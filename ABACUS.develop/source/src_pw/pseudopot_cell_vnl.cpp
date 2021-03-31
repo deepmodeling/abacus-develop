@@ -235,7 +235,7 @@ void pseudopot_cell_vnl::getvnl(const int &ik)
 
 
 
-void pseudopot_cell_vnl::init_vnl(void)
+void pseudopot_cell_vnl::init_vnl(UnitCell_pseudo &cell)
 {
 	TITLE("pseudopot_cell_vnl","init_vnl");
 	timer::tick("ppcell_vnl","init_vnl");
@@ -257,16 +257,16 @@ void pseudopot_cell_vnl::init_vnl(void)
 	this->dvan.zero_out();
 	this->dvan_so.zero_out();//added by zhengdy-soc
 	soc.rot_ylm(this->lmaxkb);
-	soc.fcoef.create(ucell.ntype, this->nhm, this->nhm);
+	soc.fcoef.create(cell.ntype, this->nhm, this->nhm);
 
-	for(int it=0;it<ucell.ntype;it++)
+	for(int it=0;it<cell.ntype;it++)
 	{
 		int BetaIndex=0;
-		const int Nprojectors = ucell.atoms[it].nh;
-		for (int ib=0; ib<ucell.atoms[it].nbeta; ib++)
+		const int Nprojectors = cell.atoms[it].nh;
+		for (int ib=0; ib<cell.atoms[it].nbeta; ib++)
 		{
-			const int l = ucell.atoms[it].lll [ib];
-			const double j = ucell.atoms[it].jjj [ib];
+			const int l = cell.atoms[it].lll [ib];
+			const double j = cell.atoms[it].jjj [ib];
 			for(int m=0; m<2*l+1; m++)
 			{
 				this->nhtol(it,BetaIndex) = l;
@@ -280,7 +280,7 @@ void pseudopot_cell_vnl::init_vnl(void)
 		//    From now on the only difference between KB and US pseudopotentials
 		//    is in the presence of the q and Q functions.
 		//    Here we initialize the D of the solid
-		if(ucell.atoms[it].has_so )
+		if(cell.atoms[it].has_so )
 		{
 			for(int ip=0; ip<Nprojectors; ip++)
 			{
@@ -328,7 +328,7 @@ void pseudopot_cell_vnl::init_vnl(void)
 					{
 						for(int is2=0;is2<2;++is2)
 						{
-							this->dvan_so(ijs,it,ip,ip2) = ucell.atoms[it].dion(ir, is) * soc.fcoef(it,is1,is2,ip,ip2);
+							this->dvan_so(ijs,it,ip,ip2) = cell.atoms[it].dion(ir, is) * soc.fcoef(it,is1,is2,ip,ip2);
 							++ijs;
 							if(ir != is) soc.fcoef(it,is1,is2,ip,ip2) = complex<double>(0.0,0.0);
 						}
@@ -348,12 +348,12 @@ void pseudopot_cell_vnl::init_vnl(void)
 					const int is = static_cast<int>( indv(it, ip2) );
 					if(LSPINORB)
 					{
-						this->dvan_so(0,it,ip,ip2) = ucell.atoms[it].dion(ir, is);
-						this->dvan_so(3,it,ip,ip2) = ucell.atoms[it].dion(ir, is);
+						this->dvan_so(0,it,ip,ip2) = cell.atoms[it].dion(ir, is);
+						this->dvan_so(3,it,ip,ip2) = cell.atoms[it].dion(ir, is);
 					}
 					else
 					{
-						this->dvan(it, ip, ip2) = ucell.atoms[it].dion(ir, is);
+						this->dvan(it, ip, ip2) = cell.atoms[it].dion(ir, is);
 					}
 				}
 			} 
@@ -366,13 +366,13 @@ void pseudopot_cell_vnl::init_vnl(void)
 	// fill the interpolation table tab
 	************************************************************/
 
-	const double pref = FOUR_PI / sqrt(ucell.omega);
+	const double pref = FOUR_PI / sqrt(cell.omega);
 	this->tab.zero_out();
 	ofs_running<<"\n Init Non-Local PseudoPotential table : ";
-	for (int it = 0;it < ucell.ntype;it++)  
+	for (int it = 0;it < cell.ntype;it++)  
 	{
-		const int nbeta = ucell.atoms[it].nbeta;
-		int kkbeta = ucell.atoms[it].kkbeta;
+		const int nbeta = cell.atoms[it].nbeta;
+		int kkbeta = cell.atoms[it].kkbeta;
 
 		//mohan modify 2008-3-31
 		//mohan add kkbeta>0 2009-2-27
@@ -386,19 +386,19 @@ void pseudopot_cell_vnl::init_vnl(void)
 
 		for (int ib = 0;ib < nbeta;ib++)
 		{
-			const int l = ucell.atoms[it].lll[ib];
+			const int l = cell.atoms[it].lll[ib];
 			for (int iq=0; iq<NQX; iq++)  
 			{
 				const double q = iq * DQ;
-				Mathzone::Spherical_Bessel(kkbeta, ucell.atoms[it].r, q, l, jl);
+				Mathzone::Spherical_Bessel(kkbeta, cell.atoms[it].r, q, l, jl);
 
 				for (int ir = 0;ir < kkbeta;ir++)
 				{
-					aux[ir] = ucell.atoms[it].betar(ib, ir) *
-					          jl[ir] * ucell.atoms[it].r[ir];
+					aux[ir] = cell.atoms[it].betar(ib, ir) *
+					          jl[ir] * cell.atoms[it].r[ir];
 				} 
 				double vqint;
-				Mathzone::Simpson_Integral(kkbeta, aux, ucell.atoms[it].rab, vqint);
+				Mathzone::Simpson_Integral(kkbeta, aux, cell.atoms[it].rab, vqint);
 				this->tab(it, ib, iq) = vqint * pref;
 			} 
 		} 

@@ -16,6 +16,7 @@ void Diago_CG::diag
     ComplexMatrix &phi,
     double *e,
     const int &dim,
+    const int &dmx,
     const int &n_band,
     const double *precondition,
     const double &eps,
@@ -64,17 +65,11 @@ void Diago_CG::diag
         for (int i=0; i<dim; i++) phi_m[i] = phi(m, i);
 
         hm.hpw.s_1psi(dim, phi_m, sphi); // sphi = S|psi(m)>
-        this->schmit_orth(dim, m, phi, sphi, phi_m);
-
-//		cout<<"\n before h_1psi sphi";
-//		for(int i=0; i<dim; i++) cout<<"\n"<<setw(15)<<sphi[i].real()<<setw(15)<<sphi[i].imag();
+        this->schmit_orth(dim, dmx, m, phi, sphi, phi_m);
 
         hm.hpw.h_1psi(dim , phi_m, hphi, sphi);
 
         e[m] = this->ddot_real(dim, phi_m, hphi );
-//		cout<<"\n\n m="<<m<<" e="<<e[m];
-//		double overlap = this->ddot_real(dim, phi_m, sphi);
-//		if(test_cg>2) OUT("overlap",overlap);
 
         int iter = 0;
         double gg_last = 0.0;
@@ -84,15 +79,13 @@ void Diago_CG::diag
         for (iter = 0;iter < maxter;iter++)
         {
             this->calculate_gradient( precondition, dim, hphi, sphi, g, pphi );
-            this->orthogonal_gradient( dim, g, scg, lagrange, phi, m);
+            this->orthogonal_gradient( dim,dmx, g, scg, lagrange, phi, m);
             this->calculate_gamma_cg( iter, dim, precondition, g, scg, 
 			g0, cg, gg_last, cg_norm, theta, phi_m);// scg used as sg
             converged = this->update_psi( dim, cg_norm, theta, pphi, cg, scg, phi_m , 
 			e[m], eps, hphi, sphi); // pphi is used as hcg
             if ( converged ) break;
         }//end iter
-//   	hm.s_1psi(dim, phi_m, sphi); // sphi = S|psi(m)>
-//		if(test_cg>2) cout<<"\n\n m="<<m<<" e="<<e[m];
 
         for (int i = 0;i < dim;i++)
         {
@@ -153,7 +146,6 @@ void Diago_CG::diag
 
     }//end m
 
-    //cout << "\n #8 of ccgdiagg() " <<endl;
     avg_iter /= n_band;
 
     delete [] lagrange;
@@ -169,6 +161,7 @@ void Diago_CG::diag
     timer::tick("Diago_CG","diag",'G');
     return;
 } // end subroutine ccgdiagg
+
 
 void Diago_CG::calculate_gradient(
     const double* precondition, const int dim,
@@ -193,8 +186,6 @@ void Diago_CG::calculate_gradient(
     const double es = this->ddot_real( dim, spsi, ppsi);
     const double lambda = eh / es;
 
-//	OUT("lambda",lambda);
-
     // Update g!
     for (int i=0; i<dim; i++)
     {
@@ -210,7 +201,7 @@ void Diago_CG::calculate_gradient(
 }
 
 
-void Diago_CG::orthogonal_gradient( const int &dim,
+void Diago_CG::orthogonal_gradient( const int &dim, const int &dmx,
                                     complex<double> *g, complex<double> *sg, complex<double> *lagrange,
                                     const ComplexMatrix &eigenfunction, const int m)
 {
@@ -218,20 +209,32 @@ void Diago_CG::orthogonal_gradient( const int &dim,
     //timer::tick("Diago_CG","orth_grad");
 
     hm.hpw.s_1psi(dim , g, sg);
-
-    for (int i=0; i<m; i++)
+    int inc=1;
+    //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+    //qianrui replace 2021-3-15
+    char trans='C';
+    zgemv_(&trans,&dim,&m,&ONE,eigenfunction.c,&dmx,sg,&inc,&ZERO,lagrange,&inc);
+    //======================================================================
+    /*for (int i=0; i<m; i++)
     {
         lagrange[i] = ZERO;
         for (int j=0; j<dim; j++)
         {
             lagrange[i] += conj( eigenfunction(i,j) ) * sg[j];
         }
-    }
+    }*/
+    //>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
     Parallel_Reduce::reduce_complex_double_pool(lagrange, m);
 
     // (3) orthogonal |g> and |Sg> to all states (0~m-1)
-    for (int i=0; i<m; i++)
+    //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+    //qianrui replace 2021-3-15
+    char trans2='N';
+    zgemv_(&trans2,&dim,&m,&NEG_ONE,eigenfunction.c,&dmx,lagrange,&inc,&ONE,g,&inc);
+    zgemv_(&trans2,&dim,&m,&NEG_ONE,eigenfunction.c,&dmx,lagrange,&inc,&ONE,sg,&inc);
+    //======================================================================
+    /*for (int i=0; i<m; i++)
     {
         for (int j=0; j<dim; j++)
         {
@@ -239,7 +242,8 @@ void Diago_CG::orthogonal_gradient( const int &dim,
             g[j] -= oo;
             sg[j] -= oo;
         }
-    }
+    }*/
+    //>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
     //timer::tick("Diago_CG","orth_grad");
     return;
@@ -319,6 +323,7 @@ void Diago_CG::calculate_gamma_cg(
     return;
 }
 
+
 bool Diago_CG::update_psi(
     const int dim,
     double &cg_norm,
@@ -336,6 +341,7 @@ bool Diago_CG::update_psi(
     //timer::tick("Diago_CG","update");
     hm.hpw.h_1psi(dim, cg, hcg, scg);
     cg_norm = sqrt( this->ddot_real(dim, cg, scg) );
+
     if (cg_norm < 1.0e-10 ) return 1;
 
     const double a0 = this->ddot_real(dim, psi_m, hcg) * 2.0 / cg_norm;
@@ -393,6 +399,7 @@ bool Diago_CG::update_psi(
 void Diago_CG::schmit_orth
 (
     const int& dim,
+    const int& dmx,
     const int& m,     //end
     const ComplexMatrix &psi,
     complex<double> *sphi,
@@ -412,29 +419,42 @@ void Diago_CG::schmit_orth
     complex<double> *lagrange = new complex<double>[ m+1 ];
     ZEROS(lagrange, m+1);
 
-    for (int j = 0; j <= m; j++)
+    //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+    //qianrui replace 2021-3-15
+    int inc=1;
+    int mp1 = m+1;
+    char trans='C';
+    zgemv_(&trans,&dim,&mp1,&ONE,psi.c,&dmx,sphi,&inc,&ZERO,lagrange,&inc);
+    //======================================================================
+    /*for (int j = 0; j <= m; j++)
     {
         for (int ig=0; ig < dim; ig++)
         {
             lagrange[j] += conj(psi( j, ig)) * sphi[ig] ;
         }
-    }
+    }*/
+    //>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
     // be careful , here reduce m+1
     Parallel_Reduce::reduce_complex_double_pool( lagrange, m+1 );
 
     double psi_norm = lagrange[m].real();
-//	cout << "\n psi norm1 = " << psi_norm;
 
-    for (int j = 0; j < m; j++)
+    //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+    //qianrui replace 2021-3-15
+    char trans2='N';
+    zgemv_(&trans2,&dim,&m,&NEG_ONE,psi.c,&dmx,lagrange,&inc,&ONE,psi_m,&inc);
+    psi_norm -= ddot_real(m,lagrange,lagrange);
+    //======================================================================
+    /*for (int j = 0; j < m; j++)
     {
         for (int ig =0; ig < dim; ig++)
         {
             psi_m[ig] -= lagrange[j] * psi(j, ig);
         }
-//		cout << "\n j = " << j << " lagrange norm = " << ( conj(lagrange[j]) * lagrange[j] ).real();
         psi_norm -= ( conj(lagrange[j]) * lagrange[j] ).real();
-    }
+    }*/
+    //>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
     if ( psi_norm <= 0.0)
     {
@@ -442,10 +462,6 @@ void Diago_CG::schmit_orth
 		for(int j=0; j<=m; ++j)
 		{
 			cout << "\n j = " << j << " lagrange norm = " << ( conj(lagrange[j]) * lagrange[j] ).real();
-//			for(int ig=0; ig<dim; ++ig)
-//			{
-//				cout << psi(j,ig) << " ";
-//			}
 		}
         cout << " in diago_cg, psi norm = " << psi_norm << endl;
 		cout << " If you use GNU compiler, it may due to the zdotc is unavailable." << endl;
@@ -464,6 +480,7 @@ void Diago_CG::schmit_orth
     //timer::tick("Diago_CG","schmit_orth");
     return ;
 }
+
 
 double Diago_CG::ddot_real
 (
@@ -488,14 +505,27 @@ complex<double> Diago_CG::ddot
     const complex<double> * psi_R
 )
 {
-    complex<double> result(0, 0);
-    for (int i = 0; i < dim ; i++)
+    //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+    //qianrui modify 2021-3-14
+    //Note that  ddot_(2*dim,a,1,b,1) = REAL( zdotc_(dim,a,1,b,1) )
+    int dim2=2*dim;
+    double *pL,*pR;
+    pL=(double *)psi_L;
+    pR=(double *)psi_R;
+    double result=LapackConnector::dot(dim2,pL,1,pR,1);
+    Parallel_Reduce::reduce_double_pool( result );
+    return result;
+    //======================================================================
+    /*complex<double> result(0,0);
+    for (int i=0;i<dim;i++)
     {
-        result += conj(psi_L[i]) *  psi_R[i] ;
+        result += conj( psi_L[i] ) * psi_R[i];
     }
     Parallel_Reduce::reduce_complex_double_pool( result );
-    return result;
+    return result.real();*/
+    //>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 }  // end of ddot
+
 
 // this return <psi(m)|psik>
 complex<double> Diago_CG::ddot
@@ -519,6 +549,7 @@ complex<double> Diago_CG::ddot
     return result;
 }  // end of ddot
 
+
 // this return <psi_L(m) | psi_R(n)>
 complex<double> Diago_CG::ddot
 (
@@ -537,5 +568,6 @@ complex<double> Diago_CG::ddot
         result += conj( psi_L(m,i) ) * psi_R(n,i) ;
     }
     Parallel_Reduce::reduce_complex_double_pool( result );
+
     return result;
 } // end of ddot

@@ -107,9 +107,14 @@ void Charge::allocate(const int &nspin_in, const int &nrxx_in, const int &ngmc_i
 
 double Charge::sum_rho(void) const
 {
+	TITLE("Charge","sum_rho");
+
     double sum_rho = 0.0;
     int nspin0 = 1;
-    if(nspin==2) nspin0 = 2;
+    if(nspin==2) 
+	{
+		nspin0 = 2;
+	}
 	
 	for(int is=0; is<nspin0; is++)
 	{
@@ -130,6 +135,7 @@ double Charge::sum_rho(void) const
 		ofs_warning << " sum_rho=" << sum_rho << endl;
         WARNING_QUIT("Charge::renormalize_rho","Can't find even an electron!");
     }
+
     return sum_rho;
 }
 
@@ -193,7 +199,10 @@ void Charge::atomic_rho(const int spin_number_need, double** rho_in)const
 		}
 	}
 
-	if(NSPIN==4) startmag_type = 1;//zhengdy-soc, type 2 is still wrong.
+	if(NSPIN==4) 
+	{
+		startmag_type = 1;//zhengdy-soc, type 2 is still wrong.
+	}
 	OUT(ofs_warning,"startmag_type",startmag_type);
 
 
@@ -223,6 +232,7 @@ void Charge::atomic_rho(const int spin_number_need, double** rho_in)const
 		OUT(ofs_warning,"charge from rho_at",charge);
 		assert(charge!=0.0);
 		double scale=1.0;
+
 		if(charge!=atom->zv)
 		{
 			OUT(ofs_warning,"charge should be",atom->zv);
@@ -1010,7 +1020,7 @@ double Charge::check_ne(const double *rho_in) const
 //LiuXh add 20180619
 void Charge::init_final_scf()
 {
-    if (test_charge) TITLE("Charge","init");
+    TITLE("Charge","init_after_scf");
 
 	assert(allocate_rho_final_scf == false);
 

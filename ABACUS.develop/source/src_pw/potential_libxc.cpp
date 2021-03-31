@@ -11,7 +11,7 @@
 #include "src_lcao/global_fp.h"
 #include "src_pw/tools.h"
 #include "src_global/global_function.h"
-#include "src_pw/gga_pw.h"
+#include "src_pw/xc_gga_pw.h"
 
 void Potential_Libxc::v_xc(
 	const double * const * const rho_in, // CHR.rho_core may be needed in future

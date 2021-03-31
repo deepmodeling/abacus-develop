@@ -36,6 +36,17 @@ void ORB_gen_tables::gen_tables( const int &job0 )
         ORB.get_dR(),// delta R, for making radial table
         ORB.get_dk() ); // delta k, for integration in k space
 
+	//caoyu add 2021-03-18
+	if (INPUT.out_descriptor && BASIS_TYPE == "lcao") {
+		talpha.allocate(
+			ORB.get_ntype(),// number of atom types
+			ORB.get_lmax(),// max L used to calculate overlap
+			ORB.get_kmesh(), // kpoints, for integration in k space
+			ORB.get_Rmax(),// max value of radial table
+			ORB.get_dR(),// delta R, for making radial table
+			ORB.get_dk()); // delta k, for integration in k space
+	}
+
 	// OV: overlap
 	MOT.init_OV_Tpair();
 	MOT.init_OV_Opair();
@@ -44,6 +55,12 @@ void ORB_gen_tables::gen_tables( const int &job0 )
 	tbeta.init_NL_Tpair();
 	tbeta.init_NL_Opair(); // add 2009-5-8
 
+	//caoyu add 2021-03-18
+	// DS: Descriptor
+	if (INPUT.out_descriptor && BASIS_TYPE == "lcao") {
+		talpha.init_DS_Opair();
+		talpha.init_DS_2Lplus1();
+	}
 
 	//=========================================
 	// (2) init Ylm Coef
@@ -58,6 +75,12 @@ void ORB_gen_tables::gen_tables( const int &job0 )
 	//calculate S(R) for interpolation
 	MOT.init_Table(job0);
 	tbeta.init_Table_Beta( MOT.pSB );// add 2009-5-8
+
+	//caoyu add 2021-03-18
+	if (INPUT.out_descriptor && BASIS_TYPE == "lcao") {
+		talpha.init_Table_Alpha(MOT.pSB);
+		talpha.print_Table_DSR();	
+	}
 
 	//=========================================
 	// (3) make Gaunt coefficients table
@@ -94,10 +117,15 @@ void ORB_gen_tables::snap_psibeta(
 	const int is) const
 {
 	//TITLE ("ORB_gen_tables","snap_psibeta");
-	//timer::tick ("ORB_gen_tables","snap_psibeta");
 
 	//optimized by zhengdy-soc
-	if(NSPIN==4 && ORB.Beta[T0].get_count_soc(is)==0) return;
+	if(NSPIN==4 && ORB.Beta[T0].get_count_soc(is)==0) 
+	{
+		return;
+	}
+
+	timer::tick ("ORB_gen_tables","snap_psibeta",'X');
+
 	bool has_so = 0;
 	if(ORB.Beta[T0].get_count_soc(0)>0 ) has_so = 1;
 
@@ -145,6 +173,7 @@ void ORB_gen_tables::snap_psibeta(
 		delete[] calproj;
 		delete[] rmesh1;
 		delete[] rmesh2;
+		timer::tick ("ORB_gen_tables","snap_psibeta",'X');
 		return;
 	}
 
@@ -156,18 +185,6 @@ void ORB_gen_tables::snap_psibeta(
 	double x0a,x1a,x2a,x3a,x123a,x120a,x032a,x031a;
 	double x0b,x1b,x2b,x3b,x123b,x120b,x032b,x031b;
 	
-	/*
-    const double position = x / table_interval;
-    const int iq = static_cast<int>(position);
-   	assert(iq < table_length-4);
-    const double x0 = position - static_cast<double>(iq);
-    const double x1 = 1.0 - x0;
-    const double x2 = 2.0 - x0;
-    const double x3 = 3.0 - x0;
-
-    return x1*x2*(table[iq]*x3+table[iq+3]*x0)/6.0
-         + x0*x3*(table[iq+1]*x2-table[iq+2]*x1)/2.0;
-	*/
 	psa = distance10 / tbeta.dr;
 	iqa = static_cast<int>(psa);
    	x0a = psa - static_cast<double>(iqa);
@@ -205,6 +222,7 @@ void ORB_gen_tables::snap_psibeta(
 	//special case for R = 0;
 	const double tiny1 = 1e-12;
 	const double tiny2 = 1e-10;
+
 	if(distance10 < tiny1) distance10 += tiny1;
 	if(distance20 < tiny1) distance20 += tiny1;
 	
@@ -228,8 +246,14 @@ void ORB_gen_tables::snap_psibeta(
 	vector<vector<double>> grlyb;
 	
 	Ylm::rl_sph_harm (T1_2Lplus1-1, dRa.x, dRa.y, dRa.z, rlya);
-	if (job == 0) Ylm::rl_sph_harm (T2_2Lplus1-1, dRb.x, dRb.y, dRb.z, rlyb);
-	else Ylm::grad_rl_sph_harm (T2_2Lplus1-1, dRb.x, dRb.y, dRb.z, rlyb, grlyb);
+	if (job == 0) 
+	{
+		Ylm::rl_sph_harm (T2_2Lplus1-1, dRb.x, dRb.y, dRb.z, rlyb);
+	}
+	else 
+	{
+		Ylm::grad_rl_sph_harm (T2_2Lplus1-1, dRb.x, dRb.y, dRb.z, rlyb, grlyb);
+	}
 	//==============================================================================
 	// Formula :                         T1       T0          T0        T2
 	// sum_{L0}sum_{m0}
@@ -239,10 +263,15 @@ void ORB_gen_tables::snap_psibeta(
 
 	// mohan update 2011-03-07
 	int n_projection =1;
-	if(has_so) n_projection = ORB.Beta[T0].get_nproj_soc();
+	if(has_so) 
+	{
+		n_projection = ORB.Beta[T0].get_nproj_soc();
+	}
+
 	vector<complex<double>> term_a_nc(n_projection,{0,0});		// Peize Lin change ptr to vector at 2020.01.31
 	vector<complex<double>> term_b_nc(n_projection,{0,0});		// Peize Lin change ptr to vector at 2020.01.31
 	int ip = -1;
+
 	for(int nb=0; nb<nproj; nb++)
 	{
 		if( !calproj[nb] ) continue;
@@ -250,6 +279,13 @@ void ORB_gen_tables::snap_psibeta(
 		const int L0 = ORB.Beta[T0].getL_Beta(nb);
 		//const int next_ip = 2* L0 +1;
 	
+
+//-------------------------------------------------------------------
+// move iterations for psi1 and psi2 from cal_fvnl_dbeta 
+// to here --- 2021/03/20 mohan chen
+//-------------------------------------------------------------------
+
+
 		// <psi1 | Beta>
 		const int Opair1 = tbeta.NL_Opair(Tpair1, L1, N1, nb); 
 		// <psi2 | Beta>
@@ -311,37 +347,6 @@ void ORB_gen_tables::snap_psibeta(
 				}
 			} //end L
 
-
-			// for test
-			/*
-			if( abs(term_a)>1.0e-5 && NURSE)
-			{
-				if(R1.x==0 && R1.y==0 && R1.z==0)
-				{
-				//	cout << endl;
-				//	cout << " R1=" << R1.x << " " << R1.y << " " << R1.z << endl;
-				//	cout << " R0=" << R0.x << " " << R0.y << " " << R0.z << endl;
-					stringstream label;
-					stringstream phi;
-					if(nb==0) label<<"s"<<m0;
-					if(nb==1) label<<"p"<<m1;
-					if(L1==0) phi<<"s"<<N1<<m1;
-					if(L1==1) phi<<"p"<<N1<<m1;
-					if(L1==2) phi<<"d"<<N1<<m1;
-					cout << setw(15) << term_a  
-						<< setw(5) << phi.str()
-						<< setw(5) << label.str()
-						<< " R2("
-						<< setw(8) << R2.x 
-						<< setw(8) << R2.y 
-						<< setw(8) << R2.z
-						<< ")"
-						<< endl; 
-				}
-			}
-			*/
-
-
 			//=============
 			// SECOND PART	
 			//=============
@@ -362,8 +367,14 @@ void ORB_gen_tables::snap_psibeta(
 				{
 					curr = tbeta.Table_NR[0][Tpair2][Opair2][L];
    					
-					if( iqb >= rmesh2[nb]-4) Interp_Vnlb = 0.0;
-					else Interp_Vnlb = i_exp * (x123b*curr[iqb]+x120b*curr[iqb+3]+x032b*curr[iqb+1]-curr[iqb+2]*x031b);
+					if( iqb >= rmesh2[nb]-4) 
+					{
+						Interp_Vnlb = 0.0;
+					}
+					else 
+					{
+						Interp_Vnlb = i_exp * (x123b*curr[iqb]+x120b*curr[iqb+3]+x032b*curr[iqb+1]-curr[iqb+2]*x031b);
+					}
 					
 					Interp_Vnlb /= rl2;
 				}
@@ -379,9 +390,14 @@ void ORB_gen_tables::snap_psibeta(
 					{
 						curr = tbeta.Table_NR[1][Tpair2][Opair2][L];
    					
-						if( iqb >= rmesh2[nb]-4) Interp_Vnlc = 0.0;
-						else Interp_Vnlc = i_exp * (x123b*curr[iqb]+x120b*curr[iqb+3]+x032b*curr[iqb+1]-curr[iqb+2]*x031b);
-						
+						if( iqb >= rmesh2[nb]-4) 
+						{
+							Interp_Vnlc = 0.0;
+						}
+						else 
+						{
+							Interp_Vnlc = i_exp * (x123b*curr[iqb]+x120b*curr[iqb+3]+x032b*curr[iqb+1]-curr[iqb+2]*x031b);
+						}
 						Interp_Vnlc = Interp_Vnlc / pow(distance20, L) - Interp_Vnlb * L / distance20;
 					}
 					else 
@@ -407,10 +423,13 @@ void ORB_gen_tables::snap_psibeta(
 						}
 						case 1: // calculate the derivative part.
 						{
+							double tt1 = tmpGaunt * Interp_Vnlc * rlyb[lm] / distance20;
+							double tt2 = tmpGaunt * Interp_Vnlb;
+										
 							for(int ir = 0; ir < 3; ir++)
 							{
-								term_c[ir] += tmpGaunt * (Interp_Vnlc * rlyb[lm] * unit_vec_dRb[ir] / distance20
-											+ Interp_Vnlb * grlyb[lm][ir]);
+								term_c[ir] += tt1 * unit_vec_dRb[ir] 
+											+ tt2 * grlyb[lm][ir];
 							}
 
 							break;
@@ -436,7 +455,10 @@ void ORB_gen_tables::snap_psibeta(
 				case 0://calculate the overlap part.
 				{
 					//nlm[0] += term_a * term_b * ORB.Beta[T0].getCoefficient_D(L0, L0);//LiuXh 2016-01-14
-					if(!has_so) nlm[0] += term_a * term_b * ORB.Beta[T0].getCoefficient_D(nb, nb);//LiuXh 2016-01-14
+					if(!has_so) 
+					{
+						nlm[0] += term_a * term_b * ORB.Beta[T0].getCoefficient_D(nb, nb);//LiuXh 2016-01-14
+					}
 					break;
 				}
 				case 1: //calculate the derivative part.
@@ -448,10 +470,6 @@ void ORB_gen_tables::snap_psibeta(
 						{
 							nlm[jr] += term_c[jr] * term_a * ORB.Beta[T0].getCoefficient_D(nb, nb);//LiuXh 2016-01-14
 						}
-						else
-						{
-							
-						}
 					}
 					break;
 				}
@@ -459,6 +477,7 @@ void ORB_gen_tables::snap_psibeta(
 			}
 		}//!m0
 	}//!L0
+
 	//zhengdy-soc, calculate non-local term
 	if(has_so)
 	{
@@ -493,7 +512,7 @@ void ORB_gen_tables::snap_psibeta(
 	delete[] rmesh1;
 	delete[] rmesh2;
 
-//	timer::tick("ORB_gen_tables","snap_psibeta");
+	timer::tick ("ORB_gen_tables","snap_psibeta",'X');
 	return;
 }
 
@@ -792,4 +811,193 @@ double ORB_gen_tables::get_distance( const Vector3<double> &R1, const Vector3<do
 	return dR.norm() * this->lat0;	
 }
 
+//caoyu add 2021-03-17
+void ORB_gen_tables::snap_psialpha(
+	double olm[],
+	const int& job,
+	const Vector3<double>& R1,
+	const int& T1,
+	const int& L1,
+	const int& m1,
+	const int& N1,
+	const Vector3<double>& R2,
+	const int& T2,
+	const int& L2,
+	const int& m2,
+	const int& N2,
+	complex<double>* olm1,
+	const int is) const
+{
 
+	if (job != 0 && job != 1)
+	{
+		WARNING_QUIT("ORB_gen_tables::snap_psialpha", "job must be equal to 0 or 1!");
+	}
+
+	Numerical_Orbital::set_position(R1, R2);
+	assert(this->lat0 > 0.0);
+
+	// (1) get distance between R1 and R2 (a.u.)
+	// judge if there exist overlap
+	double distance = Numerical_Orbital::get_distance() * this->lat0;
+
+	const double Rcut1 = ORB.Phi[T1].getRcut();
+	const double Rcut2 = ORB.Alpha[0].getRcut();
+
+	if (job == 0) ZEROS(olm, 1);
+	else if (job == 1) ZEROS(olm, 3);
+
+	if (distance > (Rcut1 + Rcut2)) return;
+
+	//if distance == 0
+	//\int psi(r) psi(r-R) dr independent of R if R == 0
+	//distance += tiny1 avoid overflow during calculation
+	const double tiny1 = 1e-12;
+	const double tiny2 = 1e-10;
+	if (distance < tiny1) distance += tiny1;
+
+	// (2) if there exist overlap, calculate the mesh number
+	// between two atoms
+	const int rmesh = this->talpha.get_rmesh(Rcut1, Rcut2);
+
+	// (3) Find three dimension of 'Table_DS'
+	// dim1 : type pairs, equal to T1 here 
+	// dim2 : radial orbital pairs,
+	// dim3 : find lmax between T1 and T2, and get lmax*2+1
+	const int dim1 = T1;
+	int dim2 = this->talpha.DS_Opair(dim1, L1, L2, N1, N2);
+	int dim3 = this->talpha.DS_2Lplus1[T1];
+
+	//Gaunt Index
+		const int gindex1 = L1 * L1 + m1;
+	const int gindex2 = L2 * L2 + m2;
+
+	// Peize Lin change rly, grly 2016-08-26
+	vector<double> rly;
+	vector<vector<double>> grly;
+
+	double arr_dR[3];
+	arr_dR[0] = Numerical_Orbital::getX() * this->lat0;
+	arr_dR[1] = Numerical_Orbital::getY() * this->lat0;
+	arr_dR[2] = Numerical_Orbital::getZ() * this->lat0;
+
+	//double xdr = arr_dR[0] / distance;
+	//double ydr = arr_dR[1] / distance;
+	//double zdr = arr_dR[2] / distance;
+
+	//=======================
+	// *r**l*Ylm_real
+	// include its derivations
+	//=======================
+	if (job == 0)
+	{
+		Ylm::rl_sph_harm(dim3 - 1, arr_dR[0], arr_dR[1], arr_dR[2], rly);
+	}
+	else
+	{
+		Ylm::grad_rl_sph_harm(dim3 - 1, arr_dR[0], arr_dR[1], arr_dR[2], rly, grly);
+	}
+
+	for (int L = 0; L < dim3; L++) //maxL = dim3-1
+	{
+		//===========================================================
+		// triangle rule for L and sum of L, L1, L2 should be even
+		//===========================================================
+		int AL = L1 + L2;
+		int SL = abs(L1 - L2);
+
+		if ((L > AL) || (L < SL) || ((L - SL) % 2 == 1)) continue;
+
+		double Interp_Slm = 0.0;
+		double Interp_dSlm = 0.0;
+		double tmpOlm0 = 0.0;
+		double tmpOlm1 = 0.0;
+
+		// prefactor
+		double i_exp = pow(-1.0, (L1 - L2 - L) / 2);
+		double rl = pow(distance, L);
+
+		if (distance > tiny2)
+		{
+			Interp_Slm = i_exp * Mathzone::Polynomial_Interpolation(
+				talpha.Table_DSR[0][dim1][dim2][L], rmesh, MOT.dr, distance);
+			Interp_Slm /= rl;
+		}
+		else // distance = 0.0; 
+		{
+			Interp_Slm = i_exp * talpha.Table_DSR[0][dim1][dim2][L][0];
+		}
+
+		if (job == 1)//calculate the derivative.
+		{
+			if (distance > tiny2)
+			{
+				Interp_dSlm = i_exp * Mathzone::Polynomial_Interpolation(
+					talpha.Table_DSR[1][dim1][dim2][L], rmesh, MOT.dr, distance);
+				Interp_dSlm = Interp_dSlm / pow(distance, L) - Interp_Slm * L / distance;
+			}
+			else
+			{
+				Interp_dSlm = 0.0;
+			}
+		}
+
+		for (int m = 0; m < 2 * L + 1; m++)
+		{
+			int gindex = L * L + m;
+			//			double tmpGaunt1 = MGT.Get_Gaunt_SH(L1, m1, L2, m2, L, m);
+			double tmpGaunt = MGT.Gaunt_Coefficients(gindex1, gindex2, gindex);
+
+			tmpOlm0 = Interp_Slm * tmpGaunt;
+
+			if (job == 1)
+			{
+				tmpOlm1 = Interp_dSlm * tmpGaunt;
+			}
+
+			switch (job)
+			{
+			case 0: // calculate overlap.
+			{
+				if (NSPIN != 4) olm[0] += tmpOlm0 * rly[MGT.get_lm_index(L, m)];
+				else if (olm1 != NULL)
+				{
+					olm1[0] += tmpOlm0 * rly[MGT.get_lm_index(L, m)];
+					olm1[1] += 0;//tmpOlm0 * (tmp(0,0)+tmp(0,1));
+					olm1[2] += 0;//tmpOlm0 * (tmp(1,0)+tmp(1,1));
+					olm1[3] += tmpOlm0 * rly[MGT.get_lm_index(L, m)];
+
+				}
+				else
+				{
+					WARNING_QUIT("ORB_gen_tables::snap_psialpha", "something wrong!");
+
+				}
+
+				/*
+				if( abs ( tmpOlm0 * rly[ MGT.get_lm_index(L, m) ] ) > 1.0e-3 )
+				{
+				cout << " L=" << L << " m=" << m << " tmpOlm0=" << tmpOlm0
+				<< " rly=" << rly[ MGT.get_lm_index(L, m) ]
+				<< " r=" << olm[0]
+				<< endl;
+				}
+				*/
+				break;
+			}
+			case 1: // calculate gradient.
+			{
+				for (int ir = 0; ir < 3; ir++)
+				{
+					olm[ir] += tmpOlm0 * grly[MGT.get_lm_index(L, m)][ir]
+						+ tmpOlm1 * rly[MGT.get_lm_index(L, m)] * arr_dR[ir] / distance;
+				}
+				break;
+			}
+			default: break;
+			}
+		}//!m
+	}
+
+	return;
+}

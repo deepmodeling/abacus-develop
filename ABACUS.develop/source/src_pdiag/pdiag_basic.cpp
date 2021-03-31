@@ -40,8 +40,6 @@ void Pdiag_Basic::set_parameters(void)
 			WARNING_QUIT("Pdiag_Basic::set_parameters","NLOCAL < DSIZE");
 		}
 
-
-
 		if (DRANK<NBANDS%DSIZE) loc_size=loc_size+1;
 		if(testpb)OUT(ofs_running,"local size",loc_size);
 
@@ -72,27 +70,28 @@ void Pdiag_Basic::set_parameters(void)
 				break;
 			}
 		}
-	}//xiaohui add 2014-12-21
-	else//xiaohui add 2014-12-21
+	}
+	else
 	{
-			loc_size=NLOCAL/DSIZE;
+		loc_size=NLOCAL/DSIZE;
 
-			// mohan add 2012-03-29
-			if(loc_size==0)
-			{
-					ofs_warning << " loc_size=0" << " in proc " << MY_RANK+1 << endl;
-					WARNING_QUIT("Pdiag_Basic::set_parameters","NLOCAL < DSIZE");
-			}
+		// mohan add 2012-03-29
+		if(loc_size==0)
+		{
+			ofs_warning << " loc_size=0" << " in proc " << MY_RANK+1 << endl;
+			WARNING_QUIT("Pdiag_Basic::set_parameters","NLOCAL < DSIZE");
+		}
 
-
-
-		if (DRANK<NLOCAL%DSIZE) loc_size=loc_size+1;
-		if(testpb)OUT(ofs_running,"local size",loc_size);
+		if (DRANK<NLOCAL%DSIZE) 
+		{
+			loc_size=loc_size+1;
+		}
+		if(testpb) OUT(ofs_running,"local size",loc_size);
 
 		// set loc_sizes
 		delete[] loc_sizes;
 		loc_sizes = new int[DSIZE];
-			ZEROS(loc_sizes, DSIZE);
+		ZEROS(loc_sizes, DSIZE);
 
 		this->lastband_in_proc = 0;
 		this->lastband_number = 0;
@@ -101,7 +100,7 @@ void Pdiag_Basic::set_parameters(void)
 		{
 			if (i<NLOCAL%DSIZE)
 			{
-							// mohan modify 2010-07-05
+				// mohan modify 2010-07-05
 				loc_sizes[i]=NLOCAL/DSIZE+1;
 			}
 			else

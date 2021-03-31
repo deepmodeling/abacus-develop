@@ -16,17 +16,16 @@ pseudopot_cell_vl::~pseudopot_cell_vl()
 }
 
 
-void pseudopot_cell_vl::init_vloc(void)
+void pseudopot_cell_vl::init_vloc(const int &nggm, matrix &vloc_in)
 {
 	TITLE("pseudopot_cell_vl","init_vloc");
 
 	// This routine computes the fourier coefficient of the local
 	// potential vloc(ig,it) for each type of atom
-	if(test_pp > 0) TITLE("pseudopot_cell_vl","init_vloc");
 	timer::tick("ppcell_vl","init_vloc",'C');
 
-	double *vloc1d = new double[pw.nggm];
-	ZEROS(vloc1d, pw.nggm);
+	double *vloc1d = new double[nggm];
+	ZEROS(vloc1d, nggm);
 
 	this->allocate();
 	
@@ -34,7 +33,7 @@ void pseudopot_cell_vl::init_vloc(void)
 	{
 		const Atom* atom = &ucell.atoms[it];
 
-		ZEROS(vloc1d, pw.nggm);
+		ZEROS(vloc1d, nggm);
 
 		this->zp[it] = atom->zv;
 
@@ -54,7 +53,7 @@ void pseudopot_cell_vl::init_vloc(void)
 			WARNING_QUIT("init_vloc","not available now.");
 		}
 
-		dcopy(vloc1d, this->vloc,it);
+		dcopy(vloc1d, vloc_in, it);
 	} 
 
 
@@ -133,6 +132,7 @@ void pseudopot_cell_vl::vloc_of_g(
 	ZEROS(aux, msh);
 	ZEROS(aux1, msh);
 
+	// for tests
 	/*
 	for(ir=0; ir<msh; ir++)
 	{
@@ -142,7 +142,7 @@ void pseudopot_cell_vl::vloc_of_g(
 	vloc_1d[0] *= 4*3.1415926;
 	cout << "  vloc_1d[0]=" <<  vloc_1d[0]/pw.ngmc << endl;
 	cout << "  vloc_1d[0]=" <<  vloc_1d[0]/pw.ncxyz << endl;
-*/
+	*/
 
 	// (1)
 	if(pw.ggs[0] < 1.0e-8)

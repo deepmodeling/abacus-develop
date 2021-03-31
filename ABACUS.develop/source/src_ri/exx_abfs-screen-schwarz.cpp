@@ -137,21 +137,3 @@ void Exx_Abfs::Screen::Schwarz::cal_max_pair_fock(
 		
 //test_screen("schwarz-max_pair_fock.dat",max_pair_fock);
 }
-
-bool Exx_Abfs::Screen::Schwarz::screen(
-	const size_t iat1, const size_t iat2, const size_t iat3, const size_t iat4,
-	const Abfs::Vector3_Order<int> & box3, const Abfs::Vector3_Order<int> & box4 ) const
-{
-	if(!flag_screen_schwarz)
-		return false;
-	if( max_pair_fock.at(iat1).at(iat3).at(box3) * max_pair_fock.at(iat2).at(iat4).at(box4) > threshold )
-	{
-//		num_cal += 1;
-		return false;
-	}
-	else
-	{
-//		num_screen += 1;
-		return true;
-	}
-}

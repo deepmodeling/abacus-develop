@@ -342,8 +342,6 @@ void energy::perform_dos(void)
 
 					if(is == kv.isk[ik])
 					{
-
-
 						LM.allocate_HS_k(ParaO.nloc);
 						LM.zeros_HSk('S');
 						LNNR.folding_fixedH(ik);

@@ -52,10 +52,14 @@ void ORB_control::set_orb_tables(void)
     return;
 }
 
-void ORB_control::clear_after_ions()
+void ORB_control::clear_after_ions(void)
 {
     TITLE("ORB_control","clear_after_ions");
     UOT.MOT.Destroy_Table();
     UOT.tbeta.Destroy_Table_Beta();
+    //caoyu add 2021-03-18
+    if (INPUT.out_descriptor && BASIS_TYPE == "lcao") {
+        UOT.talpha.Destroy_Table_Alpha();
+    }
     return;
 }

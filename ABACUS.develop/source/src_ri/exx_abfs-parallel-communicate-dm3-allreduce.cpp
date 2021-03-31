@@ -3,7 +3,10 @@
 
 #include "src_pw/global.h"
 #include "src_global/global_function.h"
-#include "src_global/serialization_cereal.h"
+
+#ifdef USE_CEREAL_SERIALIZATION
+	#include "src_global/serialization_cereal.h"
+#endif
 
 #include <mpi.h>
 #include <thread>
@@ -282,12 +285,17 @@ vector<map<size_t,set<size_t>>> Exx_Abfs::Parallel::Communicate::DM3::Allreduce:
 					for(const size_t iat2 : H_atom_pairs.second)
 						if(atom_in_2D_list[rank].second[iat2])
 							atom_required[iat1].insert(iat2);
+							
+		#ifdef USE_CEREAL_SERIALIZATION
 		{
 			stringstream atom_send_ss;
 			cereal::BinaryOutputArchive ar(atom_send_ss);
 			ar(atom_required);
 			atom_send_str[rank] = atom_send_ss.str();
 		}
+		#else
+			throw invalid_argument(TO_STRING(__FILE__)+" line "+TO_STRING(__LINE__));
+		#endif
 		if( MPI_Isend( atom_send_str[rank].c_str(), atom_send_str[rank].size(), MPI_CHAR, rank, tag, mpi_comm, &request[rank] ) !=MPI_SUCCESS)	throw runtime_error(TO_STRING(__FILE__)+TO_STRING(__LINE__));
 	}
 
@@ -303,10 +311,14 @@ vector<map<size_t,set<size_t>>> Exx_Abfs::Parallel::Communicate::DM3::Allreduce:
 		if( MPI_Recv( ss_buffer.data(), size_recv, MPI_CHAR, status.MPI_SOURCE, tag, mpi_comm, MPI_STATUS_IGNORE ) !=MPI_SUCCESS)	throw runtime_error(TO_STRING(__FILE__)+TO_STRING(__LINE__));
 		stringstream atom_recv_ss;  
 		atom_recv_ss.rdbuf()->pubsetbuf(ss_buffer.data(),size_recv);
+		#ifdef USE_CEREAL_SERIALIZATION
 		{
 			cereal::BinaryInputArchive ar(atom_recv_ss);
 			ar(H_atom_pairs_group_rank[status.MPI_SOURCE]);
 		}	
+		#else
+			throw invalid_argument(TO_STRING(__FILE__)+" line "+TO_STRING(__LINE__));
+		#endif
 	}
 
 	if( MPI_Waitall( comm_sz, request.data(), MPI_STATUSES_IGNORE ) !=MPI_SUCCESS)	throw runtime_error(TO_STRING(__FILE__)+TO_STRING(__LINE__));

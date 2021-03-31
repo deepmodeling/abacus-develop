@@ -1,24 +1,36 @@
 #include "./stress_func.h"
 #include "./H_XC_pw.h"
 
-//NLCC term, need to be test!
+//NLCC term, need to be tested
 void Stress_Func::stress_cc(matrix& sigma, const bool is_pw)
 {
 	timer::tick("Stress_Func","stress_cc",'F');
         
 	int nt,ng,l,m,ir;
 	double fact=1.0;
-	if(is_pw&&INPUT.gamma_only) fact = 2.0; //is_pw:PW basis, gamma_only need to double.
+
+	if(is_pw&&INPUT.gamma_only) 
+	{
+		fact = 2.0; //is_pw:PW basis, gamma_only need to double.
+	}
+
 	complex<double> sigmadiag;
 	double* rhocg;
 	double g[3];
 
-
 	int judge=0;
-	for(nt=0;nt<ucell.ntype;nt++){
-		if(ucell.atoms[nt].nlcc) judge++;
+	for(nt=0;nt<ucell.ntype;nt++)
+	{
+		if(ucell.atoms[nt].nlcc) 
+		{
+			judge++;
+		}
 	}
-	if(judge==0) return;
+
+	if(judge==0) 
+	{
+		return;
+	}
 
 	//recalculate the exchange-correlation potential
     matrix vxc(NSPIN, pw.nrxx);
@@ -28,17 +40,22 @@ void Stress_Func::stress_cc(matrix& sigma, const bool is_pw)
 
 	ZEROS(psic, pw.nrxx);
 
-	if(NSPIN==1||NSPIN==4){
-		for(ir=0;ir<pw.nrxx;ir++){
+	if(NSPIN==1||NSPIN==4)
+	{
+		for(ir=0;ir<pw.nrxx;ir++)
+		{
 			// psic[ir] = vxc(0,ir);
 			psic[ir] = complex<double>(vxc(0, ir),  0.0);
 		}
 	}
-	else{
-		for(ir=0;ir<pw.nrxx;ir++){
+	else
+	{
+		for(ir=0;ir<pw.nrxx;ir++)
+		{
 			psic[ir] = 0.5 * (vxc(0, ir) + vxc(1, ir));
 		}
-	}   
+	}
+
 	// to G space
 	pw.FFT_chg.FFT3D(psic, -1);
 
@@ -47,8 +64,10 @@ void Stress_Func::stress_cc(matrix& sigma, const bool is_pw)
 	ZEROS(rhocg, pw.nggm);
 
 	sigmadiag=0.0;
-	for(nt=0;nt<ucell.ntype;nt++){
-		if(ucell.atoms[nt].nlcc){
+	for(nt=0;nt<ucell.ntype;nt++)
+	{
+		if(ucell.atoms[nt].nlcc)
+		{
 			//drhoc();
 			CHR.non_linear_core_correction(
 				ppcell.numeric,
@@ -96,6 +115,7 @@ void Stress_Func::stress_cc(matrix& sigma, const bool is_pw)
 			}//end ng
 		}//end if
 	}//end nt
+
 	for( l = 0;l< 3;l++)
 	{
 		sigma(l,l) += sigmadiag.real();
@@ -142,11 +162,13 @@ void Stress_Func::deriv_drhoc
 	//
 	// G=0 term
 	//
-	if (pw.ggs[0] < 1.0e-8){
+	if (pw.ggs[0] < 1.0e-8)
+	{
 		drhocg [0] = 0.0;
 		igl0 = 1;
 	}
-	else{
+	else
+	{
 		igl0 = 0;
 	}
 	//

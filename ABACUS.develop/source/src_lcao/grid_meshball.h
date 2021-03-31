@@ -16,9 +16,11 @@ class Grid_MeshBall : public Grid_BigCell
 
 	// cartesian coordinates of meshball.
 	double** meshball_positions;
+
 	bool flag_mp;
 	
 	protected:
+
 	Grid_MeshBall();
 	~Grid_MeshBall();	
 
@@ -35,8 +37,4 @@ class Grid_MeshBall : public Grid_BigCell
 	double deal_with_atom_spillage(const double* pos);
 
 };
-
 #endif
-
-
-

@@ -3,9 +3,9 @@
 #include <stdexcept>
 #include "../src_ri/exx_abfs.h"
 
-double Make_Overlap_Table::dr = -1.0;
+double ORB_table_phi::dr = -1.0;
 
-Make_Overlap_Table::Make_Overlap_Table()
+ORB_table_phi::ORB_table_phi()
 {
 	destroy_sr = false;
 	destroy_tr = false;
@@ -26,7 +26,7 @@ Make_Overlap_Table::Make_Overlap_Table()
 	kab=new double[1];
 }
 
-Make_Overlap_Table::~Make_Overlap_Table()
+ORB_table_phi::~ORB_table_phi()
 {
 	delete[] kpoint;
 	delete[] r;
@@ -34,7 +34,7 @@ Make_Overlap_Table::~Make_Overlap_Table()
 	delete[] kab;
 }
 
-void Make_Overlap_Table::allocate
+void ORB_table_phi::allocate
 (
  	const int &ntype_in,
     const int &lmax_in,
@@ -44,7 +44,7 @@ void Make_Overlap_Table::allocate
     const double &dk_in
 )
 {
-	TITLE("Make_Overlap_Table", "allocate");
+	TITLE("ORB_table_phi", "allocate");
 
 	this->ntype = ntype_in;// type of elements.
 	this->lmax = lmax_in;
@@ -101,9 +101,9 @@ void Make_Overlap_Table::allocate
 	return;
 }
 
-int Make_Overlap_Table::get_rmesh(const double &R1, const double &R2)
+int ORB_table_phi::get_rmesh(const double &R1, const double &R2)
 {
-	int rmesh = static_cast<int>((R1+R2)/ Make_Overlap_Table::dr) + 5;
+	int rmesh = static_cast<int>((R1+R2)/ ORB_table_phi::dr) + 5;
 	//mohan update 2009-09-08 +1 ==> +5
 	//considering interpolation or so on...
 	if (rmesh % 2 == 0) rmesh ++;
@@ -112,13 +112,13 @@ int Make_Overlap_Table::get_rmesh(const double &R1, const double &R2)
 	{
 		ofs_warning << "\n R1 = " << R1 << " R2 = " << R2;
 		ofs_warning << "\n rmesh = " << rmesh;
-		WARNING_QUIT("Make_Overlap_Table::get_rmesh", "rmesh <= 0");
+		WARNING_QUIT("ORB_table_phi::get_rmesh", "rmesh <= 0");
 	}
 	return rmesh;
 }
 
 // Peize Lin accelerate 2017-10-02
-void Make_Overlap_Table::cal_ST_Phi12_R
+void ORB_table_phi::cal_ST_Phi12_R
 (
  	const int &job,
     const int &l,
@@ -129,7 +129,7 @@ void Make_Overlap_Table::cal_ST_Phi12_R
 	double* drs
 ) const
 {
-	timer::tick("Make_Overlap_Table", "cal_ST_Phi12_R");
+	timer::tick("ORB_table_phi", "cal_ST_Phi12_R");
 
 	double* k1_dot_k2 = new double[kmesh];
 	double* k1_dot_k2_dot_kpoint = new double[kmesh];
@@ -215,6 +215,8 @@ void Make_Overlap_Table::cal_ST_Phi12_R
 				integrated_func[ik] = (jlp1_r[ik]-fac*jlm1_r[ik]) * k1_dot_k2_dot_kpoint[ik];
 			}
 		}
+		// PLEASE try to make Simpson_Integral as input parameters
+		// mohan note 2021-03-23
 		Mathzone::Simpson_Integral(kmesh,integrated_func,dk,temp);
 		drs[ir] = -FOUR_PI*(l+1)/(2.0*l+1) * temp;
 	}
@@ -233,7 +235,8 @@ void Make_Overlap_Table::cal_ST_Phi12_R
 			integrated_func[ik] = k1_dot_k2[ik] * pow (kpoint[ik], l);
 		}
 		
-		// Call simpson integration
+		// PLEASE try to make Simpson_Integral as input parameters
+		// mohan note 2021-03-23
 		Mathzone::Simpson_Integral(kmesh,integrated_func,kab,temp);
 		rs[0] = FOUR_PI / Mathzone_Add1::dualfac (2*l+1) * temp;
 	}
@@ -242,14 +245,14 @@ void Make_Overlap_Table::cal_ST_Phi12_R
 	delete [] k1_dot_k2;
 	delete [] k1_dot_k2_dot_kpoint;	
 
-	timer::tick("Make_Overlap_Table", "cal_ST_Phi12_R");
+	timer::tick("ORB_table_phi", "cal_ST_Phi12_R");
 	
 	return;
 }
 
 
 // Peize Lin add 2017-10-27
-void Make_Overlap_Table::cal_ST_Phi12_R
+void ORB_table_phi::cal_ST_Phi12_R
 (
  	const int &job,
     const int &l,
@@ -260,8 +263,8 @@ void Make_Overlap_Table::cal_ST_Phi12_R
 	double* drs
 ) const
 {
-//	TITLE("Make_Overlap_Table","cal_ST_Phi12_R");
-	timer::tick("Make_Overlap_Table", "cal_ST_Phi12_R");
+//	TITLE("ORB_table_phi","cal_ST_Phi12_R");
+	timer::tick("ORB_table_phi", "cal_ST_Phi12_R");
 
 	vector<double> k1_dot_k2(kmesh);
 	switch(job)
@@ -324,6 +327,8 @@ void Make_Overlap_Table::cal_ST_Phi12_R
 		}
 		double temp = 0.0;
 //		Mathzone::Simpson_Integral(kmesh,integrated_func,kab,temp);
+		// PLEASE try to make Simpson_Integral as input parameters
+		// mohan note 2021-03-23
 		Mathzone::Simpson_Integral(kmesh,VECTOR_TO_PTR(integrated_func),dk,temp);
 		rs[ir] = temp * FOUR_PI ;
 		
@@ -345,6 +350,8 @@ void Make_Overlap_Table::cal_ST_Phi12_R
 			}
 		}
 //		Mathzone::Simpson_Integral(kmesh,integrated_func,kab,temp);
+		// PLEASE try to make Simpson_Integral as input parameters
+		// mohan note 2021-03-23
 		Mathzone::Simpson_Integral(kmesh,VECTOR_TO_PTR(integrated_func),dk,temp);
 		drs[ir] = -FOUR_PI*(l+1)/(2.0*l+1) * temp;
 	}
@@ -360,24 +367,28 @@ void Make_Overlap_Table::cal_ST_Phi12_R
 			}
 			double temp = 0.0;
 	//		Mathzone::Simpson_Integral(kmesh,integrated_func,kab,temp);
+			// PLEASE try to make Simpson_Integral as input parameters
+			// mohan note 2021-03-23
 			Mathzone::Simpson_Integral(kmesh,VECTOR_TO_PTR(integrated_func),dk,temp);
+			// PLEASE try to make dualfac function as input parameters
+			// mohan note 2021-03-23
 			rs[0] = FOUR_PI / Mathzone_Add1::dualfac (2*l+1) * temp;
 		}
 	}
 	
-	timer::tick("Make_Overlap_Table", "cal_ST_Phi12_R");
+	timer::tick("ORB_table_phi", "cal_ST_Phi12_R");
 	
 	return;
 }
 
 
 
-void Make_Overlap_Table::init_Table( const int &job0 )
+void ORB_table_phi::init_Table( const int &job0 )
 {
-	TITLE("Make_Overlap_Table", "init_Table");
-	timer::tick("Make_Overlap_Table", "init_Table",'D');
+	TITLE("ORB_table_phi", "init_Table");
+	timer::tick("ORB_table_phi", "init_Table",'D');
 	const int ntype = ORB.get_ntype();
-	assert( Make_Overlap_Table::dr > 0.0);
+	assert( ORB_table_phi::dr > 0.0);
 	assert( OV_nTpairs>0);
 
 	// init 1st dimension
@@ -516,7 +527,7 @@ void Make_Overlap_Table::init_Table( const int &job0 )
 									Table_SR[0][Tpair][Opair][L] = new double[rmesh];
 									Table_SR[1][Tpair][Opair][L] = new double[rmesh];
 
-									Memory::record("Make_Overlap_Table","Table_SR",
+									Memory::record("ORB_table_phi","Table_SR",
 									2*OV_nTpairs*pairs_chi*rmesh,"double");
 									break;
 
@@ -524,7 +535,7 @@ void Make_Overlap_Table::init_Table( const int &job0 )
 									Table_TR[0][Tpair][Opair][L] = new double[rmesh];
 									Table_TR[1][Tpair][Opair][L] = new double[rmesh];
 
-									Memory::record("Make_Overlap_Table","Table_TR",
+									Memory::record("ORB_table_phi","Table_TR",
 									2*OV_nTpairs*pairs_chi*rmesh,"double");
 									break;
 
@@ -534,7 +545,7 @@ void Make_Overlap_Table::init_Table( const int &job0 )
 									Table_TR[0][Tpair][Opair][L] = new double[rmesh];
 									Table_TR[1][Tpair][Opair][L] = new double[rmesh];
 
-									Memory::record("Make_Overlap_Table","Table_SR&TR",
+									Memory::record("ORB_table_phi","Table_SR&TR",
 									2*2*OV_nTpairs*pairs_chi*rmesh,"double");
 									break;
 								}
@@ -631,12 +642,12 @@ void Make_Overlap_Table::init_Table( const int &job0 )
 		break;
 	}
 		
-	timer::tick("Make_Overlap_Table", "init_Table",'D');
+	timer::tick("ORB_table_phi", "init_Table",'D');
 	return;
 }
 
 
-void Make_Overlap_Table::Destroy_Table(void)
+void ORB_table_phi::Destroy_Table(void)
 {
 	if(!destroy_sr && !destroy_tr) return;
 	
@@ -685,9 +696,9 @@ void Make_Overlap_Table::Destroy_Table(void)
 
 
 
-void Make_Overlap_Table::init_OV_Tpair(void)
+void ORB_table_phi::init_OV_Tpair(void)
 {
-	TITLE("Make_Overlap_Table","init_OV_Tpair");
+	TITLE("ORB_table_phi","init_OV_Tpair");
     assert(ntype>0);
 
     this->OV_nTpairs = this->ntype * (this->ntype + 1) / 2;
@@ -718,7 +729,7 @@ void Make_Overlap_Table::init_OV_Tpair(void)
 
 
 
-void Make_Overlap_Table::init_OV_Opair(void)
+void ORB_table_phi::init_OV_Opair(void)
 {
     const int lmax = ORB.get_lmax(); 
     const int nchimax = ORB.get_nchimax();
@@ -756,7 +767,7 @@ void Make_Overlap_Table::init_OV_Opair(void)
 }
 
 // Peize Lin update 2016-01-26
-void Make_Overlap_Table::init_Lmax (const int orb_num, const int mode, int &Lmax_used, int &Lmax) const
+void ORB_table_phi::init_Lmax (const int orb_num, const int mode, int &Lmax_used, int &Lmax) const
 {
 	auto cal_Lmax_Phi = [](int &Lmax)
 	{
@@ -803,7 +814,7 @@ void Make_Overlap_Table::init_Lmax (const int orb_num, const int mode, int &Lmax
 					Lmax_used = 2*Lmax + 1;
 					break;
 				default:
-					throw invalid_argument("Make_Overlap_Table::init_Lmax orb_num=2, mode error");
+					throw invalid_argument("ORB_table_phi::init_Lmax orb_num=2, mode error");
 					break;
 			}
 			break;
@@ -817,7 +828,7 @@ void Make_Overlap_Table::init_Lmax (const int orb_num, const int mode, int &Lmax
 					Lmax_used += Exx_Abfs::Lmax;
 					break;
 				default:
-					throw invalid_argument("Make_Overlap_Table::init_Lmax orb_num=3, mode error");
+					throw invalid_argument("ORB_table_phi::init_Lmax orb_num=3, mode error");
 					break;
 			}
 			break;
@@ -829,12 +840,12 @@ void Make_Overlap_Table::init_Lmax (const int orb_num, const int mode, int &Lmax
 					Lmax_used = 2*( 2*Lmax + 1 );
 					break;
 				default:
-					throw invalid_argument("Make_Overlap_Table::init_Lmax orb_num=4, mode error");
+					throw invalid_argument("ORB_table_phi::init_Lmax orb_num=4, mode error");
 					break;
 			}
 			break;
 		default:
-			throw invalid_argument("Make_Overlap_Table::init_Lmax orb_num error");
+			throw invalid_argument("ORB_table_phi::init_Lmax orb_num error");
 			break;
 	}
 
@@ -842,9 +853,9 @@ void Make_Overlap_Table::init_Lmax (const int orb_num, const int mode, int &Lmax
 }
 
 // Peize Lin update 2016-01-26
-void Make_Overlap_Table::init_Table_Spherical_Bessel (const int orb_num, const int mode, int &Lmax_used, int &Lmax)
+void ORB_table_phi::init_Table_Spherical_Bessel (const int orb_num, const int mode, int &Lmax_used, int &Lmax)
 {
-	TITLE("Make_Overlap_Table", "init_Table_Spherical_Bessel");
+	TITLE("ORB_table_phi", "init_Table_Spherical_Bessel");
 
 	this->init_Lmax (orb_num,mode,Lmax_used,Lmax);		// Peize Lin add 2016-01-26
 
@@ -890,5 +901,5 @@ void Make_Overlap_Table::init_Table_Spherical_Bessel (const int orb_num, const i
 	OUT(ofs_running,"lmax used to generate Jlq",Lmax_used);
 //	OUT(ofs_running,"kmesh",kmesh);
 //	OUT(ofs_running,"Rmesh",Rmesh);
-	Memory::record ("Make_Overlap_Table", "Jl(x)", (Lmax_used+1) * this->kmesh * this->Rmesh, "double");
+	Memory::record ("ORB_table_phi", "Jl(x)", (Lmax_used+1) * this->kmesh * this->Rmesh, "double");
 }

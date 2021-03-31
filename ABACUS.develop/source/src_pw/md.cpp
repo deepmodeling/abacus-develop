@@ -7,7 +7,7 @@
 #include<cmath>
 #include"md.h"
 #include"../input.h"
-#include"../src_lcao/local_orbital_ions.h"
+#include"../src_lcao/LOOP_ions.h"
 #include "../src_global/sltk_atom_arrange.h" //2015-10-01, xiaohui
 
 md::md(int n)

@@ -3,7 +3,7 @@
 
 #include "tools.h"
 
-class potential
+class Potential
 {
 	public:
 
@@ -12,14 +12,14 @@ class potential
 	friend class ELEC_scf;
 
     // constructor and deconstructor
-    potential();
-    ~potential();
+    Potential();
+    ~Potential();
 
     //==========================================================
     // start_pot : "atomic" or "file"
 	// extra_pot : extrapolation methods for potential
     // vr(nspin,ncxyz) : Hartree + xc potentials in real space
-    // vrs(nspin,ncxyz) : total potential in real space
+    // vr_eff(nspin,ncxyz) : effective potential in real space 
     // vnew(nspin,ncxyz) : V_out - V_in, needed in scf
 	// vltot: the local potential in real space
 	// out_potential: options to print out potentials 
@@ -28,19 +28,22 @@ class potential
     string start_pot;
 	string extra_pot;
     matrix vr;
-    matrix vrs;
+    matrix vr_eff;
     matrix vnew;
-    double *vrs1;
+    double *vr_eff1; 
     double *vltot;
 	int out_potential; // mohan add 2011-02-28
 
     void allocate(const int nrxx);
 
-	void init_pot(const int &istep);
+	void init_pot(
+		const int &istep, // ionic steps
+		ComplexMatrix &sf // structure factors
+	);
 
     void v_of_rho(double** rho_in, matrix &v);
 
-    void set_vrs(void);
+    void set_vr_eff(void);
 
     void newd(void);
 
@@ -55,7 +58,15 @@ class potential
 	
 	private:
 
-    void set_local(double *vl_pseudo)const;
+
+	void set_local_pot(
+		double* vl_pseudo, // store the local pseudopotential
+		const int &ntype, // number of atom types
+		const int &ngmc, // number of |g|, g is plane wave
+		matrix &vloc, // local pseduopotentials
+		int* ig2ngg, // ig2ngg
+		ComplexMatrix &sf // structure factors	
+	)const;
 
 	// TDDFT related, fuxiang add
     double *vext;

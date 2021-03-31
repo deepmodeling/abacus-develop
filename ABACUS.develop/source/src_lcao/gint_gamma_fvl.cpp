@@ -15,6 +15,7 @@ void Gint_Gamma::cal_force(const double* vlocal_in)
     timer::tick("Gint_Gamma","cal_force",'H');
 }
 
+
 inline void setVindex(const int ncyz, const int ibx, const int jby, const int kbz, int* vindex)
 {                
     int bindex = 0;
@@ -34,11 +35,22 @@ inline void setVindex(const int ncyz, const int ibx, const int jby, const int kb
     }
 }
 
-inline void cal_psir_ylm_dphi(int size, int grid_index, double delta_r, vector<double> &rly, vector<vector<double>> &grly,      // Peize Lin change rly, grly 2016-08-26
-                        const Numerical_Orbital_Lm* pointer, 
-                        int* block_index, int* block_iw, int* block_size, bool** cal_flag,
-                        double** psir_ylm, double** dphix, double** dphiy, double** dphiz,
-			realArray& drr)
+inline void cal_psir_ylm_dphi(
+	int size, 
+	int grid_index, 
+	double delta_r, 
+	vector<double> &rly, 
+	vector<vector<double>> &grly,      // Peize Lin change rly, grly 2016-08-26
+	const Numerical_Orbital_Lm* pointer, 
+	int* block_index, 
+	int* block_iw, 
+	int* block_size, 
+	bool** cal_flag,
+	double** psir_ylm, 
+	double** dphix, 
+	double** dphiy, 
+	double** dphiz,
+	realArray& drr)
 {
     block_index[0]=0;
     double mt[3]={0,0,0};
@@ -71,6 +83,7 @@ inline void cal_psir_ylm_dphi(int size, int grid_index, double delta_r, vector<d
         mt[0] = GridT.meshball_positions[imcell][0] - GridT.tau_in_bigcell[iat][0];
         mt[1] = GridT.meshball_positions[imcell][1] - GridT.tau_in_bigcell[iat][1];
         mt[2] = GridT.meshball_positions[imcell][2] - GridT.tau_in_bigcell[iat][2];
+
         for(int ib=0; ib<pw.bxyz; ib++)
         {
             double *p_psir_ylm=&psir_ylm[ib][block_index[id]];
@@ -84,9 +97,14 @@ inline void cal_psir_ylm_dphi(int size, int grid_index, double delta_r, vector<d
 
             if(STRESS)
             {
-                for(int i=0;i<3;i++) drr(id,ib,i) = dr[i];
+                for(int i=0;i<3;i++) 
+				{
+					drr(id,ib,i) = dr[i];
+				}
             }
+
             distance = std::sqrt(dr[0]*dr[0] + dr[1]*dr[1] + dr[2]*dr[2]);
+
             if(distance > ORB.Phi[it].getRcut())
             {
                 ZEROS(p_psir_ylm, block_size[id]);
@@ -96,6 +114,7 @@ inline void cal_psir_ylm_dphi(int size, int grid_index, double delta_r, vector<d
                 cal_flag[ib][id]=false;
                 continue;
             }
+
             cal_flag[ib][id]=true;
             // >>> the old method
             // ylma[id] = new double[nnn[it]]; // liaochen found this bug 2010/03/29
@@ -131,21 +150,6 @@ inline void cal_psir_ylm_dphi(int size, int grid_index, double delta_r, vector<d
             }
 
             const double position = distance / delta_r;
-            //this->iq[id] = static_cast<int>(position);
-            //this->x0[id] = position - iq[id];
-            //this->x1[id] = 1.0 - x0[id];
-            //this->x2[id] = 2.0 - x0[id];
-            //this->x3[id] = 3.0 - x0[id];
-            //this->x12[id] = x1[id]*x2[id] / 6;
-            //this->x03[id] = x0[id]*x3[id] / 2;
-            // iq[id] = static_cast<int>(position);
-            // x0[id] = position - iq[id];
-            // x1[id] = 1.0 - x0[id];
-            // x2[id] = 2.0 - x0[id];
-            // x3[id] = 3.0 - x0[id];
-            // x12[id] = x1[id]*x2[id] / 6;
-            // x03[id] = x0[id]*x3[id] / 2;
-
                        
             iq = static_cast<int>(position);
             x0 = position - iq;
@@ -192,15 +196,6 @@ inline void cal_psir_ylm_dphi(int size, int grid_index, double delta_r, vector<d
                     {
                         // use Polynomia Interpolation method to get the 
                         // wave functions
-                        // tmp = x12[id]*(pointer->psi_uniform[iq[id]]*x3[id]
-                        //         +pointer->psi_uniform[iq[id]+3]*x0[id])
-                        //     + x03[id]*(pointer->psi_uniform[iq[id]+1]*x2[id]
-                        //             -pointer->psi_uniform[iq[id]+2]*x1[id]);
-
-                        // dtmp = x12[id]*(pointer->dpsi_uniform[iq[id]]*x3[id]
-                        //         +pointer->dpsi_uniform[iq[id]+3]*x0[id])
-                        //         + x03[id]*(pointer->dpsi_uniform[iq[id]+1]*x2[id]
-                        //             -pointer->dpsi_uniform[iq[id]+2]*x1[id]);
 
                         tmp = x12*(pointer->psi_uniform[iq]*x3
                                 +pointer->psi_uniform[iq+3]*x0)
@@ -272,13 +267,20 @@ inline void cal_psir_ylm_dphi(int size, int grid_index, double delta_r, vector<d
             } // iw            
         }// ib
     }//!id //finish loop of calc pre-info for each adjacent atom
+
+	return;
 }
 
-inline void cal_meshball_DGridV(int size, int lgd_now, int LD_pool, int* block_index, int* block_iw, int* block_size, bool** cal_flag, double* vldr3, 
-                            double** psir_ylm, double** psir_vlbr3, double** dphix, double** dphiy, double** dphiz, 
-                            double** DGridV_x, double** DGridV_y, double** DGridV_z,
-			double** DGridV_11, double** DGridV_12, double** DGridV_13,
-			double** DGridV_22, double** DGridV_23, double** DGridV_33, realArray& drr)
+
+inline void cal_meshball_DGridV(
+	int size, int lgd_now, int LD_pool, 
+	int* block_index, int* block_iw, 
+	int* block_size, bool** cal_flag, double* vldr3, 
+	double** psir_ylm, double** psir_vlbr3, double** dphix, 
+	double** dphiy, double** dphiz, 
+	double** DGridV_x, double** DGridV_y, double** DGridV_z,
+	double** DGridV_11, double** DGridV_12, double** DGridV_13,
+	double** DGridV_22, double** DGridV_23, double** DGridV_33, realArray& drr)
 {
     char transa='N', transb='T';
     double alpha=-1.0, beta=1.0;
@@ -292,6 +294,7 @@ inline void cal_meshball_DGridV(int size, int lgd_now, int LD_pool, int* block_i
             psir_vlbr3[i][j]=psir_ylm[i][j]*vldr3[i];
         }
     }
+
     //OUT(ofs_running,"lgd_now", lgd_now);
     //OUT(ofs_running,"LD_pool", LD_pool);
     for(int ia1=0; ia1<size; ++ia1)
@@ -364,6 +367,7 @@ inline void cal_meshball_DGridV(int size, int lgd_now, int LD_pool, int* block_i
                     &dphiz[0][idx2], &LD_pool, 
                     &psir_vlbr3[0][idx1], &LD_pool,  
                     &beta, &DGridV_z[iw1_lo][iw2_lo], &lgd_now);
+
                 if(STRESS)
                 {
 					k=1;
@@ -429,44 +433,50 @@ inline void cal_meshball_DGridV(int size, int lgd_now, int LD_pool, int* block_i
                             &dphiz[ib][idx2], &LD_pool, 
                             &psir_vlbr3[ib][idx1], &LD_pool,  
                             &beta, &DGridV_z[iw1_lo][iw2_lo], &lgd_now);
+
                         if(STRESS)
-                        {
-					double stress_alpha1 = alpha * drr(ia2,ib,0);
-					double stress_alpha2 = alpha * drr(ia2,ib,1);
-					double stress_alpha3 = alpha * drr(ia2,ib,2);
-					dgemm_ (&transa, &transb, &n, &m, &k, &stress_alpha1,
-						&dphix[ib][idx2], &LD_pool,
-						&psir_vlbr3[ib][idx1], &LD_pool,
-						&beta, &DGridV_11[iw1_lo][iw2_lo], &lgd_now);
-					dgemm_ (&transa, &transb, &n, &m, &k, &stress_alpha2,
-						&dphix[ib][idx2], &LD_pool,
-						&psir_vlbr3[ib][idx1], &LD_pool,
-						&beta, &DGridV_12[iw1_lo][iw2_lo], &lgd_now);
-					dgemm_ (&transa, &transb, &n, &m, &k, &stress_alpha3,
-						&dphix[ib][idx2], &LD_pool,
-						&psir_vlbr3[ib][idx1], &LD_pool,
-						&beta, &DGridV_13[iw1_lo][iw2_lo], &lgd_now);
-					dgemm_ (&transa, &transb, &n, &m, &k, &stress_alpha2,
-						&dphiy[ib][idx2], &LD_pool,
-						&psir_vlbr3[ib][idx1], &LD_pool,
-						&beta, &DGridV_22[iw1_lo][iw2_lo], &lgd_now);
-					dgemm_ (&transa, &transb, &n, &m, &k, &stress_alpha3,
-						&dphiy[ib][idx2], &LD_pool,
-						&psir_vlbr3[ib][idx1], &LD_pool,
-						&beta, &DGridV_23[iw1_lo][iw2_lo], &lgd_now);
-					dgemm_ (&transa, &transb, &n, &m, &k, &stress_alpha3,
-						&dphiz[ib][idx2], &LD_pool,
-						&psir_vlbr3[ib][idx1], &LD_pool,
-						&beta, &DGridV_33[iw1_lo][iw2_lo], &lgd_now);
-//                        DGridV_11[iw1_lo*GridT.lgd + iw2_lo] += DGridV_x[iw1_lo][iw2_lo] * drr[ia2][ib][0];
-//                        DGridV_12[iw1_lo*GridT.lgd + iw2_lo] += DGridV_x[iw1_lo][iw2_lo] * drr[ia2][ib][1];
-//                        DGridV_13[iw1_lo*GridT.lgd + iw2_lo] += DGridV_x[iw1_lo][iw2_lo] * drr[ia2][ib][2];
-//                        DGridV_22[iw1_lo*GridT.lgd + iw2_lo] += DGridV_y[iw1_lo][iw2_lo] * drr[ia2][ib][1];
-//                        DGridV_23[iw1_lo*GridT.lgd + iw2_lo] += DGridV_y[iw1_lo][iw2_lo] * drr[ia2][ib][2];
-//                        DGridV_33[iw1_lo*GridT.lgd + iw2_lo] += DGridV_z[iw1_lo][iw2_lo] * drr[ia2][ib][2];
-//cout<<"DGridV: "<<iw1_lo<<" "<<iw2_lo<<" "<<iw1_lo*GridT.lgd + iw2_lo<<" "<<DGridV_x[iw1_lo][iw2_lo]<<" "<<DGridV_y[iw1_lo][iw2_lo]<<" "<<DGridV_z[iw1_lo][iw2_lo]<<" "<<drr[ia2][0][0]<<" "<<drr[ia2][0][1]<<" "<<drr[ia2][0][2]<<endl;
-                        }
-                    }                    
+						{
+							double stress_alpha1 = alpha * drr(ia2,ib,0);
+							double stress_alpha2 = alpha * drr(ia2,ib,1);
+							double stress_alpha3 = alpha * drr(ia2,ib,2);
+							dgemm_ (&transa, &transb, &n, &m, &k, &stress_alpha1,
+									&dphix[ib][idx2], &LD_pool,
+									&psir_vlbr3[ib][idx1], &LD_pool,
+									&beta, &DGridV_11[iw1_lo][iw2_lo], &lgd_now);
+							dgemm_ (&transa, &transb, &n, &m, &k, &stress_alpha2,
+									&dphix[ib][idx2], &LD_pool,
+									&psir_vlbr3[ib][idx1], &LD_pool,
+									&beta, &DGridV_12[iw1_lo][iw2_lo], &lgd_now);
+							dgemm_ (&transa, &transb, &n, &m, &k, &stress_alpha3,
+									&dphix[ib][idx2], &LD_pool,
+									&psir_vlbr3[ib][idx1], &LD_pool,
+									&beta, &DGridV_13[iw1_lo][iw2_lo], &lgd_now);
+							dgemm_ (&transa, &transb, &n, &m, &k, &stress_alpha2,
+									&dphiy[ib][idx2], &LD_pool,
+									&psir_vlbr3[ib][idx1], &LD_pool,
+									&beta, &DGridV_22[iw1_lo][iw2_lo], &lgd_now);
+							dgemm_ (&transa, &transb, &n, &m, &k, &stress_alpha3,
+									&dphiy[ib][idx2], &LD_pool,
+									&psir_vlbr3[ib][idx1], &LD_pool,
+									&beta, &DGridV_23[iw1_lo][iw2_lo], &lgd_now);
+							dgemm_ (&transa, &transb, &n, &m, &k, &stress_alpha3,
+									&dphiz[ib][idx2], &LD_pool,
+									&psir_vlbr3[ib][idx1], &LD_pool,
+									&beta, &DGridV_33[iw1_lo][iw2_lo], &lgd_now);
+							// DGridV_11[iw1_lo*GridT.lgd + iw2_lo] += DGridV_x[iw1_lo][iw2_lo] * drr[ia2][ib][0];
+							// DGridV_12[iw1_lo*GridT.lgd + iw2_lo] += DGridV_x[iw1_lo][iw2_lo] * drr[ia2][ib][1];
+							// DGridV_13[iw1_lo*GridT.lgd + iw2_lo] += DGridV_x[iw1_lo][iw2_lo] * drr[ia2][ib][2];
+							// DGridV_22[iw1_lo*GridT.lgd + iw2_lo] += DGridV_y[iw1_lo][iw2_lo] * drr[ia2][ib][1];
+							// DGridV_23[iw1_lo*GridT.lgd + iw2_lo] += DGridV_y[iw1_lo][iw2_lo] * drr[ia2][ib][2];
+							// DGridV_33[iw1_lo*GridT.lgd + iw2_lo] += DGridV_z[iw1_lo][iw2_lo] * drr[ia2][ib][2];
+							//cout<<"DGridV: "<<iw1_lo<<" "<<iw2_lo
+							//<<" "<<iw1_lo*GridT.lgd + iw2_lo<<" "
+							//<<DGridV_x[iw1_lo][iw2_lo]<<" "
+							//<<DGridV_y[iw1_lo][iw2_lo]<<" "
+							//<<DGridV_z[iw1_lo][iw2_lo]<<" "
+							//<<drr[ia2][0][0]<<" "<<drr[ia2][0][1]<<" "<<drr[ia2][0][2]<<endl;
+						}
+					}                    
                 }
             }
         }
@@ -474,16 +484,10 @@ inline void cal_meshball_DGridV(int size, int lgd_now, int LD_pool, int* block_i
 }
 
 
-
-// this subroutine lies in the heart of LCAO algorithms.
-// so it should be done very efficiently, very carefully.
-// I might repeat again to emphasize this: need to optimize
-// this code very efficiently, very carefully.
 void Gint_Gamma::gamma_force(void)
 {
     TITLE("Grid_Integral","gamma_force");
     timer::tick("Gint_Gamma","gamma_force",'I');
-    //timer::tick("Gint_Gamma","prepare",'J');
     // GridT.lgd: local grid dimension (sub-FFT-mesh).
     int DGridV_Size=GridT.lgd*GridT.lgd;
     //OUT(ofs_running,"Enter gamma_force, DGridV_Size", DGridV_Size);
@@ -500,6 +504,7 @@ void Gint_Gamma::gamma_force(void)
     double** DGridV_22;
     double** DGridV_23;
     double** DGridV_33;
+
     if(STRESS)
     {
         DGridV_stress_pool = new double[6*DGridV_Size];
@@ -636,53 +641,33 @@ void Gint_Gamma::gamma_force(void)
         //timer::tick("Gint_Gamma","prepare",'J');
         for (int i=0; i< GridT.nbx; i++)
         {
-            //OUT(ofs_running, "i was setted as", i);
             const int ibx = i*pw.bx; 
+
             for (int j=0; j< GridT.nby; j++)
             {
-                //OUT(ofs_running, "j was setted as", j);
                 const int jby = j*pw.by;
+
                 for (int k= GridT.nbzp_start; k< GridT.nbzp_start+GridT.nbzp; k++)
                 {
-                    //OUT(ofs_running, "Vindex was setted as", vindex[0]);
                     const int kbz = k*pw.bz-pw.nczp_start; 
                     this->grid_index = (k-GridT.nbzp_start) + j * GridT.nbzp + i * GridT.nby * GridT.nbzp;
                     const int size = GridT.how_many_atoms[ this->grid_index ];
                     if(size==0)continue;
-                    //timer::tick("Gint_Gamma","vindex",'J');
                     
                     setVindex(ncyz, ibx, jby, kbz, vindex);
     				for(int ib=0; ib<pw.bxyz; ib++)
     				{
     					vldr3[ib]=this->vlocal[vindex[ib]] * this->vfactor;
     				}
-                    //timer::tick("Gint_Gamma","vindex",'J');
-                    // OUT(ofs_running, "k was setted as", k);
     
-    //inline void cal_psir_ylm_dphi(int size, int grid_index, double delta_r, double rly, double grly,
-    //                        const Numerical_Orbital_Lm* pointer, 
-    //                        int* block_index, int* block_iw, int* block_size, 
-    //                        double** psir_ylm, double** dphix, double** dphiy, double** dphiz)
-    
-                    //OUT(ofs_running,"Start cal_psir_ylm_dphi");
-                    //timer::tick("Gint_Gamma","dphi",'J');
                     cal_psir_ylm_dphi(size, grid_index, delta_r, rly, grly, pointer, 
                             block_index, block_iw, block_size, cal_flag, psir_ylm, dphix, dphiy, dphiz, drr);
-                    //timer::tick("Gint_Gamma","dphi",'J');
     
-    //inline void cal_meshball_DGridV(int size, int GridT.lgd, int LD_pool, int* block_index, int* block_iw, int* block_size, double* vldr3, 
-    //                            double** psir_ylm, double** psir_vlbr3, double** dphix, double** dphiy, double** dphiz, 
-    //                          double** DGridV_x, double** DGridV_y, double** DGridV_z)
-                    // OUT(ofs_running,"Start cal_meshball_DGridV");
-    
-                    //timer::tick("Gint_Gamma","dpvp",'J');
                     cal_meshball_DGridV(size, GridT.lgd, LD_pool, block_index, block_iw, block_size, cal_flag, vldr3, 
                                 psir_ylm, psir_vlbr3, dphix,  dphiy, dphiz, 
                                 DGridV_x, DGridV_y, DGridV_z,
                                 DGridV_11, DGridV_12, DGridV_13,
                                 DGridV_22, DGridV_23, DGridV_33, drr);
-                    //timer::tick("Gint_Gamma","dpvp",'J');
-                    // OUT(ofs_running,"cal_meshball_DGridV was done");
                 }// k
             }// j
         }// i
@@ -702,7 +687,9 @@ void Gint_Gamma::gamma_force(void)
         delete[] block_iw;
         delete[] block_size;
         for(int ib=0; ib<pw.bxyz; ++ib)
+		{
             delete[] cal_flag[ib];
+		}
         delete[] cal_flag;
         //OUT(ofs_running,"temp variables were deleted");
 
@@ -728,30 +715,32 @@ void Gint_Gamma::gamma_force(void)
     double* tmp22;
     double* tmp23;
     double* tmp33;
-    if(STRESS)
-    {
-    tmp11 = new double[NLOCAL];
-    tmp12 = new double[NLOCAL];
-    tmp13 = new double[NLOCAL];
-    tmp22 = new double[NLOCAL];
-    tmp23 = new double[NLOCAL];
-    tmp33 = new double[NLOCAL];
-    }
+
+	if(STRESS)
+	{
+		tmp11 = new double[NLOCAL];
+		tmp12 = new double[NLOCAL];
+		tmp13 = new double[NLOCAL];
+		tmp22 = new double[NLOCAL];
+		tmp23 = new double[NLOCAL];
+		tmp33 = new double[NLOCAL];
+	}
 
     for (int i=0; i<NLOCAL; i++)
     {
         ZEROS(tmpx, NLOCAL);
         ZEROS(tmpy, NLOCAL);
-        ZEROS(tmpz, NLOCAL);
-        if(STRESS)
-        {
-        ZEROS(tmp11, NLOCAL);
-        ZEROS(tmp12, NLOCAL);
-        ZEROS(tmp13, NLOCAL);
-        ZEROS(tmp22, NLOCAL);
-        ZEROS(tmp23, NLOCAL);
-        ZEROS(tmp33, NLOCAL);
-        }
+		ZEROS(tmpz, NLOCAL);
+
+		if(STRESS)
+		{
+			ZEROS(tmp11, NLOCAL);
+			ZEROS(tmp12, NLOCAL);
+			ZEROS(tmp13, NLOCAL);
+			ZEROS(tmp22, NLOCAL);
+			ZEROS(tmp23, NLOCAL);
+			ZEROS(tmp33, NLOCAL);
+		}
 
         const int mu = GridT.trace_lo[i];
         // mohan fix bug 2010-09-05
@@ -785,15 +774,15 @@ void Gint_Gamma::gamma_force(void)
         Parallel_Reduce::reduce_double_pool( tmpx, NLOCAL );
         Parallel_Reduce::reduce_double_pool( tmpy, NLOCAL );
         Parallel_Reduce::reduce_double_pool( tmpz, NLOCAL );
-        if(STRESS)
-        {
-        Parallel_Reduce::reduce_double_pool( tmp11, NLOCAL );
-        Parallel_Reduce::reduce_double_pool( tmp12, NLOCAL );
-        Parallel_Reduce::reduce_double_pool( tmp13, NLOCAL );
-        Parallel_Reduce::reduce_double_pool( tmp22, NLOCAL );
-        Parallel_Reduce::reduce_double_pool( tmp23, NLOCAL );
-        Parallel_Reduce::reduce_double_pool( tmp33, NLOCAL );
-        }
+		if(STRESS)
+		{
+			Parallel_Reduce::reduce_double_pool( tmp11, NLOCAL );
+			Parallel_Reduce::reduce_double_pool( tmp12, NLOCAL );
+			Parallel_Reduce::reduce_double_pool( tmp13, NLOCAL );
+			Parallel_Reduce::reduce_double_pool( tmp22, NLOCAL );
+			Parallel_Reduce::reduce_double_pool( tmp23, NLOCAL );
+			Parallel_Reduce::reduce_double_pool( tmp33, NLOCAL );
+		}
 
         for (int j=0; j<NLOCAL; j++)
         {

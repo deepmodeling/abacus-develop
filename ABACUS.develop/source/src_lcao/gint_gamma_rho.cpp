@@ -7,7 +7,6 @@
 
 #include "global_fp.h" // mohan add 2021-01-30
 
-//inline void setVindex(const int ncyz, const int ibx, const int jby, const int kbz, int* vindex)
 void Gint_Gamma::setVindex(const int ncyz, const int ibx, const int jby, const int kbz, int* vindex) const
 {
     int bindex = 0;
@@ -27,11 +26,18 @@ void Gint_Gamma::setVindex(const int ncyz, const int ibx, const int jby, const i
     }
 }
 
-//inline void cal_psir_ylm(int size, int grid_index, double delta_r,
-void Gint_Gamma::cal_psir_ylm_rho(int size, int grid_index, double delta_r,
-						double** distance, double* ylma,
-						int* at, int* block_index, int* block_iw, int* block_size, 
-						int** cal_flag, double** psir_ylm)
+void Gint_Gamma::cal_psir_ylm_rho(
+	int size, // number of atoms on this grid 
+	int grid_index,  
+	double delta_r, // delta_r of uniform grid
+	double** distance, 
+	double* ylma, 
+	int* at, 
+	int* block_index, 
+	int* block_iw, 
+	int* block_size, 
+	int** cal_flag, 
+	double** psir_ylm)
 {
 	const Numerical_Orbital_Lm *pointer;
 	double mt[3];
@@ -122,14 +128,23 @@ void Gint_Gamma::cal_psir_ylm_rho(int size, int grid_index, double delta_r,
 			} // end iw
 		}// end ib
 	}// end id
+	return;
 }
 
 // can be done by GPU
-//inline void cal_band_rho(int size, int LD_pool, int* block_iw, int* bsize, int* colidx,
-void Gint_Gamma::cal_band_rho(int size, int LD_pool, int* block_iw, int* bsize, int* colidx,
-                        int** cal_flag, double ** psir_ylm, double **psir_DM, 
-                        double* psir_DM_pool, int* vindex)
+void Gint_Gamma::cal_band_rho(
+	int size, 
+	int LD_pool, 
+	int* block_iw, 
+	int* bsize, 
+	int* colidx,
+	int** cal_flag, 
+	double ** psir_ylm, 
+	double **psir_DM, 
+	double* psir_DM_pool, 
+	int* vindex)
 {
+
     //parameters for dsymm, dgemm and ddot
     char side='L', uplo='U';
     char transa='N', transb='N';
@@ -139,14 +154,12 @@ void Gint_Gamma::cal_band_rho(int size, int LD_pool, int* block_iw, int* bsize, 
     for(int is=0; is<NSPIN; ++is)
     {
         ZEROS(psir_DM_pool, pw.bxyz*LD_pool);
-        //xiaohui move 2015-09-25, fix lcao+k bug;
-        //timer::tick("Gint_Gamma","cal_band_psir",'J');
+
         for (int ia1=0; ia1<size; ++ia1)
         {
-            //OUT(ofs_running, "calculate psir_DM, atom", ia1);
             int iw1_lo=block_iw[ia1];
+
             //ia1==ia2, diagonal part
-            //cblas_dsymm(CblasRowMajor, CblasRight, CblasUpper, pw.bxyz, bsize[ia1], 1, &LOC.DM[is][iw1_lo][iw1_lo], GridT.lgd, &psir_ylm[0][colidx[ia1]], LD_pool, 1, &psir_DM[0][colidx[ia1]], LD_pool);
             // find the first ib and last ib for non-zeros cal_flag
             int first_ib=0, last_ib=0;
             for(int ib=0; ib<pw.bxyz; ++ib)
@@ -188,10 +201,6 @@ void Gint_Gamma::cal_band_rho(int size, int LD_pool, int* block_iw, int* bsize, 
                 {
                     if(cal_flag[ib][ia1]>0)
                     {
-                        // dsymm_(&side, &uplo, &bsize[ia1], &k, 
-                        //     &alpha_symm, &LOC.DM[is][iw1_lo][iw1_lo], &GridT.lgd, 
-                        //     &psir_ylm[ib][colidx[ia1]], &LD_pool, 
-                        //     &beta, &psir_DM[ib][colidx[ia1]], &LD_pool);
                         dsymv_(&uplo, &bsize[ia1],
                             &alpha_symm, &LOC.DM[is][iw1_lo][iw1_lo], &GridT.lgd,
                             &psir_ylm[ib][colidx[ia1]], &inc,
@@ -238,15 +247,10 @@ void Gint_Gamma::cal_band_rho(int size, int LD_pool, int* block_iw, int* bsize, 
                 }
                 else
                 {
-                    // int k=1;
                     for(int ib=first_ib; ib<last_ib; ++ib)
                     {
                         if(cal_flag[ib][ia1]>0 && cal_flag[ib][ia2]>0)
                         {
-                            // dgemm_(&transa, &transb, &bsize[ia2], &k, &bsize[ia1], 
-                            //     &alpha_gemm, &LOC.DM[is][iw1_lo][iw2_lo], &GridT.lgd, 
-                            //     &psir_ylm[ib][colidx[ia1]], &LD_pool, 
-                            //     &beta, &psir_DM[ib][colidx[ia2]], &LD_pool);
                             dgemv_(&transa, &bsize[ia2], &bsize[ia1], 
                                 &alpha_gemm, &LOC.DM[is][iw1_lo][iw2_lo], &GridT.lgd,
                                 &psir_ylm[ib][colidx[ia1]], &inc,
@@ -257,23 +261,16 @@ void Gint_Gamma::cal_band_rho(int size, int LD_pool, int* block_iw, int* bsize, 
                 //OUT(ofs_running, "upper triangle part of psir_DM done, atom2", ia2);
             }// ia2
         } // ia1
-        //xiaohui move 2015-09-25, fix lcao+k bug;
-        //timer::tick("Gint_Gamma","cal_band_psir",'J');
     
-        // calculate rho    
-        //xiaohui move 2015-09-25, fix lcao+k bug;
-        //timer::tick("Gint_Gamma","cal_band_rho",'J');    
         double *rhop = CHR.rho[is];
         for(int ib=0; ib<pw.bxyz; ++ib)
         {
-            //double r = cblas_ddot(colidx[size], psir_ylm[ib], 1, psir_DM[ib], 1);
             double r = ddot_(&colidx[size], psir_ylm[ib], &inc, psir_DM[ib], &inc);
             const int grid = vindex[ib];
             rhop[ grid ] += r;
         }
-        //xiaohui move 2015-09-25, fix lcao+k bug;
-        //timer::tick("Gint_Gamma","cal_band_rho",'J');    
-    }
+    } // end is
+	return;
 }
 
 double Gint_Gamma::cal_rho(void)
@@ -296,15 +293,13 @@ double Gint_Gamma::cal_rho(void)
 }
 
 
-// this subroutine lies in the heart of LCAO algorithms.
-// so it should be done very efficiently, very carefully.
-// I might repeat again to emphasize this: need to optimize
-// this code very efficiently, very carefully.
+
 double Gint_Gamma::gamma_charge(void)					// Peize Lin update OpenMP 2020.09.28
 {
     TITLE("Gint_Gamma","gamma_charge");
     timer::tick("Gint_Gamma","gamma_charge",'I');    
     double sum = 0.0;//LiuXh 2016-01-10
+
 	if(max_size)
     {
         const int mkl_threads = mkl_get_max_threads();
@@ -312,9 +307,6 @@ double Gint_Gamma::gamma_charge(void)					// Peize Lin update OpenMP 2020.09.28
 		
 		#pragma omp parallel
 		{
-			//ofstream ofs("gint_gamma_rho_"+TO_STRING(MY_RANK)+"_"+TO_STRING(omp_get_thread_num()));
-			//ofs<<"@/t"<<__LINE__<<endl;
-
 			// it's a uniform grid to save orbital values, so the delta_r is a constant.
 			const double delta_r = ORB.dr_uniform;
 		
@@ -323,11 +315,12 @@ double Gint_Gamma::gamma_charge(void)					// Peize Lin update OpenMP 2020.09.28
 			// allocate 1
 			int nnnmax=0;
 			for(int T=0; T<ucell.ntype; T++)
+			{
 				nnnmax = max(nnnmax, nnn[T]);
+			}
 
 			// set up band matrix psir_ylm and psir_DM
 			const int LD_pool=max_size*ucell.nwmax;
-			//int nblock;
 		
 			double** distance = new double*[pw.bxyz];	// distance between atom and grid: [bxyz, maxsize]
 			for(int i=0; i<pw.bxyz; ++i)
@@ -366,8 +359,6 @@ double Gint_Gamma::gamma_charge(void)					// Peize Lin update OpenMP 2020.09.28
 				cal_flag[i]=new int[max_size];
 			}
 
-			//ofs<<"@/t"<<__LINE__<<endl;
-
 			int *block_iw=new int[max_size]; // index of wave functions of each block;
 		
 			double* ylma = new double[nnnmax]; // Ylm for each atom: [bxyz, nnnmax]
@@ -383,22 +374,18 @@ double Gint_Gamma::gamma_charge(void)					// Peize Lin update OpenMP 2020.09.28
 			const int nbz = GridT.nbzp;
 		
 			const int ncyz = pw.ncy*pw.nczp; // mohan add 2012-03-25
-			//OUT(ofs_running, "nbx", nbx);
-			//OUT(ofs_running, "nby", nby);
-			//OUT(ofs_running, "nbz", nbz);
 
 			#pragma omp for
 			for (int i=0; i<nbx; i++)
 			{
-				const int ibx = i*pw.bx; // mohan add 2012-03-25
+				const int ibx = i*pw.bx;
 				for (int j=0; j<nby; j++)
 				{
-					const int jby = j*pw.by; // mohan add 2012-03-25
-					for (int k=nbz_start; k<nbz_start+nbz; k++) // FFT grid
+					const int jby = j*pw.by;
+					for (int k=nbz_start; k<nbz_start+nbz; k++)
 					{
-						const int kbz = k*pw.bz-pw.nczp_start; //mohan add 2012-03-25
+						const int kbz = k*pw.bz-pw.nczp_start;
 		
-						//this->grid_index = (k-nbz_start) + j * nbz + i * nby * nbz;
 						const int grid_index_thread = (k-nbz_start) + j * nbz + i * nby * nbz;
 		
 						// get the value: how many atoms has orbital value on this grid.
@@ -406,20 +393,14 @@ double Gint_Gamma::gamma_charge(void)					// Peize Lin update OpenMP 2020.09.28
 						const int size = GridT.how_many_atoms[ grid_index_thread ];
 						if(size==0) continue;
 						this->setVindex(ncyz, ibx, jby, kbz, vindex);
-						// cal_psir_ylm(size, this->grid_index, delta_r, phi, mt, dr, distance, pointer, ylma, colidx, block_iw, bsize,  psir_ylm);
 						
-						timer::tick("Gint_Gamma","rho_psir_ylm",'J');
-						//cal_psir_ylm(size, this->grid_index, delta_r, distance, ylma,
 						this->cal_psir_ylm_rho(size, grid_index_thread, delta_r, distance, ylma,
 								at, block_index, block_iw, block_size, 
 								cal_flag, psir_ylm);
-						timer::tick("Gint_Gamma","rho_psir_ylm",'J');
-						// cal_band_rho(size, LD_pool, block_iw, block_size, block_index, psir_ylm, psir_DM, psir_DM_pool, vindex);
 						
-						timer::tick("Gint_Gamma","cal_band_rho",'J');
+
 						cal_band_rho(size, LD_pool, block_iw, block_size, block_index,
 								cal_flag, psir_ylm, psir_DM, psir_DM_pool, vindex);
-						timer::tick("Gint_Gamma","cal_band_rho",'J');
 					}// k
 				}// j
 			}// i
@@ -457,7 +438,6 @@ double Gint_Gamma::gamma_charge(void)					// Peize Lin update OpenMP 2020.09.28
     } // end of if(max_size)
         
 //ENDandRETURN:
-    //xiaohui add 'OUT_LEVEL', 2015-09-16
     if(OUT_LEVEL != "m") OUT(ofs_running, "sum", sum);
 
     timer::tick("Gint_Gamma","reduce_charge",'J');

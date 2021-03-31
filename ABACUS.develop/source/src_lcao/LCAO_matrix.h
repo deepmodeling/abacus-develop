@@ -2,13 +2,28 @@
 #define LCAO_MATRIX_H
 
 #include "../src_pw/tools.h"
+#include "src_parallel/parallel_orbitals.h"
 
 class LCAO_Matrix 
 {
+	friend class energy;
+	friend class Mulliken_Charge;
+
 	public:
+
 	LCAO_Matrix();
 	~LCAO_Matrix();
 
+	void divide_HS_in_frag(const bool isGamma, Parallel_Orbitals &po);
+
+	private:
+	
+	void allocate_HS_gamma(const long &nloc);
+
+	void allocate_HS_k(const long &nloc);
+
+
+	public:
 	//------------------------------
 	// H, S, Hfixed 
 	// used in gamma only algorithm.
@@ -123,15 +138,18 @@ class LCAO_Matrix
 	double* DHloc_fixed_23;
 	double* DHloc_fixed_33;
 
-	void divide_HS_in_frag(void);
+
 	void set_HSgamma(const int &iw1_all, const int &iw2_all, const double &v, const char &dtype);
 	void set_HSk(const int &iw1_all, const int &iw2_all, const complex<double> &v, const char &dtype, const int spin = 0);
+
 	void set_force (const int& iw1_all, const int& iw2_all, const double& vx, const double& vy, 
 		const double& vz, const char &dtype);
 	void set_stress (const int& iw1_all, const int& iw2_all, const double& vx, const double& vy,
 		const double& vz, const char &dtype, const Vector3<double> &dtau);
+
 	void set_HR_tr(const int &Rx, const int &Ry, const int &Rz, const int &iw1_all, const int &iw2_all, const double &v);
-	void set_HR_tr_soc(const int &Rx, const int &Ry, const int &Rz, const int &iw1_all, const int &iw2_all, const complex<double> &v); //LiuXh add 2019-07-16
+	void set_HR_tr_soc(const int &Rx, const int &Ry, const int &Rz, 
+		const int &iw1_all, const int &iw2_all, const complex<double> &v); //LiuXh add 2019-07-16
 
 	void zeros_HSgamma(const char &mtype);
 	void zeros_HSk(const char &mtype);
@@ -143,8 +161,6 @@ class LCAO_Matrix
 	void update_Hloc2(void);
 
 	void allocate_HS_R(const int &nnr);
-	void allocate_HS_gamma(const long &nloc);
-	void allocate_HS_k(const long &nloc);
 
 	void output_HSk(const char &mtype, string &fn);
 	//LiuXh add 2019-07-15

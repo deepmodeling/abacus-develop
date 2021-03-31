@@ -35,6 +35,7 @@ const double SQRT3 = 1.73205080756887729352;
 //==========================================================
 const complex<double> ZERO(0.0, 0.0);
 const complex<double> ONE(1.0, 0.0);
+const complex<double> NEG_ONE(-1.0, 0.0);
 const complex<double> IMAG_UNIT(0.0,1.0);
 const complex<double> NEG_IMAG_UNIT(0.0,-1.0);
 

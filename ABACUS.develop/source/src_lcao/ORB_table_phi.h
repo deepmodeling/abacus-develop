@@ -9,12 +9,12 @@
 #include "src_global/sph_bessel_recursive.h"
 #include <set>
 
-class Make_Overlap_Table
+class ORB_table_phi
 {
 	public:
 
-	Make_Overlap_Table();
-	~Make_Overlap_Table();
+	ORB_table_phi();
+	~ORB_table_phi();
 
 	void allocate (
 		const int &ntype,

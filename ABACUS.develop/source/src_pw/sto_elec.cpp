@@ -257,7 +257,7 @@ void Stochastic_Elec::scf_stochastic(const int &istep)
 
 		if(vext == 0) 
 		{
-			pot.set_vrs();
+			pot.set_vr_eff();
 		}
         
         //print_eigenvalue(ofs_running);

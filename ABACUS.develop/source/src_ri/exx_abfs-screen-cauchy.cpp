@@ -158,6 +158,8 @@ Exx_Abfs::Screen::Cauchy::Info_Step Exx_Abfs::Screen::Cauchy::input_info(
 	const Abfs::Vector3_Order<int> & box3,
 	const Abfs::Vector3_Order<int> & box4 ) const
 {
+	if(!flag_screen_cauchy)	return Info_Step();
+
 	Info_Step info_step;
 	
 	info_step.C1_norm4_max = C_norm4_outer_max.at(iat1).at(iat3).at(box3);

@@ -30,8 +30,8 @@ class Center2_Orb::Orb21
 		const Numerical_Orbital_Lm &nA1_in,
 		const Numerical_Orbital_Lm &nA2_in,
 		const Numerical_Orbital_Lm &nB_in,
-		const Make_Overlap_Table &MOT_in,
-		const Make_Gaunt_Table &MGT_in	);
+		const ORB_table_phi &MOT_in,
+		const ORB_gaunt_table &MGT_in	);
 
 	void init_radial_table();
 
@@ -47,8 +47,8 @@ class Center2_Orb::Orb21
 	const Numerical_Orbital_Lm &nA2;
 	const Numerical_Orbital_Lm &nB;
 	
-	const Make_Overlap_Table &MOT;
-	const Make_Gaunt_Table &MGT;	
+	const ORB_table_phi &MOT;
+	const ORB_gaunt_table &MGT;	
 
 	map<int,Numerical_Orbital_Lm> nA;
 	map<int,Center2_Orb::Orb11> orb11s;

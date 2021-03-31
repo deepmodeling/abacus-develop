@@ -1,7 +1,7 @@
-#ifndef LOCAL_ORBITAL_IONS_H
-#define LOCAL_ORBITAL_IONS_H
+#ifndef RUN_MD_H
+#define RUN_MD_H 
 
-#include "local_orbital_elec.h"
+#include "LOOP_elec.h"
 #include "../src_ions/ions_move_methods.h"
 #include "../src_pw/charge_extra.h"
 #include "../src_pw/md.h"
@@ -9,18 +9,18 @@
 #include "../src_pw/mdNVE.h"
 #include "../src_ions/lattice_change_methods.h"
 
-class Local_Orbital_Ions
+class Run_MD 
 {
 
 	public:
 
-	Local_Orbital_Ions();
-	~Local_Orbital_Ions();
+	Run_MD();
+	~Run_MD();
 
-	Local_Orbital_Elec LOE;
+	LOOP_elec LOE;
 
+	void opt_cell(void);
 	void opt_ions(void);
-	void output_HS_R(void); //LiuXh add 2019-07-15
 
 	//2014-06-06, xiaohui
 	mdnvt MDNVT ;

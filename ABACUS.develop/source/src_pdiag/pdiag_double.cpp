@@ -313,9 +313,6 @@ void Pdiag_Double::divide_HS_2d
 
 	if(DCOLOR!=0) return; // mohan add 2012-01-13
 
-//	OUT(ofs_running,"NLOCAL",NLOCAL);
-//	OUT(ofs_running,"NPROC",NPROC);
-
 	// get the 2D index of computer.
 	this->dim0 = (int)sqrt((double)DSIZE); //mohan update 2012/01/13
 	//while (NPROC_IN_POOL%dim0!=0)
@@ -325,7 +322,7 @@ void Pdiag_Double::divide_HS_2d
 	}
 	assert(dim0 > 0);
 	this->dim1=DSIZE/dim0;
-//	testpb=1; //mohan test
+
 	if(testpb)OUT(ofs_running,"dim0",dim0);
 	if(testpb)OUT(ofs_running,"dim1",dim1);
 
@@ -395,8 +392,13 @@ void Pdiag_Double::divide_HS_2d
 	return;
 }
 
-void Pdiag_Double::diago_double_begin(const int &ik, double **wfc, matrix &wfc_2d,
-	double* h_mat, double* s_mat, double* ekb)
+void Pdiag_Double::diago_double_begin(
+	const int &ik, // k-point index
+	double **wfc, // wave functions
+	matrix &wfc_2d, // wave functions in 2d
+	double* h_mat, // hamiltonian matrix
+	double* s_mat, // overlap matrix
+	double* ekb) // eigenvalues for each k-point and band
 {
 	#ifdef TEST_DIAG
 	{
@@ -512,6 +514,7 @@ void Pdiag_Double::diago_double_begin(const int &ik, double **wfc, matrix &wfc_2
         MPI_Reduce(&nloc, &maxnloc, 1, MPI_LONG, MPI_MAX, 0, comm_2D);
         MPI_Bcast(&maxnloc, 1, MPI_LONG, 0, comm_2D);
 		wfc_2d.create(this->ncol,this->nrow);			// Fortran order
+
         double *work=new double[maxnloc]; // work/buffer matrix
         static int method;
         bool wantEigenVector=true;
@@ -545,9 +548,11 @@ void Pdiag_Double::diago_double_begin(const int &ik, double **wfc, matrix &wfc_2
         LapackConnector::copy(NBANDS, eigen, inc, ekb, inc);
         delete[] eigen;
 	    OUT(ofs_running,"eigenvalues were copied to ekb");
+
         if(NEW_DM==0)
         {
-            //convert wave function to band distribution and calculate the density matrix in the tranditional way
+            // convert wave function to band distribution 
+			// and calculate the density matrix in the tranditional way
             // redistribute eigenvectors to wfc / wfc_aug
 
             timer::tick("Diago_LCAO_Matrix","gath_eig",'G');
@@ -630,18 +635,30 @@ void Pdiag_Double::diago_double_begin(const int &ik, double **wfc, matrix &wfc_2
 		const int itype=1;
 		int lwork=-1, info=0;
 		vector<double> work(1,0);
-		dsygv_(&itype, &jobz, &uplo, &NLOCAL, wfc_2d.c, &NLOCAL, s_tmp.c, &NLOCAL, ekb_tmp.data(), work.data(), &lwork, &info);
+		dsygv_(&itype, &jobz, &uplo, &NLOCAL, wfc_2d.c, &NLOCAL, 
+			s_tmp.c, &NLOCAL, ekb_tmp.data(), work.data(), &lwork, &info);
+
 		if(info)
+		{
 			throw runtime_error("info="+TO_STRING(info)+". "+TO_STRING(__FILE__)+" line "+TO_STRING(__LINE__));
+		}
+
 		lwork = work[0];
 		work.resize(lwork);
-		dsygv_(&itype, &jobz, &uplo, &NLOCAL, wfc_2d.c, &NLOCAL, s_tmp.c, &NLOCAL, ekb_tmp.data(), work.data(), &lwork, &info);
+
+		dsygv_(&itype, &jobz, &uplo, &NLOCAL, wfc_2d.c, &NLOCAL, 
+			s_tmp.c, &NLOCAL, ekb_tmp.data(), work.data(), &lwork, &info);
+
 		if(info)
+		{
 			throw runtime_error("info="+TO_STRING(info)+". "+TO_STRING(__FILE__)+" line "+TO_STRING(__LINE__));
+		}
 		memcpy( ekb, ekb_tmp.data(), sizeof(double)*NBANDS ); 
 		
 		if(NEW_DM==0)
+		{
 			throw domain_error("NEW_DM must be 1. "+TO_STRING(__FILE__)+" line "+TO_STRING(__LINE__));
+		}
 	}
 	else if(KS_SOLVER=="lapack_gvx")
 	{
@@ -658,23 +675,35 @@ void Pdiag_Double::diago_double_begin(const int &ik, double **wfc, matrix &wfc_2
 		vector<double> work(1,0);
 		vector<int> iwork(5*NLOCAL,0);
 		vector<int> ifail(NLOCAL,0);
+
 		dsygvx_(&itype, &jobz, &range, &uplo,
 			&NLOCAL, h_tmp.c, &NLOCAL, s_tmp.c, &NLOCAL, NULL, NULL, &il, &iu, &abstol,
 			&M, ekb, wfc_2d.c, &NLOCAL, work.data(), &lwork, iwork.data(), ifail.data(), &info);
+
 		if(info)
+		{
 			throw runtime_error("info="+TO_STRING(info)+". "+TO_STRING(__FILE__)+" line "+TO_STRING(__LINE__));
+		}
+
 		lwork = work[0];
 		work.resize(lwork);
 		dsygvx_(&itype, &jobz, &range, &uplo,
 			&NLOCAL, h_tmp.c, &NLOCAL, s_tmp.c, &NLOCAL, NULL, NULL, &il, &iu, &abstol,
 			&M, ekb, wfc_2d.c, &NLOCAL, work.data(), &lwork, iwork.data(), ifail.data(), &info);
+
 		if(info)
+		{
 			throw runtime_error("info="+TO_STRING(info)+". "+TO_STRING(__FILE__)+" line "+TO_STRING(__LINE__));
+		}
 		if(M!=NBANDS)
+		{
 			throw runtime_error("M="+TO_STRING(M)+". NBANDS="+TO_STRING(NBANDS)+". "+TO_STRING(__FILE__)+" line "+TO_STRING(__LINE__));
+		}
 		
 		if(NEW_DM==0)
+		{
 			throw domain_error("NEW_DM must be 1. "+TO_STRING(__FILE__)+" line "+TO_STRING(__LINE__));
+		}
 	}
 	else if(KS_SOLVER=="scalapack_gvx")
 	{
@@ -699,32 +728,42 @@ void Pdiag_Double::diago_double_begin(const int &ik, double **wfc, matrix &wfc_2
 			NULL, NULL, &il, &iu, &abstol,
 			&M, &NZ, ekb, &orfac, wfc_2d.c, &one, &one, desc,
 			work.data(), &lwork, iwork.data(), &liwork, ifail.data(), iclustr.data(), gap.data(), &info);
+
 		ofs_running<<"lwork="<<work[0]<<"\t"<<"liwork="<<iwork[0]<<endl;
 		lwork = work[0];
 		work.resize(lwork,0);
 		liwork = iwork[0];
 		iwork.resize(liwork,0);
+
 		pdsygvx_(&itype, &jobz, &range, &uplo,
 			&NLOCAL, h_tmp.c, &one, &one, desc, s_tmp.c, &one, &one, desc,
 			NULL, NULL, &il, &iu, &abstol,
 			&M, &NZ, ekb, &orfac, wfc_2d.c, &one, &one, desc,
 			work.data(), &lwork, iwork.data(), &liwork, ifail.data(), iclustr.data(), gap.data(), &info);
+
 		ofs_running<<"M="<<M<<"\t"<<"NZ="<<NZ<<endl;
 
 		if(info)
+		{
 			throw runtime_error("info="+TO_STRING(info)+". "+TO_STRING(__FILE__)+" line "+TO_STRING(__LINE__));
+		}
 		if(M!=NBANDS)
+		{
 			throw runtime_error("M="+TO_STRING(M)+". NBANDS="+TO_STRING(NBANDS)+". "+TO_STRING(__FILE__)+" line "+TO_STRING(__LINE__));
+		}
 		if(M!=NZ)
+		{
 			throw runtime_error("M="+TO_STRING(M)+". NZ="+TO_STRING(NZ)+". "+TO_STRING(__FILE__)+" line "+TO_STRING(__LINE__));
-		
+		}
 		if(NEW_DM==0)
+		{
 			throw domain_error("NEW_DM must be 1. "+TO_STRING(__FILE__)+" line "+TO_STRING(__LINE__));
+		}
 	}	
     //delete[] Stmp; //LiuXh 20171109
 #endif
 
-	#ifdef TEST_DIAG
+#ifdef TEST_DIAG
 	{
 		static int istep = 0;
 		{
@@ -742,7 +781,7 @@ void Pdiag_Double::diago_double_begin(const int &ik, double **wfc, matrix &wfc_2
 		}
 		++istep;
 	}
-	#endif
+#endif
 
 	return;
 }
@@ -1141,8 +1180,6 @@ void Pdiag_Double::readin(const string &fa, const string &fb, const int &nlocal_
     {
         ofs_running << " " << setw(6) << i << setw(25) << eigen[i] << setw(25)<< eigen[i] * 13.6058 << endl;
     }
-
-
 
     delete[] A;
     delete[] B;

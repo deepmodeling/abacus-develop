@@ -917,7 +917,7 @@ void Force_LCAO_k::cal_fvl_dphi_k(
 	int istep = 1;
 
 	// if Vna potential is not used.
-	pot.init_pot(istep);
+	pot.init_pot(istep, pw.strucFac);
 
 
 	for(int is=0; is<NSPIN; ++is)
@@ -930,16 +930,21 @@ void Force_LCAO_k::cal_fvl_dphi_k(
 
 		for(int ir=0; ir<pw.nrxx; ir++)
 		{
-			pot.vrs1[ir] = pot.vrs(CURRENT_SPIN, ir);
+			pot.vr_eff1[ir] = pot.vr_eff(CURRENT_SPIN, ir);
 		}
 
 		//--------------------------------
 		// Grid integration here.
 		//--------------------------------
 		// fvl_dphi can not be set to zero here if Vna is used
-		if(isstress&&isforce) {UHM.GK.svl_k_RealSpace(fvl_dphi,svl_dphi,pot.vrs1);}
-		else if(isforce) {UHM.GK.fvl_k_RealSpace(fvl_dphi,pot.vrs1);}
-
+		if(isstress&&isforce) 
+		{
+			UHM.GK.svl_k_RealSpace(fvl_dphi,svl_dphi,pot.vr_eff1);
+		}
+		else if(isforce) 
+		{
+			UHM.GK.fvl_k_RealSpace(fvl_dphi,pot.vr_eff1);
+		}
 	}
 
 	

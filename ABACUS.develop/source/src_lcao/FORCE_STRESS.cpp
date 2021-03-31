@@ -4,21 +4,18 @@
 #include "./dftu.h"  //Quxin add for DFT+U on 20201029
 // new
 #include "../src_pw/H_XC_pw.h"
+#include "src_pw/vdwd2.h"
 
 double Force_Stress_LCAO::force_invalid_threshold_ev = 0.00;
 double Force_Stress_LCAO::output_acc = 1.0e-8;
 
-Force_Stress_LCAO::Force_Stress_LCAO ()
-{	
-}
+Force_Stress_LCAO::Force_Stress_LCAO (){}
+Force_Stress_LCAO::~Force_Stress_LCAO (){}
 
-Force_Stress_LCAO::~Force_Stress_LCAO ()
-{
-}
 
 void Force_Stress_LCAO::allocate(void)
 {
-    TITLE("Force_Stress_LCAO","init");
+    TITLE("Force_Stress_LCAO","allocate");
 
     // reduce memory occupy by vlocal
     delete[] ParaO.sender_local_index;
@@ -38,15 +35,15 @@ void Force_Stress_LCAO::allocate(void)
     return;
 }
 
+
 #include "../src_pw/efield.h"
-// be called in : Local_Orbital_Ions::force_stress
 void Force_Stress_LCAO::getForceStress(
 	const bool isforce, 
 	const bool isstress, 
 	const bool istestf, 
 	const bool istests, 
-	matrix& fcs, 
-	matrix& scs)
+	matrix &fcs, 
+	matrix &scs)
 {
     TITLE("Force_Stress_LCAO","getForceStress");
 	timer::tick("Force_Stress_LCAO","getForceStress",'E');
@@ -66,7 +63,9 @@ void Force_Stress_LCAO::getForceStress(
     matrix fewalds;
     matrix fcc;
 	matrix fscc;
+
 	fvl_dphi.create (nat, 3);//must do it now, update it later, noted by zhengdy
+
 	if(isforce)
 	{
 		fcs.create (nat, 3);
@@ -91,6 +90,7 @@ void Force_Stress_LCAO::getForceStress(
 	matrix stvnl_dphi;
 	matrix svnl_dbeta;
 	matrix svl_dphi;
+
 	if(isstress)
 	{
 		scs.create(3,3);
@@ -130,14 +130,29 @@ void Force_Stress_LCAO::getForceStress(
 				svl_dphi);
 	
 	//implement vdw force or stress here
-	// Peize Lin add 2014-04-04, update 2019-04-26
+	// Peize Lin add 2014-04-04, update 2021-03-09
 	matrix force_vdw;
 	matrix stress_vdw;
-	if(vdwd2.vdwD2)
+	if(vdwd2_para.flag_vdwd2)
 	{
-		if(isforce) force_vdw.create(nat,3);
-		if(isstress) stress_vdw.create(3,3);
-		vdwd2.force(isforce, isstress, force_vdw, stress_vdw);
+		if(isforce)
+		{
+			force_vdw.create(nat,3);
+			Vdwd2 vdwd2(ucell,vdwd2_para);
+			vdwd2.cal_force();
+			for(int iat=0; iat<ucell.nat; ++iat)
+			{
+				force_vdw(iat,0) = vdwd2.get_force()[iat].x;
+				force_vdw(iat,1) = vdwd2.get_force()[iat].y;
+				force_vdw(iat,2) = vdwd2.get_force()[iat].z;
+			}			
+		}
+		if(isstress)
+		{
+			Vdwd2 vdwd2(ucell,vdwd2_para);
+			vdwd2.cal_stress();
+			stress_vdw = vdwd2.get_stress().to_matrix();
+		}
 	}
 	// jiyy add 2019-05-18
 	else if(vdwd3.vdwD3)
@@ -213,7 +228,7 @@ void Force_Stress_LCAO::getForceStress(
 					fcs(iat, i) += force_dftu(iat, i);
 				}
 				//VDW force of vdwd2 or vdwd3
-				if(vdwd2.vdwD2||vdwd3.vdwD3)
+				if(vdwd2_para.flag_vdwd2||vdwd3.vdwD3)
 				{
 					fcs(iat,i) += force_vdw(iat,i);
 				}
@@ -291,7 +306,7 @@ void Force_Stress_LCAO::getForceStress(
 			{
 				this->print_force("EFIELD     FORCE",fefield,1,ry);
 			}
-			if(vdwd2.vdwD2||vdwd3.vdwD3)
+			if(vdwd2_para.flag_vdwd2||vdwd3.vdwD3)
 			{
 				this->print_force("VDW        FORCE",force_vdw,1,ry);
 			}
@@ -343,7 +358,7 @@ void Force_Stress_LCAO::getForceStress(
 					+ sigmahar(i,j);// hartree stress 
 
 					//VDW stress from linpz and jiyy
-				if(vdwd2.vdwD2||vdwd3.vdwD3)
+				if(vdwd2_para.flag_vdwd2||vdwd3.vdwD3)
 				{
 					scs(i,j) += stress_vdw(i , j);
 				}
@@ -399,7 +414,7 @@ void Force_Stress_LCAO::getForceStress(
 			sc_pw.print_stress("cc       STRESS",sigmacc,TEST_STRESS,ry);
 			//		sc_pw.print_stress("NLCC       STRESS",sigmacc,TEST_STRESS,ry);
 			sc_pw.print_stress("XC       STRESS",sigmaxc,TEST_STRESS,ry);
-			if(vdwd2.vdwD2||vdwd3.vdwD3)
+			if(vdwd2_para.flag_vdwd2||vdwd3.vdwD3)
 			{
 				sc_pw.print_stress("VDW      STRESS",sigmaxc,TEST_STRESS,ry);
 			}
@@ -490,7 +505,7 @@ void Force_Stress_LCAO::print_force(const string &name, matrix& f, const bool sc
     return;
 }
 
-//print total force
+
 void Force_Stress_LCAO::printforce_total (const bool ry, const bool istestf, matrix& fcs)
 {
 	TITLE("Force_Stress_LCAO","printforce_total");
@@ -566,10 +581,10 @@ void Force_Stress_LCAO::printforce_total (const bool ry, const bool istestf, mat
 
 //local pseudopotential, ewald, core correction, scc terms in force
 void Force_Stress_LCAO::calForcePwPart(
-	matrix& fvl_dvl, 
-	matrix& fewalds, 
-	matrix& fcc, 
-	matrix& fscc)
+	matrix &fvl_dvl, 
+	matrix &fewalds, 
+	matrix &fcc, 
+	matrix &fscc)
 {
 	//--------------------------------------------------------
 	// local pseudopotential force: 

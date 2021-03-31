@@ -203,11 +203,47 @@ void Bessel_Basis::init_TableOne(
 		}
 	}
 	
+	//caoyu add 2021-3-10
+	//=========output .orb format=============
+	stringstream ss;
+	ss << global_out_dir << "jle.orb";
+	ofstream ofs(ss.str().c_str());
+	ofs << "---------------------------------------------------------------------------"<< endl;
+	ofs << setiosflags(ios::left) << setw(28) << "Energy Cutoff(Ry)" << ecutwfc << endl;
+	ofs << setiosflags(ios::left) << setw(28) << "Radius Cutoff(a.u.)" << rcut << endl;
+	ofs << setiosflags(ios::left) << setw(28) << "Lmax" << lmax << endl;
+	for (int l = 0; l < lmax + 1; l++) 
+	{
+		switch (l) 
+		{
+			case 0:
+			ofs << setiosflags(ios::left) << setw(28) << "Number of Sorbitals-->" << ecut_number << endl;
+			break;
+			case 1:
+			ofs << setiosflags(ios::left) << setw(28) << "Number of Porbitals-->" << ecut_number << endl;
+			break;
+			case 2:
+			ofs << setiosflags(ios::left) << setw(28) << "Number of Dorbitals-->" << ecut_number << endl;
+			break;
+			case 3:
+			ofs << setiosflags(ios::left) << setw(28) << "Number of Forbitals-->" << ecut_number << endl;
+			break;
+			default:
+			ofs << setiosflags(ios::left) << setw(28) << "Number of Gorbitals-->" << ecut_number << endl;
+		}
+	}
+	ofs << "---------------------------------------------------------------------------"<< endl;
+	ofs << "SUMMARY END" << endl << endl;
+	ofs << setiosflags(ios::left) << setw(28) << "Mesh" << rmesh << endl;
+	ofs << setiosflags(ios::left) << setw(28) << "dr" << dr << endl ;
+	//=========output	 .orb format=============
 
 	// init eigenvalue of Jl
 	for(int l=0; l<lmax+1; l++)
 	{
-		ZEROS(en, ecut_number);ZEROS(jle, rmesh);ZEROS(jlk, rmesh);
+		ZEROS(en, ecut_number);
+		ZEROS(jle, rmesh);
+		ZEROS(jlk, rmesh);
 
 		// calculate eigenvalue for l
 		Mathzone::Spherical_Bessel_Roots(ecut_number, l, tolerence, en, rcut);
@@ -221,6 +257,18 @@ void Bessel_Basis::init_TableOne(
 		{
 			// calculate J_{l}( en[ir]*r) 
 			Mathzone::Spherical_Bessel(rmesh, r, en[ie], l, jle);
+
+			//caoyu add 2021-3-10
+			//=========output .orb format=============
+			ofs << setiosflags(ios::right) << setw(20) << "L" << setw(20) << "N" << endl;
+			ofs << setiosflags(ios::right) << setw(20) << l << setw(20) << ie << endl;
+			for (int ir = 0; ir < rmesh; ir++) 
+			{ 
+				ofs << setiosflags(ios::scientific) 
+				<< setprecision(12) << jle[ir]<< " "; if ((ir+1) % 4 == 0) ofs << endl; 
+			}
+			ofs << endl;
+			//=========output .orb format=============
 
 			for(int ir=0; ir<rmesh; ir++)
 			{
@@ -263,7 +311,12 @@ void Bessel_Basis::init_TableOne(
 			
 		}// end ie
 	}// end ;
-	
+		
+	if (ofs) 
+	{
+		ofs.close();	//caoyu add 2020-3-10
+	}
+
 	delete[] en;
 	delete[] jle;
 	delete[] jlk;

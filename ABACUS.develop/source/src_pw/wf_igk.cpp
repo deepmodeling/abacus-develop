@@ -39,7 +39,6 @@ int WF_igk::setupIndGk(const PW_Basis &pwb,const int nks)
     // Done this in each cpu ( use nks,not nkstot )
     // notice : using cartesian coordinate
     //=============================================
-//	ofs_running << " " << setw(8) << "KPOINTS" << setw(10) << "ngk" << endl;
     for (int ik = 0; ik < nks; ik++)
     {
         int ng = 0;

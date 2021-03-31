@@ -23,7 +23,7 @@ public:
 
      void create(const int i1, const int i2, const int i3);
 
-//     void free();
+//   void free();
 
 private:
 
@@ -48,7 +48,7 @@ class Soc
 	int sph_ind(const int l, const double j, const int m, const int spin);
 
 	void rot_ylm(const int lmax);
-	//        complex<double> **rotylm;
+	// complex<double> **rotylm;
 
 	complex<double> *p_rot;
 

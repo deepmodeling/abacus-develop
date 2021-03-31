@@ -1,5 +1,5 @@
 #include "ELEC_cbands_gamma.h"
-#include "local_orbital_elec.h"
+#include "LOOP_elec.h"
 #include "LCAO_diago.h"
 #include "src_pw/global.h"
 #include "src_pw/symmetry_rho.h"
@@ -30,9 +30,10 @@ void ELEC_cbands_gamma::cal_bands(const int &istep, LCAO_Hamilt &uhm)
 			CURRENT_SPIN = kv.isk[ik];
 		}
 		wf.npw = kv.ngk[ik];
+
 		for(int ir=0; ir<pw.nrxx; ir++)
 		{
-			pot.vrs1[ir] = pot.vrs( CURRENT_SPIN, ir);
+			pot.vr_eff1[ir] = pot.vr_eff( CURRENT_SPIN, ir);
 		}
 		
 		if(!uhm.init_s)
@@ -89,7 +90,7 @@ void ELEC_cbands_gamma::cal_bands(const int &istep, LCAO_Hamilt &uhm)
 			ofs_running << " no diagonalization." << endl;
 #else
 			cout << " DCOLOR=" << DCOLOR << endl;
-			WARNING_QUIT("Local_Orbital_Elec::cal_bands","no diagonalization");
+			WARNING_QUIT("ELEC_cbands_gamma::cal_bands","no diagonalization");
 #endif
 
 		}

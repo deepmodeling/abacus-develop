@@ -11,20 +11,20 @@ class Exx_Abfs::Screen::Cauchy
 public:
 	struct Info_Step
 	{
-		double C1_norm4_max;
-		double C3_norm4_max;
-		double C2_norm4_max;
-		double C4_norm4_max;
+		double C1_norm4_max = 0.0;
+		double C3_norm4_max = 0.0;
+		double C2_norm4_max = 0.0;
+		double C4_norm4_max = 0.0;
 		
-		double C1_norm2_max;
-		double C3_norm2_max;
+		double C1_norm2_max = 0.0;
+		double C3_norm2_max = 0.0;
 		
-		double V_norm4;
+		double V_norm4 = 0.0;
 		
-		double D34_norm4_max;
-		double D32_norm4_max;
-		double D14_norm4_max;
-		double D12_norm4_max;
+		double D34_norm4_max = 0.0;
+		double D32_norm4_max = 0.0;
+		double D14_norm4_max = 0.0;
+		double D12_norm4_max = 0.0;
 	};
 	
 public:

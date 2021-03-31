@@ -13,7 +13,7 @@ class wavefunc : public WF_atomic
 
     // allocate memory
     void allocate(const int nks);
-    void init_local(void);
+    void allocate_ekb_wg(const int nks);
 
     int out_wf; //qianrui modify 2020-10-19
 

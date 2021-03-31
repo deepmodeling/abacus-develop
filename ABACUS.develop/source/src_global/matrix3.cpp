@@ -193,3 +193,12 @@ void Matrix3::print(void)const
 	cout << e31 << setw(15) << e32 << setw(15) << e33 << endl ;
 	return;
 }
+
+matrix Matrix3::to_matrix(void)const			// Peize Lin add 2021.03.09
+{
+	matrix m(3,3);
+	m(0,0)=e11;	m(0,1)=e12;	m(0,2)=e13;
+	m(1,0)=e21;	m(1,1)=e22;	m(1,2)=e23;
+	m(2,0)=e31;	m(2,1)=e32;	m(2,2)=e33;
+	return m;
+}

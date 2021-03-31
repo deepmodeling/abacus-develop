@@ -17,7 +17,7 @@
 #include "../src_pw/global.h"
 #include "global_fp.h"
 #include "../src_global/global_function.h"
-#include "local_orbital_ions.h"
+#include "LOOP_ions.h"
 #include "LCAO_matrix.h"
 
 

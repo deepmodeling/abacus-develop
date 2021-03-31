@@ -1,5 +1,5 @@
 #include "ELEC_evolve.h"
-#include "local_orbital_elec.h"
+#include "LOOP_elec.h"
 #include "LCAO_diago.h"
 #include "src_pw/global.h"
 #include "src_pw/symmetry_rho.h"
@@ -33,7 +33,7 @@ void ELEC_evolve::evolve_psi(const int &istep, LCAO_Hamilt &uhm, complex<double>
 		wf.npw = kv.ngk[ik];
 		for(int ir=0; ir<pw.nrxx; ir++)
 		{
-			pot.vrs1[ir] = pot.vrs( CURRENT_SPIN, ir);
+			pot.vr_eff1[ir] = pot.vr_eff( CURRENT_SPIN, ir);
 		}
 		
 		//--------------------------------------------
@@ -49,7 +49,7 @@ void ELEC_evolve::evolve_psi(const int &istep, LCAO_Hamilt &uhm, complex<double>
 			uhm.GK.reset_spin( CURRENT_SPIN );
 
 			// vlocal = Vh[rho] + Vxc[rho] + Vl(pseudo)
-			uhm.GK.cal_vlocal_k(pot.vrs1,GridT);
+			uhm.GK.cal_vlocal_k(pot.vr_eff1,GridT);
 			// added by zhengdy-soc, for non-collinear case
 			// integral 4 times, is there any method to simplify?
 			if(NSPIN==4)
@@ -58,9 +58,9 @@ void ELEC_evolve::evolve_psi(const int &istep, LCAO_Hamilt &uhm, complex<double>
 				{
 					for(int ir=0; ir<pw.nrxx; ir++)
 					{
-						pot.vrs1[ir] = pot.vrs(is, ir);
+						pot.vr_eff1[ir] = pot.vr_eff(is, ir);
 					}
-					uhm.GK.cal_vlocal_k(pot.vrs1, GridT, is);
+					uhm.GK.cal_vlocal_k(pot.vr_eff1, GridT, is);
 				}
 			}
 		}

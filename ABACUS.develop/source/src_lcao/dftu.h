@@ -10,6 +10,8 @@
 #include "../src_pw/charge_broyden.h"
 #include "dftu_relax.h"
 
+#include "src_pw/unitcell_pseudo.h"
+#include "src_parallel/parallel_orbitals.h"
 
 using namespace std;
 
@@ -19,14 +21,17 @@ using namespace std;
 //==========================================================
 class DFTU : public DFTU_RELAX
 {
+
 public:
+
     DFTU();                      // constructor 
     ~DFTU();                     // deconstructor
 
-    //called at Run_Frag::frag_LCAO_line(void)
-    void init();                        // initialize the input terms of  U, J, double_counting etc
+	// initialize the input terms of  U, J, double_counting etc
+    void init(UnitCell_pseudo &cell, // unitcell class
+		Parallel_Orbitals &po // parallel orbitals parameters
+	);
     
-    //called at Local_Orbital_Elec::scf(const int &istep)
     //calculate the local occupation number matrix
     void cal_occup_m_k(const int iter);
     void cal_occup_m_gamma(const int iter);

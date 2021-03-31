@@ -15,10 +15,7 @@ void Gint_Gamma::cal_env(const double* wfc, double* rho)
     return;
 }
 
-// this subroutine lies in the heart of LCAO algorithms.
-// so it should be done very efficiently, very carefully.
-// I might repeat again to emphasize this: need to optimize
-// this code very efficiently, very carefully.
+
 void Gint_Gamma::gamma_envelope(const double* wfc, double* rho)
 {
     TITLE("Grid_Integral","gamma_charge");
@@ -124,7 +121,10 @@ void Gint_Gamma::gamma_envelope(const double* wfc, double* rho)
 						dr[ib][id][1] = GridT.meshcell_pos[ib][1] + mt[1]; 
 						dr[ib][id][2] = GridT.meshcell_pos[ib][2] + mt[2]; 	
 
-						distance[ib][id] = std::sqrt(dr[ib][id][0]*dr[ib][id][0] + dr[ib][id][1]*dr[ib][id][1] + dr[ib][id][2]*dr[ib][id][2]);
+						distance[ib][id] = std::sqrt(dr[ib][id][0]*dr[ib][id][0] 
+						+ dr[ib][id][1]*dr[ib][id][1] 
+						+ dr[ib][id][2]*dr[ib][id][2]);
+
 						if(distance[ib][id] <= ORB.Phi[it].getRcut()) 
 						{
 							cal_flag[ib][id]=true;

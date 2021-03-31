@@ -54,7 +54,10 @@ void energy::calculate_harris(const int &flag)
 		+ (H_XC_pw::etxc - etxcc) 
 		+ H_Ewald_pw::ewald_energy 
 		+ H_Hartree_pw::hartree_energy 
-		+ demet + exx + Efield::etotefield;
+		+ demet
+		+ exx
+		+ Efield::etotefield
+		+ evdw;							// Peize Lin add evdw 2021.03.09
 
         if(INPUT.dft_plus_u) 
 		{
@@ -73,18 +76,11 @@ void energy::calculate_etot(void)
 	+ (H_XC_pw::etxc - etxcc) 
 	+ H_Ewald_pw::ewald_energy 
 	+ H_Hartree_pw::hartree_energy 
-	+ demet + descf + exx + Efield::etotefield;
-
-	// Peize Lin add 2014-04-03, update 2019-04-26
-	if(vdwd2.vdwD2)
-	{
-		this->etot += vdwd2.energy_result;
-	}
-	// jiyy add 2019-05-18
-	else if(vdwd3.vdwD3)
-	{
-		this->etot += vdwd3.energy_result;
-	}			
+	+ demet
+	+ descf
+	+ exx
+	+ Efield::etotefield
+	+ evdw;							// Peize Lin add evdw 2021.03.09
 
     //Quxin adds for DFT+U energy correction on 20201029
 
@@ -106,9 +102,15 @@ void energy::calculate_etot(void)
 	return;	
 }
 
-void energy::print_etot(const bool converged, const int &istep, const int &iter_in, 
-const double &dr2, const double &duration, const double &ethr, const double &avg_iter,
-bool print)
+void energy::print_etot(
+	const bool converged, 
+	const int &istep, 
+	const int &iter_in, 
+	const double &dr2, 
+	const double &duration, 
+	const double &ethr, 
+	const double &avg_iter,
+	bool print)
 {
 	TITLE("energy","print_etot");
 	this->iter = iter_in;
@@ -120,7 +122,6 @@ bool print)
 
 	if(OUT_LEVEL != "m") //xiaohui add "OUT_LEVEL", 2015-09-16
 	{
-		//if(!LOCAL_BASIS)OUT(ofs_running,"Error Threshold",ethr); xiaohui modify 2013-09-02
 		if(BASIS_TYPE=="pw")OUT(ofs_running,"Error Threshold",ethr); //xiaohui add 2013-09-02
 
 		if( this->printe>0 && ( (iter+1) % this->printe == 0 || converged || iter == NITER) )	
@@ -136,9 +137,9 @@ bool print)
 			this->print_format("E_demet",demet); //mohan add 2011-12-02
 			this->print_format("E_descf",descf);
 			this->print_format("E_efield",Efield::etotefield);
-			if(vdwd2.vdwD2)					//Peize Lin add 2014-04, update 2019-04-26
+			if(vdwd2_para.flag_vdwd2)					//Peize Lin add 2014-04, update 2021-03-09
 			{
-				this->print_format("E_vdwD2",vdwd2.energy_result);
+				this->print_format("E_vdwD2",evdw);
 			}
 			if(vdwd3.vdwD3)					//jiyy add 2019-05
 			{
@@ -175,19 +176,33 @@ bool print)
 	//xiaohui add 2013-09-02, Peize Lin update 2020.11.14
     string label;
 	if(KS_SOLVER=="cg")
+	{
 		label = "CG";
+	}
 	else if (KS_SOLVER=="lapack")
+	{
 		label = "LA";
+	}
     else if(KS_SOLVER=="hpseps")
+	{
 		label = "HP";
+	}
     else if(KS_SOLVER=="genelpa")
+	{
         label = "GE";
+	}
 	else if(KS_SOLVER=="dav")
+	{
 		label = "DA";
+	}
     else if(KS_SOLVER=="scalapack_gvx")
+	{
         label = "GV";
+	}
 	else
+	{
 		WARNING_QUIT("Energy","print_etot");
+	}
     ss << label << iter;
 	//xiaohui add 2013-09-02
 

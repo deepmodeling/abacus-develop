@@ -2,18 +2,18 @@
 //AUTHOR : Mohan 
 //DATE : 2009-04-23
 //=========================================================
-#ifndef MAKE_GAUNT_TABLE_H
-#define MAKE_GAUNT_TABLE_H
+#ifndef ORB_GAUNT_TABLE_H
+#define ORB_GAUNT_TABLE_H
 
 #include "../src_pw/tools.h"
 #include <map>
 
-class Make_Gaunt_Table
+class ORB_gaunt_table
 {
 	public:
 
-	Make_Gaunt_Table();
-	~Make_Gaunt_Table();
+	ORB_gaunt_table();
+	~ORB_gaunt_table();
 
 	/***************************************
 	 * Method 2

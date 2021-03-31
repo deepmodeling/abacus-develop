@@ -41,7 +41,7 @@ LCAO_nnr::~LCAO_nnr()
 	}
 }
 
-// be called in local_orbital_ions.cpp
+// be called in LOOP_ions.cpp
 void LCAO_nnr::cal_nnr(void)
 {
 	TITLE("LCAO_nnr","cal_nnr");

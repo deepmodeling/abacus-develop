@@ -8,6 +8,7 @@
 #include <map>
 #include <set>
 #include <memory>
+#include <atomic>
 
 using namespace std;
 

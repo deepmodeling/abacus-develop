@@ -36,7 +36,11 @@
 // on other processors, this is why there is
 // a 'count' integer array in the code.
 // UPDATED BY MOHAN 2014-05-18
-void Local_Orbital_Charge::write_dm(const int &is, const int &iter, const string &fn, const int &precision)
+void Local_Orbital_Charge::write_dm(
+	const int &is, 
+	const int &iter, 
+	const string &fn, 
+	const int &precision)
 {
     TITLE("Local_Orbital_Charge","write_dm");
 

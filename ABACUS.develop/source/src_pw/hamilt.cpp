@@ -4,13 +4,7 @@
 #include "diago_david.h"
 
 Hamilt::Hamilt() {}
-Hamilt::~Hamilt() 
-{
-	if(test_deconstructor)
-	{
-		cout << " ~Hamilt()" << endl;	
-	}
-}
+Hamilt::~Hamilt() {}
 
 
 void Hamilt::diago(
@@ -50,21 +44,6 @@ void Hamilt::diago(
 		{
 			assert(NLOCAL >= NBANDS);
         	this->cinitcgg(ik, NLOCAL, NBANDS, wf.wanf2[ik0], wf.evc[ik0], wf.ekb[ik]);
-			
-			// for tests
-			/*
-			cout << " Check evc unit of ik = " << ik0 << endl;
-			for(int ib=0; ib<NBANDS; ib++)
-			{
-				complex<double> tmpn = ZERO;
-				for(int ig=0; ig<kv.ngk[ik0]; ig++)
-				{
-					tmpn += conj( wf.evc[ik0](ib,ig) ) * wf.evc[ik0](ib,ig);
-				}
-				cout << " tmpn = " << tmpn << endl;
-			}
-			*/
-
 		}
 		else
 		{
@@ -88,11 +67,12 @@ void Hamilt::diago(
                 Diago_CG cg;
     	
 				bool reorder = true;
-				if(NPOL==1) cg.diag(wf.evc[ik0], wf.ekb[ik], kv.ngk[ik],
+
+				if(NPOL==1) cg.diag(wf.evc[ik0], wf.ekb[ik], kv.ngk[ik], wf.npwx,
 						NBANDS, precondition, ETHR,
 						DIAGO_CG_MAXITER, reorder, notconv, avg);
 				else{
-					cg.diag(wf.evc[ik0], wf.ekb[ik], wf.npwx*NPOL,
+					cg.diag(wf.evc[ik0], wf.ekb[ik], wf.npwx*NPOL, wf.npwx*NPOL,
 						NBANDS, precondition, ETHR,
 						DIAGO_CG_MAXITER, reorder, notconv, avg);
 				}
@@ -137,6 +117,7 @@ void Hamilt::diago(
 	timer::tick("Hamilt","diago",'F');
     return;
 }
+
 
 bool Hamilt::test_exit_cond(const int &ntry, const int &notconv)
 {
@@ -203,7 +184,6 @@ void Hamilt::cdiaghg(
     // On output both matrix are unchanged
     // LAPACK version - uses both ZHEGV and ZHEGVX
     //=====================================================================
-//	BLOCK_HERE("cdiaghg");
 
     int lwork;
     //========================================
@@ -213,20 +193,14 @@ void Hamilt::cdiaghg(
 
     ComplexMatrix sdum(nstart, ldh);
     ComplexMatrix hdum;
-//	cout << "\n nstart = " << nstart << endl;
-//	cout << "\n ldh = " << ldh  << endl;
-//	cout << "\n nbands = " << nbands << endl;
 
     sdum = sc;
 
     const bool all_eigenvalues = (nstart == nbands);
-//	cout << "\n all eigenvalue = " << all_eigenvalues << endl;
 
-    //  cout<<"\n dimension = "<<n<<endl;
     int nb = LapackConnector::ilaenv(1, "ZHETRD", "U", nstart, -1, -1, -1);
 //  int nb = ILAENV(1,  "ZHETRD", "U", n, -1, -1, -1);
 //  int nb = 32;
-//	cout<<"\n nb = "<<nb;
 
     if (nb < 1)
     {
@@ -235,8 +209,7 @@ void Hamilt::cdiaghg(
     
 	if (nb == 1 || nb >= nstart)
     {
-		// lwork = 2 * nstart - 1; // wrong!!!!
-        lwork = 2 * nstart; // chenmohan modify 2009-08-02
+        lwork = 2 * nstart; // mohan modify 2009-08-02
     }
     else
     {
@@ -266,7 +239,6 @@ void Hamilt::cdiaghg(
 
     if (all_eigenvalues)
     {
-//		cout << "\n ZHEGV";
         //===========================
         // calculate all eigenvalues
         //===========================
@@ -275,7 +247,6 @@ void Hamilt::cdiaghg(
     }
     else
     {
-//		cout << "\n ZHEGVXXXXXXXXXXXXXXXXXX !!!";
         //=====================================
         // calculate only m lowest eigenvalues
         //=====================================
@@ -324,15 +295,6 @@ void Hamilt::cdiaghg(
                 info    //INTEGER
         );
 
-//		cout << "\n pw.gcar[0] = " << pw.gcar[0].x << " " << pw.gcar[0].y << " " << pw.gcar[0].z << endl; 
-
-//		cout << "\n work[0] = " << work[0];
-//		cout << "\n info = " << info; 
-		
-        //ZHEGVX(1, 'V', 'I', 'U', nstart, hdum, ldh, sdum, ldh,
-          //     0.0, 0.0, 1, nbands, 0.0, mm, e, hvec, ldh,
-            //   work2, lwork, rwork, iwork, ifail, info);
-		
         delete[] work2;
         delete[] iwork;
         delete[] ifail;

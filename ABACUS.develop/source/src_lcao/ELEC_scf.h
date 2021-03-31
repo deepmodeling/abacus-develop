@@ -13,8 +13,9 @@
 class ELEC_scf: private Threshold_Elec
 {
 
-	friend class Local_Orbital_Elec;
-	friend class Local_Orbital_Ions;
+	friend class LOOP_elec;
+	friend class LOOP_ions;
+	friend class Run_MD;
 
 
 	public:

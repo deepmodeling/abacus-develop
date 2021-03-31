@@ -1,6 +1,6 @@
 #include "gint_gamma.h"
 #include "grid_technique.h"
-#include "ORB_read.h"
+//#include "ORB_read.h"
 #include "../src_pw/global.h"
 
 #include "global_fp.h" // mohan add 2021-01-30
@@ -126,7 +126,10 @@ void Gint_Gamma::gamma_mulliken(double** mulliken)
 						dr[ib][id][1] = GridT.meshcell_pos[ib][1] + mt[1]; 
 						dr[ib][id][2] = GridT.meshcell_pos[ib][2] + mt[2]; 	
 
-						distance[ib][id] = std::sqrt(dr[ib][id][0]*dr[ib][id][0] + dr[ib][id][1]*dr[ib][id][1] + dr[ib][id][2]*dr[ib][id][2]);
+						distance[ib][id] = std::sqrt(dr[ib][id][0]*dr[ib][id][0] 
+							+ dr[ib][id][1]*dr[ib][id][1] 
+							+ dr[ib][id][2]*dr[ib][id][2]);
+
 						if(distance[ib][id] <= ORB.Phi[it].getRcut()) 
 						{
 							cal_flag[ib][id]=true;

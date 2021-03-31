@@ -20,7 +20,7 @@
 #include "../src_global/scalapack_connector.h"
 #include "../src_global/lapack_connector.h"
 #include "../src_global/inverse_matrix.h"
-#include "local_orbital_ions.h"
+#include "LOOP_ions.h"
 #include "LCAO_matrix.h"
 #include "../src_pw/magnetism.h"
 #include "ORB_gen_tables.h"
@@ -33,22 +33,36 @@ DFTU::DFTU(){}
 DFTU::~DFTU(){}
 
 
-void DFTU::init()
+void DFTU::init(
+	UnitCell_pseudo &cell, // unitcell class
+	Parallel_Orbitals &po // parallel orbitals parameters
+)
 {
-    TITLE("DFTU", "init()");
+    TITLE("DFTU", "init");
 
-	if(INPUT.dftu_type==1 && INPUT.double_counting==1) cal_type = 1;
-	else if(INPUT.dftu_type==1 && INPUT.double_counting==2) cal_type = 2;
-	else if(INPUT.dftu_type==2 && INPUT.double_counting==1) cal_type = 3;
-	else if(INPUT.dftu_type==2 && INPUT.double_counting==2) cal_type = 4;
+	// please, do not use 'INPUT' directly in the class!
+	// needs reconstructions in future
+	// global parameters, need to be removed in future
+	const int npol = NPOL; // number of polarization directions
+	const int nlocal = NLOCAL; // number of total local orbitals
+	const int nks = kv.nks; // number of k-points
+	const int nspin = NSPIN; // number of spins
+	const int dftu_type = INPUT.dftu_type;
+	const int double_counting = INPUT.double_counting;
+	
+
+	if(dftu_type==1 && double_counting==1) cal_type = 1;
+	else if(dftu_type==1 && double_counting==2) cal_type = 2;
+	else if(dftu_type==2 && double_counting==1) cal_type = 3;
+	else if(dftu_type==2 && double_counting==2) cal_type = 4;
 	else WARNING_QUIT("DFT+U", "Wrong parameter");
 		
 	this->EU = 0.0;
 
 	if(FORCE)
 	{
-		this->force_dftu.resize(ucell.nat);
-		for(int ia=0; ia<ucell.nat; ia++)
+		this->force_dftu.resize(cell.nat);
+		for(int ia=0; ia<cell.nat; ia++)
 		{
 			this->force_dftu.at(ia).resize(3, 0.0);
 		}
@@ -65,36 +79,37 @@ void DFTU::init()
 	
 	if(GAMMA_ONLY_LOCAL)
 	{
-		this->pot_eff_gamma.resize(kv.nks);
-		for(int ik=0; ik<kv.nks; ik++)
+		this->pot_eff_gamma.resize(nks);
+		for(int ik=0; ik<nks; ik++)
 		{
-			this->pot_eff_gamma.at(ik).resize(ParaO.nloc, 0.0);
+			this->pot_eff_gamma.at(ik).resize(po.nloc, 0.0);
 		}
 	}
 	else
 	{
-		this->Sm_k.resize(kv.nks);
-		this->pot_eff_k.resize(kv.nks);
+		this->Sm_k.resize(nks);
+		this->pot_eff_k.resize(nks);
 
-		for(int ik=0; ik<kv.nks; ik++)
+		for(int ik=0; ik<nks; ik++)
 		{
-			this->Sm_k.at(ik).resize(ParaO.nloc, ZERO);
-			this->pot_eff_k.at(ik).resize(ParaO.nloc, ZERO);
+			this->Sm_k.at(ik).resize(po.nloc, ZERO);
+			this->pot_eff_k.at(ik).resize(po.nloc, ZERO);
 		} 	
 	}
 
-	this->locale.resize(ucell.nat);
-	this->locale_save.resize(ucell.nat);
+	this->locale.resize(cell.nat);
+	this->locale_save.resize(cell.nat);
 
-	this->iatlnmipol2iwt.resize(ucell.nat);
-	this->iat2it.resize(ucell.nat);
-	this->iwt2it.resize(NLOCAL);
-	this->iwt2iat.resize(NLOCAL);
-	this->iwt2l.resize(NLOCAL);
-	this->iwt2n.resize(NLOCAL);
-	this->iwt2m.resize(NLOCAL);
-	this->iwt2ipol.resize(NLOCAL);	
-	for(int i=0; i<NLOCAL; i++)
+	this->iatlnmipol2iwt.resize(cell.nat);
+	this->iat2it.resize(cell.nat);
+	this->iwt2it.resize(nlocal);
+	this->iwt2iat.resize(nlocal);
+	this->iwt2l.resize(nlocal);
+	this->iwt2n.resize(nlocal);
+	this->iwt2m.resize(nlocal);
+	this->iwt2ipol.resize(nlocal);	
+
+	for(int i=0; i<nlocal; i++)
 	{
 		this->iwt2it.at(i) = -1;
 		this->iwt2iat.at(i) = -1;
@@ -104,26 +119,26 @@ void DFTU::init()
 		this->iwt2ipol.at(i) = -1;
 	}
 
-	for(int it=0; it<INPUT.ntype; ++it)
+	for(int it=0; it<cell.ntype; ++it)
 	{				
-		for(int ia=0; ia<ucell.atoms[it].na; ia++)
+		for(int ia=0; ia<cell.atoms[it].na; ia++)
 		{
-			const int iat = ucell.itia2iat(it, ia);
+			const int iat = cell.itia2iat(it, ia);
 			this->iat2it.at(iat) = it;
 
-			locale.at(iat).resize(ucell.atoms[it].nwl+1);
-			locale_save.at(iat).resize(ucell.atoms[it].nwl+1);
+			locale.at(iat).resize(cell.atoms[it].nwl+1);
+			locale_save.at(iat).resize(cell.atoms[it].nwl+1);
 
-			for(int l=0; l<=ucell.atoms[it].nwl; l++)
+			for(int l=0; l<=cell.atoms[it].nwl; l++)
 			{			
-				const int N = ucell.atoms[it].l_nchi[l];
+				const int N = cell.atoms[it].l_nchi[l];
 
 				locale.at(iat).at(l).resize(N);
 				locale_save.at(iat).at(l).resize(N);
 
 				for(int n=0; n<N; n++)
 				{
-					if(NSPIN==1 || NSPIN==2)
+					if(nspin==1 || nspin==2)
 					{
 						locale.at(iat).at(l).at(n).resize(2);
 						locale_save.at(iat).at(l).at(n).resize(2);
@@ -134,42 +149,42 @@ void DFTU::init()
 						locale_save.at(iat).at(l).at(n).at(0).create(2*l+1, 2*l+1);
 						locale_save.at(iat).at(l).at(n).at(1).create(2*l+1, 2*l+1);
 					}
-					else if(NSPIN==4) //SOC
+					else if(nspin==4) //SOC
 					{
 						locale.at(iat).at(l).at(n).resize(1);
 						locale_save.at(iat).at(l).at(n).resize(1);
 
-						locale.at(iat).at(l).at(n).at(0).create((2*l+1)*NPOL, (2*l+1)*NPOL);
-						locale_save.at(iat).at(l).at(n).at(0).create((2*l+1)*NPOL, (2*l+1)*NPOL);
+						locale.at(iat).at(l).at(n).at(0).create((2*l+1)*npol, (2*l+1)*npol);
+						locale_save.at(iat).at(l).at(n).at(0).create((2*l+1)*npol, (2*l+1)*npol);
 					}												
 				}
 			}
 
 			//initialize the arrry iatlnm2iwt[iat][l][n][m]
-			this->iatlnmipol2iwt.at(iat).resize(ucell.atoms[it].nwl+1);
-			for(int L=0; L<=ucell.atoms[it].nwl; L++)
+			this->iatlnmipol2iwt.at(iat).resize(cell.atoms[it].nwl+1);
+			for(int L=0; L<=cell.atoms[it].nwl; L++)
 			{
-				this->iatlnmipol2iwt.at(iat).at(L).resize(ucell.atoms[it].l_nchi[L]);
+				this->iatlnmipol2iwt.at(iat).at(L).resize(cell.atoms[it].l_nchi[L]);
 
-				for(int n=0; n<ucell.atoms[it].l_nchi[L]; n++)
+				for(int n=0; n<cell.atoms[it].l_nchi[L]; n++)
 				{
 					this->iatlnmipol2iwt.at(iat).at(L).at(n).resize(2*L+1);
 					
 					for(int m=0; m<2*L+1; m++)
 					{
-						this->iatlnmipol2iwt.at(iat).at(L).at(n).at(m).resize(NPOL);
+						this->iatlnmipol2iwt.at(iat).at(L).at(n).at(m).resize(npol);
 					}
 				}
 			}
 
-			for(int iw=0; iw<ucell.atoms[it].nw*NPOL; iw++)
+			for(int iw=0; iw<cell.atoms[it].nw*npol; iw++)
 			{
-				int iw0 = iw/NPOL;
-				int ipol = iw%NPOL;
-				int iwt = ucell.itiaiw2iwt(it, ia, iw);
-				int l = ucell.atoms[it].iw2l[iw0];
-				int n = ucell.atoms[it].iw2n[iw0];
-				int m = ucell.atoms[it].iw2m[iw0];
+				int iw0 = iw/npol;
+				int ipol = iw%npol;
+				int iwt = cell.itiaiw2iwt(it, ia, iw);
+				int l = cell.atoms[it].iw2l[iw0];
+				int n = cell.atoms[it].iw2n[iw0];
+				int m = cell.atoms[it].iw2m[iw0];
 								
 				this->iatlnmipol2iwt.at(iat).at(l).at(n).at(m).at(ipol) = iwt;
 				this->iwt2it.at(iwt) = it;
@@ -185,14 +200,14 @@ void DFTU::init()
 	this->Yukawa = INPUT.yukawa_potential;
  	if(Yukawa)
  	{
-		this->Fk.resize(INPUT.ntype);
+		this->Fk.resize(cell.ntype);
 		
-		this->U_Yukawa.resize(INPUT.ntype);
-		this->J_Yukawa.resize(INPUT.ntype);	
+		this->U_Yukawa.resize(cell.ntype);
+		this->J_Yukawa.resize(cell.ntype);	
 
-		for(int it=0; it<ucell.ntype; it++)
+		for(int it=0; it<cell.ntype; it++)
 		{			
-			const int NL = ucell.atoms[it].nwl + 1;
+			const int NL = cell.atoms[it].nwl + 1;
 
 			this->Fk.at(it).resize(NL);		
 			this->U_Yukawa.at(it).resize(NL);
@@ -200,7 +215,7 @@ void DFTU::init()
 
 			for(int l=0; l<NL; l++)
 			{
-				int N = ucell.atoms[it].l_nchi[l];
+				int N = cell.atoms[it].l_nchi[l];
 
 				this->Fk.at(it).at(l).resize(N);
 				for(int n=0; n<N; n++)

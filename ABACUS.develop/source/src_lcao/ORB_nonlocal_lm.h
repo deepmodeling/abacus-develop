@@ -1,7 +1,3 @@
-//=========================================================
-//AUTHOR : liaochen, mohan
-//DATE : 2008-03-04
-//=========================================================
 #ifndef NUMERICAL_NONLOCAL_LM
 #define NUMERICAL_NONLOCAL_LM
 

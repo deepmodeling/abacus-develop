@@ -1,7 +1,6 @@
 #include "gint_k.h"
 #include "../src_pw/global.h"
 #include "LCAO_nnr.h"
-
 #include "global_fp.h" // mohan add 2021-01-30
 
 void Gint_k::fvl_k_RealSpace(matrix& fvl_dphi, const double *vl)
@@ -24,8 +23,6 @@ void Gint_k::fvl_k_RealSpace(matrix& fvl_dphi, const double *vl)
 	{
 		nnrg = 1;
 	}
-	
-		
 
 	// to store < phi | vlocal | dphi>
 	double* pvdpx = new double[nnrg];
@@ -199,226 +196,247 @@ void Gint_k::fvl_k_RealSpace(matrix& fvl_dphi, const double *vl)
 	return;
 }
 
-void Gint_k::svl_k_RealSpace(matrix& fvl_dphi, matrix& svl_dphi, const double *vl)
+void Gint_k::svl_k_RealSpace(
+	matrix& fvl_dphi, 
+	matrix& svl_dphi, 
+	const double *vl)
 {
-        TITLE("Gint_k","cal_stress");
-        timer::tick("Gint_k","cal_stress");
+	TITLE("Gint_k","cal_stress");
+	timer::tick("Gint_k","cal_stress");
 
-        if(!this->reduced)
-        {
-                WARNING_QUIT("Gint_k::cal_stress_k","The stress with k can only with reduced H.");
-        }
+	if(!this->reduced)
+	{
+		WARNING_QUIT("Gint_k::cal_stress_k","The stress with k can only with reduced H.");
+	}
 
-        int nnrg = LNNR.nnrg;
+	int nnrg = LNNR.nnrg;
 
-        if(OUT_LEVEL != "m") ofs_running << " LNNR.nnrg in cal_force_k = " << LNNR.nnrg << endl;
-        assert(nnrg>=0);
+	if(OUT_LEVEL != "m") ofs_running << " LNNR.nnrg in cal_force_k = " << LNNR.nnrg << endl;
+	assert(nnrg>=0);
 
-        // just because to make thea arrys meaningful.
-        if(LNNR.nnrg == 0)
-        {
-                nnrg = 1;
-        }
+	// just because to make thea arrys meaningful.
+	if(LNNR.nnrg == 0)
+	{
+		nnrg = 1;
+	}
 
-        // to store < phi | vlocal | dphi>
-        double* pvdpx = new double[nnrg];
-        double* pvdpy = new double[nnrg];
-        double* pvdpz = new double[nnrg];
-        double* pvdp11 = new double[nnrg];
-        double* pvdp22 = new double[nnrg];
-        double* pvdp33 = new double[nnrg];
-        double* pvdp12 = new double[nnrg];
-        double* pvdp13 = new double[nnrg];
-        double* pvdp23 = new double[nnrg];
-        ZEROS(pvdpx, nnrg);
-        ZEROS(pvdpy, nnrg);
-        ZEROS(pvdpz, nnrg);
-        ZEROS(pvdp11, nnrg);
-        ZEROS(pvdp22, nnrg);
-        ZEROS(pvdp33, nnrg);
-        ZEROS(pvdp12, nnrg);
-        ZEROS(pvdp13, nnrg);
-        ZEROS(pvdp23, nnrg);
-
-
-    const double delta_r = ORB.dr_uniform;
-    // it's a uniform grid to save orbital values, so the delta_r is a constant.
-    const int max_size = GridT.max_atom;
-    // how many meshcells in bigcell.
-    const int bxyz = GridT.bxyz;
-
-        double*** dr;// vectors between atom and grid: [bxyz, maxsize, 3]
-        double** distance; // distance between atom and grid: [bxyz, maxsize]
-        double*** psir_ylm;
-        bool** cal_flag;
-        double* ylma;
-        double*** dphi_x;
-        double*** dphi_y;
-        double*** dphi_z;
-    if(max_size!=0)
-    {
-        dr = new double**[bxyz];
-        distance = new double*[bxyz];
-        psir_ylm = new double**[bxyz];
-        cal_flag = new bool*[bxyz];
-                dphi_x = new double**[bxyz];
-                dphi_y = new double**[bxyz];
-                dphi_z = new double**[bxyz];
-
-        // mohan fix bug 2011-05-02
-        int nn = 0;
-        for(int it=0; it<ucell.ntype; it++)
-        {
-            nn = max(nn, (ucell.atoms[it].nwl+1)*(ucell.atoms[it].nwl+1));
-        }
-        ylma = new double[nn];
-        ZEROS(ylma, nn);
-
-        for(int i=0; i<bxyz; i++)
-        {
-            dr[i] = new double*[max_size];
-            psir_ylm[i] = new double*[max_size];
-            distance[i] = new double[max_size];
-            cal_flag[i] = new bool[max_size];
-                        dphi_x[i] = new double*[max_size];
-                        dphi_y[i] = new double*[max_size];
-                        dphi_z[i] = new double*[max_size];
-
-            ZEROS(distance[i], max_size);
-            ZEROS(cal_flag[i], max_size);
-
-            for(int j=0; j<max_size; j++)
-            {
-                dr[i][j] = new double[3];
-                psir_ylm[i][j] = new double[ucell.nwmax];
-                                dphi_x[i][j] = new double[ucell.nwmax];
-                                dphi_y[i][j] = new double[ucell.nwmax];
-                                dphi_z[i][j] = new double[ucell.nwmax];
-                ZEROS(dr[i][j],3);
-                ZEROS(psir_ylm[i][j],ucell.nwmax);
-                ZEROS(dphi_x[i][j],ucell.nwmax);
-                ZEROS(dphi_y[i][j],ucell.nwmax);
-                ZEROS(dphi_z[i][j],ucell.nwmax);
-            }
-        }
-    }
-
-    assert(this->ncxyz!=0);
-    const double dv = ucell.omega/this->ncxyz;
-    int vl_index=0;
-    double* vldr3 = new double[bxyz];
-    ZEROS(vldr3, bxyz);
-
-        for(int i=0; i<nbx; i++)
-        {
-                for(int j=0; j<nby; j++)
-                {
-                        for(int k=nbz_start; k<nbz_start+nbz; k++)
-                        {
-                                const int grid_index = (k-nbz_start) + j * nbz + i * nby * nbz;
-                                const int size = GridT.how_many_atoms[ grid_index ];
-                                if(size==0) continue;
-
-                                //---------------------------------
-                                // get the wave functions in this
-                                // grid.
-                                //---------------------------------
-                                this->set_ijk_atom_force(grid_index, size,
-                                psir_ylm, dr, cal_flag,
-                                distance, ylma, delta_r,
-                                dphi_x, dphi_y, dphi_z);
-
-                                int bindex = 0;
-                                // z is the fastest,
-                                for(int ii=0; ii<pw.bx; ii++)
-                                {
-                                        for(int jj=0; jj<pw.by; jj++)
-                                        {
-                                                for(int kk=0; kk<pw.bz; kk++)
-                                                {
-                                                        const int iii = i*pw.bx + ii;
-                                                        const int jjj = j*pw.by + jj;
-                                                        const int kkk = k*pw.bz + kk;
-                                                        vl_index = (kkk-pw.nczp_start) + jjj*pw.nczp + iii*pw.ncy*pw.nczp;
-                                                        vldr3[bindex] = vl[ vl_index ] * dv;
-                                                //        vldr3[bindex] = dv; // for overlap test
-
-                                                        ++bindex;
-                                                }
-                                        }
-                                }
-//cout<<"loop  "<<i<<" "<<j<<" "<<k<<endl;//test
-
-                                this->evaluate_vl_stress(grid_index, size,i,j,k,
-                                        psir_ylm, cal_flag, vldr3, distance,
-                                        dphi_x, dphi_y, dphi_z,
-                                        pvdpx, pvdpy, pvdpz,
-                                        pvdp11, pvdp22, pvdp33, pvdp12, pvdp13, pvdp23, dr, GridT);
-                        }// int k
-                }// int j
-        } // int i
+	// to store < phi | vlocal | dphi>
+	double* pvdpx = new double[nnrg];
+	double* pvdpy = new double[nnrg];
+	double* pvdpz = new double[nnrg];
+	double* pvdp11 = new double[nnrg];
+	double* pvdp22 = new double[nnrg];
+	double* pvdp33 = new double[nnrg];
+	double* pvdp12 = new double[nnrg];
+	double* pvdp13 = new double[nnrg];
+	double* pvdp23 = new double[nnrg];
+	ZEROS(pvdpx, nnrg);
+	ZEROS(pvdpy, nnrg);
+	ZEROS(pvdpz, nnrg);
+	ZEROS(pvdp11, nnrg);
+	ZEROS(pvdp22, nnrg);
+	ZEROS(pvdp33, nnrg);
+	ZEROS(pvdp12, nnrg);
+	ZEROS(pvdp13, nnrg);
+	ZEROS(pvdp23, nnrg);
 
 
-        //---------------------------------------
-        // Folding R here
-        //---------------------------------------
+	const double delta_r = ORB.dr_uniform;
+	// it's a uniform grid to save orbital values, so the delta_r is a constant.
+	const int max_size = GridT.max_atom;
+	// how many meshcells in bigcell.
+	const int bxyz = GridT.bxyz;
+
+	double*** dr;// vectors between atom and grid: [bxyz, maxsize, 3]
+	double** distance; // distance between atom and grid: [bxyz, maxsize]
+	double*** psir_ylm;
+	bool** cal_flag;
+	double* ylma;
+	double*** dphi_x;
+	double*** dphi_y;
+	double*** dphi_z;
+
+	if(max_size!=0)
+	{
+		dr = new double**[bxyz];
+		distance = new double*[bxyz];
+		psir_ylm = new double**[bxyz];
+		cal_flag = new bool*[bxyz];
+		dphi_x = new double**[bxyz];
+		dphi_y = new double**[bxyz];
+		dphi_z = new double**[bxyz];
+
+		// mohan fix bug 2011-05-02
+		int nn = 0;
+		for(int it=0; it<ucell.ntype; it++)
+		{
+			nn = max(nn, (ucell.atoms[it].nwl+1)*(ucell.atoms[it].nwl+1));
+		}
+		ylma = new double[nn];
+		ZEROS(ylma, nn);
+
+		for(int i=0; i<bxyz; i++)
+		{
+			dr[i] = new double*[max_size];
+			psir_ylm[i] = new double*[max_size];
+			distance[i] = new double[max_size];
+			cal_flag[i] = new bool[max_size];
+			dphi_x[i] = new double*[max_size];
+			dphi_y[i] = new double*[max_size];
+			dphi_z[i] = new double*[max_size];
+
+			ZEROS(distance[i], max_size);
+			ZEROS(cal_flag[i], max_size);
+
+			for(int j=0; j<max_size; j++)
+			{
+				dr[i][j] = new double[3];
+				psir_ylm[i][j] = new double[ucell.nwmax];
+				dphi_x[i][j] = new double[ucell.nwmax];
+				dphi_y[i][j] = new double[ucell.nwmax];
+				dphi_z[i][j] = new double[ucell.nwmax];
+				ZEROS(dr[i][j],3);
+				ZEROS(psir_ylm[i][j],ucell.nwmax);
+				ZEROS(dphi_x[i][j],ucell.nwmax);
+				ZEROS(dphi_y[i][j],ucell.nwmax);
+				ZEROS(dphi_z[i][j],ucell.nwmax);
+			}
+		}
+	}
+
+	assert(this->ncxyz!=0);
+	const double dv = ucell.omega/this->ncxyz;
+	int vl_index=0;
+	double* vldr3 = new double[bxyz];
+	ZEROS(vldr3, bxyz);
+
+	for(int i=0; i<nbx; i++)
+	{
+		for(int j=0; j<nby; j++)
+		{
+			for(int k=nbz_start; k<nbz_start+nbz; k++)
+			{
+				const int grid_index = (k-nbz_start) + j * nbz + i * nby * nbz;
+				const int size = GridT.how_many_atoms[ grid_index ];
+				if(size==0) continue;
+
+				//---------------------------------
+				// get the wave functions in this
+				// grid.
+				//---------------------------------
+				this->set_ijk_atom_force(grid_index, size,
+						psir_ylm, dr, cal_flag,
+						distance, ylma, delta_r,
+						dphi_x, dphi_y, dphi_z);
+
+				int bindex = 0;
+				// z is the fastest,
+				for(int ii=0; ii<pw.bx; ii++)
+				{
+					for(int jj=0; jj<pw.by; jj++)
+					{
+						for(int kk=0; kk<pw.bz; kk++)
+						{
+							const int iii = i*pw.bx + ii;
+							const int jjj = j*pw.by + jj;
+							const int kkk = k*pw.bz + kk;
+							vl_index = (kkk-pw.nczp_start) + jjj*pw.nczp + iii*pw.ncy*pw.nczp;
+							vldr3[bindex] = vl[ vl_index ] * dv;
+							//        vldr3[bindex] = dv; // for overlap test
+
+							++bindex;
+						}
+					}
+				}
+				//cout<<"loop  "<<i<<" "<<j<<" "<<k<<endl;//test
+
+				this->evaluate_vl_stress(grid_index, size,i,j,k,
+						psir_ylm, cal_flag, vldr3, distance,
+						dphi_x, dphi_y, dphi_z,
+						pvdpx, pvdpy, pvdpz,
+						pvdp11, pvdp22, pvdp33, pvdp12, pvdp13, pvdp23, dr, GridT);
+			}// int k
+		}// int j
+	} // int i
 
 
-        //LM.DHloc_fixedR_x
-        this->folding_stress(fvl_dphi, svl_dphi, pvdpx, pvdpy, pvdpz,
-                             pvdp11, pvdp22, pvdp33, pvdp12, pvdp13, pvdp23);
-    
-        delete[] pvdpx;
-        delete[] pvdpy;
-        delete[] pvdpz;
-        delete[] pvdp11;
-        delete[] pvdp22;
-        delete[] pvdp33;
-        delete[] pvdp12;
-        delete[] pvdp13;
-        delete[] pvdp23;
+	//---------------------------------------
+	// Folding R here
+	//---------------------------------------
 
-    delete[] vldr3;
-    if(max_size!=0)
-    {
-        for(int i=0; i<pw.bxyz; i++)
-        {
-            for(int j=0; j<max_size; j++)
-            {
-                delete[] dr[i][j];
-                delete[] psir_ylm[i][j];
-                                delete[] dphi_x[i][j];
-                                delete[] dphi_y[i][j];
-                                delete[] dphi_z[i][j];
-            }
-            delete[] dr[i];
-            delete[] distance[i];
-            delete[] psir_ylm[i];
-            delete[] cal_flag[i];
-                        delete[] dphi_x[i];
-                        delete[] dphi_y[i];
-                        delete[] dphi_z[i];
-        }
-        delete[] dr;
-        delete[] distance;
-        delete[] psir_ylm;
-                delete[] dphi_x;
-                delete[] dphi_y;
-                delete[] dphi_z;
-        delete[] cal_flag;
+	//LM.DHloc_fixedR_x
+	this->folding_stress(fvl_dphi, svl_dphi, pvdpx, pvdpy, pvdpz,
+			pvdp11, pvdp22, pvdp33, pvdp12, pvdp13, pvdp23);
 
-        delete[] ylma;
-    }
-        timer::tick("Gint_k","cal_stress");
-        return;
+	delete[] pvdpx;
+	delete[] pvdpy;
+	delete[] pvdpz;
+	delete[] pvdp11;
+	delete[] pvdp22;
+	delete[] pvdp33;
+	delete[] pvdp12;
+	delete[] pvdp13;
+	delete[] pvdp23;
+
+	delete[] vldr3;
+	if(max_size!=0)
+	{
+		for(int i=0; i<pw.bxyz; i++)
+		{
+			for(int j=0; j<max_size; j++)
+			{
+				delete[] dr[i][j];
+				delete[] psir_ylm[i][j];
+				delete[] dphi_x[i][j];
+				delete[] dphi_y[i][j];
+				delete[] dphi_z[i][j];
+			}
+			delete[] dr[i];
+			delete[] distance[i];
+			delete[] psir_ylm[i];
+			delete[] cal_flag[i];
+			delete[] dphi_x[i];
+			delete[] dphi_y[i];
+			delete[] dphi_z[i];
+		}
+		delete[] dr;
+		delete[] distance;
+		delete[] psir_ylm;
+		delete[] dphi_x;
+		delete[] dphi_y;
+		delete[] dphi_z;
+		delete[] cal_flag;
+
+		delete[] ylma;
+	}
+	timer::tick("Gint_k","cal_stress");
+	return;
 }
 
 
-void Gint_k::evaluate_vl_stress(const int &grid_index, const int &size, const int &i, const int &j, const int &k,
-	double*** psir_ylm, bool** cal_flag, double* vldr3, double** distance,
-	double*** dphi_x, double*** dphi_y, double*** dphi_z,
-	double* pvdpx, double* pvdpy, double* pvdpz, 
-        double* pvdp11, double* pvdp22, double* pvdp33, double* pvdp12, double* pvdp13, double* pvdp23, double*** dr,
+void Gint_k::evaluate_vl_stress(
+	const int &grid_index, 
+	const int &size, 
+	const int &i, 
+	const int &j, 
+	const int &k,
+	double*** psir_ylm, 
+	bool** cal_flag, 
+	double* vldr3, 
+	double** distance,
+	double*** dphi_x, 
+	double*** dphi_y, 
+	double*** dphi_z,
+	double* pvdpx, 
+	double* pvdpy, 
+	double* pvdpz, 
+	double* pvdp11, 
+	double* pvdp22, 
+	double* pvdp33, 
+	double* pvdp12, 
+	double* pvdp13, 
+	double* pvdp23, 
+	double*** dr,
 	const Grid_Technique &gt)
 {
 
@@ -950,10 +968,22 @@ void Gint_k::evaluate_vl_force(const int &grid_index, const int &size, const int
         return;
 }
 
-void Gint_k::set_ijk_atom_force(const int &grid_index, const int &size,
-	double*** psir_ylm, double*** dr, bool** cal_flag, 
-	double** distance, double* ylma, const double &delta_r,
-	double*** dphi_x, double*** dphi_y, double*** dphi_z)
+
+// PLEASE be aware that 'set_ijk' subroutines should be reconstructed
+// since it has been used everytime grid integral is needed
+// mohan add 2021-03-28
+void Gint_k::set_ijk_atom_force(
+	const int &grid_index, 
+	const int &size,
+	double*** psir_ylm, 
+	double*** dr, 
+	bool** cal_flag, 
+	double** distance, 
+	double* ylma, 
+	const double &delta_r,
+	double*** dphi_x, 
+	double*** dphi_y, 
+	double*** dphi_z)
 {
 	const Numerical_Orbital_Lm* pointer;
 	double mt[3];
@@ -1008,12 +1038,12 @@ void Gint_k::set_ijk_atom_force(const int &grid_index, const int &size,
             //-------------------------------------------------
             // Here we can not deal with the situation on
             // r = 0, so if r = 0,  r-->1e-9
-            //-------------------------------------------------
+			//-------------------------------------------------
 
-                        if (distance[ib][id] < 1e-9)    // pengfei Li add 2016-3-3
-                        {
-                            distance[ib][id] = 1e-9;
-                        }
+			if (distance[ib][id] < 1e-9)    // pengfei Li add 2016-3-3
+			{
+				distance[ib][id] = 1e-9;
+			}
 
 			// these parameters are about interpolation
 			// because once we know the distance from atom to grid point,

@@ -150,7 +150,7 @@ void Build_ST_pw::set_local(const int &ik)
 			pw.FFT_wfc.FFT3D( psic, 1);
 			for (int ir=0; ir< pw.nrxx; ir++)
 			{
-				psic[ir] *= pot.vrs1[ir];
+				psic[ir] *= pot.vr_eff1[ir];
 			}
 
 			// (3) fft back to G space.
@@ -205,10 +205,10 @@ void Build_ST_pw::set_local(const int &ik)
 			complex<double> sup,sdown;
 			for (int ir=0; ir< pw.nrxx; ir++)
 			{
-				sup = psic[ir] * (pot.vrs(0,ir) + pot.vrs(3,ir)) +
-					psic1[ir] * (pot.vrs(1,ir) - complex<double>(0.0,1.0) * pot.vrs(2,ir));
-				sdown = psic1[ir] * (pot.vrs(0,ir) - pot.vrs(3,ir)) +
-					psic[ir] * (pot.vrs(1,ir) + complex<double>(0.0,1.0) * pot.vrs(2,ir));
+				sup = psic[ir] * (pot.vr_eff(0,ir) + pot.vr_eff(3,ir)) +
+					psic1[ir] * (pot.vr_eff(1,ir) - complex<double>(0.0,1.0) * pot.vr_eff(2,ir));
+				sdown = psic1[ir] * (pot.vr_eff(0,ir) - pot.vr_eff(3,ir)) +
+					psic[ir] * (pot.vr_eff(1,ir) + complex<double>(0.0,1.0) * pot.vr_eff(2,ir));
 				
 				psic[ir] = sup;
 				psic1[ir] = sdown;

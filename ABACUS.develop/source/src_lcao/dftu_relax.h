@@ -17,10 +17,11 @@ using namespace std;
 //==========================================================
 class DFTU_RELAX : public DFTU_Yukawa
 {
-public:
-    DFTU_RELAX();                      // constructor 
-    ~DFTU_RELAX();                     // deconstructor
 
+public:
+
+    DFTU_RELAX();
+    ~DFTU_RELAX();
 
     void force_stress();
     void folding_dSm_soverlap();
@@ -40,7 +41,7 @@ public:
         const int type, const bool newlocale
     );
 
-    //force and stress
+    //forces and stress
     vector<vector<double>> force_dftu;      //force_dftu[iat][dim] 
     vector<vector<double>> stress_dftu;
 

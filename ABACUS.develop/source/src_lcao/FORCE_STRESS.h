@@ -12,9 +12,10 @@ class Force_Stress_LCAO
 {
 	// mohan add 2021-02-09
 	friend class md;
+	friend class Run_MD;
 	friend void Input_Conv::Convert();
 	friend class Update_input;
-	friend class Local_Orbital_Ions;
+	friend class LOOP_ions;
 
 	public :
 	
@@ -39,36 +40,36 @@ class Force_Stress_LCAO
 		const bool isstress, 
 		const bool istestf, 
 		const bool istests, 
-		matrix& fcs, 
-		matrix& scs);
+		matrix &fcs, 
+		matrix &scs);
 
-	void forceSymmetry(matrix& fcs);
+	void forceSymmetry(matrix &fcs);
 
 	void calForcePwPart(
-		matrix& fvl_dvl, 
-		matrix& fewalds, 
-		matrix& fcc, 
-		matrix& fscc);
+		matrix &fvl_dvl, 
+		matrix &fewalds, 
+		matrix &fcc, 
+		matrix &fscc);
 
 	void calForceStressIntegralPart(
 		const bool isGammaOnly,
 		const bool isforce,
 		const bool isstress,
-		matrix& foverlap,
-		matrix& ftvnl_dphi,
-		matrix& fvnl_dbeta,	
-		matrix& fvl_dphi,
-		matrix& soverlap,
-		matrix& stvnl_dphi,
-		matrix& svnl_dbeta,
-		matrix& svl_dphi);
+		matrix &foverlap,
+		matrix &ftvnl_dphi,
+		matrix &fvnl_dbeta,	
+		matrix &fvl_dphi,
+		matrix &soverlap,
+		matrix &stvnl_dphi,
+		matrix &svnl_dbeta,
+		matrix &svl_dphi);
 
 	void calStressPwPart(
-		matrix& sigmadvl,
-		matrix& sigmahar,
-		matrix& sigmaewa,
-		matrix& sigmacc,
-		matrix& sigmaxc);
+		matrix &sigmadvl,
+		matrix &sigmahar,
+		matrix &sigmaewa,
+		matrix &sigmacc,
+		matrix &sigmaxc);
 	
 	static double force_invalid_threshold_ev;
 	static double output_acc; // control the accuracy

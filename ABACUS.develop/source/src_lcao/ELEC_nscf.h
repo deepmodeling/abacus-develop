@@ -14,8 +14,8 @@
 class ELEC_nscf
 {
 
-	friend class Local_Orbital_Ions;
-	friend class Local_Orbital_Elec;
+	friend class LOOP_ions;
+	friend class LOOP_elec;
 
 	public:
 

@@ -193,7 +193,7 @@ void ELEC_scf::scf(const int &istep)
 				en.delta_escf();
 				if (vext == 0)	
 				{
-					pot.set_vrs();
+					pot.set_vr_eff();
 				}
 				else		
 				{
@@ -475,7 +475,7 @@ void ELEC_scf::scf(const int &istep)
 		// (10) add Vloc to Vhxc.
 		if(vext == 0)	
 		{
-			pot.set_vrs();
+			pot.set_vr_eff();
 		}
 		else		
 		{
@@ -548,7 +548,7 @@ void ELEC_scf::scf(const int &istep)
 				{
 					stringstream ssp;
 					ssp << global_out_dir << "SPIN" << is + 1 << "_POT";
-					pot.write_potential( is, 0, ssp.str(), pot.vrs, precision );
+					pot.write_potential( is, 0, ssp.str(), pot.vr_eff, precision );
 				}
 
 				//LiuXh modify 20200701

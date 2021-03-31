@@ -80,7 +80,7 @@ void LCAO_Hamilt::calculate_Hgamma( const int &ik )				// Peize Lin add ik 2016-
 		// calculate the 'Vl' matrix using gamma-algorithms.
 		if(VL_IN_H)
 		{	
-			this->GG.cal_vlocal(pot.vrs1);
+			this->GG.cal_vlocal(pot.vr_eff1);
 
 			// Peize Lin add 2016-12-03
 			if( 5==xcf.iexch_now && 0==xcf.igcx_now )				// HF
@@ -181,7 +181,7 @@ void LCAO_Hamilt::calculate_STNR_gamma(void)
 
 
 #include "LCAO_nnr.h"
-// be called in Local_Orbital_Elec::cal_bands(). 
+// be called in LOOP_elec::cal_bands(). 
 void LCAO_Hamilt::calculate_Hk(const int &ik)
 {
 	TITLE("LCAO_Hamilt","calculate_Hk");

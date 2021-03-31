@@ -163,10 +163,10 @@ void Stochastic_hchi::orthogonal_to_psi_real(complex<double> *wfin, complex<doub
 
 
 
-void Stochastic_hchi:: hchi_real(complex<double>*chi_in, complex<double> *hchi)
+void Stochastic_hchi::hchi_real(complex<double>*chi_in, complex<double> *hchi)
 {
 	
-	double*vr = pot.vrs1;  //vr= pot.vrs1 temporarily use cutoff vr.
+	double*vr = pot.vr_eff1;  //vr= pot.vrs1 temporarily use cutoff vr.
 
 	//wait for init--------------------------------------	
 	double dk1,dk2,dk3;

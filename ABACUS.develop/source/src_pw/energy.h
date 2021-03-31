@@ -11,12 +11,12 @@ class energy
 	public:
 	friend class Electrons; 
 	friend class Electrons_Stochastic;//mohan add 2021-01-31 
-	friend class Local_Orbital_Elec;
+	friend class LOOP_elec;
 	friend class Local_Orbital_Charge;
 	friend class Threshold_Elec;
 	friend class Forces; 
 	friend class Charge;
-	friend class potential;
+	friend class Potential;
 	friend class Occupy;
 	friend class wavefunc;
 	friend class eximport;
@@ -50,6 +50,7 @@ class energy
 
     double etxcc;          // the nlcc exchange and correlation
 	double exx;            // the exact exchange energy.
+	double evdw;			// the vdw energy				// Peize Lin add 2021.03.09
 
     double demet;          // correction for metals
 

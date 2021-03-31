@@ -32,7 +32,7 @@ LCAO_Matrix::~LCAO_Matrix()
 }
 
 
-void LCAO_Matrix::divide_HS_in_frag(void)
+void LCAO_Matrix::divide_HS_in_frag(const bool isGamma, Parallel_Orbitals &po)
 {
 	TITLE("LCAO_Matrix","divide_HS_in_frag");
 
@@ -40,11 +40,13 @@ void LCAO_Matrix::divide_HS_in_frag(void)
 	
 	// (1) calculate nrow, ncol, nloc.
 	if (KS_SOLVER=="genelpa" || KS_SOLVER=="hpseps" || KS_SOLVER=="scalpack" 
-		|| KS_SOLVER=="selinv" || KS_SOLVER=="scalapack_gvx") //xiaohui add 2013-09-02
+		|| KS_SOLVER=="selinv" || KS_SOLVER=="scalapack_gvx")
 	{
 		ofs_running << " divide the H&S matrix using 2D block algorithms." << endl;
 #ifdef __MPI
-		ParaO.divide_HS_2d(DIAG_WORLD);
+		// storage form of H and S matrices on each processor
+		// is determined in 'divide_HS_2d' subroutine
+		po.divide_HS_2d(DIAG_WORLD);
 #else
 		WARNING_QUIT("LCAO_Matrix::init","diago method is not ready.");
 #endif
@@ -52,25 +54,22 @@ void LCAO_Matrix::divide_HS_in_frag(void)
 	else
 	{
 		// the full matrix
-		ParaO.nloc = NLOCAL * NLOCAL;
+		po.nloc = NLOCAL * NLOCAL;
 	}
 
 	// (2) set the trace, then we can calculate the nnr.
-	// for 2d: calculate ParaO.nloc first, then trace_loc_row and trace_loc_col
+	// for 2d: calculate po.nloc first, then trace_loc_row and trace_loc_col
 	// for O(N): calculate the three together.
-	ParaO.set_trace();
+	po.set_trace();
 
-	// (3) allocate matrix.
-	if(GAMMA_ONLY_LOCAL)
+	// (3) allocate for S, H_fixed, H, and S_diag
+	if(isGamma)
 	{
-		// allocate for S, H_fixed, H, and S_diag
-		allocate_HS_gamma(ParaO.nloc);
+		allocate_HS_gamma(po.nloc);
 	}
 	else
 	{
-		// allocate for S, H_fixed, H, and S_diag
-		// for version 2
-		allocate_HS_k(ParaO.nloc);
+		allocate_HS_k(po.nloc);
 	}
 
 	return;

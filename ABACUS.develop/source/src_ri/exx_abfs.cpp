@@ -30,7 +30,7 @@ void Exx_Abfs::test_all() const
 	auto test_MGT = []()
 	{
 		const int Lmax = 3;
-		Make_Gaunt_Table MGT;
+		ORB_gaunt_table MGT;
 		MGT.init_Gaunt_CH( Lmax );
 		MGT.init_Gaunt( Lmax );
 		cout_MGT(MGT,Lmax);
@@ -490,7 +490,7 @@ cout<<"I"<<endl;
 
 void Exx_Abfs::cal_exx() const
 {
-	// 全程序只一次
+	// 全锟斤拷锟斤拷只一锟斤拷
 cout<<"A"<<endl;
 
 	const vector<vector<vector<Numerical_Orbital_Lm>>>
@@ -639,7 +639,7 @@ cout<<"E"<<endl;
 
 cout<<"F"<<endl;
 
-	// 每一步离子步
+	// 每一锟斤拷锟斤拷锟接诧拷
 	const map<size_t,map<size_t,map<size_t,map<size_t,matrix>>>>
 		&&ms_abfs_abfs = m_abfs_abfs.cal_overlap_matrix( index_abfs, index_abfs );
 ofs_ms("ms_abfs_abfs",ms_abfs_abfs);
@@ -661,7 +661,7 @@ ofs_ms("ms_C",ms_C);
 
 cout<<"H"<<endl;
 
-	// 每一步电子步
+	// 每一锟斤拷锟斤拷锟接诧拷
 	timeval t_begin;
 	gettimeofday( &t_begin, NULL);
 

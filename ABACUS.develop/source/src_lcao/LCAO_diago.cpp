@@ -1,22 +1,22 @@
 #include "LCAO_diago.h"
 #include "../src_pw/global.h"
 #include "../src_pdiag/pdiag_double.h"
-#include "../src_io/hs_matrix.h"
+#include "../src_io/write_HS.h"
 //xiaohui modified 2013-03-23
 //#include "../src_develop/src_siao/selinv.h"
 
 Diago_LCAO_Matrix::Diago_LCAO_Matrix(){}
 Diago_LCAO_Matrix::~Diago_LCAO_Matrix(){}
 
-void Diago_LCAO_Matrix::solve_complex_matrix(const int &ik, complex<double>** wfc, ComplexMatrix &wfc_2d)const
+void Diago_LCAO_Matrix::solve_complex_matrix(
+	const int &ik, 
+	complex<double>** wfc, 
+	ComplexMatrix &wfc_2d)const
 {
 	TITLE("Diago_LCAO_Matrix","solve_complex_matrix");
 	time_t time_start = time(NULL);
-//	ofs_running << " Start Time : " << ctime(&time_start);
-//
 
-	//if(DIAGO_TYPE=="lapack") xiaohui modify 2013-09-02
-	if(KS_SOLVER=="lapack") //xiaohui add 2013-09-02
+	if(KS_SOLVER=="lapack")
 	{
 		this->using_LAPACK_complex(ik, wfc);
 	}
@@ -30,27 +30,28 @@ void Diago_LCAO_Matrix::solve_complex_matrix(const int &ik, complex<double>** wf
 	}
 
 	time_t time_end = time(NULL);
-//	ofs_running << " End   Time : " << ctime(&time_end);
-//	ofs_running << " FINAL Time : " << difftime(time_end, time_start) << " (SEC)" << endl;
 
 	OUT_TIME("diago(complex)", time_start, time_end);
 
 	return;
 }
 
-void Diago_LCAO_Matrix::solve_double_matrix(const int &ik, double** wfc, matrix &wfc_2d)const
+
+void Diago_LCAO_Matrix::solve_double_matrix(
+	const int &ik, 
+	double** wfc, 
+	matrix &wfc_2d)const
 {
 	TITLE("Diago_LCAO_Matrix","solve_double_matrix");
 	timer::tick("Diago_LCAO_Matrix","solve_double_matrix",'F');
 	time_t time_start = time(NULL);
 
 	
-	if(KS_SOLVER=="lapack") //xiaohui add 2013-09-02
+	if(KS_SOLVER=="lapack")
 	{
 		this->using_LAPACK(ik, wfc);
 	}
 #ifdef __MPI
-	// yshen add 7/15/2016
 	else if(KS_SOLVER=="hpseps" || KS_SOLVER=="genelpa"|| KS_SOLVER=="scalapack_gvx")
 	{
 		this->using_HPSEPS_double(ik, wfc, wfc_2d);
@@ -61,6 +62,7 @@ void Diago_LCAO_Matrix::solve_double_matrix(const int &ik, double** wfc, matrix 
 		cout << " Diago_LCAO_Matrix, diago_type = " << KS_SOLVER << endl; 
 		WARNING_QUIT("Diago_LCAO_Matrix::init","Check KS_SOLVER.");
 	}
+
 	time_t time_end = time(NULL);
 
 	OUT_TIME("diago(double)",time_start, time_end);
@@ -82,14 +84,6 @@ void Diago_LCAO_Matrix::using_HPSEPS_double(const int &ik, double**wfc, matrix &
 	// Distribution of matrix for 
 	// prallel eigensolver.
 	ParaO.diago_double_begin(ik, wfc, wfc_2d, LM.Hloc, LM.Sloc, wf.ekb[ik]);
-
-	/*
-	string fh = "/home/mohan/3_my_program/1_DAPE/data/data-H32";
-	string fs = "/home/mohan/3_my_program/1_DAPE/data/data-S32";
-	double* eigen = new double[32];
-	double* eigvr = new double[32*32];
-	PD.readin(fh, fs, 32, eigen, eigvr);
-	*/
 
 	return;
 }
@@ -181,15 +175,15 @@ void Diago_LCAO_Matrix::using_LAPACK_complex(const int &ik, complex<double> **wf
 		}
 	}
 
-	//cout << "\n Energy for k=" << ik << endl; 
+	// energy for k-point ik
 	for(int ib=0; ib<NBANDS; ib++)
 	{
 		wf.ekb[ik][ib] = en[ib];
-		//cout << setw(10) << ib << setw(15) << wf.ekb[ik][ib] * Ry_to_eV << endl;
 	}
 
 	return;
 }
+
 
 void Diago_LCAO_Matrix::using_LAPACK(const int &ik, double** wfc)const
 {

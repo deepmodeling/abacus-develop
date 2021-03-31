@@ -75,6 +75,9 @@ void Force_LCAO_gamma::cal_fvnl_dbeta(
     TITLE("Force_LCAO_gamma","cal_fvnl_dbeta");
     timer::tick("Force_LCAO_gamma","cal_fvnl_dbeta",'G');
 
+	double r0[3];
+	double r1[3];
+
     for(int iat=0; iat<ucell.nat; iat++)
     {
         const int it = ucell.iat2it[iat];
@@ -82,7 +85,8 @@ void Force_LCAO_gamma::cal_fvnl_dbeta(
         const Vector3<double> tau0 = ucell.atoms[it].tau[ia];
         //find ajacent atom of atom ia
         //GridD.Find_atom( ucell.atoms[it].tau[ia] );
-        GridD.Find_atom( ucell.atoms[it].tau[ia] ,it, ia);
+		GridD.Find_atom( ucell.atoms[it].tau[ia] ,it, ia);
+		const double Rcut_Beta = ORB.Beta[it].get_rcut_max();
 
         //FOLLOWING ARE CONTRIBUTIONS FROM
         //VNL DUE TO PROJECTOR'S DISPLACEMENT
@@ -92,7 +96,8 @@ void Force_LCAO_gamma::cal_fvnl_dbeta(
             const Atom* atom1 = &ucell.atoms[T1];
             const int I1 = GridD.getNatom (ad1);
             const int start1 = ucell.itiaiw2iwt(T1, I1, 0);
-            const Vector3<double> tau1 = GridD.getAdjacentTau (ad1);
+			const Vector3<double> tau1 = GridD.getAdjacentTau (ad1);
+			const double Rcut_AO1 = ORB.Phi[T1].getRcut();
 
             for (int ad2 =0 ; ad2 < GridD.getAdjacentNum()+1; ad2++)
             {
@@ -101,15 +106,10 @@ void Force_LCAO_gamma::cal_fvnl_dbeta(
                 const int I2 = GridD.getNatom (ad2);
                 const int start2 = ucell.itiaiw2iwt(T2, I2, 0);
                 const Vector3<double> tau2 = GridD.getAdjacentTau (ad2);
-
-                const double Rcut_Beta = ORB.Beta[it].get_rcut_max();
-                const double Rcut_AO1 = ORB.Phi[T1].getRcut();
                 const double Rcut_AO2 = ORB.Phi[T2].getRcut();
 
                 const double dist1 = (tau1-tau0).norm() * ucell.lat0;
                 const double dist2 = (tau2-tau0).norm() * ucell.lat0;
-                double r0[3];
-				double r1[3];
 				if(isstress)
                 {
                     r1[0] = ( tau1.x - tau0.x) ;
@@ -150,8 +150,12 @@ void Force_LCAO_gamma::cal_fvnl_dbeta(
                             atom2->iw2m[kk], // m1
                             atom2->iw2n[kk], // n1
                             tau0, it);
+
                         double nlm1[3] = {0,0,0};
-                        if(isstress) UOT.snap_psibeta(
+
+                        if(isstress) 
+						{
+								UOT.snap_psibeta(
                                 nlm1, 1,
                                 tau2, T2,
                                 atom2->iw2l[kk], // L2
@@ -162,6 +166,7 @@ void Force_LCAO_gamma::cal_fvnl_dbeta(
                                 atom1->iw2m[jj], // m1
                                 atom1->iw2n[jj], // n1
                                 tau0, it);
+						}
 
                         const int index = mu * ParaO.ncol + nu;
 
@@ -186,9 +191,10 @@ void Force_LCAO_gamma::cal_fvnl_dbeta(
                         {
                             for(int ipol=0;ipol<3;ipol++)
 							{
-                                svnl_dbeta(0,ipol) -= sum/2.0 * (nlm[0] * r0[ipol] + nlm1[0] * r1[ipol])* -1;
-                                svnl_dbeta(1,ipol) -= sum/2.0 * (nlm[1] * r0[ipol] + nlm1[1] * r1[ipol])* -1;
-                                svnl_dbeta(2,ipol) -= sum/2.0 * (nlm[2] * r0[ipol] + nlm1[2] * r1[ipol])* -1;
+								// mohan update 2021-03-19
+                                svnl_dbeta(0,ipol) += sum/2.0 * (nlm[0] * r0[ipol] + nlm1[0] * r1[ipol]);
+                                svnl_dbeta(1,ipol) += sum/2.0 * (nlm[1] * r0[ipol] + nlm1[1] * r1[ipol]);
+                                svnl_dbeta(2,ipol) += sum/2.0 * (nlm[2] * r0[ipol] + nlm1[2] * r1[ipol]);
                             }
                         }
                     }//!kk
@@ -196,6 +202,7 @@ void Force_LCAO_gamma::cal_fvnl_dbeta(
             }//!jj
         }//!ad1
     }//!iat
+
     if(isstress)
     {
         for(int i=0;i<3;i++)

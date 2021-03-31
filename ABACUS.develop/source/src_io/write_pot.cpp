@@ -2,8 +2,13 @@
 #include "../src_pw/global.h"
 
 // translate from write_rho in charge.cpp.
-void potential::write_potential(const int &is, const int &iter, const string &fn, 
-const matrix &v, const int &precision, const int &hartree)const
+void Potential::write_potential(
+	const int &is, 
+	const int &iter, 
+	const string &fn, 
+	const matrix &v, 
+	const int &precision, 
+	const int &hartree)const
 {
     TITLE("potential","write_potential");
 
@@ -191,10 +196,10 @@ const matrix &v, const int &precision, const int &hartree)const
 }
 
 
-void potential::write_elecstat_pot(const string &fn, const string &fn_ave)
+void Potential::write_elecstat_pot(const string &fn, const string &fn_ave)
 {
-    TITLE("potential","write_elecstat_pot");
-    timer::tick("potential","write_elecstat_pot");
+    TITLE("Potential","write_elecstat_pot");
+    timer::tick("Potential","write_elecstat_pot");
 
     double *v_elecstat;
     v_elecstat = new double[pw.nrxx];
@@ -478,6 +483,6 @@ void potential::write_elecstat_pot(const string &fn, const string &fn_ave)
     delete[] v_elecstat;
     delete[] vh_g;
 
-    timer::tick("potential","write_potential");
+    timer::tick("Potential","write_potential");
     return;
 }

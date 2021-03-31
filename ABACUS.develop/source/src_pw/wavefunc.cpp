@@ -27,10 +27,9 @@ wavefunc::~wavefunc()
 	}
 }
 
-void wavefunc::init_local(void)
+void wavefunc::allocate_ekb_wg(const int nks)
 {
     TITLE("wavefunc","init_local");
-    const int nks = kv.nks;
     this->npwx = this->setupIndGk(pw, nks);
 
 	// band energies
@@ -47,7 +46,6 @@ void wavefunc::init_local(void)
     Memory::record("wavefunc","ekb",nks*NBANDS,"double");
     Memory::record("wavefunc","wg",nks*NBANDS,"double");
 
-    if(test_wf)ofs_running << " Allocate : EigenValue; Weight;" << endl;
     return;
 }
 
@@ -142,7 +140,6 @@ void wavefunc::wfcinit(void)
     TITLE("wavefunc","wfcinit");
     timer::tick("wavefunc","wfcinit",'C');
 
-	//this->init_at_1();
     this->wfcinit_k();
 
     en.demet = 0.0;
@@ -207,11 +204,6 @@ int wavefunc::get_starting_nw(void)const
 
 
 
-//void wavefunc::PAO_in_pw_k(const int &ik, ComplexMatrix &wvf)
-//{
-//	TITLE("wavefunc","PAO_in_pw_k");
-//	this->atomic_wfc(ik, this->npw, ucell.lmax_ppwf, wvf, ppcell.tab_at, NQX, DQ);
-//}
 
 void wavefunc::LCAO_in_pw_k(const int &ik, ComplexMatrix &wvf)
 {
@@ -221,6 +213,7 @@ void wavefunc::LCAO_in_pw_k(const int &ik, ComplexMatrix &wvf)
 	assert(BASIS_TYPE=="lcao_in_pw");
 	
 	static bool ltable = false;
+
 	if(!ltable)
 	{
 		this->table_local.create(ucell.ntype, ucell.nmax_total, NQX);
@@ -233,7 +226,7 @@ void wavefunc::LCAO_in_pw_k(const int &ik, ComplexMatrix &wvf)
 	//-------------------------------------------------------------
 	// (2) diago to get wf.ekb, then the weights can be calculated.
 	//-------------------------------------------------------------
-    hm.hpw.init(this->npwx, NPOL, ppcell.nkb, pw.nrxx);
+    hm.hpw.allocate(this->npwx, NPOL, ppcell.nkb, pw.nrxx);
 	hm.hpw.init_k(ik);
 	
 	//hm.cinitcgg(ik ,NLOCAL, NBANDS, wvf, wvf, ekb[ik]);
@@ -335,7 +328,10 @@ void wavefunc::wfcinit_k(void)
 {
 	TITLE("wavefunc","wfcinit_k");
 
-	if(mem_saver) return;
+	if(mem_saver) 
+	{
+		return;
+	}
 
 	for(int ik=0; ik<kv.nks; ik++)
 	{
@@ -357,31 +353,6 @@ void wavefunc::wfcinit_k(void)
 	//---------------------------------------------------
 	//  calculte the overlap <i,0 | e^{i(q+G)r} | j,R>
 	//---------------------------------------------------
-	/*cout <<"epsilon = "<<chi0_hilbert.epsilon<<endl;
-	cout <<"system = "<<chi0_hilbert.system<<endl;
-	cout <<"eta = "<<chi0_hilbert.eta<<endl;
-	cout <<"domega = "<<chi0_hilbert.domega<<endl;
-	cout <<"nomega = "<<chi0_hilbert.nomega<<endl;
-	cout <<"dim = "<<chi0_hilbert.dim<<endl;
-	cout <<"oband = "<<chi0_hilbert.oband<<endl;
-	cout <<"start_q = "<<chi0_hilbert.start_q<<endl;
-	cout <<"interval_q = "<<chi0_hilbert.interval_q<<endl;
-	cout <<"interval_q = "<<chi0_hilbert.interval_q<<endl;
-	cout <<"out_epsilon = "<<chi0_hilbert.out_epsilon<<endl;
-	cout <<"out_chi = "<<chi0_hilbert.out_chi<<endl;
-	cout <<"out_chi0 = "<<chi0_hilbert.out_chi0<<endl;
-	cout <<"fermi_level = "<<chi0_hilbert.fermi_level<<endl;
-	cout <<"coulomb_cutoff = "<<chi0_hilbert.coulomb_cutoff<<endl;
-	cout <<"kmesh_interpolation = "<<chi0_hilbert.kmesh_interpolation<<endl;
-	cout <<"lcao_box1 = "<<chi0_hilbert.lcao_box[0]<<endl;
-	cout <<"lcao_box2 = "<<chi0_hilbert.lcao_box[1]<<endl;
-	cout <<"lcao_box3 = "<<chi0_hilbert.lcao_box[2]<<endl;
-	for(int i=0; i<100; i++)
-	{
-		cout<<"qcar["<<i<<"] = "<<chi0_hilbert.qcar[i][0]
-		<<" "<<chi0_hilbert.qcar[i][1]<<" "<<chi0_hilbert.qcar[i][2]<<endl;
-	}
-	*/
 	
 	if((!chi0_hilbert.epsilon) && chi0_hilbert.kmesh_interpolation )    // pengfei  2016-11-23
 	{
@@ -651,17 +622,20 @@ int wavefunc::get_R(int ix, int iy, int iz)   // pengfei 2016-11-23
 {
 	int count;
 	Vector3<double> r,r1,r2;
-	
+
 	for(int iw1=0; iw1<NLOCAL; iw1++)
+	{
 		for(int iw2=0; iw2<NLOCAL; iw2++)
 		{
 			int it1 = iw2it(iw1); int ia1 = iw2ia(iw1);
 			int it2 = iw2it(iw2); int ia2 = iw2ia(iw2);
 			//cout <<"iw1= "<<iw1<<" iw2= "<<iw2<<" it1= "<<it1<<" ia1= "<<ia1<<" it2= "<<it2<<" ia2= "<<ia2<<endl;
 			count = 0;
-			
+
 			for(int nx=-int(ix/2);nx<=int(ix/2);nx++)
+			{
 				for(int ny=-int(iy/2);ny<=int(iy/2);ny++)
+				{
 					for(int nz=-int(iz/2);nz<=int(iz/2);nz++)
 					{
 						//cout <<"count = "<<count<<endl;
@@ -669,25 +643,32 @@ int wavefunc::get_R(int ix, int iy, int iz)   // pengfei 2016-11-23
 						r1.x = ucell.atoms[it1].tau[ia1].x * ucell.lat0;
 						r1.y = ucell.atoms[it1].tau[ia1].y * ucell.lat0;
 						r1.z = ucell.atoms[it1].tau[ia1].z * ucell.lat0;
-						r2.x = (ucell.atoms[it2].tau[ia2].x + ucell.latvec.e11 * nx + ucell.latvec.e21 * ny + ucell.latvec.e31 * nz) * ucell.lat0;
-						r2.y = (ucell.atoms[it2].tau[ia2].y + ucell.latvec.e12 * nx + ucell.latvec.e22 * ny + ucell.latvec.e32 * nz) * ucell.lat0;
-						r2.z = (ucell.atoms[it2].tau[ia2].z + ucell.latvec.e13 * nx + ucell.latvec.e23 * ny + ucell.latvec.e33 * nz) * ucell.lat0;
+						r2.x = (ucell.atoms[it2].tau[ia2].x 
+						+ ucell.latvec.e11 * nx + ucell.latvec.e21 * ny + ucell.latvec.e31 * nz) * ucell.lat0;
+						r2.y = (ucell.atoms[it2].tau[ia2].y 
+						+ ucell.latvec.e12 * nx + ucell.latvec.e22 * ny + ucell.latvec.e32 * nz) * ucell.lat0;
+						r2.z = (ucell.atoms[it2].tau[ia2].z 
+						+ ucell.latvec.e13 * nx + ucell.latvec.e23 * ny + ucell.latvec.e33 * nz) * ucell.lat0;
 						r = r2 - r1;
 						double distance = sqrt(r*r);
+
 						if(distance < (ucell.atoms[it1].Rcut + ucell.atoms[it2].Rcut))
 						{
-							R[iw1][iw2][count].x = nx; R[iw1][iw2][count].y = ny; R[iw1][iw2][count].z = nz; 
-							//cout<<"OK "<<R[iw1][iw2][count].x<<" "<<R[iw1][iw2][count].y<<" "<<R[iw1][iw2][count].z<<endl;
+							R[iw1][iw2][count].x = nx; 
+							R[iw1][iw2][count].y = ny; 
+							R[iw1][iw2][count].z = nz; 
 							count++;
 						}
-						//cout<<"nx= "<<nx<<" ny= "<<ny<<" nz= "<<nz<<endl;
 					}
-					Rmax[iw1][iw2] = count;
-					//cout<<"Rmax["<<iw1<<"]["<<iw2<<"] = "<<Rmax[iw1][iw2]<<endl;				
+				}
+			}
+			Rmax[iw1][iw2] = count;
 		}
-		
+	}
+
 	int NR = 0;
 	for(int iw1=0;iw1<NLOCAL;iw1++)
+	{
 		for(int iw2=0;iw2<NLOCAL;iw2++)
 		{
 			if(Rmax[iw1][iw2] > NR)
@@ -695,18 +676,22 @@ int wavefunc::get_R(int ix, int iy, int iz)   // pengfei 2016-11-23
 				NR = Rmax[iw1][iw2];
 			}
 		}
-			
+	}
+
 	return NR;
 }
+
 
 int wavefunc::iw2it( int iw)    // pengfei 2016-11-23
 {
     int ic, type;
     ic =0;
     for(int it =0; it<ucell.ntype; it++)
+	{
         for(int ia = 0; ia<ucell.atoms[it].na; ia++)
         {
             for(int L=0; L<ucell.atoms[it].nwl+1; L++)
+			{
                 for(int N=0; N<ucell.atoms[it].l_nchi[L]; N++)
                 {
                     for(int i=0; i<(2*L+1); i++)
@@ -718,31 +703,35 @@ int wavefunc::iw2it( int iw)    // pengfei 2016-11-23
                         ic++;
 					}
                 }
+			}
         }
+	}
     return type;
 }
 
 int wavefunc::iw2ia( int iw)    // pengfei 2016-11-23
 {
-    int ic, na;
-    ic =0;
-    for(int it =0; it<ucell.ntype; it++)
-        for(int ia = 0; ia<ucell.atoms[it].na; ia++)
-        {
-            for(int L=0; L<ucell.atoms[it].nwl+1; L++)
-                for(int N=0; N<ucell.atoms[it].l_nchi[L]; N++)
-                {
-                    for(int i=0; i<(2*L+1); i++)
-                    {
-                        if(ic == iw)
-                        {
-                           na = ia;
-                        }
-                        ic++;
-                    }                    
+	int ic, na;
+	ic =0;
+	for(int it =0; it<ucell.ntype; it++)
+	{
+		for(int ia = 0; ia<ucell.atoms[it].na; ia++)
+		{
+			for(int L=0; L<ucell.atoms[it].nwl+1; L++)
+				for(int N=0; N<ucell.atoms[it].l_nchi[L]; N++)
+				{
+					for(int i=0; i<(2*L+1); i++)
+					{
+						if(ic == iw)
+						{
+							na = ia;
+						}
+						ic++;
+					}                    
+				}
 		}
-        }
-    return na;
+	}
+	return na;
 }
 
 //LiuXh add a new function here,

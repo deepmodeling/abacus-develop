@@ -8,7 +8,7 @@
 #include "tools.h"
 #include "atom_spec.h"
 
-// the "base class" of UnitCell_pseudo or UnitCell_epm.
+// the "base class" of UnitCell_pseudo.
 // provide the basic information about unitcell.
 class UnitCell
 {

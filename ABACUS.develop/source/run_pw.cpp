@@ -92,27 +92,29 @@ void Run_pw::plane_wave_line(void)
 
     //=====================
     // init hamiltonian
+	// only allocate in the beginning of ELEC LOOP!
     //=====================
-    hm.hpw.init(wf.npwx, NPOL, ppcell.nkb, pw.nrxx);
+    hm.hpw.allocate(wf.npwx, NPOL, ppcell.nkb, pw.nrxx);
 
     //=================================
     // initalize local pseudopotential
     //=================================
-    ppcell.init_vloc();
+    ppcell.init_vloc(pw.nggm, ppcell.vloc);
     DONE(ofs_running,"LOCAL POTENTIAL");
 
     //======================================
     // Initalize non local pseudopotential
     //======================================
-    ppcell.init_vnl();
+    ppcell.init_vnl(ucell);
     DONE(ofs_running,"NON-LOCAL POTENTIAL");
 
     //=========================================================
     // calculate the total local pseudopotential in real space
     //=========================================================
-    pot.init_pot(0);//atomic_rho, v_of_rho, set_vrs
+    pot.init_pot(0, pw.strucFac);//atomic_rho, v_of_rho, set_vrs
 
-    pot.newd();//once
+    pot.newd();
+
     DONE(ofs_running,"INIT POTENTIAL");
 
     //==================================================
@@ -126,9 +128,7 @@ void Run_pw::plane_wave_line(void)
     if ( NBANDS != 0 || (CALCULATION!="scf-sto" && CALCULATION!="relax-sto" && CALCULATION!="md-sto") )//qianrui add 
 	{
     	wf.wfcinit();
-    }
-    
-    
+    }    
 
 	switch(exx_global.info.hybrid_type)				// Peize Lin add 2019-03-09
 	{
@@ -167,38 +167,21 @@ void Run_pw::plane_wave_line(void)
         // calculate spillage value.
         if ( winput::out_spillage == 3)
         {
-            // control here!!
-            //LOCAL_BASIS = 0; xiaohui modify 2013-09-01
-            BASIS_TYPE="pw"; //xiaohui add 2013-09-01
-            //LOCAL_BASIS = 0;
+            BASIS_TYPE="pw"; 
             cout << " NLOCAL = " << NLOCAL << endl;
 
             for (int ik=0; ik<kv.nks; ik++)
             {
                 wf.wanf2[ik].create(NLOCAL, wf.npwx);
-                //if ( LOCAL_BASIS == 3 || LOCAL_BASIS == 0 ) xiaohui modify 2013-09-01
-				if(BASIS_TYPE=="pw") //xiaohui add 2013-09-01. Attention! "LOCAL_BASIS==3"???
+				if(BASIS_TYPE=="pw")
                 {
 					cout << " ik=" << ik + 1 << endl;
 
-                    // mohan modify 2010-1-10
-                    //LOCAL_BASIS=4; xiaohui modify 2013-09-1
-                    BASIS_TYPE="lcao_in_pw"; //xiaohui add 2013-09-01. Attention! How about "BASIS_TYPE=lcao"???
-					// mohan update 2010-09-30
+                    BASIS_TYPE="lcao_in_pw";
 					wf.LCAO_in_pw_k(ik, wf.wanf2[ik]);
-                    //LOCAL_BASIS=0; xiaohui modify 2013-09-01
-                    BASIS_TYPE="pw"; //xiaohui add 2013-09-01
+                    BASIS_TYPE="pw";
                 }
             }
-
-            //xiaohui modify 2013-09-01. Attention! Maybe there is some problem. When will "LOCAL_BASIS==1"???
-            //if (LOCAL_BASIS == 1)
-            //{
-            //    winput::imp_pao = 2;
-            //    winput::b_recon = true;
-            //    winput::sph_proj = 0;
-            //    //wannier::running( ofs_running );
-            //} xiaohui modify 2013-09-01
 
             //Spillage sp;
             //sp.get_both(NBANDS, NLOCAL, wf.wanf2, wf.evc);
@@ -214,7 +197,6 @@ void Run_pw::plane_wave_line(void)
     }
 
 
-	//xiaohui add 2013-09-01. Attention! Maybe there is some problem.
 	if(Optical::opt_epsilon2 && (BASIS_TYPE=="pw" || BASIS_TYPE=="lcao_in_pw"))
 	{
 		Optical opt;
@@ -224,6 +206,6 @@ void Run_pw::plane_wave_line(void)
 	// compute density of states
 	en.perform_dos();
 
-	timer::tick("Run_Frag","plane_wave_line",'B');
+	timer::tick("Run_pw","plane_wave_line",'B');
     return;
 }

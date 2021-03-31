@@ -30,7 +30,7 @@ void Vdwd3::atomkind (const UnitCell_pseudo &unitcell)
 	{
 		for (int j=0; j!=element_name.size(); j++)
 		{
-			if ( unitcell.atoms[i].label == element_name[j] )
+			if ( unitcell.atoms[i].psd == element_name[j] )
 			{
 				atom_kind[i] = j ;
 				break;

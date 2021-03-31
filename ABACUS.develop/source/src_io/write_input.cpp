@@ -32,6 +32,7 @@ void Input::Print(const string &fn)const
 	OUTP(ofs,"nche_sto",nche_sto,"number of orders for Chebyshev expansion in stochastic DFT");
 	OUTP(ofs,"symmetry",symmetry,"turn symmetry on or off");	
 	OUTP(ofs,"nelec",nelec,"input number of electrons");
+	OUTP(ofs,"newdm",newDM,"");
 
 	ofs << "\n#Parameters (2.PW)" << endl;
 	OUTP(ofs,"ecutwfc",ecutwfc,"#energy cutoff for wave functions");
@@ -61,7 +62,7 @@ void Input::Print(const string &fn)const
 	OUTP(ofs,"nz",nz,"number of points along z axis for FFT grid");	
 	
 	ofs << "\n#Parameters (3.Relaxation)" << endl;
-	OUTP(ofs,"ks_solver",KS_SOLVER,"cg; david; lapack; genelpa; hpseps; scalapack_gvx");
+	OUTP(ofs,"ks_solver",KS_SOLVER,"cg; dav; lapack; genelpa; hpseps; scalapack_gvx");
 	OUTP(ofs,"niter",niter,"#number of electron iterations");
 	OUTP(ofs,"force_set",force_set,"output the force_set or not"); 
 	OUTP(ofs,"nstep",nstep,"number of ion iteration steps");
@@ -107,11 +108,11 @@ void Input::Print(const string &fn)const
 	OUTP(ofs,"bz",bz,"division of an element grid in FFT grid along z");
 
 	ofs << "\n#Parameters (5.Smearing)" << endl;
-	OUTP(ofs,"smearing",smearing,"type of smearing: gauss; fd; fixed; mp; mp2");
+	OUTP(ofs,"smearing",smearing,"type of smearing: gauss; fd; fixed; mp; mp2; mv");
 	OUTP(ofs,"sigma",degauss,"energy range for smearing");
 	
 	ofs << "\n#Parameters (6.Charge Mixing)" << endl;
-	OUTP(ofs,"mixing_type",mixing_mode,"plain; kerker; pulay; pulay-kerker");
+	OUTP(ofs,"mixing_type",mixing_mode,"plain; kerker; pulay; pulay-kerker; broyden");
 	OUTP(ofs,"mixing_beta",mixing_beta,"mixing parameter: 0 means no new charge");
 	OUTP(ofs,"mixing_ndim",mixing_ndim,"mixing dimension in pulay");
 	OUTP(ofs,"mixing_gg0",mixing_gg0,"mixing parameter in kerker");
@@ -123,7 +124,7 @@ void Input::Print(const string &fn)const
 	OUTP(ofs,"dos_sigma",b_coef,"gauss b coefficeinet(default=0.07)");
 
 	ofs << "\n#Parameters (8.Technique)" << endl;
-	OUTP(ofs,"gamma_only",gamma_only,"gamma only");
+	OUTP(ofs,"gamma_only",gamma_only,"gamma only, only used in LCAO basis");
 	OUTP(ofs,"diago_proc",DIAGO_PROC,"number of proc used to diago");
 	OUTP(ofs,"npool",npool,"number of pools for k points, pw only");
 	OUTP(ofs,"mem_saver",mem_saver,"memory saver for many k points used");

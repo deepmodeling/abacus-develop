@@ -9,6 +9,7 @@
 #include "pseudopot_cell_vl.h"
 #include "../src_lcao/ORB_gen_tables.h"
 #include "wavefunc_in_pw.h"
+#include "unitcell_pseudo.h"
 
 //==========================================================
 // Calculate the non-local pseudopotential in reciprocal
@@ -25,7 +26,7 @@ public:
 	friend class Stress_Func;
 	friend class Forces;
 	friend class Epsilon0_vasp;
-	friend class potential;
+	friend class Potential;
 	friend class Hamilt_PW;
 	friend class WF_atomic;
 	friend class wavefunc;
@@ -41,7 +42,7 @@ public:
 // NAME : lmaxkb(max angular momentum,(see pseudo_h))
 	int lmaxkb;
 
-	void init_vnl(void);
+	void init_vnl(UnitCell_pseudo &cell);
 
 private:
 
@@ -90,7 +91,7 @@ private:
 	double CG(int l1, int m1, int l2, int m2, int L, int M);
 	void print_vnl(ofstream &ofs);
 	
-	Make_Gaunt_Table MGT;
+	ORB_gaunt_table MGT;
 };
 
 #endif // PSEUDOPOT_CELL_VNL_H

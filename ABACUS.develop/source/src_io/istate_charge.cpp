@@ -110,7 +110,7 @@ void IState_Charge::begin(void)
 		{
 			cout << " Perform band decomposed charge density for band " << ib+1 << endl;
 			// (1)
-			// This has been done once in local_orbital_ions.
+			// This has been done once in LOOP_ions.
 			// but here we need to done for each band.
 			LOC.allocate_gamma(GridT);	
 			

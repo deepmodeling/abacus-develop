@@ -167,8 +167,10 @@ void Local_Orbital_wfc::set_trace_aug(const Grid_Technique &gt)
 	// this function must be called after ParaO.trace_loc_row
 	// , ParaO.trace_loc_col and GridT.trace_lo have been called.
 
-	//xiaohui add 'OUT_LEVEL' line, 2015-09-16
-	if(OUT_LEVEL != "m") ofs_running << "\n SETUP ARRAY FOR EXTRA WAVE FUNCTIONS" << endl;
+	if(OUT_LEVEL != "m") 
+	{
+		ofs_running << "\n SETUP ARRAY FOR EXTRA WAVE FUNCTIONS" << endl;
+	}
 
 	bool* occ2d = new bool[NLOCAL];
 	for(int i=0; i<NLOCAL; i++)
@@ -206,7 +208,6 @@ void Local_Orbital_wfc::set_trace_aug(const Grid_Technique &gt)
 			if(gt.trace_lo[i]<0) 
 			{
 				this->trace_aug[i] = daug;
-//				ofs_running << " report daug " << setw(5) << i << setw(5) << daug << endl;
 				++daug;
 			}
 		}
@@ -217,10 +218,6 @@ void Local_Orbital_wfc::set_trace_aug(const Grid_Technique &gt)
 	//---------------------------------
 	//second part: prepare for c_aug.
 	//---------------------------------
-	// mohan add 2010-09-26
-	//OUT(ofs_running,"allocate_aug_flag",allocate_aug_flag);
-	
-	// mohan fix bug 2011-03-03
 	static bool first = true;
 	if(first)
 	{
@@ -255,7 +252,7 @@ void Local_Orbital_wfc::set_trace_aug(const Grid_Technique &gt)
 				}
 			}
 		}
-		else //mohan add 2012-01-08
+		else
 		{
 			for(int ik=0; ik<kv.nks; ++ik)
 			{
@@ -268,7 +265,6 @@ void Local_Orbital_wfc::set_trace_aug(const Grid_Technique &gt)
 		allocate_aug_flag = false;
 	}
 
-	// mohan add 2010-09-26
 	if(daug != 0)
 	{
 		//------------------------------------------------------
@@ -301,7 +297,10 @@ void Local_Orbital_wfc::set_trace_aug(const Grid_Technique &gt)
 		allocate_aug_flag = true;
 	}
 
-	if(OUT_LEVEL != "m") OUT(ofs_running,"daug",daug);
+	if(OUT_LEVEL != "m") 
+	{
+		OUT(ofs_running,"daug",daug);
+	}
 
 	timer::tick("Local_Orbital_wfc","set_trace_aug",'D');
 	return; 

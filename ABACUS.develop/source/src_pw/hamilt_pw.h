@@ -13,8 +13,11 @@ public:
 
     static int moved;
 
-	// mohan updated 2021-02-22
-	void init(const int &npwx, const int &npol, const int &nkb, const int &nrxx);
+	void allocate(
+		const int &npwx, // number of plane wave (max)
+		const int &npol, // polarization 
+		const int &nkb,  // number of non-local pseudopotential projectors 
+		const int &nrxx); // number of grids on this processor
 
     void cal_err
     (

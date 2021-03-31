@@ -129,8 +129,6 @@ void Electrons::self_consistent(const int &istep)
     // conv_elec is a member of Threshold_Elec
     this->conv_elec = false;//mohan add 2008-05-25
 
-    clock_t start,finish;
-    double duration = 0.0;
 
     // mohan add 2010/3/25
     // output the charge mixing data :
@@ -156,7 +154,8 @@ void Electrons::self_consistent(const int &istep)
         else CHR.set_new_e_iteration(false);
 
         // record the start time.
-        start=std::clock();
+		// the clock is not accurate, needs to be fixed 2021-03-15 mohan
+        clock_t start=std::clock();
 
         //(1) set converged threshold, 
         // automatically updated during self consistency.
@@ -342,7 +341,7 @@ void Electrons::self_consistent(const int &istep)
 
         if(vext == 0) 
 		{
-			pot.set_vrs();
+			pot.set_vr_eff();
 		}
         else 
 		{
@@ -352,8 +351,9 @@ void Electrons::self_consistent(const int &istep)
         //print_eigenvalue(ofs_running);
         en.calculate_etot();
 
-        finish=clock();
-        duration = (double)(finish - start) / CLOCKS_PER_SEC;
+		// the clock is not accurate, needs to be fixed 2021-03-15 mohan
+        clock_t finish=clock();
+        double duration = (double)(finish - start) / CLOCKS_PER_SEC;
 
 		en.print_etot(conv_elec, istep, iter, dr2, duration, ETHR, avg_iter);
 

@@ -1,12 +1,76 @@
 //==========================================================
 // AUTHOR,	 Peize Lin
-// DATE ,	 2014-03-31
-// UPDATE ,	 2019-04-26
+// DATE ,	 2021-03-09
 //==========================================================
 
-#include"vdwd2.h"
+#include "vdwd2_parameters.h"
 
-void Vdwd2::init_C6()
+Vdwd2_Parameters::Vdwd2_Parameters()
+{
+	init_C6();
+	init_R0();
+}
+
+
+void Vdwd2_Parameters::initset(const UnitCell_pseudo &ucell)
+{
+	if(model=="radius")
+	{
+		period.x = 2*ceil(radius/ucell.lat0/sqrt(ucell.a1.norm2())) +1;
+		period.y = 2*ceil(radius/ucell.lat0/sqrt(ucell.a2.norm2())) +1;
+		period.z = 2*ceil(radius/ucell.lat0/sqrt(ucell.a3.norm2())) +1;		
+	}
+}
+
+void Vdwd2_Parameters::C6_input(const std::string &file, const std::string &unit)
+{
+	if( file != "default" )
+	{
+		ifstream ifs(file);
+		if(!ifs)
+			WARNING_QUIT("Vdwd2::C6_input", "Can not find the file "+TO_STRING(file));
+		std::string element;
+		double value;
+		while( ifs >> element >> value )
+			C6[element]=value;
+		ifs.close();
+	}
+	for(auto &c6 : C6)
+	{
+		if( unit == "Jnm6/mol")
+			c6.second *= 1e6/(ELECTRONVOLT_SI*NA)/pow(BOHR_TO_A,6)/Ry_to_eV;
+		else if( unit == "eVA6")
+			c6.second /= pow(BOHR_TO_A,6)/Ry_to_eV;
+//		else if( unit == "RyBohr6");
+		else
+			WARNING_QUIT("Input","vdwD2_C6_unit must be Jnm6/mol or eVA6");
+	}
+}
+
+void Vdwd2_Parameters::R0_input(const std::string &file, const std::string &unit)
+{
+	if( file != "default" )
+	{
+		ifstream ifs(file.c_str());
+		if(!ifs)
+			WARNING_QUIT("Vdwd2::R0_input", "Can not find the file "+TO_STRING(file));
+		std::string element;
+		double value;
+		while( ifs >> element >> value )
+			R0[element]=value;
+		ifs.close();
+	}
+	for(auto &r0 : R0)
+	{
+		if( unit == "A")
+			r0.second/= BOHR_TO_A;
+		else if( unit == "Bohr") ;
+		else
+			WARNING_QUIT("Input","vdwD2_R0_unit must be A or Bohr");			
+	}
+}
+
+void Vdwd2_Parameters::init_C6()
 {
 	C6 =
 	{
@@ -99,7 +163,7 @@ void Vdwd2::init_C6()
 	};	
 }
 
-void Vdwd2::init_R0()
+void Vdwd2_Parameters::init_R0()
 {
 	R0 =
 	{

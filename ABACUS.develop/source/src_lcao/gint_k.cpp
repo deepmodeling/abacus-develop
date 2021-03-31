@@ -39,7 +39,7 @@ void Gint_k::allocate_pvpR(void)
 		WARNING_QUIT("Gint_k::allocate_pvpR","pvpR has been allocated!");
 	}
 
-//	reduced = NURSE; 
+	//	reduced = NURSE; 
 	//xiaohui modify 2015-05-30
 	//cout << " reduced algorithm for grid integration = " << reduced << endl;
 
@@ -139,8 +139,11 @@ void Gint_k::destroy_pvpR(void)
 
 // fold the <phi | vl |dphi(R)> * DM(R) to 
 // calculate the force.
-void Gint_k::folding_force(matrix& fvl_dphi,
-	double* pvdpx, double* pvdpy, double* pvdpz)
+void Gint_k::folding_force(
+	matrix& fvl_dphi,
+	double* pvdpx, 
+	double* pvdpy, 
+	double* pvdpz)
 {
 	TITLE("Gint_k","folding_force");
 	timer::tick("Gint_k","folding_force");
@@ -311,9 +314,18 @@ void Gint_k::folding_force(matrix& fvl_dphi,
 
 // fold the <phi | vl * R_beta|dphi(R_alpha)> * DM(R) to 
 // calculate the stress.
-void Gint_k::folding_stress(matrix& fvl_dphi, matrix& svl_dphi,
-	double* pvdpx, double* pvdpy, double* pvdpz,
-	double* pvdp11, double* pvdp22, double* pvdp33,double* pvdp12, double* pvdp13, double* pvdp23)
+void Gint_k::folding_stress(
+	matrix& fvl_dphi, 
+	matrix& svl_dphi,
+	double* pvdpx, 
+	double* pvdpy, 
+	double* pvdpz,
+	double* pvdp11, 
+	double* pvdp22, 
+	double* pvdp33,
+	double* pvdp12, 
+	double* pvdp13, 
+	double* pvdp23)
 {
 	TITLE("Gint_k","folding_stress");
 	timer::tick("Gint_k","folding_stress");
@@ -1132,9 +1144,15 @@ void Gint_k::folding_vl_k_nc(const int &ik)
 	return;
 }
 
-void Gint_k::set_ijk_atom(const int &grid_index, const int &size,
-	double*** psir_ylm, double*** dr, bool** cal_flag, 
-	double** distance, double* ylma, const double &delta_r)
+void Gint_k::set_ijk_atom(
+	const int &grid_index, 
+	const int &size,
+	double*** psir_ylm, 
+	double*** dr, 
+	bool** cal_flag, 
+	double** distance, 
+	double* ylma, 
+	const double &delta_r)
 {
 	const Numerical_Orbital_Lm* pointer;
 	double mt[3];
@@ -1350,72 +1368,7 @@ void Gint_k::destroy_pvpR_tr(void)
 void Gint_k::distribute_pvpR_tr(void)
 {
     TITLE("Gint_k","distribute_pvpR_tr");
-/*
-    int lgd = 0;
-    double R_minX = GridD.getD_minX();
-    double R_minY = GridD.getD_minY();
-    double R_minZ = GridD.getD_minZ();
 
-    int R_x;
-    int R_y;
-    int R_z;
-
-    Vector3<double> tau1, dtau, dR;
-    for(int T1=0; T1<ucell.ntype; ++T1)
-    {
-        for(int I1=0; I1<ucell.atoms[T1].na; ++I1)
-        {
-            const int iat = ucell.itia2iat(T1,I1);
-            // atom in this grid piece.
-            if(GridT.in_this_processor[iat])
-            {
-                Atom* atom1 = &ucell.atoms[T1];
-                const int start1 = ucell.itiaiw2iwt(T1, I1, 0);
-
-                // get the start positions of elements.
-                const int DM_start = LNNR.nlocstartg[iat];
-
-                // get the coordinates of adjacent atoms.
-                tau1 = ucell.atoms[T1].tau[I1];
-                //GridD.Find_atom(tau1);	
-                GridD.Find_atom(tau1, T1, I1);
-                // search for the adjacent atoms.
-                int nad = 0;
-
-int adj_number = 0;
-                for(int ad = 0; ad < GridD.getAdjacentNum()+1; ad++)
-                {
-                    // get iat2
-                    const int T2 = GridD.getType(ad);
-                    const int I2 = GridD.getNatom(ad);
-                    const int iat2 = ucell.itia2iat(T2, I2);
-
-                    // adjacent atom is also on the grid.
-                    if(GridT.in_this_processor[iat2])
-                    {
-int index = 0;
-                        Atom* atom2 = &ucell.atoms[T2];
-                        dtau = GridD.getAdjacentTau(ad) - tau1;
-                        double distance = dtau.norm() * ucell.lat0;
-                        double rcut = ORB.Phi[T1].getRcut() + ORB.Phi[T2].getRcut();
-
-                        // for the local part, only need to calculate <phi_i | phi_j> within range
-                        // mohan note 2012-07-06
-                        if(distance < rcut)
-                        {
-adj_number++;
-                            const int start2 = ucell.itiaiw2iwt(T2, I2, 0);
-
-                            // calculate the distance between iat1 and iat2.
-                            // Vector3<double> dR = GridD.getAdjacentTau(ad) - tau1;
-                            dR.x = GridD.getBox(ad).x;
-                            dR.y = GridD.getBox(ad).y;
-                            dR.z = GridD.getBox(ad).z;
-
-                            R_x = (int) (dR.x -R_minX);
-                            R_y = (int) (dR.y -R_minY);
-                            R_z = (int) (dR.z -R_minZ);
-*/
     int R_x = GridD.getCellX();
     int R_y = GridD.getCellY();
     int R_z = GridD.getCellZ();
@@ -1496,6 +1449,7 @@ adj_number++;
 
     return;
 }
+
 
 void Gint_k::cal_vlocal_R(const int current_spin)
 {

@@ -1,7 +1,13 @@
 #include "src_pw/charge.h"
 #include "src_pw/global.h"
 
-void Charge::write_rho(const double* rho_save, const int &is, const int &iter, const string &fn, const int &precision, const bool for_plot)
+void Charge::write_rho(
+	const double* rho_save, 
+	const int &is, 
+	const int &iter, 
+	const string &fn, 
+	const int &precision, 
+	const bool for_plot)
 {
     TITLE("Charge","write_rho");
 
@@ -34,6 +40,7 @@ void Charge::write_rho(const double* rho_save, const int &is, const int &iter, c
 		ofs << " " << ucell.latvec.e11 << " " << ucell.latvec.e12 << " " << ucell.latvec.e13 << endl;
 		ofs << " " << ucell.latvec.e21 << " " << ucell.latvec.e22 << " " << ucell.latvec.e23 << endl;
 		ofs << " " << ucell.latvec.e31 << " " << ucell.latvec.e32 << " " << ucell.latvec.e33 << endl;
+
 		for(int it=0; it<ucell.ntype; it++)
 		{
 			ofs << " " << ucell.atoms[it].label;

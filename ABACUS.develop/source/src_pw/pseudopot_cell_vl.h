@@ -1,7 +1,3 @@
-//==========================================================
-// AUTHOR : Lixin He,mohan
-// DATE : 2008-11-6
-//==========================================================
 #ifndef pseudopot_cell_vl_H
 #define pseudopot_cell_vl_H
 
@@ -14,7 +10,7 @@ public:
 	pseudopot_cell_vl();
 	~pseudopot_cell_vl();
 
-	void init_vloc(void);
+	void init_vloc(const int &nggm, matrix &vloc_in);
 
 	matrix vloc;   //(ntype,ngl),the local potential for each atom type(ntype,ngl)
 	bool *numeric; //[ntype], =true

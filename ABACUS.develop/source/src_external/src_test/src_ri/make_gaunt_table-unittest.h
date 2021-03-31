@@ -8,7 +8,7 @@
 
 #include "src_lcao/ORB_gaunt_table.h"
 
-static void cout_MGT ( const Make_Gaunt_Table & MGT, const int Lmax )
+static void cout_MGT ( const ORB_gaunt_table & MGT, const int Lmax )
 {
 	for( int LA=0; LA<=Lmax; ++LA )
 	{
@@ -28,9 +28,9 @@ static void cout_MGT ( const Make_Gaunt_Table & MGT, const int Lmax )
 								<<mA<<"\t"
 								<<mB<<"\t"
 								<<mAB<<"\t"
-								<<Make_Gaunt_Table::Index_M(mA)<<"\t"
-								<<Make_Gaunt_Table::Index_M(mB)<<"\t"
-								<<Make_Gaunt_Table::Index_M(mAB)<<"\t"
+								<<ORB_gaunt_table::Index_M(mA)<<"\t"
+								<<ORB_gaunt_table::Index_M(mB)<<"\t"
+								<<ORB_gaunt_table::Index_M(mAB)<<"\t"
 								<<MGT.Gaunt_Coefficients (
 									MGT.get_lm_index(LA,mA),
 									MGT.get_lm_index(LB,mB),

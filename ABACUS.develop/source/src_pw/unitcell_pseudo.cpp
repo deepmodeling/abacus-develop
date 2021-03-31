@@ -288,6 +288,9 @@ void UnitCell_pseudo::setup_cell(
 
 	this->cal_meshx();
 
+	// setup vdwd2 parameters
+	vdwd2_para.initset(*this);		// Peize Lin add 2021.03.09
+
 //	stringstream ss;
 //	ss << global_out_dir << "unitcell_pp.log";
 //	print_unitcell_pseudo( ss.str() );

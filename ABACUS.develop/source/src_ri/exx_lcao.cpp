@@ -195,7 +195,9 @@ void Exx_Lcao::init()
 		{
 			const string command0 =  "test -d " + dir + " || mkdir " + dir;
 			if(MY_RANK==0)
+			{
 				system( command0.c_str() );
+			}
 		};
 		test_dir = {"test_exx/process/","test_exx/thread/","test_exx/matrix/"};
 		mkdir_one("test_exx");
@@ -210,7 +212,9 @@ void Exx_Lcao::init()
 		{
 			ofstream ofs(file);
 			for( size_t i=0; i!=v.size(); ++i )
+			{
 				ofs<<v[i]<<endl;
+			}
 			ofs.close();
 		};
 		auto pr_orb = [&pr_v]( const string & file, const Numerical_Orbital_Lm & orb )
@@ -359,17 +363,28 @@ void Exx_Lcao::init()
 		if(false)
 		{
 			for( int T=0; T!=ORB.get_ntype(); ++T )
+			{
 				for( int L=0; L<=ORB.Phi[T].getLmax(); ++L )
+				{
 					for( int N=0; N!=ORB.Phi[T].getNchi(L); ++N )
+					{
 						pr_orb_all( "orb_"+TO_STRING(T)+"_"+TO_STRING(L)+"_"+TO_STRING(N), ORB.Phi[T].PhiLN(L,N) );
+					}
+				}
+			}
 		}
 		else
 		{
 			for( int T=0; T!=ORB.get_ntype(); ++T )
+			{
 				for( int L=0; L<=ORB.Phi[T].getLmax(); ++L )
+				{
 					for( int N=0; N!=ORB.Phi[T].getNchi(L); ++N )
+					{
 						pr_orb_all_kmesh( "orb_"+TO_STRING(T)+"_"+TO_STRING(L)+"_"+TO_STRING(N), ORB.Phi[T].PhiLN(L,N), 5 );
-
+					}
+				}
+			}
 		}
 	};
 
@@ -377,66 +392,96 @@ void Exx_Lcao::init()
 	{
 		cout<<"kv.kvec_d:"<<endl;
 		for( size_t ik=0; ik!=kv.nks; ++ik )
+		{
 			cout<<kv.kvec_d[ik]<<endl;
+		}
 		cout<<"kv.kvec_c:"<<endl;
 		for( size_t ik=0; ik!=kv.nks; ++ik )
+		{
 			cout<<kv.kvec_c[ik]<<endl;
+		}
 
 		const Vector3<int>BvK_period( kv.nmp[0], kv.nmp[1], kv.nmp[2] );
 		vector<Vector3<double>> boxes;
 		for( int x=0; x!=BvK_period.x; ++x )
+		{
 			for( int y=0; y!=BvK_period.y; ++y )
+			{
 				for( int z=0; z!=BvK_period.z; ++z )
+				{
 					boxes.push_back({x,y,z});
+				}
+			}
+		}
 
 		cout<<"boxes:"<<endl;
 		for( size_t i=0; i!=boxes.size(); ++i )
+		{
 			cout<<boxes[i]<<endl;
+		}
 		cout<<"box * ucell.latvec:"<<endl;
 		for( size_t i=0; i!=boxes.size(); ++i )
+		{
 			cout<<boxes[i]*ucell.latvec<<endl;
+		}
 
 		cout<<"k R"<<endl;
 		for( size_t ik=0; ik!=kv.nks; ++ik )
 		{
 			for( size_t i=0; i!=boxes.size(); ++i )
+			{
 				cout<<kv.kvec_c[ik] * (boxes[i]*ucell.latvec)<<"\t";
+			}
 			cout<<endl;
 		}
 		cout<<"exp( - 2 pi i k R )"<<endl;
 		for( size_t ik=0; ik!=kv.nks; ++ik )
 		{
 			for( size_t i=0; i!=boxes.size(); ++i )
+			{
 				cout<<exp( -TWO_PI*IMAG_UNIT* (kv.kvec_c[ik]* (boxes[i]*ucell.latvec)) )<<"\t";
+			}
 			cout<<endl;
 		}
 		cout<<"k R"<<endl;
 		for( size_t ik=0; ik!=kv.nks; ++ik )
 		{
 			for( size_t i=0; i!=boxes.size(); ++i )
+			{
 				cout<<kv.kvec_d[ik] * static_cast<Vector3<double>>(boxes[i])<<"\t";
+			}
 			cout<<endl;
 		}
 		cout<<"exp( - 2 pi i k R )"<<endl;
 		for( size_t ik=0; ik!=kv.nks; ++ik )
 		{
 			for( size_t i=0; i!=boxes.size(); ++i )
+			{
 				cout<<exp( -TWO_PI*IMAG_UNIT* (kv.kvec_d[ik]* static_cast<Vector3<double>>(boxes[i])) )<<"\t";
+			}
 			cout<<endl;
 		}
 
 		cout<<"Rcut:"<<endl;
 		for( size_t T=0; T!=ORB.get_ntype(); ++T )
+		{
 			cout<<ORB.Phi[T].getRcut()<<endl;
+		}
 		cout<<"tau:"<<endl;
 		for( size_t iat=0; iat!=ucell.nat; ++iat )
+		{
 			cout<<ucell.atoms[ ucell.iat2it[iat] ].tau[ ucell.iat2ia[iat] ]<<endl;
+		}
 		cout<<"taud:"<<endl;
 		for( size_t iat=0; iat!=ucell.nat; ++iat )
+		{
 			cout<<ucell.atoms[ ucell.iat2it[iat] ].taud[ ucell.iat2ia[iat] ]<<endl;
+		}
 		cout<<"taud * latvec:"<<endl;
 		for( size_t iat=0; iat!=ucell.nat; ++iat )
+		{
 			cout<<ucell.atoms[ ucell.iat2it[iat] ].taud[ ucell.iat2ia[iat] ] * ucell.latvec<<endl;
+		}
 		cout<<"ucell.latvec:"<<endl;
 		ucell.latvec.print();
 	};
@@ -445,8 +490,12 @@ void Exx_Lcao::init()
 	{
 		matrix m(3,3);
 		for( size_t ir=0; ir!=m.nr; ++ir )
+		{
 			for( size_t ic=0; ic!=m.nc; ++ic )
+			{
 				m(ir,ic) = ir*10+ic;
+			}
+		}
 		ComplexMatrix cm = ComplexMatrix(m) * exp( -TWO_PI*IMAG_UNIT* 1.0/3.0 );
 		cout<<m<<endl;
 		cout<<cm<<endl;
@@ -481,11 +530,17 @@ gettimeofday( &t_start_all, NULL);
 	else
 	{
 		if("plain"==CHR.mixing_mode)
+		{
 			Hexx_para.mixing_mode = Exx_Abfs::Parallel::Communicate::Hexx::Mixing_Mode::Plain;
+		}
 		else if("pulay"==CHR.mixing_mode)
+		{
 			Hexx_para.mixing_mode = Exx_Abfs::Parallel::Communicate::Hexx::Mixing_Mode::Pulay;
+		}
 		else
+		{
 			throw invalid_argument("exx mixing error. exx_separate_loop==false, mixing_mode!=plain or pulay");
+		}
 		Hexx_para.mixing_beta = CHR.mixing_beta;
 	}
 
@@ -501,9 +556,13 @@ gettimeofday( &t_start, NULL);
 	const vector<vector<vector<Numerical_Orbital_Lm>>>
 		abfs_same_atom = Exx_Abfs::Construct_Orbs::abfs_same_atom( lcaos, this->kmesh_times, info.pca_threshold );		// Peize Lin test
 	if(info.files_abfs.empty())
+	{
 		this->abfs = abfs_same_atom;
+	}
 	else
+	{
 		this->abfs = Exx_Abfs::IO::construct_abfs( abfs_same_atom, ORB, info.files_abfs, this->kmesh_times );
+	}
 //	this->abfs = Exx_Abfs::Construct_Orbs::orth_orbs( abfs_origin );		// Peize Lin test
 ofs_mpi<<"TIME@ Exx_Abfs::Construct_Orbs::abfs\t"<<time_during(t_start)<<endl;
 
@@ -512,21 +571,27 @@ ofs_mpi<<"TIME@ Exx_Abfs::Construct_Orbs::abfs\t"<<time_during(t_start)<<endl;
 		for(size_t N=0; N!=orbs[0][0].size(); ++N)
 		{
 			for(size_t ir=0; ir!=orbs[0][0][N].getNr(); ++ir)
+			{
 				cout<<orbs[0][0][N].getPsi(ir)<<"\t";
+			}
 			cout<<endl;
 		}
 		cout<<endl;
 		for(size_t N=0; N!=orbs[0][0].size(); ++N)
 		{
 			for(size_t ir=0; ir!=orbs[0][0][N].getNr(); ++ir)
+			{
 				cout<<orbs[0][0][N].getPsi_r(ir)<<"\t";
+			}
 			cout<<endl;
 		}
 		cout<<endl;
 		for(size_t N=0; N!=orbs[0][0].size(); ++N)
 		{
 			for(size_t ik=0; ik!=orbs[0][0][N].getNk(); ++ik)
+			{
 				cout<<orbs[0][0][N].getPsi_k(ik)<<"\t";
+			}
 			cout<<endl;
 		}
 		cout<<endl;
@@ -538,14 +603,20 @@ ofs_mpi<<"TIME@ Exx_Abfs::Construct_Orbs::abfs\t"<<time_during(t_start)<<endl;
 	{
 		ofstream ofs(file_name);
 		for( size_t T=0; T!=orbs.size(); ++T )
+		{
 			for( size_t L=0; L!=orbs[T].size(); ++L )
+			{
 				for( size_t N=0; N!=orbs[T][L].size(); ++N )
 				{
 //					ofs<<T<<"\t"<<L<<"\t"<<N<<endl;
 					for(size_t ir=0; ir!=orbs[T][L][N].getNr(); ++ir)
+					{
 						ofs<<orbs[T][L][N].getPsi(ir)<<"\t";
+					}
 					ofs<<endl;
 				}
+			}
+		}
 		ofs.close();
 	};
 
@@ -575,15 +646,21 @@ ofs_mpi<<"TIME@ Conv_Coulomb_Pot_K::cal_orbs_ccp\t"<<time_during(t_start)<<endl;
 		const int power )
 	{
 		for( size_t i=0; i!=orbs.size(); ++i )
+		{
 			for( size_t j=0; j!=orbs[i].size(); ++j )
+			{
 				for( size_t k=0; k!=orbs[i][j].size(); ++k )
 				{
 					const Numerical_Orbital_Lm & orb = orbs[i][j][k];
 					ofstream ofs(file_name+"_"+TO_STRING(i)+"_"+TO_STRING(j)+"_"+TO_STRING(k));
 					for( size_t ik=0; ik!=orb.getNk(); ++ik )
+					{
 						ofs<<orb.getPsi_k(ik) / pow(orb.getKpoint(ik),power)<<endl;
+					}
 					ofs.close();
 				}
+			}
+		}
 	};
 
 	#if TEST_EXX_LCAO==1
@@ -594,7 +671,9 @@ ofs_mpi<<"TIME@ Conv_Coulomb_Pot_K::cal_orbs_ccp\t"<<time_during(t_start)<<endl;
 	#endif
 
 	for( size_t T=0; T!=abfs.size(); ++T )
+	{
 		Exx_Abfs::Lmax = std::max( Exx_Abfs::Lmax, static_cast<int>(abfs[T].size())-1 );
+	}
 
 ofs_mpi<<"Exx_Abfs::Lmax:\t"<<Exx_Abfs::Lmax<<endl;
 
@@ -784,11 +863,11 @@ gettimeofday( &t_start, NULL);
 ofs_mpi<<"TIME@ Abfs::cal_Cps\t"<<time_during(t_start)<<endl;
 
 gettimeofday( &t_start, NULL);
-	schwarz.init( true, info.schwarz_threshold );
+	schwarz.init( info.schwarz_threshold, info.schwarz_threshold );
 	schwarz.cal_max_pair_fock( atom_centres_core, m_abfs_abfs,m_abfslcaos_lcaos, index_abfs,index_lcaos, Born_von_Karman_period, Cws,Vws );
 ofs_mpi<<"TIME@ schwarz::init\t"<<time_during(t_start)<<endl;
 gettimeofday( &t_start, NULL);
-	cauchy.init( true, info.cauchy_threshold, Born_von_Karman_period );
+	cauchy.init( info.cauchy_threshold, info.cauchy_threshold, Born_von_Karman_period );
 	cauchy.cal_norm_C_max( Cps, index_lcaos, index_abfs );
 	cauchy.cal_norm_V( Vps );
 ofs_mpi<<"TIME@ cauchy::init\t"<<time_during(t_start)<<endl;
@@ -1176,13 +1255,17 @@ void Exx_Lcao::add_Hexx( const size_t ik, const double alpha ) const
 	{
 		const matrix & H = Hexx_para.HK_Gamma_m2D[ik];
 		for( size_t i=0; i<H.nr*H.nc; ++i )
+		{
 			LM.Hloc[i] += alpha * H.c[i];
+		}
 	}
 	else
 	{
 		const ComplexMatrix & H = Hexx_para.HK_K_m2D[ik];
 		for( size_t i=0; i<H.nr*H.nc; ++i )
+		{
 			LM.Hloc2[i] += alpha * H.c[i];
+		}
 	}
 }
 
@@ -1200,28 +1283,38 @@ timeval t_start;
 	{
 		os<<"atom_centres_core:"<<"\t";
 		for(const auto &a : atom_centres_core)
+		{
 			os<<a<<"\t";
+		}
 		os<<endl;
 		os<<"atom_pairs_core:"<<"\t";
 		for(const auto &a : atom_pairs_core)
+		{
 			os<<"("<<a.first<<","<<a.second<<")"<<"\t";
+		}
 		os<<endl;
 	};
 	auto print_radial_R = [&](ostream &os)
 	{
 		os<<"radial_R"<<endl;
 		for(const auto &rA : radial_R)
+		{
 			for(const auto &rB : rA.second)
 			{
 				os<<rA.first<<"\t"<<rB.first<<"\t"<<"|"<<"\t";
 				for(const auto rC : rB.second)
+				{
 					os<<rC<<"\t";
+				}
 				os<<endl;
 			}
+		}
 	};
 	
 	for(int it=0; it!=ucell.ntype; ++it)
+	{
 		radial_R[it][it].insert(0.0);
+	}
 
 	#if TEST_EXX_LCAO==1
 		ofstream ofs_C("delta_R_C.dat");
@@ -1408,9 +1501,13 @@ vector<map<size_t,map<size_t,map<Abfs::Vector3_Order<int>,matrix>>>> Exx_Lcao::c
 						{
 							const Abfs::Vector3_Order<int> & box2 = m_tmp3.first;
 							if( matrix*const m_all_ptr = static_cast<matrix*const>(MAP_EXIST( m_all[is], iat1, iat2, box2 )) )
+							{
 								*m_all_ptr += m_tmp3.second;
+							}
 							else
+							{
 								m_all[is][iat1][iat2][box2] = std::move(m_tmp3.second);
+							}
 						}
 					}
 				}
@@ -1421,7 +1518,9 @@ vector<map<size_t,map<size_t,map<Abfs::Vector3_Order<int>,matrix>>>> Exx_Lcao::c
 		auto vector_empty = []( const vector<map<size_t,map<size_t,map<Abfs::Vector3_Order<int>,matrix>>>> & v ) -> bool
 		{
 			for( const auto &i : v )
+			{
 				if(!i.empty())	return false;
+			}
 			return true;
 		};
 		

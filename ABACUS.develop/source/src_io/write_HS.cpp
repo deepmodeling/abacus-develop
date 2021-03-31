@@ -1,5 +1,6 @@
-#include "hs_matrix.h"
+#include "write_HS.h"
 #include "../src_pw/global.h"
+
 
 void HS_Matrix::saving_HS(const double *Hloc, const double* Sloc, bool bit, const int &out_hs)
 {   

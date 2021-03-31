@@ -1,14 +1,14 @@
-#ifndef LOCAL_ORBTIAL_ELEC
-#define LOCAL_ORBITAL_ELEC
+#ifndef LOOP_ELEC_H
+#define LOOP_ELEC_H
 
 #include "../src_pw/tools.h"
 
-class Local_Orbital_Elec
+class LOOP_elec
 {
 	public:
 
-	Local_Orbital_Elec(){};
-	~Local_Orbital_Elec(){};
+	LOOP_elec(){};
+	~LOOP_elec(){};
 
 	// mohan add 2021-02-09
 	void solve_elec_stru(const int &istep);
