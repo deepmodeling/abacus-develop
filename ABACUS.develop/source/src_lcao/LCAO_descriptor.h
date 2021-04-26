@@ -12,11 +12,11 @@ public:
     LCAO_Descriptor();
     ~LCAO_Descriptor();
 
-	// cal S_alpha_mu：overlap between lcao basis Phi and descriptor basis Al
+	// cal S_alpha_mu: overlap between lcao basis Phi and descriptor basis Al
     void build_S_descriptor(const bool &calc_deri); 
 
 	// cal PDM: S_alpha_mu * inv(Sloc) * DM * inv(Sloc) * S_nu_beta
-    void cal_projective_DM(void);
+    void cal_projected_DM(void);
 
 	// cal d: EIGENVALUE of PDM in block of I_n_l
     void cal_descriptor(void);
@@ -27,7 +27,7 @@ private:
 	// overlap between lcao and descriptor basis
     double *S_mu_alpha;
 
-	// projective density matrix
+	// projected density matrix
     double *PDM;
 
 	// descriptors
@@ -47,7 +47,7 @@ private:
 		const int &iw2_all, 
 		const double &v);
 
-    void print_projective_DM(
+    void print_projected_DM(
 		ofstream &ofs, 
 		ComplexMatrix &des, 
 		const int &it, 

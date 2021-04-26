@@ -549,7 +549,7 @@ void Pdiag_Double::diago_double_begin(
         delete[] eigen;
 	    OUT(ofs_running,"eigenvalues were copied to ekb");
 
-        if(NEW_DM==0)
+        if(INPUT.new_dm==0)
         {
             // convert wave function to band distribution 
 			// and calculate the density matrix in the tranditional way
@@ -655,9 +655,9 @@ void Pdiag_Double::diago_double_begin(
 		}
 		memcpy( ekb, ekb_tmp.data(), sizeof(double)*NBANDS ); 
 		
-		if(NEW_DM==0)
+		if(INPUT.new_dm==0)
 		{
-			throw domain_error("NEW_DM must be 1. "+TO_STRING(__FILE__)+" line "+TO_STRING(__LINE__));
+			throw domain_error("INPUT.new_dm must be 1. "+TO_STRING(__FILE__)+" line "+TO_STRING(__LINE__));
 		}
 	}
 	else if(KS_SOLVER=="lapack_gvx")
@@ -700,9 +700,9 @@ void Pdiag_Double::diago_double_begin(
 			throw runtime_error("M="+TO_STRING(M)+". NBANDS="+TO_STRING(NBANDS)+". "+TO_STRING(__FILE__)+" line "+TO_STRING(__LINE__));
 		}
 		
-		if(NEW_DM==0)
+		if(INPUT.new_dm==0)
 		{
-			throw domain_error("NEW_DM must be 1. "+TO_STRING(__FILE__)+" line "+TO_STRING(__LINE__));
+			throw domain_error("INPUT.new_dm must be 1. "+TO_STRING(__FILE__)+" line "+TO_STRING(__LINE__));
 		}
 	}
 	else if(KS_SOLVER=="scalapack_gvx")
@@ -755,9 +755,9 @@ void Pdiag_Double::diago_double_begin(
 		{
 			throw runtime_error("M="+TO_STRING(M)+". NZ="+TO_STRING(NZ)+". "+TO_STRING(__FILE__)+" line "+TO_STRING(__LINE__));
 		}
-		if(NEW_DM==0)
+		if(INPUT.new_dm==0)
 		{
-			throw domain_error("NEW_DM must be 1. "+TO_STRING(__FILE__)+" line "+TO_STRING(__LINE__));
+			throw domain_error("INPUT.new_dm must be 1. "+TO_STRING(__FILE__)+" line "+TO_STRING(__LINE__));
 		}
 	}	
     //delete[] Stmp; //LiuXh 20171109
@@ -1037,8 +1037,8 @@ void Pdiag_Double::diago_complex_begin(const int &ik, complex<double> **wfc, Com
 		if(M!=NZ)
 			throw runtime_error("M="+TO_STRING(M)+". NZ="+TO_STRING(NZ)+". "+TO_STRING(__FILE__)+" line "+TO_STRING(__LINE__));
 		
-//		if(NEW_DM==0)
-//			throw domain_error("NEW_DM must be 1. "+TO_STRING(__FILE__)+" line "+TO_STRING(__LINE__));
+//		if(INPUT.new_dm==0)
+//			throw domain_error("INPUT.new_dm must be 1. "+TO_STRING(__FILE__)+" line "+TO_STRING(__LINE__));
 		// the follow will be deleted after finish newdm
 		{
 			//change eigenvector matrix from block-cycle distribute matrix to column-divided distribute matrix

@@ -113,14 +113,23 @@ class ORB_table_phi
 
 	// variables
     int ntype;
+
 	int lmax;
+
 	double Rmax;
+
 	double dk;
+
 	int nlm;
+
 	int kmesh;
+
 	double *kpoint;
+
 	double *r;
+
 	double *rab;
+
 	double *kab;	
 };
 #endif

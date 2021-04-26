@@ -1,15 +1,13 @@
 #ifndef ORB_GEN_TABLES_H
 #define ORB_GEN_TABLES_H
 
-//#include "../src_pw/tools.h"
-//#include "../src_global/ylm.h"
-
 #include "ORB_gaunt_table.h"
 #include "ORB_table_beta.h"
 #include "ORB_table_phi.h"
 #include "ORB_table_alpha.h"		//caoyu add 2020-3-18
 #include "ORB_read.h"
 #include "../src_global/vector3.h"
+#include "../src_global/matrix.h"
 
 //------------------------------------
 // used to be 'Use_Overlap_Table',
@@ -27,7 +25,8 @@ class ORB_gen_tables
 	void gen_tables( 
 		const int &job0, 
 		LCAO_Orbitals &orb,
-		const int &Lmax_exx);
+		const int &Lmax_exx,
+		const int &out_descriptor); // whether to generate descriptors
 
 	void set_unit( const double &v ){lat0=v;}
 	
@@ -64,6 +63,7 @@ class ORB_gen_tables
 		const int &n2,
 		const Vector3<double> &Rnl,
 		const int &type,
+		const matrix &dion, // mohan add 2021-04-25
 		complex<double> *nlm1=NULL,
 		const int is=0)const;
 

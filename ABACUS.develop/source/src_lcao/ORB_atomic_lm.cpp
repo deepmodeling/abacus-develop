@@ -210,7 +210,10 @@ void Numerical_Orbital_Lm::extra_uniform(const double &dr_uniform_in)
 	this->psi_uniform.resize(nr_uniform,0);
 
 	// do interpolation here to make grid more dense
+
+#ifdef __OPENMP
 	#pragma omp parallel for schedule(static)
+#endif
 	for (int ir = 0; ir < this->nr_uniform; ir++)
 	{
 		const double psi_uniform_tmp  = 
@@ -516,7 +519,10 @@ void Numerical_Orbital_Lm::cal_kradial_sbpool(void)
 		psi_f_tmp *= pref;
 	}
 #else
+
+#ifdef __OPENMP
 	#pragma omp parallel for schedule(static)
+#endif
 	for (int ik = 0; ik < nk; ik++)
 	{
 		const double psi_f_tmp = 

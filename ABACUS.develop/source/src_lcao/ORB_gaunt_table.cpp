@@ -1,11 +1,10 @@
-#include "ORB_gaunt_table.h"
 #include <math.h>
 #include <cassert>
+#include "ORB_gaunt_table.h"
 #include "../src_global/timer.h"
 #include "../src_global/memory.h"
 #include "../src_global/mathzone.h"
 #include "../src_global/global_function.h"
-//#include "../src_global/matrix3.h"
 #include "../src_global/vector3.h"
 #include "../src_global/constants.h"
 

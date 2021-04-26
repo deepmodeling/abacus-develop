@@ -196,6 +196,5 @@ extern int test_ion_dynamics;
 extern int test_deconstructor;
 
 extern bool FINAL_SCF; //LiuXh add 20180619
-extern int NEW_DM;  // Shen Yu add 2019/5/9
 
 #endif

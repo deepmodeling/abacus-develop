@@ -103,7 +103,7 @@ void Vdwd2::cal_stress()
     TITLE("Vdwd2","stress");
 	para.initset(ucell);
 
-	stress.Reset();
+	stress.Zero();
 	
 	for( int it1=0; it1!=ucell.ntype; ++it1 )
 	{

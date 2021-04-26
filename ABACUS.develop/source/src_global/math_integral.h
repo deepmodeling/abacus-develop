@@ -15,8 +15,8 @@ class Integral
     static void Simpson_Integral
     (
         const int mesh,
-        const double *func,
-        const double *rab,
+        const double * const func,
+        const double * const rab,
         double &asum
     );
 
@@ -24,7 +24,7 @@ class Integral
 	static void Simpson_Integral
 	(
 		const int mesh,
-		const double *func,
+		const double * const func,
 		const double dr,
 		double &asum
 	);
@@ -33,18 +33,18 @@ class Integral
     static void Simpson_Integral_0toall
     (
         const int mesh,
-        const double *func,
-        const double *rab,
-        double *asum
+        const double * const func,
+        const double * const rab,
+        double * const asum
     );
 
     // Peize Lin add 2016-02-14
     static void Simpson_Integral_alltoinf
     (
         const int mesh,
-        const double *func,
-        const double *rab,
-        double *asum
+        const double * const func,
+        const double * const rab,
+        double * const asum
     );     
 
 };

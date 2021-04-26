@@ -26,6 +26,7 @@ public:
 
 	void Reset(void);
 	void Identity(void);
+	void Zero(void);
 	double Det(void) const ;
 	Matrix3	Transpose(void) const ;
 	Matrix3	Inverse(void) const ;

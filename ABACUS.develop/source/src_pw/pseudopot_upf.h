@@ -1,8 +1,3 @@
-//==========================================================
-// Author: Lixin He,mohan
-// DATE : 2009-02-26
-//==========================================================
-/* pseudopot_upf.h   */
 #ifndef PSEUDOPOT_UPF_H
 #define PSEUDOPOT_UPF_H
 
@@ -89,6 +84,7 @@ public:
 
 	bool functional_error;//xiaohui add 2015-03-24
 	int average_p(); //zhengdy add 2020-10-20
+	void set_empty_element();		// Peize Lin add for bsse 2022.04.07
 
 private:
 

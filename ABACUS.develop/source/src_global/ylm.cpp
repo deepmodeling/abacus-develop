@@ -1045,7 +1045,7 @@ void Ylm::grad_rl_sph_harm
 	return;
 }
 	
-void Ylm::set_coefficients ()
+void Ylm::set_coefficients(void)
 {
 	Ylm::ylmcoef[0] = 1.0 / sqrt(FOUR_PI);
 	Ylm::ylmcoef[1] = sqrt (3.0 / FOUR_PI);
@@ -1086,6 +1086,7 @@ void Ylm::set_coefficients ()
 	return;
 }
 
+
 void Ylm::test1 (void)
 {
 	Vector3<double> R (20.0, 0.0, 0.0);
@@ -1120,6 +1121,7 @@ void Ylm::test1 (void)
 	}
 	return;
 }
+
 
 void Ylm::test2 (void)
 {
@@ -1515,7 +1517,8 @@ void Ylm::rlylm
 	return;
 }
 
-void Ylm::test()
+
+void Ylm::test(void)
 {
 	Vector3<double> R(0.0, 0.0, 1.0);
 	
@@ -1609,6 +1612,7 @@ void Ylm::test()
 	return;
 }
 
+
 void Ylm::ZEROS(double u[], const int& n)
 {
 	for(int i = 0; i < n; i++)
@@ -1617,6 +1621,7 @@ void Ylm::ZEROS(double u[], const int& n)
 	}
 	return;
 }
+
 
 //==========================================================
 // MEMBER FUNCTION : 
@@ -1637,6 +1642,7 @@ long double Ylm::Fact(const int n)
 	return f;
 }
 
+
 int Ylm::Semi_Fact(const int n)
 {
 	int semif = 1;
@@ -1647,10 +1653,10 @@ int Ylm::Semi_Fact(const int n)
 	return semif;
 }
 
+
 double Ylm::sgn(const double x)
 {
 	if(x < 0.0) return -1.0;
 	if(x > 0.0) return 1.0;
 	return 0.0;
 }
-

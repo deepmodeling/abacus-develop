@@ -1,10 +1,12 @@
-//=========================================================
-//AUTHOR : liaochen
-//DATE : 2008-03-04
-//=========================================================
+#include <cassert>
+#include <iostream>
+#include <sstream>
+#include <cmath>
 #include "ORB_nonlocal_lm.h"
-#include "../src_pw/global.h"
 #include "../src_global/math_integral.h"
+#include "../src_global/global_function.h"
+#include "../src_global/mathzone.h" // use Polynomial_Interpolation_xy
+#include "../src_global/mathzone_add1.h" // use SplineD2
 
 Numerical_Nonlocal_Lm::Numerical_Nonlocal_Lm()
 {
@@ -159,8 +161,7 @@ void Numerical_Nonlocal_Lm::set_NL_proj(
 	//this->extra_uniform(dr_uniform);
 	// (2) get the beta_k
 	this->get_kradial();
-	// (3)
-	this->plot();
+
 	return;
 }
 
@@ -229,7 +230,9 @@ void Numerical_Nonlocal_Lm::get_kradial(void)
     double *jl = new double[nr];
     double *integrated_func = new double[nr];
 
-    const double pref = sqrt( 2.0 / PI );
+	// mohan add constant of pi, 2021-04-26
+	const double pi = 3.14159265358979323846;
+    const double pref = sqrt( 2.0 / pi );
 
     for (int ik = 0; ik < nk; ik++)
     {
@@ -260,7 +263,7 @@ void Numerical_Nonlocal_Lm::get_kradial(void)
 }
 
 
-void Numerical_Nonlocal_Lm::plot(void)const
+void Numerical_Nonlocal_Lm::plot(const int &my_rank)const
 {
 	string orbital_type;
 	switch( this->angular_momentum_l )
@@ -273,7 +276,7 @@ void Numerical_Nonlocal_Lm::plot(void)const
 		default: WARNING_QUIT("Numerical_Orbital_Lm::plot","Please check in functoin.");
 	}
 
-	if(MY_RANK==0)
+	if(my_rank==0)
 	{
 		stringstream ssr, ssk, ssru;
 		ssr << global_out_dir << this->label << "/"
@@ -291,7 +294,7 @@ void Numerical_Nonlocal_Lm::plot(void)const
 
 		if (!ofsk || !ofsr || !ofsru)
 		{
-			WARNING("Numerical_Orbital_Lm : plot", "Can't open files !");
+			WARNING_QUIT("Numerical_Orbital_Lm::plot", "Can't open files!");
 		}
 
 		for (int i = 0; i < this->nr; i++)

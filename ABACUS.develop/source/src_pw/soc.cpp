@@ -51,11 +51,6 @@ Soc::~Soc()
 	delete[] p_rot;
 }
 
-void Soc::init()
-{
-   return;
-}
-
 
 double Soc::spinor(const int l, const double j, const int m, const int spin)
 {
@@ -101,54 +96,26 @@ double Soc::spinor(const int l, const double j, const int m, const int spin)
 void Soc::rot_ylm(const int lmax)
 {
 	int m,n,l;
-	//   this->rotylm = new complex<double>* [2*lmax +1];
-	//   for(int i=0;i< 2 * lmax + 1; i++){
-	//      this->rotylm[i] = new complex<double> [2*lmax +1];
-	//      for(int j = 0;j< 2 * lmax + 1;j++){
-	//          this->rotylm[i][j] = complex<double>(0.0,0.0) ;
-	//      }
-	//   }
-	this->l_max = 2 * lmax + 1;
+	l_max_ = lmax;
+	l2plus1_ = 2 * l_max_ + 1;
 	delete[] p_rot;
-	this->p_rot = new complex<double> [this->l_max * this->l_max];
-	ZEROS(p_rot, this->l_max*this->l_max);
-	this->rotylm(0,lmax) = complex<double>(1.0, 0.0);
+	this->p_rot = new complex<double> [l2plus1_ * l2plus1_];
+	ZEROS(p_rot, l2plus1_ * l2plus1_);
+	this->p_rot[l_max_] = complex<double>(1.0, 0.0);
 
-	l = lmax;
+	l = l_max_;
 	for(int i=1;i<2*l+1;i += 2)
 	{
 		m = (i+1)/2;
 		n = l-m;
-		this->rotylm(i,n) = complex<double>(pow(-1.0 , m) / sqrt(2) , 0.0);
-		this->rotylm(i+1,n) = complex<double>(0.0,-pow(-1.0 , m)/sqrt(2));
+		this->p_rot[l2plus1_*i + n] = complex<double>(pow(-1.0 , m) / sqrt(2) , 0.0);
+		this->p_rot[l2plus1_*(i+1) + n] = complex<double>(0.0,-pow(-1.0 , m)/sqrt(2));
 		n = l+m;
-		this->rotylm(i,n) = complex<double>(1.0/sqrt(2), 0.0);
-		this->rotylm(i+1,n) = complex<double>(0.0, 1.0/sqrt(2));
+		this->p_rot[l2plus1_*i + n] = complex<double>(1.0/sqrt(2), 0.0);
+		this->p_rot[l2plus1_*(i+1) + n] = complex<double>(0.0, 1.0/sqrt(2));
 	}
 	return;
 }
-
-/*void Soc::allocate_fcoef(const int nhm,const int nt)
-  { 
-//allocate
-fcoef = new complex<double> ****[nt];
-for(int i=0;i<nt;i++){
-fcoef[i] = new complex<double> ***[2];
-for(int j=0;j<2;j++){
-fcoef[i][j] = new complex<double> **[2];
-for(int k=0;k<nhm;k++){
-fcoef[i][j][k] = new complex<double> *[nhm];
-for(int l=0;l<nhm;l++){
-fcoef[i][j][k][l] = new complex<double> [nhm];
-for(int m=0;m<nhm;m++){
-fcoef[i][j][k][l][m] = complex<double>(0.0,0.0);
-}
-}
-}
-}
-}
-return;
-}*/
 
 int Soc::sph_ind(const int l, const double j, const int m, const int spin)
 {
@@ -254,4 +221,28 @@ bool Soc::judge_parallel(double a[3], Vector3<double> b)
    cross = pow((a[1]*b.z-a[2]*b.y),2) +  pow((a[2]*b.x-a[0]*b.z),2) + pow((a[0]*b.y-a[1]*b.x),2);
    jp = (fabs(cross)<1e-6);
    return jp;
+}
+
+void Soc::set_fcoef(
+	const int &l1,
+	const int &l2,
+	const int &is1,
+	const int &is2,
+	const int &m1,
+	const int &m2,
+	const double &j1,
+	const double &j2,
+	const int &it,
+	const int &ip1,
+	const int &ip2)
+{
+	complex<double> coeff = complex<double>(0.0,0.0);
+	for(int m=-l1-1;m<l1+1;m++)
+	{
+		const int mi = sph_ind(l1,j1,m,is1) + l_max_ ;
+		const int mj = sph_ind(l2,j2,m,is2) + l_max_ ;
+		coeff += rotylm(m1,mi) * spinor(l1,j1,m,is1)*
+				conj(rotylm(m2,mj)) * spinor(l2,j2,m,is2);
+	}
+	this->fcoef(it,is1,is2,ip1,ip2) = coeff;
 }

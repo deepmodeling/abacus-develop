@@ -1,7 +1,6 @@
 #ifndef LCAO_ORBITALS_H
 #define LCAO_ORBITALS_H
 
-//#include "../src_pw/tools.h"
 #include "ORB_atomic.h"
 #include "ORB_atomic_lm.h"
 #include "ORB_nonlocal.h"
@@ -20,21 +19,32 @@ class LCAO_Orbitals
 	LCAO_Orbitals();
 	~LCAO_Orbitals();
 
-	void Read_Orbitals(const int &ntype_in);
+	void Read_Orbitals(
+		const int &ntype_in,
+		const int &lmax_in,
+		const int &out_descriptor, //  mohan add 2021-04-25
+		const int &out_r_matrix, // mohan add 2021-04-26
+		const int &my_rank); // mohan add 2021-04-26
 
-	void Read_PAO(const int& it);
+	void Read_PAO(
+		const int& it,
+		const int& my_rank); // mohan add 2021-04-26
 
+#ifdef __NORMAL
+
+#else
 	// in order to get rid of the .NONLOCAL file.
 	void Set_NonLocal(const int &it, int &n_projectors);
 
 	// read in the NONLOCAL projector from file.
 	void Read_NonLocal(const int& it, int &n_projectors);
+#endif
 
 
 	void Read_Descriptor(void);		//caoyu add 2020-3-16
 
 #ifdef __MPI
-	void bcast_files(void);
+	void bcast_files(const int &ntype_in);
 #endif
 
 	const double& get_ecutwfc(void) const {return ecutwfc;}
@@ -66,7 +76,6 @@ class LCAO_Orbitals
 	double Rmax;
 	int *nproj; //mohan add 2010-12-19
 	int nprojmax; // mohan add 2010-03-07
-	IntArray ib2_ylm;
 	
 	double dr_uniform;
 
@@ -79,14 +88,14 @@ class LCAO_Orbitals
 
 	private:
 
-	int kmesh;
+	int ntype; // number of elements
+	int kmesh; // number of points on kmesh
+
 	int lmax;
 	int nchimax;
+
 	int lmax_d;	//caoyu add 2021-03-17
 	int nchimax_d;	//caoyu add 2021-03-17
-	int ntype; // number of elements
-
-	void set_nl_index(void);
 
 };
 

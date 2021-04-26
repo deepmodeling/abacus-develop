@@ -149,7 +149,7 @@ void Force_LCAO_gamma::cal_fvnl_dbeta(
                             atom2->iw2l[kk], // L1
                             atom2->iw2m[kk], // m1
                             atom2->iw2n[kk], // n1
-                            tau0, it);
+                            tau0, it, ucell.atoms[it].dion);
 
                         double nlm1[3] = {0,0,0};
 
@@ -165,7 +165,7 @@ void Force_LCAO_gamma::cal_fvnl_dbeta(
                                 atom1->iw2l[jj], // L1
                                 atom1->iw2m[jj], // m1
                                 atom1->iw2n[jj], // n1
-                                tau0, it);
+                                tau0, it, ucell.atoms[it].dion);
 						}
 
                         const int index = mu * ParaO.ncol + nu;
@@ -365,7 +365,7 @@ void Force_LCAO_gamma::cal_fvnl_dbeta(
                                         atom2->iw2l[kk], // L1
                                         atom2->iw2m[kk], // m1
                                         atom2->iw2n[kk], // n1
-                                        tau0, it);
+                                        tau0, it, ucell.atoms[it].dion);
                         double nlm1[3] = {0,0,0};
                         if(isstress) UOT.snap_psibeta(
                                                    nlm1, 1,
@@ -377,7 +377,7 @@ void Force_LCAO_gamma::cal_fvnl_dbeta(
                                                    atom1->iw2l[jj], // L1
                                                    atom1->iw2m[jj], // m1
                                                    atom1->iw2n[jj], // n1
-                                                   tau0, it);
+                                                   tau0, it, ucell.atoms[it].dion);
 
                         const int index = mu * ParaO.ncol + nu;
 

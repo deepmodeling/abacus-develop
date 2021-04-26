@@ -399,7 +399,7 @@ class Input
 //  2: use new DM algorithm and only show key debug information
 //  3: use new DM algorithm and show all detail debug information
 //==========================================================
-    int newDM;
+    int new_dm;
 
 //==========================================================
 //    DFT+U       Xin Qu added on 2020-10-29

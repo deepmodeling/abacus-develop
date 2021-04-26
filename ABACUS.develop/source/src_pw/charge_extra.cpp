@@ -423,19 +423,7 @@ void Charge_Extra::find_alpha_and_beta(void)
 
 void Charge_Extra::save_pos_next(const UnitCell_pseudo& ucell)
 {
-	int iat=0;
-	for(int it = 0;it < ucell.ntype;it++)
-    {
-        Atom* atom = &ucell.atoms[it];
-        for(int ia =0;ia< ucell.atoms[it].na;ia++)
-        {
-            this->pos_next[3*iat  ] = atom->tau[ia].x*ucell.lat0;
-            this->pos_next[3*iat+1] = atom->tau[ia].y*ucell.lat0;
-            this->pos_next[3*iat+2] = atom->tau[ia].z*ucell.lat0;
-
-            iat++;
-        }
-    }
+	ucell.save_cartesian_position(this->pos_next);
 	return;
 }
 
@@ -447,25 +435,12 @@ void Charge_Extra::update_istep(const int &step)
 
 void Charge_Extra::update_all_pos(const UnitCell_pseudo& ucell)
 {
-	int iat = 0;
-	for(int it = 0;it < ucell.ntype;it++)
-    {
-        Atom* atom = &ucell.atoms[it];
-        for(int ia =0;ia< ucell.atoms[it].na;ia++)
-        {
-            this->pos_old2[3*iat  ] = this->pos_old1[3*iat  ];
-            this->pos_old2[3*iat+1] = this->pos_old1[3*iat+1];
-            this->pos_old2[3*iat+2] = this->pos_old1[3*iat+2];
-
-            this->pos_old1[3*iat  ] = this->pos_now[3*iat  ];
-            this->pos_old1[3*iat+1] = this->pos_now[3*iat+1];
-            this->pos_old1[3*iat+2] = this->pos_now[3*iat+2];
-
-            this->pos_now[3*iat  ] = atom->tau[ia].x*ucell.lat0;
-            this->pos_now[3*iat+1] = atom->tau[ia].y*ucell.lat0;
-            this->pos_now[3*iat+2] = atom->tau[ia].z*ucell.lat0;
-
-            iat++;
-        }
-    }
+	const int total_freedom = ucell.nat * 3;
+	for(int i=0;i<total_freedom;i++)
+	{
+		this->pos_old2[i] = this->pos_old1[i];
+		this->pos_old1[i] = this->pos_now[i];
+	}
+	ucell.save_cartesian_position(this->pos_now);
+	return;
 }

@@ -397,6 +397,8 @@ void Input_Conv::Convert(void)
 #endif
 	}
 	else{
+		delete[] soc.m_loc;
+		soc.m_loc = new Vector3<double> [INPUT.ntype];
 		LSPINORB = false;
 		NONCOLIN = false;
 		DOMAG = false;
@@ -578,7 +580,7 @@ void Input_Conv::Convert(void)
 
     ppcell.cell_factor = INPUT.cell_factor; //LiuXh add 20180619
 
-    NEW_DM=INPUT.newDM;  // Shen Yu add 2019/5/9
+//    NEW_DM=INPUT.new_dm;  // Shen Yu add 2019/5/9
 
 //----------------------------------------------------------
 // main parameters / electrons / spin ( 2/16 )
@@ -625,10 +627,11 @@ void Input_Conv::Convert(void)
 //----------------------------------------------------------
 // About LCAO
 //----------------------------------------------------------
-	ORB.ecutwfc = INPUT.lcao_ecut;
-	ORB.dk = INPUT.lcao_dk;
-	ORB.dR = INPUT.lcao_dr;
-	ORB.Rmax = INPUT.lcao_rmax; 
+// mohan add 2021-04-16
+//	ORB.ecutwfc = INPUT.lcao_ecut;
+//	ORB.dk = INPUT.lcao_dk;
+//	ORB.dR = INPUT.lcao_dr;
+//	ORB.Rmax = INPUT.lcao_rmax; 
 
 	// mohan add 2021-02-16
 	berryphase::berry_phase_flag = INPUT.berry_phase;

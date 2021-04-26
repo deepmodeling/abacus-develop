@@ -32,7 +32,6 @@ void Input::Print(const string &fn)const
 	OUTP(ofs,"nche_sto",nche_sto,"number of orders for Chebyshev expansion in stochastic DFT");
 	OUTP(ofs,"symmetry",symmetry,"turn symmetry on or off");	
 	OUTP(ofs,"nelec",nelec,"input number of electrons");
-	OUTP(ofs,"newdm",newDM,"");
 
 	ofs << "\n#Parameters (2.PW)" << endl;
 	OUTP(ofs,"ecutwfc",ecutwfc,"#energy cutoff for wave functions");
@@ -92,6 +91,7 @@ void Input::Print(const string &fn)const
 
 	ofs << "\n#Parameters (4.LCAO)" << endl;
 	OUTP(ofs,"basis_type",basis_type,"PW; LCAO in pw; LCAO");
+	OUTP(ofs,"new_dm",new_dm,"Type of density matrix; 0: old 1: new");
 	if(ks_solver=="HPSEPS" || ks_solver=="genelpa" || ks_solver=="scalapack_gvx")
 	{
 		OUTP(ofs,"nb2d",nb2d,"2d distribution of atoms");

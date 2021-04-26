@@ -655,7 +655,7 @@ void Force_LCAO_gamma::cal_foverlap(
     timer::tick("Force_LCAO_gamma","cal_foverlap",'G');
 
     // set energy density matrix.
-    if(NEW_DM>0)
+    if(INPUT.new_dm>0)
     {
         timer::tick("Force_LCAO_gamma","cal_edm_2d",'H');
 

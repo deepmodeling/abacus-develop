@@ -36,19 +36,13 @@ void Ions_Move_Basic::setup_gradient(double* pos, double *grad, const matrix &fo
 	// the unit of pos: Bohr.
 	// the unit of force: Ry/Bohr.
 	// the unit of gradient: 
+	ucell.save_cartesian_position(pos);
 	int iat=0;
 	for(int it = 0;it < ucell.ntype;it++)
 	{
 		Atom* atom = &ucell.atoms[it];
 		for(int ia =0;ia< ucell.atoms[it].na;ia++)
 		{	
-			pos[3*iat  ] = atom->tau[ia].x*ucell.lat0;
-			pos[3*iat+1] = atom->tau[ia].y*ucell.lat0;
-			pos[3*iat+2] = atom->tau[ia].z*ucell.lat0;
-
-			// mohan remove mbl constrain 2010-04-26
-			// mohan add mbl constrain 2010-07-11
-			// mohan add ucell.lat0 2010-07-27
 			if(atom->mbl[ia].x == 1)
 			{
 				grad[3*iat  ] = -force(iat, 0)*ucell.lat0;
@@ -77,15 +71,12 @@ void Ions_Move_Basic::move_atoms(double *move, double *pos)
 	assert(move!=NULL);
 	assert(pos!=NULL);
 
-	// unit: Bohr
-	int iat=0;
-
 	//------------------------
 	// for test only
 	//------------------------
 	if(test_ion_dynamics)
 	{
-		iat=0;
+		int iat=0;
 		ofs_running << "\n movement of ions (unit is Bohr) : " << endl;
 		ofs_running << " " << setw(12) << "Atom" << setw(15) << "x" << setw(15) << "y" << setw(15) << "z" << endl;
 		for(int it = 0;it < ucell.ntype;it++)
@@ -105,89 +96,20 @@ void Ions_Move_Basic::move_atoms(double *move, double *pos)
 		assert( iat == ucell.nat );
 	}
 
-	iat = 0;
-	double move_threshold = 1.0e-10;
-	for(int it = 0;it < ucell.ntype;it++)
+	const double move_threshold = 1.0e-10;
+	const int total_freedom = ucell.nat * 3;
+	for(int i =0;i<total_freedom;i++)
 	{
-		Atom* atom = &ucell.atoms[it];
-		for(int ia =0;ia< atom->na;ia++)
+		if( abs(move[i]) > move_threshold )
 		{
-			// mohan add 2010-08-06
-			// otherwise, there might be bug for
-			// sltk_grid, on system CO when C
-			// atom is put on (0,0,0)
-			for(int i=0; i<3; i++)
-			{
-				if( abs(move[3*iat+i]) < move_threshold )
-				{
-					move[3*iat+i] = 0.0;
-				}
-			}
-		
-			// mohan modify 2010-04-26
-			if(atom->mbl[ia].x!=0)
-			{
-				atom->tau[ia].x = (move[3*iat]+pos[3*iat])/ucell.lat0;
-			}
-			if(atom->mbl[ia].y!=0)
-			{
-				atom->tau[ia].y = (move[3*iat+1]+pos[3*iat+1])/ucell.lat0;
-			}
-			if(atom->mbl[ia].z!=0)
-			{
-				atom->tau[ia].z = (move[3*iat+2]+pos[3*iat+2])/ucell.lat0;
-			}
-
-			// the direct coordinates also need to be updated.
-			atom->taud[ia] = atom->tau[ia] * ucell.GT;
-//			cout << " tau=" << atom->tau[ia].x << " " << atom->tau[ia].y << " " << atom->tau[ia].z << endl;
-			iat++;
+			pos[i] += move[i];
 		}
 	}
-	assert(iat == ucell.nat);
+	ucell.update_pos_tau(pos);
 
-	//----------------------------------------------
-	// because of the periodic boundary condition
-	// we need to adjust the atom positions,
-	// first adjust direct coordinates,
-	// then update them into cartesian coordinates,
-	//----------------------------------------------
-	for(int it=0; it<ucell.ntype; it++)
-	{
-		Atom* atom = &ucell.atoms[it];
-		for(int ia=0; ia<atom->na; ia++)
-		{
-			// mohan update 2011-03-21
-			if(atom->taud[ia].x<0) atom->taud[ia].x += 1.0;
-			if(atom->taud[ia].y<0) atom->taud[ia].y += 1.0;
-			if(atom->taud[ia].z<0) atom->taud[ia].z += 1.0;
-			if(atom->taud[ia].x>=1.0) atom->taud[ia].x -= 1.0;
-			if(atom->taud[ia].y>=1.0) atom->taud[ia].y -= 1.0;
-			if(atom->taud[ia].z>=1.0) atom->taud[ia].z -= 1.0;
-
-			if(atom->taud[ia].x<0 || atom->taud[ia].y<0
-				|| atom->taud[ia].z<0 ||
-				atom->taud[ia].x>=1.0 ||
-				atom->taud[ia].y>=1.0 ||
-				atom->taud[ia].z>=1.0)
-			{
-				ofs_warning << " it=" << it+1 << " ia=" << ia+1 << endl;
-				ofs_warning << "d=" << atom->taud[ia].x << " " << 
-				atom->taud[ia].y << " " << atom->taud[ia].z << endl;
-				WARNING_QUIT("Ions_Move_Basic::move_ions","the movement of atom is larger than the length of cell.");
-			}
-
-			atom->tau[ia] = atom->taud[ia] * ucell.latvec;
-		}
-	}
-//2015-09-16
-#ifdef __MPI
-    MPI_Barrier(MPI_COMM_WORLD);
-    for (int i=0;i<ucell.ntype;i++)
-    {
-        ucell.atoms[i].bcast_atom(); // bcast tau array
-    }
-#endif
+	ucell.periodic_boundary_adjustment();
+	
+	ucell.bcast_atoms_tau();
 
 	//--------------------------------------------
 	// Print out the structure file.

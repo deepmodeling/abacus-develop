@@ -137,7 +137,7 @@ void LOOP_ions::opt_ions(void)
         {
             LCAO_Descriptor ld;
             ld.build_S_descriptor(0);  //derivation not needed yet
-            ld.cal_projective_DM();
+            ld.cal_projected_DM();
             ld.cal_descriptor();
         }
 
@@ -200,7 +200,7 @@ void LOOP_ions::opt_ions(void)
     }
 
 	// mohan update 2021-02-10
-    hm.orb_con.clear_after_ions(UOT, ORB);
+    hm.orb_con.clear_after_ions(UOT, ORB, INPUT.out_descriptor);
 
     timer::tick("LOOP_ions","opt_ions",'B'); 
     return;

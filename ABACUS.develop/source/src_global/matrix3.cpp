@@ -23,6 +23,13 @@ void Matrix3::Identity(void)
 	e31 = 0;e32 = 0;e33 = 1;
 }
 
+void Matrix3::Zero(void)
+{
+	e11 = 0;e12 = 0;e13 = 0;
+	e21 = 0;e22 = 0;e23 = 0;
+	e31 = 0;e32 = 0;e33 = 0;
+}
+
 double Matrix3::Det(void) const 
 {
 	return	e11*e22*e33 -

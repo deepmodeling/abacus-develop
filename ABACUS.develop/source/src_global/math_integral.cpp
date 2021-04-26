@@ -58,8 +58,8 @@ void Integral::Simpson_Integral
 void Integral::Simpson_Integral
 (
     const int mesh,
-    const double *func,
-    const double *rab,
+    const double * const func,
+    const double * const rab,
     double &asum
 )
 {
@@ -99,7 +99,7 @@ void Integral::Simpson_Integral
 void Integral::Simpson_Integral
 (
     const int mesh,
-    const double *func,
+    const double * const func,
     const double dr,
     double &asum
 )
@@ -140,9 +140,9 @@ void Integral::Simpson_Integral
 void Integral::Simpson_Integral_0toall
 (
     const int mesh,
-    const double *func,
-    const double *rab,
-    double *asum
+    const double * const func,
+    const double * const rab,
+    double * const asum
 )
 {
     // asum(r) = \int_{r'=0}^{r} dr' f(r') 
@@ -204,9 +204,9 @@ void Integral::Simpson_Integral_0toall
 void Integral::Simpson_Integral_alltoinf
 (
     const int mesh,
-    const double *func,
-    const double *rab,
-    double *asum
+    const double * const func,
+    const double * const rab,
+    double * const asum
 )
 {
     Integral::Simpson_Integral_0toall( mesh, func, rab, asum );

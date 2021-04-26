@@ -457,7 +457,7 @@ void Input::Default(void)
 
 	cell_factor = 1.2; //LiuXh add 20180619
 
-	newDM=1; // Shen Yu add 2019/5/9
+	new_dm=1; // Shen Yu add 2019/5/9
 	mulliken=0;// qi feng add 2019/9/10
 
 //----------------------------------------------------------			//Peize Lin add 2020-04-04
@@ -1662,7 +1662,7 @@ bool Input::Read(const string &fn)
 		}
 		else if (strcmp("newdm", word) == 0)
 		{
-			read_value(ifs, newDM);
+			read_value(ifs, new_dm);
 		}
 //----------------------------------------------------------------------------------
 //         Xin Qu added on 2020-10-29 for DFT+U
@@ -2265,7 +2265,7 @@ void Input::Bcast()
 	
 		//Parallel_Common::bcast_int( epsilon0_choice );
     Parallel_Common::bcast_double( cell_factor); //LiuXh add 20180619
-    Parallel_Common::bcast_int( newDM ); // Shen Yu add 2019/5/9
+    Parallel_Common::bcast_int( new_dm ); // Shen Yu add 2019/5/9
     Parallel_Common::bcast_bool( restart_save ); // Peize Lin add 2020.04.04
     Parallel_Common::bcast_bool( restart_load ); // Peize Lin add 2020.04.04
 

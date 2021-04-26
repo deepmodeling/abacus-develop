@@ -114,7 +114,7 @@ void UnitCell_pseudo::setup_cell(
 	this->bcast_unitcell_pseudo();
 
 	// mohan add 2010-09-29
-	ORB.bcast_files();
+	ORB.bcast_files(ucell.ntype);
 #endif
 	
 	//========================================================

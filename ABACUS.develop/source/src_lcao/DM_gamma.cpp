@@ -108,7 +108,7 @@ int Local_Orbital_Charge::setAlltoallvParameter(MPI_Comm comm_2D, int blacs_ctxt
         int prow, pcol;
         Cblacs_pcoord(blacs_ctxt, pnum, &prow, &pcol);
         receiver_size_process[pnum]=nRow_in_proc[prow]*nCol_in_proc[pcol];
-        if(NEW_DM>1)
+        if(INPUT.new_dm>1)
         {
             OUT(ofs_running,"pnum",pnum);
             OUT(ofs_running,"prow",prow);
@@ -182,7 +182,7 @@ int Local_Orbital_Charge::setAlltoallvParameter(MPI_Comm comm_2D, int blacs_ctxt
                   sender_2D_index, sender_size_process, sender_displacement_process, MPI_INT, comm_2D);
 
 
-    if(NEW_DM>1)
+    if(INPUT.new_dm>1)
     {
         ofs_running<<"receiver_size is "<<receiver_size<<" ; receiver_size of each process is:\n";
         for(int i=0; i<nprocs; ++i)
@@ -281,7 +281,7 @@ void Local_Orbital_Charge::cal_dk_gamma_from_2D(void)
 
     for(int is=0; is<NSPIN; ++is)
     {
-        if(NEW_DM>1)
+        if(INPUT.new_dm>1)
         // outputDM( ParaO.blacs_ctxt, ParaO.nb);
         {
             // int myid;
@@ -319,7 +319,7 @@ void Local_Orbital_Charge::cal_dk_gamma_from_2D(void)
                                                                 // so the row and column index should be switched
             if(sender_buffer[i]!=0) ++nNONZERO;
         }
-        if(NEW_DM>1) 
+        if(INPUT.new_dm>1) 
         {
             OUT(ofs_running,"number of non-zero elements in sender_buffer",nNONZERO);
             OUT(ofs_running,"sender_size",sender_size);
@@ -348,7 +348,7 @@ void Local_Orbital_Charge::cal_dk_gamma_from_2D(void)
             if(receiver_buffer[i]!=0) ++nNONZERO;
         }
 
-        if(NEW_DM>1)
+        if(INPUT.new_dm>1)
         {
             OUT(ofs_running,"number of non-zero elements in receiver_buffer",nNONZERO);
             OUT(ofs_running,"receiver_size",receiver_size);

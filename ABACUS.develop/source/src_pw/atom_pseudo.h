@@ -23,6 +23,7 @@ public:
 	Vector3<int> *mbl; //If this atom can move
 	string pseudo_fn;// File name of pseudopotentia
 	double mass; // the mass of atom
+	bool flag_empty_element = false;	// whether is the empty element for bsse.	Peize Lin add 2021.04.07
 
 protected:
 

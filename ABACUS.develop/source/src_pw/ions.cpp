@@ -384,11 +384,15 @@ bool Ions::force_stress(const int &istep, int &force_step, int &stress_step)  //
             }
             else
             {
+				ofs_running << " Setup the structure factor in plane wave basis." << endl;
+                pw.setup_structure_factor();
+				ofs_running << " Setup the extrapolated charge." << endl;
                 CE.save_pos_next(ucell);
                 CE.update_istep(force_step);
                 CE.extrapolate_charge();
-
+				ofs_running << " Setup the Vl+Vh+Vxc according to new structure factor and new charge." << endl;
                 pot.init_pot( istep, pw.strucFac );
+				ofs_running << " Setup the new wave functions?" << endl;
                 wf.wfcinit();
                 ++force_step;
                 return 0;

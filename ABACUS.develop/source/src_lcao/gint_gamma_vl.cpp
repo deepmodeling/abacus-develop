@@ -462,7 +462,9 @@ void Gint_Gamma::gamma_vlocal(void)						// Peize Lin update OpenMP 2020.09.27
 	mkl_set_num_threads(std::max(1,mkl_threads/GridT.nbx));		// Peize Lin update 2021.01.20
 
 
+#ifdef __OPENMP
 	#pragma omp parallel
+#endif
 	{		
 		//OUT(ofs_running, "start calculate gamma_vlocal");
 
@@ -584,7 +586,9 @@ void Gint_Gamma::gamma_vlocal(void)						// Peize Lin update OpenMP 2020.09.27
 			//------------------------------------------------------
 			int *block_iw = new int[max_size];
 
+#ifdef __OPENMP
 			#pragma omp for
+#endif
 			for (int i=0; i< nbx; i++)
 			{
 				const int ibx=i*pw.bx;
@@ -635,7 +639,9 @@ void Gint_Gamma::gamma_vlocal(void)						// Peize Lin update OpenMP 2020.09.27
 				}// j
 			}// i
 
+#ifdef __OPENMP
 			#pragma omp critical(cal_vl)
+#endif
 			{
 				for (int i=0; i<lgd_now; i++)
 				{
