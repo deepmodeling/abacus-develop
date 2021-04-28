@@ -44,23 +44,23 @@ Local_Orbital_Charge::Local_Orbital_Charge()
 Local_Orbital_Charge::~Local_Orbital_Charge()
 {
     // with gamma point only
-     if (this->init_DM)
-	 {
-		 for (int is=0; is<NSPIN; is++)
-		 {
-			 delete[] DM[is];
-			 delete[] DM_pool[is];
-		 }
-		 delete[] DM;
-		 delete[] DM_pool;
-		 delete[] sender_2D_index;
-		 delete[] sender_size_process;
-		 delete[] sender_displacement_process;
+    if (this->init_DM)
+	{
+		/*for (int is=0; is<NSPIN; is++)
+		{
+			delete[] DM[is];
+			//delete[] DM_pool[is];
+		}*/
+		delete[] DM;
+		//delete[] DM_pool;
+		delete[] sender_2D_index;
+		delete[] sender_size_process;
+		delete[] sender_displacement_process;
 
-		 delete[] receiver_local_index;
-		 delete[] receiver_size_process;
-		 delete[] receiver_displacement_process;
-	 }
+		delete[] receiver_local_index;
+		delete[] receiver_size_process;
+		delete[] receiver_displacement_process;
+	}
 
     // with k points
     if (this->init_DM_R)

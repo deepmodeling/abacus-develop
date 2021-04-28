@@ -177,7 +177,8 @@ Exx_Abfs::Parallel::Communicate::DM::LOC_to_grid(
 		for( int i1=0; i1!=GridT.lgd; ++i1 )
 		{
 			for( int i2=0; i2!=GridT.lgd; ++i2 )
-				ofs<<LOC.DM[is][i1][i2]<<"\t";
+				//ofs<<LOC.DM[is][i1][i2]<<"\t";
+				ofs<<LOC.DM[is](i1,i2)<<"\t";
 			ofs<<endl;
 		}
 		ofs<<endl;
@@ -200,7 +201,8 @@ Exx_Abfs::Parallel::Communicate::DM::LOC_to_grid(
 					{
 						for( int iw2=0; iw2!=nw2; ++iw2 )
 						{
-							DM_grid_2D(iw1,iw2) = LOC.DM[is][iwt1_index+iw1][iwt2_index+iw2];
+							//DM_grid_2D(iw1,iw2) = LOC.DM[is][iwt1_index+iw1][iwt2_index+iw2];
+							DM_grid_2D(iw1,iw2) = LOC.DM[is](iwt1_index+iw1,iwt2_index+iw2);
 						}
 					}
 					if( DM_grid_2D.absmax() * SPIN_multiple >= threshold )

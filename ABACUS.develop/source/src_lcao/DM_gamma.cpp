@@ -220,13 +220,13 @@ void Local_Orbital_Charge::allocate_gamma(const Grid_Technique &gt)
     if(this->init_DM)
     {
 		assert(lgd_last > 0);
-		for (int is=0; is<NSPIN; is++)
+		/*for (int is=0; is<NSPIN; is++)
 		{
 			delete[] DM[is];
-			delete[] DM_pool[is];
-		}
+			//delete[] DM_pool[is];
+		}*/
 		delete[] DM;
-		delete[] DM_pool;
+		//delete[] DM_pool;
 		init_DM = false;
     }
 
@@ -235,18 +235,19 @@ void Local_Orbital_Charge::allocate_gamma(const Grid_Technique &gt)
     // mohan update 2010-09-06
     if(lgd_now > 0)
     {
-		this->DM = new double**[NSPIN];
-		this->DM_pool = new double *[NSPIN];
+		this->DM = new matrix [NSPIN];
+		//this->DM_pool = new double *[NSPIN];
 		for(int is=0; is<NSPIN; is++)
 		{
-			this->DM_pool[is]=new double [lgd_now*lgd_now];
-			ZEROS(DM_pool[is], lgd_now*lgd_now);
-			this->DM[is] = new double*[lgd_now];
+			//this->DM_pool[is]=new double [lgd_now*lgd_now];
+			//ZEROS(DM_pool[is], lgd_now*lgd_now);
+            this->DM[is].create(lgd_now, lgd_now);
+            this->DM[is].zero_out();
 
-			for (int i=0; i<lgd_now; i++)
+			/*for (int i=0; i<lgd_now; i++)
 			{
 				DM[is][i] = &DM_pool[is][i*lgd_now];
-			}
+			}*/
 			Memory::record("LocalOrbital_Charge","Density_Kernal",NSPIN*lgd_now*lgd_now,"double");
 		}
 		this->init_DM = true;
@@ -343,7 +344,8 @@ void Local_Orbital_Charge::cal_dk_gamma_from_2D(void)
             const int idx=receiver_local_index[i];
             const int icol=idx%lgd_now;
             const int irow=(idx-icol)/lgd_now;
-            DM[is][irow][icol]=receiver_buffer[i];
+            DM[is](irow,icol)=receiver_buffer[i];
+            //DM[is][irow][icol]=receiver_buffer[i];
             //DM[is][icol][irow]=receiver_buffer[i];
             if(receiver_buffer[i]!=0) ++nNONZERO;
         }
@@ -380,7 +382,8 @@ void Local_Orbital_Charge::cal_dk_gamma_from_2D(void)
                 {
                     int jj=GridT.trace_lo[j];
                     if(jj<0) continue;
-                    ofs_running<<DM[is][ii][jj]<<" ";
+                    //ofs_running<<DM[is][ii][jj]<<" ";
+                    ofs_running << DM[is](ii,jj) << " ";
                 }
                 ofs_running<<endl;
             }
@@ -410,10 +413,11 @@ void Local_Orbital_Charge::cal_dk_gamma(void)
 	// Peize Lin update 2018-07-02
 	for(int is=0; is<NSPIN; ++is )
 	{
-		for (int i=0; i<lgd_now; i++)
+		/*for (int i=0; i<lgd_now; i++)
 		{
 			ZEROS(this->DM[is][i], lgd_now);
-		}
+		}*/
+        this->DM[is].zero_out();
 	}
 
 	// initialize
@@ -538,7 +542,8 @@ void Local_Orbital_Charge::cal_dk_gamma(void)
 							const int col_index = col_count*300 + i_col;
 							const int col_nu = GridT.trace_lo[col_index];
 							if(col_nu<0)    continue;
-							this->DM[is][row_mu][col_nu] = rho_row_col(i_row,i_col);
+							//this->DM[is][row_mu][col_nu] = rho_row_col(i_row,i_col);
+                            this->DM[is](row_mu,col_nu) = rho_row_col(i_row,i_col);
 						}
 					}
 				}
@@ -561,16 +566,20 @@ void Local_Orbital_Charge::cal_dk_gamma(void)
 
 		if(idx0>=0)
 		{
-			ofs_running<<"DM(0,0)"<<DM[is][idx0][idx0]<<"\t";
+			//ofs_running<<"DM(0,0)"<<DM[is][idx0][idx0]<<"\t";
+            ofs_running<<"DM(0,0)"<<DM[is](idx0,idx0)<<"\t";
 		}
 		if(idx0>=0 && idx1>=0)
 		{
-			ofs_running<<"DM(0,1)"<<DM[is][idx0][idx1]<<endl;
-			ofs_running<<"DM(1,0)"<<DM[is][idx1][idx0]<<"\t";
+			//ofs_running<<"DM(0,1)"<<DM[is][idx0][idx1]<<endl;
+			//ofs_running<<"DM(1,0)"<<DM[is][idx1][idx0]<<"\t";
+            ofs_running<<"DM(0,1)"<<DM[is](idx0,idx1)<<endl;
+			ofs_running<<"DM(1,0)"<<DM[is](idx1,idx0)<<"\t";
 		}
 		if(idx1>=0)
 		{
-			ofs_running<<"DM(1,1)"<<DM[is][idx1][idx1]<<endl;
+			//ofs_running<<"DM(1,1)"<<DM[is][idx1][idx1]<<endl;
+            ofs_running<<"DM(1,1)"<<DM[is](idx1,idx1)<<endl;
 		}
 	}  // end for is    
 #endif //2015-09-06, xiaohui

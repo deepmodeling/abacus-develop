@@ -1,6 +1,7 @@
 #ifndef LOCAL_ORBITAL_CHARGE
 #define LOCAL_ORBITAL_CHARGE
 
+#include "src_global/matrix.h"
 #include "src_pw/tools.h"
 #include "src_lcao/grid_technique.h"
 #include "src_lcao/wfc_dm_2d.h"
@@ -33,7 +34,11 @@ class Local_Orbital_Charge
 
 	// liaochen modify on 2010-3-23 
 	// change its state from private to public
-	double*** DM;	
+	//double** DM;
+
+	// liuyu modify 2021-04-28
+	// change it to matrix to get rid of DM_pool
+	matrix *DM;
 	double** DM_R;
 
 	// whether to printout density matrix
@@ -66,7 +71,9 @@ private:
 	// add by yshen on 9/22/2014
 	// these variables are memory pool for DM series matrixes, 
 	// so that these matrixes will be storaged continuously in the memory.
-	double **DM_pool;
+	
+	// liuyu delete 2021-04-28
+	//double **DM_pool;
 	
 	// Buffer parameters for tranforming 2D block-cyclic distributed DM matrix 
 	// to grid distributed DM matrix

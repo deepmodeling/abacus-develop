@@ -190,8 +190,12 @@ void Gint_Gamma::cal_band_rho(
             // if enough cal_flag is nonzero
             if(cal_num>ib_length/4)
             {
-                dsymm_(&side, &uplo, &bsize[ia1], &ib_length, 
+                /*dsymm_(&side, &uplo, &bsize[ia1], &ib_length, 
                     &alpha_symm, &LOC.DM[is][iw1_lo][iw1_lo], &GridT.lgd, 
+                    &psir_ylm[first_ib][colidx[ia1]], &LD_pool, 
+                    &beta, &psir_DM[first_ib][colidx[ia1]], &LD_pool);*/
+				dsymm_(&side, &uplo, &bsize[ia1], &ib_length, 
+                    &alpha_symm, &LOC.DM[is](iw1_lo,iw1_lo), &GridT.lgd, 
                     &psir_ylm[first_ib][colidx[ia1]], &LD_pool, 
                     &beta, &psir_DM[first_ib][colidx[ia1]], &LD_pool);
             }
@@ -202,8 +206,12 @@ void Gint_Gamma::cal_band_rho(
                 {
                     if(cal_flag[ib][ia1]>0)
                     {
-                        dsymv_(&uplo, &bsize[ia1],
+                        /*dsymv_(&uplo, &bsize[ia1],
                             &alpha_symm, &LOC.DM[is][iw1_lo][iw1_lo], &GridT.lgd,
+                            &psir_ylm[ib][colidx[ia1]], &inc,
+                            &beta, &psir_DM[ib][colidx[ia1]], &inc);*/
+						dsymv_(&uplo, &bsize[ia1],
+                            &alpha_symm, &LOC.DM[is](iw1_lo,iw1_lo), &GridT.lgd,
                             &psir_ylm[ib][colidx[ia1]], &inc,
                             &beta, &psir_DM[ib][colidx[ia1]], &inc);
                     }
@@ -241,8 +249,12 @@ void Gint_Gamma::cal_band_rho(
                 int iw2_lo=block_iw[ia2];
                 if(cal_pair_num>ib_length/4)
                 {
-                    dgemm_(&transa, &transb, &bsize[ia2], &ib_length, &bsize[ia1], 
+                    /*dgemm_(&transa, &transb, &bsize[ia2], &ib_length, &bsize[ia1], 
                         &alpha_gemm, &LOC.DM[is][iw1_lo][iw2_lo], &GridT.lgd, 
+                        &psir_ylm[first_ib][colidx[ia1]], &LD_pool, 
+                        &beta, &psir_DM[first_ib][colidx[ia2]], &LD_pool);*/
+					dgemm_(&transa, &transb, &bsize[ia2], &ib_length, &bsize[ia1], 
+                        &alpha_gemm, &LOC.DM[is](iw1_lo,iw2_lo), &GridT.lgd, 
                         &psir_ylm[first_ib][colidx[ia1]], &LD_pool, 
                         &beta, &psir_DM[first_ib][colidx[ia2]], &LD_pool);
                 }
@@ -252,8 +264,12 @@ void Gint_Gamma::cal_band_rho(
                     {
                         if(cal_flag[ib][ia1]>0 && cal_flag[ib][ia2]>0)
                         {
-                            dgemv_(&transa, &bsize[ia2], &bsize[ia1], 
+                            /*dgemv_(&transa, &bsize[ia2], &bsize[ia1], 
                                 &alpha_gemm, &LOC.DM[is][iw1_lo][iw2_lo], &GridT.lgd,
+                                &psir_ylm[ib][colidx[ia1]], &inc,
+                                &beta, &psir_DM[ib][colidx[ia2]], &inc);*/
+							dgemv_(&transa, &bsize[ia2], &bsize[ia1], 
+                                &alpha_gemm, &LOC.DM[is](iw1_lo,iw2_lo), &GridT.lgd,
                                 &psir_ylm[ib][colidx[ia1]], &inc,
                                 &beta, &psir_DM[ib][colidx[ia2]], &inc);
                         }

@@ -999,7 +999,8 @@ ofs_mpi.close();
 						for( size_t iw1=0; iw1!=ucell.atoms[it1].nw; ++iw1 )
 						{
 							for( size_t iw2=0; iw2!=ucell.atoms[it2].nw; ++iw2 )
-								ofs<<LOC.DM[is][ucell.itiaiw2iwt(it1,ia1,iw1)][ucell.itiaiw2iwt(it2, ia2, iw2)]<<"\t";
+								//ofs<<LOC.DM[is][ucell.itiaiw2iwt(it1,ia1,iw1)][ucell.itiaiw2iwt(it2, ia2, iw2)]<<"\t";
+								ofs<<LOC.DM[is](ucell.itiaiw2iwt(it1,ia1,iw1), ucell.itiaiw2iwt(it2, ia2, iw2))<<"\t";
 							ofs<<endl;
 						}
 						ofs<<endl;

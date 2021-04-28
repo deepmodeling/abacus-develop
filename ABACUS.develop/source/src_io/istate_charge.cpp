@@ -156,7 +156,8 @@ void IState_Charge::idmatrix(const int &ib)
 			if ( mu_local >= 0)
 			{
 				// set a pointer.
-				double *alpha = LOC.DM[is][mu_local];
+				//double *alpha = LOC.DM[is][mu_local];
+				double *alpha = &LOC.DM[is](mu_local,0);
 				for (int j=i; j<NLOCAL; j++)
 				{
 					const int nu_local = GridT.trace_lo[j];

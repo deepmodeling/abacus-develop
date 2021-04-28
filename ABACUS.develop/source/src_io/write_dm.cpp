@@ -130,7 +130,8 @@ void Local_Orbital_Charge::write_dm(
             for(int j=0; j<NLOCAL; ++j)
             {
                 if(j%8==0) ofs << "\n";
-                ofs << " " << this->DM[is][i][j];
+                //ofs << " " << this->DM[is][i][j];
+                ofs << " " << this->DM[is](i,j);
             }
         }
     }
@@ -178,7 +179,8 @@ void Local_Orbital_Charge::write_dm(
                     const int nu = GridT.trace_lo[j];
                     if (nu >=0)
                     {
-                        tmp[j] = DM[is][mu][nu];
+                        //tmp[j] = DM[is][mu][nu];
+                        tmp[j] = DM[is](mu,nu);
                         //ofs_running << " dmi=" << i << " j=" << j << " " << DM[is][mu][nu] << endl;
                     }
                 }

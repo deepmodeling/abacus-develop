@@ -97,7 +97,8 @@ void Local_Orbital_Charge::read_dm(const int &is, const string &fn)
         {
             for(int j=0; j<NLOCAL; ++j)
             {
-                ifs >> DM[is][i][j];
+                //ifs >> DM[is][i][j];
+                ifs >> DM[is](i,j);
             }
         }
     }
@@ -164,7 +165,8 @@ void Local_Orbital_Charge::read_dm(const int &is, const string &fn)
                     const int nu = GridT.trace_lo[j];
                     if(nu >= 0)
                     {
-                        DM[is][mu][nu] = tmp[j];
+                        //DM[is][mu][nu] = tmp[j];
+                        DM[is](mu,nu) = tmp[j];
                     }
                 }
             }
