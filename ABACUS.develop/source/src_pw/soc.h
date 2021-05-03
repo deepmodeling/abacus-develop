@@ -41,8 +41,6 @@ class Soc
     Soc();
     ~Soc();
 
-	void init();
-
 	double spinor(const int l, const double j, const int m, const int spin);
 
 	int sph_ind(const int l, const double j, const int m, const int spin);
@@ -50,12 +48,23 @@ class Soc
 	void rot_ylm(const int lmax);
 	// complex<double> **rotylm;
 
-	complex<double> *p_rot;
-
-	complex<double> & rotylm(const int &i1,const int &i2)
-	{ return p_rot[l_max*i1 + i2]; }
+	const complex<double> & rotylm(const int &i1,const int &i2) const
+	{ return p_rot[l2plus1_*i1 + i2]; }
 
 	Fcoef fcoef;
+	void set_fcoef(
+		const int &l1,
+		const int &l2,
+		const int &is1,
+		const int &is2,
+		const int &m1,
+		const int &m2,
+		const double &j1,
+		const double &j2,
+		const int &it,
+		const int &ip1,
+		const int &ip2
+	);
 
 	Vector3<double> *m_loc;   //magnetization for each atom axis
 	double *angle1;
@@ -70,6 +79,9 @@ class Soc
 
 	bool judge_parallel(double a[3],Vector3<double> b);
 
-	int l_max;
+	int l_max_;
+	int l2plus1_;
+	complex<double> *p_rot;
+
 };
 #endif

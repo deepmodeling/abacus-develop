@@ -2,9 +2,12 @@
 #define MATHZONE_H
 
 #include "realarray.h"
+#include "vector3.h"
+#include "matrix3.h"
 #include <vector>
 #include <map>
 #include <cassert>
+#include <complex>
 using namespace std;
 
 class Mathzone
@@ -144,41 +147,6 @@ public:
     static long double Fact(const int n);
     static int Semi_Fact(const int n);
 
-	// Peize Lin accelerate 2017-10-02
-    static void Simpson_Integral
-    (
-        const int mesh,
-        const double *func,
-        const double *rab,
-        double &asum
-    );
-	// Peize Lin accelerate 2017-10-02
-	static void Simpson_Integral
-	(
-		const int mesh,
-		const double *func,
-		const double dr,
-		double &asum
-	);
-
-    // Peize Lin add 2016-02-14
-    static void Simpson_Integral_0toall
-    (
-        const int mesh,
-        const double *func,
-        const double *rab,
-        double *asum
-    );
-
-    // Peize Lin add 2016-02-14
-    static void Simpson_Integral_alltoinf
-    (
-        const int mesh,
-        const double *func,
-        const double *rab,
-        double *asum
-    );     
-	
 	// Peize Lin add 2016-08-03
 	template< typename Type >
 	static vector<Type> Pointwise_Product( const vector<Type> &f1, const vector<Type> &f2 )

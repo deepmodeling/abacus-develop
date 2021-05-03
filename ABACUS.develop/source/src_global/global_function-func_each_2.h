@@ -1,23 +1,6 @@
 // AUTHOR:	Peize Lin
 // Date: 	2016-09-07
 
-
-/*说明：
-若对
-	T tA;
-	const T tB;
-	const 其他参数(任意多个);
-有
-	func( tA, tB, 其他参数 );
-则对
-	L1<L2<...<Ln<T>>...>> t_listA;
-	const L1<L2<...<Ln<T>>...>> t_listB;
-	（其中L1、L2、...Ln为vector或map）
-可
-	FUNC_EACH_2( t_listA, t_listB, func, 其他参数 );
-*/
-
-
 #ifndef FUNC_EACH_2_H
 #define FUNC_EACH_2_H
 

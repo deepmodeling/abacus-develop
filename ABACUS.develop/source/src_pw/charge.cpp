@@ -21,6 +21,8 @@
 #include "charge.h"
 #include "magnetism.h"
 #include "../src_parallel/parallel_grid.h"
+#include "../src_global/math_integral.h"
+#include <vector>
 
 Charge::Charge()
 {
@@ -168,268 +170,257 @@ void Charge::renormalize_rho(void)
 // rho_at (read from pseudopotential files)
 // allocate work space (psic must already be allocated)
 //-------------------------------------------------------
-void Charge::atomic_rho(const int spin_number_need, double** rho_in)const
+void Charge::atomic_rho(const int spin_number_need, double** rho_in)const		// Peize Lin refactor 2021.04.08
 {
     TITLE("Charge","atomic_rho");
     timer::tick("Charge","atomic_rho");
 
-	assert(ucell.meshx>0);
-    double *rho1d = new double[ucell.meshx];
-    
-	// one dimension of charge in G space.
-	double *rho_lgl= new double[ pw.nggm ];
-    ZEROS(rho1d, ucell.meshx);
-    ZEROS(rho_lgl, pw.nggm);
-
-	// use interpolation to get three dimension charge density.
-    ComplexMatrix rho_g3d( spin_number_need, pw.ngmc);
-
-
-	// check the start magnetization
-	int startmag_type = 1;
-	for(int it=0; it<ucell.ntype; it++)
+	const ComplexMatrix rho_g3d = [&]()->ComplexMatrix
 	{
-		for(int ia=0; ia<ucell.atoms[it].na; ia++)
-		{
-			if(ucell.atoms[it].mag[ia]!=0.0)
-			{
-				startmag_type = 2;
-				break;
-			}
-		}
-	}
-
-	if(NSPIN==4) 
-	{
-		startmag_type = 1;//zhengdy-soc, type 2 is still wrong.
-	}
-	OUT(ofs_warning,"startmag_type",startmag_type);
-
-
-    for (int it = 0;it < ucell.ntype;it++)
-    {
-		Atom* atom = &ucell.atoms[it];
-
-		// mesh point of this element.
-        const int mesh = atom->msh;
-
-        //----------------------------------------------------------
-        // Here we check the electron number 
-        //----------------------------------------------------------
-		double* rhoatm = new double[mesh];
-		for(int ir=0; ir<mesh; ++ir)
-		{
-			double r2=atom->r[ir]*atom->r[ir];
-			rhoatm[ir]=atom->rho_at[ir]/FOUR_PI/r2;
-		}
-		rhoatm[0] = pow( (rhoatm[2]/rhoatm[1]), 1./(atom->r[2]-atom->r[1]) );//zws add
-		rhoatm[0] = pow(rhoatm[0], atom->r[1]);
-		rhoatm[0] = rhoatm[1] / rhoatm[0];  
-
-		double charge = 0.0;
-		Mathzone::Simpson_Integral(atom->msh,atom->rho_at,atom->rab,charge);
-
-		OUT(ofs_warning,"charge from rho_at",charge);
-		assert(charge!=0.0);
-		double scale=1.0;
-
-		if(charge!=atom->zv)
-		{
-			OUT(ofs_warning,"charge should be",atom->zv);
-			scale = atom->zv/charge;
-		}
-
-		for(int ir=0; ir<mesh; ++ir)
-		{
-			rhoatm[ir] *= scale;
-			rhoatm[ir] *= (FOUR_PI*atom->r[ir]*atom->r[ir]);
-		}
-
-        //----------------------------------------------------------
-        // Here we compute the G=0 term
-        //----------------------------------------------------------
-        if (pw.gstart == 1)
-        {
-            for (int ir = 0;ir < mesh;ir++)
-            {
-//              rho1d [ir] = atom->rho_at[ir];
-				rho1d[ir] = rhoatm[ir];
-            }
-            Mathzone::Simpson_Integral(mesh, rho1d, atom->rab , rho_lgl[0]);
-        }
-
-
-        if (test_charge>0) cout<<"\n |G|=0 term done." <<endl;
-        //----------------------------------------------------------
-        // Here we compute the G<>0 term
-        // But if in parallel case
-        // G=0 term only belong to 1 cpu.
-        // Other processors start from '0'
-        //----------------------------------------------------------
-        for (int ig = pw.gstart; ig < pw.nggm ;ig++)
-        {
-            const double gx = sqrt(pw.ggs [ig]) * ucell.tpiba;
-            for (int ir = 0; ir < mesh;ir++)
-            {
-                if ( atom->r[ir] < 1.0e-8 )
-                {
-                    rho1d[ir] = rhoatm[ir];
-                    //rho1d[ir] = atom->rho_at[ir];
-                }
-                else
-                {
-                    const double gxx = gx * atom->r[ir];
-                    rho1d[ir] = rhoatm[ir] * sin(gxx) / gxx;
-                    rho1d[ir] = rhoatm[ir] * sin(gxx) / gxx;
-                }
-            }
-            Mathzone::Simpson_Integral(mesh , rho1d, atom->rab , rho_lgl [ig]);
-        }
-		delete[] rhoatm;
-        
+		// use interpolation to get three dimension charge density.
+		ComplexMatrix rho_g3d( spin_number_need, pw.ngmc);
 		
-		if (test_charge>0) cout<<" |G|>0 term done." <<endl;
-        //----------------------------------------------------------
-        // EXPLAIN : Complete the transfer of rho from real space to
-        // reciprocal space
-        //----------------------------------------------------------
-        for (int ig=0; ig< pw.nggm ; ig++)
-        {
-            rho_lgl[ig] /= ucell.omega;
-        }
-        //----------------------------------------------------------
-        // EXPLAIN : compute the 3D atomic charge in reciprocal space
-        //----------------------------------------------------------
-        if(spin_number_need==1)
-        {
-            for (int ig=0; ig< pw.ngmc ;ig++)
-            {
-                rho_g3d(0, ig) += pw.strucFac(it, ig) * rho_lgl[ pw.ig2ngg[ig] ];
-            }
-		}
-		// mohan add 2011-06-14, initialize the charge density according to each atom 
-		else if(spin_number_need==2)
+		// check the start magnetization
+		const int startmag_type = [&]()->int
 		{
-			if(startmag_type==1)
-			{
-				for (int ig = 0; ig < pw.ngmc ; ig++)
-				{
-					const complex<double> swap = pw.strucFac(it, ig)* rho_lgl[pw.ig2ngg[ig]];
-					//rho_g3d(0, ig) += swap * mag.nelup_percent(it);
-					//rho_g3d(1, ig) += swap * mag.neldw_percent(it);
-					const double up = 0.5 * ( 1 + mag.start_magnetization[it] / atom->zv );
-					const double dw = 0.5 * ( 1 - mag.start_magnetization[it] / atom->zv );
-					rho_g3d(0, ig) += swap * up;
-					rho_g3d(1, ig) += swap * dw;
-				}
-			}
-			// mohan add 2011-06-14
-			else if(startmag_type==2)
-			{
-				complex<double> swap = ZERO;
-				complex<double> ci_tpi = NEG_IMAG_UNIT * TWO_PI;
-				for (int ia = 0; ia < atom->na; ia++)
-				{
-					//const double up = 0.5 * ( 1 + atom->mag[ia] );
-					//const double dw = 0.5 * ( 1 - atom->mag[ia] );
-					const double up = 0.5 * ( 1 + atom->mag[ia] / atom->zv );
-					const double dw = 0.5 * ( 1 - atom->mag[ia] / atom->zv );
-					//cout << " atom " << ia << " up=" << up << " dw=" << dw << endl;
+			if(NSPIN==4)		//zhengdy-soc, type 2 is still wrong.
+				return 1;
+			for(int it=0; it<ucell.ntype; it++)
+				for(int ia=0; ia<ucell.atoms[it].na; ia++)
+					if(ucell.atoms[it].mag[ia]!=0.0)
+						return 2;
+			return 1;
+		}();
+		OUT(ofs_warning,"startmag_type",startmag_type);
 
-					for (int ig = 0; ig < pw.ngmc ; ig++)
-					{
-						const double Gtau = 
-							pw.gcar[ig].x * atom->tau[ia].x
-							+ pw.gcar[ig].y * atom->tau[ia].y
-							+ pw.gcar[ig].z * atom->tau[ia].z; 
-
-						swap = exp(ci_tpi * Gtau) * rho_lgl[pw.ig2ngg[ig]];
-
-						rho_g3d(0, ig) += swap * up;
-						rho_g3d(1, ig) += swap * dw;
-					}
-				}
-			}
-		}
-		else if(spin_number_need==4)
+		for (int it = 0;it < ucell.ntype;it++)
 		{
-			//noncolinear case
-			if(startmag_type == 1)
-			{
-				for (int ig = 0; ig < pw.ngmc ; ig++)
-				{
-					const complex<double> swap = pw.strucFac(it, ig)* rho_lgl[pw.ig2ngg[ig]];
-					rho_g3d(0, ig) += swap ;
-					if(DOMAG)
-					{
-						rho_g3d(1, ig) += swap * (mag.start_magnetization[it] / atom->zv) 
-						* sin(soc.angle1[it]) * cos(soc.angle2[it]);
-						rho_g3d(2, ig) += swap * (mag.start_magnetization[it] / atom->zv) 
-						* sin(soc.angle1[it]) * sin(soc.angle2[it]);
-						rho_g3d(3, ig) += swap * (mag.start_magnetization[it] / atom->zv) 
-						* cos(soc.angle1[it]);
-					}
-					else if(DOMAG_Z)
-					{
-						//rho_g3d(3, ig) += swap * mag.start_magnetization[it];
-						rho_g3d(3, ig) += swap * (mag.start_magnetization[it] / atom->zv);
-					}
-				}
-			}
-			else if(startmag_type == 2)
-			{//zdy-warning-not-available
-				complex<double> swap = ZERO;
-				complex<double> ci_tpi = NEG_IMAG_UNIT * TWO_PI;
-				for(int ia = 0;ia<atom->na;ia++)
-				{
-					for (int ig = 0; ig < pw.ngmc ; ig++)
-					{
-						const double Gtau =
-							pw.gcar[ig].x * atom->tau[ia].x
-							+ pw.gcar[ig].y * atom->tau[ia].y
-							+ pw.gcar[ig].z * atom->tau[ia].z;
+			const Atom* const atom = &ucell.atoms[it];
 
-						swap = exp(ci_tpi * Gtau) * rho_lgl[pw.ig2ngg[ig]];
+			if(!atom->flag_empty_element)		// Peize Lin add for bsse 2021.04.07
+			{		
+				const std::vector<double> rho_lgl = [&]()->std::vector<double>
+				{
+					// one dimension of charge in G space.
+					std::vector<double> rho_lgl(pw.nggm,0);
 
-						rho_g3d(0, ig) += swap;
-						if(DOMAG)
+					// mesh point of this element.
+					const int mesh = atom->msh;
+
+					//----------------------------------------------------------
+					// Here we check the electron number 
+					//----------------------------------------------------------
+					const std::vector<double> rhoatm = [&]()->std::vector<double>
+					{
+						std::vector<double> rhoatm(mesh);		
+						for(int ir=0; ir<mesh; ++ir)
 						{
-							rho_g3d(1, ig) += swap * (atom->mag[ia] / atom->zv) 
+							double r2=atom->r[ir]*atom->r[ir];
+							rhoatm[ir]=atom->rho_at[ir]/FOUR_PI/r2;
+						}
+						rhoatm[0] = pow( (rhoatm[2]/rhoatm[1]), 1./(atom->r[2]-atom->r[1]) );//zws add
+						rhoatm[0] = pow(rhoatm[0], atom->r[1]);
+						rhoatm[0] = rhoatm[1] / rhoatm[0];
+
+						double charge = 0.0;
+						Integral::Simpson_Integral(atom->msh,atom->rho_at,atom->rab,charge);
+						OUT(ofs_warning,"charge from rho_at",charge);
+						assert(charge!=0.0 || charge==atom->zv);		// Peize Lin add charge==atom->zv for bsse 2021.04.07
+
+						double scale=1.0;
+						if(charge!=atom->zv)
+						{
+							OUT(ofs_warning,"charge should be",atom->zv);
+							scale = atom->zv/charge;
+						}
+
+						for(int ir=0; ir<mesh; ++ir)
+						{
+							rhoatm[ir] *= scale;
+							rhoatm[ir] *= (FOUR_PI*atom->r[ir]*atom->r[ir]);
+						}
+						return rhoatm;
+					}();
+
+					assert(ucell.meshx>0);
+					vector<double> rho1d(ucell.meshx);
+					//----------------------------------------------------------
+					// Here we compute the G=0 term
+					//----------------------------------------------------------
+					if (pw.gstart == 1)
+					{
+						for (int ir = 0;ir < mesh;ir++)
+						{
+			//              rho1d [ir] = atom->rho_at[ir];
+							rho1d[ir] = rhoatm[ir];
+						}
+						Integral::Simpson_Integral(mesh, rho1d.data(), atom->rab, rho_lgl[0]);
+					}
+					if (test_charge>0) cout<<"\n |G|=0 term done." <<endl;
+					//----------------------------------------------------------
+					// Here we compute the G<>0 term
+					// But if in parallel case
+					// G=0 term only belong to 1 cpu.
+					// Other processors start from '0'
+					//----------------------------------------------------------
+					for (int ig = pw.gstart; ig < pw.nggm ;ig++)
+					{
+						const double gx = sqrt(pw.ggs [ig]) * ucell.tpiba;
+						for (int ir = 0; ir < mesh;ir++)
+						{
+							if ( atom->r[ir] < 1.0e-8 )
+							{
+								rho1d[ir] = rhoatm[ir];
+								//rho1d[ir] = atom->rho_at[ir];
+							}
+							else
+							{
+								const double gxx = gx * atom->r[ir];
+								rho1d[ir] = rhoatm[ir] * sin(gxx) / gxx;
+								rho1d[ir] = rhoatm[ir] * sin(gxx) / gxx;
+							}
+						}
+						Integral::Simpson_Integral(mesh, rho1d.data(), atom->rab, rho_lgl[ig]);
+					}
+					
+					if (test_charge>0) cout<<" |G|>0 term done." <<endl;
+					//----------------------------------------------------------
+					// EXPLAIN : Complete the transfer of rho from real space to
+					// reciprocal space
+					//----------------------------------------------------------
+					for (int ig=0; ig< pw.nggm ; ig++)
+						rho_lgl[ig] /= ucell.omega;
+					return rho_lgl;
+				}();
+				//----------------------------------------------------------
+				// EXPLAIN : compute the 3D atomic charge in reciprocal space
+				//----------------------------------------------------------
+				if(spin_number_need==1)
+				{
+					for (int ig=0; ig< pw.ngmc ;ig++)
+					{
+						rho_g3d(0, ig) += pw.strucFac(it, ig) * rho_lgl[ pw.ig2ngg[ig] ];
+					}
+				}
+				// mohan add 2011-06-14, initialize the charge density according to each atom 
+				else if(spin_number_need==2)
+				{
+					if(startmag_type==1)
+					{
+						for (int ig = 0; ig < pw.ngmc ; ig++)
+						{
+							const complex<double> swap = pw.strucFac(it, ig)* rho_lgl[pw.ig2ngg[ig]];
+							//rho_g3d(0, ig) += swap * mag.nelup_percent(it);
+							//rho_g3d(1, ig) += swap * mag.neldw_percent(it);
+							const double up = 0.5 * ( 1 + mag.start_magnetization[it] / atom->zv );
+							const double dw = 0.5 * ( 1 - mag.start_magnetization[it] / atom->zv );
+							rho_g3d(0, ig) += swap * up;
+							rho_g3d(1, ig) += swap * dw;
+						}
+					}
+					// mohan add 2011-06-14
+					else if(startmag_type==2)
+					{
+						complex<double> swap = ZERO;
+						complex<double> ci_tpi = NEG_IMAG_UNIT * TWO_PI;
+						for (int ia = 0; ia < atom->na; ia++)
+						{
+							//const double up = 0.5 * ( 1 + atom->mag[ia] );
+							//const double dw = 0.5 * ( 1 - atom->mag[ia] );
+							const double up = 0.5 * ( 1 + atom->mag[ia] / atom->zv );
+							const double dw = 0.5 * ( 1 - atom->mag[ia] / atom->zv );
+							//cout << " atom " << ia << " up=" << up << " dw=" << dw << endl;
+
+							for (int ig = 0; ig < pw.ngmc ; ig++)
+							{
+								const double Gtau = 
+									pw.gcar[ig].x * atom->tau[ia].x
+									+ pw.gcar[ig].y * atom->tau[ia].y
+									+ pw.gcar[ig].z * atom->tau[ia].z; 
+
+								swap = exp(ci_tpi * Gtau) * rho_lgl[pw.ig2ngg[ig]];
+
+								rho_g3d(0, ig) += swap * up;
+								rho_g3d(1, ig) += swap * dw;
+							}
+						}
+					}
+				}
+				else if(spin_number_need==4)
+				{
+					//noncolinear case
+					if(startmag_type == 1)
+					{
+						for (int ig = 0; ig < pw.ngmc ; ig++)
+						{
+							const complex<double> swap = pw.strucFac(it, ig)* rho_lgl[pw.ig2ngg[ig]];
+							rho_g3d(0, ig) += swap ;
+							if(DOMAG)
+							{
+								rho_g3d(1, ig) += swap * (mag.start_magnetization[it] / atom->zv) 
 								* sin(soc.angle1[it]) * cos(soc.angle2[it]);
-							rho_g3d(2, ig) += swap * (atom->mag[ia] / atom->zv) 
+								rho_g3d(2, ig) += swap * (mag.start_magnetization[it] / atom->zv) 
 								* sin(soc.angle1[it]) * sin(soc.angle2[it]);
-							rho_g3d(3, ig) += swap * (atom->mag[ia] / atom->zv) 
+								rho_g3d(3, ig) += swap * (mag.start_magnetization[it] / atom->zv) 
 								* cos(soc.angle1[it]);
+							}
+							else if(DOMAG_Z)
+							{
+								//rho_g3d(3, ig) += swap * mag.start_magnetization[it];
+								rho_g3d(3, ig) += swap * (mag.start_magnetization[it] / atom->zv);
+							}
 						}
-						else if(DOMAG_Z)
+					}
+					else if(startmag_type == 2)
+					{//zdy-warning-not-available
+						complex<double> swap = ZERO;
+						complex<double> ci_tpi = NEG_IMAG_UNIT * TWO_PI;
+						for(int ia = 0;ia<atom->na;ia++)
 						{
-							rho_g3d(3, ig) += swap * (atom->mag[ia] / atom->zv);
+							for (int ig = 0; ig < pw.ngmc ; ig++)
+							{
+								const double Gtau =
+									pw.gcar[ig].x * atom->tau[ia].x
+									+ pw.gcar[ig].y * atom->tau[ia].y
+									+ pw.gcar[ig].z * atom->tau[ia].z;
+
+								swap = exp(ci_tpi * Gtau) * rho_lgl[pw.ig2ngg[ig]];
+
+								rho_g3d(0, ig) += swap;
+								if(DOMAG)
+								{
+									rho_g3d(1, ig) += swap * (atom->mag[ia] / atom->zv) 
+										* sin(soc.angle1[it]) * cos(soc.angle2[it]);
+									rho_g3d(2, ig) += swap * (atom->mag[ia] / atom->zv) 
+										* sin(soc.angle1[it]) * sin(soc.angle2[it]);
+									rho_g3d(3, ig) += swap * (atom->mag[ia] / atom->zv) 
+										* cos(soc.angle1[it]);
+								}
+								else if(DOMAG_Z)
+								{
+									rho_g3d(3, ig) += swap * (atom->mag[ia] / atom->zv);
+								}
+							}
 						}
 					}
 				}
+				else
+				{
+					WARNING_QUIT("Charge::spin_number_need"," Either 1 or 2 or 4, check SPIN number !");
+				}
 			}
 		}
-		else
-		{
-			WARNING_QUIT("Charge::spin_number_need"," Either 1 or 2 or 4, check SPIN number !");
-		}
-	}
-
-    delete [] rho_lgl;
-    delete [] rho1d;;
-
+		return rho_g3d;
+	}();
 
 	assert( spin_number_need > 0 );
-	double* ne = new double[spin_number_need];
-	ZEROS( ne, spin_number_need);
+	vector<double> ne(spin_number_need);
     for (int is = 0; is < spin_number_need;is++)
     {
         UFFT.ToRealSpace( is, rho_g3d, rho_in[is]);
 
 		for(int ir=0; ir<pw.nrxx; ++ir)
-		{
 			ne[is] += rho_in[is][ir];
-		}
 		ne[is] *= ucell.omega/(double)pw.ncxyz; 
 		Parallel_Reduce::reduce_double_pool( ne[is] );
 
@@ -487,12 +478,8 @@ void Charge::atomic_rho(const int spin_number_need, double** rho_in)const
 	OUT(ofs_warning,"total electron number from rho",ne_tot);
 	OUT(ofs_warning,"should be",ucell.nelec);
 	for(int is=0; is<spin_number_need; ++is)
-	{
 		for(int ir=0; ir<pw.nrxx; ++ir)
-		{
 			rho_in[is][ir] = rho_in[is][ir] / ne_tot * ucell.nelec;
-		}
-	}
 
 	// if TWO_EFEMI, 
 	// the total magnetism will affect the calculation of
@@ -501,7 +488,6 @@ void Charge::atomic_rho(const int spin_number_need, double** rho_in)const
 
 	//ofs_running << " Superposition of atomic wave function as First-Charge done." << endl;
 	//2014-06-22
-	delete[] ne;
 
     timer::tick("Charge","atomic_rho");
     return;
@@ -651,7 +637,7 @@ void Charge::non_linear_core_correction
             {
                 aux [ir] = r [ir] * r [ir] * rhoc [ir];
             }
-            Mathzone::Simpson_Integral(mesh, aux, rab, rhocg1);
+            Integral::Simpson_Integral(mesh, aux, rab, rhocg1);
             //rhocg [1] = fpi * rhocg1 / omega;
             rhocg [0] = FOUR_PI * rhocg1 / ucell.omega;//mohan modify 2008-01-19
             igl0 = 1;
@@ -666,7 +652,7 @@ void Charge::non_linear_core_correction
             {
                 aux [ir] = r[ir] * r[ir] * rhoc [ir] * aux [ir];
             } //  enddo
-            Mathzone::Simpson_Integral(mesh, aux, rab, rhocg1);
+            Integral::Simpson_Integral(mesh, aux, rab, rhocg1);
             rhocg [igl] = FOUR_PI * rhocg1 / ucell.omega;
         } //  enddo
         delete [] aux;

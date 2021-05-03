@@ -5,6 +5,7 @@
 // new
 #include "../src_pw/H_XC_pw.h"
 #include "src_pw/vdwd2.h"
+#include "src_pw/vdwd3.h"
 
 double Force_Stress_LCAO::force_invalid_threshold_ev = 0.00;
 double Force_Stress_LCAO::output_acc = 1.0e-8;
@@ -154,20 +155,35 @@ void Force_Stress_LCAO::getForceStress(
 			stress_vdw = vdwd2.get_stress().to_matrix();
 		}
 	}
-	// jiyy add 2019-05-18
-	else if(vdwd3.vdwD3)
+	// jiyy add 2019-05-18, update 2021-05-02
+	else if(vdwd3_para.flag_vdwd3)
 	{
-		if(isforce) force_vdw.create(nat,3);
-		if(isstress) stress_vdw.create(3,3);
-		vdwd3.force(isforce, isstress, force_vdw, stress_vdw);
-	}																			 
-	//implement force from E-field
-	matrix fefield;
-	if(EFIELD&&isforce)
-	{
-		fefield.create(nat, 3);
-		Efield::compute_force(fefield);
+		if(isforce)
+		{
+			force_vdw.create(nat,3);
+			Vdwd3 vdwd3(ucell,vdwd3_para);
+			vdwd3.cal_force();
+			for(int iat=0; iat<ucell.nat; ++iat)
+			{
+				force_vdw(iat,0) = vdwd3.get_force()[iat].x;
+				force_vdw(iat,1) = vdwd3.get_force()[iat].y;
+				force_vdw(iat,2) = vdwd3.get_force()[iat].z;
+			}			
+		}
+		if(isstress)
+		{
+			Vdwd3 vdwd3(ucell,vdwd3_para);
+			vdwd3.cal_stress();
+			stress_vdw = vdwd3.get_stress().to_matrix();
+		}
 	}
+	//implement force from E-field
+    matrix fefield;
+    if(EFIELD&&isforce)
+    {
+        fefield.create(nat, 3);
+        Efield::compute_force(fefield);
+    }
 	//Force contribution from DFT+U
 	matrix force_dftu;
 	matrix stress_dftu;
@@ -228,7 +244,7 @@ void Force_Stress_LCAO::getForceStress(
 					fcs(iat, i) += force_dftu(iat, i);
 				}
 				//VDW force of vdwd2 or vdwd3
-				if(vdwd2_para.flag_vdwd2||vdwd3.vdwD3)
+				if(vdwd2_para.flag_vdwd2||vdwd3_para.flag_vdwd3)
 				{
 					fcs(iat,i) += force_vdw(iat,i);
 				}
@@ -306,7 +322,7 @@ void Force_Stress_LCAO::getForceStress(
 			{
 				this->print_force("EFIELD     FORCE",fefield,1,ry);
 			}
-			if(vdwd2_para.flag_vdwd2||vdwd3.vdwD3)
+			if(vdwd2_para.flag_vdwd2||vdwd3_para.flag_vdwd3)
 			{
 				this->print_force("VDW        FORCE",force_vdw,1,ry);
 			}
@@ -358,7 +374,7 @@ void Force_Stress_LCAO::getForceStress(
 					+ sigmahar(i,j);// hartree stress 
 
 					//VDW stress from linpz and jiyy
-				if(vdwd2_para.flag_vdwd2||vdwd3.vdwD3)
+				if(vdwd2_para.flag_vdwd2||vdwd3_para.flag_vdwd3)
 				{
 					scs(i,j) += stress_vdw(i , j);
 				}
@@ -414,7 +430,7 @@ void Force_Stress_LCAO::getForceStress(
 			sc_pw.print_stress("cc       STRESS",sigmacc,TEST_STRESS,ry);
 			//		sc_pw.print_stress("NLCC       STRESS",sigmacc,TEST_STRESS,ry);
 			sc_pw.print_stress("XC       STRESS",sigmaxc,TEST_STRESS,ry);
-			if(vdwd2_para.flag_vdwd2||vdwd3.vdwD3)
+			if(vdwd2_para.flag_vdwd2||vdwd3_para.flag_vdwd3)
 			{
 				sc_pw.print_stress("VDW      STRESS",sigmaxc,TEST_STRESS,ry);
 			}

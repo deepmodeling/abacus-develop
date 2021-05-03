@@ -20,13 +20,6 @@
 #include "LOOP_ions.h"
 #include "LCAO_matrix.h"
 
-
-extern "C"
-{
-	void sphbsl_(int *n, double *r, double *A, double *val);
-	void sphhnk_(int *n, double *r, double *A, double *val);
-}
-
 DFTU_Yukawa::DFTU_Yukawa(){}
 
 DFTU_Yukawa::~DFTU_Yukawa(){}
@@ -95,14 +88,14 @@ void DFTU_Yukawa::cal_slater_Fk(const int L, const int T)
 						int l = 2*k;
 						if(ir0<ir1)  //less than
 						{
-						 	sphbsl_(&l, &r0, &lambda, &bslval);
-							sphhnk_(&l, &r1, &lambda, &hnkval);
+						 	bslval=this->spherical_Bessel(l, r0, lambda);
+							hnkval=this->spherical_Hankel(l, r1, lambda);
 						}
 						else //greater than
 						{
-						 	sphbsl_(&l, &r1, &lambda, &bslval);
-							sphhnk_(&l, &r0, &lambda, &hnkval);
-						}					
+						 	bslval=this->spherical_Bessel(l, r1, lambda);
+							hnkval=this->spherical_Hankel(l, r0, lambda);
+						}				
 						this->Fk.at(T).at(L).at(chi).at(k) -= (4*k+1)*lambda*pow(R_L0,2)*bslval*hnkval*pow(R_L1,2)*pow(r0,2)*pow(r1,2)*rab0*rab1;					
 					}
 				}
@@ -217,6 +210,69 @@ void DFTU_Yukawa::cal_slater_UJ(const int istep, const int iter)
 	}// end T
 		
 	return;
+}
+
+
+double DFTU_Yukawa::spherical_Bessel(const int k, const double r, const double lambda)
+{
+  TITLE("DFTU_Yukawa", "spherical_Bessel");
+
+  double val;
+  double x=r*lambda;
+  if(k==0)
+  {
+    if(x < 1.0e-3) val=1+pow(x,2)/6.0;
+    else val = sinh(x)/x;
+  }
+  else if(k==2)
+  {
+    if(x < 1.0e-2) val=-pow(x,2)/15.0 -pow(x,4)/210.0 - pow(x,6)/7560.0;
+    else val = 3*cosh(x)/pow(x,2) + (-3-pow(x,2))*sinh(x)/pow(x,3);
+  }
+  else if(k==4)
+  {
+    if(x < 5.0e-1) val=pow(x,4)/945.0 + pow(x,6)/20790.0 + pow(x,8)/1081080.0 + pow(x,10)/97297200.0;
+    else val = -5*(21+2*pow(x,2))*cosh(x)/pow(x,4)+(105+45*pow(x,2)+pow(x,4))*sinh(x)/pow(x,5);
+  }
+  else if(k==6)
+  {
+    if(x < 9.0e-1) val=-pow(x,6)/135135.0-pow(x,8)/4054050.0-pow(x,10)/275675400.0;
+    else val = 21*(495+60*pow(x,2)+pow(x,4))*cosh(x)/pow(x,6) + 
+              (-10395-4725*pow(x,2)-210*pow(x,4)-pow(x,6))*sinh(x)/pow(x,7);
+  }
+  return val;
+}
+
+
+double DFTU_Yukawa::spherical_Hankel(const int k, const double r, const double lambda)
+{
+  TITLE("DFTU_Yukawa", "spherical_Bessel");
+
+  double val;
+  double x=r*lambda;
+  if(k==0)
+  {
+    if(x < 1.0e-3) val=-1/x + 1 -x/2.0 + pow(x,2)/6.0;
+    else val = -exp(-x)/x;
+  }
+  else if(k==2)
+  {
+    if(x < 1.0e-2) val=3/pow(x,3)-1/(2*x)+x/8-pow(x,2)/15.0+pow(x,3)/48.0;
+    else val = exp(-x)*(3+3*x+pow(x,2))/pow(x,3);
+  }
+  else if(k==4)
+  {
+    if(x < 5.0e-1) val=-105/pow(x,5) + 15/(2*pow(x,3)) - 3/(8*x) + x/48 - pow(x,3)/384.0+pow(x,4)/945.0;
+    else val = -exp(-x)*(105+105*x+45*pow(x,2)+10*pow(x,3)+pow(x,4))/pow(x,5);
+  }
+  else if(k==6)
+  {
+    if(x < 9.0e-1) val=10395/pow(x,7) - 945/(2*pow(x,5)) + 105/(8*pow(x,3)) -5/(16*x)
+                        +x/128.0-pow(x,3)/3840.0 + pow(x,5)/46080.0 - pow(x,6)/135135.0;
+    else val = exp(-x)*(10395+10395*x+4725*pow(x,2)+1260*pow(x,3)+210*pow(x,4) + 
+                21*pow(x,5)+pow(x,6))/pow(x,7);
+  }
+  return val;
 }
 
 /*

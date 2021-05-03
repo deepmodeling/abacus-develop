@@ -1,10 +1,10 @@
-// Author: mohan
-// Date: 2009-10-17
 #ifndef GRID_TECHNIQUE_H
 #define GRID_TECHNIQUE_H
 
 #include "grid_meshball.h"
 
+// Author: mohan
+// Date: 2009-10-17
 class Grid_Technique : public Grid_MeshBall
 {
 	// public variables.

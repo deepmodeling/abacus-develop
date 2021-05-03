@@ -5,6 +5,7 @@
 #include "src_global/global_function.h"
 
 #include "src_external/src_test/test_function.h"
+#include "src_global/math_integral.h" // mohan add 2021-04-03
 
 Conv_Coulomb_Pot::Conv_Coulomb_Pot(const Numerical_Orbital_Lm &orb_in)
 	:orb(orb_in)
@@ -37,7 +38,7 @@ void Conv_Coulomb_Pot::cal_conv_coulomb_pot()
 	{
 		tmp_func[ir] = orb.getPsi(ir) * pow( orb.getRadial(ir), orb.getL()+2 );
 	}	
-	Mathzone::Simpson_Integral_0toall( orb.getNr(), VECTOR_TO_PTR(tmp_func), orb.getRab(), VECTOR_TO_PTR(tmp_integral) );
+	Integral::Simpson_Integral_0toall( orb.getNr(), VECTOR_TO_PTR(tmp_func), orb.getRab(), VECTOR_TO_PTR(tmp_integral) );
 	conv_coulomb_pot[0]=0;
 	for( size_t ir=1; ir!=orb.getNr(); ++ir )
 	{
@@ -53,7 +54,7 @@ void Conv_Coulomb_Pot::cal_conv_coulomb_pot()
 	{
 		tmp_func[ir] = orb.getPsi(ir) / pow( orb.getRadial(ir), orb.getL()-1 );
 	}
-	Mathzone::Simpson_Integral_alltoinf( orb.getNr(), VECTOR_TO_PTR(tmp_func), orb.getRab(), VECTOR_TO_PTR(tmp_integral) );
+	Integral::Simpson_Integral_alltoinf( orb.getNr(), VECTOR_TO_PTR(tmp_func), orb.getRab(), VECTOR_TO_PTR(tmp_integral) );
 	for( size_t ir=0; ir!=orb.getNr(); ++ir )
 	{
 		conv_coulomb_pot[ir] += tmp_integral[ir] * pow( orb.getRadial(ir), orb.getL() );

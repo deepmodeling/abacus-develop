@@ -3,12 +3,10 @@
 #include "dftu.h"  //Quxin add for DFT+U on 20201029
 
 Force_LCAO_gamma::Force_LCAO_gamma ()
-{
-}
+{}
 
 Force_LCAO_gamma::~Force_LCAO_gamma ()
-{
-}
+{}
 
 // be called in force_lo.cpp
 void Force_LCAO_gamma::ftable_gamma (
@@ -33,7 +31,7 @@ void Force_LCAO_gamma::ftable_gamma (
     // calculate the 'energy density matrix' here.
     this->cal_foverlap(isforce, isstress, foverlap, soverlap);
 
-    if(NEW_DM>0)
+    if(INPUT.new_dm>0)
     {
         this->cal_ftvnl_dphi(LOC.wfc_dm_2d.dm_gamma, isforce, isstress, ftvnl_dphi, stvnl_dphi);
         this->cal_fvnl_dbeta(LOC.wfc_dm_2d.dm_gamma, isforce, isstress, fvnl_dbeta, svnl_dbeta);
@@ -203,31 +201,6 @@ void Force_LCAO_gamma::finish_ftable_gamma(void)
         delete [] LM.DHloc_fixed_23;
         delete [] LM.DHloc_fixed_33;
     }
-    return;
-}
-
-
-void Force_LCAO_gamma::DerivT_PW(void)
-{
-    WARNING_QUIT("Force_LCAO_gamma::DerivT_PW","no use for a long time.");
-    /*
-    //------------------------------------------
-    //TEST OUTPUT OF S Deriv Matrix in PW
-    //------------------------------------------
-    //test under pw basis
-    hm.hon.genH.ForcedT = new matrix[3];
-    this->dt = hm.hon.genH.ForcedT;
-    for (int i = 0; i < 3; i++) this->dt[i].create (NLOCAL, NLOCAL);
-
-    hm.hon.genH.build_ST (1, 'T', true);
-
-    cout << "\n===========================================================================" << endl;
-    out.printrm("Force_LCAO_gamma, X Directional Derivatives of T Matrix in PW", this->dt[0]);
-    cout << "\n===========================================================================" << endl;
-
-    for (int i = 0; i < 3; i++) this->dt[i].freemem ();
-    delete[] this->dt;
-    */
     return;
 }
 

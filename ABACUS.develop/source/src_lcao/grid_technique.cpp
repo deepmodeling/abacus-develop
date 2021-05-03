@@ -93,6 +93,10 @@ void Grid_Technique::set_pbc_grid(
 	return;
 }
 
+
+// PLEASE update this 'init_atoms_on_grid' to make
+// it adapted to 'cuboid' shape of grid
+// mohan add 2021-04-06
 void Grid_Technique::init_atoms_on_grid(void)
 {
 	TITLE("Grid_Technique","init_atoms_on_grid");
@@ -352,7 +356,11 @@ void Grid_Technique::cal_trace_beta(void)
 {
 	// save the atom information in trace_beta//
 	delete[] trace_beta;
-	int nkb=ORB.nkb;
+
+	// mohan modify 2021-04-06
+	//int nkb=ORB.nkb;
+	int nkb=ppcell.nkb;
+
 	this->trace_beta = new int[nkb];
 	for(int i=0; i<nkb; i++)
 	{
@@ -394,6 +402,7 @@ void Grid_Technique::cal_trace_beta(void)
 }
 
 
+// set 'lgd' variable
 void Grid_Technique::cal_trace_lo(void)
 {	
 	TITLE("Grid_Technique","cal_trace_lo");
@@ -425,10 +434,12 @@ void Grid_Technique::cal_trace_lo(void)
 				if(NSPIN==4)
 				{//added by zhengdy-soc, need to be double in soc
 					nw0 *= 2;
-					lgd += nw0;
+					this->lgd += nw0;
 				}
 				else
-					lgd += ucell.atoms[it].nw;
+				{
+					this->lgd += ucell.atoms[it].nw;
+				}
 				
 				for(int iw=0; iw<nw0; iw++)
 				{
@@ -439,6 +450,7 @@ void Grid_Technique::cal_trace_lo(void)
 			}
 			else
 			{
+				// global index of atomic orbitals
 				iw_all += ucell.atoms[it].nw;
 				if(NSPIN==4) iw_all += ucell.atoms[it].nw;
 			}
@@ -464,5 +476,3 @@ void Grid_Technique::cal_trace_lo(void)
 	assert(iw_all == NLOCAL);
 	return;
 }
-
-

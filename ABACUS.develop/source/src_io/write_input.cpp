@@ -32,7 +32,6 @@ void Input::Print(const string &fn)const
 	OUTP(ofs,"nche_sto",nche_sto,"number of orders for Chebyshev expansion in stochastic DFT");
 	OUTP(ofs,"symmetry",symmetry,"turn symmetry on or off");	
 	OUTP(ofs,"nelec",nelec,"input number of electrons");
-	OUTP(ofs,"newdm",newDM,"");
 
 	ofs << "\n#Parameters (2.PW)" << endl;
 	OUTP(ofs,"ecutwfc",ecutwfc,"#energy cutoff for wave functions");
@@ -57,6 +56,7 @@ void Input::Print(const string &fn)const
 	OUTP(ofs,"out_band",out_band,"output energy and band structure");
 	OUTP(ofs,"restart_save",restart_save,"print to disk every step for restart");
 	OUTP(ofs,"restart_load",restart_load,"restart from disk");
+	OUTP(ofs,"read_file_dir",read_file_dir,"directory of files for reading");
 	OUTP(ofs,"nx",nx,"number of points along x axis for FFT grid");
 	OUTP(ofs,"ny",ny,"number of points along y axis for FFT grid");
 	OUTP(ofs,"nz",nz,"number of points along z axis for FFT grid");	
@@ -91,6 +91,7 @@ void Input::Print(const string &fn)const
 
 	ofs << "\n#Parameters (4.LCAO)" << endl;
 	OUTP(ofs,"basis_type",basis_type,"PW; LCAO in pw; LCAO");
+	OUTP(ofs,"new_dm",new_dm,"Type of density matrix; 0: old 1: new");
 	if(ks_solver=="HPSEPS" || ks_solver=="genelpa" || ks_solver=="scalapack_gvx")
 	{
 		OUTP(ofs,"nb2d",nb2d,"2d distribution of atoms");
@@ -208,7 +209,7 @@ void Input::Print(const string &fn)const
 	OUTP(ofs,"kernel_type",kernel_type,"the kernel type: rpa, tdlda ...");
 	OUTP(ofs,"eels_method",eels_method,"0: hilbert_transform method; 1: standard method");
 	OUTP(ofs,"absorption_method",absorption_method,"0: vasp's method  1: pwscf's method");
-	OUTP(ofs,"system",system,"the calculate system");
+	OUTP(ofs,"system",system_type,"the calculate system");
 	OUTP(ofs,"eta",eta,"eta(Ry)");
 	OUTP(ofs,"domega",domega,"domega(Ry)");
 	OUTP(ofs,"nomega",nomega,"nomega");

@@ -27,10 +27,10 @@ public:
     void folding_dSm_soverlap();
     void allocate_force_stress();
     void erase_force_stress();
-    void cal_force_k(vector<vector<complex<double>>> &VU);
-    void cal_force_gamma(vector<vector<double>> &VU);
-    void cal_stress_k(vector<vector<complex<double>>> &VU);
-    void cal_stress_gamma(vector<vector<double>> &VU);
+    void cal_force_k(const vector<vector<complex<double>>> &VU);
+    void cal_force_gamma(const vector<vector<double>> &VU);
+    void cal_stress_k(const vector<vector<complex<double>>> &VU);
+    void cal_stress_gamma(const vector<vector<double>> &VU);
 
     double get_onebody_eff_pot
     (

@@ -1,5 +1,6 @@
 #ifndef CHARGE_EXTRA_H
 #define CHARGE_EXTRA_H
+#include "src_pw/unitcell_pseudo.h"
 
 using namespace std;
 
@@ -17,6 +18,11 @@ class Charge_Extra
 	void allocate_ions(void);
 	void extrapolate_charge(void);
 
+	void save_pos_next(const UnitCell_pseudo& ucell);
+	void update_istep(const int &step);
+	void update_all_pos(const UnitCell_pseudo& ucell);
+
+	private:
 	// use "istep = ions.istep"
 	int istep;
 

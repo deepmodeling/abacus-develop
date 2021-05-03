@@ -1,0 +1,35 @@
+#
+# This is a test makefile for Electronic-structure
+#
+# This particular makefile defines all the executables and objects
+# files needed, who they depend on, and the compilation defaults.#
+# The file makefile.local is included below.
+# That file defines the actual commands to use to run the C++
+# compiler, library options and directories, etc., all of which are
+# machine specific and depend on the local installation.  Hence the name.
+#
+
+VERSION= ABACUS-ORB
+HEADERS= *.h
+
+OBJS_TRY=math_integral.o\
+complexarray.o\
+complexmatrix.o\
+matrix.o\
+
+OBJS_ORBITAL=ORB_control.o\
+ORB_read.o\
+ORB_atomic.o\
+ORB_atomic_lm.o\
+ORB_nonlocal.o\
+ORB_nonlocal_lm.o\
+ORB_gaunt_table.o\
+ORB_table_beta.o\
+ORB_table_phi.o\
+ORB_table_alpha.o\
+ORB_gen_tables.o\
+
+OBJS_GLOBAL=sph_bessel.o\
+sph_bessel_recursive-d1.o\
+sph_bessel_recursive-d2.o\
+timer.o\

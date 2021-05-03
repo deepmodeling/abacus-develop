@@ -32,6 +32,12 @@ void UnitCell_pseudo::read_atom_species(ifstream &ifa)
 						<< setw(12) << atom_mass[i] 
 						<< setw(18) << pseudo_fn[i];
 			}
+
+			// Peize Lin test for bsse 2021.04.07
+			const string bsse_label = "empty";
+			this->atoms[i].flag_empty_element = 
+				(search( atom_label[i].begin(), atom_label[i].end(), bsse_label.begin(), bsse_label.end() ) != atom_label[i].end())
+				? true : false;
 		}
 	}
 
@@ -71,6 +77,10 @@ void UnitCell_pseudo::read_atom_species(ifstream &ifa)
 				
 			}
 		}	
+		// caoyu add 2021-03-16
+		if (SCAN_BEGIN(ifa, "NUMERICAL_DESCRIPTOR")) {
+			ifa >> ORB.descriptor_file;
+		}
 	}
 
 	// Peize Lin add 2016-09-23
@@ -175,7 +185,7 @@ bool UnitCell_pseudo::read_atom_positions(ifstream &ifpos)
 			ofs_warning << " Cartesian_angstrom_center_xz" << endl;
 			ofs_warning << " Cartesian_angstrom_center_yz" << endl;
 			ofs_warning << " Cartesian_angstrom_center_xyz" << endl;
-			return 0;
+			return 0; // means something wrong
 		}
 
 		Vector3<double> v;
@@ -201,7 +211,9 @@ bool UnitCell_pseudo::read_atom_positions(ifstream &ifpos)
 			for(int it2=0; it2<ntype; it2++)
 			{
 				if( this->atoms[it].label == this->atom_label[it] )
-				found = true;
+				{
+					found = true;
+				}
 			}
 			if(!found)
 			{
@@ -252,146 +264,110 @@ bool UnitCell_pseudo::read_atom_positions(ifstream &ifpos)
 			// int atoms[it].nwl
 			// int* atoms[it].l_nchi;
 			//===========================================
-			/*READ_VALUE(ifpos, this->atoms[it].nwl);
-			assert(this->atoms[it].nwl<10);
-			OUT(ofs_running,"L max for local orbitals",atoms[it].nwl);
+			if (BASIS_TYPE == "lcao" || BASIS_TYPE == "lcao_in_pw")
+			{    
+				ifstream ifs(ORB.orbital_file[it].c_str(), ios::in);  // pengfei 2014-10-13
 
-			delete[] this->atoms[it].l_nchi;
-			this->atoms[it].l_nchi = new int[ this->atoms[it].nwl+1];
-			this->atoms[it].nw = 0;
-			for(int L=0; L<atoms[it].nwl+1; L++)
+				// mohan add return 2021-04-26
+				if (!ifs)
+				{
+					cout << " Element index " << it+1 << endl;
+					cout << " orbital file: " << ORB.orbital_file[it] << endl;
+					WARNING("read_atom_positions","ABACUS Cannot find the ORBITAL file (basis sets)");
+					return 0; // means something wrong
+				}
+
+				char word[80];
+				delete[] this->atoms[it].l_nchi;
+				this->atoms[it].l_nchi = new int[ this->atoms[it].nwl+1];
+				this->atoms[it].nw = 0;
+				int L =0;
+
+				while (ifs.good())
+				{
+					ifs >> word;
+					if (strcmp("Lmax", word) == 0)
+					{
+						READ_VALUE(ifs, this->atoms[it].nwl);
+					}
+					assert(this->atoms[it].nwl<10);
+
+					if (strcmp("Cutoff(a.u.)", word) == 0)         // pengfei Li 16-2-29
+					{
+						READ_VALUE(ifs, this->atoms[it].Rcut);
+					}
+
+					if (strcmp("Sorbital-->", word) == 0)
+					{
+						READ_VALUE(ifs, this->atoms[it].l_nchi[L]);
+						this->atoms[it].nw += (2*L + 1) * this->atoms[it].l_nchi[L];
+						stringstream ss;
+						ss << "L=" << L << ", number of zeta";
+						OUT(ofs_running,ss.str(),atoms[it].l_nchi[L]);
+						L++;
+					}
+					if (strcmp("Porbital-->", word) == 0)
+					{
+						READ_VALUE(ifs, this->atoms[it].l_nchi[L]);
+						this->atoms[it].nw += (2*L + 1) * this->atoms[it].l_nchi[L];
+						stringstream ss;
+						ss << "L=" << L << ", number of zeta";
+						OUT(ofs_running,ss.str(),atoms[it].l_nchi[L]);
+						L++;
+					}
+					if (strcmp("Dorbital-->", word) == 0)
+					{
+						READ_VALUE(ifs, this->atoms[it].l_nchi[L]);
+						this->atoms[it].nw += (2*L + 1) * this->atoms[it].l_nchi[L];
+						stringstream ss;
+						ss << "L=" << L << ", number of zeta";
+						OUT(ofs_running,ss.str(),atoms[it].l_nchi[L]);
+						L++;
+					}
+					if (strcmp("Forbital-->", word) == 0)
+					{
+						READ_VALUE(ifs, this->atoms[it].l_nchi[L]);
+						this->atoms[it].nw += (2*L + 1) * this->atoms[it].l_nchi[L];
+						stringstream ss;
+						ss << "L=" << L << ", number of zeta";
+						OUT(ofs_running,ss.str(),atoms[it].l_nchi[L]);
+						L++;
+					}
+					if (strcmp("Gorbital-->", word) == 0)
+					{
+						READ_VALUE(ifs, this->atoms[it].l_nchi[L]);
+						this->atoms[it].nw += (2*L + 1) * this->atoms[it].l_nchi[L];
+						stringstream ss;
+						ss << "L=" << L << ", number of zeta";
+						OUT(ofs_running,ss.str(),atoms[it].l_nchi[L]);
+						L++;
+					}
+				}
+				ifs.close();
+			}
+			else
 			{
-				READ_VALUE(ifpos, this->atoms[it].l_nchi[L]);
+				delete[] this->atoms[it].l_nchi;
+				this->atoms[it].l_nchi = new int[ this->atoms[it].nwl+1];
+				this->atoms[it].nw = 0;
 
-				// calculate the number of local basis(3D)
-				this->atoms[it].nw += (2*L + 1) * this->atoms[it].l_nchi[L];
-				
-				stringstream ss;
-				ss << "L=" << L << ", number of zeta";
-				OUT(ofs_running,ss.str(),atoms[it].l_nchi[L]);
-			}*/
-                    if (BASIS_TYPE == "lcao" || BASIS_TYPE == "lcao_in_pw")
-                    {    
-                        ifstream ifs(ORB.orbital_file[it].c_str(), ios::in);  // pengfei 2014-10-13
-                        if (!ifs)
-                        {
-                            cout << " Can't find the ORBITAL file." << endl;
-                        }
+				this->atoms[it].nwl = 2;
+				//cout << INPUT.lmaxmax << endl;
+				if ( INPUT.lmaxmax != 2 )
+				{
+					this->atoms[it].nwl = INPUT.lmaxmax;
+				}
+				for(int L=0; L<atoms[it].nwl+1; L++)
+				{
+					this->atoms[it].l_nchi[L] = 1;
+					// calculate the number of local basis(3D)
+					this->atoms[it].nw += (2*L + 1) * this->atoms[it].l_nchi[L];
 
-                        char word[80];
-                        delete[] this->atoms[it].l_nchi;
-                        this->atoms[it].l_nchi = new int[ this->atoms[it].nwl+1];
-                        this->atoms[it].nw = 0;
-                        int L =0;
-
-                        while (ifs.good())
-                        {
-                             ifs >> word;
-                             if (strcmp("Lmax", word) == 0)
-                             {
-                                 READ_VALUE(ifs, this->atoms[it].nwl);
-                             }
-                             assert(this->atoms[it].nwl<10);
-
-                             if (strcmp("Cutoff(a.u.)", word) == 0)         // pengfei Li 16-2-29
-                             {
-                                 READ_VALUE(ifs, this->atoms[it].Rcut);
-                             }
-
-                             //cout << "atoms[it].nwl = "<<atoms[it].nwl <<endl;
-                             if (strcmp("Sorbital-->", word) == 0)
-                             {
-                                 READ_VALUE(ifs, this->atoms[it].l_nchi[L]);
-                                this->atoms[it].nw += (2*L + 1) * this->atoms[it].l_nchi[L];
-                                stringstream ss;
-                                ss << "L=" << L << ", number of zeta";
-                                OUT(ofs_running,ss.str(),atoms[it].l_nchi[L]);
-                                L++;
-                             }
-                             if (strcmp("Porbital-->", word) == 0)
-                             {
-                                 READ_VALUE(ifs, this->atoms[it].l_nchi[L]);
-                                this->atoms[it].nw += (2*L + 1) * this->atoms[it].l_nchi[L];
-                                stringstream ss;
-                                ss << "L=" << L << ", number of zeta";
-                                OUT(ofs_running,ss.str(),atoms[it].l_nchi[L]);
-                                L++;
-                             }
-                             if (strcmp("Dorbital-->", word) == 0)
-                             {
-                                 READ_VALUE(ifs, this->atoms[it].l_nchi[L]);
-                                this->atoms[it].nw += (2*L + 1) * this->atoms[it].l_nchi[L];
-                                stringstream ss;
-                                ss << "L=" << L << ", number of zeta";
-                                OUT(ofs_running,ss.str(),atoms[it].l_nchi[L]);
-                                L++;
-                             }
-                             if (strcmp("Forbital-->", word) == 0)
-                             {
-                                 READ_VALUE(ifs, this->atoms[it].l_nchi[L]);
-                                this->atoms[it].nw += (2*L + 1) * this->atoms[it].l_nchi[L];
-                                stringstream ss;
-                                ss << "L=" << L << ", number of zeta";
-                                OUT(ofs_running,ss.str(),atoms[it].l_nchi[L]);
-                                L++;
-                             }
-                             if (strcmp("Gorbital-->", word) == 0)
-                             {
-                                 READ_VALUE(ifs, this->atoms[it].l_nchi[L]);
-                                this->atoms[it].nw += (2*L + 1) * this->atoms[it].l_nchi[L];
-                                stringstream ss;
-                                ss << "L=" << L << ", number of zeta";
-                                OUT(ofs_running,ss.str(),atoms[it].l_nchi[L]);
-                                L++;
-                             }
-                             //cout <<" atoms[it].nw = "<<atoms[it].nw<<endl;
-
-
-                        }
-                             ifs.close();
-                    }
-                    else
-                    {
-                        delete[] this->atoms[it].l_nchi;
-                        this->atoms[it].l_nchi = new int[ this->atoms[it].nwl+1];
-                        this->atoms[it].nw = 0;
-
-                             this->atoms[it].nwl = 2;
-                             //cout << INPUT.lmaxmax << endl;
-                             if ( INPUT.lmaxmax != 2 )
-                             {
-                                 this->atoms[it].nwl = INPUT.lmaxmax;
-                             }
-                        for(int L=0; L<atoms[it].nwl+1; L++)
-                        {
-                                this->atoms[it].l_nchi[L] = 1;
-                                // calculate the number of local basis(3D)
-                                this->atoms[it].nw += (2*L + 1) * this->atoms[it].l_nchi[L];
-
-                                stringstream ss;
-                                ss << "L=" << L << ", number of zeta";
-                                OUT(ofs_running,ss.str(),atoms[it].l_nchi[L]);
-                        }
-    
-                         /*   this->atoms[it].l_nchi[0] = 1;
-                                this->atoms[it].nw += (2*0 + 1) * this->atoms[it].l_nchi[0];
-                             //   stringstream s0;
-                             //   s0 << "L=" << 0 << ", number of zeta";
-                             //   OUT(ofs_running,s0.str(),atoms[it].l_nchi[0]);
-
-                             this->atoms[it].l_nchi[1] = 1;
-                                this->atoms[it].nw += (2*1 + 1) * this->atoms[it].l_nchi[1];
-                             //   stringstream s1;
-                             //   s1 << "L=" << 1 << ", number of zeta";
-                             //   OUT(ofs_running,s1.str(),atoms[it].l_nchi[1]);
-
-                             this->atoms[it].l_nchi[2] = 1;
-                                this->atoms[it].nw += (2*2 + 1) * this->atoms[it].l_nchi[2];*/
-                             //   stringstream s2;
-                             //   s2 << "L=" << 2 << ", number of zeta";
-                             //  OUT(ofs_running,s2.str(),atoms[it].l_nchi[2]);*/
-                         
-                    }
+					stringstream ss;
+					ss << "L=" << L << ", number of zeta";
+					OUT(ofs_running,ss.str(),atoms[it].l_nchi[L]);
+				}
+			} // end basis type
 
 			//OUT(ofs_running,"Total number of local orbitals",atoms[it].nw);
 

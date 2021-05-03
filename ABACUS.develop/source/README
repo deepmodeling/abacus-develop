@@ -1,29 +1,5 @@
+
 Currently we are working on optimizing the code structure of ABACUS,
 implementing new functions, and adding more autotests.
 
--- mohan 2021-02-11
-
-URGENT:
-
-Ask Xiaohui Liu: all functions named with 'after_vc' should be reconstructed.
-The 'FINAL_SCF' global varialble should be removed. 
-(condition: need to reconstruct these codes within a given time)
-
-Ask Xiaohui Liu and Daye Zheng: We need test examples.
-
-Ask Fuxiang He: we need to remove all TDDFT-related global variables
-in global_variable.h, we need TDDFT examples.
-(condition: need to reconstruct these codes within a given time)
-
-Ask Daye Zheng: MD, force, stress modules need reconstruction
-
-NEED TO DO:
-
-Ask Xiaohui: we need to remove DQ and NQX in global_variable.h, 
-but the NQX is computed in ./src_pw/pseudopot_cell_vnl.cpp
-
-Ask Peize: exx_lip.h and related Exx codes
-
-QUESTION:
-
-* in pw_basis.cpp, why ggwfc2=ggwfc if gamma_only is used?
+-- ABACUS TEAM 2021-02-11

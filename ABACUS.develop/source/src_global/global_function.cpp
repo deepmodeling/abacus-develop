@@ -189,26 +189,26 @@ void WARNING_QUIT(const string &file,const string &description)
 	{
 		cout << " " << endl;
 		cout << " !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << endl;
-		cout << " !!!!!!!!!!!!!!!!! SOMETHING TO WARN YOU !!!!!!!!!!!!!!!!!" << endl;
+		cout << "                         NOTICE                           " << endl;
 		cout << " !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << endl;
 		cout << " " << endl;
 		cout << " " << description << endl;
 		cout << " CHECK IN FILE : " << global_out_dir << "warning.log" << endl;
 		cout << " " << endl;
 		cout << " !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << endl;
-		cout << " !!!!!!!!!!!!!!!!! SOMETHING TO WARN YOU !!!!!!!!!!!!!!!!!" << endl;
+		cout << "                         NOTICE                           " << endl;
 		cout << " !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << endl;
 
 
 		ofs_running << " !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << endl;
-		ofs_running << " !!!!!!!!!!!!!!!!! SOMETHING TO WARN YOU !!!!!!!!!!!!!!!!!" << endl;
+		ofs_running << "                         NOTICE                           " << endl;
 		ofs_running << " !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << endl;
 		ofs_running << endl;
 		ofs_running << " " << description << endl;
 		ofs_running << " CHECK IN FILE : " << global_out_dir << "warning.log" << endl;
 		ofs_running << endl;
 		ofs_running << " !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << endl;
-		ofs_running << " !!!!!!!!!!!!!!!!! SOMETHING TO WARN YOU !!!!!!!!!!!!!!!!!" << endl;
+		ofs_running << "                         NOTICE                           " << endl;
 		ofs_running << " !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << endl;
 	}
 

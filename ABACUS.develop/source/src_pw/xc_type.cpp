@@ -1,7 +1,3 @@
-//==========================================================
-// AUTHOR : Lixin He ,mohan
-// DATE : 2008-11-08
-//==========================================================
 #include "xc_type.h"
 #include "src_global/global_function.h"
 #include "src_pw/global.h"

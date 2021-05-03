@@ -29,6 +29,7 @@ class Input
     string suffix;			// suffix of out put dir
     string atom_file;		// file contains atomic positions -- xiaohui modify 2015-02-01
     string pseudo_dir;      // directory of pseudopotential
+	string read_file_dir;   // directory of files for reading
     string pseudo_type;     // the type of pseudopotential, mohan add 2013-05-20, ABACUS supports
 			    			// UPF format (default) and vwr format. (xiaohui add 2013-06-23)
     string kpoint_file;		// file contains k-points -- xiaohui modify 2015-02-01
@@ -296,7 +297,7 @@ class Input
 	int      absorption_method;      // 0: vasp's method  1: pwscf's method
 	//int		 epsilon_choice;         // 0: hilbert_transform method; 1: standard method
 	string   kernel_type;           // the kernel type: rpa, tdlda ...
-	string system;                 // bulk or surface
+	string system_type;                 // bulk or surface
 	double  eta;                   // unit(Ry)
 	double  domega;                // unit(Ry)
 	int     nomega;
@@ -398,7 +399,7 @@ class Input
 //  2: use new DM algorithm and only show key debug information
 //  3: use new DM algorithm and show all detail debug information
 //==========================================================
-    int newDM;
+    int new_dm;
 
 //==========================================================
 //    DFT+U       Xin Qu added on 2020-10-29

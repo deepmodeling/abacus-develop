@@ -7,6 +7,7 @@
 #include "src_pw/global.h"
 #include "src_lcao/ORB_read.h"
 #include "src_global/global_function.h"
+#include "src_global/math_integral.h" // mohan add 2021-04-03
 
 
 vector<vector<vector<Numerical_Orbital_Lm>>> Exx_Abfs::IO::construct_abfs(
@@ -212,7 +213,7 @@ vector<vector<Numerical_Orbital_Lm>> Exx_Abfs::IO::construct_abfs_T(
 				inner[ir] = psir[ir] * psir[ir];
 			}
 			double unit = 0.0;	
-			Mathzone::Simpson_Integral(meshr, VECTOR_TO_PTR(inner), VECTOR_TO_PTR(rab), unit);
+			Integral::Simpson_Integral(meshr, VECTOR_TO_PTR(inner), VECTOR_TO_PTR(rab), unit);
 			for( int ir=0; ir!=meshr; ++ir )
 			{
 				psis[L][N][ir] /= sqrt(unit);

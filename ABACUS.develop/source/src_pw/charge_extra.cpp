@@ -14,6 +14,12 @@ Charge_Extra::Charge_Extra()
 	// for second-order extrapolation
 	this->delta_rho3 = new double*[NSPIN];
 
+	// PLEASE update the following lines, because
+	// the pw.nrxx may not be initialized yet
+	// since Charge_Extra is a member of LOOP_ions
+	// you can move the initialization of the following 
+	// arrays to somewhere else
+	// mohan add 2021-03-30
 	for(int is=0; is<NSPIN; is++)
 	{
 		delta_rho1[is] = new double[pw.nrxx];
@@ -412,5 +418,29 @@ void Charge_Extra::find_alpha_and_beta(void)
 		}
 		if(abs(alpha) >10) alpha=1.0;
 	}
+	return;
+}
+
+void Charge_Extra::save_pos_next(const UnitCell_pseudo& ucell)
+{
+	ucell.save_cartesian_position(this->pos_next);
+	return;
+}
+
+void Charge_Extra::update_istep(const int &step)
+{
+	this->istep = step;
+	return;
+}
+
+void Charge_Extra::update_all_pos(const UnitCell_pseudo& ucell)
+{
+	const int total_freedom = ucell.nat * 3;
+	for(int i=0;i<total_freedom;i++)
+	{
+		this->pos_old2[i] = this->pos_old1[i];
+		this->pos_old1[i] = this->pos_now[i];
+	}
+	ucell.save_cartesian_position(this->pos_now);
 	return;
 }

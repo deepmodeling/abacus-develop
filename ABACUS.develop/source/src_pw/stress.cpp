@@ -11,7 +11,7 @@
 #include "H_Hartree_pw.h"
 #include "H_XC_pw.h"
 
-void Stress::cal_stress()
+void Stress::cal_stress(void)
 {
 	TITLE("Stress","cal_stress");
 	timer::tick("Stress","cal_stress",'E');    
@@ -30,6 +30,7 @@ void Stress::cal_stress()
 			sigmaxcc[i][j] = 0.0;
 		}
 	}
+
 	//kinetic contribution
 	stres_knl();
 
@@ -231,23 +232,33 @@ void Stress::stres_knl(void)
 	TITLE("Stress","stres_nkl");
 
     double *kfac;
-    double **gk;
-    gk=new double* [3];
-    double tbsp,gk2,arg;
-    int ik,l,m,i,j,ibnd,is;
-    int npw;
+    double **gk=new double*[3];
+    double tbsp=0.0;
+	double gk2=0.0;
+	double arg=0.0;
+    int ik=0;	
+	int l=0;
+	int m=0;
+	int i=0;
+	int j=0;
+	int ibnd=0;
+	int is=0;
+    int npw=0;
     
     tbsp=2.0/sqrt(PI);
     
     int npwx=0;
-    int qtot = 0;
+    int qtot=0;
 	for(int ik=0; ik<kv.nks; ik++)
 	{
 		for(int ig=0; ig<kv.ngk[ik]; ig++)
 		{
 			qtot += kv.ngk[ik];
 		}
-		if(npwx<kv.ngk[ik])npwx=kv.ngk[ik];
+		if(npwx<kv.ngk[ik])
+		{
+			npwx=kv.ngk[ik];
+		}
 	}
     
     kfac=new double[npwx];
@@ -572,13 +583,6 @@ void Stress::stres_loc(void)
 
 	dvloc = new double[pw.ngmc];
 
-	/*    for(l=0;l<3;l++){
-		  for(m=0;m<3;m++){
-		  sigmaloc[l][m]=0;
-		  }
-		  }*/
-
-
 	complex<double> *Porter = UFFT.porter;
 
 	ZEROS( Porter, pw.nrxx );
@@ -590,21 +594,6 @@ void Stress::stres_loc(void)
 		}
 	}
 	pw.FFT_chg.FFT3D(Porter, -1);
-
-	/*        complex<double> *psic = new complex<double> [pw.nrxx];
-			  double *psic0 = new double[pw.nrxx];
-			  ZEROS( psic0, pw.nrxx);
-			  for(int is=0; is<NSPIN; is++)
-			  {
-			  daxpy (pw.nrxx, 1.0, CHR.rho[is],1,psic0,2 );
-			  for (int ir=0; ir<pw.nrxx; ir++)
-			  {
-			  psic[ir] = complex<double>(psic0[ir], 0.0);
-			  }
-			  }
-
-			  pw.FFT_chg.FFT3D(psic, -1) ;
-	 */  
 
 	if(INPUT.gamma_only==1) fact=2.0;
 	else fact=1.0;

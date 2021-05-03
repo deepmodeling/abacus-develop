@@ -114,7 +114,7 @@ void UnitCell_pseudo::setup_cell(
 	this->bcast_unitcell_pseudo();
 
 	// mohan add 2010-09-29
-	ORB.bcast_files();
+	ORB.bcast_files(ucell.ntype);
 #endif
 	
 	//========================================================
@@ -177,7 +177,7 @@ void UnitCell_pseudo::setup_cell(
 	ofs_running << "\n\n\n\n";
 
 
-	this->read_pseudopot(s_pseudopot_dir);
+	this->read_cell_pseudopots(s_pseudopot_dir);
 	
 	if(MY_RANK == 0) 
 	{

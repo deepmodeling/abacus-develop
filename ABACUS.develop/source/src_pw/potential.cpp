@@ -117,7 +117,7 @@ void Potential::init_pot(
             for(int is=0; is<NSPIN; is++)
             {
                 stringstream ssc;
-                ssc << global_out_dir << "SPIN" << is + 1 << "_CHG";
+                ssc << global_readin_dir << "SPIN" << is + 1 << "_CHG";
                 ofs_running << ssc.str() << endl;
                 // mohan update 2012-02-10
                 if(CHR.read_rho( is, ssc.str(), CHR.rho[is] )) 

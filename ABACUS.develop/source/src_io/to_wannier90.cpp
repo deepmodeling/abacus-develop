@@ -1,6 +1,6 @@
 #include "to_wannier90.h"
 #include "../src_lcao/global_fp.h" // mohan add 2021-01-30, this module should be modified
- 
+#include "../src_global/math_integral.h" 
 
 
 toWannier90::toWannier90(int num_kpts, Matrix3 recip_lattice)
@@ -1430,7 +1430,7 @@ void toWannier90::integral(const int meshr, const double *psir, const double *r,
 	}
 	
 	double unit = 0.0;
-	Mathzone::Simpson_Integral(meshr, inner_part, rab, unit);
+	Integral::Simpson_Integral(meshr, inner_part, rab, unit);
 	delete[] inner_part;
 
 	double *aux = new double[meshr];
@@ -1445,7 +1445,7 @@ void toWannier90::integral(const int meshr, const double *psir, const double *r,
 		}
 		
 		double vqint = 0.0;
-		Mathzone::Simpson_Integral(meshr, vchi, rab, vqint);
+		Integral::Simpson_Integral(meshr, vchi, rab, vqint);
 
 		table[iq] =  vqint * pref;
 	}

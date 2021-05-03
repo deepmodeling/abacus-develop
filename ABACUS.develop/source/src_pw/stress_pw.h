@@ -11,7 +11,7 @@ class Stress_PW:public Stress_Func
 	~Stress_PW (){};
 
 	//calculate the stress in PW basis
-	void cal_stress(matrix& sigma);
+	void cal_stress(matrix& sigmatot);
 
 	private :
 	//call the vdw stress

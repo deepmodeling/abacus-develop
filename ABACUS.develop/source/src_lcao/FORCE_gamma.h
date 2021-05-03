@@ -34,8 +34,6 @@ class Force_LCAO_gamma
 
 	void finish_ftable_gamma(void);
 
-	void DerivT_PW (void);
-
 	void average_force(double* fm);
 
 	void test_gamma(double* mm, const string &name);

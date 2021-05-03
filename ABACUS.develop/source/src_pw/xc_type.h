@@ -1,7 +1,3 @@
-//==========================================================
-// AUTHOR : Lixin He, mohan
-// DATE : 2008-11-08
-//==========================================================
 #ifndef FUNCTIONAL_H
 #define FUNCTIONAL_H
 
@@ -11,8 +7,6 @@ class xcfunc
 
 	public:
 
-	//module funct
-	// char dft[20];
 	// dft is the exchange-correlation functional, described by
 	// any nonconflicting combination of the following keywords
 	// (case-insensitive):

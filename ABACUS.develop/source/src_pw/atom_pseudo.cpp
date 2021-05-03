@@ -4,7 +4,6 @@
 
 Atom_pseudo::Atom_pseudo()
 {
-	if(test_atom) TITLE("atom_pseudo","Constructor");
 	mbl = new Vector3<int>[1];
 	pseudo_fn = "not_init";
 	mass = 0.0;
@@ -28,7 +27,7 @@ void Atom_pseudo::print_atom(ofstream &ofs)
 #ifdef __MPI
 void Atom_pseudo::bcast_atom_pseudo(const int &na)
 {
-	if(test_pp) TITLE("Atom_pseudo","bcast_atom_pseudo");
+	TITLE("Atom_pseudo","bcast_atom_pseudo");
 	Parallel_Common::bcast_double( mass );
 	Parallel_Common::bcast_string( pseudo_fn );
 
@@ -48,7 +47,7 @@ void Atom_pseudo::bcast_atom_pseudo(const int &na)
 
 void Atom_pseudo::bcast_atom_pseudo2(void)
 {
-	if(test_pp) TITLE("Atom_pseudo","bcast_atom_pseudo2");
+	TITLE("Atom_pseudo","bcast_atom_pseudo2");
 // == pseudo_h ==
 //int
 	Parallel_Common::bcast_int( lmax );
@@ -142,56 +141,13 @@ void Atom_pseudo::bcast_atom_pseudo2(void)
 		betar.create(nr,nc);
 		dion.create(nbeta, nbeta);
 	}
+
+	// below two 'bcast_double' lines of codes seem to have bugs,
+	// on some computers, the code will stuck here for ever.
+	// mohan note 2021-04-28
 	Parallel_Common::bcast_double( dion.c , nbeta * nbeta);
 	Parallel_Common::bcast_double( betar.c, nr * nc );
 // == end of psesudo_nc ==
-
-// == pseudo_us ==
-/*
-	Parallel_Common::bcast_int( nqf );
-	Parallel_Common::bcast_int( nqlc );
-	if(MY_RANK!=0)
-	{
-		rinner = new double[ nqlc ];
-	}
-	Parallel_Common::bcast_double( rinner, nqlc);
-
-	if(nbeta > 0)
-	{
-		if(MY_RANK!=0)
-		{
-			qqq.create(nbeta, nbeta);
-		}
-		Parallel_Common::bcast_double( qqq.c, nbeta*nbeta);
-	}
-
-	if(mesh>0 && nbeta>0)
-	{
-		if(MY_RANK!=0)
-		{
-			qfunc.create(nbeta, nbeta, mesh);
-		}
-		Parallel_Common::bcast_double(qfunc.ptr, qfunc.getSize() );
-	}
-
-	int b[4];
-	if(MY_RANK==0)
-	{
-		b[0] = qfcoef.getBound1();
-		b[1] = qfcoef.getBound2();
-		b[2] = qfcoef.getBound3();
-		b[3] = qfcoef.getBound4();
-	}
-	Parallel_Common::bcast_int( b, 4);
-
-	if(MY_RANK!=0)
-	{
-		qfcoef.create(b[0],b[1],b[2],b[3]);
-	}
-
-	Parallel_Common::bcast_double(qfcoef.ptr, qfcoef.getSize() );
-*/
-// == end of pseudo_us ==
 
 	return;
 }

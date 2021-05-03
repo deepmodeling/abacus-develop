@@ -10,6 +10,7 @@
 
 #include "mathzone.h"
 #include "lapack_connector.h"
+#include "math_integral.h" // mohan add 2021-04-03
 
 template<typename Func_Type, typename R_Type>
 Gram_Schmidt_Orth<Func_Type,R_Type>::Gram_Schmidt_Orth( const vector<R_Type> &rab_in, const Coordinate &coordinate_in )
@@ -75,13 +76,13 @@ Func_Type Gram_Schmidt_Orth<Func_Type,R_Type>::cal_norm( const vector<Func_Type>
 	{
 		case Coordinate::Cartesian:
 		{
-			Mathzone::Simpson_Integral( f.size(), VECTOR_TO_PTR(f), VECTOR_TO_PTR(rab), norm);		
+			Integral::Simpson_Integral( f.size(), VECTOR_TO_PTR(f), VECTOR_TO_PTR(rab), norm);		
 			break;
 		}
 		case Coordinate::Sphere:	
 		{
 			const vector<Func_Type> &&tmp_func = Mathzone::Pointwise_Product( f, radial_2 );
-			Mathzone::Simpson_Integral( f.size(), VECTOR_TO_PTR(tmp_func), VECTOR_TO_PTR(rab), norm);	
+			Integral::Simpson_Integral( f.size(), VECTOR_TO_PTR(tmp_func), VECTOR_TO_PTR(rab), norm);	
 			break;
 		}
 		default:

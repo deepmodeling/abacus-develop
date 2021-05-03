@@ -37,7 +37,7 @@ void Exx_Abfs::Matrix_Orbs21::init(
 //ofs<<"TIME@Exx_Abfs::Matrix_Orbs21::init::MOT.allocate\t"<<time_during(t_start)<<endl;
 	int Lmax_used, Lmax;
 //gettimeofday( &t_start, NULL);
-	MOT.init_Table_Spherical_Bessel (3,mode, Lmax_used, Lmax);
+	MOT.init_Table_Spherical_Bessel (3,mode, Lmax_used, Lmax, Exx_Abfs::Lmax);
 //	MOT.init_OV_Tpair();							// for MOT.OV_L2plus1
 //	MOT.Destroy_Table_Spherical_Bessel (Lmax_used);				// why?
 //ofs<<"TIME@Exx_Abfs::Matrix_Orbs21::init::MOT.init_Table_Spherical_Bessel\t"<<time_during(t_start)<<endl;
