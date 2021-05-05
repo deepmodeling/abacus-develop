@@ -95,7 +95,8 @@ void Stress_Func::stress_ewa(matrix& sigma, const bool is_pw)
     double rr;
     Vector3<double> d_tau;
     double r0[3];
-    int rmax , nrm=0;
+    double rmax=0.0;
+    int nrm=0;
     double fac;
 	if(pw.gstart==1)
 	{
@@ -116,7 +117,7 @@ void Stress_Func::stress_ewa(matrix& sigma, const bool is_pw)
 						for(int nr=0 ; nr<nrm ; nr++)
 						{
 							rr=sqrt(r2[nr]) * ucell.lat0;
-							fac = -e2/2.0/ucell.omega*pow(ucell.lat0,2)*ucell.atoms[it].zv * ucell.atoms[it].zv / pow(rr,3) * (erfc(sqrt(alpha)*rr)+rr * sqrt(8 * alpha / (TWO_PI)) * exp(-alpha * pow(rr,2)));
+							fac = -e2/2.0/ucell.omega*pow(ucell.lat0,2)*ucell.atoms[it].zv * ucell.atoms[jt].zv / pow(rr,3) * (erfc(sqrt(alpha)*rr)+rr * sqrt(8 * alpha / (TWO_PI)) * exp(-alpha * pow(rr,2)));
 							for(l=0; l<3; l++)
 							{
 								for(m=0; m<l+1; m++)
