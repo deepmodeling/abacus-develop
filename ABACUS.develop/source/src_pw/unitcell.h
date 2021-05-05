@@ -1,3 +1,7 @@
+//==========================================================
+// AUTHOR : Lixin He , mohan
+// DATE : 2008-11-08
+//==========================================================
 #ifndef UNITCELL_H
 #define UNITCELL_H
 
@@ -65,11 +69,6 @@ public:
     void print_cell_xyz(const string &fn)const;
     void print_cell_cif(const string &fn)const;
     const double& getNelec(void)const {return electrons_number;}
-
-    void update_pos_tau(const double* pos);
-    void periodic_boundary_adjustment();
-    void bcast_atoms_tau();
-    void save_cartesian_position(double* pos)const;
 
 protected:
 

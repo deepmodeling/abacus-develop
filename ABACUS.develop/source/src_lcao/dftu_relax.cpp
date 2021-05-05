@@ -16,7 +16,7 @@
 #include "../src_pw/global.h"
 #include "global_fp.h"
 #include "../src_global/global_function.h"
-//#include "../src_global/scalapack_connector.h"
+#include "../src_global/scalapack_connector.h"
 #include "../src_global/lapack_connector.h"
 #include "../src_global/inverse_matrix.h"
 #include "LOOP_ions.h"
@@ -25,26 +25,6 @@
 #include "ORB_gen_tables.h"
 #include "../src_pw/charge.h"
 
-extern "C"
-{
-  void pzgemm_(
-		const char *transa, const char *transb,
-		const int *M, const int *N, const int *K,
-		const std::complex<double> *alpha,
-		const std::complex<double> *A, const int *IA, const int *JA, const int *DESCA,
-		const std::complex<double> *B, const int *IB, const int *JB, const int *DESCB,
-		const std::complex<double> *beta,
-		std::complex<double> *C, const int *IC, const int *JC, const int *DESCC);
-  
-  void pdgemm_(
-		const char *transa, const char *transb,
-		const int *M, const int *N, const int *K,
-		const double *alpha,
-		const double *A, const int *IA, const int *JA, const int *DESCA,
-		const double *B, const int *IB, const int *JB, const int *DESCB,
-		const double *beta,
-		double *C, const int *IC, const int *JC, const int *DESCC);
-}
 
 DFTU_RELAX::DFTU_RELAX(){}
 
@@ -164,7 +144,7 @@ void DFTU_RELAX::force_stress()
 				}
 				else
 				{
-					if(NSPIN==1)
+					if(NSPIN==1 || NSPIN==4)
 					{
 						double val = get_onebody_eff_pot(T1, iat1, L1, n1, 0, m1, m2, cal_type, false);
 						VU_k.at(0).at(irc) = complex<double>(val, 0.0);
@@ -211,15 +191,13 @@ void DFTU_RELAX::force_stress()
 }
 
 
-void DFTU_RELAX::cal_force_k(const vector<vector<complex<double>>>& VU)
+void DFTU_RELAX::cal_force_k(vector<vector<complex<double>>> &VU)
 {
 	TITLE("DFTU_RELAX", "cal_force_k");
 
-	const char transN = 'N', transT = 'T', transC='C';
+	const char transN = 'N', transT = 'T';
 	const int  one_int = 1;
-	// const double alpha = 1.0, beta = 0.0;
-  const complex<double> alpha(1.0,0.0), beta(0.0,0.0);
-  const complex<double> zero(0.0,0.0);
+	const double alpha = 1.0, beta = 0.0;
 	
 	vector<vector<complex<double>>> ftmp(ucell.nat);
 	for(int ia=0; ia<ucell.nat; ia++)
@@ -230,7 +208,7 @@ void DFTU_RELAX::cal_force_k(const vector<vector<complex<double>>>& VU)
 	vector<vector<complex<double>>> dm_VU_dSm(3);
 	for(int dim=0; dim<3; dim++)
 	{
-		dm_VU_dSm.at(dim).resize(ParaO.nloc, zero);
+		dm_VU_dSm.at(dim).resize(ParaO.nloc, complex<double>(0.0, 0.0));
 	}
 	
 	for(int ik=0; ik<kv.nks; ik++)	
@@ -239,8 +217,8 @@ void DFTU_RELAX::cal_force_k(const vector<vector<complex<double>>>& VU)
 
 		for(int dim=0; dim<3; dim++)
 		{
-			vector<complex<double>> mat_tmp(ParaO.nloc);
-			vector<complex<double>> force_tmp(ParaO.nloc);
+			vector<complex<double>> mat_tmp(ParaO.nloc, complex<double>(0.0, 0.0));
+			vector<complex<double>> force_tmp(ParaO.nloc, complex<double>(0.0, 0.0));
 
 			if(dim==0) //dim=1,2 are same as dim=0
 			{
@@ -273,7 +251,7 @@ void DFTU_RELAX::cal_force_k(const vector<vector<complex<double>>>& VU)
 			//=========================================
 			ZEROS(VECTOR_TO_PTR(force_tmp), ParaO.nloc);
 
-			pzgemm_(&transN, &transC,
+			pzgemm_(&transN, &transT,
 				&NLOCAL, &NLOCAL, &NLOCAL,
 				&alpha, 
 				this->dSm_k[ik][dim], &one_int, &one_int, ParaO.desc, 
@@ -285,7 +263,7 @@ void DFTU_RELAX::cal_force_k(const vector<vector<complex<double>>>& VU)
 			{
 				dm_VU_dSm.at(dim).at(irc) -= force_tmp.at(irc);
 			}
-		}//end dim
+		}//end dim				
 	}//end ik
 
 	for(int dim=0; dim<3; dim++)
@@ -318,36 +296,35 @@ void DFTU_RELAX::cal_force_k(const vector<vector<complex<double>>>& VU)
 		}
 	}
 
+
 	return;
 }
 
 
-void DFTU_RELAX::cal_stress_k(const vector<vector<complex<double>>>& VU)
+void DFTU_RELAX::cal_stress_k(vector<vector<complex<double>>> &VU)
 {
 	TITLE("DFTU_RELAX", "cal_stress_k");
 
-	const char transN = 'N', transT = 'T', transC='C';
+	const char transN = 'N', transT = 'T';
 	const int  one_int = 1;
-	//const double alpha = 1.0, beta = 0.0;
-	const complex<double> alpha(1.0,0.0), beta(0.0,0.0);
-  const complex<double> zero(0.0,0.0);
-  
+	const double alpha = 1.0, beta = 0.0;
+	
 	int count = 0;
 	for(int dim1=0; dim1<3; dim1++)
 	{
 		for(int dim2=dim1; dim2<3; dim2++)
 		{
-			vector<complex<double>> dm_VU_sover(ParaO.nloc, zero);
+			vector<complex<double>> dm_VU_sover(ParaO.nloc, complex<double>(0.0, 0.0));
 
 			for(int ik=0; ik<kv.nks; ik++)
 			{
 				const int spin = kv.isk[ik];
 				
 				// The first term
-				vector<complex<double>> stress_tmp(ParaO.nloc);
+				vector<complex<double>> stress_tmp(ParaO.nloc, complex<double>(0.0, 0.0));
 
 				//Calculate mat_tmp=dm*VU
-				vector<complex<double>> mat_tmp(ParaO.nloc);
+				vector<complex<double>> mat_tmp(ParaO.nloc, complex<double>(0.0, 0.0));
 
 				pzgemm_(&transT, &transN,
 					&NLOCAL, &NLOCAL, &NLOCAL,
@@ -367,14 +344,13 @@ void DFTU_RELAX::cal_stress_k(const vector<vector<complex<double>>>& VU)
 
 				for(int irc=0; irc<ParaO.nloc; irc++)
 				{
-					// dm_VU_sover.at(irc) -= 0.5*stress_tmp.at(irc);
-          dm_VU_sover.at(irc) -= 0.5*stress_tmp.at(irc);
+					dm_VU_sover.at(irc) -= 0.5*stress_tmp.at(irc);
 				}
 
 				// The second term
 				ZEROS(VECTOR_TO_PTR(stress_tmp), ParaO.nloc);
 
-				pzgemm_(&transN, &transC,
+				pzgemm_(&transN, &transT,
 					&NLOCAL, &NLOCAL, &NLOCAL,
 					&alpha, 
 					this->soverlap_k[ik][count], &one_int, &one_int, ParaO.desc, 
@@ -384,8 +360,7 @@ void DFTU_RELAX::cal_stress_k(const vector<vector<complex<double>>>& VU)
 
 				for(int irc=0; irc<ParaO.nloc; irc++)
 				{
-					// dm_VU_sover.at(irc) += 0.5*stress_tmp.at(irc);
-          dm_VU_sover.at(irc) -= 0.5*stress_tmp.at(irc);
+					dm_VU_sover.at(irc) += 0.5*stress_tmp.at(irc);
 				}
 
 			}//end ik
@@ -410,8 +385,8 @@ void DFTU_RELAX::cal_stress_k(const vector<vector<complex<double>>>& VU)
 			double val = stmp.real();
 			MPI_Allreduce(&val, &stress_dftu.at(dim1).at(dim2), 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 
-			// complex<double> tmp;
-			// MPI_Allreduce(&stmp, &tmp, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+			complex<double> tmp;
+			MPI_Allreduce(&stmp, &tmp, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 						
 			count++;
 		}//end dim2
@@ -438,7 +413,7 @@ void DFTU_RELAX::cal_stress_k(const vector<vector<complex<double>>>& VU)
 }
 
 
-void DFTU_RELAX::cal_force_gamma(const vector<vector<double>> &VU)
+void DFTU_RELAX::cal_force_gamma(vector<vector<double>> &VU)
 {
 	TITLE("DFTU_RELAX", "cal_force_gamma");
 
@@ -603,7 +578,7 @@ void DFTU_RELAX::cal_force_gamma(const vector<vector<double>> &VU)
 }
 
 
-void DFTU_RELAX::cal_stress_gamma(const vector<vector<double>> &VU)
+void DFTU_RELAX::cal_stress_gamma(vector<vector<double>> &VU)
 {
 	TITLE("DFTU_RELAX", "cal_stress_gamma");
 
@@ -662,7 +637,7 @@ void DFTU_RELAX::cal_stress_gamma(const vector<vector<double>> &VU)
 
 				for(int irc=0; irc<ParaO.nloc; irc++)
 				{
-					dm_VU_sover.at(irc) -= 0.5*stress_tmp.at(irc);
+					dm_VU_sover.at(irc) += 0.5*stress_tmp.at(irc);
 				}
 
 			}//end ik
@@ -752,179 +727,145 @@ void DFTU_RELAX::folding_dSm_soverlap()
 	}
 	
 
-	  Vector3<double> tau1, tau2, dtau;
-	  Vector3<double> dtau1, dtau2, tau0;
+	Vector3<double> tau1, tau2, dtau;
+	Vector3<double> dtau1, dtau2, tau0;
     for(int T1=0; T1<ucell.ntype; ++T1)
     {
-		  Atom* atom1 = &ucell.atoms[T1];
-      for(int I1=0; I1<atom1->na; ++I1)
-      {
-			  tau1 = atom1->tau[I1];
-        const int start1 = ucell.itiaiw2iwt(T1,I1,0);    
-
-        GridD.Find_atom(tau1, T1, I1);
-        for(int ad=0; ad<GridD.getAdjacentNum()+1; ++ad)
+		Atom* atom1 = &ucell.atoms[T1];
+        for(int I1=0; I1<atom1->na; ++I1)
         {
-          const int T2 = GridD.getType(ad);
-				  const int I2 = GridD.getNatom(ad);
-          const int start2 = ucell.itiaiw2iwt(T2, I2, 0);
+			tau1 = atom1->tau[I1];
+            
+            GridD.Find_atom(tau1, T1, I1);
+            for(int ad=0; ad<GridD.getAdjacentNum()+1; ++ad)
+            {
+                const int T2 = GridD.getType(ad);
+				const int I2 = GridD.getNatom(ad);
 
-				  Atom* atom2 = &ucell.atoms[T2];
+				Atom* atom2 = &ucell.atoms[T2];
 
-				  tau2 = GridD.getAdjacentTau(ad);
-				  dtau = tau2 - tau1;
+				tau2 = GridD.getAdjacentTau(ad);
+				dtau = tau2 - tau1;
 
-				  double distance = dtau.norm() * ucell.lat0;
-				  double rcut = ORB.Phi[T1].getRcut() + ORB.Phi[T2].getRcut();
+				double distance = dtau.norm() * ucell.lat0;
+				double rcut = ORB.Phi[T1].getRcut() + ORB.Phi[T2].getRcut();				
 
-          bool adj = false;
-				  if(distance < rcut) adj = true;
-				  else if(distance >= rcut)
-				  {
-				  	for (int ad0 = 0; ad0 < GridD.getAdjacentNum()+1; ++ad0)
-				  	{
-				  		const int T0 = GridD.getType(ad0); 
-				  		const int I0 = GridD.getNatom(ad0); 
-				  		const int iat0 = ucell.itia2iat(T0, I0);
-				  		const int start0 = ucell.itiaiw2iwt(T0, I0, 0);
+				if(distance < rcut)
+				{
+					int iw1_all = ucell.itiaiw2iwt( T1, I1, 0) ; //iw1_all = combined index (it, ia, iw)
 
-				  		tau0 = GridD.getAdjacentTau(ad0);
-				  		dtau1 = tau0 - tau1;
-				  		dtau2 = tau0 - tau2;
+					for(int jj=0; jj<atom1->nw*NPOL; ++jj)
+					{
+						const int jj0 = jj/NPOL;
+						const int L1 = atom1->iw2l[jj0];
+						const int N1 = atom1->iw2n[jj0];
+						const int m1 = atom1->iw2m[jj0];
+						int iw2_all = ucell.itiaiw2iwt( T2, I2, 0);
 
-				  		double distance1 = dtau1.norm() * ucell.lat0;
-				  		double distance2 = dtau2.norm() * ucell.lat0;
+						for(int kk=0; kk<atom2->nw*NPOL; ++kk)
+						{
+							const int kk0 = kk/NPOL;
+							const int L2 = atom2->iw2l[kk0];
+							const int N2 = atom2->iw2n[kk0];
+							const int m2 = atom2->iw2m[kk0];
+							
+							if ( !ParaO.in_this_processor(iw1_all,iw2_all) )
+							{
+								++iw2_all;
+								continue;
+							}
 
-				  		double rcut1 = ORB.Phi[T1].getRcut() + ORB.Beta[T0].get_rcut_max();
-				  		double rcut2 = ORB.Phi[T2].getRcut() + ORB.Beta[T0].get_rcut_max();
+							int mu = ParaO.trace_loc_row[iw1_all];
+							int nu = ParaO.trace_loc_col[iw2_all];
+							int irc = nu*ParaO.nrow + mu;
+														
+							if(GAMMA_ONLY_LOCAL)
+							{
+								if(STRESS)
+								{
+									this->soverlap_gamma[0][irc] += LM.DSloc_Rx[nnr]*LM.DH_r[nnr*3+0];
+									this->soverlap_gamma[1][irc] += LM.DSloc_Rx[nnr]*LM.DH_r[nnr*3+1];
+									this->soverlap_gamma[2][irc] += LM.DSloc_Rx[nnr]*LM.DH_r[nnr*3+2];
+									this->soverlap_gamma[3][irc] += LM.DSloc_Ry[nnr]*LM.DH_r[nnr*3+1];
+									this->soverlap_gamma[4][irc] += LM.DSloc_Ry[nnr]*LM.DH_r[nnr*3+2];
+									this->soverlap_gamma[5][irc] += LM.DSloc_Rz[nnr]*LM.DH_r[nnr*3+2];
+								}
+							}
+							else
+							{
+								Vector3<double> dR(GridD.getBox(ad).x, GridD.getBox(ad).y, GridD.getBox(ad).z); 
+							
+								for(int ik=0; ik<kv.nks; ik++)
+								{								
+									const double arg = ( kv.kvec_d[ik] * dR ) * TWO_PI;
+									const complex<double> kphase = complex <double> ( cos(arg),  sin(arg) );
 
-				  		if( distance1 < rcut1 && distance2 < rcut2 )
-				  		{
-				  			adj = true;
-				  			break;
-				  		}
-				  	}
-				  }				
+									this->dSm_k[ik][0][irc] += LM.DSloc_Rx[nnr]*kphase;
+									this->dSm_k[ik][1][irc] += LM.DSloc_Ry[nnr]*kphase;
+									this->dSm_k[ik][2][irc] += LM.DSloc_Rz[nnr]*kphase;
 
-				  if(adj)
-				  {
-				  	for(int jj=0; jj<atom1->nw*NPOL; ++jj)
-				  	{
-              const int jj0 = jj/NPOL;
+									if(STRESS)
+									{																												
+										this->soverlap_k[ik][0][irc] += LM.DSloc_Rx[nnr]*LM.DH_r[nnr*3+0]*kphase;
+										this->soverlap_k[ik][1][irc] += LM.DSloc_Rx[nnr]*LM.DH_r[nnr*3+1]*kphase;
+										this->soverlap_k[ik][2][irc] += LM.DSloc_Rx[nnr]*LM.DH_r[nnr*3+2]*kphase;
+										this->soverlap_k[ik][3][irc] += LM.DSloc_Ry[nnr]*LM.DH_r[nnr*3+1]*kphase;
+										this->soverlap_k[ik][4][irc] += LM.DSloc_Ry[nnr]*LM.DH_r[nnr*3+2]*kphase;
+										this->soverlap_k[ik][5][irc] += LM.DSloc_Rz[nnr]*LM.DH_r[nnr*3+2]*kphase;																
+									}
+								}	
+							}
+																																																																				
+							++nnr;													
+							++iw2_all;
+						}// nw2 
 
-              const int iw1_all = start1 + jj0; 
-              const int mu = ParaO.trace_loc_row[iw1_all];
-					    if(mu<0)continue;
+						++iw1_all;
+						
+					}// nw1
+				}// distance
+				else if(distance>=rcut)
+				{
+					int start1 = ucell.itiaiw2iwt( T1, I1, 0);
+					int start2 = ucell.itiaiw2iwt( T2, I2, 0);
+					bool is_adj = false;
+					for (int ad0=0; ad0<GridD.getAdjacentNum()+1; ++ad0)
+					{
+						const int T0 = GridD.getType(ad0);
+						
+						tau0 = GridD.getAdjacentTau(ad0);
+						dtau1 = tau0 - tau1;
+						double distance1 = dtau1.norm() * ucell.lat0;
+						double rcut1 = ORB.Phi[T1].getRcut() + ORB.Beta[T0].get_rcut_max();
+						dtau2 = tau0 - tau2;
+						double distance2 = dtau2.norm() * ucell.lat0;
+						double rcut2 = ORB.Phi[T2].getRcut() + ORB.Beta[T0].get_rcut_max();
+						if(distance1<rcut1 && distance2<rcut2)
+						{
+							is_adj = true;
+							break;
+						}
+					}//ad0
+					if( is_adj )
+					{
+						for(int jj=0; jj<atom1->nw * NPOL; ++jj)
+						{
+							const int mu = ParaO.trace_loc_row[start1+jj];
+							if(mu<0)continue; 
 
-				  		const int L1 = atom1->iw2l[jj0];
-				  		const int N1 = atom1->iw2n[jj0];
-				  		const int m1 = atom1->iw2m[jj0];
+							for(int kk=0; kk<atom2->nw * NPOL; ++kk)
+							{
+								const int nu = ParaO.trace_loc_col[start2+kk];
+								if(nu<0)continue;
 
-
-				  		for(int kk=0; kk<atom2->nw*NPOL; ++kk)
-				  		{
-                const int kk0 = kk/NPOL;
-
-                const int iw2_all = start2 + kk0;
-						    const int nu = ParaO.trace_loc_col[iw2_all];
-						    if(nu<0)continue;
-
-				  			const int L2 = atom2->iw2l[kk0];
-				  			const int N2 = atom2->iw2n[kk0];
-				  			const int m2 = atom2->iw2m[kk0];
-  
-				  			// if ( !ParaO.in_this_processor(iw1_all,iw2_all) )
-				  			// {
-				  				// ++iw2_all;
-				  				// continue;
-				  			// }
-
-				  			// int mu = ParaO.trace_loc_row[iw1_all];
-				  			// int nu = ParaO.trace_loc_col[iw2_all];
-				  			int irc = nu*ParaO.nrow + mu;
-  
-				  			if(GAMMA_ONLY_LOCAL)
-							  {
-							  	if(STRESS)
-							  	{
-							  		this->soverlap_gamma[0][irc] += LM.DSloc_Rx[nnr]*LM.DH_r[nnr*3+0];
-							  		this->soverlap_gamma[1][irc] += LM.DSloc_Rx[nnr]*LM.DH_r[nnr*3+1];
-							  		this->soverlap_gamma[2][irc] += LM.DSloc_Rx[nnr]*LM.DH_r[nnr*3+2];
-							  		this->soverlap_gamma[3][irc] += LM.DSloc_Ry[nnr]*LM.DH_r[nnr*3+1];
-							  		this->soverlap_gamma[4][irc] += LM.DSloc_Ry[nnr]*LM.DH_r[nnr*3+2];
-							  		this->soverlap_gamma[5][irc] += LM.DSloc_Rz[nnr]*LM.DH_r[nnr*3+2];
-							  	}
-							  }
-				  			else
-				  			{
-				  				Vector3<double> dR(GridD.getBox(ad).x, GridD.getBox(ad).y, GridD.getBox(ad).z); 
-  
-				  				for(int ik=0; ik<kv.nks; ik++)
-				  				{
-				  					const double arg = ( kv.kvec_d[ik] * dR ) * TWO_PI;
-				  					const complex<double> kphase( cos(arg),  sin(arg) );
-
-				  					this->dSm_k[ik][0][irc] += LM.DSloc_Rx[nnr]*kphase;
-				  					this->dSm_k[ik][1][irc] += LM.DSloc_Ry[nnr]*kphase;
-				  					this->dSm_k[ik][2][irc] += LM.DSloc_Rz[nnr]*kphase;
-
-				  					if(STRESS)
-				  					{		
-				  						this->soverlap_k[ik][0][irc] += LM.DSloc_Rx[nnr]*LM.DH_r[nnr*3+0]*kphase;
-				  						this->soverlap_k[ik][1][irc] += LM.DSloc_Rx[nnr]*LM.DH_r[nnr*3+1]*kphase;
-				  						this->soverlap_k[ik][2][irc] += LM.DSloc_Rx[nnr]*LM.DH_r[nnr*3+2]*kphase;
-				  						this->soverlap_k[ik][3][irc] += LM.DSloc_Ry[nnr]*LM.DH_r[nnr*3+1]*kphase;
-				  						this->soverlap_k[ik][4][irc] += LM.DSloc_Ry[nnr]*LM.DH_r[nnr*3+2]*kphase;
-				  						this->soverlap_k[ik][5][irc] += LM.DSloc_Rz[nnr]*LM.DH_r[nnr*3+2]*kphase;																
-				  					}
-				  				}
-				  			}
-				  			++nnr;
-				  		}// kk
-				    }// jj
-				  }// adj
-				  // else if(distance>=rcut)
-				  // {
-				  	// int start1 = ucell.itiaiw2iwt( T1, I1, 0);
-				  	// int start2 = ucell.itiaiw2iwt( T2, I2, 0);
-				  	// bool is_adj = false;
-				  	// for (int ad0=0; ad0<GridD.getAdjacentNum()+1; ++ad0)
-				  	// {
-				  	// 	const int T0 = GridD.getType(ad0);
-				  		
-				  	// 	tau0 = GridD.getAdjacentTau(ad0);
-				  	// 	dtau1 = tau0 - tau1;
-				  	// 	double distance1 = dtau1.norm() * ucell.lat0;
-				  	// 	double rcut1 = ORB.Phi[T1].getRcut() + ORB.Beta[T0].get_rcut_max();
-				  	// 	dtau2 = tau0 - tau2;
-				  	// 	double distance2 = dtau2.norm() * ucell.lat0;
-				  	// 	double rcut2 = ORB.Phi[T2].getRcut() + ORB.Beta[T0].get_rcut_max();
-				  	// 	if(distance1<rcut1 && distance2<rcut2)
-				  	// 	{
-				  	// 		is_adj = true;
-				  	// 		break;
-				  	// 	}
-				  	// }//ad0
-				  	// if( is_adj )
-				  	// {
-				  // 		for(int jj=0; jj<atom1->nw * NPOL; ++jj)
-				  // 		{
-				  // 			const int mu = ParaO.trace_loc_row[start1+jj];
-				  // 			if(mu<0) continue; 
-
-				  // 			for(int kk=0; kk<atom2->nw * NPOL; ++kk)
-				  // 			{
-				  // 				const int nu = ParaO.trace_loc_col[start2+kk];
-				  // 				if(nu<0) continue;
-
-				  // 				++nnr;
-				  // 			}//kk
-				  // 		}//jj
-				  // 	// }
-				  // }//distance
-			  }// ad
-		  }// I1
-	  }// T1
+								++nnr;
+							}//kk
+						}//jj
+					}
+				}//distance
+			}// ad
+		}// I1
+	}// T1
 
 	return;
 }
@@ -1003,7 +944,7 @@ void DFTU_RELAX::erase_force_stress()
 				delete [] soverlap_gamma[i];
 			}
 			delete [] soverlap_gamma;
-      soverlap_gamma=nullptr;
+
 		}
 	}
 	else
@@ -1021,7 +962,6 @@ void DFTU_RELAX::erase_force_stress()
 			delete [] dSm_k[ik];
 		}
 		delete [] dSm_k;
-    dSm_k = nullptr;
 
 		if(STRESS)
 		{
@@ -1038,7 +978,6 @@ void DFTU_RELAX::erase_force_stress()
 				delete [] soverlap_k[ik];
 			}
 			delete [] soverlap_k;
-      soverlap_k = nullptr;
 		}
 	}
 			

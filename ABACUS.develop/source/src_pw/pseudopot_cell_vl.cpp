@@ -1,8 +1,7 @@
 #include "global.h"
 #include "tools.h"
 #include "../src_pw/myfunc.h"
-#include "VL_in_pw.h"
-#include "../src_global/math_integral.h"
+#include "pseudopot_cell_vl.h"
 
 pseudopot_cell_vl::pseudopot_cell_vl()
 {
@@ -139,7 +138,7 @@ void pseudopot_cell_vl::vloc_of_g(
 	{
 		aux[ir] = r[ir] * zp_in * e2 / ucell.omega;
 	}
-	Integral::Simpson_Integral(msh, aux, rab, vloc_1d[0] );
+	Mathzone::Simpson_Integral(msh, aux, rab, vloc_1d[0] );
 	vloc_1d[0] *= 4*3.1415926;
 	cout << "  vloc_1d[0]=" <<  vloc_1d[0]/pw.ngmc << endl;
 	cout << "  vloc_1d[0]=" <<  vloc_1d[0]/pw.ncxyz << endl;
@@ -157,7 +156,7 @@ void pseudopot_cell_vl::vloc_of_g(
 			aux[ir] = r [ir] * (r [ir] * vloc_at [ir] + zp_in * e2);
 			//aux[ir] = r [ir] * (r [ir] * vloc_at [ir] );
 		}
-		Integral::Simpson_Integral(msh, aux, rab, vloc_1d[0] );
+		Mathzone::Simpson_Integral(msh, aux, rab, vloc_1d[0] );
 		igl0 = 1;	
 	}
 	else
@@ -183,7 +182,7 @@ void pseudopot_cell_vl::vloc_of_g(
 		{
 			aux [ir] = aux1 [ir] * sin(gx * r [ir]) / gx;
 		}
-		Integral::Simpson_Integral(msh, aux, rab, vloc_1d[ig] );
+		Mathzone::Simpson_Integral(msh, aux, rab, vloc_1d[ig] );
 		//  here we add the analytic fourier transform of the erf function
 		vloc_1d[ig] -= fac * exp(- gx2 * 0.25)/ gx2;
 	} // enddo

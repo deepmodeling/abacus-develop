@@ -1,11 +1,6 @@
 #include "ORB_read.h"
+#include "../src_pw/global.h" // only use ucell.atoms[it]
 #include <cstring>		// Peize Lin fix bug about strcmp 2016-08-02
-#include <cassert>
-#include "../src_global/math_integral.h"
-//#include <math.h>
-//#include <cmath>
-#include <algorithm>
-using namespace std;
 
 //==============================
 // Define an object here! 
@@ -42,7 +37,7 @@ LCAO_Orbitals::~LCAO_Orbitals()
 
 #ifdef __MPI
 // be called in unitcell_pseudo.
-void LCAO_Orbitals::bcast_files(const int &ntype_in)
+void LCAO_Orbitals::bcast_files(void)
 {
 	TITLE("LCAO_Orbitals","bcast_files");
 
@@ -55,10 +50,10 @@ void LCAO_Orbitals::bcast_files(const int &ntype_in)
 		return;
 	}
 
-	assert(ntype_in > 0 );
+	assert(ucell.ntype > 0 );
 
 	ofs_running << "\n READING ORBITAL FILE NAMES FOR LCAO" << endl;
-	for(int it=0; it<ntype_in; it++)
+	for(int it=0; it<ucell.ntype; it++)
 	{
 		string ofile;
 		string nfile;
@@ -94,21 +89,15 @@ void LCAO_Orbitals::bcast_files(const int &ntype_in)
 //			nonlocal_file.push_back ( nfile );
 		}
 
-		ofs_running << " orbital file: " << orbital_file[it] << endl;
-//		ofs_running << " nonlocal file: " << nonlocal_file[it] << endl;
+		ofs_running << " " << ucell.atoms[it].label << " orbital file: " << orbital_file[it] << endl;
+//		ofs_running << " " << ucell.atoms[it].label << " nonlocal file: " << nonlocal_file[it] << endl;
 	}
 	return;
 }
 #endif
 
 
-//#include "../src_pw/global.h"
-void LCAO_Orbitals::Read_Orbitals(
-	const int &ntype_in, 
-	const int &lmax_in,
-	const int &out_descriptor,
-	const int &out_r_matrix,
-	const int &my_rank) // mohan add 2021-04-26
+void LCAO_Orbitals::Read_Orbitals(void)
 {
 	TITLE("LCAO_Orbitals", "Read_Orbitals");
 	timer::tick("LCAO_Orbitals","Read_Orbitals",'C');
@@ -151,13 +140,12 @@ void LCAO_Orbitals::Read_Orbitals(
     assert(dR > 0.0);
     assert(Rmax > 0.0);
 
-	// ntype: number of atom species
-	this->ntype = ntype_in; 
-	assert(ntype>0);
-
-	// lmax: lmax used in local orbitals as basis sets
-	assert(lmax_in>=0); // mohan add 2021-04-16
-	this->lmax = lmax_in;
+	this->ntype = ucell.ntype;
+	this->lmax = ucell.lmax;
+	for(int i=0; i<ucell.ntype; i++)
+	{
+		OUT(ofs_running,"atom label",ucell.atoms[i].label);
+	}
 
 	//-------------------------------------------------
 	//(2) set the kmesh according to ecutwfc and dk. 
@@ -177,11 +165,10 @@ void LCAO_Orbitals::Read_Orbitals(
 		this->kmesh = static_cast<int>( sqrt(ecutwfc) / dk )  + 4;
 	}
 
+// PLEASE avoid using 'INPUT.' as global variable 
+// mohan note 2021-03-23
 	// jingan add for calculate r(R) matrix
-	if(out_r_matrix) 
-	{
-		kmesh = kmesh * 4;
-	}
+	if(INPUT.out_r_matrix) kmesh = kmesh * 4;
 
 	//	this->kmesh = static_cast<int> (PI / 0.01 / 4 / this->dk);
 	if(kmesh%2==0) kmesh++;
@@ -194,11 +181,14 @@ void LCAO_Orbitals::Read_Orbitals(
 	// Read in numerical atomic orbitals for each atom type.
 	//>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 	delete[] this->Phi;
-
-	this->Phi = new Numerical_Orbital[ntype];
-	for(int it=0; it<ntype; it++)
+// PLEASE avoid using 'ucell' as global variable 
+// if 'ntype' is really needed, the variable should be initialized
+// as a parameter of this class
+// mohan note 2021-03-23
+	this->Phi = new Numerical_Orbital[ucell.ntype];
+	for(int it=0; it<ucell.ntype; it++)
 	{
-		this->Read_PAO(it, my_rank);	
+		this->Read_PAO(it);	
 	}
 
 	
@@ -211,11 +201,11 @@ void LCAO_Orbitals::Read_Orbitals(
 	// mohan note 2011-03-04
 	//>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 	delete[] this->Beta;
-	this->Beta = new Numerical_Nonlocal[ntype];
+	this->Beta = new Numerical_Nonlocal[ucell.ntype];
 
 	delete[] nproj;
-	this->nproj = new int[ntype];
-	ZEROS(nproj, ntype);
+	this->nproj = new int[ucell.ntype];
+	ZEROS(nproj, ucell.ntype);
 	
 	this->nprojmax = 0;
 	
@@ -224,11 +214,8 @@ void LCAO_Orbitals::Read_Orbitals(
 	// if false: get nonlocal information from .upf or .vwr directly
 	bool readin_nonlocal = false;
 
-	for(int it=0; it<ntype; it++)
+	for(int it=0; it<ucell.ntype; it++)
 	{
-#ifdef __NORMAL
-		// need to be added 2021-04-26 mohan
-#else
 		if(readin_nonlocal)
 		{
 			this->Read_NonLocal(it, this->nproj[it]);	
@@ -237,10 +224,10 @@ void LCAO_Orbitals::Read_Orbitals(
 		{
 			this->Set_NonLocal(it, this->nproj[it]);
 		}
-#endif
 		this->nprojmax = std::max( this->nprojmax, this->nproj[it] );
 	}
 
+	this->set_nl_index();
 	ofs_running << " max number of nonlocal projetors among all species is " << nprojmax << endl; 
 
 	//caoyu add 2021-3-16
@@ -250,7 +237,10 @@ void LCAO_Orbitals::Read_Orbitals(
 	//>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
 
-	if (out_descriptor>0)	//condition: descriptor in lcao line
+// PLEASE avoid using 'INPUT.' as global variable 
+// the descriptor parameter can be used as an input parameter
+// mohan note 2021-03-23
+	if (INPUT.out_descriptor && BASIS_TYPE == "lcao")		//condition: descriptor in lcao line
 	{
 		
 		delete[] this->Alpha;
@@ -265,11 +255,7 @@ void LCAO_Orbitals::Read_Orbitals(
 }
 
 
-#ifdef __NORMAL
 
-#else
-
-#include "../src_pw/global.h"
 // mohan add 2013-08-02
 // In order to get rid of the read in file .NONLOCAL.
 void LCAO_Orbitals::Set_NonLocal(const int &it, int &n_projectors)
@@ -282,14 +268,20 @@ void LCAO_Orbitals::Set_NonLocal(const int &it, int &n_projectors)
 	// get the number of non-local projectors
 	n_projectors = atom->nbeta;
 
+
 // PLEASE avoid using capital letters for local variables
 // mohan note 2021-03-23 
-	const int nh = atom->nh;//zhengdy-soc
+	const int N_PROJECTORS = atom->nh;//zhengdy-soc
+//cout << " number of projectros " << N_PROJECTORS << endl;
+//	cout << " number of projectros " << n_projectors << endl;
 
 	// set the nonlocal projector objects
 	Numerical_Nonlocal_Lm* tmpBeta_lm = new Numerical_Nonlocal_Lm[n_projectors];
 
-	ComplexMatrix Coefficient_D_in_so(nh*2, nh*2);//zhengdy-soc
+	//const int nproj_allowed = atom->lmax + 1;	
+	//matrix Coefficient_D_in(nproj_allowed, nproj_allowed); //LiuXh 2016-01-14
+	matrix Coefficient_D_in(n_projectors, n_projectors); //LiuXh 2016-01-14
+	ComplexMatrix Coefficient_D_in_so(N_PROJECTORS*2, N_PROJECTORS*2);//zhengdy-soc
 
 	if(!atom->has_so)
 	{
@@ -297,7 +289,11 @@ void LCAO_Orbitals::Set_NonLocal(const int &it, int &n_projectors)
 		{
 			const int lnow = atom->lll[p1];
 
-			// only keep the nonzero part.
+		// this will be wrong if dion is non-diagoal
+		//Coefficient_D_in(lnow,lnow)=atom->dion(p1,p1);//LiuXh 2016-01-14
+			Coefficient_D_in(p1,p1)=atom->dion(p1,p1);//LiuXh 2016-01-14
+
+		// only keep the nonzero part.
 			int cut_mesh = atom->mesh; 
 			for(int ir=atom->mesh-1; ir>=0; --ir)
 			{
@@ -329,20 +325,17 @@ void LCAO_Orbitals::Set_NonLocal(const int &it, int &n_projectors)
 					this->dk,
 					dr_uniform); // delta k mesh in reciprocal space
 
-			tmpBeta_lm[p1].plot(MY_RANK);
-
 			delete[] beta_r;
 				
 		}
 		
-		// mohan comment out 2021-04-26
-		//WARNING("LCAO_Orbitals::Set_NonLocal","bug in line "+TO_STRING(__LINE__)+", matrix ic>=nc");		
-
+		WARNING("LCAO_Orbitals::Set_NonLocal","bug in line "+TO_STRING(__LINE__)+", matrix ic>=nc");		
 		// Peize Lin add 2019-01-23
 		this->Beta[it].set_type_info(it, 
 			atom->label, 
 			atom->pp_type, 
 			atom->lmax, 
+			Coefficient_D_in, 
 			Coefficient_D_in_so, 
 			n_projectors, 
 			0, 
@@ -383,28 +376,27 @@ void LCAO_Orbitals::Set_NonLocal(const int &it, int &n_projectors)
 							{
 								for(int is2=0;is2<2;is2++)
 								{
-									soc.set_fcoef(l1, l2,
-										is1, is2,
-										m1, m2,
-										j1, j2,
-										it, ip1, ip2);
-									Coefficient_D_in_so(ip1 + nh*is1, ip2 + nh*is2) = atom->dion(p1,p2) 
-									* soc.fcoef(it, is1, is2, ip1, ip2);
-									if(p1 != p2) 
+									complex<double> coeff = complex<double>(0.0,0.0);
+									for(int m=-l1-1;m<l1+1;m++)
 									{
-										soc.fcoef(it, is1, is2, ip1, ip2) = complex<double>(0.0,0.0);
+										const int mi = soc.sph_ind(l1,j1,m,is1) + lmaxkb ;
+										const int mj = soc.sph_ind(l2,j2,m,is2) + lmaxkb ;
+										coeff += soc.rotylm(m1,mi) * soc.spinor(l1,j1,m,is1)*
+											conj(soc.rotylm(m2,mj))*soc.spinor(l2,j2,m,is2);
 									}
-								}// end is2
-							}// end is1
-						}// end l1==l2
+									soc.fcoef(it,is1,is2,ip1,ip2) = coeff;
+									Coefficient_D_in_so(ip1 + N_PROJECTORS*is1, ip2 + N_PROJECTORS*is2) = atom->dion(p1,p2) * soc.fcoef(it, is1, is2, ip1, ip2);
+									if(p1 != p2) soc.fcoef(it, is1, is2, ip1, ip2) = complex<double>(0.0,0.0);
+								}
+							}
+						}
 						ip2++;
-					}// end m2
-				}// end p2
-				assert(ip2==nh);
+					}
+				}
+				assert(ip2==N_PROJECTORS);
 				ip1++;
-			}// end m1
-
-			// only keep the nonzero part.
+			}
+		// only keep the nonzero part.
 			int cut_mesh = atom->mesh; 
 			for(int ir=atom->mesh-1; ir>=0; --ir)
 			{
@@ -414,11 +406,9 @@ void LCAO_Orbitals::Set_NonLocal(const int &it, int &n_projectors)
 					break;
 				}
 			}
-			if(cut_mesh %2 == 0) 
-			{
-				++cut_mesh;
-			}
+			if(cut_mesh %2 == 0) ++cut_mesh;
 
+//		cout << " cut_mesh=" << cut_mesh << endl;
 			double* beta_r = new double[cut_mesh];
 			ZEROS(beta_r, cut_mesh);
 			for(int ir=0; ir<cut_mesh; ++ir)
@@ -438,21 +428,20 @@ void LCAO_Orbitals::Set_NonLocal(const int &it, int &n_projectors)
 					this->dk,
 					dr_uniform); // delta k mesh in reciprocal space
 
-			tmpBeta_lm[p1].plot(MY_RANK);
-
 			delete[] beta_r;
 		}
 
-		assert(ip1==nh);
+		assert(ip1==N_PROJECTORS);
 
 		this->Beta[it].set_type_info(
 			it, 
 			atom->label, 
 			atom->pp_type, 
 			atom->lmax, 
+			Coefficient_D_in, 
 			Coefficient_D_in_so, 
 			n_projectors, 
-			nh, 
+			N_PROJECTORS, 
 			atom->lll, 
 			tmpBeta_lm, 
 			1);//zhengdy-soc 2018-09-10
@@ -461,7 +450,7 @@ void LCAO_Orbitals::Set_NonLocal(const int &it, int &n_projectors)
 
 	delete[] tmpBeta_lm;
 
-	cout << " SET NONLOCAL PSEUDOPOTENTIAL PROJECTORS" << endl;
+	cout << " Set NonLocal Pseudopotential Projectors " << endl;
 	return;
 }
 
@@ -601,7 +590,7 @@ void LCAO_Orbitals::Read_NonLocal(const int &it, int &n_projectors)
 
 #ifdef __MPI
 	Parallel_Common::bcast_int(n_projectors); // mohan add 2010-12-20
-//	Parallel_Common::bcast_double(Coefficient_D_in.c, Coefficient_D_in.nr * Coefficient_D_in.nc);
+	Parallel_Common::bcast_double(Coefficient_D_in.c, Coefficient_D_in.nr * Coefficient_D_in.nc);
 #endif
 
 	Numerical_Nonlocal_Lm* tmpBeta_lm = new Numerical_Nonlocal_Lm[n_projectors];
@@ -685,8 +674,6 @@ void LCAO_Orbitals::Read_NonLocal(const int &it, int &n_projectors)
                 this->dk,
 				dr_uniform); // delta k mesh in reciprocal space
 
-		tmpBeta_lm[p1].plot(MY_RANK);
-
 		delete[] radial_ps;
 		delete[] rab_ps;
 		delete[] beta_r;
@@ -697,87 +684,340 @@ void LCAO_Orbitals::Read_NonLocal(const int &it, int &n_projectors)
 		}
 	}// end projectors.
 	
-	this->Beta[it].set_type_info(
-		it, 
-		label, 
-		ps_type, 
-		nlmax, 
-		Coefficient_D_in_so, 
-		n_projectors, 
-		0, 
-		LfromBeta, 
-		tmpBeta_lm, 
-		ucell.atoms[it].has_so);
+	this->Beta[it].set_type_info(it, label, ps_type, nlmax, Coefficient_D_in, Coefficient_D_in_so, n_projectors, 0, LfromBeta, tmpBeta_lm, ucell.atoms[it].has_so);
 		
 	ifs.close();
-
 	delete[] LfromBeta;
 	delete[] tmpBeta_lm;
 
 	return;
 }
 
-#endif // end for Read and Set Nonlocal, mohan add 2021-04-26
 
-
-//-------------------------------------------------------
-// mohan note 2021-04-26
-// to_caoyu: 
-// 1) read in lmaxt and nchi directly from orbital files
-// 2) pass nchi to phi via this->Phi[it].set_orbital_info 
-// be careful! nchi[l] may be different for differnt phi
-//-------------------------------------------------------
-void LCAO_Orbitals::Read_PAO(
-	const int& it, 
-	const int &my_rank) // mohan add 2021-04-26
+void LCAO_Orbitals::Read_PAO(const int& it)
 {
 	TITLE("LCAO_Orbitals","Read_PAO");
+	int lmaxt = ucell.atoms[it].nwl;
 
-	ifstream in_ao;
-	bool open=false;
-	if(my_rank==0)
+	//	OUT(ofs_running,"Lmax for this type",lmaxt);
+
+	// allocate space
+	// number of chi for each L.
+	int *nchi = new int[lmaxt+1];
+	for(int l=0; l<=lmaxt; l++)
 	{
-		in_ao.open(this->orbital_file[it].c_str());
-		if(in_ao)
-		{
-			open=true;
-		}
-	}
-#ifdef __MPI
-	Parallel_Common::bcast_bool( open );
-#endif
-	if(!open)
-	{
-		ofs_warning << " Orbital file : " << this->orbital_file[it] << endl;
-		WARNING_QUIT("LCAO_Orbitals::Read_PAO","Couldn't find orbital files");
+		nchi[l] = ucell.atoms[it].l_nchi[l];
+		this->nchimax = std::max( this->nchimax, nchi[l]);
 	}
 
-	ofs_running << " " << setw(12) << "ORBITAL" << setw(3) << "L" 
+	// calculate total number of chi
+    int total_nchi = 0;
+    for(int l=0; l<=lmaxt; l++)
+    {
+        total_nchi += nchi[l];
+    }
+	//	OUT(ofs_running,"Total number of chi(l,n)",total_nchi);
+	
+	delete[] Phi[it].phiLN;
+	this->Phi[it].phiLN = new Numerical_Orbital_Lm[total_nchi];
+
+	ifstream in;
+
+	int count=0;
+	ofs_running << " " << setw(8) << "ORBITAL" << setw(3) << "L" 
 	<< setw(3) << "N" << setw(8) << "nr" << setw(8) << "dr"
 	<< setw(8) << "RCUT" << setw(12) << "CHECK_UNIT"
-		<< setw(12) << "NEW_UNIT" << endl;
-	
-	//lmax and nchimax for type it
-	int lmaxt=0;
-	int nchimaxt=0;
+	<< setw(12) << "NEW_UNIT" << endl;
+    for (int L=0; L<=lmaxt; L++)
+    {
+        for (int N=0; N<nchi[L]; N++)
+        {
+			ofs_running << " " << setw(8) << count+1 << setw(3) << L << setw(3) << N;
 
-	this->read_orb_file(in_ao, it, lmaxt, nchimaxt, this->Phi);
+			// mohan add 2010-09-08.
+			// check if the orbital file exists.
+            bool open=false;
+            if(MY_RANK==0)
+            {
+				//cout << " file name : " << orbital_file[it] << endl;
+                in.open(this->orbital_file[it].c_str());
+                if(in)
+                {
+                    open=true;
+                }
+            }
+#ifdef __MPI
+            Parallel_Common::bcast_bool( open );
+#endif
+            if(!open)
+            {
+                ofs_warning << " Orbital file : " << this->orbital_file[it] << endl;
+                WARNING_QUIT("LCAO_Orbitals::Read_PAO","Couldn't find orbital files");
+            }
 
-	//lmax and nchimax for all types
-	this->lmax = std::max(this->lmax, lmaxt);
-	this->nchimax = std::max(this->nchimax, nchimaxt);
-	
-	in_ao.close();
-	return;
+			double* radial; // radial mesh
+			double* psi; // radial local orbital
+			double* psir;// psi * r
+			double* rab;// dr
+            int meshr; // number of mesh points
+            char word[80];
+			double dr; // only used in case 1
+
+			int meshr_read;
+			if(MY_RANK==0)    //pengfei 2014-10-13
+			{
+				while (in.good())
+				{
+					in >> word;
+					if (std::strcmp(word , "END") == 0)		// Peize Lin fix bug about strcmp 2016-08-02
+					{
+						break;
+					}
+				}
+
+				CHECK_NAME(in, "Mesh");
+				in >> meshr;
+				meshr_read = meshr;
+				if(meshr%2==0) 
+				{
+					++meshr;
+				}
+			}
+				
+#ifdef __MPI
+			Parallel_Common::bcast_int( meshr );	
+			Parallel_Common::bcast_int( meshr_read );	
+#endif				
+			if(MY_RANK==0)
+			{
+				CHECK_NAME(in, "dr");
+				in >> dr;
+			}
+			
+#ifdef __MPI
+			Parallel_Common::bcast_double( dr );
+#endif
+			// set the number of mesh and the interval distance.
+			ofs_running << setw(8) << meshr << setw(8) << dr;
+
+            radial = new double[meshr];
+			psi = new double[meshr];
+            psir = new double[meshr];
+            rab = new double[meshr];
+
+			ZEROS( radial, meshr );
+			ZEROS( psi, meshr);
+			ZEROS( psir, meshr );
+			ZEROS( rab, meshr );
+
+			for(int ir=0; ir<meshr; ir++)
+			{
+				rab[ir] = dr;
+				// plus one because we can't read in r = 0 term now.
+				// change ir+1 to ir, because we need psi(r==0) information.
+				radial[ir] = ir*dr; //mohan 2010-04-19
+			}
+
+			// set the length of orbital
+			ofs_running << setw(8) << radial[meshr-1];
+
+			// mohan update 2010-09-07
+			bool find = false;
+			if(MY_RANK==0)
+			{
+				string name1, name2, name3;
+				int tmp_it, tmp_l ,tmp_n;
+				while( !find )
+				{
+					if(in.eof())
+					{
+						ofs_warning << " Can't find l=" 
+						<< L << " n=" << N << " orbital." << endl; 			
+						break;
+					}
+
+					
+					in >> name1 >> name2 >> name3;
+					assert( name1 == "Type" );
+					in >> tmp_it >> tmp_l >> tmp_n;
+					if( L == tmp_l && N == tmp_n )
+					{
+						// meshr_read is different from meshr if meshr is even number.
+						for(int ir=0; ir<meshr_read; ir++)
+						{
+							in >> psi[ir];
+							/*
+							double rl = pow (ir*dr, l);	
+							psi[ir] *= rl;
+							*/
+							psir[ir] = psi[ir] * radial[ir];
+						}
+						find = true;
+					}
+					else
+					{
+						double no_use;
+						for(int ir=0; ir<meshr_read; ir++)
+						{
+							in >> no_use;
+						}
+					}
+				}//end find
+			}
+
+#ifdef __MPI
+			Parallel_Common::bcast_bool(find);
+#endif
+			if(!find)
+			{
+				WARNING_QUIT("LCAO_Orbitals::Read_PAO","Can't find atomic orbitals.");
+			}
+
+#ifdef __MPI
+			Parallel_Common::bcast_double( psi, meshr_read ); // mohan add 2010-06-24
+			Parallel_Common::bcast_double( psir, meshr_read );
+#endif
+
+			// renormalize radial wave functions
+			double* inner = new double[meshr];
+			for(int ir=0; ir<meshr; ir++)
+			{
+				inner[ir] = psir[ir] * psir[ir];
+			}
+			double unit = 0.0;
+			Mathzone::Simpson_Integral(meshr, inner, rab, unit);
+
+			// check unit: \sum ( psi[r] * r )^2 = 1
+			ofs_running << setprecision(3) << setw(12) << unit;
+
+			for(int ir=0; ir<meshr; ir++)
+			{
+				psi[ir] /= sqrt(unit);
+				psir[ir] /= sqrt(unit);
+			}
+
+			for(int ir=0; ir<meshr; ir++)
+			{
+				inner[ir] = psir[ir] * psir[ir];
+			}
+			Mathzone::Simpson_Integral(meshr, inner, rab, unit);
+			delete[] inner;
+			ofs_running << setw(12) << unit << endl;
+			
+			this->Phi[it].phiLN[count].set_orbital_info(
+                ucell.atoms[it].label,
+                it, //type
+                L, //angular momentum L
+                N, // number of orbitals of this L
+                meshr, // number of radial mesh
+                rab,
+                radial,// radial mesh value(a.u.)
+				Numerical_Orbital_Lm::Psi_Type::Psi,// psi type next
+                psi, // radial wave function
+                this->kmesh,
+                this->dk,
+				this->dr_uniform,
+				true,
+				true); // delta k mesh in reciprocal space
+
+            delete[] radial;
+            delete[] rab;
+            delete[] psir;
+			delete[] psi;
+
+            ++count;
+			in.close();
+        }
+    }
+
+    this->Phi[it].set_orbital_info(
+        it, // type
+        ucell.atoms[it].label, // label
+        lmaxt,
+        nchi,
+        total_nchi); //copy twice !
+
+    delete[] nchi;
+    return;
 }
 
+void LCAO_Orbitals::set_nl_index(void)
+{
+	TITLE("LCAO_Orbitals","set_nl_index");
+	int ntype = ucell.ntype;
+
+	this->nkb=0;
+	for(int it=0; it<ntype; it++)
+	{
+		nkb += ucell.atoms[it].na * ucell.atoms[it].nh;
+//		cout << " projectors for " << ucell.atoms[it].label << " is " << ucell.atoms[it].nh << endl;
+	}
+
+	// mohan update 2011-05-01
+	if(nkb==0)
+	{
+		WARNING("LCAO_Orbitals","No non-local projectos, it must all be H atoms.");
+		return;
+	}
+	
+
+	this->itiaib2ib_all.create(ntype, ucell.namax, this->nkb);
+
+	int ib_all = 0;
+	for(int it=0; it<ucell.ntype; it++)
+	{
+		for(int ia=0; ia<ucell.atoms[it].na; ia++)
+		{
+			for(int ib=0; ib<ucell.atoms[it].nh; ib++)
+			{
+				itiaib2ib_all(it,ia,ib) = ib_all;
+				++ib_all;
+			}
+			/*
+			for(int ib=0; ib< this->nproj[it]; ib++)
+			{
+				for(int m=0; m< 2*Beta[it].Proj[ib].getL()+1; m++)
+				{
+					itiaib2ib_all(it,ia,ib) = ib_all;
+					++ib_all;
+				}
+			}
+			*/	
+		}
+	}
+	assert(ib_all==nkb);
+
+
+	int nh_max = 0;
+	for(int it=0; it<ucell.ntype; it++)
+	{
+		nh_max = max(nh_max, ucell.atoms[it].nh);
+	}
+
+	this->ib2_ylm.create(ntype, nh_max);
+	for(int it=0; it<ucell.ntype; it++)
+	{
+		int index = 0;
+		for(int ib=0; ib< this->nproj[it]; ib++)
+		{
+			const int L = Beta[it].Proj[ib].getL();
+			for(int m=0; m<2*L+1; m++)
+			{
+				this->ib2_ylm(it, index) = L*L+m;
+				++index;
+			}
+		}
+	}
+
+	return;
+}
 
 //caoyu add 2021-3-16
 void LCAO_Orbitals::Read_Descriptor(void)	//read descriptor basis
 {
 	TITLE("LCAO_Orbitals", "Read_Descriptor");
 
-	ifstream in_de;
+	ifstream in;
 	ofs_running << " " << setw(12) << "DESCRIPTOR" << setw(3) << "L"
 		<< setw(3) << "N" << setw(8) << "nr" << setw(8) << "dr"
 		<< setw(8) << "RCUT" << setw(12) << "CHECK_UNIT"
@@ -787,8 +1027,8 @@ void LCAO_Orbitals::Read_Descriptor(void)	//read descriptor basis
 	bool open = false;
 	if (MY_RANK == 0)
 	{
-		in_de.open(this->descriptor_file.c_str());
-		if (in_de)
+		in.open(this->descriptor_file.c_str());
+		if (in)
 		{
 			open = true;
 		}
@@ -802,91 +1042,70 @@ void LCAO_Orbitals::Read_Descriptor(void)	//read descriptor basis
 		WARNING_QUIT("LCAO_Orbitals::Read_Descriptor", "Couldn't find orbital files for descriptor");
 	}
 
-	this->lmax_d = 0;
-	this->nchimax_d = 0;
-
-	this->read_orb_file(in_de, 0, this->lmax_d, this->nchimax_d, this->Alpha);
-
-	in_de.close();
-
-	return;
-}
-
-
-void LCAO_Orbitals::read_orb_file(
-	ifstream &ifs,
-	const int &it, 
-	int &lmax, 
-	int &nchimax, 
-	Numerical_Orbital* ao)
-{
-	TITLE("LCAO_Orbitals","read_orb_file");
+	//read lmax and nchi[l]
+	int lmax = 0;
+	int nchimax = 0;
+	int nchi[10]={0};
 	char word[80];
 	if (MY_RANK == 0)
 	{
-		while (ifs.good())
+		while (in.good())
 		{
-			ifs >> word;
+			in >> word;
 			if (std::strcmp(word, "Lmax") == 0)
 			{
-				ifs >> lmax;
+				in >> lmax;
 				break;
 			}
 		}
-	}
-#ifdef __MPI
-	Parallel_Common::bcast_int(lmax);
-#endif	
-	
-	int* nchi = new int[lmax];		// allocate space: number of chi for each L.
-	
-	if (MY_RANK == 0)
-	{	
+		// allocate space
+		// number of chi for each L.
 		for (int l = 0; l <= lmax; l++)
 		{
-			ifs >> word >> word >> word >> nchi[l];
+			in >> word >> word >> word >> nchi[l];
 			nchimax = std::max(nchimax, nchi[l]);
 		}
 	}
 
 #ifdef __MPI
-	Parallel_Common::bcast_int(nchimax);
-	Parallel_Common::bcast_int(nchi, lmax + 1);
+		Parallel_Common::bcast_int(lmax);
+		Parallel_Common::bcast_int(nchimax);
+		Parallel_Common::bcast_int(nchi, lmax + 1);
 #endif		
-
+	this->lmax_d = lmax;
+	this->nchimax_d = nchimax;
 	// calculate total number of chi
 	int total_nchi = 0;
 	for (int l = 0; l <= lmax; l++)
 	{
 		total_nchi += nchi[l];
 	}
-	//OUT(ofs_running,"Total number of chi(l,n)",total_nchi);
-	delete[] ao[it].phiLN;
-	ao[it].phiLN = new Numerical_Orbital_Lm[total_nchi];
+		//OUT(ofs_running,"Total number of chi(l,n)",total_nchi);
+	this->Alpha[0].phiLN = new Numerical_Orbital_Lm[total_nchi];
 
-	int meshr=0; // number of mesh points
-	int meshr_read=0;
-	double dr=0.0; 
+	int meshr; // number of mesh points
+	int meshr_read;
+	double dr; 
 
 	if (MY_RANK == 0)
 	{
-		while (ifs.good())
+		while (in.good())
 		{
-			ifs >> word;
+			in >> word;
 			if (std::strcmp(word, "END") == 0)		// Peize Lin fix bug about strcmp 2016-08-02
 			{
 				break;
 			}
 		}
-		CHECK_NAME(ifs, "Mesh");
-		ifs >> meshr;
+		CHECK_NAME(in, "Mesh");
+		in >> meshr;
 		meshr_read = meshr;
 		if (meshr % 2 == 0)
 		{
 			++meshr;
 		}
-		CHECK_NAME(ifs, "dr");
-		ifs >> dr;
+		CHECK_NAME(in, "dr");
+		in >> dr;
 	}
 
 #ifdef __MPI
@@ -896,12 +1115,8 @@ void LCAO_Orbitals::read_orb_file(
 #endif		
 
 	int count = 0;
-	string name1;
-	string name2;
-	string name3;
-	int tmp_it=0;
-	int tmp_l=0;
-	int tmp_n=0;
+	string name1, name2;
+	int tmp_l, tmp_n;
 
 	for (int L = 0; L <= lmax; L++)
 	{
@@ -922,13 +1137,10 @@ void LCAO_Orbitals::read_orb_file(
 			psir = new double[meshr];
 			rab = new double[meshr];
 
-			for(int im=0; im<meshr; ++im)
-			{
-				radial[im]=0.0;
-				psi[im]=0.0;
-				psir[im]=0.0;
-				rab[im]=0.0;
-			}
+			ZEROS(radial, meshr);
+			ZEROS(psi, meshr);
+			ZEROS(psir, meshr);
+			ZEROS(rab, meshr);
 
 			for (int ir = 0; ir < meshr; ir++)
 			{
@@ -947,22 +1159,25 @@ void LCAO_Orbitals::read_orb_file(
 			{
 				while (!find)
 				{
-					if (ifs.eof())
+					if (in.eof())
 					{
 						ofs_warning << " Can't find l="
 							<< L << " n=" << N << " orbital." << endl;
 						break;
 					}
 
-					ifs >> name1 >> name2>> name3;
-					ifs >> tmp_it >> tmp_l >> tmp_n;
-					assert( name1 == "Type" );
+					in >> name1 >> name2;
+					in >> tmp_l >> tmp_n;
 					if (L == tmp_l && N == tmp_n)
 					{
 						// meshr_read is different from meshr if meshr is even number.
 						for (int ir = 0; ir < meshr_read; ir++)
 						{
-							ifs >> psi[ir];
+							in >> psi[ir];
+							/*
+							double rl = pow (ir*dr, l);
+							psi[ir] *= rl;
+							*/
 							psir[ir] = psi[ir] * radial[ir];
 						}
 						find = true;
@@ -972,7 +1187,7 @@ void LCAO_Orbitals::read_orb_file(
 						double no_use;
 						for (int ir = 0; ir < meshr_read; ir++)
 						{
-							ifs >> no_use;
+							in >> no_use;
 						}
 					}
 				}//end find
@@ -983,7 +1198,7 @@ void LCAO_Orbitals::read_orb_file(
 #endif
 			if (!find)
 			{
-				WARNING_QUIT("LCAO_Orbitals::read_orb_file", "Can't find orbitals.");
+				WARNING_QUIT("LCAO_Orbitals::Read_Descriptor", "Can't find descriptor orbitals.");
 			}
 
 #ifdef __MPI
@@ -992,16 +1207,16 @@ void LCAO_Orbitals::read_orb_file(
 #endif
 
 			// renormalize radial wave functions
-			double* inner = new double[meshr]();
+			double* inner = new double[meshr];
 			for (int ir = 0; ir < meshr; ir++)
 			{
 				inner[ir] = psir[ir] * psir[ir];
 			}
 			double unit = 0.0;
 
-			Integral::Simpson_Integral(meshr, inner, rab, unit);
-
-			assert(unit>0.0);
+// PLEASE make Simpson_Integral as input parameters?
+// mohan note 2021-03-23
+			Mathzone::Simpson_Integral(meshr, inner, rab, unit);
 
 			// check unit: \sum ( psi[r] * r )^2 = 1
 			ofs_running << setprecision(3) << setw(12) << unit;
@@ -1016,13 +1231,13 @@ void LCAO_Orbitals::read_orb_file(
 			{
 				inner[ir] = psir[ir] * psir[ir];
 			}
-			Integral::Simpson_Integral(meshr, inner, rab, unit);
+			Mathzone::Simpson_Integral(meshr, inner, rab, unit);
 			delete[] inner;
 			ofs_running << setw(12) << unit << endl;
 
-			ao[it].phiLN[count].set_orbital_info(
-                ucell.atoms[it].label,
-                it, //type
+			this->Alpha[0].phiLN[count].set_orbital_info(
+				"H", //any type
+				1, //any type
 				L, //angular momentum L
 				N, // number of orbitals of this L
 				meshr, // number of radial mesh
@@ -1044,13 +1259,14 @@ void LCAO_Orbitals::read_orb_file(
 			++count;
 		}
 	}
-	ao[it].set_orbital_info(
-        it, // type
-        ucell.atoms[it].label, // label	
+
+	in.close();
+
+	this->Alpha[0].set_orbital_info(
+		1, // any type
+		"H", // any label
 		lmax,
 		nchi,
 		total_nchi); //copy twice !
-	
-	delete[] nchi;
 	return;
 }

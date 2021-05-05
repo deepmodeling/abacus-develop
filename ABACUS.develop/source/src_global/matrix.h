@@ -16,7 +16,6 @@ class matrix
 {
 	/* data */
 public:
-
 	int nr=0;
 	int nc=0;   /* Number of rows and columns */
 	double *c=nullptr;    /* Holds the data */

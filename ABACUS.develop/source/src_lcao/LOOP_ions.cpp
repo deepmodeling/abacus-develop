@@ -13,8 +13,6 @@
 #include "ELEC_scf.h"
 #include "src_global/sltk_atom_arrange.h"
 #include "src_pw/vdwd2.h"
-#include "src_pw/vdwd3.h"
-#include "LCAO_descriptor.h"
 
 LOOP_ions::LOOP_ions()
 {}
@@ -110,10 +108,32 @@ void LOOP_ions::opt_ions(void)
 		
 		time_t eend = time(NULL);
 
-		//for second-order extrapolation
+		// PLEASE move the details of CE to other places
+		// mohan add 2021-03-25
+        //xiaohui add 2014-07-07, for second-order extrapolation
+        int iat=0;
         if(CALCULATION=="relax" || CALCULATION=="cell-relax")
         {
-            CE.update_all_pos(ucell);
+            for(int it = 0;it < ucell.ntype;it++)
+            {
+                Atom* atom = &ucell.atoms[it];
+                for(int ia =0;ia< ucell.atoms[it].na;ia++)
+                {
+                    CE.pos_old2[3*iat  ] = CE.pos_old1[3*iat  ];
+                    CE.pos_old2[3*iat+1] = CE.pos_old1[3*iat+1];
+                    CE.pos_old2[3*iat+2] = CE.pos_old1[3*iat+2];
+
+                    CE.pos_old1[3*iat  ] = CE.pos_now[3*iat  ];
+                    CE.pos_old1[3*iat+1] = CE.pos_now[3*iat+1];
+                    CE.pos_old1[3*iat+2] = CE.pos_now[3*iat+2];
+
+                    CE.pos_now[3*iat  ] = atom->tau[ia].x*ucell.lat0;
+                    CE.pos_now[3*iat+1] = atom->tau[ia].y*ucell.lat0;
+                    CE.pos_now[3*iat+2] = atom->tau[ia].z*ucell.lat0;
+
+                    iat++;
+                }
+            }
         }
 
 		// PLEASE design a proper interface to output potentials,
@@ -133,14 +153,6 @@ void LOOP_ions::opt_ions(void)
 		{
 			this->output_HS_R(); //LiuXh add 2019-07-15
 		}
-        //caoyu add 2021-03-31
-        if (INPUT.out_descriptor)
-        {
-            LCAO_Descriptor ld;
-            ld.build_S_descriptor(0);  //derivation not needed yet
-            ld.cal_projected_DM();
-            ld.cal_descriptor();
-        }
 
         time_t fstart = time(NULL);
         if (CALCULATION=="scf" || CALCULATION=="relax" || CALCULATION=="cell-relax")
@@ -152,9 +164,21 @@ void LOOP_ions::opt_ions(void)
 		// PLEASE move the details of CE to other places
 		// mohan add 2021-03-25
         //xiaohui add 2014-07-07, for second-order extrapolation
+        iat=0;
         if(FORCE)
         {
-            CE.save_pos_next(ucell);
+            for(int it = 0;it < ucell.ntype;it++)
+            {
+                Atom* atom = &ucell.atoms[it];
+                for(int ia =0;ia< ucell.atoms[it].na;ia++)
+                {
+                    CE.pos_next[3*iat  ] = atom->tau[ia].x*ucell.lat0;
+                    CE.pos_next[3*iat+1] = atom->tau[ia].y*ucell.lat0;
+                    CE.pos_next[3*iat+2] = atom->tau[ia].z*ucell.lat0;
+
+                    iat++;
+                }
+            }
         }
 		
         if(OUT_LEVEL=="i")
@@ -201,7 +225,7 @@ void LOOP_ions::opt_ions(void)
     }
 
 	// mohan update 2021-02-10
-    hm.orb_con.clear_after_ions(UOT, ORB, INPUT.out_descriptor);
+    hm.orb_con.clear_after_ions();
 
     timer::tick("LOOP_ions","opt_ions",'B'); 
     return;
@@ -249,7 +273,7 @@ bool LOOP_ions::force_stress(
             }
             else // ions are not converged
             {
-                CE.update_istep(istep); 
+                CE.istep = istep;
                 CE.extrapolate_charge();
 
                 if(pot.extra_pot=="dm")
@@ -363,7 +387,7 @@ xiaohui modify 2014-08-09*/
             }
             else
             {
-                CE.update_istep(force_step);
+                CE.istep = force_step;
                 CE.extrapolate_charge();
 
                 if(pot.extra_pot=="dm")
@@ -448,11 +472,10 @@ void LOOP_ions::final_scf(void)
         vdwd2.cal_energy();
         en.evdw = vdwd2.get_energy();
     }
-	else if(vdwd3_para.flag_vdwd3)							//jiyy add 2019-05-18, update 2021-05-02
+	else if(vdwd3.vdwD3)							//jiyy add 2019-05-18
     {
-        Vdwd3 vdwd3(ucell,vdwd3_para);
-        vdwd3.cal_energy();
-        en.evdw = vdwd3.get_energy();
+        vdwd3.energy();
+        en.evdw = vdwd3.energy_result;
     }											  
     
 

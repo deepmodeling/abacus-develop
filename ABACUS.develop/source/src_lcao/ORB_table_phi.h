@@ -1,9 +1,12 @@
 #ifndef ORB_TABLE_PHI_H 
 #define ORB_TABLE_PHI_H 
 
-#include "ORB_read.h"
+#include "src_pw/tools.h"
+#include "ORB_atomic.h"
 #include "ORB_atomic_lm.h"
-#include "../src_global/sph_bessel_recursive.h"
+#include "ORB_gaunt_table.h"
+#include "center2_orb.h"
+#include "src_global/sph_bessel_recursive.h"
 #include <set>
 
 class ORB_table_phi
@@ -21,11 +24,8 @@ class ORB_table_phi
 		const double &dR_in,
 		const double &dk_in);
 
-	void init_Table(
-		const int &job,
-		LCAO_Orbitals &orb);
-
-	void Destroy_Table(LCAO_Orbitals &orb);
+	void init_Table(const int &job);
+	void Destroy_Table(void);
 
 	// Five dimension:
 	// (1) 0: normal (S(R)) ; 1: derivative( dS/dR )
@@ -40,24 +40,13 @@ class ORB_table_phi
 	bool destroy_tr;
 	
 	//=================================================
-	// make table of Spherical bessel
-	// Sph_Bes : jlx[kmesh][Rmesh][L]
-	// L should be 2*Lmax, which is max L of all type
+	//make table of Spherical bessel
+	//Sph_Bes : jlx[kmesh][Rmesh][L]
+	//L should be 2*Lmax, which is max L of all type
 	//=================================================
 	// Peize Lin update 2016-01-26
-	void init_Lmax(
-		const int orb_num, 
-		const int mode, 
-		int &Lmax_used, 
-		int &Lmax,
-		const int &Lmax_exx) const;
-
-	void init_Table_Spherical_Bessel(
-		const int orb_num, 
-		const int mode, 
-		int &Lmax_used, 
-		int &Lmax,
-		const int &Lmax_exx);
+	void init_Lmax (const int orb_num, const int mode, int &Lmax_used, int &Lmax) const;
+	void init_Table_Spherical_Bessel (const int orb_num, const int mode, int &Lmax_used, int &Lmax);
 
 	// Peize Lin add 2017-04-24, and change all jlx in this class
 	Sph_Bessel_Recursive::D2* pSB = nullptr;
@@ -72,10 +61,8 @@ class ORB_table_phi
 	// T stands for atom type.
 	// O stands for orbitals.
 	//-------------------------
-
-    void init_OV_Tpair(LCAO_Orbitals &orb);
-    void init_OV_Opair(LCAO_Orbitals &orb);
-
+    void init_OV_Tpair(void);
+    void init_OV_Opair(void);
 	int OV_nTpairs;
     IntArray OV_Tpair;
     IntArray OV_Opair;
@@ -89,6 +76,7 @@ class ORB_table_phi
 	static double dr;
 	int Rmesh;
 
+	private:
 
 	void cal_ST_Phi12_R(
 		const int &job,
@@ -109,27 +97,18 @@ class ORB_table_phi
 		double *rs,
 		double *drs) const;
 
-	private:
-
 	// variables
     int ntype;
-
 	int lmax;
-
 	double Rmax;
-
 	double dk;
-
 	int nlm;
-
 	int kmesh;
-
 	double *kpoint;
-
 	double *r;
-
 	double *rab;
-
 	double *kab;	
+
+	friend class Center2_Orb::Orb11;			// Peize Lin add 2016-01-24
 };
 #endif

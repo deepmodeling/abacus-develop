@@ -1,11 +1,12 @@
+//=========================================================
+//AUTHOR : liaochen
+//DATE : 2008-11-12
+//Last Update : 2009-4-23
+//=========================================================
 #ifndef NUMERICAL_ORBITAL_H
 #define NUMERICAL_ORBITAL_H
 
-#include <string>
-using namespace std;
-
-#include "../src_global/intarray.h"
-#include "../src_global/vector3.h"
+#include "../src_pw/tools.h"
 #include "ORB_atomic_lm.h"
 
 //=========================================================

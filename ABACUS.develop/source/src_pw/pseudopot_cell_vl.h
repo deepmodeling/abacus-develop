@@ -1,5 +1,5 @@
-#ifndef VL_IN_PW_H 
-#define VL_IN_PW_H 
+#ifndef pseudopot_cell_vl_H
+#define pseudopot_cell_vl_H
 
 #include "tools.h"
 
@@ -29,4 +29,4 @@ private:
 
 };
 
-#endif // VL_IN_PW 
+#endif // PSEUDOPOT_CELL_VL_H

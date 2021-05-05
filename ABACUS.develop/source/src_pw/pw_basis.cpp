@@ -6,7 +6,6 @@
 #include "tools.h"
 #include "pw_basis.h"
 #include "../src_pw/pw_complement.h"
-#include <omp.h>
 
 PW_Basis::PW_Basis()
 {
@@ -730,35 +729,63 @@ void PW_Basis::get_nggm(const int ngmc_local)
 
 
 //  Calculate structure factor
-void PW_Basis::setup_structure_factor(void)			// Peize Lin optimize and add OpenMP 2021.04.01
+void PW_Basis::setup_structure_factor(void)
 {
     TITLE("PW_Basis","setup_structure_factor");
     timer::tick("PW_Basis","setup_struc_factor");
-    const complex<double> ci_tpi = NEG_IMAG_UNIT * TWO_PI;
+    complex<double> ci_tpi = NEG_IMAG_UNIT * TWO_PI;
+    complex<double> x;
 
-    this->strucFac.create(Ucell->ntype, this->ngmc);
+    this->strucFac.create( Ucell->ntype, this->ngmc);
+    this->strucFac.zero_out();
     Memory::record("PW_Basis","struc_fac", Ucell->ntype*this->ngmc,"complexmatrix");
 
+#define complex2cal_strufac
 //	string outstr;
 //	outstr = global_out_dir + "strucFac.dat"; 
 //	ofstream ofs( outstr.c_str() ) ;
 
-    for (int it=0; it<Ucell->ntype; it++)
+    for (int it=0; it< Ucell->ntype; it++)
     {
-		const int na = Ucell->atoms[it].na;
-		const Vector3<double> * const tau = Ucell->atoms[it].tau;
-
-		#pragma omp parallel for schedule(static)
-        for (int ig=0; ig<this->ngmc; ig++)
+        const Atom* atom = &Ucell->atoms[it];	
+        for (int ig=0; ig< this->ngmc; ig++)
         {
-			const Vector3<double> gcar_ig = gcar[ig];
+#ifdef complex2cal_strufac
             complex<double> sum_phase = ZERO;
-            for (int ia=0; ia<na; ia++)
+#else
+            double sum_cos = 0.0;
+            double sum_sin = 0.0;
+#endif
+            for (int ia=0; ia< atom->na; ia++)
             {
+                //----------------------------------------------------------
+                // EXPLAIN : Don't use Dot function until we can optimize
+                // it, use the following x*x + y*y + z*z instead!
+                //----------------------------------------------------------
                 // e^{-i G*tau}
-                sum_phase += exp( ci_tpi * (gcar_ig * tau[ia]) );
+
+#ifdef complex2cal_strufac
+                sum_phase += exp( ci_tpi * (
+                                      gcar[ig].x * atom->tau[ia].x +
+                                      gcar[ig].y * atom->tau[ia].y +
+                                      gcar[ig].z * atom->tau[ia].z ) );
+#else
+                const double theta = TWO_PI * (
+                                         gcar[ig].x * atom->tau[ia].x +
+                                         gcar[ig].y * atom->tau[ia].y +
+                                         gcar[ig].z * atom->tau[ia].z );
+                sum_cos += cos( theta );
+                sum_sin += sin( theta );
+#endif
             }
-            this->strucFac(it,ig) = sum_phase;
+#ifdef complex2cal_strufac
+            this->strucFac(it, ig) = sum_phase;
+#else
+            this->strucFac(it, ig) = complex<double>( sum_cos, -sum_sin );
+#endif
+
+//			double tmpx = strucFac(it, ig).real() ;
+//			double tmpy = strucFac(it, ig).imag() ;
         }
     }
 

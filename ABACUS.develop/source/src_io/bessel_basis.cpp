@@ -1,7 +1,6 @@
 #include "bessel_basis.h"
 #include "../src_pw/global.h"
 #include "../src_parallel/parallel_common.h"
-#include "../src_global/math_integral.h"
 
 Bessel_Basis::Bessel_Basis()
 {
@@ -261,8 +260,8 @@ void Bessel_Basis::init_TableOne(
 
 			//caoyu add 2021-3-10
 			//=========output .orb format=============
-			ofs << setiosflags(ios::right) << setw(20) << "Type"<< setw(20) << "L" << setw(20) << "N" << endl;
-			ofs << setiosflags(ios::right) << setw(20) << "0"<< setw(20) << l << setw(20) << ie << endl;
+			ofs << setiosflags(ios::right) << setw(20) << "L" << setw(20) << "N" << endl;
+			ofs << setiosflags(ios::right) << setw(20) << l << setw(20) << ie << endl;
 			for (int ir = 0; ir < rmesh; ir++) 
 			{ 
 				ofs << setiosflags(ios::scientific) 
@@ -307,7 +306,7 @@ void Bessel_Basis::init_TableOne(
 				}
 				
 				// make table value
-				Integral::Simpson_Integral(rmesh, function, rab, this->TableOne(l, ie, ik) );
+				Mathzone::Simpson_Integral(rmesh, function, rab, this->TableOne(l, ie, ik) );
 			}
 			
 		}// end ie

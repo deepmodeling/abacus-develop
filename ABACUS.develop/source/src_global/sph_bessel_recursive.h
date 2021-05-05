@@ -7,7 +7,7 @@
 #define SPH_BESSEL_RECURSIVE_H
 
 #include<vector>
-#include"stddef.h"
+using namespace std;
 
 class Sph_Bessel_Recursive
 {
@@ -21,14 +21,14 @@ public:
 class Sph_Bessel_Recursive::D1
 {
 public:	
-	const std::vector<std::vector<double>> & cal_jlx( const int lmax, const size_t ix_size );
-	const std::vector<std::vector<double>> & get_jlx()const{ return jlx; }
+	const vector<vector<double>> & cal_jlx( const int lmax, const size_t ix_size );
+	const vector<vector<double>> & get_jlx()const{ return jlx; }
 	
 	void set_dx(const double dx_in);
 	double get_dx()const{ return dx; }
 
 private:
-	std::vector<std::vector<double>> jlx;		// jlx[l][x]
+	vector<vector<double>> jlx;		// jlx[l][x]
 	double dx;
 	bool finish_set_dx = false;
 	
@@ -45,14 +45,14 @@ private:
 class Sph_Bessel_Recursive::D2
 {
 public:	
-	const std::vector<std::vector<std::vector<double>>> & cal_jlx( const int lmax, const size_t ix1_size, const size_t ix2_size );
-	const std::vector<std::vector<std::vector<double>>> & get_jlx()const{ return jlx; }
+	const vector<vector<vector<double>>> & cal_jlx( const int lmax, const size_t ix1_size, const size_t ix2_size );
+	const vector<vector<vector<double>>> & get_jlx()const{ return jlx; }
 	
 	void set_dx(const double dx_in);
 	double get_dx()const{ return dx; }
 
 private:
-	std::vector<std::vector<std::vector<double>>> jlx;		// jlx[l][x1][x2]
+	vector<vector<vector<double>>> jlx;		// jlx[l][x1][x2]
 	double dx;
 	bool finish_set_dx = false;
 	
@@ -72,12 +72,12 @@ public:
 	class D1
 	{
 		public:
-		static std::vector<Sph_Bessel_Recursive::D1> sb_pool;
+		static vector<Sph_Bessel_Recursive::D1> sb_pool;
 	};
 	class D2
 	{
 		public:
-		static std::vector<Sph_Bessel_Recursive::D2> sb_pool;
+		static vector<Sph_Bessel_Recursive::D2> sb_pool;
 	};
 };
 

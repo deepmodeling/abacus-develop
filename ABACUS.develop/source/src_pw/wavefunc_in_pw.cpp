@@ -1,6 +1,5 @@
 #include "wavefunc_in_pw.h"
 #include <cstring>		// Peize Lin fix bug about strcmp 2016-08-02
-#include "../src_global/math_integral.h"
 
 void Wavefunc_in_pw::make_table_q(std::vector<string> &fn, realArray &table_local)
 {
@@ -213,7 +212,7 @@ const double *rab, const int &l, double* table)
 	}
 	
 	double unit = 0.0;
-	Integral::Simpson_Integral(meshr, inner_part, rab, unit);
+	Mathzone::Simpson_Integral(meshr, inner_part, rab, unit);
 	delete[] inner_part;
 	OUT(ofs_running,"normalize unit",unit);
 
@@ -229,7 +228,7 @@ const double *rab, const int &l, double* table)
 		}
 		
 		double vqint = 0.0;
-		Integral::Simpson_Integral(meshr, vchi, rab, vqint);
+		Mathzone::Simpson_Integral(meshr, vchi, rab, vqint);
 
 		table[iq] =  vqint * pref;
 	}

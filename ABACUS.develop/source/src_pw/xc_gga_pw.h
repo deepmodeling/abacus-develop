@@ -1,3 +1,8 @@
+//==========================================================
+// AUTHOR : mohan, Lixin He
+// DATE : 2009-12-16
+// UPDATE : Peize Lin change all double** to Vector3<double>* 2017-12-20
+//==========================================================
 #ifndef GGA_PW_H 
 #define GGA_PW_H
 
@@ -7,7 +12,6 @@
 
 //==========================================================
 // Calculate the charge gradient using plane wave basis. 
-// UPDATE : Peize Lin change all double** to Vector3<double>* 2017-12-20
 //==========================================================
 
 namespace GGA_PW

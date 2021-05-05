@@ -5,12 +5,12 @@
 #include <cmath>
 using namespace std;
 
-int Integral_G::n_root = 512;
-bool Integral_G::calc_wx = false;
-double* Integral_G::gauleg_w;
-double* Integral_G::gauleg_x;
+int Integral::n_root = 512;
+bool Integral::calc_wx = false;
+double* Integral::gauleg_w;
+double* Integral::gauleg_x;
 
-double Integral_G::Gauss_Legendre
+double Integral::Gauss_Legendre
 (
 	const double &a,
 	const double &b,
@@ -27,7 +27,7 @@ double Integral_G::Gauss_Legendre
 	
 	if(!calc_wx) 
 	{
-		Integral_G::gauleg();
+		Integral::gauleg();
 		calc_wx = true;
 	}
 
@@ -55,7 +55,7 @@ double Integral_G::Gauss_Legendre
 	return sum * dab / 2.0;
 }
 
-void Integral_G::gauleg(void)
+void Integral::gauleg()
 {
 	int m, j, i;
 	double z1,z,xm,xl,pp,p3,p2,p1;

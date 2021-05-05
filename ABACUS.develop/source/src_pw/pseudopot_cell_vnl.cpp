@@ -1,9 +1,12 @@
+//==========================================================
+// AUTHOR : Lixin He, mohan
+// DATE : 2008-11-08
+//==========================================================
 #include "global.h"
-#include "VNL_in_pw.h"
+#include "pseudopot_cell_vnl.h"
 #include "tools.h"
 #include "wavefunc.h"
 #include "../src_lcao/ORB_gen_tables.h"
-#include "../src_global/math_integral.h"
 
 pseudopot_cell_vnl::pseudopot_cell_vnl()
 {
@@ -64,15 +67,15 @@ void pseudopot_cell_vnl::init(const int ntype, const bool allocate_vkb)
 
 	if( this->nhm > 0 )
 	{
-		this->indv.create(ntype, this->nhm);
-		this->nhtol.create(ntype, this->nhm);
-		this->nhtolm.create(ntype, this->nhm);
-		this->nhtoj.create(ntype, this->nhm);
-		this->deeq.create(NSPIN, ucell.nat, this->nhm, this->nhm);
-		this->deeq_nc.create(NSPIN, ucell.nat, this->nhm, this->nhm);
-		this->dvan.create(ntype, this->nhm, this->nhm);
-		this->dvan_so.create(NSPIN, ntype, this->nhm, this->nhm);
-		this->becsum.create(NSPIN, ucell.nat, this->nhm * (this->nhm + 1) / 2);
+		indv.create(ntype, this->nhm);
+		nhtol.create(ntype, this->nhm);
+		nhtolm.create(ntype, this->nhm);
+		nhtoj.create(ntype, this->nhm);
+		deeq.create(NSPIN, ucell.nat, this->nhm, this->nhm);
+		deeq_nc.create(NSPIN, ucell.nat, this->nhm, this->nhm);
+		dvan.create(ntype, this->nhm, this->nhm);
+		dvan_so.create(NSPIN, ntype, this->nhm, this->nhm);
+		becsum.create(NSPIN, ucell.nat, this->nhm * (this->nhm + 1) / 2);
 	}
 	else
 	{
@@ -121,6 +124,18 @@ void pseudopot_cell_vnl::init(const int ntype, const bool allocate_vkb)
 	else 
 	{
 		this->tab_at.create(ntype, nchix_nc, NQX);
+	}
+
+	if(test_pp > 1)
+	{
+		cout 
+		<< "\n     ntype   = " << ntype
+		<< "\n     lmaxkb  = " << this->lmaxkb
+		<< "\n     nhm     = " << this->nhm  
+		<< "\n     nkb     = " << this->nkb
+		<< "\n     nbrx    = " << nbrx
+		<< "\n     nchix   = " << nchix 
+		<< endl;
 	}
 
 	timer::tick("ppcell_vnl","init",'C');
@@ -285,11 +300,15 @@ void pseudopot_cell_vnl::init_vnl(UnitCell_pseudo &cell)
 						{
 							for(int is2=0;is2<2;is2++)
 							{
-								soc.set_fcoef(l1, l2,
-										is1, is2,
-										m1, m2,
-										j1, j2,
-										it, ip, ip2);
+								complex<double> coeff = complex<double>(0.0,0.0);
+								for(int m=-l1-1;m<l1+1;m++)
+								{
+									const int mi = soc.sph_ind(l1,j1,m,is1) + this->lmaxkb ;
+									const int mj = soc.sph_ind(l2,j2,m,is2) + this->lmaxkb ;
+									coeff += soc.rotylm(m1,mi) * soc.spinor(l1,j1,m,is1)*
+										conj(soc.rotylm(m2,mj))*soc.spinor(l2,j2,m,is2);
+								}
+								soc.fcoef(it,is1,is2,ip,ip2) = coeff;
 							}
 						}
 					}
@@ -379,7 +398,7 @@ void pseudopot_cell_vnl::init_vnl(UnitCell_pseudo &cell)
 					          jl[ir] * cell.atoms[it].r[ir];
 				} 
 				double vqint;
-				Integral::Simpson_Integral(kkbeta, aux, cell.atoms[it].rab, vqint);
+				Mathzone::Simpson_Integral(kkbeta, aux, cell.atoms[it].rab, vqint);
 				this->tab(it, ib, iq) = vqint * pref;
 			} 
 		} 
@@ -605,7 +624,7 @@ void pseudopot_cell_vnl::init_vnl_alpha(void)          // pengfei Li 2018-3-23
 								  ucell.atoms[it].r[ir] * ucell.atoms[it].r[ir];
 					}
 					double vqint;
-					Integral::Simpson_Integral(kkbeta, aux, ucell.atoms[it].rab, vqint);
+					Mathzone::Simpson_Integral(kkbeta, aux, ucell.atoms[it].rab, vqint);
 					this->tab_alpha(it, ib, L, iq) = vqint * pref;
 				}
 			}

@@ -1,16 +1,17 @@
 #include "./stress_pw.h"
 #include "./H_XC_pw.h"
 #include "src_pw/vdwd2.h"
-#include "src_pw/vdwd3.h"
 
-void Stress_PW::cal_stress(matrix& sigmatot)
+void Stress_PW::cal_stress(matrix& sigma)
 {
 	TITLE("Stress_PW","cal_stress");
 	timer::tick("Stress_PW","cal_stress",'E');    
 
-	sigmatot.create(3,3);
+	sigma.create(3,3);
 	matrix sigmaxc;
 	sigmaxc.create(3,3);
+	matrix sigmatot;
+	sigmatot.create(3,3);
 	matrix sigmahar;
 	sigmahar.create(3,3);
 	matrix sigmakin;
@@ -118,11 +119,9 @@ void Stress_PW::stress_vdw(matrix& sigma)
 		vdwd2.cal_stress();
 		sigma = vdwd2.get_stress().to_matrix();
 	}
-	if(vdwd3_para.flag_vdwd3)                                                                 //jiyy add 2019-05-18, update 2021-05-02
+	if(vdwd3.vdwD3)                                                                 //jiyy add 2019-05-18
 	{
-		Vdwd3 vdwd3(ucell,vdwd3_para);
-		vdwd3.cal_stress();
-		sigma = vdwd3.get_stress().to_matrix();
+		vdwd3.force(0, 1, force, sigma);
 	}              
 	return;
 }

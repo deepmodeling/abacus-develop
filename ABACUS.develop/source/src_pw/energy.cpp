@@ -1,3 +1,7 @@
+//==========================================================
+// AUTHOR : Lixin He, mohan
+// DATE : 2008-11-21
+//==========================================================
 #include "tools.h"
 #include "global.h"
 #include "energy.h"
@@ -137,9 +141,9 @@ void energy::print_etot(
 			{
 				this->print_format("E_vdwD2",evdw);
 			}
-			if(vdwd3_para.flag_vdwd3)					//jiyy add 2019-05, update 2021-05-02
+			if(vdwd3.vdwD3)					//jiyy add 2019-05
 			{
-				this->print_format("E_vdwD3",evdw);
+				this->print_format("E_vdwD3",vdwd3.energy_result);
 			}
 			this->print_format("E_exx",exx);
 		}

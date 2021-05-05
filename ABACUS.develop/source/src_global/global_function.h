@@ -1,3 +1,8 @@
+//==========================================================
+// AUTHOR : mohan
+// LAST UPDATE : 2009-02-26
+// Add : READ_VALUE; SCAN_BEGIN; SCAN_END; 2009-02-26
+//==========================================================
 #ifndef GLOBAL_FUNCTION_H
 #define GLOBAL_FUNCTION_H
 

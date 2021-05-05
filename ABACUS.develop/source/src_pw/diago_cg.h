@@ -15,14 +15,12 @@ class Diago_CG
     static double ddot_real(
         const int & dim,
         const complex<double>* psi_L,
-        const complex<double>* psi_R,
-        const bool reduce = true) ;
+        const complex<double>* psi_R) ;
 
     static complex<double> ddot(
         const int & dim,
         const complex<double>* psi_L,
         const complex<double>* psi_R ) ;
-
 
     static complex<double> ddot(
         const int & dim,

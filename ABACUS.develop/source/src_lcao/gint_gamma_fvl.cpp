@@ -5,7 +5,6 @@
 #include "src_global/blas_connector.h"
 
 #include "global_fp.h" // mohan add 2021-01-30
-#include "../src_global/ylm.h"
 
 void Gint_Gamma::cal_force(const double* vlocal_in)
 {

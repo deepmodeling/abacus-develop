@@ -1,13 +1,16 @@
-#ifndef ORB_GEN_TABLES_H
-#define ORB_GEN_TABLES_H
+//=========================================================
+//AUTHOR : Mohan 
+//DATE : 2009-04-22
+//=========================================================
+#ifndef USE_OVERLAP_TABLE_H
+#define USE_OVERLAP_TABLE_H
 
+#include "src_pw/tools.h"
 #include "ORB_gaunt_table.h"
+#include "src_global/ylm.h"
 #include "ORB_table_beta.h"
 #include "ORB_table_phi.h"
 #include "ORB_table_alpha.h"		//caoyu add 2020-3-18
-#include "ORB_read.h"
-#include "../src_global/vector3.h"
-#include "../src_global/matrix.h"
 
 //------------------------------------
 // used to be 'Use_Overlap_Table',
@@ -22,12 +25,7 @@ class ORB_gen_tables
 	ORB_gen_tables();
 	~ORB_gen_tables();
 
-	void gen_tables( 
-		const int &job0, 
-		LCAO_Orbitals &orb,
-		const int &Lmax_exx,
-		const int &out_descriptor); // whether to generate descriptors
-
+	void gen_tables( const int &job0 );
 	void set_unit( const double &v ){lat0=v;}
 	
 	void snap_psipsi(
@@ -63,7 +61,6 @@ class ORB_gen_tables
 		const int &n2,
 		const Vector3<double> &Rnl,
 		const int &type,
-		const matrix &dion, // mohan add 2021-04-25
 		complex<double> *nlm1=NULL,
 		const int is=0)const;
 
@@ -82,7 +79,9 @@ class ORB_gen_tables
 		const int& I2,
 		const int& l2,
 		const int& m2,
-		const int& n2)const;
+		const int& n2,
+		complex<double>* olm1 = NULL,
+		const int is = 0)const;
 
 	// set as public because in hamilt_linear, 
 	// we need to destroy the tables: SR,TR,NR

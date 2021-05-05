@@ -1,6 +1,5 @@
 #include "./stress_func.h"
 #include "./H_XC_pw.h"
-#include "../src_global/math_integral.h"
 
 //NLCC term, need to be tested
 void Stress_Func::stress_cc(matrix& sigma, const bool is_pw)
@@ -183,7 +182,7 @@ void Stress_Func::deriv_drhoc
 		{
 			aux [ir] = r [ir] * rhoc [ir] * (r [ir] * cos (gx * r [ir] ) / gx - sin (gx * r [ir] ) / pow(gx,2));
 		}//ir
-		Integral::Simpson_Integral(mesh, aux, rab, rhocg1);
+		Mathzone::Simpson_Integral(mesh, aux, rab, rhocg1);
 		drhocg [igl] = FOUR_PI / ucell.omega * rhocg1;
 	}//igl
 	

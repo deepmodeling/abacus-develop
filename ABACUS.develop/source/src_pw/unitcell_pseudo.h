@@ -1,3 +1,8 @@
+//==========================================================
+// AUTHOR : Lixin He , mohan
+// DATE : 2008-11-08
+// Last Update: 2009-08-31
+//==========================================================
 #ifndef UNITCELL_PSEUDO_H
 #define UNITCELL_PSEUDO_H
 
@@ -36,10 +41,11 @@ public: // member functions
 	void check_dtau(void);
     void setup_cell_after_vc(const string &s_pseudopot_dir, const string &fn, ofstream &log); //LiuXh add 20180515
 
+private: // member variables
 	bool set_atom_flag;//added on 2009-3-8 by mohan
 
-	// read in pseudopotential from files for each type of atom
-	void read_cell_pseudopots(const string &fn);
+private: // member functions
+	void read_pseudopot(const string &fn); // read in pseudopotential from files for each type of atom
 
 	//================================================================
 	// cal_natomwfc : calculate total number of atomic wavefunctions

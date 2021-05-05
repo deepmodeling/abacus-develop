@@ -1,3 +1,18 @@
+// =============================================================================
+//                          C++ Header File
+// Project:         LapackConnector
+// File:            LapackConnector.hpp
+// Author:          sltk
+// Comment:         LapackConnector provide the connector to the fortran Lapack routine.
+// Warning:
+// Start time:      2007-03-08
+// Last modified:   2008-08-12 ywcui : add zhegvx
+// 					2008-08-13 mohan : find bug,test.
+// 					2008-09-03 mohan : Add zgesv
+// 					2009-03-08 mohan : add ilaenv
+//					2010-01-22 spshu : add dgesvd
+// =============================================================================
+
 #ifndef LAPACKCONNECTOR_HPP
 #define LAPACKCONNECTOR_HPP
 
@@ -8,7 +23,7 @@
 #include "matrix.h"
 #include "complexmatrix.h"
 #include "blas_connector.h"
-#include "global_function.h"
+#include "src_global/global_function.h"
 
 
 extern "C"

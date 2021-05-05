@@ -1,12 +1,17 @@
+//==========================================================
+// Author: Lixin He,mohan
+// DATE : 2008-11-6
+// LAST MODIFIED : 2021-01-31 by Mohan
+//==========================================================
 #ifndef GLOBAL_H
 #define GLOBAL_H
 
 #include "../run_pw.h"
-#include "../src_global/global_variable.h"
-#include "../src_global/global_function.h"
+#include "src_global/global_variable.h"
+#include "src_global/global_function.h"
 #include "pw_basis.h"
 #include "energy.h"
-#include "VNL_in_pw.h"
+#include "pseudopot_cell_vnl.h"
 #include "charge_broyden.h"
 #include "potential.h"
 #include "xc_type.h"
@@ -19,8 +24,7 @@
 #include "magnetism.h"
 #include "vdwd2.h"
 #include "vdwd2_parameters.h"
-#include "vdwd3.h"
-#include "vdwd3_parameters.h"	
+#include "vdwd3.h"	
 #include "src_global/restart.h" 
 #include "exx_global.h"
 #include "exx_lip.h"
@@ -57,7 +61,7 @@ extern UnitCell_pseudo ucell;
 extern Parallel_Grid Pgrid; 
 extern Parallel_Kpoints Pkpoints;
 extern Vdwd2_Parameters vdwd2_para;		// Peize Lin add 2021.03.09
-extern Vdwd3_Parameters vdwd3_para;		// jiyy add 2021-05-02	
+extern Vdwd3 vdwd3;		// jiyy add 2019-05-18		
 extern Restart restart;	// Peize Lin add 2020.04.04  																								 
 extern Soc soc; // zhengdy-soc
 

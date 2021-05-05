@@ -1,12 +1,11 @@
-#ifndef INTEGRAL_G_H
-#define INTEGRAL_G_H
+#ifndef INTEGRAL_H
+#define INTEGRAL_H
 
-class Integral_G
+class Integral
 {
 	public:
-
-	Integral_G();
-	~Integral_G();
+	Integral();
+	~Integral();
 
 	static double Gauss_Legendre
 	(

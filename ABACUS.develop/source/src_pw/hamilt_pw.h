@@ -50,7 +50,7 @@ public:
         complex<double> *hpsi,
         complex<double> *spsi);
 
-    void h_psi( const complex<double> *psi, complex<double> *hpsi, const int m = 1); // qianrui add a default parameter 2021-3-31
+    void h_psi( const complex<double> *psi, complex<double> *hpsi);
 
     void s_1psi(
         const int npw,
@@ -66,9 +66,11 @@ public:
     // hpsi , spsi
     complex<double> *hpsi;
     complex<double> *spsi;
-    complex<double> *Bec;
 
-    void add_vuspsi(complex<double> *hpsi, const complex<double> *becp, const int m);
+    complex<double> *Bec;
+    complex<double> *Ps;
+
+    void add_vuspsi(complex<double> *hpsi, const complex<double> *becp);
 
 	private:
 
