@@ -1,5 +1,6 @@
 #include "wf_atomic.h"
 #include "global.h"
+#include "../src_global/math_integral.h"
 
 WF_atomic::WF_atomic()
 {
@@ -79,7 +80,7 @@ void WF_atomic::init_at_1(void)
                 inner_part[ir] = atom->chi(ic,ir) * atom->chi(ic,ir);
             }
             double unit = 0.0;
-            Mathzone::Simpson_Integral(atom->msh, inner_part, atom->rab, unit);
+            Integral::Simpson_Integral(atom->msh, inner_part, atom->rab, unit);
             delete[] inner_part;
 
 			ofs_running << " the unit of pseudo atomic orbital is " << unit; 
@@ -101,7 +102,7 @@ void WF_atomic::init_at_1(void)
                 inner_part[ir] = atom->chi(ic,ir) * atom->chi(ic,ir);
             }
             unit = 0.0;
-            Mathzone::Simpson_Integral(atom->msh, inner_part, atom->rab, unit);
+            Integral::Simpson_Integral(atom->msh, inner_part, atom->rab, unit);
             delete[] inner_part;
 
 			ofs_running << ", renormalize to " << unit << endl;
@@ -119,7 +120,7 @@ void WF_atomic::init_at_1(void)
                     }
 
                     double vqint = 0.0;
-                    Mathzone::Simpson_Integral(atom->msh, vchi, atom->rab, vqint);
+                    Integral::Simpson_Integral(atom->msh, vchi, atom->rab, vqint);
 
                     ppcell.tab_at(it, ic, iq) =  vqint * pref;
                     //				if( it == 0 && ic == 0 )

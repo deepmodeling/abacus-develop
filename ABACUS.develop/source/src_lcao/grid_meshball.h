@@ -30,6 +30,7 @@ class Grid_MeshBall : public Grid_BigCell
 	// init the meshball radius,
 	// search each meshcell of this meshball.
 	void init_meshball(void);
+
 	void delete_meshball_positions(void); //LiuXh add 2018-12-14
 
 	private:

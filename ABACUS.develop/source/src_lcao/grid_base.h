@@ -46,40 +46,72 @@ protected:
 
 	int* ijk_index;
 
-	Matrix3 latvec,latvec0;
-	Vector3<double> a1, a2, a3;
-	double a1_len, a2_len, a3_len;
+	Matrix3 latvec;
+	Matrix3 latvec0;
+
+	Vector3<double> a1;
+	Vector3<double> a2;
+	Vector3<double> a3;
+
+	double a1_len;
+	double a2_len;
+	double a3_len;
+
 	Vector3<double> da_d;
-	double da1, da2, da3;
-	int nx, ny, nz, nxyz;
+
+	double da1;
+	double da2;
+	double da3;
+
+	int nx;
+	int ny;
+	int nz;
+	int nxyz;
+
 	Vector3<double> *cartesian;
+
 	double lat0;
 
 	int test;
+
 	double *Rcut_max;
+
 	Vector3<double> *Rcut_max_direct;
-	int grid_number, grid_number_last;
+
+	int grid_number;
+	int grid_number_last;
 	
-	double *norm1, *norm2;
+	double *norm1;
+	double *norm2;
 	
-	double Rcut1, Rcut2;
+	double Rcut1;
+	double Rcut2;
 	
-	Vector3<double> *dR1, *dR2;
+	Vector3<double> *dR1;
+	Vector3<double> *dR2;
 
 	const Numerical_Orbital_Lm* pointer1;
 	const Numerical_Orbital_Lm* pointer2;
 
-	int iw1_all,iw2_all;
-	int index1, index2;
-	Vector3<int> edge_min, edge_max;
+	int iw1_all;
+	int iw2_all;
+	int index1;
+	int index2;
+
+	Vector3<int> edge_min;
+	Vector3<int> edge_max;
 
 	enum cal_type{ cal_charge, cal_local } job;
 	
 	double** yy1;
 	double** yy2;
-	int n1,n2; // (lmax+1)^2
-	int n1_last, n2_last;
-	int lmax1, lmax2;
+
+	int n1; // (lmax+1)^2
+	int n2;
+	int n1_last;
+	int n2_last;
+	int lmax1;
+	int lmax2;
 
 };
 

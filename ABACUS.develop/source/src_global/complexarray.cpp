@@ -1,11 +1,3 @@
-/***********************************************************
-    DFT++ is a density functional package developed
-	by the research group
-    of Professor Tomas Arias
-
-    Copyright 1996-2003 Sohrab Ismail-Beigi
-************************************************************/
-
 #include <iostream>
 #include <fstream>
 #include <iomanip>

@@ -9,18 +9,18 @@ Matrix3::Matrix3(const double &r11, const double &r12, const double &r13,
 	e31 = r31;e32 = r32;e33 = r33;
 }
 
-void Matrix3::Reset(void)
+void Matrix3::Identity(void)
 {
 	e11 = 1;e12 = 0;e13 = 0;
 	e21 = 0;e22 = 1;e23 = 0;
 	e31 = 0;e32 = 0;e33 = 1;
 }
 
-void Matrix3::Identity(void)
+void Matrix3::Zero(void)
 {
-	e11 = 1;e12 = 0;e13 = 0;
-	e21 = 0;e22 = 1;e23 = 0;
-	e31 = 0;e32 = 0;e33 = 1;
+	e11 = 0;e12 = 0;e13 = 0;
+	e21 = 0;e22 = 0;e23 = 0;
+	e31 = 0;e32 = 0;e33 = 0;
 }
 
 double Matrix3::Det(void) const 

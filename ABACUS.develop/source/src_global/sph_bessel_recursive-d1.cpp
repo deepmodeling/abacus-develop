@@ -4,18 +4,13 @@
 //==========================================================
 
 #include "sph_bessel_recursive.h"
-
-#include "src_global/constants.h"
+#include "constants.h"
 
 #include<cmath>
 #include<stdexcept>
 
-// Peize Lin test
-#include<iostream>
-#include<sys/time.h>
-using namespace std;
 
-vector<Sph_Bessel_Recursive::D1> Sph_Bessel_Recursive_Pool::D1::sb_pool;
+std::vector<Sph_Bessel_Recursive::D1> Sph_Bessel_Recursive_Pool::D1::sb_pool;
 
 void Sph_Bessel_Recursive::D1::set_dx( const double dx_in )
 {
@@ -28,7 +23,7 @@ void Sph_Bessel_Recursive::D1::set_dx( const double dx_in )
 	}
 }
 
-const vector<vector<double>> & Sph_Bessel_Recursive::D1::cal_jlx( const int lmax, const size_t ix_size )
+const std::vector<std::vector<double>> & Sph_Bessel_Recursive::D1::cal_jlx( const int lmax, const size_t ix_size )
 {
 	if(lmax<0)
 		throw std::invalid_argument("Sph_Bessel_Recursive::jlx l<0");

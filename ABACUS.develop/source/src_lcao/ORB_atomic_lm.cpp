@@ -1,10 +1,8 @@
-//=========================================================
-//AUTHOR : liaochen, mohan
-//DATE : 2008-11-12
-//=========================================================
 #include "ORB_atomic_lm.h"
-#include "src_global/sph_bessel_recursive.h"
-#include "src_global/lapack_connector.h"
+#include "../src_global/sph_bessel_recursive.h"
+#include "../src_global/lapack_connector.h"
+#include "../src_global/timer.h"
+#include "../src_global/math_integral.h"
 #include <omp.h>
 
 Numerical_Orbital_Lm::Numerical_Orbital_Lm()
@@ -27,12 +25,7 @@ Numerical_Orbital_Lm::Numerical_Orbital_Lm()
 }
 
 Numerical_Orbital_Lm::~Numerical_Orbital_Lm()
-{
-	if(test_deconstructor)
-	{
-		cout << " ~Numerical_Orbital_Lm()" << endl;
-	}
-}
+{}
 
 void Numerical_Orbital_Lm::set_orbital_info
 (
@@ -217,10 +210,14 @@ void Numerical_Orbital_Lm::extra_uniform(const double &dr_uniform_in)
 	this->psi_uniform.resize(nr_uniform,0);
 
 	// do interpolation here to make grid more dense
+
+#ifdef __OPENMP
 	#pragma omp parallel for schedule(static)
+#endif
 	for (int ir = 0; ir < this->nr_uniform; ir++)
 	{
-		const double psi_uniform_tmp  = Mathzone_Add1::Uni_RadialF(VECTOR_TO_PTR(this->psi), this->nr, this->rab[0], ir * dr_uniform); 
+		const double psi_uniform_tmp  = 
+		Mathzone_Add1::Uni_RadialF(VECTOR_TO_PTR(this->psi), this->nr, this->rab[0], ir * dr_uniform); 
 		this->psi_uniform[ir] = psi_uniform_tmp;
 //    	this->psi_uniform[ir] = Mathzone::Polynomial_Interpolation(this->psi, this->nr, this->rab[0], ir * dr_uniform); 
     }
@@ -396,7 +393,7 @@ void Numerical_Orbital_Lm::cal_kradial(void)
 			integrated_func[ir] = this->psir[ir] * this->r_radial[ir] * jl[ir];
 		}
 
-		Mathzone::Simpson_Integral(
+		Integral::Simpson_Integral(
 				this->nr,
 				integrated_func,
 				VECTOR_TO_PTR(this->rab),
@@ -450,7 +447,7 @@ void Numerical_Orbital_Lm::cal_kradial_sbpool(void)
 		const vector<double> &jlk = jl[ik];
 		for (int ir = 0; ir < nr; ir++)
 			integrated_func[ir] = psir2[ir] * jlk[ir];
-		Mathzone::Simpson_Integral(
+		Integral::Simpson_Integral(
 				this->nr,
 				VECTOR_TO_PTR(integrated_func),
 				dr,
@@ -468,16 +465,22 @@ void Numerical_Orbital_Lm::cal_kradial_sbpool(void)
 
 	// dr must be all the same for Sph_Bessel_Recursive_Pool
 	const double dr = this->rab[0];
+	
 	for( int ir=1; ir<this->nr; ++ir )
+	{
 		assert( dr == this->rab[ir] );
+	}
 
 	Sph_Bessel_Recursive::D2* pSB = nullptr;
 	for( auto & sb : Sph_Bessel_Recursive_Pool::D2::sb_pool )
+	{
 		if( this->dk * dr == sb.get_dx() )
 		{
 			pSB = &sb;
 			break;
 		}
+	}
+
 	if(!pSB)
 	{
 		Sph_Bessel_Recursive_Pool::D2::sb_pool.push_back({});
@@ -491,20 +494,45 @@ void Numerical_Orbital_Lm::cal_kradial_sbpool(void)
 
 	vector<double> r_tmp(nr);
 	for( int ir=0; ir!=nr; ++ir )
+	{
 		r_tmp[ir] = this->psir[ir] * this->r_radial[ir] * this->rab[ir];
-	constexpr double one_three=1.0/3.0, two_three=2.0/3.0, four_three=4.0/3.0;
-	r_tmp[0]*=one_three;	r_tmp[nr-1]*=one_three;
-	for( int ir=1; ir!=nr-1; ++ir )
-		r_tmp[ir] *= (ir&1) ? four_three : two_three;
+	}
 
+	constexpr double one_three=1.0/3.0, two_three=2.0/3.0, four_three=4.0/3.0;
+	r_tmp[0]*=one_three;	
+	r_tmp[nr-1]*=one_three;
+
+	for( int ir=1; ir!=nr-1; ++ir )
+	{
+		r_tmp[ir] *= (ir&1) ? four_three : two_three;
+	}
+
+#ifdef __NORMAL
+	// need to be checked (avoid using Lapack)
+	for(int ik=0; ik<nk; ++ik)
+	{
+		double psi_f_tmp = 0.0; 
+		for(int ir=0; ir<nr; ++ir)
+		{
+			psi_f_tmp += r_tmp[ir]*jl[ik][ir];
+		}
+		psi_f_tmp *= pref;
+	}
+#else
+
+#ifdef __OPENMP
 	#pragma omp parallel for schedule(static)
+#endif
 	for (int ik = 0; ik < nk; ik++)
 	{
-		const double psi_f_tmp = pref * LapackConnector::dot( this->nr, VECTOR_TO_PTR(r_tmp), 1, VECTOR_TO_PTR(jl[ik]), 1 ) ;
+		const double psi_f_tmp = 
+		pref * LapackConnector::dot( this->nr, VECTOR_TO_PTR(r_tmp), 1, VECTOR_TO_PTR(jl[ik]), 1 ) ;
 		this->psif[ik] = psi_f_tmp;
 		this->psik[ik] = psi_f_tmp * k_radial[ik];
 		this->psik2[ik] = this->psik[ik] * k_radial[ik];
 	}
+#endif
+	return;
 }
 
 // Peize Lin add 2017-12-11
@@ -568,7 +596,7 @@ void Numerical_Orbital_Lm::norm_test(void)const
 	double sumr = 0.0;
 	//double sumk = 0.0;
 
-	Mathzone::Simpson_Integral(this->nr, f, VECTOR_TO_PTR(this->rab), sumr);
+	Integral::Simpson_Integral(this->nr, f, VECTOR_TO_PTR(this->rab), sumr);
 
 	delete[] f;
 	f = new double[nk];
@@ -577,7 +605,7 @@ void Numerical_Orbital_Lm::norm_test(void)const
 		f[ik] = this->psik[ik] * this->psik[ik];
 	}
 
-//	Mathzone::Simpson_Integral(this->nk, f, this->k_radial, sumk);
+//	Integral::Simpson_Integral(this->nk, f, this->k_radial, sumk);
 	
 	//means nothing.
 	//ofs_running << setw(12) << sumk << endl;

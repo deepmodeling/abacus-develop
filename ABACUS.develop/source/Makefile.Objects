@@ -26,17 +26,15 @@ xc_2.o\
 xc_3.o \
 vdwd2.o\
 vdwd2_parameters.o\
-dftd3_subroutine.o\
 vdwd3.o\
 vdwd3_parameters.o\
-pseudopot_upf.o\
-pseudo_h.o \
-pseudo_atom.o \
-pseudo_vl.o \
+read_pp.o \
+read_pp_upf100.o \
+read_pp_upf201.o \
+read_pp_vwr.o \
 pseudo_nc.o \
-pseudo_us.o \
-pseudopot_cell_vl.o \
-pseudopot_cell_vnl.o \
+VL_in_pw.o\
+VNL_in_pw.o\
 atom_pseudo.o\
 unitcell_pseudo.o\
 threshold_elec.o\
@@ -81,6 +79,7 @@ memory.o\
 print_info.o\
 mathzone.o\
 mathzone_add1.o\
+math_integral.o\
 integral.o \
 poission.o \
 polint.o \
@@ -153,6 +152,7 @@ LCAO_matrix.o\
 LCAO_nnr.o \
 LCAO_diago.o\
 LCAO_evolve.o\
+LCAO_descriptor.o\
 ylm.o\
 FORCE_STRESS.o\
 FORCE_gamma.o\
@@ -232,7 +232,7 @@ H_XC_pw.o \
 H_TDDFT_pw.o\
 read_rho.o\
 read_atoms.o\
-read_pseudopot.o\
+read_cell_pseudopots.o\
 read_dm.o\
 write_pot.o\
 write_rho.o\
@@ -262,7 +262,6 @@ variable_cell.o\
 dftu.o\
 dftu_yukawa.o\
 dftu_relax.o\
-lscc.o\
 
 OBJS_COMMON=atom_spec.o \
 unitcell.o \

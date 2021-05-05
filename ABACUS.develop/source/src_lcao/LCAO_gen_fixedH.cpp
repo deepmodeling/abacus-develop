@@ -1,8 +1,8 @@
 #include "LCAO_gen_fixedH.h"
-#include "../src_pw/global.h"
-#include "../src_pw/wavefunc.h"
-#include "LCAO_nnr.h"
-#include "global_fp.h"
+#include "src_pw/global.h"
+#include "src_pw/wavefunc.h"
+#include "src_lcao/LCAO_nnr.h"
+#include "src_lcao/global_fp.h"
 
 LCAO_gen_fixedH::LCAO_gen_fixedH()
 {}
@@ -357,7 +357,7 @@ void LCAO_gen_fixedH::test_Nonlocal()
 											atom2->iw2l[ k0 ], // L2
 											atom2->iw2m[ k0 ], // m2
 											atom2->iw2n[ k0 ], // n2
-											tau0, T0
+											tau0, T0, ucell.atoms[T0].dion
 											);
 									
 									//vnltest[ mu * ParaO.ncol + nu ] += nlm[0];
@@ -545,7 +545,7 @@ void LCAO_gen_fixedH::build_Nonlocal_mu(const bool &calc_deri)
 												atom2->iw2l[ k0 ], // L2
 												atom2->iw2m[ k0 ], // m2
 												atom2->iw2n[ k0 ], // n2
-												tau0, T0,
+												tau0, T0, ucell.atoms[T0].dion,
 												nlm2, is0 //for soc
 												);
 
@@ -586,7 +586,7 @@ void LCAO_gen_fixedH::build_Nonlocal_mu(const bool &calc_deri)
 													atom2->iw2l[ k0 ], // L2
 													atom2->iw2m[ k0 ], // m2
 													atom2->iw2n[ k0 ], // n2
-													tau0, T0
+													tau0, T0, ucell.atoms[T0].dion
 													);
 
 											// sum all projectors for one atom.
@@ -609,7 +609,7 @@ void LCAO_gen_fixedH::build_Nonlocal_mu(const bool &calc_deri)
 													atom1->iw2l[ j0 ], // L1
 													atom1->iw2m[ j0 ], // m1
 													atom1->iw2n[ j0 ], // N1
-													tau0, T0
+													tau0, T0, ucell.atoms[T0].dion
 													);
 
 
@@ -649,11 +649,16 @@ void LCAO_gen_fixedH::build_Nonlocal_mu(const bool &calc_deri)
 }
 
 
-void LCAO_gen_fixedH::build_Nonlocal_beta(const bool& calc_deri)
+void LCAO_gen_fixedH::build_Nonlocal_beta(const bool& calc_deri) //update by liuyu 2021-04-07
 {
     TITLE("LCAO_gen_fixedH","build_Nonlocal_beta");
     timer::tick ("LCAO_gen_fixedH","build_Nonlocal_beta",'G');
 
+	matrix Rcut(ucell.ntype, ucell.ntype);
+	for(int it1=0; it1<ucell.ntype; ++it1)
+        for(int it2=0; it2<ucell.ntype; ++it2)
+            Rcut(it1,it2) = ORB.Phi[it1].getRcut() + ORB.Phi[it2].getRcut();
+	
     for (int T0 = 0; T0 < ucell.ntype; T0++)
     {
 		Atom* atom0 = &ucell.atoms[T0]; 
@@ -664,48 +669,54 @@ void LCAO_gen_fixedH::build_Nonlocal_beta(const bool& calc_deri)
 
             //(2)
             //for each projector (T0, I0), one pair of ads are used
-            for (int ad=0; ad<GridD.getAdjacentNum()+1 ; ad++)
+            for (int ad1=0; ad1<GridD.getAdjacentNum()+1 ; ++ad1)
             {
-                const int T1 = GridD.getType(ad);
-                const int I1 = GridD.getNatom(ad);
-				const int iat = ucell.itia2iat(T1, I1);
-                const int start = ucell.itiaiw2iwt(T1, I1, 0);
-                const Vector3<double> tau1 = GridD.getAdjacentTau(ad);
+                const int T1 = GridD.getType(ad1);
+                const int I1 = GridD.getNatom(ad1);
+				//const int iat1 = ucell.itia2iat(T1, I1);
+                const int start1 = ucell.itiaiw2iwt(T1, I1, 0);
+                const Vector3<double> tau1 = GridD.getAdjacentTau(ad1);
 				const Atom* atom1 = &ucell.atoms[T1];
+				const int nw1_tot = atom1->nw*NPOL;
 
 				// use to label < mu | H | nu(prime) >
-				int nnr = LNNR.nlocstart[iat];
+				//int nnr = LNNR.nlocstart[iat];
             
 				//(3)
 				for (int ad2=0; ad2 < GridD.getAdjacentNum()+1 ; ad2++)
 				{
+					//if(ad2<ad && !calc_deri) continue; //add by liuyu 20210406
 					const int T2 = GridD.getType(ad2);
 					const int I2 = GridD.getNatom(ad2);
 					const int start2 = ucell.itiaiw2iwt(T2, I2, 0);
 					const Vector3<double> tau2 = GridD.getAdjacentTau(ad2);
 					const Atom* atom2 = &ucell.atoms[T2];
+					const int nw2_tot = atom2->nw*NPOL;
 
 					Vector3<double> dtau = tau2 - tau1;
 					double distance = dtau.norm() * ucell.lat0;
-					double rcut = ORB.Phi[T1].getRcut() + ORB.Phi[T2].getRcut();
+					double rcut = Rcut(T1,T2);
+					//double rcut = ORB.Phi[T1].getRcut() + ORB.Phi[T2].getRcut();
 					if(distance < rcut)
 					{
 						// ------------- enter the nnr increaing zone --------------
-						for (int j=0; j<atom1->nw*NPOL; j++)
+						//for (int iw1=0; iw1<atom1->nw*NPOL; ++iw1)
+						for (int iw1=0; iw1<nw1_tot; ++iw1)
 						{
-							const int j0 = j/NPOL;
-							const int iw1_all = start + j;
-							const int mu = ParaO.trace_loc_row[iw1_all];
-							if(mu < 0)continue; 
+							const int iw1_all = start1 + iw1;
+							const int iw1_local = ParaO.trace_loc_row[iw1_all];
+							if(iw1_local < 0)continue;
+							const int iw1_0 = iw1/NPOL;
 
 							// mohan fix bug 2010-12-20
 							// atom2[T2] -> atom2.
-							for (int k=0; k<atom2->nw*NPOL; k++)
+							//for (int k=0; k<atom2->nw*NPOL; k++)
+							for (int iw2=0; iw2<nw2_tot; ++iw2)
 							{
-								const int k0 = k/NPOL;
-								const int iw2_all = start2 + k;
-								const int nu = ParaO.trace_loc_col[iw2_all];
-								if(nu < 0)continue;
+								const int iw2_all = start2 + iw2;
+								const int iw2_local = ParaO.trace_loc_col[iw2_all];
+								if(iw2_local < 0)continue;
+								const int iw2_0 = iw2/NPOL;
 
 								double nlm[3];
 								nlm[0] = nlm[1] = nlm[2] = 0.0;
@@ -714,63 +725,64 @@ void LCAO_gen_fixedH::build_Nonlocal_beta(const bool& calc_deri)
 								{
 									UOT.snap_psibeta(
 											nlm, 0, tau1, T1,
-											atom1->iw2l[ j0 ], // L1
-											atom1->iw2m[ j0 ], // m1
-											atom1->iw2n[ j0 ], // N1
+											atom1->iw2l[ iw1_0 ], // L1
+											atom1->iw2m[ iw1_0 ], // m1
+											atom1->iw2n[ iw1_0 ], // N1
 											tau2, T2,
-											atom2->iw2l[ k0 ], // L2
-											atom2->iw2m[ k0 ], // m2
-											atom2->iw2n[ k0 ], // n2
-											ucell.atoms[T0].tau[I0], T0
+											atom2->iw2l[ iw2_0 ], // L2
+											atom2->iw2m[ iw2_0 ], // m2
+											atom2->iw2n[ iw2_0 ], // n2
+											ucell.atoms[T0].tau[I0], T0, ucell.atoms[T0].dion
 											);
 
-									if(GAMMA_ONLY_LOCAL)
-									{
+									//if(GAMMA_ONLY_LOCAL)
+									//{
 										LM.set_HSgamma(iw1_all,iw2_all,nlm[0],'N');//N stands for nonlocal.
-									}
-									else
-									{
-										WARNING_QUIT("LCAO_gen_fixedH::build_Nonlocal_beta","not consistent with k point algorithm.");
+										//if(ad!=ad2) LM.set_HSgamma(iw2_all,iw1_all,nlm[0],'N'); //add by liuyu 20210406
+									//}
+								//	else
+								//	{
+								//		WARNING_QUIT("LCAO_gen_fixedH::build_Nonlocal_beta","not consistent with k point algorithm.");
 //										assert( nnr < LNNR.nnr );
 //										LM.Hloc_fixedR[ nnr ] += nlm[0];
 //										++nnr;
-									}
+								//	}
 								}
 								else  // calculate force
 								{
 									UOT.snap_psibeta(
 											nlm, 1, tau1, T1,
-											atom1->iw2l[ j0 ], // L1
-											atom1->iw2m[ j0 ], // m1
-											atom1->iw2n[ j0 ], // N1
+											atom1->iw2l[ iw1_0 ], // L1
+											atom1->iw2m[ iw1_0 ], // m1
+											atom1->iw2n[ iw1_0 ], // N1
 											tau2, T2,
-											atom2->iw2l[ k0 ], // L2
-											atom2->iw2m[ k0 ], // m2
-											atom2->iw2n[ k0 ], // n2
-											ucell.atoms[T0].tau[I0], T0
+											atom2->iw2l[ iw2_0 ], // L2
+											atom2->iw2m[ iw2_0 ], // m2
+											atom2->iw2n[ iw2_0 ], // n2
+											ucell.atoms[T0].tau[I0], T0, ucell.atoms[T0].dion
 											);
 
-									if(GAMMA_ONLY_LOCAL)
-									{
+									//if(GAMMA_ONLY_LOCAL)
+									//{
 										//add part of nonlocal ps derivatives to T matrix
 										LM.set_force(iw1_all, iw2_all, nlm[0], nlm[1], nlm[2], 'N');
-									}
-									else
-									{
-										WARNING_QUIT("LCAO_gen_fixedH::build_Nonlocal_beta","not consistent with k point algorithm.");
+									//}
+									//else
+									//{
+										//WARNING_QUIT("LCAO_gen_fixedH::build_Nonlocal_beta","not consistent with k point algorithm.");
 										//LM.DHloc_fixedR_x[ nnr ] += nlm[0];
 										//LM.DHloc_fixedR_y[ nnr ] += nlm[1];
 										//LM.DHloc_fixedR_z[ nnr ] += nlm[2];
-										++nnr;
-									}
+										//++nnr;
+									//}
 								}
-							}// end k
-						}// j 
+							}// end iw2
+						}// end iw1
 					} // end distance
-                }// ad2
+                }// end ad2
 				// mohan add 2011-06-16
 
-				if(!GAMMA_ONLY_LOCAL) // mohan fix bug 2011-06-26
+				/*if(!GAMMA_ONLY_LOCAL) // mohan fix bug 2011-06-26
 				{
 					if( iat < ucell.nat-1 )
 					{
@@ -782,8 +794,8 @@ void LCAO_gen_fixedH::build_Nonlocal_beta(const bool& calc_deri)
 							WARNING_QUIT("build_Nonlocal_beta","nnr");
 						}
 					}
-				}
-            }// ad
+				}*/
+            }// end ad1
         }// end I0
     }// end T0
 

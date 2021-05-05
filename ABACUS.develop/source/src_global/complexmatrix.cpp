@@ -1,15 +1,14 @@
-//==========================================================
-// AUTHOR : Lixin He, Mohan Chen
-// LAST UPDATE : 2009-03-23 modify "=" operator
-//==========================================================
-
 #include <cassert>
 #include <new>
 #include <cstdlib>
 #include <cstring>
 #include <iostream>
 #include "complexmatrix.h"
+
+#ifdef __NORMAL
+#else
 #include "lapack_connector.h"
+#endif
 
 // constructor with sizes
 ComplexMatrix::ComplexMatrix(const int nrows, const int ncols, const bool flag_zero)
@@ -75,7 +74,9 @@ ComplexMatrix::ComplexMatrix(const matrix &m)
 	{
 		c = new complex<double>[size];
 		for( int i=0; i<size; ++i)
+		{
 			c[i] = m.c[i];
+		}
 	}
 }
 
@@ -123,7 +124,7 @@ void ComplexMatrix::create(const int nr_in, const int nc_in, const bool flag_zer
 	}
 }
 
-void ComplexMatrix::set_as_identity_matrix()
+void ComplexMatrix::set_as_identity_matrix(void)
 {
 	for(int i=0; i<nr; i++)
 	{
@@ -165,23 +166,28 @@ ComplexMatrix operator*(const ComplexMatrix &m1, const ComplexMatrix &m2)
 	assert(m1.nc == m2.nr);
 	ComplexMatrix mprod(m1.nr, m2.nc);
 
+// mohan add 2021-04-05
+#ifdef __NORMAL
 	complex<double> z;
-//	for (int i = 0;i < m1.nr;i++)
-//	{
-//		for (int j = 0;j < m2.nc;j++)
-//		{
-//			z = complex<double>(0,0);
-//			for (int k = 0;k < m1.nc;k++)
-//			{
-//				z += m1(i, k) * m2(k, j);
-//			}
-//			mprod(i, j) = z;
-//		}
-//	}
+	for (int i = 0;i < m1.nr;i++)
+	{
+		for (int j = 0;j < m2.nc;j++)
+		{
+			z = complex<double>(0,0);
+			for (int k = 0;k < m1.nc;k++)
+			{
+				z += m1(i, k) * m2(k, j);
+			}
+			mprod(i, j) = z;
+		}
+	}
+#else
 	// Peize Lin accelerate 2017-10-27
 	LapackConnector::gemm('N', 'N', m1.nr, m2.nc, m1.nc,
 		1, m1.c, m1.nc, m2.c, m2.nc,
 		0, mprod.c, mprod.nc);
+#endif
+
 	return mprod;
 }
 

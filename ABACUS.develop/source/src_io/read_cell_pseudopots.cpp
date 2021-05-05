@@ -7,40 +7,37 @@
 //==========================================================
 // Read pseudopotential according to the dir
 //==========================================================
-void UnitCell_pseudo::read_pseudopot(const string &pp_dir)
+void UnitCell_pseudo::read_cell_pseudopots(const string &pp_dir)
 {
-	if(test_pseudo_cell) TITLE("UnitCell_pseudo","read_pseudopot");
-//----------------------------------------------------------
-// EXPLAIN : setup reading log for pseudopot_upf
-//----------------------------------------------------------
+	TITLE("UnitCell_pseudo","read_cell_pseudopots");
+	// setup reading log for pseudopot_upf
 	stringstream ss;
 	ss << global_out_dir << "atom_pseudo.log";
 	
-//	ofstream ofs;
-	
-//	if(MY_RANK==0)
-//	{
-//		ofs.open( ss.str().c_str(), ios::out);
-//	}
-
-//----------------------------------------------------------
-// EXPLAIN : Read in the atomic pseudo potential
-//----------------------------------------------------------
+	// Read in the atomic pseudo potentials
 	string pp_address;
 	for (int i = 0;i < ntype;i++)
 	{
 		Pseudopot_upf upf;
 	
 		// mohan update 2010-09-12	
-		int error = 0, error_ap = 0;
+		int error = 0;
+		int error_ap = 0;
 		
 		if(MY_RANK==0)
 		{
 			pp_address = pp_dir + this->pseudo_fn[i];
-			//error = upf.read_pseudo_upf( pp_address ); xiaohui modify 2013-06-23
 			error = upf.init_pseudo_reader( pp_address ); //xiaohui add 2013-06-23
-			//average pseudopotential if needed
-			error_ap = upf.average_p(); //added by zhengdy 2020-10-20
+
+			if(error==0) // mohan add 2021-04-16
+			{
+				if(this->atoms[i].flag_empty_element)	// Peize Lin add for bsse 2021.04.07
+				{
+					upf.set_empty_element();			
+				}
+				//average pseudopotential if needed
+				error_ap = upf.average_p(); //added by zhengdy 2020-10-20
+			}
 		}
 
 #ifdef __MPI
@@ -48,23 +45,25 @@ void UnitCell_pseudo::read_pseudopot(const string &pp_dir)
 		Parallel_Common::bcast_int(error_ap);
 #endif
 
-		if(error_ap) WARNING_QUIT("UnitCell_pseudo::read_pseudopot","error when average the pseudopotential.");
+		if(error_ap) 
+		{
+			WARNING_QUIT("UnitCell_pseudo::read_pseudopot","error when average the pseudopotential.");
+		}
 
 		if(error==1)
 		{
 			cout << " Pseudopotential directory now is : " << pp_address << endl;
 			ofs_warning << " Pseudopotential directory now is : " << pp_address << endl;
-			WARNING_QUIT("UnitCell_pseudo::read_pseudopot","Couldn't find pseudopotential file.");
+			WARNING_QUIT("read_pseudopot","Couldn't find pseudopotential file.");
 		}
 		else if(error==2)
 		{
-			WARNING_QUIT("UnitCell_pseudo::read_pseudopot","Something in pseudopotential not match.");
+			WARNING_QUIT("read_pseudopot","Pseudopotential data do not match.");
 		}
 		else if(error==3)
 		{
-			WARNING_QUIT("UnitCell_pseudo::read_pseudopot","Please check the reference states in pseudopotential .vwr file.\n Also the norm of the read in pseudo wave functions\n explicitly please check S, P and D channels.\n If the norm of the wave function is \n unreasonable large (should be near 1.0), ABACUS would quit. \n The solution is to turn off the wave functions  \n and the corresponding non-local projectors together\n in .vwr pseudopotential file.");
+			WARNING_QUIT("read_pseudopot","Check the reference states in pseudopotential .vwr file.\n Also the norm of the read in pseudo wave functions\n explicitly please check S, P and D channels.\n If the norm of the wave function is \n unreasonable large (should be near 1.0), ABACUS would quit. \n The solution is to turn off the wave functions  \n and the corresponding non-local projectors together\n in .vwr pseudopotential file.");
 		}
-//		OUT(ofs_running,"PP_ERRROR",error);
 
 //xiaohui add 2015-03-24
 #ifdef __MPI
@@ -79,7 +78,7 @@ void UnitCell_pseudo::read_pseudopot(const string &pp_dir)
 		if(MY_RANK==0)
 		{
 //			upf.print_pseudo_upf( ofs );
-			atoms[i].set_pseudo_us( upf );
+			atoms[i].set_pseudo_nc( upf );
 
 			ofs_running << "\n Read in pseudopotential file is " << pseudo_fn[i] << endl;
 			OUT(ofs_running,"pseudopotential type",atoms[i].pp_type);

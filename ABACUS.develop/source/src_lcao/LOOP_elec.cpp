@@ -20,6 +20,7 @@
 #include "src_ri/exx_abfs.h"
 #include "src_ri/exx_opt_orb.h"
 #include "src_pw/vdwd2.h"
+#include "src_pw/vdwd3.h"
 
 
 void LOOP_elec::solve_elec_stru(const int &istep)
@@ -147,11 +148,12 @@ void LOOP_elec::solver(const int &istep)
 		vdwd2.cal_energy();
 		en.evdw = vdwd2.get_energy();
 	}
-	// jiyy add 2019-05-18
-	else if(vdwd3.vdwD3)
+	// jiyy add 2019-05-18, update 2021.05.02
+	else if(vdwd3_para.flag_vdwd3)
 	{
-		vdwd3.energy();
-		en.evdw = vdwd3.energy_result;
+		Vdwd3 vdwd3(ucell,vdwd3_para);
+		vdwd3.cal_energy();
+		en.evdw = vdwd3.get_energy();
 	}
 
 	// self consistent calculations for electronic ground state

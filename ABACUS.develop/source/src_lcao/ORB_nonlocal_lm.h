@@ -1,11 +1,15 @@
 #ifndef NUMERICAL_NONLOCAL_LM
 #define NUMERICAL_NONLOCAL_LM
 
-#include "../src_pw/tools.h"
+#include <string>
+using namespace std;
+
 //=========================================================
 //CLASS Numerical_Nonlocal_Lm
 //Note : contain information about each projector
 //		 all features of projector's shape
+//AUTHOR : liaochen
+//DATE : 2008-03-04
 //=========================================================
 
 class Numerical_Nonlocal_Lm
@@ -52,7 +56,7 @@ class Numerical_Nonlocal_Lm
     	const double &dk_in,
 		const double &dr_uniform_in);
 
-	void plot()const;
+	void plot(const int &my_rank)const;
 
 	private:
 

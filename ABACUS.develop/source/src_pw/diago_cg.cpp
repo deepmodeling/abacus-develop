@@ -444,7 +444,7 @@ void Diago_CG::schmit_orth
     //qianrui replace 2021-3-15
     char trans2='N';
     zgemv_(&trans2,&dim,&m,&NEG_ONE,psi.c,&dmx,lagrange,&inc,&ONE,psi_m,&inc);
-    psi_norm -= ddot_real(m,lagrange,lagrange);
+    psi_norm -= ddot_real(m,lagrange,lagrange,false);
     //======================================================================
     /*for (int j = 0; j < m; j++)
     {
@@ -486,23 +486,8 @@ double Diago_CG::ddot_real
 (
     const int &dim,
     const complex<double>* psi_L,
-    const complex<double>* psi_R
-)
-{
-    complex<double> result(0,0);
-    for (int i=0;i<dim;i++)
-    {
-        result += conj( psi_L[i] ) * psi_R[i];
-    }
-    Parallel_Reduce::reduce_complex_double_pool( result );
-    return result.real();
-}
-
-complex<double> Diago_CG::ddot
-(
-    const int & dim,
-    const complex<double> * psi_L,
-    const complex<double> * psi_R
+    const complex<double>* psi_R,
+    const bool reduce
 )
 {
     //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
@@ -513,7 +498,7 @@ complex<double> Diago_CG::ddot
     pL=(double *)psi_L;
     pR=(double *)psi_R;
     double result=LapackConnector::dot(dim2,pL,1,pR,1);
-    Parallel_Reduce::reduce_double_pool( result );
+    if(reduce)  Parallel_Reduce::reduce_double_pool( result );
     return result;
     //======================================================================
     /*complex<double> result(0,0);
@@ -524,8 +509,23 @@ complex<double> Diago_CG::ddot
     Parallel_Reduce::reduce_complex_double_pool( result );
     return result.real();*/
     //>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-}  // end of ddot
+}
 
+complex<double> Diago_CG::ddot
+(
+    const int & dim,
+    const complex<double> * psi_L,
+    const complex<double> * psi_R
+)
+{
+    complex<double> result(0, 0);
+    for (int i = 0; i < dim ; i++)
+    {
+        result += conj(psi_L[i]) *  psi_R[i] ;
+    }
+    Parallel_Reduce::reduce_complex_double_pool( result );
+    return result;
+}  // end of ddot
 
 // this return <psi(m)|psik>
 complex<double> Diago_CG::ddot

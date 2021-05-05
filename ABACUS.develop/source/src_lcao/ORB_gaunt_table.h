@@ -1,12 +1,9 @@
-//=========================================================
-//AUTHOR : Mohan 
-//DATE : 2009-04-23
-//=========================================================
 #ifndef ORB_GAUNT_TABLE_H
 #define ORB_GAUNT_TABLE_H
 
-#include "../src_pw/tools.h"
 #include <map>
+#include "../src_global/realarray.h"
+#include "../src_global/matrix.h"
 
 class ORB_gaunt_table
 {
@@ -59,52 +56,64 @@ class ORB_gaunt_table
 	//============================================================
 	// (1) Make Ylm_Gaunt Table.
 	//============================================================
-	void init_Ylm_Gaunt(const int &lmax, const double &s1,const double &e1,
-		const double &s2,const double &e2);
+	void init_Ylm_Gaunt(
+		const int &lmax, 
+		const double &s1,
+		const double &e1,
+		const double &s2,
+		const double &e2);
 
 	//============================================================
 	// (2) Use Ylm_Gaunt to calculate Gaunt Coefficinets element
 	//============================================================
 	double Cal_Gaunt_single(
-	   	const int &l1, const int &m1, 
-	   	const int &l2, const int &m2, 
-	   	const int &l, const int &m, 
-	   	const double &s1, const double &e1,    
-	   	const double &s2, const double &e2);
+	   	const int &l1, 
+		const int &m1, 
+	   	const int &l2, 
+		const int &m2, 
+	   	const int &l, 
+		const int &m, 
+	   	const double &s1, 
+		const double &e1,    
+	   	const double &s2, 
+		const double &e2);
 
 	//============================================================
 	// (3) Make the whole Gaunt Coefficients table
 	//============================================================
 	void init_Gaunt(const int &lmax);
 
-
 	//========================================================
 	// Small function
 	//========================================================
 	static int get_lm_index(const int l, const int m);
+
 	static int Index_M(const int& m);
 
 	private:
 	
-	//Index Function
-	//Yu's mehtod
+	// Index Function
+	// Yu's mehtod
 	// Peize Lin delete void ZEROS(); 2016-08-26
 	
 	int P_EL(const int& L);
+
 	int EP_EL(const int& L);
+
 	int index_func(
-					const int& l1,
-					const int& l2,
-					const int& l3,
-					const int& m3	);
+			const int& l1,
+			const int& l2,
+			const int& l3,
+			const int& m3	);
 	
 	double Fact(const int& n);
+
 	void Swap(
-				int& l1,
-				int& m1,
-				int& l2,
-				int& m2	);
-	
+			int& l1,
+			int& m1,
+			int& l2,
+			int& m2	);
+
 	//2*Lmax+1
 	std::map<int,std::map<int,double>> Gaunt_CH;		// Peize Lin update 2016-08-26
 	

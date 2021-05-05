@@ -4,20 +4,12 @@
 //==========================================================
 
 #include "sph_bessel_recursive.h"
-
-#include "src_global/constants.h"
+#include "constants.h"
 
 #include<cmath>
 #include<stdexcept>
 
-// Peize Lin test
-#include<iostream>
-#include<sys/time.h>
-#include"src_external/src_test/src_ri/exx_lcao-test.h"
-#include"src_lcao/global_fp.h"
-using namespace std;
-
-vector<Sph_Bessel_Recursive::D2> Sph_Bessel_Recursive_Pool::D2::sb_pool;
+std::vector<Sph_Bessel_Recursive::D2> Sph_Bessel_Recursive_Pool::D2::sb_pool;
 
 void Sph_Bessel_Recursive::D2::set_dx( const double dx_in )
 {
@@ -30,7 +22,7 @@ void Sph_Bessel_Recursive::D2::set_dx( const double dx_in )
 	}
 }
 
-const vector<vector<vector<double>>> & Sph_Bessel_Recursive::D2::cal_jlx( const int lmax, const size_t ix1_size, const size_t ix2_size )
+const std::vector<std::vector<std::vector<double>>> & Sph_Bessel_Recursive::D2::cal_jlx( const int lmax, const size_t ix1_size, const size_t ix2_size )
 {
 	if(lmax<0)
 		throw std::invalid_argument("Sph_Bessel_Recursive::jlx l<0");
@@ -50,7 +42,7 @@ void Sph_Bessel_Recursive::D2::cal_jlx_0( const int l_size, const size_t ix1_siz
 		const double jlx0 = (0==l) ? 1.0 : 0.0;
 
 		if( jlx[l].size()<ix1_size )
-			jlx[l].resize(ix1_size,vector<double>(1,jlx0));
+			jlx[l].resize(ix1_size,std::vector<double>(1,jlx0));
 		
 		if( jlx[l][0].size()<ix2_size )
 			jlx[l][0].resize(ix2_size,jlx0);

@@ -1,15 +1,10 @@
-//==========================================================
-// Author : Lixin He, Mohan Chen
-// Update : Peize Lin
-// Last Update : 2018-09-04
-//==========================================================
 #ifndef COMPLEXMATRIX_H
 #define COMPLEXMATRIX_H
 
 #include <complex>
 using namespace std;
 
-#include "src_global/matrix.h"
+#include "matrix.h"
 
 #ifdef _MCD_CHECK
 #include "src_parallel/mcd.h"

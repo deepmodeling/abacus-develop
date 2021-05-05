@@ -143,6 +143,7 @@ void Grid_Base::init(
 	return;
 }
 
+
 void Grid_Base::get_rcut_max(void)
 {
 	assert( ORB.get_ntype() > 0 );
@@ -200,7 +201,9 @@ void Grid_Base::get_small_box(
 	    tau_dir.x, tau_dir.y, tau_dir.z
 	);
 
-	if (tau_dir.x < 0.0 || tau_dir.x > 1.0 || tau_dir.y < 0.0 || tau_dir.y > 1.0 || tau_dir.z < 0.0 || tau_dir.z > 1.0)
+	if (tau_dir.x < 0.0 || tau_dir.x > 1.0 
+	|| tau_dir.y < 0.0 || tau_dir.y > 1.0 
+	|| tau_dir.z < 0.0 || tau_dir.z > 1.0)
 	{
 		cout << "\n tau.x = " << tau.x;
 		cout << "\n tau.y = " << tau.y;
@@ -209,7 +212,8 @@ void Grid_Base::get_small_box(
 		cout << "\n tau_dir.x = " << tau_dir.x;
 		cout << "\n tau_dir.y = " << tau_dir.y;
 		cout << "\n tau_dir.z = " << tau_dir.z;
-		WARNING_QUIT("Grid_Base::get_small_box","Positions(x,y,z) Of tau and R2 in Direct Coordinates should be between 0 and 1!");
+		WARNING_QUIT("Grid_Base::get_small_box",
+		"Positions(x,y,z) Of tau and R2 in Direct Coordinates should be between 0 and 1!");
 	}
 
 	tau_max_direct = tau_dir + this->Rcut_max_direct[T];

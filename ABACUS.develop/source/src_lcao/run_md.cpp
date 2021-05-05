@@ -13,6 +13,7 @@
 #include "ELEC_scf.h"
 #include "src_global/sltk_atom_arrange.h"
 #include "src_pw/vdwd2.h"
+#include "src_pw/vdwd3.h"
 
 Run_MD::Run_MD()
 {}
@@ -128,28 +129,7 @@ void Run_MD::opt_ions(void)
 		time_t eend = time(NULL);
 
         //xiaohui add 2014-07-07, for second-order extrapolation
-		int iat=0;
-
-		for(int it = 0;it < ucell.ntype;it++)
-		{
-			Atom* atom = &ucell.atoms[it];
-			for(int ia =0;ia< ucell.atoms[it].na;ia++)
-			{
-				CE.pos_old2[3*iat  ] = CE.pos_old1[3*iat  ];
-				CE.pos_old2[3*iat+1] = CE.pos_old1[3*iat+1];
-				CE.pos_old2[3*iat+2] = CE.pos_old1[3*iat+2];
-
-				CE.pos_old1[3*iat  ] = CE.pos_now[3*iat  ];
-				CE.pos_old1[3*iat+1] = CE.pos_now[3*iat+1];
-				CE.pos_old1[3*iat+2] = CE.pos_now[3*iat+2];
-
-				CE.pos_now[3*iat  ] = atom->tau[ia].x*ucell.lat0;
-				CE.pos_now[3*iat+1] = atom->tau[ia].y*ucell.lat0;
-				CE.pos_now[3*iat+2] = atom->tau[ia].z*ucell.lat0;
-
-				iat++;
-			}
-		}
+		CE.update_all_pos(ucell);
 
 		if(mdtype==1||mdtype==2)   
 		{
@@ -181,22 +161,10 @@ void Run_MD::opt_ions(void)
         time_t fend = time(NULL);
 
         //xiaohui add 2014-07-07, for second-order extrapolation
-		iat=0;
-		for(int it = 0;it < ucell.ntype;it++)
-		{
-			Atom* atom = &ucell.atoms[it];
-			for(int ia =0;ia< ucell.atoms[it].na;ia++)
-			{
-				CE.pos_next[3*iat  ] = atom->tau[ia].x*ucell.lat0;
-				CE.pos_next[3*iat+1] = atom->tau[ia].y*ucell.lat0;
-				CE.pos_next[3*iat+2] = atom->tau[ia].z*ucell.lat0;
-
-				iat++;
-			}
-		}
+		CE.save_pos_next(ucell);
 
 		//xiaohui add CE.istep = istep 2014-07-07
-		CE.istep = istep;
+		CE.update_istep(istep);
 
 		// charge extrapolation if istep>0.
 		CE.extrapolate_charge();
@@ -236,7 +204,7 @@ void Run_MD::opt_ions(void)
     }
 
 	// mohan update 2021-02-10
-    hm.orb_con.clear_after_ions();
+    hm.orb_con.clear_after_ions(UOT, ORB, INPUT.out_descriptor);
 
     timer::tick("Run_MD","opt_ions",'B'); 
     return;
@@ -276,7 +244,7 @@ bool Run_MD::force_stress(const int &istep, int &force_step, int &stress_step)
             }
             else // ions are not converged
             {
-                CE.istep = istep;
+                CE.update_istep(istep);
                 CE.extrapolate_charge();
 
                 if(pot.extra_pot=="dm")
@@ -400,7 +368,7 @@ xiaohui modify 2014-08-09*/
             //atom_arrange::delete_vector( SEARCH_RADIUS );
 #endif
                 //CE.istep = istep;
-                CE.istep = force_step;
+                CE.update_istep(force_step);
                 CE.extrapolate_charge();
 
                 if(pot.extra_pot=="dm")//xiaohui modify 2015-02-01
@@ -480,10 +448,11 @@ void Run_MD::final_scf(void)
         vdwd2.cal_energy();
         en.evdw = vdwd2.get_energy();
     }
-	else if(vdwd3.vdwD3)							//jiyy add 2019-05-18
+	else if(vdwd3_para.flag_vdwd3)							//jiyy add 2019-05-18, update 2021-05-02
     {
-        vdwd3.energy();
-        en.evdw = vdwd3.energy_result;
+        Vdwd3 vdwd3(ucell,vdwd3_para);
+        vdwd3.cal_energy();
+        en.evdw = vdwd3.get_energy();
     }											  
     
 	ELEC_scf es;

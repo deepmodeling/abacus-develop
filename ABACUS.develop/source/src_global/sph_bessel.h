@@ -1,7 +1,6 @@
 #ifndef SPH_BESSEL_H
 #define SPH_BESSEL_H
 
-#include "realarray.h"
 using namespace std;
 
 class Sph_Bessel

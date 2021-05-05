@@ -119,7 +119,7 @@ void Local_Orbital_Charge::sum_bands(void)
         }
         else if(KS_SOLVER=="genelpa" || KS_SOLVER=="scalapack_gvx")
         {
-            if(NEW_DM>0)
+            if(INPUT.new_dm>0)
             {
                 //density matrix has already been calcualted.
                 timer::tick("LCAO_Charge","cal_dm_2d",'F');

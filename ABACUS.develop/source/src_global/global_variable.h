@@ -149,6 +149,7 @@ extern string	global_wannier_card;
 extern string	global_pseudo_dir;
 extern string   global_pseudo_type; // mohan add 2013-05-20 (xiaohui add 2013-06-23)
 extern string 	global_out_dir;
+extern string   global_readin_dir; //zhengdy modified
 
 extern ofstream ofs_running;
 extern ofstream ofs_warning;
@@ -195,6 +196,5 @@ extern int test_ion_dynamics;
 extern int test_deconstructor;
 
 extern bool FINAL_SCF; //LiuXh add 20180619
-extern int NEW_DM;  // Shen Yu add 2019/5/9
 
 #endif

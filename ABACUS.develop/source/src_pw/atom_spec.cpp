@@ -127,6 +127,7 @@ void Atom::bcast_atom()
     Parallel_Common::bcast_int( stapos_wf );
     Parallel_Common::bcast_string( label );
     Parallel_Common::bcast_int( l_nchi, nwl+1);
+    Parallel_Common::bcast_bool( flag_empty_element );
 
     if (MY_RANK!=0)
     {

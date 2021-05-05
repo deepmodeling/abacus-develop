@@ -1,8 +1,5 @@
-//=========================================================
-//AUTHOR : liaochen
-//DATE : 2008-03-04
-//=========================================================
 #include "ORB_nonlocal.h"
+#include "../src_global/global_function.h"
 
 Numerical_Nonlocal::Numerical_Nonlocal()
 {
@@ -32,7 +29,6 @@ void Numerical_Nonlocal::set_type_info
 	const string& label_in,
 	const string& type_ps_in,
 	const int& lmax_in,
-	matrix& Coefficient_D_in,
 	ComplexMatrix& Coefficient_D_in_so,
 	const int& nproj_in,
 	const int& nproj_in_so,
@@ -41,10 +37,7 @@ void Numerical_Nonlocal::set_type_info
 	const bool has_so
 )
 {
-	if (type_in < 0 || type_in > 2)
-	{
-		WARNING("Numerical_Nonlocal", "bad input of type_in: not ready yet for type >2");
-	}
+	//TITLE("Numerical_Nonlocal","set_type_info");
 
 	this->type = type_in;
 	this->label = label_in;
@@ -56,47 +49,24 @@ void Numerical_Nonlocal::set_type_info
 	}
 
 	this->lmax = lmax_in;
-//----------------------------------------------------------
-//EXPLAIN : Coefficient D used in calculate elements of NLps
-//----------------------------------------------------------
-/*2016-07-19, LiuXh
-	this->Coefficient_D.create( lmax_in+1, lmax_in+1);
-	for (int L1 = 0; L1 < lmax + 1; L1++)
-	{
-		for (int L2 = 0; L2 < lmax + 1; L2++)
-		{
-			this->Coefficient_D(L1, L2) = Coefficient_D_in(L1, L2);
-		}
-	}
-2016-07-19, LiuXh*/
 
 //----------------------------------------------------------
 //EXPLAIN : LfromBeta
 //----------------------------------------------------------
 	this->nproj = nproj_in;
-	if(has_so){ 
+
+	if(has_so)
+	{ 
 		this->nproj_soc = nproj_in_so;
 	}
-	//assert(nproj <= lmax_in+1); //LiuXh 2016-01-13, 2016-05-16
+
 	assert(nproj <= nproj_in+1); //LiuXh 2016-01-13, 2016-05-16
 	assert(nproj >= 0);
 
-//2016-07-19 begin, LiuXh
-	if(!has_so){
-		this->Coefficient_D.create( nproj_in+1, nproj_in+1);
+	//2016-07-19 begin, LiuXh
+	if(!has_so)
+	{
 		ZEROS(this->non_zero_count_soc, 4);
-		if(lmax_in > -1) //LiuXh add 20180328, fix bug of Hydrogen element with single projector pseudopot
-		{ //LiuXh add 20180328
-//			for (int L1 = 0; L1 < nproj + 1; L1++)
-			for (int L1 = 0; L1 < min(this->Coefficient_D.nr, Coefficient_D_in.nr); L1++)
-			{
-//				for (int L2 = 0; L2 < nproj + 1; L2++)
-				for (int L2 = 0; L2 < min(this->Coefficient_D.nc, Coefficient_D_in.nc); L2++)
-				{
-					this->Coefficient_D(L1, L2) = Coefficient_D_in(L1, L2);
-				}
-			}
-		} //LiuXh add 20180328
 	}
 	else//zhengdy-soc
 	{
@@ -149,7 +119,7 @@ void Numerical_Nonlocal::set_type_info
 						{
 							for (int L2 = 0; L2 < nproj_soc; L2++)
 							{
-								if(is==1||is==2) this->Coefficient_D_so(is, L1, L2) = ZERO;
+								if(is==1||is==2) this->Coefficient_D_so(is, L1, L2) = complex<double>(0.0,0.0);
 								else this->Coefficient_D_so(is, L1, L2) = Coefficient_D_in_so(L1 + nproj_soc*is1, L2 + nproj_soc*is2);
 								if(abs(this->Coefficient_D_so(is, L1, L2).real())>1.0e-8 
 									|| abs(this->Coefficient_D_so(is, L1, L2).imag())>1.0e-8)

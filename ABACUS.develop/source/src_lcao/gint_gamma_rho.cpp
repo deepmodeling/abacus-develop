@@ -6,6 +6,7 @@
 #include <mkl_service.h>
 
 #include "global_fp.h" // mohan add 2021-01-30
+#include "../src_global/ylm.h"
 
 void Gint_Gamma::setVindex(const int ncyz, const int ibx, const int jby, const int kbz, int* vindex) const
 {
@@ -305,7 +306,9 @@ double Gint_Gamma::gamma_charge(void)					// Peize Lin update OpenMP 2020.09.28
         const int mkl_threads = mkl_get_max_threads();
 		mkl_set_num_threads(std::max(1,mkl_threads/GridT.nbx));			// Peize Lin update 2021.01.20
 		
+#ifdef __OPENMP
 		#pragma omp parallel
+#endif
 		{
 			// it's a uniform grid to save orbital values, so the delta_r is a constant.
 			const double delta_r = ORB.dr_uniform;
@@ -375,7 +378,9 @@ double Gint_Gamma::gamma_charge(void)					// Peize Lin update OpenMP 2020.09.28
 		
 			const int ncyz = pw.ncy*pw.nczp; // mohan add 2012-03-25
 
+#ifdef __OPENMP
 			#pragma omp for
+#endif
 			for (int i=0; i<nbx; i++)
 			{
 				const int ibx = i*pw.bx;

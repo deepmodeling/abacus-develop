@@ -6,6 +6,10 @@ NUMERICAL_ORBITAL
 H_gga_8au_60Ry_2s1p.orb
 O_gga_7au_60Ry_2s2p1d.orb
 
+NUMERICAL_DESCRIPTOR
+jle.orb
+
+
 LATTICE_CONSTANT
 10
 

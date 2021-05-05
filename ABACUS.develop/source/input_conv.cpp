@@ -10,7 +10,7 @@
 #include "src_pw/efield.h"
 #include "src_lcao/global_fp.h"
 #include "src_pw/vdwd2_parameters.h"
-#include "src_pw/vdwd3.h"
+#include "src_pw/vdwd3_parameters.h"
 #include "src_io/chi0_hilbert.h"
 #include "src_io/chi0_standard.h"
 #include "src_io/epsilon0_pwscf.h"
@@ -213,45 +213,36 @@ void Input_Conv::Convert(void)
 	}
     if(INPUT.vdw_method=="d3_0" || INPUT.vdw_method=="d3_bj")
     {
-		vdwd3.vdwD3 = true;
-		vdwd3.s6 = std::stod(INPUT.vdw_s6);
-		vdwd3.s18 = std::stod(INPUT.vdw_s8);
-		vdwd3.rs6 = std::stod(INPUT.vdw_a1);
-		vdwd3.rs18 = std::stod(INPUT.vdw_a2);					
-		vdwd3.abc = INPUT.vdw_abc;
-		if(INPUT.vdw_method=="d3_0")
-		{
-			vdwd3.version = 1;
-		}
-		if(INPUT.vdw_method=="d3_bj")
-		{
-			vdwd3.version = 2;
-		}
-		vdwd3.model = INPUT.vdw_model;
+		vdwd3_para.flag_vdwd3 = true;
+		vdwd3_para.s6 = std::stod(INPUT.vdw_s6);
+		vdwd3_para.s18 = std::stod(INPUT.vdw_s8);
+		vdwd3_para.rs6 = std::stod(INPUT.vdw_a1);
+		vdwd3_para.rs18 = std::stod(INPUT.vdw_a2);					
+		vdwd3_para.abc = INPUT.vdw_abc;
+		vdwd3_para.version = INPUT.vdw_method;
+		vdwd3_para.model = INPUT.vdw_model;
 		if(INPUT.vdw_model=="radius")
-	    {
+		{
 			if(INPUT.vdw_radius_unit=="Bohr")
 			{
-			    vdwd3.rthr2 = pow(std::stod(INPUT.vdw_radius),2);
+				vdwd3_para.rthr2 = pow(std::stod(INPUT.vdw_radius),2);
 			}
 			else
 			{
-				vdwd3.rthr2 = pow((std::stod(INPUT.vdw_radius) * BOHR_TO_A),2);       
+				vdwd3_para.rthr2 = pow((std::stod(INPUT.vdw_radius) * BOHR_TO_A),2);       
 			}
-		    if(INPUT.vdw_cn_thr_unit=="Bohr")
+			if(INPUT.vdw_cn_thr_unit=="Bohr")
 			{
-			    vdwd3.cn_thr2 = pow(INPUT.vdw_cn_thr,2);
+				vdwd3_para.cn_thr2 = pow(INPUT.vdw_cn_thr,2);
 			}
 			else
 			{  
-				vdwd3.cn_thr2 = pow((INPUT.vdw_cn_thr * BOHR_TO_A),2);			
+				vdwd3_para.cn_thr2 = pow((INPUT.vdw_cn_thr * BOHR_TO_A),2);			
 			}
 		}
 		else if(INPUT.vdw_model=="period")
 		{
-			vdwd3.rep_vdw[0] = INPUT.vdw_period.x;
-			vdwd3.rep_vdw[1] = INPUT.vdw_period.y;
-			vdwd3.rep_vdw[2] = INPUT.vdw_period.z;
+			vdwd3_para.period = INPUT.vdw_period.x;
 		}
 	}
     
@@ -274,7 +265,7 @@ void Input_Conv::Convert(void)
 		}
 		//chi0_hilbert.epsilon = INPUT.epsilon;
 		chi0_hilbert.kernel_type = INPUT.kernel_type;
-		chi0_hilbert.system = INPUT.system;
+		chi0_hilbert.system = INPUT.system_type;
 		chi0_hilbert.eta = INPUT.eta;
 		chi0_hilbert.domega = INPUT.domega;
 		chi0_hilbert.nomega = INPUT.nomega;
@@ -314,7 +305,7 @@ void Input_Conv::Convert(void)
 	{
 		//chi0_standard.epsilon = INPUT.epsilon;
 		chi0_standard.epsilon = true;
-		chi0_standard.system = INPUT.system;
+		chi0_standard.system = INPUT.system_type;
 		chi0_standard.eta = INPUT.eta;
 		chi0_standard.domega = INPUT.domega;
 		chi0_standard.nomega = INPUT.nomega;
@@ -397,6 +388,8 @@ void Input_Conv::Convert(void)
 #endif
 	}
 	else{
+		delete[] soc.m_loc;
+		soc.m_loc = new Vector3<double> [INPUT.ntype];
 		LSPINORB = false;
 		NONCOLIN = false;
 		DOMAG = false;
@@ -578,7 +571,7 @@ void Input_Conv::Convert(void)
 
     ppcell.cell_factor = INPUT.cell_factor; //LiuXh add 20180619
 
-    NEW_DM=INPUT.newDM;  // Shen Yu add 2019/5/9
+//    NEW_DM=INPUT.new_dm;  // Shen Yu add 2019/5/9
 
 //----------------------------------------------------------
 // main parameters / electrons / spin ( 2/16 )
@@ -625,10 +618,11 @@ void Input_Conv::Convert(void)
 //----------------------------------------------------------
 // About LCAO
 //----------------------------------------------------------
-	ORB.ecutwfc = INPUT.lcao_ecut;
-	ORB.dk = INPUT.lcao_dk;
-	ORB.dR = INPUT.lcao_dr;
-	ORB.Rmax = INPUT.lcao_rmax; 
+// mohan add 2021-04-16
+//	ORB.ecutwfc = INPUT.lcao_ecut;
+//	ORB.dk = INPUT.lcao_dk;
+//	ORB.dR = INPUT.lcao_dr;
+//	ORB.Rmax = INPUT.lcao_rmax; 
 
 	// mohan add 2021-02-16
 	berryphase::berry_phase_flag = INPUT.berry_phase;

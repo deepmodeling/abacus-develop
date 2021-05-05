@@ -1,7 +1,3 @@
-//==========================================================
-// AUTHOR : Lixin He , mohan
-// DATE : 2008-11-08
-//==========================================================
 #include <cstdlib>
 #ifdef __MPI
 #include <mpi.h>
@@ -265,4 +261,102 @@ void UnitCell::set_iat2it(void)
 		}	
 	}
 	return;
+}
+
+void UnitCell::update_pos_tau(const double* pos)
+{
+    int iat = 0;
+	for(int it = 0;it < this->ntype;it++)
+	{
+		Atom* atom = &this->atoms[it];
+		for(int ia =0;ia< atom->na;ia++)
+		{		
+			if(atom->mbl[ia].x!=0)
+			{
+				atom->tau[ia].x = pos[3*iat] / this->lat0;
+			}
+			if(atom->mbl[ia].y!=0)
+			{
+				atom->tau[ia].y = pos[3*iat+1] / this->lat0;
+			}
+			if(atom->mbl[ia].z!=0)
+			{
+				atom->tau[ia].z = pos[3*iat+2] / this->lat0;
+			}
+
+			// the direct coordinates also need to be updated.
+			atom->taud[ia] = atom->tau[ia] * this->GT;
+			iat++;
+		}
+	}
+	assert(iat == this->nat);
+    return;
+}
+
+void UnitCell::periodic_boundary_adjustment()
+{
+    //----------------------------------------------
+	// because of the periodic boundary condition
+	// we need to adjust the atom positions,
+	// first adjust direct coordinates,
+	// then update them into cartesian coordinates,
+	//----------------------------------------------
+	for(int it=0; it<this->ntype; it++)
+	{
+		Atom* atom = &this->atoms[it];
+		for(int ia=0; ia<atom->na; ia++)
+		{
+			// mohan update 2011-03-21
+			if(atom->taud[ia].x<0) atom->taud[ia].x += 1.0;
+			if(atom->taud[ia].y<0) atom->taud[ia].y += 1.0;
+			if(atom->taud[ia].z<0) atom->taud[ia].z += 1.0;
+			if(atom->taud[ia].x>=1.0) atom->taud[ia].x -= 1.0;
+			if(atom->taud[ia].y>=1.0) atom->taud[ia].y -= 1.0;
+			if(atom->taud[ia].z>=1.0) atom->taud[ia].z -= 1.0;
+
+			if(atom->taud[ia].x<0 || atom->taud[ia].y<0
+				|| atom->taud[ia].z<0 ||
+				atom->taud[ia].x>=1.0 ||
+				atom->taud[ia].y>=1.0 ||
+				atom->taud[ia].z>=1.0)
+			{
+				ofs_warning << " it=" << it+1 << " ia=" << ia+1 << endl;
+				ofs_warning << "d=" << atom->taud[ia].x << " " << 
+				atom->taud[ia].y << " " << atom->taud[ia].z << endl;
+				WARNING_QUIT("Ions_Move_Basic::move_ions","the movement of atom is larger than the length of cell.");
+			}
+
+			atom->tau[ia] = atom->taud[ia] * this->latvec;
+		}
+	}
+    return;
+}
+
+void UnitCell::bcast_atoms_tau()
+{
+#ifdef __MPI
+    MPI_Barrier(MPI_COMM_WORLD);
+    for (int i=0;i<ucell.ntype;i++)
+    {
+        ucell.atoms[i].bcast_atom(); // bcast tau array
+    }
+#endif
+}
+
+void UnitCell::save_cartesian_position(double* pos)const
+{
+    int iat=0;
+	for(int it = 0;it < this->ntype;it++)
+	{
+		Atom* atom = &this->atoms[it];
+		for(int ia =0; ia<atom->na; ia++)
+		{	
+			pos[3*iat  ] = atom->tau[ia].x*this->lat0;
+			pos[3*iat+1] = atom->tau[ia].y*this->lat0;
+			pos[3*iat+2] = atom->tau[ia].z*this->lat0;
+            iat++;
+        }
+    }
+    assert(iat == this->nat);
+    return;
 }

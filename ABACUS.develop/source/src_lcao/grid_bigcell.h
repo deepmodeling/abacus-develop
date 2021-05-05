@@ -1,5 +1,6 @@
 #ifndef GRID_BIGCELL_H
 #define GRID_BIGCELL_H
+
 #include "../src_pw/tools.h"
 #include "grid_meshcell.h"
 

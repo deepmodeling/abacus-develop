@@ -1,6 +1,3 @@
-//==========================================================
-//
-//==========================================================
 #ifndef VECTOR3_H
 #define VECTOR3_H
 
@@ -42,20 +39,20 @@ public:
 	void print(void)const ;		// mohan add 2009-11-29
 };
 
-template <class T> Vector3<T> operator+( const Vector3<T> &u, const Vector3<T> &v ) { return Vector3<T>( u.x+v.x, u.y+v.y, u.z+v.z ); }
-template <class T> Vector3<T> operator-( const Vector3<T> &u, const Vector3<T> &v ) { return Vector3<T>( u.x-v.x, u.y-v.y, u.z-v.z ); }
+template <class T> inline Vector3<T> operator+( const Vector3<T> &u, const Vector3<T> &v ) { return Vector3<T>( u.x+v.x, u.y+v.y, u.z+v.z ); }
+template <class T> inline Vector3<T> operator-( const Vector3<T> &u, const Vector3<T> &v ) { return Vector3<T>( u.x-v.x, u.y-v.y, u.z-v.z ); }
 //u.v=(ux*vx)+(uy*vy)+(uz*vz)                                                     
-template <class T> T          operator*( const Vector3<T> &u, const Vector3<T> &v ) { return ( u.x*v.x + u.y*v.y + u.z*v.z ); }
-template <class T> Vector3<T> operator*( const T &s,          const Vector3<T> &u ) { return Vector3<T>( u.x*s, u.y*s, u.z*s ); }
-template <class T> Vector3<T> operator*( const Vector3<T> &u, const T &s          ) { return Vector3<T>( u.x*s, u.y*s, u.z*s ); } // mohan add 2009-5-10
-template <class T> Vector3<T> operator/( const Vector3<T> &u, const T &s          ) { return Vector3<T>( u.x/s, u.y/s, u.z/s ); }
+template <class T> inline T          operator*( const Vector3<T> &u, const Vector3<T> &v ) { return ( u.x*v.x + u.y*v.y + u.z*v.z ); }
+template <class T> inline Vector3<T> operator*( const T &s,          const Vector3<T> &u ) { return Vector3<T>( u.x*s, u.y*s, u.z*s ); }
+template <class T> inline Vector3<T> operator*( const Vector3<T> &u, const T &s          ) { return Vector3<T>( u.x*s, u.y*s, u.z*s ); } // mohan add 2009-5-10
+template <class T> inline Vector3<T> operator/( const Vector3<T> &u, const T &s          ) { return Vector3<T>( u.x/s, u.y/s, u.z/s ); }
 //u.v=(ux*vx)+(uy*vy)+(uz*vz)
-template <class T> T          dot      ( const Vector3<T> &u, const Vector3<T> &v ) { return ( u.x*v.x + u.y*v.y + u.z*v.z ); }
+template <class T> inline T          dot      ( const Vector3<T> &u, const Vector3<T> &v ) { return ( u.x*v.x + u.y*v.y + u.z*v.z ); }
 // | i  j  k  |
 // | ux uy uz |
 // | vx vy vz |
 // u.v=(uy*vz-uz*vy)i+(-ux*vz+uz*vx)j+(ux*vy-uy*vx)k
-template <class T> Vector3<T> operator^(const Vector3<T> &u,const Vector3<T> &v)
+template <class T> inline Vector3<T> operator^(const Vector3<T> &u,const Vector3<T> &v)
 {	
 	return Vector3<T> ( u.y * v.z - u.z * v.y,
 	                   -u.x * v.z + u.z * v.x,
@@ -65,7 +62,7 @@ template <class T> Vector3<T> operator^(const Vector3<T> &u,const Vector3<T> &v)
 // | ux uy uz |
 // | vx vy vz |
 // u.v=(uy*vz-uz*vy)i+(-ux*vz+uz*vx)j+(ux*vy-uy*vzx)k
-template <class T> Vector3<T> cross(const Vector3<T> &u,const Vector3<T> &v)
+template <class T> inline Vector3<T> cross(const Vector3<T> &u,const Vector3<T> &v)
 {
 	return Vector3<T> ( u.y * v.z - u.z * v.y,
 	                   -u.x * v.z + u.z * v.x,
@@ -80,9 +77,9 @@ template <class T> Vector3<T> cross(const Vector3<T> &u,const Vector3<T> &v)
 //}
 
 //whether m1 != m2
-template <class T> bool operator !=(const Vector3<T> &u, const Vector3<T> &v){ return !(u == v); }
+template <class T> inline bool operator !=(const Vector3<T> &u, const Vector3<T> &v){ return !(u == v); }
 //whether u == v
-template <class T> bool operator ==(const Vector3<T> &u, const Vector3<T> &v)
+template <class T> inline bool operator ==(const Vector3<T> &u, const Vector3<T> &v)
 {
 	if(u.x == v.x && u.y == v.y && u.z == v.z)
 		return true;

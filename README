@@ -1,93 +1,24 @@
-/********************************************************************
+WELOCOME TO THE "ABACUS" PROGRAM,
+ABACUS IS AN ELECTRONIC STRUCTURE PACKAGE BASED ON DENSITY FUNCTIONAL THEORY.
+ABACUS ADOPTS EITHER PLANE WAVE BASIS OR NUMERICAL ATOMIC ORBITALS.
 
-WELOCOME TO THE "ABACUS" PROGRAM.
-
-(1) ABACUS stands for
-
-"Atomic-orbital Based Ab-initio Computation at UStc"
-
-See also the ABACUS webpage 
-
-http://abacus.ustc.edu.cn
-
-(2) There is a sub-package called
-
-"SIA" stands for "Systematically Improvable Atomic orbitals generator"
-
-COPYRIGHT 2018, the ABACUS team, Key Laboratory of Quantum Information,
-University of Science and Technology
-
-
-If you have any problems.
-Contact: Lixin He
-Email: helx@ustc.edu.cn
-
-/********************************************************************
-
-
+ABACUS IS NOW UNDER ACTIVE DEVELOPMENTS (since 2021.01), 
+PLEASE WAIT FOR NEW ANOUCEMENTS.
 
 ---------------------------------------------------------------------
-There are generally 4 directories in this package.
-
-bin:
-Contains some executable files.
-
-examples:
-Contains test examples.
-
-source:
-Contains the source code and various makefiles for different hardware platforms.
-
-tools:
-Contains the script for generating numerical atomic orbitals.
-
----------------------------------------------------------------------
-Currently ABACUS provides the following features and functionalities:
+ABACUS provides the following features and functionalities:
 
 1. Ground-state total energy calculations using Kohn-Sham (KS) density functional theory
-(DFT) with local-density or generalized gradient approximations (LDA/GGAs).
+(DFT) with local-density, generalized gradient approximations (LDA/GGAs), and hybrid functionals 
+(PBE0 and HSE06, only for LCAO).
 2. Brillouin zone sampling using the Monkhorst-Pack special k-points.
-3. Geometry relaxation with both Conjugated Gradient (CG) and BroydenFletcherGoldfarbShanno (BFGS) methods.
+3. Geometry relaxations with Conjugated Gradient (CG) and BFGS methods.
 4. Semi-empirical van der Waals energy correction using the Grimme DFT-D2/D3 scheme.
-5. NVT molecular dynamics simulation using the Nose-Hoover thermostat. 
-6. Stress calculation and cell relaxation.
+5. NVT molecular dynamics simulation.
+6. Stress calculations and cell relaxations.
 7. Electric polarization calculation using Berry Phase theory.
 8. Interface to the Wannier90 package.
 9. Real-time time dependent density functional theory (TDDFT).
 10. Electrostatic potential.
 11. Mulliken charge analysis.
 12. Projected density of states (PDOS).
-
----------------------------------------------------------------------
-The developers of ABACUS include
-
-Advisor:
-*Lixin He 		2006~
- Xinguo Ren             2013~
-
-Developers:
-
-Now:
-Mohan Chen      2006~ (Setting up the infrastructure of the codes)
-Xiaohui Liu             2012~ (Overall structure, code optimization, charge extrapolation, MD, test)
-Yu Shen                 2016~ (Interface to the ELPA library, performance optimization, efficient parallelization)
-Weishuai Zhang          2016~ (Pseudoptential and numerical orbital basis generation)
-Pengfei Li              2012~ (Orbital generation, CG, Symmetry, test)
-Peize Lin               2013~ (vdwD2, hybrid functional)
-Daye Zheng              2013~ (MD, stress tensor)
-Fuxiang He              2015~ (TDDFT)
-Gan  Jin                2016~ (Berry phase, interface to Wannier90)
-Yuyang Ji               2019~ (vdwD3, hybrid functional)
-
-Former:
-Jie Liu 		2007~2008 (Makefile, Speed up using C++)
-Ming Gong		2008~ (EPM, small box, spin-orbital coupling)
-Shipeng Shu		2008~2009 (Symmetry2, MLWF)
-Yuwei Cui		2008~2009 (Nearest neighbour searching, BFGS)
-Pan Zheng		2007~2008 (Symmetry)
-Chen Liao               2008~2011 (Two-center integration, Force, Ylm)
-Jianping Wang           2008~2014 (DMM, sparse matrix)
-Chaobin Yang            2010~2011 (Parallel Matrix Diagonalization)
-Yi Xia                  2010~2011 (Polarization)
-Kai Chen                2010~2011 (Sparse Matrix Operations)
-

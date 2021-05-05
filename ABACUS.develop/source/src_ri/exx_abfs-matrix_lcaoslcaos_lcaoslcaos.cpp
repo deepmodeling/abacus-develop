@@ -21,7 +21,7 @@ void Exx_Abfs::Matrix_Lcaoslcaos_Lcaoslcaos::init(
 //		ORB.get_dk() / kmesh_times);				// delta k, for integration in k space
 		ORB.get_dk());											// Peize Lin change 2017-04-16
 	int Lmax_used, Lmax;
-	MOT.init_Table_Spherical_Bessel (4,mode, Lmax_used, Lmax);
+	MOT.init_Table_Spherical_Bessel (4,mode, Lmax_used, Lmax, Exx_Abfs::Lmax);
 //	MOT.init_OV_Tpair();							// for MOT.OV_L2plus1
 //	MOT.Destroy_Table_Spherical_Bessel (Lmax_used);				// why?
 

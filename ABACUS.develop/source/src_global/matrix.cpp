@@ -11,7 +11,11 @@
 
 using namespace std;
 #include "matrix.h"
+
+#ifdef __NORMAL
+#else
 #include "lapack_connector.h"
+#endif
 
 //*********************************************************
 // The init() function is the main initialization routine.
@@ -23,7 +27,13 @@ using namespace std;
 
 void matrixAlloc()
 {
+// mohan add 2021-04-25
+#ifdef __NORMAL
+	cout << "Allocation error for Matrix" << endl;
+	exit(0);
+#else
 	WARNING_QUIT("matrix","Allocation error for Matrix");
+#endif
 }
 
 matrix::matrix( const int nrows, const int ncols, const bool flag_zero )
@@ -189,19 +199,28 @@ matrix operator*(const matrix &m1, const matrix &m2)
     // allocate the result and zero it out
     matrix mprod( m1.nr, m2.nc, false );
 
+#ifdef __NORMAL
+	mprod.zero_out();
     // do the multiply and return
-//    for (int i = 0;i < m1.nr;i++)
-//        for (int j = 0;j < m2.nc;j++)
-//            for (int k = 0;k < m1.nc;k++)
-//                //mprod(i, j) += m2(i, k) * m1(k, j);
-//                mprod(i, j) += m1(i, k) * m2(k, j);
-	
+    for (int i = 0;i < m1.nr;i++)
+	{
+        for (int j = 0;j < m2.nc;j++)
+		{
+            for (int k = 0;k < m1.nc;k++)
+			{
+                mprod(i, j) += m1(i, k) * m2(k, j);
+			}
+		}
+	}
+#else
 	// Peize Lin accelerate 2017-10-27
 	LapackConnector::gemm(
 		'N', 'N', 
 		m1.nr, m2.nc, m1.nc,
 		1, m1.c, m1.nc, m2.c, m2.nc, 
 		0, mprod.c, mprod.nc);
+#endif
+
 	return mprod;
 }
 
@@ -377,7 +396,9 @@ double matrix::min() const
 	double value = std::numeric_limits<double>::max();
 	const int size = nr * nc;
 	for( int i=0; i<size; ++i )
+	{
 		value = std::min( value, c[i] );
+	}
 	return value;
 }
 
@@ -387,11 +408,23 @@ double matrix::absmax() const
 	double value = 0;
 	const int size = nr * nc;
 	for( int i=0; i<size; ++i )
+	{
 		value = std::max( value, std::abs(c[i]) );
+	}
 	return value;
 }
 
 double matrix::norm() const
 {
+// mohan add 2021-04-25, no tests.
+#ifdef  __NORMAL
+	double nn = 0.0;
+	for(int i=0; i<nr*nc; ++i)
+	{
+		nn += c[i]*c[i];
+	}	
+	return sqrt(nn);
+#else
 	return LapackConnector::nrm2(nr*nc,c,1);
+#endif
 }

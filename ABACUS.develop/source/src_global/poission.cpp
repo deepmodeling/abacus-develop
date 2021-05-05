@@ -32,11 +32,11 @@ void Poission::SolPoissonEq
     //value at the beginning
     a = r[0];
     b = r[mesh-1];
-    pot[0] = Integral::Gauss_Legendre(a, b, rad_f2, r, mesh) * 4.0 * PI * e2;
+    pot[0] = Integral_G::Gauss_Legendre(a, b, rad_f2, r, mesh) * 4.0 * PI * e2;
 
     //value at the end
     assert(r[mesh-1] > tiny);
-    pot[mesh-1] = Integral::Gauss_Legendre(a, b, rad_f1, r, mesh) * 4.0 * PI / r[mesh-1] * e2;
+    pot[mesh-1] = Integral_G::Gauss_Legendre(a, b, rad_f1, r, mesh) * 4.0 * PI / r[mesh-1] * e2;
 	
 	//points in the interval
     for(int ir = 1; ir < mesh-1; ir++)
@@ -46,10 +46,10 @@ void Poission::SolPoissonEq
         c = r[mesh-1];
 
         //integrate inside
-        const double inside = Integral::Gauss_Legendre(a, b, rad_f1, r, mesh) / r[ir];
+        const double inside = Integral_G::Gauss_Legendre(a, b, rad_f1, r, mesh) / r[ir];
 
         //integrate outside
-        const double outside = Integral::Gauss_Legendre(b, c, rad_f2, r, mesh);
+        const double outside = Integral_G::Gauss_Legendre(b, c, rad_f2, r, mesh);
 
         //inside + outside
         pot[ir] = (inside + outside) * 4.0 * PI * e2;
