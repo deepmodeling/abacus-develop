@@ -444,6 +444,12 @@ void Input::Default(void)
 	vext=0;
 	vext_dire=1;
 	
+	timescale = 0.5;
+	vexttype = 1;
+	vextout = 0;
+	td_dipoleout =0;
+
+	
 //----------------------------------------------------------			//Fuxiang He add 2016-10-26
 // constrained DFT
 //----------------------------------------------------------
@@ -1243,6 +1249,23 @@ bool Input::Read(const string &fn)
 		{
 			read_value(ifs,vext_dire );
 		}
+		else if (strcmp("timescale", word) == 0)
+		{
+			read_value(ifs,timescale );
+		}
+		else if (strcmp("vexttype", word) == 0)
+		{
+			read_value(ifs,vexttype );
+		}
+		else if (strcmp("vextout", word) == 0)
+		{
+			read_value(ifs,vextout );
+		}
+		else if (strcmp("td_dipoleout", word) == 0)
+		{
+			read_value(ifs,td_dipoleout );
+		}
+
 /* //----------------------------------------------------------
 // vdwD2
 // Peize Lin add 2014-03-31
@@ -2159,6 +2182,10 @@ void Input::Bcast()
 	Parallel_Common::bcast_double(td_force_dt);
 	Parallel_Common::bcast_int(vext);
 	Parallel_Common::bcast_int(vext_dire);
+	Parallel_Common::bcast_double(timescale);
+	Parallel_Common::bcast_int(vexttype);
+	Parallel_Common::bcast_int(vextout);
+	Parallel_Common::bcast_int(td_dipoleout);
     // pengfei Li add 2016-11-23
     //Parallel_Common::bcast_bool( epsilon );
 	//Parallel_Common::bcast_int( epsilon_choice );

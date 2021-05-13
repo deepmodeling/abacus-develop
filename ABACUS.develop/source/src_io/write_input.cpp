@@ -281,6 +281,10 @@ void Input::Print(const string &fn)const
 	OUTP(ofs,"val_elec_03",val_elec_03,"val_elec_03");
 	OUTP(ofs,"vext",vext,"add extern potential or not");
 	OUTP(ofs,"vext_dire",vext_dire,"extern potential direction");
+	OUTP(ofs,"timescale",timescale,"extern potential timescale");
+	OUTP(ofs,"vexttype",vexttype,"extern potential type");
+	OUTP(ofs,"vextout",vextout,"output extern potential or not");
+	OUTP(ofs,"td_dipoleout",td_dipoleout,"output dipole or not");
 	
 	ofs << "\n#Parameters (18.berry_wannier)" << endl;
 	OUTP(ofs,"berry_phase",berry_phase,"calculate berry phase or not");

@@ -379,6 +379,11 @@ class Input
 	int val_elec_03;			//valence electron 03
 	int vext;			//add extern potential or not
 	int vext_dire;			//vext direction
+	double timescale;			//"fs"
+	int vexttype;
+	int vextout; 			// output the electronic potential or not
+	int td_dipoleout;			// output the dipole or not
+
 	
 //==========================================================
 // restart
