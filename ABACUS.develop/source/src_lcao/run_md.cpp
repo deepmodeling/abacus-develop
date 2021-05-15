@@ -242,11 +242,12 @@ void Run_MD::final_scf(void)
         vdwd2.cal_energy();
         en.evdw = vdwd2.get_energy();
     }
-	else if(vdwd3.vdwD3)							//jiyy add 2019-05-18
+	else if(vdwd3_para.flag_vdwd3)							//jiyy add 2019-05-18, update 2021-05-02
     {
-        vdwd3.energy();
-        en.evdw = vdwd3.energy_result;
-    }											  
+        Vdwd3 vdwd3(ucell,vdwd3_para);
+        vdwd3.cal_energy();
+        en.evdw = vdwd3.get_energy();
+    }												  
     
 	ELEC_scf es;
 	es.scf(0);
