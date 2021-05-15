@@ -58,7 +58,7 @@ void Variable_Cell::final_calculation_after_vc(void)
     cout<<" -----------------------------------------------------------------"<<endl;
 
     cout<<"\n -----------------------------------------------------------------"<<endl;
-    cout<<" The structure has been fully relaxed, and the following is a scf"<<endl;
+    cout<<" The structure has been fully relaxed or MD finished, and the following is a scf"<<endl;
     cout<<" calculation at the final structure. The fft grids and G-vectors "<<endl;
     cout<<" are recalculated for the final relaxed unit cell."<<endl;
     cout<<" -----------------------------------------------------------------"<<endl;

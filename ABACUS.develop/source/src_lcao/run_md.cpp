@@ -123,6 +123,14 @@ void Run_MD::opt_ions(void)
 		{
 			mdb.runNVE(istep);
 		}
+        else if(mdtype==-1)
+        {
+            stop = mdb.runFIRE(istep);
+        }
+        else
+        {
+            WARNING_QUIT("opt_ions", "mdtype should be -1~2!");
+        }
 
         if(pot.out_potential == 2)
         {

@@ -47,7 +47,9 @@ class MD_basic
 	void update_half_velocity();
 	void update_half_direct(const bool is_restart);
 	void save_output_position();
-
+	void outStressMD(const matrix& stress, const double& twiceKE);
+	void getTaudUpdate();
+	
 
 };
 

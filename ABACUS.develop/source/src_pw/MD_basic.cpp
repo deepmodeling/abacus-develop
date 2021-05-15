@@ -141,13 +141,7 @@ void MD_basic::runNVT(int step1){
 	//print total stress + stress_MD
 	if(STRESS)
 	{
-		cout<<"output Pressure for check!"<<endl;
-		double press;
-		for(int i=0;i<3;i++)
-			press += stress(i,i)/3;
-		press += twiceKE/3/ucell.omega; //output virtual press = 2/3 *Ek/V + sum(sigma[i][i])/3
-		double unit_transform = RYDBERG_SI / pow(BOHR_RADIUS_SI,3) * 1.0e-8 ;
-		cout<<"Virtual Pressure is "<<press*unit_transform<<" Kbar "<<endl;
+		outStressMD(stress, twiceKE);
 	}
 
 	for(int k=0;k<ucell.nat;k++){
@@ -234,17 +228,7 @@ void MD_basic::runNVT(int step1){
 		    maxStep = pow(vel[ii].x,2)+pow(vel[ii].y,2)+pow(vel[ii].z,2);
         }
     }
-	Vector3<double> fracStep;
-	for(int  ii=0;ii<ucell.nat;ii++)
-    { 
-		Mathzone::Cartesian_to_Direct(cart_change[ii].x,cart_change[ii].y,cart_change[ii].z,
-					ucell.latvec.e11,ucell.latvec.e12,ucell.latvec.e13,
-					ucell.latvec.e21,ucell.latvec.e22,ucell.latvec.e23,
-					ucell.latvec.e31,ucell.latvec.e32,ucell.latvec.e33,
-					fracStep.x,fracStep.y,fracStep.z);
-
-		tauDirectChange[ii] = fracStep;
-	}
+	getTaudUpdate();
 
 	//save the atom position change to DFT module
 	save_output_position();
@@ -315,13 +299,7 @@ void MD_basic::runNVE(int step1){
     mdf.callInteraction_LCAO(ucell.nat, force, stress);
 	if(STRESS)
 	{
-		cout<<"output Pressure for check!"<<endl;
-		double press;
-		for(int i=0;i<3;i++)
-			press += stress(i,i)/3;
-		press += twiceKE/3/ucell.omega; //output virtual press = 2/3*Ek/V + sum(sigma[i][i])/3
-		double unit_transform = RYDBERG_SI / pow(BOHR_RADIUS_SI,3) * 1.0e-8 ;
-		cout<<"Virtual Pressure is "<<press*unit_transform<<" Kbar "<<endl;
+		outStressMD(stress, twiceKE);
 	}
   
     for(int k=0;k<ucell.nat;k++)
@@ -365,20 +343,14 @@ void MD_basic::runNVE(int step1){
     // Calculate the maximal velocities.
     // The step in fractional coordinates
     double maxStep = 0;
-    Vector3<double> fracStep;
     for(int  i = 0;i< ucell.nat;i++)
     {
         if((pow(vel[i].x,2.0)+pow(vel[i].y,2.0)+pow(vel[i].z,2.0))>maxStep)
         {
             maxStep = pow(vel[i].x,2.0)+pow(vel[i].y,2.0)+pow(vel[i].z,2.0);
         }
-        Mathzone::Cartesian_to_Direct(cart_change[i].x,cart_change[i].y,cart_change[i].z,
-                                        ucell.latvec.e11,ucell.latvec.e12,ucell.latvec.e13,
-                                        ucell.latvec.e21,ucell.latvec.e22,ucell.latvec.e23,
-                                        ucell.latvec.e31,ucell.latvec.e32,ucell.latvec.e33,
-                                        fracStep.x,fracStep.y,fracStep.z);
-        tauDirectChange[i] = fracStep;
     }
+    getTaudUpdate();
     save_output_position();
     maxStep = sqrt(maxStep)*mdp.dt;
 
@@ -529,20 +501,14 @@ bool MD_basic::runFIRE(int step1){
     // Calculate the maximal velocities.
     // The step in fractional coordinates
     double maxStep = 0;
-    Vector3<double> fracStep;
     for(int  i = 0;i< ucell.nat;i++)
     {
         if((pow(vel[i].x,2.0)+pow(vel[i].y,2.0)+pow(vel[i].z,2.0))>maxStep)
         {
             maxStep = pow(vel[i].x,2.0)+pow(vel[i].y,2.0)+pow(vel[i].z,2.0);
         }
-        Mathzone::Cartesian_to_Direct(cart_change[i].x,cart_change[i].y,cart_change[i].z,
-                                    ucell.latvec.e11,ucell.latvec.e12,ucell.latvec.e13,
-                                    ucell.latvec.e21,ucell.latvec.e22,ucell.latvec.e23,
-                                    ucell.latvec.e31,ucell.latvec.e32,ucell.latvec.e33,
-                                    fracStep.x,fracStep.y,fracStep.z);
-        tauDirectChange[i] = fracStep;
     }
+    getTaudUpdate();
 
     save_output_position();
     maxStep = sqrt(maxStep)*mdp.dt;
@@ -570,6 +536,7 @@ bool MD_basic::runFIRE(int step1){
     return false;
 }
 
+//update velocities of ions for half MD step
 void MD_basic::update_half_velocity()
 {
     for(int  ii=0;ii<ucell.nat;ii++){ 
@@ -577,6 +544,7 @@ void MD_basic::update_half_velocity()
     }
 }
 
+//update cartesian coordinate changes for half MD step, would turn to direct coordinate changes later
 void MD_basic::update_half_direct(const bool is_restart)
 {
     if(is_restart)
@@ -595,6 +563,7 @@ void MD_basic::update_half_direct(const bool is_restart)
     }
 }
 
+//output Structure information for each MD step
 void MD_basic::save_output_position()
 {
     string posOutName("md_pos_");
@@ -606,4 +575,32 @@ void MD_basic::save_output_position()
 int MD_basic::getRealStep()
 {
     return this->step_;
+}
+
+//output pressure of total MD system, P = tr(stress) + P_kin
+void MD_basic::outStressMD(const matrix& stress, const double& twiceKE)
+{
+    ofs_running<<"output Pressure for check!"<<endl;
+    double press;
+    for(int i=0;i<3;i++)
+        press += stress(i,i)/3;
+    press += twiceKE/3/ucell.omega; //output virtual press = 2/3 *Ek/V + sum(sigma[i][i])/3
+    double unit_transform = RYDBERG_SI / pow(BOHR_RADIUS_SI,3) * 1.0e-8 ;
+    ofs_running<<"Virtual Pressure is "<<press*unit_transform<<" Kbar "<<endl;
+}
+
+//turn cartesian coordinate changes to direct changes
+void MD_basic::getTaudUpdate()
+{
+    Vector3<double> fracStep;
+	for(int  ii=0;ii<ucell.nat;ii++)
+    { 
+		Mathzone::Cartesian_to_Direct(cart_change[ii].x,cart_change[ii].y,cart_change[ii].z,
+					ucell.latvec.e11,ucell.latvec.e12,ucell.latvec.e13,
+					ucell.latvec.e21,ucell.latvec.e22,ucell.latvec.e23,
+					ucell.latvec.e31,ucell.latvec.e32,ucell.latvec.e33,
+					fracStep.x,fracStep.y,fracStep.z);
+
+		tauDirectChange[ii] = fracStep;
+	}
 }
