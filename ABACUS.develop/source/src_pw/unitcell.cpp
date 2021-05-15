@@ -293,6 +293,22 @@ void UnitCell::update_pos_tau(const double* pos)
     return;
 }
 
+void UnitCell::update_pos_taud(const Vector3<double>* posd_in)
+{
+    int iat = 0;
+    for(int it = 0;it < this->ntype;it++)
+    {
+        Atom* atom = &this->atoms[it];
+        for(int ia =0;ia< atom->na;ia++)
+        {
+            this->atoms[it].taud[ia] += posd_in[ia];
+            iat++;
+        }
+    }
+    assert(iat == this->nat);
+    this->periodic_boundary_adjustment();
+}
+
 void UnitCell::periodic_boundary_adjustment()
 {
     //----------------------------------------------

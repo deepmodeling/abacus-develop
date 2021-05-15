@@ -292,27 +292,6 @@ void Input::Default(void)
 	md_tstep=1; //reduec md_delt every md_tstep step.
 	md_delt=1.0;
 */
-	//md and related parameters(added by zheng da ye)
-	md_mdtype=1;
-	md_tauthermo=0;
-	md_taubaro=0;
-	md_dt=-1;
-	md_nresn=3;
-	md_nyosh=3;
-	md_qmass=1;
-	md_tfirst=-1;         //kelvin
-	md_tlast=md_tfirst;
-	md_dumpmdfred=1;
-	md_mdoutpath="mdoutput";
-	md_domsd=0;
-	md_domsdatom=0;
-	md_rstmd=0;
-	md_outputstressperiod=1;
-	md_fixtemperature=1;
-	md_ediff=1e-4;
-	md_ediffg=1e-3;
-	md_msdstartTime=1;
-	//end of zhengdaye's add.
 
 /* //----------------------------------------------------------
 // vdwD2									//Peize Lin add 2014-03-31, update 2015-09-30
@@ -1128,79 +1107,59 @@ bool Input::Read(const string &fn)
 //added begin by zheng daye
 		else if (strcmp("md_mdtype",word) == 0)
 		{
-			read_value(ifs, md_mdtype);
+			read_value(ifs, mdp.mdtype);
 		}
-		else if (strcmp("md_tauthermo",word) == 0)
+		else if (strcmp("NVT_tau",word) == 0)
 		{
-			read_value(ifs, md_tauthermo);
+			read_value(ifs, mdp.NVT_tau);
 		}
-		else if (strcmp("md_taubaro",word) == 0)
+		else if (strcmp("NVT_control",word) == 0)
 		{
-			read_value(ifs,md_taubaro );
+			read_value(ifs,mdp.NVT_control );
 		}
 		else if (strcmp("md_dt",word) == 0)
 		{
-			read_value(ifs, md_dt);
+			read_value(ifs, mdp.dt);
 		}
-		else if (strcmp("md_nresn",word) == 0)
+		else if (strcmp("mnhc",word) == 0)
 		{
-			read_value(ifs,md_nresn );
-		}
-		else if (strcmp("md_nyosh",word) == 0)
-		{
-			read_value(ifs, md_nyosh);
+			read_value(ifs,mdp.MNHC );
 		}
 		else if (strcmp("md_qmass",word) == 0)
 		{
-			read_value(ifs,md_qmass );
+			read_value(ifs,mdp.Qmass );
 		}
 		else if (strcmp("md_tfirst",word) == 0)
 		{
-			read_value(ifs, md_tfirst);
+			read_value(ifs, mdp.tfirst);
 		}
 		else if (strcmp("md_tlast",word) == 0)
 		{
-			read_value(ifs,md_tlast );
+			read_value(ifs,mdp.tlast );
 		}
 		else if (strcmp("md_dumpmdfred",word) == 0)
 		{
-			read_value(ifs, md_dumpmdfred);
+			read_value(ifs, mdp.recordFreq);
 		}
 		else if (strcmp("md_mdoutpath",word) == 0)
 		{
-			read_value(ifs,md_mdoutpath );
-		}
-		else if (strcmp("md_domsd",word) == 0)
-		{
-			read_value(ifs, md_domsd);
-		}
-		else if (strcmp("md_domsdatom",word) == 0)
-		{
-			read_value(ifs, md_domsdatom);
+			read_value(ifs,mdp.mdoutputpath );
 		}
 		else if (strcmp("md_rstmd",word) == 0)
 		{
-			read_value(ifs,md_rstmd );
-		}
-		else if (strcmp("md_outputstressperiod",word) == 0)
-		{
-			read_value(ifs,md_outputstressperiod );
+			read_value(ifs,mdp.rstMD );
 		}
 		else if (strcmp("md_fixtemperature",word) == 0)
 		{
-			read_value(ifs,md_fixtemperature );
+			read_value(ifs,mdp.fixTemperature );
 		}
 		else if (strcmp("md_ediff",word) == 0)
 		{
-			read_value(ifs,md_ediff );
+			read_value(ifs,mdp.ediff );
 		}
 		else if (strcmp("md_ediffg",word) == 0)
 		{
-			read_value(ifs,md_ediffg );
-		}
-		else if (strcmp("md_msdstarttime",word) == 0)
-		{
-			read_value(ifs,md_msdstartTime );
+			read_value(ifs,mdp.ediffg );
 		}
 //added by zheng daye
 //----------------------------------------------------------
@@ -2087,7 +2046,7 @@ void Input::Bcast()
 	Parallel_Common::bcast_int( selinv_niter);
 /*
 	// mohan add 2011-11-07
-	Parallel_Common::bcast_double( md_dt );
+	Parallel_Common::bcast_double( mdp.dt );
 	Parallel_Common::bcast_int( md_restart );
 	Parallel_Common::bcast_double( md_tolv );
 	Parallel_Common::bcast_string( md_thermostat );
@@ -2096,25 +2055,20 @@ void Input::Bcast()
 	Parallel_Common::bcast_double( md_delt );
 */
 	//zheng daye add 2014/5/5
-        Parallel_Common::bcast_int(md_mdtype);
-        Parallel_Common::bcast_double(md_tauthermo);
-        Parallel_Common::bcast_double(md_taubaro);
-        Parallel_Common::bcast_double(md_dt);
-        Parallel_Common::bcast_int(md_nresn);
-        Parallel_Common::bcast_int(md_nyosh);
-        Parallel_Common::bcast_double(md_qmass);
-        Parallel_Common::bcast_double(md_tfirst);
-        Parallel_Common::bcast_double(md_tlast);
-        Parallel_Common::bcast_int(md_dumpmdfred);
-        Parallel_Common::bcast_string(md_mdoutpath);
-        Parallel_Common::bcast_bool(md_domsd);
-        Parallel_Common::bcast_bool(md_domsdatom);
-        Parallel_Common::bcast_int(md_rstmd);
-        Parallel_Common::bcast_int(md_outputstressperiod);
-        Parallel_Common::bcast_int(md_fixtemperature);
-        Parallel_Common::bcast_double(md_ediff);
-        Parallel_Common::bcast_double(md_ediffg);
-        Parallel_Common::bcast_int(md_msdstartTime);
+        Parallel_Common::bcast_int(mdp.mdtype);
+        Parallel_Common::bcast_double(mdp.NVT_tau);
+        Parallel_Common::bcast_int(mdp.NVT_control);
+        Parallel_Common::bcast_double(mdp.dt);
+        Parallel_Common::bcast_int(mdp.MNHC);
+        Parallel_Common::bcast_double(mdp.Qmass);
+        Parallel_Common::bcast_double(mdp.tfirst);
+        Parallel_Common::bcast_double(mdp.tlast);
+        Parallel_Common::bcast_int(mdp.recordFreq);
+        Parallel_Common::bcast_string(mdp.mdoutputpath);
+        Parallel_Common::bcast_int(mdp.rstMD);
+        Parallel_Common::bcast_int(mdp.fixTemperature);
+        Parallel_Common::bcast_double(mdp.ediff);
+        Parallel_Common::bcast_double(mdp.ediffg);
 /* 	// Peize Lin add 2014-04-07
 	Parallel_Common::bcast_bool( vdwD2 );
 	Parallel_Common::bcast_double( vdwD2_scaling );
@@ -2483,10 +2437,10 @@ void Input::Check(void)
 
         //deal with input parameters , 2019-04-30
         if(basis_type == "pw" ) WARNING_QUIT("Input::Check","calculate = MD is only availble for LCAO.");
-        if(md_dt == -1) WARNING_QUIT("Input::Check","time interval of MD calculation should be set!");
-        if(md_tfirst == -1) WARNING_QUIT("Input::Check","temperature of MD calculation should be set!");
-        if(md_tlast  == -1) md_tlast = md_tfirst;
-        if(md_tfirst!=md_tlast)
+        if(mdp.dt < 0) WARNING_QUIT("Input::Check","time interval of MD calculation should be set!");
+        if(mdp.tfirst < 0) WARNING_QUIT("Input::Check","temperature of MD calculation should be set!");
+        if(mdp.tlast  < 0.0) mdp.tlast = mdp.tfirst;
+        if(mdp.tfirst!=mdp.tlast)
         {
             ifstream file1;
             file1.open("ChangeTemp.dat");
@@ -2496,7 +2450,7 @@ void Input::Check(void)
                 file.open("ChangeTemp.dat");
                 for(int ii=0;ii<30;ii++)
                 {
-                    file<<md_tfirst+(md_tlast-md_tfirst)/double(30)*double(ii+1)<<" ";
+                    file<<mdp.tfirst+(mdp.tlast-mdp.tfirst)/double(30)*double(ii+1)<<" ";
                 }
                 file.close();
             }

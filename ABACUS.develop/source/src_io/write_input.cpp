@@ -141,22 +141,20 @@ void Input::Print(const string &fn)const
 	OUTP(ofs,"selinv_niter",selinv_niter,"max number of steps to update mu");
 
 	ofs << "\n#Parameters (10.Molecular dynamics)" << endl;
-	OUTP(ofs,"md_mdtype",md_mdtype,"choose ensemble");
-	OUTP(ofs,"md_dt",md_dt,"time step");
-	OUTP(ofs,"md_nresn",md_nresn,"parameter during integrater");
-	OUTP(ofs,"md_nyosh",md_nyosh,"parameter during integrater");
-	OUTP(ofs,"md_qmass",md_qmass,"mass of thermostat");
-	OUTP(ofs,"md_tfirst",md_tfirst,"temperature first");
-	OUTP(ofs,"md_tlast",md_tlast,"temperature last");
-	OUTP(ofs,"md_dumpmdfred",md_dumpmdfred,"The period to dump MD information for monitoring and restarting MD");
-	OUTP(ofs,"md_mdoutpath",md_mdoutpath,"output path of md");
-	OUTP(ofs,"md_domsd",md_domsd,"whether compute <r(t)-r(0)>");
-	OUTP(ofs,"md_domsdatom",md_domsdatom,"whether compute msd for each atom");
-	OUTP(ofs,"md_rstmd",md_rstmd,"whether restart");
-	OUTP(ofs,"md_fixtemperature",md_fixtemperature,"period to change temperature");
-	OUTP(ofs,"md_ediff",md_ediff,"parameter for constraining total energy change");
-	OUTP(ofs,"md_ediffg",md_ediffg,"parameter for constraining max force change");
-	OUTP(ofs,"md_msdstarttime",md_msdstartTime,"choose which step that msd be calculated");
+	OUTP(ofs,"md_mdtype",mdp.mdtype,"choose ensemble");
+	OUTP(ofs,"md_dt",mdp.dt,"time step");
+	OUTP(ofs,"mnhc",mdp.MNHC,"number of Nose-Hoover chains");
+	OUTP(ofs,"md_qmass",mdp.Qmass,"mass of thermostat");
+	OUTP(ofs,"md_tfirst",mdp.tfirst,"temperature first");
+	OUTP(ofs,"md_tlast",mdp.tlast,"temperature last");
+	OUTP(ofs,"md_dumpmdfred",mdp.recordFreq,"The period to dump MD information for monitoring and restarting MD");
+	OUTP(ofs,"md_mdoutpath",mdp.mdoutputpath,"output path of md");
+	OUTP(ofs,"md_rstmd",mdp.rstMD,"whether restart");
+	OUTP(ofs,"md_fixtemperature",mdp.fixTemperature,"period to change temperature");
+	OUTP(ofs,"md_ediff",mdp.ediff,"parameter for constraining total energy change");
+	OUTP(ofs,"md_ediffg",mdp.ediffg,"parameter for constraining max force change");
+	OUTP(ofs,"NVT_tau",mdp.NVT_tau,"parameter for adjust effect of thermostat");
+	OUTP(ofs,"NVT_control",mdp.NVT_control,"choose which thermostat used in NVT ensemble");
 
 	ofs << "\n#Parameters (11.Efield)" << endl;
 	OUTP(ofs,"efield",efield,"add electric field");

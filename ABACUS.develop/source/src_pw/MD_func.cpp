@@ -1,225 +1,85 @@
-#include "MD_func.h"
+#include "src_pw/MD_func.h"
+#include "src_pw/tools.h"
+#include "src_lcao/FORCE_STRESS.h"
+#include "src_pw/forces.h"
+#include "src_pw/stress_pw.h"
+#include "src_global/sltk_atom_arrange.h"
 
-
-
-void MD_func::initMD(){
-	//parameter from input file
-	mdtype=INPUT.md_mdtype;
-	Qmass=INPUT.md_qmass/6.02/9.109*1e5;
-	dt=INPUT.md_dt/fundamentalTime/1e15;
-	temperature=INPUT.md_tfirst/3.1577464e5;
-	rstMD=INPUT.md_rstmd;
-	dumpmdfreq=INPUT.md_dumpmdfred;
-	fixTemperature=INPUT.md_fixtemperature;
-	ediff=INPUT.md_ediff;
-	ediffg=INPUT.md_ediffg;
-	mdoutputpath=INPUT.md_mdoutpath;
-	NVT_control = INPUT.md_nvtcontrol;
-   	NVT_tau = INPUT.md_nvttau;
-	MNHC = INPUT.md_mnhc;
-
-
-	//other parameter default
-	outputstressperiod = 1 ;// The period to output stress
-	numIon=ucell.nat;
-	ntype=ucell.ntype;
-	step_rst=0;
-	ionlatvec=ucell.latvec;
-
-	mdenergy=en.etot/2;
-
-	//allocate for MD
-	this->md_allocate();
-
-	//MD starting setup
-	if(rstMD==0){
-		connection0();
-		connection1();
-		//A fresh new MD: Do not restart MD
-		InitVelocity() ;
-		// Initialize thermostat, and barostat
-		
-	}
-	else if ( rstMD>0 ){
-		connection0();
-		connection1();
-		InitVelocity() ;
-		if(!RestartMD()){
-			cout<<"error in restart MD!"<<endl;
-			return;
-		}
-		connection2();
-	}
-	if(NVT_tau<1e-10)
-	{
-		if(NVT_control == 1) NVT_tau = 20 * dt; //NHC
-		else if(NVT_control == 2) NVT_tau = 20 * dt; //LGV
-		else if(NVT_control == 3) NVT_tau = 20 * dt; //ADS
-		else WARNING_QUIT("md:InitMD", "please choose available reservoir!!!");
-	}
-	else
-	{
-		NVT_tau *= fundamentalTime*1e15;
-	}
-	//tau = 1.0/(NVT_tau*fundamentalTime*1e15);
-	// Q=KbT*tau**2
-	if(Qmass<1e-10)//Qmass=dt*fundamentalTime*1e15/6.02/9.109*1e5;
-	Qmass = pow(1.0/NVT_tau,2)*temperature;///beta;
-	//NHC setup
-	if(mdtype==1 && NVT_control == 1)
-	{
-		unsigned long init[4]={0x123, 0x234, 0x345, 0x456}, length=4;
-		init_by_array(init, length);
-		ofs_running<<" ...............Nose-Hoover Chain parameter initialization...............  " << endl;
-		ofs_running<<" Temperature =    "<< temperature << endl;
-		ofs_running<<" Temperature2 =    "<< temperature/K_BOLTZMAN_AU << endl;
-		ofs_running<<" NHC frequency =    "<< 1.0/NVT_tau << endl;
-		ofs_running<<" NHC chain =    "<< MNHC << endl;
-		ofs_running<<" Qmass  =    "<< Qmass << endl;
-		ofs_running<<" ...............................................................  " << endl;
-		w[0]=0.7845136105;
-		w[6]=0.7845136105;
-		w[1]=0.2355732134;
-		w[5]=0.2355732134;
-		w[2]=-1.177679984;
-		w[4]=-1.177679984;
-		w[3]=1-w[0]-w[1]-w[2]-w[4]-w[5]-w[6];
-		//
-		for(int i=0;i<nsy;i++){
-			delta[i]=w[i]*dt;
-		}
-		
-		
-		for(int j=0;j<MNHC;j++){
-			for(int k=0;k<numIon;k++){
-				NHCeta[j*numIon+k].x=genrand_real2()-0.5; 
-				NHCeta[j*numIon+k].y=genrand_real2()-0.5; 
-				NHCeta[j*numIon+k].z=genrand_real2()-0.5;
-				NHCpeta[j*numIon+k].x=gaussrand()*sqrt(Qmass * temperature);
-				NHCpeta[j*numIon+k].y=gaussrand()*sqrt(Qmass * temperature);
-				NHCpeta[j*numIon+k].z=gaussrand()*sqrt(Qmass * temperature);
-			}
-		}
-		
-		for(int j=MNHC-1;j>=1;j--){
-			for(int k=0;k<numIon;k++){
-				G[j*numIon+k].x=pow(NHCpeta[(j-1)*numIon+k].x,2)/Qmass - 1.0 * temperature;
-				G[j*numIon+k].y=pow(NHCpeta[(j-1)*numIon+k].y,2)/Qmass - 1.0 * temperature;
-				G[j*numIon+k].z=pow(NHCpeta[(j-1)*numIon+k].z,2)/Qmass - 1.0 * temperature;
-			}
-		}
-		
-		for(int k=0;k<numIon;k++){
-			G[0*numIon+k].x=pow(vel[k].x,2)*allmass[k]-1.0 * temperature;
-			G[0*numIon+k].y=pow(vel[k].y,2)*allmass[k]-1.0 * temperature;
-			G[0*numIon+k].z=pow(vel[k].z,2)*allmass[k]-1.0 * temperature;
-		}
-		ofs_running << "finish NHC thermostat define" << endl; //zifei
-	}
-
-	return;
-}
-	
-/*void md::runMD(int step1){
-       if(rstMD==1)MDNVT.runnvt();
-       else if(mdtype==3)MDNVE.runNVE(step1);
-       return;
-}*///we need this form
-
-bool  MD_func::RestartMD(){
-	int i;
+bool MD_func::RestartMD(const int& numIon, Vector3<double>* vel, int& step_rst)
+{
+	int error(0);
 	double *vell=new double[numIon*3];
-	double *cart=new double[numIon*3];
-	double *dira=new double[numIon*3];
-	double *nhcg=new double[numIon*3*MNHC];
-	double *nhcp=new double[numIon*3*MNHC];
-	double *nhce=new double[numIon*3*MNHC];
-	if (!MY_RANK){
+	if (!MY_RANK)
+	{
 		stringstream ssc;
-		ssc << global_out_dir << "Restart_md.dat";
+		ssc << global_readin_dir << "Restart_md.dat";
 		ifstream file(ssc.str().c_str());
 
-		if(!file){
-			cout<<"please ensure whether 'Restart_md.dat' exists"<<endl;
-			exit(0);
+		if(!file)
+		{
+			cout<<"please ensure whether 'Restart_md.dat' exists!"<<endl;
+			error = 1;
 		}
-		if (file.good())
+		if (!error)
 		{
 			file.ignore(11, '\n');
-		}
 
-//----------------------------------------------------------
-// main parameters
-//----------------------------------------------------------
-		file.ignore(7, '\n');
-		//                file>>xLogS;
-		file.get();	
-		file.ignore(7, '\n');
-		//                file>>vLogS;
-		file.get();
-		file.ignore(23, '\n');
-		for(i = 0;i<numIon*3;i++){
-			file>>vell[i];
+        //----------------------------------------------------------
+        // main parameters
+        //----------------------------------------------------------
+			file.ignore(13, '\n');//read and assert number of atoms
+			int num;
+			file>>num;
+			if(num != numIon)
+			{
+				cout<<"please ensure whether 'Restart_md.dat' right!"<<endl;
+				error = 1;
+			}
 		}
-		/*file.get();	file.ignore(17, '\n');
-		for(i=0;i<numIon*3;i++){
-			file>>cart[i];
+		if (!error)
+		{
+			file.get();
+			file.ignore(23, '\n');//read velocities
+			for(int i = 0;i<numIon*3;i++)
+			{
+				file>>vell[i];
+			}
+			file.get();
+			file.ignore(6, '\n');//read start step of MD
+			file>>step_rst;
+			file.close();
 		}
-		file.get();	file.ignore(13, '\n');
-		for(i=0;i<numIon*3;i++){
-			file>>dira[i];
-		}*/
-		file.get();     
-		file.ignore(6, '\n');
-		file>>step_rst;
-		file.close();
 	}
-//2015-09-05, xiaohui
+#ifdef __MPI
+	MPI_Bcast(&error,1,MPI_INT,0,MPI_COMM_WORLD);
+#endif
+	if(error)
+	{
+		delete[] vell;
+		exit(0);
+	}
 #ifdef __MPI
 	MPI_Bcast(&step_rst,1,MPI_INT,0,MPI_COMM_WORLD);
 	MPI_Bcast(vell,numIon*3,MPI_DOUBLE,0,MPI_COMM_WORLD);
 #endif
-	for(i=0;i<numIon;i++){
+	for(int i=0;i<numIon;i++)
+	{
 		vel[i].x=vell[i*3];
 		vel[i].y=vell[i*3+1];
 		vel[i].z=vell[i*3+2];
 	}
-	// DEBUG
-	//int debug = 0;
-	//if (debug) {
-	//  cout<<" dump cell + ion infomation file to -> echo_md_restart.dat, for debug purpose. "<<endl;
-	//	fstream debugfile;
-	//	debugfile.open("echo_md_restart.dat");
-	//  debugfile<<"  "<<endl;
-	//debugfile<<"cellReal[0] = "<<a.latvec.e11<<" "<<a.latvec.e12<<" "<<a.latvec.e13<<endl;
-	//debugfile<<"cellReal[1] = "<< a.latvec.e21<<" "<<a.latvec.e22<<" "<<a.latvec.e23<<endl;
-	//debugfile<<"cellReal[2] = "<< a.latvec.e31<<" "<<a.latvec.e32<<" "<<a.latvec.e33<<endl;
-	//debugfile<<"ION FRACTIONAL COORDINATES:"<<endl;
-	//for(ii=0;ii<numIon;ii++){
-	//  debugfile<<taudirac[ii].x<<" "<<taudirac[ii].y<<" "<<taudirac[ii].z<<endl;
-	//}
-	//debugfile<<"ION VELOCITIES:"<<endl;
-	//for( ii=0;ii<ionIon;ii++){
-	// debugfile<<vel[ii].x<<" "<<vel[ii].y<<" "<<vel[ii].z<<endl;
-	//	}
-	//  debugfile.close();
-	//}
-	// END DEBUG
-	if(vell!=NULL)delete []vell;
-	if(cart!=NULL)delete []cart;
-	if(dira!=NULL)delete []dira;
-	if(nhcg!=NULL)delete []nhcg;
-	if(nhcp!=NULL)delete []nhcp;
-	if(nhce!=NULL)delete []nhce;
+
+	delete []vell;
 	return true;
 }
 
-void MD_func::mstout(int step){
+void MD_func::mdRestartOut(const int& step, const int& recordFreq, const int& numIon, Vector3<double>* vel)
+{
 //this function used for outputting the information of restart file
 	bool pass;
 	pass = 0;
 
-	if (dumpmdfreq==1||step==1||( dumpmdfreq > 1&& step%dumpmdfreq==0 ) )
+	if (recordFreq==1||step==1||( recordFreq > 1&& step%recordFreq==0 ) )
 		pass =1;
 	if (!pass) return;
 
@@ -228,25 +88,18 @@ void MD_func::mstout(int step){
 		ssc << global_out_dir << "Restart_md.dat";
 		ofstream file(ssc.str().c_str());
 		file<<"MD_RESTART"<<endl;
+		file<<"ATOM_NUMBERS: "<<numIon<<endl;
 		file<<"ION_VELOCITIES_(a.u.): "<<endl;
 		for(int i=0;i<numIon;i++){
 			file<<setprecision (12)<<vel[i].x<<" "<<setprecision (12)<<vel[i].y<<" "<<setprecision (12)<<vel[i].z<<endl;
 		}
-/*	file<<"CARTESIAN_COORD: "<<endl;
-	for(i=0;i<numIon;i++){
-		file<<cartNoWrap[i].x<<" "<<cartNoWrap[i].y<<" "<<cartNoWrap[i].z<<endl;
-	}
-	file<<"DIRAC_COORD: "<<endl;
-	for(i=0;i<numIon;i++){
-		file<<taudirac[i].x<<" "<<taudirac[i].y<<" "<<taudirac[i].z<<endl;
-	}*/
 		file<<"step: "<<step<<endl;                
 		file.close();
 	}
 	return;
 }
 
-double MD_func::GetAtomKE(){
+double MD_func::GetAtomKE(const int& numIon, const Vector3<double>const* vel, const double const* allmass){
 //---------------------------------------------------------------------------
 // DESCRIPTION:
 //   This function calculates the classical kinetic energy of a group of atoms.
@@ -264,7 +117,12 @@ double MD_func::GetAtomKE(){
 	return ke;
 }
 
-void MD_func::InitVelocity()
+void MD_func::InitVelocity(
+	const int& numIon, 
+	const double& temperature, 
+	const double& fundamentalTime, 
+	const double const* allmass,
+	Vector3<double>* vel)
 {
 	if(!MY_RANK){ //xiaohui add 2015-09-25
 		srand(time(0));
@@ -323,82 +181,7 @@ void MD_func::InitVelocity()
 	return;
 }
 
-
-void MD_func::OutputMDHeader()
-{
-//---------------------------------------------------
-// Output the Header for MD simulation
-//---------------------------------------------------
-
-	// Set up extra output to ion optimizer / MD header
-	if (!MY_RANK)
-		out<<"Q ="<<Qmass<<"a.u.\n"<<" dt = "<<dt*fundamentalTime*1e15<<"fs\n"<< "T ="<<temperature/K_BOLTZMAN_AU<<endl;
-		ofs_running<<"Q ="<<Qmass<<"a.u.\n"<<" dt = "<<dt*fundamentalTime*1e15<<"fs\n"<< "T ="<<temperature/K_BOLTZMAN_AU<<endl;
-		return;
-} 
-
-void MD_func::OutputMDGeom(int iter)
-{
-//---------------------------------------------------------------------------
-// DESCRIPTION:
-//  Output the ion's position and cell's structure for monitoring and MD
-//  restart.
-//---------------------------------------------------------------------------
-  
-	bool pass;
-	int i,it;
-	ofstream uf;
-	string iteration_number;
-	string eleName;
-	   
-	//! >> FUNCTION << !
-	pass = 0;
-	// if(rankGlobal!=0) return;
-	if(dumpmdfreq==1||iter==1||( dumpmdfreq > 1&&(iter%dumpmdfreq)==0 ) ) 
-		pass = 1;
-	if(!pass)return;
-	// cout<<"test the function OutputMDGeom"<<endl;
-
-	//the final file name is the md_geometry plus the iteraction number
-	iteration_number=intTurnTostring(iter,iteration_number);
-	string  message=mdoutputpath+"_ion"+iteration_number+".txt";
-	//  cout<<"file name is:"<<message<<endl;
-	// open the file: 'ion.1.dat'
-	uf.open(message.c_str());
-	//  cout<<"already open file"<<endl;
-	uf<< "BLOCK LATTICE_CART"<<endl;
-	uf<<"    "<<ionlatvec.e11*ucell.lat0<<"  "<<ionlatvec.e12*ucell.lat0<<"  "<<ionlatvec.e13*ucell.lat0<<endl;
-	  
-	uf<<"    "<<ionlatvec.e21*ucell.lat0<<"  "<<ionlatvec.e22*ucell.lat0<<"  "<<ionlatvec.e23*ucell.lat0<<endl;
-
-	uf<<"    "<<ionlatvec.e31*ucell.lat0<<"  "<<ionlatvec.e32*ucell.lat0<<"  "<<ionlatvec.e33*ucell.lat0<<endl;
-
-	uf<< "END BLOCK LATTICE_CART"<<endl;
-	//  cout<<"already out put lattice cart"<<endl;
-  
-	//output the atom positions.
-	uf<<"BLOCK POSITIONS_CART"<<endl;
-	int ion=0;
-	for(it=0;it<ntype;it++){
-		for(i = 0;i< na[it];i++){
-			eleName=ucell.atoms[it].label; 
-			uf<<"  "<<eleName 
-				<<"  "<<cartNoWrap[ion].x  // unit of cartNorap is 'Bohr' 
-				<<"  "<<cartNoWrap[ion].y   
-				<<"  "<<cartNoWrap[ion++].z<<endl;
-		}
-	}
-	uf<< "END BLOCK POSITIONS_CART"<<endl;
-	uf<<"already output positions cart"<<endl;
-	double distance;
-	distance=pow(cartNoWrap[1].x-cartNoWrap[0].x,2.0)+pow(cartNoWrap[1].y-cartNoWrap[0].y,2.0)+pow(cartNoWrap[1].z-cartNoWrap[0].z,2);
-	distance=sqrt(distance);
-	//  cout<<"distance is "<<distance<<" ";
-	uf.close();
-	return;
-}
-
-void MD_func::ReadNewTemp(int step )
+/*void MD_func::ReadNewTemp(int step )
 {
 //-----------------------------------------------------------------
 //  If fixTemperature == 0, then this subroutine will be skipped
@@ -446,7 +229,7 @@ void MD_func::ReadNewTemp(int step )
 	}
 
 	return;
-}
+}*/
 
 //int to string and add to output path
 string MD_func::intTurnTostring(long int iter, string path)
@@ -469,117 +252,68 @@ string MD_func::intTurnTostring(long int iter, string path)
 	return path;
 }
 
-void MD_func::connection0(){
+int MD_func::getMassMbl(const UnitCell_pseudo &unit_in, double* allmass, Vector3<int>* ionmbl)
+{
 //some prepared information
 //mass and degree of freedom
 	int ion=0;
-	nfrozen=0;
-	for(int it=0;it<ntype;it++){
-		for(int i=0;i<na[it];i++){
-			allmass[ion]=ucell.atoms[it].mass/6.02/9.109*1e5;
-			ionmbl[ion]=ucell.atoms[it].mbl[i];
+	int nfrozen=0;
+	for(int it=0;it<unit_in.ntype;it++){
+		for(int i=0;i<unit_in.atoms[it].na;i++){
+			allmass[ion]=unit_in.atoms[it].mass/6.02/9.109*1e5;
+			ionmbl[ion]=unit_in.atoms[it].mbl[i];
 			if (ionmbl[ion].x==0||ionmbl[ion].y==0||ionmbl[ion].z==0) nfrozen++;
 
 			ion++;
 		}
 	}
-	return;
-}
-	
-void MD_func::connection1()
-{
-//call each atom's position
-	int i,it,ion;
-	ion=0;
-	for(it=0;it<ntype;it++){
-		for(i=0;i<na[it];i++){
-			cartNoWrap[ion]=ucell.atoms[it].tau[i]*ucell.lat0;
-			taudirac[ion]=ucell.atoms[it].taud[i];
-			ion++;
-		}
-	}
-	return;
+	return nfrozen;
 }
 
-void MD_func::connection2()
-{
-//to refresh the atoms' positions
-	int i,it,ion;
-	ion=0;
-	for(it=0;it<ntype;it++){
-		for(i=0;i<na[it];i++){
-			ucell.atoms[it].tau[i]=cartNoWrap[ion]/ucell.lat0;
-			ucell.atoms[it].taud[i]=taudirac[ion];
-			ion++;
-		}
-	}
-	return;
-}
-
-void MD_func::callforce()
+void MD_func::callInteraction_LCAO(const int& numIon, Vector3<double>* force, matrix& stress_lcao)
 {
 //to call the force of each atom
-	int ion;
-	Force_LCAO FL;
-	FL.allocate (); 
-	FL.start_force();
-	for(ion=0;ion<numIon;ion++){
-		force[ion].x=FL.fcs(ion,0)/2.0;
-		force[ion].y=FL.fcs(ion,1)/2.0;
-		force[ion].z=FL.fcs(ion,2)/2.0;
-		// cout<<force[ion].x/0.0195<<" "<<force[ion].y/0.0195<<" "<<force[ion].z/0.0195<<endl;
+	matrix fcs;//temp force matrix
+	Force_Stress_LCAO FSL;
+	FSL.allocate (); 
+	FSL.getForceStress(FORCE, STRESS, TEST_FORCE, TEST_STRESS, fcs, stress_lcao);
+	for(int ion=0;ion<numIon;ion++){
+		force[ion].x =fcs(ion, 0)/2.0;
+		force[ion].y =fcs(ion, 1)/2.0;
+		force[ion].z =fcs(ion, 2)/2.0;
 	}
 #ifdef __MPI //2015-10-01, xiaohui
 	atom_arrange::delete_vector( SEARCH_RADIUS );
 #endif //2015-10-01, xiaohui
-	//to call the stress
+
+	return;
+}
+void MD_func::callInteraction_PW(const int& numIon, Vector3<double>* force, matrix& stress_pw)
+{
+//to call the force of each atom
+	matrix fcs;//temp force matrix
+	Forces ff;
+	ff.init(fcs);
+	for(int ion=0;ion<numIon;ion++){
+		force[ion].x =fcs(ion, 0)/2.0;
+		force[ion].y =fcs(ion, 1)/2.0;
+		force[ion].z =fcs(ion, 2)/2.0;
+	}
 	if(STRESS)
 	{
-	//	matrix stress_lcao;//this is the stress matrix same as src_pw/ion.cpp
-		stress_lcao.create(3,3);
-		FL.cal_stress(stress_lcao);
+		Stress_PW ss;
+		ss.cal_stress(stress_pw);
 	}
 	return;
 }
 
-void MD_func::moveatoms(int step){
-//intent to ensure that no atom is out of the cell
-
-	for(int ia=0;ia<numIon;ia++)
-	{
-//changed by a constrain box
-                 
-		if(taudirac[ia].x<0) taudirac[ia].x += 1.0;
-		if(taudirac[ia].y<0) taudirac[ia].y += 1.0;
-		if(taudirac[ia].z<0) taudirac[ia].z += 1.0;
-		if(taudirac[ia].x>=1.0) taudirac[ia].x -= 1.0;
-		if(taudirac[ia].y>=1.0) taudirac[ia].y -= 1.0;
-		if(taudirac[ia].z>=1.0) taudirac[ia].z -= 1.0;
-
-		if(taudirac[ia].x<0 || taudirac[ia].y<0
-			|| taudirac[ia].z<0 ||
-			taudirac[ia].x>=1.0 ||
-			taudirac[ia].y>=1.0 ||
-			taudirac[ia].z>=1.0)
-		{
-			cout << " ion: "<< ia  << endl;
-			cout << "d=" << taudirac[ia].x << " " <<
-				taudirac[ia].y << " " << taudirac[ia].z << endl;
-			WARNING_QUIT("md::moveatoms","the movement of atom is larger than the length of cell.");
-		}
-
-		cartNoWrap[ia] = taudirac[ia] * ionlatvec*ucell.lat0;
-	}
-	return;
-}
-
-void MD_func::printpos(string file,int iter)
+void MD_func::printpos(const string& file, const int& iter, const int& recordFreq, const UnitCell_pseudo& unit_in)
 {
 //intend to output the positions of atoms to ordered file
 	bool pass;
 	pass = 0;
 
-	if (dumpmdfreq==1||iter==1||( dumpmdfreq > 1&& iter%dumpmdfreq==0 ) )
+	if (recordFreq==1||iter==1||( recordFreq > 1&& iter%recordFreq==0 ) )
 		pass =1;
 	if (!pass) return;
 
@@ -587,26 +321,68 @@ void MD_func::printpos(string file,int iter)
 	string file2=file+".cif";
 
 	//xiaohui add 'OUT_LEVEL', 2015-09-16
-	if(OUT_LEVEL == "i"||OUT_LEVEL == "ie") ucell.print_tau();
-	if(OUT_LEVEL == "i"||OUT_LEVEL == "ie") ucell.print_cell_xyz(file1);
-	ucell.print_cell_cif(file2);
+	if(OUT_LEVEL == "i"||OUT_LEVEL == "ie") unit_in.print_tau();
+	if(OUT_LEVEL == "i"||OUT_LEVEL == "ie") unit_in.print_cell_xyz(file1);
+	unit_in.print_cell_cif(file2);
 	stringstream ss;
 
 	ss << global_out_dir << "STRU_MD";
 
 	//zhengdy modify 2015-05-06, outputfile "STRU_Restart"
-	ucell.print_stru_file(ss.str(),2);
+	unit_in.print_stru_file(ss.str(),2);
 
 	return;
 }
 
 //rescale velocities to target temperature.
-void MD_func::scalevel()
+void MD_func::scalevel(
+	const int& numIon,
+	const int& nfrozen,
+	const double& temperature,
+	Vector3<double>* vel,
+	const double* allmass
+)
 {
-	double ke=GetAtomKE();
+	double ke=GetAtomKE(numIon, vel, allmass);
 	if(ke>1e-9)
-		for(int i=0;i<numIon;i++){
+	{
+		for(int i=0;i<numIon;i++)
+		{
 			vel[i]*=sqrt(3*(numIon-nfrozen)*temperature/ke/2);
 		}
+	}
 	return;
+}
+
+double MD_func::Conserved(const double KE, const double PE, const int number){
+//---------------------------------------------------------------------------
+//   This function calculates the conserved quantity for the NVE system. 
+//----------------------------------------------------------------------------
+
+   	// KE   // Kinetic energy of particles (due to their velocity)
+   	// PE   // Potential energy (DFT total energy)
+	// number //number of atoms which have full freedoms
+
+  	double Conserved; // The conserved quantity
+
+   	Conserved = KE + PE ;
+   
+	if (!MY_RANK)
+	{                 
+		ofs_running<< "NVE Conservation     : "<< Conserved<<" (Hartree)"<<endl;
+		ofs_running<< "NVE Temperature      : "<< 2*KE/(3*number)/K_BOLTZMAN_AU<<" (K)"<<endl;
+		ofs_running<< "NVE Kinetic energy   : "<< KE<<" (Hartree)"<<endl;
+		ofs_running<< "NVE Potential energy : "<< PE<<" (Hartree)"<<endl;
+	}
+   	return Conserved;
+}
+
+double MD_func::MAXVALF(const int numIon, const Vector3<double>const* force){
+	//cout<<"enter in MAXVALF"<<endl;
+	double max=0;
+	for(int i=0;i<numIon;i++){
+		double force0 = pow(force[i].x,2)+pow(force[i].y,2)+pow(force[i].z,2);
+		if(max<force0) max = force0;
+	}
+	return max;
 }

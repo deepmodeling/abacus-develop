@@ -7,6 +7,7 @@
 
 #include "src_global/vector3.h"
 #include <string>
+#include "src_pw/MD_parameters.h"
 using namespace std;
 
 class Input
@@ -244,7 +245,7 @@ class Input
 // molecular dynamics 
 // added by Daye Zheng
 //==========================================================
-    int md_mdtype;                   //choose ensemble
+/*    int md_mdtype;                   //choose ensemble
 	double md_tauthermo;
 	double md_taubaro;
 	double md_dt;                    //time step
@@ -262,7 +263,8 @@ class Input
 	int md_fixtemperature;          //period to change temperature
 	double md_ediff;             //parameter for constraining total energy change
 	double md_ediffg;             //parameter for constraining max force change
-	int md_msdstartTime;            //choose which step that msd be calculated 
+	int md_msdstartTime;            //choose which step that msd be calculated */
+	MD_parameters mdp;
 
 //==========================================================
 // vdw

@@ -1,30 +1,58 @@
 #ifndef MD_THERMO_H
 #define MD_THERMO_H
+#include "tools.h"
 
 class MD_thermo 
 {
     public:
     MD_thermo();
-    ~MD_thrmo();
+    ~MD_thermo();
 
-    void Integrator(const int control);
+    void Integrator(
+        const int control,
+        const double &temperature,
+        Vector3<double>* vel,
+        const double* allmass
+        );
     void init_NHC(
         const int &MNHC_in, 
+        const double &Qmass_in, 
+        const double &NVT_tau_in, 
+        const double &dt_in,
         const int &NVT_control, 
         ofstream &ofs, 
-        const int &numIon
+        const int &numIon,
+        const double &temperature,
+        const Vector3<double>* vel,
+        const double* allmass
         );
     double NHChamiltonian(
         const double &KE,
         const double &PE,
-        const int &numIon,
         const double &temperature,
-        const int &nfrozen );
+        const int &nfrozen
+        );
+
+    void NHC_info_out(const int& step, const int& recordFreq, const int& numIon);
+    void NHC_restart();
 
     private:    
-    void ADSIntegrator();
-	void LGVIntegrator();
-	void NHCIntegrator();
+    void ADSIntegrator(
+        const double &temperature,
+        Vector3<double>* vel,
+        const double* allmass
+    );
+	void LGVIntegrator(
+        const double &temperature,
+        Vector3<double>* vel,
+        const double* allmass
+    );
+	void NHCIntegrator(
+        const double &temperature,
+        Vector3<double>* vel,
+        const double* allmass
+    );
+
 
 	double gaussrand();
 	
@@ -35,7 +63,7 @@ class MD_thermo
 	double genrand_real1(void);
 	double genrand_real2(void);
 	double genrand_real3(void);
-	double genrand_res53(void) ;
+	double genrand_res53(void);
 
     //NVT thermostat parameters
 	const static int N_mt19937=624;
@@ -47,15 +75,18 @@ class MD_thermo
 	int mti=625; /* mti==N+1 means mt[N] is not initialized */
 	long double gamma; //langevin friction coefficient
 	long double nu; //Andersen collision frequency
-	long long double c1k; //parameter in Langevin
+	long double c1k; //parameter in Langevin
 	double c2k; //parameter in Langevin
     const static int nsy=7; //parameter in NHC, constant, no need to modification
-    long double w[nsy]; //parameters in NHC
-    long double delta[nsy]; //parameters in NHC
+    double w[nsy]; //parameters in NHC
+    double delta[nsy]; //parameters in NHC
 
     //input parameters
-    int MNHC;
-    int Qmass;
+    int MNHC_;
+    double Qmass_;
+    double NVT_tau_;
+    double dt_;
+    int numIon_;
 
     //need to be allocated
     Vector3<double> *G; //parameter in NHC
@@ -63,3 +94,5 @@ class MD_thermo
     Vector3<double> *NHCpeta; //NHC momentum
 
 };
+
+#endif

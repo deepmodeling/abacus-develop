@@ -1,33 +1,36 @@
 #ifndef MD_FUNC_H
 #define MD_FUNC_H
 
+#include "src_pw/unitcell_pseudo.h"
+
+
 class MD_func
 {
     public:
     MD_func(){};
     ~MD_func(){};
-    void initMD();
-	bool RestartMD();
-    void mstout(int step);
-//	void RemoveMovementOfCenterOfMass();
-	double GetAtomKE();
-//	void MakeIntCoeff();
-	void InitVelocity();
-//	void MonitorMeanSquareDisplacement(int step);
-//	void OutputIonVelocityAndStats(int iter);
-	void OutputMDHeader();
-	void OutputMDGeom(int iter);
-	void ReadNewTemp(int step);
-	string intTurnTostring(int iter,string path);
-	void connection0();
-	void connection1();
-	void connection2();
-	void callforce();
-    void moveatoms(int step);
-    void printpos(string file,int iter);
-//        void md_release();
-    void scalevel();
-	double MAXVALF();
-	double Conserved(double KE, double PE);
+	bool RestartMD(const int& numIon, Vector3<double>* vel, int& step_rst);
+    void mdRestartOut(const int& step, const int& recordFreq, const int& numIon, Vector3<double>* vel);
+	double GetAtomKE(const int& numIon, const Vector3<double>const* vel, const double const* allmass);
+	void InitVelocity(
+		const int& numIon, 
+		const double& temperature, 
+		const double& fundamentalTime, 
+		const double const* allmass,
+		Vector3<double>* vel);
+//	void ReadNewTemp(int step);
+	string intTurnTostring(long int iter,string path);
+	int getMassMbl(const UnitCell_pseudo &unit_in, double* allmass, Vector3<int>* ionmbl);
+	void callInteraction_LCAO(const int& numIon, Vector3<double>* force, matrix& stress_lcao);
+	void callInteraction_PW(const int& numIon, Vector3<double>* force, matrix& stress_pw);
+    void printpos(const string& file, const int& iter, const int& recordFreq, const UnitCell_pseudo& unit_in);
+    void scalevel(
+		const int& numIon,
+		const int& nfrozen,
+		const double& temperature,
+		Vector3<double>* vel,
+		const double* allmass);
+	double MAXVALF(const int numIon, const Vector3<double>const* force);
+	double Conserved(const double KE, const double PE, const int number);
 };
 #endif

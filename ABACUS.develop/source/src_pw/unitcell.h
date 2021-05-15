@@ -67,6 +67,7 @@ public:
     const double& getNelec(void)const {return electrons_number;}
 
     void update_pos_tau(const double* pos);
+    void update_pos_taud(const Vector3<double>* posd_in);
     void periodic_boundary_adjustment();
     void bcast_atoms_tau();
     void save_cartesian_position(double* pos)const;

@@ -53,9 +53,10 @@ chi0_hilbert.o\
 chi0_standard.o\
 epsilon0_pwscf.o\
 epsilon0_vasp.o\
-md.o\
-mdNVE.o\
-mdNVT.o\
+MD_basic.o\
+MD_thermo.o\
+MD_fire.o\
+MD_func.o\
 exx_lip.o\
 soc.o\
 to_wannier90.o \

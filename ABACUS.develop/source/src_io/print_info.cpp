@@ -37,16 +37,17 @@ void Print_Info::setup_parameters(void)
 
 			cout << " ---------------------------------------------------------" << endl;
 
-			if(INPUT.md_mdtype ==1 || INPUT.md_mdtype==2)
+			if(INPUT.mdp.mdtype ==1 || INPUT.mdp.mdtype==2)
 			{
 				cout << " ENSEMBLE                 : " << "NVT" << endl;
+				cout << " Qmass for NVT(a.u.)      : " << INPUT.mdp.Qmass/6.02/9.109*1e5 << endl;
 			}
-			else if(INPUT.md_mdtype==0)
+			else if(INPUT.mdp.mdtype==0)
 			{
 				cout << " ENSEMBLE                 : " << "NVE" << endl;
 			}
-			cout << " Qmass for NVT(a.u.)      : " << INPUT.md_qmass/6.02/9.109*1e5 << endl;
-			cout << " Time interval(fs)        : " << INPUT.md_dt << endl;
+			
+			cout << " Time interval(fs)        : " << INPUT.mdp.dt << endl;
 		}
 		cout << " ---------------------------------------------------------" << endl;
 

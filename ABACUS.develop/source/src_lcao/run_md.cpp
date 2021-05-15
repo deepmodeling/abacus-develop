@@ -13,7 +13,6 @@
 #include "ELEC_scf.h"
 #include "src_global/sltk_atom_arrange.h"
 #include "src_pw/vdwd2.h"
-#include "src_pw/vdwd3.h"
 
 Run_MD::Run_MD()
 {}
@@ -88,20 +87,8 @@ void Run_MD::opt_ions(void)
         LCM.allocate();
     }
 
-	mdtype= INPUT.md_mdtype;//control md
-
-	// NVT ensemble
-	if(mdtype==1||mdtype==2) 
-	{
-		MDNVT.md_allocate();
-		MDNVT.initMD();
-	}
-	// NVE ensemble
-	else if(mdtype==0)
-	{
-		MDNVE.md_allocate();
-		MDNVE.initMD();
-	}
+    MD_basic mdb(INPUT.mdp, ucell);
+    int mdtype = INPUT.mdp.mdtype;
 
     this->istep = 1;
     int force_step = 1;
@@ -115,10 +102,7 @@ void Run_MD::opt_ions(void)
         if(OUT_LEVEL=="ie" || OUT_LEVEL=="m")
         {
 			cout << " ---------------------------------------------------------" << endl;
-			if(mdtype==1||mdtype==2)
-			{
-				cout<<" Molecular Dynamics (NVT) STEP "<< MDNVT.step_rst + istep<<endl;
-			}
+			cout<<" Molecular Dynamics STEP "<< mdb.getRealStep()<<endl;
 			cout << " ---------------------------------------------------------" << endl;
         }
 
@@ -133,19 +117,11 @@ void Run_MD::opt_ions(void)
 
 		if(mdtype==1||mdtype==2)   
 		{
-			MDNVT.runnvt(istep);
+			mdb.runNVT(istep);
 		}
 		else if(mdtype==0)  
 		{
-			MDNVE.runNVE(istep);
-		}
-		if((mdtype==1||mdtype==2)&&(istep==NSTEP||stop))
-		{
-			MDNVT.md_release();
-		}
-		if(mdtype==0&&(istep==NSTEP||stop))
-		{
-			MDNVE.md_release();
+			mdb.runNVE(istep);
 		}
 
         if(pot.out_potential == 2)
@@ -203,195 +179,13 @@ void Run_MD::opt_ions(void)
         ++istep;
     }
 
+    if(istep>1) final_scf();
+
 	// mohan update 2021-02-10
     hm.orb_con.clear_after_ions(UOT, ORB, INPUT.out_descriptor);
 
     timer::tick("Run_MD","opt_ions",'B'); 
     return;
-}
-
-//bool Run_MD::force_stress(void)
-bool Run_MD::force_stress(const int &istep, int &force_step, int &stress_step)
-{
-    TITLE("Run_MD","force_stress");
-    if(!FORCE && !STRESS)
-    {
-        return 1;
-    }
-    timer::tick("Run_MD","force_stress",'D');
-	matrix fcs;
-	matrix scs;
-	Force_Stress_LCAO FSL;
-	FSL.allocate (); 
-	FSL.getForceStress(FORCE, STRESS, TEST_FORCE, TEST_STRESS, fcs, scs);
-	//--------------------------------------------------
-	// only forces are needed, no stresses are needed
-	//--------------------------------------------------
-    if(FORCE && !STRESS)
-    {
-
-#ifdef __MPI //2015-10-01, xiaohui
-        atom_arrange::delete_vector( SEARCH_RADIUS );
-#endif //2015-10-01, xiaohui
-
-        if(CALCULATION=="relax") 
-        {
-            IMM.cal_movement(istep, istep, fcs, en.etot);
-
-            if(IMM.get_converged() || (istep==NSTEP))
-            {
-                return 1; // 1 means converged
-            }
-            else // ions are not converged
-            {
-                CE.update_istep(istep);
-                CE.extrapolate_charge();
-
-                if(pot.extra_pot=="dm")
-                {
-                }
-                else
-                {
-                    pot.init_pot( istep, pw.strucFac );
-                }
-            }
-            return 0;
-        }
-        else
-        {
-            return 1;
-        }
-
-        // mohan update 2013-04-11
-        // setup the structure factor
-        // and do the density extraploation.
-        // for both ionic iteratoin and
-        // force calculations.
-
-        //xiaohui modify 2014-08-09
-        //pw.setup_structure_factor();
-
-        // charge extrapolation if istep>0.
-        //xiaohui modify 2014-08-09
-        //CE.extrapolate_charge();
-
-/*xiaohui modify 2014-08-09
-        if(pot.extra_pot==4)
-        {
-            // done after grid technique.
-        }
-        else
-        {
-            pot.init_pot( istep );
-        }
-xiaohui modify 2014-08-09*/
-    }
-
-    static bool converged_force = false;
-    static bool converged_stress = false;
-
-    if(!FORCE&&STRESS)
-    {
-
-#ifdef __MPI
-		atom_arrange::delete_vector( SEARCH_RADIUS );
-#endif
-		if(CALCULATION=="cell-relax")
-		{
-           	LCM.cal_lattice_change(stress_step, scs, en.etot);
-           	converged_stress = LCM.get_converged();
-           	if(converged_stress)
-           	{
-               	return 1;
-           	}
-           	else
-           	{
-               	Variable_Cell::init_after_vc();
-               	pot.init_pot(stress_step, pw.strucFac);
-
-               	++stress_step;
-               	return 0;
-           	}
-		}
-        else
-        {
-            return 1;
-        }
-	}
-
-    if(FORCE&&STRESS)
-    {
-
-//#ifdef __MPI
-        atom_arrange::delete_vector( SEARCH_RADIUS );
-//#endif
-        
-        //if(CALCULATION=="relax") IMM.cal_movement(istep, FL.fcs, en.etot);
-        if(CALCULATION=="relax" || CALCULATION=="cell-relax")
-        {
-            IMM.cal_movement(istep, force_step, fcs, en.etot);
-
-            if(IMM.get_converged())
-            {
-                force_step = 1;
-
-
-			    if(CALCULATION=="cell-relax")
-			    {
-            	    LCM.cal_lattice_change(stress_step, scs, en.etot);
-            	    converged_stress = LCM.get_converged();
-            	    if(converged_stress)
-            	    {
-                	    return 1;
-            	    }
-            	    else
-            	    {
-                	    Variable_Cell::init_after_vc();
-                	    pot.init_pot(stress_step, pw.strucFac);
-
-                	    ++stress_step;
-                	    return 0;
-                    }
-                }
-                else
-                {
-                    return 1;
-                }
-
-#ifdef __MPI
-            //atom_arrange::delete_vector( SEARCH_RADIUS );
-#endif
-            }
-            else
-            {
-#ifdef __MPI
-            //atom_arrange::delete_vector( SEARCH_RADIUS );
-#endif
-                //CE.istep = istep;
-                CE.update_istep(force_step);
-                CE.extrapolate_charge();
-
-                if(pot.extra_pot=="dm")//xiaohui modify 2015-02-01
-                {
-                    // done after grid technique.
-                }
-                else
-                {
-                    pot.init_pot( istep, pw.strucFac );
-                }
-                ++force_step;
-                return 0;
-            }
-        }
-        else
-        {
-            return 1;
-        }
-    }
-
-    return 0;
-
-    timer::tick("Run_MD","force_stress",'D');
 }
 
 void Run_MD::final_scf(void)
@@ -448,23 +242,19 @@ void Run_MD::final_scf(void)
         vdwd2.cal_energy();
         en.evdw = vdwd2.get_energy();
     }
-	else if(vdwd3_para.flag_vdwd3)							//jiyy add 2019-05-18, update 2021-05-02
+	else if(vdwd3.vdwD3)							//jiyy add 2019-05-18
     {
-        Vdwd3 vdwd3(ucell,vdwd3_para);
-        vdwd3.cal_energy();
-        en.evdw = vdwd3.get_energy();
+        vdwd3.energy();
+        en.evdw = vdwd3.energy_result;
     }											  
     
 	ELEC_scf es;
 	es.scf(0);
 
-    if(CALCULATION=="scf" || CALCULATION=="relax")
-    {
-        ofs_running << "\n\n --------------------------------------------" << endl;
-        ofs_running << setprecision(16);
-        ofs_running << " !FINAL_ETOT_IS " << en.etot * Ry_to_eV << " eV" << endl; 
-        ofs_running << " --------------------------------------------\n\n" << endl;
-    }
+    ofs_running << "\n\n --------------------------------------------" << endl;
+    ofs_running << setprecision(16);
+    ofs_running << " !FINAL_ETOT_IS " << en.etot * Ry_to_eV << " eV" << endl; 
+    ofs_running << " --------------------------------------------\n\n" << endl;
 
     return;
 }
