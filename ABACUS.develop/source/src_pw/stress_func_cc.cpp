@@ -34,8 +34,10 @@ void Stress_Func::stress_cc(matrix& sigma, const bool is_pw)
 	}
 
 	//recalculate the exchange-correlation potential
-    matrix vxc(NSPIN, pw.nrxx);
-    H_XC_pw::v_xc(pw.nrxx, pw.ncxyz, ucell.omega, CHR.rho, CHR.rho_core, vxc);
+    const auto etxc_vtxc_v = H_XC_pw::v_xc(pw.nrxx, pw.ncxyz, ucell.omega, CHR.rho, CHR.rho_core);
+	H_XC_pw::etxc    = std::get<0>(etxc_vtxc_v);			// may delete?
+	H_XC_pw::vtxc    = std::get<1>(etxc_vtxc_v);			// may delete?
+	const matrix vxc = std::get<2>(etxc_vtxc_v);
 
 	complex<double> * psic = new complex<double> [pw.nrxx];
 

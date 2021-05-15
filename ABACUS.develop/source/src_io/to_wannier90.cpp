@@ -1,7 +1,9 @@
 #include "to_wannier90.h"
 #include "../src_lcao/global_fp.h" // mohan add 2021-01-30, this module should be modified
 #include "../src_global/math_integral.h" 
-
+#include "../src_global/math_sphbes.h"
+#include "../src_global/math_polyint.h" 
+#include "../src_global/math_ylmreal.h" 
 
 toWannier90::toWannier90(int num_kpts, Matrix3 recip_lattice)
 {
@@ -775,7 +777,7 @@ void toWannier90::produce_trial_in_pw(const int &ik, ComplexMatrix &trial_orbita
 		gk[ig] = wf.get_1qvec_cartesian(ik, ig);  // k+G矢量
 	}
 	
-	Mathzone::Ylm_Real(total_lm, npw, gk, ylm);
+	YlmReal::Ylm_Real(total_lm, npw, gk, ylm);
 	
 	// test by jingan
 	//ofs_running << "the mathzone::ylm_real is successful!" << endl;
@@ -1352,7 +1354,7 @@ void toWannier90::get_trial_orbitals_lm_k(const int wannier_index, const int orb
 	// 从NQX个G点中插值法获得npw个G点的值
 	for(int ig = 0; ig < npw; ig++)
 	{
-		psik[ig] = Mathzone::Polynomial_Interpolation(psik_tem, NQX, DQ, gk[ig].norm() * ucell.tpiba);
+		psik[ig] = PolyInt::Polynomial_Interpolation(psik_tem, NQX, DQ, gk[ig].norm() * ucell.tpiba);
 	}
 	
 	
@@ -1438,7 +1440,7 @@ void toWannier90::integral(const int meshr, const double *psir, const double *r,
 	for (int iq=0; iq<NQX; iq++)
 	{
 		const double q = DQ * iq;
-		Mathzone::Spherical_Bessel(meshr, r, q, l, aux);
+		Sphbes::Spherical_Bessel(meshr, r, q, l, aux);
 		for (int ir = 0;ir < meshr;ir++)
 		{
 			vchi[ir] = psir[ir] * aux[ir] * r[ir];

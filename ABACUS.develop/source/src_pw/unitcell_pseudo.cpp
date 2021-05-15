@@ -3,7 +3,7 @@
 // DATE : 2008-11-10
 //==========================================================
 #include "unitcell_pseudo.h"
-#include "../src_lcao/ORB_read.h" // to use 'ORB' -- mohan 2021-01-30
+#include "../module_ORB/ORB_read.h" // to use 'ORB' -- mohan 2021-01-30
 #include "global.h"
 #include <cstring>		// Peize Lin fix bug about strcmp 2016-08-02
 
@@ -114,7 +114,7 @@ void UnitCell_pseudo::setup_cell(
 	this->bcast_unitcell_pseudo();
 
 	// mohan add 2010-09-29
-	ORB.bcast_files(ucell.ntype);
+	ORB.bcast_files(ucell.ntype, MY_RANK);
 #endif
 	
 	//========================================================

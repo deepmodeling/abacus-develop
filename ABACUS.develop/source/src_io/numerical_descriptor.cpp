@@ -2,6 +2,7 @@
 #include "../src_pw/global.h"
 #include "../src_pw/symmetry.h"
 #include "winput.h"
+#include "../src_global/math_ylmreal.h"
 
 Numerical_Descriptor::Numerical_Descriptor() 
 {
@@ -249,7 +250,7 @@ void Numerical_Descriptor::jlq3d_overlap(
         gk[ig] = wf.get_1qvec_cartesian(ik, ig);
     }
 
-    Mathzone::Ylm_Real(total_lm, np, gk, ylm);
+    YlmReal::Ylm_Real(total_lm, np, gk, ylm);
 
     ofs_running << "\n " << setw(5) << "ik"
     << setw(8) << "Type1"

@@ -6,7 +6,7 @@
 #define GRID_BASE_H
 
 #include "../src_pw/tools.h"
-#include "ORB_atomic_lm.h"
+#include "../module_ORB/ORB_atomic_lm.h"
 
 class Grid_Base
 {

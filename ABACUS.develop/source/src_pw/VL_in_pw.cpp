@@ -77,7 +77,9 @@ void pseudopot_cell_vl::allocate(void)
 	ZEROS(numeric, ucell.ntype);
 
 	for (int it = 0; it < ucell.ntype; it++)
-	{ this->numeric[it] = true; }
+	{ 
+		this->numeric[it] = true; 
+	}
 
 	// mohan change global variable 'npsx' to local variable,
 	// npsx( max number of different PPs)
@@ -120,7 +122,7 @@ void pseudopot_cell_vl::vloc_of_g(
 	//    The local pseudopotential of the US case is always in
 	//    numerical form, expressed in Ry units.
 	// ----------------------------------------------------------------
-	int igl0;// start from |G|=0 or not.
+	int igl0=0;// start from |G|=0 or not.
 	int ig=0;// counters on g-vectors;
 	int ir=0;// counter on mesh points
 

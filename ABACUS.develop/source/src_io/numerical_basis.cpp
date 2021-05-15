@@ -2,6 +2,7 @@
 #include "../src_pw/global.h"
 #include "../src_pw/symmetry.h"
 #include "winput.h"
+#include "../src_global/math_ylmreal.h"
 
 bool Numerical_Basis::init_label = false;
 Bessel_Basis Numerical_Basis::bessel_basis;
@@ -400,7 +401,7 @@ void Numerical_Basis::Sq_overlap(
         gk[ig] = wf.get_1qvec_cartesian(ik, ig);
     }
 
-    Mathzone::Ylm_Real(total_lm, np, gk, ylm);
+    YlmReal::Ylm_Real(total_lm, np, gk, ylm);
 
     const int enumber = Numerical_Basis::bessel_basis.get_ecut_number();
 
@@ -532,7 +533,7 @@ void Numerical_Basis::jlq3d_overlap(
         gk[ig] = wf.get_1qvec_cartesian(ik, ig);
     }
 
-    Mathzone::Ylm_Real(total_lm, np, gk, ylm);
+    YlmReal::Ylm_Real(total_lm, np, gk, ylm);
 
     ofs_running << "\n " << setw(5) << "ik"
     << setw(8) << "Type1"
@@ -650,7 +651,7 @@ void Numerical_Basis::numerical_atomic_wfc(
         gk[ig] = wf.get_1qvec_cartesian(ik, ig);
     }
 
-    Mathzone::Ylm_Real(total_lm, np, gk, ylm);
+    YlmReal::Ylm_Real(total_lm, np, gk, ylm);
 
     int index = 0;
     double *flq = new double[np];

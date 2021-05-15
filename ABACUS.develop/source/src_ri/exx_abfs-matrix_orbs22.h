@@ -5,8 +5,8 @@
 using std::map;
 
 #include "exx_abfs.h"
-#include "src_lcao/ORB_table_phi.h"
-#include "src_lcao/ORB_gaunt_table.h"
+#include "module_ORB/ORB_table_phi.h"
+#include "module_ORB/ORB_gaunt_table.h"
 #include "src_lcao/center2_orb-orb22.h"
 
 class LCAO_Orbitals;

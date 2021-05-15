@@ -17,13 +17,11 @@ class H_Hartree_pw
     static double hartree_energy;
 
 	// compute the Hartree energy
-    static void v_hartree(
+    static matrix v_hartree(
 		const UnitCell &cell, 
 		PW_Basis &pwb, 
-		const Use_FFT &ufft,
-		const int &nspin, 
-		matrix &v, 
-		double** rho);
+		const int &nspin,
+		const double*const*const rho);
 
 	private:
 

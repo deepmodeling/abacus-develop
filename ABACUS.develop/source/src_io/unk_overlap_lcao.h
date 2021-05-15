@@ -12,10 +12,10 @@ using std::set;
 #include "src_lcao/center2_orb-orb11.h"
 #include "src_lcao/center2_orb-orb21.h"
 
-#include "src_lcao/ORB_table_phi.h"
-#include "src_lcao/ORB_gaunt_table.h"
-#include "src_lcao/ORB_atomic_lm.h"
-#include "src_lcao/ORB_read.h"
+#include "module_ORB/ORB_table_phi.h"
+#include "module_ORB/ORB_gaunt_table.h"
+#include "module_ORB/ORB_atomic_lm.h"
+#include "module_ORB/ORB_read.h"
 #include "src_global/vector3.h"
 #include "src_global/ylm.h"
 

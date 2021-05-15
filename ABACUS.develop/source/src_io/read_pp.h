@@ -101,7 +101,8 @@ private:
 	//string get_string( char ss[]);
 	//int get_int( char ss[]);
 	//double get_double( char ss[]);
-	void get_char( string ss);
+	//void get_char( string ss);
+	void getnameval(ifstream&, int&, string * , string *);
 };
 
 #endif //pseudopot_upf class

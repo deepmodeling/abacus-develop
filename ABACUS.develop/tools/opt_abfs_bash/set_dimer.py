@@ -163,7 +163,9 @@ def cal_dis_weight(dis_opt,dis_all):
 	return dis_weight
 	
 def cal():
-	dis = read_stru.cut_dis(read_stru.cal_dis(read_stru.change_R(read_stru.get_R())))
+	R = read_stru.change_R(read_stru.get_R())
+	R_supercell = read_stru.supercell_R(R)
+	dis = read_stru.cut_dis(read_stru.cal_dis(R,R_supercell))
 	dis_decimal = read_stru.round_dis(dis,1E-6)
 	pprint.pprint(dis_decimal)
 	dis_opt = get_dis_opt(dis_decimal)

@@ -1,7 +1,7 @@
 #include "src_pw/tools.h"
 #include "gint_k.h"
 #include "LCAO_nnr.h"
-#include "ORB_read.h"
+#include "../module_ORB/ORB_read.h"
 #include "grid_technique.h"
 #include "src_global/ylm.h"
 #include "src_pw/global.h"
@@ -28,7 +28,7 @@ inline void setVindex(const int ncyz, const int ibx, const int jby, const int kb
 }
 
 
-inline void cal_psir_ylm(int size, int grid_index, double delta_r, double* ylma,
+inline void cal_psir_ylm(int size, int grid_index, double delta_r,
 						int* at, int* uc, int* block_index, int* block_iw, int* block_size, 
 						bool** cal_flag, double** psir_ylm)
 {
@@ -84,6 +84,7 @@ inline void cal_psir_ylm(int size, int grid_index, double delta_r, double* ylma,
 
 			cal_flag[ib][id]=true;
 			
+			std::vector<double> ylma;
 			//if(distance[id] > GridT.orbital_rmax) continue;
 			//	Ylm::get_ylm_real(this->nnn[it], this->dr[id], ylma);
 			if (distance < 1.0E-9) distance += 1.0E-9;
@@ -381,7 +382,6 @@ void Gint_k::calculate_charge(void)
 	int *at;
 	int *uc;
 	int *block_index;
-	double* ylma;
 	int* vindex;	
 	bool** cal_flag;
 	//int** AllOffset;
@@ -406,8 +406,6 @@ void Gint_k::calculate_charge(void)
 		{
 			nn = max(nn,(ucell.atoms[it].nwl+1)*(ucell.atoms[it].nwl+1));
 		}
-		ylma = new double[nn];
-		ZEROS(ylma, nn);
 
 		vindex = new int[pw.bxyz];
 		ZEROS(vindex, pw.bxyz);
@@ -442,7 +440,7 @@ void Gint_k::calculate_charge(void)
 				if(size==0) continue;
 				setVindex(ncyz, ibx, jby, kbz, vindex);
 				//timer::tick("Gint_k","cal_psir_ylm",'G');
-				cal_psir_ylm(size, grid_index, delta_r, ylma,
+				cal_psir_ylm(size, grid_index, delta_r,
 						at, uc, block_index, block_iw, block_size, 
 						cal_flag, psir_ylm);
 				//timer::tick("Gint_k","cal_psir_ylm",'G');
@@ -468,7 +466,6 @@ void Gint_k::calculate_charge(void)
 		delete[] block_index;
         delete[] cal_flag;
 
-		delete[] ylma;
 		delete[] vindex;
     }	
 

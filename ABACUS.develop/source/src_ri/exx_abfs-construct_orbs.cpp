@@ -1,7 +1,7 @@
 #include "exx_abfs-construct_orbs.h"
 #include "exx_abfs-pca.h"
 
-#include "src_lcao/ORB_read.h"
+#include "module_ORB/ORB_read.h"
 #include "src_global/gram_schmidt_orth.h"
 #include "src_global/gram_schmidt_orth-inl.h"
 
@@ -40,7 +40,7 @@ vector<vector<vector<Numerical_Orbital_Lm>>> Exx_Abfs::Construct_Orbs::change_or
 //					orb_origin.getDk() / kmesh_times,
 					orb_origin.getDruniform(),
 					false,
-					true);
+					true, FORCE);
 			}
 		}
 	}
@@ -431,7 +431,7 @@ vector<vector<vector<Numerical_Orbital_Lm>>> Exx_Abfs::Construct_Orbs::orbital(
 //					orb_info.getDk() / kmesh_times,
 					orb_info.getDruniform(),
 					false,
-					true);
+					true, FORCE);
 			}
 		}
 	}	

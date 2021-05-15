@@ -215,7 +215,7 @@ void Stochastic_Elec::scf_stochastic(const int &istep)
         if (!conv_elec)
         {
 			// not converged yet, calculate new potential from mixed charge density
-            pot.v_of_rho(CHR.rho, pot.vr);
+            pot.vr = pot.v_of_rho(CHR.rho, CHR.rho_core);
 
 			// because <T+V(ionic)> = <eband+deband> are calculated after sum
 			// band, using output charge density.
@@ -235,7 +235,7 @@ void Stochastic_Elec::scf_stochastic(const int &istep)
 			}
 
 			// the new potential V(PL)+V(H)+V(xc)
-            pot.v_of_rho(CHR.rho, pot.vr);
+            pot.vr = pot.v_of_rho(CHR.rho, CHR.rho_core);
 
             //( vnew used later for scf correction to the forces )
 	    	pot.vnew = pot.vr - pot.vnew;

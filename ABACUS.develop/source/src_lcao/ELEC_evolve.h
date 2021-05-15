@@ -24,7 +24,9 @@ class ELEC_evolve
 	private:
 
 	static void evolve_psi(const int &istep, LCAO_Hamilt &uhm, complex<double>*** wfc);
-
+	void evolve_complex_matrix(const int &ik, complex<double> **c, complex<double> **c_init)const;
+	void using_LAPACK_complex(const int &ik, complex<double> **c, complex<double> **c_init)const;
+	void using_LAPACK_complex_2(const int &ik, complex<double>** c, complex<double>** c_init)const;
 
 };
 

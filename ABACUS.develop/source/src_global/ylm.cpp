@@ -1,8 +1,12 @@
+#include <cassert>
+#include <iomanip>
 #include "ylm.h"
+#include "constants.h"
+#include "timer.h"
 
 using namespace std;
 int Ylm::nlm = 0;
-vector<double> Ylm::ylmcoef(100);
+std::vector<double> Ylm::ylmcoef(100);
 
 // here Lmax == max angular momentum + 1
 void Ylm::get_ylm_real( const int &Lmax, const Vector3<double> &vec, double ylmr[] )
@@ -482,9 +486,11 @@ void Ylm::sph_harm
  	const double& xdr,
 	const double& ydr,
 	const double& zdr,
-	double rly[]
+	std::vector<double> &rly
 )
 {
+	rly.resize( (Lmax+1)*(Lmax+1) );
+
 	//begin calculation
 	/***************************
 			 L = 0
@@ -619,7 +625,7 @@ void Ylm::rl_sph_harm
  	const double& x,
 	const double& y,
 	const double& z,
-	vector<double>& rly
+	std::vector<double>& rly
 )
 {
 	rly.resize( (Lmax+1)*(Lmax+1) );
@@ -758,12 +764,12 @@ void Ylm::grad_rl_sph_harm
  	const double& x,
 	const double& y,
 	const double& z,
-	vector<double>& rly,
-	vector<vector<double>>& grly
+	std::vector<double>& rly,
+	std::vector<std::vector<double>>& grly
 )
 {
 	rly.resize( (Lmax+1)*(Lmax+1) );
-	grly.resize( (Lmax+1)*(Lmax+1), vector<double>(3) );
+	grly.resize( (Lmax+1)*(Lmax+1), std::vector<double>(3) );
 
 	double radius2 = x*x+y*y+z*z;
 	double tx = 2.0*x;
@@ -1101,7 +1107,7 @@ void Ylm::test1 (void)
 	int nu = 100;
 	
 	// Peize Lin change rlya 2016-08-26
-	vector<double> rlya;
+	std::vector<double> rlya;
 	double rlyb[400];
 	ZEROS( rlyb, 400);
 	
@@ -1116,7 +1122,9 @@ void Ylm::test1 (void)
 		double diff = fabs(rlya[i]-rlyb[i]);
 		if (diff > 1e-8) 
 		{
-			WARNING_QUIT ("Ylm::test1","error is too large!");
+			cout << "Ylm::test1, error is too large!" << endl;
+			//WARNING_QUIT ("Ylm::test1","error is too large!");
+			exit(0);
 		}
 	}
 	return;
@@ -1130,10 +1138,10 @@ void Ylm::test2 (void)
 	
 	//int nu = 100;
 
-	vector<double> rlya;
+	std::vector<double> rlya;
 	double rlyb[400];
 	
-	vector<vector<double>> grlya;
+	std::vector<std::vector<double>> grlya;
 	double grlyb[400][3];
 	
 	Ylm::grad_rl_sph_harm (9, R.x, R.y, R.z, rlya, grlya);
@@ -1141,23 +1149,13 @@ void Ylm::test2 (void)
 	
 	for (int i = 0; i < 100; i++)
 	{
-//		cout << "\ni = " << i << " xa = " << grlya[i][0] << " xb = " << grlyb[i][0] << endl;
-		
-		/*
-		double diff = fabs(rlya[i]-rlyb[i]);
-		if (diff > 1e-8)
-		{
-			cout << "\nLarge Error in Rlya!" << endl;
-		}
-		*/
-		
-//		/*
 		double diffx = fabs(grlya[i][2]-grlyb[i][2]);
 		if (diffx > 1e-8)
 		{
-			WARNING_QUIT ("Ylm::test2","Large error in Direv X!");
+			cout << "Ylm::test2, Large error in Direv X!" << endl;
+			//WARNING_QUIT ("Ylm::test2","Large error in Direv X!");
+			exit(0);
 		}
-//		*/
 	}
 	return;
 }
@@ -1173,9 +1171,6 @@ void Ylm::rlylm
 	double grly[][3]
 )
 {
-//	TITLE("Ylm","rlylm");
-//	timer::tick("Ylm","rlylm");
-
 	int MaxL = Lmax - 1;
 	
 	assert(MaxL >= 0);
@@ -1513,7 +1508,6 @@ void Ylm::rlylm
 		}
 	}
 
-//	timer::tick("Ylm", "rlylm");
 	return;
 }
 
@@ -1599,14 +1593,7 @@ void Ylm::test(void)
 			ylm[i] *= pow(R.norm(), 7);
 		}
 		
-
-//		cout << i << " " << ylm[i] << setw(20) << rly[i] << setw(20) << ylm[i] - rly[i] << endl;
-	//	cout << i << " " << dylmdr[i][0] << setw(20) << dylmdr[i][1] << setw(20) << dylmdr[i][2] << endl;
 		cout << grly[i][0] << setw(20) << grly[i][1] << setw(20) << grly[i][2] << endl;
-//
-//		cout << i << " " << dylmdr[i][0] - grly[i][0] << setw(20) 
-///							<< dylmdr[i][1] - grly[i][1] << setw(20) 
-//								<< dylmdr[i][2] - grly[i][2] << endl;
 	}
 
 	return;
@@ -1634,10 +1621,6 @@ long double Ylm::Fact(const int n)
 	for(int i=n; i>1; i--)
 	{
 		f *= i;
-//		if(n>16)
-//		{
-//			cout<<"\n n="<<n<<" "<<f;
-//		}
 	}
 	return f;
 }

@@ -2,7 +2,7 @@
 #define HAMILT_H
 
 #include "tools.h"
-#include "../src_lcao/ORB_control.h"
+#include "../module_ORB/ORB_control.h"
 #include "hamilt_pw.h"
 
 class Hamilt

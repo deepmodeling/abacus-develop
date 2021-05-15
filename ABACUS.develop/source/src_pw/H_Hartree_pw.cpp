@@ -5,41 +5,29 @@ double H_Hartree_pw::hartree_energy=0.0;
 //--------------------------------------------------------------------
 // Transform charge density to hartree potential.
 //--------------------------------------------------------------------
-void H_Hartree_pw::v_hartree(
+matrix H_Hartree_pw::v_hartree(
 	const UnitCell &cell, 
 	PW_Basis &pwb, 
-	const Use_FFT &ufft,
-	const int &nspin, 
-	matrix &v, 
-	double** rho)
+	const int &nspin,
+	const double*const*const rho)
 {
     TITLE("H_Hartree_pw","v_hartree");
     timer::tick("H_Hartree_pw","v_hartree");
 
-    complex<double> *Porter = ufft.porter;
-
     //  Hartree potential VH(r) from n(r)
-    ZEROS( Porter, pwb.nrxx );
-    int nspin0 = 1;
-    if(nspin==2) nspin0 = nspin;
+    vector<complex<double>> Porter(pwb.nrxx);
+    const int nspin0 = (nspin==2) ? 2 : 1;
     for(int is=0; is<nspin0; is++)
-    {
         for (int ir=0; ir<pwb.nrxx; ir++) 
-        {
             Porter[ir] += complex<double>( rho[is][ir], 0.0 );
-        }
-    }
-
     //=============================
     //  bring rho (aux) to G space
     //=============================
-    pwb.FFT_chg.FFT3D(Porter, -1);
+    pwb.FFT_chg.FFT3D(Porter.data(), -1);
 
     //double charge;
     //if (pwb.gstart == 1)
-    //{
     //    charge = cell.omega * Porter[pwb.ig2fftc[0]].real();
-    //}
     //OUT(ofs_running, "v_h charge", charge);
 
     //=======================================================
@@ -48,9 +36,7 @@ void H_Hartree_pw::v_hartree(
 
 	double ehart = 0.0;
 
-    complex<double> *vh_g  = new complex<double>[pwb.ngmc];
-    ZEROS(vh_g, pwb.ngmc);
-
+    vector<complex<double>> vh_g(pwb.ngmc);
     for (int ig = pwb.gstart; ig<pwb.ngmc; ig++)
     {
         const int j = pwb.ig2fftc[ig];
@@ -65,52 +51,37 @@ void H_Hartree_pw::v_hartree(
 
     Parallel_Reduce::reduce_double_pool( ehart );
     ehart *= 0.5 * cell.omega;
-
     //cout << " ehart=" << ehart << endl;
-
     H_Hartree_pw::hartree_energy = ehart;
 
-
-
-    ZEROS(Porter, pwb.nrxx);
-
+    std::fill( Porter.begin(), Porter.end(), complex<double>(0.0,0.0) );
     for (int ig = 0;ig < pwb.ngmc;ig++)
-    {
         Porter[pwb.ig2fftc[ig]] = vh_g[ig];
-    }
-
     //==========================================
     //transform hartree potential to real space
     //==========================================
-    pwb.FFT_chg.FFT3D(Porter, 1);
+    pwb.FFT_chg.FFT3D(Porter.data(), 1);
+
     //==========================================
     //Add hartree potential to the xc potential
     //==========================================
-
-	if(nspin==4)
-	{
-		for (int ir = 0;ir < pwb.nrxx;ir++)
-		{
-			v(0, ir) += Porter[ir].real();
-		}
-	}
-	else
-	{
-		for (int is = 0;is < nspin;is++)
-		{
-			for (int ir = 0;ir < pwb.nrxx;ir++)
-			{
-				v(is, ir) += Porter[ir].real();
-			}
-		}
-	}
-
+    matrix v(nspin, pwb.nrxx);
+    if(nspin==4)
+    {
+        for (int ir = 0;ir < pwb.nrxx;ir++)
+            v(0, ir) = Porter[ir].real();
+    }
+    else
+    {
+        for (int is = 0;is < nspin;is++)
+            for (int ir = 0;ir < pwb.nrxx;ir++)
+                v(is, ir) = Porter[ir].real();
+    }
 
 //-----------------------------------------------------------
 // we need to add this out_potential funciton back 
 // in near future, 2021-02-25
 //-----------------------------------------------------------
-
 	//-------------------------------------------
 	// output the Hartree potential into a file.
 	//-------------------------------------------
@@ -135,8 +106,5 @@ void H_Hartree_pw::v_hartree(
 */
 
     timer::tick("H_Hartree_pw","v_hartree");
-
-    delete[] vh_g;
-
-    return;
+    return v;
 } // end subroutine v_h

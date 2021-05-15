@@ -101,7 +101,7 @@ void cal_r_overlap_R::init()
 	ORB.Phi[T].PhiLN(0,0).getDk(),
 	ORB.Phi[T].PhiLN(0,0).getDruniform(),
 	false,
-	true);
+	true, FORCE);
 
 /*
 	orbital_phi.resize(ucell.ntype);

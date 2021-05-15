@@ -1,7 +1,7 @@
 #include "src_pw/tools.h"
 #include "gint_k.h"
 #include "LCAO_nnr.h"
-#include "ORB_read.h"
+#include "../module_ORB/ORB_read.h"
 #include "grid_technique.h"
 #include "src_global/ylm.h"
 #include "src_pw/global.h"
@@ -128,7 +128,7 @@ inline int find_offset(const int size, const int grid_index,
 }
 
 inline void cal_psir_ylm(int size, int grid_index, double delta_r,
-						double** distance, double* ylma,
+						double** distance,
 						int* at, int* block_index, int* block_iw, int* block_size, 
 						bool** cal_flag, double** psir_ylm)
 {
@@ -182,6 +182,7 @@ inline void cal_psir_ylm(int size, int grid_index, double delta_r,
 
 			cal_flag[ib][id]=true;
 			
+			std::vector<double> ylma;
 			//if(distance[id] > GridT.orbital_rmax) continue;
 			//	Ylm::get_ylm_real(this->nnn[it], this->dr[id], ylma);
 			if (distance[ib][id] < 1.0E-9) distance[ib][id] += 1.0E-9;
@@ -368,7 +369,6 @@ void Gint_k::cal_vlocal_k(const double *vrs1, const Grid_Technique &GridT, const
 	int *block_size = nullptr; //band size: number of columns of a band
 	int *at = nullptr;
 	int *block_index = nullptr;
-	double* ylma = nullptr;
 	if(max_size!=0)
 	{
 		// save the small box information for a big box.
@@ -392,10 +392,6 @@ void Gint_k::cal_vlocal_k(const double *vrs1, const Grid_Technique &GridT, const
 		{
 			nn = std::max(nn, (ucell.atoms[it].nwl+1)*(ucell.atoms[it].nwl+1));
 		}
-
-		// ylma 
-		ylma = new double[nn];
-		ZEROS(ylma, nn);
 
 		for(int i=0; i<bxyz; i++)
 		{
@@ -437,7 +433,7 @@ void Gint_k::cal_vlocal_k(const double *vrs1, const Grid_Technique &GridT, const
 				// get the wave functions in this
 				// grid.
 				//--------------------------------- 
-				cal_psir_ylm(size, grid_index, delta_r, distance, ylma,
+				cal_psir_ylm(size, grid_index, delta_r, distance,
 						at, block_index, block_iw, block_size, 
 						cal_flag, psir_ylm);
 
@@ -493,7 +489,6 @@ void Gint_k::cal_vlocal_k(const double *vrs1, const Grid_Technique &GridT, const
 		delete[] block_iw;
 		delete[] block_size;
 		delete[] block_index;
-		delete[] ylma;
 	}	
 
 	timer::tick("Gint_k","vlocal", 'K');

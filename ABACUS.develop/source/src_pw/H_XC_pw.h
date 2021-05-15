@@ -25,13 +25,13 @@ class H_XC_pw
 	static double vtxc;
 
 	// compute the exchange-correlation energy 
-    static void v_xc(
+	// [etxc, vtxc, v] = v_xc(...)
+    static std::tuple<double,double,matrix> v_xc(
 		const int &nrxx, // number of real-space grid
 		const int &ncxyz, // total number of charge grid
 		const double &omega, // volume of cell
-		double** rho_in, 
-		double *rho_core, // core charge density
-		matrix &v);
+		const double*const*const rho_in, 
+		const double*const rho_core); // core charge density
 
 };
 

@@ -7,6 +7,7 @@
 
 #include "src_global/constants.h"
 #include "src_global/ylm.h"
+#include "src_global/math_polyint.h"
 
 #include <cmath>
 
@@ -131,7 +132,7 @@ double Center2_Orb::Orb11::cal_overlap(
 
 			const double Interp_Tlm = 
 				(distance > tiny2) ?
-				Mathzone::Polynomial_Interpolation(
+				PolyInt::Polynomial_Interpolation(
 					VECTOR_TO_PTR(tb_r.second),
 					MOT.get_rmesh(RcutA, RcutB),
 					MOT.dr,

@@ -1,0 +1,54 @@
+This is the ORB module, which is used to compute
+the "Two Center Integrals (TCI)" of Numerical Atomic Orbitals (NAO).
+
+Explain TCI:
+TCI is defined as <phi_i | phi_j> or <dphi_i/dR | phi_j>, where
+i and j are indexes of numerical atomic orbitalas.
+Furthermore, the module is expected to compute formulas such as 
+<phi_i | r | phi_j>
+
+Explain NAO:
+Numerical atomic orbitals can be divided into different categories,
+including 
+1) numerical atomic orbitals for expanding wave functions of systems,
+which are named 'phi'
+2) non-local projectors, which are named 'beta'
+3) descriptors for generating labels of electronic structure information,
+which are named 'descriptors'
+
+Let me briefly describe the files contained in this 'ORB' module.
+--------------------------------------------------------------------
+ABACUS-ORB.x: the .exe file of the module
+main.cpp: main program file
+ORB_atomic.cpp: information for all of the atomic orbitals
+ORB_atomic.h
+ORB_atomic_lm.cpp: store each atomic orbitals
+ORB_atomic_lm.h
+ORB_control.cpp: control panel to read-in orbitals and generate tables 
+ORB_control.h
+ORB_gaunt_table.cpp: compute Gaunt tables
+ORB_gaunt_table.h
+ORB_gen_tables.cpp: interfaces to give TCIs for given atomic types and distances 
+ORB_gen_tables.h
+ORB_nonlocal.cpp: information for all of the non-local projectors
+ORB_nonlocal.h
+ORB_nonlocal_lm.cpp: store each non-local projector
+ORB_nonlocal_lm.h
+ORB_read.cpp: read-in basis sets/non-local projectors/descriptors
+ORB_read.h
+ORB_table_alpha.cpp: generate Tables for descriptors
+ORB_table_alpha.h
+ORB_table_beta.cpp: generate Tables for non-local projectors
+ORB_table_beta.h
+ORB_table_phi.cpp: generate Tables for basis sets
+ORB_table_phi.h
+--------------------------------------------------------------------
+
+There are some other files in the 'OBJS_BASE' group (mainly math functions), 
+which we will give detaied explanations in near future.
+
+You may see codes with __NORMAL defined. Those codes compiled with __NORMAL
+are used in this ORB module, while those codes compiled without __NORMAL are
+used in the ABACUS code. We will keep on optimizing those codes in near fugure.
+
+-- Mohan Chen 2021-05-21 mohanchen@pku.edu.cn

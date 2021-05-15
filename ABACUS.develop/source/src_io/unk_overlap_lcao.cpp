@@ -91,7 +91,7 @@ void unkOverlap_lcao::init()
 	ORB.Phi[T].PhiLN(0,0).getDk(),
 	ORB.Phi[T].PhiLN(0,0).getDruniform(),
 	false,
-	true);
+	true, FORCE);
 	
 	// 数组初始化
 	allocate_flag = true;

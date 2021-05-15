@@ -5,7 +5,7 @@
 #define LCAO_gen_fixedH_H
 
 #include "../src_pw/tools.h"
-#include "ORB_gen_tables.h"
+#include "../module_ORB/ORB_gen_tables.h"
 #include "../src_global/sltk_grid_driver.h"
 
 class LCAO_gen_fixedH

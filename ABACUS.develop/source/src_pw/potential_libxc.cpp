@@ -13,18 +13,17 @@
 #include "src_global/global_function.h"
 #include "src_pw/xc_gga_pw.h"
 
-void Potential_Libxc::v_xc(
-	const double * const * const rho_in, // CHR.rho_core may be needed in future
-    double &etxc,
-    double &vtxc,
-    matrix &v)
+// [etxc, vtxc, v] = Potential_Libxc::v_xc(...)
+std::tuple<double,double,matrix> Potential_Libxc::v_xc(
+	const double * const * const rho_in,
+	const double * const rho_core_in)
 {
     TITLE("Potential_Libxc","v_xc");
     timer::tick("Potential_Libxc","v_xc");
 
-    etxc = 0.0;
-    vtxc = 0.0;
-	v.zero_out();
+    double etxc = 0.0;
+    double vtxc = 0.0;
+	matrix v(NSPIN,pw.nrxx);
 
 	//----------------------------------------------------------
 	// xc_func_type is defined in Libxc package
@@ -32,38 +31,51 @@ void Potential_Libxc::v_xc(
 	// use can check on website, for example:
 	// https://www.tddft.org/programs/libxc/manual/libxc-5.1.x/
 	//----------------------------------------------------------
-	vector<xc_func_type> funcs = init_func();
+	std::vector<xc_func_type> funcs = init_func();
 
-	// the type of input_tmp is automatically set to 'tuple'
+	// the type of rho_sigma_gdr is automatically set to 'tuple'
 	// [rho, sigma, gdr] = cal_input( funcs, rho_in );
-	const auto input_tmp = cal_input( funcs, rho_in );
-
-	// obtain the electron charge density rho from 'get' function (first variable)
-	const vector<double> &rho = std::get<0>(input_tmp);
-
-	// obtain the sigma from 'get' function (second variable)
-	const vector<double> &sigma = std::get<1>(input_tmp);
+	const auto rho_sigma_gdr = cal_input( funcs, rho_in, rho_core_in );
+	const std::vector<double> &rho = std::get<0>(rho_sigma_gdr);
+	const std::vector<double> &sigma = std::get<1>(rho_sigma_gdr);
 
 	for( xc_func_type &func : funcs )
 	{
-		vector<double> exc   ( pw.nrxx                       );
-		vector<double> vrho  ( pw.nrxx * nspin0()            );
-		vector<double> vsigma( pw.nrxx * ((1==nspin0())?1:3) );
-		
-		// cal etxc from rho, exc
-		auto process_exc = [&](vector<double> &sgn)
+		// jiyy add for threshold
+		constexpr double rho_threshold = 1E-6;
+		constexpr double grho_threshold = 1E-10;
+		xc_func_set_dens_threshold(&func, rho_threshold);
+		// sgn for threshold mask
+		const std::vector<double> sgn = [&]() -> std::vector<double>
 		{
-			for( size_t is=0; is!=nspin0(); ++is )
+			std::vector<double> sgn( pw.nrxx * nspin0(), 1.0);
+			if(nspin0()==2 && func.info->family != XC_FAMILY_LDA && func.info->kind==XC_CORRELATION)
 			{
 				for( size_t ir=0; ir!=pw.nrxx; ++ir )
 				{
-					etxc += e2 * exc[ir] * rho[ir*nspin0()+is] * sgn[ir*nspin0()+is];
+					if ( rho[ir*2]<rho_threshold || sqrt(abs(sigma[ir*3]))<grho_threshold ) 
+						sgn[ir*2] = 0.0;
+					if ( rho[ir*2+1]<rho_threshold || sqrt(abs(sigma[ir*3+2]))<grho_threshold ) 
+						sgn[ir*2+1] = 0.0;
 				}
 			}
+			return sgn;
+		}();
+
+		std::vector<double> exc   ( pw.nrxx                       );
+		std::vector<double> vrho  ( pw.nrxx * nspin0()            );
+		std::vector<double> vsigma( pw.nrxx * ((1==nspin0())?1:3) );
+		
+		// cal etxc from rho, exc
+		auto process_exc = [&]()
+		{
+			for( size_t is=0; is!=nspin0(); ++is )
+				for( size_t ir=0; ir!=pw.nrxx; ++ir )
+					etxc += e2 * exc[ir] * rho[ir*nspin0()+is] * sgn[ir*nspin0()+is];
 		};
 
 		// cal vtx, v from rho_in, vrho
-		auto process_vrho = [&](vector<double> &sgn)
+		auto process_vrho = [&]()
 		{
 			if(nspin0()==1 || NSPIN==2)
 			{
@@ -82,7 +94,7 @@ void Potential_Libxc::v_xc(
 				constexpr double vanishing_charge = 1.0e-12;
 				for( size_t ir=0; ir!=pw.nrxx; ++ir )
 				{
-					vector<double> v_tmp(4);
+					std::vector<double> v_tmp(4);
 					v_tmp[0] = e2 * (0.5 * (vrho[ir*2] + vrho[ir*2+1]));
 					const double vs = 0.5 * (vrho[ir*2] - vrho[ir*2+1]);
 					const double amag = sqrt( pow(rho_in[1][ir],2) 
@@ -107,11 +119,11 @@ void Potential_Libxc::v_xc(
 		};
 
 		// cal vtxc, v from rho_in, rho, gdr, vsigma
-		auto process_vsigma = [&](vector<double> &sgn)
+		auto process_vsigma = [&]()
 		{
-			const std::vector<std::vector<Vector3<double>>> &gdr = std::get<2>(input_tmp);
+			const std::vector<std::vector<Vector3<double>>> &gdr = std::get<2>(rho_sigma_gdr);
 			
-			vector<vector<Vector3<double>>> h( nspin0(), vector<Vector3<double>>(pw.nrxx) );
+			std::vector<std::vector<Vector3<double>>> h( nspin0(), std::vector<Vector3<double>>(pw.nrxx) );
 			if( 1==nspin0() )
 			{
 				for( size_t ir=0; ir!=pw.nrxx; ++ir )
@@ -123,38 +135,27 @@ void Potential_Libxc::v_xc(
 			{
 				for( size_t ir=0; ir!=pw.nrxx; ++ir )
 				{
-					h[0][ir] = e2 * (gdr[0][ir] * vsigma[ir*3  ] * 2.0 
-						* sgn[ir*2  ] + gdr[1][ir] * vsigma[ir*3+1] * sgn[ir*2] * sgn[ir*2+1]);
-					h[1][ir] = e2 * (gdr[1][ir] * vsigma[ir*3+2] * 2.0 
-						* sgn[ir*2+1] + gdr[0][ir] * vsigma[ir*3+1] * sgn[ir*2] * sgn[ir*2+1]);
+					h[0][ir] = e2 * (gdr[0][ir] * vsigma[ir*3  ] * 2.0 * sgn[ir*2  ]
+						           + gdr[1][ir] * vsigma[ir*3+1]       * sgn[ir*2]   * sgn[ir*2+1]);
+					h[1][ir] = e2 * (gdr[1][ir] * vsigma[ir*3+2] * 2.0 * sgn[ir*2+1]
+					               + gdr[0][ir] * vsigma[ir*3+1]       * sgn[ir*2]   * sgn[ir*2+1]);
 				}
 			}
 
 			// define two dimensional array dh [ nspin, pw.nrxx ]
-			vector<vector<double>> dh(nspin0(), vector<double>(pw.nrxx));
+			std::vector<std::vector<double>> dh(nspin0(), std::vector<double>(pw.nrxx));
 			for( size_t is=0; is!=nspin0(); ++is )
-			{
 				GGA_PW::grad_dot( VECTOR_TO_PTR(h[is]), VECTOR_TO_PTR(dh[is]) );
-			}
-
 
 			for( size_t is=0; is!=nspin0(); ++is )
-			{
 				for( size_t ir=0; ir!=pw.nrxx; ++ir )
-				{
 					vtxc -= dh[is][ir] * rho[ir*nspin0()+is];
-				}
-			}
 
 			if(nspin0()==1 || NSPIN==2)
 			{
 				for( size_t is=0; is!=nspin0(); ++is )
-				{
 					for( size_t ir=0; ir!=pw.nrxx; ++ir )
-					{
 						v(is,ir) -= dh[is][ir];
-					}
-				}
 			}
 			else // may need updates for SOC
 			{
@@ -163,40 +164,17 @@ void Potential_Libxc::v_xc(
 				{
 					v(0,ir) -= 0.5 * (dh[0][ir] + dh[1][ir]);
 					const double amag = sqrt( pow(rho_in[1][ir],2) + pow(rho_in[2][ir],2) + pow(rho_in[3][ir],2) );
-					const double neg = (soc.lsign && rho_in[1][ir]*soc.ux[0]
-						+rho_in[2][ir]*soc.ux[1]+rho_in[3][ir]*soc.ux[2]<=0) ? -1 : 1;
+					const double neg = (soc.lsign
+					                 && rho_in[1][ir]*soc.ux[0]+rho_in[2][ir]*soc.ux[1]+rho_in[3][ir]*soc.ux[2]<=0)
+									 ? -1 : 1;
 					if(amag > vanishing_charge)
 					{
 						for(int i=1;i<4;i++)
-						{
 							v(i,ir) -= neg * 0.5 * (dh[0][ir]-dh[1][ir]) * rho_in[i][ir] / amag;
-						}
 					}
 				}
 			}
 		};
-		
-		// jiyy add for threshold
-		constexpr double rho_threshold = 1E-6;
-		constexpr double grho_threshold = 1E-10;
-		xc_func_set_dens_threshold(&func, rho_threshold);
-
-		// LPZ: Explain what is sgn
-		vector<double> sgn( pw.nrxx * nspin0(), 1.0);
-		if(nspin0()==2 && func.info->family != XC_FAMILY_LDA && func.info->kind==XC_CORRELATION)
-		{
-			for( size_t ir=0; ir!=pw.nrxx; ++ir )
-			{
-				if ( rho[ir*2]<rho_threshold || sqrt(abs(sigma[ir*3]))<grho_threshold ) 
-				{
-					sgn[ir*2] = 0.0;
-				}
-				if ( rho[ir*2+1]<rho_threshold || sqrt(abs(sigma[ir*3+2]))<grho_threshold ) 
-				{
-					sgn[ir*2+1] = 0.0;
-				}
-			}
-		}
 
 		//------------------------------------------------------------------
 		// "func.info->family" includes LDA, GGA, Hybrid functional (HYB).
@@ -205,20 +183,19 @@ void Potential_Libxc::v_xc(
 		{
 			case XC_FAMILY_LDA:
 				// call Libxc function: xc_lda_exc_vxc
-				xc_lda_exc_vxc( &func, pw.nrxx, 
-					VECTOR_TO_PTR(rho), VECTOR_TO_PTR(exc), VECTOR_TO_PTR(vrho) );
-				process_exc(sgn);
-				process_vrho(sgn);
+				xc_lda_exc_vxc( &func, pw.nrxx, rho.data(),
+					exc.data(), vrho.data() );
+				process_exc();
+				process_vrho();
 				break;
 			case XC_FAMILY_GGA:
 			case XC_FAMILY_HYB_GGA:
 				// call Libxc function: xc_gga_exc_vxc
-				xc_gga_exc_vxc( &func, pw.nrxx, 
-					VECTOR_TO_PTR(rho), VECTOR_TO_PTR(sigma), VECTOR_TO_PTR(exc), 
-					VECTOR_TO_PTR(vrho), VECTOR_TO_PTR(vsigma) );
-				process_exc(sgn);
-				process_vrho(sgn);
-				process_vsigma(sgn);
+				xc_gga_exc_vxc( &func, pw.nrxx, rho.data(), sigma.data(),
+					exc.data(), vrho.data(), vsigma.data() );
+				process_exc();
+				process_vrho();
+				process_vsigma();
 				break;
 			default:
 				throw domain_error("func.info->family ="+TO_STRING(func.info->family)
@@ -228,7 +205,6 @@ void Potential_Libxc::v_xc(
 		// Libxc function: Deallocate memory
 		xc_func_end(&func);
 	}
-
 
 	//-------------------------------------------------
 	// for MPI, reduce the exchange-correlation energy
@@ -240,7 +216,7 @@ void Potential_Libxc::v_xc(
     vtxc *= ucell.omega / pw.ncxyz;
 
     timer::tick("Potential_Libxc","v_xc");
-    return;
+	return std::make_tuple( etxc, vtxc, std::move(v) );
 }
 
 
@@ -306,8 +282,8 @@ std::vector<xc_func_type> Potential_Libxc::init_func()
 	}
 	else
 	{
-		throw domain_error("iexch="+TO_STRING(xcf.iexch_now)+", igcx="
-			+TO_STRING(xcf.igcx_now)+" unfinished in "+TO_STRING(__FILE__)+" line "+TO_STRING(__LINE__));
+		throw domain_error("iexch="+TO_STRING(xcf.iexch_now)+", igcx="+TO_STRING(xcf.igcx_now)
+			+" unfinished in "+TO_STRING(__FILE__)+" line "+TO_STRING(__LINE__));
 	}
 
 	//--------------------------------------
@@ -323,8 +299,8 @@ std::vector<xc_func_type> Potential_Libxc::init_func()
 	}
 	else
 	{
-		throw domain_error("icorr="+TO_STRING(xcf.icorr_now)+", igcc="
-			+TO_STRING(xcf.igcc_now)+" unfinished in "+TO_STRING(__FILE__)+" line "+TO_STRING(__LINE__));
+		throw domain_error("icorr="+TO_STRING(xcf.icorr_now)+", igcc="+TO_STRING(xcf.igcc_now)
+			+" unfinished in "+TO_STRING(__FILE__)+" line "+TO_STRING(__LINE__));
 	}
 
 	return funcs;
@@ -332,19 +308,20 @@ std::vector<xc_func_type> Potential_Libxc::init_func()
 
 
 
-// [rho, sigma, gdr] = cal_input( funcs, rho_in )
+// [rho, sigma, gdr] = Potential_Libxc::cal_input(...)
 std::tuple< std::vector<double>, 
 			std::vector<double>, 
 			std::vector<std::vector<Vector3<double>>> > 
 Potential_Libxc::cal_input( 
 	const std::vector<xc_func_type> &funcs, 
-	const double * const * const rho_in )
+	const double * const * const rho_in,
+	const double * const rho_core_in )
 {
 	// ..., ↑_{i},↓_{i}, ↑_{i+1},↓_{i+1}, ...
 	std::vector<double> rho;
 	bool finished_rho   = false;
 
-	// here we assume CHR.rho_core equally exists in different spins, may need double check
+	// here we assume rho_core equally exists in different spins, may need double check
 	auto cal_rho = [&]()
 	{
 		if(!finished_rho)
@@ -353,12 +330,8 @@ Potential_Libxc::cal_input(
 			if(nspin0()==1 || NSPIN==2)
 			{
 				for( size_t is=0; is!=nspin0(); ++is )
-				{
 					for( size_t ir=0; ir!=pw.nrxx; ++ir )
-					{
-						rho[ir*nspin0()+is] = rho_in[is][ir] + 1.0/nspin0()*CHR.rho_core[ir];
-					}
-				}
+						rho[ir*nspin0()+is] = rho_in[is][ir] + 1.0/nspin0()*rho_core_in[ir];
 			}
 			else // may need updates for SOC
 			{
@@ -370,10 +343,11 @@ Potential_Libxc::cal_input(
 				{
 					const double amag = sqrt( pow(rho_in[1][ir],2) + pow(rho_in[2][ir],2) + pow(rho_in[3][ir],2) );
 					const double neg = (soc.lsign && rho_in[1][ir]*soc.ux[0]
-						+rho_in[2][ir]*soc.ux[1]
-						+rho_in[3][ir]*soc.ux[2]<=0) ? -1 : 1;
-					rho[ir*2]   = 0.5 * (rho_in[0][ir] + neg * amag) + 0.5 * CHR.rho_core[ir];
-					rho[ir*2+1] = 0.5 * (rho_in[0][ir] - neg * amag) + 0.5 * CHR.rho_core[ir];
+					                    +rho_in[2][ir]*soc.ux[1]
+					                    +rho_in[3][ir]*soc.ux[2]<=0)
+					                   ? -1 : 1;
+					rho[ir*2]   = 0.5 * (rho_in[0][ir] + neg * amag) + 0.5 * rho_core_in[ir];
+					rho[ir*2+1] = 0.5 * (rho_in[0][ir] - neg * amag) + 0.5 * rho_core_in[ir];
 				}
 			}
 		}
@@ -390,22 +364,15 @@ Potential_Libxc::cal_input(
 			gdr.resize( nspin0() );
 			for( size_t is=0; is!=nspin0(); ++is )
 			{
-				vector<double> rhor(pw.nrxx);
+				std::vector<double> rhor(pw.nrxx);
 				for(int ir=0; ir<pw.nrxx; ++ir)
-				{
 					rhor[ir] = rho[ir*nspin0()+is];
-				}
 
 				//------------------------------------------
-				// initialize the charge density arry in 
-				// reciprocal space
+				// initialize the charge density arry in reciprocal space
+				// bring electron charge density from real space to reciprocal space
 				//------------------------------------------
-				vector<complex<double>> rhog(pw.ngmc);
-
-				//-------------------------------------------
-				// bring electron charge density from real
-				// space to reciprocal space
-				//-------------------------------------------
+				std::vector<std::complex<double>> rhog(pw.ngmc);
 				CHR.set_rhog(rhor.data(), rhog.data());
 
 				//-------------------------------------------
@@ -462,14 +429,13 @@ Potential_Libxc::cal_input(
 				cal_sigma();
 				break;
 			default:
-				throw domain_error("func.info->family ="
-				+TO_STRING(func.info->family)+" unfinished in "
-				+TO_STRING(__FILE__)+" line "+TO_STRING(__LINE__));
+				throw domain_error("func.info->family ="+TO_STRING(func.info->family)
+					+" unfinished in "+TO_STRING(__FILE__)+" line "+TO_STRING(__LINE__));
 				break;
 		}
 	}
 	
-	return std::make_tuple( rho, sigma, gdr );
+	return std::make_tuple( std::move(rho), std::move(sigma), std::move(gdr) );
 }
 
 #endif	//ifdef USE_LIBXC

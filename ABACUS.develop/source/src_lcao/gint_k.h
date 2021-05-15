@@ -2,7 +2,7 @@
 #define GINT_K_H
 
 #include "gint_k_init.h"
-#include "ORB_atomic_lm.h"
+#include "module_ORB/ORB_atomic_lm.h"
 #include "grid_technique.h"
 //#include "LCAO_matrix.h"
 
@@ -85,7 +85,7 @@ class Gint_k : public Gint_k_init
 	// set the orbital/Ylm information on each real space grid.
 	void set_ijk_atom(const int &grid_index, const int &size,
 		double*** psir_ylm, double*** dr, bool** cal_flag, 
-		double** distance, double* ylma, const double &delta_r);
+		double** distance, const double &delta_r);
 
 	//------------------------------------------------------
 	// in gint_k_vl.cpp 

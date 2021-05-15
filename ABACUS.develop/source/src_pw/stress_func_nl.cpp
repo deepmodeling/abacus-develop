@@ -1,4 +1,6 @@
-#include"stress_func.h"
+#include "stress_func.h"
+#include "../src_global/math_polyint.h"
+#include "../src_global/math_ylmreal.h"
 
 //calculate the nonlocal pseudopotential stress in PW
 void Stress_Func::stress_nl(matrix& sigma){
@@ -265,7 +267,7 @@ void Stress_Func::get_dvnl1
 				//cout << "\n gk[ig] = " << gk[ig].x << " " << gk[ig].y << " " << gk[ig].z;
 				//cout << "\n gk.norm = " << gnorm;
 
-				vq [ig] = Mathzone::Polynomial_Interpolation(
+				vq [ig] = PolyInt::Polynomial_Interpolation(
 						ppcell.tab, it, nb, NQX, DQ, gnorm );
 
 			} // enddo
@@ -334,7 +336,7 @@ void Stress_Func::get_dvnl2(ComplexMatrix &vkb,
 	{
 		gk[ig] = wf.get_1qvec_cartesian(ik, ig);
 	}
-	Mathzone::Ylm_Real(x1, npw, gk, ylm);
+	YlmReal::Ylm_Real(x1, npw, gk, ylm);
 
 	int jkb = 0;
 	for(int it = 0;it < ucell.ntype;it++)
@@ -492,7 +494,8 @@ void Stress_Func::dylmr2 (
 	//$OMP END PARALLEL DO
 
 	//$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(ig)
-	for( ig = 0;ig< ngy;ig++){
+	for( ig = 0;ig< ngy;ig++)
+	{
 		if(ipol==0)
 			gx [ig].x = gk[ ig].x + dg [ig];
 		else if(ipol==1)
@@ -502,9 +505,10 @@ void Stress_Func::dylmr2 (
 	}
 	//$OMP END PARALLEL DO
 
-	Mathzone::Ylm_Real(nylm, ngy, gx, dylm);
+	YlmReal::Ylm_Real(nylm, ngy, gx, dylm);
 	//$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(ig)
-	for(ig = 0;ig< ngy;ig++){
+	for(ig = 0;ig< ngy;ig++)
+	{
 		if(ipol==0)
 			gx [ig].x = gk [ ig].x - dg [ig];
 		else if(ipol==1)
@@ -514,23 +518,27 @@ void Stress_Func::dylmr2 (
 	}
 	//$OMP END PARALLEL DO
 
-	Mathzone::Ylm_Real(nylm, ngy, gx, ylmaux);
+	YlmReal::Ylm_Real(nylm, ngy, gx, ylmaux);
 
 
 	//  zaxpy ( - 1.0, ylmaux, 1, dylm, 1);
-	for( lm = 0;lm< nylm;lm++){
-		for(ig = 0;ig< ngy;ig++){
+	for( lm = 0;lm< nylm;lm++)
+	{
+		for(ig = 0;ig< ngy;ig++)
+		{
 			dylm (lm,ig) = dylm(lm,ig) - ylmaux(lm,ig);
 		}
 	}
 
 
-	for( lm = 0;lm< nylm;lm++){
-	//$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(ig)
-	for(ig = 0;ig< ngy;ig++){
-		dylm (lm,ig) = dylm(lm,ig) * 0.5 * dgi [ig];
-	}
-	//$OMP END PARALLEL DO
+	for( lm = 0;lm< nylm;lm++)
+	{
+		//$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(ig)
+		for(ig = 0;ig< ngy;ig++)
+		{
+			dylm (lm,ig) = dylm(lm,ig) * 0.5 * dgi [ig];
+		}
+		//$OMP END PARALLEL DO
 	}
 	delete[] gx;
 	delete[] dg;

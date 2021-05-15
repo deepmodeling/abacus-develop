@@ -3,7 +3,7 @@
 
 #include "tools.h"
 #include "VL_in_pw.h"
-#include "../src_lcao/ORB_gen_tables.h"
+#include "../module_ORB/ORB_gen_tables.h"
 #include "wavefunc_in_pw.h"
 #include "unitcell_pseudo.h"
 

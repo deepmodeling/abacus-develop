@@ -41,7 +41,9 @@ class Potential
 		ComplexMatrix &sf // structure factors
 	);
 
-    void v_of_rho(double** rho_in, matrix &v);
+    matrix v_of_rho(
+		const double*const*const rho_in,
+		const double * const rho_core_in);
 
     void set_vr_eff(void);
 

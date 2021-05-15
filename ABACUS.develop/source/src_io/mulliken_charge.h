@@ -2,7 +2,7 @@
 #define MULLIKEN_CHARGE_H
 
 #include "src_pw/tools.h"
-#include "src_lcao/ORB_gen_tables.h"
+#include "module_ORB/ORB_gen_tables.h"
 #include "src_global/sltk_grid_driver.h"
 #include "src_lcao/LCAO_matrix.h"
 #include "src_lcao/global_fp.h"

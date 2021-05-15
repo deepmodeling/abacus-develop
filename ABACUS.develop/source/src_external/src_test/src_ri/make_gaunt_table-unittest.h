@@ -6,7 +6,7 @@
 #ifndef MAKE_GAUNT_TABLE_UNITTEST_H
 #define MAKE_GAUNT_TABLE_UNITTEST_H
 
-#include "src_lcao/ORB_gaunt_table.h"
+#include "module_ORB/ORB_gaunt_table.h"
 
 static void cout_MGT ( const ORB_gaunt_table & MGT, const int Lmax )
 {

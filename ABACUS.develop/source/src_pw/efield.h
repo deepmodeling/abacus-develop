@@ -10,7 +10,7 @@ class Efield
 	Efield();
 	~Efield();
 
-	void add_efield(double* rho, double* v_in);
+	void add_efield(const double*const rho, double* v_in);
     
 	// efield.
     static int edir;         // direction of the field
@@ -26,7 +26,7 @@ class Efield
 	private:
 
 	void compute_el_dip(const double& emaxpos, const double &eopreg, 
-		const int &edir, const double* rho, double& e_dipole)const;
+		const int &edir, const double*const rho, double& e_dipole)const;
 
 	void compute_ion_dip(const double& emaxpos, const double& eoperg, const int &edir, 
 		double& ion_dipole, const double& bmod, const double* bg)const;

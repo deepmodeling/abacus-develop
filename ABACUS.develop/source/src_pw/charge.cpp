@@ -22,6 +22,7 @@
 #include "magnetism.h"
 #include "../src_parallel/parallel_grid.h"
 #include "../src_global/math_integral.h"
+#include "../src_global/math_sphbes.h"
 #include <vector>
 
 Charge::Charge()
@@ -647,7 +648,7 @@ void Charge::non_linear_core_correction
         for (int igl = igl0; igl < pw.nggm;igl++) 
         {
             gx = sqrt(pw.ggs [igl] * ucell.tpiba2);
-            Mathzone::Spherical_Bessel(mesh, r, gx, 0, aux);
+            Sphbes::Spherical_Bessel(mesh, r, gx, 0, aux);
             for (int ir = 0;ir < mesh; ir++) 
             {
                 aux [ir] = r[ir] * r[ir] * rhoc [ir] * aux [ir];

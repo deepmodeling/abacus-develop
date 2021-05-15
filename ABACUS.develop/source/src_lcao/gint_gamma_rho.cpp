@@ -1,6 +1,6 @@
 #include "gint_gamma.h"
 #include "grid_technique.h"
-#include "ORB_read.h"
+#include "../module_ORB/ORB_read.h"
 #include "../src_pw/global.h"
 #include "src_global/blas_connector.h"
 #include <mkl_service.h>
@@ -31,8 +31,7 @@ void Gint_Gamma::cal_psir_ylm_rho(
 	int size, // number of atoms on this grid 
 	int grid_index,  
 	double delta_r, // delta_r of uniform grid
-	double** distance, 
-	double* ylma, 
+	double** distance,
 	int* at, 
 	int* block_index, 
 	int* block_iw, 
@@ -90,6 +89,7 @@ void Gint_Gamma::cal_psir_ylm_rho(
 
 			cal_flag[ib][id]=1;
 			
+			std::vector<double> ylma;
 			//if(distance[id] > GridT.orbital_rmax) continue;
 			//	Ylm::get_ylm_real(this->nnn[it], this->dr[id], ylma);
 			if (distance[ib][id] < 1.0E-9) distance[ib][id] += 1.0E-9;
@@ -363,10 +363,7 @@ double Gint_Gamma::gamma_charge(void)					// Peize Lin update OpenMP 2020.09.28
 			}
 
 			int *block_iw=new int[max_size]; // index of wave functions of each block;
-		
-			double* ylma = new double[nnnmax]; // Ylm for each atom: [bxyz, nnnmax]
-			ZEROS(ylma, nnnmax);
-		
+				
 			double v1 = 0.0;
 			int* vindex=new int[pw.bxyz];
 			ZEROS(vindex, pw.bxyz);
@@ -399,7 +396,7 @@ double Gint_Gamma::gamma_charge(void)					// Peize Lin update OpenMP 2020.09.28
 						if(size==0) continue;
 						this->setVindex(ncyz, ibx, jby, kbz, vindex);
 						
-						this->cal_psir_ylm_rho(size, grid_index_thread, delta_r, distance, ylma,
+						this->cal_psir_ylm_rho(size, grid_index_thread, delta_r, distance,
 								at, block_index, block_iw, block_size, 
 								cal_flag, psir_ylm);
 						
@@ -411,7 +408,6 @@ double Gint_Gamma::gamma_charge(void)					// Peize Lin update OpenMP 2020.09.28
 			}// i
 			
 			delete[] vindex;
-			delete[] ylma;
 			
 			delete[] block_iw;
 			//OUT(ofs_running, "block_iw deleted");

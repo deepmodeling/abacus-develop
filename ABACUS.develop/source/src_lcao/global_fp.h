@@ -9,8 +9,8 @@
 #include "src_lcao/LCAO_matrix.h"
 #include "src_lcao/LCAO_gen_fixedH.h"
 #include "src_lcao/LCAO_hamilt.h" 
-#include "src_lcao/ORB_read.h"
-#include "src_lcao/ORB_gen_tables.h"
+#include "../module_ORB/ORB_read.h"
+#include "../module_ORB/ORB_gen_tables.h"
 #include "src_parallel/subgrid_oper.h"
 #include "src_ri/exx_lcao.h"
 

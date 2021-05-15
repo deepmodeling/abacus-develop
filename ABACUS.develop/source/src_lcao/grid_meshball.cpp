@@ -38,13 +38,15 @@ void Grid_MeshBall::init_meshball(void)
 
 	// select a ball in a cubic.
 	double pos[3];
-	double r2;
+	double r2=0.0;
 	const double rcut2 = this->meshball_radius * this->meshball_radius;
 	
-	// calculate twice, the first time find the mesh points number,
+	//-------------------------------------------------------------------
+	// calculate twice, the first time find the number of mesh points,
 	// then allocate array and save each bigcell's cartesian coordinate.
 	// plus one because we need to cover atom spillage.
 	// meshball_ncells: How many cells in mesh ball.
+	//-------------------------------------------------------------------
 	this->meshball_ncells = 0;
 	for(int i=-dxe; i<dxe+1; i++) // mohan fix bug 2009-10-21, range should be [-dxe,dxe]
 	{

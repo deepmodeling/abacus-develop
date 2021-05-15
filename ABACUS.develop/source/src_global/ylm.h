@@ -1,7 +1,7 @@
 #ifndef YLM_H
 #define YLM_H
 
-#include "../src_pw/tools.h"
+#include "vector3.h"
 #include <vector>
 
 class Ylm
@@ -48,7 +48,7 @@ class Ylm
 			const double& xdr,
 			const double& ydr,
 			const double& zdr,
-			double rly[]);
+			std::vector<double> &rly);
 	
 	// (6) used in getting overlap.
 		// Peize Lin change rly 2016-08-26
@@ -57,7 +57,7 @@ class Ylm
 			const double& x,
 			const double& y,
 			const double& z,
-			vector<double>& rly);
+			std::vector<double>& rly);
 	
 	// (6) used in getting derivative of overlap.
 		// Peize Lin change rly, grly 2016-08-26
@@ -66,8 +66,8 @@ class Ylm
 			const double& x,
 			const double& y,
 			const double& z,
-			vector<double>& rly,
-			vector<vector<double>>& grly);
+			std::vector<double>& rly,
+			std::vector<std::vector<double>>& grly);
 			
 	static void set_coefficients ();
 	static std::vector<double> ylmcoef;

@@ -120,5 +120,6 @@ void Conv_Coulomb_Pot::cal_orbs_ccp<Numerical_Orbital_Lm>(
 //		orbs.getDk() / kmesh_times,
 		orbs.getDruniform(),
 		false,
-		true);
+		true,
+		FORCE); // mohan add 2021-05-07
 }

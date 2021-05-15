@@ -2,8 +2,11 @@
 #include "VNL_in_pw.h"
 #include "tools.h"
 #include "wavefunc.h"
-#include "../src_lcao/ORB_gen_tables.h"
+#include "../module_ORB/ORB_gen_tables.h"
 #include "../src_global/math_integral.h"
+#include "../src_global/math_sphbes.h"
+#include "../src_global/math_polyint.h"
+#include "../src_global/math_ylmreal.h"
 
 pseudopot_cell_vnl::pseudopot_cell_vnl()
 {
@@ -156,7 +159,7 @@ void pseudopot_cell_vnl::getvnl(const int &ik)
 		gk[ig] = wf.get_1qvec_cartesian(ik, ig);
 	}
 
-	Mathzone::Ylm_Real(x1, npw, gk, ylm);
+	YlmReal::Ylm_Real(x1, npw, gk, ylm);
 
 	int jkb = 0;
 	for(int it = 0;it < ucell.ntype;it++)
@@ -174,7 +177,7 @@ void pseudopot_cell_vnl::getvnl(const int &ik)
 			{
 				const double gnorm = gk[ig].norm() * ucell.tpiba;
 
-				vq [ig] = Mathzone::Polynomial_Interpolation(
+				vq [ig] = PolyInt::Polynomial_Interpolation(
 						this->tab, it, nb, NQX, DQ, gnorm );
 			}
 
@@ -371,7 +374,7 @@ void pseudopot_cell_vnl::init_vnl(UnitCell_pseudo &cell)
 			for (int iq=0; iq<NQX; iq++)  
 			{
 				const double q = iq * DQ;
-				Mathzone::Spherical_Bessel(kkbeta, cell.atoms[it].r, q, l, jl);
+				Sphbes::Spherical_Bessel(kkbeta, cell.atoms[it].r, q, l, jl);
 
 				for (int ir = 0;ir < kkbeta;ir++)
 				{
@@ -469,7 +472,7 @@ void pseudopot_cell_vnl::getvnl_alpha(const int &ik)           // pengfei Li  20
 		}
 	}
 	
-	Mathzone::Ylm_Real(x1, npw, gk, ylm);
+	YlmReal::Ylm_Real(x1, npw, gk, ylm);
 
 	MGT.init_Gaunt_CH( lmaxkb + 2 );
 	MGT.init_Gaunt( lmaxkb + 2 );
@@ -501,7 +504,7 @@ void pseudopot_cell_vnl::getvnl_alpha(const int &ik)           // pengfei Li  20
 				for (ig = 0;ig < npw;ig++)
 				{
 					const double gnorm = gk[ig].norm() * ucell.tpiba;
-					vq [ig] = Mathzone::Polynomial_Interpolation(
+					vq [ig] = PolyInt::Polynomial_Interpolation(
 							this->tab_alpha, it, nb, L, NQX, DQ, gnorm);
 					
 					for (int M=0; M<2*L+1; M++)
@@ -597,7 +600,7 @@ void pseudopot_cell_vnl::init_vnl_alpha(void)          // pengfei Li 2018-3-23
 				for (int iq = 0; iq < NQX; iq++)
 				{
 					const double q = iq * DQ;
-					Mathzone::Spherical_Bessel(kkbeta, ucell.atoms[it].r, q, L, jl);
+					Sphbes::Spherical_Bessel(kkbeta, ucell.atoms[it].r, q, L, jl);
 					
 					for (int ir = 0;ir < kkbeta;ir++)
 					{

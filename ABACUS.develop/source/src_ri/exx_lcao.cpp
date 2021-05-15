@@ -242,7 +242,7 @@ void Exx_Lcao::init()
 				orb.getDk(),
 				orb.getDruniform(),
 				false,
-				true
+				true, FORCE
 			);
 			orb_psi_F.set_orbital_info
 			(
@@ -259,7 +259,7 @@ void Exx_Lcao::init()
 				orb.getDk(),
 				orb.getDruniform(),
 				false,
-				false
+				false, FORCE
 			);
 			orb_psif_T.set_orbital_info
 			(
@@ -276,7 +276,7 @@ void Exx_Lcao::init()
 				orb.getDk(),
 				orb.getDruniform(),
 				false,
-				true
+				true, FORCE
 			);
 			orb_psik_T.set_orbital_info
 			(
@@ -293,7 +293,7 @@ void Exx_Lcao::init()
 				orb.getDk(),
 				orb.getDruniform(),
 				false,
-				true
+				true, FORCE
 			);
 			orb_psik2_T.set_orbital_info
 			(
@@ -310,7 +310,7 @@ void Exx_Lcao::init()
 				orb.getDk(),
 				orb.getDruniform(),
 				false,
-				true
+				true, FORCE
 			);
 			pr_orb( file+"-orb",orb );
 			pr_orb( file+"-orb_psi_T",orb_psi_T );
@@ -338,7 +338,7 @@ void Exx_Lcao::init()
 				orb.getDk(),
 				orb.getDruniform(),
 				false,
-				true
+				true, FORCE
 			);
 			orb_kmesh.set_orbital_info
 			(
@@ -355,7 +355,7 @@ void Exx_Lcao::init()
 				orb_psi_T.getDk(),
 				orb_psi_T.getDruniform(),
 				false,
-				true
+				true, FORCE
 			);
 			pr_orb( file+"-orb",orb );
 			pr_orb( file+"-orb_kmesh",orb_kmesh );

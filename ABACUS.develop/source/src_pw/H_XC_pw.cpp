@@ -5,21 +5,22 @@
 double H_XC_pw::etxc;
 double H_XC_pw::vtxc;
 
-void H_XC_pw::v_xc
+// [etxc, vtxc, v] = H_XC_pw::v_xc(...)
+std::tuple<double,double,matrix> H_XC_pw::v_xc
 (
 	const int &nrxx, // number of real-space grid
 	const int &ncxyz, // total number of charge grid
 	const double &omega, // volume of cell
-    double **rho_in,
-	double *rho_core, // core charge density
-    matrix &v)
+    const double*const*const rho_in,
+	const double*const rho_core) // core charge density
 {
     TITLE("H_XC_pw","v_xc");
     timer::tick("H_XC_pw","v_xc");
 
     //Exchange-Correlation potential Vxc(r) from n(r)
-    etxc = 0.0;
-    vtxc = 0.0;
+    double et_xc = 0.0;
+    double vt_xc = 0.0;
+	matrix v(NSPIN, nrxx);
 
     // the square of the e charge
     // in Rydeberg unit, so * 2.0.
@@ -51,9 +52,9 @@ void H_XC_pw::v_xc
                 XC_Functional::xc(arhox, ex, ec, vx[0], vc[0]);
                 v(0,ir) = e2 * (vx[0] + vc[0]);
 				// consider the total charge density
-                etxc += e2 * (ex + ec) * rhox;
+                et_xc += e2 * (ex + ec) * rhox;
 				// only consider rho_in
-                vtxc += v(0, ir) * rho_in[0][ir];
+                vt_xc += v(0, ir) * rho_in[0][ir];
             } // endif
         } //enddo
     }
@@ -97,9 +98,9 @@ void H_XC_pw::v_xc
                     v(is, ir) = e2 * (vx[is] + vc[is]);
                 }
 
-                etxc += e2 * (ex + ec) * rhox;
+                et_xc += e2 * (ex + ec) * rhox;
 
-                vtxc += v(0, ir) * rho_in[0][ir] + v(1, ir) * rho_in[1][ir];
+                vt_xc += v(0, ir) * rho_in[0][ir] + v(1, ir) * rho_in[1][ir];
             }
         }
 
@@ -129,10 +130,10 @@ void H_XC_pw::v_xc
 
                 XC_Functional::xc_spin( arhox, zeta, ex, ec, vx[0], vx[1], vc[0], vc[1] );
 				
-                etxc += e2 * ( ex + ec ) * rhox;
+                et_xc += e2 * ( ex + ec ) * rhox;
 
                 v(0, ir) = e2*( 0.5 * ( vx[0] + vc[0] + vx[1] + vc[1] ) );
-                vtxc += v(0,ir) * rho_in[0][ir];
+                vt_xc += v(0,ir) * rho_in[0][ir];
 
                 double vs = 0.5 * ( vx[0] + vc[0] - vx[1] - vc[1] );
                 if ( amag > vanishing_charge )
@@ -140,7 +141,7 @@ void H_XC_pw::v_xc
                     for(int ipol = 1;ipol< 4;ipol++)
                     {
                         v(ipol, ir) = e2 * vs * rho_in[ipol][ir] / amag;
-                        vtxc += v(ipol,ir) * rho_in[ipol][ir];
+                        vt_xc += v(ipol,ir) * rho_in[ipol][ir];
                     }//end do
                 }//end if
             }//end if
@@ -150,16 +151,16 @@ void H_XC_pw::v_xc
 
     // add gradient corrections (if any)
     // mohan modify 2009-12-15
-    GGA_PW::gradcorr(etxc, vtxc, v);
+    GGA_PW::gradcorr(et_xc, vt_xc, v);
 
-    // parallel code : collect vtxc,etxc
+    // parallel code : collect vt_xc,et_xc
     // mohan add 2008-06-01
-    Parallel_Reduce::reduce_double_pool( etxc );
-    Parallel_Reduce::reduce_double_pool( vtxc );
+    Parallel_Reduce::reduce_double_pool( et_xc );
+    Parallel_Reduce::reduce_double_pool( vt_xc );
 
-    etxc *= omega / ncxyz;
-    vtxc *= omega / ncxyz;
+    et_xc *= omega / ncxyz;
+    vt_xc *= omega / ncxyz;
 
     timer::tick("H_XC_pw","v_xc");
-    return;
+    return std::make_tuple(et_xc, vt_xc, std::move(v));
 }

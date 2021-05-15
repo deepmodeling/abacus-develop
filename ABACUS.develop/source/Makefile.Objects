@@ -78,8 +78,11 @@ timer.o\
 memory.o\
 print_info.o\
 mathzone.o\
-mathzone_add1.o\
+math_sphbes.o\
+math_polyint.o\
 math_integral.o\
+math_ylmreal.o\
+mathzone_add1.o\
 integral.o \
 poission.o \
 polint.o \
@@ -88,6 +91,9 @@ sph_bessel_recursive-d1.o \
 sph_bessel_recursive-d2.o \
 global_variable.o \
 global_function.o \
+tool_title.o\
+tool_quit.o\
+tool_check.o\
 global_file.o \
 element_basis_index.o \
 restart.o \
@@ -107,6 +113,7 @@ grid_meshcell.o\
 grid_bigcell.o\
 grid_meshball.o\
 gint_gamma.o\
+gint_gamma_common.o\
 gint_gamma_fvl.o\
 gint_gamma_vl.o\
 gint_gamma_rho.o\

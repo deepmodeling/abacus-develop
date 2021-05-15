@@ -150,33 +150,37 @@ def get_R():
 
 def change_R(R):
 	lat0, lat_vec, position = get_lattice()
+	R_new = R.copy()
 	if position == "Direct":
-		for T in R:
-			R[T] = np.dot(R[T],lat_vec)
+		for T in R_new:
+			R_new[T] = np.dot(R_new[T],lat_vec)
 	elif position == "Cartesian_angstrom":
-		for T in R:
-			R[T] /= 0.529166
-	for T in R:
-		R[T] *= lat0
+		for T in R_new:
+			R_new[T] /= 0.529166
+	for T in R_new:
+		R_new[T] *= lat0
+	return R_new
 
+def supercell_R(R):
 	nx,ny,nz = get_k()
+	lat0, lat_vec, position = get_lattice()
 	lat_vec *= lat0
+	R_new = dict()
 	for T in R:
-		R_new = []
+		R_new_T = []
 		for ix in range(nx):
 			for iy in range(ny):
 				for iz in range(nz):
-					R_new.append( R[T] + np.dot(np.array([ix,iy,iz]), lat_vec) )
-		R[T] = np.concatenate(R_new)
-
-	return R
+					R_new_T.append( R[T] + np.dot(np.array([ix,iy,iz]), lat_vec) )
+		R_new[T] = np.concatenate(R_new_T)
+	return R_new
 
 # dis[T1,T2] = {..., i_dis:num, ...}
-def cal_dis(R):
+def cal_dis(R1,R2):
 	dis = dict()
-	for T1,T2 in itertools.combinations_with_replacement(R,2):
+	for T1,T2 in itertools.combinations_with_replacement(R1,2):
 		dis_TT = collections.defaultdict(int)
-		for ia1,ia2 in itertools.product(R[T1],R[T2]):
+		for ia1,ia2 in itertools.product(R1[T1],R2[T2]):
 			i_dis = np.linalg.norm(ia1-ia2)
 			dis_TT[i_dis] += 1
 		dis[T1,T2] = dict(dis_TT)
@@ -194,10 +198,11 @@ def round_dis(dis,precision):
 
 def cut_dis(dis):
 	Rcut = get_Rcut()
+	dis_cut = dict()
 	for T1,T2 in dis:
 		Rcut_sum = Rcut[T1]+Rcut[T2]
-		dis[T1,T2] = { i_dis:num for i_dis,num in dis[T1,T2].items() if i_dis<Rcut_sum }
-	return dis
+		dis_cut[T1,T2] = { i_dis:num for i_dis,num in dis[T1,T2].items() if i_dis<Rcut_sum }
+	return dis_cut
 	
 """
 def cal_cut_dis(R):

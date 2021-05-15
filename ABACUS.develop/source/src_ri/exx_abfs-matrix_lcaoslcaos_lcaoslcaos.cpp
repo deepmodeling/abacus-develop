@@ -1,6 +1,6 @@
 #include "exx_abfs-matrix_lcaoslcaos_lcaoslcaos.h"
 #include "src_pw/global.h"
-#include "src_lcao/ORB_read.h"
+#include "module_ORB/ORB_read.h"
 #include "src_global/ylm.h"
 #include "src_external/src_test/test_function.h"			// Peize Lin test 2016-04-05
 

@@ -48,7 +48,7 @@ class Gint_Gamma : public Grid_Base_Beta
 	double* ylm1;
 	double* ylm2;
 
-	int grid_index;
+	int grid_index;			// may delete?
 	int max_size;
 	
 	// these parameters are for interpolation.
@@ -85,23 +85,55 @@ class Gint_Gamma : public Grid_Base_Beta
 	void gamma_force(void);
 
 
-	void cal_meshball_vlocal(int size, int LD_pool, int* block_iw, int* bsize, int* colidx, 
-        int** cal_flag, double* vldr3, double** psir_ylm, double** psir_vlbr3, 
-        int* vindex, int lgd_now, double** GridVlocal);
+	void cal_meshball_vlocal(
+		const int size,
+		const int LD_pool,
+		const int*const block_iw,
+		const int*const bsize,
+		const int*const colidx,
+		const int*const*const cal_flag,
+		const double*const vldr3,
+		const double*const*const psir_ylm,
+		double*const*const psir_vlbr3,
+		const int lgd_now,
+		double*const*const GridVlocal);
 
-	void cal_band_rho(int size, int LD_pool, int* block_iw, int* bsize, int* colidx,
-                        int** cal_flag, double ** psir_ylm, double **psir_DM,
-                        double* psir_DM_pool, int* vindex);
+	void cal_band_rho(
+		int size, 
+		int LD_pool, 
+		int* block_iw, 
+		int* bsize, 
+		int* colidx,
+		int** cal_flag, 
+		double ** psir_ylm, 
+		double **psir_DM, 
+		double* psir_DM_pool, 
+		int* vindex);
 
 	void setVindex(const int ncyz, const int ibx, const int jby, const int kbz, int* vindex) const;
 
 	void cal_psir_ylm_rho(int size, int grid_index, double delta_r,
-        double** distance, double* ylma,
+        double** distance,
         int* at, int* block_index, int* block_iw, int* block_size, 
         int** cal_flag, double** psir_ylm);
-
-
-
+	
+	// extract the local potentials.
+	double* get_vldr3( const int ncyz, const int ibx, const int jby, const int kbz) const;
+	
+	// index of wave functions for each block
+	static int* get_block_iw(
+		const int na_grid,  		// how many atoms on this (i,j,k) grid
+		const int grid_index,		// 1d index of FFT index (i,j,k))
+		const int max_size);
+		
+	static int* get_colidx(
+		const int na_grid,  		// how many atoms on this (i,j,k) grid
+		const int grid_index);		// 1d index of FFT index (i,j,k)
+		
+	// band size: number of columns of a band
+	static int* get_bsize(
+		const int na_grid,			// how many atoms on this (i,j,k) grid
+		const int grid_index);		// 1d index of FFT index (i,j,k)
 };
 
 #endif

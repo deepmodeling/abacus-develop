@@ -7,11 +7,138 @@ Atom_pseudo::Atom_pseudo()
 	mbl = new Vector3<int>[1];
 	pseudo_fn = "not_init";
 	mass = 0.0;
+
+	for(int is=0;is<4;is++) this->index1_soc[is] = new int[1];
+	for(int is=0;is<4;is++) this->index2_soc[is] = new int[1];
+
 }
 
 Atom_pseudo::~Atom_pseudo()
 {
 	delete[] mbl;
+
+	for(int is=0;is<4;is++) delete[] this->index1_soc[is];
+	for(int is=0;is<4;is++) delete[] this->index2_soc[is];
+}
+
+// mohan add 2021-05-07
+void Atom_pseudo::set_d_so(
+	ComplexMatrix &d_so_in,
+	const int &nproj_in,
+	const int &nproj_in_so,
+	const bool has_so)
+{
+	if (this->lmax < -1 || this->lmax > 20)
+	{
+		 WARNING_QUIT("Numerical_Nonlocal", "bad input of lmax : should be between -1 and 20");
+	}
+
+	this->nproj = nproj_in;
+	this->nproj_soc=0;
+
+	if(has_so)
+	{
+		nproj_soc = nproj_in_so;
+	}
+
+	assert(nproj <= nproj_in+1); //LiuXh 2016-01-13, 2016-05-16
+	assert(nproj >= 0);
+
+//	cout << " has_so=" << has_so << endl;
+
+	//2016-07-19 begin, LiuXh
+	if(!has_so)
+	{
+		ZEROS(this->non_zero_count_soc, 4);
+	}
+	else //zhengdy-soc
+	{
+		this->d_so.create(NSPIN,  nproj_soc+1,  nproj_soc+1);
+
+		// optimize
+		for(int is=0;is<4;is++)
+		{
+			this->non_zero_count_soc[is] = 0;
+			delete[] this->index1_soc[is];
+			this->index1_soc[is] = new int[nproj_soc * nproj_soc];
+			delete[] this->index2_soc[is];
+			this->index2_soc[is] = new int[nproj_soc * nproj_soc];
+		}
+
+//		cout << "lmax=" << lmax << endl;
+
+		if(this->lmax > -1)
+		{
+			if(LSPINORB)
+			{
+				int is = 0;
+				for (int is1 = 0; is1 < 2; is1++)
+				{
+					for (int is2 = 0; is2 < 2; is2++)
+					{
+						for (int L1 = 0; L1 < nproj_soc; L1++)
+						{
+							for (int L2 = 0; L2 < nproj_soc; L2++)
+							{
+								this->d_so(is, L1, L2) =
+									d_so_in(L1 + nproj_soc*is1, L2 + nproj_soc*is2); 
+
+								if(fabs(this->d_so(is, L1, L2).real())>1.0e-8 ||
+										fabs(this->d_so(is, L1, L2).imag())>1.0e-8 )
+								{
+//									cout << "tt in atom is=" << is << " L1=" << L1 << " L2=" 
+//									<< L2 << " " << d_so(is, L1, L2) << endl;
+
+									this->index1_soc[is][non_zero_count_soc[is]] = L1;
+									this->index2_soc[is][non_zero_count_soc[is]] = L2;
+									this->non_zero_count_soc[is]++;
+								}
+							}
+						}
+						is++;
+					}
+				}
+			}
+			else
+			{
+				int is = 0;
+				for (int is1 = 0; is1 < 2; is1++)
+				{
+					for (int is2 = 0; is2 < 2; is2++)
+					{
+						if(is>=NSPIN) break;
+						for (int L1 = 0; L1 < nproj_soc; L1++)
+						{
+							for (int L2 = 0; L2 < nproj_soc; L2++)
+							{
+								if(is==1||is==2)
+								{
+									this->d_so(is, L1, L2) = complex<double>(0.0,0.0);
+								}
+								else
+								{
+									this->d_so(is, L1, L2)
+										= d_so_in(L1 + nproj_soc*is1, L2 + nproj_soc*is2);
+								}
+								if(abs(this->d_so(is, L1, L2).real())>1.0e-8
+										|| abs(this->d_so(is, L1, L2).imag())>1.0e-8)
+								{
+									this->index1_soc[is][non_zero_count_soc[is]] = L1;
+									this->index2_soc[is][non_zero_count_soc[is]] = L2;
+									this->non_zero_count_soc[is]++;
+								}
+							}
+						}
+						is++;
+					}
+				}
+
+			}
+		}
+	}
+	//2016-07-19 end, LiuXh
+	
+	return;
 }
 
 void Atom_pseudo::print_atom(ofstream &ofs)

@@ -12,7 +12,7 @@ using namespace std;
 
 class Mathzone
 {
-public:
+	public:
 
     Mathzone();
     ~Mathzone();
@@ -30,122 +30,9 @@ public:
     // during parallel calculation
     static void norm_pw(complex<double> *u, const int n);
 
-    //========================================================
-    // Polynomial_Interpolation
-    //========================================================
-    static void Polynomial_Interpolation
-    (
-        const realArray &table,
-        const int &dim1,
-        const int &dim2,
-        realArray &y,
-        const int &dim_y,
-        const int &table_length,
-        const double &table_interval,
-        const double &x
-    );
-    static double Polynomial_Interpolation
-    (
-        const realArray &table,
-        const int &dim1,
-        const int &dim2,
-        const int &table_length,
-        const double &table_interval,
-        const double &x				// input value
-    );
-	static double Polynomial_Interpolation             // pengfei Li 2018-3-23
-    (
-        const realArray &table,
-        const int &dim1,
-        const int &dim2,
-		const int &dim3,
-        const int &table_length,
-        const double &table_interval,
-        const double &x				// input value
-    );
-    static double Polynomial_Interpolation
-    (
-        const double *table,
-        const int &table_length,
-        const double &table_interval,
-        const double &x				// input value
-    );
-    static double Polynomial_Interpolation_xy
-    (
-        const double *xpoint,
-        const double *ypoint,
-        const int table_length,
-        const double &x             // input value
-    );
-
-    //========================================================
-    // Spherical Bessel
-    //========================================================
-    static void Spherical_Bessel
-    (
-        const int &msh,	//number of grid points
-        const double *r,//radial grid
-        const double &q,	//
-        const int &l,	//angular momentum
-        double *jl	//jl(1:msh) = j_l(q*r(i)),spherical bessel function
-    );
-
-	static void Spherical_Bessel
-	(           
-	    const int &msh, //number of grid points
-		const double *r,//radial grid
-		const double &q,    //
-		const int &l,   //angular momentum
-		double *sj,     //jl(1:msh) = j_l(q*r(i)),spherical bessel function
-		double *sjp
-	);
-
-	
-    static void Spherical_Bessel_Roots
-    (
-        const int &num,
-        const int &l,
-        const double &epsilon,
-        double* eigenvalue,
-        const double &rcut
-    );
-private:
-
-    static double Spherical_Bessel_7(const int n, const double &x);
-    static void BESSJY(double x, double xnu, double *rj, double *ry, double *rjp, double *ryp);	// Peize Lin change double to void 2019-05-01
-    static void BESCHB(double x, double *gam1, double *gam2, double *gampl, double *gammi);
-    static double CHEBEV(double a, double b, double c[], int m, double x);
-    static int IMAX(int a, int b);
-
 public:
 
-    static void Ylm_Real
-    (
-        const int lmax2, 			// lmax2 = (lmax+1)^2
-        const int ng,				//
-        const Vector3<double> *g, 	// g_cartesian_vec(x,y,z)
-        matrix &ylm 				// output
-    );
-	
-	static void Ylm_Real2
-	(
-    	const int lmax2, 			// lmax2 = (lmax+1)^2
-    	const int ng,				//
-    	const Vector3<double> *g, 	// g_cartesian_vec(x,y,z)
-    	matrix &ylm 				// output
-	);
 
-	static void rlylm
-	(
-    	const int lmax, 	
-    	const double& x,				
-    	const double& y,
-		const double& z, // g_cartesian_vec(x,y,z)
-    	double* rly 	 // output
-	);
-
-    static long double Fact(const int n);
-    static int Semi_Fact(const int n);
 
 	// Peize Lin add 2016-08-03
 	template< typename Type >

@@ -2,7 +2,7 @@
 #define GRID_BASE_BETA_H
 
 #include "../src_pw/tools.h"
-#include "ORB_atomic_lm.h"
+#include "../module_ORB/ORB_atomic_lm.h"
 
 //AUTHOR : mohan
 //DATE : 2008-09-16

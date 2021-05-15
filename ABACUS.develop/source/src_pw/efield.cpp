@@ -13,7 +13,7 @@ double Efield::etotefield; // energy correction due to the field
 double Efield::bvec[3];
 double Efield::bmod;
 
-void Efield::add_efield(double* rho, double* v_in)
+void Efield::add_efield(const double*const rho, double* v_in)
 {
 	TITLE("Efield","add_efield");
 
@@ -207,7 +207,7 @@ void Efield::add_efield(double* rho, double* v_in)
 }
 
 void Efield::compute_el_dip(const double &emaxpos, const double &eopreg,
-	const int &edir, const double *rho, double &e_dipole)const
+	const int &edir, const double*const rho, double &e_dipole)const
 {
 	TITLE("Efield","compute_el_dip");
 

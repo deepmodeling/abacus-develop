@@ -328,6 +328,7 @@ void energy::perform_dos(void)
 
 				// mohan update 2021-04-16
 				hm.orb_con.set_orb_tables(
+						ofs_running,
 						UOT, 
 						ORB,
 						ucell.ntype,
@@ -340,6 +341,7 @@ void energy::perform_dos(void)
 						INPUT.out_descriptor,
 						INPUT.out_r_matrix,
 						Exx_Abfs::Lmax,
+						FORCE,
 						MY_RANK);
 
 				LM.allocate_HS_R(LNNR.nnr);

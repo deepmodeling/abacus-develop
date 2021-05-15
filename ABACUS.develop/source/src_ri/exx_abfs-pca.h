@@ -2,7 +2,7 @@
 #define EXX_ABFS_PCA_H
 
 #include "exx_abfs.h"
-#include "src_lcao/ORB_atomic_lm.h"
+#include "module_ORB/ORB_atomic_lm.h"
 #include "src_global/matrix.h"
 #include "src_global/element_basis_index.h"
 #include <vector>

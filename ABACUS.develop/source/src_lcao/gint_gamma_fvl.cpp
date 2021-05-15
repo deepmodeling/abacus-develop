@@ -1,6 +1,6 @@
 #include "gint_gamma.h"
 #include "grid_technique.h"
-#include "ORB_read.h"
+#include "../module_ORB/ORB_read.h"
 #include "../src_pw/global.h"
 #include "src_global/blas_connector.h"
 
@@ -16,58 +16,20 @@ void Gint_Gamma::cal_force(const double* vlocal_in)
     timer::tick("Gint_Gamma","cal_force",'H');
 }
 
-
-inline void setVindex(const int ncyz, const int ibx, const int jby, const int kbz, int* vindex)
-{                
-    int bindex = 0;
-    // z is the fastest, 
-    for(int ii=0; ii<pw.bx; ii++)
-    {
-        const int ipart = (ibx + ii) * ncyz + kbz;
-        for(int jj=0; jj<pw.by; jj++)
-        {
-            const int jpart = (jby + jj) * pw.nczp + ipart;
-            for(int kk=0; kk<pw.bz; kk++)
-            {
-                vindex[bindex] = kk + jpart; 
-                ++bindex;
-            }
-        }
-    }
-}
-
 inline void cal_psir_ylm_dphi(
-	int size, 
-	int grid_index, 
-	double delta_r, 
-	vector<double> &rly, 
-	vector<vector<double>> &grly,      // Peize Lin change rly, grly 2016-08-26
-	const Numerical_Orbital_Lm* pointer, 
-	int* block_index, 
-	int* block_iw, 
-	int* block_size, 
-	bool** cal_flag,
-	double** psir_ylm, 
-	double** dphix, 
-	double** dphiy, 
-	double** dphiz,
+	const int na_grid, 
+	const int grid_index, 
+	const double delta_r,
+	const int*const block_index,
+	const int*const block_size, 
+	bool*const*const cal_flag,
+	double*const*const psir_ylm, 
+	double*const*const dphix, 
+	double*const*const dphiy, 
+	double*const*const dphiz,
 	realArray& drr)
-{
-    block_index[0]=0;
-    double mt[3]={0,0,0};
-    double dr[3]={0,0,0}; // vectors between atom and grid
-    double distance=0; // distance between atom and grid
-    // int iq[size];
-    // double x0[size];
-    // double x1[size];
-    // double x2[size];
-    // double x3[size];
-    // double x12[size];
-    // double x03[size];
-    int iq;
-    double x0, x1, x2, x3, x12, x03;
-    
-    for (int id=0; id<size; id++)
+{    
+    for (int id=0; id<na_grid; id++)
     {
         const int mcell_index = GridT.bcell_start[grid_index] + id;
         const int imcell = GridT.which_bigcell[mcell_index];
@@ -76,25 +38,23 @@ inline void cal_psir_ylm_dphi(
         const int ia = ucell.iat2ia[iat];
         const int start = ucell.itiaiw2iwt(it, ia, 0);
         Atom *atom = &ucell.atoms[it];
-        
-        block_index[id+1]=block_index[id]+atom->nw;
-        block_iw[id]=GridT.trace_lo[start];
-        block_size[id]=atom->nw;
 
-        mt[0] = GridT.meshball_positions[imcell][0] - GridT.tau_in_bigcell[iat][0];
-        mt[1] = GridT.meshball_positions[imcell][1] - GridT.tau_in_bigcell[iat][1];
-        mt[2] = GridT.meshball_positions[imcell][2] - GridT.tau_in_bigcell[iat][2];
+		const double mt[3]={
+			GridT.meshball_positions[imcell][0] - GridT.tau_in_bigcell[iat][0],
+			GridT.meshball_positions[imcell][1] - GridT.tau_in_bigcell[iat][1],
+			GridT.meshball_positions[imcell][2] - GridT.tau_in_bigcell[iat][2]};
 
         for(int ib=0; ib<pw.bxyz; ib++)
         {
-            double *p_psir_ylm=&psir_ylm[ib][block_index[id]];
-            double *p_dphix=&dphix[ib][block_index[id]];
-            double *p_dphiy=&dphiy[ib][block_index[id]];
-            double *p_dphiz=&dphiz[ib][block_index[id]];
+            double*const p_psir_ylm=&psir_ylm[ib][block_index[id]];
+            double*const p_dphix=&dphix[ib][block_index[id]];
+            double*const p_dphiy=&dphiy[ib][block_index[id]];
+            double*const p_dphiz=&dphiz[ib][block_index[id]];
             
-            dr[0] = GridT.meshcell_pos[ib][0] + mt[0];
-            dr[1] = GridT.meshcell_pos[ib][1] + mt[1];
-            dr[2] = GridT.meshcell_pos[ib][2] + mt[2];
+			const double dr[3]={						// vectors between atom and grid
+				GridT.meshcell_pos[ib][0] + mt[0],
+				GridT.meshcell_pos[ib][1] + mt[1],
+				GridT.meshcell_pos[ib][2] + mt[2]};
 
             if(STRESS)
             {
@@ -104,7 +64,8 @@ inline void cal_psir_ylm_dphi(
 				}
             }
 
-            distance = std::sqrt(dr[0]*dr[0] + dr[1]*dr[1] + dr[2]*dr[2]);
+			// distance between atom and grid
+            double distance = std::sqrt(dr[0]*dr[0] + dr[1]*dr[1] + dr[2]*dr[2]);
 
             if(distance > ORB.Phi[it].getRcut())
             {
@@ -117,6 +78,10 @@ inline void cal_psir_ylm_dphi(
             }
 
             cal_flag[ib][id]=true;
+            
+            //array to store spherical harmonics and its derivatives
+            vector<double> rly;
+            vector<vector<double>> grly;
             // >>> the old method
             // ylma[id] = new double[nnn[it]]; // liaochen found this bug 2010/03/29
             // Ylm::get_ylm_real(ucell.atoms[it].nwl+1, this->dr[id], ylma[id]);
@@ -152,13 +117,13 @@ inline void cal_psir_ylm_dphi(
 
             const double position = distance / delta_r;
                        
-            iq = static_cast<int>(position);
-            x0 = position - iq;
-            x1 = 1.0 - x0;
-            x2 = 2.0 - x0;
-            x3 = 3.0 - x0;
-            x12 = x1*x2 / 6;
-            x03 = x0*x3 / 2;
+            const double iq = static_cast<int>(position);
+            const double x0 = position - iq;
+            const double x1 = 1.0 - x0;
+            const double x2 = 2.0 - x0;
+            const double x3 = 3.0 - x0;
+            const double x12 = x1*x2 / 6;
+            const double x03 = x0*x3 / 2;
             
             double tmp, dtmp;
 
@@ -184,12 +149,12 @@ inline void cal_psir_ylm_dphi(
                 // function from interpolation method.
                 if ( atom->iw2_new[iw] )
                 {
-                    pointer = &ORB.Phi[it].PhiLN(
+                    const Numerical_Orbital_Lm &philn = ORB.Phi[it].PhiLN(
                             atom->iw2l[iw],
                             atom->iw2n[iw]);
 
-                    //if ( iq[id] >= pointer->nr_uniform-4)
-                    if ( iq >= pointer->nr_uniform-4)
+                    //if ( iq[id] >= philn.nr_uniform-4)
+                    if ( iq >= philn.nr_uniform-4)
                     {
                         tmp = dtmp = 0.0;
                     }
@@ -198,21 +163,23 @@ inline void cal_psir_ylm_dphi(
                         // use Polynomia Interpolation method to get the 
                         // wave functions
 
-                        tmp = x12*(pointer->psi_uniform[iq]*x3
-                                +pointer->psi_uniform[iq+3]*x0)
-                            + x03*(pointer->psi_uniform[iq+1]*x2
-                                    -pointer->psi_uniform[iq+2]*x1);
+                        tmp = x12*(philn.psi_uniform[iq]*x3
+                                +philn.psi_uniform[iq+3]*x0)
+                            + x03*(philn.psi_uniform[iq+1]*x2
+                                    -philn.psi_uniform[iq+2]*x1);
 
-                        dtmp = x12*(pointer->dpsi_uniform[iq]*x3
-                                +pointer->dpsi_uniform[iq+3]*x0)
-                                + x03*(pointer->dpsi_uniform[iq+1]*x2
-                                    -pointer->dpsi_uniform[iq+2]*x1);
+                        dtmp = x12*(philn.dpsi_uniform[iq]*x3
+                                +philn.dpsi_uniform[iq+3]*x0)
+                                + x03*(philn.dpsi_uniform[iq+1]*x2
+                                    -philn.dpsi_uniform[iq+2]*x1);
                     }
                 }//new l is used.
+				
+				// WARNING: if(!atom->iw2_new[iw]), tmp and dtmp are undefined?
 
                 // get the 'l' of this localized wave function
-                int ll = atom->iw2l[iw];
-                int idx_lm = atom->iw2_ylm[iw];
+                const int ll = atom->iw2l[iw];
+                const int idx_lm = atom->iw2_ylm[iw];
 
                 //special case for distance -> 0
                 //Problems Remained
@@ -238,9 +205,9 @@ inline void cal_psir_ylm_dphi(
                     // and the derivative.
                     else
                     {
-                        pointer = &ORB.Phi[it].PhiLN(atom->iw2l[iw], atom->iw2n[iw]);
+                        const Numerical_Orbital_Lm &philn = ORB.Phi[it].PhiLN(atom->iw2l[iw], atom->iw2n[iw]);
 
-                        double Zty = pointer->zty;
+                        double Zty = philn.zty;
                         p_psir_ylm[iw] = Zty * rly[idx_lm];
                         p_dphix[iw] = Zty * grly[idx_lm][0];
                         p_dphiy[iw] = Zty * grly[idx_lm][1];
@@ -251,15 +218,14 @@ inline void cal_psir_ylm_dphi(
                 // and the derivative at r=0 point.
                 //else
                 //{
-                    double rl;
-                    rl = pow(distance, ll);
+                    const double rl = pow(distance, ll);
 
                     // 3D wave functions
                     p_psir_ylm[iw] = tmp * rly[idx_lm] / rl;
 
                     // derivative of wave functions with respect to atom positions.
-                    double tmpdphi_rly = (dtmp  - tmp * ll / distance) / rl * rly[idx_lm] / distance;
-                    double tmprl = tmp/rl;
+                    const double tmpdphi_rly = (dtmp  - tmp * ll / distance) / rl * rly[idx_lm] / distance;
+                    const double tmprl = tmp/rl;
 
                     p_dphix[iw] = tmpdphi_rly * dr[0]  + tmprl * grly[idx_lm][0];
                     p_dphiy[iw] = tmpdphi_rly * dr[1]  + tmprl * grly[idx_lm][1];
@@ -274,20 +240,26 @@ inline void cal_psir_ylm_dphi(
 
 
 inline void cal_meshball_DGridV(
-	int size, int lgd_now, int LD_pool, 
-	int* block_index, int* block_iw, 
-	int* block_size, bool** cal_flag, double* vldr3, 
-	double** psir_ylm, double** psir_vlbr3, double** dphix, 
-	double** dphiy, double** dphiz, 
-	double** DGridV_x, double** DGridV_y, double** DGridV_z,
-	double** DGridV_11, double** DGridV_12, double** DGridV_13,
-	double** DGridV_22, double** DGridV_23, double** DGridV_33, realArray& drr)
+	const int na_grid,
+	int lgd_now,
+	int LD_pool, 
+	const int*const block_index,
+	const int*const block_iw, 
+	const int*const block_size,
+	const bool*const*const cal_flag,
+	const double*const vldr3, 
+	const double*const*const psir_ylm,
+	double*const*const psir_vlbr3,
+	const double*const*const dphix, const double*const*const dphiy, const double*const*const dphiz, 
+	double*const*const DGridV_x,  double*const*const DGridV_y,  double*const*const DGridV_z,
+	double*const*const DGridV_11, double*const*const DGridV_12, double*const*const DGridV_13,
+	double*const*const DGridV_22, double*const*const DGridV_23, double*const*const DGridV_33,
+	realArray& drr)
 {
-    char transa='N', transb='T';
-    double alpha=-1.0, beta=1.0;
+    const char transa='N', transb='T';
+    const double alpha=-1.0, beta=1.0;
     
-    int allnw=block_index[size];
-    
+    const int allnw=block_index[na_grid];
     for(int i=0; i<pw.bxyz; ++i)
     {
         for(int j=0; j<allnw; ++j)
@@ -298,19 +270,19 @@ inline void cal_meshball_DGridV(
 
     //OUT(ofs_running,"lgd_now", lgd_now);
     //OUT(ofs_running,"LD_pool", LD_pool);
-    for(int ia1=0; ia1<size; ++ia1)
+    for(int ia1=0; ia1<na_grid; ++ia1)
     {
         const int iw1_lo=block_iw[ia1];
         const int idx1=block_index[ia1];
-        int m=block_size[ia1]; 
+        const int m=block_size[ia1]; 
         // OUT(ofs_running,"ia1", ia1);
         // OUT(ofs_running,"iw1_lo", iw1_lo);
         // OUT(ofs_running,"m", m);
-        for(int ia2=0; ia2<size; ++ia2)
+        for(int ia2=0; ia2<na_grid; ++ia2)
         {
             const int iw2_lo=block_iw[ia2];
             const int idx2=block_index[ia2];
-            int n=block_size[ia2];
+            const int n=block_size[ia2];
 			
            //  for(int ib=0; ib<pw.bxyz; ++ib)
            //  {
@@ -538,7 +510,6 @@ void Gint_Gamma::gamma_force(void)
 
     // it's a uniform grid to save orbital values, so the delta_r is a constant.
     const double delta_r = ORB.dr_uniform;
-    const Numerical_Orbital_Lm* pointer;
 
     int LD_pool=max_size*ucell.nwmax;
     double* psir_ylm_pool;
@@ -551,24 +522,9 @@ void Gint_Gamma::gamma_force(void)
     double** dphiy;
     double** dphiz;
 
-    int* block_index;
-    int* block_iw;
-    int* block_size;
-    bool** cal_flag;  
+    bool** cal_flag;
 
-    // Peize Lin change rly, grly 2016-08-26
-    vector<double> rly;
-    vector<vector<double>> grly;
-
-    int nnnmax=0;
     const int ncyz=pw.ncy*pw.nczp;
-
-    //double *vldr3 = new double[pw.bxyz];
-    double vldr3[pw.bxyz];
-    ZEROS(vldr3, pw.bxyz);
-    //int *vindex = new int[pw.bxyz];
-    int vindex[pw.bxyz];
-    ZEROS(vindex, pw.bxyz);
 
 /*    if(max_size<=0 || GridT.lgd <= 0) 
     {
@@ -601,22 +557,6 @@ void Gint_Gamma::gamma_force(void)
             dphiz[i] = &dphi_pool[i*LD_pool+2*pw.bxyz*LD_pool];
             cal_flag[i] = new bool[max_size];
         }
-    
-        block_index=new int[max_size+1];
-        block_iw=new int[max_size];
-        block_size=new int[max_size];
-    
-        for(int T=0; T<ucell.ntype; T++)
-        {
-            nnnmax = max(nnnmax, nnn[T]);
-        }
-    
-        //array to store spherical harmonics and its derivatives
-        assert(nnnmax<400);
-        //rly=new double[400];
-        //grly=new double*[400];
-        //for(int i=0; i<400; ++i)
-        //    grly[i]=new double[3];
 
         realArray drr;//rewrite drr form by zhengdy-2019-04-02
         if(STRESS)
@@ -651,31 +591,45 @@ void Gint_Gamma::gamma_force(void)
                 for (int k= GridT.nbzp_start; k< GridT.nbzp_start+GridT.nbzp; k++)
                 {
                     const int kbz = k*pw.bz-pw.nczp_start; 
-                    this->grid_index = (k-GridT.nbzp_start) + j * GridT.nbzp + i * GridT.nby * GridT.nbzp;
-                    const int size = GridT.how_many_atoms[ this->grid_index ];
-                    if(size==0)continue;
+                    const int grid_index = (k-GridT.nbzp_start) + j * GridT.nbzp + i * GridT.nby * GridT.nbzp;
+                    const int na_grid = GridT.how_many_atoms[ grid_index ];
+                    if(na_grid==0)continue;
                     
-                    setVindex(ncyz, ibx, jby, kbz, vindex);
-    				for(int ib=0; ib<pw.bxyz; ib++)
-    				{
-    					vldr3[ib]=this->vlocal[vindex[ib]] * this->vfactor;
-    				}
+					//------------------------------------------------------------------
+					// extract the local potentials.
+					//------------------------------------------------------------------
+					double *vldr3 = get_vldr3(ncyz, ibx, jby, kbz);
+					
+					//------------------------------------------------------
+					// index of wave functions for each block
+					//------------------------------------------------------
+					int *block_iw = get_block_iw(na_grid, grid_index, this->max_size);
+					
+					int* block_index = get_colidx(na_grid, grid_index);
+					
+					//------------------------------------------------------
+					// band size: number of columns of a band
+					//------------------------------------------------------------------
+					int* block_size = get_bsize(na_grid, grid_index);
     
-                    cal_psir_ylm_dphi(size, grid_index, delta_r, rly, grly, pointer, 
-                            block_index, block_iw, block_size, cal_flag, psir_ylm, dphix, dphiy, dphiz, drr);
+                    cal_psir_ylm_dphi(na_grid, grid_index, delta_r, 
+                            block_index, block_size, cal_flag, psir_ylm, dphix, dphiy, dphiz, drr);
     
-                    cal_meshball_DGridV(size, GridT.lgd, LD_pool, block_index, block_iw, block_size, cal_flag, vldr3, 
+                    cal_meshball_DGridV(na_grid, GridT.lgd, LD_pool, block_index, block_iw, block_size, cal_flag, vldr3, 
                                 psir_ylm, psir_vlbr3, dphix,  dphiy, dphiz, 
                                 DGridV_x, DGridV_y, DGridV_z,
                                 DGridV_11, DGridV_12, DGridV_13,
                                 DGridV_22, DGridV_23, DGridV_33, drr);
+								
+					free(vldr3);		vldr3=nullptr;
+					free(block_iw);		block_iw=nullptr;
+					free(block_index);	block_index=nullptr;
+					free(block_size);	block_size=nullptr;
                 }// k
             }// j
         }// i
     
         //OUT(ofs_running,"DGridV was calculated");
-        // delete[] vindex;
-        // delete[] vldr3;
         delete[] dphix;
         delete[] dphiy;
         delete[] dphiz;
@@ -684,9 +638,6 @@ void Gint_Gamma::gamma_force(void)
         delete[] psir_ylm_pool;
         delete[] psir_vlbr3;
         delete[] psir_vlbr3_pool;
-        delete[] block_index;
-        delete[] block_iw;
-        delete[] block_size;
         for(int ib=0; ib<pw.bxyz; ++ib)
 		{
             delete[] cal_flag[ib];

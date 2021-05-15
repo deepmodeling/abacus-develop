@@ -292,18 +292,7 @@ void Pseudopot_upf::read_pseudo_local(ifstream &ifs)
 	{
 		ifs >> this->vloc[ir];
 	}
-
 	
-	// for test
-/*
-	ofstream ofs("vloc_UPF.dat");
-	for(int ir=0; ir<mesh; ++ir)
-	{
-		ofs << r[ir] << " " << vloc[ir] << endl;
-	}
-	ofs.close();
-*/
-
 	return;
 }
 

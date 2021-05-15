@@ -1,6 +1,6 @@
 #include "conv_coulomb_pot_k.h"
 #include "src_global/constants.h"
-#include "src_lcao/ORB_atomic_lm.h"
+#include "module_ORB/ORB_atomic_lm.h"
 
 std::vector<double> Conv_Coulomb_Pot_K::cal_psi_ccp( const std::vector<double> & psif )
 {
@@ -69,7 +69,7 @@ Numerical_Orbital_Lm Conv_Coulomb_Pot_K::cal_orbs_ccp<Numerical_Orbital_Lm>(
 		orbs.getDk(),
 		orbs.getDruniform(),
 		false,
-		true);
+		true, FORCE);
 	return orbs_ccp;
 }
 

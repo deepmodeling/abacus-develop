@@ -169,6 +169,7 @@ void Mulliken_Charge::cal_mulliken(void)
 
 			// 2021-04-16
 			hm.orb_con.set_orb_tables(
+					ofs_running,
 					UOT, 
 					ORB,
 					ucell.ntype,
@@ -181,6 +182,7 @@ void Mulliken_Charge::cal_mulliken(void)
 					INPUT.out_descriptor,
 					INPUT.out_r_matrix,
 					Exx_Abfs::Lmax,
+					FORCE,
 					MY_RANK);
 
 

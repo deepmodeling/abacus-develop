@@ -4,7 +4,7 @@
 #include "exx_abfs.h"
 
 #include <vector>
-#include "src_lcao/ORB_atomic_lm.h"
+#include "module_ORB/ORB_atomic_lm.h"
 
 class Exx_Abfs::Jle
 {

@@ -1,9 +1,10 @@
-#include "../src_pw/global.h"
 #include "sltk_atom_arrange.h"
 #include "sltk_atom_input.h"
 #include "sltk_grid.h"
 #include "sltk_grid_driver.h"
 
+// update the followig two includes in near future 
+#include "../src_pw/global.h"
 #include "../src_lcao/global_fp.h" // mohan add 2021-01-30
 
 
@@ -25,23 +26,22 @@ void atom_arrange::set_sr_NL(void)
 	}
 //	cout << " LONGEST ORB RCUT     : " << longest_orb_rcut << endl;
 
- if(OUT_LEVEL != "m") //xiaohui add 'OUT_LEVEL', 2015-09-16
- {
-	ofs_running << "\n\n\n\n";
-	ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << endl;
-	ofs_running << " |                                                                    |" << endl;
-	ofs_running << " | Search adjacent atoms:                                             |" << endl;
-	ofs_running << " | Set the adjacent atoms for each atom and set the periodic boundary |" << endl;
-	ofs_running << " | condition for the atoms on real space FFT grid. For k-dependent    |" << endl;  
-	ofs_running << " | algorithm, we also need to set the sparse H and S matrix element   |" << endl;
-	ofs_running << " | for each atom.                                                     |" << endl; 
-	ofs_running << " |                                                                    |" << endl;
-	ofs_running << " <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" << endl;
-	ofs_running << "\n\n\n\n";
- }
+	if(OUT_LEVEL != "m") //xiaohui add 'OUT_LEVEL', 2015-09-16
+	{
+		ofs_running << "\n\n\n\n";
+		ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << endl;
+		ofs_running << " |                                                                    |" << endl;
+		ofs_running << " | Search adjacent atoms:                                             |" << endl;
+		ofs_running << " | Set the adjacent atoms for each atom and set the periodic boundary |" << endl;
+		ofs_running << " | condition for the atoms on real space FFT grid. For k-dependent    |" << endl;  
+		ofs_running << " | algorithm, we also need to set the sparse H and S matrix element   |" << endl;
+		ofs_running << " | for each atom.                                                     |" << endl; 
+		ofs_running << " |                                                                    |" << endl;
+		ofs_running << " <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" << endl;
+		ofs_running << "\n\n\n\n";
+	}
 
 	
-
 	//xiaohui add 'OUT_LEVEL' line, 2015-09-16
 	if(OUT_LEVEL != "m") ofs_running << "\n SETUP SEARCHING RADIUS FOR PROGRAM TO SEARCH ADJACENT ATOMS" << endl;
 	if(OUT_LEVEL != "m") ofs_running << setprecision(3);
@@ -145,10 +145,11 @@ void atom_arrange::search( const double &search_radius_bohr)
 		}
 	}
 	
-
 	timer::tick("atom_arrange","search");
 	return;
 }
+
+
 //2015-05-07
 void atom_arrange::delete_vector(const double &search_radius_bohr)
 {

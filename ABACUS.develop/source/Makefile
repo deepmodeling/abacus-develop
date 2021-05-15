@@ -4,6 +4,7 @@ include Makefile.system
 include Makefile.Objects
 
 VPATH=./src_global\
+:./module_ORB\
 :./src_pw\
 :./src_lcao\
 :./src_ions\

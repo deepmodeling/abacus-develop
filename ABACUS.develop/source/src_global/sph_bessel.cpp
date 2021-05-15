@@ -1,6 +1,8 @@
-#include "../src_pw/global.h"
+//#include "../src_pw/global.h"
 #include "sph_bessel.h"
 #include "../src_parallel/parallel_reduce.h"
+#include "timer.h"
+#include "global_function.h"
 
 Sph_Bessel::Sph_Bessel()
 {
@@ -206,7 +208,9 @@ double Sph_Bessel::jlx7(const int &n, const double &x)
     double order, rj, rjp, ry, ryp;
     if (n < 0 || x <= 0.0)
     {
-        WARNING_QUIT("Sph_Bessel::jlx7","bad arguments in sphbes");
+		cout << "Sph_Bessel::jlx7,bad arguments in sphbes" << endl;
+        //WARNING_QUIT("Sph_Bessel::jlx7","bad arguments in sphbes");
+		exit(0); // mohan add 2021-05-05
     }
 	order = n + 0.5;
 	BESSJY(x, order, &rj, &ry, &rjp, &ryp);
@@ -224,7 +228,9 @@ void Sph_Bessel::BESSJY(double x, double xnu, double *rj, double *ry, double *rj
 		   temp,w,x2,xi,xi2,xmu,xmu2;
 	if (x <= 0.0 || xnu < 0.0) 
 	{
-		WARNING_QUIT("Sph_Bessel::BESSJY","bad arguments in bessjy");
+		cout << "Sph_Bessel::BESSJY, bad arguments in bessjy" << endl;
+		//WARNING_QUIT("Sph_Bessel::BESSJY","bad arguments in bessjy");
+		exit(0);
 	}
 	nl=(x < xmin ? (int)(xnu+0.5) : IMAX(0,(int)(xnu-x+1.5)));
 	xmu=xnu-nl;
@@ -252,7 +258,9 @@ void Sph_Bessel::BESSJY(double x, double xnu, double *rj, double *ry, double *rj
 	}
 	if (i > maxit) 
 	{
-		WARNING_QUIT("Sph_Bessel::BESSJY","x too large in bessjy; try asymptotic expansion");
+		cout << "Sph_Bessel::BESSJY, x too large in bessjy; try asymptotic expansion" << endl;
+		//WARNING_QUIT("Sph_Bessel::BESSJY","x too large in bessjy; try asymptotic expansion");
+		exit(0);
 	}
 	rjl=isign*fpmin; 
 	rjpl=h*rjl;
@@ -299,7 +307,9 @@ void Sph_Bessel::BESSJY(double x, double xnu, double *rj, double *ry, double *rj
 		}
 		if (i > maxit) 
 		{
-			WARNING_QUIT("Sph_Bessel::BESSJY","bessy series failed to converge");
+			cout << "Sph_Bessel::BESSJY, bessy series failed to converge" << endl;
+			//WARNING_QUIT("Sph_Bessel::BESSJY","bessy series failed to converge");
+			exit(0); // mohan add 2021-05-05
 		}
 		rymu = -sum;
 		ry1 = -sum1*xi2;
@@ -344,7 +354,9 @@ void Sph_Bessel::BESSJY(double x, double xnu, double *rj, double *ry, double *rj
 		}
 		if (i > maxit) 
 		{
-			WARNING_QUIT("Sph_Bessel::BESSJY","cf2 failed in bessjy");
+			cout << "Sph_Bessel::BESSJY, cf2 failed in bessjy" << endl;
+			//WARNING_QUIT("Sph_Bessel::BESSJY","cf2 failed in bessjy");
+			exit(0); // mohan add 2021-05-05
 		}
 		gam=(p-f)/q; 
 		rjmu=sqrt(w/((p-f)*gam+q));

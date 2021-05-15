@@ -47,6 +47,7 @@ void Run_lcao::lcao_line(void)
 	// * construct the interpolation tables.
 
 	hm.orb_con.set_orb_tables(
+		ofs_running,
 		UOT, 
 		ORB,
 		ucell.ntype,
@@ -59,6 +60,7 @@ void Run_lcao::lcao_line(void)
 		INPUT.out_descriptor,
 		INPUT.out_r_matrix,
 		Exx_Abfs::Lmax,
+		FORCE,
 		MY_RANK);
 
 	// * allocate H and S matrices according to computational resources

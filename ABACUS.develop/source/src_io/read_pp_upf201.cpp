@@ -1,14 +1,396 @@
 #include "read_pp.h"
+//int Number[2]; // added by zhangwenshuai
 
-int Number[2];
-
-// added by zhangwenshuai
+//qianrui rewrite it 2021-5-10
 int Pseudopot_upf::read_pseudo_upf201(ifstream &ifs)
 {
-    string dummy, word;
-    int i, j, ir, ONCVPSP;
+	
+    string word;
+    int ONCVPSP;
+	//--------------------------------------
+	//-              PP_HEADER             - 
+	//--------------------------------------
+	SCAN_BEGIN(ifs,"<PP_HEADER");
+	string *name=new string[50];
+	string *val=new string[50];
+	int nparameter;
+	this->getnameval(ifs, nparameter, name, val);
+	ONCVPSP = 1;
+	
+	for(int ip = 0 ; ip < nparameter; ++ip)
+	{
+		if(name[ip]=="generated")
+		{
+			//add something//
+		}
+		else if(name[ip]=="author"){}
+		else if(name[ip]=="date"){}
+		else if(name[ip]=="comment"){}
+		else if(name[ip]=="element"){
+			psd = val[ip];
+		}
+		else if(name[ip]=="pseudo_type"){
+			pp_type = val[ip];
+			if(pp_type!="NC") 
+			{
+				WARNING_QUIT("Pseudopot_upf::read_pseudo_header","unknown pseudo type");
+			}
+		}
+		else if(name[ip]=="relativistic"){}
+		else if(name[ip]=="is_ultrasoft"){
+			if(val[ip]=="T" || val[ip]=="TRUE" || val[ip]=="True")
+			{
+				WARNING_QUIT("Pseudopot_upf::read_pseudo_header","ULTRASOFT PSEUDOPOTENTIAL IS NOT SUPPORTED !!!");
+			}
+		}
+		else if(name[ip]=="is_paw"){
+			if(val[ip]=="T" || val[ip]=="TRUE" || val[ip]=="True")
+			{
+				WARNING_QUIT("Pseudopot_upf::read_pseudo_header","PAW PSEUDOPOTENTIAL IS NOT SUPPORTED !!!");
+			}
+		}
+		else if(name[ip]=="is_coulomb"){}
+		else if(name[ip]=="has_so"){
+			if( val[ip] == "T" || val[ip] == "TRUE" || val[ip]=="True")
+				has_so = true;
+			else
+				has_so = false;
+		}
+		else if(name[ip]=="has_wfc"){}
+		else if(name[ip]=="has_gipaw"){}
+		else if(name[ip]=="paw_as_gipaw"){
+			ONCVPSP = 0;
+		}
+		else if(name[ip]=="core_correction"){
+			if( val[ip] == "T" || val[ip] == "TRUE" || val[ip]=="True")
+				nlcc = true;
+			else
+				nlcc = false;
+		}
+		else if(name[ip]=="functional"){
+			stringstream wdsstream(val[ip]);
+			for( int idft = 0; idft < 4; idft++ )
+			{
+				getline(wdsstream,dft[idft],'-');
+			}
+		}
+		else if(name[ip]=="z_valence"){
+			zp = atoi(val[ip].c_str());
+		}
+		else if(name[ip]=="total_psenergy"){
+			etotps = atof(val[ip].c_str());
+		}
+		else if(name[ip]=="wfc_cutoff"){}
+		else if(name[ip]=="rho_cutoff"){}
+		else if(name[ip]=="l_max"){
+			lmax = atoi(val[ip].c_str());
+		}
+		else if(name[ip]=="l_max_rho"){}
+		else if(name[ip]=="l_local"){}
+		else if(name[ip]=="mesh_size"){
+			mesh = atoi(val[ip].c_str());
+		}
+		else if(name[ip]=="number_of_wfc"){
+			nwfc = atoi(val[ip].c_str());
+		}
+		else if(name[ip]=="number_of_proj"){
+			nbeta = atoi(val[ip].c_str());
+		}
+		else
+		{
+			cout<<name[ip]<<" is not inputed when reading PP_HEADER. Please add this parameter in read_pp_upf201.cpp if needed."<<endl;
+		}
+	}
+	
+	//--------------------------------------
+	//-              PP_MESH               - 
+	//--------------------------------------
+	if(ONCVPSP == 0)
+	{
+		SCAN_BEGIN(ifs, "<PP_MESH");
+		this->getnameval(ifs, nparameter, name, val);
+		for(int ip = 0 ; ip < nparameter; ++ip)
+		{
+			if(name[ip]=="dx"){}
+			else if(name[ip]=="mesh"){}
+			else if(name[ip]=="xmin"){}
+			else if(name[ip]=="rmax"){}
+			else if(name[ip]=="zmesh"){}
+			else
+			cout<<name[ip]<<" is not inputed when reading PP_MESH. Please add this parameter in read_pp_upf201.cpp if needed."<<endl;
 
-	while (ifs.good())
+		}
+	}
+	else
+	{
+		SCAN_BEGIN(ifs, "<PP_MESH>");
+	}
+
+	
+
+	SCAN_BEGIN(ifs, "<PP_R");
+	READ_VALUE(ifs, word); // type size columns
+	delete[] r;
+	delete[] rab;
+	assert(mesh>0);
+	this->r = new double[mesh];
+	this->rab = new double[mesh];
+	ZEROS(r,mesh);
+	ZEROS(rab,mesh);
+	for (int ir = 0;ir < mesh;ir++)
+	{
+		ifs >> this->r[ir];
+	}
+	SCAN_END(ifs, "</PP_R>");
+
+	SCAN_BEGIN(ifs, "<PP_RAB");
+	READ_VALUE(ifs, word); // type size columns
+	for (int ir = 0;ir < mesh;ir++)
+	{
+		ifs >> this->rab[ir];
+	}
+
+	SCAN_END(ifs, "</PP_RAB>");
+	SCAN_END(ifs, "</PP_MESH>");
+
+	//--------------------------------------
+	//-              PP_NLCC               - 
+	//--------------------------------------
+	if (this->nlcc)
+	{
+		SCAN_BEGIN(ifs, "<PP_NLCC");
+		READ_VALUE(ifs, word);    // type size columns
+		delete[] rho_atc;
+		this->rho_atc = new double[mesh];
+		ZEROS(rho_atc, mesh);
+		for (int ir = 0;ir < mesh;ir++)
+		{
+			ifs >> this->rho_atc[ir];
+		}
+		SCAN_END(ifs, "</PP_NLCC>");
+	}
+
+	//--------------------------------------
+	//-              PP_LOCAL              - 
+	//--------------------------------------
+	SCAN_BEGIN(ifs, "<PP_LOCAL");
+	READ_VALUE(ifs, word);    // type size columns
+	delete[] vloc;
+	this->vloc = new double[mesh];
+	ZEROS(vloc, mesh);
+	for (int ir = 0;ir < mesh;ir++)
+	{
+		ifs >> this->vloc[ir];
+	}
+	SCAN_END(ifs, "</PP_LOCAL>");
+
+	//--------------------------------------
+	//-            PP_NONLOCAL             - 
+	//--------------------------------------
+	SCAN_BEGIN(ifs, "<PP_NONLOCAL>");
+	delete[] kkbeta;
+	delete[] lll;
+	this->kkbeta = new int[nbeta];
+	this->lll = new int[nbeta];
+	this->beta.create(nbeta , mesh);
+	this->dion.create(nbeta , nbeta);
+	for(int ib=0;ib<nbeta;ib++)
+	{
+		ifs >> word; //number of beta
+		this->getnameval(ifs, nparameter, name, val);
+		for(int ip = 0 ; ip < nparameter; ++ip)
+		{
+			if(name[ip]=="type"){}
+			else if(name[ip]=="size"){}
+			else if(name[ip]=="columns"){}
+			else if(name[ip]=="index"){}
+			else if(name[ip]=="label"){}
+			else if(name[ip]=="angular_momentum"){
+				lll[ib] = atoi(val[ip].c_str());
+			}
+			else if(name[ip]=="cutoff_radius_index"){
+				kkbeta[ib] = atoi (val[ip].c_str());
+			}
+			else if(name[ip]=="cutoff_radius"){}
+			else if(name[ip]=="ultrasoft_cutoff_radius"){}
+			else
+			cout<<name[ip]<<" is not inputed when reading PP_BETA. Please add this parameter in read_pp_upf201.cpp if needed."<<endl;
+		}
+		for (int ir=0;ir<mesh;ir++)
+		{
+			ifs >> this->beta(ib, ir);
+		}
+		ifs >> word; //number of beta
+	}
+
+	SCAN_BEGIN(ifs, "<PP_DIJ");
+	READ_VALUE(ifs, word);  // type size columns
+
+	this->nd = nbeta * nbeta;
+	for(int i=0;i<nbeta;i++)
+	{
+		for(int j=0;j<nbeta;j++)
+		{
+			ifs >> dion(i,j);
+			if ( i != j  && dion(i,j) != 0.0 )
+			{
+				cout << " error: for i != j, Dij of Pseudopotential must be 0.0 " << endl;
+				exit(1);
+			}
+		}
+	}
+	SCAN_END(ifs, "</PP_DIJ>");
+	SCAN_END(ifs, "</PP_NONLOCAL>");
+
+	//--------------------------------------
+	//-            PP_PSWFC                - 
+	//--------------------------------------
+	SCAN_BEGIN(ifs, "<PP_PSWFC>");
+	delete[] els;
+	delete[] lchi;
+	delete[] oc;
+	this->els = new string[nwfc];
+	this->lchi = new int[nwfc];
+	this->oc = new double[nwfc];
+	ZEROS(lchi, nwfc); // angular momentum of each orbital
+	ZEROS(oc, nwfc);//occupation of each orbital
+	this->chi.create(this->nwfc, this->mesh);
+	for(int iw=0;iw<nwfc;iw++)
+	{
+		ifs >> word; //number of chi
+		this->getnameval(ifs, nparameter, name, val);
+		for(int ip = 0 ; ip < nparameter; ++ip)
+		{
+			if(name[ip]=="type"){}
+			else if(name[ip]=="size"){}
+			else if(name[ip]=="columns"){}
+			else if(name[ip]=="index"){}
+			else if(name[ip]=="label"){
+				els[iw] = val[ip];
+			}
+			else if(name[ip]=="l"){
+				lchi[iw] = atoi(val[ip].c_str());
+			}
+			else if(name[ip]=="occupation"){
+				oc[iw] = atof(val[ip].c_str());
+			}
+			else if(name[ip]=="n"){}
+			else if(name[ip]=="pseudo_energy"){}
+			else if(name[ip]=="cutoff_radius"){}
+			else if(name[ip]=="ultrasoft_cutoff_radius"){}
+			else
+			cout<<name[ip]<<" is not inputed when reading PP_CHI. Please add this parameter in read_pp_upf201.cpp if needed."<<endl;
+		}
+		for (int ir=0;ir<mesh;ir++)
+		{
+			ifs >> this->chi(iw, ir);
+		}
+		ifs >> word; //number of chi
+	}
+	SCAN_END(ifs, "</PP_PSWFC>");
+
+	//--------------------------------------
+	//-          PP_RHOATOM                - 
+	//--------------------------------------
+	SCAN_BEGIN(ifs, "<PP_RHOATOM");
+	READ_VALUE(ifs, word); // type size columns
+	delete[] rho_at;
+	this->rho_at = new double[mesh];
+	ZEROS(rho_at, mesh);
+	for (int ir = 0;ir < mesh;ir++)
+	{
+		ifs >> this->rho_at[ir];
+	}
+	SCAN_END(ifs, "</PP_RHOATOM>");
+
+	//--------------------------------------
+	//-          PP_SPIN_ORB               - 
+	//--------------------------------------
+	SCAN_BEGIN(ifs, "<PP_SPIN_ORB>");
+	//added by zhengdy-soc
+	delete[] this->jchi;
+	delete[] this->jjj;
+	delete[] this->nn;
+	this->jchi = new double [nwfc];
+	this->jjj = new double [nbeta];
+	this->nn = new int [nwfc];
+	ZEROS(jchi,nwfc);
+	ZEROS(jjj,nbeta);
+	ZEROS(nn,nwfc);
+
+	for(int round=0;round<2;round++)
+	{
+		ifs>>word;
+		if(word=="<PP_RELBETA.1")
+		{
+			for(int nb = 0;nb<nbeta;nb++)
+			{
+				if(nb!=0) ifs>>word; //RELBETA
+				this->getnameval(ifs, nparameter, name, val);
+				for(int ip = 0 ; ip < nparameter; ++ip)
+				{
+					if(name[ip]=="index"){}
+					else if(name[ip]=="lll"){
+						lll[nb] = atoi(val[ip].c_str());
+					}
+					else if(name[ip]=="jjj"){
+						jjj[nb] = atof(val[ip].c_str());
+					}
+					else
+					cout<<name[ip]<<" is not inputed when reading PP_RELBETA. Please add this parameter in read_pp_upf201.cpp if needed."<<endl;
+				}
+			}
+		}
+		else if(word=="<PP_RELWFC.1")
+		{
+			for(int nw = 0;nw<nwfc;nw++)
+			{
+				if(nw!=0) ifs>>word;     //RELWFC
+				this->getnameval(ifs, nparameter, name, val);
+				for(int ip = 0 ; ip < nparameter; ++ip)
+				{
+					if(name[ip]=="index"){}
+					else if(name[ip]=="els"){
+						els[nw] = val[ip];
+					}
+					else if(name[ip]=="nn"){
+						nn[nw] = atoi(val[ip].c_str());
+					}
+					else if(name[ip]=="lchi"){
+						lchi[nw]=atoi(val[ip].c_str());
+					}
+					else if(name[ip]=="jchi"){
+						jchi[nw]=atof(val[ip].c_str());
+					}
+					else if(name[ip]=="oc"){
+						oc[nw] = atof(val[ip].c_str());
+					}
+					else
+					cout<<name[ip]<<" is not inputed when reading PP_RELWFC. Please add this parameter in read_pp_upf201.cpp if needed."<<endl;
+				}
+			}
+		}
+		else if(round==0)
+		{
+			this->has_so = 0;
+			//	cout<<"ignore SPIN_ORB part!"<<endl;
+			break;
+		}
+	}
+	SCAN_END(ifs, "</PP_SPIN_ORB>");
+	if (mesh%2 == 0)
+	{
+		mesh -= 1;
+	}
+	
+	SCAN_END(ifs, "</UPF>");
+	delete []name;
+	delete []val;
+	return 0;
+
+
+	//qianrui remove it 2020-5-10
+	/*while (ifs.good())
 	{
 		ifs >> dummy;
 		// We start from PP_Header
@@ -764,11 +1146,73 @@ int Pseudopot_upf::read_pseudo_upf201(ifstream &ifs)
 			break;
 		}
 	}
-	return 0;
+	return 0;*/
+}
+void Pseudopot_upf:: getnameval(ifstream& ifs,int &n, string * name, string *val)
+{
+	string txt,word;
+	//get long txt
+	ifs>>txt;
+	while(ifs>>word)
+	{
+		size_t wl= word.length()-1;
+		txt=txt+" "+word;
+		if(word.substr(wl,1)==">")
+		{
+			break;
+		}
+	}
+
+	//count number of parameters according to "="
+	size_t pos=0;
+	n=0;
+	while(1)
+	{
+		pos = txt.find("=",pos);
+		if(pos == string::npos) break;
+		pos++;
+		n++;
+	}
+
+	//get name & value
+	pos=0;
+	size_t pos2, ll;
+	for(int i = 0; i < n; ++i)
+	{
+		pos2 = txt.find("=",pos);
+		string space = " ";
+		for(; pos2 > pos ; --pos2)//There may be a space before "=";
+		{
+			if(txt.substr(pos2-1,1) != space) break;
+		}
+		ll=pos2-pos;
+		name[i] = txt.substr(pos,ll);
+		//cout<<i<<" "<<name[i]<<endl;
+		string mark;
+		bool findmark=false;
+		for(int j = 0; j < 100; ++j)//The mark can be ' or ".
+		{
+			mark = txt.substr(pos2,1);
+			pos2++;
+			if(mark=="\""||mark=="\'")
+			{
+				findmark = true;
+				break;
+			}
+		}
+		if(!findmark) WARNING_QUIT("read_upf201",
+		"The values are not in \' or \". Please improve the program in read_pp_upf201.cpp");
+		pos = pos2;
+		pos2 = txt.find(mark,pos);
+		ll=pos2-pos;
+		val[i] = txt.substr(pos,ll);
+		pos = pos2+2;
+		cout<<name[i]<<"=\""<<val[i]<<"\""<<endl;
+	}
+	return;
 }
 
-
-void Pseudopot_upf::get_char( string ss)
+/*void Pseudopot_upf::get_char( string ss)
 {
     int i, q;
     //char b[1]; //LiuXh 20171109
@@ -788,4 +1232,4 @@ void Pseudopot_upf::get_char( string ss)
     }
 
     return;
-}
+}*/

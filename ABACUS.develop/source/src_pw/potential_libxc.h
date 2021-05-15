@@ -23,13 +23,12 @@ class Potential_Libxc
 
 	//------------------------------------------------
 	// evaluate the exchange-correlation (XC) energy
-	// by using the input charge density rho_in
+	// by using the input charge density rho_in and rho_core_in
 	//------------------------------------------------
-	static void v_xc(
+	// [etxc, vtxc, v] = v_xc(...)
+	static std::tuple<double,double,matrix> v_xc(
 		const double * const * const rho_in,
-		double &etxc,
-		double &vtxc,
-		matrix &v);
+		const double * const rho_core_in);
 		
 	private:
 
@@ -43,14 +42,15 @@ class Potential_Libxc
 	// evaluate three quantities: rho, sigma, and gdr
 	// according to the input types of XC functionals
 	//------------------------------------------------
-	// [rho, sigma, gdr] = cal_input( funcs, rho_in )
+	// [rho, sigma, gdr] = cal_input(...)
 	static std::tuple< 
 		std::vector<double>, 
 		std::vector<double>, 
 		std::vector<std::vector<Vector3<double>>> > 
 	cal_input(
 		const std::vector<XC(func_type)> &funcs, 
-		const double * const * const rho_in );
+		const double * const * const rho_in,
+		const double * const rho_core_in );
 
 	//----------------------------
 	// decide the value of spin
