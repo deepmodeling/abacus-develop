@@ -99,26 +99,34 @@ class Gint_Gamma : public Grid_Base_Beta
 		double*const*const GridVlocal);
 
 	void cal_band_rho(
-		int size, 
-		int LD_pool, 
-		int* block_iw, 
-		int* bsize, 
-		int* colidx,
-		int** cal_flag, 
-		double ** psir_ylm, 
-		double **psir_DM, 
-		double* psir_DM_pool, 
-		int* vindex);
+		const int size, 
+		const int LD_pool, 
+		const int*const block_iw, 
+		const int*const bsize, 
+		const int*const colidx,
+		const int*const*const cal_flag, 
+		const double*const*const psir_ylm, 
+		double*const*const psir_DM, 
+		double*const psir_DM_pool, 
+		const int*const vindex);
 
-	void setVindex(const int ncyz, const int ibx, const int jby, const int kbz, int* vindex) const;
-
-	void cal_psir_ylm_rho(int size, int grid_index, double delta_r,
-        double** distance,
-        int* at, int* block_index, int* block_iw, int* block_size, 
-        int** cal_flag, double** psir_ylm);
+	void cal_psir_ylm_rho(
+		const int size,
+		const int grid_index,
+		const double delta_r,
+        const int*const block_index,
+		const int*const block_size, 
+        int*const*const cal_flag,
+		double*const*const psir_ylm);
 	
 	// extract the local potentials.
 	double* get_vldr3( const int ncyz, const int ibx, const int jby, const int kbz) const;
+
+	static int* get_vindex(
+		const int ncyz,
+		const int ibx,
+		const int jby,
+		const int kbz);
 	
 	// index of wave functions for each block
 	static int* get_block_iw(

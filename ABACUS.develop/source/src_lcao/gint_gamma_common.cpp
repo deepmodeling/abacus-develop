@@ -2,7 +2,7 @@
 #include "src_pw/global.h"
 
 // here vindex refers to local potentials
-int* get_vindex(
+int* Gint_Gamma::get_vindex(
 	const int ncyz,
 	const int ibx,
 	const int jby,
@@ -37,7 +37,7 @@ double* Gint_Gamma::get_vldr3(
 	const int kbz) const
 {
 	// set the index for obtaining local potentials
-	int* vindex = get_vindex(ncyz, ibx, jby, kbz);	
+	int* vindex = Gint_Gamma::get_vindex(ncyz, ibx, jby, kbz);	
 	double *vldr3 = (double*)malloc(pw.bxyz*sizeof(double));					
 	for(int ib=0; ib<pw.bxyz; ib++)
 	{

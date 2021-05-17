@@ -60,8 +60,9 @@ extern "C"
         const complex<double> *alpha, const double *a, const int *lda, const complex<double> *b,
         const int *ldb, const complex<double> *beta, complex<double> *c, const int *ldc);
 
-	void dsymm_(char *side, char *uplo, int *m, int *n, double *alpha,
-	            double *a,  int *lda,  double *b, int *ldb, double *beta, double *c, int *ldc);
+	void dsymm_(const char *side, const char *uplo, const int *m, const int *n,
+		const double *alpha, const double *a, const int *lda, const double *b, const int *ldb,
+		const double *beta, double *c, const int *ldc);
 
 	void zhemm_(char *side, char *uplo, int *m, int *n,complex<double> *alpha,
 		complex<double> *a,  int *lda,  complex<double> *b, int *ldb, complex<double> *beta, complex<double> *c, int *ldc);
