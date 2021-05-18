@@ -404,11 +404,11 @@ void Input_Conv::Convert(void)
 	td_dr2 = INPUT.td_dr2;
 	td_dt = INPUT.td_dt;
 	td_force_dt = INPUT.td_force_dt;
-	val_elec_01 = INPUT.val_elec_01;
-	val_elec_02 = INPUT.val_elec_02;
-	val_elec_03 = INPUT.val_elec_03;
-	vext = INPUT.vext;
-	vext_dire = INPUT.vext_dire;	
+	td_val_elec_01 = INPUT.td_val_elec_01;
+	td_val_elec_02 = INPUT.td_val_elec_02;
+	td_val_elec_03 = INPUT.td_val_elec_03;
+	td_vext = INPUT.td_vext;
+	td_vext_dire = INPUT.td_vext_dire;	
 
 
 	// jiyy add 2020.10.11	

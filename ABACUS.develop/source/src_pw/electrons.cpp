@@ -339,7 +339,7 @@ void Electrons::self_consistent(const int &istep)
             //DONE(ofs_running,"write wave functions into file WAVEFUNC.dat");
         }
 
-        if(vext == 0) 
+        if(td_vext == 0) 
 		{
 			pot.set_vr_eff();
 		}

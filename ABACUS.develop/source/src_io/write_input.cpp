@@ -276,14 +276,14 @@ void Input::Print(const string &fn)const
 	OUTP(ofs,"td_dr2",td_dr2,"threshold for electronic iteration of tddft");
 	OUTP(ofs,"td_dt",td_dt,"time of ion step");
 	OUTP(ofs,"td_force_dt",td_force_dt,"time of force change");
-	OUTP(ofs,"val_elec_01",val_elec_01,"val_elec_01");
-	OUTP(ofs,"val_elec_02",val_elec_02,"val_elec_02");
-	OUTP(ofs,"val_elec_03",val_elec_03,"val_elec_03");
-	OUTP(ofs,"vext",vext,"add extern potential or not");
-	OUTP(ofs,"vext_dire",vext_dire,"extern potential direction");
-	OUTP(ofs,"timescale",timescale,"extern potential timescale");
-	OUTP(ofs,"vexttype",vexttype,"extern potential type");
-	OUTP(ofs,"vextout",vextout,"output extern potential or not");
+	OUTP(ofs,"td_val_elec_01",td_val_elec_01,"td_val_elec_01");
+	OUTP(ofs,"td_val_elec_02",td_val_elec_02,"td_val_elec_02");
+	OUTP(ofs,"td_val_elec_03",td_val_elec_03,"td_val_elec_03");
+	OUTP(ofs,"td_vext",td_vext,"add extern potential or not");
+	OUTP(ofs,"td_vext_dire",td_vext_dire,"extern potential direction");
+	OUTP(ofs,"td_timescale",td_timescale,"extern potential td_timescale");
+	OUTP(ofs,"td_vexttype",td_vexttype,"extern potential type");
+	OUTP(ofs,"td_vextout",td_vextout,"output extern potential or not");
 	OUTP(ofs,"td_dipoleout",td_dipoleout,"output dipole or not");
 	
 	ofs << "\n#Parameters (18.berry_wannier)" << endl;

@@ -438,15 +438,15 @@ void Input::Default(void)
 	td_dr2 = 1e-9;
 	td_dt = 0.02;
 	td_force_dt = 0.02;
-	val_elec_01=1;
-	val_elec_02=1;
-	val_elec_03=1;
-	vext=0;
-	vext_dire=1;
+	td_val_elec_01=1;
+	td_val_elec_02=1;
+	td_val_elec_03=1;
+	td_vext=0;
+	td_vext_dire=1;
 	
-	timescale = 0.5;
-	vexttype = 1;
-	vextout = 0;
+	td_timescale = 0.5;
+	td_vexttype = 1;
+	td_vextout = 0;
 	td_dipoleout =0;
 
 	
@@ -1229,37 +1229,37 @@ bool Input::Read(const string &fn)
 		{
 			read_value(ifs,td_force_dt );
 		}
-		else if (strcmp("val_elec_01", word) == 0)
+		else if (strcmp("td_val_elec_01", word) == 0)
 		{
-			read_value(ifs, val_elec_01);
+			read_value(ifs, td_val_elec_01);
 		}
-		else if (strcmp("val_elec_02", word) == 0)
+		else if (strcmp("td_val_elec_02", word) == 0)
 		{
-			read_value(ifs,val_elec_02 );
+			read_value(ifs,td_val_elec_02 );
 		}
-		else if (strcmp("val_elec_03", word) == 0)
+		else if (strcmp("td_val_elec_03", word) == 0)
 		{
-			read_value(ifs,val_elec_03 );
+			read_value(ifs,td_val_elec_03 );
 		}
-		else if (strcmp("vext", word) == 0)
+		else if (strcmp("td_vext", word) == 0)
 		{
-			read_value(ifs,vext );
+			read_value(ifs,td_vext );
 		}
-		else if (strcmp("vext_dire", word) == 0)
+		else if (strcmp("td_vext_dire", word) == 0)
 		{
-			read_value(ifs,vext_dire );
+			read_value(ifs,td_vext_dire );
 		}
-		else if (strcmp("timescale", word) == 0)
+		else if (strcmp("td_timescale", word) == 0)
 		{
-			read_value(ifs,timescale );
+			read_value(ifs,td_timescale );
 		}
-		else if (strcmp("vexttype", word) == 0)
+		else if (strcmp("td_vexttype", word) == 0)
 		{
-			read_value(ifs,vexttype );
+			read_value(ifs,td_vexttype );
 		}
-		else if (strcmp("vextout", word) == 0)
+		else if (strcmp("td_vextout", word) == 0)
 		{
-			read_value(ifs,vextout );
+			read_value(ifs,td_vextout );
 		}
 		else if (strcmp("td_dipoleout", word) == 0)
 		{
@@ -2174,17 +2174,17 @@ void Input::Bcast()
 	Parallel_Common::bcast_int( vdw_period.z );
 	// Fuxiang He add 2016-10-26
 	Parallel_Common::bcast_int(tddft);
-	Parallel_Common::bcast_int(val_elec_01);
-	Parallel_Common::bcast_int(val_elec_02);
-	Parallel_Common::bcast_int(val_elec_03);
+	Parallel_Common::bcast_int(td_val_elec_01);
+	Parallel_Common::bcast_int(td_val_elec_02);
+	Parallel_Common::bcast_int(td_val_elec_03);
 	Parallel_Common::bcast_double(td_dr2);
 	Parallel_Common::bcast_double(td_dt);
 	Parallel_Common::bcast_double(td_force_dt);
-	Parallel_Common::bcast_int(vext);
-	Parallel_Common::bcast_int(vext_dire);
-	Parallel_Common::bcast_double(timescale);
-	Parallel_Common::bcast_int(vexttype);
-	Parallel_Common::bcast_int(vextout);
+	Parallel_Common::bcast_int(td_vext);
+	Parallel_Common::bcast_int(td_vext_dire);
+	Parallel_Common::bcast_double(td_timescale);
+	Parallel_Common::bcast_int(td_vexttype);
+	Parallel_Common::bcast_int(td_vextout);
 	Parallel_Common::bcast_int(td_dipoleout);
     // pengfei Li add 2016-11-23
     //Parallel_Common::bcast_bool( epsilon );

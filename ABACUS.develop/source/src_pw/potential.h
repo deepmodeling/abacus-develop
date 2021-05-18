@@ -71,9 +71,9 @@ class Potential
 	)const;
 
 	// TDDFT related, fuxiang add
-    double *vext;
+    double *td_vext;
 
-    double *vextold;
+    double *td_vextold;
 
     void set_vrs_tddft(const int istep);
 

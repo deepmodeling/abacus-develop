@@ -191,7 +191,7 @@ void ELEC_scf::scf(const int &istep)
 				// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 				pot.vr = pot.v_of_rho(CHR.rho, CHR.rho_core);
 				en.delta_escf();
-				if (vext == 0)	
+				if (td_vext == 0)	
 				{
 					pot.set_vr_eff();
 				}
@@ -473,7 +473,7 @@ void ELEC_scf::scf(const int &istep)
 		}
 
 		// (10) add Vloc to Vhxc.
-		if(vext == 0)	
+		if(td_vext == 0)	
 		{
 			pot.set_vr_eff();
 		}

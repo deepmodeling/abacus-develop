@@ -255,7 +255,7 @@ void Stochastic_Elec::scf_stochastic(const int &istep)
         
 		
 
-		if(vext == 0) 
+		if(td_vext == 0) 
 		{
 			pot.set_vr_eff();
 		}

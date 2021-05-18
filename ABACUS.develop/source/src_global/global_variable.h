@@ -88,11 +88,11 @@ extern int tddft;	//fuxiang add 2016-10-27
 extern double td_dr2;
 extern double td_dt;
 extern double td_force_dt;
-extern int val_elec_01;
-extern int val_elec_02;
-extern int val_elec_03;
-extern int vext;
-extern int vext_dire;
+extern int td_val_elec_01;
+extern int td_val_elec_02;
+extern int td_val_elec_03;
+extern int td_vext;
+extern int td_vext_dire;
 
 extern int ocp;
 //extern int ocp_n;

@@ -374,14 +374,14 @@ class Input
 	double td_dr2;			//threshold for electronic iteration of tddft
 	double td_dt;			//"fs"
 	double td_force_dt;			//"fs"
-	int val_elec_01;			//valence electron 01
-	int val_elec_02;			//valence electron 02
-	int val_elec_03;			//valence electron 03
-	int vext;			//add extern potential or not
-	int vext_dire;			//vext direction
-	double timescale;			//"fs"
-	int vexttype;
-	int vextout; 			// output the electronic potential or not
+	int td_val_elec_01;			//valence electron 01
+	int td_val_elec_02;			//valence electron 02
+	int td_val_elec_03;			//valence electron 03
+	int td_vext;			//add extern potential or not
+	int td_vext_dire;			//td_vext direction
+	double td_timescale;			//"fs"
+	int td_vexttype;
+	int td_vextout; 			// output the electronic potential or not
 	int td_dipoleout;			// output the dipole or not
 
 	
