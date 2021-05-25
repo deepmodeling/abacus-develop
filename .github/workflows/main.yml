@@ -1,0 +1,14 @@
+on: [push]
+
+jobs:
+  main:
+    env:
+      ITK: ghcr.io/tansongchen/itk
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - run: echo ${{ secrets.PAT }} | docker login ghcr.io -u tansongchen --password-stdin
+      - run: docker pull ${{ env.ITK }}
+      - run: docker build . -t ${{ env.ITK }} --cache-from=${{ env.ITK }}
+      - run: docker run -v $GITHUB_WORKSPACE:/code -w /code ${{ env.ITK }} bash entrypoint.sh
+      - run: docker push ${{ env.ITK }}
