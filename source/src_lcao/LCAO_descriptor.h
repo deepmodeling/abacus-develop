@@ -20,14 +20,19 @@ public:
 
 	// cal d: EIGENVALUE of pdm in block of I_n_l
     void cal_descriptor(void);
-    void print_descriptor(void);
+	void print_descriptor(void);
+
+	//deepks V_delta, to be added to Hamiltonian matrix
+	double* H_V_delta;
+	//deepks F_delta, to be added to atom force
+	matrix	F_delta;
 
 private:
 
 	// overlap between lcao and descriptor basis
-	double** S_mu_alpha;	//[Alpha.totnchi][NLOCAL*(2*lmax+1)]	caoyu modified 2021-05-07
+	double** S_mu_alpha;	//[tot_Inl][NLOCAL][2l+1]	caoyu modified 2021-05-07
 
-	//d(S) for f_delta:	<\psi_mu|d\alpha^I_nlm> , [Inl][NLOCAL*(2l+1)]
+	//d(S) for f_delta:	<\psi_mu|d\alpha^I_nlm> , [tot_Inl][NLOCAL][2l+1]
 	double** DS_mu_alpha_x;
 	double** DS_mu_alpha_y;
 	double** DS_mu_alpha_z;
@@ -36,10 +41,13 @@ private:
 	double** pdm;	//[2l+1][2l+1]	caoyu modified 2021-05-07
 	
 	//gdmx: dD/dX		\sum_{mu,nu} 4*c_mu*c_nu * <dpsi_mu/dx|alpha_m><alpha_m'|psi_nu>
-	double*** gdmx;	//[natom][Inl][2l+1][2l+1]	
+	double*** gdmx;	//[natom][tot_Inl][2l+1][2l+1]	
 	double*** gdmy;
 	double*** gdmz;
 
+	//dE/dD, autograd from loaded model
+	double** gedm;	//[tot_Inl][2l+1][2l+1]	
+	
 	// descriptors
     double *d;
 
