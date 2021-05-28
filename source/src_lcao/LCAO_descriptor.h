@@ -27,7 +27,7 @@ private:
 	// overlap between lcao and descriptor basis
 	double** S_mu_alpha;	//[Alpha.totnchi][NLOCAL*(2*lmax+1)]	caoyu modified 2021-05-07
 
-	//d(S) for f_delta
+	//d(S) for f_delta:	<\psi_mu|d\alpha^I_nlm> , [Inl][NLOCAL*(2l+1)]
 	double** DS_mu_alpha_x;
 	double** DS_mu_alpha_y;
 	double** DS_mu_alpha_z;
@@ -36,9 +36,9 @@ private:
 	double** pdm;	//[2l+1][2l+1]	caoyu modified 2021-05-07
 	
 	//gdmx: dD/dX		\sum_{mu,nu} 4*c_mu*c_nu * <dpsi_mu/dx|alpha_m><alpha_m'|psi_nu>
-	double** gdmx;	//[2l+1][2l+1]	
-	double** gdmy;
-	double** gdmz;
+	double*** gdmx;	//[natom][Inl][2l+1][2l+1]	
+	double*** gdmy;
+	double*** gdmz;
 
 	// descriptors
     double *d;
@@ -53,11 +53,12 @@ private:
 	const int inlmax;
 
 	IntArray* mu_index;
+	IntArray* alpha_index;
 	IntArray* inl_index;	//caoyu add 2021-05-07
-	int* inl_ld;	//inl_ld[inl_index] = l_descriptor
+	int* inl_l;	//inl_l[inl_index] = l of descriptor with inl_index
 
-    void init_mu_index(void);
-    
+	void init_index(void);	// index of descriptor in all atoms
+
 	void set_S_mu_alpha(
 		const int &iw1_all, 
 		const int& inl,
@@ -80,14 +81,14 @@ private:
 	const double& vy,
 	const double& vz);
 
-	void cal_gdmx();	//dD/dX
 	void init_gdmx();
+	void cal_gdmx(matrix& dm2d);	//dD/dX
 	void del_gdmx();
 	
 	void getdm(double* dm);
 
 	void cal_v_delta();	//pytorch term remaining!
-	void cal_f_delta();	//pytorch term remaining!
+	void cal_f_delta(matrix& dm2d);	//pytorch term remaining!
 	
 };
 
