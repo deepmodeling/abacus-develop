@@ -15,7 +15,8 @@ LCAO_Descriptor::LCAO_Descriptor(int lm, int inlm):lmaxd(lm), inlmax(inlm)
     inl_index = new IntArray[1];
     inl_l = new int[1];
     d = new double[1];
-    
+    H_V_delta = new double[1];
+
     //init S_mu_alpha**
     this->S_mu_alpha = new double* [this->inlmax];    //inl
     for (int inl = 0;inl < this->inlmax;inl++)
@@ -40,6 +41,7 @@ LCAO_Descriptor::~LCAO_Descriptor()
     delete[] inl_index;
     delete[] inl_l;
     delete[] d;
+    delete[] H_V_delta;
 
     //delete S_mu_alpha**
     for (int inl = 0;inl < this->inlmax;inl++)
@@ -563,30 +565,43 @@ void LCAO_Descriptor::del_gdmx()
 
 void LCAO_Descriptor::cal_v_delta()
 {
-    //1. dE/dD  
-
     
-    //2. <psi_mu|alpha_m><psi_nv|alpha_m'>
-    double* tmp_pp = new double[(2 * lmaxd + 1) * (2 * lmaxd + 1)];
-    ZEROS(tmp_pp, (2 * lmaxd + 1) * (2 * lmaxd + 1));
+    double* tmp_v1 = new double[(2 * lmaxd + 1) *NLOCAL];
+    ZEROS(tmp_v1, (2 * lmaxd + 1) * NLOCAL);
+    double* tmp_v2 = new double[NLOCAL *NLOCAL];
+    ZEROS(tmp_v2, NLOCAL * NLOCAL);
+    //init H_V_delta
+    delete[] this->H_V_delta;
+    this->H_V_delta = new double[NLOCAL * NLOCAL];
+
     for (int inl = 0;inl < inlmax;inl++)
-    {   
+    {
+        //1.  (dE/dD)<alpha_m'|psi_nv>
         int nm = 2 * inl_l[inl] + 1;   //1,3,5,...
         const char t = 'T';  //transpose
         const char nt = 'N'; //non transpose
         const double alpha = 1;
         const double beta = 0;
-        double* a = this->S_mu_alpha[inl];
-        double* b = a;
-        double* c = tmp_pp;
-        dgemm_(&t, &nt, &nm, &nm, &NLOCAL, &alpha, a, &NLOCAL, b, &NLOCAL, &beta, c, &nm);
+        double* a = this->gedm[inl];//[nm][nm]
+        double* b = S_mu_alpha[inl];//[NLOCAL][nm]--trans->[nm][NLOCAL]
+        double* c = tmp_v1;
+        dgemm_(&nt, &t, &nm, &NLOCAL, &nm, &alpha, a, &nm, b, &nm, &beta, c, &nm);
 
+        //2. <psi_mu|alpha_m>*(dE/dD)*<alpha_m'|psi_nv>
+        a = b; //[NLOCAL][nm]
+        b = c;//[nm][NLOCAL]
+        c = tmp_v2;//[NLOCAL][NLOCAL]
+        dgemm_(&nt, &nt, &NLOCAL, &NLOCAL, &nm, &alpha, a, &NLOCAL, b, &nm, &beta, c, &NLOCAL);
+
+        //3. sum of Inl
+        for (int i = 0;i < NLOCAL * NLOCAL;++i)
+        {
+            this->H_V_delta[i] += c[i];
+        }
     }
-
-        
-    //3. output
-
-    delete[] tmp_pp;
+    delete[] tmp_v1;
+    delete[] tmp_v2;
+    return;
 }
 
 void LCAO_Descriptor::cal_f_delta(matrix& dm2d)
