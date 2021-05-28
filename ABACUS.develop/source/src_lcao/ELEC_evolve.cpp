@@ -277,8 +277,8 @@ void ELEC_evolve::using_LAPACK_complex(const int &ik, complex<double>** c, compl
 		}	
 	}
 
-//	delete[] work;
-//	delete[] ipiv;
+	delete[] work;
+	delete[] ipiv;
 
 	return;
 }
