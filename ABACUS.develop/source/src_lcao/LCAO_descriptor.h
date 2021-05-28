@@ -61,7 +61,6 @@ private:
 
 	const int inlmax;
 
-	IntArray* mu_index;
 	IntArray* alpha_index;
 	IntArray* inl_index;	//caoyu add 2021-05-07
 	int* inl_l;	//inl_l[inl_index] = l of descriptor with inl_index
