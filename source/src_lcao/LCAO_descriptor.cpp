@@ -11,11 +11,11 @@
 LCAO_Descriptor::LCAO_Descriptor(int lm, int inlm):lmaxd(lm), inlmax(inlm)
 {
     alpha_index = new IntArray[1];
-    mu_index = new IntArray[1];
     inl_index = new IntArray[1];
     inl_l = new int[1];
     d = new double[1];
     H_V_delta = new double[1];
+    F_delta.create(ucell.nat, 3);
 
     //init S_mu_alpha**
     this->S_mu_alpha = new double* [this->inlmax];    //inl
@@ -37,7 +37,6 @@ LCAO_Descriptor::LCAO_Descriptor(int lm, int inlm):lmaxd(lm), inlmax(inlm)
 LCAO_Descriptor::~LCAO_Descriptor()
 {
     delete[] alpha_index;
-    delete[] mu_index;
     delete[] inl_index;
     delete[] inl_l;
     delete[] d;
@@ -297,13 +296,9 @@ void LCAO_Descriptor::cal_descriptor()
 
 void LCAO_Descriptor::init_index(void)
 {
-    ofs_running << " Initialize the mu index for deepks (lcao line)" << endl;
-    const int lmax = ORB.get_lmax();
-    const int nmax = ORB.get_nchimax();
+    ofs_running << " Initialize the descriptor index for deepks (lcao line)" << endl;
     const int lmaxd = ORB.get_lmax_d();
     const int nmaxd = ORB.get_nchimax_d();
-    assert(lmax >= 0);
-    assert(nmax >= 0);
     assert(lmaxd >= 0);
     assert(nmaxd >= 0);
     ofs_running << " lmax of descriptor = " << lmaxd << endl;
@@ -316,10 +311,7 @@ void LCAO_Descriptor::init_index(void)
     delete[] this->inl_l;
     this->inl_l = new int[inlmax];
     ZEROS(inl_l, inlmax);
-    delete[] this->mu_index;
-    this->mu_index = new IntArray[ucell.ntype];
 
-    int mu = 0;
     int inl = 0;
     int alpha = 0;
     for (int it = 0; it < ucell.ntype; it++)
@@ -335,11 +327,6 @@ void LCAO_Descriptor::init_index(void)
             lmaxd + 1,
             nmaxd); 
 
-        this->mu_index[it].create(
-            ucell.atoms[it].na,
-            lmax + 1, // l starts from 0
-            nmax,
-            2 * lmax + 1);
         ofs_running << "Type " << it + 1
                     << " number_of_atoms " << ucell.atoms[it].na << endl;
 
@@ -360,23 +347,10 @@ void LCAO_Descriptor::init_index(void)
                     inl++;
                 }
             }
-            //mu
-            for (int l = 0; l < lmax + 1; l++)
-            {
-                for (int n = 0; n < ORB.Phi[it].getNchi(l); n++)
-                {
-                    for (int m = 0; m < 2 * l + 1; m++)
-                    {
-                        this->mu_index[it](ia, l, n, m) = mu;
-                        mu++;
-                    }
-                }
-            }
         }//end ia
     }//end it
     assert(this->n_descriptor == alpha);
     assert(ucell.nat * ORB.Alpha[0].getTotal_nchi() == inl);
-    assert(NLOCAL == mu);
     ofs_running << "descriptors_per_atom " << this->des_per_atom << endl;
     ofs_running << "total_descriptors " << this->n_descriptor << endl;
 
@@ -470,56 +444,45 @@ void LCAO_Descriptor::cal_gdmx(matrix &dm2d)
     double** dsx = this->DS_mu_alpha_x;
     double** dsy = this->DS_mu_alpha_y;
     double** dsz = this->DS_mu_alpha_z;
-
-    int iat = 0;    //index of atom whose force is calculated
-    for (int it = 0;it < ucell.ntype;++it)
+    for (int inl = 0;inl < inlmax;inl++)
     {
-        for (int ia = 0;it < ucell.atoms[it].na;++ia)
+        //dE/dD will be multiplied in cal_f_delta, here only calculate dD/dx_I
+        int nm = 2 * inl_l[inl] + 1;   //1,3,5,...
+        for (int i =0; i < NLOCAL;++i) 
         {
-            int mu_iat_start = mu_index[it](ia, 0, 0);
-            int mu_iat_num = ORB.Phi[it].getTotal_nchi();//n_orbitals of atom iat
-    
-            for (int inl = 0;inl < inlmax;inl++)
+            const int iat = ucell.iwt2iat[i];//the atom whose force being calculated
+            for (int j= 0;j < NLOCAL; ++j)
             {
-                //dE/dD will be multiplied in cal_f_delta, here only calculate dD/dx_I
-                int nm = 2 * inl_l[inl] + 1;   //1,3,5,...
-                for (int mu_iat = mu_iat_start;mu_iat < mu_iat_start + mu_iat_num;++mu_iat)
+                const int mu = ParaO.trace_loc_row[j];
+                const int nu = ParaO.trace_loc_col[i];
+                if (mu >= 0 && nu >= 0)
                 {
-                    for (int nu = 0;nu < NLOCAL;nu++)
+                    const int dm_index = mu * ParaO.ncol + nu;
+                    for (int m1 = 0;m1 < nm;++m1)
                     {
-                        const int ir = ParaO.trace_loc_row[nu];
-                        const int ic = ParaO.trace_loc_col[mu_iat];
-                        if (ir >= 0 && ic >= 0)
+                        for (int m2 = 0;m2 < nm;++m2)
                         {
-                            const int dm_index = ir * ParaO.ncol + ic;
-                            for (int m1 = 0;m1 < nm;m1++)
+                            for (int is = 0;is < NSPIN;++is)
                             {
-                                for (int m2 = 0;m2 < nm;m2++)
+                                if (KS_SOLVER == "genelpa" || KS_SOLVER == "scalapack_gvx") // save the matrix as column major format
                                 {
-                                    for (int is = 0;is < NSPIN;is++)
-                                    {
-                                        if (KS_SOLVER == "genelpa" || KS_SOLVER == "scalapack_gvx") // save the matrix as column major format
-                                        {
-                                            gdmx[iat][inl][m1 * nm + m2] += 4 * dsx[inl][m1 * NLOCAL + mu_iat] * dm2d(is, dm_index) * ss[inl][m2 * NLOCAL + nu];
-                                            gdmy[iat][inl][m1 * nm + m2] += 4 * dsy[inl][m1 * NLOCAL + mu_iat] * dm2d(is, dm_index) * ss[inl][m2 * NLOCAL + nu];
-                                            gdmz[iat][inl][m1 * nm + m2] += 4 * dsz[inl][m1 * NLOCAL + mu_iat] * dm2d(is, dm_index) * ss[inl][m2 * NLOCAL + nu];
-                                        }
-                                        else
-                                        {
-                                            gdmx[iat][inl][m1 * nm + m2] += 4 * dsx[inl][mu_iat * nm + m1] * dm2d(is, dm_index) * ss[inl][nu * nm + m2];
-                                            gdmy[iat][inl][m1 * nm + m2] += 4 * dsy[inl][mu_iat * nm + m1] * dm2d(is, dm_index) * ss[inl][nu * nm + m2];
-                                            gdmz[iat][inl][m1 * nm + m2] += 4 * dsz[inl][mu_iat * nm + m1] * dm2d(is, dm_index) * ss[inl][nu * nm + m2];
-                                        }
-                                    }
-                                }//end m2
-                            } //end m1
-                        }//end if
-                    }//end nu
-                }//end mu_iat
-                ++iat;
-            }//end inl
-        }//end ia
-    }//end it;
+                                    gdmx[iat][inl][m1 * nm + m2] += 4 * dsx[inl][m1 * NLOCAL + mu] * dm2d(is, dm_index) * ss[inl][m2 * NLOCAL + nu];
+                                    gdmy[iat][inl][m1 * nm + m2] += 4 * dsy[inl][m1 * NLOCAL + mu] * dm2d(is, dm_index) * ss[inl][m2 * NLOCAL + nu];
+                                    gdmz[iat][inl][m1 * nm + m2] += 4 * dsz[inl][m1 * NLOCAL + mu] * dm2d(is, dm_index) * ss[inl][m2 * NLOCAL + nu];
+                                }
+                                else
+                                {
+                                    gdmx[iat][inl][m1 * nm + m2] += 4 * dsx[inl][mu * nm + m1] * dm2d(is, dm_index) * ss[inl][nu * nm + m2];
+                                    gdmy[iat][inl][m1 * nm + m2] += 4 * dsy[inl][mu * nm + m1] * dm2d(is, dm_index) * ss[inl][nu * nm + m2];
+                                    gdmz[iat][inl][m1 * nm + m2] += 4 * dsz[inl][mu * nm + m1] * dm2d(is, dm_index) * ss[inl][nu * nm + m2];
+                                }
+                            }
+                        }//end m2
+                    } //end m1
+                }//end if
+            }//end nu
+        }//end mu
+    }//end inl
     return;
 }
 
@@ -606,16 +569,38 @@ void LCAO_Descriptor::cal_v_delta()
 
 void LCAO_Descriptor::cal_f_delta(matrix& dm2d)
 {
-    //1. dE/dD  
+    int iat = 0;    //check if the index same as ucell.iw2iat or not !!
+    for (int it = 0;it < ucell.ntype;++it)
+    {
+        for (int ia = 0;ia < ucell.atoms[it].na;++ia)
+        {
+            for (int inl = 0;inl < inlmax;++inl)
+            {
+                int nm = 2 * inl_l[inl] + 1;
+                
+                //1. cal gdmx
+                this->init_gdmx();
+                this->cal_gdmx(dm2d);
+                
+                //2.multiply and sum for each atom
+                // \sum_{Inl}\sum_{mm'} <gedm, gdmx>_{mm'}
+                //notice: sum of multiplied corresponding element(mm') , not matrix multiplication !
+                for (int m1 = 0;m1 < nm;++m1)
+                {
+                    for (int m2 = 0; m2 < nm;++m2)
+                    {
+                        this->F_delta(iat, 1) += gedm[inl][m1 * nm + m2] * gdmx[iat][inl][m1 * nm + m2];
+                        this->F_delta(iat, 2) += gedm[inl][m1 * nm + m2] * gdmy[iat][inl][m1 * nm + m2];
+                        this->F_delta(iat, 3) += gedm[inl][m1 * nm + m2] * gdmz[iat][inl][m1 * nm + m2];
+                    }
+                }
+                
+            }//end inl
+            ++iat;
+        }//end ia
+    }//end it
 
-    
-    //2. gdvx
-    this->init_gdmx();
-    this->cal_gdmx(dm2d);
-
-    //3.multiply and sum for each atom
-
-    //4.output
 
     this->del_gdmx();
+    return;
 }
