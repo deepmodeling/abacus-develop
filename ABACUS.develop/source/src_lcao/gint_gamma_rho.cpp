@@ -112,8 +112,7 @@ void Gint_Gamma::cal_band_rho(
 	const int*const colidx,
 	const int*const*const cal_flag, 
 	const double*const*const psir_ylm, 
-	double*const*const psir_DM, 
-	double*const psir_DM_pool, 
+	double*const*const psir_DM,
 	const int*const vindex)
 {
 
@@ -125,7 +124,6 @@ void Gint_Gamma::cal_band_rho(
 
     for(int is=0; is<NSPIN; ++is)
     {
-        ZEROS(psir_DM_pool, pw.bxyz*LD_pool);
 
         for (int ia1=0; ia1<na_grid; ++ia1)
         {
@@ -278,28 +276,7 @@ double Gint_Gamma::gamma_charge(void)					// Peize Lin update OpenMP 2020.09.28
 #ifdef __OPENMP
 		#pragma omp parallel
 #endif
-		{		
-			// set up band matrix psir_ylm and psir_DM
-			const int LD_pool=max_size*ucell.nwmax;
-
-			double *psir_ylm_pool=new double[pw.bxyz*LD_pool];
-			ZEROS(psir_ylm_pool, pw.bxyz*LD_pool);
-			
-			double **psir_ylm=new double *[pw.bxyz];
-			for(int i=0; i<pw.bxyz; ++i)
-			{
-				psir_ylm[i] = &psir_ylm_pool[i*LD_pool];
-			}
-
-			double *psir_DM_pool=new double[pw.bxyz*LD_pool];
-			ZEROS(psir_DM_pool, pw.bxyz*LD_pool);
-
-			double **psir_DM=new double *[pw.bxyz];
-			for(int i=0; i<pw.bxyz; ++i)
-			{
-				psir_DM[i] = &psir_DM_pool[i*LD_pool];
-			}
-
+		{
 			int **cal_flag=new int*[pw.bxyz];
 			for(int i=0; i<pw.bxyz; ++i)
 			{
@@ -349,13 +326,19 @@ double Gint_Gamma::gamma_charge(void)					// Peize Lin update OpenMP 2020.09.28
 						int *block_iw = get_block_iw(na_grid, grid_index, this->max_size);
 
 						int* block_index = get_colidx(na_grid, grid_index);
+
+						// set up band matrix psir_ylm and psir_DM
+						const int LD_pool=max_size*ucell.nwmax;
+						Array_Pool psir_ylm(pw.bxyz, LD_pool);
+						Array_Pool psir_DM(pw.bxyz, LD_pool);
+						ZEROS(psir_DM.ptr_1D, pw.bxyz*LD_pool);
 						
 						this->cal_psir_ylm_rho(na_grid, grid_index, delta_r,
 								block_index, block_size, 
-								cal_flag, psir_ylm);
+								cal_flag, psir_ylm.ptr_2D);
 						
 						this->cal_band_rho(na_grid, LD_pool, block_iw, block_size, block_index,
-								cal_flag, psir_ylm, psir_DM, psir_DM_pool, vindex);
+								cal_flag, psir_ylm.ptr_2D, psir_DM.ptr_2D, vindex);
 
 						free(vindex);			vindex=nullptr;
 						free(block_size);		block_size=nullptr;
@@ -370,10 +353,6 @@ double Gint_Gamma::gamma_charge(void)					// Peize Lin update OpenMP 2020.09.28
 				delete[] cal_flag[i];
 			}
 			delete[] cal_flag;
-			delete[] psir_DM;
-			delete[] psir_DM_pool;
-			delete[] psir_ylm;
-			delete[] psir_ylm_pool;
 		} // end of #pragma omp parallel
 		
         for(int is=0; is<NSPIN; is++)

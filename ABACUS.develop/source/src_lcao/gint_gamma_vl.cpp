@@ -9,6 +9,8 @@
 #include "../src_global/ylm.h"
 //#include <vector>
 
+#include "src_external/src_test/icecream.hpp"
+
 extern "C"
 {
     void Cblacs_gridinfo(int icontxt, int* nprow, int *npcol, int *myprow, int *mypcol);
@@ -135,7 +137,6 @@ void Gint_Gamma::cal_meshball_vlocal(
 	const char transa='N', transb='T';
 	const double alpha=1, beta=1;
 
-	//int allnw=colidx[na_grid];
 	for(int ib=0; ib<pw.bxyz; ++ib)
 	{
         for(int ia=0; ia<na_grid; ++ia)
@@ -421,6 +422,7 @@ void Gint_Gamma::gamma_vlocal(void)						// Peize Lin update OpenMP 2020.09.27
         GridVlocal[i] = new double[GridT.lgd];
         ZEROS(GridVlocal[i], GridT.lgd);
     }
+			Memory::record("Gint_Gamma","GridVlocal",GridT.lgd*GridT.lgd,"double");
 
     const int mkl_threads = mkl_get_max_threads();
 	mkl_set_num_threads(std::max(1,mkl_threads/GridT.nbx));		// Peize Lin update 2021.01.20
@@ -448,37 +450,11 @@ void Gint_Gamma::gamma_vlocal(void)						// Peize Lin update OpenMP 2020.09.27
 			//------------------------------------------------------
 			// <phi | V_local | phi>
 			//------------------------------------------------------
-			double *GridVlocal_pool=new double [lgd_now*lgd_now];
-			ZEROS(GridVlocal_pool, lgd_now*lgd_now);
-
-			double **GridVlocal_thread=new double*[lgd_now];
-			for (int i=0; i<lgd_now; i++)
-			{
-				GridVlocal_thread[i]=&GridVlocal_pool[i*lgd_now];
-			}
-			Memory::record("Gint_Gamma","GridVlocal",lgd_now*lgd_now,"double");
+			Array_Pool GridVlocal_thread(lgd_now, lgd_now);
+			ZEROS(GridVlocal_thread.ptr_1D, lgd_now*lgd_now);
+			Memory::record("Gint_Gamma","GridVlocal_therad",lgd_now*lgd_now,"double");
 
 			const int LD_pool = max_size*ucell.nwmax;
-
-			double *psir_ylm_pool=new double[pw.bxyz*LD_pool];
-
-			//------------------------------------------------------
-			// atomic basis sets
-			//------------------------------------------------------
-			double **psir_ylm=new double *[pw.bxyz];
-			for(int i=0; i<pw.bxyz; i++)
-			{
-				psir_ylm[i]=&psir_ylm_pool[i*LD_pool];
-			}
-			ZEROS(psir_ylm_pool, pw.bxyz*LD_pool);
-
-			double *psir_vlbr3_pool=new double[pw.bxyz*LD_pool];
-			double **psir_vlbr3=new double *[pw.bxyz];
-			for(int i=0; i<pw.bxyz; i++)
-			{
-				psir_vlbr3[i]=&psir_vlbr3_pool[i*LD_pool];
-			}
-			ZEROS(psir_vlbr3_pool, pw.bxyz*LD_pool);
 
 			//------------------------------------------------------
 			// whether the atom-grid distance is larger than
@@ -531,18 +507,24 @@ void Gint_Gamma::gamma_vlocal(void)						// Peize Lin update OpenMP 2020.09.27
 						// band size: number of columns of a band
 						//------------------------------------------------------------------
 						int* bsize = get_bsize(na_grid, grid_index);
+
+						//------------------------------------------------------
+						// atomic basis sets
+						//------------------------------------------------------
+						Array_Pool psir_ylm(pw.bxyz, LD_pool);
+						Array_Pool psir_vlbr3(pw.bxyz, LD_pool);
 						
 						//------------------------------------------------------------------
 						// compute atomic basis phi(r) with both radial and angular parts
 						//------------------------------------------------------------------
 						cal_psir_ylm(na_grid, grid_index, delta_r, phi,
-						colidx, bsize,  psir_ylm, cal_flag);
+						colidx, bsize,  psir_ylm.ptr_2D, cal_flag);
 
 						//------------------------------------------------------------------
 						// calculate <phi_i|V|phi_j>
 						//------------------------------------------------------------------
 						cal_meshball_vlocal(na_grid, LD_pool, block_iw, bsize, colidx, cal_flag,
-						vldr3, psir_ylm, psir_vlbr3, lgd_now, GridVlocal_thread);
+						vldr3, psir_ylm.ptr_2D, psir_vlbr3.ptr_2D, lgd_now, GridVlocal_thread.ptr_2D);
 						
 						free(vldr3);		vldr3=nullptr;
 						free(block_iw);		block_iw=nullptr;
@@ -560,23 +542,16 @@ void Gint_Gamma::gamma_vlocal(void)						// Peize Lin update OpenMP 2020.09.27
 				{
 					for (int j=0; j<lgd_now; j++)
 					{
-						GridVlocal[i][j] += GridVlocal_thread[i][j];
+						GridVlocal[i][j] += GridVlocal_thread.ptr_2D[i][j];
 					}
 				}
 			}
-
-			delete[] GridVlocal_thread;
-			delete[] GridVlocal_pool;
 
 			for(int i=0; i<pw.bxyz; i++)
 			{
 				delete[] cal_flag[i];
 			}
 			delete[] cal_flag;
-			delete[] psir_vlbr3;
-			delete[] psir_vlbr3_pool;
-			delete[] psir_ylm;
-			delete[] psir_ylm_pool;
 		} // end of if(max_size>0 && lgd_now>0)
 	} // end of #pragma omp parallel
 

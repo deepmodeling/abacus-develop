@@ -107,7 +107,6 @@ class Gint_Gamma : public Grid_Base_Beta
 		const int*const*const cal_flag, 
 		const double*const*const psir_ylm, 
 		double*const*const psir_DM, 
-		double*const psir_DM_pool, 
 		const int*const vindex);
 
 	void cal_psir_ylm_rho(
@@ -142,6 +141,29 @@ class Gint_Gamma : public Grid_Base_Beta
 	static int* get_bsize(
 		const int na_grid,			// how many atoms on this (i,j,k) grid
 		const int grid_index);		// 1d index of FFT index (i,j,k)
+
+	class Array_Pool
+	{
+	public:
+		Array_Pool(const int nr_in, const int nc_in)
+			:nr(nr_in),
+			 nc(nc_in)
+		{
+			ptr_1D = (double*)malloc(nr_in*nc_in*sizeof(double));
+			ptr_2D = (double**)malloc(nr_in*sizeof(double*));
+			for (int ir=0; ir<nr; ++ir)
+				ptr_2D[ir] = &ptr_1D[ir*nc];
+		}
+		~Array_Pool()
+		{
+			free(ptr_2D);
+			free(ptr_1D);
+		}
+		double** ptr_2D;
+		double* ptr_1D;
+		int nr;
+		int nc;
+	};		
 };
 
 #endif
