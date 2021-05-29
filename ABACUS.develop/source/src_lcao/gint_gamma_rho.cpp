@@ -14,7 +14,7 @@ void Gint_Gamma::cal_psir_ylm_rho(
 	const double delta_r, // delta_r of uniform grid
 	const int*const block_index,
 	const int*const block_size, 
-	int*const*const cal_flag, 
+	bool*const*const cal_flag, 
 	double*const*const psir_ylm)
 {
 	for (int id=0; id<na_grid; id++)
@@ -52,12 +52,12 @@ void Gint_Gamma::cal_psir_ylm_rho(
 			double distance = std::sqrt(dr[0]*dr[0] + dr[1]*dr[1] + dr[2]*dr[2]);	// distance between atom and grid
 			if(distance > (ORB.Phi[it].getRcut()- 1.0e-15)) 
 			{
-				cal_flag[ib][id]=0;
+				cal_flag[ib][id]=false;
 				ZEROS(p, block_size[id]);
 			}
 			else
 			{
-				cal_flag[ib][id]=1;
+				cal_flag[ib][id]=true;
 				
 				std::vector<double> ylma;
 				//if(distance[id] > GridT.orbital_rmax) continue;
@@ -110,7 +110,7 @@ void Gint_Gamma::cal_band_rho(
 	const int*const block_iw, 
 	const int*const bsize, 
 	const int*const colidx,
-	const int*const*const cal_flag, 
+	const bool*const*const cal_flag, 
 	const double*const*const psir_ylm, 
 	double*const*const psir_DM,
 	const int*const vindex)
@@ -134,7 +134,7 @@ void Gint_Gamma::cal_band_rho(
             int first_ib=0, last_ib=0;
             for(int ib=0; ib<pw.bxyz; ++ib)
             {
-                if(cal_flag[ib][ia1]>0)
+                if(cal_flag[ib][ia1])
                 {
                     first_ib=ib;
                     break;
@@ -142,7 +142,7 @@ void Gint_Gamma::cal_band_rho(
             }
             for(int ib=pw.bxyz-1; ib>=0; --ib)
             {
-                if(cal_flag[ib][ia1]>0)
+                if(cal_flag[ib][ia1])
                 {
                     last_ib=ib+1;
                     break;
@@ -154,7 +154,7 @@ void Gint_Gamma::cal_band_rho(
             int cal_num=0;
             for(int ib=first_ib; ib<last_ib; ++ib)
             {
-                cal_num+=cal_flag[ib][ia1];
+                cal_num += cal_flag[ib][ia1];
             }
             // if enough cal_flag is nonzero
             if(cal_num>ib_length/4)
@@ -169,7 +169,7 @@ void Gint_Gamma::cal_band_rho(
                 // int k=1;
                 for(int ib=first_ib; ib<last_ib; ++ib)
                 {
-                    if(cal_flag[ib][ia1]>0)
+                    if(cal_flag[ib][ia1])
                     {
                         dsymv_(&uplo, &bsize[ia1],
                             &alpha_symm, &LOC.DM[is][iw1_lo][iw1_lo], &GridT.lgd,
@@ -185,7 +185,7 @@ void Gint_Gamma::cal_band_rho(
                 int first_ib=0, last_ib=0;
                 for(int ib=0; ib<pw.bxyz; ++ib)
                 {
-                    if(cal_flag[ib][ia1]>0 && cal_flag[ib][ia2]>0)
+                    if(cal_flag[ib][ia1] && cal_flag[ib][ia2])
                     {
                         first_ib=ib;
                         break;
@@ -193,7 +193,7 @@ void Gint_Gamma::cal_band_rho(
                 }
                 for(int ib=pw.bxyz-1; ib>=0; --ib)
                 {
-                    if(cal_flag[ib][ia1]>0 && cal_flag[ib][ia2]>0)
+                    if(cal_flag[ib][ia1] && cal_flag[ib][ia2])
                     {
                         last_ib=ib+1;
                         break;
@@ -205,7 +205,7 @@ void Gint_Gamma::cal_band_rho(
                 int cal_pair_num=0;
                 for(int ib=first_ib; ib<last_ib; ++ib)
                 {
-                    cal_pair_num+=cal_flag[ib][ia1]*cal_flag[ib][ia2];
+                    cal_pair_num += cal_flag[ib][ia1] && cal_flag[ib][ia2];
                 }
                 const int iw2_lo=block_iw[ia2];
                 if(cal_pair_num>ib_length/4)
@@ -219,7 +219,7 @@ void Gint_Gamma::cal_band_rho(
                 {
                     for(int ib=first_ib; ib<last_ib; ++ib)
                     {
-                        if(cal_flag[ib][ia1]>0 && cal_flag[ib][ia2]>0)
+                        if(cal_flag[ib][ia1] && cal_flag[ib][ia2])
                         {
                             dgemv_(&transa, &bsize[ia2], &bsize[ia1], 
                                 &alpha_gemm, &LOC.DM[is][iw1_lo][iw2_lo], &GridT.lgd,
@@ -277,10 +277,10 @@ double Gint_Gamma::gamma_charge(void)					// Peize Lin update OpenMP 2020.09.28
 		#pragma omp parallel
 #endif
 		{
-			int **cal_flag=new int*[pw.bxyz];
+			bool **cal_flag=new bool*[pw.bxyz];
 			for(int i=0; i<pw.bxyz; ++i)
 			{
-				cal_flag[i]=new int[max_size];
+				cal_flag[i]=new bool[max_size];
 			}
 		
 			const int nbx = GridT.nbx;

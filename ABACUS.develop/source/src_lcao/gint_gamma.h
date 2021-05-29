@@ -91,7 +91,7 @@ class Gint_Gamma : public Grid_Base_Beta
 		const int*const block_iw,
 		const int*const bsize,
 		const int*const colidx,
-		const int*const*const cal_flag,
+		const bool*const*const cal_flag,
 		const double*const vldr3,
 		const double*const*const psir_ylm,
 		double*const*const psir_vlbr3,
@@ -104,7 +104,7 @@ class Gint_Gamma : public Grid_Base_Beta
 		const int*const block_iw, 
 		const int*const bsize, 
 		const int*const colidx,
-		const int*const*const cal_flag, 
+		const bool*const*const cal_flag, 
 		const double*const*const psir_ylm, 
 		double*const*const psir_DM, 
 		const int*const vindex);
@@ -115,7 +115,7 @@ class Gint_Gamma : public Grid_Base_Beta
 		const double delta_r,
         const int*const block_index,
 		const int*const block_size, 
-        int*const*const cal_flag,
+        bool*const*const cal_flag,
 		double*const*const psir_ylm);
 	
 	// extract the local potentials.

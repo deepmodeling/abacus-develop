@@ -26,7 +26,7 @@ inline void cal_psir_ylm(
 	const int*const colidx,  // count total number of atomis orbitals
 	const int*const bsize,  // ??
 	double*const*const psir_ylm, // bxyz * LD_pool
-	int*const*const cal_flag) // whether the atom-grid distance is larger than cutoff
+	bool*const*const cal_flag) // whether the atom-grid distance is larger than cutoff
 {
     for (int id=0; id<na_grid; id++)
     {
@@ -67,12 +67,12 @@ inline void cal_psir_ylm(
             //if(distance[ib][id] > ORB.Phi[it].getRcut())
             if(distance > (ORB.Phi[it].getRcut()- 1.0e-15))
             {
-				cal_flag[ib][id]=0;
+				cal_flag[ib][id]=false;
                 ZEROS(p, bsize[id]);
             }
 			else
 			{
-				cal_flag[ib][id]=1;
+				cal_flag[ib][id]=true;
 
 				//if(distance[id] > GridT.orbital_rmax) continue;
 				//    Ylm::get_ylm_real(this->nnn[it], this->dr[id], ylma);
@@ -127,7 +127,7 @@ void Gint_Gamma::cal_meshball_vlocal(
 	const int*const block_iw,
 	const int*const bsize,
 	const int*const colidx,
-	const int*const*const cal_flag,
+	const bool*const*const cal_flag,
 	const double*const vldr3,
 	const double*const*const psir_ylm,
 	double*const*const psir_vlbr3,
@@ -141,7 +141,7 @@ void Gint_Gamma::cal_meshball_vlocal(
 	{
         for(int ia=0; ia<na_grid; ++ia)
         {
-            if(cal_flag[ib][ia]>0)
+            if(cal_flag[ib][ia])
             {
                 for(int i=colidx[ia]; i<colidx[ia+1]; ++i)
                 {
@@ -171,7 +171,7 @@ void Gint_Gamma::cal_meshball_vlocal(
                 int first_ib=0, last_ib=0;
                 for(int ib=0; ib<pw.bxyz; ++ib)
                 {
-                    if(cal_flag[ib][ia1]>0 && cal_flag[ib][ia2]>0)
+                    if(cal_flag[ib][ia1] && cal_flag[ib][ia2])
                     {
                         first_ib=ib;
                         break;
@@ -179,7 +179,7 @@ void Gint_Gamma::cal_meshball_vlocal(
                 }
                 for(int ib=pw.bxyz-1; ib>=0; --ib)
                 {
-                    if(cal_flag[ib][ia1]>0 && cal_flag[ib][ia2]>0)
+                    if(cal_flag[ib][ia1] && cal_flag[ib][ia2])
                     {
                         last_ib=ib+1;
                         break;
@@ -191,7 +191,7 @@ void Gint_Gamma::cal_meshball_vlocal(
                 int cal_pair_num=0;
                 for(int ib=first_ib; ib<last_ib; ++ib)
                 {
-                    cal_pair_num+=cal_flag[ib][ia1]*cal_flag[ib][ia2];
+                    cal_pair_num += cal_flag[ib][ia1] && cal_flag[ib][ia2];
                 }
 
                 int n=bsize[ia2];
@@ -207,7 +207,7 @@ void Gint_Gamma::cal_meshball_vlocal(
                 {
                     for(int ib=first_ib; ib<last_ib; ++ib)
                     {
-                        if(cal_flag[ib][ia1]>0 && cal_flag[ib][ia2]>0)
+                        if(cal_flag[ib][ia1] && cal_flag[ib][ia2])
                         {
                             int k=1;
                             dgemm_(&transa, &transb, &n, &m, &k, &alpha,
@@ -460,10 +460,10 @@ void Gint_Gamma::gamma_vlocal(void)						// Peize Lin update OpenMP 2020.09.27
 			// whether the atom-grid distance is larger than
 			// cutoff
 			//------------------------------------------------------
-			int **cal_flag=new int*[pw.bxyz];
+			bool **cal_flag=new bool*[pw.bxyz];
 			for(int i=0; i<pw.bxyz; i++)
 			{
-				cal_flag[i]=new int[max_size];
+				cal_flag[i]=new bool[max_size];
 			}
 
 #ifdef __OPENMP
