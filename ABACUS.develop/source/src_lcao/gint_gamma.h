@@ -97,6 +97,15 @@ class Gint_Gamma : public Grid_Base_Beta
 	// on regular FFT real space grid.
 	void gamma_force(void);
 
+	Array_Pool<double> cal_psir_ylm_vl(
+		const int na_grid,  // how many atoms on this (i,j,k) grid
+		const int LD_pool,
+		const int grid_index, // 1d index of FFT index (i,j,k)
+		const double delta_r, // delta_r of the uniform FFT grid
+		double phi, // radial wave functions
+		const int*const colidx,  // count total number of atomis orbitals
+		const int*const bsize,  // ??
+		const bool*const*const cal_flag);
 
 	void cal_meshball_vlocal(
 		const int na_grid,
@@ -123,7 +132,7 @@ class Gint_Gamma : public Grid_Base_Beta
 
 	Array_Pool<double> cal_psir_ylm_rho(
 		const int na_grid,
-		const int LD_Pool,
+		const int LD_pool,
 		const int grid_index,
 		const double delta_r,
         const int*const block_index,
