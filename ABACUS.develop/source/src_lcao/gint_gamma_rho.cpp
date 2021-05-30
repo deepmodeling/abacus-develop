@@ -8,15 +8,16 @@
 #include "global_fp.h" // mohan add 2021-01-30
 #include "../src_global/ylm.h"
 
-void Gint_Gamma::cal_psir_ylm_rho(
+Gint_Gamma::Array_Pool<double> Gint_Gamma::cal_psir_ylm_rho(
 	const int na_grid, // number of atoms on this grid 
+	const int LD_Pool,
 	const int grid_index,  
 	const double delta_r, // delta_r of uniform grid
 	const int*const block_index,
 	const int*const block_size, 
-	bool*const*const cal_flag, 
-	double*const*const psir_ylm)
+	const bool*const*const cal_flag)
 {
+	Array_Pool<double> psir_ylm(pw.bxyz, LD_Pool);
 	for (int id=0; id<na_grid; id++)
 	{
 		// there are two parameters we want to know here:
@@ -42,28 +43,24 @@ void Gint_Gamma::cal_psir_ylm_rho(
 
 		for(int ib=0; ib<pw.bxyz; ib++)
 		{
-			double *p=&psir_ylm[ib][block_index[id]];
-			// meshcell_pos: z is the fastest
-			const double dr[3] = {
-				GridT.meshcell_pos[ib][0] + mt[0],
-				GridT.meshcell_pos[ib][1] + mt[1],
-				GridT.meshcell_pos[ib][2] + mt[2]};	
-
-			double distance = std::sqrt(dr[0]*dr[0] + dr[1]*dr[1] + dr[2]*dr[2]);	// distance between atom and grid
-			if(distance > (ORB.Phi[it].getRcut()- 1.0e-15)) 
+			double *p=&psir_ylm.ptr_2D[ib][block_index[id]];
+			if(!cal_flag[ib][id]) 
 			{
-				cal_flag[ib][id]=false;
 				ZEROS(p, block_size[id]);
 			}
 			else
 			{
-				cal_flag[ib][id]=true;
-				
-				std::vector<double> ylma;
+				// meshcell_pos: z is the fastest
+				const double dr[3] = {
+					GridT.meshcell_pos[ib][0] + mt[0],
+					GridT.meshcell_pos[ib][1] + mt[1],
+					GridT.meshcell_pos[ib][2] + mt[2]};	
 				//if(distance[id] > GridT.orbital_rmax) continue;
-				//	Ylm::get_ylm_real(this->nnn[it], this->dr[id], ylma);
+				double distance = std::sqrt(dr[0]*dr[0] + dr[1]*dr[1] + dr[2]*dr[2]);	// distance between atom and grid
 				if (distance < 1.0E-9) distance += 1.0E-9;
 				
+				std::vector<double> ylma;
+				//	Ylm::get_ylm_real(this->nnn[it], this->dr[id], ylma);
 				Ylm::sph_harm (	ucell.atoms[it].nwl,
 						dr[0] / distance,
 						dr[1] / distance,
@@ -100,7 +97,7 @@ void Gint_Gamma::cal_psir_ylm_rho(
 			}// end distance<=(ORB.Phi[it].getRcut()-1.0e-15)
 		}// end ib
 	}// end id
-	return;
+	return psir_ylm;
 }
 
 // can be done by GPU
@@ -111,10 +108,11 @@ void Gint_Gamma::cal_band_rho(
 	const int*const bsize, 
 	const int*const colidx,
 	const bool*const*const cal_flag, 
-	const double*const*const psir_ylm, 
-	double*const*const psir_DM,
+	const double*const*const psir_ylm,
 	const int*const vindex)
 {
+	Array_Pool<double> psir_DM(pw.bxyz, LD_pool);
+	ZEROS(psir_DM.ptr_1D, pw.bxyz*LD_pool);
 
     //parameters for dsymm, dgemm and ddot
     constexpr char side='L', uplo='U';
@@ -162,7 +160,7 @@ void Gint_Gamma::cal_band_rho(
                 dsymm_(&side, &uplo, &bsize[ia1], &ib_length, 
                     &alpha_symm, &LOC.DM[is][iw1_lo][iw1_lo], &GridT.lgd, 
                     &psir_ylm[first_ib][colidx[ia1]], &LD_pool, 
-                    &beta, &psir_DM[first_ib][colidx[ia1]], &LD_pool);
+                    &beta, &psir_DM.ptr_2D[first_ib][colidx[ia1]], &LD_pool);
             }
             else
             {
@@ -174,7 +172,7 @@ void Gint_Gamma::cal_band_rho(
                         dsymv_(&uplo, &bsize[ia1],
                             &alpha_symm, &LOC.DM[is][iw1_lo][iw1_lo], &GridT.lgd,
                             &psir_ylm[ib][colidx[ia1]], &inc,
-                            &beta, &psir_DM[ib][colidx[ia1]], &inc);
+                            &beta, &psir_DM.ptr_2D[ib][colidx[ia1]], &inc);
                     }
                 }
             }
@@ -213,7 +211,7 @@ void Gint_Gamma::cal_band_rho(
                     dgemm_(&transa, &transb, &bsize[ia2], &ib_length, &bsize[ia1], 
                         &alpha_gemm, &LOC.DM[is][iw1_lo][iw2_lo], &GridT.lgd, 
                         &psir_ylm[first_ib][colidx[ia1]], &LD_pool, 
-                        &beta, &psir_DM[first_ib][colidx[ia2]], &LD_pool);
+                        &beta, &psir_DM.ptr_2D[first_ib][colidx[ia2]], &LD_pool);
                 }
                 else
                 {
@@ -224,7 +222,7 @@ void Gint_Gamma::cal_band_rho(
                             dgemv_(&transa, &bsize[ia2], &bsize[ia1], 
                                 &alpha_gemm, &LOC.DM[is][iw1_lo][iw2_lo], &GridT.lgd,
                                 &psir_ylm[ib][colidx[ia1]], &inc,
-                                &beta, &psir_DM[ib][colidx[ia2]], &inc);
+                                &beta, &psir_DM.ptr_2D[ib][colidx[ia2]], &inc);
                         }
                     }
                 }
@@ -235,12 +233,11 @@ void Gint_Gamma::cal_band_rho(
         double*const rhop = CHR.rho[is];
         for(int ib=0; ib<pw.bxyz; ++ib)
         {
-            const double r = ddot_(&colidx[na_grid], psir_ylm[ib], &inc, psir_DM[ib], &inc);
+            const double r = ddot_(&colidx[na_grid], psir_ylm[ib], &inc, psir_DM.ptr_2D[ib], &inc);
             const int grid = vindex[ib];
             rhop[ grid ] += r;
         }
     } // end is
-	return;
 }
 
 double Gint_Gamma::cal_rho(void)
@@ -276,13 +273,7 @@ double Gint_Gamma::gamma_charge(void)					// Peize Lin update OpenMP 2020.09.28
 #ifdef __OPENMP
 		#pragma omp parallel
 #endif
-		{
-			bool **cal_flag=new bool*[pw.bxyz];
-			for(int i=0; i<pw.bxyz; ++i)
-			{
-				cal_flag[i]=new bool[max_size];
-			}
-		
+		{		
 			const int nbx = GridT.nbx;
 			const int nby = GridT.nby;
 			const int nbz_start = GridT.nbzp_start;
@@ -327,32 +318,30 @@ double Gint_Gamma::gamma_charge(void)					// Peize Lin update OpenMP 2020.09.28
 
 						int* block_index = get_colidx(na_grid, grid_index);
 
+						bool **cal_flag = get_cal_flag(na_grid, grid_index);
+
 						// set up band matrix psir_ylm and psir_DM
 						const int LD_pool=max_size*ucell.nwmax;
-						Array_Pool psir_ylm(pw.bxyz, LD_pool);
-						Array_Pool psir_DM(pw.bxyz, LD_pool);
-						ZEROS(psir_DM.ptr_1D, pw.bxyz*LD_pool);
 						
-						this->cal_psir_ylm_rho(na_grid, grid_index, delta_r,
-								block_index, block_size, 
-								cal_flag, psir_ylm.ptr_2D);
+						const Array_Pool<double> psir_ylm = this->cal_psir_ylm_rho(
+							na_grid, LD_pool, grid_index, delta_r,
+							block_index, block_size, 
+							cal_flag);
 						
 						this->cal_band_rho(na_grid, LD_pool, block_iw, block_size, block_index,
-								cal_flag, psir_ylm.ptr_2D, psir_DM.ptr_2D, vindex);
+							cal_flag, psir_ylm.ptr_2D, vindex);
 
 						free(vindex);			vindex=nullptr;
 						free(block_size);		block_size=nullptr;
 						free(block_iw);			block_iw=nullptr;
 						free(block_index);		block_index=nullptr;
+
+						for(int ib=0; ib<pw.bxyz; ++ib)
+							free(cal_flag[ib]);
+						free(cal_flag);			cal_flag=nullptr;
 					}// k
 				}// j
 			}// i
-			
-			for(int i=0; i<pw.bxyz; i++)
-			{
-				delete[] cal_flag[i];
-			}
-			delete[] cal_flag;
 		} // end of #pragma omp parallel
 		
         for(int is=0; is<NSPIN; is++)

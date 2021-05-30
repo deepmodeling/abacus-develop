@@ -97,3 +97,50 @@ int* Gint_Gamma::get_bsize(
 	}
 	return bsize;
 }
+
+bool** Gint_Gamma::get_cal_flag(
+	const int na_grid, 		// number of atoms on this grid 
+	const int grid_index)
+{
+	bool** cal_flag = (bool**)malloc(pw.bxyz*sizeof(bool*));
+	for(int ib=0; ib<pw.bxyz; ++ib)
+		cal_flag[ib] = (bool*)malloc(na_grid*sizeof(bool));
+
+	for (int id=0; id<na_grid; id++)
+	{
+		// there are two parameters we want to know here:
+		// in which bigcell of the meshball the atom in?
+		// what's the cartesian coordinate of the bigcell?
+		const int mcell_index=GridT.bcell_start[grid_index] + id;
+		const int iat=GridT.which_atom[mcell_index];		
+		const int it=ucell.iat2it[iat];
+
+		// meshball_positions should be the bigcell position in meshball
+		// to the center of meshball.
+		// calculated in cartesian coordinates
+		// the vector from the grid which is now being operated to the atom position.
+		// in meshball language, is the vector from imcell to the center cel, plus
+		// tau_in_bigcell.
+		const int imcell=GridT.which_bigcell[mcell_index];
+		const double mt[3] = {
+			GridT.meshball_positions[imcell][0] - GridT.tau_in_bigcell[iat][0],
+			GridT.meshball_positions[imcell][1] - GridT.tau_in_bigcell[iat][1],
+			GridT.meshball_positions[imcell][2] - GridT.tau_in_bigcell[iat][2]};
+
+		for(int ib=0; ib<pw.bxyz; ib++)
+		{
+			// meshcell_pos: z is the fastest
+			const double dr[3] = {
+				GridT.meshcell_pos[ib][0] + mt[0],
+				GridT.meshcell_pos[ib][1] + mt[1],
+				GridT.meshcell_pos[ib][2] + mt[2]};
+			const double distance = std::sqrt(dr[0]*dr[0] + dr[1]*dr[1] + dr[2]*dr[2]);	// distance between atom and grid
+
+			if(distance > (ORB.Phi[it].getRcut()-1.0e-15))
+				cal_flag[ib][id]=false;
+			else
+				cal_flag[ib][id]=true;
+		}// end ib
+	}// end id
+	return cal_flag;
+}

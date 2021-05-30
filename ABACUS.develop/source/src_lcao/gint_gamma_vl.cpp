@@ -450,7 +450,7 @@ void Gint_Gamma::gamma_vlocal(void)						// Peize Lin update OpenMP 2020.09.27
 			//------------------------------------------------------
 			// <phi | V_local | phi>
 			//------------------------------------------------------
-			Array_Pool GridVlocal_thread(lgd_now, lgd_now);
+			Array_Pool<double> GridVlocal_thread(lgd_now, lgd_now);
 			ZEROS(GridVlocal_thread.ptr_1D, lgd_now*lgd_now);
 			Memory::record("Gint_Gamma","GridVlocal_therad",lgd_now*lgd_now,"double");
 
@@ -511,8 +511,8 @@ void Gint_Gamma::gamma_vlocal(void)						// Peize Lin update OpenMP 2020.09.27
 						//------------------------------------------------------
 						// atomic basis sets
 						//------------------------------------------------------
-						Array_Pool psir_ylm(pw.bxyz, LD_pool);
-						Array_Pool psir_vlbr3(pw.bxyz, LD_pool);
+						Array_Pool<double> psir_ylm(pw.bxyz, LD_pool);
+						Array_Pool<double> psir_vlbr3(pw.bxyz, LD_pool);
 						
 						//------------------------------------------------------------------
 						// compute atomic basis phi(r) with both radial and angular parts

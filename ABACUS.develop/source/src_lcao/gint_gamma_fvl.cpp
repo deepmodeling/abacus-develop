@@ -599,8 +599,8 @@ void Gint_Gamma::gamma_force(void)
 					//------------------------------------------------------------------
 					int* block_size = get_bsize(na_grid, grid_index);
 
-					Array_Pool psir_vlbr3(pw.bxyz, LD_pool);
-					Array_Pool psir_ylm(pw.bxyz, LD_pool);
+					Array_Pool<double> psir_vlbr3(pw.bxyz, LD_pool);
+					Array_Pool<double> psir_ylm(pw.bxyz, LD_pool);
     
                     cal_psir_ylm_dphi(na_grid, grid_index, delta_r, 
                             block_index, block_size, cal_flag, psir_ylm.ptr_2D, dphix, dphiy, dphiz, drr);
