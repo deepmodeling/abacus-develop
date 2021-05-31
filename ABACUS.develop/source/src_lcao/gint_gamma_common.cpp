@@ -67,38 +67,39 @@ int* Gint_Gamma::get_block_iw(
 	return block_iw;
 }
 
-int* Gint_Gamma::get_colidx(
+int* Gint_Gamma::get_block_index(
 	const int na_grid,  		// how many atoms on this (i,j,k) grid
 	const int grid_index)		// 1d index of FFT index (i,j,k)
 {
-	int* colidx = (int*)malloc((na_grid+1)*sizeof(int));
-    colidx[0] = 0;
+	int* block_index = (int*)malloc((na_grid+1)*sizeof(int));
+    block_index[0] = 0;
     for (int id=0; id<na_grid; id++)
 	{
         const int mcell_index = GridT.bcell_start[grid_index] + id;
         const int iat = GridT.which_atom[mcell_index]; // index of atom
         const int it = ucell.iat2it[iat]; // index of atom type
-        colidx[id+1] = colidx[id]+ucell.atoms[it].nw;
+        block_index[id+1] = block_index[id]+ucell.atoms[it].nw;
 	}
-	return colidx;
+	return block_index;
 }
 
 // band size: number of columns of a band
-int* Gint_Gamma::get_bsize(
+int* Gint_Gamma::get_block_size(
 	const int na_grid,			// how many atoms on this (i,j,k) grid
 	const int grid_index)		// 1d index of FFT index (i,j,k)
 {
-	int* bsize = (int*)malloc(na_grid*sizeof(int));
+	int* block_size = (int*)malloc(na_grid*sizeof(int));
     for (int id=0; id<na_grid; id++)
 	{
         const int mcell_index=GridT.bcell_start[grid_index] + id;
         const int iat=GridT.which_atom[mcell_index]; // index of atom
         const int it=ucell.iat2it[ iat ]; // index of atom type
-        bsize[id]=ucell.atoms[it].nw;	
+        block_size[id]=ucell.atoms[it].nw;	
 	}
-	return bsize;
+	return block_size;
 }
 
+// whether the atom-grid distance is larger than cutoff
 bool** Gint_Gamma::get_cal_flag(
 	const int na_grid, 		// number of atoms on this grid 
 	const int grid_index)

@@ -101,8 +101,8 @@ class Gint_Gamma : public Grid_Base_Beta
 		const int na_grid,
 		const int LD_pool,
 		const int*const block_iw,
-		const int*const bsize,
-		const int*const colidx,
+		const int*const block_size,
+		const int*const block_index,
 		const bool*const*const cal_flag,
 		const double*const vldr3,
 		const double*const*const psir_ylm,
@@ -114,20 +114,11 @@ class Gint_Gamma : public Grid_Base_Beta
 		const int na_grid, 
 		const int LD_pool, 
 		const int*const block_iw, 
-		const int*const bsize, 
-		const int*const colidx,
+		const int*const block_size, 
+		const int*const block_index,
 		const bool*const*const cal_flag, 
 		const double*const*const psir_ylm,
 		const int*const vindex);
-
-	static Array_Pool<double> cal_psir_ylm(
-		const int na_grid, // number of atoms on this grid 
-		const int LD_pool,
-		const int grid_index, // 1d index of FFT index (i,j,k) 
-		const double delta_r, // delta_r of the uniform FFT grid
-		const int*const block_index,  // count total number of atomis orbitals
-		const int*const block_size, 
-		const bool*const*const cal_flag); // whether the atom-grid distance is larger than cutoff
 	
 	// extract the local potentials.
 	// vldr3[pw.bxyz]
@@ -147,21 +138,32 @@ class Gint_Gamma : public Grid_Base_Beta
 		const int grid_index,		// 1d index of FFT index (i,j,k))
 		const int max_size);
 		
-	// colidx[na_grid+1]
-	static int* get_colidx(
+	// block_index[na_grid+1]
+	static int* get_block_index(
 		const int na_grid,  		// how many atoms on this (i,j,k) grid
 		const int grid_index);		// 1d index of FFT index (i,j,k)
 		
 	// band size: number of columns of a band
-	// bsize[na_grid]
-	static int* get_bsize(
+	// block_size[na_grid]
+	static int* get_block_size(
 		const int na_grid,			// how many atoms on this (i,j,k) grid
 		const int grid_index);		// 1d index of FFT index (i,j,k)
 
+	// whether the atom-grid distance is larger than cutoff
 	// cal_flag[pw.bxyz][na_grid]
 	static bool** get_cal_flag(
 		const int na_grid, 		// number of atoms on this grid 
-		const int grid_index);				
+		const int grid_index);		
+
+	// psir_ylm[pw.bxyz][LD_pool]
+	static Array_Pool<double> cal_psir_ylm(
+		const int na_grid, // number of atoms on this grid 
+		const int LD_pool,
+		const int grid_index, // 1d index of FFT index (i,j,k) 
+		const double delta_r, // delta_r of the uniform FFT grid
+		const int*const block_index,  // count total number of atomis orbitals
+		const int*const block_size, 
+		const bool*const*const cal_flag); // whether the atom-grid distance is larger than cutoff		
 };
 
 

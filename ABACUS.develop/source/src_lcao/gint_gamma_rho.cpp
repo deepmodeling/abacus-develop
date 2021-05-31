@@ -12,8 +12,8 @@ void Gint_Gamma::cal_band_rho(
 	const int na_grid, 
 	const int LD_pool, 
 	const int*const block_iw, 
-	const int*const bsize, 
-	const int*const colidx,
+	const int*const block_size, 
+	const int*const block_index,
 	const bool*const*const cal_flag, 
 	const double*const*const psir_ylm,
 	const int*const vindex)
@@ -64,10 +64,10 @@ void Gint_Gamma::cal_band_rho(
             // if enough cal_flag is nonzero
             if(cal_num>ib_length/4)
             {
-                dsymm_(&side, &uplo, &bsize[ia1], &ib_length, 
+                dsymm_(&side, &uplo, &block_size[ia1], &ib_length, 
                     &alpha_symm, &LOC.DM[is][iw1_lo][iw1_lo], &GridT.lgd, 
-                    &psir_ylm[first_ib][colidx[ia1]], &LD_pool, 
-                    &beta, &psir_DM.ptr_2D[first_ib][colidx[ia1]], &LD_pool);
+                    &psir_ylm[first_ib][block_index[ia1]], &LD_pool, 
+                    &beta, &psir_DM.ptr_2D[first_ib][block_index[ia1]], &LD_pool);
             }
             else
             {
@@ -76,10 +76,10 @@ void Gint_Gamma::cal_band_rho(
                 {
                     if(cal_flag[ib][ia1])
                     {
-                        dsymv_(&uplo, &bsize[ia1],
+                        dsymv_(&uplo, &block_size[ia1],
                             &alpha_symm, &LOC.DM[is][iw1_lo][iw1_lo], &GridT.lgd,
-                            &psir_ylm[ib][colidx[ia1]], &inc,
-                            &beta, &psir_DM.ptr_2D[ib][colidx[ia1]], &inc);
+                            &psir_ylm[ib][block_index[ia1]], &inc,
+                            &beta, &psir_DM.ptr_2D[ib][block_index[ia1]], &inc);
                     }
                 }
             }
@@ -115,10 +115,10 @@ void Gint_Gamma::cal_band_rho(
                 const int iw2_lo=block_iw[ia2];
                 if(cal_pair_num>ib_length/4)
                 {
-                    dgemm_(&transa, &transb, &bsize[ia2], &ib_length, &bsize[ia1], 
+                    dgemm_(&transa, &transb, &block_size[ia2], &ib_length, &block_size[ia1], 
                         &alpha_gemm, &LOC.DM[is][iw1_lo][iw2_lo], &GridT.lgd, 
-                        &psir_ylm[first_ib][colidx[ia1]], &LD_pool, 
-                        &beta, &psir_DM.ptr_2D[first_ib][colidx[ia2]], &LD_pool);
+                        &psir_ylm[first_ib][block_index[ia1]], &LD_pool, 
+                        &beta, &psir_DM.ptr_2D[first_ib][block_index[ia2]], &LD_pool);
                 }
                 else
                 {
@@ -126,10 +126,10 @@ void Gint_Gamma::cal_band_rho(
                     {
                         if(cal_flag[ib][ia1] && cal_flag[ib][ia2])
                         {
-                            dgemv_(&transa, &bsize[ia2], &bsize[ia1], 
+                            dgemv_(&transa, &block_size[ia2], &block_size[ia1], 
                                 &alpha_gemm, &LOC.DM[is][iw1_lo][iw2_lo], &GridT.lgd,
-                                &psir_ylm[ib][colidx[ia1]], &inc,
-                                &beta, &psir_DM.ptr_2D[ib][colidx[ia2]], &inc);
+                                &psir_ylm[ib][block_index[ia1]], &inc,
+                                &beta, &psir_DM.ptr_2D[ib][block_index[ia2]], &inc);
                         }
                     }
                 }
@@ -140,7 +140,7 @@ void Gint_Gamma::cal_band_rho(
         double*const rhop = CHR.rho[is];
         for(int ib=0; ib<pw.bxyz; ++ib)
         {
-            const double r = ddot_(&colidx[na_grid], psir_ylm[ib], &inc, psir_DM.ptr_2D[ib], &inc);
+            const double r = ddot_(&block_index[na_grid], psir_ylm[ib], &inc, psir_DM.ptr_2D[ib], &inc);
             const int grid = vindex[ib];
             rhop[ grid ] += r;
         }
@@ -216,15 +216,18 @@ double Gint_Gamma::gamma_charge(void)					// Peize Lin update OpenMP 2020.09.28
 						//------------------------------------------------------
 						// band size: number of columns of a band
 						//------------------------------------------------------------------
-						int* block_size = get_bsize(na_grid, grid_index);
+						int* block_size = get_block_size(na_grid, grid_index);
 						
 						//------------------------------------------------------
 						// index of wave functions for each block
 						//------------------------------------------------------
 						int *block_iw = get_block_iw(na_grid, grid_index, this->max_size);
 
-						int* block_index = get_colidx(na_grid, grid_index);
+						int* block_index = get_block_index(na_grid, grid_index);
 
+						//------------------------------------------------------
+						// whether the atom-grid distance is larger than cutoff
+						//------------------------------------------------------
 						bool **cal_flag = get_cal_flag(na_grid, grid_index);
 
 						// set up band matrix psir_ylm and psir_DM

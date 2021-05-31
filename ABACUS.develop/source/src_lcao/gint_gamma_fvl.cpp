@@ -592,12 +592,12 @@ void Gint_Gamma::gamma_force(void)
 					//------------------------------------------------------
 					int *block_iw = get_block_iw(na_grid, grid_index, this->max_size);
 					
-					int* block_index = get_colidx(na_grid, grid_index);
+					int* block_index = get_block_index(na_grid, grid_index);
 					
 					//------------------------------------------------------
 					// band size: number of columns of a band
 					//------------------------------------------------------------------
-					int* block_size = get_bsize(na_grid, grid_index);
+					int* block_size = get_block_size(na_grid, grid_index);
 
 					Array_Pool<double> psir_vlbr3(pw.bxyz, LD_pool);
 					Array_Pool<double> psir_ylm(pw.bxyz, LD_pool);
