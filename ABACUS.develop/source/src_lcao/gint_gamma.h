@@ -106,7 +106,7 @@ class Gint_Gamma : public Grid_Base_Beta
 		const bool*const*const cal_flag,
 		const double*const vldr3,
 		const double*const*const psir_ylm,
-		double*const*const psir_vlbr3,
+		const double*const*const psir_vlbr3,
 		const int lgd_now,
 		double*const*const GridVlocal);
 
@@ -163,7 +163,16 @@ class Gint_Gamma : public Grid_Base_Beta
 		const double delta_r, // delta_r of the uniform FFT grid
 		const int*const block_index,  // count total number of atomis orbitals
 		const int*const block_size, 
-		const bool*const*const cal_flag); // whether the atom-grid distance is larger than cutoff		
+		const bool*const*const cal_flag); // whether the atom-grid distance is larger than cutoff
+
+	// psir_vlbr3[pw.bxyz][LD_pool]
+	static Array_Pool<double> get_psir_vlbr3(
+		const int na_grid,
+		const int LD_pool,
+		const int*const block_index,
+		const bool*const*const cal_flag,
+		const double*const vldr3,
+		const double*const*const psir_ylm);	
 };
 
 

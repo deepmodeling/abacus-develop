@@ -14,6 +14,40 @@ extern "C"
     void Cblacs_pcoord(int icontxt, int pnum, int *prow, int *pcol);
 }
 
+// atomic basis sets
+Gint_Gamma::Array_Pool<double> Gint_Gamma::get_psir_vlbr3(
+	const int na_grid,
+	const int LD_pool,
+	const int*const block_index,
+	const bool*const*const cal_flag,
+	const double*const vldr3,
+	const double*const*const psir_ylm)
+{
+	Array_Pool<double> psir_vlbr3(pw.bxyz, LD_pool);
+	for(int ib=0; ib<pw.bxyz; ++ib)
+	{
+        for(int ia=0; ia<na_grid; ++ia)
+        {
+            if(cal_flag[ib][ia])
+            {
+                for(int i=block_index[ia]; i<block_index[ia+1]; ++i)
+                {
+                    psir_vlbr3.ptr_2D[ib][i]=psir_ylm[ib][i]*vldr3[ib];
+                }
+            }
+            else
+            {
+                for(int i=block_index[ia]; i<block_index[ia+1]; ++i)
+                {
+                    psir_vlbr3.ptr_2D[ib][i]=0;
+                }
+            }
+
+        }
+	}
+    return psir_vlbr3;
+}
+
 //inline void cal_meshball_vlocal(int na_grid, int LD_pool, int* block_iw, int* block_size, int* block_index,
 void Gint_Gamma::cal_meshball_vlocal(
 	const int na_grid,
@@ -24,34 +58,12 @@ void Gint_Gamma::cal_meshball_vlocal(
 	const bool*const*const cal_flag,
 	const double*const vldr3,
 	const double*const*const psir_ylm,
-	double*const*const psir_vlbr3,
+	const double*const*const psir_vlbr3,
 	const int lgd_now,
 	double*const*const GridVlocal)
 {
 	const char transa='N', transb='T';
 	const double alpha=1, beta=1;
-
-	for(int ib=0; ib<pw.bxyz; ++ib)
-	{
-        for(int ia=0; ia<na_grid; ++ia)
-        {
-            if(cal_flag[ib][ia])
-            {
-                for(int i=block_index[ia]; i<block_index[ia+1]; ++i)
-                {
-                    psir_vlbr3[ib][i]=psir_ylm[ib][i]*vldr3[ib];
-                }
-            }
-            else
-            {
-                for(int i=block_index[ia]; i<block_index[ia+1]; ++i)
-                {
-                    psir_vlbr3[ib][i]=0;
-                }
-            }
-
-        }
-	}
 
 	for(int ia1=0; ia1<na_grid; ++ia1)
 	{
@@ -395,11 +407,6 @@ void Gint_Gamma::gamma_vlocal(void)						// Peize Lin update OpenMP 2020.09.27
 						// whether the atom-grid distance is larger than cutoff
 						//------------------------------------------------------
 						bool **cal_flag = get_cal_flag(na_grid, grid_index);
-
-						//------------------------------------------------------
-						// atomic basis sets
-						//------------------------------------------------------
-						Array_Pool<double> psir_vlbr3(pw.bxyz, LD_pool);
 						
 						//------------------------------------------------------------------
 						// compute atomic basis phi(r) with both radial and angular parts
@@ -407,6 +414,9 @@ void Gint_Gamma::gamma_vlocal(void)						// Peize Lin update OpenMP 2020.09.27
 						const Array_Pool<double> psir_ylm = this->cal_psir_ylm(
 							na_grid, LD_pool, grid_index, delta_r,
 							block_index, block_size, cal_flag);
+
+                        const Array_Pool<double> psir_vlbr3 = get_psir_vlbr3(
+                                na_grid, LD_pool, block_index, cal_flag, vldr3, psir_ylm.ptr_2D);
 
 						//------------------------------------------------------------------
 						// calculate <phi_i|V|phi_j>
