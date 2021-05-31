@@ -1,13 +1,11 @@
 #include "gint_gamma.h"
 #include "grid_technique.h"
-#include "../module_ORB/ORB_read.h"
-#include "../src_pw/global.h"
+#include "module_ORB/ORB_read.h"
+#include "src_pw/global.h"
 #include "src_global/blas_connector.h"
 #include <mkl_service.h>
 
 #include "global_fp.h" // mohan add 2021-01-30
-#include "../src_global/ylm.h"
-//#include <vector>
 
 extern "C"
 {
@@ -16,202 +14,112 @@ extern "C"
     void Cblacs_pcoord(int icontxt, int pnum, int *prow, int *pcol);
 }
 
-inline void cal_psir_ylm(
-	const int na_grid,  // how many atoms on this (i,j,k) grid
-	const int grid_index, // 1d index of FFT index (i,j,k)
-	const double delta_r, // delta_r of the uniform FFT grid
-	double phi, // radial wave functions
-	const int*const colidx,  // count total number of atomis orbitals
-	const int*const bsize,  // ??
-	double*const*const psir_ylm, // bxyz * LD_pool
-	int*const*const cal_flag) // whether the atom-grid distance is larger than cutoff
+// atomic basis sets
+Gint_Gamma::Array_Pool<double> Gint_Gamma::get_psir_vlbr3(
+	const int na_grid,
+	const int LD_pool,
+	const int*const block_index,
+	const bool*const*const cal_flag,
+	const double*const vldr3,
+	const double*const*const psir_ylm)
 {
-    for (int id=0; id<na_grid; id++)
-    {
-        // there are two parameters we want to know here:
-        // in which bigcell of the meshball the atom is in?
-        // what's the cartesian coordinate of the bigcell?
-        const int mcell_index=GridT.bcell_start[grid_index] + id;
-
-        const int iat=GridT.which_atom[mcell_index]; // index of atom
-        const int it=ucell.iat2it[ iat ]; // index of atom type
-        const Atom*const atom=&ucell.atoms[it];
-		
-        const int imcell=GridT.which_bigcell[mcell_index];
-
-        // meshball_positions should be the bigcell position in meshball
-        // to the center of meshball.
-        // calculated in cartesian coordinates
-        // the vector from the grid which is now being operated to the atom position.
-        // in meshball language, is the vector from imcell to the center cel, plus
-        // tau_in_bigcell.
-		const double mt[3] = {
-        	GridT.meshball_positions[imcell][0] - GridT.tau_in_bigcell[iat][0],
-        	GridT.meshball_positions[imcell][1] - GridT.tau_in_bigcell[iat][1],
-        	GridT.meshball_positions[imcell][2] - GridT.tau_in_bigcell[iat][2]};
-
-		// number of grids in each big cell (bxyz)
-        for(int ib=0; ib<pw.bxyz; ib++)
+	Array_Pool<double> psir_vlbr3(pw.bxyz, LD_pool);
+	for(int ib=0; ib<pw.bxyz; ++ib)
+	{
+        for(int ia=0; ia<na_grid; ++ia)
         {
-            double *p=&psir_ylm[ib][colidx[id]];
-            // meshcell_pos: z is the fastest
-			const double dr[3] = {
-            	GridT.meshcell_pos[ib][0] + mt[0],
-            	GridT.meshcell_pos[ib][1] + mt[1],
-            	GridT.meshcell_pos[ib][2] + mt[2]};
-
-            double distance = std::sqrt( dr[0]*dr[0] + dr[1]*dr[1] + dr[2]*dr[2] );
-
-            //if(distance[ib][id] > ORB.Phi[it].getRcut())
-            if(distance > (ORB.Phi[it].getRcut()- 1.0e-15))
+            if(cal_flag[ib][ia])
             {
-				cal_flag[ib][id]=0;
-                ZEROS(p, bsize[id]);
+                for(int i=block_index[ia]; i<block_index[ia+1]; ++i)
+                {
+                    psir_vlbr3.ptr_2D[ib][i]=psir_ylm[ib][i]*vldr3[ib];
+                }
             }
-			else
-			{
-				cal_flag[ib][id]=1;
+            else
+            {
+                for(int i=block_index[ia]; i<block_index[ia+1]; ++i)
+                {
+                    psir_vlbr3.ptr_2D[ib][i]=0;
+                }
+            }
 
-				//if(distance[id] > GridT.orbital_rmax) continue;
-				//    Ylm::get_ylm_real(this->nnn[it], this->dr[id], ylma);
-				if (distance < 1.0E-9) distance += 1.0E-9;
-
-				//------------------------------------------------------
-				// spherical harmonic functions Ylm
-				//------------------------------------------------------
-				std::vector<double> ylma;
-				Ylm::sph_harm (    ucell.atoms[it].nwl,
-						dr[0] / distance,
-						dr[1] / distance,
-						dr[2] / distance,
-						ylma);
-				// these parameters are related to interpolation
-				// because once the distance from atom to grid point is known,
-				// we can obtain the parameters for interpolation and
-				// store them first! these operations save lots of efforts.
-				const double position=distance / delta_r;
-
-				const int ip = static_cast<int>(position);
-				const double dx = position - ip;
-				const double dx2 = dx * dx;
-				const double dx3 = dx2 * dx;
-
-				const double c3 = 3.0*dx2-2.0*dx3;
-				const double c1 = 1.0-c3;
-				const double c2 = (dx-2.0*dx2+dx3)*delta_r;
-				const double c4 = (dx3-dx2)*delta_r;
-
-				for (int iw=0; iw< atom->nw; ++iw, ++p)
-				{
-					if ( atom->iw2_new[iw] )
-					{
-						const Numerical_Orbital_Lm &philn = ORB.Phi[it].PhiLN(
-								atom->iw2l[iw],
-								atom->iw2n[iw]);
-						phi = c1*philn.psi_uniform[ip] + c2*philn.dpsi_uniform[ip]			 // radial wave functions
-							+ c3*philn.psi_uniform[ip+1] + c4*philn.dpsi_uniform[ip+1];
-					}
-					*p=phi * ylma[atom->iw2_ylm[iw]];
-				}
-			}// end distance<=(ORB.Phi[it].getRcut()-1.0e-15)
-        }// end ib
-    }// end id
+        }
+	}
+    return psir_vlbr3;
 }
 
-//inline void cal_meshball_vlocal(int na_grid, int LD_pool, int* block_iw, int* bsize, int* colidx,
+//inline void cal_meshball_vlocal(int na_grid, int LD_pool, int* block_iw, int* block_size, int* block_index,
 void Gint_Gamma::cal_meshball_vlocal(
 	const int na_grid,
 	const int LD_pool,
 	const int*const block_iw,
-	const int*const bsize,
-	const int*const colidx,
-	const int*const*const cal_flag,
+	const int*const block_size,
+	const int*const block_index,
+	const bool*const*const cal_flag,
 	const double*const vldr3,
 	const double*const*const psir_ylm,
-	double*const*const psir_vlbr3,
+	const double*const*const psir_vlbr3,
 	const int lgd_now,
 	double*const*const GridVlocal)
 {
 	const char transa='N', transb='T';
 	const double alpha=1, beta=1;
 
-	//int allnw=colidx[na_grid];
-	for(int ib=0; ib<pw.bxyz; ++ib)
-	{
-        for(int ia=0; ia<na_grid; ++ia)
-        {
-            if(cal_flag[ib][ia]>0)
-            {
-                for(int i=colidx[ia]; i<colidx[ia+1]; ++i)
-                {
-                    psir_vlbr3[ib][i]=psir_ylm[ib][i]*vldr3[ib];
-                }
-            }
-            else
-            {
-                for(int i=colidx[ia]; i<colidx[ia+1]; ++i)
-                {
-                    psir_vlbr3[ib][i]=0;
-                }
-            }
-
-        }
-	}
-
 	for(int ia1=0; ia1<na_grid; ++ia1)
 	{
 		const int iw1_lo=block_iw[ia1];
-		const int m=bsize[ia1];
+		const int m=block_size[ia1];
 		for(int ia2=0; ia2<na_grid; ++ia2)
 		{
 			const int iw2_lo=block_iw[ia2];
 			if(iw1_lo<=iw2_lo)
 			{
-                int first_ib=0, last_ib=0;
+                int first_ib=0;
                 for(int ib=0; ib<pw.bxyz; ++ib)
                 {
-                    if(cal_flag[ib][ia1]>0 && cal_flag[ib][ia2]>0)
+                    if(cal_flag[ib][ia1] && cal_flag[ib][ia2])
                     {
                         first_ib=ib;
                         break;
                     }
                 }
+                int last_ib=0;
                 for(int ib=pw.bxyz-1; ib>=0; --ib)
                 {
-                    if(cal_flag[ib][ia1]>0 && cal_flag[ib][ia2]>0)
+                    if(cal_flag[ib][ia1] && cal_flag[ib][ia2])
                     {
                         last_ib=ib+1;
                         break;
                     }
                 }
-                int ib_length=last_ib-first_ib;
+                const int ib_length = last_ib-first_ib;
                 if(ib_length<=0) continue;
 
                 int cal_pair_num=0;
                 for(int ib=first_ib; ib<last_ib; ++ib)
                 {
-                    cal_pair_num+=cal_flag[ib][ia1]*cal_flag[ib][ia2];
+                    cal_pair_num += cal_flag[ib][ia1] && cal_flag[ib][ia2];
                 }
 
-                int n=bsize[ia2];
+                const int n=block_size[ia2];
 //omp_set_lock(&lock);
                 if(cal_pair_num>ib_length/4)
                 {
                     dgemm_(&transa, &transb, &n, &m, &ib_length, &alpha,
-                        &psir_vlbr3[first_ib][colidx[ia2]], &LD_pool,
-                        &psir_ylm[first_ib][colidx[ia1]], &LD_pool,
+                        &psir_vlbr3[first_ib][block_index[ia2]], &LD_pool,
+                        &psir_ylm[first_ib][block_index[ia1]], &LD_pool,
                         &beta, &GridVlocal[iw1_lo][iw2_lo], &lgd_now);
                 }
                 else
                 {
                     for(int ib=first_ib; ib<last_ib; ++ib)
                     {
-                        if(cal_flag[ib][ia1]>0 && cal_flag[ib][ia2]>0)
+                        if(cal_flag[ib][ia1] && cal_flag[ib][ia2])
                         {
                             int k=1;
                             dgemm_(&transa, &transb, &n, &m, &k, &alpha,
-                                &psir_vlbr3[ib][colidx[ia2]], &LD_pool,
-                                &psir_ylm[ib][colidx[ia1]], &LD_pool,
+                                &psir_vlbr3[ib][block_index[ia2]], &LD_pool,
+                                &psir_ylm[ib][block_index[ia1]], &LD_pool,
                                 &beta, &GridVlocal[iw1_lo][iw2_lo], &lgd_now);
                         }
                     }
@@ -421,6 +329,7 @@ void Gint_Gamma::gamma_vlocal(void)						// Peize Lin update OpenMP 2020.09.27
         GridVlocal[i] = new double[GridT.lgd];
         ZEROS(GridVlocal[i], GridT.lgd);
     }
+			Memory::record("Gint_Gamma","GridVlocal",GridT.lgd*GridT.lgd,"double");
 
     const int mkl_threads = mkl_get_max_threads();
 	mkl_set_num_threads(std::max(1,mkl_threads/GridT.nbx));		// Peize Lin update 2021.01.20
@@ -434,7 +343,6 @@ void Gint_Gamma::gamma_vlocal(void)						// Peize Lin update OpenMP 2020.09.27
 		// it's a uniform grid to save orbital values, so the delta_r is a constant.
 		const double delta_r=ORB.dr_uniform;
 
-		double phi=0.0;
 		const int nbx=GridT.nbx;
 		const int nby=GridT.nby;
 		const int nbz_start=GridT.nbzp_start;
@@ -448,47 +356,11 @@ void Gint_Gamma::gamma_vlocal(void)						// Peize Lin update OpenMP 2020.09.27
 			//------------------------------------------------------
 			// <phi | V_local | phi>
 			//------------------------------------------------------
-			double *GridVlocal_pool=new double [lgd_now*lgd_now];
-			ZEROS(GridVlocal_pool, lgd_now*lgd_now);
-
-			double **GridVlocal_thread=new double*[lgd_now];
-			for (int i=0; i<lgd_now; i++)
-			{
-				GridVlocal_thread[i]=&GridVlocal_pool[i*lgd_now];
-			}
-			Memory::record("Gint_Gamma","GridVlocal",lgd_now*lgd_now,"double");
+			Array_Pool<double> GridVlocal_thread(lgd_now, lgd_now);
+			ZEROS(GridVlocal_thread.ptr_1D, lgd_now*lgd_now);
+			Memory::record("Gint_Gamma","GridVlocal_therad",lgd_now*lgd_now,"double");
 
 			const int LD_pool = max_size*ucell.nwmax;
-
-			double *psir_ylm_pool=new double[pw.bxyz*LD_pool];
-
-			//------------------------------------------------------
-			// atomic basis sets
-			//------------------------------------------------------
-			double **psir_ylm=new double *[pw.bxyz];
-			for(int i=0; i<pw.bxyz; i++)
-			{
-				psir_ylm[i]=&psir_ylm_pool[i*LD_pool];
-			}
-			ZEROS(psir_ylm_pool, pw.bxyz*LD_pool);
-
-			double *psir_vlbr3_pool=new double[pw.bxyz*LD_pool];
-			double **psir_vlbr3=new double *[pw.bxyz];
-			for(int i=0; i<pw.bxyz; i++)
-			{
-				psir_vlbr3[i]=&psir_vlbr3_pool[i*LD_pool];
-			}
-			ZEROS(psir_vlbr3_pool, pw.bxyz*LD_pool);
-
-			//------------------------------------------------------
-			// whether the atom-grid distance is larger than
-			// cutoff
-			//------------------------------------------------------
-			int **cal_flag=new int*[pw.bxyz];
-			for(int i=0; i<pw.bxyz; i++)
-			{
-				cal_flag[i]=new int[max_size];
-			}
 
 #ifdef __OPENMP
 			#pragma omp for
@@ -507,7 +379,6 @@ void Gint_Gamma::gamma_vlocal(void)						// Peize Lin update OpenMP 2020.09.27
 						// get the value: how many atoms are involved in this grid (big cell)
 						//------------------------------------------------------------------
 						const int na_grid=GridT.how_many_atoms[ grid_index ];
-
 						if(na_grid==0) continue;
 
 						//------------------------------------------------------------------
@@ -525,29 +396,43 @@ void Gint_Gamma::gamma_vlocal(void)						// Peize Lin update OpenMP 2020.09.27
 						//------------------------------------------------------
 						int *block_iw = get_block_iw(na_grid, grid_index, this->max_size);
 						
-						int* colidx = get_colidx(na_grid, grid_index);
+						int* block_index = get_block_index(na_grid, grid_index);
 						
 						//------------------------------------------------------
 						// band size: number of columns of a band
-						//------------------------------------------------------------------
-						int* bsize = get_bsize(na_grid, grid_index);
+						//------------------------------------------------------
+						int* block_size = get_block_size(na_grid, grid_index);
+
+						//------------------------------------------------------
+						// whether the atom-grid distance is larger than cutoff
+						//------------------------------------------------------
+						bool **cal_flag = get_cal_flag(na_grid, grid_index);
 						
 						//------------------------------------------------------------------
 						// compute atomic basis phi(r) with both radial and angular parts
 						//------------------------------------------------------------------
-						cal_psir_ylm(na_grid, grid_index, delta_r, phi,
-						colidx, bsize,  psir_ylm, cal_flag);
+						const Array_Pool<double> psir_ylm = this->cal_psir_ylm(
+							na_grid, LD_pool, grid_index, delta_r,
+							block_index, block_size, cal_flag);
+
+                        const Array_Pool<double> psir_vlbr3 = get_psir_vlbr3(
+                                na_grid, LD_pool, block_index, cal_flag, vldr3, psir_ylm.ptr_2D);
 
 						//------------------------------------------------------------------
 						// calculate <phi_i|V|phi_j>
 						//------------------------------------------------------------------
-						cal_meshball_vlocal(na_grid, LD_pool, block_iw, bsize, colidx, cal_flag,
-						vldr3, psir_ylm, psir_vlbr3, lgd_now, GridVlocal_thread);
+						cal_meshball_vlocal(
+							na_grid, LD_pool, block_iw, block_size, block_index, cal_flag,
+							vldr3, psir_ylm.ptr_2D, psir_vlbr3.ptr_2D, lgd_now, GridVlocal_thread.ptr_2D);
 						
 						free(vldr3);		vldr3=nullptr;
 						free(block_iw);		block_iw=nullptr;
-						free(colidx);		colidx=nullptr;
-						free(bsize);		bsize=nullptr;
+						free(block_index);		block_index=nullptr;
+						free(block_size);		block_size=nullptr;
+
+						for(int ib=0; ib<pw.bxyz; ++ib)
+							free(cal_flag[ib]);
+						free(cal_flag);			cal_flag=nullptr;
 					}// k
 				}// j
 			}// i
@@ -560,23 +445,10 @@ void Gint_Gamma::gamma_vlocal(void)						// Peize Lin update OpenMP 2020.09.27
 				{
 					for (int j=0; j<lgd_now; j++)
 					{
-						GridVlocal[i][j] += GridVlocal_thread[i][j];
+						GridVlocal[i][j] += GridVlocal_thread.ptr_2D[i][j];
 					}
 				}
 			}
-
-			delete[] GridVlocal_thread;
-			delete[] GridVlocal_pool;
-
-			for(int i=0; i<pw.bxyz; i++)
-			{
-				delete[] cal_flag[i];
-			}
-			delete[] cal_flag;
-			delete[] psir_vlbr3;
-			delete[] psir_vlbr3_pool;
-			delete[] psir_ylm;
-			delete[] psir_ylm_pool;
 		} // end of if(max_size>0 && lgd_now>0)
 	} // end of #pragma omp parallel
 
