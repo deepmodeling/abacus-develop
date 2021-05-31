@@ -3,6 +3,7 @@
 
 #include "../module_base/intarray.h"
 #include "../module_base/complexmatrix.h"
+#include <torch/script.h>
 
 //caoyu add 2021-03-29
 class LCAO_Descriptor

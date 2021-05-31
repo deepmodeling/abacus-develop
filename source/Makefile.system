@@ -31,6 +31,9 @@ LIBXC_LIB         = -L${LIBXC_LIB_DIR} -lxc -Wl,-rpath=${LIBXC_LIB_DIR}
 
 CEREAL_INCLUDE_DIR = ${CEREAL_DIR}/include
 
+LIBTORCH_INCLUDE_DIR =  -isystem /home/cyFortneu/pkgs/libtorch/include -isystem /home/cyFortneu/pkgs/libtorch/include/torch/csrc/api/include
+LIBTORCH_LIB = -Wl,-rpath,/home/cyFortneu/pkgs/libtorch/lib /home/cyFortneu/pkgs/libtorch/lib/libtorch.so /home/cyFortneu/pkgs/libtorch/lib/libc10.so -Wl,--no-as-needed,"/home/cyFortneu/pkgs/libtorch/lib/libtorch_cpu.so" -Wl,--as-needed /home/cyFortneu/pkgs/libtorch/lib/libc10.so -lpthread -Wl,--no-as-needed,"/home/cyFortneu/pkgs/libtorch/lib/libtorch.so" -Wl,--as-needed 
+
 #==========================
 # LIBS and INCLUDES
 #==========================
@@ -39,10 +42,10 @@ CEREAL_INCLUDE_DIR = ${CEREAL_DIR}/include
 LIBS = -lifcore -lm -lpthread ${LAPACK_LIB} ${FFTW_LIB} ${ELPA_LIB} 
 #LIBS = -liomp5 -lpthread -lm -ldl ${BOOST_LIB} ${LAPACK_LIB} ${FFTW_LIB} ${LPA_LIB} ${LIBXC_LIB}
 
-INCLUDES = -I. -Icommands -I${BOOST_INCLUDE_DIR} -I${LAPACK_INCLUDE_DIR} -I${FFTW_INCLUDE_DIR} -I${LIBXC_INCLUDE_DIR} -I${CEREAL_INCLUDE_DIR}
+INCLUDES = -I. -Icommands -I${BOOST_INCLUDE_DIR} -I${LAPACK_INCLUDE_DIR} -I${FFTW_INCLUDE_DIR} -I${LIBXC_INCLUDE_DIR} -I${CEREAL_INCLUDE_DIR} ${LIBTORCH_INCLUDE_DIR}
 
 #==========================
 # OPTIMIZE OPTIONS
 #==========================
-OPTS     = ${INCLUDES} -Ofast -traceback -std=c++11 -simd -march=native -xHost -m64 -qopenmp -Werror -Wall -pedantic -g
+OPTS     = ${INCLUDES} -Ofast -traceback -std=c++14 -simd -march=native -xHost -m64 -qopenmp -Werror -Wall -pedantic -g
 OPTS_MPI = -cxx=${CPLUSPLUS}
