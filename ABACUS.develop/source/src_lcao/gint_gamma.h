@@ -97,16 +97,6 @@ class Gint_Gamma : public Grid_Base_Beta
 	// on regular FFT real space grid.
 	void gamma_force(void);
 
-	Array_Pool<double> cal_psir_ylm_vl(
-		const int na_grid,  // how many atoms on this (i,j,k) grid
-		const int LD_pool,
-		const int grid_index, // 1d index of FFT index (i,j,k)
-		const double delta_r, // delta_r of the uniform FFT grid
-		double phi, // radial wave functions
-		const int*const colidx,  // count total number of atomis orbitals
-		const int*const bsize,  // ??
-		const bool*const*const cal_flag);
-
 	void cal_meshball_vlocal(
 		const int na_grid,
 		const int LD_pool,
@@ -130,14 +120,14 @@ class Gint_Gamma : public Grid_Base_Beta
 		const double*const*const psir_ylm,
 		const int*const vindex);
 
-	Array_Pool<double> cal_psir_ylm_rho(
-		const int na_grid,
+	static Array_Pool<double> cal_psir_ylm(
+		const int na_grid, // number of atoms on this grid 
 		const int LD_pool,
-		const int grid_index,
-		const double delta_r,
-        const int*const block_index,
+		const int grid_index, // 1d index of FFT index (i,j,k) 
+		const double delta_r, // delta_r of the uniform FFT grid
+		const int*const block_index,  // count total number of atomis orbitals
 		const int*const block_size, 
-        const bool*const*const cal_flag);
+		const bool*const*const cal_flag); // whether the atom-grid distance is larger than cutoff
 	
 	// extract the local potentials.
 	// vldr3[pw.bxyz]
