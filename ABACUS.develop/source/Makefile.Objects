@@ -113,6 +113,7 @@ grid_meshk.o\
 grid_meshcell.o\
 grid_bigcell.o\
 grid_meshball.o\
+gint_tools.o\
 gint_gamma.o\
 gint_gamma_common.o\
 gint_gamma_fvl.o\

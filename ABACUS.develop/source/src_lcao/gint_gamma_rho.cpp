@@ -1,4 +1,5 @@
 #include "gint_gamma.h"
+#include "gint_tools.h"
 #include "grid_technique.h"
 #include "module_ORB/ORB_read.h"
 #include "src_pw/global.h"
@@ -18,7 +19,7 @@ void Gint_Gamma::cal_band_rho(
 	const double*const*const psir_ylm,
 	const int*const vindex)
 {
-	Array_Pool<double> psir_DM(pw.bxyz, LD_pool);
+	Gint_Tools::Array_Pool<double> psir_DM(pw.bxyz, LD_pool);
 	ZEROS(psir_DM.ptr_1D, pw.bxyz*LD_pool);
 
     //parameters for dsymm, dgemm and ddot
@@ -211,29 +212,29 @@ double Gint_Gamma::gamma_charge(void)					// Peize Lin update OpenMP 2020.09.28
 						const double delta_r = ORB.dr_uniform;						
 						
 						// here vindex refers to local potentials
-						int* vindex = Gint_Gamma::get_vindex(ncyz, ibx, jby, kbz);	
+						int* vindex = Gint_Tools::get_vindex(ncyz, ibx, jby, kbz);	
 						
 						//------------------------------------------------------
 						// band size: number of columns of a band
 						//------------------------------------------------------------------
-						int* block_size = get_block_size(na_grid, grid_index);
+						int* block_size = Gint_Tools::get_block_size(na_grid, grid_index);
 						
 						//------------------------------------------------------
 						// index of wave functions for each block
 						//------------------------------------------------------
-						int *block_iw = get_block_iw(na_grid, grid_index, this->max_size);
+						int *block_iw = Gint_Tools::get_block_iw(na_grid, grid_index, this->max_size);
 
-						int* block_index = get_block_index(na_grid, grid_index);
+						int* block_index = Gint_Tools::get_block_index(na_grid, grid_index);
 
 						//------------------------------------------------------
 						// whether the atom-grid distance is larger than cutoff
 						//------------------------------------------------------
-						bool **cal_flag = get_cal_flag(na_grid, grid_index);
+						bool **cal_flag = Gint_Tools::get_cal_flag(na_grid, grid_index);
 
 						// set up band matrix psir_ylm and psir_DM
-						const int LD_pool=max_size*ucell.nwmax;
+						const int LD_pool = max_size*ucell.nwmax;
 						
-						const Array_Pool<double> psir_ylm = this->cal_psir_ylm(
+						const Gint_Tools::Array_Pool<double> psir_ylm = Gint_Tools::cal_psir_ylm(
 							na_grid, LD_pool, grid_index, delta_r,
 							block_index, block_size, 
 							cal_flag);

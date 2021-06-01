@@ -1,4 +1,5 @@
 #include "gint_gamma.h"
+#include "gint_tools.h"
 #include "grid_technique.h"
 #include "../module_ORB/ORB_read.h"
 #include "../src_pw/global.h"
@@ -590,17 +591,17 @@ void Gint_Gamma::gamma_force(void)
 					//------------------------------------------------------
 					// index of wave functions for each block
 					//------------------------------------------------------
-					int *block_iw = get_block_iw(na_grid, grid_index, this->max_size);
+					int *block_iw = Gint_Tools::get_block_iw(na_grid, grid_index, this->max_size);
 					
-					int* block_index = get_block_index(na_grid, grid_index);
+					int* block_index = Gint_Tools::get_block_index(na_grid, grid_index);
 					
 					//------------------------------------------------------
 					// band size: number of columns of a band
 					//------------------------------------------------------------------
-					int* block_size = get_block_size(na_grid, grid_index);
+					int* block_size = Gint_Tools::get_block_size(na_grid, grid_index);
 
-					Array_Pool<double> psir_vlbr3(pw.bxyz, LD_pool);
-					Array_Pool<double> psir_ylm(pw.bxyz, LD_pool);
+					Gint_Tools::Array_Pool<double> psir_vlbr3(pw.bxyz, LD_pool);
+					Gint_Tools::Array_Pool<double> psir_ylm(pw.bxyz, LD_pool);
     
                     cal_psir_ylm_dphi(na_grid, grid_index, delta_r, 
                             block_index, block_size, cal_flag, psir_ylm.ptr_2D, dphix, dphiy, dphiz, drr);

@@ -1,4 +1,5 @@
 #include "gint_gamma.h"
+#include "gint_tools.h"
 #include "grid_technique.h"
 #include "module_ORB/ORB_read.h"
 #include "src_pw/global.h"
@@ -15,7 +16,8 @@ extern "C"
 }
 
 // atomic basis sets
-Gint_Gamma::Array_Pool<double> Gint_Gamma::get_psir_vlbr3(
+// psir_vlbr3[pw.bxyz][LD_pool]
+Gint_Tools::Array_Pool<double> get_psir_vlbr3(
 	const int na_grid,
 	const int LD_pool,
 	const int*const block_index,
@@ -23,7 +25,7 @@ Gint_Gamma::Array_Pool<double> Gint_Gamma::get_psir_vlbr3(
 	const double*const vldr3,
 	const double*const*const psir_ylm)
 {
-	Array_Pool<double> psir_vlbr3(pw.bxyz, LD_pool);
+	Gint_Tools::Array_Pool<double> psir_vlbr3(pw.bxyz, LD_pool);
 	for(int ib=0; ib<pw.bxyz; ++ib)
 	{
         for(int ia=0; ia<na_grid; ++ia)
@@ -356,7 +358,7 @@ void Gint_Gamma::gamma_vlocal(void)						// Peize Lin update OpenMP 2020.09.27
 			//------------------------------------------------------
 			// <phi | V_local | phi>
 			//------------------------------------------------------
-			Array_Pool<double> GridVlocal_thread(lgd_now, lgd_now);
+			Gint_Tools::Array_Pool<double> GridVlocal_thread(lgd_now, lgd_now);
 			ZEROS(GridVlocal_thread.ptr_1D, lgd_now*lgd_now);
 			Memory::record("Gint_Gamma","GridVlocal_therad",lgd_now*lgd_now,"double");
 
@@ -389,39 +391,39 @@ void Gint_Gamma::gamma_vlocal(void)						// Peize Lin update OpenMP 2020.09.27
 						//------------------------------------------------------------------
 						// extract the local potentials.
 						//------------------------------------------------------------------
-						double *vldr3 = get_vldr3(ncyz, ibx, jby, kbz);
+						double *vldr3 = this->get_vldr3(ncyz, ibx, jby, kbz);
 
 						//------------------------------------------------------
 						// index of wave functions for each block
 						//------------------------------------------------------
-						int *block_iw = get_block_iw(na_grid, grid_index, this->max_size);
+						int *block_iw = Gint_Tools::get_block_iw(na_grid, grid_index, this->max_size);
 						
-						int* block_index = get_block_index(na_grid, grid_index);
+						int* block_index = Gint_Tools::get_block_index(na_grid, grid_index);
 						
 						//------------------------------------------------------
 						// band size: number of columns of a band
 						//------------------------------------------------------
-						int* block_size = get_block_size(na_grid, grid_index);
+						int* block_size = Gint_Tools::get_block_size(na_grid, grid_index);
 
 						//------------------------------------------------------
 						// whether the atom-grid distance is larger than cutoff
 						//------------------------------------------------------
-						bool **cal_flag = get_cal_flag(na_grid, grid_index);
+						bool **cal_flag = Gint_Tools::get_cal_flag(na_grid, grid_index);
 						
 						//------------------------------------------------------------------
 						// compute atomic basis phi(r) with both radial and angular parts
 						//------------------------------------------------------------------
-						const Array_Pool<double> psir_ylm = this->cal_psir_ylm(
+						const Gint_Tools::Array_Pool<double> psir_ylm = Gint_Tools::cal_psir_ylm(
 							na_grid, LD_pool, grid_index, delta_r,
 							block_index, block_size, cal_flag);
 
-                        const Array_Pool<double> psir_vlbr3 = get_psir_vlbr3(
+                        const Gint_Tools::Array_Pool<double> psir_vlbr3 = get_psir_vlbr3(
                                 na_grid, LD_pool, block_index, cal_flag, vldr3, psir_ylm.ptr_2D);
 
 						//------------------------------------------------------------------
 						// calculate <phi_i|V|phi_j>
 						//------------------------------------------------------------------
-						cal_meshball_vlocal(
+						this->cal_meshball_vlocal(
 							na_grid, LD_pool, block_iw, block_size, block_index, cal_flag,
 							vldr3, psir_ylm.ptr_2D, psir_vlbr3.ptr_2D, lgd_now, GridVlocal_thread.ptr_2D);
 						
