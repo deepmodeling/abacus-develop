@@ -4,7 +4,6 @@
 #include "module_ORB/ORB_read.h"
 #include "src_pw/global.h"
 #include "src_global/blas_connector.h"
-#include <mkl_service.h>
 
 #include "global_fp.h" // mohan add 2021-01-30
 
@@ -333,8 +332,8 @@ void Gint_Gamma::gamma_vlocal(void)						// Peize Lin update OpenMP 2020.09.27
     }
 			Memory::record("Gint_Gamma","GridVlocal",GridT.lgd*GridT.lgd,"double");
 
-    const int mkl_threads = mkl_get_max_threads();
-	mkl_set_num_threads(std::max(1,mkl_threads/GridT.nbx));		// Peize Lin update 2021.01.20
+    const int omp_threads = omp_get_max_threads();
+	omp_set_num_threads(std::max(1,omp_threads/GridT.nbx));		// Peize Lin update 2021.01.20
 
 #ifdef __OPENMP
 	#pragma omp parallel
@@ -454,7 +453,7 @@ void Gint_Gamma::gamma_vlocal(void)						// Peize Lin update OpenMP 2020.09.27
 		} // end of if(max_size>0 && lgd_now>0)
 	} // end of #pragma omp parallel
 
-    mkl_set_num_threads(mkl_threads);
+    omp_set_num_threads(omp_threads);
 
     OUT(ofs_running, "temp variables are deleted");
     timer::tick("Gint_Gamma","gamma_vlocal",'K');

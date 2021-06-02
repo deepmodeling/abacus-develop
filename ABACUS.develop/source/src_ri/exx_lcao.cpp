@@ -22,7 +22,6 @@
 #include "exx_abfs-parallel-distribute-order.h"
 
 #include <thread>
-#include <mkl_service.h>
 
 // Peize Lin test
 #include<stdexcept>	
@@ -1433,8 +1432,8 @@ ofs_mpi.close();
 
 vector<map<size_t,map<size_t,map<Abfs::Vector3_Order<int>,matrix>>>> Exx_Lcao::cal_Hexx() const
 {
-	const int mkl_threads = mkl_get_max_threads();
-	mkl_set_num_threads(std::max(1UL,mkl_threads/atom_pairs_core.size()));
+	const int omp_threads = omp_get_max_threads();
+	omp_set_num_threads(std::max(1UL,omp_threads/atom_pairs_core.size()));
 	
 	vector<map<size_t,map<size_t,map<Abfs::Vector3_Order<int>,matrix>>>> HexxR(NSPIN);
 	omp_lock_t Hexx_lock;
@@ -1771,7 +1770,7 @@ vector<map<size_t,map<size_t,map<Abfs::Vector3_Order<int>,matrix>>>> Exx_Lcao::c
 	} // end omp parallel
 
 	omp_destroy_lock(&Hexx_lock);
-	mkl_set_num_threads(mkl_threads);
+	omp_set_num_threads(omp_threads);
 	
 	return HexxR;
 }
