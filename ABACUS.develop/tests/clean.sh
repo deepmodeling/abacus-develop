@@ -1,6 +1,6 @@
 #!/bin/bash
 
-for module in "_PW_" "_NO_"; do
+for module in "_PW_" "_NO_" "_NP_"; do
 
 echo $module
 

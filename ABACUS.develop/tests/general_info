@@ -1,10 +1,11 @@
 EXEC path_of_ABACUS
-NUMBEROFPROCESS 4
+NUMBEROFPROCESS 1
 CHECKACCURACY 8
 list_of_tests _PW 
 ##################
 _PW    plain wave bases
 _NO    numerical atoms orbitals bases
+_NP    expand numerical atoms orbitals in plane-wave basis
 
 _OU    old upf pseudopotential file
 _15    SG15 pseudopotential file
@@ -139,3 +140,5 @@ TESTDIR 304_NO_GO_AF
 TESTDIR 304_NO_GO_FM
 TESTDIR 307_NO_GO_OH
 TESTDIR 345_NO_GO_BS
+TESTDIR 401_NP_KP_sp
+TESTDIR 401_NP_KP_spd
