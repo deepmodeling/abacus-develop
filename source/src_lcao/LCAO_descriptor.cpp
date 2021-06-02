@@ -1,4 +1,5 @@
 //caoyu add 2021-03-29
+
 #include "LCAO_descriptor.h"
 #include "LCAO_matrix.h"
 #include "../module_base/lapack_connector.h"
@@ -7,6 +8,9 @@
 #include "global_fp.h"
 #include "../src_pw/global.h"
 #include "../src_io/winput.h"
+#include <torch/script.h>
+#include <torch/csrc/autograd/autograd.h>
+
 
 LCAO_Descriptor::LCAO_Descriptor(int lm, int inlm):lmaxd(lm), inlmax(inlm)
 {
@@ -60,7 +64,6 @@ LCAO_Descriptor::~LCAO_Descriptor()
 void LCAO_Descriptor::build_S_descriptor(const bool &calc_deri)
 {
     TITLE("LCAO_Descriptor", "build_S_descriptor");
-
     // =======init==============
     // cal n(descriptor) per atom , related to Lmax, nchi(L) and m. (not total_nchi!)
 	this->des_per_atom=0; // mohan add 2021-04-21
@@ -290,6 +293,7 @@ void LCAO_Descriptor::cal_descriptor()
             }     //l
         }         //ia
     }             //it
+    this->cal_descriptor_tensor();  //use torch::symeig
     this->print_descriptor();
     return;
 }
@@ -589,9 +593,9 @@ void LCAO_Descriptor::cal_f_delta(matrix& dm2d)
                 {
                     for (int m2 = 0; m2 < nm;++m2)
                     {
-                        this->F_delta(iat, 1) += gedm[inl][m1 * nm + m2] * gdmx[iat][inl][m1 * nm + m2];
-                        this->F_delta(iat, 2) += gedm[inl][m1 * nm + m2] * gdmy[iat][inl][m1 * nm + m2];
-                        this->F_delta(iat, 3) += gedm[inl][m1 * nm + m2] * gdmz[iat][inl][m1 * nm + m2];
+                        this->F_delta(iat, 1) += this->gedm[inl][m1 * nm + m2] * gdmx[iat][inl][m1 * nm + m2];
+                        this->F_delta(iat, 2) += this->gedm[inl][m1 * nm + m2] * gdmy[iat][inl][m1 * nm + m2];
+                        this->F_delta(iat, 3) += this->gedm[inl][m1 * nm + m2] * gdmz[iat][inl][m1 * nm + m2];
                     }
                 }
                 
@@ -602,5 +606,67 @@ void LCAO_Descriptor::cal_f_delta(matrix& dm2d)
 
 
     this->del_gdmx();
+    return;
+}
+
+void LCAO_Descriptor::cal_descriptor_tensor()
+{
+    //init pdm_tensor and d_tensor
+    torch::Tensor tmp;
+    for (int inl = 0;inl < this->inlmax;++inl)
+    {
+        int nm = 2 * inl_l[inl] + 1;
+        tmp = torch::ones({ nm, nm }, torch::TensorOptions().dtype(torch::kFloat64));
+        for (int m1 = 0;m1 < nm;++m1)
+        {
+            for (int m2 = 0;m2 < nm;++m2)
+            {
+                tmp.index_put_({m1, m2}, this->pdm[inl][m1 * nm + m2]);
+            }
+        }
+        //torch::Tensor tmp = torch::from_blob(this->pdm[inl], { nm, nm }, torch::requires_grad());
+        tmp.requires_grad_(true);
+        this->pdm_tensor.push_back(tmp);
+        this->d_tensor.push_back(torch::ones({ nm }, torch::requires_grad(true)));
+    }
+
+    //cal d_tensor
+    for (int inl = 0;inl < inlmax;++inl)
+    {
+        torch::Tensor vd;
+        std::tuple<torch::Tensor, torch::Tensor> d_v(this->d_tensor[inl], vd);
+        d_v = torch::symeig(pdm_tensor[inl], /*eigenvalues=*/false, /*upper=*/true);
+        d_tensor[inl] = std::get<0>(d_v);
+    }
+    return;
+}
+
+void LCAO_Descriptor::cal_gedm()
+{
+    //load model
+    const char* model_name = "cmodel.pt";
+    try {
+        module = torch::jit::load(model_name);
+    }
+    catch (const c10::Error& e) {
+        std::cerr << "error loading the model" << std::endl;
+        return;
+    }
+    std::vector<torch::jit::IValue> inputs;
+    inputs.push_back(torch::cat(d_tensor, /*dim=*/0));
+    std::vector<torch::Tensor> ec;
+    ec.push_back(module.forward(inputs).toTensor());
+    std::vector<torch::Tensor> grad_shell;
+    for (int inl = 0;inl < inlmax;++inl)
+    {
+        int nm = 2 * inl_l[inl] + 1;
+        grad_shell.push_back(torch::ones({ nm, nm }));
+    }
+        this->gedm_tensor = torch::autograd::grad(ec, this->pdm_tensor, grad_shell);
+    //gedm size: [inl][3][nsph*nsph]
+
+    //gedm_Tensor to gedm
+    
+
     return;
 }
