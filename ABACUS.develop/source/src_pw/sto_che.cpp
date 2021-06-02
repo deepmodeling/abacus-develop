@@ -80,11 +80,11 @@ void Stochastic_Chebychev::calcoef(double fun(double))
     {
         if(i == 0)
         {
-            coef[i] = real(exp(-ui*i*PI/norder2) * pcoef[i]) / norder2 * 2 / 3;
+            coef[i] = real(exp(-ui*(i*PI/norder2)) * pcoef[i]) / norder2 * 2 / 3;
         }
         else
         {
-            coef[i] = real(exp(-ui*i*PI/norder2) * pcoef[i]) / norder2 * 4 / 3;
+            coef[i] = real(exp(-ui*(i*PI/norder2)) * pcoef[i]) / norder2 * 4 / 3;
         }
     }
 
@@ -294,7 +294,7 @@ bool Stochastic_Chebychev::checkconverge(
         }
         for(int i = 0; i < ndim; ++i)
         {
-            arraynp1[i]=2*arraynp1[i]-arrayn_1[i];
+            arraynp1[i]=2.*arraynp1[i]-arrayn_1[i];
         }
         complex<double>* tem = arrayn_1;
         arrayn_1 = arrayn;

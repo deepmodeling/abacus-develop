@@ -12,12 +12,12 @@ class MD_func
 
 	bool RestartMD(const int& numIon, Vector3<double>* vel, int& step_rst);
     void mdRestartOut(const int& step, const int& recordFreq, const int& numIon, Vector3<double>* vel);
-	double GetAtomKE(const int& numIon, const Vector3<double>const* vel, const double const* allmass);
+	double GetAtomKE(const int& numIon, const Vector3<double>* vel, const double* allmass);
 	void InitVelocity(
 		const int& numIon, 
 		const double& temperature, 
 		const double& fundamentalTime, 
-		const double const* allmass,
+		const double* allmass,
 		Vector3<double>* vel);
 
 //	void ReadNewTemp(int step);
@@ -32,7 +32,7 @@ class MD_func
 		const double& temperature,
 		Vector3<double>* vel,
 		const double* allmass);
-	double MAXVALF(const int numIon, const Vector3<double>const* force);
+	double MAXVALF(const int numIon, const Vector3<double>* force);
 	double Conserved(const double KE, const double PE, const int number);
 };
 #endif

@@ -91,7 +91,7 @@ void Stochastic_Chebychev::recurs(
     fun(arrayn,arraynp1,m);
     for(int i = 0; i < ndim * m; ++i)
     {
-        arraynp1[i]=2*arraynp1[i]-arrayn_1[i];
+        arraynp1[i]=2.*arraynp1[i]-arrayn_1[i];
     }
 }
 #endif// Eelectrons_Chebychev

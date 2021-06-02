@@ -172,7 +172,7 @@ void Stochastic_hchi::orthogonal_to_psi_real(complex<double> *wfin, complex<doub
 	//LapackConnector::scal(nrxx,1/double(nrxx),wfout,1);
 	for(int ir = 0; ir < nrxx ; ++ir)
 	{
-		wfout[ir] = rl_chi[ir] / nrxx;
+		wfout[ir] = rl_chi[ir] / static_cast<double>(nrxx);
 	}
 	
 
@@ -397,7 +397,7 @@ void Stochastic_hchi::hchi_real(complex<double>*chi_in, complex<double> *hchi, c
 	//LapackConnector::scal(nrxx,1/DeltaE,hchi,1);
 	for(int i = 0; i < nrxx; ++i)
 	{
-		hchi[i] += rl_chi[i] / nrxx;
+		hchi[i] += rl_chi[i] / static_cast<double>(nrxx);
 	}
 	for(int i = 0; i < nrxx; ++i)
 	{
