@@ -2,7 +2,7 @@
 #define SERIALIZATION_CEREAL_H
 
 #include <cereal/archives/binary.hpp>
-
+#include <cereal/archives/json.hpp>
 #include <cereal/types/vector.hpp>
 #include <cereal/types/map.hpp>
 #include <cereal/types/set.hpp>
