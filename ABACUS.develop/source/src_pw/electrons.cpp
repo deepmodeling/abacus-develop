@@ -16,6 +16,10 @@ double Electrons::avg_iter = 0;
 
 Electrons::Electrons()
 {
+    iter = 0;
+    test = 0;
+    unit = 0;
+    delta_total_energy = 0.0;
 }
 
 Electrons::~Electrons()

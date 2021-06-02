@@ -579,7 +579,7 @@ void Forces::cal_force_cc(matrix& forcecc)
     //psiv contains now Vxc(G)
     double * rhocg = new double [pw.nggm];
     ZEROS(rhocg, pw.nggm);
-
+    int iat = 0;
     for (int T1 = 0;T1 < ucell.ntype;T1++)
     {
         if (ucell.atoms[T1].nlcc)
@@ -592,44 +592,41 @@ void Forces::cal_force_cc(matrix& forcecc)
                 ucell.atoms[T1].rab,
                 ucell.atoms[T1].rho_atc,
                 rhocg);
-            int iat = 0;
 
 
 			complex<double> ipol0, ipol1, ipol2;
-            for (int T2 = 0;T2 < ucell.ntype;T2++)
+            for (int I1 = 0;I1 < ucell.atoms[T1].na;I1++)
             {
-                for (int I2 = 0;I2 < ucell.atoms[T2].na;I2++)
+                for (int ig = pw.gstart; ig < pw.ngmc; ig++)
                 {
-                    if (T2 == T1)
-                    {
-                        for (int ig = pw.gstart; ig < pw.ngmc; ig++)
-                        {
-                            const double arg = TWO_PI * (pw.gcar[ig].x * ucell.atoms[T2].tau[I2].x
-                                                      + pw.gcar[ig].y * ucell.atoms[T2].tau[I2].y
-                                                      + pw.gcar[ig].z * ucell.atoms[T2].tau[I2].z);
+                    const double arg = TWO_PI * (pw.gcar[ig].x * ucell.atoms[T1].tau[I1].x
+                                                + pw.gcar[ig].y * ucell.atoms[T1].tau[I1].y
+                                                + pw.gcar[ig].z * ucell.atoms[T1].tau[I1].z);
 
-                            ipol0 = ucell.tpiba * ucell.omega * rhocg[pw.ig2ngg[ig]]
-                                                    * pw.gcar[ig].x * conj(psiv[pw.ig2fftc[ig]]) 
-													* complex<double>(sin(arg), cos(arg))  ;
-                            forcecc(iat, 0) +=  ipol0.real();
+                    ipol0 = ucell.tpiba * ucell.omega * rhocg[pw.ig2ngg[ig]]
+                                            * pw.gcar[ig].x * conj(psiv[pw.ig2fftc[ig]]) 
+                                            * complex<double>(sin(arg), cos(arg))  ;
+                    forcecc(iat, 0) +=  ipol0.real();
 
-                            ipol1 = ucell.tpiba * ucell.omega * rhocg[pw.ig2ngg[ig]]
-                                                    * pw.gcar[ig].y * conj(psiv[pw.ig2fftc[ig]]) 
-													* complex<double>(sin(arg), cos(arg)) ;
-                            forcecc(iat, 1) += ipol1.real();
+                    ipol1 = ucell.tpiba * ucell.omega * rhocg[pw.ig2ngg[ig]]
+                                            * pw.gcar[ig].y * conj(psiv[pw.ig2fftc[ig]]) 
+                                            * complex<double>(sin(arg), cos(arg)) ;
+                    forcecc(iat, 1) += ipol1.real();
 
-                            ipol2 = ucell.tpiba * ucell.omega * rhocg[pw.ig2ngg[ig]]
-                                                    * pw.gcar[ig].z * conj(psiv[pw.ig2fftc[ig]]) 
-													* complex<double>(sin(arg), cos(arg)) ;
+                    ipol2 = ucell.tpiba * ucell.omega * rhocg[pw.ig2ngg[ig]]
+                                            * pw.gcar[ig].z * conj(psiv[pw.ig2fftc[ig]]) 
+                                            * complex<double>(sin(arg), cos(arg)) ;
 
-							forcecc(iat, 2) += ipol2.real();
-                        }
-                        ++iat;
-                    }
+                    forcecc(iat, 2) += ipol2.real();
                 }
+                ++iat;
             }
         }
+        else{
+            iat += ucell.atoms[T1].na;
+        }
     }
+    assert(iat == ucell.nat);
     delete [] rhocg;
 	delete [] psiv; // mohan fix bug 2012-03-22
     Parallel_Reduce::reduce_double_all(forcecc.c, forcecc.nr * forcecc.nc);
