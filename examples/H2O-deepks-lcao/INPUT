@@ -23,8 +23,8 @@ sigma                   0.02
 mixing_type             pulay
 mixing_beta             0.4
 
-#Parameters (6.File)
-out_band                0
-out_descriptor          1 
+#Parameters (6.Deepks)
+out_descriptor          1
 lmax_descriptor			2
 newdm		1
+deepks_scf	1

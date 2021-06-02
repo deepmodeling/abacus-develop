@@ -171,6 +171,15 @@ void LOOP_ions::opt_ions(void)
             ld.build_S_descriptor(0);  //derivation not needed yet
             ld.cal_projected_DM();
             ld.cal_descriptor();
+            if (INPUT.deepks_scf)
+            {
+                ld.build_S_descriptor(1);   //for F_delta calculation
+                ld.cal_v_delta("cmodel.pt");
+                ld.print_H_V_delta();
+                ld.cal_f_delta(LOC.wfc_dm_2d.dm_gamma[0]);
+                cout << "cal f ok" << endl;
+                ld.print_F_delta();
+            }
         }
 
         time_t fstart = time(NULL);

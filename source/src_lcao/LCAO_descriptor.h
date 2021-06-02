@@ -23,6 +23,13 @@ public:
     void cal_descriptor(void);
 	void print_descriptor(void);
 
+	
+	void cal_v_delta(const string& model_name);//<psi|V_delta|psi>
+	void cal_f_delta(matrix& dm);	//pytorch term remaining!
+	void print_H_V_delta();
+	void print_F_delta();
+	
+
 	//deepks V_delta, to be added to Hamiltonian matrix
 	double* H_V_delta;
 	//deepks F_delta, to be added to atom force
@@ -97,15 +104,13 @@ private:
 	const double& vz);
 
 	void init_gdmx();
+	void load_model(const string& model_name);
 	void cal_gedm();	//need to load model in this step
-	void cal_gdmx(matrix& dm2d);	//dD/dX
+	void cal_gdmx(matrix& dm);	//dD/dX
 	void del_gdmx();
 	
 	void getdm(double* dm);
-
-	void cal_v_delta();	//pytorch term remaining!
-	void cal_f_delta(matrix& dm2d);	//pytorch term remaining!
-
+	
 	void cal_descriptor_tensor();
 	
 };
