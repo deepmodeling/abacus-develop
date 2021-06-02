@@ -10,7 +10,7 @@ class LCAO_Descriptor
 {
 public:
 
-    LCAO_Descriptor(int lm, int inlm);
+    explicit LCAO_Descriptor(int lm, int inlm);
     ~LCAO_Descriptor();
 
 	// cal S_alpha_mu: overlap between lcao basis Phi and descriptor basis Al
@@ -29,7 +29,8 @@ public:
 	matrix	F_delta;
 
 private:
-
+	torch::jit::script::Module module;
+	
 	// overlap between lcao and descriptor basis
 	double** S_mu_alpha;	//[tot_Inl][NLOCAL][2l+1]	caoyu modified 2021-05-07
 
@@ -39,8 +40,16 @@ private:
 	double** DS_mu_alpha_z;
 	
 	// projected density matrix
-	double** pdm;	//[2l+1][2l+1]	caoyu modified 2021-05-07
+	double** pdm;	//[tot_Inl][2l+1][2l+1]	caoyu modified 2021-05-07
+	std::vector<torch::Tensor> pdm_tensor;
+
+	// descriptors
+    double *d;
+	vector<torch::Tensor> d_tensor;
 	
+	//gedm:dE/dD, [tot_Inl][2l+1][2l+1]
+	std::vector<torch::Tensor> gedm_tensor;
+
 	//gdmx: dD/dX		\sum_{mu,nu} 4*c_mu*c_nu * <dpsi_mu/dx|alpha_m><alpha_m'|psi_nu>
 	double*** gdmx;	//[natom][tot_Inl][2l+1][2l+1]	
 	double*** gdmy;
@@ -49,8 +58,6 @@ private:
 	//dE/dD, autograd from loaded model
 	double** gedm;	//[tot_Inl][2l+1][2l+1]	
 	
-	// descriptors
-    double *d;
 
     int n_descriptor;
 
@@ -90,6 +97,7 @@ private:
 	const double& vz);
 
 	void init_gdmx();
+	void cal_gedm();	//need to load model in this step
 	void cal_gdmx(matrix& dm2d);	//dD/dX
 	void del_gdmx();
 	
@@ -97,6 +105,8 @@ private:
 
 	void cal_v_delta();	//pytorch term remaining!
 	void cal_f_delta(matrix& dm2d);	//pytorch term remaining!
+
+	void cal_descriptor_tensor();
 	
 };
 

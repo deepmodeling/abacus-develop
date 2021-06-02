@@ -295,6 +295,7 @@ void LCAO_Descriptor::cal_descriptor()
     }             //it
     this->cal_descriptor_tensor();  //use torch::symeig
     this->print_descriptor();
+    this->cal_gedm();   //delete and put in LOOP_ions after tested
     return;
 }
 
@@ -635,7 +636,7 @@ void LCAO_Descriptor::cal_descriptor_tensor()
     {
         torch::Tensor vd;
         std::tuple<torch::Tensor, torch::Tensor> d_v(this->d_tensor[inl], vd);
-        d_v = torch::symeig(pdm_tensor[inl], /*eigenvalues=*/false, /*upper=*/true);
+        d_v = torch::symeig(pdm_tensor[inl], /*eigenvalues=*/true, /*upper=*/true);
         d_tensor[inl] = std::get<0>(d_v);
     }
     return;
@@ -652,21 +653,19 @@ void LCAO_Descriptor::cal_gedm()
         std::cerr << "error loading the model" << std::endl;
         return;
     }
+    //forward
     std::vector<torch::jit::IValue> inputs;
-    inputs.push_back(torch::cat(d_tensor, /*dim=*/0));
+    //input_dim:(natom, des_per_atom)
+    inputs.push_back(torch::cat(d_tensor, /*dim=*/0).reshape({ ucell.nat, des_per_atom }));
     std::vector<torch::Tensor> ec;
     ec.push_back(module.forward(inputs).toTensor());
+
+    //cal gedm
     std::vector<torch::Tensor> grad_shell;
-    for (int inl = 0;inl < inlmax;++inl)
-    {
-        int nm = 2 * inl_l[inl] + 1;
-        grad_shell.push_back(torch::ones({ nm, nm }));
-    }
-        this->gedm_tensor = torch::autograd::grad(ec, this->pdm_tensor, grad_shell);
-    //gedm size: [inl][3][nsph*nsph]
+    grad_shell.push_back(torch::ones_like(ec[0]));
+    this->gedm_tensor = torch::autograd::grad(ec, this->pdm_tensor, grad_shell);
 
     //gedm_Tensor to gedm
-    
 
     return;
 }
