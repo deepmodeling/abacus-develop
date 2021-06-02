@@ -10,7 +10,7 @@ class MD_fire
         ~MD_fire(){};
         void check_FIRE(
             const int& numIon, 
-            const Vector3<double>const* force, 
+            const Vector3<double>* force,
             double& deltaT, 
             Vector3<double>* vel);
     private:
