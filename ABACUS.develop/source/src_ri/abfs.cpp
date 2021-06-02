@@ -6,7 +6,6 @@
 #include "src_pw/global.h"
 #include "src_global/global_function.h"
 #include <omp.h>
-#include <mkl_service.h>
 
 #include <fstream>		// Peize Lin test
 #include <iomanip>		// Peize Lin test
@@ -35,8 +34,8 @@ map<size_t,map<size_t,map<Abfs::Vector3_Order<int>,shared_ptr<matrix>>>> Abfs::c
 	for(size_t it=0; it!=ucell.ntype; ++it)
 		Vs_same_atom[it] = DPcal_V( it,it,{0,0,0}, m_abfs_abfs, index_abfs, 0,true, rwlock_Vw,Vws );
 	
-	const int mkl_threads = mkl_get_max_threads();
-	mkl_set_num_threads(std::max(1UL,mkl_threads/atom_centres_vector.size()));
+	const int omp_threads = omp_get_max_threads();
+	omp_set_num_threads(std::max(1UL,omp_threads/atom_centres_vector.size()));
 	
 	map<size_t,map<size_t,map<Vector3_Order<int>,shared_ptr<matrix>>>> Cs;
 	#pragma omp parallel for
@@ -65,7 +64,7 @@ map<size_t,map<size_t,map<Abfs::Vector3_Order<int>,shared_ptr<matrix>>>> Abfs::c
 			}
 		}
 	}
-	mkl_set_num_threads(mkl_threads);
+	omp_set_num_threads(omp_threads);
 	Abfs::delete_threshold_ptrs( Cs, threshold );
 	Vs_same_atom.clear();
 	Abfs::delete_empty_ptrs( Vws );
