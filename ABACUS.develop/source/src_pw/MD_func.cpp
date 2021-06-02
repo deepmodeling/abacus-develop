@@ -99,7 +99,7 @@ void MD_func::mdRestartOut(const int& step, const int& recordFreq, const int& nu
 	return;
 }
 
-double MD_func::GetAtomKE(const int& numIon, const Vector3<double>const* vel, const double const* allmass){
+double MD_func::GetAtomKE(const int& numIon, const Vector3<double>* vel, const double * allmass){
 //---------------------------------------------------------------------------
 // DESCRIPTION:
 //   This function calculates the classical kinetic energy of a group of atoms.
@@ -121,7 +121,7 @@ void MD_func::InitVelocity(
 	const int& numIon, 
 	const double& temperature, 
 	const double& fundamentalTime, 
-	const double const* allmass,
+	const double* allmass,
 	Vector3<double>* vel)
 {
 	if(!MY_RANK){ //xiaohui add 2015-09-25
@@ -377,7 +377,7 @@ double MD_func::Conserved(const double KE, const double PE, const int number){
    	return Conserved;
 }
 
-double MD_func::MAXVALF(const int numIon, const Vector3<double>const* force){
+double MD_func::MAXVALF(const int numIon, const Vector3<double>* force){
 	//cout<<"enter in MAXVALF"<<endl;
 	double max=0;
 	for(int i=0;i<numIon;i++){
