@@ -745,12 +745,22 @@ void LCAO_Descriptor::print_H_V_delta()
         ofs.open(ss.str().c_str());
     }
     ofs << "E_delta(Hartree) from deepks model: " << this->E_delta << endl;
-    ofs << "H_delta(gamma only)) from deepks model: " << endl;
+    ofs << "E_delta(eV) from deepks model: " << this->E_delta * Hartree_to_eV << endl;
+    ofs << "H_delta(Hartree)(gamma only)) from deepks model: " << endl;
     for (int i = 0;i < NLOCAL;++i)
     {
         for (int j = 0;j < NLOCAL;++j)
         {
             ofs<< setw(12)<< this->H_V_delta[i * NLOCAL + j] << " ";
+        }
+        ofs << endl;
+    }
+    ofs << "H_delta(eV)(gamma only)) from deepks model: " << endl;
+    for (int i = 0;i < NLOCAL;++i)
+    {
+        for (int j = 0;j < NLOCAL;++j)
+        {
+            ofs<< setw(12)<< this->H_V_delta[i * NLOCAL + j] *Hartree_to_eV<< " ";
         }
         ofs << endl;
     }
@@ -770,13 +780,29 @@ void LCAO_Descriptor::print_F_delta()
     {
         ofs.open(ss.str().c_str());
     }
+    ofs << "F_delta(Hatree/Angstrom) from deepks model: " << endl;
     ofs << setw(12) << "type" << setw(12) << "atom" << setw(15) << "dF_x" << setw(15) << "dF_y" << setw(15) << "dF_z" << endl;
     for (int it = 0;it < ucell.ntype;++it)
     {
         for (int ia = 0;ia < ucell.atoms[it].na;++ia)
         {
             int iat = ucell.itia2iat(it, ia);
-            ofs << setw(12) << ucell.atoms[it].label << setw(12) << ia << setw(15) << this->F_delta(iat, 0) << setw(15) << this->F_delta(iat, 1) << setw(15) << this->F_delta(iat, 2) << endl;
+            ofs << setw(12) << ucell.atoms[it].label << setw(12) << ia
+                << setw(15) << this->F_delta(iat, 0) << setw(15) << this->F_delta(iat, 1)
+                << setw(15) << this->F_delta(iat, 2) << endl;
+        }
+    }
+    ofs << "F_delta(eV/Angstrom) from deepks model: " << endl;
+    ofs << setw(12) << "type" << setw(12) << "atom" << setw(15) << "dF_x" << setw(15) << "dF_y" << setw(15) << "dF_z" << endl;
+    for (int it = 0;it < ucell.ntype;++it)
+    {
+        for (int ia = 0;ia < ucell.atoms[it].na;++ia)
+        {
+            int iat = ucell.itia2iat(it, ia);
+            ofs << setw(12) << ucell.atoms[it].label << setw(12)
+                << ia << setw(15) << this->F_delta(iat, 0) * Hartree_to_eV
+                << setw(15) << this->F_delta(iat, 1) * Hartree_to_eV
+                << setw(15) << this->F_delta(iat, 2) * Hartree_to_eV << endl;
         }
     }
     ofs_running << "F_delta is printed" << endl;
