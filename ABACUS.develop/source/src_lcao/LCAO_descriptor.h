@@ -29,7 +29,8 @@ public:
 	void print_H_V_delta();
 	void print_F_delta();
 	
-
+	//deepks E_delta(Hartree)
+	double E_delta = 0.0;
 	//deepks V_delta, to be added to Hamiltonian matrix
 	double* H_V_delta;
 	//deepks F_delta, to be added to atom force
