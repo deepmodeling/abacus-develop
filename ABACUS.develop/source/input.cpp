@@ -1002,8 +1002,12 @@ bool Input::Read(const string &fn)
         else if (strcmp("lmax_descriptor", word) == 0)// mohan added 2021-01-03
         {
             read_value(ifs, lmax_descriptor);
+		}
+		else if (strcmp("deepks_scf", word) == 0) // caoyu added 2021-06-02
+        {
+            read_value(ifs, deepks_scf);
         }
-        else if (strcmp("out_potential", word) == 0)
+		else if (strcmp("out_potential", word) == 0)
         {
             read_value(ifs, out_potential);
         }
