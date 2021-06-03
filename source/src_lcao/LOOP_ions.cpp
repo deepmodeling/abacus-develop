@@ -177,7 +177,6 @@ void LOOP_ions::opt_ions(void)
                 ld.cal_v_delta("cmodel.pt");
                 ld.print_H_V_delta();
                 ld.cal_f_delta(LOC.wfc_dm_2d.dm_gamma[0]);
-                cout << "cal f ok" << endl;
                 ld.print_F_delta();
             }
         }
