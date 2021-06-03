@@ -28,3 +28,4 @@ out_descriptor          1
 lmax_descriptor			2
 newdm		1
 deepks_scf	1
+model_file	model.ptg

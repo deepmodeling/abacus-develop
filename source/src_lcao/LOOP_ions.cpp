@@ -174,7 +174,7 @@ void LOOP_ions::opt_ions(void)
             if (INPUT.deepks_scf)
             {
                 ld.build_S_descriptor(1);   //for F_delta calculation
-                ld.cal_v_delta("cmodel.pt");
+                ld.cal_v_delta(INPUT.model_file);
                 ld.print_H_V_delta();
                 ld.cal_f_delta(LOC.wfc_dm_2d.dm_gamma[0]);
                 ld.print_F_delta();
