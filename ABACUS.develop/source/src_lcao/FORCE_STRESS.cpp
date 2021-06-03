@@ -188,7 +188,7 @@ void Force_Stress_LCAO::getForceStress(
 	//Force contribution from DFT+U
 	matrix force_dftu;
 	matrix stress_dftu;
-	if(INPUT.dft_plus_u)
+	if (INPUT.dft_plus_u)
 	{
 		if(isforce)
 		{

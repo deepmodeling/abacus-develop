@@ -726,15 +726,15 @@ void LCAO_Descriptor::cal_gedm()
     //input_dim:(natom, des_per_atom)
     inputs.push_back(torch::cat(d_tensor, /*dim=*/0).reshape({ ucell.nat, des_per_atom }));
     std::vector<torch::Tensor> ec;
-    ec.push_back(module.forward(inputs).toTensor());
-    this->E_delta = ec[0].item().toDouble();
+    ec.push_back(module.forward(inputs).toTensor());    //Hartree
+    this->E_delta = ec[0].item().toDouble() * 2;//Ry; *2 is for Hartree to Ry
     
     //cal gedm
     std::vector<torch::Tensor> grad_shell;
     grad_shell.push_back(torch::ones_like(ec[0]));
     this->gedm_tensor = torch::autograd::grad(ec, this->pdm_tensor, grad_shell);
 
-    //gedm_tensor to gedm
+    //gedm_tensor(Hartree) to gedm(Ry)
     for (int inl = 0;inl < inlmax;++inl)
     {
         int nm = 2 * inl_l[inl] + 1;
@@ -743,7 +743,8 @@ void LCAO_Descriptor::cal_gedm()
             for (int m2 = 0;m2 < nm;++m2)
             {
                 int index = m1 * nm + m2;
-                this->gedm[inl][index] = this->gedm_tensor[inl].index({ m1,m2 }).item().toDouble();
+                //*2 is for Hartree to Ry
+                this->gedm[inl][index] = this->gedm_tensor[inl].index({ m1,m2 }).item().toDouble() * 2;
             }
         }
     }
@@ -762,7 +763,7 @@ void LCAO_Descriptor::print_H_V_delta()
     {
         ofs.open(ss.str().c_str());
     }
-    ofs << "E_delta(Hartree) from deepks model: " << this->E_delta << endl;
+    ofs << "E_delta(Ry) from deepks model: " << this->E_delta << endl;
     ofs << "E_delta(eV) from deepks model: " << this->E_delta * Hartree_to_eV << endl;
     ofs << "H_delta(Hartree)(gamma only)) from deepks model: " << endl;
     for (int i = 0;i < NLOCAL;++i)
@@ -806,8 +807,8 @@ void LCAO_Descriptor::print_F_delta()
         {
             int iat = ucell.itia2iat(it, ia);
             ofs << setw(12) << ucell.atoms[it].label << setw(12) << ia
-                << setw(15) << this->F_delta(iat, 0) << setw(15) << this->F_delta(iat, 1)
-                << setw(15) << this->F_delta(iat, 2) << endl;
+                << setw(15) << this->F_delta(iat, 0) / 2 << setw(15) << this->F_delta(iat, 1) / 2
+                << setw(15) << this->F_delta(iat, 2) / 2 << endl;
         }
     }
     ofs << "F_delta(eV/Angstrom) from deepks model: " << endl;
@@ -818,9 +819,9 @@ void LCAO_Descriptor::print_F_delta()
         {
             int iat = ucell.itia2iat(it, ia);
             ofs << setw(12) << ucell.atoms[it].label << setw(12)
-                << ia << setw(15) << this->F_delta(iat, 0) * Hartree_to_eV/BOHR_TO_A
-                << setw(15) << this->F_delta(iat, 1) * Hartree_to_eV/BOHR_TO_A
-                << setw(15) << this->F_delta(iat, 2) * Hartree_to_eV/BOHR_TO_A << endl;
+                << ia << setw(15) << this->F_delta(iat, 0) * Ry_to_eV/BOHR_TO_A
+                << setw(15) << this->F_delta(iat, 1) * Ry_to_eV/BOHR_TO_A
+                << setw(15) << this->F_delta(iat, 2) * Ry_to_eV/BOHR_TO_A << endl;
         }
     }
     ofs_running << "F_delta is printed" << endl;
