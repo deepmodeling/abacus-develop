@@ -31,11 +31,11 @@ public:
 	void print_H_V_delta();
 	void print_F_delta();
 	
-	//deepks E_delta(Hartree)
+	//deepks E_delta(Ry)
 	double E_delta = 0.0;
 	//deepks V_delta, to be added to Hamiltonian matrix
 	double* H_V_delta;
-	//deepks F_delta, to be added to atom force
+	//deepks F_delta(Ry/Bohr), to be added to atom force
 	matrix	F_delta;
 
 private:
@@ -57,7 +57,7 @@ private:
     double *d;
 	vector<torch::Tensor> d_tensor;
 	
-	//gedm:dE/dD, [tot_Inl][2l+1][2l+1]
+	//gedm:dE/dD, [tot_Inl][2l+1][2l+1]	(E: Hartree)
 	std::vector<torch::Tensor> gedm_tensor;
 
 	//gdmx: dD/dX		\sum_{mu,nu} 4*c_mu*c_nu * <dpsi_mu/dx|alpha_m><alpha_m'|psi_nu>
@@ -65,7 +65,7 @@ private:
 	double*** gdmy;
 	double*** gdmz;
 
-	//dE/dD, autograd from loaded model
+	//dE/dD, autograd from loaded model(E: Ry)
 	double** gedm;	//[tot_Inl][2l+1][2l+1]	
 	
 
