@@ -6,6 +6,7 @@
 #include "../src_pw/H_XC_pw.h"
 #include "../src_pw/vdwd2.h"
 #include "../src_pw/vdwd3.h"
+#include "LCAO_descriptor.h"	//caoyu add for deepks 2021-06-03
 
 double Force_Stress_LCAO::force_invalid_threshold_ev = 0.00;
 double Force_Stress_LCAO::output_acc = 1.0e-8;
@@ -258,6 +259,11 @@ void Force_Stress_LCAO::getForceStress(
 				{
 					fcs(iat, i) += force_dftu(iat, i);
 				}
+				//DeePKS force, caoyu add 2021-06-03
+				if(INPUT.deepks_scf)
+				{
+					fcs(iat, i) += ld.F_delta(iat, i);
+				}
 				//sum total force for correction
 				sum += fcs(iat, i);
 			}
@@ -325,6 +331,11 @@ void Force_Stress_LCAO::getForceStress(
 			if(vdwd2_para.flag_vdwd2||vdwd3_para.flag_vdwd3)
 			{
 				this->print_force("VDW        FORCE",force_vdw,1,ry);
+			}
+			//caoyu add 2021-06-03
+			if (INPUT.deepks_scf)
+			{
+				this->print_force("DeePKS 	FORCE", ld.F_delta, 1, ry);
 			}
 		}
 		

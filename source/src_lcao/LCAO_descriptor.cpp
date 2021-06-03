@@ -13,52 +13,15 @@
 #include <torch/csrc/autograd/autograd.h>
 #include <npy.hpp>
 
-
-LCAO_Descriptor::LCAO_Descriptor(int lm, int inlm):lmaxd(lm), inlmax(inlm)
+LCAO_Descriptor ld;
+LCAO_Descriptor::LCAO_Descriptor()
 {
     alpha_index = new IntArray[1];
     inl_index = new IntArray[1];
     inl_l = new int[1];
     d = new double[1];
     H_V_delta = new double[1];
-    F_delta.create(ucell.nat, 3);
-
-    //init S_mu_alpha**
-    this->S_mu_alpha = new double* [this->inlmax];    //inl
-    for (int inl = 0;inl < this->inlmax;inl++)
-    {
-        this->S_mu_alpha[inl] = new double[NLOCAL * (2 * this->lmaxd + 1)];     //NLOCAL*nm
-        ZEROS(S_mu_alpha[inl], NLOCAL * (2 * this->lmaxd+ 1));
-    }
     
-    //init DS_mu_alpha**
-    this->DS_mu_alpha_x = new double* [this->inlmax];
-    this->DS_mu_alpha_y = new double* [this->inlmax];
-    this->DS_mu_alpha_z = new double* [this->inlmax];
-    for (int inl = 0;inl < this->inlmax;inl++)
-    {
-        this->DS_mu_alpha_x[inl] = new double[NLOCAL * (2 * this->lmaxd + 1)];
-        this->DS_mu_alpha_y[inl] = new double[NLOCAL * (2 * this->lmaxd + 1)];
-        this->DS_mu_alpha_z[inl] = new double[NLOCAL * (2 * this->lmaxd + 1)];
-        ZEROS(DS_mu_alpha_x[inl], NLOCAL * (2 * this->lmaxd + 1));
-        ZEROS(DS_mu_alpha_y[inl], NLOCAL * (2 * this->lmaxd + 1));
-        ZEROS(DS_mu_alpha_z[inl], NLOCAL * (2 * this->lmaxd + 1));
-    }
-    //init pdm**
-    const int PDM_size = (lmaxd * 2 + 1) * (lmaxd * 2 + 1);
-    this->pdm = new double* [inlmax];
-    for (int inl = 0;inl < inlmax;inl++)
-    {
-        this->pdm[inl] = new double[PDM_size];
-        ZEROS(this->pdm[inl], PDM_size);
-    }
-    //init gedm**
-    this->gedm = new double* [inlmax];
-    for (int inl = 0;inl < inlmax;inl++)
-    {
-        this->gedm[inl] = new double[PDM_size];
-        ZEROS(this->gedm[inl], PDM_size);
-    }
 }
 LCAO_Descriptor::~LCAO_Descriptor()
 {
@@ -100,10 +63,59 @@ LCAO_Descriptor::~LCAO_Descriptor()
     delete[] gedm;
 }
 
-void LCAO_Descriptor::build_S_descriptor(const bool &calc_deri)
+void LCAO_Descriptor::init(int lm, int nm, int tot_inl)
 {
-    TITLE("LCAO_Descriptor", "build_S_descriptor");
-    // =======init==============
+    TITLE("LCAO_Descriptor", "init");
+    ofs_running << " Initialize the descriptor index for deepks (lcao line)" << endl;
+
+    assert(lm >= 0);
+    assert(nm >= 0);
+    assert(tot_inl >= 0);
+    
+    this->lmaxd = lm;
+    this->nmaxd = nm;
+    this->inlmax = tot_inl;
+    ofs_running << " lmax of descriptor = " << this->lmaxd << endl;
+    ofs_running << " nmax of descriptor= " << nmaxd << endl;
+
+    //init S_mu_alpha**
+    this->S_mu_alpha = new double* [this->inlmax];    //inl
+    for (int inl = 0;inl < this->inlmax;inl++)
+    {
+        this->S_mu_alpha[inl] = new double[NLOCAL * (2 * this->lmaxd + 1)];     //NLOCAL*nm
+        ZEROS(S_mu_alpha[inl], NLOCAL * (2 * this->lmaxd+ 1));
+    }
+
+    //init F_delta
+    F_delta.create(ucell.nat, 3);
+    //init DS_mu_alpha**
+    this->DS_mu_alpha_x = new double* [this->inlmax];
+    this->DS_mu_alpha_y = new double* [this->inlmax];
+    this->DS_mu_alpha_z = new double* [this->inlmax];
+    for (int inl = 0;inl < this->inlmax;inl++)
+    {
+        this->DS_mu_alpha_x[inl] = new double[NLOCAL * (2 * this->lmaxd + 1)];
+        this->DS_mu_alpha_y[inl] = new double[NLOCAL * (2 * this->lmaxd + 1)];
+        this->DS_mu_alpha_z[inl] = new double[NLOCAL * (2 * this->lmaxd + 1)];
+        ZEROS(DS_mu_alpha_x[inl], NLOCAL * (2 * this->lmaxd + 1));
+        ZEROS(DS_mu_alpha_y[inl], NLOCAL * (2 * this->lmaxd + 1));
+        ZEROS(DS_mu_alpha_z[inl], NLOCAL * (2 * this->lmaxd + 1));
+    }
+    //init pdm**
+    const int PDM_size = (this->lmaxd * 2 + 1) * (this->lmaxd * 2 + 1);
+    this->pdm = new double* [this->inlmax];
+    for (int inl = 0;inl < this->inlmax;inl++)
+    {
+        this->pdm[inl] = new double[PDM_size];
+        ZEROS(this->pdm[inl], PDM_size);
+    }
+    //init gedm**
+    this->gedm = new double* [this->inlmax];
+    for (int inl = 0;inl < this->inlmax;inl++)
+    {
+        this->gedm[inl] = new double[PDM_size];
+        ZEROS(this->gedm[inl], PDM_size);
+    }
     // cal n(descriptor) per atom , related to Lmax, nchi(L) and m. (not total_nchi!)
 	this->des_per_atom=0; // mohan add 2021-04-21
     for (int l = 0; l <= this->lmaxd; l++)
@@ -114,8 +126,65 @@ void LCAO_Descriptor::build_S_descriptor(const bool &calc_deri)
 
     this->init_index();
     
-    // =======init==============
+    return;
+}
+void LCAO_Descriptor::init_index()
+{
+    
+    delete[] this->alpha_index;
+    this->alpha_index = new IntArray[ucell.ntype];
+    delete[] this->inl_index;
+    this->inl_index = new IntArray[ucell.ntype];
+    delete[] this->inl_l;
+    this->inl_l = new int[this->inlmax];
+    ZEROS(this->inl_l, this->inlmax);
 
+    int inl = 0;
+    int alpha = 0;
+    for (int it = 0; it < ucell.ntype; it++)
+    {
+        this->alpha_index[it].create(
+            ucell.atoms[it].na,
+            this->lmaxd + 1, // l starts from 0
+            this->nmaxd,
+            2 * this->lmaxd + 1); // m ==> 2*l+1
+
+        this->inl_index[it].create(
+            ucell.atoms[it].na,
+            this->lmaxd + 1,
+            this->nmaxd); 
+
+        ofs_running << "Type " << it + 1
+                    << " number_of_atoms " << ucell.atoms[it].na << endl;
+
+        for (int ia = 0; ia < ucell.atoms[it].na; ia++)
+        {
+            //alpha
+            for (int l = 0; l < this->lmaxd + 1; l++)
+            {
+                for (int n = 0; n < ORB.Alpha[0].getNchi(l); n++)
+                {
+                    for (int m = 0; m < 2 * l + 1; m++)
+                    {
+                        this->alpha_index[it](ia, l, n, m) = alpha;
+                        alpha++;
+                    }
+                    this->inl_index[it](ia, l, n) = inl;
+                    this->inl_l[inl] = l;
+                    inl++;
+                }
+            }
+        }//end ia
+    }//end it
+    assert(this->n_descriptor == alpha);
+    assert(ucell.nat * ORB.Alpha[0].getTotal_nchi() == inl);
+    ofs_running << "descriptors_per_atom " << this->des_per_atom << endl;
+    ofs_running << "total_descriptors " << this->n_descriptor << endl;
+}
+
+void LCAO_Descriptor::build_S_descriptor(const bool& calc_deri)
+{
+    TITLE("LCAO_Descriptor", "build_S_descriptor");
     //array to store data
     double olm[3] = {0.0, 0.0, 0.0};
 
@@ -339,69 +408,6 @@ void LCAO_Descriptor::cal_descriptor()
     return;
 }
 
-void LCAO_Descriptor::init_index(void)
-{
-    TITLE("LCAO_Descriptor", "init_index");
-    ofs_running << " Initialize the descriptor index for deepks (lcao line)" << endl;
-    const int lmaxd = ORB.get_lmax_d();
-    const int nmaxd = ORB.get_nchimax_d();
-    assert(lmaxd >= 0);
-    assert(nmaxd >= 0);
-    ofs_running << " lmax of descriptor = " << lmaxd << endl;
-    ofs_running << " nmax of descriptor= " << nmaxd << endl;
-
-    delete[] this->alpha_index;
-    this->alpha_index = new IntArray[ucell.ntype];
-    delete[] this->inl_index;
-    this->inl_index = new IntArray[ucell.ntype];
-    delete[] this->inl_l;
-    this->inl_l = new int[inlmax];
-    ZEROS(inl_l, inlmax);
-
-    int inl = 0;
-    int alpha = 0;
-    for (int it = 0; it < ucell.ntype; it++)
-    {
-        this->alpha_index[it].create(
-            ucell.atoms[it].na,
-            lmaxd + 1, // l starts from 0
-            nmaxd,
-            2 * lmaxd + 1); // m ==> 2*l+1
-
-        this->inl_index[it].create(
-            ucell.atoms[it].na,
-            lmaxd + 1,
-            nmaxd); 
-
-        ofs_running << "Type " << it + 1
-                    << " number_of_atoms " << ucell.atoms[it].na << endl;
-
-        for (int ia = 0; ia < ucell.atoms[it].na; ia++)
-        {
-            //alpha
-            for (int l = 0; l < lmaxd + 1; l++)
-            {
-                for (int n = 0; n < ORB.Alpha[0].getNchi(l); n++)
-                {
-                    for (int m = 0; m < 2 * l + 1; m++)
-                    {
-                        this->alpha_index[it](ia, l, n, m) = alpha;
-                        alpha++;
-                    }
-                    this->inl_index[it](ia, l, n) = inl;
-                    inl_l[inl] = l;
-                    inl++;
-                }
-            }
-        }//end ia
-    }//end it
-    assert(this->n_descriptor == alpha);
-    assert(ucell.nat * ORB.Alpha[0].getTotal_nchi() == inl);
-    ofs_running << "descriptors_per_atom " << this->des_per_atom << endl;
-    ofs_running << "total_descriptors " << this->n_descriptor << endl;
-
-    return;
-}
 
 
 void LCAO_Descriptor::print_projected_DM(ofstream& ofs, ComplexMatrix& des, const int& it, const int& ia, const int& l, const int& n)
@@ -792,7 +798,7 @@ void LCAO_Descriptor::print_F_delta()
     {
         ofs.open(ss.str().c_str());
     }
-    ofs << "F_delta(Hatree/Angstrom) from deepks model: " << endl;
+    ofs << "F_delta(Hatree/Bohr) from deepks model: " << endl;
     ofs << setw(12) << "type" << setw(12) << "atom" << setw(15) << "dF_x" << setw(15) << "dF_y" << setw(15) << "dF_z" << endl;
     for (int it = 0;it < ucell.ntype;++it)
     {
@@ -804,7 +810,7 @@ void LCAO_Descriptor::print_F_delta()
                 << setw(15) << this->F_delta(iat, 2) << endl;
         }
     }
-    ofs << "F_delta(eV/Angstrom) from deepks model: cd" << endl;
+    ofs << "F_delta(eV/Angstrom) from deepks model: " << endl;
     ofs << setw(12) << "type" << setw(12) << "atom" << setw(15) << "dF_x" << setw(15) << "dF_y" << setw(15) << "dF_z" << endl;
     for (int it = 0;it < ucell.ntype;++it)
     {
@@ -812,9 +818,9 @@ void LCAO_Descriptor::print_F_delta()
         {
             int iat = ucell.itia2iat(it, ia);
             ofs << setw(12) << ucell.atoms[it].label << setw(12)
-                << ia << setw(15) << this->F_delta(iat, 0) * Hartree_to_eV
-                << setw(15) << this->F_delta(iat, 1) * Hartree_to_eV
-                << setw(15) << this->F_delta(iat, 2) * Hartree_to_eV << endl;
+                << ia << setw(15) << this->F_delta(iat, 0) * Hartree_to_eV/BOHR_TO_A
+                << setw(15) << this->F_delta(iat, 1) * Hartree_to_eV/BOHR_TO_A
+                << setw(15) << this->F_delta(iat, 2) * Hartree_to_eV/BOHR_TO_A << endl;
         }
     }
     ofs_running << "F_delta is printed" << endl;

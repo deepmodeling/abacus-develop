@@ -24,6 +24,8 @@ mixing_type             pulay
 mixing_beta             0.4
 
 #Parameters (6.Deepks)
+force			1
+test_force			1
 out_descriptor          1
 lmax_descriptor			2
 newdm		1

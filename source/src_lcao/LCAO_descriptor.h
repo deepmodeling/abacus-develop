@@ -4,15 +4,17 @@
 #include "../module_base/intarray.h"
 #include "../module_base/complexmatrix.h"
 #include <torch/script.h>
+#include "../src_pw/global.h"
 
 //caoyu add 2021-03-29
 class LCAO_Descriptor
 {
 public:
 
-    explicit LCAO_Descriptor(int lm, int inlm);
+    explicit LCAO_Descriptor();
     ~LCAO_Descriptor();
 
+	void init(int lm, int nm, int tot_inl);	// index of descriptor in all atoms
 	// cal S_alpha_mu: overlap between lcao basis Phi and descriptor basis Al
     void build_S_descriptor(const bool &calc_deri); 
 
@@ -67,14 +69,14 @@ private:
 	double** gedm;	//[tot_Inl][2l+1][2l+1]	
 	
 
-    int n_descriptor;
+	int n_descriptor;
 
 	// \sum_L{Nchi(L)*(2L+1)}
 	int des_per_atom;
 
-	const int lmaxd;
-
-	const int inlmax;
+	int lmaxd = 0;
+	int nmaxd = 0;
+	int inlmax = 0;
 
 	IntArray* alpha_index;
 	IntArray* inl_index;	//caoyu add 2021-05-07
@@ -115,6 +117,6 @@ private:
 	void cal_descriptor_tensor();
 	
 };
-
+extern LCAO_Descriptor ld;
 
 #endif

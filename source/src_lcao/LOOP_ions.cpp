@@ -167,7 +167,7 @@ void LOOP_ions::opt_ions(void)
         //caoyu add 2021-03-31
         if (INPUT.out_descriptor)
         {
-            LCAO_Descriptor ld(ORB.get_lmax_d(), ucell.nat* ORB.Alpha[0].getTotal_nchi());
+            ld.init(ORB.get_lmax_d(), ORB.get_nchimax_d(), ucell.nat* ORB.Alpha[0].getTotal_nchi());
             ld.build_S_descriptor(0);  //derivation not needed yet
             ld.cal_projected_DM();
             ld.cal_descriptor();
