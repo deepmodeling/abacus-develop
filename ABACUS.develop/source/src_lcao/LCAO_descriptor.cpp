@@ -8,8 +8,10 @@
 #include "global_fp.h"
 #include "../src_pw/global.h"
 #include "../src_io/winput.h"
+
 #include <torch/script.h>
 #include <torch/csrc/autograd/autograd.h>
+#include <npy.hpp>
 
 
 LCAO_Descriptor::LCAO_Descriptor(int lm, int inlm):lmaxd(lm), inlmax(inlm)
@@ -443,6 +445,16 @@ void LCAO_Descriptor::print_descriptor()
         }
     }
     ofs_running << "descriptors are printed" << endl;
+
+    //print descriptor in .npy format
+    vector<double>npy_des;
+    for (int i = 0;i < n_descriptor;++i)
+    {
+        npy_des.push_back(this->d[i]);
+    }
+    const long unsigned shape [] = {ucell.nat, des_per_atom};
+    npy::SaveArrayAsNumpy("dm_eig.npy", false, 2, shape, npy_des);
+
     return;
 }
 
@@ -792,7 +804,7 @@ void LCAO_Descriptor::print_F_delta()
                 << setw(15) << this->F_delta(iat, 2) << endl;
         }
     }
-    ofs << "F_delta(eV/Angstrom) from deepks model: " << endl;
+    ofs << "F_delta(eV/Angstrom) from deepks model: cd" << endl;
     ofs << setw(12) << "type" << setw(12) << "atom" << setw(15) << "dF_x" << setw(15) << "dF_y" << setw(15) << "dF_z" << endl;
     for (int it = 0;it < ucell.ntype;++it)
     {
