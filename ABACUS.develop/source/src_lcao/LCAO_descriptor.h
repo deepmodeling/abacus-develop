@@ -24,7 +24,7 @@ public:
 	void print_descriptor(void);
 
 	
-	void cal_v_delta(const string& model_name);//<psi|V_delta|psi>
+	void cal_v_delta(const string& model_file);//<psi|V_delta|psi>
 	void cal_f_delta(matrix& dm);	//pytorch term remaining!
 	void print_H_V_delta();
 	void print_F_delta();
@@ -105,7 +105,7 @@ private:
 	const double& vz);
 
 	void init_gdmx();
-	void load_model(const string& model_name);
+	void load_model(const string& model_file);
 	void cal_gedm();	//need to load model in this step
 	void cal_gdmx(matrix& dm);	//dD/dX
 	void del_gdmx();

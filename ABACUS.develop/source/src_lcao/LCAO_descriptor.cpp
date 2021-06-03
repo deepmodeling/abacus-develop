@@ -447,7 +447,7 @@ void LCAO_Descriptor::print_descriptor()
     ofs_running << "descriptors are printed" << endl;
 
     //print descriptor in .npy format
-    vector<double>npy_des;
+    vector<double> npy_des;
     for (int i = 0;i < n_descriptor;++i)
     {
         npy_des.push_back(this->d[i]);
@@ -585,11 +585,11 @@ void LCAO_Descriptor::del_gdmx()
     return;
 }
 
-void LCAO_Descriptor::cal_v_delta(const string& model_name)
+void LCAO_Descriptor::cal_v_delta(const string& model_file)
 {
     TITLE("LCAO_Descriptor", "cal_v_delta");
     //1.  (dE/dD)<alpha_m'|psi_nv>
-    this->load_model(model_name);
+    this->load_model(model_file);
     this->cal_gedm();
 
     //2. multiply and sum
@@ -702,10 +702,10 @@ void LCAO_Descriptor::cal_descriptor_tensor()
     return;
 }
 
-void LCAO_Descriptor::load_model(const string& model_name)
+void LCAO_Descriptor::load_model(const string& model_file)
 {
     try {
-        module = torch::jit::load(model_name);
+        module = torch::jit::load(model_file);
     }
     catch (const c10::Error& e) {
         std::cerr << "error loading the model" << std::endl;
