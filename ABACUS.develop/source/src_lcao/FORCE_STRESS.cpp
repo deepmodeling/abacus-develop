@@ -263,6 +263,7 @@ void Force_Stress_LCAO::getForceStress(
 				if(INPUT.deepks_scf)
 				{
 					fcs(iat, i) += ld.F_delta(iat, i);
+					ld.save_npy_f(ld.F_delta);
 				}
 				//sum total force for correction
 				sum += fcs(iat, i);

@@ -452,15 +452,6 @@ void LCAO_Descriptor::print_descriptor()
     }
     ofs_running << "descriptors are printed" << endl;
 
-    //print descriptor in .npy format
-    vector<double> npy_des;
-    for (int i = 0;i < n_descriptor;++i)
-    {
-        npy_des.push_back(this->d[i]);
-    }
-    const long unsigned shape [] = {ucell.nat, des_per_atom};
-    npy::SaveArrayAsNumpy("dm_eig.npy", false, 2, shape, npy_des);
-
     return;
 }
 
@@ -825,5 +816,45 @@ void LCAO_Descriptor::print_F_delta()
         }
     }
     ofs_running << "F_delta is printed" << endl;
+    return;
+}
+
+void LCAO_Descriptor::save_npy_d()
+{
+    //save descriptor in .npy format
+    vector<double> npy_des;
+    for (int i = 0;i < this->n_descriptor;++i)
+    {
+        npy_des.push_back(this->d[i]);
+    }
+    const long unsigned dshape[] = { ucell.nat, this->des_per_atom };
+    npy::SaveArrayAsNumpy("dm_eig.npy", false, 2, dshape, npy_des);
+    return;
+}
+
+void LCAO_Descriptor::save_npy_e(double& ebase)
+{   
+    //save e_base
+    const long unsigned eshape[] = { 1 };
+    vector<double> npy_ebase;
+    npy_ebase.push_back(ebase);
+    npy::SaveArrayAsNumpy("e_base.npy", false, 1, eshape, npy_ebase);
+    return;
+}
+
+void LCAO_Descriptor::save_npy_f(matrix& fbase)
+{
+    //save f_base
+    //caution: unit: Rydberg/Bohr
+    const long unsigned fshape[] = { ucell.nat, 3 };
+    vector<double> npy_fbase;
+    for (int iat = 0;iat < ucell.nat;++iat)
+    {
+        for (int i = 0;i < 3;i++)
+        {
+            npy_fbase.push_back(fbase(iat, i));
+        }
+    }
+    npy::SaveArrayAsNumpy("f_base.npy", false, 2, fshape, npy_fbase);
     return;
 }
