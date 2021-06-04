@@ -30,7 +30,16 @@ public:
 	void cal_f_delta(matrix& dm);	//pytorch term remaining!
 	void print_H_V_delta();
 	void print_F_delta();
-	
+
+	/*These 3 func save the [dm_eig], [e_base], [f_base]
+	of current configuration as .npy file, when deepks_scf = 1.
+	After a full group of consfigurations are calculated,
+    we need a python script to 'load' and 'torch.cat' these .npy files,
+    and get l_e_delta and l_f_delta corresponding to the exact e,f data.*/
+	void save_npy_d();
+	void save_npy_e(double& ebase);	//Ry
+	void save_npy_f(matrix& fbase);//Ry
+
 	//deepks E_delta(Ry)
 	double E_delta = 0.0;
 	//deepks V_delta, to be added to Hamiltonian matrix

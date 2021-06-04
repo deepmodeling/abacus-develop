@@ -11,6 +11,7 @@
 #include "../src_pw/occupy.h"
 //new
 #include "../src_pw/H_Ewald_pw.h"
+#include "LCAO_descriptor.h"	//caoyu add 2021-06-04
 
 ELEC_scf::ELEC_scf(){}
 ELEC_scf::~ELEC_scf(){}
@@ -570,6 +571,10 @@ void ELEC_scf::scf(const int &istep)
 				if(OUT_LEVEL=="ie")
 				{
 					ofs_running << " " << global_out_dir << " final etot is " << en.etot * Ry_to_eV << " eV" << endl; 
+				}
+				if (INPUT.deepks_scf)	//caoyu add 2021-06-04
+				{
+					ld.save_npy_e(en.etot);//ebase = etot, no deepks E_delta including 
 				}
 			}
 			else
