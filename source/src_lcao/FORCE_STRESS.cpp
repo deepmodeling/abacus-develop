@@ -259,12 +259,6 @@ void Force_Stress_LCAO::getForceStress(
 				{
 					fcs(iat, i) += force_dftu(iat, i);
 				}
-				//DeePKS force, caoyu add 2021-06-03
-				if(INPUT.deepks_scf)
-				{
-					fcs(iat, i) += ld.F_delta(iat, i);
-					ld.save_npy_f(ld.F_delta);
-				}
 				//sum total force for correction
 				sum += fcs(iat, i);
 			}
@@ -287,7 +281,13 @@ void Force_Stress_LCAO::getForceStress(
 		{
 			this->forceSymmetry(fcs);
 		}
-
+		
+		//DeePKS force, caoyu add 2021-06-03
+		if (INPUT.deepks_scf)
+		{
+			ld.save_npy_f(fcs);	//save fbase
+		}
+		
 		// print Rydberg force or not
 		bool ry = false;
 		if(istestf)
