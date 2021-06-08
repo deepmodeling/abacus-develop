@@ -1,6 +1,10 @@
 # This is the Makefile of ABACUS
 
-include Makefile.system
+ifdef GNU
+    include Makefile.gnu
+else
+    include Makefile.system
+endif
 include Makefile.Objects
 
 VPATH=./src_global\
