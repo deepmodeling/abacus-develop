@@ -4,6 +4,7 @@
 #include <cassert>
 #include <limits>
 #include <thread>
+#include <mkl_service.h>
 
 #include "src_external/src_test/src_ri/exx_abfs-screen-test.h"
 #include "src_external/src_test/src_ri/exx_lcao-test.h"
