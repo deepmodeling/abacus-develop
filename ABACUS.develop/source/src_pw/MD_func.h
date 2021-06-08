@@ -11,12 +11,12 @@ class MD_func
     ~MD_func(){};
 	bool RestartMD(const int& numIon, Vector3<double>* vel, int& step_rst);
     void mdRestartOut(const int& step, const int& recordFreq, const int& numIon, Vector3<double>* vel);
-	double GetAtomKE(const int& numIon, const Vector3<double>* vel, const double* allmass);
+	double GetAtomKE(const int& numIon, const Vector3<double>const* vel, const double const* allmass);
 	void InitVelocity(
 		const int& numIon, 
 		const double& temperature, 
 		const double& fundamentalTime, 
-		const double* allmass,
+		const double const* allmass,
 		Vector3<double>* vel);
 //	void ReadNewTemp(int step);
 	string intTurnTostring(long int iter,string path);
@@ -30,7 +30,7 @@ class MD_func
 		const double& temperature,
 		Vector3<double>* vel,
 		const double* allmass);
-	double MAXVALF(const int numIon, const Vector3<double>* force);
+	double MAXVALF(const int numIon, const Vector3<double>const* force);
 	double Conserved(const double KE, const double PE, const int number);
 };
 #endif
