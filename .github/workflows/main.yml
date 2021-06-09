@@ -3,12 +3,12 @@ on: [push]
 jobs:
   main:
     env:
-      ITK: ghcr.io/tansongchen/itk
+      CONTAINER: ghcr.io/deepmodeling/adk:latest
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - run: echo ${{ secrets.PAT }} | docker login ghcr.io -u tansongchen --password-stdin
-      - run: docker pull ${{ env.ITK }}
-      - run: docker build . -t ${{ env.ITK }} --cache-from=${{ env.ITK }}
-      - run: docker run -v $GITHUB_WORKSPACE:/code -w /code ${{ env.ITK }} bash entrypoint.sh
-      - run: docker push ${{ env.ITK }}
+      - run: echo ${{ secrets.PAT }} | docker login ghcr.io -u Unboundwill --password-stdin
+      - run: docker pull ${{ env.CONTAINER }}
+      - run: docker build . -t ${{ env.CONTAINER }} --cache-from=${{ env.CONTAINER }}
+      - run: docker run -v $GITHUB_WORKSPACE:/workspace -w /workspace ${{ env.CONTAINER }} bash entrypoint.sh
+      - run: docker push ${{ env.CONTAINER }}
