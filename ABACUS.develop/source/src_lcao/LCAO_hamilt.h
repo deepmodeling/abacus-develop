@@ -23,6 +23,11 @@ class LCAO_Hamilt
 
     void calculate_STN_R(void); //LiuXh add 2019-07-15
 
+	// jingan add 2021-6-4
+	void calculate_STN_R_sparse(void);
+	void calculate_HSR_sparse(const int &current_spin);
+	void destroy_all_HSR_sparse(void);
+
 	// used for gamma only algorithms.
 	Gint_Gamma GG;
 

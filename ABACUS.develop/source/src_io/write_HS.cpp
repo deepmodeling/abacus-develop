@@ -860,3 +860,407 @@ void HS_Matrix::save_HSR_tr(const int current_spin)
     timer::tick("HS_Matrix","save_HSR_tr");
     return;
 }
+
+void HS_Matrix::save_HR_sparse(const int &current_spin)
+{
+    TITLE("HS_Matrix","save_HR_sparse");
+    timer::tick("HS_Matrix","save_HR_sparse");
+
+    auto &HR_sparse_ptr = LM.HR_sparse;
+    auto &HR_soc_sparse_ptr = LM.HR_soc_sparse;
+
+    stringstream ssh;
+    ssh << global_out_dir << "data-HR-sparse_SPIN" << current_spin;
+    ofstream g1;
+
+    int R_x = GridD.getCellX();
+    int R_y = GridD.getCellY();
+    int R_z = GridD.getCellZ();
+
+    double R_minX = GridD.getD_minX();
+    double R_minY = GridD.getD_minY();
+    double R_minZ = GridD.getD_minZ();
+
+    if(DRANK==0)
+    {
+        g1.open(ssh.str().c_str());
+        g1 << "Matrix Dimension of H(R): " << NLOCAL <<endl;
+        g1 << "Matrix number of H(R): " << R_x * R_y * R_z << endl;
+    }
+
+    vector<int> indices;
+    vector<int> indptr;
+    indices.reserve(NLOCAL*NLOCAL);
+    indptr.reserve(NLOCAL+1);
+
+    double *line = nullptr;
+    complex<double> *line_soc = nullptr;
+
+    bool minus_R = false;
+
+    for(int ix=0; ix<R_x; ix++)
+    {
+        int dRx = ix + R_minX;
+        int minus_ix = -dRx - R_minX;
+        for(int iy=0; iy<R_y; iy++)
+        {
+            int dRy = iy + R_minY;
+            int minus_iy = -dRy - R_minY;
+            for(int iz=0; iz<R_z; iz++)
+            {
+                int dRz = iz + R_minZ;
+                int minus_iz = -dRz - R_minZ;
+
+                indices.clear();
+                indptr.clear();
+                indptr.push_back(0);
+
+                if (DRANK == 0) g1 << "R direct coordinate: " << dRx << " " << dRy << " " << dRz << endl;
+
+                if (
+                    (minus_ix < R_x) && (minus_ix >= 0) &&
+                    (minus_iy < R_y) && (minus_iy >= 0) &&
+                    (minus_iz < R_z) && (minus_iz >= 0)
+                )
+                {
+                    minus_R = true;
+                }
+                else
+                {
+                    minus_R = false;
+                }
+
+                int ir,ic;
+                for(int i=0; i<NLOCAL; i++)
+                {
+                    if (current_spin != 4)
+                    {
+                        line = new double[NLOCAL];
+                        ZEROS(line, NLOCAL);
+                    }
+                    else
+                    {
+                        line_soc = new complex<double>[NLOCAL];
+                        ZEROS(line_soc, NLOCAL);
+                    }
+
+                    if (minus_R)
+                    {
+                        for (int j = 0; j < i; ++j)
+                        {
+                            if (ParaO.in_this_processor(j, i))
+                            {
+                                if (current_spin != 4)
+                                {
+                                    auto iter = HR_sparse_ptr[minus_ix][minus_iy][minus_iz].find(j*NLOCAL+i);
+                                    if (iter != HR_sparse_ptr[minus_ix][minus_iy][minus_iz].end())
+                                    {
+                                        line[j] = iter->second;
+                                    }
+                                }
+                                else
+                                {
+                                    auto iter = HR_soc_sparse_ptr[minus_ix][minus_iy][minus_iz].find(j*NLOCAL+i);
+                                    if (iter != HR_soc_sparse_ptr[minus_ix][minus_iy][minus_iz].end())
+                                    {
+                                        line_soc[j] = conj(iter->second);
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    ir = ParaO.trace_loc_row[i];
+                    if(ir>=0)
+                    {
+                        for(int j = i; j < NLOCAL; ++j)
+                        {
+                            ic = ParaO.trace_loc_col[j];
+                            if(ic >= 0)
+                            {
+                                if (current_spin != 4)
+                                {
+                                    auto iter = HR_sparse_ptr[ix][iy][iz].find(i*NLOCAL+j);
+                                    if (iter != HR_sparse_ptr[ix][iy][iz].end())
+                                    {
+                                        line[j] = iter->second;
+                                    }
+                                }
+                                else
+                                {
+                                    auto iter = HR_soc_sparse_ptr[ix][iy][iz].find(i*NLOCAL+j);
+                                    if (iter != HR_soc_sparse_ptr[ix][iy][iz].end())
+                                    {
+                                        line_soc[j] = iter->second;
+                                    }
+                                }
+                            
+                            }
+                        }
+
+                    }
+
+                    if (current_spin != 4)
+                    {
+                        Parallel_Reduce::reduce_double_all(line, NLOCAL);
+                    }
+                    else
+                    {
+                        Parallel_Reduce::reduce_complex_double_all(line_soc, NLOCAL);
+                    }
+                
+                    if(DRANK==0)
+                    {
+                        int nonzeros_count = 0;
+                        for (int j = 0; j < NLOCAL; ++j)
+                        {
+                            if (current_spin != 4)
+                            {
+                                if (abs(line[j]) < 1e-10)
+                                {
+                                    // do nothing
+                                }
+                                else
+                                {
+                                    g1 << " " << line[j];
+                                    indices.push_back(j);
+                                    nonzeros_count++;
+                                }
+                            }
+                            else
+                            {
+                                if (abs(line_soc[j]) < 1e-10)
+                                {
+                                    // do nothing
+                                }
+                                else
+                                {
+                                    g1 << " " << line_soc[j];
+                                    indices.push_back(j);
+                                    nonzeros_count++;
+                                }
+                            }
+                            
+                        }
+                        nonzeros_count += indptr.back();
+                        indptr.push_back(nonzeros_count);
+                    }
+
+                    if (current_spin != 4)
+                    {
+                        delete[] line;
+                        line = nullptr;
+                    }
+                    else
+                    {
+                        delete[] line_soc;
+                        line_soc = nullptr;
+                    }
+                    
+                }
+
+                if (DRANK == 0)
+                {
+                    g1 << endl;
+                    for (auto &i : indices)
+                    {
+                        g1 << " " << i;
+                    }
+                    g1 << endl;
+                    for (auto &i : indptr)
+                    {
+                        g1 << " " << i;
+                    }
+                    g1 << endl;
+                }
+
+            }
+        }
+    }
+
+    if(DRANK==0) g1.close();
+
+    timer::tick("HS_Matrix","save_HR_sparse");
+    return;
+}
+
+void HS_Matrix::save_SR_sparse(const int &current_spin)
+{
+    TITLE("HS_Matrix","save_SR_sparse");
+    timer::tick("HS_Matrix","save_SR_sparse");
+
+    auto &SR_sparse_ptr = LM.SR_sparse;
+    auto &SR_soc_sparse_ptr = LM.SR_soc_sparse;
+
+    stringstream ssh;
+    ssh << global_out_dir << "data-SR-sparse_SPIN" << current_spin;
+    ofstream g1;
+
+    int R_x = GridD.getCellX();
+    int R_y = GridD.getCellY();
+    int R_z = GridD.getCellZ();
+
+    double R_minX = GridD.getD_minX();
+    double R_minY = GridD.getD_minY();
+    double R_minZ = GridD.getD_minZ();
+
+    if(DRANK==0)
+    {
+        g1.open(ssh.str().c_str());
+        g1 << "Matrix Dimension of S(R): " << NLOCAL <<endl;
+        g1 << "Matrix number of S(R): " << R_x * R_y * R_z << endl;
+        
+    }
+
+    vector<int> indices;
+    vector<int> indptr;
+    indices.reserve(NLOCAL*NLOCAL);
+    indptr.reserve(NLOCAL+1);
+
+    double *line = nullptr;
+    complex<double> *line_soc = nullptr;
+
+    for(int ix=0; ix<R_x; ix++)
+    {
+        int dRx = ix + R_minX;
+        for(int iy=0; iy<R_y; iy++)
+        {
+            int dRy = iy + R_minY;
+            for(int iz=0; iz<R_z; iz++)
+            {
+                int dRz = iz + R_minZ;
+
+                indices.clear();
+                indptr.clear();
+                indptr.push_back(0);
+
+                if (DRANK == 0) g1 << "R direct coordinate: " << dRx << " " << dRy << " " << dRz << endl;
+
+                int ir,ic;
+                for(int i = 0; i < NLOCAL; i++)
+                {
+                    if (current_spin != 4)
+                    {
+                        line = new double[NLOCAL];
+                        ZEROS(line, NLOCAL);
+                    }
+                    else
+                    {
+                        line_soc = new complex<double>[NLOCAL];
+                        ZEROS(line_soc, NLOCAL);
+                    }
+
+                    ir = ParaO.trace_loc_row[i];
+                    if(ir>=0)
+                    {
+                        for(int j = 0; j < NLOCAL; ++j)
+                        {
+                            ic = ParaO.trace_loc_col[j];
+                            if(ic >= 0)
+                            {
+                                if (current_spin != 4)
+                                {
+                                    auto iter = SR_sparse_ptr[ix][iy][iz].find(i*NLOCAL+j);
+                                    if (iter != SR_sparse_ptr[ix][iy][iz].end())
+                                    {
+                                        line[j] = iter->second;
+                                    }
+                                }
+                                else
+                                {
+                                    auto iter = SR_soc_sparse_ptr[ix][iy][iz].find(i*NLOCAL+j);
+                                    if (iter != SR_soc_sparse_ptr[ix][iy][iz].end())
+                                    {
+                                        line_soc[j] = iter->second;
+                                    }
+                                }
+                                
+                            }
+                        }
+
+                    }
+
+                    if (current_spin != 4)
+                    {
+                        Parallel_Reduce::reduce_double_all(line, NLOCAL);
+                    }
+                    else
+                    {
+                        Parallel_Reduce::reduce_complex_double_all(line_soc, NLOCAL);
+                    }
+                
+                    if(DRANK==0)
+                    {
+                        int nonzeros_count = 0;
+                        for (int j = 0; j < NLOCAL; ++j)
+                        {
+                            if (current_spin != 4)
+                            {
+                                if (abs(line[j]) < 1e-10)
+                                {
+                                    // do nothing
+                                }
+                                else
+                                {
+                                    g1 << " " << line[j];
+                                    indices.push_back(j);
+                                    nonzeros_count++;
+                                }
+                            }
+                            else
+                            {
+                                if (abs(line_soc[j]) < 1e-10)
+                                {
+                                    // do nothing
+                                }
+                                else
+                                {
+                                    g1 << " " << line_soc[j];
+                                    indices.push_back(j);
+                                    nonzeros_count++;
+                                }
+                            }
+                            
+                        }
+                        nonzeros_count += indptr.back();
+                        indptr.push_back(nonzeros_count);
+                    }
+
+                    if (current_spin != 4)
+                    {
+                        delete[] line;
+                        line = nullptr;
+                    }
+                    else
+                    {
+                        delete[] line_soc;
+                        line_soc = nullptr;
+                    }
+                    
+                }
+
+                if (DRANK == 0)
+                {
+                    g1 << endl;
+                    for (auto &i : indices)
+                    {
+                        g1 << " " << i;
+                    }
+                    g1 << endl;
+                    for (auto &i : indptr)
+                    {
+                        g1 << " " << i;
+                    }
+                    g1 << endl;
+                }
+
+            }
+        }
+    }
+
+    if(DRANK==0) g1.close();
+
+    timer::tick("HS_Matrix","save_SR_sparse");
+    return;
+}
+

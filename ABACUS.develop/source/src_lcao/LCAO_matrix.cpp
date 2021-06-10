@@ -891,3 +891,90 @@ void LCAO_Matrix::set_HR_tr_soc(const int &Rx, const int &Ry, const int &Rz, con
     return;
 }
 
+void LCAO_Matrix::allocate_HS_R_sparse(void)
+{
+	TITLE("LCAO_Matrix","allocate_HS_R_sparse");
+
+	int R_x = GridD.getCellX();
+    int R_y = GridD.getCellY();
+    int R_z = GridD.getCellZ();
+
+	if (NSPIN != 4)
+	{
+		HR_sparse = new map<size_t, double> **[R_x];
+		SR_sparse = new map<size_t, double> **[R_x];
+		for (int ix = 0; ix < R_x; ++ix)
+		{
+			HR_sparse[ix] = new map<size_t, double> *[R_y];
+			SR_sparse[ix] = new map<size_t, double> *[R_y];
+			for (int iy = 0; iy < R_y; ++iy)
+			{
+				HR_sparse[ix][iy] = new map<size_t, double>[R_z];
+				SR_sparse[ix][iy] = new map<size_t, double>[R_z];
+			}
+		}
+	}
+	else
+	{
+		HR_soc_sparse = new map<size_t, complex<double>> **[R_x];
+		SR_soc_sparse = new map<size_t, complex<double>> **[R_x];
+		for (int ix = 0; ix < R_x; ++ix)
+		{
+			HR_soc_sparse[ix] = new map<size_t, complex<double>> *[R_y];
+			SR_soc_sparse[ix] = new map<size_t, complex<double>> *[R_y];
+			for (int iy = 0; iy < R_y; ++iy)
+			{
+				HR_soc_sparse[ix][iy] = new map<size_t, complex<double>>[R_z];
+				SR_soc_sparse[ix][iy] = new map<size_t, complex<double>>[R_z];
+			}
+		}
+	}
+
+	return;
+}
+
+void LCAO_Matrix::destroy_HS_R_sparse(void)
+{
+	TITLE("LCAO_Matrix","destroy_HS_R_sparse");
+
+	int R_x = GridD.getCellX();
+    int R_y = GridD.getCellY();
+
+	if (NSPIN != 4)
+	{
+		for (int ix = 0; ix < R_x; ++ix)
+		{
+			for (int iy = 0; iy < R_y; ++iy)
+			{
+				delete[] HR_sparse[ix][iy];
+				delete[] SR_sparse[ix][iy];
+			}
+			delete[] HR_sparse[ix];
+			delete[] SR_sparse[ix];
+		}
+		delete[] HR_sparse;
+		delete[] SR_sparse;
+		HR_sparse = nullptr;
+		SR_sparse = nullptr;
+	}
+	else
+	{
+		for (int ix = 0; ix < R_x; ++ix)
+		{
+			for (int iy = 0; iy < R_y; ++iy)
+			{
+				delete[] HR_soc_sparse[ix][iy];
+				delete[] SR_soc_sparse[ix][iy];
+			}
+			delete[] HR_soc_sparse[ix];
+			delete[] SR_soc_sparse[ix];
+		}
+		delete[] HR_soc_sparse;
+		delete[] SR_soc_sparse;
+		HR_soc_sparse = nullptr;
+		SR_soc_sparse = nullptr;
+	}
+
+	return;
+}
+

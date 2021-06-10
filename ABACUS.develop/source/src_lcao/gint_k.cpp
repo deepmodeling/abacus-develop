@@ -1585,3 +1585,344 @@ void Gint_k::cal_vlocal_R(const int current_spin)
     return;
 }
 
+void Gint_k::allocate_pvpR_sparseMatrix(void)
+{
+    TITLE("Gint_k","allocate_pvpR_sparseMatrix");
+
+    int R_x = GridD.getCellX();
+    int R_y = GridD.getCellY();
+    int R_z = GridD.getCellZ();
+
+	if(NSPIN != 4)
+    {
+		pvpR_sparseMatrix = new map<size_t, double>**[R_x];
+        for(int ix=0; ix<R_x; ix++)
+        {
+			pvpR_sparseMatrix[ix] = new map<size_t, double>*[R_y];
+            for(int iy=0; iy<R_y; iy++)
+            {
+				pvpR_sparseMatrix[ix][iy] = new map<size_t, double>[R_z];
+            }
+        }
+    }
+    else
+    {
+		pvpR_soc_sparseMatrix = new map<size_t, complex<double>>**[R_x];
+        for(int ix=0; ix<R_x; ix++)
+        {
+			pvpR_soc_sparseMatrix[ix] = new map<size_t, complex<double>>*[R_y];
+            for(int iy=0; iy<R_y; iy++)
+            {
+				pvpR_soc_sparseMatrix[ix][iy] = new map<size_t, complex<double>>[R_z];
+            }
+        }
+    }
+
+    return;
+}
+
+void Gint_k::destroy_pvpR_sparseMatrix(void)
+{
+	TITLE("Gint_k","destroy_pvpR_sparseMatrix");
+
+	int R_x = GridD.getCellX();
+    int R_y = GridD.getCellY();
+
+	if (NSPIN != 4)
+	{
+		for (int ix = 0; ix < R_x; ++ix)
+		{
+			for (int iy = 0; iy < R_y; ++iy)
+			{
+				delete[] pvpR_sparseMatrix[ix][iy];
+			}
+			delete[] pvpR_sparseMatrix[ix];
+		}
+		delete[] pvpR_sparseMatrix;
+		pvpR_sparseMatrix = nullptr;
+	}
+	else
+	{
+		for (int ix = 0; ix < R_x; ++ix)
+		{
+			for (int iy = 0; iy < R_y; ++iy)
+			{
+				delete[] pvpR_soc_sparseMatrix[ix][iy];
+			}
+			delete[] pvpR_soc_sparseMatrix[ix];
+		}
+		delete[] pvpR_soc_sparseMatrix;
+		pvpR_soc_sparseMatrix = nullptr;
+	}
+
+	return;
+}
+
+void Gint_k::distribute_pvpR_sparseMatrix(void)
+{
+	TITLE("Gint_k","distribute_pvpR_sparseMatrix");
+
+	int R_x = GridD.getCellX();
+    int R_y = GridD.getCellY();
+    int R_z = GridD.getCellZ();
+
+	double* tmp = nullptr;
+	complex<double>* tmp_soc = nullptr;
+
+    for(int ix = 0; ix < R_x; ix++)
+    {
+        for(int iy = 0; iy < R_y; iy++)
+        {
+            for(int iz = 0; iz < R_z; iz++)
+            {
+                for(int i = 0; i < NLOCAL; i++)
+                {
+					if (NSPIN != 4)
+					{
+						tmp = new double[NLOCAL];
+						ZEROS(tmp, NLOCAL);
+					}
+					else
+					{
+						tmp_soc = new complex<double>[NLOCAL];
+						ZEROS(tmp_soc, NLOCAL);
+					}
+
+                    const int mug = GridT.trace_lo[i];
+                    if(mug >= 0)
+                    {
+                        for(int j = 0; j < NLOCAL; j++)
+                        {
+                            const int nug = GridT.trace_lo[j];
+                            if(nug >= 0)
+                            {
+								if (NSPIN != 4)
+								{
+									auto iter = pvpR_sparseMatrix[ix][iy][iz].find(i*NLOCAL+j);
+									if (iter != pvpR_sparseMatrix[ix][iy][iz].end())
+									{
+										tmp[j] = iter->second;
+									}
+								}
+								else
+								{
+									auto iter = pvpR_soc_sparseMatrix[ix][iy][iz].find(i*NLOCAL+j);
+									if (iter != pvpR_soc_sparseMatrix[ix][iy][iz].end())
+									{
+										tmp_soc[j] = iter->second;
+									}
+								}
+
+                            }
+                        }
+                    }
+                    // collect the matrix after folding.
+					if (NSPIN != 4)
+					{
+                    	Parallel_Reduce::reduce_double_pool(tmp, NLOCAL);
+					}
+					else
+					{
+						Parallel_Reduce::reduce_complex_double_pool(tmp_soc, NLOCAL);
+					}
+
+                    for(int j = 0; j < NLOCAL; j++)
+                    {
+                        if(!ParaO.in_this_processor(i,j))
+                        {
+                            continue;
+                        }
+                        else
+                        {
+							if (NSPIN != 4)
+							{
+								if (abs(tmp[j]) > 1e-10)
+								{
+									LM.HR_sparse[ix][iy][iz][i*NLOCAL+j] += tmp[j];
+								}
+							}
+							else
+							{
+								if(abs(tmp_soc[j]) > 1e-10)
+								{
+									LM.HR_soc_sparse[ix][iy][iz][i*NLOCAL+j] += tmp_soc[j];
+								}
+							}
+							
+                        }
+                    }
+
+					if (NSPIN != 4)
+					{
+                    	delete[] tmp;
+						tmp = nullptr;
+					}
+					else
+					{
+						delete[] tmp_soc;
+						tmp_soc = nullptr;
+					}
+					
+					
+                }
+            }
+        }
+    }
+	
+    return;
+
+}
+
+
+void Gint_k::cal_vlocal_R_sparseMatrix(const int current_spin)
+{
+    TITLE("Gint_k","cal_vlocal_R_sparseMatrix");
+
+    allocate_pvpR_sparseMatrix();
+
+    int lgd = 0;
+
+    double R_minX = GridD.getD_minX();
+    double R_minY = GridD.getD_minY();
+    double R_minZ = GridD.getD_minZ();
+
+    int R_x;
+    int R_y;
+    int R_z;
+
+    Vector3<double> tau1, dtau, dR;
+    for(int T1=0; T1<ucell.ntype; ++T1)
+    {
+        for(int I1=0; I1<ucell.atoms[T1].na; ++I1)
+        {
+            const int iat = ucell.itia2iat(T1,I1);
+            if(GridT.in_this_processor[iat])
+            {
+                Atom* atom1 = &ucell.atoms[T1];
+                const int start1 = ucell.itiaiw2iwt(T1, I1, 0);
+
+                const int DM_start = LNNR.nlocstartg[iat];
+                tau1 = ucell.atoms[T1].tau[I1];
+                //GridD.Find_atom(tau1);        
+                GridD.Find_atom(ucell, tau1, T1, I1);
+                int nad2 = 0;
+
+                for(int ad = 0; ad < GridD.getAdjacentNum()+1; ad++)
+                {
+                    const int T2 = GridD.getType(ad);
+                    const int I2 = GridD.getNatom(ad);
+                    const int iat2 = ucell.itia2iat(T2, I2);
+
+                    if(GridT.in_this_processor[iat2])
+                    {
+                        Atom* atom2 = &ucell.atoms[T2];
+                        dtau = GridD.getAdjacentTau(ad) - tau1;
+                        double distance = dtau.norm() * ucell.lat0;
+                        double rcut = ORB.Phi[T1].getRcut() + ORB.Phi[T2].getRcut();
+
+                        if(distance < rcut)
+                        {
+                            const int start2 = ucell.itiaiw2iwt(T2, I2, 0);
+
+                            dR.x = GridD.getBox(ad).x;
+                            dR.y = GridD.getBox(ad).y;
+                            dR.z = GridD.getBox(ad).z;
+
+                            R_x = (int) (dR.x -R_minX);
+                            R_y = (int) (dR.y -R_minY);
+                            R_z = (int) (dR.z -R_minZ);
+
+                            int ixxx = DM_start + LNNR.find_R2st[iat][nad2];
+                            for(int iw=0; iw<atom1->nw * NPOL; iw++)
+                            {
+								for(int iw2=0;iw2<atom2->nw * NPOL; iw2++)
+								{
+									const int nw = atom2->nw;
+									const int mug0 = iw/NPOL;
+									const int nug0 = iw2/NPOL;
+									const int iw_nowg = ixxx + mug0*nw + nug0;
+									int icc;
+
+									if(NSPIN == 4)
+									{		
+										// pvp is symmetric, only half is calculated.
+
+										icc = (start1 + iw) * NLOCAL + start2 + iw2;
+										complex<double> temp_value;
+										
+										if(iw%2==0&&iw2%2==0)
+										{
+											//spin = 0;
+											temp_value = complex<double>(1.0,0.0) * pvpR_reduced[0][iw_nowg] + complex<double>(1.0,0.0) * pvpR_reduced[3][iw_nowg];
+											if( abs(temp_value) > 1e-10 )
+												pvpR_soc_sparseMatrix[R_x][R_y][R_z].insert(pair<size_t, complex<double>>(icc, temp_value));
+										}	
+										else if(iw%2==1&&iw2%2==1)
+										{
+											//spin = 3;
+											temp_value = complex<double>(1.0,0.0) * pvpR_reduced[0][iw_nowg] - complex<double>(1.0,0.0) * pvpR_reduced[3][iw_nowg];
+											if( abs(temp_value) > 1e-10 )
+												pvpR_soc_sparseMatrix[R_x][R_y][R_z].insert(pair<size_t, complex<double>>(icc, temp_value));
+										}
+										else if(iw%2==0&&iw2%2==1)
+										{
+											// spin = 1;
+											if(!DOMAG)
+											{
+												// do nothing
+											}
+											else
+											{
+												temp_value = pvpR_reduced[1][iw_nowg] - complex<double>(0.0,1.0) * pvpR_reduced[2][iw_nowg];
+												if( abs(temp_value) > 1e-10 )
+													pvpR_soc_sparseMatrix[R_x][R_y][R_z].insert(pair<size_t, complex<double>>(icc, temp_value));
+											}
+										}	
+										else if(iw%2==1&&iw2%2==0) 
+										{
+											//spin = 2;
+											if(!DOMAG)
+											{
+												// do nothing
+											}
+											else
+											{
+												temp_value = pvpR_reduced[1][iw_nowg] + complex<double>(0.0,1.0) * pvpR_reduced[2][iw_nowg];
+												if( abs(temp_value) > 1e-10 )
+													pvpR_soc_sparseMatrix[R_x][R_y][R_z].insert(pair<size_t, complex<double>>(icc, temp_value));
+											}
+										}
+										else
+										{
+											WARNING_QUIT("Gint_k::folding_vl_k_nc","index is wrong!");
+										}
+									} //endif NC
+									else
+									{
+										icc = (start1 + iw) * NLOCAL + start2 + iw2;
+										double temp_value = pvpR_reduced[current_spin][iw_nowg];
+										if (abs(temp_value) > 1e-10)
+										{
+											pvpR_sparseMatrix[R_x][R_y][R_z].insert(pair<size_t, double>(icc, temp_value));
+										}
+											
+									} //endif normal
+									
+								}
+
+                                ++lgd;
+                            }
+                            ++nad2;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+	distribute_pvpR_sparseMatrix();
+	destroy_pvpR_sparseMatrix();
+
+    return;
+}
+

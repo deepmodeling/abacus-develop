@@ -24,6 +24,12 @@ class Gint_k : public Gint_k_init
 	void destroy_pvpR_tr(void);
 	void distribute_pvpR_tr(void);
 
+	// jingan add 2021-6-4
+	void allocate_pvpR_sparseMatrix(void);
+	void destroy_pvpR_sparseMatrix(void);
+	void distribute_pvpR_sparseMatrix(void);
+	void cal_vlocal_R_sparseMatrix(const int current_spin);
+
 	// reset the spin.
 	void reset_spin(const int &spin_now);
 
@@ -145,6 +151,10 @@ class Gint_k : public Gint_k_init
 
 	double***** pvpR_tr; //LiuXh add 2019-07-15
 	complex<double>***** pvpR_tr_soc; //LiuXh add 2019-07-15
+
+	// jingan add 2021-6-4
+	map<size_t, double> ***pvpR_sparseMatrix;
+	map<size_t, complex<double>> ***pvpR_soc_sparseMatrix;
 
 	//----------------------------
 	// key variable 

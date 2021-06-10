@@ -79,6 +79,13 @@ class LCAO_Matrix
 	complex<double> ****HR_tr_soc;	
 
 
+	// jingan add 2021-6-4
+	map<size_t, double> ***HR_sparse;
+	map<size_t, double> ***SR_sparse;
+	map<size_t, complex<double>> ***HR_soc_sparse;
+	map<size_t, complex<double>> ***SR_soc_sparse;
+
+
 	//========================================
 	// FORCE
 	//========================================
@@ -168,6 +175,10 @@ class LCAO_Matrix
 	void allocate_HR_tr(void);
 	void allocate_SlocR_tr(void);
 	void destroy_Hloc_fixedR_tr(void);
+
+	// jingan add 2021-6-4
+	void allocate_HS_R_sparse(void);
+	void destroy_HS_R_sparse(void);
 
 };
 
