@@ -10,7 +10,9 @@ cd build
 
 cmake ../cmake
 make -j 16
+
+# By default, the binary will be copied to `/usr/local/bin/ABACUS`
+make install
 ```
 
 Then, the binary `ABACUS-${PROJECT_VERSION}` is generated in your working directory.
-
