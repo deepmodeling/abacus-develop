@@ -5,12 +5,15 @@
 #include "ORB_atomic_lm.h"
 #include "ORB_nonlocal.h"
 
-//---------------------------------------------------------------------
-// advices for reconstructions:
-// each set of orbitals should have: lmax, dr, dk, rmax, lmax, etc.
-// the orbitals include : NAO, non-local projectors, descriptors, etc.
-// mohan note 2021-02-13
-//---------------------------------------------------------------------
+////////////////////////////////////////////////////////////
+/// advices for reconstructions:
+/// -------------------------------
+/// each set of orbitals should have: lmax, dr, dk, rmax, lmax, etc.
+///
+/// the orbitals include : NAO, non-local projectors, descriptors, etc.
+///
+/// mohan note 2021-02-13
+///////////////////////////////////////////////////////////
 
 class LCAO_Orbitals
 {
@@ -37,10 +40,10 @@ class LCAO_Orbitals
 #ifdef __NORMAL
 
 #else
-	// in order to get rid of the .NONLOCAL file.
+	/// in order to get rid of the .NONLOCAL file.
 	void Set_NonLocal(const int &it, int &n_projectors);
 
-	// read in the NONLOCAL projector from file.
+	/// read in the NONLOCAL projector from file.
 	void Read_NonLocal(const int& it, int &n_projectors, const int &my_rank);
 #endif
 
@@ -60,24 +63,24 @@ class LCAO_Orbitals
 	const double& get_dR(void) const {return dR;}
 	const double& get_Rmax(void) const {return Rmax;}
 	const int& get_lmax(void) const {return lmax;}
-	const int& get_lmax_d(void) const { return lmax_d; }		//lmax of descriptor basis		//caoyu add 2021-03-17
+	const int& get_lmax_d(void) const { return lmax_d; }		///<lmax of descriptor basis
 	const int& get_nchimax(void) const {return nchimax;}
-	const int& get_nchimax_d(void) const { return nchimax_d; }	//nchimax of descriptor basis		//caoyu add 2021-03-17
+	const int& get_nchimax_d(void) const { return nchimax_d; }	///<nchimax of descriptor basis
 	const int& get_ntype(void) const {return ntype;}
 	const double& get_dr_uniform(void) const { return dr_uniform; }
 
-	//caoyu add 021-05-24
+	//caoyu add 2021-05-24
 	const double& get_rcutmax_Phi(void) const { return rcutmax_Phi; }
 	const double& get_rcutmax_Beta(void) const { return rcutmax_Beta; }
 
-	// numerical atomic orbitals
+	/// numerical atomic orbitals
 	Numerical_Orbital* Phi;
 	
-	// nonlocal projectors (1-dimension array)
+	/// nonlocal projectors (1-dimension array)
 	Numerical_Nonlocal* Beta;
 	
 	//caoyu add 2021-3-10
-	// descriptor bases, saved as one-type atom orbital
+	/// descriptor bases, saved as one-type atom orbital
 	Numerical_Orbital* Alpha;
 
 	// initialized in input.cpp
@@ -123,7 +126,8 @@ private:
 
 };
 
-// PLEASE avoid using 'ORB' as global variable 
-// mohan note 2021-03-23
+/// PLEASE avoid using 'ORB' as global variable 
+///
+///mohan note 2021 - 03 - 23
 extern LCAO_Orbitals ORB;
 #endif

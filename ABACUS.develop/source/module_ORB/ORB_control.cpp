@@ -28,10 +28,11 @@ void ORB_control::set_orb_tables(
     TITLE("ORB_control","set_orb_tables");
 	timer::tick("ORB_control","set_orb_tables",'B');
     
-	//=============================================================================
-    // (1) FUNCTION : use 'info' to generate 'Numerical Orbital'
-    // (1) RESULT : We have 'Numerical Orbital' for calculate S-table and T-table.
-	//=============================================================================
+	/////////////////////////////////////////////////////////////////
+	/// (1) FUNCTION : use 'info' to generate 'Numerical Orbital'
+	///
+	/// (1) RESULT : We have 'Numerical Orbital' for calculate S-table and T-table.
+	/////////////////////////////////////////////////////////////////
 
 	// mohan add 2021-04-16
 	assert(ntype>0);
@@ -66,16 +67,17 @@ void ORB_control::set_orb_tables(
 	}
 #endif
 
-    //=============================================================================
-    // (2) FUNCTION : Generate Gaunt_Coefficients and S-table using OGT.init
-    // 	   Must have 'Numerical Orbital' infomation
-    // (2) RESULT : we have tabulated S table for use.
-    //=============================================================================
+    ///////////////////////////////////////////////////////////////////
+    /// (2) FUNCTION : Generate Gaunt_Coefficients and S-table using OGT.init
+	/// 	   Must have 'Numerical Orbital' infomation
+	///
+	/// (2) RESULT : we have tabulated S table for use.
+    ///////////////////////////////////////////////////////////////////
     const int job0 = 3;
-    // job0 :
-    // 1: generate overlap table
-    // 2: generate kinetic table
-    // 3: generate overlap & kinetic table
+    /// job0 :
+    /// 1. generate overlap table
+    /// 2. generate kinetic table
+    /// 3. generate overlap & kinetic table
     OGT.gen_tables(ofs_in, job0, orb, Lmax_exx, out_descriptor);
     // init lat0, in order to interpolated value from this table.
 

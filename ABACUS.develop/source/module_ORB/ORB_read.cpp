@@ -10,7 +10,7 @@ using namespace std;
 //==============================
 // Define an object here! 
 //==============================
-// PLEASE avoid using 'ORB' as global variable 
+/// PLEASE avoid using 'ORB' as global variable 
 // mohan note 2021-03-23
 LCAO_Orbitals ORB;
 
@@ -125,9 +125,9 @@ void LCAO_Orbitals::Read_Orbitals(
 	ofs_in << " <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" << endl;
 	ofs_in << "\n\n\n\n";	
 
-	//--------------------------
-	//(1) check dk, dR, Rmax.
-	//--------------------------
+	//////////////////////
+	/// (1) check dk, dR, Rmax.
+	//////////////////////
 
 	ofs_in << "\n SETUP ONE DIMENSIONAL ORBITALS/POTENTIAL" << endl;
 
@@ -149,21 +149,21 @@ void LCAO_Orbitals::Read_Orbitals(
     assert(dR > 0.0);
     assert(Rmax > 0.0);
 
-	// ntype: number of atom species
+	/// ntype: number of atom species
 	this->ntype = ntype_in; 
 	assert(ntype>0);
 
-	// lmax: lmax used in local orbitals as basis sets
+	/// lmax: lmax used in local orbitals as basis sets
 	assert(lmax_in>=0); // mohan add 2021-04-16
 	this->lmax = lmax_in;
 
-	//-------------------------------------------------
-	//(2) set the kmesh according to ecutwfc and dk. 
-	//-------------------------------------------------
+	//////////////////////////////////////////////////////////
+	/// (2) set the kmesh according to ecutwfc and dk. 
+	//////////////////////////////////////////////////////////
 
 	//-----------------------------------------------------------------
-	// calculate number of k mesh according to energy cutoff.
-	// Mohan choose ecutwfc according to interpolation requirement.
+	/// calculate number of k mesh according to energy cutoff.
+	/// Mohan choose ecutwfc according to interpolation requirement.
 	//	cout << " ecutwfc=" << ecutwfc << endl;
 	//LiuXh modified 2016-01-25, 2016-07-20
 	if(ecutwfc< 20)
@@ -246,10 +246,10 @@ void LCAO_Orbitals::Read_Orbitals(
 	ofs_in << " max number of nonlocal projetors among all species is " << nprojmax << endl; 
 
 	//caoyu add 2021-3-16
-	//>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-	//~~~~~~~~~~~~~~~~~~~~~~   3    ~~~~~~~~~~~~~~~~~~~~~~~~~
-	// Read in numerical basis for descriptor.
-	//>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+	///>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+	///~~~~~~~~~~~~~~~~~~~~~~   3    ~~~~~~~~~~~~~~~~~~~~~~~~~
+	/// Read in numerical basis for descriptor.
+	///>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
 
 	if (out_descriptor>0)	//condition: descriptor in lcao line
@@ -722,8 +722,8 @@ void LCAO_Orbitals::Read_NonLocal(
 //-------------------------------------------------------
 // mohan note 2021-04-26
 // to_caoyu: 
-// 1) read in lmaxt and nchi directly from orbital files
-// 2) pass nchi to phi via this->Phi[it].set_orbital_info 
+// 1. read in lmaxt and nchi directly from orbital files
+// 2. pass nchi to phi via this->Phi[it].set_orbital_info 
 // be careful! nchi[l] may be different for differnt phi
 //-------------------------------------------------------
 void LCAO_Orbitals::Read_PAO(

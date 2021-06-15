@@ -1,0 +1,8 @@
+PROJECT_NAME = module_ORB
+INPUT = ../..
+PROJECT_BRIEF = "Compute the \"Two Center Integrals (TCI)\" of Numerical Atomic Orbitals (NAO)."
+OUTPUT_DIRECTORY = .
+FILE_PATTERNS = *.cpp *.h
+EXTRACT_ALL = YES
+USE_MATHJAX = YES
+GENERATE_XML = YES

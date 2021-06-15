@@ -427,12 +427,12 @@ void ORB_table_phi::init_Table(
 			const int lmax_now = std::max( Lmax1, Lmax2 );
 			
 
-			//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+			///////////////////////////////////
 			// mohan add 2011-03-07
 			// I think the lmax_now should be judged from two 
 			// orbitals, not atom type!!!!!!!!!!!!!
 			// there are space that can imporve the efficiency.
-			//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+			//////////////////////////////////
 			
 			const int L2plus1 =  2*lmax_now + 1;
 
@@ -700,14 +700,14 @@ void ORB_table_phi::init_OV_Tpair(LCAO_Orbitals &orb)
 		// means that T2 >= T1
         for (int T2 = T1 ; T2 < ntype ; T2++)
         {
-			// (1) pairs about atom types
+			/// (1) pairs about atom types
 			//liaochen modify 2010/8/4
-			//index for T1>T2 is also needed
+			///index for T1>T2 is also needed
             this->OV_Tpair(T2, T1) = index;						
 			this->OV_Tpair(T1, T2) = this->OV_Tpair(T2, T1);
             
 			++index;
-			// (2) pairs about lmax
+			/// (2) pairs about lmax
 			this->OV_L2plus1(T1,T2) = max(orb.Phi[T1].getLmax(), orb.Phi[T2].getLmax() )*2+1;
 			this->OV_L2plus1(T2,T1) = this->OV_L2plus1(T1,T2);
         }

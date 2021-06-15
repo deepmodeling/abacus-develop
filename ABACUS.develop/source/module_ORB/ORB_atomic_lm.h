@@ -12,11 +12,12 @@ using std::vector;
 //#include "../src_parallel/fftw.h"
 #include "../src_global/global_function.h"
 
-//=========================================================
-//CLASS Num_orbital_lm
-//Note : contain information about each orbital : psi(l,m)
-//		 all features of orbital's shape
-//=========================================================
+/**
+ * CLASS Num_orbital_lm
+ * -------------------------------
+ * Note : contain information about each orbital : psi(l,m)
+ *  all features of orbital's shape
+ */
 
 class Numerical_Orbital_Lm
 {
@@ -29,18 +30,15 @@ class Numerical_Orbital_Lm
 	
 	int nr_uniform;// mohan add 2009-5-10
 	double dr_uniform;// mohan add 2009-5-10
-	double zty; // the valus of psi at 0.
+	double zty; ///< the valus of psi at 0.
 	
 	Numerical_Orbital_Lm();
 	~Numerical_Orbital_Lm();
 
-//==========================================================
-// EXPLAIN : set information about Numerical_Orbital_Lm
-// MEMBER FUNCTION :
-//==========================================================
 	// Peize Lin add 2017-12-12
 	enum class Psi_Type{ Psi, Psif, Psik, Psik2 };
 
+	/// EXPLAIN : set information about Numerical_Orbital_Lm
 	void set_orbital_info
 	(
  		const string &label_in,
@@ -95,16 +93,16 @@ private:
 	double kcut;
 	double dk;
 
-	vector<double> r_radial; //points of r
+	vector<double> r_radial; ///<points of r
 	vector<double> k_radial;
 
 	vector<double> rab;
 
-	vector<double> psi;   // psi(r)
-	vector<double> psir;  // psi(r) * r
-	vector<double> psif;  // psi(k)
-	vector<double> psik;  // psi(k) * k
-	vector<double> psik2; // psi(k) * k^2
+	vector<double> psi;   ///< psi(r)
+	vector<double> psir;  ///< psi(r) * r
+	vector<double> psif;  ///< psi(k)
+	vector<double> psik;  ///< psi(k) * k
+	vector<double> psik2; ///< psi(k) * k^2
 
 public:
 

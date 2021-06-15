@@ -23,11 +23,11 @@ class ORB_table_beta
 	double***** Table_NR;
 	bool destroy_nr;
 	
-	//-------------------------
-	// NL stands for 'nonlocal'
-	// T stands for atom type.
-	// O stands for orbitals.
-	//-------------------------
+	///
+	/// NL stands for 'nonlocal', 
+	/// T stands for atom type.
+	///O stands for orbitals.
+	///
 	void init_NL_Tpair(void);
 
     void init_NL_Opair(LCAO_Orbitals &orb);
