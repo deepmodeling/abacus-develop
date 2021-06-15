@@ -9,16 +9,10 @@ mkdir build
 cd build
 
 cmake ../cmake
-
-# Or specifying installation paths of dependencies:
-# cmake ../cmake \
-#   -DCEREAL_DIR=${CEREAL_DIR} \
-#   -DELPA_DIR=${FFTW_DIR} \
-#   -DFFTW_DIR=${ELPA_DIR} \
-#   -DSCALAPACK_DIR=${SCALAPACK_DIR}
-
 make -j 16
+
+# By default, the binary will be copied to `/usr/local/bin/ABACUS`
+make install
 ```
 
 Then, the binary `ABACUS-${PROJECT_VERSION}` is generated in your working directory.
-

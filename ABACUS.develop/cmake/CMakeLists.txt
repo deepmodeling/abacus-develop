@@ -13,51 +13,35 @@ project(ABACUS
 set(ABACUS_BIN_NAME ${PROJECT_NAME}-${PROJECT_VERSION})
 
 set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O2")
+add_compile_options(-O2 -g)
+
+set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/modules)
 
 get_filename_component(ABACUS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/.. ABSOLUTE)
 set(ABACUS_SOURCE_DIR ${ABACUS_DIR}/source)
+include_directories(${ABACUS_SOURCE_DIR})
 
-set(CEREAL_DIR /usr/local)
-include_directories(${CEREAL_DIR}/include)
-
-set(ELPA_DIR /usr/local)
-include_directories(${ELPA_DIR}/include)
-
-set(FFTW_DIR /usr/local)
-include_directories(${FFTW_DIR}/include)
-
-set(SCALAPACK_DIR /usr/local)
-include_directories(${SCALAPACK_DIR}/include)
-
-# OpenBlas is required by ScaLAPACK
-find_package(BLAS REQUIRED)
-
-# We only use the header-only part of Boost
+# We only use headers
 find_package(Boost REQUIRED)
-include_directories(${Boost_INCLUDE_DIRS})
+find_package(Cereal REQUIRED)
 
+# We only use libraries while headers are customed in project:
+# - "blas_connector.h"
+# - "lapack_connect.h"
+# - "my_elpa.h"
+# - "scalapack_connector.h"
+find_package(BLAS REQUIRED)
+find_package(ELPA REQUIRED)
+find_package(ScaLAPACK REQUIRED)
+
+# Both header and library are needed
+find_package(FFTW3 REQUIRED)
 find_package(MPI REQUIRED)
-include_directories(${MPI_CXX_INCLUDE_PATH})
-add_compile_options(${MPI_CXX_COMPILE_FLAGS})
+include_directories(${MPI_CXX_INCLUDE_PATH} ${FFTW3_INCLUDE_DIRS})
 
-# Look for pthread or equivalent
+# No header needed
 find_package(Threads REQUIRED)
 find_package(OpenMP REQUIRED)
-
-set(EXTERNAL_LIB_NAMES
-    -lgfortran
-    -lm
-    -lelpa
-    -lfftw3
-    ${SCALAPACK_DIR}/lib/libscalapack.a
-)
-
-set(EXTERNAL_LIB_DIRS
-    ${LAPACK_DIR}/lib
-    ${FFTW_DIR}/lib
-    ${ELPA_DIR}/lib
-)
 
 add_definitions(
     -D__EXX
@@ -453,12 +437,10 @@ add_library(abacusTools OBJECT ${CODE_TOOLS})
 add_library(abacusCodePdiag OBJECT ${CODE_PDIAG})
 add_library(abacusCodePdiagMr OBJECT ${CODE_PDIAG_MR})
 
-target_include_directories(abacusCommon PUBLIC ${ABACUS_SOURCE_DIR})
-target_include_directories(abacusFirstPrinciple PUBLIC ${ABACUS_SOURCE_DIR})
-target_include_directories(abacusParallel PUBLIC ${ABACUS_SOURCE_DIR})
-target_include_directories(abacusTools PUBLIC ${ABACUS_SOURCE_DIR})
-target_include_directories(abacusCodePdiag PUBLIC ${ABACUS_SOURCE_DIR})
-target_include_directories(abacusCodePdiagMr PUBLIC ${ABACUS_SOURCE_DIR})
+target_include_directories(abacusFirstPrinciple PUBLIC
+    ${Cereal_INCLUDE_DIRS}
+    ${Boost_INCLUDE_DIRS}
+)
 
 add_executable(${ABACUS_BIN_NAME}
     ${ABACUS_SOURCE_DIR}/main.cpp
@@ -470,13 +452,19 @@ add_executable(${ABACUS_BIN_NAME}
     $<TARGET_OBJECTS:abacusCodePdiagMr>
 )
 target_link_libraries(${ABACUS_BIN_NAME}
-    ${EXTERNAL_LIB_NAMES}
+    -lgfortran
+    -lm
+    ELPA::ELPA
+    FFTW3::FFTW3
+    ScaLAPACK::ScaLAPACK
+    BLAS::BLAS
     MPI::MPI_CXX
     OpenMP::OpenMP_CXX
-    BLAS::BLAS
     Threads::Threads
 )
-target_link_directories(${ABACUS_BIN_NAME}
-    PUBLIC ${EXTERNAL_LIB_DIRS}
-)
 
+install(PROGRAMS ${ABACUS_BIN_NAME}
+    TYPE BIN
+    DESTINATION ${CMAKE_INSTALL_BINDIR}
+    RENAME ${PROJECT_NAME}
+)
