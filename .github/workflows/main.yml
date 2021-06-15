@@ -1,31 +1,48 @@
 on: [push, pull_request]
 env:
   PREFIX: ABACUS.develop
+  BIN: ABACUS-2.2.0
 jobs:
-  Build_on_GNU:
+  build_dockerfile:
     runs-on: ubuntu-latest
-    container: darelbeida/debian10:latest
     steps:
-      - name: Setup env
-        run: git config --global http.sslverify false && git config --global https.sslverify false
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build and push
+        id: docker_build
+        uses: docker/build-push-action@v2
+        with:
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ghcr.io/darelbeida/abacus_debian10_gnu:latest
+          cache-from: type=registry,ref=ghcr.io/darelbeida/abacus_debian10_gnu:latest
+          cache-to: type=inline
+
+  build_on_gnu:
+    runs-on: ubuntu-latest
+    container: ghcr.io/darelbeida/abacus_debian10_gnu:latest
+    needs: build_dockerfile
+    if: success() || failure()
+    steps:
       - name: Download source codes
         uses: actions/checkout@v2
       - name: Build
-        run: cd ${PREFIX}/source && GNU=1 make fp_mpi
+        run: cd ${PREFIX} && mkdir build && cd build && cmake ../cmake && make -j4
       - name: Artifacts bins
         uses: actions/upload-artifact@v2
         with:
           name: bin
-          path: ${{env.PREFIX}}/bin/*
+          path: ${{env.PREFIX}}/build/${{env.BIN}}
           retention-days: 1
 
-  Test:
+  test:
     runs-on: ubuntu-latest
-    container: darelbeida/debian10:latest
-    needs: Build_on_GNU
+    container: ghcr.io/darelbeida/abacus_debian10_gnu:latest
+    needs: build_on_gnu
     steps:
-      - name: Setup env
-        run: git config --global http.sslverify false && git config --global https.sslverify false
       - name: Download source codes
         uses: actions/checkout@v2
       - name: Reload bins
@@ -37,7 +54,7 @@ jobs:
         run: |
           export PATH=$PATH:$PWD/${PREFIX}/bin
           export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
-          chmod +x ${PREFIX}/bin/ABACUS.mpi
+          chmod +x ${PREFIX}/bin/${BIN}
           cd ${PREFIX}/tests/
           cd 103_PW_15_CS_CF/
-          ABACUS.mpi
+          ${BIN}
