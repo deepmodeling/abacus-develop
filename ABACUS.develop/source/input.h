@@ -2,6 +2,7 @@
 #define INPUT_H
 
 #include "src_global/vector3.h"
+#include <fstream>
 #include <string>
 #include "src_ions/MD_parameters.h"
 
