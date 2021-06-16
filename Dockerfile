@@ -44,3 +44,5 @@ RUN cd /tmp \
     && git clone https://github.com/USCiLab/cereal.git \
     && cp -r cereal/include /usr/local \
     && rm -rf cereal
+
+ENV LD_LIBRARY_PATH /usr/local/lib
