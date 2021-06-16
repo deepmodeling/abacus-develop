@@ -1,6 +1,6 @@
 FROM debian:buster-slim
 
-LABEL org.opencontainers.image.source https://github.com/deepmodeling/abacus-develop
+LABEL org.opencontainers.image.source https://github.com/darelbeida/abacus-develop
 
 RUN apt-get update && apt-get install -y --no-install-recommends git gfortran libboost-dev libssl-dev make ssh vim wget \
     && apt-get install -y --no-install-recommends mpich libmpich-dev
