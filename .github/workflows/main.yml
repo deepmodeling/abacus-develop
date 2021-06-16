@@ -17,7 +17,6 @@ jobs:
         id: docker_build
         uses: docker/build-push-action@v2
         with:
-          push: true
           tags: ghcr.io/deepmodeling/abacus_build_gcc8:latest
           cache-from: type=registry,ref=ghcr.io/deepmodeling/abacus_build_gcc8:latest
           cache-to: type=inline
@@ -26,6 +25,7 @@ jobs:
     runs-on: ubuntu-latest
     container: ghcr.io/deepmodeling/abacus_build_gcc8:latest
     needs: build_dockerfile
+    if: success() || failure()
     steps:
       - name: Download source codes
         uses: actions/checkout@v2
