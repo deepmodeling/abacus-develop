@@ -318,10 +318,10 @@ void WF_atomic::atomic_wfc
                                                       aux[ig] += soc.rotylm(n1,ind)* ylm(lm,ig);
                                               }
                                               for(int ig=0; ig<np;ig++)
-                                                 wfcatom(index, ig + wf.npwx*is ) = lphase * fact[is] * sk[ig] * aux[ig] * flq[ig];
+                                                 wfcatom(index, ig + this->npwx*is ) = lphase * fact[is] * sk[ig] * aux[ig] * flq[ig];
                                           }
                                           else 
-                                            for(int ig=0; ig<np;ig++) wfcatom(index,ig+ wf.npwx*is) = complex<double>(0.0 , 0.0);
+                                            for(int ig=0; ig<np;ig++) wfcatom(index,ig+ this->npwx*is) = complex<double>(0.0 , 0.0);
                                       }//is
                                       index++;
                                    }//if
@@ -383,12 +383,12 @@ void WF_atomic::atomic_wfc
                                      //build the orthogonal wfc
                                      //first rotation with angle (alpha + PI) around (OX)
                                      wfcatom(index,ig) = (cos(0.5 * gamma) + IMAG_UNIT * sin(0.5*gamma)) * fup;
-                                     wfcatom(index,ig+ wf.npwx) = (cos(0.5 * gamma) - IMAG_UNIT * sin(0.5*gamma)) * fdown;
+                                     wfcatom(index,ig+ this->npwx) = (cos(0.5 * gamma) - IMAG_UNIT * sin(0.5*gamma)) * fdown;
                                      //second rotation with angle gamma around(OZ)
                                      fup = cos(0.5 * (alpha + PI))*aux[ig];
                                      fdown = IMAG_UNIT * sin(0.5 * (alpha + PI))*aux[ig];
                                      wfcatom(index+2*l+1,ig) = (cos(0.5*gamma) + IMAG_UNIT*sin(0.5*gamma))*fup;
-                                     wfcatom(index+2*l+1,ig+ wf.npwx) = (cos(0.5*gamma) - IMAG_UNIT*sin(0.5*gamma))*fdown;
+                                     wfcatom(index+2*l+1,ig+ this->npwx) = (cos(0.5*gamma) - IMAG_UNIT*sin(0.5*gamma))*fdown;
                                  }
                                  index++;
                               }
@@ -418,12 +418,12 @@ void WF_atomic::atomic_wfc
                                      //build the orthogonal wfc
                                      //first rotation with angle(alpha+PI) around(OX)
                                      wfcatom(index,ig) = (cos(0.5 * gamman) + IMAG_UNIT * sin(0.5*gamman)) * fup;
-                                     wfcatom(index,ig+ wf.npwx) = (cos(0.5 * gamman) - IMAG_UNIT * sin(0.5*gamman)) * fdown;
+                                     wfcatom(index,ig+ this->npwx) = (cos(0.5 * gamman) - IMAG_UNIT * sin(0.5*gamman)) * fdown;
                                      //second rotation with angle gamma around(OZ)
                                      fup = cos(0.5 * (alpha + PI)) * aux[ig];
                                      fdown = IMAG_UNIT * sin(0.5 * (alpha + PI)) * aux[ig];
                                      wfcatom(index+2*l+1,ig) = (cos(0.5*gamman) + IMAG_UNIT*sin(0.5*gamman))*fup;
-                                     wfcatom(index+2*l+1,ig+ wf.npwx) = (cos(0.5*gamman) - IMAG_UNIT*sin(0.5*gamman))*fdown;
+                                     wfcatom(index+2*l+1,ig+ this->npwx) = (cos(0.5*gamman) - IMAG_UNIT*sin(0.5*gamman))*fdown;
                                 }
                                 index++;
                             }
@@ -483,11 +483,11 @@ void WF_atomic::random(ComplexMatrix &psi,const int iw_start,const int iw_end,co
             Vector3<double> v3 = pw.get_GPlusK_cartesian(ik, this->igk(ik, ig));
             psi(iw,ig) = complex<double>(rr * cos(arg), rr * sin(arg)) / (v3 * v3 + 1.0);
         }
-        if(NPOL==2)for (int ig = wf.npwx;ig < wf.npwx + ng;ig++)
+        if(NPOL==2)for (int ig = this->npwx;ig < this->npwx + ng;ig++)
         {
             const double rr = std::rand()/double(RAND_MAX);
             const double arg= TWO_PI * std::rand()/double(RAND_MAX);
-            Vector3<double> v3 = pw.get_GPlusK_cartesian(ik, this->igk(ik, ig-wf.npwx));
+            Vector3<double> v3 = pw.get_GPlusK_cartesian(ik, this->igk(ik, ig - this->npwx));
             psi(iw,ig) = complex<double>(rr * cos(arg), rr * sin(arg)) / (v3 * v3 + 1.0);
         }
     }
