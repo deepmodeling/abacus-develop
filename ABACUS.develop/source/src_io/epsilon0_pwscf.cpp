@@ -423,9 +423,9 @@ void Epsilon0_pwscf:: Cal_dipole(int ik)
 				{
 					for(int ig=0; ig<kv.ngk[ik]; ig++)
 					{
-						dipole_aux_core[0][ib1][ib2] += conj(wf.evc[ik](ib1,ig)) * ((pw.gcar[ig].x)*(TWO_PI/ucell.lat0)) * wf.evc[ik](ib2,ig);
-						dipole_aux_core[1][ib1][ib2] += conj(wf.evc[ik](ib1,ig)) * ((pw.gcar[ig].y)*(TWO_PI/ucell.lat0)) * wf.evc[ik](ib2,ig);
-						dipole_aux_core[2][ib1][ib2] += conj(wf.evc[ik](ib1,ig)) * ((pw.gcar[ig].z)*(TWO_PI/ucell.lat0)) * wf.evc[ik](ib2,ig);
+						dipole_aux_core[0][ib1][ib2] += conj(wf.evc[ik](ib1, ig)) * (pw.get_G_cartesian_projection(ig, 0)) * (TWO_PI / ucell.lat0)) * wf.evc[ik](ib2, ig);
+						dipole_aux_core[1][ib1][ib2] += conj(wf.evc[ik](ib1,ig)) * (pw.get_G_cartesian_projection(ig, 1))*(TWO_PI/ucell.lat0)) * wf.evc[ik](ib2,ig);
+						dipole_aux_core[2][ib1][ib2] += conj(wf.evc[ik](ib1,ig)) * (pw.get_G_cartesian_projection(ig, 2))*(TWO_PI/ucell.lat0)) * wf.evc[ik](ib2,ig);
 					}
 				}
 			}
@@ -439,9 +439,9 @@ void Epsilon0_pwscf:: Cal_dipole(int ik)
 		{
 			for(int ig=0; ig<kv.ngk[ik]; ig++)
 			{
-				dipole_aux_core[0][ib1][ib1] += conj(wf.evc[ik](ib1,ig)) * ((kv.kvec_c[ik].x+pw.gcar[ig].x)*(TWO_PI/ucell.lat0)) * wf.evc[ik](ib1,ig);
-				dipole_aux_core[1][ib1][ib1] += conj(wf.evc[ik](ib1,ig)) * ((kv.kvec_c[ik].y+pw.gcar[ig].y)*(TWO_PI/ucell.lat0)) * wf.evc[ik](ib1,ig);
-				dipole_aux_core[2][ib1][ib1] += conj(wf.evc[ik](ib1,ig)) * ((kv.kvec_c[ik].z+pw.gcar[ig].z)*(TWO_PI/ucell.lat0)) * wf.evc[ik](ib1,ig);
+				dipole_aux_core[0][ib1][ib1] += conj(wf.evc[ik](ib1, ig)) * (pw.get_GPlusK_cartesian_projection(ik, ig, 0) * (TWO_PI / ucell.lat0) * wf.evc[ik](ib1,ig);
+				dipole_aux_core[1][ib1][ib1] += conj(wf.evc[ik](ib1, ig)) * (pw.get_GPlusK_cartesian_projection(ik, ig, 1) * (TWO_PI / ucell.lat0) * wf.evc[ik](ib1, ig);
+				dipole_aux_core[2][ib1][ib1] += conj(wf.evc[ik](ib1, ig)) * (pw.get_GPlusK_cartesian_projection(ik, ig, 2) * (TWO_PI / ucell.lat0) * wf.evc[ik](ib1, ig);
 			}
 		}
 	}

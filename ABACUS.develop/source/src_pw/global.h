@@ -31,7 +31,7 @@
 //==========================================================
 extern Use_FFT UFFT;
 extern FFT fftwan;
-extern kvect kv;
+extern K_Vectors kv;
 extern output out;
 
 extern PW_Basis pw;

@@ -372,13 +372,13 @@ void Forces::cal_force_loc(matrix& forcelc)
         {
             for (int ig = gstart_here; ig < pw.ngmc; ig++)
             {
-                const double phase = TWO_PI * (pw.gcar[ig] * ucell.atoms[it].tau[ia]);
+                const double phase = TWO_PI * (pw.get_G_cartesian(ig) * ucell.atoms[it].tau[ia]);
                 const double factor = ppcell.vloc(it, pw.ig2ngg[ig]) *
 									  ( cos(phase) * aux[ pw.ig2fftc[ig] ].imag()
                                       + sin(phase) * aux[ pw.ig2fftc[ig] ].real()); 
-                forcelc(iat, 0) += pw.gcar[ig].x * factor;
-                forcelc(iat, 1) += pw.gcar[ig].y * factor;
-                forcelc(iat, 2) += pw.gcar[ig].z * factor;
+                forcelc(iat, 0) += pw.get_G_cartesian_projection(ig, 0) * factor;
+                forcelc(iat, 1) += pw.get_G_cartesian_projection(ig, 1) * factor;
+                forcelc(iat, 2) += pw.get_G_cartesian_projection(ig, 2) * factor;
             }
             for (int ipol = 0;ipol < 3;ipol++)
             {
@@ -456,11 +456,11 @@ void Forces::cal_force_ew(matrix& forceion)
         {
             for (int ig = gstart; ig < pw.ngmc; ig++)
             {
-                const double arg = TWO_PI * (pw.gcar[ig] * ucell.atoms[it].tau[ia]);
+                const double arg = TWO_PI * (pw.get_G_cartesian(ig) * ucell.atoms[it].tau[ia]);
                 double sumnb =  -cos(arg) * aux[ig].imag() + sin(arg) * aux[ig].real();
-                forceion(iat, 0) += pw.gcar[ig].x * sumnb;
-                forceion(iat, 1) += pw.gcar[ig].y * sumnb;
-                forceion(iat, 2) += pw.gcar[ig].z * sumnb;
+                forceion(iat, 0) += pw.get_G_cartesian_projection(ig, 0) * sumnb;
+                forceion(iat, 1) += pw.get_G_cartesian_projection(ig, 1) * sumnb;
+                forceion(iat, 2) += pw.get_G_cartesian_projection(ig, 2) * sumnb;
             }
             for (int ipol = 0;ipol < 3;ipol++)
             {
@@ -599,23 +599,20 @@ void Forces::cal_force_cc(matrix& forcecc)
             {
                 for (int ig = pw.gstart; ig < pw.ngmc; ig++)
                 {
-                    const double arg = TWO_PI * (pw.gcar[ig].x * ucell.atoms[T1].tau[I1].x
-                                                + pw.gcar[ig].y * ucell.atoms[T1].tau[I1].y
-                                                + pw.gcar[ig].z * ucell.atoms[T1].tau[I1].z);
+                    const double arg = TWO_PI * (pw.get_G_cartesian_projection(ig, 0) * ucell.atoms[T1].tau[I1].x + 
+                        pw.get_G_cartesian_projection(ig, 1) * ucell.atoms[T1].tau[I1].y + 
+                        pw.get_G_cartesian_projection(ig, 2) * ucell.atoms[T1].tau[I1].z);
 
-                    ipol0 = ucell.tpiba * ucell.omega * rhocg[pw.ig2ngg[ig]]
-                                            * pw.gcar[ig].x * conj(psiv[pw.ig2fftc[ig]]) 
-                                            * complex<double>(sin(arg), cos(arg))  ;
+                    ipol0 = ucell.tpiba * ucell.omega * rhocg[pw.ig2ngg[ig]] * 
+                        pw.get_G_cartesian_projection(ig, 0) * conj(psiv[pw.ig2fftc[ig]]) * complex<double>(sin(arg), cos(arg));
                     forcecc(iat, 0) +=  ipol0.real();
 
-                    ipol1 = ucell.tpiba * ucell.omega * rhocg[pw.ig2ngg[ig]]
-                                            * pw.gcar[ig].y * conj(psiv[pw.ig2fftc[ig]]) 
-                                            * complex<double>(sin(arg), cos(arg)) ;
+                    ipol1 = ucell.tpiba * ucell.omega * rhocg[pw.ig2ngg[ig]] * 
+                        pw.get_G_cartesian_projection(ig, 1) * conj(psiv[pw.ig2fftc[ig]]) * complex<double>(sin(arg), cos(arg));
                     forcecc(iat, 1) += ipol1.real();
 
-                    ipol2 = ucell.tpiba * ucell.omega * rhocg[pw.ig2ngg[ig]]
-                                            * pw.gcar[ig].z * conj(psiv[pw.ig2fftc[ig]]) 
-                                            * complex<double>(sin(arg), cos(arg)) ;
+                    ipol2 = ucell.tpiba * ucell.omega * rhocg[pw.ig2ngg[ig]] * 
+                        pw.get_G_cartesian_projection(ig, 2) * conj(psiv[pw.ig2fftc[ig]]) * complex<double>(sin(arg), cos(arg));
 
                     forcecc(iat, 2) += ipol2.real();
                 }
@@ -687,18 +684,18 @@ void Forces::cal_force_nl(matrix& forcenl)
 				if (ipol==0)
 				{
 					for (int ig=0; ig<wf.npw; ig++)
-						vkb1(i, ig) = ppcell.vkb(i, ig) * NEG_IMAG_UNIT * pw.gcar[ wf.igk(ik, ig) ].x;
-				}
+                        vkb1(i, ig) = ppcell.vkb(i, ig) * NEG_IMAG_UNIT * pw.get_G_cartesian_projection(wf.igk(ik, ig), 0);
+                }
 				if (ipol==1)
 				{
 					for (int ig=0; ig<wf.npw; ig++)
-						vkb1(i, ig) = ppcell.vkb(i, ig) * NEG_IMAG_UNIT * pw.gcar[ wf.igk(ik, ig) ].y;
-				}
+                        vkb1(i, ig) = ppcell.vkb(i, ig) * NEG_IMAG_UNIT * pw.get_G_cartesian_projection(wf.igk(ik, ig), 1);
+                }
 				if (ipol==2)
 				{
 					for (int ig=0; ig<wf.npw; ig++)
-						vkb1(i, ig) = ppcell.vkb(i, ig) * NEG_IMAG_UNIT * pw.gcar[ wf.igk(ik, ig) ].z;
-				}
+                        vkb1(i, ig) = ppcell.vkb(i, ig) * NEG_IMAG_UNIT * pw.get_G_cartesian_projection(wf.igk(ik, ig), 2);
+                }
 			}
             for (int ib=0; ib<NBANDS; ib++)
             {
@@ -856,15 +853,15 @@ void Forces::cal_force_scc(matrix& forcescc)
                 {
                     for (int ig = pw.gstart;ig < pw.ngmc;ig++)
                     {
-                        const double arg = TWO_PI * (pw.gcar[ig].x * ucell.atoms[it].tau[ia].x
-                                                  + pw.gcar[ig].y * ucell.atoms[it].tau[ia].y
-                                                  + pw.gcar[ig].z * ucell.atoms[it].tau[ia].z);
-                        
-						const complex<double> cpm = complex<double>(sin(arg), cos(arg)) * conj(psic[pw.ig2fftc[ig] ]);
-						
-                        forcescc(iat, 0) += fact * rhocgnt [pw.ig2ngg[ig] ] * ucell.tpiba * pw.gcar[ig].x * cpm.real();
-                        forcescc(iat, 1) += fact * rhocgnt [pw.ig2ngg[ig] ] * ucell.tpiba * pw.gcar[ig].y * cpm.real();
-                        forcescc(iat, 2) += fact * rhocgnt [pw.ig2ngg[ig] ] * ucell.tpiba * pw.gcar[ig].z * cpm.real();
+                        const double arg = TWO_PI * (pw.get_G_cartesian_projection(ig, 0) * ucell.atoms[it].tau[ia].x + 
+                            pw.get_G_cartesian_projection(ig, 1) * ucell.atoms[it].tau[ia].y + 
+                            pw.get_G_cartesian_projection(ig, 2) * ucell.atoms[it].tau[ia].z);
+
+                        const complex<double> cpm = complex<double>(sin(arg), cos(arg)) * conj(psic[pw.ig2fftc[ig] ]);
+
+                        forcescc(iat, 0) += fact * rhocgnt[pw.ig2ngg[ig]] * ucell.tpiba * pw.get_G_cartesian_projection(ig, 0) * cpm.real();
+                        forcescc(iat, 1) += fact * rhocgnt[pw.ig2ngg[ig]] * ucell.tpiba * pw.get_G_cartesian_projection(ig, 1) * cpm.real();
+                        forcescc(iat, 2) += fact * rhocgnt[pw.ig2ngg[ig]] * ucell.tpiba * pw.get_G_cartesian_projection(ig, 2) * cpm.real();
                     }
 					//cout << " forcescc = " << forcescc(iat,0) << " " << forcescc(iat,1) << " " << forcescc(iat,2) << endl;
                 }

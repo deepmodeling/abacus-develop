@@ -10,7 +10,7 @@
 #include "src_pw/hamilt_pw.h"
 #include "src_pw/exx_global.h"
 
-class kvect;
+class K_Vectors;
 class wavefunc;
 class PW_Basis;
 class Use_FFT;
@@ -34,7 +34,7 @@ public:
 	};
 	Exx_Info info;
 
-	void init(kvect *kv_ptr_in, wavefunc *wf_ptr_in, PW_Basis *pw_ptr_in, Use_FFT *UFFT_ptr_in, UnitCell_pseudo *ucell_ptr_in);	
+	void init(K_Vectors *kv_ptr_in, wavefunc *wf_ptr_in, PW_Basis *pw_ptr_in, Use_FFT *UFFT_ptr_in, UnitCell_pseudo *ucell_ptr_in);
 	void cal_exx();
 	const complex<double> * const * const * get_exx_matrix() const { return exx_matrix; }
 	double get_exx_energy() const { return exx_energy; }
@@ -49,7 +49,7 @@ private:
 		
 	struct k_package
 	{
-		kvect *kv_ptr;
+		K_Vectors *kv_ptr;
 		wavefunc *wf_ptr;
 		matrix wf_wg;
 		ComplexMatrix *hvec_array;		

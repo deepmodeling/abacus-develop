@@ -667,7 +667,7 @@ void Charge_Pulay::generate_datas(const int &irstep, const int &idstep, const in
 			double* filter_g = new double[pw.ngmc];
 			for(int ig=0; ig<pw.ngmc; ig++)
 			{
-				double gg = pw.gcar[ig].norm2();
+				double gg = pw.get_NormG_cartesian(ig);
 				filter_g[ig] = max(gg / (gg + gg0), 0.1);
 				kerpulay[ig] = (1 - filter_g[ig]) * kerpulay[ig];
 			}

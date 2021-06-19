@@ -16,7 +16,7 @@ public:
     PW_Basis();
     ~PW_Basis();
 
-    void gen_pw(ofstream &log, const UnitCell &Ucell_in, const kvect &Klist_in);
+    void gen_pw(ofstream &log, const UnitCell &Ucell_in, const K_Vectors &Klist_in);
 
     void set
     (
@@ -35,9 +35,9 @@ public:
     );
 
 	const UnitCell *Ucell; // pointer for UnitCell
-	const kvect *Klist; // pointer for K-point list
+    const K_Vectors *Klist; // pointer for K-point list
 
-	FFT FFT_chg; // FFT operations for charge density
+    FFT FFT_chg; // FFT operations for charge density
 	FFT FFT_wfc; // FFT operations for wave functions
 
 
@@ -151,6 +151,60 @@ public:
     Vector3<double> *gcar_global;   	//G vectors in cartesian corrdinate
     //g=ig*G ?? HLX (05-26-06): need to check if this is ok!
     //tau is also defined in Cartesian coordintes unit lat0
+    const Vector3<double> &get_GPlusK_cartesian(const int ik, const int ig) const {
+        assert(ig>=0 && ig<this->ngmc && ik>=0 && ik<Klist->nks);
+        Vector3<double> g_temp_ = Klist->kvec_c[ik] + this->gcar[ig];
+        return g_temp_;
+    };
+    const double &get_GPlusK_cartesian_projection(const int ik, const int ig, const int axis) const
+    {
+        assert(ig >= 0 && ig < this->ngmc && ik >= 0 && ik < Klist->nks && axis >= 0 && axis <= 2);
+        Vector3<double> g_temp_ = Klist->kvec_c[ik] + this->gcar[ig];
+        if (axis == 0)
+        {
+            return g_temp_.x;
+        }
+        else if (axis == 1)
+        {
+            return g_temp_.y;
+        }
+        else if (axis == 2)
+        {
+            return g_temp_.z;
+        }
+    }
+    const Vector3<double>& get_SquareGPlusK_cartesian(const int ik, const int ig) const {
+        assert(ig >= 0 && ig < this->ngmc && ik >= 0 && ik < Klist->nks);
+        Vector3<double> g_temp_ = Klist->kvec_c[ik] + this->gcar[ig];
+        g_temp_ = g_temp_ * g_temp_;
+        return g_temp_;
+    };
+    const Vector3<double>& get_G_cartesian(const int ig) const {
+        assert(ig>=0 && ig<this->ngmc);
+        return this->gcar[ig];
+    };
+    const double& get_G_cartesian_projection(const int ig, const int axis) const 
+    {
+        assert(ig>=0 && ig<this->ngmc && axis>=0 && axis<=2);
+        if(axis == 0) 
+        {
+            return this->gcar[ig].x;
+        }
+        else if(axis == 1)
+        {
+            return this->gcar[ig].y;
+        }
+        else if(axis == 2)
+        {
+            return this->gcar[ig].z;
+        }
+    }
+    const double& get_NormG_cartesian(const int ig) const
+    {
+        assert(ig >= 0 && ig < this->ngmc);
+        return (this->gcar[ig].x * this->gcar[ig].x + this->gcar[ig].y * this->gcar[ig].y + this->gcar[ig].z * this->gcar[ig].z);
+    }
+
 
     double *gg;       	// modulus (G^2) of G vectors [ngmc]
     double *gg_global;  // modulus (G^2) of G vectors [ngmc_g]

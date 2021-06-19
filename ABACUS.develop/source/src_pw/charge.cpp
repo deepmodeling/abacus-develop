@@ -334,10 +334,10 @@ void Charge::atomic_rho(const int spin_number_need, double** rho_in)const		// Pe
 
 							for (int ig = 0; ig < pw.ngmc ; ig++)
 							{
-								const double Gtau = 
-									pw.gcar[ig].x * atom->tau[ia].x
-									+ pw.gcar[ig].y * atom->tau[ia].y
-									+ pw.gcar[ig].z * atom->tau[ia].z; 
+								const double Gtau =
+									pw.get_G_cartesian_projection(ig, 0) * atom->tau[ia].x + 
+									pw.get_G_cartesian_projection(ig, 1) * atom->tau[ia].y + 
+									pw.get_G_cartesian_projection(ig, 2) * atom->tau[ia].z;
 
 								swap = exp(ci_tpi * Gtau) * rho_lgl[pw.ig2ngg[ig]];
 
@@ -381,9 +381,9 @@ void Charge::atomic_rho(const int spin_number_need, double** rho_in)const		// Pe
 							for (int ig = 0; ig < pw.ngmc ; ig++)
 							{
 								const double Gtau =
-									pw.gcar[ig].x * atom->tau[ia].x
-									+ pw.gcar[ig].y * atom->tau[ia].y
-									+ pw.gcar[ig].z * atom->tau[ia].z;
+									pw.get_G_cartesian_projection(ig, 0) * atom->tau[ia].x + 
+									pw.get_G_cartesian_projection(ig, 1) * atom->tau[ia].y + 
+									pw.get_G_cartesian_projection(ig, 2) * atom->tau[ia].z;
 
 								swap = exp(ci_tpi * Gtau) * rho_lgl[pw.ig2ngg[ig]];
 

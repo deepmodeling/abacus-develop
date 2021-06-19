@@ -83,7 +83,7 @@ void Charge_Mixing::plain_mixing( double *rho, double *rho_save_in ) const
 		double* filter_g = new double[pw.ngmc];
 		for(int ig=0; ig<pw.ngmc; ig++)
 		{
-			double gg = pw.gcar[ig].norm2();
+			double gg = pw.get_NormG_cartesian(ig);
 			filter_g[ig] = max(gg / (gg + gg0), 0.1);
 
 			kerpulay[ig] = (1 - filter_g[ig]) * kerpulay[ig];
@@ -142,7 +142,7 @@ void Charge_Mixing::Kerker_mixing( double *rho, const complex<double> *residual_
     double *filter_g = new double[pw.ngmc];
     for (int ig=0; ig<pw.ngmc; ig++)
     {
-        double gg = pw.gcar[ig].norm2();
+        double gg = pw.get_NormG_cartesian(ig);
 //      filter_g[ig] = a * gg / (gg+gg0);
 		filter_g[ig] = mixing_beta * gg / (gg+gg0);//mohan modify 2010/03/25
     }

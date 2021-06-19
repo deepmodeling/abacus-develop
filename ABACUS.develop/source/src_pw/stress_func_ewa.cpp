@@ -61,21 +61,20 @@ void Stress_Func::stress_ewa(matrix& sigma, const bool is_pw)
 		{
 			for(int i=0; i<ucell.atoms[it].na; i++)
 			{
-				arg = (pw.gcar[ng].x * ucell.atoms[it].tau[i].x + pw.gcar[ng].y * ucell.atoms[it].tau[i].y + pw.gcar[ng].z * ucell.atoms[it].tau[i].z) * (TWO_PI);
+				arg = (pw.get_G_cartesian_projection(ng, 0) * ucell.atoms[it].tau[i].x + 
+					pw.get_G_cartesian_projection(ng, 1) * ucell.atoms[it].tau[i].y + 
+					pw.get_G_cartesian_projection(ng, 2) * ucell.atoms[it].tau[i].z) * (TWO_PI);
 				rhostar = rhostar + complex<double>(ucell.atoms[it].zv * cos(arg),ucell.atoms[it].zv * sin(arg));
 			}
 		}
 		rhostar /= ucell.omega;
 		sewald = fact* (TWO_PI) * e2 * exp(-g2a) / g2 * pow(abs(rhostar),2);
 		sdewald = sdewald - sewald;
-		g[0]=pw.gcar[ng].x;
-		g[1]=pw.gcar[ng].y;
-		g[2]=pw.gcar[ng].z;
 		for(l=0;l<3;l++)
 		{
 			for(m=0;m<l+1;m++)
 			{
-				sigma(l,m) +=sewald * ucell.tpiba2 * 2.0 * g[l] * g[m] / g2 * (g2a+1);
+				sigma(l, m) += sewald * ucell.tpiba2 * 2.0 * pw.get_G_cartesian_projection(ng, l) * pw.get_G_cartesian_projection(ng, m) / g2 * (g2a + 1);
 			}
 		}
 	}

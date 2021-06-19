@@ -480,14 +480,14 @@ void WF_atomic::random(ComplexMatrix &psi,const int iw_start,const int iw_end,co
         {
             const double rr = std::rand()/double(RAND_MAX); //qianrui add RAND_MAX
             const double arg= TWO_PI * std::rand()/double(RAND_MAX);
-            Vector3<double> v3 = kv.kvec_c[ik] + pw.gcar[this->igk(ik, ig)];
+            Vector3<double> v3 = pw.get_GPlusK_cartesian(ik, this->igk(ik, ig));
             psi(iw,ig) = complex<double>(rr * cos(arg), rr * sin(arg)) / (v3 * v3 + 1.0);
         }
         if(NPOL==2)for (int ig = wf.npwx;ig < wf.npwx + ng;ig++)
         {
             const double rr = std::rand()/double(RAND_MAX);
             const double arg= TWO_PI * std::rand()/double(RAND_MAX);
-            Vector3<double> v3 = kv.kvec_c[ik] + pw.gcar[this->igk(ik, ig-wf.npwx)];
+            Vector3<double> v3 = pw.get_GPlusK_cartesian(ik, this->igk(ik, ig-wf.npwx));
             psi(iw,ig) = complex<double>(rr * cos(arg), rr * sin(arg)) / (v3 * v3 + 1.0);
         }
     }

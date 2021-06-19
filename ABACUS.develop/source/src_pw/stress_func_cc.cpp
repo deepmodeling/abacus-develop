@@ -101,17 +101,16 @@ void Stress_Func::stress_cc(matrix& sigma, const bool is_pw)
 			// non diagonal term (g=0 contribution missing)
 			for( ng = pw.gstart;ng< pw.ngmc;ng++)
 			{
-				g[0] = pw.gcar[ng].x;
-				g[1] = pw.gcar[ng].y;
-				g[2] = pw.gcar[ng].z;
-				for( l = 0;l< 3;l++)
+				double norm_g = sqrt(pw.get_NormG_cartesian(ng));
+				assert(norm_g != 0.000);
+				for (l = 0; l < 3; l++)
 				{
 					for (m = 0;m< 3;m++)
 					{
-						const complex<double> t = conj(psic[pw.ig2fftc[ng]] )
-							* pw.strucFac (nt, ng) * rhocg [pw.ig2ngg[ng] ] * ucell.tpiba *
-							g [l] * g [m] / pw.gcar[ng].norm() * fact;
-//						sigmacc [l][ m] += t.real();
+						const complex<double> t = conj(psic[pw.ig2fftc[ng]]) * pw.strucFac(nt, ng) * rhocg[pw.ig2ngg[ng]] * ucell.tpiba *
+												  pw.get_G_cartesian_projection(ng, l) * pw.get_G_cartesian_projection(ng, m) 
+												  / norm_g * fact;
+						//						sigmacc [l][ m] += t.real();
 						sigma(l,m) += t.real();
 					}//end m
 				}//end l

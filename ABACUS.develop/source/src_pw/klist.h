@@ -3,13 +3,13 @@
 // START: 2006
 // LAST UPDATE: 2009-05-18
 //==========================================================
-#ifndef KVECT_H
-#define KVECT_H
+#ifndef K_VECTORS_H
+#define K_VECTORS_H
 
 #include "tools.h"
 #include "symmetry.h"
 
-class kvect
+class K_Vectors
 {
 public:
 
@@ -30,8 +30,8 @@ public:
 
     int nmp[3];						// Number of Monhorst-Pack
 
-    kvect();
-    ~kvect();
+    K_Vectors();
+    ~K_Vectors();
 
     void set(
         const Symmetry &symm,

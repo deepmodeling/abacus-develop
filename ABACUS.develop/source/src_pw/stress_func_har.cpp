@@ -63,9 +63,6 @@ void Stress_Func::stress_har(matrix& sigma, const bool is_pw)
 //		ehart += ( conj( Porter[j] ) * Porter[j] ).real() * fac;
 	//            vh_g[ig] = fac * Porter[j];
 		shart= ( conj( Porter[j] ) * Porter[j] ).real()/(ucell.tpiba2 * pw.gg [ig]);
-		g[0]=pw.gcar[ig].x;
-		g[1]=pw.gcar[ig].y;
-		g[2]=pw.gcar[ig].z;
         //test
 
         //   cout<<"g "<<g[0]<<" "<<g[1]<<" "<<g[2]<<endl;
@@ -78,7 +75,7 @@ void Stress_Func::stress_har(matrix& sigma, const bool is_pw)
 		{
 			for(int m=0;m<l+1;m++)
 			{
-				sigma(l,m) += shart *2*g[l]*g[m]/pw.gg[ig];
+				sigma(l, m) += shart * 2 * pw.get_G_cartesian_projection(ig, l) * pw.get_G_cartesian_projection(ig, m) / pw.gg[ig];
 			}
 		}
 	}

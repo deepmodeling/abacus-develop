@@ -569,7 +569,7 @@ void Parallel_PW::fft_map_after_vc(
         if(this->gcut == pw.ggchg)
         {
             pw.gcar[ig] = pw.gdirect[ig]*ucell.G;
-            pw.gg[ig] = pw.gcar[ig].x * pw.gcar[ig].x + pw.gcar[ig].y * pw.gcar[ig].y + pw.gcar[ig].z * pw.gcar[ig].z;
+            pw.gg[ig] = pw.get_NormG_cartesian(ig);
         }
     }
 

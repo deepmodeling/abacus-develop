@@ -3,7 +3,7 @@
 #include "../src_parallel/parallel_global.h"
 #include "symmetry.h"
 
-kvect::kvect()
+K_Vectors::K_Vectors()
 {	
 #ifdef _MCD_CHECK
     FILE* out;
@@ -40,9 +40,9 @@ kvect::kvect()
     k_nkstot = 0; //LiuXh add 20180619
 }
 
-kvect::~kvect()
+K_Vectors::~K_Vectors()
 {
-//	TITLE("kvect","~kvect");
+//	TITLE("K_Vectors","~K_Vectors");
     delete[] kvec_c;
     delete[] kvec_d;
     delete[] kvec_d_ibz;
@@ -56,14 +56,14 @@ kvect::~kvect()
 #endif
 }
 
-void kvect::set(
+void K_Vectors::set(
     const Symmetry &symm,
     const string &k_file_name,
     const int& nspin_in,
     const Matrix3 &reciprocal_vec,
     const Matrix3 &latvec)
 {
-    TITLE("kvect", "set");
+    TITLE("K_Vectors", "set");
 
 	ofs_running << "\n\n\n\n";
 	ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << endl;
@@ -92,7 +92,7 @@ void kvect::set(
 #endif
 	if(!read_succesfully)
 	{
-		WARNING_QUIT("kvect::set","Something wrong while reading KPOINTS.");
+		WARNING_QUIT("K_Vectors::set","Something wrong while reading KPOINTS.");
 	}
 
     // (2)
@@ -117,7 +117,7 @@ void kvect::set(
 	}
 	else
 	{
-        WARNING_QUIT("kvect::set", "Only available for nspin = 1 or 2 or 4");
+        WARNING_QUIT("K_Vectors::set", "Only available for nspin = 1 or 2 or 4");
     }
 	this->normalize_wk(deg);
 
@@ -137,7 +137,7 @@ void kvect::set(
     return;
 }
 
-void kvect::renew(const int &kpoint_number)
+void K_Vectors::renew(const int &kpoint_number)
 {
     delete[] kvec_c;
     delete[] kvec_d;
@@ -151,18 +151,18 @@ void kvect::renew(const int &kpoint_number)
     isk = new int[kpoint_number];
     ngk = new int[kpoint_number];
 
-    Memory::record("kvect","kvec_c",kpoint_number*3,"double");
-    Memory::record("kvect","kvec_d",kpoint_number*3,"double");
-    Memory::record("kvect","wk",kpoint_number*3,"double");
-    Memory::record("kvect","isk",kpoint_number*3,"int");
-    Memory::record("kvect","ngk",kpoint_number*3,"int");
+    Memory::record("K_Vectors","kvec_c",kpoint_number*3,"double");
+    Memory::record("K_Vectors","kvec_d",kpoint_number*3,"double");
+    Memory::record("K_Vectors","wk",kpoint_number*3,"double");
+    Memory::record("K_Vectors","isk",kpoint_number*3,"int");
+    Memory::record("K_Vectors","ngk",kpoint_number*3,"int");
 
     return;
 }
 
-bool kvect::read_kpoints(const string &fn)
+bool K_Vectors::read_kpoints(const string &fn)
 {
-    TITLE("kvect", "read_kpoints");
+    TITLE("K_Vectors", "read_kpoints");
     if (MY_RANK != 0) return 1;
 
 	// mohan add 2010-09-04
@@ -285,7 +285,7 @@ bool kvect::read_kpoints(const string &fn)
 			//cout << " kword = " << kword << endl;
 			if(Symmetry::symm_flag)
 			{
-				WARNING("kvect::read_kpoints","Line mode of k-points is open, please set symmetry to 0.");
+				WARNING("K_Vectors::read_kpoints","Line mode of k-points is open, please set symmetry to 0.");
 				return 0;
 			}
 		
@@ -373,7 +373,7 @@ bool kvect::read_kpoints(const string &fn)
 			//cout << " kword = " << kword << endl;
 			if(Symmetry::symm_flag)
 			{
-				WARNING("kvect::read_kpoints","Line mode of k-points is open, please set symmetry to 0.");
+				WARNING("K_Vectors::read_kpoints","Line mode of k-points is open, please set symmetry to 0.");
 				return 0;
 			}
 		
@@ -470,7 +470,7 @@ bool kvect::read_kpoints(const string &fn)
 } // END SUBROUTINE
 
 
-double kvect::Monkhorst_Pack_formula( const int &k_type, const double &offset,
+double K_Vectors::Monkhorst_Pack_formula( const int &k_type, const double &offset,
                                       const int& n, const int &dim)
 {
     double coordinate;
@@ -480,9 +480,9 @@ double kvect::Monkhorst_Pack_formula( const int &k_type, const double &offset,
 }
 
 //add by dwan
-void kvect::Monkhorst_Pack(const int *nmp_in, const double *koffset_in, const int k_type)
+void K_Vectors::Monkhorst_Pack(const int *nmp_in, const double *koffset_in, const int k_type)
 {
-    if (test_kpoint) TITLE("kvect", "Monkhorst_Pack");
+    if (test_kpoint) TITLE("K_Vectors", "Monkhorst_Pack");
     const int mpnx = nmp_in[0];
     const int mpny = nmp_in[1];
     const int mpnz = nmp_in[2];
@@ -520,10 +520,10 @@ void kvect::Monkhorst_Pack(const int *nmp_in, const double *koffset_in, const in
     return;
 }
 
-void kvect::update_use_ibz( void )
+void K_Vectors::update_use_ibz( void )
 {
     if (MY_RANK!=0) return;
-    TITLE("kvect","update_use_ibz");
+    TITLE("K_Vectors","update_use_ibz");
     assert( nkstot_ibz > 0 );
 
 	// update nkstot
@@ -547,10 +547,10 @@ void kvect::update_use_ibz( void )
     return;
 }
 
-void kvect::ibz_kpoint(const Symmetry &symm)
+void K_Vectors::ibz_kpoint(const Symmetry &symm)
 {
     if (MY_RANK!=0) return;
-    TITLE("kvect", "ibz_kpoint");
+    TITLE("K_Vectors", "ibz_kpoint");
     //===============================================
     // search in all space group operations
     // if the operations does not already included
@@ -714,7 +714,7 @@ void kvect::ibz_kpoint(const Symmetry &symm)
 }
 
 
-void kvect::set_both_kvec(const Matrix3 &G, const Matrix3 &R)
+void K_Vectors::set_both_kvec(const Matrix3 &G, const Matrix3 &R)
 {
 
     if(FINAL_SCF) //LiuXh add 20180606
@@ -801,7 +801,7 @@ void kvect::set_both_kvec(const Matrix3 &G, const Matrix3 &R)
 }
 
 
-void kvect::normalize_wk(const int &degspin)
+void K_Vectors::normalize_wk(const int &degspin)
 {
 	if(MY_RANK!=0) return;
     double sum = 0.0;
@@ -825,10 +825,10 @@ void kvect::normalize_wk(const int &degspin)
     return;
 }
 
-void kvect::mpi_k(void)
+void K_Vectors::mpi_k(void)
 {
 #ifdef __MPI
-	TITLE("kvect","mpi_k");
+	TITLE("K_Vectors","mpi_k");
 
     Parallel_Common::bcast_bool(kc_done);
 
@@ -852,7 +852,7 @@ void kvect::mpi_k(void)
 
     if (nks_minimum == 0)
     {
-        WARNING_QUIT("kvect::mpi_k()"," nks == 0, some processor have no k point!");
+        WARNING_QUIT("K_Vectors::mpi_k()"," nks == 0, some processor have no k point!");
     }
     else
     {
@@ -920,9 +920,9 @@ void kvect::mpi_k(void)
 // This routine sets the k vectors for the up and down spin
 //----------------------------------------------------------
 // from set_kup_and_kdw.f90
-void kvect::set_kup_and_kdw(void)
+void K_Vectors::set_kup_and_kdw(void)
 {
-    TITLE("kvect", "setup_kup_and_kdw");
+    TITLE("K_Vectors", "setup_kup_and_kdw");
 
     //=========================================================================
     // on output: the number of points is doubled and xk and wk in the
@@ -971,9 +971,9 @@ void kvect::set_kup_and_kdw(void)
 } // end subroutine set_kup_and_kdw
 
 
-void kvect::print_klists(ofstream &ofs)
+void K_Vectors::print_klists(ofstream &ofs)
 {
-    TITLE("kvect", "print_klists");
+    TITLE("K_Vectors", "print_klists");
 
     if (nkstot < nks)
     {
@@ -1017,14 +1017,14 @@ void kvect::print_klists(ofstream &ofs)
 
 //LiuXh add a new function here,
 //20180515
-void kvect::set_after_vc(
+void K_Vectors::set_after_vc(
         const Symmetry &symm,
         const string &k_file_name,
         const int& nspin_in,
         const Matrix3 &reciprocal_vec,
         const Matrix3 &latvec)
 {
-    TITLE("kvect", "set_after_vc");
+    TITLE("K_Vectors", "set_after_vc");
 
     ofs_running << "\n SETUP K-POINTS" << endl;
     this->nspin = nspin_in;
@@ -1044,10 +1044,10 @@ void kvect::set_after_vc(
 
 //LiuXh add a new function here,
 //20180515
-void kvect::mpi_k_after_vc(void)
+void K_Vectors::mpi_k_after_vc(void)
 {
 #ifdef __MPI
-    TITLE("kvect","mpi_k_after_vc");
+    TITLE("K_Vectors","mpi_k_after_vc");
 
     Parallel_Common::bcast_bool(kc_done);
     Parallel_Common::bcast_bool(kd_done);
@@ -1065,7 +1065,7 @@ void kvect::mpi_k_after_vc(void)
 
     if (nks_minimum == 0)
     {
-        WARNING_QUIT("kvect::mpi_k()"," nks == 0, some processor have no k point!");
+        WARNING_QUIT("K_Vectors::mpi_k()"," nks == 0, some processor have no k point!");
     }
     else
     {
@@ -1118,7 +1118,7 @@ void kvect::mpi_k_after_vc(void)
 #endif
 }
 
-void kvect::set_both_kvec_after_vc(const Matrix3 &G, const Matrix3 &R)
+void K_Vectors::set_both_kvec_after_vc(const Matrix3 &G, const Matrix3 &R)
 {
     // set cartesian k vectors.
     kd_done = true;
@@ -1179,9 +1179,9 @@ void kvect::set_both_kvec_after_vc(const Matrix3 &G, const Matrix3 &R)
     return;
 }
 
-void kvect::set_kup_and_kdw_after_vc(void)
+void K_Vectors::set_kup_and_kdw_after_vc(void)
 {
-    TITLE("kvect", "setup_kup_and_kdw_after_vc");
+    TITLE("K_Vectors", "setup_kup_and_kdw_after_vc");
 
     //=========================================================================
     // on output: the number of points is doubled and xk and wk in the

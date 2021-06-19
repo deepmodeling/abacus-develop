@@ -334,8 +334,10 @@ void Chi0_standard::Parallel_G()
 	
 	for(int g0=0;g0<pw.ngmc; g0++)
 	{
-		G_r_core[g0] = pw.gcar[g0].x * pw.gcar[g0].x + pw.gcar[g0].y * pw.gcar[g0].y + pw.gcar[g0].z * pw.gcar[g0].z;
-		Gvec_core[3*g0] = pw.gcar[g0].x; Gvec_core[3*g0+1] = pw.gcar[g0].y; Gvec_core[3*g0+2] = pw.gcar[g0].z;
+		G_r_core[g0] = pw.get_NormG_cartesian(g0);
+		Gvec_core[3 * g0] = pw.get_G_cartesian_projection(g0, 0);
+		Gvec_core[3 * g0 + 1] = pw.get_G_cartesian_projection(g0, 1);
+		Gvec_core[3 * g0 + 2] = pw.get_G_cartesian_projection(g0, 2);
 	}
 	
 #ifdef __MPI

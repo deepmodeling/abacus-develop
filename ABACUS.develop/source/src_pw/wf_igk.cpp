@@ -44,9 +44,8 @@ int WF_igk::setupIndGk(const PW_Basis &pwb,const int nks)
         int ng = 0;
         for (int ig = 0; ig < pwb.ngmw ; ig++)
         {
-            Vector3<double> f =  pwb.gcar[ig] + kv.kvec_c[ik];
-            const double gk2 = f * f;
-            const double k2 = kv.kvec_c[ik] * kv.kvec_c[ik];
+            const double gk2 = pwb.get_GPlusK_cartesian(ik, ig).norm2();
+            const double k2 = pwb.Klist->kvec_c[ik].norm2();
             if (sqrt(pwb.gg[ig]) > sqrt(pwb.ggpsi) + sqrt(k2))
             {
                 break;
@@ -79,9 +78,8 @@ int WF_igk::setupIndGk(const PW_Basis &pwb,const int nks)
         int ng = 0;
         for (int ig = 0; ig < pwb.ngmw; ig++)
         {
-            Vector3<double> f =  pwb.gcar[ig] + kv.kvec_c[ik];
-            const double gk2 = f * f;
-            const double k2 = kv.kvec_c[ik] * kv.kvec_c[ik];
+            const double gk2 = pwb.get_GPlusK_cartesian(ik, ig).norm2();
+            const double k2 = pwb.Klist->kvec_c[ik].norm2();
             if (sqrt(pwb.gg[ig]) > sqrt(pwb.ggpsi) + sqrt(k2))
             {
                 break;
@@ -110,8 +108,8 @@ int WF_igk::setupIndGk(const PW_Basis &pwb,const int nks)
 			ofs << pwb.ngmw << " (Number of plane waves)" << endl;	
 			for(int ig=0; ig < pwb.ngmw; ++ig)
 			{
-				f =  pwb.gcar[ig] + kv.kvec_c[ik];
-				ofs << f.x << " " << f.y << " " << f.z << " " << f.norm() << endl;
+                f = pwb.get_GPlusK_cartesian(ik, ig);
+                ofs << f.x << " " << f.y << " " << f.z << " " << f.norm() << endl;
 			}
 		}
 		ofs.close();
@@ -132,13 +130,10 @@ void WF_igk::ekin(const int ik)
 
     for (int ig = 0;ig < kv.ngk[ik];ig++)
     {
-        Vector3<double> v3 = kv.kvec_c[ik] + pw.gcar[ this->igk(ik, ig) ];
-        this->g2kin[ig] = v3 * v3;
 //--------------------------------------------------------
 // EXPLAIN : Put the correct units on the kinetic energy
 //--------------------------------------------------------
-        this->g2kin[ig] = g2kin[ig] * ucell.tpiba2;
-
+        this->g2kin[ig] = pw.get_GPlusK_cartesian(ik, this->igk(ik, ig)).norm2() * ucell.tpiba2;
     }
     timer::tick("WF_igk","ekin");
     return ;
@@ -147,9 +142,9 @@ void WF_igk::ekin(const int ik)
 
 Vector3<double> WF_igk::get_1qvec_cartesian(const int ik,const int ig)const
 {
-    Vector3<double> qvec = kv.kvec_c[ik] + pw.gcar[ this->igk(ik, ig) ];
+    Vector3<double> qvec = pw.get_GPlusK_cartesian(ik, this->igk(ik, ig));
 
-	/*
+    /*
 	if(igk(ik,ig)==0)
 	{
 		cout << " g add = " << pw.gcar << endl;
@@ -169,9 +164,8 @@ double* WF_igk::get_qvec_cartesian(const int &ik)
     for (int ig=0; ig< kv.ngk[ik]; ig++)
     {
         // cartesian coordinate
-        Vector3<double> qvec = kv.kvec_c[ik] + pw.gcar[ this->igk(ik, ig) ];
         // modulus, in ucell.tpiba unit.
-        const double q2 = qvec*qvec;
+        const double q2 = pw.get_GPlusK_cartesian(ik, this->igk(ik, ig)).norm2();
         qmod[ig] = ucell.tpiba * sqrt(q2);//sqrt(q2) * ucell.tpiba;
     }
     return qmod;
@@ -204,9 +198,9 @@ complex<double>* WF_igk::get_skq(int ik, const int it, const int ia, Vector3<dou
 
     for (int ig=0; ig<kv.ngk[ik]; ig++)
     {
-         Vector3<double> qkq = kv.kvec_c[ik] + pw.gcar[this->igk(ik, ig)] + q;
-         double arg = (qkq * ucell.atoms[it].tau[ia]) * TWO_PI;
-         skq[ig] = complex <double> ( cos(arg),  -sin(arg) );
+        Vector3<double> qkq = pw.get_GPlusK_cartesian(ik, this->igk(ik, ig)) + q;
+        double arg = (qkq * ucell.atoms[it].tau[ia]) * TWO_PI;
+        skq[ig] = complex<double>(cos(arg), -sin(arg));
     }
 
     return skq;

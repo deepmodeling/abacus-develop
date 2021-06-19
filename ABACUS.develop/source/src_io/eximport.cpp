@@ -220,9 +220,9 @@ void eximport::out_gspace_wan(const ComplexMatrix *psi,const int iw,const string
 		//output wannier functions in G space.
 		for(int ig=0;ig<kv.ngk[ik];ig++)
 		{
-			double g1 = kv.kvec_c[ik].x + pw.gcar[wf.igk(ik, ig)].x;
-			double g2 = kv.kvec_c[ik].y + pw.gcar[wf.igk(ik, ig)].y;
-			double g3 = kv.kvec_c[ik].z + pw.gcar[wf.igk(ik, ig)].z;
+			double g1 = pw.get_GPlusK_cartesian_projection(ik, wf.igk(ik, ig), 0);
+			double g2 = pw.get_GPlusK_cartesian_projection(ik, wf.igk(ik, ig), 1);
+			double g3 = pw.get_GPlusK_cartesian_projection(ik, wf.igk(ik, ig), 2);
 			out_gwan 
 			<< setw(15) << g1*factor 
 			<< setw(15) << g2*factor
@@ -447,9 +447,9 @@ void eximport::out_planewave(ofstream &out_data)
 	for(int i=0; i<pw.ngmc_g; i++)
 	{
 		if(i%4==0) out_data<<"\n";
-		out_data << setw(8) << pw.gcar[i].x 
-			<< setw(8) << pw.gcar[i].y
-			<< setw(8) << pw.gcar[i].z ;
+		out_data << setw(8) << pw.get_G_cartesian_projection(i, 0)
+				 << setw(8) << pw.get_G_cartesian_projection(i, 1)
+				 << setw(8) << pw.get_G_cartesian_projection(i, 2);
 	}
 	out_data << "\n<PLANEWAVE>";
 	return;
