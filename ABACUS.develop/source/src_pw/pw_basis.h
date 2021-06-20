@@ -151,12 +151,12 @@ public:
     Vector3<double> *gcar_global;   	//G vectors in cartesian corrdinate
     //g=ig*G ?? HLX (05-26-06): need to check if this is ok!
     //tau is also defined in Cartesian coordintes unit lat0
-    const Vector3<double> get_GPlusK_cartesian(const int ik, const int ig) const {
+    Vector3<double> get_GPlusK_cartesian(const int ik, const int ig) const {
         assert(ig>=0 && ig<this->ngmc && ik>=0 && ik<Klist->nks);
         Vector3<double> g_temp_ = Klist->kvec_c[ik] + this->gcar[ig];
         return g_temp_;
     };
-    const double get_GPlusK_cartesian_projection(const int ik, const int ig, const int axis) const
+    double get_GPlusK_cartesian_projection(const int ik, const int ig, const int axis) const
     {
         assert(ig >= 0 && ig < this->ngmc && ik >= 0 && ik < Klist->nks && axis >= 0 && axis <= 2);
         Vector3<double> g_temp_ = Klist->kvec_c[ik] + this->gcar[ig];
@@ -172,19 +172,20 @@ public:
         {
             return g_temp_.z;
         }
+        return 0.0;
     }
-    const double get_SquareGPlusK_cartesian(const int ik, const int ig) const 
+    double get_SquareGPlusK_cartesian(const int ik, const int ig) const 
     {
         assert(ig >= 0 && ig < this->ngmc && ik >= 0 && ik < Klist->nks);
         Vector3<double> g_temp_ = Klist->kvec_c[ik] + this->gcar[ig];
         return (g_temp_ * g_temp_);
     };
-    const Vector3<double> get_G_cartesian(const int ig) const 
+    Vector3<double> get_G_cartesian(const int ig) const 
     {
         assert(ig>=0 && ig<this->ngmc);
         return this->gcar[ig];
     };
-    const double get_G_cartesian_projection(const int ig, const int axis) const 
+    double get_G_cartesian_projection(const int ig, const int axis) const 
     {
         assert(ig>=0 && ig<this->ngmc && axis>=0 && axis<=2);
         if(axis == 0) 
@@ -199,8 +200,9 @@ public:
         {
             return this->gcar[ig].z;
         }
+        return 0.0;
     }
-    const double get_NormG_cartesian(const int ig) const
+    double get_NormG_cartesian(const int ig) const
     {
         assert(ig >= 0 && ig < this->ngmc);
         return (this->gcar[ig].x * this->gcar[ig].x + this->gcar[ig].y * this->gcar[ig].y + this->gcar[ig].z * this->gcar[ig].z);
