@@ -1,10 +1,10 @@
-# This is the Makefile of ABACUS-ORB API
+# This is the Makefile of ABACUS-neighbor API
 
 include Makefile.system
 include Makefile.Objects
 
-VPATH=../../src_global\
-:../../src_lcao\
+VPATH=../src_global\
+:../src_lcao\
 :./\
 
 #==========================
