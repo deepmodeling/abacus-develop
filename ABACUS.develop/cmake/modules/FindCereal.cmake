@@ -19,4 +19,7 @@ if(Cereal_FOUND)
 endif()
 
 mark_as_advanced(Cereal_INCLUDE_DIR)
+<<<<<<< HEAD
 
+=======
+>>>>>>> upstream/reconstruction

@@ -151,7 +151,7 @@ void Exx_Lip::cal_exx()
 }
 */
 
-void Exx_Lip::init(kvect *kv_ptr_in, wavefunc *wf_ptr_in, PW_Basis *pw_ptr_in, Use_FFT *UFFT_ptr_in, UnitCell_pseudo *ucell_ptr_in)
+void Exx_Lip::init(K_Vectors *kv_ptr_in, wavefunc *wf_ptr_in, PW_Basis *pw_ptr_in, Use_FFT *UFFT_ptr_in, UnitCell_pseudo *ucell_ptr_in)
 {
 	TITLE("Exx_Lip","init");
 	try
@@ -671,7 +671,7 @@ void Exx_Lip::read_q_pack()
 
 	q_pack = new k_package();
 
-	q_pack->kv_ptr = new kvect();
+	q_pack->kv_ptr = new K_Vectors();
 	const string exx_kpoint_card = global_out_dir + exx_q_pack + global_kpoint_card;
 	q_pack->kv_ptr->set( symm, exx_kpoint_card, NSPIN, ucell_ptr->G, ucell_ptr->latvec );
 //	q_pack->kv_ptr->set( symm, exx_kpoint_card, NSPIN, ucell_ptr->G, ucell_ptr->latvec, &Pkpoints );

@@ -123,9 +123,9 @@ double Optical::element_cvk(const int &ik, const int &iv, const int &ic)
 	for(int ig=0; ig<kv.ngk[ik]; ig++)
 	{
 		const complex<double> uvc = conj( wf.evc[ik](ic,ig) ) * wf.evc[ik](iv, ig);
-		tmp[0] += uvc * (kv.kvec_c[ik].x + pw.gcar[ wf.igk(ik, ig) ].x);
-		tmp[1] += uvc * (kv.kvec_c[ik].y + pw.gcar[ wf.igk(ik, ig) ].y);
-		tmp[2] += uvc * (kv.kvec_c[ik].z + pw.gcar[ wf.igk(ik, ig) ].z);
+		tmp[0] += uvc * pw.get_GPlusK_cartesian_projection(ik, wf.igk(ik, ig), 0);
+		tmp[1] += uvc * pw.get_GPlusK_cartesian_projection(ik, wf.igk(ik, ig), 1);
+		tmp[2] += uvc * pw.get_GPlusK_cartesian_projection(ik, wf.igk(ik, ig), 2);
 	}
 
 	Parallel_Reduce::reduce_complex_double_pool( tmp,3 );

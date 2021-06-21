@@ -372,7 +372,7 @@ void GGA_PW::grad_rho( const complex<double> *rhog, Vector3<double> *gdr )
 	// calculate the charge density gradient in reciprocal space.
 	ZEROS(Porter, pw.nrxx);
 	for(int ig=0; ig<pw.ngmc; ig++)
-		Porter[ pw.ig2fftc[ig] ] = gdrtmpg[ig]* complex<double>(pw.gcar[ig].x, 0.0);
+		Porter[ pw.ig2fftc[ig] ] = gdrtmpg[ig]* complex<double>(pw.get_G_cartesian_projection(ig, 0), 0.0);
 	// bring the gdr from G --> R
 	pw.FFT_chg.FFT3D(Porter, 1);
 	// remember to multily 2pi/a0, which belongs to G vectors.
@@ -382,7 +382,7 @@ void GGA_PW::grad_rho( const complex<double> *rhog, Vector3<double> *gdr )
 	// calculate the charge density gradient in reciprocal space.
 	ZEROS(Porter, pw.nrxx);
 	for(int ig=0; ig<pw.ngmc; ig++)
-		Porter[ pw.ig2fftc[ig] ] = gdrtmpg[ig]* complex<double>(pw.gcar[ig].y, 0.0);
+		Porter[pw.ig2fftc[ig]] = gdrtmpg[ig] * complex<double>(pw.get_G_cartesian_projection(ig, 1), 0.0);
 	// bring the gdr from G --> R
 	pw.FFT_chg.FFT3D(Porter, 1);
 	// remember to multily 2pi/a0, which belongs to G vectors.
@@ -392,7 +392,7 @@ void GGA_PW::grad_rho( const complex<double> *rhog, Vector3<double> *gdr )
 	// calculate the charge density gradient in reciprocal space.
 	ZEROS(Porter, pw.nrxx);
 	for(int ig=0; ig<pw.ngmc; ig++)
-		Porter[ pw.ig2fftc[ig] ] = gdrtmpg[ig]* complex<double>(pw.gcar[ig].z, 0.0);
+		Porter[pw.ig2fftc[ig]] = gdrtmpg[ig] * complex<double>(pw.get_G_cartesian_projection(ig, 2), 0.0);
 	// bring the gdr from G --> R
 	pw.FFT_chg.FFT3D(Porter, 1);
 	// remember to multily 2pi/a0, which belongs to G vectors.
@@ -416,23 +416,23 @@ void GGA_PW::grad_dot(const Vector3<double> *h, double *dh)
 	// bring to G space.
 	pw.FFT_chg.FFT3D(aux, -1);
 	for(int ig=0; ig<pw.ngmc; ig++)
-		gaux[ig] += pw.gcar[ig].x * IMAG_UNIT * aux[ pw.ig2fftc[ig] ]; 
-	
+		gaux[ig] += pw.get_G_cartesian_projection(ig, 0) * IMAG_UNIT * aux[pw.ig2fftc[ig]];
+
 	ZEROS(aux, pw.nrxx);
 	for(int ir=0; ir<pw.nrxx; ir++)
 		aux[ir] = complex<double>( h[ir].y, 0.0);
 	// bring to G space.
 	pw.FFT_chg.FFT3D(aux, -1);
 	for(int ig=0; ig<pw.ngmc; ig++)
-		gaux[ig] += pw.gcar[ig].y * IMAG_UNIT * aux[ pw.ig2fftc[ig] ]; 
-	
+		gaux[ig] += pw.get_G_cartesian_projection(ig, 1) * IMAG_UNIT * aux[pw.ig2fftc[ig]];
+
 	ZEROS(aux, pw.nrxx);
 	for(int ir=0; ir<pw.nrxx; ir++)
 		aux[ir] = complex<double>( h[ir].z, 0.0);
 	// bring to G space.
 	pw.FFT_chg.FFT3D(aux, -1);
 	for(int ig=0; ig<pw.ngmc; ig++)
-		gaux[ig] += pw.gcar[ig].z * IMAG_UNIT * aux[ pw.ig2fftc[ig] ]; 
+		gaux[ig] += pw.get_G_cartesian_projection(ig, 2) * IMAG_UNIT * aux[pw.ig2fftc[ig]];
 
 	ZEROS(aux, pw.nrxx);
 	for(int ig=0; ig<pw.ngmc; ig++)

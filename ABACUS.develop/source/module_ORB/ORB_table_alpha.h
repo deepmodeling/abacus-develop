@@ -20,14 +20,13 @@ public:
 		const double &dR_in,
 		const double &dk_in);
 
-	// overlap between lcao basis phi and descriptor basis alpha
+	/// overlap between lcao basis phi and descriptor basis alpha
 	double *****Table_DSR;
 
 	bool destroy_nr;
 
-	//-------------------------
-	// O stands for orbitals.
-	//-------------------------
+	
+	/// O stands for orbitals.
 	void init_DS_Opair(void);
 
 	void init_DS_2Lplus1(void);

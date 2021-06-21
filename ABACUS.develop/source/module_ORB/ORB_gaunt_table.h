@@ -12,11 +12,11 @@ class ORB_gaunt_table
 	ORB_gaunt_table();
 	~ORB_gaunt_table();
 
-	/***************************************
-	 * Method 2
-	 * using WIgner 3j symbols 
-	 * Y(l1,m1), Y(l2,m2), Y(L,M)
-	 * *************************************/
+	/**
+	 * Method 2: 
+	 * using WIgner 3j symbols
+	 * \f$ Y(l1,m1), Y(l2,m2), Y(L,M) \f$
+	*/
 	
 	void init_Gaunt_CH(const int& Lmax);
 	double Get_Gaunt_CH(
@@ -27,8 +27,9 @@ class ORB_gaunt_table
 							const int& l3,
 							const int& m3	);
 
-	//M defined here are restricted within 0 to 2l+1
-	//should be transformed first
+	///M defined here are restricted within 0 to 2l+1
+	///
+	///should be transformed first
 	double Get_Gaunt_SH(
 							const int& l1,
 							const int& mm1,
@@ -46,16 +47,16 @@ class ORB_gaunt_table
 							const int& m3	);
 					
 
-	/***************************************
+	/**
 	 * MEthod 2
-	 * Directly Calculate integral of 
-	 * S(l1,m1), S(l2,m2), S(L,M)
-	 * ************************************/
+	 *
+	 * Directly Calculate integral of
+	 * \f$ S(l_1,m_1), S(l_2,m_2), S(L,M) \f$
+	 */
 	realArray Gaunt_Coefficients;
 
-	//============================================================
-	// (1) Make Ylm_Gaunt Table.
-	//============================================================
+	/// (1) Make Ylm_Gaunt Table.
+	///----------------
 	void init_Ylm_Gaunt(
 		const int &lmax, 
 		const double &s1,
@@ -63,9 +64,8 @@ class ORB_gaunt_table
 		const double &s2,
 		const double &e2);
 
-	//============================================================
-	// (2) Use Ylm_Gaunt to calculate Gaunt Coefficinets element
-	//============================================================
+	/// (2) Use Ylm_Gaunt to calculate Gaunt Coefficinets element
+	///------
 	double Cal_Gaunt_single(
 	   	const int &l1, 
 		const int &m1, 
@@ -78,14 +78,10 @@ class ORB_gaunt_table
 	   	const double &s2, 
 		const double &e2);
 
-	//============================================================
-	// (3) Make the whole Gaunt Coefficients table
-	//============================================================
+	/// (3) Make the whole Gaunt Coefficients table
+	/// ------------------------------------
 	void init_Gaunt(const int &lmax);
 
-	//========================================================
-	// Small function
-	//========================================================
 	static int get_lm_index(const int l, const int m);
 
 	static int Index_M(const int& m);

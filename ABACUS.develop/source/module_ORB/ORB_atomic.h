@@ -8,11 +8,14 @@ using namespace std;
 #include "../src_global/vector3.h"
 #include "ORB_atomic_lm.h"
 
-//=========================================================
-//CLASS  Num_Orbital
-//Note : contain information about atoms
-//Feature : set and store information about atoms
-//=========================================================
+///
+///CLASS  Num_Orbital
+///------------------------------------------
+///
+///Note : contain information about atoms
+///
+///Feature : set and store information about atoms
+///
 class Numerical_Orbital
 {
 	friend class LCAO_Orbitals;
@@ -22,10 +25,6 @@ public:
 	Numerical_Orbital();
 	~Numerical_Orbital();
 
-	//==========================================================
-	// EXPLAIN : get information from Numerical_Orbital
-	// MEMBER FUNCTION :
-	//===========================================================
 	const int& getLmax() const { return this->lmax; }
 	const double& getRcut () const {return this->rcut; }
    	const int& getType() const { return this->type; }
@@ -38,7 +37,7 @@ public:
 		return this->phiLN[ this->find_chi(L, N) ];
 	}
 	
-	// about the distance between two atoms.
+	/// about the distance between two atoms.
 	static double& get_distance()
 	{ 
 		if(distance < 0.0) WARNING_QUIT("NUMERICAL_ORBITAL","distance should be above zero!"); 
@@ -52,9 +51,9 @@ public:
 	static Vector3<double>& getR2() { return R2; }
 	static Vector3<double>& getdR() { return dR; }
 
-	//==========================================================
-	// EXPLAIN : set information about Numerical Orbital
-	//==========================================================
+	///
+	/// set information about Numerical Orbital
+	///
 	void set_orbital_info(
 			const int& type_in,
 			const string& label_in,

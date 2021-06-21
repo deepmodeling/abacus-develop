@@ -55,15 +55,15 @@ void Stress_Func::stress_kin(matrix& sigma)
 	//       }
 		for(i=0;i<npw;i++)
 		{
-			gk[0][i]=(kv.kvec_c[ik].x+pw.gcar[wf.igk(ik, i)].x)*factor;
-			gk[1][i]=(kv.kvec_c[ik].y+pw.gcar[wf.igk(ik, i)].y)*factor;
-			gk[2][i]=(kv.kvec_c[ik].z+pw.gcar[wf.igk(ik, i)].z)*factor;
-			  
-	//          if(qcutz>0){
-	//             gk2=pow(gk[i].x,2)+pow(gk[i].y,2)+pow(gk[i].z,2);
-	//             arg=pow((gk2-ecfixed)/q2sigma,2);
-	//             kfac[i]=1+qcutz/q2sigma*tbsp*exp(-arg);
-	//          }
+			gk[0][i] = pw.get_GPlusK_cartesian_projection(ik, wf.igk(ik, i), 0) * factor;
+			gk[1][i] = pw.get_GPlusK_cartesian_projection(ik, wf.igk(ik, i), 1) * factor;
+			gk[2][i] = pw.get_GPlusK_cartesian_projection(ik, wf.igk(ik, i), 2) * factor;
+
+			//          if(qcutz>0){
+			//             gk2=pow(gk[i].x,2)+pow(gk[i].y,2)+pow(gk[i].z,2);
+			//             arg=pow((gk2-ecfixed)/q2sigma,2);
+			//             kfac[i]=1+qcutz/q2sigma*tbsp*exp(-arg);
+			//          }
 		}
 
 		//kinetic contribution

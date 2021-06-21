@@ -3,7 +3,7 @@
 // init "GLOBAL CLASS" object
 //----------------------------------------------------------
 
-kvect kv; // mem check in in here.
+K_Vectors kv; // mem check in in here.
 Use_FFT UFFT; // mohan add 2010-07-22
 FFT fftwan;
 output out;

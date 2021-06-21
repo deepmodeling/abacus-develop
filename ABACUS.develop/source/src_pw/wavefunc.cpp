@@ -526,7 +526,7 @@ void wavefunc::wfcinit_k(void)
 						{
 							for(int ig=0;ig<kv.ngk[ik];ig++)    // loop over ig
 							{
-								gkqg =  kv.kvec_c[ik] + pw.gcar[wf.igk(ik, ig)] + qg;
+								gkqg = pw.get_GPlusK_cartesian(ik, wf.igk(ik, ig)) + qg;
 								for(int ir=0; ir<Rmax[iw1][iw2]; ir++)   // Rmax
 								{
 									arg = gkqg * Rcar[iw1][iw2][ir] * TWO_PI;

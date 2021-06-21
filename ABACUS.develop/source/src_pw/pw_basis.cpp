@@ -122,7 +122,7 @@ void PW_Basis::set
 
 
 // initialize of plane wave basis.
-void PW_Basis::gen_pw(ofstream &runlog, const UnitCell &Ucell_in, const kvect &Klist_in)
+void PW_Basis::gen_pw(ofstream &runlog, const UnitCell &Ucell_in, const K_Vectors &Klist_in)
 {
     TITLE("PW_Basis","gen_pw");
     timer::tick("PW_Basis","gen_pw",'B');

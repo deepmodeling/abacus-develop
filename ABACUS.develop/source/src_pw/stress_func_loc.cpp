@@ -70,16 +70,13 @@ void Stress_Func::stress_loc(matrix& sigma, const bool is_pw)
 		for( ng = 0;ng< pw.ngmc;ng++)
 		{
 			const int j = pw.ig2fftc[ng];
-			g[0]=pw.gcar[ng].x;
-			g[1]=pw.gcar[ng].y;
-			g[2]=pw.gcar[ng].z;
 			for (l = 0;l< 3;l++)
 			{
 				for (m = 0; m<l+1;m++)
 				{
-					sigma(l,m) = sigma(l,m) +  ( conj( Porter[j] )
-							* pw.strucFac (nt, ng) ).real() * 2.0 * dvloc [ pw.ig2ngg[ng] ]
-							* ucell.tpiba2 * g[l] * g[m] * fact;
+					sigma(l, m) = sigma(l, m) + (conj(Porter[j]) * pw.strucFac(nt, ng)).real() 
+						* 2.0 * dvloc[pw.ig2ngg[ng]] * ucell.tpiba2 * 
+						pw.get_G_cartesian_projection(ng, l) * pw.get_G_cartesian_projection(ng, m) * fact;
 				}
 			}
 		}

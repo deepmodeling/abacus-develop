@@ -1,14 +1,21 @@
-# This is the Makefile of ABACUS-ADJ API
+# This is the Makefile of ABACUS-neighor API
 
 #==========================
 # Compiler information 
 #==========================
 CPLUSPLUS     = icpc
 CPLUSPLUS_MPI = icpc
+<<<<<<< HEAD:ABACUS.develop/source/src_external/ADJ_api/Makefile
 BOOST_DIR = /home/cyFortneu/soft/boost_1_74_0
 #BOOST_DIR = /home/mohan/1_Software/impi_boost-1.70.0
 FFTW_DIR = /home/cyFortneu/soft/fftw-3.3.8
 #FFTW_DIR = /home/mohan/1_Software/impi_fftw-3.3.8
+=======
+#BOOST_DIR = /home/cyFortneu/soft/boost_1_74_0
+BOOST_DIR = /home/mohan/1_Software/impi_boost-1.70.0
+#FFTW_DIR = /home/cyFortneu/soft/fftw-3.3.8
+FFTW_DIR = /home/mohan/1_Software/impi_fftw-3.3.8
+>>>>>>> upstream/reconstruction:ABACUS.develop/source/module_neighbor/Makefile
 
 OBJ_DIR = obj
 NP      = 1
@@ -44,7 +51,7 @@ OPTS = ${INCLUDES} -Ofast -std=c++11 -simd -march=native -xHost -m64 -qopenmp -W
 
 include Makefile.Objects
 
-VPATH=../../src_global\
+VPATH=../src_global\
 :./\
 
 #==========================

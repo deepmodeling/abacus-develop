@@ -102,9 +102,9 @@ void Stochastic_hchi::get_GRA_index()
 		ZEROS(GRA_index,wf.npw);
 		for(int ig = 0 ; ig < wf.npw; ++ig)
 		{
-			ix = floor(pw.gcar[wf.igk(0, ig)].x+0.1);
-			iy = floor(pw.gcar[wf.igk(0, ig)].y+0.1);
-			iz = floor(pw.gcar[wf.igk(0, ig)].z+0.1);
+			ix = floor(pw.get_G_cartesian_projection(wf.igk(0, ig), 0) + 0.1);
+			iy = floor(pw.get_G_cartesian_projection(wf.igk(0, ig), 1) + 0.1);
+			iz = floor(pw.get_G_cartesian_projection(wf.igk(0, ig), 2) + 0.1);
 			if(ix < 0) ix += nx;
 			if(iy < 0) iy += ny;
 			if(iz < 0) iz += nz;

@@ -1,8 +1,8 @@
 #
-# The ABACUS-ADJ module
+# The ABACUS-neighbor module
 #
 
-VERSION= ABACUS-ADJ
+VERSION= ABACUS-neighbor
 HEADERS= *.h
 
 OBJS_BASE=

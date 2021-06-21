@@ -14,9 +14,9 @@ ORB_gaunt_table::~ORB_gaunt_table(){}
 
 void ORB_gaunt_table::init_Gaunt(const int &lmax)
 {
-//----------------------------------------------------------
-// EXPLAIN : make table of Gaunt Coefficients
-// ---------------------------------------------------------
+////////////////////////////////////////
+/// EXPLAIN : make table of Gaunt Coefficients
+////////////////////////////////////////
     TITLE("ORB_gaunt_table", "init_Gaunt");
     timer::tick("ORB_gaunt_table", "init_Gaunt",'D');
     
@@ -40,9 +40,9 @@ void ORB_gaunt_table::init_Gaunt(const int &lmax)
                         for (int m2 = 0; m2 < 2*L2+1 ; m2++)
                         {
                             const int dim2 = this->get_lm_index(L2,m2);
-                            //=====================
-                            //call Calculate::Cal_G
-                            //======================
+                            /////////////////////
+                            ///call Calculate::Cal_G
+                            ////////////////////
 					
 							Gaunt_Coefficients(dim1, dim2, dim) = 
 								this->Get_Gaunt_SH (L1, m1, L2, m2, L, m);	
@@ -162,17 +162,17 @@ int ORB_gaunt_table::get_lm_index(
 }
 
 
-/**********************
-//Rasch and Yu's Method
-***********************/
-//total pointers
+/**********************//**
+  * Rasch and Yu's Method
+  ***********************/
+///total pointers
 int ORB_gaunt_table::P_EL(const int& L)
 {
 	return (L+1) * (L+2) * (L+3) * (L+4) / 24;
 }
 
 
-//effective pointers
+///effective pointers
 int ORB_gaunt_table::EP_EL(const int& L)
 {
 	if(L % 2 == 0) return (L+2) * (L+4) * (3*L*L+14*L+24) / 192;
@@ -362,9 +362,9 @@ double ORB_gaunt_table::Get_Gaunt_CH
 }
 	
 
-//Input value
-//m1, m2, m3 are restricted within 0 to 2l+1
-//and should be transformed first
+///Input value, 
+///m1, m2, m3 are restricted within 0 to 2l+1, 
+///and should be transformed first.
 double ORB_gaunt_table::Get_Gaunt_SH
 (
  	const int& l1,

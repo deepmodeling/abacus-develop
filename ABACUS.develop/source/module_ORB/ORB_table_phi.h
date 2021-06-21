@@ -15,12 +15,13 @@ class ORB_table_phi
 	~ORB_table_phi();
 
 	void allocate (
-		const int &ntype,
-		const int &lmax_in,
-		const int &kmesh_in,
-		const double &Rmax_in,
-		const double &dR_in,
-		const double &dk_in);
+		const int &ntype, ///< number of atom types
+		const int &lmax_in,///< max L used to calculate overlap
+		const int &kmesh_in,///< kpoints, for integration in k space
+		const double &Rmax_in,///< max value of radial table
+		const double &dR_in,///< delta R, for making radial table
+		const double& dk_in///< delta k, for integration in k space
+	);
 
 	void init_Table(
 		const int &job,
@@ -28,23 +29,30 @@ class ORB_table_phi
 
 	void Destroy_Table(LCAO_Orbitals &orb);
 
-	// Five dimension:
-	// (1) 0: normal (S(R)) ; 1: derivative( dS/dR )
-	// (2) pairs type number. 
-	// (3) pairs chi.
-	// (4) Max angular momentum: L.
-	// (5) Distance between atoms: R.
+	/**
+	 * Five dimension:
+	 *-----------------------------
+	 * (1) 0: normal (S(R)) ; 1: derivative( dS/dR )
+	 *
+	 * (2) pairs type number.
+	 *
+	 * (3) pairs chi
+	 *
+	 * (4) Max angular momentum: L.
+	 *
+	 * (5) Distance between atoms: R.
+	 */
 	double***** Table_SR;
 	double***** Table_TR;
 
 	bool destroy_sr;
 	bool destroy_tr;
-	
-	//=================================================
-	// make table of Spherical bessel
-	// Sph_Bes : jlx[kmesh][Rmesh][L]
-	// L should be 2*Lmax, which is max L of all type
-	//=================================================
+	/**
+	 * \brief make table of Spherical bessel
+	 *
+	 * Sph_Bes : jlx[kmesh][Rmesh][L],
+	 * L should be 2*Lmax, which is max L of all type
+	 */
 	// Peize Lin update 2016-01-26
 	void init_Lmax(
 		const int orb_num, 
@@ -63,28 +71,26 @@ class ORB_table_phi
 	// Peize Lin add 2017-04-24, and change all jlx in this class
 	Sph_Bessel_Recursive::D2* pSB = nullptr;
 
-	//==============================================
-	// make the index, in order to get the element 
-	// from Table_SR and Table_TR quickly.
-	//==============================================
-	
-	//-------------------------
-	// OV stands for 'overlap'
-	// T stands for atom type.
-	// O stands for orbitals.
-	//-------------------------
+	///
+	/// make the index, in order to get the element from Table_SR and Table_TR quickly.
+	///
 
-    void init_OV_Tpair(LCAO_Orbitals &orb);
-    void init_OV_Opair(LCAO_Orbitals &orb);
+	///
+	/// OV stands for 'overlap'
+	///
+	/// T stands for atom type.
+	///
+	void init_OV_Tpair(LCAO_Orbitals& orb);
+	///
+	/// O stands for orbitals.
+	///
+	void init_OV_Opair(LCAO_Orbitals& orb);
 
 	int OV_nTpairs;
     IntArray OV_Tpair;
     IntArray OV_Opair;
     IntArray OV_L2plus1;
 
-	//========================================================
-	// Small function
-	//========================================================
 	static int get_rmesh( const double &R1, const double &R2);
 
 	static double dr;

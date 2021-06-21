@@ -3,13 +3,13 @@
 #include "../src_global/ylm.h"
 #include "../src_global/math_polyint.h"
 
-// here is a member of ORB_gen_tables class
+///here is a member of ORB_gen_tables class
 ORB_gen_tables UOT;
 
 ORB_gen_tables::ORB_gen_tables() {}
 ORB_gen_tables::~ORB_gen_tables() {}
 
-// call in hamilt_linear::init_before_ions.
+/// call in hamilt_linear::init_before_ions.
 void ORB_gen_tables::gen_tables(
 	ofstream &ofs_in,
 	const int &job0,
@@ -22,36 +22,36 @@ void ORB_gen_tables::gen_tables(
 
 	ofs_in << "\n SETUP THE TWO-CENTER INTEGRATION TABLES" << endl;
 
-	//=========================================
-	// (1) MOT: make overlap table.
-	//=========================================
+	//////////////////////////////
+	/// (1) MOT: make overlap table.
+	//////////////////////////////
 	MOT.allocate(
-		orb.get_ntype(), // number of atom types
-		orb.get_lmax(),	 // max L used to calculate overlap
-		orb.get_kmesh(), // kpoints, for integration in k space
-		orb.get_Rmax(),	 // max value of radial table
-		orb.get_dR(),	 // delta R, for making radial table
-		orb.get_dk());	 // delta k, for integration in k space
+		orb.get_ntype(),
+		orb.get_lmax(),	 
+		orb.get_kmesh(), 
+		orb.get_Rmax(),	
+		orb.get_dR(),	 
+		orb.get_dk());	 
 
 	tbeta.allocate(
-		orb.get_ntype(), // number of atom types
-		orb.get_lmax(),	 // max L used to calculate overlap
-		orb.get_kmesh(), // kpoints, for integration in k space
-		orb.get_Rmax(),	 // max value of radial table
-		orb.get_dR(),	 // delta R, for making radial table
-		orb.get_dk());	 // delta k, for integration in k space
+		orb.get_ntype(),
+		orb.get_lmax(),	
+		orb.get_kmesh(), 
+		orb.get_Rmax(),	
+		orb.get_dR(),
+		orb.get_dk());
 
 	//caoyu add 2021-03-18
 	//mohan update 2021-04-22
 	if (out_descriptor>0)
 	{
 		talpha.allocate(
-			orb.get_ntype(), // number of atom types
-			orb.get_lmax(),	 // max L used to calculate overlap
-			orb.get_kmesh(), // kpoints, for integration in k space
-			orb.get_Rmax(),	 // max value of radial table
-			orb.get_dR(),	 // delta R, for making radial table
-			orb.get_dk());	 // delta k, for integration in k space
+			orb.get_ntype(), 
+			orb.get_lmax(),	
+			orb.get_kmesh(),
+			orb.get_Rmax(),
+			orb.get_dR(),
+			orb.get_dk());
 	}
 
 	// OV: overlap
@@ -70,9 +70,9 @@ void ORB_gen_tables::gen_tables(
 		talpha.init_DS_2Lplus1();
 	}
 
-	//=========================================
-	// (2) init Ylm Coef
-	//=========================================
+	//////////////////////////////
+	/// (2) init Ylm Coef
+	//////////////////////////////
 	//liaochen add 2010/4/29
 	Ylm::set_coefficients();
 
@@ -97,9 +97,9 @@ void ORB_gen_tables::gen_tables(
 		//talpha.print_Table_DSR();
 	}
 
-	//=========================================
-	// (3) make Gaunt coefficients table
-	//=========================================
+	/////////////////////////////
+	/// (3) make Gaunt coefficients table
+	/////////////////////////////
 
 	const int lmax = (Lmax_used - 1) / 2;
 	//MGT.init_Ylm_Gaunt(orb.get_lmax()+1, 0.0,PI,0.0,TWO_PI);
@@ -280,11 +280,13 @@ void ORB_gen_tables::snap_psibeta(
 	{
 		Ylm::grad_rl_sph_harm(T2_2Lplus1 - 1, dRb.x, dRb.y, dRb.z, rlyb, grlyb);
 	}
-	//==============================================================================
-	// Formula :                         T1       T0          T0        T2
-	// sum_{L0}sum_{m0}
-	// 			D_{L0,L0} <psi1_{L1,N1}|Beta_{L0,m0}><Beta_{L0,m0}|psi2_{L2,N2}>
-	//==============================================================================
+	//////////////////////////////////////////////////////////////////////////
+	/// Formula :                         T1       T0          T0        T2
+	/// \f[
+	///	\sum_{ L0 }sum_{ m0 }
+	/// 			D_{L0,L0} <\psi1_{L1,N1}|\Beta_{L0,m0}><\Beta_{L0,m0}|\psi2_{L2,N2}>
+	///\f]
+	//////////////////////////////////////////////////////////////////////////
 	//double v = 0.0;
 
 	// mohan update 2011-03-07
@@ -310,10 +312,10 @@ void ORB_gen_tables::snap_psibeta(
 		const int L0 = ORB.Beta[T0].Proj[nb].getL(); // mohan add 2021-05-07
 		//const int next_ip = 2* L0 +1;
 
-		//-------------------------------------------------------------------
-		// we should consider move iterations for psi1 and psi2 from cal_fvnl_dbeta
-		// to here --- 2021/03/20 mohan chen
-		//-------------------------------------------------------------------
+		//////////////////////////////////////////////////////
+		/// we should consider move iterations for psi1 and psi2 from cal_fvnl_dbeta
+		/// to here --- 2021/03/20 mohan chen
+		//////////////////////////////////////////////////////
 
 		// <psi1 | Beta>
 		const int Opair1 = tbeta.NL_Opair(Tpair1, L1, N1, nb);
@@ -369,9 +371,9 @@ void ORB_gen_tables::snap_psibeta(
 					Interp_Vnla = i_exp * tbeta.Table_NR[0][Tpair1][Opair1][L][0];
 				}
 
-				//------------------------------------------
-				//  Overlap value = S_from_table * G * Ylm
-				//------------------------------------------
+				/////////////////////////////////////
+				///  Overlap value = S_from_table * G * Ylm
+				////////////////////////////////////
 				for (int m = 0; m < 2 * L + 1; m++)
 				{
 					int gindexa = L * L + m;
@@ -588,8 +590,8 @@ void ORB_gen_tables::snap_psipsi(
 	Numerical_Orbital::set_position(R1, R2);
 	assert(this->lat0 > 0.0);
 
-	// (1) get distance between R1 and R2 (a.u.)
-	// judge if there exist overlap
+	/// (1) get distance between R1 and R2 (a.u.)
+	/// judge if there exist overlap
 	double distance = Numerical_Orbital::get_distance() * this->lat0;
 
 	const double Rcut1 = ORB.Phi[T1].getRcut();
@@ -607,22 +609,22 @@ void ORB_gen_tables::snap_psipsi(
 	if (distance > (Rcut1 + Rcut2))
 		return;
 
-	//if distance == 0
-	//\int psi(r) psi(r-R) dr independent of R if R == 0
-	//distance += tiny1 avoid overflow during calculation
+	/// if distance == 0, 
+	/// \f[ \int psi(r) psi(r-R)\f] dr independent of R if R == 0. 
+	/// distance += tiny1 avoid overflow during calculation.
 	const double tiny1 = 1e-12;
 	const double tiny2 = 1e-10;
 	if (distance < tiny1)
 		distance += tiny1;
 
-	// (2) if there exist overlap, calculate the mesh number
-	// between two atoms
+	/// (2) if there exist overlap, calculate the mesh number
+	/// between two atoms
 	const int rmesh = (dtype == 'D' ? this->talpha.get_rmesh(Rcut1, Rcut2) : this->MOT.get_rmesh(Rcut1, Rcut2));	//caoyu modified 2021-05-08
 
-	// (3) Find three dimension of 'Table_S' or 'Table_T'
-	// dim1 : type pairs,
-	// dim2 : radial orbital pairs,
-	// dim3 : find lmax between T1 and T2, and get lmax*2+1
+	/// (3) Find three dimension of 'Table_S' or 'Table_T'.
+	/// -dim1 : type pairs,
+	/// -dim2 : radial orbital pairs,
+	/// -dim3 : find lmax between T1 and T2, and get lmax*2+1
 	int dim1, dim2, dim3;
 	if (dtype == 'D')	//caoyu modified 2021-05-08
 	{
@@ -784,7 +786,7 @@ void ORB_gen_tables::snap_psipsi(
 				default:
 					break;
 				}
-			} //!m
+			} //m
 		}
 		break;
 
@@ -958,7 +960,7 @@ void ORB_gen_tables::snap_psipsi(
 				default:
 					break;
 				}
-			} //!m
+			} //m
 		}
 	}
 	//	timer::tick ("ORB_gen_tables", "snap_psipsi");

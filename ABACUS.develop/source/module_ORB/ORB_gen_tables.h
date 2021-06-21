@@ -9,10 +9,8 @@
 #include "../src_global/vector3.h"
 #include "../src_global/matrix.h"
 
-//------------------------------------
-// used to be 'Use_Overlap_Table',
-// now the name is 'ORB_gen_tables'
-//------------------------------------
+/// used to be 'Use_Overlap_Table',
+/// now the name is 'ORB_gen_tables'
 class ORB_gen_tables
 {
 	public:
@@ -27,14 +25,14 @@ class ORB_gen_tables
 		const int &job0, 
 		LCAO_Orbitals &orb,
 		const int &Lmax_exx,
-		const int &out_descriptor); // whether to generate descriptors
-
-	void set_unit( const double &v ){lat0=v;}
+		const int& out_descriptor///<[in] whether to generate descriptors
+	);
+	void set_unit(const double& v) { lat0 = v; }
 	
 	void snap_psipsi(
 		double olm[],
-		const int &job, // 0 for matrix element of either S or T, 1 for its derivatives
-	    const char &dtype, // derivative type, 'S' for overlap, 'T' for kinetic energy, 'D' for descriptor in deepks
+		const int &job, ///<[in]0 for matrix element of either S or T, 1 for its derivatives
+	    const char &dtype, ///<[in] derivative type, 'S' for overlap, 'T' for kinetic energy, 'D' for descriptor in deepks
 		const Vector3<double> &R1,
     	const int &I1,
     	const int &l1,
@@ -48,11 +46,10 @@ class ORB_gen_tables
 		const int &nspin,
 		complex<double> *olm1=NULL)const;
 		
-	//job = 0 for vnl matrix elements
-	//job = 1 for its derivatives
+
 	void snap_psibeta(
 		double nlm[],
-		const int& job,
+		const int& job/**<[in]	job = 0 for vnl matrix elements, job = 1 for its derivatives*/,
 		const Vector3<double> &R1,
 		const int &I1,
 		const int &l1,
@@ -75,14 +72,14 @@ class ORB_gen_tables
 		complex<double> *nlm1=NULL,
 		const int is=0)const;
 
-	// set as public because in hamilt_linear, 
-	// we need to destroy the tables: SR,TR,NR
-	// after ionic optimization is done.
+	/// set as public because in hamilt_linear, 
+	/// we need to destroy the tables: SR,TR,NR
+	/// after ionic optimization is done.
 	ORB_table_phi MOT;
 	ORB_table_beta tbeta;
 
-	// if we want to add table for descriptors,
-	// we should consider here -- mohan 2021-02-09
+	/// if we want to add table for descriptors,
+	/// we should consider here -- mohan 2021-02-09
 	ORB_table_alpha talpha;		//caoyu add 2021-03-17
 
 	private:
@@ -95,8 +92,8 @@ class ORB_gen_tables
 
 };
 
-// PLEASE try to get rid of UOT, which is a global variable
-// mohan add 2021-03-30
+/// PLEASE try to get rid of UOT, which is a global variable
+/// mohan add 2021-03-30
 extern ORB_gen_tables UOT;
 
 #endif

@@ -19,7 +19,7 @@ sum_file(){
 
 file=$1
 #echo $1
-calculation=`grep calculation INPUT | awk '{print $2}'`
+calculation=`grep calculation INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
 running_path=`echo "OUT.autotest/running_$calculation"".log"`
 natom=`grep -En '(^|[[:space:]])TOTAL ATOM NUMBER($|[[:space:]])' $running_path | awk '{print $6}'`
 has_force=`grep -En '(^|[[:space:]])force($|[[:space:]])' INPUT | awk '{print $2}'`
@@ -30,14 +30,13 @@ has_dos=`grep -En '(^|[[:space:]])out_dos($|[[:space:]])' INPUT | awk '{print $2
 has_hs=`grep -En '(^|[[:space:]])out_hs($|[[:space:]])' INPUT | awk '{print $2}'`
 has_r=`grep -En '(^|[[:space:]])out_r($|[[:space:]])' INPUT | awk '{print $2}'`
 #echo $running_path
-base=`grep -En '(^|[[:space:]])basis_type($|[[:space:]])' INPUT | awk '{print $2}'`
+base=`grep -En '(^|[[:space:]])basis_type($|[[:space:]])' INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
 if [ $base == "pw" ]; then word="plane_wave_line" 
 else
 word="lcao_line"
 fi
 #echo $word
 test -e $1 && rm $1
-
 #--------------------------------------------
 # if NOT non-self-consistent calculations
 #--------------------------------------------

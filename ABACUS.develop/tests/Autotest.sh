@@ -45,13 +45,12 @@ check_out(){
 		#--------------------------------------------------
 
 		ref=`grep "$key" result.ref | awk '{printf "%.'$CA'f\n",$2}'`
-
 		#--------------------------------------------------
 		# computed the deviation between the calculated 
 		# and reference value
 		#--------------------------------------------------
 		deviation=`awk 'BEGIN {x='$ref';y='$cal';printf "%.'$CA'f\n",x-y}'`
-
+		deviation1=`awk 'BEGIN {x='$ref';y='$cal';printf "%.'$CA'f\n",y-x}'`
 
 		if [ $key == "totaltimeref" ]; then		
 #			echo "time=$cal ref=$ref"
@@ -63,16 +62,16 @@ check_out(){
 		# If deviation < threshold, then the test passes,
 		# otherwise, the test prints out warning
 		#--------------------------------------------------
-		if [ $(echo "$deviation < $threshold"|bc) = 0 ]; then
+		if [ $(echo "$deviation < $threshold && $deviation1 < $threshold"|bc) = 1 ]; then
+			#echo "$key cal=$cal ref=$ref deviation=$deviation"
+			#echo "[ PASS ] $key"
+			echo -e "\e[1;32m [ PASS ] \e[0m $key"
+		else 
 			echo " *************"
 			echo -e "\e[1;31m Incorrect :(  \e[0m"
 			echo " *************"
 			echo "$key cal=$cal ref=$ref deviation=$deviation"
 			break
-		else 
-			#echo "$key cal=$cal ref=$ref deviation=$deviation"
-			#echo "[ PASS ] $key"
-			echo -e "\e[1;32m [ PASS ] \e[0m $key"
 		fi
 	done
 }

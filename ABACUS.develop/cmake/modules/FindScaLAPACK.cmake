@@ -25,4 +25,7 @@ if(ScaLAPACK_FOUND)
 endif()
 
 mark_as_advanced(ScaLAPACK_LIBRARY)
+<<<<<<< HEAD
 
+=======
+>>>>>>> upstream/reconstruction

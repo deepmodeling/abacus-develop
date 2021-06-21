@@ -4,13 +4,17 @@
 #include <string>
 using namespace std;
 
-//=========================================================
-//CLASS Numerical_Nonlocal_Lm
-//Note : contain information about each projector
-//		 all features of projector's shape
-//AUTHOR : liaochen
-//DATE : 2008-03-04
-//=========================================================
+/**
+ * \class Numerical_Nonlocal_Lm
+ * CLASS Numerical_Nonlocal_Lm
+ * -------------------------------
+ * Note : contain information about each projector
+ * all features of projector's shape
+ *
+ * AUTHOR : liaochen
+ *
+ * DATE : 2008-03-04
+ */
 
 class Numerical_Nonlocal_Lm
 {

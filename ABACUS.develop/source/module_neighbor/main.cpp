@@ -1,4 +1,3 @@
-//#include "timer.h"
 #include <ctime>
 #include <fstream>
 #include <iomanip>
@@ -11,9 +10,9 @@ void calculate();
 int main(int argc, char **argv)
 {
 
-	cout << "Hello, this is the ADJ module of ABACUS." << endl;
+	cout << "Hello, this is the 'neighbor' module of ABACUS." << endl;
 
-	cout << "The module searchs for the adjacent atoms for a given atomic position" << endl;
+	cout << "The module searchs for the neighboring atoms for a given atomic position" << endl;
 
 	cout << "Right now, the module is still empty, soon we will have more tests." << endl;
 

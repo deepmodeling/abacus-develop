@@ -30,4 +30,7 @@ if(ELPA_FOUND)
 endif()
 
 mark_as_advanced(ELPA_INCLUDE_DIR ELPA_LIBRARY)
+<<<<<<< HEAD
 
+=======
+>>>>>>> upstream/reconstruction
