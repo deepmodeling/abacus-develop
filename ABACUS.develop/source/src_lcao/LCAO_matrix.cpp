@@ -901,31 +901,31 @@ void LCAO_Matrix::allocate_HS_R_sparse(void)
 
 	if (NSPIN != 4)
 	{
-		HR_sparse = new map<size_t, double> **[R_x];
-		SR_sparse = new map<size_t, double> **[R_x];
+		HR_sparse = new map<size_t, map<size_t, double>> **[R_x];
+		SR_sparse = new map<size_t, map<size_t, double>> **[R_x];
 		for (int ix = 0; ix < R_x; ++ix)
 		{
-			HR_sparse[ix] = new map<size_t, double> *[R_y];
-			SR_sparse[ix] = new map<size_t, double> *[R_y];
+			HR_sparse[ix] = new map<size_t, map<size_t, double>> *[R_y];
+			SR_sparse[ix] = new map<size_t, map<size_t, double>> *[R_y];
 			for (int iy = 0; iy < R_y; ++iy)
 			{
-				HR_sparse[ix][iy] = new map<size_t, double>[R_z];
-				SR_sparse[ix][iy] = new map<size_t, double>[R_z];
+				HR_sparse[ix][iy] = new map<size_t, map<size_t, double>>[R_z];
+				SR_sparse[ix][iy] = new map<size_t, map<size_t, double>>[R_z];
 			}
 		}
 	}
 	else
 	{
-		HR_soc_sparse = new map<size_t, complex<double>> **[R_x];
-		SR_soc_sparse = new map<size_t, complex<double>> **[R_x];
+		HR_soc_sparse = new map<size_t, map<size_t, complex<double>>> **[R_x];
+		SR_soc_sparse = new map<size_t, map<size_t, complex<double>>> **[R_x];
 		for (int ix = 0; ix < R_x; ++ix)
 		{
-			HR_soc_sparse[ix] = new map<size_t, complex<double>> *[R_y];
-			SR_soc_sparse[ix] = new map<size_t, complex<double>> *[R_y];
+			HR_soc_sparse[ix] = new map<size_t, map<size_t, complex<double>>> *[R_y];
+			SR_soc_sparse[ix] = new map<size_t, map<size_t, complex<double>>> *[R_y];
 			for (int iy = 0; iy < R_y; ++iy)
 			{
-				HR_soc_sparse[ix][iy] = new map<size_t, complex<double>>[R_z];
-				SR_soc_sparse[ix][iy] = new map<size_t, complex<double>>[R_z];
+				HR_soc_sparse[ix][iy] = new map<size_t, map<size_t, complex<double>>>[R_z];
+				SR_soc_sparse[ix][iy] = new map<size_t, map<size_t, complex<double>>>[R_z];
 			}
 		}
 	}

@@ -1595,25 +1595,25 @@ void Gint_k::allocate_pvpR_sparseMatrix(void)
 
 	if(NSPIN != 4)
     {
-		pvpR_sparseMatrix = new map<size_t, double>**[R_x];
+		pvpR_sparseMatrix = new map<size_t, map<size_t, double>>**[R_x];
         for(int ix=0; ix<R_x; ix++)
         {
-			pvpR_sparseMatrix[ix] = new map<size_t, double>*[R_y];
+			pvpR_sparseMatrix[ix] = new map<size_t, map<size_t, double>>*[R_y];
             for(int iy=0; iy<R_y; iy++)
             {
-				pvpR_sparseMatrix[ix][iy] = new map<size_t, double>[R_z];
+				pvpR_sparseMatrix[ix][iy] = new map<size_t, map<size_t, double>>[R_z];
             }
         }
     }
     else
     {
-		pvpR_soc_sparseMatrix = new map<size_t, complex<double>>**[R_x];
+		pvpR_soc_sparseMatrix = new map<size_t, map<size_t, complex<double>>>**[R_x];
         for(int ix=0; ix<R_x; ix++)
         {
-			pvpR_soc_sparseMatrix[ix] = new map<size_t, complex<double>>*[R_y];
+			pvpR_soc_sparseMatrix[ix] = new map<size_t, map<size_t, complex<double>>>*[R_y];
             for(int iy=0; iy<R_y; iy++)
             {
-				pvpR_soc_sparseMatrix[ix][iy] = new map<size_t, complex<double>>[R_z];
+				pvpR_soc_sparseMatrix[ix][iy] = new map<size_t, map<size_t, complex<double>>>[R_z];
             }
         }
     }
@@ -1658,7 +1658,7 @@ void Gint_k::destroy_pvpR_sparseMatrix(void)
 	return;
 }
 
-void Gint_k::distribute_pvpR_sparseMatrix(void)
+void Gint_k::distribute_pvpR_sparseMatrix(const double &sparse_threshold)
 {
 	TITLE("Gint_k","distribute_pvpR_sparseMatrix");
 
@@ -1666,16 +1666,40 @@ void Gint_k::distribute_pvpR_sparseMatrix(void)
     int R_y = GridD.getCellY();
     int R_z = GridD.getCellZ();
 
+	double R_minX = GridD.getD_minX();
+    double R_minY = GridD.getD_minY();
+    double R_minZ = GridD.getD_minZ();
+
 	double* tmp = nullptr;
 	complex<double>* tmp_soc = nullptr;
+	int minus_ix;
+	int minus_iy;
+	int minus_iz;
+	bool minus_R = false;
 
     for(int ix = 0; ix < R_x; ix++)
     {
+		minus_ix = -ix - R_minX - R_minX;
         for(int iy = 0; iy < R_y; iy++)
         {
+			minus_iy = -iy - R_minY - R_minY;
             for(int iz = 0; iz < R_z; iz++)
             {
-                for(int i = 0; i < NLOCAL; i++)
+				minus_iz = -iz - R_minZ - R_minZ;
+
+				minus_R = false;
+				if ((minus_ix < R_x) && (minus_ix >= 0))
+				{
+					if ((minus_iy < R_y) && (minus_iy >= 0))
+					{
+						if ((minus_iz < R_z) && (minus_iz >= 0))
+						{
+							minus_R = true;
+						}
+					}
+				}
+
+                for(int row = 0; row < NLOCAL; ++row)
                 {
 					if (NSPIN != 4)
 					{
@@ -1688,69 +1712,112 @@ void Gint_k::distribute_pvpR_sparseMatrix(void)
 						ZEROS(tmp_soc, NLOCAL);
 					}
 
-                    const int mug = GridT.trace_lo[i];
-                    if(mug >= 0)
-                    {
-                        for(int j = 0; j < NLOCAL; j++)
-                        {
-                            const int nug = GridT.trace_lo[j];
-                            if(nug >= 0)
-                            {
+					if(GridT.trace_lo[row] >= 0)
+					{
+						if (NSPIN != 4)
+						{
+							auto iter = pvpR_sparseMatrix[ix][iy][iz].find(row);
+							if (iter != pvpR_sparseMatrix[ix][iy][iz].end())
+							{
+								for (auto &value : iter->second)
+								{																		
+									tmp[value.first] = value.second;									
+								}
+							}
+						}
+						else
+						{
+							auto iter = pvpR_soc_sparseMatrix[ix][iy][iz].find(row);
+							if (iter != pvpR_soc_sparseMatrix[ix][iy][iz].end())
+							{
+								for (auto &value : iter->second)
+								{									
+									tmp_soc[value.first] = value.second;									
+								}
+							}
+						}
+					}
+
+					if (minus_R)
+					{
+						for (int col = 0; col < row; ++col)
+						{
+							if(GridT.trace_lo[col] >= 0)
+							{
 								if (NSPIN != 4)
 								{
-									auto iter = pvpR_sparseMatrix[ix][iy][iz].find(i*NLOCAL+j);
-									if (iter != pvpR_sparseMatrix[ix][iy][iz].end())
+									auto iter = pvpR_sparseMatrix[minus_ix][minus_iy][minus_iz].find(col);
+									if (iter != pvpR_sparseMatrix[minus_ix][minus_iy][minus_iz].end())
 									{
-										tmp[j] = iter->second;
+										auto value = iter->second.find(row);
+										if (value != iter->second.end())
+										{
+											tmp[col] = value->second;
+										}
+
 									}
 								}
 								else
 								{
-									auto iter = pvpR_soc_sparseMatrix[ix][iy][iz].find(i*NLOCAL+j);
-									if (iter != pvpR_soc_sparseMatrix[ix][iy][iz].end())
+									auto iter = pvpR_soc_sparseMatrix[minus_ix][minus_iy][minus_iz].find(col);
+									if (iter != pvpR_soc_sparseMatrix[minus_ix][minus_iy][minus_iz].end())
 									{
-										tmp_soc[j] = iter->second;
+										auto value = iter->second.find(row);
+										if (value != iter->second.end())
+										{
+											tmp_soc[col] = conj(value->second);
+										}
+
 									}
 								}
+							}
+						}
+					}
 
-                            }
-                        }
-                    }
-                    // collect the matrix after folding.
 					if (NSPIN != 4)
 					{
-                    	Parallel_Reduce::reduce_double_pool(tmp, NLOCAL);
+						Parallel_Reduce::reduce_double_pool(tmp, NLOCAL);
 					}
 					else
 					{
 						Parallel_Reduce::reduce_complex_double_pool(tmp_soc, NLOCAL);
 					}
 
-                    for(int j = 0; j < NLOCAL; j++)
-                    {
-                        if(!ParaO.in_this_processor(i,j))
-                        {
-                            continue;
-                        }
-                        else
-                        {
-							if (NSPIN != 4)
+					if (ParaO.trace_loc_row[row] >= 0)
+					{
+						for(int col = 0; col < NLOCAL; ++col)
+						{
+							if(ParaO.trace_loc_col[col] >= 0)
 							{
-								if (abs(tmp[j]) > 1e-10)
+								if (NSPIN != 4)
 								{
-									LM.HR_sparse[ix][iy][iz][i*NLOCAL+j] += tmp[j];
+									if (abs(tmp[col]) > sparse_threshold)
+									{
+										double &value = LM.HR_sparse[ix][iy][iz][row][col];
+										value += tmp[col];
+										if (abs(value) < sparse_threshold)
+										{
+											LM.HR_sparse[ix][iy][iz][row].erase(col);
+										}
+									}
 								}
-							}
-							else
-							{
-								if(abs(tmp_soc[j]) > 1e-10)
+								else
 								{
-									LM.HR_soc_sparse[ix][iy][iz][i*NLOCAL+j] += tmp_soc[j];
+									if(abs(tmp_soc[col]) > sparse_threshold)
+									{
+										complex<double> &value = LM.HR_soc_sparse[ix][iy][iz][row][col];
+										value += tmp_soc[col];
+										if (abs(value) < sparse_threshold)
+										{
+											LM.HR_soc_sparse[ix][iy][iz][row].erase(col);
+										}
+									}
 								}
+								
 							}
-							
-                        }
-                    }
+						}
+					}
+					
 
 					if (NSPIN != 4)
 					{
@@ -1774,7 +1841,7 @@ void Gint_k::distribute_pvpR_sparseMatrix(void)
 }
 
 
-void Gint_k::cal_vlocal_R_sparseMatrix(const int current_spin)
+void Gint_k::cal_vlocal_R_sparseMatrix(const int current_spin, const double &sparse_threshold)
 {
     TITLE("Gint_k","cal_vlocal_R_sparseMatrix");
 
@@ -1841,28 +1908,30 @@ void Gint_k::cal_vlocal_R_sparseMatrix(const int current_spin)
 									const int mug0 = iw/NPOL;
 									const int nug0 = iw2/NPOL;
 									const int iw_nowg = ixxx + mug0*nw + nug0;
-									int icc;
 
 									if(NSPIN == 4)
 									{		
 										// pvp is symmetric, only half is calculated.
 
-										icc = (start1 + iw) * NLOCAL + start2 + iw2;
 										complex<double> temp_value;
 										
 										if(iw%2==0&&iw2%2==0)
 										{
 											//spin = 0;
 											temp_value = complex<double>(1.0,0.0) * pvpR_reduced[0][iw_nowg] + complex<double>(1.0,0.0) * pvpR_reduced[3][iw_nowg];
-											if( abs(temp_value) > 1e-10 )
-												pvpR_soc_sparseMatrix[R_x][R_y][R_z].insert(pair<size_t, complex<double>>(icc, temp_value));
+											if( abs(temp_value) > sparse_threshold )
+											{
+												pvpR_soc_sparseMatrix[R_x][R_y][R_z][start1 + iw].insert(pair<size_t, complex<double>>(start2 + iw2, temp_value));
+											}
 										}	
 										else if(iw%2==1&&iw2%2==1)
 										{
 											//spin = 3;
 											temp_value = complex<double>(1.0,0.0) * pvpR_reduced[0][iw_nowg] - complex<double>(1.0,0.0) * pvpR_reduced[3][iw_nowg];
-											if( abs(temp_value) > 1e-10 )
-												pvpR_soc_sparseMatrix[R_x][R_y][R_z].insert(pair<size_t, complex<double>>(icc, temp_value));
+											if( abs(temp_value) > sparse_threshold )
+											{
+												pvpR_soc_sparseMatrix[R_x][R_y][R_z][start1 + iw].insert(pair<size_t, complex<double>>(start2 + iw2, temp_value));
+											}
 										}
 										else if(iw%2==0&&iw2%2==1)
 										{
@@ -1874,8 +1943,10 @@ void Gint_k::cal_vlocal_R_sparseMatrix(const int current_spin)
 											else
 											{
 												temp_value = pvpR_reduced[1][iw_nowg] - complex<double>(0.0,1.0) * pvpR_reduced[2][iw_nowg];
-												if( abs(temp_value) > 1e-10 )
-													pvpR_soc_sparseMatrix[R_x][R_y][R_z].insert(pair<size_t, complex<double>>(icc, temp_value));
+												if( abs(temp_value) > sparse_threshold )
+												{
+													pvpR_soc_sparseMatrix[R_x][R_y][R_z][start1 + iw].insert(pair<size_t, complex<double>>(start2 + iw2, temp_value));
+												}
 											}
 										}	
 										else if(iw%2==1&&iw2%2==0) 
@@ -1888,8 +1959,10 @@ void Gint_k::cal_vlocal_R_sparseMatrix(const int current_spin)
 											else
 											{
 												temp_value = pvpR_reduced[1][iw_nowg] + complex<double>(0.0,1.0) * pvpR_reduced[2][iw_nowg];
-												if( abs(temp_value) > 1e-10 )
-													pvpR_soc_sparseMatrix[R_x][R_y][R_z].insert(pair<size_t, complex<double>>(icc, temp_value));
+												if( abs(temp_value) > sparse_threshold )
+												{
+													pvpR_soc_sparseMatrix[R_x][R_y][R_z][start1 + iw].insert(pair<size_t, complex<double>>(start2 + iw2, temp_value));
+												}
 											}
 										}
 										else
@@ -1899,11 +1972,10 @@ void Gint_k::cal_vlocal_R_sparseMatrix(const int current_spin)
 									} //endif NC
 									else
 									{
-										icc = (start1 + iw) * NLOCAL + start2 + iw2;
 										double temp_value = pvpR_reduced[current_spin][iw_nowg];
-										if (abs(temp_value) > 1e-10)
+										if (abs(temp_value) > sparse_threshold)
 										{
-											pvpR_sparseMatrix[R_x][R_y][R_z].insert(pair<size_t, double>(icc, temp_value));
+											pvpR_sparseMatrix[R_x][R_y][R_z][start1 + iw].insert(pair<size_t, double>(start2 + iw2, temp_value));
 										}
 											
 									} //endif normal
@@ -1920,7 +1992,8 @@ void Gint_k::cal_vlocal_R_sparseMatrix(const int current_spin)
         }
     }
 
-	distribute_pvpR_sparseMatrix();
+	distribute_pvpR_sparseMatrix(sparse_threshold);
+
 	destroy_pvpR_sparseMatrix();
 
     return;

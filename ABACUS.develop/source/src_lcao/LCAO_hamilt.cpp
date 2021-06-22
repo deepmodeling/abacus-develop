@@ -3,6 +3,7 @@
 #include "build_st_pw.h"
 #include "../src_global/sltk_atom_arrange.h"
 #include "global_fp.h" // mohan add 2021-01-30
+#include "dftu.h"
 
 LCAO_Hamilt::LCAO_Hamilt()
 { 
@@ -492,7 +493,7 @@ void LCAO_Hamilt::calculate_STN_R(void)
     return;
 }
 
-void LCAO_Hamilt::calculate_STN_R_sparse(void)
+void LCAO_Hamilt::calculate_STN_R_sparse(const double &sparse_threshold)
 {
     TITLE("LCAO_Hamilt","calculate_STN_R_sparse");
 
@@ -586,36 +587,32 @@ void LCAO_Hamilt::calculate_STN_R_sparse(void)
 
                             if(nu<0)continue;
 
-                            int iic;
-
                             if(NSPIN!=4)
                             {
-                                iic = iw1_all * NLOCAL + iw2_all;
 								double temp_value = LM.SlocR[index];
-								if (abs(temp_value) > 1e-10)
+								if (abs(temp_value) > sparse_threshold)
 								{
-									LM.SR_sparse[R_x][R_y][R_z].insert(pair<size_t, double>(iic, temp_value));
+									LM.SR_sparse[R_x][R_y][R_z][iw1_all].insert(pair<size_t, double>(iw2_all, temp_value));
 								}
 
 								temp_value = LM.Hloc_fixedR[index];
-								if (abs(temp_value) > 1e-10)
+								if (abs(temp_value) > sparse_threshold)
 								{
-									LM.HR_sparse[R_x][R_y][R_z].insert(pair<size_t, double>(iic, temp_value));
+									LM.HR_sparse[R_x][R_y][R_z][iw1_all].insert(pair<size_t, double>(iw2_all, temp_value));
 								}
                             }
                             else
                             {
-								iic = iw1_all * NLOCAL + iw2_all;
 								complex<double> temp_value = LM.SlocR_soc[index];
-								if(abs(temp_value) > 1e-10)
+								if(abs(temp_value) > sparse_threshold)
 								{
-									LM.SR_soc_sparse[R_x][R_y][R_z].insert(pair<size_t, complex<double>>(iic, temp_value));
+									LM.SR_soc_sparse[R_x][R_y][R_z][iw1_all].insert(pair<size_t, complex<double>>(iw2_all, temp_value));
 								}
 
 								temp_value = LM.Hloc_fixedR_soc[index];
-								if(abs(temp_value) > 1e-10)
+								if(abs(temp_value) > sparse_threshold)
 								{
-									LM.HR_soc_sparse[R_x][R_y][R_z].insert(pair<size_t, complex<double>>(iic, temp_value));
+									LM.HR_soc_sparse[R_x][R_y][R_z][iw1_all].insert(pair<size_t, complex<double>>(iw2_all, temp_value));
 								}
                             }
 
@@ -631,19 +628,222 @@ void LCAO_Hamilt::calculate_STN_R_sparse(void)
 }
 
 
-void LCAO_Hamilt::calculate_HSR_sparse(const int &current_spin)
+void LCAO_Hamilt::calculate_HSR_sparse(const int &current_spin, const double &sparse_threshold)
 {
 	TITLE("LCAO_Hamilt","calculate_HSR_sparse");
+
+	calculate_STN_R_sparse(sparse_threshold);
+
+	GK.cal_vlocal_R_sparseMatrix(current_spin, sparse_threshold);
+
+	if (INPUT.dft_plus_u)
+	{
+		if (NSPIN == 4)
+		{
+			calculat_HR_dftu_soc_sparse(current_spin, sparse_threshold);
+		}
+		else
+		{
+			calculat_HR_dftu_sparse(current_spin, sparse_threshold);
+		}
+	}
+
+}
+
+void LCAO_Hamilt::calculat_HR_dftu_sparse(const int &current_spin, const double &sparse_threshold)
+{
+	TITLE("LCAO_Hamilt","calculat_HR_dftu_sparse");
+	timer::tick("LCAO_Hamilt","calculat_HR_dftu_sparse");
+
+	int R_x = GridD.getCellX();
+    int R_y = GridD.getCellY();
+    int R_z = GridD.getCellZ();
+
+    double R_minX = GridD.getD_minX();
+    double R_minY = GridD.getD_minY();
+    double R_minZ = GridD.getD_minZ();
+
+	double *HR_tmp = new double[ParaO.nloc];
+	double *SR_tmp = new double[ParaO.nloc];
+
+	int ir;
+	int ic;
+	int iic;
+
+	for(int ix=0; ix<R_x; ix++)
+    {
+        for(int iy=0; iy<R_y; iy++)
+        {
+            for(int iz=0; iz<R_z; iz++)
+            {	
+				map<size_t, map<size_t, double>> &temp_HR_sparse = LM.HR_sparse[ix][iy][iz];
+				map<size_t, map<size_t, double>> &temp_SR_sparse = LM.SR_sparse[ix][iy][iz];
+
+				ZEROS(HR_tmp, ParaO.nloc);
+				ZEROS(SR_tmp, ParaO.nloc);
+				
+				for (auto &iter : temp_SR_sparse)
+				{
+					ir = ParaO.trace_loc_row[iter.first];
+					for (auto &value : iter.second)
+					{
+						ic = ParaO.trace_loc_col[value.first];
+						if(KS_SOLVER=="genelpa" || KS_SOLVER=="scalapack_gvx")  // save the matrix as column major format
+						{
+							iic = ir + ic * ParaO.nrow;
+						}
+						else
+						{
+							iic = ir * ParaO.ncol + ic;
+						}
+						SR_tmp[iic] = value.second;
+					}
+				}
+
+				dftu.cal_eff_pot_mat_R_double(current_spin, SR_tmp, HR_tmp);
+
+				for (int i = 0; i < NLOCAL; ++i)
+				{
+					ir = ParaO.trace_loc_row[i];
+					if (ir >= 0)
+					{
+						for (int j = 0; j < NLOCAL; ++j)
+						{
+							ic = ParaO.trace_loc_col[j];
+							if (ic >= 0)
+							{
+								if(KS_SOLVER=="genelpa" || KS_SOLVER=="scalapack_gvx")  // save the matrix as column major format
+								{
+									iic = ir + ic * ParaO.nrow;
+								}
+								else
+								{
+									iic = ir * ParaO.ncol + ic;
+								}
+
+								if (abs(HR_tmp[iic]) > sparse_threshold)
+								{
+									double &value = temp_HR_sparse[i][j];
+									value += HR_tmp[iic];
+									if (abs(value) < sparse_threshold)
+									{
+										temp_HR_sparse[i].erase(j);
+									}
+								}
+							}
+						}
+					}
+				}
+
+			}
+		}
+	}
+
+	delete[] HR_tmp;
+	delete[] SR_tmp;
+	HR_tmp = nullptr;
+	SR_tmp = nullptr;
+
+	timer::tick("LCAO_Hamilt","calculat_HR_dftu_sparse");
+
+}
+
+void LCAO_Hamilt::calculat_HR_dftu_soc_sparse(const int &current_spin, const double &sparse_threshold)
+{
+	TITLE("LCAO_Hamilt","calculat_HR_dftu_soc_sparse");
+	timer::tick("LCAO_Hamilt","calculat_HR_dftu_soc_sparse");
+
+	int R_x = GridD.getCellX();
+    int R_y = GridD.getCellY();
+    int R_z = GridD.getCellZ();
+
+    double R_minX = GridD.getD_minX();
+    double R_minY = GridD.getD_minY();
+    double R_minZ = GridD.getD_minZ();
+
+	complex<double> *HR_soc_tmp = new complex<double>[ParaO.nloc];
+	complex<double> *SR_soc_tmp = new complex<double>[ParaO.nloc];
+
+	int ir;
+	int ic;
+	int iic;
+
+	for(int ix=0; ix<R_x; ix++)
+    {
+        for(int iy=0; iy<R_y; iy++)
+        {
+            for(int iz=0; iz<R_z; iz++)
+            {
+				map<size_t, map<size_t, complex<double>>> &temp_HR_soc_sparse = LM.HR_soc_sparse[ix][iy][iz];
+				map<size_t, map<size_t, complex<double>>> &temp_SR_soc_sparse = LM.SR_soc_sparse[ix][iy][iz];
+
+				ZEROS(HR_soc_tmp, ParaO.nloc);
+				ZEROS(SR_soc_tmp, ParaO.nloc);
+				
+				for (auto &iter : temp_SR_soc_sparse)
+				{
+					ir = ParaO.trace_loc_row[iter.first];
+					for (auto &value : iter.second)
+					{
+						ic = ParaO.trace_loc_col[value.first];
+						if(KS_SOLVER=="genelpa" || KS_SOLVER=="scalapack_gvx")  // save the matrix as column major format
+						{
+							iic = ir + ic * ParaO.nrow;
+						}
+						else
+						{
+							iic = ir * ParaO.ncol + ic;
+						}
+						SR_soc_tmp[iic] = value.second;
+					}
+				}
+
+				dftu.cal_eff_pot_mat_R_complex_double(current_spin, SR_soc_tmp, HR_soc_tmp);
+
+				for (int i = 0; i < NLOCAL; ++i)
+				{
+					ir = ParaO.trace_loc_row[i];
+					if (ir >= 0)
+					{
+						for (int j = 0; j < NLOCAL; ++j)
+						{
+							ic = ParaO.trace_loc_col[j];
+							if (ic >= 0)
+							{
+								if(KS_SOLVER=="genelpa" || KS_SOLVER=="scalapack_gvx")  // save the matrix as column major format
+								{
+									iic = ir + ic * ParaO.nrow;
+								}
+								else
+								{
+									iic = ir * ParaO.ncol + ic;
+								}
+
+								if (abs(HR_soc_tmp[iic]) > sparse_threshold)
+								{
+									complex<double> &value = temp_HR_soc_sparse[i][j];
+									value += HR_soc_tmp[iic];
+									if (abs(value) < sparse_threshold)
+									{
+										temp_HR_soc_sparse[i].erase(j);
+									}
+								}
+							}
+						}
+					}
+				}
+
+			}
+		}
+	}
+
+	delete[] HR_soc_tmp;
+	delete[] SR_soc_tmp;
+	HR_soc_tmp = nullptr;
+	SR_soc_tmp = nullptr;
 	
-	calculate_STN_R_sparse();
-	if (current_spin != 2)
-	{
-		GK.cal_vlocal_R_sparseMatrix(0);
-	}
-	else
-	{
-		GK.cal_vlocal_R_sparseMatrix(current_spin);
-	}
+	timer::tick("LCAO_Hamilt","calculat_HR_dftu_soc_sparse");
+
 }
 
 void LCAO_Hamilt::destroy_all_HSR_sparse(void)

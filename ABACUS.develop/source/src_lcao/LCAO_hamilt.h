@@ -24,8 +24,10 @@ class LCAO_Hamilt
     void calculate_STN_R(void); //LiuXh add 2019-07-15
 
 	// jingan add 2021-6-4
-	void calculate_STN_R_sparse(void);
-	void calculate_HSR_sparse(const int &current_spin);
+	void calculate_STN_R_sparse(const double &sparse_threshold);
+	void calculat_HR_dftu_sparse(const int &current_spin, const double &sparse_threshold);
+	void calculat_HR_dftu_soc_sparse(const int &current_spin, const double &sparse_threshold);
+	void calculate_HSR_sparse(const int &current_spin, const double &sparse_threshold);
 	void destroy_all_HSR_sparse(void);
 
 	// used for gamma only algorithms.

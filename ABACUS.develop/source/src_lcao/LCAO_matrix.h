@@ -80,10 +80,11 @@ class LCAO_Matrix
 
 
 	// jingan add 2021-6-4
-	map<size_t, double> ***HR_sparse;
-	map<size_t, double> ***SR_sparse;
-	map<size_t, complex<double>> ***HR_soc_sparse;
-	map<size_t, complex<double>> ***SR_soc_sparse;
+	// Sparse form of HR and SR, the format is [R_x][R_y][R_z][orbit_row][orbit_col]
+	map<size_t, map<size_t, double>> ***HR_sparse;
+	map<size_t, map<size_t, double>> ***SR_sparse;
+	map<size_t, map<size_t, complex<double>>> ***HR_soc_sparse;
+	map<size_t, map<size_t, complex<double>>> ***SR_soc_sparse;
 
 
 	//========================================

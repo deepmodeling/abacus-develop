@@ -68,13 +68,6 @@ class LCAO_Orbitals
 	const int& get_nchimax_d(void) const { return nchimax_d; }	///<nchimax of descriptor basis
 	const int& get_ntype(void) const {return ntype;}
 	const double& get_dr_uniform(void) const { return dr_uniform; }
-<<<<<<< HEAD
-
-	//caoyu add 021-05-24
-	const double& get_rcutmax_Phi(void) const { return rcutmax_Phi; }
-	const double& get_rcutmax_Beta(void) const { return rcutmax_Beta; }
-=======
->>>>>>> upstream/reconstruction
 
 	//caoyu add 2021-05-24
 	const double& get_rcutmax_Phi(void) const { return rcutmax_Phi; }

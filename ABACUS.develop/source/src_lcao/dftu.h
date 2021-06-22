@@ -47,6 +47,8 @@ public:
     //calculate the effective potential
     void cal_eff_pot_mat(const int ik, const int istep);
 
+    void cal_eff_pot_mat_R_double(const int ispin, double* SR, double* HR);
+    void cal_eff_pot_mat_R_complex_double(const int ispin, complex<double>* SR, complex<double>* HR);
 
     void print(const int T, const int iat, const int L, const int N, const int iter);
 

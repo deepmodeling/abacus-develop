@@ -16,7 +16,7 @@ complex<double> unkOverlap_pw::unkdotp_G(const int ik_L, const int ik_R, const i
 {
 	
 	complex<double> result(0.0,0.0);
-	//波函数的平面波基组总数
+	// Total number of plane wave basis sets of wave function
 	const int number_pw = pw.ngmw;
 	complex<double> *unk_L = new complex<double>[number_pw];
 	complex<double> *unk_R = new complex<double>[number_pw];
@@ -68,7 +68,7 @@ complex<double> unkOverlap_pw::unkdotp_G0(const int ik_L, const int ik_R, const 
 	// (1) set value
 	complex<double> result(0.0,0.0);
 	complex<double> *phase = UFFT.porter;
-	complex<double> *psi_r = new complex<double>[pw.nrxx]; // 实空间的波函数
+	complex<double> *psi_r = new complex<double>[pw.nrxx]; // Wave function in real space
 
 	ZEROS( phase, pw.nrxx);
 	ZEROS( psi_r, pw.nrxx );
@@ -130,7 +130,7 @@ complex<double> unkOverlap_pw::unkdotp_soc_G(const int ik_L, const int ik_R, con
 {
 	
 	complex<double> result(0.0,0.0);
-	//波函数的平面波基组总数
+	//Total number of plane wave basis sets of wave function
 	const int number_pw = pw.ngmw;
 	complex<double> *unk_L = new complex<double>[number_pw*NPOL];
 	complex<double> *unk_R = new complex<double>[number_pw*NPOL];
@@ -177,7 +177,7 @@ complex<double> unkOverlap_pw::unkdotp_soc_G(const int ik_L, const int ik_R, con
 }
 
 
-//这里G矢量是direct坐标
+// Here the G vector is the direct coordinate
 complex<double> unkOverlap_pw::unkdotp_soc_G0(const int ik_L, const int ik_R, const int iband_L, const int iband_R, const ComplexMatrix *evc, const Vector3<double> G)
 {
 	// (1) set value

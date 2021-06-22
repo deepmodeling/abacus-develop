@@ -27,14 +27,14 @@ public:
 
 	ORB_table_phi MOT;
 	ORB_gaunt_table MGT;
-	Numerical_Orbital_Lm orb_r;  // 新建的r矢量,以原子轨道形式存在,以solid球谐函数展开
+	Numerical_Orbital_Lm orb_r;  // The newly created r vector exists in the form of atomic orbitals and is expanded by solid spherical harmonic functions
 	
 	vector<vector<vector<Vector3<double>>>> orb1_orb2_R;
 	vector<vector<vector<double>>> psi_psi;
 	vector<vector<vector<Vector3<double>>>> psi_r_psi;
-	bool allocate_flag; // 用于初始化数组的
-	complex<double>***lcao_wfc_global; // 全局的lcao基组下的波函数系数
-	int** cal_tag; // 用于并行方案
+	bool allocate_flag; // Used to initialize the array
+	complex<double>***lcao_wfc_global; // Wave function coefficients under the global lcao basis set
+	int** cal_tag; // For parallel scenarios
 	
 	map<size_t,
 		map<size_t,

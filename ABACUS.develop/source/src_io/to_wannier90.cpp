@@ -79,7 +79,9 @@ void toWannier90::init_wannier()
 void toWannier90::read_nnkp()
 {
 	// read *.nnkp file
-	// 检查 正格矢，倒格矢，k点坐标，试探轨道投影，每个k点的近邻k点，需要排除的能带指标
+
+	// Check lattice vector, reciprocal lattice vector, k-point coordinates, trial orbit projection, 
+	// neighbor k points of each k point, and energy band indicators that need to be excluded
 	
 	wannier_file_name = INPUT.NNKP;
 	wannier_file_name = wannier_file_name.substr(0,wannier_file_name.length() - 5);
@@ -171,7 +173,7 @@ void toWannier90::read_nnkp()
 				
 		delete[] kpoints_direct_nnkp;
 		
-		//判断gamma only
+		// Judge whether it's gamma only
 		Vector3<double> my_gamma_point(0.0,0.0,0.0);
 		//if( (kv.nkstot == 1) && (kv.kvec_d[0] == my_gamma_point) ) gamma_only_wannier = true;
 	} 
@@ -181,9 +183,6 @@ void toWannier90::read_nnkp()
 		if( SCAN_BEGIN(nnkp_read,"projections") )
 		{
 			READ_VALUE(nnkp_read, num_wannier);
-			// test
-			//ofs_running << "num_wannier = " << num_wannier << endl;
-			// test
 			if(num_wannier < 0)
 			{
 				WARNING_QUIT("toWannier90::read_nnkp","wannier number is lower than 0");
@@ -262,33 +261,18 @@ void toWannier90::read_nnkp()
 		}
 	}
 	
-	// test by jingan
-	//ofs_running << "num_exclude_bands = " << num_exclude_bands << endl;
-	//for(int i = 0; i < num_exclude_bands; i++)
-	//{
-	//	ofs_running << "exclude_bands : " << exclude_bands[i] << endl;
-	//}
-	// test by jingan
-	
 	nnkp_read.close();
 	
-	// 设置试探轨道参数
+	// Set trial orbit parameters
 	for(int i = 0; i < num_wannier; i++)
 	{
 		R_centre[i] = R_centre[i] * ucell.latvec;
-		m[i] = m[i] - 1; // ABACUS and wannier90 对磁角动量m的定义不一样，ABACUS是从0开始的，wannier90是从1开始的
+
+		// ABACUS and wannier90 have different definitions of magnetic angular momentum 'm'. ABACUS starts from 0 and wannier90 starts from 1.
+		m[i] = m[i] - 1; 
 	}
 	
-	// test by jingan
-	//ofs_running << "num_wannier is " << num_wannier << endl;
-	//for(int i = 0; i < num_wannier; i++)
-	//{
-	//	ofs_running << "num_wannier" << endl;
-	//	ofs_running << L[i] << " " << m[i] << " " << rvalue[i] << " " << alfa[i] << endl;
-	//}
-	// test by jingan
-	
-	// 设置exclude_bands
+	// Set exclude_bands
 	tag_cal_band = new bool[NBANDS];
 	if(NBANDS <= num_exclude_bands) WARNING_QUIT("toWannier90::read_nnkp","you set the band numer is not enough, please add bands number.");
 	if(num_exclude_bands == 0)
@@ -572,9 +556,9 @@ void toWannier90::writeUNK(const ComplexMatrix *wfc_pw)
 
 void toWannier90::cal_Amn(const ComplexMatrix *wfc_pw)
 {
-	// 第一步：建立实球谐函数lm在某个k点下的平面波基组下的表格（矩阵）	
-	// 第二步：将试探轨道的径向部分向某个k点下平面波投影
-	// 第三步：获取试探轨道在某个k点下平面波基组下的投影
+	// Step 1: Establish a table (matrix) under the plane wave basis set of the real spherical harmonic function 'lm' at a certain k point
+	// Step 2: Project the radial part of the trial orbit to the plane wave basis set under a certain k point
+	// Step 3: Obtain the projection of the trial orbit under the plane wave basis set at a certain k point
 	const int pwNumberMax = wf.npwx;
 	
 	ofstream Amn_file;
@@ -595,9 +579,6 @@ void toWannier90::cal_Amn(const ComplexMatrix *wfc_pw)
 		produce_trial_in_pw(ik,trial_orbitals[ik]);
 	}	
 	
-	// test by jingan
-	//ofs_running << __FILE__ << __LINE__ << "start_k_index = " << start_k_index << "  cal_num_kpts = " << cal_num_kpts << endl;
-	// test by jingan
 
 	for(int ik = start_k_index; ik < (cal_num_kpts+start_k_index); ik++)
 	{
@@ -623,8 +604,6 @@ void toWannier90::cal_Amn(const ComplexMatrix *wfc_pw)
 					Amn_file << setw(5) << index_band << setw(5) << iw+1 << setw(5) << ik+1-start_k_index 
 							 << setw(18) << showpoint << fixed << setprecision(12) << amn.real() 
 							 << setw(18) << showpoint << fixed << setprecision(12) << amn.imag()
-							 //jingan test
-							 //<< "   " << setw(18) << setprecision(13) << abs(amn)
 							 << endl;
 				}
 			}
@@ -642,11 +621,7 @@ void toWannier90::cal_Amn(const ComplexMatrix *wfc_pw)
 
 
 void toWannier90::cal_Mmn(const ComplexMatrix *wfc_pw)
-{	
-	// test by jingan
-	//ofs_running << __FILE__ << __LINE__ << " cal_num_kpts = " << cal_num_kpts << endl;
-	// test by jingan
-	
+{
 	ofstream mmn_file;
 	
 	if(MY_RANK == 0)
@@ -685,7 +660,7 @@ void toWannier90::cal_Mmn(const ComplexMatrix *wfc_pw)
 	{
 		for(int ib = 0; ib < nntot; ib++)
 		{
-			int ikb = nnlist[ik][ib];             // ik+b : ik的近邻k点	
+			int ikb = nnlist[ik][ib];             // ik+b : nearest neighbor kpoint	of ik
 			
 			Vector3<double> phase_G = nncell[ik][ib];
 			
@@ -708,9 +683,6 @@ void toWannier90::cal_Mmn(const ComplexMatrix *wfc_pw)
 					{
 						int cal_ik = ik + start_k_index;
 						int cal_ikb = ikb + start_k_index;												
-						// test by jingan
-						//ofs_running << __FILE__ << __LINE__ << "cal_ik = " << cal_ik << "cal_ikb = " << cal_ikb << endl;
-						// test by jingan
 						//complex<double> *unk_L_r = new complex<double>[pw.nrxx];
 						//ToRealSpace(cal_ik,n,wfc_pw,unk_L_r,phase_G);				
 						//mmn = unkdotb(unk_L_r,cal_ikb,m,wfc_pw);
@@ -727,8 +699,6 @@ void toWannier90::cal_Mmn(const ComplexMatrix *wfc_pw)
 					{
 						mmn_file << setw(18) << setprecision(12) << showpoint << fixed << mmn.real() 
 								 << setw(18) << setprecision(12) << showpoint << fixed << mmn.imag()
-								 // jingan test
-								 //<< "    " << setw(12) << setprecision(9) << abs(mmn)
 								 << endl;				
 					}
 				}
@@ -744,7 +714,7 @@ void toWannier90::cal_Mmn(const ComplexMatrix *wfc_pw)
 
 void toWannier90::produce_trial_in_pw(const int &ik, ComplexMatrix &trial_orbitals_k)
 {
-	// 检查参数是否正确
+	// Check if the parameters are correct
 	for(int i =0; i < num_wannier; i++)
 	{
 		if(L[i] < -5 || L[i] > 3) cout << "toWannier90::produce_trial_in_pw() your L angular momentum is wrong , please check !!! " << endl;
@@ -763,8 +733,8 @@ void toWannier90::produce_trial_in_pw(const int &ik, ComplexMatrix &trial_orbita
 	const int npw = kv.ngk[ik];
 	const int npwx = wf.npwx;
 	const int total_lm = 16;
-	matrix ylm(total_lm,npw);               //所有类型的球谐函数
-	//matrix wannier_ylm(num_wannier,npw);    //要试探轨道的使用的球谐函数
+	matrix ylm(total_lm,npw);               // All types of spherical harmonics
+	//matrix wannier_ylm(num_wannier,npw);    // Spherical harmonic function of trial orbit
 	double bs2, bs3, bs6, bs12;
 	bs2 = 1.0/sqrt(2.0);
 	bs3 = 1.0/sqrt(3.0);
@@ -774,28 +744,23 @@ void toWannier90::produce_trial_in_pw(const int &ik, ComplexMatrix &trial_orbita
 	Vector3<double> *gk = new Vector3<double>[npw];
 	for(int ig = 0; ig < npw; ig++)
 	{
-		gk[ig] = wf.get_1qvec_cartesian(ik, ig);  // k+G矢量
+		gk[ig] = wf.get_1qvec_cartesian(ik, ig);  // k+G vector
 	}
 	
 	YlmReal::Ylm_Real(total_lm, npw, gk, ylm);
 	
-	// test by jingan
-	//ofs_running << "the mathzone::ylm_real is successful!" << endl;
-	//ofs_running << "produce_trial_in_pw: num_wannier is " << num_wannier << endl;
-	// test by jingan
 	
+	// 1. Generate the projection of the radial orbit on the plane wave basis set at a certain k point
+	const int mesh_r = 333; 		// The number of grid points required to describe the radial function
+	const double dx = 0.025; 		// Fixed interval, used to generate non-fixed interval dr to improve accuracy, this value is very clever
+	const double x_min = -6.0;  	// Starting point for generating dr and r
+	matrix r(num_wannier,mesh_r);   // 'r' is the detailed coordinates of the radial function of different alfa
+	matrix dr(num_wannier,mesh_r);  // The interval of each r point of the radial function of different alfa
+	matrix psi(num_wannier,mesh_r); // Radial function 'psi' in real space
+	matrix psir(num_wannier,mesh_r);// 'psi * r' in real space
+	matrix psik(num_wannier,npw);   // The projection of the radial function to the reciprocal space under a certain k point
 	
-	// 1.生成径向轨道在某个k点平面波基组的投影
-	const int mesh_r = 333; 		//描述径向函数所需要的格点数
-	const double dx = 0.025; 		//固定间隔，用于生成非固定间隔的dr来提高精度,这个值很巧妙
-	const double x_min = -6.0;  	// 用于生成dr和r的起始点
-	matrix r(num_wannier,mesh_r);   //不同alfa的径向函数的r
-	matrix dr(num_wannier,mesh_r);  //不同alfa的径向函数的每个r点的间隔
-	matrix psi(num_wannier,mesh_r); //径向函数psi in 实空间
-	matrix psir(num_wannier,mesh_r);// psi * r in 实空间
-	matrix psik(num_wannier,npw);   //径向函数在某个k点下倒空间的投影
-	
-	// 生成r,dr
+	// Generate r,dr
 	for(int i = 0; i < num_wannier; i++)
 	{
 		double x = 0;
@@ -808,7 +773,7 @@ void toWannier90::produce_trial_in_pw(const int &ik, ComplexMatrix &trial_orbita
 		
 	}
 	
-	// 生成psi
+	// Generate psi
 	for(int i = 0; i < num_wannier; i++)
 	{
 		double alfa32 = pow(alfa[i],3.0/2.0);
@@ -845,7 +810,7 @@ void toWannier90::produce_trial_in_pw(const int &ik, ComplexMatrix &trial_orbita
 		
 	}
 
-	// 生成psir
+	// Generate psir
 	for(int i = 0; i < num_wannier; i++)
 	{
 		for(int ir = 0; ir < mesh_r; ir++)
@@ -855,7 +820,7 @@ void toWannier90::produce_trial_in_pw(const int &ik, ComplexMatrix &trial_orbita
 	}
 	
 	
-	// 获得试探轨道
+	// Get the trial orbit
 	for(int wannier_index = 0; wannier_index < num_wannier; wannier_index++)
 	{
 		if(L[wannier_index] >= 0)
@@ -1327,17 +1292,17 @@ void toWannier90::produce_trial_in_pw(const int &ik, ComplexMatrix &trial_orbita
 	
 }
 
-// 注意这里轨道的L值必须是大于等于0的
+// Note that the 'L' value of the trial orbit must be greater than or equal to 0
 void toWannier90::get_trial_orbitals_lm_k(const int wannier_index, const int orbital_L, const int orbital_m, matrix &ylm, 
 										matrix &dr, matrix &r, matrix &psir, const int mesh_r, 
 										Vector3<double> *gk, const int npw, ComplexMatrix &trial_orbitals_k)
 {
-	//计算径向函数在某个k点下倒空间的投影
+	// Calculate the projection of the radial function to the reciprocal space under a certain k point
 	double *psik = new double[npw];
 	double *psir_tem = new double[mesh_r];
 	double *r_tem = new double[mesh_r];
 	double *dr_tem = new double[mesh_r];
-	double *psik_tem = new double[NQX];    //径向函数在固定k空间的投影（临时使用的数组）
+	double *psik_tem = new double[NQX];    // Projection of radial function in fixed k-space (array for temporary use)
 	ZEROS(psir_tem,mesh_r);
 	ZEROS(r_tem,mesh_r);
 	ZEROS(dr_tem,mesh_r);
@@ -1351,14 +1316,14 @@ void toWannier90::get_trial_orbitals_lm_k(const int wannier_index, const int orb
 	
 	toWannier90::integral(mesh_r,psir_tem,r_tem,dr_tem,orbital_L,psik_tem);
 	
-	// 从NQX个G点中插值法获得npw个G点的值
+	// Obtain the value of npw 'G' points by interpolation from NQX 'G' points
 	for(int ig = 0; ig < npw; ig++)
 	{
 		psik[ig] = PolyInt::Polynomial_Interpolation(psik_tem, NQX, DQ, gk[ig].norm() * ucell.tpiba);
 	}
 	
 	
-	// 2.计算与原点选择（即轨道中心）而产生的相位在平面波基组下	
+	// 2. Calculate phase resulting from the center of the orbit under the plane wave basis set
 	complex<double> *sk = new complex<double>[npw];
 	for(int ig = 0; ig < npw; ig++)
 	{
@@ -1366,7 +1331,7 @@ void toWannier90::get_trial_orbitals_lm_k(const int wannier_index, const int orb
 		sk[ig] = complex <double> ( cos(arg),  -sin(arg) );
 	}
 	
-	// 3.生成 wannier_ylm
+	// 3. Generate wannier_ylm
 	double *wannier_ylm = new double[npw];
 	for(int ig = 0; ig < npw; ig++)
 	{
@@ -1381,7 +1346,7 @@ void toWannier90::get_trial_orbitals_lm_k(const int wannier_index, const int orb
 		}
 	}
 	
-	// 4.计算最终试探轨道在某个k点下平面波基组的投影
+	// 4. Calculate the projection of the plane wave basis set of the trial orbit at a certain k point
 	complex<double> lphase = pow(NEG_IMAG_UNIT, orbital_L);
 	for(int ig = 0; ig < wf.npwx; ig++)
 	{
@@ -1393,7 +1358,7 @@ void toWannier90::get_trial_orbitals_lm_k(const int wannier_index, const int orb
 	}
 	
 	
-	// 5.归一化
+	// 5. Normalized
 	complex<double> anorm(0.0,0.0);
 	for(int ig = 0; ig < wf.npwx; ig++)
 	{
@@ -1622,7 +1587,7 @@ complex<double> toWannier90::gamma_only_cal(const int &ib_L, const int &ib_R, co
 	
 }
 
-//使用lcao_in_pw方法将lcao基组转成pw基组
+// Use lcao_in_pw method to convert lcao basis set to pw basis set
 void toWannier90::lcao2pw_basis(const int ik, ComplexMatrix &orbital_in_G)
 {
 	this->table_local.create(ucell.ntype, ucell.nmax_total, NQX);
@@ -1630,7 +1595,8 @@ void toWannier90::lcao2pw_basis(const int ik, ComplexMatrix &orbital_in_G)
 	Wavefunc_in_pw::produce_local_basis_in_pw(ik, orbital_in_G, this->table_local);
 }
 
-// 从lcao基组下产生pw基组的波函数周期部分unk的值，unk_inLcao[ik](ib,ig),ig的范围是kv.ngk[ik]
+// Generate the 'unk' of the periodic part of the wave function of the pw basis set from the lcao basis set, 
+// unk_inLcao[ik](ib,ig), the range of ig is kv.ngk[ik]
 void toWannier90::getUnkFromLcao()
 {
 	complex<double>*** lcao_wfc_global = new complex<double>**[num_kpts];
@@ -1651,7 +1617,7 @@ void toWannier90::getUnkFromLcao()
 
 	for(int ik = 0; ik < num_kpts; ik++)
 	{
-		// 获取全局的lcao的波函数系数
+		// Get the global wave function coefficient of lcao
 		get_lcao_wfc_global_ik(lcao_wfc_global[ik],LOWF.WFC_K[ik]);
 	
 		int npw = kv.ngk[ik];
@@ -1661,7 +1627,7 @@ void toWannier90::getUnkFromLcao()
 	
 	}
 	
-	// 将lcao基组的unk转成pw基组下的unk
+	// Convert the 'unk' under the lcao basis set to the 'unk' under the pw basis set
 	for(int ik = 0; ik < num_kpts; ik++)
 	{
 		for(int ib = 0; ib < NBANDS; ib++)
@@ -1676,7 +1642,7 @@ void toWannier90::getUnkFromLcao()
 		}
 	}
 	
-	// 归一化
+	// Normalized
 	for(int ik = 0; ik < num_kpts; ik++)
 	{
 		for(int ib = 0; ib < NBANDS; ib++)
@@ -1716,7 +1682,7 @@ void toWannier90::getUnkFromLcao()
 	return;
 }
 
-// 获取全局的lcao的波函数系数
+// Get the global wave function coefficient of lcao
 void toWannier90::get_lcao_wfc_global_ik(complex<double> **ctot, complex<double> **cc)
 {
 	complex<double>* ctot_send = new complex<double>[NBANDS*NLOCAL];

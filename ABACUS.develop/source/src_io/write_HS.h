@@ -15,8 +15,9 @@ namespace HS_Matrix
 	void save_HSR_tr(const int current_spin); //LiuXh add 2019-07-15
 
 	// jingan add 2021-6-4
-	void save_HR_sparse(const int &current_spin);
-	void save_SR_sparse(const int &current_spin);
+	void save_HSR_sparse(const int &current_spin, const double &sparse_threshold, const bool &binary);
+	void output_single_R(ofstream &ofs, const map<size_t, map<size_t, double>> &XR, const double &sparse_threshold, const bool &binary);
+	void output_soc_single_R(ofstream &ofs, const map<size_t, map<size_t, complex<double>>> &XR, const double &sparse_threshold, const bool &binary);
 
 // mohan comment out 2021-02-10
 //	void save_HS_ccf(const int &iter, const int &Hnnz, const int *colptr_H, const int *rowind_H, 

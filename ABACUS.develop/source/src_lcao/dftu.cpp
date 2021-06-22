@@ -1657,4 +1657,171 @@ void DFTU::output()
 	return;
 }
 
+void DFTU::cal_eff_pot_mat_R_double(const int ispin, double* SR, double* HR)
+{
+  const char transN = 'N', transT = 'T';
+	const int  one_int = 1;
+	const double alpha = 1.0, beta = 0.0;
 
+  for(int i=0; i<ParaO.nloc; i++) HR[i] = 0.0;
+
+  vector<double> VU(ParaO.nloc, 0.0);
+
+	for(int ir=0; ir<ParaO.nrow; ir++)
+	{
+		const int iwt1 = ParaO.MatrixInfo.row_set[ir];
+		const int T1 = this->iwt2it.at(iwt1);
+		const int iat1 = this->iwt2iat.at(iwt1);
+		const int L1 = this->iwt2l.at(iwt1);
+		const int n1 = this->iwt2n.at(iwt1);
+		const int m1 = this->iwt2m.at(iwt1);
+		const int ipol1 = this->iwt2ipol.at(iwt1);
+
+		for(int ic=0; ic<ParaO.ncol; ic++)
+		{
+			const int iwt2 = ParaO.MatrixInfo.col_set[ic];
+			const int T2 = this->iwt2it.at(iwt2);
+			const int iat2 = this->iwt2iat.at(iwt2);
+			const int L2 = this->iwt2l.at(iwt2);
+			const int n2 = this->iwt2n.at(iwt2);
+			const int m2 = this->iwt2m.at(iwt2);
+			const int ipol2 = this->iwt2ipol.at(iwt2);
+
+			int irc = ic*ParaO.nrow + ir;			
+
+			if(INPUT.orbital_corr[T1]==-1 || INPUT.orbital_corr[T2]==-1) continue;
+			if(iat1!=iat2) continue;			
+			// if(Yukawa)
+			// {
+				// if(L1<INPUT.orbital_corr[T1] || L2<INPUT.orbital_corr[T2]) continue;
+			// }
+			// else
+			// {
+				if(L1!=INPUT.orbital_corr[T1] || L2!=INPUT.orbital_corr[T2] || n1!=0 || n2!=0) continue;
+			// }
+			if(L1!=L2 || n1!=n2) continue;
+
+			double val = get_onebody_eff_pot(T1, iat1, L1, n1, ispin, m1, m2, cal_type, 1);
+
+		  VU.at(irc) = val;	
+	  }//ic
+  }//ir
+
+
+  vector<double> potm_tmp(ParaO.nloc, 0.0);
+
+	// The first term
+	pdgemm_(&transN, &transN,
+		&NLOCAL, &NLOCAL, &NLOCAL,
+		&alpha, 
+		VECTOR_TO_PTR(VU), &one_int, &one_int, ParaO.desc, 
+		SR, &one_int, &one_int, ParaO.desc,
+		&beta,
+		VECTOR_TO_PTR(potm_tmp), &one_int, &one_int, ParaO.desc);
+		
+	for(int irc=0; irc<ParaO.nloc; irc++)
+		HR[irc] += 0.5*potm_tmp.at(irc);
+
+	// The second term
+	ZEROS(VECTOR_TO_PTR(potm_tmp), ParaO.nloc);
+
+	pdgemm_(&transN, &transN,
+		&NLOCAL, &NLOCAL, &NLOCAL,
+		&alpha, 
+		SR, &one_int, &one_int, ParaO.desc, 
+		VECTOR_TO_PTR(VU), &one_int, &one_int, ParaO.desc,
+		&beta,
+		VECTOR_TO_PTR(potm_tmp), &one_int, &one_int, ParaO.desc);
+		
+	for(int irc=0; irc<ParaO.nloc; irc++)
+	  HR[irc] += 0.5*potm_tmp.at(irc);
+
+  return;
+}
+
+void DFTU::cal_eff_pot_mat_R_complex_double(
+  const int ispin, complex<double>* SR, complex<double>* HR)
+{
+  const char transN = 'N', transT = 'T';
+	const int  one_int = 1;
+	const double alpha = 1.0, beta = 0.0;
+  const complex<double> zero(0.0,0.0);
+
+  for(int i=0; i<ParaO.nloc; i++) HR[i] = zero;
+
+  vector<complex<double>> VU(ParaO.nloc, complex<double>(0.0, 0.0));
+
+	for(int ir=0; ir<ParaO.nrow; ir++)
+	{
+		const int iwt1 = ParaO.MatrixInfo.row_set[ir];
+		const int T1 = this->iwt2it.at(iwt1);
+		const int iat1 = this->iwt2iat.at(iwt1);
+		const int L1 = this->iwt2l.at(iwt1);
+		const int n1 = this->iwt2n.at(iwt1);
+		const int m1 = this->iwt2m.at(iwt1);
+		const int ipol1 = this->iwt2ipol.at(iwt1);
+
+		for(int ic=0; ic<ParaO.ncol; ic++)
+		{
+			const int iwt2 = ParaO.MatrixInfo.col_set[ic];
+			const int T2 = this->iwt2it.at(iwt2);
+			const int iat2 = this->iwt2iat.at(iwt2);
+			const int L2 = this->iwt2l.at(iwt2);
+			const int n2 = this->iwt2n.at(iwt2);
+			const int m2 = this->iwt2m.at(iwt2);
+			const int ipol2 = this->iwt2ipol.at(iwt2);
+
+			int irc = ic*ParaO.nrow + ir;			
+
+			if(INPUT.orbital_corr[T1]==-1 || INPUT.orbital_corr[T2]==-1) continue;
+			if(iat1!=iat2) continue;			
+			// if(Yukawa)
+			// {
+				// if(L1<INPUT.orbital_corr[T1] || L2<INPUT.orbital_corr[T2]) continue;
+			// }
+			// else
+			// {
+				if(L1!=INPUT.orbital_corr[T1] || L2!=INPUT.orbital_corr[T2] || n1!=0 || n2!=0) continue;
+			// }
+			if(L1!=L2 || n1!=n2) continue;
+
+			// if(m1==m2 && iwt1==iwt2) delta.at(irc) = 1.0;
+
+			int m1_all = m1 + (2*L1+1)*ipol1;
+			int m2_all = m2 + (2*L2+1)*ipol2;
+
+			double val = get_onebody_eff_pot(T1, iat1, L1, n1, ispin, m1_all, m2_all, cal_type, 1);
+
+			VU.at(irc) = complex<double>(val, 0.0);
+		}
+	}
+	vector<complex<double>> potm_tmp(ParaO.nloc, complex<double>(0.0, 0.0));
+
+	// The first term
+	pzgemm_(&transN, &transN,
+		&NLOCAL, &NLOCAL, &NLOCAL,
+		&alpha, 
+		VECTOR_TO_PTR(VU), &one_int, &one_int, ParaO.desc,
+		SR, &one_int, &one_int, ParaO.desc,
+		&beta,
+		VECTOR_TO_PTR(potm_tmp), &one_int, &one_int, ParaO.desc);
+		
+	for(int irc=0; irc<ParaO.nloc; irc++)
+	  HR[irc] += 0.5*potm_tmp.at(irc);
+
+	//The second term
+	ZEROS(VECTOR_TO_PTR(potm_tmp), ParaO.nloc);
+		
+	pzgemm_(&transN, &transN,
+		&NLOCAL, &NLOCAL, &NLOCAL,
+		&alpha, 
+		SR, &one_int, &one_int, ParaO.desc, 
+		VECTOR_TO_PTR(VU), &one_int, &one_int, ParaO.desc,
+		&beta,
+		VECTOR_TO_PTR(potm_tmp), &one_int, &one_int, ParaO.desc);
+		
+	for(int irc=0; irc<ParaO.nloc; irc++)
+    HR[irc] += 0.5*potm_tmp.at(irc);
+
+  return;
+}

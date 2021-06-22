@@ -9,7 +9,7 @@ berryphase::berryphase()
 
 berryphase::~berryphase()
 {
-	//ofs_running << "this is ~berryphase()" << endl;
+	
 }
 
 void berryphase::get_occupation_bands()
@@ -25,7 +25,6 @@ void berryphase::get_occupation_bands()
 	{
 		WARNING_QUIT("berryphase::get_occupation_bands","not enough bands for berryphase, increase band numbers.");
 	}
-	//ofs_running << "the berryphase's occ_nbands is " << occ_nbands << endl;
 }
 
 void berryphase::lcao_init()
@@ -37,17 +36,17 @@ void berryphase::lcao_init()
 	return;
 }
 
-// this routine 依赖于 kpoint的mp生成方式
+// This routine depends on MP generation of Kpoints
 void berryphase::set_kpoints(const int direction)
 {
 	TITLE("berryphase","set_kpoints");
 
-	const int mp_x = kv.nmp[0]; // x,y,z方向k点的数目
+	const int mp_x = kv.nmp[0]; // Number of k points in x, y, z directions
 	const int mp_y = kv.nmp[1];
 	const int mp_z = kv.nmp[2];
 	const int num_k = int(kv.nkstot/2);	
 
-	if( direction == 1 ) // 计算x方向
+	if( direction == 1 ) // Calculate the x direction
 	{
 		const int num_string = mp_y * mp_z;
 		
@@ -65,7 +64,7 @@ void berryphase::set_kpoints(const int direction)
 		
 		for(int istring = 0; istring < total_string; istring++)
 		{
-			k_index[istring].resize(mp_x+1); // 加 1 代表着每条string是从k=0到k=G	
+			k_index[istring].resize(mp_x+1); // Adding 1 means that each string is from k=0 to k=G
 		}
 		
 		int string_index = -1;
@@ -96,7 +95,7 @@ void berryphase::set_kpoints(const int direction)
 		nppstr = mp_x+1;
 		
 	}
-	else if( direction == 2 ) // 计算y方向
+	else if( direction == 2 ) // Calculate the y direction
 	{
 		const int num_string = mp_x * mp_z;
 		
@@ -113,7 +112,7 @@ void berryphase::set_kpoints(const int direction)
 	
 		for(int istring = 0; istring < total_string; istring++)
 		{
-			k_index[istring].resize(mp_y+1); // 加 1 代表着每条string是从k=0到k=G	
+			k_index[istring].resize(mp_y+1); // Adding 1 means that each string is from k=0 to k=G
 		}
 		
 		int string_index = -1;
@@ -144,7 +143,7 @@ void berryphase::set_kpoints(const int direction)
 		nppstr = mp_y+1;
 		
 	}
-	else if( direction == 3 ) // 计算z方向
+	else if( direction == 3 ) // Calculate the z direction
 	{
 		const int num_string = mp_x * mp_y;
 		
@@ -161,7 +160,7 @@ void berryphase::set_kpoints(const int direction)
 		
 		for(int istring = 0; istring < total_string; istring++)
 		{
-			k_index[istring].resize(mp_z+1); // 加 1 代表着每条string是从k=0到k=G
+			k_index[istring].resize(mp_z+1); // Adding 1 means that each string is from k=0 to k=G
 		}
 		
 		int string_index = -1;
@@ -193,24 +192,6 @@ void berryphase::set_kpoints(const int direction)
 		
 	}
 
-	// test by jingan
-	/*
-	ofs_running << "direction is " << direction << endl;
-	ofs_running << "nppstr = " << nppstr << endl;
-	ofs_running << "total string is " << total_string << endl;
-	for(int istring = 0; istring < total_string; istring++)
-	{
-		ofs_running << " the string is " << istring << endl;
-		for(int count = 0; count < nppstr; count++)
-		{
-			ofs_running << "(" << kv.kvec_c[ k_index[istring][count] ].x << ","
-							   << kv.kvec_c[ k_index[istring][count] ].y << ","
-							   << kv.kvec_c[ k_index[istring][count] ].z << ")" << endl;
-		}
-		
-	}
-	*/
-	// test by jingan
 	
 
 }
@@ -223,7 +204,6 @@ double berryphase::stringPhase(int index_str, int nbands)
 	int ik_2;
 	Vector3<double> G(0.0,0.0,0.0);
 	Vector3<double> dk = kv.kvec_c[ k_index[index_str][1] ] - kv.kvec_c[ k_index[index_str][0] ];
-	//ofs_running << "the string index is " << index_str << endl;
 	
 	for(int k_start = 0; k_start < (nppstr-1); k_start++)
 	{
@@ -313,46 +293,13 @@ double berryphase::stringPhase(int index_str, int nbands)
 		{
 			if(NSPIN!=4)
 			{
-				//complex<double> my_det = lcao_method.det_berryphase(ik_1,ik_2,dk,nbands);
 				zeta = zeta * lcao_method.det_berryphase(ik_1,ik_2,dk,nbands);
-				// test by jingan
-				//ofs_running << "methon 1: det = " << my_det << endl;
-				// test by jingan
 			}
 			else
 			{
 				
 			}
 			
-			// test by jingan
-			/*
-			for (int mb = 0; mb < nbands; mb++)
-			{
-
-				for (int nb = 0; nb < nbands; nb++)
-				{
-					
-					mat(nb, mb) = lcao_method.unkdotp_LCAO(ik_1,ik_2,nb,mb,dk);
-				}
-			}
-			
-			complex<double> det(1.0,0.0);
-			int info = 0;
-			int *ipiv = new int[nbands];
-			LapackConnector::zgetrf(nbands, nbands, mat, nbands, ipiv, &info);				
-			for (int ib = 0; ib < nbands; ib++)
-			{
-				if (ipiv[ib] != (ib+1)) det = -det * mat(ib,ib);
-				else det = det * mat(ib,ib);
-			}
-			
-			zeta = zeta*det;
-			
-			ofs_running << "methon 2: det = " << det << endl;
-			
-			delete[] ipiv;
-			*/
-			// test by jingan
 		}
 
 
@@ -383,7 +330,7 @@ void berryphase::Berry_Phase(int nbands, double &pdl_elec_tot, int &mod_elec_tot
 	for(int istring = 0; istring < total_string; istring++)
 	{
 		phik[istring] = stringPhase(istring,nbands);
-		// 将相位转换成复数形式
+		// Convert phase to complex number
 		cphik[istring] = complex<double>(cos(phik[istring]),sin(phik[istring]));	
 		cave = cave + complex<double>(wistring[istring],0.0) * cphik[istring];
 		
@@ -397,9 +344,6 @@ void berryphase::Berry_Phase(int nbands, double &pdl_elec_tot, int &mod_elec_tot
 		dtheta = atan2(cphik[istring].imag(),cphik[istring].real());
 		phik[istring] = (theta0 + dtheta) / (2 * PI);
 		phik_ave = phik_ave + wistring[istring] * phik[istring];
-		// test by jingan
-		//ofs_running << "phik[" << istring << "] = " << phik[istring] << endl;
-		// test by jingan
 	}
 	
 	if(NSPIN == 1)
@@ -428,8 +372,6 @@ void berryphase::Berry_Phase(int nbands, double &pdl_elec_tot, int &mod_elec_tot
 	delete[] cphik;
 	delete[] wistring;
 	
-	
-	//ofs_running << "Berry_Phase end " << endl;
 
 }
 
@@ -454,9 +396,9 @@ void berryphase::Macroscopic_polarization()
 	
 	
 	// ion polarization	
-	double polarization_ion[3]; // 指的是晶格矢量R1，R2，R3方向
+	double polarization_ion[3]; // Lattice vector R1, R2, R3 direction
 	ZEROS(polarization_ion,3);
-	// 倒格矢
+	// Reciprocal lattice vector 
 	Vector3<double> rcell_1(ucell.G.e11,ucell.G.e12,ucell.G.e13);
 	Vector3<double> rcell_2(ucell.G.e21,ucell.G.e22,ucell.G.e23);
 	Vector3<double> rcell_3(ucell.G.e31,ucell.G.e32,ucell.G.e33);
@@ -547,11 +489,6 @@ void berryphase::Macroscopic_polarization()
 	int modulus;
 	if( (!lodd) && (NSPIN==1) ) modulus = 2;
 	else modulus = 1;
-	
-	// test by jingan
-	//ofs_running << "ion polarization end" << endl;
-	// test by jingan
-
 
 	// berry phase calculate begin	
 	switch(GDIR)
@@ -573,7 +510,6 @@ void berryphase::Macroscopic_polarization()
 			ofs_running << endl;
 			ofs_running << "  The Ionic Phase: " << setw(10) << fixed << setprecision(5) << polarization_ion[0] << endl;
 			ofs_running << " Electronic Phase: " << setw(10) << fixed << setprecision(5) << pdl_elec_tot << endl;
-			//ofs_running << " the electronic part polarization is P(ele) = " << rmod * pdl_elec_tot << "   (e/Omega).bohr   in R1 direction" << endl;
 			
 			// calculate total polarization,add electron part and ions part
 			double total_polarization = pdl_elec_tot + polarization_ion[0] ;
@@ -608,7 +544,6 @@ void berryphase::Macroscopic_polarization()
 			ofs_running << endl;
 			ofs_running << "  The Ionic Phase: " << setw(10) << fixed << setprecision(5) << polarization_ion[1] << endl;
 			ofs_running << " Electronic Phase: " << setw(10) << fixed << setprecision(5) << pdl_elec_tot << endl;
-			//ofs_running << " the electronic part polarization is P(ele) = " << rmod * pdl_elec_tot << "   (e/Omega).bohr   in R2 direction" << endl;
 		
 			// calculate total polarization,add electron part and ions part
 			double total_polarization = pdl_elec_tot + polarization_ion[1] ;
@@ -643,7 +578,6 @@ void berryphase::Macroscopic_polarization()
 			ofs_running << endl;
 			ofs_running << "  The Ionic Phase: " << setw(10) << fixed << setprecision(5) << polarization_ion[2] << endl;
 			ofs_running << " Electronic Phase: " << setw(10) << fixed << setprecision(5) << pdl_elec_tot << endl;
-			//ofs_running << " the electronic part polarization is P(ele) = " << rmod * pdl_elec_tot << "   (e/Omega).bohr   in R3 direction" << endl;
 		
 			// calculate total polarization,add electron part and ions part
 			double total_polarization = pdl_elec_tot + polarization_ion[2] ;
@@ -662,8 +596,6 @@ void berryphase::Macroscopic_polarization()
 		}
 	
 	}
-
-	//ofs_running << "the Macroscopic_polarization is over" << endl;
 	
 	return;
 }

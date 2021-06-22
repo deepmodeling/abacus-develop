@@ -76,7 +76,18 @@ void unkOverlap_lcao::init()
 	MGT.init_Gaunt_CH( Lmax );
 	MGT.init_Gaunt( Lmax );
 
-	const int T = 0;  //任意选择的元素类型
+	int T = 0;  // atom type
+	int mat_Nr = ORB.Phi[0].PhiLN(0,0).getNr();
+	for(int it = 0; it < ucell.ntype; it++)
+	{
+		int count_Nr = ORB.Phi[it].PhiLN(0,0).getNr();
+		if(count_Nr > mat_Nr) 
+		{
+			mat_Nr = count_Nr;
+			T = it;
+		}
+	}
+
 	orb_r.set_orbital_info(
 	ORB.Phi[T].PhiLN(0,0).getLabel(),  //atom label
 	T,    //atom type
@@ -93,7 +104,7 @@ void unkOverlap_lcao::init()
 	false,
 	true, FORCE);
 	
-	// 数组初始化
+	// Array initialization
 	allocate_flag = true;
 	const int kpoints_number = kv.nkstot;
 	if(allocate_flag)
@@ -118,13 +129,13 @@ void unkOverlap_lcao::init()
 	}
 	
 	
-	//获取每个cpu核的原子轨道系数
+	// Get the atomic orbital coefficient of each cpu core
 	for(int ik = 0; ik < kpoints_number; ik++)
 	{
 		get_lcao_wfc_global_ik(lcao_wfc_global[ik],LOWF.WFC_K[ik]);
 	}
 	
-	// 并行方案
+	// Parallel solution
 	int nproc,myrank;
 	MPI_Comm_size(MPI_COMM_WORLD,&nproc);
 	MPI_Comm_rank(MPI_COMM_WORLD,&myrank);
@@ -374,10 +385,10 @@ int unkOverlap_lcao::iw2im(int iw)
 }
 
 
-//寻找近邻原子
+// Find neighbor atoms
 void unkOverlap_lcao::cal_R_number()
 {
-	// 原子轨道1和原子轨道2之间存在overlap的数目,或者说是R的数目，为空时说明没有overlap
+	// The number of overlaps between atomic orbital 1 and atomic orbital 2, or the number of R, when it is empty, it means that there is no overlap.
 	orb1_orb2_R.resize(NLOCAL);
 	for(int iw = 0; iw < NLOCAL; iw++)
 	{
@@ -408,7 +419,7 @@ void unkOverlap_lcao::cal_R_number()
 				double rcut = ORB.Phi[T1].getRcut() + ORB.Phi[T2].getRcut();
 				if(distance < rcut - 1.0e-15)
 				{
-					// R_car 单位是 ucell.lat0
+					// The unit of R_car is ucell.lat0
 					Vector3<double> R_car = R_direct_x * ucell.a1 + 
 											R_direct_y * ucell.a2 +
 											R_direct_z * ucell.a3;
@@ -458,7 +469,7 @@ void unkOverlap_lcao::cal_orb_overlap()
 		{
 			//if ( !ParaO.in_this_processor(iw1,iw2) ) continue;
 			
-			// iw1 和 iw2 永远没有overlap
+			// iw1 and iw2 never overlap
 			if( orb1_orb2_R[iw1][iw2].empty() ) continue;
 			
 			int atomType1 = iw2it(iw1);  int ia1 = iw2ia(iw1);  int N1 = iw2iN(iw1);  int L1 = iw2iL(iw1);  int m1 = iw2im(iw1); 
@@ -506,7 +517,7 @@ complex<double> unkOverlap_lcao::unkdotp_LCAO(const int ik_L, const int ik_R, co
 			
 			//ofs_running << "the calculate iw1 and iw2 is " << iw1 << "," << iw2 << endl;
 			
-			// iw1 和 iw2 永远没有overlap
+			// iw1 and iw2 never overlap
 			if( orb1_orb2_R[iw1][iw2].empty() ) continue;
 		
 			
@@ -525,7 +536,7 @@ complex<double> unkOverlap_lcao::unkdotp_LCAO(const int ik_L, const int ik_R, co
 				
 				/*
 				// test by jingan
-				// R_tem 是 iw1 和 iw2 的轨道中心的矢量
+				// R_tem is the vector of the orbit center of iw1 and iw2
 				Vector3<double> R_tem = dtau + orb1_orb2_R[iw1][iw2][iR];
 				double kRn = ( kv.kvec_c[ik_R] * orb1_orb2_R[iw1][iw2][iR] - dk * tau1 - 0.5 * dk * R_tem ) * TWO_PI;
 				complex<double>  kRn_phase(cos(kRn),sin(kRn));
