@@ -12,9 +12,10 @@
 
 class Run_MD_PW
 {
+public:
     Run_MD_PW(){};
     ~Run_MD_PW(){};
-public:
+
     void md_ions_pw();
     void md_cells_pw();
 
