@@ -2498,7 +2498,7 @@ void Input::Check(void)
         if(!out_md_control) out_level = "m";//zhengdy add 2019-04-07
 
         //deal with input parameters , 2019-04-30
-        if(basis_type == "pw" ) WARNING_QUIT("Input::Check","calculate = MD is only availble for LCAO.");
+        //if(basis_type == "pw" ) WARNING_QUIT("Input::Check","calculate = MD is only availble for LCAO.");
         if(mdp.dt < 0) WARNING_QUIT("Input::Check","time interval of MD calculation should be set!");
         if(mdp.tfirst < 0) WARNING_QUIT("Input::Check","temperature of MD calculation should be set!");
         if(mdp.tlast  < 0.0) mdp.tlast = mdp.tfirst;
