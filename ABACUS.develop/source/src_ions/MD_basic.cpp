@@ -295,9 +295,16 @@ void MD_basic::runNVE(int step1){
     double tempNow = twiceKE/(3*double(ucell.nat-nfrozen_))/K_BOLTZMAN_AU;
     cout<<" start temperature = "<< tempNow/K_BOLTZMAN_AU<< " (k)"<<endl;
 
-    // Set up forces 
-    mdf.callInteraction_LCAO(ucell.nat, force, stress);
-	if(STRESS)
+    // Set up forces
+    if (INPUT.basis_type == "lcao")
+    {
+        mdf.callInteraction_LCAO(ucell.nat, force, stress);
+    }
+    else if (INPUT.basis_type == "pw")
+    {
+        mdf.callInteraction_PW(ucell.nat, force, stress);
+    }
+    if(STRESS)
 	{
 		outStressMD(stress, twiceKE);
 	}
@@ -432,9 +439,16 @@ bool MD_basic::runFIRE(int step1){
 
 
 
-    // Set up forces 
-    mdf.callInteraction_LCAO(ucell.nat, force, stress);
-    
+    // Set up forces
+    if (INPUT.basis_type == "lcao")
+    {
+        mdf.callInteraction_LCAO(ucell.nat, force, stress);
+    }
+    else if (INPUT.basis_type == "pw")
+    {
+        mdf.callInteraction_PW(ucell.nat, force, stress);
+    }
+
     for(int k=0;k<ucell.nat;k++)
     {
         if(ionmbl[k].x==0)force[k].x=0;
