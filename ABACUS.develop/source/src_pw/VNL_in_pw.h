@@ -3,9 +3,9 @@
 
 #include "tools.h"
 #include "VL_in_pw.h"
-#include "../module_ORB/ORB_gen_tables.h"
+#include "module_ORB/ORB_gen_tables.h"
 #include "wavefunc_in_pw.h"
-#include "unitcell_pseudo.h"
+#include "module_cell/unitcell_pseudo.h"
 
 //==========================================================
 // Calculate the non-local pseudopotential in reciprocal

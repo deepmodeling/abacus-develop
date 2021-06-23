@@ -1,0 +1,20 @@
+#
+# The ABACUS-cell module
+#
+
+VERSION= ABACUS-cell
+HEADERS= *.h
+
+OBJS_BASE=tool_title.o\
+tool_quit.o\
+timer.o\
+
+OBJS_ORBITAL=pseudo_nc.o\
+atom_spec.o\
+atom_pseudo.o\
+read_pp.o\
+read_pp_upf100.o\
+read_pp_upf201.o\
+read_pp_vwr.o\
+unitcell.o\
+unitcell_pseudo.o\

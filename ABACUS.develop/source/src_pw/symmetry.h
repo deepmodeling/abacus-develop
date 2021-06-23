@@ -1,11 +1,8 @@
-//==========================================================
-// AUTHOR : Zhengpan , mohan , spshu
-// DATE : 2007-9
-//==========================================================
 #ifndef SYMMETRY_H
 #define SYMMETRY_H
+
 #include "tools.h"
-#include "unitcell.h"
+#include "module_cell/unitcell.h"
 #include "symmetry_basic.h"
 
 class Symmetry : public Symmetry_Basic

@@ -1,7 +1,7 @@
 INPUT_PARAMETERS
 ntype                         2
 ecutwfc                       20
-dr2                           1e-06
+dr2                           1e-08
 niter                         400
 basis_type                    pw
 ks_solver                     cg

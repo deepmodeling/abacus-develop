@@ -3,7 +3,7 @@
 
 #include "realarray.h"
 #include "vector3.h"
-#include "matrix3.h"
+#include "../module_base/matrix3.h"
 #include "global_function.h"
 #include <vector>
 #include <map>

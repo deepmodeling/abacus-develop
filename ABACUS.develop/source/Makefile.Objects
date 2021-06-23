@@ -253,6 +253,8 @@ potential_libxc.o \
 efield.o \
 magnetism.o\
 optical.o\
+Cell_PW.o\
+run_md_pw.o\
 ions.o \
 ions_move_methods.o\
 ions_move_bfgs.o\

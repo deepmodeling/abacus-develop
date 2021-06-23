@@ -11,7 +11,7 @@
 #include "src_ri/exx_abfs.h"
 #include "src_ri/exx_opt_orb.h"
 #include "ELEC_scf.h"
-#include "src_global/sltk_atom_arrange.h"
+#include "module_neighbor/sltk_atom_arrange.h"
 #include "src_pw/vdwd2.h"
 
 Run_MD::Run_MD()
@@ -198,9 +198,24 @@ void Run_MD::final_scf(void)
     TITLE("Run_MD","final_scf"); 
 
     FINAL_SCF = true;
+
     Variable_Cell::final_calculation_after_vc();
-    SEARCH_RADIUS = atom_arrange::set_sr_NL(ORB.get_rcutmax_Phi(), ORB.get_rcutmax_Beta(), GAMMA_ONLY_LOCAL);
-    atom_arrange::search(GridD, ucell, SEARCH_RADIUS, test_atom_input);
+
+    SEARCH_RADIUS = atom_arrange::set_sr_NL(
+		ofs_running, 
+		OUT_LEVEL, 
+		ORB.get_rcutmax_Phi(), 
+		ORB.get_rcutmax_Beta(), 
+		GAMMA_ONLY_LOCAL);
+
+    atom_arrange::search(
+		SEARCH_PBC,
+		ofs_running,
+		GridD, 
+		ucell, 
+		SEARCH_RADIUS, 
+		test_atom_input);
+
     GridT.set_pbc_grid(
         pw.ncx, pw.ncy, pw.ncz,
         pw.bx, pw.by, pw.bz,

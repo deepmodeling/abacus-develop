@@ -1,7 +1,7 @@
 #ifndef GLOBAL_FP_H
 #define GLOBAL_FP_H
 
-#include "src_global/sltk_grid_driver.h"
+#include "module_neighbor/sltk_grid_driver.h"
 #include "src_lcao/grid_technique.h"
 #include "src_parallel/parallel_orbitals.h"
 #include "src_lcao/local_orbital_wfc.h"
@@ -9,8 +9,8 @@
 #include "src_lcao/LCAO_matrix.h"
 #include "src_lcao/LCAO_gen_fixedH.h"
 #include "src_lcao/LCAO_hamilt.h" 
-#include "../module_ORB/ORB_read.h"
-#include "../module_ORB/ORB_gen_tables.h"
+#include "module_ORB/ORB_read.h"
+#include "module_ORB/ORB_gen_tables.h"
 #include "src_parallel/subgrid_oper.h"
 #include "src_ri/exx_lcao.h"
 
