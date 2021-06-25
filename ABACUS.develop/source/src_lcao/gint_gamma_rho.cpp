@@ -18,9 +18,6 @@ void Gint_Gamma::cal_band_rho(
 	const double*const*const psir_ylm,
 	const int*const vindex)
 {
-	Gint_Tools::Array_Pool<double> psir_DM(pw.bxyz, LD_pool);
-	ZEROS(psir_DM.ptr_1D, pw.bxyz*LD_pool);
-
     //parameters for dsymm, dgemm and ddot
     constexpr char side='L', uplo='U';
     constexpr char transa='N', transb='N';
@@ -29,6 +26,8 @@ void Gint_Gamma::cal_band_rho(
 
     for(int is=0; is<NSPIN; ++is)
     {
+        Gint_Tools::Array_Pool<double> psir_DM(pw.bxyz, LD_pool);
+        ZEROS(psir_DM.ptr_1D, pw.bxyz*LD_pool);
 
         for (int ia1=0; ia1<na_grid; ++ia1)
         {
