@@ -306,6 +306,8 @@ set(CODE_FIRST_PRINCIPLES
     src_ions/ions_move_methods.cpp
     src_ions/ions_move_sd.cpp
     src_ions/ions.cpp
+    src_ions/Cell_PW.cpp
+    src_ions/run_md_pw.cpp
     src_ions/lattice_change_basic.cpp
     src_ions/lattice_change_cg.cpp
     src_ions/lattice_change_methods.cpp
