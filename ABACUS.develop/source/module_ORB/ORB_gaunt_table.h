@@ -3,7 +3,7 @@
 
 #include <map>
 #include "../src_global/realarray.h"
-#include "../src_global/matrix.h"
+#include "../module_base/matrix.h"
 
 class ORB_gaunt_table
 {

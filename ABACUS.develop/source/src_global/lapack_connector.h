@@ -5,8 +5,8 @@
 #include <stdexcept>
 #include <iostream>
 #include <cassert>
-#include "matrix.h"
-#include "complexmatrix.h"
+#include "../module_base/matrix.h"
+#include "../module_base/complexmatrix.h"
 #include "blas_connector.h"
 #include "global_function.h"
 

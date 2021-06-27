@@ -6,7 +6,7 @@
 
 #include"vdwd2.h"
 #include"src_global/global_function.h"
-#include"src_global/constants.h"
+#include"module_base/constants.h"
 #include<cmath>
 
 Vdwd2::Vdwd2(const UnitCell_pseudo &unit_in, Vdwd2_Parameters &para_in):

@@ -5,7 +5,7 @@
 #ifndef EXX_LIP_H
 #define EXX_LIP_H
 
-#include "src_global/complexmatrix.h"
+#include "module_base/complexmatrix.h"
 #include "src_global/vector3.h"
 #include "src_pw/hamilt_pw.h"
 #include "src_pw/exx_global.h"

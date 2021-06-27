@@ -2,7 +2,7 @@
 #define LATTICE_CHANGE_BASIC_H
 
 using namespace std;
-#include "../src_global/matrix.h"
+#include "../module_base/matrix.h"
 
 namespace Lattice_Change_Basic
 {

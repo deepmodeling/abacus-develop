@@ -2,9 +2,9 @@
 #define EXX_ABFS_PARALLEL_COMMUNICATE_HEXX_H
 
 #include "exx_abfs-parallel.h"
-#include "src_global/matrix.h"
+#include "module_base/matrix.h"
 #include "src_global/matrix_wrapper.h"
-#include "src_global/complexmatrix.h"
+#include "module_base/complexmatrix.h"
 #include "src_ri/abfs-vector3_order.h"
 #include <vector>
 #include <valarray>

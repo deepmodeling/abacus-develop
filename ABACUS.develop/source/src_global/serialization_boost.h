@@ -13,7 +13,7 @@
 
 #include "src_global/vector3.h"
 #include "src_lcao/abfs-vector3_order.h"
-#include "src_global/matrix.h"
+#include "module_base/matrix.h"
 #include "src_global/matrix_wrapper.h"
 
 namespace boost

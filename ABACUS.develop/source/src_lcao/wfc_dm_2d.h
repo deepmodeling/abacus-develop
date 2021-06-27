@@ -6,8 +6,8 @@
 #ifndef WFC_DM_2D_H
 #define WFC_DM_2D_H
 
-#include "src_global/matrix.h"
-#include "src_global/complexmatrix.h"
+#include "module_base/matrix.h"
+#include "module_base/complexmatrix.h"
 #include <vector>
 
 class Wfc_Dm_2d

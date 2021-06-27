@@ -19,8 +19,8 @@
 #include "src_lcao/wfc_dm_2d.h"
 #include "src_global/lapack_connector.h"
 #include "src_global/scalapack_connector.h"
-#include "src_global/matrix.h"
-#include "src_global/complexmatrix.h"
+#include "module_base/matrix.h"
+#include "module_base/complexmatrix.h"
 #include <vector>
 #include <mpi.h>
 #include "module_neighbor/sltk_atom_arrange.h"

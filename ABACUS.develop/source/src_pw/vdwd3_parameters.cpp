@@ -4,7 +4,7 @@
 //==========================================================
 
 #include "vdwd3_parameters.h"
-#include "src_global/constants.h"
+#include "module_base/constants.h"
 
 Vdwd3_Parameters::Vdwd3_Parameters():
       mxc(max_elem, 1), 

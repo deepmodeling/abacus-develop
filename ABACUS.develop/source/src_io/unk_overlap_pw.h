@@ -6,7 +6,7 @@
 #include <fstream>
 #include <string>
 #include "../src_pw/global.h"
-#include "../src_global/complexmatrix.h"
+#include "../module_base/complexmatrix.h"
 #include "../src_global/lapack_connector.h"
 #include "../src_global/global_variable.h"
 #include "../src_parallel/parallel_reduce.h"

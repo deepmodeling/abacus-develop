@@ -9,8 +9,8 @@
 #include "src_lcao/wfc_dm_2d.h"
 #include "src_global/lapack_connector.h"
 #include "src_global/scalapack_connector.h"
-#include "src_global/matrix.h"
-#include "src_global/complexmatrix.h"
+#include "module_base/matrix.h"
+#include "module_base/complexmatrix.h"
 #include "src_pdiag/pdiag_double.h"
 #include "src_pdiag/GenELPA.h"
 #include <vector>

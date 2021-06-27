@@ -1,7 +1,7 @@
 #ifndef MATRIX_INL_H
 #define MATRIX_INL_H
 
-#include "matrix.h"
+#include "../module_base/matrix.h"
 #include <cstring>
 
 // test

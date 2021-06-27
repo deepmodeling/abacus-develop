@@ -6,4 +6,7 @@ VERSION= ABACUS-base
 HEADERS= *.h
 
 OBJS_BASE=matrix3.o\
-main.o\
+matrix.o\
+intarray.o\
+complexmatrix.o\
+complexarray.o\

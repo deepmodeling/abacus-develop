@@ -6,7 +6,7 @@
 #include "../src_global/mathzone.h"
 #include "../src_global/global_function.h"
 #include "../src_global/vector3.h"
-#include "../src_global/constants.h"
+#include "../module_base/constants.h"
 #include "../src_global/math_ylmreal.h"
 
 ORB_gaunt_table::ORB_gaunt_table(){}

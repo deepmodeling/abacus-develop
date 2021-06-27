@@ -6,7 +6,7 @@
 
 #include "vdwd3.h"
 #include "src_global/global_function.h"
-#include "src_global/constants.h"
+#include "module_base/constants.h"
 #include "src_global/element_name.h"
 
 Vdwd3::Vdwd3(const UnitCell_pseudo &unit_in, Vdwd3_Parameters &para_in):

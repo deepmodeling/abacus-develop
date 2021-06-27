@@ -6,7 +6,7 @@
 #endif
 
 #include "../src_global/vector3.h"
-#include "../src_global/matrix.h"
+#include "../module_base/matrix.h"
 
 class Matrix3
 {

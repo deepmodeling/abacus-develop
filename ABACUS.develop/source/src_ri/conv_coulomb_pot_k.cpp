@@ -1,5 +1,5 @@
 #include "conv_coulomb_pot_k.h"
-#include "src_global/constants.h"
+#include "module_base/constants.h"
 #include "module_ORB/ORB_atomic_lm.h"
 
 std::vector<double> Conv_Coulomb_Pot_K::cal_psi_ccp( const std::vector<double> & psif )

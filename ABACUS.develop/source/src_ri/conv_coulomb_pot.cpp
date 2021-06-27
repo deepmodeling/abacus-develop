@@ -1,7 +1,7 @@
 #include "conv_coulomb_pot.h"
 #include "conv_coulomb_pot-inl.h"
 #include "src_global/mathzone.h"
-#include "src_global/constants.h"
+#include "module_base/constants.h"
 #include "src_global/global_function.h"
 
 #include "src_external/src_test/test_function.h"

@@ -1,7 +1,7 @@
 #include "sto_che.h" 
 #include "diago_cg.h"
 #include "global.h"
-#include "../src_global/constants.h"
+#include "../module_base/constants.h"
 
 Stochastic_Chebychev::Stochastic_Chebychev()
 {

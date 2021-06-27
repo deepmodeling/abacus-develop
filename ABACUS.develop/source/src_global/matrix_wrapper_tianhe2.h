@@ -6,7 +6,7 @@
 #ifndef MATRIX_WRAPPER_H
 #define MATRIX_WRAPPER_H
 
-#include "src_global/matrix.h"
+#include "module_base/matrix.h"
 #include <cstring>
 
 // !!! Attention: c is very dangerous, may point to somewhere deleted

@@ -2,7 +2,7 @@
 #define EXX_ABFS_PARALLEL_COMMUNICATE_DM2_H
 
 #include "exx_abfs-parallel.h"
-#include "src_global/matrix.h"
+#include "module_base/matrix.h"
 #include "src_ri/abfs-vector3_order.h"
 #include <vector>
 #include <map>

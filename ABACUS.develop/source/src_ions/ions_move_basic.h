@@ -2,7 +2,7 @@
 #define IONS_MOVE_BASIC_H
 
 using namespace std;
-#include "../src_global/matrix.h"
+#include "../module_base/matrix.h"
 
 namespace Ions_Move_Basic
 {

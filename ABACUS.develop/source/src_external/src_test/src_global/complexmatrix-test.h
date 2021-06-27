@@ -6,7 +6,7 @@
 #ifndef COMPLEXMATRIX_TEST_H
 #define COMPLEXMATRIX_TEST_H
 
-#include "src_global/complexmatrix.h"
+#include "module_base/complexmatrix.h"
 #include<limits>
 
 static std::ostream & operator<<( std::ostream & os, const ComplexMatrix & m )

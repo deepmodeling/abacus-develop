@@ -1,8 +1,8 @@
 #ifndef NUMERICAL_NONLOCAL_H
 #define NUMERICAL_NONLOCAL_H
 
-#include "../src_global/complexarray.h"
-#include "../src_global/complexmatrix.h"
+#include "../module_base/complexarray.h"
+#include "../module_base/complexmatrix.h"
 #include "ORB_nonlocal_lm.h"
 /**
  * \class Numerical_Nonlocal

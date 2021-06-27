@@ -1,7 +1,7 @@
 #ifndef EFIELD_H
 #define EFIELD_H
 
-#include "../src_global/matrix.h"
+#include "../module_base/matrix.h"
 
 class Efield
 {

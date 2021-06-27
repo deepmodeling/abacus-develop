@@ -13,7 +13,7 @@
 #include <complex>
 
 #include "dftu_yukawa.h"
-#include "../src_global/constants.h"
+#include "../module_base/constants.h"
 #include "../src_pw/global.h"
 #include "global_fp.h"
 #include "../src_global/global_function.h"

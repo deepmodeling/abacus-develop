@@ -1,7 +1,7 @@
 #ifndef MATRIX_UNITTEST_H
 #define MATRIX_UNITTEST_H
 
-#include "src_global/matrix.h"
+#include "module_base/matrix.h"
 
 static void matrix_mutiply_test()
 {

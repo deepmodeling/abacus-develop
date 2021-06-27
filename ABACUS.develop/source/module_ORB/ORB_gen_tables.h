@@ -7,7 +7,7 @@
 #include "ORB_table_alpha.h"		//caoyu add 2020-3-18
 #include "ORB_read.h"
 #include "../src_global/vector3.h"
-#include "../src_global/matrix.h"
+#include "../module_base/matrix.h"
 
 /// used to be 'Use_Overlap_Table',
 /// now the name is 'ORB_gen_tables'

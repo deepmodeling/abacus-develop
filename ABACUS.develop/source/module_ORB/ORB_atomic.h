@@ -4,7 +4,7 @@
 #include <string>
 using namespace std;
 
-#include "../src_global/intarray.h"
+#include "../module_base/intarray.h"
 #include "../src_global/vector3.h"
 #include "ORB_atomic_lm.h"
 

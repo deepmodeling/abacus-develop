@@ -1,8 +1,8 @@
 #ifndef EXX_LCAO_TEST_H
 #define EXX_LCAO_TEST_H
 
-#include "src_global/matrix.h"
-#include "src_global/complexmatrix.h"
+#include "module_base/matrix.h"
+#include "module_base/complexmatrix.h"
 #include "../src_global/complexmatrix-test.h"
 #include "../src_global/matrix-test.h"
 #include<map>

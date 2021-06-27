@@ -2,7 +2,7 @@
 #define ABFS_H
 
 #include "src_global/vector3.h"
-#include "src_global/matrix.h"
+#include "module_base/matrix.h"
 #include "src_ri/exx_abfs.h"
 
 #include <set>

@@ -1,8 +1,8 @@
 #ifndef LCAO_DESCRIPTOR_H
 #define LCAO_DESCRIPTOR_H
 
-#include "../src_global/intarray.h"
-#include "../src_global/complexmatrix.h"
+#include "../module_base/intarray.h"
+#include "../module_base/complexmatrix.h"
 
 //caoyu add 2021-03-29
 class LCAO_Descriptor

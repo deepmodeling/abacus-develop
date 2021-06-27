@@ -3,7 +3,7 @@
 #include <set>
 #include <complex>
 #include "src_global/global_function.h"
-#include "src_global/matrix.h"
+#include "module_base/matrix.h"
 #include "src_pw/global.h"
 
 class Exx_Abfs_DM_Test
