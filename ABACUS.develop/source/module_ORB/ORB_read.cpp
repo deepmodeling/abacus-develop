@@ -3,6 +3,7 @@
 #include <cassert>
 #include "../src_global/math_integral.h"
 #include "../src_global/tool_check.h"
+#include "../src_global/"
 #include <algorithm>
 //#include "src_pw/soc.h"
 using namespace std;
@@ -272,6 +273,7 @@ void LCAO_Orbitals::Read_Orbitals(
 #else
 
 #include "../src_pw/global.h"
+#include "../src_pw/soc.h"
 // mohan add 2013-08-02
 // In order to get rid of the read in file .NONLOCAL.
 void LCAO_Orbitals::Set_NonLocal(const int &it, int &n_projectors)
