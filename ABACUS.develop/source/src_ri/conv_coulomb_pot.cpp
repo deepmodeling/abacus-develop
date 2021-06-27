@@ -2,7 +2,7 @@
 #include "conv_coulomb_pot-inl.h"
 #include "src_global/mathzone.h"
 #include "module_base/constants.h"
-#include "src_global/global_function.h"
+#include "../module_base/global_function.h"
 
 #include "src_external/src_test/test_function.h"
 #include "src_global/math_integral.h" // mohan add 2021-04-03

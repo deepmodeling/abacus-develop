@@ -8,7 +8,7 @@
 
 using namespace std;
 #include "myfunc.h"
-#include "src_global/blas_connector.h"
+#include "module_base/blas_connector.h"
 #include "../src_pw/global.h"
 
 // dscal compute y = alpha * y, where alpha is a scalar and

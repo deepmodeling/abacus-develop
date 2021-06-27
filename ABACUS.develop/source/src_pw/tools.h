@@ -18,7 +18,7 @@ using namespace std;
 #include <vector>
 
 #include "../module_base/constants.h"
-#include "../src_global/vector3.h"
+#include "../module_base/vector3.h"
 #include "../module_base/matrix.h"
 #include "../module_base/matrix3.h"
 #include "../src_global/realarray.h"
@@ -27,15 +27,15 @@ using namespace std;
 #include "../module_base/complexmatrix.h"
 
 #include "../src_global/memory.h"
-#include "../src_global/timer.h"
-#include "../src_global/lapack_connector.h"
+#include "../module_base/timer.h"
+#include "../module_base/lapack_connector.h"
 #include "../src_global/export.h"
 
 #include "../src_global/mathzone.h"
 #include "../src_global/mathzone_add1.h"
-#include "../src_global/global_function.h"
-#include "../src_global/global_variable.h"
-#include "../src_global/global_file.h"
+#include "../module_base/global_function.h"
+#include "../module_base/global_variable.h"
+#include "../module_base/global_file.h"
 
 #ifdef _MCD_CHECK
 #include "../src_parallel/mcd.h"

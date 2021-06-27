@@ -1,7 +1,7 @@
 #include "unk_overlap_lcao.h"
 #include "../src_lcao/LCAO_nnr.h"
 #include "ctime"
-#include "src_global/scalapack_connector.h"
+#include "module_base/scalapack_connector.h"
 
 
 unkOverlap_lcao::unkOverlap_lcao()

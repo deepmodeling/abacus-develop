@@ -3,7 +3,7 @@
 #include "grid_technique.h"
 #include "../module_ORB/ORB_read.h"
 #include "../src_pw/global.h"
-#include "src_global/blas_connector.h"
+#include "module_base/blas_connector.h"
 
 #include "global_fp.h" // mohan add 2021-01-30
 #include "../src_global/ylm.h"

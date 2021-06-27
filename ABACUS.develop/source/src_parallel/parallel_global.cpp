@@ -5,7 +5,7 @@
 #include "parallel_global.h"
 #include "parallel_common.h"
 #include "parallel_reduce.h"
-#include "../src_global/global_function.h"
+#include "../module_base/global_function.h"
 
 #ifdef _OPENMP
 #include <omp.h>					// Peize Lin add 2018-02-13

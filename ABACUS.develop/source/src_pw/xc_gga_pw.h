@@ -2,7 +2,7 @@
 #define GGA_PW_H
 
 #include "src_pw/tools.h"
-#include "src_global/vector3.h"
+#include "module_base/vector3.h"
 #include "src_parallel/parallel_global.h"
 
 //==========================================================

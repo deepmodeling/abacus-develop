@@ -4,13 +4,13 @@
 //==========================================================
 
 #include "exx_lip.h"
-#include "src_global/global_function.h"
-#include "src_global/vector3.h"
+#include "../module_base/global_function.h"
+#include "module_base/vector3.h"
 #include "src_pw/global.h"
 #include "src_pw/klist.h"
 #include "src_pw/wavefunc.h"
 #include "src_pw/wavefunc_in_pw.h"
-#include "src_global/lapack_connector.h"
+#include "module_base/lapack_connector.h"
 #include <limits>
 
 #include "src_external/src_test/test_function.h"

@@ -1,7 +1,7 @@
 #ifndef MATH_YLMREAL_H
 #define MATH_YLMREAL_H
 
-#include "vector3.h"
+#include "../module_base/vector3.h"
 #include "../module_base/matrix.h"
 
 using namespace std;

@@ -1,5 +1,5 @@
 #include "exx_abfs-inverse_matrix_double.h"
-#include "src_global/lapack_connector.h"
+#include "module_base/lapack_connector.h"
 #include <cstring>
 
 #include "src_external/src_test/src_global/matrix-test.h"		// Peize Lin test

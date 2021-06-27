@@ -1,6 +1,6 @@
 #include "exx_abfs-screen-schwarz.h"
 #include "src_pw/global.h"
-#include "src_global/lapack_connector.h"
+#include "module_base/lapack_connector.h"
 #include <cassert>
 #include <limits>
 #include <thread>

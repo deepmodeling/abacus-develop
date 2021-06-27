@@ -2,7 +2,7 @@
 
 #ifdef __NORMAL
 #else
-#include "global_variable.h"
+#include "../module_base/global_variable.h"
 #endif
 
 //==========================================================

@@ -6,7 +6,7 @@
 #include "exx_abfs-abfs_index.h"
 #include "src_pw/global.h"
 #include "module_ORB/ORB_read.h"
-#include "src_global/global_function.h"
+#include "../module_base/global_function.h"
 #include "src_global/math_integral.h" // mohan add 2021-04-03
 
 

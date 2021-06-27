@@ -10,7 +10,7 @@
 using std::vector;
 #include "../src_pw/tools.h"
 //#include "../src_parallel/fftw.h"
-#include "../src_global/global_function.h"
+#include "../module_base/global_function.h"
 
 /**
  * CLASS Num_orbital_lm

@@ -9,7 +9,7 @@
 #include "gram_schmidt_orth.h"
 
 #include "mathzone.h"
-#include "lapack_connector.h"
+#include "module_base/lapack_connector.h"
 #include "math_integral.h" // mohan add 2021-04-03
 
 template<typename Func_Type, typename R_Type>

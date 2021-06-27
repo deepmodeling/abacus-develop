@@ -7,7 +7,7 @@
 
 #include <vector>
 #include <string>
-#include "src_global/vector3.h"
+#include "module_base/vector3.h"
 #include "module_base/matrix3.h"
 #include "module_cell/unitcell_pseudo.h"
 

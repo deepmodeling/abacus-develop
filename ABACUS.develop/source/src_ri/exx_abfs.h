@@ -10,7 +10,7 @@ using std::map;
 #include "module_ORB/ORB_atomic_lm.h"
 #include "src_global/element_basis_index.h"
 #include "module_base/matrix.h"
-#include "src_global/vector3.h"
+#include "module_base/vector3.h"
 
 class Exx_Abfs
 {

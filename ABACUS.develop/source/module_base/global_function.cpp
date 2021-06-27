@@ -9,8 +9,8 @@
 // USE FILE timer.h
 // ONLY :  output time after quit.
 //==========================================================
-#include "timer.h"
-#include "memory.h"
+#include "../module_base/timer.h"
+#include "../src_global/memory.h"
 
 #include <string>
 #include <fstream>

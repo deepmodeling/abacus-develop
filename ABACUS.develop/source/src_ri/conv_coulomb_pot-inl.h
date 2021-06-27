@@ -2,7 +2,7 @@
 #define CONV_COULOMB_POT_INL_H
 
 #include "conv_coulomb_pot.h"
-#include "../src_global/global_function.h"
+#include "../module_base/global_function.h"
 
 #include "../src_external/src_test/test_function.h"			// Peize Lin test
 

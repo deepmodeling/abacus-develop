@@ -2,8 +2,8 @@
 #define GLOBAL_H
 
 #include "../run_pw.h"
-#include "../src_global/global_variable.h"
-#include "../src_global/global_function.h"
+#include "../module_base/global_variable.h"
+#include "../module_base/global_function.h"
 #include "pw_basis.h"
 #include "energy.h"
 #include "VNL_in_pw.h"

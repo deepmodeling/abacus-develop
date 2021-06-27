@@ -1,9 +1,9 @@
 //#include "../src_pw/global.h"
 #include "mathzone.h"
 #include "../module_base/constants.h"
-#include "global_variable.h"
-#include "global_function.h"
-#include "timer.h"
+#include "../module_base/global_variable.h"
+#include "../module_base/global_function.h"
+#include "../module_base/timer.h"
 #include "../src_parallel/parallel_reduce.h"
 
 Mathzone::Mathzone()

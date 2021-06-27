@@ -4,7 +4,7 @@
 #include "../module_cell/unitcell.h"
 #include "klist.h"
 #include "module_base/complexmatrix.h"
-#include "src_global/vector3.h"
+#include "module_base/vector3.h"
 #include "src_parallel/ft.h"
 
 using namespace std;

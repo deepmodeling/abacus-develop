@@ -1,7 +1,7 @@
 #ifndef INPUT_H
 #define INPUT_H
 
-#include "src_global/vector3.h"
+#include "module_base/vector3.h"
 #include <fstream>
 #include <string>
 #include "src_ions/MD_parameters.h"

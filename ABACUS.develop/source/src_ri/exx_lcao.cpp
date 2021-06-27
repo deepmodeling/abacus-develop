@@ -1,7 +1,7 @@
 #include "exx_lcao.h"
 
 #include "src_pw/global.h"
-#include "src_global/global_function.h"
+#include "../module_base/global_function.h"
 
 #include "conv_coulomb_pot.h"
 #include "conv_coulomb_pot-inl.h"

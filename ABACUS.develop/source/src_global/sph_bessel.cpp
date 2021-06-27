@@ -1,8 +1,8 @@
 //#include "../src_pw/global.h"
 #include "sph_bessel.h"
 #include "../src_parallel/parallel_reduce.h"
-#include "timer.h"
-#include "global_function.h"
+#include "../module_base/timer.h"
+#include "../module_base/global_function.h"
 
 Sph_Bessel::Sph_Bessel()
 {

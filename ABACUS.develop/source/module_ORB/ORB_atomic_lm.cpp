@@ -1,7 +1,7 @@
 #include "ORB_atomic_lm.h"
 #include "../src_global/sph_bessel_recursive.h"
-#include "../src_global/lapack_connector.h"
-#include "../src_global/timer.h"
+#include "../module_base/lapack_connector.h"
+#include "../module_base/timer.h"
 #include "../src_global/math_integral.h"
 #include "../src_global/math_sphbes.h"
 #include <omp.h>

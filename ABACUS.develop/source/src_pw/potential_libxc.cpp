@@ -10,7 +10,7 @@
 #include "src_pw/global.h"
 #include "src_lcao/global_fp.h"
 #include "src_pw/tools.h"
-#include "src_global/global_function.h"
+#include "../module_base/global_function.h"
 #include "src_pw/xc_gga_pw.h"
 
 // [etxc, vtxc, v] = Potential_Libxc::v_xc(...)

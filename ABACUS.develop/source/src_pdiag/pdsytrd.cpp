@@ -1,5 +1,5 @@
 #include "pdsytrd.h"
-#include "src_global/lapack_connector.h"
+#include "module_base/lapack_connector.h"
 
 void pdsytrd(MPI_Comm comm2D, LocalMatrix loc_A,int N,int NB,
              double *a,double *diag,double *off_diag,double  *norm,char uplo)
@@ -24,7 +24,7 @@ void pdsytrd(MPI_Comm comm2D, LocalMatrix loc_A,int N,int NB,
      * comm2D  (input) MPI_Comm
      * MPI 2D  communicator
      * N       (global input) INTEGER
-     *         The number of columns and rows to be operated on matrices A£¬N >= 0.
+     *         The number of columns and rows to be operated on matrices Aï¿½ï¿½N >= 0.
      * NB      (input) INTEGER
      *         blocked size of 2D blocked cyclic matrix
      * A       (local input/local output) double precision pointer,

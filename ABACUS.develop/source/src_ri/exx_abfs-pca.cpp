@@ -5,8 +5,8 @@
 #include "exx_abfs-matrix_orbs21.h"
 #include "exx_abfs-inverse_matrix_double.h"
 
-#include "src_global/lapack_connector.h"
-#include "src_global/global_function.h"
+#include "module_base/lapack_connector.h"
+#include "../module_base/global_function.h"
 
 #include <cassert>
 #include <limits>

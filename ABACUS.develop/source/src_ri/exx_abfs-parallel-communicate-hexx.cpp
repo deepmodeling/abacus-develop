@@ -1,7 +1,7 @@
 #include "exx_abfs-parallel-communicate-hexx.h"
 #include "exx_abfs-parallel-communicate-hexx-template.h"
 #include "src_pw/global.h"
-#include "src_global/global_function.h"
+#include "../module_base/global_function.h"
 #include "exx_abfs-io.h"
 
 #if EXX_H_COMM==1

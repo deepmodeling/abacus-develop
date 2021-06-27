@@ -1,6 +1,6 @@
 #include "local_orbital_charge.h"
 #include "../src_pw/global.h"
-#include "src_global/blas_connector.h"
+#include "module_base/blas_connector.h"
 
 #include "LCAO_nnr.h"
 void Local_Orbital_Charge::allocate_DM_k(void)

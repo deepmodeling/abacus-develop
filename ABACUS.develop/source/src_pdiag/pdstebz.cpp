@@ -1,5 +1,5 @@
 #include "pdstebz.h"
-#include "src_global/lapack_connector.h"
+#include "module_base/lapack_connector.h"
 
 void pdstebz(MPI_Comm comm ,double *D,double *E,double *eigen,int N)
 /*

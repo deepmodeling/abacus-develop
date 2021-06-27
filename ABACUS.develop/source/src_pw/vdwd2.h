@@ -8,7 +8,7 @@
 
 #include "vdwd2_parameters.h"
 #include "module_cell/unitcell_pseudo.h"
-#include "src_global/vector3.h"
+#include "module_base/vector3.h"
 #include <vector>
 
 class Vdwd2

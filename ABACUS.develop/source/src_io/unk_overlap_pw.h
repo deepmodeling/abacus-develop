@@ -7,8 +7,8 @@
 #include <string>
 #include "../src_pw/global.h"
 #include "../module_base/complexmatrix.h"
-#include "../src_global/lapack_connector.h"
-#include "../src_global/global_variable.h"
+#include "../module_base/lapack_connector.h"
+#include "../module_base/global_variable.h"
 #include "../src_parallel/parallel_reduce.h"
 
 using namespace std;

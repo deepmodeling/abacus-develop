@@ -14,7 +14,7 @@
 #include "conv_coulomb_pot.h"
 #include "conv_coulomb_pot-inl.h"
 
-#include "src_global/global_function.h"
+#include "../module_base/global_function.h"
 
 #include "src_external/src_test/test_function.h"				// Peize Lin test
 #include "src_external/src_test/src_ri/exx_abfs-unittest.h"

@@ -2,7 +2,7 @@
 
 #include "../src_pw/global.h"
 #include "module_ORB/ORB_read.h"
-#include "../src_global/global_function.h"
+#include "../module_base/global_function.h"
 #include "../src_global/mathzone.h"
 #include "../src_global/math_sphbes.h" // mohan add 2021-05-06
 

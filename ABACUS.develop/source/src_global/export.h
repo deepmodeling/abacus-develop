@@ -10,7 +10,7 @@ using namespace std;
 #include <fstream>
 #include <iomanip>
 #include <cstdlib>
-#include "global_variable.h"
+#include "../module_base/global_variable.h"
 
 #ifdef __MPI
 #include <mpi.h>

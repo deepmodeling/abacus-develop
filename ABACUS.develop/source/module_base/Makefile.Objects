@@ -10,3 +10,9 @@ matrix.o\
 intarray.o\
 complexmatrix.o\
 complexarray.o\
+global_variable.o\
+global_function.o\
+global_file.o\
+tool_title.o\
+tool_quit.o\
+tool_check.o\

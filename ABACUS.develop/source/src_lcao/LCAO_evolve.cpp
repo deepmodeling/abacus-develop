@@ -294,7 +294,7 @@ extern "C"
     #include "/export/soft/intel2015/composer_xe_2015.1.133/mkl/include/mkl_scalapack.h"
     #include "/export/soft/intel2015/composer_xe_2015.1.133/mkl/include/mkl_blas.h"
 }
-#include "src_global/blas_connector.h"
+#include "module_base/blas_connector.h"
 
 int Evolve_LCAO_Matrix::using_ScaLAPACK_complex(const int &ik, complex<double>** c, complex<double>** c_init)const
 {

@@ -1,5 +1,5 @@
 #include "print_info.h"
-#include "../src_global/global_variable.h"
+#include "../module_base/global_variable.h"
 #include "../src_pw/global.h"
 
 Print_Info::Print_Info(){}

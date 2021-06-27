@@ -1,7 +1,7 @@
 //caoyu add 2021-03-29
 #include "LCAO_descriptor.h"
 #include "LCAO_matrix.h"
-#include "../src_global/lapack_connector.h"
+#include "../module_base/lapack_connector.h"
 #include "../module_base/intarray.h"
 #include "../module_base/complexmatrix.h"
 #include "global_fp.h"

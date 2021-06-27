@@ -1,6 +1,6 @@
 /*test generalized Stardand double precision symmetric eigenproblem*/
 #include "pdiag_double.h"
-#include "src_global/lapack_connector.h"
+#include "module_base/lapack_connector.h"
 #include "src_pw/occupy.h"
 #include "src_pw/global.h"
 #include "src_lcao/local_orbital_charge.h"
@@ -14,12 +14,12 @@ extern "C"
 //    #include "pblas.h"
 //    #include "scalapack.h"
     #include "my_elpa.h"
-	#include "src_global/scalapack_connector.h"
+	#include "module_base/scalapack_connector.h"
 }
 #include "GenELPA.h"
 #include "pdgseps.h"
 #include "pzgseps.h"
-#include "src_global/lapack_connector.h"
+#include "module_base/lapack_connector.h"
 #endif
 
 #include "src_external/src_test/test_function.h"

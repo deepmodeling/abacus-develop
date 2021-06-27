@@ -1,5 +1,5 @@
 #include "xc_type.h"
-#include "../src_global/global_function.h"
+#include "../module_base/global_function.h"
 #include "../src_pw/global.h"
 #include "../src_pw/exx_global.h"
 

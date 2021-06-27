@@ -4,8 +4,8 @@
 #ifdef __MPI
 #include "mpi.h"
 #endif
-#include "src_global/blas_connector.h"
-#include "src_global/lapack_connector.h"			// Peize Lin add 2016-08-04
+#include "module_base/blas_connector.h"
+#include "module_base/lapack_connector.h"			// Peize Lin add 2016-08-04
 
 struct LocalMatrix
 {

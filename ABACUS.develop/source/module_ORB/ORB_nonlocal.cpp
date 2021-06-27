@@ -1,5 +1,5 @@
 #include "ORB_nonlocal.h"
-#include "../src_global/global_function.h"
+#include "../module_base/global_function.h"
 
 Numerical_Nonlocal::Numerical_Nonlocal()
 {

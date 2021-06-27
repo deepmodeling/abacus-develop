@@ -3,8 +3,8 @@
 // DATE : 2008-11-10
 //==========================================================
 #include "global_file.h"
-#include "global_variable.h"
-#include "global_function.h"
+#include "../module_base/global_variable.h"
+#include "../module_base/global_function.h"
 #ifdef __MPI
 #include "mpi.h"
 #endif
@@ -13,6 +13,7 @@
 //----------------------------------------------------------
 // EXPLAIN : Be Called in input.cpp
 //----------------------------------------------------------
+/*
 void Global_File::make_dir_out(
     const std::string &suffix,
 	const std::string &calculation,
@@ -100,7 +101,7 @@ void Global_File::make_dir_out(
     }
     return;
 }
-
+*/
 void Global_File::make_dir_atom(const std::string &label)
 {
 //----------------------------------------------------------

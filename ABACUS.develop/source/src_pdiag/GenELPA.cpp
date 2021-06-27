@@ -71,7 +71,7 @@ extern "C"
     #include "Cblacs.h"
 //    #include "scalapack.h"
     #include "my_elpa.h"
-	#include "src_global/scalapack_connector.h"
+	#include "module_base/scalapack_connector.h"
 }
 #include "GenELPA.h"
 

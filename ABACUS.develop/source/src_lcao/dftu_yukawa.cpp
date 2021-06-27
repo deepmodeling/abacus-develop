@@ -16,7 +16,7 @@
 #include "../module_base/constants.h"
 #include "../src_pw/global.h"
 #include "global_fp.h"
-#include "../src_global/global_function.h"
+#include "../module_base/global_function.h"
 #include "LOOP_ions.h"
 #include "LCAO_matrix.h"
 

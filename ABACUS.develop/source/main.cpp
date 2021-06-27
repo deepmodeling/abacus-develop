@@ -4,8 +4,8 @@
 //==========================================================
 #include "driver.h"
 #include "src_parallel/parallel_global.h"
-#include "src_global/global_variable.h"
-#include "src_global/timer.h"
+#include "module_base/global_variable.h"
+#include "module_base/timer.h"
 
 #include <ctime>
 

@@ -2,9 +2,9 @@
 #define MATHZONE_H
 
 #include "realarray.h"
-#include "vector3.h"
+#include "../module_base/vector3.h"
 #include "../module_base/matrix3.h"
-#include "global_function.h"
+#include "../module_base/global_function.h"
 #include <vector>
 #include <map>
 #include <cassert>

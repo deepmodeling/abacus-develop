@@ -5,7 +5,7 @@
 //==========================================================
 
 #include"vdwd2.h"
-#include"src_global/global_function.h"
+#include"../module_base/global_function.h"
 #include"module_base/constants.h"
 #include<cmath>
 

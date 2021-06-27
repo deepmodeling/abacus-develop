@@ -5,8 +5,8 @@
 //=========================================================
 
 #include "wfc_dm_2d.h"
-#include "src_global/lapack_connector.h"
-#include "src_global/scalapack_connector.h"
+#include "module_base/lapack_connector.h"
+#include "module_base/scalapack_connector.h"
 #include "src_lcao/global_fp.h"
 #include "src_pw/global.h"
 

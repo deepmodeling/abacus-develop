@@ -2,7 +2,7 @@
 #define EXX_ABFS_PARALLEL_DISTRIBUTE_KMEANS_H
 
 #include "exx_abfs-parallel.h"
-#include "src_global/vector3.h"
+#include "module_base/vector3.h"
 #include <vector>
 #include <utility>
 #include <mpi.h>

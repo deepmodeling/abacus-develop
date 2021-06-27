@@ -8,7 +8,7 @@ using namespace std;
 #include <cmath>
 #include <cstdlib>
 #include "src_pw/tools.h"
-#include "src_global/lapack_connector.h"
+#include "module_base/lapack_connector.h"
 #include "src_pw/global.h"
 #include "src_pw/wavefunc_in_pw.h"
 #include "src_lcao/local_orbital_wfc.h"
@@ -22,48 +22,48 @@ public:
 	//const int k_shells = 12;                                                                // default the shell numbers
 	//const double large_number = 99999999.0;
 	//const double small_number = 0.000001;
-	//vector<Vector3<double>> lmn;                                                            //Ã¿¸ökµãÔ­°ûÐòºÅ
-	//vector<double> dist_shell;                                                              //Ã¿Ò»²ãshellµÄ½üÁÚkµã¾àÀë
-	//vector<int> multi;                                                                      //Ã¿Ò»²ãshellµÄ½üÁÚkµãÊýÄ¿
-	//int num_shell_real;                                                                     //ÕæÕýµÄÂú×ãB1Ìõ¼þµÄshellÊýÄ¿£¬×îÖÕ½á¹û¡£(×¢´Ó1¿ªÊ¼¼ÆÊý)
-	//int *shell_list_real;                                                                   //1µ½12²ãshellÖÐ²»Æ½ÐÐ²»µÈ¼ÛµÄshell±êÇ©£¬³¤¶ÈÎªnum_shell_real
-	//double *bweight;                                                                        //Ã¿¸öshellµÄbweight£¬³¤¶ÈÎªnum_shell_real
+	//vector<Vector3<double>> lmn;                                                            //Ã¿ï¿½ï¿½kï¿½ï¿½Ô­ï¿½ï¿½ï¿½ï¿½ï¿½
+	//vector<double> dist_shell;                                                              //Ã¿Ò»ï¿½ï¿½shellï¿½Ä½ï¿½ï¿½ï¿½kï¿½ï¿½ï¿½ï¿½ï¿½
+	//vector<int> multi;                                                                      //Ã¿Ò»ï¿½ï¿½shellï¿½Ä½ï¿½ï¿½ï¿½kï¿½ï¿½ï¿½ï¿½Ä¿
+	//int num_shell_real;                                                                     //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½B1ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½shellï¿½ï¿½Ä¿ï¿½ï¿½ï¿½ï¿½ï¿½Õ½ï¿½ï¿½ï¿½ï¿½(×¢ï¿½ï¿½1ï¿½ï¿½Ê¼ï¿½ï¿½ï¿½ï¿½)
+	//int *shell_list_real;                                                                   //1ï¿½ï¿½12ï¿½ï¿½shellï¿½Ð²ï¿½Æ½ï¿½Ð²ï¿½ï¿½È¼Ûµï¿½shellï¿½ï¿½Ç©ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îªnum_shell_real
+	//double *bweight;                                                                        //Ã¿ï¿½ï¿½shellï¿½ï¿½bweightï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îªnum_shell_real
 	
-	int num_kpts;                                                                           // kµãµÄÊýÄ¿
-	int cal_num_kpts;                                                                       // ÐèÒª¼ÆËãµÄkµÄÊýÄ¿£¬¶ÔÓÚnspin=2Ê±ÓÐÓÃ´¦
+	int num_kpts;                                                                           // kï¿½ï¿½ï¿½ï¿½ï¿½Ä¿
+	int cal_num_kpts;                                                                       // ï¿½ï¿½Òªï¿½ï¿½ï¿½ï¿½ï¿½kï¿½ï¿½ï¿½ï¿½Ä¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½nspin=2Ê±ï¿½ï¿½ï¿½Ã´ï¿½
 	Matrix3 recip_lattice;
-	vector<vector<int>> nnlist;                                                             //Ã¿¸ökµãµÄ½üÁÚkµãÐòºÅ
-	vector<vector<Vector3<double>>> nncell;                                                 //Ã¿¸ökµãµÄ½üÁÚkµãËùÔÚµÄÔ­°ûÐòºÅ
-	int nntot = 0;                                                                          //Ã¿¸ökµãµÄ½üÁÚkµãÊýÄ¿   
-	int num_wannier;																		//ÏëÒª¼ÆËãwannierº¯ÊýµÄ¸öÊý
-	int *L;																					//ÊÔÌ½¹ìµÀµÄ½ÇÁ¿×ÓÊýÖ¸¶¨,³¤¶ÈÎªnum_wannier
-	int *m;																					//ÊÔÌ½¹ìµÀµÄ´ÅÁ¿×ÓÊýÖ¸¶¨,³¤¶ÈÎªnum_wannier
-	int *rvalue;																			//ÊÔÌ½¹ìµÀµÄ¾¶Ïò²¿·Öº¯ÊýÐÎÊ½,Ö»ÓÐÈýÖÖÐÎÊ½,³¤¶ÈÎªnum_wannier
-	double *alfa;																			//ÊÔÌ½¹ìµÀµÄ¾¶Ïò²¿·Öº¯ÊýÖÐµÄµ÷½Ú²ÎÊý,³¤¶ÈÎªnum_wannier
-	Vector3<double> *R_centre;																//ÊÔÌ½¹ìµÀº¯ÊýÖÐÐÄ,³¤¶ÈÎªnum_wannier,cartesian×ø±ê
-	string wannier_file_name = "seedname";                                                  // .mmn,.amnÎÄ¼þÃû
-	int num_exclude_bands = 0;																// ÅÅ³ý¼ÆËãµÄÄÜ´øÊýÄ¿£¬-1±íÊ¾Ã»ÓÐÐèÒªÅÅ³ýµÄÄÜ´ø
-	int *exclude_bands;                                                                     // ÅÅ³ýÄÜ´øµÄindex
-	bool *tag_cal_band;																		// ÅÐ¶ÏNBANDSÄÜ´øÄÇÒ»ÌõÐèÒª¼ÆËã
-	int num_bands;																		   	// wannier90 ÖÐµÄnum_bands
-	bool gamma_only_wannier = false;														// Ö»ÓÃgammaµãÉú³Éwannierº¯Êý
-	string wannier_spin = "up";                                                             // spin²ÎÊý£¬ÓÐup,downÁ½¸ö²ÎÊý
-	int start_k_index = 0;                                                                  // ÓÃÓÚforÑ­»·Ñ°ÕÒkµÄÖ¸±ê£¬spin=2Ê±¿ªÊ¼µÄindexÊÇ²»Ò»ÑùµÄ
+	vector<vector<int>> nnlist;                                                             //Ã¿ï¿½ï¿½kï¿½ï¿½Ä½ï¿½ï¿½ï¿½kï¿½ï¿½ï¿½ï¿½ï¿½
+	vector<vector<Vector3<double>>> nncell;                                                 //Ã¿ï¿½ï¿½kï¿½ï¿½Ä½ï¿½ï¿½ï¿½kï¿½ï¿½ï¿½ï¿½ï¿½Úµï¿½Ô­ï¿½ï¿½ï¿½ï¿½ï¿½
+	int nntot = 0;                                                                          //Ã¿ï¿½ï¿½kï¿½ï¿½Ä½ï¿½ï¿½ï¿½kï¿½ï¿½ï¿½ï¿½Ä¿   
+	int num_wannier;																		//ï¿½ï¿½Òªï¿½ï¿½ï¿½ï¿½wannierï¿½ï¿½ï¿½ï¿½ï¿½Ä¸ï¿½ï¿½ï¿½
+	int *L;																					//ï¿½ï¿½Ì½ï¿½ï¿½ï¿½ï¿½Ä½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö¸ï¿½ï¿½,ï¿½ï¿½ï¿½ï¿½Îªnum_wannier
+	int *m;																					//ï¿½ï¿½Ì½ï¿½ï¿½ï¿½ï¿½Ä´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö¸ï¿½ï¿½,ï¿½ï¿½ï¿½ï¿½Îªnum_wannier
+	int *rvalue;																			//ï¿½ï¿½Ì½ï¿½ï¿½ï¿½ï¿½Ä¾ï¿½ï¿½ò²¿·Öºï¿½ï¿½ï¿½ï¿½ï¿½Ê½,Ö»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê½,ï¿½ï¿½ï¿½ï¿½Îªnum_wannier
+	double *alfa;																			//ï¿½ï¿½Ì½ï¿½ï¿½ï¿½ï¿½Ä¾ï¿½ï¿½ò²¿·Öºï¿½ï¿½ï¿½ï¿½ÐµÄµï¿½ï¿½Ú²ï¿½ï¿½ï¿½,ï¿½ï¿½ï¿½ï¿½Îªnum_wannier
+	Vector3<double> *R_centre;																//ï¿½ï¿½Ì½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½,ï¿½ï¿½ï¿½ï¿½Îªnum_wannier,cartesianï¿½ï¿½ï¿½ï¿½
+	string wannier_file_name = "seedname";                                                  // .mmn,.amnï¿½Ä¼ï¿½ï¿½ï¿½
+	int num_exclude_bands = 0;																// ï¿½Å³ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ü´ï¿½ï¿½ï¿½Ä¿ï¿½ï¿½-1ï¿½ï¿½Ê¾Ã»ï¿½ï¿½ï¿½ï¿½Òªï¿½Å³ï¿½ï¿½ï¿½ï¿½Ü´ï¿½
+	int *exclude_bands;                                                                     // ï¿½Å³ï¿½ï¿½Ü´ï¿½ï¿½ï¿½index
+	bool *tag_cal_band;																		// ï¿½Ð¶ï¿½NBANDSï¿½Ü´ï¿½ï¿½ï¿½Ò»ï¿½ï¿½ï¿½ï¿½Òªï¿½ï¿½ï¿½ï¿½
+	int num_bands;																		   	// wannier90 ï¿½Ðµï¿½num_bands
+	bool gamma_only_wannier = false;														// Ö»ï¿½ï¿½gammaï¿½ï¿½ï¿½ï¿½ï¿½ï¿½wannierï¿½ï¿½ï¿½ï¿½
+	string wannier_spin = "up";                                                             // spinï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½up,downï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+	int start_k_index = 0;                                                                  // ï¿½ï¿½ï¿½ï¿½forÑ­ï¿½ï¿½Ñ°ï¿½ï¿½kï¿½ï¿½Ö¸ï¿½ê£¬spin=2Ê±ï¿½ï¿½Ê¼ï¿½ï¿½indexï¿½Ç²ï¿½Ò»ï¿½ï¿½ï¿½ï¿½
 
 	
-	// ÒÔÏÂÊÇlcao»ù×éÏÂµÄwannier90ËùÐè²ÎÊý
+	// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½lcaoï¿½ï¿½ï¿½ï¿½ï¿½Âµï¿½wannier90ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 	realArray table_local;
-	ComplexMatrix *unk_inLcao;                                                             // lcao»ù×éÏÂ²¨º¯ÊýµÄÖÜÆÚ²¿·Öunk
+	ComplexMatrix *unk_inLcao;                                                             // lcaoï¿½ï¿½ï¿½ï¿½ï¿½Â²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ú²ï¿½ï¿½ï¿½unk
 
 
 
 	toWannier90(int num_kpts,Matrix3 recip_lattice);
 	~toWannier90();
 
-	//void kmesh_supercell_sort(); //°´ÕÕÓëÔ­µãµÄ¾àÀë´ÓÐ¡µ½´óÅÅÐòlmn
-	//void get_nnkpt_first();      //¼ÆËã»ñµÃ12²ãshellµÄ½üÁÚkµãµÄ¾àÀëºÍ¸öÊý
-	//void kmesh_get_bvectors(int multi, int reference_kpt, double dist_shell, vector<Vector3<double>>& bvector);  //»ñÈ¡Ö¸¶¨shell²ã£¬Ö¸¶¨²Î¿¼kµãµÄ½üÁÚkµãµÄbvector
-	//void get_nnkpt_last(); //»ñÈ¡×îÖÕµÄshellÊýÄ¿ºÍbweight
+	//void kmesh_supercell_sort(); //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ô­ï¿½ï¿½Ä¾ï¿½ï¿½ï¿½ï¿½Ð¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½lmn
+	//void get_nnkpt_first();      //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½12ï¿½ï¿½shellï¿½Ä½ï¿½ï¿½ï¿½kï¿½ï¿½Ä¾ï¿½ï¿½ï¿½Í¸ï¿½ï¿½ï¿½
+	//void kmesh_get_bvectors(int multi, int reference_kpt, double dist_shell, vector<Vector3<double>>& bvector);  //ï¿½ï¿½È¡Ö¸ï¿½ï¿½shellï¿½ã£¬Ö¸ï¿½ï¿½ï¿½Î¿ï¿½kï¿½ï¿½Ä½ï¿½ï¿½ï¿½kï¿½ï¿½ï¿½bvector
+	//void get_nnkpt_last(); //ï¿½ï¿½È¡ï¿½ï¿½ï¿½Õµï¿½shellï¿½ï¿½Ä¿ï¿½ï¿½bweight
     //void get_nnlistAndnncell();
 
 	void init_wannier();
@@ -82,7 +82,7 @@ public:
 	complex<double> unkdotkb(const int &ik, const int &ikb, const int &iband_L, const int &iband_R, const Vector3<double> G, const ComplexMatrix *wfc_pw);
 	complex<double> gamma_only_cal(const int &ib_L, const int &ib_R, const ComplexMatrix *wfc_pw, const Vector3<double> G);
 	
-	// lcao²¿·Ö
+	// lcaoï¿½ï¿½ï¿½ï¿½
 	void lcao2pw_basis(const int ik, ComplexMatrix &orbital_in_G);
 	void getUnkFromLcao();
 	void get_lcao_wfc_global_ik(complex<double> **ctot, complex<double> **cc);

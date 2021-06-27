@@ -1,7 +1,7 @@
 #ifndef ABFS_H
 #define ABFS_H
 
-#include "src_global/vector3.h"
+#include "module_base/vector3.h"
 #include "module_base/matrix.h"
 #include "src_ri/exx_abfs.h"
 
