@@ -23,7 +23,7 @@
 #include "src_global/complexmatrix.h"
 #include <vector>
 #include <mpi.h>
-#include "src_global/sltk_atom_arrange.h"
+#include "module_neighbor/sltk_atom_arrange.h"
 #include "src_lcao/LCAO_nnr.h"
 
 
@@ -164,8 +164,21 @@ void Mulliken_Charge::cal_mulliken(void)
 			std::vector<ComplexMatrix> mud;
 			mud.resize(1);
 			mud[0].create(ParaO.ncol,ParaO.nrow);
-			SEARCH_RADIUS = atom_arrange::set_sr_NL(ORB.get_rcutmax_Phi(), ORB.get_rcutmax_Beta(), GAMMA_ONLY_LOCAL);
-			atom_arrange::search(GridD, ucell, SEARCH_RADIUS,test_atom_input );//qifeng-2019-01-21
+
+			SEARCH_RADIUS = atom_arrange::set_sr_NL(
+				ofs_running,
+				OUT_LEVEL,
+				ORB.get_rcutmax_Phi(), 
+				ORB.get_rcutmax_Beta(), 
+				GAMMA_ONLY_LOCAL);
+
+			atom_arrange::search(
+				SEARCH_PBC,
+				ofs_running,
+				GridD, 
+				ucell, 
+				SEARCH_RADIUS,
+				test_atom_input);//qifeng-2019-01-21
 
 			// 2021-04-16
 			LOWF.orb_con.set_orb_tables(
@@ -242,7 +255,13 @@ void Mulliken_Charge::cal_mulliken(void)
 				}//if                       
 			}//ik
 #ifdef __MPI
-			atom_arrange::delete_vector(GridD, ucell, SEARCH_RADIUS, test_atom_input);
+			atom_arrange::delete_vector(
+				ofs_running,
+				SEARCH_PBC,
+				GridD, 
+				ucell, 
+				SEARCH_RADIUS, 
+				test_atom_input);
 #endif
 			LOWF.orb_con.clear_after_ions(UOT, ORB, INPUT.out_descriptor);
 

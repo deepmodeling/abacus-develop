@@ -1,7 +1,7 @@
 #include "../src_pw/global.h"
 #include "LCAO_hamilt.h"
 #include "build_st_pw.h"
-#include "../src_global/sltk_atom_arrange.h"
+#include "module_neighbor/sltk_atom_arrange.h"
 #include "global_fp.h" // mohan add 2021-01-30
 
 LCAO_Hamilt::LCAO_Hamilt()

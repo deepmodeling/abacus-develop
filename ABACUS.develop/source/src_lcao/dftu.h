@@ -7,10 +7,10 @@
 
 #include <string>
 
-#include "../src_pw/charge_broyden.h"
+#include "src_pw/charge_broyden.h"
 #include "dftu_relax.h"
 
-#include "src_pw/unitcell_pseudo.h"
+#include "module_cell/unitcell_pseudo.h"
 #include "src_parallel/parallel_orbitals.h"
 
 using namespace std;

@@ -3,7 +3,7 @@
 
 #include "src_pw/tools.h"
 #include "module_ORB/ORB_gen_tables.h"
-#include "src_global/sltk_grid_driver.h"
+#include "module_neighbor/sltk_grid_driver.h"
 #include "src_lcao/LCAO_matrix.h"
 #include "src_lcao/global_fp.h"
 #include "src_lcao/wfc_dm_2d.h"

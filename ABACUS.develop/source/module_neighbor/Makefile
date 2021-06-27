@@ -53,7 +53,7 @@ VPATH=../src_global\
 HONG= -DMETIS -DMKL_ILP64 -D__NORMAL ${HONG_FFTW} 
 
 FP_OBJS_0=main.o\
-$(OBJS_ADJACENT)\
+$(OBJS_NEIGHBOR)\
 $(OBJS_BASE)\
 
 FP_OBJS=$(patsubst %.o, ${OBJ_DIR}/%.o, ${FP_OBJS_0})
@@ -61,7 +61,7 @@ FP_OBJS=$(patsubst %.o, ${OBJ_DIR}/%.o, ${FP_OBJS_0})
 #==========================
 # MAKING OPTIONS
 #==========================
-ORB : 
+neighbor : 
 	@ make init
 	@ make -j $(NP) serial
 

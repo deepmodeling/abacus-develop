@@ -1,10 +1,5 @@
-//==========================================================
-// AUTHOR : Zhengpan , mohan , spshu
-// DATE : 2007-9
-//==========================================================
 #include "symmetry.h"
 #include "global.h"
-//#include "../src_algorithms/mymath.h"
 #include "symm_other.h"
 
 Symmetry::Symmetry()
@@ -16,7 +11,6 @@ Symmetry::Symmetry()
 
 Symmetry::~Symmetry()
 {
-
 }
 
 
@@ -70,16 +64,15 @@ void Symmetry::analy_sys(void)
     this->a2 = ucell.a2;
     this->a3 = ucell.a3;
 
-
 	Matrix3 latvec1;
 	latvec1.e11 = a1.x; latvec1.e12 = a1.y; latvec1.e13 = a1.z;
 	latvec1.e21 = a2.x; latvec1.e22 = a2.y; latvec1.e23 = a2.z;
 	latvec1.e31 = a3.x; latvec1.e32 = a3.y; latvec1.e33 = a3.z;
-//        cout << "a1 = " << a1.x << " " << a1.y << " " << a1.z <<endl;
-//        cout << "a1 = " << a2.x << " " << a2.y << " " << a2.z <<endl;
-//        cout << "a1 = " << a3.x << " " << a3.y << " " << a3.z <<endl;
-	out.printM3(ofs_running,"LATTICE VECTORS: (CARTESIAN COORDINATE: IN UNIT OF A0)",latvec1);
+//  cout << "a1 = " << a1.x << " " << a1.y << " " << a1.z <<endl;
+//  cout << "a1 = " << a2.x << " " << a2.y << " " << a2.z <<endl;
+//  cout << "a1 = " << a3.x << " " << a3.y << " " << a3.z <<endl;
 
+	out.printM3(ofs_running,"LATTICE VECTORS: (CARTESIAN COORDINATE: IN UNIT OF A0)",latvec1);
 
     int count = 0;
     istart[0] = 0;
@@ -142,16 +135,15 @@ void Symmetry::analy_sys(void)
 					new_lat.e31, new_lat.e32, new_lat.e33,
 					newpos[3*iat],newpos[3*iat+1],newpos[3*iat+2]);
 
-    //                    cout << " newpos_before = " << newpos[3*iat] << " " << newpos[3*iat+1] << " " << newpos[3*iat+2] << endl;
-//			ofs_running << " newpos_before = " << newpos[3*iat] << " " << newpos[3*iat+1] << " " << newpos[3*iat+2] << endl; 
+    	//  cout << " newpos_before = " << newpos[3*iat] << " " << newpos[3*iat+1] << " " << newpos[3*iat+2] << endl;
+		//	ofs_running << " newpos_before = " << newpos[3*iat] << " " << newpos[3*iat+1] << " " << newpos[3*iat+2] << endl; 
 			for(int k=0; k<3; ++k)
 			{
 				this->check_translation( newpos[iat*3+k], -floor(newpos[iat*3+k]));
                          	this->check_boundary( this->newpos[iat*3+k] );
 			}
-      //                  cout << " newpos = " << newpos[3*iat] << " " << newpos[3*iat+1] << " " << newpos[3*iat+2] << endl;
-
-//			ofs_running << " newpos = " << newpos[3*iat] << " " << newpos[3*iat+1] << " " << newpos[3*iat+2] << endl; 
+      	// cout << " newpos = " << newpos[3*iat] << " " << newpos[3*iat+1] << " " << newpos[3*iat+2] << endl;
+		// ofs_running << " newpos = " << newpos[3*iat] << " " << newpos[3*iat+1] << " " << newpos[3*iat+2] << endl; 
 			++iat;
 		}
 	}
@@ -251,8 +243,6 @@ int Symmetry::standard_lat(
 //	cout << " alpha=" << alpha << endl;
 //	cout << " beta=" << beta << endl;
 //	cout << " gamma=" << gamma << endl;
-	
-
      
 
     Symm_Other::right_hand_sense(a, b, c);
@@ -1602,28 +1592,29 @@ void Symmetry::stress_symmetry(matrix& sigma)   //zhengdy added 2017
 	ZEROS(tot_sigma, 9);
 
 	temp[0]=ucell.a1.x;
-        temp[1]=ucell.a1.y;
-        temp[2]=ucell.a1.z;
-        temp[3]=ucell.a2.x;
-        temp[4]=ucell.a2.y;
-        temp[5]=ucell.a2.z;
-        temp[6]=ucell.a3.x;
-        temp[7]=ucell.a3.y;
-        temp[8]=ucell.a3.z;
+	temp[1]=ucell.a1.y;
+	temp[2]=ucell.a1.z;
+	temp[3]=ucell.a2.x;
+	temp[4]=ucell.a2.y;
+	temp[5]=ucell.a2.z;
+	temp[6]=ucell.a3.x;
+	temp[7]=ucell.a3.y;
+	temp[8]=ucell.a3.z;
 
-        for(int i=0;i<3;i++)
-        {
-                for(int j= 0;j<3;j++)
-                {
-                        for(int k=0;k<3;k++)
-                        {
-                                for(int l=0;l<3;l++)
-                                {
-                                        tot_sigma[i*3 +j] += sigma(k,l) * temp[i*3+k] * temp[j*3+l];
-                                }
-                        }
-                }
-        }
+	for(int i=0;i<3;i++)
+	{
+		for(int j= 0;j<3;j++)
+		{
+			for(int k=0;k<3;k++)
+			{
+				for(int l=0;l<3;l++)
+				{
+					tot_sigma[i*3 +j] += sigma(k,l) * temp[i*3+k] * temp[j*3+l];
+				}
+			}
+		}
+	}
+
 	for(int i=0;i<3;i++)
 	{
 		for(int j = 0;j<3;j++)
@@ -1631,6 +1622,7 @@ void Symmetry::stress_symmetry(matrix& sigma)   //zhengdy added 2017
 			sigma(i,j) = tot_sigma[i*3+j];
 		}
 	}
+
 	ZEROS(temp, 9);
 	ZEROS(tot_sigma, 9);
 
@@ -1670,37 +1662,43 @@ void Symmetry::stress_symmetry(matrix& sigma)   //zhengdy added 2017
 	}
 
 	ZEROS(temp, 9);
-        ZEROS(tot_sigma, 9);
-        double det = ucell.a1.x*ucell.a2.y*ucell.a3.z -
-                ucell.a1.x*ucell.a3.y*ucell.a2.z +
-                ucell.a2.x*ucell.a3.y*ucell.a1.z -
-                ucell.a2.x*ucell.a1.y*ucell.a3.z +
-                ucell.a3.x*ucell.a1.y*ucell.a2.z -
-                ucell.a3.x*ucell.a2.y*ucell.a1.z;
-        if(det == 0)det = 1;
-        temp[0] = (ucell.a2.y*ucell.a3.z - ucell.a2.z*ucell.a3.y) / det;
-        temp[1] = -(ucell.a1.y*ucell.a3.z - ucell.a1.z*ucell.a3.y) / det;
-        temp[2] = (ucell.a1.y*ucell.a2.z - ucell.a1.z*ucell.a2.y) / det;
-        temp[3] = -(ucell.a2.x*ucell.a3.z - ucell.a2.z*ucell.a3.x) / det;
-        temp[4] = (ucell.a1.x*ucell.a3.z - ucell.a1.z*ucell.a3.x) / det;
-        temp[5] = -(ucell.a1.x*ucell.a2.z - ucell.a1.z*ucell.a2.x) / det;
-        temp[6] = (ucell.a2.x*ucell.a3.y - ucell.a2.y*ucell.a3.x) / det;
-        temp[7] = -(ucell.a1.x*ucell.a3.y - ucell.a1.y*ucell.a3.x) / det;
-        temp[8] = (ucell.a1.x*ucell.a2.y - ucell.a1.y*ucell.a2.x) / det;
+	ZEROS(tot_sigma, 9);
 
-        for(int i=0;i<3;i++)
-        {
-                for(int j= 0;j<3;j++)
-                {
-                        for(int k=0;k<3;k++)
-                        {
-                                for(int l=0;l<3;l++)
-                                {
-                                        tot_sigma[i*3 +j] += sigma(k,l) * temp[i*3+k] * temp[j*3+l];
-                                }
-                        }
-                }
-        }
+	double det = ucell.a1.x*ucell.a2.y*ucell.a3.z -
+		ucell.a1.x*ucell.a3.y*ucell.a2.z +
+		ucell.a2.x*ucell.a3.y*ucell.a1.z -
+		ucell.a2.x*ucell.a1.y*ucell.a3.z +
+		ucell.a3.x*ucell.a1.y*ucell.a2.z -
+		ucell.a3.x*ucell.a2.y*ucell.a1.z;
+
+	if(det == 0)
+	{
+		det = 1;
+	}
+
+	temp[0] = (ucell.a2.y*ucell.a3.z - ucell.a2.z*ucell.a3.y) / det;
+	temp[1] = -(ucell.a1.y*ucell.a3.z - ucell.a1.z*ucell.a3.y) / det;
+	temp[2] = (ucell.a1.y*ucell.a2.z - ucell.a1.z*ucell.a2.y) / det;
+	temp[3] = -(ucell.a2.x*ucell.a3.z - ucell.a2.z*ucell.a3.x) / det;
+	temp[4] = (ucell.a1.x*ucell.a3.z - ucell.a1.z*ucell.a3.x) / det;
+	temp[5] = -(ucell.a1.x*ucell.a2.z - ucell.a1.z*ucell.a2.x) / det;
+	temp[6] = (ucell.a2.x*ucell.a3.y - ucell.a2.y*ucell.a3.x) / det;
+	temp[7] = -(ucell.a1.x*ucell.a3.y - ucell.a1.y*ucell.a3.x) / det;
+	temp[8] = (ucell.a1.x*ucell.a2.y - ucell.a1.y*ucell.a2.x) / det;
+
+	for(int i=0;i<3;i++)
+	{
+		for(int j= 0;j<3;j++)
+		{
+			for(int k=0;k<3;k++)
+			{
+				for(int l=0;l<3;l++)
+				{
+					tot_sigma[i*3 +j] += sigma(k,l) * temp[i*3+k] * temp[j*3+l];
+				}
+			}
+		}
+	}
 
 	for(int i=0;i<3;i++)
 	{
@@ -1715,7 +1713,7 @@ void Symmetry::stress_symmetry(matrix& sigma)   //zhengdy added 2017
 	return;
 }
 
-void Symmetry::write()
+void Symmetry::write(void)
 {
     if (test_symmetry) TITLE("Symmetry","write");
     ofs_running<<endl;

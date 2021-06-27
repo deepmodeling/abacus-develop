@@ -2,7 +2,7 @@
 #define H_EWALD_PW_H
 
 #include "tools.h"
-#include "unitcell.h"
+#include "module_cell/unitcell.h"
 #include "pw_basis.h"
 
 class H_Ewald_pw 

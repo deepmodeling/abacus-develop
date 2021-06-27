@@ -6,8 +6,8 @@
 #ifndef VDWD3_H
 #define VDWD3_H
 #include "vdwd3_parameters.h"
-#include "unitcell_pseudo.h"
-#include "../src_global/vector3.h"
+#include "module_cell/unitcell_pseudo.h"
+#include "src_global/vector3.h"
 #include <vector>
 #include <cmath>
 

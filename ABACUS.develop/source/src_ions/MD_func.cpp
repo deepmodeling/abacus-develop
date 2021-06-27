@@ -3,7 +3,7 @@
 #include "src_lcao/FORCE_STRESS.h"
 #include "src_pw/forces.h"
 #include "src_pw/stress_pw.h"
-#include "src_global/sltk_atom_arrange.h"
+#include "module_neighbor/sltk_atom_arrange.h"
 
 bool MD_func::RestartMD(const int& numIon, Vector3<double>* vel, int& step_rst)
 {
@@ -282,8 +282,15 @@ void MD_func::callInteraction_LCAO(const int& numIon, Vector3<double>* force, ma
 		force[ion].y =fcs(ion, 1)/2.0;
 		force[ion].z =fcs(ion, 2)/2.0;
 	}
+
 #ifdef __MPI //2015-10-01, xiaohui
-	atom_arrange::delete_vector(GridD, ucell, SEARCH_RADIUS, test_atom_input);
+	atom_arrange::delete_vector(
+		ofs_running, 
+		SEARCH_PBC, 
+		GridD, 
+		ucell, 
+		SEARCH_RADIUS, 
+		test_atom_input);
 #endif //2015-10-01, xiaohui
 
 	return;

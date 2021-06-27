@@ -23,7 +23,7 @@ smearing            gaussian
 sigma             0.001
 #Parameters (3.PW)
 ecutwfc             20
-dr2                 1e-6
+dr2                 1e-8
 niter               100
 
 #Parameters (LCAO)

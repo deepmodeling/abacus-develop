@@ -4,7 +4,7 @@
 #include "src_io/optical.h"
 #include "src_io/cal_test.h"
 #include "src_io/winput.h"
-#include "src_global/sltk_atom_arrange.h"
+#include "module_neighbor/sltk_atom_arrange.h"
 #include "src_lcao/LOOP_cell.h"
 #include "src_io/print_info.h"
 #include "src_pw/symmetry.h"

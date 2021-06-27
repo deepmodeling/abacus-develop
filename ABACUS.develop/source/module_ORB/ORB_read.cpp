@@ -4,7 +4,7 @@
 #include "../src_global/math_integral.h"
 #include "../src_global/tool_check.h"
 #include <algorithm>
-#include "src_pw/soc.h"
+//#include "src_pw/soc.h"
 using namespace std;
 
 //==============================

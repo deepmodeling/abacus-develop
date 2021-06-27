@@ -1,8 +1,3 @@
-//==========================================================
-// AUTHOR : Linxin He, Kaimin Duan, Wei Fang, Mohan Chen
-// START: 2006
-// LAST UPDATE: 2009-05-18
-//==========================================================
 #ifndef K_VECTORS_H
 #define K_VECTORS_H
 

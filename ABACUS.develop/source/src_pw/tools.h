@@ -20,7 +20,7 @@ using namespace std;
 #include "../src_global/constants.h"
 #include "../src_global/vector3.h"
 #include "../src_global/matrix.h"
-#include "../src_global/matrix3.h"
+#include "../module_base/matrix3.h"
 #include "../src_global/realarray.h"
 #include "../src_global/intarray.h"
 #include "../src_global/complexarray.h"

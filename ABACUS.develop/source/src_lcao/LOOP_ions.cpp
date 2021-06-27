@@ -11,7 +11,7 @@
 #include "src_ri/exx_abfs.h"
 #include "src_ri/exx_opt_orb.h"
 #include "ELEC_scf.h"
-#include "src_global/sltk_atom_arrange.h"
+#include "module_neighbor/sltk_atom_arrange.h"
 #include "src_pw/vdwd2.h"
 #include "src_pw/vdwd3.h"
 #include "LCAO_descriptor.h"
@@ -234,7 +234,13 @@ bool LOOP_ions::force_stress(
     {
 
 #ifdef __MPI
-        atom_arrange::delete_vector(GridD, ucell, SEARCH_RADIUS, test_atom_input);
+        atom_arrange::delete_vector(
+			ofs_running,
+			SEARCH_PBC, 
+			GridD, 
+			ucell, 
+			SEARCH_RADIUS, 
+			test_atom_input);
 #endif
 
         if(CALCULATION=="relax") 
@@ -297,7 +303,13 @@ xiaohui modify 2014-08-09*/
     {
 
 #ifdef __MPI
-		atom_arrange::delete_vector(GridD, ucell, SEARCH_RADIUS, test_atom_input);
+		atom_arrange::delete_vector(
+			ofs_running,
+			SEARCH_PBC, 
+			GridD, 
+			ucell, 
+			SEARCH_RADIUS, 
+			test_atom_input);
 #endif
 		if(CALCULATION=="cell-relax")
 		{
@@ -324,8 +336,13 @@ xiaohui modify 2014-08-09*/
 
     if(FORCE&&STRESS)
     {
-
-        atom_arrange::delete_vector(GridD, ucell, SEARCH_RADIUS, test_atom_input);
+        atom_arrange::delete_vector(
+			ofs_running,
+			SEARCH_PBC, 
+			GridD, 
+			ucell, 
+			SEARCH_RADIUS, 
+			test_atom_input);
         
         if(CALCULATION=="relax" || CALCULATION=="cell-relax")
         {
@@ -394,12 +411,22 @@ void LOOP_ions::final_scf(void)
 
     Variable_Cell::final_calculation_after_vc();
 
-
 	//------------------------------------------------------------------
 	// THIS PART IS THE SAME AS LOOP_elec::set_matrix_grid
-    SEARCH_RADIUS = atom_arrange::set_sr_NL(ORB.get_rcutmax_Phi(), ORB.get_rcutmax_Beta(), GAMMA_ONLY_LOCAL);
+    SEARCH_RADIUS = atom_arrange::set_sr_NL(
+		ofs_running,
+		OUT_LEVEL,
+		ORB.get_rcutmax_Phi(), 
+		ORB.get_rcutmax_Beta(), 
+		GAMMA_ONLY_LOCAL);
 
-    atom_arrange::search(GridD, ucell, SEARCH_RADIUS, test_atom_input);
+    atom_arrange::search(
+		SEARCH_PBC,
+		ofs_running,
+		GridD, 
+		ucell, 
+		SEARCH_RADIUS, 
+		test_atom_input);
 
     GridT.set_pbc_grid(
         pw.ncx, pw.ncy, pw.ncz,
