@@ -15,12 +15,12 @@ jobs:
       - name: Docker Build
         uses: docker/build-push-action@v2
         with:
-          tags: ${CONTAINER}
-          cache-from: type=registry,ref=${CONTAINER}
+          tags: ${{ env.CONTAINER }}
+          cache-from: type=registry,ref=${{ env.CONTAINER }}
 
   build_and_test_abacus:
     runs-on: ubuntu-latest
-    container: ${CONTAINER}
+    container: ${{ env.CONTAINER }}
     needs: build_container
     steps:
       - name: Checkout Recent Pull Request
