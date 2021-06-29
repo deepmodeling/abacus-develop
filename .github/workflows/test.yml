@@ -9,21 +9,15 @@ env:
   CONTAINER: ghcr.io/deepmodeling/test:latest
 
 jobs:
-  build_container:
+  test:
     runs-on: ubuntu-latest
     steps:
-      - name: Docker Build
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Build Docker Image
         uses: docker/build-push-action@v2
         with:
-          tags: ${CONTAINER}
-          cache-from: type=registry,ref=${CONTAINER}
-
-  build_and_test_abacus:
-    runs-on: ubuntu-latest
-    container: ${CONTAINER}
-    needs: build_container
-    steps:
-      - name: Checkout Recent Pull Request
-        uses: actions/checkout@v2
+          tags: test
+          cache-from: type=registry,ref=${{ env.CONTAINER }}
       - name: Build and Test
-        run: bash entrypoint.sh
+        run: docker run -v $GITHUB_WORKSPACE:/workspace -w /workspace test bash entrypoint.sh
