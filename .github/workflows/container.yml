@@ -19,6 +19,6 @@ jobs:
           password: ${{ secrets.PAT }}
       - uses: docker/build-push-action@v2
         with:
-          tags: ${CONTAINER}
-          cache-from: type=registry,ref=${CONTAINER}
+          tags: ${{ env.CONTAINER }}
+          cache-from: type=registry,ref=${{ env.CONTAINER }}
           push: true
