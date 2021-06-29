@@ -1,0 +1,29 @@
+name: Test ABACUS
+
+on:
+  pull_request:
+    branches:
+      - ghcr-test
+
+env:
+  CONTAINER: ghcr.io/deepmodeling/test:latest
+
+jobs:
+  build_container:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Docker Build
+        uses: docker/build-push-action@v2
+        with:
+          tags: ${CONTAINER}
+          cache-from: type=registry,ref=${CONTAINER}
+
+  build_and_test_abacus:
+    runs-on: ubuntu-latest
+    container: ${CONTAINER}
+    needs: build_container
+    steps:
+      - name: Checkout Recent Pull Request
+        uses: actions/checkout@v2
+      - name: Build and Test
+        run: bash entrypoint.sh
