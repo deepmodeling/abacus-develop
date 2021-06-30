@@ -20,6 +20,7 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           tags: abacus-development-kit:gnu
+          load: true
           cache-from: type=registry,ref=${{ env.CONTAINER }}
       - name: Build and Test
         run: docker run -v $GITHUB_WORKSPACE:/workspace -w /workspace abacus-development-kit:gnu bash entrypoint.sh
