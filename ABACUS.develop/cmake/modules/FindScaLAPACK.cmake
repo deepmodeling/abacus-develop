@@ -5,7 +5,11 @@
 #  ScaLAPACK_FOUND         - True if ScaLAPACK is found.
 #
 
-find_library(ScaLAPACK_LIBRARY NAMES scalapack)
+find_library(ScaLAPACK_LIBRARY
+    NAMES scalapack
+    HINTS ${LAPACK_ROOT}
+    PATH_SUFFIXES "lib"
+    )
 
 # Handle the QUIET and REQUIRED arguments and
 # set ScaLAPACK_FOUND to TRUE if all variables are non-zero.

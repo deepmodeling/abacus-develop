@@ -7,8 +7,16 @@
 #  ELPA_INCLUDE_DIRS - Where to find ELPA headers.
 #
 
-find_path(ELPA_INCLUDE_DIR elpa/elpa.h)
-find_library(ELPA_LIBRARY NAMES elpa)
+find_path(ELPA_INCLUDE_DIR
+    elpa/elpa.h
+    HINTS ${ELPA_ROOT}
+    PATH_SUFFIXES "include"
+    )
+find_library(ELPA_LIBRARY
+    NAMES elpa
+    HINTS ${ELPA_ROOT}
+    PATH_SUFFIXES "lib"
+    )
 
 # Handle the QUIET and REQUIRED arguments and
 # set ELPA_FOUND to TRUE if all variables are non-zero.

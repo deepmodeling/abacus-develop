@@ -6,8 +6,16 @@
 #  FFTW3_FOUND         - True if FFTW3 is found.
 #
 
-find_path(FFTW3_INCLUDE_DIR fftw3.h)
-find_library(FFTW3_LIBRARY NAMES fftw3)
+find_path(FFTW3_INCLUDE_DIR
+    NAMES fftw3.h
+    HINTS ${FFTW3_ROOT}
+    PATH_SUFFIXES "include"
+    )
+find_library(FFTW3_LIBRARY
+    NAMES fftw3
+    HINTS ${FFTW3_ROOT}
+    PATH_SUFFIXES "lib"
+    )
 
 # Handle the QUIET and REQUIRED arguments and
 # set FFTW3_FOUND to TRUE if all variables are non-zero.
