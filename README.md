@@ -1,8 +1,15 @@
-<div style="text-align:center">
+<p style="text-align:center">
     <img src="https://raw.githubusercontent.com/deepmodeling/abacus-develop/develop/ABACUS.develop/documents/abacus-logo.jpg"/>
-</div>
+</p>
 
-[![Container](https://github.com/deepmodeling/abacus-develop/actions/workflows/container.yml/badge.svg)](https://github.com/deepmodeling/abacus-develop/actions/workflows/container.yml) [![Test](https://github.com/deepmodeling/abacus-develop/actions/workflows/test.yml/badge.svg)](https://github.com/deepmodeling/abacus-develop/actions/workflows/test.yml)
+<p style="text-align:center">
+    <a href="https://github.com/deepmodeling/abacus-develop/actions/workflows/container.yml">
+        <img src="https://github.com/deepmodeling/abacus-develop/actions/workflows/container.yml/badge.svg">
+    </a>
+    <a href="https://github.com/deepmodeling/abacus-develop/actions/workflows/test.yml">
+        <img src="https://github.com/deepmodeling/abacus-develop/actions/workflows/test.yml/badge.svg">
+    </a>
+</p>
 
 WELCOME TO THE "ABACUS" PROGRAM!
 
