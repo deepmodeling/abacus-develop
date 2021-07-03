@@ -1,7 +1,6 @@
 #ifndef RWSTREAM_H
 #define RWSTREAM_H
 
-#include "malloc.h"
 #include <stdio.h>
 #include <cstdlib>
 #include <complex>
@@ -74,7 +73,7 @@ Rwstream& operator>>(Rwstream& rstream,T* &data)
 	cout<<malloc_usable_size(data)<<' '<<sizeof(T)<<' '<<n<<endl;
 	size_t ch;
     ch=fread(data,size,n,rstream.fileptr);
-	if(ch<n) 
+	if(ch<n)
 	{
 		cout<<"Error in Rwstream: Some dynamic memory didn't be read."<<endl;
 		exit(0);
@@ -87,13 +86,13 @@ void rwread(Rwstream& rstream,T* &data,int n)
 	int size=sizeof(T);
 	size_t ch;
     ch=fread(data,size,n,rstream.fileptr);
-    if(ch<n) 
+    if(ch<n)
     {
         cout<<"Error in Rwstream: Some dynamic memory didn't be read."<<endl;
         exit(0);
     }
     return;
-}	
+}
 
 #endif
 

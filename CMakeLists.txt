@@ -96,7 +96,6 @@ if(DEFINED MKL_DIR)
   )
 else()
   target_link_libraries(${ABACUS_BIN_NAME}
-    -lgfortran
     FFTW3::FFTW3
     ScaLAPACK::ScaLAPACK
     LAPACK::LAPACK

@@ -25,14 +25,14 @@ extern "C"
 #include "src_external/src_test/test_function.h"
 
 inline int cart2blacs(
-	MPI_Comm comm_2D, 
-	int nprows, 
-	int npcols, 
-	int N, 
-	int nblk, 
-	int lld, 
-	int *desc, 
-	int &mpi_comm_rows, 
+	MPI_Comm comm_2D,
+	int nprows,
+	int npcols,
+	int N,
+	int nblk,
+	int lld,
+	int *desc,
+	int &mpi_comm_rows,
 	int &mpi_comm_cols)
 {
 #ifdef __MPI
@@ -48,7 +48,8 @@ inline int cart2blacs(
             MPI_Cart_rank(comm_2D, pcoord, &usermap[i+j*nprows]);
         }
     }
-    Cblacs_get(comm_2D, 0, &my_blacs_ctxt);
+    MPI_Fint comm_2D_f = MPI_Comm_c2f(comm_2D);
+    Cblacs_get(comm_2D_f, 0, &my_blacs_ctxt);
     Cblacs_gridmap(&my_blacs_ctxt, usermap, nprows, nprows, npcols);
     Cblacs_gridinfo(my_blacs_ctxt, &nprows, &npcols, &myprow, &mypcol);
     info=elpa_get_communicators(comm_2D, myprow, mypcol, &mpi_comm_rows, &mpi_comm_cols);
@@ -63,16 +64,16 @@ inline int cart2blacs(
 }
 
 inline int q2ZLOC_WFC(
-	int pos, 
-	int naroc[2], 
+	int pos,
+	int naroc[2],
 	int nb,
-	int dim0, 
-	int dim1, 
-	int iprow, 
+	int dim0,
+	int dim1,
+	int iprow,
 	int ipcol,
 	int loc_size,
-	double* work, 
-	double* ZLOC, 
+	double* work,
+	double* ZLOC,
 	double** WFC)
 {
     //OUT(ofs_running,"start q2ZLOC_WFC");
@@ -100,20 +101,20 @@ inline int q2ZLOC_WFC(
 }
 
 inline int q2ZLOC_WFC_WFCAUG(
-	int pos, 
-	int naroc[2], 
+	int pos,
+	int naroc[2],
 	int nb,
-	int dim0, 
-	int dim1, 
-	int iprow, 
+	int dim0,
+	int dim1,
+	int iprow,
 	int ipcol,
 	int loc_size,
-	double* work, 
-	double* ZLOC, 
-	double** WFC, 
+	double* work,
+	double* ZLOC,
+	double** WFC,
 	double** WFCAUG)
 {
-	
+
     stringstream ss;
     for(int j=0; j<naroc[1]; ++j)
     {
@@ -146,23 +147,23 @@ inline int q2ZLOC_WFC_WFCAUG(
         }
     }
 
-    //OUT(ofs_running,"WFCAUG was done in q2ZLOC_WFC_WFCAUG");  
+    //OUT(ofs_running,"WFCAUG was done in q2ZLOC_WFC_WFCAUG");
     return 0;
 }
 
 inline int q2ZLOC_WFC_CTOT(
-	int myid, 
-	int pos, 
-	int naroc[2], 
+	int myid,
+	int pos,
+	int naroc[2],
 	int nb,
-	int dim0, 
-	int dim1, 
-	int iprow, 
+	int dim0,
+	int dim1,
+	int iprow,
 	int ipcol,
 	int loc_size,
-	double* work, 
-	double* ZLOC, 
-	double** WFC, 
+	double* work,
+	double* ZLOC,
+	double** WFC,
 	double** CTOT)
 {
     for(int j=0; j<naroc[1]; ++j)
@@ -189,19 +190,19 @@ inline int q2ZLOC_WFC_CTOT(
 }
 
 inline int q2ZLOC_WFC_WFCAUG_CTOT(
-	int myid, 
-	int pos, 
-	int naroc[2], 
+	int myid,
+	int pos,
+	int naroc[2],
 	int nb,
-	int dim0, 
-	int dim1, 
-	int iprow, 
+	int dim0,
+	int dim1,
+	int iprow,
 	int ipcol,
 	int loc_size,
-	double* work, 
-	double* ZLOC, 
-	double** WFC, 
-	double** WFCAUG, 
+	double* work,
+	double* ZLOC,
+	double** WFC,
+	double** WFCAUG,
 	double** CTOT)
 {
     for(int j=0; j<naroc[1]; ++j)
@@ -233,13 +234,13 @@ inline int q2ZLOC_WFC_WFCAUG_CTOT(
 }
 
 inline int q2WFC_complex(
-	int naroc[2], 
+	int naroc[2],
 	int nb,
-	int dim0, 
-	int dim1, 
-	int iprow, 
+	int dim0,
+	int dim1,
+	int iprow,
 	int ipcol,
-	complex<double>* work, 
+	complex<double>* work,
 	complex<double>** WFC)
 {
     for(int j=0; j<naroc[1]; ++j)
@@ -260,14 +261,14 @@ inline int q2WFC_complex(
 }
 
 inline int q2WFC_WFCAUG_complex(
-	int naroc[2], 
+	int naroc[2],
 	int nb,
-	int dim0, 
-	int dim1, 
-	int iprow, 
+	int dim0,
+	int dim1,
+	int iprow,
 	int ipcol,
-	complex<double>* work, 
-	complex<double>** WFC, 
+	complex<double>* work,
+	complex<double>** WFC,
 	complex<double>** WFCAUG)
 {
     for(int j=0; j<naroc[1]; ++j)
@@ -293,15 +294,15 @@ inline int q2WFC_WFCAUG_complex(
 }
 
 inline int q2WFC_CTOT_complex(
-	int myid, 
-	int naroc[2], 
+	int myid,
+	int naroc[2],
 	int nb,
-	int dim0, 
-	int dim1, 
-	int iprow, 
+	int dim0,
+	int dim1,
+	int iprow,
 	int ipcol,
-	complex<double>* work, 
-	complex<double>** WFC, 
+	complex<double>* work,
+	complex<double>** WFC,
 	complex<double>** CTOT)
 {
     for(int j=0; j<naroc[1]; ++j)
@@ -323,16 +324,16 @@ inline int q2WFC_CTOT_complex(
 }
 
 inline int q2WFC_WFCAUG_CTOT_complex(
-	int myid, 
-	int naroc[2], 
+	int myid,
+	int naroc[2],
 	int nb,
-	int dim0, 
-	int dim1, 
-	int iprow, 
+	int dim0,
+	int dim1,
+	int iprow,
 	int ipcol,
-	complex<double>* work, 
-	complex<double>** WFC, 
-	complex<double>** WFCAUG, 
+	complex<double>* work,
+	complex<double>** WFC,
+	complex<double>** WFCAUG,
 	complex<double>** CTOT)
 {
     for(int j=0; j<naroc[1]; ++j)
@@ -519,7 +520,7 @@ void Pdiag_Double::diago_double_begin(
 		++istep;
 	}
 	#endif
-	
+
 #ifdef __MPI
 	TITLE("Pdiag_Double","diago_begin");
 	assert(this->loc_size > 0);
@@ -531,7 +532,7 @@ void Pdiag_Double::diago_double_begin(
     int nprocs, myid;
     MPI_Status status;
     MPI_Comm_size(comm_2D, &nprocs);
-    MPI_Comm_rank(comm_2D, &myid);	
+    MPI_Comm_rank(comm_2D, &myid);
 
 	// parallel diagonalize the
 	// H | psi > = S | psi >
@@ -597,7 +598,8 @@ void Pdiag_Double::diago_double_begin(
         bool wantEigenVector=true;
         bool wantDebug=true;
         int info;
-        int comm_2D_f=MPI_Comm_c2f(comm_2D);
+        // int comm_2D_f=MPI_Comm_c2f(comm_2D);
+        MPI_Comm comm_2D_f = comm_2D;
 
         int THIS_REAL_ELPA_KERNEL_API=12;
         int useQR=0;						// may be changed to input parameter sometime
@@ -628,7 +630,7 @@ void Pdiag_Double::diago_double_begin(
 
         if(INPUT.new_dm==0)
         {
-            // convert wave function to band distribution 
+            // convert wave function to band distribution
 			// and calculate the density matrix in the tranditional way
             // redistribute eigenvectors to wfc / wfc_aug
 
@@ -707,12 +709,12 @@ void Pdiag_Double::diago_double_begin(
 		matrix s_tmp(this->ncol, this->nrow, false);
 		memcpy( s_tmp.c, s_mat, sizeof(double)*this->ncol*this->nrow );
 		vector<double> ekb_tmp(NLOCAL,0);
-		
+
 		const char jobz='V', uplo='U';
 		const int itype=1;
 		int lwork=-1, info=0;
 		vector<double> work(1,0);
-		dsygv_(&itype, &jobz, &uplo, &NLOCAL, wfc_2d.c, &NLOCAL, 
+		dsygv_(&itype, &jobz, &uplo, &NLOCAL, wfc_2d.c, &NLOCAL,
 			s_tmp.c, &NLOCAL, ekb_tmp.data(), work.data(), &lwork, &info);
 
 		if(info)
@@ -723,15 +725,15 @@ void Pdiag_Double::diago_double_begin(
 		lwork = work[0];
 		work.resize(lwork);
 
-		dsygv_(&itype, &jobz, &uplo, &NLOCAL, wfc_2d.c, &NLOCAL, 
+		dsygv_(&itype, &jobz, &uplo, &NLOCAL, wfc_2d.c, &NLOCAL,
 			s_tmp.c, &NLOCAL, ekb_tmp.data(), work.data(), &lwork, &info);
 
 		if(info)
 		{
 			throw runtime_error("info="+TO_STRING(info)+". "+TO_STRING(__FILE__)+" line "+TO_STRING(__LINE__));
 		}
-		memcpy( ekb, ekb_tmp.data(), sizeof(double)*NBANDS ); 
-		
+		memcpy( ekb, ekb_tmp.data(), sizeof(double)*NBANDS );
+
 		if(INPUT.new_dm==0)
 		{
 			throw domain_error("INPUT.new_dm must be 1. "+TO_STRING(__FILE__)+" line "+TO_STRING(__LINE__));
@@ -744,7 +746,7 @@ void Pdiag_Double::diago_double_begin(
 		matrix s_tmp(this->ncol, this->nrow, false);
 		memcpy( s_tmp.c, s_mat, sizeof(double)*this->ncol*this->nrow );
 		wfc_2d.create(this->ncol, this->nrow, false);
-		
+
 		const char jobz='V', range='I', uplo='U';
 		const int itype=1, il=1, iu=NBANDS;
 		int M=0, lwork=-1, info=0;
@@ -776,7 +778,7 @@ void Pdiag_Double::diago_double_begin(
 		{
 			throw runtime_error("M="+TO_STRING(M)+". NBANDS="+TO_STRING(NBANDS)+". "+TO_STRING(__FILE__)+" line "+TO_STRING(__LINE__));
 		}
-		
+
 		if(INPUT.new_dm==0)
 		{
 			throw domain_error("INPUT.new_dm must be 1. "+TO_STRING(__FILE__)+" line "+TO_STRING(__LINE__));
@@ -789,7 +791,7 @@ void Pdiag_Double::diago_double_begin(
 		matrix s_tmp(this->ncol, this->nrow, false);
 		memcpy( s_tmp.c, s_mat, sizeof(double)*this->ncol*this->nrow );
 		wfc_2d.create(this->ncol, this->nrow, false);
-		
+
 		const char jobz='V', range='I', uplo='U';
 		const int itype=1, il=1, iu=NBANDS, one=1;
 		int M=0, NZ=0, lwork=-1, liwork=-1, info=0;
@@ -799,7 +801,7 @@ void Pdiag_Double::diago_double_begin(
 		vector<int> ifail(NLOCAL,0);
 		vector<int> iclustr(2*DSIZE);
 		vector<double> gap(DSIZE);
-		
+
 		pdsygvx_(&itype, &jobz, &range, &uplo,
 			&NLOCAL, h_tmp.c, &one, &one, desc, s_tmp.c, &one, &one, desc,
 			NULL, NULL, &il, &iu, &abstol,
@@ -836,7 +838,7 @@ void Pdiag_Double::diago_double_begin(
 		{
 			throw domain_error("INPUT.new_dm must be 1. "+TO_STRING(__FILE__)+" line "+TO_STRING(__LINE__));
 		}
-	}	
+	}
     //delete[] Stmp; //LiuXh 20171109
 #endif
 
@@ -867,11 +869,11 @@ void Pdiag_Double::diago_double_begin(
 
 
 void Pdiag_Double::diago_complex_begin(
-	const int &ik, 
-	complex<double> **wfc, 
+	const int &ik,
+	complex<double> **wfc,
 	ComplexMatrix &wfc_2d,
-	complex<double>* ch_mat, 
-	complex<double>* cs_mat, 
+	complex<double>* ch_mat,
+	complex<double>* cs_mat,
 	double *ekb)
 {
     #ifdef TEST_DIAG
@@ -996,7 +998,8 @@ void Pdiag_Double::diago_complex_begin(
         bool wantEigenVector=true;
         bool wantDebug=true;
         int info;
-        int comm_2D_f=MPI_Comm_c2f(comm_2D);
+        // int comm_2D_f=MPI_Comm_c2f(comm_2D);
+        MPI_Comm comm_2D_f = comm_2D;
 
         int THIS_REAL_ELPA_KERNEL_API=9;
         timer::tick("Diago_LCAO_Matrix","genelpa",'G');
@@ -1095,7 +1098,7 @@ void Pdiag_Double::diago_complex_begin(
 		ComplexMatrix s_tmp(this->ncol, this->nrow, false);
 		memcpy( s_tmp.c, cs_mat, sizeof(complex<double>)*this->ncol*this->nrow );
 		wfc_2d.create(this->ncol, this->nrow, false);
-		
+
 		const char jobz='V', range='I', uplo='U';
 		const int itype=1, il=1, iu=NBANDS, one=1;
 		int M=0, NZ=0, lwork=-1, lrwork=-1, liwork=-1, info=0;
@@ -1106,12 +1109,12 @@ void Pdiag_Double::diago_complex_begin(
 		vector<int> ifail(NLOCAL,0);
 		vector<int> iclustr(2*DSIZE);
 		vector<double> gap(DSIZE);
-		
+
 		pzhegvx_(&itype, &jobz, &range, &uplo,
 			&NLOCAL, h_tmp.c, &one, &one, desc, s_tmp.c, &one, &one, desc,
 			NULL, NULL, &il, &iu, &abstol,
 			&M, &NZ, ekb, &orfac, wfc_2d.c, &one, &one, desc,
-			work.data(), &lwork, rwork.data(), &lrwork, 
+			work.data(), &lwork, rwork.data(), &lrwork,
 			iwork.data(), &liwork, ifail.data(), iclustr.data(), gap.data(), &info);
 
 		ofs_running<<"lwork="<<work[0]<<"\t"<<"liwork="<<iwork[0]<<endl;
@@ -1134,7 +1137,7 @@ void Pdiag_Double::diago_complex_begin(
 			throw runtime_error("M="+TO_STRING(M)+". NBANDS="+TO_STRING(NBANDS)+". "+TO_STRING(__FILE__)+" line "+TO_STRING(__LINE__));
 		if(M!=NZ)
 			throw runtime_error("M="+TO_STRING(M)+". NZ="+TO_STRING(NZ)+". "+TO_STRING(__FILE__)+" line "+TO_STRING(__LINE__));
-		
+
 //		if(INPUT.new_dm==0)
 //			throw domain_error("INPUT.new_dm must be 1. "+TO_STRING(__FILE__)+" line "+TO_STRING(__LINE__));
 		// the follow will be deleted after finish newdm
@@ -1207,7 +1210,7 @@ void Pdiag_Double::diago_complex_begin(
 			delete[] work;
 			timer::tick("Diago_LCAO_Matrix","gath_eig_complex",'G');
 		}
-	}		
+	}
 
 #endif
 	return;
@@ -1217,10 +1220,10 @@ void Pdiag_Double::diago_complex_begin(
 
 #ifdef __MPI
 void Pdiag_Double::readin(
-	const string &fa, 
-	const string &fb, 
-	const int &nlocal_tot, 
-	double *eigen, 
+	const string &fa,
+	const string &fb,
+	const int &nlocal_tot,
+	double *eigen,
 	double *eigvr)
 {
     TITLE("Pdiag_Double","readin");
