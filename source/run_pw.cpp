@@ -25,6 +25,10 @@ void Run_pw::plane_wave_line(void)
     ucell.setup_cell( global_pseudo_dir, out, global_atom_card, ofs_running);
     //ucell.setup_cell( global_pseudo_dir , global_atom_card , ofs_running, NLOCAL, NBANDS);
 
+    // setup NBANDS 
+	// Yu Liu add 2021-07-03
+	CHR.cal_nelec();
+
     // mohan add 2010-09-06
 	// Yu Liu move here 2021-06-27
 	// because the number of element type

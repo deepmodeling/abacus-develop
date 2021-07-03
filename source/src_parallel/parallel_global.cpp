@@ -27,13 +27,13 @@ void Parallel_Global::myProd(complex<double> *in,complex<double> *inout,int *len
 	{
 //		(*inout).real()=(*inout).real()+(*in).real();
 //		(*inout).imag()=(*inout).imag()+(*in).imag();
-		
+
 		// mohan updat 2011-09-21
 		(*inout)=complex<double>((*inout).real()+(*in).real(),(*inout).imag()+(*in).imag());
 
 		in++;
 		inout++;
-	}	
+	}
 	return;
 }
 #endif
@@ -64,7 +64,7 @@ void Parallel_Global::split_diag_world(const int &diag_np)
 	// key: rank in each fragment group.
 	int color = -1;		// Peize Lin add initialization for compiler warning at 2020.01.31
 	int key = -1;		// Peize Lin add initialization for compiler warning at 2020.01.31
-	
+
 	int np_now = 0;
 	for(int i=0; i<diag_np; ++i)
 	{
@@ -74,19 +74,19 @@ void Parallel_Global::split_diag_world(const int &diag_np)
 			key = i;
 			color = group_grid_np[i] - (np_now - MY_RANK);
 			break;
-		}	
+		}
 	}
 
 	MPI_Comm_split(MPI_COMM_WORLD, color, key, &DIAG_WORLD);
 	MPI_Comm_rank(DIAG_WORLD, &DRANK);
-	MPI_Comm_size(DIAG_WORLD, &DSIZE); 
+	MPI_Comm_size(DIAG_WORLD, &DSIZE);
 	DCOLOR=color;
 
 
 	delete[] group_grid_np;
 #else
 	DCOLOR=0; //mohan fix bug 2012-02-04
-	DRANK=0; 
+	DRANK=0;
 	DSIZE=1;
 #endif
 	return;
@@ -119,7 +119,7 @@ void Parallel_Global::split_grid_world(const int &diag_np)
 	// key: rank in each fragment group.
 	int color = -1;		// Peize Lin add initialization for compiler warning at 2020.01.31
 	int key = -1;		// Peize Lin add initialization for compiler warning at 2020.01.31
-	
+
 	int np_now = 0;
 	for(int i=0; i<diag_np; ++i)
 	{
@@ -129,12 +129,12 @@ void Parallel_Global::split_grid_world(const int &diag_np)
 			color = i;
 			key = group_grid_np[i] - (np_now - MY_RANK);
 			break;
-		}	
+		}
 	}
 
 	MPI_Comm_split(MPI_COMM_WORLD, color, key, &GRID_WORLD);
 	MPI_Comm_rank(GRID_WORLD, &GRANK);
-	MPI_Comm_size(GRID_WORLD, &GSIZE); 
+	MPI_Comm_size(GRID_WORLD, &GSIZE);
 
 	delete[] group_grid_np;
 #else
@@ -160,7 +160,7 @@ void Parallel_Global::read_mpi_parameters(int argc,char **argv)
 	#ifdef _OPENMP
 //	omp_set_nested(true);					// Peize Lin add 2018-02-13
 	#endif
-	
+
 //	MPI_Init(&argc,&argv);					// Peize Lin change 2018-07-12
 	int provided;
 	MPI_Init_thread(&argc,&argv,MPI_THREAD_FUNNELED,&provided);
@@ -186,7 +186,7 @@ void Parallel_Global::read_mpi_parameters(int argc,char **argv)
     {
         if (MY_RANK == i)
         {
-			if(i==0) 
+			if(i==0)
 			{
 				/*
 				printf( "\n\e[33m%s\e[0m\n", " ===================================================");
@@ -202,7 +202,7 @@ void Parallel_Global::read_mpi_parameters(int argc,char **argv)
 				cout << " *                                                       *" << endl;
 				cout << " *                  WELCOME TO MESIA                     *" << endl;
 				cout << " *                                                       *" << endl;
-				cout << " *       'Massive Electronic simulation based on         *" << endl; 
+				cout << " *       'Massive Electronic simulation based on         *" << endl;
 				cout << " *        Systematically Improvable Atomic bases'        *" << endl;
 				cout << " *                                                       *" << endl;
 				cout << " *********************************************************" << endl;
@@ -211,7 +211,7 @@ void Parallel_Global::read_mpi_parameters(int argc,char **argv)
 				cout << " *                                                       *" << endl;
 				cout << " *                  WELCOME TO ABACUS                    *" << endl;
 				cout << " *                                                       *" << endl;
-				cout << " *            'Atomic-orbital Based Ab-initio            *" << endl; 
+				cout << " *            'Atomic-orbital Based Ab-initio            *" << endl;
 				cout << " *                  Computation at UStc'                 *" << endl;
 				cout << " *                                                       *" << endl;
                 cout << " *          Website: http://abacus.ustc.edu.cn/          *" << endl;
@@ -229,31 +229,31 @@ void Parallel_Global::read_mpi_parameters(int argc,char **argv)
 
 	// This section can be chosen !!
 	// mohan 2011-03-15
-    if (MY_RANK != 0 ) 
+    if (MY_RANK != 0 )
     {
         //cout.rdbuf(NULL);
 		cout.setstate(ios::failbit);//qianrui modify 2020-10-14
     }
 	// end test
-	
+
 	MPI_Datatype block[2];
 	block[0]=MPI_DOUBLE;
 	block[1]=MPI_DOUBLE;
-	
+
 	int ac[2]={1,1};
 	MPI_Aint dipc[2]={0,sizeof(double)};
 
 	// MPI_Type_struct: create a struct datatype
-	MPI_Type_struct(
+	MPI_Type_create_struct(
 	2,// count: number of blocks(integer)
 	ac,//number of element in each block(array)
 	dipc,//byte displacement of each block
 	block,//type of element in each block(array of handles to datatype objects)
 	&mpicomplex);//new type
-	
+
 	MPI_Type_commit(&mpicomplex);
 	MPI_Op_create((MPI_User_function *)Parallel_Global::myProd,1,&myOp);
-	
+
 #endif
     return;
 }

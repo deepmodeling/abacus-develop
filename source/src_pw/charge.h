@@ -17,6 +17,7 @@ public:
 
 //==========================================================
 // MEMBER VARIABLES :
+// NAME : total number of electrons
 // NAME : rho (nspin,ncxyz), the charge density in real space
 // NAME : rho_save (nspin,ncxyz), for charge mixing
 // NAME : rhog, charge density in G space
@@ -25,6 +26,7 @@ public:
 // NAME : rhog_core [ngm], the core charge in reciprocal space
 //==========================================================
 
+    double nelec;  // Yu Liu add 2021-07-03
     double** rho;
     double** rho_save;
 
@@ -46,6 +48,8 @@ public:
     void atomic_rho(const int spin_number_need, double **rho_in)const;
 
     void set_rho_core(const ComplexMatrix &structure_factor);
+
+    void cal_nelec();  // calculate total number of electrons  Yu Liu add 2021-07-03
 
     void sum_band(void);
 

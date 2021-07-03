@@ -7,7 +7,7 @@
  * \param mpi_comm_rows    Communicator for communicating within rows of processes (out)
  * \result int             integer error value of mpi_comm_split function
  */
- int get_elpa_row_col_comms(int mpi_comm_world, int my_prow, int my_pcol, int *mpi_comm_rows, int *mpi_comm_cols);
+ int get_elpa_row_col_comms(MPI_Comm mpi_comm_world, int my_prow, int my_pcol, int *mpi_comm_rows, int *mpi_comm_cols);
  /*! \brief C old, deprecated interface, will be deleted. Use "elpa_get_communicators"
  *
  * \param mpi_comm_word    MPI global communicator (in)
@@ -16,7 +16,7 @@
  * \param mpi_comm_rows    Communicator for communicating within rows of processes (out)
  * \result int             integer error value of mpi_comm_split function
  */
- int get_elpa_communicators(int mpi_comm_world, int my_prow, int my_pcol, int *mpi_comm_rows, int *mpi_comm_cols);
+ int get_elpa_communicators(MPI_Comm mpi_comm_world, int my_prow, int my_pcol, int *mpi_comm_rows, int *mpi_comm_cols);
  /*! \brief C interface to create ELPA communicators
  *
  * \param mpi_comm_word    MPI global communicator (in)
@@ -25,7 +25,7 @@
  * \param mpi_comm_rows    Communicator for communicating within rows of processes (out)
  * \result int             integer error value of mpi_comm_split function
  */
- int elpa_get_communicators(int mpi_comm_world, int my_prow, int my_pcol, int *mpi_comm_rows, int *mpi_comm_cols);
+ int elpa_get_communicators(MPI_Comm mpi_comm_world, int my_prow, int my_pcol, int *mpi_comm_rows, int *mpi_comm_cols);
   /*! \brief C interface to solve the real eigenvalue problem with 1-stage solver
   *
  *  \param  na                   Order of matrix a
@@ -97,7 +97,7 @@
  *
  *  \result                     int: 1 if error occured, otherwise 0
  */
- int elpa_solve_evp_real_2stage(int na, int nev, double *a, int lda, double *ev, double *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int mpi_comm_all, int THIS_REAL_ELPA_KERNEL_API, int useQR);
+ int elpa_solve_evp_real_2stage(int na, int nev, double *a, int lda, double *ev, double *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, MPI_Comm mpi_comm_all, int THIS_REAL_ELPA_KERNEL_API, int useQR);
  /*! \brief C interface to solve the complex eigenvalue problem with 2-stage solver
  *
  *  \param  na                        Order of matrix a
@@ -122,7 +122,7 @@
  *
  *  \result                     int: 1 if error occured, otherwise 0
  */
- int elpa_solve_evp_complex_2stage(int na, int nev, std::complex<double> *a, int lda, double *ev, std::complex<double> *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int mpi_comm_all, int THIS_COMPLEX_ELPA_KERNEL_API);
+ int elpa_solve_evp_complex_2stage(int na, int nev, std::complex<double> *a, int lda, double *ev, std::complex<double> *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, MPI_Comm mpi_comm_all, int THIS_COMPLEX_ELPA_KERNEL_API);
  /*! \brief C interface to driver function "elpa_solve_evp_real"
  *
  *  \param  na                        Order of matrix a
@@ -152,7 +152,7 @@
  *
  *  \result                     int: 1 if error occured, otherwise 0
  */
- int elpa_solve_evp_real(int na, int nev, double *a, int lda, double *ev, double *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int mpi_comm_all, int THIS_REAL_ELPA_KERNEL_API, int useQR, char *method);
+ int elpa_solve_evp_real(int na, int nev, double *a, int lda, double *ev, double *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, MPI_Comm mpi_comm_all, int THIS_REAL_ELPA_KERNEL_API, int useQR, char *method);
  /*! \brief C interface to driver function "elpa_solve_evp_complex"
  *
  *  \param  na                           Order of matrix a
@@ -181,7 +181,7 @@
  *
  *  \result                     int: 1 if error occured, otherwise 0
  */
- int elpa_solve_evp_complex(int na, int nev, std::complex<double> *a, int lda, double *ev, std::complex<double> *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int mpi_comm_all, int THIS_COMPLEX_ELPA_KERNEL_API, char *method);
+ int elpa_solve_evp_complex(int na, int nev, std::complex<double> *a, int lda, double *ev, std::complex<double> *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, MPI_Comm mpi_comm_all, int THIS_COMPLEX_ELPA_KERNEL_API, char *method);
  /*! \brief  C interface to solve tridiagonal eigensystem with divide and conquer method
  *\details
 

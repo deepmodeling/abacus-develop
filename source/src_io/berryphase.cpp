@@ -14,7 +14,7 @@ berryphase::~berryphase()
 
 void berryphase::get_occupation_bands()
 {
-	double occupied_bands = static_cast<double>(ucell.nelec/DEGSPIN);	
+	double occupied_bands = static_cast<double>(CHR.nelec/DEGSPIN);	
 	if( (occupied_bands - std::floor(occupied_bands)) > 0.0 )
 	{
 		occupied_bands = std::floor(occupied_bands) + 1.0;

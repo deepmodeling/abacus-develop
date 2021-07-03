@@ -5,6 +5,7 @@
 #include "../module_base/math_polyint.h"
 #include "../module_base/math_ylmreal.h"
 #include "../src_pw/soc.h"
+#include <complex>
 
 WF_atomic::WF_atomic()
 {
@@ -13,7 +14,7 @@ WF_atomic::WF_atomic()
 }
 
 WF_atomic::~WF_atomic()
-{ 
+{
 	if(test_deconstructor)
 	{
 		cout << " ~WF_atomic()" << endl;
@@ -71,7 +72,7 @@ void WF_atomic::init_at_1(void)
 		Atom* atom = &ucell.atoms[it];
 
 		ofs_running <<"\n number of pseudo atomic orbitals for "
-		<< atom->label << " is " << atom->nchi << endl;	
+		<< atom->label << " is " << atom->nchi << endl;
 
         for (int ic=0; ic<atom->nchi ;ic++)
         {
@@ -81,7 +82,7 @@ void WF_atomic::init_at_1(void)
                 nmesh = atom->mesh;
             else
                 nmesh = atom->msh;
-                
+
             // check the unit condition
             double *inner_part = new double[nmesh];
             for (int ir=0; ir<nmesh; ir++)
@@ -92,7 +93,7 @@ void WF_atomic::init_at_1(void)
             Integral::Simpson_Integral(nmesh, inner_part, atom->rab, unit);
             delete[] inner_part;
 
-			ofs_running << " the unit of pseudo atomic orbital is " << unit; 
+			ofs_running << " the unit of pseudo atomic orbital is " << unit;
 
             //=================================
             // normalize radial wave functions
@@ -313,14 +314,14 @@ void WF_atomic::atomic_wfc
                                               ZEROS(aux, np);
                                               for(int n1=0;n1<2*l+1;n1++){
                                                  const int lm = l*l +n1;
-                                                 if(fabs(soc.rotylm(n1,ind))>1e-8)
-                                                   for(int ig=0; ig<np;ig++) 
+                                                 if(abs(soc.rotylm(n1,ind))>1e-8)
+                                                   for(int ig=0; ig<np;ig++)
                                                       aux[ig] += soc.rotylm(n1,ind)* ylm(lm,ig);
                                               }
                                               for(int ig=0; ig<np;ig++)
                                                  wfcatom(index, ig + this->npwx*is ) = lphase * fact[is] * sk[ig] * aux[ig] * flq[ig];
                                           }
-                                          else 
+                                          else
                                             for(int ig=0; ig<np;ig++) wfcatom(index,ig+ this->npwx*is) = complex<double>(0.0 , 0.0);
                                       }//is
                                       index++;
@@ -333,12 +334,12 @@ void WF_atomic::atomic_wfc
                               double alpha, gamma;
                               complex<double> fup,fdown;
                               int nc;
-                              //This routine creates two functions only in the case j=l+1/2 or exit in the other case  
+                              //This routine creates two functions only in the case j=l+1/2 or exit in the other case
                               if(fabs(j-l+0.5<1e-4)) continue;
                               delete[] chiaux;
                               chiaux = new double [np];
                               //Find the functions j= l- 1/2
-                              if(l==0) 
+                              if(l==0)
                                  for(int ig=0;ig<np;ig++){
                                     chiaux[ig] = flq[ig];
                                  }
@@ -354,7 +355,7 @@ void WF_atomic::atomic_wfc
                                  }
                                  for(int ig=0;ig<np;ig++)
                                  {//Average the two functions
-                                    chiaux[ig] =  l * 
+                                    chiaux[ig] =  l *
                                          PolyInt::Polynomial_Interpolation(table_q,
                                                                it, nc, table_dimension, dq, gk[ig].norm() * ucell.tpiba );
 
@@ -395,7 +396,7 @@ void WF_atomic::atomic_wfc
                               index += 2*l +1;
                             }
                         }
-                        else 
+                        else
                         {//atomic_wfc_nc
                             double alpha, gamman;
                             complex<double> fup, fdown;
@@ -431,7 +432,7 @@ void WF_atomic::atomic_wfc
                         }
                        // index++;
                     }
-                    else{//LSDA and nomagnet case 
+                    else{//LSDA and nomagnet case
 
                       for (int m=0; m<2*l+1; m++)
                       {

@@ -25,7 +25,7 @@ void Stochastic_Iter::init(int &dim, int& chetype)
     nchip = STO_WF.nchip;
     stotype = STO_WF.stotype;
     //wait for init
-    targetne = ucell.nelec;
+    targetne = CHR.nelec;
     stoche.init( dim, chetype );
     stohchi.init();
     stohchi.get_GRA_index();
@@ -153,13 +153,13 @@ void Stochastic_Iter::itermu(int &iter)
     if(iter == 1)
     {
         dmu = 2;
-        th_ne = 0.1 * DRHO2 * ucell.nelec;
+        th_ne = 0.1 * DRHO2 * CHR.nelec;
         cout<<"th_ne "<<th_ne<<endl;
     }
     else
     {
         dmu = 0.1;
-        th_ne = DRHO2 * 1e-2 * ucell.nelec;
+        th_ne = DRHO2 * 1e-2 * CHR.nelec;
     }
     sumpolyval();
     mu = mu0 - dmu;

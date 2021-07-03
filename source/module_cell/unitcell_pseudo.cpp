@@ -287,7 +287,7 @@ void UnitCell_pseudo::setup_cell(
 	this->cal_nwfc();
 
 	// setup NBANDS
-	this->cal_nelec();
+	//this->cal_nelec();
 
 	this->cal_meshx();
 
@@ -307,6 +307,7 @@ void UnitCell_pseudo::setup_cell(
 // calculate total number of electrons (nelec) and default
 // number of bands (NBANDS).
 //=========================================================
+/*
 #include "../src_pw/occupy.h"
 void UnitCell_pseudo::cal_nelec(void)
 {
@@ -408,7 +409,7 @@ void UnitCell_pseudo::cal_nelec(void)
 
 	OUT(ofs_running,"NBANDS",NBANDS);
 	return;
-}
+}*/
 
 //===========================================
 // calculate the total number of local basis

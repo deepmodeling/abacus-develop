@@ -150,7 +150,7 @@ void Charge::renormalize_rho(void)
     const double sr = this->sum_rho();
 	ofs_warning << setprecision(15);
 	OUT(ofs_warning,"charge before normalized",sr);
-    const double normalize_factor = ucell.nelec / sr;
+    const double normalize_factor = nelec / sr;
 
 	for(int is=0; is<nspin; is++)
 	{
@@ -477,10 +477,10 @@ void Charge::atomic_rho(const int spin_number_need, double** rho_in)const		// Pe
 		ne_tot += ne[is];
 	}
 	OUT(ofs_warning,"total electron number from rho",ne_tot);
-	OUT(ofs_warning,"should be",ucell.nelec);
+	OUT(ofs_warning,"should be",nelec);
 	for(int is=0; is<spin_number_need; ++is)
 		for(int ir=0; ir<pw.nrxx; ++ir)
-			rho_in[is][ir] = rho_in[is][ir] / ne_tot * ucell.nelec;
+			rho_in[is][ir] = rho_in[is][ir] / ne_tot * nelec;
 
 	// if TWO_EFEMI, 
 	// the total magnetism will affect the calculation of
@@ -1061,4 +1061,111 @@ void Charge::init_final_scf()
 
 	this->allocate_rho_final_scf = true;
     return;
+}
+
+//=========================================================
+// calculate total number of electrons (nelec) and default
+// number of bands (NBANDS).
+//=========================================================
+#include "occupy.h"
+void Charge::cal_nelec(void)
+{
+	TITLE("UnitCell_pseudo","cal_nelec");
+	//=======================================================
+	// calculate the total number of electrons in the system
+	// if nelec <>0; use input number (setup.f90)
+	//=======================================================
+
+	ofs_running << "\n SETUP THE ELECTRONS NUMBER" << endl;
+
+	if (nelec == 0)
+	{
+		for (int it = 0; it < ucell.ntype;it++)
+		{
+			stringstream ss1, ss2;
+			ss1 << "electron number of element " << ucell.atoms[it].label;
+			const int nelec_it = ucell.atoms[it].zv * ucell.atoms[it].na;
+			nelec += nelec_it;
+			ss2 << "total electron number of element " << ucell.atoms[it].label; 
+			
+			OUT(ofs_running,ss1.str(),ucell.atoms[it].zv);
+			OUT(ofs_running,ss2.str(),nelec_it);
+		}
+	}
+
+	//OUT(ofs_running,"Total nelec",nelec);
+
+	//=======================================
+	// calculate number of bands (setup.f90)
+	//=======================================
+	double occupied_bands = static_cast<double>(nelec/DEGSPIN);	
+
+	if( (occupied_bands - std::floor(occupied_bands)) > 0.0 )
+	{
+		occupied_bands = std::floor(occupied_bands) + 1.0; //mohan fix 2012-04-16
+	}
+
+	OUT(ofs_running,"occupied bands",occupied_bands);
+	
+	// mohan add 2010-09-04
+    //cout << "nbands(ucell) = " <<NBANDS <<endl;
+	if(NBANDS==occupied_bands)
+	{
+		if( Occupy::gauss() || Occupy::tetra() )
+		{
+			WARNING_QUIT("UnitCell_pseudo::cal_nelec","for smearing, num. of bands > num. of occupied bands");
+		}
+	}
+	
+	if ( CALCULATION!="scf-sto" && CALCULATION!="relax-sto" && CALCULATION!="md-sto" ) //qianrui 2021-2-20
+	{
+	if(NBANDS == 0)
+	{
+		if(NSPIN == 1)
+		{
+			int nbands1 = static_cast<int>(occupied_bands) + 10;
+			int nbands2 = static_cast<int>(1.2 * occupied_bands);
+			NBANDS = max(nbands1, nbands2);
+		}
+		else if (NSPIN ==2 || NSPIN == 4)
+		{
+			int nbands3 = nelec + 20;
+			int nbands4 = 1.2 * nelec;
+			NBANDS = max(nbands3, nbands4);
+		}
+		AUTO_SET("NBANDS",NBANDS);
+	}
+	//else if ( CALCULATION=="scf" || CALCULATION=="md" || CALCULATION=="relax") //pengfei 2014-10-13
+	else
+	{
+		if(NBANDS < occupied_bands) WARNING_QUIT("unitcell","Too few bands!");
+		if(NBANDS < mag.get_nelup() ) 
+		{
+			OUT(ofs_running,"nelup",mag.get_nelup());
+			WARNING_QUIT("unitcell","Too few spin up bands!");
+		}
+		if(NBANDS < mag.get_neldw() )
+        {
+            WARNING_QUIT("unitcell","Too few spin down bands!");
+        }
+	}
+	}
+
+	// mohan update 2021-02-19
+    // mohan add 2011-01-5
+    if(BASIS_TYPE=="lcao" || BASIS_TYPE=="lcao_in_pw")
+    {
+        if( NBANDS > NLOCAL )
+        {
+            WARNING_QUIT("UnitCell_pseudo::cal_nwfc","NLOCAL < NBANDS");
+        }
+        else
+        {
+            OUT(ofs_running,"NLOCAL",NLOCAL);
+            OUT(ofs_running,"NBANDS",NBANDS);
+        }
+    }
+
+	OUT(ofs_running,"NBANDS",NBANDS);
+	return;
 }

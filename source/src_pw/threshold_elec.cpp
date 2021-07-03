@@ -23,7 +23,7 @@ void Threshold_Elec::set_ethr(void) const
     {
         if (ETHR == 0.0)
         {
-            ETHR = 0.1 * std::min(1.0e-2, DRHO2 / ucell.nelec);
+            ETHR = 0.1 * std::min(1.0e-2, DRHO2 / CHR.nelec);
         }
     }
     //=================
@@ -76,12 +76,12 @@ void Threshold_Elec::update_ethr(const int &iter)
 		//----------------------------
 		if(BASIS_TYPE=="lcao")
 		{
-			ETHR = std::min( ETHR, 0.01*dr2/ std::max(1.0, ucell.nelec));
+			ETHR = std::min( ETHR, 0.01*dr2/ std::max(1.0, CHR.nelec));
 		}
 		// mohan update 2009-09-04
 		else
 		{
-			ETHR = std::min( ETHR, 0.1*dr2/ std::max(1.0, ucell.nelec));
+			ETHR = std::min( ETHR, 0.1*dr2/ std::max(1.0, CHR.nelec));
 			//cout << " new ethr = " << ETHR << endl;
 		}
 

@@ -1,4 +1,4 @@
-#ifndef IOMS_MOVE_BASIC_H
+#ifndef IONS_MOVE_BASIC_H
 #define IONS_MOVE_BASIC_H
 
 using namespace std;
@@ -9,8 +9,8 @@ namespace Ions_Move_Basic
 	extern int dim; // dimension of the free variables,
 	extern bool converged; // converged force or not,
 	extern double largest_grad; // largest gradient among the forces,
-	extern int update_iter; // number of sucesfully updated iterations, 
-	extern int istep; // index of ionic steps, 
+	extern int update_iter; // number of sucesfully updated iterations,
+	extern int istep; // index of ionic steps,
 	extern double ediff; // energy difference compared to last step,
 	extern double etot; // total energy of this step,
 	extern double etot_p; // total energy of last step,
@@ -20,7 +20,7 @@ namespace Ions_Move_Basic
 	extern double trust_radius_max; // max value of trust radius,
 	extern double trust_radius_min; // min value of trust radius,
 	extern double trust_radius_ini; // initial value of trust radius,
-        extern double best_xxx;         // the last step length of cg , we use it as  bfgs`s initial step length   
+        extern double best_xxx;         // the last step length of cg , we use it as  bfgs`s initial step length
 
 	extern int out_stru; // output the structure or not,
 
@@ -30,7 +30,7 @@ namespace Ions_Move_Basic
 	void setup_gradient(double *pos, double* grad, const matrix &force);
 
 	//----------------------------------------------------------------------------
-	// move the atom positions, considering the periodic boundary condition. 
+	// move the atom positions, considering the periodic boundary condition.
 	//----------------------------------------------------------------------------
 	void move_atoms(double* move, double *pos);
 
@@ -48,25 +48,25 @@ namespace Ions_Move_Basic
 	//----------------------------------------------------------------------------
 	// setup the total energy, keep the new energy or not.
 	//----------------------------------------------------------------------------
-	void setup_etot(const double &energy_in, const bool judgement); 
+	void setup_etot(const double &energy_in, const bool judgement);
 
 	double dot_func(const double* a, const double* b, const int &dim);
 
 
 	//----------------------------------------------------------------------------
-	// second order interpolation scheme, 
+	// second order interpolation scheme,
 	//----------------------------------------------------------------------------
 	void second_order(
 		const double &e0, // energy of previous step
 		const double &e1, // energy at this step
 		const double *f0, // force at first step
-		const double *x, // movement 
+		const double *x, // movement
 		const int &dim,
 		double &best_x,
 		double &best_e);
 
 	//----------------------------------------------------------------------------
-	// third order interpolation scheme, 
+	// third order interpolation scheme,
 	//----------------------------------------------------------------------------
 	void third_order();
 

@@ -57,7 +57,7 @@ void Optical::cal_epsilon2(const int &nbands)
 
 	double range = maxe - mine;
 	int np = int(range / de) + 1; 
-	int n_occ = static_cast<int>( (ucell.nelec+1)/2 + 1.0e-8 );
+	int n_occ = static_cast<int>( (CHR.nelec+1)/2 + 1.0e-8 );
 
 	cout << " n_occ = " << n_occ << endl;
 	cout << " nbands = " << opt_nbands << endl;	

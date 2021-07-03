@@ -24,6 +24,10 @@ void Run_lcao::lcao_line(void)
     // cell relaxation. b) put NLOCAL and NBANDS as input parameters
     ucell.setup_cell( global_pseudo_dir, out, global_atom_card, ofs_running);
 
+	// setup NBANDS 
+	// Yu Liu add 2021-07-03
+	CHR.cal_nelec();
+
 	// mohan add 2010-09-06
 	// Yu Liu move here 2021-06-27
 	// because the number of element type

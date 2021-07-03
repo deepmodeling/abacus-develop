@@ -51,7 +51,7 @@ void Magnetism::compute_magnetization()
 		}
 		else
 		{
-			OUT(ofs_running,"nelec",ucell.nelec);
+			OUT(ofs_running,"nelec",CHR.nelec);
 		}
 
 //        cout << "\n tot_mag = " << setprecision(6) << this->tot_magnetization << " Bohr mag/cell" << endl;
@@ -90,11 +90,11 @@ double Magnetism::get_nelup(void)
 //===============================================================
 //  this type of electrons are used as "fixed" magnetization.
 //===============================================================
-		nelup = 0.5 * ucell.nelec + 0.5 * tot_magnetization;
+		nelup = 0.5 * CHR.nelec + 0.5 * tot_magnetization;
 	}
 	else
 	{
-		nelup = 0.5 * ucell.nelec;
+		nelup = 0.5 * CHR.nelec;
 	}
     return nelup;
 
@@ -104,7 +104,7 @@ double Magnetism::get_nelup(void)
 //	double nelup = 0.0;
 //	for(int i=0; i<pw.ntype; i++)
 //	{
-//		nelup += ucell.nelec * (1.0+start_magnetization[i])/2.0/pw.ntype;
+//		nelup += CHR.nelec * (1.0+start_magnetization[i])/2.0/pw.ntype;
 //	}
 //	return nelup;
 }
@@ -118,11 +118,11 @@ double Magnetism::get_neldw(void)
 //===============================================================
 //  this type of electrons are used as "fixed" magnetization.
 //===============================================================
-		neldw = 0.5 * ucell.nelec - 0.5 * tot_magnetization;
+		neldw = 0.5 * CHR.nelec - 0.5 * tot_magnetization;
 	}
 	else
 	{
-		neldw = 0.5 * ucell.nelec;
+		neldw = 0.5 * CHR.nelec;
 	}
     return neldw ;
 

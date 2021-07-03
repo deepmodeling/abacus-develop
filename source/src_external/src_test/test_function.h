@@ -13,14 +13,22 @@
 static void MPI_RANK_OFSTREAM( const std::string& file_name, std::stringstream &content )
 {
 	std::stringstream file;
-	int my_rank;	MPI_Comm_rank(MPI_COMM_WORLD,&my_rank);	
+	int my_rank;	MPI_Comm_rank(MPI_COMM_WORLD,&my_rank);
 	file<<file_name<<"_"<<my_rank;
-	
+
 	std::ofstream ofs(file.str().c_str(), std::ofstream::app);
 	ofs<<content.str();
-	
+
 	content.str("");
 	ofs.close();
+}
+
+// Peize Lin add 2016-06-06
+template<typename T1,typename T2>
+static std::ostream & operator<<( std::ostream & os, const std::pair<T1,T2> &p )
+{
+	os<<"<"<<p.first<<","<<p.second<<">";
+	return os;
 }
 
 // Peize Lin add 2016-06-06
@@ -52,14 +60,6 @@ static std::ostream & operator<<( std::ostream & os, const std::map<T1,T2> &v )
 	for( const auto &i : v )
 //		os<<"{"<<i.first<<":"<<i.second<<"}"<<"\t";
 		os<<i.first<<endl<<i.second<<endl;
-	return os;
-}
-
-// Peize Lin add 2016-06-06
-template<typename T1,typename T2>
-static std::ostream & operator<<( std::ostream & os, const std::pair<T1,T2> &p )
-{
-	os<<"<"<<p.first<<","<<p.second<<">";
 	return os;
 }
 

@@ -18,23 +18,23 @@ void Wavefunc_in_pw::make_table_q(std::vector<string> &fn, realArray &table_loca
 	for(int it=0; it<ucell.ntype; it++)
 	{
 		ifstream in(fn[it].c_str());
-		if(!in) 
+		if(!in)
 		{
 			ofs_warning << " File name : " << fn[it] << endl;
 			WARNING_QUIT("Wavefunc_in_pw::make_table_q","Can not find file.");
 		}
-		else 
+		else
 		{
 			stringstream ss;
 			ss << "Orbital of species " << ucell.atoms[it].label;
 			OUT(ofs_running,ss.str(),fn[it]);
 		}
-		in.close();	
+		in.close();
 	}
 
 	table_local.zero_out();
 	for(int it=0; it<ucell.ntype; it++)
-	{	
+	{
 		int ic=0;
 		for(int L=0; L<ucell.atoms[it].nwl+1; L++)
 		{
@@ -42,7 +42,7 @@ void Wavefunc_in_pw::make_table_q(std::vector<string> &fn, realArray &table_loca
 			{
 				ofs_running << " L=" << L << " N=" << N;
 				ifstream in(fn[it].c_str());
-				if (!in) 
+				if (!in)
 				{
 					ofs_warning << " File name : " << fn[it] << endl;
 					WARNING_QUIT("Wavefunc_in_pw::make_table_q","Can not find file.");
@@ -66,12 +66,12 @@ void Wavefunc_in_pw::make_table_q(std::vector<string> &fn, realArray &table_loca
 				{
 					++meshr;
 				}
-				ofs_running << " meshr=" << meshr; 
+				ofs_running << " meshr=" << meshr;
 
 				CHECK_NAME(in, "dr");
 				in >> dr;
 				ofs_running << " dr=" << dr;
-				
+
 				double* radial = new double[meshr];
 				double *psi = new double[meshr];
 				double* psir = new double[meshr];
@@ -122,7 +122,7 @@ void Wavefunc_in_pw::make_table_q(std::vector<string> &fn, realArray &table_loca
 						 {
 							 in >> no_use;
 						 }
-					}		
+					}
 				}
 				double* table = new double[NQX];
 				Wavefunc_in_pw::integral(meshr, psir, radial, rab, L, table);
@@ -137,7 +137,7 @@ void Wavefunc_in_pw::make_table_q(std::vector<string> &fn, realArray &table_loca
 				delete[] psi;
 				delete[] psir;
 				++ic;
-			}// N 
+			}// N
 		}// L
 	}// T
 
@@ -167,7 +167,7 @@ void Wavefunc_in_pw::make_table_q(std::vector<string> &fn, realArray &table_loca
 			ofs.close();
 		}
 	}
-		
+
 	return;
 }
 
@@ -209,13 +209,13 @@ void Wavefunc_in_pw::integral(const int meshr, const double *psir, const double 
 const double *rab, const int &l, double* table)
 {
 	const double pref = FOUR_PI / sqrt(ucell.omega);
-	
+
 	double *inner_part = new double[meshr];
 	for(int ir=0; ir<meshr; ir++)
 	{
 		inner_part[ir] = psir[ir] * psir[ir];
 	}
-	
+
 	double unit = 0.0;
 	Integral::Simpson_Integral(meshr, inner_part, rab, unit);
 	delete[] inner_part;
@@ -231,7 +231,7 @@ const double *rab, const int &l, double* table)
 		{
 			vchi[ir] = psir[ir] * aux[ir] * r[ir];
 		}
-		
+
 		double vqint = 0.0;
 		Integral::Simpson_Integral(meshr, vchi, rab, vqint);
 
@@ -258,7 +258,7 @@ void Wavefunc_in_pw::produce_local_basis_in_pw(const int &ik,ComplexMatrix &psi,
 	{
 		gk[ig] = wf.get_1qvec_cartesian(ik, ig);
 	}
-	
+
 	YlmReal::Ylm_Real(total_lm, npw, gk, ylm);
 
 	//int index = 0;
@@ -276,7 +276,7 @@ void Wavefunc_in_pw::produce_local_basis_in_pw(const int &ik,ComplexMatrix &psi,
 				for(int N=0; N < ucell.atoms[it].l_nchi[L]; N++)
 				{
 //					ofs_running << " it=" << it << " ia=" << ia << " L=" << L << " N=" << N << endl;
-					
+
 					for(int ig=0; ig<npw; ig++)
 					{
 						flq[ig] = PolyInt::Polynomial_Interpolation(table_local,
@@ -306,8 +306,8 @@ void Wavefunc_in_pw::produce_local_basis_in_pw(const int &ik,ComplexMatrix &psi,
 											//else
 											psi(iwall+1, ig+wf.npwx) =
 											lphase * sk[ig] * ylm(lm, ig) * flq[ig];
-											
-										}	
+
+										}
 										iwall+=2;
 									}
 								}//if
@@ -316,12 +316,12 @@ void Wavefunc_in_pw::produce_local_basis_in_pw(const int &ik,ComplexMatrix &psi,
 									double alpha, gamma;
 									complex<double> fup,fdown;
                               		//int nc;
-                              		//This routine creates two functions only in the case j=l+1/2 or exit in the other case  
+                              		//This routine creates two functions only in the case j=l+1/2 or exit in the other case
 									if(fabs(j-L+0.5<1e-4)) continue;
 									delete[] chiaux;
 									chiaux = new double [npw];
                               		//Find the functions j= l- 1/2
-									if(L==0) 
+									if(L==0)
 									for(int ig=0;ig<npw;ig++){
 										chiaux[ig] = flq[ig];
 									}
@@ -337,7 +337,7 @@ void Wavefunc_in_pw::produce_local_basis_in_pw(const int &ik,ComplexMatrix &psi,
 										}*/
 										for(int ig=0;ig<npw;ig++)
 										{//Average the two functions
-											chiaux[ig] =  L * 
+											chiaux[ig] =  L *
 												PolyInt::Polynomial_Interpolation(table_local,
 												it, ic, NQX, DQ, gk[ig].norm() * ucell.tpiba );
 
@@ -378,7 +378,7 @@ void Wavefunc_in_pw::produce_local_basis_in_pw(const int &ik,ComplexMatrix &psi,
 									iwall += 2*L +1;
 								} // end else INPUT.starting_spin_angle || !DOMAG
 							} // end if ucell.atoms[it].has_so
-							else 
+							else
 							{//atomic_wfc_nc
 								double alpha, gamman;
 								complex<double> fup, fdown;
@@ -422,7 +422,7 @@ void Wavefunc_in_pw::produce_local_basis_in_pw(const int &ik,ComplexMatrix &psi,
 							{
 								psi(iwall, ig) =
 								lphase * sk[ig] * ylm(lm, ig) * flq[ig];
-							}	
+							}
 							++iwall;
 						}
 					}
@@ -449,7 +449,7 @@ void Wavefunc_in_pw::produce_local_basis_q_in_pw(const int &ik, ComplexMatrix &p
 	double *chiaux = new double[1];
 
 	Vector3<double> *gkq = new Vector3<double>[npw];
-        
+
 	for(int ig=0;ig<npw;ig++)
 	{
 		gkq[ig] = wf.get_1qvec_cartesian(ik, ig) + q;
@@ -511,14 +511,14 @@ void Wavefunc_in_pw::produce_local_basis_q_in_pw(const int &ik, ComplexMatrix &p
 													ZEROS(aux, npw);
 													for(int n1=0;n1<2*L+1;n1++){
 														const int lm = L*L +n1;
-														if(fabs(soc.rotylm(n1,ind))>1e-8)
-														for(int ig=0; ig<npw;ig++) 
+														if(abs(soc.rotylm(n1,ind))>1e-8)
+														for(int ig=0; ig<npw;ig++)
 															aux[ig] += soc.rotylm(n1,ind)* ylm(lm,ig);
 													}
 													for(int ig=0; ig<npw;ig++)
 														psi(iwall, ig + wf.npwx*is ) = lphase * fact[is] * skq[ig] * aux[ig] * flq[ig];
 												}
-												else 
+												else
 													for(int ig=0; ig<npw;ig++) psi(iwall,ig+ wf.npwx*is) = complex<double>(0.0 , 0.0);
 											}//is
 											iwall++;
@@ -531,12 +531,12 @@ void Wavefunc_in_pw::produce_local_basis_q_in_pw(const int &ik, ComplexMatrix &p
 									double alpha, gamma;
 									complex<double> fup,fdown;
 									//int nc;
-									//This routine creates two functions only in the case j=l+1/2 or exit in the other case  
+									//This routine creates two functions only in the case j=l+1/2 or exit in the other case
 									if(fabs(j-L+0.5<1e-4)) continue;
 									delete[] chiaux;
 									chiaux = new double [npw];
 									//Find the functions j= l- 1/2
-									if(L==0) 
+									if(L==0)
 										for(int ig=0;ig<npw;ig++){
 											chiaux[ig] = flq[ig];
 										}
@@ -552,7 +552,7 @@ void Wavefunc_in_pw::produce_local_basis_q_in_pw(const int &ik, ComplexMatrix &p
 										}*/
 										for(int ig=0;ig<npw;ig++)
 										{//Average the two functions
-											chiaux[ig] =  L * 
+											chiaux[ig] =  L *
 												PolyInt::Polynomial_Interpolation(table_local,
 																	it, ic, NQX, DQ, gkq[ig].norm() * ucell.tpiba );
 
@@ -593,7 +593,7 @@ void Wavefunc_in_pw::produce_local_basis_q_in_pw(const int &ik, ComplexMatrix &p
 									iwall += 2*L +1;
 								}
 							}
-							else 
+							else
 							{//atomic_wfc_nc
 								double alpha, gamman;
 								complex<double> fup, fdown;
@@ -638,7 +638,7 @@ void Wavefunc_in_pw::produce_local_basis_q_in_pw(const int &ik, ComplexMatrix &p
 							{
 								psi(iwall, ig) =
 								lphase * skq[ig] * ylm(lm, ig) * flq[ig];
-							}	
+							}
 							++iwall;
 						}
 					}
