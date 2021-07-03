@@ -49,7 +49,6 @@ ABACUS provides the following features and functionalities:
 11. Mulliken charge analysis.
 12. Projected density of states (PDOS).
 
-<<<<<<< HEAD
 [back to top](#readme-top)
 
 # Download and install
@@ -146,9 +145,12 @@ ABACUS provides a wide variety of functionalities, with explanation and examples
 We also provide many examples in the directories examples/ and tests/
 
 # For developers
+
 We also provide some [information](doc/developer.md) for developers.
-=======
-# Build and install ABACUS from CMake
+
+---
+
+## Build and install ABACUS from CMake
 
 Check the cmake version on your machine
 ```bash
