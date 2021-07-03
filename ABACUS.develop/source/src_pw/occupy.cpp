@@ -48,7 +48,7 @@ void Occupy::calculate_weights(void)
         else
         {
 			// -1 means don't need to consider spin.
-            iweights(kv.nks, kv.wk, NBANDS, ucell.nelec, wf.ekb, en.ef, wf.wg, -1, kv.isk);
+            iweights(kv.nks, kv.wk, NBANDS, CHR.nelec, wf.ekb, en.ef, wf.wg, -1, kv.isk);
         }
     }
     else if (use_tetrahedron_method)
@@ -56,7 +56,7 @@ void Occupy::calculate_weights(void)
         WARNING_QUIT("calculate_weights","not implemented yet,coming soon!");
 //		if(my_rank == 0)
 //		{
-//			tweights(kv.nkstot, nspin, NBANDS, ucell.nelec, ntetra,tetra, wf.et, en.ef, wf.wg);
+//			tweights(kv.nkstot, nspin, NBANDS, CHR.nelec, ntetra,tetra, wf.et, en.ef, wf.wg);
 //		}
     }
     else if (use_gaussian_broadening)
@@ -75,7 +75,7 @@ void Occupy::calculate_weights(void)
 		else
 		{
 			// -1 means is no related to spin.
-        	Occupy::gweights(kv.nks, kv.wk, NBANDS, ucell.nelec, gaussian_parameter, gaussian_type,
+        	Occupy::gweights(kv.nks, kv.wk, NBANDS, CHR.nelec, gaussian_parameter, gaussian_type,
                  wf.ekb, en.ef, en.demet, wf.wg, -1, kv.isk);
 
 		}

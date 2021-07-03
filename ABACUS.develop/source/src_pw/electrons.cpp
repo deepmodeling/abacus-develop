@@ -254,7 +254,7 @@ void Electrons::self_consistent(const int &istep)
                 // if 'dr2 < ETHR * nelec' happen,
                 // in other word, 'dr2 < diago_error'
                 // we update ETHR.
-                diago_error = ETHR*std::max(1.0, ucell.nelec);
+                diago_error = ETHR*std::max(1.0, CHR.nelec);
             }
 
             // if converged is achieved, or the self-consistent error(dr2)
@@ -283,7 +283,7 @@ void Electrons::self_consistent(const int &istep)
 
                     // update ETHR.
                     ofs_running << " Origin ETHR = " << ETHR << endl;
-                    ETHR = 0.1 * dr2 / ucell.nelec;
+                    ETHR = 0.1 * dr2 / CHR.nelec;
                     ofs_running << " New    ETHR = " << ETHR << endl;
                     //goto first_iter_again;
                     goto scf_step;

@@ -39,13 +39,13 @@ void IState_Charge::begin(void)
 
 	// (1.2) read in LOWF_GAMMA.dat
 	OUT(ofs_running,"LOWF.allocate_flag",LOWF.get_allocate_flag());	
-	cout << " number of electrons = " << ucell.nelec << endl;
+	cout << " number of electrons = " << CHR.nelec << endl;
 
 	// mohan update 2011-03-21
 	// if ucell is odd, it's correct,
 	// if ucell is even, it's also correct.
 	// +1.0e-8 in case like (2.999999999+1)/2
-	fermi_band = static_cast<int>( (ucell.nelec+1)/2 + 1.0e-8 ) ;
+	fermi_band = static_cast<int>( (CHR.nelec+1)/2 + 1.0e-8 ) ;
 	cout << " number of occupied bands = " << fermi_band << endl;
 
 	if(mode == 1)

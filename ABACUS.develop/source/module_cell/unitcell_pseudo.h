@@ -23,7 +23,7 @@ public: // member variables
 	int nmax;
 	int nmax_total;//mohan add 2009-09-10
 	int lmax_ppwf;
-	double nelec;
+	//double nelec;
 
 public: // member functions
 	UnitCell_pseudo();
@@ -49,7 +49,7 @@ public: // member functions
 	// cal_meshx	: calculate max number of mesh points in pp file
 	//================================================================
 	void cal_nwfc();
-	void cal_nelec();
+	//void cal_nelec();
 	void cal_meshx();
 	void cal_natomwfc(); 
 	void print_unitcell_pseudo(const string &fn);

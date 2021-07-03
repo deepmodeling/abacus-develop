@@ -31,11 +31,11 @@ void IState_Envelope::begin(void)
 	// if ucell is odd, it's correct,
 	// if ucell is even, it's also correct.
 	// +1.0e-8 in case like (2.999999999+1)/2
-	int fermi_band = static_cast<int>( (ucell.nelec+1)/2 + 1.0e-8 ) ;
+	int fermi_band = static_cast<int>( (CHR.nelec+1)/2 + 1.0e-8 ) ;
 	int bands_below = NBANDS_ISTATE;
 	int bands_above = NBANDS_ISTATE;
 
-	cout << " number of electrons = " << ucell.nelec << endl;
+	cout << " number of electrons = " << CHR.nelec << endl;
 	cout << " number of occupied bands = " << fermi_band << endl;
 	cout << " plot band decomposed charge density below fermi surface with " 
 	<< bands_below << " bands." << endl;
