@@ -1,4 +1,4 @@
-![](ABACUS.develop/documents/abacus-logo.jpg)
+![](documents/abacus-logo.jpg)
 
 <p style="text-align:center">
     <a href="https://github.com/deepmodeling/abacus-develop/actions/workflows/container.yml">
