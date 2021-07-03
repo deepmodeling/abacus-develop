@@ -1,8 +1,4 @@
-![](ABACUS.develop/documents/abacus-logo.jpg)
-=======
-<p style="text-align:center">
-    <img src="https://raw.githubusercontent.com/deepmodeling/abacus-develop/develop/ABACUS.develop/documents/abacus-logo.jpg"/>
-</p>
+![](documents/abacus-logo.jpg)
 
 <p style="text-align:center">
     <a href="https://github.com/deepmodeling/abacus-develop/actions/workflows/container.yml">
@@ -31,12 +27,12 @@ WHERE MORE INFORMATION CAN BE FOUND.
 
 
 # About ABACUS
-ABACUS is an electronic structure package based on Density Functional Theory (DFT).
-Both plane wave basis and numerical atomic orbitals can be used with ABACUS.
+ABACUS IS AN ELECTRONIC STRUCTURE PACKAGE BASED ON DENSITY FUNCTIONAL THEORY.
+ABACUS ADOPTS EITHER PLANE WAVE BASIS OR NUMERICAL ATOMIC ORBITALS
 
 ---
 
-ABACUS provides the following functionalities:
+ABACUS provides the following features and functionalities:
 
 1. Ground-state total energy calculations using Kohn-Sham (KS) density functional theory
 (DFT) with local-density, generalized gradient approximations (LDA/GGAs), and hybrid functionals
@@ -149,9 +145,12 @@ ABACUS provides a wide variety of functionalities, with explanation and examples
 We also provide many examples in the directories examples/ and tests/
 
 # For developers
+
 We also provide some [information](doc/developer.md) for developers.
-=======
-# Build and install ABACUS from CMake
+
+---
+
+## Build and install ABACUS from CMake
 
 Check the cmake version on your machine
 ```bash
