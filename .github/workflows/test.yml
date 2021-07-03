@@ -19,6 +19,7 @@ jobs:
       - name: Build Docker Image
         uses: docker/build-push-action@v2
         with:
+          load: true
           tags: abacus-development-kit:gnu
           cache-from: type=registry,ref=${{ env.CONTAINER }}
       - name: Build and Test

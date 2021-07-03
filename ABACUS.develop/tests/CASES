@@ -1,0 +1,67 @@
+101_PW_15_pseudopots 
+101_PW_OU_pseudopots
+101_PW_VW_pseudopots
+101_PW_15_f_pseudopots
+101_PW_upf201_pseudopots
+# 102_PW_DA_davidson
+# 103_PW_15_CS_CF
+# 103_PW_OU_CS_CF
+# 103_PW_CF_CS_S1_smallg
+104_PW_AF_magnetic
+104_PW_FM_magnetic
+# 105_PW_FD_smearing
+105_PW_FX_smearing
+105_PW_M2_smearing
+# 105_PW_GA_smearing
+105_PW_MP_smearing
+105_PW_MV_smearing
+106_PW_BD_chargemixing
+106_PW_KK_chargemixing
+106_PW_PK_chargemixing
+106_PW_PL_chargemixing
+106_PW_PU_chargemixing
+107_PW_OB_outputbands
+# 107_PW_OD_outputdos
+108_PW_RE
+108_PW_RE_MB
+108_PW_RE_MG
+# 109_PW_CR
+110_PW_SY_symmetry
+111_PW_elec_add
+111_PW_elec_minus
+111_PW_S2_elec_add
+111_PW_S2_elec_minus
+# 107_PW_OB_outputdos
+# 114_PW_15_BD
+# 125_PW_15_PK_PU_AF
+# 127_PW_15_PK_AF
+# 133_PW_DJ_PK
+# 135_PW_15_PK
+# 140_PW_15_SO
+
+201_NO_KP_15_CF_CS_Si
+201_NO_KP_DJ_CF_CS_GaAs
+201_NO_KP_DJ_Si
+202_NO_KP_HP_hpseps
+204_NO_KP_FM
+204_NO_KP_AFM
+207_NO_KP_OB
+207_NO_KP_OD
+208_NO_KP_CF_RE
+208_NO_KP_CS_CR
+220_NO_KP_MD_NVErestart
+220_NO_KP_MD_NVTrestart
+220_NO_KP_MD_FIRE
+# 230_NO_KP_MD_TD
+240_NO_KP_15_SO
+
+301_NO_GO_15_CF_CS
+301_NO_GO_DJ_Si
+# 303_NO_GO_HP_15
+304_NO_GO_AF
+304_NO_GO_FM
+307_NO_GO_OH
+345_NO_GO_BS
+
+401_NP_KP_sp
+401_NP_KP_spd

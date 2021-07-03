@@ -1,7 +1,5 @@
 FROM debian:buster-slim
 
-LABEL org.opencontainers.image.source https://github.com/darelbeida/abacus-develop
-
 RUN apt-get update && apt-get install -y --no-install-recommends git gfortran libboost-dev libssl-dev make ssh vim wget \
     && apt-get install -y --no-install-recommends mpich libmpich-dev
 
@@ -44,5 +42,7 @@ RUN cd /tmp \
     && git clone https://github.com/USCiLab/cereal.git \
     && cp -r cereal/include /usr/local \
     && rm -rf cereal
+
+RUN apt-get install -y bc
 
 ENV LD_LIBRARY_PATH /usr/local/lib
