@@ -1,5 +1,5 @@
 
-![](ABACUS.develop/documents/abacus-logo.jpg)
+![](documents/abacus-logo.jpg)
 =======
 
 
