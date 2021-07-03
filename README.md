@@ -173,4 +173,3 @@ cmake --build build
 cmake --install build
 ```
 If no install prefix is specified, the binary will be installed to `/usr/local/bin/ABACUS` by default.
->>>>>>> 30a329f719bb1b3c22fdcf5477e9c647eb02fbed
