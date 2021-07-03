@@ -1,10 +1,4 @@
-<<<<<<< HEAD
 ![](ABACUS.develop/documents/abacus-logo.jpg)
-=======
-<p style="text-align:center">
-    <img src="https://raw.githubusercontent.com/deepmodeling/abacus-develop/develop/ABACUS.develop/documents/abacus-logo.jpg"/>
-</p>
->>>>>>> 30a329f719bb1b3c22fdcf5477e9c647eb02fbed
 
 <p style="text-align:center">
     <a href="https://github.com/deepmodeling/abacus-develop/actions/workflows/container.yml">
