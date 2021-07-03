@@ -1,6 +1,5 @@
 
 ![](documents/abacus-logo.jpg)
-=======
 
 
 <p style="text-align:center">
