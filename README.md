@@ -1,13 +1,15 @@
-![](documents/abacus-logo.jpg)
+<div style="text-align:center; margin: 20px">
+    <img src="documents/abacus-logo.jpg">
+</div>
 
-<p style="text-align:center">
+<div style="text-align:center; margin: 20px">
     <a href="https://github.com/deepmodeling/abacus-develop/actions/workflows/container.yml">
         <img src="https://github.com/deepmodeling/abacus-develop/actions/workflows/container.yml/badge.svg">
     </a>
     <a href="https://github.com/deepmodeling/abacus-develop/actions/workflows/test.yml">
         <img src="https://github.com/deepmodeling/abacus-develop/actions/workflows/test.yml/badge.svg">
     </a>
-</p>
+</div>
 
 <a id="readme-top"></a>
 WELCOME TO THE "ABACUS" PROGRAM!
@@ -15,15 +17,17 @@ THE PROJECT STARTS FROM https://github.com/abacusmodeling/abacus-develop,
 WHERE MORE INFORMATION CAN BE FOUND.
 
 # Table of contents
+- [Table of contents](#table-of-contents)
 - [About ABACUS](#about-abacus)
 - [Download and install](#download-and-install)
 - [Quickstart guide](#quickstart-guide)
-    - [Input files](#input-files)
-    - [Output files](#output-files)
+  - [Input files](#input-files)
+  - [Output files](#output-files)
 - [Features](#features)
 - [Functionalities](#functionalities)
 - [Examples](#examples)
 - [For developers](#for-developers)
+  - [Build and install ABACUS from CMake](#build-and-install-abacus-from-cmake)
 
 
 # About ABACUS
@@ -64,14 +68,14 @@ Please refer to the [installation guide](doc/install.md) for instruction on the 
 The following files are the central input files for ABACUS. Before executing the program, please
 make sure these files are prepared and stored in the working directory.
 - The INPUT file
-    
+
     The file named INPUT contains the setting parameters used in the calculation, which informs the program “what to do and how to do it”. Most parameters are supplied with default values, but some important parameters must be explicitly set by the user. For a complete list of the input parameters, please consult this [instruction](doc/input-main.md).
-    
+
     *Attention: Users cannot change the filename “INPUT” to other names.*
 - The structure file
 
     The default name for structure file is STRU.The name can however be changed to a different name by explicitly specifying the name in the INPUT file.
-    
+
     The STRU file contains the structural information about the system, e.g., lattice constant, lattice vectors, and positions of the atoms within a unit cell. The positions can be given either in direct or Cartesian coordinates. Moreover, the name (and location of the pseudopotential and numerical orbital files, see below) need to be specified in the STRU file.
 
     Specifications of the STRU file can be found in this [short instruction](doc/input-stru).
