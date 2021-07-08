@@ -827,7 +827,7 @@ void LCAO_Descriptor::save_npy_d()
     {
         npy_des.push_back(this->d[i]);
     }
-    const long unsigned dshape[] = { ucell.nat, this->des_per_atom };
+    const long unsigned dshape[] = {(long unsigned) ucell.nat, (long unsigned) this->des_per_atom };
     npy::SaveArrayAsNumpy("dm_eig.npy", false, 2, dshape, npy_des);
     return;
 }
@@ -846,7 +846,7 @@ void LCAO_Descriptor::save_npy_f(matrix& fbase)
 {
     //save f_base
     //caution: unit: Rydberg/Bohr
-    const long unsigned fshape[] = { ucell.nat, 3 };
+    const long unsigned fshape[] = {(long unsigned) ucell.nat, 3 };
     vector<double> npy_fbase;
     for (int iat = 0;iat < ucell.nat;++iat)
     {

@@ -11,7 +11,13 @@ project(ABACUS
     LANGUAGES CXX
 )
 
-set(CMAKE_CXX_STANDARD 11)
+option(ENABLE_DEEPKS "Enable DeePKS functionality" OFF)
+
+if(ENABLE_DEEPKS)
+  set(CMAKE_CXX_STANDARD 14)
+else()
+  set(CMAKE_CXX_STANDARD 11)
+endif()
 add_compile_options(-O2 -g)
 
 set(ABACUS_BIN_NAME abacus)
@@ -29,14 +35,34 @@ find_package(MPI REQUIRED)
 find_package(Threads REQUIRED)
 find_package(OpenMP REQUIRED)
 
+if(DEFINED MKL_DIR)
+  set(MKL_DIR_CACHE "${MKL_DIR}")
+endif()
+
+include(FetchContent)
+
 include_directories(
-    ${Cereal_INCLUDE_DIRS}
-    ${Boost_INCLUDE_DIRS}
-    ${MPI_CXX_INCLUDE_PATH}
+  ${Cereal_INCLUDE_DIRS}
+  ${Boost_INCLUDE_DIRS}
+  ${MPI_CXX_INCLUDE_PATH}
 )
 
-if(DEFINED MKL_DIR)
-  find_package(MKL REQUIRED)
+if(ENABLE_DEEPKS)
+  find_package(Torch REQUIRED)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${TORCH_CXX_FLAGS}")
+  FetchContent_Declare(
+    libnpy
+    GIT_REPOSITORY https://github.com.cnpmjs.org/llohse/libnpy.git
+  )
+  FetchContent_MakeAvailable(libnpy)
+  include_directories(
+    ${libnpy_SOURCE_DIR}
+    ${TORCH_INCLUDE_DIRS}
+  )
+endif()
+
+if(DEFINED MKL_DIR_CACHE)
+  find_package(IntelMKL REQUIRED)
   add_definitions(-D__MKL -DMKL_ILP64)
   include_directories(${MKL_INCLUDE_DIRS} ${MKL_INCLUDE_DIRS}/fftw)
 else()
@@ -90,10 +116,10 @@ target_link_libraries(${ABACUS_BIN_NAME}
     Threads::Threads
 )
 
-if(DEFINED MKL_DIR)
+if(DEFINED MKL_DIR_CACHE)
   target_link_libraries(${ABACUS_BIN_NAME}
     -lifcore
-    MKL::MKL
+    IntelMKL::MKL
     OpenMP::OpenMP_CXX
   )
 else()
@@ -103,6 +129,12 @@ else()
     ScaLAPACK::ScaLAPACK
     LAPACK::LAPACK
     OpenMP::OpenMP_CXX
+  )
+endif()
+
+if(ENABLE_DEEPKS)
+  target_link_libraries(${ABACUS_BIN_NAME}
+    ${TORCH_LIBRARIES}
   )
 endif()
 
