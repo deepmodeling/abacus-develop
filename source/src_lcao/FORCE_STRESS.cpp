@@ -6,7 +6,9 @@
 #include "../src_pw/H_XC_pw.h"
 #include "../src_pw/vdwd2.h"
 #include "../src_pw/vdwd3.h"
+#ifdef __DEEPKS
 #include "LCAO_descriptor.h"	//caoyu add for deepks 2021-06-03
+#endif
 
 double Force_Stress_LCAO::force_invalid_threshold_ev = 0.00;
 double Force_Stress_LCAO::output_acc = 1.0e-8;
@@ -40,16 +42,16 @@ void Force_Stress_LCAO::allocate(void)
 
 #include "../src_pw/efield.h"
 void Force_Stress_LCAO::getForceStress(
-	const bool isforce, 
-	const bool isstress, 
-	const bool istestf, 
-	const bool istests, 
-	matrix &fcs, 
+	const bool isforce,
+	const bool isstress,
+	const bool istestf,
+	const bool istests,
+	matrix &fcs,
 	matrix &scs)
 {
     TITLE("Force_Stress_LCAO","getForceStress");
 	timer::tick("Force_Stress_LCAO","getForceStress",'E');
-	
+
 	if(!isforce&&!isstress) return;
 
 	const int nat = ucell.nat;
@@ -101,7 +103,7 @@ void Force_Stress_LCAO::getForceStress(
 		sigmaewa.create(3,3);
 		sigmaxc.create(3,3);
 		sigmahar.create(3,3);
-		
+
 		soverlap.create(3,3);
 		stvnl_dphi.create(3,3);
 		svnl_dbeta.create(3,3);
@@ -114,7 +116,7 @@ void Force_Stress_LCAO::getForceStress(
 				sigmacc,
 				sigmaxc);
 	}
-	
+
 	//--------------------------------------------------------
 	// implement four terms which needs integration
 	//--------------------------------------------------------
@@ -124,13 +126,13 @@ void Force_Stress_LCAO::getForceStress(
 				isstress,
 				foverlap,
 				ftvnl_dphi,
-				fvnl_dbeta,	
+				fvnl_dbeta,
 				fvl_dphi,
 				soverlap,
 				stvnl_dphi,
 				svnl_dbeta,
 				svl_dphi);
-	
+
 	//implement vdw force or stress here
 	// Peize Lin add 2014-04-04, update 2021-03-09
 	matrix force_vdw;
@@ -147,7 +149,7 @@ void Force_Stress_LCAO::getForceStress(
 				force_vdw(iat,0) = vdwd2.get_force()[iat].x;
 				force_vdw(iat,1) = vdwd2.get_force()[iat].y;
 				force_vdw(iat,2) = vdwd2.get_force()[iat].z;
-			}			
+			}
 		}
 		if(isstress)
 		{
@@ -169,7 +171,7 @@ void Force_Stress_LCAO::getForceStress(
 				force_vdw(iat,0) = vdwd3.get_force()[iat].x;
 				force_vdw(iat,1) = vdwd3.get_force()[iat].y;
 				force_vdw(iat,2) = vdwd3.get_force()[iat].z;
-			}			
+			}
 		}
 		if(isstress)
 		{
@@ -231,16 +233,16 @@ void Force_Stress_LCAO::getForceStress(
 			for (int iat = 0; iat < nat; iat++)
 			{
 				fcs(iat, i) += foverlap(iat, i)
-					+ ftvnl_dphi(iat, i) 
-					+ fvnl_dbeta(iat, i) 
-					+ fvl_dphi(iat, i) 
+					+ ftvnl_dphi(iat, i)
+					+ fvnl_dbeta(iat, i)
+					+ fvl_dphi(iat, i)
 					+ fvl_dvl(iat, i) // derivative of local potential force (pw)
 					+ fewalds(iat, i) // ewald force (pw)
 					+ fcc(iat, i) //nonlinear core correction force (pw)
 					+ fscc(iat, i);//self consistent corretion force (pw)
 
 				// Force contribution from DFT+U, Quxin add on 20201029
-				if(INPUT.dft_plus_u) 
+				if(INPUT.dft_plus_u)
 				{
 					fcs(iat, i) += force_dftu(iat, i);
 				}
@@ -269,25 +271,25 @@ void Force_Stress_LCAO::getForceStress(
 			}
 
 			//xiaohui add "OUT_LEVEL", 2015-09-16
-			if(OUT_LEVEL != "m") 
+			if(OUT_LEVEL != "m")
 			{
-				ofs_running << " correction force for each atom along direction " 
+				ofs_running << " correction force for each atom along direction "
 					<< i+1 << " is " << sum/nat << endl;
 			}
 		}
-		
+
 		// pengfei 2016-12-20
 		if(Symmetry::symm_flag)
 		{
 			this->forceSymmetry(fcs);
 		}
-		
+#ifdef __DEEPKS
 		//DeePKS force, caoyu add 2021-06-03
 		if (INPUT.deepks_scf)
 		{
 			ld.save_npy_f(fcs);	//save fbase
 		}
-		
+#endif
 		// print Rydberg force or not
 		bool ry = false;
 		if(istestf)
@@ -305,7 +307,7 @@ void Force_Stress_LCAO::getForceStress(
 					ftvnl(iat,i) = ftvnl_dphi(iat,i) + fvnl_dbeta(iat,i);
 				}
 			}
-			
+
 			ofs_running << "\n PARTS OF FORCE: " << endl;
 			ofs_running << setiosflags(ios::showpos);
 			ofs_running << setiosflags(ios::fixed) << setprecision(8) << endl;
@@ -323,7 +325,7 @@ void Force_Stress_LCAO::getForceStress(
 			this->print_force("NLCC       FORCE",fcc,1,ry);
 			this->print_force("SCC        FORCE",fscc,1,ry);
 			//-------------------------------
-			//put extra force here for test! 
+			//put extra force here for test!
 			//-------------------------------
 			if(EFIELD)
 			{
@@ -333,15 +335,17 @@ void Force_Stress_LCAO::getForceStress(
 			{
 				this->print_force("VDW        FORCE",force_vdw,1,ry);
 			}
+#ifdef __DEEPKS
 			//caoyu add 2021-06-03
 			if (INPUT.deepks_scf)
 			{
 				this->print_force("DeePKS 	FORCE", ld.F_delta, 1, ry);
 			}
+#endif
 		}
-		
-		ofs_running << setiosflags(ios::left);  
-			
+
+		ofs_running << setiosflags(ios::left);
+
 		this->printforce_total(ry, istestf, fcs);
 		if(istestf)
 		{
@@ -376,14 +380,14 @@ void Force_Stress_LCAO::getForceStress(
 			for (int j=0;j<3;j++)
 			{
 				scs(i,j) += soverlap(i,j)
-					+ stvnl_dphi(i,j) 
-					+ svnl_dbeta(i,j) 
-					+ svl_dphi(i,j) 
+					+ stvnl_dphi(i,j)
+					+ svnl_dbeta(i,j)
+					+ svl_dphi(i,j)
 					+ sigmadvl(i,j) // derivative of local potential stress (pw)
 					+ sigmaewa(i,j) // ewald stress (pw)
 					+ sigmacc(i,j) //nonlinear core correction stress (pw)
-					+ sigmaxc(i,j)//exchange corretion stress 
-					+ sigmahar(i,j);// hartree stress 
+					+ sigmaxc(i,j)//exchange corretion stress
+					+ sigmahar(i,j);// hartree stress
 
 					//VDW stress from linpz and jiyy
 				if(vdwd2_para.flag_vdwd2||vdwd3_para.flag_vdwd3)
@@ -394,10 +398,10 @@ void Force_Stress_LCAO::getForceStress(
 				if(INPUT.dft_plus_u)
 				{
 					scs(i, j) += stress_dftu(i, j);
-				} 
+				}
 			}
 		}
-		
+
 
 		if(Symmetry::symm_flag)
 		{
@@ -407,7 +411,7 @@ void Force_Stress_LCAO::getForceStress(
 		// print Rydberg stress or not
 		bool ry = false;
 
-		//test stress each terms if needed 
+		//test stress each terms if needed
 		if(istests)
 		{
 			// test
@@ -430,7 +434,7 @@ void Force_Stress_LCAO::getForceStress(
 			sc_pw.print_stress("OVERLAP  STRESS",soverlap,TEST_STRESS,ry);
 			//test
 			sc_pw.print_stress("T        STRESS",stvnl_dphi,TEST_STRESS,ry);
-			sc_pw.print_stress("VNL      STRESS",svnl_dbeta,TEST_STRESS,ry);	
+			sc_pw.print_stress("VNL      STRESS",svnl_dbeta,TEST_STRESS,ry);
 
 			sc_pw.print_stress("T_VNL    STRESS",stvnl,TEST_STRESS,ry);
 
@@ -451,10 +455,10 @@ void Force_Stress_LCAO::getForceStress(
 				sc_pw.print_stress("DFTU     STRESS",sigmaxc,TEST_STRESS,ry);
 			}
 			sc_pw.print_stress("TOTAL    STRESS",scs,TEST_STRESS,ry);
-			
+
 		}//end of test
-		ofs_running << setiosflags(ios::left);  
-		//print total stress 
+		ofs_running << setiosflags(ios::left);
+		//print total stress
 		sc_pw.printstress_total(scs, ry);
 
 		double unit_transform = 0.0;
@@ -467,7 +471,7 @@ void Force_Stress_LCAO::getForceStress(
 		}
 		PRESSURE = (scs(0,0)+scs(1,1)+scs(2,2))/3;
 	}//end of stress calculation
-	
+
 	timer::tick("Force_LCAO","start_force",'E');
 	return;
 }
@@ -477,9 +481,9 @@ void Force_Stress_LCAO::print_force(const string &name, matrix& f, const bool sc
 {
 	ofs_running << " --------------------------- " << name << " ----------------------------" << endl;
 	ofs_running << " " << setw(8) << "atom" << setw(15) << "x" << setw(15) << "y" << setw(15) << "z" << endl;
-	
+
 	double fac = 1.0;
-	
+
 	if(!ry)
 	{
 	 	fac = Ry_to_eV / 0.529177;
@@ -521,8 +525,8 @@ void Force_Stress_LCAO::print_force(const string &name, matrix& f, const bool sc
 				if( abs(f(iat,2)) >output_acc) cout << setw(15) << f(iat,2)*fac;
 				else cout << setw(15) << "0";
 				cout << endl;
-			}	
-				
+			}
+
             iat++;
         }
     }
@@ -562,14 +566,14 @@ void Force_Stress_LCAO::printforce_total (const bool ry, const bool istestf, mat
 
 		for(int iat=0; iat<ucell.nat; iat++)
 		{
-			ofs << "   " << fcs(iat,0)*Ry_to_eV / 0.529177 
-				<< "   " << fcs(iat,1)*Ry_to_eV / 0.529177 
+			ofs << "   " << fcs(iat,0)*Ry_to_eV / 0.529177
+				<< "   " << fcs(iat,1)*Ry_to_eV / 0.529177
 				<< "   " << fcs(iat,2)*Ry_to_eV / 0.529177 << endl;
 		}
 		ofs.close();
 	}
 
- 	if(istestf) 
+ 	if(istestf)
 	{
 		cout << setprecision(6) << setiosflags(ios::showpos) << setiosflags(ios::fixed) << endl;
 		cout << " ------------------- TOTAL      FORCE --------------------" << endl;
@@ -587,15 +591,15 @@ void Force_Stress_LCAO::printforce_total (const bool ry, const bool istestf, mat
 
 			if(istestf)
 			{
-            	cout << " " << setw(8) << ss.str() 
-					<< setw(15) << fcs(iat,0)*unit_transform 
-					<< setw(15) << fcs(iat,1)*unit_transform 
+            	cout << " " << setw(8) << ss.str()
+					<< setw(15) << fcs(iat,0)*unit_transform
+					<< setw(15) << fcs(iat,1)*unit_transform
 					<< setw(15) << fcs(iat,2)*unit_transform << endl;
 			}
 
-            ofs_running << " " << setw(12) << ss.str() 
-				<< setw(15) << fcs(iat,0)*unit_transform 
-				<< setw(15) << fcs(iat,1)*unit_transform 
+            ofs_running << " " << setw(12) << ss.str()
+				<< setw(15) << fcs(iat,0)*unit_transform
+				<< setw(15) << fcs(iat,1)*unit_transform
 				<< setw(15) << fcs(iat,2)*unit_transform << endl;
 
             ++iat;
@@ -609,13 +613,13 @@ void Force_Stress_LCAO::printforce_total (const bool ry, const bool istestf, mat
 
 //local pseudopotential, ewald, core correction, scc terms in force
 void Force_Stress_LCAO::calForcePwPart(
-	matrix &fvl_dvl, 
-	matrix &fewalds, 
-	matrix &fcc, 
+	matrix &fvl_dvl,
+	matrix &fewalds,
+	matrix &fcc,
 	matrix &fscc)
 {
 	//--------------------------------------------------------
-	// local pseudopotential force: 
+	// local pseudopotential force:
 	// use charge density; plane wave; local pseudopotential;
 	//--------------------------------------------------------
 	f_pw.cal_force_loc (fvl_dvl);
@@ -624,13 +628,13 @@ void Force_Stress_LCAO::calForcePwPart(
 	//--------------------------------------------------------
 	f_pw.cal_force_ew (fewalds); //remain problem
 	//--------------------------------------------------------
-	// force due to core correlation. 
+	// force due to core correlation.
 	//--------------------------------------------------------
 	f_pw.cal_force_cc(fcc);
 	//--------------------------------------------------------
 	// force due to self-consistent charge.
 	//--------------------------------------------------------
-	f_pw.cal_force_scc(fscc);	
+	f_pw.cal_force_scc(fscc);
 	return;
 }
 
@@ -641,7 +645,7 @@ void Force_Stress_LCAO::calForceStressIntegralPart(
 	const bool isstress,
 	matrix& foverlap,
 	matrix& ftvnl_dphi,
-	matrix& fvnl_dbeta,	
+	matrix& fvnl_dbeta,
 	matrix& fvl_dphi,
 	matrix& soverlap,
 	matrix& stvnl_dphi,
@@ -655,7 +659,7 @@ void Force_Stress_LCAO::calForceStressIntegralPart(
 				isstress,
 				foverlap,
 				ftvnl_dphi,
-				fvnl_dbeta,	
+				fvnl_dbeta,
 				fvl_dphi,
 				soverlap,
 				stvnl_dphi,
@@ -669,7 +673,7 @@ void Force_Stress_LCAO::calForceStressIntegralPart(
 				isstress,
 				foverlap,
 				ftvnl_dphi,
-				fvnl_dbeta,	
+				fvnl_dbeta,
 				fvl_dphi,
 				soverlap,
 				stvnl_dphi,
@@ -689,16 +693,16 @@ void Force_Stress_LCAO::calStressPwPart(
 )
 {
 	//--------------------------------------------------------
-	// local pseudopotential stress: 
+	// local pseudopotential stress:
 	// use charge density; plane wave; local pseudopotential;
 	//--------------------------------------------------------
     sc_pw.stress_loc (sigmadvl, 0);
- 
+
 	//--------------------------------------------------------
 	//hartree term
 	//--------------------------------------------------------
 	sc_pw.stress_har (sigmahar, 0);
-    
+
 	//--------------------------------------------------------
 	// ewald stress: use plane wave only.
 	//--------------------------------------------------------
@@ -706,7 +710,7 @@ void Force_Stress_LCAO::calStressPwPart(
 
 
 	//--------------------------------------------------------
-	// stress due to core correlation. 
+	// stress due to core correlation.
 	//--------------------------------------------------------
 	sc_pw.stress_cc(sigmacc, 0);
 
@@ -745,7 +749,7 @@ void Force_Stress_LCAO::forceSymmetry(matrix& fcs)
 			iat++;
 		}
 	}
-		
+
 	for(int iat=0; iat<ucell.nat; iat++)
 	{
 		Mathzone::Cartesian_to_Direct(fcs(iat,0),fcs(iat,1),fcs(iat,2),
@@ -753,7 +757,7 @@ void Force_Stress_LCAO::forceSymmetry(matrix& fcs)
 							ucell.a2.x, ucell.a2.y, ucell.a2.z,
 							ucell.a3.x, ucell.a3.y, ucell.a3.z,
 							d1,d2,d3);
-									
+
 		fcs(iat,0) = d1;fcs(iat,1) = d2;fcs(iat,2) = d3;
 	}
 	symm.force_symmetry(fcs , pos);
@@ -764,7 +768,7 @@ void Force_Stress_LCAO::forceSymmetry(matrix& fcs)
 							ucell.a2.x, ucell.a2.y, ucell.a2.z,
 							ucell.a3.x, ucell.a3.y, ucell.a3.z,
 							d1,d2,d3);
-										
+
 		fcs(iat,0) = d1;fcs(iat,1) = d2;fcs(iat,2) = d3;
 	}
 	//cout << "nrotk =" << symm.nrotk << endl;

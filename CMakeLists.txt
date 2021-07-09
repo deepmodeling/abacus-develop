@@ -59,6 +59,7 @@ if(ENABLE_DEEPKS)
     ${libnpy_SOURCE_DIR}
     ${TORCH_INCLUDE_DIRS}
   )
+  add_definitions(-D__DEEPKS)
 endif()
 
 if(DEFINED MKL_DIR_CACHE)
@@ -124,12 +125,17 @@ if(DEFINED MKL_DIR_CACHE)
   )
 else()
   target_link_libraries(${ABACUS_BIN_NAME}
-    -lgfortran
     FFTW3::FFTW3
     ScaLAPACK::ScaLAPACK
     LAPACK::LAPACK
     OpenMP::OpenMP_CXX
   )
+endif()
+
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    target_link_libraries(${ABACUS_BIN_NAME}
+        -lgfortran
+    )
 endif()
 
 if(ENABLE_DEEPKS)
