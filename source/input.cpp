@@ -63,7 +63,7 @@ void Input::Init(const string &fn)
 	Global_File::make_dir_out( this->suffix , this->calculation, MY_RANK, this->out_alllog); //xiaohui add 2013-09-01
 	Check();
 
-	time_t  time_now = time(NULL);
+	time_t time_now = time(NULL);
 	ofs_running << "                                                                                     " << endl;
 	ofs_running << "                             WELCOME TO ABACUS                                       " << endl;
 	ofs_running << "                                                                                     " << endl;

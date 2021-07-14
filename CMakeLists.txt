@@ -92,7 +92,7 @@ add_definitions(
 add_subdirectory(source)
 
 add_executable(${ABACUS_BIN_NAME}
-    source/main.cpp
+  source/main.cpp
 )
 
 target_link_libraries(${ABACUS_BIN_NAME}
