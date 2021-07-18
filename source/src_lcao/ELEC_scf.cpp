@@ -37,7 +37,7 @@ void ELEC_scf::scf(const int &istep)
 	Symmetry_rho srho;
 	for(int is=0; is<NSPIN; is++)
 	{
-		srho.begin(is);
+		srho.begin(is, CHR, pw, Pgrid, symm);
 	}
 
 //	cout << scientific;
@@ -379,7 +379,7 @@ void ELEC_scf::scf(const int &istep)
 		Symmetry_rho srho;
 		for(int is=0; is<NSPIN; is++)
 		{
-			srho.begin(is);
+			srho.begin(is, CHR, pw, Pgrid, symm);
 		}
 
 		// (6) compute magnetization, only for spin==2

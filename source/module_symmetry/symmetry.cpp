@@ -1,7 +1,7 @@
 #include <memory>
 #include "symmetry.h"
-#include "../src_pw/global.h"
-#include "symm_other.h"
+//#include "../src_pw/global.h"
+//#include "symm_other.h"
 
 Symmetry::Symmetry()
 {
@@ -18,7 +18,7 @@ Symmetry::~Symmetry()
 bool Symmetry::symm_flag=false;
 
 
-void Symmetry::analy_sys(void)
+void Symmetry::analy_sys(const UnitCell_pseudo &ucell, const output &out)
 {
     if (available == false) return;
     TITLE("Symmetry","init");
@@ -109,7 +109,7 @@ void Symmetry::analy_sys(void)
     s3 = a3;
 
     // find the lattice type accordiing to lattice vectors.
-    this->lattice_type(a1,a2,a3,ibrav,cel_const,ilattname);
+    this->lattice_type(a1,a2,a3,ibrav,cel_const,ilattname, ucell);
   //      cout << "a1 = " << a1.x << " " << a1.y << " " << a1.z <<endl;
   //      cout << "a1 = " << a2.x << " " << a2.y << " " << a2.z <<endl;
   //      cout << "a1 = " << a3.x << " " << a3.y << " " << a3.z <<endl;
@@ -489,7 +489,8 @@ void Symmetry::lattice_type(
     Vector3<double> &v3,
     int &brav,
     double *cel_const,
-    string &bravname
+    string &bravname,
+    const UnitCell_pseudo &ucell
 )
 {
     TITLE("Symmetry","lattice_type");
@@ -837,8 +838,8 @@ void Symmetry::change_lattice(void)
     }
     return;
 }
-
-void Symmetry::pricell(void)
+/*
+void Symmetry::pricell(const UnitCell_pseudo &ucell)
 {
     //detect the generating cell (primitive cell) of a supercell
     if (test_symmetry) TITLE("Symmetry","pricell");
@@ -1074,12 +1075,12 @@ void Symmetry::pricell(void)
     double celvolume = 0;
     double pcelvolume = 0.0;
 
-    this->lattice_type(p1, p2, p3, pbrav, pcel_const, plattname);
+    this->lattice_type(p1, p2, p3, pbrav, pcel_const, plattname, ucell);
 
     pcelvolume = std::fabs( Symm_Other::celvol(p1,p2,p3) );
 	OUT(ofs_running,"pcelvolume",pcelvolume);
 
-    this->lattice_type(a1, a2, a3, ibrav, cel_const, ilattname);
+    this->lattice_type(a1, a2, a3, ibrav, cel_const, ilattname, ucell);
 
     celvolume = std::fabs( Symm_Other::celvol(a1, a2, a3) );
 	OUT(ofs_running,"celvolume",celvolume);
@@ -1117,7 +1118,7 @@ void Symmetry::pricell(void)
     }
     //cout<<"pricell ends!"<<endl;
     return;
-}
+}*/
 
 
 void Symmetry::getgroup(int &nrot, int &nrotk)
@@ -1504,7 +1505,7 @@ void Symmetry::rho_symmetry( double *rho,
     timer::tick("Symmetry","rho_symmetry");
 }
 
-void Symmetry::force_symmetry(matrix &force , double* pos)   // pengfei 2016-12-20
+void Symmetry::force_symmetry(matrix &force , double* pos, const UnitCell_pseudo &ucell)   // pengfei 2016-12-20
 {
 	TITLE("Symmetry","force_symmetry");
 	double *protpos;
@@ -1584,7 +1585,7 @@ void Symmetry::force_symmetry(matrix &force , double* pos)   // pengfei 2016-12-
 	return;
 }
 
-void Symmetry::stress_symmetry(matrix& sigma)   //zhengdy added 2017
+void Symmetry::stress_symmetry(matrix& sigma, const UnitCell_pseudo &ucell)   //zhengdy added 2017
 {
 	double *tot_sigma, *temp;
 	tot_sigma = new double[9];

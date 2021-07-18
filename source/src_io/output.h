@@ -5,8 +5,10 @@
 #ifndef OUTPUT_H
 #define OUTPUT_H
 
-#include "../src_pw/tools.h"
-
+//#include "../src_pw/tools.h"
+#include "../module_base/realarray.h"
+#include "../module_base/matrix3.h"
+#include "../module_base/complexmatrix.h"
 class output
 {
 public:

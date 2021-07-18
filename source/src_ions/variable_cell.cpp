@@ -14,7 +14,7 @@ void Variable_Cell::init_after_vc(void)
 
     if(Symmetry::symm_flag)
     {
-        symm.analy_sys();
+        symm.analy_sys(ucell, out);
         DONE(ofs_running, "SYMMETRY");
     }
 
@@ -78,7 +78,7 @@ void Variable_Cell::final_calculation_after_vc(void)
     // (6) symmetry analysize.
     if(Symmetry::symm_flag)
     {
-        symm.analy_sys();
+        symm.analy_sys(ucell, out);
         DONE(ofs_running, "SYMMETRY");
     }
 

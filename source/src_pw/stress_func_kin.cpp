@@ -130,7 +130,7 @@ void Stress_Func::stress_kin(matrix& sigma)
 	//do symmetry
 	if(Symmetry::symm_flag)
 	{
-		symm.stress_symmetry(sigma);
+		symm.stress_symmetry(sigma, ucell);
 	}//end symmetry
 	
 	delete[] kfac;

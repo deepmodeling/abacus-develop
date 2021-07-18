@@ -1,8 +1,9 @@
 #ifndef SYMM_OTHER_H
 #define SYMM_OTHER_H
 
-#include "../src_pw/tools.h"
-
+//#include "../src_pw/tools.h"
+#include "../module_base/vector3.h"
+#include "../module_base/global_function.h"
 namespace Symm_Other
 {
 	void print1(const int &ibrav, const double *cel_const);

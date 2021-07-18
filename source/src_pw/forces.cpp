@@ -149,7 +149,7 @@ void Forces::init(matrix& force)
 			
 			force(iat,0) = d1;force(iat,1) = d2;force(iat,2) = d3;
 		}
-		symm.force_symmetry(force , pos);
+		symm.force_symmetry(force , pos, ucell);
 		for(int iat=0; iat<ucell.nat; iat++)
 		{
 			Mathzone::Direct_to_Cartesian(force(iat,0),force(iat,1),force(iat,2),

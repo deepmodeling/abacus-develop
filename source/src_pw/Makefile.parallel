@@ -59,6 +59,7 @@ VPATH=../src_global\
 :../src_io\
 :../src_ions\
 :../module_md\
+:../module_symmetry\
 :../\
 
 #==========================

@@ -1,8 +1,8 @@
 #ifndef SYMMETRY_H
 #define SYMMETRY_H
 
-#include "../src_pw/tools.h"
-#include "../module_cell/unitcell.h"
+//#include "../src_pw/tools.h"
+#include "../module_cell/unitcell_pseudo.h"
 #include "symmetry_basic.h"
 
 class Symmetry : public Symmetry_Basic
@@ -15,7 +15,7 @@ public:
 	// mohan add 2021-02-21
 	static bool symm_flag;
 
-	void analy_sys();
+	void analy_sys(const UnitCell_pseudo &ucell, const output &out);
 	bool available;
 
 	Vector3<double> s1, s2, s3;
@@ -68,7 +68,7 @@ public:
 	int standard_lat(Vector3<double> &a,Vector3<double> &b,Vector3<double> &c,double *celconst );
 
 	void lattice_type(Vector3<double> &v1,Vector3<double> &v2,Vector3<double> &v3, 
-			int &ibrav,double *cel_const,string &bravname);
+			int &ibrav,double *cel_const,string &bravname, const UnitCell_pseudo &ucell);
 
 	void recip(
 			const double a,
@@ -83,12 +83,12 @@ public:
 	void change_lattice(void);
 
 	// check if the input cell is a primitive cell.
-	void pricell(void);
+	//void pricell(const UnitCell_pseudo &ucell);
 	void getgroup(int &nrot, int &nrotk);
 	void checksym(Matrix3 &s, Vector3<double> &gtrans, double *pos);
 	void rho_symmetry(double *rho, const int &nr1, const int &nr2, const int &nr3);
-	void force_symmetry(matrix &force, double* pos);
-	void stress_symmetry(matrix &sigma);
+	void force_symmetry(matrix &force, double* pos, const UnitCell_pseudo &ucell);
+	void stress_symmetry(matrix &sigma, const UnitCell_pseudo &ucell);
 	void write();
 
 	void print_pos(const double* pos, const int &nat);

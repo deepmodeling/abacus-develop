@@ -75,6 +75,8 @@ diago_cg.o\
 electrons.o \
 efield.o \
 energy.o \
+energy_dos_pw.o\
+dos.o\
 forces.o\
 global.o \
 hamilt_pw.o \

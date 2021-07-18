@@ -3,9 +3,9 @@
 // DATE : 2007-9
 //==========================================================
 #include "symmetry.h"
-#include "../src_pw/global.h"
+//#include "../src_pw/global.h"
 #include "../module_base/mymath.h"
-#include "symm_other.h"
+//#include "symm_other.h"
 
 Symmetry_Basic::Symmetry_Basic()
 {

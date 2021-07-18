@@ -11,6 +11,7 @@
 // (4) Modified Broden Mixing
 //===================================
 #include "tools.h"
+#include "../module_base/matrix.h"
 #include "charge_pulay.h"
 
 class Charge_Broyden: public Charge_Pulay

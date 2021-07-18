@@ -42,10 +42,6 @@ add_library(
     stress_func_nl.cpp
     stress_func_print.cpp
     stress_pw.cpp
-    symm_other.cpp
-    symmetry.cpp
-    symmetry_basic.cpp
-    symmetry_rho.cpp
     threshold_elec.cpp
     use_fft.cpp
     vdwd2.cpp
