@@ -55,6 +55,7 @@ include Makefile.Objects
 VPATH=../src_global\
 :../module_base\
 :../module_cell\
+:../module_symmetry\
 :../src_parallel\
 :../src_io\
 :../src_ions\

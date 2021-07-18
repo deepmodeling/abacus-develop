@@ -52,6 +52,7 @@ include Makefile.Objects
 
 VPATH=../src_global\
 :../module_base\
+:../module_symmetry\
 :../module_cell\
 :../src_parallel\
 :../src_io\

@@ -1,6 +1,6 @@
 #include "dos.h"
 #include "../src_pw/global.h"
-
+#ifdef __LCAO
 void Dos::calculate_Mulliken(const string &fa)
 {
 	TITLE("Dos","calculate_Mulliken");
@@ -136,6 +136,7 @@ void Dos::calculate_Mulliken(const string &fa)
 
 	return;
 }
+#endif
 
 bool Dos::calculate_dos
 (
