@@ -1,6 +1,7 @@
 #include "istate_charge.h"
 #include "../src_pw/global.h"
 #include "../src_pw/tools.h"
+#include "../module_base/scalapack_connector.h"
 
 IState_Charge::IState_Charge(){}
 
@@ -112,7 +113,7 @@ void IState_Charge::begin(void)
 			// (1)
 			// This has been done once in LOOP_ions.
 			// but here we need to done for each band.
-			LOC.allocate_gamma(GridT);	
+			//LOC.allocate_gamma(GridT);	
 			
 			// (2) calculate the density matrix for a partuclar 
 			// band, whenever it is occupied or not.
@@ -147,7 +148,7 @@ void IState_Charge::begin(void)
 void IState_Charge::idmatrix(const int &ib)
 {
 	TITLE("IState_Charge","idmatrix");
-		
+/*		
 	for(int is=0; is<NSPIN; is++)
 	{
 		for (int i=0; i<NLOCAL; i++)
@@ -176,5 +177,50 @@ void IState_Charge::idmatrix(const int &ib)
 		}
 	}
 	return;
+*/
+
+		assert(wf.wg.nr==NSPIN);
+		for(int is=0; is!=NSPIN; ++is)
+		{
+			std::vector<double> wg_local(ParaO.ncol,0.0);
+			const int ib_local = ParaO.trace_loc_col[ib];
+
+			if(ib_local>=0)
+			{
+				wg_local[ib_local] = wf.wg(is,ib);
+			}
+			ofs_running << "ib, ib_local : " << ib << ' ' << ib_local << endl;
+		
+			// wg_wfc(ib,iw) = wg[ib] * wfc(ib,iw);
+			matrix wg_wfc(LOC.wfc_dm_2d.wfc_gamma[is]);
+			ofs_running << wg_wfc << endl;
+	
+			for(int ir=0; ir!=wg_wfc.nr; ++ir)
+			{
+				LapackConnector::scal( wg_wfc.nc, wg_local[ir], wg_wfc.c+ir*wg_wfc.nc, 1 );
+			}
+
+			// C++: dm(iw1,iw2) = wfc(ib,iw1).T * wg_wfc(ib,iw2)
+			const double one_float=1.0, zero_float=0.0;
+			const int one_int=1;
+			const char N_char='N', T_char='T';
+			LOC.wfc_dm_2d.dm_gamma[is].create( wg_wfc.nr, wg_wfc.nc );
+
+			pdgemm_(
+				&N_char, &T_char,
+				&NLOCAL, &NLOCAL, &wf.wg.nc,
+				&one_float,
+				wg_wfc.c, &one_int, &one_int, ParaO.desc,
+				LOC.wfc_dm_2d.wfc_gamma[is].c, &one_int, &one_int, ParaO.desc,
+				&zero_float,
+				LOC.wfc_dm_2d.dm_gamma[is].c, &one_int, &one_int, ParaO.desc);
+		}
+
+		cout << " finished calc dm_2d : " << endl;
+
+		LOC.cal_dk_gamma_from_2D_pub();
+		
+		cout << " finished convert : " << endl;
+
 }
 

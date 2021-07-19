@@ -317,6 +317,12 @@ void Local_Orbital_Charge::gamma_file(const Grid_Technique &gt)
 	}//loop ispin
 }
 
+void Local_Orbital_Charge::cal_dk_gamma_from_2D_pub(void)
+{
+    TITLE("Local_Orbital_Charge","cal_dk_gamma_from_2D_pub");
+
+	cal_dk_gamma_from_2D();
+}
 // calculate the grid distributed DM matrix from 2D block-cyclic distributed DM matrix
 // transform dm_gamma[is].c to this->DM[is]
 void Local_Orbital_Charge::cal_dk_gamma_from_2D(void)

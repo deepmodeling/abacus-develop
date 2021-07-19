@@ -5,6 +5,7 @@
 - [Installation](#installation)
   - [Prerequisites](#prerequisites)
   - [Building the program](#building-the-program)
+  - [Build and install ABACUS with CMake](#build-and-install-abacus-with-cmake)
 
   [back to main page](#../install.md)  
 
@@ -138,5 +139,33 @@ After modifying the `Makefile.vars` file, to build the program, simply type
 make
 ```
 If the compilation finishes without error messages (except perhaps for some warnings), an executable program `ABACUS.mpi` will be created in directory `bin/`
+
+[back to top](#download-and-install)
+
+## Build and install ABACUS with CMake
+
+Check the cmake version on your machine
+```bash
+cmake --version
+```
+ABACUS requires the minimum cmake version `3.18`.
+
+You can specify the bin path of ABACUS binary to install by `CMAKE_INSTALL_PREFIX`.
+```bash
+cmake -B build -DCMAKE_INSTALL_PREFIX=${ABACUS_BIN_PATH}
+```
+You can provide root path of each dependent package if the package cannot be automatically found by cmake.
+Keys `LAPACK_DIR`, `SCALAPACK_DIR`, `ELPA_DIR`, `FFTW3_DIR`, `CEREAL_INCLUDEDIR`, `BOOST_INCLUDEDIR`, `MPI_CXX_COMPILER` and `MKL_DIR`. are currently available to specify.
+For example
+```bash
+cmake -B build -DFFTW3_ROOT=/opt/fftw3
+```
+
+If the cmake has executed successfully, then
+```bash
+cmake --build build
+cmake --install build
+```
+If no install prefix is specified, the binary will be installed to `/usr/local/bin/ABACUS` by default.
 
 [back to top](#download-and-install)
