@@ -35,8 +35,33 @@ inline int CTOT2q(
     return 0;
 }
 
+inline int CTOT2q_c(
+	int myid,
+	int naroc[2],
+	int nb,
+	int dim0,
+	int dim1,
+	int iprow,
+	int ipcol,
+	complex<double>* work,
+	complex<double>** CTOT)
+{
+    for(int j=0; j<naroc[1]; ++j)
+    {
+        int igcol=globalIndex(j, nb, dim1, ipcol);
+        if(igcol>=NBANDS) continue;
+        for(int i=0; i<naroc[0]; ++i)
+        {
+            int igrow=globalIndex(i, nb, dim0, iprow);
+			//ofs_running << "i,j,igcol,igrow" << i<<" "<<j<<" "<<igcol<<" "<<igrow<<endl;
+            if(myid==0) work[j*naroc[0]+i]=CTOT[igcol][igrow];
+        }
+    }
+    return 0;
+}
+
 // be called in local_orbital_wfc::allocate_k
-int WF_Local::read_lowf_complex(complex<double> **c, const int &ik)
+int WF_Local::read_lowf_complex(complex<double> **c, const int &ik, const bool &newdm)
 {
     TITLE("WF_Local","read_lowf_complex");
     timer::tick("WF_Local","read_lowf_complex");
@@ -156,7 +181,14 @@ int WF_Local::read_lowf_complex(complex<double> **c, const int &ik)
     // so it's save.
 	
     //WF_Local::distri_lowf(ctot, SGO.totwfc[0]);
-	WF_Local::distri_lowf_complex(ctot, c); 
+    if(newdm==0)
+	{
+		WF_Local::distri_lowf_complex(ctot, c); 
+	}
+	else
+	{	
+		WF_Local::distri_lowf_complex_new(ctot, ik);
+	}
 	
 	// mohan add 2012-02-15,
 	// still have bugs, but can solve it later.
@@ -260,6 +292,7 @@ int WF_Local::read_lowf(double **c, const int &is)
             ctot[i] = new double[NLOCAL];
         }
 
+		//cout << "nbands" << NBANDS << endl;
         for (int i=0; i<NBANDS; i++)
         {
             int ib;
@@ -273,7 +306,7 @@ int WF_Local::read_lowf(double **c, const int &is)
                 ifs >> ctot[i][j];
 				//cout << ctot[i][j] << " ";
             }
-		//cout << endl;
+			//cout << endl;
         }
     }
 
@@ -404,7 +437,7 @@ void WF_Local::write_lowf_complex(const string &name, complex<double> **ctot, co
 
 void WF_Local::distri_lowf_new(double **ctot, const int &is)
 {
-    TITLE("WF_Local","distri_lowf");
+    TITLE("WF_Local","distri_lowf_new");
 #ifdef __MPI
 
 //1. alloc work array; set some parameters
@@ -469,11 +502,82 @@ void WF_Local::distri_lowf_new(double **ctot, const int &is)
 
 	delete[] work;
 #else
-	WARNING_QUIT("WF_Local::distri_lowf","check the code without MPI.");
+	WARNING_QUIT("WF_Local::distri_lowf_new","check the code without MPI.");
 #endif
     return;
 }
 
+void WF_Local::distri_lowf_complex_new(complex<double> **ctot, const int &ik)
+{
+    TITLE("WF_Local","distri_lowf_complex_new");
+#ifdef __MPI
+
+//1. alloc work array; set some parameters
+
+	long maxnloc; // maximum number of elements in local matrix
+	MPI_Reduce(&ParaO.nloc, &maxnloc, 1, MPI_LONG, MPI_MAX, 0, ParaO.comm_2D);
+	MPI_Bcast(&maxnloc, 1, MPI_LONG, 0, ParaO.comm_2D);
+	//reduce and bcast could be replaced by allreduce
+	
+    int nprocs, myid;
+    MPI_Comm_size(ParaO.comm_2D, &nprocs);
+    MPI_Comm_rank(ParaO.comm_2D, &myid);
+
+	complex<double> *work=new complex<double>[maxnloc]; // work/buffer matrix
+	int nb = 0;
+	if(NB2D==0)
+	{
+		if(NLOCAL>0) nb = 1;
+		if(NLOCAL>500) nb = 32;
+		if(NLOCAL>1000) nb = 64;
+	}
+	else if(NB2D>0)
+	{
+		nb = NB2D; // mohan add 2010-06-28
+	}
+	int info;
+	int naroc[2]; // maximum number of row or column
+	
+//2. copy from ctot to wfc_gamma
+	for(int iprow=0; iprow<ParaO.dim0; ++iprow)
+	{
+		for(int ipcol=0; ipcol<ParaO.dim1; ++ipcol)
+		{
+//2.1 get and bcast local 2d matrix info
+			const int coord[2]={iprow, ipcol};
+			int src_rank;
+			MPI_Cart_rank(ParaO.comm_2D, coord, &src_rank);
+			if(myid==src_rank)
+			{
+				naroc[0]=ParaO.nrow;
+				naroc[1]=ParaO.ncol;
+			}
+			info=MPI_Bcast(naroc, 2, MPI_INT, src_rank, ParaO.comm_2D);
+
+//2.2 copy from ctot to work, then bcast work
+			info=CTOT2q_c(myid, naroc, nb, ParaO.dim0, ParaO.dim1, iprow, ipcol, work, ctot);
+			info=MPI_Bcast(work, maxnloc, MPI_DOUBLE_COMPLEX, 0, ParaO.comm_2D);
+			//ofs_running << "iprow, ipcow : " << iprow << ipcol << endl;
+			//for (int i=0; i<maxnloc; ++i)
+			//{
+				//ofs_running << *(work+i)<<" ";
+			//}
+			//ofs_running << endl;
+//2.3 copy from work to wfc_k
+			const int inc=1;
+			if(myid==src_rank)
+			{
+				LapackConnector::copy(ParaO.nloc, work, inc, LOC.wfc_dm_2d.wfc_k[ik].c, inc);
+			}
+		}//loop ipcol
+	}//loop	iprow
+
+	delete[] work;
+#else
+	WARNING_QUIT("WF_Local::distri_lowf_new","check the code without MPI.");
+#endif
+    return;
+}
 
 void WF_Local::distri_lowf(double **ctot, double **c)
 {

@@ -128,7 +128,7 @@ void Local_Orbital_wfc::allocate_k(const Grid_Technique &gt)
 		for(int ik=0; ik<kv.nkstot; ++ik)
 		{
 			ofs_running << " Read in wave functions " << ik + 1 << endl;
-			error = WF_Local::read_lowf_complex( this->WFC_K[ik], ik );
+			error = WF_Local::read_lowf_complex( this->WFC_K[ik], ik, 0 );
 		}
 #ifdef __MPI
 		Parallel_Common::bcast_int(error);

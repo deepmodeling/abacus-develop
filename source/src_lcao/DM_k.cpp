@@ -1,5 +1,6 @@
 #include "local_orbital_charge.h"
 #include "../src_pw/global.h"
+#include "../src_io/wf_local.h"
 #include "../module_base/blas_connector.h"
 
 #include "LCAO_nnr.h"
@@ -46,10 +47,55 @@ void Local_Orbital_Charge::allocate_DM_k(void)
 
 	// Peize Lin test 2019-01-16 
     wfc_dm_2d.init();
+	if(wf.start_wfc=="file")
+	{
+		this->kpt_file(GridT);
+	}
 
     return;
 }
 
+void Local_Orbital_Charge::kpt_file(const Grid_Technique &gt)
+{
+	TITLE("Local_Orbital_Charge","kpt_file");
+
+	int error;
+		cout << " Read in wave functions files: " << kv.nkstot << endl;
+
+	complex<double> **ctot;
+
+	for(int ik=0; ik<kv.nkstot; ++ik)
+	{
+
+		LOC.wfc_dm_2d.wfc_k[ik].create(ParaO.ncol, ParaO.nrow);
+		LOC.wfc_dm_2d.wfc_k[ik].zero_out();
+
+		ofs_running << " Read in wave functions " << ik + 1 << endl;
+		error = WF_Local::read_lowf_complex( ctot , ik , 1);
+
+#ifdef __MPI
+		Parallel_Common::bcast_int(error);
+#endif
+		ofs_running << " Error=" << error << endl;
+		if(error==1)
+		{
+			WARNING_QUIT("Local_Orbital_wfc","Can't find the wave function file: LOWF.dat");
+		}
+		else if(error==2)
+		{
+			WARNING_QUIT("Local_Orbital_wfc","In wave function file, band number doesn't match");
+		}
+		else if(error==3)
+		{
+			WARNING_QUIT("Local_Orbital_wfc","In wave function file, nlocal doesn't match");
+		}
+		else if(error==4)
+		{
+			WARNING_QUIT("Local_Orbital_wfc","In k-dependent wave function file, k point is not correct");
+		}
+
+	}//loop ispin
+}
 
 
 #include "record_adj.h"
