@@ -211,7 +211,7 @@ void Bessel_Basis::init_TableOne(
 	ss << GlobalV::global_out_dir << "jle.orb";
 	ofstream ofs(ss.str().c_str());
 	ofs << "---------------------------------------------------------------------------"<< endl;
-	ofs << setiosflags(ios::left) << setw(28) << "Energy Cutoff(Ry)" << ecutwfc << endl;
+	ofs << setiosflags(ios::left) << setw(28) << "Energy Cutoff(Ry)" << ecut << endl;
 	ofs << setiosflags(ios::left) << setw(28) << "Radius Cutoff(a.u.)" << rcut << endl;
 	ofs << setiosflags(ios::left) << setw(28) << "Lmax" << lmax << endl;
 	for (int l = 0; l < lmax + 1; l++) 
