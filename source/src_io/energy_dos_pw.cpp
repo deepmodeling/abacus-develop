@@ -252,5 +252,26 @@ void energy::perform_dos_pw(void)
 	 }
 
 	}//out_dos=1
+	if(this->out_band) //pengfei 2014-10-13
+	{
+		int nks=0;
+		if(nspin0==1) 
+		{
+			nks = GlobalC::kv.nkstot;
+		}
+		else if(nspin0==2) 
+		{
+			nks = GlobalC::kv.nkstot/2;
+		}
+
+		for(int is=0; is<nspin0; is++)
+		{
+			stringstream ss2;
+			ss2 << GlobalV::global_out_dir << "BANDS_" << is+1 << ".dat";
+			GlobalV::ofs_running << "\n Output bands in file: " << ss2.str() << endl;
+			Dos::nscf_band(is, ss2.str(), nks, GlobalV::NBANDS, this->ef*0, wf.ekb);
+		}
+
+	}
 }
 
