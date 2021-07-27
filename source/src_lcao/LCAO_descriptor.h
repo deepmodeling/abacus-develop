@@ -26,9 +26,10 @@ public:
     void cal_descriptor(void);
 	void print_descriptor(void);
 
-
-	void cal_v_delta(const string& model_file);//<psi|V_delta|psi>
-	void cal_f_delta(matrix& dm);	//pytorch term remaining!
+	void deepks_pre_scf(const string& model_file);
+	void cal_v_delta();//<psi|V_delta|psi>
+	void add_v_delta();
+	void cal_f_delta(matrix& dm);
 	void print_H_V_delta();
 	void print_F_delta();
 
@@ -50,7 +51,9 @@ public:
 
 private:
 	torch::jit::script::Module module;
-
+	
+	//density matrix: dm_gamma
+	double* dm;
 	// overlap between lcao and descriptor basis
 	double** S_mu_alpha;	//[tot_Inl][NLOCAL][2l+1]	caoyu modified 2021-05-07
 
@@ -65,7 +68,7 @@ private:
 
 	// descriptors
     double *d;
-	vector<torch::Tensor> d_tensor;
+	std::vector<torch::Tensor> d_tensor;
 
 	//gedm:dE/dD, [tot_Inl][2l+1][2l+1]	(E: Hartree)
 	std::vector<torch::Tensor> gedm_tensor;
@@ -122,7 +125,7 @@ private:
 	void cal_gdmx(matrix& dm);	//dD/dX
 	void del_gdmx();
 
-	void getdm(double* dm);
+	void getdm();
 
 	void cal_descriptor_tensor();
 

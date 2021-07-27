@@ -21,7 +21,9 @@
 #include "../src_ri/exx_opt_orb.h"
 #include "../src_pw/vdwd2.h"
 #include "../src_pw/vdwd3.h"
-
+#ifdef __DEEPKS
+#include "LCAO_descriptor.h"
+#endif
 
 void LOOP_elec::solve_elec_stru(const int &istep)
 {
@@ -145,6 +147,16 @@ void LOOP_elec::before_solver(const int &istep)
 	// (9) compute S, T, Vnl, Vna matrix.
 	UHM.set_lcao_matrices();
 
+#ifdef __DEEPKS
+	//init deepks
+	ld.init(ORB.get_lmax_d(), ORB.get_nchimax_d(), ucell.nat * ORB.Alpha[0].getTotal_nchi());
+    ld.build_S_descriptor(0);  //init overlap table
+	if (INPUT.deepks_scf)
+	{
+		//load a model
+		ld.deepks_pre_scf(INPUT.model_file);	//caoyu add 2021-07-26
+	}
+#endif
     timer::tick("LOOP_elec","before_solver"); 
 	return;
 }

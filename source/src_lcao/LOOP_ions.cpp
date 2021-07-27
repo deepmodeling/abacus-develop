@@ -17,7 +17,7 @@
 #include "../src_pw/vdwd2_parameters.h"
 #include "../src_pw/vdwd3_parameters.h"
 #ifdef __DEEPKS
-#include "LCAO_descriptor.h"
+#include "LCAO_descriptor.h"    //caoyu add 2021-07-26
 #endif
 
 LOOP_ions::LOOP_ions()
@@ -170,22 +170,21 @@ void LOOP_ions::opt_ions(void)
 #ifdef __DEEPKS
         if (INPUT.out_descriptor)
         {
-            ld.init(ORB.get_lmax_d(), ORB.get_nchimax_d(), ucell.nat* ORB.Alpha[0].getTotal_nchi());
-            ld.build_S_descriptor(0);  //derivation not needed yet
-            ld.cal_projected_DM();
-            ld.cal_descriptor();
+            //ld.init(ORB.get_lmax_d(), ORB.get_nchimax_d(), ucell.nat* ORB.Alpha[0].getTotal_nchi());
+            //ld.build_S_descriptor(0);  //cal overlap, no need dm
+            ld.cal_projected_DM();  //need dm
+            ld.cal_descriptor();    //final descriptor
             if (INPUT.deepks_scf)
             {
-                ld.build_S_descriptor(1);   //for F_delta calculation
-                ld.cal_v_delta(INPUT.model_file);
-                ld.print_H_V_delta();
+                ld.cal_v_delta();
+                ld.print_H_V_delta();   //final H_delta
                 ld.save_npy_d();
                 if (FORCE)
                 {
+                    ld.build_S_descriptor(1);   //for F_delta calculation
                     ld.cal_f_delta(LOC.wfc_dm_2d.dm_gamma[0]);
                     ld.print_F_delta();
                 }
-
             }
         }
 #endif

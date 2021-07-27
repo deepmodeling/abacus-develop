@@ -22,7 +22,7 @@ LCAO_Descriptor::LCAO_Descriptor()
     inl_l = new int[1];
     d = new double[1];
     H_V_delta = new double[1];
-    
+    dm = new double[1];
 }
 LCAO_Descriptor::~LCAO_Descriptor()
 {
@@ -31,7 +31,7 @@ LCAO_Descriptor::~LCAO_Descriptor()
     delete[] inl_l;
     delete[] d;
     delete[] H_V_delta;
-
+    delete[] dm;
     //delete S_mu_alpha**
     for (int inl = 0;inl < this->inlmax;inl++)
     {
@@ -290,9 +290,11 @@ void LCAO_Descriptor::cal_projected_DM()
 {
     TITLE("LCAO_Descriptor", "cal_projected_DM");
     //step 1: get dm: the coefficient of wfc, not charge density
-    double *dm = new double[NLOCAL * NLOCAL];
-    ZEROS(dm, NLOCAL * NLOCAL);
-    this->getdm(dm);
+    //init dm
+    delete[] this->dm;
+    this->dm = new double [NLOCAL * NLOCAL];
+    ZEROS(this->dm, NLOCAL * NLOCAL);
+    this->getdm();
 
     //step 2: get S_alpha_mu and S_nu_beta
     double **ss = this->S_mu_alpha;
@@ -322,7 +324,6 @@ void LCAO_Descriptor::cal_projected_DM()
     }
     
     delete[] tmp_pdm;
-    delete[] dm;
     return;
 }
 
@@ -404,7 +405,6 @@ void LCAO_Descriptor::cal_descriptor()
             }     //l
         }         //ia
     }             //it
-    this->cal_descriptor_tensor();  //use torch::symeig
     this->print_descriptor();
     return;
 }
@@ -480,13 +480,13 @@ void LCAO_Descriptor::set_DS_mu_alpha(const int& iw1_all, const int& inl, const 
     return;
 }
 
-void LCAO_Descriptor::getdm(double* dm)
+void LCAO_Descriptor::getdm()
 {
     for (int i = 0; i < LOC.wfc_dm_2d.dm_gamma[0].nr; i++)
     {
         for (int j = 0; j < LOC.wfc_dm_2d.dm_gamma[0].nc; j++)
         {
-            dm[i * NLOCAL + j] = LOC.wfc_dm_2d.dm_gamma[0](i, j); //only consider default NSPIN = 1
+            this->dm[i * NLOCAL + j] = LOC.wfc_dm_2d.dm_gamma[0](i, j); //only consider default NSPIN = 1
         }
     }
 }
@@ -583,24 +583,39 @@ void LCAO_Descriptor::del_gdmx()
     return;
 }
 
-void LCAO_Descriptor::cal_v_delta(const string& model_file)
+void LCAO_Descriptor::deepks_pre_scf(const string& model_file)
 {
-    TITLE("LCAO_Descriptor", "cal_v_delta");
-    //1.  (dE/dD)<alpha_m'|psi_nv>
+    TITLE("LCAO_Descriptor", "deepks_pre_scf");
     this->load_model(model_file);
-    this->cal_gedm();
-
-    //2. multiply and sum
-    double* tmp_v1 = new double[(2 * lmaxd + 1) * NLOCAL];
-    ZEROS(tmp_v1, (2 * lmaxd + 1) * NLOCAL);
-    double* tmp_v2 = new double[NLOCAL *NLOCAL];
-    ZEROS(tmp_v2, NLOCAL * NLOCAL);
+    //init dm
+    delete[] this->dm;
+    this->dm = new double[NLOCAL * NLOCAL];
+    ZEROS(this->dm, NLOCAL * NLOCAL);
     //init H_V_delta
     delete[] this->H_V_delta;
     this->H_V_delta = new double[NLOCAL * NLOCAL];
+    ZEROS(this->H_V_delta, NLOCAL * NLOCAL);
+    return;
+}
+
+void LCAO_Descriptor::cal_v_delta()
+{
+    TITLE("LCAO_Descriptor", "cal_v_delta");
+    //1.  (dE/dD)<alpha_m'|psi_nv> (descriptor changes in every scf iter)
+    this->cal_projected_DM();
+    this->cal_descriptor_tensor();  //use torch::symeig
+    this->cal_gedm();
+    
+    //2. multiply overlap matrice and sum
+    double* tmp_v1 = new double[(2 * lmaxd + 1) * NLOCAL];
+    double* tmp_v2 = new double[NLOCAL *NLOCAL];
+
+    ZEROS(this->H_V_delta, NLOCAL * NLOCAL); //init before calculate
     
     for (int inl = 0;inl < inlmax;inl++)
     {
+        ZEROS(tmp_v1, (2 * lmaxd + 1) * NLOCAL);
+        ZEROS(tmp_v2, NLOCAL * NLOCAL);
         int nm = 2 * inl_l[inl] + 1;   //1,3,5,...
         const char t = 'T';  //transpose
         const char nt = 'N'; //non transpose
@@ -610,9 +625,10 @@ void LCAO_Descriptor::cal_v_delta(const string& model_file)
         double* b = S_mu_alpha[inl];//[NLOCAL][nm]--trans->[nm][NLOCAL]
         double* c = tmp_v1;
         
+        //2.1  (dE/dD)*<alpha_m'|psi_nv>
         dgemm_(&nt, &t, &nm, &NLOCAL, &nm, &alpha, a, &nm, b, &NLOCAL, &beta, c, &nm);
 
-        //2. <psi_mu|alpha_m>*(dE/dD)*<alpha_m'|psi_nv>
+        //2.2  <psi_mu|alpha_m>*(dE/dD)*<alpha_m'|psi_nv>
         a = b; //[NLOCAL][nm]
         b = c;//[nm][NLOCAL]
         c = tmp_v2;//[NLOCAL][NLOCAL]
@@ -628,6 +644,24 @@ void LCAO_Descriptor::cal_v_delta(const string& model_file)
     delete[] tmp_v2;
     ofs_running << "finish calculating H_V_delta" << endl;
     return;
+}
+void LCAO_Descriptor::add_v_delta()
+{
+    TITLE("LCAO_DESCRIPTOR", "add_v_delta");
+    if (GAMMA_ONLY_LOCAL)
+    {
+        for (int iw1 = 0;iw1 < NLOCAL;++iw1)
+        {
+            for (int iw2 = 0;iw2 < NLOCAL;++iw2)
+            {
+                LM.set_HSgamma(iw1, iw2, this->H_V_delta[iw1 * NLOCAL + iw2], 'L');
+            }
+        }
+    }
+    else
+    {
+        //call set_HSk, complex Matrix
+    }
 }
 
 void LCAO_Descriptor::cal_f_delta(matrix& dm)
@@ -672,6 +706,17 @@ void LCAO_Descriptor::cal_descriptor_tensor()
     TITLE("LCAO_Descriptor", "cal_descriptor_tensor");
     //init pdm_tensor and d_tensor
     torch::Tensor tmp;
+    
+    //if pdm_tensor and d_tensor is not empty, clear it !!
+    if (!this->d_tensor.empty())
+    {
+        this->d_tensor.erase(this->d_tensor.begin(), this->d_tensor.end());
+    }
+    if (!this->pdm_tensor.empty())
+    {
+        this->pdm_tensor.erase(this->pdm_tensor.begin(), this->pdm_tensor.end());
+    }
+    
     for (int inl = 0;inl < this->inlmax;++inl)
     {
         int nm = 2 * inl_l[inl] + 1;
@@ -702,8 +747,9 @@ void LCAO_Descriptor::cal_descriptor_tensor()
 
 void LCAO_Descriptor::load_model(const string& model_file)
 {
+    TITLE("LCAO_Descriptor", "load_model");
     try {
-        module = torch::jit::load(model_file);
+        this->module = torch::jit::load(model_file);
     }
     catch (const c10::Error& e) {
         std::cerr << "error loading the model" << std::endl;
@@ -822,6 +868,7 @@ void LCAO_Descriptor::print_F_delta()
 
 void LCAO_Descriptor::save_npy_d()
 {
+    TITLE("LCAO_Descriptor", "save_npy_d");
     //save descriptor in .npy format
     vector<double> npy_des;
     for (int i = 0;i < this->n_descriptor;++i)
@@ -834,7 +881,8 @@ void LCAO_Descriptor::save_npy_d()
 }
 
 void LCAO_Descriptor::save_npy_e(double& ebase)
-{   
+{
+    TITLE("LCAO_Descriptor", "save_npy_e");
     //save e_base
     const long unsigned eshape[] = { 1 };
     vector<double> npy_ebase;
@@ -845,6 +893,7 @@ void LCAO_Descriptor::save_npy_e(double& ebase)
 
 void LCAO_Descriptor::save_npy_f(matrix& fbase)
 {
+    TITLE("LCAO_Descriptor", "save_npy_f");
     //save f_base
     //caution: unit: Rydberg/Bohr
     const long unsigned fshape[] = {(long unsigned) ucell.nat, 3 };

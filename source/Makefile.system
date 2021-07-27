@@ -44,8 +44,8 @@ CNPY_INCLUDE_DIR = ${LIBNPY_DIR}
 #==========================
 # comment out by mohan 2021-02-06
 #LIBS = -lifcore -lm -lpthread ${LAPACK_LIB} ${FFTW_LIB} ${ELPA_LIB} ${LIBXC_LIB}
-#LIBS = -lifcore -lm -lpthread ${LIBTORCH_LIB} ${LAPACK_LIB} ${FFTW_LIB} ${ELPA_LIB}	#for DeePKS
-LIBS = -lifcore -lm -lpthread ${LAPACK_LIB} ${FFTW_LIB} ${ELPA_LIB}
+LIBS = -lifcore -lm -lpthread ${LIBTORCH_LIB} ${LAPACK_LIB} ${FFTW_LIB} ${ELPA_LIB}	#for DeePKS
+#LIBS = -lifcore -lm -lpthread ${LAPACK_LIB} ${FFTW_LIB} ${ELPA_LIB}
 #LIBS = -liomp5 -lpthread -lm -ldl ${BOOST_LIB} ${LAPACK_LIB} ${FFTW_LIB} ${LPA_LIB} ${LIBXC_LIB}
 
 INCLUDES = -I. -Icommands -I${BOOST_INCLUDE_DIR} -I${LAPACK_INCLUDE_DIR} -I${FFTW_INCLUDE_DIR} -I${LIBXC_INCLUDE_DIR} -I${CEREAL_INCLUDE_DIR} ${LIBTORCH_INCLUDE_DIR} -I${CNPY_INCLUDE_DIR}

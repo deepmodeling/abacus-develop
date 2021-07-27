@@ -4,6 +4,9 @@
 #include "../module_neighbor/sltk_atom_arrange.h"
 #include "global_fp.h" // mohan add 2021-01-30
 #include "dftu.h"
+#ifdef __DEEPKS
+#include "LCAO_descriptor.h"	//caoyu add 2021-07-26
+#endif
 
 LCAO_Hamilt::LCAO_Hamilt()
 { 
@@ -101,7 +104,17 @@ void LCAO_Hamilt::calculate_Hgamma( const int &ik )				// Peize Lin add ik 2016-
 		time_t time_vlocal_end = time(NULL);
 		OUT_TIME("vlocal integration",time_vlocal_start,time_vlocal_end);
 	}
+	
+#ifdef __DEEPKS	//caoyu add 2021-07-26 for DeePKS
 
+	if (INPUT.deepks_scf)
+	{
+		ld.cal_v_delta();
+		ld.add_v_delta();
+	}
+	
+#endif
+	
 	//add T+VNL+Vl matrix.
 	LM.update_Hloc();
 
