@@ -168,8 +168,13 @@ void Pseudopot_upf::read_pseudo_header(ifstream &ifs)
 	}
 
 	// mohan modify 2009-12-15
-	ifs >> dft[0] >> dft[1] >> dft[2];
-	READ_VALUE(ifs, this->dft[3]);
+	ifs >> dft[0] >> dft[1] >> dft[2] >> dft[3];
+	
+	//dft[i](i=0-3) gives the four components of xc functional:
+	//local X, local C, semilocal X, semilocal C
+	//dft_tot is the name of the combination
+	string dft_tot;
+	READ_VALUE(ifs, dft_tot);
 	
 	// dft functional enforced to modify
 	// mohan add 2010-07-15
@@ -183,24 +188,29 @@ void Pseudopot_upf::read_pseudo_header(ifstream &ifs)
 		xiaohui modify 2015-03-24*/
 
 		//xiaohui add 2015-03-23
+		
 		string dft_functional;
 		if(dft[1] == "PZ")
 		{
 			dft_functional = "lda";
 		}
-		else if(dft[1] == "PW")
+		else if(dft[1] == "PBE")
 		{
 			dft_functional = "pbe";
 		}
-
-		if(dft_functional != GlobalV::DFT_FUNCTIONAL)
+		else if(dft[1] == "SCAN")
+		{
+			dft_functional = "scan";
+		}
+		
+		if(dft_tot != GlobalV::DFT_FUNCTIONAL)
 		{
 			functional_error = 1;
 
 			cout << " dft_functional readin is: " << GlobalV::DFT_FUNCTIONAL << endl;
-			cout << " dft_functional in pseudopot file is: " << dft_functional << endl;
+			cout << " dft_functional in pseudopot file is: " << dft_tot << endl;
 			GlobalV::ofs_warning << " dft_functional readin is: " << GlobalV::DFT_FUNCTIONAL << endl;
-			GlobalV::ofs_warning << " dft_functional in pseudopot file is: " << dft_functional << endl;
+			GlobalV::ofs_warning << " dft_functional in pseudopot file is: " << dft_tot << endl;
 			//WARNING_QUIT("Pseudopot_upf::read_pseudo_header","input xc functional does not match that in pseudopot file");
 		}
 	}

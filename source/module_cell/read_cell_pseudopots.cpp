@@ -9,7 +9,6 @@
 
 #include <cstring>		// Peize Lin fix bug about strcmp 2016-08-02
 
-
 //==========================================================
 // Read pseudopotential according to the dir
 //==========================================================
@@ -76,10 +75,6 @@ void UnitCell_pseudo::read_cell_pseudopots(const string &pp_dir)
 		Parallel_Common::bcast_bool(upf.functional_error);
 #endif
 		//xiaohui add 2015-03-24
-		if(upf.functional_error == 1)
-		{
-			WARNING_QUIT("Pseudopot_upf::read_pseudo_header","input xc functional does not match that in pseudopot file");
-		}
 
 		if(GlobalV::MY_RANK==0)
 		{
@@ -103,6 +98,24 @@ void UnitCell_pseudo::read_cell_pseudopots(const string &pp_dir)
 				OUT(GlobalV::ofs_running,"L of projector", atoms[i].lll[ib]);
 			}
 //			OUT(GlobalV::ofs_running,"Grid Mesh Number", atoms[i].mesh);
+		}
+		if(upf.functional_error == 1)
+		{
+			cout << "In Pseudopot_upf::read_pseudo_header : input xc functional does not match that in pseudopot file" << endl;
+			cout << "Please make sure this is what you need" << endl;
+			atoms[i].dft[0] = GlobalV::DFT_FUNCTIONAL;
+			transform(atoms[i].dft[0].begin(), atoms[i].dft[0].end(), atoms[i].dft[0].begin(), (::toupper));
+			atoms[i].dft[1].clear();
+			atoms[i].dft[2].clear();
+			atoms[i].dft[3].clear();
+			if(GlobalV::MY_RANK==0)
+			{
+				GlobalV::ofs_running << "\n XC functional updated to : " << endl;
+				OUT(GlobalV::ofs_running,"functional Ex", atoms[i].dft[0]);
+				OUT(GlobalV::ofs_running,"functional Ec", atoms[i].dft[1]);
+				OUT(GlobalV::ofs_running,"functional GCEx", atoms[i].dft[2]);
+				OUT(GlobalV::ofs_running,"functional GCEc", atoms[i].dft[3]);
+			}
 		}
 			
 		//atoms[i].print_pseudo_us(ofs);

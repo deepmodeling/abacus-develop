@@ -4,7 +4,7 @@
 //qianrui rewrite it 2021-5-10
 int Pseudopot_upf::read_pseudo_upf201(ifstream &ifs)
 {
-	
+
     string word;
     int ONCVPSP;
 	//--------------------------------------
@@ -102,7 +102,7 @@ int Pseudopot_upf::read_pseudo_upf201(ifstream &ifs)
 			WARNING("PP_HEADRER reading", warningstr);
 		}
 	}
-	
+			
 	//--------------------------------------
 	//-              PP_MESH               - 
 	//--------------------------------------
@@ -402,8 +402,20 @@ int Pseudopot_upf::read_pseudo_upf201(ifstream &ifs)
 	SCAN_END(ifs, "</UPF>");
 	delete []name;
 	delete []val;
-	return 0;
+	
+	if(GlobalV::DFT_FUNCTIONAL!="none")
+	{
+		if(dft[0] != GlobalV::DFT_FUNCTIONAL)
+		{
+			functional_error = 1;
 
+			cout << " dft_functional readin is: " << GlobalV::DFT_FUNCTIONAL << endl;
+			cout << " dft_functional in pseudopot file is: " << dft[0] << endl;
+			GlobalV::ofs_warning << " dft_functional readin is: " << GlobalV::DFT_FUNCTIONAL << endl;
+			GlobalV::ofs_warning << " dft_functional in pseudopot file is: " << dft[0] << endl;
+		}
+	}
+	return 0;
 
 	//qianrui remove it 2020-5-10
 	/*while (ifs.good())
