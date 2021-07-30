@@ -1,0 +1,9 @@
+This test for:
+*GaAs-soc
+*PW
+*kpoints 2*2*2
+*sg15 pseudopotential
+*smearing gauss
+*ks_solver cg
+*mixing_type pulay-kerker
+*mixing_beta 0.4

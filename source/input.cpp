@@ -410,6 +410,7 @@ void Input::Default(void)
 	//added by zhengdy-soc
 	noncolin = false;
 	lspinorb = false;
+	soc_lambda = 1.0;
 	angle1[0] = 0.0;
 	angle2[0] = 0.0;
 
@@ -1662,6 +1663,10 @@ bool Input::Read(const string &fn)
 		{
 			read_value(ifs, lspinorb);
 		}
+		else if (strcmp("soc_lambda", word) == 0)
+		{
+			read_value(ifs, soc_lambda);
+		}
 		else if (strcmp("angle1", word) == 0)
 		{
 			delete[] angle1;
@@ -2287,6 +2292,7 @@ void Input::Bcast()
 
 	Parallel_Common::bcast_bool( noncolin );
 	Parallel_Common::bcast_bool( lspinorb );
+	Parallel_Common::bcast_double( soc_lambda );
 	if(noncolin)
 	{
 		if(GlobalV::MY_RANK==0)

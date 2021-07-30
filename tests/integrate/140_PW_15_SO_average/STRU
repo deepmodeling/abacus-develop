@@ -1,0 +1,23 @@
+ATOMIC_SPECIES
+As 1   As_ONCV_PBE_FR-1.1.upf 
+Ga 1   Ga_ONCV_PBE_FR-1.0.upf.txt
+
+LATTICE_CONSTANT
+1  // add lattice constant, 10.58 ang
+
+LATTICE_VECTORS
+5.34197 5.34197  0.0
+0.0  5.34197 5.34197
+5.34197  0.0  5.34197
+ATOMIC_POSITIONS
+Direct //Cartesian or Direct coordinate.
+
+As
+0
+1
+0.2500000          0.2500000          0.25000000     0 0 0
+
+Ga              //Element Label
+0
+1              //number of atom
+0.00000          0.00000          0.000000     0 0 0

@@ -82,7 +82,7 @@ public:
 	void print_pseudo_upf(ofstream &ofs);
 
 	bool functional_error;//xiaohui add 2015-03-24
-	int average_p(); //zhengdy add 2020-10-20
+	int average_p(const double& lambda); //zhengdy add 2020-10-20
 	void set_empty_element();		// Peize Lin add for bsse 2022.04.07
 
 private:
