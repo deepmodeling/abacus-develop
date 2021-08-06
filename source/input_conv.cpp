@@ -179,6 +179,9 @@ void Input_Conv::Convert(void)
 	GlobalV::T_IN_H = INPUT.t_in_h;
 	GlobalV::VL_IN_H = INPUT.vl_in_h;
 	GlobalV::VNL_IN_H = INPUT.vnl_in_h;
+	GlobalV::VH_IN_H = INPUT.vh_in_h;
+	GlobalV::VXC_IN_H = INPUT.vxc_in_h;
+	GlobalV::VION_IN_H = INPUT.vion_in_h;
 	GlobalV::TEST_FORCE = INPUT.test_force;
 	GlobalV::TEST_STRESS = INPUT.test_stress;
 

@@ -43,7 +43,7 @@ void Potential::allocate(const int nrxx)
 	if(GlobalV::DFT_META)
 	{
 		this->vofk.create(GlobalV::NSPIN,nrxx);
-    	Memory::record("Potential","vork",GlobalV::NSPIN*nrxx,"double");
+    	Memory::record("Potential","vofk",GlobalV::NSPIN*nrxx,"double");
 	}
 
     delete[] this->vr_eff1;
@@ -83,14 +83,24 @@ void Potential::init_pot(
 	//-------------------------------------------------------------------
 	// (1) local pseudopotential + electric field (if any) in vltot
 	//-------------------------------------------------------------------
-	this->set_local_pot(
-		this->vltot, // 3D local pseudopotentials 
-		GlobalC::ucell.ntype,
-		GlobalC::pw.ngmc,
-		GlobalC::ppcell.vloc,
-		GlobalC::pw.ig2ngg,
-		sf // structure factors		
-	);
+	if(GlobalV::VION_IN_H)
+	{
+		this->set_local_pot(
+			this->vltot, // 3D local pseudopotentials 
+			GlobalC::ucell.ntype,
+			GlobalC::pw.ngmc,
+			GlobalC::ppcell.vloc,
+			GlobalC::pw.ig2ngg,
+			sf // structure factors		
+		);
+	}
+	else
+	{
+		for(int ir=0; ir<GlobalC::pw.nrxx; ++ir)
+		{
+			this->vltot[ir]=0.0;
+		}
+	}
 
 	// zhengdy-soc, pauli matrix, just index 0 has vlocal term
 	int nspin0=GlobalV::NSPIN;
@@ -307,35 +317,39 @@ matrix Potential::v_of_rho(
 //----------------------------------------------------------
 //  calculate the exchange-correlation potential
 //----------------------------------------------------------
-	
-	#ifdef USE_LIBXC
+
+
+#ifdef USE_LIBXC
 	if(GlobalV::DFT_META)
 	{
-    	const std::tuple<double,double,matrix,matrix> etxc_vtxc_v = Potential_Libxc::v_xc_meta(rho_in, GlobalC::CHR.rho_core, GlobalC::CHR.kin_r);
+   		const std::tuple<double,double,matrix,matrix> etxc_vtxc_v = Potential_Libxc::v_xc_meta(rho_in, GlobalC::CHR.rho_core, GlobalC::CHR.kin_r);
 		H_XC_pw::etxc = std::get<0>(etxc_vtxc_v);
 		H_XC_pw::vtxc = std::get<1>(etxc_vtxc_v);
 		v            += std::get<2>(etxc_vtxc_v);
 		vofk		  = std::get<3>(etxc_vtxc_v);	
 	}
 	else
-	{	
-    	const std::tuple<double,double,matrix> etxc_vtxc_v = Potential_Libxc::v_xc(rho_in, GlobalC::CHR.rho_core);
+	{
+   		const std::tuple<double,double,matrix> etxc_vtxc_v = Potential_Libxc::v_xc(rho_in, GlobalC::CHR.rho_core);
 		H_XC_pw::etxc = std::get<0>(etxc_vtxc_v);
 		H_XC_pw::vtxc = std::get<1>(etxc_vtxc_v);
 		v            += std::get<2>(etxc_vtxc_v);
 	}
-	#else
+#else
 	const std::tuple<double,double,matrix> etxc_vtxc_v = H_XC_pw::v_xc(GlobalC::pw.nrxx, GlobalC::pw.ncxyz, GlobalC::ucell.omega, rho_in, GlobalC::CHR.rho_core);
-	
+
 	H_XC_pw::etxc = std::get<0>(etxc_vtxc_v);
 	H_XC_pw::vtxc = std::get<1>(etxc_vtxc_v);
 	v            += std::get<2>(etxc_vtxc_v);
-	#endif
+#endif
 
 //----------------------------------------------------------
 //  calculate the Hartree potential
 //----------------------------------------------------------
-	v += H_Hartree_pw::v_hartree(GlobalC::ucell,GlobalC::pw, GlobalV::NSPIN, rho_in);
+	if(GlobalV::VH_IN_H)
+	{
+		v += H_Hartree_pw::v_hartree(GlobalC::ucell,GlobalC::pw, GlobalV::NSPIN, rho_in);
+	}
 
     // mohan add 2011-06-20
     if(GlobalV::EFIELD && GlobalV::DIPOLE)
@@ -379,7 +393,7 @@ void Potential::set_vr_eff(void)
 		{
 			for (int i = 0;i < GlobalC::pw.nrxx; i++)
 	        {
-	            this->vr_eff(is, i) = this->vltot[i] + this->vr(is, i);
+	           	this->vr_eff(is, i) = this->vltot[i] + this->vr(is, i);
 			}
 		}
     }

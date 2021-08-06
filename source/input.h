@@ -157,8 +157,13 @@ class Input
 	bool colour;			// used for fun.
 
 	int t_in_h;				// calculate the T or not.
-	int vl_in_h;			// calculate the T or not.
-	int vnl_in_h;			// calculate the T or not.
+	int vl_in_h;			// calculate the vloc or not.
+	int vnl_in_h;			// calculate the vnl or not.
+
+	int vh_in_h;			// calculate the hartree potential or not
+	int vxc_in_h;			// calculate the xc potential or not
+	int vion_in_h;			// calculate the local ionic potential or not
+	//only relevant when vl_in_h = 1
 
 	int test_force;			// test the force.
 	int test_stress;		// test the stress.
