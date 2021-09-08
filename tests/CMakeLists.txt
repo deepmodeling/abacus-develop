@@ -13,7 +13,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 include(FetchContent)
 FetchContent_Declare(
   googletest
-  GIT_REPOSITORY https://github.com.cnpmjs.org/google/googletest.git
+  GIT_REPOSITORY https://github.com/google/googletest.git
 )
 FetchContent_MakeAvailable(googletest)
 include_directories(${ABACUS_SOURCE_DIR})
