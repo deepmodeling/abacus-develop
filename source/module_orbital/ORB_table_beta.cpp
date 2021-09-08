@@ -218,7 +218,11 @@ void ORB_table_beta::cal_VNL_PhiBeta_R(
 }
 
 
-void ORB_table_beta::init_Table_Beta(ModuleBase::Sph_Bessel_Recursive::D2 *pSB, LCAO_Orbitals &orb)
+void ORB_table_beta::init_Table_Beta(
+	ModuleBase::Sph_Bessel_Recursive::D2 *pSB,
+	const Numerical_Orbital* phi_,
+	const Numerical_Nonlocal* beta_,
+	const int* nproj_)
 {
 	ModuleBase::TITLE("ORB_table_beta", "init_Table_Beta");
 	ModuleBase::timer::tick("ORB_table_beta", "init_Table_Beta");
@@ -236,14 +240,14 @@ void ORB_table_beta::init_Table_Beta(ModuleBase::Sph_Bessel_Recursive::D2 *pSB, 
 		{
 			// Tpair: type std::pair.
 			const int Tpair=this->NL_Tpair(T1,T2);
-			const int Lmax1 = orb.Phi[T1].getLmax();			
-			const int NBeta = orb.nproj[T2];
+			const int Lmax1 = phi_[T1].getLmax();			
+			const int NBeta = nproj_[T2];
 			
 			//-------------------------------------------------------------
 			// how many <psi|beta_l>
 			// here we count all possible psi with (L,N) index for type T1.
 			//-------------------------------------------------------------
-			const int pairs_chi = orb.Phi[T1].getTotal_nchi() * NBeta;
+			const int pairs_chi = phi_[T1].getTotal_nchi() * NBeta;
 
 			// CAUTION!!!
 			// no matter nchi = 0 or NBeta = 0,
@@ -256,18 +260,18 @@ void ORB_table_beta::init_Table_Beta(ModuleBase::Sph_Bessel_Recursive::D2 *pSB, 
 
             const int T12_2Lplus1 = this->NL_L2plus1(T1,T2);
 
-			const double Rcut1 = orb.Phi[T1].getRcut();
+			const double Rcut1 = phi_[T1].getRcut();
 			for (int L1 = 0; L1 < Lmax1 + 1; L1++)
             {
-                for (int N1 = 0; N1 < orb.Phi[T1].getNchi(L1); N1++)
+                for (int N1 = 0; N1 < phi_[T1].getNchi(L1); N1++)
 				{
 					// number of projectors.
 					for (int nb = 0; nb < NBeta; nb ++)
 					{
-						//const int L2 = orb.Beta[T2].getL_Beta(nb); // mohan delete the variable 2021-05-07
-						const int L2 = orb.Beta[T2].Proj[nb].getL(); // mohan add 2021-05-07
+						//const int L2 = beta_[T2].getL_Beta(nb); // mohan delete the variable 2021-05-07
+						const int L2 = beta_[T2].Proj[nb].getL(); // mohan add 2021-05-07
 
-						const double Rcut2 = orb.Beta[T2].Proj[nb].getRcut();
+						const double Rcut2 = beta_[T2].Proj[nb].getRcut();
 
 						const int Opair = this->NL_Opair(Tpair,L1,N1,nb);
 						assert( Opair < pairs_chi );
@@ -302,13 +306,13 @@ void ORB_table_beta::init_Table_Beta(ModuleBase::Sph_Bessel_Recursive::D2 *pSB, 
 								continue;
 							}
 
-							assert(nb < orb.nproj[T2]);	
+							assert(nb < nproj_[T2]);	
 
 							this->cal_VNL_PhiBeta_R(
 								pSB, // mohan add 2021-03-06
 								L,
-                                orb.Phi[T1].PhiLN(L1,N1),
-                                orb.Beta[T2].Proj[nb], // mohan update 2011-03-07
+                                phi_[T1].PhiLN(L1,N1),
+                                beta_[T2].Proj[nb], // mohan update 2011-03-07
                                 rmesh,
 								this->Table_NR[0][Tpair][Opair][L],
 								this->Table_NR[1][Tpair][Opair][L]);
@@ -327,11 +331,13 @@ void ORB_table_beta::init_Table_Beta(ModuleBase::Sph_Bessel_Recursive::D2 *pSB, 
 }
 
 
-void ORB_table_beta::Destroy_Table_Beta(LCAO_Orbitals &orb)
+void ORB_table_beta::Destroy_Table_Beta(
+	const int& ntype,
+	const Numerical_Orbital* phi_,
+	const int* nproj_)
 {
 	if(!destroy_nr) return;
 
-	const int ntype = orb.get_ntype();
 	for(int ir = 0; ir < 2; ir ++)
 	{
 		for(int T1=0; T1<ntype; T1++)
@@ -340,7 +346,7 @@ void ORB_table_beta::Destroy_Table_Beta(LCAO_Orbitals &orb)
 			{
 				const int Tpair = this->NL_Tpair(T1,T2); 
 				const int L2plus1 = this->NL_L2plus1(T1,T2);
-				const int pairs = orb.Phi[T1].getTotal_nchi() * orb.nproj[T2]; 
+				const int pairs = phi_[T1].getTotal_nchi() * nproj_[T2]; 
 
 				// mohan fix bug 2011-03-30
 				if(pairs ==0) continue;
@@ -362,7 +368,10 @@ void ORB_table_beta::Destroy_Table_Beta(LCAO_Orbitals &orb)
 }
 
 
-void ORB_table_beta::init_NL_Tpair(LCAO_Orbitals &orb)
+void ORB_table_beta::init_NL_Tpair(
+	const Numerical_Orbital* phi_,
+	const Numerical_Nonlocal* beta_
+)
 {
 	ModuleBase::TITLE("ORB_table_beta","init_NL_index");
 	assert(ntype>0);
@@ -382,7 +391,7 @@ void ORB_table_beta::init_NL_Tpair(LCAO_Orbitals &orb)
 
 			 // the std::pair < psi | beta >
 			 // be careful! This is not a symmetry matrix.
-			 this->NL_L2plus1(T1,T0) = std::max(orb.Phi[T1].getLmax(), orb.Beta[T0].getLmax() )*2+1;
+			 this->NL_L2plus1(T1,T0) = std::max(phi_[T1].getLmax(), beta_[T0].getLmax() )*2+1;
 			 
 			 // there are special situations:
 			 // for example, two H atom without projector.
@@ -402,11 +411,13 @@ void ORB_table_beta::init_NL_Tpair(LCAO_Orbitals &orb)
 
 
 
-void ORB_table_beta::init_NL_Opair(LCAO_Orbitals &orb)
+void ORB_table_beta::init_NL_Opair(
+	LCAO_Orbitals &orb, 
+	const int nprojmax,
+	const int* nproj)
 {
 	const int lmax = orb.get_lmax();
 	const int nchimax = orb.get_nchimax();
-	const int nprojmax = orb.nprojmax;
 	
 	// may have bug if we use all H!
 	if( nprojmax == 0)
@@ -433,7 +444,7 @@ void ORB_table_beta::init_NL_Opair(LCAO_Orbitals &orb)
 				{
 					// notice !! T0 must be Beta( Nonlocal projector)
 					// mohan update 2011-03-07
-					for(int ip=0; ip<orb.nproj[T0]; ip++)
+					for(int ip=0; ip<nproj[T0]; ip++)
 					{
 						assert( nlpair < NL_nTpairs );
 						assert( L1 < lmax+1 );

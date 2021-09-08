@@ -174,7 +174,7 @@ void Mulliken_Charge::cal_mulliken(void)
 				GlobalV::ofs_running,
 				GlobalV::OUT_LEVEL,
 				GlobalC::ORB.get_rcutmax_Phi(), 
-				GlobalC::ORB.get_rcutmax_Beta(), 
+				GlobalC::ucell.infoNL.get_rcutmax_Beta(), 
 				GlobalV::GAMMA_ONLY_LOCAL);
 
 			atom_arrange::search(
@@ -201,7 +201,10 @@ void Mulliken_Charge::cal_mulliken(void)
 					INPUT.out_r_matrix,
 					Exx_Abfs::Lmax,
 					GlobalV::FORCE,
-					GlobalV::MY_RANK);
+					GlobalV::MY_RANK,
+					GlobalC::ucell.infoNL.nprojmax,
+					GlobalC::ucell.infoNL.nproj,
+					GlobalC::ucell.infoNL.Beta);
 
 
 
@@ -268,7 +271,7 @@ void Mulliken_Charge::cal_mulliken(void)
 				GlobalV::SEARCH_RADIUS, 
 				GlobalV::test_atom_input);
 #endif
-			GlobalC::LOWF.orb_con.clear_after_ions(GlobalC::UOT, GlobalC::ORB, INPUT.out_descriptor);
+			GlobalC::LOWF.orb_con.clear_after_ions(GlobalC::UOT, GlobalC::ORB, INPUT.out_descriptor, GlobalC::ucell.infoNL.nproj);
 
 		}//else                     
 		MPI_Reduce(MecMulP[is], DecMulP[is] , GlobalV::NLOCAL , MPI_DOUBLE , MPI_SUM, 0, MPI_COMM_WORLD);

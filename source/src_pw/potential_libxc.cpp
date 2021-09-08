@@ -356,7 +356,7 @@ Potential_Libxc::cal_input(
 			{
 				if(GlobalC::xcf.igcx||GlobalC::xcf.igcc)
 				{
-					GlobalC::ucell.magnet.cal_ux(GlobalC::ucell.ntype);
+					GlobalC::ucell.cal_ux();
 				}
 				for( size_t ir=0; ir!=GlobalC::pw.nrxx; ++ir )
 				{

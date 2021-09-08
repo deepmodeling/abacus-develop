@@ -310,6 +310,7 @@ symmetry_rho.o \
 symm_other.o \
 eximport.o \
 mulliken_charge.o\
+setup_nonlocal.o\
 
 OBJS_PDIAG=pdgseps.o \
 pzgseps.o \

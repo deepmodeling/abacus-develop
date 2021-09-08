@@ -745,7 +745,7 @@ void Force_LCAO_k::cal_fvnl_dbeta_k(
 					for (int ad0=0; ad0 < GlobalC::GridD.getAdjacentNum()+1 ; ++ad0)
 					{
 						const int T0 = GlobalC::GridD.getType(ad0);
-						if( GlobalC::ORB.nproj[T0] == 0) continue;
+						if( GlobalC::ucell.infoNL.nproj[T0] == 0) continue;
 						const int I0 = GlobalC::GridD.getNatom(ad0);
 						//const int iat0 = GlobalC::ucell.itia2iat(T0, I0);
 						//const int start0 = GlobalC::ucell.itiaiw2iwt(T0, I0, 0);
@@ -753,11 +753,11 @@ void Force_LCAO_k::cal_fvnl_dbeta_k(
 						tau0 = GlobalC::GridD.getAdjacentTau(ad0);
 						dtau1 = tau0 - tau1;
 						distance1 = dtau1.norm() * GlobalC::ucell.lat0;
-						rcut1 = GlobalC::ORB.Phi[T1].getRcut() + GlobalC::ORB.Beta[T0].get_rcut_max();
+						rcut1 = GlobalC::ORB.Phi[T1].getRcut() + GlobalC::ucell.infoNL.Beta[T0].get_rcut_max();
 
 						dtau2 = tau0 - tau2;
 						distance2 = dtau2.norm() * GlobalC::ucell.lat0;
-						rcut2 = GlobalC::ORB.Phi[T2].getRcut() + GlobalC::ORB.Beta[T0].get_rcut_max(); 
+						rcut2 = GlobalC::ORB.Phi[T2].getRcut() + GlobalC::ucell.infoNL.Beta[T0].get_rcut_max(); 
 
 						if( distance1 < rcut1 && distance2 < rcut2 )
 						{
@@ -785,7 +785,7 @@ void Force_LCAO_k::cal_fvnl_dbeta_k(
 							for (int ad0=0; ad0 < GlobalC::GridD.getAdjacentNum()+1 ; ++ad0)
 							{
 								const int T0 = GlobalC::GridD.getType(ad0);
-								if( GlobalC::ORB.nproj[T0] == 0) continue;
+								if( GlobalC::ucell.infoNL.nproj[T0] == 0) continue;
 								const int I0 = GlobalC::GridD.getNatom(ad0);
 								const int iat0 = GlobalC::ucell.itia2iat(T0, I0);
 								//const int start0 = GlobalC::ucell.itiaiw2iwt(T0, I0, 0);
@@ -793,11 +793,11 @@ void Force_LCAO_k::cal_fvnl_dbeta_k(
 
 								dtau1 = tau0 - tau1;
 								distance1 = dtau1.norm() * GlobalC::ucell.lat0;
-								rcut1 = GlobalC::ORB.Phi[T1].getRcut() + GlobalC::ORB.Beta[T0].get_rcut_max();
+								rcut1 = GlobalC::ORB.Phi[T1].getRcut() + GlobalC::ucell.infoNL.Beta[T0].get_rcut_max();
 
 								dtau2 = tau0 - tau2;
 								distance2 = dtau2.norm() * GlobalC::ucell.lat0;
-								rcut2 = GlobalC::ORB.Phi[T2].getRcut() + GlobalC::ORB.Beta[T0].get_rcut_max();
+								rcut2 = GlobalC::ORB.Phi[T2].getRcut() + GlobalC::ucell.infoNL.Beta[T0].get_rcut_max();
 
 								double r0[3];
 								double r1[3];
@@ -815,6 +815,7 @@ void Force_LCAO_k::cal_fvnl_dbeta_k(
 
 									GlobalC::UOT.snap_psibeta(
 											GlobalC::ORB,
+											GlobalC::ucell.infoNL,
 											nlm, 1,
 											tau2,
 											T2,
@@ -839,6 +840,7 @@ void Force_LCAO_k::cal_fvnl_dbeta_k(
 									{
 										GlobalC::UOT.snap_psibeta(
 											GlobalC::ORB,
+											GlobalC::ucell.infoNL,
 											nlm1, 1,
 											tau1,
 											T1,

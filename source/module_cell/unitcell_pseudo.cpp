@@ -263,6 +263,62 @@ void UnitCell_pseudo::setup_cell(
 		}
 	}
 
+	//>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+	//~~~~~~~~~~~~~~~~~~~~~~   2    ~~~~~~~~~~~~~~~~~~~~~~~~~
+	// Read in non-local projector for each atom type.
+	// In fact this should be improved,
+	// the non-local projector should be transferred
+	// from .UPF file directly.
+	// mohan note 2011-03-04
+	//>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+	if(GlobalV::BASIS_TYPE=="lcao" || GlobalV::BASIS_TYPE=="lcao_in_pw")
+	{
+		delete[] this->infoNL.Beta;
+		this->infoNL.Beta = new Numerical_Nonlocal[ntype];
+
+		delete[] this->infoNL.nproj;
+		this->infoNL.nproj = new int[ntype];
+		ModuleBase::GlobalFunc::ZEROS(this->infoNL.nproj, ntype);
+		
+		this->infoNL.nprojmax = 0;
+		
+
+		// if true: read in the nonlocal file from file.
+		// if false: get nonlocal information from .upf or .vwr directly
+		bool readin_nonlocal = false;
+
+		for(int it=0; it<ntype; it++)
+		{
+			Atom* atom = &(this->atoms[it]);
+			if(readin_nonlocal)
+			{
+				this->infoNL.Read_NonLocal(
+					it, 
+					atom, 
+					this->infoNL.nproj[it], 
+					GlobalV::MY_RANK, 
+					orb.get_kmesh(),
+					orb.get_dk(),
+					orb.get_dr_uniform(),
+					orb.orbital_file[it] );	
+			}
+			else
+			{
+				this->infoNL.Set_NonLocal(
+					it, 
+					atom, 
+					this->infoNL.nproj[it],
+					orb.get_kmesh(),
+					orb.get_dk(),
+					orb.get_dr_uniform() );
+			}
+			this->infoNL.nprojmax = std::max(this->infoNL.nprojmax, this->infoNL.nproj[it]);
+			//caoyu add 2021-05-24 to reconstruct atom_arrange::set_sr_NL
+			this->infoNL.rcutmax_Beta = std::max(this->infoNL.rcutmax_Beta, this->infoNL.Beta[it].get_rcut_max());
+		}
+
+		log << " max number of nonlocal projetors among all species is " << this->infoNL.nprojmax << std::endl; 
+	}
 #ifdef __MPI
 	this->bcast_unitcell_pseudo2();
 #endif	

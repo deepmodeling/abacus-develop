@@ -7,6 +7,7 @@
 #include "unitcell.h"
 #ifdef __LCAO
 #include "../module_orbital/ORB_read.h"
+#include "setup_nonlocal.h"
 #endif
 
 class UnitCell_pseudo : public UnitCell
@@ -50,6 +51,8 @@ public: // member functions
 		std::ofstream &ofs_running,
 		std::ofstream &ofs_warning); // liuyu 2021-07-13, RX changed ofs_running and ofs_warning from globalV to inputs. 2021-07-24
 #ifdef __LCAO
+	InfoNonlocal infoNL;//store nonlocal information of lcao, added by zhengdy 2021-09-07
+
 	void read_atom_species(LCAO_Orbitals &orb, std::ifstream &ifa, std::ofstream &ofs_running);
 	bool read_atom_positions(LCAO_Orbitals &orb, std::ifstream &ifpos, std::ofstream &ofs_running, std::ofstream &ofs_warning); // read in atomic positions
 #else

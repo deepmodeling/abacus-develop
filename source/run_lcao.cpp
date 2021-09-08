@@ -34,7 +34,7 @@ void Run_lcao::lcao_line(void)
 			GlobalV::ofs_running,
 			GlobalV::OUT_LEVEL,
 			GlobalC::ORB.get_rcutmax_Phi(),
-			GlobalC::ORB.get_rcutmax_Beta(),
+			GlobalC::ucell.infoNL.get_rcutmax_Beta(),
 			GlobalV::GAMMA_ONLY_LOCAL);
 
 		atom_arrange::search(
@@ -96,7 +96,10 @@ void Run_lcao::lcao_line(void)
 		INPUT.out_r_matrix,
 		Exx_Abfs::Lmax,
 		GlobalV::FORCE,
-		GlobalV::MY_RANK);
+		GlobalV::MY_RANK,
+		GlobalC::ucell.infoNL.nprojmax,
+		GlobalC::ucell.infoNL.nproj,
+		GlobalC::ucell.infoNL.Beta);
 
 	// * allocate H and S matrices according to computational resources
 	// * set the 'trace' between local H/S and global H/S

@@ -86,7 +86,7 @@ void Force_LCAO_gamma::cal_fvnl_dbeta(
         //find ajacent atom of atom ia
         //GlobalC::GridD.Find_atom( GlobalC::ucell.atoms[it].tau[ia] );
 		GlobalC::GridD.Find_atom(GlobalC::ucell, GlobalC::ucell.atoms[it].tau[ia] ,it, ia);
-		const double Rcut_Beta = GlobalC::ORB.Beta[it].get_rcut_max();
+		const double Rcut_Beta = GlobalC::ucell.infoNL.Beta[it].get_rcut_max();
 
         //FOLLOWING ARE CONTRIBUTIONS FROM
         //VNL DUE TO PROJECTOR'S DISPLACEMENT
@@ -141,6 +141,7 @@ void Force_LCAO_gamma::cal_fvnl_dbeta(
                                 
                         GlobalC::UOT.snap_psibeta(
 							GlobalC::ORB,
+                            GlobalC::ucell.infoNL,
                             nlm, 1,
                             tau1, T1,
                             atom1->iw2l[jj], // L2
@@ -164,6 +165,7 @@ void Force_LCAO_gamma::cal_fvnl_dbeta(
 						{
 								GlobalC::UOT.snap_psibeta(
 								GlobalC::ORB,
+                                GlobalC::ucell.infoNL,
                                 nlm1, 1,
                                 tau2, T2,
                                 atom2->iw2l[kk], // L2
@@ -331,7 +333,7 @@ void Force_LCAO_gamma::cal_fvnl_dbeta(
                 const int start2 = GlobalC::ucell.itiaiw2iwt(T2, I2, 0);
                 const ModuleBase::Vector3<double> tau2 = GlobalC::GridD.getAdjacentTau (ad2);
 
-                const double Rcut_Beta = GlobalC::ORB.Beta[it].get_rcut_max();
+                const double Rcut_Beta = GlobalC::ucell.infoNL.Beta[it].get_rcut_max();
                 const double Rcut_AO1 = GlobalC::ORB.Phi[T1].getRcut();
                 const double Rcut_AO2 = GlobalC::ORB.Phi[T2].getRcut();
 
@@ -370,6 +372,7 @@ void Force_LCAO_gamma::cal_fvnl_dbeta(
 
                         GlobalC::UOT.snap_psibeta(
 										GlobalC::ORB,
+                                        GlobalC::ucell.infoNL,
                                         nlm, 1,
                                         tau1, T1,
                                         atom1->iw2l[jj], // L2
@@ -390,6 +393,7 @@ void Force_LCAO_gamma::cal_fvnl_dbeta(
                         double nlm1[3] = {0,0,0};
                         if(isstress) GlobalC::UOT.snap_psibeta(
 												   GlobalC::ORB,
+                                                   GlobalC::ucell.infoNL,
                                                    nlm1, 1,
                                                    tau2, T2,
                                                    atom2->iw2l[kk], // L2

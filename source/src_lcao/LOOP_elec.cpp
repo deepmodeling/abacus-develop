@@ -52,7 +52,7 @@ void LOOP_elec::set_matrix_grid(void)
 		GlobalV::ofs_running,
 		GlobalV::OUT_LEVEL,
 		GlobalC::ORB.get_rcutmax_Phi(), 
-		GlobalC::ORB.get_rcutmax_Beta(), 
+		GlobalC::ucell.infoNL.get_rcutmax_Beta(), 
 		GlobalV::GAMMA_ONLY_LOCAL);
 
 	atom_arrange::search(

@@ -37,15 +37,6 @@ class LCAO_Orbitals
 		const bool &force_flag, // mohan add 2021-05-07
 		const int& my_rank); // mohan add 2021-04-26
 
-#ifdef __NORMAL
-
-#else
-	/// in order to get rid of the .NONLOCAL file.
-	void Set_NonLocal(const int &it, int &n_projectors);
-
-	/// read in the NONLOCAL projector from file.
-	void Read_NonLocal(const int& it, int &n_projectors, const int &my_rank);
-#endif
 
 
 	void Read_Descriptor(
@@ -71,13 +62,10 @@ class LCAO_Orbitals
 
 	//caoyu add 2021-05-24
 	const double& get_rcutmax_Phi(void) const { return rcutmax_Phi; }
-	const double& get_rcutmax_Beta(void) const { return rcutmax_Beta; }
 
 	/// numerical atomic orbitals
 	Numerical_Orbital* Phi;
 	
-	/// nonlocal projectors (1-dimension array)
-	Numerical_Nonlocal* Beta;
 	
 	//caoyu add 2021-3-10
 	/// descriptor bases, saved as one-type atom orbital
@@ -88,8 +76,6 @@ class LCAO_Orbitals
 	double dk;
 	double dR;
 	double Rmax;
-	int *nproj; //mohan add 2010-12-19
-	int nprojmax; // mohan add 2010-03-07
 	
 	double dr_uniform;
 
@@ -112,7 +98,6 @@ private:
 	int nchimax_d;	//caoyu add 2021-03-17
 
 	double rcutmax_Phi;	//caoyu add 2021-05-24
-	double rcutmax_Beta;	//caoyu add 2021-05-24
 
 	void read_orb_file(
 		std::ofstream &ofs_in,

@@ -28,18 +28,30 @@ class ORB_table_beta
 	/// T stands for atom type.
 	///O stands for orbitals.
 	///
-	void init_NL_Tpair(LCAO_Orbitals &orb);
+	void init_NL_Tpair(
+		const Numerical_Orbital* phi_,
+		const Numerical_Nonlocal* beta_
+	);
 
-    void init_NL_Opair(LCAO_Orbitals &orb);
+    void init_NL_Opair(
+		LCAO_Orbitals &orb,
+		const int nprojmax,
+		const int* nproj);
 
 	int NL_nTpairs;
 	ModuleBase::IntArray NL_Tpair;
 	ModuleBase::IntArray NL_Opair;
 	ModuleBase::IntArray NL_L2plus1;
 
-	void init_Table_Beta(ModuleBase::Sph_Bessel_Recursive::D2 *pSB, LCAO_Orbitals &orb);
+	void init_Table_Beta(
+		ModuleBase::Sph_Bessel_Recursive::D2 *pSB,
+		const Numerical_Orbital* phi_,
+		const Numerical_Nonlocal* beta_,
+		const int* nproj_);
 
-	void Destroy_Table_Beta(LCAO_Orbitals &orb);
+	void Destroy_Table_Beta(const int& ntype,
+	const Numerical_Orbital* phi_,
+	const int* nproj_);
 
 	static int get_rmesh( const double &R1, const double &R2);
 
