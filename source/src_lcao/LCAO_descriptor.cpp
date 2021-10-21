@@ -595,6 +595,7 @@ void LCAO_Descriptor::cal_gdmx(const ModuleBase::matrix &dm)
             }//end nu
         }//end mu
     }//end inl
+    //print GDMX
     return;
 }
 
@@ -1720,7 +1721,6 @@ void LCAO_Descriptor::cal_e_delta_band(const std::vector<ModuleBase::matrix> &dm
     }
     return;
 }
-#endif
 
 void LCAO_Descriptor::cal_gvx(const ModuleBase::matrix &dm)
 {
@@ -1789,3 +1789,4 @@ void LCAO_Descriptor::cal_gvx(const ModuleBase::matrix &dm)
 
     return;
 }
+#endif
