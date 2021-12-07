@@ -1369,7 +1369,25 @@ This part of variables are used to control berry phase and wannier90 interfacae 
     - *Default*: 0
 
     [back to top](#input-file)
-- vext<a id="vext"></a>
+- td_dr2<a id="td_dr2"></a>
+    - *Type*: Double
+    - *Description*: Accuracy of electron convergence when doing time-dependent evolution.
+    - *Default*: 1e-9
+
+    [back to top](#input-file)
+- td_dt<a id="td_dt"></a>
+    - *Type*: Double
+    - *Description*: Time-dependent evolution time step. (fs)
+    - *Default*: 0.02
+
+    [back to top](#input-file)
+- td_force_dt<a id="td_force_dt"></a>
+    - *Type*: Double
+    - *Description*: Time-dependent evolution force changes time step. (fs)
+    - *Default*: 0.02
+
+    [back to top](#input-file)
+- td_vext<a id="td_vext"></a>
     - *Type*: Integer
     - *Description*:
         - 1: add a laser material interaction (extern laser field).
@@ -1377,7 +1395,7 @@ This part of variables are used to control berry phase and wannier90 interfacae 
     - *Default*: 0
 
     [back to top](#input-file)
-- vext_dire<a id="vext-dire"></a>
+- td_vext_dire<a id="td_vext_dire"></a>
     - *Type*: Integer
     - *Description*:
         - 1: the direction of external light field is along x axis.
@@ -1386,7 +1404,38 @@ This part of variables are used to control berry phase and wannier90 interfacae 
     - *Default*: 1
 
     [back to top](#input-file)
+- td_timescale<a id="td_timescale"></a>
+    - *Type*: Double
+    - *Description*: Time range of external electric field application. (fs)
+    - *Default*: 0.5
 
+    [back to top](#input-file)
+- td_vexttype<a id="td_vexttype"></a>
+    - *Type*: Integer
+    - *Description*:
+        - 1: Gaussian-type light field.
+        - 2: Delta function form light field.
+        - 3: Trigonometric function form light field.
+    - *Default*: 1
+
+    [back to top](#input-file)
+- td_vextout<a id="td_vextout"></a>
+    - *Type*: Integer
+    - *Description*:
+        - 1: Output external electric field.
+        - 0: do not Output external electric field.
+    - *Default*: 0
+
+    [back to top](#input-file)
+- td_dipoleout<a id="td_dipoleout"></a>
+    - *Type*: Integer
+    - *Description*:
+        - 1: Output dipole.
+        - 0: do not Output dipole.
+    - *Default*: 0
+
+    [back to top](#input-file)
+	
 ### Variables useful for debugging
 
 - nurse(#nurse)
