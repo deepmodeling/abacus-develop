@@ -347,8 +347,22 @@ void Dos::nscf_band(
 	}
 	MPI_Barrier(MPI_COMM_WORLD);
 
+	std::vector<double> klength;
+	klength.resize(nks);
+	klength[0] = 0.0;
 	for(int ik=0; ik<nks; ik++)
 	{
+		if (ik>0)
+		{
+			double thiskx = GlobalC::kv.kvec_c[ik].x;
+			double thisky = GlobalC::kv.kvec_c[ik].y;
+			double thiskz = GlobalC::kv.kvec_c[ik].z;
+			double lastkx = GlobalC::kv.kvec_c[ik-1].x;
+			double lastky = GlobalC::kv.kvec_c[ik-1].y;
+			double lastkz = GlobalC::kv.kvec_c[ik-1].z;
+			klength[ik] = klength[ik-1] + sqrt(pow(thiskx-lastkx,2)
+						+pow(thisky-lastky,2)+pow(thiskz-lastkz,2));
+		}
 		if ( GlobalV::MY_POOL == GlobalC::Pkpoints.whichpool[ik] )
 		{
 			const int ik_now = ik - GlobalC::Pkpoints.startk_pool[GlobalV::MY_POOL];
@@ -360,6 +374,7 @@ void Dos::nscf_band(
 					ofs << std::setprecision(8);
 					//start from 1
 					ofs << ik+1;
+					ofs << " " << klength[ik] << " ";
 					for(int ib = 0; ib < nband; ib++)
 					{
 						ofs << " " << (ekb[ik_now+is*nks][ib]-fermie) * ModuleBase::Ry_to_eV;
