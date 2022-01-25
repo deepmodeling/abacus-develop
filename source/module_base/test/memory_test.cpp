@@ -18,8 +18,6 @@
  *   - print_all
  *     - print memory consumed (> MB) in a
  *     - std::ofstream file
- *
- * - Author: Tianqi Zhao
  */
 
 class MemoryTest : public testing::Test

@@ -18,8 +18,6 @@
  *
  *   - ModuleBase::WARNING_QUIT
  *     - combine the above 2 functions
- *
- * - Author: Tianqi Zhao
  */
 
 class ToolQuitTest : public testing::Test

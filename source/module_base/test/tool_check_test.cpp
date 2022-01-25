@@ -21,8 +21,6 @@
  *
  *   - ModuleBase::CHECK_STRING
  *    - check the next input from ifs is string
- *
- * - Author: Tianqi Zhao
  */
 
 class ToolCheckTest : public testing::Test
