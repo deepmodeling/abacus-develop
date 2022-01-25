@@ -18,3 +18,7 @@ AddTest(
   TARGET tool_quit
   SOURCES tool_quit_test.cpp
 )
+AddTest(
+  TARGET memory
+  SOURCES memory_test.cpp
+)
