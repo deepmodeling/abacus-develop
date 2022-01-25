@@ -49,7 +49,7 @@ TEST_F(MemoryTest, calculatemem)
 {
 	// three types of complex number
 	EXPECT_EQ(ModuleBase::Memory::calculate_mem(n,"ModuleBase::ComplexMatrix"),
-		       	n * complex_matrix_mem);
+			n * complex_matrix_mem);
 	EXPECT_EQ(ModuleBase::Memory::calculate_mem(n,"complexmatrix"),
 			n * complex_matrix_mem);
 	EXPECT_EQ(ModuleBase::Memory::calculate_mem(n,"cdouble"), 
