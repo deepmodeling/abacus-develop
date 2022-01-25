@@ -12,7 +12,7 @@
 namespace ModuleBase
 {
 
-// 1024 bit  = 1 Byte
+//    8 bit  = 1 Byte
 // 1024 Byte = 1 KB
 // 1024 KB   = 1 MB
 // 1024 MB   = 1 GB

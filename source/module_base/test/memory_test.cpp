@@ -27,12 +27,12 @@ class MemoryTest : public testing::Test
 protected:
 	// definition according to ../memory.cpp
 	double factor = 1.0 / 1024.0 / 1024.0; // MB
-	double complex_matrix_mem = 16.0 * factor; // byte to MB
-	double double_mem = 8.0 * factor;
-	double int_mem = 4.0 * factor;
-	double bool_mem = 1.0 * factor;
-	double float_mem = 4.0 * factor;
-	double short_mem = 2.0 * factor;
+	double complex_matrix_mem = 2*sizeof(double) * factor; // byte to MB
+	double double_mem = sizeof(double) * factor;
+	double int_mem = sizeof(int) * factor;
+	double bool_mem = sizeof(bool) * factor;
+	double float_mem = sizeof(float) * factor;
+	double short_mem = sizeof(short) * factor;
 	int n = 1024;
 	// for capturing stdout
 	std::string output;
@@ -49,7 +49,7 @@ TEST_F(MemoryTest, calculatemem)
 {
 	// three types of complex number
 	EXPECT_EQ(ModuleBase::Memory::calculate_mem(n,"ModuleBase::ComplexMatrix"),
-			n * complex_matrix_mem);
+		       	n * complex_matrix_mem);
 	EXPECT_EQ(ModuleBase::Memory::calculate_mem(n,"complexmatrix"),
 			n * complex_matrix_mem);
 	EXPECT_EQ(ModuleBase::Memory::calculate_mem(n,"cdouble"), 
