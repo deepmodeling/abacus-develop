@@ -197,7 +197,7 @@ void ELEC_scf::scf(const int &istep)
 		}
 		else
 		{
-			if(ELEC_evolve::tddft && istep >= 1 && iter > 1)
+			if(ELEC_evolve::tddft && istep >= 1 )
 			{
 				ELEC_evolve::evolve_psi(istep, GlobalC::UHM);
 			}

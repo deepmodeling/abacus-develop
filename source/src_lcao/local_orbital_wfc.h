@@ -19,6 +19,8 @@ class Local_Orbital_wfc
 	// std::complex Hamiltonian matrix.
 	std::complex<double>*** WFC_K; // [NK, GlobalV::NBANDS, GlobalV::NLOCAL]	
 	std::complex<double>* WFC_K_POOL; // [NK*GlobalV::NBANDS*GlobalV::NLOCAL]
+	std::complex<double>*** WFC_K_backup; // store the wave function of the last step for tddft module 
+	std::complex<double>* WFC_K_POOL_backup;
 
 	// augmented wave functions to 'c',
 	// used to generate density matrix 
@@ -27,6 +29,7 @@ class Local_Orbital_wfc
 	// daug means : dimension of augmented wave functions
 	double*** WFC_GAMMA_aug; // [GlobalV::NSPIN, GlobalV::NBANDS, daug];
 	std::complex<double>*** WFC_K_aug; // [NK, GlobalV::NBANDS, daug];
+	std::complex<double>*** WFC_K_aug_backup;
 	int* trace_aug;
 	
 	// how many elements are missing. 
@@ -34,6 +37,8 @@ class Local_Orbital_wfc
 
 	void allocate_k(const Grid_Technique &gt);
 	void set_trace_aug(const Grid_Technique &gt);
+	void allocate_k_backup(const Grid_Technique &gt);
+	void set_trace_aug_backup(const Grid_Technique &gt);
 	bool get_allocate_aug_flag(void)const{return allocate_aug_flag;}
 
     //=========================================
@@ -50,9 +55,12 @@ class Local_Orbital_wfc
 	private:
 
 	bool wfck_flag; 
+	bool wfck_backup_flag;
 	bool complex_flag;
+	bool complex_backup_flag;
 	bool allocate_flag;
 	bool allocate_aug_flag;
+	bool allocate_aug_backup_flag;
 
 };
 
