@@ -52,12 +52,12 @@ TEST_F(ToolCheckTest, Name)
 	ofs << name << std::endl;
 	ofs.close();
 	ifs.open("tmp");
-	// non-quit check
+	// non-quit check: quit = false
 	testing::internal::CaptureStdout();
 	ModuleBase::CHECK_NAME(ifs, "abacus", quit);
 	output = testing::internal::GetCapturedStdout();
 	EXPECT_THAT(output,testing::HasSubstr("not match"));
-	// quit check: quit = false
+	// quit check
 	testing::internal::CaptureStdout();
 	EXPECT_DEATH(ModuleBase::CHECK_NAME(ifs, "abacus"), "");
 	output = testing::internal::GetCapturedStdout();
@@ -73,12 +73,12 @@ TEST_F(ToolCheckTest, Int)
 	ofs << ecut << std::endl;
 	ofs.close();
 	ifs.open("tmp");
-	// non-quit check
+	// non-quit check: quit = false
 	testing::internal::CaptureStdout();
 	ModuleBase::CHECK_INT(ifs, 80, quit);
 	output = testing::internal::GetCapturedStdout();
 	EXPECT_THAT(output,testing::HasSubstr("not match"));
-	// quit check: quit = false
+	// quit check
 	testing::internal::CaptureStdout();
 	EXPECT_DEATH(ModuleBase::CHECK_INT(ifs, 80), "");
 	output = testing::internal::GetCapturedStdout();
