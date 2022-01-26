@@ -173,52 +173,6 @@ void ELEC_scf::scf(const int &istep)
 			}
 		}
 
-		// fuxiang add 2016-11-1
-		// need reconstruction in near future -- mohan 2021-02-09
-		// the initialization of wave functions should be moved to
-		// somewhere else
-		if(ELEC_evolve::tddft == 1 && iter == 2)
-		{
-			this->WFC_init = new std::complex<double>**[GlobalC::kv.nks];
-			for(int ik=0; ik<GlobalC::kv.nks; ik++)
-			{
-				this->WFC_init[ik] = new std::complex<double>*[GlobalV::NBANDS];
-			}
-			for(int ik=0; ik<GlobalC::kv.nks; ik++)
-			{
-				for(int ib=0; ib<GlobalV::NBANDS; ib++)
-				{
-					this->WFC_init[ik][ib] = new std::complex<double>[GlobalV::NLOCAL];
-				}
-			}
-			if(istep>=1)
-			{
-				for (int ik=0; ik<GlobalC::kv.nks; ik++)
-				{
-					for (int ib=0; ib<GlobalV::NBANDS; ib++)
-					{
-						for (int i=0; i<GlobalV::NLOCAL; i++)
-						{
-							WFC_init[ik][ib][i] = GlobalC::LOWF.WFC_K[ik][ib][i];
-						}
-					}
-				}
-			}
-			else
-			{
-				for (int ik=0; ik<GlobalC::kv.nks; ik++)
-				{
-					for (int ib=0; ib<GlobalV::NBANDS; ib++)
-					{
-						for (int i=0; i<GlobalV::NLOCAL; i++)
-						{
-							WFC_init[ik][ib][i] = std::complex<double>(0.0,0.0);
-						}
-					}
-				}
-			}
-		}
-
 		// calculate exact-exchange
 		switch(GlobalC::xcf.iexch_now)						// Peize Lin add 2018-10-30
 		{
@@ -245,7 +199,7 @@ void ELEC_scf::scf(const int &istep)
 		{
 			if(ELEC_evolve::tddft && istep >= 1 && iter > 1)
 			{
-				ELEC_evolve::evolve_psi(istep, GlobalC::UHM, this->WFC_init);
+				ELEC_evolve::evolve_psi(istep, GlobalC::UHM);
 			}
 			else
 			{
@@ -581,12 +535,6 @@ void ELEC_scf::scf(const int &istep)
 			ModuleBase::timer::tick("ELEC_scf","scf");
 			return;
 		}
-	}
-
-	// fuxiang add, should be reconstructed in near future -- mohan note 2021-02-09
-	if (ELEC_evolve::tddft==1)
-	{
-		delete[] WFC_init;
 	}
 
 	ModuleBase::timer::tick("ELEC_scf","scf");

@@ -30,8 +30,6 @@ class ELEC_scf: private Threshold_Elec
 
 	static int iter;
 
-	std::complex<double>*** WFC_init;
-
 	void init_mixstep_final_scf(void);
 
 };
