@@ -463,7 +463,7 @@ void Force_LCAO_k::cal_foverlap_k(
 	//--------------------------------------------	
 	// calculate the energy density matrix here.
     //--------------------------------------------	
-    if (INPUT.new_dm > 0)
+    if (INPUT.new_dm > 0 && INPUT.tddft==0)
     {
         ModuleBase::timer::tick("Force_LCAO_k","cal_edm_2d");
 
