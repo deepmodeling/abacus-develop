@@ -5,7 +5,7 @@ on:
 
 jobs:
   clang-tidy:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     container: ghcr.io/deepmodeling/abacus-development-kit:gnu
     steps:
       - name: Checkout Pull Request

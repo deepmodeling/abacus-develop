@@ -6,10 +6,10 @@ on:
       - develop
       - reconstruction
       - newelpa
-      
+
 jobs:
   build_container_and_push:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     strategy:
       matrix:
         dockerfile: ["gnu","intel","cuda"]
