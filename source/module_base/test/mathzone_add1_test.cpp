@@ -1,6 +1,5 @@
 #include "../mathzone_add1.h"
 #include "gtest/gtest.h"
-#include "gmock/gmock.h"
 
 /************************************************
  *  unit test of class Mathzone_Add1

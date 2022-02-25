@@ -82,3 +82,7 @@ AddTest(
   LIBS ${math_libs}
   SOURCES math_ylmreal_test.cpp ../math_ylmreal.cpp ../realarray.cpp ../timer.cpp ../matrix.cpp 
 )
+AddTest(
+  TARGET base_math_bspline
+  SOURCES math_bspline_test.cpp ../math_bspline.cpp
+)
