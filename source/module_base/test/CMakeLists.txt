@@ -86,3 +86,12 @@ AddTest(
   TARGET base_math_bspline
   SOURCES math_bspline_test.cpp ../math_bspline.cpp
 )
+AddTest(
+  TARGET base_inverse_matrix
+  LIBS ${math_libs}
+  SOURCES inverse_matrix_test.cpp ../inverse_matrix.cpp ../complexmatrix.cpp ../matrix.cpp ../timer.cpp
+)
+AddTest(
+  TARGET base_mymath
+  SOURCES mymath_test.cpp ../mymath3.cpp ../timer.cpp
+)
