@@ -34,6 +34,12 @@ void Bspline::init(int norderin, double Dxin, double xiin)
     }
 }
 
+void Bspline::cleanp()
+{
+    delete[] bezier;
+    bezier = NULL;
+}
+
 double Bspline::bezier_ele(int n)
 {
     return this->bezier[n];
