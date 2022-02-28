@@ -8,7 +8,7 @@ namespace ModuleBase
  * @brief A class to treat Cardinal B-spline interpolation.
  *
  * @author qianrui created 2021-09-14
- * @details
+ * @details see J. Chem. Phys. 103, 8577 (1995).
  * Math:
  * Only uniform nodes are considered: xm-x[m-1]=Dx(>= 0) for control node: X={x0,x1,...,xm};
  * Any function p(x) can be written by
@@ -43,11 +43,7 @@ class Bspline
     Bspline();
     ~Bspline();
 
-    // Init norder, Dx, xi
     void init(int norderin, double Dxin, double xiin);
-
-    // delete[] bezier
-    void cleanp();
 
     // Get the result of i-th bezier base functions for different input x+xi+n*Dx.
     // x should be in [0,Dx]
@@ -57,5 +53,5 @@ class Bspline
     // get the element of bezier
     double bezier_ele(int n);
 };
-} // namespace ModuleBase
+} 
 #endif
