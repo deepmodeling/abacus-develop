@@ -32,6 +32,7 @@ public:
     ///=========================================
     std::vector<ModuleBase::matrix> wfc_gamma;			// dm_gamma[is](iw1,iw2);
     std::vector<ModuleBase::ComplexMatrix> wfc_k;		// dm_k[ik](iw1,iw2);
+    std::vector<ModuleBase::ComplexMatrix> wfc_k_laststep; // store the 2d wavefunction of the last step in TDDFT
 
     const Parallel_Orbitals *ParaV;
 

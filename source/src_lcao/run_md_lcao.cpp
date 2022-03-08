@@ -21,6 +21,7 @@
 #include "../module_md/NVT_ADS.h"
 #include "../module_md/NVT_NHC.h"
 #include "../module_md/Langevin.h"
+#include "../src_lcao/ELEC_evolve.h"
 
 //LCAO_Matrix LM_md;
 Run_MD_LCAO::Run_MD_LCAO()
@@ -126,6 +127,7 @@ void Run_MD_LCAO::opt_ions(ORB_control &orb_con, ModuleESolver::ESolver *p_esolv
 	else
 	{
         LOWF_md.wfc_k.resize(GlobalC::kv.nks);
+        LOWF_md.wfc_k_laststep.resize(GlobalC::kv.nks);
     }
 
     LOC_md.init_dm_2d();
@@ -270,6 +272,25 @@ void Run_MD_LCAO::md_force_virial(
     }
 
     p_esolver->Run(istep + 1, RA_md, LOC_md, LOWF_md, UHM_md);
+
+    // store 2d wfc for TDDFT after charge density is converged
+    if(ELEC_evolve::tddft)
+    {
+        #ifdef __MPI
+            const Parallel_Orbitals* pv = lowf.ParaV;
+            for (int ik = 0;ik < GlobalC::kv.nks;++ik)
+            {
+                LOWF_md.wfc_k_laststepstep[ik].create(pv->ncol_bands, pv->nrow);
+                LOWF_md.wfc_k_laststepstep[ik]=LOWF_md.wfc_k[ik];
+            }
+        #else
+            for (int ik = 0;ik < GlobalC::kv.nks;++ik)
+            {
+                LOWF_md.wfc_k_laststep[ik].create(GlobalV::NBANDS, GlobalV::NLOCAL);
+                LOWF_md.wfc_k_laststep[ik]=LOWF_md.wfc_k[ik];
+            }
+        #endif
+    }
 
     //to call the force of each atom
 	ModuleBase::matrix fcs;//temp force matrix
