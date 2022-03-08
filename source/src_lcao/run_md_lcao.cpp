@@ -277,7 +277,7 @@ void Run_MD_LCAO::md_force_virial(
     if(ELEC_evolve::tddft)
     {
         #ifdef __MPI
-            const Parallel_Orbitals* pv = lowf.ParaV;
+            const Parallel_Orbitals* pv = LOWF_md.ParaV;
             for (int ik = 0;ik < GlobalC::kv.nks;++ik)
             {
                 LOWF_md.wfc_k_laststepstep[ik].create(pv->ncol_bands, pv->nrow);
