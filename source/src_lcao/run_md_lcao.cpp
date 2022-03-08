@@ -280,8 +280,8 @@ void Run_MD_LCAO::md_force_virial(
             const Parallel_Orbitals* pv = LOWF_md.ParaV;
             for (int ik = 0;ik < GlobalC::kv.nks;++ik)
             {
-                LOWF_md.wfc_k_laststepstep[ik].create(pv->ncol_bands, pv->nrow);
-                LOWF_md.wfc_k_laststepstep[ik]=LOWF_md.wfc_k[ik];
+                LOWF_md.wfc_k_laststep[ik].create(pv->ncol_bands, pv->nrow);
+                LOWF_md.wfc_k_laststep[ik]=LOWF_md.wfc_k[ik];
             }
         #else
             for (int ik = 0;ik < GlobalC::kv.nks;++ik)
