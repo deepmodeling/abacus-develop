@@ -24,7 +24,7 @@ void Evolve_LCAO_Matrix::evolve_complex_matrix(const int &ik, Local_Orbital_wfc 
 #ifdef __MPI
 		this->using_ScaLAPACK_complex(ik, lowf.wfc_k[ik]);
 #else
-		//this->using_LAPACK_complex(ik, lowf.wfc_k_grid, lowf.wfc_k[ik]);
+		this->using_LAPACK_complex(ik, lowf.wfc_k_grid[ik], lowf.wfc_k[ik],lowf.wfc_k_laststep[ik]);
 #endif
 //*/
 		//this->using_ScaLAPACK_complex(ik, lowf.wfc_k_grid, lowf.wfc_k[ik]);
@@ -40,7 +40,7 @@ void Evolve_LCAO_Matrix::evolve_complex_matrix(const int &ik, Local_Orbital_wfc 
 	return;
 }
 
-void Evolve_LCAO_Matrix::using_LAPACK_complex(const int& ik, std::complex<double>*** wfc_k_grid, std::complex<double>** c_init)const
+void Evolve_LCAO_Matrix::using_LAPACK_complex(const int& ik, std::complex<double>** wfc_k_grid, ModuleBase::ComplexMatrix &wfc_k, ModuleBase::ComplexMatrix &wfc_k_laststep)const
 {
     ModuleBase::TITLE("Evolve_LCAO_Matrix","using_LAPACK_complex");
 
@@ -53,7 +53,7 @@ void Evolve_LCAO_Matrix::using_LAPACK_complex(const int& ik, std::complex<double
         	for(int j=0; j<GlobalV::NLOCAL; j++)
                 {
                 	Htmp(i,j) = this->LM->Hloc2[i*GlobalV::NLOCAL+j];
-                        Stmp(i,j) = this->LM->Sloc2[i*GlobalV::NLOCAL+j];
+                    Stmp(i,j) = this->LM->Sloc2[i*GlobalV::NLOCAL+j];
                 }
         }
 
@@ -220,22 +220,16 @@ void Evolve_LCAO_Matrix::using_LAPACK_complex(const int& ik, std::complex<double
 	std::cout <<std::endl;
 */
 
-	for(int i=0; i<GlobalV::NBANDS; i++)
-	{
-		std::complex<double> ccc[GlobalV::NLOCAL];
-		for(int j=0; j<GlobalV::NLOCAL; j++)
-		{	
-			ccc[j] = std::complex<double>(0.0,0.0);
-			for(int k=0; k<GlobalV::NLOCAL; k++)
-			{
-				 ccc[j] += U_operator(j,k)*c_init[i][k];
-			}
-		}
-		for(int j=0; j<GlobalV::NLOCAL; j++)
-		{
-			wfc_k_grid[ik][i][j] = ccc[j];
-		}	
-	}
+	const bool conjugate=false;
+    wfc_k=wfc_k_laststep*transpose(U_operator,conjugate);
+
+    for(int i=0; i<GlobalV::NBANDS; i++)
+    {
+        for(int j=0; j<GlobalV::NLOCAL; j++)
+        {
+            wfc_k_grid[i][j]=wfc_k.c[i*GlobalV::NLOCAL+j];
+        }
+    }
 
 /*	for(int i=0; i<GlobalV::NBANDS; i++)
 	{
