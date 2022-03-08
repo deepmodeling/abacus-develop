@@ -285,8 +285,8 @@ void MD_func::force_virial(
 #ifdef __LCAO
 		else if(GlobalV::BASIS_TYPE=="lcao")
 		{
-			Run_MD_LCAO md_lcao(*ParaV);
-			md_lcao.md_force_virial(p_esolver,istep, unit_in.nat, potential, force, stress);
+			//Run_MD_LCAO md_lcao(*ParaV);
+			//md_lcao.md_force_virial(p_esolver,istep, unit_in.nat, potential, force, stress);
 		}
 #endif
 	}

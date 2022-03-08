@@ -22,13 +22,10 @@
 #include "../module_md/NVT_NHC.h"
 #include "../module_md/Langevin.h"
 
-Run_MD_LCAO::Run_MD_LCAO(Parallel_Orbitals &pv)
+//LCAO_Matrix LM_md;
+Run_MD_LCAO::Run_MD_LCAO()
 {
     cellchange = false;
-    this->LM_md.ParaV = &pv;
-    // * allocate H and S matrices according to computational resources
-	// * set the 'trace' between local H/S and global H/S
-	this->LM_md.divide_HS_in_frag(GlobalV::GAMMA_ONLY_LOCAL, pv);
 }
 
 Run_MD_LCAO::~Run_MD_LCAO(){}
@@ -58,14 +55,14 @@ void Run_MD_LCAO::opt_cell(ORB_control &orb_con, ModuleESolver::ESolver *p_esolv
     int ion_step=0;
     GlobalC::pot.init_pot(ion_step, GlobalC::pw.strucFac);
 
-    opt_ions(p_esolver);
+    opt_ions(orb_con, p_esolver);
     orb_con.clear_after_ions(GlobalC::UOT, GlobalC::ORB, GlobalV::out_descriptor, GlobalC::ucell.infoNL.nproj);
     
     return;
 }
 
 
-void Run_MD_LCAO::opt_ions(ModuleESolver::ESolver *p_esolver)
+void Run_MD_LCAO::opt_ions(ORB_control &orb_con, ModuleESolver::ESolver *p_esolver)
 {
     ModuleBase::TITLE("Run_MD_LCAO","opt_ions"); 
     ModuleBase::timer::tick("Run_MD_LCAO","opt_ions"); 
@@ -113,12 +110,36 @@ void Run_MD_LCAO::opt_ions(ModuleESolver::ESolver *p_esolver)
         cellchange = true;
     }
 
+    LCAO_Matrix LM_md;
+    LM_md.ParaV = &orb_con.ParaV;
+    // * allocate H and S matrices according to computational resources
+	// * set the 'trace' between local H/S and global H/S
+	LM_md.divide_HS_in_frag(GlobalV::GAMMA_ONLY_LOCAL, orb_con.ParaV);
+
+    Local_Orbital_wfc LOWF_md;
+    Local_Orbital_Charge LOC_md;
+    LOC_md.ParaV = LOWF_md.ParaV = LM_md.ParaV;
+    if (GlobalV::GAMMA_ONLY_LOCAL)
+    {
+        LOWF_md.wfc_gamma.resize(GlobalV::NSPIN);
+	}
+	else
+	{
+        LOWF_md.wfc_k.resize(GlobalC::kv.nks);
+    }
+
+    LOC_md.init_dm_2d();
+
+    LCAO_Hamilt UHM_md;
+    UHM_md.genH.LM = UHM_md.LM = &LM_md;
+    Record_adj RA_md;
+
     // md cycle
     while ((verlet->step_ + verlet->step_rst_) <= GlobalV::NSTEP && !verlet->stop)
     {
         if(verlet->step_ == 0)
         {
-            MD_func::ParaV = this->LM_md.ParaV;
+            MD_func::ParaV = LM_md.ParaV;
             verlet->setup(p_esolver);
         }
         else
@@ -148,8 +169,15 @@ void Run_MD_LCAO::opt_ions(ModuleESolver::ESolver *p_esolver)
             GlobalC::pot.init_pot(verlet->step_, GlobalC::pw.strucFac);
 
             // update force and virial due to the update of atom positions
-            MD_func::force_virial(p_esolver, verlet->step_, verlet->mdp, verlet->ucell, verlet->potential, verlet->force, verlet->virial);
-
+            if (verlet->mdp.md_potential == "FP" && GlobalV::BASIS_TYPE=="lcao" )
+            {
+                this->md_force_virial(p_esolver, verlet->step_, verlet->ucell.nat, verlet->potential, verlet->force, verlet->virial,
+                RA_md, LOC_md, LOWF_md, UHM_md);
+            }
+            else 
+            {
+                MD_func::force_virial(p_esolver, verlet->step_, verlet->mdp, verlet->ucell, verlet->potential, verlet->force, verlet->virial);
+            }
             verlet->second_half();
 
             MD_func::kinetic_stress(verlet->ucell, verlet->vel, verlet->allmass, verlet->kinetic, verlet->stress);
@@ -207,7 +235,11 @@ void Run_MD_LCAO::md_force_virial(
     const int& numIon, 
     double &potential, 
     ModuleBase::Vector3<double>* force, 
-    ModuleBase::matrix& virial)
+    ModuleBase::matrix& virial,
+    Record_adj& RA_md,
+    Local_Orbital_Charge& LOC_md,
+    Local_Orbital_wfc& LOWF_md,
+    LCAO_Hamilt& UHM_md)
 {
     //----------------------------------------------------------
 	// about vdw, jiyy add vdwd3 and linpz add vdwd2
@@ -237,28 +269,7 @@ void Run_MD_LCAO::md_force_virial(
         GlobalC::en.evdw = vdwd3.get_energy();
     }
 
-    Local_Orbital_wfc LOWF_md;
-    Local_Orbital_Charge LOC_md;
-    LOC_md.ParaV = LOWF_md.ParaV = this->LM_md.ParaV;
-    if (GlobalV::GAMMA_ONLY_LOCAL)
-    {
-        LOWF_md.wfc_gamma.resize(GlobalV::NSPIN);
-	}
-	else
-	{
-        LOWF_md.wfc_k.resize(GlobalC::kv.nks);
-    }
-
-    LOC_md.init_dm_2d();
-    // solve electronic structures in terms of LCAO
-    // mohan add 2021-02-09
-    LCAO_Hamilt UHM_md;
-    UHM_md.genH.LM = UHM_md.LM = &this->LM_md;
-    
-    Record_adj RA_md;
-
-    LOOP_elec LOE;
-    LOE.solve_elec_stru(istep + 1, RA_md, LOC_md, LOWF_md, UHM_md);
+    p_esolver->Run(istep + 1, RA_md, LOC_md, LOWF_md, UHM_md);
 
     //to call the force of each atom
 	ModuleBase::matrix fcs;//temp force matrix

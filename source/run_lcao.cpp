@@ -81,7 +81,7 @@ void Run_lcao::lcao_line(ModuleESolver::ESolver *p_esolver)
     //---------------------------MD/Relax------------------
     if (GlobalV::CALCULATION == "md")
 	{
-		Run_MD_LCAO run_md_lcao(orb_con.ParaV);
+		Run_MD_LCAO run_md_lcao;
 		run_md_lcao.opt_cell(orb_con, p_esolver);
 	}
 	else // cell relaxations
