@@ -15,6 +15,7 @@ test_deepks::~test_deepks()
 void test_deepks::check_dstable(void)
 {
 	OGT.talpha.print_Table_DSR(ORB);
+	std::flush;
 	this->compare_with_ref("S_I_mu_alpha.dat","S_I_mu_alpha_ref.dat");
 }
 
@@ -46,6 +47,7 @@ void test_deepks::check_psialpha(void)
 		ParaO.trace_loc_row,
 		ParaO.trace_loc_col,
 		OGT);
+	std::flush;
 	this->compare_with_ref("psialpha.dat","psialpha_ref.dat");
 	this->compare_with_ref("dpsialpha_x.dat","dpsialpha_x_ref.dat");
 	this->compare_with_ref("dpsialpha_y.dat","dpsialpha_y_ref.dat");
@@ -116,6 +118,7 @@ void test_deepks::check_pdm(void)
 			kv.kvec_d);		
 	}
 	this->ld.check_projected_dm();
+	std::flush;
 	this->compare_with_ref("pdm.dat","pdm_ref.dat");
 }
 
@@ -152,19 +155,21 @@ void test_deepks::check_gdmx(void)
         ss<<"gdmx_"<<ia<<".dat";
 		ss1.str("");
         ss1<<"gdmx_"<<ia<<"_ref.dat";
-		
+		std::flush;
 		this->compare_with_ref(ss.str(),ss1.str());
 
         ss.str("");
         ss<<"gdmy_"<<ia<<".dat";
 		ss1.str("");
         ss1<<"gdmy_"<<ia<<"_ref.dat";
+		std::flush;
 		this->compare_with_ref(ss.str(),ss1.str());
 
         ss.str("");
         ss<<"gdmz_"<<ia<<".dat";
         ss1.str("");
         ss1<<"gdmz_"<<ia<<"_ref.dat";
+		std::flush;
 		this->compare_with_ref(ss.str(),ss1.str());
 	}	
 }
@@ -173,6 +178,7 @@ void test_deepks::check_descriptor(void)
 {
 	this->ld.cal_descriptor();
 	this->ld.check_descriptor(ucell);
+	std::flush;
 	this->compare_with_ref("descriptor.dat","descriptor_ref.dat");
 }
 
@@ -189,18 +195,21 @@ void test_deepks::check_gvx(void)
         ss<<"gvx_"<<ia<<".dat";
 		ss1.str("");
         ss1<<"gvx_"<<ia<<"_ref.dat";
+		std::flush;
 		this->compare_with_ref(ss.str(),ss1.str());
 
         ss.str("");
         ss<<"gvy_"<<ia<<".dat";
 		ss1.str("");
         ss1<<"gvy_"<<ia<<"_ref.dat";
+		std::flush;
 		this->compare_with_ref(ss.str(),ss1.str());
 
         ss.str("");
         ss<<"gvz_"<<ia<<".dat";
         ss1.str("");
         ss1<<"gvz_"<<ia<<"_ref.dat";
+		std::flush;
 		this->compare_with_ref(ss.str(),ss1.str());
 	}
 }
@@ -221,9 +230,11 @@ void test_deepks::check_edelta(void)
 	ofstream ofs("E_delta.dat");
 	ofs << std::setprecision(10) << this->ld.E_delta << std::endl;
 	ofs.close();
+	std::flush;
 	this->compare_with_ref("E_delta.dat","E_delta_ref.dat");
 	
 	this->ld.check_gedm();
+	std::flush;
 	this->compare_with_ref("gedm.dat","gedm_ref.dat");
 }
 
@@ -250,6 +261,7 @@ void test_deepks::check_e_deltabands(void)
 	ofstream ofs("E_delta_bands.dat");
 	ofs << std::setprecision(10) << this->ld.e_delta_band << std::endl;
 	ofs.close();
+	std::flush;
 	this->compare_with_ref("E_delta_bands.dat","E_delta_bands_ref.dat");
 }
 
@@ -265,6 +277,7 @@ void test_deepks::check_v_delta()
             ParaO.nrow,
             ParaO.ncol);
 		this->ld.check_v_delta(ParaO.nrow,ParaO.ncol);
+		std::flush;
 		this->compare_with_ref("H_V_delta.dat","H_V_delta_ref.dat");
 	}
 	else
@@ -278,6 +291,7 @@ void test_deepks::check_v_delta()
 			ParaO.trace_loc_col,
 			nnr);
 		this->ld.check_v_delta_k(nnr);
+		std::flush;
 		this->compare_with_ref("H_V_deltaR.dat","H_V_deltaR_ref.dat");
 	}
 }
@@ -310,6 +324,7 @@ void test_deepks::check_f_delta()
 	}
 	ld.check_f_delta(ucell.nat, svnl_dalpha);
 
+	std::flush;
 	this->compare_with_ref("F_delta.dat","F_delta_ref.dat");
 }
 
