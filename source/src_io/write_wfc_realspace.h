@@ -21,7 +21,7 @@ namespace Write_Wfc_Realspace
 	// write ||wfc_r|| for all k-points and all bands
 	// Input: wfc_g[ik](ib,ig)
 	// loop order is for(z){for(y){for(x)}}
-    void write_wfc_realspace_1(const ModuleBase::ComplexMatrix*const wfc_g, const std::string &folder_name);
+    void write_wfc_realspace_1(const ModuleBase::ComplexMatrix*const wfc_g, const std::string &folder_name, const bool& square);
 
 	// Input: wfc_g(ib,ig)
 	// Output: wfc_r[ir]

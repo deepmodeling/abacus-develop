@@ -83,13 +83,11 @@ hamilt_pw_gpu.o \
 hamilt.o \
 H_Ewald_pw.o\
 H_Hartree_pw.o\
-H_XC_pw.o \
 klist.o  \
 magnetism.o\
 occupy.o\
 potential.o \
 potential_libxc.o \
-potential_libxc_meta.o \
 pw_basis.o\
 bspline_sf.o\
 pw_complement.o\
@@ -126,9 +124,7 @@ wavefunc.o\
 wf_atomic.o \
 wf_igk.o \
 xc_3.o \
-xc_gga_pw.o \
 xc_type.o \
-xc_functional.o \
 diago_cg_gpu.o
 
 OBJS_IO=berryphase.o\

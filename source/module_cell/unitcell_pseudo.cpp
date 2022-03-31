@@ -750,13 +750,13 @@ bool UnitCell_pseudo::if_cell_can_change()const
 void UnitCell_pseudo::setup(const std::string &latname_in,
 	const int &ntype_in, 
 	const int &lmaxmax_in,
-	const bool &set_vel_in,
+	const bool &init_vel_in,
 	const std::string &fixed_axes_in)
 {
 	this->latName = latname_in;
 	this->ntype = ntype_in;
 	this->lmaxmax = lmaxmax_in;
-	this->set_vel = set_vel_in;
+	this->init_vel = init_vel_in;
 	// pengfei Li add 2018-11-11
 	if (fixed_axes_in == "None")
 	{

@@ -318,6 +318,12 @@ static inline void FREE_MUL_PTR(T_element* v, const T_N_first N_first, const T_N
 	v = nullptr;
 }
 
+double ddot_real(
+        const int & dim,
+        const std::complex<double>* psi_L,
+        const std::complex<double>* psi_R,
+        const bool reduce = true) ;
+
 }//namespace GlobalFunc
 }//namespace ModuleBase
 

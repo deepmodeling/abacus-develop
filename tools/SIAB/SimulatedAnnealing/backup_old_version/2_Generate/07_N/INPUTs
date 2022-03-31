@@ -1,7 +1,7 @@
 INPUT_ORBITAL_INFORMATION
 <SPHERICAL_BESSEL>
 1           // smooth or not
-0.1         // sigma
+0.1         // smearing_sigma
 50       // energy cutoff for spherical bessel functions(Ry)
 6       // cutoff of wavefunctions(a.u.)
 1.0e-12     // tolerence

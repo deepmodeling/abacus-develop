@@ -6,6 +6,7 @@
 #define GINT_K_INIT_H
 #include "../module_base/global_function.h"
 #include "../module_base/global_variable.h"
+#include "src_lcao/LCAO_matrix.h"
 class Gint_k_init
 {
 	friend class Gint_k;
@@ -17,9 +18,13 @@ public:
 		const int &nby_in,
 		const int &nbz_in,
 		const int &nbz_start_in,
-		const int &ncxyz_in);
+        const int& ncxyz_in,
+        LCAO_Matrix *lm);
+
 
 protected:
+
+    LCAO_Matrix* LM;
 
 	Gint_k_init();
 	~Gint_k_init();

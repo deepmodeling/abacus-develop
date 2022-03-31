@@ -12,7 +12,7 @@ Parallel_Grid::~Parallel_Grid()
 	//if(this->allocate) //LiuXh modify 20180619
 	if(this->allocate || this->allocate_final_scf) //LiuXh add 20180619
 	{
-		for(int ip=0; ip<GlobalV::NPOOL; ip++)
+		for(int ip=0; ip<GlobalV::KPAR; ip++)
 		{
 			delete[] numz[ip];
 			delete[] startz[ip];
@@ -64,23 +64,23 @@ void Parallel_Grid::init(
 
 	// (2)
 	assert(allocate==false);
-	assert(GlobalV::NPOOL > 0);
+	assert(GlobalV::KPAR > 0);
 
-	this->nproc_in_pool = new int[GlobalV::NPOOL];
-	const int remain_pro = GlobalV::NPROC%GlobalV::NPOOL;
-	for(int i=0; i<GlobalV::NPOOL; i++)
+	this->nproc_in_pool = new int[GlobalV::KPAR];
+	const int remain_pro = GlobalV::NPROC%GlobalV::KPAR;
+	for(int i=0; i<GlobalV::KPAR; i++)
 	{
-		nproc_in_pool[i] = GlobalV::NPROC/GlobalV::NPOOL;
+		nproc_in_pool[i] = GlobalV::NPROC/GlobalV::KPAR;
 		if(i<remain_pro) this->nproc_in_pool[i]++;
 	}	
 
-	this->numz = new int*[GlobalV::NPOOL];
-	this->startz = new int*[GlobalV::NPOOL];
-	this->whichpro = new int*[GlobalV::NPOOL];
-	this->numdata = new int*[GlobalV::NPOOL];
-	this->startdata = new int*[GlobalV::NPOOL];
+	this->numz = new int*[GlobalV::KPAR];
+	this->startz = new int*[GlobalV::KPAR];
+	this->whichpro = new int*[GlobalV::KPAR];
+	this->numdata = new int*[GlobalV::KPAR];
+	this->startdata = new int*[GlobalV::KPAR];
 
-	for(int ip=0; ip<GlobalV::NPOOL; ip++)
+	for(int ip=0; ip<GlobalV::KPAR; ip++)
 	{
 		const int nproc = nproc_in_pool[ip];
 		this->numz[ip] = new int[nproc];
@@ -105,9 +105,9 @@ void Parallel_Grid::z_distribution(void)
 {
 	assert(allocate);	
 
-	int* startp = new int[GlobalV::NPOOL];
+	int* startp = new int[GlobalV::KPAR];
 	startp[0] = 0;
-	for(int ip=0; ip<GlobalV::NPOOL; ip++)
+	for(int ip=0; ip<GlobalV::KPAR; ip++)
 	{
 //		GlobalV::ofs_running << "\n now POOL=" << ip;
 		const int nproc = nproc_in_pool[ip];
@@ -201,7 +201,7 @@ void Parallel_Grid::zpiece_to_all(double *zpiece, const int &iz, double *rho)
 			{
 				rho[ir*nczp+znow] = zpiece[ir];
 			}
-			for(int ipool=1; ipool < GlobalV::NPOOL; ipool++)
+			for(int ipool=1; ipool < GlobalV::KPAR; ipool++)
 			{
 				MPI_Send(zpiece, ncxy, MPI_DOUBLE, this->whichpro[ipool][iz], iz, MPI_COMM_WORLD);
 			}
@@ -224,7 +224,7 @@ void Parallel_Grid::zpiece_to_all(double *zpiece, const int &iz, double *rho)
 		// them is iz.
 		else if(GlobalV::RANK_IN_POOL==0)
 		{
-			for(int ipool=0; ipool < GlobalV::NPOOL; ipool++)
+			for(int ipool=0; ipool < GlobalV::KPAR; ipool++)
 			{
 				MPI_Send(zpiece, ncxy, MPI_DOUBLE, this->whichpro[ipool][iz], iz, MPI_COMM_WORLD);
 			}
@@ -354,23 +354,23 @@ const int &nrxx_in, const int &nbz_in, const int &bz_in)
 
 	// (2)
 	assert(allocate_final_scf==false);
-	assert(GlobalV::NPOOL > 0);
+	assert(GlobalV::KPAR > 0);
 
-	this->nproc_in_pool = new int[GlobalV::NPOOL];
-	const int remain_pro = GlobalV::NPROC%GlobalV::NPOOL;
-	for(int i=0; i<GlobalV::NPOOL; i++)
+	this->nproc_in_pool = new int[GlobalV::KPAR];
+	const int remain_pro = GlobalV::NPROC%GlobalV::KPAR;
+	for(int i=0; i<GlobalV::KPAR; i++)
 	{
-		nproc_in_pool[i] = GlobalV::NPROC/GlobalV::NPOOL;
+		nproc_in_pool[i] = GlobalV::NPROC/GlobalV::KPAR;
 		if(i<remain_pro) this->nproc_in_pool[i]++;
 	}	
 
-	this->numz = new int*[GlobalV::NPOOL];
-	this->startz = new int*[GlobalV::NPOOL];
-	this->whichpro = new int*[GlobalV::NPOOL];
-	this->numdata = new int*[GlobalV::NPOOL];
-	this->startdata = new int*[GlobalV::NPOOL];
+	this->numz = new int*[GlobalV::KPAR];
+	this->startz = new int*[GlobalV::KPAR];
+	this->whichpro = new int*[GlobalV::KPAR];
+	this->numdata = new int*[GlobalV::KPAR];
+	this->startdata = new int*[GlobalV::KPAR];
 
-	for(int ip=0; ip<GlobalV::NPOOL; ip++)
+	for(int ip=0; ip<GlobalV::KPAR; ip++)
 	{
 		const int nproc = nproc_in_pool[ip];
 		this->numz[ip] = new int[nproc];

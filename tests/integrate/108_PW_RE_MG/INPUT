@@ -10,21 +10,21 @@ pseudo_type     upf201
 
 #Parameters (2.Iteration)
 ecutwfc			20
-dr2				1e-9
-niter			100
-force           1
+scf_thr_rho				1e-9
+scf_nmax			100
+cal_force           1
 
 #Parameters (3.Relaxation)
-nstep           2
+relax_nmax           2
 force_thr_ev    0.01
-move_method     cg
+relax_method     cg
 
 #Parameters (4.Basis)
 basis_type		pw
 
 #Parameters (5.Smearing)
-smearing		gauss
-sigma			0.002
+smearing_method		gauss
+smearing_sigma			0.002
 
 #Parameters (6.Mixing)
 mixing_type		pulay

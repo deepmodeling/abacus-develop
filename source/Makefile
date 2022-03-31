@@ -16,6 +16,7 @@ VPATH=./src_global\
 :./module_md\
 :./module_deepks\
 :./module_xc\
+:./module_esolver\
 :./src_pw\
 :./src_lcao\
 :./src_ions\
@@ -25,6 +26,7 @@ VPATH=./src_global\
 :./src_pdiag/MRRR\
 :./src_ri\
 :./\
+
 
 #==========================
 # Define HONG
@@ -46,8 +48,8 @@ HONG_MEM = ${HONG_FFTW} -D__FP -D_MCD_CHECK -DWIN32 -DMCD_VERBOSE
 
 #!!!!!!!!!!!!!!!!!!!! CHANE HERE IF YOU LIKE !!!!!!!!!!!!!!
 #! change series version or parallel version~~~
-HONG=${HONG_MPI_SELINV_20210523}
-#HONG=${HONG_SER_SELINV}
+#HONG=${HONG_MPI_SELINV_20210523}
+HONG=${HONG_SER_SELINV}
 #!!!!!!!!!!!!!!!!!!!! CHANE HERE IF YOU LIKE !!!!!!!!!!!!!!
 
 #==========================
@@ -69,6 +71,7 @@ $(OBJS_COMMON)\
 main.o\
 
 FP_OBJS=$(patsubst %.o, ${OBJ_DIR}/%.o, ${FP_OBJS_0})
+FP_OBJS_serial=$(patsubst %.o, ${OBJ_DIR_serial}/%.o, ${FP_OBJS_0})
 PDIAG_OBJS=$(patsubst %.o, ${OBJ_DIR}/%.o, ${OBJS_PDIAG})
 PDIAG_MR=$(patsubst %.o, ${OBJ_DIR}/%.o, ${PDIAG_MR_0})
 
@@ -80,7 +83,7 @@ fp_mpi :
 	@ make -j $(NP) parallel
 
 fp : 
-	@ make init
+	@ make init_serial
 	@ make -j $(NP) serial
 
 fp_gbd : 
@@ -100,11 +103,16 @@ init :
 	@ if [ ! -d $(OBJ_DIR)/README ]; then echo "This directory contains all of the .o files" > $(OBJ_DIR)/README; fi
 	@ if [ ! -d ../bin ]; then mkdir ../bin; fi
 
+init_serial :
+	@ if [ ! -d $(OBJ_DIR_serial) ]; then mkdir $(OBJ_DIR_serial); fi
+	@ if [ ! -d $(OBJ_DIR_serial)/README ]; then echo "This directory contains all of the .o files" > $(OBJ_DIR_serial)/README; fi
+	@ if [ ! -d ../bin ]; then mkdir ../bin; fi
+
 parallel : ${FP_OBJS} ${PDIAG_OBJS} ${PDIAG_MR} ${HEADERS}
 	${CPLUSPLUS_MPI} ${OPTS} ${OPTS_MPI} $(FP_OBJS) ${PDIAG_OBJS} ${PDIAG_MR} ${LIBS} -o  ../bin/${VERSION}.mpi
 
-serial : ${FP_OBJS} ${HEADERS} 
-	${CPLUSPLUS} ${OPTS} $(FP_OBJS) ${LIBS} -o ${VERSION}.fp.x 
+serial : ${FP_OBJS_serial} ${HEADERS} 
+	${CPLUSPLUS} ${OPTS} $(FP_OBJS_serial) ${LIBS} -o ${VERSION}.fp.x 
 
 serial_gdb : ${FP_OBJS} ${HEADERS}
 	${CPLUSPLUS} ${OPTS_GDB} $(FP_OBJS) ${LIBS} -o ${VERSION}.fp_gdb.x
@@ -123,8 +131,14 @@ ${OBJ_DIR}/%.o:%.cpp
 ${OBJ_DIR}/%.o:%.f
 	${FORTRAN} -c ${HONG} $< -o $@	 
 
+${OBJ_DIR_serial}/%.o:%.cpp
+	${CPLUSPLUS} ${OPTS} ${OPTS_MPI} -c ${HONG} $< -o $@
+${OBJ_DIR_serial}/%.o:%.f
+	${FORTRAN} -c ${HONG} $< -o $@
+
 .PHONY:clean
 clean:
 	@ if [ -d $(OBJ_DIR) ]; then rm -rf $(OBJ_DIR); fi
+	@ if [ -d $(OBJ_DIR_serial) ]; then rm -rf $(OBJ_DIR_serial); fi
 	@ if [ -d ../bin ]; then rm -rf ../bin; fi
 	@ cd src_pw; make clean

@@ -15,7 +15,9 @@
 #include "src_pw/occupy.h"
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
+#ifdef __EXX
 #include "src_ri/exx_abfs-jle.h"
+#endif
 #ifdef __LCAO
 #include "module_orbital/ORB_read.h"
 #include "src_lcao/ELEC_evolve.h"
@@ -34,8 +36,8 @@ void Input_Conv::Convert(void)
 	// main parameters / electrons / spin ( 10/16 )
 	//----------------------------------------------------------
 	//  suffix
-	if (INPUT.atom_file != "")
-		GlobalV::global_atom_card = INPUT.atom_file;
+	if (INPUT.stru_file != "")
+		GlobalV::stru_file = INPUT.stru_file;
 	GlobalV::global_wannier_card = INPUT.wannier_card;
 	if (INPUT.kpoint_file != "")
 		GlobalV::global_kpoint_card = INPUT.kpoint_file;
@@ -47,33 +49,33 @@ void Input_Conv::Convert(void)
 	GlobalC::ucell.setup(INPUT.latname,
 				INPUT.ntype,
 				INPUT.lmaxmax,
-				INPUT.set_vel,
+				INPUT.init_vel,
 				INPUT.fixed_axes);
 
 	GlobalV::NBANDS = INPUT.nbands;
-	GlobalC::wf.seed = INPUT.seed;
+	GlobalC::wf.pw_seed = INPUT.pw_seed;
 	GlobalV::NBANDS_ISTATE = INPUT.nbands_istate;
 #if ((defined __CUDA) || (defined __ROCM))
 	int temp_nproc;
 	MPI_Comm_size(MPI_COMM_WORLD, &temp_nproc);
-	if (temp_nproc != INPUT.npool)
+	if (temp_nproc != INPUT.kpar)
 	{
-		ModuleBase::WARNING("Input_conv", "None npool set in INPUT file, auto set npool value.");
+		ModuleBase::WARNING("Input_conv", "None kpar set in INPUT file, auto set kpar value.");
 	}
-	GlobalV::NPOOL = temp_nproc;
+	GlobalV::KPAR = temp_nproc;
 #else
-	GlobalV::NPOOL = INPUT.npool;
+	GlobalV::KPAR = INPUT.kpar;
 #endif
 	GlobalV::CALCULATION = INPUT.calculation;
 
 	GlobalV::PSEUDORCUT = INPUT.pseudo_rcut;
-	GlobalV::RENORMWITHMESH = INPUT.renormwithmesh;
+	GlobalV::PSEUDO_MESH = INPUT.pseudo_mesh;
 
 	GlobalV::DFT_FUNCTIONAL = INPUT.dft_functional;
 	GlobalV::NSPIN = INPUT.nspin;
 	GlobalV::CURRENT_SPIN = 0;
 
-	GlobalV::FORCE = INPUT.force;
+	GlobalV::CAL_FORCE = INPUT.cal_force;
 	GlobalV::FORCE_THR = INPUT.force_thr;
 
 	GlobalV::STRESS_THR = INPUT.stress_thr;
@@ -85,20 +87,20 @@ void Input_Conv::Convert(void)
 	Force_Stress_LCAO::force_invalid_threshold_ev = INPUT.force_thr_ev2;
 #endif
 
-	BFGS_Basic::w1 = INPUT.bfgs_w1;
-	BFGS_Basic::w2 = INPUT.bfgs_w2;
+	BFGS_Basic::relax_bfgs_w1 = INPUT.relax_bfgs_w1;
+	BFGS_Basic::relax_bfgs_w2 = INPUT.relax_bfgs_w2;
 
-	Ions_Move_Basic::trust_radius_max = INPUT.trust_radius_max;
-	Ions_Move_Basic::trust_radius_min = INPUT.trust_radius_min;
-	Ions_Move_Basic::trust_radius_ini = INPUT.trust_radius_ini;
+	Ions_Move_Basic::relax_bfgs_rmax = INPUT.relax_bfgs_rmax;
+	Ions_Move_Basic::relax_bfgs_rmin = INPUT.relax_bfgs_rmin;
+	Ions_Move_Basic::relax_bfgs_init = INPUT.relax_bfgs_init;
 	Ions_Move_Basic::out_stru = INPUT.out_stru; // mohan add 2012-03-23
 
-	GlobalV::STRESS = INPUT.stress;
+	GlobalV::CAL_STRESS = INPUT.cal_stress;
 
 
-	GlobalV::MOVE_IONS = INPUT.ion_dynamics;
+	GlobalV::RELAX_METHOD = INPUT.relax_method;
 	GlobalV::OUT_LEVEL = INPUT.out_level;
-	Ions_Move_CG::CG_THRESHOLD = INPUT.cg_threshold; // pengfei add 2013-09-09
+	Ions_Move_CG::RELAX_CG_THR_E = INPUT.relax_cg_thr_e; // pengfei add 2013-09-09
 
 	ModuleSymmetry::Symmetry::symm_flag = INPUT.symmetry; // 9
 	GlobalC::symm.epsilon = INPUT.symmetry_prec; // LiuXh add 2021-08-12, accuracy for symmetry
@@ -122,7 +124,7 @@ void Input_Conv::Convert(void)
 					INPUT.bx,
 					INPUT.by,
 					INPUT.bz,
-					INPUT.seed,
+					INPUT.pw_seed,
 					INPUT.nbspline);
 	GlobalV::GAMMA_ONLY_LOCAL = INPUT.gamma_only_local;
 
@@ -130,10 +132,10 @@ void Input_Conv::Convert(void)
 	// diagonalization  (5/5)
 	//----------------------------------------------------------
 	GlobalV::DIAGO_PROC = INPUT.diago_proc;
-	GlobalV::DIAGO_CG_MAXITER = INPUT.diago_cg_maxiter;
+	GlobalV::DIAG_CG_NMAX = INPUT.diag_cg_nmax;
 	GlobalV::DIAGO_CG_PREC = INPUT.diago_cg_prec;
 	GlobalV::DIAGO_DAVID_NDIM = INPUT.diago_david_ndim;
-	GlobalV::ETHR = INPUT.ethr;
+	GlobalV::DIAG_THR_E = INPUT.diag_thr_e;
 	GlobalV::NB2D = INPUT.nb2d;
 	GlobalV::NURSE = INPUT.nurse;
 	GlobalV::COLOUR = INPUT.colour;
@@ -148,13 +150,13 @@ void Input_Conv::Convert(void)
 	//----------------------------------------------------------
 	// iteration (1/3)
 	//----------------------------------------------------------
-	GlobalV::DRHO2 = INPUT.dr2;
+	GlobalV::SCF_THR_RHO = INPUT.scf_thr_rho;
 
 	//----------------------------------------------------------
 	// wavefunction / charge / potential / (2/4)
 	//----------------------------------------------------------
 	GlobalV::RESTART_MODE = INPUT.restart_mode;
-	GlobalC::wf.start_wfc = INPUT.start_wfc;
+	GlobalC::wf.init_wfc = INPUT.init_wfc;
 	GlobalC::wf.mem_saver = INPUT.mem_saver; // mohan add 2010-09-07
 	GlobalC::en.printe = INPUT.printe; // mohan add 2011-03-16
 
@@ -218,7 +220,7 @@ void Input_Conv::Convert(void)
 //----------------------------------------------------------
 #ifdef __LCAO
 	ELEC_evolve::tddft = INPUT.tddft;
-	ELEC_evolve::td_dr2 = INPUT.td_dr2;
+	ELEC_evolve::td_scf_thr_rho = INPUT.td_scf_thr_rho;
 	ELEC_evolve::td_dt = INPUT.td_dt;
 	ELEC_evolve::td_force_dt = INPUT.td_force_dt;
 	ELEC_evolve::td_val_elec_01 = INPUT.td_val_elec_01;
@@ -296,7 +298,7 @@ void Input_Conv::Convert(void)
 		}
 	}
 
-	GlobalV::mulliken = INPUT.mulliken; // qifeng add 2019/9/10
+	GlobalV::out_mul = INPUT.out_mul; // qifeng add 2019/9/10
 
 	//----------------------------------------------------------
 	// about restart, // Peize Lin add 2020-04-04
@@ -334,6 +336,7 @@ void Input_Conv::Convert(void)
 //----------------------------------------------------------
 // about exx, Peize Lin add 2018-06-20
 //----------------------------------------------------------
+#ifdef __MPI // liyuanbo 2022/2/23
 #ifdef __LCAO
 
 	if (INPUT.dft_functional == "hf")
@@ -393,10 +396,9 @@ void Input_Conv::Convert(void)
 		Exx_Abfs::Jle::tolerence = INPUT.exx_opt_orb_tolerence;
 	}
 #endif
-
+#endif
 	GlobalC::ppcell.cell_factor = INPUT.cell_factor; // LiuXh add 20180619
 
-	//    NEW_DM=INPUT.new_dm;  // Shen Yu add 2019/5/9
 
 	//----------------------------------------------------------
 	// main parameters / electrons / spin ( 2/16 )
@@ -407,7 +409,7 @@ void Input_Conv::Convert(void)
 	//----------------------------------------------------------
 	// occupation (3/3)
 	//----------------------------------------------------------
-	Occupy::decision(INPUT.occupations, INPUT.smearing, INPUT.degauss);
+	Occupy::decision(INPUT.occupations, INPUT.smearing_method, INPUT.smearing_sigma);
 	//----------------------------------------------------------
 	// charge mixing(3/3)
 	//----------------------------------------------------------
@@ -419,26 +421,27 @@ void Input_Conv::Convert(void)
 	//----------------------------------------------------------
 	// iteration
 	//----------------------------------------------------------
-	GlobalV::NITER = INPUT.niter;
-	GlobalV::NSTEP = INPUT.nstep;
+	GlobalV::SCF_NMAX = INPUT.scf_nmax;
+	GlobalV::RELAX_NMAX = INPUT.relax_nmax;
+    GlobalV::MD_NSTEP = INPUT.mdp.md_nstep;
 
 	//----------------------------------------------------------
 	// wavefunction / charge / potential / (2/4)
 	//----------------------------------------------------------
-	GlobalC::pot.start_pot = INPUT.start_pot;
-	GlobalC::pot.extra_pot = INPUT.charge_extrap; // xiaohui modify 2015-02-01
-	GlobalC::CHR.out_charge = INPUT.out_charge;
+	GlobalC::pot.init_chg = INPUT.init_chg;
+	GlobalC::pot.chg_extrap = INPUT.chg_extrap; // xiaohui modify 2015-02-01
+	GlobalC::CHR.out_chg = INPUT.out_chg;
 	GlobalC::CHR.nelec = INPUT.nelec;
-	GlobalC::pot.out_potential = INPUT.out_potential;
-	GlobalC::wf.out_wf = INPUT.out_wf;
-	GlobalC::wf.out_wf_r = INPUT.out_wf_r;
+	GlobalC::pot.out_pot = INPUT.out_pot;
+	GlobalC::wf.out_wfc_pw = INPUT.out_wfc_pw;
+	GlobalC::wf.out_wfc_r = INPUT.out_wfc_r;
 	GlobalC::en.out_dos = INPUT.out_dos;
 	GlobalC::en.out_band = INPUT.out_band;
 #ifdef __LCAO
-	GlobalC::LOC.out_dm = INPUT.out_dm;
-	GlobalC::ParaO.out_hs = INPUT.out_hs;
-	GlobalC::ParaO.out_hsR = INPUT.out_hs2; // LiuXh add 2019-07-16
-	GlobalC::ParaO.out_lowf = INPUT.out_lowf;
+	Local_Orbital_Charge::out_dm = INPUT.out_dm;
+	Pdiag_Double::out_mat_hs = INPUT.out_mat_hs;
+	Pdiag_Double::out_mat_hsR = INPUT.out_mat_hs2; // LiuXh add 2019-07-16
+	Pdiag_Double::out_wfc_lcao = INPUT.out_wfc_lcao;
 #endif
 
 	GlobalC::en.dos_emin_ev = INPUT.dos_emin_ev;
@@ -473,8 +476,8 @@ void Input_Conv::Convert(void)
 		GlobalV::deepks_out_labels = 1;
 		GlobalV::deepks_scf = 1;
 		if (GlobalV::NPROC>1) ModuleBase::WARNING_QUIT("Input_conv","generate deepks unittest with only 1 processor");
-		if (GlobalV::FORCE!=1) ModuleBase::WARNING_QUIT("Input_conv","force is required in generating deepks unittest");
-		if (GlobalV::STRESS!=1) ModuleBase::WARNING_QUIT("Input_conv","stress is required in generating deepks unittest");
+		if (GlobalV::CAL_FORCE!=1) ModuleBase::WARNING_QUIT("Input_conv","force is required in generating deepks unittest");
+		if (GlobalV::CAL_STRESS!=1) ModuleBase::WARNING_QUIT("Input_conv","stress is required in generating deepks unittest");
 	}
 	if(GlobalV::deepks_scf || GlobalV::deepks_out_labels) GlobalV::deepks_setorb = 1;
 #endif

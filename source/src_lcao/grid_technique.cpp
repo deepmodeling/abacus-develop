@@ -13,7 +13,10 @@ Grid_Technique GridT;
 
 Grid_Technique::Grid_Technique()
 {
-	this->how_many_atoms = new int[1];
+    this->nlocdimg = new int[1];	
+	this->nlocstartg = new int[1];
+	this->nad = new int[1];
+    this->how_many_atoms = new int[1];
 	this->which_atom = new int[1];
 	this->which_bigcell = new int[1];
 	this->which_unitcell = new int[1];
@@ -23,19 +26,34 @@ Grid_Technique::Grid_Technique()
 	this->trace_beta = new int[1];//sun zhiyuan add
 
 	this->total_atoms_on_grid = 0;
+    allocate_find_R2 = false;
 }
 
 
 Grid_Technique::~Grid_Technique()
 {
-	delete[] how_many_atoms;
+    delete[] nlocdimg;
+    delete[] nlocstartg;
+    delete[] nad;
+    delete[] how_many_atoms;
 	delete[] which_atom;
 	delete[] which_bigcell;
 	delete[] which_unitcell;
 	delete[] bcell_start;
 	delete[] in_this_processor;
 	delete[] trace_lo;
-	delete[] trace_beta; //sun zhiyuan add
+    delete[] trace_beta; //sun zhiyuan add
+    
+    if (allocate_find_R2)
+	{
+		for(int iat=0; iat<GlobalC::ucell.nat; iat++)
+		{
+			delete[] find_R2[iat];
+			delete[] find_R2st[iat];
+		}
+		delete[] find_R2;
+		delete[] find_R2st;
+	}
 }
 
 

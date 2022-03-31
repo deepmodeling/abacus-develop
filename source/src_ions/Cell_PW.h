@@ -6,6 +6,7 @@
 #define CELL_PW_H
 
 #include "../src_pw/global.h"
+#include "module_esolver/esolver.h"
 
 class Cell_PW
 {
@@ -13,7 +14,7 @@ public:
     Cell_PW(){};
     ~Cell_PW(){};
     
-    void opt_cells_pw();
+    void opt_cells_pw(ModuleESolver::ESolver *p_esolver);
 };
 
 #endif

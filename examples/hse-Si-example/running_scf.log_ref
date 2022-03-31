@@ -1802,7 +1802,7 @@
 
  DONE : INIT POTENTIAL Time : 1.84 (SEC)
 
-                                start_pot = atomic
+                                init_chg = atomic
  ---------------------------------------------------------
  SELF-CONSISTENT
  ---------------------------------------------------------

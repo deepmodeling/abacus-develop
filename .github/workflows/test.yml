@@ -5,6 +5,12 @@ on:
     branches:
       - develop
       - tryEigen
+      - update_MD
+      - ABACUS_2.2.0_beta
+      - deepks
+      - planewave
+      - pw_refactor
+      - TDDFT
 
 jobs:
   test:

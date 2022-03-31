@@ -21,7 +21,7 @@ Ecut 50 # cutoff energy (in Ry)
 Rcut 6 # cutoff radius (in a.u.)
 Pseudo_dir ./
 Pseudo N.LDA.UPF
-sigma 0.01 # energy range for gauss smearing (in Ry)
+smearing_sigma 0.01 # energy range for gauss smearing (in Ry)
 #----------------------------------------------------------------------------
 #( In this part , some parameters of calculating are given )
 #3.structure information
@@ -93,7 +93,7 @@ The ORBITAL_INPUT file contains 5 parts :
     - Pseudo
 
         the file name of pseudopotential
-    - sigma
+    - smearing_sigma
 
         the gaussian smearing (in Ry) for scf calculations. The default vaule is 0.01. In case that the scf iterations don’t converage (which could happen, e.g., for transition metal dimers), the user may increase this parameter, say, to 0.05.
 3. structure information

@@ -46,7 +46,7 @@ void Parallel_Global::read_mpi_parameters(int argc,char **argv)
 // atof : Convert string to double type
 // atol : Convert string to long int type
 //----------------------------------------------------------
-//  NPOOL = atoi(argv[1]); // mohan abandon 2010-06-09
+//  KPAR = atoi(argv[1]); // mohan abandon 2010-06-09
 
 	// get the size --> NPROC
 	// get the rank --> MY_RANK

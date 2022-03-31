@@ -14,6 +14,7 @@
 
 #ifdef __LCAO
 #include "../src_lcao/run_md_lcao.h"
+Parallel_Orbitals* MD_func::ParaV = nullptr;
 #endif
 
 
@@ -199,7 +200,7 @@ void MD_func::InitVel(
 	if(frozen.y == 0) ++frozen_freedom;
 	if(frozen.z == 0) ++frozen_freedom;
 
-	if(unit_in.set_vel)
+	if(unit_in.init_vel)
     {
         ReadVel(unit_in, vel);
     }
@@ -225,7 +226,9 @@ void MD_func::InitPos(
 }
 
 //calculate potential, force and virial
-void MD_func::force_virial(const int &istep,
+void MD_func::force_virial(
+		ModuleESolver::ESolver *p_esolver,
+		const int &istep,
 		const MD_parameters &mdp,
 		const UnitCell_pseudo &unit_in,
 		double &potential,
@@ -278,13 +281,13 @@ void MD_func::force_virial(const int &istep,
 		if(GlobalV::BASIS_TYPE=="pw" || GlobalV::BASIS_TYPE=="lcao_in_pw")
 		{
 			Run_MD_PW md_pw;
-			md_pw.md_force_virial(istep, unit_in.nat, potential, force, stress);
+			md_pw.md_force_virial(p_esolver, istep, unit_in.nat, potential, force, stress);
 		}
 #ifdef __LCAO
 		else if(GlobalV::BASIS_TYPE=="lcao")
 		{
-			Run_MD_LCAO md_lcao;
-			md_lcao.md_force_virial(istep, unit_in.nat, potential, force, stress);
+			Run_MD_LCAO md_lcao(*ParaV);
+			md_lcao.md_force_virial(p_esolver,istep, unit_in.nat, potential, force, stress);
 		}
 #endif
 	}

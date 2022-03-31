@@ -2,6 +2,8 @@
 #define ENERGY_H
 #include "../module_base/global_function.h"
 #include "../module_base/global_variable.h"
+#include "src_lcao/local_orbital_wfc.h"
+#include "src_lcao/LCAO_hamilt.h"
 
 class energy
 {
@@ -26,8 +28,8 @@ class energy
     energy();
     ~energy();
 
-	void perform_dos(void);
-	void perform_dos_pw(void);
+	void perform_dos(Local_Orbital_wfc &lowf, LCAO_Hamilt &uhm);
+    void perform_dos_pw(void);
 
     double etot;    	   // the total energy of the solid
     double ef;             // the fermi energy
@@ -73,7 +75,7 @@ class energy
     //=========================================================
 	void calculate_etot(void);
 	void print_etot(const bool converged, const int &itep, const int &iter, 
-	const double &dr2, const double &duration, const double &ethr=0, const double &avg_iter=0, bool print = true);
+	const double &scf_thr_rho, const double &duration, const double &diag_thr_e=0, const double &avg_iter=0, bool print = true);
 
 	void print_band(const int &ik);
 

@@ -11,7 +11,10 @@
 ELEC_nscf::ELEC_nscf(){}
 ELEC_nscf::~ELEC_nscf(){}
 
-void ELEC_nscf::nscf(LCAO_Hamilt &uhm)
+void ELEC_nscf::nscf(LCAO_Hamilt& uhm,
+    std::vector<ModuleBase::matrix>& dm_gamma,
+    std::vector<ModuleBase::ComplexMatrix>& dm_k,
+    Local_Orbital_wfc &lowf)
 {
 	ModuleBase::TITLE("ELEC_nscf","nscf");
 
@@ -19,15 +22,17 @@ void ELEC_nscf::nscf(LCAO_Hamilt &uhm)
 	
 	time_t time_start= std::time(NULL);
 
+#ifdef __MPI
 	// Peize Lin add 2018-08-14
 	switch(GlobalC::exx_lcao.info.hybrid_type)
 	{
 		case Exx_Global::Hybrid_Type::HF:
 		case Exx_Global::Hybrid_Type::PBE0:
 		case Exx_Global::Hybrid_Type::HSE:
-			GlobalC::exx_lcao.cal_exx_elec_nscf();
+			GlobalC::exx_lcao.cal_exx_elec_nscf(*lowf.ParaV);
 			break;
 	}
+#endif
 
 	// mohan add 2021-02-09
 	// in LOOP_ions, istep starts from 1,
@@ -36,11 +41,11 @@ void ELEC_nscf::nscf(LCAO_Hamilt &uhm)
 	int istep=0; 
 	if(GlobalV::GAMMA_ONLY_LOCAL)
 	{
-		ELEC_cbands_gamma::cal_bands(istep, uhm);
+		ELEC_cbands_gamma::cal_bands(istep, uhm, lowf, dm_gamma);
 	}
 	else
 	{
-		ELEC_cbands_k::cal_bands(istep, uhm);
+		ELEC_cbands_k::cal_bands(istep, uhm, lowf, dm_k);
 	}
 
 	time_t time_finish=std::time(NULL);
@@ -87,7 +92,7 @@ void ELEC_nscf::nscf(LCAO_Hamilt &uhm)
 	// add by jingan
 	if (berryphase::berry_phase_flag && ModuleSymmetry::Symmetry::symm_flag == 0)
     {
-    	berryphase bp;
+    	berryphase bp(lowf);
 		bp.Macroscopic_polarization();
     }
 

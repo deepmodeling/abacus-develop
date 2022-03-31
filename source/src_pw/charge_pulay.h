@@ -26,6 +26,9 @@ class Charge_Pulay: public Charge_Mixing
 	int irstep; //mohan add 2012-02-10
 	int idstep;
 	int totstep;
+	int rstep; // the record step;
+	int dstep; // Delta step " dstep = rstep-1 ".
+	double* alpha; // - sum (Abar * dRR)
 	
 	// Peize Lin add 2018-11-01, and set new_e_iteration protected
 	const bool &get_new_e_iteration(){ return new_e_iteration; }
@@ -39,8 +42,6 @@ class Charge_Pulay: public Charge_Mixing
 	
 	// Pulay mixing method.
 	void Pulay_mixing();
-	int rstep; // the record step;
-	int dstep; // Delta step " dstep = rstep-1 ".
 	double*** Rrho;// Rrho(i) = rho(i) - rho_save(i), (GlobalV::NSPIN, rstep, pw.nrxx)
 	double*** dRrho;// dRrho(i) = Rrho(i+1) - Rrho(i), (GlobalV::NSPIN, dstep, pw.nrxx)
 	double*** drho;// drho(i)= rho_save(i+1) - rho_save2(i), (GlobalV::NSPIN, dstep, pw.nrxx)
@@ -51,7 +52,6 @@ class Charge_Pulay: public Charge_Mixing
 	
 	ModuleBase::matrix Abar; // <dR_j|dR_i>^{-1}
 	double* dRR; // <dR_j|R_m>
-	double* alpha; // - sum (Abar * dRR)
 	
 	void allocate_pulay(const int &scheme);
 	void generate_datas(const int &irstep, const int &idstep, const int &totstep);
@@ -69,8 +69,10 @@ class Charge_Pulay: public Charge_Mixing
 	void Modified_Broyden_mixing();
 
 #ifdef __EXX
-	friend class Exx_Abfs::DM;
-	friend class Exx_Abfs::Parallel::Communicate::Hexx;
+    friend class Exx_Abfs::DM;
+    #ifdef __MPI
+    friend class Exx_Abfs::Parallel::Communicate::Hexx;
+    #endif
 #endif
 
 };

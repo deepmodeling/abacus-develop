@@ -1,3 +1,4 @@
+#ifdef __MPI //liyuanbo 2022/2/23
 #ifndef EXX_ABFS_INVERSE_MATRIX_DOUBLE_H
 #define EXX_ABFS_INVERSE_MATRIX_DOUBLE_H
 
@@ -55,3 +56,4 @@ private:
 };
 
 #endif	// EXX_ABFS_INVERSE_MATRIX_DOUBLE_H
+#endif

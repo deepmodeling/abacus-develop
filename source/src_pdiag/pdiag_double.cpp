@@ -23,58 +23,9 @@ extern "C"
 
 #include "../src_external/src_test/test_function.h"
 
-inline int globalIndex(int localIndex, int nblk, int nprocs, int myproc)
-{
-    int iblock, gIndex;
-    iblock=localIndex/nblk;
-    gIndex=(iblock*nprocs+myproc)*nblk+localIndex%nblk;
-    return gIndex;
-}
 
-
-inline int localIndex(int globalIndex, int nblk, int nprocs, int& myproc)
-{
-    myproc=int((globalIndex%(nblk*nprocs))/nblk);
-    return int(globalIndex/(nblk*nprocs))*nblk+globalIndex%nblk;
-}
-
-inline int cart2blacs(
-	MPI_Comm comm_2D,
-	int nprows,
-	int npcols,
-	int N,
-	int nblk,
-	int lld,
-	int *desc)
-{
 #ifdef __MPI
-    int my_blacs_ctxt;
-    int myprow, mypcol;
-    int *usermap=new int[nprows*npcols];
-    int info=0;
-    for(int i=0; i<nprows; ++i)
-    {
-        for(int j=0; j<npcols; ++j)
-        {
-            int pcoord[2]={i, j};
-            MPI_Cart_rank(comm_2D, pcoord, &usermap[i+j*nprows]);
-        }
-    }
-    MPI_Fint comm_2D_f = MPI_Comm_c2f(comm_2D);
-    Cblacs_get(comm_2D_f, 0, &my_blacs_ctxt);
-    Cblacs_gridmap(&my_blacs_ctxt, usermap, nprows, nprows, npcols);
-    Cblacs_gridinfo(my_blacs_ctxt, &nprows, &npcols, &myprow, &mypcol);
-    delete[] usermap;
-    int ISRC=0;
-    descinit_(desc, &N, &N, &nblk, &nblk, &ISRC, &ISRC, &my_blacs_ctxt, &lld, &info);
-
-    return my_blacs_ctxt;
-#else
-    return 0;
-#endif
-}
-
-inline int set_elpahandle(elpa_t &handle, int *desc, int local_nrows, int local_ncols)
+inline int set_elpahandle(elpa_t &handle, const int *desc,const int local_nrows,const int local_ncols, const int nbands)
 {
   int error;
   int nprows, npcols, myprow, mypcol;
@@ -82,7 +33,7 @@ inline int set_elpahandle(elpa_t &handle, int *desc, int local_nrows, int local_
   elpa_init(20210430);
   handle = elpa_allocate(&error);
   elpa_set_integer(handle, "na", desc[2], &error);
-  elpa_set_integer(handle, "nev", desc[2], &error);
+  elpa_set_integer(handle, "nev", nbands, &error);
 
   elpa_set_integer(handle, "local_nrows", local_nrows, &error);
 
@@ -103,327 +54,8 @@ inline int set_elpahandle(elpa_t &handle, int *desc, int local_nrows, int local_
   elpa_setup(handle);   /* Set tunables */
   return 0;
 }
+#endif
 
-inline int q2CTOT(
-	int myid,
-	int naroc[2],
-	int nb,
-	int dim0,
-	int dim1,
-	int iprow,
-	int ipcol,
-	int loc_size,
-	double* work,
-	double** CTOT)
-{
-    for(int j=0; j<naroc[1]; ++j)
-    {
-        int igcol=globalIndex(j, nb, dim1, ipcol);
-        if(igcol>=GlobalV::NBANDS) continue;
-        for(int i=0; i<naroc[0]; ++i)
-        {
-            int igrow=globalIndex(i, nb, dim0, iprow);
-            if(myid==0) CTOT[igcol][igrow]=work[j*naroc[0]+i];
-        }
-    }
-    return 0;
-}
-
-inline int q2ZLOC_WFC(
-	int pos,
-	int naroc[2],
-	int nb,
-	int dim0,
-	int dim1,
-	int iprow,
-	int ipcol,
-	int loc_size,
-	double* work,
-	double* ZLOC,
-	double** WFC)
-{
-    //ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"start q2ZLOC_WFC");
-    for(int j=0; j<naroc[1]; ++j)
-    {
-        int igcol=globalIndex(j, nb, dim1, ipcol);
-        if(igcol>=GlobalV::NBANDS) continue;
-        int zcol=igcol-pos;
-        for(int i=0; i<naroc[0]; ++i)
-        {
-            int igrow=globalIndex(i, nb, dim0, iprow);
-            if(0<=zcol && zcol<loc_size)
-            {
-                ZLOC[igrow*loc_size+zcol]=work[j*naroc[0]+i];
-            }
-	        int mu_local=GlobalC::SGO.trace_lo_tot[igrow];
-            if(mu_local>=0 && igrow<GlobalV::NBANDS)
-            {
-                WFC[igcol][mu_local]=work[j*naroc[0]+i];
-            }
-        }
-    }
-    //ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"WFC was done in q2ZLOC_WFC");
-    return 0;
-}
-
-inline int q2ZLOC_WFC_WFCAUG(
-	int pos,
-	int naroc[2],
-	int nb,
-	int dim0,
-	int dim1,
-	int iprow,
-	int ipcol,
-	int loc_size,
-	double* work,
-	double* ZLOC,
-	double** WFC,
-	double** WFCAUG)
-{
-
-    std::stringstream ss;
-    for(int j=0; j<naroc[1]; ++j)
-    {
-        int igcol=globalIndex(j, nb, dim1, ipcol);
-/*        ss<<"local column "<<j<<" nb "<<nb<<" dim1 "<<dim1<<" mypcol "<<ipcol<<" global column (GlobalV::NBANDS) "<<igcol;
-		ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,ss.str());
-		ss.str("");*/
-        if(igcol>=GlobalV::NBANDS) continue;
-        int zcol=igcol-pos;
-        for(int i=0; i<naroc[0]; ++i)
-        {
-            int igrow=globalIndex(i, nb, dim0, iprow);
-/*	        ss<<"    local row "<<i<<" nb "<<nb<<" dim0 "<<dim0<<" myprow "<<iprow<<" global row (GlobalV::NLOCAL)"<<igrow;
-			ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,ss.str());
-			ss.str("");*/
-            if(0<=zcol && zcol<loc_size)
-            {
-                ZLOC[igrow*loc_size+zcol]=work[j*naroc[0]+i];
-            }
-	        int mu_local=GlobalC::SGO.trace_lo_tot[igrow];
-            if(mu_local>=0)
-            {
-                WFC[igcol][mu_local]=work[j*naroc[0]+i];
-            }
-	        int mu_aug=GlobalC::LOWF.trace_aug[igrow];
-            if(mu_aug>=0)
-            {
-                WFCAUG[igcol][mu_aug]=work[j*naroc[0]+i];
-            }
-        }
-    }
-
-    //ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"WFCAUG was done in q2ZLOC_WFC_WFCAUG");
-    return 0;
-}
-
-inline int q2ZLOC_WFC_CTOT(
-	int myid,
-	int pos,
-	int naroc[2],
-	int nb,
-	int dim0,
-	int dim1,
-	int iprow,
-	int ipcol,
-	int loc_size,
-	double* work,
-	double* ZLOC,
-	double** WFC,
-	double** CTOT)
-{
-    for(int j=0; j<naroc[1]; ++j)
-    {
-        int igcol=globalIndex(j, nb, dim1, ipcol);
-        if(igcol>=GlobalV::NBANDS) continue;
-        int zcol=igcol-pos;
-        for(int i=0; i<naroc[0]; ++i)
-        {
-            int igrow=globalIndex(i, nb, dim0, iprow);
-            if(0<=zcol && zcol<loc_size)
-            {
-                ZLOC[igrow*loc_size+zcol]=work[j*naroc[0]+i];
-            }
-	        int mu_local=GlobalC::SGO.trace_lo_tot[igrow];
-            if(mu_local>=0)
-            {
-                WFC[igcol][mu_local]=work[j*naroc[0]+i];
-            }
-            if(myid==0) CTOT[igcol][igrow]=work[j*naroc[0]+i];
-        }
-    }
-    return 0;
-}
-
-inline int q2ZLOC_WFC_WFCAUG_CTOT(
-	int myid,
-	int pos,
-	int naroc[2],
-	int nb,
-	int dim0,
-	int dim1,
-	int iprow,
-	int ipcol,
-	int loc_size,
-	double* work,
-	double* ZLOC,
-	double** WFC,
-	double** WFCAUG,
-	double** CTOT)
-{
-    for(int j=0; j<naroc[1]; ++j)
-    {
-        int igcol=globalIndex(j, nb, dim1, ipcol);
-        if(igcol>=GlobalV::NBANDS) continue;
-        int zcol=igcol-pos;
-        for(int i=0; i<naroc[0]; ++i)
-        {
-            int igrow=globalIndex(i, nb, dim0, iprow);
-            if(0<=zcol && zcol<loc_size)
-            {
-                ZLOC[igrow*loc_size+zcol]=work[j*naroc[0]+i];
-            }
-	        int mu_local=GlobalC::SGO.trace_lo_tot[igrow];
-            if(mu_local>=0)
-            {
-                WFC[igcol][mu_local]=work[j*naroc[0]+i];
-            }
-	        int mu_aug=GlobalC::LOWF.trace_aug[igrow];
-            if(mu_aug>=0)
-            {
-                WFCAUG[igcol][mu_aug]=work[j*naroc[0]+i];
-            }
-            if(myid==0) CTOT[igcol][igrow]=work[j*naroc[0]+i];
-        }
-    }
-    return 0;
-}
-
-inline int q2WFC_complex(
-	int naroc[2],
-	int nb,
-	int dim0,
-	int dim1,
-	int iprow,
-	int ipcol,
-	std::complex<double>* work,
-	std::complex<double>** WFC)
-{
-    for(int j=0; j<naroc[1]; ++j)
-    {
-        int igcol=globalIndex(j, nb, dim1, ipcol);
-        if(igcol>=GlobalV::NBANDS) continue;
-        for(int i=0; i<naroc[0]; ++i)
-        {
-            int igrow=globalIndex(i, nb, dim0, iprow);
-	        int mu_local=GlobalC::GridT.trace_lo[igrow];
-            if(mu_local>=0)
-            {
-                WFC[igcol][mu_local]=work[j*naroc[0]+i];
-            }
-        }
-    }
-    return 0;
-}
-
-inline int q2WFC_WFCAUG_complex(
-	int naroc[2],
-	int nb,
-	int dim0,
-	int dim1,
-	int iprow,
-	int ipcol,
-	std::complex<double>* work,
-	std::complex<double>** WFC,
-	std::complex<double>** WFCAUG)
-{
-    for(int j=0; j<naroc[1]; ++j)
-    {
-        int igcol=globalIndex(j, nb, dim1, ipcol);
-        if(igcol>=GlobalV::NBANDS) continue;
-        for(int i=0; i<naroc[0]; ++i)
-        {
-            int igrow=globalIndex(i, nb, dim0, iprow);
-	        int mu_local=GlobalC::GridT.trace_lo[igrow];
-            if(mu_local>=0)
-            {
-                WFC[igcol][mu_local]=work[j*naroc[0]+i];
-            }
-	        int mu_aug=GlobalC::LOWF.trace_aug[igrow];
-            if(mu_aug>=0)
-            {
-                WFCAUG[igcol][mu_aug]=work[j*naroc[0]+i];
-            }
-        }
-    }
-    return 0;
-}
-
-inline int q2WFC_CTOT_complex(
-	int myid,
-	int naroc[2],
-	int nb,
-	int dim0,
-	int dim1,
-	int iprow,
-	int ipcol,
-	std::complex<double>* work,
-	std::complex<double>** WFC,
-	std::complex<double>** CTOT)
-{
-    for(int j=0; j<naroc[1]; ++j)
-    {
-        int igcol=globalIndex(j, nb, dim1, ipcol);
-        if(igcol>=GlobalV::NBANDS) continue;
-        for(int i=0; i<naroc[0]; ++i)
-        {
-            int igrow=globalIndex(i, nb, dim0, iprow);
-	        int mu_local=GlobalC::GridT.trace_lo[igrow];
-            if(mu_local>=0)
-            {
-                WFC[igcol][mu_local]=work[j*naroc[0]+i];
-            }
-            if(myid==0) CTOT[igcol][igrow]=work[j*naroc[0]+i];
-        }
-    }
-    return 0;
-}
-
-inline int q2WFC_WFCAUG_CTOT_complex(
-	int myid,
-	int naroc[2],
-	int nb,
-	int dim0,
-	int dim1,
-	int iprow,
-	int ipcol,
-	std::complex<double>* work,
-	std::complex<double>** WFC,
-	std::complex<double>** WFCAUG,
-	std::complex<double>** CTOT)
-{
-    for(int j=0; j<naroc[1]; ++j)
-    {
-        int igcol=globalIndex(j, nb, dim1, ipcol);
-        if(igcol>=GlobalV::NBANDS) continue;
-        for(int i=0; i<naroc[0]; ++i)
-        {
-            int igrow=globalIndex(i, nb, dim0, iprow);
-	        int mu_local=GlobalC::GridT.trace_lo[igrow];
-            if(mu_local>=0)
-            {
-                WFC[igcol][mu_local]=work[j*naroc[0]+i];
-            }
-	        int mu_aug=GlobalC::LOWF.trace_aug[igrow];
-            if(mu_aug>=0)
-            {
-                WFCAUG[igcol][mu_aug]=work[j*naroc[0]+i];
-            }
-            if(myid==0) CTOT[igcol][igrow]=work[j*naroc[0]+i];
-        }
-    }
-    return 0;
-}
 
 inline bool ifElpaHandle(const bool& newIteration, const bool& ifNSCF)
 {
@@ -433,135 +65,36 @@ inline bool ifElpaHandle(const bool& newIteration, const bool& ifNSCF)
 	return doHandle;
 }
 
-Pdiag_Double::Pdiag_Double()
-{
-	// default value of nb is 1,
-	// but can change to larger value from input.
-    nb = 1;
-	MatrixInfo.row_set = new int[1];
-	MatrixInfo.col_set = new int[1];
-}
+int Pdiag_Double::out_mat_hs = 0;
+int Pdiag_Double::out_mat_hsR = 0;
+int Pdiag_Double::out_wfc_lcao = 0;
 
-Pdiag_Double::~Pdiag_Double()
-{
-	delete[] MatrixInfo.row_set;
-	delete[] MatrixInfo.col_set;
-}
+Pdiag_Double::Pdiag_Double() {}
 
-void Pdiag_Double::divide_HS_2d
-(
-#ifdef __MPI
-	MPI_Comm DIAG_WORLD
-#endif
-)
-{
-	ModuleBase::TITLE("Pdiag_Double","divide_HS_2d");
-	assert(GlobalV::NLOCAL>0);
-	assert(GlobalV::DSIZE>0);
+Pdiag_Double::~Pdiag_Double(){}
 
-#ifdef __MPI
-	DIAG_HPSEPS_WORLD=DIAG_WORLD;
-#endif
-
-	if(GlobalV::DCOLOR!=0) return; // mohan add 2012-01-13
-
-	// get the 2D index of computer.
-	this->dim0 = (int)sqrt((double)GlobalV::DSIZE); //mohan update 2012/01/13
-	//while (GlobalV::NPROC_IN_POOL%dim0!=0)
-	while (GlobalV::DSIZE%dim0!=0)
-	{
-		this->dim0 = dim0 - 1;
-	}
-	assert(dim0 > 0);
-	this->dim1=GlobalV::DSIZE/dim0;
-
-	if(testpb)ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"dim0",dim0);
-	if(testpb)ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"dim1",dim1);
-
-#ifdef __MPI
-	// mohan add 2011-04-16
-	if(GlobalV::NB2D==0)
-	{
-		if(GlobalV::NLOCAL>0) this->nb = 1;
-		if(GlobalV::NLOCAL>500) this->nb = 32;
-		if(GlobalV::NLOCAL>1000) this->nb = 64;
-	}
-	else if(GlobalV::NB2D>0)
-	{
-		this->nb = GlobalV::NB2D; // mohan add 2010-06-28
-	}
-	ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"nb2d",nb);
-
-	this->set_parameters();
-
-	// call mpi_creat_cart
-	this->mpi_creat_cart(&this->comm_2D,this->dim0,this->dim1);
-
-	// call mat_2d
-	this->mat_2d(this->comm_2D, GlobalV::NLOCAL, GlobalV::NLOCAL, this->nb, this->MatrixInfo);
-
-	// mohan add 2010-06-29
-	this->nrow = this->MatrixInfo.row_num;
-	this->ncol = this->MatrixInfo.col_num;
-	this->nloc = MatrixInfo.col_num * MatrixInfo.row_num;
-
-	// init blacs context for genelpa
-    if(GlobalV::KS_SOLVER=="genelpa" || GlobalV::KS_SOLVER=="scalapack_gvx")
-    {
-        blacs_ctxt=cart2blacs(comm_2D, dim0, dim1, GlobalV::NLOCAL, nb, nrow, desc);
-    }
-#else // single processor used.
-	this->nb = GlobalV::NLOCAL;
-	this->nrow = GlobalV::NLOCAL;
-	this->ncol = GlobalV::NLOCAL;
-	this->nloc = GlobalV::NLOCAL * GlobalV::NLOCAL;
-	this->set_parameters();
-	MatrixInfo.row_b = 1;
-	MatrixInfo.row_num = GlobalV::NLOCAL;
-	delete[] MatrixInfo.row_set;
-	MatrixInfo.row_set = new int[GlobalV::NLOCAL];
-	for(int i=0; i<GlobalV::NLOCAL; i++)
-	{
-		MatrixInfo.row_set[i]=i;
-	}
-	MatrixInfo.row_pos=0;
-
-	MatrixInfo.col_b = 1;
-	MatrixInfo.col_num = GlobalV::NLOCAL;
-	delete[] MatrixInfo.col_set;
-	MatrixInfo.col_set = new int[GlobalV::NLOCAL];
-	for(int i=0; i<GlobalV::NLOCAL; i++)
-	{
-		MatrixInfo.col_set[i]=i;
-	}
-	MatrixInfo.col_pos=0;
-#endif
-
-	assert(nloc>0);
-	if(testpb)ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"MatrixInfo.row_num",MatrixInfo.row_num);
-	if(testpb)ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"MatrixInfo.col_num",MatrixInfo.col_num);
-	if(testpb)ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"nloc",nloc);
-	return;
-}
 
 void Pdiag_Double::diago_double_begin(
 	const int &ik, // k-point index
-	ModuleBase::matrix &wfc_2d, // wave functions in 2d
+	Local_Orbital_wfc &lowf,
 	double* h_mat, // hamiltonian matrix
-	double* s_mat, // overlap matrix
-	double* ekb) // eigenvalues for each k-point and band
+    double* s_mat, // overlap matrix
+    double* Stmp, 	// because the output Stmp will be different from Sloc2, so we need to copy that.
+    double* ekb) // eigenvalues for each k-point and band
 {
-	#ifdef TEST_DIAG
+    const Parallel_Orbitals* pv = this->ParaV = lowf.ParaV;
+    
+#ifdef TEST_DIAG
 	{
 		static int istep = 0;
 		auto print_matrix_C = [&](const std::string &file_name, double*m)
 		{
 			std::ofstream ofs(file_name+"-C_"+ModuleBase::GlobalFunc::TO_STRING(istep)+"_"+ModuleBase::GlobalFunc::TO_STRING(GlobalV::MY_RANK));
-			for(int ic=0; ic<GlobalC::ParaO.ncol; ++ic)
+			for(int ic=0; ic<pv->ncol; ++ic)
 			{
-				for(int ir=0; ir<GlobalC::ParaO.nrow; ++ir)
+				for(int ir=0; ir<pv->nrow; ++ir)
 				{
-					const int index=ic*GlobalC::ParaO.nrow+ir;
+					const int index=ic*pv->nrow+ir;
 					if(abs(m[index])>1E-10)
 						ofs<<m[index]<<"\t";
 					else
@@ -573,11 +106,11 @@ void Pdiag_Double::diago_double_begin(
 		auto print_matrix_F = [&](const std::string &file_name, double*m)
 		{
 			std::ofstream ofs(file_name+"-F_"+ModuleBase::GlobalFunc::TO_STRING(istep)+"_"+ModuleBase::GlobalFunc::TO_STRING(GlobalV::MY_RANK));
-			for(int ir=0; ir<GlobalC::ParaO.nrow; ++ir)
+			for(int ir=0; ir<pv->nrow; ++ir)
 			{
-				for(int ic=0; ic<GlobalC::ParaO.ncol; ++ic)
+				for(int ic=0; ic<pv->ncol; ++ic)
 				{
-					const int index=ic*GlobalC::ParaO.nrow+ir;
+					const int index=ic*pv->nrow+ir;
 					if(abs(m[index])>1E-10)
 						ofs<<m[index]<<"\t";
 					else
@@ -596,46 +129,43 @@ void Pdiag_Double::diago_double_begin(
 
 #ifdef __MPI
 	ModuleBase::TITLE("Pdiag_Double","diago_begin");
-	assert(this->loc_size > 0);
+	assert(pv->loc_size > 0);
 	assert(GlobalV::NLOCAL > 0);
 
 	char uplo='U';
 	const int inc=1;
 
-    int nprocs, myid;
-    MPI_Status status;
-    MPI_Comm_size(comm_2D, &nprocs);
-    MPI_Comm_rank(comm_2D, &myid);
-
-	// parallel diagonalize the
-	// H | psi > = S | psi >
-	// problem.
-	int loc_pos;
-
-	double* Stmp = GlobalC::LM.Sdiag.data();
-
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"start solver, ks_solver",GlobalV::KS_SOLVER);
     if(GlobalV::KS_SOLVER=="hpseps")
     {
-        double *eigen = new double[GlobalV::NLOCAL];
+        // parallel diagonalize the
+        // H | psi > = S | psi >
+        // problem.
+        int loc_pos;
+        
+        int  myid;
+        MPI_Comm_rank(pv->comm_2D, &myid);
+
+        double* eigen = new double[GlobalV::NLOCAL];
         ModuleBase::GlobalFunc::ZEROS(eigen, GlobalV::NLOCAL);
 
-        double* Z = new double[this->loc_size * GlobalV::NLOCAL];
-        ModuleBase::GlobalFunc::ZEROS(Z, this->loc_size * GlobalV::NLOCAL);
+        double* Z = new double[pv->loc_size * GlobalV::NLOCAL];
+        ModuleBase::GlobalFunc::ZEROS(Z, pv->loc_size * GlobalV::NLOCAL);
 
-        ModuleBase::Memory::record("Pdiag_Double","Z",loc_size * GlobalV::NLOCAL,"double");
+        ModuleBase::Memory::record("Pdiag_Double","Z", pv->loc_size * GlobalV::NLOCAL,"double");
         ModuleBase::timer::tick("Diago_LCAO_Matrix","pdgseps");
-		BlasConnector::copy(nloc, s_mat, inc, Stmp, inc);
-		pdgseps(comm_2D, GlobalV::NLOCAL, nb, h_mat, Stmp, Z, eigen, this->MatrixInfo, uplo, this->loc_size, loc_pos);
+        BlasConnector::copy(pv->nloc, s_mat, inc, Stmp, inc);
+        int loc_size = pv->loc_size;
+        pdgseps(pv->comm_2D, GlobalV::NLOCAL, pv->nb, h_mat, Stmp, Z, eigen, pv->MatrixInfo, uplo, loc_size, loc_pos);
         ModuleBase::timer::tick("Diago_LCAO_Matrix","pdgseps");
 
-        if(myid <= lastband_in_proc)
+        if(myid <= pv->lastband_in_proc)
         {
-            for(int i=0; i<loc_sizes[myid]; i++)
+            for(int i=0; i<pv->loc_sizes[myid]; i++)
             {
                 for(int n=0; n<GlobalV::NLOCAL; n++)
                 {
-                    Z_LOC[ik][n*loc_sizes[myid] + i] = Z[n*loc_sizes[myid] + i];
+                    pv->Z_LOC[ik][n*pv->loc_sizes[myid] + i] = Z[n*pv->loc_sizes[myid] + i];
                 }
             }
         }
@@ -662,15 +192,15 @@ void Pdiag_Double::diago_double_begin(
         ModuleBase::GlobalFunc::ZEROS(eigen, GlobalV::NLOCAL);
 
         long maxnloc; // maximum number of elements in local matrix
-        MPI_Reduce(&nloc, &maxnloc, 1, MPI_LONG, MPI_MAX, 0, comm_2D);
-        MPI_Bcast(&maxnloc, 1, MPI_LONG, 0, comm_2D);
-		wfc_2d.create(this->ncol,this->nrow);			// Fortran order
-
+        MPI_Reduce(&pv->nloc_wfc, &maxnloc, 1, MPI_LONG, MPI_MAX, 0, pv->comm_2D);
+        MPI_Bcast(&maxnloc, 1, MPI_LONG, 0, pv->comm_2D);
+        lowf.wfc_gamma[ik].create(pv->ncol, pv->nrow);			// Fortran order
+        
         static elpa_t handle;
         static bool has_set_elpa_handle = false;
         if(! has_set_elpa_handle)
         {
-            set_elpahandle(handle, desc, nrow, ncol);
+            set_elpahandle(handle, pv->desc, pv->nrow, pv->ncol, GlobalV::NBANDS);
             has_set_elpa_handle = true;
         }
 
@@ -678,7 +208,7 @@ void Pdiag_Double::diago_double_begin(
         if(ifElpaHandle(GlobalC::CHR.get_new_e_iteration(), (GlobalV::CALCULATION=="nscf")))
         {
             ModuleBase::timer::tick("Diago_LCAO_Matrix","decompose_S");
-            BlasConnector::copy(nloc, s_mat, inc, Stmp, inc);
+            BlasConnector::copy(pv->nloc, s_mat, inc, Stmp, inc);
             is_already_decomposed=0;
             ModuleBase::timer::tick("Diago_LCAO_Matrix","decompose_S");
         }
@@ -689,112 +219,31 @@ void Pdiag_Double::diago_double_begin(
 
         ModuleBase::timer::tick("Diago_LCAO_Matrix","elpa_solve");
         int elpa_error;
-        elpa_generalized_eigenvectors_d(handle, h_mat, Stmp, eigen, wfc_2d.c, is_already_decomposed, &elpa_error);
-        ModuleBase::timer::tick("Diago_LCAO_Matrix","elpa_solve");
+        elpa_generalized_eigenvectors_d(handle, h_mat, Stmp, eigen, lowf.wfc_gamma[ik].c, is_already_decomposed, &elpa_error);
+        ModuleBase::timer::tick("Diago_LCAO_Matrix", "elpa_solve");
 
     	ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"K-S equation was solved by genelpa2");
         BlasConnector::copy(GlobalV::NBANDS, eigen, inc, ekb, inc);
         delete[] eigen;
 	    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"eigenvalues were copied to ekb");
 
-		// convert wave function to band distribution
-			// and calculate the density matrix in the tranditional way
-			// redistribute eigenvectors to wfc / wfc_aug
-
-		ModuleBase::timer::tick("Diago_LCAO_Matrix","gath_eig");
-		int pos=0;
-		for(int i=0; i<myid; ++i)
-		{
-			pos+=loc_sizes[i];
-		}
-		int naroc[2]; // maximum number of row or column
-		double **ctot;
-
-		if(this->out_lowf && myid==0)
-		{
-			ctot = new double*[GlobalV::NBANDS];
-			for (int i=0; i<GlobalV::NBANDS; i++)
-			{
-				ctot[i] = new double[GlobalV::NLOCAL];
-				ModuleBase::GlobalFunc::ZEROS(ctot[i], GlobalV::NLOCAL);
-			}
-			ModuleBase::Memory::record("Pdiag_Basic","ctot",GlobalV::NBANDS*GlobalV::NLOCAL,"double");
-		}
-
-        double *work=new double[maxnloc]; // work/buffer matrix
-        int info;
-		for(int iprow=0; iprow<dim0; ++iprow)
-		{
-			for(int ipcol=0; ipcol<dim1; ++ipcol)
-			{
-				const int coord[2]={iprow, ipcol};
-				int src_rank;
-				MPI_Cart_rank(comm_2D, coord, &src_rank);
-				if(myid==src_rank)
-				{
-					BlasConnector::copy(nloc, wfc_2d.c, inc, work, inc);
-					naroc[0]=nrow;
-					naroc[1]=ncol;
-				}
-				info=MPI_Bcast(naroc, 2, MPI_INT, src_rank, comm_2D);
-				info=MPI_Bcast(work, maxnloc, MPI_DOUBLE, src_rank, comm_2D);
-
-				if(out_lowf)
-				{
-					if(INPUT.new_dm==0)
-					{
-						// mohan delete Bfield option 2021-02-12
-						//info=q2ZLOC_WFC_WFCAUG_CTOT(myid, pos, naroc, nb,
-						//	dim0, dim1, iprow, ipcol, this->loc_size,
-						//	work, Z_LOC[ik], wfc, GlobalC::LOWF.WFC_GAMMA_aug[GlobalV::CURRENT_SPIN], ctot);
-					}
-					else
-					{
-						info=q2CTOT(myid, naroc, nb,
-							dim0, dim1, iprow, ipcol, this->loc_size,
-							work, ctot);
-					}
-				}//out_lowf
-				else
-				{
-					// mohan update 2021-02-12, delete Bfield option
-					//info=q2ZLOC_WFC_WFCAUG(pos, naroc, nb,
-					//	dim0, dim1, iprow, ipcol, this->loc_size,
-					//	work, Z_LOC[ik], wfc, GlobalC::LOWF.WFC_GAMMA_aug[GlobalV::CURRENT_SPIN]);
-				}
-			}//loop ipcol
-		}//loop iprow
-
-		if(out_lowf && myid==0)
-		{
-			std::stringstream ss;
-			ss << GlobalV::global_out_dir << "LOWF_GAMMA_S" << GlobalV::CURRENT_SPIN+1 << ".dat";
-			// mohan add 2012-04-03, because we need the occupations for the
-				// first iteration.
-			WF_Local::write_lowf( ss.str(), ctot );//mohan add 2010-09-09
-			for (int i=0; i<GlobalV::NBANDS; i++)
-			{
-				delete[] ctot[i];
-			}
-			delete[] ctot;
-		}
-
-		delete[] work;
-		ModuleBase::timer::tick("Diago_LCAO_Matrix","gath_eig");
-	} // GenELPA method
+        double** wfc_grid = nullptr;    //output but not do "2d-to-grid" conversion
+        lowf.wfc_2d_to_grid(this->out_wfc_lcao, lowf.wfc_gamma[ik].c, wfc_grid);
+        
+    } // GenELPA method
 	else if(GlobalV::KS_SOLVER=="lapack_gv")
 	{
-		wfc_2d.create(this->ncol, this->nrow, false);
-		memcpy( wfc_2d.c, h_mat, sizeof(double)*this->ncol*this->nrow );
-		ModuleBase::matrix s_tmp(this->ncol, this->nrow, false);
-		memcpy( s_tmp.c, s_mat, sizeof(double)*this->ncol*this->nrow );
+		lowf.wfc_gamma[ik].create(pv->ncol_bands, pv->nrow, false);
+		memcpy( lowf.wfc_gamma[ik].c, h_mat, sizeof(double)*pv->ncol*pv->nrow );
+		ModuleBase::matrix s_tmp(pv->ncol, pv->nrow, false);
+		memcpy( s_tmp.c, s_mat, sizeof(double)*pv->ncol*pv->nrow );
 		std::vector<double> ekb_tmp(GlobalV::NLOCAL,0);
 
 		const char jobz='V', uplo='U';
 		const int itype=1;
 		int lwork=-1, info=0;
 		std::vector<double> work(1,0);
-		dsygv_(&itype, &jobz, &uplo, &GlobalV::NLOCAL, wfc_2d.c, &GlobalV::NLOCAL,
+		dsygv_(&itype, &jobz, &uplo, &GlobalV::NLOCAL, lowf.wfc_gamma[ik].c, &GlobalV::NLOCAL,
 			s_tmp.c, &GlobalV::NLOCAL, ekb_tmp.data(), work.data(), &lwork, &info);
 
 		if(info)
@@ -805,7 +254,7 @@ void Pdiag_Double::diago_double_begin(
 		lwork = work[0];
 		work.resize(lwork);
 
-		dsygv_(&itype, &jobz, &uplo, &GlobalV::NLOCAL, wfc_2d.c, &GlobalV::NLOCAL,
+		dsygv_(&itype, &jobz, &uplo, &GlobalV::NLOCAL, lowf.wfc_gamma[ik].c, &GlobalV::NLOCAL,
 			s_tmp.c, &GlobalV::NLOCAL, ekb_tmp.data(), work.data(), &lwork, &info);
 
 		if(info)
@@ -814,18 +263,14 @@ void Pdiag_Double::diago_double_begin(
 		}
 		memcpy( ekb, ekb_tmp.data(), sizeof(double)*GlobalV::NBANDS );
 
-		if(INPUT.new_dm==0)
-		{
-			throw std::domain_error("INPUT.new_dm must be 1. "+ModuleBase::GlobalFunc::TO_STRING(__FILE__)+" line "+ModuleBase::GlobalFunc::TO_STRING(__LINE__));
-		}
 	}
 	else if(GlobalV::KS_SOLVER=="lapack_gvx")
 	{
-		ModuleBase::matrix h_tmp(this->ncol, this->nrow, false);
-		memcpy( h_tmp.c, h_mat, sizeof(double)*this->ncol*this->nrow );
-		ModuleBase::matrix s_tmp(this->ncol, this->nrow, false);
-		memcpy( s_tmp.c, s_mat, sizeof(double)*this->ncol*this->nrow );
-		wfc_2d.create(this->ncol, this->nrow, false);
+		ModuleBase::matrix h_tmp(pv->ncol, pv->nrow, false);
+		memcpy( h_tmp.c, h_mat, sizeof(double)*pv->ncol*pv->nrow );
+		ModuleBase::matrix s_tmp(pv->ncol, pv->nrow, false);
+		memcpy( s_tmp.c, s_mat, sizeof(double)*pv->ncol*pv->nrow );
+		lowf.wfc_gamma[ik].create(pv->ncol, pv->nrow, false);
 
 		const char jobz='V', range='I', uplo='U';
 		const int itype=1, il=1, iu=GlobalV::NBANDS;
@@ -837,7 +282,7 @@ void Pdiag_Double::diago_double_begin(
 
 		dsygvx_(&itype, &jobz, &range, &uplo,
 			&GlobalV::NLOCAL, h_tmp.c, &GlobalV::NLOCAL, s_tmp.c, &GlobalV::NLOCAL, NULL, NULL, &il, &iu, &abstol,
-			&M, ekb, wfc_2d.c, &GlobalV::NLOCAL, work.data(), &lwork, iwork.data(), ifail.data(), &info);
+			&M, ekb, lowf.wfc_gamma[ik].c, &GlobalV::NLOCAL, work.data(), &lwork, iwork.data(), ifail.data(), &info);
 
 		if(info)
 		{
@@ -848,7 +293,7 @@ void Pdiag_Double::diago_double_begin(
 		work.resize(lwork);
 		dsygvx_(&itype, &jobz, &range, &uplo,
 			&GlobalV::NLOCAL, h_tmp.c, &GlobalV::NLOCAL, s_tmp.c, &GlobalV::NLOCAL, NULL, NULL, &il, &iu, &abstol,
-			&M, ekb, wfc_2d.c, &GlobalV::NLOCAL, work.data(), &lwork, iwork.data(), ifail.data(), &info);
+			&M, ekb, lowf.wfc_gamma[ik].c, &GlobalV::NLOCAL, work.data(), &lwork, iwork.data(), ifail.data(), &info);
 
 		if(info)
 		{
@@ -859,19 +304,10 @@ void Pdiag_Double::diago_double_begin(
 			throw std::runtime_error("M="+ModuleBase::GlobalFunc::TO_STRING(M)+". GlobalV::NBANDS="+ModuleBase::GlobalFunc::TO_STRING(GlobalV::NBANDS)+". "+ModuleBase::GlobalFunc::TO_STRING(__FILE__)+" line "+ModuleBase::GlobalFunc::TO_STRING(__LINE__));
 		}
 
-		if(INPUT.new_dm==0)
-		{
-			throw std::domain_error("INPUT.new_dm must be 1. "+ModuleBase::GlobalFunc::TO_STRING(__FILE__)+" line "+ModuleBase::GlobalFunc::TO_STRING(__LINE__));
-		}
 	}
 	else if(GlobalV::KS_SOLVER=="scalapack_gvx")
 	{
-		diag_scalapack_gvx.pdsygvx_diag(this->desc, this->ncol, this->nrow, h_mat, s_mat, ekb, wfc_2d);		// Peize Lin add 2021.11.02
-
-		if(INPUT.new_dm==0)
-		{
-			throw std::domain_error("INPUT.new_dm must be 1. "+ModuleBase::GlobalFunc::TO_STRING(__FILE__)+" line "+ModuleBase::GlobalFunc::TO_STRING(__LINE__));
-		}
+		diag_scalapack_gvx.pdsygvx_diag(pv->desc, pv->ncol, pv->nrow, h_mat, s_mat, ekb, lowf.wfc_gamma[ik]);		// Peize Lin add 2021.11.02
 	}
     //delete[] Stmp; //LiuXh 20171109
 #endif
@@ -888,11 +324,11 @@ void Pdiag_Double::diago_double_begin(
 		}
 		{
 			std::ofstream ofs("wfc-C_"+ModuleBase::GlobalFunc::TO_STRING(istep)+"_"+ModuleBase::GlobalFunc::TO_STRING(GlobalV::MY_RANK));
-			ofs<<wfc_2d<<std::endl;
+			ofs<<lowf.wfc_gamma[ik]<<std::endl;
 		}
 		{
 			std::ofstream ofs("wfc-F_"+ModuleBase::GlobalFunc::TO_STRING(istep)+"_"+ModuleBase::GlobalFunc::TO_STRING(GlobalV::MY_RANK));
-			ofs<<transpose(wfc_2d)<<std::endl;
+			ofs<<transpose(lowf.wfc_gamma[ik])<<std::endl;
 		}
 		++istep;
 	}
@@ -903,23 +339,25 @@ void Pdiag_Double::diago_double_begin(
 
 void Pdiag_Double::diago_complex_begin(
 	const int &ik,
-	std::complex<double> **wfc,
-	ModuleBase::ComplexMatrix &wfc_2d,
+    Local_Orbital_wfc &lowf,
 	std::complex<double>* ch_mat,
-	std::complex<double>* cs_mat,
-	double *ekb)
+    std::complex<double>* cs_mat,
+    std::complex<double>* Stmp, 	// because the output Stmp will be different from Sloc2, so we need to copy that.
+    double* ekb)
 {
-    #ifdef TEST_DIAG
+    const Parallel_Orbitals* pv = this->ParaV = lowf.ParaV;
+    
+#ifdef TEST_DIAG
    	{
 		static int istep = 0;
 		auto print_matrix_C = [&](const std::string &file_name, std::complex<double>*m)
 		{
 			std::ofstream ofs(file_name+"-C_"+ModuleBase::GlobalFunc::TO_STRING(istep)+"_"+ModuleBase::GlobalFunc::TO_STRING(GlobalV::MY_RANK));
-			for(int ic=0; ic<GlobalC::ParaO.ncol; ++ic)
+			for(int ic=0; ic<pv->ncol; ++ic)
 			{
-				for(int ir=0; ir<GlobalC::ParaO.nrow; ++ir)
+				for(int ir=0; ir<pv->nrow; ++ir)
 				{
-					const int index=ic*GlobalC::ParaO.nrow+ir;
+					const int index=ic*pv->nrow+ir;
 					if(std::norm(m[index])>1E-10)
                     {
                         if(std::imag(m[index])>1E-10)
@@ -942,11 +380,11 @@ void Pdiag_Double::diago_complex_begin(
 		auto print_matrix_F = [&](const std::string &file_name, std::complex<double>*m)
 		{
 			std::ofstream ofs(file_name+"-F_"+ModuleBase::GlobalFunc::TO_STRING(istep)+"_"+ModuleBase::GlobalFunc::TO_STRING(GlobalV::MY_RANK));
-			for(int ir=0; ir<GlobalC::ParaO.nrow; ++ir)
+			for(int ir=0; ir<pv->nrow; ++ir)
 			{
-				for(int ic=0; ic<GlobalC::ParaO.ncol; ++ic)
+				for(int ic=0; ic<pv->ncol; ++ic)
 				{
-					const int index=ic*GlobalC::ParaO.nrow+ir;
+					const int index=ic*pv->nrow+ir;
 					if(std::norm(m[index])>1E-10)
                     {
                         if(std::imag(m[index])>1E-10)
@@ -980,33 +418,26 @@ void Pdiag_Double::diago_complex_begin(
 	char uplo='U';
 	const int inc=1;
 
-    int nprocs, myid;
-    MPI_Status status;
-    MPI_Comm_size(comm_2D, &nprocs);
-    MPI_Comm_rank(comm_2D, &myid);
-
-	// parallel diagonalize the
-	// H | psi > = S | psi >
-	// problem.
-	int loc_pos;
-
-	// because the output Stmp will be different from Sloc2, so we need to copy that.
-	std::complex<double>* Stmp = GlobalC::LM.Sdiag2.data();
-
 	if(GlobalV::KS_SOLVER=="hpseps")
-	{
-        double *eigen = new double[GlobalV::NLOCAL];
+    {
+        // parallel diagonalize the
+        // H | psi > = S | psi >
+        // problem.
+        int loc_pos;
+        
+        double* eigen = new double[GlobalV::NLOCAL];
         ModuleBase::GlobalFunc::ZEROS(eigen, GlobalV::NLOCAL);
 
-        assert(loc_size > 0);
-        std::complex<double>* Z = new std::complex<double>[this->loc_size * GlobalV::NLOCAL];
-        ModuleBase::GlobalFunc::ZEROS(Z, this->loc_size * GlobalV::NLOCAL);
+        assert(pv->loc_size > 0);
+        std::complex<double>* Z = new std::complex<double>[pv->loc_size * GlobalV::NLOCAL];
+        ModuleBase::GlobalFunc::ZEROS(Z, pv->loc_size * GlobalV::NLOCAL);
 
-        ModuleBase::Memory::record("Pdiag_Double","Z",loc_size * GlobalV::NLOCAL,"cdouble");
+        ModuleBase::Memory::record("Pdiag_Double","Z",pv->loc_size * GlobalV::NLOCAL,"cdouble");
 		int nbands_tmp = GlobalV::NBANDS;
         ModuleBase::timer::tick("Diago_LCAO_Matrix","pzgseps");
-		BlasConnector::copy(nloc, cs_mat, inc, Stmp, inc);
-    	pzgseps(comm_2D, GlobalV::NLOCAL, nb, nbands_tmp, ch_mat, Stmp, Z, eigen, this->MatrixInfo, uplo, this->loc_size, loc_pos);
+        BlasConnector::copy(pv->nloc, cs_mat, inc, Stmp, inc);
+        int loc_size = pv->loc_size;
+        pzgseps(pv->comm_2D, GlobalV::NLOCAL, pv->nb, nbands_tmp, ch_mat, Stmp, Z, eigen, pv->MatrixInfo, uplo, loc_size, loc_pos);
         ModuleBase::timer::tick("Diago_LCAO_Matrix","pzgseps");
         // the eigenvalues.
         BlasConnector::copy(GlobalV::NBANDS, eigen, inc, ekb, inc);
@@ -1014,7 +445,7 @@ void Pdiag_Double::diago_complex_begin(
 
         // Z is delete in gath_eig
         ModuleBase::timer::tick("Diago_LCAO_Matrix","gath_eig_complex");
-        this->gath_eig_complex(DIAG_HPSEPS_WORLD, GlobalV::NLOCAL, wfc, Z, ik);
+        this->gath_eig_complex(DIAG_HPSEPS_WORLD, GlobalV::NLOCAL, lowf.wfc_k_grid[ik], Z, ik);
         ModuleBase::timer::tick("Diago_LCAO_Matrix","gath_eig_complex");
         //delete[] Z; //LiuXh 20180329, fix bug of 'double free()'
         //this->gath_full_eig_complex(DIAG_WORLD, GlobalV::NLOCAL, c, Z);
@@ -1023,174 +454,39 @@ void Pdiag_Double::diago_complex_begin(
     {
         double *eigen = new double[GlobalV::NLOCAL];
         ModuleBase::GlobalFunc::ZEROS(eigen, GlobalV::NLOCAL);
-        long maxnloc; // maximum number of elements in local matrix
-        MPI_Reduce(&nloc, &maxnloc, 1, MPI_LONG, MPI_MAX, 0, comm_2D);
-        MPI_Bcast(&maxnloc, 1, MPI_LONG, 0, comm_2D);
-        wfc_2d.create(this->ncol,this->nrow);            // Fortran order
+        lowf.wfc_k[ik].create(pv->ncol_bands, pv->nrow);            // Fortran order
 
         static elpa_t handle;
         static bool has_set_elpa_handle = false;
         if(! has_set_elpa_handle)
         {
-            set_elpahandle(handle, desc, nrow, ncol);
+            set_elpahandle(handle, pv->desc, pv->nrow, pv->ncol, GlobalV::NBANDS);
             has_set_elpa_handle = true;
         }
 
-        BlasConnector::copy(nloc, cs_mat, inc, Stmp, inc);
+        BlasConnector::copy(pv->nloc, cs_mat, inc, Stmp, inc);
 
         ModuleBase::timer::tick("Diago_LCAO_Matrix","elpa_solve");
         int elpa_derror;
         elpa_generalized_eigenvectors_dc(handle, reinterpret_cast<double _Complex*>(ch_mat),
                                          reinterpret_cast<double _Complex*>(Stmp),
-                                         eigen, reinterpret_cast<double _Complex*>(wfc_2d.c), 0, &elpa_derror);
+                                         eigen, reinterpret_cast<double _Complex*>(lowf.wfc_k[ik].c), 0, &elpa_derror);
         ModuleBase::timer::tick("Diago_LCAO_Matrix","elpa_solve");
 
         // the eigenvalues.
         BlasConnector::copy(GlobalV::NBANDS, eigen, inc, ekb, inc);
         delete[] eigen;
 
-        //change eigenvector matrix from block-cycle distribute matrix to column-divided distribute matrix
-        ModuleBase::timer::tick("Diago_LCAO_Matrix","gath_eig_complex");
-        std::complex<double> *work=new std::complex<double>[maxnloc]; // work/buffer matrix
-        int naroc[2]; // maximum number of row or column
-        int info;
-        for(int iprow=0; iprow<dim0; ++iprow)
-        {
-            for(int ipcol=0; ipcol<dim1; ++ipcol)
-            {
-                const int coord[2]={iprow, ipcol};
-                int src_rank;
-                MPI_Cart_rank(comm_2D, coord, &src_rank);
-                if(myid==src_rank)
-                {
-                    BlasConnector::copy(nloc, wfc_2d.c, inc, work, inc);
-                    naroc[0]=nrow;
-                    naroc[1]=ncol;
-                }
-                info=MPI_Bcast(naroc, 2, MPI_INT, src_rank, comm_2D);
-                info=MPI_Bcast(work, maxnloc, MPI_DOUBLE_COMPLEX, src_rank, comm_2D);
-
-                if(this->out_lowf)
-                {
-                    std::complex<double> **ctot;
-                    if(myid==0)
-                    {
-                        ctot = new std::complex<double>*[GlobalV::NBANDS];
-                        for (int i=0; i<GlobalV::NBANDS; i++)
-                        {
-                            ctot[i] = new std::complex<double>[GlobalV::NLOCAL];
-                            ModuleBase::GlobalFunc::ZEROS(ctot[i], GlobalV::NLOCAL);
-                        }
-                        ModuleBase::Memory::record("Pdiag_Basic","ctot",GlobalV::NBANDS*GlobalV::NLOCAL,"cdouble");
-                    }
-					// mohan update 2021-02-12, delete BFIELD option
-					info=q2WFC_WFCAUG_CTOT_complex(myid, naroc, nb,
-							dim0, dim1, iprow, ipcol,
-							work, wfc, GlobalC::LOWF.WFC_K_aug[ik], ctot);
-                    std::stringstream ss;
-	                ss << GlobalV::global_out_dir << "LOWF_K_" << ik+1 << ".dat";
-                    // mohan add 2012-04-03, because we need the occupations for the
-                    // first iteration.
-                    WF_Local::write_lowf_complex( ss.str(), ctot, ik );//mohan add 2010-09-09
-                    if(myid==0)
-                    {
-                        for (int i=0; i<GlobalV::NBANDS; i++)
-                        {
-                            delete[] ctot[i];
-                        }
-                        delete[] ctot;
-                    }
-                }
-                else
-                {
-					// mohan update 2021-02-12, delte BFIELD option
-					info=q2WFC_WFCAUG_complex(naroc, nb,
-							dim0, dim1, iprow, ipcol,
-							work, wfc, GlobalC::LOWF.WFC_K_aug[ik]);
-				}
-            }
-        }
-        delete[] work;
-        ModuleBase::timer::tick("Diago_LCAO_Matrix","gath_eig_complex");
+        lowf.wfc_2d_to_grid(this->out_wfc_lcao, lowf.wfc_k[ik].c, lowf.wfc_k_grid[ik], ik);
+        
     } // GenELPA method
 	else if(GlobalV::KS_SOLVER=="scalapack_gvx")
 	{
-		diag_scalapack_gvx.pzhegvx_diag(this->desc, this->ncol, this->nrow, ch_mat, cs_mat, ekb, wfc_2d);		// Peize Lin add 2021.11.02
+		diag_scalapack_gvx.pzhegvx_diag(pv->desc, pv->ncol, pv->nrow, ch_mat, cs_mat, ekb, lowf.wfc_k[ik]);		// Peize Lin add 2021.11.02
 
-//		if(INPUT.new_dm==0)
-//			throw std::domain_error("INPUT.new_dm must be 1. "+ModuleBase::GlobalFunc::TO_STRING(__FILE__)+" line "+ModuleBase::GlobalFunc::TO_STRING(__LINE__));
-		// the follow will be deleted after finish newdm
-		{
-			//change eigenvector matrix from block-cycle distribute matrix to column-divided distribute matrix
-			ModuleBase::timer::tick("Diago_LCAO_Matrix","gath_eig_complex");
+        lowf.wfc_2d_to_grid(this->out_wfc_lcao, lowf.wfc_k[ik].c, lowf.wfc_k_grid[ik], ik);
 
-			int info;
-			long maxnloc; // maximum number of elements in local matrix
-			info=MPI_Reduce(&nloc, &maxnloc, 1, MPI_LONG, MPI_MAX, 0, comm_2D);
-			info=MPI_Bcast(&maxnloc, 1, MPI_LONG, 0, comm_2D);
-			std::complex<double> *work=new std::complex<double>[maxnloc]; // work/buffer matrix
-
-			int naroc[2]; // maximum number of row or column
-			for(int iprow=0; iprow<dim0; ++iprow)
-			{
-				for(int ipcol=0; ipcol<dim1; ++ipcol)
-				{
-					const int coord[2]={iprow, ipcol};
-					int src_rank;
-					info=MPI_Cart_rank(comm_2D, coord, &src_rank);
-					if(myid==src_rank)
-					{
-						BlasConnector::copy(nloc, wfc_2d.c, inc, work, inc);
-						naroc[0]=nrow;
-						naroc[1]=ncol;
-					}
-					info=MPI_Bcast(naroc, 2, MPI_INT, src_rank, comm_2D);
-					info=MPI_Bcast(work, maxnloc, MPI_DOUBLE_COMPLEX, src_rank, comm_2D);
-
-					if(this->out_lowf)
-					{
-						std::complex<double> **ctot;
-						if(myid==0)
-						{
-							ctot = new std::complex<double>*[GlobalV::NBANDS];
-							for (int i=0; i<GlobalV::NBANDS; i++)
-							{
-								ctot[i] = new std::complex<double>[GlobalV::NLOCAL];
-								ModuleBase::GlobalFunc::ZEROS(ctot[i], GlobalV::NLOCAL);
-							}
-							ModuleBase::Memory::record("Pdiag_Basic","ctot",GlobalV::NBANDS*GlobalV::NLOCAL,"cdouble");
-						}
-						// mohan update 2021-02-12, delete BFIELD option
-						info=q2WFC_WFCAUG_CTOT_complex(myid, naroc, nb,
-								dim0, dim1, iprow, ipcol,
-								work, wfc, GlobalC::LOWF.WFC_K_aug[ik], ctot);
-						std::stringstream ss;
-						ss << GlobalV::global_out_dir << "LOWF_K_" << ik+1 << ".dat";
-						// mohan add 2012-04-03, because we need the occupations for the
-						// first iteration.
-						WF_Local::write_lowf_complex( ss.str(), ctot, ik );//mohan add 2010-09-09
-						if(myid==0)
-						{
-							for (int i=0; i<GlobalV::NBANDS; i++)
-							{
-								delete[] ctot[i];
-							}
-							delete[] ctot;
-						}
-					}
-					else
-					{
-						// mohan update 2021-02-12, delte BFIELD option
-						info=q2WFC_WFCAUG_complex(naroc, nb,
-								dim0, dim1, iprow, ipcol,
-								work, wfc, GlobalC::LOWF.WFC_K_aug[ik]);
-					}
-				}
-			}
-			delete[] work;
-			ModuleBase::timer::tick("Diago_LCAO_Matrix","gath_eig_complex");
-		}
-	}
+    }
 
 #endif
 	return;
@@ -1199,76 +495,606 @@ void Pdiag_Double::diago_complex_begin(
 
 
 #ifdef __MPI
-void Pdiag_Double::readin(
-	const std::string &fa,
-	const std::string &fb,
-	const int &nlocal_tot,
-	double *eigen,
-	double *eigvr)
+#include "../src_pw/occupy.h"
+void Pdiag_Double::gath_eig_complex(MPI_Comm comm,int n,std::complex<double> **cc,std::complex<double> *Z, const int &ik)
 {
-    ModuleBase::TITLE("Pdiag_Double","readin");
+    ModuleBase::TITLE("Pdiag_Double","gath_eig_complex");
+    time_t time_start = time(NULL);
+    //GlobalV::ofs_running << " Start gath_eig_complex Time : " << ctime(&time_start);
+    const Parallel_Orbitals* pv = this->ParaV;
 
-    int coord[2];
-    int dim[2];
-    int period[2];
-    int i,j,tmp1,tmp2;
-    int k,loc_size,loc_pos;
-    double time1,time2;
+    int i,j,k;
+    int nprocs,myid;
+    MPI_Status status;
+    MPI_Comm_size(comm,&nprocs);
+    MPI_Comm_rank(comm,&myid);
 
-    MPI_Comm comm=DIAG_HPSEPS_WORLD,comm_2D,comm_col,comm_row,newcomm;
+    std::complex<double> **ctot;
 
-    dim[0]=(int)sqrt((double)GlobalV::DSIZE);
+	// mohan add 2010-07-03
+	// the occupied bands are useless
+	// for calculating charge density.
+	if(GlobalV::DRANK> pv->lastband_in_proc)
+	{
+		delete[] Z;
+	}
 
-    while (GlobalV::DSIZE%dim[0]!=0)
+	// first we need to collect all
+	// the occupied bands.
+	// GlobalV::NBANDS * GlobalV::NLOCAL	
+	if(GlobalV::DRANK==0)
+	{
+		ctot = new std::complex<double>*[GlobalV::NBANDS];
+    	for (int i=0; i<GlobalV::NBANDS; i++)
+    	{
+        	ctot[i] = new std::complex<double>[GlobalV::NLOCAL];
+        	ModuleBase::GlobalFunc::ZEROS(ctot[i], GlobalV::NLOCAL);
+    	}
+    	ModuleBase::Memory::record("Pdiag_Double","ctot",GlobalV::NBANDS*GlobalV::NLOCAL,"cdouble");
+	}
+
+	k=0;
+    if (myid==0)
     {
-        dim[0]=dim[0]-1;
+        // mohan add nbnd0 2010-07-02
+        int nbnd0 = -1;
+        if (GlobalV::NBANDS < pv->loc_sizes[0])
+        {
+			// means all bands in this processor
+			// is needed ( is occupied)
+            nbnd0 = GlobalV::NBANDS;
+        }
+        else
+        {
+			// means this processor only save
+			// part of GlobalV::NBANDS.
+            nbnd0 = pv->loc_sizes[0];
+        }
+        if(pv->testpb)GlobalV::ofs_running << " nbnd in processor 0 is " << nbnd0 << std::endl;
+
+        for (i=0; i<nbnd0; i++)
+        {
+            for (j=0; j<GlobalV::NLOCAL; j++)
+            {
+				// change the order in processor 0.
+				// the contribution from processor 0.
+                ctot[k][j]=Z[j*pv->loc_sizes[0]+i];
+            }
+            k++;
+        }
+		// Z is useless in processor 0 now.
+		delete[] Z;
     }
-    dim[1]=GlobalV::DSIZE/dim[0];
+    MPI_Barrier(comm);
 
-    // call mpi_creat_cart
-    this->mpi_creat_cart(&comm_2D,dim[0],dim[1]);
-
-    // call mat_2d
-    this->mat_2d(comm_2D,nlocal_tot,nlocal_tot,nb,MatrixInfo);
-
-    loc_size=nlocal_tot/GlobalV::DSIZE;
-    if (GlobalV::DRANK<nlocal_tot%GlobalV::DSIZE) loc_size=loc_size+1;
-
-    GlobalV::ofs_running << " loc_size = " << loc_size;
-
-    /*Distribute the matrix*/
-    const long nloc = MatrixInfo.col_num * MatrixInfo.row_num;
-
-    double *A = new double[nloc];
-    double *B = new double[nloc];
-    double *Z = new double[loc_size*nlocal_tot];
-    ModuleBase::GlobalFunc::ZEROS(A, nloc);
-    ModuleBase::GlobalFunc::ZEROS(B, nloc);
-    ModuleBase::GlobalFunc::ZEROS(Z, loc_size * nlocal_tot);
-
-    GlobalV::ofs_running << "\n Data distribution of H." << std::endl;
-    this->data_distribution(comm_2D,fa,nlocal_tot,nb,A,MatrixInfo);
-    GlobalV::ofs_running << "\n Data distribution of S." << std::endl;
-    this->data_distribution(comm_2D,fb,nlocal_tot,nb,B,MatrixInfo);
-
-    time1=MPI_Wtime();
-    // call pdgseps
-    char uplo = 'U';
-    pdgseps(comm_2D,nlocal_tot,nb,A,B,Z,eigen,MatrixInfo,uplo,loc_size,loc_pos);
-    time2=MPI_Wtime();
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"time1",time1);
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"time2",time2);
-
-    //this->gath_eig(comm,n,eigvr,Z);
-
-    GlobalV::ofs_running << "\n " << std::setw(6) << "Band" << std::setw(25) << "Ry" << std::setw(25) << " eV" << std::endl;
-    for(int i=0; i<nlocal_tot; i++)
+	for (i=1; i<= pv->lastband_in_proc; i++)
     {
-        GlobalV::ofs_running << " " << std::setw(6) << i << std::setw(25) << eigen[i] << std::setw(25)<< eigen[i] * 13.6058 << std::endl;
+        // mohan fix bug 2010-07-02
+        // rows indicates the data structure of Z.
+        // mpi_times indicates the data distribution
+        // time, each time send a band.
+        int rows = pv->loc_sizes[i];
+        int mpi_times;
+        if (i==pv->lastband_in_proc)
+        {
+            mpi_times = pv->lastband_number;
+        }
+        else
+        {
+            mpi_times = pv->loc_sizes[i];
+        }
+        if(pv->testpb)GlobalV::ofs_running << " nbnd in processor " << i << " is " << mpi_times << std::endl;
+        if (myid==i)
+        {
+            for (j=0; j<mpi_times; j++)
+            {
+                int tag = j;
+                std::complex<double> *send = new std::complex<double>[n];
+                int count = 0;
+
+                for (int m=0; m<rows*n; m++)
+                {
+                    if (m%rows==j)
+                    {
+                        send[count] = Z[m];
+                        ++count;
+                    }
+                }
+
+				// send the data to processor 0.
+                MPI_Send(send,n,mpicomplex,0,tag,comm);
+
+                delete[] send;
+            }
+			// third part to delete Z;
+			delete[] Z;
+        }
+        else if (myid==0)
+        {
+            int col=0;
+            for (j=0; j<mpi_times; j++)
+            {
+                std::complex<double> *ctmp = new std::complex<double>[GlobalV::NLOCAL];
+                ModuleBase::GlobalFunc::ZEROS(ctmp, GlobalV::NLOCAL);
+                int tag = j;
+                
+				// Processor 0 receive the data from other processors.
+				MPI_Recv(ctmp,n,mpicomplex,i,tag,comm,&status);
+
+                for (int m=0; m<GlobalV::NLOCAL; m++)
+                {
+                    ctot[k][m]=ctmp[m];
+//					GlobalV::ofs_running << " receive Z=" << ctmp[m] << std::endl;
+                }
+                k++;
+
+                delete[] ctmp;
+            }
+        }
+        //MPI_Barrier(comm);
+    }
+    if(pv->testpb)ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"Final k",k);
+
+	// output the wave function if required.
+	// this is a bad position to output wave functions.
+	// but it works!
+	std::stringstream ss;
+	ss << GlobalV::global_out_dir << "LOWF_K_" << ik+1 << ".dat";
+    if(this->out_wfc_lcao)
+	{
+//		std::cout << " write the wave functions" << std::endl;
+		WF_Local::write_lowf_complex( ss.str(), ctot, ik );//mohan add 2010-09-09        
+	}
+
+	// mohan add 2010-09-10
+	// distribution of local wave functions 
+	// to each processor.
+	WF_Local::distri_lowf_complex( ctot, cc);
+	
+	// clean staff.
+	if(GlobalV::DRANK==0)
+	{
+    	for (int i=0; i<GlobalV::NBANDS; i++)
+    	{
+        	delete[] ctot[i];
+    	}
+    	delete[] ctot;
+	}
+
+    time_t time_end = time(NULL);
+//    GlobalV::ofs_running << " End   gath_eig_complex Time : " << ctime(&time_end);
+
+	ModuleBase::GlobalFunc::OUT_TIME("gather eigenvalues",time_start,time_end);
+    return;
+}
+#endif
+
+#ifdef __MPI
+void Pdiag_Double::gath_full_eig(MPI_Comm comm,int n,double **c,double *Z)
+{
+    ModuleBase::TITLE("Pdiag_Double","gath_full_eig");
+
+    time_t time_start = time(NULL);
+    //GlobalV::ofs_running << " Start gath_full_eig Time : " << ctime(&time_start);
+
+    int i,j,k,incx=1;
+    int *loc_sizes,loc_size,nprocs,myid;
+    MPI_Status status;
+    MPI_Comm_size(comm,&nprocs);
+    MPI_Comm_rank(comm,&myid);
+    loc_sizes =(int*)malloc(sizeof(int)*nprocs);
+    loc_size=n/nprocs;
+    for (i=0; i<nprocs; i++)
+    {
+        if (i<n%nprocs)
+        {
+            loc_sizes[i]=loc_size+1;
+        }
+        else
+        {
+            loc_sizes[i]=loc_size;
+        }
+    }
+    if (myid==0)
+    {
+        k=0;
+        for (i=0; i<loc_sizes[0]; i++)
+        {
+            for (j=0; j<n; j++)
+            {
+                // i : column index;
+                // j : row index.
+//              c[k*n+j]=Z[i*n+j];
+                c[k][j]=Z[j*loc_sizes[0]+i];
+                //			GlobalV::ofs_running << " Z=" << Z[i*n+j] << std::endl;
+            }
+            k++;
+        }
+    }
+    MPI_Barrier(comm);
+
+    for (i=1; i<nprocs; i++)
+    {
+        const int rows = loc_sizes[i];
+        const int mpi_times = rows;
+        if (myid==i)
+        {
+            for (j=0; j<mpi_times; j++)
+            {
+                int tag = j;
+
+                double *send = new double[n];
+
+                int count = 0;
+                for (int m=0; m<rows*n; m++)
+                {
+                    if (m%rows==j)
+                    {
+                        send[count] = Z[m];
+                        ++count;
+                    }
+                }
+
+                MPI_Send(send,n,MPI_DOUBLE,0,tag,comm);
+
+                delete[] send;
+            }
+        }
+        else if (myid==0)
+        {
+            int col=0;
+            for (j=0; j<mpi_times; j++)
+            {
+                double *ctmp = new double[n];
+                ModuleBase::GlobalFunc::ZEROS(ctmp, n);
+                int tag = j;
+                MPI_Recv(ctmp,n,MPI_DOUBLE,i,tag,comm,&status);
+
+                for (int m=0; m<n; m++)
+                {
+                    c[k][m]=ctmp[m];
+//					GlobalV::ofs_running << " receive Z=" << ctmp[m] << std::endl;
+                }
+                k++;
+
+                delete[] ctmp;
+            }
+        }
+        MPI_Barrier(comm);
     }
 
-    delete[] A;
-    delete[] B;
-    delete[] Z;
+    for (int i=0; i<GlobalV::NLOCAL; i++)
+    {
+        Parallel_Common::bcast_double(c[i],GlobalV::NLOCAL);
+    }
+
+    time_t time_end = time(NULL);
+//    GlobalV::ofs_running << " End   gath_full_eig Time : " << ctime(&time_end);
+
+    return;
+}
+
+void Pdiag_Double::gath_full_eig_complex(MPI_Comm comm,int n,std::complex<double> **c,std::complex<double> *Z)
+{
+    ModuleBase::TITLE("Pdiag_Double","gath_full_eig_complex");
+
+    time_t time_start = time(NULL);
+    //GlobalV::ofs_running << " Start gath_full_eig_complex Time : " << ctime(&time_start);
+
+    int i,j,k,incx=1;
+    int *loc_sizes,loc_size,nprocs,myid;
+    MPI_Status status;
+    MPI_Comm_size(comm,&nprocs);
+    MPI_Comm_rank(comm,&myid);
+    loc_sizes =(int*)malloc(sizeof(int)*nprocs);
+    loc_size=n/nprocs;
+    for (i=0; i<nprocs; i++)
+    {
+        if (i<n%nprocs)
+        {
+            loc_sizes[i]=loc_size+1;
+        }
+        else
+        {
+            loc_sizes[i]=loc_size;
+        }
+    }
+    if (myid==0)
+    {
+        k=0;
+        for (i=0; i<loc_sizes[0]; i++)
+        {
+            for (j=0; j<n; j++)
+            {
+                // i : column index;
+                // j : row index.
+//              c[k*n+j]=Z[i*n+j];
+                c[k][j]=Z[j*loc_sizes[0]+i];
+                //			GlobalV::ofs_running << " Z=" << Z[i*n+j] << std::endl;
+            }
+            k++;
+        }
+    }
+    MPI_Barrier(comm);
+
+	for (i=1; i<nprocs; i++)
+	{
+		const int rows = loc_sizes[i];
+		const int mpi_times = rows;
+		if (myid==i)
+		{
+			for (j=0; j<mpi_times; j++)
+			{
+				int tag = j;
+
+				std::complex<double> *send = new std::complex<double>[n];
+
+				int count = 0;
+				for (int m=0; m<rows*n; m++)
+				{
+					if (m%rows==j)
+					{
+						send[count] = Z[m];
+						++count;
+					}
+				}
+
+				MPI_Send(send,n,mpicomplex,0,tag,comm);
+
+				delete[] send;
+			}
+		}
+		else if (myid==0)
+		{
+			int col=0;
+			for (j=0; j<mpi_times; j++)
+			{
+				std::complex<double> *ctmp = new std::complex<double>[n];
+				ModuleBase::GlobalFunc::ZEROS(ctmp, n);
+				int tag = j;
+				MPI_Recv(ctmp,n,mpicomplex,i,tag,comm,&status);
+
+				for (int m=0; m<n; m++)
+				{
+					c[k][m]=ctmp[m];
+					//					GlobalV::ofs_running << " receive Z=" << ctmp[m] << std::endl;
+				}
+				k++;
+
+				delete[] ctmp;
+			}
+		}
+		MPI_Barrier(comm);
+	}
+
+	for (int i=0; i<GlobalV::NLOCAL; i++)
+	{
+		Parallel_Common::bcast_complex_double(c[i],GlobalV::NLOCAL);
+	}
+
+    time_t time_end = time(NULL);
+    //GlobalV::ofs_running << " End   gath_full_eig Time : " << ctime(&time_end);
+	ModuleBase::GlobalFunc::OUT_TIME("gather full eigenvalues",time_start,time_end);
+
+    return;
+}
+#endif
+
+//LiuXh add 2021-09-06, clear memory, totwfc and WFC_GAMMA_aug not used now
+#ifdef __MPI
+#include "../src_pw/occupy.h"
+void Pdiag_Double::gath_eig(MPI_Comm comm,int n,double *Z)
+{
+    ModuleBase::TITLE("Pdiag_Double","gath_eig");
+    time_t time_start = time(NULL);
+//  GlobalV::ofs_running << " Start gath_eig Time : " << ctime(&time_start);
+
+    const Parallel_Orbitals* pv = this->ParaV;
+    
+    int i, j, k;
+    int nprocs,myid;
+    MPI_Status status;
+    MPI_Comm_size(comm,&nprocs);
+    MPI_Comm_rank(comm,&myid);
+
+    double **ctot;
+
+	// mohan add 2010-07-03
+	// the occupied bands are useless
+	// for calculating charge density.
+	if(GlobalV::DRANK > pv->lastband_in_proc)
+	{
+		delete[] Z;
+	}
+
+	// first we need to collect all
+	// the occupied bands.
+	// GlobalV::NBANDS * GlobalV::NLOCAL	
+	if(myid==0)
+	{
+		ctot = new double*[GlobalV::NBANDS];
+    	for (int i=0; i<GlobalV::NBANDS; i++)
+    	{
+        	ctot[i] = new double[GlobalV::NLOCAL];
+        	ModuleBase::GlobalFunc::ZEROS(ctot[i], GlobalV::NLOCAL);
+    	}
+    	ModuleBase::Memory::record("Pdiag_Double","ctot",GlobalV::NBANDS*GlobalV::NLOCAL,"double");
+	}
+
+    k=0;
+    if (myid==0)
+    {
+        // mohan add nbnd0 2010-07-02
+        int nbnd0 = -1;
+        if (GlobalV::NBANDS < pv->loc_sizes[0])
+        {
+			// means all bands in this processor
+			// is needed ( is occupied)
+            nbnd0 = GlobalV::NBANDS;
+        }
+        else
+        {
+			// means this processor only save
+			// part of GlobalV::NBANDS.
+            nbnd0 = pv->loc_sizes[0];
+        }
+        if(pv->testpb) GlobalV::ofs_running << " nbnd in processor 0 is " << nbnd0 << std::endl;
+
+//printf("from 0 to %d\n",nbnd0-1);
+        for (i=0; i<nbnd0; i++)
+        {
+            for (j=0; j<GlobalV::NLOCAL; j++)
+            {
+				// change the order in processor 0.
+				// the contribution from processor 0.
+                ctot[k][j]=Z[j*pv->loc_sizes[0]+i];
+            }
+            k++;
+        }
+		// Z is useless in processor 0 now.
+		delete[] Z;
+    }
+    MPI_Barrier(comm);
+
+
+    for (i=1; i<= pv->lastband_in_proc; i++)
+    {
+        // mohan fix bug 2010-07-02
+        // rows indicates the data structure of Z.
+        // mpi_times indicates the data distribution
+        // time, each time send a band.
+        int rows = pv->loc_sizes[i];
+        int mpi_times;
+        if (i==pv->lastband_in_proc)
+        {
+            mpi_times = pv->lastband_number;
+        }
+        else
+        {
+            mpi_times = pv->loc_sizes[i];
+        }
+        if(pv->testpb)GlobalV::ofs_running << " nbnd in processor " << i << " is " << mpi_times << std::endl;
+        if (myid==i)
+        {
+            for (j=0; j<mpi_times; j++)
+            {
+                int tag = j;
+                double *send = new double[n];
+                int count = 0;
+
+                for (int m=0; m<rows*n; m++)
+                {
+                    if (m%rows==j)
+                    {
+                        send[count] = Z[m];
+                        ++count;
+                    }
+                }
+
+				// send the data to processor 0.
+                MPI_Send(send,n,MPI_DOUBLE,0,tag,comm);
+
+                delete[] send;
+            }
+			// third part to delete Z;
+			delete[] Z;
+        }
+        else if (myid==0)
+        {
+            int col=0;
+            for (j=0; j<mpi_times; j++)
+            {
+                double *ctmp = new double[GlobalV::NLOCAL];
+                ModuleBase::GlobalFunc::ZEROS(ctmp, GlobalV::NLOCAL);
+                int tag = j;
+                
+				// Processor 0 receive the data from other processors.
+				MPI_Recv(ctmp,n,MPI_DOUBLE,i,tag,comm,&status);
+
+                for (int m=0; m<GlobalV::NLOCAL; m++)
+                {
+                    ctot[k][m]=ctmp[m];
+//					GlobalV::ofs_running << " receive Z=" << ctmp[m] << std::endl;
+                }
+                k++;
+
+                delete[] ctmp;
+            }
+        }
+        //MPI_Barrier(comm);
+    }
+    if(pv->testpb)ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"Final k",k);
+/*
+if(myid==0){
+	double *vect=new double[GlobalV::NLOCAL*GlobalV::NBANDS];
+	double *form=new double[GlobalV::NBANDS*GlobalV::NBANDS];
+	int x,y;
+	for(x=0;x<GlobalV::NBANDS;x++){
+		for(y=0;y<GlobalV::NLOCAL;y++){
+			vect[x*GlobalV::NLOCAL+y]=ctot[x][y];
+		}
+	}
+		char chT='T';
+		char chN='N';
+		int	ne = GlobalV::NBANDS;
+		int m1, n1, k1;
+		double ONE=1.0,ZERO=0.0;
+		m1 = ne;
+		n1 = ne;
+		k1 = GlobalV::NLOCAL;
+		dgemm_(&chT, &chN, &m1, &n1, &k1, &ONE, vect, &k1, vect, &k1, &ZERO, form, &m1);
+		double di=0.0,oth=0.0;
+		for(x=0;x<ne;x++){
+			for(y=0;y<ne;y++){
+				if(x==y){
+					di+=fabs(form[x*ne+y]);
+				}else{
+					oth+=fabs(form[x*ne+y]);
+				}
+			}
+		}
+		di-=ne;
+		printf("\n\n\ndi=%.16lf\n\n\nother=%.16lf\n\n\n",di,oth);
+		//assert(0>1);
+}
+*/
+MPI_Barrier(comm);
+
+	// mohan add 2010-09-10
+	// output the wave function if required.
+	// this is a bad position to output wave functions.
+	// but it works!
+    if(this->out_wfc_lcao)
+	{
+		// read is in ../src_algorithms/wf_local.cpp
+		std::stringstream ss;
+		ss << GlobalV::global_out_dir << "LOWF_GAMMA_S" << GlobalV::CURRENT_SPIN+1 << ".dat";
+		// mohan add 2012-04-03, because we need the occupations for the
+		// first iteration. 
+		Occupy::calculate_weights();
+		WF_Local::write_lowf( ss.str(), ctot );//mohan add 2010-09-09        
+	}
+
+	// mohan add 2010-09-10
+	// distribution of local wave functions 
+	// to each processor.
+	// only used for GlobalV::GAMMA_ONLY_LOCAL
+	//WF_Local::distri_lowf( ctot, wfc);
+
+
+	// clean staff.
+	if(myid==0)
+	{
+    	for (int i=0; i<GlobalV::NBANDS; i++)
+    	{
+        	delete[] ctot[i];
+    	}
+    	delete[] ctot;
+	}
+
+    time_t time_end = time(NULL);
+    //GlobalV::ofs_running << " End   gath_eig Time : " << ctime(&time_end);
+	ModuleBase::GlobalFunc::OUT_TIME("gather eigenvalues",time_start,time_end);
+    return;
 }
 #endif

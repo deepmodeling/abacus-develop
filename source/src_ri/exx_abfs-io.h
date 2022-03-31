@@ -46,8 +46,10 @@ public:
 	static void output_text( const T &data, const std::string &file_name );
 	template<typename T>
 	static T input_text( const std::string &file_name );
+#ifdef __MPI
 	template<typename T>
 	static void bcast( T &data, const int rank_src, MPI_Comm mpi_comm );
+#endif
 	
 private:
 	static std::vector<std::vector<Numerical_Orbital_Lm>> construct_abfs_T(

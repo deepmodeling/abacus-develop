@@ -199,7 +199,7 @@ Exx_Abfs::Parallel::Communicate::Hexx::Allreduce::exx_to_a2D()
 
 
 
-void Exx_Abfs::Parallel::Communicate::Hexx::Allreduce::set_atom_in_2D()
+void Exx_Abfs::Parallel::Communicate::Hexx::Allreduce::set_atom_in_2D(Parallel_Orbitals &pv)
 {
 	atom_in_2D.first.resize(GlobalC::ucell.nat,false);
 	atom_in_2D.second.resize(GlobalC::ucell.nat,false);
@@ -211,9 +211,9 @@ void Exx_Abfs::Parallel::Communicate::Hexx::Allreduce::set_atom_in_2D()
 			for( size_t iw=0; iw!=GlobalC::ucell.atoms[it].nw; ++iw )
 			{
 				const size_t iwt = GlobalC::ucell.itiaiw2iwt(it,ia,iw);
-				if( GlobalC::ParaO.trace_loc_row[iwt]>=0 )
+				if( pv.trace_loc_row[iwt]>=0 )
 					atom_in_2D.first[iat] = true;
-				if( GlobalC::ParaO.trace_loc_col[iwt]>=0 )
+				if( pv.trace_loc_col[iwt]>=0 )
 					atom_in_2D.second[iat] = true;
 			}
 		}

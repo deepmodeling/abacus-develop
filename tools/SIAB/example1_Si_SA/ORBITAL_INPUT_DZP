@@ -24,7 +24,7 @@ Rcut        6  # cutoff radius (in a.u.)
 #Pseudo_dir  /home/nic/wszhang/eclipse_project/delta_dft/CIF_POT/SG15_ONCV_PBE-1.0/
 Pseudo_dir  /gpfs/home/nic/wszhang/abacus/CIF_POT/SG15_ONCV_PBE-1.0
 Pseudo      Si_ONCV_PBE-1.0.upf
-sigma       0.01          # energy range for gauss smearing (in Ry) 
+smearing_sigma       0.01          # energy range for gauss smearing (in Ry) 
 #--------------------------------------------------------------------------------
 #( In this part , some parameters of calculating are given )
 

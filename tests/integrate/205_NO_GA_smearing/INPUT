@@ -10,16 +10,16 @@ orbital_dir      ../tools/PP_ORB/
 
 #Parameters (2.Iteration)
 ecutwfc			20
-dr2				1e-8
-niter			100
+scf_thr_rho				1e-8
+scf_nmax			100
 
 
 #Parameters (3.Basis)
 basis_type		lcao
 
 #Parameters (4.Smearing)
-smearing	    gauss	
-sigma			0.002
+smearing_method	    gauss	
+smearing_sigma			0.002
 
 #Parameters (5.Mixing)
 mixing_type		pulay-kerker

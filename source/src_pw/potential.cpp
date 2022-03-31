@@ -17,7 +17,7 @@ Potential::Potential()
 {
     vltot = new double[1];
     vr_eff1 = new double[1];
-	this->out_potential = 0;
+	this->out_pot = 0;
 }
 
 Potential::~Potential()
@@ -133,15 +133,15 @@ void Potential::init_pot(
 	//--------------------------------------------------------------------
     if(istep==0)
     {
-        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"start_pot",start_pot);
+        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"init_chg",init_chg);
 
-        std::cout << " START POTENTIAL      : " << start_pot << std::endl;
-        if (this->start_pot == "atomic")//mohan add 2007-10-17
+        std::cout << " START POTENTIAL      : " << init_chg << std::endl;
+        if (this->init_chg == "atomic")//mohan add 2007-10-17
         {
             start_from_atomic:
             GlobalC::CHR.atomic_rho(GlobalV::NSPIN, GlobalC::CHR.rho);
         }
-        else if (this->start_pot == "file")
+        else if (this->init_chg == "file")
         {
             GlobalV::ofs_running << " try to start potential from file : ";
             for(int is=0; is<GlobalV::NSPIN; is++)
@@ -202,7 +202,7 @@ void Potential::init_pot(
         }
         else
         {
-            ModuleBase::WARNING_QUIT("potential::init_pot","start_pot is wrong!");
+            ModuleBase::WARNING_QUIT("potential::init_pot","init_chg is wrong!");
         }
 		
 		// Peize Lin add 2020.04.04

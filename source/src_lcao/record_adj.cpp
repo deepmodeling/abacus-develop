@@ -26,15 +26,26 @@ void Record_adj::delete_grid(void)
 //--------------------------------------------
 // This will record the orbitals according to
 // HPSEPS's 2D block division.
+// If multi-k, calculate nnr at the same time.
+// be called only once in an ion-step.
 //--------------------------------------------
-#include "LCAO_nnr.h"
-void Record_adj::for_2d(void)
+void Record_adj::for_2d(Parallel_Orbitals &pv, bool gamma_only)
 {
 	ModuleBase::TITLE("Record_adj","for_2d");
 	ModuleBase::timer::tick("Record_adj","for_2d");
 
-	assert(GlobalC::ucell.nat>0);
-
+    assert(GlobalC::ucell.nat > 0);
+    if (!gamma_only)
+    {
+        delete[] pv.nlocdim;
+        delete[] pv.nlocstart;
+        pv.nlocdim = new int[GlobalC::ucell.nat];	
+        pv.nlocstart = new int[GlobalC::ucell.nat];
+        ModuleBase::GlobalFunc::ZEROS(pv.nlocdim, GlobalC::ucell.nat);
+        ModuleBase::GlobalFunc::ZEROS(pv.nlocstart, GlobalC::ucell.nat);
+        pv.nnr = 0;
+    }
+    
 	// (1) find the adjacent atoms of atom[T1,I1];
 	ModuleBase::Vector3<double> tau1, tau2, dtau;
 	ModuleBase::Vector3<double> dtau1, dtau2, tau0;
@@ -45,8 +56,6 @@ void Record_adj::for_2d(void)
 	this->na_each = new int[na_proc];
 	ModuleBase::GlobalFunc::ZEROS(na_each, na_proc);
 	int iat = 0;
-	int irr = 0;
-
 	
 //	std::cout << " in for_2d" << std::endl;
 
@@ -59,8 +68,9 @@ void Record_adj::for_2d(void)
 			//GlobalC::GridD.Find_atom( tau1 );
 			GlobalC::GridD.Find_atom(GlobalC::ucell,  tau1 ,T1, I1);
 			const int start1 = GlobalC::ucell.itiaiw2iwt(T1, I1, 0);
-
-			// (2) search among all adjacent atoms.
+            if(!gamma_only) pv.nlocstart[iat] = pv.nnr;
+            
+            // (2) search among all adjacent atoms.
 			for (int ad = 0; ad < GlobalC::GridD.getAdjacentNum()+1; ++ad)
 			{
 				const int T2 = GlobalC::GridD.getType(ad);
@@ -72,8 +82,12 @@ void Record_adj::for_2d(void)
 				double rcut = GlobalC::ORB.Phi[T1].getRcut() + GlobalC::ORB.Phi[T2].getRcut();
 
 				bool is_adj = false;
-				if( distance < rcut) is_adj = true;
-				else if( distance >= rcut)
+                if (distance < rcut) is_adj = true;
+                // there is another possibility that i and j are adjacent atoms.
+				// which is that <i|beta> are adjacents while <beta|j> are also
+				// adjacents, these considerations are only considered in k-point
+				// algorithm, 
+                else if (distance >= rcut)
 				{
 					for (int ad0 = 0; ad0 < GlobalC::GridD.getAdjacentNum()+1; ++ad0)
 					{
@@ -99,39 +113,37 @@ void Record_adj::for_2d(void)
 					}
 				}
 
-
-
 				if(is_adj)
 				{
-					++na_each[iat];
+                    ++na_each[iat];
+                    if (!gamma_only)
+                    {
+                        for(int ii=0; ii<atom1->nw * GlobalV::NPOL; ++ii)
+                        {
+                            // the index of orbitals in this processor
+                            const int iw1_all = start1 + ii;
+                            const int mu = pv.trace_loc_row[iw1_all];
+                            if(mu<0)continue;
 
-					for(int ii=0; ii<atom1->nw * GlobalV::NPOL; ++ii)
-					{
-						// the index of orbitals in this processor
-						const int iw1_all = start1 + ii;
-						const int mu = GlobalC::ParaO.trace_loc_row[iw1_all];
-						if(mu<0)continue;
-
-						for(int jj=0; jj<GlobalC::ucell.atoms[T2].nw * GlobalV::NPOL; ++jj)
-						{
-							const int iw2_all = start2 + jj;
-							const int nu = GlobalC::ParaO.trace_loc_col[iw2_all];
-							if(nu<0)continue;
-							
-							++irr;
-						}
-					}
-				}//end is_adj
-			}//end ad
-			++iat;
+                            for(int jj=0; jj<GlobalC::ucell.atoms[T2].nw * GlobalV::NPOL; ++jj)
+                            {
+                                const int iw2_all = start2 + jj;
+                                const int nu = pv.trace_loc_col[iw2_all];
+                                if(nu<0)continue;
+                                
+                                pv.nlocdim[iat]++;
+                                ++(pv.nnr);
+                            }
+                        }
+                    }
+                }//end is_adj
+            }//end ad
+            ++iat;
 		}//end I1
 	}//end T1
 
- 	//xiaohui add "OUT_LEVEL", 2015-09-16
-	if(GlobalV::OUT_LEVEL != "m") ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"irr",irr);
-	if(GlobalV::OUT_LEVEL != "m") ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"LNNR.nnr",GlobalC::LNNR.nnr);
-
-
+    //xiaohui add "OUT_LEVEL", 2015-09-16
+    if (GlobalV::OUT_LEVEL != "m" && !gamma_only) ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "ParaV.nnr", pv.nnr);
 
 	//------------------------------------------------
 	// info will identify each atom in each unitcell.
@@ -208,8 +220,8 @@ void Record_adj::for_2d(void)
 					info[iat][cb][1] = GlobalC::GridD.getBox(ad).y; 
 					info[iat][cb][2] = GlobalC::GridD.getBox(ad).z; 
 					info[iat][cb][3] = T2;
-					info[iat][cb][4] = I2;
-					++cb;
+                    info[iat][cb][4] = I2;
+                    ++cb;
 				}
 			}//end ad
 //			GlobalV::ofs_running << " nadj = " << cb << std::endl;

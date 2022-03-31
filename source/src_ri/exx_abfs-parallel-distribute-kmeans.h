@@ -6,7 +6,7 @@
 #include <vector>
 #include <utility>
 #include "mpi.h"
-
+#ifdef __MPI
 class Exx_Abfs::Parallel::Distribute::Kmeans
 {
 public:
@@ -33,5 +33,5 @@ private:
 	static std::pair< std::vector<Exx_Abfs::Parallel::Distribute::Kmeans::Atom>, std::vector<Exx_Abfs::Parallel::Distribute::Kmeans::Cluster> > 
 		cluster( const int Nc );
 };
-
+#endif
 #endif

@@ -692,6 +692,7 @@ void FFT::scatter(std::complex<double> *psi, int sign)
 
 		ModuleBase::GlobalFunc::ZEROS(this->aux, nxx);
 
+	#ifdef __MPI
 		if (in_pool)
 		{
 			// send buffer ==> psi
@@ -702,9 +703,13 @@ void FFT::scatter(std::complex<double> *psi, int sign)
 		{
 			MPI_Alltoallv(psi, sentc, sdis, mpicomplex, this->aux, recvc, rdis, mpicomplex, MPI_COMM_WORLD);
 		}
+	#endif
+
 	}
 	else if (sign == -1)
 	{
+	
+	#ifdef __MPI
 		if (in_pool)
 		{
 			MPI_Alltoallv(this->aux, recvc, rdis, mpicomplex, psi, sentc, sdis, mpicomplex, POOL_WORLD);
@@ -713,6 +718,7 @@ void FFT::scatter(std::complex<double> *psi, int sign)
 		{
 			MPI_Alltoallv(this->aux, recvc, rdis, mpicomplex, psi, sentc, sdis, mpicomplex, MPI_COMM_WORLD);
 		}
+	#endif
 
 		ModuleBase::GlobalFunc::ZEROS(this->aux, nxx);
 

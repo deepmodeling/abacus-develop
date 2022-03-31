@@ -21,7 +21,7 @@ public:
 
     static void calculate_weights(void);
 
-    static void decision(const std::string &name,const std::string &smearing,const double &degauss);
+    static void decision(const std::string &name,const std::string &smearing_method,const double &smearing_sigma);
 
     static const bool& gauss(void) 
 	{
@@ -56,7 +56,7 @@ public:
 						ModuleBase::matrix &wg, const int &is, const std::vector<int> &isk);
 
     static void gweights(const int nks,const std::vector<double> &wk,const int nband,
-						const double &nelec,const double &degauss,
+						const double &nelec,const double &smearing_sigma,
                          const int ngauss,double **ekb, double &ef, 
 						double &demet, ModuleBase::matrix &wg, const int &is, const std::vector<int> &isk);
 
@@ -70,11 +70,11 @@ private:
 
     static void efermig(double **ekb,const int nbnd,const int nks,
 						const double &nelec,const std::vector<double> &wk,
-                        const double &degauss,const int ngauss,
+                        const double &smearing_sigma,const int ngauss,
 						double &ef, const int &is, const std::vector<int> &isk);
 
     static double sumkg(double **ekb,const int nband,const int nks,
-						const std::vector<double> &wk,const double &degauss, const int ngauss,
+						const std::vector<double> &wk,const double &smearing_sigma, const int ngauss,
 						const double &e, const int &is, const std::vector<int> &isk);
 
     static double wgauss(const double &x,const int n);

@@ -14,7 +14,7 @@ Ecut        50                # cutoff energy (in Ry)
 Rcut        6                # cutoff radius (in a.u.)
 Pseudo_dir  ../../../../data/elements/07_N/1_LDA/ 
 Pseudo      N.LDA.UPF
-sigma       0.01          # energy range for gauss smearing (in Ry)
+smearing_sigma       0.01          # energy range for gauss smearing (in Ry)
 #--------------------------------------------------------------------------------
 #( In this part , some parameters of calculating are given )
 

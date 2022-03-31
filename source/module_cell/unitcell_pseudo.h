@@ -30,7 +30,7 @@ public: // member variables
 	int nmax_total;//mohan add 2009-09-10
 	int lmax_ppwf;
 	int lmaxmax; // liuyu 2021-07-04
-	bool set_vel; // liuyu 2021-07-15
+	bool init_vel; // liuyu 2021-07-15
 	//double nelec;
 
 public: // member functions
@@ -91,7 +91,7 @@ public: // member functions
 	void setup(const std::string &latname_in,
 			const int &ntype_in, 
 			const int &lmaxmax_in,
-			const bool &set_vel_in,
+			const bool &init_vel_in,
 			const std::string &fixed_axes_in);
 
 #ifdef __MPI

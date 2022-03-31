@@ -378,7 +378,7 @@ void LCAO_Deepks::check_v_delta_k(const int nnr)
 
 //calculating sum of correction band energies
 //for gamma_only calculations
-void LCAO_Deepks::cal_e_delta_band(const ModuleBase::matrix &dm,
+void LCAO_Deepks::cal_e_delta_band(const std::vector<ModuleBase::matrix> &dm,
 	const int* trace_loc_row,
     const int* trace_loc_col,
 	const int nrow)
@@ -395,7 +395,10 @@ void LCAO_Deepks::cal_e_delta_band(const ModuleBase::matrix &dm,
             if (mu >= 0 && nu >= 0)
             {                
                 const int index=nu*nrow+mu;
-				this->e_delta_band += dm(nu, mu) * this->H_V_delta[index];
+                for (int is = 0; is < dm.size(); ++is)  //dm.size() == GlobalV::NSPIN
+                {
+                    this->e_delta_band += dm[is](nu, mu) * this->H_V_delta[index];
+                }
             }
         }
     }

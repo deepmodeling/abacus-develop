@@ -1,3 +1,4 @@
+#ifdef __MPI
 #include "exx_abfs-screen-cauchy.h"
 
 #include "../src_pw/global.h"
@@ -305,3 +306,4 @@ ModuleBase::matrix Exx_Abfs::Screen::Cauchy::m_mT( const ModuleBase::matrix & m 
 	BlasConnector::gemm( 'N','T', m.nr,m.nr,m.nc, 1, m.c,m.nc, m.c,m.nc, 0, mm.c,mm.nc );
 	return mm;
 }
+#endif

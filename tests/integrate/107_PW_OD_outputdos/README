@@ -1,7 +1,7 @@
 This test for: out electron DOS of 
 *Si-diamond
 *old upf pseudopotential
-*smearing default
+*smearing_method default
 *ks_solver cg
 
 ERROR IN OUT DOS!!!!!

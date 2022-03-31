@@ -241,7 +241,7 @@ void Gint_Gamma::gamma_mulliken(double** mulliken)
 										{
 											v1=psi1[iw]+psi1[iw];
 											int iw2_lo = GlobalC::GridT.trace_lo[start2];
-											double *DMp = &GlobalC::LOC.DM[is][iw1_lo][iw2_lo];
+											double *DMp = &this->DM[is][iw1_lo][iw2_lo];
 											double *psi2p = psi2;
 											double *psi2p_end = psi2 + atom2->nw;
 

@@ -68,7 +68,7 @@ void Parallel_Reduce::reduce_double_pool(double *object, const int n)
 // (2) we need to reduce the value from different pool.
 void Parallel_Reduce::reduce_double_allpool(double &object)
 {
-	if(NPOOL==1) return;
+	if(KPAR==1) return;
 #ifdef __MPI
 	double swap = object / NPROC_IN_POOL;
 	MPI_Allreduce(&swap , &object , 1, MPI_DOUBLE , MPI_SUM , MPI_COMM_WORLD);

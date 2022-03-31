@@ -1,3 +1,4 @@
+#ifdef __MPI
 #include "exx_abfs-screen-schwarz.h"
 #include "../src_pw/global.h"
 #include "../module_base/lapack_connector.h"
@@ -136,3 +137,4 @@ void Exx_Abfs::Screen::Schwarz::cal_max_pair_fock(
 		
 //test_screen("schwarz-max_pair_fock.dat",max_pair_fock);
 }
+#endif

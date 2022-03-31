@@ -7,7 +7,7 @@ get_target_property(ABACUS_LINK_LIBRARIES ${ABACUS_BIN_NAME} LINK_LIBRARIES)
 target_link_libraries(
     test_deepks
     base cell symmetry md xc
-    neighbor orb io ions lcao parallel mrrr pdiag pw ri driver
+    neighbor orb io ions lcao parallel mrrr pdiag pw ri driver esolver
     pthread
     deepks
     ${ABACUS_LINK_LIBRARIES}

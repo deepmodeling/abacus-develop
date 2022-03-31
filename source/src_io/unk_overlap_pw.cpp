@@ -44,7 +44,7 @@ std::complex<double> unkOverlap_pw::unkdotp_G(const int ik_L, const int ik_R, co
 
 
 #ifdef __MPI
-    // note: the mpi uses MPI_COMMON_WORLD,so you must make the GlobalV::NPOOL = 1.
+    // note: the mpi uses MPI_COMMON_WORLD,so you must make the GlobalV::KPAR = 1.
 	double in_date_real = result.real();
 	double in_date_imag = result.imag();
 	double out_date_real = 0.0;
@@ -111,7 +111,7 @@ std::complex<double> unkOverlap_pw::unkdotp_G0(const int ik_L, const int ik_R, c
 	}
 
 #ifdef __MPI
-    // note: the mpi uses MPI_COMMON_WORLD,so you must make the GlobalV::NPOOL = 1.
+    // note: the mpi uses MPI_COMMON_WORLD,so you must make the GlobalV::KPAR = 1.
 	double in_date_real = result.real();
 	double in_date_imag = result.imag();
 	double out_date_real = 0.0;
@@ -159,7 +159,7 @@ std::complex<double> unkOverlap_pw::unkdotp_soc_G(const int ik_L, const int ik_R
 	}
 	
 #ifdef __MPI
-    // note: the mpi uses MPI_COMMON_WORLD,so you must make the GlobalV::NPOOL = 1.
+    // note: the mpi uses MPI_COMMON_WORLD,so you must make the GlobalV::KPAR = 1.
 	double in_date_real = result.real();
 	double in_date_imag = result.imag();
 	double out_date_real = 0.0;
@@ -234,7 +234,7 @@ std::complex<double> unkOverlap_pw::unkdotp_soc_G0(const int ik_L, const int ik_
 	}
 	
 #ifdef __MPI
-    // note: the mpi uses MPI_COMMON_WORLD,so you must make the GlobalV::NPOOL = 1.
+    // note: the mpi uses MPI_COMMON_WORLD,so you must make the GlobalV::KPAR = 1.
 	double in_date_real = result.real();
 	double in_date_imag = result.imag();
 	double out_date_real = 0.0;

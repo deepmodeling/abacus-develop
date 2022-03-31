@@ -11,6 +11,7 @@
 #include "exx_abfs-screen-cauchy.h"
 #include "../module_base/element_basis_index.h"
 #include "../module_xc/exx_global.h"
+#include "src_lcao/local_orbital_charge.h"
 
 #if EXX_DM==1
 #include "exx_abfs-parallel-communicate-dm.h"
@@ -35,10 +36,10 @@ public:
 	Exx_Lcao( const Exx_Global::Exx_Info &info_global );				// Peize Lin test
 public:
 	void init();
-	void cal_exx_ions();
-	void cal_exx_elec();
-	void cal_exx_elec_nscf();
-	void add_Hexx(const size_t ik, const double alpha) const;
+	void cal_exx_ions(const Parallel_Orbitals &pv);
+	void cal_exx_elec(Local_Orbital_Charge &loc, complex<double>*** wfc_k_grid);
+	void cal_exx_elec_nscf(const Parallel_Orbitals &pv);
+	void add_Hexx(const size_t ik, const double alpha, LCAO_Matrix &lm) const;
 private:
 	std::vector<std::map<size_t,std::map<size_t,std::map<Abfs::Vector3_Order<int>,ModuleBase::matrix>>>> cal_Hexx() const;
 	double cal_energy(
@@ -62,7 +63,10 @@ private:
 #elif EXX_DM==3
 	Exx_Abfs::Parallel::Communicate::DM3 DM_para;
 #endif
+
+#ifdef __MPI
 	Exx_Abfs::Parallel::Communicate::Hexx Hexx_para;
+#endif
 	double energy = 0.0;
 	
 	std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> lcaos;

@@ -16,6 +16,15 @@ toWannier90::toWannier90(int num_kpts, ModuleBase::Matrix3 recip_lattice)
 
 }
 
+toWannier90::toWannier90(int num_kpts, ModuleBase::Matrix3 recip_lattice, std::complex<double>*** wfc_k_grid_in)
+{
+    this->wfc_k_grid = wfc_k_grid_in;
+    this->num_kpts = num_kpts;
+	this->recip_lattice = recip_lattice;
+	if(GlobalV::NSPIN==1 || GlobalV::NSPIN==4) this->cal_num_kpts = this->num_kpts;
+	else if(GlobalV::NSPIN==2) this->cal_num_kpts = this->num_kpts/2;
+
+}
 
 toWannier90::~toWannier90()
 {
@@ -1666,7 +1675,7 @@ void toWannier90::getUnkFromLcao()
 	for(int ik = 0; ik < num_kpts; ik++)
 	{
 		// ��ȡȫ�ֵ�lcao�Ĳ�����ϵ��
-		get_lcao_wfc_global_ik(lcao_wfc_global[ik],GlobalC::LOWF.WFC_K[ik]);
+		get_lcao_wfc_global_ik(lcao_wfc_global[ik], this->wfc_k_grid[ik]);
 	
 		int npw = GlobalC::kv.ngk[ik];
 		unk_inLcao[ik].create(GlobalV::NBANDS,GlobalC::wf.npwx);
@@ -1702,8 +1711,10 @@ void toWannier90::getUnkFromLcao()
 			}
 			
 			std::complex<double> anorm_tem(0.0,0.0);
+			#ifdef __MPI
 			MPI_Allreduce(&anorm , &anorm_tem , 1, MPI_DOUBLE_COMPLEX , MPI_SUM , POOL_WORLD);
-			
+			#endif
+
 			for(int ig = 0; ig < GlobalC::kv.ngk[ik]; ig++)
 			{
 				unk_inLcao[ik](ib,ig) = unk_inLcao[ik](ib,ig) / sqrt(anorm_tem);
@@ -1724,9 +1735,11 @@ void toWannier90::getUnkFromLcao()
 	delete[] lcao_wfc_global;
 	
 	delete[] orbital_in_G;
-	
+
+#ifdef __MPI
 	MPI_Barrier(MPI_COMM_WORLD);
-	
+#endif
+
 	return;
 }
 
@@ -1735,7 +1748,9 @@ void toWannier90::get_lcao_wfc_global_ik(std::complex<double> **ctot, std::compl
 {
 	std::complex<double>* ctot_send = new std::complex<double>[GlobalV::NBANDS*GlobalV::NLOCAL];
 
+#ifdef __MPI
 	MPI_Status status;
+#endif
 
 	for (int i=0; i<GlobalV::DSIZE; i++)
 	{
@@ -1764,7 +1779,9 @@ void toWannier90::get_lcao_wfc_global_ik(std::complex<double> **ctot, std::compl
 				// receive lgd2
 				int lgd2 = 0;
 				tag = i * 3;
+				#ifdef __MPI
 				MPI_Recv(&lgd2, 1, MPI_INT, i, tag, DIAG_WORLD, &status);
+				#endif
 				if(lgd2==0)
 				{
 
@@ -1774,14 +1791,17 @@ void toWannier90::get_lcao_wfc_global_ik(std::complex<double> **ctot, std::compl
 					// receive trace_lo2
 					tag = i * 3 + 1;
 					int* trace_lo2 = new int[GlobalV::NLOCAL];
+					#ifdef __MPI
 					MPI_Recv(trace_lo2, GlobalV::NLOCAL, MPI_INT, i, tag, DIAG_WORLD, &status);
+					#endif
 
 					// receive crecv
 					std::complex<double>* crecv = new std::complex<double>[GlobalV::NBANDS*lgd2];
 					ModuleBase::GlobalFunc::ZEROS(crecv, GlobalV::NBANDS*lgd2);
 					tag = i * 3 + 2;
+					#ifdef __MPI
 					MPI_Recv(crecv,GlobalV::NBANDS*lgd2,mpicomplex,i,tag,DIAG_WORLD, &status);
-				
+					#endif
 					for (int ib=0; ib<GlobalV::NBANDS; ib++)
 					{
 						for (int iw=0; iw<GlobalV::NLOCAL; iw++)
@@ -1806,13 +1826,17 @@ void toWannier90::get_lcao_wfc_global_ik(std::complex<double> **ctot, std::compl
 
 			// send GlobalC::GridT.lgd
 			tag = GlobalV::DRANK * 3;
+			#ifdef __MPI
 			MPI_Send(&GlobalC::GridT.lgd, 1, MPI_INT, 0, tag, DIAG_WORLD);
+			#endif
 
 			if(GlobalC::GridT.lgd != 0)
 			{
 				// send trace_lo
 				tag = GlobalV::DRANK * 3 + 1;
+				#ifdef __MPI
 				MPI_Send(GlobalC::GridT.trace_lo, GlobalV::NLOCAL, MPI_INT, 0, tag, DIAG_WORLD);
+				#endif
 
 				// send cc
 				std::complex<double>* csend = new std::complex<double>[GlobalV::NBANDS*GlobalC::GridT.lgd];
@@ -1827,18 +1851,22 @@ void toWannier90::get_lcao_wfc_global_ik(std::complex<double> **ctot, std::compl
 				}
 			
 				tag = GlobalV::DRANK * 3 + 2;
+				#ifdef __MPI
 				MPI_Send(csend, GlobalV::NBANDS*GlobalC::GridT.lgd, mpicomplex, 0, tag, DIAG_WORLD);
-
+				#endif
 			
 
 				delete[] csend;
 
 			}
 		}// end i==GlobalV::DRANK
+		#ifdef __MPI
 		MPI_Barrier(DIAG_WORLD);
+		#endif
 	}
-
+	#ifdef __MPI
 	MPI_Bcast(ctot_send,GlobalV::NBANDS*GlobalV::NLOCAL,mpicomplex,0,DIAG_WORLD);
+	#endif
 
 	for(int ib = 0; ib < GlobalV::NBANDS; ib++)
 	{

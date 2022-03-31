@@ -21,7 +21,7 @@ class Charge_Broyden: public Charge_Pulay
 	Charge_Broyden();
 	~Charge_Broyden();
 
-    void mix_rho(double &dr2,const double &tr2_min,
+    void mix_rho(double &scf_thr_rho,const double &tr2_min,
                  const double &tr2,const int &iter,
                  bool &converged);// mix rho
 

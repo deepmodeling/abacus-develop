@@ -4,15 +4,23 @@
 #include "MD_parameters.h"
 #include "../module_cell/unitcell_pseudo.h"
 #include "../module_base/matrix.h"
+#ifdef __LCAO
+#include "../module_orbital/parallel_orbitals.h"
+#endif
 
+#include "module_esolver/esolver.h"
 class MD_func
 {
     public:
 
     MD_func(){};
-    ~MD_func(){};
+    ~MD_func() {};
+    
+#ifdef __LCAO
+    static Parallel_Orbitals* ParaV;
+#endif
 
-	static double gaussrand();
+    static double gaussrand();
 	
 	static void InitPos( const UnitCell_pseudo &unit_in, ModuleBase::Vector3<double>* pos);
 
@@ -36,6 +44,7 @@ class MD_func
 		ModuleBase::Vector3<double>* vel);
 
 	static void force_virial(
+		ModuleESolver::ESolver *p_esolver,
 		const int &istep,
 		const MD_parameters &mdp,
 		const UnitCell_pseudo &unit_in,

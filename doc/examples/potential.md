@@ -1,7 +1,7 @@
 # Electrostatic potential
 [back to main page](../../README.md)
 
-From version 2.1.0, ABACUS has the function of outputing electrostatic potential, which consists of Hartree potential and the local pseudopotential. To use this function, set ‘out_potential’ to ‘2’ in the INPUT file. Here is an example for the Si-111 surface, and the INPUT file is:
+From version 2.1.0, ABACUS has the function of outputing electrostatic potential, which consists of Hartree potential and the local pseudopotential. To use this function, set ‘out_pot’ to ‘2’ in the INPUT file. Here is an example for the Si-111 surface, and the INPUT file is:
 
 ```
 INPUT_PARAMETERS
@@ -13,21 +13,21 @@ gamma_only 0
 
 #Parameters (2.Iteration)
 ecutwfc 50
-dr2 1e-8
-niter 200
+scf_thr_rho 1e-8
+scf_nmax 200
 
 #Parameters (3.Basis)
 basis_type lcao
 ks_solver genelpa
 
 #Parameters (4.Smearing)
-smearing gaussian
-sigma 0.01
+smearing_method gaussian
+smearing_sigma 0.01
 
 #Parameters (5.Mixing)
 mixing_type pulay
 mixing_beta 0.4
-out_potential 2
+out_pot 2
 ```
 
 The STRU file is:

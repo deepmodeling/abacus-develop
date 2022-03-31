@@ -6,12 +6,17 @@
 #include "../module_base/scalapack_connector.h"
 #include "../module_base/blas_connector.h"
 
-IState_Charge::IState_Charge(){}
+IState_Charge::IState_Charge(
+    std::vector<ModuleBase::matrix>& wfc_gamma_in,
+    Local_Orbital_Charge& loc_in) :
+    wfc_gamma(&wfc_gamma_in),
+    loc(&loc_in)
+{}
 
 IState_Charge::~IState_Charge(){}
 
 
-void IState_Charge::begin(void)
+void IState_Charge::begin(Gint_Gamma &gg)
 {
 	ModuleBase::TITLE("IState_Charge","begin");
 
@@ -42,7 +47,6 @@ void IState_Charge::begin(void)
 	// (1.1) allocate the space for GlobalC::LOWF.WFC_GAMMA
 
 	// (1.2) read in LOWF_GAMMA.dat
-	ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"LOWF.allocate_flag",GlobalC::LOWF.get_allocate_flag());	
 	std::cout << " number of electrons = " << GlobalC::CHR.nelec << std::endl;
 
 	// mohan update 2011-03-21
@@ -116,12 +120,14 @@ void IState_Charge::begin(void)
 			// (1)
 			// This has been done once in LOOP_ions.
 			// but here we need to done for each band.
-			//GlobalC::LOC.allocate_gamma(GridT);	
+			//this->loc->allocate_gamma(GridT);	
 			
 			// (2) calculate the density matrix for a partuclar 
 			// band, whenever it is occupied or not.
+			
+		#ifdef __MPI
 			this->idmatrix(ib);
-
+		#endif
 			// (3) zero out of charge density array. 
 			for(int is=0; is<GlobalV::NSPIN; is++)
 			{
@@ -130,7 +136,7 @@ void IState_Charge::begin(void)
 			
 			// (4) calculate charge density for a particular 
 			// band.
-   			GlobalC::UHM.GG.cal_rho(GlobalC::LOC.DM);
+   			gg.cal_rho(this->loc->DM);
 			GlobalC::CHR.save_rho_before_sum_band(); //xiaohui add 2014-12-09
 			std::stringstream ss;
 			std::stringstream ss1;
@@ -150,7 +156,7 @@ void IState_Charge::begin(void)
 	return;
 }
 
-
+#ifdef __MPI
 void IState_Charge::idmatrix(const int &ib)
 {
 	ModuleBase::TITLE("IState_Charge","idmatrix");
@@ -163,7 +169,7 @@ void IState_Charge::idmatrix(const int &ib)
 			if ( mu_local >= 0)
 			{
 				// set a pointer.
-				//double *alpha = GlobalC::LOC.DM[is][mu_local];
+				//double *alpha = this->loc->DM[is][mu_local];
 				for (int j=i; j<GlobalV::NLOCAL; j++)
 				{
 					const int nu_local = GlobalC::GridT.trace_lo[j];
@@ -188,8 +194,8 @@ void IState_Charge::idmatrix(const int &ib)
 		assert(GlobalC::wf.wg.nr==GlobalV::NSPIN);
 		for(int is=0; is!=GlobalV::NSPIN; ++is)
 		{
-			std::vector<double> wg_local(GlobalC::ParaO.ncol,0.0);
-			const int ib_local = GlobalC::ParaO.trace_loc_col[ib];
+			std::vector<double> wg_local(this->loc->ParaV->ncol,0.0);
+			const int ib_local = this->loc->ParaV->trace_loc_col[ib];
 
 			int fermi_band=0;
 			fermi_band = static_cast<int>( (GlobalC::CHR.nelec+1)/2 + 1.0e-8 ) ;
@@ -207,7 +213,7 @@ void IState_Charge::idmatrix(const int &ib)
 			}
 		
 			// wg_wfc(ib,iw) = wg[ib] * wfc(ib,iw);
-			ModuleBase::matrix wg_wfc(GlobalC::LOC.wfc_dm_2d.wfc_gamma[is]);
+			ModuleBase::matrix wg_wfc(this->wfc_gamma->at(is));
 	
 			for(int ir=0; ir!=wg_wfc.nr; ++ir)
 			{
@@ -218,23 +224,23 @@ void IState_Charge::idmatrix(const int &ib)
 			const double one_float=1.0, zero_float=0.0;
 			const int one_int=1;
 			const char N_char='N', T_char='T';
-			GlobalC::LOC.wfc_dm_2d.dm_gamma[is].create( wg_wfc.nr, wg_wfc.nc );
+			this->loc->dm_gamma.at(is).create( wg_wfc.nr, wg_wfc.nc );
 
 			pdgemm_(
 				&N_char, &T_char,
 				&GlobalV::NLOCAL, &GlobalV::NLOCAL, &GlobalC::wf.wg.nc,
 				&one_float,
-				wg_wfc.c, &one_int, &one_int, GlobalC::ParaO.desc,
-				GlobalC::LOC.wfc_dm_2d.wfc_gamma[is].c, &one_int, &one_int, GlobalC::ParaO.desc,
+				wg_wfc.c, &one_int, &one_int, this->loc->ParaV->desc,
+				this->wfc_gamma->at(is).c, &one_int, &one_int, this->loc->ParaV->desc,
 				&zero_float,
-				GlobalC::LOC.wfc_dm_2d.dm_gamma[is].c, &one_int, &one_int, GlobalC::ParaO.desc);
+				this->loc->dm_gamma.at(is).c, &one_int, &one_int, this->loc->ParaV->desc);
 		}
 
 		std::cout << " finished calc dm_2d : " << std::endl;
 
-		GlobalC::LOC.cal_dk_gamma_from_2D_pub();
+		this->loc->cal_dk_gamma_from_2D_pub();
 		
 		std::cout << " finished convert : " << std::endl;
 
 }
-
+#endif

@@ -10,7 +10,7 @@ namespace ModuleBase
 namespace GlobalV
 {
     std::string BASIS_TYPE = "";
-    bool STRESS = 0;
+    bool CAL_STRESS = 0;
     int NSPIN = 1;
 }
 

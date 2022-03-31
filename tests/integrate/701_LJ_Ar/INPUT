@@ -5,14 +5,14 @@ ntype			1
 calculation     md
 basis_type      pw
 read_file_dir   ./
-nstep           1
+md_nstep           1
 
 md_ensolver    LJ
 lj_rcut         8.5
 lj_epsilon      0.01062
 lj_sigma        3.360
 
-force           1
+cal_force           1
 
 md_type         3
 md_dt           10

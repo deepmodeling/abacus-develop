@@ -9,7 +9,7 @@ public:
     FIRE(MD_parameters& MD_para_in, UnitCell_pseudo &unit_in);
     ~FIRE();
 
-    void setup();
+    void setup(ModuleESolver::ESolver *p_ensolve);
     void first_half();
     void second_half();
     void outputMD();

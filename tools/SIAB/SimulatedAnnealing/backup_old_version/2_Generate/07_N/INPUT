@@ -1,7 +1,7 @@
 INPUT_PARAMETERS
 suffix              N-6-3.0
 latname             N-6-3.0
-atom_file           07_N.stru
+stru_file           07_N.stru
 pseudo_dir          ../../../../data/elements/07_N/1_LDA/
 kpoint_file         KPOINTS
 wannier_card        INPUTw
@@ -14,11 +14,11 @@ symmetry            0
 nbands             	8 
 
 ecutwfc             50
-dr2                 1.0e-7  // about iteration
-niter               1000
+scf_thr_rho                 1.0e-7  // about iteration
+scf_nmax               1000
 
-smearing            gauss
-sigma               0.01
+smearing_method            gauss
+smearing_sigma               0.01
 
 mixing_type         pulay       // about charge mixing
 mixing_beta         0.4

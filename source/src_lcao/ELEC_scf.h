@@ -3,7 +3,10 @@
 
 #include "../module_base/global_function.h"
 #include "../module_base/global_variable.h"
+#include "../module_base/matrix.h"
+#include "../module_base/complexmatrix.h"
 #include "../src_pw/threshold_elec.h"
+#include "src_lcao/local_orbital_charge.h"
 
 //-----------------------------------------------------------
 // mohan add 2021-02-09
@@ -26,11 +29,12 @@ class ELEC_scf: private Threshold_Elec
 
 	private:
 
-	void scf(const int &istep);
+    void scf(const int& istep,
+        Local_Orbital_Charge& loc,
+        Local_Orbital_wfc& lowf,
+        LCAO_Hamilt& uhm);
 
 	static int iter;
-
-	std::complex<double>*** WFC_init;
 
 	void init_mixstep_final_scf(void);
 

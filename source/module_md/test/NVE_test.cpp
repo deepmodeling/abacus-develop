@@ -1,6 +1,7 @@
 #include "gtest/gtest.h"
 #include "setcell.h"
 #include "module_md/NVE.h"
+#include "../../module_esolver/esolver.h"
 
 class NVE_test : public testing::Test
 {
@@ -14,8 +15,9 @@ protected:
         Setcell::setupcell(ucell);
         Setcell::parameters();
         verlet = new NVE(INPUT.mdp, ucell);
+        ModuleESolver::ESolver *p_esolver;
 
-        verlet->setup();
+        verlet->setup(p_esolver);
     }
 
     void TearDown()

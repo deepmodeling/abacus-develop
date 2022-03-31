@@ -159,6 +159,7 @@ void Hamilt_PW::diagH_subspace(
 
 	// Peize Lin add 2019-03-09
 #ifdef __LCAO
+#ifdef __MPI
 	if(GlobalV::BASIS_TYPE=="lcao_in_pw")
 	{
 		auto add_Hexx = [&](const double alpha)
@@ -185,6 +186,7 @@ void Hamilt_PW::diagH_subspace(
 		}
 	}
 #endif
+#endif
 
 	if(GlobalV::NPROC_IN_POOL>1)
 	{
@@ -198,6 +200,7 @@ void Hamilt_PW::diagH_subspace(
 
 	// Peize Lin add 2019-03-09
 #ifdef __LCAO
+#ifdef __MPI
 	if("lcao_in_pw"==GlobalV::BASIS_TYPE)
 	{
 		switch(GlobalC::exx_global.info.hybrid_type)
@@ -209,6 +212,7 @@ void Hamilt_PW::diagH_subspace(
 				break;
 		}
 	}
+#endif
 #endif
 
     //=======================

@@ -1,7 +1,6 @@
 #include "../module_base/global_function.h"
 #include "../module_base/global_variable.h"
 #include "gint_k.h"
-#include "LCAO_nnr.h"
 #include "../module_orbital/ORB_read.h"
 #include "grid_technique.h"
 #include "../module_base/ylm.h"
@@ -35,7 +34,7 @@ inline int find_offset(const int size, const int grid_index,
 	const int R2z=GlobalC::GridT.ucell_index2z[id2];
 	const int dRz=R1z-R2z;
 
-	const int index=GlobalC::LNNR.cal_RindexAtom(dRx, dRy, dRz, iat2);
+	const int index=GlobalC::GridT.cal_RindexAtom(dRx, dRy, dRz, iat2);
 	
 	int offset=-1;
 	for(int* find=find_start; find < find_end; ++find)
@@ -125,15 +124,15 @@ inline int find_offset(const int size, const int grid_index,
 		}
 
 		GlobalV::ofs_running << " target index = " << index << std::endl;
-		GlobalV::ofs_running << " iat=" << iat1 << " nad=" << GlobalC::LNNR.nad[iat1] << std::endl;
-		for(int iii = 0; iii < GlobalC::LNNR.nad[iat1]; iii++)
+		GlobalV::ofs_running << " iat=" << iat1 << " nad=" << GlobalC::GridT.nad[iat1] << std::endl;
+		for(int iii = 0; iii < GlobalC::GridT.nad[iat1]; iii++)
 		{
-			GlobalV::ofs_running << " ad=" << iii << " find_R2=" << GlobalC::LNNR.find_R2[iat1][iii] << std::endl;
+			GlobalV::ofs_running << " ad=" << iii << " find_R2=" << GlobalC::GridT.find_R2[iat1][iii] << std::endl;
 		}
 		GlobalV::ofs_warning << " The adjacent atom found by 	 is not found by SLTK_Adjacent program!" << std::endl;
 		ModuleBase::WARNING_QUIT("gint_k","evaluate_pvpR_reduced wrong");
 	}
-	assert(offset < GlobalC::LNNR.nad[iat1]);
+	assert(offset < GlobalC::GridT.nad[iat1]);
 	return offset;
 }
 
@@ -262,10 +261,10 @@ inline void cal_pvpR_reduced(int size, int LD_pool, int grid_index,
 		const int T1 = GlobalC::ucell.iat2it[iat1];
 		const int mcell_index1 = GlobalC::GridT.bcell_start[grid_index] + ia1;
 		const int id1 = GlobalC::GridT.which_unitcell[mcell_index1];
-		const int DM_start = GlobalC::LNNR.nlocstartg[iat1];
+		const int DM_start = GlobalC::GridT.nlocstartg[iat1];
 		// nad : how many adjacent atoms for atom 'iat'
-		int* find_start = GlobalC::LNNR.find_R2[iat1];
-		int* find_end = GlobalC::LNNR.find_R2[iat1] + GlobalC::LNNR.nad[iat1];
+		int* find_start = GlobalC::GridT.find_R2[iat1];
+		int* find_end = GlobalC::GridT.find_R2[iat1] + GlobalC::GridT.nad[iat1];
 		for(int ia2=0; ia2<size; ++ia2)
 		{
 			const int iat2=at[ia2];
@@ -296,7 +295,7 @@ inline void cal_pvpR_reduced(int size, int LD_pool, int grid_index,
 						ia2, iat2, id2, T2, 
 						distance, find_start, find_end);
 
-				const int iatw = DM_start + GlobalC::LNNR.find_R2st[iat1][offset];	
+				const int iatw = DM_start + GlobalC::GridT.find_R2st[iat1][offset];	
 
 			    if(cal_num>GlobalC::pw.bxyz/4)
 			    {
@@ -345,7 +344,7 @@ void Gint_k::cal_vlocal_k(const double *vrs1, const Grid_Technique &GridT, const
 		// is used to save <phi | Vl | phi>
 		if(this->reduced)
 		{
-			ModuleBase::GlobalFunc::ZEROS(this->pvpR_reduced[spin], GlobalC::LNNR.nnrg);
+			ModuleBase::GlobalFunc::ZEROS(this->pvpR_reduced[spin], GlobalC::GridT.nnrg);
 		}
 		// else one needs to consdier all cell with a std::vector R
 		// the number of cells is GridT.nutot,
@@ -370,8 +369,8 @@ void Gint_k::cal_vlocal_k(const double *vrs1, const Grid_Technique &GridT, const
     #pragma omp parallel
     {
         double* pvpR_reduced_thread;
-        pvpR_reduced_thread = new double[GlobalC::LNNR.nnrg];
-        ModuleBase::GlobalFunc::ZEROS(pvpR_reduced_thread, GlobalC::LNNR.nnrg);
+        pvpR_reduced_thread = new double[GlobalC::GridT.nnrg];
+        ModuleBase::GlobalFunc::ZEROS(pvpR_reduced_thread, GlobalC::GridT.nnrg);
 #endif
 	// it's a uniform grid to save orbital values, so the delta_r is a constant.
 	double delta_r = GlobalC::ORB.dr_uniform;
@@ -507,7 +506,7 @@ void Gint_k::cal_vlocal_k(const double *vrs1, const Grid_Technique &GridT, const
 
 #ifdef _OPENMP
         #pragma omp critical(cal_vl_k)
-        for(int innrg=0; innrg<GlobalC::LNNR.nnrg; innrg++)
+        for(int innrg=0; innrg<GlobalC::GridT.nnrg; innrg++)
         {
             pvpR_reduced[spin][innrg] += pvpR_reduced_thread[innrg];
         }
@@ -595,7 +594,7 @@ void Gint_k::evaluate_pvpR_reduced(
         const int R1x = gt.ucell_index2x[id1];
         const int R1y = gt.ucell_index2y[id1];
         const int R1z = gt.ucell_index2z[id1];
-        const int DM_start = GlobalC::LNNR.nlocstartg[iat];
+        const int DM_start = GlobalC::GridT.nlocstartg[iat];
 
         // get (j,beta,R2)
         for (int ia2=0; ia2<size; ++ia2)
@@ -646,12 +645,12 @@ void Gint_k::evaluate_pvpR_reduced(
                 const int dRy = R1y - R2y;
                 const int dRz = R1z - R2z;
 	
-				const int index = GlobalC::LNNR.cal_RindexAtom(dRx, dRy, dRz, iat2);
+				const int index = GlobalC::GridT.cal_RindexAtom(dRx, dRy, dRz, iat2);
                 int offset = -1;
 
 				// nad : how many adjacent atoms for atom 'iat'
-				int* find_start = GlobalC::LNNR.find_R2[iat];
-				int* findend = GlobalC::LNNR.find_R2[iat] + GlobalC::LNNR.nad[iat];
+				int* find_start = GlobalC::GridT.find_R2[iat];
+				int* findend = GlobalC::GridT.find_R2[iat] + GlobalC::GridT.nad[iat];
 				
 				// the nad should be a large expense of time.
 				for(int* find=find_start; find < findend; ++find)
@@ -740,15 +739,15 @@ void Gint_k::evaluate_pvpR_reduced(
 					}
 
 					GlobalV::ofs_running << " target index = " << index << std::endl;
-					GlobalV::ofs_running << " iat=" << iat << " nad=" << GlobalC::LNNR.nad[iat] << std::endl;
-                    for(int iii = 0; iii < GlobalC::LNNR.nad[iat]; iii++)
+					GlobalV::ofs_running << " iat=" << iat << " nad=" << GlobalC::GridT.nad[iat] << std::endl;
+                    for(int iii = 0; iii < GlobalC::GridT.nad[iat]; iii++)
                     {
-                        GlobalV::ofs_running << " ad=" << iii << " find_R2=" << GlobalC::LNNR.find_R2[iat][iii] << std::endl;
+                        GlobalV::ofs_running << " ad=" << iii << " find_R2=" << GlobalC::GridT.find_R2[iat][iii] << std::endl;
                     }
 					GlobalV::ofs_warning << " The adjacent atom found by gt is not found by SLTK_Adjacent program!" << std::endl;
                     ModuleBase::WARNING_QUIT("gint_k","evaluate_pvpR_reduced wrong");
                 }
-                assert(offset < GlobalC::LNNR.nad[iat]);
+                assert(offset < GlobalC::GridT.nad[iat]);
 
 				// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 				// what I do above is to get 'offset' for atom std::pair (iat1, iat2)
@@ -756,7 +755,7 @@ void Gint_k::evaluate_pvpR_reduced(
 				// I should take advantage of gt.which_unitcell.
 				// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-				const int iatw = DM_start + GlobalC::LNNR.find_R2st[iat][offset];
+				const int iatw = DM_start + GlobalC::GridT.find_R2st[iat][offset];
 				
 				for(int ib=0; ib<gt.bxyz; ib++)
 				{

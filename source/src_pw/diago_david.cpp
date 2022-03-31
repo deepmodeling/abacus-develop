@@ -1,11 +1,13 @@
 #include "diago_david.h"
-#include "diago_cg.h"
-#include "global.h"
 #include "../src_parallel/parallel_reduce.h"
 #include "../module_base/timer.h"
+#include "module_base/constants.h"
+#include "module_base/blas_connector.h"
+#include "module_base/lapack_connector.h"
 
-Diago_David::Diago_David()
+Diago_David::Diago_David(Hamilt_PW* phamilt)
 {
+    this->hpw = phamilt;
     test_david = 2;
     // 1: check which function is called and which step is executed
     // 2: check the eigenvalues of the result of each iteration
@@ -86,7 +88,7 @@ void Diago_David::diag
 
         this->SchmitOrth(npw, nband, m, basis, psi_m, spsi);
 
-        GlobalC::hm.hpw.h_1psi(npw, psi_m, hpsi, spsi);
+        this->hpw->h_1psi(npw, psi_m, hpsi, spsi);
 
         // basis(m) = psi_m, hp(m) = H |psi_m>, sp(m) = S |psi_m>
         for ( int ig = 0; ig < npw; ig++ )
@@ -252,14 +254,14 @@ void Diago_David::cal_grad
 			ppsi[ig] = respsi[ig] / precondition[ig] ;
 		}
 /*
-		double ppsi_norm = Diago_CG::ddot_real( npw, ppsi, ppsi);
-		double rpsi_norm = Diago_CG::ddot_real( npw, respsi, respsi);
+		double ppsi_norm = ModuleBase::GlobalFunc::ddot_real( npw, ppsi, ppsi);
+		double rpsi_norm = ModuleBase::GlobalFunc::ddot_real( npw, respsi, respsi);
 		assert( rpsi_norm > 0.0 );
 		assert( ppsi_norm > 0.0 );
 */
         this->SchmitOrth(npw, nbase+notconv, nbase+m, basis, ppsi, spsi);
 
-        GlobalC::hm.hpw.h_1psi(npw, ppsi, hpsi, spsi);
+        this->hpw->h_1psi(npw, ppsi, hpsi, spsi);
 
         for ( int ig = 0; ig < npw; ig++ )
         {
@@ -495,7 +497,7 @@ void Diago_David::cal_err
             }
         }
 
-        err[m] = Diago_CG::ddot_real( npw, respsi, respsi );
+        err[m] = ModuleBase::GlobalFunc::ddot_real( npw, respsi, respsi );
         err[m] = sqrt( err[m] );
     }
 
@@ -534,7 +536,7 @@ void Diago_David::SchmitOrth
     assert(m >= 0);
     assert(m < n_band);
 
-    GlobalC::hm.hpw.s_1psi(npw, psi_m, spsi);
+    this->hpw->s_1psi(npw, psi_m, spsi);
 
     std::complex<double>* lagrange = new std::complex<double>[m+1];
     ModuleBase::GlobalFunc::ZEROS( lagrange, m+1 );
@@ -589,7 +591,7 @@ void Diago_David::SchmitOrth
         }
     }
 
-    GlobalC::hm.hpw.s_1psi(npw, psi_m, spsi);
+    this->hpw->s_1psi(npw, psi_m, spsi);
 
     delete[] lagrange;
     ModuleBase::timer::tick("Diago_David","SchmitOrth");

@@ -100,7 +100,10 @@ Exx_Abfs::Parallel::Communicate::DM::f(
 void Exx_Abfs::Parallel::Communicate::DM::cal_DM( 
 	const Abfs::Vector3_Order<int> &Born_von_Karman_period,
 	const set<std::pair<size_t,size_t>> &H_atom_pairs_core,
-	const double threshold )
+    const double threshold,
+    complex<double>*** wfc_k_grid,
+    double*** DM,
+    double** DM_R)
 {
 	ModuleBase::TITLE("Exx_Abfs::Parallel::Communicate::DM::cal_DM");
 	
@@ -108,7 +111,7 @@ std::ofstream ofs_time("time_"+ModuleBase::GlobalFunc::TO_STRING(GlobalV::MY_RAN
 timeval t_start;
 //gettimeofday( &t_start, NULL);
 #if false
-	std::vector<std::map<size_t,std::map<size_t,std::map<Abfs::Vector3_Order<int>,ModuleBase::matrix>>>> DM_grid = LOC_to_grid( Born_von_Karman_period, threshold );
+	std::vector<std::map<size_t,std::map<size_t,std::map<Abfs::Vector3_Order<int>,ModuleBase::matrix>>>> DM_grid = LOC_to_grid( Born_von_Karman_period, threshold, DM, DM_R );
 //ofs_time<<"TIME@ Exx_Abfs::Parallel::Communicate::DM::LOC_to_grid\t"<<time_during(t_start)<<std::endl;
 ofs_matrixes( "DM_grid_"+ModuleBase::GlobalFunc::TO_STRING(GlobalV::MY_RANK), DM_grid );
 
@@ -131,7 +134,7 @@ ofs_matrixes( "DM_grid_"+ModuleBase::GlobalFunc::TO_STRING(GlobalV::MY_RANK), DM
 				
 		Exx_Abfs::DM dm_my;
 		dm_my.flag_mix = false;
-		dm_my.cal_DM( H_atom_pairs_core, Born_von_Karman_boxes );
+		dm_my.cal_DM( H_atom_pairs_core, Born_von_Karman_boxes, wfc_k_grid );
 		
 		std::vector<std::map<size_t,std::map<size_t,std::map<Abfs::Vector3_Order<int>,ModuleBase::matrix>>>> DM_grid(GlobalV::NSPIN);
 		for( const auto &DMrA : dm_my.DMr )
@@ -161,7 +164,9 @@ ofs_matrixes( "DMr_"+ModuleBase::GlobalFunc::TO_STRING(GlobalV::MY_RANK), DMr );
 std::vector<std::map<size_t,std::map<size_t,std::map<Abfs::Vector3_Order<int>,ModuleBase::matrix>>>>
 Exx_Abfs::Parallel::Communicate::DM::LOC_to_grid( 
 	const Abfs::Vector3_Order<int> &Born_von_Karman_period,
-	const double threshold ) const
+    const double threshold,
+    double*** DM,
+    double** DM_R) const
 {
 	ModuleBase::TITLE("Exx_Abfs::Parallel::Communicate::DM::LOC_to_grid");
 	
@@ -171,13 +176,13 @@ Exx_Abfs::Parallel::Communicate::DM::LOC_to_grid(
 	if(GlobalV::GAMMA_ONLY_LOCAL)
 	{
 {
-	std::ofstream ofs("GlobalC::LOC.DM_"+ModuleBase::GlobalFunc::TO_STRING(GlobalV::MY_RANK));
+	std::ofstream ofs("LOC.DM_"+ModuleBase::GlobalFunc::TO_STRING(GlobalV::MY_RANK));
 	for( int is=0; is!=GlobalV::NSPIN; ++is )
 	{
 		for( int i1=0; i1!=GlobalC::GridT.lgd; ++i1 )
 		{
 			for( int i2=0; i2!=GlobalC::GridT.lgd; ++i2 )
-				ofs<<GlobalC::LOC.DM[is][i1][i2]<<"\t";
+				ofs<<DM[is][i1][i2]<<"\t";
 			ofs<<std::endl;
 		}
 		ofs<<std::endl;
@@ -200,7 +205,7 @@ Exx_Abfs::Parallel::Communicate::DM::LOC_to_grid(
 					{
 						for( int iw2=0; iw2!=nw2; ++iw2 )
 						{
-							DM_grid_2D(iw1,iw2) = GlobalC::LOC.DM[is][iwt1_index+iw1][iwt2_index+iw2];
+							DM_grid_2D(iw1,iw2) = DM[is][iwt1_index+iw1][iwt2_index+iw2];
 						}
 					}
 					if( DM_grid_2D.absmax() * SPIN_multiple >= threshold )
@@ -227,14 +232,14 @@ std::cout<<iwt1_grid<<"\t"<<iwt1<<"\t"<<iat1<<"\t"<<iw1<<std::endl;
 std::cout<<"\t"<<iwt2_grid<<"\t"<<iwt2<<"\t"<<iat2<<"\t"<<iw2<<std::endl;
 					try
 					{
-						DM_grid[is].at(iat1).at(iat2).at({0,0,0})(iw1,iw2) = GlobalC::LOC.DM[is][iwt1_grid][iwt2_grid];
+						DM_grid[is].at(iat1).at(iat2).at({0,0,0})(iw1,iw2) = DM[is][iwt1_grid][iwt2_grid];
 					}
 					catch(const std::out_of_range&)
 					{
 						DM_grid[is][iat1][iat2][{0,0,0}].create(
 							GlobalC::ucell.atoms[GlobalC::ucell.iat2it[iat1]].nw,
 							GlobalC::ucell.atoms[GlobalC::ucell.iat2it[iat2]].nw);
-						DM_grid[is][iat1][iat2][{0,0,0}](iw1,iw2) = GlobalC::LOC.DM[is][iwt1_grid][iwt2_grid];
+						DM_grid[is][iat1][iat2][{0,0,0}](iw1,iw2) = DM[is][iwt1_grid][iwt2_grid];
 					}
 				}
 			}*/
@@ -242,9 +247,9 @@ std::cout<<"\t"<<iwt2_grid<<"\t"<<iwt2<<"\t"<<iat2<<"\t"<<iw2<<std::endl;
 	}
 	else
 	{	
-std::ofstream ofs_LOC_DM("GlobalC::LOC.DM_R_"+ModuleBase::GlobalFunc::TO_STRING(GlobalV::MY_RANK));
+std::ofstream ofs_LOC_DM("LOC.DM_R_"+ModuleBase::GlobalFunc::TO_STRING(GlobalV::MY_RANK));
 for( int i=0; i<100; ++i )
-	ofs_LOC_DM<<GlobalC::LOC.DM_R[0][i]<<"\t";
+	ofs_LOC_DM<<DM_R[0][i]<<"\t";
 ofs_LOC_DM<<std::endl<<std::endl;
 
 		Record_adj RA;
@@ -269,7 +274,7 @@ ofs_LOC_DM<<std::endl<<std::endl;
 	for( int iw1=0; iw1!=nw1; ++iw1 )
 	{
 		for( int iw2=0; iw2!=nw2; ++iw2 )
-			ofs_LOC_DM<<GlobalC::LOC.DM_R[is][GlobalC::LNNR.nlocstartg[iat1]+iw_index+iw1*nw2+iw2]<<"\t";
+			ofs_LOC_DM<<DM_R[is][GlobalC::GridT.nlocstartg[iat1]+iw_index+iw1*nw2+iw2]<<"\t";
 		ofs_LOC_DM<<std::endl;
 	}
 	ofs_LOC_DM<<std::endl;
@@ -277,7 +282,7 @@ ofs_LOC_DM<<std::endl<<std::endl;
 					if( !ModuleBase::GlobalFunc::MAP_EXIST( DM_grid[is], iat1, iat2, boxp2 ) )
 					{					
 						ModuleBase::matrix DM_grid_2D(nw1,nw2,false);
-						memcpy( DM_grid_2D.c, GlobalC::LOC.DM_R[is]+GlobalC::LNNR.nlocstartg[iat1]+iw_index, sizeof(double)*(nw1*nw2) );
+						memcpy( DM_grid_2D.c, DM_R[is]+GlobalC::GridT.nlocstartg[iat1]+iw_index, sizeof(double)*(nw1*nw2) );
 						if( DM_grid_2D.absmax() * SPIN_multiple >= threshold )
 							DM_grid[is][iat1][iat2][boxp2] = DM_grid_2D * SPIN_multiple;
 						else

@@ -17,12 +17,15 @@ void Gint_k_init::init(
 	const int &nby_in,
 	const int &nbz_in,
 	const int &nbz_start_in,
-	const int &ncxyz_in
-	)
+    const int& ncxyz_in,
+    LCAO_Matrix *lm
+    )
 {
 	ModuleBase::TITLE(GlobalV::ofs_running,"Gint_k_init","init");
 
-	this->nbx = nbx_in;
+    this->LM = lm;
+    
+    this->nbx = nbx_in;
 	this->nby = nby_in;
 	this->nbz = nbz_in;
 	this->ncxyz = ncxyz_in;

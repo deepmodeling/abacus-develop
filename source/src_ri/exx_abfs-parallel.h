@@ -3,6 +3,7 @@
 
 #include "exx_abfs.h"
 
+#ifdef __MPI
 class Exx_Abfs::Parallel
 {
 	public:
@@ -30,5 +31,6 @@ class Exx_Abfs::Parallel
 		#endif
 	};
 };
+#endif
 
 #endif

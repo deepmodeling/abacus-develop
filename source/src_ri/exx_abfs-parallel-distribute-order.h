@@ -8,11 +8,13 @@
 #include <vector>
 #include <utility>
 
+#ifdef __MPI
 class Exx_Abfs::Parallel::Distribute::Order
 {
 public:
 	static std::vector<std::pair<size_t,size_t>> distribute(
 		const double rmesh_times );
 };
+#endif
 
 #endif

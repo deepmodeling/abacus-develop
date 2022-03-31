@@ -1,12 +1,11 @@
 #include "run_md_lcao.h"
 #include "LOOP_elec.h"
-#include "LCAO_nnr.h"
 #include "FORCE_STRESS.h"
 #include "../src_pw/global.h"
 #include "../src_pw/vdwd2.h"
 #include "../src_pw/vdwd2_parameters.h"
 #include "../src_pw/vdwd3_parameters.h"
-#include "../src_parallel/parallel_orbitals.h"
+#include "../module_orbital/parallel_orbitals.h"
 #include "../src_pdiag/pdiag_double.h"
 #include "../src_io/write_HS.h"
 #include "../src_io/cal_r_overlap_R.h"
@@ -23,15 +22,19 @@
 #include "../module_md/NVT_NHC.h"
 #include "../module_md/Langevin.h"
 
-Run_MD_LCAO::Run_MD_LCAO()
+Run_MD_LCAO::Run_MD_LCAO(Parallel_Orbitals &pv)
 {
     cellchange = false;
+    this->LM_md.ParaV = &pv;
+    // * allocate H and S matrices according to computational resources
+	// * set the 'trace' between local H/S and global H/S
+	this->LM_md.divide_HS_in_frag(GlobalV::GAMMA_ONLY_LOCAL, pv);
 }
 
 Run_MD_LCAO::~Run_MD_LCAO(){}
 
 
-void Run_MD_LCAO::opt_cell(void)
+void Run_MD_LCAO::opt_cell(ORB_control &orb_con, ModuleESolver::ESolver *p_esolver)
 {
 	ModuleBase::TITLE("Run_MD_LCAO","opt_cell");
 
@@ -55,13 +58,14 @@ void Run_MD_LCAO::opt_cell(void)
     int ion_step=0;
     GlobalC::pot.init_pot(ion_step, GlobalC::pw.strucFac);
 
-	
-	opt_ions();
-	return;
+    opt_ions(p_esolver);
+    orb_con.clear_after_ions(GlobalC::UOT, GlobalC::ORB, GlobalV::deepks_setorb, GlobalC::ucell.infoNL.nproj);
+    
+    return;
 }
 
 
-void Run_MD_LCAO::opt_ions(void)
+void Run_MD_LCAO::opt_ions(ModuleESolver::ESolver *p_esolver)
 {
     ModuleBase::TITLE("Run_MD_LCAO","opt_ions"); 
     ModuleBase::timer::tick("Run_MD_LCAO","opt_ions"); 
@@ -110,11 +114,12 @@ void Run_MD_LCAO::opt_ions(void)
     }
 
     // md cycle
-    while ((verlet->step_ + verlet->step_rst_) <= GlobalV::NSTEP && !verlet->stop)
+    while ((verlet->step_ + verlet->step_rst_) <= GlobalV::MD_NSTEP && !verlet->stop)
     {
         if(verlet->step_ == 0)
         {
-            verlet->setup();
+            MD_func::ParaV = this->LM_md.ParaV;
+            verlet->setup(p_esolver);
         }
         else
         {
@@ -143,7 +148,7 @@ void Run_MD_LCAO::opt_ions(void)
             GlobalC::pot.init_pot(verlet->step_, GlobalC::pw.strucFac);
 
             // update force and virial due to the update of atom positions
-            MD_func::force_virial(verlet->step_, verlet->mdp, verlet->ucell, verlet->potential, verlet->force, verlet->virial);
+            MD_func::force_virial(p_esolver, verlet->step_, verlet->mdp, verlet->ucell, verlet->potential, verlet->force, verlet->virial);
 
             verlet->second_half();
 
@@ -176,7 +181,7 @@ void Run_MD_LCAO::opt_ions(void)
         verlet->step_++;
     }
 
-    if (GlobalC::pot.out_potential == 2)
+    if (GlobalC::pot.out_pot == 2)
     {
         std::stringstream ssp;
         std::stringstream ssp_ave;
@@ -191,13 +196,13 @@ void Run_MD_LCAO::opt_ions(void)
     GlobalV::ofs_running << " --------------------------------------------\n\n" << std::endl;
 
 	// mohan update 2021-02-10
-    GlobalC::LOWF.orb_con.clear_after_ions(GlobalC::UOT, GlobalC::ORB, GlobalV::deepks_setorb, GlobalC::ucell.infoNL.nproj);
 
     ModuleBase::timer::tick("Run_MD_LCAO","opt_ions"); 
     return;
 }
 
 void Run_MD_LCAO::md_force_virial(
+    ModuleESolver::ESolver *p_esolver,
     const int &istep,
     const int& numIon, 
     double &potential, 
@@ -232,17 +237,36 @@ void Run_MD_LCAO::md_force_virial(
         GlobalC::en.evdw = vdwd3.get_energy();
     }
 
+    Local_Orbital_wfc LOWF_md;
+    Local_Orbital_Charge LOC_md;
+    LOC_md.ParaV = LOWF_md.ParaV = this->LM_md.ParaV;
+    if (GlobalV::GAMMA_ONLY_LOCAL)
+    {
+        LOWF_md.wfc_gamma.resize(GlobalV::NSPIN);
+	}
+	else
+	{
+        LOWF_md.wfc_k.resize(GlobalC::kv.nks);
+    }
+
+    LOC_md.init_dm_2d();
     // solve electronic structures in terms of LCAO
-	// mohan add 2021-02-09
+    // mohan add 2021-02-09
+    LCAO_Hamilt UHM_md;
+    UHM_md.genH.LM = UHM_md.LM = &this->LM_md;
+    
+    Record_adj RA_md;
+
     LOOP_elec LOE;
-	LOE.solve_elec_stru(istep+1);
+    LOE.solve_elec_stru(istep + 1, RA_md, LOC_md, LOWF_md, UHM_md);
 
     //to call the force of each atom
 	ModuleBase::matrix fcs;//temp force matrix
-	Force_Stress_LCAO FSL;
-	FSL.allocate (); 
-	FSL.getForceStress(GlobalV::FORCE, GlobalV::STRESS, GlobalV::TEST_FORCE, GlobalV::TEST_STRESS, fcs, virial);
-
+	Force_Stress_LCAO FSL(RA_md);
+    FSL.getForceStress(GlobalV::CAL_FORCE, GlobalV::CAL_STRESS,
+        GlobalV::TEST_FORCE, GlobalV::TEST_STRESS,
+        LOC_md, LOWF_md, UHM_md, fcs, virial);
+    RA_md.delete_grid();
 	for(int ion=0; ion<numIon; ++ion)
     {
 		force[ion].x = fcs(ion, 0)/2.0;

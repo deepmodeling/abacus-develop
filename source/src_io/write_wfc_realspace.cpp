@@ -16,7 +16,7 @@ namespace Write_Wfc_Realspace
 	// write ||wfc_r|| for all k-points and all bands
 	// Input: wfc_g[ik](ib,ig)
 	// loop order is for(z){for(y){for(x)}}
-	void write_wfc_realspace_1(const ModuleBase::ComplexMatrix*const wfc_g, const std::string &folder_name)
+	void write_wfc_realspace_1(const ModuleBase::ComplexMatrix*const wfc_g, const std::string &folder_name, const bool& square)
 	{
 		ModuleBase::TITLE("Write_Wfc_Realspace", "write_wfc_realspace_1");
 		ModuleBase::timer::tick("Write_Wfc_Realspace", "write_wfc_realspace_1");
@@ -39,8 +39,12 @@ namespace Write_Wfc_Realspace
 				const std::vector<std::complex<double>> wfc_r = cal_wfc_r(wfc_g[ik], ik, ib);
 
 				std::vector<double> wfc_r2(wfc_r.size());
-				for(int ir=0; ir<wfc_r2.size(); ++ir)
-					wfc_r2[ir] = std::norm(wfc_r[ir]);
+                if (square)
+                    for (int ir = 0; ir < wfc_r2.size(); ++ir)
+                        wfc_r2[ir] = std::norm(wfc_r[ir]);   // "std::norm(z)" returns |z|^2 
+                else
+                    for (int ir = 0; ir < wfc_r2.size(); ++ir)
+                        wfc_r2[ir] = std::abs(wfc_r[ir]);
 
 				const std::string file_name = outdir + "wfc_realspace_"
 					+ ModuleBase::GlobalFunc::TO_STRING(ik_out)

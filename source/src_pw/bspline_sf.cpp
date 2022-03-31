@@ -79,7 +79,11 @@ void PW_Basis::bspline_sf(const int norder)
 	    			zpiece[ir] = r[iz*ny*nx + ir];
 	    		}
 	    	}
+        
+        #ifdef __MPI
 	    	GlobalC::Pgrid.zpiece_to_all(zpiece, iz, tmpr);
+        #endif
+        
 	    }
         //---------------------------------------------------
 

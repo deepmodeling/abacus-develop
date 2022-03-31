@@ -145,7 +145,7 @@
  Check file ./module_orbital/ORB_atomic_lm.cpp line 272
  The angular momentum larger than 4 (g orbitals) may be error about eggbox. 
  Check file ./module_orbital/ORB_atomic_lm.cpp line 272
- ITER   ETOT(eV)       EDIFF(eV)      DRHO2      TIME(s)    
+ ITER   ETOT(eV)       EDIFF(eV)      SCF_THR_RHO      TIME(s)    
  GE1    -2.140228e+02  0.000000e+00   1.487e-01  3.328e+00  
  GE2    -2.140400e+02  -1.721168e-02  3.449e-02  3.070e+00  
  GE3    -2.140404e+02  -4.611448e-04  2.690e-03  3.073e+00  
@@ -154,7 +154,7 @@
  GE6    -2.140404e+02  3.460502e-08   5.541e-07  3.062e+00  
  GE7    -2.140404e+02  1.279774e-09   3.983e-08  3.188e+00  
  GE8    -2.140404e+02  8.002215e-11   3.571e-09  3.083e+00  
- ITER   ETOT(eV)       EDIFF(eV)      DRHO2      TIME(s)    
+ ITER   ETOT(eV)       EDIFF(eV)      SCF_THR_RHO      TIME(s)    
  GE1    -2.139658e+02  0.000000e+00   3.298e-02  5.923e+01  
  GE2    -2.139876e+02  -2.173434e-02  2.097e-02  5.620e+01  
  GE3    -2.141280e+02  -1.404185e-01  1.037e-02  5.717e+01  

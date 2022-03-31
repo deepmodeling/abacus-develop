@@ -3,7 +3,7 @@ INPUT_PARAMETERS
 suffix                  autotest
 ntype			1
 nbands			4
-atom_file		STRU
+stru_file		STRU
 kpoint_file		KPT
 pseudo_dir		../tools/PP_ORB/
 calculation             scf 		
@@ -12,7 +12,7 @@ latname			baco
 ecutwfc			25.0              # Rydberg
 #Parameters (electronic)
 basis_type		pw 	
-dr2			1e-10
+scf_thr_rho			1e-10
 
-force			1
-stress			1
+cal_force			1
+cal_stress			1

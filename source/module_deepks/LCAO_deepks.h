@@ -13,7 +13,7 @@
 #include "torch/csrc/api/include/torch/linalg.h"
 
 #include "../module_neighbor/sltk_grid_driver.h"
-#include "../src_parallel/parallel_orbitals.h"
+#include "../module_orbital/parallel_orbitals.h"
 #include "../src_lcao/LCAO_matrix.h"
 #include "../module_base/intarray.h"
 #include "../module_base/complexmatrix.h"
@@ -319,7 +319,7 @@ public:
     void check_v_delta_k(const int nnr);
 
     ///calculate tr(\rho V_delta)
-    void cal_e_delta_band(const ModuleBase::matrix &dm/**<[in] density matrix*/,
+    void cal_e_delta_band(const std::vector<ModuleBase::matrix>& dm/**<[in] density matrix*/,
         const int* trace_loc_row,
         const int* trace_loc_col,
         const int nrow);

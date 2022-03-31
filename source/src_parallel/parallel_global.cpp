@@ -177,7 +177,7 @@ void Parallel_Global::read_mpi_parameters(int argc,char **argv)
 // atof : Convert std::string to double type
 // atol : Convert std::string to long int type
 //----------------------------------------------------------
-//  GlobalV::NPOOL = atoi(argv[1]); // mohan abandon 2010-06-09
+//  GlobalV::KPAR = atoi(argv[1]); // mohan abandon 2010-06-09
 
 	// get the size --> GlobalV::NPROC
 	// get the rank --> GlobalV::MY_RANK

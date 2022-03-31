@@ -4,6 +4,7 @@
 #include "../module_base/global_function.h"
 #include "../module_base/global_variable.h"
 #include "LCAO_hamilt.h"
+#include "src_lcao/local_orbital_wfc.h"
 
 //-----------------------------------------------------------
 // mohan add 2021-02-09
@@ -25,7 +26,7 @@ class ELEC_evolve
 	// fuxiang add 2021-05-25
 
     static int tddft;
-    static double td_dr2;
+    static double td_scf_thr_rho;
     static double td_dt;
     static double td_force_dt;
     static int td_val_elec_01;
@@ -41,10 +42,8 @@ class ELEC_evolve
 
 	private:
 
-	static void evolve_psi(const int &istep, LCAO_Hamilt &uhm, std::complex<double>*** wfc);
-	void evolve_complex_matrix(const int &ik, std::complex<double> **c, std::complex<double> **c_init)const;
-	void using_LAPACK_complex(const int &ik, std::complex<double> **c, std::complex<double> **c_init)const;
-	void using_LAPACK_complex_2(const int &ik, std::complex<double>** c, std::complex<double>** c_init)const;
+    static void evolve_psi(const int& istep, LCAO_Hamilt& uhm,
+    Local_Orbital_wfc &lowf);
 
 };
 

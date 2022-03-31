@@ -125,7 +125,7 @@ void Electrons::self_consistent(const int &istep)
 	// mohan update 2021-02-25
 	H_Ewald_pw::compute_ewald(GlobalC::ucell, GlobalC::pw);
 
-    set_ethr();
+    set_diag_thr_e();
 
     this->unit = 0;
 
@@ -140,7 +140,7 @@ void Electrons::self_consistent(const int &istep)
             std::cout<<std::setw(10)<<"AMAG";
         }
 
-        std::cout<<std::setw(15)<< "ETOT(eV)"<<std::setw(15)<< "EDIFF(eV)"<<std::setw(11)<< "DRHO2"; // pengfei Li added 2015-1-31
+        std::cout<<std::setw(15)<< "ETOT(eV)"<<std::setw(15)<< "EDIFF(eV)"<<std::setw(11)<< "SCF_THR_RHO"; // pengfei Li added 2015-1-31
         //if(GlobalV::DIAGO_TYPE=="cg") xiaohui modify 2013-09-02
         if(GlobalV::KS_SOLVER=="cg") //xiaohui add 2013-09-02
         {
@@ -167,7 +167,7 @@ void Electrons::self_consistent(const int &istep)
 
     // mohan add 2010/3/25
     // output the charge mixing data :
-    // iteration && dr2.
+    // iteration && scf_thr_rho.
     // std::stringstream ss;
     // ss << GlobalV::global_out_dir << "ChargeMixing.dat";
     // std::ofstream ofs_mix;
@@ -178,7 +178,7 @@ void Electrons::self_consistent(const int &istep)
     // }
     // ###
 
-    for (this->iter = 1;iter <= GlobalV::NITER;iter++)
+    for (this->iter = 1;iter <= GlobalV::SCF_NMAX;iter++)
     {
         GlobalV::ofs_running
         << "\n PW ALGORITHM --------------- ION=" << std::setw(4) << istep + 1
@@ -195,11 +195,11 @@ void Electrons::self_consistent(const int &istep)
 
         //(1) set converged threshold,
         // automatically updated during self consistency.
-        //this->update_ethr(iter);
-        if(GlobalV::FINAL_SCF && iter==1) GlobalV::ETHR = 1.0e-2;
+        //this->update_diag_thr_e(iter);
+        if(GlobalV::FINAL_SCF && iter==1) GlobalV::DIAG_THR_E = 1.0e-2;
         
-        // Note: use GlobalC::CHR.nelec in update ethr
-        else this->update_ethr(iter);
+        // Note: use GlobalC::CHR.nelec in update diag_thr_e
+        else this->update_diag_thr_e(iter);
         if(GlobalV::FINAL_SCF && iter==1)
         {
             init_mixstep_final_scf();
@@ -292,7 +292,7 @@ void Electrons::self_consistent(const int &istep)
         //if (LOCAL_BASIS) xiaohui modify 2013-09-02
 		if(GlobalV::BASIS_TYPE=="lcao" || GlobalV::BASIS_TYPE=="lcao_in_pw") //xiaohui add 2013-09-02
         {
-            GlobalC::CHR.mix_rho(dr2,0,GlobalV::DRHO2,iter,conv_elec);
+            GlobalC::CHR.mix_rho(scf_thr_rho,0,GlobalV::SCF_THR_RHO,iter,conv_elec);
         }
         else
         {
@@ -300,40 +300,40 @@ void Electrons::self_consistent(const int &istep)
             double diago_error = 0.0;
             if(iter==1)
             {
-                // if 'dr2 < GlobalV::ETHR * nelec' happen,
-                // in other word, 'dr2 < diago_error'
-                // we update GlobalV::ETHR.
-                diago_error = GlobalV::ETHR*std::max(1.0, GlobalC::CHR.nelec);
+                // if 'scf_thr_rho < GlobalV::DIAG_THR_E * nelec' happen,
+                // in other word, 'scf_thr_rho < diago_error'
+                // we update GlobalV::DIAG_THR_E.
+                diago_error = GlobalV::DIAG_THR_E*std::max(1.0, GlobalC::CHR.nelec);
             }
 
-            // if converged is achieved, or the self-consistent error(dr2)
+            // if converged is achieved, or the self-consistent error(scf_thr_rho)
             // is samller than the estimated error due to diagonalization(diago_error)
             // rhoin and rho are unchanged:
             // rhoin contain the input charge density and
             // rho contain the output charge density.
             // in other cases rhoin contains the mixed charge density
             // (the new input density) while rho is unchanged.
-            GlobalC::CHR.mix_rho(dr2,diago_error,GlobalV::DRHO2,iter,conv_elec);
+            GlobalC::CHR.mix_rho(scf_thr_rho,diago_error,GlobalV::SCF_THR_RHO,iter,conv_elec);
 
             //if(GlobalV::MY_RANK==0)
             //{
-            //    ofs_mix << std::setw(5) << iter << std::setw(20) << dr2 << std::endl;
+            //    ofs_mix << std::setw(5) << iter << std::setw(20) << scf_thr_rho << std::endl;
             //}
 
             if (iter==1 && !onescf)
             {
                 onescf = true;
-                if (dr2 < diago_error)
+                if (scf_thr_rho < diago_error)
                 {
                     GlobalV::ofs_running << " Notice: Threshold on eigenvalues was too large.\n";
 
                     ModuleBase::WARNING("scf","Threshold on eigenvalues was too large.");
-                    GlobalV::ofs_running << " dr2=" << dr2 << " < diago_error=" << diago_error << std::endl;
+                    GlobalV::ofs_running << " scf_thr_rho=" << scf_thr_rho << " < diago_error=" << diago_error << std::endl;
 
-                    // update GlobalV::ETHR.
-                    GlobalV::ofs_running << " Origin GlobalV::ETHR = " << GlobalV::ETHR << std::endl;
-                    GlobalV::ETHR = 0.1 * dr2 / GlobalC::CHR.nelec;
-                    GlobalV::ofs_running << " New    GlobalV::ETHR = " << GlobalV::ETHR << std::endl;
+                    // update GlobalV::DIAG_THR_E.
+                    GlobalV::ofs_running << " Origin GlobalV::DIAG_THR_E = " << GlobalV::DIAG_THR_E << std::endl;
+                    GlobalV::DIAG_THR_E = 0.1 * scf_thr_rho / GlobalC::CHR.nelec;
+                    GlobalV::ofs_running << " New    GlobalV::DIAG_THR_E = " << GlobalV::DIAG_THR_E << std::endl;
                     //goto first_iter_again;
                     goto scf_step;
                 }
@@ -390,7 +390,7 @@ void Electrons::self_consistent(const int &istep)
 			GlobalC::CHR.write_rho_cube(GlobalC::CHR.rho_save[is], is, ssc.str(), 3);
         }
 
-        if(GlobalC::wf.out_wf == 1 || GlobalC::wf.out_wf == 2)
+        if(GlobalC::wf.out_wfc_pw == 1 || GlobalC::wf.out_wfc_pw == 2)
         {
             //WF_io::write_wfc( ssw.str(), GlobalC::wf.evc );
             // mohan update 2011-02-21
@@ -408,9 +408,9 @@ void Electrons::self_consistent(const int &istep)
         clock_t finish=clock();
         double duration = (double)(finish - start) / CLOCKS_PER_SEC;
 
-		GlobalC::en.print_etot(conv_elec, istep, iter, dr2, duration, GlobalV::ETHR, avg_iter);
+		GlobalC::en.print_etot(conv_elec, istep, iter, scf_thr_rho, duration, GlobalV::DIAG_THR_E, avg_iter);
 
-        if (conv_elec || iter==GlobalV::NITER)
+        if (conv_elec || iter==GlobalV::SCF_NMAX)
         {
 
             //--------------------------------------

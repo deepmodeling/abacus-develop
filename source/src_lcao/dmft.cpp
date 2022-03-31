@@ -92,7 +92,8 @@ namespace ModuleDMFT
     return;
   }
 
-  void DFT_DMFT_interface::out_to_dmft()
+  void DFT_DMFT_interface::out_to_dmft(Local_Orbital_wfc &lowf,
+      LCAO_Matrix &lm)
   {
     ModuleBase::TITLE("DFT_DMFT_interface", "out_to_dmft");
     
@@ -102,7 +103,7 @@ namespace ModuleDMFT
 
     this->out_correlated_atom_info();
 
-    this->out_eigen_vector(GlobalC::LOC.wfc_dm_2d.wfc_k);
+    this->out_eigen_vector(lowf);
     
     this->out_bands(GlobalC::wf.ekb, GlobalC::en.ef, GlobalC::CHR.nelec);
 
@@ -250,7 +251,7 @@ namespace ModuleDMFT
   }
 
   void DFT_DMFT_interface::out_eigen_vector(
-    const std::vector<ModuleBase::ComplexMatrix>& wfc )
+    Local_Orbital_wfc &lowf)
   {
     //Output wave functions
     ModuleBase::TITLE("DFT_DMFT_interface", "out_eigen_vector");
@@ -259,12 +260,6 @@ namespace ModuleDMFT
     const int nks_tot = GlobalV::NSPIN==2 ? (int)GlobalC::kv.nks/2 : GlobalC::kv.nks;
     const int npsin_tmp = GlobalV::NSPIN==2 ? 2 : 1;
     const std::complex<double> zero(0.0,0.0);
-
-    // GlobalV::ofs_running << "GlobalV::NLOCAL:" << GlobalV::NLOCAL
-    // << "  GlobalC::ParaO.nrow:" << GlobalC::ParaO.nrow 
-    // << "  nb:" << wfc[0].nr
-    // << "  GlobalC::ParaO.ncol:" << GlobalC::ParaO.ncol 
-    // << "  iw:" << wfc[0].nc << std::endl;
 
     for(int ik=0; ik<nks_tot; ik++)
     {
@@ -288,14 +283,17 @@ namespace ModuleDMFT
         {
           std::vector<std::complex<double>> wfc_iks(GlobalV::NLOCAL, zero);
 
-          const int ib_local = GlobalC::ParaO.trace_loc_col[ib_global];
+          const int ib_local = lowf.ParaV->trace_loc_col[ib_global];
           
           if(ib_local>=0)
-            for(int ir=0; ir<wfc[ik+nks_tot*is].nc; ir++)
-              wfc_iks[GlobalC::ParaO.MatrixInfo.row_set[ir]] = wfc[ik+nks_tot*is](ib_local, ir);
+            for(int ir=0; ir<lowf.wfc_k[ik+nks_tot*is].nc; ir++)
+              wfc_iks[lowf.ParaV->MatrixInfo.row_set[ir]] = lowf.wfc_k[ik+nks_tot*is](ib_local, ir);
           
           std::vector<std::complex<double>> tmp = wfc_iks;
+
+        #ifdef __MPI
           MPI_Allreduce(&tmp[0], &wfc_iks[0], GlobalV::NLOCAL, MPI_DOUBLE_COMPLEX, MPI_SUM, MPI_COMM_WORLD);
+        #endif
 
           for(int iw=0; iw<GlobalV::NLOCAL; iw++)
             ofs << std::setw(2) << GlobalC::kv.isk[ik+nks_tot*is]
@@ -364,7 +362,7 @@ namespace ModuleDMFT
     return;
   } 
 
-  void DFT_DMFT_interface::out_Sk()
+  void DFT_DMFT_interface::out_Sk(LCAO_Matrix &lm)
   {
     //output overlap matrix on k points, used for test
 
@@ -374,24 +372,27 @@ namespace ModuleDMFT
 
     for(int ik=0; ik<nks_tot; ik++)
     {
-      std::vector<std::complex<double>> Sk_loc(GlobalC::ParaO.nloc);
-      ModuleDFTU::DFTU::folding_overlap_matrix(ik, &Sk_loc[0]);
+      std::vector<std::complex<double>> Sk_loc(lm.ParaV->nloc);
+      ModuleDFTU::DFTU::folding_overlap_matrix(ik, &Sk_loc[0], lm);
 
       std::vector<std::complex<double>> Sk_tmp(GlobalV::NLOCAL*GlobalV::NLOCAL, zero);
-      for(int ir=0; ir<GlobalC::ParaO.nrow; ir++)
+      for(int ir=0; ir<lm.ParaV->nrow; ir++)
       {
-        const int iwt1 = GlobalC::ParaO.MatrixInfo.row_set[ir];
-        for(int ic=0; ic<GlobalC::ParaO.ncol; ic++)
+        const int iwt1 = lm.ParaV->MatrixInfo.row_set[ir];
+        for(int ic=0; ic<lm.ParaV->ncol; ic++)
         {
-          const int iwt2 = GlobalC::ParaO.MatrixInfo.col_set[ic];
-          Sk_tmp[iwt1*GlobalV::NLOCAL+iwt2] = Sk_loc[ic*GlobalC::ParaO.nrow+ir];
+          const int iwt2 = lm.ParaV->MatrixInfo.col_set[ic];
+          Sk_tmp[iwt1*GlobalV::NLOCAL+iwt2] = Sk_loc[ic*lm.ParaV->nrow+ir];
         }
       }
 
       std::vector<std::complex<double>> Sk(GlobalV::NLOCAL*GlobalV::NLOCAL, zero);
+    
+    #ifdef __MPI
       MPI_Allreduce( &Sk_tmp[0], &Sk[0], GlobalV::NLOCAL*GlobalV::NLOCAL,
 	  								 MPI_DOUBLE_COMPLEX, MPI_SUM, MPI_COMM_WORLD );
-      
+    #endif
+
       if(GlobalV::MY_RANK==0)
       {
         std::stringstream ss;

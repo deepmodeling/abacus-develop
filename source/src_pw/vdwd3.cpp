@@ -589,7 +589,7 @@ void Vdwd3::get_dc6_dcnij(int &mxci, int &mxcj, double &cni, double &cnj, int &i
 	}
 }
 
-void Vdwd3::pbcgdisp(std::vector<ModuleBase::Vector3<double>> &g, ModuleBase::matrix &sigma)
+void Vdwd3::pbcgdisp(std::vector<ModuleBase::Vector3<double>> &g, ModuleBase::matrix &smearing_sigma)
 {
 	init(ucell);
 	std::vector<double> c6save(ucell.nat*(ucell.nat+1)), dc6_rest_sum(ucell.nat*(ucell.nat+1)/2), dc6i(ucell.nat), cn(ucell.nat);
@@ -1160,7 +1160,7 @@ void Vdwd3::pbcgdisp(std::vector<ModuleBase::Vector3<double>> &g, ModuleBase::ma
 						for(size_t i=0; i!=3; i++)
 							for(size_t j=0; j!=3; j++)
 							{
-								sigma(i, j) += vec[j]*rij_vec[i];
+								smearing_sigma(i, j) += vec[j]*rij_vec[i];
 							}
 					} // end tau
 		} // end iat, jat
@@ -1191,7 +1191,7 @@ void Vdwd3::pbcgdisp(std::vector<ModuleBase::Vector3<double>> &g, ModuleBase::ma
 					for(size_t i=0; i!=3; i++)
 						for(size_t j=0; j!=3; j++)
 						{
-							sigma(i, j) += vec[j]*tau_vec[i];
+							smearing_sigma(i, j) += vec[j]*tau_vec[i];
 						}
 				} // end tau
 	} // end iat
@@ -1207,9 +1207,9 @@ void Vdwd3::cal_force()
 	std::vector<ModuleBase::Vector3<double>> g;
 	g.clear();
 	g.resize(ucell.nat);
-	ModuleBase::matrix sigma(3, 3);
+	ModuleBase::matrix smearing_sigma(3, 3);
 
-	pbcgdisp(g, sigma);
+	pbcgdisp(g, smearing_sigma);
 
 	for(size_t iat=0; iat!=ucell.nat; iat++)
 		force[iat] = -2.0*g[iat];
@@ -1223,14 +1223,14 @@ void Vdwd3::cal_stress()
 	std::vector<ModuleBase::Vector3<double>> g;
 	g.clear();
 	g.resize(ucell.nat);
-	ModuleBase::matrix sigma(3, 3);
+	ModuleBase::matrix smearing_sigma(3, 3);
 
-	pbcgdisp(g, sigma);
+	pbcgdisp(g, smearing_sigma);
 	
 	stress = ModuleBase::Matrix3(
-		2.0*sigma(0, 0), 2.0*sigma(0, 1), 2.0*sigma(0, 2),
-		2.0*sigma(1, 0), 2.0*sigma(1, 1), 2.0*sigma(1, 2),
-		2.0*sigma(2, 0), 2.0*sigma(2, 1), 2.0*sigma(2, 2)
+		2.0*smearing_sigma(0, 0), 2.0*smearing_sigma(0, 1), 2.0*smearing_sigma(0, 2),
+		2.0*smearing_sigma(1, 0), 2.0*smearing_sigma(1, 1), 2.0*smearing_sigma(1, 2),
+		2.0*smearing_sigma(2, 0), 2.0*smearing_sigma(2, 1), 2.0*smearing_sigma(2, 2)
 	)/ucell.omega;
 
 }

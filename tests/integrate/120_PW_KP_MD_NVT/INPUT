@@ -9,14 +9,14 @@ read_file_dir   ./
 
 #Parameters (Accuracy)
 ecutwfc			20
-niter			20
+scf_nmax			20
 
 basis_type		pw
-nstep           1
+md_nstep           1
 
-stress          1
+cal_stress          1
 stress_thr      1e-6
-force           1
+cal_force           1
 force_thr_ev    1.0e-3
 
 ks_solver       cg

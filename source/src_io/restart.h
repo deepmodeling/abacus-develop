@@ -2,6 +2,7 @@
 #define RESTART_H
 
 #include <string>
+#include "src_lcao/LCAO_matrix.h"
 
 class Restart
 {
@@ -27,7 +28,10 @@ public:
 	
 	void save_disk(const std::string mode, const int i) const;
 	void load_disk(const std::string mode, const int i) const;
-	
+#ifdef __LCAO
+    void save_disk(LCAO_Matrix &lm, const std::string mode, const int i) const;
+    void load_disk(LCAO_Matrix &lm, const std::string mode, const int i) const;
+#endif
 private:
 	void write_file1(const std::string &file_name, const void*const ptr, const size_t size) const;
 	void read_file1(const std::string &file_name, void*const ptr, const size_t size) const;

@@ -42,8 +42,8 @@ public:
     double *rho_core;
 	std::complex<double> *rhog_core;
 
-	//  output charge if out_charge > 0, and output every "out_charge" elec step.
-    int out_charge;
+	//  output charge if out_chg > 0, and output every "out_chg" elec step.
+    int out_chg;
 
     double *start_mag_type;
     double *start_mag_atom;

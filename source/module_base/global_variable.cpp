@@ -23,7 +23,7 @@ int		NBANDS_ISTATE = 0; // default number.
 int		NLOCAL = 0;	// total number of local basis.
 
 double PSEUDORCUT;
-bool RENORMWITHMESH;
+bool PSEUDO_MESH;
 
 std::string	CALCULATION = "scf";
 int		EFIELD = 0; // 5: add electric field
@@ -34,17 +34,18 @@ int 	NSPIN = 1; // LDA
 bool	TWO_EFERMI = 0; // two fermi energy, exist only magnetization is fixed.
 int 	CURRENT_SPIN = 0;
 int 	CURRENT_K = 0;
-int		FORCE = 0;// if force >1, means do the grid integration 'force' times.
+int		CAL_FORCE = 0;// if cal_force >1, means do the grid integration 'cal_force' times.
 double	FORCE_THR = 1.0e-3;
-bool	STRESS = false;
+bool	CAL_STRESS = false;
 double PRESS1 = 0.0;
 double PRESS2 = 0.0;
 double PRESS3 = 0.0;
 double PRESSURE = 0.0;
-std::string	MOVE_IONS = "bfgs";
+std::string	RELAX_METHOD = "bfgs";
 std::string  OUT_LEVEL = "ie";
-int		NSTEP = 20;
-int 	NITER = 50;
+int		RELAX_NMAX = 20;
+int     MD_NSTEP = 20;
+int 	SCF_NMAX = 50;
 
 std::string	BASIS_TYPE = "pw"; //xiaohui add 2013-09-01
 std::string	KS_SOLVER = "cg"; //xiaohui add 2013-09-01
@@ -53,13 +54,13 @@ bool	SEARCH_PBC = true;
 bool	SPARSE_MATRIX = false;
 
 int		DIAGO_PROC = 0;
-int 	DIAGO_CG_MAXITER = 30;
+int 	DIAG_CG_NMAX = 30;
 int		DIAGO_CG_PREC = 1; //mohan add 2012-03-31
 int 	DIAGO_DAVID_NDIM = 4;
-double 	ETHR = 1.0e-2;
+double 	DIAG_THR_E = 1.0e-2;
 int		NB2D = 1;
 
-double 	DRHO2 = 1.0e-9;
+double 	SCF_THR_RHO = 1.0e-9;
 
 std::string	RESTART_MODE = "new";
 
@@ -84,12 +85,12 @@ std::string ocp_set = "none";
 std::vector<double> ocp_kb(10000);
 //int ocp_n=0;
 //double ocp_kb[10000];
-int  mulliken=0;//qifeng add 2019/9/10
+int  out_mul=0;//qifeng add 2019/9/10
 //----------------------------------------------------------
 // EXPLAIN : Parallel information
 // GLOBAL VARIABLES :
 // NAME : NPROC( global number of process )
-// NAME : NPOOL( global number of pools )
+// NAME : KPAR( global number of pools )
 // NAME : MY_RANK( global index of process )
 // NAME : MY_POOL( global index of pool (count in pool))
 // NAME : NPROC_IN_POOL( local number of process in a pool.)
@@ -97,13 +98,13 @@ int  mulliken=0;//qifeng add 2019/9/10
 //  		my_rank in each pool)
 //----------------------------------------------------------
 int NPROC = 1;
-int NPOOL = 1;
+int KPAR = 1;
 int MY_RANK = 0;
 int MY_POOL = 0;
 int NPROC_IN_POOL = 1;
 int RANK_IN_POOL = 0;
 int DRANK = -1; //mohan add 2012-01-13, must be -1, so we can recognize who didn't in DIAG_WORLD
-int DSIZE = NPOOL;
+int DSIZE = KPAR;
 int DCOLOR = -1;
 int GRANK = MY_RANK;
 int GSIZE = DSIZE; 
@@ -112,7 +113,7 @@ int GSIZE = DSIZE;
 // EXPLAIN :
 //----------------------------------------------------------
 std::string	global_in_card = "INPUT";
-std::string	global_atom_card = "STRU";
+std::string	stru_file = "STRU";
 std::string	global_kpoint_card = "KPT";
 std::string	global_wannier_card;
 
@@ -162,7 +163,7 @@ int test_gridt = 0; // mohan add 2011-03-17
 int test_pseudo_cell = 0;// 2 : output readin data
 int test_pp = 0;// pp: pseudopotential
 int test_kmesh = 0;
-int test_ion_dynamics = 0;
+int test_relax_method = 0;
 //----------------------------------------------------------
 // src_tools
 //----------------------------------------------------------

@@ -32,7 +32,7 @@ void test_deepks::check_psialpha(void)
 		ucell.ntype,
 		na);
 
-	ld.build_psialpha(GlobalV::FORCE,
+	ld.build_psialpha(GlobalV::CAL_FORCE,
 		ucell,
 		ORB,
 		Test_Deepks::GridD,
@@ -40,7 +40,7 @@ void test_deepks::check_psialpha(void)
 		ParaO.trace_loc_col,
 		OGT);
 
-	ld.check_psialpha(GlobalV::FORCE,
+	ld.check_psialpha(GlobalV::CAL_FORCE,
 		ucell,
 		ORB,
 		Test_Deepks::GridD,
@@ -56,8 +56,9 @@ void test_deepks::check_psialpha(void)
 
 void test_deepks::read_dm(void)
 {
-	ifstream ifs("dm");
-	dm.create(GlobalV::NLOCAL,GlobalV::NLOCAL);
+    ifstream ifs("dm");
+    dm.resize(1);
+    dm[0].create(GlobalV::NLOCAL, GlobalV::NLOCAL);
 
 	for (int mu=0;mu<GlobalV::NLOCAL;mu++)
 	{
@@ -65,7 +66,7 @@ void test_deepks::read_dm(void)
 		{
 			double c;
 			ifs >> c;
-			dm(mu,nu)=c;
+			dm[0](mu,nu)=c;
 		}
 	}
 }
@@ -98,7 +99,7 @@ void test_deepks::check_pdm(void)
 	if(GlobalV::GAMMA_ONLY_LOCAL)
 	{
 		this->read_dm();
-		this->ld.cal_projected_DM(dm,
+		this->ld.cal_projected_DM(dm[0],
 			ucell,
 			ORB,
 			Test_Deepks::GridD,
@@ -127,7 +128,7 @@ void test_deepks::check_gdmx(void)
 	this->ld.init_gdmx(ucell.nat);
 	if(GlobalV::GAMMA_ONLY_LOCAL)
 	{
-		this->ld.cal_gdmx(dm,
+		this->ld.cal_gdmx(dm[0],
 			ucell,
 			ORB,
 			Test_Deepks::GridD,
@@ -302,7 +303,7 @@ void test_deepks::check_f_delta()
 	svnl_dalpha.create(3,3);
 	if(GlobalV::GAMMA_ONLY_LOCAL)
 	{
-		ld.cal_f_delta_gamma(dm,
+		ld.cal_f_delta_gamma(dm[0],
             ucell,
             ORB,
             Test_Deepks::GridD,

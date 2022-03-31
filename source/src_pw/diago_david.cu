@@ -289,12 +289,7 @@ void Diago_David_CUDA::cal_grad
 		// 	ppsi[ig] = respsi[ig] / precondition[ig] ;
 		// } 
         kernel_precondition_david<double, double2><<<block, thread>>>(ppsi, respsi, npw, precondition);
-/*
-		double ppsi_norm = Diago_CG::ddot_real( npw, ppsi, ppsi);
-		double rpsi_norm = Diago_CG::ddot_real( npw, respsi, respsi);
-		assert( rpsi_norm > 0.0 );
-		assert( ppsi_norm > 0.0 );
-*/
+
         this->SchmitOrth(npw, nbase+notconv, nbase+m, basis, ppsi, spsi);
 
         GlobalC::hm.hpw.h_1psi(npw, ppsi, hpsi, spsi);
@@ -519,7 +514,7 @@ void Diago_David_CUDA::cal_err
             }
         }
 
-        err[m] = Diago_CG::ddot_real( npw, respsi, respsi );
+        err[m] = ModuleBase::GlobalFunc::ddot_real( npw, respsi, respsi );
         err[m] = sqrt( err[m] );
     }
 

@@ -12,11 +12,12 @@
 
 void Exx_Abfs::DM::cal_DM(
 	const std::set<std::pair<size_t,size_t>> &atom_pairs,
-	const std::vector<Abfs::Vector3_Order<int>> &Born_von_Karman_boxes)
+    const std::vector<Abfs::Vector3_Order<int>>& Born_von_Karman_boxes,
+    std::complex<double>*** wfc_k_grid)
 {
 	ModuleBase::TITLE("Exx_Abfs::DM::cal_DM");
 	
-	cal_DMk_mixing( GlobalC::CHR, atom_pairs );
+	cal_DMk_mixing( GlobalC::CHR, atom_pairs, wfc_k_grid);
 
 	for( const std::pair<size_t,size_t> & atom_pair : atom_pairs )
 	{
@@ -40,7 +41,8 @@ void Exx_Abfs::DM::cal_DM(
 
 void Exx_Abfs::DM::cal_DMk_mixing(
 	const Charge_Broyden &charge,
-	const std::set<std::pair<size_t,size_t>> &atom_pairs )
+    const std::set<std::pair<size_t, size_t>>& atom_pairs,
+     std::complex<double>*** wfc_k_grid)
 {
 	ModuleBase::TITLE("Exx_Abfs::DM::cal_DMk_mixing");
 
@@ -48,7 +50,7 @@ void Exx_Abfs::DM::cal_DMk_mixing(
 	{
 		if ( charge.mixing_mode == "plain" )
 		{
-			plain_mixing( charge, atom_pairs );
+			plain_mixing( charge, atom_pairs,wfc_k_grid );
 		}
 		else if ( charge.mixing_mode == "kerker" )
 		{
@@ -56,7 +58,7 @@ void Exx_Abfs::DM::cal_DMk_mixing(
 		}
 		else if ( charge.mixing_mode == "pulay" )
 		{
-			pulay_mixing( charge, atom_pairs );
+			pulay_mixing( charge, atom_pairs, wfc_k_grid );
 		}
 		else if ( charge.mixing_mode == "pulay-kerker" )
 		{
@@ -69,7 +71,7 @@ void Exx_Abfs::DM::cal_DMk_mixing(
 	}
 	else
 	{
-		DMk = cal_DMk_raw(atom_pairs);
+		DMk = cal_DMk_raw(atom_pairs, wfc_k_grid);
 //		DMk = Exx_Abfs_DM_Test::cal_DMk_raw_readfile(atom_pairs);			// Peize Lin test 2018-03-27
 
 		#if TEST_EXX_LCAO==1
@@ -83,7 +85,7 @@ void Exx_Abfs::DM::cal_DMk_mixing(
 
 
 
-std::map<size_t,std::map<size_t,std::vector<ModuleBase::ComplexMatrix>>> Exx_Abfs::DM::cal_DMk_raw( const std::set<std::pair<size_t,size_t>> &atom_pairs ) const
+std::map<size_t,std::map<size_t,std::vector<ModuleBase::ComplexMatrix>>> Exx_Abfs::DM::cal_DMk_raw( const std::set<std::pair<size_t,size_t>> &atom_pairs, std::complex<double>*** wfc_k_grid ) const
 {
 	ModuleBase::TITLE("Exx_Abfs::DM::cal_DMk_raw");
 
@@ -123,8 +125,8 @@ std::map<size_t,std::map<size_t,std::vector<ModuleBase::ComplexMatrix>>> Exx_Abf
 						else
 						{
 							DMk_raw[iat1][iat2][ik](iw1,iw2) += GlobalC::wf.wg(ik,ib) 
-								* GlobalC::LOWF.WFC_K[ik][ib][GlobalC::ucell.itiaiw2iwt(it1,ia1,iw1)] 
-								* conj(GlobalC::LOWF.WFC_K[ik][ib][GlobalC::ucell.itiaiw2iwt(it2,ia2,iw2)]);
+								* wfc_k_grid[ik][ib][GlobalC::ucell.itiaiw2iwt(it1,ia1,iw1)] 
+								* conj(wfc_k_grid[ik][ib][GlobalC::ucell.itiaiw2iwt(it2,ia2,iw2)]);
 						}
 					}
 				}
@@ -146,28 +148,30 @@ std::map<size_t,std::map<size_t,std::vector<ModuleBase::ComplexMatrix>>> Exx_Abf
 
 void Exx_Abfs::DM::plain_mixing(
 	const Charge_Broyden &charge,
-	const std::set<std::pair<size_t,size_t>> &atom_pairs)
+    const std::set<std::pair<size_t, size_t>>& atom_pairs,
+    complex<double>*** wfc_k_grid)
 {
 	ModuleBase::TITLE("Exx_Abfs::DM::plain_mixing");
 
 	if(DMk.empty())
-		DMk = cal_DMk_raw(atom_pairs);
+		DMk = cal_DMk_raw(atom_pairs, wfc_k_grid);
 	else
-		DMk = charge.mixing_beta * cal_DMk_raw(atom_pairs) + (1-charge.mixing_beta) * DMk;
+		DMk = charge.mixing_beta * cal_DMk_raw(atom_pairs, wfc_k_grid) + (1-charge.mixing_beta) * DMk;
 }
 
 
 
 void Exx_Abfs::DM::pulay_mixing(
 	const Charge_Broyden &charge,
-	const std::set<std::pair<size_t,size_t>> &atom_pairs)
+    const std::set<std::pair<size_t, size_t>>& atom_pairs,
+    complex<double>*** wfc_k_grid)
 {
 	if( 1==charge.totstep )
 	{
 		DMk_pulay_seq.clear();
 	}
 	
-	DMk_pulay_seq.push_back( charge.mixing_beta * cal_DMk_raw(atom_pairs) + (1-charge.mixing_beta) * DMk );
+	DMk_pulay_seq.push_back( charge.mixing_beta * cal_DMk_raw(atom_pairs, wfc_k_grid) + (1-charge.mixing_beta) * DMk );
 	if( charge.totstep > charge.rstep )
 		DMk_pulay_seq.pop_front();
 	

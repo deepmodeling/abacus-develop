@@ -26,13 +26,13 @@ file=$1
 calculation=`grep calculation INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
 running_path=`echo "OUT.autotest/running_$calculation"".log"`
 natom=`grep -En '(^|[[:space:]])TOTAL ATOM NUMBER($|[[:space:]])' $running_path | awk '{print $6}'`
-has_force=`grep -En '(^|[[:space:]])force($|[[:space:]])' INPUT | awk '{print $2}'`
-has_stress=`grep -En '(^|[[:space:]])stress($|[[:space:]])' INPUT | awk '{print $2}'`
+has_force=`grep -En '(^|[[:space:]])cal_force($|[[:space:]])' INPUT | awk '{print $2}'`
+has_stress=`grep -En '(^|[[:space:]])cal_stress($|[[:space:]])' INPUT | awk '{print $2}'`
 has_dftu=`grep -En '(^|[[:space:]])dft_plus_u($|[[:space:]])' INPUT | awk '{print $2}'`
 has_band=`grep -En '(^|[[:space:]])out_band($|[[:space:]])' INPUT | awk '{print $2}'`
 has_dos=`grep -En '(^|[[:space:]])out_dos($|[[:space:]])' INPUT | awk '{print $2}'`
-has_hs=`grep -En '(^|[[:space:]])out_hs($|[[:space:]])' INPUT | awk '{print $2}'`
-has_r=`grep -En '(^|[[:space:]])out_r($|[[:space:]])' INPUT | awk '{print $2}'`
+has_hs=`grep -En '(^|[[:space:]])out_mat_hs($|[[:space:]])' INPUT | awk '{print $2}'`
+has_r=`grep -En '(^|[[:space:]])out_mat_r($|[[:space:]])' INPUT | awk '{print $2}'`
 deepks_out_labels=`grep deepks_out_labels INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
 deepks_bandgap=`grep deepks_bandgap INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
 #echo $running_path

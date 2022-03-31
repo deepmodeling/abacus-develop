@@ -19,7 +19,7 @@ public:
 		 int nomega;
 		 double shift;
 		 bool metalcalc;
-		 double degauss;
+		 double smearing_sigma;
 		 
 		 void Init();
 		 void Cal_epsilon0();

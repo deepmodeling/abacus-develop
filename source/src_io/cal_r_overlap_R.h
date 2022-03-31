@@ -64,15 +64,18 @@ class cal_r_overlap_R
 						std::map<size_t,
 						Center2_Orb::Orb21>>>>>> center2_orb21_r;
 						
-	void init();
+	void init(const Parallel_Orbitals &pv);
 	void out_r_overlap_R(const int nspin);
 	
 	int iw2it(int iw);
 	int iw2ia(int iw);
 	int iw2iL(int iw);
 	int iw2iN(int iw);
-	int iw2im(int iw);					
-	
+    int iw2im(int iw);
+
+private:
+    const Parallel_Orbitals* ParaV;
+    
 };
 #endif
 

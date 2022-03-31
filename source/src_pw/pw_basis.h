@@ -82,7 +82,7 @@ public:
 	// nrxx_start: starting nrxx in each processor 
     int nrxx_start;
 
-    int seed;
+    int pw_seed;
 
 private:
     void setup_FFT_dimension(void);	// set up FFT dimensions
@@ -138,8 +138,9 @@ private:
     void get_MPI_GVectors(void);
     void columns_and_pw_distribution_2(void);
 // #else
-    void get_GVectors(void);
 #endif
+    void get_GVectors(void);
+
 
 
 

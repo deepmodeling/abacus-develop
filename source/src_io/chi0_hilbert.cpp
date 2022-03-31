@@ -25,10 +25,11 @@ namespace GlobalC
 Chi0_hilbert chi0_hilbert;
 }
 
+std::complex<double> *** Chi0_hilbert::wfc_k_grid = nullptr;
 Chi0_hilbert::Chi0_hilbert()
          :init_finish(false)
 {
-	epsilon = false;
+    epsilon = false;
 	system = "bulk";
 	eta = 0.05;
 	domega = 0.01;
@@ -258,7 +259,7 @@ void Chi0_hilbert::Chi()
 	}
 
 	//std::cout <<"GlobalC::en.ef = "<<GlobalC::en.ef<<std::endl;
-	//std::cout <<"degauss = "<<INPUT.degauss<<std::endl;
+	//std::cout <<"smearing_sigma = "<<INPUT.smearing_sigma<<std::endl;
 
 	//------------------------------------------------------------------
 	// change the fermi level or not
@@ -279,14 +280,14 @@ void Chi0_hilbert::Chi()
 			//----------------------------------------------------------
 			//  gauss smearing
 			//----------------------------------------------------------
-			if(INPUT.smearing == "gauss" || INPUT.smearing == "gaussian")
+			if(INPUT.smearing_method == "gauss" || INPUT.smearing_method == "gaussian")
 			{
-				cweight[ik][ib] = GlobalC::kv.wk[ik] * Occupy::wgauss( (energy - GlobalC::wf.ekb[ik][ib] )/INPUT.degauss, 0);
+				cweight[ik][ib] = GlobalC::kv.wk[ik] * Occupy::wgauss( (energy - GlobalC::wf.ekb[ik][ib] )/INPUT.smearing_sigma, 0);
 			}
 			//----------------------------------------------------------
 			//  fixed smearing
 			//----------------------------------------------------------
-			else if(INPUT.smearing == "fixed")
+			else if(INPUT.smearing_method == "fixed")
 			{
 				if((GlobalC::wf.ekb[ik][ib]-energy)<-0.0001 )
 				{
@@ -304,9 +305,9 @@ void Chi0_hilbert::Chi()
 			//----------------------------------------------------------
 			//   fermi-dirac smearing
 			//----------------------------------------------------------
-			else if(INPUT.smearing == "fd")
+			else if(INPUT.smearing_method == "fd")
 			{
-				cweight[ik][ib] = GlobalC::kv.wk[ik] * Occupy::wgauss( (energy - GlobalC::wf.ekb[ik][ib] )/INPUT.degauss, -99);
+				cweight[ik][ib] = GlobalC::kv.wk[ik] * Occupy::wgauss( (energy - GlobalC::wf.ekb[ik][ib] )/INPUT.smearing_sigma, -99);
 			}
 			else
 			{
@@ -1177,7 +1178,7 @@ void Chi0_hilbert::Cal_b_lcao(int iq, int ik, int iqk)
 					{
 						for(int ir=0; ir<Rmax[iw1][iw2]; ir++)
 						{
-							b[ig][ib1][ib2] += conj(GlobalC::LOWF.WFC_K[ik][ib1][iw1]) * GlobalC::LOWF.WFC_K[iqk][ib2][iw2] * overlap[iw1][iw2][ig][ir] * phase[iw1][iw2][ir];
+							b[ig][ib1][ib2] += conj(this->wfc_k_grid[ik][ib1][iw1]) * this->wfc_k_grid[iqk][ib2][iw2] * overlap[iw1][iw2][ig][ir] * phase[iw1][iw2][ir];
 						}
 					}
 				}
@@ -1202,7 +1203,7 @@ void Chi0_hilbert::Cal_b_lcao(int iq, int ik, int iqk)
 				{
 					for(int ir=0; ir<Rmax[iw1][iw2]; ir++)
 					{
-						left[ib1][r] = conj(GlobalC::LOWF.WFC_K[ik][ib1][iw1]) * overlap[iw1][iw2][ig][ir] * phase[iw1][iw2][ir];
+						left[ib1][r] = conj(this->wfc_k_grid[ik][ib1][iw1]) * overlap[iw1][iw2][ig][ir] * phase[iw1][iw2][ir];
 						r++;
 					}
 				}
@@ -1218,7 +1219,7 @@ void Chi0_hilbert::Cal_b_lcao(int iq, int ik, int iqk)
 				{
 					for(int ir=0; ir<Rmax[iw1][iw2]; ir++)
 					{
-						right[r][ib2] = GlobalC::LOWF.WFC_K[iqk][ib2][iw2];
+						right[r][ib2] = this->wfc_k_grid[iqk][ib2][iw2];
 						r++;
 					}
 				}

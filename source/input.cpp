@@ -105,7 +105,7 @@ void Input::Default(void)
 	//xiaohui modify 2015-03-25
     //suffix = "MESIA";
     suffix = "ABACUS";
-    atom_file = "";//xiaohui modify 2015-02-01
+    stru_file = "";//xiaohui modify 2015-02-01
     kpoint_file = "";//xiaohui modify 2015-02-01
     pseudo_dir = "";
 	orbital_dir = ""; // liuyu add 2021-08-14
@@ -117,16 +117,16 @@ void Input::Default(void)
     //calculation = "relax";
     calculation = "scf";
 	pseudo_rcut = 15.0; //qianrui add this parameter 2021-5
-	renormwithmesh = false; //qianrui add this pararmeter
+	pseudo_mesh = false; //qianrui add this pararmeter
     ntype = 0;
     nbands = 0;
 	nbands_sto = 0;
 	nbands_istate = 5;
-	seed = 1;
+	pw_seed = 1;
 	nche_sto = 0;
 	seed_sto = 0;
 	stotype = "pw";
-	npool = 1;
+	kpar = 1;
     berry_phase = false;
 	gdir = 3;
 	towannier90 = false;
@@ -150,27 +150,27 @@ void Input::Default(void)
     search_radius=-1.0; // unit: a.u. -1.0 has no meaning.
     search_pbc=true;
     symmetry=false;
-	set_vel=false;
+	init_vel=false;
     symmetry_prec = 1.0e-5; //LiuXh add 2021-08-12, accuracy for symmetry
-    force=0;
-    force_set=false;
+    cal_force=0;
+    out_force=false;
     force_thr=1.0e-3;
 	force_thr_ev2=0;
     stress_thr = 1.0e-2; //LiuXh add 20180515
     press1 = 0.0;
     press2 = 0.0;
     press3 = 0.0;
-	stress=false;
+	cal_stress=false;
 	fixed_axes = "None"; // pengfei 2018-11-9
-	ion_dynamics="cg"; // pengfei  2014-10-13
-    cg_threshold=0.5; // pengfei add 2013-08-15
+	relax_method="cg"; // pengfei  2014-10-13
+    relax_cg_thr_e=0.5; // pengfei add 2013-08-15
 	out_level="ie";
     out_md_control = false;
-	bfgs_w1 = 0.01;		// mohan add 2011-03-13
-	bfgs_w2 = 0.5;
-	trust_radius_max = 0.8; // bohr
-	trust_radius_min = 1e-5;
-	trust_radius_ini = 0.5; //bohr
+	relax_bfgs_w1 = 0.01;		// mohan add 2011-03-13
+	relax_bfgs_w2 = 0.5;
+	relax_bfgs_rmax = 0.8; // bohr
+	relax_bfgs_rmin = 1e-5;
+	relax_bfgs_init = 0.5; //bohr
 	nbspline = -1;
 //----------------------------------------------------------
 // ecutwfc
@@ -194,10 +194,10 @@ void Input::Default(void)
 //----------------------------------------------------------
     //diago_type = "default"; xiaohui modify 2013-09-01 //mohan update 2012-02-06
 	diago_proc = 0; //if 0, then diago_proc = GlobalV::NPROC
-    diago_cg_maxiter = 50;
+    diag_cg_nmax = 50;
 	diago_cg_prec=1; //mohan add 2012-03-31
     diago_david_ndim = 4;
-    ethr = 1.0e-2;
+    diag_thr_e = 1.0e-2;
 	nb2d = 0;
 	nurse = 0;
 	colour = 0;
@@ -211,16 +211,16 @@ void Input::Default(void)
 //----------------------------------------------------------
 // iteration
 //----------------------------------------------------------
-    dr2 = 1.0e-9;
-    niter = 40;
-    this->nstep = 0;
+    scf_thr_rho = 1.0e-9;
+    scf_nmax = 40;
+    relax_nmax = 0;
 	out_stru = 0;
 //----------------------------------------------------------
 // occupation
 //----------------------------------------------------------
     occupations = "smearing";  //pengfei 2014-10-13
-    smearing = "fixed";
-    degauss = 0.01;
+    smearing_method = "fixed";
+    smearing_sigma = 0.01;
 //----------------------------------------------------------
 //  charge mixing
 //----------------------------------------------------------
@@ -232,12 +232,12 @@ void Input::Default(void)
 // potential / charge / wavefunction / energy
 //----------------------------------------------------------
     restart_mode = "new";
-    start_wfc = "atomic";
+    init_wfc = "atomic";
 	mem_saver = 0;
 	printe = 100; // must > 0
-    start_pot = "atomic";
-	charge_extrap = "atomic";//xiaohui modify 2015-02-01
-    out_charge = 0;
+    init_chg = "atomic";
+	chg_extrap = "atomic";//xiaohui modify 2015-02-01
+    out_chg = 0;
 	out_dm = 0;
 
 	deepks_out_labels = 0; // caoyu added 2020-11-24, mohan added 2021-01-03
@@ -246,15 +246,15 @@ void Input::Default(void)
 	deepks_out_unittest = 0;
 	deepks_descriptor_lmax = 2; // mohan added 2021-01-03
 
-    out_potential = 0;
-    out_wf = 0;
-    out_wf_r = 0;
+    out_pot = 0;
+    out_wfc_pw = 0;
+    out_wfc_r = 0;
 	out_dos = 0;
     out_band = 0;
-	out_hs = 0;
-	out_hs2 = 0; //LiuXh add 2019-07-15
-	out_r_matrix = 0; // jingan add 2019-8-14
-	out_lowf = false;
+	out_mat_hs = 0;
+	out_mat_hs2 = 0; //LiuXh add 2019-07-15
+	out_mat_r = 0; // jingan add 2019-8-14
+	out_wfc_lcao = false;
 	out_alllog = false;
 	dos_emin_ev = -15;//(ev)
 	dos_emax_ev = 15;//(ev)
@@ -329,7 +329,7 @@ void Input::Default(void)
 // tddft
 //----------------------------------------------------------
 	tddft=0;
-	td_dr2 = 1e-9;
+	td_scf_thr_rho = 1e-9;
 	td_dt = 0.02;
 	td_force_dt = 0.02;
 	td_val_elec_01=1;
@@ -357,8 +357,7 @@ void Input::Default(void)
 
 	cell_factor = 1.2; //LiuXh add 20180619
 
-	new_dm=1; // Shen Yu add 2019/5/9
-	GlobalV::mulliken=0;// qi feng add 2019/9/10
+	GlobalV::out_mul=0;// qi feng add 2019/9/10
 
 //----------------------------------------------------------			//Peize Lin add 2020-04-04
 // restart
@@ -443,9 +442,9 @@ bool Input::Read(const std::string &fn)
         {
             read_value(ifs, suffix);
         }
-        else if (strcmp("atom_file", word) == 0)//xiaohui modify 2015-02-01
+        else if (strcmp("stru_file", word) == 0)//xiaohui modify 2015-02-01
         {
-            read_value(ifs, atom_file);//xiaohui modify 2015-02-01
+            read_value(ifs, stru_file);//xiaohui modify 2015-02-01
         }
         else if (strcmp("pseudo_dir", word) == 0)
         {
@@ -475,9 +474,9 @@ bool Input::Read(const std::string &fn)
         {
             read_value(ifs, pseudo_rcut);
         }
-		else if (strcmp("renormwithmesh", word) == 0)//
+		else if (strcmp("pseudo_mesh", word) == 0)//
 		{
-            read_value(ifs, renormwithmesh);
+            read_value(ifs, pseudo_mesh);
         }
         else if (strcmp("calculation", word) == 0)// which type calculation
         {
@@ -514,9 +513,9 @@ bool Input::Read(const std::string &fn)
         {
             read_value(ifs, seed_sto);
 		}
-		else if (strcmp("seed", word) == 0)
+		else if (strcmp("pw_seed", word) == 0)
         {
-            read_value(ifs, seed);
+            read_value(ifs, pw_seed);
 		}
 		else if (strcmp("emax_sto", word) == 0)
         {
@@ -530,9 +529,9 @@ bool Input::Read(const std::string &fn)
         {
             read_value(ifs, stotype);
         }
-        else if (strcmp("npool", word) == 0)// number of pools
+        else if (strcmp("kpar", word) == 0)// number of pools
         {
-            read_value(ifs, npool);
+            read_value(ifs, kpar);
         }
         else if (strcmp("berry_phase", word) == 0)// berry phase calculation
         {
@@ -609,21 +608,21 @@ bool Input::Read(const std::string &fn)
         {
             read_value(ifs, symmetry);
         }
-		else if (strcmp("set_vel", word) == 0)
+		else if (strcmp("init_vel", word) == 0)
         {
-            read_value(ifs, set_vel);
+            read_value(ifs, init_vel);
 		}
         else if (strcmp("symmetry_prec", word) == 0) //LiuXh add 2021-08-12, accuracy for symmetry
         {
             read_value(ifs, symmetry_prec);
         }
-        else if (strcmp("force", word) == 0)
+        else if (strcmp("cal_force", word) == 0)
         {
-            read_value(ifs, force);
+            read_value(ifs, cal_force);
         }
-        else if (strcmp("force_set", word) == 0)
+        else if (strcmp("out_force", word) == 0)
         {
-            read_value(ifs, force_set);
+            read_value(ifs, out_force);
         }
         else if (strcmp("force_thr", word) == 0)
         {
@@ -654,46 +653,46 @@ bool Input::Read(const std::string &fn)
         {
             read_value(ifs, press3);
         }
-        else if (strcmp("stress", word) == 0)
+        else if (strcmp("cal_stress", word) == 0)
         {
-            read_value(ifs, stress);
+            read_value(ifs, cal_stress);
         }
         else if (strcmp("fixed_axes", word) == 0)
         {
             read_value(ifs, fixed_axes);
         }
-		else if (strcmp("move_method", word) == 0)
+		else if (strcmp("relax_method", word) == 0)
         {
-            read_value(ifs, ion_dynamics);
+            read_value(ifs, relax_method);
         }
-        else if (strcmp("cg_threshold",word) == 0) // pengfei add 2013-08-15
+        else if (strcmp("relax_cg_thr_e",word) == 0) // pengfei add 2013-08-15
         {
-            read_value(ifs, cg_threshold);
+            read_value(ifs, relax_cg_thr_e);
         }
         else if (strcmp("out_level", word) == 0)
         {
             read_value(ifs, out_level);
             out_md_control = true;
         }
-        else if (strcmp("bfgs_w1", word) == 0)
+        else if (strcmp("relax_bfgs_w1", word) == 0)
         {
-            read_value(ifs, bfgs_w1);
+            read_value(ifs, relax_bfgs_w1);
         }
-        else if (strcmp("bfgs_w2", word) == 0)
+        else if (strcmp("relax_bfgs_w2", word) == 0)
         {
-            read_value(ifs, bfgs_w2);
+            read_value(ifs, relax_bfgs_w2);
         }
-        else if (strcmp("trust_radius_max", word) == 0)
+        else if (strcmp("relax_bfgs_rmax", word) == 0)
         {
-            read_value(ifs, trust_radius_max);
+            read_value(ifs, relax_bfgs_rmax);
         }
-        else if (strcmp("trust_radius_min", word) == 0)
+        else if (strcmp("relax_bfgs_rmin", word) == 0)
         {
-            read_value(ifs, trust_radius_min);
+            read_value(ifs, relax_bfgs_rmin);
         }
-        else if (strcmp("trust_radius_ini", word) == 0)
+        else if (strcmp("relax_bfgs_init", word) == 0)
         {
-            read_value(ifs, trust_radius_ini);
+            read_value(ifs, relax_bfgs_init);
         }
 //		else if (strcmp("gauss_pao_flag", word) == 0)
 //		else if (strcmp("gauss_pao_flag", word) == 0)
@@ -751,9 +750,9 @@ bool Input::Read(const std::string &fn)
         {
             read_value(ifs, diago_proc);
         }
-        else if (strcmp("diago_cg_maxiter", word) == 0)
+        else if (strcmp("diag_cg_nmax", word) == 0)
         {
-            read_value(ifs, diago_cg_maxiter);
+            read_value(ifs, diag_cg_nmax);
         }
         else if (strcmp("diago_cg_prec", word) == 0)//mohan add 2012-03-31
         {
@@ -763,9 +762,9 @@ bool Input::Read(const std::string &fn)
         {
             read_value(ifs, diago_david_ndim);
         }
-        else if (strcmp("ethr", word) == 0)
+        else if (strcmp("diag_thr_e", word) == 0)
         {
-            read_value(ifs, ethr);
+            read_value(ifs, diag_thr_e);
         }
         else if (strcmp("nb2d", word) == 0)
         {
@@ -816,17 +815,17 @@ bool Input::Read(const std::string &fn)
 //----------------------------------------------------------
 // iteration
 //----------------------------------------------------------
-        else if (strcmp("dr2", word) == 0)
+        else if (strcmp("scf_thr_rho", word) == 0)
         {
-            read_value(ifs, dr2);
+            read_value(ifs, scf_thr_rho);
         }
-        else if (strcmp("niter", word) == 0)
+        else if (strcmp("scf_nmax", word) == 0)
         {
-            read_value(ifs, niter);
+            read_value(ifs, scf_nmax);
         }
-        else if (strcmp("nstep", word) == 0)
+        else if (strcmp("relax_nmax", word) == 0)
         {
-            read_value(ifs, this->nstep);
+            read_value(ifs, this->relax_nmax);
         }
         else if (strcmp("out_stru", word) == 0)
         {
@@ -839,19 +838,19 @@ bool Input::Read(const std::string &fn)
         //{
         //    read_value(ifs, occupations);
         //}
-        else if (strcmp("smearing", word) == 0)
+        else if (strcmp("smearing_method", word) == 0)
         {
-            read_value(ifs, smearing);
+            read_value(ifs, smearing_method);
         }
-        else if (strcmp("sigma", word) == 0)
+        else if (strcmp("smearing_sigma", word) == 0)
         {
-            read_value(ifs, degauss);
+            read_value(ifs, smearing_sigma);
         }
-        else if (strcmp("degauss_temp", word) == 0)
+        else if (strcmp("smearing_sigma_temp", word) == 0)
         {
-			double degauss_temp;
-            read_value(ifs, degauss_temp);
-			degauss = degauss_temp * 3.166815e-6;
+			double smearing_sigma_temp;
+            read_value(ifs, smearing_sigma_temp);
+			smearing_sigma = smearing_sigma_temp * 3.166815e-6;
         }
 //----------------------------------------------------------
 // charge mixing
@@ -888,9 +887,9 @@ bool Input::Read(const std::string &fn)
 		{
 			read_value(ifs, read_file_dir);
 		}
-        else if (strcmp("start_wfc", word) == 0)
+        else if (strcmp("init_wfc", word) == 0)
         {
-            read_value(ifs, start_wfc);
+            read_value(ifs, init_wfc);
         }
         else if (strcmp("mem_saver", word) == 0)
         {
@@ -900,17 +899,17 @@ bool Input::Read(const std::string &fn)
         {
             read_value(ifs, printe);
         }
-        else if (strcmp("start_charge", word) == 0)
+        else if (strcmp("init_chg", word) == 0)
         {
-            read_value(ifs, start_pot);
+            read_value(ifs, init_chg);
         }
-        else if (strcmp("charge_extrap", word) == 0)//xiaohui modify 2015-02-01
+        else if (strcmp("chg_extrap", word) == 0)//xiaohui modify 2015-02-01
         {
-            read_value(ifs, charge_extrap);//xiaohui modify 2015-02-01
+            read_value(ifs, chg_extrap);//xiaohui modify 2015-02-01
         }
-        else if (strcmp("out_charge", word) == 0)
+        else if (strcmp("out_chg", word) == 0)
         {
-            read_value(ifs, out_charge);
+            read_value(ifs, out_chg);
         }
         else if (strcmp("out_dm", word) == 0)
         {
@@ -940,17 +939,17 @@ bool Input::Read(const std::string &fn)
         {
             read_value(ifs, deepks_descriptor_lmax);
 		}
-		else if (strcmp("out_potential", word) == 0)
+		else if (strcmp("out_pot", word) == 0)
         {
-            read_value(ifs, out_potential);
+            read_value(ifs, out_pot);
         }
-        else if (strcmp("out_wf", word) == 0)
+        else if (strcmp("out_wfc_pw", word) == 0)
         {
-            read_value(ifs, out_wf);
+            read_value(ifs, out_wfc_pw);
         }
-        else if (strcmp("out_wf_r", word) == 0)
+        else if (strcmp("out_wfc_r", word) == 0)
         {
-            read_value(ifs, out_wf_r);
+            read_value(ifs, out_wfc_r);
         }
 		//mohan add 20090909
         else if (strcmp("out_dos", word) == 0)
@@ -962,22 +961,22 @@ bool Input::Read(const std::string &fn)
             read_value(ifs, out_band);
         }
 
-        else if (strcmp("out_hs", word) == 0)
+        else if (strcmp("out_mat_hs", word) == 0)
         {
-            read_value(ifs, out_hs);
+            read_value(ifs, out_mat_hs);
         }
 		//LiuXh add 2019-07-15
-		else if (strcmp("out_hs2", word) == 0)
+		else if (strcmp("out_mat_hs2", word) == 0)
 		{
-			read_value(ifs, out_hs2);
+			read_value(ifs, out_mat_hs2);
 		}
-		else if (strcmp("out_r", word) == 0)
+		else if (strcmp("out_mat_r", word) == 0)
 		{
-			read_value(ifs, out_r_matrix);
+			read_value(ifs, out_mat_r);
 		}
-        else if (strcmp("out_lowf", word) == 0)
+        else if (strcmp("out_wfc_lcao", word) == 0)
         {
-            read_value(ifs, out_lowf);
+            read_value(ifs, out_wfc_lcao);
         }
         else if (strcmp("out_alllog", word) == 0)
         {
@@ -1033,6 +1032,10 @@ bool Input::Read(const std::string &fn)
 		else if (strcmp("md_type",word) == 0)
 		{
 			read_value(ifs, mdp.md_type);
+		}
+        else if (strcmp("md_nstep",word) == 0)
+		{
+			read_value(ifs, mdp.md_nstep);
 		}
 		else if (strcmp("md_dt",word) == 0)
 		{
@@ -1119,9 +1122,9 @@ bool Input::Read(const std::string &fn)
 		{
 			read_value(ifs,tddft );
 		}
-		else if (strcmp("td_dr2", word) == 0)
+		else if (strcmp("td_scf_thr_rho", word) == 0)
 		{
-			read_value(ifs,td_dr2 );
+			read_value(ifs,td_scf_thr_rho );
 		}
 		else if (strcmp("td_dt", word) == 0)
 		{
@@ -1260,9 +1263,9 @@ bool Input::Read(const std::string &fn)
 			getline(ifs, GlobalV::ocp_set);
 //			ifs.ignore(150, '\n');
 		}
-		else if (strcmp("mulliken", word) == 0)
+		else if (strcmp("out_mul", word) == 0)
 		{
-			read_value(ifs, GlobalV::mulliken);
+			read_value(ifs, GlobalV::out_mul);
 		}//qifeng add 2019/9/10
 //----------------------------------------------------------
 // exx
@@ -1355,10 +1358,6 @@ bool Input::Read(const std::string &fn)
 		else if (strcmp("cell_factor", word) == 0)
 		{
 			read_value(ifs, cell_factor);
-		}
-		else if (strcmp("newdm", word) == 0)
-		{
-			read_value(ifs, new_dm);
 		}
 		else if (strcmp("test_just_neighbor", word) == 0)
 		{
@@ -1739,7 +1738,7 @@ void Input::Bcast()
 // main parameters
 //----------------------------------------------------------
     Parallel_Common::bcast_string( suffix );
-    Parallel_Common::bcast_string( atom_file );//xiaohui modify 2015-02-01
+    Parallel_Common::bcast_string( stru_file );//xiaohui modify 2015-02-01
     Parallel_Common::bcast_string( pseudo_dir );
     Parallel_Common::bcast_string( pseudo_type ); // mohan add 2013-05-20 (xiaohui add 2013-06-23)
 	Parallel_Common::bcast_string( orbital_dir );
@@ -1748,18 +1747,18 @@ void Input::Bcast()
     Parallel_Common::bcast_string( latname );
     Parallel_Common::bcast_string( calculation );
 	Parallel_Common::bcast_double( pseudo_rcut );
-	Parallel_Common::bcast_bool( renormwithmesh );
+	Parallel_Common::bcast_bool( pseudo_mesh );
     Parallel_Common::bcast_int( ntype );
     Parallel_Common::bcast_int( nbands );
 	Parallel_Common::bcast_int( nbands_sto );
     Parallel_Common::bcast_int( nbands_istate );
 	Parallel_Common::bcast_int( nche_sto );
 	Parallel_Common::bcast_int( seed_sto );
-	Parallel_Common::bcast_int( seed );
+	Parallel_Common::bcast_int( pw_seed );
 	Parallel_Common::bcast_double( emax_sto );
 	Parallel_Common::bcast_double( emin_sto );
 	Parallel_Common::bcast_string( stotype );
-	Parallel_Common::bcast_int( npool );
+	Parallel_Common::bcast_int( kpar );
     Parallel_Common::bcast_bool( berry_phase );
 	Parallel_Common::bcast_int( gdir );
 	Parallel_Common::bcast_bool(towannier90);
@@ -1779,27 +1778,27 @@ void Input::Bcast()
 	Parallel_Common::bcast_bool( search_pbc );
     Parallel_Common::bcast_double( search_radius );
     Parallel_Common::bcast_bool( symmetry );
-	Parallel_Common::bcast_bool( set_vel );  //liuyu 2021-07-14
+	Parallel_Common::bcast_bool( init_vel );  //liuyu 2021-07-14
     Parallel_Common::bcast_double( symmetry_prec ); //LiuXh add 2021-08-12, accuracy for symmetry
-    Parallel_Common::bcast_int( force );
-    Parallel_Common::bcast_bool( force_set );
+    Parallel_Common::bcast_int( cal_force );
+    Parallel_Common::bcast_bool( out_force );
     Parallel_Common::bcast_double( force_thr);
     Parallel_Common::bcast_double( force_thr_ev2);
     Parallel_Common::bcast_double( stress_thr); //LiuXh add 20180515
     Parallel_Common::bcast_double( press1);
     Parallel_Common::bcast_double( press2);
     Parallel_Common::bcast_double( press3);
-    Parallel_Common::bcast_bool( stress );
+    Parallel_Common::bcast_bool( cal_stress );
 	Parallel_Common::bcast_string( fixed_axes );
-    Parallel_Common::bcast_string( ion_dynamics );
-    Parallel_Common::bcast_double( cg_threshold); // pengfei add 2013-08-15
+    Parallel_Common::bcast_string( relax_method );
+    Parallel_Common::bcast_double( relax_cg_thr_e); // pengfei add 2013-08-15
 	Parallel_Common::bcast_string( out_level);
     Parallel_Common::bcast_bool( out_md_control);
-    Parallel_Common::bcast_double( bfgs_w1);
-    Parallel_Common::bcast_double( bfgs_w2);
-    Parallel_Common::bcast_double( trust_radius_max);
-    Parallel_Common::bcast_double( trust_radius_min);
-    Parallel_Common::bcast_double( trust_radius_ini);
+    Parallel_Common::bcast_double( relax_bfgs_w1);
+    Parallel_Common::bcast_double( relax_bfgs_w2);
+    Parallel_Common::bcast_double( relax_bfgs_rmax);
+    Parallel_Common::bcast_double( relax_bfgs_rmin);
+    Parallel_Common::bcast_double( relax_bfgs_init);
 
     Parallel_Common::bcast_bool( gamma_only );
     Parallel_Common::bcast_bool( gamma_only_local );
@@ -1816,10 +1815,10 @@ void Input::Bcast()
     Parallel_Common::bcast_int( bz );
 
     Parallel_Common::bcast_int( diago_proc ); //mohan add 2012-01-03
-    Parallel_Common::bcast_int( diago_cg_maxiter );
+    Parallel_Common::bcast_int( diag_cg_nmax );
 	Parallel_Common::bcast_int( diago_cg_prec );
     Parallel_Common::bcast_int( diago_david_ndim );
-    Parallel_Common::bcast_double( ethr );
+    Parallel_Common::bcast_double( diag_thr_e );
 	Parallel_Common::bcast_int( nb2d );
 	Parallel_Common::bcast_int( nurse );
 	Parallel_Common::bcast_bool( colour );
@@ -1833,14 +1832,14 @@ void Input::Bcast()
 	Parallel_Common::bcast_int( test_force );
 	Parallel_Common::bcast_int( test_stress );
 
-    Parallel_Common::bcast_double( dr2 );
-    Parallel_Common::bcast_int( niter );
-    Parallel_Common::bcast_int( this->nstep );
+    Parallel_Common::bcast_double( scf_thr_rho );
+    Parallel_Common::bcast_int( scf_nmax );
+    Parallel_Common::bcast_int( this->relax_nmax );
 	Parallel_Common::bcast_int( out_stru ); //mohan add 2012-03-23
 
     //Parallel_Common::bcast_string( occupations );
-    Parallel_Common::bcast_string( smearing );
-    Parallel_Common::bcast_double( degauss );
+    Parallel_Common::bcast_string( smearing_method );
+    Parallel_Common::bcast_double( smearing_sigma );
 
     Parallel_Common::bcast_string( mixing_mode );
     Parallel_Common::bcast_double( mixing_beta );
@@ -1849,12 +1848,12 @@ void Input::Bcast()
 
     Parallel_Common::bcast_string( restart_mode );
 	Parallel_Common::bcast_string( read_file_dir);
-    Parallel_Common::bcast_string( start_wfc );
+    Parallel_Common::bcast_string( init_wfc );
 	Parallel_Common::bcast_int( mem_saver );
 	Parallel_Common::bcast_int( printe );
-    Parallel_Common::bcast_string( start_pot );
-    Parallel_Common::bcast_string( charge_extrap );//xiaohui modify 2015-02-01
-    Parallel_Common::bcast_int( out_charge );
+    Parallel_Common::bcast_string( init_chg );
+    Parallel_Common::bcast_string( chg_extrap );//xiaohui modify 2015-02-01
+    Parallel_Common::bcast_int( out_chg );
     Parallel_Common::bcast_int( out_dm );
 
     Parallel_Common::bcast_bool( deepks_out_labels ); // caoyu added 2020-11-24, mohan modified 2021-01-03
@@ -1864,15 +1863,15 @@ void Input::Bcast()
 	Parallel_Common::bcast_string( deepks_model );
 	Parallel_Common::bcast_int( deepks_descriptor_lmax );
 
-	Parallel_Common::bcast_int(out_potential);
-    Parallel_Common::bcast_int( out_wf );
-    Parallel_Common::bcast_int( out_wf_r );
+	Parallel_Common::bcast_int(out_pot);
+    Parallel_Common::bcast_int( out_wfc_pw );
+    Parallel_Common::bcast_int( out_wfc_r );
 	Parallel_Common::bcast_int( out_dos );
 	Parallel_Common::bcast_int( out_band );
-	Parallel_Common::bcast_int( out_hs );
-	Parallel_Common::bcast_int( out_hs2 ); //LiuXh add 2019-07-15
-	Parallel_Common::bcast_int( out_r_matrix ); // jingan add 2019-8-14
-	Parallel_Common::bcast_bool( out_lowf );
+	Parallel_Common::bcast_int( out_mat_hs );
+	Parallel_Common::bcast_int( out_mat_hs2 ); //LiuXh add 2019-07-15
+	Parallel_Common::bcast_int( out_mat_r ); // jingan add 2019-8-14
+	Parallel_Common::bcast_bool( out_wfc_lcao );
 	Parallel_Common::bcast_bool( out_alllog );
 	Parallel_Common::bcast_bool( out_element_info );
 
@@ -1899,6 +1898,7 @@ void Input::Bcast()
 */
 	//zheng daye add 2014/5/5
         Parallel_Common::bcast_int(mdp.md_type);
+        Parallel_Common::bcast_int(mdp.md_nstep);
         Parallel_Common::bcast_double(mdp.md_dt);
         Parallel_Common::bcast_int(mdp.md_mnhc);
         Parallel_Common::bcast_double(mdp.msst_qmass);
@@ -1956,7 +1956,7 @@ void Input::Bcast()
 	Parallel_Common::bcast_int(td_val_elec_01);
 	Parallel_Common::bcast_int(td_val_elec_02);
 	Parallel_Common::bcast_int(td_val_elec_03);
-	Parallel_Common::bcast_double(td_dr2);
+	Parallel_Common::bcast_double(td_scf_thr_rho);
 	Parallel_Common::bcast_double(td_dt);
 	Parallel_Common::bcast_double(td_force_dt);
 	Parallel_Common::bcast_int(td_vext);
@@ -1968,7 +1968,7 @@ void Input::Bcast()
 	Parallel_Common::bcast_bool( test_just_neighbor );
 	Parallel_Common::bcast_int(GlobalV::ocp);
 	Parallel_Common::bcast_string(GlobalV::ocp_set);
-    Parallel_Common::bcast_int( GlobalV::mulliken);//qifeng add 2019/9/10
+    Parallel_Common::bcast_int( GlobalV::out_mul);//qifeng add 2019/9/10
 
 	// Peize Lin add 2018-06-20
 	Parallel_Common::bcast_string( dft_functional );
@@ -1996,7 +1996,6 @@ void Input::Bcast()
 
 		//Parallel_Common::bcast_int( epsilon0_choice );
     Parallel_Common::bcast_double( cell_factor); //LiuXh add 20180619
-    Parallel_Common::bcast_int( new_dm ); // Shen Yu add 2019/5/9
     Parallel_Common::bcast_bool( restart_save ); // Peize Lin add 2020.04.04
     Parallel_Common::bcast_bool( restart_load ); // Peize Lin add 2020.04.04
 
@@ -2080,17 +2079,17 @@ void Input::Check(void)
 			ModuleBase::GlobalFunc::AUTO_SET("mem_savre","0");
 		}
 		//xiaohui modify 2015-09-15, 0 -> 1
-        //force = 0;
+        //cal_force = 0;
 /*
 		if(!noncolin)
-        	force = 1;
+        	cal_force = 1;
 		else
 		{
-			force = 0;//modified by zhengdy-soc, can't calculate force now!
+			cal_force = 0;//modified by zhengdy-soc, can't calculate force now!
 			std::cout<<"sorry, can't calculate force with soc now, would be implement in next version!"<<std::endl;
 		}
 */
-                this->nstep = 1;
+                this->relax_nmax = 1;
 
     }
 	else if (calculation == "scf-sto")  // qianrui 2021-2-20
@@ -2100,7 +2099,7 @@ void Input::Check(void)
                         mem_saver = 0;
                         ModuleBase::GlobalFunc::AUTO_SET("mem_savre","0");
                 }
-				this->nstep = 1;
+				this->relax_nmax = 1;
     }
     else if (calculation == "relax")  // pengfei 2014-10-13
     {
@@ -2109,28 +2108,28 @@ void Input::Check(void)
                         mem_saver = 0;
                         ModuleBase::GlobalFunc::AUTO_SET("mem_savre","0");
                 }
-                force = 1;
-				if(! this->nstep) this->nstep = 50;
+                cal_force = 1;
+				if(! this->relax_nmax) this->relax_nmax = 50;
     }
 
     else if (calculation == "nscf")
     {
 		GlobalV::CALCULATION = "nscf";
-        this->nstep = 1;
+        this->relax_nmax = 1;
 		out_stru = 0;
 
 		//if (local_basis == 0 && linear_scaling == 0) xiaohui modify 2013-09-01
 		if (basis_type == "pw") //xiaohui add 2013-09-01. Attention! maybe there is some problem
 		{
-			if (ethr>1.0e-3)
+			if (diag_thr_e>1.0e-3)
         	{
-        	    ethr = 1.0e-5;
+        	    diag_thr_e = 1.0e-5;
         	}
 		}
-		if(force) // mohan add 2010-09-07
+		if(cal_force) // mohan add 2010-09-07
 		{
-			force = false;
-			ModuleBase::GlobalFunc::AUTO_SET("force","false");
+			cal_force = false;
+			ModuleBase::GlobalFunc::AUTO_SET("cal_force","false");
 		}
 		if (out_dos == 3 && symmetry)
 		{
@@ -2140,17 +2139,17 @@ void Input::Check(void)
 	else if(calculation == "istate")
 	{
 		GlobalV::CALCULATION = "istate";
-		this->nstep = 1;
+		this->relax_nmax = 1;
 		out_stru = 0;
 		out_dos = 0;
                 out_band = 0;
-		force=0;
-		start_wfc = "file";
-		start_pot = "atomic"; // useless,
-		charge_extrap = "atomic"; //xiaohui modify 2015-02-01
-		out_charge = 1; // this leads to the calculation of state charge.
+		cal_force=0;
+		init_wfc = "file";
+		init_chg = "atomic"; // useless,
+		chg_extrap = "atomic"; //xiaohui modify 2015-02-01
+		out_chg = 1; // this leads to the calculation of state charge.
 		out_dm = 0;
-		out_potential = 0;
+		out_pot = 0;
 
 		//if(!local_basis || !linear_scaling) xiaohui modify 2013-09-01
 		if(basis_type == "pw") //xiaohui add 2013-09-01
@@ -2161,17 +2160,17 @@ void Input::Check(void)
 	else if(calculation == "ienvelope")
 	{
 		GlobalV::CALCULATION = "ienvelope"; // mohan fix 2011-11-04
-		this->nstep = 1;
+		this->relax_nmax = 1;
 		out_stru = 0;
 		out_dos = 0;
                 out_band = 0;
-		force = 0;
-		start_wfc = "file";
-		start_pot = "atomic";
-		charge_extrap = "atomic"; //xiaohui modify 2015-02-01
-		out_charge = 1;
+		cal_force = 0;
+		init_wfc = "file";
+		init_chg = "atomic";
+		chg_extrap = "atomic"; //xiaohui modify 2015-02-01
+		out_chg = 1;
 		out_dm = 0;
-		out_potential = 0;
+		out_pot = 0;
 		//if(!local_basis || !linear_scaling) xiaohui modify 2013-09-01
 		if(basis_type == "pw") //xiaohui add 2013-09-01
 		{
@@ -2182,10 +2181,11 @@ void Input::Check(void)
 	{
 		GlobalV::CALCULATION = "md";
 		symmetry = false;
-		force = 1;
-		if(this->nstep==0){
-			GlobalV::ofs_running<<"nstep should be set. Autoset nstep to 50!"<<endl;
-			this->nstep = 50;
+		cal_force = 1;
+		if(mdp.md_nstep == 0)
+        {
+			GlobalV::ofs_running<<"md_nstep should be set. Autoset md_nstep to 50!"<<endl;
+			mdp.md_nstep = 50;
 		}
         if(!out_md_control) out_level = "m";//zhengdy add 2019-04-07
 
@@ -2194,47 +2194,47 @@ void Input::Check(void)
         if(mdp.md_dt < 0) ModuleBase::WARNING_QUIT("Input::Check","time interval of MD calculation should be set!");
         if(mdp.md_tfirst < 0) ModuleBase::WARNING_QUIT("Input::Check","temperature of MD calculation should be set!");
         if(mdp.md_tlast  < 0.0) mdp.md_tlast = mdp.md_tfirst;
-        if(mdp.md_tfirst!=mdp.md_tlast)
-        {
-            std::ifstream file1;
-            file1.open("ChangeTemp.dat");
-            if(!file1)                      // Peize Lin fix bug 2016-08-06
-           {
-                std::ofstream file;
-                file.open("ChangeTemp.dat");
-                for(int ii=0;ii<30;ii++)
-                {
-                    file<<mdp.md_tfirst+(mdp.md_tlast-mdp.md_tfirst)/double(30)*double(ii+1)<<" ";
-                }
-                file.close();
-            }
-            else
-                file1.close();
-        }
+        // if(mdp.md_tfirst!=mdp.md_tlast)
+        // {
+        //     std::ifstream file1;
+        //     file1.open("ChangeTemp.dat");
+        //     if(!file1)                      // Peize Lin fix bug 2016-08-06
+        //    {
+        //         std::ofstream file;
+        //         file.open("ChangeTemp.dat");
+        //         for(int ii=0;ii<30;ii++)
+        //         {
+        //             file<<mdp.md_tfirst+(mdp.md_tlast-mdp.md_tfirst)/double(30)*double(ii+1)<<" ";
+        //         }
+        //         file.close();
+        //     }
+        //     else
+        //         file1.close();
+        // }
 
 	}
 	else if(calculation == "cell-relax") // mohan add 2011-11-04
 	{
-		force = 1;
-		stress = 1;
-		if(! this->nstep) this->nstep = 50;
+		cal_force = 1;
+		cal_stress = 1;
+		if(! this->relax_nmax) this->relax_nmax = 50;
 	}
 	else if(calculation == "test")
 	{
-		this->nstep = 1;
+		this->relax_nmax = 1;
 	}
     else
     {
         ModuleBase::WARNING_QUIT("Input","check 'calculation' !");
     }
-    if (start_pot != "atomic" && start_pot != "file")
+    if (init_chg != "atomic" && init_chg != "file")
     {
-        ModuleBase::WARNING_QUIT("Input","wrong 'start_pot',not 'atomic', 'file',please check");
+        ModuleBase::WARNING_QUIT("Input","wrong 'init_chg',not 'atomic', 'file',please check");
     }
-	//xiaohui modify 2014-05-10, extra_pot value changes to 0~7
-	//if (extra_pot <0 ||extra_pot > 7)
+	//xiaohui modify 2014-05-10, chg_extrap value changes to 0~7
+	//if (chg_extrap <0 ||chg_extrap > 7)
 	//{
-	//	ModuleBase::WARNING_QUIT("Input","wrong 'extra_pot',neither 0~7.");
+	//	ModuleBase::WARNING_QUIT("Input","wrong 'chg_extrap',neither 0~7.");
 	//}xiaohui modify 2015-02-01
 	if(gamma_only_local==0)
 	{
@@ -2244,38 +2244,38 @@ void Input::Check(void)
 		}
 	}
 
-	//if(extra_pot==4 && local_basis==0) xiaohui modify 2013-09-01
-	if(charge_extrap=="dm" && basis_type=="pw") //xiaohui add 2013-09-01, xiaohui modify 2015-02-01
+	//if(chg_extrap==4 && local_basis==0) xiaohui modify 2013-09-01
+	if(chg_extrap=="dm" && basis_type=="pw") //xiaohui add 2013-09-01, xiaohui modify 2015-02-01
 	{
-		ModuleBase::WARNING_QUIT("Input","wrong 'charge_extrap=dm' is only available for local orbitals.");//xiaohui modify 2015-02-01
+		ModuleBase::WARNING_QUIT("Input","wrong 'chg_extrap=dm' is only available for local orbitals.");//xiaohui modify 2015-02-01
 	}
 
-	if(charge_extrap=="dm" || force>1)
+	if(chg_extrap=="dm" || cal_force>1)
 	{
 		//if(out_dm==0) out_dm = 10000;//at least must output the density matrix at the last electron iteration step.
 	}
-	//if(charge_extrap != "dm")//xiaohui add 2015-02-01
+	//if(chg_extrap != "dm")//xiaohui add 2015-02-01
 	//{
 	//	if(calculation=="relax")//xiaohui add 2015-02-01
 	//	{
-	//		charge_extrap = "first-order";
+	//		chg_extrap = "first-order";
 	//	}
 	//	if(calculation=="md")//xiaohui add 2015-02-01
 	//	{
-	//		charge_extrap = "second-order";
+	//		chg_extrap = "second-order";
 	//	}
 	//}
 
-    if (GlobalV::CALCULATION=="nscf" && start_pot != "file")
+    if (GlobalV::CALCULATION=="nscf" && init_chg != "file")
     {
-        start_pot = "file";
-        ModuleBase::GlobalFunc::AUTO_SET("start_pot",start_pot);
+        init_chg = "file";
+        ModuleBase::GlobalFunc::AUTO_SET("init_chg",init_chg);
     }
 
-    if (start_wfc != "atomic" && start_wfc != "atomic+random" && start_wfc != "random" &&
-            start_wfc != "file")
+    if (init_wfc != "atomic" && init_wfc != "atomic+random" && init_wfc != "random" &&
+            init_wfc != "file")
     {
-        ModuleBase::WARNING_QUIT("Input","wrong start_wfc, please use 'atomic' or 'random' or 'file' ");
+        ModuleBase::WARNING_QUIT("Input","wrong init_wfc, please use 'atomic' or 'random' or 'file' ");
     }
 
     if (nbands > 100000)
@@ -2447,9 +2447,9 @@ void Input::Check(void)
 	}
 
 	// pengfei add 13-8-10 a new method cg to bfgs
-	if(ion_dynamics!= "sd" && ion_dynamics!="cg" && ion_dynamics!="bfgs" && ion_dynamics!="cg_bfgs")
+	if(relax_method!= "sd" && relax_method!="cg" && relax_method!="bfgs" && relax_method!="cg_bfgs")
 	{
-		 ModuleBase::WARNING_QUIT("Input","ion_dynamics can only be sd, cg, bfgs or cg_bfgs.");
+		 ModuleBase::WARNING_QUIT("Input","relax_method can only be sd, cg, bfgs or cg_bfgs.");
 	}
 
 	if(basis_type=="pw")

@@ -14,7 +14,7 @@
 		"rcut":			6,
 		"pseudo_dir":	"/home/nic/wszhang/eclipse_project/delta_dft/CIF_POT/SG15_ONCV_PBE-1.0/",
 		"pseudo":		"Si_ONCV_PBE-1.0.upf",
-		"sigma":		0.01
+		"smearing_sigma":		0.01
 	},
 	"orbital":	[2,2,1]
 }

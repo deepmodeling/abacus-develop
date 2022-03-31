@@ -12,6 +12,7 @@
 #include<sys/time.h>
 
 // Peize Lin add 2015-11-11
+#ifdef __MPI
 static void MPI_RANK_OFSTREAM( const std::string& file_name, std::stringstream &content )
 {
 	std::stringstream file;
@@ -24,6 +25,7 @@ static void MPI_RANK_OFSTREAM( const std::string& file_name, std::stringstream &
 	content.str("");
 	ofs.close();
 }
+#endif
 
 // Peize Lin add 2016-06-06
 template<typename T1,typename T2>

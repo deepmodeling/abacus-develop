@@ -4,7 +4,8 @@
 
 #include "global_fp.h" // mohan add 2021-01-30
 
-Build_ST_pw::Build_ST_pw()
+Build_ST_pw::Build_ST_pw(LCAO_Matrix* lm):
+LM(lm)
 {
 
 }
@@ -25,11 +26,11 @@ void Build_ST_pw::set_ST(const int &ik, const char& dtype)
 		{
 			for(int i=0; i<GlobalV::NLOCAL; i++)
 			{
-				const int mu = GlobalC::ParaO.trace_loc_row[i];
+				const int mu = this->LM->ParaV->trace_loc_row[i];
 				if(mu < 0)continue;
 				for(int j=0; j<GlobalV::NLOCAL; j++)
 				{
-					const int nu = GlobalC::ParaO.trace_loc_col[j];
+					const int nu = this->LM->ParaV->trace_loc_col[j];
 					if(nu < 0)continue;
 					
 					if(GlobalV::NSPIN!=4)
@@ -45,7 +46,7 @@ void Build_ST_pw::set_ST(const int &ik, const char& dtype)
 						// The results are saved in Sloc2.
 						// 2 stands for k points.
 						//-----------------------------------
-						GlobalC::LM.Sloc2[ mu * GlobalC::ParaO.ncol + nu ] = v;
+						this->LM->Sloc2[ mu * this->LM->ParaV->ncol + nu ] = v;
 					}
 					else//added by zhengdy-soc
 					{
@@ -57,14 +58,14 @@ void Build_ST_pw::set_ST(const int &ik, const char& dtype)
 							v2 += conj(GlobalC::wf.wanf2[ik](mu, ig + GlobalC::wf.npwx)) * GlobalC::wf.wanf2[ik](nu, ig);
 							v3 += conj(GlobalC::wf.wanf2[ik](mu, ig + GlobalC::wf.npwx)) * GlobalC::wf.wanf2[ik](nu, ig + GlobalC::wf.npwx);
 						}
-						GlobalC::LM.Sloc2_soc(0, mu * GlobalC::ParaO.ncol + nu) = v0;
-						GlobalC::LM.Sloc2_soc(1, mu * GlobalC::ParaO.ncol + nu) = v1;
-						GlobalC::LM.Sloc2_soc(2, mu * GlobalC::ParaO.ncol + nu) = v2;
-						GlobalC::LM.Sloc2_soc(3, mu * GlobalC::ParaO.ncol + nu) = v3;*/
+						this->LM->Sloc2_soc(0, mu * this->LM->ParaV->ncol + nu) = v0;
+						this->LM->Sloc2_soc(1, mu * this->LM->ParaV->ncol + nu) = v1;
+						this->LM->Sloc2_soc(2, mu * this->LM->ParaV->ncol + nu) = v2;
+						this->LM->Sloc2_soc(3, mu * this->LM->ParaV->ncol + nu) = v3;*/
 						std::complex<double> v0 = ModuleBase::ZERO;
 						for (int ig = 0; ig < GlobalC::wf.npwx*GlobalV::NPOL; ig++)
 							v0 += conj(GlobalC::wf.wanf2[ik](mu, ig)) * GlobalC::wf.wanf2[ik](nu, ig);
-						GlobalC::LM.Sloc2[ mu * GlobalC::ParaO.ncol + nu ] = v0;
+                        this->LM->Sloc2[mu * this->LM->ParaV->ncol + nu] = v0;
 
 					}
 				}
@@ -80,11 +81,11 @@ void Build_ST_pw::set_ST(const int &ik, const char& dtype)
 
 			for(int i=0; i<GlobalV::NLOCAL; i++)
 			{
-				const int mu = GlobalC::ParaO.trace_loc_row[i];
+				const int mu = this->LM->ParaV->trace_loc_row[i];
 				if(mu < 0)continue;
 				for(int j=0; j<GlobalV::NLOCAL; j++)
 				{
-					const int nu = GlobalC::ParaO.trace_loc_col[j];
+					const int nu = this->LM->ParaV->trace_loc_col[j];
 					if(nu < 0)continue;
 					
 					std::complex<double> v = ModuleBase::ZERO;
@@ -102,8 +103,8 @@ void Build_ST_pw::set_ST(const int &ik, const char& dtype)
 					//-----------------------------------------
 					// The results are saved in Hloc_fixed2.
 					//-----------------------------------------
-					GlobalC::LM.Hloc_fixed2[ mu * GlobalC::ParaO.ncol + nu ] = v;
-				}
+                    this->LM->Hloc_fixed2[mu * this->LM->ParaV->ncol + nu] = v;
+                }
 			}
 			break;
 		}
@@ -170,10 +171,10 @@ void Build_ST_pw::set_local(const int &ik)
 					v += conj( GlobalC::wf.wanf2[ik](j,ig) ) * hpsi[ig];
 				}
 	//			vij(j, i) = v;
-				GlobalC::LM.set_HSk(j,i,v,'L');
+				this->LM->set_HSk(j,i,v,'L');
 				if(i!=j)
 				{
-					GlobalC::LM.set_HSk(i,j,conj(v),'L');
+					this->LM->set_HSk(i,j,conj(v),'L');
 				}
 			}
 		}
@@ -234,10 +235,10 @@ void Build_ST_pw::set_local(const int &ik)
 					v += conj( GlobalC::wf.wanf2[ik](j,ig + GlobalC::wf.npwx) ) * hpsi[ig + GlobalC::wf.npwx];
 				}
 //			vij(j, i) = v;
-				GlobalC::LM.set_HSk(j,i,v,'L');
+				this->LM->set_HSk(j,i,v,'L');
 				if(i!=j)
 				{
-					GlobalC::LM.set_HSk(i,j,conj(v),'L');
+					this->LM->set_HSk(i,j,conj(v),'L');
 				}
 			}
 			delete[] psi_down;

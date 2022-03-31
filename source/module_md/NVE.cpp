@@ -6,12 +6,12 @@ NVE::NVE(MD_parameters& MD_para_in, UnitCell_pseudo &unit_in) : Verlet(MD_para_i
 
 NVE::~NVE(){}
 
-void NVE::setup()
+void NVE::setup(ModuleESolver::ESolver *p_ensolve)
 {
     ModuleBase::TITLE("NVE", "setup");
     ModuleBase::timer::tick("NVE", "setup");
     
-    Verlet::setup();
+    Verlet::setup(p_ensolve);
 
     ModuleBase::timer::tick("NVE", "setup");
 }

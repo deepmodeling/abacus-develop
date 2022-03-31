@@ -8,16 +8,16 @@ calculation		md
 
 #Parameter (Accuracy)
 ecutwfc			50
-niter			30
+scf_nmax			30
 
-smearing		gaussian
-sigma			0.02
+smearing_method		gaussian
+smearing_sigma			0.02
 
 basis_type		lcao
 gamma_only		0
-nstep			1	
+md_nstep			1	
 
-dr2			1.0e-6
+scf_thr_rho			1.0e-6
 
 tddft			1
 

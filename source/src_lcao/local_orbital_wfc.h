@@ -8,33 +8,36 @@
 
 class Local_Orbital_wfc
 {
-	public:
+public:
 
 	Local_Orbital_wfc();
 	~Local_Orbital_wfc();
 
-	// used to generate density matrix: GlobalC::LOC.DM_R,
-	// which is used to calculate the charge density. 
-	// which is got after the diagonalization of 
-	// std::complex Hamiltonian matrix.
-	std::complex<double>*** WFC_K; // [NK, GlobalV::NBANDS, GlobalV::NLOCAL]	
-	std::complex<double>* WFC_K_POOL; // [NK*GlobalV::NBANDS*GlobalV::NLOCAL]
+    ///=========================================
+    /// grid wfc 
+    /// used to generate density matrix: LOC.DM_R,
+	/// which is used to calculate the charge density. 
+	/// which is got after the diagonalization of 
+    /// std::complex Hamiltonian matrix.
+    ///=========================================
+    //( Old Name: WFC_K)
+    std::complex<double>*** wfc_k_grid; // [NK, GlobalV::NBANDS, GlobalV::NLOCAL]	
+    //( Old Name: WFC_K_POOL)
+    std::complex<double>* wfc_k_grid2; // [NK*GlobalV::NBANDS*GlobalV::NLOCAL]
 
-	// augmented wave functions to 'c',
-	// used to generate density matrix 
-	// according to 2D data block.
-	// mohan add 2010-09-26
-	// daug means : dimension of augmented wave functions
-	double*** WFC_GAMMA_aug; // [GlobalV::NSPIN, GlobalV::NBANDS, daug];
-	std::complex<double>*** WFC_K_aug; // [NK, GlobalV::NBANDS, daug];
-	int* trace_aug;
-	
-	// how many elements are missing. 
-	int daug;
+    ///=========================================
+    /// 2d wfc
+    /// directly output from elpa interface
+    /// used to calculate density matrix LOC.dm_gamma and LOC.dm_k
+    ///=========================================
+    std::vector<ModuleBase::matrix> wfc_gamma;			// dm_gamma[is](iw1,iw2);
+    std::vector<ModuleBase::ComplexMatrix> wfc_k;		// dm_k[ik](iw1,iw2);
 
-	void allocate_k(const Grid_Technique &gt);
-	void set_trace_aug(const Grid_Technique &gt);
-	bool get_allocate_aug_flag(void)const{return allocate_aug_flag;}
+    const Parallel_Orbitals *ParaV;
+
+
+    void allocate_k(const Grid_Technique& gt,
+        Local_Orbital_wfc &lowf);
 
     //=========================================
     // Init Cij, make it satisfy 2 conditions:
@@ -42,18 +45,85 @@ class Local_Orbital_wfc
     // (2) Orthogonal <i|S|j>= \delta{ij}
     //=========================================
 	// void init_Cij(const bool change_c = 1);
-	bool get_allocate_flag(void)const{return allocate_flag;}	
 
-	// mohan move orb_con here, 2021-05-24 
-	ORB_control orb_con;
-	
-	private:
+
+    ///=========================================
+    ///Parallel: map of index in 2D distribution: global<->local
+    ///=========================================
+    static int globalIndex(int localindex, int nblk, int nprocs, int myproc);
+    static int localIndex(int globalindex, int nblk, int nprocs, int& myproc);
+
+#ifdef __MPI
+    ///=========================================
+    ///Parallel: convert the distribution of wavefunction from 2D to grid
+    ///=========================================
+    /// For gamma_only, T = double; 
+    /// For multi-k, T = complex<double>;
+    /// Set myid and ctot when output is needed;
+    /// Set wfc as nullptr when 2d-to-grid convertion is not needed.
+    
+    // Notice: here I reload this function rather than use template
+    // (in which the implementation should be put in header file )
+    // because sub-function `write_lowf_complex`contains GlobalC declared in `global.h`
+    // which will cause lots of "not defined" if included in a header file.
+    void wfc_2d_to_grid(int out_wfc_lcao, double* wfc_2d, double** wfc_grid);
+    void wfc_2d_to_grid(int out_wfc_lcao, std::complex<double>* wfc_2d, std::complex<double>** wfc_grid, int ik);
+#endif
+
+private:
+    template <typename T>
+    int set_wfc_grid(
+        int naroc[2],
+        int nb,
+        int dim0,
+        int dim1,
+        int iprow,
+        int ipcol,
+        T* work,
+        T** wfc,
+        int myid = -1,
+        T** ctot = nullptr);
 
 	bool wfck_flag; 
 	bool complex_flag;
 	bool allocate_flag;
-	bool allocate_aug_flag;
 
 };
+
+#ifdef __MPI
+template <typename T>
+int Local_Orbital_wfc::set_wfc_grid(
+    int naroc[2],
+    int nb,
+    int dim0,
+    int dim1,
+    int iprow,
+    int ipcol,
+    T* work,
+    T** wfc,
+    int myid,
+    T** ctot)
+{
+    ModuleBase::TITLE(" Local_Orbital_wfc", "set_wfc_grid");
+    if (!wfc && !ctot) return 0;
+    for (int j = 0; j < naroc[1]; ++j)
+    {
+        int igcol=globalIndex(j, nb, dim1, ipcol);
+        if(igcol>=GlobalV::NBANDS) continue;
+        for(int i=0; i<naroc[0]; ++i)
+        {
+            int igrow=globalIndex(i, nb, dim0, iprow);
+	        int mu_local=GlobalC::GridT.trace_lo[igrow];
+            if (wfc && mu_local >= 0)
+            {
+                wfc[igcol][mu_local]=work[j*naroc[0]+i];
+            }
+            if (ctot && myid == 0)
+                ctot[igcol][igrow] = work[j * naroc[0] + i];
+        }
+    }
+    return 0;
+}
+#endif
 
 #endif

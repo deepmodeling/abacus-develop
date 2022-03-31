@@ -15,12 +15,12 @@ NVT_ADS::NVT_ADS(MD_parameters& MD_para_in, UnitCell_pseudo &unit_in) : Verlet(M
 
 NVT_ADS::~NVT_ADS(){}
 
-void NVT_ADS::setup()
+void NVT_ADS::setup(ModuleESolver::ESolver *p_ensolve)
 {
     ModuleBase::TITLE("NVT_ADS", "setup");
     ModuleBase::timer::tick("NVT_ADS", "setup");
 
-    Verlet::setup();
+    Verlet::setup(p_ensolve);
 
     ModuleBase::timer::tick("NVT_ADS", "setup");
 }

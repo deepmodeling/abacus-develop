@@ -54,18 +54,18 @@ void Driver_classic::convert(UnitCell_pseudo &ucell_c)
     ModuleBase::TITLE("Driver_classic","convert");
 	ModuleBase::timer::tick("Driver_classic","convert");
 
-    if(INPUT.atom_file!="") GlobalV::global_atom_card = INPUT.atom_file;
+    if(INPUT.stru_file!="") GlobalV::stru_file = INPUT.stru_file;
     GlobalV::CALCULATION = INPUT.calculation;
 	GlobalV::BASIS_TYPE = INPUT.basis_type;
     GlobalV::OUT_LEVEL = INPUT.out_level;
     GlobalV::SEARCH_RADIUS = max(INPUT.search_radius,(INPUT.mdp.lj_rcut+2)*ModuleBase::ANGSTROM_AU);
 	GlobalV::SEARCH_PBC = INPUT.search_pbc;
-    GlobalV::NSTEP = INPUT.nstep;
+    GlobalV::MD_NSTEP = INPUT.mdp.md_nstep;
 
-	GlobalV::FORCE = INPUT.force;
+	GlobalV::CAL_FORCE = INPUT.cal_force;
     GlobalV::FORCE_THR = INPUT.force_thr;
 
-	GlobalV::STRESS = INPUT.stress;
+	GlobalV::CAL_STRESS = INPUT.cal_stress;
     GlobalV::STRESS_THR = INPUT.stress_thr;
     GlobalV::PRESS1 = INPUT.press1;
     GlobalV::PRESS2 = INPUT.press2;
@@ -73,7 +73,7 @@ void Driver_classic::convert(UnitCell_pseudo &ucell_c)
 
     ucell_c.latName = INPUT.latname; 
 	ucell_c.ntype = INPUT.ntype;
-	ucell_c.set_vel = INPUT.set_vel;
+	ucell_c.init_vel = INPUT.init_vel;
 
 }
 

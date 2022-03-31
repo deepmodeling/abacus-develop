@@ -2,7 +2,7 @@
 #include "../src_pw/global.h"
 #include "../src_parallel/parallel_reduce.h"
 #ifdef __LCAO
-void Dos::calculate_Mulliken(const std::string &fa)
+void Dos::calculate_Mulliken(const std::string &fa, Gint_Gamma &gg)
 {
 	ModuleBase::TITLE("Dos","calculate_Mulliken");
 	std::ofstream ofs;
@@ -24,7 +24,7 @@ void Dos::calculate_Mulliken(const std::string &fa)
 			ModuleBase::GlobalFunc::ZEROS(mulliken[is], GlobalV::NLOCAL);
 		}
 		
-		GlobalC::UHM.GG.cal_mulliken( mulliken );	
+		gg.cal_mulliken( mulliken );	
 
 		if(GlobalV::MY_RANK==0)
 		{
@@ -433,7 +433,7 @@ void Dos::nscf_band(
 	
 	// old version
 	/*
-	for(int ip=0;ip<GlobalV::NPOOL;ip++)
+	for(int ip=0;ip<GlobalV::KPAR;ip++)
 	{
 		if(GlobalV::MY_POOL == ip && GlobalV::RANK_IN_POOL == 0)
 		{

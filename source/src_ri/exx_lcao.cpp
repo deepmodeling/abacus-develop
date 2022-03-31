@@ -1,3 +1,4 @@
+#ifdef __MPI   
 #include "exx_lcao.h"
 
 #include "../src_pw/global.h"
@@ -41,7 +42,6 @@
 #include "../src_external/src_test/src_global/sph_bessel-unittest.h"
 #include "../src_external/src_test/src_ri/exx_lcao-test.h"
 #include "../src_external/src_test/src_ri/abfs-test.h"
-#include "../src_lcao/LCAO_nnr.h"
 
 /*
 // m_new( i2*n1+i1, i3 ) = m( i1*n2+i2, i3 )
@@ -250,7 +250,7 @@ void Exx_Lcao::init()
 				orb.getDk(),
 				orb.getDruniform(),
 				false,
-				true, GlobalV::FORCE
+				true, GlobalV::CAL_FORCE
 			);
 			orb_psi_F.set_orbital_info
 			(
@@ -267,7 +267,7 @@ void Exx_Lcao::init()
 				orb.getDk(),
 				orb.getDruniform(),
 				false,
-				false, GlobalV::FORCE
+				false, GlobalV::CAL_FORCE
 			);
 			orb_psif_T.set_orbital_info
 			(
@@ -284,7 +284,7 @@ void Exx_Lcao::init()
 				orb.getDk(),
 				orb.getDruniform(),
 				false,
-				true, GlobalV::FORCE
+				true, GlobalV::CAL_FORCE
 			);
 			orb_psik_T.set_orbital_info
 			(
@@ -301,7 +301,7 @@ void Exx_Lcao::init()
 				orb.getDk(),
 				orb.getDruniform(),
 				false,
-				true, GlobalV::FORCE
+				true, GlobalV::CAL_FORCE
 			);
 			orb_psik2_T.set_orbital_info
 			(
@@ -318,7 +318,7 @@ void Exx_Lcao::init()
 				orb.getDk(),
 				orb.getDruniform(),
 				false,
-				true, GlobalV::FORCE
+				true, GlobalV::CAL_FORCE
 			);
 			pr_orb( file+"-orb",orb );
 			pr_orb( file+"-orb_psi_T",orb_psi_T );
@@ -346,7 +346,7 @@ void Exx_Lcao::init()
 				orb.getDk(),
 				orb.getDruniform(),
 				false,
-				true, GlobalV::FORCE
+				true, GlobalV::CAL_FORCE
 			);
 			orb_kmesh.set_orbital_info
 			(
@@ -363,7 +363,7 @@ void Exx_Lcao::init()
 				orb_psi_T.getDk(),
 				orb_psi_T.getDruniform(),
 				false,
-				true, GlobalV::FORCE
+				true, GlobalV::CAL_FORCE
 			);
 			pr_orb( file+"-orb",orb );
 			pr_orb( file+"-orb_kmesh",orb_kmesh );
@@ -530,6 +530,7 @@ gettimeofday( &t_start_all, NULL);
 //	DM.flag_mix = info.separate_loop ? false : true;
 //	DM.flag_mix = false;		// Peize Lin test
 
+#ifdef __MPI
 	if(GlobalC::exx_global.info.separate_loop)
 	{
 		Hexx_para.mixing_mode = Exx_Abfs::Parallel::Communicate::Hexx::Mixing_Mode::No;
@@ -551,13 +552,16 @@ gettimeofday( &t_start_all, NULL);
 		}
 		Hexx_para.mixing_beta = GlobalC::CHR.mixing_beta;
 	}
+#endif
 
 gettimeofday( &t_start, NULL);
 	this->lcaos = Exx_Abfs::Construct_Orbs::change_orbs( GlobalC::ORB, this->kmesh_times );
 ofs_mpi<<"TIME@ Exx_Abfs::Construct_Orbs::change_orbs\t"<<time_during(t_start)<<std::endl;
 
 ofs_mpi<<info.files_abfs<<std::endl;
+#ifdef __MPI
 	Exx_Abfs::Util::bcast( info.files_abfs, 0, MPI_COMM_WORLD );
+#endif
 ofs_mpi<<info.files_abfs<<std::endl;
 
 gettimeofday( &t_start, NULL);
@@ -792,7 +796,7 @@ ofs_mpi.close();
 	};
 }
 
-void Exx_Lcao::cal_exx_ions()
+void Exx_Lcao::cal_exx_ions(const Parallel_Orbitals &pv)
 {
 	ModuleBase::TITLE("Exx_Lcao","cal_exx_ions");
 std::ofstream ofs_mpi(test_dir.process+"time_"+ModuleBase::GlobalFunc::TO_STRING(GlobalV::MY_RANK),std::ofstream::app);
@@ -811,6 +815,7 @@ gettimeofday( &t_start_all, NULL);
 	};
 	
 gettimeofday( &t_start, NULL);
+#ifdef __MPI
 	if(atom_pairs_core_origin.empty())
 		switch(this->info.distribute_type)
 		{
@@ -826,6 +831,7 @@ gettimeofday( &t_start, NULL);
 				throw std::domain_error(ModuleBase::GlobalFunc::TO_STRING(__FILE__)+" line "+ModuleBase::GlobalFunc::TO_STRING(__LINE__));  break;
 				//throw std::domain_error(ModuleBase::GlobalFunc::TO_STRING(static_cast<std::underlying_type<Exx_Lcao::Distribute_Type>::type>(info.distribute_type))+"\t"+ModuleBase::GlobalFunc::TO_STRING(__FILE__)+" line "+ModuleBase::GlobalFunc::TO_STRING(__LINE__));	break;
 		}
+#endif
 ofs_mpi<<"atom_pairs_core_origin\t"<<atom_pairs_core_origin.size()<<std::endl;
 ofs_mpi<<"TIME@ Htime::distribute\t"<<time_during(t_start)<<std::endl;
 //std::ofstream ofs_atom_pair("atom_pair+"+ModuleBase::GlobalFunc::TO_STRING(GlobalV::MY_RANK));
@@ -884,11 +890,11 @@ ofs_mpi<<"TIME@ cauchy::init\t"<<time_during(t_start)<<std::endl;
 	#if EXX_DM==2
 	DM_para.init( H_atom_pairs_core, info.dm_threshold );
 	#elif EXX_DM==3
-	DM_para.allreduce.init( MPI_COMM_WORLD, Abfs::get_H_pairs_core_group( atom_pairs_core ) );
+	DM_para.allreduce.init( MPI_COMM_WORLD, Abfs::get_H_pairs_core_group( atom_pairs_core ), pv);
 	#endif
 	
 	#if EXX_H_COMM==2
-	Hexx_para.allreduce2.init(MPI_COMM_WORLD, H_atom_pairs_core);
+	Hexx_para.allreduce2.init(MPI_COMM_WORLD, H_atom_pairs_core, pv);
 	#endif
 	
 ofs_mpi<<"TIME@ Exx_Lcao::cal_exx_ions\t"<<time_during(t_start_all)<<std::endl;
@@ -914,7 +920,7 @@ ofs_mpi.close();
 	#endif
 }
 
-void Exx_Lcao::cal_exx_elec()
+void Exx_Lcao::cal_exx_elec(Local_Orbital_Charge &loc, complex<double>*** wfc_k_grid)
 {
 	ModuleBase::TITLE("Exx_Lcao","cal_exx_elec");
 
@@ -937,7 +943,7 @@ gettimeofday( &t_start_all, NULL);
 
 #if EXX_DM==1
 gettimeofday( &t_start, NULL);
-	this->DM_para.cal_DM( Born_von_Karman_period, H_atom_pairs_core, info.dm_threshold );
+	this->DM_para.cal_DM( Born_von_Karman_period, H_atom_pairs_core, info.dm_threshold, loc.DM, loc.DM_R, wfc_k_grid,);
 ofs_mpi<<"TIME@ Exx_Lcao::cal_DM\t"<<time_during(t_start)<<std::endl;
 #elif EXX_DM==2
 gettimeofday( &t_start, NULL);
@@ -946,15 +952,18 @@ gettimeofday( &t_start, NULL);
 ofs_mpi<<"TIME@ Exx_Lcao::cal_DM\t"<<time_during(t_start)<<std::endl;
 #elif EXX_DM==3
 gettimeofday( &t_start, NULL);
-	this->DM_para.cal_DM(info.dm_threshold);
+	this->DM_para.cal_DM(info.dm_threshold, loc);
 ofs_mpi<<"TIME@ Exx_Lcao::cal_DM\t"<<time_during(t_start)<<std::endl;
 #endif
 
 gettimeofday( &t_start, NULL);
+#ifdef __MPI
 	cauchy.cal_norm_D_max( DM_para.DMr );
+#endif
 ofs_mpi<<"TIME@ cauchy.cal_norm_D_max\t"<<time_during(t_start)<<std::endl;
+#ifdef __MPI
 ofs_mpi<<"sizeof_DM\t"<<get_sizeof(DM_para.DMr)<<std::endl;
-
+#endif
 gettimeofday( &t_start, NULL);
 	// HexxR[is][iat1][iat2][box2]
 	std::vector<std::map<size_t,std::map<size_t,std::map<Abfs::Vector3_Order<int>,ModuleBase::matrix>>>> HexxR = cal_Hexx();
@@ -967,14 +976,19 @@ gettimeofday( &t_start, NULL);
 ofs_mpi<<"TIME@ Exx_Lcao::cal_energy\t"<<time_during(t_start)<<std::endl;
 
 gettimeofday( &t_start, NULL);
-	Hexx_para.Rexx_to_Km2D( HexxR, {GlobalC::pot.start_pot=="file",GlobalC::CHR.out_charge} );
+#ifdef __MPI
+	Hexx_para.Rexx_to_Km2D(*loc.ParaV, HexxR, {GlobalC::pot.init_chg=="file",GlobalC::CHR.out_chg} );
+#endif
 ofs_mpi<<"TIME@ Hexx_para.Rexx_to_Km2D\t"<<time_during(t_start)<<std::endl;
 
+#ifdef __MPI
 ofs_mpi<<"sizeof_Hexx2D\t"<<get_sizeof(Hexx_para.HK_Gamma_m2D)+get_sizeof(Hexx_para.HK_K_m2D)<<std::endl;
+#endif
 
 ofs_mpi<<"TIME@ Exx_Lcao::cal_exx_elec\t"<<time_during(t_start_all)<<std::endl;
 ofs_mpi.close();
 
+#ifdef __MPI
 	auto print_Hexxk = [&]()
 	{
 		std::ofstream ofs("Hexxk_"+ModuleBase::GlobalFunc::TO_STRING(GlobalV::MY_RANK));
@@ -985,6 +999,7 @@ ofs_mpi.close();
 		};
 		ofs.close();
 	};
+#endif
 
 	#if TEST_EXX_LCAO==1
 		ofs_matrixes("DMk_"+ModuleBase::GlobalFunc::TO_STRING(istep)+".dat",DM.DMk);
@@ -998,7 +1013,7 @@ ofs_mpi.close();
 	{
 		if(GlobalV::GAMMA_ONLY_LOCAL)
 		{
-			std::ofstream ofs("GlobalC::LOC.DM.dat",std::ofstream::app);
+			std::ofstream ofs("LOC.DM.dat",std::ofstream::app);
 			const int it1=0, it2=0;
 			for( size_t ia1=0; ia1!=GlobalC::ucell.atoms[it1].na; ++ia1 )
 				for( size_t ia2=0; ia2!=GlobalC::ucell.atoms[it2].na; ++ia2 )
@@ -1008,7 +1023,7 @@ ofs_mpi.close();
 						for( size_t iw1=0; iw1!=GlobalC::ucell.atoms[it1].nw; ++iw1 )
 						{
 							for( size_t iw2=0; iw2!=GlobalC::ucell.atoms[it2].nw; ++iw2 )
-								ofs<<GlobalC::LOC.DM[is][GlobalC::ucell.itiaiw2iwt(it1,ia1,iw1)][GlobalC::ucell.itiaiw2iwt(it2, ia2, iw2)]<<"\t";
+								ofs<<loc.DM[is][GlobalC::ucell.itiaiw2iwt(it1,ia1,iw1)][GlobalC::ucell.itiaiw2iwt(it2, ia2, iw2)]<<"\t";
 							ofs<<std::endl;
 						}
 						ofs<<std::endl;
@@ -1022,7 +1037,7 @@ ofs_mpi.close();
 			static int istep=0;
 			for( size_t is=0; is!=GlobalV::NSPIN; ++is )
 			{
-				std::ofstream ofs("GlobalC::LOC.DM_"+ModuleBase::GlobalFunc::TO_STRING(istep++)+"_"+ModuleBase::GlobalFunc::TO_STRING(is));
+				std::ofstream ofs("LOC.DM_"+ModuleBase::GlobalFunc::TO_STRING(istep++)+"_"+ModuleBase::GlobalFunc::TO_STRING(is));
 				for(int T1=0; T1<GlobalC::ucell.ntype; T1++)
 				{
 					for(int I1=0; I1<GlobalC::ucell.atoms[T1].na; I1++)
@@ -1040,7 +1055,7 @@ ofs_mpi.close();
 								{
 									for( int iw2=0; iw2!=GlobalC::ucell.atoms[GlobalC::ucell.iat2it[iat2]].nw; ++iw2 )
 									{
-										ofs<<GlobalC::LOC.DM_R[is][GlobalC::LNNR.nlocstartg[iat1]+iv]<<"\t";
+										ofs<<loc.DM_R[is][GlobalC::LNNR.nlocstartg[iat1]+iv]<<"\t";
 										++iv;
 									}
 									ofs<<std::endl;
@@ -1056,7 +1071,7 @@ ofs_mpi.close();
 		}
 	};
 	
-	auto print_WFC = [&]()
+	auto print_WFC = [&](std::complex<double>*** wfc_k_grid)
 	{
 		if( GlobalV::GAMMA_ONLY_LOCAL )
 		{
@@ -1084,11 +1099,11 @@ ofs_mpi.close();
 		{
 			for( size_t ik=0; ik!=GlobalC::kv.nks; ++ik )
 			{
-				std::ofstream ofs("GlobalC::LOWF.WFC_K_"+ModuleBase::GlobalFunc::TO_STRING(istep)+"_"+ModuleBase::GlobalFunc::TO_STRING(ik));
+				std::ofstream ofs("LOWF.wfc_k_grid_"+ModuleBase::GlobalFunc::TO_STRING(istep)+"_"+ModuleBase::GlobalFunc::TO_STRING(ik));
 				for( size_t ib=0; ib!=GlobalV::NBANDS; ++ib )
 				{
 					for( size_t iwt=0; iwt!=GlobalV::NLOCAL; ++iwt )
-						ofs<<GlobalC::LOWF.WFC_K[ik][ib][iwt]<<"\t";
+						ofs<<wfc_k_grid[ik][ib][iwt]<<"\t";
 					ofs<<std::endl;
 				}
 				ofs.close();
@@ -1096,6 +1111,7 @@ ofs_mpi.close();
 		}
 	};
 
+#ifdef __MPI
 	auto print_Hexx=[&]()		// Peize Lin test 2019-11-14
 	{
 		if(GlobalV::GAMMA_ONLY_LOCAL)
@@ -1115,15 +1131,17 @@ ofs_mpi.close();
 			}
 		}
 	};
+#endif
 
-	auto print_wfc=[&]()		// Peize Lin test 2019-11-14
+	auto print_wfc=[&](std::vector<ModuleBase::matrix>& wfc_gamma,
+        std::vector<ModuleBase::ComplexMatrix>& wfc_k)		// Peize Lin test 2019-11-14
 	{
 		if(GlobalV::GAMMA_ONLY_LOCAL)
 		{
 			for(int is=0; is<GlobalV::NSPIN; ++is)
 			{		
 				std::ofstream ofs("wfc_"+ModuleBase::GlobalFunc::TO_STRING(istep)+"_"+ModuleBase::GlobalFunc::TO_STRING(is)+"_"+ModuleBase::GlobalFunc::TO_STRING(GlobalV::MY_RANK));
-				GlobalC::LOC.wfc_dm_2d.wfc_gamma[is].print(ofs, 1E-10)<<std::endl;
+				wfc_gamma[is].print(ofs, 1E-10)<<std::endl;
 			}
 		}
 		else
@@ -1131,7 +1149,7 @@ ofs_mpi.close();
 			for(int ik=0; ik<GlobalC::kv.nks; ++ik)
 			{
 				std::ofstream ofs("wfc_"+ModuleBase::GlobalFunc::TO_STRING(istep)+"_"+ModuleBase::GlobalFunc::TO_STRING(ik)+"_"+ModuleBase::GlobalFunc::TO_STRING(GlobalV::MY_RANK));
-				GlobalC::LOC.wfc_dm_2d.wfc_gamma[ik].print(ofs, 1E-10)<<std::endl;
+				wfc_gamma[ik].print(ofs, 1E-10)<<std::endl;
 			}
 		}
 	};
@@ -1168,10 +1186,12 @@ ofs_mpi.close();
 //		<<Exx_Abfs::Screen::Cauchy::num_cal<<std::endl;
 }
 
-void Exx_Lcao::cal_exx_elec_nscf()
+void Exx_Lcao::cal_exx_elec_nscf(const Parallel_Orbitals &pv)
 {
 	std::vector<std::map<size_t,std::map<size_t,std::map<Abfs::Vector3_Order<int>,ModuleBase::matrix>>>> HexxR;
-	Hexx_para.Rexx_to_Km2D( HexxR, {GlobalC::pot.start_pot=="file",GlobalC::CHR.out_charge} );
+#ifdef __MPI
+	Hexx_para.Rexx_to_Km2D(pv, HexxR, {GlobalC::pot.init_chg=="file",GlobalC::CHR.out_chg} );
+#endif
 }
 
 /*
@@ -1256,7 +1276,7 @@ ofs_mpi.close();
 	return energy;
 }
 
-void Exx_Lcao::add_Hexx( const size_t ik, const double alpha ) const
+void Exx_Lcao::add_Hexx( const size_t ik, const double alpha, LCAO_Matrix &lm) const
 {
 	ModuleBase::TITLE("Exx_Lcao","add_Hexx");
 	
@@ -1265,7 +1285,7 @@ void Exx_Lcao::add_Hexx( const size_t ik, const double alpha ) const
 		const ModuleBase::matrix & H = Hexx_para.HK_Gamma_m2D[ik];
 		for( size_t i=0; i<H.nr*H.nc; ++i )
 		{
-			GlobalC::LM.Hloc[i] += alpha * H.c[i];
+			lm.Hloc[i] += alpha * H.c[i];
 		}
 	}
 	else
@@ -1273,7 +1293,7 @@ void Exx_Lcao::add_Hexx( const size_t ik, const double alpha ) const
 		const ModuleBase::ComplexMatrix & H = Hexx_para.HK_K_m2D[ik];
 		for( size_t i=0; i<H.nr*H.nc; ++i )
 		{
-			GlobalC::LM.Hloc2[i] += alpha * H.c[i];
+			lm.Hloc2[i] += alpha * H.c[i];
 		}
 	}
 }
@@ -1776,3 +1796,4 @@ std::vector<std::map<size_t,std::map<size_t,std::map<Abfs::Vector3_Order<int>,Mo
 	
 	return HexxR;
 }
+#endif //__MPI

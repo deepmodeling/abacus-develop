@@ -3,27 +3,27 @@
 #include "../src_parallel/parallel_reduce.h"
 #include "../module_base/timer.h"
 
-void HS_Matrix::saving_HS(const double *Hloc, const double* Sloc, bool bit, const int &out_hs)
+void HS_Matrix::saving_HS(const double *Hloc, const double* Sloc, bool bit, const int &out_mat_hs,  const Parallel_Orbitals &pv)
 {   
-    if(out_hs==1)
+    if(out_mat_hs==1)
     {
-        save_HS(Hloc, Sloc, bit);
+        save_HS(Hloc, Sloc, bit, pv);
     }
-    else if(out_hs==2)
+    else if(out_mat_hs==2)
     {
-        save_HS(Hloc, Sloc, bit);
+        save_HS(Hloc, Sloc, bit, pv);
     }
-    else if(out_hs==3)
+    else if(out_mat_hs==3)
     {
         //please call individually
     }
-    else if(out_hs==0)
+    else if(out_mat_hs==0)
     {
         // do nothing.
     }
     else
     {
-        ModuleBase::WARNING("Diago_LCAO_Matrix","unrecorganized out_hs value.");
+        ModuleBase::WARNING("Diago_LCAO_Matrix","unrecorganized out_mat_hs value.");
     }
     return;
 }
@@ -108,7 +108,7 @@ void HS_Matrix::save_HS_ccf(const int &iter, const int &Hnnz, const int *colptr_
 
 // mohan add 2010/3/20, output H and S matrix, convinence for diagonalization
 // test or save the middle information for next start.
-void HS_Matrix::save_HS(const double *H, const double *S, bool bit)
+void HS_Matrix::save_HS(const double *H, const double *S, bool bit, const Parallel_Orbitals &pv)
 {
     ModuleBase::TITLE("HS_Matrix","save_HS_bit");
     ModuleBase::timer::tick("HS_Matrix","save_HS_bit");
@@ -150,26 +150,26 @@ void HS_Matrix::save_HS(const double *H, const double *S, bool bit)
             ModuleBase::GlobalFunc::ZEROS(lineH, GlobalV::NLOCAL-i);
             ModuleBase::GlobalFunc::ZEROS(lineS, GlobalV::NLOCAL-i);
 
-            ir = GlobalC::ParaO.trace_loc_row[i];
+            ir = pv.trace_loc_row[i];
             if (ir>=0)
             {
                 // data collection
                 for (int j=i; j<GlobalV::NLOCAL; j++)
                 {
-                    ic = GlobalC::ParaO.trace_loc_col[j];
+                    ic = pv.trace_loc_col[j];
                     if (ic>=0)
                     {
                         int iic;
                         if(GlobalV::KS_SOLVER=="genelpa" || GlobalV::KS_SOLVER=="scalapack_gvx")  // save the matrix as column major format
                         {
-                            iic=ir+ic*GlobalC::ParaO.nrow;
+                            iic=ir+ic*pv.nrow;
                         }
                         else
                         {
-                            iic=ir*GlobalC::ParaO.ncol+ic;
+                            iic=ir*pv.ncol+ic;
                         }
-                        //lineH[j-i] = H[ir*GlobalC::ParaO.ncol+ic];
-                        //lineS[j-i] = S[ir*GlobalC::ParaO.ncol+ic];
+                        //lineH[j-i] = H[ir*pv.ncol+ic];
+                        //lineS[j-i] = S[ir*pv.ncol+ic];
                         lineH[j-i] = H[iic];
                         lineS[j-i] = S[iic];
                     }
@@ -243,26 +243,26 @@ void HS_Matrix::save_HS(const double *H, const double *S, bool bit)
             ModuleBase::GlobalFunc::ZEROS(lineH, GlobalV::NLOCAL-i);
             ModuleBase::GlobalFunc::ZEROS(lineS, GlobalV::NLOCAL-i);
 
-            ir = GlobalC::ParaO.trace_loc_row[i];
+            ir = pv.trace_loc_row[i];
             if (ir>=0)
             {
                 // data collection
                 for (int j=i; j<GlobalV::NLOCAL; j++)
                 {
-                    ic = GlobalC::ParaO.trace_loc_col[j];
+                    ic = pv.trace_loc_col[j];
                     if (ic>=0)
                     {
                         int iic;
                         if(GlobalV::KS_SOLVER=="genelpa" || GlobalV::KS_SOLVER=="scalapack_gvx")  // save the matrix as column major format
                         {
-                            iic=ir+ic*GlobalC::ParaO.nrow;
+                            iic=ir+ic*pv.nrow;
                         }
                         else
                         {
-                            iic=ir*GlobalC::ParaO.ncol+ic;
+                            iic=ir*pv.ncol+ic;
                         }
-                        //lineH[j-i] = H[ir*GlobalC::ParaO.ncol+ic];
-                        //lineS[j-i] = S[ir*GlobalC::ParaO.ncol+ic];
+                        //lineH[j-i] = H[ir*pv.ncol+ic];
+                        //lineS[j-i] = S[ir*pv.ncol+ic];
                         lineH[j-i] = H[iic];
                         lineS[j-i] = S[iic];
                     }
@@ -322,19 +322,19 @@ void HS_Matrix::save_HS(const double *H, const double *S, bool bit)
         int irr,icc;
         for (int i=0; i<GlobalV::NLOCAL; i++)
         {
-            irr = GlobalC::ParaO.trace_loc_row[i];
+            irr = pv.trace_loc_row[i];
             if (irr>=0)
             {
                 // data collection
                 for (int j=0; j<GlobalV::NLOCAL; j++)
                 {
-            icc = GlobalC::ParaO.trace_loc_col[j];
+            icc = pv.trace_loc_col[j];
             if (icc>=0)
             {
-                //if(abs(H[irr*GlobalC::ParaO.ncol+icc]) < 1.0e-10) H[irr*GlobalC::ParaO.ncol+icc] = 0.0;
-                //if(abs(S[irr*GlobalC::ParaO.ncol+icc]) < 1.0e-10) S[irr*GlobalC::ParaO.ncol+icc] = 0.0;
-                ofs_H << " " << H[irr*GlobalC::ParaO.ncol+icc];
-                ofs_S << " " << S[irr*GlobalC::ParaO.ncol+icc];
+                //if(abs(H[irr*pv.ncol+icc]) < 1.0e-10) H[irr*pv.ncol+icc] = 0.0;
+                //if(abs(S[irr*pv.ncol+icc]) < 1.0e-10) S[irr*pv.ncol+icc] = 0.0;
+                ofs_H << " " << H[irr*pv.ncol+icc];
+                ofs_S << " " << S[irr*pv.ncol+icc];
             }
         }
         ofs_H << std::endl;
@@ -369,25 +369,25 @@ void HS_Matrix::save_HS(const double *H, const double *S, bool bit)
 }
 
 //LiuXh, 2017-03-21
-void HS_Matrix::saving_HS_complex(std::complex<double> *Hloc, std::complex<double>* Sloc, bool bit, const int &out_hs)
+void HS_Matrix::saving_HS_complex(std::complex<double> *Hloc, std::complex<double>* Sloc, bool bit, const int &out_mat_hs, const Parallel_Orbitals &pv)
 {   
-    if(out_hs==1)
+    if(out_mat_hs==1)
     {
-        save_HS_complex(Hloc, Sloc, bit);
+        save_HS_complex(Hloc, Sloc, bit, pv);
     }
-    else if(out_hs==0)
+    else if(out_mat_hs==0)
     {
         // do nothing.
     }
     else
     {
-        ModuleBase::WARNING("Diago_LCAO_Matrix","unrecorganized out_hs value.");
+        ModuleBase::WARNING("Diago_LCAO_Matrix","unrecorganized out_mat_hs value.");
     }
     return;
 }
 
 //LiuXh, 2017-03-21
-void HS_Matrix::save_HS_complex(std::complex<double> *H, std::complex<double> *S, bool bit)
+void HS_Matrix::save_HS_complex(std::complex<double> *H, std::complex<double> *S, bool bit, const Parallel_Orbitals &pv)
 {
     ModuleBase::TITLE("HS_Matrix","save_HS_bit");
     ModuleBase::timer::tick("HS_Matrix","save_HS_bit");
@@ -429,26 +429,26 @@ void HS_Matrix::save_HS_complex(std::complex<double> *H, std::complex<double> *S
             ModuleBase::GlobalFunc::ZEROS(lineH, GlobalV::NLOCAL-i);
             ModuleBase::GlobalFunc::ZEROS(lineS, GlobalV::NLOCAL-i);
 
-            ir = GlobalC::ParaO.trace_loc_row[i];
+            ir = pv.trace_loc_row[i];
             if (ir>=0)
             {
                 // data collection
                 for (int j=i; j<GlobalV::NLOCAL; j++)
                 {
-                    ic = GlobalC::ParaO.trace_loc_col[j];
+                    ic = pv.trace_loc_col[j];
                     if (ic>=0)
                     {
                         int iic;
                         if(GlobalV::KS_SOLVER=="genelpa" || GlobalV::KS_SOLVER=="scalapack_gvx")  // save the matrix as column major format
                         {
-                            iic=ir+ic*GlobalC::ParaO.nrow;
+                            iic=ir+ic*pv.nrow;
                         }
                         else
                         {
-                            iic=ir*GlobalC::ParaO.ncol+ic;
+                            iic=ir*pv.ncol+ic;
                         }
-                        //lineH[j-i] = H[ir*GlobalC::ParaO.ncol+ic];
-                        //lineS[j-i] = S[ir*GlobalC::ParaO.ncol+ic];
+                        //lineH[j-i] = H[ir*pv.ncol+ic];
+                        //lineS[j-i] = S[ir*pv.ncol+ic];
                         lineH[j-i] = H[iic];
                         lineS[j-i] = S[iic];
                     }
@@ -522,26 +522,26 @@ void HS_Matrix::save_HS_complex(std::complex<double> *H, std::complex<double> *S
             ModuleBase::GlobalFunc::ZEROS(lineH, GlobalV::NLOCAL-i);
             ModuleBase::GlobalFunc::ZEROS(lineS, GlobalV::NLOCAL-i);
 
-            ir = GlobalC::ParaO.trace_loc_row[i];
+            ir = pv.trace_loc_row[i];
             if (ir>=0)
             {
                 // data collection
                 for (int j=i; j<GlobalV::NLOCAL; j++)
                 {
-                    ic = GlobalC::ParaO.trace_loc_col[j];
+                    ic = pv.trace_loc_col[j];
                     if (ic>=0)
                     {
                         int iic;
                         if(GlobalV::KS_SOLVER=="genelpa" || GlobalV::KS_SOLVER=="scalapack_gvx")  // save the matrix as column major format
                         {
-                            iic=ir+ic*GlobalC::ParaO.nrow;
+                            iic=ir+ic*pv.nrow;
                         }
                         else
                         {
-                            iic=ir*GlobalC::ParaO.ncol+ic;
+                            iic=ir*pv.ncol+ic;
                         }
-                        //lineH[j-i] = H[ir*GlobalC::ParaO.ncol+ic];
-                        //lineS[j-i] = S[ir*GlobalC::ParaO.ncol+ic];
+                        //lineH[j-i] = H[ir*pv.ncol+ic];
+                        //lineS[j-i] = S[ir*pv.ncol+ic];
                         lineH[j-i] = H[iic];
                         lineS[j-i] = S[iic];
                     }
@@ -601,19 +601,19 @@ void HS_Matrix::save_HS_complex(std::complex<double> *H, std::complex<double> *S
         int irr,icc;
         for (int i=0; i<GlobalV::NLOCAL; i++)
         {
-            irr = GlobalC::ParaO.trace_loc_row[i];
+            irr = pv.trace_loc_row[i];
             if (irr>=0)
             {
                 // data collection
                 for (int j=0; j<GlobalV::NLOCAL; j++)
                 {
-                        icc = GlobalC::ParaO.trace_loc_col[j];
+                        icc = pv.trace_loc_col[j];
                         if (icc>=0)
                         {
-                                //if(abs(H[irr*GlobalC::ParaO.ncol+icc]) < 1.0e-10) H[irr*GlobalC::ParaO.ncol+icc] = 0.0;
-                                //if(abs(S[irr*GlobalC::ParaO.ncol+icc]) < 1.0e-10) S[irr*GlobalC::ParaO.ncol+icc] = 0.0;
-                                ofs_H << " " << H[irr*GlobalC::ParaO.ncol+icc];
-                                ofs_S << " " << S[irr*GlobalC::ParaO.ncol+icc];
+                                //if(abs(H[irr*pv.ncol+icc]) < 1.0e-10) H[irr*pv.ncol+icc] = 0.0;
+                                //if(abs(S[irr*pv.ncol+icc]) < 1.0e-10) S[irr*pv.ncol+icc] = 0.0;
+                                ofs_H << " " << H[irr*pv.ncol+icc];
+                                ofs_S << " " << S[irr*pv.ncol+icc];
                         }
                 }
                 ofs_H << std::endl;
@@ -648,7 +648,7 @@ void HS_Matrix::save_HS_complex(std::complex<double> *H, std::complex<double> *S
 }
 
 //void HS_Matrix::save_HSR_tr(const int Rx, const int Ry, const int Rz, const double *H, const double *S)
-void HS_Matrix::save_HSR_tr(const int current_spin)
+void HS_Matrix::save_HSR_tr(const int current_spin, LCAO_Matrix &lm)
 //void HS_Matrix::save_HSR_tr(void)
 {
     ModuleBase::TITLE("HS_Matrix","save_HSR_tr");
@@ -728,35 +728,35 @@ void HS_Matrix::save_HSR_tr(const int current_spin)
                     //ModuleBase::GlobalFunc::ZEROS(lineH, GlobalV::NLOCAL);
                     //ModuleBase::GlobalFunc::ZEROS(lineS, GlobalV::NLOCAL);
 
-                    ir = GlobalC::ParaO.trace_loc_row[i];
+                    ir = lm.ParaV->trace_loc_row[i];
                     if(ir>=0)
                     {
                         //for(int j=i; j<GlobalV::NLOCAL; j++)
                         for(int j=0; j<GlobalV::NLOCAL; j++)
                         {
-                            ic = GlobalC::ParaO.trace_loc_col[j];
+                            ic = lm.ParaV->trace_loc_col[j];
                             if(ic>=0)
                             {
-                                //lineH[j-i] = H[ir*GlobalC::ParaO.ncol+ic];
-                                //lineS[j-i] = S[ir*GlobalC::ParaO.ncol+ic];
+                                //lineH[j-i] = H[ir*lm.ParaV->ncol+ic];
+                                //lineS[j-i] = S[ir*lm.ParaV->ncol+ic];
                                 int iic;
                                 if(GlobalV::KS_SOLVER=="genelpa" || GlobalV::KS_SOLVER=="scalapack_gvx")  // save the matrix as column major format
                                 {
-                                    iic=ir+ic*GlobalC::ParaO.nrow;
+                                    iic=ir+ic*lm.ParaV->nrow;
                                 }
                                 else
                                 {
-                                    iic=ir*GlobalC::ParaO.ncol+ic;
+                                    iic=ir*lm.ParaV->ncol+ic;
                                 }
                                 if(GlobalV::NSPIN!=4)
                                 {
-                                    lineH[j] = GlobalC::LM.HR_tr[ix][iy][iz][iic];
-                                    lineS[j] = GlobalC::LM.SlocR_tr[ix][iy][iz][iic];
+                                    lineH[j] = lm.HR_tr[ix][iy][iz][iic];
+                                    lineS[j] = lm.SlocR_tr[ix][iy][iz][iic];
                                 }
                                 else
                                 {
-                                    lineH_soc[j] = GlobalC::LM.HR_tr_soc[ix][iy][iz][iic];
-                                    lineS_soc[j] = GlobalC::LM.SlocR_tr_soc[ix][iy][iz][iic];
+                                    lineH_soc[j] = lm.HR_tr_soc[ix][iy][iz][iic];
+                                    lineS_soc[j] = lm.SlocR_tr_soc[ix][iy][iz][iic];
                                 }
                             }
                         }
@@ -850,8 +850,9 @@ void HS_Matrix::save_HSR_tr(const int current_spin)
     {
         for (int j=i; j<GlobalV::NLOCAL; j++)
         {
-            g1 << " " << H[i*GlobalV::NLOCAL+j];
-            g2 << " " << S[i*GlobalV::NLOCAL+j];
+            // not correct for serial version; need change 
+            //g1 << " " << H[i*GlobalV::NLOCAL+j];
+            //g2 << " " << S[i*GlobalV::NLOCAL+j];
         }
     }
     g1.close();
@@ -863,7 +864,8 @@ void HS_Matrix::save_HSR_tr(const int current_spin)
 }
 
 void HS_Matrix::save_HSR_sparse(
-    const double &sparse_threshold, 
+    LCAO_Matrix &lm,
+    const double& sparse_threshold,
     const bool &binary,  
     const std::string &SR_filename, 
     const std::string &HR_filename_up, 
@@ -873,11 +875,11 @@ void HS_Matrix::save_HSR_sparse(
     ModuleBase::TITLE("HS_Matrix","save_HSR_sparse");
     ModuleBase::timer::tick("HS_Matrix","save_HSR_sparse");
 
-    auto &all_R_coor_ptr = GlobalC::LM.all_R_coor;
-    auto &HR_sparse_ptr = GlobalC::LM.HR_sparse;
-    auto &SR_sparse_ptr = GlobalC::LM.SR_sparse;
-    auto &HR_soc_sparse_ptr = GlobalC::LM.HR_soc_sparse;
-    auto &SR_soc_sparse_ptr = GlobalC::LM.SR_soc_sparse;
+    auto &all_R_coor_ptr = lm.all_R_coor;
+    auto &HR_sparse_ptr = lm.HR_sparse;
+    auto &SR_sparse_ptr = lm.SR_sparse;
+    auto &HR_soc_sparse_ptr = lm.HR_soc_sparse;
+    auto &SR_soc_sparse_ptr = lm.SR_soc_sparse;
 
     int total_R_num = all_R_coor_ptr.size();
     int output_R_number = 0;
@@ -1087,11 +1089,11 @@ void HS_Matrix::save_HSR_sparse(
             {
                 if (GlobalV::NSPIN != 4)
                 {
-                    output_single_R(g1[ispin], HR_sparse_ptr[ispin][R_coor], sparse_threshold, binary);
+                    output_single_R(g1[ispin], HR_sparse_ptr[ispin][R_coor], sparse_threshold, binary, *lm.ParaV);
                 }
                 else
                 {
-                    output_soc_single_R(g1[ispin], HR_soc_sparse_ptr[R_coor], sparse_threshold, binary);
+                    output_soc_single_R(g1[ispin], HR_soc_sparse_ptr[R_coor], sparse_threshold, binary, *lm.ParaV);
                 }
             }
         }
@@ -1116,11 +1118,11 @@ void HS_Matrix::save_HSR_sparse(
         {
             if (GlobalV::NSPIN != 4)
             {
-                output_single_R(g2, SR_sparse_ptr[R_coor], sparse_threshold, binary);
+                output_single_R(g2, SR_sparse_ptr[R_coor], sparse_threshold, binary, *lm.ParaV);
             }
             else
             {
-                output_soc_single_R(g2, SR_soc_sparse_ptr[R_coor], sparse_threshold, binary);
+                output_soc_single_R(g2, SR_soc_sparse_ptr[R_coor], sparse_threshold, binary, *lm.ParaV);
             }
         }
 
@@ -1147,7 +1149,8 @@ void HS_Matrix::save_HSR_sparse(
 }
 
 void HS_Matrix::save_SR_sparse(
-    const double &sparse_threshold, 
+    LCAO_Matrix &lm,
+    const double& sparse_threshold,
     const bool &binary,  
     const std::string &SR_filename
 )
@@ -1155,9 +1158,9 @@ void HS_Matrix::save_SR_sparse(
     ModuleBase::TITLE("HS_Matrix","save_SR_sparse");
     ModuleBase::timer::tick("HS_Matrix","save_SR_sparse");
 
-    auto &all_R_coor_ptr = GlobalC::LM.all_R_coor;
-    auto &SR_sparse_ptr = GlobalC::LM.SR_sparse;
-    auto &SR_soc_sparse_ptr = GlobalC::LM.SR_soc_sparse;
+    auto &all_R_coor_ptr = lm.all_R_coor;
+    auto &SR_sparse_ptr = lm.SR_sparse;
+    auto &SR_soc_sparse_ptr = lm.SR_soc_sparse;
 
     int total_R_num = all_R_coor_ptr.size();
     int output_R_number = 0;
@@ -1255,11 +1258,11 @@ void HS_Matrix::save_SR_sparse(
 
         if (GlobalV::NSPIN != 4)
         {
-            output_single_R(g2, SR_sparse_ptr[R_coor], sparse_threshold, binary);
+            output_single_R(g2, SR_sparse_ptr[R_coor], sparse_threshold, binary, *lm.ParaV);
         }
         else
         {
-            output_soc_single_R(g2, SR_soc_sparse_ptr[R_coor], sparse_threshold, binary);
+            output_soc_single_R(g2, SR_soc_sparse_ptr[R_coor], sparse_threshold, binary, *lm.ParaV);
         }
 
         count++;
@@ -1278,7 +1281,7 @@ void HS_Matrix::save_SR_sparse(
     return;
 }
 
-void HS_Matrix::output_single_R(std::ofstream &ofs, const std::map<size_t, std::map<size_t, double>> &XR, const double &sparse_threshold, const bool &binary)
+void HS_Matrix::output_single_R(std::ofstream &ofs, const std::map<size_t, std::map<size_t, double>> &XR, const double &sparse_threshold, const bool &binary, const Parallel_Orbitals &pv)
 {
     double *line = nullptr;
     std::vector<int> indptr;
@@ -1308,7 +1311,7 @@ void HS_Matrix::output_single_R(std::ofstream &ofs, const std::map<size_t, std::
         // line = new double[GlobalV::NLOCAL];
         ModuleBase::GlobalFunc::ZEROS(line, GlobalV::NLOCAL);
 
-        if(GlobalC::ParaO.trace_loc_row[row] >= 0)
+        if(pv.trace_loc_row[row] >= 0)
         {
             auto iter = XR.find(row);
             if (iter != XR.end())
@@ -1391,7 +1394,7 @@ void HS_Matrix::output_single_R(std::ofstream &ofs, const std::map<size_t, std::
 
 }
 
-void HS_Matrix::output_soc_single_R(std::ofstream &ofs, const std::map<size_t, std::map<size_t, std::complex<double>>> &XR, const double &sparse_threshold, const bool &binary)
+void HS_Matrix::output_soc_single_R(std::ofstream &ofs, const std::map<size_t, std::map<size_t, std::complex<double>>> &XR, const double &sparse_threshold, const bool &binary, const Parallel_Orbitals &pv)
 {
     std::complex<double> *line = nullptr;
     std::vector<int> indptr;
@@ -1421,7 +1424,7 @@ void HS_Matrix::output_soc_single_R(std::ofstream &ofs, const std::map<size_t, s
         // line = new std::complex<double>[GlobalV::NLOCAL];
         ModuleBase::GlobalFunc::ZEROS(line, GlobalV::NLOCAL);
 
-        if(GlobalC::ParaO.trace_loc_row[row] >= 0)
+        if(pv.trace_loc_row[row] >= 0)
         {
             auto iter = XR.find(row);
             if (iter != XR.end())

@@ -52,7 +52,7 @@ list(APPEND objects
     local_orbital_charge.cpp
     local_orbital_wfc.cpp
     record_adj.cpp
-    wfc_dm_2d.cpp
+    dm_2d.cpp
     wavefunc_in_pw.cpp
 	H_TDDFT_pw.cpp
     run_md_lcao.cpp

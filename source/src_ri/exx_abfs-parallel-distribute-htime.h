@@ -7,7 +7,7 @@
 
 #include <vector>
 #include <utility>
-
+#ifdef __MPI
 class Exx_Abfs::Parallel::Distribute::Htime
 {
 public:
@@ -23,5 +23,5 @@ private:
 	static std::vector<std::vector<std::pair<size_t,size_t>>> cal_rank_work( 
 		const std::vector<std::pair<size_t,std::pair<size_t,size_t>>> & pair_costs );
 };
-
+#endif
 #endif

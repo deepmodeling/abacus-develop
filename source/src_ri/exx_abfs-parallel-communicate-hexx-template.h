@@ -5,14 +5,14 @@
 #include "../src_pw/global.h"
 #include "../src_lcao/global_fp.h"
 #include <cassert>
-
+#ifdef __MPI
 /*
 template< typename T >
 T Exx_Abfs::Parallel::Communicate::Hexx::a2D_to_m2D( const std::map<size_t,std::map<size_t,T>> & H_a2D ) const
 {
 	ModuleBase::TITLE("Exx_Abfs::Parallel::Communicate::Hexx::a2D_to_m2D");
 	
-	T H_m2D;
+	T H_m2D;s
 	if(GlobalV::KS_SOLVER=="genelpa")
 		H_m2D.create( GlobalC::ParaO.ncol, GlobalC::ParaO.nrow );
 	else
@@ -66,16 +66,16 @@ ModuleBase::ComplexMatrix Exx_Abfs::Parallel::Communicate::Hexx::H_phase<ModuleB
 }
 
 template<typename Tmatrix>
-Tmatrix Exx_Abfs::Parallel::Communicate::Hexx::Ra2D_to_Km2D(
+Tmatrix Exx_Abfs::Parallel::Communicate::Hexx::Ra2D_to_Km2D(const Parallel_Orbitals &pv, 
 	std::vector<std::map<size_t,std::map<size_t,std::map<Abfs::Vector3_Order<int>,ModuleBase::matrix>>>> &HR_a2D, const int ik) const
 {
 	ModuleBase::TITLE("Exx_Abfs::Parallel::Communicate::Hexx::Ra2D_to_Km2D");
 
 	Tmatrix HK_m2D;
 	if(GlobalV::KS_SOLVER=="genelpa")
-		HK_m2D.create( GlobalC::ParaO.ncol, GlobalC::ParaO.nrow );
+		HK_m2D.create( pv.ncol, pv.nrow );
 	else
-		HK_m2D.create( GlobalC::ParaO.nrow, GlobalC::ParaO.ncol );
+		HK_m2D.create( pv.nrow, pv.ncol );
 
 	const int is_begin = (GlobalV::NSPIN==4) ? 0 : GlobalC::kv.isk[ik];
 	const int is_end = (GlobalV::NSPIN==4) ? 4 : GlobalC::kv.isk[ik]+1;
@@ -108,7 +108,7 @@ Tmatrix Exx_Abfs::Parallel::Communicate::Hexx::Ra2D_to_Km2D(
 						? (iw1*2+is/2)
 						: iw1;
 					const int iwt1 = GlobalC::ucell.itiaiw2iwt(it1,ia1,iw1_tmp);
-					const int iwt1_m2D = GlobalC::ParaO.trace_loc_row[iwt1];
+					const int iwt1_m2D = pv.trace_loc_row[iwt1];
 					if(iwt1_m2D<0) continue;
 					for(int iw2=0; iw2!=HK_a2D.nc; ++iw2)
 					{
@@ -116,7 +116,7 @@ Tmatrix Exx_Abfs::Parallel::Communicate::Hexx::Ra2D_to_Km2D(
 							? (iw2*2+is%2)
 							: iw2;
 						const int iwt2 = GlobalC::ucell.itiaiw2iwt(it2,ia2,iw2_tmp);
-						const int iwt2_m2D = GlobalC::ParaO.trace_loc_col[iwt2];
+						const int iwt2_m2D = pv.trace_loc_col[iwt2];
 						if(iwt2_m2D<0) continue;
 
 						if(GlobalV::KS_SOLVER=="genelpa" || GlobalV::KS_SOLVER=="scalapack_gvx")
@@ -132,7 +132,7 @@ Tmatrix Exx_Abfs::Parallel::Communicate::Hexx::Ra2D_to_Km2D(
 }
 
 template<typename Tmatrix>
-void Exx_Abfs::Parallel::Communicate::Hexx::Ra2D_to_Km2D_mixing(
+void Exx_Abfs::Parallel::Communicate::Hexx::Ra2D_to_Km2D_mixing(const Parallel_Orbitals &pv, 
 	std::vector<std::map<size_t,std::map<size_t,std::map<Abfs::Vector3_Order<int>,ModuleBase::matrix>>>> &HR_a2D,
 	std::vector<Tmatrix> &HK_m2D,
 	std::vector<std::deque<Tmatrix>> &HK_m2D_pulay_seq) const
@@ -151,16 +151,16 @@ void Exx_Abfs::Parallel::Communicate::Hexx::Ra2D_to_Km2D_mixing(
 		switch(mixing_mode)
 		{
 			case Mixing_Mode::No:
-				HK_m2D[ik] = Ra2D_to_Km2D<Tmatrix>(HR_a2D, ik);
+				HK_m2D[ik] = Ra2D_to_Km2D<Tmatrix>(pv, HR_a2D, ik);
 				break;
 			case Mixing_Mode::Plain:
 				if( HK_m2D[ik].nr && HK_m2D[ik].nc )
-					HK_m2D[ik] = (1-mixing_beta) * HK_m2D[ik] + mixing_beta * Ra2D_to_Km2D<Tmatrix>(HR_a2D, ik);
+					HK_m2D[ik] = (1-mixing_beta) * HK_m2D[ik] + mixing_beta * Ra2D_to_Km2D<Tmatrix>(pv, HR_a2D, ik);
 				else
-					HK_m2D[ik] = Ra2D_to_Km2D<Tmatrix>(HR_a2D, ik);
+					HK_m2D[ik] = Ra2D_to_Km2D<Tmatrix>(pv, HR_a2D, ik);
 				break;
 			case Mixing_Mode::Pulay:
-				HK_m2D[ik] = pulay_mixing( HK_m2D[ik], HK_m2D_pulay_seq[ik], Ra2D_to_Km2D<Tmatrix>(HR_a2D, ik) );
+				HK_m2D[ik] = pulay_mixing( HK_m2D[ik], HK_m2D_pulay_seq[ik], Ra2D_to_Km2D<Tmatrix>(pv, HR_a2D, ik) );
 				break;
 			default:
 				throw std::domain_error(ModuleBase::GlobalFunc::TO_STRING(__FILE__)+" line "+ModuleBase::GlobalFunc::TO_STRING(__LINE__));	break;
@@ -210,5 +210,5 @@ Tmatrix Exx_Abfs::Parallel::Communicate::Hexx::pulay_mixing(
 	}
 	return H_pulay;
 }
-
+#endif
 #endif

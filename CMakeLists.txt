@@ -275,6 +275,7 @@ target_link_libraries(${ABACUS_BIN_NAME}
     ri
     driver
     xc
+    esolver
     -lm
 )
 

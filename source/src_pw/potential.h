@@ -19,17 +19,17 @@ class Potential
     ~Potential();
 
     //==========================================================
-    // start_pot : "atomic" or "file"
-	// extra_pot : extrapolation methods for potential
+    // init_chg : "atomic" or "file"
+	// chg_extrap : extrapolation methods for potential
     // vr(nspin,ncxyz) : Hartree + xc potentials in real space
     // vr_eff(nspin,ncxyz) : effective potential in real space 
     // vnew(nspin,ncxyz) : V_out - V_in, needed in scf
 	// vltot: the local potential in real space
-	// out_potential: options to print out potentials 
+	// out_pot: options to print out potentials 
     //==========================================================
 
-    std::string start_pot;
-	std::string extra_pot;
+    std::string init_chg;
+	std::string chg_extrap;
     ModuleBase::matrix vr;
     ModuleBase::matrix vr_eff;
     ModuleBase::matrix vnew;
@@ -41,7 +41,7 @@ class Potential
 	double *d_vr_eff1;
 #endif
     double *vltot;
-	int out_potential; // mohan add 2011-02-28
+	int out_pot; // mohan add 2011-02-28
 
     void allocate(const int nrxx);
 

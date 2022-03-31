@@ -109,6 +109,7 @@ int UnitCell_pseudo::read_atom_species(std::ifstream &ifa, std::ofstream &ofs_ru
 
 	// Peize Lin add 2016-09-23
 #ifndef __CELL
+#ifdef __MPI 
 	if( Exx_Global::Hybrid_Type::HF   == GlobalC::exx_lcao.info.hybrid_type || 
 	    Exx_Global::Hybrid_Type::PBE0 == GlobalC::exx_lcao.info.hybrid_type || 
 		Exx_Global::Hybrid_Type::HSE  == GlobalC::exx_lcao.info.hybrid_type )
@@ -123,8 +124,9 @@ int UnitCell_pseudo::read_atom_species(std::ifstream &ifa, std::ofstream &ofs_ru
 			}
 		}
 	}
-#endif
-#endif
+#endif // __MPI
+#endif // __CELL
+#endif // __LCAO
 	//==========================
 	// read in lattice constant
 	//==========================

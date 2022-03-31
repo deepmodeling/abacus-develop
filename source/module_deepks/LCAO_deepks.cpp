@@ -250,7 +250,7 @@ void LCAO_Deepks::allocate_V_delta(const int nat, const int nloc, const int nks)
         this->gedm[inl] = new double[pdm_size];
         ModuleBase::GlobalFunc::ZEROS(this->gedm[inl], pdm_size);
     }
-    if (GlobalV::FORCE)
+    if (GlobalV::CAL_FORCE)
     {
         //init F_delta
         F_delta.create(nat, 3);

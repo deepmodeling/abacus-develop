@@ -206,7 +206,7 @@ void Stress_Func::stress_nl(ModuleBase::matrix& sigma)
 			{
 				sigmanlc[l][m] = sigmanlc[m][l];
 			}
-			Parallel_Reduce::reduce_double_all( sigmanlc[l][m] ); //qianrui fix a bug for npool > 1
+			Parallel_Reduce::reduce_double_all( sigmanlc[l][m] ); //qianrui fix a bug for kpar > 1
 		}
 	}
 

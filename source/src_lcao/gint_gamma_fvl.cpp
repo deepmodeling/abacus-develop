@@ -63,7 +63,7 @@ inline void cal_psir_ylm_dphi(
 				GlobalC::GridT.meshcell_pos[ib][1] + mt[1],
 				GlobalC::GridT.meshcell_pos[ib][2] + mt[2]};
 
-            if(GlobalV::STRESS)
+            if(GlobalV::CAL_STRESS)
             {
                 for(int i=0;i<3;i++) 
 				{
@@ -346,7 +346,7 @@ inline void cal_meshball_DGridV(
                     &psir_vlbr3[0][idx1], &LD_pool,  
                     &beta, &DGridV_z[iw1_lo][iw2_lo], &lgd_now);
 
-                if(GlobalV::STRESS)
+                if(GlobalV::CAL_STRESS)
                 {
 					k=1;
 					for(int ib=0; ib<GlobalC::pw.bxyz; ++ib)
@@ -412,7 +412,7 @@ inline void cal_meshball_DGridV(
                             &psir_vlbr3[ib][idx1], &LD_pool,  
                             &beta, &DGridV_z[iw1_lo][iw2_lo], &lgd_now);
 
-                        if(GlobalV::STRESS)
+                        if(GlobalV::CAL_STRESS)
 						{
 							double stress_alpha1 = alpha * drr(ia2,ib,0);
 							double stress_alpha2 = alpha * drr(ia2,ib,1);
@@ -483,7 +483,7 @@ void Gint_Gamma::gamma_force(const double*const vlocal) const
     double** DGridV_23;
     double** DGridV_33;
 
-    if(GlobalV::STRESS)
+    if(GlobalV::CAL_STRESS)
     {
         DGridV_stress_pool = new double[6*DGridV_Size];
         ModuleBase::GlobalFunc::ZEROS(DGridV_stress_pool, 6*DGridV_Size);
@@ -551,13 +551,13 @@ void Gint_Gamma::gamma_force(const double*const vlocal) const
         }
 
         ModuleBase::realArray drr;//rewrite drr form by zhengdy-2019-04-02
-        if(GlobalV::STRESS)
+        if(GlobalV::CAL_STRESS)
         {
             drr.create(max_size, GlobalC::pw.bxyz, 3);
             drr.zero_out();
         }    
 /*        double ***drr;//store dr for stress calculate, added by zhengdy
-        if(GlobalV::STRESS)//added by zhengdy-stress
+        if(GlobalV::CAL_STRESS)//added by zhengdy-stress
         {
     		drr = new double**[max_size];
     		for(int id=0; id<max_size; id++)
@@ -650,7 +650,7 @@ void Gint_Gamma::gamma_force(const double*const vlocal) const
     double* tmp23;
     double* tmp33;
 
-	if(GlobalV::STRESS)
+	if(GlobalV::CAL_STRESS)
 	{
 		tmp11 = new double[GlobalV::NLOCAL];
 		tmp12 = new double[GlobalV::NLOCAL];
@@ -666,7 +666,7 @@ void Gint_Gamma::gamma_force(const double*const vlocal) const
         ModuleBase::GlobalFunc::ZEROS(tmpy, GlobalV::NLOCAL);
 		ModuleBase::GlobalFunc::ZEROS(tmpz, GlobalV::NLOCAL);
 
-		if(GlobalV::STRESS)
+		if(GlobalV::CAL_STRESS)
 		{
 			ModuleBase::GlobalFunc::ZEROS(tmp11, GlobalV::NLOCAL);
 			ModuleBase::GlobalFunc::ZEROS(tmp12, GlobalV::NLOCAL);
@@ -689,7 +689,7 @@ void Gint_Gamma::gamma_force(const double*const vlocal) const
                     tmpx[j] = DGridV_x[mu][nu];
                     tmpy[j] = DGridV_y[mu][nu];
                     tmpz[j] = DGridV_z[mu][nu];
-                    if(GlobalV::STRESS)
+                    if(GlobalV::CAL_STRESS)
                     {
                         tmp11[j] = DGridV_11[mu][nu];
                         tmp12[j] = DGridV_12[mu][nu];
@@ -708,7 +708,7 @@ void Gint_Gamma::gamma_force(const double*const vlocal) const
         Parallel_Reduce::reduce_double_pool( tmpx, GlobalV::NLOCAL );
         Parallel_Reduce::reduce_double_pool( tmpy, GlobalV::NLOCAL );
         Parallel_Reduce::reduce_double_pool( tmpz, GlobalV::NLOCAL );
-		if(GlobalV::STRESS)
+		if(GlobalV::CAL_STRESS)
 		{
 			Parallel_Reduce::reduce_double_pool( tmp11, GlobalV::NLOCAL );
 			Parallel_Reduce::reduce_double_pool( tmp12, GlobalV::NLOCAL );
@@ -716,33 +716,35 @@ void Gint_Gamma::gamma_force(const double*const vlocal) const
 			Parallel_Reduce::reduce_double_pool( tmp22, GlobalV::NLOCAL );
 			Parallel_Reduce::reduce_double_pool( tmp23, GlobalV::NLOCAL );
 			Parallel_Reduce::reduce_double_pool( tmp33, GlobalV::NLOCAL );
-		}
+        }
+
+        const Parallel_Orbitals* pv = this->LM->ParaV;
 
         for (int j=0; j<GlobalV::NLOCAL; j++)
         {
-            if (!GlobalC::ParaO.in_this_processor(i,j))
+            if (!pv->in_this_processor(i,j))
             {
                 continue;
             }
-            GlobalC::LM.set_force (i,j,tmpx[j], tmpy[j], tmpz[j],'N');
-            if(GlobalV::STRESS)
+            this->LM->set_force (i,j,tmpx[j], tmpy[j], tmpz[j],'N');
+            if(GlobalV::CAL_STRESS)
             {
-                const int irr = GlobalC::ParaO.trace_loc_row[ i ];
-                const int icc = GlobalC::ParaO.trace_loc_col[ j ];
-                const int index = irr * GlobalC::ParaO.ncol + icc;
-                GlobalC::LM.DHloc_fixed_11[index] += tmp11[j];
-                GlobalC::LM.DHloc_fixed_12[index] += tmp12[j];
-                GlobalC::LM.DHloc_fixed_13[index] += tmp13[j];
-                GlobalC::LM.DHloc_fixed_22[index] += tmp22[j];
-                GlobalC::LM.DHloc_fixed_23[index] += tmp23[j];
-                GlobalC::LM.DHloc_fixed_33[index] += tmp33[j];
+                const int irr = pv->trace_loc_row[ i ];
+                const int icc = pv->trace_loc_col[ j ];
+                const int index = irr * pv->ncol + icc;
+                this->LM->DHloc_fixed_11[index] += tmp11[j];
+                this->LM->DHloc_fixed_12[index] += tmp12[j];
+                this->LM->DHloc_fixed_13[index] += tmp13[j];
+                this->LM->DHloc_fixed_22[index] += tmp22[j];
+                this->LM->DHloc_fixed_23[index] += tmp23[j];
+                this->LM->DHloc_fixed_33[index] += tmp33[j];
             }
         }
     }
     delete[] tmpx;
     delete[] tmpy;
     delete[] tmpz;
-    if(GlobalV::STRESS)
+    if(GlobalV::CAL_STRESS)
     {
         delete[] tmp11;
         delete[] tmp12;
@@ -788,8 +790,8 @@ void Gint_Gamma::gamma_force(const double*const vlocal) const
     // {
     //     for(int j=0; j<GlobalV::NLOCAL; ++j)
     //     {
-    //         if(GlobalC::ParaO.in_this_processor(i,j))
-    //             GlobalC::LM.set_force (i,j,DGridV_x[i][j], DGridV_y[i][j], DGridV_z[i][j],'N');
+    //         if(pv->in_this_processor(i,j))
+    //             this->LM->set_force (i,j,DGridV_x[i][j], DGridV_y[i][j], DGridV_z[i][j],'N');
     //     }
     // }
     // delete[] tmp;
@@ -799,7 +801,7 @@ void Gint_Gamma::gamma_force(const double*const vlocal) const
     delete [] DGridV_x;
     delete [] DGridV_y;
     delete [] DGridV_z;
-    if(GlobalV::STRESS)
+    if(GlobalV::CAL_STRESS)
     {
         delete [] DGridV_11;
         delete [] DGridV_12;

@@ -94,13 +94,14 @@ Exx_Abfs::Parallel::Communicate::DM3::K_to_R(const std::vector<ModuleBase::Compl
 }
 */
 
-
-void Exx_Abfs::Parallel::Communicate::DM3::cal_DM(const double threshold_D)
+#ifdef __MPI
+void Exx_Abfs::Parallel::Communicate::DM3::cal_DM(const double threshold_D,
+    Local_Orbital_Charge &loc)
 {
 	ModuleBase::TITLE("Exx_Abfs::Parallel::Communicate::DM3::cal_DM");
 	std::vector<std::map<size_t,std::map<size_t,std::map<Abfs::Vector3_Order<int>,ModuleBase::matrix>>>> DR_a2D = GlobalV::GAMMA_ONLY_LOCAL
-		? K_to_R(GlobalC::LOC.wfc_dm_2d.dm_gamma, threshold_D)
-		: K_to_R(GlobalC::LOC.wfc_dm_2d.dm_k, threshold_D);
+		? K_to_R(loc.dm_gamma, threshold_D, *loc.ParaV)
+		: K_to_R(loc.dm_k, threshold_D, *loc.ParaV);
 	DMr = allreduce.a2D_to_exx(DR_a2D);
 
 	/*{
@@ -109,3 +110,4 @@ void Exx_Abfs::Parallel::Communicate::DM3::cal_DM(const double threshold_D)
 		ofs<<DMr<<std::endl;
 	}*/	
 }
+#endif

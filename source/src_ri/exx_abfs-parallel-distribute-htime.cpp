@@ -1,3 +1,4 @@
+#ifdef __MPI
 #include "exx_abfs-parallel-distribute-htime.h"
 
 #include "../src_pw/global.h"
@@ -113,3 +114,4 @@ std::vector<std::vector<std::pair<size_t,size_t>>> Exx_Abfs::Parallel::Distribut
 	}
 	return rank_work;
 }
+#endif

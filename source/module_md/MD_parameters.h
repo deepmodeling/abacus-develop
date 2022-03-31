@@ -10,6 +10,7 @@ public:
 	{
 		md_restart = 0;
 		md_type = 1;
+        md_nstep = 10;
 		md_dt = 1;
 		md_tfirst = 0;
 		md_tlast = -1;
@@ -38,6 +39,7 @@ public:
 	};
     ~MD_parameters(){};
 
+    int md_nstep;                 // md nstep
     bool md_restart;              // 1: restart MD, 0: no restart MD
 	int md_type;                  // -1: FIRE, 0: NVE, 1: NVT NHC, 2: LGV, 3: NVT ADS, 4: MSST 
     double md_dt;                 // Time increment (hbar/E_hartree)

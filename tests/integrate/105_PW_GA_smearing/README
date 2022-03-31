@@ -2,5 +2,5 @@ This test for:
 *fcc Al (110)
 *k-points 1*1*1
 *SG15 upf pseudopotential
-*smearing gauss = gaussian smearing
+*smearing_method gauss = gaussian smearing
 *ks_solver cg

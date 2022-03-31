@@ -99,7 +99,7 @@ void Ions_Move_BFGS::restart_bfgs(void)
 		}
 		trust_radius_old = sqrt(trust_radius_old);
 		
-		if(GlobalV::test_ion_dynamics)
+		if(GlobalV::test_relax_method)
 		{
 			ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"trust_radius_old (bohr)",trust_radius_old);
 		}
@@ -125,7 +125,7 @@ void Ions_Move_BFGS::restart_bfgs(void)
 		Ions_Move_Basic::update_iter = 0;
 
 		// set the trust radius old as the initial trust radius.
-		trust_radius_old = trust_radius_ini;
+		trust_radius_old = relax_bfgs_init;
 		this->reset_hessian();
 
 		/*	
@@ -215,7 +215,7 @@ void Ions_Move_BFGS::bfgs_routine(void)
 			// get optimized trust radius
 			trust_radius = -0.5 * dE0s * trust_radius_old /den;
 			
-			if(GlobalV::test_ion_dynamics)
+			if(GlobalV::test_relax_method)
 			{
 				ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"dE0s",dE0s);
 				ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"den",den);
@@ -240,16 +240,16 @@ void Ions_Move_BFGS::bfgs_routine(void)
 			this->grad[i] = grad_p[i];
 		}
 		
-		if(trust_radius < trust_radius_min )
+		if(trust_radius < relax_bfgs_rmin )
 		{
 			//we are trapped in this case..., so the algorithim must be restart
 			//the history is reset
 			//xiaohui add 2013-03-17
 			GlobalV::ofs_running<<"trust_radius = "<<trust_radius<<std::endl;
-			GlobalV::ofs_running<<"trust_radius_min = "<<trust_radius_min<<std::endl;
-			GlobalV::ofs_running<<"trust_radius_max = "<<trust_radius_max<<std::endl;
+			GlobalV::ofs_running<<"relax_bfgs_rmin = "<<relax_bfgs_rmin<<std::endl;
+			GlobalV::ofs_running<<"relax_bfgs_rmax = "<<relax_bfgs_rmax<<std::endl;
 			//xiaohui add 2013-03-17
-			GlobalV::ofs_running<<" trust_radius < trust_radius_min, reset bfgs history."<<std::endl;
+			GlobalV::ofs_running<<" trust_radius < relax_bfgs_rmin, reset bfgs history."<<std::endl;
 			
 			if(tr_min_hit)
 			{
@@ -265,11 +265,11 @@ void Ions_Move_BFGS::bfgs_routine(void)
 				this->move[i] = -grad[i];
 			}
 			
-			trust_radius = trust_radius_min;
+			trust_radius = relax_bfgs_rmin;
 			
 			tr_min_hit =true;
 		}
-		else if(trust_radius >= trust_radius_min)
+		else if(trust_radius >= relax_bfgs_rmin)
 		{
 			//old bfgs direction ( normalized ) is recovered
 			for(int i=0;i<dim;i++)

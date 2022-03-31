@@ -9,7 +9,7 @@
 wavefunc::wavefunc()
 {
 	allocate_ekb = false;
-	out_wf = 0;
+	out_wfc_pw = 0;
 }
 
 wavefunc::~wavefunc()
@@ -176,7 +176,7 @@ void wavefunc::wfcinit(void)
 
 int wavefunc::get_starting_nw(void)const
 {
-    if (start_wfc == "file")
+    if (init_wfc == "file")
     {
 		throw std::runtime_error("wavefunc::get_starting_nw. start_ wfc from file: not implemented yet! "+ModuleBase::GlobalFunc::TO_STRING(__FILE__)+" line "+ModuleBase::GlobalFunc::TO_STRING(__LINE__)); 	// Peize Lin change 2019-05-01
         //ModuleBase::WARNING_QUIT("wfcinit_k","\n start_ wfc from file: not implemented yet!");
@@ -184,7 +184,7 @@ int wavefunc::get_starting_nw(void)const
         // ... read the wavefunction into memory (if it is not done in c_bands)
         //**********************************************************************
     }
-    else if (start_wfc.substr(0,6) == "atomic")
+    else if (init_wfc.substr(0,6) == "atomic")
     {
         if (GlobalC::ucell.natomwfc >= GlobalV::NBANDS)
         {
@@ -198,7 +198,7 @@ int wavefunc::get_starting_nw(void)const
         }
         return max(GlobalC::ucell.natomwfc,  GlobalV::NBANDS);
     }
-    else if (start_wfc == "random")
+    else if (init_wfc == "random")
     {
         if(GlobalV::test_wf)GlobalV::ofs_running << " Start wave functions are all random." << std::endl;
         return GlobalV::NBANDS;
@@ -287,10 +287,10 @@ void wavefunc::diago_PAO_in_pw_k2(const int &ik, ModuleBase::ComplexMatrix &wvf)
 
 	ModuleBase::ComplexMatrix wfcatom(starting_nw, npwx * GlobalV::NPOL);//added by zhengdy-soc
 	if(GlobalV::test_wf)ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "starting_nw", starting_nw);
-	if(start_wfc.substr(0,6)=="atomic")
+	if(init_wfc.substr(0,6)=="atomic")
 	{
 		this->atomic_wfc(ik, this->npw, GlobalC::ucell.lmax_ppwf, wfcatom, GlobalC::ppcell.tab_at, GlobalV::NQX, GlobalV::DQ);
-		if( start_wfc == "atomic+random" && starting_nw == GlobalC::ucell.natomwfc )//added by qianrui 2021-5-16
+		if( init_wfc == "atomic+random" && starting_nw == GlobalC::ucell.natomwfc )//added by qianrui 2021-5-16
 		{
 			this->atomicrandom(wfcatom,0,starting_nw,ik);
 		}
@@ -301,7 +301,7 @@ void wavefunc::diago_PAO_in_pw_k2(const int &ik, ModuleBase::ComplexMatrix &wvf)
 		//====================================================
 		this->random(wfcatom, GlobalC::ucell.natomwfc, GlobalV::NBANDS, ik);
 	}
-	else if(start_wfc=="random")
+	else if(init_wfc=="random")
 	{
 		this->random(wfcatom,0,GlobalV::NBANDS,ik);
 	}

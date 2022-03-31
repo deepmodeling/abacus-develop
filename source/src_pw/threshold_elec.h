@@ -15,13 +15,13 @@ class Threshold_Elec
 
 	protected:
 
-    double dr2;
+    double scf_thr_rho;
 
     bool conv_elec;
 
-    void set_ethr() const;
+    void set_diag_thr_e() const;
 
-    void update_ethr(const int &iter);
+    void update_diag_thr_e(const int &iter);
 
 	// this should be moved to other places, mohan note 2021-03-03
     void print_eigenvalue(std::ofstream &ofs);

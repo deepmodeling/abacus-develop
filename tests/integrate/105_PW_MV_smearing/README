@@ -2,5 +2,5 @@ This test for:
 *hcp Be
 *k-points 2*2*2
 *SG15 upf pseudopotential
-*smearing mv = marzari-vanderbilt = cold
+*smearing_method mv = marzari-vanderbilt = cold
 *ks_solver cg

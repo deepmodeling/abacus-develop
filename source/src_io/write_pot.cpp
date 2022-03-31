@@ -13,15 +13,15 @@ void Potential::write_potential(
 {
     ModuleBase::TITLE("potential","write_potential");
 
-    if(out_potential==0) 
+    if(out_pot==0) 
     {
         return;
     }
-    else if(out_potential<0)
+    else if(out_pot<0)
     {
         if(hartree==0) return;
     }
-    else if(iter % out_potential != 0)
+    else if(iter % out_pot != 0)
     {
         return;
     }

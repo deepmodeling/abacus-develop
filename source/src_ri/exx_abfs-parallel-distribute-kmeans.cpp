@@ -1,3 +1,4 @@
+#ifdef __MPI
 #include "exx_abfs-parallel-distribute-kmeans.h"
 #include "../src_pw/global.h"
 #include <random>
@@ -342,3 +343,4 @@ ofs_mpi<<rank_work<<std::endl;
 ofs_mpi.close();
 	return rank_work;
 }
+#endif

@@ -33,7 +33,7 @@ void Parallel_Kpoints::init(void)
 			<< setw(8) << "MY_POOL"
 			<< setw(13) << "RANK_IN_POOL"
 			<< setw(6) << "NPROC"
-			<< setw(6) << "NPOOL"
+			<< setw(6) << "KPAR"
 			<< setw(14) << "NPROC_IN_POOL" << endl;
 	}
 
@@ -41,7 +41,7 @@ void Parallel_Kpoints::init(void)
 			<< setw(8) << "MY_POOL"
 			<< setw(13) << "RANK_IN_POOL"
 			<< setw(6) << "NPROC"
-			<< setw(6) << "NPOOL"
+			<< setw(6) << "KPAR"
 			<< setw(14) << "NPROC_IN_POOL" << endl;
 	
 	for(int i=0;i<NPROC;i++)
@@ -52,14 +52,14 @@ void Parallel_Kpoints::init(void)
 			<< setw(8) << MY_POOL
 			<< setw(13) << RANK_IN_POOL
 			<< setw(6) << NPROC
-			<< setw(6) << NPOOL
+			<< setw(6) << KPAR
 			<< setw(14) << NPROC_IN_POOL << endl;
 
 			ofs_running << " I'm" << setw(8) << MY_RANK
 			<< setw(8) << MY_POOL
 			<< setw(13) << RANK_IN_POOL
 			<< setw(6) << NPROC
-			<< setw(6) << NPOOL
+			<< setw(6) << KPAR
 			<< setw(14) << NPROC_IN_POOL << endl;
 		}
 		MPI_Barrier(MPI_COMM_WORLD);
@@ -81,40 +81,40 @@ void Parallel_Kpoints::divide_pools(void)
 	//cout<<"\n ==> mpi_split()"<<endl;
 	int i=0;
 	int j=0;
-	if(NPROC<NPOOL)
+	if(NPROC<KPAR)
 	{
-		cout<<"\n NPROC=" << NPROC << " NPOOL=" << NPOOL;
+		cout<<"\n NPROC=" << NPROC << " KPAR=" << KPAR;
 		cout<<"Error : Too many pools !"<<endl;
 		exit(0);
 	}
-	//if(kv.nkstot<NPOOL) cout<<"Error !"<<endl;
+	//if(kv.nkstot<KPAR) cout<<"Error !"<<endl;
 	
 	// (1) per process in each pool
-	NPROC_IN_POOL = NPROC/NPOOL;
-	if(MY_RANK < (NPROC%NPOOL)*(NPROC_IN_POOL+1)) 
+	NPROC_IN_POOL = NPROC/KPAR;
+	if(MY_RANK < (NPROC%KPAR)*(NPROC_IN_POOL+1)) 
 	{
 		NPROC_IN_POOL++;
 	}
 
 	// (2) To know how many process in pool j.
-	nproc_pool = new int[NPOOL];
-	ZEROS(nproc_pool, NPOOL);
+	nproc_pool = new int[KPAR];
+	ZEROS(nproc_pool, KPAR);
 	for(i=0;i<NPROC;i++)
 	{
-		j = i%NPOOL;
+		j = i%KPAR;
 		nproc_pool[j]++;
 	}
 
 	// (3) To know start proc index in each pool.
-	startpro_pool = new int[NPOOL];
-	ZEROS(startpro_pool, NPOOL);
-	for(i=1;i<NPOOL;i++) 
+	startpro_pool = new int[KPAR];
+	ZEROS(startpro_pool, KPAR);
+	for(i=1;i<KPAR;i++) 
 	{
 		startpro_pool[i]=startpro_pool[i-1]+nproc_pool[i-1];
 	}
 
 	// use 'MY_RANK' to know 'MY_POOL'.
-	for(i=0;i<NPOOL;i++) 
+	for(i=0;i<KPAR;i++) 
 	{
 		if(MY_RANK >= startpro_pool[i]) 
 		{
@@ -155,7 +155,7 @@ void Parallel_Kpoints::get_whichpool(const int &nkstot)
 	this->whichpool = new int[nkstot];
 	ZEROS(whichpool, nkstot);
 
-	for(int i=0; i<NPOOL; i++)
+	for(int i=0; i<KPAR; i++)
 	{
 		for(int ik=0; ik< this->nks_pool[i]; ik++)
 		{
@@ -171,17 +171,17 @@ void Parallel_Kpoints::get_whichpool(const int &nkstot)
 void Parallel_Kpoints::get_nks_pool(const int &nkstot)
 {
 	delete[] nks_pool;
-	this->nks_pool = new int[NPOOL];
-	ZEROS(nks_pool, NPOOL);
+	this->nks_pool = new int[KPAR];
+	ZEROS(nks_pool, KPAR);
 	 
-	const int nks_ave = nkstot/NPOOL;
-	const int remain = nkstot%NPOOL;
+	const int nks_ave = nkstot/KPAR;
+	const int remain = nkstot%KPAR;
 
 	//ofs_running << "\n nkstot = " << nkstot;
-	//ofs_running << "\n NPOOL = " << NPOOL;
+	//ofs_running << "\n KPAR = " << KPAR;
 	//ofs_running << "\n nks_ave = " << nks_ave;
 	
-	for(int i=0; i<NPOOL; i++)
+	for(int i=0; i<KPAR; i++)
 	{
 		this->nks_pool[i] = nks_ave;
 		if(i<remain)
@@ -196,11 +196,11 @@ void Parallel_Kpoints::get_nks_pool(const int &nkstot)
 void Parallel_Kpoints::get_startk_pool(const int &nkstot)
 {
 	delete[] startk_pool;
-	startk_pool = new int[NPOOL]; 
-	const int remain = nkstot%NPOOL;
+	startk_pool = new int[KPAR]; 
+	const int remain = nkstot%KPAR;
 	
 	startk_pool[0] = 0;
-	for(int i=1; i<NPOOL; i++)
+	for(int i=1; i<KPAR; i++)
 	{
 		startk_pool[i] = startk_pool[i-1] + nks_pool[i-1];
 		//ofs_running << "\n startk_pool[i] = " << startk_pool[i];

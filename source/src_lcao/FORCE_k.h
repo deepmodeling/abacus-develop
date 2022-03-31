@@ -6,6 +6,8 @@
 #include "../module_base/matrix.h"
 #include "LCAO_matrix.h" 
 #include "FORCE_gamma.h"
+#include "src_lcao/local_orbital_charge.h"
+#include "src_lcao/LCAO_hamilt.h"
 
 class Force_LCAO_k : public Force_LCAO_gamma
 {
@@ -16,13 +18,19 @@ class Force_LCAO_k : public Force_LCAO_gamma
 	Force_LCAO_k ();
 	~Force_LCAO_k ();
 
-	private:
-	
+private:
+    
+    LCAO_Hamilt* UHM;
+    const Parallel_Orbitals* ParaV;
+
 	//orthonormal force + contribution from T and VNL
 	void ftable_k (
 		const bool isforce,
-		const bool isstress,
-		ModuleBase::matrix& foverlap,
+        const bool isstress,
+        Record_adj &ra, 
+        std::vector<ModuleBase::ComplexMatrix>& wfc_k,
+        Local_Orbital_Charge &loc,
+        ModuleBase::matrix& foverlap,
 		ModuleBase::matrix& ftvnl_dphi,
 		ModuleBase::matrix& fvnl_dbeta,	
 		ModuleBase::matrix& fvl_dphi,
@@ -31,31 +39,24 @@ class Force_LCAO_k : public Force_LCAO_gamma
 		ModuleBase::matrix& svnl_dbeta,
 #ifdef __DEEPKS
 		ModuleBase::matrix& svl_dphi,
-		ModuleBase::matrix& svnl_dalpha
+		ModuleBase::matrix& svnl_dalpha,
 #else
-		ModuleBase::matrix& svl_dphi
+		ModuleBase::matrix& svl_dphi,
 #endif
-		);
+		LCAO_Hamilt &uhm);
 
 	// get the ds, dt, dvnl.
-	void allocate_k(void);
+	void allocate_k(const Parallel_Orbitals &pv);
 
 	void finish_k(void);
-
-	void set_EDM_k(double** dm2d, const bool with_energy);
-
-	// mohan add 2012-01-09
-	std::complex<double> set_EDM_k_element(
-		const std::complex<double> &phase,
-		const bool with_energy,
-		std::complex<double> &coef1, std::complex<double> &coef2,
-		const double &ekb);
 	
 	// calculate the force due to < dphi | beta > < beta | phi >
-	void cal_ftvnl_dphi_k(double** dm2d, const bool isforce, const bool isstress, ModuleBase::matrix& ftvnl_dphi, ModuleBase::matrix& stvnl_dphi);
+    void cal_ftvnl_dphi_k(double** dm2d, const bool isforce, const bool isstress, Record_adj& ra,
+        ModuleBase::matrix& ftvnl_dphi, ModuleBase::matrix& stvnl_dphi);
 
 	// calculate the overlap force
-	void cal_foverlap_k(const bool isforce, const bool isstress, ModuleBase::matrix& foverlap, ModuleBase::matrix& soverlap);
+    void cal_foverlap_k(const bool isforce, const bool isstress, Record_adj &ra, std::vector<ModuleBase::ComplexMatrix>& wfc_k,
+        Local_Orbital_Charge& loc, ModuleBase::matrix& foverlap, ModuleBase::matrix& soverlap);
 
 	// calculate the force due to < phi | Vlocal | dphi >
 	void cal_fvl_dphi_k(double** dm2d, const bool isforce, const bool isstress, ModuleBase::matrix& fvl_dphi, ModuleBase::matrix& svl_dphi);

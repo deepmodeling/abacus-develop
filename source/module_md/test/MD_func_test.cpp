@@ -65,7 +65,7 @@ TEST_F(MD_func_test, initpos)
 
 TEST_F(MD_func_test, randomvel)
 {
-    ucell.set_vel = 0;
+    ucell.init_vel = 0;
     temperature = 300 / ModuleBase::Hartree_to_K;
     MD_func::InitVel(ucell, temperature, allmass, frozen_freedom, ionmbl, vel);
     
@@ -85,7 +85,7 @@ TEST_F(MD_func_test, randomvel)
 
 TEST_F(MD_func_test, getmassmbl)
 {
-    ucell.set_vel = 0;
+    ucell.init_vel = 0;
     temperature = 300 / ModuleBase::Hartree_to_K;
     MD_func::InitVel(ucell, temperature, allmass, frozen_freedom, ionmbl, vel);
     

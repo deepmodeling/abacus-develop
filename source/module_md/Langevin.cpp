@@ -11,12 +11,12 @@ Langevin::Langevin(MD_parameters& MD_para_in, UnitCell_pseudo &unit_in) : Verlet
 
 Langevin::~Langevin(){}
 
-void Langevin::setup()
+void Langevin::setup(ModuleESolver::ESolver *p_ensolve)
 {
     ModuleBase::TITLE("Langevin", "setup");
     ModuleBase::timer::tick("Langevin", "setup");
     
-    Verlet::setup();
+    Verlet::setup(p_ensolve);
 
     post_force();
 
@@ -83,6 +83,6 @@ void Langevin::post_force()
 
 void Langevin::temp_target()
 {
-    double delta = (double)(step_ + step_rst_) / GlobalV::NSTEP;
+    double delta = (double)(step_ + step_rst_) / GlobalV::MD_NSTEP;
     t_target = mdp.md_tfirst + delta * (mdp.md_tlast - mdp.md_tfirst);
 }

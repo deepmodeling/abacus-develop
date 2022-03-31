@@ -1,6 +1,5 @@
 #include "gint_k.h"
 #include "../src_pw/global.h"
-#include "LCAO_nnr.h"
 #include "global_fp.h" // mohan add 2021-01-30
 
 #include "../module_base/ylm.h"
@@ -16,13 +15,13 @@ void Gint_k::fvl_k_RealSpace(ModuleBase::matrix& fvl_dphi, const double *vl)
 		ModuleBase::WARNING_QUIT("Gint_k::cal_force_k","The force with k can only with reduced H.");
 	}
 
-	int nnrg = GlobalC::LNNR.nnrg;
+	int nnrg = GlobalC::GridT.nnrg;
  	//xiaohui add "OUT_LEVEL", 2015-09-16
-	if(GlobalV::OUT_LEVEL != "m") GlobalV::ofs_running << " LNNR.nnrg in cal_force_k = " << GlobalC::LNNR.nnrg << std::endl;
+	if(GlobalV::OUT_LEVEL != "m") GlobalV::ofs_running << " LNNR.nnrg in cal_force_k = " << nnrg << std::endl;
 	assert(nnrg>=0);
 
 	// just because to make thea arrys meaningful.
-	if(GlobalC::LNNR.nnrg == 0)
+	if(nnrg == 0)
 	{
 		nnrg = 1;
 	}
@@ -157,7 +156,7 @@ void Gint_k::fvl_k_RealSpace(ModuleBase::matrix& fvl_dphi, const double *vl)
 	//---------------------------------------
 
 
-	//GlobalC::LM.DHloc_fixedR_x
+	//this->LM->DHloc_fixedR_x
 	this->folding_force(fvl_dphi,pvdpx, pvdpy, pvdpz);
 
 	delete[] pvdpx;
@@ -214,13 +213,13 @@ void Gint_k::svl_k_RealSpace(
 		ModuleBase::WARNING_QUIT("Gint_k::cal_stress_k","The stress with k can only with reduced H.");
 	}
 
-	int nnrg = GlobalC::LNNR.nnrg;
+	int nnrg = GlobalC::GridT.nnrg;
 
-	if(GlobalV::OUT_LEVEL != "m") GlobalV::ofs_running << " LNNR.nnrg in cal_force_k = " << GlobalC::LNNR.nnrg << std::endl;
+	if(GlobalV::OUT_LEVEL != "m") GlobalV::ofs_running << " LNNR.nnrg in cal_force_k = " << nnrg << std::endl;
 	assert(nnrg>=0);
 
 	// just because to make thea arrys meaningful.
-	if(GlobalC::LNNR.nnrg == 0)
+	if(nnrg == 0)
 	{
 		nnrg = 1;
 	}
@@ -394,7 +393,7 @@ void Gint_k::svl_k_RealSpace(
 	// Folding R here
 	//---------------------------------------
 
-	//GlobalC::LM.DHloc_fixedR_x
+	//this->LM->DHloc_fixedR_x
 	this->folding_stress(isforce, isstress, fvl_dphi, svl_dphi, pvdpx, pvdpy, pvdpz,
 			pvdp11, pvdp22, pvdp33, pvdp12, pvdp13, pvdp23);
 
@@ -498,7 +497,7 @@ void Gint_k::evaluate_vl_stress(
 	}
 
 
-	double* dmR = GlobalC::LOC.DM_R[GlobalV::CURRENT_SPIN];
+	double* dmR = this->DM_R[GlobalV::CURRENT_SPIN];
 
 	double* dmR2;
 	for (int ia1=0; ia1<size; ++ia1)
@@ -518,7 +517,7 @@ void Gint_k::evaluate_vl_stress(
         const int R1x = gt.ucell_index2x[id1];
         const int R1y = gt.ucell_index2y[id1];
         const int R1z = gt.ucell_index2z[id1];
-        const int DM_start = GlobalC::LNNR.nlocstartg[iat];
+        const int DM_start = gt.nlocstartg[iat];
 
         // get (j,beta,R2)
         for (int ia2=0; ia2<size; ++ia2)
@@ -574,11 +573,11 @@ void Gint_k::evaluate_vl_stress(
                                               GlobalC::ucell.a3.x, GlobalC::ucell.a3.y, GlobalC::ucell.a3.z,
                                               rt[0],rt[1],rt[2]);
 	
-				const int index = GlobalC::LNNR.cal_RindexAtom(dRx, dRy, dRz, iat2);
+				const int index = gt.cal_RindexAtom(dRx, dRy, dRz, iat2);
                 int offset = -1;
 
-				int* find_start = GlobalC::LNNR.find_R2[iat];
-				int* findend = GlobalC::LNNR.find_R2[iat] + GlobalC::LNNR.nad[iat];
+				int* find_start = gt.find_R2[iat];
+				int* findend = gt.find_R2[iat] + gt.nad[iat];
 				
 				// the nad should be a large expense of time.
 				for(int* find=find_start; find < findend; find++)
@@ -594,7 +593,7 @@ void Gint_k::evaluate_vl_stress(
                 {
                     ModuleBase::WARNING_QUIT("gint_k","evaluate_vl_force wrong");
                 }
-                assert(offset < GlobalC::LNNR.nad[iat]);
+                assert(offset < gt.nad[iat]);
 
 				//--------------------------------------------------------------- 
 				// what I do above is to get 'offset' for atom std::pair (iat1, iat2)
@@ -602,7 +601,7 @@ void Gint_k::evaluate_vl_stress(
 				// I should take advantage of gt.which_unitcell.
 				//--------------------------------------------------------------- 
 
-				const int iatw = DM_start + GlobalC::LNNR.find_R2st[iat][offset];
+				const int iatw = DM_start + gt.find_R2st[iat][offset];
 				
 				for(int ib=0; ib<gt.bxyz; ++ib)
 				{
@@ -730,7 +729,7 @@ void Gint_k::evaluate_vl_force(const int &grid_index, const int &size, const int
         }
 
 
-        double* dmR = GlobalC::LOC.DM_R[GlobalV::CURRENT_SPIN];
+        double* dmR = this->DM_R[GlobalV::CURRENT_SPIN];
         double* dmR2;
         for (int ia1=0; ia1<size; ++ia1)
         {
@@ -749,7 +748,7 @@ void Gint_k::evaluate_vl_force(const int &grid_index, const int &size, const int
 			const int R1x = gt.ucell_index2x[id1];
 			const int R1y = gt.ucell_index2y[id1];
 			const int R1z = gt.ucell_index2z[id1];
-			const int DM_start = GlobalC::LNNR.nlocstartg[iat];
+			const int DM_start = gt.nlocstartg[iat];
 
 			// get (j,beta,R2)
 			for (int ia2=0; ia2<size; ++ia2)
@@ -798,11 +797,11 @@ void Gint_k::evaluate_vl_force(const int &grid_index, const int &size, const int
 					const int dRy = R1y - R2y;
 					const int dRz = R1z - R2z;
 
-                    const int index = GlobalC::LNNR.cal_RindexAtom(dRx, dRy, dRz, iat2);
+                    const int index = gt.cal_RindexAtom(dRx, dRy, dRz, iat2);
                 	int offset = -1;
 
-					int* find_start = GlobalC::LNNR.find_R2[iat];
-					int* findend = GlobalC::LNNR.find_R2[iat] + GlobalC::LNNR.nad[iat];
+					int* find_start = gt.find_R2[iat];
+					int* findend = gt.find_R2[iat] + gt.nad[iat];
 
 					// the nad should be a large expense of time.
 					for(int* find=find_start; find < findend; find++)
@@ -818,7 +817,7 @@ void Gint_k::evaluate_vl_force(const int &grid_index, const int &size, const int
 					{
 						ModuleBase::WARNING_QUIT("gint_k","evaluate_vl_force wrong");
 					}
-                	assert(offset < GlobalC::LNNR.nad[iat]);
+                	assert(offset < gt.nad[iat]);
 
 					//--------------------------------------------------------------- 
 					// what I do above is to get 'offset' for atom std::pair (iat1, iat2)
@@ -826,7 +825,7 @@ void Gint_k::evaluate_vl_force(const int &grid_index, const int &size, const int
 					// I should take advantage of gt.which_unitcell.
 					//--------------------------------------------------------------- 
 
-                    const int iatw = DM_start + GlobalC::LNNR.find_R2st[iat][offset];
+                    const int iatw = DM_start + gt.find_R2st[iat][offset];
 
 					for(int ib=0; ib<gt.bxyz; ++ib)
 					{

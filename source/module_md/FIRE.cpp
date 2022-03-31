@@ -20,12 +20,12 @@ FIRE::FIRE(MD_parameters& MD_para_in, UnitCell_pseudo &unit_in) : Verlet(MD_para
 
 FIRE::~FIRE(){}
 
-void FIRE::setup()
+void FIRE::setup(ModuleESolver::ESolver *p_ensolve)
 {
     ModuleBase::TITLE("FIRE", "setup");
     ModuleBase::timer::tick("FIRE", "setup");
     
-    Verlet::setup();
+    Verlet::setup(p_ensolve);
 
     check_force();
 

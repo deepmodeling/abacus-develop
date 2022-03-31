@@ -11,28 +11,28 @@ calculation         scf
 symmetry            0
 
 #test_force         1
-nstep               1
+relax_nmax               1
 force_thr_ev        0.001
 out_level           ie
-move_method         cg
+relax_method         cg
 
-smearing            gaussian
-sigma               0.001
+smearing_method            gaussian
+smearing_sigma               0.001
 #Parameters (3.PW)
 ecutwfc             20
-dr2                 1e-6
-niter               100
+scf_thr_rho                 1e-6
+scf_nmax               100
 
 #Parameters (LCAO)
 basis_type          lcao
 ks_solver           genelpa
-charge_extrap       second-order
+chg_extrap       second-order
 out_dm              0
-ethr                0.00001
+diag_thr_e                0.00001
 
 mixing_type         pulay 
 mixing_beta         0.4
 mixing_ndim         5
 
-force 1
-stress 1
+cal_force 1
+cal_stress 1

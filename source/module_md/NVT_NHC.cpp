@@ -46,12 +46,12 @@ NVT_NHC::~NVT_NHC()
     delete []veta;
 }
 
-void NVT_NHC::setup()
+void NVT_NHC::setup(ModuleESolver::ESolver *p_ensolve)
 {
     ModuleBase::TITLE("NVT_NHC", "setup");
     ModuleBase::timer::tick("NVT_NHC", "setup");
 
-    Verlet::setup();
+    Verlet::setup(p_ensolve);
 
     temp_target();
     
@@ -235,7 +235,7 @@ void NVT_NHC::integrate()
 
 void NVT_NHC::temp_target()
 {
-    double delta = (double)(step_ + step_rst_) / GlobalV::NSTEP;
+    double delta = (double)(step_ + step_rst_) / GlobalV::MD_NSTEP;
     t_target = mdp.md_tfirst + delta * (mdp.md_tlast - mdp.md_tfirst);
 }
 

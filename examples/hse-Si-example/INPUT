@@ -6,10 +6,10 @@ calculation				scf
 basis_type 				lcao
 ks_solver  				genelpa
 ecutwfc    				100
-dr2        				1e-8
-niter      				100
+scf_thr_rho        				1e-8
+scf_nmax      				100
 gamma_only 				0
-smearing   				smearing
+smearing_method   				smearing_method
 mixing_type				pulay
 
 exx_hybrid_type			hse

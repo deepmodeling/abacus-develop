@@ -23,7 +23,7 @@ extern int		NBANDS_ISTATE;		// 1.05 // mohan add 2011-03-22
 extern int 		NLOCAL;				// 1.1 // mohan add 2009-05-29
 
 extern double PSEUDORCUT;
-extern bool RENORMWITHMESH;
+extern bool PSEUDO_MESH;
 
 extern std::string	CALCULATION;		// 2 "scf";"nscf" ;"symmetry"
 extern int		EFIELD;				// 5 add electric field
@@ -36,18 +36,19 @@ extern bool		TWO_EFERMI; 		// 7.5 mohan add 2011-04-03, two fermi energy, exist 
 extern int 		CURRENT_SPIN;		// 8
 extern int 		CURRENT_K;		// 8
 
-extern int 		FORCE;				// 8.1
+extern int 		CAL_FORCE;				// 8.1
 extern double	FORCE_THR;			// 8.2
-extern bool 	STRESS;				// 8.25 calcualte the stress
+extern bool 	CAL_STRESS;				// 8.25 calcualte the stress
 extern double  PRESS1;
 extern double  PRESS2;
 extern double  PRESS3;
 extern double PRESSURE;
-extern std::string	MOVE_IONS;
+extern std::string	RELAX_METHOD;
 extern std::string	OUT_LEVEL;
 
-extern int		NSTEP;				// 8.3
-extern int 		NITER;				// 8.4
+extern int		RELAX_NMAX;				// 8.3
+extern int 		SCF_NMAX;				// 8.4
+extern int      MD_NSTEP;
 
 extern std::string	BASIS_TYPE; //xiaohui add 2013-09-01
 extern std::string	KS_SOLVER; //xiaohui add 2013-09-01
@@ -66,13 +67,13 @@ extern double   soc_lambda; //soc modulator factor, from 0 to 1
 
 
 extern int		DIAGO_PROC;			// 12.1 number of processors used to diag.
-extern int 		DIAGO_CG_MAXITER;	// 13
+extern int 		DIAG_CG_NMAX;	// 13
 extern int		DIAGO_CG_PREC;		// 13.1
 extern int 		DIAGO_DAVID_NDIM;	// 14
-extern double 	ETHR;				// 15 ethr
+extern double 	DIAG_THR_E;				// 15 diag_thr_e
 extern int		NB2D;				// 16.5 dividsion of 2D_matrix.
 
-extern double 	DRHO2;				// 17
+extern double 	SCF_THR_RHO;				// 17
 
 extern std::string	RESTART_MODE;		// 18
 
@@ -96,12 +97,12 @@ extern int ocp;
 extern std::string ocp_set;
 extern std::vector<double> ocp_kb;
 //extern double ocp_kb[10000];
-extern int  mulliken;//qifeng add 2019/9/10
+extern int  out_mul;//qifeng add 2019/9/10
 //========================================================================
 // EXPLAIN : Parallel information
 // GLOBAL VARIABLES :
 // NAME : NPROC( global number of process )
-// NAME : NPOOL( global number of pools )
+// NAME : KPAR( global number of pools )
 // NAME : MY_RANK( global index of process )
 // NAME : MY_POOL( global index of pool (count in pool))
 // NAME : NPROC_IN_POOL( local number of process in a pool.)
@@ -114,7 +115,7 @@ extern int  mulliken;//qifeng add 2019/9/10
 // NAME : GSIZE( number of processors in each grid world)
 //========================================================================
 extern int NPROC;
-extern int NPOOL;
+extern int KPAR;
 extern int MY_RANK;
 extern int MY_POOL;
 extern int NPROC_IN_POOL;
@@ -129,7 +130,7 @@ extern int GSIZE;
 // EXPLAIN : readin file dir, output file std::ofstream
 // GLOBAL VARIABLES :
 // NAME : global_in_card
-// NAME : global_atom_card
+// NAME : stru_file
 // NAME : global_kpoint_card
 // NAME : global_wannier_card
 // NAME : global_pseudo_dir
@@ -139,7 +140,7 @@ extern int GSIZE;
 // NAME : ofs_warning( contain warning information, including error)
 //==========================================================
 extern std::string	global_in_card;
-extern std::string	global_atom_card;
+extern std::string	stru_file;
 extern std::string 	global_kpoint_card;
 extern std::string	global_wannier_card;
 
@@ -187,7 +188,7 @@ extern int test_gridt; // mohan add 2011-03-17
 extern int test_pseudo_cell;
 extern int test_pp;
 extern int test_kmesh;
-extern int test_ion_dynamics;
+extern int test_relax_method;
 //==========================================================
 // src_tools
 //==========================================================

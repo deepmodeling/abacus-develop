@@ -12,6 +12,7 @@ add_library(
     ORB_table_alpha.cpp
     ORB_table_beta.cpp
     ORB_table_phi.cpp
+    parallel_orbitals.cpp
 )
 
 set(CMAKE_CXX_STANDARD_REQUIRED ON) 

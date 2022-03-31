@@ -11,7 +11,7 @@
 #include "dftu_relax.h"
 
 #include "../module_cell/unitcell_pseudo.h"
-#include "../src_parallel/parallel_orbitals.h"
+#include "../module_orbital/parallel_orbitals.h"
 
 using namespace std;
 
@@ -31,14 +31,14 @@ public:
 
 	// initialize the input terms of  U, J, double_counting etc
     void init(UnitCell_pseudo &cell, // unitcell class
-		Parallel_Orbitals &po // parallel orbitals parameters
+        LCAO_Matrix &lm
 	);
     
-    static void folding_overlap_matrix(const int ik, std::complex<double>* Sk);
+    static void folding_overlap_matrix(const int ik, std::complex<double>* Sk, LCAO_Matrix &lm);
     
     //calculate the local occupation number matrix
-    void cal_occup_m_k(const int iter);
-    void cal_occup_m_gamma(const int iter);
+    void cal_occup_m_k(const int iter,  std::vector<ModuleBase::ComplexMatrix> &dm_k);
+    void cal_occup_m_gamma(const int iter,  std::vector<ModuleBase::matrix> &dm_gamma);
 
     void write_occup_m(const std::string &fn);
     void read_occup_m(const std::string &fn);
@@ -62,7 +62,6 @@ public:
 
     double EU;
     int iter_dftu;
-   
 };
 }
 namespace GlobalC

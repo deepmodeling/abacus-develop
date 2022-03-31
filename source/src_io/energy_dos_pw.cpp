@@ -33,7 +33,7 @@ void energy::perform_dos_pw(void)
 			ofsi.close();
 		}
 #ifdef __MPI
-		for(int ip=0; ip<GlobalV::NPOOL; ip++)
+		for(int ip=0; ip<GlobalV::KPAR; ip++)
 		{
 			MPI_Barrier(MPI_COMM_WORLD);
 			if( GlobalV::MY_POOL == ip )

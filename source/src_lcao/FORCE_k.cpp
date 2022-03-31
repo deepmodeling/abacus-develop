@@ -18,11 +18,13 @@ Force_LCAO_k::~Force_LCAO_k ()
 {
 }
 
-#include "LCAO_nnr.h"
 // be called in Force_LCAO::start_force_calculation
 void Force_LCAO_k::ftable_k (
 		const bool isforce,
 		const bool isstress,
+        Record_adj &ra, 
+        std::vector<ModuleBase::ComplexMatrix>& wfc_k,
+        Local_Orbital_Charge &loc, 
 		ModuleBase::matrix& foverlap,
 		ModuleBase::matrix& ftvnl_dphi,
 		ModuleBase::matrix& fvnl_dbeta,	
@@ -32,64 +34,65 @@ void Force_LCAO_k::ftable_k (
 		ModuleBase::matrix& svnl_dbeta,
 #ifdef __DEEPKS
 		ModuleBase::matrix& svl_dphi,
-		ModuleBase::matrix& svnl_dalpha
+		ModuleBase::matrix& svnl_dalpha,
 #else
-		ModuleBase::matrix& svl_dphi
+		ModuleBase::matrix& svl_dphi,
 #endif
-		)
+		LCAO_Hamilt &uhm)
 {
     ModuleBase::TITLE("Force_LCAO_k", "ftable_k");
 	ModuleBase::timer::tick("Force_LCAO_k","ftable_k");
-	
-	this->allocate_k();
+
+    this->UHM = &uhm;
+
+    const Parallel_Orbitals* pv = loc.ParaV;
+    this->allocate_k(*pv);
 
 	// calculate the energy density matrix
 	// and the force related to overlap matrix and energy density matrix.
-	this->cal_foverlap_k(isforce, isstress, foverlap, soverlap);
+    this->cal_foverlap_k(isforce, isstress, ra, wfc_k, loc, foverlap, soverlap);
 
 	// calculate the density matrix
 	double** dm2d = new double*[GlobalV::NSPIN];
 	for(int is=0; is<GlobalV::NSPIN; is++)
 	{
-		dm2d[is] = new double[GlobalC::LNNR.nnr];
-		ModuleBase::GlobalFunc::ZEROS(dm2d[is], GlobalC::LNNR.nnr);
+		dm2d[is] = new double[pv->nnr];
+		ModuleBase::GlobalFunc::ZEROS(dm2d[is], pv->nnr);
 	}
-	ModuleBase::Memory::record ("Force_LCAO_k", "dm2d", GlobalV::NSPIN*GlobalC::LNNR.nnr, "double");	
-	bool with_energy = false;
+    ModuleBase::Memory::record ("Force_LCAO_k", "dm2d", GlobalV::NSPIN*pv->nnr, "double");	
 
-	
-	this->set_EDM_k(dm2d, with_energy);
-	
-	this->cal_ftvnl_dphi_k(dm2d, isforce, isstress, ftvnl_dphi, stvnl_dphi);
+    loc.cal_dm_R(loc.dm_k, ra, dm2d);
+    
+    this->cal_ftvnl_dphi_k(dm2d, isforce, isstress, ra, ftvnl_dphi, stvnl_dphi);
 
 
-	// ---------------------------------------
-	// doing on the real space grid.
-	// ---------------------------------------
-	this->cal_fvl_dphi_k(dm2d, isforce, isstress, fvl_dphi, svl_dphi);
+    // ---------------------------------------
+    // doing on the real space grid.
+    // ---------------------------------------
+    this->cal_fvl_dphi_k(dm2d, isforce, isstress, fvl_dphi, svl_dphi);
 
-	this->calFvnlDbeta(dm2d, isforce, isstress, fvnl_dbeta, svnl_dbeta, GlobalV::vnl_method);
+    this->calFvnlDbeta(dm2d, isforce, isstress, fvnl_dbeta, svnl_dbeta, GlobalV::vnl_method);
 
 #ifdef __DEEPKS
     if (GlobalV::deepks_scf)
     {
-		GlobalC::ld.cal_projected_DM_k(GlobalC::LOC.wfc_dm_2d.dm_k,
+        GlobalC::ld.cal_projected_DM_k(loc.dm_k,
 			GlobalC::ucell,
             GlobalC::ORB,
             GlobalC::GridD,
-            GlobalC::ParaO.trace_loc_row,
-			GlobalC::ParaO.trace_loc_col,
+            pv->trace_loc_row,
+			pv->trace_loc_col,
 			GlobalC::kv.nks,
 			GlobalC::kv.kvec_d);
     	GlobalC::ld.cal_descriptor();
 		GlobalC::ld.cal_gedm(GlobalC::ucell.nat);
 
-        GlobalC::ld.cal_f_delta_k(GlobalC::LOC.wfc_dm_2d.dm_k,
+        GlobalC::ld.cal_f_delta_k(loc.dm_k,
 			GlobalC::ucell,
             GlobalC::ORB,
             GlobalC::GridD,
-            GlobalC::ParaO.trace_loc_row,
-			GlobalC::ParaO.trace_loc_col,
+            pv->trace_loc_row,
+			pv->trace_loc_col,
 			GlobalC::kv.nks,
 			GlobalC::kv.kvec_d,
 			isstress,svnl_dalpha);
@@ -102,27 +105,27 @@ void Force_LCAO_k::ftable_k (
 #endif
         if(GlobalV::deepks_out_unittest)
         {
-			GlobalC::ld.print_dm_k(GlobalC::kv.nks,GlobalC::LOC.wfc_dm_2d.dm_k);
+			GlobalC::ld.print_dm_k(GlobalC::kv.nks, loc.dm_k);
 			GlobalC::ld.check_projected_dm();
 			GlobalC::ld.check_descriptor(GlobalC::ucell);
 			GlobalC::ld.check_gedm();
 			GlobalC::ld.add_v_delta_k(GlobalC::ucell,
 				GlobalC::ORB,
 				GlobalC::GridD,
-				GlobalC::ParaO.trace_loc_row,
-				GlobalC::ParaO.trace_loc_col,
-				GlobalC::LNNR.nnr);
-			GlobalC::ld.check_v_delta_k(GlobalC::LNNR.nnr);
+				pv->trace_loc_row,
+				pv->trace_loc_col,
+				pv->nnr);
+			GlobalC::ld.check_v_delta_k(pv->nnr);
 			for(int ik=0;ik<GlobalC::kv.nks;ik++)
 			{
-				GlobalC::LNNR.folding_fixedH(ik);
+				uhm.LM->folding_fixedH(ik);
 			}
-			GlobalC::ld.cal_e_delta_band_k(GlobalC::LOC.wfc_dm_2d.dm_k,
-				GlobalC::ParaO.trace_loc_row,
-				GlobalC::ParaO.trace_loc_col,
+			GlobalC::ld.cal_e_delta_band_k(loc.dm_k,
+				pv->trace_loc_row,
+				pv->trace_loc_col,
 				GlobalC::kv.nks,
-				GlobalC::ParaO.nrow,
-				GlobalC::ParaO.ncol);
+				pv->nrow,
+				pv->ncol);
 			ofstream ofs("E_delta_bands.dat");
 			ofs <<std::setprecision(10)<< GlobalC::ld.e_delta_band;
 			ofstream ofs1("E_delta.dat");
@@ -174,67 +177,67 @@ void Force_LCAO_k::ftable_k (
     return;
 }
 
-void Force_LCAO_k::allocate_k(void)
+void Force_LCAO_k::allocate_k(const Parallel_Orbitals &pv)
 {
 	ModuleBase::TITLE("Force_LCAO_k","allocate_k");
 	ModuleBase::timer::tick("Force_LCAO_k","allocate_k");
 
-	const int nnr = GlobalC::LNNR.nnr;
+    this->ParaV = &pv;
+    const int nnr =pv.nnr;
 	//--------------------------------
     // (1) allocate for dSx dSy & dSz
 	//--------------------------------
-	GlobalC::LM.DSloc_Rx = new double [nnr];
-    GlobalC::LM.DSloc_Ry = new double [nnr];
-    GlobalC::LM.DSloc_Rz = new double [nnr];
-    ModuleBase::GlobalFunc::ZEROS(GlobalC::LM.DSloc_Rx, nnr);
-    ModuleBase::GlobalFunc::ZEROS(GlobalC::LM.DSloc_Ry, nnr);
-    ModuleBase::GlobalFunc::ZEROS(GlobalC::LM.DSloc_Rz, nnr);
+	this->UHM->LM->DSloc_Rx = new double [nnr];
+    this->UHM->LM->DSloc_Ry = new double [nnr];
+    this->UHM->LM->DSloc_Rz = new double [nnr];
+    ModuleBase::GlobalFunc::ZEROS(this->UHM->LM->DSloc_Rx, nnr);
+    ModuleBase::GlobalFunc::ZEROS(this->UHM->LM->DSloc_Ry, nnr);
+    ModuleBase::GlobalFunc::ZEROS(this->UHM->LM->DSloc_Rz, nnr);
 	ModuleBase::Memory::record("force_lo", "dS", nnr*3, "double");
     
-	if(GlobalV::STRESS){
-		GlobalC::LM.DH_r = new double [3* nnr];
-		ModuleBase::GlobalFunc::ZEROS(GlobalC::LM.DH_r, 3 * nnr);
-		GlobalC::LM.stvnl11 = new double [nnr];
-		GlobalC::LM.stvnl12 = new double [nnr];
-		GlobalC::LM.stvnl13 = new double [nnr];
-		GlobalC::LM.stvnl22 = new double [nnr];
-		GlobalC::LM.stvnl23 = new double [nnr];
-		GlobalC::LM.stvnl33 = new double [nnr];
-		ModuleBase::GlobalFunc::ZEROS(GlobalC::LM.stvnl11,  nnr);
-		ModuleBase::GlobalFunc::ZEROS(GlobalC::LM.stvnl12,  nnr);
-		ModuleBase::GlobalFunc::ZEROS(GlobalC::LM.stvnl13,  nnr);
-		ModuleBase::GlobalFunc::ZEROS(GlobalC::LM.stvnl22,  nnr);
-		ModuleBase::GlobalFunc::ZEROS(GlobalC::LM.stvnl23,  nnr);
-		ModuleBase::GlobalFunc::ZEROS(GlobalC::LM.stvnl33,  nnr);
+	if(GlobalV::CAL_STRESS){
+		this->UHM->LM->DH_r = new double [3* nnr];
+		ModuleBase::GlobalFunc::ZEROS(this->UHM->LM->DH_r, 3 * nnr);
+		this->UHM->LM->stvnl11 = new double [nnr];
+		this->UHM->LM->stvnl12 = new double [nnr];
+		this->UHM->LM->stvnl13 = new double [nnr];
+		this->UHM->LM->stvnl22 = new double [nnr];
+		this->UHM->LM->stvnl23 = new double [nnr];
+		this->UHM->LM->stvnl33 = new double [nnr];
+		ModuleBase::GlobalFunc::ZEROS(this->UHM->LM->stvnl11,  nnr);
+		ModuleBase::GlobalFunc::ZEROS(this->UHM->LM->stvnl12,  nnr);
+		ModuleBase::GlobalFunc::ZEROS(this->UHM->LM->stvnl13,  nnr);
+		ModuleBase::GlobalFunc::ZEROS(this->UHM->LM->stvnl22,  nnr);
+		ModuleBase::GlobalFunc::ZEROS(this->UHM->LM->stvnl23,  nnr);
+		ModuleBase::GlobalFunc::ZEROS(this->UHM->LM->stvnl33,  nnr);
 		ModuleBase::Memory::record("stress_lo", "dSR", nnr*6, "double");
 	}
 
 	//-----------------------------
 	// calculate dS = <phi | dphi> 
 	//-----------------------------
-    // tips: build_ST_new --> GlobalC::ParaO.set_force 
 	bool cal_deri = true;
-	GlobalC::UHM.genH.build_ST_new ('S', cal_deri, GlobalC::ucell);
+	this->UHM->genH.build_ST_new ('S', cal_deri, GlobalC::ucell);
 
 	//-----------------------------------------
 	// (2) allocate for <phi | T + Vnl | dphi>
 	//-----------------------------------------
-    GlobalC::LM.DHloc_fixedR_x = new double [nnr];
-    GlobalC::LM.DHloc_fixedR_y = new double [nnr];
-    GlobalC::LM.DHloc_fixedR_z = new double [nnr];
-    ModuleBase::GlobalFunc::ZEROS (GlobalC::LM.DHloc_fixedR_x, nnr);
-    ModuleBase::GlobalFunc::ZEROS (GlobalC::LM.DHloc_fixedR_y, nnr);
-    ModuleBase::GlobalFunc::ZEROS (GlobalC::LM.DHloc_fixedR_z, nnr);
+    this->UHM->LM->DHloc_fixedR_x = new double [nnr];
+    this->UHM->LM->DHloc_fixedR_y = new double [nnr];
+    this->UHM->LM->DHloc_fixedR_z = new double [nnr];
+    ModuleBase::GlobalFunc::ZEROS (this->UHM->LM->DHloc_fixedR_x, nnr);
+    ModuleBase::GlobalFunc::ZEROS (this->UHM->LM->DHloc_fixedR_y, nnr);
+    ModuleBase::GlobalFunc::ZEROS (this->UHM->LM->DHloc_fixedR_z, nnr);
 	ModuleBase::Memory::record("force_lo", "dTVNL", nnr*3, "double");
     
     // calculate dT=<phi|kin|dphi> in LCAO
     // calculate T + VNL(P1) in LCAO basis
-    GlobalC::UHM.genH.build_ST_new ('T', cal_deri, GlobalC::ucell);
-	//test(GlobalC::LM.DHloc_fixedR_x,"GlobalC::LM.DHloc_fixedR_x T part");
+    this->UHM->genH.build_ST_new ('T', cal_deri, GlobalC::ucell);
+	//test(this->UHM->LM->DHloc_fixedR_x,"this->UHM->LM->DHloc_fixedR_x T part");
    
    	// calculate dVnl=<phi|dVnl|dphi> in LCAO 
-	this->NonlocalDphi(GlobalV::NSPIN, GlobalV::vnl_method, cal_deri);
-	//test(GlobalC::LM.DHloc_fixedR_x,"GlobalC::LM.DHloc_fixedR_x Vnl part");
+	this->NonlocalDphi(GlobalV::NSPIN, GlobalV::vnl_method, cal_deri, this->UHM->genH);
+	//test(this->UHM->LM->DHloc_fixedR_x,"this->UHM->LM->DHloc_fixedR_x Vnl part");
 
 	ModuleBase::timer::tick("Force_LCAO_k","allocate_k");
 	return;
@@ -242,249 +245,71 @@ void Force_LCAO_k::allocate_k(void)
 
 void Force_LCAO_k::finish_k(void)
 {
-    delete [] GlobalC::LM.DSloc_Rx;
-    delete [] GlobalC::LM.DSloc_Ry;
-    delete [] GlobalC::LM.DSloc_Rz;
-    delete [] GlobalC::LM.DHloc_fixedR_x;
-    delete [] GlobalC::LM.DHloc_fixedR_y;
-    delete [] GlobalC::LM.DHloc_fixedR_z;
-	if(GlobalV::STRESS)
+    delete [] this->UHM->LM->DSloc_Rx;
+    delete [] this->UHM->LM->DSloc_Ry;
+    delete [] this->UHM->LM->DSloc_Rz;
+    delete [] this->UHM->LM->DHloc_fixedR_x;
+    delete [] this->UHM->LM->DHloc_fixedR_y;
+    delete [] this->UHM->LM->DHloc_fixedR_z;
+	if(GlobalV::CAL_STRESS)
 	{
-		delete [] GlobalC::LM.DH_r;
-		delete [] GlobalC::LM.stvnl11;
-		delete [] GlobalC::LM.stvnl12;
-		delete [] GlobalC::LM.stvnl13;
-		delete [] GlobalC::LM.stvnl22;
-		delete [] GlobalC::LM.stvnl23;
-		delete [] GlobalC::LM.stvnl33;
+		delete [] this->UHM->LM->DH_r;
+		delete [] this->UHM->LM->stvnl11;
+		delete [] this->UHM->LM->stvnl12;
+		delete [] this->UHM->LM->stvnl13;
+		delete [] this->UHM->LM->stvnl22;
+		delete [] this->UHM->LM->stvnl23;
+		delete [] this->UHM->LM->stvnl33;
 	}
 	return;
 }
 
 #include "record_adj.h"
-#include "LCAO_nnr.h"
-void Force_LCAO_k::set_EDM_k(double** dm2d, const bool with_energy)
-{
-	ModuleBase::TITLE("Force_LCAO_k","set_EDM_k");
-	ModuleBase::timer::tick("Force_LCAO_k","set_EDM_k");
-
-	ModuleBase::Vector3<double> tau1, dtau;
-
-	//----------------------------------------------------------
-	// RA will set the adjacent information for each atom
-	// 2d means this adjacent information is for HPSEPS's kind
-	// of division of H matrix.
-	//----------------------------------------------------------
- 	//xiaohui add "OUT_LEVEL", 2015-09-16
-	if(GlobalV::OUT_LEVEL != "m") GlobalV::ofs_running << " Calculate the energy density matrix with k " << std::endl;
-	Record_adj RA;
-	RA.for_2d();
-
-	//------------------------
-	// circle for each atom
-	//------------------------
-	for(int T1=0; T1<GlobalC::ucell.ntype; ++T1)
-    {
-        Atom* atom1 = &GlobalC::ucell.atoms[T1];
-		for(int I1=0; I1<atom1->na; ++I1)
-		{
-			const int iat = GlobalC::ucell.itia2iat(T1,I1);
-			const int start1 = GlobalC::ucell.itiaiw2iwt(T1,I1,0);
-			const int gstart = GlobalC::LNNR.nlocstart[iat];
-			const int irr = GlobalC::LNNR.nlocdim[iat];//number of adjacet orbitals
-
-			std::complex<double> **vvv = new std::complex<double>*[GlobalV::NSPIN];
-         //xiaohui add 2014-03-17, add "if(irr > 0)", 
-         //meaing only allocate memory when number of iat-th atom adjacet orbitals are not zero in this processor
-         if(irr > 0)
-         {
-   			for(int is=0; is<GlobalV::NSPIN; is++)
-			   {
-				   vvv[is] = new std::complex<double>[ irr ];
-				   ModuleBase::GlobalFunc::ZEROS(vvv[is], irr );
-			   }
-         }
-
-			int ispin=0;
-			std::complex<double> *dm;
-			//----------------
-			// circle for k
-			//----------------
-			for(int ik=0; ik<GlobalC::kv.nks; ++ik)
-			{
-				// set the spin direction
-				if(GlobalV::NSPIN==2)
-				{
-					ispin = GlobalC::kv.isk[ik];
-				}
-				dm = vvv[ispin];
-				//------------------
-				// circle for bands
-				//------------------
-				for(int ib=0; ib<GlobalV::NBANDS; ++ib)
-				{
-					const double w1=GlobalC::wf.wg(ik,ib);
-					if(w1>0)
-					{
-						//-----------------------------
-						// start the adjacent cycle.
-						//-----------------------------
-						std::complex<double> *wfc = GlobalC::LOWF.WFC_K[ik][ib];
-						int count = 0;
-						for (int cb = 0; cb < RA.na_each[iat]; ++cb)
-						{
-							const int T2 = RA.info[iat][cb][3];
-							const int I2 = RA.info[iat][cb][4];
-							Atom* atom2 = &GlobalC::ucell.atoms[T2];
-
-							//-----------------
-							// exp[i * R * k]
-							//-----------------
-							const std::complex<double> phase = w1 * exp(ModuleBase::TWO_PI * ModuleBase::IMAG_UNIT * (
-										GlobalC::kv.kvec_d[ik].x * RA.info[iat][cb][0] +
-										GlobalC::kv.kvec_d[ik].y * RA.info[iat][cb][1] +
-										GlobalC::kv.kvec_d[ik].z * RA.info[iat][cb][2]
-										) );
-
-							const int start2 = GlobalC::ucell.itiaiw2iwt(T2,I2,0);
-
-							for(int jj=0; jj<atom1->nw; ++jj)
-							{
-								const int iw1_all = start1 + jj;
-								
-								// 2D division (HPSEPS)
-								const int mu = GlobalC::ParaO.trace_loc_row[iw1_all];
-								if(mu<0) continue;
-								const int mug = GlobalC::GridT.trace_lo[iw1_all];
-
-								for(int kk=0; kk<atom2->nw; ++kk)
-								{
-									const int iw2_all = start2 + kk;
-									
-									// 2D division (HPSEPS)
-									const int nu = GlobalC::ParaO.trace_loc_col[iw2_all];
-									if(nu<0) continue;
-									const int nug = GlobalC::GridT.trace_lo[iw2_all];
-	
-									if(mug >= 0 && nug >= 0)
-									{
-										dm[count] += set_EDM_k_element(phase, with_energy, 
-										wfc[mug], wfc[nug], GlobalC::wf.ekb[ik][ib]); 
-									}
-									else if( mug >= 0 && nug <= 0)
-									{
-										const int a4 = GlobalC::LOWF.trace_aug[iw2_all];
-									
-										//assert(a4>=0);
-
-										dm[count] += set_EDM_k_element(phase, with_energy, wfc[mug], 
-										GlobalC::LOWF.WFC_K_aug[ik][ib][a4], GlobalC::wf.ekb[ik][ib]); 
-									}
-									else if( mug <= 0 && nug >= 0)
-									{
-										const int a3 = GlobalC::LOWF.trace_aug[iw1_all]; 
-
-										dm[count] += set_EDM_k_element(phase, with_energy, 
-										GlobalC::LOWF.WFC_K_aug[ik][ib][a3], wfc[nug], GlobalC::wf.ekb[ik][ib]); 
-									}
-									else if( mug <=0 && nug <=0 )
-									{
-										const int a1 = GlobalC::LOWF.trace_aug[iw1_all];
-										const int a2 = GlobalC::LOWF.trace_aug[iw2_all];
-
-										dm[count] += set_EDM_k_element(phase, with_energy, 
-										GlobalC::LOWF.WFC_K_aug[ik][ib][a1], GlobalC::LOWF.WFC_K_aug[ik][ib][a2], GlobalC::wf.ekb[ik][ib]); 
-									}
-									assert(count<irr);
-									++ count;
-								}//kk
-							}//jj
-						}// cb
-//						GlobalV::ofs_running << " count = " << count << std::endl;
-						assert(count == GlobalC::LNNR.nlocdim[iat]);
-					}// w1
-				}//ib
-			}//ik
-
-			//--------------------------------------
-			// get the real value density matrix or
-			// energy density matrix 
-			//--------------------------------------
-			for(int is=0; is<GlobalV::NSPIN; ++is)
-			{
-				for(int iv=0; iv<irr; ++iv)
-				{
-					dm2d[is][gstart+iv] = vvv[is][iv].real();
-				}
-            //xiaohui add 2014-03-17, add "if(irr > 0)"
-            //meaning delete memory when number of iat-th atom adjacet orbitals are not zero in this processor 
-            if(irr > 0)
-            {
-				   delete[] vvv[is];
-            }
-			}
-			delete[] vvv;
-
-		}// I1
-	}// T1
-
-RA.delete_grid();//xiaohui add 2015-02-04
-	ModuleBase::timer::tick("Force_LCAO_k","set_EDM_k");
-	return;
-}
-
-
-std::complex<double> Force_LCAO_k::set_EDM_k_element(
-	const std::complex<double> &phase,
-	const bool with_energy,
-	std::complex<double> &coef1, std::complex<double> &coef2,
-	const double &ekb)
-{
-	std::complex<double> dm = std::complex<double>(0,0);
-	//--------------------------------------
-	// for energy density matrix
-	// \sum E(i)*exp(iRk)*psi(mu)*psi(nu)
-	//--------------------------------------
-	if(with_energy)
-	{
-		dm += phase * ekb * conj(coef1) * coef2;
-	}
-	//--------------------------------------
-	// for density matrix
-	// \sum exp(iRk)*psi(mu)*psi(nu)
-	//--------------------------------------
-	else
-	{
-		dm += phase * conj(coef1) * coef2 ;
-	}
-	return dm;
-}
-
-
 void Force_LCAO_k::cal_foverlap_k(
 	const bool isforce, 
-	const bool isstress, 
-	ModuleBase::matrix& foverlap, 
+    const bool isstress,
+    Record_adj &ra, 
+    std::vector<ModuleBase::ComplexMatrix>& wfc_k,
+    Local_Orbital_Charge &loc,
+    ModuleBase::matrix& foverlap,
 	ModuleBase::matrix& soverlap)
 {
 	ModuleBase::TITLE("Force_LCAO_k","cal_foverlap_k");
 	ModuleBase::timer::tick("Force_LCAO_k","cal_foverlap_k");
 
-	//--------------------------------------------
+    const Parallel_Orbitals* pv = this->ParaV;
+    //--------------------------------------------
 	// (1) allocate energy density matrix (nnr)
 	//--------------------------------------------
 	double** edm2d = new double*[GlobalV::NSPIN];
 	for(int is=0; is<GlobalV::NSPIN; is++)
 	{
-		edm2d[is] = new double[GlobalC::LNNR.nnr];
-		ModuleBase::GlobalFunc::ZEROS(edm2d[is], GlobalC::LNNR.nnr);
-	}
-	bool with_energy = true;
+		edm2d[is] = new double[pv->nnr];
+		ModuleBase::GlobalFunc::ZEROS(edm2d[is], pv->nnr);
+    }
 
 	//--------------------------------------------	
 	// calculate the energy density matrix here.
-	//--------------------------------------------	
-	this->set_EDM_k(edm2d, with_energy);
+    //--------------------------------------------	
+    ModuleBase::timer::tick("Force_LCAO_k","cal_edm_2d");
+
+    ModuleBase::matrix wgEkb;
+    wgEkb.create(GlobalC::kv.nks, GlobalV::NBANDS);
+
+    for (int ik = 0; ik < GlobalC::kv.nks; ik++)
+    {
+        for(int ib=0; ib<GlobalV::NBANDS; ib++)
+        {
+            wgEkb(ik, ib) = GlobalC::wf.wg(ik, ib) * GlobalC::wf.ekb[ik][ib];
+        }
+    }
+    std::vector<ModuleBase::ComplexMatrix> edm_k(GlobalC::kv.nks);
+    loc.cal_dm(wgEkb,
+        wfc_k,
+        edm_k);
+    loc.cal_dm_R(edm_k,
+        ra, edm2d);
+    ModuleBase::timer::tick("Force_LCAO_k", "cal_edm_2d");
 
 	//--------------------------------------------
     //summation \sum_{i,j} E(i,j)*dS(i,j)
@@ -492,8 +317,7 @@ void Force_LCAO_k::cal_foverlap_k(
 	//--------------------------------------------
 	ModuleBase::Vector3<double> tau1, dtau, tau2;
 
-	Record_adj RA;
-	RA.for_2d();
+
 
 	int irr = 0;
 	int iat = 0;
@@ -503,10 +327,10 @@ void Force_LCAO_k::cal_foverlap_k(
         for(int I1=0; I1<atom1->na; ++I1)
         {
 			const int start1 = GlobalC::ucell.itiaiw2iwt(T1,I1,0);
-			for (int cb = 0; cb < RA.na_each[iat]; ++cb)
+			for (int cb = 0; cb < ra.na_each[iat]; ++cb)
 			{
-				const int T2 = RA.info[iat][cb][3];
-				const int I2 = RA.info[iat][cb][4];
+				const int T2 = ra.info[iat][cb][3];
+				const int I2 = ra.info[iat][cb][4];
 				const int start2 = GlobalC::ucell.itiaiw2iwt(T2, I2, 0);
 
 				Atom* atom2 = &GlobalC::ucell.atoms[T2];
@@ -516,7 +340,7 @@ void Force_LCAO_k::cal_foverlap_k(
 					const int iw1_all = start1 + jj; 
 
 					// HPSEPS
-					const int mu = GlobalC::ParaO.trace_loc_row[iw1_all];
+					const int mu = pv->trace_loc_row[iw1_all];
 					if(mu<0)continue;
 
 					for(int kk=0; kk<atom2->nw; kk++)
@@ -524,7 +348,7 @@ void Force_LCAO_k::cal_foverlap_k(
 						const int iw2_all = start2 + kk;
 
 						// HPSEPS
-						const int nu = GlobalC::ParaO.trace_loc_col[iw2_all];
+						const int nu = pv->trace_loc_col[iw2_all];
 						if(nu<0)continue;
 						//==============================================================
 						// here we use 'minus', but in GlobalV::GAMMA_ONLY_LOCAL we use 'plus',
@@ -537,19 +361,19 @@ void Force_LCAO_k::cal_foverlap_k(
 							double edm2d2 = 2.0 * edm2d[is][irr];
 							if(isforce)
 							{
-								foverlap(iat,0) -= edm2d2 * GlobalC::LM.DSloc_Rx[irr];
-								foverlap(iat,1) -= edm2d2 * GlobalC::LM.DSloc_Ry[irr];
-								foverlap(iat,2) -= edm2d2 * GlobalC::LM.DSloc_Rz[irr];
+								foverlap(iat,0) -= edm2d2 * this->UHM->LM->DSloc_Rx[irr];
+								foverlap(iat,1) -= edm2d2 * this->UHM->LM->DSloc_Ry[irr];
+								foverlap(iat,2) -= edm2d2 * this->UHM->LM->DSloc_Rz[irr];
 							}
 							if(isstress)
 							{
 								for(int ipol = 0;ipol<3;ipol++)
 								{
-									soverlap(0,ipol) += edm2d[is][irr] * GlobalC::LM.DSloc_Rx[irr] * GlobalC::LM.DH_r[irr * 3 + ipol];
+									soverlap(0,ipol) += edm2d[is][irr] * this->UHM->LM->DSloc_Rx[irr] * this->UHM->LM->DH_r[irr * 3 + ipol];
 									if(ipol<1) continue;
-									soverlap(1,ipol) += edm2d[is][irr] * GlobalC::LM.DSloc_Ry[irr] * GlobalC::LM.DH_r[irr * 3 + ipol];
+									soverlap(1,ipol) += edm2d[is][irr] * this->UHM->LM->DSloc_Ry[irr] * this->UHM->LM->DH_r[irr * 3 + ipol];
 									if(ipol<2) continue;
-									soverlap(2,ipol) += edm2d[is][irr] * GlobalC::LM.DSloc_Rz[irr] * GlobalC::LM.DH_r[irr * 3 + ipol];
+									soverlap(2,ipol) += edm2d[is][irr] * this->UHM->LM->DSloc_Rz[irr] * this->UHM->LM->DH_r[irr * 3 + ipol];
 								}
 							}
 						}
@@ -566,10 +390,10 @@ void Force_LCAO_k::cal_foverlap_k(
 		StressTools::stress_fill(GlobalC::ucell.lat0, GlobalC::ucell.omega, soverlap);
 	}
 
-	if(irr!=GlobalC::LNNR.nnr)
+	if(irr!=pv->nnr)
 	{
 		ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"wrong irr",irr);
-		ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"wrong LNNR.nnr",GlobalC::LNNR.nnr);
+		ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"wrong LNNR.nnr",pv->nnr);
 		ModuleBase::WARNING_QUIT("Force_LCAO_k::cal_foverlap_k","irr!=LNNR.nnr");
 	}
 	
@@ -579,7 +403,6 @@ void Force_LCAO_k::cal_foverlap_k(
 	}
 	delete[] edm2d;
 
-	RA.delete_grid();//xiaohui add 2015-02-04
 	ModuleBase::timer::tick("Force_LCAO_k","cal_foverlap_k");
 	return;
 }
@@ -587,18 +410,18 @@ void Force_LCAO_k::cal_foverlap_k(
 void Force_LCAO_k::cal_ftvnl_dphi_k(
 	double** dm2d, 
 	const bool isforce, 
-	const bool isstress, 
-	ModuleBase::matrix& ftvnl_dphi, 
+    const bool isstress,
+    Record_adj &ra, 
+    ModuleBase::matrix& ftvnl_dphi,
 	ModuleBase::matrix& stvnl_dphi)
 {	
 	ModuleBase::TITLE("Force_LCAO_k","cal_ftvnl_dphi");
-	ModuleBase::timer::tick("Force_LCAO_k","cal_ftvnl_dphi");
-	
-	// get the adjacent atom's information.
+    ModuleBase::timer::tick("Force_LCAO_k", "cal_ftvnl_dphi");
+
+    const Parallel_Orbitals* pv = this->ParaV;
+    // get the adjacent atom's information.
 
 //	GlobalV::ofs_running << " calculate the ftvnl_dphi_k force" << std::endl;
-	Record_adj RA;
-	RA.for_2d();
 
 	int irr = 0;
     for(int T1=0; T1<GlobalC::ucell.ntype; ++T1)
@@ -608,22 +431,22 @@ void Force_LCAO_k::cal_ftvnl_dphi_k(
         {
 			const int iat = GlobalC::ucell.itia2iat(T1,I1);
 			const int start1 = GlobalC::ucell.itiaiw2iwt(T1,I1,0);
-			for (int cb = 0; cb < RA.na_each[iat]; ++cb)
+			for (int cb = 0; cb < ra.na_each[iat]; ++cb)
 			{
-				const int T2 = RA.info[iat][cb][3];
-				const int I2 = RA.info[iat][cb][4];
+				const int T2 = ra.info[iat][cb][3];
+				const int I2 = ra.info[iat][cb][4];
 				const int start2 = GlobalC::ucell.itiaiw2iwt(T2,I2,0);
 				Atom* atom2 = &GlobalC::ucell.atoms[T2];
 
 				for(int jj=0; jj<atom1->nw; ++jj)
 				{
 					const int iw1_all = start1 + jj; 
-					const int mu = GlobalC::ParaO.trace_loc_row[iw1_all];
+					const int mu = pv->trace_loc_row[iw1_all];
 					if(mu<0)continue;
 					for(int kk=0; kk<atom2->nw; ++kk)
 					{
 						const int iw2_all = start2 + kk;
-						const int nu = GlobalC::ParaO.trace_loc_col[iw2_all];
+						const int nu = pv->trace_loc_col[iw2_all];
 						if(nu<0)continue;
 						//==============================================================
 						// here we use 'minus', but in GlobalV::GAMMA_ONLY_LOCAL we use 'plus',
@@ -636,18 +459,18 @@ void Force_LCAO_k::cal_ftvnl_dphi_k(
 							double dm2d2 = 2.0 * dm2d[is][irr];
 							if(isforce)
 							{
-								ftvnl_dphi(iat,0) += dm2d2 * GlobalC::LM.DHloc_fixedR_x[irr];
-								ftvnl_dphi(iat,1) += dm2d2 * GlobalC::LM.DHloc_fixedR_y[irr];
-								ftvnl_dphi(iat,2) += dm2d2 * GlobalC::LM.DHloc_fixedR_z[irr];
+								ftvnl_dphi(iat,0) += dm2d2 * this->UHM->LM->DHloc_fixedR_x[irr];
+								ftvnl_dphi(iat,1) += dm2d2 * this->UHM->LM->DHloc_fixedR_y[irr];
+								ftvnl_dphi(iat,2) += dm2d2 * this->UHM->LM->DHloc_fixedR_z[irr];
 							}
 							if(isstress)
 							{
-								stvnl_dphi(0,0) -= dm2d[is][irr] * GlobalC::LM.stvnl11[irr];
-								stvnl_dphi(0,1) -= dm2d[is][irr] * GlobalC::LM.stvnl12[irr];
-								stvnl_dphi(0,2) -= dm2d[is][irr] * GlobalC::LM.stvnl13[irr];
-								stvnl_dphi(1,1) -= dm2d[is][irr] * GlobalC::LM.stvnl22[irr];
-								stvnl_dphi(1,2) -= dm2d[is][irr] * GlobalC::LM.stvnl23[irr];
-								stvnl_dphi(2,2) -= dm2d[is][irr] * GlobalC::LM.stvnl33[irr];
+								stvnl_dphi(0,0) -= dm2d[is][irr] * this->UHM->LM->stvnl11[irr];
+								stvnl_dphi(0,1) -= dm2d[is][irr] * this->UHM->LM->stvnl12[irr];
+								stvnl_dphi(0,2) -= dm2d[is][irr] * this->UHM->LM->stvnl13[irr];
+								stvnl_dphi(1,1) -= dm2d[is][irr] * this->UHM->LM->stvnl22[irr];
+								stvnl_dphi(1,2) -= dm2d[is][irr] * this->UHM->LM->stvnl23[irr];
+								stvnl_dphi(2,2) -= dm2d[is][irr] * this->UHM->LM->stvnl33[irr];
 							}
 						}
 						++irr;
@@ -656,16 +479,15 @@ void Force_LCAO_k::cal_ftvnl_dphi_k(
 			}// end cb
 		}
 	}
-	assert(irr==GlobalC::LNNR.nnr);
+	assert(irr==pv->nnr);
 	
-//	test(GlobalC::LM.DSloc_Rx);
+//	test(this->UHM->LM->DSloc_Rx);
 //	test(dm2d[0],"dm2d");
 
 	if(isstress){
 		StressTools::stress_fill(GlobalC::ucell.lat0, GlobalC::ucell.omega, stvnl_dphi);
 	}
 
-	RA.delete_grid();//xiaohui add 2015-02-04
 	ModuleBase::timer::tick("Force_LCAO_k","cal_ftvnl_dphi");
 	return;
 }
@@ -673,7 +495,8 @@ void Force_LCAO_k::cal_ftvnl_dphi_k(
 	
 void Force_LCAO_k::test(double* mmm, const std::string &name)
 {
-	if(GlobalV::NPROC!=1)return;
+    const Parallel_Orbitals* pv = this->ParaV;
+    if (GlobalV::NPROC != 1)return;
 	std::cout << "test!" << std::endl;
 
 	int irr = 0;
@@ -681,7 +504,7 @@ void Force_LCAO_k::test(double* mmm, const std::string &name)
 
 	GlobalV::ofs_running << " Calculate the test in Force_LCAO_k" << std::endl;
 	Record_adj RA;
-	RA.for_2d();
+	RA.for_2d(*this->UHM->LM->ParaV, GlobalV::GAMMA_ONLY_LOCAL);
 	
 	double *test;
 	test = new double[GlobalV::NLOCAL * GlobalV::NLOCAL];
@@ -707,8 +530,8 @@ void Force_LCAO_k::test(double* mmm, const std::string &name)
 					for(int kk=0; kk<atom2->nw; kk++)
 					{
 						const int iw2_all = start2+kk;
-						assert(irr<GlobalC::LNNR.nnr);
-						//test[iw1_all*GlobalV::NLOCAL+iw2_all] += GlobalC::LM.DHloc_fixedR_x[irr];
+						assert(irr<pv->nnr);
+						//test[iw1_all*GlobalV::NLOCAL+iw2_all] += this->UHM->LM->DHloc_fixedR_x[irr];
 						test[iw1_all*GlobalV::NLOCAL+iw2_all] += mmm[irr];
 						++irr;
 					}
@@ -747,8 +570,9 @@ void Force_LCAO_k::cal_fvnl_dbeta_k(
 	ModuleBase::matrix& svnl_dbeta)
 {
 	ModuleBase::TITLE("Force_LCAO_k","cal_fvnl_dbeta_k");
-	ModuleBase::timer::tick("Force_LCAO_k","cal_fvnl_dbeta_k");
-	int iir = 0;
+    ModuleBase::timer::tick("Force_LCAO_k", "cal_fvnl_dbeta_k");
+    const Parallel_Orbitals* pv = this->ParaV;
+    int iir = 0;
 	ModuleBase::Vector3<double> tau1;
 	ModuleBase::Vector3<double> tau2;
 	ModuleBase::Vector3<double> dtau;
@@ -826,12 +650,12 @@ void Force_LCAO_k::cal_fvnl_dbeta_k(
 					for (int j=0; j<atom1->nw; ++j)
 					{
 						const int iw1_all = start1 + j;
-						const int mu = GlobalC::ParaO.trace_loc_row[iw1_all];
+						const int mu = pv->trace_loc_row[iw1_all];
 						if(mu < 0)continue;
 						for (int k=0; k<atom2->nw; ++k)
 						{
 							const int iw2_all = start2 + k;
-							const int nu = GlobalC::ParaO.trace_loc_col[iw2_all];
+							const int nu = pv->trace_loc_col[iw2_all];
 							if(nu < 0)continue;
 							
 							for (int ad0=0; ad0 < GlobalC::GridD.getAdjacentNum()+1 ; ++ad0)
@@ -944,7 +768,7 @@ void Force_LCAO_k::cal_fvnl_dbeta_k(
 		}// I1
 	}// T1
 
-	assert( iir == GlobalC::LNNR.nnr );
+	assert( iir == pv->nnr );
 
 	if(isstress)
 	{
@@ -967,7 +791,7 @@ void Force_LCAO_k::cal_fvnl_dbeta_k_new(
 {
 	ModuleBase::TITLE("Force_LCAO_k","cal_fvnl_dbeta_k_new");
 	ModuleBase::timer::tick("Force_LCAO_k","cal_fvnl_dbeta_k_new");
-
+    const Parallel_Orbitals* pv = this->ParaV;
 	
 	for(int iat=0;iat<GlobalC::ucell.nat;iat++)
 	{
@@ -1009,8 +833,8 @@ void Force_LCAO_k::cal_fvnl_dbeta_k_new(
 			for (int iw1=0; iw1<nw1_tot; ++iw1)
 			{
 				const int iw1_all = start1 + iw1;
-				const int iw1_local = GlobalC::ParaO.trace_loc_row[iw1_all];
-				const int iw2_local = GlobalC::ParaO.trace_loc_col[iw1_all];
+				const int iw1_local = pv->trace_loc_row[iw1_all];
+				const int iw2_local = pv->trace_loc_col[iw1_all];
 				if(iw1_local < 0 && iw2_local < 0)continue;
 				const int iw1_0 = iw1/GlobalV::NPOL;
 				std::vector<std::vector<double>> nlm;
@@ -1125,12 +949,12 @@ void Force_LCAO_k::cal_fvnl_dbeta_k_new(
 						for (int j=0; j<atom1->nw; ++j)
 						{
 							const int iw1_all = start1 + j;
-							const int mu = GlobalC::ParaO.trace_loc_row[iw1_all];
+							const int mu = pv->trace_loc_row[iw1_all];
 							if(mu < 0)continue;
 							for (int k=0; k<atom2->nw; ++k)
 							{
 								const int iw2_all = start2 + k;
-								const int nu = GlobalC::ParaO.trace_loc_col[iw2_all];
+								const int nu = pv->trace_loc_col[iw2_all];
 								if(nu < 0)continue;
 								
 								for (int ad0=0; ad0 < GlobalC::GridD.getAdjacentNum()+1 ; ++ad0)
@@ -1258,7 +1082,7 @@ void Force_LCAO_k::cal_fvnl_dbeta_k_new(
 			}// I1
 		}// T1
 
-		assert( iir == GlobalC::LNNR.nnr );
+		assert( iir == pv->nnr );
 	}//iat
 
 	if(isstress)
@@ -1274,8 +1098,8 @@ void Force_LCAO_k::cal_fvnl_dbeta_k_new(
 void Force_LCAO_k::cal_fvl_dphi_k(
 	double** dm2d, 
 	const bool isforce, 
-	const bool isstress, 
-	ModuleBase::matrix& fvl_dphi, 
+    const bool isstress,
+    ModuleBase::matrix& fvl_dphi,
 	ModuleBase::matrix& svl_dphi)
 {
 	ModuleBase::TITLE("Force_LCAO_k","cal_fvl_dphi_k");
@@ -1286,9 +1110,9 @@ void Force_LCAO_k::cal_fvl_dphi_k(
 		ModuleBase::timer::tick("Force_LCAO_k","cal_fvl_dphi_k");
 		return;
 	}
-	assert(GlobalC::LM.DHloc_fixedR_x!=NULL);
-	assert(GlobalC::LM.DHloc_fixedR_y!=NULL);
-	assert(GlobalC::LM.DHloc_fixedR_z!=NULL);
+	assert(this->UHM->LM->DHloc_fixedR_x!=NULL);
+	assert(this->UHM->LM->DHloc_fixedR_y!=NULL);
+	assert(this->UHM->LM->DHloc_fixedR_z!=NULL);
 
 	int istep = 1;
 
@@ -1299,9 +1123,9 @@ void Force_LCAO_k::cal_fvl_dphi_k(
 	for(int is=0; is<GlobalV::NSPIN; ++is)
 	{
 		GlobalV::CURRENT_SPIN = is;
-//		ZEROS (GlobalC::LM.DHloc_fixedR_x, GlobalC::LNNR.nnr);
-//		ZEROS (GlobalC::LM.DHloc_fixedR_y, GlobalC::LNNR.nnr);
-//		ZEROS (GlobalC::LM.DHloc_fixedR_z, GlobalC::LNNR.nnr);
+//		ZEROS (this->UHM->LM->DHloc_fixedR_x, pv->nnr);
+//		ZEROS (this->UHM->LM->DHloc_fixedR_y, pv->nnr);
+//		ZEROS (this->UHM->LM->DHloc_fixedR_z, pv->nnr);
 //		std::cout << " CURRENT_SPIN=" << GlobalV::CURRENT_SPIN << std::endl;
 
 		for(int ir=0; ir<GlobalC::pw.nrxx; ir++)
@@ -1315,11 +1139,11 @@ void Force_LCAO_k::cal_fvl_dphi_k(
 		// fvl_dphi can not be set to zero here if Vna is used
 		if(isstress||isforce) 
 		{
-			GlobalC::UHM.GK.svl_k_RealSpace(isforce, isstress, fvl_dphi,svl_dphi,GlobalC::pot.vr_eff1);
+			this->UHM->GK.svl_k_RealSpace(isforce, isstress, fvl_dphi,svl_dphi,GlobalC::pot.vr_eff1);
 		}
 		else if(isforce) 
 		{
-			GlobalC::UHM.GK.fvl_k_RealSpace(fvl_dphi,GlobalC::pot.vr_eff1);
+			this->UHM->GK.fvl_k_RealSpace(fvl_dphi,GlobalC::pot.vr_eff1);
 		}
 	}
 

@@ -25,18 +25,18 @@ Below is an example using DFT + dispersion calculation:
 INPUT_PARAMETERS
 ntype                         2
 ecutwfc                       20
-dr2                           1e-06
-niter                         400
+scf_thr_rho                           1e-06
+scf_nmax                         400
 basis_type                    lcao
 ks_solver                     genelpa
-smearing                      gaussian
-sigma                         0.02
+smearing_method                      gaussian
+smearing_sigma                         0.02
 mixing_type                   pulay
 mixing_beta                   0.4
 vdw_method                    d2
 calculation                   scf
-force                         1
-stress                        1
+cal_force                         1
+cal_stress                        1
 ```
 
 - STRU:
@@ -125,7 +125,7 @@ The files (`Sn_ONCV_PBE-1.0.upf`,`Te_ONCV_PBE-1.0.upf`,`Sn_pbe_9.0au_100Ry_2s2p2
  ---------------------------------------------------------
  SELF-CONSISTENT : 
  ---------------------------------------------------------
- ITER   ETOT(eV)       EDIFF(eV)      DRHO2      TIME(s)    
+ ITER   ETOT(eV)       EDIFF(eV)      SCF_THR_RHO      TIME(s)    
  GE1    -4.263615e+03  0.000000e+00   1.030e-01  1.030e+00  
  GE2    -4.262783e+03  8.325232e-01   6.041e-02  1.010e+00  
  GE3    -4.262610e+03  1.722243e-01   2.263e-02  1.040e+00  

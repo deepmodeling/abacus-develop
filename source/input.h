@@ -24,7 +24,7 @@ class Input
 //==========================================================
 
     std::string suffix;			// suffix of out put dir
-    std::string atom_file;		// file contains atomic positions -- xiaohui modify 2015-02-01
+    std::string stru_file;		// file contains atomic positions -- xiaohui modify 2015-02-01
     std::string pseudo_dir;      // directory of pseudopotential
 	std::string orbital_dir;      // directory of orbital file
 	std::string read_file_dir;   // directory of files for reading
@@ -39,19 +39,19 @@ class Input
 						    // "nscf" : non-self consistent calculation.
 							// "relax" : cell relaxations
     double pseudo_rcut;     // cut-off radius for calculating msh
-	bool renormwithmesh;     // 0: use msh to normalize radial wave functions;  1: use mesh, which is used in QE.
+	bool pseudo_mesh;     // 0: use msh to normalize radial wave functions;  1: use mesh, which is used in QE.
     int ntype;				// number of atom types
     int nbands;				// number of bands
 	int nbands_istate;		// number of bands around fermi level for istate calculation.
-	int seed;               // random seed for initializing wave functions qianrui 2021-8-12
+	int pw_seed;               // random seed for initializing wave functions qianrui 2021-8-12
 
 	
 
-	bool set_vel;           // read velocity from STRU or not  liuyu 2021-07-14
+	bool init_vel;           // read velocity from STRU or not  liuyu 2021-07-14
 
     bool symmetry;			// turn on symmetry or not
     double symmetry_prec;   // LiuXh add 2021-08-12, accuracy for symmetry
-	int npool; 				// ecch pool is for one k point
+	int kpar; 				// ecch pool is for one k point
 
     bool berry_phase;		// berry phase calculation
 	int gdir;               // berry phase calculation
@@ -92,8 +92,8 @@ class Input
 //==========================================================
 // Forces
 //==========================================================
-    int force;
-    bool force_set;
+    int cal_force;
+    bool out_force;
     double force_thr;		// threshold of force in unit (Ry/Bohr)
 	double force_thr_ev2;	// invalid force threshold, mohan add 2011-04-17
 
@@ -104,19 +104,19 @@ class Input
     double press1;
     double press2;
     double press3;
-	bool stress;			// calculate the stress
+	bool cal_stress;			// calculate the stress
 
 	std::string fixed_axes;      //which axes are fixed
-	std::string ion_dynamics;	// methods to move_ion: sd, bfgs, cg...
+	std::string relax_method;	// methods to move_ion: sd, bfgs, cg...
 
-    double cg_threshold;    // threshold when cg to bfgs, pengfei add 2011-08-15
+    double relax_cg_thr_e;    // threshold when cg to bfgs, pengfei add 2011-08-15
 
-	double bfgs_w1;			// wolfe condition 1
-	double bfgs_w2;			// wolfe condition 2
+	double relax_bfgs_w1;			// wolfe condition 1
+	double relax_bfgs_w2;			// wolfe condition 2
 
-	double trust_radius_max;	// trust radius max
-	double trust_radius_min;	// trust radius min
-	double trust_radius_ini;	// initial move
+	double relax_bfgs_rmax;	// trust radius max
+	double relax_bfgs_rmin;	// trust radius min
+	double relax_bfgs_init;	// initial move
 
 //==========================================================
 // Planewave
@@ -135,10 +135,10 @@ class Input
 // technique
 //==========================================================
 	int diago_proc;			// the number of procs used to diag. mohan add 2012-01-13
-    int diago_cg_maxiter;
+    int diag_cg_nmax;
 	int diago_cg_prec;		// mohan add 2012-03-31
     int diago_david_ndim;
-    double ethr;			// used in cg method
+    double diag_thr_e;			// used in cg method
 
 	int nb2d;				// matrix 2d division.
 
@@ -161,9 +161,9 @@ class Input
 //==========================================================
 // iteration
 //==========================================================
-    double dr2;				// \sum |rhog_out - rhog_in |^2
-    int niter;				// number of max elec iter
-    int nstep;				// number of max ionic iter
+    double scf_thr_rho;				// \sum |rhog_out - rhog_in |^2
+    int scf_nmax;				// number of max elec iter
+    int relax_nmax;				// number of max ionic iter
 	int out_stru;			// outut stru file each ion step
 	std::string out_level;		// control the output information.
     bool out_md_control;    // internal parameter , added by zhengdy 2019-04-07
@@ -173,11 +173,11 @@ class Input
 //==========================================================
     std::string occupations;		// "fixed","smearing","tetrahedra","from_input"
 
-    std::string smearing;		// "gaussian",
+    std::string smearing_method;		// "gaussian",
 						    // "mp","methfessel-paxton"
 						    // "mv","marzari-vanderbilt","cold"
 						    // "fd","fermi-dirac"
-    double degauss;			//
+    double smearing_sigma;			//
 
 //==========================================================
 // charge mixing
@@ -192,25 +192,25 @@ class Input
 //==========================================================
     std::string restart_mode;	//
 
-    std::string start_wfc;		// "file","atomic","random"
-    std::string start_pot;		// "file","atomic"
+    std::string init_wfc;		// "file","atomic","random"
+    std::string init_chg;		// "file","atomic"
 
-	std::string charge_extrap;	// xiaohui modify 2015-02-01
+	std::string chg_extrap;	// xiaohui modify 2015-02-01
 
 	int mem_saver;			// 1: save psi when nscf calculation.
 
 	int printe;				// mohan add 2011-03-16
-    int out_charge;		// output charge density.
+    int out_chg;		// output charge density.
 	int out_dm; // output density matrix.
-	int out_potential;		// yes or no
-    int out_wf;			// 0: no; 1: txt; 2: dat
-    int out_wf_r;			// 0: no; 1: yes
+	int out_pot;		// yes or no
+    int out_wfc_pw;			// 0: no; 1: txt; 2: dat
+    int out_wfc_r;			// 0: no; 1: yes
 	int out_dos;			// dos calculation. mohan add 20090909
     int out_band;                   // band calculation pengfei 2014-10-13
-	int out_hs;			// output H matrix and S matrix in local basis.
-	int out_hs2;			//LiuXh add 2019-07-16, output H(R) matrix and S(R) matrix in local basis.
-	int out_r_matrix;   // jingan add 2019-8-14, output r(R) matrix.
-	bool out_lowf;			// output the wave functions in local basis.
+	int out_mat_hs;			// output H matrix and S matrix in local basis.
+	int out_mat_hs2;			//LiuXh add 2019-07-16, output H(R) matrix and S(R) matrix in local basis.
+	int out_mat_r;   // jingan add 2019-8-14, output r(R) matrix.
+	bool out_wfc_lcao;			// output the wave functions in local basis.
 	bool out_alllog; 		// output all logs.
 	bool out_element_info; // output infomation of all element
 
@@ -281,7 +281,7 @@ class Input
 
 	int ocp;
 	std::string ocp_set;
-	int    mulliken;//qifeng add 2019-9-10
+	int    out_mul;//qifeng add 2019-9-10
 	double* atom_mag;
 	int n_mag_at;
 	//added by zhengdy-soc
@@ -323,7 +323,7 @@ class Input
 // Fuxiang He add 2016-10-26
 //==========================================================
 	int tddft;			//calculate tddft or not
-	double td_dr2;			//threshold for electronic iteration of tddft
+	double td_scf_thr_rho;			//threshold for electronic iteration of tddft
 	double td_dt;			//"fs"
 	double td_force_dt;			//"fs"
 	int td_val_elec_01;			//valence electron 01
@@ -347,17 +347,6 @@ class Input
 	//xiaohui add 2015-09-16
 	bool input_error;
     double cell_factor; //LiuXh add 20180619
-
-//==========================================================
-// new DM algorithm test
-// add by Shen Yu @ 2019/5/9
-// newDM values:
-//  0: not use new DM algorithm;
-//  1: use new DM algorithm and show no debug information
-//  2: use new DM algorithm and only show key debug information
-//  3: use new DM algorithm and show all detail debug information
-//==========================================================
-    int new_dm;
 
 //==========================================================
 //    DFT+U       Xin Qu added on 2020-10-29
