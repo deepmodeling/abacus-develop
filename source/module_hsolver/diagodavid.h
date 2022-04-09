@@ -19,7 +19,7 @@
 namespace ModuleHSolver
 {
 
-class DiagoDavid : DiagH
+class DiagoDavid : public DiagH
 {
 public:
 

@@ -70,7 +70,7 @@ class Psi
         this->current_k = ik;
         this->current_nbasis = this->pbasis->Klist->ngk[ik];
         this->current_b = 0;
-        this->psi_current = &this->psi[ik * this->nbands * this->nbasis];
+        this->psi_current = &(this->psi[ik * this->nbands * this->nbasis]);
         return;
     }
 
