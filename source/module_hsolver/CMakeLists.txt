@@ -7,3 +7,7 @@ add_library(
     iterdiagcon.cpp
     hsolverlcao.cpp
 )
+
+IF (BUILD_TESTING)
+  add_subdirectory(test)
+endif()
