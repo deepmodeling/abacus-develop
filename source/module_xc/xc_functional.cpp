@@ -120,6 +120,7 @@ void XC_Functional::set_xc_type(const std::string xc_func_in)
     {
         func_id.push_back(XC_HYB_GGA_XC_HSE06);
         func_type = 4;
+        use_libxc = true;
     }
 #endif
     else
