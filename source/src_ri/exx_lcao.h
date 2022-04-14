@@ -55,6 +55,7 @@ public:
 private:
 	
 	int kmesh_times = 4;				// Peize Lin test
+#ifdef __MPI
 	
 #if EXX_DM==1
 	Exx_Abfs::Parallel::Communicate::DM DM_para;
@@ -64,7 +65,6 @@ private:
 	Exx_Abfs::Parallel::Communicate::DM3 DM_para;
 #endif
 
-#ifdef __MPI
 	Exx_Abfs::Parallel::Communicate::Hexx Hexx_para;
 #endif
 	double energy = 0.0;
