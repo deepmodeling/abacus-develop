@@ -126,7 +126,7 @@ ComplexArray &ComplexArray::operator=(const ComplexArray & cd)
 }
 
 // Assignment of scalar:  all entries set to c
-inline void ComplexArray::operator=(const std::complex < double> c)
+void ComplexArray::operator=(const std::complex < double> c)
 {
 	const int size = this->getSize();
 	for (int i = 0; i < size; i++)
@@ -237,6 +237,50 @@ void ComplexArray::operator*=(double r)
 	const int size = this->getSize();
 	for (int i = 0; i < size; i++)
 		ptr[i] *= r;
+}
+
+/* Judge if two ComplexArray is equal */
+bool ComplexArray::operator==(const ComplexArray &cd2)const 
+{
+	const int size1 = this->getSize();
+	const int size2 = cd2.getSize();
+	const int b11 = this->getBound1();
+	const int b12 = this->getBound2();
+	const int b13 = this->getBound3();
+	const int b14 = this->getBound4();
+	const int b21 = cd2.getBound1();
+	const int b22 = cd2.getBound2();
+	const int b23 = cd2.getBound3();
+	const int b24 = cd2.getBound4();
+	if (size1 != size2) {return false;}
+	if (b11 != b21) {return false;}
+    if (b12 != b22) {return false;}
+    if (b13 != b23) {return false;}
+    if (b14 != b24) {return false;}
+    for ( int i = 0;i <size1;++i) {if (this->ptr[i] != cd2.ptr[i]) {return false;} }
+    return true;
+}
+
+/* Judge if two ComplexArray is not equal */
+bool ComplexArray::operator!=(const ComplexArray &cd2)const 
+{
+	const int size1 = this->getSize();
+	const int size2 = cd2.getSize();
+	const int b11 = this->getBound1();
+	const int b12 = this->getBound2();
+	const int b13 = this->getBound3();
+	const int b14 = this->getBound4();
+	const int b21 = cd2.getBound1();
+	const int b22 = cd2.getBound2();
+	const int b23 = cd2.getBound3();
+	const int b24 = cd2.getBound4();
+	if (size1 != size2) {return true;}
+	if (b11 != b21) {return true;}
+    if (b12 != b22) {return true;}
+    if (b13 != b23) {return true;}
+    if (b14 != b24) {return true;}
+    for ( int i = 0;i <size1;++i) {if (this->ptr[i] != cd2.ptr[i]) {return true;} }
+    return false;
 }
 
 /////////////////////////////////////////////

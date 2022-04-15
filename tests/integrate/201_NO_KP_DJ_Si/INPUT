@@ -7,11 +7,11 @@ nbands			8
 calculation     scf
 #Parameters (Accuracy)
 ecutwfc			20
-niter			20
+scf_nmax			20
 
 gamma_only      0
 basis_type		lcao
-nstep           1
+relax_nmax           1
 
 ks_solver       genelpa
 mixing_type     pulay

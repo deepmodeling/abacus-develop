@@ -46,9 +46,9 @@ void PW_Basis::bspline_sf(const int norder)
             bsx.init(norder, 1, 0);
             bsy.init(norder, 1, 0);
             bsz.init(norder, 1, 0);
-            bsx.getbslpine(dx);
-            bsy.getbslpine(dy);
-            bsz.getbslpine(dz);
+            bsx.getbspline(dx);
+            bsy.getbspline(dy);
+            bsz.getbspline(dz);
 
             for(int iz = 0 ; iz <= norder ; ++iz)
             {
@@ -79,7 +79,11 @@ void PW_Basis::bspline_sf(const int norder)
 	    			zpiece[ir] = r[iz*ny*nx + ir];
 	    		}
 	    	}
+        
+        #ifdef __MPI
 	    	GlobalC::Pgrid.zpiece_to_all(zpiece, iz, tmpr);
+        #endif
+        
 	    }
         //---------------------------------------------------
 
@@ -109,7 +113,7 @@ void PW_Basis:: bsplinecoef(complex<double> *b1, complex<double> *b2, complex<do
     const std::complex<double> ci_tpi = ModuleBase::NEG_IMAG_UNIT * ModuleBase::TWO_PI;
     ModuleBase::Bspline bsp;
     bsp.init(norder, 1, 0);
-    bsp.getbslpine(1.0);
+    bsp.getbspline(1.0);
     for(int ix = 0 ; ix < this->nx ; ++ix)
     {
         complex<double> fracx=0;

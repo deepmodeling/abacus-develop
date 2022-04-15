@@ -2,7 +2,7 @@ This test for: Si-nspin2-FM
 *Si-diamond
 *Kpoints 2*2*2
 *old upf pseudopotential
-*smearing default
+*smearing_method default
 *ks_solver genelpa
 *nspin 2
 *LCAO

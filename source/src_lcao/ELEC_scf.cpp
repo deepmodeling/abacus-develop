@@ -10,10 +10,12 @@
 #include "ELEC_evolve.h"
 #include "input_update.h"
 #include "../src_pw/occupy.h"
+#include "../module_base/timer.h"
+#include "chrono"
 //new
 #include "../src_pw/H_Ewald_pw.h"
 #ifdef __DEEPKS
-    #include "LCAO_descriptor.h"	//caoyu add 2021-06-04
+    #include "../module_deepks/LCAO_deepks.h"	//caoyu add 2021-06-04
 #endif
 
 ELEC_scf::ELEC_scf(){}
@@ -21,7 +23,10 @@ ELEC_scf::~ELEC_scf(){}
 
 int ELEC_scf::iter=0;
 
-void ELEC_scf::scf(const int &istep)
+void ELEC_scf::scf(const int& istep,
+    Local_Orbital_Charge &loc,
+    Local_Orbital_wfc& lowf,
+    LCAO_Hamilt& uhm)
 {
 	ModuleBase::TITLE("ELEC_scf","scf");
 	ModuleBase::timer::tick("ELEC_scf","scf");
@@ -31,7 +36,7 @@ void ELEC_scf::scf(const int &istep)
 	H_Ewald_pw::compute_ewald(GlobalC::ucell, GlobalC::pw);
 
 	// mohan add 2012-02-08
-    set_ethr();
+    set_pw_diag_thr();
 
 	// the electron charge density should be symmetrized,
 	// here is the initialization
@@ -55,7 +60,7 @@ void ELEC_scf::scf(const int &istep)
 				printf( "\e[33m%-10s\e[0m", "TMAG");
 				printf( "\e[33m%-10s\e[0m", "AMAG");
 			}
-			printf( "\e[33m%-14s\e[0m", "DRHO2");
+			printf( "\e[33m%-14s\e[0m", "SCF_THR");
 			printf( "\e[33m%-15s\e[0m", "ETOT(eV)");
 			printf( "\e[33m%-11s\e[0m\n", "TIME(s)");
 		}
@@ -71,26 +76,26 @@ void ELEC_scf::scf(const int &istep)
 
 			std::cout << std::setw(15) << "ETOT(eV)";
 			std::cout << std::setw(15) << "EDIFF(eV)";
-			std::cout << std::setw(11) << "DRHO2";
+			std::cout << std::setw(11) << "SCF_THR";
 			std::cout << std::setw(11) << "TIME(s)" << std::endl;
 		}
 	}// end GlobalV::OUT_LEVEL
 
 
-	for(iter=1; iter<=GlobalV::NITER; iter++)
+	for(iter=1; iter<=GlobalV::SCF_NMAX; iter++)
 	{
         Print_Info::print_scf(istep, iter);
-
-		//time_t time_start, time_finish;
-		clock_t clock_start;
 
 		std::string ufile = "CHANGE";
 		Update_input UI;
 		UI.init(ufile);
 
 		if(INPUT.dft_plus_u) GlobalC::dftu.iter_dftu = iter;
-		//time_start= std::time(NULL);
-		clock_start = std::clock();
+#ifdef __MPI
+		auto clock_start = MPI_Wtime();
+#else
+		auto clock_start = std::chrono::system_clock::now();
+#endif
 		conv_elec = false;//mohan add 2008-05-25
 
 		// mohan add 2010-07-16
@@ -106,7 +111,7 @@ void ELEC_scf::scf(const int &istep)
 
 		// set converged threshold,
 		// automatically updated during self consistency, only for CG.
-        this->update_ethr(iter);
+        this->update_pw_diag_thr(iter);
         if(GlobalV::FINAL_SCF && iter==1)
         {
             init_mixstep_final_scf();
@@ -126,7 +131,7 @@ void ELEC_scf::scf(const int &istep)
 		// so the smearing can not be done.
 		if(iter>1)Occupy::calculate_weights();
 
-		if(GlobalC::wf.start_wfc == "file")
+		if(GlobalC::wf.init_wfc == "file")
 		{
 			if(iter==1)
 			{
@@ -137,7 +142,7 @@ void ELEC_scf::scf(const int &istep)
 
 				// calculate the density matrix using read in wave functions
 				// and the ncalculate the charge density on grid.
-				GlobalC::LOC.sum_bands();
+				loc.sum_bands(uhm);
 				// calculate the local potential(rho) again.
 				// the grid integration will do in later grid integration.
 
@@ -145,7 +150,7 @@ void ELEC_scf::scf(const int &istep)
 				// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 				// a puzzle remains here.
 				// if I don't renew potential,
-				// The dr2 is very small.
+				// The scf_thr is very small.
 				// OneElectron, Hartree and
 				// Exc energy are all correct
 				// except the band energy.
@@ -173,62 +178,16 @@ void ELEC_scf::scf(const int &istep)
 			}
 		}
 
-		// fuxiang add 2016-11-1
-		// need reconstruction in near future -- mohan 2021-02-09
-		// the initialization of wave functions should be moved to
-		// somewhere else
-		if(ELEC_evolve::tddft == 1 && iter == 2)
-		{
-			this->WFC_init = new std::complex<double>**[GlobalC::kv.nks];
-			for(int ik=0; ik<GlobalC::kv.nks; ik++)
-			{
-				this->WFC_init[ik] = new std::complex<double>*[GlobalV::NBANDS];
-			}
-			for(int ik=0; ik<GlobalC::kv.nks; ik++)
-			{
-				for(int ib=0; ib<GlobalV::NBANDS; ib++)
-				{
-					this->WFC_init[ik][ib] = new std::complex<double>[GlobalV::NLOCAL];
-				}
-			}
-			if(istep>=1)
-			{
-				for (int ik=0; ik<GlobalC::kv.nks; ik++)
-				{
-					for (int ib=0; ib<GlobalV::NBANDS; ib++)
-					{
-						for (int i=0; i<GlobalV::NLOCAL; i++)
-						{
-							WFC_init[ik][ib][i] = GlobalC::LOWF.WFC_K[ik][ib][i];
-						}
-					}
-				}
-			}
-			else
-			{
-				for (int ik=0; ik<GlobalC::kv.nks; ik++)
-				{
-					for (int ib=0; ib<GlobalV::NBANDS; ib++)
-					{
-						for (int i=0; i<GlobalV::NLOCAL; i++)
-						{
-							WFC_init[ik][ib][i] = std::complex<double>(0.0,0.0);
-						}
-					}
-				}
-			}
-		}
-
+#ifdef __MPI
 		// calculate exact-exchange
-		switch(GlobalC::xcf.iexch_now)						// Peize Lin add 2018-10-30
+		if(XC_Functional::get_func_type()==4)
 		{
-			case 5:    case 6:   case 9:
-				if( !GlobalC::exx_global.info.separate_loop )
-				{
-					GlobalC::exx_lcao.cal_exx_elec();
-				}
-				break;
+			if( !GlobalC::exx_global.info.separate_loop )
+			{
+				GlobalC::exx_lcao.cal_exx_elec(loc, lowf.wfc_k_grid);
+			}
 		}
+#endif
 
 		if(INPUT.dft_plus_u)
 		{
@@ -239,17 +198,17 @@ void ELEC_scf::scf(const int &istep)
 		// mohan add 2021-02-09
 		if(GlobalV::GAMMA_ONLY_LOCAL)
 		{
-			ELEC_cbands_gamma::cal_bands(istep, GlobalC::UHM);
+			ELEC_cbands_gamma::cal_bands(istep, uhm, lowf, loc.dm_gamma);
 		}
 		else
 		{
 			if(ELEC_evolve::tddft && istep >= 1 && iter > 1)
 			{
-				ELEC_evolve::evolve_psi(istep, GlobalC::UHM, this->WFC_init);
+				ELEC_evolve::evolve_psi(istep, uhm, lowf);
 			}
 			else
 			{
-				ELEC_cbands_k::cal_bands(istep, GlobalC::UHM);
+				ELEC_cbands_k::cal_bands(istep, uhm, lowf, loc.dm_k);
 			}
 		}
 
@@ -308,37 +267,53 @@ void ELEC_scf::scf(const int &istep)
 
 		// if selinv is used, we need this to calculate the charge
 		// using density matrix.
-		GlobalC::LOC.sum_bands();
+		loc.sum_bands(uhm);
 
+#ifdef __MPI
 		// add exx
 		// Peize Lin add 2016-12-03
 		GlobalC::en.set_exx();
 
 		// Peize Lin add 2020.04.04
-		if(Exx_Global::Hybrid_Type::HF==GlobalC::exx_lcao.info.hybrid_type
-			|| Exx_Global::Hybrid_Type::PBE0==GlobalC::exx_lcao.info.hybrid_type
-			|| Exx_Global::Hybrid_Type::HSE==GlobalC::exx_lcao.info.hybrid_type)
+		if(XC_Functional::get_func_type()==4)
 		{
 			if(GlobalC::restart.info_load.load_H && GlobalC::restart.info_load.load_H_finish && !GlobalC::restart.info_load.restart_exx)
 			{
-				GlobalC::exx_global.info.set_xcfunc(GlobalC::xcf);
-				GlobalC::exx_lcao.cal_exx_elec();
+				XC_Functional::set_xc_type(GlobalC::ucell.atoms[0].xc_func);
+				GlobalC::exx_lcao.cal_exx_elec(loc, lowf.wfc_k_grid);
 				GlobalC::restart.info_load.restart_exx = true;
 			}
 		}
-
+#endif
 
 		// if DFT+U calculation is needed, this function will calculate
 		// the local occupation number matrix and energy correction
 		if(INPUT.dft_plus_u)
 		{
-			if(GlobalV::GAMMA_ONLY_LOCAL) GlobalC::dftu.cal_occup_m_gamma(iter);
-			else GlobalC::dftu.cal_occup_m_k(iter);
+			if(GlobalV::GAMMA_ONLY_LOCAL) GlobalC::dftu.cal_occup_m_gamma(iter, loc.dm_gamma);
+			else GlobalC::dftu.cal_occup_m_k(iter, loc.dm_k);
 
 		 	GlobalC::dftu.cal_energy_correction(istep);
 			GlobalC::dftu.output();
+        }
+        
+#ifdef __DEEPKS
+        if(GlobalV::deepks_scf) 
+        {
+            const Parallel_Orbitals* pv = lowf.ParaV;
+            if (GlobalV::GAMMA_ONLY_LOCAL)
+			{
+                GlobalC::ld.cal_e_delta_band(loc.dm_gamma,
+                    pv->trace_loc_row, pv->trace_loc_col, pv->nrow);
+            }
+			else
+			{
+                GlobalC::ld.cal_e_delta_band_k(loc.dm_k,
+                    pv->trace_loc_row, pv->trace_loc_col, 
+                    GlobalC::kv.nks, pv->nrow, pv->ncol);
+            }
 		}
-
+#endif
 		// (4) mohan add 2010-06-24
 		// using new charge density.
 		GlobalC::en.calculate_harris(2);
@@ -364,24 +339,24 @@ void ELEC_scf::scf(const int &istep)
 		GlobalC::en.deband = GlobalC::en.delta_e();
 
 		// (8) Mix charge density
-		GlobalC::CHR.mix_rho(dr2,0,GlobalV::DRHO2,iter,conv_elec);
+		GlobalC::CHR.mix_rho(scf_thr,0,GlobalV::SCF_THR,iter,conv_elec);
 
 		// Peize Lin add 2020.04.04
 		if(GlobalC::restart.info_save.save_charge)
 		{
 			for(int is=0; is<GlobalV::NSPIN; ++is)
 			{
-				GlobalC::restart.save_disk("charge", is);
+				GlobalC::restart.save_disk(*uhm.LM, "charge", is);
 			}
 		}
 
 		// (9) Calculate new potential according to new Charge Density.
 
-		if(conv_elec || iter==GlobalV::NITER)
+		if(conv_elec || iter==GlobalV::SCF_NMAX)
 		{
-			if(GlobalC::pot.out_potential<0) //mohan add 2011-10-10
+			if(GlobalC::pot.out_pot<0) //mohan add 2011-10-10
 			{
-				GlobalC::pot.out_potential = -2;
+				GlobalC::pot.out_pot = -2;
 			}
 		}
 
@@ -399,7 +374,7 @@ void ELEC_scf::scf(const int &istep)
 			/*
 			GlobalC::pot.vr = GlobalC::pot.v_of_rho(GlobalC::CHR.rho_save, GlobalC::CHR.rho);
 			GlobalC::en.calculate_etot();
-			GlobalC::en.print_etot(conv_elec, istep, iter, dr2, 0.0, GlobalV::ETHR, avg_iter,0);
+			GlobalC::en.print_etot(conv_elec, istep, iter, scf_thr, 0.0, GlobalV::PW_DIAG_THR, avg_iter,0);
 			GlobalC::pot.vr = GlobalC::pot.v_of_rho(GlobalC::CHR.rho, GlobalC::CHR.rho_core);
 			GlobalC::en.delta_escf();
 			*/
@@ -433,7 +408,7 @@ void ELEC_scf::scf(const int &istep)
 			{
 				ssd << GlobalV::global_out_dir << "tmp" << "_SPIN" << is + 1 << "_DM_R";
 			}
-			GlobalC::LOC.write_dm( is, iter, ssd.str(), precision );
+			loc.write_dm( is, iter, ssd.str(), precision );
 
 			//LiuXh modify 20200701
 			/*
@@ -454,7 +429,11 @@ void ELEC_scf::scf(const int &istep)
 		}
 
 		//time_finish=std::time(NULL);
-		double duration = (double)(clock() - clock_start) / CLOCKS_PER_SEC;
+#ifdef __MPI
+		double duration = (double)(MPI_Wtime() - clock_start);
+#else
+		double duration = (std::chrono::system_clock::now() - clock_start).count() / CLOCKS_PER_SEC;
+#endif
 		//double duration_time = difftime(time_finish, time_start);
 		//std::cout<<"Time_clock\t"<<"Time_time"<<std::endl;
 		//std::cout<<duration<<"\t"<<duration_time<<std::endl;
@@ -465,11 +444,11 @@ void ELEC_scf::scf(const int &istep)
 		// avg_iter is an useless variable in LCAO,
 		// will fix this interface in future -- mohan 2021-02-10
 		int avg_iter=0;
-		GlobalC::en.print_etot(conv_elec, istep, iter, dr2, duration, GlobalV::ETHR, avg_iter);
+		GlobalC::en.print_etot(conv_elec, istep, iter, scf_thr, duration, GlobalV::PW_DIAG_THR, avg_iter);
 
 		GlobalC::en.etot_old = GlobalC::en.etot;
 
-		if (conv_elec || iter==GlobalV::NITER)
+		if (conv_elec || iter==GlobalV::SCF_NMAX)
 		{
 			//--------------------------------------
 			// output charge density for converged,
@@ -481,19 +460,9 @@ void ELEC_scf::scf(const int &istep)
 				std::cout <<"domega = "<<GlobalC::chi0_hilbert.domega<<std::endl;
 				std::cout <<"nomega = "<<GlobalC::chi0_hilbert.nomega<<std::endl;
 				std::cout <<"dim = "<<GlobalC::chi0_hilbert.dim<<std::endl;
-				//std::cout <<"oband = "<<GlobalC::chi0_hilbert.oband<<std::endl;
-				GlobalC::chi0_hilbert.Chi();
-			}
-
-			//quxin add for DFT+U for nscf calculation
-			if(INPUT.dft_plus_u)
-			{
-				if(GlobalC::CHR.out_charge)
-				{
-					std::stringstream sst;
-					sst << GlobalV::global_out_dir << "onsite.dm";
-					GlobalC::dftu.write_occup_m( sst.str() );
-				}
+                //std::cout <<"oband = "<<GlobalC::chi0_hilbert.oband<<std::endl;
+                GlobalC::chi0_hilbert.wfc_k_grid = lowf.wfc_k_grid;
+                GlobalC::chi0_hilbert.Chi();
 			}
 
 			for(int is=0; is<GlobalV::NSPIN; is++)
@@ -513,9 +482,9 @@ void ELEC_scf::scf(const int &istep)
 				{
 					ssd << GlobalV::global_out_dir << "SPIN" << is + 1 << "_DM_R";
 				}
-				GlobalC::LOC.write_dm( is, 0, ssd.str(), precision );
+				loc.write_dm( is, 0, ssd.str(), precision );
 
-				if(GlobalC::pot.out_potential == 1) //LiuXh add 20200701
+				if(GlobalC::pot.out_pot == 1) //LiuXh add 20200701
 				{
 					std::stringstream ssp;
 					ssp << GlobalV::global_out_dir << "SPIN" << is + 1 << "_POT";
@@ -551,20 +520,6 @@ void ELEC_scf::scf(const int &istep)
 				{
 					GlobalV::ofs_running << " " << GlobalV::global_out_dir << " final etot is " << GlobalC::en.etot * ModuleBase::Ry_to_eV << " eV" << std::endl;
 				}
-#ifdef __DEEPKS
-				if (GlobalV::out_descriptor)	//caoyu add 2021-06-04
-				{
-                    GlobalC::ld.save_npy_e(GlobalC::en.etot, "e_tot.npy");
-                    if (GlobalV::deepks_scf) {
-                        GlobalC::ld.save_npy_e(GlobalC::en.etot - GlobalC::ld.E_delta + GlobalC::ld.e_delta_band, "e_base.npy");//ebase :no deepks E_delta including
-                    }
-                    else
-                    {
-                        GlobalC::ld.save_npy_e(GlobalC::en.etot, "e_base.npy");  // no scf, e_tot=e_base
-                    }
-
-				}
-#endif
 			}
 			else
 			{
@@ -573,16 +528,84 @@ void ELEC_scf::scf(const int &istep)
 				std::cout << " !! CONVERGENCE HAS NOT BEEN ACHIEVED !!" << std::endl;
 			}
 
+			if(conv_elec || iter==GlobalV::SCF_NMAX)
+			{
+#ifdef __DEEPKS
+				//calculating deepks correction to bandgap
+				//and save the results
+				if (GlobalV::deepks_bandgap)
+				{
+					int nocc = GlobalC::CHR.nelec/2;
+					ModuleBase::matrix wg_hl;
+					wg_hl.create(GlobalV::NSPIN, GlobalV::NBANDS);
+		
+					for(int is=0; is<GlobalV::NSPIN; is++)
+					{
+						for(int ib=0; ib<GlobalV::NBANDS; ib++)
+						{
+							wg_hl(is,ib) = 0.0;
+						
+							if(ib == nocc-1)
+								wg_hl(is,ib) = -1.0;
+							else if(ib == nocc)
+								wg_hl(is,ib) = 1.0;
+						}
+					}
+
+                    std::vector<ModuleBase::matrix> dm_bandgap_gamma;
+                    std::vector<ModuleBase::ComplexMatrix> dm_bandgap_k;
+				
+					if(GlobalV::GAMMA_ONLY_LOCAL)
+                    {
+                        dm_bandgap_gamma.resize(GlobalV::NSPIN);
+                        loc.cal_dm(wg_hl, lowf.wfc_gamma, dm_bandgap_gamma);
+                        GlobalC::ld.cal_o_delta(dm_bandgap_gamma, *lowf.ParaV);
+					}			
+					else
+                    {
+                        dm_bandgap_k.resize(GlobalC::kv.nks);
+                        loc.cal_dm(wg_hl, lowf.wfc_k, dm_bandgap_k);
+                        GlobalC::ld.cal_o_delta_k(dm_bandgap_k, *lowf.ParaV, GlobalC::kv.nks);
+					}
+					if(GlobalV::deepks_out_labels)
+					{
+						GlobalC::ld.save_npy_o(GlobalC::wf.ekb[0][nocc] - GlobalC::wf.ekb[0][nocc-1] - GlobalC::ld.o_delta, "o_base.npy");
+						GlobalC::ld.cal_orbital_precalc(dm_bandgap_gamma,
+							GlobalC::ucell.nat,
+							GlobalC::ucell,
+							GlobalC::ORB,
+							GlobalC::GridD,
+							*lowf.ParaV);
+						GlobalC::ld.save_npy_orbital_precalc(GlobalC::ucell.nat);
+					}	
+				}
+
+				if (GlobalV::deepks_out_labels)	//caoyu add 2021-06-04
+				{
+					int nocc = GlobalC::CHR.nelec/2;
+					GlobalC::ld.save_npy_o(GlobalC::wf.ekb[0][nocc] - GlobalC::wf.ekb[0][nocc-1], "o_tot.npy");
+					if (!GlobalV::deepks_bandgap)
+					{
+						GlobalC::ld.save_npy_o(GlobalC::wf.ekb[0][nocc] - GlobalC::wf.ekb[0][nocc-1], "o_base.npy");  // no scf, o_tot=o_base	
+					}
+
+					GlobalC::ld.save_npy_e(GlobalC::en.etot, "e_tot.npy");
+                    if (GlobalV::deepks_scf)
+					{
+                        GlobalC::ld.save_npy_e(GlobalC::en.etot - GlobalC::ld.E_delta, "e_base.npy");//ebase :no deepks E_delta including
+					}
+                    else
+                    {
+                        GlobalC::ld.save_npy_e(GlobalC::en.etot, "e_base.npy");  // no scf, e_tot=e_base
+												
+                    }
+				}
+#endif
+			}
 //			ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running,"ELECTRONS CONVERGED!");
 			ModuleBase::timer::tick("ELEC_scf","scf");
 			return;
 		}
-	}
-
-	// fuxiang add, should be reconstructed in near future -- mohan note 2021-02-09
-	if (ELEC_evolve::tddft==1)
-	{
-		delete[] WFC_init;
 	}
 
 	ModuleBase::timer::tick("ELEC_scf","scf");

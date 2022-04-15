@@ -9,13 +9,14 @@ add_library(
     inverse_matrix.cpp
     global_file.cpp
     global_function.cpp
+    global_function_ddotreal.cpp
     global_variable.cpp
     intarray.cpp
     math_integral.cpp
     math_polyint.cpp
     math_sphbes.cpp
     math_ylmreal.cpp
-	math_bspline.cpp
+	  math_bspline.cpp
     mathzone.cpp
     mathzone_add1.cpp
     matrix.cpp
@@ -34,3 +35,7 @@ add_library(
     tool_title.cpp
     ylm.cpp
 )
+
+IF (BUILD_TESTING)
+  add_subdirectory(test)
+endif()

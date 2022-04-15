@@ -1,13 +1,9 @@
 #ifndef MYMATH_H
 #define MYMATH_H
-//#include "../src_pw/tools.h"
 #if defined __FFTW2
 #include "fftw.h"
 #elif defined __FFTW3
 #include "fftw3.h"
-#else
-#include <fftw3-mpi.h>
-//#include "fftw3-mpi_mkl.h"
 #endif
 namespace ModuleBase
 {

@@ -25,10 +25,11 @@ namespace GlobalC
 Chi0_hilbert chi0_hilbert;
 }
 
+std::complex<double> *** Chi0_hilbert::wfc_k_grid = nullptr;
 Chi0_hilbert::Chi0_hilbert()
          :init_finish(false)
 {
-	epsilon = false;
+    epsilon = false;
 	system = "bulk";
 	eta = 0.05;
 	domega = 0.01;
@@ -258,7 +259,7 @@ void Chi0_hilbert::Chi()
 	}
 
 	//std::cout <<"GlobalC::en.ef = "<<GlobalC::en.ef<<std::endl;
-	//std::cout <<"degauss = "<<INPUT.degauss<<std::endl;
+	//std::cout <<"smearing_sigma = "<<INPUT.smearing_sigma<<std::endl;
 
 	//------------------------------------------------------------------
 	// change the fermi level or not
@@ -279,14 +280,14 @@ void Chi0_hilbert::Chi()
 			//----------------------------------------------------------
 			//  gauss smearing
 			//----------------------------------------------------------
-			if(INPUT.smearing == "gauss" || INPUT.smearing == "gaussian")
+			if(INPUT.smearing_method == "gauss" || INPUT.smearing_method == "gaussian")
 			{
-				cweight[ik][ib] = GlobalC::kv.wk[ik] * Occupy::wgauss( (energy - GlobalC::wf.ekb[ik][ib] )/INPUT.degauss, 0);
+				cweight[ik][ib] = GlobalC::kv.wk[ik] * Occupy::wgauss( (energy - GlobalC::wf.ekb[ik][ib] )/INPUT.smearing_sigma, 0);
 			}
 			//----------------------------------------------------------
 			//  fixed smearing
 			//----------------------------------------------------------
-			else if(INPUT.smearing == "fixed")
+			else if(INPUT.smearing_method == "fixed")
 			{
 				if((GlobalC::wf.ekb[ik][ib]-energy)<-0.0001 )
 				{
@@ -304,9 +305,9 @@ void Chi0_hilbert::Chi()
 			//----------------------------------------------------------
 			//   fermi-dirac smearing
 			//----------------------------------------------------------
-			else if(INPUT.smearing == "fd")
+			else if(INPUT.smearing_method == "fd")
 			{
-				cweight[ik][ib] = GlobalC::kv.wk[ik] * Occupy::wgauss( (energy - GlobalC::wf.ekb[ik][ib] )/INPUT.degauss, -99);
+				cweight[ik][ib] = GlobalC::kv.wk[ik] * Occupy::wgauss( (energy - GlobalC::wf.ekb[ik][ib] )/INPUT.smearing_sigma, -99);
 			}
 			else
 			{
@@ -1177,7 +1178,7 @@ void Chi0_hilbert::Cal_b_lcao(int iq, int ik, int iqk)
 					{
 						for(int ir=0; ir<Rmax[iw1][iw2]; ir++)
 						{
-							b[ig][ib1][ib2] += conj(GlobalC::LOWF.WFC_K[ik][ib1][iw1]) * GlobalC::LOWF.WFC_K[iqk][ib2][iw2] * overlap[iw1][iw2][ig][ir] * phase[iw1][iw2][ir];
+							b[ig][ib1][ib2] += conj(this->wfc_k_grid[ik][ib1][iw1]) * this->wfc_k_grid[iqk][ib2][iw2] * overlap[iw1][iw2][ig][ir] * phase[iw1][iw2][ir];
 						}
 					}
 				}
@@ -1202,7 +1203,7 @@ void Chi0_hilbert::Cal_b_lcao(int iq, int ik, int iqk)
 				{
 					for(int ir=0; ir<Rmax[iw1][iw2]; ir++)
 					{
-						left[ib1][r] = conj(GlobalC::LOWF.WFC_K[ik][ib1][iw1]) * overlap[iw1][iw2][ig][ir] * phase[iw1][iw2][ir];
+						left[ib1][r] = conj(this->wfc_k_grid[ik][ib1][iw1]) * overlap[iw1][iw2][ig][ir] * phase[iw1][iw2][ir];
 						r++;
 					}
 				}
@@ -1218,7 +1219,7 @@ void Chi0_hilbert::Cal_b_lcao(int iq, int ik, int iqk)
 				{
 					for(int ir=0; ir<Rmax[iw1][iw2]; ir++)
 					{
-						right[r][ib2] = GlobalC::LOWF.WFC_K[iqk][ib2][iw2];
+						right[r][ib2] = this->wfc_k_grid[iqk][ib2][iw2];
 						r++;
 					}
 				}
@@ -2460,82 +2461,6 @@ std::complex<double> Chi0_hilbert:: Cal_g(int iq)
 
     return g;
 }
-
-
-//---------------------------------------------
-//  matrix inverse( exist some bugs!)
-//---------------------------------------------
-
-/*void Chi0_hilbert:: C_inverse(int n, std::complex<double>** a)
-{
-         int info;
-
-         //std::complex<double> M[n][n],N[n][n];
-         std::complex<double> M[n*n],N[n*n];
-
-         for(int i=0; i<n; i++)
-         {
-             for(int j=0; j<n; j++)
-             {
-                 int index = i * n + j;
-                 M[index] = a[i][j];
-                 //M[i][j] = a[i][j];
-             }
-         }
-
-         std::cout<<"a in "<<std::endl;
-         for(int i=0; i<n; i++)
-         {
-             for(int j=0; j<n; j++)
-             {
-                 int index = i * n + j;
-                 //std::cout <<M[i][j]<<" ";
-                 std::cout<<M[index]<<" ";
-             }
-             std::cout <<std::endl;
-         }
-
-         int dim = n;
-         int nrhs = n;
-         int lda = n;
-         int ipiv = n;
-         int ldb = n;
-
-         //zgesv_(&dim, &nrhs, M[0], &lda, &ipiv, N[0], &ldb, &info);
-         //zgesv_(&dim, &nrhs, M, &lda, &ipiv, N, &ldb, &info);
-
-         zgetrf_(&dim, &dim, M, &lda, &ipiv, &info);
-
-         zgetri_(&dim, M, &lda, &ipiv, N, &dim, &info);
-
-
-         std::cout<<"a out "<<std::endl;
-         for(int i=0; i<n; i++)
-         {
-             for(int j=0; j<n; j++)
-             {
-                 int index = i * n + j;
-                 //std::cout <<N[i][j]<<" ";
-                 std::cout <<M[index]<<" ";
-             }
-             std::cout <<std::endl;
-         }
-
-         for(int i=0; i<n; i++)
-         {
-             for(int j=0; j<n; j++)
-             {
-                 int index = i * n + j;
-                 //a[i][j] = N[i][j];
-                 a[i][j] = M[index];
-             }
-         }
-
-         //delete[] M;
-         //delete[] N;
-
-         return;
-}*/
 
 //----------------------------------------------------
 // plot function

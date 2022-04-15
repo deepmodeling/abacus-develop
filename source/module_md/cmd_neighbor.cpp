@@ -1,5 +1,6 @@
 #include "cmd_neighbor.h"
 #include "../src_parallel/parallel_common.h"
+#include "../module_base/timer.h"
 
 CMD_neighbor::CMD_neighbor()
 {
@@ -38,8 +39,9 @@ ModuleBase::Vector3<double> CMD_neighbor::cell_periodic(const ModuleBase::Vector
 	return temp;
 }
 
+#include "../module_base/mathzone.h"
 //build the neighbor list
-void CMD_neighbor::neighbor(UnitCell_pseudo &ucell_c)
+void CMD_neighbor::neighbor(const UnitCell_pseudo &ucell_c)
 {
     ModuleBase::TITLE("CMD_neighbor", "Neighbor");
     ModuleBase::timer::tick("CMD_neighbor", "Neighbor");

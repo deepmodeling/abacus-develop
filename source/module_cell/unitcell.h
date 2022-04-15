@@ -1,7 +1,10 @@
 #ifndef UNITCELL_H
 #define UNITCELL_H
 
-#include "../src_pw/tools.h"
+#include "../module_base/global_function.h"
+#include "../module_base/global_variable.h"
+#include "../module_base/matrix3.h"
+#include "../module_base/intarray.h"
 #include "../src_io/output.h"
 #ifndef __CMD
 #include "../src_pw/magnetism.h"
@@ -74,19 +77,21 @@ public:
 public:
     UnitCell();
     ~UnitCell();
-    void print_cell(std::ofstream &ofs, output &outp)const;
+    void print_cell(std::ofstream &ofs)const;
     void print_cell_xyz(const std::string &fn)const;
     void print_cell_cif(const std::string &fn)const;
 
     void update_pos_tau(const double* pos);
+    void update_pos_tau(const ModuleBase::Vector3<double>* posd_in);
     void update_pos_taud(const ModuleBase::Vector3<double>* posd_in);
+    void update_vel(const ModuleBase::Vector3<double>* vel_in);
     void periodic_boundary_adjustment();
     void bcast_atoms_tau();
     void save_cartesian_position(double* pos)const;
 
-    bool judge_big_cell(void);
+    bool judge_big_cell(void)const;
 
-protected:
+
 
     double *atom_mass;
     std::string *atom_label;

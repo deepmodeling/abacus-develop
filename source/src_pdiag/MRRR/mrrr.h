@@ -1,7 +1,7 @@
 #ifndef MRRR_H_
 #define MRRR_H_
 #ifdef __MPI
-#include <mpi.h>
+#include "mpi.h"
 #endif
 #include<stdlib.h>
 #include<stdio.h>

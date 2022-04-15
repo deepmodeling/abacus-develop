@@ -1,4 +1,5 @@
 #include "unitcell_pseudo.h"
+#include "../src_parallel/parallel_common.h"
 #include "../input.h"
 #ifdef __LCAO
 //#include "../module_orbital/ORB_read.h" // to use 'ORB' -- mohan 2021-01-30
@@ -81,10 +82,7 @@ void UnitCell_pseudo::read_cell_pseudopots(const std::string &pp_dir, std::ofstr
 
 			log << "\n Read in pseudopotential file is " << pseudo_fn[i] << std::endl;
 			ModuleBase::GlobalFunc::OUT(log,"pseudopotential type",atoms[i].pp_type);
-			ModuleBase::GlobalFunc::OUT(log,"functional Ex", atoms[i].dft[0]);
-			ModuleBase::GlobalFunc::OUT(log,"functional Ec", atoms[i].dft[1]);
-			ModuleBase::GlobalFunc::OUT(log,"functional GCEx", atoms[i].dft[2]);
-			ModuleBase::GlobalFunc::OUT(log,"functional GCEc", atoms[i].dft[3]);
+			ModuleBase::GlobalFunc::OUT(log,"exchange-correlation functional", atoms[i].xc_func);
 			ModuleBase::GlobalFunc::OUT(log,"nonlocal core correction", atoms[i].nlcc);
 //			ModuleBase::GlobalFunc::OUT(log,"spin orbital",atoms[i].has_so);
 			ModuleBase::GlobalFunc::OUT(log,"valence electrons", atoms[i].zv);
@@ -99,20 +97,16 @@ void UnitCell_pseudo::read_cell_pseudopots(const std::string &pp_dir, std::ofstr
 		}
 		if(upf.functional_error == 1)
 		{
-			std::cout << "In Pseudopot_upf::read_pseudo_header : input xc functional does not match that in pseudopot file" << std::endl;
+			std::cout << "In Pseudopot_upf::read_pseudo_header : dft_functional from INPUT does not match that in pseudopot file" << std::endl;
 			std::cout << "Please make sure this is what you need" << std::endl;
-			atoms[i].dft[0] = GlobalV::DFT_FUNCTIONAL;
-			transform(atoms[i].dft[0].begin(), atoms[i].dft[0].end(), atoms[i].dft[0].begin(), (::toupper));
-			atoms[i].dft[1].clear();
-			atoms[i].dft[2].clear();
-			atoms[i].dft[3].clear();
+			atoms[i].xc_func = GlobalV::DFT_FUNCTIONAL;
+			transform(atoms[i].xc_func.begin(), atoms[i].xc_func.end(), atoms[i].xc_func.begin(), (::toupper));
 			if(GlobalV::MY_RANK==0)
 			{
-				log << "\n XC functional updated to : " << std::endl;
-				ModuleBase::GlobalFunc::OUT(log,"functional Ex", atoms[i].dft[0]);
-				ModuleBase::GlobalFunc::OUT(log,"functional Ec", atoms[i].dft[1]);
-				ModuleBase::GlobalFunc::OUT(log,"functional GCEx", atoms[i].dft[2]);
-				ModuleBase::GlobalFunc::OUT(log,"functional GCEc", atoms[i].dft[3]);
+				log << "\n In Pseudopot_upf::read_pseudo_header : dft_functional from INPUT does not match that in pseudopot file" << std::endl;
+				log << " Please make sure this is what you need" << std::endl;
+				log << " XC functional updated to : " << GlobalV::DFT_FUNCTIONAL << std::endl;
+				ModuleBase::GlobalFunc::OUT(log,"exchange-correlation functional", atoms[i].xc_func);
 			}
 		}
 			
@@ -127,15 +121,15 @@ void UnitCell_pseudo::read_cell_pseudopots(const std::string &pp_dir, std::ofstr
 }
 
 
-void UnitCell_pseudo::print_unitcell_pseudo(const std::string &fn, output &outp)
+void UnitCell_pseudo::print_unitcell_pseudo(const std::string &fn)
 {
 	if(GlobalV::test_pseudo_cell) ModuleBase::TITLE("UnitCell_pseudo","print_unitcell_pseudo");
 	std::ofstream ofs( fn.c_str() );
 
-	this->print_cell(ofs, outp);
+	this->print_cell(ofs);
 	for (int i = 0;i < ntype;i++)
 	{
-		atoms[i].print_Atom(ofs, outp);
+		atoms[i].print_Atom(ofs);
 	}
 
 	ofs.close();

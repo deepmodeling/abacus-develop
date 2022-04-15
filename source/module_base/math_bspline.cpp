@@ -22,7 +22,9 @@ namespace ModuleBase
         this->Dx = Dxin;
         this->norder = norderin;
         assert(Dx > 0);
-        assert(norder >= 0);
+        //norder must be a positive even number.
+        assert(norder > 0);
+        assert(norder % 2 == 0); 
         bezier = new double [this->norder+1];
         for(int i = 0 ; i < norder+1 ; ++i)
         {
@@ -30,18 +32,12 @@ namespace ModuleBase
         }
     }
 
-    void Bspline::cleanp()
-    {
-        delete[] bezier;
-        bezier = NULL;
-    }
-
     double Bspline::bezier_ele(int n)
     {
         return this->bezier[n];
     }
 
-    void Bspline::getbslpine(double x)
+    void Bspline::getbspline(double x)
     {
         bezier[0] = 1.0;
         for(int k = 1 ; k <= norder ; ++k)

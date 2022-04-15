@@ -40,16 +40,12 @@ int Pseudopot_upf::read_pseudo_blps(std::ifstream &ifs)
 
     if(pspxc == 2)
     {
-        this->dft[0] = "LDA";
-        this->dft[1] = "LDA";
+        this->xc_func = "LDA";
     }
     else if (pspxc == 11)
     {
-        this->dft[0] = "GGA";
-        this->dft[1] = "GGA";
+        this->xc_func = "GGA";
     }
-    this->dft[2] = "NOGX";
-    this->dft[3] = "NOGC";
 
     ifs.ignore(300, '\n');
     ifs.ignore(300, '\n');
@@ -64,7 +60,7 @@ int Pseudopot_upf::read_pseudo_blps(std::ifstream &ifs)
     delete[] vloc;
     this->r = new double[mesh]; // Bohr
     this->rab = new double[mesh];
-    this->vloc = new double[mesh]; // Hatree
+    this->vloc = new double[mesh]; // Hartree
     ModuleBase::GlobalFunc::ZEROS(r,mesh);
     ModuleBase::GlobalFunc::ZEROS(rab,mesh);
     ModuleBase::GlobalFunc::ZEROS(vloc,mesh);
@@ -72,7 +68,7 @@ int Pseudopot_upf::read_pseudo_blps(std::ifstream &ifs)
     for(int i = 0;i < mesh; ++i)
     {
         ifs >> num >> this->r[i] >> this->vloc[i];
-        this->vloc[i] = this->vloc[i]*2;
+        this->vloc[i] = this->vloc[i]*2; // Hartree to Ry
     }
     rab[0] = r[1] - r[0];
     for(int i = 1; i < mesh - 1; ++i)

@@ -1,4 +1,5 @@
 #include "klist.h"
+#include "../module_base/memory.h"
 
 namespace Test_Cell
 {

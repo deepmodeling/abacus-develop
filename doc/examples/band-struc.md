@@ -5,7 +5,7 @@
 This example shows how to calculate the energy band structure. Similar to the [DOS case](#dos.md), we first, do a ground-state energy calculation as in [this example](#basic-lcao.md) ***with one additional keyword in the INPUT file***:
 
 ```
-out_charge              1
+out_chg              1
 ```
 
 this will produce the converged charge density, which is contained in the file SPIN1_CHG. Copy the file along with the `STRU` file, the pseudopotential file and the atomic orbital file (and the local density matrix file onsite.dm if DFT+U is used) to the new working directory where we will do a non-self-consistent calculation. In this example, the potential is constructed from the ground-state charge density from the proceeding calculation. Now the INPUT file is like:
@@ -20,17 +20,17 @@ read_file_dir   ./
 
 #Parameters (Accuracy)
 ecutwfc 60
-niter 50
-dr2 1.0e-9
-ethr 1.0e-7
+scf_nmax 50
+scf_thr 1.0e-9
+pw_diag_thr 1.0e-7
 
 #Parameters (File)
-start_charge file
+init_chg file
 out_band 1
 
 #Parameters (Smearing)
-smearing gaussian
-sigma 0.02
+smearing_method gaussian
+smearing_sigma 0.02
 ```
 
 Here the the relevant k-point file KPT looks like,

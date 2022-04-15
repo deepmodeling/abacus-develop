@@ -90,8 +90,8 @@ void pzgseps(MPI_Comm comm_2D,int n,int nb,int &egnum, std::complex<double> *A, 
 //	for (i=0;i<n;i++)
 //		printf("\neigen[%d]=%lf,diag[%d]=%lf,off_diag[%d]=%lf ",i,eigen[i],i,diag[i],i,off_diag[i]);
 
-	LapackConnector::copy(n,diag,incx,D,incx);
-	LapackConnector::copy(n,off_diag,incx,E,incx);
+	BlasConnector::copy(n,diag,incx,D,incx);
+	BlasConnector::copy(n,off_diag,incx,E,incx);
 
 	pdstebz(comm_2D,diag,off_diag,eigen,n);
 

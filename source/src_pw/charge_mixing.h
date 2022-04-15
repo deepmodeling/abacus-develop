@@ -10,7 +10,8 @@
 // (3) Pulay Mixing
 // (4) Modified Broden Mixing
 //===================================
-#include "tools.h"
+#include "../module_base/global_function.h"
+#include "../module_base/global_variable.h"
 #include "charge.h"
 class Charge_Mixing: public Charge
 {

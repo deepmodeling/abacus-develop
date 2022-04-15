@@ -13,11 +13,9 @@
 #include "../module_orbital/ORB_gaunt_table.h"
 #include "../module_orbital/ORB_atomic_lm.h"
 #include "../module_orbital/ORB_read.h"
+#include "../module_orbital/parallel_orbitals.h"
 #include "../module_base/vector3.h"
 #include "../module_base/ylm.h"
-#include "../src_lcao/global_fp.h"
-
-#include "../src_pw/global.h"
 
 
 // output r_R matrix, added by Jingan
@@ -64,15 +62,18 @@ class cal_r_overlap_R
 						std::map<size_t,
 						Center2_Orb::Orb21>>>>>> center2_orb21_r;
 						
-	void init();
+	void init(const Parallel_Orbitals &pv);
 	void out_r_overlap_R(const int nspin);
 	
 	int iw2it(int iw);
 	int iw2ia(int iw);
 	int iw2iL(int iw);
 	int iw2iN(int iw);
-	int iw2im(int iw);					
-	
+    int iw2im(int iw);
+
+private:
+    const Parallel_Orbitals* ParaV;
+    
 };
 #endif
 

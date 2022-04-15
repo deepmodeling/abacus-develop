@@ -1,5 +1,3 @@
-enable_testing()
-
 find_program(BASH bash)
 if(ENABLE_ASAN)
     add_test(

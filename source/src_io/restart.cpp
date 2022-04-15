@@ -41,28 +41,36 @@ void Restart::save_disk(const std::string mode, const int i) const
 {
 	if("charge"==mode)
 		write_file2(folder+"charge_"+ModuleBase::GlobalFunc::TO_STRING(GlobalV::MY_RANK)+"_"+ModuleBase::GlobalFunc::TO_STRING(i), GlobalC::CHR.rho[i], GlobalC::pw.nrxx*sizeof(double));
-#ifdef __LCAO
-	if("H"==mode)
-	{
-		if(GlobalV::GAMMA_ONLY_LOCAL)
-			write_file2(folder+"Hgamma_"+ModuleBase::GlobalFunc::TO_STRING(GlobalV::MY_RANK)+"_"+ModuleBase::GlobalFunc::TO_STRING(i), GlobalC::LM.Hloc, GlobalC::ParaO.nloc*sizeof(double));
-		else
-			write_file2(folder+"Hk_"+ModuleBase::GlobalFunc::TO_STRING(GlobalV::MY_RANK)+"_"+ModuleBase::GlobalFunc::TO_STRING(i), GlobalC::LM.Hloc2, GlobalC::ParaO.nloc*sizeof(std::complex<double>));
-	}
-#endif 
 }
 
 void Restart::load_disk(const std::string mode, const int i) const
 {
 	if("charge"==mode)
 		read_file2(folder+"charge_"+ModuleBase::GlobalFunc::TO_STRING(GlobalV::MY_RANK)+"_"+ModuleBase::GlobalFunc::TO_STRING(i), GlobalC::CHR.rho[i], GlobalC::pw.nrxx*sizeof(double));
-#ifdef __LCAO
+}
+
+void Restart::save_disk(LCAO_Matrix &lm, const std::string mode, const int i) const
+{
+	if("charge"==mode)
+		write_file2(folder+"charge_"+ModuleBase::GlobalFunc::TO_STRING(GlobalV::MY_RANK)+"_"+ModuleBase::GlobalFunc::TO_STRING(i), GlobalC::CHR.rho[i], GlobalC::pw.nrxx*sizeof(double));
 	if("H"==mode)
 	{
 		if(GlobalV::GAMMA_ONLY_LOCAL)
-			read_file2(folder+"Hgamma_"+ModuleBase::GlobalFunc::TO_STRING(GlobalV::MY_RANK)+"_"+ModuleBase::GlobalFunc::TO_STRING(i), GlobalC::LM.Hloc, GlobalC::ParaO.nloc*sizeof(double));
+			write_file2(folder+"Hgamma_"+ModuleBase::GlobalFunc::TO_STRING(GlobalV::MY_RANK)+"_"+ModuleBase::GlobalFunc::TO_STRING(i), lm.Hloc.data(), lm.ParaV->nloc*sizeof(double));
 		else
-			read_file2(folder+"Hk_"+ModuleBase::GlobalFunc::TO_STRING(GlobalV::MY_RANK)+"_"+ModuleBase::GlobalFunc::TO_STRING(i), GlobalC::LM.Hloc2, GlobalC::ParaO.nloc*sizeof(std::complex<double>));
+			write_file2(folder+"Hk_"+ModuleBase::GlobalFunc::TO_STRING(GlobalV::MY_RANK)+"_"+ModuleBase::GlobalFunc::TO_STRING(i), lm.Hloc2.data(), lm.ParaV->nloc*sizeof(std::complex<double>));
 	}
-#endif
+}
+
+void Restart::load_disk(LCAO_Matrix &lm, const std::string mode, const int i) const
+{
+	if("charge"==mode)
+		read_file2(folder+"charge_"+ModuleBase::GlobalFunc::TO_STRING(GlobalV::MY_RANK)+"_"+ModuleBase::GlobalFunc::TO_STRING(i), GlobalC::CHR.rho[i], GlobalC::pw.nrxx*sizeof(double));
+	if("H"==mode)
+	{
+		if(GlobalV::GAMMA_ONLY_LOCAL)
+			read_file2(folder+"Hgamma_"+ModuleBase::GlobalFunc::TO_STRING(GlobalV::MY_RANK)+"_"+ModuleBase::GlobalFunc::TO_STRING(i), lm.Hloc.data(), lm.ParaV->nloc*sizeof(double));
+		else
+			read_file2(folder+"Hk_"+ModuleBase::GlobalFunc::TO_STRING(GlobalV::MY_RANK)+"_"+ModuleBase::GlobalFunc::TO_STRING(i), lm.Hloc2.data(), lm.ParaV->nloc*sizeof(std::complex<double>));
+	}
 }

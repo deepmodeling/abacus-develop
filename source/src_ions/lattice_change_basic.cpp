@@ -1,5 +1,6 @@
 #include "lattice_change_basic.h"
 #include "../src_pw/global.h"
+#include "../src_parallel/parallel_common.h"
 
 int Lattice_Change_Basic::dim=0;
 bool Lattice_Change_Basic::converged=true;

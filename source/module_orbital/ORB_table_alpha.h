@@ -4,6 +4,7 @@
 #include "ORB_atomic_lm.h"
 #include "ORB_read.h" 
 #include "../module_base/sph_bessel_recursive.h"
+#include "../module_base/intarray.h"
 
 //caoyu add 2021-03-17
 
@@ -50,7 +51,7 @@ public:
 
 	int lmax;
 
-	//void print_Table_DSR(void);		//caoyu add 2021-03-20
+	void print_Table_DSR(LCAO_Orbitals &orb);		//caoyu add 2021-03-20
 
 private:
 

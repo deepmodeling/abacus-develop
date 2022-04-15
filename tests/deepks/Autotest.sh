@@ -1,15 +1,15 @@
 #!/bin/bash
 
 # ABACUS executable path
-abacus=/home/fortneu49/abacus-develop/bin/ABACUS.mpi
+abacus=abacus
 # number of mpi processes
-np=1
+np=4
 # threshold with unit: eV
 threshold=0.0000001
 # check accuracy
 ca=8
 # regex of case name
-case="601_PW_deepks_s_H2O"
+case="^[^#].*_.*$"
 # enable AddressSanitizer
 sanitize=false
 

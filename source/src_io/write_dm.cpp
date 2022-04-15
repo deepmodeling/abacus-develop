@@ -1,7 +1,8 @@
 #include "../src_lcao/local_orbital_charge.h"
 #include "../src_pw/global.h"
+#include "../src_parallel/parallel_reduce.h"
 #include "../module_base/blas_connector.h"
-#include "../src_lcao/LCAO_nnr.h" // mohan add 2021-03-07
+#include "../module_base/timer.h"
 
 //-------------------------------------------------
 // NOTE for Local_Orbital_Charge::write_dm
@@ -137,8 +138,8 @@ void Local_Orbital_Charge::write_dm(
     else
     {
         ModuleBase::WARNING_QUIT("write_dm","not ready yet");
-        ofs << " " << GlobalC::LNNR.nnrg << " (nnrg)" << std::endl;
-        for(int i=0; i<GlobalC::LNNR.nnrg; ++i)
+        ofs << " " << GlobalC::GridT.nnrg << " (nnrg)" << std::endl;
+        for(int i=0; i<GlobalC::GridT.nnrg; ++i)
         {
             if(i%8==0) ofs << "\n";
             ofs << " " << this->DM_R[is][i];
@@ -217,7 +218,7 @@ void Local_Orbital_Charge::write_dm(
     }
     else
     {
-        ofs << " " << GlobalC::LNNR.nnrg << " (nnrg)" << std::endl;
+        ofs << " " << GlobalC::GridT.nnrg << " (nnrg)" << std::endl;
         ModuleBase::WARNING_QUIT("local_orbital_charge","not ready to output DM_R");
     }
 #endif

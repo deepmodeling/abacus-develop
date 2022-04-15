@@ -79,6 +79,7 @@ T Exx_Abfs::IO::input_text( const std::string &file_name )
 	return data;
 }
 
+#ifdef __MPI
 template<typename T>
 void Exx_Abfs::IO::bcast( T &data, const int rank_src, MPI_Comm mpi_comm )
 {
@@ -105,5 +106,5 @@ void Exx_Abfs::IO::bcast( T &data, const int rank_src, MPI_Comm mpi_comm )
 		throw std::invalid_argument(ModuleBase::GlobalFunc::TO_STRING(__FILE__)+" line "+ModuleBase::GlobalFunc::TO_STRING(__LINE__));
 	#endif
 }
-
+#endif
 #endif

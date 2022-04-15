@@ -3,12 +3,12 @@ suffix          autotest
 ntype               2
 nbands              6
 ecutwfc             20
-dr2                 1e-8
-niter               100
+scf_thr                 1e-8
+scf_nmax               100
 gamma_only          1
 calculation         scf
-smearing			gaussian
-sigma				0.001
+smearing_method			gaussian
+smearing_sigma				0.001
 nspin				2
 basis_type			lcao
 ks_solver           genelpa

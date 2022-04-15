@@ -2,7 +2,7 @@ This test for:
 *Si-diamond
 *k-points 2*2*2
 *old upf pseudopotential
-*smearing default
+*smearing_method default
 *ks_solver cg
 *mixing_type plain
 *mixing_beta 0.7

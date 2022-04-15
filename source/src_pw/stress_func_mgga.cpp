@@ -1,7 +1,7 @@
 #include "./stress_func.h"
-#include "./xc_functional.h"
-#include "./myfunc.h"
-#include "./xc_gga_pw.h"
+#include "../module_xc/xc_functional.h"
+#include "../module_base/timer.h"
+#include "global.h"
 
 //calculate the mGGA stress correction in PW and LCAO
 void Stress_Func::stress_mgga(ModuleBase::matrix& sigma) 
@@ -48,7 +48,7 @@ void Stress_Func::stress_mgga(ModuleBase::matrix& sigma)
 			{
 				psi[ig]=GlobalC::wf.evc[ik](ibnd,ig);
 			}
-			GGA_PW::grad_wfc(psi, ik, gradwfc, npw);
+			XC_Functional::grad_wfc(psi, ik, gradwfc, npw);
 
 			int ipol = 0;
 			for (int ix = 0; ix < 3; ix++)

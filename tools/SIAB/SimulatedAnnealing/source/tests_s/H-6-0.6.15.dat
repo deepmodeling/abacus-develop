@@ -11,7 +11,7 @@ H label
 100 ecutwfc_jlq
 6 rcut_Jlq
 1 smooth
-0.1 sigma
+0.1 smearing_sigma
 1e-12 tolerence
 1 lmax
 1 nks

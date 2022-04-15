@@ -10,7 +10,8 @@
 // (3) Pulay Mixing
 // (4) Modified Broden Mixing
 //===================================
-#include "tools.h"
+#include "../module_base/global_function.h"
+#include "../module_base/global_variable.h"
 #include "../module_base/matrix.h"
 #include "charge_pulay.h"
 
@@ -20,7 +21,7 @@ class Charge_Broyden: public Charge_Pulay
 	Charge_Broyden();
 	~Charge_Broyden();
 
-    void mix_rho(double &dr2,const double &tr2_min,
+    void mix_rho(double &scf_thr,const double &tr2_min,
                  const double &tr2,const int &iter,
                  bool &converged);// mix rho
 

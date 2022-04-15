@@ -1,7 +1,8 @@
 #ifndef MPI_DATA_H
 #define MPI_DATA_H
 
-#include "../src_pw/tools.h" 
+#include "../module_base/global_function.h"
+#include "../module_base/global_variable.h" 
 #include "../module_cell/unitcell.h"
 #include "parallel_global.h"
 

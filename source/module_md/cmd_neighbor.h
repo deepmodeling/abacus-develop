@@ -12,7 +12,7 @@ public:
     ~CMD_neighbor();
 
     ModuleBase::Vector3<double> cell_periodic(const ModuleBase::Vector3<double> a, const ModuleBase::Vector3<double> b);
-    void neighbor(UnitCell_pseudo &ucell_c);
+    void neighbor(const UnitCell_pseudo &ucell_c);
     void comm_list(const int num, int *nlist_in, int **list_in, int *nlist_out, int **list_out);
 
     int **list;    // record the index of adjent atoms of every atom

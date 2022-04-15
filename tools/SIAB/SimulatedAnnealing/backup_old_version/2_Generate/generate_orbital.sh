@@ -1,6 +1,7 @@
 #!/bin/bash
 # author mohan 
 # edit by Pengfei Li 2013-6-4
+# edit by Wenshuai Zhang 2016-11-30
 #-----------------------------------------------------------------
 #
 # (0.0) fixed  parameters 
@@ -8,7 +9,10 @@
 #-----------------------------------------------------------------
 mass=1                                         #not used yet.
 lat0=20                                        #in a.u
-cpu_num=1         
+cpu_num=8         
+export OMP_NUM_THREADS=1
+#hostfpath="/home/nic/wszhang/eclipse_project/mesia_dft/error_estimates_for_DFT/cif2cellroot/0abacus_lcao/myhosts"
+#hostfpath="/home/nic/wszhang/eclipse_project/mesia_dft/delta_test/delta_dft/cifs2deltaDFT/myhosts"
 #-----------------------------------------------------------------
 #
 # (0.1) input parameters
@@ -127,8 +131,8 @@ pseudofile=`grep "Pseudo " ORBITAL_INPUT | awk -F "Pseudo " '{print $0}' | awk '
 echo "pseudo=$pseudofile"
 
 # (0.1.15) get the smearing
-degauss=`grep "sigma " ORBITAL_INPUT | awk -F "sigma " '{print $0}' | awk '{print $2}'`
-echo "degauss=$degauss"
+smearing_sigma=`grep "smearing_sigma " ORBITAL_INPUT | awk -F "smearing_sigma " '{print $0}' | awk '{print $2}'`
+echo "smearing_sigma=$smearing_sigma"
 
 #-----------------------------------------------------------------
 #
@@ -170,11 +174,16 @@ do
 	# (1.4.2.0) calculate the distance of dimers
 	dis=`echo "$info" | awk '{print $'$count'}' ` 
         dis1=$(echo "scale=5;$dis * 0.86603 "|bc)
-        dis2=$(echo "scale=5;$dis * 0.5 "|bc)
+        dis2=$(echo "scale=5;$dis * 0.5     "|bc)
+	dis3=$(echo "scale=5;$dis * 0.81649 "|bc)
+	dis4=$(echo "scale=5;$dis * 0.28867 "|bc)
         echo "dis=$dis"
+
+
 # (1.4.2.1) get the" structures"
 if ( test $element = Na -o $element = Li -o $element = K -o $element = Ca )
 then
+echo "use trimer"
 na=3
 cat > $name.stru << EOF
 ATOMIC_SPECIES
@@ -195,7 +204,32 @@ $element //Element Label
 0.0     $dis1   $dis2   0   0   0
 EOF
 
+#elif ( test $element = Mn -o $element = Fe ) 
+#then
+#echo "use tetramer"
+#na=4
+#cat > $name.stru << EOF
+#ATOMIC_SPECIES
+#$element $mass $pseudofile
+#LATTICE_CONSTANT
+#$lat0  // add lattice constant(a.u.)
+#LATTICE_VECTORS
+#1 0 0
+#0 1 0
+#0 0 1
+#ATOMIC_POSITIONS
+#Cartesian_angstrom  //Cartesian or Direct coordinate.
+#$element //Element Label
+#0.0     //starting magnetism
+#4       //number of atoms
+#0.0     0.0     0.0     0   0   0  // crystal coor.
+#0.0     0.0     $dis    0   0   0 
+#0.0     $dis1   $dis2   0   0   0 
+#$dis3   $dis4   $dis2   0   0   0 
+#EOF
+
 else
+echo "use dimer"
 na=2
 cat > $name.stru << EOF
 ATOMIC_SPECIES
@@ -237,7 +271,7 @@ cat > INPUTs << EOF
 INPUT_ORBITAL_INFORMATION
 <SPHERICAL_BESSEL>
 1           // smooth or not
-0.1         // sigma
+0.1         // smearing_sigma
 $ecut       // energy cutoff for spherical bessel functions(Ry)
 $rcut       // cutoff of wavefunctions(a.u.)
 1.0e-12     // tolerence
@@ -250,7 +284,7 @@ cat > INPUT << EOF
 INPUT_PARAMETERS
 suffix              $element-$rcut-$dis
 latname             $element-$rcut-$dis
-atom_file           $name.stru
+stru_file           $name.stru
 pseudo_dir          $pseudo_dir
 kpoint_file         KPOINTS
 wannier_card        INPUTw
@@ -263,11 +297,11 @@ symmetry            0
 nbands             	$nbands 
 
 ecutwfc             $ecut
-dr2                 1.0e-7  // about iteration
-niter               1000
+scf_thr                 2.0e-8  // about iteration
+scf_nmax               1000
 
-smearing            gauss
-sigma               $degauss
+smearing_method            gauss
+smearing_sigma               $smearing_sigma
 
 mixing_type         pulay       // about charge mixing
 mixing_beta         0.4
@@ -290,9 +324,10 @@ let count++
 #-------------
 #mpiexec -np $cpu_num -machinefile node_openmpi $EXE_pw
 #mpiexec -np $1 -machinefile $EXE_pw
-#mpirun -np 4 $EXE_pw
+mpirun -np $cpu_num $EXE_pw
+#mpirun -np $cpu_num -hostfile $hostfpath  $EXE_pw
 
-$EXE_pw 
+#$EXE_pw 
 
 #mpiexec -n 12  -machinefile $PBS_NODEFILE $EXE_pw >> Log.txt
 # end (1.4.2), dimer distace cicle
@@ -343,12 +378,12 @@ cat >> INPUT << EOF
 $Start_tem_S              // Start temparature for spillage
 0.8                 // Cooling rate
 $Step_S                   // Number of temperatures(spillage)
-500                // Number of steps per temparature
+600                // Number of steps per temparature
 
 $Start_tem_K              // start temperature for kinetic energy
 0.8                 // Cooling rate
 $Step_K                  // Number of temperatures(kinetical)
-500                // Number of steps per temparature
+600                // Number of steps per temparature
 
 $Delta_kappa        // Delta kappa
 50                  // Selectly output information
@@ -416,7 +451,8 @@ cat >> INPUT << EOF
 EOF
 
 #mpiexec -n 1 -machinefile $PBS_NODEFILE $EXE_orbital >> Log.txt
-$EXE_orbital
+$EXE_orbital 
+#mpirun -np cpu_num $EXE_orbital
 
 # (1.4.3.5)
 cd ..
@@ -431,3 +467,4 @@ cd ..
 done
 # end targets cicle
 
+unset OMP_NUM_THREADS

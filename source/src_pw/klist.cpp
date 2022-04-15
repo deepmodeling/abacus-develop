@@ -2,6 +2,9 @@
 #include "klist.h"
 #include "../src_parallel/parallel_global.h"
 #include "../module_symmetry/symmetry.h"
+#include "../src_parallel/parallel_reduce.h"
+#include "../src_parallel/parallel_common.h"
+#include "../module_base/memory.h"
 
 K_Vectors::K_Vectors()
 {	
@@ -22,17 +25,6 @@ K_Vectors::K_Vectors()
     kc_done = false;
     kd_done = false;
 
-    kvec_c = new ModuleBase::Vector3<double>[1];
-    kvec_d = new ModuleBase::Vector3<double>[1];
-    kvec_d_ibz = new ModuleBase::Vector3<double>[1];
-
-    wk = new double[1];
-    wk_ibz = new double[1];
-    ngk = new int[1];
-    isk = new int[1];
-
-    ibz2bz = new int[1];
-
     nks = 0;
     nkstot = 0;
     nkstot_ibz = 0;
@@ -43,14 +35,6 @@ K_Vectors::K_Vectors()
 K_Vectors::~K_Vectors()
 {
 //	ModuleBase::TITLE("K_Vectors","~K_Vectors");
-    delete[] kvec_c;
-    delete[] kvec_d;
-    delete[] kvec_d_ibz;
-    delete[] wk;
-    delete[] wk_ibz;
-    delete[] ngk;
-    delete[] isk;
-    delete[] ibz2bz;
 #ifdef _MCD_CHECK
     showMemStats();
 #endif
@@ -140,17 +124,11 @@ void K_Vectors::set(
 
 void K_Vectors::renew(const int &kpoint_number)
 {
-    delete[] kvec_c;
-    delete[] kvec_d;
-    delete[] wk;
-    delete[] isk;
-    delete[] ngk;
-
-    kvec_c = new ModuleBase::Vector3<double>[kpoint_number];
-    kvec_d = new ModuleBase::Vector3<double>[kpoint_number];
-    wk = new double[kpoint_number];
-    isk = new int[kpoint_number];
-    ngk = new int[kpoint_number];
+    kvec_c.resize(kpoint_number);
+    kvec_d.resize(kpoint_number);
+    wk.resize(kpoint_number);
+    isk.resize(kpoint_number);
+    ngk.resize(kpoint_number);
 
     ModuleBase::Memory::record("K_Vectors","kvec_c",kpoint_number*3,"double");
     ModuleBase::Memory::record("K_Vectors","kvec_d",kpoint_number*3,"double");
@@ -298,18 +276,14 @@ bool K_Vectors::read_kpoints(const std::string &fn)
 			//------------------------------------------
 			// number of points to the next k points
 			//------------------------------------------
-			int* nkl = new int[nks_special];
+			std::vector<int> nkl(nks_special,0);
 				
 			//------------------------------------------
 			// cartesian coordinates of special points.
 			//------------------------------------------
-			double *ksx = new double[nks_special];
-			double *ksy = new double[nks_special];
-			double *ksz = new double[nks_special];
-			std::vector<double> kposx;
-			std::vector<double> kposy;
-			std::vector<double> kposz;
-			ModuleBase::GlobalFunc::ZEROS(nkl, nks_special);
+			std::vector<double> ksx(nks_special);
+			std::vector<double> ksy(nks_special);
+			std::vector<double> ksz(nks_special);
 			
 			//recalculate nkstot.
 			nkstot = 0;
@@ -360,11 +334,6 @@ bool K_Vectors::read_kpoints(const std::string &fn)
 			
 			GlobalV::ofs_warning << " Error : nkstot == -1, not implemented yet." << std::endl;
 
-			delete[] nkl;
-			delete[] ksx;
-			delete[] ksy;
-			delete[] ksz;
-
             this->kc_done = true;
 
 		}
@@ -386,18 +355,14 @@ bool K_Vectors::read_kpoints(const std::string &fn)
 			//------------------------------------------
 			// number of points to the next k points
 			//------------------------------------------
-			int* nkl = new int[nks_special];
+			std::vector<int> nkl(nks_special,0);
 				
 			//------------------------------------------
 			// cartesian coordinates of special points.
 			//------------------------------------------
-			double *ksx = new double[nks_special];
-			double *ksy = new double[nks_special];
-			double *ksz = new double[nks_special];
-			std::vector<double> kposx;
-			std::vector<double> kposy;
-			std::vector<double> kposz;
-			ModuleBase::GlobalFunc::ZEROS(nkl, nks_special);
+			std::vector<double> ksx(nks_special);
+			std::vector<double> ksy(nks_special);
+			std::vector<double> ksz(nks_special);
 			
 			//recalculate nkstot.
 			nkstot = 0;
@@ -447,11 +412,6 @@ bool K_Vectors::read_kpoints(const std::string &fn)
 			}
 			
 			GlobalV::ofs_warning << " Error : nkstot == -1, not implemented yet." << std::endl;
-
-			delete[] nkl;
-			delete[] ksx;
-			delete[] ksy;
-			delete[] ksz;
 
             this->kd_done = true;
 
@@ -532,8 +492,7 @@ void K_Vectors::update_use_ibz( void )
 
 	ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"nkstot now",nkstot);
 
-    delete[] kvec_d;
-    this->kvec_d = new ModuleBase::Vector3<double>[ this->nkstot * nspin]; //qianrui fix a bug 2021-7-13 for nspin=2 in set_kup_and_kdw()
+    this->kvec_d.resize(this->nkstot * nspin); //qianrui fix a bug 2021-7-13 for nspin=2 in set_kup_and_kdw()
 
     for (int i = 0; i < this->nkstot; ++i)
     {
@@ -558,7 +517,7 @@ void K_Vectors::ibz_kpoint(const ModuleSymmetry::Symmetry &symm)
     // inverse operation, double it.
     //===============================================
     bool include_inv = false;
-    ModuleBase::Matrix3 *kgmatrix = new ModuleBase::Matrix3[48 * 2];
+    std::vector<ModuleBase::Matrix3> kgmatrix(48 * 2);
     ModuleBase::Matrix3 inv(-1, 0, 0, 0, -1, 0, 0, 0, -1);
 
     int nrotkm = symm.nrotk;// change if inv not included
@@ -584,13 +543,10 @@ void K_Vectors::ibz_kpoint(const ModuleSymmetry::Symmetry &symm)
     // the new set kvec_d : ir_kpt
     this->nkstot_ibz = 0;
 
-    assert(nkstot > 0 );
-    delete[] kvec_d_ibz;
-    delete[] wk_ibz;
-    delete[] ibz2bz;
-    this->kvec_d_ibz = new ModuleBase::Vector3<double>[ this->nkstot ];
-    this->wk_ibz = new double[ this->nkstot ];
-    this->ibz2bz = new int[ this->nkstot ];
+    assert(nkstot > 0);
+    kvec_d_ibz.resize(this->nkstot);
+    wk_ibz.resize(this->nkstot);
+    ibz2bz.resize(this->nkstot);
 
 	// nkstot is the total input k-points number.
     const double weight = 1.0 / static_cast<double>(nkstot);
@@ -709,7 +665,6 @@ void K_Vectors::ibz_kpoint(const ModuleSymmetry::Symmetry &symm)
             << std::setw(20) << this->wk_ibz[ik]
             << std::setw(10) << this->ibz2bz[ik] << std::endl;
     }
-    delete[] kgmatrix;
 
     return;
 }
@@ -860,13 +815,10 @@ void K_Vectors::mpi_k(void)
 		ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"minimum distributed K point number",nks_minimum);
     }
 
-    int *isk_aux = new int[nkstot];
-
-    double *wk_aux = new double[nkstot];
-
-    double *kvec_c_aux = new double[nkstot*3];
-
-    double *kvec_d_aux = new double[nkstot*3];
+    std::vector<int> isk_aux(nkstot);
+    std::vector<double> wk_aux(nkstot);
+    std::vector<double> kvec_c_aux(nkstot*3);
+    std::vector<double> kvec_d_aux(nkstot*3);
 
     if (GlobalV::MY_RANK == 0)
     {
@@ -883,11 +835,11 @@ void K_Vectors::mpi_k(void)
         }
     }
 
-    Parallel_Common::bcast_int(isk_aux, nkstot);
+    Parallel_Common::bcast_int(isk_aux.data(), nkstot);
 
-    Parallel_Common::bcast_double(wk_aux, nkstot);
-    Parallel_Common::bcast_double(kvec_c_aux , nkstot*3);
-    Parallel_Common::bcast_double(kvec_d_aux , nkstot*3);
+    Parallel_Common::bcast_double(wk_aux.data(), nkstot);
+    Parallel_Common::bcast_double(kvec_c_aux.data(), nkstot*3);
+    Parallel_Common::bcast_double(kvec_d_aux.data(), nkstot*3);
 
     this->renew(this->nks * this->nspin);
 
@@ -907,11 +859,6 @@ void K_Vectors::mpi_k(void)
         wk[i] = wk_aux[k_index];
         isk[i] = isk_aux[k_index];
     }
-
-    delete[] isk_aux;
-    delete[] wk_aux;
-    delete[] kvec_c_aux;
-    delete[] kvec_d_aux;
 } // END SUBROUTINE
 #endif
 
@@ -1072,10 +1019,10 @@ void K_Vectors::mpi_k_after_vc(void)
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"minimum distributed K point number",nks_minimum);
     }
 
-    int *isk_aux = new int[nkstot];
-    double *wk_aux = new double[nkstot];
-    double *kvec_c_aux = new double[nkstot*3];
-    double *kvec_d_aux = new double[nkstot*3];
+    std::vector<int> isk_aux(nkstot);
+    std::vector<double> wk_aux(nkstot);
+    std::vector<double> kvec_c_aux(nkstot*3);
+    std::vector<double> kvec_d_aux(nkstot*3);
 
     if (GlobalV::MY_RANK == 0)
     {
@@ -1092,10 +1039,10 @@ void K_Vectors::mpi_k_after_vc(void)
         }
     }
 
-    Parallel_Common::bcast_int(isk_aux, nkstot);
-    Parallel_Common::bcast_double(wk_aux, nkstot);
-    Parallel_Common::bcast_double(kvec_c_aux , nkstot*3);
-    Parallel_Common::bcast_double(kvec_d_aux , nkstot*3);
+    Parallel_Common::bcast_int(isk_aux.data(), nkstot);
+    Parallel_Common::bcast_double(wk_aux.data(), nkstot);
+    Parallel_Common::bcast_double(kvec_c_aux.data(), nkstot*3);
+    Parallel_Common::bcast_double(kvec_d_aux.data(), nkstot*3);
 
     int k_index = 0;
     for (int i = 0;i < nks;i++)
@@ -1110,11 +1057,6 @@ void K_Vectors::mpi_k_after_vc(void)
         wk[i] = wk_aux[k_index];
         isk[i] = isk_aux[k_index];
     }
-
-    delete[] isk_aux;
-    delete[] wk_aux;
-    delete[] kvec_c_aux;
-    delete[] kvec_d_aux;
 #endif
 }
 

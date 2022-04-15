@@ -34,8 +34,12 @@ class Center2_Orb::Orb11
 	double cal_overlap(
 		const ModuleBase::Vector3<double> &RA, const ModuleBase::Vector3<double> &RB,			// unit: Bohr
 		const int &mA, const int &mB) const;
-		
-	private:
+
+    ModuleBase::Vector3<double> cal_grad_overlap( //caoyu add 2021-11-19
+		const ModuleBase::Vector3<double> &RA, const ModuleBase::Vector3<double> &RB,			// unit: Bohr
+		const int& mA, const int& mB) const;
+    
+private:
 
 	const Numerical_Orbital_Lm &nA;
 	const Numerical_Orbital_Lm &nB;

@@ -1,7 +1,8 @@
 #ifndef PARALLEL_GRID_H
 #define PARALLEL_GRID_H
 
-#include "../src_pw/tools.h"
+#include "../module_base/global_function.h"
+#include "../module_base/global_variable.h"
 
 class Parallel_Grid
 {

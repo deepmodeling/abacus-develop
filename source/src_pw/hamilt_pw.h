@@ -1,7 +1,9 @@
 #ifndef HAMILT_PW_H
 #define HAMILT_PW_H
 
-#include "tools.h"
+#include "../module_base/global_function.h"
+#include "../module_base/global_variable.h"
+#include "../module_base/complexmatrix.h"
 
 class Hamilt_PW
 {
@@ -32,7 +34,6 @@ public:
 
 	friend class Diago_David;
 	friend class Diago_CG;
-    // friend class Diago_CG_GPU;
 	friend class Exx_Lip;
 	friend class Hamilt;
     friend class Stochastic_Iter;
@@ -75,24 +76,6 @@ public:
 		std::complex<double> *hpsi,
 		const std::complex<double> *becp,
 		const int m);
-
-    double ddot_real(
-		const int& npw,
-		const std::complex<double>* psi_L,
-		const std::complex<double>* psi_R)const;
-
-    std::complex<double> ddot( const int& npw,
-                          const std::complex<double> * psi_L,
-                          const std::complex<double> * psi_R )const ;
-
-    std::complex<double> just_ddot( const int& npw,
-                          const std::complex<double> * psi_L,
-                          const std::complex<double> * psi_R )const ;
-
-    std::complex<double> ddot( const int & npw,
-                          const ModuleBase::ComplexMatrix &psi,
-                          const int & m,
-                          const std::complex<double> *psik )const ;
 
     void diag_zheev
     (

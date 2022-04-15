@@ -1,3 +1,4 @@
+#ifdef __MPI
 #ifndef EXX_ABFS_PARALLEL_COMMUNICATE_HEXX_H
 #define EXX_ABFS_PARALLEL_COMMUNICATE_HEXX_H
 
@@ -10,8 +11,9 @@
 #include <valarray>
 #include <map>
 #include <deque>
-#include <mpi.h>
+#include "mpi.h"
 #include <atomic>
+#include "module_orbital/parallel_orbitals.h"
 
 // mohan comment out 2021-02-06
 //#include <boost/dynamic_bitset.hpp>
@@ -20,7 +22,7 @@
 class Exx_Abfs::Parallel::Communicate::Hexx
 {
 public:
-	void Rexx_to_Km2D(
+	void Rexx_to_Km2D(const Parallel_Orbitals &pv, 
 		std::vector<std::map<size_t,std::map<size_t,std::map<Abfs::Vector3_Order<int>,ModuleBase::matrix>>>> &HR_exx,
 		const std::pair<bool,bool> &io_HR_a2D );
 
@@ -35,10 +37,10 @@ private:
 	template<typename T>
 	inline T H_phase(ModuleBase::matrix &&HR, const int ik, const Abfs::Vector3_Order<int> &box2) const;
 	template<typename Tmatrix>
-	Tmatrix Ra2D_to_Km2D(
+	Tmatrix Ra2D_to_Km2D(const Parallel_Orbitals &pv, 
 		std::vector<std::map<size_t,std::map<size_t,std::map<Abfs::Vector3_Order<int>,ModuleBase::matrix>>>> &HR_a2D, const int ik) const;
 	template<typename Tmatrix>
-	void Ra2D_to_Km2D_mixing(
+	void Ra2D_to_Km2D_mixing(const Parallel_Orbitals &pv, 
 		std::vector<std::map<size_t,std::map<size_t,std::map<Abfs::Vector3_Order<int>,ModuleBase::matrix>>>> &HR_a2D,
 		std::vector<Tmatrix> &HK_m2D,
 		std::vector<std::deque<Tmatrix>> &HK_m2D_pulay_seq) const;
@@ -56,7 +58,7 @@ private:
 		std::vector<std::map<size_t,std::map<size_t,std::map<Abfs::Vector3_Order<int>,ModuleBase::matrix>>>> exx_to_a2D();
 
 	private:
-		void set_atom_in_2D();
+		void set_atom_in_2D(Parallel_Orbitals &pv);
 		void ask( const int rank_delta_now );
 		void recv_data_process( const int rank_data );
 		void insert_data( std::vector<std::map<size_t,std::map<size_t,std::map<Abfs::Vector3_Order<int>,ModuleBase::Matrix_Wrapper>>>> &data_rank );
@@ -96,8 +98,9 @@ private:
 	public:
 		void init(
 			const MPI_Comm &mpi_comm_in,
-			const std::set<std::pair<size_t,size_t>> &H_atom_pairs_core);
-		std::vector<std::map<size_t,std::map<size_t,std::map<Abfs::Vector3_Order<int>,ModuleBase::matrix>>>> exx_to_a2D(
+            const std::set<std::pair<size_t, size_t>>& H_atom_pairs_core,
+            const Parallel_Orbitals &pv);
+        std::vector<std::map<size_t, std::map<size_t, std::map<Abfs::Vector3_Order<int>, ModuleBase::matrix>>>> exx_to_a2D(
 			std::vector<std::map<size_t,std::map<size_t,std::map<Abfs::Vector3_Order<int>,ModuleBase::matrix>>>> &data_local) const;
 
 	private:
@@ -152,8 +155,11 @@ public:
 	enum class Mixing_Mode{ No, Plain, Pulay };
 	Mixing_Mode mixing_mode;
 	double mixing_beta;
-	
+
+#ifdef __MPI	
 	Allreduce2 allreduce2;
+#endif
 };
 
+#endif
 #endif

@@ -1,7 +1,7 @@
 '''
 Date: 2021-08-18 11:05:39
 LastEditors: jiyuyang
-LastEditTime: 2021-08-22 13:29:07
+LastEditTime: 2021-11-08 15:16:35
 Mail: jiyuyang@mail.ustc.edu.cn, 1041176461@qq.com
 '''
 
@@ -239,12 +239,13 @@ def get_angular_momentum_label(l_index: int) -> str:
 
 
 angular_momentum_name = [
-    ['s'],
-    ['px', 'py', 'pz'],
-    ['d3z^2-r^2', 'dxy', 'dxz', 'dx^2-y^2', 'dyz'],
-    ['f5z^2-3r^2', 'f5xz^2-xr^2', 'f5yz^2-yr^2',
-        'fzx^2-zy^2', 'fxyz', 'fx^3-3*xy^2', 'f3yx^2-y^3'],
-    ['g1', 'g2', 'g3', 'g4', 'g5', 'g6', 'g7', 'g8', 'g9']
+    ['$s$'],
+    ['$p_x$', '$p_y$', '$p_z$'],
+    ['$d_{3z^2-r^2}$', '$d_{xy}$', '$d_{xz}$', '$d_{x^2-y^2}$', '$d_{yz}$'],
+    ['$f_{5z^2-3r^2}$', '$f_{5xz^2-xr^2}$', '$f_{5yz^2-yr^2}$',
+        '$f_{zx^2-zy^2}$', '$f_{xyz}$', '$f_{x^3-3*xy^2}$', '$f_{3yx^2-y^3}$'],
+    ['$g_1$', '$g_2$', '$g_3$', '$g_4$', '$g_5$',
+        '$g_6$', '$g_7$', '$g_8$', '$g_9$']
 ]
 
 

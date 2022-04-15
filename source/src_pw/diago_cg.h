@@ -1,41 +1,30 @@
 #ifndef DIAGO_CG_H
 #define DIAGO_CG_H
 
-#include "tools.h"
+#include "../module_base/global_function.h"
+#include "../module_base/global_variable.h"
+#include "../module_base/complexmatrix.h"
+
+#if ((defined __CUDA) || (defined __ROCM))
+
+#ifdef __CUDA
+#include "hamilt_pw.cuh"
+#else
+#include "hamilt_pw_hip.h"
+#endif
+
+#else
+#include "hamilt_pw.h"
+#endif
 
 class Diago_CG
 {
 	public:
 
-    Diago_CG();
+    Diago_CG(Hamilt_PW* phamilt);
     ~Diago_CG();
 
     static int moved;
-
-    static double ddot_real(
-        const int & dim,
-        const std::complex<double>* psi_L,
-        const std::complex<double>* psi_R,
-        const bool reduce = true) ;
-
-    static std::complex<double> ddot(
-        const int & dim,
-        const std::complex<double>* psi_L,
-        const std::complex<double>* psi_R ) ;
-
-
-    static std::complex<double> ddot(
-        const int & dim,
-        const ModuleBase::ComplexMatrix &psi,
-        const int & m,
-        std::complex<double> *psik ) ;
-
-    static std::complex<double> ddot(
-        const int & dim,
-        const ModuleBase::ComplexMatrix &psi_L,
-        const int & m,
-        const ModuleBase::ComplexMatrix &psi_R,
-        const int & n) ;
 
     void diag(
         ModuleBase::ComplexMatrix &phi,
@@ -50,7 +39,7 @@ class Diago_CG
         int &notconv,
         double &avg_iter);
 
-    static void schmit_orth(
+    void schmit_orth(
         const int &dim,
         const int &dmx,
         const int &end,
@@ -60,6 +49,9 @@ class Diago_CG
     );
 
 	private:
+
+    /// temp operator pointer
+    Hamilt_PW* hpw;
 
     int test_cg;
 

@@ -1,7 +1,7 @@
 <!--
  * @Date: 2021-08-21 21:58:06
  * @LastEditors: jiyuyang
- * @LastEditTime: 2021-08-26 14:51:04
+ * @LastEditTime: 2022-01-03 17:21:08
  * @Mail: jiyuyang@mail.ustc.edu.cn, 1041176461@qq.com
 -->
 
@@ -31,7 +31,7 @@ First, prepare a json file e.g. band-input.json:
 ```
 |    Property    |           Type           |                              Note                              |
 | :------------: | :----------------------: | :------------------------------------------------------------: |
-|   *filename*   |   `str` or `List[str]`   |               Bands data file output from ABACUS               |
+|   *bandfile*   |   `str` or `List[str]`   |               Bands data file output from ABACUS               |
 |    *efermi*    | `float` or `List[float]` |                       Fermi level in eV                        |
 | *energy_range* |          `list`          |                     Range of energy in eV                      |
 |    *shift*     |          `bool`          | If set `'true'`, it will evaluate band gap. Default: `'false'` |
@@ -89,7 +89,6 @@ First, prepare a json file e.g. dos-input.json:
 			]
 		},
 	"pdosfig": "pdos.png",
-	"tdosfig": "tdos.png"
 }
 ```
 If you only want to plot total DOS, you can modify `pdosfile` to `tdosfile` and do not set `species` and `pdosfig`.
@@ -104,7 +103,17 @@ If you only want to plot total DOS, you can modify `pdosfile` to `tdosfile` and 
 |   *tdosfig*    |                                    `str`                                    |                                         Output picture of total DOS                                         |
 |   *pdosfig*    |                                    `str`                                    |                                        Output picture of partial DOS                                        |
 
-Then, the following command will plot both total DOS and partial DOS:
+Then, the following command will plot total DOS:
 ```shell
-abacus-plot -d dos-input.json
+abacus-plot -t tdos-input.json
+```
+
+Then, the following command will plot partial DOS:
+```shell
+abacus-plot -p pdos-input.json
+```
+
+Then, the following command will output parsed partial DOS to directory `PDOS_FILE`:
+```shell
+abacus-plot -o pdos-input.json
 ```

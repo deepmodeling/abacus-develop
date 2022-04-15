@@ -1,6 +1,9 @@
 #include "istate_envelope.h"
 #include "../src_pw/global.h"
-#include "../src_pw/tools.h"
+#include "../module_base/global_function.h"
+#include "../module_base/global_variable.h"
+#include "src_io/wf_io.h"
+#include "src_io/write_wfc_realspace.h"
 
 IState_Envelope::IState_Envelope()
 {}
@@ -9,7 +12,7 @@ IState_Envelope::~IState_Envelope()
 {}
 
 
-void IState_Envelope::begin(void)
+void IState_Envelope::begin(Local_Orbital_wfc &lowf, Gint_Gamma &gg, int& out_wfc_pw, int& out_wfc_r)
 {
 	ModuleBase::TITLE("IState_Envelope","begin");
 
@@ -17,15 +20,13 @@ void IState_Envelope::begin(void)
 
 	if(!GlobalV::GAMMA_ONLY_LOCAL)
 	{
-		ModuleBase::WARNING_QUIT("IState_Envelope::begin","Only available for GlobalV::GAMMA_ONLY_LOCAL now.");
+		ModuleBase::WARNING_QUIT("IState_Envelope::begin","Only available for GAMMA_ONLY_LOCAL now.");
 	}
 
 	// (1) 
 	// (1.1) allocate the space for GlobalC::LOWF.WFC_GAMMA
 
 	// (1.2) read in LOWF_GAMMA.dat
-
-	ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"GlobalC::LOWF.allocate_flag",GlobalC::LOWF.get_allocate_flag());	
 
 	// mohan update 2011-03-21
 	// if ucell is odd, it's correct,
@@ -65,7 +66,27 @@ void IState_Envelope::begin(void)
 		}
 	}
 
-	for(int ib=0; ib<GlobalV::NBANDS; ib++)
+	//allocate grid wavefunction for gamma_only
+	std::vector<double**> wfc_gamma_grid(GlobalV::NSPIN);
+	for(int is=0; is<GlobalV::NSPIN; ++is)
+    {
+        wfc_gamma_grid[is] = new double* [GlobalV::NBANDS];
+        for (int ib = 0;ib < GlobalV::NBANDS; ++ib)
+            wfc_gamma_grid[is][ib] = new double[GlobalC::GridT.lgd];
+    }
+
+    //for pw-wfc in G space
+    ModuleBase::ComplexMatrix* pw_wfc_g;
+    
+    if (out_wfc_pw || out_wfc_r)
+    {
+        pw_wfc_g = new ModuleBase::ComplexMatrix[GlobalC::kv.nks];
+        for (int ik = 0;ik < GlobalC::kv.nks;++ik)
+            pw_wfc_g[ik].create(GlobalV::NBANDS, GlobalC::kv.ngk[ik], true);
+    }
+
+
+    for (int ib = 0; ib < GlobalV::NBANDS; ib++)
 	{
 		if(bands_picked[ib])
 		{
@@ -77,12 +98,18 @@ void IState_Envelope::begin(void)
 
 				//---------------------------------------------------------
 				// GlobalC::LOWF.WFC_GAMMA has been replaced by wfc_dm_2d.cpp 
-				// we need to fix this function in near future.
-				// -- mohan add 2021-02-09
-				//---------------------------------------------------------
-				ModuleBase::WARNING_QUIT("IState_Charge::idmatrix","need to update GlobalC::LOWF.WFC_GAMMA");
-
-				//GlobalC::UHM.GG.cal_env( GlobalC::LOWF.WFC_GAMMA[is][ib], GlobalC::CHR.rho[is] );
+				// and 2d-to-grid conversion is unified into `wfc_2d_to_grid`.
+                //---------------------------------------------------------
+#ifdef __MPI
+                lowf.wfc_2d_to_grid(0, lowf.wfc_gamma[is].c, wfc_gamma_grid[is]);
+#else
+                for (int i = 0;i < GlobalV::NBANDS;++i)
+                {
+                    for (int j = 0;j < GlobalV::NLOCAL;++j)
+                        wfc_gamma_grid[is][i][j] = lowf.wfc_gamma[is](i, j);
+                }
+#endif
+				gg.cal_env( wfc_gamma_grid[is][ib], GlobalC::CHR.rho[is] );
 
 
 				GlobalC::CHR.save_rho_before_sum_band(); //xiaohui add 2014-12-09
@@ -90,13 +117,61 @@ void IState_Envelope::begin(void)
 				ss << GlobalV::global_out_dir << "BAND" << ib + 1 << "_ENV" << is+1 << "_CHG";
 				// 0 means definitely output charge density.
 				bool for_plot = true;
-				GlobalC::CHR.write_rho(GlobalC::CHR.rho_save[is], is, 0, ss.str(), 3, for_plot );
-			}
+                GlobalC::CHR.write_rho(GlobalC::CHR.rho_save[is], is, 0, ss.str(), 3, for_plot);
+                
+                if (out_wfc_pw || out_wfc_r) //only for gamma_only now
+                    this->set_pw_wfc(GlobalC::pw, 0, ib, GlobalV::NSPIN, GlobalC::kv.ngk[0],
+                        GlobalC::CHR.rho_save, pw_wfc_g[0]);
+            }
 		}
 	}
 
-	delete[] bands_picked;
-	return;
+    if (out_wfc_pw || out_wfc_r)
+    {
+        if (out_wfc_pw)
+        {
+            std::stringstream ssw;
+            ssw << GlobalV::global_out_dir << "WAVEFUNC";
+            std::cout << " write G-space wavefunction into \"" <<
+                GlobalV::global_out_dir << "/" << ssw.str() << "\" files." << std::endl;
+            WF_io::write_wfc2(ssw.str(), pw_wfc_g, GlobalC::pw.gcar);
+        }
+        if(out_wfc_r)
+		    Write_Wfc_Realspace::write_wfc_realspace_1(pw_wfc_g, "wfc_realspace", false);
+        delete[] pw_wfc_g;
+    }  
+    
+    delete[] bands_picked;
+    for(int is=0; is<GlobalV::NSPIN; ++is)
+    {
+        for (int ib = 0;ib < GlobalV::NBANDS; ++ib)
+            delete[] wfc_gamma_grid[is][ib];
+        delete[] wfc_gamma_grid[is];
+    }
+    return;
 }
 
+//for each band
+void IState_Envelope::set_pw_wfc(PW_Basis& pwb,
+    const int& ik, const int& ib, const int& nspin,const int& ngk, 
+    const double* const* const rho,
+    ModuleBase::ComplexMatrix &wfc_g)
+{
+    if (ib == 0)//once is enough
+        ModuleBase::TITLE("IState_Envelope", "set_pw_wfc");
+    
+    std::vector<std::complex<double>> Porter(pwb.nrxx);
+     // here I refer to v_hartree, but I don't know how to deal with NSPIN=4
+    const int nspin0 = (nspin == 2) ? 2 : 1;
+    for (int is = 0; is < nspin0; is++)
+        for (int ir=0; ir<pwb.nrxx; ir++) 
+            Porter[ir] += std::complex<double>(rho[is][ir], 0.0);
 
+    //call FFT
+    pwb.FFT_wfc.FFT3D(Porter.data(), -1);
+
+    // set pw_wfc_g
+    // ig2fftw: the index map from i_ngk(local) to i_ngmw(local)
+    for (int ig = 0;ig < ngk;++ig)     // is it right (check local index)???
+        wfc_g(ib,ig) = Porter[pwb.ig2fftw[GlobalC::wf.igk(ik, ig)]];
+}

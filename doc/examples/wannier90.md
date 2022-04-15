@@ -42,10 +42,10 @@ ntype 1
 ecutwfc 40
 nbands 4 ! number of bands
 calculation nscf ! non-self-consistent calculation
-niter 40
-ethr 1.0e-8
-dr2 1.0e-8
-start_charge file ! read charge from files
+scf_nmax 40
+pw_diag_thr 1.0e-8
+scf_thr 1.0e-8
+init_chg file ! read charge from files
 #Parameters(wannier90)
 towannier90 1 ! use the ABACUS-wannier90 interface
 nnkpfile diamond.nnkp ! specify .nnkp file

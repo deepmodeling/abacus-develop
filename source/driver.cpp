@@ -11,6 +11,8 @@
 #include "src_io/winput.h"
 #include "src_io/print_info.h"
 #include "module_base/timer.h"
+#include "module_base/memory.h"
+#include "module_esolver/esolver.h"
 
 Driver::Driver(){}
 
@@ -64,7 +66,7 @@ void Driver::reading(void)
 	ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"GSIZE",GlobalV::GSIZE);
 
 #ifdef __MPI
-    // (4)  divide the GlobalV::NPROC processors into GlobalV::NPOOL for k-points parallelization.
+    // (4)  divide the GlobalV::NPROC processors into GlobalV::KPAR for k-points parallelization.
     GlobalC::Pkpoints.init_pools();
 #endif
 
@@ -84,22 +86,31 @@ void Driver::reading(void)
 void Driver::atomic_world(void)
 {
 	ModuleBase::TITLE("Driver","atomic_world");
-
 	//--------------------------------------------------
 	// choose basis sets:
 	// pw: plane wave basis set
 	// lcao_in_pw: LCAO expaned by plane wave basis set
 	// lcao: linear combination of atomic orbitals
 	//--------------------------------------------------
+	string use_ensol;
+	ModuleESolver::ESolver *p_esolver;
 	if(GlobalV::BASIS_TYPE=="pw" || GlobalV::BASIS_TYPE=="lcao_in_pw")
 	{
-		Run_pw::plane_wave_line();
+		use_ensol = "ksdft_pw"; 
+		//We set it temporarily
+		//Finally, we have ksdft_pw, ksdft_lcao, sdft_pw, ofdft, lj, eam, etc.
+		ModuleESolver::init_esolver(p_esolver, use_ensol);
+		Run_pw::plane_wave_line(p_esolver);
+		ModuleESolver::clean_esolver(p_esolver);
 	}
 #ifdef __LCAO
 	else if(GlobalV::BASIS_TYPE=="lcao")
-	{
-		Run_lcao::lcao_line();
-	}
+    {
+        use_ensol = "ksdft_lcao";
+        ModuleESolver::init_esolver(p_esolver, use_ensol);
+        Run_lcao::lcao_line(p_esolver);
+        ModuleESolver::clean_esolver(p_esolver);
+    }
 #endif
 
 	ModuleBase::timer::finish( GlobalV::ofs_running );

@@ -7,9 +7,12 @@ using namespace std;
 #include <algorithm>
 #include <cmath>
 #include <cstdlib>
-#include "../src_pw/tools.h"
+#include "../module_base/global_function.h"
+#include "../module_base/global_variable.h"
+#include "../module_base/matrix.h"
+#include "../module_base/matrix3.h"
+#include "../module_base/complexmatrix.h"
 #include "../module_base/lapack_connector.h"
-#include "../src_pw/global.h"
 #include "../src_lcao/wavefunc_in_pw.h"
 
 #ifdef __LCAO
@@ -60,8 +63,9 @@ public:
 
 
 
-	toWannier90(int num_kpts,ModuleBase::Matrix3 recip_lattice);
-	~toWannier90();
+    toWannier90(int num_kpts, ModuleBase::Matrix3 recip_lattice);
+    toWannier90(int num_kpts,ModuleBase::Matrix3 recip_lattice, std::complex<double>*** wfc_k_grid_in);
+    ~toWannier90();
 
 	//void kmesh_supercell_sort(); //������ԭ��ľ����С��������lmn
 	//void get_nnkpt_first();      //������12��shell�Ľ���k��ľ���͸���
@@ -88,7 +92,10 @@ public:
 	// lcao����
 	void lcao2pw_basis(const int ik, ModuleBase::ComplexMatrix &orbital_in_G);
 	void getUnkFromLcao();
-	void get_lcao_wfc_global_ik(std::complex<double> **ctot, std::complex<double> **cc);
+    void get_lcao_wfc_global_ik(std::complex<double>** ctot, std::complex<double>** cc);
+
+private:
+    std::complex<double>*** wfc_k_grid;
 
 };
 

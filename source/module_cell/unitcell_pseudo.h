@@ -2,7 +2,8 @@
 #define UNITCELL_PSEUDO_H
 
 #include "atom_spec.h"
-#include "../src_pw/tools.h"
+#include "../module_base/global_function.h"
+#include "../module_base/global_variable.h"
 #include "../src_io/output.h"
 #include "unitcell.h"
 #ifdef __LCAO
@@ -29,7 +30,7 @@ public: // member variables
 	int nmax_total;//mohan add 2009-09-10
 	int lmax_ppwf;
 	int lmaxmax; // liuyu 2021-07-04
-	bool set_vel; // liuyu 2021-07-15
+	bool init_vel; // liuyu 2021-07-15
 	//double nelec;
 
 public: // member functions
@@ -40,7 +41,6 @@ public: // member functions
 		LCAO_Orbitals &orb,
 #endif
 		const std::string &s_pseudopot_dir, 
-		output &outp, 
 		const std::string &fn, 
 		std::ofstream &log);
 	void setup_cell_classic(
@@ -62,12 +62,12 @@ public: // member functions
 	int find_type(const std::string &label);
 	void print_tau(void)const;
 #ifdef __LCAO
-	void print_stru_file(const LCAO_Orbitals &orb, const std::string &fn, const int &type=1)const; // mohan add 2011-03-22
+	void print_stru_file(const LCAO_Orbitals &orb, const std::string &fn, const int &type=1, const int &level=0)const; // mohan add 2011-03-22
 #else
-	void print_stru_file(const std::string &fn, const int &type=1)const; // mohan add 2011-03-22
+	void print_stru_file(const std::string &fn, const int &type=1, const int &level=0)const; // mohan add 2011-03-22
 #endif
 	void check_dtau(void);
-    void setup_cell_after_vc(const std::string &s_pseudopot_dir, output &outp, const std::string &fn, std::ofstream &log); //LiuXh add 20180515
+    void setup_cell_after_vc(std::ofstream &log); //LiuXh add 20180515
 
 	bool set_atom_flag;//added on 2009-3-8 by mohan
 
@@ -84,10 +84,15 @@ public: // member functions
 	//void cal_nelec();
 	void cal_meshx();
 	void cal_natomwfc(std::ofstream &log); 
-	void print_unitcell_pseudo(const std::string &fn, output &outp);
+	void print_unitcell_pseudo(const std::string &fn);
 	bool check_tau(void)const; //mohan add 2011-03-03
 	bool if_atoms_can_move()const;
 	bool if_cell_can_change()const;
+	void setup(const std::string &latname_in,
+			const int &ntype_in, 
+			const int &lmaxmax_in,
+			const bool &init_vel_in,
+			const std::string &fixed_axes_in);
 
 #ifdef __MPI
 	void bcast_unitcell_pseudo(void);

@@ -28,23 +28,19 @@ namespace Gint_Tools
 		const int jby,
 		const int kbz);
 
-	// index of wave functions for each block
-	// block_iw[na_grid]
-	int* get_block_iw(
-		const int na_grid,  		// how many atoms on this (i,j,k) grid
-		const int grid_index,		// 1d index of FFT index (i,j,k))
-		const int max_size);
-		
-	// block_index[na_grid+1]
-	int* get_block_index(
-		const int na_grid,  		// how many atoms on this (i,j,k) grid
-		const int grid_index);		// 1d index of FFT index (i,j,k)
-		
-	// band size: number of columns of a band
-	// block_size[na_grid]
-	int* get_block_size(
-		const int na_grid,			// how many atoms on this (i,j,k) grid
-		const int grid_index);		// 1d index of FFT index (i,j,k)
+	//------------------------------------------------------
+	// na_grid : #. atoms for this group of grids
+	// block_iw : size na_grid, index of the first orbital on this atom
+	// block_size : size na_grid, number of orbitals on this atom
+	// block_index : size na_grid+1, start from 0, accumulates block_size
+	//------------------------------------------------------
+	void get_block_info(
+		const int na_grid,
+		const int grid_index,
+		int * &block_iw,
+		int * &block_index,
+		int * &block_size
+	);
 
 	// whether the atom-grid distance is larger than cutoff
 	// cal_flag[pw.bxyz][na_grid]

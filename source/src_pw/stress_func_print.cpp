@@ -1,4 +1,5 @@
-#include"stress_func.h"
+#include "stress_func.h"
+#include "module_base/constants.h"
 
 static double output_acc = 1.0e-8;
 

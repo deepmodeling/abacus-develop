@@ -38,9 +38,12 @@ std::map<size_t,std::map<size_t,std::map<Abfs::Vector3_Order<int>,std::shared_pt
 	
 	// pre-cal Vws on same atom, speed up DPcal_V() in DPcal_C()
 	std::vector<std::shared_ptr<ModuleBase::matrix>> Vs_same_atom(GlobalC::ucell.ntype);
+
+	#ifdef __MPI //liyuanbo 2022/2/23
 	for(size_t it=0; it!=GlobalC::ucell.ntype; ++it)
 		Vs_same_atom[it] = DPcal_V( it,it,{0,0,0}, m_abfs_abfs, index_abfs, 0,true, rwlock_Vw,Vws );
-	
+	#endif
+
 #ifdef __MKL
     const int mkl_threads = mkl_get_max_threads();
 	mkl_set_num_threads(std::max(1UL,mkl_threads/atom_centres_vector.size()));
@@ -66,6 +69,7 @@ std::map<size_t,std::map<size_t,std::map<Abfs::Vector3_Order<int>,std::shared_pt
 			for( const ModuleBase::Vector3<int> &box2 : atom2.second )
 			{
 //				std::cout<<"cal_Cs\t"<<iat1<<"\t"<<iat2<<"\t"<<box2<<std::endl;
+			#ifdef __MPI //liyuanbo 2022/2/23
 				const std::shared_ptr<ModuleBase::matrix> C = DPcal_C( 
 					it1, it2, -tau1+tau2+(box2*GlobalC::ucell.latvec), 
 					m_abfs_abfs, m_abfslcaos_lcaos, index_abfs, index_lcaos, 
@@ -74,6 +78,7 @@ std::map<size_t,std::map<size_t,std::map<Abfs::Vector3_Order<int>,std::shared_pt
 				#pragma omp critical(Abfs_cal_Cs)
 #endif
 				Cs[iat1][iat2][box2] = C;
+			#endif
 			}
 		}
 	}
@@ -207,6 +212,7 @@ std::map<size_t,std::map<size_t,std::map<Abfs::Vector3_Order<int>,std::shared_pt
 			const Vector3_Order<double> delta_R = -tau1+tau2+(box2*GlobalC::ucell.latvec);
 			if( delta_R.norm()*GlobalC::ucell.lat0 < Rcut )
 			{
+			#ifdef __MPI //liyuanbo 2022/2/23
 //				std::cout<<"cal_Vs\t"<<iat1<<"\t"<<iat2<<"\t"<<box2<<"\t"<<delta_R<<"\t"<<delta_R.norm()<<"\t"<<delta_R.norm()*GlobalC::ucell.lat0<<"\t"<<GlobalC::ORB.Phi[it1].getRcut()*rmesh_times+GlobalC::ORB.Phi[it2].getRcut()<<std::endl;
 				const std::shared_ptr<ModuleBase::matrix> V = DPcal_V( 
 					it1, it2, delta_R, 
@@ -216,6 +222,7 @@ std::map<size_t,std::map<size_t,std::map<Abfs::Vector3_Order<int>,std::shared_pt
 				#pragma omp critical(Abfs_cal_Vs)
 #endif
 				Vs[iat1][iat2][box2] = V;
+			#endif
 			}
 		}
 	}
@@ -281,7 +288,7 @@ std::map<size_t,std::map<size_t,std::map<Abfs::Vector3_Order<int>,std::shared_pt
 	return mps;
 }
 
-
+#ifdef __MPI //liyuanbo 2022/2/23
 std::shared_ptr<ModuleBase::matrix> Abfs::DPcal_C( 
 	const size_t &it1, 
 	const size_t &it2, 
@@ -342,7 +349,7 @@ std::shared_ptr<ModuleBase::matrix> Abfs::DPcal_C(
 			const std::vector<std::shared_ptr<ModuleBase::matrix>> A = 
 				{ make_shared<ModuleBase::matrix>( m_abfslcaos_lcaos.cal_overlap_matrix(it1,it2,0,R ,index_abfs,index_lcaos,index_lcaos,Exx_Abfs::Matrix_Orbs21::Matrix_Order::A2B_A1) ) ,
 				  make_shared<ModuleBase::matrix>( m_abfslcaos_lcaos.cal_overlap_matrix(it2,it1,0,-R,index_abfs,index_lcaos,index_lcaos,Exx_Abfs::Matrix_Orbs21::Matrix_Order::BA2_A1) ) };
-			
+
 			const std::shared_ptr<ModuleBase::matrix> V_00 = DPcal_V(it1,it1,{0,0,0}, m_abfs_abfs,index_abfs, 0,false, rwlock_Vw,Vws);
 			const std::shared_ptr<ModuleBase::matrix> V_01 = DPcal_V(it1,it2,R,       m_abfs_abfs,index_abfs, 0,false, rwlock_Vw,Vws);
 			const std::shared_ptr<ModuleBase::matrix> V_10 = DPcal_V(it2,it1,-R,      m_abfs_abfs,index_abfs, 0,false, rwlock_Vw,Vws);
@@ -411,6 +418,7 @@ std::shared_ptr<ModuleBase::matrix> Abfs::DPcal_V(
 		return V;
 	}
 }
+#endif
 
 std::map<size_t,std::vector<Abfs::Vector3_Order<int>>> Abfs::get_adjs( const size_t &iat )
 {
@@ -596,6 +604,8 @@ std::vector<Abfs::Vector3_Order<int>> Abfs::get_Born_von_Karmen_boxes( const Abf
 	return Born_von_Karman_boxes;
 }
 
+
+#ifdef __MPI //liyuanbo 2022/2/23
 std::shared_ptr<ModuleBase::matrix> Abfs::cal_I( const std::shared_ptr<ModuleBase::matrix> &m )
 {
 //	ModuleBase::TITLE("Abfs","cal_I1");
@@ -654,3 +664,4 @@ std::vector<std::vector<std::shared_ptr<ModuleBase::matrix>>> Abfs::cal_I( const
 	I.output( ms_new[0][0], ms_new[0][1], ms_new[1][0], ms_new[1][1] );
 	return ms_new;
 }
+#endif

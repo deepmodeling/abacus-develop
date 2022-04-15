@@ -45,7 +45,6 @@ void test_cell::setup_cell()
 	ORB,
 #endif
 	"./",
-	out,
 	"STRU", 
 	ofs_running);
 

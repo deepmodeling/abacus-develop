@@ -1,22 +1,21 @@
 #include "exx_abfs-parallel-communicate-dm3.h"
 #include "../src_pw/global.h"
 
+#ifdef __MPI
 const ModuleBase::matrix &Exx_Abfs::Parallel::Communicate::DM3::D_phase(
 	const ModuleBase::matrix &DK, const int ik, const Abfs::Vector3_Order<int> &box2) const
 {
 	assert(box2 == Abfs::Vector3_Order<int>(0,0,0));
 	return DK;
 }
-
 ModuleBase::matrix Exx_Abfs::Parallel::Communicate::DM3::D_phase(
 	const ModuleBase::ComplexMatrix &DK, const int ik, const Abfs::Vector3_Order<int> &box2) const
 {
 	return (DK * exp( -ModuleBase::TWO_PI*ModuleBase::IMAG_UNIT * (GlobalC::kv.kvec_c[ik] * (box2*GlobalC::ucell.latvec)) )).real();
 }
 
-
 template<typename Tmatrix> std::vector<std::map<size_t,std::map<size_t,std::map<Abfs::Vector3_Order<int>,ModuleBase::matrix>>>>
-Exx_Abfs::Parallel::Communicate::DM3::K_to_R(const std::vector<Tmatrix> &DK_2D, const double threshold_D) const
+Exx_Abfs::Parallel::Communicate::DM3::K_to_R(const std::vector<Tmatrix> &DK_2D, const double threshold_D, const Parallel_Orbitals &pv) const
 {
 	ModuleBase::TITLE("Exx_Abfs::Parallel::Communicate::DM3::K_to_R");
 
@@ -46,12 +45,12 @@ Exx_Abfs::Parallel::Communicate::DM3::K_to_R(const std::vector<Tmatrix> &DK_2D, 
 		{
 			for(int iwt1_local=0; iwt1_local!=DR_2D[is_2D].nr; ++iwt1_local)
 			{
-				const int iwt1 = GlobalC::ParaO.MatrixInfo.col_set[iwt1_local];
+				const int iwt1 = pv.MatrixInfo.col_set[iwt1_local];
 				const int iat1 = GlobalC::ucell.iwt2iat[iwt1];
 				const int iw1 = GlobalC::ucell.iwt2iw[iwt1];
 				for(int iwt2_local=0; iwt2_local!=DR_2D[is_2D].nc; ++iwt2_local)
 				{
-					const int iwt2 = GlobalC::ParaO.MatrixInfo.row_set[iwt2_local];
+					const int iwt2 = pv.MatrixInfo.row_set[iwt2_local];
 					const int iat2 = GlobalC::ucell.iwt2iat[iwt2];
 					const int iw2 = GlobalC::ucell.iwt2iw[iwt2];
 					
@@ -94,3 +93,4 @@ Exx_Abfs::Parallel::Communicate::DM3::K_to_R(const std::vector<Tmatrix> &DK_2D, 
 	}*/
 	return DR_a2D;
 }
+#endif

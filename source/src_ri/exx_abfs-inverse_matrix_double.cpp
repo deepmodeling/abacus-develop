@@ -1,5 +1,6 @@
 #include "exx_abfs-inverse_matrix_double.h"
 #include "../module_base/lapack_connector.h"
+#include "../module_base/blas_connector.h"
 #include <cstring>
 
 #include "../src_external/src_test/src_global/matrix-test.h"		// Peize Lin test
@@ -72,7 +73,7 @@ void Exx_Abfs::Inverse_Matrix_Double::using_dsyev( const double &threshold_condi
 	
 	double eigen_value_max = 0;
 	for( const double &ie : eigen_value )
-		eigen_value_max = max( ie, eigen_value_max );
+		eigen_value_max = std::max( ie, eigen_value_max );
 	const double threshold = eigen_value_max * threshold_condition_number;
 
 	#if TEST_EXX_LCAO==1
@@ -93,10 +94,10 @@ void Exx_Abfs::Inverse_Matrix_Double::using_dsyev( const double &threshold_condi
 	for( int i=0; i!=A.nr; ++i )
 		if( eigen_value[i] > threshold )
 		{
-			LapackConnector::axpy( A.nc, sqrt(1.0/eigen_value[i]), A.c+i*A.nc,1, eA.c+ie*eA.nc,1 );
+			BlasConnector::axpy( A.nc, sqrt(1.0/eigen_value[i]), A.c+i*A.nc,1, eA.c+ie*eA.nc,1 );
 			++ie;
 		}
-	LapackConnector::gemm( 'T','N', eA.nc,eA.nc,ie, 1, eA.c,eA.nc, eA.c,eA.nc, 0, A.c,A.nc );
+	BlasConnector::gemm( 'T','N', eA.nc,eA.nc,ie, 1, eA.c,eA.nc, eA.c,eA.nc, 0, A.c,A.nc );
 }
 
 

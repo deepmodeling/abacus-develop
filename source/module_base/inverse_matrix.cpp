@@ -1,4 +1,8 @@
 #include "inverse_matrix.h"
+#include "tool_quit.h"
+#include "lapack_connector.h"
+#include "timer.h"
+#include "complexmatrix.h"
 
 namespace ModuleBase
 {
@@ -49,12 +53,12 @@ void Inverse_Matrix_Complex::init(const int &dim_in)
 	return;
 }
 
+
 void Inverse_Matrix_Complex::using_zheev( const ModuleBase::ComplexMatrix &Sin, ModuleBase::ComplexMatrix &Sout)
 {
 	ModuleBase::timer::tick("Inverse","using_zheev");
 	this->A = Sin;
 
-    //LapackConnector::zhegv( 1, 'V', 'U', nwan , A ,  nwan , B , nwan , e, work2 , 80 , rwork , &info );
     LapackConnector::zheev('V', 'U', dim, this->A, dim, e, work2, lwork, rwork, &info);
 	
 	for(int i=0; i<dim; i++)
@@ -68,47 +72,6 @@ void Inverse_Matrix_Complex::using_zheev( const ModuleBase::ComplexMatrix &Sin, 
     Sout = this->A * this->EA;
 	ModuleBase::timer::tick("Inverse","using_zheev");
     return;
-}
-
-void Inverse_Matrix_Complex::using_zpotrf( const ModuleBase::ComplexMatrix &Sin)
-{
-//	ModuleBase::timer::tick("Inverse","using_zpotrf");
-
-	for(int i=0; i<dim; i++)
-	{
-		for(int j=i; j<dim; j++)
-		{
-			A(i,j) = Sin(i,j);
-		}
-	}
-
-	LapackConnector::zpotrf('U',dim,A,dim,&info);
-
-	if(info!=0)
-	{
-		std::cout << "\n info_zpotrf = " << info;
-		ModuleBase::QUIT();
-	}
-	
-	LapackConnector::zpotri('U',dim,A,dim,&info);
-	
-	if(info!=0)
-	{
-		std::cout << "\n info_zpotri = " << info;
-		ModuleBase::QUIT();
-	}
-//	ModuleBase::timer::tick("Inverse","using_zpotrf");
-	return;
-}
-
-int Inverse_Matrix_Real::using_spotri(matrix &A, const int dim)
-{
-	int info = 0;
-	LapackConnector::spotrf('U',dim,A,dim,&info);
-	std::cout << "\n info_spotrf = " << info;
-	LapackConnector::spotri('U',dim,A,dim,&info);
-	std::cout << "\n info_spotri = " << info;
-	return info;
 }
 
 }

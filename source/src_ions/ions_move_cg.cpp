@@ -3,7 +3,7 @@
 #include "ions_move_basic.h"
 using namespace Ions_Move_Basic;
 
-double Ions_Move_CG::CG_THRESHOLD =-1.0;  //default is 0.5
+double Ions_Move_CG::RELAX_CG_THR =-1.0;  //default is 0.5
 //=================== NOTES ========================
 // in vasp, it's like
 // contolled by POTIM.
@@ -91,8 +91,8 @@ void Ions_Move_CG::start(const ModuleBase::matrix& force, const double& etot_in)
 	
 	if( Ions_Move_Basic::istep == 1 )
 	{
-		steplength=Ions_Move_Basic::trust_radius_ini;          // read in the init trust radius
-		//std::cout<<"Ions_Move_Basic::trust_radius_ini = "<<Ions_Move_Basic::trust_radius_ini<<std::endl;
+		steplength=Ions_Move_Basic::relax_bfgs_init;          // read in the init trust radius
+		//std::cout<<"Ions_Move_Basic::relax_bfgs_init = "<<Ions_Move_Basic::relax_bfgs_init<<std::endl;
 		sd = true;
 		trial = true;
 		ncggrad = 0;
@@ -156,16 +156,16 @@ void Ions_Move_CG::start(const ModuleBase::matrix& force, const double& etot_in)
 			fmax=fa;
 			sd=false;
 			
-			if(GlobalV::MOVE_IONS=="cg_bfgs")
+			if(GlobalV::RELAX_METHOD=="cg_bfgs")
 			{
-				if(Ions_Move_Basic::largest_grad * ModuleBase::Ry_to_eV / 0.529177 < CG_THRESHOLD )         // cg to bfgs  by pengfei 13-8-8
+				if(Ions_Move_Basic::largest_grad * ModuleBase::Ry_to_eV / 0.529177 < RELAX_CG_THR )         // cg to bfgs  by pengfei 13-8-8
 				{
-					 GlobalV::MOVE_IONS="bfgs";
+					 GlobalV::RELAX_METHOD="bfgs";
 				}
 				Ions_Move_Basic::best_xxx = steplength;
 			}
 			
-			Ions_Move_Basic::trust_radius_ini = xb;
+			Ions_Move_Basic::relax_bfgs_init = xb;
 		}
 		else
 		{
@@ -214,7 +214,7 @@ void Ions_Move_CG::start(const ModuleBase::matrix& force, const double& etot_in)
 				f_cal(move0,move,dim,xc);
 				xc=xb+xc;
 				xpt=xc;
-				Ions_Move_Basic::trust_radius_ini = xc;
+				Ions_Move_Basic::relax_bfgs_init = xc;
 								
 			}
 			else
@@ -267,7 +267,7 @@ void Ions_Move_CG::start(const ModuleBase::matrix& force, const double& etot_in)
 					setup_move(move, cg_gradn, best_x);
 					Ions_Move_Basic::move_atoms(move, pos);
 					
-					Ions_Move_Basic::trust_radius_ini = xc;
+					Ions_Move_Basic::relax_bfgs_init = xc;
 				}	 
 			}
 		}

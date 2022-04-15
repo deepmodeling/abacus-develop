@@ -1,77 +1,111 @@
-//==========================================================
-// AUTHOR : fangwei , mohan
-// DATE : 2008-11-06
-// UPDATE : Peize Lin at 2019-11-21
-//==========================================================
 #ifndef TIMER_H
 #define TIMER_H
 
 #include <ctime>
-#include <string>
 #include <fstream>
-#include <sstream>
-#include <iostream>
 #include <iomanip>
+#include <iostream>
 #include <map>
+#include <sstream>
+#include <string>
 namespace ModuleBase
 {
-
-//==========================================================
-// CLASS :
-// NAME : timer(calculate time)
-//==========================================================
+/**
+ * @brief Tracing computation time
+ * @authors Fangwei, Mohan, Peize Lin
+ *
+ */
 class timer
 {
-	public:
-	
-	struct Timer_One
-	{
-		double cpu_start;
-		double cpu_second = 0.0;
-		size_t calls = 0;
-		size_t order = n_now++;
-		bool start_flag = true;
-	};
-	
-	static std::map<std::string,std::map<std::string,Timer_One>> timer_pool;
-//==========================================================
-// MEMBER FUNCTIONS :
-// NAME : tick(use twice at a time)
-// NAME : start
-// NAME : finish
-// NAME : enable
-// NAME : disable
-// NAME : print_all
-//==========================================================
-	static void tick(const std::string &class_name_in,const std::string &name_in);
+  public:
+    struct Timer_One
+    {
+        double cpu_start;
+        double cpu_second = 0.0;
+        size_t calls = 0;
+        size_t order = n_now++;
+        bool start_flag = true;
+    };
 
-	static void start(void);
-	static void finish(std::ofstream &ofs,const bool print_flag = 1);
+    static std::map<std::string, std::map<std::string, Timer_One>> timer_pool;
 
-	static void enable(void){ disabled = false; }
-	static void disable(void){ disabled = true; }
+    /**
+     * @brief Use twice at a time: the first time, set start_flag to false;
+     * the second time, calculate the time duration
+     *
+     * @param class_name_in The class name for timing
+     * @param name_in The compuational process for timing
+     */
+    static void tick(const std::string &class_name_in, const std::string &name_in);
 
-	static void print_all(std::ofstream &ofs);
-	static long double print_until_now(void);
+    /**
+     * @brief Start total time calculation
+     *
+     */
+    static void start(void);
 
-	private:
+    /**
+     * @brief Finish total time calculation and
+     * print computational processes with duration > 0.1 s
+     *
+     * @param ofs The output file for print out timings
+     * @param print_flag Print timings or not
+     */
+    static void finish(std::ofstream &ofs, const bool print_flag = 1);
 
-//==========================================================
-// MEMBER VARIABLES : 
-// NAME : disabled(if disabled , timer can't work)
-// NAME : n_now(the index of clocks) 
-//==========================================================
-	static bool disabled;
-	static size_t n_now;
+    /**
+     * @brief Enable time computation
+     *
+     */
+    static void enable(void)
+    {
+        disabled = false;
+    }
 
-//==========================================================
-// MEMBER FUNCTIONS :
-// NAME : cpu_time(calculate time)
-//==========================================================
-	static double cpu_time(void);
+    /**
+     * @brief Disable time computation
+     *
+     */
+    static void disable(void)
+    {
+        disabled = true;
+    }
 
+    /**
+     * @brief Print all computational processes with during > 0.1 s
+     *
+     * @param ofs The output file for print out timings
+     */
+    static void print_all(std::ofstream &ofs);
+
+    /**
+     * @brief Stop total time calculation, print total time until now,
+     * and then start total time calculation again
+     *
+     * @return long double
+     */
+    static long double print_until_now(void);
+
+  private:
+    /**
+     * @brief Member variable: if disabled , timer can't work
+     *
+     */
+    static bool disabled;
+
+    /**
+     * @brief Member variable: the index of clocks
+     *
+     */
+    static size_t n_now;
+
+    /**
+     * @brief Member function: calculate time
+     *
+     * @return double
+     */
+    static double cpu_time(void);
 };
 
-}
+} // namespace ModuleBase
 #endif
-

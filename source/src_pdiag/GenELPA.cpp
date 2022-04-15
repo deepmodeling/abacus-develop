@@ -65,12 +65,12 @@
 #include <cmath>
 #include <cfloat>
 #ifdef __MPI
-#include <mpi.h>
+#include "mpi.h"
 #endif
 extern "C"
 {
 //    #include "pblas.h"
-    #include "Cblacs.h"
+    #include "../module_base/blacs_connector.h"
 //    #include "scalapack.h"
     #include "my_elpa.h"
 	#include "../module_base/scalapack_connector.h"
@@ -497,10 +497,10 @@ int pdCheloskyDecomposeRightMatrix(int nFull, int narows, int nacols, int *desc,
     #endif
     for(int j=0; j<nacols; ++j)
     {
-        int jGlobal=globalIndex(j, nblk, npcols, mypcol);
+        int jGlobal=Local_Orbital_wfc::globalIndex(j, nblk, npcols, mypcol);
         for(int i=0; i<narows; ++i)
         {
-            int iGlobal=globalIndex(i, nblk, nprows, myprow);
+            int iGlobal=Local_Orbital_wfc::globalIndex(i, nblk, nprows, myprow);
             if(iGlobal>jGlobal) b[i+j*narows]=0;
         }
     }
@@ -580,7 +580,7 @@ int pdDiagonalizeRightMatrix1(int nFull, int narows, int nacols, int *desc,
     #endif
     for(int i=0; i<nacols; ++i)
     {
-        int eidx=globalIndex(i, nblk, npcols, mypcol);
+        int eidx=Local_Orbital_wfc::globalIndex(i, nblk, npcols, mypcol);
         double ev_sqrt=ev[eidx]>DBL_MIN?1.0/sqrt(ev[eidx]):0;
         for(int j=0; j<narows; ++j)
             work[i*lda+j]=q[i*lda+j]*ev_sqrt;
@@ -663,7 +663,7 @@ int pdDiagonalizeRightMatrix2(int nFull, int narows, int nacols, int *desc,
     #endif
     for(int i=0; i<nacols; ++i)
     {
-        int eidx=globalIndex(i, nblk, npcols, mypcol);
+        int eidx=Local_Orbital_wfc::globalIndex(i, nblk, npcols, mypcol);
         //double ev_sqrt=1.0/sqrt(ev[eidx]);
         double ev_sqrt=ev[eidx]>DBL_MIN?1.0/sqrt(ev[eidx]):0;
         for(int j=0; j<narows; ++j)
@@ -1425,10 +1425,10 @@ int pzCheloskyDecomposeRightMatrix(int nFull, int narows, int nacols, int *desc,
     #endif
     for(int j=0; j<nacols; ++j)
     {
-        int jGlobal=globalIndex(j, nblk, npcols, mypcol);
+        int jGlobal=Local_Orbital_wfc::globalIndex(j, nblk, npcols, mypcol);
         for(int i=0; i<narows; ++i)
         {
-            int iGlobal=globalIndex(i, nblk, nprows, myprow);
+            int iGlobal=Local_Orbital_wfc::globalIndex(i, nblk, nprows, myprow);
             if(iGlobal>jGlobal) b[i+j*narows]=0;
         }
     }
@@ -1508,7 +1508,7 @@ int pzDiagonalizeRightMatrix1(int nFull, int narows, int nacols, int *desc,
     #endif
     for(int i=0; i<nacols; ++i)
     {
-        int eidx=globalIndex(i, nblk, npcols, mypcol);
+        int eidx=Local_Orbital_wfc::globalIndex(i, nblk, npcols, mypcol);
         double ev_sqrt=ev[eidx]>DBL_MIN?1.0/sqrt(ev[eidx]):0;
         for(int j=0; j<narows; ++j)
             work[i*lda+j]=q[i*lda+j]*ev_sqrt;
@@ -1591,7 +1591,7 @@ int pzDiagonalizeRightMatrix2(int nFull, int narows, int nacols, int *desc,
     #endif
     for(int i=0; i<nacols; ++i)
     {
-        int eidx=globalIndex(i, nblk, npcols, mypcol);
+        int eidx=Local_Orbital_wfc::globalIndex(i, nblk, npcols, mypcol);
         //double ev_sqrt=1.0/sqrt(ev[eidx]);
         double ev_sqrt=ev[eidx]>DBL_MIN?1.0/sqrt(ev[eidx]):0;
         for(int j=0; j<narows; ++j)
@@ -1959,19 +1959,4 @@ int pzSolveEigen2(int nev, int nFull, int narows, int nacols, int *desc,
         return info;
     }
     return 0;
-}
-
-int globalIndex(int localIndex, int nblk, int nprocs, int myproc)
-{
-    int iblock, gIndex;
-    iblock=localIndex/nblk;
-    gIndex=(iblock*nprocs+myproc)*nblk+localIndex%nblk;
-    return gIndex;
-}
-
-
-int localIndex(int globalIndex, int nblk, int nprocs, int& myproc)
-{
-    myproc=int((globalIndex%(nblk*nprocs))/nblk);
-    return int(globalIndex/(nblk*nprocs))*nblk+globalIndex%nblk;
 }

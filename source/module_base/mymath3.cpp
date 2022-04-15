@@ -11,11 +11,13 @@ void heapAjust(double *r, int *ind, int s, int m)
     rc = r[s];
     ic = ind[s];
 
-    for (j = 2 * s;j <= m;j *= 2)
+    for (j = 2 * s; j <= m; j *= 2)
     {
-        if (j < m && (r[j] < r[j+1])) j++;
+        if (j < m && (r[j] < r[j + 1]))
+            j++;
 
-        if (!(rc < r[j])) break;
+        if (!(rc < r[j]))
+            break;
 
         r[s] = r[j];
 
@@ -32,24 +34,24 @@ void heapAjust(double *r, int *ind, int s, int m)
 
 void heapsort(const int n, double *r, int *ind)
 {
-    ModuleBase::timer::tick("mymath","heapsort");
+    ModuleBase::timer::tick("mymath", "heapsort");
     int i, ic;
     double rc;
 
     if (ind[0] == 0)
     {
-        for (i = 0;i < n;i++)
+        for (i = 0; i < n; i++)
         {
             ind[i] = i;
         }
     }
 
-    for (i = n / 2;i >= 0;i--)
+    for (i = n / 2; i >= 0; i--)
     {
         heapAjust(r, ind, i, n - 1);
     }
 
-    for (i= n - 1;i > 0;i--)
+    for (i = n - 1; i > 0; i--)
     {
         rc = r[0];
         r[0] = r[i];
@@ -59,7 +61,7 @@ void heapsort(const int n, double *r, int *ind)
         ind[i] = ic;
         heapAjust(r, ind, 0, i - 1);
     }
-    ModuleBase::timer::tick("mymath","heapsort");
+    ModuleBase::timer::tick("mymath", "heapsort");
     return;
 }
 
@@ -89,82 +91,83 @@ void hpsort(int n, double *ra, int *ind)
     int i, ir, j, k, iind;
     double rra;
 
-    if (ind[1] == 0)
+    if (ind[0] == 0)
     {
-        for (i = 1;i <= n;i++)
-            ind[i] = i;
+        for (i = 1; i <= n; i++)
+            ind[i - 1] = i;
     }
 
-    if (n < 2) return;  // nothing to order
+    if (n < 2)
+        return; // nothing to order
 
-    k  = n / 2 + 1;
+    k = n / 2;
 
-    ir = n;
+    ir = n - 1;
 
     while (true)
     {
-        if (k > 1)      // still in hiring phase
+        if (k > 0) // still in hiring phase
         {
-            k   = k - 1;
+            k = k - 1;
             rra = ra[k];
             iind = ind[k];
         }
-        else                 // in retirement-promotion phase.
+        else // in retirement-promotion phase.
         {
-            rra = ra[ir];      // clear a space at the end of the array
-            iind = ind[ir];    //
-            ra[ir] = ra[1];    // retire the top of the heap into it
-            ind[ir] = ind[1];  //
-            ir     = ir - 1;   // decrease the size of the corporation
+            rra = ra[ir]; // clear a space at the end of the array
+            iind = ind[ir]; //
+            ra[ir] = ra[0]; // retire the top of the heap into it
+            ind[ir] = ind[0]; //
+            ir = ir - 1; // decrease the size of the corporation
 
-            if (ir == 1)   // done with the last promotion
+            if (ir == 0) // done with the last promotion
             {
-                ra[1] = rra;    // the least competent worker at all //
-                ind[1] = iind;  //
+                ra[0] = rra; // the least competent worker at all //
+                ind[0] = iind; //
                 return;
             }
         }
 
-        i = k;               // wheter in hiring or promotion phase, we
+        i = k; // wheter in hiring or promotion phase, we
 
-        j = k + k;           // set up to place rra in its proper level
+        j = k + k + 1; // set up to place rra in its proper level
 
         while (j <= ir)
         {
             if (j < ir)
             {
-                if (ra[j] < ra[j+1])   // compare to better underling
+                if (ra[j] < ra[j + 1]) // compare to better underling
                 {
                     j = j + 1;
                 }
-                else if (ra[j] == ra[j+1])
+                else if (ra[j] == ra[j + 1])
                 {
-                    if (ind[j] < ind[j+1])
+                    if (ind[j] < ind[j + 1])
                         j = j + 1;
                 }
             }
 
-            if (rra < ra[j])   // demote rra
+            if (rra < ra[j]) // demote rra
             {
                 ra[i] = ra[j];
                 ind[i] = ind[j];
                 i = j;
-                j = j + j;
+                j = j + j + 1;
             }
             else if (rra == ra[j])
             {
-                if (iind < ind[j])   // demote rra
+                if (iind < ind[j]) // demote rra
                 {
                     ra[i] = ra[j];
                     ind[i] = ind[j];
                     i = j;
-                    j = j + j;
+                    j = j + j + 1;
                 }
                 else
-                    j = ir + 1;         // set j to terminate do-while loop
+                    j = ir + 1; // set j to terminate do-while loop
             }
-            else                   // this is the right place for rra
-                j = ir + 1;           // set j to terminate do-while loop
+            else // this is the right place for rra
+                j = ir + 1; // set j to terminate do-while loop
         }
 
         ra[i] = rra;
@@ -173,4 +176,4 @@ void hpsort(int n, double *ra, int *ind)
     }
 }
 
-}
+} // namespace ModuleBase

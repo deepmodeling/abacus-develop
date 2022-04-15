@@ -8,7 +8,7 @@
 #include "../module_base/complexmatrix.h"
 #include "../module_base/vector3.h"
 #include "../src_pw/hamilt.h"
-#include "../src_pw/exx_global.h"
+#include "../module_xc/exx_global.h"
 
 class K_Vectors;
 class wavefunc;

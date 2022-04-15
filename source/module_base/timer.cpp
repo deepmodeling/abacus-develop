@@ -11,6 +11,10 @@
 #include "mpi.h"
 #endif
 
+#ifdef _OPENMP
+#include <omp.h>
+#endif
+
 namespace ModuleBase
 {
 
@@ -67,7 +71,11 @@ void timer::tick(const std::string &class_name,const std::string &name)
 	if (disabled)
 		return;
 
-	Timer_One &timer_one = timer_pool[class_name][name];
+#ifdef _OPENMP
+	if(!omp_get_thread_num())
+#endif
+	{
+		Timer_One &timer_one = timer_pool[class_name][name];
 
 //----------------------------------------------------------
 // CALL MEMBER FUNCTION :
@@ -79,32 +87,33 @@ void timer::tick(const std::string &class_name,const std::string &name)
 // if start_flag == false, means it's the end of this counting,
 // so we add the time during this two 'time point'  to the clock time storage.
 //----------------------------------------------------------
-	if(timer_one.start_flag)
-	{
+		if(timer_one.start_flag)
+		{
 #ifdef __MPI
-		timer_one.cpu_start = MPI_Wtime();
+			timer_one.cpu_start = MPI_Wtime();
 #else
-		timer_one.cpu_start = cpu_time();
+			timer_one.cpu_start = cpu_time();
 #endif
-		++timer_one.calls;
-		timer_one.start_flag = false;
-	}
-	else
-	{
+			++timer_one.calls;
+			timer_one.start_flag = false;
+		}
+		else
+		{
 #ifdef __MPI
-		timer_one.cpu_second += MPI_Wtime() - timer_one.cpu_start;
+			timer_one.cpu_second += MPI_Wtime() - timer_one.cpu_start;
 #else
-		// if(class_name=="electrons"&&name=="c_bands")
-		// {
-		// 	cout<<"call times"<<timer_one.calls<<endl;
-		// 	cout<<"electrons c_bands cost time:"<<endl;
-		// 	cout<<cpu_time()<<"-"<<timer_one.cpu_start<<endl;
-		// }
+			// if(class_name=="electrons"&&name=="c_bands")
+			// {
+			// 	cout<<"call times"<<timer_one.calls<<endl;
+			// 	cout<<"electrons c_bands cost time:"<<endl;
+			// 	cout<<cpu_time()<<"-"<<timer_one.cpu_start<<endl;
+			// }
 
-		timer_one.cpu_second += (cpu_time() - timer_one.cpu_start);
+			timer_one.cpu_second += (cpu_time() - timer_one.cpu_start);
 #endif
-		timer_one.start_flag = true;
-	}
+			timer_one.start_flag = true;
+		}
+	} // end if(!omp_get_thread_num())
 }
 
 long double timer::print_until_now(void)
@@ -149,12 +158,13 @@ void timer::print_all(std::ofstream &ofs)
 		if(timer_one.cpu_second < small)
 			continue;
 
+		ofs << std::resetiosflags(std::ios::scientific);
 		ofs  << " "
 			// << std::setw(2)  << timer_one.level
 			 << std::setw(2)  << " "
 			 << std::setw(20) << class_name
 			 << std::setw(20) << name
-			 << std::setw(15) << timer_one.cpu_second
+			 << std::setw(15) << std::setprecision(5) << timer_one.cpu_second
 			 << std::setw(10) << timer_one.calls
 			 << std::setw(10) << std::setprecision(2) << timer_one.cpu_second/timer_one.calls
 			 << std::setw(10) << timer_one.cpu_second / timer_pool_order[0].second.cpu_second * 100 << "%" << std::endl;

@@ -53,6 +53,22 @@ realArray::realArray(const int d1,const int d2,const int d3,const int d4)
 	++arrayCount;
 }
 
+realArray::realArray(const realArray &cd)
+{
+	this->size = cd.getSize();
+	this->ptr = new double[size];
+	for (int i = 0; i < size; i++)
+		this->ptr[i] = cd.ptr[i];
+	this->dim = cd.dim;
+	this->bound1 = cd.bound1;
+	this->bound2 = cd.bound2;
+	this->bound3 = cd.bound3;
+	this->bound4 = cd.bound4;
+
+	++arrayCount;
+}
+
+
 //********************************
 //
 // Destructor for class realArray
@@ -65,8 +81,8 @@ realArray ::~realArray()
 
 void realArray::freemem()
 {
-	delete [] ptr;
-	ptr = NULL;
+		delete [] ptr;
+		ptr = NULL;
 }
 
 void realArray::create(const int d1,const int d2,const int d3,const int d4)

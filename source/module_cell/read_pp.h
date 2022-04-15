@@ -3,7 +3,8 @@
 
 #include <string>
 #include "../module_base/matrix.h"
-#include "../src_pw/tools.h"
+#include "../module_base/global_function.h"
+#include "../module_base/global_variable.h"
 #include "../src_io/output.h"
 
 using namespace std;
@@ -31,7 +32,7 @@ public:
 	std::string pp_type;		// header_3 // Pseudo type ( NC or US )
 	bool tvanp;         // header_4 // .true. if Ultrasoft 
 	bool nlcc;		    // header_5 // Non linear core corrections
-	std::string dft[4];		// header_6 // Exch-Corr type
+	std::string xc_func;		// header_6 // Exch-Corr type
 	int  zp;            // header_7 // z valence 
 	double etotps;		// header_8 // total energy
 	double ecutwfc;		// header_9 // suggested cut-off for wfc
@@ -104,6 +105,11 @@ private:
 	void read_pseudo_rhoatom(std::ifstream &ifs);
 	void read_pseudo_addinfo(std::ifstream &ifs);
 	void read_pseudo_so(std::ifstream &ifs);
+
+	void read_pseudo_upf201_r(std::ifstream &ifs);
+	void read_pseudo_upf201_rab(std::ifstream &ifs);
+	void read_pseudo_upf201_dij(std::ifstream &ifs);
+	void read_pseudo_upf201_rhoatom(std::ifstream &ifs);
 	//std::string get_string( char ss[]);
 	//int get_int( char ss[]);
 	//double get_double( char ss[]);

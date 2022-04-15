@@ -2,6 +2,7 @@
 #include "sltk_atom_input.h"
 #include "sltk_grid.h"
 #include "sltk_grid_driver.h"
+#include "../module_base/timer.h"
 
 // update the followig class in near future 
 #include "../module_cell/unitcell.h"
@@ -100,7 +101,7 @@ void atom_arrange::search(
 
 	assert( search_radius_bohr > 0.0 );
 
-//	OUT(ofs_in,"Atom coordinates reading from",GlobalV::global_atom_card);
+//	OUT(ofs_in,"Atom coordinates reading from",GlobalV::stru_file);
 //	OUT(ofs_in,"The coordinate type",ucell.Coordinate);
 //	OUT(ofs_in,"Use cartesian(unit:lat0) coordinate","TRUE");
 //	if(GlobalV::OUT_LEVEL != "m") OUT(ofs_in,"searching radius is (Bohr))", search_radius_bohr);

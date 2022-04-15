@@ -1,0 +1,27 @@
+INPUT_PARAMETERS
+suffix    autotest
+ntype     1
+#nbands   40
+
+calculation   scf
+nspin         2
+ecutwfc       15
+scf_thr           1.0e-8
+scf_nmax         200
+out_chg    0
+
+#init_chg    file
+#out_dos      1
+#dos_sigma    0.05
+#out_band     1
+noncolin	1
+smearing_method    gaussian
+smearing_sigma       0.07
+
+mixing_type    pulay 
+mixing_beta    0.5
+mixing_ndim 10
+
+ks_solver     genelpa
+basis_type    lcao
+symmetry      1

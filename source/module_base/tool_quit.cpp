@@ -9,7 +9,6 @@
 #else
 #include "global_variable.h"
 #include "global_file.h"
-#include "../src_parallel/parallel_common.h"
 #include "timer.h"
 #include "memory.h"
 #endif
@@ -88,14 +87,14 @@ void WARNING_QUIT(const std::string &file,const std::string &description)
 		//printf( " \e[32m%s\e[0m\n", description.c_str());
 		//printf( " \e[32m%s\e[0m", "CHECK IN FILE : ");
 		//printf( "\e[32m%s\e[0m", GlobalV::global_out_dir.c_str());
-		//printf( "\e[32m%s\e[0m\n", "warning.log"); 
-		//printf( "\e[32m%s\e[0m\n", " ---------------------------------------------------"); 
+		//printf( "\e[32m%s\e[0m\n", "warning.log");
+		//printf( "\e[32m%s\e[0m\n", " ---------------------------------------------------");
 		printf( "[32m%s[0m\n", " -------------- SOMETHING TO WARN YOU ! ------------");
 		printf( " [32m%s[0m\n", description.c_str());
 		printf( " [32m%s[0m", "CHECK IN FILE : ");
 		printf( "[32m%s[0m", GlobalV::global_out_dir.c_str());
-		printf( "[32m%s[0m\n", "warning.log"); 
-		printf( "[32m%s[0m\n", " ---------------------------------------------------"); 
+		printf( "[32m%s[0m\n", "warning.log");
+		printf( "[32m%s[0m\n", " ---------------------------------------------------");
 	}
 	else
 	{

@@ -25,14 +25,14 @@ suffix        PbTiO3
 ntype         3
 nbands        25 // number of bands
 ecutwfc       50 // Ry
-niter         20
+scf_nmax         20
 symmetry      0 // turn off symmetry
-ethr          1e-10
-smearing      gaussian // gaussian smearing
-sigma         0.002 // Ry
+pw_diag_thr          1e-10
+smearing_method      gaussian // gaussian smearing
+smearing_sigma         0.002 // Ry
 calculation   nscf // non-self-consistent calculation
 basis_type    lcao // atomic basis
-start_charge  file // read charge from files
+init_chg  file // read charge from files
 berry_phase   1 // calculate Berry phase
 gdir          3 // calculate polarization along c axis
 ```

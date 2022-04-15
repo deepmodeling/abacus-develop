@@ -1057,7 +1057,7 @@ void density_matrix()
 			{
 				for( size_t iw2=0; iw2!=GlobalV::NLOCAL; ++iw2 )
 				{
-					DM_k[ik](iw1,iw2) += GlobalC::wf.wg(ik,ib) * conj(GlobalC::LOWF.WFC_K[ik][ib][iw1]) * GlobalC::LOWF.WFC_K[ik][ib][iw2];
+					DM_k[ik](iw1,iw2) += GlobalC::wf.wg(ik,ib) * conj(GlobalC::LOWF.wfc_k_grid[ik][ib][iw1]) * GlobalC::LOWF.wfc_k_grid[ik][ib][iw2];
 				}
 			}
 		}

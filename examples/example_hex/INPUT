@@ -4,8 +4,8 @@ pseudo_dir		./
 ntype			2	
 #Parameters (Accuracy)
 ecutwfc			50
-niter			20
-sigma		  0.002
+scf_nmax			20
+smearing_sigma		  0.002
 
 basis_type		pw
 

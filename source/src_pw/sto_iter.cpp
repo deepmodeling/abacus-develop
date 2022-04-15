@@ -1,8 +1,9 @@
-#include "tools.h"
+#include "../module_base/global_function.h"
+#include "../module_base/global_variable.h"
 #include "global.h"
 #include "sto_iter.h"
 #include "occupy.h"
-#include "diago_cg.h" 
+#include "../module_base/timer.h" 
 
 double Stochastic_Iter:: mu;
 double Stochastic_Iter:: mu0;
@@ -153,13 +154,13 @@ void Stochastic_Iter::itermu(int &iter)
     if(iter == 1)
     {
         dmu = 2;
-        th_ne = 0.1 * GlobalV::DRHO2 * GlobalC::CHR.nelec;
+        th_ne = 0.1 * GlobalV::SCF_THR * GlobalC::CHR.nelec;
         std::cout<<"th_ne "<<th_ne<<std::endl;
     }
     else
     {
         dmu = 0.1;
-        th_ne = GlobalV::DRHO2 * 1e-2 * GlobalC::CHR.nelec;
+        th_ne = GlobalV::SCF_THR * 1e-2 * GlobalC::CHR.nelec;
     }
     sumpolyval();
     mu = mu0 - dmu;
@@ -294,7 +295,7 @@ double Stochastic_Iter::calne()
     KS_ne = 0;
     for(int ikk = 0; ikk < nkk; ++ikk)
     {
-        double stok_ne = LapackConnector::dot(norder,stoche.coef,1,spolyv,1);
+        double stok_ne = BlasConnector::dot(norder,stoche.coef,1,spolyv,1);
         //double stok_ne = 0;
         //for(int ior = 0; ior < norder; ++ior)
         //{
@@ -338,7 +339,7 @@ void Stochastic_Iter::sum_stoband()
 
     for(int ikk = 0; ikk < nkk; ++ikk)
     {
-        double stok_demet = LapackConnector::dot(norder,stoche.coef,1,spolyv,1);
+        double stok_demet = BlasConnector::dot(norder,stoche.coef,1,spolyv,1);
         //double stok_demet=0;
         //for(int ior = 0; ior < norder; ++ior)
         //{
@@ -413,8 +414,8 @@ void Stochastic_Iter::sum_stoband()
                 stoche.calfinalvec(stohchi.hchi_reciprocal, pchi, out, nchip);
                 hout = new std::complex<double> [npwall];
                 stohchi.hchi_reciprocal(out,hout,nchip);
-                stok_eband = Diago_CG::ddot_real(npwall, out, hout,false) * DeltaE 
-                            +  Diago_CG::ddot_real(npwall, out, out,false) * Ebar;
+                stok_eband = ModuleBase::GlobalFunc::ddot_real(npwall, out, hout,false) * DeltaE 
+                            +  ModuleBase::GlobalFunc::ddot_real(npwall, out, out,false) * Ebar;
                 sto_eband += stok_eband * GlobalC::kv.wk[ik];
                 std::complex<double> *tmpout = out;
             for(int ichi = 0; ichi < nchip ; ++ichi)

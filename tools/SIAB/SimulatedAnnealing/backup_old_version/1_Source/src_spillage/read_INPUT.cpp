@@ -125,8 +125,8 @@ void Read_INPUT::init(void)
 				READ_VALUE( ifs, NKSTOT );
 				assert(NKSTOT>0);
 #ifdef __MPI
-				READ_VALUE( ifs, NPOOL );
-				assert(NPOOL>0);
+				READ_VALUE( ifs, KPAR );
+				assert(KPAR>0);
 #endif	
 			}
 
@@ -159,8 +159,8 @@ void Read_INPUT::init(void)
                 READ_VALUE( ifs2, NKSTOT );
                 assert(NKSTOT>0);
 #ifdef __MPI
-                READ_VALUE( ifs2, NPOOL );
-                assert(NPOOL>0);
+                READ_VALUE( ifs2, KPAR );
+                assert(KPAR>0);
 #endif
             }
 		}// end ifs2
@@ -185,7 +185,7 @@ void Read_INPUT::init(void)
 	// 2.2
 	// bcast NKSTOT.
 	// bcast the global information.
-	// need to first bcast NPOOL.
+	// need to first bcast KPAR.
 	this->bcast();
 
 	// set the parallel information 
@@ -229,7 +229,7 @@ void Read_INPUT::bcast(void)
     Parallel_Common::bcast_int( BLOCK_NE_MIN );
 
     Parallel_Common::bcast_int( SCHEME_VALUE );
-    Parallel_Common::bcast_int( NPOOL );
+    Parallel_Common::bcast_int( KPAR );
 
     Parallel_Common::bcast_int( CALSPI );
     Parallel_Common::bcast_bool( RESTART );

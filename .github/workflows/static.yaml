@@ -5,31 +5,27 @@ on:
 
 jobs:
   clang-tidy:
-    runs-on: ubuntu-20.04
+    runs-on: self-hosted
+    if: github.repository_owner == 'deepmodeling'
     container: ghcr.io/deepmodeling/abacus-development-kit:gnu
     steps:
       - name: Checkout Pull Request
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           ref: ${{ github.event.pull_request.head.sha }}
       - name: Setup clang-tidy
         run: |
-          apt-get install -y --no-install-recommends gnupg ca-certificates
-          wget https://apt.llvm.org/llvm-snapshot.gpg.key --no-check-certificate && apt-key add llvm-snapshot.gpg.key
-          echo "deb http://apt.llvm.org/buster/ llvm-toolchain-buster-12 main" >> /etc/apt/sources.list
-          echo "deb-src http://apt.llvm.org/buster/ llvm-toolchain-buster-12 main" >> /etc/apt/sources.list
-          apt-get update
-          apt-get install -y --no-install-recommends clang-tidy-12
+          apt-get update && apt-get install -y --no-install-recommends clang-format clang-tidy
       - name: Generate Build Commands
         run: |
-          cmake -B build -DCMAKE_EXPORT_COMPILE_COMMANDS=1 -DCMAKE_CXX_COMPILER=clang++-12
+          cmake -B build -DCMAKE_EXPORT_COMPILE_COMMANDS=1
       - name: Checkout Changed Files
         id: files
         uses: deepmodeling/get-changed-files@master
       - name: Run clang-tidy
         run: |
           printf "%s\n" ${{ steps.files.outputs.added_modified }} | grep -E "^.*\.(cpp|h)$" > cppfiles.txt
-          clang-tidy-12 -p=build --export-fixes=diagnostics.yaml `cat cppfiles.txt`
+          clang-tidy -p=build --export-fixes=diagnostics.yaml `cat cppfiles.txt`
       - name: Run clang-tidy-pr-comments action
         uses: deepmodeling/abacus-code-reviewer@master
         with:

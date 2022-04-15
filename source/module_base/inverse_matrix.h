@@ -1,7 +1,9 @@
 #ifndef INVERSE_MATRIX_H
 #define INVERSE_MATRIX_H
 
-#include "../src_pw/tools.h"
+#include "global_function.h"
+#include "global_variable.h"
+#include "complexmatrix.h"
 namespace ModuleBase
 {
 
@@ -13,7 +15,7 @@ class Inverse_Matrix_Complex
 	~Inverse_Matrix_Complex();
 	
 	ModuleBase::ComplexMatrix A;
-	void using_zpotrf( const ModuleBase::ComplexMatrix &Sin);
+
 	void using_zheev(const ModuleBase::ComplexMatrix &in, ModuleBase::ComplexMatrix &out);
 	void init( const int &dim_in);
 
@@ -29,17 +31,6 @@ class Inverse_Matrix_Complex
 	ModuleBase::ComplexMatrix EA;
 };
 
-//not been used yet!
-class Inverse_Matrix_Real
-{
-	public:
-	
-	Inverse_Matrix_Real(){};
-	~Inverse_Matrix_Real(){};
-
-	int using_spotri(matrix &A, const int dim);
-
-};
 
 }
 #endif

@@ -1,7 +1,9 @@
 #ifndef IONS_MOVE_BFGS_H
 #define IONS_MOVE_BFGS_H
 
-#include "../src_pw/tools.h"
+#include "../module_base/global_function.h"
+#include "../module_base/global_variable.h"
+#include "../module_base/matrix.h"
 //xiaohui modified 2013-04-25
 //#include "../src_algorithms/myfunc.h"
 #include "bfgs_basic.h"

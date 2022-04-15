@@ -1,6 +1,9 @@
-#include "tools.h"
+#include "../module_base/global_function.h"
+#include "../module_base/global_variable.h"
 #include "global.h"
 #include "sto_hchi.h" 
+#include "../src_parallel/parallel_reduce.h"
+#include "../module_base/timer.h"
 
 int Stochastic_hchi::nrxx;
 int Stochastic_hchi::nx;
@@ -121,7 +124,7 @@ void Stochastic_hchi::orthogonal_to_psi_real(std::complex<double> *wfin, std::co
 	if(!initplan) ModuleBase::WARNING_QUIT("Stochastic_hchi", "Please init hchi first!");
 
 	ModuleBase::GlobalFunc::DCOPY(wfin,rp_chi,nrxx);
-	//LapackConnector::copy(nrxx,wfin,1,rp_chi,1);
+	//BlasConnector::copy(nrxx,wfin,1,rp_chi,1);
 	fftw_execute(pf);
 	
 	std::complex<double> * chig = new std::complex<double> [GlobalC::wf.npw];
@@ -138,8 +141,6 @@ void Stochastic_hchi::orthogonal_to_psi_real(std::complex<double> *wfin, std::co
 		std::complex<double> *kswf = &GlobalC::wf.evc[ikk](iksb,0); 
 		zdotc_(&sum,&GlobalC::wf.npw,kswf,&inc,chig,&inc);
 
-//
-		//LapackConnector::axpy(GlobalC::wf.npw,-sum,kswf,1,chig,1);
 		for(int ig = 0; ig < GlobalC::wf.npw; ++ig)
 		{
 			chig[ig] -= sum*kswf[ig];
@@ -164,12 +165,9 @@ void Stochastic_hchi::orthogonal_to_psi_real(std::complex<double> *wfin, std::co
 		rp_chi[GRA_index[ig]] = chig[ig];
 	}
 	ModuleBase::GlobalFunc::DCOPY(rp_chi,rl_chi,nrxx);
-	//LapackConnector::copy(nrxx,rp_chi,1,rl_chi,1);
 
 	fftw_execute(pb);
 
-	//LapackConnector::copy(nrxx,rl_chi,1,wfout,1);
-	//LapackConnector::scal(nrxx,1/double(nrxx),wfout,1);
 	for(int ir = 0; ir < nrxx ; ++ir)
 	{
 		wfout[ir] = rl_chi[ir] / static_cast<double>(nrxx);
@@ -249,7 +247,7 @@ void Stochastic_hchi::hchi_real(std::complex<double>*chi_in, std::complex<double
 
 	ModuleBase::GlobalFunc::ZEROS(hchi,nrxx);
 	ModuleBase::GlobalFunc::DCOPY(chi_in, rp_chi, nrxx);
-	//LapackConnector::copy(nrxx,chi_in,1,rp_chi,1);
+	//BlasConnector::copy(nrxx,chi_in,1,rp_chi,1);
 	fftw_execute(pf);
 
 	std::complex<double> * chig = new std::complex<double> [GlobalC::wf.npw];
@@ -368,7 +366,6 @@ void Stochastic_hchi::hchi_real(std::complex<double>*chi_in, std::complex<double
 				for(int i=0; i<GlobalC::ppcell.nkb; ++i)
 				{
 					std::complex<double>* p = &GlobalC::ppcell.vkb(i,0);
-					//LapackConnector::axpy(GlobalC::wf.npw,Ps[i],p,1,chig,1);
 					for(int ig=0; ig< GlobalC::wf.npw; ++ig)
 					{
 						chig[ig] += Ps[i] * p[ig];
@@ -392,9 +389,6 @@ void Stochastic_hchi::hchi_real(std::complex<double>*chi_in, std::complex<double
 	double Ebar = (Emin + Emax)/2;
 	double DeltaE = (Emax - Emin)/2;
 
-	//LapackConnector::axpy(nrxx,1/double(nrxx),rl_chi,1,hchi,1);
-	//LapackConnector::axpy(nrxx,-Ebar,chi_in,1,hchi,1);
-	//LapackConnector::scal(nrxx,1/DeltaE,hchi,1);
 	for(int i = 0; i < nrxx; ++i)
 	{
 		hchi[i] += rl_chi[i] / static_cast<double>(nrxx);

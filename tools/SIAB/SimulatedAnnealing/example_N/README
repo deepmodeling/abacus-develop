@@ -1,4 +1,5 @@
 http://abacus.ustc.edu.cn/manual_411.html can be a reference to generate orbitals.
 
 First, change some parameter in ORBITAL_INPUT, for EXE_pw, EXE_orbital and Pseudo_dir, you'd better use the absolute path;
-Second, run the script: ./generate_orbital.sh
+
+Second, run the script: ../../../generate_orbital.sh ORBITAL_INPUT

@@ -169,8 +169,9 @@ void Exx_Lip::init(K_Vectors *kv_ptr_in, wavefunc *wf_ptr_in, PW_Basis *pw_ptr_i
 		{
 			gzero_judge = GlobalV::RANK_IN_POOL;
 		}
+	#ifdef __MPI
 		MPI_Allreduce(&gzero_judge, &gzero_rank_in_pool, 1, MPI_INT, MPI_MAX, POOL_WORLD);
-
+	#endif
 		k_pack->wf_wg.create(k_pack->kv_ptr->nks,GlobalV::NBANDS);
 
 		k_pack->hvec_array = new ModuleBase::ComplexMatrix [k_pack->kv_ptr->nks];
@@ -179,11 +180,11 @@ void Exx_Lip::init(K_Vectors *kv_ptr_in, wavefunc *wf_ptr_in, PW_Basis *pw_ptr_i
 			k_pack->hvec_array[ik].create(GlobalV::NLOCAL,GlobalV::NBANDS);
 		}
 
-		if (GlobalC::pot.start_pot=="atomic")
+		if (GlobalC::pot.init_chg=="atomic")
 		{
 			q_pack = k_pack;
 		}
-		else if(GlobalC::pot.start_pot=="file")
+		else if(GlobalC::pot.init_chg=="file")
 		{
 			read_q_pack();
 		}
@@ -300,11 +301,11 @@ Exx_Lip::~Exx_Lip()
 		delete[] k_pack->hvec_array;	k_pack->hvec_array=NULL;
 		delete k_pack;
 
-		if (GlobalC::pot.start_pot=="atomic")
+		if (GlobalC::pot.init_chg=="atomic")
 		{
 			q_pack = NULL;
 		}
-		else if(GlobalC::pot.start_pot=="file")
+		else if(GlobalC::pot.init_chg=="file")
 		{
 			delete q_pack->kv_ptr;	q_pack->kv_ptr=NULL;
 			delete q_pack->wf_ptr;	q_pack->wf_ptr=NULL;
@@ -357,7 +358,7 @@ void Exx_Lip::phi_cal(k_package *kq_pack, int ikq)
 void Exx_Lip::psi_cal()
 {
 	ModuleBase::TITLE("Exx_Lip","psi_cal");
-	if (GlobalC::pot.start_pot=="atomic")
+	if (GlobalC::pot.init_chg=="atomic")
 	{
 		for( int iq = 0; iq < q_pack->kv_ptr->nks; ++iq)
 		{
@@ -388,7 +389,7 @@ void Exx_Lip::psi_cal()
 			}
 		}
 	}
-	else if(GlobalC::pot.start_pot=="file")
+	else if(GlobalC::pot.init_chg=="file")
 	{
 		for( int iq=0; iq<q_pack->kv_ptr->nks; ++iq)
 		{
@@ -413,11 +414,11 @@ void Exx_Lip::psi_cal()
 
 void Exx_Lip::judge_singularity( int ik)
 {
-	if (GlobalC::pot.start_pot=="atomic")
+	if (GlobalC::pot.init_chg=="atomic")
 	{
 		iq_vecik = ik;
 	}
-	else if(GlobalC::pot.start_pot=="file")
+	else if(GlobalC::pot.init_chg=="file")
 	{
 		double min_q_minus_k(numeric_limits<double>::max());
 		for( int iq=0; iq<q_pack->kv_ptr->nks; ++iq)
@@ -526,8 +527,9 @@ void Exx_Lip::sum_all(int ik)
 {
 	double sum2_factor_g(0.0);
 	if( Exx_Global::Hybrid_Type::HF==info.hybrid_type || Exx_Global::Hybrid_Type::PBE0==info.hybrid_type )
+		#ifdef __MPI
 		MPI_Reduce( &sum2_factor, &sum2_factor_g, 1, MPI_DOUBLE, MPI_SUM, gzero_rank_in_pool, POOL_WORLD);
-
+		#endif
 	for( size_t iw_l=1; iw_l<GlobalV::NLOCAL; ++iw_l)
 		for( size_t iw_r=0; iw_r<iw_l; ++iw_r)
 			sum1[iw_l*GlobalV::NLOCAL+iw_r] = conj(sum1[iw_r*GlobalV::NLOCAL+iw_l]);		// Peize Lin add conj 2019-04-14
@@ -566,7 +568,9 @@ void Exx_Lip::exx_energy_cal()
 			}
 		}
 	}
+#ifdef __MPI
 	MPI_Allreduce( &exx_energy_tmp, &exx_energy, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);				// !!! k_point parallel incompleted. different pools have different GlobalC::kv.nks => deadlock
+#endif
 	exx_energy *= (GlobalV::NSPIN==1) ? 2 : 1;
 	exx_energy /= 2;										// ETOT = E_band - 1/2 E_exx
 
@@ -621,7 +625,7 @@ void Exx_Lip::exx_energy_cal()
 
 void Exx_Lip::write_q_pack() const
 {
-    if (GlobalC::CHR.out_charge==0)
+    if (GlobalC::CHR.out_chg==0)
 		return;
 
 	if(!GlobalV::RANK_IN_POOL)
@@ -706,7 +710,9 @@ void Exx_Lip::read_q_pack()
 		}
 		ifs_wf_wg.close();
 	}
+	#ifdef __MPI
 	MPI_Bcast( q_pack->wf_wg.c, q_pack->kv_ptr->nks*GlobalV::NBANDS, MPI_DOUBLE, 0, POOL_WORLD);
+	#endif
 
 	q_pack->hvec_array = new ModuleBase::ComplexMatrix [q_pack->kv_ptr->nks];
 	for( int iq=0; iq<q_pack->kv_ptr->nks; ++iq)
@@ -732,10 +738,12 @@ void Exx_Lip::read_q_pack()
 		}
 		ifs_hvec.close();
 	}
+	#ifdef __MPI
 	for( int iq=0; iq<q_pack->kv_ptr->nks; ++iq)
 	{
 		MPI_Bcast( q_pack->hvec_array[iq].c, GlobalV::NLOCAL*GlobalV::NBANDS, mpicomplex, 0, POOL_WORLD);
 	}
+	#endif
 
 	return;
 }

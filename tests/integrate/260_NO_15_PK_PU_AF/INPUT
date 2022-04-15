@@ -5,22 +5,22 @@ nbands    40
 
 calculation    scf
 ecutwfc    20
-dr2    1.0e-4
-niter    2
-out_charge    0
+scf_thr    1.0e-4
+scf_nmax    2
+out_chg    0
 
-#start_charge    file
+#init_chg    file
 #out_dos    1
 #dos_sigma    0.05
 #out_band    1
 
-smearing    gaussian
-sigma    0.07
+smearing_method    gaussian
+smearing_sigma    0.07
 
-#force     1
+#cal_force     1
 #force_thr_ev    0.01
-#move_method    cg
-#trust_radius_ini    0.5
+#relax_method    cg
+#relax_bfgs_init    0.5
 
 mixing_type    pulay
 mixing_beta    0.4
@@ -31,7 +31,6 @@ basis_type    lcao
 gamma_only    1
 symmetry    0
 nspin    2
-newdm   1
 
 #Parameter DFT+U
 dft_plus_u    1

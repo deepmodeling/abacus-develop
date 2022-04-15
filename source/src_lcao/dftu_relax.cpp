@@ -22,6 +22,7 @@
 #include "../src_pw/magnetism.h"
 #include "../module_orbital/ORB_gen_tables.h"
 #include "../src_pw/charge.h"
+#include "../module_base/timer.h"
 
 extern "C"
 {
@@ -48,12 +49,16 @@ DFTU_RELAX::DFTU_RELAX(){}
 
 DFTU_RELAX::~DFTU_RELAX(){}
 
-void DFTU_RELAX::force_stress()
+void DFTU_RELAX::force_stress(std::vector<ModuleBase::matrix>& dm_gamma,
+    std::vector<ModuleBase::ComplexMatrix>& dm_k,
+    LCAO_Matrix &lm)
 {
 	ModuleBase::TITLE("DFTU_RELAX", "force_stress");
 	ModuleBase::timer::tick("DFTU_RELAX", "force_stress");
 
-	if(GlobalV::FORCE)
+    this->LM = &lm;
+    
+    if (GlobalV::CAL_FORCE)
 	{
 		for(int iat=0; iat<GlobalC::ucell.nat; iat++)
 		{
@@ -64,7 +69,7 @@ void DFTU_RELAX::force_stress()
 		}
 	}
 
-	if(GlobalV::STRESS)
+	if(GlobalV::CAL_STRESS)
 	{
 		for(int dim=0; dim<3; dim++)
 		{
@@ -80,28 +85,31 @@ void DFTU_RELAX::force_stress()
 	  	const int  one_int = 1;
 	  	const double alpha = 1.0, beta = 0.0;
 
-    	std::vector<double> rho_VU(GlobalC::ParaO.nloc);
+    	std::vector<double> rho_VU(this->LM->ParaV->nloc);
 
     	for(int ik=0; ik<GlobalC::kv.nks; ik++)
 	  	{
 		  
 	  		const int spin = GlobalC::kv.isk[ik];
 
-			double* VU = new double [GlobalC::ParaO.nloc];
+			double* VU = new double [this->LM->ParaV->nloc];
 			this->cal_VU_pot_mat_real(spin, false, VU);
 			ModuleBase::timer::tick("DFTU_RELAX", "cal_rho_VU");
+		
+		#ifdef __MPI
 			pdgemm_(&transT, &transN,
 					    &GlobalV::NLOCAL, &GlobalV::NLOCAL, &GlobalV::NLOCAL,
 					    &alpha, 
-					    GlobalC::LOC.wfc_dm_2d.dm_gamma[spin].c, &one_int, &one_int, GlobalC::ParaO.desc, 
-					    VU, &one_int, &one_int, GlobalC::ParaO.desc,
+					    dm_gamma[spin].c, &one_int, &one_int, this->LM->ParaV->desc, 
+					    VU, &one_int, &one_int, this->LM->ParaV->desc,
 					    &beta,
-					    &rho_VU[0], &one_int, &one_int, GlobalC::ParaO.desc);
+					    &rho_VU[0], &one_int, &one_int, this->LM->ParaV->desc);
+		#endif
 
       		delete [] VU;
 			ModuleBase::timer::tick("DFTU_RELAX", "cal_rho_VU");
-      		if(GlobalV::FORCE) this->cal_force_gamma(&rho_VU[0]);
-      		if(GlobalV::STRESS) this->cal_stress_gamma(&rho_VU[0]);
+      		if(GlobalV::CAL_FORCE) this->cal_force_gamma(&rho_VU[0]);
+      		if(GlobalV::CAL_STRESS) this->cal_stress_gamma(&rho_VU[0]);
     	}//ik
   	}
   	else
@@ -110,32 +118,36 @@ void DFTU_RELAX::force_stress()
 	  	const int  one_int = 1;
 	  	const std::complex<double> alpha(1.0,0.0), beta(0.0,0.0);
 
-    	std::vector<std::complex<double>> rho_VU(GlobalC::ParaO.nloc);
+    	std::vector<std::complex<double>> rho_VU(this->LM->ParaV->nloc);
 
     	for(int ik=0; ik<GlobalC::kv.nks; ik++)
 	  	{
 	  		const int spin = GlobalC::kv.isk[ik];
 
-			std::complex<double>* VU = new std::complex<double> [GlobalC::ParaO.nloc];
+			std::complex<double>* VU = new std::complex<double> [this->LM->ParaV->nloc];
 			this->cal_VU_pot_mat_complex(spin, false, VU);
 			ModuleBase::timer::tick("DFTU_RELAX", "cal_rho_VU");
+		
+		#ifdef __MPI
 			pzgemm_(&transT, &transN,
 					    &GlobalV::NLOCAL, &GlobalV::NLOCAL, &GlobalV::NLOCAL,
 					    &alpha, 
-					    GlobalC::LOC.wfc_dm_2d.dm_k[ik].c, &one_int, &one_int, GlobalC::ParaO.desc, 
-					    VU, &one_int, &one_int, GlobalC::ParaO.desc,
+					    dm_k[ik].c, &one_int, &one_int, this->LM->ParaV->desc, 
+					    VU, &one_int, &one_int, this->LM->ParaV->desc,
 					    &beta,
-					    &rho_VU[0], &one_int, &one_int, GlobalC::ParaO.desc);
+					    &rho_VU[0], &one_int, &one_int, this->LM->ParaV->desc);
+		#endif
 
       		delete [] VU;
 	  		ModuleBase::timer::tick("DFTU_RELAX", "cal_rho_VU");
 
-      		if(GlobalV::FORCE) this->cal_force_k(ik, &rho_VU[0]);
-      		if(GlobalV::STRESS) cal_stress_k(ik, &rho_VU[0]);
+      		if(GlobalV::CAL_FORCE) this->cal_force_k(ik, &rho_VU[0]);
+      		if(GlobalV::CAL_STRESS) cal_stress_k(ik, &rho_VU[0]);
     	}//ik
   	}
 
-	if(GlobalV::FORCE)
+#ifdef __MPI
+	if(GlobalV::CAL_FORCE)
 	{
 		for(int iat=0; iat<GlobalC::ucell.nat; iat++)
 		{
@@ -143,9 +155,11 @@ void DFTU_RELAX::force_stress()
 			MPI_Allreduce(&tmp[0], &this->force_dftu[iat][0], 3, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 		}
 	}
+#endif
 
-  	if(GlobalV::STRESS)
+  	if(GlobalV::CAL_STRESS)
   	{
+	#ifdef __MPI
     	for(int dim1=0; dim1<3; dim1++)
 	  	{
 	  		for(int dim2=dim1; dim2<3; dim2++)
@@ -154,6 +168,7 @@ void DFTU_RELAX::force_stress()
         		MPI_Allreduce(&val_tmp, &stress_dftu[dim1][dim2], 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
       		}
     	}
+	#endif
 
 		for(int i=0; i<3; i++)
 		{
@@ -186,43 +201,47 @@ void DFTU_RELAX::cal_force_k(const int ik, const std::complex<double>* rho_VU)
 	const int  one_int = 1;
 	const std::complex<double> zero(0.0,0.0), one(1.0,0.0);
 
-	std::vector<std::complex<double>> dm_VU_dSm(GlobalC::ParaO.nloc);
-	std::vector<std::complex<double>> dSm_k(GlobalC::ParaO.nloc);
+	std::vector<std::complex<double>> dm_VU_dSm(this->LM->ParaV->nloc);
+	std::vector<std::complex<double>> dSm_k(this->LM->ParaV->nloc);
 
 	for(int dim=0; dim<3; dim++)
 	{
     	this->fold_dSm_k(ik, dim, &dSm_k[0]);
     
+	#ifdef __MPI
 		pzgemm_(&transN, &transC,
 			&GlobalV::NLOCAL, &GlobalV::NLOCAL, &GlobalV::NLOCAL,
 			&one, 
-			&dSm_k[0], &one_int, &one_int, GlobalC::ParaO.desc, 
-			rho_VU, &one_int, &one_int, GlobalC::ParaO.desc,
+			&dSm_k[0], &one_int, &one_int, this->LM->ParaV->desc, 
+			rho_VU, &one_int, &one_int, this->LM->ParaV->desc,
 			&zero,
-			&dm_VU_dSm[0], &one_int, &one_int, GlobalC::ParaO.desc);
+			&dm_VU_dSm[0], &one_int, &one_int, this->LM->ParaV->desc);
+	#endif
 
-    	for(int ir=0; ir<GlobalC::ParaO.nrow; ir++)
+    	for(int ir=0; ir<this->LM->ParaV->nrow; ir++)
 		{
-			const int iwt1 = GlobalC::ParaO.MatrixInfo.row_set[ir];
+			const int iwt1 = this->LM->ParaV->MatrixInfo.row_set[ir];
 			const int iat1 = GlobalC::ucell.iwt2iat[iwt1];
 
-			for(int ic=0; ic<GlobalC::ParaO.ncol; ic++)
+			for(int ic=0; ic<this->LM->ParaV->ncol; ic++)
 			{
-				const int iwt2 = GlobalC::ParaO.MatrixInfo.col_set[ic];
-				const int irc = ic*GlobalC::ParaO.nrow + ir;
+				const int iwt2 = this->LM->ParaV->MatrixInfo.col_set[ic];
+				const int irc = ic*this->LM->ParaV->nrow + ir;
 
 				if(iwt1==iwt2) this->force_dftu[iat1][dim] += dm_VU_dSm[irc].real();
 
 			}//end ic
 		}//end ir
 
+	#ifdef __MPI
     	pzgemm_(&transN, &transN,
 			&GlobalV::NLOCAL, &GlobalV::NLOCAL, &GlobalV::NLOCAL,
 			&one, 
-			&dSm_k[0], &one_int, &one_int, GlobalC::ParaO.desc, 
-			rho_VU, &one_int, &one_int, GlobalC::ParaO.desc,
+			&dSm_k[0], &one_int, &one_int, this->LM->ParaV->desc, 
+			rho_VU, &one_int, &one_int, this->LM->ParaV->desc,
 			&zero,
-			&dm_VU_dSm[0], &one_int, &one_int, GlobalC::ParaO.desc);
+			&dm_VU_dSm[0], &one_int, &one_int, this->LM->ParaV->desc);
+	#endif
 
     	for(int it=0; it<GlobalC::ucell.ntype; it++)
 	  	{
@@ -259,12 +278,12 @@ void DFTU_RELAX::cal_force_k(const int ik, const std::complex<double>* rho_VU)
 		  				for(int ipol=0; ipol<GlobalV::NPOL; ipol++)
 		  				{
 		  					const int iwt = this->iatlnmipol2iwt[iat][l][n][m][ipol];
-		  					const int mu = GlobalC::ParaO.trace_loc_row[iwt];
-		  					const int nu = GlobalC::ParaO.trace_loc_col[iwt];
+		  					const int mu = this->LM->ParaV->trace_loc_row[iwt];
+		  					const int nu = this->LM->ParaV->trace_loc_col[iwt];
 
                 			if(mu<0 || nu<0) continue;
 
-                			this->force_dftu[iat][dim] += dm_VU_dSm[nu*GlobalC::ParaO.nrow+mu].real();
+                			this->force_dftu[iat][dim] += dm_VU_dSm[nu*this->LM->ParaV->nrow+mu].real();
               			}
             		}//
           		}//n
@@ -286,8 +305,8 @@ void DFTU_RELAX::cal_stress_k(const int ik, const std::complex<double>* rho_VU)
 	const int  one_int = 1;
 	const std::complex<double> minus_half(-0.5,0.0), zero(0.0,0.0), one(1.0,0.0);
 
-  	std::vector<std::complex<double>> dm_VU_sover(GlobalC::ParaO.nloc);
-  	std::vector<std::complex<double>> dSR_k(GlobalC::ParaO.nloc);
+  	std::vector<std::complex<double>> dm_VU_sover(this->LM->ParaV->nloc);
+  	std::vector<std::complex<double>> dSR_k(this->LM->ParaV->nloc);
 
 	for(int dim1=0; dim1<3; dim1++)
 	{
@@ -295,21 +314,23 @@ void DFTU_RELAX::cal_stress_k(const int ik, const std::complex<double>* rho_VU)
 		{
 			this->fold_dSR_k(ik, dim1, dim2, &dSR_k[0]);
 
+		#ifdef __MPI
 			pzgemm_(&transN, &transN,
 				&GlobalV::NLOCAL, &GlobalV::NLOCAL, &GlobalV::NLOCAL,
 				&minus_half, 
-				rho_VU, &one_int, &one_int, GlobalC::ParaO.desc, 
-				&dSR_k[0], &one_int, &one_int, GlobalC::ParaO.desc,
+				rho_VU, &one_int, &one_int, this->LM->ParaV->desc, 
+				&dSR_k[0], &one_int, &one_int, this->LM->ParaV->desc,
 				&zero,
-				&dm_VU_sover[0], &one_int, &one_int, GlobalC::ParaO.desc);
+				&dm_VU_sover[0], &one_int, &one_int, this->LM->ParaV->desc);
+		#endif
 
-			for(int ir=0; ir<GlobalC::ParaO.nrow; ir++)
+			for(int ir=0; ir<this->LM->ParaV->nrow; ir++)
 			{
-				const int iwt1 = GlobalC::ParaO.MatrixInfo.row_set[ir];
-				for(int ic=0; ic<GlobalC::ParaO.ncol; ic++)
+				const int iwt1 = this->LM->ParaV->MatrixInfo.row_set[ir];
+				for(int ic=0; ic<this->LM->ParaV->ncol; ic++)
 				{
-					const int iwt2 = GlobalC::ParaO.MatrixInfo.col_set[ic];
-					const int irc = ic*GlobalC::ParaO.nrow + ir;
+					const int iwt2 = this->LM->ParaV->MatrixInfo.col_set[ic];
+					const int irc = ic*this->LM->ParaV->nrow + ir;
 
 					if(iwt1==iwt2) stress_dftu[dim1][dim2] += 2.0*dm_VU_sover[irc].real();
 				}//end ic
@@ -330,45 +351,49 @@ void DFTU_RELAX::cal_force_gamma(const double* rho_VU)
 	const int  one_int = 1;
 	const double one = 1.0, zero = 0.0, minus_one=-1.0;
 	
-	std::vector<double> dm_VU_dSm(GlobalC::ParaO.nloc);
+	std::vector<double> dm_VU_dSm(this->LM->ParaV->nloc);
 	
 	for(int dim=0; dim<3; dim++)
 	{
 		double* tmp_ptr;
-		if(dim==0) tmp_ptr = GlobalC::LM.DSloc_x;
-		else if(dim==1) tmp_ptr = GlobalC::LM.DSloc_y;
-		else if(dim==2) tmp_ptr = GlobalC::LM.DSloc_z;
+		if(dim==0) tmp_ptr = this->LM->DSloc_x;
+		else if(dim==1) tmp_ptr = this->LM->DSloc_y;
+		else if(dim==2) tmp_ptr = this->LM->DSloc_z;
 
+	#ifdef __MPI
 		pdgemm_(&transN, &transT,
 			&GlobalV::NLOCAL, &GlobalV::NLOCAL, &GlobalV::NLOCAL,
 			&one, 
-			tmp_ptr, &one_int, &one_int, GlobalC::ParaO.desc, 
-			rho_VU, &one_int, &one_int, GlobalC::ParaO.desc,
+			tmp_ptr, &one_int, &one_int, this->LM->ParaV->desc, 
+			rho_VU, &one_int, &one_int, this->LM->ParaV->desc,
 			&zero,
-			&dm_VU_dSm[0], &one_int, &one_int, GlobalC::ParaO.desc);
+			&dm_VU_dSm[0], &one_int, &one_int, this->LM->ParaV->desc);
+	#endif
 
-    	for(int ir=0; ir<GlobalC::ParaO.nrow; ir++)
+    	for(int ir=0; ir<this->LM->ParaV->nrow; ir++)
 		{
-			const int iwt1 = GlobalC::ParaO.MatrixInfo.row_set[ir];
+			const int iwt1 = this->LM->ParaV->MatrixInfo.row_set[ir];
 			const int iat1 = GlobalC::ucell.iwt2iat[iwt1];
 
-			for(int ic=0; ic<GlobalC::ParaO.ncol; ic++)
+			for(int ic=0; ic<this->LM->ParaV->ncol; ic++)
 			{
-				const int iwt2 = GlobalC::ParaO.MatrixInfo.col_set[ic];
-				const int irc = ic*GlobalC::ParaO.nrow + ir;
+				const int iwt2 = this->LM->ParaV->MatrixInfo.col_set[ic];
+				const int irc = ic*this->LM->ParaV->nrow + ir;
 
 				if(iwt1==iwt2) this->force_dftu[iat1][dim] += dm_VU_dSm[irc];
 
 			}//end ic
 		}//end ir
 
+	#ifdef __MPI
     	pdgemm_(&transN, &transT,
 			&GlobalV::NLOCAL, &GlobalV::NLOCAL, &GlobalV::NLOCAL,
 			&one, 
-			tmp_ptr, &one_int, &one_int, GlobalC::ParaO.desc, 
-			rho_VU, &one_int, &one_int, GlobalC::ParaO.desc,
+			tmp_ptr, &one_int, &one_int, this->LM->ParaV->desc, 
+			rho_VU, &one_int, &one_int, this->LM->ParaV->desc,
 			&zero,
-			&dm_VU_dSm[0], &one_int, &one_int, GlobalC::ParaO.desc);
+			&dm_VU_dSm[0], &one_int, &one_int, this->LM->ParaV->desc);
+	#endif
 
     	for(int it=0; it<GlobalC::ucell.ntype; it++)
 	  	{
@@ -405,12 +430,12 @@ void DFTU_RELAX::cal_force_gamma(const double* rho_VU)
 							for(int ipol=0; ipol<GlobalV::NPOL; ipol++)
 							{
 								const int iwt = this->iatlnmipol2iwt[iat][l][n][m][ipol];
-								const int mu = GlobalC::ParaO.trace_loc_row[iwt];
-								const int nu = GlobalC::ParaO.trace_loc_col[iwt];
+								const int mu = this->LM->ParaV->trace_loc_row[iwt];
+								const int nu = this->LM->ParaV->trace_loc_col[iwt];
 
 								if(mu<0 || nu<0) continue;
 
-								this->force_dftu[iat][dim] += dm_VU_dSm[nu*GlobalC::ParaO.nrow+mu];
+								this->force_dftu[iat][dim] += dm_VU_dSm[nu*this->LM->ParaV->nrow+mu];
 							}
             			}//
           			}//n
@@ -432,8 +457,8 @@ void DFTU_RELAX::cal_stress_gamma(const double* rho_VU)
 	const int  one_int = 1;
 	const double zero = 0.0, minus_half=-0.5, one=1.0;
 
-	std::vector<double> dSR_gamma(GlobalC::ParaO.nloc);
-	std::vector<double> dm_VU_sover(GlobalC::ParaO.nloc);
+	std::vector<double> dSR_gamma(this->LM->ParaV->nloc);
+	std::vector<double> dm_VU_sover(this->LM->ParaV->nloc);
 
 	for(int dim1=0; dim1<3; dim1++)
 	{
@@ -441,22 +466,24 @@ void DFTU_RELAX::cal_stress_gamma(const double* rho_VU)
 		{	
       		this->fold_dSR_gamma(dim1, dim2, &dSR_gamma[0]);
 
+		#ifdef __MPI
 			pdgemm_(&transN, &transN,
 				&GlobalV::NLOCAL, &GlobalV::NLOCAL, &GlobalV::NLOCAL,
 				&minus_half, 
-				rho_VU, &one_int, &one_int, GlobalC::ParaO.desc, 
-				&dSR_gamma[0], &one_int, &one_int, GlobalC::ParaO.desc,
+				rho_VU, &one_int, &one_int, this->LM->ParaV->desc, 
+				&dSR_gamma[0], &one_int, &one_int, this->LM->ParaV->desc,
 				&zero,
-				&dm_VU_sover[0], &one_int, &one_int, GlobalC::ParaO.desc);
+				&dm_VU_sover[0], &one_int, &one_int, this->LM->ParaV->desc);
+		#endif
 
-			for(int ir=0; ir<GlobalC::ParaO.nrow; ir++)
+			for(int ir=0; ir<this->LM->ParaV->nrow; ir++)
 			{
-				const int iwt1 = GlobalC::ParaO.MatrixInfo.row_set[ir];
+				const int iwt1 = this->LM->ParaV->MatrixInfo.row_set[ir];
 
-				for(int ic=0; ic<GlobalC::ParaO.ncol; ic++)
+				for(int ic=0; ic<this->LM->ParaV->ncol; ic++)
 				{
-					const int iwt2 = GlobalC::ParaO.MatrixInfo.col_set[ic];
-					const int irc = ic*GlobalC::ParaO.nrow + ir;
+					const int iwt2 = this->LM->ParaV->MatrixInfo.col_set[ic];
+					const int irc = ic*this->LM->ParaV->nrow + ir;
 
 					if(iwt1==iwt2) stress_dftu[dim1][dim2] += 2.0*dm_VU_sover[irc];
 				}//end ic
@@ -582,7 +609,7 @@ double DFTU_RELAX::get_onebody_eff_pot
 void DFTU_RELAX::cal_VU_pot_mat_complex(const int spin, const bool newlocale, std::complex<double>* VU)
 {
 	ModuleBase::TITLE("DFTU_RELAX","cal_VU_pot_mat_complex"); 
-	ModuleBase::GlobalFunc::ZEROS(VU, GlobalC::ParaO.nloc);
+	ModuleBase::GlobalFunc::ZEROS(VU, this->LM->ParaV->nloc);
 
 	for(int it=0; it<GlobalC::ucell.ntype; ++it)
 	{
@@ -608,21 +635,21 @@ void DFTU_RELAX::cal_VU_pot_mat_complex(const int spin, const bool newlocale, st
           			{
             			for(int ipol1=0; ipol1<GlobalV::NPOL; ipol1++)
 		  		  		{
-		  			  		const int mu = GlobalC::ParaO.trace_loc_row[this->iatlnmipol2iwt[iat][L][n][m1][ipol1]];
+		  			  		const int mu = this->LM->ParaV->trace_loc_row[this->iatlnmipol2iwt[iat][L][n][m1][ipol1]];
               				if(mu<0) continue;
 
               				for(int m2=0; m2<2*L+1; m2++)
               				{
                 				for(int ipol2=0; ipol2<GlobalV::NPOL; ipol2++)
                 				{
-                 					const int nu = GlobalC::ParaO.trace_loc_col[this->iatlnmipol2iwt[iat][L][n][m2][ipol2]];
+                 					const int nu = this->LM->ParaV->trace_loc_col[this->iatlnmipol2iwt[iat][L][n][m2][ipol2]];
                   					if(nu<0) continue;
 
                   					int m1_all = m1 + (2*L+1)*ipol1;
 			            			int m2_all = m2 + (2*L+1)*ipol2;
                   
                   					double val = get_onebody_eff_pot(it, iat, L, n, spin, m1_all, m2_all, cal_type, newlocale);
-			            			VU[nu*GlobalC::ParaO.nrow + mu] = std::complex<double>(val, 0.0);
+			            			VU[nu*this->LM->ParaV->nrow + mu] = std::complex<double>(val, 0.0);
                 				}//ipol2
               				}//m2
             			}//ipol1
@@ -639,7 +666,7 @@ void DFTU_RELAX::cal_VU_pot_mat_real(const int spin, const bool newlocale, doubl
 {
 	ModuleBase::TITLE("DFTU_RELAX","cal_VU_pot_mat_real"); 
 		// ModuleBase::timer::tick("DFTU","folding_overlap_matrix");
-	ModuleBase::GlobalFunc::ZEROS(VU, GlobalC::ParaO.nloc);
+	ModuleBase::GlobalFunc::ZEROS(VU, this->LM->ParaV->nloc);
 
   	for(int it=0; it<GlobalC::ucell.ntype; ++it)
 	{
@@ -665,19 +692,19 @@ void DFTU_RELAX::cal_VU_pot_mat_real(const int spin, const bool newlocale, doubl
           			{
             			for(int ipol1=0; ipol1<GlobalV::NPOL; ipol1++)
 		  		  		{
-		  			  		const int mu = GlobalC::ParaO.trace_loc_row[this->iatlnmipol2iwt[iat][L][n][m1][ipol1]];
+		  			  		const int mu = this->LM->ParaV->trace_loc_row[this->iatlnmipol2iwt[iat][L][n][m1][ipol1]];
               				if(mu<0) continue;
               				for(int m2=0; m2<2*L+1; m2++)
               				{
                 				for(int ipol2=0; ipol2<GlobalV::NPOL; ipol2++)
                 				{
-									const int nu = GlobalC::ParaO.trace_loc_col[this->iatlnmipol2iwt[iat][L][n][m2][ipol2]];
+									const int nu = this->LM->ParaV->trace_loc_col[this->iatlnmipol2iwt[iat][L][n][m2][ipol2]];
 									if(nu<0) continue;
 
                   					int m1_all = m1 + (2*L+1)*ipol1;
 			            			int m2_all = m2 + (2*L+1)*ipol2;
                   
-                  					VU[nu*GlobalC::ParaO.nrow + mu] = this->get_onebody_eff_pot(it, iat, L, n, spin, m1_all, m2_all, cal_type, newlocale);
+                  					VU[nu*this->LM->ParaV->nrow + mu] = this->get_onebody_eff_pot(it, iat, L, n, spin, m1_all, m2_all, cal_type, newlocale);
 
                 				}//ipol2
               				}//m2
@@ -695,12 +722,12 @@ void DFTU_RELAX::fold_dSR_gamma(const int dim1, const int dim2, double* dSR_gamm
 {
 	ModuleBase::TITLE("DFTU_RELAX","fold_dSR_gamma");
 
-	ModuleBase::GlobalFunc::ZEROS(dSR_gamma, GlobalC::ParaO.nloc);
+	ModuleBase::GlobalFunc::ZEROS(dSR_gamma, this->LM->ParaV->nloc);
 
 	double* dS_ptr;
-	if(dim1==0) dS_ptr =  GlobalC::LM.DSloc_x;
-	else if(dim1==1) dS_ptr =  GlobalC::LM.DSloc_y;
-	else if(dim1==2) dS_ptr =  GlobalC::LM.DSloc_z;
+	if(dim1==0) dS_ptr =  this->LM->DSloc_x;
+	else if(dim1==1) dS_ptr =  this->LM->DSloc_y;
+	else if(dim1==2) dS_ptr =  this->LM->DSloc_z;
 
   	int nnr = 0;
 	ModuleBase::Vector3<double> tau1, tau2, dtau;
@@ -754,17 +781,17 @@ void DFTU_RELAX::fold_dSR_gamma(const int dim1, const int dim2, double* dSR_gamm
 					{
 						const int jj0 = jj/GlobalV::NPOL;
 						const int iw1_all = start1 + jj0; 
-						const int mu = GlobalC::ParaO.trace_loc_row[iw1_all];
+						const int mu = this->LM->ParaV->trace_loc_row[iw1_all];
 				    	if(mu<0)continue;
 
 						for(int kk=0; kk<atom2->nw*GlobalV::NPOL; ++kk)
 						{
 							const int kk0 = kk/GlobalV::NPOL;
 							const int iw2_all = start2 + kk0;
-							const int nu = GlobalC::ParaO.trace_loc_col[iw2_all];
+							const int nu = this->LM->ParaV->trace_loc_col[iw2_all];
 							if(nu<0)continue;
 
-              				dSR_gamma[nu*GlobalC::ParaO.nrow + mu] += dS_ptr[nnr]*GlobalC::LM.DH_r[nnr*3+dim2];
+              				dSR_gamma[nu*this->LM->ParaV->nrow + mu] += dS_ptr[nnr]*this->LM->DH_r[nnr*3+dim2];
 
 			  				++nnr;
 			  			}// kk
@@ -781,12 +808,12 @@ void DFTU_RELAX::fold_dSm_k(const int ik, const int dim, std::complex<double>* d
 {
 	ModuleBase::TITLE("DFTU_RELAX","fold_dSm_k");
 	ModuleBase::timer::tick("DFTU_RELAX","fold_dSm_k");
-	ModuleBase::GlobalFunc::ZEROS(dSm_k, GlobalC::ParaO.nloc);
+	ModuleBase::GlobalFunc::ZEROS(dSm_k, this->LM->ParaV->nloc);
 
 	double* dSm_ptr;
-	if(dim==0) dSm_ptr = GlobalC::LM.DSloc_Rx;
-	else if(dim==1) dSm_ptr = GlobalC::LM.DSloc_Ry;
-	else if(dim==2) dSm_ptr = GlobalC::LM.DSloc_Rz;
+	if(dim==0) dSm_ptr = this->LM->DSloc_Rx;
+	else if(dim==1) dSm_ptr = this->LM->DSloc_Ry;
+	else if(dim==2) dSm_ptr = this->LM->DSloc_Rz;
 
 	int nnr = 0;
 	ModuleBase::Vector3<double> tau1, tau2, dtau;
@@ -849,21 +876,21 @@ void DFTU_RELAX::fold_dSm_k(const int ik, const int dim, std::complex<double>* d
 			  		{
 						const int jj0 = jj/GlobalV::NPOL;
 						const int iw1_all = start1 + jj0; 
-						const int mu = GlobalC::ParaO.trace_loc_row[iw1_all];
+						const int mu = this->LM->ParaV->trace_loc_row[iw1_all];
 						if(mu<0) continue;
 
 						for(int kk=0; kk<atom2->nw*GlobalV::NPOL; ++kk)
 						{
 							const int kk0 = kk/GlobalV::NPOL;
 							const int iw2_all = start2 + kk0;
-							const int nu = GlobalC::ParaO.trace_loc_col[iw2_all];
+							const int nu = this->LM->ParaV->trace_loc_col[iw2_all];
 							if(nu<0) continue;
 
 							ModuleBase::Vector3<double> dR(GlobalC::GridD.getBox(ad).x, GlobalC::GridD.getBox(ad).y, GlobalC::GridD.getBox(ad).z); 
 							const double arg = ( GlobalC::kv.kvec_d[ik] * dR ) * ModuleBase::TWO_PI;
 							const std::complex<double> kphase( cos(arg),  sin(arg) );
 
-							dSm_k[nu*GlobalC::ParaO.nrow + mu] += dSm_ptr[nnr]*kphase;
+							dSm_k[nu*this->LM->ParaV->nrow + mu] += dSm_ptr[nnr]*kphase;
 
 							++nnr;
 			  			}// kk
@@ -882,12 +909,12 @@ void DFTU_RELAX::fold_dSR_k(const int ik, const int dim1, const int dim2, std::c
 {
 	ModuleBase::TITLE("DFTU_RELAX","fold_dSR_k");
 
-	ModuleBase::GlobalFunc::ZEROS(dSR_k, GlobalC::ParaO.nloc);
+	ModuleBase::GlobalFunc::ZEROS(dSR_k, this->LM->ParaV->nloc);
 
 	double* dSm_ptr;
-	if(dim1==0) dSm_ptr = GlobalC::LM.DSloc_Rx;
-	else if(dim1==1) dSm_ptr = GlobalC::LM.DSloc_Ry;
-	else if(dim1==2) dSm_ptr = GlobalC::LM.DSloc_Rz;
+	if(dim1==0) dSm_ptr = this->LM->DSloc_Rx;
+	else if(dim1==1) dSm_ptr = this->LM->DSloc_Ry;
+	else if(dim1==2) dSm_ptr = this->LM->DSloc_Rz;
 
 	int nnr = 0;
 	ModuleBase::Vector3<double> tau1, tau2, dtau;
@@ -950,21 +977,21 @@ void DFTU_RELAX::fold_dSR_k(const int ik, const int dim1, const int dim2, std::c
 			  		{
 						const int jj0 = jj/GlobalV::NPOL;
 						const int iw1_all = start1 + jj0; 
-						const int mu = GlobalC::ParaO.trace_loc_row[iw1_all];
+						const int mu = this->LM->ParaV->trace_loc_row[iw1_all];
 				    	if(mu<0)continue;
 
 						for(int kk=0; kk<atom2->nw*GlobalV::NPOL; ++kk)
 						{
 							const int kk0 = kk/GlobalV::NPOL;
 							const int iw2_all = start2 + kk0;
-							const int nu = GlobalC::ParaO.trace_loc_col[iw2_all];
+							const int nu = this->LM->ParaV->trace_loc_col[iw2_all];
 							if(nu<0)continue;
               	
 							ModuleBase::Vector3<double> dR(GlobalC::GridD.getBox(ad).x, GlobalC::GridD.getBox(ad).y, GlobalC::GridD.getBox(ad).z); 
 							const double arg = ( GlobalC::kv.kvec_d[ik] * dR ) * ModuleBase::TWO_PI;
 							const std::complex<double> kphase( cos(arg),  sin(arg) );
 
-			  				dSR_k[nu*GlobalC::ParaO.nrow + mu] += dSm_ptr[nnr]*GlobalC::LM.DH_r[nnr*3+dim2]*kphase;														
+			  				dSR_k[nu*this->LM->ParaV->nrow + mu] += dSm_ptr[nnr]*this->LM->DH_r[nnr*3+dim2]*kphase;														
 
 			  				++nnr;
 			  			}// kk

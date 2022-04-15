@@ -6,17 +6,17 @@
 
 namespace ModuleBase
 {
-// 1024 bit  = 1 Byte
+//    8 bit  = 1 Byte
 // 1024 Byte = 1 KB
 // 1024 KB   = 1 MB
 // 1024 MB   = 1 GB
 double Memory::total = 0.0;
-double Memory::complex_matrix_memory = 16.0;//(Byte)
-double Memory::double_memory = 8.0;//(Byte)
-double Memory::int_memory = 4.0;//(Byte)
-double Memory::bool_memory = 1.0;//(Byte)
-double Memory::float_memory = 4.0;//(Byte)
-double Memory::short_memory = 2.0;//(Byte)
+int Memory::complex_matrix_memory = 2*sizeof(double); // 16 byte
+int Memory::double_memory = sizeof(double); // 8 byte
+int Memory::int_memory = sizeof(int); // 4.0 Byte
+int Memory::bool_memory = sizeof(bool); // 1.0 Byte
+int Memory::float_memory = sizeof(float); // 4.0 Byte
+int Memory::short_memory = sizeof(short); // 2.0 Byte
 
 int Memory::n_memory = 500;
 int Memory::n_now = 0;

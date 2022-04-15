@@ -2,9 +2,10 @@
 #define PARALLEL_COMMON_H
 
 #ifdef __MPI
-#include <mpi.h>
+#include "mpi.h"
 #endif
-#include "../src_pw/tools.h"
+#include <complex>
+#include <string>
 
 namespace Parallel_Common
 {

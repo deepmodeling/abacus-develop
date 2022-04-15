@@ -1,6 +1,7 @@
 #include "global.h"
 #include "occupy.h"
 #include "../module_base/mymath.h"
+#include "../src_parallel/parallel_reduce.h"
 
 Occupy::Occupy(){}
 Occupy::~Occupy(){}
@@ -8,7 +9,7 @@ Occupy::~Occupy(){}
 //===========================================================
 // Four smearing methods:
 // (1) do nothing
-// (2) gaussian_broadening method (need 'degauss' value).
+// (2) gaussian_broadening method (need 'smearing_sigma' value).
 // (3) tetrahedron method
 // (4) fixed_occupations
 //===========================================================
@@ -134,7 +135,7 @@ void Occupy::calculate_weights(void)
 }
 
 
-void Occupy::decision(const std::string &name,const std::string &smearing,const double &degauss)
+void Occupy::decision(const std::string &name,const std::string &smearing_method,const double &smearing_sigma)
 {
 	ModuleBase::TITLE("Occupy","decision");
     use_gaussian_broadening = false;
@@ -142,7 +143,7 @@ void Occupy::decision(const std::string &name,const std::string &smearing,const 
     fixed_occupations = false;
 
     gaussian_type = 0;
-    gaussian_parameter = degauss;
+    gaussian_parameter = smearing_sigma;
 
     if (name == "fixed")
     {
@@ -153,7 +154,7 @@ void Occupy::decision(const std::string &name,const std::string &smearing,const 
             gaussian_parameter = 0.0;
         }
     }
-    else if (name == "smearing" && smearing == "fixed")
+    else if (name == "smearing" && smearing_method == "fixed")
     {
         if ( gaussian_parameter!=0.0 )
         {
@@ -176,24 +177,24 @@ void Occupy::decision(const std::string &name,const std::string &smearing,const 
             ModuleBase::WARNING_QUIT("smearing_decision",
                          "Smearing requires gaussian broadening,but gaussian_parameter = 0(default value = 0.1)");
         }
-        if ( smearing == "gaussian" || smearing == "gauss")
+        if ( smearing_method == "gaussian" || smearing_method == "gauss")
         {
             gaussian_type = 0; //  0: gaussian
         }
-        else if (smearing == "methfessel-paxton" || smearing ==  "mp")
+        else if (smearing_method == "methfessel-paxton" || smearing_method ==  "mp")
         {
             gaussian_type = 1;  // >0 Methfessel-Paxton method.
         }
-        else if (smearing ==  "mp2")
+        else if (smearing_method ==  "mp2")
         {
             gaussian_type = 2;  // 2nd Methfessel-Paxton method.
         }
 
-        else if (smearing == "marzari-vanderbilt" || smearing == "cold" || smearing == "mv")
+        else if (smearing_method == "marzari-vanderbilt" || smearing_method == "cold" || smearing_method == "mv")
         {
             gaussian_type = -1;
         }
-        else if (smearing == "fermi-dirac" || smearing == "fd")
+        else if (smearing_method == "fermi-dirac" || smearing_method == "fd")
         {
             gaussian_type = -99;
         }
@@ -221,14 +222,14 @@ void Occupy::decision(const std::string &name,const std::string &smearing,const 
 void Occupy::iweights
 (
     const int nks, //number of k points.
-    const double *wk,//weight of each k point (consider symmetry).
+    const std::vector<double> &wk,//weight of each k point (consider symmetry).
     const int nband,//number of bands.
     const double &nelec, //number of electrons for this spin direction.
     double **ekb,//the array save the band energy.
     double &ef,//output: the highest occupied Kohn-Sham level.
     ModuleBase::matrix &wg,//output: weight for each k, each band.
     const int &is,//the spin index now.
-    const int *isk//distinguish k point belong to which spin.
+    const std::vector<int> &isk//distinguish k point belong to which spin.
 )
 {
 	assert(is<2); //not include non-collinear yet!
@@ -304,24 +305,24 @@ void Occupy::iweights
 //==========================================================
 void Occupy::gweights(
     const int nks,//number of k points.
-    const double *wk,//weight of each k point(symmetry considered).
+    const std::vector<double> &wk,//weight of each k point(symmetry considered).
     const int nband,//number of bands.
     const double &nelec,//number of electrons.
-    const double &degauss,//parameter input by user.
+    const double &smearing_sigma,//parameter input by user.
     const int ngauss,//which type of smearing.
     double **ekb,//save the band energy.
     double &ef,//ouput: fermi level
     double &demet,//output: energy correction for metal
     ModuleBase::matrix &wg,//output: weight of each band at each k point.
 	const int &is, // spin
-	const int *isk) // array to point out each k belong to which spin
+	const std::vector<int> &isk) // array to point out each k belong to which spin
 {
 	//ModuleBase::TITLE("Occupy","gweights");
     //===============================
     // Calculate the Fermi energy ef
     //===============================
     // call efermig
-    Occupy::efermig(ekb, GlobalV::NBANDS, nks, nelec, wk, degauss, ngauss, ef, is, isk);
+    Occupy::efermig(ekb, GlobalV::NBANDS, nks, nelec, wk, smearing_sigma, ngauss, ef, is, isk);
     demet = 0.0;
 
     for (int ik = 0;ik < nks;ik++)
@@ -335,7 +336,7 @@ void Occupy::gweights(
 			// Calculate the gaussian weights
 			//================================
 			// call wgauss
-			wg(ik, ib) = wk [ik] * Occupy::wgauss( (ef - ekb[ik][ib] )/ degauss, ngauss);
+			wg(ik, ib) = wk [ik] * Occupy::wgauss( (ef - ekb[ik][ib] )/ smearing_sigma, ngauss);
 
 			//====================================================================
 			// The correct form of the band energy is  \int e n(e) de   for e<ef
@@ -343,7 +344,7 @@ void Occupy::gweights(
 			//====================================================================
 			// Mohan fix bug 2010-1-9
 			// call w1gauss
-			demet += wk [ik] * degauss * Occupy::w1gauss((ef - ekb[ik][ib]) / degauss, ngauss);
+			demet += wk [ik] * smearing_sigma * Occupy::w1gauss((ef - ekb[ik][ib]) / smearing_sigma, ngauss);
 		}
 	}
 
@@ -357,12 +358,12 @@ void Occupy::efermig
     const int nband,
     const int nks,
     const double &nelec,
-    const double *wk,
-    const double &degauss,
+    const std::vector<double> &wk,
+    const double &smearing_sigma,
     const int ngauss,
     double &ef,
 	const int &is,
-	const int *isk
+	const std::vector<int> &isk
 )
 {
 	//ModuleBase::TITLE("Occupy","efermig");
@@ -393,8 +394,8 @@ void Occupy::efermig
         eup = std::max(eup, ekb[ik][nband-1]);
     }
 
-    eup += 2 * degauss;
-    elw -= 2 * degauss; //qianrui change 2 to 5 for high temerature
+    eup += 2 * smearing_sigma;
+    elw -= 2 * smearing_sigma; //qianrui change 2 to 5 for high temerature
 
 #ifdef __MPI
     // find min and max across pools
@@ -406,8 +407,8 @@ void Occupy::efermig
     //Bisection method
     //=================
     // call sumkg
-    const double sumkup = Occupy::sumkg(ekb, nband, nks, wk, degauss, ngauss, eup, is, isk);
-    const double sumklw = Occupy::sumkg(ekb, nband, nks, wk, degauss, ngauss, elw, is, isk);
+    const double sumkup = Occupy::sumkg(ekb, nband, nks, wk, smearing_sigma, ngauss, eup, is, isk);
+    const double sumklw = Occupy::sumkg(ekb, nband, nks, wk, smearing_sigma, ngauss, elw, is, isk);
 
     if ((sumkup - nelec) < -eps || (sumklw - nelec) > eps)
     {
@@ -430,7 +431,7 @@ void Occupy::efermig
         // change ef value
         //======================
         ef = (eup + elw) / 2.0;
-        const double sumkmid = sumkg(ekb, nband, nks, wk, degauss, ngauss, ef, is, isk);
+        const double sumkmid = sumkg(ekb, nband, nks, wk, smearing_sigma, ngauss, ef, is, isk);
 
         if (abs(sumkmid - nelec) < eps)
         {
@@ -456,12 +457,12 @@ double Occupy::sumkg(
 	double** ekb,
 	const int nband,
 	const int nks,
-	const double *wk,
-	const double &degauss,
+	const std::vector<double> &wk,
+	const double &smearing_sigma,
 	const int ngauss,
 	const double &e,
 	const int &is,
-	const int *isk
+	const std::vector<int> &isk
 )
 {
 	//ModuleBase::TITLE("Occupy","sumkg");
@@ -476,7 +477,7 @@ double Occupy::sumkg(
 			//===========================
 			// call wgauss
 			//===========================
-			sum1 += Occupy::wgauss(  (e - ekb[ik][ib]) / degauss, ngauss);
+			sum1 += Occupy::wgauss(  (e - ekb[ik][ib]) / smearing_sigma, ngauss);
 		}
 		sum2 += wk [ik] * sum1;
 	}

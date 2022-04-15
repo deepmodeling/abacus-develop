@@ -1,0 +1,21 @@
+ATOMIC_SPECIES
+Al 27 Al_ONCV_PBE-1.0.upf
+
+NUMERICAL_ORBITAL
+Al_gga_8au_100Ry_4s4p1d.orb
+
+LATTICE_CONSTANT
+10   // add lattice constant
+
+LATTICE_VECTORS
+0.5 0.5 0.0
+0.5 0.0 0.5
+0.0 0.5 0.5
+
+ATOMIC_POSITIONS
+Direct 
+
+Al	// Element type	
+0.0	// magnetism
+1
+0.00 0.00 0.00 1 1 1

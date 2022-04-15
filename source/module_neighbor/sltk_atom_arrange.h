@@ -1,7 +1,6 @@
 #ifndef ATOM_ARRANGE_H
 #define ATOM_ARRANGE_H
 
-//#include "../src_pw/tools.h"
 #include "sltk_grid.h"
 #include "sltk_grid_driver.h"
 #include "sltk_atom_input.h"

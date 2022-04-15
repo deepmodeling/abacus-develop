@@ -54,7 +54,7 @@ INCLUDES = -I. -Icommands -I${FFTW_INCLUDE_DIR}
 #==========================
 # -pedantic turns off more extensions and generates more warnings
 # -xHost generates instructions for the highest instruction set available on the compilation host processor
-OPTS = ${INCLUDES} -Ofast -std=c++11 -simd -march=native -xHost -m64 -qopenmp -Werror -Wall -pedantic -g
+OPTS = ${INCLUDES} -Ofast -std=c++11 -simd -xHost -m64 -qopenmp -Werror -Wall -pedantic -g
 #OPTS = ${INCLUDES} -Ofast  -std=c++11 -march=native -Wall -fpermissive -fopenmp
 
 include Makefile.Objects

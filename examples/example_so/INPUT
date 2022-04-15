@@ -1,13 +1,13 @@
 INPUT_PARAMETERS
 ntype                         2
 ecutwfc                       20
-dr2                           1e-08
-niter                         400
+scf_thr                           1e-08
+scf_nmax                         400
 basis_type                    pw
 ks_solver                     cg
-smearing                      gaussian
-nstep                         1
-sigma                         0.02
+smearing_method                      gaussian
+relax_nmax                         1
+smearing_sigma                         0.02
 mixing_type                   pulay
 mixing_beta                   0.4
 vdw_method                    d3_0
@@ -16,6 +16,6 @@ force_thr_ev                  0.005
 stress_thr                    0.1
 suffix                        autotest
 calculation                   cell-relax
-force                         1
-stress                        1
+cal_force                         1
+cal_stress                        1
 latname						  so

@@ -1,5 +1,7 @@
 #include "subgrid_oper.h"
-#include "../src_pw/tools.h"
+#include "../module_base/global_function.h"
+#include "../module_base/global_variable.h"
+#include "../src_parallel/parallel_reduce.h"
 #include "../src_pw/global.h"
 
 SubGrid_oper::SubGrid_oper()
@@ -21,76 +23,6 @@ SubGrid_oper::~SubGrid_oper()
 // the force, not related to the grid integration
 // Only DIAG_WORLD use density matrix (2D) only.
 //--------------------------------------------------
-/*
-void SubGrid_oper::cal_totwfc_aug()
-{
-	ModuleBase::TITLE("SubGrid_oper","cal_totwfc_aug");
-
-	int *occupy = new int[GlobalV::NLOCAL];
-	ModuleBase::GlobalFunc::ZEROS(occupy, GlobalV::NLOCAL);
-	for(int i=0; i<GlobalV::NLOCAL; ++i)
-	{
-		if(GlobalC::LOWF.trace_aug[i]>=0)
-		{
-			occupy[i] += 1;
-		}
-	}
-
-	// reduce occupy and get the full occupations.
-#ifdef __MPI
-	Parallel_Reduce::reduce_int_grid(occupy, GlobalV::NLOCAL);
-#endif
-
-	delete[] trace_aug_tot;
-	trace_aug_tot = new int[GlobalV::NLOCAL];
-	ModuleBase::GlobalFunc::ZEROS(trace_aug_tot,GlobalV::NLOCAL);
-	for(int i=0; i<GlobalV::NLOCAL; ++i)
-	{
-		trace_aug_tot[i]=GlobalC::LOWF.trace_aug[i];
-	}
-
-	// how many occupied wave functions.	
-#ifdef __MPI
-	Parallel_Reduce::reduce_int_grid(trace_aug_tot, GlobalV::NLOCAL);
-#endif
-
-	if(GlobalV::GRANK==0)
-	{
-		// rescale trace_lo_tot
-		for(int i=0; i<GlobalV::NLOCAL; ++i)
-		{
-			if(occupy[i]!=0)
-			{
-				trace_aug_tot[i]/=occupy[i];
-			}
-		}	
-		delete[] occupy;
-
-		GlobalV::ofs_running << " Second" << std::endl;
-		for(int i=0; i<GlobalV::NLOCAL; ++i)
-		{
-			GlobalV::ofs_running << " i=" << i << " trace_lo_tot=" << trace_lo_tot[i] << std::endl;
-		}
-
-		//-----------------------------------------
-		// calculate the total lgd.
-		//-----------------------------------------
-		this->lgd_aug = 0;
-		for(int i=0; i<GlobalV::NLOCAL; ++i)
-		{
-			if(trace_aug_tot[i]>=0)
-			{
-				++lgd_aug;
-			}
-		}
-
-		OUT(GlobalV::ofs_running,"GlobalC::SGO.lgd_aug",lgd);
-	
-
-
-	return;
-}
-*/
 
 void SubGrid_oper::cal_totwfc()
 {

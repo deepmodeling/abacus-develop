@@ -1,8 +1,10 @@
 #include "global.h"
-#include "tools.h"
+#include "../module_base/global_function.h"
+#include "../module_base/global_variable.h"
 #include "myfunc.h"
 #include "VL_in_pw.h"
 #include "../module_base/math_integral.h"
+#include "../module_base/timer.h"
 
 pseudopot_cell_vl::pseudopot_cell_vl()
 {
@@ -205,7 +207,7 @@ void pseudopot_cell_vl::vloc_of_g(
 void pseudopot_cell_vl::print_vloc(void)const
 {
 	if(GlobalV::MY_RANK!=0) return; //mohan fix bug 2011-10-13
-	bool check_vl = true;
+	bool check_vl = GlobalV::out_element_info;
 	if(check_vl)
 	{
 		for(int it=0; it<GlobalC::ucell.ntype; it++)

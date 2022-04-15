@@ -37,7 +37,7 @@ public:
 	ModuleBase::Vector3<int> period;
 
     // internal used
-    int max_elem = 94;
+    size_t max_elem = 94;
     std::vector<int> mxc;
     std::vector<std::vector<std::vector<std::vector<std::vector<double>>>>> c6ab;
     std::vector<double> r2r4;

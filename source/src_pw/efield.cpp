@@ -1,6 +1,8 @@
 #include "efield.h"
-#include "tools.h"
+#include "../module_base/global_function.h"
+#include "../module_base/global_variable.h"
 #include "global.h"
+#include "../src_parallel/parallel_reduce.h"
 
 Efield::Efield(){}
 Efield::~Efield(){}
@@ -68,7 +70,7 @@ void Efield::add_efield(const double*const rho, double* v_in)
 		// calculate the correction to total energy
 		etotefield = -ModuleBase::e2*(eamp-tot_dipole/2.0)*tot_dipole*GlobalC::ucell.omega/ModuleBase::FOUR_PI;
 		// calculate the force
-		if(GlobalV::FORCE)
+		if(GlobalV::CAL_FORCE)
 		{
 //			std::cout << "\n dipole force: " << std::endl;
 			int iat = 0;
@@ -94,7 +96,7 @@ void Efield::add_efield(const double*const rho, double* v_in)
 		this->compute_ion_dip(emaxpos, eopreg, edir, ion_dipole, bmod, bvec);
 		this->etotefield=-ModuleBase::e2*eamp*ion_dipole*GlobalC::ucell.omega/ModuleBase::FOUR_PI;
 		// calculate the force
-		if(GlobalV::FORCE)
+		if(GlobalV::CAL_FORCE)
 		{
 			assert(bmod>0);
 //			std::cout << "\n dipole force: " << std::endl;

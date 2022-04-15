@@ -99,15 +99,15 @@ void pseudo_nc::set_pseudo_nc(const Pseudopot_upf &upf)
 } // end subroutine set_pseudo_upf
 
 
-void pseudo_nc::print_pseudo_nc(std::ofstream &ofs, output &outp)
+void pseudo_nc::print_pseudo_nc(std::ofstream &ofs)
 {
-	print_pseudo_vl(ofs, outp);
+	print_pseudo_vl(ofs);
 	ofs << "\n pseudo_nc : ";
 	ofs << "\n kkbeta	" << kkbeta;
 	ofs << "\n nh  " << nh;
-	outp.printr1_d(ofs, " lll : ", lll, nbeta);
-	outp.printrm(ofs, " betar : ", betar);
-	outp.printrm(ofs, " dion : ", dion);
+	output::printr1_d(ofs, " lll : ", lll, nbeta);
+	output::printrm(ofs, " betar : ", betar);
+	output::printrm(ofs, " dion : ", dion);
 	ofs << "\n ----------------------";
 }
 
@@ -125,10 +125,7 @@ void pseudo_nc::set_pseudo_h(const Pseudopot_upf &upf)
 	this->tvanp = upf.tvanp;// if USPP
 	this->nlcc = upf.nlcc;// Non linear core corrections( bool ?)
 	
-	for(int i=0; i<4; i++)
-	{
-		this->dft[i] = upf.dft[i];
-	}
+	this->xc_func = upf.xc_func;
 
 	this->zv = upf.zp;
 	this->etotps = upf.etotps;
@@ -345,31 +342,31 @@ void pseudo_nc::set_pseudo_vl(const Pseudopot_upf &upf)
 } 
 
 
-void pseudo_nc::print_pseudo_atom(std::ofstream &ofs, output &outp)
+void pseudo_nc::print_pseudo_atom(std::ofstream &ofs)
 {
-	print_pseudo_h(ofs, outp);
+	print_pseudo_h(ofs);
 	ofs << "\n pseudo_atom : ";
 	ofs << "\n msh	" << msh;
 //	ofs	<< "\n nchi	" << nchi;
-	outp.printr1_d(ofs, " r : ", r, mesh);
-	outp.printr1_d(ofs, " rab : ", rab, mesh);
-	outp.printr1_d(ofs, " rho_atc : ", rho_atc, mesh);
-	outp.printr1_d(ofs, " rho_at : ", rho_at, mesh);
-	outp.printr1_d(ofs," jchi : ", jchi, nchi);
-	outp.printrm(ofs, " chi : ", chi);
+	output::printr1_d(ofs, " r : ", r, mesh);
+	output::printr1_d(ofs, " rab : ", rab, mesh);
+	output::printr1_d(ofs, " rho_atc : ", rho_atc, mesh);
+	output::printr1_d(ofs, " rho_at : ", rho_at, mesh);
+	output::printr1_d(ofs," jchi : ", jchi, nchi);
+	output::printrm(ofs, " chi : ", chi);
 	ofs << "\n ----------------------";
 }
 
 
-void pseudo_nc::print_pseudo_vl(std::ofstream &ofs, output &outp)
+void pseudo_nc::print_pseudo_vl(std::ofstream &ofs)
 {
 	ofs << "\n pseudo_vl:";
-	print_pseudo_atom(ofs, outp);
-	outp.printr1_d(ofs, "vloc_at : ", vloc_at, mesh);
+	print_pseudo_atom(ofs);
+	output::printr1_d(ofs, "vloc_at : ", vloc_at, mesh);
 	ofs << "\n ----------------------------------- ";
 }
 
-void pseudo_nc::print_pseudo_h(std::ofstream &ofs, output &outp)
+void pseudo_nc::print_pseudo_h(std::ofstream &ofs)
 {
     ofs << "\n pseudo_info :";
     ofs << "\n nv       " << nv;
@@ -377,7 +374,7 @@ void pseudo_nc::print_pseudo_h(std::ofstream &ofs, output &outp)
     ofs << "\n pp_type  " << pp_type;
     ofs << "\n tvanp    " << tvanp;
     ofs << "\n nlcc " << nlcc;
-    ofs << "\n dft  " << dft;
+    ofs << "\n dft  " << xc_func;
     ofs << "\n zv       " << zv;
     ofs << "\n etotps   " << etotps;
     ofs << "\n ecutwfc " << ecutwfc;
@@ -387,8 +384,8 @@ void pseudo_nc::print_pseudo_h(std::ofstream &ofs, output &outp)
     ofs << "\n nchi " << nchi;
     ofs << "\n nbeta    " << nbeta;
 //  out.printr1_d(ofs," els: ", els, nchi);
-    outp.printr1_d(ofs, " lchi: ", lchi, nchi);
-    outp.printr1_d(ofs, " oc: ", oc, nchi);
+    output::printr1_d(ofs, " lchi: ", lchi, nchi);
+    output::printr1_d(ofs, " oc: ", oc, nchi);
     ofs << "\n ----------------------";
 }
 

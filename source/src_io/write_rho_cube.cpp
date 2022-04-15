@@ -110,6 +110,7 @@ void Charge::write_rho_cube(
     	{
         	start_z[ip] = start_z[ip-1]+num_z[ip-1];
     	}	
+		delete[] num_z;
 
 		// which_ip: found iz belongs to which ip.
 		int *which_ip = new int[GlobalC::pw.ncz];
@@ -151,7 +152,7 @@ void Charge::write_rho_cube(
 				{
 					// mohan change to rho_save on 2012-02-10
 					// because this can make our next restart calculation lead
-					// to the same dr2 as the one saved.
+					// to the same scf_thr as the one saved.
 					zpiece[ir] = rho_save[ir*GlobalC::pw.nczp+iz-start_z[GlobalV::RANK_IN_POOL]];
 					//						ofs_running << "\n get zpiece[" << ir << "]=" << zpiece[ir] << " ir*GlobalC::pw.nczp+iz=" << ir*GlobalC::pw.nczp+iz;
 				}

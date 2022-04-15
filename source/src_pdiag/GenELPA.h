@@ -24,6 +24,7 @@
 //  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 //  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //====================================8<----------------------------------------
+#ifdef __MPI
 #include <complex>
 using namespace std;
 const int  CHOLESKY_CRITICAL_SIZE=1000;
@@ -127,7 +128,4 @@ int pzSolveEigen2(int nev, int nFull, int narows, int nacols, int *desc,
                  int method, int THIS_REAL_ELPA_KERNEL_API,
                  bool wantEigenVector, bool wantDebug);
 
-
-int globalIndex(int localIndex, int nblk, int nproc, int myproc);
-
-int localIndex(int globalIndex, int nblk, int nproc, int& myproc);
+#endif

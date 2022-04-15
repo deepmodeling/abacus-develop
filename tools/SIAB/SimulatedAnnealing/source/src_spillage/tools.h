@@ -15,7 +15,7 @@ extern ofstream ofs_running;
 
 // parallel information
 extern int NPROC; // mohan add 2010-06-12
-extern int NPOOL;
+extern int KPAR;
 extern int MY_RANK;
 extern int MY_POOL;
 extern int NPROC_IN_POOL;

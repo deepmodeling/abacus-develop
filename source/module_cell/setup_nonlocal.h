@@ -2,7 +2,8 @@
 #define INFONONLOCAL_H
 
 #include "atom_spec.h"
-#include "../src_pw/tools.h"
+#include "../module_base/global_function.h"
+#include "../module_base/global_variable.h"
 #include "../module_orbital/ORB_nonlocal.h"
 #include "../module_orbital/ORB_read.h"
 class InfoNonlocal
@@ -25,7 +26,8 @@ class InfoNonlocal
 			int &n_projectors,
 			const int& kmesh,
 			const double& dk,
-			const double& dr_uniform);
+			const double& dr_uniform,
+			std::ofstream &log);
 		/// read in the NONLOCAL projector from file.
 		void Read_NonLocal(
 			const int &it, 

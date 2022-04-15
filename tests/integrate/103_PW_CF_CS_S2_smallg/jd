@@ -1,2 +1,1 @@
-test energies, forces, stresses when system is large (small-g components) 
-and spin component is 2
+Func:PW/nspin=2,small-g; Sys:H2O; Ref:energy,force,stress

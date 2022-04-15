@@ -1,5 +1,6 @@
 #include "parallel_reduce.h"
-#include "../src_pw/tools.h"
+#include "../module_base/global_function.h"
+#include "../module_base/global_variable.h"
 #include "parallel_global.h"
 
 
@@ -121,7 +122,7 @@ void Parallel_Reduce::reduce_double_pool(double *object, const int n)
 // (2) we need to reduce the value from different pool.
 void Parallel_Reduce::reduce_double_allpool(double &object)
 {
-	if(GlobalV::NPOOL==1) return;
+	if(GlobalV::KPAR==1) return;
 #ifdef __MPI
 	double swap = object / GlobalV::NPROC_IN_POOL;
 	MPI_Allreduce(&swap , &object , 1, MPI_DOUBLE , MPI_SUM , MPI_COMM_WORLD);
@@ -132,7 +133,7 @@ void Parallel_Reduce::reduce_double_allpool(double &object)
 // (2) we need to reduce the value from different pool.
 void Parallel_Reduce::reduce_double_allpool(double *object, const int n)
 {
-	if(GlobalV::NPOOL==1) return;
+	if(GlobalV::KPAR==1) return;
 #ifdef __MPI
 	double *swap = new double[n];
 	for(int i=0; i<n; i++)

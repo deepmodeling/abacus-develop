@@ -1,11 +1,15 @@
 #include "diago_cg.h"
-#include "global.h"
+#include "../src_parallel/parallel_reduce.h"
+#include "../module_base/timer.h"
+#include "module_base/constants.h"
+#include "module_base/blas_connector.h"
 
 int Diago_CG::moved = 0;
 
 
-Diago_CG::Diago_CG()
+Diago_CG::Diago_CG(Hamilt_PW* phamilt)
 {
+    this->hpw = phamilt;
     test_cg=0;
 }
 Diago_CG::~Diago_CG() {}
@@ -64,12 +68,12 @@ void Diago_CG::diag
         if (test_cg>2) GlobalV::ofs_running << "Diagonal Band : " << m << std::endl;
         for (int i=0; i<dim; i++) phi_m[i] = phi(m, i);
 
-        GlobalC::hm.hpw.s_1psi(dim, phi_m, sphi); // sphi = S|psi(m)>
+        this->hpw->s_1psi(dim, phi_m, sphi); // sphi = S|psi(m)>
         this->schmit_orth(dim, dmx, m, phi, sphi, phi_m);
 
-        GlobalC::hm.hpw.h_1psi(dim , phi_m, hphi, sphi);
+        this->hpw->h_1psi(dim , phi_m, hphi, sphi);
 
-        e[m] = this->ddot_real(dim, phi_m, hphi );
+        e[m] = ModuleBase::GlobalFunc::ddot_real(dim, phi_m, hphi );
 
         int iter = 0;
         double gg_last = 0.0;
@@ -181,9 +185,9 @@ void Diago_CG::calculate_gradient(
 
     // Update lambda !
     // (4) <psi|SPH|psi >
-    const double eh = this->ddot_real( dim, spsi, g);
+    const double eh = ModuleBase::GlobalFunc::ddot_real( dim, spsi, g);
     // (5) <psi|SPS|psi >
-    const double es = this->ddot_real( dim, spsi, ppsi);
+    const double es = ModuleBase::GlobalFunc::ddot_real( dim, spsi, ppsi);
     const double lambda = eh / es;
 
     // Update g!
@@ -208,7 +212,7 @@ void Diago_CG::orthogonal_gradient( const int &dim, const int &dmx,
     if (test_cg==1) ModuleBase::TITLE("Diago_CG","orthogonal_gradient");
     //ModuleBase::timer::tick("Diago_CG","orth_grad");
 
-    GlobalC::hm.hpw.s_1psi(dim , g, sg);
+    this->hpw->s_1psi(dim , g, sg);
     int inc=1;
     //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     //qianrui replace 2021-3-15
@@ -270,7 +274,7 @@ void Diago_CG::calculate_gamma_cg(
         // (1) Update gg_inter!
         // gg_inter = <g|psg>
         // Attention : the 'g' in psg is getted last time
-        gg_inter = this->ddot_real( dim, g, psg);// b means before
+        gg_inter = ModuleBase::GlobalFunc::ddot_real( dim, g, psg);// b means before
     }
 
     // (2) Update for psg!
@@ -285,7 +289,7 @@ void Diago_CG::calculate_gamma_cg(
 
     // (3) Update gg_now!
     // gg_now = < g|P|sg > = < g|psg >
-    const double gg_now = this->ddot_real( dim, g, psg);
+    const double gg_now = ModuleBase::GlobalFunc::ddot_real( dim, g, psg);
 
     if (iter==0)
     {
@@ -339,13 +343,13 @@ bool Diago_CG::update_psi(
 {
     if (test_cg==1) ModuleBase::TITLE("Diago_CG","update_psi");
     //ModuleBase::timer::tick("Diago_CG","update");
-    GlobalC::hm.hpw.h_1psi(dim, cg, hcg, scg);
-    cg_norm = sqrt( this->ddot_real(dim, cg, scg) );
+    this->hpw->h_1psi(dim, cg, hcg, scg);
+    cg_norm = sqrt( ModuleBase::GlobalFunc::ddot_real(dim, cg, scg) );
 
     if (cg_norm < 1.0e-10 ) return 1;
 
-    const double a0 = this->ddot_real(dim, psi_m, hcg) * 2.0 / cg_norm;
-    const double b0 = this->ddot_real(dim, cg, hcg) / ( cg_norm * cg_norm ) ;
+    const double a0 = ModuleBase::GlobalFunc::ddot_real(dim, psi_m, hcg) * 2.0 / cg_norm;
+    const double b0 = ModuleBase::GlobalFunc::ddot_real(dim, cg, hcg) / ( cg_norm * cg_norm ) ;
 
     const double e0 = eigenvalue;
 
@@ -444,7 +448,7 @@ void Diago_CG::schmit_orth
     //qianrui replace 2021-3-15
     char trans2='N';
     zgemv_(&trans2,&dim,&m,&ModuleBase::NEG_ONE,psi.c,&dmx,lagrange,&inc,&ModuleBase::ONE,psi_m,&inc);
-    psi_norm -= ddot_real(m,lagrange,lagrange,false);
+    psi_norm -= ModuleBase::GlobalFunc::ddot_real(m,lagrange,lagrange,false);
     //======================================================================
     /*for (int j = 0; j < m; j++)
     {
@@ -474,100 +478,9 @@ void Diago_CG::schmit_orth
     {
         psi_m[ig] /= psi_norm;
     }
-    GlobalC::hm.hpw.s_1psi(dim, psi_m, sphi); // sphi = S|psi(m)>
+    this->hpw->s_1psi(dim, psi_m, sphi); // sphi = S|psi(m)>
 
     delete [] lagrange ;
     //ModuleBase::timer::tick("Diago_CG","schmit_orth");
     return ;
 }
-
-
-double Diago_CG::ddot_real
-(
-    const int &dim,
-    const std::complex<double>* psi_L,
-    const std::complex<double>* psi_R,
-    const bool reduce
-)
-{
-    //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-    //qianrui modify 2021-3-14
-    //Note that  ddot_(2*dim,a,1,b,1) = REAL( zdotc_(dim,a,1,b,1) )
-    int dim2=2*dim;
-    double *pL,*pR;
-    pL=(double *)psi_L;
-    pR=(double *)psi_R;
-    double result=LapackConnector::dot(dim2,pL,1,pR,1);
-    if(reduce)  Parallel_Reduce::reduce_double_pool( result );
-    return result;
-    //======================================================================
-    /*std::complex<double> result(0,0);
-    for (int i=0;i<dim;i++)
-    {
-        result += conj( psi_L[i] ) * psi_R[i];
-    }
-    Parallel_Reduce::reduce_complex_double_pool( result );
-    return result.real();*/
-    //>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-}
-
-std::complex<double> Diago_CG::ddot
-(
-    const int & dim,
-    const std::complex<double> * psi_L,
-    const std::complex<double> * psi_R
-)
-{
-    std::complex<double> result(0, 0);
-    for (int i = 0; i < dim ; i++)
-    {
-        result += conj(psi_L[i]) *  psi_R[i] ;
-    }
-    Parallel_Reduce::reduce_complex_double_pool( result );
-    return result;
-}  // end of ddot
-
-// this return <psi(m)|psik>
-std::complex<double> Diago_CG::ddot
-(
-    const int & dim,
-    const ModuleBase::ComplexMatrix &psi,
-    const int & m,
-    std::complex<double> *psik
-)
-{
-    std::complex<double> result(0, 0);
-    assert(dim > 0) ;
-
-    for (int i = 0; i < dim ; i++)
-    {
-        result += conj(psi(m, i)) *  psik[i] ;
-    }
-
-    Parallel_Reduce::reduce_complex_double_pool( result );
-
-    return result;
-}  // end of ddot
-
-
-// this return <psi_L(m) | psi_R(n)>
-std::complex<double> Diago_CG::ddot
-(
-    const int & dim,
-    const ModuleBase::ComplexMatrix &psi_L,
-    const int & m,
-    const ModuleBase::ComplexMatrix &psi_R,
-    const int & n
-)
-{
-    std::complex<double> result = ModuleBase::ZERO;
-    assert( (dim>0) && (dim<=psi_L.nc) && (dim<=psi_R.nc) );
-
-    for ( int i = 0; i < dim ; i++)
-    {
-        result += conj( psi_L(m,i) ) * psi_R(n,i) ;
-    }
-    Parallel_Reduce::reduce_complex_double_pool( result );
-
-    return result;
-} // end of ddot

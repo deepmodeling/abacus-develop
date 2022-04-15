@@ -61,6 +61,7 @@ NOTES:
 
 -------------------------------------------------------------
 200-300 LCAO basic properties
+300-400 LCAO basic Gamma Only properties
 
 _PW    plain wave bases
 _NO    numerical atoms orbitals bases
@@ -127,3 +128,6 @@ _VD    VDW (both d2 or d3)
 _MG    move ions method: cg
 _MF    move ions method: FIRE
 _MB    move ions method: bfgs
+
+_1O    first-order charge extrapolation
+_2O    second-order charge extrapolation

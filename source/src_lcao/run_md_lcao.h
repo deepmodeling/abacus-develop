@@ -1,44 +1,34 @@
 #ifndef RUN_MD_LCAO_H
 #define RUN_MD_LCAO_H 
 
-#include "../src_lcao/LOOP_elec.h"
-#include "../src_ions/ions_move_methods.h"
 #include "../src_pw/charge_extra.h"
-#include "../module_md/MD_basic.h"
-#include "../src_ions/lattice_change_methods.h"
+#include "module_orbital/ORB_control.h"
+#include "src_lcao/LCAO_matrix.h"
+#include "module_esolver/esolver.h"
 
 class Run_MD_LCAO
 {
 
 	public:
 
-	Run_MD_LCAO();
+	Run_MD_LCAO(Parallel_Orbitals &pv);
 	~Run_MD_LCAO();
 
-	LOOP_elec LOE;
-
-	void opt_cell(void);
-	void opt_ions(void);
-
-	void callInteraction_LCAO(const int& numIon, ModuleBase::Vector3<double>* force, ModuleBase::matrix& stress_lcao);
+	void opt_cell(ORB_control &orb_con, ModuleESolver::ESolver *p_esolver);
+	void opt_ions(ModuleESolver::ESolver *p_esolver);
+	void md_force_virial(ModuleESolver::ESolver *p_esolver,
+		const int &istep,
+        const int& numIon, 
+        double &potential, 
+        ModuleBase::Vector3<double>* force, 
+        ModuleBase::matrix& virial);
 
 	private:
 
-	Ions_Move_Methods IMM;
-
-	//bool force_stress(void);
-	Lattice_Change_Methods LCM;
-
-	int istep;
-
 	// electron charge density extropolation method
 	Charge_Extra CE;
-
-	void final_scf(void);
-
-	ModuleBase::Vector3<double> *force;  //force of each atom
-	ModuleBase::matrix stress;           //stress for this lattice
-
+    bool cellchange;
+    LCAO_Matrix LM_md;
 };
 
 #endif

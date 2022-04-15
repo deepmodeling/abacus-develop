@@ -1,6 +1,7 @@
 #include "FORCE_gamma.h"
 #include "../src_pw/global.h"
 #include <unordered_map>
+#include "../module_base/timer.h"
 
 
 void Force_LCAO_gamma::cal_ftvnl_dphi(
@@ -17,12 +18,12 @@ void Force_LCAO_gamma::cal_ftvnl_dphi(
         const int iat = GlobalC::ucell.iwt2iat[i];
         for(int j=0; j<GlobalV::NLOCAL; j++)
         {
-            const int mu = GlobalC::ParaO.trace_loc_row[j];
-            const int nu = GlobalC::ParaO.trace_loc_col[i];
+            const int mu = this->ParaV->trace_loc_row[j];
+            const int nu = this->ParaV->trace_loc_col[i];
 
             if (mu >= 0 && nu >= 0 )
             {
-                const int index = mu * GlobalC::ParaO.ncol + nu;
+                const int index = mu * this->ParaV->ncol + nu;
                 //contribution from deriv of AO's in T+VNL term
                 
                 double sum = 0.0;
@@ -34,31 +35,24 @@ void Force_LCAO_gamma::cal_ftvnl_dphi(
 
 				if(isforce)
 				{
-					ftvnl_dphi(iat,0) += sum * GlobalC::LM.DHloc_fixed_x[index];
-					ftvnl_dphi(iat,1) += sum * GlobalC::LM.DHloc_fixed_y[index];
-					ftvnl_dphi(iat,2) += sum * GlobalC::LM.DHloc_fixed_z[index];
+					ftvnl_dphi(iat,0) += sum * this->UHM->LM->DHloc_fixed_x[index];
+					ftvnl_dphi(iat,1) += sum * this->UHM->LM->DHloc_fixed_y[index];
+					ftvnl_dphi(iat,2) += sum * this->UHM->LM->DHloc_fixed_z[index];
 				}
                 if(isstress)
                 {
-                    stvnl_dphi(0,0) += sum/2.0 * GlobalC::LM.DHloc_fixed_11[index];
-                    stvnl_dphi(0,1) += sum/2.0 * GlobalC::LM.DHloc_fixed_12[index];
-                    stvnl_dphi(0,2) += sum/2.0 * GlobalC::LM.DHloc_fixed_13[index];
-                    stvnl_dphi(1,1) += sum/2.0 * GlobalC::LM.DHloc_fixed_22[index];
-                    stvnl_dphi(1,2) += sum/2.0 * GlobalC::LM.DHloc_fixed_23[index];
-                    stvnl_dphi(2,2) += sum/2.0 * GlobalC::LM.DHloc_fixed_33[index];   
+                    stvnl_dphi(0,0) += sum/2.0 * this->UHM->LM->DHloc_fixed_11[index];
+                    stvnl_dphi(0,1) += sum/2.0 * this->UHM->LM->DHloc_fixed_12[index];
+                    stvnl_dphi(0,2) += sum/2.0 * this->UHM->LM->DHloc_fixed_13[index];
+                    stvnl_dphi(1,1) += sum/2.0 * this->UHM->LM->DHloc_fixed_22[index];
+                    stvnl_dphi(1,2) += sum/2.0 * this->UHM->LM->DHloc_fixed_23[index];
+                    stvnl_dphi(2,2) += sum/2.0 * this->UHM->LM->DHloc_fixed_33[index];   
                 }
             }
         }
     }
     if(isstress){
-        for(int i=0;i<3;i++)
-        {
-            for(int j=0;j<3;j++)
-            {
-                if(i<j) stvnl_dphi(j,i) = stvnl_dphi(i,j);
-				stvnl_dphi(i,j) *=  GlobalC::ucell.lat0 / GlobalC::ucell.omega;
-            }
-        }
+        StressTools::stress_fill(GlobalC::ucell.lat0, GlobalC::ucell.omega, stvnl_dphi);
     }
     ModuleBase::timer::tick("Force_LCAO_gamma","cal_ftvnl_dphi");
     return;
@@ -113,8 +107,8 @@ void Force_LCAO_gamma::cal_fvnl_dbeta_new(
 			for (int iw1=0; iw1<GlobalC::ucell.atoms[T1].nw; ++iw1)
 			{
 				const int iw1_all = start1 + iw1;
-				const int iw1_local = GlobalC::ParaO.trace_loc_row[iw1_all];
-				const int iw2_local = GlobalC::ParaO.trace_loc_col[iw1_all];
+				const int iw1_local = this->ParaV->trace_loc_row[iw1_all];
+				const int iw2_local = this->ParaV->trace_loc_col[iw1_all];
 				if(iw1_local < 0 && iw2_local < 0) continue;
                 
                 std::vector<std::vector<double>> nlm;
@@ -173,12 +167,12 @@ void Force_LCAO_gamma::cal_fvnl_dbeta_new(
                 for (int iw1=0; iw1<GlobalC::ucell.atoms[T1].nw; ++iw1)
                 {
                     const int iw1_all = start1 + iw1;
-                    const int iw1_local = GlobalC::ParaO.trace_loc_row[iw1_all];
+                    const int iw1_local = this->ParaV->trace_loc_row[iw1_all];
                     if(iw1_local < 0)continue;
                     for (int iw2=0; iw2<GlobalC::ucell.atoms[T2].nw; ++iw2)
                     {
                         const int iw2_all = start2 + iw2;
-                        const int iw2_local = GlobalC::ParaO.trace_loc_col[iw2_all];
+                        const int iw2_local = this->ParaV->trace_loc_col[iw2_all];
                         if(iw2_local < 0)continue;
 
                         double nlm[3] = {0,0,0};
@@ -237,7 +231,7 @@ void Force_LCAO_gamma::cal_fvnl_dbeta_new(
 						    assert(ib==nlm1.size());
                         }
 
-                        const int index = iw1_local * GlobalC::ParaO.ncol + iw2_local;
+                        const int index = iw1_local * this->ParaV->ncol + iw2_local;
 
                         // dbeta is minus, that's consistent.
                         // only one projector for each atom force.
@@ -260,9 +254,10 @@ void Force_LCAO_gamma::cal_fvnl_dbeta_new(
                         {
                             for(int ipol=0;ipol<3;ipol++)
 							{
-                                svnl_dbeta(0,ipol) += sum/2.0 * (nlm[0] * r0[ipol] + nlm_t[0] * r1[ipol]);
-                                svnl_dbeta(1,ipol) += sum/2.0 * (nlm[1] * r0[ipol] + nlm_t[1] * r1[ipol]);
-                                svnl_dbeta(2,ipol) += sum/2.0 * (nlm[2] * r0[ipol] + nlm_t[2] * r1[ipol]);
+                                for(int jpol=ipol;jpol<3;jpol++)
+                                {
+                                    svnl_dbeta(ipol, jpol) += sum/2.0 * (nlm[ipol] * r0[jpol] + nlm_t[ipol] * r1[jpol]);
+                                }
                             }
                         }
                     }//iw2
@@ -273,13 +268,7 @@ void Force_LCAO_gamma::cal_fvnl_dbeta_new(
 
     if(isstress)
     {
-        for(int i=0;i<3;i++)
-        {
-            for(int j=0;j<3;j++)
-            {
-                svnl_dbeta(i,j) *=  GlobalC::ucell.lat0 / GlobalC::ucell.omega;
-            }
-        }
+        StressTools::stress_fill(GlobalC::ucell.lat0, GlobalC::ucell.omega, svnl_dbeta);
     }
     ModuleBase::timer::tick("Force_LCAO_gamma","cal_fvnl_dbeta_new");
 }
@@ -334,8 +323,8 @@ void Force_LCAO_gamma::cal_fvnl_dbeta_new(
 			for (int iw1=0; iw1<GlobalC::ucell.atoms[T1].nw; ++iw1)
 			{
 				const int iw1_all = start1 + iw1;
-				const int iw1_local = GlobalC::ParaO.trace_loc_row[iw1_all];
-				const int iw2_local = GlobalC::ParaO.trace_loc_col[iw1_all];
+				const int iw1_local = this->ParaV->trace_loc_row[iw1_all];
+				const int iw2_local = this->ParaV->trace_loc_col[iw1_all];
 				if(iw1_local < 0 && iw2_local < 0) continue;
                 
                 std::vector<std::vector<double>> nlm;
@@ -394,12 +383,12 @@ void Force_LCAO_gamma::cal_fvnl_dbeta_new(
                 for (int iw1=0; iw1<GlobalC::ucell.atoms[T1].nw; ++iw1)
                 {
                     const int iw1_all = start1 + iw1;
-                    const int iw1_local = GlobalC::ParaO.trace_loc_row[iw1_all];
+                    const int iw1_local = this->ParaV->trace_loc_row[iw1_all];
                     if(iw1_local < 0)continue;
                     for (int iw2=0; iw2<GlobalC::ucell.atoms[T2].nw; ++iw2)
                     {
                         const int iw2_all = start2 + iw2;
-                        const int iw2_local = GlobalC::ParaO.trace_loc_col[iw2_all];
+                        const int iw2_local = this->ParaV->trace_loc_col[iw2_all];
                         if(iw2_local < 0)continue;
 
                         double nlm[3] = {0,0,0};
@@ -479,9 +468,10 @@ void Force_LCAO_gamma::cal_fvnl_dbeta_new(
                         {
                             for(int ipol=0;ipol<3;ipol++)
 							{
-                                svnl_dbeta(0,ipol) -= sum/2.0 * (nlm[0] * r0[ipol] + nlm_t[0] * r1[ipol])* -1;
-                                svnl_dbeta(1,ipol) -= sum/2.0 * (nlm[1] * r0[ipol] + nlm_t[1] * r1[ipol])* -1;
-                                svnl_dbeta(2,ipol) -= sum/2.0 * (nlm[2] * r0[ipol] + nlm_t[2] * r1[ipol])* -1;
+                                for(int jpol=ipol;jpol<3;jpol++)
+                                {
+                                    svnl_dbeta(ipol, jpol) += sum/2.0 * (nlm[ipol] * r0[jpol] + nlm_t[ipol] * r1[jpol]);
+                                }
                             }
                         }
                     }//iw2
@@ -491,13 +481,7 @@ void Force_LCAO_gamma::cal_fvnl_dbeta_new(
     }//iat
     if(isstress)
     {
-        for(int i=0;i<3;i++)
-        {
-            for(int j=0;j<3;j++)
-            {
-                svnl_dbeta(i,j) *=  GlobalC::ucell.lat0 / GlobalC::ucell.omega;
-            }
-        }
+        StressTools::stress_fill(GlobalC::ucell.lat0, GlobalC::ucell.omega, svnl_dbeta);
     }
     ModuleBase::timer::tick("Force_LCAO_gamma","cal_fvnl_dbeta_new");
 }
@@ -566,12 +550,12 @@ void Force_LCAO_gamma::cal_fvnl_dbeta(
                 for (int jj = 0; jj < GlobalC::ucell.atoms[T1].nw; jj++)
                 {
                     const int iw1_all = start1 + jj;
-                    const int mu = GlobalC::ParaO.trace_loc_row[iw1_all];
+                    const int mu = this->ParaV->trace_loc_row[iw1_all];
                     if(mu<0) continue;
                     for (int kk = 0; kk < GlobalC::ucell.atoms[T2].nw; kk++)
                     {
                         const int iw2_all = start2 + kk;
-                        const int nu = GlobalC::ParaO.trace_loc_col[iw2_all];
+                        const int nu = this->ParaV->trace_loc_col[iw2_all];
                         if(nu<0) continue;
                     
                         double nlm[3] = {0,0,0};
@@ -620,7 +604,7 @@ void Force_LCAO_gamma::cal_fvnl_dbeta(
 								GlobalC::ucell.atoms[it].nproj_soc);
 						}
 
-                        const int index = mu * GlobalC::ParaO.ncol + nu;
+                        const int index = mu * this->ParaV->ncol + nu;
 
                         // dbeta is minus, that's consistent.
                         // only one projector for each atom force.
@@ -643,10 +627,11 @@ void Force_LCAO_gamma::cal_fvnl_dbeta(
                         {
                             for(int ipol=0;ipol<3;ipol++)
 							{
-								// mohan update 2021-03-19
-                                svnl_dbeta(0,ipol) += sum/2.0 * (nlm[0] * r0[ipol] + nlm1[0] * r1[ipol]);
-                                svnl_dbeta(1,ipol) += sum/2.0 * (nlm[1] * r0[ipol] + nlm1[1] * r1[ipol]);
-                                svnl_dbeta(2,ipol) += sum/2.0 * (nlm[2] * r0[ipol] + nlm1[2] * r1[ipol]);
+                                for(int jpol=ipol;jpol<3;jpol++)
+                                {
+								    // mohan update 2021-03-19
+                                    svnl_dbeta(ipol, jpol) += sum * (nlm[ipol] * r0[jpol] + nlm1[ipol] * r1[jpol]);
+                                }
                             }
                         }
                     }//!kk
@@ -657,13 +642,7 @@ void Force_LCAO_gamma::cal_fvnl_dbeta(
 
     if(isstress)
     {
-        for(int i=0;i<3;i++)
-        {
-            for(int j=0;j<3;j++)
-            {
-                svnl_dbeta(i,j) *=  GlobalC::ucell.lat0 / GlobalC::ucell.omega;
-            }
-        }
+        StressTools::stress_fill(GlobalC::ucell.lat0, GlobalC::ucell.omega, svnl_dbeta);
     }
     ModuleBase::timer::tick("Force_LCAO_gamma","cal_fvnl_dbeta");
     return;
@@ -685,12 +664,12 @@ void Force_LCAO_gamma::cal_ftvnl_dphi(
         const int iat = GlobalC::ucell.iwt2iat[i];
         for(int j=0; j<GlobalV::NLOCAL; j++)
         {
-            const int mu = GlobalC::ParaO.trace_loc_row[j];
-            const int nu = GlobalC::ParaO.trace_loc_col[i];
+            const int mu = this->ParaV->trace_loc_row[j];
+            const int nu = this->ParaV->trace_loc_col[i];
 
             if (mu >= 0 && nu >= 0 )
             {
-                const int index = mu * GlobalC::ParaO.ncol + nu;
+                const int index = mu * this->ParaV->ncol + nu;
                 //contribution from deriv of AO's in T+VNL term
 
                 double sum = 0.0;
@@ -702,31 +681,24 @@ void Force_LCAO_gamma::cal_ftvnl_dphi(
 
                 if(isforce)
 				{
-					ftvnl_dphi(iat,0) += sum * GlobalC::LM.DHloc_fixed_x[index];
-					ftvnl_dphi(iat,1) += sum * GlobalC::LM.DHloc_fixed_y[index];
-					ftvnl_dphi(iat,2) += sum * GlobalC::LM.DHloc_fixed_z[index];
+					ftvnl_dphi(iat,0) += sum * this->UHM->LM->DHloc_fixed_x[index];
+					ftvnl_dphi(iat,1) += sum * this->UHM->LM->DHloc_fixed_y[index];
+					ftvnl_dphi(iat,2) += sum * this->UHM->LM->DHloc_fixed_z[index];
 				}
                 if(isstress)
                 {
-                    stvnl_dphi(0,0) += sum/2.0 * GlobalC::LM.DHloc_fixed_11[index];
-                    stvnl_dphi(0,1) += sum/2.0 * GlobalC::LM.DHloc_fixed_12[index];
-                    stvnl_dphi(0,2) += sum/2.0 * GlobalC::LM.DHloc_fixed_13[index];
-                    stvnl_dphi(1,1) += sum/2.0 * GlobalC::LM.DHloc_fixed_22[index];
-                    stvnl_dphi(1,2) += sum/2.0 * GlobalC::LM.DHloc_fixed_23[index];
-                    stvnl_dphi(2,2) += sum/2.0 * GlobalC::LM.DHloc_fixed_33[index];   
+                    stvnl_dphi(0,0) += sum/2.0 * this->UHM->LM->DHloc_fixed_11[index];
+                    stvnl_dphi(0,1) += sum/2.0 * this->UHM->LM->DHloc_fixed_12[index];
+                    stvnl_dphi(0,2) += sum/2.0 * this->UHM->LM->DHloc_fixed_13[index];
+                    stvnl_dphi(1,1) += sum/2.0 * this->UHM->LM->DHloc_fixed_22[index];
+                    stvnl_dphi(1,2) += sum/2.0 * this->UHM->LM->DHloc_fixed_23[index];
+                    stvnl_dphi(2,2) += sum/2.0 * this->UHM->LM->DHloc_fixed_33[index];   
                 }
             }
         }
     }
     if(isstress){
-        for(int i=0;i<3;i++)
-        {
-            for(int j=0;j<3;j++)
-            {
-                if(i<j) stvnl_dphi(j,i) = stvnl_dphi(i,j);
-				stvnl_dphi(i,j) *=  GlobalC::ucell.lat0 / GlobalC::ucell.omega;
-            }
-        }
+        StressTools::stress_fill(GlobalC::ucell.lat0, GlobalC::ucell.omega, stvnl_dphi);
     }
     ModuleBase::timer::tick("Force_LCAO_gamma","cal_ftvnl_dphi");
     return;
@@ -797,12 +769,12 @@ void Force_LCAO_gamma::cal_fvnl_dbeta(
                 for (int jj = 0; jj < GlobalC::ucell.atoms[T1].nw; jj++)
                 {
                     const int iw1_all = start1 + jj;
-                    const int mu = GlobalC::ParaO.trace_loc_row[iw1_all];
+                    const int mu = this->ParaV->trace_loc_row[iw1_all];
                     if(mu<0) continue;
                     for (int kk = 0; kk < GlobalC::ucell.atoms[T2].nw; kk++)
                     {
                         const int iw2_all = start2 + kk;
-                        const int nu = GlobalC::ParaO.trace_loc_col[iw2_all];
+                        const int nu = this->ParaV->trace_loc_col[iw2_all];
                         if(nu<0) continue;
 
                         double nlm[3] = {0,0,0};
@@ -848,7 +820,7 @@ void Force_LCAO_gamma::cal_fvnl_dbeta(
 												   GlobalC::ucell.atoms[it].nproj_soc
 								); // mohan  add 2021-05-07
 
-                        //const int index = mu * GlobalC::ParaO.ncol + nu;
+                        //const int index = mu * this->ParaV->ncol + nu;
 
                         // dbeta is minus, that's consistent.
                         // only one projector for each atom force.
@@ -871,9 +843,10 @@ void Force_LCAO_gamma::cal_fvnl_dbeta(
                         {
                             for(int ipol=0;ipol<3;ipol++)
 							{
-                                svnl_dbeta(0,ipol) -= sum/2.0 * (nlm[0] * r0[ipol] + nlm1[0] * r1[ipol])* -1;
-                                svnl_dbeta(1,ipol) -= sum/2.0 * (nlm[1] * r0[ipol] + nlm1[1] * r1[ipol])* -1;
-                                svnl_dbeta(2,ipol) -= sum/2.0 * (nlm[2] * r0[ipol] + nlm1[2] * r1[ipol])* -1;
+                                for(int jpol=ipol;jpol<3;jpol++)
+                                {
+                                    svnl_dbeta(ipol,jpol) += sum * (nlm[ipol] * r0[jpol] + nlm1[ipol] * r1[jpol]);
+                                }
                             }
                         }
                     }//!kk
@@ -883,13 +856,7 @@ void Force_LCAO_gamma::cal_fvnl_dbeta(
     }//!iat
     if(isstress)
     {
-        for(int i=0;i<3;i++)
-        {
-            for(int j=0;j<3;j++)
-            {
-                svnl_dbeta(i,j) *=  GlobalC::ucell.lat0 / GlobalC::ucell.omega;
-            }
-        }
+        StressTools::stress_fill(GlobalC::ucell.lat0, GlobalC::ucell.omega, svnl_dbeta);
     }
     ModuleBase::timer::tick("Force_LCAO_gamma","cal_fvnl_dbeta");
     return;

@@ -10,18 +10,18 @@ class Driver_classic
 	Driver_classic();
 	~Driver_classic();
 
-	void init();
+	static void init();
 
 	private:
 
 	// reading the parameters
-	void reading();
+	static void reading();
 
     // convert INPUT parameters for classic MD
-    void convert(UnitCell_pseudo &ucell_c);
+    static void convert(UnitCell_pseudo &ucell_c);
 
 	// classic MD
-	void classic_world();
+	static void classic_world();
 
 };
 

@@ -12,7 +12,7 @@
 #include "global_variable.h"
 
 #ifdef __MPI
-#include <mpi.h>
+#include "mpi.h"
 #endif
 //these two function is not used yet!!!!
 /*namespace ModuleBase

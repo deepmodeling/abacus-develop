@@ -14,6 +14,20 @@ Gint_Gamma::Gint_Gamma()
     x3 = new double[1];
     x12 = new double[1];
     x03 = new double[1];
+    
+    sender_index_size = 1;
+	sender_local_index = new int[1];
+    sender_size_process = new int[1];
+    sender_displacement_process = new int[1];
+    sender_size=1;
+    sender_buffer=new double[1];
+
+    receiver_index_size=1;
+    receiver_global_index = new int[1];
+    receiver_size_process = new int[1];
+    receiver_displacement_process = new int[1];
+    receiver_size=1;
+    receiver_buffer=new double[1];
 }
 
 Gint_Gamma::~Gint_Gamma()
@@ -27,6 +41,16 @@ Gint_Gamma::~Gint_Gamma()
     delete[] x3;
     delete[] x12;
     delete[] x03;
+
+    delete[] sender_local_index;
+    delete[] sender_size_process;
+    delete[] sender_displacement_process;
+    delete[] sender_buffer;
+
+    delete[] receiver_global_index;
+    delete[] receiver_size_process;
+    delete[] receiver_displacement_process;
+    delete[] receiver_buffer;
 }
 
 

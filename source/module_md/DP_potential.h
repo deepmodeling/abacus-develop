@@ -12,12 +12,12 @@ public:
     DP_potential();
     ~DP_potential();
 
-    static void DP_init(UnitCell_pseudo &ucell_c, 
+    static void DP_init(const UnitCell_pseudo &ucell_c, 
                 std::vector<double> &cell, 
                 std::vector<double> &coord, 
                 std::vector<int> &atype);
 
-    static void DP_pot(UnitCell_pseudo &ucell_c, 
+    static void DP_pot(const UnitCell_pseudo &ucell_c, 
                 double &potential, 
                 ModuleBase::Vector3<double> *force, 
                 ModuleBase::matrix &stress);

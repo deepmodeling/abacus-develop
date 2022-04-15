@@ -7,6 +7,8 @@
 #include "../module_orbital/ORB_read.h"
 #include "../src_pw/global.h"
 #include "../module_base/blas_connector.h"
+#include "../src_parallel/parallel_reduce.h"
+#include "../module_base/timer.h"
 
 #include "global_fp.h" // mohan add 2021-01-30
 
@@ -213,17 +215,8 @@ Gint_Tools::Array_Pool<double> Gint_Gamma::gamma_charge(const double*const*const
 						// here vindex refers to local potentials
 						int* vindex = Gint_Tools::get_vindex(ncyz, ibx, jby, kbz);	
 						
-						//------------------------------------------------------
-						// band size: number of columns of a band
-						//------------------------------------------------------------------
-						int* block_size = Gint_Tools::get_block_size(na_grid, grid_index);
-						
-						//------------------------------------------------------
-						// index of wave functions for each block
-						//------------------------------------------------------
-						int *block_iw = Gint_Tools::get_block_iw(na_grid, grid_index, this->max_size);
-
-						int* block_index = Gint_Tools::get_block_index(na_grid, grid_index);
+                        int * block_iw, * block_index, * block_size;
+                        Gint_Tools::get_block_info(na_grid, grid_index, block_iw, block_index, block_size);
 
 						//------------------------------------------------------
 						// whether the atom-grid distance is larger than cutoff
@@ -242,9 +235,9 @@ Gint_Tools::Array_Pool<double> Gint_Gamma::gamma_charge(const double*const*const
 							cal_flag, psir_ylm.ptr_2D, vindex, DM, rho);
 
 						free(vindex);			vindex=nullptr;
-						free(block_size);		block_size=nullptr;
-						free(block_iw);			block_iw=nullptr;
-						free(block_index);		block_index=nullptr;
+                        delete[] block_iw;
+                        delete[] block_index;
+                        delete[] block_size;
 
 						for(int ib=0; ib<GlobalC::pw.bxyz; ++ib)
 							free(cal_flag[ib]);
@@ -301,15 +294,16 @@ double sum_up_rho(const Gint_Tools::Array_Pool<double> &rho)
 
 
 // calculate charge density
-double Gint_Gamma::cal_rho(const double*const*const*const DM)
+double Gint_Gamma::cal_rho(double*** DM_in)
 {
     ModuleBase::TITLE("Gint_Gamma","cal_rho");
     ModuleBase::timer::tick("Gint_Gamma","cal_rho");
 
+    this->DM = DM_in;
     this->job = cal_charge;
     this->save_atoms_on_grid(GlobalC::GridT);
 
-	const Gint_Tools::Array_Pool<double> rho = this->gamma_charge(DM);
+	const Gint_Tools::Array_Pool<double> rho = this->gamma_charge(this->DM);
     const double ne = sum_up_rho(rho);
 
     ModuleBase::timer::tick("Gint_Gamma","cal_rho");

@@ -1,7 +1,8 @@
 #ifndef INCLUDE_ELECTRONS_H
 #define INCLUDE_ELECTRONS_H
 
-#include "tools.h"
+#include "../module_base/global_function.h"
+#include "../module_base/global_variable.h"
 #include "threshold_elec.h"
 
 class Electrons: private Threshold_Elec

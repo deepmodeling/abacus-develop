@@ -1,6 +1,8 @@
 #include "charge_mixing.h"
 #include "global.h"
 #include "../module_base/inverse_matrix.h"
+#include "../src_parallel/parallel_reduce.h"
+#include "../module_base/timer.h"
 
 Charge_Mixing::Charge_Mixing(){}
 Charge_Mixing::~Charge_Mixing(){}
@@ -274,16 +276,6 @@ double Charge_Mixing::rhog_dot_product(
 	ModuleBase::timer::tick("Charge_Mixing","rhog_dot_product");
 
 	sum *= GlobalC::ucell.omega * 0.5;
-
-	//bool dft_is_meta = false;
-	//bool lda_plus_u = false;
-	//bool okpaw = false;
-	//bool dipfield = false;
-
-//	if(dft_is_meta) sum += tauk_ddot();
-//	if(lda_pluse_u) sum += ns_ddot();
-//	if(okpaw) sum += paw_ddot();
-//	if(dipfield) sum += ...;
 
     return sum;
 }

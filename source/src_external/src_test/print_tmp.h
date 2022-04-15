@@ -1,4 +1,5 @@
-#pragma once
+#ifndef PRINT_TMP_H
+#define PRINT_TMP_H
 
 #include<iostream>
 #include<fstream>
@@ -43,3 +44,5 @@ void print_matrixess(const std::map<size_t,std::map<size_t,std::map<Abfs::Vector
 				c3.second->print(ofs, 1E-10)<<std::endl;
 			}
 }
+
+#endif

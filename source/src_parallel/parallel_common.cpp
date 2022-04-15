@@ -1,5 +1,6 @@
 #include "parallel_common.h"
 #include <cstring>
+#include "../module_base/global_variable.h"
 
 #ifdef __MPI
 void Parallel_Common::bcast_string(std::string &object)					// Peize Lin fix bug 2019-03-18

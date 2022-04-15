@@ -1,0 +1,25 @@
+ATOMIC_SPECIES
+H 1.000 ../tools/PP_ORB/H_ONCV_PBE-1.0.upf
+O 1.000 ../tools/PP_ORB/O_ONCV_PBE-1.0.upf
+
+LATTICE_CONSTANT
+10  // add lattice constant, 10.58 ang
+
+LATTICE_VECTORS
+1.0 0.0 0.0
+0.0 1.0 0.0
+0.0 0.0 1.0
+
+ATOMIC_POSITIONS
+Direct //Cartesian or Direct coordinate.
+
+H // element type
+0 // magnetism
+2	// number of atoms
+0.57155  0.05539  0.000  1 1 1
+0.42845  0.05539  0.000  1 1 1
+
+O	// Element type
+0	// magnetism
+1  //number of atoms
+0.500  0.000  0.000  1 1 1

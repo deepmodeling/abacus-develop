@@ -51,7 +51,7 @@ void CHECK_DOUBLE(std::ifstream &ifs,const double &v,bool quit)
 	const double tiny = 1.0e-5;
 	double v_in;
 	ifs >> v_in;
-	if( (v - v_in) > tiny )
+	if( fabs(v - v_in) > tiny )
 	{
 		if(quit)
 		{
@@ -77,7 +77,7 @@ void CHECK_STRING(std::ifstream &ifs,const std::string &v,bool quit)
 		{
 			std::cout << " read in value = " << v_in << std::endl;
 			std::cout << " the value should be = " << v << std::endl;
-			WARNING_QUIT("CHECK_DOUBLE","the name of parameter wrong!");
+			WARNING_QUIT("CHECK_STRING","the name of parameter wrong!");
 		}
 		else
 		{

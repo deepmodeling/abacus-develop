@@ -23,10 +23,7 @@ int Pseudopot_upf::read_pseudo_vwr(std::ifstream &ifs)
 	// --------------------------------------
 	// (1) read in data 
 	// --------------------------------------
-	this->dft[0]="SLA";
-	this->dft[1]="PZ";
-	this->dft[2]="NOGX";
-	this->dft[3]="NOGC";
+	this->xc_func="PZ";
 	this->pp_type="NC";
 	this->tvanp=false;
 	GlobalV::ofs_running << " Always use PZ-LDA by now." << std::endl;

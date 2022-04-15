@@ -7,8 +7,6 @@
 #include "sltk_atom.h"
 #include "sltk_atom_input.h"
 
-//#include "../src_pw/tools.h"
-//#include "../src_pw/pw_basis.h"
 #include "../module_cell/unitcell.h"
 //extern PW_Basis pw;
 

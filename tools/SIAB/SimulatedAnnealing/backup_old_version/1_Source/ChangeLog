@@ -92,7 +92,7 @@ VERSION 039
 10-06-17 Fix a bug in ReadData about USEPW.
 10-06-17 Fix two bug in pw_basis::get_GVectors.
 10-06-17 Fix a bug in ReadData about bcast.
-10-06-17 NPOOL is not readable in series version.
+10-06-17 KPAR is not readable in series version.
 10-06-17 Add calculation of ig1, ig2, ig3 in pw_basic.
 10-06-17 Add NMAXUSED and CALSPI in tools.
 10-06-17 Add LMAXUSED. 
@@ -132,7 +132,7 @@ VERSION 037
 
 VERSION 036
 10-06-14 Add mpi information in main.cpp
-10-06-14 Fix a bug about NPOOL bcast.
+10-06-14 Fix a bug about KPAR bcast.
 10-06-14 Bcast Q data available.
 
 VERSION 035

@@ -2,7 +2,7 @@
 
 [back to main page](../../README.md)
 
-From version 2.1.0, ABACUS has the function of Mulliken population analysis. To use this function, set ‘mulliken’ to ‘1’ in the INPUT file. After calculation, there will be an output file named mulliken.txt in the output directory. In the file, there are contents like:
+From version 2.1.0, ABACUS has the function of Mulliken population analysis. To use this function, set ‘out_mul’ to ‘1’ in the INPUT file. After calculation, there will be an output file named mulliken.txt in the output directory. In the file, there are contents like:
 
 ```
 

@@ -1,3 +1,4 @@
+#ifdef __MPI
 #include "exx_abfs-screen-cauchy.h"
 
 #include "../src_pw/global.h"
@@ -294,7 +295,7 @@ double Exx_Abfs::Screen::Cauchy::cal_matrix_outer_max( const ModuleBase::matrix 
 	assert( m.nr*m.nc == ni*nj );
 	std::valarray<double> m_outer(ni);
 	for( size_t i=0; i<ni; ++i )
-		m_outer[i] = LapackConnector::nrm2( nj, m.c+i*nj, 1 );
+		m_outer[i] = BlasConnector::nrm2( nj, m.c+i*nj, 1 );
 	return m_outer.max();
 }
 
@@ -302,6 +303,7 @@ double Exx_Abfs::Screen::Cauchy::cal_matrix_outer_max( const ModuleBase::matrix 
 ModuleBase::matrix Exx_Abfs::Screen::Cauchy::m_mT( const ModuleBase::matrix & m ) const
 {
 	ModuleBase::matrix mm( m.nr, m.nr, false );
-	LapackConnector::gemm( 'N','T', m.nr,m.nr,m.nc, 1, m.c,m.nc, m.c,m.nc, 0, mm.c,mm.nc );
+	BlasConnector::gemm( 'N','T', m.nr,m.nr,m.nc, 1, m.c,m.nc, m.c,m.nc, 0, mm.c,mm.nc );
 	return mm;
 }
+#endif

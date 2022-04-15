@@ -1,0 +1,2 @@
+# https://www.gitpod.io/docs/configure
+image: "ghcr.io/deepmodeling/abacus-development-kit:gnu"

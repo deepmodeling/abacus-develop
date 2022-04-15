@@ -5,7 +5,10 @@ obj
 OUT.*
 log.txt
 result.out
+*.dat
 .DS_Store
 .cache
 .vscode
 html
+*.log
+STRU_READIN_ADJUST.cif

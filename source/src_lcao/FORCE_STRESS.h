@@ -1,7 +1,9 @@
 #ifndef FORCE_STRESS_LCAO_H
 #define FORCE_STRESS_LCAO_H
 
-#include "../src_pw/tools.h"
+#include "../module_base/global_function.h"
+#include "../module_base/global_variable.h"
+#include "../module_base/matrix.h"
 #include "FORCE_k.h"
 //#include "./force_lcao_gamma.h"
 #include "../src_pw/stress_func.h"
@@ -20,18 +22,16 @@ class Force_Stress_LCAO
 
 	public :
 	
-	Force_Stress_LCAO ();
+	Force_Stress_LCAO (Record_adj &ra);
 	~Force_Stress_LCAO ();
 
-	private:
-
+private:
+    
+    Record_adj* RA;
 	Force_LCAO_k flk;
 //	Force_LCAO_gamma flg;
 	Stress_Func sc_pw;
 	Forces f_pw;
-
-	void allocate (void);
-	void destroy (void);
 	
 	void print_force(const std::string &name, ModuleBase::matrix& f, const bool screen, bool ry)const;
 	void printforce_total (const bool ry, const bool istestf, ModuleBase::matrix& fcs);
@@ -40,8 +40,11 @@ class Force_Stress_LCAO
 		const bool isforce, 
 		const bool isstress, 
 		const bool istestf, 
-		const bool istests, 
-		ModuleBase::matrix &fcs, 
+        const bool istests,
+        Local_Orbital_Charge& loc,
+        Local_Orbital_wfc& lowf,
+        LCAO_Hamilt &uhm,
+        ModuleBase::matrix& fcs,
 		ModuleBase::matrix &scs);
 
 	void forceSymmetry(ModuleBase::matrix &fcs);
@@ -55,15 +58,25 @@ class Force_Stress_LCAO
 	void calForceStressIntegralPart(
 		const bool isGammaOnly,
 		const bool isforce,
-		const bool isstress,
-		ModuleBase::matrix &foverlap,
+        const bool isstress,
+        Local_Orbital_Charge& loc,
+        Local_Orbital_wfc& lowf,
+        ModuleBase::matrix& foverlap,
 		ModuleBase::matrix &ftvnl_dphi,
 		ModuleBase::matrix &fvnl_dbeta,	
 		ModuleBase::matrix &fvl_dphi,
 		ModuleBase::matrix &soverlap,
 		ModuleBase::matrix &stvnl_dphi,
 		ModuleBase::matrix &svnl_dbeta,
-		ModuleBase::matrix &svl_dphi);
+#if __DEEPKS
+		ModuleBase::matrix& svl_dphi,
+	    ModuleBase::matrix& svnl_dalpha,
+#else
+	    ModuleBase::matrix& svl_dphi,
+#endif
+        LCAO_Hamilt &uhm);
+    
+
 
 	void calStressPwPart(
 		ModuleBase::matrix &sigmadvl,

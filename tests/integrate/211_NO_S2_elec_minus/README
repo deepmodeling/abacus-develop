@@ -1,0 +1,7 @@
+This test for:
+*fcc Al
+*one subtracted electron
+*nspin = 2
+*sg15 pseudopotential
+*mixing_type plain
+*mixing_beta 0.7

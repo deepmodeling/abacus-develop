@@ -3,8 +3,8 @@
 #include "../src_pw/global.h"
 using namespace Ions_Move_Basic;
 
-double BFGS_Basic::w1 = -1.0; // default is 0.01
-double BFGS_Basic::w2 = -1.0; // defalut is 0.05
+double BFGS_Basic::relax_bfgs_w1 = -1.0; // default is 0.01
+double BFGS_Basic::relax_bfgs_w2 = -1.0; // defalut is 0.05
 
 BFGS_Basic::BFGS_Basic()
 {
@@ -140,21 +140,21 @@ void BFGS_Basic::check_wolfe_conditions(void)
 	double dot = dot_func(grad, move_p, dim);
 
 	// if the total energy falls rapidly, enlarge the trust radius.
-    bool wolfe1 = ( etot - etot_p ) < this->w1 * dot_p;
+    bool wolfe1 = ( etot - etot_p ) < this->relax_bfgs_w1 * dot_p;
 
 	// if the force is still very large, enlarge the trust radius,
 	// otherwise the dot should be very small, in this case,
 	// enlarge trst radius is not good.
-    bool wolfe2 = abs(dot) > - this->w2 * dot_p;
+    bool wolfe2 = abs(dot) > - this->relax_bfgs_w2 * dot_p;
 
-	if(GlobalV::test_ion_dynamics)
+	if(GlobalV::test_relax_method)
 	{
 		ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"etot - etot_p",etot-etot_p);
-		ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"w1 * dot_p",w1 * dot_p);
+		ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"relax_bfgs_w1 * dot_p",relax_bfgs_w1 * dot_p);
 		ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"dot",dot);
-		ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"w2 * dot_p",w2 * dot_p);	
-		ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"w1",w1);
-		ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"w2",w2);
+		ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"relax_bfgs_w2 * dot_p",relax_bfgs_w2 * dot_p);	
+		ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"relax_bfgs_w1",relax_bfgs_w1);
+		ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"relax_bfgs_w2",relax_bfgs_w2);
 		ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"wolfe1",wolfe1);
 		ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"wolfe2",wolfe2);
 	}
@@ -174,7 +174,7 @@ void BFGS_Basic::check_wolfe_conditions(void)
 	 */
 	 
 	ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"etot - etot_p",etot-etot_p);
-	ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"w1 * dot_p",w1 * dot_p);
+	ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"relax_bfgs_w1 * dot_p",relax_bfgs_w1 * dot_p);
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"wolfe1",wolfe1);
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"wolfe2",wolfe2);
 //  ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"dot = ",dot);
@@ -223,18 +223,18 @@ void BFGS_Basic::new_step(void)
 		// we haven't succes before, but we also need to decide a direction
 		// this is the case when BFGS first start			
 		// if the gradient is very small now, 
-		// we don't need large trust_radius_ini, 
+		// we don't need large relax_bfgs_init, 
 		// we choose a smaller one. 
 		if( Ions_Move_Basic::largest_grad < 0.01)
 		{
-			trust_radius_ini = std::min(0.2, trust_radius_ini );
+			relax_bfgs_init = std::min(0.2, relax_bfgs_init );
 		}
                 
                 Ions_Move_Basic::best_xxx = std::fabs(Ions_Move_Basic::best_xxx); 
                 
                 // std::cout << "best_xxx=" << " " << best_xxx <<std::endl;
                 
-                trust_radius_ini = std::min( Ions_Move_Basic::best_xxx, trust_radius_ini );     //cg to bfgs initial trust_radius   13-8-10 pengfei
+                relax_bfgs_init = std::min( Ions_Move_Basic::best_xxx, relax_bfgs_init );     //cg to bfgs initial trust_radius   13-8-10 pengfei
 	}
 	else if(Ions_Move_Basic::update_iter>1)
 	{
@@ -294,7 +294,7 @@ void BFGS_Basic::new_step(void)
         //std::cout<<"update_iter="<<Ions_Move_Basic::update_iter<<std::endl;
 	if(Ions_Move_Basic::update_iter==1)
 	{       
-		trust_radius = trust_radius_ini;
+		trust_radius = relax_bfgs_init;
 		
                 this->tr_min_hit = false;
 	}
@@ -315,7 +315,7 @@ void BFGS_Basic::compute_trust_radius(void)
 
     // (1) judge 1
     double dot = dot_func(grad_p, move_p, dim);
-    bool ltest = (etot - etot_p) < this->w1 * dot;
+    bool ltest = (etot - etot_p) < this->relax_bfgs_w1 * dot;
 
     // (2) judge 2
 	// calculate the norm of move, which
@@ -346,16 +346,16 @@ void BFGS_Basic::compute_trust_radius(void)
 
     if(this->wolfe_flag)
     {
-        trust_radius = std::min(trust_radius_max, 2.0*a*trust_radius_old);
+        trust_radius = std::min(relax_bfgs_rmax, 2.0*a*trust_radius_old);
     }
     else
     {
 		// mohan fix bug 2011-03-13 2*a*trust_radius_old -> a*trust_radius_old
-        trust_radius = std::min(trust_radius_max, a*trust_radius_old);
+        trust_radius = std::min(relax_bfgs_rmax, a*trust_radius_old);
         trust_radius = std::min(trust_radius, norm_move);
     }
 
-	if(GlobalV::test_ion_dynamics)
+	if(GlobalV::test_relax_method)
 	{
 		ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"wolfe_flag",wolfe_flag);
 		ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"trust_radius_old",trust_radius_old);
@@ -364,7 +364,7 @@ void BFGS_Basic::compute_trust_radius(void)
 		ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"Trust_radius (Bohr)",trust_radius);
 	}
 
-    if( trust_radius < trust_radius_min )
+    if( trust_radius < relax_bfgs_rmin )
     {
         //the history should be reset, we got trapped
         if(tr_min_hit)
@@ -379,7 +379,7 @@ void BFGS_Basic::compute_trust_radius(void)
         {
             move[i] = -grad[i];
         }
-        trust_radius = trust_radius_min;
+        trust_radius = relax_bfgs_rmin;
         tr_min_hit = true;
     }
     else

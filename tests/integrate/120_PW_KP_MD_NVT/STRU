@@ -1,0 +1,19 @@
+ATOMIC_SPECIES
+Si 1 ../tools/PP_ORB/Si_ONCV_PBE-1.0.upf
+
+LATTICE_CONSTANT
+10.2
+
+LATTICE_VECTORS
+0.5 0.5 0 #latvec1
+0.5 0 0.5 #latvec2
+0 0.5 0.5 #latvec3
+
+ATOMIC_POSITIONS
+Cartesian
+
+Si #label
+0 #magnetism
+2 #number of atoms
+0  0  0  m  1  1  1  v  -8.2024241958e-05  3.02182240507e-05  0.000135711648533
+0.241  0.255  0.250999999999  m  1  1  1  v  8.2024241958e-05  -3.02182240507e-05  -0.000135711648533

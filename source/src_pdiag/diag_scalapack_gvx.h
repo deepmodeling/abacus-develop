@@ -6,8 +6,8 @@
 #ifndef DIAG_SCALAPACK_GVX
 #define DIAG_SCALAPACK_GVX
 
-#include "module_base/matrix.h"
-#include "module_base/complexmatrix.h"
+#include "../module_base/matrix.h"
+#include "../module_base/complexmatrix.h"
 #include <complex>
 #include <utility>
 #include <vector>

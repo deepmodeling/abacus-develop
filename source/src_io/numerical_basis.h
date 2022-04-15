@@ -5,7 +5,13 @@
 //==========================================================
 #ifndef NUMERICAL_BASIS_H
 #define NUMERICAL_BASIS_H
-#include "../src_pw/tools.h"
+#include "../module_base/global_function.h"
+#include "../module_base/global_variable.h"
+#include "../module_base/matrix.h"
+#include "../module_base/vector3.h"
+#include "../module_base/intarray.h"
+#include "../module_base/complexarray.h"
+#include "../module_base/complexmatrix.h"
 #include "bessel_basis.h"
 #include <vector>
 //==========================================================
@@ -34,19 +40,21 @@ class Numerical_Basis
 
 	ModuleBase::ComplexArray cal_overlap_Q(
 		const int &ik, const int &np, const ModuleBase::ComplexMatrix &psi,
-		const int derivative_order ) const;
+		const double derivative_order ) const;
 		
 	ModuleBase::ComplexArray cal_overlap_Sq(
 		const int &ik, 
 		const int &np,
-		const int derivative_order ) const;
+		const double derivative_order ) const;
 
-	static ModuleBase::matrix cal_overlap_V(const ModuleBase::ComplexMatrix *psi, const int derivative_order);
+	static ModuleBase::matrix cal_overlap_V(const ModuleBase::ComplexMatrix *psi, const double derivative_order);
 
 	ModuleBase::realArray cal_flq(const int ik, const std::vector<ModuleBase::Vector3<double>> &gk) const;
 
 	static ModuleBase::matrix cal_ylm(const std::vector<ModuleBase::Vector3<double>> &gk);
 	
+	static std::vector<double> cal_gpow (const std::vector<ModuleBase::Vector3<double>> &gk, const double derivative_order);
+
 	static void output_info(
 		std::ofstream &ofs,
 		const Bessel_Basis &bessel_basis);

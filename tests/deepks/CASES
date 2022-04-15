@@ -1,7 +1,9 @@
 601_PW_deepks_s_H2O
 601_PW_deepks_p_H2O
 601_PW_deepks_d_H2O
-602_NO_deepks_s_H2O
-602_NO_deepks_p_H2O
-602_NO_deepks_d_H2O
-603_NO_deepks_d_H2O_scf_lda2pbe
+602_NO_deepks_d_H2O_scf_lda2pbe
+603_NO_deepks_H2O_multik
+603_NO_deepks_CH4
+603_NO_deepks_ethanol
+603_NO_deepks_watertrimer
+603_NO_deepks_H2O_bandgap

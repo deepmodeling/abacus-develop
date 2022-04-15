@@ -1,7 +1,11 @@
 #ifndef VNL_IN_PW_H
 #define VNL_IN_PW_H
 
-#include "tools.h"
+#include "../module_base/global_function.h"
+#include "../module_base/global_variable.h"
+#include "../module_base/matrix.h"
+#include "../module_base/complexarray.h"
+#include "../module_base/complexmatrix.h"
 #include "VL_in_pw.h"
 #ifdef __LCAO
 #include "../module_orbital/ORB_gen_tables.h"
@@ -76,6 +80,9 @@ public:
 	ModuleBase::realArray tab_at;	//(:,:,:), interpolation table for atomic wfc
 
 	ModuleBase::realArray deeq;		//(:,:,:,:), the integral of V_eff and Q_{nm}
+#ifdef __CUDA
+	double *d_deeq;
+#endif
 	ModuleBase::ComplexArray deeq_nc;	//(:,:,:,:), the spin-orbit case
 	ModuleBase::realArray becsum;	//(:,:,:,:), \sum_i  f(i) <psi(i)/beta_1><beta_m/psi(i)> //used in charge
 

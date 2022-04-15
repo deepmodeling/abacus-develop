@@ -1,10 +1,11 @@
+#ifdef __MPI
 #include "exx_abfs-parallel-communicate-hexx.h"
 #include "exx_abfs-parallel-communicate-function.h"
 
 #include "../src_pw/global.h"
 #include "../src_lcao/global_fp.h"
 
-#include <mpi.h>
+#include "mpi.h"
 #include <thread>
 
 
@@ -12,7 +13,8 @@
 
 void Exx_Abfs::Parallel::Communicate::Hexx::Allreduce2::init(
 	const MPI_Comm &mpi_comm_in,
-	const set<std::pair<size_t,size_t>> &H_atom_pairs_core)
+    const set<std::pair<size_t, size_t>>& H_atom_pairs_core,
+    const Parallel_Orbitals &pv)
 {
 	ModuleBase::TITLE("Exx_Abfs::Parallel::Communicate::Hexx::Allreduce2::init");
 	
@@ -20,9 +22,9 @@ void Exx_Abfs::Parallel::Communicate::Hexx::Allreduce2::init(
 	MPI_Comm_size(mpi_comm, &comm_sz);
 	MPI_Comm_rank(mpi_comm, &my_rank);
 	
-	atom_in_2D_list = Exx_Abfs::Parallel::Communicate::Function::get_atom_in_2D_list(mpi_comm);
+	atom_in_2D_list = Exx_Abfs::Parallel::Communicate::Function::get_atom_in_2D_list(mpi_comm, pv);
 	send_size_list = get_send_size_list(H_atom_pairs_core, atom_in_2D_list);
-	recv_size = GlobalC::ParaO.nrow * GlobalC::ParaO.ncol * sizeof(double);
+	recv_size = pv.nrow * pv.ncol * sizeof(double);
 }
 
 std::vector<std::map<size_t,std::map<size_t,std::map<Abfs::Vector3_Order<int>,ModuleBase::matrix>>>> 
@@ -360,3 +362,4 @@ void Exx_Abfs::Parallel::Communicate::Hexx::Allreduce2::insert_data(
 		}
 	}
 }
+#endif

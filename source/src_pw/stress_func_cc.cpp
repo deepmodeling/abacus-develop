@@ -1,6 +1,8 @@
 #include "./stress_func.h"
-#include "./H_XC_pw.h"
+#include "../module_xc/xc_functional.h"
 #include "../module_base/math_integral.h"
+#include "../module_base/timer.h"
+#include "global.h"
 
 //NLCC term, need to be tested
 void Stress_Func::stress_cc(ModuleBase::matrix& sigma, const bool is_pw)
@@ -34,9 +36,9 @@ void Stress_Func::stress_cc(ModuleBase::matrix& sigma, const bool is_pw)
 	}
 
 	//recalculate the exchange-correlation potential
-    const auto etxc_vtxc_v = H_XC_pw::v_xc(GlobalC::pw.nrxx, GlobalC::pw.ncxyz, GlobalC::ucell.omega, GlobalC::CHR.rho, GlobalC::CHR.rho_core);
-	H_XC_pw::etxc    = std::get<0>(etxc_vtxc_v);			// may delete?
-	H_XC_pw::vtxc    = std::get<1>(etxc_vtxc_v);			// may delete?
+    const auto etxc_vtxc_v = XC_Functional::v_xc(GlobalC::pw.nrxx, GlobalC::pw.ncxyz, GlobalC::ucell.omega, GlobalC::CHR.rho, GlobalC::CHR.rho_core);
+	GlobalC::en.etxc    = std::get<0>(etxc_vtxc_v);			// may delete?
+	GlobalC::en.vtxc    = std::get<1>(etxc_vtxc_v);			// may delete?
 	const ModuleBase::matrix vxc = std::get<2>(etxc_vtxc_v);
 
 	std::complex<double> * psic = new std::complex<double> [GlobalC::pw.nrxx];

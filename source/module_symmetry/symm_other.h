@@ -1,7 +1,6 @@
 #ifndef SYMM_OTHER_H
 #define SYMM_OTHER_H
 
-//#include "../src_pw/tools.h"
 #include "../module_base/vector3.h"
 #include "../module_base/global_function.h"
 namespace ModuleSymmetry

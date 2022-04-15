@@ -1,7 +1,9 @@
 #ifndef IONS_MOVE_SD_H
 #define IONS_MOVE_SD_H
 
-#include "../src_pw/tools.h"
+#include "../module_base/global_function.h"
+#include "../module_base/global_variable.h"
+#include "../module_base/matrix.h"
 class Ions_Move_SD
 {
 public:

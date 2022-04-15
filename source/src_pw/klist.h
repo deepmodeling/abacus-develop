@@ -1,23 +1,26 @@
 #ifndef K_VECTORS_H
 #define K_VECTORS_H
 
-#include "tools.h"
+#include "../module_base/global_function.h"
+#include "../module_base/global_variable.h"
+#include "../module_base/matrix3.h"
 #include "../module_symmetry/symmetry.h"
+#include <vector>
 
 class K_Vectors
 {
 public:
 
-    ModuleBase::Vector3<double> *kvec_c;		// Cartesian coordinates of k points
-    ModuleBase::Vector3<double> *kvec_d;		// Direct coordinates of k points
-    ModuleBase::Vector3<double> *kvec_d_ibz;	// ibz Direct coordinates of k points
+    std::vector<ModuleBase::Vector3<double>> kvec_c;		// Cartesian coordinates of k points
+    std::vector<ModuleBase::Vector3<double>> kvec_d;		// Direct coordinates of k points
+    std::vector<ModuleBase::Vector3<double>> kvec_d_ibz;	// ibz Direct coordinates of k points
 
-    double *wk;						// wk, weight of k points
-    double *wk_ibz;					// ibz kpoint wk ,weight of k points
+    std::vector<double> wk;						// wk, weight of k points
+    std::vector<double> wk_ibz;					// ibz kpoint wk ,weight of k points
 
-    int *ngk;						// ngk, number of plane waves for each k point
-    int *isk;						// distinguish spin up and down k points
-    int *ibz2bz;					// mohan added 2009-05-18
+    std::vector<int> ngk;						// ngk, number of plane waves for each k point
+    std::vector<int> isk;						// distinguish spin up and down k points
+    std::vector<int> ibz2bz;					// mohan added 2009-05-18
 
     int nks;						// number of k points in this pool(processor, up+dw)
     int nkstot;						// total number of k points

@@ -1,6 +1,8 @@
 #include "sltk_grid.h"
 #include "sltk_atom_input.h"
-#include "../src_pw/tools.h"
+#include "../module_base/global_function.h"
+#include "../module_base/global_variable.h"
+#include "../module_base/memory.h"
 //#include "../src_pw/global.h"
 //=================
 // Class AtomLink
@@ -397,6 +399,7 @@ void Grid::Build_Cell(void)
 	return;
 }
 
+#include "../module_base/mathzone.h"
 void Grid::In_Which_Cell(const UnitCell &ucell, int &a, int &b, int &c, const FAtom &atom)const
 {
 	if (expand_flag)

@@ -1,7 +1,9 @@
 #ifndef MAGNETISM_H
 #define MAGNETISM_H
 
-#include "tools.h"
+#include "../module_base/global_function.h"
+#include "../module_base/global_variable.h"
+#include "../module_base/vector3.h"
 
 class Magnetism
 {

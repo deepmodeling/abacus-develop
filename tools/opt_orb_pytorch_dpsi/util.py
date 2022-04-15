@@ -37,3 +37,6 @@ def change_to_cuda(s):
 
 def update0(t):
 	return t.masked_fill(mask=(t==0), value=1E-10)
+
+def Nm(il):
+	return 2*il+1

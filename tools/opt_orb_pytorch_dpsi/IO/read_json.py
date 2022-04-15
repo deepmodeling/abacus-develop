@@ -16,77 +16,67 @@ def read_json(file_name):
 
 	""" file_name
 	{
-		"file_list":
-		{
-			"origin":
-			[
-				"~/S2/OUT.ABACUS/S2.psi.dat",
-				"~/SO2/OUT.ABACUS/SO2.psi.dat",
-				"~/SO/OUT.ABACUS/SO.psi.dat"
+		"file_list": {
+			"origin": [
+				"~/C_bulk/orb_matrix/test.0.dat",
+				"~/CO2/orb_matrix/test.0.dat"
 			],
-			"linear":
-			[
+			"linear": [
 				[
-					"~/S2/OUT.ABACUS/S2.dpsi.dat",
-					"~/SO2/OUT.ABACUS/SO2.dpsi.dat",
-					"~/SO/OUT.ABACUS/SO.dpsi.dat"				
+					"~/C_bulk/orb_matrix/test.1.dat",
+					"~/CO2/orb_matrix/test.1.dat"
 				],
 				[
-					"~/S2/OUT.ABACUS/S2.ddpsi.dat",
-					"~/SO2/OUT.ABACUS/SO2.ddpsi.dat",
-					"~/SO/OUT.ABACUS/SO.ddpsi.dat"				
-				]
+					"~/C_bulk/orb_matrix/test.2.dat",
+					"~/CO2/orb_matrix/test.2.dat"
+				],
 			]
 		},
-		"info":
-		{
-			"Nt_all":	["S","O"],
-			"Nu":		{"S":[3,3,2],"O":[3,3,2]},
-			"Rcut":		{"S":10,"O":10},
-			"dr":		{"S":0.01,"O":0.01},
-			"Ecut":		{"S":100,"O":100},
-			"lr":		0.01,
-			"cal_T":	true,
-			"cal_smooth":	true
+		"info": {
+			"Nt_all": [ "C", "O" ],
+			"Nu":   { "C":[2,2,1], "O":[3,2,1] },
+			"Rcut": { "C":6,       "O":6       },
+			"dr":   { "C":0.01,    "O":0.01    },
+			"Ecut": { "C":200,     "O":200     },
+			"lr": 0.01,
+			"cal_T": false,
+			"cal_smooth": false
 		},
 		"weight":
 		{
-			"stru":	[2,3,1.5],
-			"bands_range":	[7,9,7],					# "bands_range" and "bands_file" only once
+			"stru":	[1, 2.3],
+			"bands_range":	[10, 15],					# "bands_range" and "bands_file" only once
 			"bands_file":
 			[
-				"~/S2/OUT.ABACUS/istate.info",
-				"~/SO2/OUT.ABACUS/istate.info",
-				"~/SO/OUT.ABACUS/istate.info"
+				"~/C_bulk/OUT.ABACUS/istate.info",
+				"~/CO2/OUT.ABACUS/istate.info"
 			]
+		},	
+		"C_init_info": {
+			"init_from_file": false,
+			"C_init_file": "~/CO/ORBITAL_RESULTS.txt",
+			"opt_C_read": false
 		},
-		"C_init_info":
-		{
-			"init_from_file":	false,
-			"C_init_file":		"/public/udata/linpz/try/SIA/pytorch/test/many_atoms/SIA/ORBITAL_RESULTS.txt",
-			"opt_C_read":		false
-		},
-		"V_info":
-		{
-			"init_from_file":	true,
-			"same_band":		false
+		"V_info": {
+			"init_from_file": true,
+			"same_band": true
 		}
 	}
 	"""
 	
 	""" info
-	Nt_all	["S", "O"]
-	Nu		{"S":[3,3,2], "O":[3,3,2]}
-	Nb_true	[7, 9, 7]
-	weight	[2, 3, 1.5]
-	Rcut	{"S":10, "O":10}
-	dr		{"S":0.01, "O":0.01}
-	Ecut	{"S":100, "O":100}
-	lr		0.01
-	Nl		{"S":2, "O":2}
-	Nst		3
-	Nt		[["S"], ["S","O"], ["S","O"]]
-	Na		[{"S":2}, {"S":1,"O":2}, {"S":1,"O":1}]
-	Nb		[7, 9, 7]
-	Ne		{"S":22, "O":19}
+		Nt_all		['C', 'O']
+		Nu			{'C': [2, 2, 1], 'O': [3, 2, 1]}
+		Rcut		{'C': 6, 'O': 6}
+		dr			{'C': 0.01, 'O': 0.01}
+		Ecut		{'C': 200, 'O': 200}
+		lr			0.01
+		cal_T		False
+		cal_smooth	False
+		Nl			{'C': 3, 'O': 3}
+		Nst			3
+		Nt			[['C'], ['C'], ['C', 'O']]
+		Na			[{'C': 1}, {'C': 1}, {'C': 1, 'O': 2}]
+		Nb			[6, 6, 10]
+		Ne			{'C': 19, 'O': 19}
 	"""

@@ -56,7 +56,7 @@ void Center2_Orb::Orb21::init_radial_table()
 			nA_short.getDruniform(),
 			false,
 			true,
-			GlobalV::FORCE); // mohan add 2021-05-07
+			GlobalV::CAL_FORCE); // mohan add 2021-05-07
 
 		orb11s.insert( make_pair( LA, Center2_Orb::Orb11(nA[LA], nB, MOT, MGT) ) );
 
@@ -97,7 +97,7 @@ void Center2_Orb::Orb21::init_radial_table( const std::set<size_t> &radials )
 			nA_short.getDruniform(),
 			false,
 			true, 
-			GlobalV::FORCE); // mohan add 2021-05-07
+			GlobalV::CAL_FORCE); // mohan add 2021-05-07
 
 		orb11s.insert( make_pair( LA, Center2_Orb::Orb11(nA[LA], nB, MOT, MGT) ) );
 

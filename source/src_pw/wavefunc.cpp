@@ -3,11 +3,13 @@
 #include "../src_lcao/wavefunc_in_pw.h"
 #include "../src_io/winput.h"
 #include "../src_io/chi0_hilbert.h"
+#include "../module_base/memory.h"
+#include "../module_base/timer.h"
 
 wavefunc::wavefunc()
 {
 	allocate_ekb = false;
-	out_wf = 0;
+	out_wfc_pw = 0;
 }
 
 wavefunc::~wavefunc()
@@ -65,6 +67,10 @@ void wavefunc::allocate(const int nks)
 	// allocate for kinetic energy
 	delete[] g2kin;
 	this->g2kin = new double[npwx];
+#ifdef __CUDA
+	cudaFree(this->d_g2kin);
+	cudaMalloc((void**)&this->d_g2kin, npwx*sizeof(double));
+#endif
 	ModuleBase::GlobalFunc::ZEROS(g2kin, npwx);
 	ModuleBase::Memory::record("wavefunc","g2kin",npwx,"double");
 
@@ -160,7 +166,7 @@ void wavefunc::wfcinit(void)
 	}
     if (GlobalV::test_wf>2)
     {
-        GlobalC::out.printrm(GlobalV::ofs_running, " wg  ",  wg);
+        output::printrm(GlobalV::ofs_running, " wg  ",  wg);
         this->check_psi(evc);
     }
 
@@ -170,7 +176,7 @@ void wavefunc::wfcinit(void)
 
 int wavefunc::get_starting_nw(void)const
 {
-    if (start_wfc == "file")
+    if (init_wfc == "file")
     {
 		throw std::runtime_error("wavefunc::get_starting_nw. start_ wfc from file: not implemented yet! "+ModuleBase::GlobalFunc::TO_STRING(__FILE__)+" line "+ModuleBase::GlobalFunc::TO_STRING(__LINE__)); 	// Peize Lin change 2019-05-01
         //ModuleBase::WARNING_QUIT("wfcinit_k","\n start_ wfc from file: not implemented yet!");
@@ -178,7 +184,7 @@ int wavefunc::get_starting_nw(void)const
         // ... read the wavefunction into memory (if it is not done in c_bands)
         //**********************************************************************
     }
-    else if (start_wfc.substr(0,6) == "atomic")
+    else if (init_wfc.substr(0,6) == "atomic")
     {
         if (GlobalC::ucell.natomwfc >= GlobalV::NBANDS)
         {
@@ -192,7 +198,7 @@ int wavefunc::get_starting_nw(void)const
         }
         return max(GlobalC::ucell.natomwfc,  GlobalV::NBANDS);
     }
-    else if (start_wfc == "random")
+    else if (init_wfc == "random")
     {
         if(GlobalV::test_wf)GlobalV::ofs_running << " Start wave functions are all random." << std::endl;
         return GlobalV::NBANDS;
@@ -281,10 +287,10 @@ void wavefunc::diago_PAO_in_pw_k2(const int &ik, ModuleBase::ComplexMatrix &wvf)
 
 	ModuleBase::ComplexMatrix wfcatom(starting_nw, npwx * GlobalV::NPOL);//added by zhengdy-soc
 	if(GlobalV::test_wf)ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "starting_nw", starting_nw);
-	if(start_wfc.substr(0,6)=="atomic")
+	if(init_wfc.substr(0,6)=="atomic")
 	{
 		this->atomic_wfc(ik, this->npw, GlobalC::ucell.lmax_ppwf, wfcatom, GlobalC::ppcell.tab_at, GlobalV::NQX, GlobalV::DQ);
-		if( start_wfc == "atomic+random" && starting_nw == GlobalC::ucell.natomwfc )//added by qianrui 2021-5-16
+		if( init_wfc == "atomic+random" && starting_nw == GlobalC::ucell.natomwfc )//added by qianrui 2021-5-16
 		{
 			this->atomicrandom(wfcatom,0,starting_nw,ik);
 		}
@@ -295,9 +301,9 @@ void wavefunc::diago_PAO_in_pw_k2(const int &ik, ModuleBase::ComplexMatrix &wvf)
 		//====================================================
 		this->random(wfcatom, GlobalC::ucell.natomwfc, GlobalV::NBANDS, ik);
 	}
-	else if(start_wfc=="random")
+	else if(init_wfc=="random")
 	{
-			this->random(wfcatom,0,GlobalV::NBANDS,ik);
+		this->random(wfcatom,0,GlobalV::NBANDS,ik);
 	}
 
 	// (7) Diago with cg method.
@@ -772,7 +778,11 @@ void wavefunc::init_after_vc(const int nks)
 
     delete[] g2kin;
     this->g2kin = new double[npwx];   // [npw],kinetic energy
-    ModuleBase::GlobalFunc::ZEROS(g2kin, npwx);
+#ifdef __CUDA
+	cudaFree(this->d_g2kin);
+	cudaMalloc((void**)&this->d_g2kin, npwx*sizeof(double));
+#endif
+	ModuleBase::GlobalFunc::ZEROS(g2kin, npwx);
     ModuleBase::Memory::record("wavefunc","g2kin",npwx,"double");
     if(GlobalV::test_wf)ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"g2kin allocation","Done");
 

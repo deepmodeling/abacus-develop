@@ -168,51 +168,17 @@ void Pseudopot_upf::read_pseudo_header(std::ifstream &ifs)
 	}
 
 	// mohan modify 2009-12-15
-	ifs >> dft[0] >> dft[1] >> dft[2] >> dft[3];
-	
-	//dft[i](i=0-3) gives the four components of xc functional:
-	//local X, local C, semilocal X, semilocal C
-	//dft_tot is the name of the combination
-	std::string dft_tot;
-	ModuleBase::GlobalFunc::READ_VALUE(ifs, dft_tot);
+	std::string junk;
+	ifs >> junk >> junk >> junk >> junk;
+	ModuleBase::GlobalFunc::READ_VALUE(ifs, xc_func);
 	
 	// dft functional enforced to modify
 	// mohan add 2010-07-15
-	if(GlobalV::DFT_FUNCTIONAL!="none")
+	string xc_func1 = GlobalV::DFT_FUNCTIONAL;
+	transform(xc_func1.begin(), xc_func1.end(), xc_func1.begin(), (::toupper));
+	if(GlobalV::DFT_FUNCTIONAL!="default" && xc_func1 != xc_func)
 	{
-		/*xiaohui modify 2015-03-24
-		dft[0] = GlobalV::DFT_FUNCTIONAL;
-		dft[1] = GlobalV::DFT_FUNCTIONAL;
-		dft[2] = GlobalV::DFT_FUNCTIONAL;
-		dft[3] = GlobalV::DFT_FUNCTIONAL;
-		xiaohui modify 2015-03-24*/
-
-		//xiaohui add 2015-03-23
-		
-		std::string dft_functional;
-		if(dft[1] == "PZ")
-		{
-			dft_functional = "lda";
-		}
-		else if(dft[1] == "PBE")
-		{
-			dft_functional = "pbe";
-		}
-		else if(dft[1] == "SCAN")
-		{
-			dft_functional = "scan";
-		}
-		
-		if(dft_tot != GlobalV::DFT_FUNCTIONAL)
-		{
-			functional_error = 1;
-
-			std::cout << " dft_functional readin is: " << GlobalV::DFT_FUNCTIONAL << std::endl;
-			std::cout << " dft_functional in pseudopot file is: " << dft_tot << std::endl;
-			GlobalV::ofs_warning << " dft_functional readin is: " << GlobalV::DFT_FUNCTIONAL << std::endl;
-			GlobalV::ofs_warning << " dft_functional in pseudopot file is: " << dft_tot << std::endl;
-			//ModuleBase::WARNING_QUIT("Pseudopot_upf::read_pseudo_header","input xc functional does not match that in pseudopot file");
-		}
+		functional_error = 1;
 	}
 	
 	ModuleBase::GlobalFunc::READ_VALUE(ifs, this->zp);
@@ -460,7 +426,7 @@ void Pseudopot_upf::print_pseudo_upf(std::ofstream &ofs)
 	ofs << " pp_type: " << pp_type << std::endl;
 	ofs << " tvanp: " << tvanp << std::endl;
 	ofs << " nlcc: " << nlcc << std::endl; 
-	ofs << " dft: " << dft[0] << " " << dft[1] << " " << dft[2] << " " << dft[3] << std::endl;
+	ofs << " dft: " << xc_func << std::endl;
 	ofs << " zp: " << zp << std::endl;
 	ofs << " etotps: " << etotps << std::endl;
 	ofs << " ecutwfc: " << ecutwfc << std::endl;

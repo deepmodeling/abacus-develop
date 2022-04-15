@@ -7,14 +7,18 @@ HEADERS= *.h
 OBJS_MAIN=input.o\
 
 OBJS_MD=driver_classic.o\
-MD_basic.o\
-MD_fire.o\
 MD_func.o\
-MD_thermo.o\
 run_md_classic.o\
 LJ_potential.o\
 DP_potential.o\
 cmd_neighbor.o\
+verlet.o\
+NVE.o\
+MSST.o\
+NVT_ADS.o\
+NVT_NHC.o\
+FIRE.o\
+Langevin.o\
 
 OBJS_BASE=matrix3.o\
 matrix.o\
@@ -27,7 +31,6 @@ global_function.o\
 global_variable.o\
 tool_title.o\
 tool_quit.o\
-mymath3.o\
 memory.o\
 
 OBJS_CELL=pseudo_nc.o\

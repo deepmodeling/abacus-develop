@@ -17,9 +17,9 @@ namespace Ions_Move_Basic
 
 	extern double trust_radius; // trust radius now,
 	extern double trust_radius_old; // old trust radius,
-	extern double trust_radius_max; // max value of trust radius,
-	extern double trust_radius_min; // min value of trust radius,
-	extern double trust_radius_ini; // initial value of trust radius,
+	extern double relax_bfgs_rmax; // max value of trust radius,
+	extern double relax_bfgs_rmin; // min value of trust radius,
+	extern double relax_bfgs_init; // initial value of trust radius,
         extern double best_xxx;         // the last step length of cg , we use it as  bfgs`s initial step length
 
 	extern int out_stru; // output the structure or not,

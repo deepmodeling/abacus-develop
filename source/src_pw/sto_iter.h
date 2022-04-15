@@ -1,7 +1,8 @@
 #ifndef STO_ITER_H
 #define STO_ITER_H
 
-#include "tools.h"
+#include "../module_base/global_function.h"
+#include "../module_base/global_variable.h"
 #include "sto_che.h"
 #include "sto_hchi.h"
 

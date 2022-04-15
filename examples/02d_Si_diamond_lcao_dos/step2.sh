@@ -18,7 +18,7 @@ basis_type		lcao
 #Parameters (Accuracy)
 ecutwfc			50
 #Parameters (File)
-start_charge		file
+init_chg		file
 out_dos			1
 EOF
 

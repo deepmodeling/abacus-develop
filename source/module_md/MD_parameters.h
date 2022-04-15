@@ -8,49 +8,65 @@ class MD_parameters
 public:
     MD_parameters()
 	{
-		mdtype=1;
-		NVT_tau=0;
-		NVT_control=1;
-		dt=1;
-		Qmass=1;
-		tfirst=0;         //kelvin
-		tlast=-1;
-		recordFreq=1;
-		mdoutputpath="mdoutput";
-		rstMD=0;
-		fixTemperature=1;
-		ediff=1e-4;
-		ediffg=1e-3;
-		MNHC=4;
+		md_restart = 0;
+		md_type = 1;
+        md_nstep = 10;
+		md_dt = 1;
+		md_tfirst = 0;
+		md_tlast = -1;
+		md_dumpfreq = 1;
+		md_restartfreq = 1;
 
-		md_potential = "FP";
-		rcut_lj = 8.5;        // \AA
-		epsilon_lj = 0.01032; // eV
-		sigma_lj = 3.405;     // \AA
+		// Classic MD 
+		md_ensolver = "FP";
+		lj_rcut = 8.5;        
+		lj_epsilon = 0.01032; 
+		lj_sigma = 3.405;     
+
+		// MSST
+		msst_direction = 2;
+		msst_qmass = 1;
+		msst_vel = 0;
+		msst_vis = 0;
+		msst_tscale = 0.01;
+
+		// NHC
+		md_tfreq = 1;
+		md_mnhc = 4;
+
+		// Langevin
+		md_damp = 1;
 	};
     ~MD_parameters(){};
 
-    int rstMD;          // 1 : restart MD, vel.restart and ion.restart files will be read
-                        // 0 : not restart from ion and vel files
-	int mdtype;         // 1: NVT:Nose Hoover, 2:NVT:velocity scaling 3: NPT, 0: NVE 
-    double Qmass;       // Inertia of extended system variable
-    double dt ;         // Time increment (hbar/E_hartree)
-    double tfirst; //Temperature (in Hartree, 1 Hartree ~ 3E5 K)
-    double tlast;
-    int recordFreq;     // The period to dump MD information for monitoring and restarting MD
-    int NVT_control;
-    double NVT_tau;
-    int MNHC;
-    std::string mdoutputpath;// output directory of md files: .ion .vel
-	double ediff;       //parameter for constrain 
-	double ediffg;      //parameter for constrain
-    int fixTemperature;
+    int md_nstep;                 // md nstep
+    bool md_restart;              // 1: restart MD, 0: no restart MD
+	int md_type;                  // -1: FIRE, 0: NVE, 1: NVT NHC, 2: LGV, 3: NVT ADS, 4: MSST 
+    double md_dt;                 // Time increment (hbar/E_hartree)
+    double md_tfirst;             // Temperature (in Hartree, 1 Hartree ~ 3E5 K)
+    double md_tlast;              // Target temperature
+    int md_dumpfreq;              // The period to dump MD information
+	int md_restartfreq;           // The period to output MD restart information
 
-	/*Classic MD*/              // liuyu 2021-07-30
-	std::string md_potential;   // choose potential: LJ, DP, FP
-	double rcut_lj;             // cutoff radius of LJ potential (\AA)
-	double epsilon_lj;          // the value of epsilon for LJ potential (eV)
-	double sigma_lj;            // the value of sigma for LJ potential (\AA)
+	// Classic MD               // liuyu 2021-07-30
+	std::string md_ensolver;    // choose potential: LJ, DP, FP
+	double lj_rcut;             // cutoff radius of LJ potential (\AA)
+	double lj_epsilon;          // the value of epsilon for LJ potential (eV)
+	double lj_sigma;            // the value of sigma for LJ potential (\AA)
+
+	// MSST
+	int msst_direction;              // shock direction: 0, 1, 2
+	double msst_vel;            // shock msst_vel (\AA/fs)
+	double msst_qmass;               // cell mass-like parameter (mass^2/length^4)
+	double msst_vis;           // artificial msst_vis (mass/length/time)
+	double msst_tscale;              // reduction in initial temperature (0~1)
+
+	// NHC
+	double md_tfreq;               // Oscillation frequency, used to determine msst_qmass of NHC
+	int md_mnhc;                   // num of NHC
+
+	// Langevin
+	double md_damp;                // damping parameter (time units)
 };
 
 

@@ -1,7 +1,8 @@
 #ifndef STO_CHEBYCHEV_H
 #define STO_CHEBYCHEV_H
 
-#include "tools.h"
+#include "../module_base/global_function.h"
+#include "../module_base/global_variable.h"
 #include "../module_base/mymath.h"
 //----------------------------------------------
 // Chebychev Filtering

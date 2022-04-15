@@ -2,6 +2,7 @@
 #include "hamilt.h"
 #include "diago_cg.h"
 #include "diago_david.h"
+#include "../module_base/timer.h"
 
 Hamilt::Hamilt() {}
 Hamilt::~Hamilt() {}
@@ -81,21 +82,21 @@ void Hamilt::diagH_pw(
 
                     avg_iter += 1.0;
                 }
-                Diago_CG cg;
+                Diago_CG cg(&GlobalC::hm.hpw);
 
 				bool reorder = true;
 
 				if(GlobalV::NPOL==1)
 				{
 						cg.diag(GlobalC::wf.evc[ik0], GlobalC::wf.ekb[ik], GlobalC::kv.ngk[ik], GlobalC::wf.npwx,
-						GlobalV::NBANDS, precondition, GlobalV::ETHR,
-						GlobalV::DIAGO_CG_MAXITER, reorder, notconv, avg);
+						GlobalV::NBANDS, precondition, GlobalV::PW_DIAG_THR,
+						GlobalV::PW_DIAG_NMAX, reorder, notconv, avg);
 				}
 				else
 				{
 					cg.diag(GlobalC::wf.evc[ik0], GlobalC::wf.ekb[ik], GlobalC::wf.npwx*GlobalV::NPOL, GlobalC::wf.npwx*GlobalV::NPOL,
-						GlobalV::NBANDS, precondition, GlobalV::ETHR,
-						GlobalV::DIAGO_CG_MAXITER, reorder, notconv, avg);
+						GlobalV::NBANDS, precondition, GlobalV::PW_DIAG_THR,
+						GlobalV::PW_DIAG_NMAX, reorder, notconv, avg);
 				}
 				// P.S. : nscf is the flag about reorder.
 				// if diagH_subspace is done once,
@@ -105,23 +106,23 @@ void Hamilt::diagH_pw(
             }
 	   		else if(GlobalV::KS_SOLVER=="dav")
         	{
-				Diago_David david;
+				Diago_David david(&GlobalC::hm.hpw);
 				if(GlobalV::NPOL==1)
 				{
 					david.diag(GlobalC::wf.evc[ik0], GlobalC::wf.ekb[ik], GlobalC::kv.ngk[ik],
-						GlobalV::NBANDS, precondition, GlobalV::DIAGO_DAVID_NDIM,
-				 		GlobalV::ETHR, GlobalV::DIAGO_CG_MAXITER, notconv, avg);
+						GlobalV::NBANDS, precondition, GlobalV::PW_DIAG_NDIM,
+				 		GlobalV::PW_DIAG_THR, GlobalV::PW_DIAG_NMAX, notconv, avg);
 				}
 				else
 				{
 					david.diag(GlobalC::wf.evc[ik0], GlobalC::wf.ekb[ik], GlobalC::wf.npwx*GlobalV::NPOL,
-						GlobalV::NBANDS, precondition, GlobalV::DIAGO_DAVID_NDIM,
-						GlobalV::ETHR, GlobalV::DIAGO_CG_MAXITER, notconv, avg);
+						GlobalV::NBANDS, precondition, GlobalV::PW_DIAG_NDIM,
+						GlobalV::PW_DIAG_THR, GlobalV::PW_DIAG_NMAX, notconv, avg);
 				}
         	}
         	else
         	{
-				ModuleBase::WARNING_QUIT("calculate_bands","Check GlobalV::KS_SOLVER !");
+				ModuleBase::WARNING_QUIT("calculate_bands","Check ks_solver !");
         	}
             avg_iter += avg;
             ++ntry;
@@ -207,10 +208,6 @@ void Hamilt::diagH_LAPACK(
 	ModuleBase::timer::tick("Hamilt","diagH_LAPACK");
 
     int lwork=0;
-    //========================================
-    // int ILAENV();
-    // ILAENV returns optimal block size "nb"
-    //========================================
 
     ModuleBase::ComplexMatrix sdum(nstart, ldh);
     ModuleBase::ComplexMatrix hdum;
@@ -219,9 +216,8 @@ void Hamilt::diagH_LAPACK(
 
     const bool all_eigenvalues = (nstart == nbands);
 
+    //workspace query
     int nb = LapackConnector::ilaenv(1, "ZHETRD", "U", nstart, -1, -1, -1);
-//  int nb = ILAENV(1,  "ZHETRD", "U", n, -1, -1, -1);
-//  int nb = 32;
 
     if (nb < 1)
     {

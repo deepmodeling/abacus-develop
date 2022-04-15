@@ -2,9 +2,11 @@
 #include "grid_technique.h"
 //#include "../module_orbital/ORB_read.h"
 #include "../src_pw/global.h"
+#include "../src_parallel/parallel_reduce.h"
 
 #include "global_fp.h" // mohan add 2021-01-30
 #include "../module_base/ylm.h"
+#include "../module_base/timer.h"
 
 void Gint_Gamma::cal_mulliken(double** mulliken)
 {
@@ -29,13 +31,6 @@ void Gint_Gamma::gamma_mulliken(double** mulliken)
     // it's a uniform grid to save orbital values, so the delta_r is a constant.
     const double delta_r = GlobalC::ORB.dr_uniform;
 	const Numerical_Orbital_Lm* pointer;
-
-	// allocate 1
-	int nnnmax=0;
-	for(int T=0; T<GlobalC::ucell.ntype; T++)
-	{
-		nnnmax = max(nnnmax, nnn[T]);
-	}
 
 	double*** dr; // vectors between atom and grid: [bxyz, maxsize, 3]
 	double** distance; // distance between atom and grid: [bxyz, maxsize]
@@ -139,8 +134,6 @@ void Gint_Gamma::gamma_mulliken(double** mulliken)
 						}
 						
 						std::vector<double> ylma;
-						//if(distance[id] > GlobalC::GridT.orbital_rmax) continue;
-						//	Ylm::get_ylm_real(this->nnn[it], this->dr[id], ylma);
 						if (distance[ib][id] < 1.0E-9) distance[ib][id] += 1.0E-9;
 						
 						ModuleBase::Ylm::sph_harm (	GlobalC::ucell.atoms[it].nwl,
@@ -212,7 +205,6 @@ void Gint_Gamma::gamma_mulliken(double** mulliken)
 					// a particular number: (lmax+1)^2 and vectors between
 					// atom and grid point(we need the direction), the output
 					// are put in the array: ylm1.
-					//Ylm::get_ylm_real(this->nnn[T1], this->dr[ia1], this->ylm1);
 
 					// attention! assume all rcut are same for this atom type now.
 					//if (distance[ia1] > GlobalC::ORB.Phi[T1].getRcut())continue;
@@ -249,7 +241,7 @@ void Gint_Gamma::gamma_mulliken(double** mulliken)
 										{
 											v1=psi1[iw]+psi1[iw];
 											int iw2_lo = GlobalC::GridT.trace_lo[start2];
-											double *DMp = &GlobalC::LOC.DM[is][iw1_lo][iw2_lo];
+											double *DMp = &this->DM[is][iw1_lo][iw2_lo];
 											double *psi2p = psi2;
 											double *psi2p_end = psi2 + atom2->nw;
 

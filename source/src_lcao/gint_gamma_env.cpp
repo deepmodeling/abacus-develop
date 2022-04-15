@@ -3,6 +3,7 @@
 #include "../module_orbital/ORB_read.h"
 #include "../src_pw/global.h"
 #include "../module_base/ylm.h"
+#include "../module_base/timer.h"
 
 void Gint_Gamma::cal_env(const double* wfc, double* rho)
 {
@@ -24,13 +25,6 @@ void Gint_Gamma::gamma_envelope(const double* wfc, double* rho)
     // it's a uniform grid to save orbital values, so the delta_r is a constant.
     const double delta_r = GlobalC::ORB.dr_uniform;
 	const Numerical_Orbital_Lm* pointer;
-
-	// allocate 1
-	int nnnmax=0;
-	for(int T=0; T<GlobalC::ucell.ntype; T++)
-	{
-		nnnmax = max(nnnmax, nnn[T]);
-	}
 
 	double*** dr; // vectors between atom and grid: [bxyz, maxsize, 3]
 	double** distance; // distance between atom and grid: [bxyz, maxsize]
@@ -135,7 +129,6 @@ void Gint_Gamma::gamma_envelope(const double* wfc, double* rho)
 						
 						std::vector<double> ylma;
 						//if(distance[id] > GlobalC::GridT.orbital_rmax) continue;
-						//	Ylm::get_ylm_real(this->nnn[it], this->dr[id], ylma);
 						if (distance[ib][id] < 1.0E-9) distance[ib][id] += 1.0E-9;
 						
 						ModuleBase::Ylm::sph_harm (	GlobalC::ucell.atoms[it].nwl,

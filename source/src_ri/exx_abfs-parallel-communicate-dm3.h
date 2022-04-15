@@ -3,6 +3,12 @@
 
 #include "exx_abfs-parallel.h"
 #include "abfs-vector3_order.h"
+#include "../module_base/complexmatrix.h"
+#include "module_orbital/parallel_orbitals.h"
+#include "src_lcao/local_orbital_charge.h"
+#ifdef __MPI
+#include "mpi.h"
+#endif
 
 #include <vector>
 #include <map>
@@ -10,16 +16,18 @@
 #include <memory>
 #include <atomic>
 
+#ifdef __MPI
 class Exx_Abfs::Parallel::Communicate::DM3
 {
 public:
-	void cal_DM(const double threshold_D);
+    void cal_DM(const double threshold_D,
+        Local_Orbital_Charge &loc);
 
 	std::vector<std::map<size_t,std::map<size_t,std::map<Abfs::Vector3_Order<int>,ModuleBase::matrix>>>> DMr;
 
 private:
 	template<typename Tmatrix> std::vector<std::map<size_t,std::map<size_t,std::map<Abfs::Vector3_Order<int>,ModuleBase::matrix>>>>
-		K_to_R(const std::vector<Tmatrix> &DK_2D, const double threshold_D) const;
+		K_to_R(const std::vector<Tmatrix> &DK_2D, const double threshold_D, const Parallel_Orbitals &pv) const;
 	const ModuleBase::matrix &D_phase( const ModuleBase::matrix &DK, const int ik, const Abfs::Vector3_Order<int> &box2) const;	
 	ModuleBase::matrix D_phase( const ModuleBase::ComplexMatrix &DK, const int ik, const Abfs::Vector3_Order<int> &box2) const;	
 //	std::vector<std::map<size_t,std::map<size_t,std::map<Abfs::Vector3_Order<int>,matrix>>>>
@@ -30,8 +38,9 @@ private:
 		public:
 			void init(
 				const MPI_Comm &mpi_comm_in,
-				const std::map<std::set<size_t>,std::set<size_t>> &H_atom_pairs_group);
-			std::vector<std::map<size_t,std::map<size_t,std::map<Abfs::Vector3_Order<int>,ModuleBase::matrix>>>> a2D_to_exx(
+                const std::map<std::set<size_t>, std::set<size_t>>& H_atom_pairs_group,
+                const Parallel_Orbitals &pv);
+            std::vector<std::map<size_t, std::map<size_t, std::map<Abfs::Vector3_Order<int>, ModuleBase::matrix>>>> a2D_to_exx(
 				std::vector<std::map<size_t,std::map<size_t,std::map<Abfs::Vector3_Order<int>,ModuleBase::matrix>>>> &data_local) const;
 
 		private:
@@ -48,7 +57,7 @@ private:
 
 			//std::vector<std::pair<bool,bool>> get_atom_in_2D() const;
 			std::vector<std::map<size_t,std::set<size_t>>> get_H_atom_pairs_group_rank(
-				const std::map<std::set<size_t>,std::set<size_t>> &H_atom_pairs_group) const;
+				const std::map<std::set<size_t>,std::set<size_t>> &H_atom_pairs_group, const Parallel_Orbitals &pv) const;
 			void get_send_recv_size(
 				const std::vector<std::map<size_t,std::set<size_t>>> &H_atom_pairs_group_rank,
 				const std::map<std::set<size_t>,std::set<size_t>> &H_atom_pairs_group,
@@ -86,5 +95,6 @@ private:
 public:
 	Allreduce allreduce;
 };
+#endif
 
 #endif

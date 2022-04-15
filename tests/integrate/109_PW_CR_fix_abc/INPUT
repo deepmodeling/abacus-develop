@@ -1,0 +1,25 @@
+INPUT_PARAMETERS
+#Parameters	(General)
+suffix              autotest
+pseudo_dir		    ../tools/PP_ORB/
+ntype			    1	
+nbands			    8
+calculation         cell-relax
+
+#Parameters (Accuracy)
+ecutwfc			    20
+scf_nmax			    20
+
+basis_type		    pw
+relax_nmax               2
+
+cal_stress              1
+stress_thr          1e-6
+cal_force               1
+force_thr_ev        1.0e-3
+
+mixing_type         pulay
+mixing_beta         0.7
+mixing_gg0          1.5
+
+fixed_axes          abc

@@ -72,7 +72,7 @@ const double ANGSTROM_AU      = 1.8897270;		// au
 //const double AU_TERAHERTZ     = 2.418e-5;		// THz
 //const double TERAHERTZ        = 2.418e-5;		// from au to THz
 //const double AU_SEC           = 2.4189e-17;		// sec
-//const double AU_PS            = 2.4189e-5;		// sec
+const double AU_to_FS           = 2.418884326505e-2;		// from a.u. to fs
 //const double rhothr = 1.0e-5;					// tolerance
 //const double gsmall = 1.0e-12;
 const double e2 = 2.0;							// the square of the electron charge
@@ -94,7 +94,7 @@ const double RYDBERG_SI =  HARTREE_SI/2.0; //J
 
 // zero up to a given accuracy
 //const double epsr  = 1.0e-6;
-//const double epsg  = 1.0e-10;
+const double threshold_wg  = 1.0e-14;
 }
 
 #endif 

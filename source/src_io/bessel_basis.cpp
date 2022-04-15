@@ -3,6 +3,7 @@
 #include "../src_parallel/parallel_common.h"
 #include "../module_base/math_integral.h"
 #include "../module_base/math_sphbes.h"
+#include "../module_base/timer.h"
 
 Bessel_Basis::Bessel_Basis()
 {

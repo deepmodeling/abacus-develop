@@ -1,7 +1,9 @@
 #ifndef GRID_BIGCELL_H
 #define GRID_BIGCELL_H
 
-#include "../src_pw/tools.h"
+#include "../module_base/global_function.h"
+#include "../module_base/global_variable.h"
+#include "../module_base/matrix3.h"
 #include "grid_meshcell.h"
 
 class Grid_BigCell: public Grid_MeshCell

@@ -1,7 +1,9 @@
 #ifndef STOCHASTIC_WF_H
 #define STOCHASTIC_WF_H
 
-#include "tools.h"
+#include "../module_base/global_function.h"
+#include "../module_base/global_variable.h"
+#include "../module_base/complexmatrix.h"
 #include "sto_che.h"
 //qianrui 2021-2-4
 
@@ -18,7 +20,12 @@ class Stochastic_WF
     ~Stochastic_WF();
 
 
-	void init();
+	void init(const int & nchi_in,
+		const int & nche_sto_in,
+		const int & seed_sto_in,
+		const double & emax_sto_in,
+		const double & emin_sto_in,
+		const std::string & stotype_in);
 
 	// ModuleBase::ComplexMatrix may not be a best filetype to store the electronic wave functions
     ModuleBase::ComplexMatrix* chi0;  	// origin stochastic wavefunctions in real space

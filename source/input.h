@@ -24,7 +24,7 @@ class Input
 //==========================================================
 
     std::string suffix;			// suffix of out put dir
-    std::string atom_file;		// file contains atomic positions -- xiaohui modify 2015-02-01
+    std::string stru_file;		// file contains atomic positions -- xiaohui modify 2015-02-01
     std::string pseudo_dir;      // directory of pseudopotential
 	std::string orbital_dir;      // directory of orbital file
 	std::string read_file_dir;   // directory of files for reading
@@ -39,19 +39,19 @@ class Input
 						    // "nscf" : non-self consistent calculation.
 							// "relax" : cell relaxations
     double pseudo_rcut;     // cut-off radius for calculating msh
-	bool renormwithmesh;     // 0: use msh to normalize radial wave functions;  1: use mesh, which is used in QE.
+	bool pseudo_mesh;     // 0: use msh to normalize radial wave functions;  1: use mesh, which is used in QE.
     int ntype;				// number of atom types
     int nbands;				// number of bands
 	int nbands_istate;		// number of bands around fermi level for istate calculation.
-	int seed;               // random seed for initializing wave functions qianrui 2021-8-12
+	int pw_seed;               // random seed for initializing wave functions qianrui 2021-8-12
 
 	
 
-	bool set_vel;           // read velocity from STRU or not  liuyu 2021-07-14
+	bool init_vel;           // read velocity from STRU or not  liuyu 2021-07-14
 
     bool symmetry;			// turn on symmetry or not
     double symmetry_prec;   // LiuXh add 2021-08-12, accuracy for symmetry
-	int npool; 				// ecch pool is for one k point
+	int kpar; 				// ecch pool is for one k point
 
     bool berry_phase;		// berry phase calculation
 	int gdir;               // berry phase calculation
@@ -62,8 +62,6 @@ class Input
 	bool towannier90;       // add by jingan for wannier90
 	std::string NNKP;            // add by jingan for wannier90
 	std::string wannier_spin;    // add by jingan for wannier90
-
-	bool mlwf_flag; 		// add by mohan
 
 //==========================================================
 // Stochastic DFT
@@ -76,25 +74,10 @@ class Input
 	int nbands_sto;			// number of stochastic bands //qianrui 2021-2-5
 
 //==========================================================
-// E field 
-//==========================================================
-    int efield;				// add electrical field
-	int edir;
-	double emaxpos;
-	double eopreg;
-	double eamp;
-
-//==========================================================
-// Optical properties
-//==========================================================
-	bool opt_epsilon2;		// true : calculate the dielectric functions
-	int  opt_nbands;		// number of bands for optical transition matrix
-    bool lda_plus_u;		// true : lda plus u calculation
-
-//==========================================================
 // electrons / spin
 //==========================================================
     std::string dft_functional;	// input DFT functional.
+	bool use_libxc;         // whether to use LIBXC
 	int nspin;				// LDA ; LSDA ; non-linear spin
     double nelec;			// total number of electrons
     int lmaxmax;
@@ -109,8 +92,8 @@ class Input
 //==========================================================
 // Forces
 //==========================================================
-    int force;
-    bool force_set;
+    int cal_force;
+    bool out_force;
     double force_thr;		// threshold of force in unit (Ry/Bohr)
 	double force_thr_ev2;	// invalid force threshold, mohan add 2011-04-17
 
@@ -121,19 +104,19 @@ class Input
     double press1;
     double press2;
     double press3;
-	bool stress;			// calculate the stress
+	bool cal_stress;			// calculate the stress
 
 	std::string fixed_axes;      //which axes are fixed
-	std::string ion_dynamics;	// methods to move_ion: sd, bfgs, cg...
+	std::string relax_method;	// methods to move_ion: sd, bfgs, cg...
 
-    double cg_threshold;    // threshold when cg to bfgs, pengfei add 2011-08-15
+    double relax_cg_thr;    // threshold when cg to bfgs, pengfei add 2011-08-15
 
-	double bfgs_w1;			// wolfe condition 1
-	double bfgs_w2;			// wolfe condition 2
+	double relax_bfgs_w1;			// wolfe condition 1
+	double relax_bfgs_w2;			// wolfe condition 2
 
-	double trust_radius_max;	// trust radius max
-	double trust_radius_min;	// trust radius min
-	double trust_radius_ini;	// initial move
+	double relax_bfgs_rmax;	// trust radius max
+	double relax_bfgs_rmin;	// trust radius min
+	double relax_bfgs_init;	// initial move
 
 //==========================================================
 // Planewave
@@ -152,10 +135,10 @@ class Input
 // technique
 //==========================================================
 	int diago_proc;			// the number of procs used to diag. mohan add 2012-01-13
-    int diago_cg_maxiter;
+    int pw_diag_nmax;
 	int diago_cg_prec;		// mohan add 2012-03-31
-    int diago_david_ndim;
-    double ethr;			// used in cg method
+    int pw_diag_ndim;
+    double pw_diag_thr;			// used in cg method
 
 	int nb2d;				// matrix 2d division.
 
@@ -169,7 +152,6 @@ class Input
 	int vnl_in_h;			// calculate the vnl or not.
 
 	int vh_in_h;			// calculate the hartree potential or not
-	int vxc_in_h;			// calculate the xc potential or not
 	int vion_in_h;			// calculate the local ionic potential or not
 	//only relevant when vl_in_h = 1
 
@@ -179,9 +161,9 @@ class Input
 //==========================================================
 // iteration
 //==========================================================
-    double dr2;				// \sum |rhog_out - rhog_in |^2
-    int niter;				// number of max elec iter
-    int nstep;				// number of max ionic iter
+    double scf_thr;				// \sum |rhog_out - rhog_in |^2
+    int scf_nmax;				// number of max elec iter
+    int relax_nmax;				// number of max ionic iter
 	int out_stru;			// outut stru file each ion step
 	std::string out_level;		// control the output information.
     bool out_md_control;    // internal parameter , added by zhengdy 2019-04-07
@@ -191,11 +173,11 @@ class Input
 //==========================================================
     std::string occupations;		// "fixed","smearing","tetrahedra","from_input"
 
-    std::string smearing;		// "gaussian",
+    std::string smearing_method;		// "gaussian",
 						    // "mp","methfessel-paxton"
 						    // "mv","marzari-vanderbilt","cold"
 						    // "fd","fermi-dirac"
-    double degauss;			//
+    double smearing_sigma;			//
 
 //==========================================================
 // charge mixing
@@ -210,25 +192,27 @@ class Input
 //==========================================================
     std::string restart_mode;	//
 
-    std::string start_wfc;		// "file","atomic","random"
-    std::string start_pot;		// "file","atomic"
+    std::string init_wfc;		// "file","atomic","random"
+    std::string init_chg;		// "file","atomic"
 
-	std::string charge_extrap;	// xiaohui modify 2015-02-01
+	std::string chg_extrap;	// xiaohui modify 2015-02-01
 
 	int mem_saver;			// 1: save psi when nscf calculation.
 
 	int printe;				// mohan add 2011-03-16
-    int out_charge;		// output charge density.
+    int out_chg;		// output charge density.
 	int out_dm; // output density matrix.
-	int out_potential;		// yes or no
-    int out_wf;			// 0: no; 1: txt; 2: dat
+	int out_pot;		// yes or no
+    int out_wfc_pw;			// 0: no; 1: txt; 2: dat
+    int out_wfc_r;			// 0: no; 1: yes
 	int out_dos;			// dos calculation. mohan add 20090909
     int out_band;                   // band calculation pengfei 2014-10-13
-	int out_hs;			// output H matrix and S matrix in local basis.
-	int out_hs2;			//LiuXh add 2019-07-16, output H(R) matrix and S(R) matrix in local basis.
-	int out_r_matrix;   // jingan add 2019-8-14, output r(R) matrix.
-	bool out_lowf;			// output the wave functions in local basis.
+	int out_mat_hs;			// output H matrix and S matrix in local basis.
+	int out_mat_hs2;			//LiuXh add 2019-07-16, output H(R) matrix and S(R) matrix in local basis.
+	int out_mat_r;   // jingan add 2019-8-14, output r(R) matrix.
+	bool out_wfc_lcao;			// output the wave functions in local basis.
 	bool out_alllog; 		// output all logs.
+	bool out_element_info; // output infomation of all element
 
 	double dos_emin_ev;
 	double dos_emax_ev;
@@ -249,23 +233,12 @@ class Input
 	bool search_pbc; // 11.2
 
 
-//==========================================================
-// selected inversion method
-//==========================================================
-	// selinv method parameter (cooperate with LinLin)
-	int selinv_npole;
-	double selinv_temp;
-	double selinv_gap;
-	double selinv_deltae;
-	double selinv_mu;
-	double selinv_threshold;
-	int selinv_niter;
 
 //==========================================================
 // molecular dynamics
 // added by Daye Zheng
 //==========================================================
-/*    int md_mdtype;                   //choose ensemble
+/*    int md_type;                   //choose ensemble
 	double md_tauthermo;
 	double md_taubaro;
 	double md_dt;                    //time step
@@ -274,15 +247,13 @@ class Input
 	double md_qmass;                   //mass of thermostat
 	double md_tfirst;                    //temperature begin
 	double md_tlast;                    //temperature end
-	int md_dumpmdfred;                  //The period to dump MD information for monitoring and restarting MD
+	int md_dumpfred;                  //The period to dump MD information for monitoring and restarting MD
 	std::string md_mdoutpath;                //output path for md
 	bool md_domsd;                   //whether compute <r(t)-r(0)>
 	bool md_domsdatom;                //whether compute msd for each atom
-	int md_rstmd;                    //whether restart;
+	int md_restart;                    //whether restart;
 	int md_outputstressperiod;      //period to output stress
 	int md_fixtemperature;          //period to change temperature
-	double md_ediff;             //parameter for constraining total energy change
-	double md_ediffg;             //parameter for constraining max force change
 	int md_msdstartTime;            //choose which step that msd be calculated */
 	MD_parameters mdp;
 
@@ -308,48 +279,9 @@ class Input
 	std::string vdw_model;			//"period" or "radius"
 	ModuleBase::Vector3<int> vdw_period;
 
-//==========================================================
-// Spectrum
-// pengfei Li add 2016-11-23
-//==========================================================
-	//bool     epsilon;               // calculate epsilon or not
-	std::string   spectral_type;          // the type of the calculated spectrum
-	int      spectral_method;        // 0: tddft(linear response)
-	int      eels_method;            // 0: hilbert_transform method; 1: standard method
-	int      absorption_method;      // 0: vasp's method  1: pwscf's method
-	//int		 epsilon_choice;         // 0: hilbert_transform method; 1: standard method
-	std::string   kernel_type;           // the kernel type: rpa, tdlda ...
-	std::string system_type;                 // bulk or surface
-	double  eta;                   // unit(Ry)
-	double  domega;                // unit(Ry)
-	int     nomega;
-	int     ecut_chi;                   // the dimension of G
-	//int     oband;                 // the number of "occupied" bands
-	double  q_start[3];            // the position of the first q point in direct coordinate
-	double  q_direct[3];             // the q direction
-	//int     start_q;               // the serial number of the start qpoint
-	//int     interval_q;            // the interval of the qpoints
-	int     nq;                    // the total number of qpoints for calculation
-	bool     out_epsilon;           // output epsilon or not
-	bool     out_chi;               // output chi or not
-	bool     out_chi0;              // output chi0 or not
-	double  fermi_level;            // the change the fermi level(Ry)
-	bool     coulomb_cutoff;         // turn on or off the Coulomb_cutoff 0/1
-	//bool     epsilon0;              // calculate the macroscopic dielectric constant or not
-	//double   intersmear;            // eta
-	double   intrasmear;            // Eta
-	double   shift;
-	bool     metalcalc;             // metal or not
-	double   eps_degauss;            // degauss
-	//int	epsilon0_choice;             // 0: vasp's method  1: pwscf's method
-	bool     kmesh_interpolation;          // calculting <i,0|j,R>
-	double  qcar[100][3];          // the Cartesian position of q points(unit: 2*PI/lat0)
 	int ocp;
-	//int ocp_n;
 	std::string ocp_set;
-	//double  ocp_kb[10000];
-	int     lcao_box[3];           // the scale for searching the existence of the overlap <i,0|j,R>
-	int    mulliken;//qifeng add 2019-9-10
+	int    out_mul;//qifeng add 2019-9-10
 	double* atom_mag;
 	int n_mag_at;
 	//added by zhengdy-soc
@@ -357,16 +289,12 @@ class Input
 	bool lspinorb;
 	double soc_lambda;
 
-	//	bool starting_spin_angle;
-	vector<double> angle1={0}, angle2={0};
 
 
 //==========================================================
 // exx
 // Peize Lin add 2018-06-20
 //==========================================================
-	std::string exx_hybrid_type;		// "no", "hf", "pbe0", "hse"
-
 	double exx_hybrid_alpha;
 	double exx_hse_omega;
 
@@ -395,7 +323,7 @@ class Input
 // Fuxiang He add 2016-10-26
 //==========================================================
 	int tddft;			//calculate tddft or not
-	double td_dr2;			//threshold for electronic iteration of tddft
+	double td_scf_thr;			//threshold for electronic iteration of tddft
 	double td_dt;			//"fs"
 	double td_force_dt;			//"fs"
 	int td_val_elec_01;			//valence electron 01
@@ -421,17 +349,6 @@ class Input
     double cell_factor; //LiuXh add 20180619
 
 //==========================================================
-// new DM algorithm test
-// add by Shen Yu @ 2019/5/9
-// newDM values:
-//  0: not use new DM algorithm;
-//  1: use new DM algorithm and show no debug information
-//  2: use new DM algorithm and only show key debug information
-//  3: use new DM algorithm and show all detail debug information
-//==========================================================
-    int new_dm;
-
-//==========================================================
 //    DFT+U       Xin Qu added on 2020-10-29
 //==========================================================
     bool dft_plus_u;                //true:DFT+U correction; false：standard DFT calcullation(default)
@@ -448,12 +365,25 @@ class Input
 	int double_counting;            // 1:FLL(fully localized limit)(default); 2:AMF(around mean field)
 
 //==========================================================
+//    DFT+DMFT       Xin Qu added on 2021-08
+//==========================================================
+  bool dft_plus_dmft;                //true:DFT+U correction; false：standard DFT calcullation(default)
+
+//==========================================================
 // DeepKS -- added by caoyu and mohan
 //==========================================================
-    int out_descriptor; // (need libnpy) output descritpor for deepks. caoyu added 2020-11-24, mohan modified 2021-01-03
-	int lmax_descriptor; //lmax used in descriptor, mohan added 2021-01-03
-	int deepks_scf;	//(need libnpy and libtorch) if set 1, a trained model would be needed to cal V_delta and F_delta
-	string model_file;		//needed when deepks_scf=1
+    bool deepks_out_labels; // (need libnpy) prints energy and force labels and descriptors for training, wenfei 2022-1-12
+	bool deepks_scf;	//(need libnpy and libtorch) if set 1, a trained model would be needed to cal V_delta and F_delta
+	bool deepks_bandgap; //for bandgap label. QO added 2021-12-15	
+	
+	bool deepks_out_unittest; //if set 1, prints intermediate quantities that shall be used for making unit test
+
+	string deepks_model;		//needed when deepks_scf=1
+
+	//the following 3 are used when generating jle.orb
+	int deepks_descriptor_lmax; //lmax used in descriptor, mohan added 2021-01-03
+	double deepks_descriptor_rcut;
+	double deepks_descriptor_ecut;
 
 //==========================================================
 // variables for test only

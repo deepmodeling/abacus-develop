@@ -3,9 +3,13 @@
 // 2. change ./src_parallel/ft.cpp 's some group size
 // 3. delete condition justification in pw_and_columns distributins 2
 
-#include "tools.h"
+#include "../module_base/global_function.h"
+#include "../module_base/global_variable.h"
+#include "../module_base/memory.h"
+#include "../src_parallel/parallel_reduce.h"
 #include "pw_basis.h"
 #include "pw_complement.h"
+#include "../module_base/timer.h"
 
 #ifdef _OPENMP
 #include <omp.h>
@@ -59,7 +63,7 @@ PW_Basis::~PW_Basis()
 	delete [] cutgg_num_table;
 
 #ifdef __MPI
-#ifndef __CUDA
+#if ((!defined __CUDA) && (!defined __ROCM))
     delete [] gcar;
     delete [] gdirect;
     delete [] gg;
@@ -88,7 +92,9 @@ void PW_Basis::set
     const int &ncz_in,
 	const int &bx_in,
 	const int &by_in,
-	const int &bz_in
+	const int &bz_in,
+    const int &seed_in,
+    const int &nbspline_in
 )
 {
     ModuleBase::TITLE("PW_Basis","set");
@@ -104,6 +110,8 @@ void PW_Basis::set
 	this->bx = bx_in;
 	this->by = by_in;
 	this->bz = bz_in;
+    this->pw_seed = seed_in;
+    this->nbspline = nbspline_in;
 
     if (ecutwfc <= 0.00)
     {
@@ -173,7 +181,7 @@ void PW_Basis::gen_pw(std::ofstream &runlog, const UnitCell &Ucell_in, const K_V
 	}
 
 #ifdef __MPI
-#ifdef __CUDA
+#if ((defined __CUDA) || (defined __ROCM))
     bool cutgg_flag = false;
 #else
     this->divide_fft_grid();
@@ -345,7 +353,7 @@ void PW_Basis::gen_pw(std::ofstream &runlog, const UnitCell &Ucell_in, const K_V
         PW_complement::setup_GVectors(Ucell->G, ngmc_g, gg_global, gdirect_global, gcar_global);
 
 #ifdef __MPI
-#ifdef __CUDA
+#if ((defined __CUDA) || (defined __ROCM))
         this->get_GVectors();
         FFT_wfc.setupFFT3D(this->nx, this->ny,this->nz);
         FFT_chg.setupFFT3D(this->ncx, this->ncy,this->ncz);
@@ -414,9 +422,9 @@ void PW_Basis::setup_gg(void)
             const double tmp2 = tmp * tmp ;
             if (this->ggwfc2 < tmp2) this->ggwfc2 = tmp2;
         }
-        //qianrui add 2021-8-13 to make different npool parameters can get the same results
+        //qianrui add 2021-8-13 to make different kpar parameters can get the same results
 #ifdef __MPI
-        if(seed > 0)    MPI_Allreduce(MPI_IN_PLACE, &ggwfc2, 1, MPI_DOUBLE, MPI_MAX , MPI_COMM_WORLD);
+        if(pw_seed > 0)    MPI_Allreduce(MPI_IN_PLACE, &ggwfc2, 1, MPI_DOUBLE, MPI_MAX , MPI_COMM_WORLD);
 #endif
     }
 
@@ -620,6 +628,7 @@ void PW_Basis::get_MPI_GVectors(void)
     //=====================================
 }//end setup_mpi_GVectors
 // #else
+#endif
 void PW_Basis::get_GVectors(void)
 {
     if (GlobalV::test_pw) ModuleBase::TITLE("PW_Basis","get_GVectors");
@@ -673,7 +682,6 @@ void PW_Basis::get_GVectors(void)
     ModuleBase::timer::tick("PW_Basis","get_GVectors");
     return;
 }//end get_GVectors;
-#endif
 
 void PW_Basis::get_nggm(const int ngmc_local)
 {
@@ -745,7 +753,7 @@ void PW_Basis::get_nggm(const int ngmc_local)
     return;
 }
 
-
+#include "../module_base/constants.h"
 //  Calculate structure factor
 void PW_Basis::setup_structure_factor(void)			// Peize Lin optimize and add OpenMP 2021.04.01
 {
@@ -760,11 +768,12 @@ void PW_Basis::setup_structure_factor(void)			// Peize Lin optimize and add Open
 //	outstr = GlobalV::global_out_dir + "strucFac.dat"; 
 //	std::ofstream ofs( outstr.c_str() ) ;
     bool usebspline;
-    if(nbspline >= 0)   usebspline = true;
+    if(nbspline > 0)   usebspline = true;
     else    usebspline = false;
     
     if(usebspline)
     {
+        nbspline = int((nbspline+1)/2)*2; // nbspline must be a positive even number.
         this->bspline_sf(nbspline);
     }
     else
@@ -887,7 +896,7 @@ void PW_Basis::columns_and_pw_distribution_2(void)
                         //------------------------------------------------------
                         if (npw2 < npw1)
                         {
-							if (non_zero_grid + nz < ngrid) //qianrui fix a bug 2021-5-20 to make sure non_zero_grid < ngrid after distributing pw
+							if (non_zero_grid + nz <= ngrid) //qianrui fix a bug 2021-5-20 to make sure non_zero_grid < ngrid after distributing pw
 							{
 								// ip1 save the process number which has smallest number of plane wave
 								// in this pool.
@@ -904,7 +913,7 @@ void PW_Basis::columns_and_pw_distribution_2(void)
                         {
                             if (nst2 < nst1)
                             {
-                                if (non_zero_grid + nz < ngrid) //qianrui add nz
+                                if (non_zero_grid + nz <= ngrid) //qianrui add nz
                                 {
                                     ip1=ip2;
                                 }
@@ -935,7 +944,7 @@ void PW_Basis::columns_and_pw_distribution_2(void)
                 if (npw2 < pw_tmp)
                 {
                     pw_tmp = npw2;
-                    if (non_zero_grid + nz < ngrid) //qianrui add nz
+                    if (non_zero_grid + nz <= ngrid) //qianrui add nz
                     {
                         // ip1 is the index of processor which
                         // has smallest number of plane wave.

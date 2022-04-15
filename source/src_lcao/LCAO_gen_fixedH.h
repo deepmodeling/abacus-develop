@@ -4,9 +4,11 @@
 #ifndef LCAO_gen_fixedH_H
 #define LCAO_gen_fixedH_H
 
-#include "../src_pw/tools.h"
+#include "../module_base/global_function.h"
+#include "../module_base/global_variable.h"
 #include "../module_orbital/ORB_gen_tables.h"
 #include "../module_neighbor/sltk_grid_driver.h"
+#include "src_lcao/LCAO_matrix.h"
 
 class LCAO_gen_fixedH
 {
@@ -15,7 +17,9 @@ class LCAO_gen_fixedH
 	friend class energy;//qifeng 2019/9/10
 	friend class Mulliken_Charge;//qifeng  2019/9/10
 
-	public:
+public:
+
+    LCAO_Matrix* LM;
 
 	LCAO_gen_fixedH();
 	~LCAO_gen_fixedH();

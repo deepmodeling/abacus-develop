@@ -12,32 +12,32 @@ calculation         scf
 symmetry             1
 
 #test_force          1
-nstep               1
+relax_nmax               1
 force_thr_ev        0.001
 out_level           ie
-move_method           cg
-out_charge          1
+relax_method           cg
+out_chg          1
 #out_band            1
-#start_charge        file
+#init_chg        file
 
-smearing            gaussian
-sigma             0.001
+smearing_method            gaussian
+smearing_sigma             0.001
 #Parameters (3.PW)
 ecutwfc             20
-dr2                 1e-6
-niter               100
+scf_thr                 1e-6
+scf_nmax               100
 
 
-#stress              1
+#cal_stress              1
 #noncolin             1
 lspinorb             1
 
 #Parameters (LCAO)
 basis_type lcao
 ks_solver           genelpa
-charge_extrap       second-order
+chg_extrap       second-order
 out_dm             0
-ethr                0.00001
+pw_diag_thr                0.00001
 
 
 mixing_type         pulay

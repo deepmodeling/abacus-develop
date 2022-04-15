@@ -51,6 +51,6 @@ void pdstebz(MPI_Comm comm ,double *D,double *E,double *eigen,int N)
 	}
 	*/
     
-	LapackConnector::copy(N,D,incx,eigen,incy);
+	BlasConnector::copy(N,D,incx,eigen,incy);
 	return;
 }

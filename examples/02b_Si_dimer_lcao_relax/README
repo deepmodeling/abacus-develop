@@ -13,7 +13,7 @@ Note:
 
 
 (2)Use Conjugate Gradient (CG) algorithm to optimize the atom positions.
-"move_method	cg"(default value)
+"relax_method	cg"(default value)
 
 
 (3)'nsep': number of ion iteration steps

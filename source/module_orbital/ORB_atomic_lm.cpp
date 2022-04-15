@@ -1,9 +1,10 @@
 #include "ORB_atomic_lm.h"
 #include "../module_base/sph_bessel_recursive.h"
-#include "../module_base/lapack_connector.h"
+#include "../module_base/blas_connector.h"
 #include "../module_base/timer.h"
 #include "../module_base/math_integral.h"
 #include "../module_base/math_sphbes.h"
+#include "../module_base/constants.h"
 
 #ifdef _OPENMP
 #include <omp.h>
@@ -211,6 +212,7 @@ void Numerical_Orbital_Lm::copy_parameter(
 	this->kcut = (nk-1) * this->dk;
 }
 
+#include "../module_base/mathzone_add1.h"
 void Numerical_Orbital_Lm::extra_uniform(const double &dr_uniform_in, const bool &force_flag)
 {
 	ModuleBase::timer::tick("NOrbital_Lm", "extra_uniform");
@@ -562,7 +564,7 @@ void Numerical_Orbital_Lm::cal_kradial_sbpool(void)
 		psi_f_tmp *= pref;
 #else
 		const double psi_f_tmp = 
-		pref * LapackConnector::dot( this->nr, ModuleBase::GlobalFunc::VECTOR_TO_PTR(r_tmp), 1, ModuleBase::GlobalFunc::VECTOR_TO_PTR(jl[ik]), 1 ) ;
+		pref * BlasConnector::dot( this->nr, ModuleBase::GlobalFunc::VECTOR_TO_PTR(r_tmp), 1, ModuleBase::GlobalFunc::VECTOR_TO_PTR(jl[ik]), 1 ) ;
 #endif
 		this->psif[ik] = psi_f_tmp;
 		this->psik[ik] = psi_f_tmp * k_radial[ik];
@@ -633,7 +635,7 @@ void Numerical_Orbital_Lm::cal_rradial_sbpool(void)
 		}
 		this->psi[ir] = pref * kj_dot;
 #else
-		this->psi[ir] = pref * LapackConnector::dot( this->nk, ModuleBase::GlobalFunc::VECTOR_TO_PTR(k_tmp), 1, ModuleBase::GlobalFunc::VECTOR_TO_PTR(jl[ir]), 1 );
+		this->psi[ir] = pref * BlasConnector::dot( this->nk, ModuleBase::GlobalFunc::VECTOR_TO_PTR(k_tmp), 1, ModuleBase::GlobalFunc::VECTOR_TO_PTR(jl[ir]), 1 );
 #endif
 		this->psir[ir] = this->psi[ir] * r_radial[ir];
 	}

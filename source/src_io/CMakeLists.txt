@@ -23,6 +23,16 @@ add_library(
     print_info.cpp
     read_dm.cpp
     read_rho.cpp
+    read_txt_tools.cpp
+    read_txt_input_value.cpp
+    read_txt_input_item.cpp
+	read_txt_input_list.cpp
+	read_txt_input_process.cpp
+	read_txt_input_process_global.cpp
+	read_txt_input-general.cpp
+	read_txt_input-pw.cpp
+	read_txt_input-spectrum.cpp
+    read_txt_stru.cpp
     restart.cpp
     rwstream.cpp
     to_wannier90.cpp
@@ -39,4 +49,5 @@ add_library(
     write_rho.cpp
     write_rho_cube.cpp
     write_rho_dipole.cpp
+	write_wfc_realspace.cpp
 )

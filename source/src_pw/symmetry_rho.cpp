@@ -1,4 +1,5 @@
 #include "symmetry_rho.h"
+#include "../module_xc/xc_functional.h"
 //#include "../src_pw/global.h"
 
 Symmetry_rho::Symmetry_rho()
@@ -19,11 +20,11 @@ void Symmetry_rho::begin(const int &spin_now, const Charge_Broyden &CHR, const P
 #ifdef __MPI
 	// parallel version
 	psymm(CHR.rho[spin_now], pw, Pgrid, symm);
-	if(GlobalV::DFT_META) psymm(CHR.kin_r[spin_now],pw,Pgrid,symm);
+	if(XC_Functional::get_func_type() == 3) psymm(CHR.kin_r[spin_now],pw,Pgrid,symm);
 #else
 	// series version.
 	symm.rho_symmetry(CHR.rho[spin_now], pw.ncx, pw.ncy, pw.ncz);
-	if(GlobalV::DFT_META) symm.rho_symmetry(CHR.kin_r[spin_now],pw.ncx, pw.ncy, pw.ncz);
+	if(XC_Functional::get_func_type() == 3) symm.rho_symmetry(CHR.kin_r[spin_now],pw.ncx, pw.ncy, pw.ncz);
 #endif
 	return;
 }
@@ -32,12 +33,16 @@ void Symmetry_rho::psymm(double* rho_part, const PW_Basis &pw, Parallel_Grid &Pg
 {
 #ifdef __MPI
 	// (1) reduce all rho from the first pool.
-	double* rhotot = new double[pw.ncxyz];
-	ModuleBase::GlobalFunc::ZEROS(rhotot, pw.ncxyz);
+	double* rhotot;
+	if(GlobalV::MY_RANK == 0)
+	{
+		rhotot = new double[pw.ncxyz];
+		ModuleBase::GlobalFunc::ZEROS(rhotot, pw.ncxyz);
+	}
 	Pgrid.reduce_to_fullrho(rhotot, rho_part);
 
 	// (2)
-	if(GlobalV::RANK_IN_POOL==0)
+	if(GlobalV::MY_RANK==0)
 	{
 		symm.rho_symmetry(rhotot, pw.ncx, pw.ncy, pw.ncz);
 		/*
@@ -81,7 +86,7 @@ void Symmetry_rho::psymm(double* rho_part, const PW_Basis &pw, Parallel_Grid &Pg
 		Pgrid.zpiece_to_all(zpiece,iz, rho_part);
 	}
 
-	delete[] rhotot;
+	if(GlobalV::MY_RANK==0)		delete[] rhotot;
 	delete[] zpiece;
 #endif
 	return;

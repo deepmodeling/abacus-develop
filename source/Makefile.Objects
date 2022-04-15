@@ -19,11 +19,7 @@ input_conv.o\
 run_pw.o\
 run_lcao.o\
 
-OBJS_PW=xc_type.o \
-xc_functional.o\
-xc_1.o\
-xc_2.o\
-xc_3.o \
+OBJS_PW=xc_3.o \
 vdwd2.o\
 vdwd2_parameters.o\
 vdwd3.o\
@@ -55,9 +51,6 @@ chi0_hilbert.o\
 chi0_standard.o\
 epsilon0_pwscf.o\
 epsilon0_vasp.o\
-MD_basic.o\
-MD_thermo.o\
-MD_fire.o\
 MD_func.o\
 exx_lip.o\
 soc.o\
@@ -94,6 +87,7 @@ sph_bessel_recursive-d1.o \
 sph_bessel_recursive-d2.o \
 global_variable.o \
 global_function.o \
+global_function_ddotreal.o \
 tool_title.o\
 tool_quit.o\
 tool_check.o\
@@ -128,7 +122,6 @@ gint_k_init.o\
 gint_k_vl.o\
 gint_k_rho.o\
 gint_k_fvl.o\
-grid_base.o\
 grid_base_beta.o\
 ORB_control.o\
 ORB_read.o\
@@ -163,9 +156,15 @@ LCAO_matrix.o\
 LCAO_nnr.o \
 LCAO_diago.o\
 LCAO_evolve.o\
-LCAO_descriptor.o\
-LCAO_descriptor_old.o\
-LCAO_descriptor_new.o\
+LCAO_deepks.o\
+LCAO_deepks_fdelta.o\
+LCAO_deepks_odelta.o\
+LCAO_deepks_io.o\
+LCAO_deepks_mpi.o\
+LCAO_deepks_pdm.o\
+LCAO_deepks_psialpha.o\
+LCAO_deepks_torch.o\
+LCAO_deepks_vdelta.o\
 ylm.o\
 FORCE_STRESS.o\
 FORCE_gamma.o\
@@ -176,7 +175,6 @@ FORCE_k.o\
 parallel_orbitals.o \
 global_fp.o \
 pdiag_double.o \
-pdiag_basic.o \
 pdiag_common.o \
 diag_scalapack_gvx.o \
 subgrid_oper.o \
@@ -213,7 +211,7 @@ exx_abfs-screen-cauchy.o \
 exx_lcao.o \
 exx_opt_orb.o \
 exx_opt_orb-print.o \
-wfc_dm_2d.o \
+dm_2d.o \
 unk_overlap_lcao.o \
 cal_r_overlap_R.o \
 bessel_basis.o\
@@ -228,26 +226,55 @@ parallel_reduce.o\
 parallel_pw.o\
 ft.o\
 parallel_grid.o\
-parallel_deepks.o \
+
+OBJS_ESOLVER=esolver.o\
+    esolver_ks.o\
+    esolver_fp.o\
+    esolver_ks_pw.o\
+    esolver_ks_lcao.o\
+    esolver_lj.o\
+    esolver_dp.o\
+
+OBJS_XC=xc_funct_corr_gga.o \
+xc_funct_corr_lda.o \
+xc_funct_exch_gga.o \
+xc_funct_exch_lda.o \
+xc_funct_hcth.o \
+xc_functional_gradcorr.o \
+xc_functional_vxc.o \
+xc_functional_wrapper_gcxc.o \
+xc_functional_wrapper_tauxc.o \
+xc_functional_wrapper_xc.o \
+xc_functional.o \
 
 OBJS_FIRST_PRINCIPLES=$(OBJS_MAIN)\
 $(OBJS_PW)\
 $(OBJS_LCAO)\
+$(OBJS_ESOLVER)\
+$(OBJS_XC)\
 charge.o \
 charge_mixing.o \
 charge_pulay.o \
 charge_broyden.o \
 charge_extra.o \
-xc_gga_pw.o \
 potential.o \
 H_Ewald_pw.o\
 H_Hartree_pw.o\
-H_XC_pw.o \
 H_TDDFT_pw.o\
 read_rho.o\
 read_atoms.o\
 read_cell_pseudopots.o\
 read_dm.o\
+read_txt_tools.o\
+read_txt_stru.o\
+read_txt_input_value.o\
+read_txt_input_item.o\
+read_txt_input_list.o\
+read_txt_input_process.o\
+read_txt_input_process_global.o\
+read_txt_input-general.o\
+read_txt_input-pw.o\
+read_txt_input-spectrum.o\
 write_pot.o\
 write_rho.o\
 write_rho_cube.o\
@@ -255,8 +282,7 @@ write_rho_dipole.o\
 write_HS.o\
 write_HS_R.o\
 write_dm.o\
-potential_libxc.o \
-potential_libxc_meta.o \
+write_wfc_realspace.o\
 efield.o \
 magnetism.o\
 optical.o\
@@ -280,6 +306,7 @@ variable_cell.o\
 dftu.o\
 dftu_yukawa.o\
 dftu_relax.o\
+dmft.o \
 
 OBJS_COMMON=atom_spec.o \
 unitcell.o \
@@ -296,6 +323,13 @@ run_md_classic.o\
 LJ_potential.o\
 DP_potential.o\
 cmd_neighbor.o\
+verlet.o\
+NVE.o\
+MSST.o\
+NVT_ADS.o\
+NVT_NHC.o\
+FIRE.o\
+Langevin.o\
 dos.o \
 inverse_matrix.o \
 energy.o \

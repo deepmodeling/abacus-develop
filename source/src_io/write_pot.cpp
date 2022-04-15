@@ -1,5 +1,6 @@
 #include "../src_pw/potential.h"
 #include "../src_pw/global.h"
+#include "../module_base/timer.h"
 
 // translate from write_rho in charge.cpp.
 void Potential::write_potential(
@@ -12,15 +13,15 @@ void Potential::write_potential(
 {
     ModuleBase::TITLE("potential","write_potential");
 
-    if(out_potential==0) 
+    if(out_pot==0) 
     {
         return;
     }
-    else if(out_potential<0)
+    else if(out_pot<0)
     {
         if(hartree==0) return;
     }
-    else if(iter % out_potential != 0)
+    else if(iter % out_pot != 0)
     {
         return;
     }

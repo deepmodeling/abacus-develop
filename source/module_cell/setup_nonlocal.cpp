@@ -1,4 +1,5 @@
 #include "setup_nonlocal.h"
+#include "../src_parallel/parallel_common.h"
 
 #ifdef __LCAO
 //#include "../src_pw/global.h"
@@ -10,7 +11,8 @@ InfoNonlocal::InfoNonlocal()
 {
     this->Beta = new Numerical_Nonlocal[1];
 	this->nproj = new int[1];
-	this->nprojmax = 0;
+    this->nprojmax = 0;
+    this->rcutmax_Beta = 0.0;
 }
 InfoNonlocal::~InfoNonlocal()
 {
@@ -18,13 +20,15 @@ InfoNonlocal::~InfoNonlocal()
 	delete[] nproj;
 }
 
+#include "../module_base/complexmatrix.h"
 void InfoNonlocal::Set_NonLocal(
     const int &it, 
     Atom* atom, 
     int &n_projectors,
     const int& kmesh,
     const double& dk,
-    const double& dr_uniform)
+    const double& dr_uniform,
+	std::ofstream &log)
 {
 	ModuleBase::TITLE("InfoNonlocal","Set_NonLocal");
 
@@ -79,7 +83,7 @@ void InfoNonlocal::Set_NonLocal(
 					dk,
 					dr_uniform); // delta k mesh in reciprocal space
 
-			tmpBeta_lm[p1].plot(GlobalV::MY_RANK);
+			if(GlobalV::out_element_info)tmpBeta_lm[p1].plot(GlobalV::MY_RANK);
 
 			delete[] beta_r;
 				
@@ -189,7 +193,7 @@ void InfoNonlocal::Set_NonLocal(
 					dk,
 					dr_uniform); // delta k mesh in reciprocal space
 
-			tmpBeta_lm[p1].plot(GlobalV::MY_RANK);
+			if(GlobalV::out_element_info)tmpBeta_lm[p1].plot(GlobalV::MY_RANK);
 
 			delete[] beta_r;
 		}
@@ -211,7 +215,7 @@ void InfoNonlocal::Set_NonLocal(
 
 	delete[] tmpBeta_lm;
 
-	std::cout << " SET NONLOCAL PSEUDOPOTENTIAL PROJECTORS" << std::endl;
+	log << " SET NONLOCAL PSEUDOPOTENTIAL PROJECTORS" << std::endl;
 	return;
 }
 
@@ -443,7 +447,7 @@ void InfoNonlocal::Read_NonLocal(
                 dk,
 				dr_uniform); // delta k mesh in reciprocal space
 
-		tmpBeta_lm[p1].plot(my_rank);
+		if(GlobalV::out_element_info)tmpBeta_lm[p1].plot(my_rank);
 
 		delete[] radial_ps;
 		delete[] rab_ps;
@@ -525,7 +529,8 @@ void InfoNonlocal::setupNonlocal(
 					this->nproj[it],
 					orb.get_kmesh(),
 					orb.get_dk(),
-					orb.get_dr_uniform() );
+					orb.get_dr_uniform(),
+					log);
 			}
 			this->nprojmax = std::max(this->nprojmax, this->nproj[it]);
 			//caoyu add 2021-05-24 to reconstruct atom_arrange::set_sr_NL

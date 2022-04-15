@@ -1,7 +1,8 @@
 #include "./stress_pw.h"
-#include "./H_XC_pw.h"
 #include "vdwd2.h"
 #include "vdwd3.h"
+#include "../module_base/timer.h"
+#include "global.h"
 
 void Stress_PW::cal_stress(ModuleBase::matrix& sigmatot)
 {
@@ -63,10 +64,10 @@ void Stress_PW::cal_stress(ModuleBase::matrix& sigmatot)
     //xc contribution: add gradient corrections(non diagonal)
     for(int i=0;i<3;i++)
 	{
-       sigmaxc(i,i) = - (H_XC_pw::etxc - H_XC_pw::vtxc) / GlobalC::ucell.omega;
+       sigmaxc(i,i) = - (GlobalC::en.etxc - GlobalC::en.vtxc) / GlobalC::ucell.omega;
     }
     stress_gga(sigmaxc);
-    if(GlobalV::DFT_META) stress_mgga(sigmaxc);
+    if(XC_Functional::get_func_type() == 3) stress_mgga(sigmaxc);
 
     //local contribution
     stress_loc(sigmaloc, 1);

@@ -13,16 +13,19 @@ def print_file_pw(info,dis):
 			ntype               1
 			nspin               1
 			lmaxmax             {len(info["orbital"])-1}
+			basis_type          pw
+			ks_solver           cg
 
 			symmetry            0
+			gamma_only          1
 			nbands             	{info["input"]["nbands"]} 
 
 			ecutwfc             {info["input"]["ecut"]}
-			dr2                 2.0e-8  // about iteration
-			niter               1000
+			scf_thr                 1.0e-8  // about iteration
+			scf_nmax               1000
 
-			smearing            gauss
-			sigma               {info["input"]["sigma"]}
+			smearing_method            gauss
+			smearing_sigma               {info["input"]["smearing_sigma"]}
 
 			mixing_type         pulay       // about charge mixing
 			mixing_beta         0.4
@@ -46,8 +49,8 @@ def print_file_pw(info,dis):
 		file.write(textwrap.dedent(f"""\
 			INPUT_ORBITAL_INFORMATION
 			<SPHERICAL_BESSEL>
-			1           // smooth or not
-			0.1         // sigma
+			{int(info["input"]["smooth"])}           // smooth or not
+			0.1         // smearing_sigma
 			{info["input"]["ecut"]}       // energy cutoff for spherical bessel functions(Ry)
 			{info["input"]["rcut"]}       // cutoff of wavefunctions(a.u.)
 			1.0e-12     // tolerence
@@ -114,6 +117,18 @@ def print_file_pw(info,dis):
 				EXEC={info["exe"]["exe_pw"]}
 				mpirun -n {core} -env OMP_NUM_THREADS=1 $EXEC
 				"""))
+	elif utils.sub=="sbatch":
+		with open("sub.sh","w") as file:
+			core = info["exe"]["qsub"][0]*info["exe"]["qsub"][1]
+			file.write(textwrap.dedent(f"""\
+				#!/bin/bash
+				#SBATCH -J {info["input"]["element"]}_{dis}
+				#SBATCH -p regular
+				#SBATCH -N {info["exe"]["qsub"][0]}
+				#SBATCH -o test.out
+				EXEC={info["exe"]["exe_pw"]}
+				mpirun -n {core} -env OMP_NUM_THREADS=1 $EXEC
+				"""))
 	elif utils.sub=="bsub":
 		with open("sub.sh","w") as file:
 			core = info["exe"]["qsub"][0]*info["exe"]["qsub"][1]
@@ -134,25 +149,33 @@ def print_file_pw(info,dis):
 
 def print_file_opt(info,dis):
 
-	with open("input.json","w") as file:
+	with open("INPUT","w") as file:
 		input = {
-			"file_list": [ f'../{info["input"]["element"]}-{info["input"]["rcut"]}-{distance}/test.{utils.lat0}.dat' for distance in dis[info["input"]["element"]] ],
+			"file_list": {
+				"origin": [ f'../{info["input"]["element"]}-{info["input"]["rcut"]}-{distance}/orb_matrix/orb_matrix.0.dat' for distance in dis[info["input"]["element"]] ],
+				"linear": [[ f'../{info["input"]["element"]}-{info["input"]["rcut"]}-{distance}/orb_matrix/orb_matrix.1.dat' for distance in dis[info["input"]["element"]] ]]
+			},
 			"info": {
 				"Nt_all":	[info["input"]["element"]],
 				"Nu":		{info["input"]["element"] : info["orbital"]},
-				"Nb_true":	info["input"]["ref_bands"] if isinstance(info["input"]["ref_bands"],list) else [info["input"]["ref_bands"]] * len(dis[info["input"]["element"]]),
-				"weight":	[1] * len(dis[info["input"]["element"]]),
 				"Rcut":		{info["input"]["element"] : info["input"]["rcut"]},
 				"dr":		{info["input"]["element"] : utils.dr},
 				"Ecut":		{info["input"]["element"] : info["input"]["ecut"]},
-				"lr":		utils.lr
+				"lr":		utils.lr,
+				"cal_T":	False,
+				"cal_smooth":	info["input"]["smooth"]
+			},
+			"weight":
+			{
+				"stru":	[1] * len(dis[info["input"]["element"]]),
+				"bands_file": [ f'../{info["input"]["element"]}-{info["input"]["rcut"]}-{distance}/OUT.ABACUS/istate.info' for distance in dis[info["input"]["element"]] ]
 			},
 			"C_init_info": {
 				"init_from_file":	False
 			},
 			"V_info": {
 				"same_band":		True,
-				"init_from_file":	False
+				"init_from_file":	True
 			}
 		}
 		file.write(json.dumps(input,indent=4))
@@ -173,6 +196,19 @@ def print_file_opt(info,dis):
 				EXEC={info["exe"]["exe_orbital"]}
 				python3 $EXEC
 				"""))
+	elif utils.sub=="sbatch":
+		with open("sub.sh","w") as file:
+			core = info["exe"]["qsub"][0]*info["exe"]["qsub"][1]
+			file.write(textwrap.dedent(f"""\
+				#!/bin/bash
+				#SBATCH -J {info["input"]["element"]}_opt-orb
+				#SBATCH -p regular
+				#SBATCH -N 1
+				#SBATCH -o test.out
+				export OMP_NUM_THREADS={core}
+				EXEC={info["exe"]["exe_orbital"]}
+				python3 $EXEC
+				"""))		
 	elif utils.sub=="bsub":
 		with open("sub.sh","w") as file:
 			file.write(textwrap.dedent(f"""\

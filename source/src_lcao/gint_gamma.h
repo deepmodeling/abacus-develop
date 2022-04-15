@@ -7,7 +7,8 @@
 #define GINT_GAMMA_H
 
 #include "gint_tools.h"
-#include "../src_pw/tools.h"
+#include "../module_base/global_function.h"
+#include "../module_base/global_variable.h"
 #include "grid_base_beta.h"
 #include "grid_technique.h"
 #include "LCAO_matrix.h"
@@ -30,7 +31,7 @@ class Gint_Gamma : public Grid_Base_Beta
 	void cal_vlocal( const double*const vlocal);
 
 	// (2) calculate charge density
-	double cal_rho(const double*const*const*const DM);
+	double cal_rho(double*** DM_in);
 
 	// (3) calcualte the forces related to grid
 	void cal_force( const double*const vlocal);
@@ -42,9 +43,10 @@ class Gint_Gamma : public Grid_Base_Beta
 	void cal_mulliken(double** mulliken);
 
 
-	private:	
+private:
 
-	double* transformer;
+    double***  DM;   //pointer to LOC.DM
+    double* transformer;
 	double psiv1;
 	double psiv2;
 	double* ylm1;
@@ -64,7 +66,25 @@ class Gint_Gamma : public Grid_Base_Beta
 	double* x03;
 	int *iq;
 
-	void save_atoms_on_grid(const Grid_Technique &gt);
+    ///===============================
+    /// Use MPI_Alltoallv to convert a grid distributed matrix
+    /// to 2D - block cyclic distributed matrix.
+    ///===============================
+    int sender_index_size;
+    int *sender_local_index;
+    int sender_size;
+    int *sender_size_process;
+    int *sender_displacement_process;
+    double* sender_buffer;
+
+    int receiver_index_size;
+    int *receiver_global_index;
+    int receiver_size;
+    int *receiver_size_process;
+    int *receiver_displacement_process;
+    double* receiver_buffer;
+    
+    void save_atoms_on_grid(const Grid_Technique& gt);
 
 	// for calculation of < phi_i | Vlocal | phi_j >
 	// Input:	vlocal[ir]
@@ -114,7 +134,8 @@ class Gint_Gamma : public Grid_Base_Beta
 	
 	// extract the local potentials.
 	// vldr3[GlobalC::pw.bxyz]
-	double* get_vldr3(const double*const vlocal, const int ncyz, const int ibx, const int jby, const int kbz) const;
+    double* get_vldr3(const double* const vlocal, const int ncyz, const int ibx, const int jby, const int kbz) const;
+    void vl_grid_to_2D(const Gint_Tools::Array_Pool<double>& GridVlocal, LCAO_Matrix& lm);
 };
 
 #endif

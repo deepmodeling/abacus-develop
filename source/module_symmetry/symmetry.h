@@ -1,7 +1,6 @@
 #ifndef SYMMETRY_H
 #define SYMMETRY_H
 
-//#include "../src_pw/tools.h"
 #include "../module_cell/unitcell_pseudo.h"
 #include "symmetry_basic.h"
 
@@ -17,7 +16,7 @@ public:
 	// mohan add 2021-02-21
 	static bool symm_flag;
 
-	void analy_sys(const UnitCell_pseudo &ucell, const output &out, std::ofstream &ofs_running);
+	void analy_sys(const UnitCell_pseudo &ucell, std::ofstream &ofs_running);
 	bool available;
 
 	ModuleBase::Vector3<double> s1, s2, s3;
@@ -51,6 +50,7 @@ public:
 	int sym_test;
 	int pbrav;
 	int ibrav;
+	int real_brav;    // the real ibrav for the cell     pengfei Li 3-15-2022
 	std::string ilattname;	//the bravais lattice type of the supercell
 	std::string plattname;	//the bravais lattice type of the primitive cell
 

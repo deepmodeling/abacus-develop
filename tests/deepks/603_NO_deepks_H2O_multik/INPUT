@@ -1,0 +1,22 @@
+INPUT_PARAMETERS
+calculation scf
+suffix autotest
+ntype 2
+ecutwfc 100.000000
+scf_thr 5.000000e-07
+scf_nmax 35
+basis_type lcao
+dft_functional pbe
+gamma_only 0
+mixing_type pulay
+mixing_beta 0.400000
+smearing_method gaussian
+smearing_sigma 0.020000
+cal_force 1
+cal_stress 0
+deepks_out_labels 0
+deepks_descriptor_lmax 2
+deepks_scf 1
+deepks_model model.ptg
+
+relax_nmax 20

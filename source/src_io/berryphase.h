@@ -10,8 +10,9 @@ class berryphase
 
 public:
 
-	berryphase();
-	~berryphase();
+    berryphase();   //for pw-line
+    berryphase(Local_Orbital_wfc &lowf_in);   //for lcao-line
+    ~berryphase();
 
 	// mohan add 2021-02-16
 	static bool berry_phase_flag;
@@ -25,8 +26,10 @@ public:
 	int nppstr;
 	int direction;
 	int occ_nbands;
-	int GDIR;
-	
+    int GDIR;
+
+    Local_Orbital_wfc* lowf;
+
 	void get_occupation_bands();
 
 	void lcao_init();

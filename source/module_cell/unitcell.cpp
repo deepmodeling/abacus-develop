@@ -1,10 +1,12 @@
 #include <cstdlib>
 #ifdef __MPI
-#include <mpi.h>
+#include "mpi.h"
 #endif
 
 //#include "../src_pw/global.h"
-#include "../src_pw/tools.h"
+#include "../module_base/global_function.h"
+#include "../module_base/global_variable.h"
+#include "../module_base/constants.h"
 #include "unitcell.h"
 using namespace std;
 
@@ -58,7 +60,7 @@ UnitCell::~UnitCell()
 	delete[] lc;
 }
 
-
+#include "../src_parallel/parallel_common.h"
 #ifdef __MPI
 void UnitCell::bcast_unitcell(void)
 {
@@ -116,13 +118,6 @@ void UnitCell::bcast_unitcell(void)
 #ifndef __CMD
     Parallel_Common::bcast_double( magnet.start_magnetization, ntype );
 
-    if(GlobalV::NSPIN != 1)
-    for(int it = 0;it<ntype;it++)
-    {
-         Parallel_Common::bcast_double( magnet.m_loc_[it].x );
-         Parallel_Common::bcast_double( magnet.m_loc_[it].y );
-         Parallel_Common::bcast_double( magnet.m_loc_[it].z );
-    }
     if(GlobalV::NSPIN==4)
     {
          Parallel_Common::bcast_double( magnet.ux_[0] );
@@ -148,7 +143,7 @@ void UnitCell::bcast_unitcell2(void)
 }
 #endif
 
-void UnitCell::print_cell(std::ofstream &ofs, output &outp)const
+void UnitCell::print_cell(std::ofstream &ofs)const
 {
     if (GlobalV::test_unitcell) ModuleBase::TITLE("UnitCell","print_cell");
 
@@ -162,10 +157,10 @@ void UnitCell::print_cell(std::ofstream &ofs, output &outp)const
     ModuleBase::GlobalFunc::OUT(ofs,"tpiba",tpiba);
     ModuleBase::GlobalFunc::OUT(ofs,"omega",omega);
 
-    outp.printM3(ofs,"Lattices Vector (R) : ", latvec);
-    outp.printM3(ofs ,"Supercell lattice vector : ", latvec_supercell);
-    outp.printM3(ofs, "Reciprocal lattice Vector (G): ", G);
-    outp.printM3(ofs, "GGT : ", GGT);
+    output::printM3(ofs,"Lattices Vector (R) : ", latvec);
+    output::printM3(ofs ,"Supercell lattice vector : ", latvec_supercell);
+    output::printM3(ofs, "Reciprocal lattice Vector (G): ", G);
+    output::printM3(ofs, "GGT : ", GGT);
 
     ofs<<std::endl;
     return;
@@ -302,6 +297,36 @@ void UnitCell::update_pos_tau(const double* pos)
     return;
 }
 
+void UnitCell::update_pos_tau(const ModuleBase::Vector3<double>* posd_in)
+{
+    int iat = 0;
+	for(int it = 0; it < this->ntype; ++it)
+	{
+		Atom* atom = &this->atoms[it];
+		for(int ia = 0; ia < atom->na; ++ia)
+		{		
+			if(atom->mbl[ia].x!=0)
+			{
+				atom->tau[ia].x = posd_in[iat].x / this->lat0;
+			}
+			if(atom->mbl[ia].y!=0)
+			{
+				atom->tau[ia].y = posd_in[iat].y / this->lat0;
+			}
+			if(atom->mbl[ia].z!=0)
+			{
+				atom->tau[ia].z = posd_in[iat].z / this->lat0;
+			}
+
+			// the direct coordinates also need to be updated.
+			atom->taud[ia] = atom->tau[ia] * this->GT;
+			iat++;
+		}
+	}
+	assert(iat == this->nat);
+    return;
+}
+
 void UnitCell::update_pos_taud(const ModuleBase::Vector3<double>* posd_in)
 {
     int iat = 0;
@@ -316,6 +341,21 @@ void UnitCell::update_pos_taud(const ModuleBase::Vector3<double>* posd_in)
     }
     assert(iat == this->nat);
     this->periodic_boundary_adjustment();
+}
+
+void UnitCell::update_vel(const ModuleBase::Vector3<double>* vel_in)
+{
+    int iat = 0;
+    for(int it=0; it<this->ntype; ++it)
+    {
+        Atom* atom = &this->atoms[it];
+        for(int ia=0; ia<atom->na; ++ia)
+        {
+            this->atoms[it].vel[ia] = vel_in[iat];
+            ++iat;
+        }
+    }
+    assert(iat == this->nat);
 }
 
 void UnitCell::periodic_boundary_adjustment()
@@ -386,7 +426,7 @@ void UnitCell::save_cartesian_position(double* pos)const
     return;
 }
 
-bool UnitCell::judge_big_cell(void)
+bool UnitCell::judge_big_cell(void)const
 {
 	double diameter = 2*GlobalV::SEARCH_RADIUS;
 

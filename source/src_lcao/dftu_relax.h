@@ -8,7 +8,7 @@
 #include <vector>
 #include "dftu_yukawa.h"
 #include "../module_base/complexmatrix.h"
-
+#include "src_lcao/LCAO_matrix.h"
 using namespace std;
 
 //==========================================================
@@ -24,7 +24,9 @@ public:
     DFTU_RELAX();
     ~DFTU_RELAX();
 
-    void force_stress();
+    void force_stress(std::vector<ModuleBase::matrix>& dm_gamma,
+        std::vector<ModuleBase::ComplexMatrix>& dm_k,
+        LCAO_Matrix &lm);
     void cal_force_k(const int ik, const std::complex<double>* rho_VU);
     void cal_stress_k(const int ik, const std::complex<double>* rho_VU);
     void cal_force_gamma(const double* rho_VU);
@@ -62,6 +64,8 @@ public:
     //locale_save: the input local occupation number matrix of correlated electrons in the current electronic step
     std::vector<std::vector<std::vector<std::vector<ModuleBase::matrix>>>> locale;            // locale[iat][l][n][spin](m1,m2)
     std::vector<std::vector<std::vector<std::vector<ModuleBase::matrix>>>> locale_save;       // locale_save[iat][l][n][spin](m1,m2)
+protected:
+    LCAO_Matrix* LM;
 };
 }
 #endif

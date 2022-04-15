@@ -1,6 +1,7 @@
 #include "ft.h"
 #include "parallel_pw.h"
 #include "parallel_global.h"
+#include "../module_base/timer.h"
 //#include "../src_algorithms/mymath.h"
 //#include "fftw.h"
 
@@ -68,7 +69,7 @@ void FFT::FFT3D(std::complex<double> *psi,const int sign)
 	ModuleBase::timer::tick("FFT","FFT3D");
 
 #ifdef __MPI
-#ifdef __CUDA
+#if ((defined __CUDA) || (defined __ROCM))
 	SFFT3D(psi,sign);
 #else
 	P3DFFT(psi,sign);
@@ -691,6 +692,7 @@ void FFT::scatter(std::complex<double> *psi, int sign)
 
 		ModuleBase::GlobalFunc::ZEROS(this->aux, nxx);
 
+	#ifdef __MPI
 		if (in_pool)
 		{
 			// send buffer ==> psi
@@ -701,9 +703,13 @@ void FFT::scatter(std::complex<double> *psi, int sign)
 		{
 			MPI_Alltoallv(psi, sentc, sdis, mpicomplex, this->aux, recvc, rdis, mpicomplex, MPI_COMM_WORLD);
 		}
+	#endif
+
 	}
 	else if (sign == -1)
 	{
+	
+	#ifdef __MPI
 		if (in_pool)
 		{
 			MPI_Alltoallv(this->aux, recvc, rdis, mpicomplex, psi, sentc, sdis, mpicomplex, POOL_WORLD);
@@ -712,6 +718,7 @@ void FFT::scatter(std::complex<double> *psi, int sign)
 		{
 			MPI_Alltoallv(this->aux, recvc, rdis, mpicomplex, psi, sentc, sdis, mpicomplex, MPI_COMM_WORLD);
 		}
+	#endif
 
 		ModuleBase::GlobalFunc::ZEROS(this->aux, nxx);
 

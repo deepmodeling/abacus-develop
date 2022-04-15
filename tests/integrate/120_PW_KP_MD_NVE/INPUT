@@ -1,0 +1,28 @@
+INPUT_PARAMETERS
+#Parameters	(General)
+suffix          autotest
+pseudo_dir		./
+ntype			1	
+nbands			8
+calculation     md
+
+#Parameters (Accuracy)
+ecutwfc			20
+scf_nmax			20
+
+basis_type		pw
+md_nstep           1
+
+cal_stress          1
+stress_thr      1e-6
+cal_force           1
+force_thr_ev    1.0e-3
+
+ks_solver       cg
+mixing_type     pulay
+mixing_beta     0.7
+
+md_type         0
+md_restart         0
+
+read_file_dir   ./

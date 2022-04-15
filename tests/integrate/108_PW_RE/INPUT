@@ -1,22 +1,21 @@
 INPUT_PARAMETERS
 #Parameters	(General)
 suffix      	autotest
-pseudo_dir		./
 ntype			1	
 nbands			8
 calculation 	relax
 
 #Parameters (Accuracy)
 ecutwfc			20
-niter			50
-dr2             1.0e-8
+scf_nmax			50
+scf_thr             1.0e-8
 
 basis_type		pw
-nstep           2
+relax_nmax           2
 
-stress          1
+cal_stress          1
 stress_thr      1e-6
-force           1
+cal_force           1
 force_thr_ev    1.0e-3
 
 ks_solver       cg

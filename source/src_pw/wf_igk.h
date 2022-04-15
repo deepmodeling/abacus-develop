@@ -1,7 +1,9 @@
 #ifndef WF_IGK_H
 #define WF_IGK_H
 
-#include "tools.h"
+#include "../module_base/global_function.h"
+#include "../module_base/global_variable.h"
+#include "../module_base/intarray.h"
 #include "pw_basis.h"
 
 class WF_igk 
@@ -21,6 +23,9 @@ class WF_igk
     int npw;
     ModuleBase::IntArray igk;
     double *g2kin;
+#ifdef __CUDA
+    double *d_g2kin;
+#endif
 
 	public:
 

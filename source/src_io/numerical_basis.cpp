@@ -3,9 +3,11 @@
 #include "../module_symmetry/symmetry.h"
 #include "winput.h"
 #include "../module_base/math_ylmreal.h"
+#include "../src_parallel/parallel_reduce.h"
 #include <cstring>
 #include <functional>
 #include <algorithm>
+#include "../module_base/timer.h"
 
 Numerical_Basis::Numerical_Basis() {}
 Numerical_Basis::~Numerical_Basis() {}
@@ -67,7 +69,7 @@ void Numerical_Basis::output_overlap( const ModuleBase::ComplexMatrix *psi)
         std::ofstream ofs;
         std::stringstream ss;
         // the parameter 'winput::spillage_outdir' is read from INPUTw.
-        ss << winput::spillage_outdir << "/" << GlobalC::ucell.latName << "." << derivative_order << ".dat";
+        ss << winput::spillage_outdir << "/" <<  "orb_matrix." << derivative_order << ".dat";
         if (GlobalV::MY_RANK==0)
         {
             ofs.open(ss.str().c_str());
@@ -95,18 +97,18 @@ void Numerical_Basis::output_overlap( const ModuleBase::ComplexMatrix *psi)
             GlobalV::ofs_running << " --------------------------------------------------------" << std::endl;
 
             // search for all k-points.
-            overlap_Q[ik] = this->cal_overlap_Q(ik, npw, psi[ik], derivative_order);
+            overlap_Q[ik] = this->cal_overlap_Q(ik, npw, psi[ik], static_cast<double>(derivative_order));
             ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running,"cal_overlap_Q");
 
             // (2) generate Sq matrix if necessary.
             if (winput::out_spillage == 2)
             {
-                overlap_Sq[ik] = this->cal_overlap_Sq( ik, npw, derivative_order );
+                overlap_Sq[ik] = this->cal_overlap_Sq( ik, npw, static_cast<double>(derivative_order) );
                 ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running,"cal_overlap_Sq");
             }
         }
 
-        const ModuleBase::matrix overlap_V = this->cal_overlap_V(psi, derivative_order);		// Peize Lin add 2020.04.23
+        const ModuleBase::matrix overlap_V = this->cal_overlap_V(psi, static_cast<double>(derivative_order));		// Peize Lin add 2020.04.23
 
     #ifdef __MPI
         for (int ik=0; ik<GlobalC::kv.nks; ik++)
@@ -139,7 +141,7 @@ ModuleBase::ComplexArray Numerical_Basis::cal_overlap_Q(
     const int &ik,
     const int &np,
     const ModuleBase::ComplexMatrix &psi,
-	const int derivative_order) const
+	const double derivative_order) const
 {
     ModuleBase::TITLE("Numerical_Basis","cal_overlap_Q");
     ModuleBase::timer::tick("Numerical_Basis","cal_overlap_Q");
@@ -155,6 +157,8 @@ ModuleBase::ComplexArray Numerical_Basis::cal_overlap_Q(
     std::vector<ModuleBase::Vector3<double>> gk(np);
     for (int ig=0; ig<np; ig++)
         gk[ig] = GlobalC::wf.get_1qvec_cartesian(ik, ig);
+
+    const std::vector<double> gpow = Numerical_Basis::cal_gpow(gk, derivative_order);
 
 	const ModuleBase::realArray flq = this->cal_flq(ik, gk);
 
@@ -195,7 +199,7 @@ ModuleBase::ComplexArray Numerical_Basis::cal_overlap_Q(
                             for (int ig=0; ig<np; ig++)
                             {
 //                              const std::complex<double> local_tmp = lphase * sk[ig] * ylm(lm, ig) * flq[ig];
-                                const std::complex<double> local_tmp = lphase * sk[ig] * ylm(lm, ig) * flq(L,ie,ig) * pow(gk[ig].norm2(),derivative_order);		// Peize Lin add for dpsi 2020.04.23
+                                const std::complex<double> local_tmp = lphase * sk[ig] * ylm(lm, ig) * flq(L,ie,ig) * gpow[ig];		// Peize Lin add for dpsi 2020.04.23
                                 overlap_tmp += conj( local_tmp ) * psi(ib, ig); // psi is bloch orbitals
                             }
                             overlap_Q(ib, this->mu_index[T](I, L, N, m), ie) = overlap_tmp;
@@ -214,7 +218,7 @@ ModuleBase::ComplexArray Numerical_Basis::cal_overlap_Q(
 ModuleBase::ComplexArray Numerical_Basis::cal_overlap_Sq(
     const int &ik,
     const int &np,
-	const int derivative_order) const
+	const double derivative_order) const
 {
     ModuleBase::TITLE("Numerical_Basis","cal_overlap_Sq");
     ModuleBase::timer::tick("Numerical_Basis","cal_overlap_Sq");
@@ -231,6 +235,8 @@ ModuleBase::ComplexArray Numerical_Basis::cal_overlap_Sq(
     std::vector<ModuleBase::Vector3<double>> gk(np);
     for (int ig=0; ig<np; ig++)
         gk[ig] = GlobalC::wf.get_1qvec_cartesian(ik, ig);
+
+    const std::vector<double> gpow = Numerical_Basis::cal_gpow(gk, derivative_order);
 
 	const ModuleBase::realArray flq = this->cal_flq(ik, gk);
 
@@ -281,7 +287,7 @@ ModuleBase::ComplexArray Numerical_Basis::cal_overlap_Sq(
 										
                                         std::vector<std::complex<double>> about_ig1(np, std::complex<double>(0.0,0.0));
                                         for (int ig=0; ig<np; ig++)
-                                            about_ig1[ig] = conj( lphase1 * sk1[ig] * ylm(lm1, ig) ) * pow(gk[ig].norm2(),derivative_order);		// Peize Lin add for dpsi 2020.04.23
+                                            about_ig1[ig] = conj( lphase1 * sk1[ig] * ylm(lm1, ig) ) * gpow[ig];		// Peize Lin add for dpsi 2020.04.23
 										
                                         for (int m2=0; m2<2*l2+1; m2++) // 2.6
                                         {
@@ -307,7 +313,7 @@ ModuleBase::ComplexArray Numerical_Basis::cal_overlap_Sq(
                                             for(int ie2=0; ie2<enumber; ++ie2)
                                                 std::transform( &flq(l2,ie2,0), &flq(l2,ie2,0)+np, about_ig2.data(), about_ig3_2.c+ie2*np, std::multiplies<std::complex<double>>() );
 
-                                            LapackConnector::gemm('N', 'T', enumber, enumber, np,
+                                            BlasConnector::gemm('N', 'T', enumber, enumber, np,
                                                 1.0, about_ig3_1.c, np, about_ig3_2.c, np, 
                                                 1.0, &overlap_Sq(iwt1,iwt2,0,0), enumber);
                                         }
@@ -330,18 +336,20 @@ ModuleBase::ComplexArray Numerical_Basis::cal_overlap_Sq(
 // Peize Lin add for dpsi 2020.04.23
 ModuleBase::matrix Numerical_Basis::cal_overlap_V(
 	const ModuleBase::ComplexMatrix *psi,
-	const int derivative_order)
+	const double derivative_order)
 {
 	ModuleBase::matrix overlap_V(GlobalC::kv.nks, GlobalV::NBANDS);
 	for(int ik=0; ik<GlobalC::kv.nks; ++ik)
 	{
+        std::vector<ModuleBase::Vector3<double>> gk(GlobalC::kv.ngk[ik]);
+        for (int ig=0; ig<gk.size(); ig++)
+            gk[ig] = GlobalC::wf.get_1qvec_cartesian(ik, ig);
+
+        const std::vector<double> gpow = Numerical_Basis::cal_gpow(gk, derivative_order);
+
 		for(int ib=0; ib<GlobalV::NBANDS; ++ib)
-		{
 			for(int ig=0; ig<GlobalC::kv.ngk[ik]; ++ig)
-			{
-				overlap_V(ik,ib)+= norm(psi[ik](ib,ig)) * pow(GlobalC::wf.get_1qvec_cartesian(ik,ig).norm2(),derivative_order);
-			}
-		}
+				overlap_V(ik,ib)+= norm(psi[ik](ib,ig)) * gpow[ig];
 	}
 	return overlap_V;
 }
@@ -366,6 +374,25 @@ ModuleBase::matrix Numerical_Basis::cal_ylm(const std::vector<ModuleBase::Vector
     ModuleBase::matrix ylm(total_lm, gk.size());
     ModuleBase::YlmReal::Ylm_Real(total_lm, gk.size(), gk.data(), ylm);
     return ylm;
+}
+
+std::vector<double> Numerical_Basis::cal_gpow (const std::vector<ModuleBase::Vector3<double>> &gk, const double derivative_order)
+{
+    constexpr double thr = 1E-12;
+    std::vector<double> gpow(gk.size(), 0.0);
+    for (int ig=0; ig<gpow.size(); ++ig)
+    {
+        if (derivative_order>=0)
+        {
+            gpow[ig] = std::pow(gk[ig].norm2(),derivative_order);
+        }
+        else
+        {
+            if (gk[ig].norm2() >= thr)
+                gpow[ig] = std::pow(gk[ig].norm2(),derivative_order);
+        }
+    }
+    return gpow;
 }
 
 std::vector<ModuleBase::IntArray> Numerical_Basis::init_mu_index(void)

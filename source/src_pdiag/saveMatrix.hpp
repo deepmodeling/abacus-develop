@@ -1,5 +1,5 @@
 #ifdef __MPI
-#include <mpi.h>
+#include "mpi.h"
 #endif
 #include <fstream>
 #include <sstream>

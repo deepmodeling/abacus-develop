@@ -2,12 +2,13 @@
 #ifndef __CELL
 #include "global.h"
 #endif
+#include "../src_parallel/parallel_reduce.h"
 
 Magnetism::Magnetism()
 {
     this->tot_magnetization = 0.0;
     this->abs_magnetization = 0.0;
-    //this->start_magnetization = new double[10];
+    this->start_magnetization = new double[1];
 
 	//m_loc_ = new ModuleBase::Vector3<double> [1];
 	//angle1_ = new double[1];
@@ -16,7 +17,7 @@ Magnetism::Magnetism()
 
 Magnetism::~Magnetism()
 {
-    //delete[] this->start_magnetization;
+    delete[] this->start_magnetization;
 	//delete[] m_loc_;
 	//delete[] angle1_;
 	//delete[] angle2_;

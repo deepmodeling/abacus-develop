@@ -4,6 +4,7 @@
 #include "ORB_read.h" // use LCAO_Orbitals
 #include "ORB_atomic_lm.h" // use Numerical_Orbital_Lm
 #include "../module_base/sph_bessel_recursive.h" // use ModuleBase::Sph_Bessel_Recursive
+#include "../module_base/intarray.h"
 
 class ORB_table_beta
 {

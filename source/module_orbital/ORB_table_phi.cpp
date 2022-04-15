@@ -1,6 +1,9 @@
 #include <stdexcept>
 #include "ORB_table_phi.h"
 #include "../module_base/math_integral.h"
+#include "../module_base/memory.h"
+#include "../module_base/constants.h"
+#include "../module_base/timer.h"
 
 double ORB_table_phi::dr = -1.0;
 
@@ -110,6 +113,7 @@ int ORB_table_phi::get_rmesh(const double &R1, const double &R2)
 	return rmesh;
 }
 
+#include "../module_base/mathzone_add1.h"
 // Peize Lin accelerate 2017-10-02
 void ORB_table_phi::cal_ST_Phi12_R
 (
@@ -241,6 +245,7 @@ void ORB_table_phi::cal_ST_Phi12_R
 	return;
 }
 
+#include "../module_base/constants.h"
 
 // Peize Lin add 2017-10-27
 void ORB_table_phi::cal_ST_Phi12_R

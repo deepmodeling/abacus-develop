@@ -4,7 +4,6 @@ add_library(
     pdiag
     OBJECT
     pdgseps.cpp
-    pdiag_basic.cpp
     pdiag_common.cpp
     pdiag_double.cpp
     pdst2g.cpp

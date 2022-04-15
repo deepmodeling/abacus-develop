@@ -1,32 +1,33 @@
 #include "dos.h"
-#include "../src_pw/tools.h"
+#include "../module_base/global_function.h"
+#include "../module_base/global_variable.h"
 #include "../src_pw/global.h"
 #include "../src_pw/energy.h"
 #include "../src_pw/wavefunc.h"
 #ifdef __LCAO
 #include "mulliken_charge.h"
-#include "../src_lcao/LCAO_nnr.h"
 #include "../src_lcao/LCAO_gen_fixedH.h"    
 #include "../src_lcao/local_orbital_charge.h"
 #include "../src_lcao/LCAO_matrix.h"
 #include "../src_lcao/global_fp.h"
-#include "../src_lcao/wfc_dm_2d.h"
 #include "../module_neighbor/sltk_atom_arrange.h"//qifeng-2019-01-21
 #endif
-#include "../module_base/lapack_connector.h"
+#include "../module_base/blas_connector.h"
 #include "../module_base/scalapack_connector.h"
 #include "../module_base/matrix.h"
 #include "../module_base/complexmatrix.h"
+#include "../src_parallel/parallel_reduce.h"
 #include <vector>
 #ifdef __MPI
 #include<mpi.h>
 #endif
 #include <sys/time.h>
 
-void energy::perform_dos(void)
+void energy::perform_dos(Local_Orbital_wfc &lowf, LCAO_Hamilt &uhm)
 {
 	ModuleBase::TITLE("energy","perform_dos");
 
+    const Parallel_Orbitals* pv = uhm.LM->ParaV;
 
     if(out_dos !=0 || out_band !=0)
     {
@@ -116,9 +117,11 @@ void energy::perform_dos(void)
 			std::ofstream ofsi( ss.str().c_str() ); // clear istate.info
 			ofsi.close();
 		}
-		for(int ip=0; ip<GlobalV::NPOOL; ip++)
+		for(int ip=0; ip<GlobalV::KPAR; ip++)
 		{
+		#ifdef __MPI
 			MPI_Barrier(MPI_COMM_WORLD);
+		#endif
 			if( GlobalV::MY_POOL == ip )
 			{
 				if( GlobalV::RANK_IN_POOL != 0 ) continue;
@@ -174,10 +177,10 @@ void energy::perform_dos(void)
 
 	// GlobalV::mulliken charge analysis
 #ifdef __LCAO
-	if(GlobalV::mulliken == 1)
+	if(GlobalV::out_mul == 1)
 	{
-		Mulliken_Charge   MC;
-		MC.stdout_mulliken();			
+		Mulliken_Charge   MC(&lowf.wfc_gamma, &lowf.wfc_k);
+		MC.stdout_mulliken(uhm);			
 	}//qifeng add 2019/9/10
 #endif
 
@@ -223,26 +226,6 @@ void energy::perform_dos(void)
 		const int npoints = static_cast<int>(std::floor ( ( emax - emin ) / de_ev ));
 
 		int NUM=GlobalV::NLOCAL*npoints;
-		Wfc_Dm_2d D;
-		D.init();
-		if(GlobalV::GAMMA_ONLY_LOCAL)
-		{
-			for(int in=0;in<GlobalV::NSPIN;in++)
-			{
-
-				D.wfc_gamma[in]=GlobalC::LOC.wfc_dm_2d.wfc_gamma[in];
-			}
-
-		}
-		else 
-		{
-
-			for(int in=0;in<GlobalC::kv.nks;in++)
-			{
-
-				D.wfc_k[in] = GlobalC::LOC.wfc_dm_2d.wfc_k[in];
-			}
-		}
 
 
 		const int np=npoints;
@@ -278,10 +261,10 @@ void energy::perform_dos(void)
 			{
 				std::vector<ModuleBase::matrix>   Mulk;
 				Mulk.resize(1);
-				Mulk[0].create(GlobalC::ParaO.ncol,GlobalC::ParaO.nrow);
+				Mulk[0].create(pv->ncol,pv->nrow);
 
 
-				ModuleBase::matrix Dwf = D.wfc_gamma[is];
+				ModuleBase::matrix Dwf = lowf.wfc_gamma[is];
 				for (int i=0; i<GlobalV::NBANDS; ++i)		  
 				{     
 					ModuleBase::GlobalFunc::ZEROS(waveg, GlobalV::NLOCAL);
@@ -301,29 +284,30 @@ void energy::perform_dos(void)
 					const double one_float=1.0, zero_float=0.0;
 					const int one_int=1;
 
-
+				#ifdef __MPI
 					const char T_char='T';		
 					pdgemv_(
 							&T_char,
 							&GlobalV::NLOCAL,&GlobalV::NLOCAL,
 							&one_float,
-							GlobalC::LM.Sloc, &one_int, &one_int, GlobalC::ParaO.desc,
-							Dwf.c, &one_int, &NB, GlobalC::ParaO.desc, &one_int,
+							uhm.LM->Sloc.data(), &one_int, &one_int, pv->desc,
+							Dwf.c, &one_int, &NB, pv->desc, &one_int,
 							&zero_float,
-							Mulk[0].c, &one_int, &NB, GlobalC::ParaO.desc,
+							Mulk[0].c, &one_int, &NB, pv->desc,
 							&one_int);
+				#endif
 
 					for (int j=0; j<GlobalV::NLOCAL; ++j)
 					{
 
-						if ( GlobalC::ParaO.in_this_processor(j,i) )
+						if ( pv->in_this_processor(j,i) )
 						{
 
-							const int ir = GlobalC::ParaO.trace_loc_row[j];
-							const int ic = GlobalC::ParaO.trace_loc_col[i];
-							waveg[j] = Mulk[0](ic,ir)*D.wfc_gamma[is](ic,ir);
+							const int ir = pv->trace_loc_row[j];
+							const int ic = pv->trace_loc_col[i];
+							waveg[j] = Mulk[0](ic,ir)*lowf.wfc_gamma[is](ic,ir);
 							const double x = waveg[j].real();
-							LapackConnector::axpy(np , x,Gauss, 1,pdosk[is].c+j*pdosk[is].nc,1);
+							BlasConnector::axpy(np , x,Gauss, 1,pdosk[is].c+j*pdosk[is].nc,1);
 						}
 					} 
 				}//ib
@@ -345,46 +329,13 @@ void energy::perform_dos(void)
 					GlobalV::SEARCH_RADIUS, 
 					GlobalV::test_atom_input);//qifeng-2019-01-21
 
-				// mohan update 2021-04-16
-				GlobalC::LOWF.orb_con.read_orb_first(
-					GlobalV::ofs_running,
-					GlobalC::ORB,
-					GlobalC::ucell.ntype,
-					GlobalC::ucell.lmax,
-					INPUT.lcao_ecut,
-					INPUT.lcao_dk,
-					INPUT.lcao_dr,
-					INPUT.lcao_rmax,
-					GlobalV::out_descriptor,
-					INPUT.out_r_matrix,
-					GlobalV::FORCE,
-					GlobalV::MY_RANK);
-					
-				GlobalC::ucell.infoNL.setupNonlocal(
-					GlobalC::ucell.ntype,
-					GlobalC::ucell.atoms,
-					GlobalV::ofs_running,
-					GlobalC::ORB
-				);
-
-				GlobalC::LOWF.orb_con.set_orb_tables(
-					GlobalV::ofs_running,
-					GlobalC::UOT,
-					GlobalC::ORB,
-					GlobalC::ucell.lat0,
-					GlobalV::out_descriptor,
-					Exx_Abfs::Lmax,
-					GlobalC::ucell.infoNL.nprojmax,
-					GlobalC::ucell.infoNL.nproj,
-					GlobalC::ucell.infoNL.Beta);
-
-				GlobalC::LM.allocate_HS_R(GlobalC::LNNR.nnr);
-				GlobalC::LM.zeros_HSR('S', GlobalC::LNNR.nnr);
-				GlobalC::UHM.genH.calculate_S_no();
-				GlobalC::UHM.genH.build_ST_new('S', false, GlobalC::ucell);
+				uhm.LM->allocate_HS_R(pv->nnr);
+				uhm.LM->zeros_HSR('S');
+				uhm.genH.calculate_S_no();
+				uhm.genH.build_ST_new('S', false, GlobalC::ucell);
 				std::vector<ModuleBase::ComplexMatrix> Mulk;
 				Mulk.resize(1);
-				Mulk[0].create(GlobalC::ParaO.ncol,GlobalC::ParaO.nrow);
+				Mulk[0].create(pv->ncol,pv->nrow);
 
 
 				for(int ik=0;ik<GlobalC::kv.nks;ik++)
@@ -392,12 +343,12 @@ void energy::perform_dos(void)
 
 					if(is == GlobalC::kv.isk[ik])
 					{
-						GlobalC::LM.allocate_HS_k(GlobalC::ParaO.nloc);
-						GlobalC::LM.zeros_HSk('S');
-						GlobalC::LNNR.folding_fixedH(ik);
+						uhm.LM->allocate_HS_k(pv->nloc);
+						uhm.LM->zeros_HSk('S');
+						uhm.LM->folding_fixedH(ik);
 
 
-						ModuleBase::ComplexMatrix Dwfc = conj(D.wfc_k[ik]);
+						ModuleBase::ComplexMatrix Dwfc = conj(lowf.wfc_k[ik]);
 
 						for (int i=0; i<GlobalV::NBANDS; ++i)		  
 						{     
@@ -417,35 +368,36 @@ void energy::perform_dos(void)
 
 							const int NB= i+1;
 
-							const double one_float=1.0, zero_float=0.0;
+							const double one_float[2]={1.0, 0.0}, zero_float[2]={0.0, 0.0};
 							const int one_int=1;
 							//   const int two_int=2;
 							const char T_char='T';		// N_char='N',U_char='U'
 
+						#ifdef __MPI
 							pzgemv_(
 									&T_char,
 									&GlobalV::NLOCAL,&GlobalV::NLOCAL,
-									&one_float,
-									GlobalC::LM.Sloc2, &one_int, &one_int, GlobalC::ParaO.desc,
-									Dwfc.c, &one_int, &NB, GlobalC::ParaO.desc, &one_int,
-									&zero_float,
-									Mulk[0].c, &one_int, &NB, GlobalC::ParaO.desc,
+									&one_float[0],
+									uhm.LM->Sloc2.data(), &one_int, &one_int, pv->desc,
+									Dwfc.c, &one_int, &NB, pv->desc, &one_int,
+									&zero_float[0],
+									Mulk[0].c, &one_int, &NB, pv->desc,
 									&one_int);
-
+						#endif
 
 
 							for (int j=0; j<GlobalV::NLOCAL; ++j)
 							{
 
-								if ( GlobalC::ParaO.in_this_processor(j,i) )
+								if ( pv->in_this_processor(j,i) )
 								{
 
-									const int ir = GlobalC::ParaO.trace_loc_row[j];
-									const int ic = GlobalC::ParaO.trace_loc_col[i];
+									const int ir = pv->trace_loc_row[j];
+									const int ic = pv->trace_loc_col[i];
 
-									waveg[j] = Mulk[0](ic,ir)*D.wfc_k[ik](ic,ir);
+									waveg[j] = Mulk[0](ic,ir)*lowf.wfc_k[ik](ic,ir);
 									const double x = waveg[j].real();
-									LapackConnector::axpy(np , x,Gauss, 1,pdosk[is].c+j*pdosk[is].nc,1);
+									BlasConnector::axpy(np , x,Gauss, 1,pdosk[is].c+j*pdosk[is].nc,1);
 
 								}
 							}                             
@@ -464,11 +416,10 @@ void energy::perform_dos(void)
 					GlobalV::SEARCH_RADIUS, 
 					GlobalV::test_atom_input);
 #endif
-				// mohan update 2021-02-10
-				GlobalC::LOWF.orb_con.clear_after_ions(GlobalC::UOT, GlobalC::ORB, GlobalV::out_descriptor, GlobalC::ucell.infoNL.nproj);
 			}//else
-
+		#ifdef __MPI
 		 MPI_Reduce(pdosk[is].c, pdos[is].c , NUM , MPI_DOUBLE , MPI_SUM, 0, MPI_COMM_WORLD);
+		#endif
 	 }//is                                              
 	 delete[] pdosk;                                               
 	 delete[] waveg;
@@ -649,106 +600,18 @@ void energy::perform_dos(void)
 	 {
 		 std::stringstream ss;
 		 ss << GlobalV::global_out_dir << "DOS" << is+1;
+		 std::stringstream ss1;
+		 ss1 << GlobalV::global_out_dir << "DOS" << is+1 << "_smearing.dat";
 
 		 Dos::calculate_dos(
 				 is,
 				 GlobalC::kv.isk,
-				 ss.str(), 
+				 ss.str(),
+				 ss1.str(),
 				 this->dos_edelta_ev, 
 				 emax, 
 				 emin, 
 				 GlobalC::kv.nks, GlobalC::kv.nkstot, GlobalC::kv.wk, GlobalC::wf.wg, GlobalV::NBANDS, GlobalC::wf.ekb );
-		 std::ifstream in(ss.str().c_str());
-		 if(!in)
-		 {
-			 //      std::cout<<"\n Can't find file : "<< name << std::endl;
-			 //      return 0;
-		 }
-
-		 //----------------------------------------------------------
-		 // FOUND LOCAL VARIABLES :
-		 // NAME : number(number of DOS points)
-		 // NAME : nk(number of k point used)
-		 // NAME : energy(energy range,from emin_ev to emax_ev)
-		 // NAME : dos(old,count k points in the energy range)
-		 // NAME : dos2(new,count k points in the energy range)
-		 //----------------------------------------------------------
-		 int number=0;
-		 int nk=0;
-		 in >> number;
-		 in >> nk;
-		 double *energy = new double[number];
-		 double *dos = new double[number];
-		 double *dos2 = new double[number];
-		 for(int i=0 ;i<number; i++)
-		 {
-			 energy[i] = 0.0;
-			 dos[i] = 0.0;
-			 dos2[i] =0.0;
-		 }
-
-		 for(int i=0;i<number;i++)
-		 {
-			 in >> energy[i] >> dos[i];
-		 }
-		 if(!in.eof())
-		 {
-			 //std::cout<<"\n Read Over!"<<std::endl;
-		 }
-		 in.close();
-
-		 //----------------------------------------------------------
-		 // EXPLAIN : b is an empirical value.
-		 // please DIY b!!
-		 //----------------------------------------------------------
-
-		 //double b = INPUT.b_coef;
-		 double b = sqrt(2.0)*bcoeff;
-		 for(int i=0;i<number;i++)
-		 {
-			 double Gauss=0.0;
-
-			 for(int j=0;j<number;j++)
-			 {
-				 double de = energy[j] - energy[i];
-				 double de2 = de * de;
-				 //----------------------------------------------------------
-				 // EXPLAIN : if en
-				 //----------------------------------------------------------
-				 Gauss = exp(-de2/b/b)/sqrt(3.1415926)/b;
-				 dos2[j] += dos[i]*Gauss;
-			 }
-		 }
-
-		 //----------------------------------------------------------
-		 // EXPLAIN : output DOS2.txt
-		 //----------------------------------------------------------
-		 std::stringstream sss;
-		 sss << GlobalV::global_out_dir << "DOS" << is+1 << "_smearing" << ".dat" ;
-		 std::ofstream out(sss.str().c_str());
-		 double sum2=0.0;
-		 for(int i=0;i<number;i++)
-		 {
-			 sum2 += dos2[i];
-			 //            if(dos2[i]<1e-5)
-			 //            {
-			 //                    dos2[i] = 0.00;
-			 //            }
-			 out <<std::setw(20)<<energy[i]
-				 <<std::setw(20)<<dos2[i]
-				 <<std::setw(20)<<sum2<<"\n";
-		 }
-		 out.close();
-
-		 //----------------------------------------------------------
-		 // DELETE
-		 //----------------------------------------------------------
-		 delete[] dos;
-		 delete[] dos2;
-		 delete[] energy;
-
-		 //std::cout<<" broden spectrum over, success : ) "<<std::endl;
-
 	 }
 
 
@@ -757,7 +620,7 @@ void energy::perform_dos(void)
 		{
 			std::stringstream sp;
 			sp << GlobalV::global_out_dir << "Mulliken.dat";
-			Dos::calculate_Mulliken(sp.str());
+			Dos::calculate_Mulliken(sp.str(), uhm.GG);
 		}
 	
 		if(nspin0==1)
@@ -817,3 +680,4 @@ void energy::perform_dos(void)
 	}
 	return;
 }
+

@@ -4,7 +4,8 @@
 //==========================================================
 #include "input_update.h"
 #include "src_pw/global.h"
-#include "src_pw/tools.h"
+#include "module_base/global_function.h"
+#include "module_base/global_variable.h"
 #include "input.h"
 #include "src_ions/ions_move_basic.h"
 #include "src_io/optical.h"
@@ -74,13 +75,13 @@ bool Update_input::Read(const std::string &fn)
         INPUT.strtolower(word1, word);
 		
 		// 1
-        if (strcmp("force", word) == 0)
+        if (strcmp("cal_force", word) == 0)
         {
-            read_value(ifs, force);
-			if(force!=GlobalV::FORCE)
+            read_value(ifs, cal_force);
+			if(cal_force!=GlobalV::CAL_FORCE)
 			{
-				this->change(GlobalV::ofs_warning,"FORCE",GlobalV::FORCE, force);
-    			GlobalV::FORCE = this->force;
+				this->change(GlobalV::ofs_warning,"CAL_FORCE",GlobalV::CAL_FORCE, cal_force);
+    			GlobalV::CAL_FORCE = this->cal_force;
 			}
         }
 		// 2
@@ -117,33 +118,42 @@ bool Update_input::Read(const std::string &fn)
         }
 #endif
 		// 4
-        else if (strcmp("dr2", word) == 0)
+        else if (strcmp("scf_thr", word) == 0)
         {
-            read_value(ifs, dr2);
-			if(dr2!=GlobalV::DRHO2)
+            read_value(ifs, scf_thr);
+			if(scf_thr!=GlobalV::SCF_THR)
 			{
-				this->change(GlobalV::ofs_warning,"dr2",GlobalV::DRHO2,dr2);
-    			GlobalV::DRHO2 = this->dr2;
+				this->change(GlobalV::ofs_warning,"scf_thr",GlobalV::SCF_THR,scf_thr);
+    			GlobalV::SCF_THR = this->scf_thr;
 			}
         }
 		// 5
-        else if (strcmp("niter", word) == 0)
+        else if (strcmp("scf_nmax", word) == 0)
         {
-            read_value(ifs, niter);
-			if(niter!=GlobalV::NITER)
+            read_value(ifs, scf_nmax);
+			if(scf_nmax!=GlobalV::SCF_NMAX)
 			{
-				this->change(GlobalV::ofs_warning,"niter",GlobalV::NITER,niter);
-    			GlobalV::NITER = this->niter;
+				this->change(GlobalV::ofs_warning,"scf_nmax",GlobalV::SCF_NMAX,scf_nmax);
+    			GlobalV::SCF_NMAX = this->scf_nmax;
 			}
         }
 		// 6
-        else if (strcmp("nstep", word) == 0)
+        else if (strcmp("relax_nmax", word) == 0)
         {
-            read_value(ifs, nstep);
-			if(nstep!=GlobalV::NSTEP)
+            read_value(ifs, relax_nmax);
+			if(relax_nmax!=GlobalV::RELAX_NMAX)
 			{
-				this->change(GlobalV::ofs_warning,"nstep",GlobalV::NSTEP,nstep);
-    			GlobalV::NSTEP = this->nstep;
+				this->change(GlobalV::ofs_warning,"relax_nmax",GlobalV::RELAX_NMAX,relax_nmax);
+    			GlobalV::RELAX_NMAX = this->relax_nmax;
+			}
+        }
+        else if (strcmp("md_nstep", word) == 0)
+        {
+            read_value(ifs, md_nstep);
+			if(md_nstep!=GlobalV::MD_NSTEP)
+			{
+				this->change(GlobalV::ofs_warning, "md_nstep", GlobalV::MD_NSTEP, md_nstep);
+    			GlobalV::MD_NSTEP = this->md_nstep;
 			}
         }
 		// 7
@@ -167,33 +177,33 @@ bool Update_input::Read(const std::string &fn)
 			}
         }
 		// 9 
-        else if (strcmp("charge_extrap", word) == 0)//xiaohui modify 2015-02-01
+        else if (strcmp("chg_extrap", word) == 0)//xiaohui modify 2015-02-01
         {
-            read_value(ifs, charge_extrap);
+            read_value(ifs, chg_extrap);
 
-			if(charge_extrap!=GlobalC::pot.extra_pot)
+			if(chg_extrap!=GlobalC::pot.chg_extrap)
 			{
-				this->change(GlobalV::ofs_warning,"extra_pot",GlobalC::pot.extra_pot,charge_extrap);
-				GlobalC::pot.extra_pot = this->charge_extrap;
+				this->change(GlobalV::ofs_warning,"chg_extrap",GlobalC::pot.chg_extrap,chg_extrap);
+				GlobalC::pot.chg_extrap = this->chg_extrap;
 				if(out_dm==0) 
 				{
 					out_dm = 10000;
 #ifdef __FP
-					this->change(GlobalV::ofs_warning,"out_dm",GlobalC::LOC.out_dm, out_dm);
-					GlobalC::LOC.out_dm=out_dm;
+					this->change(GlobalV::ofs_warning,"out_dm",Local_Orbital_Charge::out_dm, out_dm);
+					Local_Orbital_Charge::out_dm=out_dm;
 #endif
 				}
 			}
 
         }
 		// 10
-        else if (strcmp("out_charge", word) == 0)
+        else if (strcmp("out_chg", word) == 0)
         {
-            read_value(ifs, out_charge);
-			if(out_charge!=GlobalC::CHR.out_charge)
+            read_value(ifs, out_chg);
+			if(out_chg!=GlobalC::CHR.out_chg)
 			{
-				this->change(GlobalV::ofs_warning,"out_charge",GlobalC::CHR.out_charge,out_charge);
-    			GlobalC::CHR.out_charge = this->out_charge;
+				this->change(GlobalV::ofs_warning,"out_chg",GlobalC::CHR.out_chg,out_chg);
+    			GlobalC::CHR.out_chg = this->out_chg;
 			}
         }
 		// 11
@@ -201,10 +211,10 @@ bool Update_input::Read(const std::string &fn)
         {
             read_value(ifs, out_dm);
 #ifdef __FP
-			if(out_dm!=GlobalC::LOC.out_dm)
+			if(out_dm!=Local_Orbital_Charge::out_dm)
 			{
-				this->change(GlobalV::ofs_warning,"out_dm",GlobalC::LOC.out_dm,out_dm);
-				GlobalC::LOC.out_dm = this->out_dm;
+				this->change(GlobalV::ofs_warning,"out_dm",Local_Orbital_Charge::out_dm,out_dm);
+				Local_Orbital_Charge::out_dm = this->out_dm;
 			}
 #endif
         }
@@ -219,15 +229,15 @@ bool Update_input::Read(const std::string &fn)
 			}
         }
 		// 13
-        else if (strcmp("out_lowf", word) == 0)
+        else if (strcmp("out_wfc_lcao", word) == 0)
         {
-            read_value(ifs, out_lowf);
+            read_value(ifs, out_wfc_lcao);
 #ifdef __FP
-			//if(out_lowf!=out_lowf)
-			if(out_lowf!=GlobalC::ParaO.out_lowf)		// Peize Lin change out_lowf to GlobalC::ParaO.out_lowf at 2020.01.31
+			//if(out_wfc_lcao!=out_wfc_lcao)
+			if(out_wfc_lcao!=Pdiag_Double::out_wfc_lcao)		// Peize Lin change out_wfc_lcao to GlobalC::ParaO.out_wfc_lcao at 2020.01.31
 			{
-				this->change(GlobalV::ofs_warning,"out_lowf",GlobalC::ParaO.out_lowf,out_lowf);
-				GlobalC::ParaO.out_lowf = this->out_lowf;
+				this->change(GlobalV::ofs_warning,"out_wfc_lcao",Pdiag_Double::out_wfc_lcao,out_wfc_lcao);
+				Pdiag_Double::out_wfc_lcao = this->out_wfc_lcao;
 			}
 #endif
         }
@@ -264,27 +274,28 @@ bool Update_input::Read(const std::string &fn)
     return true;
 }//end read_parameters
 
+#include "src_parallel/parallel_common.h"
 #ifdef __MPI
 void Update_input::Bcast()
 {
-    Parallel_Common::bcast_int( GlobalV::FORCE );
+    Parallel_Common::bcast_int( GlobalV::CAL_FORCE );
     Parallel_Common::bcast_double( GlobalV::FORCE_THR);
 #ifdef __LCAO
     Parallel_Common::bcast_double( Force_Stress_LCAO::force_invalid_threshold_ev);
-    Parallel_Common::bcast_int( GlobalC::LOC.out_dm );
-    Parallel_Common::bcast_int( GlobalC::ParaO.out_lowf );
+    Parallel_Common::bcast_int( Local_Orbital_Charge::out_dm );
+    Parallel_Common::bcast_int( Pdiag_Double::out_wfc_lcao );
 #endif
-    Parallel_Common::bcast_double( GlobalV::DRHO2 );
-    Parallel_Common::bcast_int( GlobalV::NITER );
-    Parallel_Common::bcast_int( GlobalV::NSTEP );
+    Parallel_Common::bcast_double( GlobalV::SCF_THR );
+    Parallel_Common::bcast_int( GlobalV::SCF_NMAX );
+    Parallel_Common::bcast_int( GlobalV::RELAX_NMAX );
     Parallel_Common::bcast_double( GlobalC::CHR.mixing_beta );
     Parallel_Common::bcast_int( GlobalC::en.printe );
-    Parallel_Common::bcast_string( GlobalC::pot.extra_pot );//xiaohui modify 2015-02-01
-    Parallel_Common::bcast_int( GlobalC::CHR.out_charge );
+    Parallel_Common::bcast_string( GlobalC::pot.chg_extrap );//xiaohui modify 2015-02-01
+    Parallel_Common::bcast_int( GlobalC::CHR.out_chg );
 	Parallel_Common::bcast_int( GlobalC::en.out_dos );
     Parallel_Common::bcast_double( GlobalC::CHR.nelec );
 	
-
+    Parallel_Common::bcast_int( GlobalV::MD_NSTEP );
     return;
 }
 #endif

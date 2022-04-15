@@ -1,7 +1,9 @@
 #ifndef WF_ATOMIC_H
 #define WF_ATOMIC_H
 
-#include "tools.h"
+#include "../module_base/global_function.h"
+#include "../module_base/global_variable.h"
+#include "../module_base/complexmatrix.h"
 #include "wf_igk.h"
 
 class WF_atomic : public WF_igk
@@ -17,7 +19,7 @@ class WF_atomic : public WF_igk
 
     ModuleBase::ComplexMatrix *wanf2; // wannier functions in the PW basis
     
-    int seed; //random seed for wave functions qianrui add 2021-8-13
+    int pw_seed; //random seed for wave functions qianrui add 2021-8-13
 
     void init_at_1(void);// from init_at_1.f90
 

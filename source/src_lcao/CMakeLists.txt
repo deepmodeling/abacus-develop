@@ -1,6 +1,4 @@
-add_library(
-    lcao
-    OBJECT
+list(APPEND objects
     DM_gamma.cpp
     DM_k.cpp
     ELEC_cbands_gamma.cpp
@@ -45,7 +43,6 @@ add_library(
     gint_k_vl.cpp
     gint_tools.cpp
     global_fp.cpp
-    grid_base.cpp
     grid_base_beta.cpp
     grid_bigcell.cpp
     grid_meshball.cpp
@@ -55,14 +52,15 @@ add_library(
     local_orbital_charge.cpp
     local_orbital_wfc.cpp
     record_adj.cpp
-    wfc_dm_2d.cpp
+    dm_2d.cpp
     wavefunc_in_pw.cpp
 	H_TDDFT_pw.cpp
     run_md_lcao.cpp
+    dmft.cpp
 )
 
-if(ENABLE_DEEPKS)
-    target_sources(lcao PRIVATE LCAO_descriptor.cpp)
-    target_sources(lcao PRIVATE LCAO_descriptor_new.cpp)
-    target_sources(lcao PRIVATE LCAO_descriptor_old.cpp)
-endif()
+add_library(
+    lcao
+    OBJECT
+    ${objects}
+)

@@ -13,8 +13,8 @@ def cal_pw():
 		pathlib.Path(folder).mkdir(parents=True,exist_ok=False)
 		os.chdir(folder)
 		print_file_pw(info,distance)
-		if utils.sub=="qsub":
-			os.system("qsub sub.sh")
+		if utils.sub in ["qsub", "sbatch"]:
+			os.system(f"{utils.sub} sub.sh")
 		elif utils.sub=="bsub":
 			os.system("bsub < sub.sh")
 		else:
@@ -26,8 +26,8 @@ def cal_opt():
 	pathlib.Path("opt_orb").mkdir(parents=True,exist_ok=False)
 	os.chdir("opt_orb")
 	print_file_opt(info,dis)
-	if utils.sub=="qsub":
-		os.system("qsub sub.sh")
+	if utils.sub in ["qsub", "sbatch"]:
+		os.system(f"{utils.sub} sub.sh")
 	elif utils.sub=="bsub":
 		os.system("bsub < sub.sh")
 	else:

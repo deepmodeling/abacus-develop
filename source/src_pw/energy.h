@@ -1,6 +1,9 @@
 #ifndef ENERGY_H
 #define ENERGY_H
-#include "tools.h"
+#include "../module_base/global_function.h"
+#include "../module_base/global_variable.h"
+#include "src_lcao/local_orbital_wfc.h"
+#include "src_lcao/LCAO_hamilt.h"
 
 class energy
 {
@@ -25,8 +28,8 @@ class energy
     energy();
     ~energy();
 
-	void perform_dos(void);
-	void perform_dos_pw(void);
+	void perform_dos(Local_Orbital_wfc &lowf, LCAO_Hamilt &uhm);
+    void perform_dos_pw(void);
 
     double etot;    	   // the total energy of the solid
     double ef;             // the fermi energy
@@ -46,6 +49,8 @@ class energy
     double descf;
 
     double etxcc;          // the nlcc exchange and correlation
+	double etxc;
+	double vtxc;
 	double exx;            // the exact exchange energy.
 	double evdw;			// the vdw energy				// Peize Lin add 2021.03.09
 
@@ -70,7 +75,7 @@ class energy
     //=========================================================
 	void calculate_etot(void);
 	void print_etot(const bool converged, const int &itep, const int &iter, 
-	const double &dr2, const double &duration, const double &ethr=0, const double &avg_iter=0, bool print = true);
+	const double &scf_thr, const double &duration, const double &pw_diag_thr=0, const double &avg_iter=0, bool print = true);
 
 	void print_band(const int &ik);
 

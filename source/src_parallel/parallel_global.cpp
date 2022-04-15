@@ -163,9 +163,11 @@ void Parallel_Global::read_mpi_parameters(int argc,char **argv)
 
 #ifdef _OPENMP
 	int provided;
-	MPI_Init_thread(&argc,&argv,MPI_THREAD_FUNNELED,&provided);
-	if( provided != MPI_THREAD_FUNNELED )
-		GlobalV::ofs_warning<<"MPI_Init_thread request "<<MPI_THREAD_FUNNELED<<" but provide "<<provided<<std::endl;
+	MPI_Init_thread(&argc,&argv,MPI_THREAD_SERIALIZED,&provided);
+	if( provided != MPI_THREAD_SERIALIZED )
+		GlobalV::ofs_warning<<"MPI_Init_thread request "<<MPI_THREAD_SERIALIZED<<" but provide "<<provided<<std::endl;
+	// Peize Lin change 2021.11.24
+	// MPI_THREAD_FUNNELED is enough for ABACUS. Using MPI_THREAD_SERIALIZED for elpa.
 #else
 	MPI_Init(&argc,&argv);					// Peize Lin change 2018-07-12
 #endif
@@ -175,7 +177,7 @@ void Parallel_Global::read_mpi_parameters(int argc,char **argv)
 // atof : Convert std::string to double type
 // atol : Convert std::string to long int type
 //----------------------------------------------------------
-//  GlobalV::NPOOL = atoi(argv[1]); // mohan abandon 2010-06-09
+//  GlobalV::KPAR = atoi(argv[1]); // mohan abandon 2010-06-09
 
 	// get the size --> GlobalV::NPROC
 	// get the rank --> GlobalV::MY_RANK

@@ -4,6 +4,7 @@
 #include "abfs.h"
 #include <cmath>
 
+#ifdef __MPI
 std::vector<std::pair<size_t,size_t>> Exx_Abfs::Parallel::Distribute::Order::distribute(
 	const double rmesh_times )
 {
@@ -35,3 +36,4 @@ std::vector<std::pair<size_t,size_t>> Exx_Abfs::Parallel::Distribute::Order::dis
 		std::min( pairs.begin()+ GlobalV::MY_RANK   *work, pairs.end() ),
 		std::min( pairs.begin()+(GlobalV::MY_RANK+1)*work, pairs.end() )};
 }
+#endif

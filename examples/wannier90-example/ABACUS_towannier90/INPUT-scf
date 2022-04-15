@@ -3,5 +3,5 @@ INPUT_PARAMETERS
 ntype			1	
 ecutwfc			40
 calculation             scf
-dr2                     1e-13
-out_charge              1
+scf_thr                     1e-13
+out_chg              1

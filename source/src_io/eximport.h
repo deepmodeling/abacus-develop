@@ -5,6 +5,8 @@
 #ifndef EXIMPORT_H
 #define EXIMPORT_H
 #include <fstream>
+#include "../module_base/complexmatrix.h"
+#include "../module_base/matrix.h"
 
 using namespace std;
 
@@ -106,25 +108,6 @@ public:
 		const std::string &out_band_dir,// file address.
 		const int &nband
 	);
-
-//==========================================================
-// MEMBER FUNCTION : calculate_dos
-// DO : output DOS in nscf case.
-// RETURN : = TRUE (seccess)
-//  	    = FALSE (failure)
-//==========================================================
-	bool calculate_dos
-	(
- 		const std::string &fa, // file address.
-		const double de_ev, // delta energy in ev
-		const double emax_ev, // maximal energy in ev.
-		const double emin_ev, // minimal energy in ev.
-		const int nks, // number of k points included.
-		const int nbands, // number of nbands included.
-		const ModuleBase::matrix &et// store energy for each k point
-		                    // and each band
-	);
-
 
 #ifdef __MPI
 //==========================================================

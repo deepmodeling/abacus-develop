@@ -1,30 +1,38 @@
 #include "potential.h"
+
+#include "../module_base/global_function.h"
+#include "../module_base/global_variable.h"
+#include "../module_base/memory.h"
+#include "../module_xc/xc_functional.h"
 #include "efield.h"
 #include "global.h"
 #include "math.h"
-#include "potential_libxc.h"
-#include "tools.h"
-#include "xc_functional.h"
-#include "xc_gga_pw.h"
 // new
+#include "../module_surchem/surchem.h"
 #include "H_Hartree_pw.h"
-#include "H_XC_pw.h"
 #ifdef __LCAO
 #include "../src_lcao/ELEC_evolve.h"
 #endif
+#include "../module_base/timer.h"
 
-Potential::Potential() {
+Potential::Potential()
+{
     vltot = new double[1];
     vr_eff1 = new double[1];
-    this->out_potential = 0;
+    this->out_pot = 0;
 }
 
-Potential::~Potential() {
+Potential::~Potential()
+{
     delete[] vltot;
     delete[] vr_eff1;
+#ifdef __CUDA
+    cudaFree(d_vr_eff1);
+#endif
 }
 
-void Potential::allocate(const int nrxx) {
+void Potential::allocate(const int nrxx)
+{
     ModuleBase::TITLE("Potential", "allocate");
     assert(nrxx > 0);
 
@@ -34,24 +42,24 @@ void Potential::allocate(const int nrxx) {
 
     this->vr.create(GlobalV::NSPIN, nrxx);
     this->vr_eff.create(GlobalV::NSPIN, nrxx);
-    ModuleBase::Memory::record("Potential", "vr", GlobalV::NSPIN * nrxx,
-                               "double");
-    ModuleBase::Memory::record("Potential", "vr_eff", GlobalV::NSPIN * nrxx,
-                               "double");
+    ModuleBase::Memory::record("Potential", "vr", GlobalV::NSPIN * nrxx, "double");
+    ModuleBase::Memory::record("Potential", "vr_eff", GlobalV::NSPIN * nrxx, "double");
 
-    if (GlobalV::DFT_META) {
+    if (XC_Functional::get_func_type() == 3)
+    {
         this->vofk.create(GlobalV::NSPIN, nrxx);
-        ModuleBase::Memory::record("Potential", "vofk", GlobalV::NSPIN * nrxx,
-                                   "double");
+        ModuleBase::Memory::record("Potential", "vofk", GlobalV::NSPIN * nrxx, "double");
     }
 
     delete[] this->vr_eff1;
     this->vr_eff1 = new double[nrxx];
+#ifdef __CUDA
+    cudaMalloc((void **)&this->d_vr_eff1, nrxx * sizeof(double));
+#endif
     ModuleBase::Memory::record("Potential", "vr_eff1", nrxx, "double");
 
     this->vnew.create(GlobalV::NSPIN, nrxx);
-    ModuleBase::Memory::record("Potential", "vnew", GlobalV::NSPIN * nrxx,
-                               "double");
+    ModuleBase::Memory::record("Potential", "vnew", GlobalV::NSPIN * nrxx, "double");
 
     return;
 }
@@ -59,9 +67,10 @@ void Potential::allocate(const int nrxx) {
 //----------------------------------------------------------
 //  Initializes the self consistent potential
 //----------------------------------------------------------
-void Potential::init_pot(const int &istep,             // number of ionic steps
+void Potential::init_pot(const int &istep, // number of ionic steps
                          ModuleBase::ComplexMatrix &sf // structure factors
-) {
+)
+{
     ModuleBase::TITLE("Potential", "init_pot");
     ModuleBase::timer::tick("Potential", "init_pot");
 
@@ -73,21 +82,28 @@ void Potential::init_pot(const int &istep,             // number of ionic steps
     // the vltot should and must be zero here.
     ModuleBase::GlobalFunc::ZEROS(this->vltot, GlobalC::pw.nrxx);
 
-    if (GlobalV::DFT_META) {
+    if (XC_Functional::get_func_type() == 3)
+    {
         this->vofk.zero_out();
     }
 
     //-------------------------------------------------------------------
     // (1) local pseudopotential + electric field (if any) in vltot
     //-------------------------------------------------------------------
-    if (GlobalV::VION_IN_H) {
+    if (GlobalV::VION_IN_H)
+    {
         this->set_local_pot(this->vltot, // 3D local pseudopotentials
-                            GlobalC::ucell.ntype, GlobalC::pw.ngmc,
-                            GlobalC::ppcell.vloc, GlobalC::pw.ig2ngg,
+                            GlobalC::ucell.ntype,
+                            GlobalC::pw.ngmc,
+                            GlobalC::ppcell.vloc,
+                            GlobalC::pw.ig2ngg,
                             sf // structure factors
         );
-    } else {
-        for (int ir = 0; ir < GlobalC::pw.nrxx; ++ir) {
+    }
+    else
+    {
+        for (int ir = 0; ir < GlobalC::pw.nrxx; ++ir)
+        {
             this->vltot[ir] = 0.0;
         }
     }
@@ -95,12 +111,15 @@ void Potential::init_pot(const int &istep,             // number of ionic steps
     // zhengdy-soc, pauli matrix, just index 0 has vlocal term
     int nspin0 = GlobalV::NSPIN;
 
-    if (GlobalV::NSPIN == 4) {
+    if (GlobalV::NSPIN == 4)
+    {
         nspin0 = 1;
     }
 
-    for (int is = 0; is < nspin0; ++is) {
-        for (int ir = 0; ir < GlobalC::pw.nrxx; ++ir) {
+    for (int is = 0; is < nspin0; ++is)
+    {
+        for (int ir = 0; ir < GlobalC::pw.nrxx; ++ir)
+        {
             this->vr_eff(is, ir) = this->vltot[ir];
         }
     }
@@ -112,90 +131,94 @@ void Potential::init_pot(const int &istep,             // number of ionic steps
     // (2) other effective potentials need charge density,
     // choose charge density from ionic step 0.
     //--------------------------------------------------------------------
-    if (istep == 0) {
-        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "start_pot",
-                                    start_pot);
+    if (istep == 0)
+    {
+        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "init_chg", init_chg);
 
-        std::cout << " START POTENTIAL      : " << start_pot << std::endl;
-        if (this->start_pot == "atomic") // mohan add 2007-10-17
+        std::cout << " START POTENTIAL      : " << init_chg << std::endl;
+        if (this->init_chg == "atomic") // mohan add 2007-10-17
         {
         start_from_atomic:
             GlobalC::CHR.atomic_rho(GlobalV::NSPIN, GlobalC::CHR.rho);
-        } else if (this->start_pot == "file") {
+        }
+        else if (this->init_chg == "file")
+        {
             GlobalV::ofs_running << " try to start potential from file : ";
-            for (int is = 0; is < GlobalV::NSPIN; is++) {
+            for (int is = 0; is < GlobalV::NSPIN; is++)
+            {
                 std::stringstream ssc;
                 ssc << GlobalV::global_readin_dir << "SPIN" << is + 1 << "_CHG";
                 GlobalV::ofs_running << ssc.str() << std::endl;
                 // mohan update 2012-02-10
-                if (GlobalC::CHR.read_rho(is, ssc.str(),
-                                          GlobalC::CHR.rho[is])) {
-                    GlobalV::ofs_running
-                        << " Read in the charge density: " << ssc.str()
-                        << std::endl;
-                } else if (is > 0 && GlobalV::NSPIN == 4) {
+                if (GlobalC::CHR.read_rho(is, ssc.str(), GlobalC::CHR.rho[is]))
+                {
+                    GlobalV::ofs_running << " Read in the charge density: " << ssc.str() << std::endl;
+                }
+                else if (is > 0 && GlobalV::NSPIN == 4)
+                {
                     // read only spin (up+down)
-                    if (GlobalV::PRENSPIN == 1) {
-                        GlobalV::ofs_running
-                            << " Didn't read in the charge density but autoset "
-                               "it for spin "
-                            << is + 1 << std::endl;
-                        for (int ir = 0; ir < GlobalC::pw.nrxx; ir++) {
+                    if (GlobalV::PRENSPIN == 1)
+                    {
+                        GlobalV::ofs_running << " Didn't read in the charge density but autoset it for spin " << is + 1
+                                             << std::endl;
+                        for (int ir = 0; ir < GlobalC::pw.nrxx; ir++)
+                        {
                             GlobalC::CHR.rho[is][ir] = 0.0;
                         }
                     }
                     //
-                    else if (GlobalV::PRENSPIN ==
-                             2) { // read up and down , then rearrange them.
-                        if (is == 1) {
-                            ModuleBase::WARNING_QUIT(
-                                "potential::init_pot",
-                                "Incomplete charge density file!");
-                        } else if (is == 2) {
-                            GlobalV::ofs_running
-                                << " Didn't read in the charge density but "
-                                   "would rearrange it later. "
-                                << std::endl;
-                        } else if (is == 3) {
-                            GlobalV::ofs_running << " rearrange charge density "
+                    else if (GlobalV::PRENSPIN == 2)
+                    { // read up and down , then rearrange them.
+                        if (is == 1)
+                        {
+                            ModuleBase::WARNING_QUIT("potential::init_pot", "Incomplete charge density file!");
+                        }
+                        else if (is == 2)
+                        {
+                            GlobalV::ofs_running << " Didn't read in the charge density but would rearrange it later. "
                                                  << std::endl;
-                            for (int ir = 0; ir < GlobalC::pw.nrxx; ir++) {
-                                GlobalC::CHR.rho[3][ir] =
-                                    GlobalC::CHR.rho[0][ir] -
-                                    GlobalC::CHR.rho[1][ir];
-                                GlobalC::CHR.rho[0][ir] =
-                                    GlobalC::CHR.rho[0][ir] +
-                                    GlobalC::CHR.rho[1][ir];
+                        }
+                        else if (is == 3)
+                        {
+                            GlobalV::ofs_running << " rearrange charge density " << std::endl;
+                            for (int ir = 0; ir < GlobalC::pw.nrxx; ir++)
+                            {
+                                GlobalC::CHR.rho[3][ir] = GlobalC::CHR.rho[0][ir] - GlobalC::CHR.rho[1][ir];
+                                GlobalC::CHR.rho[0][ir] = GlobalC::CHR.rho[0][ir] + GlobalC::CHR.rho[1][ir];
                                 GlobalC::CHR.rho[1][ir] = 0.0;
                                 GlobalC::CHR.rho[2][ir] = 0.0;
                             }
                         }
-                    } else {
-                        ModuleBase::WARNING_QUIT(
-                            "potential::init_pot",
-                            "Incomplete charge density file!");
                     }
-                } else {
-                    GlobalV::ofs_running
-                        << " Start charge density from atomic charge density."
-                        << std::endl;
+                    else
+                    {
+                        ModuleBase::WARNING_QUIT("potential::init_pot", "Incomplete charge density file!");
+                    }
+                }
+                else
+                {
+                    GlobalV::ofs_running << " Start charge density from atomic charge density." << std::endl;
                     goto start_from_atomic;
                 }
             }
-        } else {
-            ModuleBase::WARNING_QUIT("potential::init_pot",
-                                     "start_pot is wrong!");
+        }
+        else
+        {
+            ModuleBase::WARNING_QUIT("potential::init_pot", "init_chg is wrong!");
         }
 
         // Peize Lin add 2020.04.04
-        if (GlobalC::restart.info_load.load_charge &&
-            !GlobalC::restart.info_load.load_charge_finish) {
-            for (int is = 0; is < GlobalV::NSPIN; ++is) {
+        if (GlobalC::restart.info_load.load_charge && !GlobalC::restart.info_load.load_charge_finish)
+        {
+            for (int is = 0; is < GlobalV::NSPIN; ++is)
+            {
                 GlobalC::restart.load_disk("charge", is);
             }
             GlobalC::restart.info_load.load_charge_finish = true;
         }
-    } else {
+    }
+    else
+    {
         // the extrapolation part moves to ions.cpp.
     }
 
@@ -211,9 +234,12 @@ void Potential::init_pot(const int &istep,             // number of ionic steps
     // (4) total potentials
     //----------------------------------------------------------
 #ifdef __LCAO
-    if (ELEC_evolve::td_vext == 0) {
+    if (ELEC_evolve::td_vext == 0)
+    {
         this->set_vr_eff();
-    } else {
+    }
+    else
+    {
         this->set_vrs_tddft(istep);
     }
 #else
@@ -229,15 +255,14 @@ void Potential::init_pot(const int &istep,             // number of ionic steps
 //==========================================================
 // This routine computes the local potential in real space
 //==========================================================
-void Potential::set_local_pot(
-    double *vl_pseudo,            // store the local pseudopotential
-    const int &ntype,             // number of atom types
-    const int &ngmc,              // number of |g|, g is plane wave
-    ModuleBase::matrix &vloc,     // local pseduopotentials
-    int *ig2ngg,                  // ig2ngg
-    ModuleBase::ComplexMatrix &sf // structure factors
-) const {
-    // cout << "set local pot" << endl;
+void Potential::set_local_pot(double *vl_pseudo, // store the local pseudopotential
+                              const int &ntype, // number of atom types
+                              const int &ngmc, // number of |g|, g is plane wave
+                              ModuleBase::matrix &vloc, // local pseduopotentials
+                              int *ig2ngg, // ig2ngg
+                              ModuleBase::ComplexMatrix &sf // structure factors
+) const
+{
     ModuleBase::TITLE("Potential", "set_local_pot");
     ModuleBase::timer::tick("Potential", "set_local_pot");
 
@@ -245,30 +270,29 @@ void Potential::set_local_pot(
 
     ModuleBase::GlobalFunc::ZEROS(vg, ngmc);
 
-    for (int it = 0; it < ntype; it++) {
-        for (int ig = 0; ig < ngmc; ig++) {
+    for (int it = 0; it < ntype; it++)
+    {
+        for (int ig = 0; ig < ngmc; ig++)
+        {
             vg[ig] += vloc(it, ig2ngg[ig]) * sf(it, ig);
         }
     }
 
     GlobalC::UFFT.ToRealSpace(vg, vl_pseudo);
 
-    // for (int i = 0; i < GlobalC::pw.nz; i++) {
-    //     cout << vl_pseudo[i] << endl;
-    // }
-
     delete[] vg;
 
-    if (GlobalV::EFIELD && !GlobalV::DIPOLE) {
+    if (GlobalV::EFIELD && !GlobalV::DIPOLE)
+    {
         Efield EFID;
         // in fact, GlobalC::CHR.rho is not used here.
         // if charge correction due to Efield is considered,
         // the structure here need to be updated.
 
         static bool first = true;
-        if (first) {
-            std::cout << " ADD THE GlobalV::EFIELD (V/A) : "
-                      << Efield::eamp * 51.44 << std::endl;
+        if (first)
+        {
+            std::cout << " ADD THE GlobalV::EFIELD (V/A) : " << Efield::eamp * 51.44 << std::endl;
             first = false;
         }
         EFID.add_efield(GlobalC::CHR.rho[0], vl_pseudo);
@@ -285,8 +309,8 @@ void Potential::set_local_pot(
 // The XC potential is computed in real space, while the
 // Hartree potential is computed in reciprocal space.
 //==========================================================
-ModuleBase::matrix Potential::v_of_rho(const double *const *const rho_in,
-                                       const double *const rho_core_in) {
+ModuleBase::matrix Potential::v_of_rho(const double *const *const rho_in, const double *const rho_core_in)
+{
     ModuleBase::TITLE("Potential", "v_of_rho");
     ModuleBase::timer::tick("Potential", "v_of_rho");
 
@@ -296,46 +320,54 @@ ModuleBase::matrix Potential::v_of_rho(const double *const *const rho_in,
     //  calculate the exchange-correlation potential
     //----------------------------------------------------------
 
+    if (XC_Functional::get_func_type() == 3)
+    {
 #ifdef USE_LIBXC
-    if (GlobalV::DFT_META) {
-        const std::tuple<double, double, ModuleBase::matrix, ModuleBase::matrix>
-            etxc_vtxc_v = Potential_Libxc::v_xc_meta(
-                rho_in, GlobalC::CHR.rho_core, GlobalC::CHR.kin_r);
-        H_XC_pw::etxc = std::get<0>(etxc_vtxc_v);
-        H_XC_pw::vtxc = std::get<1>(etxc_vtxc_v);
+        const std::tuple<double, double, ModuleBase::matrix, ModuleBase::matrix> etxc_vtxc_v
+            = XC_Functional::v_xc_meta(GlobalC::pw.nrxx,
+                                       GlobalC::pw.ncxyz,
+                                       GlobalC::ucell.omega,
+                                       rho_in,
+                                       GlobalC::CHR.rho_core,
+                                       GlobalC::CHR.kin_r);
+        GlobalC::en.etxc = std::get<0>(etxc_vtxc_v);
+        GlobalC::en.vtxc = std::get<1>(etxc_vtxc_v);
         v += std::get<2>(etxc_vtxc_v);
         vofk = std::get<3>(etxc_vtxc_v);
-    } else {
-        const std::tuple<double, double, ModuleBase::matrix> etxc_vtxc_v =
-            Potential_Libxc::v_xc(rho_in, GlobalC::CHR.rho_core);
-        H_XC_pw::etxc = std::get<0>(etxc_vtxc_v);
-        H_XC_pw::vtxc = std::get<1>(etxc_vtxc_v);
+#else
+        ModuleBase::WARNING_QUIT("v_of_rho", "to use mGGA, compile with LIBXC");
+#endif
+    }
+    else
+    {
+        const std::tuple<double, double, ModuleBase::matrix> etxc_vtxc_v = XC_Functional::v_xc(GlobalC::pw.nrxx,
+                                                                                               GlobalC::pw.ncxyz,
+                                                                                               GlobalC::ucell.omega,
+                                                                                               rho_in,
+                                                                                               GlobalC::CHR.rho_core);
+        GlobalC::en.etxc = std::get<0>(etxc_vtxc_v);
+        GlobalC::en.vtxc = std::get<1>(etxc_vtxc_v);
         v += std::get<2>(etxc_vtxc_v);
     }
-#else
-    const std::tuple<double, double, ModuleBase::matrix> etxc_vtxc_v =
-        H_XC_pw::v_xc(GlobalC::pw.nrxx, GlobalC::pw.ncxyz, GlobalC::ucell.omega,
-                      rho_in, GlobalC::CHR.rho_core);
-
-    H_XC_pw::etxc = std::get<0>(etxc_vtxc_v);
-    H_XC_pw::vtxc = std::get<1>(etxc_vtxc_v);
-    v += std::get<2>(etxc_vtxc_v);
-#endif
 
     //----------------------------------------------------------
     //  calculate the Hartree potential
     //----------------------------------------------------------
-    if (GlobalV::VH_IN_H) {
-        v += H_Hartree_pw::v_hartree(GlobalC::ucell, GlobalC::pw,
-                                     GlobalV::NSPIN, rho_in);
-        v += H_Hartree_pw::v_correction(GlobalC::ucell, GlobalC::pw,
-                                        GlobalV::NSPIN, rho_in);
+    if (GlobalV::VH_IN_H)
+    {
+        v += H_Hartree_pw::v_hartree(GlobalC::ucell, GlobalC::pw, GlobalV::NSPIN, rho_in);
+        if (GlobalV::imp_sol)
+        {
+            v += surchem::v_correction(GlobalC::ucell, GlobalC::pw, GlobalV::NSPIN, rho_in);
+        }
     }
 
     // mohan add 2011-06-20
-    if (GlobalV::EFIELD && GlobalV::DIPOLE) {
+    if (GlobalV::EFIELD && GlobalV::DIPOLE)
+    {
         Efield EFID;
-        for (int is = 0; is < GlobalV::NSPIN; is++) {
+        for (int is = 0; is < GlobalV::NSPIN; is++)
+        {
             EFID.add_efield(rho_in[is], &v.c[is * GlobalC::pw.nrxx]);
         }
     }
@@ -349,20 +381,27 @@ ModuleBase::matrix Potential::v_of_rho(const double *const *const rho_in,
 // part and the sum of all the local pseudopotential
 // contributions.
 //==========================================================
-void Potential::set_vr_eff(void) {
+void Potential::set_vr_eff(void)
+{
     ModuleBase::TITLE("Potential", "set_vr_eff");
     ModuleBase::timer::tick("Potential", "set_vr_eff");
 
-    for (int is = 0; is < GlobalV::NSPIN; is++) {
+    for (int is = 0; is < GlobalV::NSPIN; is++)
+    {
         //=================================================================
         // define the total local potential (external + scf) for each spin
         //=================================================================
-        if (GlobalV::NSPIN == 4 && is > 0) {
-            for (int i = 0; i < GlobalC::pw.nrxx; i++) {
+        if (GlobalV::NSPIN == 4 && is > 0)
+        {
+            for (int i = 0; i < GlobalC::pw.nrxx; i++)
+            {
                 this->vr_eff(is, i) = this->vr(is, i);
             }
-        } else {
-            for (int i = 0; i < GlobalC::pw.nrxx; i++) {
+        }
+        else
+        {
+            for (int i = 0; i < GlobalC::pw.nrxx; i++)
+            {
                 this->vr_eff(is, i) = this->vltot[i] + this->vr(is, i);
             }
         }
@@ -373,7 +412,8 @@ void Potential::set_vr_eff(void) {
 }
 
 // ----------------------------------------------------------------------
-void Potential::newd(void) {
+void Potential::newd(void)
+{
     ModuleBase::TITLE("Potential", "newd");
 
     // distringuish non-local pseudopotential in REAL or RECIPROCAL space.
@@ -389,49 +429,59 @@ void Potential::newd(void) {
     // no ultrasoft potentials: use bare coefficients for projectors
     // if( spin_orbital) ....
     // else if(noncolin) ....
-    for (int iat = 0; iat < GlobalC::ucell.nat; iat++) {
+    for (int iat = 0; iat < GlobalC::ucell.nat; iat++)
+    {
         const int it = GlobalC::ucell.iat2it[iat];
         const int nht = GlobalC::ucell.atoms[it].nh;
         // nht: number of beta functions per atom type
-        for (int is = 0; is < GlobalV::NSPIN; is++) {
-            for (int ih = 0; ih < nht; ih++) {
-                for (int jh = ih; jh < nht; jh++) {
-                    if (GlobalV::LSPINORB) {
-                        GlobalC::ppcell.deeq_nc(is, iat, ih, jh) =
-                            GlobalC::ppcell.dvan_so(is, it, ih, jh);
-                        GlobalC::ppcell.deeq_nc(is, iat, jh, ih) =
-                            GlobalC::ppcell.dvan_so(is, it, jh, ih);
-                    } else if (GlobalV::NSPIN == 4) {
-                        if (is == 0) {
-                            GlobalC::ppcell.deeq_nc(is, iat, ih, jh) =
-                                GlobalC::ppcell.dvan(it, ih, jh);
-                            GlobalC::ppcell.deeq_nc(is, iat, jh, ih) =
-                                GlobalC::ppcell.dvan(it, ih, jh);
-                        } else if (is == 1) {
-                            GlobalC::ppcell.deeq_nc(is, iat, ih, jh) =
-                                std::complex<double>(0.0, 0.0);
-                            GlobalC::ppcell.deeq_nc(is, iat, jh, ih) =
-                                std::complex<double>(0.0, 0.0);
-                        } else if (is == 2) {
-                            GlobalC::ppcell.deeq_nc(is, iat, ih, jh) =
-                                std::complex<double>(0.0, 0.0);
-                            GlobalC::ppcell.deeq_nc(is, iat, jh, ih) =
-                                std::complex<double>(0.0, 0.0);
-                        } else if (is == 3) {
-                            GlobalC::ppcell.deeq_nc(is, iat, ih, jh) =
-                                GlobalC::ppcell.dvan(it, ih, jh);
-                            GlobalC::ppcell.deeq_nc(is, iat, jh, ih) =
-                                GlobalC::ppcell.dvan(it, ih, jh);
+        for (int is = 0; is < GlobalV::NSPIN; is++)
+        {
+            for (int ih = 0; ih < nht; ih++)
+            {
+                for (int jh = ih; jh < nht; jh++)
+                {
+                    if (GlobalV::LSPINORB)
+                    {
+                        GlobalC::ppcell.deeq_nc(is, iat, ih, jh) = GlobalC::ppcell.dvan_so(is, it, ih, jh);
+                        GlobalC::ppcell.deeq_nc(is, iat, jh, ih) = GlobalC::ppcell.dvan_so(is, it, jh, ih);
+                    }
+                    else if (GlobalV::NSPIN == 4)
+                    {
+                        if (is == 0)
+                        {
+                            GlobalC::ppcell.deeq_nc(is, iat, ih, jh) = GlobalC::ppcell.dvan(it, ih, jh);
+                            GlobalC::ppcell.deeq_nc(is, iat, jh, ih) = GlobalC::ppcell.dvan(it, ih, jh);
                         }
-                    } else {
-                        GlobalC::ppcell.deeq(is, iat, ih, jh) =
-                            GlobalC::ppcell.dvan(it, ih, jh);
-                        GlobalC::ppcell.deeq(is, iat, jh, ih) =
-                            GlobalC::ppcell.dvan(it, ih, jh);
+                        else if (is == 1)
+                        {
+                            GlobalC::ppcell.deeq_nc(is, iat, ih, jh) = std::complex<double>(0.0, 0.0);
+                            GlobalC::ppcell.deeq_nc(is, iat, jh, ih) = std::complex<double>(0.0, 0.0);
+                        }
+                        else if (is == 2)
+                        {
+                            GlobalC::ppcell.deeq_nc(is, iat, ih, jh) = std::complex<double>(0.0, 0.0);
+                            GlobalC::ppcell.deeq_nc(is, iat, jh, ih) = std::complex<double>(0.0, 0.0);
+                        }
+                        else if (is == 3)
+                        {
+                            GlobalC::ppcell.deeq_nc(is, iat, ih, jh) = GlobalC::ppcell.dvan(it, ih, jh);
+                            GlobalC::ppcell.deeq_nc(is, iat, jh, ih) = GlobalC::ppcell.dvan(it, ih, jh);
+                        }
+                    }
+                    else
+                    {
+                        GlobalC::ppcell.deeq(is, iat, ih, jh) = GlobalC::ppcell.dvan(it, ih, jh);
+                        GlobalC::ppcell.deeq(is, iat, jh, ih) = GlobalC::ppcell.dvan(it, ih, jh);
                     }
                 }
             }
         }
     }
+#ifdef __CUDA
+    cudaMemcpy(GlobalC::ppcell.d_deeq,
+               GlobalC::ppcell.deeq.ptr,
+               GlobalV::NSPIN * GlobalC::ucell.nat * GlobalC::ppcell.nhm * GlobalC::ppcell.nhm * sizeof(double),
+               cudaMemcpyHostToDevice);
+#endif
     return;
 } // end subroutine newd

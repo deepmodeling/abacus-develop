@@ -1,0 +1,22 @@
+#This is the atom file containing all the information
+#about the lattice structure.
+
+ATOMIC_SPECIES
+H 1.0008   H_ONCV_PBE-1.0.upf
+ 
+NUMERICAL_ORBITAL
+H_gga_6au_60Ry_2s1p.orb
+
+LATTICE_CONSTANT
+10.0  			#Lattice constant
+
+LATTICE_PARAMETERS
+0.5
+
+ATOMIC_POSITIONS
+Cartesian   		#Cartesian(Unit is LATTICE_CONSTANT)
+H 			#Name of element	
+0.0			#Magnetic for this element.
+2			#Number of atoms
+0.00 0.00 -0.0661400 0 0 0	#x,y,z, move_x, move_y, move_z
+0.00 0.00  0.0661400 0 0 0	#x,y,z, move_x, move_y, move_z

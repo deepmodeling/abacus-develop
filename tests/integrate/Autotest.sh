@@ -78,12 +78,11 @@ check_out(){
 		# and reference value
 		#--------------------------------------------------
 		deviation=`awk 'BEGIN {x='$ref';y='$cal';printf "%.'$ca'f\n",x-y}'`
-		deviation1=`awk 'BEGIN {x='$ref';y='$cal';printf "%.'$ca'f\n",y-x}'`
 
 		if [ $key == "totaltimeref" ]; then
 			# echo "time=$cal ref=$ref"
 			break
-		fi		
+		fi
 
 
 		#--------------------------------------------------
@@ -93,18 +92,24 @@ check_out(){
 		# deviation should be positively defined
 		#--------------------------------------------------
 		if [ ! -n "$deviation" ]; then
-            echo -e "\e[1;31m Fatal Error! :(  \e[0m"
+            echo -e "\e[1;31m [  FAILED  ]  Fatal Error: key $key not found in output. \e[0m"
 			let failed++
+			failed_case_list+=$dir
 			break
         else
 			if [ $(echo "sqrt($deviation*$deviation) < $threshold"|bc) = 0 ]; then
-				echo -e "\e[1;31m [  FAILED  ] \e[0m"\
+				echo -e "\e[1;33m [  FAILED  ] \e[0m"\
 					"$key cal=$cal ref=$ref deviation=$deviation"
 				let failed++
+				failed_case_list+=$dir
 				if [ $(echo "sqrt($deviation*$deviation) < $fatal_threshold"|bc) = 0 ]; then
 					let fatal++
-					echo -e "\e[1;31m [  FAILED  ] \e[0m"\
+					fatal_case_list+=$dir
+					echo -e "\e[1;31m [  FATAL   ] \e[0m"\
 						"An unacceptable deviation occurs."
+					calculation=`grep calculation INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
+					running_path=`echo "OUT.autotest/running_$calculation"".log"`
+					cat $running_path
 				fi
 				break
 			else
@@ -121,15 +126,15 @@ check_out(){
 # the file name that contains all of the tests
 #---------------------------------------------
 
-test -e CASES || echo "Plese specify tests"
-test -e CASES || exit 0
-which $abacus > /dev/null || echo "Error! ABACUS path was wrong!!"
-which $abacus > /dev/null || exit 0
+test -e CASES || (echo "Plese specify tests." && exit 1)
+which $abacus > /dev/null || (echo "No ABACUS executable was found." && exit 1)
 
 testdir=`cat CASES | grep -E $case`
 failed=0
+failed_case_list=()
 ok=0
 fatal=0
+fatal_case_list=()
 fatal_threshold=1
 report=""
 repo="$(realpath ..)/"
@@ -160,8 +165,7 @@ for dir in $testdir; do
 			mpirun -np $np $abacus > log.txt
 		fi
 		#$abacus > log.txt
-		test -d OUT.autotest || echo "Some errors happened in ABACUS!"
-		test -d OUT.autotest || exit 0
+		test -d OUT.autotest || (echo "No 'OUT.autotest' dir presented. Some errors may happened in ABACUS." && exit 1)
 		if test -z $g
 		then
 			../tools/catch_properties.sh result.out
@@ -188,10 +192,12 @@ if [ $failed -eq 0 ]
 then
 	echo -e "\e[1;32m [  PASSED  ] \e[0m $ok test cases passed."
 else
-	echo -e "\e[1;31m [  FAILED  ] \e[0m $failed test cases out of $[ $failed + $ok ] failed."
+	echo -e "\e[1;33m [  FAILED  ] \e[0m $failed test cases out of $[ $failed + $ok ] failed."
+	echo $failed_case_list
 	if [ $fatal -gt 0 ]
 	then
 		echo -e "\e[1;31m [  FAILED  ] \e[0m $fatal test cases out of $[ $failed + $ok ] produced fatal error."
+		echo $fatal_case_list
 		exit 1
 	fi
 fi

@@ -6,45 +6,50 @@
 #include "vdwd3_parameters.h"
 #include "../module_base/constants.h"
 
-Vdwd3_Parameters::Vdwd3_Parameters():
-      mxc(max_elem, 1), 
-      r0ab(max_elem, std::vector<double>(max_elem)),
-      c6ab(3, std::vector<std::vector<std::vector<std::vector<double>>>>(5, std::vector<std::vector<std::vector<double>>>(5, std::vector<std::vector<double>>(max_elem, std::vector<double>(max_elem)))))
+Vdwd3_Parameters::Vdwd3_Parameters()
 {
-	init_C6();
-	init_r2r4();
-	init_rcov();
-      init_r0ab();
 }
 
 void Vdwd3_Parameters::initial_parameters(const Input &input)
 {
-      this->flag_vdwd3 = true;
-      this->s6 = std::stod(input.vdw_s6);
-      this->s18 = std::stod(input.vdw_s8);
-      this->rs6 = std::stod(input.vdw_a1);
-      this->rs18 = std::stod(input.vdw_a2);					
-      this->abc = input.vdw_abc;
-      this->version = input.vdw_method;
-      this->model = input.vdw_model;
-      if(input.vdw_model=="radius")
-      {
-            if(input.vdw_radius_unit=="Bohr")
-            {
-                  this->rthr2 = pow(std::stod(input.vdw_radius),2);
-            }
-            else
-            {
-                  this->rthr2 = pow((std::stod(input.vdw_radius) * ModuleBase::BOHR_TO_A),2);       
-            }
-            if(input.vdw_cn_thr_unit=="Bohr")
-            {
-                  this->cn_thr2 = pow(input.vdw_cn_thr,2);
-            }
-            else
-            {  
-                  this->cn_thr2 = pow((input.vdw_cn_thr * ModuleBase::BOHR_TO_A),2);			
-            }
+    this->mxc.resize(max_elem, 1);
+    this->r0ab.resize(max_elem,
+      std::vector<double>(max_elem, 0.0));
+    this->c6ab.resize(3,std::vector<std::vector<std::vector<std::vector<double>>>>(
+      5, std::vector<std::vector<std::vector<double>>>(
+      5, std::vector<std::vector<double>>(
+      max_elem,
+      std::vector<double>(max_elem, 0.0)))));
+    init_C6();
+    init_r2r4();
+    init_rcov();
+    init_r0ab();
+    this->flag_vdwd3 = true;
+    this->s6 = std::stod(input.vdw_s6);
+    this->s18 = std::stod(input.vdw_s8);
+    this->rs6 = std::stod(input.vdw_a1);
+    this->rs18 = std::stod(input.vdw_a2);
+    this->abc = input.vdw_abc;
+    this->version = input.vdw_method;
+    this->model = input.vdw_model;
+    if(input.vdw_model=="radius") 
+    {
+        if(input.vdw_radius_unit=="Bohr")
+        {
+            this->rthr2 = pow(std::stod(input.vdw_radius),2);
+        } 
+        else
+        {
+            this->rthr2 = pow((std::stod(input.vdw_radius) * ModuleBase::BOHR_TO_A),2);
+        }
+        if(input.vdw_cn_thr_unit=="Bohr")
+        {
+            this->cn_thr2 = pow(input.vdw_cn_thr,2);
+        }
+        else
+        {
+            this->cn_thr2 = pow((input.vdw_cn_thr * ModuleBase::BOHR_TO_A),2);
+        }
       }
       else if(input.vdw_model=="period")
       {

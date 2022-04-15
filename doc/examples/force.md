@@ -1,11 +1,11 @@
 # Force calculation and structure relaxation
 [back to main page](../../README.md)
 
-To calculate the atomic forces for a given structure without ion relaxation, set ‘calculation’ to ‘scf’, set input parameter ‘force’ to 1.
+To calculate the atomic forces for a given structure without ion relaxation, set ‘calculation’ to ‘scf’, set input parameter ‘cal_force’ to 1.
 
 ```
 calculation scf
-force 1
+cal_force 1
 ```
 
 To relax the atom position without change cell shape, one needs to add a few more parameters
@@ -15,23 +15,23 @@ default.
 ```
 calculation relax
 gamma_only 1
-nstep 100
+relax_nmax 100
 force_thr_ev 0.01
-move_method cg
+relax_method cg
 out_stru 1
-trust_radius_ini 0.5
+relax_bfgs_init 0.5
 ```
 
 - `calculation` relax
 
     relax atom positions with fixed lattice vectors.
-- `nstep`
+- `relax_nmax`
 
     the maximal number of ionic iteration steps.
 - `force_thr_ev`
 
     the threshold for the force, below which the geometry relaxation is considered to be converged. The unit is eV/Angstrom.
-- `move_method`
+- `relax_method`
 
     the algorithm used for geometry optimization. Possible choices are:
 - `cg`
@@ -44,7 +44,7 @@ trust_radius_ini 0.5
 
 - `cg_bfgs`
 
-    A mixed cg-bfgs method. For detail description, check out the variable cg_threshold in the [list of input keywords](../input-main.md#cg-threshold).
+    A mixed cg-bfgs method. For detail description, check out the variable relax_cg_thr in the [list of input keywords](../input-main.md#cg-threshold).
 
 - `sd`
 
@@ -54,7 +54,7 @@ trust_radius_ini 0.5
 
     output the structure of each step or not.
 
-- `trust_radius_ini`
+- `relax_bfgs_init`
 
     the initial radius of the relaxation. We advise you not to change this parameter, unless you are sure that the initial structure is close to the final structure.
 

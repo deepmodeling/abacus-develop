@@ -1,7 +1,8 @@
 #ifndef STO_ELEC_H
 #define STO_ELEC_H
 
-#include "tools.h"
+#include "../module_base/global_function.h"
+#include "../module_base/global_variable.h"
 #include "threshold_elec.h"
 #include "sto_wf.h"
 #include "sto_iter.h"

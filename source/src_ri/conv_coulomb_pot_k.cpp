@@ -69,7 +69,7 @@ Numerical_Orbital_Lm Conv_Coulomb_Pot_K::cal_orbs_ccp<Numerical_Orbital_Lm>(
 		orbs.getDk(),
 		orbs.getDruniform(),
 		false,
-		true, GlobalV::FORCE);
+		true, GlobalV::CAL_FORCE);
 	return orbs_ccp;
 }
 

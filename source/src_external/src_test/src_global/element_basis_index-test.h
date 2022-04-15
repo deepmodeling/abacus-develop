@@ -3,8 +3,8 @@
 // DATE : 2016-06-02
 //==========================================================
 
-#pragma once
-
+#ifndef ELEMENT_BASIS_INDEX_TEST_H
+#define ELEMENT_BASIS_INDEX_TEST_H
 
 #include <iostream>
 using namespace std;
@@ -42,3 +42,5 @@ static std::ostream & operator << (std::ostream & os, const ModuleBase::Element_
 	}
 	return os;
 }
+
+#endif

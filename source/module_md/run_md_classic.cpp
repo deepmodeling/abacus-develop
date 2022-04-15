@@ -1,201 +1,112 @@
 #include "run_md_classic.h"
-#include "MD_basic.h"
-#include "LJ_potential.h"
-#include "DP_potential.h"
-#include "cmd_neighbor.h"
+#include "MD_func.h"
+#include "NVE.h"
+#include "MSST.h"
+#include "FIRE.h"
+#include "NVT_ADS.h"
+#include "NVT_NHC.h"
+#include "Langevin.h"
 #include "../input.h"
 #include "../src_io/print_info.h"
-#include "../module_neighbor/sltk_atom_arrange.h"
-#include "../module_neighbor/sltk_grid_driver.h"
+#include "../module_base/timer.h"
+#include "module_esolver/esolver.h"
 
-Run_MD_CLASSIC::Run_MD_CLASSIC()
-{
-    pos_old1 = new double[1];
-	pos_old2 = new double[1];
-	pos_now = new double[1];
-	pos_next = new double[1];
-	force = new ModuleBase::Vector3<double>[1];
-	stress.create(3,3);
-}
+Run_MD_CLASSIC::Run_MD_CLASSIC(){}
 
-Run_MD_CLASSIC::~Run_MD_CLASSIC()
-{
-    delete[] pos_old1;
-	delete[] pos_old2;
-	delete[] pos_now;
-	delete[] pos_next;
-	delete[] force;
-}
+Run_MD_CLASSIC::~Run_MD_CLASSIC(){}
 
 void Run_MD_CLASSIC::classic_md_line(void)
 {
 	ModuleBase::TITLE("Run_MD_CLASSIC", "classic_md_line");
     ModuleBase::timer::tick("Run_MD_CLASSIC", "classic_md_line");
+    ModuleESolver::ESolver* p_esolver; //qianrui add it temporarily
 
 	// Setup the unitcell.
 #ifdef __LCAO
-	ucell_c.setup_cell_classic(GlobalC::ORB, GlobalV::global_atom_card, GlobalV::ofs_running, GlobalV::ofs_warning);
+	ucell_c.setup_cell_classic(GlobalC::ORB, GlobalV::stru_file, GlobalV::ofs_running, GlobalV::ofs_warning);
 #else
-    ucell_c.setup_cell_classic(GlobalV::global_atom_card, GlobalV::ofs_running, GlobalV::ofs_warning);
+    ucell_c.setup_cell_classic(GlobalV::stru_file, GlobalV::ofs_running, GlobalV::ofs_warning);
 #endif
 	ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "SETUP UNITCELL");
 
-    this->md_allocate_ions();
-
-    MD_basic mdb(INPUT.mdp, ucell_c);
-    int mdtype = INPUT.mdp.mdtype;
-
-    this->istep = 1;
-    bool stop = false;
-	double potential;
-
-    while (istep <= GlobalV::NSTEP && !stop)
+    // determine the md_type
+    Verlet *verlet;
+    if(INPUT.mdp.md_type == -1)
     {
-		time_t fstart = time(NULL);
+        verlet = new FIRE(INPUT.mdp, ucell_c); 
+    }
+    else if(INPUT.mdp.md_type == 0)
+    {
+        verlet = new NVE(INPUT.mdp, ucell_c); 
+    }
+    else if(INPUT.mdp.md_type == 1)
+    {
+        verlet = new NVT_NHC(INPUT.mdp, ucell_c);
+    }
+    else if(INPUT.mdp.md_type == 2)
+    {
+        verlet = new Langevin(INPUT.mdp, ucell_c);
+    }
+    else if(INPUT.mdp.md_type == 3)
+    {
+        verlet = new NVT_ADS(INPUT.mdp, ucell_c);
+    }
+    else if(INPUT.mdp.md_type == 4)
+    {
+        verlet = new MSST(INPUT.mdp, ucell_c); 
+    }
 
-        Print_Info::print_screen(0, 0, istep);
-
-		this->md_force_stress(potential);
-
-		this->update_pos_classic();
-
-		if (mdtype == 1 || mdtype == 2)
+    // md cycle
+    while ( (verlet->step_ + verlet->step_rst_) <= GlobalV::MD_NSTEP && !verlet->stop )
+    {
+        if(verlet->step_ == 0)
         {
-            mdb.runNVT(istep, potential, force, stress);
-        }
-        else if (mdtype == 0)
-        {
-            mdb.runNVE(istep, potential, force, stress);
-        }
-        else if (mdtype == -1)
-        {
-            stop = mdb.runFIRE(istep, potential, force, stress);
+            verlet->setup(p_esolver);
         }
         else
         {
-            ModuleBase::WARNING_QUIT("md_cells_classic", "mdtype should be -1~2!");
+            verlet->first_half();
+
+            // update force and virial due to the update of atom positions
+            MD_func::force_virial(p_esolver, verlet->step_, verlet->mdp, verlet->ucell, verlet->potential, verlet->force, verlet->virial);
+
+            verlet->second_half();
+
+            MD_func::kinetic_stress(verlet->ucell, verlet->vel, verlet->allmass, verlet->kinetic, verlet->stress);
+
+            verlet->stress +=  verlet->virial;
         }
 
-        time_t fend = time(NULL);
+        if((verlet->step_ + verlet->step_rst_) % verlet->mdp.md_dumpfreq == 0)
+        {
+            Print_Info::print_screen(0, 0, verlet->step_ + verlet->step_rst_);
+            verlet->outputMD();
 
-		ucell_c.save_cartesian_position(this->pos_next);
+            MD_func::MDdump(verlet->step_ + verlet->step_rst_, verlet->ucell, verlet->virial, verlet->force);
+        }
 
-		++istep;
+        if((verlet->step_ + verlet->step_rst_) % verlet->mdp.md_restartfreq == 0)
+        {
+            verlet->ucell.update_vel(verlet->vel);
+            std::stringstream file;
+            file << GlobalV::global_out_dir << "STRU_MD_" << verlet->step_ + verlet->step_rst_;
+#ifdef __LCAO
+            verlet->ucell.print_stru_file(GlobalC::ORB, file.str(), 1, 1);
+#else
+            verlet->ucell.print_stru_file(file.str(), 1, 1);
+#endif
+            verlet->write_restart();
+        }
+
+        verlet->step_++;
     }
 
 	GlobalV::ofs_running << "\n\n --------------------------------------------" << std::endl;
     GlobalV::ofs_running << std::setprecision(16);
-    GlobalV::ofs_running << " !FINAL_ETOT_IS " << potential*ModuleBase::Hartree_to_eV << " eV" << std::endl; 
+    GlobalV::ofs_running << " !FINAL_ETOT_IS " << verlet->potential*ModuleBase::Hartree_to_eV << " eV" << std::endl; 
     GlobalV::ofs_running << " --------------------------------------------\n\n" << std::endl;
 
-    ModuleBase::timer::tick("Run_MD_CLASSIC", "md_cells_classic");
+    delete verlet;
+    ModuleBase::timer::tick("Run_MD_CLASSIC", "classic_md_line");
     return;
-}
-
-void Run_MD_CLASSIC::md_force_stress(double &potential)
-{
-	ModuleBase::TITLE("Run_MD_CLASSIC", "md_force_stress");
-    ModuleBase::timer::tick("Run_MD_CLASSIC", "md_force_stress");
-
-	if(INPUT.mdp.md_potential == "LJ")
-	{
-		bool which_method = this->ucell_c.judge_big_cell();
-		if(which_method)
-		{
-			CMD_neighbor cmd_neigh;
-			cmd_neigh.neighbor(this->ucell_c);
-
-			potential = LJ_potential::Lennard_Jones(
-								this->ucell_c,
-								cmd_neigh,
-								this->force,
-								this->stress);
-		}
-		else
-		{
-			Grid_Driver grid_neigh(GlobalV::test_deconstructor, GlobalV::test_grid_driver, GlobalV::test_grid);
-			atom_arrange::search(
-					GlobalV::SEARCH_PBC,
-					GlobalV::ofs_running,
-					grid_neigh,
-					this->ucell_c, 
-					GlobalV::SEARCH_RADIUS, 
-					GlobalV::test_atom_input,
-					INPUT.test_just_neighbor);
-
-			potential = LJ_potential::Lennard_Jones(
-								this->ucell_c,
-								grid_neigh,
-								this->force,
-								this->stress);
-		}
-	}
-	else if(INPUT.mdp.md_potential == "DP")
-	{
-		DP_potential::DP_pot(ucell_c, potential, force, stress);
-	}
-	else if(INPUT.mdp.md_potential == "FP")
-	{
-		ModuleBase::WARNING_QUIT("md_force_stress", "FPMD is only available in integrated program or PW module ！");
-	}
-	else
-	{
-		ModuleBase::WARNING_QUIT("md_force_stress", "Unsupported MD potential ！");
-	}
-
-	ModuleBase::GlobalFunc::NEW_PART("   TOTAL-FORCE (eV/Angstrom)");
-	GlobalV::ofs_running << std::endl;
-	GlobalV::ofs_running << " atom    x              y              z" << std::endl;
-	const double fac = ModuleBase::Hartree_to_eV*ModuleBase::ANGSTROM_AU;
-	int iat = 0;
-	for(int it=0; it<ucell_c.ntype; ++it)
-	{
-		for(int ia=0; ia<ucell_c.atoms[it].na; ++ia)
-		{
-			std::stringstream ss;
-			ss << ucell_c.atoms[it].label << ia+1;
-			GlobalV::ofs_running << " " << std::left << std::setw(8) << ss.str()
-						  		<< std::setw(15) << std::setiosflags(ios::fixed) << std::setprecision(6) << force[iat].x*fac
-						  		<< std::setw(15) << std::setiosflags(ios::fixed) << std::setprecision(6) << force[iat].y*fac
-						  		<< std::setw(15) << std::setiosflags(ios::fixed) << std::setprecision(6) << force[iat].z*fac
-						  		<< std::endl;
-			iat++;
-		}
-	}
-
-	ModuleBase::timer::tick("Run_MD_CLASSIC", "md_force_stress");
-}
-
-
-void Run_MD_CLASSIC::md_allocate_ions(void)
-{
-	pos_dim = ucell_c.nat * 3;
-
-	delete[] this->pos_old1;
-	delete[] this->pos_old2;
-	delete[] this->pos_now;
-	delete[] this->pos_next;
-	delete[] this->force;
-
-	this->pos_old1 = new double[pos_dim];
-	this->pos_old2 = new double[pos_dim];
-	this->pos_now = new double[pos_dim];
-	this->pos_next = new double[pos_dim];
-	this->force = new ModuleBase::Vector3<double>[ucell_c.nat];
-
-	ModuleBase::GlobalFunc::ZEROS(pos_old1, pos_dim);
-	ModuleBase::GlobalFunc::ZEROS(pos_old2, pos_dim);
-	ModuleBase::GlobalFunc::ZEROS(pos_now, pos_dim);
-	ModuleBase::GlobalFunc::ZEROS(pos_next, pos_dim);
-}
-
-void Run_MD_CLASSIC::update_pos_classic(void)
-{
-	for(int i=0;i<pos_dim;i++)
-	{
-		this->pos_old2[i] = this->pos_old1[i];
-		this->pos_old1[i] = this->pos_now[i];
-	}
-	this->ucell_c.save_cartesian_position(this->pos_now);
-	return;
 }

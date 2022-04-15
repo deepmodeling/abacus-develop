@@ -2,8 +2,6 @@
 #include <string>
 #include "sltk_adjacent_set.h"
 
-// to be deleted
-//#include "../src_pw/tools.h"
 
 long AdjacentSet::call_times = 0;
 int AdjacentSet::dx = 3;

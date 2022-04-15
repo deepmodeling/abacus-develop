@@ -17,40 +17,38 @@ gamma_only          1
 calculation         md
 symmetry            0
 
-nstep               10
 out_level           m
-move_method         cg
+relax_method         cg
 
-smearing            gaussian
-sigma               0.02
+smearing_method            gaussian
+smearing_sigma               0.02
 #Parameters (3.PW)
 ecutwfc             30
-dr2                 1e-5
-niter               100
+scf_thr                 1e-5
+scf_nmax               100
 
 #Parameters (5.LCAO)
 basis_type          lcao
 mixing_beta         0.4
-charge_extrap       second-order
+chg_extrap       second-order
 
-md_mdtype           1    //choose ensemble
+md_nstep          10   // md steps
+md_type           1    //choose ensemble
 md_dt               1    //time step
 md_tfirst           700  //the first target temperature
-md_rstmd            0    //whether restart md
-md_qmass            1    //mass of themostat
-md_dumpmdfred       10   //The period to dump MD information for monitoring and restarting MD
+md_restart            0    //whether restart md
+md_dumpfreq       10   //The period to dump MD information
 ```
 
 These MD parameters means that ABACUS will use NVT ensemble with Nosé-hoover themostat; the time step is 1fs, and target temperature is 700K; start renew without restart file, set the mass of themostat as 1g/mol, and calculate the MSD and diffusion coefficent from first step.
 
 Note: *Please turn off symmetry when do MD simulation.*
 
-- md_mdtype : 0, NVE; 1, NVT; 2, velocity scaling
+- md_type : -1, FIRE; 0, NVE; 1, NHC; 2, LGV; 3, ADS; 4, MSST
 - md_dt : time step in md simulation (fs)
-- md_tfirst : target temperature in md simulation(K), you should set parameter md_tlast and md_fixtemperature when you want to change temperature during md simulation.
-- md_rstmd : 0, no need of restart ; 1, restart with restart file, you must repalce STRU file with STRU_MD before you run the restart task.
-- md_qmass : mass of thermostat, set by experience, if you don’t know how to set, set it to 0 will have a number autosetted by ABACUS
-- md_dumpmdfred : frequency for output consequence of md simulation
+- md_tfirst : target temperature in md simulation(K), you should set parameter md_tlast when you want to change temperature during md simulation.
+- md_restart : 0, no need of restart ; 1, restart with restart file, you must repalce STRU file with STRU_MD before you run the restart task.
+- md_dumpfreq : frequency for output consequence of md simulation
 
 The STRU file is:
 ```
@@ -149,9 +147,9 @@ Gamma
 ```
 
 Run the program, and see results in the output directory. The following files are about MD:
-- md_pos_$num.cif optimized structure in direct coordinate
-- MD_RESTART output the information of md for restart
-- STRU_MD if you want to restart md, you must replace the STRU with this file.
+- STRU_MD_$num: optimized structures in direct coordinate
+- Restart_md.dat: output the information of md for restart
+- If you want to restart md, you must replace the STRU with STRU_MD_$num.
 
 MD information can be found in file running_md.log or in file MD_OUT
 

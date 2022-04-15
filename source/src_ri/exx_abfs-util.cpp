@@ -2,6 +2,7 @@
 #include <numeric>
 #include <deque>
 
+#ifdef __MPI
 void Exx_Abfs::Util::bcast( std::vector<std::string> &v, const int rank_src, const MPI_Comm &mpi_comm )
 {
 	int my_rank;	MPI_Comm_rank( mpi_comm, &my_rank );
@@ -40,3 +41,4 @@ void Exx_Abfs::Util::bcast( std::vector<std::string> &v, const int rank_src, con
 			v[i] = s_all.substr(index_begin[i], size_s[i]);
 	}
 }
+#endif

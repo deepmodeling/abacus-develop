@@ -10,31 +10,31 @@ gamma_only          0
 calculation         relax
 symmetry             0
 
-nstep               200
+relax_nmax               200
 force_thr_ev        0.001
 out_level           ie
-move_method           cg
-out_charge          1
+relax_method           cg
+out_chg          1
 
 #lattice_change_ini  0.1
 stress_thr          0.000001
 
-smearing            gaussian
-sigma             0.02
+smearing_method            gaussian
+smearing_sigma             0.02
 #Parameters (3.PW)
 ecutwfc             400
-dr2                 1e-8
-niter               100
+scf_thr                 1e-8
+scf_nmax               100
 
-stress              1
+cal_stress              1
 
 
 #Parameters (LCAO)
 basis_type          pw
-#charge_extrap       second-order
+#chg_extrap       second-order
 #out_dm             0
 
 
 mixing_beta         0.4
 
-#start_wfc random
+#init_wfc random

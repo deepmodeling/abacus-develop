@@ -7,7 +7,7 @@
 #define GRAM_SCHMIDT_ORTH_H
 
 #include<limits>
-
+#include<vector>
 namespace ModuleBase
 {
 

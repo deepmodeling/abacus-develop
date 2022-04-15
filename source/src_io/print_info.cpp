@@ -7,7 +7,7 @@ Print_Info::Print_Info(){}
 Print_Info::~Print_Info(){}
 
 
-void Print_Info::setup_parameters(UnitCell_pseudo &ucell, K_Vectors &kv, xcfunc &xcf)
+void Print_Info::setup_parameters(UnitCell_pseudo &ucell, K_Vectors &kv)
 {
 	ModuleBase::TITLE("Print_Info","setup_parameters");
 	
@@ -37,17 +37,16 @@ void Print_Info::setup_parameters(UnitCell_pseudo &ucell, K_Vectors &kv, xcfunc 
 
 			std::cout << " ---------------------------------------------------------" << std::endl;
 
-			if(INPUT.mdp.mdtype ==1 || INPUT.mdp.mdtype==2)
+			if(INPUT.mdp.md_type ==1 || INPUT.mdp.md_type==3)
 			{
 				std::cout << " ENSEMBLE                 : " << "NVT" << std::endl;
-				std::cout << " Qmass for NVT(a.u.)      : " << INPUT.mdp.Qmass/ModuleBase::AU_to_MASS << std::endl;
 			}
-			else if(INPUT.mdp.mdtype==0)
+			else if(INPUT.mdp.md_type==0)
 			{
 				std::cout << " ENSEMBLE                 : " << "NVE" << std::endl;
 			}
 			
-			std::cout << " Time interval(fs)        : " << INPUT.mdp.dt << std::endl;
+			std::cout << " Time interval(fs)        : " << INPUT.mdp.md_dt << std::endl;
 		}
 		std::cout << " ---------------------------------------------------------" << std::endl;
 
@@ -62,9 +61,6 @@ void Print_Info::setup_parameters(UnitCell_pseudo &ucell, K_Vectors &kv, xcfunc 
 		}
 
 		std::cout << std::endl;
-
-
-
 		std::cout << " " << std::setw(8) << GlobalV::NSPIN;
 
 		if(GlobalV::GAMMA_ONLY_LOCAL)
@@ -166,20 +162,6 @@ void Print_Info::setup_parameters(UnitCell_pseudo &ucell, K_Vectors &kv, xcfunc 
 				std::stringstream orb;
 
 				int norb = 0;
-				/*for(int L=0; L<=ORB.Phi[it].getLmax(); ++L)
-				{
-					norb += (2*L+1)*ORB.Phi[it].getNchi(L);
-					orb << ORB.Phi[it].getNchi(L);
-					if(L==0) orb << "s";
-					else if(L==1) orb << "p";
-					else if(L==2) orb << "d";
-					else if(L==3) orb << "f";
-					else if(L==4) orb << "g";
-					else if(L==5) orb << "h";
-					else if(L==6) orb << "i";
-				}
-				orb << "-" << ORB.Phi[it].getRcut() << "au";*/
-
 
 				for(int L=0; L<=ucell.atoms[it].nwl; ++L)        // pengfei Li 16-2-29
 				{
@@ -211,21 +193,6 @@ void Print_Info::setup_parameters(UnitCell_pseudo &ucell, K_Vectors &kv, xcfunc 
 
 
 			std::cout << std::setw(12) << ucell.atoms[it].na;
-
-//				if(ucell.atoms[it].dft[1]=="PZ")    // pengfei Li added 2015-1-31 cancelled by zws
-//				{
-//					//std::cout << std::setw(12) << "PZ-LDA";
-//
-//				}
-//				else
-//				{
-//					//std::cout << std::setw(12) << ucell.atoms[it].dft[0];
-//                                        std::cout << std::setw(12) << "PBE";
-//				}
-#ifndef __CMD
-			xcf.ostreamdft(std::cout); // zws add 20150108
-#endif
-			//std::cout << " ( "  << std::setw(3) << xcf.iexch << std::setw(3) << xcf.icorr << std::setw(3) << xcf.igcx << std::setw(3) << xcf.igcc << ")";
 			std::cout << std::endl;
 		}
 

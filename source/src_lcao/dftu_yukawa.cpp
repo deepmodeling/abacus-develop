@@ -46,9 +46,12 @@ void DFTU_Yukawa::cal_yukawa_lambda()
 
 	double val1 = 0.0;
 	double val2 = 0.0;
+
+#ifdef __MPI
 	MPI_Allreduce(&sum_rho, &val1, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 	MPI_Allreduce(&sum_rho_lambda, &val2, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-	
+#endif
+
 	this->lambda = val2/val1;
 
 	//rescaling

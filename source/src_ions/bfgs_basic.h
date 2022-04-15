@@ -1,7 +1,9 @@
 #ifndef BFGS_BASIC
 #define BFGS_BASIC
 
-#include "../src_pw/tools.h"
+#include "../module_base/global_function.h"
+#include "../module_base/global_variable.h"
+#include "../module_base/matrix.h"
 
 // references
 // 1) Roger Fletcher, Practical Methods of Optimization, John Wiley and
@@ -37,8 +39,8 @@ class BFGS_Basic
 
 	public://mohan update 2011-06-12
 
-	static double w1; // fixed: parameters for Wolfe conditions.
-	static double w2; // fixed: parameters for Wolfe conditions.
+	static double relax_bfgs_w1; // fixed: parameters for Wolfe conditions.
+	static double relax_bfgs_w2; // fixed: parameters for Wolfe conditions.
 	
 	protected:
 

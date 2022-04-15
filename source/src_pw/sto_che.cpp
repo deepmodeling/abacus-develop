@@ -1,5 +1,5 @@
 #include "sto_che.h" 
-#include "diago_cg.h"
+
 #include "global.h"
 #include "../module_base/constants.h"
 
@@ -151,8 +151,8 @@ void Stochastic_Chebychev::calpolyval(
 
     tfun(arrayn_1, arrayn,m);
 
-    polyvalue[0] = Diago_CG::ddot_real(ndmx,wavein,wavein, false);
-    polyvalue[1] = Diago_CG::ddot_real(ndmx,wavein,arrayn, false);
+    polyvalue[0] = ModuleBase::GlobalFunc::ddot_real(ndmx,wavein,wavein, false);
+    polyvalue[1] = ModuleBase::GlobalFunc::ddot_real(ndmx,wavein,arrayn, false);
     
     //ModuleBase::GlobalFunc::ZEROS(polyvalue,norder);
     ////0- & 1-st order
@@ -167,7 +167,7 @@ void Stochastic_Chebychev::calpolyval(
     for(int ior = 2; ior < norder; ++ior)
     {
         recurs(arraynp1, arrayn, arrayn_1, tfun, m);
-        polyvalue[ior] = Diago_CG::ddot_real(ndmx,wavein,arraynp1, false);
+        polyvalue[ior] = ModuleBase::GlobalFunc::ddot_real(ndmx,wavein,arraynp1, false);
         
         //for(int i = 0; i < ndim; ++i) // n-th order : <wavein | T_n(tfun) | wavein>
         //{
@@ -252,7 +252,7 @@ bool Stochastic_Chebychev::checkconverge(
     arrayn_1 = new std::complex<double> [ndim];
 
     ModuleBase::GlobalFunc::DCOPY(wavein, arrayn_1, ndim);
-    //LapackConnector::copy(ndim,wavein,1,arrayn_1,1); 
+    //BlasConnector::copy(ndim,wavein,1,arrayn_1,1); 
     if(tmin == tmax) 
 	{
 		tmax += stept;
@@ -262,8 +262,8 @@ bool Stochastic_Chebychev::checkconverge(
     double sum1,sum2;
     double t;
 
-    sum1=Diago_CG::ddot_real(ndim,arrayn_1,arrayn_1);
-    sum2=Diago_CG::ddot_real(ndim,arrayn_1,arrayn);
+    sum1=ModuleBase::GlobalFunc::ddot_real(ndim,arrayn_1,arrayn_1);
+    sum2=ModuleBase::GlobalFunc::ddot_real(ndim,arrayn_1,arrayn);
     t = sum2 / sum1 * (tmax - tmin) / 2 + (tmax + tmin) / 2;
     if(t < tmin)
     {
@@ -279,8 +279,8 @@ bool Stochastic_Chebychev::checkconverge(
     for(int ior = 2; ior < norder; ++ior)
     {
         tfun(arrayn,arraynp1,1);
-        sum1=Diago_CG::ddot_real(ndim,arrayn,arrayn);
-        sum2=Diago_CG::ddot_real(ndim,arrayn,arraynp1);
+        sum1=ModuleBase::GlobalFunc::ddot_real(ndim,arrayn,arrayn);
+        sum2=ModuleBase::GlobalFunc::ddot_real(ndim,arrayn,arraynp1);
         t = sum2/sum1 * (tmax - tmin) / 2 + (tmax + tmin) / 2;
         if(t < tmin)
         {

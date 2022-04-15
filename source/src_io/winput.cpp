@@ -1,5 +1,5 @@
 #ifdef __MPI
-	#include <mpi.h>
+	#include "mpi.h"
 #endif
 #include <cstring>
 #include <iostream>
@@ -52,7 +52,7 @@ bool winput::plot_wanq;//add 2008-01-26
 std::string winput::plot_option;//(110),[110] etc.
 int winput::n_unitcell;//number of unitcell to plot
 bool winput::out_all;
-bool winput::out_charge;
+bool winput::out_chg;
 std::string winput::charge_type;
 bool winput::cal_bands; //for wan  	   wan basis + wan charge
 bool winput::cal_bands2;//for semi-wan ;pw basis + wan charge add 2008-4-11
@@ -192,7 +192,7 @@ void winput::Read(const std::string &fn)
 		else if (strcmp("end_flag",		word) == 0)	{read_value(ifs,  end_flag);}
 
 		else if (strcmp("out_all",		word) == 0)	{read_value(ifs,  out_all);}
-		else if (strcmp("out_charge",	word) == 0)	{read_value(ifs,  out_charge);}
+		else if (strcmp("out_chg",	word) == 0)	{read_value(ifs,  out_chg);}
 		else if (strcmp("compare_atomic",word) == 0)	{read_value(ifs,  compare_atomic);}
 		//add 2008-1-26
 		else if (strcmp("plot_wanq",	word) == 0)	{read_value(ifs,  plot_wanq);}
@@ -317,7 +317,7 @@ void winput::Default()
 	// part4 : out_all || out_charge
 	//===============================
 	out_all		= 0;
-	out_charge  = 0;
+	out_chg  = 0;
 	compare_atomic = 0;
 
 
@@ -351,10 +351,10 @@ void winput::Check(void)
 
 	if(GlobalV::CALCULATION=="nscf")
 	{
-		if(out_charge)
+		if(out_chg)
 		{
-			out_charge = false;
-			ModuleBase::GlobalFunc::AUTO_SET("winput::out_charge",out_charge);
+			out_chg = false;
+			ModuleBase::GlobalFunc::AUTO_SET("winput::out_chg",out_chg);
 		}
 	}
 	//=====================
@@ -504,7 +504,7 @@ void winput::Check(void)
 	//	}// end after_iter
 	//}
 
-	if(out_charge == true || cal_bands == true || 
+	if(out_chg == true || cal_bands == true || 
 			out_all == true || cal_bands2 == true || 
 			cal_dos == true)
 	{
@@ -600,9 +600,9 @@ void winput::Print(const std::string &fn)
 	ModuleBase::GlobalFunc::OUTP(ofs,"plot_option",plot_option);
 	ModuleBase::GlobalFunc::OUTP(ofs,"n_unitcell",n_unitcell);
 
-	ofs << "#Parameters (out_all || out_charge)" << std::endl;
+	ofs << "#Parameters (out_all || out_chg)" << std::endl;
 	ModuleBase::GlobalFunc::OUTP(ofs,"out_all",out_all);
-	ModuleBase::GlobalFunc::OUTP(ofs,"out_charge",out_charge);
+	ModuleBase::GlobalFunc::OUTP(ofs,"out_chg",out_chg);
 	ModuleBase::GlobalFunc::OUTP(ofs,"compare_atomic",compare_atomic);
 
 	ofs << "#Parameters (Other functions: bands & dos)" << std::endl;
@@ -623,6 +623,7 @@ void winput::Print(const std::string &fn)
 	return;
 }
 
+#include "../src_parallel/parallel_common.h"
 #ifdef __MPI
 void winput::Bcast(void)
 {
@@ -683,7 +684,7 @@ void winput::Bcast(void)
 	Parallel_Common::bcast_string( plot_option );
 	Parallel_Common::bcast_int( n_unitcell );
 	Parallel_Common::bcast_bool( out_all );
-	Parallel_Common::bcast_bool( out_charge );
+	Parallel_Common::bcast_bool( out_chg );
 
 	Parallel_Common::bcast_string( charge_type );
 	Parallel_Common::bcast_bool( cal_bands );

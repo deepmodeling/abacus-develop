@@ -1,6 +1,6 @@
 FROM debian:bullseye-slim
 
-RUN apt-get update && apt-get install -y --no-install-recommends git gfortran libssl-dev make cmake vim wget bc unzip \
+RUN apt-get update && apt-get install -y --no-install-recommends git g++ gfortran libssl-dev make cmake vim wget bc unzip \
     && apt-get install -y --no-install-recommends mpich libmpich-dev
 
 ENV GIT_SSL_NO_VERIFY 1
@@ -57,3 +57,13 @@ RUN cd /tmp \
     && cd /tmp \
     && rm -rf libxc-5.1.5 \
     && rm libxc-5.1.5.tar.gz
+
+RUN cd /tmp \
+    && git clone https://github.com/llohse/libnpy.git \
+    && cp libnpy/include/npy.hpp /usr/local \
+    && rm -rf libnpy
+
+RUN cd /tmp \
+    && git clone https://github.com/google/googletest.git \
+    && cd googletest && cmake . && make install \
+    && rm -rf googletest

@@ -601,8 +601,8 @@ void pzhetrd(MPI_Comm comm2D, LocalMatrix loc_A,int N,int NB,
 	// {
 	//     printf("diag[%d]=%lf,dg[%d]=%lf,off_diag[%d]=%lf,z[%d]=%lf\n ",haha,diag[haha],haha,dg[haha],haha,off_diag[haha],haha,z[haha]);
 	// }  
-	LapackConnector::copy(N,dg,indx,diag,indy);
-	LapackConnector::copy(N,z,indx,off_diag,indy);
+	BlasConnector::copy(N,dg,indx,diag,indy);
+	BlasConnector::copy(N,z,indx,off_diag,indy);
 	//  for(int haha=0;haha<N;haha++)
 	//  {
 	//     printf("diag[%d]=%lf,dg[%d]=%lf,off_diag[%d]=%lf,z[%d]=%lf\n ",haha,diag[haha],haha,dg[haha],haha,off_diag[haha],haha,z[haha]);

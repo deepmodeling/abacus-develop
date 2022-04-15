@@ -8,17 +8,18 @@
 	#include "../src_lcao/serialization_cereal.h"
 #endif
 
-#include <mpi.h>
+#include "mpi.h"
 #include <thread>
 #include <algorithm>
 
 
 #include "../src_external/src_test/test_function.h"
 
-
+#ifdef __MPI
 void Exx_Abfs::Parallel::Communicate::DM3::Allreduce::init(
 	const MPI_Comm &mpi_comm_in,
-	const std::map<std::set<size_t>,std::set<size_t>> &H_atom_pairs_group)
+    const std::map<std::set<size_t>, std::set<size_t>>& H_atom_pairs_group,
+    const Parallel_Orbitals &pv)
 {
 	ModuleBase::TITLE("Exx_Abfs::Parallel::Communicate::DM3::Allreduce::init");
 	
@@ -27,7 +28,7 @@ void Exx_Abfs::Parallel::Communicate::DM3::Allreduce::init(
 	MPI_Comm_rank(mpi_comm, &my_rank);
 
 //	const std::vector<std::pair<bool,bool>> atom_in_2D = get_atom_in_2D();
-	H_atom_pairs_group_rank = get_H_atom_pairs_group_rank(H_atom_pairs_group);
+	H_atom_pairs_group_rank = get_H_atom_pairs_group_rank(H_atom_pairs_group, pv);
 	get_send_recv_size(H_atom_pairs_group_rank, H_atom_pairs_group, send_size_list, recv_size);
 
 std::ofstream ofs(GlobalC::exx_lcao.test_dir.process+"dm3_"+ModuleBase::GlobalFunc::TO_STRING(my_rank));
@@ -267,11 +268,11 @@ std::vector<std::map<size_t,std::shared_ptr<std::set<size_t>>>> Exx_Abfs::Parall
 
 
 std::vector<std::map<size_t,std::set<size_t>>> Exx_Abfs::Parallel::Communicate::DM3::Allreduce::get_H_atom_pairs_group_rank(
-	const std::map<std::set<size_t>,std::set<size_t>> &H_atom_pairs_group) const
+	const std::map<std::set<size_t>,std::set<size_t>> &H_atom_pairs_group, const Parallel_Orbitals &pv) const
 {
 	constexpr int tag = 0;
 
-	const std::vector<std::pair<std::vector<bool>,std::vector<bool>>> atom_in_2D_list = Exx_Abfs::Parallel::Communicate::Function::get_atom_in_2D_list(mpi_comm);
+	const std::vector<std::pair<std::vector<bool>,std::vector<bool>>> atom_in_2D_list = Exx_Abfs::Parallel::Communicate::Function::get_atom_in_2D_list(mpi_comm, pv);
 
 	std::vector<MPI_Request> request(comm_sz);
 	std::vector<std::string> atom_send_str(comm_sz);
@@ -613,3 +614,4 @@ void Exx_Abfs::Parallel::Communicate::DM3::Allreduce::insert_data(
 		}
 	}
 }
+#endif

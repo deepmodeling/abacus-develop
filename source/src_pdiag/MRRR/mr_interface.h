@@ -1,5 +1,5 @@
 #ifdef __MPI
-#include <mpi.h>
+#include "mpi.h"
 #endif
 extern int pdstemr_mpi(MPI_Comm comm1D, char *jobz, char *range, int *n,
         double * d__, double *e, double *vl, double *vu, int *il, int *iu,

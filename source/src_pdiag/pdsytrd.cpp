@@ -1,5 +1,4 @@
 #include "pdsytrd.h"
-#include "../module_base/lapack_connector.h"
 
 void pdsytrd(MPI_Comm comm2D, LocalMatrix loc_A,int N,int NB,
              double *a,double *diag,double *off_diag,double  *norm,char uplo)
@@ -515,8 +514,8 @@ void pdsytrd(MPI_Comm comm2D, LocalMatrix loc_A,int N,int NB,
         }
     MPI_Allreduce(dg,diag,N,MPI_DOUBLE,MPI_SUM,comm_row);
     MPI_Allreduce(diag,dg,N,MPI_DOUBLE,MPI_SUM,comm_col);
-    LapackConnector::copy(N,dg,indx,diag,indy);
-    LapackConnector::copy(N,z,indx,off_diag,indy);
+    BlasConnector::copy(N,dg,indx,diag,indy);
+    BlasConnector::copy(N,z,indx,off_diag,indy);
     off_diag[N-1]=0.0;
     MPI_Comm_free(&comm_row);
     MPI_Comm_free(&comm_col);

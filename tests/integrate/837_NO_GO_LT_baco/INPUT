@@ -1,0 +1,20 @@
+INPUT_PARAMETERS
+#Parameters	(System)
+suffix                  autotest
+ntype			1
+nbands			4
+stru_file		STRU
+kpoint_file		KPT
+pseudo_dir		../tools/PP_ORB/
+orbital_dir		../tools/PP_ORB/
+gamma_only		1
+calculation             scf 		
+latname			baco
+#Parameters (PW)
+ecutwfc			25.0              # Rydberg
+#Parameters (electronic)
+basis_type		lcao 	
+scf_thr			1e-10
+
+cal_force			1
+cal_stress			1

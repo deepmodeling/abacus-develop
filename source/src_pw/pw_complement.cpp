@@ -1,5 +1,7 @@
 #include "pw_complement.h"
 #include "../module_base/mymath.h"
+#include "../module_base/memory.h"
+#include "../module_base/timer.h"
 
 int PW_complement::get_total_pw_number(
     const double& ggcut_start,
@@ -158,7 +160,6 @@ void PW_complement::get_FFT_dimension(
         // increase ibox[i] by 1 until it is totally factorizable by (2,3,5,7) 
         do
         {
-            ibox[i] += 1;
 			b = ibox[i];
 
 			// mohan add 2011-04-22            
@@ -196,8 +197,10 @@ void PW_complement::get_FFT_dimension(
 					done_factoring = true;
 				}
 			}//
+            ibox[i] += 1;
         }
         while (b != 1);
+        ibox[i] -= 1;
         //  b==1 means fftbox[i] is (2,3,5,7) factorizable 
     }
 

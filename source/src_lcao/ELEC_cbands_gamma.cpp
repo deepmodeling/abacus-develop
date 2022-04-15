@@ -5,13 +5,16 @@
 #include "../src_pw/symmetry_rho.h"
 #include "LCAO_evolve.h"
 #include "dftu.h"
+#include "../module_base/timer.h"
 
 
 ELEC_cbands_gamma::ELEC_cbands_gamma(){};
 ELEC_cbands_gamma::~ELEC_cbands_gamma(){};
 
 
-void ELEC_cbands_gamma::cal_bands(const int &istep, LCAO_Hamilt &uhm)
+void ELEC_cbands_gamma::cal_bands(const int& istep, LCAO_Hamilt& uhm,
+    Local_Orbital_wfc &lowf,
+    std::vector<ModuleBase::matrix>& dm_gamma)
 {
 	ModuleBase::TITLE("ELEC_cbands_gamma","cal_bands");
 	ModuleBase::timer::tick("ELEC_cband_gamma","cal_bands");
@@ -47,29 +50,29 @@ void ELEC_cbands_gamma::cal_bands(const int &istep, LCAO_Hamilt &uhm)
 		//--------------------------------------------
 
 		// Peize Lin add ik 2016-12-03
-		uhm.calculate_Hgamma(ik);
+		uhm.calculate_Hgamma(ik, dm_gamma);
 
     // Effective potential of DFT+U is added to total Hamiltonian here; Quxin adds on 20201029
 		if(INPUT.dft_plus_u) 
 		{
-      std::vector<double> eff_pot(GlobalC::ParaO.nloc);
+      std::vector<double> eff_pot(lowf.ParaV->nloc);
 			GlobalC::dftu.cal_eff_pot_mat_real(ik, istep, &eff_pot[0]);
 
 			const int spin = GlobalC::kv.isk[ik];
-			for(int irc=0; irc<GlobalC::ParaO.nloc; irc++)
-				GlobalC::LM.Hloc[irc] += eff_pot[irc];
+			for(int irc=0; irc<lowf.ParaV->nloc; irc++)
+				uhm.LM->Hloc[irc] += eff_pot[irc];
         
 		}
 
 		// Peize Lin add at 2020.04.04
 		if(GlobalC::restart.info_load.load_H && !GlobalC::restart.info_load.load_H_finish)
 		{
-			GlobalC::restart.load_disk("H", ik);
+			GlobalC::restart.load_disk( *uhm.LM, "H", ik);
 			GlobalC::restart.info_load.load_H_finish = true;
 		}			
 		if(GlobalC::restart.info_save.save_H)
 		{
-			GlobalC::restart.save_disk("H", ik);
+			GlobalC::restart.save_disk( *uhm.LM, "H", ik);
 		}
 
 		// SGO: sub_grid_operation
@@ -80,10 +83,10 @@ void ELEC_cbands_gamma::cal_bands(const int &istep, LCAO_Hamilt &uhm)
 		//--------------------------------------
 		if(GlobalV::DCOLOR==0)
 		{
-			Diago_LCAO_Matrix DLM;
+			Diago_LCAO_Matrix DLM(uhm.LM);
 			// the temperary array totwfc only have one spin direction.
-			//DLM.solve_double_matrix(ik, GlobalC::SGO.totwfc[0], GlobalC::LOC.wfc_dm_2d.wfc_gamma[ik]);
-			DLM.solve_double_matrix(ik, GlobalC::LOC.wfc_dm_2d.wfc_gamma[ik]); //LiuXh modify 2021-09-06, clear memory, totwfc not used now
+			//DLM.solve_double_matrix(ik, GlobalC::SGO.totwfc[0], wfc_gamma[ik]);
+			DLM.solve_double_matrix(ik, lowf); //LiuXh modify 2021-09-06, clear memory, totwfc not used now
 		}
 		else
 		{

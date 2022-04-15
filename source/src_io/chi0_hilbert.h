@@ -14,8 +14,10 @@ class Chi0_hilbert
 	public:
 
 	Chi0_hilbert();
-	~Chi0_hilbert();
-	
+    ~Chi0_hilbert();
+    
+    static std::complex<double>*** wfc_k_grid;
+
 	bool epsilon;           // calculate epsilon or not
 	std::string kernel_type;      // the type of kernel
 	std::string system;          // bulk or surface
@@ -79,7 +81,6 @@ class Chi0_hilbert
 	std::complex<double> **chi;
 
 private:
-
 
 	bool init_finish;
 

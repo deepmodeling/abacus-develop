@@ -37,13 +37,19 @@ namespace Gint_Tools
 		return vindex;
 	}
 
-	// index of wave functions for each block
-	int* get_block_iw(
-		const int na_grid,  		// how many atoms on this (i,j,k) grid
-		const int grid_index,		// 1d index of FFT index (i,j,k)
-		const int max_size)
+	void get_block_info(
+		const int na_grid,
+		const int grid_index,
+		int * &block_iw,
+		int * &block_index,
+		int * &block_size	
+	)
 	{
-		int *block_iw = (int*)malloc(max_size*sizeof(int));
+		block_iw = new int[na_grid];
+		block_index = new int[na_grid+1];
+		block_size = new int[na_grid];
+
+		block_index[0] = 0;
 		for (int id=0; id<na_grid; id++)
 		{
 			const int mcell_index=GlobalC::GridT.bcell_start[grid_index] + id;
@@ -52,40 +58,9 @@ namespace Gint_Tools
 			const int ia=GlobalC::ucell.iat2ia[ iat ]; // index of atoms within each type
 			const int start=GlobalC::ucell.itiaiw2iwt(it, ia, 0); // the index of the first wave function for atom (it,ia)
 			block_iw[id]=GlobalC::GridT.trace_lo[start];
-		}
-		return block_iw;
-	}
-
-	int* get_block_index(
-		const int na_grid,  		// how many atoms on this (i,j,k) grid
-		const int grid_index)		// 1d index of FFT index (i,j,k)
-	{
-		int* block_index = (int*)malloc((na_grid+1)*sizeof(int));
-		block_index[0] = 0;
-		for (int id=0; id<na_grid; id++)
-		{
-			const int mcell_index = GlobalC::GridT.bcell_start[grid_index] + id;
-			const int iat = GlobalC::GridT.which_atom[mcell_index]; // index of atom
-			const int it = GlobalC::ucell.iat2it[iat]; // index of atom type
 			block_index[id+1] = block_index[id]+GlobalC::ucell.atoms[it].nw;
-		}
-		return block_index;
-	}
-
-	// band size: number of columns of a band
-	int* get_block_size(
-		const int na_grid,			// how many atoms on this (i,j,k) grid
-		const int grid_index)		// 1d index of FFT index (i,j,k)
-	{
-		int* block_size = (int*)malloc(na_grid*sizeof(int));
-		for (int id=0; id<na_grid; id++)
-		{
-			const int mcell_index=GlobalC::GridT.bcell_start[grid_index] + id;
-			const int iat=GlobalC::GridT.which_atom[mcell_index]; // index of atom
-			const int it=GlobalC::ucell.iat2it[ iat ]; // index of atom type
 			block_size[id]=GlobalC::ucell.atoms[it].nw;	
 		}
-		return block_size;
 	}
 	
 	// whether the atom-grid distance is larger than cutoff

@@ -10,16 +10,30 @@
 #ifndef Diago_David_H
 #define Diago_David_H
 
-#include "tools.h"
+#include "../module_base/global_function.h"
+#include "../module_base/global_variable.h"
+#include "../module_base/complexmatrix.h"
+
+#if ((defined __CUDA) || (defined __ROCM))
+
+#ifdef __CUDA
+#include "hamilt_pw.cuh"
+#else
+#include "hamilt_pw_hip.h"
+#endif
+
+#else
+#include "hamilt_pw.h"
+#endif
 
 class Diago_David
 {
 public:
 
-    Diago_David();
+    Diago_David(Hamilt_PW* phamilt);
     ~Diago_David();
 
-    static void SchmitOrth(
+    void SchmitOrth(
         const int& npw,
         const int n_band,
         const int m,
@@ -49,6 +63,8 @@ public:
         double &avg_iter);
 
 private:
+
+    Hamilt_PW* hpw;
 
     int test_david;
 

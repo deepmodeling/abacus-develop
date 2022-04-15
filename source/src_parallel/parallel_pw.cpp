@@ -1,6 +1,8 @@
 #include "../src_pw/global.h"	// only alat,Ecut,wfac,Nx,Ny,Nz,kv,out
-#include "../src_pw/tools.h"
+#include "../module_base/global_function.h"
+#include "../module_base/global_variable.h"
 #include "parallel_pw.h"
+#include "../module_base/timer.h"
 
 Parallel_PW::Parallel_PW()
 {

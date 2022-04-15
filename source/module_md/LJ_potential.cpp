@@ -1,11 +1,12 @@
 #include "LJ_potential.h"
 #include "../input.h"
+#include "../module_base/timer.h"
 
 LJ_potential::LJ_potential(){}
 
 LJ_potential::~LJ_potential(){}
 
-double LJ_potential::Lennard_Jones(UnitCell_pseudo &ucell_c, 
+double LJ_potential::Lennard_Jones(const UnitCell_pseudo &ucell_c, 
                     Grid_Driver &grid_neigh, 
                     ModuleBase::Vector3<double> *force,
                     ModuleBase::matrix &stress)
@@ -32,9 +33,9 @@ double LJ_potential::Lennard_Jones(UnitCell_pseudo &ucell_c,
                 tau2 = grid_neigh.getAdjacentTau(ad);
                 dtau = (tau1 - tau2) * ucell_c.lat0;
                 distance = dtau.norm();
-                if(distance <= INPUT.mdp.rcut_lj)
+                if(distance <= INPUT.mdp.lj_rcut)
 			    {
-				    potential += LJ_energy(distance) - LJ_energy(INPUT.mdp.rcut_lj);
+				    potential += LJ_energy(distance); // - LJ_energy(INPUT.mdp.lj_rcut);
                     ModuleBase::Vector3<double> f_ij = LJ_force(distance, dtau);
 				    force[index] += f_ij;
                     LJ_virial(virial, f_ij, dtau);
@@ -56,7 +57,8 @@ double LJ_potential::Lennard_Jones(UnitCell_pseudo &ucell_c,
 	return potential/2.0;
 }
 
-double LJ_potential::Lennard_Jones(UnitCell_pseudo &ucell_c, 
+#include "../module_base/mathzone.h"
+double LJ_potential::Lennard_Jones(const UnitCell_pseudo &ucell_c, 
                     CMD_neighbor &cmd_neigh,
                     ModuleBase::Vector3<double> *force,
                     ModuleBase::matrix &stress)
@@ -93,9 +95,9 @@ double LJ_potential::Lennard_Jones(UnitCell_pseudo &ucell_c,
 
             double distance = temp.norm()*ucell_c.lat0;
 
-			if(distance <= INPUT.mdp.rcut_lj)
+			if(distance <= INPUT.mdp.lj_rcut)
 			{
-				potential += LJ_energy(distance) - LJ_energy(INPUT.mdp.rcut_lj);
+				potential += LJ_energy(distance); // - LJ_energy(INPUT.mdp.lj_rcut);
                 ModuleBase::Vector3<double> f_ij = LJ_force(distance, temp*ucell_c.lat0);
 				force[i] = force[i] + f_ij;
                 LJ_virial(virial, f_ij, temp*ucell_c.lat0);
@@ -117,12 +119,12 @@ double LJ_potential::Lennard_Jones(UnitCell_pseudo &ucell_c,
 
 double LJ_potential::LJ_energy(const double d)
 {
-	return 4*INPUT.mdp.epsilon_lj*( pow(INPUT.mdp.sigma_lj/d, 12) - pow(INPUT.mdp.sigma_lj/d, 6) );
+	return 4*INPUT.mdp.lj_epsilon*( pow(INPUT.mdp.lj_sigma/d, 12) - pow(INPUT.mdp.lj_sigma/d, 6) );
 }
 
 ModuleBase::Vector3<double> LJ_potential::LJ_force(const double d, const ModuleBase::Vector3<double> dr)
 {
-	double coff = 4*INPUT.mdp.epsilon_lj*( 12*pow(INPUT.mdp.sigma_lj/d, 12) - 6*pow(INPUT.mdp.sigma_lj/d, 6) )/pow(d,2);
+	double coff = 4*INPUT.mdp.lj_epsilon*( 12*pow(INPUT.mdp.lj_sigma/d, 12) - 6*pow(INPUT.mdp.lj_sigma/d, 6) )/pow(d,2);
 	return dr*coff;
 }
 

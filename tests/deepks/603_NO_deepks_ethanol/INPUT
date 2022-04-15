@@ -1,0 +1,33 @@
+INPUT_PARAMETERS
+#Parameters (1.General)
+suffix			autotest
+calculation     	scf
+dft_functional	        pbe	
+ntype			3
+nbands			12
+symmetry		0
+
+#Parameters (2.Iteration)
+ecutwfc			50
+scf_thr			5e-7
+scf_nmax			50
+
+#Parameters (3.Basis)
+basis_type		lcao
+gamma_only		1
+
+#Parameters (4.Smearing)
+smearing_method		gaussian
+smearing_sigma			0.02
+
+#Parameters (5.Mixing)
+mixing_type		pulay
+mixing_beta		0.4
+
+#Parameters (6.File)
+deepks_out_labels          0 
+deepks_descriptor_lmax		2
+deepks_scf            1
+cal_force                 1
+deepks_model            model.ptg
+

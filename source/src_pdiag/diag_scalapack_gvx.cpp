@@ -42,7 +42,7 @@ std::pair<int,std::vector<int>> Diag_Scalapack_gvx::pdsygvx_once(
 	if (info)
 		throw std::runtime_error("info = "+ModuleBase::GlobalFunc::TO_STRING(info)+".\n"+ModuleBase::GlobalFunc::TO_STRING(__FILE__)+" line "+ModuleBase::GlobalFunc::TO_STRING(__LINE__));
 
-	GlobalV::ofs_running<<"lwork="<<work[0]<<"\t"<<"liwork="<<iwork[0]<<std::endl;
+//	GlobalV::ofs_running<<"lwork="<<work[0]<<"\t"<<"liwork="<<iwork[0]<<std::endl;
 	lwork = work[0];
 	work.resize(lwork,0);
 	liwork = iwork[0];
@@ -55,7 +55,7 @@ std::pair<int,std::vector<int>> Diag_Scalapack_gvx::pdsygvx_once(
 		work.data(), &lwork,
 		iwork.data(), &liwork,
 		ifail.data(), iclustr.data(), gap.data(), &info);
-	GlobalV::ofs_running<<"M="<<M<<"\t"<<"NZ="<<NZ<<std::endl;
+//	GlobalV::ofs_running<<"M="<<M<<"\t"<<"NZ="<<NZ<<std::endl;
 
 	if(info==0)
 		return std::make_pair(info, std::vector<int>{});
@@ -110,7 +110,7 @@ std::pair<int,std::vector<int>> Diag_Scalapack_gvx::pzhegvx_once(
 	if (info)
 		throw std::runtime_error("info="+ModuleBase::GlobalFunc::TO_STRING(info)+". "+ModuleBase::GlobalFunc::TO_STRING(__FILE__)+" line "+ModuleBase::GlobalFunc::TO_STRING(__LINE__));
 
-	GlobalV::ofs_running<<"lwork="<<work[0]<<"\t"<<"lrwork="<<rwork[0]<<"\t"<<"liwork="<<iwork[0]<<std::endl;
+//	GlobalV::ofs_running<<"lwork="<<work[0]<<"\t"<<"lrwork="<<rwork[0]<<"\t"<<"liwork="<<iwork[0]<<std::endl;
 	lwork = work[0].real();
 	work.resize(lwork,0);
 	lrwork = rwork[0] + this->degeneracy_max * GlobalV::NLOCAL;
@@ -126,7 +126,7 @@ std::pair<int,std::vector<int>> Diag_Scalapack_gvx::pzhegvx_once(
 		rwork.data(), &lrwork,
 		iwork.data(), &liwork,
 		ifail.data(), iclustr.data(), gap.data(), &info);
-	GlobalV::ofs_running<<"M="<<M<<"\t"<<"NZ="<<NZ<<std::endl;
+//	GlobalV::ofs_running<<"M="<<M<<"\t"<<"NZ="<<NZ<<std::endl;
 
 	if(info==0)
 		return std::make_pair(info, std::vector<int>{});

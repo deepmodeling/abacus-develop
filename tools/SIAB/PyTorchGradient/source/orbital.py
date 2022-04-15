@@ -24,14 +24,14 @@ def generate_orbital(info,C,E,Rcut,dr):
 	return orb
 						
 						
-def smooth_orbital(orb,Rcut,dr,sigma):
+def smooth_orbital(orb,Rcut,dr,smearing_sigma):
 	for it,orb_t in orb.items():
 		for orb_tl in orb_t:
 			for orb_tlu in orb_tl:
 				for ir in range(orb_tlu.shape[0]):
 					assert orb_tlu.shape[0] == int(Rcut[it]/dr[it])+1
 					r = ir * dr[it]
-					orb_tlu[ir] *= 1-np.exp( -(r-Rcut[it])**2/(2*sigma**2) )
+					orb_tlu[ir] *= 1-np.exp( -(r-Rcut[it])**2/(2*smearing_sigma**2) )
 	
 	
 	

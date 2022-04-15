@@ -1,2 +1,1 @@
-test cg diagonalization with pw basis
-2*2*2 k-points with symmetry=off
+Func:PW/mixing_type=plain,symmetry=0; Sys:Si2 Ref:energy

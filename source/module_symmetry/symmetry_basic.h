@@ -4,8 +4,6 @@
 //==========================================================
 #ifndef SYMMETRY_BASIC_H
 #define SYMMETRY_BASIC_H
-//#include "../src_pw/tools.h"
-//#include "symmetry_basic.h"
 #include "symm_other.h"
 #include "../module_base/mymath.h"
 #include "../module_base/ylm.h"
@@ -71,6 +69,10 @@ class Symmetry_Basic
 	void order_y(double *pos, const int &oldpos, const int &newpos);
 	void order_z(double *pos, const int &oldpos, const int &newpos);
 };
+
+//for test only
+extern bool test_brav;
+
 }//end of define namespace
 
 #endif

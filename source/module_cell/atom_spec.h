@@ -1,7 +1,6 @@
 #ifndef ATOM_H
 #define ATOM_H
 
-//#include "tools.h"
 #include "atom_pseudo.h"
 #include "../src_io/output.h"
 class Atom: public Atom_pseudo
@@ -41,7 +40,7 @@ public:
     ModuleBase::Vector3<double> *m_loc_;
 
 
-    void print_Atom(std::ofstream &ofs, output &outp);
+    void print_Atom(std::ofstream &ofs);
 #ifdef __MPI
     void bcast_atom(void);
     void bcast_atom2(void);

@@ -5,6 +5,9 @@
 #endif
 //#include "../src_pw/global.h"
 #include <cstring>		// Peize Lin fix bug about strcmp 2016-08-02
+#include "../module_base/global_file.h"
+#include "../src_parallel/parallel_common.h"
+#include "../module_base/constants.h"
 
 UnitCell_pseudo::UnitCell_pseudo()
 {
@@ -28,7 +31,6 @@ void UnitCell_pseudo::setup_cell(
 		LCAO_Orbitals &orb,
 #endif
 		const std::string &s_pseudopot_dir,
-		output &outp,  
 		const std::string &fn,
 		std::ofstream &log)
 {
@@ -99,7 +101,7 @@ void UnitCell_pseudo::setup_cell(
 			ok2 = this->read_atom_positions(ifa, log, GlobalV::ofs_warning);
 #endif
 
-			if(ok2)
+			if(ok2&&GlobalV::out_element_info)
 			{
 				for(int i=0;i<this->ntype;i++)
 				{
@@ -169,8 +171,8 @@ void UnitCell_pseudo::setup_cell(
     this->invGGT0 = GGT.Inverse();
 
 	log << std::endl;
-	outp.printM3(log,"Lattice vectors: (Cartesian coordinate: in unit of a_0)",latvec); 
-	outp.printM3(log,"Reciprocal vectors: (Cartesian coordinate: in unit of 2 pi/a_0)",G);
+	output::printM3(log,"Lattice vectors: (Cartesian coordinate: in unit of a_0)",latvec); 
+	output::printM3(log,"Reciprocal vectors: (Cartesian coordinate: in unit of 2 pi/a_0)",G);
 //	OUT(log,"lattice center x",latcenter.x);
 //	OUT(log,"lattice center y",latcenter.y);
 //	OUT(log,"lattice center z",latcenter.z);
@@ -197,7 +199,7 @@ void UnitCell_pseudo::setup_cell(
 
 	this->read_cell_pseudopots(s_pseudopot_dir, log);
 	
-	if(GlobalV::MY_RANK == 0) 
+	if(GlobalV::MY_RANK == 0 && GlobalV::out_element_info) 
 	{
 		for(int it=0; it<this->ntype; it++)
 		{
@@ -269,31 +271,17 @@ void UnitCell_pseudo::setup_cell(
 
 	for(int it=0; it<ntype; it++)
 	{
-		for(int j=0; j<4; j++)
+		if(atoms[0].xc_func !=atoms[it].xc_func)
 		{
-			if(atoms[0].dft[j]!=atoms[it].dft[j])
-			{
-				GlobalV::ofs_warning << "\n type " << atoms[0].label << " functional is " 
-				<< atoms[0].dft[0] << " " << atoms[0].dft[1] << " "
-				<< atoms[0].dft[2] << " " << atoms[0].dft[3];
-				
-				GlobalV::ofs_warning << "\n type " << atoms[it].label << " functional is " 
-				<< atoms[it].dft[0] << " " << atoms[it].dft[1] << " "
-				<< atoms[it].dft[2] << " " << atoms[it].dft[3] << std::endl;
-				
-				ModuleBase::WARNING_QUIT("setup_cell","All DFT functional must consistent.");
-			}
+			GlobalV::ofs_warning << "\n type " << atoms[0].label << " functional is " 
+			<< atoms[0].xc_func;
+			
+			GlobalV::ofs_warning << "\n type " << atoms[it].label << " functional is " 
+			<< atoms[it].xc_func << std::endl;
+			
+			ModuleBase::WARNING_QUIT("setup_cell","All DFT functional must consistent.");
 		}
 	}
-
-	// mohan add 2010-09-06
-	// because the number of element type
-	// will easily be ignored, so here
-	// I warn the user again for each type.
-	//for(int it=0; it<ntype; it++)
-	//{
-	//	GlobalC::xcf.which_dft(atoms[it].dft);
-	//}
 
 	// setup the total number of PAOs
 	this->cal_natomwfc(log);
@@ -380,7 +368,7 @@ void UnitCell_pseudo::setup_cell_classic(
 #else
 			ok2 = this->read_atom_positions(ifa, ofs_running, ofs_warning);
 #endif
-			if(ok2)
+			if(ok2&&GlobalV::out_element_info)
 			{
 				for(int i=0;i<this->ntype;i++)
 				{
@@ -421,6 +409,21 @@ void UnitCell_pseudo::setup_cell_classic(
 		ModuleBase::GlobalFunc::OUT(ofs_running,"Volume (Bohr^3)", this->omega);
 		ModuleBase::GlobalFunc::OUT(ofs_running,"Volume (A^3)", this->omega * pow(ModuleBase::BOHR_TO_A, 3));
 	}
+
+	//==========================================================
+	// Calculate recip. lattice vectors and dot products
+	// latvec have the unit of lat0, but G has the unit 2Pi/lat0
+	//==========================================================
+	this->GT = latvec.Inverse();
+	this->G  = GT.Transpose();
+	this->GGT = G * GT;
+	this->invGGT = GGT.Inverse();
+
+    //LiuXh add 20180515
+    this->GT0 = latvec.Inverse();
+    this->G0  = GT.Transpose();
+    this->GGT0 = G * GT;
+    this->invGGT0 = GGT.Inverse();
 
 	this->set_iat2itia();
 }
@@ -662,17 +665,8 @@ void UnitCell_pseudo::cal_natomwfc(std::ofstream &log)
 
 //LiuXh add a new function here,
 //20180515
-void UnitCell_pseudo::setup_cell_after_vc(
-        const std::string &s_pseudopot_dir,
-		output &outp,
-        const std::string &fn, std::ofstream &log)
+void UnitCell_pseudo::setup_cell_after_vc(std::ofstream &log)
 {
-    if(GlobalV::MY_RANK == 0)
-    {
-        //std::ifstream ifa(fn.c_str(), ios::in);
-        //this->read_atom_species_after_vc(ifa);
-    }
-
     assert(lat0 > 0.0);
     this->omega = abs(latvec.Det()) * this->lat0 * lat0 * lat0;
     if(this->omega <= 0)
@@ -722,8 +716,8 @@ Parallel_Common::bcast_double( atom->taud[ia].z );
 #endif
 
     log << std::endl;
-    outp.printM3(log,"Lattice vectors: (Cartesian coordinate: in unit of a_0)",latvec);
-    outp.printM3(log,"Reciprocal vectors: (Cartesian coordinate: in unit of 2 pi/a_0)",G);
+    output::printM3(log,"Lattice vectors: (Cartesian coordinate: in unit of a_0)",latvec);
+    output::printM3(log,"Reciprocal vectors: (Cartesian coordinate: in unit of 2 pi/a_0)",G);
 
     return;
 }
@@ -751,4 +745,76 @@ bool UnitCell_pseudo::if_cell_can_change()const
 		return 1;
 	}
 	return 0;
+}
+
+void UnitCell_pseudo::setup(const std::string &latname_in,
+	const int &ntype_in, 
+	const int &lmaxmax_in,
+	const bool &init_vel_in,
+	const std::string &fixed_axes_in)
+{
+	this->latName = latname_in;
+	this->ntype = ntype_in;
+	this->lmaxmax = lmaxmax_in;
+	this->init_vel = init_vel_in;
+	// pengfei Li add 2018-11-11
+	if (fixed_axes_in == "None")
+	{
+		this->lc[0] = 1;
+		this->lc[1] = 1;
+		this->lc[2] = 1;
+	}
+	else if (fixed_axes_in == "volume")
+	{
+		this->lc[0] = 1;
+		this->lc[1] = 1;
+		this->lc[2] = 1;
+	}
+	else if (fixed_axes_in == "a")
+	{
+		this->lc[0] = 0;
+		this->lc[1] = 1;
+		this->lc[2] = 1;
+	}
+	else if (fixed_axes_in == "b")
+	{
+		this->lc[0] = 1;
+		this->lc[1] = 0;
+		this->lc[2] = 1;
+	}
+	else if (fixed_axes_in == "c")
+	{
+		this->lc[0] = 1;
+		this->lc[1] = 1;
+		this->lc[2] = 0;
+	}
+	else if (fixed_axes_in == "ab")
+	{
+		this->lc[0] = 0;
+		this->lc[1] = 0;
+		this->lc[2] = 1;
+	}
+	else if (fixed_axes_in == "ac")
+	{
+		this->lc[0] = 0;
+		this->lc[1] = 1;
+		this->lc[2] = 0;
+	}
+	else if (fixed_axes_in == "bc")
+	{
+		this->lc[0] = 1;
+		this->lc[1] = 0;
+		this->lc[2] = 0;
+	}
+	else if (fixed_axes_in == "abc")
+	{
+		this->lc[0] = 0;
+		this->lc[1] = 0;
+		this->lc[2] = 0;
+	}
+	else
+	{
+		ModuleBase::WARNING_QUIT("Input", "fixed_axes should be None,a,b,c,ab,ac,bc or abc!");
+	}
+	return;
 }

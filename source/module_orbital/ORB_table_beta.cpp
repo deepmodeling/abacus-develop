@@ -2,6 +2,8 @@
 #include "ORB_table_beta.h"
 #include "ORB_read.h"
 #include "../module_base/math_integral.h"
+#include "../module_base/memory.h"
+#include "../module_base/timer.h"
 
 double ORB_table_beta::dr = -1.0;
 
@@ -119,7 +121,8 @@ int ORB_table_beta::get_rmesh(const double &R1, const double &R2)
 	return rmesh;
 }
 
-
+#include "../module_base/mathzone_add1.h"
+#include "../module_base/constants.h"
 
 void ORB_table_beta::cal_VNL_PhiBeta_R(
 		ModuleBase::Sph_Bessel_Recursive::D2 *pSB, // mohan add 2021-03-06

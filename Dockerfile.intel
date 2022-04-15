@@ -38,7 +38,7 @@ RUN source /opt/intel/oneapi/setvars.sh \
 	&& wget https://elpa.mpcdf.mpg.de/software/tarball-archive/Releases/2021.05.002/elpa-2021.05.002.tar.gz \
 	&& tar xzf elpa-2021.05.002.tar.gz  && rm elpa-2021.05.002.tar.gz \
 	&& cd elpa-2021.05.002 && mkdir build && cd build \
-	&& ../configure FCFLAGS="-mkl=cluster" \
+	&& ../configure FCFLAGS="-qmkl=cluster" \
 	&& make -j8 \
 	&& make PREFIX=/usr/local install \
 	&& ln -s /usr/local/include/elpa-2021.05.002/elpa /usr/local/include/ \
