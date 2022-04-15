@@ -2,15 +2,6 @@ name: Integration Test and Unit Test
 
 on:
   pull_request_target:
-    branches:
-      - develop
-      - tryEigen
-      - update_MD
-      - ABACUS_2.2.0_beta
-      - deepks
-      - planewave
-      - pw_refactor
-      - TDDFT
 
 jobs:
   test:
@@ -20,9 +11,9 @@ jobs:
     container: ghcr.io/deepmodeling/abacus-development-kit:gnu
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
-          ref: ${{ github.event.pull_request.head.sha }}
+          ref: "refs/pull/${{ github.event.number }}/merge"
       - name: Build and Test
         env:
           GTEST_COLOR: 'yes'

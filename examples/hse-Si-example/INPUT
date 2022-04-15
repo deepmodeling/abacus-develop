@@ -12,7 +12,7 @@ gamma_only 				0
 smearing_method   				smearing_method
 mixing_type				pulay
 
-exx_hybrid_type			hse
+dft_functional			hse
 exx_separate_loop		0		
 exx_pca_threshold		1E-3
 exx_ccp_rmesh_times		10

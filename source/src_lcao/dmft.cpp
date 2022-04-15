@@ -352,7 +352,10 @@ namespace ModuleDMFT
               << std::setw(6) << iband
               << std::setw(6) << ik
               << std::setw(25) << std::fixed << std::setprecision(15) 
-              << ekb[ik+is*nks_tot][iband]/2.0 << std::endl;          //Rydberg to Hartree
+              << ekb[ik+is*nks_tot][iband]/2.0 
+              << std::setw(17) << std::fixed << std::setprecision(12)
+              << GlobalC::wf.wg(ik,iband)/GlobalC::kv.wk[ik]
+              << std::endl;          //Rydberg to Hartree
         }
       }
     }

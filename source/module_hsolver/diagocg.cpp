@@ -11,11 +11,9 @@ namespace ModuleHSolver
 
 DiagoCG::DiagoCG(
     Hamilt_PW* hpw_in, 
-    const PW_Basis* pbas_in,
     const double *precondition_in)
 {
     this->hpw = hpw_in; 
-    this->pbas = pbas_in;
     this->precondition = precondition_in;
     test_cg=0;
     reorder = false;
@@ -489,7 +487,7 @@ void DiagoCG::diag(
     }
     while ( IterDiagControl::test_exit_cond(ntry, this->notconv) );
 
-    if ( notconv > max(5, GlobalV::NBANDS/4) )
+    if ( notconv > max(5, psi.get_nbands()/4) )
     {
         std::cout << "\n notconv = " << this->notconv;
         std::cout << "\n DiagoCG::diag', too many bands are not converged! \n";

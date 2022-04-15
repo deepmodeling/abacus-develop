@@ -11,14 +11,16 @@ class HSolverPW : public HSolver
 {
     public:
 
-    HSolverPW(const PW_Basis* pbas_in){this->init(pbas_in);}
+    HSolverPW(const PW_Basis* pbas_in){
+        this->pbas = pbas_in;
+        /*this->init(pbas_in);*/}
 
-    void init(
-        const PW_Basis* pbas
+    /*void init(
+        const Basis* pbas
         //const Input &in,
     ) override;
     void update(//Input &in
-    ) override;
+    ) override;*/
     
     void solve(
         ModuleHamilt::Hamilt* pHamilt, 

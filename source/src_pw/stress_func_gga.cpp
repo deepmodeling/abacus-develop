@@ -1,6 +1,7 @@
 #include "./stress_func.h"
 #include "../module_xc/xc_functional.h"
 #include "../module_base/timer.h"
+#include "global.h"
 
 //calculate the GGA stress correction in PW and LCAO
 void Stress_Func::stress_gga(ModuleBase::matrix& sigma) 

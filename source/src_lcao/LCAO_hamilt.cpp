@@ -173,7 +173,7 @@ void LCAO_Hamilt::calculate_STNR_gamma(void)
 
     this->LM->zeros_HSgamma('S');    	
 
-    this->genH.calculate_S_no();	
+    this->genH.calculate_S_no(this->LM->Sloc.data());	
 
     //this->LM->print_HSgamma('S');
 
@@ -194,7 +194,7 @@ void LCAO_Hamilt::calculate_STNR_gamma(void)
     time_t time_vnl_start = time(NULL);
     if(GlobalV::VNL_IN_H)
     {
-        genH.calculate_NL_no();
+        genH.calculate_NL_no(this->LM->Hloc_fixed.data());
     }
     time_t time_vnl_end = time(NULL);
 
@@ -204,7 +204,7 @@ void LCAO_Hamilt::calculate_STNR_gamma(void)
     time_t time_t_start = time(NULL);
     if(GlobalV::T_IN_H)
     {
-        genH.calculate_T_no();
+        genH.calculate_T_no(this->LM->Hloc_fixed.data());
 //		this->LM->print_HSgamma('T');
     }
     time_t time_t_end = time(NULL);
@@ -315,7 +315,7 @@ void LCAO_Hamilt::calculate_STNR_k(void)
     // and store in this->LM->SlocR.
     //--------------------------------------------
     this->LM->zeros_HSR('S');
-    this->genH.calculate_S_no();	
+    this->genH.calculate_S_no(this->LM->SlocR.data());	
 
     //------------------------------
     // set T(R) and Vnl(R) to zero.
@@ -328,13 +328,13 @@ void LCAO_Hamilt::calculate_STNR_k(void)
 
     if(GlobalV::T_IN_H)
     {
-        this->genH.calculate_T_no();	
+        this->genH.calculate_T_no(this->LM->Hloc_fixedR.data());	
     }
 
 
     if(GlobalV::VNL_IN_H)
     {
-        this->genH.calculate_NL_no();
+        this->genH.calculate_NL_no(this->LM->Hloc_fixedR.data());
     }
 
 

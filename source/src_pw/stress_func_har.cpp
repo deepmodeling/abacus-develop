@@ -2,6 +2,7 @@
 #include "./myfunc.h"
 #include "./H_Hartree_pw.h"
 #include "../module_base/timer.h"
+#include "global.h"
 
 //calculate the Hartree part in PW or LCAO base
 void Stress_Func::stress_har(ModuleBase::matrix& sigma, const bool is_pw)

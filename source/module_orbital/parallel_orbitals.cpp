@@ -33,7 +33,7 @@ Parallel_Orbitals::~Parallel_Orbitals()
 {
     delete[] trace_loc_row;
     delete[] trace_loc_col;
-    delete loc_sizes;
+    delete[] loc_sizes;
     
     if (alloc_Z_LOC)//xiaohui add 2014-12-22
 	{

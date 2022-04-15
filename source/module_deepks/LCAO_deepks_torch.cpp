@@ -293,7 +293,7 @@ void LCAO_Deepks::cal_gedm(const int nat)
     std::vector<torch::jit::IValue> inputs;
     
     //input_dim:(natom, des_per_atom)
-    inputs.push_back(torch::cat(this->d_tensor, 0).reshape({ nat, this->des_per_atom }));
+    inputs.push_back(torch::cat(this->d_tensor, 0).reshape({ 1, nat, this->des_per_atom }));
     std::vector<torch::Tensor> ec;
     ec.push_back(module.forward(inputs).toTensor());    //Hartree
     this->E_delta = ec[0].item().toDouble() * 2;//Ry; *2 is for Hartree to Ry

@@ -18,6 +18,8 @@
 #ifdef __DEEPKS
 
 #include "LCAO_deepks.h"
+#include "../src_lcao/global_fp.h"
+#include "../src_pw/global.h"
 
 namespace GlobalC
 {

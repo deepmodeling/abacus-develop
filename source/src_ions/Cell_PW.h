@@ -5,7 +5,6 @@
 #ifndef CELL_PW_H
 #define CELL_PW_H
 
-#include "../src_pw/global.h"
 #include "module_esolver/esolver.h"
 
 class Cell_PW

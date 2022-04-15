@@ -122,6 +122,7 @@ TEST(DiagoDavRealSystemTest,dataH)
 	ModuleBase::ComplexMatrix hmatrix;
 	std::ifstream ifs("data-H");
 	DIAGOTEST::readh(ifs,hmatrix);
+	ifs.close();
 	DIAGOTEST::hmatrix = hmatrix;
 	DIAGOTEST::npw = hmatrix.nc;
 

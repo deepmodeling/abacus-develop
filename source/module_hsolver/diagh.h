@@ -16,8 +16,13 @@ class DiagH
 
     virtual void diag(
         ModuleHamilt::Hamilt* phm_in,
-        ModulePsi::Psi<std::complex<double>> &phi,
+        ModulePsi::Psi<std::complex<double>> &psi,
         double *eigenvalue_in)=0;
+    
+    virtual void diag(
+        ModuleHamilt::Hamilt* phm_in,
+        ModulePsi::Psi<double> &psi,
+        double *eigenvalue_in){return;}
 
 };
 

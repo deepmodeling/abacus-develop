@@ -24,7 +24,7 @@ public:
     ESolver(){
         tag = "ESolver";
     }
-    // virtual ~ESolver(){};
+    virtual ~ESolver(){};
 
     //virtual void Init(Input_EnSolver &inp, matrix &lattice_v)=0
     virtual void Init(Input &inp, UnitCell_pseudo &cell)=0;

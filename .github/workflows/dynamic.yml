@@ -4,11 +4,6 @@ on:
   schedule:
     - cron: '0 3 * * *'
   workflow_dispatch:
-    inputs:
-      name:
-        description: 'Number of Cores to Run ABACUS'
-        required: false
-        default: '2'
 
 jobs:
   test:
@@ -18,17 +13,20 @@ jobs:
     container: ghcr.io/deepmodeling/abacus-development-kit:gnu
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
-      - name: Build and Test
+        uses: actions/checkout@v3
+      - name: Building
         run: |
           cmake -B build -DENABLE_ASAN=1 -DBUILD_TESTING=ON -DENABLE_DEEPKS=1
           cmake --build build -j16
           cmake --install build
+      - name: Testing
+        run: |
           cmake --build build --target test ARGS="-V"
       - name: Publish Report to Dashboard
         uses: crazy-max/ghaction-github-pages@v2
+        if: ${{ ! cancelled() }}
         with:
           target_branch: dashboard
-          build_dir: html
+          build_dir: tests/html
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

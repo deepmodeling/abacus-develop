@@ -28,42 +28,12 @@ void LOOP_ions::output_HS_R(
 
     if(GlobalV::NSPIN==1||GlobalV::NSPIN==4)
     {
-        // this->UHM.calculate_STN_R();
-        // this->UHM.GK.cal_vlocal_R(0);
-        // this->UHM.GK.distribute_pvpR_tr();
-        // HS_Matrix::save_HSR_tr(0);
-
         // jingan add 2021-6-4, modify 2021-12-2
         this->UHM.calculate_HSR_sparse(0, sparse_threshold);
     }
     ///*
     else if(GlobalV::NSPIN==2)
     {
-        // this->UHM.calculate_STN_R();
-        // for(int ik=0; ik<GlobalC::kv.nks; ik++)
-        // {
-        //     if(ik==0 || ik==GlobalC::kv.nks/2)
-        //     {
-        //         if(GlobalV::NSPIN==2)GlobalV::CURRENT_SPIN = GlobalC::kv.isk[ik];
-        //         for(int ir=0; ir<GlobalC::pw.nrxx; ir++)
-        //         {
-        //             GlobalC::pot.vr_eff1[ir] = GlobalC::pot.vr_eff( GlobalV::CURRENT_SPIN, ir);
-        //         }
-                    
-        //         if(!GlobalV::GAMMA_ONLY_LOCAL)
-        //         {
-        //             if(GlobalV::VL_IN_H)
-        //             {
-        // 				//this->UHM.GK.cal_vlocal_k(GlobalC::pot.vrs1,GridT);
-        // 				this->UHM.GK.cal_vlocal_k(GlobalC::pot.vr_eff1, GlobalC::GridT, GlobalV::CURRENT_SPIN);
-        //             }
-        //         }
-        //         this->UHM.GK.cal_vlocal_R(GlobalV::CURRENT_SPIN);
-        //         this->UHM.GK.distribute_pvpR_tr();
-        //         HS_Matrix::save_HSR_tr(GlobalV::CURRENT_SPIN);
-        //     }
-        // }
-
         // jingan add 2021-6-4
         for(int ik = 0; ik < GlobalC::kv.nks; ik++)
         {

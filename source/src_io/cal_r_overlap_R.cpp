@@ -1,4 +1,6 @@
 #include "cal_r_overlap_R.h"
+#include "../src_lcao/global_fp.h"
+#include "../src_pw/global.h"
 #include "../src_parallel/parallel_reduce.h"
 #include "../module_base/timer.h"
 

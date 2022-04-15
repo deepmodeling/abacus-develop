@@ -10,9 +10,9 @@ void ElecStatePW::init(
     this->pchg = chg_in;
 }
 
-const MatrixBlock<double> ElecStatePW::getRho()const
+const ModuleHamilt::MatrixBlock<double> ElecStatePW::getRho()const
 {
-    MatrixBlock<double> temp{&(this->pchg->rho[0][0]), 1,1};//this->chr->get_nspin(), this->chr->get_nrxx()};
+    ModuleHamilt::MatrixBlock<double> temp{&(this->pchg->rho[0][0]), 1,1};//this->chr->get_nspin(), this->chr->get_nrxx()};
     return temp;
 }
 

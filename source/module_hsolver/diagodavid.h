@@ -13,7 +13,17 @@
 #include "diagh.h"
 #include "module_base/complexmatrix.h"
 
+#if ((defined __CUDA) || (defined __ROCM))
+
+#ifdef __CUDA
+#include "src_pw/hamilt_pw.cuh"
+#else
+#include "src_pw/hamilt_pw_hip.h"
+#endif
+
+#else
 #include "src_pw/hamilt_pw.h"
+#endif
 #include "src_pw/pw_basis.h"
 
 namespace ModuleHSolver
@@ -23,7 +33,7 @@ class DiagoDavid : public DiagH
 {
 public:
 
-    DiagoDavid(Hamilt_PW* hpw_in, const PW_Basis* pbas_in, const double *precondition_in);
+    DiagoDavid(Hamilt_PW* hpw_in, const double *precondition_in);
     ~DiagoDavid();
 
     //this is the override function diag() for CG method
@@ -39,7 +49,7 @@ private:
     int test_david;
 
     /// record for how many bands not have convergence eigenvalues
-    static int notconv;
+    int notconv;
 
     void cal_grad(
         const int& npw,
@@ -111,7 +121,6 @@ private:
         double *eigenvalue_in);
 
     Hamilt_PW* hpw;
-    const PW_Basis* pbas;
     const double* precondition;
 
 

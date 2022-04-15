@@ -3,7 +3,17 @@
 
 #include "module_psi/psi.h"
 #include "module_base/complexmatrix.h"
+#if ((defined __CUDA) || (defined __ROCM))
+
+#ifdef __CUDA
+#include "src_pw/hamilt_pw.cuh"
+#else
+#include "src_pw/hamilt_pw_hip.h"
+#endif
+
+#else
 #include "src_pw/hamilt_pw.h"
+#endif
 
 namespace ModuleHSolver
 {

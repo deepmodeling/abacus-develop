@@ -31,6 +31,8 @@ do
 	state=`echo $?`
 	if [ $state != "0" ]; then
 		let failed++
+		running_path=`echo "./running.log"`
+                cat $running_path
 	fi
 	cd ..
 	echo""

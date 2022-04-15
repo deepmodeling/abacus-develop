@@ -331,12 +331,19 @@ void MD_func::MDdump(const int &step,
 		const ModuleBase::matrix &virial, 
 		const ModuleBase::Vector3<double> *force)
 {
-	if(GlobalV::MY_RANK) return;
+    if(GlobalV::MY_RANK) return;
 
-	std::stringstream file;
+    std::stringstream file;
     file << GlobalV::global_out_dir << "MD_dump";
-	std::ofstream ofs;
-	ofs.open(file.str(), ios::app);
+    std::ofstream ofs;
+    if(step == 0)
+    {
+        ofs.open(file.str(), ios::trunc);
+    }
+    else
+    {
+        ofs.open(file.str(), ios::app);
+    }
 
 	const double unit_virial = ModuleBase::HARTREE_SI / pow(ModuleBase::BOHR_RADIUS_SI,3) * 1.0e-8;
 	const double unit_force = ModuleBase::Hartree_to_eV * ModuleBase::ANGSTROM_AU;

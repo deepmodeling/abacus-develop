@@ -128,7 +128,7 @@ void test_deepks::setup_cell()
 
 void test_deepks::prep_neighbour()
 {
-    GlobalV::SEARCH_RADIUS = atom_arrange::set_sr_NL(
+    double search_radius = atom_arrange::set_sr_NL(
         GlobalV::ofs_running,
         GlobalV::OUT_LEVEL,
         ORB.get_rcutmax_Phi(),
@@ -140,7 +140,7 @@ void test_deepks::prep_neighbour()
         GlobalV::ofs_running,
         Test_Deepks::GridD,
         ucell,
-        GlobalV::SEARCH_RADIUS,
+        search_radius,
         GlobalV::test_atom_input);
 }
 

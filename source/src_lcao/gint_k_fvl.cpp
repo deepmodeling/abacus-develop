@@ -10,11 +10,6 @@ void Gint_k::fvl_k_RealSpace(ModuleBase::matrix& fvl_dphi, const double *vl)
 	ModuleBase::TITLE("Gint_k","cal_force");
 	ModuleBase::timer::tick("Gint_k","cal_force");
 
-	if(!this->reduced)
-	{
-		ModuleBase::WARNING_QUIT("Gint_k::cal_force_k","The force with k can only with reduced H.");
-	}
-
 	int nnrg = GlobalC::GridT.nnrg;
  	//xiaohui add "OUT_LEVEL", 2015-09-16
 	if(GlobalV::OUT_LEVEL != "m") GlobalV::ofs_running << " LNNR.nnrg in cal_force_k = " << nnrg << std::endl;
@@ -207,11 +202,6 @@ void Gint_k::svl_k_RealSpace(
 {
 	ModuleBase::TITLE("Gint_k","svl_k_RealSpace");
 	ModuleBase::timer::tick("Gint_k","svl_k_RealSpace");
-
-	if(!this->reduced)
-	{
-		ModuleBase::WARNING_QUIT("Gint_k::cal_stress_k","The stress with k can only with reduced H.");
-	}
 
 	int nnrg = GlobalC::GridT.nnrg;
 

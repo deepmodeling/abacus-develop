@@ -48,8 +48,8 @@ HONG_MEM = ${HONG_FFTW} -D__FP -D_MCD_CHECK -DWIN32 -DMCD_VERBOSE
 
 #!!!!!!!!!!!!!!!!!!!! CHANE HERE IF YOU LIKE !!!!!!!!!!!!!!
 #! change series version or parallel version~~~
-#HONG=${HONG_MPI_SELINV_20210523}
-HONG=${HONG_SER_SELINV}
+HONG=${HONG_MPI_SELINV_20210523}
+#HONG=${HONG_SER_SELINV}
 #!!!!!!!!!!!!!!!!!!!! CHANE HERE IF YOU LIKE !!!!!!!!!!!!!!
 
 #==========================

@@ -5,7 +5,17 @@
 #include "module_base/complexmatrix.h"
 #include "module_psi/psi.h"
 
+#if ((defined __CUDA) || (defined __ROCM))
+
+#ifdef __CUDA
+#include "src_pw/hamilt_pw.cuh"
+#else
+#include "src_pw/hamilt_pw_hip.h"
+#endif
+
+#else
 #include "src_pw/hamilt_pw.h"
+#endif
 #include "src_pw/pw_basis.h"
 
 namespace ModuleHSolver
@@ -17,11 +27,9 @@ class DiagoCG : public DiagH
 
     //Constructor need:
     //1. temporary mock of Hamiltonian "Hamilt_PW"
-    //2. temporary use of basis "PW_Basis", we should design Basis module later
-    //3. precondition pointer should point to place of precondition array. 
+    //2. precondition pointer should point to place of precondition array. 
     DiagoCG(
         Hamilt_PW* hpw_in, 
-        const PW_Basis* pbas_in, 
         const double *precondition_in);
     ~DiagoCG();
 
@@ -30,7 +38,7 @@ class DiagoCG : public DiagH
     //this is the override function diag() for CG method
     void diag(
         ModuleHamilt::Hamilt* phm_in,
-        ModulePsi::Psi<std::complex<double>> &phi,
+        ModulePsi::Psi<std::complex<double>> &psi,
         double *eigenvalue_in) override;
 
 	private:
@@ -42,7 +50,6 @@ class DiagoCG : public DiagH
 
     /// temp operator pointer
     Hamilt_PW* hpw;
-    const PW_Basis* pbas;
 
     int test_cg;
 

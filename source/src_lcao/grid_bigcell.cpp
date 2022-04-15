@@ -117,21 +117,6 @@ void Grid_BigCell::init_grid_expansion(void)
 	}
 	if(GlobalV::test_gridt)ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"rmax of periodic grid (bohr)",orbital_rmax);
 
-	// calculate the distance between bigcell.
-	// in other word, calculate the distance one bigcell point
-	// can describe.
-
-	//length of each edge at room
-	this->bigcell_dx = GlobalC::ucell.a1.norm() * GlobalC::ucell.lat0 / (double)nbx;	
-	this->bigcell_dy = GlobalC::ucell.a2.norm() * GlobalC::ucell.lat0 / (double)nby;	
-	this->bigcell_dz = GlobalC::ucell.a3.norm() * GlobalC::ucell.lat0 / (double)nbz;
-
-	if(GlobalV::test_gridt)ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"Length of Meshcell (Bohr): ",bigcell_dx,bigcell_dy,bigcell_dz);
-	
-	assert( bigcell_dx > 0.0);
-	assert( bigcell_dy > 0.0);
-	assert( bigcell_dz > 0.0);
-	
 	// mohan fixed serious bug 2010-03-06
 	// G = GT^T
 	// g1 = the norm of first std::vector of G 
@@ -151,16 +136,6 @@ void Grid_BigCell::init_grid_expansion(void)
 
 	// we assume the added bigcell can present even the atom
 	// is at the edge of the origin grid.
-	// notice here we don't need to + 1 in the end
-	// because we consider this below.
-
-	// this is wrong!!!
-	//this->dxe = static_cast<int>( this->orbital_rmax / bigcell_dx) ;
-	//this->dye = static_cast<int>( this->orbital_rmax / bigcell_dy) ;
-	//this->dze = static_cast<int>( this->orbital_rmax / bigcell_dz) ;
-
-	// this may be correct!
-	//bug dxe++, dye++, dze++;
 	// mohan add +1, 2011-04-23
 	this->dxe = static_cast<int>( this->orbital_rmax * g1) +1;
 	this->dye = static_cast<int>( this->orbital_rmax * g2) +1;

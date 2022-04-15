@@ -3,9 +3,6 @@ include Makefile.vars
 #==========================
 # LIB and INCLUDE
 #==========================
-BOOST_INCLUDE_DIR = ${BOOST_DIR}/include
-#BOOST_LIB_DIR     = ${BOOST_DIR}/lib
-#BOOST_LIB         = -L${BOOST_LIB_DIR} -lboost_serialization -lboost_mpi -Wl,-rpath=${BOOST_LIB_DIR}
 
 HONG_LAPACK        = -D__MKL -DMKL_ILP64
 LAPACK_INCLUDE_DIR = ${LAPACK_DIR}/include
@@ -20,7 +17,7 @@ FFTW_LIB_DIR     = ${FFTW_DIR}/lib
 #FFTW_LIB_DIR     = $(MKLROOT)/lib/intel64
 FFTW_LIB         = -L${FFTW_LIB_DIR} -lfftw3 -Wl,-rpath=${FFTW_LIB_DIR}
 
-ELPA_INCLUDE_DIR = ${ELPA_DIR}/include
+ELPA_INCLUDE_DIR = ${ELPA_DIR}/include/elpa-2021.11.002
 ELPA_LIB_DIR = ${ELPA_DIR}/lib
 # comment out by mohan 2021-02-06
 #ELPA_LIB     = -L${ELPA_LIB_DIR} -lelpa_openmp -Wl,-rpath=${ELPA_LIB_DIR}

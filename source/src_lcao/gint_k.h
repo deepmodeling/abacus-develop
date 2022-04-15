@@ -130,32 +130,6 @@ class Gint_k : public Gint_k_init
         const double &delta_r);
 
     //------------------------------------------------------
-    // in gint_k_vl.cpp 
-    //------------------------------------------------------
-    // evaluate the matrix element < phi0 | V | phiR> and store them in
-    // a full H matrix.
-    void evaluate_pvpR_full(
-        const int &grid_index, 
-        const int &size, 
-        double*** psir_ylm,
-        bool** cal_flag, 
-        double* vldr3);
-
-    // reduced means the H storage take the advance of adjacent atoms.
-    void evaluate_pvpR_reduced(
-        double* pvpR, 
-        const int &grid_index, 
-        const int &size, 
-        const int &i, 
-        const int &j, 
-        const int &k,
-        double*** psir_ylm, 
-        bool** cal_flag, 
-        double* vldr3, 
-        double** distance, 
-        const Grid_Technique &gt);
-
-    //------------------------------------------------------
     // in gint_k_rho.cpp 
     //------------------------------------------------------
     // evaluate the <phi0 | Density Matrix | phiR> to get the charge density.
@@ -231,10 +205,6 @@ class Gint_k : public Gint_k_init
     //----------------------------
     // key variable 
     //----------------------------
-    // dimension: [GridT.lgd, GridT.nutot]
-    // used only in vlocal with full H matrix.
-    double* pvpR_pool;
-    double** pvpR;
 
     double***** pvpR_tr; //LiuXh add 2019-07-15
     std::complex<double>***** pvpR_tr_soc; //LiuXh add 2019-07-15
@@ -260,7 +230,6 @@ class Gint_k : public Gint_k_init
 
     // just pointer.
     bool pvpR_alloc_flag;
-    bool reduced;
 
     double** DM_R; //pointer to Local_Orbital_Charge::DM_R
 };

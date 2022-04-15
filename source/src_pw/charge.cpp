@@ -212,13 +212,11 @@ void Charge::atomic_rho(const int spin_number_need, double** rho_in)const		// Pe
 		// check the start magnetization
 		const int startmag_type = [&]()->int
 		{
-			if(GlobalV::NSPIN==4)		//zhengdy-soc, type 2 is still wrong.
-				return 1;
 			for(int it=0; it<GlobalC::ucell.ntype; it++)
-				for(int ia=0; ia<GlobalC::ucell.atoms[it].na; ia++)
-					if(GlobalC::ucell.atoms[it].mag[ia]!=0.0)
-						return 2;
-			return 1;
+			{
+				if( GlobalC::ucell.magnet.start_magnetization[it] != 0.0) return 1;
+			}
+			return 2;
 		}();
 		ModuleBase::GlobalFunc::OUT(GlobalV::ofs_warning,"startmag_type",startmag_type);
 
@@ -1222,6 +1220,7 @@ void Charge::cal_nelec(void)
 	// calculate number of bands (setup.f90)
 	//=======================================
 	double occupied_bands = static_cast<double>(nelec/ModuleBase::DEGSPIN);	
+	if(GlobalV::LSPINORB==1) occupied_bands = static_cast<double>(nelec);
 
 	if( (occupied_bands - std::floor(occupied_bands)) > 0.0 )
 	{

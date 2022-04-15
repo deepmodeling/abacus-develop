@@ -10,7 +10,7 @@ namespace ModuleHSolver
 {
 
 
-void HSolverPW::init(const PW_Basis* pbas_in)
+/*void HSolverPW::init(const PW_Basis* pbas_in)
 {
     this->pbas = pbas_in;
     return;
@@ -19,7 +19,7 @@ void HSolverPW::init(const PW_Basis* pbas_in)
 void HSolverPW::update()
 {
     return;
-}
+}*/
 
 void HSolverPW::solve
 (
@@ -32,8 +32,8 @@ void HSolverPW::solve
     std::vector<double> precondition(psi.get_nbasis());
 
     // select the method of diagonalization
-    if(this->method == "cg") pdiagh = new DiagoCG(&(GlobalC::hm.hpw), pbas, precondition.data());
-    else if(this->method == "david") pdiagh = new DiagoDavid(&GlobalC::hm.hpw, pbas, precondition.data());
+    if(this->method == "cg") pdiagh = new DiagoCG(&(GlobalC::hm.hpw), precondition.data());
+    else if(this->method == "david") pdiagh = new DiagoDavid(&(GlobalC::hm.hpw), precondition.data());
     else ModuleBase::WARNING_QUIT("HSolverPW::solve", "This method of DiagH is not supported!");
 
     ///Loop over k points for solve Hamiltonian to charge density 
@@ -51,7 +51,7 @@ void HSolverPW::solve
         double *p_eigenvalues = GlobalC::wf.ekb[ik];
         this->hamiltSolvePsiK(pHamilt, psi, p_eigenvalues);
         ///calculate the contribution of Psi for charge density rho
-        dynamic_cast<ModuleElecS::ElecStatePW*>(pes)->updateRhoK(psi);
+        pes->updateRhoK(psi);
     }
 }
 

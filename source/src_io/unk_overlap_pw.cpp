@@ -1,4 +1,5 @@
 #include "unk_overlap_pw.h"
+#include "../src_pw/global.h"
 
 unkOverlap_pw::unkOverlap_pw()
 {
