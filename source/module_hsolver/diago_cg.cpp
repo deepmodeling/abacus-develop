@@ -1,10 +1,10 @@
-#include "diagocg.h"
+#include "diago_cg.h"
 #include "src_parallel/parallel_reduce.h"
 #include "module_base/timer.h"
 #include "module_base/constants.h"
 #include "module_base/global_function.h"
 #include "module_base/blas_connector.h"
-#include "iterdiagcon.h"
+#include "diago_iter_assist.h"
 
 namespace hsolver
 {
@@ -76,7 +76,7 @@ void DiagoCG::diag_mock
         double cg_norm = 0.0;
         double theta = 0.0;
         bool converged = false;
-        for (iter = 0;iter < IterDiagControl::PW_DIAG_NMAX;iter++)
+        for (iter = 0;iter < DiagoIterAssist::PW_DIAG_NMAX;iter++)
         {
             this->calculate_gradient();
             this->orthogonal_gradient(phi, m);
@@ -102,13 +102,13 @@ void DiagoCG::diag_mock
         if (m > 0 && reorder)
         {
 		    ModuleBase::GlobalFunc::NOTE("reorder bands!");
-            if (eigenvalue[m]-eigenvalue[m-1]<-2.0*IterDiagControl::PW_DIAG_THR)
+            if (eigenvalue[m]-eigenvalue[m-1]<-2.0*DiagoIterAssist::PW_DIAG_THR)
             {
                 // if the last calculated eigenvalue is not the largest...
                 int i=0;
                 for (i=m-2; i>= 0; i--)
                 {
-                    if (eigenvalue[m]-eigenvalue[i]>2.0*IterDiagControl::PW_DIAG_THR) break;
+                    if (eigenvalue[m]-eigenvalue[i]>2.0*DiagoIterAssist::PW_DIAG_THR) break;
                 }
                 i++;
 
@@ -144,7 +144,7 @@ void DiagoCG::diag_mock
     }//end m
 
     avg /= this->n_band;
-    IterDiagControl::avg_iter += avg;
+    DiagoIterAssist::avg_iter += avg;
 
     ModuleBase::timer::tick("DiagoCG","diag");
     return;
@@ -346,7 +346,7 @@ bool DiagoCG::update_psi(
 
 //	std::cout << "\n overlap2 = "  << this->ddot(dim, phi_m, phi_m);
 
-    if ( abs(eigenvalue-e0)< IterDiagControl::PW_DIAG_THR)
+    if ( abs(eigenvalue-e0)< DiagoIterAssist::PW_DIAG_THR)
     {
         //ModuleBase::timer::tick("DiagoCG","update");
         return 1;
@@ -472,20 +472,20 @@ void DiagoCG::diag(
     this->notconv = 0;
     do
     {
-        IterDiagControl::diagH_subspace(
+        DiagoIterAssist::diagH_subspace(
             this->hpw,
             psi,
             psi,
             eigenvalue_in);
 
-        IterDiagControl::avg_iter += 1.0;
+        DiagoIterAssist::avg_iter += 1.0;
         this->reorder = true;
 
         this->diag_mock(psi, eigenvalue_in);
 
         ++ntry;
     }
-    while ( IterDiagControl::test_exit_cond(ntry, this->notconv) );
+    while ( DiagoIterAssist::test_exit_cond(ntry, this->notconv) );
 
     if ( notconv > max(5, psi.get_nbands()/4) )
     {

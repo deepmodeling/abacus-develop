@@ -1,4 +1,4 @@
-#include "diagoelpa.h"
+#include "diago_elpa.h"
 
 #include "module_base/global_variable.h"
 #include "module_base/lapack_connector.h"

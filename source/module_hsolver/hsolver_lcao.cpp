@@ -1,6 +1,6 @@
-#include "hsolverlcao.h"
-#include "diagoelpa.h"
-#include "diagosca.h"
+#include "hsolver_lcao.h"
+#include "diago_elpa.h"
+#include "diago_blas.h"
 
 namespace hsolver
 {
@@ -14,7 +14,7 @@ void HSolverLCAO::solveTemplate(
 {
     // select the method of diagonalization
     if(this->method == "genelpa") pdiagh = new DiagoElpa();
-    else if(this->method == "scalapack_gvx") pdiagh = new DiagoSca();
+    else if(this->method == "scalapack_gvx") pdiagh = new DiagoBlas();
     else ModuleBase::WARNING_QUIT("HSolverLCAO::solve", "This method of DiagH is not supported!");
 
     ///Loop over k points for solve Hamiltonian to charge density 

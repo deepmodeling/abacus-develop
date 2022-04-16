@@ -1,4 +1,4 @@
-#include "hamiltpw.h"
+#include "hamilt_pw.h"
 
 namespace hamilt
 {

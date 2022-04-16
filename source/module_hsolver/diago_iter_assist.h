@@ -1,5 +1,5 @@
-#ifndef ITERDIAGCONTROL_H
-#define ITERDIAGCONTROL_H
+#ifndef DIAGOITERASSIST_H
+#define DIAGOITERASSIST_H
 
 #include "module_psi/psi.h"
 #include "module_base/complexmatrix.h"
@@ -18,7 +18,7 @@
 namespace hsolver
 {
 
-class IterDiagControl
+class DiagoIterAssist
 {
     public: 
     static double PW_DIAG_THR;

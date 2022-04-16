@@ -1,5 +1,5 @@
 add_library(
     elecstate
     OBJECT
-    elecstatepw.cpp
+    elecstate_pw.cpp
 )

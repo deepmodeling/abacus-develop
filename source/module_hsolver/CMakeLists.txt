@@ -1,13 +1,13 @@
 add_library(
     hsolver
     OBJECT
-    diagocg.cpp
-    diagodavid.cpp
-    hsolverpw.cpp
-    iterdiagcon.cpp
-    hsolverlcao.cpp
-    diagosca.cpp
-    diagoelpa.cpp
+    diago_cg.cpp
+    diago_david.cpp
+    hsolver_pw.cpp
+    diago_iter_assist.cpp
+    hsolver_lcao.cpp
+    diago_blas.cpp
+    diago_elpa.cpp
 )
 
 IF (BUILD_TESTING)

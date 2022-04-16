@@ -1,8 +1,8 @@
-#include "hsolverpw.h"
+#include "hsolver_pw.h"
 #include "module_base/tool_quit.h"
-#include "module_elecstate/elecstatepw.h"
-#include "diagocg.h"
-#include "diagodavid.h"
+#include "module_elecstate/elecstate_pw.h"
+#include "diago_cg.h"
+#include "diago_david.h"
 
 #include "src_pw/global.h"
 

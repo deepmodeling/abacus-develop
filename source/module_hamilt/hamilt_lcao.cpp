@@ -1,4 +1,4 @@
-#include "hamiltlcao.h"
+#include "hamilt_lcao.h"
 #include "module_base/global_variable.h"
 #include "module_base/timer.h"
 

@@ -1,4 +1,4 @@
-#include "iterdiagcon.h"
+#include "diago_iter_assist.h"
 #include "module_base/complexmatrix.h"
 #include "module_base/global_variable.h"
 #include "module_base/timer.h"
@@ -10,24 +10,24 @@
 namespace hsolver
 {
 
-double IterDiagControl::avg_iter = 0.0;
-int IterDiagControl::PW_DIAG_NMAX = 30;
-double IterDiagControl::PW_DIAG_THR = 1.0e-2;
+double DiagoIterAssist::avg_iter = 0.0;
+int DiagoIterAssist::PW_DIAG_NMAX = 30;
+double DiagoIterAssist::PW_DIAG_THR = 1.0e-2;
 
 //----------------------------------------------------------------------
 // Hamiltonian diagonalization in the subspace spanned
 // by nstart states psi (atomic or random wavefunctions).
 // Produces on output n_band eigenvectors (n_band <= nstart) in evc.
 //----------------------------------------------------------------------
-void IterDiagControl::diagH_subspace(
+void DiagoIterAssist::diagH_subspace(
     Hamilt_PW* phm,
     const psi::Psi<std::complex<double>> &psi,
     psi::Psi<std::complex<double>> &evc,
     double *en,
     int n_band)
 {
-    ModuleBase::TITLE("IterDiagControl","diagH_subspace");
-    ModuleBase::timer::tick("IterDiagControl","diagH_subspace");
+    ModuleBase::TITLE("DiagoIterAssist","diagH_subspace");
+    ModuleBase::timer::tick("DiagoIterAssist","diagH_subspace");
 
     //two case:
     //1. pw base: nstart = n_band, psi(nbands * npwx)
@@ -68,7 +68,7 @@ void IterDiagControl::diagH_subspace(
 	}
 
 	// after generation of H and S matrix, diag them
-    IterDiagControl::diagH_LAPACK(nstart, n_band, hc, sc, nstart, en, hvec);
+    DiagoIterAssist::diagH_LAPACK(nstart, n_band, hc, sc, nstart, en, hvec);
 
     //=======================
     //diagonize the H-matrix
@@ -117,11 +117,11 @@ void IterDiagControl::diagH_subspace(
 		}
 	}
 
-    ModuleBase::timer::tick("IterDiagControl","diagH_subspace");
+    ModuleBase::timer::tick("DiagoIterAssist","diagH_subspace");
     return;
 }
 
-void IterDiagControl::diagH_LAPACK(
+void DiagoIterAssist::diagH_LAPACK(
 	const int nstart,
 	const int nbands,
 	const ModuleBase::ComplexMatrix &hc,
@@ -130,8 +130,8 @@ void IterDiagControl::diagH_LAPACK(
 	double *e,
 	ModuleBase::ComplexMatrix &hvec)
 {
-    ModuleBase::TITLE("IterDiagControl","diagH_LAPACK");
-	ModuleBase::timer::tick("IterDiagControl","diagH_LAPACK");
+    ModuleBase::TITLE("DiagoIterAssist","diagH_LAPACK");
+	ModuleBase::timer::tick("DiagoIterAssist","diagH_LAPACK");
 
     int lwork=0;
 
@@ -242,11 +242,11 @@ void IterDiagControl::diagH_LAPACK(
     delete[] rwork;
     delete[] work;
 
-	ModuleBase::timer::tick("IterDiagControl","diagH_LAPACK");
+	ModuleBase::timer::tick("DiagoIterAssist","diagH_LAPACK");
     return;
 }
 
-bool IterDiagControl::test_exit_cond(const int &ntry, const int &notconv)
+bool DiagoIterAssist::test_exit_cond(const int &ntry, const int &notconv)
 {
     //================================================================
     // If this logical function is true, need to do diagH_subspace

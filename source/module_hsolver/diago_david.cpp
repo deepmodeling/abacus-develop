@@ -1,9 +1,9 @@
-#include "diagodavid.h"
+#include "diago_david.h"
 #include "src_parallel/parallel_reduce.h"
 #include "module_base/timer.h"
 #include "module_base/lapack_connector.h"
 #include "module_base/constants.h"
-#include "iterdiagcon.h"
+#include "diago_iter_assist.h"
 
 namespace hsolver
 {
@@ -122,7 +122,7 @@ void DiagoDavid::diag_mock
         this->notconv = 0;
         for ( int m = 0 ; m < nband; m++ )
         {
-            convflag[m] = ( abs( eigenvalue[m] - eigenvalue_in[m] ) < IterDiagControl::PW_DIAG_THR );
+            convflag[m] = ( abs( eigenvalue[m] - eigenvalue_in[m] ) < DiagoIterAssist::PW_DIAG_THR );
 
             if ( !convflag[m] ) 
 			{
@@ -134,7 +134,7 @@ void DiagoDavid::diag_mock
         }
 
         ModuleBase::timer::tick("DiagoDavid","check_update");
-        if ( !this->notconv || ( nbase + this->notconv > nbase_x) || (dav_iter == IterDiagControl::PW_DIAG_NMAX) )
+        if ( !this->notconv || ( nbase + this->notconv > nbase_x) || (dav_iter == DiagoIterAssist::PW_DIAG_NMAX) )
         {
             ModuleBase::timer::tick("DiagoDavid","last");
 
@@ -151,7 +151,7 @@ void DiagoDavid::diag_mock
                 }
             }
 
-            if ( !this->notconv || (dav_iter == IterDiagControl::PW_DIAG_NMAX) )
+            if ( !this->notconv || (dav_iter == DiagoIterAssist::PW_DIAG_NMAX) )
             {
                 // overall convergence or last iteration: exit the iteration
 
@@ -172,7 +172,7 @@ void DiagoDavid::diag_mock
 
     } while (1);
 
-    IterDiagControl::avg_iter += static_cast<double>(dav_iter);
+    DiagoIterAssist::avg_iter += static_cast<double>(dav_iter);
 
     ModuleBase::timer::tick("DiagoDavid", "diag_mock");
     return;
@@ -563,7 +563,7 @@ void DiagoDavid::diag(
         this->diag_mock(psi, eigenvalue_in);
         ++ntry;
     }
-    while ( IterDiagControl::test_exit_cond(ntry, this->notconv) );
+    while ( DiagoIterAssist::test_exit_cond(ntry, this->notconv) );
 
     if ( notconv > max(5, psi.get_nbands()/4) )
     {

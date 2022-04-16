@@ -3,9 +3,9 @@
 #include "../../src_pw/pw_basis.h"
 #include "../../module_psi/psi.h"
 #include "../../module_hamilt/hamilt.h"
-#include "../../module_hamilt/hamiltpw.h"
-#include "../diagocg.h"
-#include "../iterdiagcon.h"
+#include "../../module_hamilt/hamilt_pw.h"
+#include "../diago_cg.h"
+#include "../diago_iter_assist.h"
 #include "diago_mock.h"
 #include "mpi.h"
 #include <complex>
@@ -57,8 +57,8 @@ class DiagoCGPrepare
         : nband(nband), npw(npw), sparsity(sparsity), reorder(reorder), eps(eps), maxiter(maxiter),
           threshold(threshold)
     {
-	    hsolver::IterDiagControl::PW_DIAG_NMAX = maxiter;
-	    hsolver::IterDiagControl::PW_DIAG_THR = eps;
+	    hsolver::DiagoIterAssist::PW_DIAG_NMAX = maxiter;
+	    hsolver::DiagoIterAssist::PW_DIAG_THR = eps;
     }
 
     int nband, npw, sparsity, maxiter, notconv;

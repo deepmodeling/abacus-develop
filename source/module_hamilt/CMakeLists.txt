@@ -1,6 +1,6 @@
 add_library(
     hamilt
     OBJECT
-    hamiltpw.cpp
-    hamiltlcao.cpp
+    hamilt_pw.cpp
+    hamilt_lcao.cpp
 )

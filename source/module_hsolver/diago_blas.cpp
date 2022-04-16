@@ -5,7 +5,7 @@
 // DATE : 2022-04-14
 //=====================
 
-#include "diagosca.h"
+#include "diago_blas.h"
 #include "module_hamilt/matrixblock.h"
 #include "module_base/global_variable.h"
 #include "module_base/scalapack_connector.h"
@@ -19,7 +19,7 @@ typedef hamilt::MatrixBlock<std::complex<double>> matcd;
 namespace hsolver
 {
 
-void DiagoSca::diag(
+void DiagoBlas::diag(
     hamilt::Hamilt* phm_in,
     psi::Psi<double> &psi,
     double *eigenvalue_in)
@@ -30,7 +30,7 @@ void DiagoSca::diag(
     this->pdsygvx_diag(h_mat.desc, h_mat.col, h_mat.row, h_mat.p, s_mat.p, eigenvalue_in, psi);
 }
 
-void DiagoSca::diag(
+void DiagoBlas::diag(
     hamilt::Hamilt* phm_in,
     psi::Psi<std::complex<double>> &psi,
     double *eigenvalue_in)
@@ -41,7 +41,7 @@ void DiagoSca::diag(
     this->pzhegvx_diag(h_mat.desc, h_mat.col, h_mat.row, h_mat.p, s_mat.p, eigenvalue_in, psi);
 }
 
-std::pair<int,std::vector<int>> DiagoSca::pdsygvx_once(
+std::pair<int,std::vector<int>> DiagoBlas::pdsygvx_once(
 	const int*const desc,
 	const int ncol,
 	const int nrow,
@@ -106,7 +106,7 @@ std::pair<int,std::vector<int>> DiagoSca::pdsygvx_once(
 
 
 
-std::pair<int,std::vector<int>> DiagoSca::pzhegvx_once(
+std::pair<int,std::vector<int>> DiagoBlas::pzhegvx_once(
 	const int*const desc,
 	const int ncol,
 	const int nrow,
@@ -174,7 +174,7 @@ std::pair<int,std::vector<int>> DiagoSca::pzhegvx_once(
 		throw std::runtime_error("info = "+ModuleBase::GlobalFunc::TO_STRING(info)+".\n"+ModuleBase::GlobalFunc::TO_STRING(__FILE__)+" line "+ModuleBase::GlobalFunc::TO_STRING(__LINE__));
 }
 
-void DiagoSca::pdsygvx_diag(
+void DiagoBlas::pdsygvx_diag(
 	const int*const desc,
 	const int ncol,
 	const int nrow,
@@ -194,7 +194,7 @@ void DiagoSca::pdsygvx_diag(
 
 
 
-void DiagoSca::pzhegvx_diag(
+void DiagoBlas::pzhegvx_diag(
 	const int*const desc,
 	const int ncol,
 	const int nrow,
@@ -214,7 +214,7 @@ void DiagoSca::pzhegvx_diag(
 
 
 
-void DiagoSca::post_processing(const int info, const std::vector<int> &vec)
+void DiagoBlas::post_processing(const int info, const std::vector<int> &vec)
 {
 	const std::string str_info = "info = "+ModuleBase::GlobalFunc::TO_STRING(info)+".\n";
 	const std::string str_FILE = ModuleBase::GlobalFunc::TO_STRING(__FILE__)+" line "+ModuleBase::GlobalFunc::TO_STRING(__LINE__)+".\n";

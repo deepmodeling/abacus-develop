@@ -1,6 +1,6 @@
-#include"module_hsolver/diagodavid.h"
-#include"module_hsolver/iterdiagcon.h"
-#include"module_hamilt/hamiltpw.h"
+#include"module_hsolver/diago_david.h"
+#include"module_hsolver/diago_iter_assist.h"
+#include"module_hamilt/hamilt_pw.h"
 #include "src_pw/hamilt_pw.h"
 #include"diago_mock.h"
 #include "module_psi/psi.h"
@@ -78,8 +78,8 @@ public:
 		phm = new hamilt::HamiltPW;
 		hsolver::DiagoDavid dav(&hpw, precondition);
 		hsolver::DiagoDavid::PW_DIAG_NDIM = order;
-		hsolver::IterDiagControl::PW_DIAG_NMAX = maxiter;
-		hsolver::IterDiagControl::PW_DIAG_THR = eps;
+		hsolver::DiagoIterAssist::PW_DIAG_NMAX = maxiter;
+		hsolver::DiagoIterAssist::PW_DIAG_THR = eps;
 		phi.fix_k(0);
 
 		clock_t start,end;

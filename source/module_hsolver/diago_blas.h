@@ -5,8 +5,8 @@
 // DATE : 2022-04-14
 //=====================
 
-#ifndef DIAGOSCA_H
-#define DIAGOSCA_H
+#ifndef DIAGOBLAS_H
+#define DIAGOBLAS_H
 
 #include "diagh.h"
 #include "module_base/matrix.h"
@@ -19,7 +19,7 @@
 namespace hsolver
 {
 
-class DiagoSca : public DiagH
+class DiagoBlas : public DiagH
 {
 
 public:
