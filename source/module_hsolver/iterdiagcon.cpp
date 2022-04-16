@@ -7,7 +7,7 @@
 #include "module_base/constants.h"
 #include "src_parallel/parallel_reduce.h"
 
-namespace ModuleHSolver
+namespace hsolver
 {
 
 double IterDiagControl::avg_iter = 0.0;
@@ -21,8 +21,8 @@ double IterDiagControl::PW_DIAG_THR = 1.0e-2;
 //----------------------------------------------------------------------
 void IterDiagControl::diagH_subspace(
     Hamilt_PW* phm,
-    const ModulePsi::Psi<std::complex<double>> &psi,
-    ModulePsi::Psi<std::complex<double>> &evc,
+    const psi::Psi<std::complex<double>> &psi,
+    psi::Psi<std::complex<double>> &evc,
     double *en,
     int n_band)
 {
@@ -268,4 +268,4 @@ bool IterDiagControl::test_exit_cond(const int &ntry, const int &notconv)
     return  ( f1 && ( f2 || f3 ) );
 }
 
-}
+}//namespace hsolver

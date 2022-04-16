@@ -10,10 +10,10 @@ extern "C"
 	#include "module_base/scalapack_connector.h"
 }
 
-typedef ModuleHamilt::MatrixBlock<double> matd;
-typedef ModuleHamilt::MatrixBlock<std::complex<double>> matcd;
+typedef hamilt::MatrixBlock<double> matd;
+typedef hamilt::MatrixBlock<std::complex<double>> matcd;
 
-namespace ModuleHSolver
+namespace hsolver
 {
 
 #ifdef __MPI
@@ -49,8 +49,8 @@ inline int set_elpahandle(elpa_t &handle, const int *desc,const int local_nrows,
 #endif
 
 void DiagoElpa::diag(
-    ModuleHamilt::Hamilt* phm_in,
-    ModulePsi::Psi<std::complex<double>> &psi,
+    hamilt::Hamilt* phm_in,
+    psi::Psi<std::complex<double>> &psi,
     double *eigenvalue_in
 )
 {
@@ -85,8 +85,8 @@ void DiagoElpa::diag(
 }
 
 void DiagoElpa::diag(
-    ModuleHamilt::Hamilt* phm_in,
-    ModulePsi::Psi<double> &psi,
+    hamilt::Hamilt* phm_in,
+    psi::Psi<double> &psi,
     double *eigenvalue_in
 )
 {
@@ -141,4 +141,4 @@ bool DiagoElpa::ifElpaHandle(const bool& newIteration, const bool& ifNSCF)
 	return doHandle;
 }
 
-}
+}//namespace hsolver

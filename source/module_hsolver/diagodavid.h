@@ -26,7 +26,7 @@
 #endif
 #include "src_pw/pw_basis.h"
 
-namespace ModuleHSolver
+namespace hsolver
 {
 
 class DiagoDavid : public DiagH
@@ -38,18 +38,18 @@ public:
 
     //this is the override function diag() for CG method
     void diag(
-        ModuleHamilt::Hamilt* phm_in,
-        ModulePsi::Psi<std::complex<double>> &phi,
+        hamilt::Hamilt* phm_in,
+        psi::Psi<std::complex<double>> &phi,
         double *eigenvalue_in) override;
 
     static int PW_DIAG_NDIM;
 
 private:
 
-    int test_david;
+    int test_david=0;
 
     /// record for how many bands not have convergence eigenvalues
-    int notconv;
+    int notconv=0;
 
     void cal_grad(
         const int& npw,
@@ -82,7 +82,7 @@ private:
         const int& nband,
         int& nbase,
         const double* en,
-        const ModulePsi::Psi<std::complex<double>> &psi,
+        const psi::Psi<std::complex<double>> &psi,
         ModuleBase::ComplexMatrix &basis,
         ModuleBase::ComplexMatrix &hp,
         ModuleBase::ComplexMatrix &sp,
@@ -117,15 +117,15 @@ private:
         double* e,
         ModuleBase::ComplexMatrix &vc);
 
-    void diag_mock(ModulePsi::Psi<std::complex<double>> &psi,
+    void diag_mock(psi::Psi<std::complex<double>> &psi,
         double *eigenvalue_in);
 
-    Hamilt_PW* hpw;
-    const double* precondition;
+    Hamilt_PW* hpw = nullptr;
+    const double* precondition = nullptr;
 
 
 };
 
-}
+}//namespace hsolver
 
 #endif

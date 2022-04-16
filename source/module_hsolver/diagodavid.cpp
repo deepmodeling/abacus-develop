@@ -5,7 +5,7 @@
 #include "module_base/constants.h"
 #include "iterdiagcon.h"
 
-namespace ModuleHSolver
+namespace hsolver
 {
 
 int DiagoDavid::PW_DIAG_NDIM = 4;
@@ -31,7 +31,7 @@ DiagoDavid::~DiagoDavid()
 
 void DiagoDavid::diag_mock
 (
-    ModulePsi::Psi<std::complex<double>> &psi,
+    psi::Psi<std::complex<double>> &psi,
     double *eigenvalue_in
 )
 {
@@ -370,7 +370,7 @@ void DiagoDavid::refresh
     const int& nband,
     int& nbase,
     const double* eigenvalue_in,
-    const ModulePsi::Psi<std::complex<double>> &psi,
+    const psi::Psi<std::complex<double>> &psi,
     ModuleBase::ComplexMatrix &basis,
     ModuleBase::ComplexMatrix &hp,
     ModuleBase::ComplexMatrix &sp,
@@ -556,8 +556,8 @@ void DiagoDavid::SchmitOrth
 }
 
 void DiagoDavid::diag(
-        ModuleHamilt::Hamilt* phm_in,
-        ModulePsi::Psi<std::complex<double>> &psi,
+        hamilt::Hamilt* phm_in,
+        psi::Psi<std::complex<double>> &psi,
         double *eigenvalue_in)
 {
     /// record the times of trying iterative diagonalization
@@ -578,4 +578,4 @@ void DiagoDavid::diag(
     return;
 }
 
-}
+}//namespace hsolver

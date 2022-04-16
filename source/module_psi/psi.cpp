@@ -1,6 +1,6 @@
 #include "psi.h"
 
-namespace ModulePsi
+namespace psi
 {
 
 //only iterative diagonaliztion need initialization of Psi
@@ -14,4 +14,4 @@ void Psi<double>::initialize(void)
     return;
 }
 
-}
+}//namespace psi

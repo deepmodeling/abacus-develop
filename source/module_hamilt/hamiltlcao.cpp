@@ -5,7 +5,7 @@
 #include "src_lcao/global_fp.h"
 #include "src_pw/global.h"
 
-namespace ModuleHamilt
+namespace hamilt
 {
 
 template<typename T, typename T1>
@@ -122,4 +122,4 @@ void HamiltLCAO<double, double>::updateHk(const int ik)
     this->hk_update_mock(ik);
 };
 
-}
+}//namespace hamilt

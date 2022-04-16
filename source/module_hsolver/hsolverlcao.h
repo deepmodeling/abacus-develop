@@ -4,7 +4,7 @@
 #include "hsolver.h"
 #include "src_lcao/local_orbital_wfc.h"
 
-namespace ModuleHSolver
+namespace hsolver
 {
 
 class HSolverLCAO : public HSolver
@@ -28,14 +28,14 @@ class HSolverLCAO : public HSolver
     ) override;*/
     
     void solve(
-        ModuleHamilt::Hamilt* pHamilt, 
-        ModulePsi::Psi<std::complex<double>>& psi, 
-        ModuleElecS::ElecState* pes) override;
+        hamilt::Hamilt* pHamilt, 
+        psi::Psi<std::complex<double>>& psi, 
+        elecstate::ElecState* pes) override;
 
     void solve(
-        ModuleHamilt::Hamilt* pHamilt, 
-        ModulePsi::Psi<double>& psi, 
-        ModuleElecS::ElecState* pes) override;
+        hamilt::Hamilt* pHamilt, 
+        psi::Psi<double>& psi, 
+        elecstate::ElecState* pes) override;
 
     static int out_wfc_lcao;
     static int out_mat_hs; // mohan add 2010-09-02
@@ -43,25 +43,25 @@ class HSolverLCAO : public HSolver
     
 
     private:
-    void hamiltSolvePsiK(ModuleHamilt::Hamilt* hm, ModulePsi::Psi<std::complex<double>>& psi, double* eigenvalue);
-    void hamiltSolvePsiK(ModuleHamilt::Hamilt* hm, ModulePsi::Psi<double>& psi, double* eigenvalue);
+    void hamiltSolvePsiK(hamilt::Hamilt* hm, psi::Psi<std::complex<double>>& psi, double* eigenvalue);
+    void hamiltSolvePsiK(hamilt::Hamilt* hm, psi::Psi<double>& psi, double* eigenvalue);
 
     template<typename T>
     void solveTemplate(
-        ModuleHamilt::Hamilt* pHamilt, 
-        ModulePsi::Psi<T>& psi, 
-        ModuleElecS::ElecState* pes
+        hamilt::Hamilt* pHamilt, 
+        psi::Psi<T>& psi, 
+        elecstate::ElecState* pes
     );
     /*void solveTemplate(
-        ModuleHamilt::Hamilt* pHamilt, 
-        ModulePsi::Psi<std::complex<double>>& psi, 
-        ModuleElecS::ElecState* pes
+        hamilt::Hamilt* pHamilt, 
+        psi::Psi<std::complex<double>>& psi, 
+        elecstate::ElecState* pes
     );*/
 
-    Local_Orbital_wfc* lowf;
-    double** ekb;
+    Local_Orbital_wfc* lowf = nullptr;
+    double** ekb = nullptr;
 };
 
-}
+}//namespace hsolver
 
 #endif

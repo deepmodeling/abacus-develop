@@ -4,7 +4,7 @@
 #include "hsolver.h"
 #include "src_pw/pw_basis.h"
 
-namespace ModuleHSolver
+namespace hsolver
 {
 
 class HSolverPW : public HSolver
@@ -23,13 +23,13 @@ class HSolverPW : public HSolver
     ) override;*/
     
     void solve(
-        ModuleHamilt::Hamilt* pHamilt, 
-        ModulePsi::Psi<std::complex<double>>& psi, 
-        ModuleElecS::ElecState* pes) override;
+        hamilt::Hamilt* pHamilt, 
+        psi::Psi<std::complex<double>>& psi, 
+        elecstate::ElecState* pes) override;
     
 
     private:
-    void hamiltSolvePsiK(ModuleHamilt::Hamilt* hm, ModulePsi::Psi<std::complex<double>>& psi, double* eigenvalue);
+    void hamiltSolvePsiK(hamilt::Hamilt* hm, psi::Psi<std::complex<double>>& psi, double* eigenvalue);
 
     const PW_Basis* pbas;
 
@@ -37,6 +37,6 @@ class HSolverPW : public HSolver
     void update_precondition(std::vector<double> h_diag, const int npw, const double* g2kin);
 };
 
-}
+}//namespace hsolver
 
 #endif

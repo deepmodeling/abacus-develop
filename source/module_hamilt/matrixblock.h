@@ -1,7 +1,7 @@
 #ifndef MATRIXBLOCK
 #define MATRIXBLOCK
 
-namespace ModuleHamilt
+namespace hamilt
 {
 
 template<typename T>
@@ -15,5 +15,5 @@ struct MatrixBlock
     int * desc;
 };
 
-}
+}//namespace hamilt
 #endif

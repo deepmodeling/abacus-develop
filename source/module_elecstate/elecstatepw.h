@@ -5,7 +5,7 @@
 #include "module_psi/psi.h"
 #include "module_hamilt/hamilt.h"
 
-namespace ModuleElecS
+namespace elecstate
 {
 
 class ElecStatePW : public ElecState
@@ -15,11 +15,11 @@ class ElecStatePW : public ElecState
     /*const Basis &basis, const Cell &cell*/) override;
     
     //return current electronic density rho, as a input for constructing Hamiltonian
-    const ModuleHamilt::MatrixBlock<double> getRho()const override;
+    const hamilt::MatrixBlock<double> getRho()const override;
     
     //calculate electronic charge density on grid points or density matrix in real space
     //the consequence charge density rho saved into rho_out, preparing for charge mixing. 
-    void updateRhoK(const ModulePsi::Psi<std::complex<double>> &psi) override;
+    void updateRhoK(const psi::Psi<std::complex<double>> &psi) override;
     
     //update charge density for next scf step
     void getNewRho() override;
@@ -28,6 +28,6 @@ class ElecStatePW : public ElecState
     Charge* pchg;
 };
 
-}
+}//namespace elecstate
 
 #endif

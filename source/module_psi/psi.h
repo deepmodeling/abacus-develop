@@ -10,7 +10,7 @@
 
 #include "../src_pw/pw_basis.h"
 
-namespace ModulePsi
+namespace psi
 {
 // there is the structure of electric wavefunction coefficient
 // the basic operations defined in the Operator Class
@@ -219,5 +219,5 @@ class Psi
 //would be updated later */
 };
 
-}
+}//namespace psi
 #endif

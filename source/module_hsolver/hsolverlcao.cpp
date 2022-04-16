@@ -2,14 +2,14 @@
 #include "diagoelpa.h"
 #include "diagosca.h"
 
-namespace ModuleHSolver
+namespace hsolver
 {
 
 template<typename T>
 void HSolverLCAO::solveTemplate(
-    ModuleHamilt::Hamilt* pHamilt, 
-    ModulePsi::Psi<T>& psi, 
-    ModuleElecS::ElecState* pes
+    hamilt::Hamilt* pHamilt, 
+    psi::Psi<T>& psi, 
+    elecstate::ElecState* pes
 )
 {
     // select the method of diagonalization
@@ -38,23 +38,23 @@ int HSolverLCAO::out_mat_hsR = 0;
 int HSolverLCAO::out_wfc_lcao = 0;
 
 void HSolverLCAO::solve(
-    ModuleHamilt::Hamilt* pHamilt, 
-    ModulePsi::Psi<std::complex<double>>& psi, 
-    ModuleElecS::ElecState* pes
+    hamilt::Hamilt* pHamilt, 
+    psi::Psi<std::complex<double>>& psi, 
+    elecstate::ElecState* pes
 )
 {
     this->solveTemplate(pHamilt, psi, pes);
 }
 void HSolverLCAO::solve(
-    ModuleHamilt::Hamilt* pHamilt, 
-    ModulePsi::Psi<double>& psi, 
-    ModuleElecS::ElecState* pes
+    hamilt::Hamilt* pHamilt, 
+    psi::Psi<double>& psi, 
+    elecstate::ElecState* pes
 )
 {
     this->solveTemplate(pHamilt, psi, pes);
 }
 
-void HSolverLCAO::hamiltSolvePsiK(ModuleHamilt::Hamilt* hm, ModulePsi::Psi<std::complex<double>>& psi, double* eigenvalue)
+void HSolverLCAO::hamiltSolvePsiK(hamilt::Hamilt* hm, psi::Psi<std::complex<double>>& psi, double* eigenvalue)
 {
     pdiagh->diag(hm, psi, eigenvalue);
     if(this->method == "scalapack_gvx" || this->method == "genelpa")
@@ -64,7 +64,7 @@ void HSolverLCAO::hamiltSolvePsiK(ModuleHamilt::Hamilt* hm, ModulePsi::Psi<std::
     }
 }
 
-void HSolverLCAO::hamiltSolvePsiK(ModuleHamilt::Hamilt* hm, ModulePsi::Psi<double>& psi, double* eigenvalue)
+void HSolverLCAO::hamiltSolvePsiK(hamilt::Hamilt* hm, psi::Psi<double>& psi, double* eigenvalue)
 {
     pdiagh->diag(hm, psi, eigenvalue);
     // for gamma_only case, no convertion occured, just for print.
@@ -75,4 +75,4 @@ void HSolverLCAO::hamiltSolvePsiK(ModuleHamilt::Hamilt* hm, ModulePsi::Psi<doubl
     }
 }
 
-}
+}//namespace hsolver

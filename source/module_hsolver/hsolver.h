@@ -8,7 +8,7 @@
 #include<complex>
 
 
-namespace ModuleHSolver
+namespace hsolver
 {
     
 class HSolver
@@ -18,23 +18,23 @@ class HSolver
     virtual void init( 
         const Basis* pbas //We need Basis class here, use global class for this initialization first 
         //const Input &in, //We need new Input class here, use global variable for this initialization first 
-        //ModuleElecS::ElecState *pes
+        //elecstate::ElecState *pes
         )=0;
     //initialization, only be called for change some parameters only
     virtual void update(
         Input &in )=0;*/
         
     //solve Hamiltonian to electronic density in ElecState
-    virtual void solve(ModuleHamilt::Hamilt* phm, 
-                ModulePsi::Psi<std::complex<double>>& ppsi,
-                ModuleElecS::ElecState* pes) =0;
-    virtual void solve(ModuleHamilt::Hamilt* phm, 
-                ModulePsi::Psi<double>& ppsi,
-                ModuleElecS::ElecState* pes){return;}
+    virtual void solve(hamilt::Hamilt* phm, 
+                psi::Psi<std::complex<double>>& ppsi,
+                elecstate::ElecState* pes) =0;
+    virtual void solve(hamilt::Hamilt* phm, 
+                psi::Psi<double>& ppsi,
+                elecstate::ElecState* pes){return;}
     
     protected:
     
-    DiagH* pdiagh;          // for single Hamiltonian matrix diagonal solver
+    DiagH* pdiagh = nullptr;          // for single Hamiltonian matrix diagonal solver
 
     //choose method of DiagH for solve Hamiltonian matrix
     //cg, dav, elpa, scalapack, hpseps, cusolver 
@@ -45,5 +45,5 @@ class HSolver
 
 std::string HSolver::method = "none";
 
-}
+}//namespace hsolver
 #endif

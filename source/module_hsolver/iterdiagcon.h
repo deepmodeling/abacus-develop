@@ -15,7 +15,7 @@
 #include "src_pw/hamilt_pw.h"
 #endif
 
-namespace ModuleHSolver
+namespace hsolver
 {
 
 class IterDiagControl
@@ -29,8 +29,8 @@ class IterDiagControl
 
     static void diagH_subspace(
         Hamilt_PW* phm,
-        const ModulePsi::Psi<std::complex<double>> &psi,
-        ModulePsi::Psi<std::complex<double>> &evc,
+        const psi::Psi<std::complex<double>> &psi,
+        psi::Psi<std::complex<double>> &evc,
         double *en,
         int n_band=0);
 
@@ -46,6 +46,6 @@ class IterDiagControl
     static bool test_exit_cond(const int &ntry, const int &notconv);
 };
 
-}
+}//namespace hsolver
 
 #endif

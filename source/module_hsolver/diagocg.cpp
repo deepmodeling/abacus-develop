@@ -6,7 +6,7 @@
 #include "module_base/blas_connector.h"
 #include "iterdiagcon.h"
 
-namespace ModuleHSolver
+namespace hsolver
 {
 
 DiagoCG::DiagoCG(
@@ -23,7 +23,7 @@ DiagoCG::~DiagoCG() {}
 
 void DiagoCG::diag_mock
 (
-    ModulePsi::Psi<std::complex<double>> &phi,
+    psi::Psi<std::complex<double>> &phi,
     double *eigenvalue_in
 )
 {
@@ -186,7 +186,7 @@ void DiagoCG::calculate_gradient()
 }
 
 
-void DiagoCG::orthogonal_gradient( const ModulePsi::Psi<std::complex<double>> &eigenfunction, const int m)
+void DiagoCG::orthogonal_gradient( const psi::Psi<std::complex<double>> &eigenfunction, const int m)
 {
     if (test_cg==1) ModuleBase::TITLE("DiagoCG","orthogonal_gradient");
     //ModuleBase::timer::tick("DiagoCG","orth_grad");
@@ -367,7 +367,7 @@ bool DiagoCG::update_psi(
 void DiagoCG::schmit_orth
 (
     const int& m,     //end
-    const ModulePsi::Psi<std::complex<double>> &psi
+    const psi::Psi<std::complex<double>> &psi
 )
 {
 //	ModuleBase::TITLE("DiagoCG","schmit_orth");
@@ -463,8 +463,8 @@ void DiagoCG::schmit_orth
 }
 
 void DiagoCG::diag(
-        ModuleHamilt::Hamilt* phm_in,
-        ModulePsi::Psi<std::complex<double>> &psi,
+        hamilt::Hamilt* phm_in,
+        psi::Psi<std::complex<double>> &psi,
         double *eigenvalue_in)
 {
     /// record the times of trying iterative diagonalization
@@ -496,4 +496,4 @@ void DiagoCG::diag(
 }
 
 
-}//end of namespace
+}//namespace hsolver

@@ -6,7 +6,7 @@
 
 #include "src_pw/global.h"
 
-namespace ModuleHSolver
+namespace hsolver
 {
 
 
@@ -23,9 +23,9 @@ void HSolverPW::update()
 
 void HSolverPW::solve
 (
-    ModuleHamilt::Hamilt* pHamilt, 
-    ModulePsi::Psi<std::complex<double>>& psi, 
-    ModuleElecS::ElecState* pes
+    hamilt::Hamilt* pHamilt, 
+    psi::Psi<std::complex<double>>& psi, 
+    elecstate::ElecState* pes
 )
 {
     //prepare for the precondition of diagonalization
@@ -55,7 +55,7 @@ void HSolverPW::solve
     }
 }
 
-void HSolverPW::hamiltSolvePsiK(ModuleHamilt::Hamilt* hm, ModulePsi::Psi<std::complex<double>>& psi, double* eigenvalue)
+void HSolverPW::hamiltSolvePsiK(hamilt::Hamilt* hm, psi::Psi<std::complex<double>>& psi, double* eigenvalue)
 {
     pdiagh->diag(hm, psi, eigenvalue);
 }
@@ -84,4 +84,4 @@ void HSolverPW::update_precondition(std::vector<double> h_diag, const int npw, c
     }
 }
 
-}
+}//namespace hsolver

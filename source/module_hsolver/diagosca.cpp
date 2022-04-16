@@ -13,15 +13,15 @@
 #include <cstring>
 #include <cassert>
 
-typedef ModuleHamilt::MatrixBlock<double> matd;
-typedef ModuleHamilt::MatrixBlock<std::complex<double>> matcd;
+typedef hamilt::MatrixBlock<double> matd;
+typedef hamilt::MatrixBlock<std::complex<double>> matcd;
 
-namespace ModuleHSolver
+namespace hsolver
 {
 
 void DiagoSca::diag(
-    ModuleHamilt::Hamilt* phm_in,
-    ModulePsi::Psi<double> &psi,
+    hamilt::Hamilt* phm_in,
+    psi::Psi<double> &psi,
     double *eigenvalue_in)
 {
     matd h_mat, s_mat;
@@ -31,8 +31,8 @@ void DiagoSca::diag(
 }
 
 void DiagoSca::diag(
-    ModuleHamilt::Hamilt* phm_in,
-    ModulePsi::Psi<std::complex<double>> &psi,
+    hamilt::Hamilt* phm_in,
+    psi::Psi<std::complex<double>> &psi,
     double *eigenvalue_in)
 {
     matcd h_mat, s_mat;
@@ -48,7 +48,7 @@ std::pair<int,std::vector<int>> DiagoSca::pdsygvx_once(
 	const double*const h_mat,
 	const double*const s_mat,
 	double*const ekb,
-	ModulePsi::Psi<double> &wfc_2d) const
+	psi::Psi<double> &wfc_2d) const
 {
 	ModuleBase::matrix h_tmp(ncol, nrow, false);
 	memcpy( h_tmp.c, h_mat, sizeof(double)*ncol*nrow );
@@ -113,7 +113,7 @@ std::pair<int,std::vector<int>> DiagoSca::pzhegvx_once(
 	const std::complex<double>*const h_mat,
 	const std::complex<double>*const s_mat,
 	double*const ekb,
-	ModulePsi::Psi<std::complex<double>> &wfc_2d) const
+	psi::Psi<std::complex<double>> &wfc_2d) const
 {
 	ModuleBase::ComplexMatrix h_tmp(ncol, nrow, false);
 	memcpy( h_tmp.c, h_mat, sizeof(std::complex<double>)*ncol*nrow );
@@ -181,7 +181,7 @@ void DiagoSca::pdsygvx_diag(
 	const double*const h_mat,
 	const double*const s_mat,
 	double*const ekb,
-	ModulePsi::Psi<double> &wfc_2d)
+	psi::Psi<double> &wfc_2d)
 {
 	while(true)
 	{
@@ -201,7 +201,7 @@ void DiagoSca::pzhegvx_diag(
 	const std::complex<double>*const h_mat,
 	const std::complex<double>*const s_mat,
 	double*const ekb,
-	ModulePsi::Psi<std::complex<double>> &wfc_2d)
+	psi::Psi<std::complex<double>> &wfc_2d)
 {
 	while(true)
 	{
@@ -275,4 +275,4 @@ void DiagoSca::post_processing(const int info, const std::vector<int> &vec)
 	}
 }
 
-}
+}//namespace hsolver

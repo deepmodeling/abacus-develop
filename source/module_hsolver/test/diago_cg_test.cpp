@@ -57,8 +57,8 @@ class DiagoCGPrepare
         : nband(nband), npw(npw), sparsity(sparsity), reorder(reorder), eps(eps), maxiter(maxiter),
           threshold(threshold)
     {
-	    ModuleHSolver::IterDiagControl::PW_DIAG_NMAX = maxiter;
-	    ModuleHSolver::IterDiagControl::PW_DIAG_THR = eps;
+	    hsolver::IterDiagControl::PW_DIAG_NMAX = maxiter;
+	    hsolver::IterDiagControl::PW_DIAG_THR = eps;
     }
 
     int nband, npw, sparsity, maxiter, notconv;
@@ -91,12 +91,12 @@ class DiagoCGPrepare
 	//======================================================================
         double *en = new double[npw];
         int ik = 1;
-	ModuleHamilt::Hamilt* ha;
-	ha =new ModuleHamilt::HamiltPW;
+	hamilt::Hamilt* ha;
+	ha =new hamilt::HamiltPW;
 	Hamilt_PW* hpw;
 	int* ngk = new int [1];
-	//ModulePsi::Psi<std::complex<double>> psi(ngk,ik,nband,npw);
-	ModulePsi::Psi<std::complex<double>> psi;
+	//psi::Psi<std::complex<double>> psi(ngk,ik,nband,npw);
+	psi::Psi<std::complex<double>> psi;
 	psi.resize(ik,nband,npw);
 	//psi.fix_k(0);
         for (int i = 0; i < nband; i++)
@@ -106,7 +106,7 @@ class DiagoCGPrepare
 	        psi(i,j)=psiguess(i,j);
 	    }
 	}
-	ModuleHSolver::DiagoCG cg(hpw,precondition);
+	hsolver::DiagoCG cg(hpw,precondition);
         cg.diag(ha,psi,en); 
 	//======================================================================
         for (int i = 0; i < nband; i++)

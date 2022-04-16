@@ -4,7 +4,7 @@
 #include "hamilt.h"
 
 
-namespace ModuleHamilt
+namespace hamilt
 {
 
 class HamiltPW : public Hamilt
@@ -26,7 +26,7 @@ class HamiltPW : public Hamilt
     };
     
     //core function: for solving eigenvalues of Hamiltonian with iterative method
-    virtual void hPsi(const ModulePsi::Psi<std::complex<double>>& psi, ModulePsi::Psi<std::complex<double>>& hpsi) const override
+    virtual void hPsi(const psi::Psi<std::complex<double>>& psi, psi::Psi<std::complex<double>>& hpsi) const override
     {
         this->hpsi_mock(psi, hpsi);
     };
@@ -39,10 +39,10 @@ class HamiltPW : public Hamilt
     private:
     void ch_mock();
     void hk_mock();
-    void hpsi_mock(const ModulePsi::Psi<std::complex<double>>& psi, ModulePsi::Psi<std::complex<double>>& hpsi) const;
+    void hpsi_mock(const psi::Psi<std::complex<double>>& psi, psi::Psi<std::complex<double>>& hpsi) const;
 };
 
-}
+}//namespace hamilt
 
 
 #endif

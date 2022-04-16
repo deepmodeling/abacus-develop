@@ -1,6 +1,6 @@
 #include "elecstatepw.h"
 
-namespace ModuleElecS
+namespace elecstate
 {
 
 void ElecStatePW::init(
@@ -10,13 +10,13 @@ void ElecStatePW::init(
     this->pchg = chg_in;
 }
 
-const ModuleHamilt::MatrixBlock<double> ElecStatePW::getRho()const
+const hamilt::MatrixBlock<double> ElecStatePW::getRho()const
 {
-    ModuleHamilt::MatrixBlock<double> temp{&(this->pchg->rho[0][0]), 1,1};//this->chr->get_nspin(), this->chr->get_nrxx()};
+    hamilt::MatrixBlock<double> temp{&(this->pchg->rho[0][0]), 1,1};//this->chr->get_nspin(), this->chr->get_nrxx()};
     return temp;
 }
 
-void ElecStatePW::updateRhoK(const ModulePsi::Psi<std::complex<double>> &psi)
+void ElecStatePW::updateRhoK(const psi::Psi<std::complex<double>> &psi)
 {
     this->pchg->sum_band_k(/*psi*/);
     return;
@@ -27,4 +27,4 @@ void ElecStatePW::getNewRho()
     return;
 }
 
-}
+}//namespace elecstate

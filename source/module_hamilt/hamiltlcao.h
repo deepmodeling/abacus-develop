@@ -9,7 +9,7 @@
 #include "src_lcao/LCAO_matrix.h"
 
 
-namespace ModuleHamilt
+namespace hamilt
 {
 
 //memory for storing Hamiltonian matrix and overlap matrix for one k point
@@ -50,7 +50,7 @@ class HamiltLCAO : public Hamilt
     void updateHk(const int ik) override;
     
     //core function: for solving eigenvalues of Hamiltonian with iterative method
-    virtual void hPsi(const ModulePsi::Psi<std::complex<double>>& psi, ModulePsi::Psi<std::complex<double>>& hpsi) const override
+    virtual void hPsi(const psi::Psi<std::complex<double>>& psi, psi::Psi<std::complex<double>>& hpsi) const override
     {
         //should be updated for iterative diagonalization method
         return;
@@ -84,15 +84,15 @@ class HamiltLCAO : public Hamilt
 
     // temporary class members
     // used for gamma only algorithms.
-    Gint_Gamma* GG;
+    Gint_Gamma* GG = nullptr;
 
     // used for k-dependent grid integration.
-    Gint_k* GK;
+    Gint_k* GK = nullptr;
 
     // use overlap matrix to generate fixed Hamiltonian
-    LCAO_gen_fixedH* genH;
+    LCAO_gen_fixedH* genH = nullptr;
 
-    LCAO_Matrix* LM;
+    LCAO_Matrix* LM = nullptr;
 
 };
 template<typename T, typename T1>
@@ -100,7 +100,7 @@ bool HamiltLCAO<T, T1>::isFixedDone = false;
 
 
 
-}
+}//namespace hamilt
 
 
 #endif

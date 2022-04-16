@@ -4,7 +4,7 @@
 #include "diagh.h"
 #include "module_orbital/parallel_orbitals.h"
 
-namespace ModuleHSolver
+namespace hsolver
 {
 
 class DiagoElpa : public DiagH
@@ -12,13 +12,13 @@ class DiagoElpa : public DiagH
 
 public:
     void diag(
-        ModuleHamilt::Hamilt* phm_in,
-        ModulePsi::Psi<double> &psi,
+        hamilt::Hamilt* phm_in,
+        psi::Psi<double> &psi,
         double *eigenvalue_in)override;
 
     void diag(
-        ModuleHamilt::Hamilt* phm_in,
-        ModulePsi::Psi<std::complex<double>> &psi,
+        hamilt::Hamilt* phm_in,
+        psi::Psi<std::complex<double>> &psi,
         double *eigenvalue_in)override;
 
 private:
@@ -30,6 +30,6 @@ private:
 
 };
 
-}
+}//namespace hsolver
 
 #endif

@@ -5,7 +5,7 @@
 #include "module_hamilt/hamilt.h"
 #include "module_psi/psi.h"
 
-namespace ModuleHSolver
+namespace hsolver
 {
 
 class DiagH
@@ -15,17 +15,17 @@ class DiagH
     //virtual void init()=0;
 
     virtual void diag(
-        ModuleHamilt::Hamilt* phm_in,
-        ModulePsi::Psi<std::complex<double>> &psi,
+        hamilt::Hamilt* phm_in,
+        psi::Psi<std::complex<double>> &psi,
         double *eigenvalue_in)=0;
     
     virtual void diag(
-        ModuleHamilt::Hamilt* phm_in,
-        ModulePsi::Psi<double> &psi,
+        hamilt::Hamilt* phm_in,
+        psi::Psi<double> &psi,
         double *eigenvalue_in){return;}
 
 };
 
-}
+}//namespace hsolver
 
 #endif

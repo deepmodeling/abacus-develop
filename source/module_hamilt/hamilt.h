@@ -6,7 +6,7 @@
 
 #include "matrixblock.h"
 
-namespace ModuleHamilt
+namespace hamilt
 {
 
 
@@ -21,7 +21,7 @@ class Hamilt
     virtual void updateHk(const int ik)=0;
     
     //core function: for solving eigenvalues of Hamiltonian with iterative method
-    virtual void hPsi(const ModulePsi::Psi<std::complex<double>>& psi, ModulePsi::Psi<std::complex<double>>& hpsi)const=0;
+    virtual void hPsi(const psi::Psi<std::complex<double>>& psi, psi::Psi<std::complex<double>>& hpsi)const=0;
     
     //core function: return H(k) and S(k) matrixs for direct solving eigenvalues.
     virtual void matrix(MatrixBlock<std::complex<double>> hk_in, MatrixBlock<std::complex<double>> sk_in)=0;
@@ -33,7 +33,7 @@ class Hamilt
     //vector<Operator*> p_operators;
 };
 
-}
+}//namespace hamilt
 
 
 #endif

@@ -1,6 +1,6 @@
 #include "hamiltpw.h"
 
-namespace ModuleHamilt
+namespace hamilt
 {
 
 void HamiltPW::ch_mock()
@@ -13,7 +13,7 @@ void HamiltPW::hk_mock()
     return;
 }
 
-void HamiltPW::hpsi_mock(const ModulePsi::Psi<std::complex<double>>& psi, ModulePsi::Psi<std::complex<double>>& hpsi) const
+void HamiltPW::hpsi_mock(const psi::Psi<std::complex<double>>& psi, psi::Psi<std::complex<double>>& hpsi) const
 {
     for(size_t iband=0; iband < hpsi.get_nbands(); ++iband )
     {
@@ -24,4 +24,4 @@ void HamiltPW::hpsi_mock(const ModulePsi::Psi<std::complex<double>>& psi, Module
     }
 }
 
-}
+}//namespace hamilt

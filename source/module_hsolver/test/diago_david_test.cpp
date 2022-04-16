@@ -63,7 +63,7 @@ public:
 	int nband, npw, sparsity, order, maxiter, notconv;
 	double eps, avg_iter;
 
-	void CompareEigen(ModulePsi::Psi<std::complex<double>> &phi, double *precondition)
+	void CompareEigen(psi::Psi<std::complex<double>> &phi, double *precondition)
 	{
 		//calculate eigenvalues by LAPACK;
 		double* e_lapack = new double[npw];
@@ -74,12 +74,12 @@ public:
 		double* en = new double[npw];
 		
 		Hamilt_PW hpw;
-		ModuleHamilt::Hamilt *phm;
-		phm = new ModuleHamilt::HamiltPW;
-		ModuleHSolver::DiagoDavid dav(&hpw, precondition);
-		ModuleHSolver::DiagoDavid::PW_DIAG_NDIM = order;
-		ModuleHSolver::IterDiagControl::PW_DIAG_NMAX = maxiter;
-		ModuleHSolver::IterDiagControl::PW_DIAG_THR = eps;
+		hamilt::Hamilt *phm;
+		phm = new hamilt::HamiltPW;
+		hsolver::DiagoDavid dav(&hpw, precondition);
+		hsolver::DiagoDavid::PW_DIAG_NDIM = order;
+		hsolver::IterDiagControl::PW_DIAG_NMAX = maxiter;
+		hsolver::IterDiagControl::PW_DIAG_THR = eps;
 		phi.fix_k(0);
 
 		clock_t start,end;
@@ -112,7 +112,7 @@ TEST_P(DiagoDavTest,RandomHamilt)
 	HPsi hpsi(ddp.nband,ddp.npw,ddp.sparsity);
 	DIAGOTEST::hmatrix = hpsi.hamilt();
 	DIAGOTEST::npw = ddp.npw;
-	ModulePsi::Psi<std::complex<double>> psi = hpsi.psi();	
+	psi::Psi<std::complex<double>> psi = hpsi.psi();	
 
 	ddp.CompareEigen(psi,hpsi.precond());
 }
@@ -141,7 +141,7 @@ TEST(DiagoDavRealSystemTest,dataH)
 
 	DiagoDavPrepare ddp(10,DIAGOTEST::npw,0,2,1e-5,500);
 	HPsi hpsi(10,DIAGOTEST::npw);
-	ModulePsi::Psi<std::complex<double>> psi = hpsi.psi();	
+	psi::Psi<std::complex<double>> psi = hpsi.psi();	
 	
 	ddp.CompareEigen(psi,hpsi.precond());
 }
