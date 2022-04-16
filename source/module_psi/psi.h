@@ -21,7 +21,7 @@ class Psi
     Psi(void){};
     Psi(PW_Basis* pbasis_in)
     {
-        this->ngk = pbasis_in->Klist->ngk->data();
+        this->ngk = pbasis_in->Klist->ngk.data();
         this->resize(pbasis_in->Klist->nks, GlobalV::NBANDS, pbasis_in->ngmw);
     }
     Psi(const int* ngk_in){this->ngk = ngk_in;}
@@ -51,13 +51,7 @@ class Psi
     }
     // initialize the wavefunction coefficient
     // only resize and construct function now is used
-    void initialize(void);
-    /*    const bool &gamma_only, 
-        const int &basis_type, 
-        const int &data_type, 
-        const int &hardware_type, 
-        const int &parallel_type 
-    );*/
+    
     
     // allocate psi for three dimensions 
     void resize(
@@ -110,7 +104,7 @@ class Psi
         if(this->ngk!=nullptr&&GlobalV::NSPIN!=4) this->current_nbasis = this->ngk[ik];
         else this->current_nbasis = this->nbasis;
         this->current_b = 0;
-        this->psi_current = &(this->psi[ik * this->nbands * this->nbasis]);
+        this->psi_current = const_cast<T*>(&(this->psi[ik * this->nbands * this->nbasis]));
         return;
     }
 
@@ -218,6 +212,15 @@ class Psi
     int parallel_type;
 //would be updated later */
 };
+
+template<typename T>
+void initialize(Psi<T> &psi);
+    /*    const bool &gamma_only, 
+        const int &basis_type, 
+        const int &data_type, 
+        const int &hardware_type, 
+        const int &parallel_type 
+    );*/
 
 }
 #endif
