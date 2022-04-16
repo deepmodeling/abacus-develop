@@ -2,9 +2,8 @@
 #define ELPA_H
 
 #include <complex>
-#include <limits.h>
-
 #include <elpa/elpa_version.h>
+#include <limits.h>
 
 struct elpa_struct;
 typedef struct elpa_struct *elpa_t;
@@ -23,7 +22,7 @@ typedef struct elpa_autotune_struct *elpa_autotune_t;
 #undef complex
 #include <elpa/elpa_generic.h>
 
-#define ELPA_2STAGE_REAL_GPU ELPA_2STAGE_REAL_NVIDIA_GPU
+#define ELPA_2STAGE_REAL_GPU    ELPA_2STAGE_REAL_NVIDIA_GPU
 #define ELPA_2STAGE_COMPLEX_GPU ELPA_2STAGE_COMPLEX_NVIDIA_GPU
 
 const char *elpa_strerr(int elpa_error);

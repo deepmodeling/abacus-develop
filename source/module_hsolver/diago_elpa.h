@@ -10,26 +10,17 @@ namespace hsolver
 class DiagoElpa : public DiagH
 {
 
-public:
-    void diag(
-        hamilt::Hamilt* phm_in,
-        psi::Psi<double> &psi,
-        double *eigenvalue_in)override;
+  public:
+    void diag(hamilt::Hamilt* phm_in, psi::Psi<double>& psi, double* eigenvalue_in) override;
 
-    void diag(
-        hamilt::Hamilt* phm_in,
-        psi::Psi<std::complex<double>> &psi,
-        double *eigenvalue_in)override;
+    void diag(hamilt::Hamilt* phm_in, psi::Psi<std::complex<double>>& psi, double* eigenvalue_in) override;
 
-private:
-
+  private:
     bool ifElpaHandle(const bool& newIteration, const bool& ifNSCF);
 
     static bool is_already_decomposed;
-
-
 };
 
-}//namespace hsolver
+} // namespace hsolver
 
 #endif
