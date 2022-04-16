@@ -67,8 +67,8 @@ void HamiltLCAO<T, T1>::hk_update_mock(const int ik)
 template<typename T, typename T1>
 void HamiltLCAO<T, T1>::getMatrix(MatrixBlock<T> &hk_in, MatrixBlock<T> &sk_in)
 {
-    hk_in = MatrixBlock<T>{kM.hloc.data(), this->LM->ParaV->nrow, this->LM->ParaV->ncol, this->LM->ParaV->desc};
-    sk_in = MatrixBlock<T>{kM.sloc.data(), this->LM->ParaV->nrow, this->LM->ParaV->ncol, this->LM->ParaV->desc};
+    hk_in = MatrixBlock<T>{kM.hloc.data(), (size_t)this->LM->ParaV->nrow, (size_t)this->LM->ParaV->ncol, this->LM->ParaV->desc};
+    sk_in = MatrixBlock<T>{kM.sloc.data(), (size_t)this->LM->ParaV->nrow, (size_t)this->LM->ParaV->ncol, this->LM->ParaV->desc};
 }
 
 
@@ -78,12 +78,14 @@ void HamiltLCAO<T, T1>::getMatrix(MatrixBlock<T> &hk_in, MatrixBlock<T> &sk_in)
     this->getMatrix(hk_in, sk_in);
 }*/
 // case for nspin<4, multi-k-points 
+template<>
 void HamiltLCAO<std::complex<double>, double>::matrix(MatrixBlock<std::complex<double>> hk_in, MatrixBlock<std::complex<double>> sk_in)
 {
     this->getMatrix(hk_in, sk_in);
 }
 
 // case for nspin<4, gamma_only
+template<>
 void HamiltLCAO<double, double>::matrix(MatrixBlock<double> hk_in, MatrixBlock<double> sk_in)
 {
     this->getMatrix(hk_in, sk_in);
@@ -95,11 +97,13 @@ void HamiltLCAO<double, double>::matrix(MatrixBlock<double> hk_in, MatrixBlock<d
     this->constructFixedReal();
     this->constructUpdateReal();
 }*/
+template<>
 void HamiltLCAO<std::complex<double>, double>::constructHamilt(const int iter, const MatrixBlock<double> rho)
 {
     this->constructFixedReal();
     this->constructUpdateReal();
 }
+template<>
 void HamiltLCAO<double, double>::constructHamilt(const int iter, const MatrixBlock<double> rho)
 {
     this->constructFixedReal();
@@ -111,15 +115,17 @@ void HamiltLCAO<double, double>::constructHamilt(const int iter, const MatrixBlo
     this->hk_fixed_mock(ik);
     this->hk_update_mock(ik);
 };*/
+template<>
 void HamiltLCAO<double, std::complex<double>>::updateHk(const int ik)
 {
     this->hk_fixed_mock(ik);
     this->hk_update_mock(ik);
-};
+}
+template<>
 void HamiltLCAO<double, double>::updateHk(const int ik)
 {
     this->hk_fixed_mock(ik);
     this->hk_update_mock(ik);
-};
+}
 
 }//namespace hamilt
