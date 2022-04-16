@@ -7,7 +7,7 @@ on:
 
 jobs:
   test:
-    name: Do the job on the runner
+    name: Dynamic analysis
     runs-on: self-hosted
     if: github.repository_owner == 'deepmodeling'
     container: ghcr.io/deepmodeling/abacus-development-kit:gnu
