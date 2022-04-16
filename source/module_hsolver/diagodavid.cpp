@@ -24,11 +24,6 @@ DiagoDavid::DiagoDavid(
     // default: no check
 }
 
-DiagoDavid::~DiagoDavid() 
-{
-}
-
-
 void DiagoDavid::diag_mock
 (
     psi::Psi<std::complex<double>> &psi,

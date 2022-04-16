@@ -33,19 +33,19 @@ class Psi
         this->current_b = 0;
         this->current_k = 0;
     }
-    Psi(const Psi& psi_in, const int& nk_in, const int& nbd_in)
+    Psi(const Psi& psi_in, const int& nk_in, const int& nband_in)
     {
-        assert(nk_in<=psi_in.get_nk() && nbd_in<=psi_in.get_nbd());
-        this->resize(nk_in, nbd_in, psi_in.get_nbasis());
+        assert(nk_in<=psi_in.get_nk() && nband_in<=psi_in.get_nbands());
+        this->resize(nk_in, nband_in, psi_in.get_nbasis());
         //if size of k is 1, copy from Psi in current_k, 
         //else copy from start of Psi
         if(nk_in==1) for(size_t index=0; index<this->size();++index)
         {
             psi[index] = psi_in.get_pointer()[index];
             //current_k for this Psi only keep the spin index same as the copied Psi
-            this->current_k = psi_in.get_spin();
+            this->current_k = psi_in.get_spin(psi_in.get_current_k());
         } 
-        else for(size_t index=0; index<this->size();++index) psi[index] = psi_in[index];
+        else for(size_t index=0; index<this->size();++index) psi[index] = psi_in.get_pointer()[index];
 
         this->spin_method = psi_in.spin_method;
     }

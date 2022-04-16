@@ -7,6 +7,10 @@
 
 namespace hamilt
 {
+// case for nspin<4, gamma-only k-point 
+template class HamiltLCAO<double, double>;
+// case for nspin<4, multi-k-points 
+template class HamiltLCAO<std::complex<double>, double>;
 
 template<typename T, typename T1>
 void HamiltLCAO<T,T1>::constructFixedReal()
@@ -97,35 +101,35 @@ void HamiltLCAO<double, double>::matrix(MatrixBlock<double> hk_in, MatrixBlock<d
     this->constructFixedReal();
     this->constructUpdateReal();
 }*/
-template<>
-void HamiltLCAO<std::complex<double>, double>::constructHamilt(const int iter, const MatrixBlock<double> rho)
+template<typename T, typename T1>
+void HamiltLCAO<T, T1>::constructHamilt(const int iter, const MatrixBlock<double> rho)
 {
     this->constructFixedReal();
     this->constructUpdateReal();
 }
-template<>
+/*template<>
 void HamiltLCAO<double, double>::constructHamilt(const int iter, const MatrixBlock<double> rho)
 {
     this->constructFixedReal();
     this->constructUpdateReal();
-}
+}*/
 
 /*void HamiltLCAO<std::complex<double>, std::complex<double>>::updateHk(const int ik)
 {
     this->hk_fixed_mock(ik);
     this->hk_update_mock(ik);
 };*/
-template<>
-void HamiltLCAO<double, std::complex<double>>::updateHk(const int ik)
+template<typename T, typename T1>
+void HamiltLCAO<T, T1>::updateHk(const int ik)
 {
     this->hk_fixed_mock(ik);
     this->hk_update_mock(ik);
 }
-template<>
+/*template<>
 void HamiltLCAO<double, double>::updateHk(const int ik)
 {
     this->hk_fixed_mock(ik);
     this->hk_update_mock(ik);
-}
+}*/
 
 }//namespace hamilt

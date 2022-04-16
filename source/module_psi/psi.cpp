@@ -2,6 +2,8 @@
 
 namespace psi
 {
+template class Psi<std::complex<double>>;
+template class Psi<double>;
 
 //only iterative diagonaliztion need initialization of Psi
 void initialize(Psi<std::complex<double>> &psi)

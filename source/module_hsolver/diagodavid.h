@@ -34,7 +34,6 @@ class DiagoDavid : public DiagH
 public:
 
     DiagoDavid(Hamilt_PW* hpw_in, const double *precondition_in);
-    ~DiagoDavid();
 
     //this is the override function diag() for CG method
     void diag(
