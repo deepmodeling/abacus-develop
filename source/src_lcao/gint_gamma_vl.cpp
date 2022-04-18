@@ -217,15 +217,21 @@ inline int setBufferParameter(
         for(int irow=0, grow=0; grow<GlobalV::NLOCAL; ++irow)
         {
             grow=Local_Orbital_wfc::globalIndex(irow, nblk, nprows, iprow);
-            int lrow=GlobalC::GridT.trace_lo[grow];
+            if (grow >= GlobalV::NLOCAL)
+                continue;
+            int lrow = GlobalC::GridT.trace_lo[grow];
 
-            if(lrow < 0 || grow >= GlobalV::NLOCAL) continue;
+            if (lrow < 0)
+                continue;
 
             for(int icol=0, gcol=0; gcol<GlobalV::NLOCAL; ++icol)
             {
                 gcol=Local_Orbital_wfc::globalIndex(icol,nblk, npcols, ipcol);
-                int lcol=GlobalC::GridT.trace_lo[gcol];
-                if(lcol < 0 || gcol >= GlobalV::NLOCAL) continue;
+                if (gcol >= GlobalV::NLOCAL)
+                    continue;
+                int lcol = GlobalC::GridT.trace_lo[gcol];
+                if (lcol < 0)
+                    continue;
                 // if(pos<0 || pos >= current_s_index_siz)
                 // {
                 //     OUT(GlobalV::ofs_running, "pos error, pos:", pos);
@@ -365,7 +371,7 @@ Gint_Tools::Array_Pool<double> Gint_Gamma::gamma_vlocal(const double*const vloca
 						// whether the atom-grid distance is larger than cutoff
 						//------------------------------------------------------
 						bool **cal_flag = Gint_Tools::get_cal_flag(na_grid, grid_index);
-						
+
 						//------------------------------------------------------------------
 						// compute atomic basis phi(r) with both radial and angular parts
 						//------------------------------------------------------------------
@@ -387,7 +393,7 @@ Gint_Tools::Array_Pool<double> Gint_Gamma::gamma_vlocal(const double*const vloca
 						this->cal_meshball_vlocal(
 							na_grid, LD_pool, block_iw, block_size, block_index, cal_flag,
 							vldr3, psir_ylm.ptr_2D, psir_vlbr3.ptr_2D, lgd_now, GridVlocal_thread.ptr_2D);
-						
+
 						free(vldr3);		vldr3=nullptr;
                         delete[] block_iw;
                         delete[] block_index;
@@ -425,10 +431,10 @@ Gint_Tools::Array_Pool<double> Gint_Gamma::gamma_vlocal(const double*const vloca
     MPI_Barrier(MPI_COMM_WORLD);
 #endif
     ModuleBase::timer::tick("Gint_Gamma","distri_vl");
-	
+
 	return GridVlocal;
 }
-	
+
 void Gint_Gamma::vl_grid_to_2D(const Gint_Tools::Array_Pool<double> &GridVlocal, LCAO_Matrix &lm)
 {
     // setup send buffer and receive buffer size
@@ -489,7 +495,7 @@ void Gint_Gamma::vl_grid_to_2D(const Gint_Tools::Array_Pool<double> &GridVlocal,
         //     OUT(GlobalV::ofs_running, "g_col:", g_col);
         //     OUT(GlobalV::ofs_running, "g_col:", g_col);
         // }
-        lm.set_HSgamma(g_row,g_col,this->receiver_buffer[i/2],'L');
+        lm.set_HSgamma(g_row,g_col,this->receiver_buffer[i/2],'L', lm.Hloc.data());
     }
 
     ModuleBase::timer::tick("Gint_Gamma","distri_vl_value");

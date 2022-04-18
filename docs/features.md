@@ -1,16 +1,19 @@
 # Features
+
 Here we summarize several features of ABACUS:
-   - [Basis sets](#basis-sets)
-   - [Pseudopotentials](#pseudopotentials)
-   - [Boundary conditions and k-points](#boundary-conditions-and-k-points)
-   - [Kohn-Sham solver](#kohn-sham-solver)
-   - [Exchange-correlation functionals](#exchange-correlation-functionals)
+
+- [Basis sets](#basis-sets)
+- [Pseudopotentials](#pseudopotentials)
+- [Boundary conditions and k-points](#boundary-conditions-and-k-points)
+- [Kohn-Sham solver](#kohn-sham-solver)
+- [Exchange-correlation functionals](#exchange-correlation-functionals)
 
      [back to main page](../README.md)
 
 ## Basis sets
 
 In ABACUS, there are 3 types of basis set choices:
+
 1. PW
 
     Plane wave basis.
@@ -22,7 +25,7 @@ In ABACUS, there are 3 types of basis set choices:
 3. LCAO_in_PW
 
     Expand the atomic basis in terms of plane waves, and use plane-waves techniques to construct the Hamiltonian matrix, but solve the eigenvalue problem within the LCAO basis set.
-    
+
 In the INPUT file, the keyword basis_type controls what basis type to use:
 
    1. PW: basis_type = pw
@@ -30,7 +33,7 @@ In the INPUT file, the keyword basis_type controls what basis type to use:
    3. LCAO_in_PW: basis_type = lcao_in_pw
 
 The default value of basis_type is pw. When choosing lcao or lcao_in_pw, the user should prepare atomic orbitals first.
-    
+
 Information on the keyword basis_type can also be found in [the list of input keywords](input-main.md#basis-type).
 
 We also provide a [detailed instruction](generate-basis.md) on generating basis functions.
@@ -88,10 +91,11 @@ Information on the keyword ks_solver is also given in the [list of input variabl
 [back to top](#features)
 
 ## Exchange-correlation functionals
+
 In our package, the XC functional can either be set explicitly using the dft_functional keyword as explained below, or set implicitly according to the XC functional information read from pseudopotential file. The user should ensure that the XC functional set in the INPUT file and the pseudopotential file are consistent. **Currently only LDA and GGA are supported.**
 
 To be specific, we briefly explain the format of the pseudopotential file and the key information it contains. There are a few lines in Si’s GGA pseudopotential file Si_ONCV_PBE-1.0.upf:
-    
+
 ```
 <PP_HEADER
 generated="Generated using ONCVPSP code by D. R. Hamann"
@@ -115,10 +119,11 @@ rho_cutoff=" 6.01000000000E+00"
 ```
 
 The user can set the XC functional type in INPUT file with the parameter, dft_functional:
+
 - none: the functional is specified implicity by the input pseudopotential file
 - lda: Perdew-Zunger local density approximation
 - pbe: Perdew-Burke-Ernzerhof general gradient approximation
-    
+
 If the functional specified by the user is not consistent with the pseudopotential file, the program will stop with an error message.
 
 Information on the keyword ks_solver is also given in the [list of input variables](input-main.md#dft-functional).

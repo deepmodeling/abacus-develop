@@ -92,6 +92,7 @@ public:
     bool read_rho(const int &is, const std::string &fn, double* rho);//mohan add 2007-10-17
     void rho_mpi(void);
 
+    void sum_band_k();
 
 	private:
 
@@ -100,7 +101,6 @@ public:
 	int ngmc; // number of g vectors in this processor
 	int nspin; // number of spins
 
-    void sum_band_k();
 
     double sum_rho(void) const;
 

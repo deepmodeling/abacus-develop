@@ -15,7 +15,6 @@ Hamilt_PW::Hamilt_PW()
     hpsi = new std::complex<double>[1];
     spsi = new std::complex<double>[1];
     GR_index = new int[1];
-    Bec = new std::complex<double>[1];
 }
 
 Hamilt_PW::~Hamilt_PW()
@@ -23,7 +22,6 @@ Hamilt_PW::~Hamilt_PW()
     delete[] hpsi;
     delete[] spsi;
     delete[] GR_index;
-    delete[] Bec;
 }
 
 
@@ -43,12 +41,10 @@ void Hamilt_PW::allocate(
     delete[] hpsi;
     delete[] spsi;
     delete[] GR_index;
-    delete[] Bec;
 
     this->hpsi = new std::complex<double> [npwx * npol];
     this->spsi = new std::complex<double> [npwx * npol];
     this->GR_index = new int[nrxx];
-    this->Bec = new std::complex<double> [nkb];
 
     ModuleBase::GlobalFunc::ZEROS(this->hpsi, npwx * npol);
     ModuleBase::GlobalFunc::ZEROS(this->spsi, npwx * npol);

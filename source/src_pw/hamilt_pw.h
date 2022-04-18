@@ -68,7 +68,6 @@ public:
     // hpsi and spsi
     std::complex<double> *hpsi;
     std::complex<double> *spsi;
-    std::complex<double> *Bec;
 
 	// add contributions of h*psi from
 	// non-local pseduopotentials

@@ -5,53 +5,11 @@
   - [Build and install ABACUS with CMake](#build-and-install-abacus-with-cmake)
   - [Build ABACUS with make](#build-abacus-with-make)
     - [Link LIBXC](#link-libxc)
-- [Structure of the package](#structure-of-the-package)
-  - [Structure of source code](#structure-of-source-code)
 - [Installation with DeePKS](#installation-with-deepks)
   - [Extra prerequisites](#extra-prerequisites)
   - [Extra settings for building](#extra-settings-for-building)
 
   [back to main page](../README.md)
-
-# Structure of the package
-
-Under the ABACUS directory, there are the following subdirectories:
-
-- cmake/
-  which contains relevant files for compiling the code with cmake
-- documents/
-  which contains a copy of the manual in pdf format
-- examples/
-  which contains some examples
-- source/
-  which contains the source code and makefiles
-- tests/
-  which contains test examples
-- tools/
-  which currently contains the script for generating the numerical atomic orbitals
-
-[back to top](#download-and-install)
-
-## Structure of source code
-
-The source directory further contains the following folders, where the source files of ABACUS are located:
-
-- module_base
-- module_cell
-- module_grid
-- module_grid
-- module_neighbor
-- module_orbital
-- obj
-- src_external
-- src_global
-- src_io
-- src_ions
-- src_lcao
-- src_parallel
-- src_pdiag
-- src_pw
-- src_ri
 
 ## Installation
 
@@ -250,17 +208,17 @@ HONG=${HONG_MPI_SELINV_20210523}
 
 [back to top](#download-and-install)
 
-# Installation with DeePKS
+## Installation with DeePKS
 
 This part of installation is based on [Installation](#installation). If DeePKS feature is requied for [DeePKS-kit](https://github.com/deepmodeling/deepks-kit), the following prerequisites and steps are needed:
 
-## Extra prerequisites
+### Extra prerequisites
 
 - C++ compiler, supporting **C++14**. For example, Intel C++ compiler 18
 - [LibTorch](https://download.pytorch.org/libtorch/cpu/libtorch-cxx11-abi-shared-with-deps-1.9.0%2Bcpu.zip) for cpu, with c++11 ABI;
 - [Libnpy](https://github.com.cnpmjs.org/llohse/libnpy/);
 
-## Extra settings for building
+### Extra settings for building
 
 ### Using Cmake
 

@@ -201,7 +201,7 @@ TEST_F(MathzoneAdd1Test, Factorial)
 	EXPECT_EQ(fac[0],fac1);
 	fac1 = ModuleBase::Mathzone_Add1::factorial(1);
 	EXPECT_EQ(fac[1],fac1);
-	for (int i=2; i<=MaxInt; i++)
+	for (int i=2; i<MaxInt; i++)
 	{
 		fac[i] = i*fac[i-1];
 		fac1 = ModuleBase::Mathzone_Add1::factorial(i);
@@ -222,7 +222,7 @@ TEST_F(MathzoneAdd1Test, DualFac)
 	dualfac[1]=1.0;
 	dualfac1 = ModuleBase::Mathzone_Add1::dualfac(1);
 	EXPECT_EQ(dualfac[1],dualfac1);
-	for (int i=2; i<=MaxInt; i++)
+	for (int i=2; i<MaxInt; i++)
 	{
 		dualfac[i] = i*dualfac[i-2];
 		dualfac1 = ModuleBase::Mathzone_Add1::dualfac(i);

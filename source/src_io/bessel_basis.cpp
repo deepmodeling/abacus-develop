@@ -17,7 +17,7 @@ Bessel_Basis::~Bessel_Basis()
 
 
 // the function is called in numerical_basis.
-void Bessel_Basis::init( 
+void Bessel_Basis::init(
 	const bool start_from_file,
 	const double &ecutwfc,
 	const int &ntype,
@@ -57,7 +57,7 @@ void Bessel_Basis::init(
 //		GlobalV::ofs_running << "\n" << TableOne.ptr[i];
 //	}
 
-	if( start_from_file )	
+	if( start_from_file )
 	{
 		// setup C4
 		this->allocate_C4(ntype, lmax_in, GlobalC::ucell.nmax, Ecut_number);
@@ -80,7 +80,7 @@ double Bessel_Basis::Polynomial_Interpolation2
 	const int iq = static_cast<int>(position);
 	/*
 	if(iq >= kmesh-4)
-	{	
+	{
 		std::cout << "\n iq = " << iq;
 		std::cout << "\n kmesh = " << kmesh;
 		ModuleBase::QUIT();
@@ -117,7 +117,7 @@ double Bessel_Basis::Polynomial_Interpolation(
 	return y;
 }
 
-void Bessel_Basis::init_Faln( 
+void Bessel_Basis::init_Faln(
 	const int &ntype,
 	const int &lmax,
 	const int &nmax,
@@ -195,7 +195,7 @@ void Bessel_Basis::init_TableOne(
 	double *g = new double[rmesh]; // smooth function
 	double *function = new double[rmesh];
 	double *en = new double[ecut_number];
-	
+
 	for(int ir=0; ir<rmesh; ir++)
 	{
 		r[ir] = static_cast<double>(ir) * dr;
@@ -205,7 +205,7 @@ void Bessel_Basis::init_TableOne(
 			g[ir] = 1.0 - std::exp(-( (r[ir]-rcut)*(r[ir]-rcut)/2.0/sigma_in/sigma_in ) );
 		}
 	}
-	
+
 	//caoyu add 2021-3-10
 	//=========output .orb format=============
 	std::stringstream ss;
@@ -215,9 +215,9 @@ void Bessel_Basis::init_TableOne(
 	ofs << std::setiosflags(ios::left) << std::setw(28) << "Energy Cutoff(Ry)" << ecut << std::endl;
 	ofs << std::setiosflags(ios::left) << std::setw(28) << "Radius Cutoff(a.u.)" << rcut << std::endl;
 	ofs << std::setiosflags(ios::left) << std::setw(28) << "Lmax" << lmax << std::endl;
-	for (int l = 0; l < lmax + 1; l++) 
+	for (int l = 0; l < lmax + 1; l++)
 	{
-		switch (l) 
+		switch (l)
 		{
 			case 0:
 			ofs << std::setiosflags(ios::left) << std::setw(28) << "Number of Sorbitals-->" << ecut_number << std::endl;
@@ -250,7 +250,7 @@ void Bessel_Basis::init_TableOne(
 
 		// calculate eigenvalue for l
 		ModuleBase::Sphbes::Spherical_Bessel_Roots(ecut_number, l, tolerence, en, rcut);
-//		for (int ie=0; ie<ecut_number; ie++) 
+//		for (int ie=0; ie<ecut_number; ie++)
 //		{
 //			std::cout << "\n en[" << ie << "]=" << en[ie];
 //		}
@@ -258,17 +258,17 @@ void Bessel_Basis::init_TableOne(
 		// for each eigenvalue
 		for (int ie=0; ie<ecut_number; ie++)
 		{
-			// calculate J_{l}( en[ir]*r) 
+			// calculate J_{l}( en[ir]*r)
 			ModuleBase::Sphbes::Spherical_Bessel(rmesh, r, en[ie], l, jle);
 
 			//caoyu add 2021-3-10
 			//=========output .orb format=============
 			ofs << std::setiosflags(ios::right) << std::setw(20) << "Type"<< std::setw(20) << "L" << std::setw(20) << "N" << std::endl;
 			ofs << std::setiosflags(ios::right) << std::setw(20) << "0"<< std::setw(20) << l << std::setw(20) << ie << std::endl;
-			for (int ir = 0; ir < rmesh; ir++) 
-			{ 
-				ofs << std::setiosflags(ios::scientific) 
-				<< std::setprecision(12) << jle[ir]<< " "; if ((ir+1) % 4 == 0) ofs << std::endl; 
+			for (int ir = 0; ir < rmesh; ir++)
+			{
+				ofs << std::setiosflags(ios::scientific)
+				<< std::setprecision(12) << jle[ir]<< " "; if ((ir+1) % 4 == 0) ofs << std::endl;
 			}
 			ofs << std::endl;
 			//=========output .orb format=============
@@ -283,7 +283,7 @@ void Bessel_Basis::init_TableOne(
 //			ss << GlobalV::global_out_dir << l << "." << ie << ".txt";
 //			std::ofstream ofs(ss.str().c_str());
 
-//			for(int ir=0; ir<rmesh; ir++) ofs << r[ir] << " " << jle[ir] << " " << jle[ir]*g[ir] << std::endl; 
+//			for(int ir=0; ir<rmesh; ir++) ofs << r[ir] << " " << jle[ir] << " " << jle[ir]*g[ir] << std::endl;
 
 //			ofs.close();
 			//====== output ========
@@ -296,7 +296,7 @@ void Bessel_Basis::init_TableOne(
 					jle[ir] *= g[ir];
 				}
 			}
-			
+
 			for(int ik=0; ik<kmesh; ik++)
 			{
 				// calculate J_{l}( ik*dk*r )
@@ -307,15 +307,15 @@ void Bessel_Basis::init_TableOne(
 				{
 					function[ir] = jle[ir] * jlk[ir];
 				}
-				
+
 				// make table value
 				ModuleBase::Integral::Simpson_Integral(rmesh, function, rab, this->TableOne(l, ie, ik) );
 			}
-			
+
 		}// end ie
 	}// end ;
-		
-	if (ofs) 
+
+	if (ofs)
 	{
 		ofs.close();	//caoyu add 2020-3-10
 	}
@@ -345,7 +345,7 @@ void Bessel_Basis::readin_C4(
 
 	std::ifstream ifs( name.c_str() );
 
-	if(!ifs) 
+	if(!ifs)
 	{
 		GlobalV::ofs_warning << " File name : " << name << std::endl;
 		ModuleBase::WARNING_QUIT("Bessel_Basis::readin_C4","Can not find file.");
@@ -366,8 +366,8 @@ void Bessel_Basis::readin_C4(
 					//std::cout << "\n" << std::setw(5) << it << std::setw(5) << il << std::setw(5) << in;
 					//std::cout << "\n file=" << filec4;
 					std::ifstream inc4( filec4.c_str() );
-					
-					if(!inc4) 
+
+					if(!inc4)
 					{
 						GlobalV::ofs_warning << " File name : " << filec4 << std::endl;
 						ModuleBase::WARNING_QUIT("Bessel_Basis::readin_C4","Can not find file.");
@@ -377,16 +377,16 @@ void Bessel_Basis::readin_C4(
 					{
 						double tmp_ecut;
 						double tmp_rcut;
-						double tmp_enumber; 
+						double tmp_enumber;
 						double tmp_tolerence;
-						ModuleBase::GlobalFunc::READ_VALUE( inc4, tmp_ecut); 
-						ModuleBase::GlobalFunc::READ_VALUE( inc4, tmp_rcut); 
-						ModuleBase::GlobalFunc::READ_VALUE( inc4, tmp_enumber); 
-						ModuleBase::GlobalFunc::READ_VALUE( inc4, tmp_tolerence); 
-						assert( tmp_ecut = this->ecut );
-						assert( tmp_rcut = this->rcut );
-						assert( tmp_enumber = this->Ecut_number);
-						assert( tmp_tolerence = this->tolerence );
+						ModuleBase::GlobalFunc::READ_VALUE( inc4, tmp_ecut);
+						ModuleBase::GlobalFunc::READ_VALUE( inc4, tmp_rcut);
+						ModuleBase::GlobalFunc::READ_VALUE( inc4, tmp_enumber);
+						ModuleBase::GlobalFunc::READ_VALUE( inc4, tmp_tolerence);
+						assert( tmp_ecut == this->ecut );
+						assert( tmp_rcut == this->rcut );
+						assert( tmp_enumber == this->Ecut_number);
+						assert( tmp_tolerence == this->tolerence );
 					}
 
 					bool find = false;
@@ -403,7 +403,7 @@ void Bessel_Basis::readin_C4(
 							int tmp_type, tmp_l, tmp_n;
 							inc4 >> tmp_type >> tmp_l >> tmp_n;
 							//std::cout << "\n Find T=" << tmp_type << " L=" << tmp_l << " N=" << tmp_n;
-								
+
 							if(tmp_l == il && tmp_n == in)
 							//if(tmp_type == it && tmp_l == il && tmp_n == in) // mohan modify 2009-11-29
 							{
@@ -443,12 +443,12 @@ void Bessel_Basis::readin_C4(
 
 void Bessel_Basis::allocate_C4(
 	const int &ntype,
-	const int &lmax, 
+	const int &lmax,
 	const int &nmax,
 	const int &ecut_number)
 {
 	ModuleBase::TITLE("Bessel_Basis","allocate_C4");
-		
+
 	this->C4.create(ntype, lmax+1, nmax, ecut_number);
 
 	for(int it=0; it<ntype; it++)
@@ -471,7 +471,7 @@ void Bessel_Basis::bcast(void)
 {
 #ifdef __MPI
 	ModuleBase::TITLE("Bessel_Basis", "bcast");
-	
+
 	Parallel_Common::bcast_double( ecut );
 	Parallel_Common::bcast_double( rcut );
 	Parallel_Common::bcast_double( tolerence );
@@ -513,7 +513,7 @@ void Bessel_Basis::readin(const std::string &name)
 		ifs.close();
 	}
 #ifdef __MPI
-	Parallel_Common::bcast_bool(smooth);	
+	Parallel_Common::bcast_bool(smooth);
 	Parallel_Common::bcast_double(sigma);
 	Parallel_Common::bcast_double(ecut);
 	Parallel_Common::bcast_double(rcut);

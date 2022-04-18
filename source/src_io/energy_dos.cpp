@@ -331,8 +331,8 @@ void energy::perform_dos(Local_Orbital_wfc &lowf, LCAO_Hamilt &uhm)
 
 				uhm.LM->allocate_HS_R(pv->nnr);
 				uhm.LM->zeros_HSR('S');
-				uhm.genH.calculate_S_no();
-				uhm.genH.build_ST_new('S', false, GlobalC::ucell);
+				uhm.genH.calculate_S_no(uhm.LM->SlocR.data());
+				uhm.genH.build_ST_new('S', false, GlobalC::ucell, uhm.LM->SlocR.data());
 				std::vector<ModuleBase::ComplexMatrix> Mulk;
 				Mulk.resize(1);
 				Mulk[0].create(pv->ncol,pv->nrow);

@@ -33,7 +33,7 @@ wavefunc::~wavefunc()
 void wavefunc::allocate_ekb_wg(const int nks)
 {
     ModuleBase::TITLE("wavefunc","init_local");
-    this->npwx = this->setupIndGk(GlobalC::pw, nks);
+    this->npwx = GlobalC::pw.setupIndGk(this->igk, GlobalC::kv.ngk);
 
 	// band energies
 	this->ekb = new double*[nks];
@@ -56,7 +56,7 @@ void wavefunc::allocate(const int nks)
 {	
 	ModuleBase::TITLE("wavefunc","allocate");
 
-	this->npwx = this->setupIndGk(GlobalC::pw, nks);
+	this->npwx = GlobalC::pw.setupIndGk(this->igk, GlobalC::kv.ngk);
 	ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"npwx",npwx);
 
 	assert(npwx > 0);
@@ -769,7 +769,6 @@ void wavefunc::init_after_vc(const int nks)
     }
 
     ModuleBase::TITLE("wavefunc","init");
-    //this->npwx = this->setupIndGk(GlobalC::pw, nks);
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"npwx",npwx);
 
     assert(npwx > 0);

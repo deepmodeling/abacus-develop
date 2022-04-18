@@ -178,7 +178,7 @@ void Force_LCAO_gamma::allocate_gamma(const Parallel_Orbitals &pv)
     }
     //calculate dS in LCAO basis
     //ModuleBase::timer::tick("Force_LCAO_gamma","build_S_new");
-    this->UHM->genH.build_ST_new ('S', cal_deri, GlobalC::ucell);
+    this->UHM->genH.build_ST_new ('S', cal_deri, GlobalC::ucell, this->UHM->LM->Sloc.data());
     //ModuleBase::timer::tick("Force_LCAO_gamma","build_S_new");
 
     ModuleBase::Memory::record("force_lo", "dS", pv.nloc*3, "double");
@@ -196,7 +196,7 @@ void Force_LCAO_gamma::allocate_gamma(const Parallel_Orbitals &pv)
     //calculate dT
     //calculate T + VNL(P1) in LCAO basis
     //ModuleBase::timer::tick("Force_LCAO_gamma","build_T_new");
-    this->UHM->genH.build_ST_new ('T', cal_deri, GlobalC::ucell);
+    this->UHM->genH.build_ST_new ('T', cal_deri, GlobalC::ucell, this->UHM->LM->Hloc_fixed.data());
     //ModuleBase::timer::tick("Force_LCAO_gamma","build_T_new");
     //test_gamma(this->UHM->LM->DHloc_fixed_x, "dHloc_fixed_x T part");
     
@@ -292,11 +292,11 @@ void Force_LCAO_gamma::NonlocalDphi(const int& nspin, const int& vnl_method, con
 	ModuleBase::TITLE("Force_LCAO_gamma", "NonlocalDphi");
 	if(nspin==4 || vnl_method == 0)
 	{
-		genH.build_Nonlocal_mu (cal_deri);
+		genH.build_Nonlocal_mu (genH.LM->Hloc_fixed.data(), cal_deri);
 	}
 	else if(vnl_method == 1)
 	{
-		genH.build_Nonlocal_mu_new (cal_deri);
+		genH.build_Nonlocal_mu_new (genH.LM->Hloc_fixed.data(), cal_deri);
 	}
 	else
 	{

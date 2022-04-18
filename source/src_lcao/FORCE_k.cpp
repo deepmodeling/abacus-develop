@@ -217,7 +217,7 @@ void Force_LCAO_k::allocate_k(const Parallel_Orbitals &pv)
 	// calculate dS = <phi | dphi> 
 	//-----------------------------
 	bool cal_deri = true;
-	this->UHM->genH.build_ST_new ('S', cal_deri, GlobalC::ucell);
+	this->UHM->genH.build_ST_new ('S', cal_deri, GlobalC::ucell, this->UHM->genH.LM->SlocR.data());
 
 	//-----------------------------------------
 	// (2) allocate for <phi | T + Vnl | dphi>
@@ -232,7 +232,7 @@ void Force_LCAO_k::allocate_k(const Parallel_Orbitals &pv)
     
     // calculate dT=<phi|kin|dphi> in LCAO
     // calculate T + VNL(P1) in LCAO basis
-    this->UHM->genH.build_ST_new ('T', cal_deri, GlobalC::ucell);
+    this->UHM->genH.build_ST_new ('T', cal_deri, GlobalC::ucell, this->UHM->genH.LM->Hloc_fixedR.data());
 	//test(this->UHM->LM->DHloc_fixedR_x,"this->UHM->LM->DHloc_fixedR_x T part");
    
    	// calculate dVnl=<phi|dVnl|dphi> in LCAO 

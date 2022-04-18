@@ -116,7 +116,6 @@ Hamilt_PW::Hamilt_PW()
 	// hpsi = new complex<double>[1];
 	// spsi = new complex<double>[1];
 	// GR_index = new int[1];
-	// Bec = new complex<double>[1];
 #ifdef __ROCM
 	hipMalloc((void **)&GR_index_d, sizeof(int));
 	CHECK_CUBLAS(hipblasCreate(&hpw_handle));
@@ -128,7 +127,6 @@ Hamilt_PW::~Hamilt_PW()
 	// delete[] hpsi;
 	// delete[] spsi;
 	delete[] GR_index;
-	// delete[] Bec;
 #ifdef __ROCM
 	CHECK_CUDA(hipFree(GR_index_d));
 	if (hpw_handle)
@@ -149,7 +147,6 @@ void Hamilt_PW::allocate(const int &npwx, const int &npol, const int &nkb, const
 	// delete[] hpsi;
 	// delete[] spsi;
 	// delete[] GR_index;
-	// delete[] Bec;
 
 	delete[] GR_index;
 	GR_index = new int[npwx];

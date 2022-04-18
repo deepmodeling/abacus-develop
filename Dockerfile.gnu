@@ -60,7 +60,7 @@ RUN cd /tmp \
 
 RUN cd /tmp \
     && git clone https://github.com/llohse/libnpy.git \
-    && cp libnpy/include/npy.hpp /usr/local \
+    && cp libnpy/include/npy.hpp /usr/local/include \
     && rm -rf libnpy
 
 RUN cd /tmp \
