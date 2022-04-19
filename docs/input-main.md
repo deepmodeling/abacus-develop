@@ -210,40 +210,33 @@ This part of variables are used to control general system parameters.
 #### dft_functional
 
 - **Type**: String
-- **Description**: In our package, the XC functional can either be set explicitly using the dft_functional keyword as explained below, or set implicitly according to the XC functional information read from pseudopotential file. The user should ensure that the XC functional set in the INPUT file and the pseudopotential file are consistent. If more than one element is present in the system, make sure all of pseudopotentials have the same XC functional. **Currently only LDA and GGA are supported.**
-
-    To be specific, we briefly explain the format of the pseudopotential file and the key information it contains. There are a few lines in Si`s GGA pseudopotential file Si_ONCV_PBE-1.0.upf:
-
-    ```
-    ...
-    <PP_HEADER
-    generated="Generated using ONCVPSP code by D. R. Hamann"
-    author="Martin Schlipf and Francois Gygi"
-    date="150105"
-    comment=""
-    element="Si"
-    pseudo_type="NC"
-    relativistic="scalar"
-    is_ultrasoft="F"
-    is_paw="F"
-    is_coulomb="F"
-    has_so="F"
-    has_wfc="F"
-    has_gipaw="F"
-    core_correction="F"
-    functional="PBE"
-    z_valence=" 4.00"
-    total_psenergy=" -3.74274958433E+00"
-    rho_cutoff=" 6.01000000000E+00"
-    ```
-
-    Possible values of this variable are:
-  - none: the functional is specified implicity by the input pseudopotential file
-  - lda: Perdew-Zunger local density approximation
-  - pbe: Perdew-Burke-Ernzerhof general gradient approximation
-
-    If the functional specified by the user is not consistent with the pseudopotential file, the program will stop with an error message.
-- **Default**: none
+- **Description**: type of exchange-correlation functional used in calculation. If dft_functional is not set, the program will adopt the functional used to generate pseudopotential files, provided all of them are generated using the same functional. For example, we present a few lines in Si’s GGA pseudopotential file Si_ONCV_PBE-1.0.upf:
+        ```
+        ...
+        <PP_HEADER
+        generated="Generated using ONCVPSP code by D. R. Hamann"
+        author="Martin Schlipf and Francois Gygi"
+        date="150105"
+        comment=""
+        element="Si"
+        pseudo_type="NC"
+        relativistic="scalar"
+        is_ultrasoft="F"
+        is_paw="F"
+        is_coulomb="F"
+        has_so="F"
+        has_wfc="F"
+        has_gipaw="F"
+        core_correction="F"
+        functional="PBE"
+        z_valence=" 4.00"
+        total_psenergy=" -3.74274958433E+00"
+        rho_cutoff=" 6.01000000000E+00"
+        ```
+    According to the information above, this pseudopotential is generated using PBE functional.
+    On the other hand, if dft_functional is specified, it will overwrite the functional from pseudopotentials and performs calculation with whichever functional the user prefers. We further offer two ways of supplying exchange-correlation functional. The first is using 'short-hand' names such as 'LDA', 'PBE', 'SCAN'. A complete list of 'short-hand' expressions can be found in [source code](../source/module_xc/xc_functional.cpp). The other way is only available when ***compiling with LIBXC***, and it allows for supplying exchange-correlation functionals as combinations of LIBXC keywords for functional components, joined by plus sign, for example, 'dft_functional='LDA_X_1D_EXPONENTIAL+LDA_C_1D_CSC'. The list of LIBXC keywords can be found on its [website](https://www.tddft.org/programs/libxc/functionals/). In this way, **we support all the LDA,GGA and mGGA functionals provided by LIBXC**.
+    We also provides (under test) two hybrid functionals: PBE0 and HSE. For more information about hybrid functionals, refer to the [section](#exact-exchange) on its input variables.
+- **Default**: same as UPF file.
 
 #### pseudo_type
 
@@ -975,6 +968,8 @@ This part of variables are used to control the molecular dynamics calculations.
   - 2: NVT ensemble with Langevin method;
   - 3: NVT ensemble with Anderson thermostat;
   - 4: MSST method;
+  
+  ***Note: when md_type is set to 1, md_tfreq is required to stablize temperature. It is an empirical parameter whose value is system-dependent, ranging from 1/(40\*md_dt) to 1/(100\*md_dt). An improper choice of its value might lead to failure of job.***
 - **Default**: 1
 
 #### md_nstep
@@ -1028,9 +1023,11 @@ This part of variables are used to control the molecular dynamics calculations.
 
 - **Type**: Real
 - **Description**:
-  - Oscillation frequency, used to determine Qmass of NHC;
-  - 1/(md_tfreq*md_dt) is collision probability in Anderson method.
-- **Default**: 1.0
+  - When md_type = 1, md_tfreq controls the frequency of the temperature oscillations during the simulation. If it is too large, the
+temperature will fluctuate violently; if it is too small, the temperature will take a very long time to equilibrate with the atomic system. 
+  - When md_type = 3, md_tfreq*md_dt is the collision probability in Anderson method.
+  - If md_tfreq is not set in INPUT, md_tfreq will be autoset to be 1/40/md_dt.
+- **Default**: 1/40/md_dt
 
 #### md_mnhc
 

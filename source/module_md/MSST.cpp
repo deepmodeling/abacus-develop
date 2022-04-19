@@ -160,9 +160,9 @@ void MSST::second_half()
     ModuleBase::timer::tick("MSST", "second_half");
 }
 
-void MSST::outputMD()
+void MSST::outputMD(std::ofstream &ofs)
 {
-    Verlet::outputMD();
+    Verlet::outputMD(ofs);
 }
 
 void MSST::write_restart()

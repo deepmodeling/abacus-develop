@@ -59,6 +59,8 @@ void Run_MD_CLASSIC::classic_md_line(void)
     // md cycle
     while ( (verlet->step_ + verlet->step_rst_) <= GlobalV::MD_NSTEP && !verlet->stop )
     {
+        Print_Info::print_screen(0, 0, verlet->step_ + verlet->step_rst_);
+
         if(verlet->step_ == 0)
         {
             verlet->setup(p_esolver);
@@ -79,8 +81,8 @@ void Run_MD_CLASSIC::classic_md_line(void)
 
         if((verlet->step_ + verlet->step_rst_) % verlet->mdp.md_dumpfreq == 0)
         {
-            Print_Info::print_screen(0, 0, verlet->step_ + verlet->step_rst_);
-            verlet->outputMD();
+            // Print_Info::print_screen(0, 0, verlet->step_ + verlet->step_rst_);
+            verlet->outputMD(GlobalV::ofs_running);
 
             MD_func::MDdump(verlet->step_ + verlet->step_rst_, verlet->ucell, verlet->virial, verlet->force);
         }

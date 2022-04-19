@@ -31,7 +31,7 @@ public:
 		msst_tscale = 0.01;
 
 		// NHC
-		md_tfreq = 1;
+		md_tfreq = 0;
 		md_mnhc = 4;
 
 		// Langevin

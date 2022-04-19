@@ -63,7 +63,7 @@ vectors of the supercell are set in the STRU file.
 
 For the input k-point (KPT) file, the file should either contain the k-point coordinates and weights or the mesh size for creating the k-point gird. Both options are allowed in ABACUS.
 
-More information on k-points is provided in this [instruction](#doc/input-kpt.md)
+More information on k-points is provided in this [instruction](#docs/input-kpt.md)
 
 [back to top](#features)
 

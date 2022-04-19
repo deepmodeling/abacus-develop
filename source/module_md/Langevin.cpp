@@ -45,9 +45,9 @@ void Langevin::second_half()
     ModuleBase::timer::tick("Langevin", "second_half");
 }
 
-void Langevin::outputMD()
+void Langevin::outputMD(std::ofstream &ofs)
 {
-    Verlet::outputMD();
+    Verlet::outputMD(ofs);
 }
 
 void Langevin::write_restart()

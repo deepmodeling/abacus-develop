@@ -13,11 +13,10 @@ smearing_method   				smearing_method
 mixing_type				pulay
 
 dft_functional			hse
-exx_separate_loop		0		
-exx_pca_threshold		1E-3
-exx_ccp_rmesh_times		10
-exx_c_threshold			1E-4	
-exx_dm_threshold		1E-3	
-exx_schwarz_threshold	1E-4	
-exx_cauchy_threshold	1E-6	
-
+exx_separate_loop 1
+exx_pca_threshold 1e-4
+exx_c_threshold 1e-4
+exx_dm_threshold 1e-4
+exx_schwarz_threshold 1e-5
+exx_cauchy_threshold 1e-7
+exx_ccp_rmesh_times 10

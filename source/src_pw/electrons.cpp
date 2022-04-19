@@ -100,31 +100,71 @@ void Electrons::self_consistent(const int &istep)
 
     this->unit = 0;
 
-    if(GlobalV::OUT_LEVEL=="ie")
+    if(GlobalV::OUT_LEVEL=="ie" || GlobalV::OUT_LEVEL=="m")
     {
-        std::cout << std::setprecision(12);
-        std::cout<< " " << std::setw(7)<< "ITER"; // pengfei Li added 2015-1-31
-
-        if(GlobalV::NSPIN==2)
+        if(GlobalV::COLOUR && GlobalV::MY_RANK==0)
         {
-            std::cout<<std::setw(10)<<"TMAG";
-            std::cout<<std::setw(10)<<"AMAG";
+            printf( "\e[33m%-7s\e[0m", "ITER");
+            printf( "\e[33m%-15s\e[0m", "ETOT(Ry)");
+            if(GlobalV::NSPIN==2)
+            {
+                printf( "\e[33m%-10s\e[0m", "TMAG");
+                printf( "\e[33m%-10s\e[0m", "AMAG");
+            }
+            printf( "\e[33m%-14s\e[0m", "SCF_THR");
+            printf( "\e[33m%-15s\e[0m", "ETOT(eV)");
+            if(GlobalV::KS_SOLVER=="cg")
+            {
+                printf( "\e[33m%-15s\e[0m", "CG_ITER");
+            }
+            printf( "\e[33m%-11s\e[0m\n", "TIME(s)");
         }
-
-        std::cout<<std::setw(15)<< "ETOT(eV)"<<std::setw(15)<< "EDIFF(eV)"<<std::setw(11)<< "SCF_THR"; // pengfei Li added 2015-1-31
-        //if(GlobalV::DIAGO_TYPE=="cg") xiaohui modify 2013-09-02
-        if(GlobalV::KS_SOLVER=="cg") //xiaohui add 2013-09-02
+        else
         {
-            std::cout<<std::setw(11)<<"CG_ITER";
-        }
+            std::cout << " " << std::setw(7) << "ITER";
 
-        std::cout<<std::setw(11)<< "TIME(S)";
-        std::cout<<std::endl;
-    }
-    else
-    {
+            if(GlobalV::NSPIN==2)
+            {
+                std::cout << std::setw(10) << "TMAG";
+                std::cout << std::setw(10) << "AMAG";
+            }
 
-    }
+            std::cout << std::setw(15) << "ETOT(eV)";
+            std::cout << std::setw(15) << "EDIFF(eV)";
+            std::cout << std::setw(11) << "SCF_THR";
+            if(GlobalV::KS_SOLVER == "cg")
+            {
+                std::cout << std::setw(11) << "CG_ITER";
+            }
+			std::cout << std::setw(11) << "TIME(s)" << std::endl;
+		}
+	}
+
+    // if(GlobalV::OUT_LEVEL=="ie")
+    // {
+    //     std::cout << std::setprecision(12);
+    //     std::cout<< " " << std::setw(7)<< "ITER"; // pengfei Li added 2015-1-31
+
+    //     if(GlobalV::NSPIN==2)
+    //     {
+    //         std::cout<<std::setw(10)<<"TMAG";
+    //         std::cout<<std::setw(10)<<"AMAG";
+    //     }
+
+    //     std::cout<<std::setw(15)<< "ETOT(eV)"<<std::setw(15)<< "EDIFF(eV)"<<std::setw(11)<< "SCF_THR"; // pengfei Li added 2015-1-31
+    //     //if(GlobalV::DIAGO_TYPE=="cg") xiaohui modify 2013-09-02
+    //     if(GlobalV::KS_SOLVER=="cg") //xiaohui add 2013-09-02
+    //     {
+    //         std::cout<<std::setw(11)<<"CG_ITER";
+    //     }
+
+    //     std::cout<<std::setw(11)<< "TIME(S)";
+    //     std::cout<<std::endl;
+    // }
+    // else
+    // {
+
+    // }
 
     Symmetry_rho srho;
     for(int is=0; is<GlobalV::NSPIN; is++)

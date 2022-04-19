@@ -12,13 +12,17 @@
 #include "../module_orbital/ORB_read.h"
 #include "../module_orbital/ORB_gen_tables.h"
 #include "../src_parallel/subgrid_oper.h"
+#ifdef __EXX
 #include "../src_ri/exx_lcao.h"
+#endif
 
 namespace GlobalC
 {
 extern Grid_Driver GridD;
 extern Pdiag_Double ParaO;
 extern SubGrid_oper SGO; //mohan add 2012-01-12
+#ifdef __EXX
 extern Exx_Lcao exx_lcao; // Peize Lin add 2016-12-03
+#endif
 }
 #endif

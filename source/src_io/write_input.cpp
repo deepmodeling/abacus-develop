@@ -205,12 +205,27 @@ void Input::Print(const std::string &fn) const
     ModuleBase::GlobalFunc::OUTP(ofs, "dos_scale", dos_scale, "scale dos range by");
     ModuleBase::GlobalFunc::OUTP(ofs, "dos_sigma", b_coef, "gauss b coefficeinet(default=0.07)");
 
-    ofs << "\n#Parameters (8.Technique)" << std::endl;
-    ModuleBase::GlobalFunc::OUTP(ofs, "gamma_only", gamma_only, "gamma only, only used in LCAO basis");
-    ModuleBase::GlobalFunc::OUTP(ofs, "diago_proc", GlobalV::DIAGO_PROC, "number of proc used to diago");
-    ModuleBase::GlobalFunc::OUTP(ofs, "kpar", kpar, "number of pools for k points, pw only");
-    ModuleBase::GlobalFunc::OUTP(ofs, "mem_saver", mem_saver, "memory saver for many k points used");
-    ModuleBase::GlobalFunc::OUTP(ofs, "printe", printe, "print band energy for selectively ionic steps");
+	ofs << "\n#Parameters (9.Molecular dynamics)" << std::endl;
+	ModuleBase::GlobalFunc::OUTP(ofs,"md_type",mdp.md_type,"choose ensemble");
+    ModuleBase::GlobalFunc::OUTP(ofs,"md_nstep",mdp.md_nstep,"md steps");
+	ModuleBase::GlobalFunc::OUTP(ofs,"md_ensolver",mdp.md_ensolver,"choose potential");
+	ModuleBase::GlobalFunc::OUTP(ofs,"md_dt",mdp.md_dt,"time step");
+	ModuleBase::GlobalFunc::OUTP(ofs,"md_mnhc",mdp.md_mnhc,"number of Nose-Hoover chains");
+	ModuleBase::GlobalFunc::OUTP(ofs,"md_tfirst",mdp.md_tfirst,"temperature first");
+	ModuleBase::GlobalFunc::OUTP(ofs,"md_tlast",mdp.md_tlast,"temperature last");
+	ModuleBase::GlobalFunc::OUTP(ofs,"md_dumpfreq",mdp.md_dumpfreq,"The period to dump MD information");
+	ModuleBase::GlobalFunc::OUTP(ofs,"md_restartfreq",mdp.md_restartfreq,"The period to output MD restart information");
+	ModuleBase::GlobalFunc::OUTP(ofs,"md_restart",mdp.md_restart,"whether restart");
+	ModuleBase::GlobalFunc::OUTP(ofs,"lj_rcut",mdp.lj_rcut,"cutoff radius of LJ potential");
+	ModuleBase::GlobalFunc::OUTP(ofs,"lj_epsilon",mdp.lj_epsilon,"the value of epsilon for LJ potential");
+	ModuleBase::GlobalFunc::OUTP(ofs,"lj_sigma",mdp.lj_sigma,"the value of sigma for LJ potential");
+	ModuleBase::GlobalFunc::OUTP(ofs,"msst_direction",mdp.msst_direction,"the direction of shock wave");
+	ModuleBase::GlobalFunc::OUTP(ofs,"msst_vel",mdp.msst_vel,"the velocity of shock wave");
+	ModuleBase::GlobalFunc::OUTP(ofs,"msst_vis",mdp.msst_vis,"artificial viscosity");
+	ModuleBase::GlobalFunc::OUTP(ofs,"msst_tscale",mdp.msst_tscale,"reduction in initial temperature");
+	ModuleBase::GlobalFunc::OUTP(ofs,"msst_qmass",mdp.msst_qmass,"mass of thermostat");
+	ModuleBase::GlobalFunc::OUTP(ofs,"md_tfreq",mdp.md_tfreq,"oscillation frequency, used to determine qmass of NHC");
+	ModuleBase::GlobalFunc::OUTP(ofs,"md_damp",mdp.md_damp,"damping parameter (time units) used to add force in Langevin method");
 
     ofs << "\n#Parameters (9.Molecular dynamics)" << std::endl;
     ModuleBase::GlobalFunc::OUTP(ofs, "md_type", mdp.md_type, "choose ensemble");

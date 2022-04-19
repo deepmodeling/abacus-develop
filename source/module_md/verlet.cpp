@@ -25,6 +25,15 @@ Verlet::Verlet(MD_parameters& MD_para_in, UnitCell_pseudo &unit_in):
     mdp.md_tfirst /= ModuleBase::Hartree_to_K;
     mdp.md_tlast /= ModuleBase::Hartree_to_K;
 
+    if(mdp.md_tfreq == 0)
+    {
+        mdp.md_tfreq = 1.0/40.0/mdp.md_dt;
+    }
+    else
+    {
+        mdp.md_tfreq *= ModuleBase::AU_to_FS;
+    }
+
     // LJ parameters
     mdp.lj_rcut *= ModuleBase::ANGSTROM_AU;
 	mdp.lj_epsilon /= ModuleBase::Hartree_to_eV;
@@ -94,19 +103,9 @@ void Verlet::second_half()
     }
 }
 
-void Verlet::outputMD()
+void Verlet::outputMD(std::ofstream &ofs)
 {
     if(GlobalV::MY_RANK) return;
-
-	std::ofstream ofs;
-	if(step_ + step_rst_ == 0)
-	{
-		ofs.open("run.log", ios::trunc);
-	}
-	else
-	{
-		ofs.open("run.log", ios::app);
-	}
 
     temperature_ = 2*kinetic/(double(3*ucell.nat-frozen_freedom_))*ModuleBase::Hartree_to_K;
 
@@ -117,7 +116,7 @@ void Verlet::outputMD()
         press += stress(i,i)/3;
     }
 
-    // std::cout << std::setprecision(6) << std::setiosflags(ios::showpos) << std::setiosflags(ios::fixed);
+    std::cout << " ------------------------------------------------------------------------------------------------" << std::endl;
     std::cout << " " << std::left << std::setw(20) << "Energy" 
             << std::left << std::setw(20) << "Potential" 
             << std::left << std::setw(20) << "Kinetic" 
@@ -128,25 +127,25 @@ void Verlet::outputMD()
             << std::left << std::setw(20) << kinetic
             << std::left << std::setw(20) << temperature_
             << std::left << std::setw(20) << press*unit_transform <<std::endl;
-	std::cout << " ------------------------------------------------------------" << std::endl;
-    MD_func::outStress(virial, stress);
+	std::cout << " ------------------------------------------------------------------------------------------------" << std::endl;
 
-    if(step_ == 0)
-	{
-		ofs << std::left << std::setw(20) << "Step" 
-            << std::left << std::setw(20) << "Energy" 
-            << std::left << std::setw(20) << "Potential" 
-            << std::left << std::setw(20) << "Kinetic" 
-            << std::left << std::setw(20) << "Temperature" 
-            << std::left << std::setw(20) << "Pressure (KBAR)" <<std::endl;
-	}
-    ofs << std::left << std::setw(20) << step_ + step_rst_
-        << std::left << std::setw(20) << potential+kinetic
+    ofs << std::endl;
+    ofs << std::endl;
+    ofs << " ------------------------------------------------------------------------------------------------" << std::endl;
+	ofs << " " << std::left << std::setw(20) << "Energy" 
+        << std::left << std::setw(20) << "Potential" 
+        << std::left << std::setw(20) << "Kinetic" 
+        << std::left << std::setw(20) << "Temperature" 
+        << std::left << std::setw(20) << "Pressure (KBAR)" <<std::endl;
+    ofs << " " << std::left << std::setw(20) << potential+kinetic
         << std::left << std::setw(20) << potential
         << std::left << std::setw(20) << kinetic
         << std::left << std::setw(20) << temperature_
         << std::left << std::setw(20) << press*unit_transform <<std::endl;
-    ofs.close();
+    ofs << " ------------------------------------------------------------------------------------------------" << std::endl;
+    MD_func::outStress(virial, stress);
+    ofs << std::endl;
+    ofs << std::endl;
 }
 
 void Verlet::write_restart()
