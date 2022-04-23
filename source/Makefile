@@ -14,6 +14,7 @@ VPATH=./src_global\
 :./module_cell\
 :./module_base\
 :./module_md\
+:./module_surchem\
 :./module_deepks\
 :./module_xc\
 :./module_esolver\

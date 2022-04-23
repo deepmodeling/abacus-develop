@@ -367,6 +367,15 @@ pzt2s.o\
 pdtrsm.o\
 pzhtrsm.o\
 
+OBJS_SURCHEM=cal_epsilon.o\
+cal_pseudo.o\
+cal_totn.o\
+cal_vcav.o\
+cal_vel.o\
+corrected_energy.o\
+H_correction_pw.o\
+minimize_cg.o\
+
 PDIAG_MR_0=dcopy.o\
 dlae2.o\
 dlaebz.o\
