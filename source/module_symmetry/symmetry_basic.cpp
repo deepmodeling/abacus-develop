@@ -6,6 +6,7 @@
 //#include "../src_pw/global.h"
 #include "../module_base/mymath.h"
 //#include "symm_other.h"
+bool ModuleSymmetry::test_brav = 0;
 
 namespace ModuleSymmetry
 {
@@ -811,7 +812,11 @@ void Symmetry_Basic::setgroup(ModuleBase::Matrix3* symop, int &nop, const int &i
 		this->matrigen(symgen, 3, symop, nop);
 	}
 
-	ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"ROTATION MATRICES",nop);
+	if(test_brav)
+	{
+		ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"ROTATION MATRICES",nop);
+	}
+
 	if(GlobalV::test_symmetry > 1)
 	{
 		GlobalV::ofs_running<<" THERE ARE " << nop << " ROTATION MATRICES FOR THE PURE BRAVAIS LATTICE"<<std::endl;
@@ -939,14 +944,17 @@ void Symmetry_Basic::pointgroup(const int &nrot, int &pgnumber, std::string &pgn
 		else if(trace == -2 && det == -1) ++ns3; //mohan add 2012-01-15
 	}
 
-	ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"C2",nc2);
-	ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"C3",nc3);
-	ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"C4",nc4);
-	ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"C6",nc6);
-	ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"S1",ns1);
-	ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"S3",ns3);
-	ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"S4",ns4);
-	ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"S6",ns6);
+        if(test_brav)
+	{
+		ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"C2",nc2);
+		ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"C3",nc3);
+		ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"C4",nc4);
+		ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"C6",nc6);
+		ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"S1",ns1);
+		ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"S3",ns3);
+		ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"S4",ns4);
+		ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"S6",ns6);
+	}
 	
 	if(nrot == 2)
 	{

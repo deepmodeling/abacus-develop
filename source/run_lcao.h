@@ -22,8 +22,6 @@ class Run_lcao
 	// perform Linear Combination of Atomic Orbitals (LCAO) calculations
     static void lcao_line(ModuleESolver::ESolver *p_esolver);
 
-private:
-    static void Init_Basis_lcao(ORB_control& orb_con, Input& inp, UnitCell_pseudo& ucell);
 };
 
 #endif

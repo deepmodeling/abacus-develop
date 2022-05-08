@@ -3,11 +3,13 @@
 
 #include "../module_base/global_function.h"
 #include "../module_base/global_variable.h"
+#include "module_esolver/esolver_ks_lcao.h"
 
 class Threshold_Elec
 {
 
-	public:
+    friend class ModuleESolver::ESolver_KS_LCAO;
+public:
 
     // constructor and deconstructor
     Threshold_Elec();
@@ -15,16 +17,16 @@ class Threshold_Elec
 
 	protected:
 
-    double dr2;
+    double scf_thr;
 
     bool conv_elec;
 
-    void set_ethr() const;
+    void set_pw_diag_thr() const;
 
-    void update_ethr(const int &iter);
+    void update_pw_diag_thr(const int &iter);
 
 	// this should be moved to other places, mohan note 2021-03-03
-    void print_eigenvalue(std::ofstream &ofs);
+    static void print_eigenvalue(std::ofstream &ofs);
 };
 
 #endif

@@ -82,7 +82,7 @@ public:
 	// nrxx_start: starting nrxx in each processor 
     int nrxx_start;
 
-    int seed;
+    int pw_seed;
 
 private:
     void setup_FFT_dimension(void);	// set up FFT dimensions
@@ -265,5 +265,18 @@ public:
     int ggchg_time_global;
 
     void update_gvectors(std::ofstream &log, const UnitCell &Ucell_in);
+
+// S|psi> operator
+    void sPsi(const std::complex<double>* psi, std::complex<double>* spsi, int dim = 1)
+    {
+        if(spsi!=nullptr) {
+            delete[] spsi;
+            spsi = nullptr;
+        }
+
+        return;
+    }
+    //calculate max npw for all k points in this core
+    int setupIndGk(ModuleBase::IntArray& igk, std::vector<int>& ngk);
 };
 #endif //PlaneWave class

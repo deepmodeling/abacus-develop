@@ -13,9 +13,9 @@ class Pdiag_Double
 {
 
 public:
-    static int out_lowf;
-    static int out_hs; // mohan add 2010-09-02
-    static int out_hsR; // LiuXh add 2019-07-16
+    static int out_wfc_lcao;
+    static int out_mat_hs; // mohan add 2010-09-02
+    static int out_mat_hsR; // LiuXh add 2019-07-16
     Pdiag_Double();
     ~Pdiag_Double();
     

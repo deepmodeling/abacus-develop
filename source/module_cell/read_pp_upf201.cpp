@@ -126,7 +126,7 @@ int Pseudopot_upf::read_pseudo_upf201(std::ifstream &ifs)
 		ModuleBase::GlobalFunc::SCAN_BEGIN(ifs, "<PP_MESH>");
 	}
 
-	if (ModuleBase::GlobalFunc::SCAN_BEGIN(ifs, "<PP_R"))
+	if (ModuleBase::GlobalFunc::SCAN_BEGIN(ifs, "<PP_R", true, false))
 	{
 		ModuleBase::GlobalFunc::READ_VALUE(ifs, word); // type size columns
 		this->read_pseudo_upf201_r(ifs);
@@ -137,7 +137,7 @@ int Pseudopot_upf::read_pseudo_upf201(std::ifstream &ifs)
 	}
 	ModuleBase::GlobalFunc::SCAN_END(ifs, "</PP_R>");
 
-    if (ModuleBase::GlobalFunc::SCAN_BEGIN(ifs, "<PP_RAB"))
+    if (ModuleBase::GlobalFunc::SCAN_BEGIN(ifs, "<PP_RAB", true, false))
 	{
 		ModuleBase::GlobalFunc::READ_VALUE(ifs, word); // type size columns
 		this->read_pseudo_upf201_rab(ifs);
@@ -222,7 +222,7 @@ int Pseudopot_upf::read_pseudo_upf201(std::ifstream &ifs)
 		ifs >> word; //number of beta
 	}
 
-	if (ModuleBase::GlobalFunc::SCAN_BEGIN(ifs, "<PP_DIJ"))
+	if (ModuleBase::GlobalFunc::SCAN_BEGIN(ifs, "<PP_DIJ", true, false))
 	{
 		ModuleBase::GlobalFunc::READ_VALUE(ifs, word);  // type size columns
 		this->read_pseudo_upf201_dij(ifs);
@@ -287,7 +287,7 @@ int Pseudopot_upf::read_pseudo_upf201(std::ifstream &ifs)
 	//--------------------------------------
 	//-          PP_RHOATOM                - 
 	//--------------------------------------
-	if (ModuleBase::GlobalFunc::SCAN_BEGIN(ifs, "<PP_RHOATOM"))
+	if (ModuleBase::GlobalFunc::SCAN_BEGIN(ifs, "<PP_RHOATOM", true, false))
 	{
 		ModuleBase::GlobalFunc::READ_VALUE(ifs, word); // type size columns
 		this->read_pseudo_upf201_rhoatom(ifs);
@@ -301,7 +301,7 @@ int Pseudopot_upf::read_pseudo_upf201(std::ifstream &ifs)
 	//--------------------------------------
 	//-          PP_SPIN_ORB               - 
 	//--------------------------------------
-	ModuleBase::GlobalFunc::SCAN_BEGIN(ifs, "<PP_SPIN_ORB>");
+	ModuleBase::GlobalFunc::SCAN_BEGIN(ifs, "<PP_SPIN_ORB>", true, false);
 	//added by zhengdy-soc
 	delete[] this->jchi;
 	delete[] this->jjj;
@@ -378,13 +378,13 @@ int Pseudopot_upf::read_pseudo_upf201(std::ifstream &ifs)
 			break;
 		}
 	}
-	ModuleBase::GlobalFunc::SCAN_END(ifs, "</PP_SPIN_ORB>");
+	ModuleBase::GlobalFunc::SCAN_END(ifs, "</PP_SPIN_ORB>", false);
 	if (mesh%2 == 0)
 	{
 		mesh -= 1;
 	}
 	
-	ModuleBase::GlobalFunc::SCAN_END(ifs, "</UPF>");
+	ModuleBase::GlobalFunc::SCAN_END(ifs, "</UPF>", false);
 	delete []name;
 	delete []val;
 	

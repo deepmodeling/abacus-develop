@@ -96,7 +96,7 @@ void Potential::set_vrs_tddft(const int istep)
 					const double sigmasquare = 700;
 					const double timecenter = 700;
 					//Notice: these three parameters should be written in INPUT. I will correct soon.
-					const double timenow = (istep-timecenter)*ELEC_evolve::td_dr2*41.34; //41.34 is conversion factor of fs-a.u.
+					const double timenow = (istep-timecenter)*ELEC_evolve::td_scf_thr*41.34; //41.34 is conversion factor of fs-a.u.
 					this->vext[ir] = this->vextold[ir]*cos(w/27.2116*timenow)*exp(-timenow*timenow*0.5/(sigmasquare))*0.25;  //0.1 is modified in 2018/1/12
 				}
 
@@ -110,15 +110,15 @@ void Potential::set_vrs_tddft(const int istep)
 					// The parameters should be written in INPUT!
 					if(istep < stepcut1)
 					{
-						this->vext[ir] = this->vextold[ir]*2.74*istep/stepcut1*cos(w_h*istep*ELEC_evolve::td_dr2*41.34);	// 2.74 is equal to E0;
+						this->vext[ir] = this->vextold[ir]*2.74*istep/stepcut1*cos(w_h*istep*ELEC_evolve::td_scf_thr*41.34);	// 2.74 is equal to E0;
 					}
 					else if(istep < stepcut2)
 					{
-						this->vext[ir] = this->vextold[ir]*2.74*cos(w_h*istep*ELEC_evolve::td_dr2*41.34);
+						this->vext[ir] = this->vextold[ir]*2.74*cos(w_h*istep*ELEC_evolve::td_scf_thr*41.34);
 					}
 					else if(istep < stepcut3)
 					{
-						this->vext[ir] = this->vextold[ir]*2.74*(stepcut3-istep)/stepcut1*cos(w_h*istep*ELEC_evolve::td_dr2*41.34);
+						this->vext[ir] = this->vextold[ir]*2.74*(stepcut3-istep)/stepcut1*cos(w_h*istep*ELEC_evolve::td_scf_thr*41.34);
 					}
 				}
 
@@ -128,7 +128,7 @@ void Potential::set_vrs_tddft(const int istep)
 				{
 					const double w_h2 = 0.0428;  //a.u.
 					const double w_h3 = 0.00107;  //a.u.
-					const double timenow = (istep)*ELEC_evolve::td_dr2*41.34;
+					const double timenow = (istep)*ELEC_evolve::td_scf_thr*41.34;
 					// The parameters should be written in INPUT!
 
 					//this->vext[ir] = this->vextold[ir]*2.74*cos(0.856*timenow)*sin(0.0214*timenow)*sin(0.0214*timenow);

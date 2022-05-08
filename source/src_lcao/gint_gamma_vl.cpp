@@ -27,41 +27,6 @@ extern "C"
     void Cblacs_pcoord(int icontxt, int pnum, int *prow, int *pcol);
 }
 
-// atomic basis sets
-// psir_vlbr3[GlobalC::pw.bxyz][LD_pool]
-Gint_Tools::Array_Pool<double> get_psir_vlbr3(
-	const int na_grid,  					    // how many atoms on this (i,j,k) grid
-	const int LD_pool,
-	const int*const block_index,		    	// block_index[na_grid+1], count total number of atomis orbitals
-	const bool*const*const cal_flag,	    	// cal_flag[GlobalC::pw.bxyz][na_grid],	whether the atom-grid distance is larger than cutoff
-	const double*const vldr3,			    	// vldr3[GlobalC::pw.bxyz]
-	const double*const*const psir_ylm)		    // psir_ylm[GlobalC::pw.bxyz][LD_pool]
-{
-	Gint_Tools::Array_Pool<double> psir_vlbr3(GlobalC::pw.bxyz, LD_pool);
-	for(int ib=0; ib<GlobalC::pw.bxyz; ++ib)
-	{
-        for(int ia=0; ia<na_grid; ++ia)
-        {
-            if(cal_flag[ib][ia])
-            {
-                for(int i=block_index[ia]; i<block_index[ia+1]; ++i)
-                {
-                    psir_vlbr3.ptr_2D[ib][i]=psir_ylm[ib][i]*vldr3[ib];
-                }
-            }
-            else
-            {
-                for(int i=block_index[ia]; i<block_index[ia+1]; ++i)
-                {
-                    psir_vlbr3.ptr_2D[ib][i]=0;
-                }
-            }
-
-        }
-	}
-    return psir_vlbr3;
-}
-
 void Gint_Gamma::cal_meshball_vlocal(
 	const int na_grid,  					    // how many atoms on this (i,j,k) grid
 	const int LD_pool,
@@ -217,25 +182,20 @@ inline int setBufferParameter(
         for(int irow=0, grow=0; grow<GlobalV::NLOCAL; ++irow)
         {
             grow=Local_Orbital_wfc::globalIndex(irow, nblk, nprows, iprow);
-            int lrow=GlobalC::GridT.trace_lo[grow];
-
-            if(lrow < 0 || grow >= GlobalV::NLOCAL) continue;
+            if (grow >= GlobalV::NLOCAL)
+                continue;
+            int lrow = GlobalC::GridT.trace_lo[grow];
+            if (lrow < 0)
+                continue;
 
             for(int icol=0, gcol=0; gcol<GlobalV::NLOCAL; ++icol)
             {
                 gcol=Local_Orbital_wfc::globalIndex(icol,nblk, npcols, ipcol);
-                int lcol=GlobalC::GridT.trace_lo[gcol];
-                if(lcol < 0 || gcol >= GlobalV::NLOCAL) continue;
-                // if(pos<0 || pos >= current_s_index_siz)
-                // {
-                //     OUT(GlobalV::ofs_running, "pos error, pos:", pos);
-                //     OUT(GlobalV::ofs_running, "irow:", irow);
-                //     OUT(GlobalV::ofs_running, "icol:", icol);
-                //     OUT(GlobalV::ofs_running, "grow:", grow);
-                //     OUT(GlobalV::ofs_running, "gcol:", gcol);
-                //     OUT(GlobalV::ofs_running, "lrow:", grow);
-                //     OUT(GlobalV::ofs_running, "lcol:", gcol);
-                // }
+                if (gcol >= GlobalV::NLOCAL)
+                    continue;
+                int lcol = GlobalC::GridT.trace_lo[gcol];
+                if (lcol < 0)
+                    continue;
                 s_global_index[pos]=grow;
                 s_global_index[pos+1]=gcol;
                 s_local_index[pos]=lrow;
@@ -365,7 +325,7 @@ Gint_Tools::Array_Pool<double> Gint_Gamma::gamma_vlocal(const double*const vloca
 						// whether the atom-grid distance is larger than cutoff
 						//------------------------------------------------------
 						bool **cal_flag = Gint_Tools::get_cal_flag(na_grid, grid_index);
-						
+
 						//------------------------------------------------------------------
 						// compute atomic basis phi(r) with both radial and angular parts
 						//------------------------------------------------------------------
@@ -378,7 +338,7 @@ Gint_Tools::Array_Pool<double> Gint_Gamma::gamma_vlocal(const double*const vloca
 						//------------------------------------------------------------------
 						double *vldr3 = this->get_vldr3(vlocal, ncyz, ibx, jby, kbz);
 
-                        const Gint_Tools::Array_Pool<double> psir_vlbr3 = get_psir_vlbr3(
+                        const Gint_Tools::Array_Pool<double> psir_vlbr3 = Gint_Tools::get_psir_vlbr3(
                                 na_grid, LD_pool, block_index, cal_flag, vldr3, psir_ylm.ptr_2D);
 
 						//------------------------------------------------------------------
@@ -387,7 +347,7 @@ Gint_Tools::Array_Pool<double> Gint_Gamma::gamma_vlocal(const double*const vloca
 						this->cal_meshball_vlocal(
 							na_grid, LD_pool, block_iw, block_size, block_index, cal_flag,
 							vldr3, psir_ylm.ptr_2D, psir_vlbr3.ptr_2D, lgd_now, GridVlocal_thread.ptr_2D);
-						
+
 						free(vldr3);		vldr3=nullptr;
                         delete[] block_iw;
                         delete[] block_index;
@@ -425,10 +385,10 @@ Gint_Tools::Array_Pool<double> Gint_Gamma::gamma_vlocal(const double*const vloca
     MPI_Barrier(MPI_COMM_WORLD);
 #endif
     ModuleBase::timer::tick("Gint_Gamma","distri_vl");
-	
+
 	return GridVlocal;
 }
-	
+
 void Gint_Gamma::vl_grid_to_2D(const Gint_Tools::Array_Pool<double> &GridVlocal, LCAO_Matrix &lm)
 {
     // setup send buffer and receive buffer size
@@ -489,7 +449,7 @@ void Gint_Gamma::vl_grid_to_2D(const Gint_Tools::Array_Pool<double> &GridVlocal,
         //     OUT(GlobalV::ofs_running, "g_col:", g_col);
         //     OUT(GlobalV::ofs_running, "g_col:", g_col);
         // }
-        lm.set_HSgamma(g_row,g_col,this->receiver_buffer[i/2],'L');
+        lm.set_HSgamma(g_row,g_col,this->receiver_buffer[i/2],'L', lm.Hloc.data());
     }
 
     ModuleBase::timer::tick("Gint_Gamma","distri_vl_value");

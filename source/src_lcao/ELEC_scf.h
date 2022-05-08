@@ -27,7 +27,7 @@ class ELEC_scf: private Threshold_Elec
 	ELEC_scf();
 	~ELEC_scf();
 
-	private:
+	//private:
 
     void scf(const int& istep,
         Local_Orbital_Charge& loc,

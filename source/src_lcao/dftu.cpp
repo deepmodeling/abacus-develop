@@ -97,14 +97,14 @@ void DFTU::init(
 		
 	this->EU = 0.0;
 
-	if(GlobalV::FORCE)
+	if(GlobalV::CAL_FORCE)
 	{
 		this->force_dftu.resize(cell.nat);
 		for(int ia=0; ia<cell.nat; ia++)
 			this->force_dftu.at(ia).resize(3, 0.0);
 	}
 
-	if(GlobalV::STRESS)
+	if(GlobalV::CAL_STRESS)
 	{
 		this->stress_dftu.resize(3);
 		for(int dim=0; dim<3; dim++)
@@ -253,7 +253,7 @@ void DFTU::init(
 		}
  	}
 
-	if(GlobalV::CALCULATION=="nscf")
+	if(GlobalV::CALCULATION=="nscf" || GlobalC::pot.init_chg == "file")
 	{
 		std::stringstream sst; 
 		sst << GlobalV::global_out_dir << "onsite.dm"; 
@@ -999,7 +999,7 @@ void DFTU::cal_energy_correction(const int istep)
 {
 	ModuleBase::TITLE("DFTU", "cal_energy_correction");
 	ModuleBase::timer::tick("DFTU", "cal_energy_correction");
-	if((GlobalV::CALCULATION=="scf" || GlobalV::CALCULATION=="relax" || GlobalV::CALCULATION=="cell-relax") && (!omc) && istep==0 && this->iter_dftu==1)
+	if((GlobalV::CALCULATION=="scf" || GlobalV::CALCULATION=="relax" || GlobalV::CALCULATION=="cell-relax") && (!omc) && istep==0 && this->iter_dftu==1 && GlobalC::pot.init_chg != "file")
 	{
 		ModuleBase::timer::tick("DFTU", "cal_energy_correction"); 
 		return;
@@ -1164,7 +1164,7 @@ void DFTU::cal_eff_pot_mat_complex(const int ik, const int istep, std::complex<d
 {
 	ModuleBase::TITLE("DFTU", "cal_eff_pot_mat");
 	ModuleBase::timer::tick("DFTU", "cal_eff_pot_mat");
- 	if((GlobalV::CALCULATION=="scf" || GlobalV::CALCULATION=="relax" || GlobalV::CALCULATION=="cell-relax") && (!omc) && istep==0 && this->iter_dftu==1)
+ 	if((GlobalV::CALCULATION=="scf" || GlobalV::CALCULATION=="relax" || GlobalV::CALCULATION=="cell-relax") && (!omc) && istep==0 && this->iter_dftu==1 && GlobalC::pot.init_chg != "file")
 	{
 		ModuleBase::timer::tick("DFTU", "cal_eff_pot_mat");
 		return;
@@ -1256,7 +1256,7 @@ void DFTU::cal_eff_pot_mat_real(const int ik, const int istep, double* eff_pot)
 {
 	ModuleBase::TITLE("DFTU", "cal_eff_pot_mat");
 	ModuleBase::timer::tick("DFTU", "cal_eff_pot_mat");
- 	if((GlobalV::CALCULATION=="scf" || GlobalV::CALCULATION=="relax" || GlobalV::CALCULATION=="cell-relax") && (!omc) && istep==0 && this->iter_dftu==1)
+ 	if((GlobalV::CALCULATION=="scf" || GlobalV::CALCULATION=="relax" || GlobalV::CALCULATION=="cell-relax") && (!omc) && istep==0 && this->iter_dftu==1 && GlobalC::pot.init_chg != "file")
 	{
 		ModuleBase::timer::tick("DFTU", "cal_eff_pot_mat");
 		return;
@@ -1347,6 +1347,13 @@ void DFTU::cal_eff_pot_mat_real(const int ik, const int istep, double* eff_pot)
 void DFTU::output()
 {
 	ModuleBase::TITLE("DFTU", "output");
+
+    if(GlobalC::CHR.out_chg)
+	{
+		std::stringstream sst;
+		sst << GlobalV::global_out_dir << "onsite.dm";
+		this->write_occup_m( sst.str() );
+	}
 	
 	GlobalV::ofs_running << "//=========================L(S)DA+U===========================//" << std::endl;
 

@@ -20,10 +20,13 @@ class Charge_Broyden: public Charge_Pulay
 	public:
 	Charge_Broyden();
 	~Charge_Broyden();
+	double get_drho();
 
-    void mix_rho(double &dr2,const double &tr2_min,
+    void mix_rho(const int &iter);// mix rho
+	//tmp , it should be replaced by get_drho and mix_rho after all KS_ESolver uses the same scf process
+	void tmp_mixrho(double &scf_thr,const double &tr2_min,
                  const double &tr2,const int &iter,
-                 bool &converged);// mix rho
+                 bool &converged);
 
 	private:
 

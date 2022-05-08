@@ -12,9 +12,9 @@ class IState_Envelope
 	~IState_Envelope();
 
     /// for gamma_only
-    void begin(Local_Orbital_wfc& lowf, Gint_Gamma& gg, int& out_wf, int& out_wf_r);
+    void begin(Local_Orbital_wfc& lowf, Gint_Gamma& gg, int& out_wfc_pw, int& out_wfc_r);
     /// for multi-k
-    void begin(Local_Orbital_wfc& lowf, Gint_k& gk, int& out_wf, int& out_wf_r);
+    void begin(Local_Orbital_wfc& lowf, Gint_k& gk, int& out_wfc_pw, int& out_wfc_r);
 
 private:
 	bool *bands_picked;

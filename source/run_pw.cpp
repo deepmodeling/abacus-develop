@@ -21,9 +21,9 @@ void Run_pw::plane_wave_line(ModuleESolver::ESolver *p_esolver)
     // improvement: a) separating the first reading of the atom_card and subsequent
     // cell relaxation. b) put GlobalV::NLOCAL and GlobalV::NBANDS as input parameters
 #ifdef __LCAO
-    GlobalC::ucell.setup_cell( GlobalC::ORB, GlobalV::global_pseudo_dir, GlobalV::global_atom_card, GlobalV::ofs_running);
+    GlobalC::ucell.setup_cell( GlobalC::ORB, GlobalV::global_pseudo_dir, GlobalV::stru_file, GlobalV::ofs_running);
 #else
-    GlobalC::ucell.setup_cell( GlobalV::global_pseudo_dir, GlobalV::global_atom_card, GlobalV::ofs_running);
+    GlobalC::ucell.setup_cell( GlobalV::global_pseudo_dir, GlobalV::stru_file, GlobalV::ofs_running);
 #endif
 
     // mohan add 2010-10-10, just to test the symmetry of a variety
@@ -108,8 +108,7 @@ void Run_pw::plane_wave_line(ModuleESolver::ESolver *p_esolver)
 		opt.cal_epsilon2(GlobalV::NBANDS);
 	}
 
-	// compute density of states
-	GlobalC::en.perform_dos_pw();
+    p_esolver->postprocess();
 
 	ModuleBase::timer::tick("Run_pw","plane_wave_line");
     return;

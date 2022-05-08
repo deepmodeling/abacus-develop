@@ -4,10 +4,10 @@ ntype			1
 ecutwfc			40
 nbands          	4
 calculation     	nscf
-niter			40
-ethr                    1.0e-12
-dr2             	1.0e-15
-start_charge            file
+scf_nmax			40
+pw_diag_thr                    1.0e-12
+scf_thr             	1.0e-15
+init_chg            file
 out_band                1
 towannier90             1
 nnkpfile                seedname.nnkp

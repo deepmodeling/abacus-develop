@@ -63,7 +63,7 @@ private:
 
 	void pbcgdisp(
 		std::vector<ModuleBase::Vector3<double>> &g, 
-		ModuleBase::matrix &sigma);
+		ModuleBase::matrix &smearing_sigma);
 
 	void get_dc6_dcnij(
 		int &mxci, 

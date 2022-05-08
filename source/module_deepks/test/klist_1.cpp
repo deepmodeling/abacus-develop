@@ -117,19 +117,6 @@ namespace Test_Deepks
 	{
 
 		std::ifstream ifk(fn.c_str());
-		if (!ifk || GAMMA_ONLY_LOCAL) 
-		{
-			ofs_warning << " Gamma point only, auto generating k-points file: " << fn << std::endl;
-			std::ofstream ofs(fn.c_str());
-			ofs << "K_POINTS" << std::endl;
-			ofs << "0" << std::endl;
-			ofs << "Gamma" << std::endl;
-			ofs << "1 1 1 0 0 0" << std::endl;
-			ofs.close();
-			ifk.close();
-			std::ifstream ifk(fn.c_str());
-		}
-
 		ifk >> std::setiosflags(std::ios::uppercase);
 
 		ifk.clear();

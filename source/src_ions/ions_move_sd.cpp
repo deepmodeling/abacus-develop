@@ -94,7 +94,7 @@ void Ions_Move_SD::cal_tradius_sd(void)const
 
 	if(Ions_Move_Basic::istep==1)
 	{
-		Ions_Move_Basic::trust_radius = Ions_Move_Basic::trust_radius_ini;
+		Ions_Move_Basic::trust_radius = Ions_Move_Basic::relax_bfgs_init;
 	}
 	else if(Ions_Move_Basic::istep > 1)
 	{

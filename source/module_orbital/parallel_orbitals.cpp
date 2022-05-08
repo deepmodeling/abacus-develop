@@ -33,7 +33,7 @@ Parallel_Orbitals::~Parallel_Orbitals()
 {
     delete[] trace_loc_row;
     delete[] trace_loc_col;
-    delete loc_sizes;
+    delete[] loc_sizes;
     
     if (alloc_Z_LOC)//xiaohui add 2014-12-22
 	{
@@ -235,8 +235,16 @@ void ORB_control::divide_HS_2d
 	this->mpi_creat_cart(&pv->comm_2D,pv->dim0,pv->dim1, ofs_running);
 
 	// call mat_2d
-    this->mat_2d(pv->comm_2D, nlocal, nbands, pv->nb,
+    int try_nb = this->mat_2d(pv->comm_2D, nlocal, nbands, pv->nb,
         pv->MatrixInfo, ofs_running, ofs_warning);
+    if(try_nb==1)
+    {
+        ofs_running<<" parameter nb2d is too large: nb2d = "<<pv->nb<<std::endl;
+        ofs_running<<" reset nb2d to value 1, this set would make the program keep working but maybe get slower during diagonalization."<<std::endl;
+        pv->nb = 1;
+        try_nb = this->mat_2d(pv->comm_2D, nlocal, nbands, pv->nb,
+        pv->MatrixInfo, ofs_running, ofs_warning);
+    }
 
 	// mohan add 2010-06-29
 	pv->nrow = pv->MatrixInfo.row_num;

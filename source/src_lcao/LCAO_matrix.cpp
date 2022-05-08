@@ -143,7 +143,8 @@ void LCAO_Matrix::set_HSgamma(
     const int &iw1_all, // index i for atomic orbital (row)
     const int &iw2_all, // index j for atomic orbital (column)
     const double &v, // value for matrix element (i,j) 
-    const char &dtype) // type of the matrix
+    const char &dtype, // type of the matrix
+    double* HSloc) //input pointer for store the matrix
 {
     // use iw1_all and iw2_all to set Hloc
     // becareful! The ir and ic may be < 0 !!!
@@ -181,7 +182,7 @@ void LCAO_Matrix::set_HSgamma(
     // N : nonlocal H matrix element.
     // L : local H matrix element.
     //-----------------------------------
-    if (dtype=='S')
+    /*if (dtype=='S')
     {
         this->Sloc[index] += v;
     }
@@ -192,7 +193,9 @@ void LCAO_Matrix::set_HSgamma(
     else if (dtype=='L')
     {
         this->Hloc[index] += v;
-    }
+    }*/
+    //using input pointer HSloc
+    HSloc[index] += v;
 
     return;
 }

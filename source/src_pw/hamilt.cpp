@@ -89,14 +89,14 @@ void Hamilt::diagH_pw(
 				if(GlobalV::NPOL==1)
 				{
 						cg.diag(GlobalC::wf.evc[ik0], GlobalC::wf.ekb[ik], GlobalC::kv.ngk[ik], GlobalC::wf.npwx,
-						GlobalV::NBANDS, precondition, GlobalV::ETHR,
-						GlobalV::DIAGO_CG_MAXITER, reorder, notconv, avg);
+						GlobalV::NBANDS, precondition, GlobalV::PW_DIAG_THR,
+						GlobalV::PW_DIAG_NMAX, reorder, notconv, avg);
 				}
 				else
 				{
 					cg.diag(GlobalC::wf.evc[ik0], GlobalC::wf.ekb[ik], GlobalC::wf.npwx*GlobalV::NPOL, GlobalC::wf.npwx*GlobalV::NPOL,
-						GlobalV::NBANDS, precondition, GlobalV::ETHR,
-						GlobalV::DIAGO_CG_MAXITER, reorder, notconv, avg);
+						GlobalV::NBANDS, precondition, GlobalV::PW_DIAG_THR,
+						GlobalV::PW_DIAG_NMAX, reorder, notconv, avg);
 				}
 				// P.S. : nscf is the flag about reorder.
 				// if diagH_subspace is done once,
@@ -110,14 +110,14 @@ void Hamilt::diagH_pw(
 				if(GlobalV::NPOL==1)
 				{
 					david.diag(GlobalC::wf.evc[ik0], GlobalC::wf.ekb[ik], GlobalC::kv.ngk[ik],
-						GlobalV::NBANDS, precondition, GlobalV::DIAGO_DAVID_NDIM,
-				 		GlobalV::ETHR, GlobalV::DIAGO_CG_MAXITER, notconv, avg);
+						GlobalV::NBANDS, precondition, GlobalV::PW_DIAG_NDIM,
+				 		GlobalV::PW_DIAG_THR, GlobalV::PW_DIAG_NMAX, notconv, avg);
 				}
 				else
 				{
 					david.diag(GlobalC::wf.evc[ik0], GlobalC::wf.ekb[ik], GlobalC::wf.npwx*GlobalV::NPOL,
-						GlobalV::NBANDS, precondition, GlobalV::DIAGO_DAVID_NDIM,
-						GlobalV::ETHR, GlobalV::DIAGO_CG_MAXITER, notconv, avg);
+						GlobalV::NBANDS, precondition, GlobalV::PW_DIAG_NDIM,
+						GlobalV::PW_DIAG_THR, GlobalV::PW_DIAG_NMAX, notconv, avg);
 				}
         	}
         	else

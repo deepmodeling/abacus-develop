@@ -1,6 +1,7 @@
 #include "./stress_func.h"
 #include "./H_Ewald_pw.h"
 #include "../module_base/timer.h"
+#include "global.h"
 
 //calcualte the Ewald stress term in PW and LCAO
 void Stress_Func::stress_ewa(ModuleBase::matrix& sigma, const bool is_pw)

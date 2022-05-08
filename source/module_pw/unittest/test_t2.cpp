@@ -19,7 +19,7 @@ using namespace std;
 int main(int argc,char **argv)
 {
     int nproc, myrank;
-    int nproc_in_pool, npool, mypool, rank_in_pool;
+    int nproc_in_pool, kpar, mypool, rank_in_pool;
     ModulePW::PW_Basis pwtest;
     ModuleBase::Matrix3 latvec;
     int nx,ny,nz;  //f*G
@@ -31,19 +31,19 @@ int main(int argc,char **argv)
     ModuleBase::Matrix3 la(1, 0, 0, 0, 1, 0, 0, 0, 1);
     latvec = la;
     wfcecut = 160;
-    npool = 1;
+    kpar = 1;
     gamma_only = true;
     //--------------------------------------------------
 
     //setup mpi
 #ifdef __MPI
     setupmpi(argc,argv,nproc, myrank);
-    divide_pools(nproc, myrank, nproc_in_pool, npool, mypool, rank_in_pool);
+    divide_pools(nproc, myrank, nproc_in_pool, kpar, mypool, rank_in_pool);
 #else
-    nproc = nproc_in_pool = npool = 1;
+    nproc = nproc_in_pool = kpar = 1;
     myrank = mypool = rank_in_pool = 0;
 #endif
-    //cout<<nproc<<" d "<<myrank<<" d "<<nproc_in_pool<<" "<<npool<<" "<<mypool<<" "<<rank_in_pool<<endl;
+    //cout<<nproc<<" d "<<myrank<<" d "<<nproc_in_pool<<" "<<kpar<<" "<<mypool<<" "<<rank_in_pool<<endl;
     // MPI_Barrier(MPI_COMM_WORLD);
     // if(myrank==0) ProfilerStart("test0.prof");
     // if(myrank==1) ProfilerStart("test1.prof");

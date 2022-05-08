@@ -1,5 +1,5 @@
 // MPI BUG FIX STEPS:
-// 1. add GlobalC::pw.nrxx_mpi ,used in sum_band_k , rho's Allgather
+// 1. add pw.nrxx_mpi ,used in sum_band_k , rho's Allgather
 // 2. change ./src_parallel/ft.cpp 's some group size
 // 3. delete condition justification in pw_and_columns distributins 2
 
@@ -110,7 +110,7 @@ void PW_Basis::set
 	this->bx = bx_in;
 	this->by = by_in;
 	this->bz = bz_in;
-    this->seed = seed_in;
+    this->pw_seed = seed_in;
     this->nbspline = nbspline_in;
 
     if (ecutwfc <= 0.00)
@@ -127,7 +127,7 @@ void PW_Basis::set
         this->wfac = ecutrho/ecutwfc;
         if (wfac <= 1.0)
         {
-            ModuleBase::WARNING_QUIT("input","GlobalC::pw.wfac <= 1.0 is not allowed !");
+            ModuleBase::WARNING_QUIT("input","pw.wfac <= 1.0 is not allowed !");
         }
     }
     return;
@@ -422,9 +422,9 @@ void PW_Basis::setup_gg(void)
             const double tmp2 = tmp * tmp ;
             if (this->ggwfc2 < tmp2) this->ggwfc2 = tmp2;
         }
-        //qianrui add 2021-8-13 to make different npool parameters can get the same results
+        //qianrui add 2021-8-13 to make different kpar parameters can get the same results
 #ifdef __MPI
-        if(seed > 0)    MPI_Allreduce(MPI_IN_PLACE, &ggwfc2, 1, MPI_DOUBLE, MPI_MAX , MPI_COMM_WORLD);
+        if(pw_seed > 0)    MPI_Allreduce(MPI_IN_PLACE, &ggwfc2, 1, MPI_DOUBLE, MPI_MAX , MPI_COMM_WORLD);
 #endif
     }
 
@@ -1140,3 +1140,107 @@ void PW_Basis::update_gvectors(std::ofstream &runlog, const UnitCell &Ucell_in)
 
     return;
 }
+
+//=======================================================
+//  find out all G vectors that |k+G|^2<=GPsi2 for each
+//  k point, and create indices ind_Gk(ngk,nk)
+//  between the G vectors in the
+//  k point array and the 1d Gvector array G1d[:].
+//  set npwx
+//  set igk
+//========================================================
+int PW_Basis::setupIndGk(ModuleBase::IntArray& igk, std::vector<int>& ngk)
+{
+	ModuleBase::TITLE("PW_Basis", "setupIndGk");
+	ModuleBase::timer::tick("PW_Basis", "setupIndGk");
+
+	//============================================
+	// Find out for each k point,
+	// how many planewave within the radius ggpsi
+	// and the index ind_Gk array
+	//============================================
+	int npw_max = 0;
+
+	//=============================================
+	// Done this in each cpu ( use nks,not nkstot )
+	// notice : using cartesian coordinate
+	//=============================================
+	for (int ik = 0; ik < this->Klist->nks; ik++)
+	{
+		int ng = 0;
+		for (int ig = 0; ig < this->ngmw; ig++)
+		{
+			const double gk2 = this->get_GPlusK_cartesian(ik, ig).norm2();
+			const double k2 = this->Klist->kvec_c[ik].norm2();
+			if (sqrt(this->gg[ig]) > sqrt(this->ggpsi) + sqrt(k2))
+			{
+				break;
+			}
+			if (gk2 <= this->ggpsi)
+			{
+				ng++;
+			}
+		}
+		ngk[ik] = ng;
+		if (npw_max < ng)
+		{
+			npw_max = ng;
+		}
+	}
+
+	if (GlobalV::test_wf > 1)
+		ModuleBase::GlobalFunc::OUT("npw_max", npw_max);
+	//----------------------------------------------------------
+	// EXPLAIN : correspondence K + G <- -> G
+	//----------------------------------------------------------
+	igk.create(this->Klist->nks, npw_max);
+	ModuleBase::Memory::record("PW_Basis", "igk", this->Klist->nks * npw_max, "int");
+
+	//----------------------------------------------------------
+	// EXPLAIN : Calculate again ! (Not a smart job)
+	//----------------------------------------------------------
+	for (int ik = 0; ik < this->Klist->nks; ik++)
+	{
+		int ng = 0;
+		for (int ig = 0; ig < this->ngmw; ig++)
+		{
+			const double gk2 = this->get_GPlusK_cartesian(ik, ig).norm2();
+			const double k2 = this->Klist->kvec_c[ik].norm2();
+			if (sqrt(this->gg[ig]) > sqrt(this->ggpsi) + sqrt(k2))
+			{
+				break;
+			}
+			if (gk2 <= this->ggpsi)
+			{
+				igk(ik, ng) = ig;
+				ng++;
+			}
+		}
+	}
+
+	bool out_gk = 0; // DIY! mohan 2011-10-03
+	if (out_gk)
+	{
+		std::stringstream ss;
+		ss << GlobalV::global_out_dir << "PW_GK" << GlobalV::MY_RANK + 1 << ".dat";
+		std::ofstream ofs(ss.str().c_str());
+		ofs << this->ggpsi << " (ggpsi, Ry)" << std::endl;
+		ofs << this->ggwfc << " (ggwfc, Ry)" << std::endl;
+		ofs << this->ggwfc2 << " (ggwfc2, Ry)" << std::endl;
+		ModuleBase::Vector3<double> f;
+		for (int ik = 0; ik < this->Klist->nks; ++ik)
+		{
+			ofs << ik + 1 << " (Index of k)" << std::endl;
+			ofs << this->ngmw << " (Number of plane waves)" << std::endl;
+			for (int ig = 0; ig < this->ngmw; ++ig)
+			{
+				f = this->get_GPlusK_cartesian(ik, ig);
+				ofs << f.x << " " << f.y << " " << f.z << " " << f.norm() << std::endl;
+			}
+		}
+		ofs.close();
+	}
+
+	ModuleBase::timer::tick("PW_Basis", "setupIndGk");
+	return npw_max;
+} // end setupIndGk()

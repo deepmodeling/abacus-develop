@@ -2,7 +2,7 @@ This test for:
 *Si-diamond
 *just gamma point
 *sg15 pseudopotential
-*smearing fixed
+*smearing_method fixed
 *ks_solver cg
 *mixing_type plain
 *mixing_beta 0.4

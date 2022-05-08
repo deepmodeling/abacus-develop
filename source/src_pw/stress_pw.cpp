@@ -2,6 +2,7 @@
 #include "vdwd2.h"
 #include "vdwd3.h"
 #include "../module_base/timer.h"
+#include "global.h"
 
 void Stress_PW::cal_stress(ModuleBase::matrix& sigmatot)
 {

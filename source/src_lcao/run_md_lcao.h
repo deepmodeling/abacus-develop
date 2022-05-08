@@ -11,10 +11,10 @@ class Run_MD_LCAO
 
 	public:
 
-	Run_MD_LCAO(Parallel_Orbitals &pv);
+	Run_MD_LCAO();
 	~Run_MD_LCAO();
 
-	void opt_cell(ORB_control &orb_con, ModuleESolver::ESolver *p_esolver);
+	void opt_cell(ModuleESolver::ESolver *p_esolver);
 	void opt_ions(ModuleESolver::ESolver *p_esolver);
 	void md_force_virial(ModuleESolver::ESolver *p_esolver,
 		const int &istep,
@@ -28,7 +28,6 @@ class Run_MD_LCAO
 	// electron charge density extropolation method
 	Charge_Extra CE;
     bool cellchange;
-    LCAO_Matrix LM_md;
 };
 
 #endif

@@ -157,7 +157,7 @@ void Charge_Extra::extrapolate_charge()
 	// just use atomic charge.
 	//-------------------------------------------------------
 
-	if(GlobalC::pot.extra_pot == "dm")//xiaohui modify 2015-02-01
+	if(GlobalC::pot.chg_extrap == "dm")//xiaohui modify 2015-02-01
 	{
 		if(GlobalV::BASIS_TYPE=="pw" || GlobalV::BASIS_TYPE=="lcao_in_pw")
 		{
@@ -169,7 +169,7 @@ void Charge_Extra::extrapolate_charge()
 		}
 	}
 	// "atomic" extrapolation
-	else if(GlobalC::pot.extra_pot == "atomic")
+	else if(GlobalC::pot.chg_extrap == "atomic")
 	{
 		double** rho_atom_old = new double*[GlobalV::NSPIN];
 		double** rho_atom_new = new double*[GlobalV::NSPIN];
@@ -216,7 +216,7 @@ void Charge_Extra::extrapolate_charge()
 
 	}
 	// "first-order" extrapolation
-	else if(GlobalC::pot.extra_pot == "first-order")
+	else if(GlobalC::pot.chg_extrap == "first-order")
 	{
 		double** rho_atom_old = new double*[GlobalV::NSPIN];
 		double** rho_atom_new = new double*[GlobalV::NSPIN];
@@ -274,7 +274,7 @@ void Charge_Extra::extrapolate_charge()
 	}
 
 	// "second-order" extrapolation of charge density
-	else if(GlobalC::pot.extra_pot == "second-order")
+	else if(GlobalC::pot.chg_extrap == "second-order")
 	{
 		double** rho_atom_old = new double*[GlobalV::NSPIN];
 		double** rho_atom_new = new double*[GlobalV::NSPIN];
@@ -350,7 +350,7 @@ void Charge_Extra::extrapolate_charge()
 	}
 	else
 	{
-		ModuleBase::WARNING_QUIT("potential::init_pot","extra_pot parameter is wrong!");
+		ModuleBase::WARNING_QUIT("potential::init_pot","chg_extrap parameter is wrong!");
 	}
 
     return;

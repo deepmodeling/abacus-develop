@@ -45,7 +45,7 @@ public:
 		const double &lcao_dr_in, // mohan add 2021-04-16
 		const double &lcao_rmax_in, // mohan add 2021-04-16
 		const bool &deepks_setorb,
-		const int &out_r_matrix,
+		const int &out_mat_r,
 		const bool &force_flag, // mohan add 2021-05-07
 		const int &my_rank // mohan add 2021-04-26
 	);
@@ -79,18 +79,18 @@ public:
 
     bool setup_2d = false;
 
-private:
-    const bool gamma_only = 1;
-    const int nlocal = 0;
-    const int nbands = 0;
-    const int nspin = 1;
-    const int dsize = 0;
-    const int nb2d = 0;
-    const int dcolor = 0;
-    const int drank = 0;
-    const int myrank = 0;
-    const std::string calculation;
-    const std::string ks_solver;
+//private:
+    bool gamma_only = 1;
+    int nlocal = 0;
+    int nbands = 0;
+    int nspin = 1;
+    int dsize = 0;
+    int nb2d = 0;
+    int dcolor = 0;
+    int drank = 0;
+    int myrank = 0;
+    std::string calculation;
+    std::string ks_solver;
     std::ofstream ofs_running;
     std::ofstream ofs_warning;
 
@@ -115,7 +115,7 @@ private:
     void mpi_creat_cart(MPI_Comm* comm_2D,
         int prow, int pcol, std::ofstream& ofs_running);
 
-    void mat_2d(MPI_Comm vu,
+    int mat_2d(MPI_Comm vu,
         const int& M_A, const int& N_A,
         const int& NB, LocalMatrix& loc_A,
         std::ofstream& ofs_running,

@@ -66,7 +66,7 @@ void Driver::reading(void)
 	ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"GSIZE",GlobalV::GSIZE);
 
 #ifdef __MPI
-    // (4)  divide the GlobalV::NPROC processors into GlobalV::NPOOL for k-points parallelization.
+    // (4)  divide the GlobalV::NPROC processors into GlobalV::KPAR for k-points parallelization.
     GlobalC::Pkpoints.init_pools();
 #endif
 

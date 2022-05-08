@@ -1,7 +1,7 @@
 '''
 Date: 2021-08-21 13:28:51
 LastEditors: jiyuyang
-LastEditTime: 2021-08-21 13:33:21
+LastEditTime: 2022-01-03 17:08:06
 Mail: jiyuyang@mail.ustc.edu.cn, 1041176461@qq.com
 '''
 
@@ -10,7 +10,7 @@ from setuptools import setup, find_packages
 if __name__ == "__main__":
     setup(
         name='abacus_plot',
-        version='1.0.0',
+        version='1.1.0',
         packages=find_packages(),
         description='Ploting tools for ABACUS',
         author='jiyuyang',

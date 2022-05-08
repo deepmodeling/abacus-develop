@@ -9,7 +9,7 @@ ofstream ofs_running;
 
 // parallel information
 int NPROC = 1; // mohan add 2010-06-12
-int NPOOL = 1;
+int KPAR = 1;
 int MY_RANK = 0;
 int MY_POOL = 0;
 int NPROC_IN_POOL = 1;

@@ -29,10 +29,6 @@ class WF_igk
 
 	public:
 
-    // for each k point , find the number of pws
-    int setupIndGk(const PW_Basis &pwb,const int nks);
-    
-
     // Calculate kinetic energy
     void ekin(const int ik);
 

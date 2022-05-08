@@ -3,10 +3,10 @@
 //#include "../../src_develop/src_wannier/eximport.h"
 
 //qianrui add 2020-10-15
-/*inline int getink(const int &ik,const int &ipool,const int &nktot,const int &npool)
+/*inline int getink(const int &ik,const int &ipool,const int &nktot,const int &kpar)
 {
-    int nkp=nktot/npool;
-    int rem=nktot%npool;
+    int nkp=nktot/kpar;
+    int rem=nktot%kpar;
     if(ipool<rem)
     {
         return ipool*nkp+ipool+ik;
@@ -62,21 +62,21 @@ void WF_io::write_wfc2(const std::string &fn, const ModuleBase::ComplexMatrix *p
     for(int ik=0;ik<GlobalC::kv.nkstot;ik++)
     {
         std::stringstream wfss;
-        if(GlobalC::wf.out_wf==1)
+        if(GlobalC::wf.out_wfc_pw==1)
             wfss<<fn<<ik+1<<".txt";
-        else if(GlobalC::wf.out_wf==2)
+        else if(GlobalC::wf.out_wfc_pw==2)
         {
             wfss<<fn<<ik+1<<".dat";
         }
         wfilename[ik]=wfss.str();
         if ( GlobalV::MY_RANK == 0 )
         {
-            if(GlobalC::wf.out_wf==1)
+            if(GlobalC::wf.out_wfc_pw==1)
             {
                 std::ofstream ofs(wfss.str().c_str()); //clear all wavefunc files.
                 ofs.close();
             }
-            else if(GlobalC::wf.out_wf==2)
+            else if(GlobalC::wf.out_wfc_pw==2)
             {
                 Rwstream wfs(wfss.str(),"w");
                 wfs.close();
@@ -91,7 +91,7 @@ void WF_io::write_wfc2(const std::string &fn, const ModuleBase::ComplexMatrix *p
 
 	
     // out put the wave functions in plane wave basis.
-	for(int ip=0; ip<GlobalV::NPOOL; ip++)
+	for(int ip=0; ip<GlobalV::KPAR; ip++)
 	{
         if( GlobalV::MY_POOL == ip )
 		{
@@ -108,7 +108,7 @@ void WF_io::write_wfc2(const std::string &fn, const ModuleBase::ComplexMatrix *p
                 ikstot=ik;
 #endif
 #ifdef __MPI
-                //int ikstot=getink(ik,ip,GlobalC::kv.nkstot,GlobalV::NPOOL);
+                //int ikstot=getink(ik,ip,GlobalC::kv.nkstot,GlobalV::KPAR);
 				for( int id=0; id<GlobalV::NPROC_IN_POOL; id++)
 				{
 					MPI_Barrier(POOL_WORLD);
@@ -117,7 +117,7 @@ void WF_io::write_wfc2(const std::string &fn, const ModuleBase::ComplexMatrix *p
 #else
                     int id=0;               
 #endif
-                    if(GlobalC::wf.out_wf==1)
+                    if(GlobalC::wf.out_wfc_pw==1)
                     {
                         std::ofstream ofs2( wfilename[ikstot].c_str(),ios::app);
                         if(id==0)
@@ -146,7 +146,7 @@ void WF_io::write_wfc2(const std::string &fn, const ModuleBase::ComplexMatrix *p
                         }
 						ofs2.close();
                     }
-                    else if(GlobalC::wf.out_wf==2)
+                    else if(GlobalC::wf.out_wfc_pw==2)
                     {
                         Rwstream wfs2( wfilename[ikstot],"a");
                         if(id==0)
@@ -188,7 +188,7 @@ void WF_io::write_wfc2(const std::string &fn, const ModuleBase::ComplexMatrix *p
 #else
                     int id=0;
 #endif
-                        if(GlobalC::wf.out_wf==1)
+                        if(GlobalC::wf.out_wfc_pw==1)
                         {
                             std::ofstream ofs2( wfilename[ikstot].c_str(),ios::app);
                             if(id==0)   ofs2 << "\n< Band "<<ib+1 <<" >" <<std::endl; 
@@ -203,7 +203,7 @@ void WF_io::write_wfc2(const std::string &fn, const ModuleBase::ComplexMatrix *p
                             if(id==GlobalV::NPROC_IN_POOL-1)   ofs2 << "\n< Band "<<ib+1 <<" >" <<std::endl; 
 							ofs2.close();
                         }
-                        else if(GlobalC::wf.out_wf==2)
+                        else if(GlobalC::wf.out_wfc_pw==2)
                         {
                             Rwstream wfs2(wfilename[ikstot],"a");
                             if(id==0) wfs2<<ikngtot*16;

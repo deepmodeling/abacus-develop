@@ -127,7 +127,7 @@ void Symmetry::analy_sys(const UnitCell_pseudo &ucell, std::ofstream &ofs_runnin
 	new_lat.e11=a1.x; new_lat.e12=a1.y; new_lat.e13=a1.z;
 	new_lat.e21=a2.x; new_lat.e22=a2.y; new_lat.e23=a2.z;
 	new_lat.e31=a3.x; new_lat.e32=a3.y; new_lat.e33=a3.z;
-	output::printM3(ofs_running,"STANDARD LATTICE VECTORS: (CARTESIAN COORDINATE: IN UNIT OF A0)",new_lat);
+	//output::printM3(ofs_running,"STANDARD LATTICE VECTORS: (CARTESIAN COORDINATE: IN UNIT OF A0)",new_lat);
 
 	int iat=0;
 	for(int it=0; it<ucell.ntype; ++it)
@@ -156,21 +156,31 @@ void Symmetry::analy_sys(const UnitCell_pseudo &ucell, std::ofstream &ofs_runnin
 	}
 
 
-	Symm_Other::print1(ibrav, cel_const, ofs_running);
-
+	//Symm_Other::print1(ibrav, cel_const, ofs_running);
+        Symm_Other::print1(real_brav, cel_const, ofs_running);
 	this->change_lattice();
     //this->pricell();         // pengfei Li 2018-05-14 
          //for( iat =0 ; iat < ucell.nat ; iat++)   
 //         std::cout << " newpos_now = " << newpos[3*iat] << " " << newpos[3*iat+1] << " " << newpos[3*iat+2] << std::endl;
-	ModuleBase::GlobalFunc::OUT(ofs_running,"ibrav",ibrav);
-    this->setgroup(this->symop, this->nop, this->ibrav);
-    //now select all symmetry operations which reproduce the lattice
-    //to find those symmetry operations which reproduce the entire crystal
-    this->getgroup(this->nrot, this->nrotk, ofs_running);
-    // find the name of point group
-    this->pointgroup(this->nrot, this->pgnumber, this->pgname, this->gmatrix, ofs_running);
-    ModuleBase::GlobalFunc::OUT(ofs_running,"POINT GROUP", this->pgname);
-    //write();
+	test_brav = true; // output the real ibrav and point group
+	ModuleBase::GlobalFunc::OUT(ofs_running,"ibrav",real_brav);
+	this->setgroup(this->symop, this->nop, this->real_brav);
+	this->getgroup(this->nrot, this->nrotk, ofs_running);
+	this->pointgroup(this->nrot, this->pgnumber, this->pgname, this->gmatrix, ofs_running);
+	ModuleBase::GlobalFunc::OUT(ofs_running,"POINT GROUP", this->pgname);
+    ofs_running<<"Warning : If the optimal symmetric configuration is not the input configuration, "<<'\n';
+    ofs_running<<"you have to manually change configurations, ABACUS would only calculate the input structure!"<<'\n';
+
+	test_brav = false;  // use the input ibrav to calculate
+	//ModuleBase::GlobalFunc::OUT(ofs_running,"ibrav",ibrav);
+	this->setgroup(this->symop, this->nop, this->ibrav);
+	//now select all symmetry operations which reproduce the lattice
+	//to find those symmetry operations which reproduce the entire crystal
+	this->getgroup(this->nrot, this->nrotk, ofs_running);
+	// find the name of point group
+	this->pointgroup(this->nrot, this->pgnumber, this->pgname, this->gmatrix, ofs_running);
+	// ModuleBase::GlobalFunc::OUT(ofs_running,"POINT GROUP", this->pgname);
+	//write();
 
     delete[] dirpos;
 	delete[] newpos;
@@ -705,6 +715,7 @@ void Symmetry::lattice_type(
 //	GlobalV::ofs_running << " pre_brav=" << pre_brav << std::endl;
 //	GlobalV::ofs_running << " temp_brav=" << temp_brav << std::endl;
 
+
     if ( temp_brav < pre_brav)
     {
         //if the symmetry of the new vectors is higher, store the new ones
@@ -771,7 +782,6 @@ void Symmetry::lattice_type(
             }
         }
         ofs.close();
-
         
     }
     
@@ -811,9 +821,12 @@ void Symmetry::lattice_type(
         }
     }*/
     brav = pre_brav;
-    bravname = get_brav_name(brav);
+    //brav = temp_brav;
+    //bravname = get_brav_name(brav);
+    real_brav = temp_brav;     // pengfei Li 15-3-2022
+    bravname = get_brav_name(real_brav);
 
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"BRAVAIS TYPE",brav);
+    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"BRAVAIS TYPE",real_brav);
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"BRAVAIS LATTICE NAME",bravname);
     return;
 }
@@ -1209,8 +1222,12 @@ void Symmetry::getgroup(int &nrot, int &nrotk, std::ofstream &ofs_running)
     //total number of space group operations
 	//-----------------------------------------------------
     nrotk += nrot;
-	ModuleBase::GlobalFunc::OUT(ofs_running,"PURE POINT GROUP OPERATIONS",nrot);
-    ModuleBase::GlobalFunc::OUT(ofs_running,"SPACE GROUP OPERATIONS",nrotk);
+
+    if(test_brav)
+    {
+	    ModuleBase::GlobalFunc::OUT(ofs_running,"PURE POINT GROUP OPERATIONS",nrot);
+        ModuleBase::GlobalFunc::OUT(ofs_running,"SPACE GROUP OPERATIONS",nrotk);
+    }
 
 	//-----------------------------------------------------
     //fill the rest of matrices and vectors with zeros

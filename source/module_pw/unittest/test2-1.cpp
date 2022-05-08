@@ -14,13 +14,13 @@ int main(int argc,char **argv)
     double ecut = 100;
     double lat0 = 1;
     int nproc, myrank;
-    int nproc_in_pool, npool, mypool, rank_in_pool;
-    npool = 1;
+    int nproc_in_pool, kpar, mypool, rank_in_pool;
+    kpar = 1;
 #ifdef __MPI
     setupmpi(argc,argv,nproc, myrank);
-    divide_pools(nproc, myrank, nproc_in_pool, npool, mypool, rank_in_pool);
+    divide_pools(nproc, myrank, nproc_in_pool, kpar, mypool, rank_in_pool);
 #else
-    nproc = nproc_in_pool = npool = 1;
+    nproc = nproc_in_pool = kpar = 1;
     myrank = mypool = rank_in_pool = 0;
 #endif
 

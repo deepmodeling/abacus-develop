@@ -80,11 +80,11 @@ void FIRE::second_half()
     ModuleBase::timer::tick("FIRE", "second_half");
 }
 
-void FIRE::outputMD()
+void FIRE::outputMD(std::ofstream &ofs)
 {
-    Verlet::outputMD();
+    Verlet::outputMD(ofs);
 
-    GlobalV::ofs_running << " LARGEST GRAD (eV/A)  : " 
+    ofs << " LARGEST GRAD (eV/A)  : " 
         << max * ModuleBase::Hartree_to_eV * ModuleBase::ANGSTROM_AU << std::endl;
     std::cout << " LARGEST GRAD (eV/A)  : " 
         << max * ModuleBase::Hartree_to_eV * ModuleBase::ANGSTROM_AU << std::endl;

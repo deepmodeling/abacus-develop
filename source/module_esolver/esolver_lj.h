@@ -14,14 +14,14 @@ class ESolver_LJ: public ESolver
 public:
     ESolver_LJ() : grid_neigh(GlobalV::test_deconstructor, GlobalV::test_grid_driver, GlobalV::test_grid)
     {
-        tag = "ESolver_LJ";
+        classname = "ESolver_LJ";
     }
     
     void Init(Input &inp, UnitCell_pseudo &cell) override;
-    void Run(int istep, UnitCell_pseudo& cell) override;
+    void Run(const int istep, UnitCell_pseudo& cell) override;
     void cal_Energy(energy& en) override;
     void cal_Force(ModuleBase::matrix &force) override;
-    void cal_Stress(ModuleBase::matrix &stress) override;
+    void cal_Stress(ModuleBase::matrix& stress) override;
 
 
     double LJ_energy(const double d);

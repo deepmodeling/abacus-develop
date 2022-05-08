@@ -36,7 +36,7 @@ void ELEC_scf::scf(const int& istep,
 	H_Ewald_pw::compute_ewald(GlobalC::ucell, GlobalC::pw);
 
 	// mohan add 2012-02-08
-    set_ethr();
+    set_pw_diag_thr();
 
 	// the electron charge density should be symmetrized,
 	// here is the initialization
@@ -60,7 +60,7 @@ void ELEC_scf::scf(const int& istep,
 				printf( "\e[33m%-10s\e[0m", "TMAG");
 				printf( "\e[33m%-10s\e[0m", "AMAG");
 			}
-			printf( "\e[33m%-14s\e[0m", "DRHO2");
+			printf( "\e[33m%-14s\e[0m", "SCF_THR");
 			printf( "\e[33m%-15s\e[0m", "ETOT(eV)");
 			printf( "\e[33m%-11s\e[0m\n", "TIME(s)");
 		}
@@ -76,13 +76,13 @@ void ELEC_scf::scf(const int& istep,
 
 			std::cout << std::setw(15) << "ETOT(eV)";
 			std::cout << std::setw(15) << "EDIFF(eV)";
-			std::cout << std::setw(11) << "DRHO2";
+			std::cout << std::setw(11) << "SCF_THR";
 			std::cout << std::setw(11) << "TIME(s)" << std::endl;
 		}
 	}// end GlobalV::OUT_LEVEL
 
 
-	for(iter=1; iter<=GlobalV::NITER; iter++)
+	for(iter=1; iter<=GlobalV::SCF_NMAX; iter++)
 	{
         Print_Info::print_scf(istep, iter);
 
@@ -111,7 +111,7 @@ void ELEC_scf::scf(const int& istep,
 
 		// set converged threshold,
 		// automatically updated during self consistency, only for CG.
-        this->update_ethr(iter);
+        this->update_pw_diag_thr(iter);
         if(GlobalV::FINAL_SCF && iter==1)
         {
             init_mixstep_final_scf();
@@ -131,7 +131,7 @@ void ELEC_scf::scf(const int& istep,
 		// so the smearing can not be done.
 		if(iter>1)Occupy::calculate_weights();
 
-		if(GlobalC::wf.start_wfc == "file")
+		if(GlobalC::wf.init_wfc == "file")
 		{
 			if(iter==1)
 			{
@@ -150,7 +150,7 @@ void ELEC_scf::scf(const int& istep,
 				// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 				// a puzzle remains here.
 				// if I don't renew potential,
-				// The dr2 is very small.
+				// The scf_thr is very small.
 				// OneElectron, Hartree and
 				// Exc energy are all correct
 				// except the band energy.
@@ -339,7 +339,7 @@ void ELEC_scf::scf(const int& istep,
 		GlobalC::en.deband = GlobalC::en.delta_e();
 
 		// (8) Mix charge density
-		GlobalC::CHR.mix_rho(dr2,0,GlobalV::DRHO2,iter,conv_elec);
+		GlobalC::CHR.tmp_mixrho(scf_thr,0,GlobalV::SCF_THR,iter,conv_elec);
 
 		// Peize Lin add 2020.04.04
 		if(GlobalC::restart.info_save.save_charge)
@@ -352,11 +352,11 @@ void ELEC_scf::scf(const int& istep,
 
 		// (9) Calculate new potential according to new Charge Density.
 
-		if(conv_elec || iter==GlobalV::NITER)
+		if(conv_elec || iter==GlobalV::SCF_NMAX)
 		{
-			if(GlobalC::pot.out_potential<0) //mohan add 2011-10-10
+			if(GlobalC::pot.out_pot<0) //mohan add 2011-10-10
 			{
-				GlobalC::pot.out_potential = -2;
+				GlobalC::pot.out_pot = -2;
 			}
 		}
 
@@ -374,7 +374,7 @@ void ELEC_scf::scf(const int& istep,
 			/*
 			GlobalC::pot.vr = GlobalC::pot.v_of_rho(GlobalC::CHR.rho_save, GlobalC::CHR.rho);
 			GlobalC::en.calculate_etot();
-			GlobalC::en.print_etot(conv_elec, istep, iter, dr2, 0.0, GlobalV::ETHR, avg_iter,0);
+			GlobalC::en.print_etot(conv_elec, iter, scf_thr, 0.0, GlobalV::PW_DIAG_THR, avg_iter,0);
 			GlobalC::pot.vr = GlobalC::pot.v_of_rho(GlobalC::CHR.rho, GlobalC::CHR.rho_core);
 			GlobalC::en.delta_escf();
 			*/
@@ -444,11 +444,11 @@ void ELEC_scf::scf(const int& istep,
 		// avg_iter is an useless variable in LCAO,
 		// will fix this interface in future -- mohan 2021-02-10
 		int avg_iter=0;
-		GlobalC::en.print_etot(conv_elec, istep, iter, dr2, duration, GlobalV::ETHR, avg_iter);
+		GlobalC::en.print_etot(conv_elec, iter, scf_thr, duration, GlobalV::PW_DIAG_THR, avg_iter);
 
 		GlobalC::en.etot_old = GlobalC::en.etot;
 
-		if (conv_elec || iter==GlobalV::NITER)
+		if (conv_elec || iter==GlobalV::SCF_NMAX)
 		{
 			//--------------------------------------
 			// output charge density for converged,
@@ -463,17 +463,6 @@ void ELEC_scf::scf(const int& istep,
                 //std::cout <<"oband = "<<GlobalC::chi0_hilbert.oband<<std::endl;
                 GlobalC::chi0_hilbert.wfc_k_grid = lowf.wfc_k_grid;
                 GlobalC::chi0_hilbert.Chi();
-			}
-
-			//quxin add for DFT+U for nscf calculation
-			if(INPUT.dft_plus_u)
-			{
-				if(GlobalC::CHR.out_charge)
-				{
-					std::stringstream sst;
-					sst << GlobalV::global_out_dir << "onsite.dm";
-					GlobalC::dftu.write_occup_m( sst.str() );
-				}
 			}
 
 			for(int is=0; is<GlobalV::NSPIN; is++)
@@ -495,7 +484,7 @@ void ELEC_scf::scf(const int& istep,
 				}
 				loc.write_dm( is, 0, ssd.str(), precision );
 
-				if(GlobalC::pot.out_potential == 1) //LiuXh add 20200701
+				if(GlobalC::pot.out_pot == 1) //LiuXh add 20200701
 				{
 					std::stringstream ssp;
 					ssp << GlobalV::global_out_dir << "SPIN" << is + 1 << "_POT";
@@ -539,76 +528,137 @@ void ELEC_scf::scf(const int& istep,
 				std::cout << " !! CONVERGENCE HAS NOT BEEN ACHIEVED !!" << std::endl;
 			}
 
-			if(conv_elec || iter==GlobalV::NITER)
+			if(conv_elec || iter==GlobalV::SCF_NMAX)
 			{
 #ifdef __DEEPKS
 				//calculating deepks correction to bandgap
 				//and save the results
-				if (GlobalV::deepks_bandgap)
-				{
-					int nocc = GlobalC::CHR.nelec/2;
-					ModuleBase::matrix wg_hl;
-					wg_hl.create(GlobalV::NSPIN, GlobalV::NBANDS);
-		
-					for(int is=0; is<GlobalV::NSPIN; is++)
-					{
-						for(int ib=0; ib<GlobalV::NBANDS; ib++)
-						{
-							wg_hl(is,ib) = 0.0;
-						
-							if(ib == nocc-1)
-								wg_hl(is,ib) = -1.0;
-							else if(ib == nocc)
-								wg_hl(is,ib) = 1.0;
-						}
-					}
-
-                    std::vector<ModuleBase::matrix> dm_bandgap_gamma;
-                    std::vector<ModuleBase::ComplexMatrix> dm_bandgap_k;
-				
-					if(GlobalV::GAMMA_ONLY_LOCAL)
-                    {
-                        dm_bandgap_gamma.resize(GlobalV::NSPIN);
-                        loc.cal_dm(wg_hl, lowf.wfc_gamma, dm_bandgap_gamma);
-                        GlobalC::ld.cal_o_delta(dm_bandgap_gamma, *lowf.ParaV);
-					}			
-					else
-                    {
-                        dm_bandgap_k.resize(GlobalC::kv.nks);
-                        loc.cal_dm(wg_hl, lowf.wfc_k, dm_bandgap_k);
-                        GlobalC::ld.cal_o_delta_k(dm_bandgap_k, *lowf.ParaV, GlobalC::kv.nks);
-					}
-					if(GlobalV::deepks_out_labels)
-					{
-						GlobalC::ld.save_npy_o(GlobalC::wf.ekb[0][nocc] - GlobalC::wf.ekb[0][nocc-1] - GlobalC::ld.o_delta, "o_base.npy");
-						GlobalC::ld.cal_orbital_precalc(dm_bandgap_gamma,
-							GlobalC::ucell.nat,
-							GlobalC::ucell,
-							GlobalC::ORB,
-							GlobalC::GridD,
-							*lowf.ParaV);
-						GlobalC::ld.save_npy_orbital_precalc(GlobalC::ucell.nat);
-					}	
-				}
 
 				if (GlobalV::deepks_out_labels)	//caoyu add 2021-06-04
 				{
 					int nocc = GlobalC::CHR.nelec/2;
-					GlobalC::ld.save_npy_o(GlobalC::wf.ekb[0][nocc] - GlobalC::wf.ekb[0][nocc-1], "o_tot.npy");
-					if (!GlobalV::deepks_bandgap)
+					if (GlobalV::deepks_bandgap)
 					{
-						GlobalC::ld.save_npy_o(GlobalC::wf.ekb[0][nocc] - GlobalC::wf.ekb[0][nocc-1], "o_base.npy");  // no scf, o_tot=o_base	
+						if(GlobalV::GAMMA_ONLY_LOCAL)
+						{
+							GlobalC::ld.save_npy_o(GlobalC::wf.ekb[0][nocc] - GlobalC::wf.ekb[0][nocc-1], "o_tot.npy"); 
+						}
+						else
+						{
+							double homo = GlobalC::wf.ekb[0][nocc-1];
+							double lumo = GlobalC::wf.ekb[0][nocc];
+							for(int ik=1; ik<GlobalC::kv.nks; ik++)
+							{
+								if (homo < GlobalC::wf.ekb[ik][nocc-1])
+								{
+									homo = GlobalC::wf.ekb[ik][nocc-1];
+									GlobalC::ld.h_ind = ik;
+								}
+								if (lumo > GlobalC::wf.ekb[ik][nocc])
+								{
+									lumo = GlobalC::wf.ekb[ik][nocc];
+									GlobalC::ld.l_ind = ik;
+								}
+							}
+							GlobalC::ld.save_npy_o(lumo - homo - GlobalC::ld.o_delta, "o_tot.npy");
+							GlobalV::ofs_running << " HOMO index is " << GlobalC::ld.h_ind << std::endl;
+							GlobalV::ofs_running << " HOMO energy " << homo << std::endl;
+							GlobalV::ofs_running << " LUMO index is " << GlobalC::ld.l_ind << std::endl;
+							GlobalV::ofs_running << " LUMO energy " << lumo << std::endl;
+						}
 					}
 
 					GlobalC::ld.save_npy_e(GlobalC::en.etot, "e_tot.npy");
                     if (GlobalV::deepks_scf)
 					{
                         GlobalC::ld.save_npy_e(GlobalC::en.etot - GlobalC::ld.E_delta, "e_base.npy");//ebase :no deepks E_delta including
+						if (GlobalV::deepks_bandgap)
+            			{
+			    			int nocc = GlobalC::CHR.nelec/2;
+				
+							ModuleBase::matrix wg_hl;
+							if(GlobalV::GAMMA_ONLY_LOCAL)
+							{
+                				wg_hl.create(GlobalV::NSPIN, GlobalV::NBANDS);
+				
+			    				for(int is=0; is<GlobalV::NSPIN; is++)
+								{
+        		    				for(int ib=0; ib<GlobalV::NBANDS; ib++)
+									{
+        			    				wg_hl(is,ib) = 0.0;
+					    				if(ib == nocc-1)
+						  					wg_hl(is,ib) = -1.0;
+					    				else if(ib == nocc)
+						    				wg_hl(is,ib) = 1.0;
+        		    				}
+        	    				}
+
+								std::vector<ModuleBase::matrix> dm_bandgap_gamma;
+        	    				dm_bandgap_gamma.resize(GlobalV::NSPIN);
+                        		loc.cal_dm(wg_hl, lowf.wfc_gamma, dm_bandgap_gamma);
+                        		
+							
+            	    			GlobalC::ld.cal_orbital_precalc(dm_bandgap_gamma,
+									GlobalC::ucell.nat,
+									GlobalC::ucell,
+									GlobalC::ORB,
+									GlobalC::GridD,
+									*lowf.ParaV);
+								
+								GlobalC::ld.save_npy_orbital_precalc(GlobalC::ucell.nat);
+							
+								GlobalC::ld.cal_o_delta(dm_bandgap_gamma, *lowf.ParaV);
+								GlobalC::ld.save_npy_o(GlobalC::wf.ekb[0][nocc] - GlobalC::wf.ekb[0][nocc-1] - GlobalC::ld.o_delta, "o_base.npy");
+                			
+							}
+                			else //multi-k bandgap label
+							{
+								wg_hl.create(GlobalC::kv.nks, GlobalV::NBANDS);
+				
+			    				for(int ik=0; ik<GlobalC::kv.nks; ik++){
+        		    				for(int ib=0; ib<GlobalV::NBANDS; ib++){
+        			    				wg_hl(ik,ib) = 0.0;
+								
+					    				if(ik == GlobalC::ld.h_ind && ib == nocc-1)
+						  					wg_hl(ik,ib) = -1.0;
+					    				else if(ik == GlobalC::ld.l_ind && ib == nocc)
+						    				wg_hl(ik,ib) = 1.0;
+        		    				}
+        	    				}
+								std::vector<ModuleBase::ComplexMatrix> dm_bandgap_k;
+								dm_bandgap_k.resize(GlobalC::kv.nks);
+                        		loc.cal_dm(wg_hl, lowf.wfc_k, dm_bandgap_k);
+                        		GlobalC::ld.cal_o_delta_k(dm_bandgap_k, *lowf.ParaV, GlobalC::kv.nks);
+			    				
+								GlobalC::ld.cal_orbital_precalc_k(dm_bandgap_k,
+									GlobalC::ucell.nat,
+									GlobalC::kv.nks,
+									GlobalC::kv.kvec_d,
+									GlobalC::ucell,
+            						GlobalC::ORB,
+            						GlobalC::GridD,
+            						*lowf.ParaV);
+								GlobalC::ld.save_npy_orbital_precalc(GlobalC::ucell.nat);
+							
+								GlobalC::ld.cal_o_delta_k(dm_bandgap_k, *lowf.ParaV, GlobalC::kv.nks);
+								GlobalC::ld.save_npy_o(GlobalC::wf.ekb[GlobalC::ld.l_ind][nocc] - GlobalC::wf.ekb[GlobalC::ld.h_ind][nocc-1]- GlobalC::ld.o_delta, "o_base.npy");
+                			}	
+        				}					
 					}
-                    else
+                    else //deepks_scf = 0; base calculation
                     {
                         GlobalC::ld.save_npy_e(GlobalC::en.etot, "e_base.npy");  // no scf, e_tot=e_base
-												
+						if (GlobalV::deepks_bandgap)
+						{
+							if(GlobalV::GAMMA_ONLY_LOCAL)
+							{
+								GlobalC::ld.save_npy_o(GlobalC::wf.ekb[0][nocc] - GlobalC::wf.ekb[0][nocc-1], "o_base.npy");  // no scf, o_tot=o_base
+							}	
+							else
+							{
+								GlobalC::ld.save_npy_o(GlobalC::wf.ekb[GlobalC::ld.l_ind][nocc] - GlobalC::wf.ekb[GlobalC::ld.h_ind][nocc-1], "o_base.npy");
+							}
+						}							
                     }
 				}
 #endif

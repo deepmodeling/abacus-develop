@@ -1,5 +1,4 @@
 #include "run_md_lcao.h"
-#include "LOOP_elec.h"
 #include "FORCE_STRESS.h"
 #include "../src_pw/global.h"
 #include "../src_pw/vdwd2.h"
@@ -22,44 +21,18 @@
 #include "../module_md/NVT_NHC.h"
 #include "../module_md/Langevin.h"
 
-Run_MD_LCAO::Run_MD_LCAO(Parallel_Orbitals &pv)
+Run_MD_LCAO::Run_MD_LCAO()
 {
     cellchange = false;
-    this->LM_md.ParaV = &pv;
-    // * allocate H and S matrices according to computational resources
-	// * set the 'trace' between local H/S and global H/S
-	this->LM_md.divide_HS_in_frag(GlobalV::GAMMA_ONLY_LOCAL, pv);
 }
 
 Run_MD_LCAO::~Run_MD_LCAO(){}
 
-
-void Run_MD_LCAO::opt_cell(ORB_control &orb_con, ModuleESolver::ESolver *p_esolver)
+void Run_MD_LCAO::opt_cell(ModuleESolver::ESolver *p_esolver)
 {
 	ModuleBase::TITLE("Run_MD_LCAO","opt_cell");
 
-    // Initialize the local wave functions.
-    // npwx, eigenvalues, and weights
-    // npwx may change according to cell change
-    // this function belongs to cell LOOP
-    GlobalC::wf.allocate_ekb_wg(GlobalC::kv.nks);
-
-    // Initialize the FFT.
-    // this function belongs to cell LOOP
-    GlobalC::UFFT.allocate();
-
-    // output is GlobalC::ppcell.vloc 3D local pseudopotentials
-    // this function belongs to cell LOOP
-    GlobalC::ppcell.init_vloc(GlobalC::pw.nggm, GlobalC::ppcell.vloc);
-
-    // Initialize the sum of all local potentials.
-    // if ion_step==0, read in/initialize the potentials
-    // this function belongs to ions LOOP
-    int ion_step=0;
-    GlobalC::pot.init_pot(ion_step, GlobalC::pw.strucFac);
-
     opt_ions(p_esolver);
-    orb_con.clear_after_ions(GlobalC::UOT, GlobalC::ORB, GlobalV::deepks_setorb, GlobalC::ucell.infoNL.nproj);
     
     return;
 }
@@ -114,11 +87,12 @@ void Run_MD_LCAO::opt_ions(ModuleESolver::ESolver *p_esolver)
     }
 
     // md cycle
-    while ((verlet->step_ + verlet->step_rst_) <= GlobalV::NSTEP && !verlet->stop)
+    while ((verlet->step_ + verlet->step_rst_) <= GlobalV::MD_NSTEP && !verlet->stop)
     {
+        Print_Info::print_screen(0, 0, verlet->step_ + verlet->step_rst_);
+
         if(verlet->step_ == 0)
         {
-            MD_func::ParaV = this->LM_md.ParaV;
             verlet->setup(p_esolver);
         }
         else
@@ -159,8 +133,8 @@ void Run_MD_LCAO::opt_ions(ModuleESolver::ESolver *p_esolver)
 
         if((verlet->step_ + verlet->step_rst_) % verlet->mdp.md_dumpfreq == 0)
         {
-            Print_Info::print_screen(0, 0, verlet->step_ + verlet->step_rst_);
-            verlet->outputMD();
+            // Print_Info::print_screen(0, 0, verlet->step_ + verlet->step_rst_);
+            verlet->outputMD(GlobalV::ofs_running);
 
             MD_func::MDdump(verlet->step_ + verlet->step_rst_, verlet->ucell, verlet->virial, verlet->force);
         }
@@ -181,7 +155,7 @@ void Run_MD_LCAO::opt_ions(ModuleESolver::ESolver *p_esolver)
         verlet->step_++;
     }
 
-    if (GlobalC::pot.out_potential == 2)
+    if (GlobalC::pot.out_pot == 2)
     {
         std::stringstream ssp;
         std::stringstream ssp_ave;
@@ -237,37 +211,16 @@ void Run_MD_LCAO::md_force_virial(
         GlobalC::en.evdw = vdwd3.get_energy();
     }
 
-    Local_Orbital_wfc LOWF_md;
-    Local_Orbital_Charge LOC_md;
-    LOC_md.ParaV = LOWF_md.ParaV = this->LM_md.ParaV;
-    if (GlobalV::GAMMA_ONLY_LOCAL)
-    {
-        LOWF_md.wfc_gamma.resize(GlobalV::NSPIN);
-	}
-	else
-	{
-        LOWF_md.wfc_k.resize(GlobalC::kv.nks);
-    }
-
-    LOC_md.init_dm_2d();
     // solve electronic structures in terms of LCAO
     // mohan add 2021-02-09
-    LCAO_Hamilt UHM_md;
-    UHM_md.genH.LM = UHM_md.LM = &this->LM_md;
-    
-    Record_adj RA_md;
-
-    LOOP_elec LOE;
-    LOE.solve_elec_stru(istep + 1, RA_md, LOC_md, LOWF_md, UHM_md);
+    p_esolver->Run(istep, GlobalC::ucell);
 
     //to call the force of each atom
 	ModuleBase::matrix fcs;//temp force matrix
-	Force_Stress_LCAO FSL(RA_md);
-    FSL.getForceStress(GlobalV::FORCE, GlobalV::STRESS,
-        GlobalV::TEST_FORCE, GlobalV::TEST_STRESS,
-        LOC_md, LOWF_md, UHM_md, fcs, virial);
-    RA_md.delete_grid();
-	for(int ion=0; ion<numIon; ++ion)
+    p_esolver->cal_Force(fcs);
+    p_esolver->cal_Stress(virial);
+    
+    for (int ion = 0; ion < numIon; ++ion)
     {
 		force[ion].x = fcs(ion, 0)/2.0;
 		force[ion].y = fcs(ion, 1)/2.0;

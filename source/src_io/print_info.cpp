@@ -37,18 +37,30 @@ void Print_Info::setup_parameters(UnitCell_pseudo &ucell, K_Vectors &kv)
 
 			std::cout << " ---------------------------------------------------------" << std::endl;
 
-			if(INPUT.mdp.md_type ==1 || INPUT.mdp.md_type==3)
-			{
-				std::cout << " ENSEMBLE                 : " << "NVT" << std::endl;
-			}
-			else if(INPUT.mdp.md_type==0)
-			{
-				std::cout << " ENSEMBLE                 : " << "NVE" << std::endl;
-			}
-			
-			std::cout << " Time interval(fs)        : " << INPUT.mdp.md_dt << std::endl;
-		}
-		std::cout << " ---------------------------------------------------------" << std::endl;
+            if(INPUT.mdp.md_type == -1)
+            {
+                std::cout << " ENSEMBLE                 : " << "FIRE" << std::endl;
+            }
+            else if(INPUT.mdp.md_type == 0)
+            {
+                std::cout << " ENSEMBLE                 : " << "NVE" << std::endl;
+            }
+            else if(INPUT.mdp.md_type == 1 || INPUT.mdp.md_type == 3)
+            {
+                std::cout << " ENSEMBLE                 : " << "NVT" << std::endl;
+            }
+            else if(INPUT.mdp.md_type==2)
+            {
+                std::cout << " ENSEMBLE                 : " << "Langevin" << std::endl;
+            }
+            else if(INPUT.mdp.md_type==4)
+            {
+                std::cout << " ENSEMBLE                 : " << "MSST" << std::endl;
+            }
+
+            std::cout << " Time interval(fs)        : " << INPUT.mdp.md_dt << std::endl;
+        }
+        std::cout << " ---------------------------------------------------------" << std::endl;
 
 
 		std::cout << " " << std::setw(8) << "SPIN"

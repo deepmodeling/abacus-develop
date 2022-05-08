@@ -26,7 +26,7 @@ void ESolver_LJ::Init(Input &inp, UnitCell_pseudo &ucell)
             inp.test_just_neighbor);
 }
 
-void ESolver_LJ::Run(int istep, UnitCell_pseudo &ucell)
+void ESolver_LJ::Run(const int istep, UnitCell_pseudo &ucell)
 {
     double distance;
     int index = 0;

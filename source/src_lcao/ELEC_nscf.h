@@ -23,7 +23,7 @@ class ELEC_nscf
 	ELEC_nscf();
 	~ELEC_nscf();
 
-	private:
+	//private:
 
     static void nscf(LCAO_Hamilt& uhm,
         std::vector<ModuleBase::matrix>& dm_gamma,

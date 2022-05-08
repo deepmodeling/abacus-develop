@@ -76,19 +76,10 @@ Charge_Broyden::~Charge_Broyden()
 	}
 }
 
-void Charge_Broyden::mix_rho
-(
-    double &dr2,
-    const double &diago_error,
-    const double &tr2,
-    const int &iter,
-    bool &converged
-)
+double Charge_Broyden::get_drho()
 {
-    ModuleBase::TITLE("Charge_Broyden","mix_rho");
-	ModuleBase::timer::tick("Charge", "mix_rho");
-
-    for (int is=0; is<GlobalV::NSPIN; is++)
+	double scf_thr;
+	for (int is=0; is<GlobalV::NSPIN; is++)
     {
 		ModuleBase::GlobalFunc::NOTE("Perform FFT on rho(r) to obtain rho(G).");
         this->set_rhog(rho[is], rhog[is]);
@@ -106,47 +97,44 @@ void Charge_Broyden::mix_rho
     }
 
 	ModuleBase::GlobalFunc::NOTE("Calculate the norm of the Residual std::vector: < R[rho] | R[rho_save] >");
-    dr2 = this->rhog_dot_product( this->rhog, this->rhog);
+    scf_thr = this->rhog_dot_product( this->rhog, this->rhog);
 	
-	if(GlobalV::test_charge)GlobalV::ofs_running << " dr2 from rhog_dot_product is " << dr2 << std::endl;
+	if(GlobalV::test_charge)GlobalV::ofs_running << " scf_thr from rhog_dot_product is " << scf_thr << std::endl;
 
-	// dr2 calculated from real space.
-	double dr22 = 0.0;
+	// scf_thr calculated from real space.
+	double scf_thr2 = 0.0;
 	for(int is=0; is<GlobalV::NSPIN; is++)
 	{
 		for(int ir=0; ir<GlobalC::pw.nrxx; ir++)
 		{
-			dr22 += abs( rho[is][ir] - rho_save[is][ir] );
+			scf_thr2 += abs( rho[is][ir] - rho_save[is][ir] );
 		}
 	}
 
-	Parallel_Reduce::reduce_double_pool( dr22 );
+	Parallel_Reduce::reduce_double_pool( scf_thr2 );
 	assert( nelec != 0);
 	assert( GlobalC::ucell.omega > 0);
 	assert( GlobalC::pw.ncxyz > 0);
-	dr22 *= GlobalC::ucell.omega / static_cast<double>( GlobalC::pw.ncxyz );
-	dr22 /= nelec;
-	if(GlobalV::test_charge)GlobalV::ofs_running << " dr2 from real space grid is " << dr22 << std::endl;
+	scf_thr2 *= GlobalC::ucell.omega / static_cast<double>( GlobalC::pw.ncxyz );
+	scf_thr2 /= nelec;
+	if(GlobalV::test_charge)GlobalV::ofs_running << " scf_thr from real space grid is " << scf_thr2 << std::endl;
 
 	// mohan add 2011-01-22
 	//if(LINEAR_SCALING && LOCAL_BASIS) xiaohui modify 2013-09-01
 	if(GlobalV::BASIS_TYPE=="lcao" )
 	{
-		dr2 = dr22;	
+		scf_thr = scf_thr2;	
 	}
-    if ( dr2 < diago_error )
-    {
-        GlobalV::ofs_warning << " dr2 < diago_error, keep charge density unchanged." << std::endl;
-    	ModuleBase::timer::tick("Charge","mix_rho");
-        return;
-    }
-    else if (dr2 < tr2)
-    {
-        converged = true;
-    	ModuleBase::timer::tick("Charge","mix_rho");
-		return;
-    }
+	return scf_thr;
+}
 
+void Charge_Broyden::mix_rho
+(
+    const int &iter
+)
+{
+    ModuleBase::TITLE("Charge_Broyden","mix_rho");
+	ModuleBase::timer::tick("Charge", "mix_rho");
 
 	// the charge before mixing.
 	double **rho123 = new double*[GlobalV::NSPIN];
@@ -159,7 +147,7 @@ void Charge_Broyden::mix_rho
 			rho123[is][ir] = this->rho[is][ir];
 		}
 	}
-
+	
 	
 	if ( this->mixing_mode == "plain")
     {
@@ -218,6 +206,31 @@ void Charge_Broyden::mix_rho
 
     ModuleBase::timer::tick("Charge","mix_rho");
     return;
+}
+
+void Charge_Broyden::tmp_mixrho
+(
+    double &scf_thr,
+    const double &diago_error,
+    const double &tr2,
+    const int &iter,
+    bool &converged
+)
+{
+	scf_thr = get_drho();
+	if ( scf_thr < diago_error )
+    {
+        GlobalV::ofs_warning << " scf_thr < diago_error, keep charge density unchanged." << std::endl;
+    	ModuleBase::timer::tick("Charge","mix_rho");
+        return;
+    }
+    else if (scf_thr < tr2)
+    {
+        converged = true;
+    	ModuleBase::timer::tick("Charge","mix_rho");
+		return;
+    }
+	mix_rho(iter);
 }
 
 void Charge_Broyden::Simplified_Broyden_mixing(const int &iter)

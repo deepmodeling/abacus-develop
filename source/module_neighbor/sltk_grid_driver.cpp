@@ -314,3 +314,33 @@ ModuleBase::Vector3<double> Grid_Driver::Calculate_adjacent_site
 
 	return adjacent_site;
 }
+
+std::vector<std::tuple<int, int, ModuleBase::Vector3<int>, ModuleBase::Vector3<double>>> Grid_Driver::get_adjs(const UnitCell_pseudo& ucell_in, const size_t &iat)
+{
+    const int it = ucell_in.iat2it[iat];
+    const int ia = ucell_in.iat2ia[iat];
+    const ModuleBase::Vector3<double> &tau = ucell_in.atoms[it].tau[ia];
+
+    std::vector<std::tuple<int, int, ModuleBase::Vector3<int>, ModuleBase::Vector3<double>>> adjs;
+    this->Find_atom(ucell_in, tau, it, ia);
+    for(int ad=0; ad<this->getAdjacentNum()+1; ad++)
+    {
+        const size_t it_ad = this->getType(ad);
+        const size_t ia_ad = this->getNatom(ad);
+        const ModuleBase::Vector3<int> box_ad = this->getBox(ad);
+        const ModuleBase::Vector3<double> tau_ad = this->getAdjacentTau(ad);
+
+        adjs.push_back(std::make_tuple(it_ad, ia_ad, box_ad, tau_ad));
+    }
+    return adjs;
+}
+
+std::vector<std::vector<std::tuple<int, int, ModuleBase::Vector3<int>, ModuleBase::Vector3<double>>>> Grid_Driver::get_adjs(const UnitCell_pseudo& ucell_in)
+{
+    std::vector<std::vector<std::tuple<int, int, ModuleBase::Vector3<int>, ModuleBase::Vector3<double>>>> adjs(ucell_in.nat);
+    for(size_t iat=0; iat<ucell_in.nat; iat++)
+    {
+        adjs[iat] = Grid_Driver::get_adjs(ucell_in, iat);
+    }
+    return adjs;
+}

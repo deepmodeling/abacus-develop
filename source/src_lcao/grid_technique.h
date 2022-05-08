@@ -2,6 +2,8 @@
 #define GRID_TECHNIQUE_H
 
 #include "grid_meshball.h"
+#include "grid_index.h"
+#include "module_orbital/parallel_orbitals.h"
 
 // Author: mohan
 // Date: 2009-10-17
@@ -62,6 +64,9 @@ class Grid_Technique : public Grid_MeshBall
 	int **find_R2;
 	int **find_R2st;
     bool allocate_find_R2;
+
+	//indexes for nnrg -> orbital index + R index
+	std::vector<gridIntegral::gridIndex> nnrg_index;
     
     // public functions
 	public:
@@ -85,7 +90,7 @@ class Grid_Technique : public Grid_MeshBall
             
     /// number of elements(basis-pairs) in this processon
     /// on all adjacent atoms-pairs(Grid division)
-    void cal_nnrg();
+    void cal_nnrg(Parallel_Orbitals* pv);
     int cal_RindexAtom(const int& u1, const int& u2, const int& u3, const int& iat2) const;
     
 private:

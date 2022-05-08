@@ -12,7 +12,7 @@ Diago_LCAO_Matrix::Diago_LCAO_Matrix(LCAO_Matrix* lm) :
 Diago_LCAO_Matrix::~Diago_LCAO_Matrix() {}
 
 void Diago_LCAO_Matrix::solve_complex_matrix(
-	const int &ik, 
+	const int &ik,
 	Local_Orbital_wfc &lowf)
 {
 	ModuleBase::TITLE("Diago_LCAO_Matrix","solve_complex_matrix");
@@ -43,15 +43,15 @@ void Diago_LCAO_Matrix::using_HPSEPS_complex(const int &ik, Local_Orbital_wfc &l
 {
 	ModuleBase::TITLE("Diago_LCAO_Matrix","using_HPSEPS_complex");
 
-	//lowf.ParaV->out_hs=1;//zhengdy-soc-test
+	//lowf.ParaV->out_mat_hs=1;//zhengdy-soc-test
 	bool bit = false; //LiuXh, 2017-03-21
 	//if set bit = true, there would be error in soc-multi-core calculation, noted by zhengdy-soc
-	HS_Matrix::saving_HS_complex(this->LM->Hloc2.data(), this->LM->Sloc2.data(), bit, this->out_hs, *lowf.ParaV); //LiuXh, 2017-03-21
+	HS_Matrix::saving_HS_complex(this->LM->Hloc2.data(), this->LM->Sloc2.data(), bit, this->out_mat_hs, "data-"+std::to_string(ik), *lowf.ParaV); //LiuXh, 2017-03-21
 	GlobalV::ofs_running << std::setprecision(6); //LiuXh, 2017-03-21
 
 	this->diago_complex_begin(ik, lowf, this->LM->Hloc2.data(), this->LM->Sloc2.data(), this->LM->Sdiag2.data(), GlobalC::wf.ekb[ik]);
 
-	//added by zhengdy-soc, rearrange the wfc_k_grid from [up,down,up,down...] to [up,up...down,down...], 
+	//added by zhengdy-soc, rearrange the wfc_k_grid from [up,down,up,down...] to [up,up...down,down...],
 	if(GlobalV::NSPIN==4)
 	{
 		int row = GlobalC::GridT.lgd;
@@ -78,7 +78,7 @@ void Diago_LCAO_Matrix::using_LAPACK_complex(const int &ik, std::complex<double>
 {
 	ModuleBase::TITLE("Diago_LCAO_Matrix","using_LAPACK_complex");
 
-	assert(GlobalV::NPROC = 1);
+	assert(GlobalV::NPROC == 1);
 
 	ModuleBase::ComplexMatrix Htmp(GlobalV::NLOCAL,GlobalV::NLOCAL);
 	ModuleBase::ComplexMatrix Stmp(GlobalV::NLOCAL,GlobalV::NLOCAL);
@@ -145,7 +145,7 @@ void Diago_LCAO_Matrix::using_LAPACK(const int &ik, Local_Orbital_wfc &lowf)cons
 	// save H and S matrix to disk.
 //	bool bit = false;
 	bool bit = true;//zhengdy-soc
-	HS_Matrix::saving_HS(this->LM->Hloc.data(), this->LM->Sloc.data(), bit, this->out_hs, *lowf.ParaV);
+	HS_Matrix::saving_HS(this->LM->Hloc.data(), this->LM->Sloc.data(), bit, this->out_mat_hs, "data-"+std::to_string(ik), *lowf.ParaV);
 
 	ModuleBase::matrix Htmp(GlobalV::NLOCAL,GlobalV::NLOCAL);
 	ModuleBase::matrix Stmp(GlobalV::NLOCAL,GlobalV::NLOCAL);
@@ -163,7 +163,7 @@ void Diago_LCAO_Matrix::using_LAPACK(const int &ik, Local_Orbital_wfc &lowf)cons
 	// @@@@@@@
 //    out.printrm("Lapack_H", Htmp);
 //    out.printrm("Lapack_S", Stmp);
-		
+
 	int itype=1;
 	int lwork=3*GlobalV::NLOCAL-1;// tmp
 	double* w = new double[GlobalV::NLOCAL];
@@ -187,13 +187,13 @@ void Diago_LCAO_Matrix::using_LAPACK(const int &ik, Local_Orbital_wfc &lowf)cons
 	for(int i=0; i<GlobalV::NBANDS; i++)
 	{
 		// eigenvalues
-		GlobalC::wf.ekb[ik][i] = w[i]; 
+		GlobalC::wf.ekb[ik][i] = w[i];
 		for(int j=0; j<GlobalV::NLOCAL; j++)
 		{
 			lowf.wfc_k_grid[ik][i][j] = Htmp(j,i);
 		}
 	}
-	
+
 
 	// @@@@@@@
 	// test
@@ -220,14 +220,14 @@ void Diago_LCAO_Matrix::using_LAPACK(const int &ik, Local_Orbital_wfc &lowf)cons
 
 //LiuXh add 2021-09-06, clear memory, totwfc not used now
 void Diago_LCAO_Matrix::solve_double_matrix(
-	const int &ik, 
+	const int &ik,
 	Local_Orbital_wfc &lowf)
 {
     ModuleBase::TITLE("Diago_LCAO_Matrix","solve_double_matrix");
     ModuleBase::timer::tick("Diago_LCAO_Matrix","solve_double_matrix");
 	time_t time_start = time(NULL);
 
-	
+
 	if(GlobalV::KS_SOLVER=="lapack")
 	{
 		//this->using_LAPACK(ik, wfc);
@@ -240,7 +240,7 @@ void Diago_LCAO_Matrix::solve_double_matrix(
 #endif
 	else
 	{
-		std::cout << " Diago_LCAO_Matrix, diago_type = " << GlobalV::KS_SOLVER << std::endl; 
+		std::cout << " Diago_LCAO_Matrix, diago_type = " << GlobalV::KS_SOLVER << std::endl;
 		ModuleBase::WARNING_QUIT("Diago_LCAO_Matrix::init","Check ks_solver.");
 	}
 
@@ -260,10 +260,10 @@ void Diago_LCAO_Matrix::using_HPSEPS_double(const int &ik, Local_Orbital_wfc &lo
 
 	// save H and S matrix to disk.
 	bool bit = false;
-	HS_Matrix::saving_HS(this->LM->Hloc.data(), this->LM->Sloc.data(), bit, this->out_hs, *lowf.ParaV);
+	HS_Matrix::saving_HS(this->LM->Hloc.data(), this->LM->Sloc.data(), bit, this->out_mat_hs, "data-"+std::to_string(ik), *lowf.ParaV);
 	GlobalV::ofs_running << std::setprecision(6);
 
-	// Distribution of matrix for 
+	// Distribution of matrix for
 	// prallel eigensolver.
 	this->diago_double_begin(ik, lowf, this->LM->Hloc.data(), this->LM->Sloc.data(), this->LM->Sdiag.data(), GlobalC::wf.ekb[ik]);
 

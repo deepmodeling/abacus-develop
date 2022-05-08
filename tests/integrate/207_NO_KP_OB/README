@@ -2,7 +2,7 @@ This test for: BANDS
 *Si-diamond
 *LCAO
 *sg15 pseudopotential
-*smearing gauss
+*smearing_method gauss
 *ks_solver genelpa
 *restart from 4*4*4 consequence
 *do nscf 

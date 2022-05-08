@@ -1,25 +1,26 @@
-#include "../src_lcao/LOOP_ions.h"
 #include "cal_r_overlap_R.h"
 #include "../src_pw/global.h"
 #include "write_HS.h"
 #include "../module_base/timer.h"
+#include "module_esolver/esolver_ks_lcao.h"
 
+namespace ModuleESolver
+{
 // if 'binary=true', output binary file.
 // The 'sparse_threshold' is the accuracy of the sparse matrix. 
 // If the absolute value of the matrix element is less than or equal to the 'sparse_threshold', it will be ignored.
-void LOOP_ions::output_HS_R(
+void ESolver_KS_LCAO::output_HS_R(
     const std::string &SR_filename,
     const std::string &HR_filename_up,
     const std::string HR_filename_down,
     const bool &binary, 
-    const double &sparse_threshold
-)
+    const double &sparse_threshold)
 {
     ModuleBase::TITLE("LOOP_ions","output_HS_R"); 
     ModuleBase::timer::tick("LOOP_ions","output_HS_R"); 
     
     // add by jingan for out r_R matrix 2019.8.14
-    if(INPUT.out_r_matrix)
+    if(INPUT.out_mat_r)
     {
         cal_r_overlap_R r_matrix;
         r_matrix.init(*this->LOWF.ParaV);
@@ -28,42 +29,12 @@ void LOOP_ions::output_HS_R(
 
     if(GlobalV::NSPIN==1||GlobalV::NSPIN==4)
     {
-        // this->UHM.calculate_STN_R();
-        // this->UHM.GK.cal_vlocal_R(0);
-        // this->UHM.GK.distribute_pvpR_tr();
-        // HS_Matrix::save_HSR_tr(0);
-
         // jingan add 2021-6-4, modify 2021-12-2
         this->UHM.calculate_HSR_sparse(0, sparse_threshold);
     }
     ///*
     else if(GlobalV::NSPIN==2)
     {
-        // this->UHM.calculate_STN_R();
-        // for(int ik=0; ik<GlobalC::kv.nks; ik++)
-        // {
-        //     if(ik==0 || ik==GlobalC::kv.nks/2)
-        //     {
-        //         if(GlobalV::NSPIN==2)GlobalV::CURRENT_SPIN = GlobalC::kv.isk[ik];
-        //         for(int ir=0; ir<GlobalC::pw.nrxx; ir++)
-        //         {
-        //             GlobalC::pot.vr_eff1[ir] = GlobalC::pot.vr_eff( GlobalV::CURRENT_SPIN, ir);
-        //         }
-                    
-        //         if(!GlobalV::GAMMA_ONLY_LOCAL)
-        //         {
-        //             if(GlobalV::VL_IN_H)
-        //             {
-        // 				//this->UHM.GK.cal_vlocal_k(GlobalC::pot.vrs1,GridT);
-        // 				this->UHM.GK.cal_vlocal_k(GlobalC::pot.vr_eff1, GlobalC::GridT, GlobalV::CURRENT_SPIN);
-        //             }
-        //         }
-        //         this->UHM.GK.cal_vlocal_R(GlobalV::CURRENT_SPIN);
-        //         this->UHM.GK.distribute_pvpR_tr();
-        //         HS_Matrix::save_HSR_tr(GlobalV::CURRENT_SPIN);
-        //     }
-        // }
-
         // jingan add 2021-6-4
         for(int ik = 0; ik < GlobalC::kv.nks; ik++)
         {
@@ -106,7 +77,7 @@ void LOOP_ions::output_HS_R(
 }
 
 
-void LOOP_ions::output_SR(const std::string &SR_filename, const bool &binary, const double &sparse_threshold)
+void ESolver_KS_LCAO::output_SR(const std::string &SR_filename, const bool &binary, const double &sparse_threshold)
 {
     ModuleBase::TITLE("LOOP_ions","output_SR");
     ModuleBase::timer::tick("LOOP_ions","output_SR"); 
@@ -117,4 +88,5 @@ void LOOP_ions::output_SR(const std::string &SR_filename, const bool &binary, co
 
     ModuleBase::timer::tick("LOOP_ions","output_SR");
     return;
+}
 }

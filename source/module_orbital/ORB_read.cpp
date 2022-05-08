@@ -30,7 +30,8 @@ LCAO_Orbitals::LCAO_Orbitals()
 	this->dr_uniform = 0.001;
 
 	this->lmax_d = 0;
-	this->nchimax_d = 0;
+    this->nchimax_d = 0;
+    this->rcutmax_Phi = 0.0;
 }
 
 LCAO_Orbitals::~LCAO_Orbitals()
@@ -106,7 +107,7 @@ void LCAO_Orbitals::Read_Orbitals(
 	const int &ntype_in, 
 	const int &lmax_in,
 	const bool &deepks_setorb,
-	const int &out_r_matrix,
+	const int &out_mat_r,
 	const bool &force_flag, // mohan add 2021-05-07
 	const int &my_rank) // mohan add 2021-04-26
 {
@@ -178,7 +179,7 @@ void LCAO_Orbitals::Read_Orbitals(
 	}
 
 	// jingan add for calculate r(R) matrix
-	if(out_r_matrix) 
+	if(out_mat_r) 
 	{
 		kmesh = kmesh * 4;
 	}

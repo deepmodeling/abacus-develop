@@ -69,6 +69,10 @@ class Symmetry_Basic
 	void order_y(double *pos, const int &oldpos, const int &newpos);
 	void order_z(double *pos, const int &oldpos, const int &newpos);
 };
+
+//for test only
+extern bool test_brav;
+
 }//end of define namespace
 
 #endif

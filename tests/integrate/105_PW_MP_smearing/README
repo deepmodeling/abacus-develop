@@ -2,5 +2,5 @@ This test for:
 *bcc Fe
 *k-points 2*2*2
 *SG15 upf pseudopotential
-*smearing mp = methfessel-paxton
+*smearing_method mp = methfessel-paxton
 *ks_solver cg

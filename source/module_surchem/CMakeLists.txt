@@ -1,0 +1,12 @@
+add_library(
+    surchem
+    OBJECT
+    H_correction_pw.cpp
+    cal_epsilon.cpp
+    cal_pseudo.cpp
+    cal_totn.cpp
+    cal_vcav.cpp
+    cal_vel.cpp
+    corrected_energy.cpp
+    minimize_cg.cpp
+)

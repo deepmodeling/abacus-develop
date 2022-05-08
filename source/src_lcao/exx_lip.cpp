@@ -180,11 +180,11 @@ void Exx_Lip::init(K_Vectors *kv_ptr_in, wavefunc *wf_ptr_in, PW_Basis *pw_ptr_i
 			k_pack->hvec_array[ik].create(GlobalV::NLOCAL,GlobalV::NBANDS);
 		}
 
-		if (GlobalC::pot.start_pot=="atomic")
+		if (GlobalC::pot.init_chg=="atomic")
 		{
 			q_pack = k_pack;
 		}
-		else if(GlobalC::pot.start_pot=="file")
+		else if(GlobalC::pot.init_chg=="file")
 		{
 			read_q_pack();
 		}
@@ -301,11 +301,11 @@ Exx_Lip::~Exx_Lip()
 		delete[] k_pack->hvec_array;	k_pack->hvec_array=NULL;
 		delete k_pack;
 
-		if (GlobalC::pot.start_pot=="atomic")
+		if (GlobalC::pot.init_chg=="atomic")
 		{
 			q_pack = NULL;
 		}
-		else if(GlobalC::pot.start_pot=="file")
+		else if(GlobalC::pot.init_chg=="file")
 		{
 			delete q_pack->kv_ptr;	q_pack->kv_ptr=NULL;
 			delete q_pack->wf_ptr;	q_pack->wf_ptr=NULL;
@@ -358,7 +358,7 @@ void Exx_Lip::phi_cal(k_package *kq_pack, int ikq)
 void Exx_Lip::psi_cal()
 {
 	ModuleBase::TITLE("Exx_Lip","psi_cal");
-	if (GlobalC::pot.start_pot=="atomic")
+	if (GlobalC::pot.init_chg=="atomic")
 	{
 		for( int iq = 0; iq < q_pack->kv_ptr->nks; ++iq)
 		{
@@ -389,7 +389,7 @@ void Exx_Lip::psi_cal()
 			}
 		}
 	}
-	else if(GlobalC::pot.start_pot=="file")
+	else if(GlobalC::pot.init_chg=="file")
 	{
 		for( int iq=0; iq<q_pack->kv_ptr->nks; ++iq)
 		{
@@ -414,11 +414,11 @@ void Exx_Lip::psi_cal()
 
 void Exx_Lip::judge_singularity( int ik)
 {
-	if (GlobalC::pot.start_pot=="atomic")
+	if (GlobalC::pot.init_chg=="atomic")
 	{
 		iq_vecik = ik;
 	}
-	else if(GlobalC::pot.start_pot=="file")
+	else if(GlobalC::pot.init_chg=="file")
 	{
 		double min_q_minus_k(numeric_limits<double>::max());
 		for( int iq=0; iq<q_pack->kv_ptr->nks; ++iq)
@@ -625,7 +625,7 @@ void Exx_Lip::exx_energy_cal()
 
 void Exx_Lip::write_q_pack() const
 {
-    if (GlobalC::CHR.out_charge==0)
+    if (GlobalC::CHR.out_chg==0)
 		return;
 
 	if(!GlobalV::RANK_IN_POOL)

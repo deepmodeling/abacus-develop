@@ -25,7 +25,7 @@ def read_info(file_name):
 		"rcut":			6,
 		"pseudo_dir":	"../",
 		"pseudo":		"N_ONCV_PBE-1.0.upf",
-		"sigma":		0.01,
+		"smearing_sigma":		0.01,
 		"smooth":		false,
 	},
 	"orbital":	[2,2,1]

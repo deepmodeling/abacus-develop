@@ -12,7 +12,7 @@ do
 latA=`echo " $stru_start + $count*$delta" |bc`
 stru=`echo " ($stru_start + $count*$delta)* 1.88972687777" |bc`
 echo " stru_num=stru-$latA"
-#nstep=1 
+#relax_nmax=1 
 
 file="out_data_$latA"
 test -d $file || mkdir $file

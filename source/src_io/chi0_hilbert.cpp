@@ -259,7 +259,7 @@ void Chi0_hilbert::Chi()
 	}
 
 	//std::cout <<"GlobalC::en.ef = "<<GlobalC::en.ef<<std::endl;
-	//std::cout <<"degauss = "<<INPUT.degauss<<std::endl;
+	//std::cout <<"smearing_sigma = "<<INPUT.smearing_sigma<<std::endl;
 
 	//------------------------------------------------------------------
 	// change the fermi level or not
@@ -280,14 +280,14 @@ void Chi0_hilbert::Chi()
 			//----------------------------------------------------------
 			//  gauss smearing
 			//----------------------------------------------------------
-			if(INPUT.smearing == "gauss" || INPUT.smearing == "gaussian")
+			if(INPUT.smearing_method == "gauss" || INPUT.smearing_method == "gaussian")
 			{
-				cweight[ik][ib] = GlobalC::kv.wk[ik] * Occupy::wgauss( (energy - GlobalC::wf.ekb[ik][ib] )/INPUT.degauss, 0);
+				cweight[ik][ib] = GlobalC::kv.wk[ik] * Occupy::wgauss( (energy - GlobalC::wf.ekb[ik][ib] )/INPUT.smearing_sigma, 0);
 			}
 			//----------------------------------------------------------
 			//  fixed smearing
 			//----------------------------------------------------------
-			else if(INPUT.smearing == "fixed")
+			else if(INPUT.smearing_method == "fixed")
 			{
 				if((GlobalC::wf.ekb[ik][ib]-energy)<-0.0001 )
 				{
@@ -305,9 +305,9 @@ void Chi0_hilbert::Chi()
 			//----------------------------------------------------------
 			//   fermi-dirac smearing
 			//----------------------------------------------------------
-			else if(INPUT.smearing == "fd")
+			else if(INPUT.smearing_method == "fd")
 			{
-				cweight[ik][ib] = GlobalC::kv.wk[ik] * Occupy::wgauss( (energy - GlobalC::wf.ekb[ik][ib] )/INPUT.degauss, -99);
+				cweight[ik][ib] = GlobalC::kv.wk[ik] * Occupy::wgauss( (energy - GlobalC::wf.ekb[ik][ib] )/INPUT.smearing_sigma, -99);
 			}
 			else
 			{

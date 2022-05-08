@@ -14,7 +14,17 @@
 #include "../module_base/global_variable.h"
 #include "../module_base/complexmatrix.h"
 
-#include "src_pw/hamilt_pw.h"
+#if ((defined __CUDA) || (defined __ROCM))
+
+#ifdef __CUDA
+#include "hamilt_pw.cuh"
+#else
+#include "hamilt_pw_hip.h"
+#endif
+
+#else
+#include "hamilt_pw.h"
+#endif
 
 class Diago_David
 {

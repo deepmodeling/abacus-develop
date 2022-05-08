@@ -3,7 +3,7 @@ This test for:
 *PW
 *kpoints 2*2*2
 *sg15 pseudopotential
-*smearing gauss
-*ion_move_method bfgs
+*smearing_method gauss
+*relax_method bfgs
 *mixing_type pulay
 *mixing_beta 0.5

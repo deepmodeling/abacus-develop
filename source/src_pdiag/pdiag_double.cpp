@@ -65,9 +65,9 @@ inline bool ifElpaHandle(const bool& newIteration, const bool& ifNSCF)
 	return doHandle;
 }
 
-int Pdiag_Double::out_hs = 0;
-int Pdiag_Double::out_hsR = 0;
-int Pdiag_Double::out_lowf = 0;
+int Pdiag_Double::out_mat_hs = 0;
+int Pdiag_Double::out_mat_hsR = 0;
+int Pdiag_Double::out_wfc_lcao = 0;
 
 Pdiag_Double::Pdiag_Double() {}
 
@@ -228,7 +228,7 @@ void Pdiag_Double::diago_double_begin(
 	    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"eigenvalues were copied to ekb");
 
         double** wfc_grid = nullptr;    //output but not do "2d-to-grid" conversion
-        lowf.wfc_2d_to_grid(this->out_lowf, lowf.wfc_gamma[ik].c, wfc_grid);
+        lowf.wfc_2d_to_grid(this->out_wfc_lcao, lowf.wfc_gamma[ik].c, wfc_grid);
         
     } // GenELPA method
 	else if(GlobalV::KS_SOLVER=="lapack_gv")
@@ -307,7 +307,11 @@ void Pdiag_Double::diago_double_begin(
 	}
 	else if(GlobalV::KS_SOLVER=="scalapack_gvx")
 	{
-		diag_scalapack_gvx.pdsygvx_diag(pv->desc, pv->ncol, pv->nrow, h_mat, s_mat, ekb, lowf.wfc_gamma[ik]);		// Peize Lin add 2021.11.02
+        double *eigen = new double[GlobalV::NLOCAL];
+        ModuleBase::GlobalFunc::ZEROS(eigen, GlobalV::NLOCAL);
+		diag_scalapack_gvx.pdsygvx_diag(pv->desc, pv->ncol, pv->nrow, h_mat, s_mat, eigen, lowf.wfc_gamma[ik]);		// Peize Lin add 2021.11.02
+        BlasConnector::copy(GlobalV::NBANDS, eigen, inc, ekb, inc);
+        delete[] eigen;
 	}
     //delete[] Stmp; //LiuXh 20171109
 #endif
@@ -477,14 +481,17 @@ void Pdiag_Double::diago_complex_begin(
         BlasConnector::copy(GlobalV::NBANDS, eigen, inc, ekb, inc);
         delete[] eigen;
 
-        lowf.wfc_2d_to_grid(this->out_lowf, lowf.wfc_k[ik].c, lowf.wfc_k_grid[ik], ik);
+        lowf.wfc_2d_to_grid(this->out_wfc_lcao, lowf.wfc_k[ik].c, lowf.wfc_k_grid[ik], ik);
         
     } // GenELPA method
 	else if(GlobalV::KS_SOLVER=="scalapack_gvx")
 	{
-		diag_scalapack_gvx.pzhegvx_diag(pv->desc, pv->ncol, pv->nrow, ch_mat, cs_mat, ekb, lowf.wfc_k[ik]);		// Peize Lin add 2021.11.02
-
-        lowf.wfc_2d_to_grid(this->out_lowf, lowf.wfc_k[ik].c, lowf.wfc_k_grid[ik], ik);
+        double *eigen = new double[GlobalV::NLOCAL];
+        ModuleBase::GlobalFunc::ZEROS(eigen, GlobalV::NLOCAL);
+		diag_scalapack_gvx.pzhegvx_diag(pv->desc, pv->ncol, pv->nrow, ch_mat, cs_mat, eigen, lowf.wfc_k[ik]);		// Peize Lin add 2021.11.02       
+        BlasConnector::copy(GlobalV::NBANDS, eigen, inc, ekb, inc);
+        delete[] eigen;
+        lowf.wfc_2d_to_grid(this->out_wfc_lcao, lowf.wfc_k[ik].c, lowf.wfc_k_grid[ik], ik);
 
     }
 
@@ -640,7 +647,7 @@ void Pdiag_Double::gath_eig_complex(MPI_Comm comm,int n,std::complex<double> **c
 	// but it works!
 	std::stringstream ss;
 	ss << GlobalV::global_out_dir << "LOWF_K_" << ik+1 << ".dat";
-    if(this->out_lowf)
+    if(this->out_wfc_lcao)
 	{
 //		std::cout << " write the wave functions" << std::endl;
 		WF_Local::write_lowf_complex( ss.str(), ctot, ik );//mohan add 2010-09-09        
@@ -1064,7 +1071,7 @@ MPI_Barrier(comm);
 	// output the wave function if required.
 	// this is a bad position to output wave functions.
 	// but it works!
-    if(this->out_lowf)
+    if(this->out_wfc_lcao)
 	{
 		// read is in ../src_algorithms/wf_local.cpp
 		std::stringstream ss;

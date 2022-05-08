@@ -50,6 +50,7 @@ public:
 	int sym_test;
 	int pbrav;
 	int ibrav;
+	int real_brav;    // the real ibrav for the cell     pengfei Li 3-15-2022
 	std::string ilattname;	//the bravais lattice type of the supercell
 	std::string plattname;	//the bravais lattice type of the primitive cell
 

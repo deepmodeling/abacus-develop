@@ -1,7 +1,7 @@
 This test for:
 *Si-diamond
 *sg15 pseudopotential
-*smearing fixed
+*smearing_method fixed
 *ks_solver cg
 *mixing_type broyden
 *mixing_beta 0.4

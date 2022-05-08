@@ -13,9 +13,9 @@ double Ions_Move_Basic::etot_p=0.0;
 
 double Ions_Move_Basic::trust_radius=0.0;
 double Ions_Move_Basic::trust_radius_old=0.0;
-double Ions_Move_Basic::trust_radius_max = -1.0; // default is 0.8
-double Ions_Move_Basic::trust_radius_min = -1.0; // default is 1e-5
-double Ions_Move_Basic::trust_radius_ini = -1.0; // default is 0.5
+double Ions_Move_Basic::relax_bfgs_rmax = -1.0; // default is 0.8
+double Ions_Move_Basic::relax_bfgs_rmin = -1.0; // default is 1e-5
+double Ions_Move_Basic::relax_bfgs_init = -1.0; // default is 0.5
 double Ions_Move_Basic::best_xxx = 1.0;
 
 int Ions_Move_Basic::out_stru=0;
@@ -74,7 +74,7 @@ void Ions_Move_Basic::move_atoms(double *move, double *pos)
 	//------------------------
 	// for test only
 	//------------------------
-	if(GlobalV::test_ion_dynamics)
+	if(GlobalV::test_relax_method)
 	{
 		int iat=0;
 		GlobalV::ofs_running << "\n movement of ions (unit is Bohr) : " << std::endl;
@@ -141,7 +141,7 @@ void Ions_Move_Basic::check_converged(const double *grad)
 	// mohan add 2010-08-06
 	Ions_Move_Basic::largest_grad /= GlobalC::ucell.lat0;
 
-	if(GlobalV::test_ion_dynamics)
+	if(GlobalV::test_relax_method)
 	{	
 		ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"old total energy (ry)", etot_p);
 		ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"new total energy (ry)", etot);

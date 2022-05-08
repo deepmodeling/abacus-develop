@@ -22,3 +22,7 @@ add_library(
     pzt2s.cpp
     diag_scalapack_gvx.cpp
 )
+
+IF (BUILD_TESTING)
+  add_subdirectory(test)
+endif()

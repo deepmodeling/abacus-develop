@@ -18,11 +18,11 @@ def print_file_pw(info,dis):
 			nbands             	{info["input"]["nbands"]} 
 
 			ecutwfc             {info["input"]["ecut"]}
-			dr2                 2.0e-8  // about iteration
-			niter               1000
+			scf_thr                 2.0e-8  // about iteration
+			scf_nmax               1000
 
-			smearing            gauss
-			sigma               {info["input"]["sigma"]}
+			smearing_method            gauss
+			smearing_sigma               {info["input"]["smearing_sigma"]}
 
 			mixing_type         pulay       // about charge mixing
 			mixing_beta         0.4
@@ -46,7 +46,7 @@ def print_file_pw(info,dis):
 			INPUT_ORBITAL_INFORMATION
 			<SPHERICAL_BESSEL>
 			1           // smooth or not
-			0.1         // sigma
+			0.1         // smearing_sigma
 			{info["input"]["ecut"]}       // energy cutoff for spherical bessel functions(Ry)
 			{info["input"]["rcut"]}       // cutoff of wavefunctions(a.u.)
 			1.0e-12     // tolerence

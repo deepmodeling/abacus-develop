@@ -23,7 +23,18 @@ class Force_Stress_LCAO
 	public :
 	
 	Force_Stress_LCAO (Record_adj &ra);
-	~Force_Stress_LCAO ();
+    ~Force_Stress_LCAO();
+
+	void getForceStress(
+		const bool isforce, 
+		const bool isstress, 
+		const bool istestf, 
+        const bool istests,
+        Local_Orbital_Charge& loc,
+        Local_Orbital_wfc& lowf,
+        LCAO_Hamilt &uhm,
+        ModuleBase::matrix& fcs,
+		ModuleBase::matrix &scs);
 
 private:
     
@@ -36,16 +47,6 @@ private:
 	void print_force(const std::string &name, ModuleBase::matrix& f, const bool screen, bool ry)const;
 	void printforce_total (const bool ry, const bool istestf, ModuleBase::matrix& fcs);
 	
-	void getForceStress(
-		const bool isforce, 
-		const bool isstress, 
-		const bool istestf, 
-        const bool istests,
-        Local_Orbital_Charge& loc,
-        Local_Orbital_wfc& lowf,
-        LCAO_Hamilt &uhm,
-        ModuleBase::matrix& fcs,
-		ModuleBase::matrix &scs);
 
 	void forceSymmetry(ModuleBase::matrix &fcs);
 

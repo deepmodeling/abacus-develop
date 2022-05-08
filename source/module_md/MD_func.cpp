@@ -200,7 +200,7 @@ void MD_func::InitVel(
 	if(frozen.y == 0) ++frozen_freedom;
 	if(frozen.z == 0) ++frozen_freedom;
 
-	if(unit_in.set_vel)
+	if(unit_in.init_vel)
     {
         ReadVel(unit_in, vel);
     }
@@ -286,7 +286,7 @@ void MD_func::force_virial(
 #ifdef __LCAO
 		else if(GlobalV::BASIS_TYPE=="lcao")
 		{
-			Run_MD_LCAO md_lcao(*ParaV);
+			Run_MD_LCAO md_lcao;
 			md_lcao.md_force_virial(p_esolver,istep, unit_in.nat, potential, force, stress);
 		}
 #endif
@@ -331,12 +331,19 @@ void MD_func::MDdump(const int &step,
 		const ModuleBase::matrix &virial, 
 		const ModuleBase::Vector3<double> *force)
 {
-	if(GlobalV::MY_RANK) return;
+    if(GlobalV::MY_RANK) return;
 
-	std::stringstream file;
+    std::stringstream file;
     file << GlobalV::global_out_dir << "MD_dump";
-	std::ofstream ofs;
-	ofs.open(file.str(), ios::app);
+    std::ofstream ofs;
+    if(step == 0)
+    {
+        ofs.open(file.str(), ios::trunc);
+    }
+    else
+    {
+        ofs.open(file.str(), ios::app);
+    }
 
 	const double unit_virial = ModuleBase::HARTREE_SI / pow(ModuleBase::BOHR_RADIUS_SI,3) * 1.0e-8;
 	const double unit_force = ModuleBase::Hartree_to_eV * ModuleBase::ANGSTROM_AU;

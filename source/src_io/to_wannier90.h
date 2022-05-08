@@ -13,7 +13,6 @@ using namespace std;
 #include "../module_base/matrix3.h"
 #include "../module_base/complexmatrix.h"
 #include "../module_base/lapack_connector.h"
-#include "../src_pw/global.h"
 #include "../src_lcao/wavefunc_in_pw.h"
 
 #ifdef __LCAO

@@ -6,18 +6,17 @@ calculation				scf
 basis_type 				lcao
 ks_solver  				genelpa
 ecutwfc    				100
-dr2        				1e-8
-niter      				100
+scf_thr        				1e-8
+scf_nmax      				100
 gamma_only 				0
-smearing   				smearing
+smearing_method   				smearing_method
 mixing_type				pulay
 
-exx_hybrid_type			hse
-exx_separate_loop		0		
-exx_pca_threshold		1E-3
-exx_ccp_rmesh_times		10
-exx_c_threshold			1E-4	
-exx_dm_threshold		1E-3	
-exx_schwarz_threshold	1E-4	
-exx_cauchy_threshold	1E-6	
-
+dft_functional			hse
+exx_separate_loop 1
+exx_pca_threshold 1e-4
+exx_c_threshold 1e-4
+exx_dm_threshold 1e-4
+exx_schwarz_threshold 1e-5
+exx_cauchy_threshold 1e-7
+exx_ccp_rmesh_times 10

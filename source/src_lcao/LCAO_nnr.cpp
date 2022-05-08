@@ -1,13 +1,12 @@
 #include "../src_pw/global.h"
 #include "record_adj.h" //mohan add 2012-07-06
-#include "src_lcao/LOOP_elec.h"
 #include "../module_base/timer.h"
 #ifdef __DEEPKS
 #include "../module_deepks/LCAO_deepks.h"
 #endif
 
 // This is for cell R dependent part. 
-void Grid_Technique::cal_nnrg()
+void Grid_Technique::cal_nnrg(Parallel_Orbitals* pv)
 {
 	ModuleBase::TITLE("LCAO_nnr","cal_nnrg");
 
@@ -18,6 +17,7 @@ void Grid_Technique::cal_nnrg()
 	delete[] nlocdimg;
 	delete[] nlocstartg;
 	delete[] nad;
+	this->nnrg_index.resize(0);
 	
 	this->nad = new int[GlobalC::ucell.nat];
 	this->nlocdimg = new int[GlobalC::ucell.nat];	
@@ -81,57 +81,17 @@ void Grid_Technique::cal_nnrg()
 						// GlobalC::ORB.Phi[it].getRcut = 7.0000000000000008
 						if(distance < rcut - 1.0e-15)
 						{
-							const int nelement = atom1->nw * atom2->nw;//modified by zhengdy-soc, no need to double
+							//storing the indexed for nnrg
+							const int mu = pv->trace_loc_row[iat];
+							const int nu = pv->trace_loc_col[iat2];
+							this->nnrg_index.push_back(gridIntegral::gridIndex{this->nnrg, mu, nu, GlobalC::GridD.getBox(ad), atom1->nw, atom2->nw});
+							
+							const int nelement = atom1->nw * atom2->nw;
 							this->nnrg += nelement;
 							this->nlocdimg[iat] += nelement; 
 							this->nad[iat]++;
 							++count;
-
-							/*
-							   ofs << std::setw(10) << iat << std::setw(10) << iat2
-							   << std::setw(10) << GlobalC::GridD.getBox(ad).x 
-							   << std::setw(10) << GlobalC::GridD.getBox(ad).y 
-							   << std::setw(10) << GlobalC::GridD.getBox(ad).z 
-							   << std::setw(20) << distance << std::endl;
-							 */
 						}
-						// there is another possibility that i and j are adjacent atoms.
-						// which is that <i|beta> are adjacents while <beta|j> are also
-						// adjacents, these considerations are only considered in k-point
-						// algorithm, 
-						// mohan fix bug 2012-07-03
-						/*
-						else if(distance >= rcut)
-						{
-							for (int ad0 = 0; ad0 < GlobalC::GridD.getAdjacentNum()+1; ++ad0)
-							{
-								const int T0 = GlobalC::GridD.getType(ad0);
-								const int I0 = GlobalC::GridD.getNatom(ad0);
-								const int iat0 = GlobalC::ucell.itia2iat(T0, I0);
-								const int start0 = GlobalC::ucell.itiaiw2iwt(T0, I0, 0);
-
-								tau0 = GlobalC::GridD.getAdjacentTau(ad0);	
-								dtau1 = tau0 - tau1; 
-								dtau2 = tau0 - tau2;
-
-								double distance1 = dtau1.norm() * GlobalC::ucell.lat0;
-								double distance2 = dtau2.norm() * GlobalC::ucell.lat0;
-
-								double rcut1 = GlobalC::ORB.Phi[T1].getRcut() + GlobalC::ucell.infoNL.Beta[T0].get_rcut_max();
-								double rcut2 = GlobalC::ORB.Phi[T2].getRcut() + GlobalC::ucell.infoNL.Beta[T0].get_rcut_max();
-
-								if( distance1 < rcut1 && distance2 < rcut2 )
-								{
-									const int nelement = atom1->nw * atom2->nw;
-									this->nnrg += nelement;
-									this->nlocdimg[iat] += nelement; 
-									this->nad[iat]++;
-									++count;
-									break;	
-								} // dis1, dis2
-							}//ad0
-						}//distance
-						*/
 					}// end iat2
 				}// end ad
 //				GlobalV::ofs_running << " iat=" << iat << " nlocstartg=" << nlocstartg[iat] << " nad=" << nad[iat] << std::endl;
@@ -181,9 +141,6 @@ void Grid_Technique::cal_nnrg()
 	}
 	allocate_find_R2 = true;
 
-//	GlobalV::ofs_running << std::setw(5) << "b1" << std::setw(5) << "b2" << std::setw(5) << "b3"
-//	<< std::setw(8) << "iat" << std::setw(8) << "ad" << std::setw(8) << "iat2"
-//	<< std::setw(8) << "find_R2" << std::setw(8) << "find_R2st" << std::setw(8) << "dis" << std::endl;
 	for (int T1 = 0; T1 < GlobalC::ucell.ntype; T1++)
 	{
 		for (int I1 = 0; I1 < GlobalC::ucell.atoms[T1].na; I1++)
@@ -203,7 +160,6 @@ void Grid_Technique::cal_nnrg()
 				const int I2 = GlobalC::GridD.getNatom(ad);
 				const int iat2 = GlobalC::ucell.itia2iat(T2,I2);
 
-				
 				// if this atom is in this processor.
 				if(this->in_this_processor[iat])
 				{
@@ -216,28 +172,6 @@ void Grid_Technique::cal_nnrg()
 						const int b1 = GlobalC::GridD.getBox(ad).x;
 						const int b2 = GlobalC::GridD.getBox(ad).y;
 						const int b3 = GlobalC::GridD.getBox(ad).z;
-                        
-						// for test
-						/*
-						if( this->cal_RindexAtom(b1, b2, b3, iat2) == 232 )
-						{
-							std::cout << " ====== nnrg =========" << std::endl;
-							std::cout << " index=" << cal_RindexAtom(b1, b2, b3, iat2) << std::endl;
-							std::cout << " iat=" << iat << " iat2=" << iat2 << std::endl;
-							std::cout << " R1 = " << tau1.x << " " << tau1.y << " " << tau1.z << std::endl;
-							std::cout << " R2 = " << GlobalC::GridD.getAdjacentTau(ad).x 
-							<< " " << GlobalC::GridD.getAdjacentTau(ad).y 
-							<< " " << GlobalC::GridD.getAdjacentTau(ad).z << std::endl;
-							std::cout << std::setprecision(25);
-							std::cout << " distance = " << distance << std::endl;
-							std::cout << " box = " << b1 << " " << b2 << " " << b3 << std::endl;
-							std::cout << " rcut = " << rcut << std::endl;
-						}
-						*/
-						
-
-						//std::cout << " iat=" << iat << " find_R2=" << this->cal_RindexAtom(b1, b2, b3, iat2) <<
-						// " b1=" << b1 << " b2=" << b2 << " b3=" << b3 << " iat2=" << iat2 << " distance=" << distance << std::endl;
 					
 						// mohan fix bug 2011-06-26, should be '<', not '<='	
 						//			if(distance < rcut)
@@ -258,19 +192,6 @@ void Grid_Technique::cal_nnrg()
 							find_R2[iat][count] = this->cal_RindexAtom(b1, b2, b3, iat2);
 
 
-							/*if(iat==50 && iat2==96)
-							{
-								GlobalV::ofs_running << " ************** iat=" << iat << " count=" << count << " find_R2=" << find_R2[iat][count] << 
-								" b1=" << b1 << " b2=" << b2 << " b3=" << b3 << " iat2=" << iat2 << " distance=" << distance 
-								<< " rcut=" << rcut <<std::endl;
-							}
-							else if(find_R2[iat][count]==10536)
-							{
-								GlobalV::ofs_running << " ************** iat=" << iat << " count=" << count << " find_R2=" << find_R2[iat][count] << 
-								" b1=" << b1 << " b2=" << b2 << " b3=" << b3 << " iat2=" << iat2 << " distance=" << distance 
-								<< " rcut=" << rcut <<std::endl;
-							}*/
-
 							// find_R2st
 							// note: the first must be zero.
 							// find_R2st: start position of each adjacen atom.
@@ -286,21 +207,6 @@ void Grid_Technique::cal_nnrg()
 			}
 		}
 	}
-
-	//---------
-	// for test
-	//---------
-	/*
-	GlobalV::ofs_running << " print find_R2 " << std::endl;
-	for(int i=0; i<GlobalC::ucell.nat; i++)
-	{
-		for(int j=0; j<nad[i]; j++)
-		{
-			GlobalV::ofs_running << " i=" << i << " j=" << j << " find_R2=" << find_R2[i][j] << std::endl;
-		}
-	}
-	GlobalV::ofs_running << std::endl;
-	*/
 
 	return;
 }
@@ -330,24 +236,9 @@ void Grid_Technique::cal_max_box_index(void)
 		}
 	}
 
-	/*
-	ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"maxB1",maxB1);
-	ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"maxB2",maxB2);
-	ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"maxB3",maxB3);
-	ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"minB1",minB1);
-	ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"minB2",minB2);
-	ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"minB3",minB3);
-	*/
-
 	nB1 = maxB1-minB1+1;
 	nB2 = maxB2-minB2+1;
 	nB3 = maxB3-minB3+1;
-
-	/*
-	ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"nB1",nB1);
-	ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"nB2",nB2);
-	ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"nB3",nB3);
-	*/
 
 	nbox = nB1 * nB2 * nB3;
 	

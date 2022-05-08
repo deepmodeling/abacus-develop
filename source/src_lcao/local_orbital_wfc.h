@@ -36,7 +36,7 @@ public:
     const Parallel_Orbitals *ParaV;
 
 
-    void allocate_k(const Grid_Technique& gt,
+    void allocate_k(const int& lgd,
         Local_Orbital_wfc &lowf);
 
     //=========================================
@@ -66,8 +66,8 @@ public:
     // (in which the implementation should be put in header file )
     // because sub-function `write_lowf_complex`contains GlobalC declared in `global.h`
     // which will cause lots of "not defined" if included in a header file.
-    void wfc_2d_to_grid(int out_lowf, double* wfc_2d, double** wfc_grid);
-    void wfc_2d_to_grid(int out_lowf, std::complex<double>* wfc_2d, std::complex<double>** wfc_grid, int ik);
+    void wfc_2d_to_grid(int out_wfc_lcao, const double* wfc_2d, double** wfc_grid);
+    void wfc_2d_to_grid(int out_wfc_lcao, const std::complex<double>* wfc_2d, std::complex<double>** wfc_grid, int ik);
 #endif
 
 private:

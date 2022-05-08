@@ -13,7 +13,7 @@ public:
     void allocate(void);
     void start(const ModuleBase::matrix& force, const double &etot);
         
-        static double CG_THRESHOLD;
+        static double RELAX_CG_THR;
 	int sd_step;
 	int cg_step;
 

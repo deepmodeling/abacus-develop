@@ -55,8 +55,5 @@ TEST_F(MathBsplineTest,Properties)
 		}
 		//std::cout<<"sum "<< sum<< std::endl;
 		EXPECT_NEAR(sum,1.0,1.e-15);
-		bp.getbspline(0.0); // must be set to 0.0 to test M_n(0)
-		EXPECT_NEAR(bp.bezier_ele(0),0,1.e-16); 
-		EXPECT_NEAR(bp.bezier_ele(norder+1),0,1.e-16); 
 	}
 }

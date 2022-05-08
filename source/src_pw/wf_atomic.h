@@ -19,7 +19,7 @@ class WF_atomic : public WF_igk
 
     ModuleBase::ComplexMatrix *wanf2; // wannier functions in the PW basis
     
-    int seed; //random seed for wave functions qianrui add 2021-8-13
+    int pw_seed; //random seed for wave functions qianrui add 2021-8-13
 
     void init_at_1(void);// from init_at_1.f90
 

@@ -49,7 +49,7 @@ public:
 
         ucell.nat = 4;
         ucell.atoms[0].na = 4;
-        ucell.set_vel = 1;
+        ucell.init_vel = 1;
 
         delete[] ucell.atoms[0].tau;
         delete[] ucell.atoms[0].taud;

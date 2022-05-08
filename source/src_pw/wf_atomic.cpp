@@ -12,7 +12,7 @@ WF_atomic::WF_atomic()
 {
     evc  = new ModuleBase::ComplexMatrix[1];
     wanf2= new ModuleBase::ComplexMatrix[1];
-    seed = 0;
+    pw_seed = 0;
 }
 
 WF_atomic::~WF_atomic()
@@ -80,7 +80,7 @@ void WF_atomic::init_at_1(void)
         {
 			//std::cout << "\n T=" << it << " ic=" << ic << std::endl;
             int nmesh;
-            if(GlobalV::RENORMWITHMESH)
+            if(GlobalV::PSEUDO_MESH)
                 nmesh = atom->mesh;
             else
                 nmesh = atom->msh;
@@ -483,14 +483,14 @@ void WF_atomic::random(ModuleBase::ComplexMatrix &psi,const int iw_start,const i
     const int ng = GlobalC::kv.ngk[ik];
 #ifdef __MPI
 #if ((defined __CUDA) || (defined __ROCM))
-    if(seed > 0)//qianrui add 2021-8-13
+    if(pw_seed > 0)//qianrui add 2021-8-13
     {
-        srand(unsigned(seed + GlobalC::Pkpoints.startk_pool[GlobalV::MY_POOL] + ik));
+        srand(unsigned(pw_seed + GlobalC::Pkpoints.startk_pool[GlobalV::MY_POOL] + ik));
     }
 #else
-    if(seed > 0)//qianrui add 2021-8-13
+    if(pw_seed > 0)//qianrui add 2021-8-13
     {
-        srand(unsigned(seed + GlobalC::Pkpoints.startk_pool[GlobalV::MY_POOL] + ik));
+        srand(unsigned(pw_seed + GlobalC::Pkpoints.startk_pool[GlobalV::MY_POOL] + ik));
         int nxy = GlobalC::pw.ncx * GlobalC::pw.ncy;
         int nrxx = GlobalC::pw.nrxx;
         int nz = GlobalC::pw.ncz;
@@ -544,9 +544,9 @@ void WF_atomic::random(ModuleBase::ComplexMatrix &psi,const int iw_start,const i
     {
 #endif
 #else
-        if(seed > 0)//qianrui add 2021-8-13
+        if(pw_seed > 0)//qianrui add 2021-8-13
         {
-            srand(unsigned(seed + GlobalC::Pkpoints.startk_pool[GlobalV::MY_POOL] + ik));
+            srand(unsigned(pw_seed + GlobalC::Pkpoints.startk_pool[GlobalV::MY_POOL] + ik));
         }
 #endif
         for (int iw = iw_start ;iw < iw_end;iw++)
@@ -581,9 +581,9 @@ void WF_atomic::atomicrandom(ModuleBase::ComplexMatrix &psi,const int iw_start,c
     assert(psi.nr >= iw_end);
     const int ng = GlobalC::kv.ngk[ik];
 #ifdef __MPI
-    if(seed > 0)//qianrui add 2021-8-13
+    if(pw_seed > 0)//qianrui add 2021-8-13
     {
-        srand(unsigned(seed + GlobalC::Pkpoints.startk_pool[GlobalV::MY_POOL] + ik));
+        srand(unsigned(pw_seed + GlobalC::Pkpoints.startk_pool[GlobalV::MY_POOL] + ik));
         int nxy = GlobalC::pw.ncx * GlobalC::pw.ncy;
         int nrxx = GlobalC::pw.nrxx;
         int nz = GlobalC::pw.ncz;
@@ -635,9 +635,9 @@ void WF_atomic::atomicrandom(ModuleBase::ComplexMatrix &psi,const int iw_start,c
     else
     {
 #else
-        if(seed > 0)//qianrui add 2021-8-13
+        if(pw_seed > 0)//qianrui add 2021-8-13
         {
-            srand(unsigned(seed + GlobalC::Pkpoints.startk_pool[GlobalV::MY_POOL] + ik));
+            srand(unsigned(pw_seed + GlobalC::Pkpoints.startk_pool[GlobalV::MY_POOL] + ik));
         }
 #endif
         double rr, arg;

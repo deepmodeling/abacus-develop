@@ -1,4 +1,6 @@
 #include "cal_r_overlap_R.h"
+#include "../src_lcao/global_fp.h"
+#include "../src_pw/global.h"
 #include "../src_parallel/parallel_reduce.h"
 #include "../module_base/timer.h"
 
@@ -106,7 +108,7 @@ void cal_r_overlap_R::init(const Parallel_Orbitals &pv)
 	GlobalC::ORB.Phi[T].PhiLN(0,0).getDk(),
 	GlobalC::ORB.Phi[T].PhiLN(0,0).getDruniform(),
 	false,
-	true, GlobalV::FORCE);
+	true, GlobalV::CAL_FORCE);
 
 /*
 	orbital_phi.resize(GlobalC::ucell.ntype);

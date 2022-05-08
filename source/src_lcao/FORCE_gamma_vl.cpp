@@ -40,9 +40,6 @@ void Force_LCAO_gamma::cal_fvl_dphi(
         tmpDHx[i] = this->UHM->LM->DHloc_fixed_x[i];
         tmpDHy[i] = this->UHM->LM->DHloc_fixed_y[i];
         tmpDHz[i] = this->UHM->LM->DHloc_fixed_z[i];
-        //std::cout << "  this->UHM->LM->DHloc_fixed_x=" <<  this->UHM->LM->DHloc_fixed_x[i] << std::endl;
-        //std::cout << "  this->UHM->LM->DHloc_fixed_y=" <<  this->UHM->LM->DHloc_fixed_y[i] << std::endl;
-        //std::cout << "  this->UHM->LM->DHloc_fixed_z=" <<  this->UHM->LM->DHloc_fixed_z[i] << std::endl;
     }
 
     //calculate dVL
@@ -65,12 +62,7 @@ void Force_LCAO_gamma::cal_fvl_dphi(
             GlobalC::pot.vr_eff1[ir] = GlobalC::pot.vr_eff(GlobalV::CURRENT_SPIN, ir);
         }
 
-        //  should not be set zero if VNA is used.
-        //  ModuleBase::GlobalFunc::ZEROS(this->UHM->LM->DHloc_fixed_x,this->ParaV->nloc);
-        //  ModuleBase::GlobalFunc::ZEROS(this->UHM->LM->DHloc_fixed_y,this->ParaV->nloc);
-        //  ModuleBase::GlobalFunc::ZEROS(this->UHM->LM->DHloc_fixed_z,this->ParaV->nloc);
         this->UHM->GG.cal_force(GlobalC::pot.vr_eff1);
-
 
         for(int i=0; i<GlobalV::NLOCAL; i++)
         {
@@ -102,26 +94,10 @@ void Force_LCAO_gamma::cal_fvl_dphi(
                         svl_dphi(1,2) += dm2d2 * this->UHM->LM->DHloc_fixed_23[index];
                         svl_dphi(2,2) += dm2d2 * this->UHM->LM->DHloc_fixed_33[index];
                     }
-                    //  std::cout << std::setw(5) << iat << std::setw(5) << iat2 
-                    //  << std::setw(5) << mu << std::setw(5) << nu
-                    //  << std::setw(15) << this->UHM->LM->DHloc_fixed_z[index] << std::endl;
                 }
             }
         }
-
-//          std::cout << "fvl_dphi:" << std::endl;
-//          for(int iat=0; iat<GlobalC::ucell.nat; ++iat)
-//          {
-//              std::cout << std::setw(5) << iat << std::setw(15) << fvl_dphi[iat][0] 
-//              << std::setw(15) << fvl_dphi[iat][1]
-//              << std::setw(15) << fvl_dphi[iat][2] << std::endl;
-//          }
-
-
     } // end spin
-    // test mohan tmp
-//  test_gamma(this->UHM->LM->DHloc_fixed_x,"this->UHM->LM->DHloc_fixed_x");
-
     if(isstress)
     {
         for(int i=0;i<3;i++)
@@ -158,7 +134,7 @@ void Force_LCAO_gamma::cal_fvl_dphi(
     ModuleBase::GlobalFunc::ZEROS (this->UHM->LM->DHloc_fixed_x, this->ParaV->nloc);
     ModuleBase::GlobalFunc::ZEROS (this->UHM->LM->DHloc_fixed_y, this->ParaV->nloc);
     ModuleBase::GlobalFunc::ZEROS (this->UHM->LM->DHloc_fixed_z, this->ParaV->nloc);
-    if(GlobalV::STRESS)
+    if(GlobalV::CAL_STRESS)
     {
         ModuleBase::GlobalFunc::ZEROS (this->UHM->LM->DHloc_fixed_11, this->ParaV->nloc);
         ModuleBase::GlobalFunc::ZEROS (this->UHM->LM->DHloc_fixed_12, this->ParaV->nloc);

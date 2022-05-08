@@ -57,3 +57,13 @@ RUN cd /tmp \
     && cd /tmp \
     && rm -rf libxc-5.1.5 \
     && rm libxc-5.1.5.tar.gz
+
+RUN cd /tmp \
+    && git clone https://github.com/llohse/libnpy.git \
+    && cp libnpy/include/npy.hpp /usr/local/include \
+    && rm -rf libnpy
+
+RUN cd /tmp \
+    && git clone https://github.com/google/googletest.git \
+    && cd googletest && cmake . && make install \
+    && rm -rf googletest

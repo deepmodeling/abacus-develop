@@ -9,7 +9,10 @@ void Charge::write_rho_cube(
 	const int &precision) 
 {
     ModuleBase::TITLE("Charge","write_rho_cube");
-
+	if (out_chg==0) 
+	{
+		return;
+	}
 	time_t start, end;
 	std::ofstream ofs;
 	
@@ -152,7 +155,7 @@ void Charge::write_rho_cube(
 				{
 					// mohan change to rho_save on 2012-02-10
 					// because this can make our next restart calculation lead
-					// to the same dr2 as the one saved.
+					// to the same scf_thr as the one saved.
 					zpiece[ir] = rho_save[ir*GlobalC::pw.nczp+iz-start_z[GlobalV::RANK_IN_POOL]];
 					//						ofs_running << "\n get zpiece[" << ir << "]=" << zpiece[ir] << " ir*GlobalC::pw.nczp+iz=" << ir*GlobalC::pw.nczp+iz;
 				}

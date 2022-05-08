@@ -92,7 +92,7 @@ void MSST::first_half()
     vsum = vel_sum();
 
     // save the velocities
-    for(int i; i<ucell.nat; ++i)
+    for(int i=0; i<ucell.nat; ++i)
     {
         old_v[i] = vel[i];
     }
@@ -103,7 +103,7 @@ void MSST::first_half()
     vsum = vel_sum();
 
     // reset the velocities
-    for(int i; i<ucell.nat; ++i)
+    for(int i=0; i<ucell.nat; ++i)
     {
         vel[i] = old_v[i];
     }
@@ -160,9 +160,9 @@ void MSST::second_half()
     ModuleBase::timer::tick("MSST", "second_half");
 }
 
-void MSST::outputMD()
+void MSST::outputMD(std::ofstream &ofs)
 {
-    Verlet::outputMD();
+    Verlet::outputMD(ofs);
 }
 
 void MSST::write_restart()
@@ -274,7 +274,7 @@ void MSST::propagate_vel()
             }
             else
             {
-                vel[i][k] += ( const_C[k] + const_D[k] * vel[i][k] ) * dthalf + 
+                vel[i][k] += ( const_C[k] + const_D[k] * vel[i][k] ) * dthalf +
                     0.5 * (const_D[k] * const_D[k] * vel[i][k] + const_C[k] * const_D[k] ) * dthalf * dthalf;
             }
         }
@@ -304,7 +304,7 @@ void MSST::propagate_voldot()
     }
     else
     {
-        omega[sd] += (const_A - const_B * omega[sd]) * dthalf + 
+        omega[sd] += (const_A - const_B * omega[sd]) * dthalf +
             0.5 * (const_B * const_B * omega[sd] - const_A * const_B) * dthalf * dthalf;
     }
 }

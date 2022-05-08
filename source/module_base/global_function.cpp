@@ -150,7 +150,7 @@ void TEST_LEVEL(const std::string &name)
     return;
 }
 
-bool SCAN_BEGIN(std::ifstream &ifs, const std::string &TargetName, const bool restart)
+bool SCAN_BEGIN(std::ifstream &ifs, const std::string &TargetName, const bool restart, const bool ifwarn)
 {
     std::string SearchName;
     bool find = false;
@@ -169,18 +169,18 @@ bool SCAN_BEGIN(std::ifstream &ifs, const std::string &TargetName, const bool re
             break;
         }
     }
-    if (!find)
+    if (!find && ifwarn)
     {
         GlobalV::ofs_warning << " In SCAN_BEGIN, can't find: " << TargetName << " block." << std::endl;
     }
     return find;
 }
 
-void SCAN_END(std::ifstream &ifs, const std::string &TargetName)
+void SCAN_END(std::ifstream &ifs, const std::string &TargetName, const bool ifwarn)
 {
     std::string SearchName;
     ifs >> SearchName;
-    if (SearchName != TargetName)
+    if (SearchName != TargetName && ifwarn)
     {
         GlobalV::ofs_warning << " In SCAN_END, can't find: " << TargetName << " block." << std::endl;
     }

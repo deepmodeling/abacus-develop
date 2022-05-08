@@ -481,7 +481,13 @@ void WF_Local::distri_lowf_new(double** ctot, const int& is,
 
 	delete[] work;
 #else
-	ModuleBase::WARNING_QUIT("WF_Local::distri_lowf_new","check the code without MPI.");
+        for (int i=0; i<GlobalV::NBANDS; i++)
+        {
+            for (int j=0; j<GlobalV::NLOCAL; j++)
+            {
+               lowf.wfc_gamma[is](i,j) = ctot[i][j];
+            }
+        }
 #endif
     return;
 }

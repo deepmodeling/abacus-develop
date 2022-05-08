@@ -250,7 +250,7 @@ void Exx_Lcao::init()
 				orb.getDk(),
 				orb.getDruniform(),
 				false,
-				true, GlobalV::FORCE
+				true, GlobalV::CAL_FORCE
 			);
 			orb_psi_F.set_orbital_info
 			(
@@ -267,7 +267,7 @@ void Exx_Lcao::init()
 				orb.getDk(),
 				orb.getDruniform(),
 				false,
-				false, GlobalV::FORCE
+				false, GlobalV::CAL_FORCE
 			);
 			orb_psif_T.set_orbital_info
 			(
@@ -284,7 +284,7 @@ void Exx_Lcao::init()
 				orb.getDk(),
 				orb.getDruniform(),
 				false,
-				true, GlobalV::FORCE
+				true, GlobalV::CAL_FORCE
 			);
 			orb_psik_T.set_orbital_info
 			(
@@ -301,7 +301,7 @@ void Exx_Lcao::init()
 				orb.getDk(),
 				orb.getDruniform(),
 				false,
-				true, GlobalV::FORCE
+				true, GlobalV::CAL_FORCE
 			);
 			orb_psik2_T.set_orbital_info
 			(
@@ -318,7 +318,7 @@ void Exx_Lcao::init()
 				orb.getDk(),
 				orb.getDruniform(),
 				false,
-				true, GlobalV::FORCE
+				true, GlobalV::CAL_FORCE
 			);
 			pr_orb( file+"-orb",orb );
 			pr_orb( file+"-orb_psi_T",orb_psi_T );
@@ -346,7 +346,7 @@ void Exx_Lcao::init()
 				orb.getDk(),
 				orb.getDruniform(),
 				false,
-				true, GlobalV::FORCE
+				true, GlobalV::CAL_FORCE
 			);
 			orb_kmesh.set_orbital_info
 			(
@@ -363,7 +363,7 @@ void Exx_Lcao::init()
 				orb_psi_T.getDk(),
 				orb_psi_T.getDruniform(),
 				false,
-				true, GlobalV::FORCE
+				true, GlobalV::CAL_FORCE
 			);
 			pr_orb( file+"-orb",orb );
 			pr_orb( file+"-orb_kmesh",orb_kmesh );
@@ -977,7 +977,7 @@ ofs_mpi<<"TIME@ Exx_Lcao::cal_energy\t"<<time_during(t_start)<<std::endl;
 
 gettimeofday( &t_start, NULL);
 #ifdef __MPI
-	Hexx_para.Rexx_to_Km2D(*loc.ParaV, HexxR, {GlobalC::pot.start_pot=="file",GlobalC::CHR.out_charge} );
+	Hexx_para.Rexx_to_Km2D(*loc.ParaV, HexxR, {GlobalC::pot.init_chg=="file",GlobalC::CHR.out_chg} );
 #endif
 ofs_mpi<<"TIME@ Hexx_para.Rexx_to_Km2D\t"<<time_during(t_start)<<std::endl;
 
@@ -1190,7 +1190,7 @@ void Exx_Lcao::cal_exx_elec_nscf(const Parallel_Orbitals &pv)
 {
 	std::vector<std::map<size_t,std::map<size_t,std::map<Abfs::Vector3_Order<int>,ModuleBase::matrix>>>> HexxR;
 #ifdef __MPI
-	Hexx_para.Rexx_to_Km2D(pv, HexxR, {GlobalC::pot.start_pot=="file",GlobalC::CHR.out_charge} );
+	Hexx_para.Rexx_to_Km2D(pv, HexxR, {GlobalC::pot.init_chg=="file",GlobalC::CHR.out_chg} );
 #endif
 }
 

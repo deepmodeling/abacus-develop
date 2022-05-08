@@ -247,7 +247,7 @@ std::vector<std::vector<Numerical_Orbital_Lm>> Exx_Abfs::IO::construct_abfs_T(
 				dk,
 				dr_uniform,
 				false,
-				true, GlobalV::FORCE);		
+				true, GlobalV::CAL_FORCE);		
 		}
 	}
 	
@@ -318,9 +318,9 @@ void Exx_Abfs::IO::print_matrix(
 		assert( GlobalC::ORB.Phi[TA].getRcut() == GlobalC::ORB.Phi[TB].getRcut() );
 		ofs << GlobalC::ORB.Phi[TA].getRcut() << " rcut_Jlq" << std::endl;
 
-		// mohan add 'smooth' and 'sigma' 2009-08-28
+		// mohan add 'smooth' and 'smearing_sigma' 2009-08-28
 		ofs << 0 << " smooth" << std::endl;
-		ofs << 0 << " sigma" << std::endl;
+		ofs << 0 << " smearing_sigma" << std::endl;
 
 		ofs << Exx_Abfs::Jle::tolerence << " tolerence" << std::endl;
 

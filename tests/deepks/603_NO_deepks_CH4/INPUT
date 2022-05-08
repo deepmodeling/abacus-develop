@@ -9,21 +9,20 @@ symmetry		0
 
 #Parameters (2.Iteration)
 ecutwfc			50
-dr2			1e-8
-niter			50
+scf_thr			1e-8
+scf_nmax			50
 
 #Parameters (3.Basis)
 basis_type		lcao
 gamma_only		1
-force 1
+cal_force 1
 
 deepks_out_labels	0
 deepks_descriptor_lmax		2
-newdm	1
 
 #Parameters (4.Smearing)
-smearing		gaussian
-sigma			0.02
+smearing_method		gaussian
+smearing_sigma			0.02
 
 #Parameters (5.Mixing)
 mixing_type		pulay

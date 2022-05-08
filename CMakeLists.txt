@@ -263,6 +263,7 @@ target_link_libraries(${ABACUS_BIN_NAME}
     cell
     symmetry
     md
+    surchem
     neighbor
     orb
     io

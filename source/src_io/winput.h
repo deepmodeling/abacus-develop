@@ -116,7 +116,7 @@ public:
 	static std::string plot_option;//(110),[110] etc.
 	static int n_unitcell;//number of unitcell to plot
 	static bool out_all;
-	static bool out_charge;
+	static bool out_chg;
 	static std::string charge_type;
 	static bool cal_bands; //for wan  	   wan basis + wan charge
 	static bool cal_bands2;//for semi-wan ;pw basis + wan charge add 2008-4-11

@@ -40,7 +40,17 @@ void Grid_MeshBall::init_meshball(void)
 	// select a ball in a cubic.
 	double pos[3];
 	double r2=0.0;
-	const double rcut2 = this->meshball_radius * this->meshball_radius;
+
+	//------------------------------------------------------------------
+	// const double rcut2 = this->meshball_radius * this->meshball_radius;
+	// qianrui fix a bug and add 0.001 2022-4-30
+	// Sometimes r2 is equal to rcut2, for example they are 36.
+	// However, r2 is either 35.99.. or 36.0..001， which makes  count != this->meshball_ncells
+	// and segment fault.
+	// I do not know how to solve it and this may occurs in somewhere else in ABACUS.
+	// May some genius can give a better solution.
+	//------------------------------------------------------------------
+	const double rcut2 = this->meshball_radius * this->meshball_radius + 0.001;
 	
 	//-------------------------------------------------------------------
 	// calculate twice, the first time find the number of mesh points,

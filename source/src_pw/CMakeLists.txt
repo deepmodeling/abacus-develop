@@ -78,3 +78,7 @@ add_library(
     OBJECT
     ${objects}
 )
+
+IF (BUILD_TESTING)
+  add_subdirectory(test)
+endif()

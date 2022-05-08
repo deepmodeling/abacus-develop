@@ -6,17 +6,17 @@ ntype     1
 calculation   scf
 nspin         2
 ecutwfc       15
-dr2           1.0e-8
-niter         50
-out_charge    0
+scf_thr           1.0e-8
+scf_nmax         50
+out_chg    0
 
-#start_charge    file
+#init_chg    file
 #out_dos      1
 #dos_sigma    0.05
 #out_band     1
 
-smearing    gaussian
-sigma       0.07
+smearing_method    gaussian
+smearing_sigma       0.07
 
 mixing_type    pulay 
 mixing_beta    0.5
@@ -25,4 +25,3 @@ mixing_ndim 10
 ks_solver     cg
 basis_type    pw
 symmetry      1
-#newdm   1

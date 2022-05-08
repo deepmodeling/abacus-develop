@@ -50,7 +50,7 @@ public:
 	double lcao_dr = 0.01;
 	double lcao_rmax = 30; // (a.u.)
 
-	int out_r_matrix = 0;
+	int out_mat_r = 0;
 
 	int lmax=2;
 	int ntype=0;

@@ -25,7 +25,7 @@ void test_deepks::set_parameters()
 	GlobalV::ofs_warning.open("warning.log");
 	GlobalV::ofs_running.open("running.log");
 	GlobalV::deepks_setorb=1;
-	GlobalV::FORCE=1;
+	GlobalV::CAL_FORCE=1;
 	
 	std::ifstream ifs("INPUT");
 	char word[80];
@@ -128,7 +128,7 @@ void test_deepks::setup_cell()
 
 void test_deepks::prep_neighbour()
 {
-    GlobalV::SEARCH_RADIUS = atom_arrange::set_sr_NL(
+    double search_radius = atom_arrange::set_sr_NL(
         GlobalV::ofs_running,
         GlobalV::OUT_LEVEL,
         ORB.get_rcutmax_Phi(),
@@ -140,7 +140,7 @@ void test_deepks::prep_neighbour()
         GlobalV::ofs_running,
         Test_Deepks::GridD,
         ucell,
-        GlobalV::SEARCH_RADIUS,
+        search_radius,
         GlobalV::test_atom_input);
 }
 
@@ -160,8 +160,8 @@ void test_deepks::set_orbs(const double &lat0_in)
 			lcao_dr,
 			lcao_rmax,
 			GlobalV::deepks_setorb,
-			out_r_matrix,
-			GlobalV::FORCE,
+			out_mat_r,
+			GlobalV::CAL_FORCE,
 			my_rank);
 		
 		ucell.infoNL.setupNonlocal(

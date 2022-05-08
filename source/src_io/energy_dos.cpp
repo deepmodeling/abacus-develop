@@ -117,7 +117,7 @@ void energy::perform_dos(Local_Orbital_wfc &lowf, LCAO_Hamilt &uhm)
 			std::ofstream ofsi( ss.str().c_str() ); // clear istate.info
 			ofsi.close();
 		}
-		for(int ip=0; ip<GlobalV::NPOOL; ip++)
+		for(int ip=0; ip<GlobalV::KPAR; ip++)
 		{
 		#ifdef __MPI
 			MPI_Barrier(MPI_COMM_WORLD);
@@ -177,7 +177,7 @@ void energy::perform_dos(Local_Orbital_wfc &lowf, LCAO_Hamilt &uhm)
 
 	// GlobalV::mulliken charge analysis
 #ifdef __LCAO
-	if(GlobalV::mulliken == 1)
+	if(GlobalV::out_mul == 1)
 	{
 		Mulliken_Charge   MC(&lowf.wfc_gamma, &lowf.wfc_k);
 		MC.stdout_mulliken(uhm);			
@@ -331,8 +331,8 @@ void energy::perform_dos(Local_Orbital_wfc &lowf, LCAO_Hamilt &uhm)
 
 				uhm.LM->allocate_HS_R(pv->nnr);
 				uhm.LM->zeros_HSR('S');
-				uhm.genH.calculate_S_no();
-				uhm.genH.build_ST_new('S', false, GlobalC::ucell);
+				uhm.genH.calculate_S_no(uhm.LM->SlocR.data());
+				uhm.genH.build_ST_new('S', false, GlobalC::ucell, uhm.LM->SlocR.data());
 				std::vector<ModuleBase::ComplexMatrix> Mulk;
 				Mulk.resize(1);
 				Mulk[0].create(pv->ncol,pv->nrow);

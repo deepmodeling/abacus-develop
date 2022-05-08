@@ -8,16 +8,16 @@ symmetry                0
 
 #Parameters (2.Iteration)
 ecutwfc                 50
-dr2                     1e-8
-niter                   50
+scf_thr                     1e-8
+scf_nmax                   50
 
 #Parameters (3.Basis)
 basis_type              pw
 gamma_only              1
 
 #Parameters (4.Smearing)
-smearing                gaussian
-sigma                   0.02
+smearing_method                gaussian
+smearing_sigma                   0.02
 
 #Parameters (5.Mixing)
 mixing_type             pulay

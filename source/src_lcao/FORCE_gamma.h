@@ -128,6 +128,13 @@ private:
         ModuleBase::matrix& fvl_dphi,
 		ModuleBase::matrix& svl_dphi);
 
+	void cal_fvl_dphi_new(
+		double*** DM_in,
+		const bool isforce, 
+        const bool isstress,
+        ModuleBase::matrix& fvl_dphi,
+		ModuleBase::matrix& svl_dphi);
+
 	void calFvnlDbeta(
 		const std::vector<ModuleBase::matrix> &dm2d, 
 		const bool &isforce, 

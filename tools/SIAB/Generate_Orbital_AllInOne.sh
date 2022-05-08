@@ -141,8 +141,8 @@ pseudofile=`grep -E "^\s*Pseudo " $InputFile | awk -F "Pseudo " '{print $0}' | a
 echo "         Pseudo = $pseudofile"
 
 # (0.1.15) get the smearing
-degauss=`grep -E "^\s*sigma " $InputFile | awk -F "sigma " '{print $0}' | awk '{print $2}'`
-echo "          sigma = $degauss"
+smearing_sigma=`grep -E "^\s*smearing_sigma " $InputFile | awk -F "smearing_sigma " '{print $0}' | awk '{print $2}'`
+echo "          smearing_sigma = $smearing_sigma"
 
 
 #
@@ -597,7 +597,7 @@ cat > INPUTs << EOF
 INPUT_ORBITAL_INFORMATION
 <SPHERICAL_BESSEL>
 1           // smooth or not
-0.1         // sigma
+0.1         // smearing_sigma
 $ecut       // energy cutoff for spherical bessel functions(Ry)
 $rcut       // cutoff of wavefunctions(a.u.)
 1.0e-12     // tolerence
@@ -609,7 +609,7 @@ EOF
 cat > INPUT << EOF
 INPUT_PARAMETERS
 suffix              $element-$rcut-$BL
-atom_file           $name.stru
+stru_file           $name.stru
 pseudo_dir          $Pseudo_dir
 kpoint_file         KPOINTS
 wannier_card        INPUTw
@@ -622,11 +622,11 @@ symmetry            0
 nbands             	${nbands[iSTRU]} 
 
 ecutwfc             $ecut
-dr2                 1.0e-7  // about iteration
-niter               1500
+scf_thr                 1.0e-7  // about iteration
+scf_nmax               1500
 
-smearing            gauss
-sigma               $degauss
+smearing_method            gauss
+smearing_sigma               $smearing_sigma
 
 mixing_type         pulay       // about charge mixing
 mixing_beta         0.4

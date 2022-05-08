@@ -66,7 +66,7 @@ public:
 	double lcao_rmax = 30; // (a.u.)
 
 	int out_descriptor = 0;
-	int out_r_matrix = 0;
+	int out_mat_r = 0;
 
 	int lmax=1;
 	double lat0 = 1.0;

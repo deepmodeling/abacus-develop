@@ -12,7 +12,7 @@ IState_Envelope::~IState_Envelope()
 {}
 
 
-void IState_Envelope::begin(Local_Orbital_wfc &lowf, Gint_Gamma &gg, int& out_wf, int& out_wf_r)
+void IState_Envelope::begin(Local_Orbital_wfc &lowf, Gint_Gamma &gg, int& out_wfc_pw, int& out_wfc_r)
 {
 	ModuleBase::TITLE("IState_Envelope","begin");
 
@@ -73,7 +73,7 @@ void IState_Envelope::begin(Local_Orbital_wfc &lowf, Gint_Gamma &gg, int& out_wf
     //for pw-wfc in G space
     ModuleBase::ComplexMatrix* pw_wfc_g;
     
-    if (out_wf || out_wf_r)
+    if (out_wfc_pw || out_wfc_r)
     {
         pw_wfc_g = new ModuleBase::ComplexMatrix[GlobalC::kv.nks];
         for (int ik = 0;ik < GlobalC::kv.nks;++ik)
@@ -114,16 +114,16 @@ void IState_Envelope::begin(Local_Orbital_wfc &lowf, Gint_Gamma &gg, int& out_wf
 				bool for_plot = true;
                 GlobalC::CHR.write_rho(GlobalC::CHR.rho_save[is], is, 0, ss.str(), 3, for_plot);
                 
-                if (out_wf || out_wf_r) //only for gamma_only now
+                if (out_wfc_pw || out_wfc_r) //only for gamma_only now
                     this->set_pw_wfc(GlobalC::pw, 0, ib, GlobalV::NSPIN, GlobalC::kv.ngk[0],
                         GlobalC::CHR.rho_save, pw_wfc_g[0]);
             }
 		}
 	}
 
-    if (out_wf || out_wf_r)
+    if (out_wfc_pw || out_wfc_r)
     {
-        if (out_wf)
+        if (out_wfc_pw)
         {
             std::stringstream ssw;
             ssw << GlobalV::global_out_dir << "WAVEFUNC";
@@ -131,7 +131,7 @@ void IState_Envelope::begin(Local_Orbital_wfc &lowf, Gint_Gamma &gg, int& out_wf
                 GlobalV::global_out_dir << "/" << ssw.str() << "\" files." << std::endl;
             WF_io::write_wfc2(ssw.str(), pw_wfc_g, GlobalC::pw.gcar);
         }
-        if(out_wf_r)
+        if(out_wfc_r)
 		    Write_Wfc_Realspace::write_wfc_realspace_1(pw_wfc_g, "wfc_realspace", false);
         delete[] pw_wfc_g;
     }  

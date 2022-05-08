@@ -5,7 +5,17 @@
 #include "../module_base/global_variable.h"
 #include "../module_base/complexmatrix.h"
 
-#include "src_pw/hamilt_pw.h"
+#if ((defined __CUDA) || (defined __ROCM))
+
+#ifdef __CUDA
+#include "hamilt_pw.cuh"
+#else
+#include "hamilt_pw_hip.h"
+#endif
+
+#else
+#include "hamilt_pw.h"
+#endif
 
 class Diago_CG
 {
@@ -15,12 +25,6 @@ class Diago_CG
     ~Diago_CG();
 
     static int moved;
-
-    static double ddot_real(
-        const int & dim,
-        const std::complex<double>* psi_L,
-        const std::complex<double>* psi_R,
-        const bool reduce = true) ;
 
     void diag(
         ModuleBase::ComplexMatrix &phi,

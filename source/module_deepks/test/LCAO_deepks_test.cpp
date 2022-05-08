@@ -31,7 +31,7 @@ void test_deepks::check_psialpha(void)
 		ucell.ntype,
 		na);
 
-	ld.build_psialpha(GlobalV::FORCE,
+	ld.build_psialpha(GlobalV::CAL_FORCE,
 		ucell,
 		ORB,
 		Test_Deepks::GridD,
@@ -39,7 +39,7 @@ void test_deepks::check_psialpha(void)
 		ParaO.trace_loc_col,
 		OGT);
 
-	ld.check_psialpha(GlobalV::FORCE,
+	ld.check_psialpha(GlobalV::CAL_FORCE,
 		ucell,
 		ORB,
 		Test_Deepks::GridD,

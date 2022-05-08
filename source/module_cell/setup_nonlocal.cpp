@@ -11,7 +11,8 @@ InfoNonlocal::InfoNonlocal()
 {
     this->Beta = new Numerical_Nonlocal[1];
 	this->nproj = new int[1];
-	this->nprojmax = 0;
+    this->nprojmax = 0;
+    this->rcutmax_Beta = 0.0;
 }
 InfoNonlocal::~InfoNonlocal()
 {

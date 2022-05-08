@@ -1,4 +1,5 @@
 #include "unk_overlap_lcao.h"
+#include "../src_pw/global.h"
 #include "ctime"
 #include "../module_base/scalapack_connector.h"
 
@@ -92,7 +93,7 @@ void unkOverlap_lcao::init(std::complex<double>*** wfc_k_grid)
 	GlobalC::ORB.Phi[T].PhiLN(0,0).getDk(),
 	GlobalC::ORB.Phi[T].PhiLN(0,0).getDruniform(),
 	false,
-	true, GlobalV::FORCE);
+	true, GlobalV::CAL_FORCE);
 	
 	// 数组初始化
 	allocate_flag = true;
@@ -547,7 +548,7 @@ std::complex<double> unkOverlap_lcao::unkdotp_LCAO(const int ik_L, const int ik_
 	
 
 #ifdef __MPI
-    // note: the mpi uses MPI_COMMON_WORLD,so you must make the GlobalV::NPOOL = 1.
+    // note: the mpi uses MPI_COMMON_WORLD,so you must make the GlobalV::KPAR = 1.
 	double in_date_real = result.real();
 	double in_date_imag = result.imag();
 	double out_date_real = 0.0;
@@ -784,7 +785,7 @@ std::complex<double> unkOverlap_lcao::det_berryphase(const int ik_L, const int i
 	
 	
 #ifdef __MPI
-    // note: the mpi uses MPI_COMMON_WORLD,so you must make the GlobalV::NPOOL = 1.
+    // note: the mpi uses MPI_COMMON_WORLD,so you must make the GlobalV::KPAR = 1.
 	std::complex<double> result;
 	MPI_Allreduce(&det , &result , 1, MPI_DOUBLE_COMPLEX , MPI_PROD , DIAG_WORLD);
 	return result;

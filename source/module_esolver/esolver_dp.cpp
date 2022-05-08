@@ -43,7 +43,7 @@ void ESolver_DP::Init(Input &inp, UnitCell_pseudo &ucell)
     assert(ucell.nat == iat);
 }
 
-void ESolver_DP::Run(int istep, UnitCell_pseudo &ucell)
+void ESolver_DP::Run(const int istep, UnitCell_pseudo &ucell)
 {
 #ifdef __DPMD
     if(access("graph.pb", 0) == -1)

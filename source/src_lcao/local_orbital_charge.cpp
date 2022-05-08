@@ -77,7 +77,7 @@ Local_Orbital_Charge::~Local_Orbital_Charge()
 
 
 
-void Local_Orbital_Charge::allocate_dm_wfc(const Grid_Technique& gt,
+void Local_Orbital_Charge::allocate_dm_wfc(const int& lgd,
     Local_Orbital_wfc &lowf)
 {
     ModuleBase::TITLE("Local_Orbital_Charge", "allocate_dm_wfc");
@@ -86,11 +86,11 @@ void Local_Orbital_Charge::allocate_dm_wfc(const Grid_Technique& gt,
     if (GlobalV::GAMMA_ONLY_LOCAL)
 	{
 		// here we reset the density matrix dimension.
-		this->allocate_gamma(gt);
+		this->allocate_gamma(lgd);
 	}
 	else
     {
-		lowf.allocate_k(gt, lowf);
+		lowf.allocate_k(lgd, lowf);
 		this->allocate_DM_k();
 	}
     

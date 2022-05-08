@@ -10,21 +10,21 @@ calculation         relax
 
 #Parameters (3.PW)
 ecutwfc             50
-dr2                 1e-8
-niter		    100
+scf_thr                 1e-8
+scf_nmax		    100
 
 #Parameters (5.LCAO)
 basis_type          lcao
 ks_solver           hpseps
 gamma_only          0
 
-nstep               50
+relax_nmax               50
 force_thr_ev        0.001
 
 #Parameters (6.Smearing) 
-smearing            gaussian
-sigma               0.02
+smearing_method            gaussian
+smearing_sigma               0.02
 
-stress              1
+cal_stress              1
 #cell_factor         10
 stress_thr          1e-6

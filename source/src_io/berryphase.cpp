@@ -1,4 +1,5 @@
 ﻿#include "berryphase.h"
+#include "../src_pw/global.h"
 
 bool berryphase::berry_phase_flag=false;
 

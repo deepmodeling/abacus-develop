@@ -7,26 +7,26 @@ pseudo_type         upf201
 gamma_only          0
 calculation         scf
 symmetry            1
-nstep               1
+relax_nmax               1
 out_level           ie
-smearing            gaussian
-sigma               0.02
+smearing_method            gaussian
+smearing_sigma               0.02
 
 #Parameters (3.PW)
 ecutwfc             20
-dr2                 1e-9
-niter               100
+scf_thr                 1e-9
+scf_nmax               100
 
 #Parameters (LCAO)
 basis_type          pw
 ks_solver           cg 
-charge_extrap       second-order
+chg_extrap       second-order
 out_dm              0
-ethr                0.00001
+pw_diag_thr                0.00001
 
-force                1
+cal_force                1
 #test_force          1
-stress               1
+cal_stress               1
 #test_stress         1
 
 mixing_type         pulay

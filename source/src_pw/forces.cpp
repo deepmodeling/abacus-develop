@@ -181,7 +181,7 @@ void Forces::init(ModuleBase::matrix& force)
 /*
 	Forces::print("   TOTAL-FORCE (Ry/Bohr)", force);
 	
-	if(INPUT.force_set)                                                   // pengfei 2016-12-20
+	if(INPUT.out_force)                                                   // pengfei 2016-12-20
 	{
 		std::ofstream ofs("FORCE.dat");
 		if(!ofs)
@@ -656,7 +656,7 @@ void Forces::cal_force_cc(ModuleBase::matrix& forcecc)
     assert(iat == GlobalC::ucell.nat);
     delete [] rhocg;
 	delete [] psiv; // mohan fix bug 2012-03-22
-    Parallel_Reduce::reduce_double_pool(forcecc.c, forcecc.nr * forcecc.nc); //qianrui fix a bug for npool > 1
+    Parallel_Reduce::reduce_double_pool(forcecc.c, forcecc.nr * forcecc.nc); //qianrui fix a bug for kpar > 1
 	return;
 }
 

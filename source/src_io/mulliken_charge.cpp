@@ -178,8 +178,8 @@ void Mulliken_Charge::cal_mulliken(LCAO_Hamilt &uhm)
 
 			uhm.LM->allocate_HS_R(pv->nnr);
 			uhm.LM->zeros_HSR('S');
-			uhm.genH.calculate_S_no();
-			uhm.genH.build_ST_new('S', false, GlobalC::ucell);
+			uhm.genH.calculate_S_no(uhm.LM->SlocR.data());
+			uhm.genH.build_ST_new('S', false, GlobalC::ucell, uhm.LM->SlocR.data());
 
 			for(int ik=0;ik<GlobalC::kv.nks;ik++)
 			{

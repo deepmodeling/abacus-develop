@@ -3,27 +3,27 @@
 #include "../src_parallel/parallel_reduce.h"
 #include "../module_base/timer.h"
 
-void HS_Matrix::saving_HS(const double *Hloc, const double* Sloc, bool bit, const int &out_hs,  const Parallel_Orbitals &pv)
+void HS_Matrix::saving_HS(const double *Hloc, const double* Sloc, const bool bit, const int &out_mat_hs, const std::string &file_name, const Parallel_Orbitals &pv)
 {   
-    if(out_hs==1)
+    if(out_mat_hs==1)
     {
-        save_HS(Hloc, Sloc, bit, pv);
+        save_HS(Hloc, Sloc, bit, file_name, pv);
     }
-    else if(out_hs==2)
+    else if(out_mat_hs==2)
     {
-        save_HS(Hloc, Sloc, bit, pv);
+        save_HS(Hloc, Sloc, bit, file_name, pv);
     }
-    else if(out_hs==3)
+    else if(out_mat_hs==3)
     {
         //please call individually
     }
-    else if(out_hs==0)
+    else if(out_mat_hs==0)
     {
         // do nothing.
     }
     else
     {
-        ModuleBase::WARNING("Diago_LCAO_Matrix","unrecorganized out_hs value.");
+        ModuleBase::WARNING("Diago_LCAO_Matrix","unrecorganized out_mat_hs value.");
     }
     return;
 }
@@ -108,7 +108,7 @@ void HS_Matrix::save_HS_ccf(const int &iter, const int &Hnnz, const int *colptr_
 
 // mohan add 2010/3/20, output H and S matrix, convinence for diagonalization
 // test or save the middle information for next start.
-void HS_Matrix::save_HS(const double *H, const double *S, bool bit, const Parallel_Orbitals &pv)
+void HS_Matrix::save_HS(const double *H, const double *S, const bool bit, const std::string &file_name, const Parallel_Orbitals &pv)
 {
     ModuleBase::TITLE("HS_Matrix","save_HS_bit");
     ModuleBase::timer::tick("HS_Matrix","save_HS_bit");
@@ -119,13 +119,13 @@ void HS_Matrix::save_HS(const double *H, const double *S, bool bit, const Parall
 
     if(bit)
     {
-        ssh << GlobalV::global_out_dir << "data-H-bit";
-        sss << GlobalV::global_out_dir << "data-S-bit";
+        ssh << GlobalV::global_out_dir << file_name+"-H-bit";
+        sss << GlobalV::global_out_dir << file_name+"-S-bit";
     }
     else 
     {
-        ssh << GlobalV::global_out_dir << "data-H";
-        sss << GlobalV::global_out_dir << "data-S";
+        ssh << GlobalV::global_out_dir << file_name+"-H";
+        sss << GlobalV::global_out_dir << file_name+"-S";
     }
 
     if (bit)
@@ -369,25 +369,25 @@ void HS_Matrix::save_HS(const double *H, const double *S, bool bit, const Parall
 }
 
 //LiuXh, 2017-03-21
-void HS_Matrix::saving_HS_complex(std::complex<double> *Hloc, std::complex<double>* Sloc, bool bit, const int &out_hs, const Parallel_Orbitals &pv)
+void HS_Matrix::saving_HS_complex(std::complex<double> *Hloc, std::complex<double>* Sloc, const bool bit, const int &out_mat_hs, const std::string &file_name, const Parallel_Orbitals &pv)
 {   
-    if(out_hs==1)
+    if(out_mat_hs==1)
     {
-        save_HS_complex(Hloc, Sloc, bit, pv);
+        save_HS_complex(Hloc, Sloc, bit, file_name, pv);
     }
-    else if(out_hs==0)
+    else if(out_mat_hs==0)
     {
         // do nothing.
     }
     else
     {
-        ModuleBase::WARNING("Diago_LCAO_Matrix","unrecorganized out_hs value.");
+        ModuleBase::WARNING("Diago_LCAO_Matrix","unrecorganized out_mat_hs value.");
     }
     return;
 }
 
 //LiuXh, 2017-03-21
-void HS_Matrix::save_HS_complex(std::complex<double> *H, std::complex<double> *S, bool bit, const Parallel_Orbitals &pv)
+void HS_Matrix::save_HS_complex(std::complex<double> *H, std::complex<double> *S, const bool bit, const std::string &file_name, const Parallel_Orbitals &pv)
 {
     ModuleBase::TITLE("HS_Matrix","save_HS_bit");
     ModuleBase::timer::tick("HS_Matrix","save_HS_bit");
@@ -398,13 +398,13 @@ void HS_Matrix::save_HS_complex(std::complex<double> *H, std::complex<double> *S
 
     if(bit)
     {
-    ssh << GlobalV::global_out_dir << "data-H-bit";
-    sss << GlobalV::global_out_dir << "data-S-bit";
+        ssh << GlobalV::global_out_dir << file_name+"-H-bit";
+        sss << GlobalV::global_out_dir << file_name+"-S-bit";
     }
     else
     {
-    ssh << GlobalV::global_out_dir << "data-H";
-    sss << GlobalV::global_out_dir << "data-S";
+        ssh << GlobalV::global_out_dir << file_name+"-H";
+        sss << GlobalV::global_out_dir << file_name+"-S";
     }
 
     if (bit)

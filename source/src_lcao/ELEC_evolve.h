@@ -5,6 +5,7 @@
 #include "../module_base/global_variable.h"
 #include "LCAO_hamilt.h"
 #include "src_lcao/local_orbital_wfc.h"
+#include "module_esolver/esolver_ks_lcao.h"
 
 //-----------------------------------------------------------
 // mohan add 2021-02-09
@@ -16,7 +17,8 @@
 class ELEC_evolve
 {
 
-	friend class ELEC_scf;
+    friend class ELEC_scf;
+    friend class ModuleESolver::ESolver_KS_LCAO;
 
 	public:
 
@@ -26,7 +28,7 @@ class ELEC_evolve
 	// fuxiang add 2021-05-25
 
     static int tddft;
-    static double td_dr2;
+    static double td_scf_thr;
     static double td_dt;
     static double td_force_dt;
     static int td_val_elec_01;

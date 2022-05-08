@@ -39,8 +39,8 @@ class BFGS_Basic
 
 	public://mohan update 2011-06-12
 
-	static double w1; // fixed: parameters for Wolfe conditions.
-	static double w2; // fixed: parameters for Wolfe conditions.
+	static double relax_bfgs_w1; // fixed: parameters for Wolfe conditions.
+	static double relax_bfgs_w2; // fixed: parameters for Wolfe conditions.
 	
 	protected:
 

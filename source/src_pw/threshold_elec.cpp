@@ -3,16 +3,16 @@
 
 Threshold_Elec::Threshold_Elec()
 {
-	dr2 = 0.0;
+	scf_thr = 0.0;
 	conv_elec = false;
 }
 
-void Threshold_Elec::set_ethr(void) const
+void Threshold_Elec::set_pw_diag_thr(void) const
 {
-	ModuleBase::TITLE("Threshold_Elec","set_ethr");
+	ModuleBase::TITLE("Threshold_Elec","set_pw_diag_thr");
     //========================================================================
-    // setup ethr see setup.f90 Page 5/14
-    // setup ethr, the convergence threshold for eigenvalues
+    // setup pw_diag_thr see setup.f90 Page 5/14
+    // setup pw_diag_thr, the convergence threshold for eigenvalues
     // tr2: the convergence threshold for self-consistency (rho or potential);
     //========================================================================
 
@@ -21,9 +21,9 @@ void Threshold_Elec::set_ethr(void) const
     //===================
     if (GlobalV::CALCULATION=="nscf")
     {
-        if (abs(GlobalV::ETHR - 1.0e-2) < 1.0e-10)
+        if (abs(GlobalV::PW_DIAG_THR - 1.0e-2) < 1.0e-10)
         {
-            GlobalV::ETHR = 0.1 * std::min(1.0e-2, GlobalV::DRHO2 / GlobalC::CHR.nelec);
+            GlobalV::PW_DIAG_THR = 0.1 * std::min(1.0e-2, GlobalV::SCF_THR / GlobalC::CHR.nelec);
         }
     }
     //=================
@@ -31,16 +31,16 @@ void Threshold_Elec::set_ethr(void) const
     //=================
     else if(GlobalV::CALCULATION=="scf" || GlobalV::CALCULATION=="md" || GlobalV::CALCULATION=="relax" || GlobalV::CALCULATION=="scf-sto")//qianrui 2021-2-20
     {
-        if (abs(GlobalV::ETHR - 1.0e-2) < 1.0e-10)
+        if (abs(GlobalV::PW_DIAG_THR - 1.0e-2) < 1.0e-10)
         {
-            if (GlobalC::pot.start_pot == "file")
+            if (GlobalC::pot.init_chg == "file")
             {
                 //======================================================
                 // if you think that the starting potential is good
                 // do not spoil it with a louly first diagonalization:
-                // set a strict ethr in the input file ()diago_the_init
+                // set a strict pw_diag_thr in the input file ()diago_the_init
                 //======================================================
-                GlobalV::ETHR = 1.0e-5;
+                GlobalV::PW_DIAG_THR = 1.0e-5;
             }
             else
             {
@@ -48,7 +48,7 @@ void Threshold_Elec::set_ethr(void) const
                 // starting atomic potential is probably far from scf
                 // don't waste iterations in the first diagonalization
                 //=======================================================
-                GlobalV::ETHR = 1.0e-2;
+                GlobalV::PW_DIAG_THR = 1.0e-2;
             }
         }
     }
@@ -56,7 +56,7 @@ void Threshold_Elec::set_ethr(void) const
     return;
 }
 
-void Threshold_Elec::update_ethr(const int &iter)
+void Threshold_Elec::update_pw_diag_thr(const int &iter)
 {
     //======================================================
     // Convergence threshold for iterative diagonalization
@@ -66,25 +66,32 @@ void Threshold_Elec::update_ethr(const int &iter)
     {
         if (iter == 2)
         {
-            GlobalV::ETHR = 1.e-2;
+            GlobalV::PW_DIAG_THR = 1.e-2;
         }
 
 		//----------------------------
-		// GlobalV::ETHR changes in CG Method.
+		// GlobalV::PW_DIAG_THR changes in CG Method.
 		// mohan update 2012-03-26
 		// mohan update 2012-02-08
 		//----------------------------
 		if(GlobalV::BASIS_TYPE=="lcao")
 		{
-			GlobalV::ETHR = std::min( GlobalV::ETHR, 0.01*dr2/ std::max(1.0, GlobalC::CHR.nelec));
+			GlobalV::PW_DIAG_THR = std::min( GlobalV::PW_DIAG_THR, 0.01*scf_thr/ std::max(1.0, GlobalC::CHR.nelec));
 		}
 		// mohan update 2009-09-04
 		else
 		{
-			GlobalV::ETHR = std::min( GlobalV::ETHR, 0.1*dr2/ std::max(1.0, GlobalC::CHR.nelec));
-			//std::cout << " new ethr = " << GlobalV::ETHR << std::endl;
+			GlobalV::PW_DIAG_THR = std::min( GlobalV::PW_DIAG_THR, 0.1*scf_thr/ std::max(1.0, GlobalC::CHR.nelec));
+			//std::cout << " new pw_diag_thr = " << GlobalV::PW_DIAG_THR << std::endl;
 		}
 
+    }
+    else
+    {
+        if(GlobalV::CALCULATION=="md"||GlobalV::CALCULATION=="relax"||GlobalV::CALCULATION=="cell-relax")
+        {
+            GlobalV::PW_DIAG_THR = std::max(GlobalV::PW_DIAG_THR, INPUT.pw_diag_thr);
+        }
     }
     return;
 }

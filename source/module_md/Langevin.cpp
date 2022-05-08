@@ -45,9 +45,9 @@ void Langevin::second_half()
     ModuleBase::timer::tick("Langevin", "second_half");
 }
 
-void Langevin::outputMD()
+void Langevin::outputMD(std::ofstream &ofs)
 {
-    Verlet::outputMD();
+    Verlet::outputMD(ofs);
 }
 
 void Langevin::write_restart()
@@ -83,6 +83,6 @@ void Langevin::post_force()
 
 void Langevin::temp_target()
 {
-    double delta = (double)(step_ + step_rst_) / GlobalV::NSTEP;
+    double delta = (double)(step_ + step_rst_) / GlobalV::MD_NSTEP;
     t_target = mdp.md_tfirst + delta * (mdp.md_tlast - mdp.md_tfirst);
 }

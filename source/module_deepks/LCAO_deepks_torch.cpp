@@ -25,6 +25,7 @@
 
 #include "LCAO_deepks.h"
 #include "../src_parallel/parallel_reduce.h"
+#include "../module_base/constants.h"
 
 //calculates descriptors from projected density matrices
 void LCAO_Deepks::cal_descriptor(void)
@@ -293,7 +294,7 @@ void LCAO_Deepks::cal_gedm(const int nat)
     std::vector<torch::jit::IValue> inputs;
     
     //input_dim:(natom, des_per_atom)
-    inputs.push_back(torch::cat(this->d_tensor, 0).reshape({ nat, this->des_per_atom }));
+    inputs.push_back(torch::cat(this->d_tensor, 0).reshape({ 1, nat, this->des_per_atom }));
     std::vector<torch::Tensor> ec;
     ec.push_back(module.forward(inputs).toTensor());    //Hartree
     this->E_delta = ec[0].item().toDouble() * 2;//Ry; *2 is for Hartree to Ry
@@ -426,6 +427,185 @@ void LCAO_Deepks::cal_orbital_precalc(const std::vector<ModuleBase::matrix> &dm_
                                             {   
                                                 orbital_pdm_shell[0][inl][m1*nm+m2] += dm_hl[0](iw2_local,iw1_local)*nlm1[ib+m1]*nlm2[ib+m2];
                                             } 
+                                        }
+                                    }
+                                    ib+=nm;
+                                }
+                            }                            
+
+						}//iw2
+					}//iw1
+				}//ad2
+			}//ad1   
+            
+        }
+    }
+#ifdef __MPI
+    for(int inl = 0; inl < this->inlmax; inl++)
+    {
+        Parallel_Reduce::reduce_double_all(this->orbital_pdm_shell[0][inl],(2 * this->lmaxd + 1) * (2 * this->lmaxd + 1));
+    }
+#endif    
+    
+    // transfer orbital_pdm_shell to orbital_pdm_shell_vector
+    
+
+    int nlmax = this->inlmax/nat;
+   
+    std::vector<torch::Tensor> orbital_pdm_shell_vector;
+    
+    for(int nl = 0; nl < nlmax; ++nl)
+    {
+        std::vector<torch::Tensor> iammv;
+        for(int hl=0; hl<1; ++hl)
+        {
+            std::vector<torch::Tensor> ammv;
+            for (int iat=0; iat<nat; ++iat)
+            {
+                int inl = iat*nlmax+nl;
+                int nm = 2*this->inl_l[inl]+1;
+                std::vector<double> mmv;
+                
+                for (int m1=0; m1<nm; ++m1) // m1 = 1 for s, 3 for p, 5 for d
+                {
+                    for (int m2=0; m2<nm; ++m2) // m1 = 1 for s, 3 for p, 5 for d
+                    {
+                        mmv.push_back(this->orbital_pdm_shell[hl][inl][m1*nm+m2]);
+                    }
+                
+                }
+                torch::Tensor mm = torch::tensor(mmv, torch::TensorOptions().dtype(torch::kFloat64) ).reshape({nm, nm});    //nm*nm
+                ammv.push_back(mm);
+            }
+            
+            torch::Tensor amm = torch::stack(ammv, 0); 
+            iammv.push_back(amm);
+        }
+        
+        torch::Tensor iamm = torch::stack(iammv, 0);  //inl*nm*nm
+        orbital_pdm_shell_vector.push_back(iamm);
+    }
+       
+    
+    assert(orbital_pdm_shell_vector.size() == nlmax);
+        
+    
+    //einsum for each nl: 
+    std::vector<torch::Tensor> orbital_precalc_vector;
+    for (int nl = 0; nl<nlmax; ++nl)
+    {
+        orbital_precalc_vector.push_back(at::einsum("iamn, avmn->iav", {orbital_pdm_shell_vector[nl], this->gevdm_vector[nl]}));
+    }
+       
+    this->orbital_precalc_tensor = torch::cat(orbital_precalc_vector, -1);
+       
+    this->del_orbital_pdm_shell();
+	return;
+}
+
+// calculates orbital_precalc[1,NAt,NDscrpt] = gvdm * orbital_pdm_shells for multi-k case;
+// orbital_pdm_shells[1,Inl,nm*nm] = dm_hl_k * overlap * overlap;
+void LCAO_Deepks::cal_orbital_precalc_k(const std::vector<ModuleBase::ComplexMatrix> &dm_hl_k,
+    const int nat,
+    const int nks,
+    const std::vector<ModuleBase::Vector3<double>> &kvec_d,
+    const UnitCell_pseudo &ucell,
+    const LCAO_Orbitals &orb,
+    Grid_Driver &GridD,
+    const Parallel_Orbitals &ParaO)
+{
+    ModuleBase::TITLE("LCAO_Deepks", "calc_orbital_precalc_k");
+    
+    this->cal_gvdm(nat);
+    const double Rcut_Alpha = orb.Alpha[0].getRcut();
+    this->init_orbital_pdm_shell();
+   
+    for (int T0 = 0; T0 < ucell.ntype; T0++)
+    {
+		Atom* atom0 = &ucell.atoms[T0]; 
+        
+        for (int I0 =0; I0< atom0->na; I0++)
+        {
+            const int iat = ucell.itia2iat(T0,I0);
+            const ModuleBase::Vector3<double> tau0 = atom0->tau[I0];
+            GridD.Find_atom(ucell, atom0->tau[I0] ,T0, I0);
+
+            for (int ad1=0; ad1<GridD.getAdjacentNum()+1 ; ++ad1)
+            {
+                const int T1 = GridD.getType(ad1);
+                const int I1 = GridD.getNatom(ad1);
+                const int ibt1 = ucell.itia2iat(T1,I1);
+                const int start1 = ucell.itiaiw2iwt(T1, I1, 0);
+                const ModuleBase::Vector3<double> tau1 = GridD.getAdjacentTau(ad1);
+
+				const Atom* atom1 = &ucell.atoms[T1];
+				const int nw1_tot = atom1->nw*GlobalV::NPOL;
+				const double Rcut_AO1 = orb.Phi[T1].getRcut(); 
+
+                ModuleBase::Vector3<double> dR1(GridD.getBox(ad1).x, GridD.getBox(ad1).y, GridD.getBox(ad1).z);
+
+				for (int ad2=0; ad2 < GridD.getAdjacentNum()+1 ; ad2++)
+				{
+					const int T2 = GridD.getType(ad2);
+					const int I2 = GridD.getNatom(ad2);
+                    const int ibt2 = ucell.itia2iat(T2,I2);
+					const int start2 = ucell.itiaiw2iwt(T2, I2, 0);
+					const ModuleBase::Vector3<double> tau2 = GridD.getAdjacentTau(ad2);
+					const Atom* atom2 = &ucell.atoms[T2];
+					const int nw2_tot = atom2->nw*GlobalV::NPOL;
+                    ModuleBase::Vector3<double> dR2(GridD.getBox(ad2).x, GridD.getBox(ad2).y, GridD.getBox(ad2).z);
+					
+					const double Rcut_AO2 = orb.Phi[T2].getRcut();
+                	const double dist1 = (tau1-tau0).norm() * ucell.lat0;
+                	const double dist2 = (tau2-tau0).norm() * ucell.lat0;
+
+					if (dist1 > Rcut_Alpha + Rcut_AO1 || dist2 > Rcut_Alpha + Rcut_AO2)
+					{
+						continue;
+					}
+
+					for (int iw1=0; iw1<nw1_tot; ++iw1)
+					{
+						const int iw1_all = start1 + iw1; // this is \mu
+						const int iw1_local = ParaO.trace_loc_col[iw1_all];
+						if(iw1_local < 0)continue;
+						
+						for (int iw2=0; iw2<nw2_tot; ++iw2)
+						{
+							const int iw2_all = start2 + iw2; // this is \nu
+							const int iw2_local = ParaO.trace_loc_row[iw2_all];
+							if(iw2_local < 0)continue;
+                            double dm_current;
+                            std::complex<double> tmp = 0.0;
+                            for(int ik=0;ik<nks;ik++)
+                            {
+                                const double arg = - (kvec_d[ik] * (dR2-dR1) ) * ModuleBase::TWO_PI;
+                                const std::complex<double> kphase = std::complex <double> ( cos(arg),  sin(arg) );
+                                tmp += dm_hl_k[ik](iw1_local, iw2_local) * kphase;
+                            }
+                            dm_current=tmp.real();
+
+                            key_tuple key_1(ibt1,dR1.x,dR1.y,dR1.z);
+                            key_tuple key_2(ibt2,dR2.x,dR2.y,dR2.z);
+                            std::vector<double> nlm1 = this->nlm_save_k[iat][key_1][iw1_all][0];
+                            std::vector<double> nlm2 = this->nlm_save_k[iat][key_2][iw2_all][0];
+                            assert(nlm1.size()==nlm2.size());
+
+                            int ib=0;
+                            for (int L0 = 0; L0 <= orb.Alpha[0].getLmax();++L0)
+                            {
+                                for (int N0 = 0;N0 < orb.Alpha[0].getNchi(L0);++N0)
+                                {
+                                    const int inl = this->inl_index[T0](I0, L0, N0);
+                                    const int nm = 2*L0+1;
+                                    
+                                    for (int m1=0; m1<nm; ++m1) // m1 = 1 for s, 3 for p, 5 for d
+                                    {
+                                        for (int m2=0; m2<nm; ++m2) // m1 = 1 for s, 3 for p, 5 for d
+                                        {
+                                               
+                                            orbital_pdm_shell[0][inl][m1*nm+m2] += dm_current*nlm1[ib+m1]*nlm2[ib+m2];
+                                             
                                         }
                                     }
                                     ib+=nm;

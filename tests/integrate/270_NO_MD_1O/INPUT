@@ -7,25 +7,25 @@ calculation 	md
 
 #Parameters (Accuracy)
 ecutwfc			20
-niter			50
-dr2             1.0e-6
+scf_nmax			50
+scf_thr             1.0e-6
 
 basis_type		lcao
-nstep           3
+md_nstep           3
 
-stress          1
+cal_stress          1
 stress_thr      1e-6
-force           1
+cal_force           1
 force_thr_ev    1.0e-3
 
-smearing    gaussian
-sigma   0.002
+smearing_method    gaussian
+smearing_sigma   0.002
 mixing_type     pulay
 mixing_beta     0.7
 
 md_tfirst       10
 md_tfreq        0.1
 
-charge_extrap  first-order
+chg_extrap  first-order
 
 read_file_dir   ./

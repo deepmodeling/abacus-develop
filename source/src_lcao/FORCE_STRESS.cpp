@@ -610,7 +610,7 @@ void Force_Stress_LCAO::printforce_total (const bool ry, const bool istestf, Mod
 	ModuleBase::GlobalFunc::NEW_PART("TOTAL-FORCE (eV/Angstrom)");
 
 	// print out forces
-	if(INPUT.force_set == 1)
+	if(INPUT.out_force == 1)
 	{
 		std::ofstream ofs("FORCE.dat");
 		if(!ofs)

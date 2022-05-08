@@ -195,7 +195,7 @@ void Force_LCAO_k::allocate_k(const Parallel_Orbitals &pv)
     ModuleBase::GlobalFunc::ZEROS(this->UHM->LM->DSloc_Rz, nnr);
 	ModuleBase::Memory::record("force_lo", "dS", nnr*3, "double");
     
-	if(GlobalV::STRESS){
+	if(GlobalV::CAL_STRESS){
 		this->UHM->LM->DH_r = new double [3* nnr];
 		ModuleBase::GlobalFunc::ZEROS(this->UHM->LM->DH_r, 3 * nnr);
 		this->UHM->LM->stvnl11 = new double [nnr];
@@ -217,7 +217,7 @@ void Force_LCAO_k::allocate_k(const Parallel_Orbitals &pv)
 	// calculate dS = <phi | dphi> 
 	//-----------------------------
 	bool cal_deri = true;
-	this->UHM->genH.build_ST_new ('S', cal_deri, GlobalC::ucell);
+	this->UHM->genH.build_ST_new ('S', cal_deri, GlobalC::ucell, this->UHM->genH.LM->SlocR.data());
 
 	//-----------------------------------------
 	// (2) allocate for <phi | T + Vnl | dphi>
@@ -232,7 +232,7 @@ void Force_LCAO_k::allocate_k(const Parallel_Orbitals &pv)
     
     // calculate dT=<phi|kin|dphi> in LCAO
     // calculate T + VNL(P1) in LCAO basis
-    this->UHM->genH.build_ST_new ('T', cal_deri, GlobalC::ucell);
+    this->UHM->genH.build_ST_new ('T', cal_deri, GlobalC::ucell, this->UHM->genH.LM->Hloc_fixedR.data());
 	//test(this->UHM->LM->DHloc_fixedR_x,"this->UHM->LM->DHloc_fixedR_x T part");
    
    	// calculate dVnl=<phi|dVnl|dphi> in LCAO 
@@ -251,7 +251,7 @@ void Force_LCAO_k::finish_k(void)
     delete [] this->UHM->LM->DHloc_fixedR_x;
     delete [] this->UHM->LM->DHloc_fixedR_y;
     delete [] this->UHM->LM->DHloc_fixedR_z;
-	if(GlobalV::STRESS)
+	if(GlobalV::CAL_STRESS)
 	{
 		delete [] this->UHM->LM->DH_r;
 		delete [] this->UHM->LM->stvnl11;
@@ -1139,11 +1139,7 @@ void Force_LCAO_k::cal_fvl_dphi_k(
 		// fvl_dphi can not be set to zero here if Vna is used
 		if(isstress||isforce) 
 		{
-			this->UHM->GK.svl_k_RealSpace(isforce, isstress, fvl_dphi,svl_dphi,GlobalC::pot.vr_eff1);
-		}
-		else if(isforce) 
-		{
-			this->UHM->GK.fvl_k_RealSpace(fvl_dphi,GlobalC::pot.vr_eff1);
+			this->UHM->GK.fvl_k_RealSpace(isforce, isstress, fvl_dphi,svl_dphi,GlobalC::pot.vr_eff1);
 		}
 	}
 

@@ -9,17 +9,17 @@ symmetry            1
 
 #Parameters (3.PW)
 ecutwfc             20
-dr2                 1e-8
-niter               100
+scf_thr                 1e-8
+scf_nmax               100
 
 #Parameters (LCAO)
 basis_type          lcao
-smearing            gaussian
-sigma               0.02
+smearing_method            gaussian
+smearing_sigma               0.02
 
-force                1
+cal_force                1
 #test_force          1
-stress               1
+cal_stress               1
 #test_stress         1
 
 mixing_type         pulay

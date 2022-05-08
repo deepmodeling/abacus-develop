@@ -433,7 +433,7 @@ void Dos::nscf_band(
 	
 	// old version
 	/*
-	for(int ip=0;ip<GlobalV::NPOOL;ip++)
+	for(int ip=0;ip<GlobalV::KPAR;ip++)
 	{
 		if(GlobalV::MY_POOL == ip && GlobalV::RANK_IN_POOL == 0)
 		{

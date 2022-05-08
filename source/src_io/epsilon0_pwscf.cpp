@@ -31,7 +31,7 @@ Epsilon0_pwscf::Epsilon0_pwscf()
 	  nomega = 300;
 	  shift = 0.0;
 	  metalcalc = false;
-	  degauss = 0.01;
+	  smearing_sigma = 0.01;
 }
 
 Epsilon0_pwscf::~Epsilon0_pwscf()
@@ -46,7 +46,7 @@ void Epsilon0_pwscf:: Cal_epsilon0()
 	std::cout << "nomega = "<<nomega<<std::endl;
 	std::cout << "shift = "<< shift << std::endl;
 	std::cout << "metalcalc = "<<metalcalc<<std::endl;
-	std::cout << "degauss = "<<degauss<<std::endl;
+	std::cout << "smearing_sigma = "<<smearing_sigma<<std::endl;
 
 	if( !init_finish )
 	{
@@ -124,8 +124,8 @@ void Epsilon0_pwscf:: Cal_epsilon0()
 								double w = wgrid(iw);
 								for(int j=0; j<9; j++)
 								{
-									epsi[j][iw] += dipole[j][ib1][ib1].real() * intrasmear * w * exp((GlobalC::wf.ekb[ik][ib1]- GlobalC::en.ef)/degauss)/(1.0 + exp((GlobalC::wf.ekb[ik][ib1]- GlobalC::en.ef)/degauss))/(1.0 + exp((GlobalC::wf.ekb[ik][ib1]- GlobalC::en.ef)/degauss))/degauss/(w*w*w*w + intrasmear * intrasmear * w * w);
-									epsr[j][iw] -= dipole[j][ib1][ib1].real() * w * w  * exp((GlobalC::wf.ekb[ik][ib1]- GlobalC::en.ef)/degauss)/(1.0 + exp((GlobalC::wf.ekb[ik][ib1]- GlobalC::en.ef)/degauss))/(1.0 + exp((GlobalC::wf.ekb[ik][ib1]- GlobalC::en.ef)/degauss))/degauss/(w*w*w*w + intrasmear * intrasmear * w * w);
+									epsi[j][iw] += dipole[j][ib1][ib1].real() * intrasmear * w * exp((GlobalC::wf.ekb[ik][ib1]- GlobalC::en.ef)/smearing_sigma)/(1.0 + exp((GlobalC::wf.ekb[ik][ib1]- GlobalC::en.ef)/smearing_sigma))/(1.0 + exp((GlobalC::wf.ekb[ik][ib1]- GlobalC::en.ef)/smearing_sigma))/smearing_sigma/(w*w*w*w + intrasmear * intrasmear * w * w);
+									epsr[j][iw] -= dipole[j][ib1][ib1].real() * w * w  * exp((GlobalC::wf.ekb[ik][ib1]- GlobalC::en.ef)/smearing_sigma)/(1.0 + exp((GlobalC::wf.ekb[ik][ib1]- GlobalC::en.ef)/smearing_sigma))/(1.0 + exp((GlobalC::wf.ekb[ik][ib1]- GlobalC::en.ef)/smearing_sigma))/smearing_sigma/(w*w*w*w + intrasmear * intrasmear * w * w);
 								}
 							}
 						}
@@ -245,8 +245,8 @@ void Epsilon0_pwscf:: Cal_epsilon0()
 								double w = wgrid(iw);
 								for(int j=0; j<9; j++)
 								{
-									epsi[j][iw] += dipole[j][ib1][ib1].real() * intrasmear * w * exp((GlobalC::wf.ekb[ik][ib1]- GlobalC::en.ef)/degauss)/(1.0 + exp((GlobalC::wf.ekb[ik][ib1]- GlobalC::en.ef)/degauss))/(1.0 + exp((GlobalC::wf.ekb[ik][ib1]- GlobalC::en.ef)/degauss))/degauss/(w*w*w*w + intrasmear * intrasmear * w * w);
-									epsr[j][iw] -= dipole[j][ib1][ib1].real() * w * w  * exp((GlobalC::wf.ekb[ik][ib1]- GlobalC::en.ef)/degauss)/(1.0 + exp((GlobalC::wf.ekb[ik][ib1]- GlobalC::en.ef)/degauss))/(1.0 + exp((GlobalC::wf.ekb[ik][ib1]- GlobalC::en.ef)/degauss))/degauss/(w*w*w*w + intrasmear * intrasmear * w * w);
+									epsi[j][iw] += dipole[j][ib1][ib1].real() * intrasmear * w * exp((GlobalC::wf.ekb[ik][ib1]- GlobalC::en.ef)/smearing_sigma)/(1.0 + exp((GlobalC::wf.ekb[ik][ib1]- GlobalC::en.ef)/smearing_sigma))/(1.0 + exp((GlobalC::wf.ekb[ik][ib1]- GlobalC::en.ef)/smearing_sigma))/smearing_sigma/(w*w*w*w + intrasmear * intrasmear * w * w);
+									epsr[j][iw] -= dipole[j][ib1][ib1].real() * w * w  * exp((GlobalC::wf.ekb[ik][ib1]- GlobalC::en.ef)/smearing_sigma)/(1.0 + exp((GlobalC::wf.ekb[ik][ib1]- GlobalC::en.ef)/smearing_sigma))/(1.0 + exp((GlobalC::wf.ekb[ik][ib1]- GlobalC::en.ef)/smearing_sigma))/smearing_sigma/(w*w*w*w + intrasmear * intrasmear * w * w);
 								}
 							}
 						}

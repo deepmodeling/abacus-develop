@@ -87,6 +87,7 @@ sph_bessel_recursive-d1.o \
 sph_bessel_recursive-d2.o \
 global_variable.o \
 global_function.o \
+global_function_ddotreal.o \
 tool_title.o\
 tool_quit.o\
 tool_check.o\
@@ -231,9 +232,19 @@ OBJS_ESOLVER=esolver.o\
     esolver_ks.o\
     esolver_fp.o\
     esolver_ks_pw.o\
+    esolver_sdft_pw.o\
     esolver_ks_lcao.o\
     esolver_lj.o\
     esolver_dp.o\
+
+OBJS_SURCHEM=H_correction_pw.o\
+    cal_epsilon.o\
+    cal_pseudo.o\
+    cal_totn.o\
+    cal_vcav.o\
+    cal_vel.o\
+    corrected_energy.o\
+    minimize_cg.o\
 
 OBJS_XC=xc_funct_corr_gga.o \
 xc_funct_corr_lda.o \
@@ -252,6 +263,7 @@ $(OBJS_PW)\
 $(OBJS_LCAO)\
 $(OBJS_ESOLVER)\
 $(OBJS_XC)\
+$(OBJS_SURCHEM)\
 charge.o \
 charge_mixing.o \
 charge_pulay.o \
@@ -366,6 +378,7 @@ pdt2s.o\
 pzt2s.o\
 pdtrsm.o\
 pzhtrsm.o\
+
 
 PDIAG_MR_0=dcopy.o\
 dlae2.o\

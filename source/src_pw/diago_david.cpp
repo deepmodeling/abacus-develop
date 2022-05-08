@@ -1,5 +1,4 @@
 #include "diago_david.h"
-#include "diago_cg.h"
 #include "../src_parallel/parallel_reduce.h"
 #include "../module_base/timer.h"
 #include "module_base/constants.h"
@@ -255,8 +254,8 @@ void Diago_David::cal_grad
 			ppsi[ig] = respsi[ig] / precondition[ig] ;
 		}
 /*
-		double ppsi_norm = Diago_CG::ddot_real( npw, ppsi, ppsi);
-		double rpsi_norm = Diago_CG::ddot_real( npw, respsi, respsi);
+		double ppsi_norm = ModuleBase::GlobalFunc::ddot_real( npw, ppsi, ppsi);
+		double rpsi_norm = ModuleBase::GlobalFunc::ddot_real( npw, respsi, respsi);
 		assert( rpsi_norm > 0.0 );
 		assert( ppsi_norm > 0.0 );
 */
@@ -498,7 +497,7 @@ void Diago_David::cal_err
             }
         }
 
-        err[m] = Diago_CG::ddot_real( npw, respsi, respsi );
+        err[m] = ModuleBase::GlobalFunc::ddot_real( npw, respsi, respsi );
         err[m] = sqrt( err[m] );
     }
 

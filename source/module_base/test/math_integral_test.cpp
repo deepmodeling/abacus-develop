@@ -52,9 +52,9 @@ class SimpsonIntegralSinx : public testing::Test
 
     void TearDown()
     {
-        delete func;
-        delete rab;
-        delete asumlist;
+        delete[] func;
+        delete[] rab;
+        delete[] asumlist;
     }
 };
 

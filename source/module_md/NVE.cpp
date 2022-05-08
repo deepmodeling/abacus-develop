@@ -36,9 +36,9 @@ void NVE::second_half()
     ModuleBase::timer::tick("NVE", "second_half");
 }
 
-void NVE::outputMD()
+void NVE::outputMD(std::ofstream &ofs)
 {
-    Verlet::outputMD();
+    Verlet::outputMD(ofs);
 }
 
 void NVE::write_restart()

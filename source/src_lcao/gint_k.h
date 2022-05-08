@@ -69,15 +69,9 @@ class Gint_k : public Gint_k_init
 
     // folding the < dphi_0 | V | phi_R> matrix to 
     // < dphi_0i | V | phi_0j>
-    void folding_force(
-        ModuleBase::matrix& fvl_dphi,
-        double* pvdpx, 
-        double* pvdpy, 
-        double* pvdpz);//mohan add 2012-1-6
-
     // folding the < dphi_0 | V * R_beta | phi_R> matrix
     // < dphi_0i | V | phi_0j>
-    void folding_stress(
+    void folding_force(
         const bool isforce,
         const bool isstress,
         ModuleBase::matrix& fvl_dphi, 
@@ -90,7 +84,9 @@ class Gint_k : public Gint_k_init
         double* pvdp33, 
         double* pvdp12, 
         double* pvdp13, 
-        double* pvdp23);//zhengdy add 2016-10-18
+        double* pvdp23);
+        //mohan add 2012-1-6
+        //zhengdy add 2016-10-18
 
     //------------------------------------------------------
     // in gint_k_rho.cpp 
@@ -110,17 +106,16 @@ class Gint_k : public Gint_k_init
     //------------------------------------------------------
     // in gint_k_fvl.cpp 
     //------------------------------------------------------
-    // calculate the force (many k-points).
-    void fvl_k_RealSpace(
-        ModuleBase::matrix& fvl_dphi, 
-        const double* vl);//mohan add 2011-06-19
+    // calculate force & stress (many k-points).
 
-    void svl_k_RealSpace(
+    void fvl_k_RealSpace(
         const bool isforce,
         const bool isstress,
         ModuleBase::matrix& fvl_dphi, 
         ModuleBase::matrix& svl_dphi, 
-        const double* vl);//zhengdy add 2016-10-18
+        const double* vl);
+        //mohan add 2011-06-19
+        //zhengdy add 2016-10-18
 
     private:
     
@@ -137,32 +132,6 @@ class Gint_k : public Gint_k_init
         bool** cal_flag, 
         double** distance, 
         const double &delta_r);
-
-    //------------------------------------------------------
-    // in gint_k_vl.cpp 
-    //------------------------------------------------------
-    // evaluate the matrix element < phi0 | V | phiR> and store them in
-    // a full H matrix.
-    void evaluate_pvpR_full(
-        const int &grid_index, 
-        const int &size, 
-        double*** psir_ylm,
-        bool** cal_flag, 
-        double* vldr3);
-
-    // reduced means the H storage take the advance of adjacent atoms.
-    void evaluate_pvpR_reduced(
-        double* pvpR, 
-        const int &grid_index, 
-        const int &size, 
-        const int &i, 
-        const int &j, 
-        const int &k,
-        double*** psir_ylm, 
-        bool** cal_flag, 
-        double* vldr3, 
-        double** distance, 
-        const Grid_Technique &gt);
 
     //------------------------------------------------------
     // in gint_k_rho.cpp 
@@ -240,10 +209,6 @@ class Gint_k : public Gint_k_init
     //----------------------------
     // key variable 
     //----------------------------
-    // dimension: [GridT.lgd, GridT.nutot]
-    // used only in vlocal with full H matrix.
-    double* pvpR_pool;
-    double** pvpR;
 
     double***** pvpR_tr; //LiuXh add 2019-07-15
     std::complex<double>***** pvpR_tr_soc; //LiuXh add 2019-07-15
@@ -269,7 +234,6 @@ class Gint_k : public Gint_k_init
 
     // just pointer.
     bool pvpR_alloc_flag;
-    bool reduced;
 
     double** DM_R; //pointer to Local_Orbital_Charge::DM_R
 };

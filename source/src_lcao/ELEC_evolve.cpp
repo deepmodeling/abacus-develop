@@ -1,5 +1,4 @@
 #include "ELEC_evolve.h"
-#include "LOOP_elec.h"
 #include "LCAO_diago.h"
 #include "../src_pw/global.h"
 #include "../src_pw/symmetry_rho.h"
@@ -12,7 +11,7 @@ ELEC_evolve::ELEC_evolve(){};
 ELEC_evolve::~ELEC_evolve(){};
 
 int ELEC_evolve::tddft;
-double ELEC_evolve::td_dr2;
+double ELEC_evolve::td_scf_thr;
 double ELEC_evolve::td_dt;
 double ELEC_evolve::td_force_dt;
 int ELEC_evolve::td_val_elec_01;
@@ -126,7 +125,7 @@ void ELEC_evolve::evolve_psi(
 	} // end k
 
 	// LiuXh modify 2019-07-15*/
-	if(!Pdiag_Double::out_hsR)
+	if(!Pdiag_Double::out_mat_hsR)
 	{
 		uhm.GK.destroy_pvpR();
 	}

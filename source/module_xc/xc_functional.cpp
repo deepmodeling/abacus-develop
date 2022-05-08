@@ -19,15 +19,18 @@ int XC_Functional::get_func_type()
 // for detail, refer to https://www.tddft.org/programs/libxc/functionals/
 void XC_Functional::set_xc_type(const std::string xc_func_in)
 {
+    //Note : due to the separation of gcx_spin and gcc_spin,
+    //when you are adding new GGA functionals,
+    //please put exchange first, followed by correlation,
+    //such as for PBE we have:
+    //        func_id.push_back(XC_GGA_X_PBE);
+    //        func_id.push_back(XC_GGA_C_PBE);
+    
     func_id.clear();
     std::string xc_func = xc_func_in;
     std::transform(xc_func.begin(), xc_func.end(), xc_func.begin(), (::toupper));
 	if( xc_func == "LDA" || xc_func == "PZ" || xc_func == "SLAPZNOGXNOGC") //SLA+PZ
 	{
-        // I should use XC_LDA_X and XC_LDA_C_PZ here,
-        // but since we are not compiling with libxc as default,
-        // I chose to set it manually instead.
-        // Same for the rest.
         func_id.push_back(XC_LDA_X);
         func_id.push_back(XC_LDA_C_PZ);
         func_type = 1;
@@ -102,6 +105,7 @@ void XC_Functional::set_xc_type(const std::string xc_func_in)
         func_id.push_back(XC_MGGA_X_SCAN);
         func_id.push_back(XC_MGGA_C_SCAN);
         func_type = 3;
+        use_libxc = true;
 	}
 #endif
    	else if( xc_func == "PBE0")
@@ -120,6 +124,7 @@ void XC_Functional::set_xc_type(const std::string xc_func_in)
     {
         func_id.push_back(XC_HYB_GGA_XC_HSE06);
         func_type = 4;
+        use_libxc = true;
     }
 #endif
     else
@@ -127,6 +132,7 @@ void XC_Functional::set_xc_type(const std::string xc_func_in)
 #ifdef USE_LIBXC
         //see if it matches libxc functionals
         set_xc_type_libxc(xc_func);
+        use_libxc = true;
 #else
         std::cout << "functional name not recognized!" << std::endl;
 #endif
@@ -145,7 +151,7 @@ void XC_Functional::set_xc_type(const std::string xc_func_in)
     {
         ModuleBase::WARNING_QUIT("set_xc_type","hybrid functional not realized for planewave yet");
     }
-    if(func_type == 3 && GlobalV::STRESS == 1 && GlobalV::NSPIN!=1)
+    if(func_type == 3 && GlobalV::CAL_STRESS == 1 && GlobalV::NSPIN!=1)
     {
         ModuleBase::WARNING_QUIT("set_xc_type","mgga stress not implemented for polarized case yet");
     }

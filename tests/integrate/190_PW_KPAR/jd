@@ -1,0 +1,1 @@
+test parallel method kpar. Must be run by MPI with at least 2 cores, otherwise please ignore this test.

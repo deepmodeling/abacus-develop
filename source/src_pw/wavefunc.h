@@ -18,8 +18,8 @@ class wavefunc : public WF_atomic
     void allocate(const int nks);
     void allocate_ekb_wg(const int nks);
 
-    int out_wf; //qianrui modify 2020-10-19
-    int out_wf_r=0; // Peize Lin add 2021.11.21
+    int out_wfc_pw; //qianrui modify 2020-10-19
+    int out_wfc_r=0; // Peize Lin add 2021.11.21
 
     // et    : (nks,nbnd),eigenvalues of the hamiltonian
     // wg	 : the weight of each k point and band
@@ -27,8 +27,8 @@ class wavefunc : public WF_atomic
 	bool   allocate_ekb;   // flag
     ModuleBase::matrix wg;
 
-    // start_wfc : "random",or "atomic" or "file"
-    std::string start_wfc;
+    // init_wfc : "random",or "atomic" or "file"
+    std::string init_wfc;
 	int mem_saver; //1: save evc when doing nscf calculation.
     void wfcinit(void);// from wfcinit.f90
     void wfcinit_k();

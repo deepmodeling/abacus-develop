@@ -1,7 +1,7 @@
 #include "global.h"
 #include "hamilt.h"
 #include "hip/hip_runtime.h"
-// #include "diago_cg.h"
+// 
 #include "diago_cg_hip.h"
 #include "diago_david.h"
 #include "../module_base/timer.h"
@@ -194,10 +194,10 @@ void Hamilt::diagH_pw(const int &istep, const int &iter, const int &ik, const do
 					CHECK_CUDA(
 						hipMemcpy(d_precondition, precondition, DIM_CG_CUDA * sizeof(double), hipMemcpyHostToDevice));
 					// cout<<"ITER: "<<iter<<endl;
-					// cout<<"ETHR_now: "<<GlobalV::ETHR<<endl;
+					// cout<<"PW_DIAG_THR_now: "<<GlobalV::PW_DIAG_THR<<endl;
 					// cast to float
 					// if(iter < 100)
-					// if(iter == 1 || GlobalV::ETHR > 5e-4)
+					// if(iter == 1 || GlobalV::PW_DIAG_THR > 5e-4)
 					if (iter < 0)
 					{
 						CHECK_CUDA(
@@ -248,8 +248,8 @@ void Hamilt::diagH_pw(const int &istep, const int &iter, const int &ik, const do
 									   GlobalC::wf.npwx,
 									   GlobalV::NBANDS,
 									   f_precondition,
-									   GlobalV::ETHR,
-									   GlobalV::DIAGO_CG_MAXITER,
+									   GlobalV::PW_DIAG_THR,
+									   GlobalV::PW_DIAG_NMAX,
 									   reorder,
 									   notconv,
 									   avg);
@@ -284,8 +284,8 @@ void Hamilt::diagH_pw(const int &istep, const int &iter, const int &ik, const do
 									   GlobalC::wf.npwx,
 									   GlobalV::NBANDS,
 									   d_precondition,
-									   GlobalV::ETHR,
-									   GlobalV::DIAGO_CG_MAXITER,
+									   GlobalV::PW_DIAG_THR,
+									   GlobalV::PW_DIAG_NMAX,
 									   reorder,
 									   notconv,
 									   avg);
@@ -336,8 +336,8 @@ void Hamilt::diagH_pw(const int &istep, const int &iter, const int &ik, const do
 								   DIM_CG_CUDA2,
 								   GlobalV::NBANDS,
 								   d_precondition,
-								   GlobalV::ETHR,
-								   GlobalV::DIAGO_CG_MAXITER,
+								   GlobalV::PW_DIAG_THR,
+								   GlobalV::PW_DIAG_NMAX,
 								   reorder,
 								   notconv,
 								   avg);
@@ -378,9 +378,9 @@ void Hamilt::diagH_pw(const int &istep, const int &iter, const int &ik, const do
 							   GlobalC::kv.ngk[ik],
 							   GlobalV::NBANDS,
 							   precondition,
-							   GlobalV::DIAGO_DAVID_NDIM,
-							   GlobalV::ETHR,
-							   GlobalV::DIAGO_CG_MAXITER,
+							   GlobalV::PW_DIAG_NDIM,
+							   GlobalV::PW_DIAG_THR,
+							   GlobalV::PW_DIAG_NMAX,
 							   notconv,
 							   avg);
 				}
@@ -391,9 +391,9 @@ void Hamilt::diagH_pw(const int &istep, const int &iter, const int &ik, const do
 							   GlobalC::wf.npwx * GlobalV::NPOL,
 							   GlobalV::NBANDS,
 							   precondition,
-							   GlobalV::DIAGO_DAVID_NDIM,
-							   GlobalV::ETHR,
-							   GlobalV::DIAGO_CG_MAXITER,
+							   GlobalV::PW_DIAG_NDIM,
+							   GlobalV::PW_DIAG_THR,
+							   GlobalV::PW_DIAG_NMAX,
 							   notconv,
 							   avg);
 				}

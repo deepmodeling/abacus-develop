@@ -58,7 +58,7 @@ void DFTU_RELAX::force_stress(std::vector<ModuleBase::matrix>& dm_gamma,
 
     this->LM = &lm;
     
-    if (GlobalV::FORCE)
+    if (GlobalV::CAL_FORCE)
 	{
 		for(int iat=0; iat<GlobalC::ucell.nat; iat++)
 		{
@@ -69,7 +69,7 @@ void DFTU_RELAX::force_stress(std::vector<ModuleBase::matrix>& dm_gamma,
 		}
 	}
 
-	if(GlobalV::STRESS)
+	if(GlobalV::CAL_STRESS)
 	{
 		for(int dim=0; dim<3; dim++)
 		{
@@ -108,8 +108,8 @@ void DFTU_RELAX::force_stress(std::vector<ModuleBase::matrix>& dm_gamma,
 
       		delete [] VU;
 			ModuleBase::timer::tick("DFTU_RELAX", "cal_rho_VU");
-      		if(GlobalV::FORCE) this->cal_force_gamma(&rho_VU[0]);
-      		if(GlobalV::STRESS) this->cal_stress_gamma(&rho_VU[0]);
+      		if(GlobalV::CAL_FORCE) this->cal_force_gamma(&rho_VU[0]);
+      		if(GlobalV::CAL_STRESS) this->cal_stress_gamma(&rho_VU[0]);
     	}//ik
   	}
   	else
@@ -141,13 +141,13 @@ void DFTU_RELAX::force_stress(std::vector<ModuleBase::matrix>& dm_gamma,
       		delete [] VU;
 	  		ModuleBase::timer::tick("DFTU_RELAX", "cal_rho_VU");
 
-      		if(GlobalV::FORCE) this->cal_force_k(ik, &rho_VU[0]);
-      		if(GlobalV::STRESS) cal_stress_k(ik, &rho_VU[0]);
+      		if(GlobalV::CAL_FORCE) this->cal_force_k(ik, &rho_VU[0]);
+      		if(GlobalV::CAL_STRESS) cal_stress_k(ik, &rho_VU[0]);
     	}//ik
   	}
 
 #ifdef __MPI
-	if(GlobalV::FORCE)
+	if(GlobalV::CAL_FORCE)
 	{
 		for(int iat=0; iat<GlobalC::ucell.nat; iat++)
 		{
@@ -157,7 +157,7 @@ void DFTU_RELAX::force_stress(std::vector<ModuleBase::matrix>& dm_gamma,
 	}
 #endif
 
-  	if(GlobalV::STRESS)
+  	if(GlobalV::CAL_STRESS)
   	{
 	#ifdef __MPI
     	for(int dim1=0; dim1<3; dim1++)

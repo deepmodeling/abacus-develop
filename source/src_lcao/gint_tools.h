@@ -56,7 +56,28 @@ namespace Gint_Tools
 		const double delta_r, // delta_r of the uniform FFT grid
 		const int*const block_index,  // count total number of atomis orbitals
 		const int*const block_size, 
-		const bool*const*const cal_flag); // whether the atom-grid distance is larger than cutoff		
+		const bool*const*const cal_flag); // whether the atom-grid distance is larger than cutoff
+
+	void cal_dpsir_ylm(
+		const int na_grid, 					// number of atoms on this grid 
+		const int LD_pool,
+		const int grid_index, 				// 1d index of FFT index (i,j,k) 
+		const double delta_r, 				// delta_r of the uniform FFT grid
+		const int*const block_index,  		// block_index[na_grid+1], count total number of atomis orbitals
+		const int*const block_size, 		// block_size[na_grid],	number of columns of a band
+		const bool*const*const cal_flag,    // cal_flag[GlobalC::pw.bxyz][na_grid],	whether the atom-grid distance is larger than cutoff
+		double*const*const psir_ylm,
+		double*const*const dpsir_ylm_x,
+		double*const*const dpsir_ylm_y,
+		double*const*const dpsir_ylm_z);
+
+	Gint_Tools::Array_Pool<double> get_psir_vlbr3(
+		const int na_grid,  					    // how many atoms on this (i,j,k) grid
+		const int LD_pool,
+		const int*const block_index,		    	// block_index[na_grid+1], count total number of atomis orbitals
+		const bool*const*const cal_flag,	    	// cal_flag[GlobalC::pw.bxyz][na_grid],	whether the atom-grid distance is larger than cutoff
+		const double*const vldr3,			    	// vldr3[GlobalC::pw.bxyz]
+		const double*const*const psir_ylm);		    // psir_ylm[GlobalC::pw.bxyz][LD_pool]
 }
 
 

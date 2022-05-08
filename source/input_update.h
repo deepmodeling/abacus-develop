@@ -24,20 +24,21 @@ public:
 
 private:
 	
-    int force;
+    int cal_force;
     double force_thr;		// threshold of force in unit (Ry/Bohr)
 	double force_thr_ev2;	// invalid force threshold, mohan add 2011-04-17
-    double dr2;				// \sum |rhog_out - rhog_in |^2
-    int niter;				// number of max elec iter
-    int nstep;				// number of max ionic iter
+    double scf_thr;				// \sum |rhog_out - rhog_in |^2
+    int scf_nmax;				// number of max elec iter
+    int relax_nmax;				// number of max ionic iter
+    int md_nstep;               // number of md steps
     double mixing_beta;		// 0 : no_mixing
 	int printe;
-	//int extra_pot;	// mohan add 2011-03-13, xiaohui modify 2015-02-01
-	std::string charge_extrap;	//xiaohui add 2015-02-01
-    int out_charge;		// output charge density.
+	//int chg_extrap;	// mohan add 2011-03-13, xiaohui modify 2015-02-01
+	std::string chg_extrap;	//xiaohui add 2015-02-01
+    int out_chg;		// output charge density.
 	int out_dm; // output density matrix.
 	int out_dos;			// dos calculation. mohan add 20090909
-	int	out_lowf;			// output the wave functions in local basis.
+	int	out_wfc_lcao;			// output the wave functions in local basis.
     
 	bool Read(const std::string &fn);
 #ifdef __MPI

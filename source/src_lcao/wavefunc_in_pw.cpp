@@ -1,4 +1,5 @@
 #include "wavefunc_in_pw.h"
+#include "../src_pw/global.h"
 #include <cstring>		// Peize Lin fix bug about strcmp 2016-08-02
 #include "../module_base/math_integral.h"
 #include "../module_base/math_sphbes.h"
