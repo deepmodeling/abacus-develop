@@ -21,25 +21,21 @@
 
 TEST(ParaGlobal,SplitGrid)
 {
-	// NPROC is set to 6 in parallel_global_test.sh
-	if(GlobalV::NPROC==6)
+	// NPROC is set to 4 in parallel_global_test.sh
+	if(GlobalV::NPROC==4)
 	{
 		Parallel_Global::split_grid_world(2);
-		EXPECT_EQ(GlobalV::GSIZE,3);
+		EXPECT_EQ(GlobalV::GSIZE,2);
 		if(GlobalV::MY_RANK==0) EXPECT_EQ(GlobalV::GRANK,0);
 		if(GlobalV::MY_RANK==1) EXPECT_EQ(GlobalV::GRANK,1);
-		if(GlobalV::MY_RANK==2) EXPECT_EQ(GlobalV::GRANK,2);
-		if(GlobalV::MY_RANK==3) EXPECT_EQ(GlobalV::GRANK,0);
-		if(GlobalV::MY_RANK==4) EXPECT_EQ(GlobalV::GRANK,1);
-		if(GlobalV::MY_RANK==5) EXPECT_EQ(GlobalV::GRANK,2);
-		Parallel_Global::split_grid_world(6);
+		if(GlobalV::MY_RANK==2) EXPECT_EQ(GlobalV::GRANK,0);
+		if(GlobalV::MY_RANK==3) EXPECT_EQ(GlobalV::GRANK,1);
+		Parallel_Global::split_grid_world(4);
 		EXPECT_EQ(GlobalV::GSIZE,1);
 		if(GlobalV::MY_RANK==0) EXPECT_EQ(GlobalV::GRANK,0);
 		if(GlobalV::MY_RANK==1) EXPECT_EQ(GlobalV::GRANK,0);
 		if(GlobalV::MY_RANK==2) EXPECT_EQ(GlobalV::GRANK,0);
 		if(GlobalV::MY_RANK==3) EXPECT_EQ(GlobalV::GRANK,0);
-		if(GlobalV::MY_RANK==4) EXPECT_EQ(GlobalV::GRANK,0);
-		if(GlobalV::MY_RANK==5) EXPECT_EQ(GlobalV::GRANK,0);
 	}
 	else
 	{
@@ -53,25 +49,21 @@ TEST(ParaGlobal,SplitGrid)
 
 TEST(ParaGlobal,SplitDiag)
 {
-	// NPROC is set to 6 in parallel_global_test.sh
-	if(GlobalV::NPROC==6)
+	// NPROC is set to 4 in parallel_global_test.sh
+	if(GlobalV::NPROC==4)
 	{
 		Parallel_Global::split_diag_world(2);
 		EXPECT_EQ(GlobalV::DSIZE,2);
 		if(GlobalV::MY_RANK==0) EXPECT_EQ(GlobalV::DRANK,0);
 		if(GlobalV::MY_RANK==1) EXPECT_EQ(GlobalV::DRANK,0);
-		if(GlobalV::MY_RANK==2) EXPECT_EQ(GlobalV::DRANK,0);
+		if(GlobalV::MY_RANK==2) EXPECT_EQ(GlobalV::DRANK,1);
 		if(GlobalV::MY_RANK==3) EXPECT_EQ(GlobalV::DRANK,1);
-		if(GlobalV::MY_RANK==4) EXPECT_EQ(GlobalV::DRANK,1);
-		if(GlobalV::MY_RANK==5) EXPECT_EQ(GlobalV::DRANK,1);
-		Parallel_Global::split_diag_world(6);
-		EXPECT_EQ(GlobalV::DSIZE,6);
+		Parallel_Global::split_diag_world(4);
+		EXPECT_EQ(GlobalV::DSIZE,4);
 		if(GlobalV::MY_RANK==0) EXPECT_EQ(GlobalV::DRANK,0);
 		if(GlobalV::MY_RANK==1) EXPECT_EQ(GlobalV::DRANK,1);
 		if(GlobalV::MY_RANK==2) EXPECT_EQ(GlobalV::DRANK,2);
 		if(GlobalV::MY_RANK==3) EXPECT_EQ(GlobalV::DRANK,3);
-		if(GlobalV::MY_RANK==4) EXPECT_EQ(GlobalV::DRANK,4);
-		if(GlobalV::MY_RANK==5) EXPECT_EQ(GlobalV::DRANK,5);
 	}
 	else
 	{

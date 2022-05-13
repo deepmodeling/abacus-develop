@@ -140,7 +140,18 @@ void ORB_gen_tables::snap_psibeta_half(
 
 	//find number of projectors on atom R0
 	const int nproj = infoNL_.nproj[T0];
-	assert(nproj>0); // mohan add 2021-04-25
+	if(nproj==0)
+	{
+		if(calc_deri)
+		{
+			nlm.resize(4);
+		}
+		else
+		{
+			nlm.resize(1);
+		}
+		return;	
+	}
 
 	std::vector<bool> calproj;
 	calproj.resize(nproj);

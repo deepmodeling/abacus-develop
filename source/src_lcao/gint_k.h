@@ -5,6 +5,7 @@
 #include "../module_orbital/ORB_atomic_lm.h"
 #include "grid_technique.h"
 #include "LCAO_matrix.h"
+#include "../src_pw/charge.h"
 
 // add by jingan for map<> in 2021-12-2, will be deleted in the future
 #include "../src_ri/abfs-vector3_order.h"
@@ -92,7 +93,7 @@ class Gint_k : public Gint_k_init
     // in gint_k_rho.cpp 
     //------------------------------------------------------
     // calculate the charge density via grid integrals
-    void cal_rho_k(double** DM_R_in);
+    void cal_rho_k(double** DM_R_in, Charge* chr);
 
     //------------------------------------------------------
     // in gint_k_env.cpp 
@@ -117,6 +118,13 @@ class Gint_k : public Gint_k_init
         //mohan add 2011-06-19
         //zhengdy add 2016-10-18
 
+    void cal_force_k(
+        const bool isforce,
+        const bool isstress,
+        ModuleBase::matrix& fvl_dphi, 
+        ModuleBase::matrix& svl_dphi, 
+        const double* vl);
+
     private:
     
     //------------------------------------------------------
@@ -133,6 +141,18 @@ class Gint_k : public Gint_k_init
         double** distance, 
         const double &delta_r);
 
+    void cal_meshball_vlocal(
+        int na_grid,
+        int LD_pool,
+        int grid_index, 
+        int* block_size,
+        int* block_index,
+        int* block_iw,
+        bool** cal_flag, 
+        int* at, 
+        double** psir_ylm,
+        double** psir_vlbr3,
+        double* pvpR);
 
     //------------------------------------------------------
     // in gint_k_fvl.cpp 

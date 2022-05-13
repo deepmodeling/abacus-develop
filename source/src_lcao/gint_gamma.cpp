@@ -5,16 +5,7 @@
 
 Gint_Gamma::Gint_Gamma()
 {
-    ylm1 = new double[100];
-    ylm2 = new double[100]; // can used for L=9
-    iq = new int[1];
-    x0 = new double[1];
-    x1 = new double[1];
-    x2 = new double[1];
-    x3 = new double[1];
-    x12 = new double[1];
-    x03 = new double[1];
-    
+   
     sender_index_size = 1;
 	sender_local_index = new int[1];
     sender_size_process = new int[1];
@@ -32,15 +23,6 @@ Gint_Gamma::Gint_Gamma()
 
 Gint_Gamma::~Gint_Gamma()
 {
-    delete[] ylm1;
-    delete[] ylm2;
-    delete[] iq;
-    delete[] x0;
-    delete[] x1;
-    delete[] x2;
-    delete[] x3;
-    delete[] x12;
-    delete[] x03;
 
     delete[] sender_local_index;
     delete[] sender_size_process;
@@ -51,61 +33,4 @@ Gint_Gamma::~Gint_Gamma()
     delete[] receiver_size_process;
     delete[] receiver_displacement_process;
     delete[] receiver_buffer;
-}
-
-
-void Gint_Gamma::save_atoms_on_grid(const Grid_Technique &gt)
-{
-    ModuleBase::TITLE("Grid_Integral","save_atoms_on_grid");
-
-    // mohan change.
-    max_size = gt.max_atom;
-
-	if(max_size == 0)
-	{
-		// mohan add return 2011-03-15
-		GlobalV::ofs_warning << " processor " << GlobalV::MY_RANK << ": no atom on sub-fft-grid." << std::endl;
-		return;
-	}
-
-    delete[] iq;
-    delete[] x0;
-    delete[] x1;
-    delete[] x2;
-    delete[] x3;
-    delete[] x12;
-    delete[] x03;
-    this->iq = new int[max_size];
-    this->x0 = new double[max_size];
-    this->x1 = new double[max_size];
-    this->x2 = new double[max_size];
-    this->x3 = new double[max_size];
-    this->x12 = new double[max_size];
-    this->x03 = new double[max_size];
-
-	ModuleBase::GlobalFunc::ZEROS(iq, max_size);
-	ModuleBase::GlobalFunc::ZEROS(x0, max_size);
-	ModuleBase::GlobalFunc::ZEROS(x1, max_size);
-	ModuleBase::GlobalFunc::ZEROS(x2, max_size);
-	ModuleBase::GlobalFunc::ZEROS(x3, max_size);
-	ModuleBase::GlobalFunc::ZEROS(x12, max_size);
-	ModuleBase::GlobalFunc::ZEROS(x03, max_size);
-
-	this->vfactor = std::abs(this->latvec0.Det())/gt.ncxyz;
-
-    return;
-}
-
-void Gint_Gamma::prepare(
-    const ModuleBase::Matrix3 &latvec_in,
-    const double& lat0_in)
-{
-	ModuleBase::TITLE("Grid_Base_Beta","prepare");
-
-	this->lat0 = lat0_in;
-
-	this->latvec0 = latvec_in;
-	this->latvec0 *= this->lat0;
-	
-	return;
 }

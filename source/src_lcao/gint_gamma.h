@@ -11,6 +11,7 @@
 #include "../module_base/global_variable.h"
 #include "grid_technique.h"
 #include "LCAO_matrix.h"
+#include "../src_pw/charge.h"
 #include <omp.h>
 
 //=========================================================
@@ -30,7 +31,7 @@ class Gint_Gamma
 	void cal_vlocal( const double*const vlocal, LCAO_Matrix &lm);
 
 	// (2) calculate charge density
-	double cal_rho(double*** DM_in);
+	void cal_rho(double*** DM_in, Charge* chr);
 
 	// (3) calcualte the forces related to grid
 	void cal_force(double*** DM_in, const double*const vlocal,
@@ -42,36 +43,13 @@ class Gint_Gamma
 
 	// (5) calculate the Mulliken charge
 	void cal_mulliken(double** mulliken);
-	
-	void prepare( 
-		const ModuleBase::Matrix3 &latvec_in, 
-        const double& lat0_in);
 
 private:
 
-	double vfactor;
-	ModuleBase::Matrix3 latvec0;
-	double lat0;
     double***  DM;   //pointer to LOC.DM
-    double* transformer;
-	double psiv1;
-	double psiv2;
-	double* ylm1;
-	double* ylm2;
 
 	int grid_index;			// may delete?
 	int max_size;
-	
-	// these parameters are for interpolation.
-	// we store these parameters at first to speed
-	// up the calculation.
-	double *x0;
-	double *x1;
-	double *x2;
-	double *x3;
-	double* x12;
-	double* x03;
-	int *iq;
 
     ///===============================
     /// Use MPI_Alltoallv to convert a grid distributed matrix
@@ -90,31 +68,16 @@ private:
     int *receiver_size_process;
     int *receiver_displacement_process;
     double* receiver_buffer;
-    
-    void save_atoms_on_grid(const Grid_Technique& gt);
 
 	// for calculation of < phi_i | Vlocal | phi_j >
 	// Input:	vlocal[ir]
 	// Output:	GridVlocal.ptr_2D[iw1_lo][iw2_lo]
 	Gint_Tools::Array_Pool<double> gamma_vlocal(const double*const vlocal) const;  
-
-	// for calculation of charege 
-	// Input:	DM[is][iw1_lo][iw2_lo]
-	// Output:	rho.ptr_2D[is][ir]
-	Gint_Tools::Array_Pool<double> gamma_charge(const double*const*const*const DM) const;
-
 	// for calculation of Mulliken charge.
 	void gamma_mulliken(double** mulliken);
 
 	// for calculation of envelope functions.
 	void gamma_envelope(const double* wfc, double* rho);// mohan add 2011-07-01
-
-
-	// for calculatin of < dphi_i | Vlocal | phi_j > for foce calculation
-	// on regular FFT real space grid.
-	void gamma_force(const double*const*const*const DM, const double*const vlocal,
-			ModuleBase::matrix& force, ModuleBase::matrix& stress,
-			const bool is_force, const bool is_stress);
 
 	void cal_meshball_vlocal(
 		const int na_grid,  						// how many atoms on this (i,j,k) grid
@@ -139,7 +102,7 @@ private:
 		const double*const*const psir_ylm,				// psir_ylm[GlobalC::pw.bxyz][LD_pool]
 		const int*const vindex,							// vindex[GlobalC::pw.bxyz]
 		const double*const*const*const DM,				// DM[GlobalV::NSPIN][lgd_now][lgd_now]
-		Gint_Tools::Array_Pool<double> &rho) const;		// rho[GlobalV::NSPIN][GlobalC::pw.nrxx]
+		Charge* chr) const;		// rho[GlobalV::NSPIN][GlobalC::pw.nrxx]
 
 	void cal_meshball_force(
 		const int grid_index,

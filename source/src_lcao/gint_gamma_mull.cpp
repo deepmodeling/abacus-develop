@@ -13,7 +13,7 @@ void Gint_Gamma::cal_mulliken(double** mulliken)
     ModuleBase::TITLE("Gint_Gamma","cal_mulliken");
     ModuleBase::timer::tick("Gint_Gamma","cal_mulliken");
 
-    this->save_atoms_on_grid(GlobalC::GridT);
+	this->max_size = GlobalC::GridT.max_atom;
     this->gamma_mulliken(mulliken);
 
     ModuleBase::timer::tick("Gint_Gamma","cal_mulliken");
@@ -146,15 +146,7 @@ void Gint_Gamma::gamma_mulliken(double** mulliken)
 						// we can get the parameters we need to do interpolation and
 						// store them first!! these can save a lot of effort.
 						const double position = distance[ib][id] / delta_r;
-						/*
-						   this->iq[id] = static_cast<int>(position);
-						   this->x0[id] = position - static_cast<double>(iq[id]);
-						   this->x1[id] = 1.0 - x0[id];
-						   this->x2[id] = 2.0 - x0[id];
-						   this->x3[id] = 3.0 - x0[id];
-						   this->x12[id] = x1[id]*x2[id] / 6.0;
-						   this->x03[id] = x0[id]*x3[id] / 2.0;
-						 */
+
 						int ip;
 						double dx, dx2, dx3;
 						double c1, c2, c3, c4;

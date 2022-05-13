@@ -294,6 +294,7 @@ Gint_Tools::Array_Pool<double> Gint_Gamma::gamma_vlocal(const double*const vloca
 			ModuleBase::Memory::record("Gint_Gamma","GridVlocal_therad",lgd_now*lgd_now,"double");
 
 			const int LD_pool = max_size*GlobalC::ucell.nwmax;
+            const double dv = GlobalC::ucell.omega/GlobalC::pw.ncxyz;
 
 #ifdef _OPENMP
 			#pragma omp for
@@ -339,7 +340,7 @@ Gint_Tools::Array_Pool<double> Gint_Gamma::gamma_vlocal(const double*const vloca
 						//------------------------------------------------------------------
 						// extract the local potentials.
 						//------------------------------------------------------------------
-						double *vldr3 = Gint_Tools::get_vldr3(vlocal, ncyz, ibx, jby, kbz, this->vfactor);
+						double *vldr3 = Gint_Tools::get_vldr3(vlocal, ncyz, ibx, jby, kbz, dv);
 
                         const Gint_Tools::Array_Pool<double> psir_vlbr3 = Gint_Tools::get_psir_vlbr3(
                                 na_grid, LD_pool, block_index, cal_flag, vldr3, psir_ylm.ptr_2D);
@@ -468,8 +469,7 @@ void Gint_Gamma::cal_vlocal(
     ModuleBase::timer::tick("Gint_Gamma", "cal_vlocal"
     );
 
-    this->save_atoms_on_grid(GlobalC::GridT);
-
+    this->max_size = GlobalC::GridT.max_atom;
     const Gint_Tools::Array_Pool<double> GridVlocal = this->gamma_vlocal(vlocal);
 	vl_grid_to_2D(GridVlocal, lm);
 

@@ -70,6 +70,7 @@ void Force_LCAO_k::ftable_k (
     // doing on the real space grid.
     // ---------------------------------------
     this->cal_fvl_dphi_k(dm2d, isforce, isstress, fvl_dphi, svl_dphi);
+	//this->cal_fvl_dphi_k_new(isforce, isstress, fvl_dphi, svl_dphi);
 
     this->calFvnlDbeta(dm2d, isforce, isstress, fvnl_dbeta, svnl_dbeta, GlobalV::vnl_method);
 
@@ -1149,6 +1150,50 @@ void Force_LCAO_k::cal_fvl_dphi_k(
 	}
 
 	ModuleBase::timer::tick("Force_LCAO_k","cal_fvl_dphi_k");
+	return;
+}
+
+// calculate the force due to < phi | Vlocal | dphi >
+void Force_LCAO_k::cal_fvl_dphi_k_new(
+	const bool isforce, 
+    const bool isstress,
+    ModuleBase::matrix& fvl_dphi,
+	ModuleBase::matrix& svl_dphi)
+{
+	ModuleBase::TITLE("Force_LCAO_k","cal_fvl_dphi_k_new");
+	ModuleBase::timer::tick("Force_LCAO_k","cal_fvl_dphi_k_new");
+
+	if(!isforce&&!isstress) 
+	{
+		ModuleBase::timer::tick("Force_LCAO_k","cal_fvl_dphi_k_new");
+		return;
+	}
+
+	int istep = 1;
+
+	// if Vna potential is not used.
+	GlobalC::pot.init_pot(istep, GlobalC::pw.strucFac);
+
+
+	for(int is=0; is<GlobalV::NSPIN; ++is)
+	{
+		GlobalV::CURRENT_SPIN = is;
+		for(int ir=0; ir<GlobalC::pw.nrxx; ir++)
+		{
+			GlobalC::pot.vr_eff1[ir] = GlobalC::pot.vr_eff(GlobalV::CURRENT_SPIN, ir);
+		}
+
+		//--------------------------------
+		// Grid integration here.
+		//--------------------------------
+		// fvl_dphi can not be set to zero here if Vna is used
+		if(isstress||isforce) 
+		{
+			this->UHM->GK.cal_force_k(isforce, isstress, fvl_dphi,svl_dphi,GlobalC::pot.vr_eff1);
+		}
+	}
+
+	ModuleBase::timer::tick("Force_LCAO_k","cal_fvl_dphi_k_new");
 	return;
 }
 

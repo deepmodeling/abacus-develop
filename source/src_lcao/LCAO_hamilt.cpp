@@ -34,11 +34,7 @@ void LCAO_Hamilt::set_lcao_matrices(void)
     ModuleBase::timer::tick("LCAO_Hamilt","set_lcao_matrices");
 
     if(GlobalV::GAMMA_ONLY_LOCAL)
-    {
-        // mohan add 2012-03-29
-        // calculate the grid integration of 'Vl' matrix for gamma algorithms.
-        this->GG.prepare(GlobalC::ucell.latvec, GlobalC::ucell.lat0);
-    
+    {   
         // calulate the 'S', 'T' and 'Vnl' matrix for gamma algorithms.
         this->calculate_STNR_gamma();	
 
@@ -50,7 +46,6 @@ void LCAO_Hamilt::set_lcao_matrices(void)
 
         // calculate the grid integration of 'Vl' matrix for l-points algorithms.
         this->GK.init(GlobalC::pw.nbx, GlobalC::pw.nby, GlobalC::pw.nbzp, GlobalC::pw.nbzp_start, GlobalC::pw.ncxyz, this->LM);
-
     }
 
     // initial the overlap matrix is done.	

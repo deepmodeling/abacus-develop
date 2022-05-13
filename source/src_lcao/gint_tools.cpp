@@ -44,14 +44,14 @@ namespace Gint_Tools
 		const int ibx,
 		const int jby,
 		const int kbz,
-		const double vfactor)
+		const double dv)
 	{
 		// set the index for obtaining local potentials
 		int* vindex = Gint_Tools::get_vindex(ncyz, ibx, jby, kbz);	
 		double *vldr3 = (double*)malloc(GlobalC::pw.bxyz*sizeof(double));					
 		for(int ib=0; ib<GlobalC::pw.bxyz; ib++)
 		{
-			vldr3[ib]=vlocal[vindex[ib]] * vfactor;
+			vldr3[ib]=vlocal[vindex[ib]] * dv;
 		}
 		free(vindex);	vindex=nullptr;
 		return vldr3;

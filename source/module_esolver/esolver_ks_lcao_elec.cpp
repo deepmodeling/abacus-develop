@@ -124,11 +124,11 @@ namespace ModuleESolver
             // calculate the charge density
             if (GlobalV::GAMMA_ONLY_LOCAL)
             {
-                this->UHM.GG.cal_rho(this->LOC.DM);
+                this->UHM.GG.cal_rho(this->LOC.DM, (Charge*)(&GlobalC::CHR));
             }
             else
             {
-                this->UHM.GK.cal_rho_k(this->LOC.DM_R);
+                this->UHM.GK.cal_rho_k(this->LOC.DM_R, (Charge*)(&GlobalC::CHR));
             }
 
             // renormalize the charge density

@@ -46,18 +46,25 @@ inline int find_offset(const int id1, const int id2, const int iat1, const int i
 	return offset;
 }
 
-inline void cal_pvpR_reduced(int size, int LD_pool, int grid_index, 
-							const int ibx, const int jby, const int kbz,
-							int* block_size, int* at, int* block_index, int* block_iw,
-							double* vldr3, double** psir_ylm, double** psir_vlbr3, 
-							bool** cal_flag, double* pvpR)
+void Gint_k::cal_meshball_vlocal(
+	int na_grid,
+	int LD_pool,
+	int grid_index, 
+	int* block_size,
+	int* block_index,
+	int* block_iw,
+	bool** cal_flag, 
+	int* at, 
+	double** psir_ylm,
+	double** psir_vlbr3,
+	double* pvpR)
 {
 	char transa='N', transb='T';
 	double alpha=1, beta=1;
-	int allnw=block_index[size];
+	int allnw=block_index[na_grid];
 
 	int k=GlobalC::pw.bxyz;
-	for(int ia1=0; ia1<size; ++ia1)
+	for(int ia1=0; ia1<na_grid; ++ia1)
 	{
 		//if(all_out_of_range[ia1]) continue;
 		//const int iw1_lo=block_iw[ia1];
@@ -71,7 +78,7 @@ inline void cal_pvpR_reduced(int size, int LD_pool, int grid_index,
 		// nad : how many adjacent atoms for atom 'iat'
 		int* find_start = GlobalC::GridT.find_R2[iat1];
 		int* find_end = GlobalC::GridT.find_R2[iat1] + GlobalC::GridT.nad[iat1];
-		for(int ia2=0; ia2<size; ++ia2)
+		for(int ia2=0; ia2<na_grid; ++ia2)
 		{
 			const int iat2=at[ia2];
 			const int T2 = GlobalC::ucell.iat2it[iat2];
@@ -217,17 +224,15 @@ void Gint_k::cal_vlocal_k(const double *vrs1, const Grid_Technique &GridT, const
                                 na_grid, LD_pool, block_index, cal_flag, vldr3, psir_ylm.ptr_2D);
 
 		#ifdef _OPENMP
-						cal_pvpR_reduced(na_grid, LD_pool, grid_index, 
-										ibx, jby, kbz, 
-										block_size, at, block_index, block_iw, 
-										vldr3, psir_ylm.ptr_2D, psir_vlbr3.ptr_2D, 
-										cal_flag, pvpR_reduced_thread);
+						cal_meshball_vlocal(na_grid, LD_pool, grid_index, 
+							block_size, block_index, block_iw, cal_flag, at,
+							psir_ylm.ptr_2D, psir_vlbr3.ptr_2D, 
+							pvpR_reduced_thread);
 		#else
-						cal_pvpR_reduced(na_grid, LD_pool, grid_index, 
-										ibx, jby, kbz, 
-										block_size, at, block_index, block_iw, 
-										vldr3, psir_ylm.ptr_2D, psir_vlbr3.ptr_2D, 
-										cal_flag, this->pvpR_reduced[spin]);
+						cal_meshball_vlocal(na_grid, LD_pool, grid_index, 
+							block_size, at, block_index, block_iw, cal_flag, at,
+							psir_ylm.ptr_2D, psir_vlbr3.ptr_2D, 
+							this->pvpR_reduced[spin]);
 		#endif
 						free(vldr3);		vldr3=nullptr;
                         delete[] block_iw;

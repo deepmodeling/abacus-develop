@@ -164,12 +164,12 @@ void Local_Orbital_Charge::sum_bands(LCAO_Hamilt &uhm)
 
     if(GlobalV::GAMMA_ONLY_LOCAL)
     {
-        uhm.GG.cal_rho(this->DM);
+        uhm.GG.cal_rho(this->DM, (Charge*)(&GlobalC::CHR));
     }
     else
     {
         ModuleBase::GlobalFunc::NOTE("Calculate the charge on real space grid!");
-        uhm.GK.cal_rho_k(this->DM_R);
+        uhm.GK.cal_rho_k(this->DM_R, (Charge*)(&GlobalC::CHR));
     }
 
      time_t end = time(NULL);

@@ -29,7 +29,8 @@ inline void cal_band_rho(
 	double** psir_ylm,
 	int* vindex, 
     bool** cal_flag,
-    double** DM_R)
+    double** DM_R,
+	Charge* chr)
 {
 	char trans='N';
 	double alpha_diag=1;
@@ -65,14 +66,13 @@ inline void cal_band_rho(
     			    ++cal_num;
 				}
 			}
-			if(cal_num>GlobalC::pw.bxyz/4)
+
+			int offset;
+			if(cal_num>0)
 			{
-				//find offset
-				const int dRx=0;
-				const int dRy=0;
-				const int dRz=0;				
-				const int index = GlobalC::GridT.cal_RindexAtom(dRx, dRy, dRz, iat1);
-				int offset = -1;
+				//find offset				
+				const int index = GlobalC::GridT.cal_RindexAtom(0, 0, 0, iat1);
+				offset = -1;
 				for(int* find=find_start; find < find_end; find++)
 				{
 					//--------------------------------------------------------------
@@ -80,24 +80,17 @@ inline void cal_band_rho(
 					//--------------------------------------------------------------
 					if( find[0] == index ) 
 					{
-						offset = find - find_start;
+						offset = find - find_start; // start positions of adjacent atom of 'iat'
 						break;
 					}
 				}
 
-				if(offset == -1)
-				{					
-					std::cout << "== charge ==========================" << std::endl;
-					std::cout << " grid_index = " << grid_index << std::endl;
-                    std::cout << " index = " << index << std::endl;
-					std::cout << " size1=" << ia1 << " size2=" << ia1 << std::endl;
-                    std::cout << " iat1=" << iat1 << " iat2=" << iat1 << std::endl;
-                    std::cout << " dR=" << dRx << " " << dRy << " " << dRz << std::endl;
-					ModuleBase::WARNING_QUIT("gint_k","cal_band_rho wrong");
-				}
-				//const int offset=AllOffset[ia1][ia2];
-				assert(offset < GlobalC::GridT.nad[iat1]);
-				
+				assert(offset!=-1);
+				assert(offset < GlobalC::GridT.nad[iat1]);				
+			}
+
+			if(cal_num>GlobalC::pw.bxyz/4)
+			{				
 				const int DM_start = GlobalC::GridT.nlocstartg[iat1]+ GlobalC::GridT.find_R2st[iat1][offset];					
 				dgemm_(&trans, &trans, &block_size[ia1], &GlobalC::pw.bxyz, &block_size[ia1], &alpha_diag,
 					&DM_R[is][DM_start], &block_size[ia1], 
@@ -105,38 +98,7 @@ inline void cal_band_rho(
 					&beta, &psir_DM.ptr_2D[0][idx1], &LD_pool);
 			}
 			else if(cal_num>0)
-			{
-				//find offset
-				const int dRx=0;
-				const int dRy=0;
-				const int dRz=0;				
-				const int index = GlobalC::GridT.cal_RindexAtom(dRx, dRy, dRz, iat1);
-				int offset = -1;
-				for(int* find=find_start; find < find_end; find++)
-				{
-					//--------------------------------------------------------------
-					// start positions of adjacent atom of 'iat'
-					//--------------------------------------------------------------
-					if( find[0] == index ) 
-					{
-						offset = find - find_start;
-						break;
-					}
-				}
-
-				if(offset == -1)
-				{					
-					std::cout << "== charge ==========================" << std::endl;
-					std::cout << " grid_index = " << grid_index << std::endl;
-                    std::cout << " index = " << index << std::endl;
-					std::cout << " size1=" << ia1 << " size2=" << ia1 << std::endl;
-                    std::cout << " iat1=" << iat1 << " iat2=" << iat1 << std::endl;
-                    std::cout << " dR=" << dRx << " " << dRy << " " << dRz << std::endl;
-					ModuleBase::WARNING_QUIT("gint_k","cal_band_rho wrong");
-				}
-				//const int offset=AllOffset[ia1][ia2];
-				assert(offset < GlobalC::GridT.nad[iat1]);
-				
+			{	
 				const int DM_start = GlobalC::GridT.nlocstartg[iat1]+ GlobalC::GridT.find_R2st[iat1][offset];
 				for(int ib=0; ib<GlobalC::pw.bxyz; ++ib					)
 				{
@@ -149,6 +111,7 @@ inline void cal_band_rho(
     				}
 				}
 			}
+
 			//ia2>ia1
 			for(int ia2=ia1+1; ia2<size; ++ia2)
 			{			
@@ -158,15 +121,14 @@ inline void cal_band_rho(
         			if(cal_flag[ib][ia1] && cal_flag[ib][ia2])
         			    ++cal_num;
     			}
-				if(cal_num>GlobalC::pw.bxyz/4)
+				
+				int offset;
+				if(cal_num>0)
 				{
-    				const int iw2_lo=block_iw[ia2];
-    				const int iat2=at[ia2];
-    				const int T2 = GlobalC::ucell.iat2it[iat2];
+					const int iat2=at[ia2];
     				
     				// find offset
     				const int id2=uc[ia2];
-			        const int idx2=block_index[ia2];
     				const int R2x = GlobalC::GridT.ucell_index2x[id2];
     				const int R2y = GlobalC::GridT.ucell_index2y[id2];
     				const int R2z = GlobalC::GridT.ucell_index2z[id2];
@@ -174,7 +136,7 @@ inline void cal_band_rho(
     				const int dRy = R1y - R2y;
     				const int dRz = R1z - R2z;
     				const int index = GlobalC::GridT.cal_RindexAtom(dRx, dRy, dRz, iat2);
-    				int offset = -1;
+    				offset = -1;
     				for(int* find=find_start; find < find_end; find++)
     				{
     					//--------------------------------------------------------------
@@ -186,22 +148,14 @@ inline void cal_band_rho(
     						break;
     					}
     				}
-    				if(offset == -1)
-    				{					
-    					std::cout << "== charge ==========================" << std::endl;
-    					std::cout << " grid_index = " << grid_index << std::endl;
-                        std::cout << " index = " << index << std::endl;
-    					std::cout << " size1=" << ia1 << " size2=" << ia2 << std::endl;
-                        std::cout << " iat1=" << iat1 << " iat2=" << iat2 << std::endl;
-                        std::cout << " dR=" << dRx << " " << dRy << " " << dRz << std::endl;
-                        std::cout << " R1=" << R1x << " " << R1y << " " << R1z << std::endl;
-                        std::cout << " R2=" << R2x << " " << R2y << " " << R2z << std::endl;
-    					ModuleBase::WARNING_QUIT("gint_k","cal_band_rho wrong");
-    				}				
+					assert(offset!=-1);				
     				assert(offset < GlobalC::GridT.nad[iat1]);
+				}
 
+				if(cal_num>GlobalC::pw.bxyz/4)
+				{
+			        const int idx2=block_index[ia2];
     				const int DM_start = GlobalC::GridT.nlocstartg[iat1]+ GlobalC::GridT.find_R2st[iat1][offset];
-
     				dgemm_(&trans, &trans, &block_size[ia2], &GlobalC::pw.bxyz, &block_size[ia1], &alpha_nondiag,
     					&DM_R[is][DM_start], &block_size[ia2], 
     					&psir_ylm[0][idx1], &LD_pool,
@@ -209,48 +163,10 @@ inline void cal_band_rho(
 				}
 				else if(cal_num>0)
 				{
-    				const int iw2_lo=block_iw[ia2];
-    				const int iat2=at[ia2];
-    				const int T2 = GlobalC::ucell.iat2it[iat2];
-    				
-    				// find offset
-    				const int id2=uc[ia2];
-    				const int idx2=block_index[ia2];
-    				const int R2x = GlobalC::GridT.ucell_index2x[id2];
-    				const int R2y = GlobalC::GridT.ucell_index2y[id2];
-    				const int R2z = GlobalC::GridT.ucell_index2z[id2];
-    				const int dRx = R1x - R2x;
-    				const int dRy = R1y - R2y;
-    				const int dRz = R1z - R2z;
-    				const int index = GlobalC::GridT.cal_RindexAtom(dRx, dRy, dRz, iat2);
-    				int offset = -1;
-    				for(int* find=find_start; find < find_end; find++)
-    				{
-    					//--------------------------------------------------------------
-    					// start positions of adjacent atom of 'iat'
-    					//--------------------------------------------------------------
-    					if( find[0] == index ) 
-    					{
-    						offset = find - find_start;
-    						break;
-    					}
-    				}
-    				if(offset == -1)
-    				{					
-    					std::cout << "== charge ==========================" << std::endl;
-    					std::cout << " grid_index = " << grid_index << std::endl;
-                        std::cout << " index = " << index << std::endl;
-    					std::cout << " size1=" << ia1 << " size2=" << ia2 << std::endl;
-                        std::cout << " iat1=" << iat1 << " iat2=" << iat2 << std::endl;
-                        std::cout << " dR=" << dRx << " " << dRy << " " << dRz << std::endl;
-                        std::cout << " R1=" << R1x << " " << R1y << " " << R1z << std::endl;
-                        std::cout << " R2=" << R2x << " " << R2y << " " << R2z << std::endl;
-    					ModuleBase::WARNING_QUIT("gint_k","cal_band_rho wrong");
-    				}				
-    				assert(offset < GlobalC::GridT.nad[iat1]);
-
+					const int idx2=block_index[ia2];
     				const int DM_start = GlobalC::GridT.nlocstartg[iat1]+ GlobalC::GridT.find_R2st[iat1][offset];
-    				for(int ib=0; ib<GlobalC::pw.bxyz; ++ib					)
+					
+    				for(int ib=0; ib<GlobalC::pw.bxyz; ++ib)
     				{
         				if(cal_flag[ib][ia1] && cal_flag[ib][ia2])
         				{
@@ -265,7 +181,7 @@ inline void cal_band_rho(
 		} // ia1
 		
 		// calculate rho
-		double *rhop = GlobalC::CHR.rho[is];
+		double *rhop = chr->rho[is];
 		for(int ib=0; ib<GlobalC::pw.bxyz; ++ib)
 		{
 			double r=ddot_(&block_index[size], psir_ylm[ib], &inc, psir_DM.ptr_2D[ib], &inc);
@@ -276,7 +192,7 @@ inline void cal_band_rho(
 }
 
 
-void Gint_k::cal_rho_k(double** DM_R_in)
+void Gint_k::cal_rho_k(double** DM_R_in, Charge* chr)
 {
 	ModuleBase::TITLE("Gint_k","cal_rho_k");
     ModuleBase::timer::tick("Gint_k", "cal_rho_k");
@@ -358,7 +274,8 @@ void Gint_k::cal_rho_k(double** DM_R_in)
 							psir_ylm.ptr_2D,
 							vindex, 
 							cal_flag,
-							DM_R);
+							DM_R,
+							chr);
 						
 						free(vindex);			vindex=nullptr;
                         delete[] block_iw;

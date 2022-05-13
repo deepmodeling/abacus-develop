@@ -36,7 +36,7 @@ namespace Gint_Tools
 		const int ibx,
 		const int jby,
 		const int kbz,
-		const double vfactor);
+		const double dv);
 
 	//------------------------------------------------------
 	// na_grid : #. atoms for this group of grids

@@ -36,6 +36,7 @@ list(APPEND objects
     gint_gamma_vl.cpp
     gint_k.cpp
     gint_k_fvl.cpp
+    gint_k_fvl_new.cpp
     gint_k_init.cpp
     gint_k_rho.cpp
     gint_k_vl.cpp
