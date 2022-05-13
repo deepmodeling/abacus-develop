@@ -121,6 +121,7 @@ gint_k_init.o\
 gint_k_vl.o\
 gint_k_rho.o\
 gint_k_fvl.o\
+gint_k_fvl_new.o\
 gint_k_env.o \
 ORB_control.o\
 ORB_read.o\
