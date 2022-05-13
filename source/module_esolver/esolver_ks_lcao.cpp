@@ -143,6 +143,19 @@ namespace ModuleESolver
         int ion_step = 0;
         GlobalC::pot.init_pot(ion_step, GlobalC::pw.strucFac);
 
+        //------------------init Basis_lcao----------------------
+        // Init Basis should be put outside of Ensolver.
+        // * reading the localized orbitals/projectors
+        // * construct the interpolation tables.
+        this->Init_Basis_lcao(this->orb_con, inp, ucell);
+        //------------------init Basis_lcao----------------------
+
+        //------------------init Hamilt_lcao----------------------
+        // * allocate H and S matrices according to computational resources
+        // * set the 'trace' between local H/S and global H/S
+        this->LM.divide_HS_in_frag(GlobalV::GAMMA_ONLY_LOCAL, orb_con.ParaV);
+        //------------------init Hamilt_lcao----------------------
+
 #ifdef __MPI  
         // PLEASE simplify the Exx_Global interface
         // mohan add 2021-03-25
@@ -175,19 +188,7 @@ namespace ModuleESolver
 
         if (INPUT.dft_plus_dmft) GlobalC::dmft.init(INPUT, ucell);
 
-        //------------------init Basis_lcao----------------------
-        // Init Basis should be put outside of Ensolver.
-        // * reading the localized orbitals/projectors
-        // * construct the interpolation tables.
-        this->Init_Basis_lcao(this->orb_con, inp, ucell);
-        //------------------init Basis_lcao----------------------
-
-        //------------------init Hamilt_lcao----------------------
-        // * allocate H and S matrices according to computational resources
-        // * set the 'trace' between local H/S and global H/S
-        this->LM.divide_HS_in_frag(GlobalV::GAMMA_ONLY_LOCAL, orb_con.ParaV);
-        //------------------init Hamilt_lcao----------------------
-      //init Psi
+        //init Psi
         if (GlobalV::GAMMA_ONLY_LOCAL)
             this->LOWF.wfc_gamma.resize(GlobalV::NSPIN);
         else
