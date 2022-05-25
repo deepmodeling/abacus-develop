@@ -8,7 +8,7 @@ ENV OMPI_ALLOW_RUN_AS_ROOT=1 OMPI_ALLOW_RUN_AS_ROOT_CONFIRM=1 OMPI_MCA_btl_vader
 CMD mpirun --use-hwthread-cpus abacus
 
 # To run ABACUS built by this image with all available threads, execute `docker run -v <host>:<wd> -w <wd/input> abacus`.
-# Replace '<host>' with the path to all files(including pseudopotential files), '<wd>' with a path to working directory, and '<wd/input>' with the path to input folder(containing 'INPUT', 'STRU' etc.).
+# Replace '<host>' with the path to all files(including pseudopotential files), '<wd>' with a path to working directory, and '<wd/input>' with the path to input folder(containing 'INPUT', 'STRU', etc.).
 # e.g. after clone the repo to `$HOME` and pulled this image, execute `docker run -v ~/abacus-develop/tests/integrate:/workspace -w /workspace/101_PW_15_f_pseudopots abacus`.
 # To run ABACUS with a given MPI process number, execute `docker run -v <host>:<wd> -w <wd/input> -it --entrypoint mpirun abacus -np <processes> abacus`. Note: the first "abacus" is the name of the image, the second "abacus" is the name of the executable file. Do not use '--cpus' flag of 'docker run' to specify the number of processes.
 
