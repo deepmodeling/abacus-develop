@@ -84,7 +84,7 @@ void ModuleBase::Global_File::make_dir_out(
 	MPI_Barrier(MPI_COMM_WORLD);
 #endif
 
-    if(calculation == "md" && calculation == "sto-md")
+    if(calculation == "md")
     {
         int make_dir_stru = 0;
         std::string command1 =  "test -d " + GlobalV::global_stru_dir + " || mkdir " + GlobalV::global_stru_dir;
