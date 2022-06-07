@@ -18,9 +18,9 @@ int Pseudopot_upf::read_pseudo_blps(std::ifstream &ifs)
     delete[] nn;
     delete[] jchi;
     delete[] jjj;
-    this->nn = nullptr;
-    this->jchi = nullptr;
-    this->jjj = nullptr;
+    this->nn = new int[1];
+    this->jchi = new double[1];
+    this->jjj = new double[1];
     ModuleBase::GlobalFunc::ZEROS(nn, 1);
     ModuleBase::GlobalFunc::ZEROS(jchi, 1);
     ModuleBase::GlobalFunc::ZEROS(jjj, 1);
