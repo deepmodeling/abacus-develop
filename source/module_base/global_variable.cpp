@@ -22,6 +22,8 @@ int NBANDS = 0;
 int NBANDS_ISTATE = 0; // default number.
 int NLOCAL = 0; // total number of local basis.
 
+double KSPACING = 0.0;
+
 double PSEUDORCUT;
 bool PSEUDO_MESH;
 

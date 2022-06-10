@@ -8,7 +8,7 @@
 
 - [System variables](#system-variables)
 
-    [suffix](#suffix) | [ntype](#ntype) | [calculation](#calculation) | [symmetry](#symmetry) | [kpar](#kpar) | [bndpar](#bndpar) | [latname](#latname) | [init_wfc](#init_wfc) | [init_chg](#init_chg) | [init_vel](#init_vel) | [nelec](#nelec) | [tot_magnetization](#tot-magnetization) | [dft_functional](#dft-functional) | [pseudo_type](#pseudo-type) |  [pseudo_rcut](#pseudo-rcut) | [pseudo_mesh](#pseudo_mesh) | [mem_saver](#mem-saver) | [diago_proc](#diago_proc) | [nbspline](#nbspline)
+    [suffix](#suffix) | [ntype](#ntype) | [calculation](#calculation) | [symmetry](#symmetry) | [kpar](#kpar) | [bndpar](#bndpar) | [latname](#latname) | [init_wfc](#init_wfc) | [init_chg](#init_chg) | [init_vel](#init_vel) | [nelec](#nelec) | [tot_magnetization](#tot-magnetization) | [dft_functional](#dft-functional) | [pseudo_type](#pseudo-type) |  [pseudo_rcut](#pseudo-rcut) | [pseudo_mesh](#pseudo_mesh) | [mem_saver](#mem-saver) | [diago_proc](#diago_proc) | [nbspline](#nbspline) | [kspacing](#kspacing)
 
 - [Variables related to input files](#variables-related-to-input-files)
 
@@ -292,6 +292,12 @@ This part of variables are used to control general system parameters.
 - **Descrption**: If set to a natural number, a Cardinal B-spline interpolation will be used to calculate Structure Factor. `nbspline` represents the order of B-spline basis and larger one can get more accurate results but cost more.
     It is turned off by default.
 - **Default**: -1
+
+#### kspacing
+
+- **Type**: double
+- **Descrption**: Set the smallest allowed spacing between k points, unit in 1/bohr. It should be larger than 0.0, and suggest smaller than 0.25. When you have set this value > 0.0, then the KPT file is unneccessary, and the number of K points nk_i = max(1,int(|b_i|/KSPACING)+1), where b_i is the reciprocal lattice vector. The default value 0.0 means that ABACUS will read the applied KPT file. Notice: if gamma_only is set to be true, kspacing is invalid.
+- **Default**: 0.0
 
 ### Variables related to input files
 

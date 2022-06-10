@@ -155,6 +155,25 @@ bool K_Vectors::read_kpoints(const std::string &fn)
 		ofs << "1 1 1 0 0 0" << std::endl;
 		ofs.close();
 	}
+    else if (GlobalV::KSPACING > 0.0)
+    {
+        //number of K points = max(1,int(|bi|/KSPACING+1))
+        ModuleBase::Matrix3 btmp = GlobalC::ucell.G;
+        double b1 = sqrt(btmp.e11 * btmp.e11 + btmp.e12 * btmp.e12 + btmp.e13 * btmp.e13);
+        double b2 = sqrt(btmp.e21 * btmp.e21 + btmp.e22 * btmp.e22 + btmp.e23 * btmp.e23);
+        double b3 = sqrt(btmp.e31 * btmp.e31 + btmp.e32 * btmp.e32 + btmp.e33 * btmp.e33);
+        int nk1 = max(1,static_cast<int>(b1 * ModuleBase::TWO_PI / GlobalV::KSPACING / GlobalC::ucell.lat0 + 1));
+        int nk2 = max(1,static_cast<int>(b2 * ModuleBase::TWO_PI / GlobalV::KSPACING / GlobalC::ucell.lat0 + 1));
+        int nk3 = max(1,static_cast<int>(b3 * ModuleBase::TWO_PI / GlobalV::KSPACING / GlobalC::ucell.lat0 + 1));
+
+        GlobalV::ofs_warning << " Generate k-points file according to KSPACING: " << fn << std::endl;
+		std::ofstream ofs(fn.c_str());
+		ofs << "K_POINTS" << std::endl;
+		ofs << "0" << std::endl;
+		ofs << "Gamma" << std::endl;
+		ofs << nk1 << " " << nk2 << " " << nk3 <<" 0 0 0" << std::endl;
+		ofs.close();
+    }
 
     std::ifstream ifk(fn.c_str());
     if (!ifk) 

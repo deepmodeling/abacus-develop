@@ -52,6 +52,7 @@ class Input
 
     bool berry_phase; // berry phase calculation
     int gdir; // berry phase calculation
+    double kspacing;
 
     //==========================================================
     // Wannier functions

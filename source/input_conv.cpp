@@ -49,6 +49,7 @@ void Input_Conv::Convert(void)
     GlobalV::global_pseudo_type = INPUT.pseudo_type;
     GlobalC::ucell.setup(INPUT.latname, INPUT.ntype, INPUT.lmaxmax, INPUT.init_vel, INPUT.fixed_axes);
 
+    GlobalV::KSPACING = INPUT.kspacing;
     GlobalV::NBANDS = INPUT.nbands;
     GlobalC::wf.pw_seed = INPUT.pw_seed;
     GlobalV::NBANDS_ISTATE = INPUT.nbands_istate;
