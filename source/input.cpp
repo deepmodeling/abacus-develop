@@ -2215,7 +2215,7 @@ void Input::Check(void)
         diago_proc = GlobalV::NPROC;
     }
 
-    if (kspacing <= 0.0)
+    if (kspacing < 0.0)
     {
         ModuleBase::WARNING_QUIT("Input", "kspacing must > 0");
     }
