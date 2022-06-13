@@ -529,14 +529,10 @@ bool Input::Read(const std::string &fn)
         else if (strcmp("ntype", word) == 0) // number of atom types
         {
             read_value(ifs, ntype);
-            if (ntype <= 0)
-                ModuleBase::WARNING_QUIT("Input", "ntype must > 0");
         }
         else if (strcmp("nbands", word) == 0) // number of atom bands
         {
             read_value(ifs, nbands);
-            if (nbands < 0)
-                ModuleBase::WARNING_QUIT("Input", "NBANDS must >= 0");
         }
         else if (strcmp("nbands_sto", word) == 0) // number of stochastic bands
         {
@@ -545,8 +541,6 @@ bool Input::Read(const std::string &fn)
         else if (strcmp("kspacing", word) == 0)
         {
             read_value(ifs, kspacing);
-            if (kspacing <= 0.0)
-                ModuleBase::WARNING_QUIT("Input", "kspacing must > 0");
         }
         else if (strcmp("nbands_istate", word) == 0) // number of atom bands
         {
@@ -819,8 +813,6 @@ bool Input::Read(const std::string &fn)
         else if (strcmp("nb2d", word) == 0)
         {
             read_value(ifs, nb2d);
-            if (nb2d < 0)
-                ModuleBase::WARNING_QUIT("Input", "nb2d must > 0");
         }
         else if (strcmp("nurse", word) == 0)
         {
@@ -2223,9 +2215,9 @@ void Input::Check(void)
         diago_proc = GlobalV::NPROC;
     }
 
-    if (nbands < 0)
+    if (kspacing <= 0.0)
     {
-        ModuleBase::WARNING_QUIT("Input", "nbands < 0 is not allowed !");
+        ModuleBase::WARNING_QUIT("Input", "kspacing must > 0");
     }
 
     if (nelec < 0.0)
