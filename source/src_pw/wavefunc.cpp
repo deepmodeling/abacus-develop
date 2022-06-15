@@ -20,13 +20,8 @@ wavefunc::~wavefunc()
 	}
 	if(allocate_ekb)
 	{
-		// bug still remains, hard to find!
-		// it might be somewhere out there,
-		// may be in diagH_LAPACK.
-		// I don't know why.......
-		// mohan 2010-08-08
-		//for(int ik=0; ik<GlobalC::kv.nks-1; ik++) delete[] ekb[ik];
-		//delete[] ekb;
+		for(int ik=0; ik<GlobalC::kv.nks; ik++) delete[] ekb[ik];
+		delete[] ekb;
 	}
 }
 
@@ -783,6 +778,12 @@ void wavefunc::init_after_vc(const int nks, psi::Psi<std::complex<double>>* psi_
     assert(this->npwx > 0);
     assert(nks > 0);
     assert(GlobalV::NBANDS > 0);
+
+	if(allocate_ekb)
+	{
+		for(int ik=0; ik<nks; ik++) delete[] ekb[ik];
+		delete[] ekb;
+	}
 
 
     this->ekb = new double*[nks];

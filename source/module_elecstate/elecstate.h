@@ -12,6 +12,7 @@ class ElecState
 {
   public:
     ElecState(){};
+    virtual ~ElecState(){};
     virtual void init(Charge *chg_in, // pointer for class Charge
                       const K_Vectors *klist_in,
                       int nk_in, // number of k points

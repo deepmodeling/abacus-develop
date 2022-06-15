@@ -15,6 +15,9 @@ class HSolver
 {
   public:
     HSolver(){};
+    virtual ~HSolver(){
+        delete pdiagh;
+    };
     /*//initialization, used in construct function or restruct a new HSolver
     virtual void init(
         const Basis* pbas //We need Basis class here, use global class for this initialization first

@@ -12,6 +12,7 @@ namespace hamilt
 class Hamilt
 {
   public:
+    virtual ~Hamilt(){};
     // construct Hamiltonian matrix with inputed electonic density
     virtual void constructHamilt() {return;}
 

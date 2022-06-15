@@ -217,6 +217,9 @@ void Charge::write_rho(
 			}
 		}// end iz
 		delete[] zpiece;
+		delete[] which_ip;
+		delete[] num_z;
+		delete[] start_z;
 	}
 	MPI_Barrier(MPI_COMM_WORLD);
 #endif

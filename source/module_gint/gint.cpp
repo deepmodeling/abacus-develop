@@ -10,6 +10,17 @@
 #ifdef __MKL
 #include <mkl_service.h>
 #endif
+Gint::~Gint()
+{
+	if(pvpR_alloc_flag)
+	{
+		for(int is =0;is<GlobalV::NSPIN;is++)
+		{
+			delete[] pvpR_reduced[is]; 
+		}
+		delete[] pvpR_reduced;
+	}
+}
 
 void Gint::cal_gint(Gint_inout *inout)
 {

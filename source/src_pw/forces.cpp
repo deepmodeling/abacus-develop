@@ -539,6 +539,9 @@ void Forces::cal_force_ew(ModuleBase::matrix& forceion, ModulePW::PW_Basis* rho_
                 ++iat1;
             }
         }//atom a
+        delete []r;
+        delete []r2;
+        delete []irr;
     }
 
     Parallel_Reduce::reduce_double_pool(forceion.c, forceion.nr * forceion.nc);

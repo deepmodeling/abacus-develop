@@ -49,7 +49,7 @@ class PW_Basis
 
 public:
     PW_Basis();
-    ~PW_Basis();
+    virtual ~PW_Basis();
 
     //Init the grids for FFT
     virtual void initgrids(

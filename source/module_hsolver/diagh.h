@@ -12,6 +12,7 @@ namespace hsolver
 class DiagH
 {
   public:
+    virtual ~DiagH(){};
     // virtual void init()=0;
     std::string method = "none";
 

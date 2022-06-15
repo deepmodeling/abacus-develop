@@ -213,6 +213,8 @@ void Charge::write_rho_cube(
 			}
 		}
 		delete[] wfc;
+		delete[] which_ip;
+		delete[] start_z;
 	}//end mypool=0
 	MPI_Barrier(MPI_COMM_WORLD);
 #endif

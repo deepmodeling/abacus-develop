@@ -347,7 +347,7 @@ void Stochastic_Iter::sum_stoband(Stochastic_WF& stowf)
     std::complex<double>* porter = new std::complex<double>[nrxx];
     double out2;
 
-    double *ksrho;
+    double *ksrho = nullptr;
     if(GlobalV::NBANDS > 0 && GlobalV::MY_STOGROUP==0 )
     {
         ksrho = new double [nrxx];
@@ -435,6 +435,7 @@ void Stochastic_Iter::sum_stoband(Stochastic_WF& stowf)
 
     
     delete [] sto_rho;
+    delete [] ksrho;
     ModuleBase::timer::tick("Stochastic_Iter","sum_stoband");
     return;
 }
