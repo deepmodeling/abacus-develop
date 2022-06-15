@@ -34,10 +34,11 @@ Potential::~Potential()
 void Potential::allocate(const int nrxx)
 {
     ModuleBase::TITLE("Potential", "allocate");
-    assert(nrxx > 0);
+    assert(nrxx >= 0);
 
     delete[] this->vltot;
-    this->vltot = new double[nrxx];
+    if(nrxx > 0)    this->vltot = new double[nrxx];
+    else            this->vltot = nullptr;
     ModuleBase::Memory::record("Potential", "vltot", nrxx, "double");
 
     this->vr.create(GlobalV::NSPIN, nrxx);
@@ -52,7 +53,8 @@ void Potential::allocate(const int nrxx)
     }
 
     delete[] this->vr_eff1;
-    this->vr_eff1 = new double[nrxx];
+    if(nrxx > 0)    this->vr_eff1 = new double[nrxx];
+    else            this->vr_eff1 = nullptr;
 #ifdef __CUDA
     cudaMalloc((void **)&this->d_vr_eff1, nrxx * sizeof(double));
 #endif

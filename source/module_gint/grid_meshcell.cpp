@@ -50,14 +50,6 @@ void Grid_MeshCell::set_grid_dim(
     this->nbzp_start = nbzp_start_in;
     this->nbzp = nbzp_in;
 
-	if(nbxx<=0)
-	{
-		std::cout << " nbx = " << nbx << std::endl;
-		std::cout << " nby = " << nby << std::endl;
-		std::cout << " nbz = " << nbz << std::endl;
-		std::cout << " nbxx = " << nbxx << std::endl;
-		ModuleBase::WARNING_QUIT("Grid_MeshCell::set_grid_dim","nbxx is <=0 !");
-	}
 
 	//xiaohui add 'GlobalV::OUT_LEVEL' line, 2015-09-16
 	if(GlobalV::OUT_LEVEL != "m") ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"real space grid",ncx,ncy,ncz); // real space uniform grid

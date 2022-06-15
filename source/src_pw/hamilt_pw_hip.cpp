@@ -142,7 +142,6 @@ void Hamilt_PW::allocate(const int &npwx, const int &npol, const int &nkb, const
 	assert(npwx > 0);
 	assert(npol > 0);
 	assert(nkb >= 0);
-	assert(nrxx > 0);
 
 	// delete[] hpsi;
 	// delete[] spsi;

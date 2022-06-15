@@ -208,7 +208,7 @@ void Gint::prep_grid(
 	this->nbz_start = nbz_start_in;
 	assert(nbx>0);
 	assert(nby>0);
-	assert(nbz>0);
+	assert(nbz>=0);
 	assert(ncxyz>0);
 
 	assert( GlobalC::ucell.omega > 0.0);

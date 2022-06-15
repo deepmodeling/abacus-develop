@@ -121,13 +121,13 @@ void Grid_Technique::get_startind(void)
 {
 	ModuleBase::TITLE("Grid_Technique","get_startind");
 
-	assert(nbxx>0);
-
+	assert(nbxx>=0);
 	// calculates start_ind, which stores the 
 	// starting index of each bigcell
 
 	delete[] this->start_ind;
-	this->start_ind = new int[nbxx];
+	if(nbxx > 0)	this->start_ind = new int[nbxx];
+	else			this->start_ind = nullptr;
 	ModuleBase::GlobalFunc::ZEROS(start_ind, nbxx);
 	ModuleBase::Memory::record("atoms_on_grid","start_ind",nbxx,"int");	
 
@@ -159,15 +159,15 @@ void Grid_Technique::init_atoms_on_grid(void)
 {
 	ModuleBase::TITLE("Grid_Technique","init_atoms_on_grid");
 
-	assert(nbxx>0);
-
+	assert(nbxx>=0);
 	this->get_startind();
 	
 	// (1) prepare data. 
 	// counting the number of atoms whose orbitals have
 	// values on the bigcell.
 	delete[] this->how_many_atoms;
-	this->how_many_atoms = new int[nbxx];
+	if(nbxx > 0)	this->how_many_atoms = new int[nbxx];
+	else			this->how_many_atoms = nullptr;
 	ModuleBase::GlobalFunc::ZEROS(how_many_atoms, nbxx);
 	ModuleBase::Memory::record("atoms_on_grid","how_many_atoms",nbxx,"int");
 	

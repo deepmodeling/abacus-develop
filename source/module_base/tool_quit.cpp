@@ -54,9 +54,6 @@ void QUIT(void)
     std::cout<<" See output information in : "<<GlobalV::global_out_dir<<std::endl;
 #endif
 
-#ifdef __MPI
-    MPI_Finalize();
-#endif
     exit(0);
 }
 
