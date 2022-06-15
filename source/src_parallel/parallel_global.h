@@ -46,6 +46,9 @@ namespace Parallel_Global
 	//-------------------------------------------
 	void split_diag_world(const int &diag_np);
 	void split_grid_world(const int &diag_np);
+#ifdef __MPI
+	void finalize_mpi();
+#endif
 }
 
 

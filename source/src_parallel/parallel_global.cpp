@@ -254,3 +254,15 @@ void Parallel_Global::read_mpi_parameters(int argc,char **argv)
 #endif //__MPI
     return;
 }
+
+#ifdef __MPI
+void Parallel_Global::finalize_mpi()
+{
+	MPI_Comm_free(&POOL_WORLD);
+	MPI_Comm_free(&STO_WORLD);
+	MPI_Comm_free(&PARAPW_WORLD);
+	MPI_Comm_free(&GRID_WORLD);
+	MPI_Comm_free(&DIAG_WORLD);
+	MPI_Finalize();
+}
+#endif
