@@ -10,9 +10,6 @@
 #ifdef __MKL
 #include <mkl_service.h>
 #endif
-Gint::~Gint()
-{
-}
 
 void Gint::cal_gint(Gint_inout *inout)
 {

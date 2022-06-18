@@ -14,7 +14,6 @@
 class Gint
 {
     public:
-    ~Gint();
 
     // the unified interface to grid integration
 	void cal_gint(Gint_inout *inout);
