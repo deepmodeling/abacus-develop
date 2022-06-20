@@ -1,0 +1,28 @@
+INPUT_PARAMETERS
+#Parameters	(General)
+suffix          autotest
+pseudo_dir		./
+ntype			1	
+nbands			8
+calculation     md
+read_file_dir   ./
+
+#Parameters (Accuracy)
+ecutwfc			20
+scf_nmax			20
+
+basis_type		lcao
+md_nstep           2
+
+cal_stress          1
+cal_force           1
+
+ks_solver       genelpa
+mixing_type     pulay
+mixing_beta     0.7
+
+md_type          2
+md_tfirst        10
+md_dt            1
+md_restart         0
+init_vel         1
