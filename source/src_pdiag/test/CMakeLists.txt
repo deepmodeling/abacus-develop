@@ -34,7 +34,3 @@ add_test(NAME hsolver_diago_elpa_parallel
       COMMAND ${BASH} diago_elpa_parallel_test.sh
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
     )
-add_test(NAME hsolver_diago_parallel
-      COMMAND ${BASH} diago_parallel_test.sh
-      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-    )    
