@@ -460,10 +460,10 @@ void Charge::atomic_rho(const int spin_number_need, double** rho_in, ModulePW::P
 		double sumrea = 0.0;
         for (int ir=0;ir < rho_basis->nrxx; ir++)
         {
-            rea = rho_basis->ft.aux1[ir].real();
+            rea = rho_basis->ft.auxg[ir].real();
 			sumrea += rea;
             neg += std::min(0.0, rea);
-            ima += abs(rho_basis->ft.aux1[ir].imag());
+            ima += abs(rho_basis->ft.auxg[ir].imag());
         }
 
 		Parallel_Reduce::reduce_double_pool( neg );	
@@ -622,8 +622,8 @@ void Charge::set_rho_core(
     double rhoneg = 0.0;
     for (int ir = 0; ir < GlobalC::rhopw->nrxx; ir++)
     {
-        rhoneg += min(0.0, GlobalC::rhopw->ft.aux1[ir].real());
-        rhoima += abs(GlobalC::rhopw->ft.aux1[ir].imag());
+        rhoneg += min(0.0, GlobalC::rhopw->ft.auxg[ir].real());
+        rhoima += abs(GlobalC::rhopw->ft.auxg[ir].imag());
         // NOTE: Core charge is computed in reciprocal space and brought to real
         // space by FFT. For non smooth core charges (or insufficient cut-off)
         // this may result in negative values in some grid points.
