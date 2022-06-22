@@ -17,12 +17,14 @@ ABACUS is an electronic structure package based on density functional theory(DFT
 Please refer to our [GitHub repository](https://github.com/deepmodeling/abacus-develop) for more information and support.
 # Table of contents
 
+- [Table of contents](#table-of-contents)
 - [Features](#features)
 - [Download and install](#download-and-install)
 - [Quickstart guide](#quickstart-guide)
   - [Input files](#input-files)
+  - [Run ABACUS](#run-abacus)
   - [Output files](#output-files)
-- [Features](#features)
+- [Features](#features-1)
 - [Functionalities](#functionalities)
 - [Examples](#examples)
 - [For developers](#for-developers)
@@ -89,6 +91,25 @@ The following files are the central input files for ABACUS. Before executing the
 
     When performing calculations with numerical atomic orbital basis, it is necessary to prepare a numerical orbital file for each element in the system. Generally, the numerical orbital file should be prepared by the user, which will be described later. The filename for each element’s numerical orbital basis needs to be specified in the `STRU` file. However, in case that the numerical orbital files are stored in a location different from the working directory, then a full path to access the orbital files have to be specified in the `STRU` file.
     ABACUS provides numerical atomic basis sets of different accuracy levels for most elements commonly used. Users can download these basis sets from the [website](http://abacus.ustc.edu.cn/pseudo.html). Moreover, users can generate numerical atomic orbitals by themselves, and the procedure is provided in this [short introduction](docs/generate-basis.md).
+
+[back to top](#readme-top)
+
+## Run ABACUS
+
+After installation, the executable file named `abacus` can be found in the `build` folder. Copy this file and put it in the same folder as all required input files.
+
+Perform calculation by:
+```bash
+mpirun -np 4 abacus
+```
+
+You can replace `4` with your desired number of process, typically the result of the command `nproc`.
+
+Alternatively, if you want to run ABACUS as root, you can add the `--allow-run-as-root` option to the cmd line
+
+```bash
+mpirun -np 4 --allow-run-as-root abacus
+```
 
 [back to top](#readme-top)
 
