@@ -96,7 +96,10 @@ The following files are the central input files for ABACUS. Before executing the
 
 ## Run ABACUS
 
-After installation, the executable file named `abacus` can be found in the `build` folder. Copy this file and put it in the same folder as all required input files.
+After putting all required input files under one folder, enter this folder.
+```bash
+cd input_folder
+```
 
 Perform calculation by:
 ```bash
@@ -104,12 +107,6 @@ mpirun -np 4 abacus
 ```
 
 You can replace `4` with your desired number of process, typically the result of the command `nproc`.
-
-Alternatively, if you want to run ABACUS as root, you can add the `--allow-run-as-root` option to the cmd line
-
-```bash
-mpirun -np 4 --allow-run-as-root abacus
-```
 
 [back to top](#readme-top)
 
