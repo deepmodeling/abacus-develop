@@ -47,7 +47,7 @@ ABACUS provides the following features and functionalities:
 13. DFT+U calculation (only for LCAO).
 14. Solvation model method for solvation energy.
 15. Stochastic DFT (only for PW).
-16. DeePKS method (trial version, only for LCAO).
+16. DeePKS method (under development, only for LCAO).
 17. Electric field and dipole correction.
 18. Orbital-free DFT.
 19. (subsidiary tool)Plot_tools for plot PDOS and PBANDS.
