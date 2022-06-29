@@ -33,7 +33,7 @@ Please refer to our [GitHub repository](https://github.com/deepmodeling/abacus-d
 ABACUS provides the following features and functionalities:
 
 1. Three types of supported basis sets: pw, LCAO, and LCAO-in-pw.
-2. Ground-state total energy calculations using Kohn-Sham (KS) density functional theory (DFT) with local-density, generalized gradient approximations (LDA/GGAs), Meta-GGA(depend on LIBXC, only for PW), and hybrid functionals (PBE0 and HSE06, only for LCAO and currently under test).
+2. Ground-state total energy calculations using Kohn-Sham (KS) density functional theory (DFT) with local-density, generalized gradient approximations (LDA/GGAs), Meta-GGA(requires LIBXC, only for PW), and hybrid functionals (PBE0 and HSE06, only for LCAO and currently under test).
 3. Geometry relaxations with Conjugated Gradient (CG) and BFGS methods and FIRE methods.
 4. Semi-empirical van der Waals energy correction using the Grimme DFT-D2/D3 scheme.
 5. NVT and NVE molecular dynamics simulation. AIMD, DP potential, LJ potential are supported.
