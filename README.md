@@ -203,7 +203,7 @@ The current development team consists the following research groups/affiliations
 
 # Communicating and making contributions
 
-We also provide some [information](docs/CONTRIBUTING.md) on how to make contributions to ABACUS.
+If you find a bug or have some questions, please refer to our GitHub [issue tracker](https://github.com/deepmodeling/abacus-develop/issues), and our developers are willing to help. We also provide guidelines on how to make contributions to ABACUS.
 
 - [Structure of the package](docs/CONTRIBUTING.md#structure-of-the-package)
 - [Submitting an Issue](docs/CONTRIBUTING.md#submitting-an-issue)
