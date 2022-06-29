@@ -51,7 +51,7 @@ ABACUS provides the following features and functionalities:
 17. Electric field and dipole correction.
 18. Orbital-free DFT.
 19. (subsidiary tool)Plot_tools for plot PDOS and PBANDS.
-20. (subsidiary tool)Generator for second second generation numerical orbital basis.
+20. (subsidiary tool)Generator for second generation numerical orbital basis.
 
 [back to top](#readme-top)
 
