@@ -17,36 +17,41 @@ ABACUS is an electronic structure package based on density functional theory(DFT
 Please refer to our [GitHub repository](https://github.com/deepmodeling/abacus-develop) for more information and support.
 # Table of contents
 
-- [Table of contents](#table-of-contents)
 - [Features](#features)
 - [Download and install](#download-and-install)
 - [Quickstart guide](#quickstart-guide)
   - [Input files](#input-files)
   - [Run ABACUS](#run-abacus)
   - [Output files](#output-files)
-- [Features](#features-1)
-- [Functionalities](#functionalities)
-- [Examples](#examples)
-- [For developers](#for-developers)
+  - [Hands-on examples](#hands-on-examples)
+- [Citations](#citations)
+- [Development team](#development-team)
+- [Communicating and making contributions](#communicating-and-making-contributions)
 
 # Features
 
 ABACUS provides the following features and functionalities:
 
-1. Ground-state total energy calculations using Kohn-Sham (KS) density functional theory
-(DFT) with local-density, generalized gradient approximations (LDA/GGAs), and hybrid functionals
-(PBE0 and HSE06, only for LCAO).
-2. Brillouin zone sampling using the Monkhorst-Pack special k-points.
-3. Geometry relaxations with Conjugated Gradient (CG) and BFGS methods.
+1. Three types of supported basis sets: pw, LCAO, and LCAO-in-pw.
+2. Ground-state total energy calculations using Kohn-Sham (KS) density functional theory (DFT) with local-density, generalized gradient approximations (LDA/GGAs), Meta-GGA(depend on LIBXC, only for PW), and hybrid functionals (PBE0 and HSE06, only for LCAO and currently under test).
+3. Geometry relaxations with Conjugated Gradient (CG) and BFGS methods and FIRE methods.
 4. Semi-empirical van der Waals energy correction using the Grimme DFT-D2/D3 scheme.
-5. NVT molecular dynamics simulation.
+5. NVT and NVE molecular dynamics simulation. AIMD, DP potential, LJ potential are supported.
 6. Stress calculations and cell relaxations.
 7. Electric polarization calculation using Berry Phase theory.
 8. Interface to the Wannier90 package.
 9. Real-time time dependent density functional theory (TDDFT).
-10. Electrostatic potential.
-11. Mulliken charge analysis.
-12. Projected density of states (PDOS).
+10. Print-out of the electrostatic potential.
+11. Mulliken charge analysis (only for LCAO).
+12. Projected density of states (PDOS) (only for LCAO).
+13. DFT+U calculation (only for LCAO).
+14. Solvation model method for solvation energy.
+15. Stochastic DFT (only for PW).
+16. DeePKS method (trial version, only for LCAO).
+17. Electric field and dipole correction.
+18. Orbital-free DFT.
+19. (subsidiary tool)Plot_tools for plot PDOS and PBANDS.
+20. (subsidiary tool)Generator for second second generation numerical orbital basis.
 
 [back to top](#readme-top)
 
@@ -64,32 +69,30 @@ Please refer to the [installation guide](docs/install.md) for instruction on the
 
 The following files are the central input files for ABACUS. Before executing the program, please make sure these files are prepared and stored in the working directory.
 
-- The INPUT file
+- `INPUT`
 
-    The file named INPUT contains the setting parameters used in the calculation, which informs the program “what to do and how to do it”. Most parameters are supplied with default values, but some important parameters must be explicitly set by the user. For a complete list of the input parameters, please consult this [instruction](docs/input-main.md).
+    This is the main input file that contains the setting parameters used in the calculation. For a complete list of the input parameters, please consult this [instruction](docs/input-main.md).
 
     *Attention: Users cannot change the filename “INPUT” to other names.*
-- The structure file
+- `STRU`
 
-    The default name for structure file is STRU.The name can however be changed to a different name by explicitly specifying the name in the INPUT file.
-
-    The STRU file contains the structural information about the system, e.g., lattice constant, lattice vectors, and positions of the atoms within a unit cell. The positions can be given either in direct or Cartesian coordinates. Moreover, the name (and location of the pseudopotential and numerical orbital files, see below) need to be specified in the STRU file.
+    This is the structure file that contains the structural information about the system, e.g., lattice constant, lattice vectors, and positions of the atoms within a unit cell. The positions can be given either in direct or Cartesian coordinates. Moreover, the name of the atom (and location of the pseudopotential and numerical orbital files, see below) needs to be specified in the STRU file. The name of the structure file can be changed to a different name by explicitly specifying the name in the INPUT file.
 
     Specifications of the STRU file can be found in this [short instruction](docs/input-stru.md).
-- The k-point file
+- `KPT`
 
-    The default name is KPT. It contains the information of the k-grid setting for the Brillouin zone sampling.
-
+    This is the k-point file that contains the information of the k-grid setting for the Brillouin zone sampling.
     Specification of the k-point file can be found in this [short instruction](docs/input-kpt.md).
 - The pseudopotential files
 
-    Norm-conserving pseudopotentials are used in ABACUS, in the UPF file format.The filename of each element’s pseudopotential needs to be specified in the `STRU` file, if the the pseudopotential files are already present in the working directory. However, in case that the pseudopotential files are stored in some other directories, then a full path to access the pseudopotential files have to be specified in the `STRU` file.
+    Norm-conserving pseudopotentials are used in ABACUS, in the UPF file format.The filename of each element’s pseudopotential needs to be specified in the STRU file, together with the directory of the pseudopotential files unless they are already present in the working directory.
 
     More information on pseudopotentials is given [here](docs/features.md#pseudopotentials).
 
 - The numerical orbital files
 
-    When performing calculations with numerical atomic orbital basis, it is necessary to prepare a numerical orbital file for each element in the system. Generally, the numerical orbital file should be prepared by the user, which will be described later. The filename for each element’s numerical orbital basis needs to be specified in the `STRU` file. However, in case that the numerical orbital files are stored in a location different from the working directory, then a full path to access the orbital files have to be specified in the `STRU` file.
+    This part is only required in LCAO calculations. 
+    The filename for each element’s numerical orbital basis needs to be specified in the STRU file, together with the directory of the orbital files unless they are already present in the working directory.
     ABACUS provides numerical atomic basis sets of different accuracy levels for most elements commonly used. Users can download these basis sets from the [website](http://abacus.ustc.edu.cn/pseudo.html). Moreover, users can generate numerical atomic orbitals by themselves, and the procedure is provided in this [short introduction](docs/generate-basis.md).
 
 [back to top](#readme-top)
@@ -128,21 +131,10 @@ into which the following output files will be generated:
 
 [back to top](#readme-top)
 
-# Features
+## Hands-on examples
+The following provides basic sample jobs in ABACUS. More can be found in the directories `examples/` and `tests/`, with an introduction [here](tests/README.md), and the corresponding reference outputs can be found in the file `result.ref` under each subdirectory.
 
-Users can refer to this [page](docs/features.md) for several features of the ABACUS code:
-
-- [Basis sets](docs/features.md#basis-sets)
-- [Pseudopotentials](docs/features.md#pseudopotentials)
-- [Boundary conditions and k-points](docs/features.md#boundary-conditions-and-k-points)
-- [Kohn-Sham solver](docs/features.md#kohn-sham-solver)
-- [Exchange-correlation functionals](docs/features.md#exchange-correlation-functionals)
-
-[back to top](#readme-top)
-
-# Functionalities
-
-ABACUS provides a wide variety of functionalities, with explanation and examples:
+*Note that the examples there are intended as quick hands-on jobs, and the results are NOT converged with regard to basis set or k point sampling.*
 
 - [Basic electronic structure calculation with PW basis set](docs/examples/basic-pw.md)
 - [Basic electronic structure calculation with LCAO basis set](docs/examples/basic-lcao.md)
@@ -162,17 +154,54 @@ ABACUS provides a wide variety of functionalities, with explanation and examples
 
 [back to top](#readme-top)
 
-# Examples
 
-We also provide many examples in the directories examples/ and tests/.
 
-Note that the examples there are intended as references, and the results are not converged with regard to basis set or k point sampling.
+# Citations
+The following references are required to be cited when using ABACUS. Specifically:
+- **For general purpose:**
 
-In the directory tests/, each sub-directory contains a separate test example. An introduction of the examples in tests/ directory can be found [here](tests/README.md). In each subdirectory, you may also find a file named jd which contains a short job description, and for some cases you may also find a README file containing more details about the run. Also, reference output is provided in the file `result.ref`.
+    [1]. Mohan Chen, G. C. Guo, and Lixin He. "Systematically improvable optimized atomic basis sets for ab initio calculations." Journal of Physics: Condensed Matter 22.44 (2010): 445501.
+    
+    [2]. Pengfei Li, et al. "Large-scale ab initio simulations based on systematically improvable atomic basis." Computational Materials Science 112 (2016): 503-517.
+
+- **If Stochastic DFT is used:**
+
+    [1]. Qianrui Liu, and Mohan Chen. "Plane-Wave-Based Stochastic-Deterministic Density Functional Theory for Extended Systems." https://arxiv.org/abs/2204.05662
+    
+- **If DFT+U is used:**
+
+    [1]. Xin Qu, et al. "DFT+ U within the framework of linear combination of numerical atomic orbitals." The Journal of Chemical Physics (2022).
+
+- **If second generation numerical orbital basis is used:**
+
+    [1]. Peize Li, Xinguo Ren, and Lixin He. "Strategy for constructing compact numerical atomic orbital basis sets by incorporating the gradients of reference wavefunctions." Physical Review B 103.23 (2021): 235131.
+
+- **If berry curvature calculation is used in LCAO base:**
+
+    [1]. Gan Jin, Daye Zheng, and Lixin He. "Calculation of Berry curvature using non-orthogonal atomic orbitals." Journal of Physics: Condensed Matter 33.32 (2021): 325503.
+    
+- **If DeePKS is used:**
+
+    [1]. Wenfei Li, Qi Ou, et al. "DeePKS+ABACUS as a Bridge between Expensive Quantum Mechanical Models and Machine Learning Potentials." 
+    
+- **If hybrid functional is used:**
+    
+    [1]. Peize Lin, Xinguo Ren, and Lixin He. "Efficient Hybrid Density Functional Calculations for Large Periodic Systems Using Numerical Atomic Orbitals." Journal of Chemical Theory and Computation 2021, 17(1), 222–239.
+    
+    [2]. Peize Lin, Xinguo Ren, and Lixin He. "Accuracy of Localized Resolution of the Identity in Periodic Hybrid Functional Calculations with Numerical Atomic Orbitals." Journal of Physical Chemistry Letters 2020, 11, 3082-3088.
+    
+[back to top](#readme-top)
+
+# Development team
+The current development team consists the following research groups/affiliations:
+- University of Science and Technology of China (Dr. Lixin He)
+- Peking University (Dr. Mohan Chen)
+- Institute of Physics, Chinese Academy of Sciences (Dr. Xinguo Ren)
+- AI for Science Institute
 
 [back to top](#readme-top)
 
-# For developers
+# Communicating and making contributions
 
 We also provide some [information](docs/CONTRIBUTING.md) on how to make contributions to ABACUS.
 
@@ -183,3 +212,14 @@ We also provide some [information](docs/CONTRIBUTING.md) on how to make contribu
 - [Submitting a Pull Request](docs/CONTRIBUTING.md#submitting-a-pull-request)
 - [Commit Message Guidelines](docs/CONTRIBUTING.md#commit-message-guidelines)
 [back to top](#readme-top)
+
+# Miscellaneous
+
+- [Basis sets](docs/features.md#basis-sets)
+- [Pseudopotentials](docs/features.md#pseudopotentials)
+- [Boundary conditions and k-points](docs/features.md#boundary-conditions-and-k-points)
+- [Kohn-Sham solver](docs/features.md#kohn-sham-solver)
+- [Exchange-correlation functionals](docs/features.md#exchange-correlation-functionals)
+
+[back to top](#readme-top)
+
