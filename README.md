@@ -3,8 +3,8 @@
 </p>
 
 <p align="center">
-    <a href="https://github.com/deepmodeling/abacus-develop/actions/workflows/container.yml">
-        <img src="https://github.com/deepmodeling/abacus-develop/actions/workflows/container.yml/badge.svg">
+    <a href="https://github.com/deepmodeling/abacus-develop/actions/workflows/image.yml">
+        <img src="https://github.com/deepmodeling/abacus-develop/actions/workflows/image.yml/badge.svg">
     </a>
     <a href="https://github.com/deepmodeling/abacus-develop/actions/workflows/test.yml">
         <img src="https://github.com/deepmodeling/abacus-develop/actions/workflows/test.yml/badge.svg">
