@@ -168,7 +168,7 @@ The following references are required to be cited when using ABACUS. Specificall
 
 - **If Stochastic DFT is used:**
 
-    [1]. Qianrui Liu, and Mohan Chen. "Plane-Wave-Based Stochastic-Deterministic Density Functional Theory for Extended Systems." https://arxiv.org/abs/2204.05662
+    [1]. Qianrui Liu, and Mohan Chen. "Plane-Wave-Based Stochastic-Deterministic Density Functional Theory for Extended Systems." https://arxiv.org/abs/2204.05662.
     
 - **If DFT+U is used:**
 
@@ -184,7 +184,7 @@ The following references are required to be cited when using ABACUS. Specificall
     
 - **If DeePKS is used:**
 
-    [1]. Wenfei Li, Qi Ou, et al. "DeePKS+ABACUS as a Bridge between Expensive Quantum Mechanical Models and Machine Learning Potentials." 
+    [1]. Wenfei Li, Qi Ou, et al. "DeePKS+ABACUS as a Bridge between Expensive Quantum Mechanical Models and Machine Learning Potentials." https://arxiv.org/abs/2206.10093.
     
 - **If hybrid functional is used:**
     
