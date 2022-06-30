@@ -136,10 +136,10 @@ void Input::Default(void)
     pseudo_mesh = false; // qianrui add this pararmeter
     ntype = 0;
     nbands = 0;
-    nbands_sto = 0;
+    nbands_sto = 256;
     nbands_istate = 5;
     pw_seed = 1;
-    nche_sto = 5;
+    nche_sto = 100;
     seed_sto = 0;
     bndpar = 1;
     kpar = 1;

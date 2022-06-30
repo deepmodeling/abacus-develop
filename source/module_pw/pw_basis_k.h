@@ -84,11 +84,13 @@ public:
 
     double *gk2=nullptr; // modulus (G+K)^2 of G vectors [npwk_max*nks]
 
+    //collect gdirect, gcar, gg
     void collect_local_pw();
 
 private:
     //create igl2isz_k map array for fft
     void setupIndGk();
+    //calculate G+K, it is a private function
     ModuleBase::Vector3<double> cal_GplusK_cartesian(const int ik, const int ig) const;
 
 public:

@@ -52,14 +52,6 @@ namespace hsolver
 		    	//In fact, hm.hpw.init_k has been done in wf.wfcinit();
 		    }
 
-            // DiagoCG would keep 9*nbasis memory in cache during loop-k
-            // it should be deleted before calculating charge
-            if(this->method == "cg")
-            {
-                delete pdiagh;
-                pdiagh = nullptr;
-            }
-            
 		    stoiter.stohchi.current_ik = ik;
 		
 #ifdef __MPI
@@ -72,6 +64,13 @@ namespace hsolver
 			stoiter.orthog(ik,psi,stowf);
 			stoiter.checkemm(ik,iter, stowf);	//check and reset emax & emin
 		}
+		// DiagoCG would keep 9*nbasis memory in cache during loop-k
+        // it should be deleted before calculating charge
+		if(this->method == "cg")
+        {
+            delete pdiagh;
+            pdiagh = nullptr;
+        }
 
 		for (int ik = 0;ik < nks;ik++)
 		{

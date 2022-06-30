@@ -144,18 +144,14 @@ protected:
 
 
 public:
-    //prepare for transforms between real and reciprocal spaces
+    //collect gdirect, gcar, gg
     void collect_local_pw();
 
-    // void collect_tot_pw(
-    //     double* gg_global,
-    //     ModuleBase::Vector3<double> *gdirect_global,
-    //     ModuleBase::Vector3<double> *gcar_global
-    // ); 
 public:
     int ngg=0; //number of different modulus (G^2) of G vectors
     int *ig2igg=nullptr;//[npw] map ig to igg(<ngg: the index of G^2)
     double *gg_uniq=nullptr; //[ngg] modulus (G^2) of G vectors of igg, each gg of igg is unique.
+    //collect gg_uniq
     void collect_uniqgg();
    
 
@@ -173,9 +169,9 @@ public:
     int distribution_type=1;
     int poolnproc=1;
     int poolrank=0;
-    //distribute plane waves to different processors
-
+    
 protected:
+    //distribute plane waves to different processors
     //method 1: first consider number of plane waves
     void distribution_method1(); 
     // Distribute sticks to cores in method 1.
@@ -237,6 +233,7 @@ public:
                 // Thus complex<double>[nmaxgr] is able to contain either reciprocal or real data
     FFT ft;
     //The position of pointer in and out can be equal(in-place transform) or different(out-of-place transform).
+    
     void real2recip(const double * in, std::complex<double> * out, const bool add = false, const double factor = 1.0); //in:(nplane,nx*ny)  ; out(nz, ns)
     void real2recip(const std::complex<double> * in, std::complex<double> * out, const bool add = false, const double factor = 1.0); //in:(nplane,nx*ny)  ; out(nz, ns)
     void recip2real(const std::complex<double> * in, double *out, const bool add = false, const double factor = 1.0); //in:(nz, ns)  ; out(nplane,nx*ny)

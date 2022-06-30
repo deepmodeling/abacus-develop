@@ -189,7 +189,7 @@ void Stochastic_Iter::itermu(const int iter, elecstate::ElecState* pes)
         mu1 -= dmu;
         this->stofunc.mu = mu1;
         ne1 = calne(pes);
-        std::cout<<"Reset mu1 from "<<mu1+dmu<<" to "<<mu1<<std::endl;
+        // std::cout<<"Reset mu1 from "<<mu1+dmu<<" to "<<mu1<<std::endl;
         dmu *= 2;
     }
     while(ne2 < targetne)
@@ -441,7 +441,6 @@ void Stochastic_Iter::sum_stoband(Stochastic_WF& stowf, elecstate::ElecState* pe
     pes->demet += stodemet;
     pes->demet *= Occupy::gaussian_parameter;
 
-    cout.precision(12);
     GlobalV::ofs_running<<"Renormalize rho from ne = "<<sto_ne+KS_ne<<" to targetne = "<<targetne<<endl;
 
     double factor;

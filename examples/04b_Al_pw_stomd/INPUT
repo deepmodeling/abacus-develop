@@ -1,0 +1,21 @@
+INPUT_PARAMETERS
+#Parameters	(General)
+calculation     sto-md
+pseudo_dir		./	
+ntype			1	
+nbands			0
+nbands_sto      64
+nche_sto        20
+method_sto      2
+#Parameters (Accuracy)
+ecutwfc			50
+scf_nmax		20
+scf_thr         1e-6
+symmetry		1
+#Parameters (Smearing)
+smearing_method     fd
+smearing_sigma      7.34986072
+#Parameters (MD)
+md_tfirst      1160400
+md_dt          0.2
+md_nstep       10

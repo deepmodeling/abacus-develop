@@ -144,6 +144,12 @@ void PW_Basis::collect_local_pw()
     }
     return;
 }
+
+///
+/// Collect modulus of planewaves on current cores
+/// known: ig2isz, is2fftixy
+/// output: ig2igg, gg_uniq, ngg
+/// 
 void PW_Basis::collect_uniqgg()
 {
     delete[] this->ig2igg; this->ig2igg = new int [this->npw];

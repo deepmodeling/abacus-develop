@@ -74,7 +74,7 @@
 
     [deepks_out_labels](#out-descriptor) | [deepks_descriptor_lmax](#lmax-descriptor) | [deepks_scf](#deepks-scf) | [deepks_model](#model-file)
 
-- [Electric field and dipole correction](#Electric-field-and-dipole-correction)
+- [Electric field and dipole correction](#electric-field-and-dipole-correction)
 
     [efield_flag](#efield_flag) | [dip_cor_flag](#dip_cor_flag) | [efield_dir](#efield_dir) | [efield_pos_max](#efield_pos_max) | [efield_pos_dec](#efield_pos_dec) | [efield_amp ](#efield_amp )
 
@@ -142,6 +142,8 @@ This part of variables are used to control general system parameters.
   - *istate*: Please see the explanation for variable `nbands_istate`.
   - *ienvelope*: Please see the explanation for variable `nbands_istate`.
   - *md*: molecular dynamics
+  - *sto-scf*: do self-consistent electronic structure calculation with [stochastic DFT](#electronic-structure-sdft)
+  - *sto-md*: molecular dynamics with [stochastic DFT](#electronic-structure-sdft)
 
   > Note: *istate* and *ienvelope* only work for LCAO basis set and are not working right now.
 - **Default**: scf
@@ -577,7 +579,7 @@ calculations.
 
 ### Electronic structure (SDFT)
 
-This part of variables are used to control the parameters of stochastic DFT (SDFT),  mix stochastic-deterministic DFT (MDFT), or complete-basis Chebyshev method (CT). We now support calculation of "sto-scf" and "sto-md".
+This part of variables are used to control the parameters of stochastic DFT (SDFT),  mix stochastic-deterministic DFT (MDFT), or complete-basis Chebyshev method (CT). To use it,  [calculation](#calculation) need to be set to "sto-scf" and "sto-md". We suggest using SDFT to calculate high-temperature systems and we only support [smearing_method](#smearing_method) "fd".
 
 #### method_sto
 
@@ -585,7 +587,7 @@ This part of variables are used to control the parameters of stochastic DFT (SDF
 - **Description**: 
   - Different method to do SDFT.
   - 1: SDFT calculates $T_n(\hat{h})\ket{\chi}$ twice, where $T_n(x)$ is the n-th order Chebyshev polynomial and $\hat{h}=\frac{\hat{H}-\bar{E}}{\Delta E}$ owning eigen-value $\in(-1,1)$. This method cost less memory but slow.
-  - 2: SDFT calculates $T_n(\hat{h})\ket{\chi}$ once but need much more memory. This method is fast but when memory is not enough. Only method 1 can be used.
+  - 2: SDFT calculates $T_n(\hat{h})\ket{\chi}$ once but need much more memory. This method is fast but when memory is not enough, only method 1 can be used.
   - other: use 1
 - **Default**: 1
 
@@ -596,13 +598,13 @@ This part of variables are used to control the parameters of stochastic DFT (SDF
   - nbands_sto>0: Number of stochastic orbitals to calculate in SDFT and MDFT.  More bands obtain more precise results or smaller stochastic errors ($ \propto 1/\sqrt{N_{\chi}}$); 
   - nbands_sto=0: Complete basis will be used to replace stochastic orbitals with the Chebyshev method (CT) and it will get the results the same as KSDFT without stochastic errors.
   - If you want to do MDFT. [nbands](#nbands) which represents the number of KS orbitals should be set.
-- **Default**: 0
+- **Default**: 256
 
 #### nche_sto
 
 - **Type**: Integer
 - **Description**: Chebyshev expansion orders for SDFT, MDFT, CT methods.
-- **Default**:5
+- **Default**:100
 
 #### emin_sto
 

@@ -1,0 +1,23 @@
+/*******************************************************************************/
+/
+/ This is the examples of ABACUS program.
+/
+/*******************************************************************************/
+
+This is the simpleset example: Using stochastic DFT to simulate 16-atom 2.7 g/cc Aluminum at the temperature of 100 eV.
+
+Note:
+(1) Three input files are required in this calculation: 
+INPUT(control parameters)
+STRU(structures) 
+KPT(k points, here we use Gamma point.)
+
+(2) This is a molecular-dynamics calculations (default) with plane wave basis (default).
+(3) The pseudopotential file is also needed, which appears in STRU file.
+
+Run the program(if permitted, otherwise please use a script to submit the job)
+$ABACUS-path/ABACUS.fp_mpi-v1.0.1
+
+Finish! Then you can see running_scf.log in OUT.ABACUS.
+If you are not familiar with the parameters in INPUT, 
+please check in OUT.ABACUS/INPUT.

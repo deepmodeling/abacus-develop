@@ -12,43 +12,53 @@ ntype               1
 nbands              600
 pseudo_type         upf
 gamma_only          1
-
-#Parameters (2.Methods)
 calculation         md
 symmetry            0
-
 out_level           m
-relax_method         cg
 
-smearing_method            gaussian
-smearing_sigma               0.02
-#Parameters (3.PW)
-ecutwfc             30
-scf_thr                 1e-5
-scf_nmax               100
+#Parameters (2.SCF)
+ecutwfc             60
+scf_thr             1e-6
+scf_nmax            100
 
-#Parameters (5.LCAO)
+#Parameters (3.Basis)
 basis_type          lcao
-mixing_beta         0.4
-chg_extrap       second-order
+ks_solver           genelpa
 
-md_nstep          10   // md steps
-md_type           1    //choose ensemble
-md_dt               1    //time step
-md_tfirst           700  //the first target temperature
-md_restart            0    //whether restart md
-md_dumpfreq       10   //The period to dump MD information
+#Parameters (4.Smearing)
+smearing_method     gaussian
+smearing_sigma      0.02
+
+#Parameters (5.Mixing)
+mixing_type         pulay
+mixing_beta         0.4
+chg_extrap          second-order
+
+#Parameters (6.MD)
+md_nstep            10   // md steps
+md_type             1    // choose ensemble
+md_dt               1    // time step
+md_tfirst           700  // the first target temperature
+md_restart          0    // whether restart md
+md_dumpfreq         10   // The period to dump MD information
 ```
 
-These MD parameters means that ABACUS will use NVT ensemble with Nosé-hoover themostat; the time step is 1fs, and target temperature is 700K; start renew without restart file, set the mass of themostat as 1g/mol, and calculate the MSD and diffusion coefficent from first step.
+These MD parameters means that ABACUS will use NVT ensemble with Nosé-hoover chain themostat; the time step is 1fs, and target temperature is 700K; start new MD without restart file.
 
-Note: *Please turn off symmetry when do MD simulation.*
+Note: *Please turn off symmetry during MD simulations.*
 
-- md_type : -1, FIRE; 0, NVE; 1, NHC; 2, LGV; 3, ADS; 4, MSST
+- md_type : 
+  - -1, FIRE : an ionic relaxation method using MD;
+  - 0, NVE : microcanonical ensemble; 
+  - 1, NHC : canonical ensemble (NVT) with Nosé-hoover chain themostat ; 
+  - 2, LGV : ion dynamics is over-damped Langevin, modeling an interaction with a
+background implicit solvent.; 
+  - 3, ADS : NVT, control ionic temperature using Andersen thermostat; 
+  - 4, MSST :  Multi-Scale Shock Technique (MSST) integration to mimic a compressive shock wave passing over the system.
 - md_dt : time step in md simulation (fs)
-- md_tfirst : target temperature in md simulation(K), you should set parameter md_tlast when you want to change temperature during md simulation.
+- md_tfirst : target temperature in md simulation (K), you should set parameter md_tlast when you want to change temperature during md simulation.
 - md_restart : 0, no need of restart ; 1, restart with restart file, you must repalce STRU file with STRU_MD before you run the restart task.
-- md_dumpfreq : frequency for output consequence of md simulation
+- md_dumpfreq : frequency for output consequence of md simulations.
 
 The STRU file is:
 ```
@@ -62,9 +72,9 @@ NUMERICAL_ORBITAL
 ./Sn_pz-bhs_8.0au_16Ry_2s2p1d
 
 LATTICE_VECTORS
-1.00000       0.0000000      0.000000
-0.000000      1.0000000      0.00000
-0.00000       0.00000000     1.00000
+1.00     0.00     0.00
+0.00     1.00     0.00
+0.00     0.00     1.00
 
 ATOMIC_POSITIONS
 Direct 
@@ -147,25 +157,24 @@ Gamma
 ```
 
 Run the program, and see results in the output directory. The following files are about MD:
-- STRU_MD_$num: optimized structures in direct coordinate
+- STRU/STRU_MD_$num: optimized structures in direct coordinate
 - Restart_md.dat: output the information of md for restart
-- If you want to restart md, you must replace the STRU with STRU_MD_$num.
+- If you want to restart md, you must replace the STRU with STRU/STRU_MD_$num.
 
-MD information can be found in file running_md.log or in file MD_OUT
+MD information can be found in file running_md.log.
 
 ```
---------------------------------------------------
-Molecular Dynamics (NVT) STEP +10
---------------------------------------------------
---------------------------------------------------
-SUMMARY OF NVT CALCULATION
---------------------------------------------------
-NVT Conservation     : -450.943151 (Rydberg) //total energy of system
-NVT Temperature      : +689.931183 (K) //temperature at this second
-NVT Kinetic energy   :  +0.419483 (Rydberg) //kinetic energy of system
-NVT Potential energy : -452.902847 (Rydberg) //potential energy of system
+------------------------------------------------------------------------------------------------
+ Energy              Potential           Kinetic             Temperature         Pressure (KBAR)     
+ -7.7824215          -7.782469           +4.7502231e-05      +10                 +124.19599          
+ ------------------------------------------------------------------------------------------------
 ```
+All energy values are in atomic unit (Ry), and temperature is Kelvin. 
 
 Check these information to confirm whether temperature and conservation is steady.
+
+The MD post-processing tools can be found as follows:
+- Candela : https://github.com/MCresearch/Candela
+- dpdata : https://github.com/deepmodeling/dpdata
 
 [back to top](#molecular-dynamics)

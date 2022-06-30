@@ -44,7 +44,7 @@ void Input::Print(const std::string &fn) const
                                  "0: use our own mesh to do radial renormalization; 1: use mesh as in QE");
     ModuleBase::GlobalFunc::OUTP(ofs, "lmaxmax", lmaxmax, "maximum of l channels used");
     ModuleBase::GlobalFunc::OUTP(ofs, "dft_functional", dft_functional, "exchange correlation functional");
-    ModuleBase::GlobalFunc::OUTP(ofs, "calculation", calculation, "test; scf; relax; nscf; ienvelope; istate;");
+    ModuleBase::GlobalFunc::OUTP(ofs, "calculation", calculation, "test; scf; relax; nscf; ienvelope; istate; sto-scf; sto-md");
     ModuleBase::GlobalFunc::OUTP(ofs, "ntype", ntype, "atom species number");
     ModuleBase::GlobalFunc::OUTP(ofs, "nspin", nspin, "1: single spin; 2: up and down spin; 4: noncollinear spin");
     ModuleBase::GlobalFunc::OUTP(ofs, "kspacing", kspacing, "unit in 1/bohr, should be > 0, default is 0 which means read KPT file");

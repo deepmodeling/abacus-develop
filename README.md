@@ -151,6 +151,8 @@ The following provides basic sample jobs in ABACUS. More can be found in the dir
 - [Electrostatic potential](docs/examples/potential.md)
 - [Mulliken charge](docs/examples/mulliken.md)
 - [Hybrid functional](docs/examples/hybrid.md)
+- [Electric field and dipole correction](docs/examples/electric_dipole.md)
+- [Stochastic DFT and mix stochastic-deterministic DFT](docs/examples/stochastic.md)
 
 [back to top](#readme-top)
 
