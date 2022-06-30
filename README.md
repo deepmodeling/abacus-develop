@@ -176,7 +176,7 @@ The following references are required to be cited when using ABACUS. Specificall
 
 - **If second generation numerical orbital basis is used:**
 
-    [1]. Peize Li, Xinguo Ren, and Lixin He. "Strategy for constructing compact numerical atomic orbital basis sets by incorporating the gradients of reference wavefunctions." Physical Review B 103.23 (2021): 235131.
+    [1]. Peize Lin, Xinguo Ren, and Lixin He. "Strategy for constructing compact numerical atomic orbital basis sets by incorporating the gradients of reference wavefunctions." Physical Review B 103.23 (2021): 235131.
 
 - **If berry curvature calculation is used in LCAO base:**
 
