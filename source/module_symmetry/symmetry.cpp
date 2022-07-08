@@ -148,7 +148,7 @@ void Symmetry::analy_sys(const UnitCell_pseudo &ucell, std::ofstream &ofs_runnin
 			for(int k=0; k<3; ++k)
 			{
 				this->check_translation( newpos[iat*3+k], -floor(newpos[iat*3+k]));
-                         	this->check_boundary( this->newpos[iat*3+k] );
+                this->check_boundary( this->newpos[iat*3+k] );
 			}
       	// std::cout << " newpos = " << newpos[3*iat] << " " << newpos[3*iat+1] << " " << newpos[3*iat+2] << std::endl;
 		// GlobalV::ofs_running << " newpos = " << newpos[3*iat] << " " << newpos[3*iat+1] << " " << newpos[3*iat+2] << std::endl; 
@@ -1265,7 +1265,7 @@ void Symmetry::checksym(ModuleBase::Matrix3 &s, ModuleBase::Vector3<double> &gtr
 		//------------------------------------
         for (int j = istart[it]; j < istart[it] + na[it]; ++j)
         {
-            this->check_boundary(pos[j*3+1]);
+            this->check_boundary(pos[j*3+0]);
             this->check_boundary(pos[j*3+1]);
             this->check_boundary(pos[j*3+2]);
         }
@@ -1283,7 +1283,7 @@ void Symmetry::checksym(ModuleBase::Matrix3 &s, ModuleBase::Vector3<double> &gtr
             const int xx=j*3;
             const int yy=j*3+1;
             const int zz=j*3+2;
-            
+
 
             rotpos[xx] = pos[xx] * s.e11
                          + pos[yy] * s.e21
@@ -1445,10 +1445,11 @@ void Symmetry::rho_symmetry( double *rho,
     int count_fft = 0;
     for (int i=0; i<nrotk; ++i)
     {
-        if ( (gtrans[i].x * nr1 - int(gtrans[i].x * nr1) < epsilon)
-           &&(gtrans[i].y * nr2 - int(gtrans[i].y * nr2) < epsilon)
-           &&(gtrans[i].z * nr3 - int(gtrans[i].z * nr3) < epsilon)
-           )
+        //if ( (gtrans[i].x * nr1 - int(gtrans[i].x * nr1) < epsilon)
+        //   &&(gtrans[i].y * nr2 - int(gtrans[i].y * nr2) < epsilon)
+        //   &&(gtrans[i].z * nr3 - int(gtrans[i].z * nr3) < epsilon)
+        //   )
+        if (equal(gtrans[i].x,0.0) && equal(gtrans[i].y,0.0) && equal(gtrans[i].z,0.0))
         {
             ++count_fft;
             this->symflag_fft[i] = true;
