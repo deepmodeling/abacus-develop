@@ -32,6 +32,7 @@ set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 add_compile_options(-O2 -g)
 add_compile_options(-Wno-write-strings)
+set(FETCHCONTENT_QUIET FALSE) # Notify user when cloning git repo
 
 find_package(Cereal REQUIRED)
 include_directories(${CEREAL_INCLUDE_DIR})
