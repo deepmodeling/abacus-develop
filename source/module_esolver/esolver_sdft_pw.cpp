@@ -50,7 +50,6 @@ void ESolver_SDFT_PW::Init(Input &inp, UnitCell_pseudo &ucell)
     }
     this->phsol = new hsolver::HSolverPW_SDFT(GlobalC::wfcpw, this->stowf, inp.method_sto);
     this->pelec = new elecstate::ElecStatePW_SDFT( GlobalC::wfcpw, (Charge*)(&(GlobalC::CHR)), (K_Vectors*)(&(GlobalC::kv)), GlobalV::NBANDS);
-    this->phami = new hamilt::HamiltPW(&(GlobalC::hm.hpw));
 }
 
 void ESolver_SDFT_PW::beforescf(const int istep)

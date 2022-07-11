@@ -2,5 +2,9 @@ add_library(
     hamilt
     OBJECT
     hamilt_pw.cpp
+    ekinetic_pw.cpp
+    veff_pw.cpp
+    nonlocal_pw.cpp
+    meta_pw.cpp
     hamilt_lcao.cpp
 )

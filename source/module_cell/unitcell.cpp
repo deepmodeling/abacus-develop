@@ -426,6 +426,22 @@ void UnitCell::save_cartesian_position(double* pos)const
     return;
 }
 
+void UnitCell::save_cartesian_position(ModuleBase::Vector3<double>* pos)const
+{
+    int iat = 0;
+    for(int it = 0; it < this->ntype; ++it)
+    {
+        Atom* atom = &this->atoms[it];
+        for(int ia = 0; ia < atom->na; ++ia)
+        {
+            pos[iat] = atom->tau[ia] * this->lat0;
+            iat++;
+        }
+    }
+    assert(iat == this->nat);
+    return;
+}
+
 bool UnitCell::judge_big_cell(void)const
 {
 	double diameter = 2*GlobalV::SEARCH_RADIUS;

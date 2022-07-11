@@ -88,6 +88,10 @@ private:
 		ModuleBase::matrix &sigmaewa,
 		ModuleBase::matrix &sigmacc,
 		ModuleBase::matrix &sigmaxc);
+
+	void stress_mgga(ModuleBase::matrix &sigmaxc,
+		Local_Orbital_Charge& loc,
+		LCAO_Hamilt &uhm);
 	
 	static double force_invalid_threshold_ev;
 	static double output_acc; // control the accuracy

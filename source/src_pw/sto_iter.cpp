@@ -63,8 +63,8 @@ void Stochastic_Iter::orthog(const int& ik, psi::Psi<std::complex<double>>& psi,
     if(GlobalV::NBANDS > 0)
     {
 	    const int nchipk=stowf.nchip[ik];
-	    const int npw = GlobalC::wf.npw;
-	    const int npwx = GlobalC::wf.npwx;
+	    const int npw = psi.get_current_nbas();
+	    const int npwx = psi.get_nbasis();
         std::complex<double> *wfgin = stowf.chi0[ik].c, *wfgout = stowf.chiortho[ik].c;
 	    for(int ig = 0 ; ig < npwx * nchipk; ++ig)
 	    {
@@ -120,7 +120,7 @@ void Stochastic_Iter::checkemm(const int& ik, const int iter, Stochastic_WF& sto
             bool converge;
             converge = p_che->checkconverge(
 				&stohchi, &Stochastic_hchi::hchi_reciprocal, 
-				pchi, GlobalC::wf.npw,
+				pchi, GlobalC::kv.ngk[ik],
 				stohchi.Emax, 
 				stohchi.Emin, 
 				5.0);
@@ -283,7 +283,7 @@ void Stochastic_Iter::calPn(const int& ik, Stochastic_WF& stowf)
     
     if(this->method == 2)
     {
-        p_che->calpolyvec_complex(&stohchi, &Stochastic_hchi::hchi_reciprocal, pchi, this->chiallorder[ik].c, GlobalC::wf.npw, GlobalC::wf.npwx, nchip[ik]);
+        p_che->calpolyvec_complex(&stohchi, &Stochastic_hchi::hchi_reciprocal, pchi, this->chiallorder[ik].c, GlobalC::kv.ngk[ik], GlobalC::wf.npwx, nchip[ik]);
         double* vec_all= (double *) this->chiallorder[ik].c;
         double* vec= (double *) pchi;
         char transa = 'T';
@@ -291,7 +291,7 @@ void Stochastic_Iter::calPn(const int& ik, Stochastic_WF& stowf)
         int inc = 1;
         // double zero = 0;
         int LDA = GlobalC::wf.npwx * nchip[ik] * 2;
-        int M = GlobalC::wf.npw * nchip[ik] * 2;
+        int M = GlobalC::kv.ngk[ik] * nchip[ik] * 2;
         int N = norder;
         dgemv_(&transa, &M, &N, &one, vec_all, &LDA, vec, &inc, &one, spolyv, &inc);
         for(int i = 0 ; i < norder ; ++i)
@@ -301,7 +301,7 @@ void Stochastic_Iter::calPn(const int& ik, Stochastic_WF& stowf)
     }
     else
     {
-        p_che->tracepolyA(&stohchi, &Stochastic_hchi::hchi_reciprocal, pchi, GlobalC::wf.npw, GlobalC::wf.npwx, nchip[ik]);
+        p_che->tracepolyA(&stohchi, &Stochastic_hchi::hchi_reciprocal, pchi, GlobalC::kv.ngk[ik], GlobalC::wf.npwx, nchip[ik]);
         for(int i = 0 ; i < norder ; ++i)
         {
             spolyv[i] += p_che->polytrace[i] * GlobalC::kv.wk[ik];
@@ -490,7 +490,7 @@ void Stochastic_Iter::calTnchi(const int& ik, Stochastic_WF& stowf)
         int inc = 1;
         std::complex<double> zero = 0;
         int LDA = GlobalC::wf.npwx * nchip[ik];
-        int M = GlobalC::wf.npw * nchip[ik];
+        int M = GlobalC::kv.ngk[ik] * nchip[ik];
         int N = p_che->norder;
         std::complex<double> *coef_real = new std::complex<double> [p_che->norder];
         for(int i = 0 ; i < p_che->norder; ++i)

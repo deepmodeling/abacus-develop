@@ -67,7 +67,8 @@ template <class T> class ElpaPrepare
             readsfile = LCAO_DIAGO_TEST::read_hs<std::vector<T>>(sfname, stmp);
             if (htmp.size() != stmp.size())
             {
-                printf("Error: dimensions of H and S are not equal, %d, %d", htmp.size(), stmp.size());
+                std::cout << "Error: dimensions of H and S are not equal: "
+                    << htmp.size() << "," << stmp.size() << std::endl;
                 readhfile = readsfile = false;
             }
 

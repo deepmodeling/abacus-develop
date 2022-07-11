@@ -1,451 +1,513 @@
 #include "charge_extra.h"
 #include "../module_base/global_function.h"
 #include "../module_base/global_variable.h"
-#include "../module_base/memory.h"
 #include "global.h"
-#ifdef __LCAO
-#include "../src_lcao/global_fp.h"
-#endif
+// #ifdef __LCAO
+// #include "../src_lcao/global_fp.h"
+// #endif
 
 Charge_Extra::Charge_Extra()
 {
-	init_rho = false;
+    if(GlobalC::pot.chg_extrap == "none")
+    {
+        pot_order = 0;
+    }
+    else if(GlobalC::pot.chg_extrap == "atomic")
+    {
+        pot_order = 1;
+    }
+    else if(GlobalC::pot.chg_extrap == "first-order")
+    {
+        pot_order = 2;
+    }
+    else if(GlobalC::pot.chg_extrap == "second-order")
+    {
+        pot_order = 3;
+    }
+    else
+    {
+        ModuleBase::WARNING_QUIT("Charge_Extra","charge extrapolation method is not available !");
+    }
 
-	// for first-order extrapolation
-	this->delta_rho1 = new double*[GlobalV::NSPIN];
-	this->delta_rho2 = new double*[GlobalV::NSPIN];
-	this->delta_rho = new double*[GlobalV::NSPIN];
-	// for second-order extrapolation
-	this->delta_rho3 = new double*[GlobalV::NSPIN];
+    if(pot_order > 1)
+    {
+        delta_rho1 = new double*[GlobalV::NSPIN];
+        delta_rho2 = new double*[GlobalV::NSPIN];
+        for(int is=0; is<GlobalV::NSPIN; is++)
+        {
+            delta_rho1[is] = new double[GlobalC::rhopw->nrxx];
+            delta_rho2[is] = new double[GlobalC::rhopw->nrxx];
+            ModuleBase::GlobalFunc::ZEROS(delta_rho1[is], GlobalC::rhopw->nrxx);
+            ModuleBase::GlobalFunc::ZEROS(delta_rho2[is], GlobalC::rhopw->nrxx);
+        }
+    }
 
-	// PLEASE update the following lines, because
-	// the GlobalC::rhopw->nrxx may not be initialized yet
-	// since Charge_Extra is a member of LOOP_ions
-	// you can move the initialization of the following 
-	// arrays to somewhere else
-	// mohan add 2021-03-30
-	for(int is=0; is<GlobalV::NSPIN; is++)
-	{
-		delta_rho1[is] = new double[GlobalC::rhopw->nrxx];
-		delta_rho2[is] = new double[GlobalC::rhopw->nrxx];
-		delta_rho[is] = new double[GlobalC::rhopw->nrxx];
+    // if(pot_order > 2)
+    // {
+    //     delta_rho3 = new double*[GlobalV::NSPIN];
+    //     for(int is=0; is<GlobalV::NSPIN; is++)
+    //     {
+    //         delta_rho3[is] = new double[GlobalC::rhopw->nrxx];
+    //         ModuleBase::GlobalFunc::ZEROS(delta_rho3[is], GlobalC::rhopw->nrxx);
+    //     }
+    // }
 
-		// for second-order extrapolation
-		delta_rho3[is] = new double[GlobalC::rhopw->nrxx];
+    natom = GlobalC::ucell.nat;
 
-		ModuleBase::GlobalFunc::ZEROS(delta_rho1[is], GlobalC::rhopw->nrxx);
-		ModuleBase::GlobalFunc::ZEROS(delta_rho2[is], GlobalC::rhopw->nrxx);
-		ModuleBase::GlobalFunc::ZEROS(delta_rho[is], GlobalC::rhopw->nrxx);
-		ModuleBase::GlobalFunc::ZEROS(delta_rho3[is], GlobalC::rhopw->nrxx);
-	}
+    pos_old1 = new ModuleBase::Vector3<double>[natom];
+    pos_old2 = new ModuleBase::Vector3<double>[natom];
+    pos_now  = new ModuleBase::Vector3<double>[natom];
+    pos_next = new ModuleBase::Vector3<double>[natom];
 
-	pos_old1 = nullptr;
-	pos_old2 = nullptr;
-	pos_now = nullptr;
-	pos_next = nullptr;
-	alpha = 0.0;
-	beta = 0.0;
+    alpha = 1.0;
+    beta  = 0.0;
 }
 
 
 Charge_Extra::~Charge_Extra()
 {
-	if(init_rho)
-	{
-		for(int i=0; i<dim; i++)
-		{
-			for(int is=0; is<GlobalV::NSPIN; is++)
-			{
-				delete[] rho_ion[i][is];
-			}
-			delete[] rho_ion[i];
-		}	
-		delete[] rho_ion;
-	}
+    if(pot_order > 1)
+    {
+        for(int is=0; is<GlobalV::NSPIN; is++)
+        {
+            delete[] delta_rho1[is];
+            delete[] delta_rho2[is];
+        }
+        delete[] delta_rho1;
+        delete[] delta_rho2;
+    }
 
-	for(int is=0; is<GlobalV::NSPIN; is++)
-	{
-		delete[] delta_rho1[is];
-		delete[] delta_rho2[is];
-		delete[] delta_rho[is];
-		delete[] delta_rho3[is];
-	}	
-	delete[] delta_rho1;
-	delete[] delta_rho2;
-	delete[] delta_rho;
-	delete[] delta_rho3;
+    // if(pot_order > 2)
+    // {
+    //     for(int is=0; is<GlobalV::NSPIN; is++)
+    //     {
+    //         delete[] delta_rho3[is];
+    //     }	
+    //     delete[] delta_rho3;
+    // }
 
-	delete[] pos_old1;
-	delete[] pos_old2;
-	delete[] pos_now;
-	delete[] pos_next;
+    delete[] pos_old1;
+    delete[] pos_old2;
+    delete[] pos_now;
+    delete[] pos_next;
 }
-
-
-void Charge_Extra::allocate_ions(void)
-{
-	ModuleBase::TITLE("Charge_Extra","allocate_ions");
-
-	// 1: first order extrapolation.
-	// 2: second order extrapolation.
-
-	this->dim = 0;
-	
-	// for the second-order extrapolation	
-	pos_dim = GlobalC::ucell.nat * 3;
-
-	delete[] this->pos_old1;
-	delete[] this->pos_old2;
-	delete[] this->pos_now;
-	delete[] this->pos_next;
-
-	this->pos_old1 = new double[pos_dim];
-	this->pos_old2 = new double[pos_dim];
-	this->pos_now = new double[pos_dim];
-	this->pos_next = new double[pos_dim];
-
-	ModuleBase::GlobalFunc::ZEROS(pos_old1, pos_dim);
-	ModuleBase::GlobalFunc::ZEROS(pos_old2, pos_dim);
-	ModuleBase::GlobalFunc::ZEROS(pos_now, pos_dim);
-	ModuleBase::GlobalFunc::ZEROS(pos_next, pos_dim);
-
-	if(init_rho)
-	{
-		ModuleBase::WARNING_QUIT("Charge_Extra::allocate","rho_ion has been allocated, pls check.");
-	}
-
-	this->rho_ion = new double**[dim];
-
-	for(int i=0; i<dim; i++)
-	{
-		rho_ion[i] = new double*[GlobalV::NSPIN];
-		for(int is=0; is<GlobalV::NSPIN; is++)
-		{
-			rho_ion[i][is] = new double[GlobalC::rhopw->nrxx];
-			// first value from charge density.
-			for(int ir=0; ir<GlobalC::rhopw->nrxx; ir++)
-			{
-				rho_ion[i][is][ir] = GlobalC::CHR.rho[is][ir];	
-			}
-		}
-	}	
-
-	init_rho = true;
-
-	ModuleBase::Memory::record("charge_extra","rho_ion",dim*GlobalV::NSPIN*GlobalC::rhopw->nrxx,"double");
-
-	return;
-}
-
 
 void Charge_Extra::extrapolate_charge()
 {
     ModuleBase::TITLE("Charge_Extra","extrapolate_charge");
-	//-------------------------------------------------------
-    // charge density expolation:
-    // pot_order = 0 copy the old potential(nothing is done);
-    // pot_order = 3 substrate old atomic charge density and
-    // sum the new.
-    // If the dynamics is done, this routine extrapolates also
-    // the difference between the scf and the atomic one.
-    // pot_order = 1 first order extrapolation:
-    // rho(t+dt) = 2*rho(t) - rho(t-dt)
-    // pot_order = 2 second order extrapolation:
-    // rho(t+dt) = rho+
-    // alpha*(rho(t) - rho(t-dt))
-    // + beta*( rho(t-dt) - rho(t-2*dt) )
-	// just use atomic charge.
-	//-------------------------------------------------------
+    //-------------------------------------------------------
+    // Charge density extrapolation:
+    //
+    // * pot_order=0 : copy the old potential (nothing is done);
+    // * pot_order=1 : subtract old atomic charge density and sum the new
+    //                 if dynamics is done the routine extrapolates also the difference
+    //                 between the scf charge and the atomic one;
+    // * pot_order=2 : first order extrapolation: 
+    //                             \[ \rho(t+dt) = 2\ \rho(t)-\rho(t-dt); \]
+    // * pot_order=3 : second order extrapolation:
+    //                             \[ \rho(t+dt) = \rho(t) + \alpha_0\ (\rho(t) - \rho(t-dt))
+    //                             + \beta_0\ (\rho(t-dt)- \rho(t-2 dt)). \]
+    // 
+    // The \(\alpha_0\) and \(\beta_0\) parameters are calculated in find_alpha_and_beta()
+    // so that \(|\tau'-\tau(t+dt)|\) is minimum. \(\tau'\) and \(\tau(t+dt)\) are respectively
+    // the atomic positions at time t+dt and the extrapolated one:
+    // \[ \tau(t+dt) = \tau(t) + \alpha_0\ ( \tau(t)    - \tau(t-dt)   )
+    //                         + \beta_0\ ( \tau(t-dt) - \tau(t-2 dt) ). \]
+    //-------------------------------------------------------
 
-	if(GlobalC::pot.chg_extrap == "dm")//xiaohui modify 2015-02-01
-	{
-		if(GlobalV::BASIS_TYPE=="pw" || GlobalV::BASIS_TYPE=="lcao_in_pw")
-		{
-			ModuleBase::WARNING_QUIT("Charge_Extra","charge extrapolation method is not available");
-		}
-		else
-		{
-			GlobalC::sf.setup_structure_factor(&GlobalC::ucell,GlobalC::rhopw);
-		}
-	}
-	// "atomic" extrapolation
-	else if(GlobalC::pot.chg_extrap == "atomic")
-	{
-		double** rho_atom_old = new double*[GlobalV::NSPIN];
-		double** rho_atom_new = new double*[GlobalV::NSPIN];
+    rho_extr = min(istep, pot_order);
+    if(rho_extr == 0)
+    {
+        // if(cellchange) scale();
+        GlobalC::sf.setup_structure_factor(&GlobalC::ucell, GlobalC::rhopw);
+        GlobalV::ofs_running << " charge density from previous step !" << std::endl;
+        return;
+    }
 
-		for(int is=0; is<GlobalV::NSPIN; is++)
-		{
-			rho_atom_old[is] = new double[GlobalC::rhopw->nrxx];
-			rho_atom_new[is] = new double[GlobalC::rhopw->nrxx];
 
-			ModuleBase::GlobalFunc::ZEROS(rho_atom_old[is], GlobalC::rhopw->nrxx);
-			ModuleBase::GlobalFunc::ZEROS(rho_atom_new[is], GlobalC::rhopw->nrxx);
-		}
-		GlobalC::CHR.atomic_rho(GlobalV::NSPIN,rho_atom_old,GlobalC::rhopw);
-		for(int is=0; is<GlobalV::NSPIN; is++)
-		{
-			for(int ir=0; ir<GlobalC::rhopw->nrxx; ir++)
-			{
-				delta_rho[is][ir] = GlobalC::CHR.rho[is][ir] - rho_atom_old[is][ir];
-			}
-		}
+    // if(lsda || noncolin) rho2zeta();
 
-		if(GlobalV::OUT_LEVEL != "m") 
-		{
-			GlobalV::ofs_running << " Setup the structure factor in plane wave basis." << std::endl;
-		}
-		GlobalC::sf.setup_structure_factor(&GlobalC::ucell,GlobalC::rhopw);
+    double** rho_atom = new double*[GlobalV::NSPIN];
+    for(int is=0; is<GlobalV::NSPIN; is++)
+    {
+        rho_atom[is] = new double[GlobalC::rhopw->nrxx];
+        
+        ModuleBase::GlobalFunc::ZEROS(rho_atom[is], GlobalC::rhopw->nrxx);
+    }
+    GlobalC::CHR.atomic_rho(GlobalV::NSPIN, rho_atom, GlobalC::rhopw);
+    for(int is=0; is<GlobalV::NSPIN; is++)
+    {
+        for(int ir=0; ir<GlobalC::rhopw->nrxx; ir++)
+        {
+            GlobalC::CHR.rho[is][ir] -= rho_atom[is][ir];
+        }
+    }
 
-		GlobalC::CHR.atomic_rho(GlobalV::NSPIN,rho_atom_new, GlobalC::rhopw);
+    // if(cellchange)  GlobalC::CHR.rho =  GlobalC::CHR.rho * omega_old;
 
-		for(int is=0; is<GlobalV::NSPIN; is++)
-		{
-			for(int ir=0; ir<GlobalC::rhopw->nrxx; ir++)
-			{
-				GlobalC::CHR.rho[is][ir] = delta_rho[is][ir] + rho_atom_new[is][ir];
-			}
-		}
-		for(int is=0; is<GlobalV::NSPIN; is++)
-		{
-			delete[] rho_atom_old[is];
-			delete[] rho_atom_new[is];
-		}	
-		delete[] rho_atom_old;
-		delete[] rho_atom_new;
+    if(rho_extr == 1)
+    {
+        GlobalV::ofs_running << " NEW-OLD atomic charge density approx. for the potential !" << std::endl;
 
-	}
-	// "first-order" extrapolation
-	else if(GlobalC::pot.chg_extrap == "first-order")
-	{
-		double** rho_atom_old = new double*[GlobalV::NSPIN];
-		double** rho_atom_new = new double*[GlobalV::NSPIN];
+        if(pot_order > 1)
+        {
+            for(int is=0; is<GlobalV::NSPIN; is++)
+            {
+                for(int ir=0; ir<GlobalC::rhopw->nrxx; ir++)
+                {
+                    delta_rho1[is][ir] = GlobalC::CHR.rho[is][ir];
+                }
+            }
+        }
+    }
+    // first order extrapolation
+    else if(rho_extr ==2)
+    {
+        GlobalV::ofs_running << " first order charge density extrapolation !" << std::endl;
 
-		for(int is=0; is<GlobalV::NSPIN; is++)
-		{
-			rho_atom_old[is] = new double[GlobalC::rhopw->nrxx];
-			rho_atom_new[is] = new double[GlobalC::rhopw->nrxx];
+        for(int is=0; is<GlobalV::NSPIN; is++)
+        {
+            for(int ir=0; ir<GlobalC::rhopw->nrxx; ir++)
+            {
+                delta_rho2[is][ir] = delta_rho1[is][ir];
+                delta_rho1[is][ir] = GlobalC::CHR.rho[is][ir];
+                GlobalC::CHR.rho[is][ir] = 2 * delta_rho1[is][ir] - delta_rho2[is][ir];
+            }
+        }
+    }
+    // second order extrapolation
+    else
+    {
+        GlobalV::ofs_running << " second order charge density extrapolation !" << std::endl;
 
-			ModuleBase::GlobalFunc::ZEROS(rho_atom_old[is], GlobalC::rhopw->nrxx);
-			ModuleBase::GlobalFunc::ZEROS(rho_atom_new[is], GlobalC::rhopw->nrxx);
-		}
+        find_alpha_and_beta();
 
-		// generate atomic rho
-		GlobalC::CHR.atomic_rho(GlobalV::NSPIN,rho_atom_old,GlobalC::rhopw);
+        double **delta_rho3 = new double*[GlobalV::NSPIN];
+        for(int is=0; is<GlobalV::NSPIN; is++)
+        {
+            delta_rho3[is] = new double[GlobalC::rhopw->nrxx];
+        }
 
-		for(int is=0; is<GlobalV::NSPIN; is++)
-		{
-			for(int ir=0; ir<GlobalC::rhopw->nrxx; ir++)
-			{
-				delta_rho2[is][ir] = delta_rho1[is][ir];
-				delta_rho1[is][ir] = GlobalC::CHR.rho[is][ir] - rho_atom_old[is][ir];
-				delta_rho[is][ir] = 2*delta_rho1[is][ir] - delta_rho2[is][ir];
-			}
-		}
+        for(int is=0; is<GlobalV::NSPIN; is++)
+        {
+            for(int ir=0; ir<GlobalC::rhopw->nrxx; ir++)
+            {
+                delta_rho3[is][ir] = delta_rho2[is][ir];
+                delta_rho2[is][ir] = delta_rho1[is][ir];
+                delta_rho1[is][ir] = GlobalC::CHR.rho[is][ir];
+                GlobalC::CHR.rho[is][ir] = delta_rho1[is][ir] + alpha * (delta_rho1[is][ir] - delta_rho2[is][ir])
+                                            + beta * (delta_rho2[is][ir] - delta_rho3[is][ir]);
+            }
+        }
 
-		if(GlobalV::OUT_LEVEL != "m") 
-		{
-			GlobalV::ofs_running << " Setup the structure factor in plane wave basis." << std::endl;
-		}
-		GlobalC::sf.setup_structure_factor(&GlobalC::ucell,GlobalC::rhopw);
+        for(int is=0; is<GlobalV::NSPIN; is++)
+        {
+            delete[] delta_rho3[is];
+        }	
+        delete[] delta_rho3;
+    }
 
-		GlobalC::CHR.atomic_rho(GlobalV::NSPIN,rho_atom_new,GlobalC::rhopw);
-		for(int is=0; is<GlobalV::NSPIN; is++)
-		{
-			for(int ir=0; ir<GlobalC::rhopw->nrxx; ir++)
-			{
-				if(istep == 1)
-				{
-					GlobalC::CHR.rho[is][ir] = delta_rho1[is][ir] + rho_atom_new[is][ir];
-				}
-				else
-				{
-					GlobalC::CHR.rho[is][ir] = delta_rho[is][ir] + rho_atom_new[is][ir];
-				}
-			}
-		}
-		for(int is=0; is<GlobalV::NSPIN; is++)
-		{
-			delete[] rho_atom_old[is];
-			delete[] rho_atom_new[is];
-		}	
-		delete[] rho_atom_old;
-		delete[] rho_atom_new;
-	}
+    // if(cellchange)  GlobalC::CHR.rho =  GlobalC::CHR.rho / omega;
+    // if(cellchange) scale();
 
-	// "second-order" extrapolation of charge density
-	else if(GlobalC::pot.chg_extrap == "second-order")
-	{
-		double** rho_atom_old = new double*[GlobalV::NSPIN];
-		double** rho_atom_new = new double*[GlobalV::NSPIN];
+    GlobalC::sf.setup_structure_factor(&GlobalC::ucell, GlobalC::rhopw);
+    for(int is=0; is<GlobalV::NSPIN; is++)
+    {
+        ModuleBase::GlobalFunc::ZEROS(rho_atom[is], GlobalC::rhopw->nrxx);
+    }
+    GlobalC::CHR.atomic_rho(GlobalV::NSPIN, rho_atom, GlobalC::rhopw);
+    for(int is=0; is<GlobalV::NSPIN; is++)
+    {
+        for(int ir=0; ir<GlobalC::rhopw->nrxx; ir++)
+        {
+            GlobalC::CHR.rho[is][ir] += rho_atom[is][ir];
+        }
+    }
 
-		for(int is=0; is<GlobalV::NSPIN; is++)
-		{
-			rho_atom_old[is] = new double[GlobalC::rhopw->nrxx];
-			rho_atom_new[is] = new double[GlobalC::rhopw->nrxx];
+    // if(lsda || noncolin) rho2zeta();
 
-			ModuleBase::GlobalFunc::ZEROS(rho_atom_old[is], GlobalC::rhopw->nrxx);
-			ModuleBase::GlobalFunc::ZEROS(rho_atom_new[is], GlobalC::rhopw->nrxx);
-		}
-
-		// generate atomic_rho
-		GlobalC::CHR.atomic_rho(GlobalV::NSPIN,rho_atom_old,GlobalC::rhopw);
-
-		// compute alpha and beta
-		find_alpha_and_beta();
-
-		for(int is=0; is<GlobalV::NSPIN; is++)
-		{
-			for(int ir=0; ir<GlobalC::rhopw->nrxx; ir++)
-			{
-				delta_rho3[is][ir] = delta_rho2[is][ir];
-				delta_rho2[is][ir] = delta_rho1[is][ir];
-				delta_rho1[is][ir] = GlobalC::CHR.rho[is][ir] - rho_atom_old[is][ir];
-				delta_rho[is][ir] = delta_rho1[is][ir] + 
-					alpha * (delta_rho1[is][ir] - delta_rho2[is][ir]) +
-					beta * (delta_rho2[is][ir] - delta_rho3[is][ir]);
-			}
-		}
-
-		//xiaohui add 'GlobalV::OUT_LEVEL', 2015-09-16
-		if(GlobalV::OUT_LEVEL != "m") 
-		{
-			GlobalV::ofs_running << " Setup the structure factor in plane wave basis." << std::endl;
-		}
-
-		// setup the structure factor
-		GlobalC::sf.setup_structure_factor(&GlobalC::ucell,GlobalC::rhopw);
-
-		// generate atomic rho
-		GlobalC::CHR.atomic_rho(GlobalV::NSPIN,rho_atom_new,GlobalC::rhopw);
-
-		for(int is=0; is<GlobalV::NSPIN; is++)
-		{
-			for(int ir=0; ir<GlobalC::rhopw->nrxx; ir++)
-			{
-				if(istep == 1)
-				{
-					GlobalC::CHR.rho[is][ir] = delta_rho1[is][ir] + rho_atom_new[is][ir];
-				}
-				else if(istep == 2)
-				{
-					delta_rho[is][ir] = 2*delta_rho1[is][ir] - delta_rho2[is][ir];
-					GlobalC::CHR.rho[is][ir] = delta_rho1[is][ir] + rho_atom_new[is][ir];
-				}
-				else
-				{
-					GlobalC::CHR.rho[is][ir] = delta_rho[is][ir] + rho_atom_new[is][ir];
-				}
-			}
-		}
-
-		for(int is=0; is<GlobalV::NSPIN; is++)
-		{
-			delete[] rho_atom_old[is];
-			delete[] rho_atom_new[is];
-		}	
-
-		delete[] rho_atom_old;
-		delete[] rho_atom_new;
-	}
-	else
-	{
-		ModuleBase::WARNING_QUIT("potential::init_pot","chg_extrap parameter is wrong!");
-	}
-
+    for(int is=0; is<GlobalV::NSPIN; is++)
+    {
+        delete[] rho_atom[is];
+    }
+    delete[] rho_atom;
     return;
+
+
+
+
+	// if(GlobalC::pot.chg_extrap == "dm")//xiaohui modify 2015-02-01
+	// {
+	// 	if(GlobalV::BASIS_TYPE=="pw" || GlobalV::BASIS_TYPE=="lcao_in_pw")
+	// 	{
+	// 		ModuleBase::WARNING_QUIT("Charge_Extra","charge extrapolation method is not available");
+	// 	}
+	// 	else
+	// 	{
+	// 		GlobalC::sf.setup_structure_factor(&GlobalC::ucell,GlobalC::rhopw);
+	// 	}
+	// }
+	// // "atomic" extrapolation
+	// else if(GlobalC::pot.chg_extrap == "atomic")
+	// {
+	// 	double** rho_atom_old = new double*[GlobalV::NSPIN];
+	// 	double** rho_atom_new = new double*[GlobalV::NSPIN];
+
+	// 	for(int is=0; is<GlobalV::NSPIN; is++)
+	// 	{
+	// 		rho_atom_old[is] = new double[GlobalC::rhopw->nrxx];
+	// 		rho_atom_new[is] = new double[GlobalC::rhopw->nrxx];
+
+	// 		ModuleBase::GlobalFunc::ZEROS(rho_atom_old[is], GlobalC::rhopw->nrxx);
+	// 		ModuleBase::GlobalFunc::ZEROS(rho_atom_new[is], GlobalC::rhopw->nrxx);
+	// 	}
+	// 	GlobalC::CHR.atomic_rho(GlobalV::NSPIN,rho_atom_old,GlobalC::rhopw);
+	// 	for(int is=0; is<GlobalV::NSPIN; is++)
+	// 	{
+	// 		for(int ir=0; ir<GlobalC::rhopw->nrxx; ir++)
+	// 		{
+	// 			delta_rho[is][ir] = GlobalC::CHR.rho[is][ir] - rho_atom_old[is][ir];
+	// 		}
+	// 	}
+
+	// 	if(GlobalV::OUT_LEVEL != "m") 
+	// 	{
+	// 		GlobalV::ofs_running << " Setup the structure factor in plane wave basis." << std::endl;
+	// 	}
+	// 	GlobalC::sf.setup_structure_factor(&GlobalC::ucell,GlobalC::rhopw);
+
+	// 	GlobalC::CHR.atomic_rho(GlobalV::NSPIN,rho_atom_new, GlobalC::rhopw);
+
+	// 	for(int is=0; is<GlobalV::NSPIN; is++)
+	// 	{
+	// 		for(int ir=0; ir<GlobalC::rhopw->nrxx; ir++)
+	// 		{
+	// 			GlobalC::CHR.rho[is][ir] = delta_rho[is][ir] + rho_atom_new[is][ir];
+	// 		}
+	// 	}
+	// 	for(int is=0; is<GlobalV::NSPIN; is++)
+	// 	{
+	// 		delete[] rho_atom_old[is];
+	// 		delete[] rho_atom_new[is];
+	// 	}	
+	// 	delete[] rho_atom_old;
+	// 	delete[] rho_atom_new;
+
+	// }
+	// // "first-order" extrapolation
+	// else if(GlobalC::pot.chg_extrap == "first-order")
+	// {
+	// 	double** rho_atom_old = new double*[GlobalV::NSPIN];
+	// 	double** rho_atom_new = new double*[GlobalV::NSPIN];
+
+	// 	for(int is=0; is<GlobalV::NSPIN; is++)
+	// 	{
+	// 		rho_atom_old[is] = new double[GlobalC::rhopw->nrxx];
+	// 		rho_atom_new[is] = new double[GlobalC::rhopw->nrxx];
+
+	// 		ModuleBase::GlobalFunc::ZEROS(rho_atom_old[is], GlobalC::rhopw->nrxx);
+	// 		ModuleBase::GlobalFunc::ZEROS(rho_atom_new[is], GlobalC::rhopw->nrxx);
+	// 	}
+
+	// 	// generate atomic rho
+	// 	GlobalC::CHR.atomic_rho(GlobalV::NSPIN,rho_atom_old,GlobalC::rhopw);
+
+	// 	for(int is=0; is<GlobalV::NSPIN; is++)
+	// 	{
+	// 		for(int ir=0; ir<GlobalC::rhopw->nrxx; ir++)
+	// 		{
+	// 			delta_rho2[is][ir] = delta_rho1[is][ir];
+	// 			delta_rho1[is][ir] = GlobalC::CHR.rho[is][ir] - rho_atom_old[is][ir];
+	// 			delta_rho[is][ir] = 2*delta_rho1[is][ir] - delta_rho2[is][ir];
+	// 		}
+	// 	}
+
+	// 	if(GlobalV::OUT_LEVEL != "m") 
+	// 	{
+	// 		GlobalV::ofs_running << " Setup the structure factor in plane wave basis." << std::endl;
+	// 	}
+	// 	GlobalC::sf.setup_structure_factor(&GlobalC::ucell,GlobalC::rhopw);
+
+	// 	GlobalC::CHR.atomic_rho(GlobalV::NSPIN,rho_atom_new,GlobalC::rhopw);
+	// 	for(int is=0; is<GlobalV::NSPIN; is++)
+	// 	{
+	// 		for(int ir=0; ir<GlobalC::rhopw->nrxx; ir++)
+	// 		{
+	// 			if(istep == 1)
+	// 			{
+	// 				GlobalC::CHR.rho[is][ir] = delta_rho1[is][ir] + rho_atom_new[is][ir];
+	// 			}
+	// 			else
+	// 			{
+	// 				GlobalC::CHR.rho[is][ir] = delta_rho[is][ir] + rho_atom_new[is][ir];
+	// 			}
+	// 		}
+	// 	}
+	// 	for(int is=0; is<GlobalV::NSPIN; is++)
+	// 	{
+	// 		delete[] rho_atom_old[is];
+	// 		delete[] rho_atom_new[is];
+	// 	}	
+	// 	delete[] rho_atom_old;
+	// 	delete[] rho_atom_new;
+	// }
+
+	// // "second-order" extrapolation of charge density
+	// else if(GlobalC::pot.chg_extrap == "second-order")
+	// {
+	// 	double** rho_atom_old = new double*[GlobalV::NSPIN];
+	// 	double** rho_atom_new = new double*[GlobalV::NSPIN];
+
+	// 	for(int is=0; is<GlobalV::NSPIN; is++)
+	// 	{
+	// 		rho_atom_old[is] = new double[GlobalC::rhopw->nrxx];
+	// 		rho_atom_new[is] = new double[GlobalC::rhopw->nrxx];
+
+	// 		ModuleBase::GlobalFunc::ZEROS(rho_atom_old[is], GlobalC::rhopw->nrxx);
+	// 		ModuleBase::GlobalFunc::ZEROS(rho_atom_new[is], GlobalC::rhopw->nrxx);
+	// 	}
+
+	// 	// generate atomic_rho
+	// 	GlobalC::CHR.atomic_rho(GlobalV::NSPIN,rho_atom_old,GlobalC::rhopw);
+
+	// 	// compute alpha and beta
+	// 	find_alpha_and_beta();
+
+	// 	for(int is=0; is<GlobalV::NSPIN; is++)
+	// 	{
+	// 		for(int ir=0; ir<GlobalC::rhopw->nrxx; ir++)
+	// 		{
+	// 			delta_rho3[is][ir] = delta_rho2[is][ir];
+	// 			delta_rho2[is][ir] = delta_rho1[is][ir];
+	// 			delta_rho1[is][ir] = GlobalC::CHR.rho[is][ir] - rho_atom_old[is][ir];
+	// 			delta_rho[is][ir] = delta_rho1[is][ir] + 
+	// 				alpha * (delta_rho1[is][ir] - delta_rho2[is][ir]) +
+	// 				beta * (delta_rho2[is][ir] - delta_rho3[is][ir]);
+	// 		}
+	// 	}
+
+	// 	//xiaohui add 'GlobalV::OUT_LEVEL', 2015-09-16
+	// 	if(GlobalV::OUT_LEVEL != "m") 
+	// 	{
+	// 		GlobalV::ofs_running << " Setup the structure factor in plane wave basis." << std::endl;
+	// 	}
+
+	// 	// setup the structure factor
+	// 	GlobalC::sf.setup_structure_factor(&GlobalC::ucell,GlobalC::rhopw);
+
+	// 	// generate atomic rho
+	// 	GlobalC::CHR.atomic_rho(GlobalV::NSPIN,rho_atom_new,GlobalC::rhopw);
+
+	// 	for(int is=0; is<GlobalV::NSPIN; is++)
+	// 	{
+	// 		for(int ir=0; ir<GlobalC::rhopw->nrxx; ir++)
+	// 		{
+	// 			if(istep == 1)
+	// 			{
+	// 				GlobalC::CHR.rho[is][ir] = delta_rho1[is][ir] + rho_atom_new[is][ir];
+	// 			}
+	// 			else if(istep == 2)
+	// 			{
+	// 				delta_rho[is][ir] = 2*delta_rho1[is][ir] - delta_rho2[is][ir];
+	// 				GlobalC::CHR.rho[is][ir] = delta_rho1[is][ir] + rho_atom_new[is][ir];
+	// 			}
+	// 			else
+	// 			{
+	// 				GlobalC::CHR.rho[is][ir] = delta_rho[is][ir] + rho_atom_new[is][ir];
+	// 			}
+	// 		}
+	// 	}
+
+	// 	for(int is=0; is<GlobalV::NSPIN; is++)
+	// 	{
+	// 		delete[] rho_atom_old[is];
+	// 		delete[] rho_atom_new[is];
+	// 	}	
+
+	// 	delete[] rho_atom_old;
+	// 	delete[] rho_atom_new;
+	// }
+	// else
+	// {
+	// 	ModuleBase::WARNING_QUIT("potential::init_pot","chg_extrap parameter is wrong!");
+	// }
+
+    // return;
 }
 
 
 void Charge_Extra::find_alpha_and_beta(void)
 {
-	double a11,a12,a21,a22;
-	double b1,b2;
-	double detA;
+    if(istep < 3) return;
 
-	a11 = 0.0;
-	a12 = 0.0;
-	a21 = 0.0;
-	a22 = 0.0;
-	b1 = 0.0;
-	b2 = 0.0;
-	detA = 0.0;
+    double a11 = 0.0;
+    double a12 = 0.0;
+    double a21 = 0.0;
+    double a22 = 0.0;
+    double b1  = 0.0;
+    double b2  = 0.0;
+    double c   = 0.0;
+    double det = 0.0;
 
-	if(istep >= 3)
-	{
-		int iat=0;
-		for(int it = 0;it < GlobalC::ucell.ntype;it++)
-		{
-			//Atom* atom = &GlobalC::ucell.atoms[it];
-			for(int ia =0;ia< GlobalC::ucell.atoms[it].na;ia++)
-			{
-				a11 += (pos_now[3*iat  ] - pos_old1[3*iat  ]) * (pos_now[3*iat  ] - pos_old1[3*iat  ]) + 
-					(pos_now[3*iat+1] - pos_old1[3*iat+1]) * (pos_now[3*iat+1] - pos_old1[3*iat+1]) + 
-					(pos_now[3*iat+2] - pos_old1[3*iat+2]) * (pos_now[3*iat+2] - pos_old1[3*iat+2]);
+    for(int i=0; i<natom; ++i)
+    {
+        a11 += (pos_now[i] - pos_old1[i]).norm2();
+        a12 += ModuleBase::dot((pos_now[i] - pos_old1[i]), (pos_old1[i] - pos_old2[i]));
+        a22 += (pos_old1[i] - pos_old2[i]).norm2();
+        b1  -= ModuleBase::dot((pos_now[i] - pos_next[i]), (pos_now[i] - pos_old1[i]));
+        b2  -= ModuleBase::dot((pos_now[i] - pos_next[i]), (pos_old1[i] - pos_old2[i]));
+        c   += (pos_now[i] - pos_next[i]).norm2();
+    }
 
-				a12 += (pos_now[3*iat  ] - pos_old1[3*iat  ]) * (pos_old1[3*iat  ] - pos_old2[3*iat  ]) + 
-					(pos_now[3*iat+1] - pos_old1[3*iat+1]) * (pos_old1[3*iat+1] - pos_old2[3*iat+1]) + 
-					(pos_now[3*iat+2] - pos_old1[3*iat+2]) * (pos_old1[3*iat+2] - pos_old2[3*iat+2]);
+    a21 = a12;
+    det = a11 * a22 - a12 * a21;
 
-				a22 += (pos_old1[3*iat  ] - pos_old2[3*iat  ]) * (pos_old1[3*iat  ] - pos_old2[3*iat  ]) + 
-					(pos_old1[3*iat+1] - pos_old2[3*iat+1]) * (pos_old1[3*iat+1] - pos_old2[3*iat+1]) + 
-					(pos_old1[3*iat+2] - pos_old2[3*iat+2]) * (pos_old1[3*iat+2] - pos_old2[3*iat+2]);
+    if(det < -1e-16)
+    {
+        alpha = 0.0;
+        beta = 0.0;
 
-				b1 += -((pos_now[3*iat  ] - pos_next[3*iat  ]) * (pos_now[3*iat  ] - pos_old1[3*iat  ]) +
-					(pos_now[3*iat+1] - pos_next[3*iat+1]) * (pos_now[3*iat+1] - pos_old1[3*iat+1]) +
-					(pos_now[3*iat+2] - pos_next[3*iat+2]) * (pos_now[3*iat+2] - pos_old1[3*iat+2]));
+        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_warning,"in find_alpha_and beta()  det = ", det);
+    }
 
-				b2 += -((pos_now[3*iat  ] - pos_next[3*iat  ]) * (pos_old1[3*iat  ] - pos_old2[3*iat  ]) +
-					(pos_now[3*iat+1] - pos_next[3*iat+1]) * (pos_old1[3*iat+1] - pos_old2[3*iat+1]) +
-					(pos_now[3*iat+2] - pos_next[3*iat+2]) * (pos_old1[3*iat+2] - pos_old2[3*iat+2]));
+    if(det > 1e-16)
+    {
+        alpha = (b1 * a22 - b2 * a12) / det;
+        beta  = (a11 * b2 - a21 * b1) / det;
+    }
+    else
+    {
+        alpha = 0.0;
+        beta = 0.0;
 
-				iat++;
-			}
-		}
-	}
-	a21 = a12;
-	detA = a11 * a22 - a21 * a12;
+        if(a11 != 0)
+        {
+            alpha = b1 /a11;
+        }
+    }
 
-	if(detA > 1.0E-12)
-	{
-		alpha = (b1 * a22 - b2 * a12) / detA;
-		beta = (b2 * a11 - b1 * a21) / detA;
-		if(abs(alpha) >10) alpha=1.0;
-		if(abs(beta)>10) beta=0.0;
-	}
-	else
-	{
-		alpha = 0.0;
-		beta = 0.0;
-		if(a11 != 0)
-		{
-			alpha = b1 / a11 ;
-		}
-		if(abs(alpha) >10) alpha=1.0;
-	}
-	return;
+    return;
 }
 
 void Charge_Extra::save_pos_next(const UnitCell_pseudo& ucell)
 {
-	ucell.save_cartesian_position(this->pos_next);
-	return;
+    ucell.save_cartesian_position(this->pos_next);
+    return;
 }
 
 void Charge_Extra::update_istep(const int &step)
 {
-	this->istep = step;
-	return;
+    this->istep = step;
+    return;
 }
 
 void Charge_Extra::update_all_pos(const UnitCell_pseudo& ucell)
 {
-	const int total_freedom = ucell.nat * 3;
-	for(int i=0;i<total_freedom;i++)
-	{
-		this->pos_old2[i] = this->pos_old1[i];
-		this->pos_old1[i] = this->pos_now[i];
-	}
-	ucell.save_cartesian_position(this->pos_now);
-	return;
+    for(int i=0; i<natom; ++i)
+    {
+        this->pos_old2[i] = this->pos_old1[i];
+        this->pos_old1[i] = this->pos_now[i];
+    }
+    ucell.save_cartesian_position(this->pos_now);
+    return;
 }

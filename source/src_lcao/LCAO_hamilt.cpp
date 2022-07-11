@@ -82,9 +82,17 @@ void LCAO_Hamilt::calculate_Hgamma( const int &ik , vector<ModuleBase::matrix> d
     
         // calculate the 'Vl' matrix using gamma-algorithms.
         if(GlobalV::VL_IN_H)
-        {	
-            Gint_inout inout(GlobalC::pot.vr_eff1, this->LM, Gint_Tools::job_type::vlocal);
-            this->GG.cal_vlocal(&inout);
+        {
+            if(XC_Functional::get_func_type()==3)
+            {
+                Gint_inout inout(GlobalC::pot.vr_eff1, GlobalC::pot.vofk_eff1, this->LM, Gint_Tools::job_type::vlocal_meta);
+                this->GG.cal_vlocal(&inout);
+            }
+            else
+            {
+                Gint_inout inout(GlobalC::pot.vr_eff1, this->LM, Gint_Tools::job_type::vlocal);
+                this->GG.cal_vlocal(&inout);
+            }
 
         #ifdef __MPI //liyuanbo 2022/2/23
             // Peize Lin add 2016-12-03
@@ -1027,6 +1035,8 @@ void LCAO_Hamilt::calculat_HR_dftu_soc_sparse(const int &current_spin, const dou
 
 }
 
+#include "src_external/src_test/src_global/matrix-test.h"
+
 #ifdef __MPI
 // Peize Lin add 2021.11.16
 void LCAO_Hamilt::calculate_HR_exx_sparse(const int &current_spin, const double &sparse_threshold)
@@ -1040,9 +1050,10 @@ void LCAO_Hamilt::calculate_HR_exx_sparse(const int &current_spin, const double 
 			+ModuleBase::GlobalFunc::TO_STRING(__FILE__)+" line "+ModuleBase::GlobalFunc::TO_STRING(__LINE__));
 	const std::vector<Abfs::Vector3_Order<int>> Rs = Abfs::get_Born_von_Karmen_boxes( Rs_period );
 
-
 	const int ik_begin = (GlobalV::NSPIN==2) ? (current_spin*GlobalC::kv.nks/2) : 0;
 	const int ik_end = (GlobalV::NSPIN==2) ? ((current_spin+1)*GlobalC::kv.nks/2) : GlobalC::kv.nks;
+	const double frac = (GlobalV::NSPIN==1) ? 0.5 : 1.0;                        // Peize Lin add 2022.07.09
+
 	for(const Abfs::Vector3_Order<int> &R : Rs)
 	{
 		ModuleBase::matrix HexxR;
@@ -1051,11 +1062,13 @@ void LCAO_Hamilt::calculate_HR_exx_sparse(const int &current_spin, const double 
 			ModuleBase::matrix HexxR_tmp;
 			if(GlobalV::GAMMA_ONLY_LOCAL)
 				HexxR_tmp = GlobalC::exx_global.info.hybrid_alpha
-					* GlobalC::exx_lcao.Hexx_para.HK_Gamma_m2D[ik];
+					* GlobalC::exx_lcao.Hexx_para.HK_Gamma_m2D[ik]
+					* (GlobalC::kv.wk[ik] * frac);
 			else
 				HexxR_tmp = GlobalC::exx_global.info.hybrid_alpha
 					* (GlobalC::exx_lcao.Hexx_para.HK_K_m2D[ik]
-					* std::exp( ModuleBase::TWO_PI*ModuleBase::IMAG_UNIT * (GlobalC::kv.kvec_c[ik] * (R*GlobalC::ucell.latvec)) )).real();
+					* std::exp( ModuleBase::TWO_PI*ModuleBase::IMAG_UNIT * (GlobalC::kv.kvec_c[ik] * (R*GlobalC::ucell.latvec)) )).real()
+					* (GlobalC::kv.wk[ik] * frac);
 
 			if(HexxR.c)
 				HexxR += HexxR_tmp;

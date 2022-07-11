@@ -3,19 +3,6 @@
 
 #include "diagh.h"
 #include "module_base/complexmatrix.h"
-#include "module_psi/psi.h"
-
-#if ((defined __CUDA) || (defined __ROCM))
-
-#ifdef __CUDA
-#include "src_pw/hamilt_pw.cuh"
-#else
-#include "src_pw/hamilt_pw_hip.h"
-#endif
-
-#else
-#include "src_pw/hamilt_pw.h"
-#endif
 #include "src_pw/structure_factor.h"
 
 namespace hsolver
@@ -27,7 +14,7 @@ class DiagoCG : public DiagH
     // Constructor need:
     // 1. temporary mock of Hamiltonian "Hamilt_PW"
     // 2. precondition pointer should point to place of precondition array.
-    DiagoCG(Hamilt_PW *hpw_in, const double *precondition_in);
+    DiagoCG(const double *precondition_in);
     ~DiagoCG();
 
     // virtual void init(){};
@@ -41,9 +28,6 @@ class DiagoCG : public DiagH
     bool reorder = false;
     /// record for how many bands not have convergence eigenvalues
     int notconv = 0;
-
-    /// temp operator pointer
-    Hamilt_PW *hpw = nullptr;
 
     int test_cg = 0;
 
@@ -80,16 +64,16 @@ class DiagoCG : public DiagH
 
     void calculate_gradient();
 
-    void orthogonal_gradient(const psi::Psi<std::complex<double>> &eigenfunction, const int m);
+    void orthogonal_gradient(hamilt::Hamilt *phm_in, const psi::Psi<std::complex<double>> &eigenfunction, const int m);
 
     void calculate_gamma_cg(const int iter, double &gg_last, const double &cg0, const double &theta);
 
-    bool update_psi(double &cg_norm, double &theta, double &eigenvalue);
+    bool update_psi(hamilt::Hamilt *phm_in, double &cg_norm, double &theta, double &eigenvalue);
 
-    void schmit_orth(const int &m, const psi::Psi<std::complex<double>> &psi);
+    void schmit_orth(hamilt::Hamilt *phm_in, const int &m, const psi::Psi<std::complex<double>> &psi);
 
     // used in diag() for template replace Hamilt with Hamilt_PW
-    void diag_mock(psi::Psi<std::complex<double>> &phi, double *eigenvalue_in);
+    void diag_mock(hamilt::Hamilt *phm_in, psi::Psi<std::complex<double>> &phi, double *eigenvalue_in);
 };
 
 } // namespace hsolver

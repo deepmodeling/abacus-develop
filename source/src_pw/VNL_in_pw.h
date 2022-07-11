@@ -30,6 +30,7 @@ public:
 	friend class Epsilon0_vasp;
 	friend class Potential;
 	friend class Hamilt_PW;
+	friend class HamiltPW;
 	friend class WF_atomic;
 	friend class wavefunc;
 	friend class Stochastic_hchi;
@@ -46,7 +47,7 @@ public:
 
 
 
-	void getvnl(const int &ik);
+	void getvnl(const int &ik, ModuleBase::ComplexMatrix& vkb_in)const;
 
 	void getvnl_alpha(const int &ik);
 
@@ -87,7 +88,7 @@ public:
 	ModuleBase::realArray becsum;	//(:,:,:,:), \sum_i  f(i) <psi(i)/beta_1><beta_m/psi(i)> //used in charge
 
 
-	ModuleBase::ComplexMatrix vkb;	// all beta functions in reciprocal space
+	mutable ModuleBase::ComplexMatrix vkb;	// all beta functions in reciprocal space
 	std::complex<double> ***vkb1_alpha;
 	std::complex<double> ***vkb_alpha;
 

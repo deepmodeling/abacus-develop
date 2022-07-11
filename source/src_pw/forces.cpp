@@ -685,7 +685,7 @@ void Forces::cal_force_nl(ModuleBase::matrix& forcenl, const psi::Psi<complex<do
         // generate vkb
         if (GlobalC::ppcell.nkb > 0)
         {
-            GlobalC::ppcell.getvnl(ik);
+            GlobalC::ppcell.getvnl(ik, GlobalC::ppcell.vkb);
         }
 
         // get becp according to wave functions and vkb

@@ -50,9 +50,9 @@ void XC_Functional::set_xc_type(const std::string xc_func_in)
         func_type = 2;
         use_libxc = false;
 	} 
-	else if( xc_func == "revPBE" ) //rPBX+PBC
+	else if( xc_func == "revPBE" ) //PBX_r+PBC
 	{
-		func_id.push_back(XC_GGA_X_RPBE);
+		func_id.push_back(XC_GGA_X_PBE_R);
         func_id.push_back(XC_GGA_C_PBE);
         func_type = 2;
         use_libxc = false;
@@ -143,9 +143,9 @@ void XC_Functional::set_xc_type(const std::string xc_func_in)
 		std::cerr << "\n OPTX untested please test,";
 	}
 
-    if(func_type == 3 && GlobalV::BASIS_TYPE != "pw")
+    if(func_type == 3 && GlobalV::BASIS_TYPE != "pw" && (GlobalV::CAL_STRESS || GlobalV::CAL_FORCE))
     {
-        ModuleBase::WARNING_QUIT("set_xc_type","mGGA not realized for LCAO yet");
+        ModuleBase::WARNING_QUIT("set_xc_type","mGGA stress & force not finished for LCAO yet");
     }
     if(func_type == 4 && GlobalV::BASIS_TYPE == "pw")
     {
@@ -216,7 +216,7 @@ std::vector<xc_func_type> XC_Functional::init_func(const int xc_polarized)
 
 	for(int id : func_id)
 	{
-		if( id == 406 ) // PBE0
+		if( id == XC_HYB_GGA_XC_PBEH ) // PBE0
 		{
 			add_func( XC_HYB_GGA_XC_PBEH );		
 			double parameter_hse[3] = { GlobalC::exx_global.info.hybrid_alpha, 
@@ -224,7 +224,7 @@ std::vector<xc_func_type> XC_Functional::init_func(const int xc_polarized)
 				GlobalC::exx_global.info.hse_omega };
 			xc_func_set_ext_params(&funcs.back(), parameter_hse);	
 		}
-		else if( id == 428 ) // HSE06 hybrid functional
+		else if( id == XC_HYB_GGA_XC_HSE06 ) // HSE06 hybrid functional
 		{
 			add_func( XC_HYB_GGA_XC_HSE06 );	
 			double parameter_hse[3] = { GlobalC::exx_global.info.hybrid_alpha, 

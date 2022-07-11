@@ -1,11 +1,20 @@
 # To build this Dockerfile, run `docker build -t abacus - < Dockerfile`.
 # Pull image with `docker pull ghcr.io/deepmodeling/abacus:latest`.
-FROM ubuntu:latest
-RUN apt update && apt install -y --no-install-recommends libopenblas-dev liblapack-dev libscalapack-mpi-dev libelpa-dev libfftw3-dev libcereal-dev libxc-dev g++ make cmake bc time sudo vim git
+FROM ubuntu:22.04
+RUN apt update && apt install -y --no-install-recommends \
+    libopenblas-dev liblapack-dev libscalapack-mpi-dev libelpa-dev libfftw3-dev libcereal-dev libxc-dev \
+    g++ make cmake bc time sudo vim git
 # If you wish to use the LLVM compiler, replace 'g++' above with 'clang libomp-dev'.
-RUN GIT_SSL_NO_VERIFY=true git clone https://github.com/deepmodeling/abacus-develop.git --depth 1 && cd abacus-develop && cmake -B build && cmake --build build -j`nproc` && cmake --install build && cd .. && rm -rf abacus-develop
+
+ENV GIT_SSL_NO_VERIFY=true TERM=xterm-256color \
+    OMPI_ALLOW_RUN_AS_ROOT=1 OMPI_ALLOW_RUN_AS_ROOT_CONFIRM=1 OMPI_MCA_btl_vader_single_copy_mechanism=none
+RUN git clone https://github.com/deepmodeling/abacus-develop.git --depth 1 && \
+    cd abacus-develop && \
+    cmake -B build && \
+    cmake --build build -j`nproc` && \
+    cmake --install build && \
+    cd .. && rm -rf abacus-develop
 # If you have trouble cloning repo, replace "github.com" with "gitee.com".
-ENV OMPI_ALLOW_RUN_AS_ROOT=1 OMPI_ALLOW_RUN_AS_ROOT_CONFIRM=1 OMPI_MCA_btl_vader_single_copy_mechanism=none
 CMD mpirun --use-hwthread-cpus abacus
 
 # To run ABACUS built by this image with all available threads, execute `docker run -v <host>:<wd> -w <wd/input> abacus`.

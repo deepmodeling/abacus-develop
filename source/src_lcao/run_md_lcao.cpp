@@ -56,7 +56,7 @@ void Run_MD_LCAO::opt_ions(ModuleESolver::ESolver *p_esolver)
     }
 
     //Charge_Extrapolation
-    CE.allocate_ions();
+    // CE.allocate_ions();
 
     // determine the md_type
     Verlet *verlet;
@@ -109,8 +109,8 @@ void Run_MD_LCAO::opt_ions(ModuleESolver::ESolver *p_esolver)
                 CE.update_istep(verlet->step_);
             }
 
-            CE.extrapolate_charge();
             CE.save_pos_next(GlobalC::ucell);
+            CE.extrapolate_charge();
 
             if(cellchange)
             {

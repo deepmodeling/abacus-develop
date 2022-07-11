@@ -71,7 +71,7 @@ void Hamilt_PW::init_k(const int ik)
 	//if (GlobalC::ppcell.nkb > 0 && !LINEAR_SCALING) xiaohui modify 2013-09-02
 	if(GlobalC::ppcell.nkb > 0 && (GlobalV::BASIS_TYPE=="pw" || GlobalV::BASIS_TYPE=="lcao_in_pw")) //xiaohui add 2013-09-02. Attention...
 	{
-		GlobalC::ppcell.getvnl(ik);
+		GlobalC::ppcell.getvnl(ik, GlobalC::ppcell.vkb);
 	}
 
 	// (4) The number of wave functions.
@@ -519,7 +519,7 @@ void Hamilt_PW::h_psi(const std::complex<double> *psi_in, std::complex<double> *
 			{
 				for (int ig = 0;ig < GlobalC::kv.ngk[GlobalV::CURRENT_K] ; ig++)
 				{
-					double fact = GlobalC::wfcpw->getgpluskcar(ik,ig)[j] * tpiba2;
+					double fact = GlobalC::wfcpw->getgpluskcar(ik,ig)[j] * GlobalC::ucell.tpiba;
 					porter[ig] = tmpsi_in[ig] * complex<double>(0.0,fact);
 				}
 				
@@ -533,7 +533,7 @@ void Hamilt_PW::h_psi(const std::complex<double> *psi_in, std::complex<double> *
 
 				for (int ig = 0;ig < npw ; ig++)
 				{
-					double fact = GlobalC::wfcpw->getgpluskcar(ik,ig)[j] * tpiba2;
+					double fact = GlobalC::wfcpw->getgpluskcar(ik,ig)[j] * GlobalC::ucell.tpiba;
 					tmhpsi[ig] -= complex<double>(0.0,fact) * porter[ig];
 				}
 			}//x,y,z directions

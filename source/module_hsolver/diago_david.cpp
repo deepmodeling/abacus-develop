@@ -11,9 +11,8 @@ namespace hsolver
 
 int DiagoDavid::PW_DIAG_NDIM = 4;
 
-DiagoDavid::DiagoDavid(Hamilt_PW *hpw_in, const double *precondition_in)
+DiagoDavid::DiagoDavid(const double *precondition_in)
 {
-    this->hpw = hpw_in;
     this->precondition = precondition_in;
 
     test_david = 2;
@@ -23,7 +22,7 @@ DiagoDavid::DiagoDavid(Hamilt_PW *hpw_in, const double *precondition_in)
     // default: no check
 }
 
-void DiagoDavid::diag_mock(psi::Psi<std::complex<double>> &psi, double *eigenvalue_in)
+void DiagoDavid::diag_mock(hamilt::Hamilt* phm_in, psi::Psi<std::complex<double>> &psi, double *eigenvalue_in)
 {
     if (test_david == 1)
         ModuleBase::TITLE("DiagoDavid", "diag_mock");
@@ -73,9 +72,10 @@ void DiagoDavid::diag_mock(psi::Psi<std::complex<double>> &psi, double *eigenval
             psi_m[ig] = psi(m, ig);
         }
 
-        this->SchmitOrth(dim, nband, m, basis, psi_m.data(), spsi.data());
+        this->SchmitOrth(phm_in, dim, nband, m, basis, psi_m.data(), spsi.data());
 
-        this->hpw->h_1psi(dim, psi_m.data(), hpsi.data(), spsi.data());
+        phm_in->hPsi(psi_m.data(), hpsi.data(),  (size_t)dim);
+        phm_in->sPsi(psi_m.data(), spsi.data(),  (size_t)dim);
 
         // basis(m) = psi_m, hp(m) = H |psi_m>, sp(m) = S |psi_m>
         for (int ig = 0; ig < dim; ig++)
@@ -105,7 +105,8 @@ void DiagoDavid::diag_mock(psi::Psi<std::complex<double>> &psi, double *eigenval
     {
         dav_iter++;
 
-        this->cal_grad(dim,
+        this->cal_grad(phm_in,
+                       dim,
                        nbase,
                        this->notconv,
                        basis,
@@ -185,7 +186,8 @@ void DiagoDavid::diag_mock(psi::Psi<std::complex<double>> &psi, double *eigenval
     return;
 }
 
-void DiagoDavid::cal_grad(const int &npw,
+void DiagoDavid::cal_grad(hamilt::Hamilt* phm_in,
+                          const int &npw,
                           const int &nbase, // current dimension of the reduced basis
                           const int &notconv,
                           ModuleBase::ComplexMatrix &basis,
@@ -222,9 +224,10 @@ void DiagoDavid::cal_grad(const int &npw,
             ppsi[ig] = respsi[ig] / this->precondition[ig];
         }
 
-        this->SchmitOrth(npw, nbase + notconv, nbase + m, basis, ppsi, spsi);
+        this->SchmitOrth(phm_in, npw, nbase + notconv, nbase + m, basis, ppsi, spsi);
 
-        this->hpw->h_1psi(npw, ppsi, hpsi, spsi);
+        phm_in->hPsi(ppsi, hpsi, (size_t)npw);
+        phm_in->sPsi(ppsi, spsi, (size_t)npw);
 
         for (int ig = 0; ig < npw; ig++)
         {
@@ -481,7 +484,8 @@ void DiagoDavid::cal_err(const int &npw,
     return;
 }
 
-void DiagoDavid::SchmitOrth(const int &npw,
+void DiagoDavid::SchmitOrth(hamilt::Hamilt* phm_in,
+                            const int &npw,
                             const int n_band,
                             const int m,
                             const ModuleBase::ComplexMatrix &psi,
@@ -501,7 +505,7 @@ void DiagoDavid::SchmitOrth(const int &npw,
     assert(m >= 0);
     assert(m < n_band);
 
-    this->hpw->s_1psi(npw, psi_m, spsi);
+    phm_in->sPsi(psi_m, spsi, (size_t)npw);
 
     std::complex<double> *lagrange = new std::complex<double>[m + 1];
     ModuleBase::GlobalFunc::ZEROS(lagrange, m + 1);
@@ -556,7 +560,7 @@ void DiagoDavid::SchmitOrth(const int &npw,
         }
     }
 
-    this->hpw->s_1psi(npw, psi_m, spsi);
+    phm_in->sPsi(psi_m, spsi, (size_t)npw);
 
     delete[] lagrange;
     ModuleBase::timer::tick("DiagoDavid", "SchmitOrth");
@@ -570,7 +574,7 @@ void DiagoDavid::diag(hamilt::Hamilt *phm_in, psi::Psi<std::complex<double>> &ps
     this->notconv = 0;
     do
     {
-        this->diag_mock(psi, eigenvalue_in);
+        this->diag_mock(phm_in, psi, eigenvalue_in);
         ++ntry;
     } while (DiagoIterAssist::test_exit_cond(ntry, this->notconv));
 

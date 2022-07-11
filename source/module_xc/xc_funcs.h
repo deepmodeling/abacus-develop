@@ -10,7 +10,7 @@
 #define  XC_GGA_X_PW91                  109  /*Perdew & Wang 91                                                      */
 #define  XC_GGA_X_OPTX                  110  /*Handy & Cohen OPTX 01                                                 */
 #define  XC_GGA_X_PBE_SOL               116  /* Perdew, Burke & Ernzerhof exchange (solids)                          */
-#define  XC_GGA_X_RPBE                  117  /*Hammer, Hansen & Norskov (PBE-like)                                   */
+#define  XC_GGA_X_PBE_R                 117  /*Y. Zhang and W. Yang (PBE-like)                                   */
 #define  XC_GGA_X_WC                    118  /*Wu & Cohen                                                            */
 #define  XC_GGA_C_PBE                   130  /*Perdew, Burke & Ernzerhof correlation                                 */
 #define  XC_GGA_C_LYP                   131  /*Lee, Yang & Parr                                                      */

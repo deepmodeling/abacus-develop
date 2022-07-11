@@ -59,13 +59,6 @@ template <typename T> class HamiltLCAO : public Hamilt
     // for target K point, update consequence of hPsi() and matrix()
     void updateHk(const int ik) override;
 
-    // core function: for solving eigenvalues of Hamiltonian with iterative method
-    virtual void hPsi(const psi::Psi<std::complex<double>>& psi, psi::Psi<std::complex<double>>& hpsi) const override
-    {
-        // should be updated for iterative diagonalization method
-        return;
-    };
-
     // core function: return H(k) and S(k) matrixs for direct solving eigenvalues.
     // not used in PW base
     //void matrix(MatrixBlock<std::complex<double>> &hk_in, MatrixBlock<std::complex<double>> &sk_in) override;

@@ -49,7 +49,7 @@ void LOOP_ions::opt_ions(ModuleESolver::ESolver* p_esolver)
         //Ions_Move_Methods
         IMM.allocate();
         //Charge_Extrapolation
-        CE.allocate_ions();
+        // CE.allocate_ions();
     }
 
     // pengfei Li 2018-05-14

@@ -32,7 +32,7 @@ void Gint_Gamma::cal_vlocal(Gint_inout *inout)
 	const int max_size = GlobalC::GridT.max_atom;
 	const int lgd = GlobalC::GridT.lgd;
 
-	if(inout->job==Gint_Tools::job_type::vlocal)
+	if(inout->job==Gint_Tools::job_type::vlocal || inout->job==Gint_Tools::job_type::vlocal_meta)
 	{
         if (max_size >0 && lgd > 0)
         {

@@ -27,11 +27,12 @@ void Stochastic_hchi:: hchi_reciprocal(complex<double> *chig, complex<double> *h
 	
 	//---------------------------------------------------
 
+	const int ik = this->current_ik;
+	const int current_spin = GlobalC::kv.isk[ik];
 	const int npwx = GlobalC::wf.npwx;
-	const int npw = GlobalC::wf.npw;
+	const int npw = GlobalC::kv.ngk[ik];
 	const int npm = GlobalV::NPOL * m;
 	const int inc = 1;
-	const int ik = this->current_ik;
 	const double tpiba2 = GlobalC::ucell.tpiba2;
 	const int nrxx = GlobalC::rhopw->nrxx;
 	//------------------------------------
@@ -61,12 +62,13 @@ void Stochastic_hchi:: hchi_reciprocal(complex<double> *chig, complex<double> *h
 	{
 		chibg = chig;
 		hchibg = hchig;
+		const double* pveff = &(GlobalC::pot.vr_eff(current_spin, 0));
 		for(int ib = 0 ; ib < m ; ++ib)
 		{
 			GlobalC::wfcpw->recip2real(chibg, porter, ik);
 			for (int ir=0; ir< nrxx; ir++)
 			{
-				porter[ir] *=  GlobalC::pot.vr_eff1[ir];
+				porter[ir] *=  pveff[ir];
 			}
 			GlobalC::wfcpw->real2recip(porter, hchibg, ik, true);
 			
@@ -94,11 +96,11 @@ void Stochastic_hchi:: hchi_reciprocal(complex<double> *chig, complex<double> *h
 			char transt = 'T';
 			if(m==1 && GlobalV::NPOL ==1)
 			{
-				zgemv_(&transc, &npw, &nkb, &ModuleBase::ONE, GlobalC::ppcell.vkb.c, &GlobalC::wf.npwx, chig, &inc, &ModuleBase::ZERO, becp, &inc);
+				zgemv_(&transc, &npw, &nkb, &ModuleBase::ONE, GlobalC::ppcell.vkb.c, &npwx, chig, &inc, &ModuleBase::ZERO, becp, &inc);
 			}
 			else
 			{
-				zgemm_(&transc,&transn,&nkb,&npm,&npw,&ModuleBase::ONE,GlobalC::ppcell.vkb.c,&GlobalC::wf.npwx,chig,&npwx,&ModuleBase::ZERO,becp,&nkb);
+				zgemm_(&transc,&transn,&nkb,&npm,&npw,&ModuleBase::ONE,GlobalC::ppcell.vkb.c,&npwx,chig,&npwx,&ModuleBase::ZERO,becp,&nkb);
 			}
 			Parallel_Reduce::reduce_complex_double_pool( becp, nkb * GlobalV::NPOL * m);
 
@@ -122,7 +124,7 @@ void Stochastic_hchi:: hchi_reciprocal(complex<double> *chig, complex<double> *h
 							for(int ib = 0; ib < m ; ++ib)
 							{
 								Ps[(sum + ip2) * m + ib] += 
-								GlobalC::ppcell.deeq(GlobalV::CURRENT_SPIN, iat, ip, ip2) * becp[ib * nkb + sum + ip];
+								GlobalC::ppcell.deeq(current_spin, iat, ip, ip2) * becp[ib * nkb + sum + ip];
 							}//end ib
     		            }// end ih
     		        }//end jh 
@@ -134,12 +136,12 @@ void Stochastic_hchi:: hchi_reciprocal(complex<double> *chig, complex<double> *h
 			if(GlobalV::NPOL==1 && m==1)
 			{
 				zgemv_(&transn, &npw, &nkb, &ModuleBase::ONE, 
-						GlobalC::ppcell.vkb.c, &GlobalC::wf.npwx, Ps, &inc, &ModuleBase::ONE, hchig, &inc);
+						GlobalC::ppcell.vkb.c, &npwx, Ps, &inc, &ModuleBase::ONE, hchig, &inc);
 			}
 			else
 			{
 				zgemm_(&transn,&transt,&npw,&npm,&nkb,&ModuleBase::ONE,
-						GlobalC::ppcell.vkb.c,&GlobalC::wf.npwx,Ps,&npm,&ModuleBase::ONE,hchig,&npwx);
+						GlobalC::ppcell.vkb.c,&npwx,Ps,&npm,&ModuleBase::ONE,hchig,&npwx);
 			}
 
 			delete[] becp;

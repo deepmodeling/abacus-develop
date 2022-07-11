@@ -145,7 +145,7 @@ void pseudopot_cell_vnl::init(const int ntype, const bool allocate_vkb)
 // Calculates beta functions (Kleinman-Bylander projectors),
 // with structure factor, for all atoms, in reciprocal space
 //----------------------------------------------------------
-void pseudopot_cell_vnl::getvnl(const int &ik)
+void pseudopot_cell_vnl::getvnl(const int &ik, ModuleBase::ComplexMatrix& vkb_in)const
 {
 	if(GlobalV::test_pp) ModuleBase::TITLE("pseudopot_cell_vnl","getvnl");
 	ModuleBase::timer::tick("pp_cell_vnl","getvnl");
@@ -156,14 +156,14 @@ void pseudopot_cell_vnl::getvnl(const int &ik)
 	}
 
 	const int npw = GlobalC::kv.ngk[ik];
-	int ig, ia, nb, ih;
+
 	ModuleBase::matrix vkb1(nhm, npw);
 	double *vq = new double[npw];
 	const int x1= (lmaxkb + 1)*(lmaxkb + 1);
 
 	ModuleBase::matrix ylm(x1, npw);
 	ModuleBase::Vector3<double> *gk = new ModuleBase::Vector3<double>[npw];
-	for (ig = 0;ig < npw;ig++) 
+	for (int ig = 0;ig < npw;ig++) 
 	{
 		gk[ig] = GlobalC::wf.get_1qvec_cartesian(ik, ig);
 	}
@@ -179,10 +179,10 @@ void pseudopot_cell_vnl::getvnl(const int &ik)
 
 		if(GlobalV::test_pp>1) ModuleBase::GlobalFunc::OUT("nbeta",nbeta);
 
-		for (nb = 0;nb < nbeta;nb++)
+		for (int nb = 0;nb < nbeta;nb++)
 		{
 			if(GlobalV::test_pp>1) ModuleBase::GlobalFunc::OUT("ib",nb);
-			for (ig = 0;ig < npw;ig++)
+			for (int ig = 0;ig < npw;ig++)
 			{
 				const double gnorm = gk[ig].norm() * GlobalC::ucell.tpiba;
 
@@ -191,12 +191,12 @@ void pseudopot_cell_vnl::getvnl(const int &ik)
 			}
 
 			// add spherical harmonic part
-			for (ih = 0;ih < nh;ih++)
+			for (int ih = 0;ih < nh;ih++)
 			{
 				if (nb == this->indv(it, ih))
 				{
 					const int lm = static_cast<int>( nhtolm(it, ih) );
-					for (ig = 0;ig < npw;ig++)
+					for (int ig = 0;ig < npw;ig++)
 					{
 						vkb1(ih, ig) = ylm(lm, ig) * vq [ig];
 					}
@@ -206,15 +206,16 @@ void pseudopot_cell_vnl::getvnl(const int &ik)
 
 		// vkb1 contains all betas including angular part for type nt
 		// now add the structure factor and factor (-i)^l
-		for (ia=0; ia<GlobalC::ucell.atoms[it].na; ia++) 
+		for (int ia=0; ia<GlobalC::ucell.atoms[it].na; ia++) 
 		{
 			std::complex<double> *sk = GlobalC::wf.get_sk(ik, it, ia,GlobalC::wfcpw);
-			for (ih = 0;ih < nh;ih++)
+			for (int ih = 0;ih < nh;ih++)
 			{
 				std::complex<double> pref = pow( ModuleBase::NEG_IMAG_UNIT, nhtol(it, ih));	//?
-				for (ig = 0;ig < npw;ig++)
+				std::complex<double>* pvkb = &vkb_in(jkb, 0);
+				for (int ig = 0;ig < npw;ig++)
 				{
-					this->vkb(jkb, ig) = vkb1(ih, ig) * sk [ig] * pref;
+					pvkb[ig] = vkb1(ih, ig) * sk [ig] * pref;
 				}
 				++jkb;
 			} // end ih

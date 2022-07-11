@@ -3,17 +3,7 @@
 
 #include "module_base/complexmatrix.h"
 #include "module_psi/psi.h"
-#if ((defined __CUDA) || (defined __ROCM))
-
-#ifdef __CUDA
-#include "src_pw/hamilt_pw.cuh"
-#else
-#include "src_pw/hamilt_pw_hip.h"
-#endif
-
-#else
-#include "src_pw/hamilt_pw.h"
-#endif
+#include "module_hamilt/hamilt.h"
 
 namespace hsolver
 {
@@ -28,11 +18,17 @@ class DiagoIterAssist
     static double avg_iter;
     static bool need_subspace;
 
-    static void diagH_subspace(Hamilt_PW *phm,
+    // for CG diagonalization only
+    static void diagH_subspace(hamilt::Hamilt* pHamilt,
                                const psi::Psi<std::complex<double>> &psi,
                                psi::Psi<std::complex<double>> &evc,
                                double *en,
                                int n_band = 0);
+    // for initializing wave function , this is a template function
+    static void diagH_subspace_init(hamilt::Hamilt* pHamilt,
+                               const ModuleBase::ComplexMatrix &psi,
+                               psi::Psi<std::complex<double>> &evc,
+                               double *en);
 
     static void diagH_LAPACK(const int nstart,
                              const int nbands,

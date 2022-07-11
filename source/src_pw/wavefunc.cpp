@@ -5,6 +5,7 @@
 #include "../src_io/chi0_hilbert.h"
 #include "../module_base/memory.h"
 #include "../module_base/timer.h"
+#include "module_hsolver/diago_iter_assist.h"
 
 wavefunc::wavefunc()
 {
@@ -22,6 +23,11 @@ wavefunc::~wavefunc()
 	{
 		for(int ik=0; ik<GlobalC::kv.nks; ik++) delete[] ekb[ik];
 		delete[] ekb;
+	}
+	if(this->irindex == nullptr) 
+	{
+		delete[] this->irindex;		
+		this->irindex=nullptr;
 	}
 }
 
@@ -265,21 +271,23 @@ void wavefunc::diago_PAO_in_pw_k(const int &ik, psi::Psi<std::complex<double>> &
 	return;
 }
 
-void wavefunc::diago_PAO_in_pw_k2(const int &ik, psi::Psi<std::complex<double>> &wvf)
+void wavefunc::diago_PAO_in_pw_k2(const int &ik, psi::Psi<std::complex<double>> &wvf, hamilt::Hamilt* phm_in)
 {
 	ModuleBase::TITLE("wavefunc","diago_PAO_in_pw_k2");
 	// (6) Prepare for atmoic orbitals or random orbitals
 	const int starting_nw = this->get_starting_nw();
+	if(starting_nw == 0) return;
 	assert(starting_nw > 0);
 
 	const int nbasis = wvf.get_nbasis();
 	const int nbands = wvf.get_nbands();
+	const int current_nbasis = GlobalC::kv.ngk[ik];
 
 	ModuleBase::ComplexMatrix wfcatom(starting_nw, nbasis);//added by zhengdy-soc
 	if(GlobalV::test_wf)ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "starting_nw", starting_nw);
 	if(init_wfc.substr(0,6)=="atomic")
 	{
-		this->atomic_wfc(ik, this->npw, GlobalC::ucell.lmax_ppwf, wfcatom, GlobalC::ppcell.tab_at, GlobalV::NQX, GlobalV::DQ);
+		this->atomic_wfc(ik, current_nbasis, GlobalC::ucell.lmax_ppwf, wfcatom, GlobalC::ppcell.tab_at, GlobalV::NQX, GlobalV::DQ);
 		if( init_wfc == "atomic+random" && starting_nw == GlobalC::ucell.natomwfc )//added by qianrui 2021-5-16
 		{
 			this->atomicrandom(wfcatom,0,starting_nw,ik, GlobalC::wfcpw);
@@ -301,7 +309,18 @@ void wavefunc::diago_PAO_in_pw_k2(const int &ik, psi::Psi<std::complex<double>> 
 	//if(GlobalV::DIAGO_TYPE == "cg") xiaohui modify 2013-09-02
 	if(GlobalV::KS_SOLVER=="cg") //xiaohui add 2013-09-02
 	{
-		GlobalC::hm.diagH_subspace(ik ,starting_nw, nbands, wfcatom, wfcatom, etatom.data());
+		if(phm_in!= nullptr)
+		{
+			hsolver::DiagoIterAssist::diagH_subspace_init(phm_in,
+                               wfcatom,
+                               wvf,
+                               etatom.data());
+			return;
+		}
+		else
+		{
+			GlobalC::hm.diagH_subspace(ik ,starting_nw, nbands, wfcatom, wfcatom, etatom.data());
+		}
 	}
 
 	/*
@@ -343,7 +362,7 @@ void wavefunc::wfcinit_k(psi::Psi<std::complex<double>>* psi_in)
 			// get the wave functions
 			// by first diagolize PAO
 			// wave functions.
-			this->diago_PAO_in_pw_k(ik, *psi_in);
+			//this->diago_PAO_in_pw_k(ik, *psi_in);
 		}
 #ifdef __LCAO
 		else if(GlobalV::BASIS_TYPE=="lcao_in_pw")
@@ -353,10 +372,6 @@ void wavefunc::wfcinit_k(psi::Psi<std::complex<double>>* psi_in)
 			this->LCAO_in_pw_k(ik, GlobalC::wf.wanf2[ik]);
 		}
 #endif
-	}
-	if(GlobalV::BASIS_TYPE=="pw") 
-	{
-		delete[] this->irindex;		this->irindex=nullptr;
 	}
 
 	//---------------------------------------------------

@@ -10,7 +10,7 @@ std::vector<T> operator + ( const std::vector<T> & x1, const std::vector<T> & x2
 {
 	assert(x1.size()==x2.size());
 	std::vector<T> x;
-	for( size_t i=0; i!=x1.size(); ++i )
+	for(std::size_t i=0; i!=x1.size(); ++i )
 		x.push_back(x1[i]+x2[i]);
 	return x;
 }
@@ -20,7 +20,7 @@ std::vector<T> operator - ( const std::vector<T> & x1, const std::vector<T> & x2
 {
 	assert(x1.size()==x2.size());
 	std::vector<T> x;
-	for( size_t i=0; i!=x1.size(); ++i )
+	for(std::size_t i=0; i!=x1.size(); ++i )
 		x.push_back(x1[i]-x2[i]);
 	return x;
 }
@@ -49,7 +49,7 @@ template< typename T1, typename T2 >
 std::vector<T2> operator * ( const T1 & x1, const std::vector<T2> & x2 )
 {
 	std::vector<T2> x;
-	for( size_t i=0; i!=x2.size(); ++i )
+	for(std::size_t i=0; i!=x2.size(); ++i )
 		x.push_back(x1*x2[i]);
 	return x;
 }

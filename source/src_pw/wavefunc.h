@@ -6,6 +6,7 @@
 #include "../module_base/matrix.h"
 #include "../module_base/complexmatrix.h"
 #include "wf_atomic.h"
+#include "module_hamilt/hamilt.h"
 
 class wavefunc : public WF_atomic
 {
@@ -50,7 +51,7 @@ class wavefunc : public WF_atomic
 	// used if k dependent staff is ready.
 	void prepare_k(void);
 
-	void diago_PAO_in_pw_k2(const int &ik, psi::Psi<std::complex<double>> &wvf);
+	void diago_PAO_in_pw_k2(const int &ik, psi::Psi<std::complex<double>> &wvf, hamilt::Hamilt* phm_in = nullptr);
     void diago_PAO_in_pw_k2(const int &ik, ModuleBase::ComplexMatrix &wvf);
 
     int get_R(int ix, int iy, int iz);     // pengfei 2016-11-23

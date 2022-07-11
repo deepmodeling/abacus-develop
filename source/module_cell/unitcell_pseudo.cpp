@@ -8,6 +8,7 @@
 #include "../module_base/global_file.h"
 #include "../src_parallel/parallel_common.h"
 #include "../module_base/constants.h"
+#include "../module_base/element_elec_config.h"
 
 UnitCell_pseudo::UnitCell_pseudo()
 {
@@ -290,6 +291,36 @@ void UnitCell_pseudo::setup_cell(
 	// setup GlobalV::NLOCAL
 	this->cal_nwfc(log);
 #endif
+
+//	Check whether the number of valence is minimum 
+	if(GlobalV::MY_RANK==0)
+	{
+		int abtype = 0;
+		for(int it=0; it<ntype; it++)
+		{
+			if(atoms[it].zv > ModuleBase::MinZval.at(atoms[it].label))
+			{
+				abtype += 1;
+				if(abtype == 1)
+				{
+					std::cout << "\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"<<std::endl;
+					log << "\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"<<std::endl;
+				}
+				std::cout<<" Warning: number valence electrons > " << ModuleBase::MinZval.at(atoms[it].label);
+				std::cout<<" for " << atoms[it].label << ": " << ModuleBase::EleConfig.at(atoms[it].label) << std::endl;
+				log << " Warning: number valence electrons > " << ModuleBase::MinZval.at(atoms[it].label);
+				log << " for " << atoms[it].label << ": " << ModuleBase::EleConfig.at(atoms[it].label) << std::endl;
+			}
+		}
+		if(abtype>0)
+		{
+			std::cout<< " Please make sure the pseudopotential file is what you need"<<std::endl;
+			std::cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n"<<std::endl;
+			log << " Please make sure the pseudopential file is what you need"<<std::endl;
+			log << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!";
+			ModuleBase::GlobalFunc::OUT(log,"");
+		}
+	}
 
 	// setup GlobalV::NBANDS
 	//this->cal_nelec();

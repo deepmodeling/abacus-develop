@@ -54,7 +54,7 @@ void XC_Functional::gcxc(const double &rho, const double &grho, double &sxc,
                 XC_Functional::ggax(rho, grho, s, v1, v2);break;
             case XC_GGA_X_PBE: //PBX
                 XC_Functional::pbex(rho, grho, 0, s, v1, v2);break;
-            case XC_GGA_X_RPBE: //revised PBX
+            case XC_GGA_X_PBE_R: //revised PBX
                 XC_Functional::pbex(rho, grho, 1, s, v1, v2);break;
             case XC_GGA_X_HCTH_A: //HCTH_X
                 XC_Functional::hcth(rho, grho, s, v1, v2);break; //XC together
@@ -164,7 +164,7 @@ void XC_Functional::gcx_spin(double rhoup, double rhodw, double grhoup2, double 
                     XC_Functional::pbex(2.0 * rhodw, 4.0 * grhodw2, 0, sxdw, v1xdw, v2xdw);
                 }
                 break;
-            case XC_GGA_X_RPBE: //revised PBX
+            case XC_GGA_X_PBE_R: //revised PBX
                 if (rhoup > small && sqrt(fabs(grhoup2)) > small)
                 {
                     XC_Functional::pbex(2.0 * rhoup, 4.0 * grhoup2, 1, sxup, v1xup, v2xup);

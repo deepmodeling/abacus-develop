@@ -23,7 +23,20 @@ static void print_tmp(const T &S)
 	}
 }
 
-void print_matrixess(const std::map<size_t,std::map<size_t,std::map<Abfs::Vector3_Order<double>,std::weak_ptr<ModuleBase::matrix>>>> &ms, std::ofstream &ofs)
+template<typename T1,typename T2,typename T3>
+void print_matrixess(const std::map<T1,std::map<T2,std::map<Abfs::Vector3_Order<T3>,ModuleBase::matrix>>> &ms, std::ofstream &ofs)
+{
+	for( const auto & c1 : ms )
+		for( const auto & c2 : c1.second )
+			for( const auto & c3 : c2.second )
+			{
+				ofs<<c1.first<<"\t"<<c2.first<<"\t"<<c3.first<<std::endl;
+				c3.second.print(ofs, 1E-10)<<std::endl;
+			}
+}
+
+template<typename T1,typename T2,typename T3>
+void print_matrixess(const std::map<T1,std::map<T2,std::map<Abfs::Vector3_Order<T3>,std::weak_ptr<ModuleBase::matrix>>>> &ms, std::ofstream &ofs)
 {
 	for( const auto & c1 : ms )
 		for( const auto & c2 : c1.second )
@@ -34,7 +47,8 @@ void print_matrixess(const std::map<size_t,std::map<size_t,std::map<Abfs::Vector
 			}
 }
 
-void print_matrixess(const std::map<size_t,std::map<size_t,std::map<Abfs::Vector3_Order<int>,std::shared_ptr<ModuleBase::matrix>>>> &ms, std::ofstream &ofs)
+template<typename T1,typename T2,typename T3>
+void print_matrixess(const std::map<T1,std::map<T2,std::map<Abfs::Vector3_Order<T3>,std::shared_ptr<ModuleBase::matrix>>>> &ms, std::ofstream &ofs)
 {
 	for( const auto & c1 : ms )
 		for( const auto & c2 : c1.second )

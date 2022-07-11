@@ -122,6 +122,7 @@ gint_k_pvpr.o\
 gint_k_sparse.o\
 gint_rho.o\
 gint_vl.o\
+gint_tau.cpp
 gint.o\
 ORB_control.o\
 ORB_read.o\

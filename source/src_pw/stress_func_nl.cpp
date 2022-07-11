@@ -39,11 +39,11 @@ void Stress_Func::stress_nl(ModuleBase::matrix& sigma, const psi::Psi<complex<do
     for (int ik = 0;ik < GlobalC::kv.nks;ik++)
     {   	  
 		if (GlobalV::NSPIN==2) GlobalV::CURRENT_SPIN = GlobalC::kv.isk[ik];
-		GlobalC::wf.npw = GlobalC::kv.ngk[ik];
+		const int npw = GlobalC::kv.ngk[ik];
 		// generate vkb
 		if (GlobalC::ppcell.nkb > 0)
 		{
-			GlobalC::ppcell.getvnl(ik);
+			GlobalC::ppcell.getvnl(ik, GlobalC::ppcell.vkb);
 		}
 
 		// get becp according to wave functions and vkb
@@ -75,7 +75,7 @@ void Stress_Func::stress_nl(ModuleBase::matrix& sigma, const psi::Psi<complex<do
             &transb,
             &nkb,
             &npm,
-            &GlobalC::wf.npw,
+            &npw,
             &ModuleBase::ONE,
             GlobalC::ppcell.vkb.c,
             &GlobalC::wf.npwx,
@@ -113,7 +113,7 @@ void Stress_Func::stress_nl(ModuleBase::matrix& sigma, const psi::Psi<complex<do
 					// third term of dbecp_noevc
 					//std::complex<double>* pvkb = &vkb2(i,0);
 					//std::complex<double>* pdbecp_noevc = &dbecp_noevc(i, 0);
-					for (int ig = 0; ig < GlobalC::wf.npw; ig++) 
+					for (int ig = 0; ig < npw; ig++) 
 					{
 						qvec = GlobalC::wfcpw->getgpluskcar(ik, ig);
 
@@ -129,7 +129,7 @@ void Stress_Func::stress_nl(ModuleBase::matrix& sigma, const psi::Psi<complex<do
 					std::complex<double>* pdbecp_noevc = &dbecp_noevc(i, 0);
 					std::complex<double>* pvkb = &vkb1(i, 0);
 					// first term
-					for (int ig = 0; ig < GlobalC::wf.npw;ig++) 
+					for (int ig = 0; ig < npw;ig++) 
 					{
 						pdbecp_noevc[ig] -= 2.0 * pvkb[ig];
 					}
@@ -137,14 +137,14 @@ void Stress_Func::stress_nl(ModuleBase::matrix& sigma, const psi::Psi<complex<do
 					if (ipol == jpol)
 					{
 						pvkb = &GlobalC::ppcell.vkb(i, 0);
-						for (int ig = 0; ig < GlobalC::wf.npw;ig++) 
+						for (int ig = 0; ig < npw;ig++) 
 						{
 							pdbecp_noevc[ig] -= pvkb[ig];
 						}
 					}
 					// third term
 					pvkb = &vkb2(i,0);
-					for (int ig = 0; ig < GlobalC::wf.npw;ig++) 
+					for (int ig = 0; ig < npw;ig++) 
 					{
 						qvec =	GlobalC::wfcpw->getgpluskcar(ik, ig);
 						double qm1;
@@ -158,7 +158,7 @@ void Stress_Func::stress_nl(ModuleBase::matrix& sigma, const psi::Psi<complex<do
 					&transb,
 					&nkb,
 					&npm,
-					&GlobalC::wf.npw,
+					&npw,
 					&ModuleBase::ONE,
 					dbecp_noevc.c,
 					&GlobalC::wf.npwx,

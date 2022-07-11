@@ -10,7 +10,8 @@
 
 namespace Gint_Tools
 {
-    enum class job_type{vlocal, rho, force};
+    enum class job_type{vlocal, rho, force, tau, vlocal_meta, crosstaus};
+	//Hamiltonian, electron density, force, kinetic energy density, Hamiltonian for mGGA
 }
 
 //the class used to pass input/output variables
@@ -22,6 +23,8 @@ class Gint_inout
         double** DM_R;
         double*** DM;
         double* vl;
+		double* vofk;
+		double** crosstaus;
         bool isforce;
         bool isstress;
         int ispin;
@@ -39,6 +42,14 @@ class Gint_inout
         {
             DM_R = DM_R_in;
             chr = chr_in;
+            job = job_in;
+        }
+
+	// crosstaus, multi-k
+        Gint_inout(double **DM_R_in, double** crosstaus_in, Gint_Tools::job_type job_in)
+        {
+            DM_R = DM_R_in;
+            crosstaus = crosstaus_in;
             job = job_in;
         }
 
@@ -64,6 +75,18 @@ class Gint_inout
             Gint_Tools::job_type job_in)
         {
             vl = vl_in;
+            ispin = ispin_in;
+            job = job_in;
+        }
+
+	// mGGA vlocal, multi-k
+        Gint_inout(double* vl_in,
+			double* vofk_in,
+            int ispin_in,
+            Gint_Tools::job_type job_in)
+        {
+            vl = vl_in;
+			vofk = vofk_in;
             ispin = ispin_in;
             job = job_in;
         }
@@ -101,8 +124,20 @@ class Gint_inout
             lm = lm_in;
             job = job_in;
         }
-};
 
+	// mGGA vlocal, gamma point
+		Gint_inout(double* vl_in,
+			double* vofk_in,
+            LCAO_Matrix *lm_in,
+            Gint_Tools::job_type job_in)
+        {
+            vl = vl_in;
+			vofk = vofk_in;
+            lm = lm_in;
+            job = job_in;
+        }
+};
+ 
 namespace Gint_Tools
 {
 	template<typename T>

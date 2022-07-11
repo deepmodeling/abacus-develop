@@ -105,8 +105,8 @@ void Force_Stress_LCAO::getForceStress(
 				sigmaewa,
 				sigmacc,
 				sigmaxc);
+		this->stress_mgga(sigmaxc, loc, uhm);
 	}
-
 	//--------------------------------------------------------
 	// implement four terms which needs integration
 	//--------------------------------------------------------
@@ -827,7 +827,98 @@ void Force_Stress_LCAO::calStressPwPart(
 	}
 	//Exchange-correlation for PBE
 	sc_pw.stress_gga(sigmaxc);
+
 	return;
+}
+
+void Force_Stress_LCAO::stress_mgga(ModuleBase::matrix &sigmaxc,
+		Local_Orbital_Charge& loc,
+		LCAO_Hamilt &uhm)
+{
+	if(XC_Functional::get_func_type()==3)
+	{
+		double deband0 = 0.0;
+		double deband_aux = 0.0;
+		int ipol2xy[3][3];
+		double sigma_mgga[3][3];
+		double ***crosstaus;
+		crosstaus = new double**[GlobalV::NSPIN];
+
+		ipol2xy[0][0] = 0;
+		ipol2xy[0][1] = 1;
+		ipol2xy[0][2] = 2;
+		ipol2xy[1][0] = 1;
+		ipol2xy[1][1] = 3;
+		ipol2xy[1][2] = 4;
+		ipol2xy[2][0] = 2;
+		ipol2xy[2][1] = 4;
+		ipol2xy[2][2] = 5;
+
+		for(int is = 0;is<GlobalV::NSPIN;is++)
+		{
+			crosstaus[is] = new double*[GlobalC::wfcpw->nrxx];
+			for(int ir = 0;ir<GlobalC::wfcpw->nrxx; ir++)
+			{
+				crosstaus[is][ir] = new double [6];
+				ModuleBase::GlobalFunc::ZEROS(crosstaus[is][ir],6);
+			}
+			Gint_inout inout(loc.DM_R, crosstaus[is], Gint_Tools::job_type::crosstaus);
+			uhm.GK.cal_gint(&inout);
+		}
+
+		for(int is = 0; is < GlobalV::NSPIN; is++)
+		{
+			for (int ix = 0; ix < 3; ix++)
+			{
+				for (int iy = 0; iy < 3; iy++)
+				{
+					sigma_mgga[ix][iy] = 0.0;
+					for(int ir = 0;ir<GlobalC::wfcpw->nrxx;ir++)
+					{
+						double x = GlobalC::pot.vofk(is,ir) * crosstaus[is][ir][ipol2xy[ix][iy]];
+						sigma_mgga[ix][iy] += x;
+					}
+				}
+			}
+		}
+
+#ifdef __MPI
+		for(int l = 0;l<3;l++)
+		{
+			for(int m = 0;m<3;m++)
+			{
+				Parallel_Reduce::reduce_double_all( sigma_mgga[l][m] );
+			}
+		}
+#endif
+
+		for(int is = 0; is < GlobalV::NSPIN; is++)
+		{
+			for (int ir=0; ir<GlobalC::rhopw->nrxx; ir++)
+			{
+				deband_aux += GlobalC::CHR.kin_r[is][ir] * GlobalC::pot.vofk(is,ir);
+			}
+		}
+	#ifdef __MPI
+		MPI_Allreduce(&deband_aux,&deband0,1,MPI_DOUBLE,MPI_SUM,POOL_WORLD);
+	#else
+		deband0 = deband_aux;
+	#endif
+
+		for(int i=0;i<3;i++)
+		{
+			for(int j=0;j<3;j++)
+			{
+				sigmaxc(i,j) += sigma_mgga[i][j] * 2.0 / GlobalC::wfcpw->nxyz;
+			}
+		}
+
+		for(int i=0;i<3;i++)   
+		{
+			sigmaxc(i,i) += deband0 / GlobalC::rhopw->nxyz;
+		}
+
+	}
 }
 
 #include "../module_base/mathzone.h"

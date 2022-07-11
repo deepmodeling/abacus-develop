@@ -19,6 +19,7 @@ Potential::Potential()
 {
     vltot = nullptr;
     vr_eff1 = nullptr;
+    vofk_eff1 = nullptr;
     this->out_pot = 0;
 }
 
@@ -26,6 +27,7 @@ Potential::~Potential()
 {
     delete[] vltot;
     delete[] vr_eff1;
+    delete[] vofk_eff1;
 #ifdef __CUDA
     cudaFree(d_vr_eff1);
 #endif
@@ -50,6 +52,10 @@ void Potential::allocate(const int nrxx)
     {
         this->vofk.create(GlobalV::NSPIN, nrxx);
         ModuleBase::Memory::record("Potential", "vofk", GlobalV::NSPIN * nrxx, "double");
+        delete[] this->vofk_eff1;
+        if(nrxx > 0)    this->vofk_eff1 = new double[nrxx];
+        else            this->vofk_eff1 = nullptr;
+        ModuleBase::Memory::record("Potential", "vofk_eff1", nrxx, "double");   
     }
 
     delete[] this->vr_eff1;

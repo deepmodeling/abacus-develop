@@ -188,7 +188,7 @@ void Hamilt_PW::init_k(const int ik)
 	if (GlobalC::ppcell.nkb > 0
 		&& (GlobalV::BASIS_TYPE == "pw" || GlobalV::BASIS_TYPE == "lcao_in_pw")) // xiaohui add 2013-09-02. Attention...
 	{
-		GlobalC::ppcell.getvnl(ik);
+		GlobalC::ppcell.getvnl(ik, GlobalC::ppcell.vkb);
 	}
 
 	// (5) The number of wave functions.

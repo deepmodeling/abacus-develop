@@ -39,7 +39,8 @@ class Potential
 	
 	ModuleBase::matrix vofk; //kinetic energy density, for meta-GGA; wenfei 2021-07-28
 
-    double *vr_eff1; 
+    double *vr_eff1;
+	double *vofk_eff1;
 #ifdef __CUDA
 	double *d_vr_eff1;
 #endif

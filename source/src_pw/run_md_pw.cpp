@@ -38,7 +38,7 @@ void Run_MD_PW::md_ions_pw(ModuleESolver::ESolver *p_esolver)
     }
 
     // allocation for ion movement.
-    CE.allocate_ions();
+    // CE.allocate_ions();
 
     // determine the md_type
     Verlet *verlet;
@@ -91,8 +91,8 @@ void Run_MD_PW::md_ions_pw(ModuleESolver::ESolver *p_esolver)
                 CE.update_istep(verlet->step_);
             }
 
-            CE.extrapolate_charge();
             CE.save_pos_next(GlobalC::ucell);
+            CE.extrapolate_charge();
 
             if(cellchange)
             {

@@ -29,29 +29,22 @@ namespace hsolver
 
         // select the method of diagonalization
         this->method = method_in;
-        this->initpdiagh();
+        this->initDiagh();
 
         // part of KSDFT to get KS orbitals
 	    for (int ik = 0; ik < nks; ++ik)
 	    {
+			pHamilt->updateHk(ik);
 		    if(nbands > 0 && GlobalV::MY_STOGROUP == 0)
 		    {
-                pHamilt->updateHk(ik);
-                psi.fix_k(ik);
-
+				this->updatePsiK(pHamilt, psi, ik);
                 // template add precondition calculating here
                 update_precondition(precondition, ik, this->wfc_basis->npwk[ik]);
 		    	/// solve eigenvector and eigenvalue for H(k)
                 double* p_eigenvalues = &(pes->ekb(ik, 0));
                 this->hamiltSolvePsiK(pHamilt, psi, p_eigenvalues);
 		    }
-		    else
-		    {
-		    	pHamilt->updateHk(ik);
-                psi.fix_k(ik);
-		    	//In fact, hm.hpw.init_k has been done in wf.wfcinit();
-		    }
-
+            
 		    stoiter.stohchi.current_ik = ik;
 		
 #ifdef __MPI
@@ -71,6 +64,8 @@ namespace hsolver
             delete pdiagh;
             pdiagh = nullptr;
         }
+
+		this->endDiagh();
 
 		for (int ik = 0;ik < nks;ik++)
 		{
@@ -99,7 +94,7 @@ namespace hsolver
 		}
 		// calculate stochastic rho
 		stoiter.sum_stoband(stowf,pes);
-		
+
 
 		//(6) calculate the delta_harris energy 
 		// according to new charge density.

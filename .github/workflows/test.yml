@@ -22,5 +22,6 @@ jobs:
       - name: Test
         env:
           GTEST_COLOR: 'yes'
+          # OMP_NUM_THREADS: '1'
         run: |
           cmake --build build --target test ARGS="-V"

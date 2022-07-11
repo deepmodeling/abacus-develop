@@ -11,45 +11,34 @@ using namespace std;
 //--------------------------------
 class Charge_Extra
 {
-	public:
+    public:
 
-	Charge_Extra();
-	~Charge_Extra();
+    Charge_Extra();
+    ~Charge_Extra();
 
-	void allocate_ions(void);
-	void extrapolate_charge(void);
+    void extrapolate_charge(void);
+    void save_pos_next(const UnitCell_pseudo& ucell);
+    void update_istep(const int &step);
+    void update_all_pos(const UnitCell_pseudo& ucell);
 
-	void save_pos_next(const UnitCell_pseudo& ucell);
-	void update_istep(const int &step);
-	void update_all_pos(const UnitCell_pseudo& ucell);
+    private:
+    int istep;
+    int natom;
+    int pot_order;
+    int rho_extr;
 
-	private:
-	// use "istep = ions.istep"
-	int istep;
+    // for the second-order extrapolation
+    ModuleBase::Vector3<double> *pos_old1;
+    ModuleBase::Vector3<double> *pos_old2;
+    ModuleBase::Vector3<double> *pos_now;
+    ModuleBase::Vector3<double> *pos_next;
 
-	// for the second-order extrapolation
-	double* pos_old1;
-	double* pos_old2;
-	double* pos_now;
-	double* pos_next;
+    double** delta_rho1;
+    double** delta_rho2;
 
-	private:
+    double alpha,beta;
 
-	double*** rho_ion; //(dim, nspin, GlobalC::rhopw->nrxx)
-	bool init_rho;
-	int dim;
-
-	// use the first-order extrapolation
-	double** delta_rho1;
-	double** delta_rho2;
-	double** delta_rho;
-
-	// use the second-order extrapolation
-	double** delta_rho3;
-	int pos_dim;
-	double alpha,beta;
-
-	void find_alpha_and_beta(void);
+    void find_alpha_and_beta(void);
 
 };
 

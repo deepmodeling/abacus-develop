@@ -27,7 +27,7 @@ void HSolverPW::update()
 {
     return;
 }*/
-void HSolverPW::initpdiagh()
+void HSolverPW::initDiagh()
 {
     if (this->method == "cg")
     {
@@ -36,13 +36,13 @@ void HSolverPW::initpdiagh()
             if(pdiagh->method != this->method)
             {
                 delete[] pdiagh;
-                pdiagh = new DiagoCG(&(GlobalC::hm.hpw), precondition.data());
+                pdiagh = new DiagoCG(precondition.data());
                 pdiagh->method = this->method;
             }
         }
         else
         {
-            pdiagh = new DiagoCG(&(GlobalC::hm.hpw), precondition.data());
+            pdiagh = new DiagoCG(precondition.data());
             pdiagh->method = this->method;
         }
     }
@@ -54,13 +54,13 @@ void HSolverPW::initpdiagh()
             if (pdiagh->method != this->method)
             {
                 delete[] pdiagh;
-                pdiagh = new DiagoDavid(&(GlobalC::hm.hpw), precondition.data());
+                pdiagh = new DiagoDavid( precondition.data());
                 pdiagh->method = this->method;
             }
         }
         else
         {
-            pdiagh = new DiagoDavid(&(GlobalC::hm.hpw), precondition.data());
+            pdiagh = new DiagoDavid( precondition.data());
             pdiagh->method = this->method;
         }
     }
@@ -79,7 +79,7 @@ void HSolverPW::solve(hamilt::Hamilt* pHamilt, psi::Psi<std::complex<double>>& p
 
     // select the method of diagonalization
     this->method = method_in;
-    this->initpdiagh();
+    this->initDiagh();
 
     /// Loop over k points for solve Hamiltonian to charge density
     for (int ik = 0; ik < this->wfc_basis->nks; ++ik)
@@ -87,7 +87,7 @@ void HSolverPW::solve(hamilt::Hamilt* pHamilt, psi::Psi<std::complex<double>>& p
         /// update H(k) for each k point
         pHamilt->updateHk(ik);
 
-        this->updatePsiK(psi, ik);
+        this->updatePsiK(pHamilt, psi, ik);
 
         // template add precondition calculating here
         update_precondition(precondition, ik, this->wfc_basis->npwk[ik]);
@@ -98,13 +98,7 @@ void HSolverPW::solve(hamilt::Hamilt* pHamilt, psi::Psi<std::complex<double>>& p
         /// calculate the contribution of Psi for charge density rho
     }
 
-    // DiagoCG would keep 9*nbasis memory in cache during loop-k
-    // it should be deleted before calculating charge
-    if(this->method == "cg")
-    {
-        delete (DiagoCG*)pdiagh;
-        pdiagh = nullptr;
-    }
+    this->endDiagh();
 
     if(skip_charge)
     {
@@ -117,24 +111,37 @@ void HSolverPW::solve(hamilt::Hamilt* pHamilt, psi::Psi<std::complex<double>>& p
     return;
 }
 
-void HSolverPW::updatePsiK(psi::Psi<std::complex<double>>& psi, const int ik)
+void HSolverPW::endDiagh()
 {
-    if(GlobalV::CALCULATION=="nscf")
+    // DiagoCG would keep 9*nbasis memory in cache during loop-k
+    // it should be deleted before calculating charge
+    if(this->method == "cg")
+    {
+        delete (DiagoCG*)pdiagh;
+        pdiagh = nullptr;
+    }
+    if(this->method == "dav")
+    {
+        delete (DiagoDavid*)pdiagh;
+        pdiagh = nullptr;
+    }
+    //psi only should be initialed once for PW
+    if(!this->initialed_psi)
+    {
+        this->initialed_psi = true;
+    }
+}
+
+void HSolverPW::updatePsiK(hamilt::Hamilt* pHamilt, psi::Psi<std::complex<double>>& psi, const int ik)
+{
+    psi.fix_k(ik);
+    if(!this->initialed_psi)
     {
         if(GlobalV::BASIS_TYPE=="pw")
         {
             // generate PAOs first, then diagonalize to get
             // inital wavefunctions.
-            if(GlobalC::wf.mem_saver==1)
-            {
-                psi.fix_k(ik);
-                GlobalC::wf.diago_PAO_in_pw_k2(ik, psi);
-            }
-            else
-            {
-                psi.fix_k(ik);
-                GlobalC::wf.diago_PAO_in_pw_k2(ik, psi);
-            }
+            GlobalC::wf.diago_PAO_in_pw_k2(ik, psi, pHamilt);
         }
         else
         {
@@ -142,7 +149,6 @@ void HSolverPW::updatePsiK(psi::Psi<std::complex<double>>& psi, const int ik)
         }
         return;
     }
-    psi.fix_k(ik);
 }
 
 void HSolverPW::hamiltSolvePsiK(hamilt::Hamilt* hm, psi::Psi<std::complex<double>>& psi, double* eigenvalue)

@@ -906,7 +906,7 @@ namespace ModuleESolver
             GlobalC::dmft.out_to_dmft(this->LOWF, *this->UHM.LM);
         }
 
-        if (Pdiag_Double::out_mat_hsR)
+        if (hsolver::HSolverLCAO::out_mat_hsR)
         {
             this->output_HS_R(); //LiuXh add 2019-07-15
         }

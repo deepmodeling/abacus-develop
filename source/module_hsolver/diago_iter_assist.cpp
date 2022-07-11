@@ -21,7 +21,7 @@ bool DiagoIterAssist::need_subspace = false;
 // by nstart states psi (atomic or random wavefunctions).
 // Produces on output n_band eigenvectors (n_band <= nstart) in evc.
 //----------------------------------------------------------------------
-void DiagoIterAssist::diagH_subspace(Hamilt_PW *phm,
+void DiagoIterAssist::diagH_subspace(hamilt::Hamilt* pHamilt,
                                      const psi::Psi<std::complex<double>> &psi,
                                      psi::Psi<std::complex<double>> &evc,
                                      double *en,
@@ -50,8 +50,142 @@ void DiagoIterAssist::diagH_subspace(Hamilt_PW *phm,
     const std::complex<double> *paux = aux;
     const std::complex<double> *ppsi = psi.get_pointer();
 
-    // qianrui replace it
-    phm->h_psi(ppsi, aux, nstart);
+    pHamilt->hPsi(ppsi, aux, size_t(dmax * nstart));
+
+    char trans1 = 'C';
+    char trans2 = 'N';
+    zgemm_(&trans1,
+           &trans2,
+           &nstart,
+           &nstart,
+           &dmin,
+           &ModuleBase::ONE,
+           ppsi,
+           &dmax,
+           paux,
+           &dmax,
+           &ModuleBase::ZERO,
+           hc.c,
+           &nstart);
+    hc = transpose(hc, false);
+
+    zgemm_(&trans1,
+           &trans2,
+           &nstart,
+           &nstart,
+           &dmin,
+           &ModuleBase::ONE,
+           ppsi,
+           &dmax,
+           ppsi,
+           &dmax,
+           &ModuleBase::ZERO,
+           sc.c,
+           &nstart);
+    sc = transpose(sc, false);
+
+    delete[] aux;
+
+    if (GlobalV::NPROC_IN_POOL > 1)
+    {
+        Parallel_Reduce::reduce_complex_double_pool(hc.c, nstart * nstart);
+        Parallel_Reduce::reduce_complex_double_pool(sc.c, nstart * nstart);
+    }
+
+    // after generation of H and S matrix, diag them
+    DiagoIterAssist::diagH_LAPACK(nstart, n_band, hc, sc, nstart, en, hvec);
+
+    //=======================
+    // diagonize the H-matrix
+    //=======================
+    if ((GlobalV::BASIS_TYPE == "lcao" || GlobalV::BASIS_TYPE == "lcao_in_pw") && GlobalV::CALCULATION == "nscf")
+    {
+        GlobalV::ofs_running << " Not do zgemm to get evc." << std::endl;
+    }
+    else if ((GlobalV::BASIS_TYPE == "lcao" || GlobalV::BASIS_TYPE == "lcao_in_pw")
+             && (GlobalV::CALCULATION == "scf" || GlobalV::CALCULATION == "md"
+                 || GlobalV::CALCULATION == "relax")) // pengfei 2014-10-13
+    {
+        // because psi and evc are different here,
+        // I think if psi and evc are the same,
+        // there may be problems, mohan 2011-01-01
+        char transa = 'N';
+        char transb = 'T';
+        zgemm_(&transa,
+               &transb,
+               &dmax, // m: row of A,C
+               &n_band, // n: col of B,C
+               &nstart, // k: col of A, row of B
+               &ModuleBase::ONE, // alpha
+               ppsi, // A
+               &dmax, // LDA: if(N) max(1,m) if(T) max(1,k)
+               hvec.c, // B
+               &n_band, // LDB: if(N) max(1,k) if(T) max(1,n)
+               &ModuleBase::ZERO, // belta
+               evc.get_pointer(), // C
+               &dmax); // LDC: if(N) max(1, m)
+    }
+    else
+    {
+        // As the evc and psi may refer to the same matrix, we first
+        // create a temporary matrix to store the result. (by wangjp)
+        // qianrui improve this part 2021-3-13
+        char transa = 'N';
+        char transb = 'T';
+        ModuleBase::ComplexMatrix evctmp(n_band, dmin, false);
+        zgemm_(&transa,
+               &transb,
+               &dmin,
+               &n_band,
+               &nstart,
+               &ModuleBase::ONE,
+               ppsi,
+               &dmax,
+               hvec.c,
+               &n_band,
+               &ModuleBase::ZERO,
+               evctmp.c,
+               &dmin);
+        for (int ib = 0; ib < n_band; ib++)
+        {
+            for (int ig = 0; ig < dmin; ig++)
+            {
+                evc(ib, ig) = evctmp(ib, ig);
+            }
+        }
+    }
+
+    ModuleBase::timer::tick("DiagoIterAssist", "diagH_subspace");
+    return;
+}
+
+void DiagoIterAssist::diagH_subspace_init(hamilt::Hamilt* pHamilt,
+                                     const ModuleBase::ComplexMatrix &psi,
+                                     psi::Psi<std::complex<double>> &evc,
+                                     double *en)
+{
+    ModuleBase::TITLE("DiagoIterAssist", "diagH_subspace_init");
+    ModuleBase::timer::tick("DiagoIterAssist", "diagH_subspace");
+
+    // two case:
+    // 1. pw base: nstart = n_band, psi(nbands * npwx)
+    // 2. lcao_in_pw base: nstart >= n_band, psi(NLOCAL * npwx)
+    const int nstart = psi.nr;
+    const int n_band = evc.get_nbands();
+
+    ModuleBase::ComplexMatrix hc(nstart, nstart);
+    ModuleBase::ComplexMatrix sc(nstart, nstart);
+    ModuleBase::ComplexMatrix hvec(nstart, n_band);
+
+    const int dmin = evc.get_current_nbas();
+    const int dmax = evc.get_nbasis();
+
+    // qianrui improve this part 2021-3-14
+    std::complex<double> *aux = new std::complex<double>[dmax * nstart];
+    const std::complex<double> *paux = aux;
+    const std::complex<double> *ppsi = psi.c;
+
+    pHamilt->hPsi(ppsi, aux, size_t(dmax * nstart));
 
     char trans1 = 'C';
     char trans2 = 'N';

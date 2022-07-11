@@ -25,7 +25,7 @@ void XC_Functional::xc(const double &rho, double &exc, double &vxc)
         switch( id )
         {
             // Exchange functionals containing slater exchange
-            case XC_LDA_X: case XC_GGA_X_PBE: case XC_GGA_X_RPBE: 
+            case XC_LDA_X: case XC_GGA_X_PBE: case XC_GGA_X_PBE_R: 
             case XC_GGA_X_WC: case XC_GGA_X_B88: case XC_GGA_X_PW91:
             //  SLA,PBX,rPBX,PBXsol,WC,B88,PW91_X
                 XC_Functional::slater(rs, e, v);break;
@@ -77,7 +77,7 @@ void XC_Functional::xc_spin(const double &rho, const double &zeta,
         switch( id )
         {
             // Exchange functionals containing slater exchange
-            case XC_LDA_X: case XC_GGA_X_PBE: case XC_GGA_X_RPBE: 
+            case XC_LDA_X: case XC_GGA_X_PBE: case XC_GGA_X_PBE_R: 
             case XC_GGA_X_WC: case XC_GGA_X_B88: case XC_GGA_X_PW91:
             //  SLA,PBX,rPBX,PBXsol,WC,B88,PW91_X
                 XC_Functional::slater_spin(rho, zeta, e, vup, vdw);	break;

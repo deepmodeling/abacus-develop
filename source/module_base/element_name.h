@@ -123,12 +123,12 @@ const std::vector<std::string> element_name = {
 "Ds"	,
 "Rg"	,
 "Cn"	,
-"Uut"	,
-"Uuq"	,
-"Uup"	,
-"Uuh"	,
-"Uus"	,
-"Uuo"	
+"Nh"	,
+"Fl"	,
+"Mc"	,
+"Lv"	,
+"Ts"	,
+"Og"
 };
 
 }
