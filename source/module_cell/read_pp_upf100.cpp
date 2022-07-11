@@ -307,14 +307,6 @@ void Pseudopot_upf::read_pseudo_nl(std::ifstream &ifs)
 			for (ir=0;ir<kkbeta[i];ir++)
 			{
 				ifs >> this->beta(i, ir);// nl_3
-
-				// --------- FOR TEST ---------
-				// mohan test bug
-				if(i>2)
-				{
-					beta(i,ir) = 0.0;
-				}
-				// --------- FOR TEST ---------
 			}
 			ModuleBase::GlobalFunc::SCAN_END(ifs, "</PP_BETA>");
 		}

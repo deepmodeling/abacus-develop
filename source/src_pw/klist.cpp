@@ -252,8 +252,6 @@ bool K_Vectors::read_kpoints(const std::string &fn)
 			return 0;
         }
 
-        GlobalV::ofs_running << "is_mp : " << is_mp << std::endl;
-
         ifk >> nmp[0] >> nmp[1] >> nmp[2];
 
         ifk >> koffset[0] >> koffset[1] >> koffset[2];

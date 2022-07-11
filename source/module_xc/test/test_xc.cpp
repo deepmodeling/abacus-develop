@@ -11,6 +11,7 @@ namespace GlobalV
 {
     std::string BASIS_TYPE = "";
     bool CAL_STRESS = 0;
+    int CAL_FORCE = 0;
     int NSPIN = 1;
 }
 
@@ -92,7 +93,7 @@ TEST_F(XCTest_BP, set_xc_type)
     std::vector<double> v_lda_ref  = {-1.2588131365,-1.2588131365,-1.2096658201,-0.49757720968,-12.13038680};
     std::vector<double> e_gga_ref  = {0.0          ,-0.0012525632,-0.0457062154,-0.0035030371,0.0         };
     std::vector<double> v1_gga_ref = {0.0          ,0.00118557755,0.04272756138,0.04137909619,0.0         };
-    std::vector<double> v2_gga_ref = {-0.0010246353,-0.0016488916,-0.0027047176,-0.0753933855,0.0         };
+    std::vector<double> v2_gga_ref = {0.0,-0.0016488916,-0.0027047176,-0.0753933855,0.0         };
     for (int i = 0;i<5;++i)
     {
         EXPECT_NEAR(e_lda[i],e_lda_ref[i],1.0e-8);

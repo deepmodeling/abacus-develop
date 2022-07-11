@@ -189,15 +189,23 @@ void Stress_Func::stress_nl(ModuleBase::matrix& sigma, const psi::Psi<complex<do
 						const int Nprojs = GlobalC::ucell.atoms[it].nh;
 						for (int ia=0; ia<GlobalC::ucell.atoms[it].na; ia++)
 						{
-							for (int ip=0; ip<Nprojs; ip++)
+							for (int ip1=0; ip1<Nprojs; ip1++)
 							{
-								double ps = GlobalC::ppcell.deeq(GlobalV::CURRENT_SPIN, iat, ip, ip) ;
-								const int inkb = sum + ip;
-								//out<<"\n ps = "<<ps;
+								for(int ip2=0; ip2<Nprojs; ip2++)
+								{
+									if(!GlobalC::ppcell.multi_proj && ip1 != ip2) 
+									{
+										continue;
+									}
+									double ps = GlobalC::ppcell.deeq(GlobalV::CURRENT_SPIN, iat, ip1, ip2) ;
+									const int inkb1 = sum + ip1;
+									const int inkb2 = sum + ip2;
+									//out<<"\n ps = "<<ps;
 
-							 
-								const double dbb = ( conj( dbecp( ib, inkb) ) * becp( ib, inkb) ).real();
-								sigmanlc[ipol][ jpol] -= ps * fac * dbb;
+								
+									const double dbb = ( conj( dbecp( ib, inkb1) ) * becp( ib, inkb2) ).real();
+									sigmanlc[ipol][ jpol] -= ps * fac * dbb;
+								}
 							 
 							}//end ip
 							++iat;        

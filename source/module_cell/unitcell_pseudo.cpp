@@ -298,18 +298,21 @@ void UnitCell_pseudo::setup_cell(
 		int abtype = 0;
 		for(int it=0; it<ntype; it++)
 		{
-			if(atoms[it].zv > ModuleBase::MinZval.at(atoms[it].label))
+			if(ModuleBase::MinZval.find(atoms[it].psd) != ModuleBase::MinZval.end())
 			{
-				abtype += 1;
-				if(abtype == 1)
+				if(atoms[it].zv > ModuleBase::MinZval.at(atoms[it].psd))
 				{
-					std::cout << "\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"<<std::endl;
-					log << "\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"<<std::endl;
+					abtype += 1;
+					if(abtype == 1)
+					{
+						std::cout << "\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"<<std::endl;
+						log << "\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"<<std::endl;
+					}
+					std::cout<<" Warning: number valence electrons > " << ModuleBase::MinZval.at(atoms[it].psd);
+					std::cout<<" for " << atoms[it].psd << ": " << ModuleBase::EleConfig.at(atoms[it].psd) << std::endl;
+					log << " Warning: number valence electrons > " << ModuleBase::MinZval.at(atoms[it].psd);
+					log << " for " << atoms[it].psd << ": " << ModuleBase::EleConfig.at(atoms[it].psd) << std::endl;
 				}
-				std::cout<<" Warning: number valence electrons > " << ModuleBase::MinZval.at(atoms[it].label);
-				std::cout<<" for " << atoms[it].label << ": " << ModuleBase::EleConfig.at(atoms[it].label) << std::endl;
-				log << " Warning: number valence electrons > " << ModuleBase::MinZval.at(atoms[it].label);
-				log << " for " << atoms[it].label << ": " << ModuleBase::EleConfig.at(atoms[it].label) << std::endl;
 			}
 		}
 		if(abtype>0)

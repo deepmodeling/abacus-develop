@@ -41,7 +41,9 @@ std::vector<size_t> Exx_Abfs::Parallel::Distribute::Htime::cal_Nadj(
 		{
 			set<Abfs::Vector3_Order<int>> boxp;
 			for( const auto & box : adj_i.second )
+			{
 				boxp.insert( box % Born_von_Karman_period );
+			}
 			Nadj[iat] += boxp.size();
 		}
 	}

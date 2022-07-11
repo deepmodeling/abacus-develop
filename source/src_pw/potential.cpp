@@ -487,6 +487,13 @@ void Potential::newd(void)
                     {
                         GlobalC::ppcell.deeq(is, iat, ih, jh) = GlobalC::ppcell.dvan(it, ih, jh);
                         GlobalC::ppcell.deeq(is, iat, jh, ih) = GlobalC::ppcell.dvan(it, ih, jh);
+                        // in most of pseudopotential files, number of projections of one orbital is only one, 
+                        // which lead to diagonal matrix of dion
+                        // when number larger than 1, non-diagonal dion should be calculated.
+                        if(ih != jh && std::fabs(GlobalC::ppcell.deeq(is, iat, ih, jh))>0.0)
+                        {
+                            GlobalC::ppcell.multi_proj = true;
+                        }
                     }
                 }
             }

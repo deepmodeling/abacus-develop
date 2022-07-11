@@ -35,11 +35,12 @@ void XC_Functional::gcxc(const double &rho, const double &grho, double &sxc,
     // USE kinds
     // implicit none
     // real rho, grho, sx, sc, v1x, v2x, v1c, v2c;
-    double small = 1.e-10;
+    const double small = 1.e-6;
+    const double smallg = 1.e-10;
     double s,v1,v2;
     sxc = v1xc = v2xc = 0.0;
 
-    if (rho <= small)
+    if (rho <= small || grho < small)
     {
         return;
     }

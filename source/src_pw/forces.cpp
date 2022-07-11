@@ -792,31 +792,28 @@ void Forces::cal_force_nl(ModuleBase::matrix& forcenl, const psi::Psi<complex<do
 						}
 					}
 
-					//if ( GlobalC::ucell.atoms[it].nbeta > GlobalC::ucell.atoms[it].lmax+1 )    //{zws add 20160110
-					//{
-					//std::cout << " \n multi-projector force calculation ... " << std::endl;
-					for (int ip=0; ip<Nprojs; ip++)
-					{
-						const int inkb = sum + ip;
-						//for (int ip2=0; ip2<Nprojs; ip2++)
-						for (int ip2=ip+1; ip2<Nprojs; ip2++)
-						{
-						//if ( ip != ip2 )
-						//{
-							const int jnkb = sum + ip2;
-							double ps = GlobalC::ppcell.deeq(GlobalV::CURRENT_SPIN, iat, ip2, ip) ;
+                    if(GlobalC::ppcell.multi_proj)
+                    {
+                        for (int ip=0; ip<Nprojs; ip++)
+                        {
+                            const int inkb = sum + ip;
+                            //for (int ip2=0; ip2<Nprojs; ip2++)
+                            for (int ip2=0; ip2<Nprojs; ip2++)
+                            {
+                                if ( ip != ip2 )
+                                {
+                                    const int jnkb = sum + ip2;
+                                    double ps = GlobalC::ppcell.deeq(GlobalV::CURRENT_SPIN, iat, ip, ip2) ;
 
-							for (int ipol=0; ipol<3; ipol++)
-							{
-								const double dbb = 2.0 * ( conj( dbecp( ipol, ib, inkb) ) * becp( ib, jnkb) ).real();
-								//const double dbb = ( conj( dbecp( inkb, ib, ipol) ) * becp( jnkb, ib) ).real();
-								forcenl(iat, ipol) = forcenl(iat, ipol) - ps * fac * dbb;
-								//cf[iat*3+ipol] += ps * fac * dbb;
-							}
-						//}
-						}
-					}
-					//}    //}zws add 20160110
+                                    for (int ipol=0; ipol<3; ipol++)
+                                    {
+                                        const double dbb = ( conj( dbecp( ipol, ib, inkb) ) * becp( ib, jnkb) ).real();
+                                        forcenl(iat, ipol) = forcenl(iat, ipol) - ps * fac * dbb;
+                                    }
+                                }
+                            }
+                        }
+                    }
 
 					++iat;
 					sum+=Nprojs;

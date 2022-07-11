@@ -219,7 +219,15 @@ namespace ModuleESolver
             }
         }
 #endif
+        ModuleBase::timer::tick("ESolver_KS_LCAO", "beforesolver");
 
+    }
+
+    void ESolver_KS_LCAO::beforescf(int istep)
+    {
+        ModuleBase::TITLE("ESolver_KS_LCAO", "beforescf");
+        ModuleBase::timer::tick("ESolver_KS_LCAO", "beforescf");
+        this->beforesolver(istep);
 //Peize Lin add 2016-12-03
 #ifdef __MPI
         if(Exx_Global::Hybrid_Type::No != GlobalC::exx_global.info.hybrid_type)
@@ -236,19 +244,11 @@ namespace ModuleESolver
                 //program should be stopped after this judgement
                 Exx_Opt_Orb exx_opt_orb;
                 exx_opt_orb.generate_matrix();
-                ModuleBase::timer::tick("ESolver_KS_LCAO", "beforesolver");
+                ModuleBase::timer::tick("ESolver_KS_LCAO", "beforescf");
                 return;
             }
         }
 #endif
-        ModuleBase::timer::tick("ESolver_KS_LCAO", "beforesolver");
-    }
-
-    void ESolver_KS_LCAO::beforescf(int istep)
-    {
-        ModuleBase::TITLE("ESolver_KS_LCAO", "beforescf");
-        ModuleBase::timer::tick("ESolver_KS_LCAO", "beforescf");
-        this->beforesolver(istep);
         // 1. calculate ewald energy.
         // mohan update 2021-02-25
         H_Ewald_pw::compute_ewald(GlobalC::ucell, GlobalC::rhopw);
