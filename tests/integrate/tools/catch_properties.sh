@@ -1,21 +1,20 @@
 #!/bin/bash
 
 sum_file(){
-	line=`grep -vc '^$' $1`
 	inc=1
 	if ! test -z $2; then
 		inc=$2
-	fi	
-	sum=0.0
-	for (( num=1 ; num<=$line ; num+=$inc ));do
-		value_line=(` sed -n "$num p" $1 | head -n1 `)
-		colume=`echo ${#value_line[@]}`
-		for (( col=0 ; col<$colume ; col++ ));do
-			value=`echo ${value_line[$col]}`
-			sum=`awk 'BEGIN {x='$sum';y='$value';printf "%.6f\n",x+sqrt(y*y)}'` 
-		done
-	done
-	echo $sum
+	fi
+
+    awk -v each=$inc -F '[ (),]' 'BEGIN {sum=0.0;line=1} 
+        {
+			if(NR==line) 
+		 	{
+				for(i=1;i<=NF;i++) {sum+=sqrt($i*$i)};
+				line+=each
+			}
+		}
+        END {printf "%.6f", sum}' $1
 }
 #answer=`sum_file test.txt`
 #echo $answer
