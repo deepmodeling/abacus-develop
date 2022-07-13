@@ -1,10 +1,5 @@
 #include "sto_func.h"
 #include "occupy.h"
-//we only have two examples: REAL and float.
-template class Sto_Func<double>;
-#ifdef __MIX_PRECISION
-template class Sto_Func<float>;
-#endif
 
 template<typename REAL>
 Sto_Func<REAL>::Sto_Func()
@@ -80,7 +75,7 @@ REAL Sto_Func<REAL>:: fdlnfd(REAL e)
     else
     {
         REAL f = 1 / (1 + exp(e_mu));
-        return (f * log(f) + (1.0-f) * log(1.0-f)); 
+        return (f * log(f) + (1.0-f) * log(1.0-f));
     }
 }
 
@@ -97,7 +92,12 @@ REAL Sto_Func<REAL>:: nfdlnfd(REAL e)
     else
     {
         REAL f = 1 / (1 + exp(ne_mu));
-        return f * log(f) + (1-f) * log(1-f); 
+        return f * log(f) + (1-f) * log(1-f);
     }
 }
 
+//we only have two examples: REAL and float.
+template class Sto_Func<double>;
+#ifdef __MIX_PRECISION
+template class Sto_Func<float>;
+#endif
