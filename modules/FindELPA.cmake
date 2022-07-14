@@ -41,8 +41,8 @@ set(CMAKE_REQUIRED_INCLUDES ${CMAKE_REQUIRED_INCLUDES} ${ELPA_INCLUDE_DIR})
 include(CheckCXXSourceCompiles)
 check_cxx_source_compiles("
 #include <elpa/elpa_version.h>
-#if ELPA_API_VERSION <= 20210430
-#error ELPA version is too old. We support version 2017 or higher.
+#if ELPA_API_VERSION < 20210430
+#error ELPA version is too old.
 #endif
 int main(){}
 "
