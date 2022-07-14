@@ -1,8 +1,10 @@
-# DOS, wave functions
+# Density_of_states
 
 [back to main page](../../README.md)
 
-The main task of this example is to calculate the density of states (DOS) of the system. At first, do a ground-state energy calculation as in [this example](#basic-lcao.md) ***with one additional keyword in the INPUT file***:
+# DOS
+
+The main task of this example is to calculate the density of states (DOS) of the system. At first, do a ground-state energy calculation ***with one additional keyword in the INPUT file***:
 
 ```
 out_chg              1
@@ -72,6 +74,8 @@ Gamma
 ```
 Run the program, and you will see a file named DOS1_smearing.dat in the output directory. The first two columns in the file are the energy and DOS, respectively.Plot file DOS1_smearing.dat with graphing software, and you’ll get the DOS.
 
+# PDOS
+
 Along with the DOS1_smearing.dat file, we also produce the projected density of states (PDOS) in a file called PDOS.
 
 The PDOS file starts with number of atomic orbitals in the system, then a list of energy values, such as:
@@ -102,4 +106,4 @@ The rest of the fileis arranged in sections, each section with a header such as 
 ```
 which tells the atom and symmetry of the current atomic orbital, and followed by the PDOS values. The values can thus be plotted against the energies.
 
-[back to top](#dos,-wave-functions)
+[back to top](#Density_of_states)

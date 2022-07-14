@@ -17,6 +17,7 @@ ABACUS is an electronic structure package based on density functional theory(DFT
 Please refer to our [GitHub repository](https://github.com/deepmodeling/abacus-develop) for more information and support.
 # Table of contents
 
+- [Table of contents](#table-of-contents)
 - [Features](#features)
 - [Download and install](#download-and-install)
 - [Quickstart guide](#quickstart-guide)
@@ -27,6 +28,7 @@ Please refer to our [GitHub repository](https://github.com/deepmodeling/abacus-d
 - [Citations](#citations)
 - [Development team](#development-team)
 - [Communicating and making contributions](#communicating-and-making-contributions)
+- [Miscellaneous](#miscellaneous)
 
 # Features
 
@@ -139,7 +141,7 @@ The following provides basic sample jobs in ABACUS. More can be found in the dir
 - [Basic electronic structure calculation with PW basis set](docs/examples/basic-pw.md)
 - [Basic electronic structure calculation with LCAO basis set](docs/examples/basic-lcao.md)
 - [DFT + dispersion calculations](docs/examples/dispersion.md)
-- [DOS, wave functions](docs/examples/dos.md)
+- [Density of states](docs/examples/dos.md)
 - [Band structure](docs/examples/band-struc.md)
 - [Magnetic properties](docs/examples/magnetic.md)
 - [Force calculation and structure relaxation](docs/examples/force.md)
@@ -153,6 +155,8 @@ The following provides basic sample jobs in ABACUS. More can be found in the dir
 - [Hybrid functional](docs/examples/hybrid.md)
 - [Electric field and dipole correction](docs/examples/electric_dipole.md)
 - [Stochastic DFT and mix stochastic-deterministic DFT](docs/examples/stochastic.md)
+- [Wave functions](docs/examples/wavefunction.md)
+- [BSSE for molecular formation energy](docs/examples/BSSE.md)
 
 [back to top](#readme-top)
 

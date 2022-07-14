@@ -147,4 +147,23 @@ void ElecStateLCAO::psiToRho(const psi::Psi<double>& psi)
     return;
 }
 
+void ElecStateLCAO::print_psi(const psi::Psi<double>& psi_in)
+{
+    if(!ElecStateLCAO::out_wfc_lcao) return;
+
+    // output but not do "2d-to-grid" conversion
+    double** wfc_grid = nullptr; 
+    this->lowf->wfc_2d_to_grid(ElecStateLCAO::out_wfc_lcao, psi_in.get_pointer(), wfc_grid, this->ekb, this->wg);
+    return;
+}
+void ElecStateLCAO::print_psi(const psi::Psi<std::complex<double>>& psi_in)
+{
+    if(!ElecStateLCAO::out_wfc_lcao) return;
+
+    // output but not do "2d-to-grid" conversion
+    std::complex<double>** wfc_grid = nullptr; 
+    this->lowf->wfc_2d_to_grid(ElecStateLCAO::out_wfc_lcao, psi_in.get_pointer(), wfc_grid, psi_in.get_current_k(), this->ekb, this->wg);
+    return;
+}
+
 } // namespace elecstate

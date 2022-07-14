@@ -21,6 +21,7 @@ HamiltPW::HamiltPW()
     this->ops.resize(0);
     const int npwx = GlobalC::wf.npwx;
     const int npol = GlobalV::NPOL;
+    const double tpiba = GlobalC::ucell.tpiba;
     const double tpiba2 = GlobalC::ucell.tpiba2;
     const int* ngk = GlobalC::kv.ngk.data();
     const int* isk = GlobalC::kv.isk.data();
@@ -64,7 +65,7 @@ HamiltPW::HamiltPW()
     Operator* meta = new MetaPW(
         npwx,
         npol,
-        tpiba2,
+        tpiba,
         ngk,
         isk,
         &GlobalC::pot.vofk,

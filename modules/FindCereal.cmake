@@ -18,7 +18,7 @@ if(NOT CEREAL_INCLUDE_DIR)
         URL https://github.com/USCiLab/cereal/archive/refs/tags/v1.3.0.tar.gz
     )
     FetchContent_Populate(cereal)
-    set(CEREAL_INCLUDE_DIR ${cereal_SOURCE_DIR})
+    set(CEREAL_INCLUDE_DIR ${cereal_SOURCE_DIR}/include)
 endif()
 # Handle the QUIET and REQUIRED arguments and
 # set Cereal_FOUND to TRUE if all variables are non-zero.

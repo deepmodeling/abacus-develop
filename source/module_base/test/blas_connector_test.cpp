@@ -157,7 +157,7 @@ TEST(blas_connector, dgemv_) {
     const int size_n = 4;
     const T alpha_const = 2;
     const T beta_const = 3;
-    const int lda = 5;
+    const int lda = size_m;
     const int incx = 1;
     const int incy = 1;
     std::array<T, size_m> x_const_m, result_m, answer_m, c_dot_m{};

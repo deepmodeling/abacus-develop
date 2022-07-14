@@ -1,4 +1,5 @@
 find_program(BASH bash)
+find_package(Python3 REQUIRED)
 if(ENABLE_ASAN)
     add_test(
         NAME integrated_test_with_asan
