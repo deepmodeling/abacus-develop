@@ -43,6 +43,7 @@ include(CheckIPOSupported)
 check_ipo_supported(RESULT IPOSupported)
 if(IPOSupported)
   set_target_properties(${ABACUS_BIN_NAME} PROPERTIES INTERPROCEDURAL_OPTIMIZATION TRUE)
+  set(CMAKE_INTERPROCEDURAL_OPTIMIZATION ON)
 endif()
 
 find_package(Cereal REQUIRED)
