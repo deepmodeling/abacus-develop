@@ -46,11 +46,6 @@ endif()
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
   add_compile_options(-O2 -g) # default flag
 endif()
-include(CheckIPOSupported)
-check_ipo_supported(RESULT IPOSupported)
-if(IPOSupported)
-  set_target_properties(${ABACUS_BIN_NAME} PROPERTIES INTERPROCEDURAL_OPTIMIZATION TRUE)
-endif()
 
 find_package(Cereal REQUIRED)
 include_directories(${CEREAL_INCLUDE_DIR})
