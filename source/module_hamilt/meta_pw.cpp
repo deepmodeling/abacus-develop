@@ -13,7 +13,7 @@ namespace hamilt
 MetaPW::MetaPW(
     int max_npw_in,
     int npol_in,
-    double tpiba2_in,
+    double tpiba_in,
     const int* ngk_in, 
     const int* isk_in,
     const ModuleBase::matrix* vk_in,
@@ -23,12 +23,12 @@ MetaPW::MetaPW(
     this->ngk = ngk_in;
     this->isk = isk_in;
     this->max_npw = max_npw_in;
-    this->tpiba2 = tpiba2_in;
+    this->tpiba = tpiba_in;
     this->vk = vk_in;
     this->wfcpw = wfcpw_in;
     this->npol = npol_in;
     if(this->ngk == nullptr || this->isk == nullptr || this->max_npw == 0 
-    || this->tpiba2 < 1e-10 || this->vk == nullptr || this->wfcpw == nullptr
+    || this->tpiba < 1e-10 || this->vk == nullptr || this->wfcpw == nullptr
     || this->npol == 0)
     {
         ModuleBase::WARNING_QUIT("MetaPW", "Constuctor of Operator::MetaPW is failed, please check your code!");
@@ -63,7 +63,7 @@ void MetaPW::act(const std::complex<double> *psi_in, std::complex<double> *hpsi,
         {
             for (int ig = 0; ig < npw; ig++)
             {
-                double fact = wfcpw->getgpluskcar(ik, ig)[j] * this->tpiba2;
+                double fact = wfcpw->getgpluskcar(ik, ig)[j] * this->tpiba;
                 porter[ig] = tmpsi_in[ig] * complex<double>(0.0, fact);
             }
 
@@ -78,7 +78,7 @@ void MetaPW::act(const std::complex<double> *psi_in, std::complex<double> *hpsi,
 
             for (int ig = 0; ig < npw; ig++)
             {
-                double fact = wfcpw->getgpluskcar(ik, ig)[j] * this->tpiba2;
+                double fact = wfcpw->getgpluskcar(ik, ig)[j] * this->tpiba;
                 tmhpsi[ig] -= complex<double>(0.0, fact) * porter[ig];
             }
         } // x,y,z directions

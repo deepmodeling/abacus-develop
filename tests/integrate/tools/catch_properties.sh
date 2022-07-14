@@ -32,6 +32,7 @@ has_dftu=`grep -En '(^|[[:space:]])dft_plus_u($|[[:space:]])' INPUT | awk '{prin
 has_band=`grep -En '(^|[[:space:]])out_band($|[[:space:]])' INPUT | awk '{print $2}'`
 has_dos=`grep -En '(^|[[:space:]])out_dos($|[[:space:]])' INPUT | awk '{print $2}'`
 has_hs=`grep -En '(^|[[:space:]])out_mat_hs($|[[:space:]])' INPUT | awk '{print $2}'`
+has_hs2=`grep -En '(^|[[:space:]])out_mat_hs2($|[[:space:]])' INPUT | awk '{print $2}'`
 has_r=`grep -En '(^|[[:space:]])out_mat_r($|[[:space:]])' INPUT | awk '{print $2}'`
 deepks_out_labels=`grep deepks_out_labels INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
 deepks_bandgap=`grep deepks_bandgap INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
@@ -110,10 +111,30 @@ if ! test -z "$has_band"  && [  $has_band -eq 1 ]; then
 fi
 #echo $has_hs
 if ! test -z "$has_hs"  && [  $has_hs -eq 1 ]; then
-        total_h=`sum_file OUT.autotest/data-0-H`
-        echo "totalHmatrix $total_h" >>$1
-	total_s=`sum_file OUT.autotest/data-0-S`
-	echo "totalSmatrix $total_s" >>$1
+	if ! test -z "$gamma_only"  && [ $gamma_only -eq 1 ]; then
+		href=data-0-H.ref
+		hcal=OUT.autotest/data-0-H
+		sref=data-0-H.ref
+		scal=OUT.autotest/data-0-H
+	else
+		href=data-1-H.ref
+		hcal=OUT.autotest/data-1-H
+		sref=data-1-H.ref
+		scal=OUT.autotest/data-1-H
+	fi
+
+	python3 ../tools/CompareFile.py $href $hcal 8
+    echo "CompareH_Failed $?" >>$1
+    python3 ../tools/CompareFile.py $sref $scal 8
+    echo "CompareS_Failed $?" >>$1
+fi
+
+#echo $has_hs2
+if ! test -z "$has_hs2"  && [  $has_hs2 -eq 1 ]; then
+    python3 ../tools/CompareFile.py data-HR-sparse_SPIN0.csr.ref OUT.autotest/data-HR-sparse_SPIN0.csr 8
+    echo "CompareHR_Failed $?" >>$1
+    python3 ../tools/CompareFile.py data-SR-sparse_SPIN0.csr.ref OUT.autotest/data-SR-sparse_SPIN0.csr 8
+    echo "CompareSR_Failed $?" >>$1
 fi
 
 # echo "$has_wfc_r" ## test out_wfc_r > 0

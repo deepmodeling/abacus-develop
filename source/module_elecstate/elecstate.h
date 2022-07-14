@@ -54,6 +54,15 @@ class ElecState
     // calculate wg from ekb
     virtual void calculate_weights(void);
 
+    virtual void print_psi(const psi::Psi<double>& psi_in)
+    {
+        return;
+    }
+    virtual void print_psi(const psi::Psi<std::complex<double>>& psi_in)
+    {
+        return;
+    }
+
     // pointer to charge density
     Charge *charge = nullptr;
     // pointer to k points lists

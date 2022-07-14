@@ -14,7 +14,7 @@ class MetaPW : public Operator
     MetaPW(
         int max_npw_in,
         int npol_in,
-        double tpiba2_in,
+        double tpiba_in,
         const int* ngk_in, 
         const int* isk_in,
         const ModuleBase::matrix* vk,
@@ -29,7 +29,7 @@ class MetaPW : public Operator
 
     int npol = 0;
 
-    double tpiba2 = 0.0;
+    double tpiba = 0.0;
 
     const int* ngk = nullptr;
 
