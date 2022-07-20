@@ -1,6 +1,14 @@
-FROM ghcr.io/deepmodeling/abacus-development-kit:gnu
+FROM nvidia/cuda:11.7.0-devel-ubuntu22.04
 
-RUN wget https://developer.download.nvidia.com/compute/cuda/11.7.0/local_installers/cuda_11.7.0_515.43.04_linux.run --no-check-certificate --quiet \
-	&& sh cuda_11.7.0_515.43.04_linux.run --toolkit --silent \
-	&& rm cuda_11.7.0_515.43.04_linux.run
-ENV PATH=/usr/local/cuda/bin:$PATH
+RUN apt update && apt install -y --no-install-recommends \
+    libopenblas-dev liblapack-dev libscalapack-mpi-dev libelpa-dev libfftw3-dev libcereal-dev \
+    libxc-dev libgtest-dev libgmock-dev python3-numpy \
+    bc cmake git g++ make bc time sudo unzip vim wget
+
+ENV GIT_SSL_NO_VERIFY=true TERM=xterm-256color \
+    OMPI_ALLOW_RUN_AS_ROOT=1 OMPI_ALLOW_RUN_AS_ROOT_CONFIRM=1 \
+    OMPI_MCA_btl_vader_single_copy_mechanism=none
+
+RUN git clone https://github.com/llohse/libnpy.git && \
+    cp libnpy/include/npy.hpp /usr/local/include && \
+    rm -r libnpy
