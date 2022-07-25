@@ -54,6 +54,7 @@ ABACUS provides the following features and functionalities:
 18. Orbital-free DFT.
 19. (subsidiary tool)Plot_tools for plot PDOS and PBANDS.
 20. (subsidiary tool)Generator for second generation numerical orbital basis.
+21. Interface with DPGEN
 
 [back to top](#readme-top)
 
@@ -157,6 +158,7 @@ The following provides basic sample jobs in ABACUS. More can be found in the dir
 - [Stochastic DFT and mix stochastic-deterministic DFT](docs/examples/stochastic.md)
 - [Wave functions](docs/examples/wavefunction.md)
 - [BSSE for molecular formation energy](docs/examples/BSSE.md)
+- [ABACUS-DPGEN interface](docs/examples/dpgen.md)
 
 [back to top](#readme-top)
 
