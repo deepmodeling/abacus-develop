@@ -109,7 +109,9 @@ void HamiltPW::hPsi(const std::complex<double> *psi_in, std::complex<double> *hp
     ModuleBase::timer::tick("HamiltPW", "h_psi");
     for(int iter = 0; iter < this->ops.size(); ++iter)
     {
+        cout<<iter<<" "<<" aa "<<psi_in[3];
         this->ops[iter]->act(psi_in, hpsi, size);
+        cout<<" "<<hpsi[3]<<endl;
     }
     ModuleBase::timer::tick("HamiltPW", "h_psi");
     return;

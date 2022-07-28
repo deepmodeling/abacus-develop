@@ -739,9 +739,6 @@ void ESolver_SDFT_PW::sKG_new(const int nche_KG, const double fwhmin, const doub
                 zgemm_(&transa, &transb,&totbands_per, &totbands, &npw, &ModuleBase::IMAG_UNIT, expsfpsi.get_pointer(), &npwx,
                         &(p_j2psi->operator()(id,0,0)), &npwx, &ModuleBase::ZERO, &j2r(id,0), &totbands_per);
             }
-            GlobalV::ofs_running<<"11111111"<<endl;
-            GlobalV::ofs_running<<j2l(0,23)<<" "<<j2l(1,23)<<" "<<j2l(2,23)<<endl;
-            GlobalV::ofs_running<<j2r(0,23)<<" "<<j2r(1,23)<<" "<<j2r(2,23)<<endl;
 
 #ifdef __MPI
             MPI_Allreduce(MPI_IN_PLACE,j1l.c,ndim*totbands_per*totbands*2,MPI_DOUBLE,MPI_SUM,POOL_WORLD);
@@ -749,9 +746,7 @@ void ESolver_SDFT_PW::sKG_new(const int nche_KG, const double fwhmin, const doub
             MPI_Allreduce(MPI_IN_PLACE,j1r.c,ndim*totbands_per*totbands*2,MPI_DOUBLE,MPI_SUM,POOL_WORLD);
             MPI_Allreduce(MPI_IN_PLACE,j2r.c,ndim*totbands_per*totbands*2,MPI_DOUBLE,MPI_SUM,POOL_WORLD);
 #endif
-            GlobalV::ofs_running<<"2222222"<<endl;
-            GlobalV::ofs_running<<j2l(0,23)<<" "<<j2l(1,23)<<" "<<j2l(2,23)<<endl;
-            GlobalV::ofs_running<<j2r(0,23)<<" "<<j2r(1,23)<<" "<<j2r(2,23)<<endl;
+            
             //Re(i<psi|sqrt(f)j(1-f) exp(iHt)|psi><psi|j exp(-iHt)\sqrt(f)|psi>)
             if(GlobalV::RANK_IN_POOL==0)
             {
