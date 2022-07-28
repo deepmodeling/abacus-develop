@@ -613,10 +613,21 @@ void ESolver_SDFT_PW::sKG_new(const int nche_KG, const double fwhmin, const doub
                 }
             }
         }
+         GlobalV::ofs_running<<"0000000"<<endl;
+        GlobalV::ofs_running<<j1psi(0,0,3)<<" "<<j1psi(1,0,3)<<" "<<j1psi(2,0,3)<<endl;
+        GlobalV::ofs_running<<j1sfpsi(0,0,3)<<" "<<j1sfpsi(1,0,3)<<" "<<j1sfpsi(2,0,3)<<endl;
         this->phami->hPsi(psi0.get_pointer(), hpsi0.get_pointer(), totbands_per*npwx);
         this->phami->hPsi(sfpsi0.get_pointer(), hsfpsi0.get_pointer(), totbands_per*npwx);
         this->phami->hPsi(j1psi.get_pointer(), j2psi.get_pointer(), ndim*totbands_per*npwx);
         this->phami->hPsi(j1sfpsi.get_pointer(), j2sfpsi.get_pointer(), ndim*totbands_per*npwx);
+        GlobalV::ofs_running<<"aaaaa"<<endl;
+        GlobalV::ofs_running<<psi0(0,0,3)<<" "<<psi0(0,1,3)<<" "<<psi0(0,2,3)<<endl;
+        GlobalV::ofs_running<<hpsi0(0,0,3)<<" "<<hpsi0(0,1,3)<<" "<<hpsi0(0,2,3)<<endl;
+        GlobalV::ofs_running<<sfpsi0(0,0,3)<<" "<<sfpsi0(0,1,3)<<" "<<sfpsi0(0,2,3)<<endl;
+        GlobalV::ofs_running<<hsfpsi0(0,0,3)<<" "<<hsfpsi0(0,1,3)<<" "<<hsfpsi0(0,2,3)<<endl;
+        GlobalV::ofs_running<<"0000000"<<endl;
+        GlobalV::ofs_running<<j1psi(0,0,3)<<" "<<j1psi(1,0,3)<<" "<<j1psi(2,0,3)<<endl;
+        GlobalV::ofs_running<<j1sfpsi(0,0,3)<<" "<<j1sfpsi(1,0,3)<<" "<<j1sfpsi(2,0,3)<<endl;
         GlobalV::ofs_running<<"11111111"<<endl;
         GlobalV::ofs_running<<j2psi(0,0,3)<<" "<<j2psi(1,0,3)<<" "<<j2psi(2,0,3)<<endl;
         GlobalV::ofs_running<<j2sfpsi(0,0,3)<<" "<<j2sfpsi(1,0,3)<<" "<<j2sfpsi(2,0,3)<<endl;
@@ -634,17 +645,13 @@ void ESolver_SDFT_PW::sKG_new(const int nche_KG, const double fwhmin, const doub
                 }
             }
         }
-        GlobalV::ofs_running<<"222222"<<endl;
-        GlobalV::ofs_running<<j2psi(0,0,3)<<" "<<j2psi(1,0,3)<<" "<<j2psi(2,0,3)<<endl;
-        GlobalV::ofs_running<<j2sfpsi(0,0,3)<<" "<<j2sfpsi(1,0,3)<<" "<<j2sfpsi(2,0,3)<<endl;
+        
 
         //(1-f)
         che.calcoef_real(&stoiter.stofunc,&Sto_Func<double>::n_fd);
         che.calfinalvec_real(&stohchi, &Stochastic_hchi::hchi_reciprocal, j1sfpsi.get_pointer(), j1sfpsi.get_pointer(), npw, npwx, totbands_per*ndim);
         che.calfinalvec_real(&stohchi, &Stochastic_hchi::hchi_reciprocal, j2sfpsi.get_pointer(), j2sfpsi.get_pointer(), npw, npwx, totbands_per*ndim);
-        GlobalV::ofs_running<<"33333333"<<endl;
-        GlobalV::ofs_running<<j2psi(0,0,3)<<" "<<j2psi(1,0,3)<<" "<<j2psi(2,0,3)<<endl;
-        GlobalV::ofs_running<<j2sfpsi(0,0,3)<<" "<<j2sfpsi(1,0,3)<<" "<<j2sfpsi(2,0,3)<<endl;
+        
         psi::Psi<std::complex<double>> *p_j1psi = &j1psi; 
         psi::Psi<std::complex<double>> *p_j2psi = &j2psi; 
 #ifdef __MPI
