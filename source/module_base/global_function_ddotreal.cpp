@@ -22,7 +22,9 @@ namespace GlobalFunc
         pL=(double *)psi_L;
         pR=(double *)psi_R;
         double result=BlasConnector::dot(dim2,pL,1,pR,1);
+#ifdef __MPI
         if(reduce)  Parallel_Reduce::reduce_double_pool( result );
+#endif
         return result;
         //======================================================================
         /*std::complex<double> result(0,0);

@@ -10,3 +10,7 @@ add_library(
     ks_pw/nonlocal_pw.cpp
     ks_pw/meta_pw.cpp
 )
+
+IF (BUILD_TESTING)
+  add_subdirectory(test)
+endif()

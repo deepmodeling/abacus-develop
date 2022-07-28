@@ -1,4 +1,5 @@
 add_subdirectory(integrate)
+add_subdirectory(hamilt)
 if(ENABLE_DEEPKS)
 	add_subdirectory(deepks)
 endif()
