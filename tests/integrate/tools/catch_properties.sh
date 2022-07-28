@@ -109,6 +109,8 @@ if ! test -z "$has_cond"  && [  $has_cond -eq 1 ]; then
 	oncal=Onsager.txt
 	python3 ../tools/CompareFile.py $onref $oncal 2
     echo "CompareH_Failed $?" >>$1
+	cat Onsager.txt
+	rm -f je-je.txt Onsager.txt Chebycoef
 fi
 
 #echo total_dos
