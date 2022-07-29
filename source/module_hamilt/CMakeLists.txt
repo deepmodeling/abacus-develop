@@ -11,6 +11,6 @@ add_library(
     ks_pw/meta_pw.cpp
 )
 
-IF (BUILD_TESTING AND !USE_CUDA)
+IF (BUILD_TESTING AND NOT USE_CUDA)
   add_subdirectory(test)
 endif()

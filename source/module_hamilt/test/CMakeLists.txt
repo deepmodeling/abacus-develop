@@ -10,9 +10,9 @@ add_executable(
   kinetic_test.cpp ../ks_pw/ekinetic_pw.cpp ../../module_psi/psi.cpp
 )
 
-get_target_property(ABACUS_LINK_LIBRARIES ${ABACUS_BIN_NAME} LINK_LIBRARIES)
 target_link_libraries(
-  hamilt_test_kinetic ${math_libs} planewave_serial base_serial
+  hamilt_test_kinetic
+  ${math_libs} planewave_serial base_serial
 )
 
 install(
