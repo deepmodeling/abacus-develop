@@ -1851,12 +1851,7 @@ bool Input::Read(const std::string &fn)
         }
     }
 
-    if (basis_type == "pw") // pengfei Li add 2015-1-31
-    {
-        gamma_only = 0;
-        // std::cout << "gamma_only =" << gamma_only << std::endl;
-    }
-    else if ((basis_type == "lcao" || basis_type == "lcao_in_pw") && (gamma_only == 1))
+    if ((basis_type == "lcao" || basis_type == "lcao_in_pw") && (gamma_only == 1))
     {
         gamma_only_local = 1;
         // std::cout << "gamma_only_local =" << gamma_only_local << std::endl;
