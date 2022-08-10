@@ -942,7 +942,7 @@ This part of variables are used to control the calculation of DOS.
 ### DeePKS
 
 This part of variables are used to control the usage of DeePKS method (a comprehensive data-driven approach to improve accuracy of DFT).
-Warning: this function is not robust enough for version 2.2.0. Please try these variables in <https://github.com/deepmodeling/abacus-develop/tree/deepks> .
+Warning: this function is not robust enough for version 2.2.0. Please try the following variables at your own risk:
 
 #### deepks_out_labels
 
