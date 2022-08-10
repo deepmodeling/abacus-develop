@@ -16,7 +16,7 @@ AddTest(
 )
 AddTest(
   TARGET HSolver_LCAO
-  LIBS ${math_libs} ELPA::ELPA base
+  LIBS ${math_libs} ELPA::ELPA base genelpa
   SOURCES diago_lcao_test.cpp ../diago_elpa.cpp ../diago_blas.cpp ../../src_parallel/parallel_global.cpp 
           ../../src_parallel/parallel_common.cpp ../../src_parallel/parallel_reduce.cpp
 )
