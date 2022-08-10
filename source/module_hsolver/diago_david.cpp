@@ -443,8 +443,14 @@ void DiagoDavid::cal_elem(const int &npw,
            &sc.nr);
     sc = transpose(sc, false);
 
-    Parallel_Reduce::reduce_complex_double_pool(hc.c + offset_h, notconv * hc.nr);
-    Parallel_Reduce::reduce_complex_double_pool(sc.c + offset_s, notconv * sc.nr);
+    for(int i=0;i<notconv;i++)
+    {
+        for(int j=0;j<notconv+nbase;j++)
+        {
+            Parallel_Reduce::reduce_complex_double_pool(hc.c + offset_h + i*hc.nr + j, 1);
+            Parallel_Reduce::reduce_complex_double_pool(sc.c + offset_s + i*sc.nr + j, 1);
+        }
+    }
     /*
         for( int i = nbase; i < nbase+notconv; i++ )
         {
