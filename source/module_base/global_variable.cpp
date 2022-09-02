@@ -24,6 +24,7 @@ int NLOCAL = 0; // total number of local basis.
 
 double KSPACING = 0.0;
 double MIN_DIST_COEF = 0.2;
+bool TIME_REVERSAL = true;
 
 double PSEUDORCUT;
 bool PSEUDO_MESH;

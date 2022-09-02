@@ -160,6 +160,7 @@ void Input::Default(void)
     wannier_spin = "up";
     kspacing = 0.0;
     min_dist_coef = 0.2;
+    time_reversal = true;
     //----------------------------------------------------------
     // electrons / spin
     //----------------------------------------------------------
@@ -561,6 +562,10 @@ bool Input::Read(const std::string &fn)
         else if (strcmp("min_dist_coef", word) == 0)
         {
             read_value(ifs, min_dist_coef);
+        }
+        else if (strcmp("time_reversal", word) == 0)
+        {
+            read_value(ifs, time_reversal);
         }
         else if (strcmp("nbands_istate", word) == 0) // number of atom bands
         {
@@ -1981,6 +1986,7 @@ void Input::Bcast()
     Parallel_Common::bcast_int(nbands_istate);
     Parallel_Common::bcast_double(kspacing);
     Parallel_Common::bcast_double(min_dist_coef);
+    Parallel_Common::bcast_bool(time_reversal);
     Parallel_Common::bcast_int(nche_sto);
     Parallel_Common::bcast_int(seed_sto);
     Parallel_Common::bcast_int(pw_seed);
@@ -2329,6 +2335,11 @@ void Input::Check(void)
     if (kspacing < 0.0)
     {
         ModuleBase::WARNING_QUIT("Input", "kspacing must > 0");
+    }
+
+    if (symmetry == true)
+    {
+        time_reversal = true; 
     }
 
     if (nelec < 0.0)

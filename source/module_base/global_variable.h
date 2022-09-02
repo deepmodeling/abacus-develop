@@ -24,6 +24,7 @@ extern int NLOCAL; // 1.1 // mohan add 2009-05-29
 
 extern double KSPACING;
 extern double MIN_DIST_COEF;
+extern bool TIME_REVERSAL;
 
 extern double PSEUDORCUT;
 extern bool PSEUDO_MESH;

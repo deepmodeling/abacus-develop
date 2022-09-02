@@ -54,6 +54,7 @@ class Input
     int gdir; // berry phase calculation
     double kspacing;
     double min_dist_coef;
+    bool time_reversal; // if open time reversal symmetry
     //==========================================================
     // Wannier functions
     //==========================================================

@@ -53,6 +53,7 @@ void Input_Conv::Convert(void)
 
     GlobalV::KSPACING = INPUT.kspacing;
     GlobalV::MIN_DIST_COEF = INPUT.min_dist_coef;
+    GlobalV::TIME_REVERSAL = INPUT.time_reversal;
     GlobalV::NBANDS = INPUT.nbands;
     GlobalC::wf.pw_seed = INPUT.pw_seed;
     GlobalV::NBANDS_ISTATE = INPUT.nbands_istate;

@@ -86,7 +86,7 @@ void K_Vectors::set(
     if(!berryphase::berry_phase_flag)
     {
         this->ibz_kpoint(symm, ModuleSymmetry::Symmetry::symm_flag);
-        if(ModuleSymmetry::Symmetry::symm_flag || is_mp)
+        if(ModuleSymmetry::Symmetry::symm_flag || (is_mp && GlobalV::TIME_REVERSAL))
         {
             this->update_use_ibz();
             this->nks = this->nkstot = this->nkstot_ibz;
@@ -570,7 +570,7 @@ void K_Vectors::ibz_kpoint(const ModuleSymmetry::Symmetry &symm, bool use_symm)
             nrotkm = 2 * symm.nrotk;
         }
     }
-    else if(is_mp) // only include for mp grid
+    else if(is_mp && GlobalV::TIME_REVERSAL) // only include for mp grid
     {
         nrotkm = 2;
         kgmatrix[0] = ind;
