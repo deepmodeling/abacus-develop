@@ -57,7 +57,7 @@ There are pseudopotential files in these websites which are also supported by AB
 2. [SG15-ONCV](http://quantum-simulation.org/potentials/sg15_oncv/upf/).
 3. [DOJO](http://www.pseudo-dojo.org/).
 
-If LCAO base is used, the numerical orbital files should match the pseudopotential files, the [official orbitals package](http://abacus.ustc.edu.cn/pseudo/list.htm) only matches SG15-ONCV pseudopotentials.
+If LCAO base is used, the numerical orbital files should match the pseudopotential files. The [official orbitals package](http://abacus.ustc.edu.cn/pseudo/list.htm) only matches SG15-ONCV pseudopotentials.
 
 [back to top](#features)
 
