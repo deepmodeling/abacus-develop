@@ -50,9 +50,9 @@ ATOMIC_SPECIES
 Si 28.00 Si_ONCV_PBE-1.0.upf
 ```
 
-The user can download the pseudopotential files from our [website](http://abacus.ustc.edu.cn/pseudo.html).
+You can download the pseudopotential files from our [website](http://abacus.ustc.edu.cn/pseudo/list.htm).
 
-For more information of different types of pseudopotentials, please visit the Quantum espresso [website](http://www.quantum-espresso.org/pseudopotentials/).
+For more information of different types of pseudopotentials, please visit the [Quantum ESPRESSO website](http://www.quantum-espresso.org/pseudopotentials/).
 
 [back to top](#features)
 
