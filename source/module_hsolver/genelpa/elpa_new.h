@@ -27,5 +27,5 @@ const char *elpa_strerr(int elpa_error);
 }
 
 #define complex _Complex
-#include "my_elpa_generic.hpp"
+#include "elpa_generic.hpp"
 #undef complex

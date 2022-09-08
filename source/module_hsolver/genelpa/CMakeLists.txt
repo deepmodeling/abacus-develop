@@ -1,17 +1,1 @@
-#cmake_minimum_required(VERSION 2.8)
-#PROJECT (TEST)
-
-#SET(ELPA_INCLUDE_DIR /home/nic/yshen/program/elpa/2016.05.004/include/elpa-2016.05.004/)
-#SET(ELPA_INCLUDE_DIR /home/nic/yshen/program/elpa/2021.11.002-A100/include/elpa-2021.11.002)
-MESSAGE(STATUS "elpa include dir:" ${ELPA_INCLUDE_DIR} )
-string(REGEX REPLACE "/$" "" ELPA_INC_STR ${ELPA_INCLUDE_DIR})
-string(REPLACE "/" ";" ELPA_INC_STR ${ELPA_INC_STR})
-list(GET ELPA_INC_STR -1 ELPA_VER)
-string(REPLACE "elpa-" "" ELPA_VER ${ELPA_VER})
-message(STATUS "elpa version is: " ${ELPA_VER})
-
-
-execute_process(COMMAND /bin/sh ${CMAKE_CURRENT_SOURCE_DIR}/translate_elpa_generic.sh ${ELPA_INCLUDE_DIR})
 add_library(genelpa OBJECT elpa_new.cpp elpa_new_real.cpp elpa_new_complex.cpp utils.cpp)
-
-
