@@ -16,9 +16,9 @@
 #include "my_math.hpp"
 #include "utils.h"
 
-using namespace std;
+// using namespace std;
 
-map<int, elpa_t> NEW_ELPA_HANDLE_POOL;
+std::map<int, elpa_t> NEW_ELPA_HANDLE_POOL;
 
 ELPA_Solver::ELPA_Solver(const bool isReal, const MPI_Comm comm, const int nev,
                          const int narows, const int nacols, const int* desc)

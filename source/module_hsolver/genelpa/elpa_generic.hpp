@@ -1,5 +1,6 @@
 // `elpa_generic.h` replacement for version 2021.11.002
 #pragma once
+#include "elpa_new.h"
 static inline void elpa_set(elpa_t e, const char *name, int value, int *error)
 {
 	elpa_set_integer(e, name, value, error);
@@ -92,13 +93,13 @@ static inline void elpa_generalized_eigenvectors(elpa_t handle, float *a, float 
 	elpa_generalized_eigenvectors_f(handle, a, b, ev, q, is_already_decomposed, error);
 }
 
-static inline void elpa_generalized_eigenvectors(elpa_t handle, double complex *a, double complex *b, 
+static inline void elpa_generalized_eigenvectors(elpa_t handle, double complex *a, double complex *b,
 	double *ev, double complex *q, int is_already_decomposed, int *error)
 {
 	elpa_generalized_eigenvectors_dc(handle, a, b, ev, q, is_already_decomposed, error);
 }
 
-static inline void elpa_generalized_eigenvectors(elpa_t handle, float complex *a, float complex *b, 
+static inline void elpa_generalized_eigenvectors(elpa_t handle, float complex *a, float complex *b,
 	float *ev, float complex *q, int is_already_decomposed, int *error)
 {
 	elpa_generalized_eigenvectors_fc(handle, a, b, ev, q, is_already_decomposed, error);
@@ -184,28 +185,28 @@ static inline void elpa_cholesky(elpa_t handle, float complex *a, int *error)
 	elpa_cholesky_fc(handle, a, error);
 }
 
-static inline void elpa_hermitian_multiply(elpa_t handle, char uplo_a, char uplo_c, int ncb, 
+static inline void elpa_hermitian_multiply(elpa_t handle, char uplo_a, char uplo_c, int ncb,
 	double *a, double *b, int nrows_b, int ncols_b, double *c, int nrows_c, int ncols_c, int *error)
 {
 	elpa_hermitian_multiply_d(handle, uplo_a, uplo_c, ncb,
 					a, b, nrows_b, ncols_b, c, nrows_c, ncols_c, error);
 }
 
-static inline void elpa_hermitian_multiply(elpa_t handle, char uplo_a, char uplo_c, int ncb, 
+static inline void elpa_hermitian_multiply(elpa_t handle, char uplo_a, char uplo_c, int ncb,
 	float *a, float *b, int nrows_b, int ncols_b, float *c, int nrows_c, int ncols_c, int *error)
 {
 	elpa_hermitian_multiply_df(handle, uplo_a, uplo_c, ncb,
 					a, b, nrows_b, ncols_b, c, nrows_c, ncols_c, error);
 }
 
-static inline void elpa_hermitian_multiply(elpa_t handle, char uplo_a, char uplo_c, int ncb, 
+static inline void elpa_hermitian_multiply(elpa_t handle, char uplo_a, char uplo_c, int ncb,
 	double complex *a, double complex *b, int nrows_b, int ncols_b, double complex *c, int nrows_c, int ncols_c, int *error)
 {
 	elpa_hermitian_multiply_dc(handle, uplo_a, uplo_c, ncb,
 					a, b, nrows_b, ncols_b, c, nrows_c, ncols_c, error);
 }
 
-static inline void elpa_hermitian_multiply(elpa_t handle, char uplo_a, char uplo_c, int ncb, 
+static inline void elpa_hermitian_multiply(elpa_t handle, char uplo_a, char uplo_c, int ncb,
 	float complex *a, float complex *b, int nrows_b, int ncols_b, float complex *c, int nrows_c, int ncols_c, int *error)
 {
 	elpa_hermitian_multiply_fc(handle, uplo_a, uplo_c, ncb,
