@@ -23,6 +23,8 @@ static inline void elpa_get(elpa_t e, const char *name, double *value, int *erro
     elpa_get_double(e, name, value, error);
 }
 
+#if ELPA_API_VERSION <= 20210430 // ELPA 2021.05.002 and earlier versions
+
 static inline void elpa_eigenvectors(elpa_t handle, double *a, double *ev, double *q, int *error)
 {
     elpa_eigenvectors_d(handle, a, ev, q, error);
@@ -136,6 +138,180 @@ static inline void elpa_cholesky(elpa_t handle, float *a, int *error)
 {
     elpa_cholesky_f(handle, a, error);
 }
+#else // ELPA version >= 2021.11.002
+static inline void elpa_eigenvectors(elpa_t handle, double *a, double *ev, double *q, int *error)
+{
+    elpa_eigenvectors_all_host_arrays_d(handle, a, ev, q, error);
+}
+
+static inline void elpa_eigenvectors(elpa_t handle, float *a, float *ev, float *q, int *error)
+{
+    elpa_eigenvectors_all_host_arrays_f(handle, a, ev, q, error);
+}
+
+static inline void elpa_eigenvectors(elpa_t handle, double complex *a, double *ev, double complex *q, int *error)
+{
+    elpa_eigenvectors_all_host_arrays_dc(handle, a, ev, q, error);
+}
+
+static inline void elpa_eigenvectors(elpa_t handle, float complex *a, float *ev, float complex *q, int *error)
+{
+    elpa_eigenvectors_all_host_arrays_fc(handle, a, ev, q, error);
+}
+
+static inline void elpa_eigenvectors_double(elpa_t handle, double *a, double *ev, double *q, int *error)
+{
+    elpa_eigenvectors_device_pointer_d(handle, a, ev, q, error);
+}
+
+static inline void elpa_eigenvectors_float(elpa_t handle, float *a, float *ev, float *q, int *error)
+{
+    elpa_eigenvectors_device_pointer_f(handle, a, ev, q, error);
+}
+
+static inline void elpa_eigenvectors_double_complex(elpa_t handle,
+                                                    double complex *a,
+                                                    double *ev,
+                                                    double complex *q,
+                                                    int *error)
+{
+    elpa_eigenvectors_device_pointer_dc(handle, a, ev, q, error);
+}
+
+static inline void elpa_eigenvectors_float_complex(elpa_t handle,
+                                                   float complex *a,
+                                                   float *ev,
+                                                   float complex *q,
+                                                   int *error)
+{
+    elpa_eigenvectors_device_pointer_fc(handle, a, ev, q, error);
+}
+
+static inline void elpa_skew_eigenvectors(elpa_t handle, double *a, double *ev, double *q, int *error)
+{
+    elpa_eigenvectors_all_host_arrays_d(handle, a, ev, q, error);
+}
+
+static inline void elpa_skew_eigenvectors(elpa_t handle, float *a, float *ev, float *q, int *error)
+{
+    elpa_eigenvectors_all_host_arrays_f(handle, a, ev, q, error);
+}
+
+static inline void elpa_skew_eigenvectors_double(elpa_t handle, double *a, double *ev, double *q, int *error)
+{
+    elpa_eigenvectors_device_pointer_d(handle, a, ev, q, error);
+}
+
+static inline void elpa_skew_eigenvectors_float(elpa_t handle, float *a, float *ev, float *q, int *error)
+{
+    elpa_eigenvectors_device_pointer_f(handle, a, ev, q, error);
+}
+
+static inline void elpa_generalized_eigenvectors(elpa_t handle,
+                                                 double *a,
+                                                 double *b,
+                                                 double *ev,
+                                                 double *q,
+                                                 int is_already_decomposed,
+                                                 int *error)
+{
+    elpa_generalized_eigenvectors_d(handle, a, b, ev, q, is_already_decomposed, error);
+}
+
+static inline void elpa_generalized_eigenvectors(elpa_t handle,
+                                                 float *a,
+                                                 float *b,
+                                                 float *ev,
+                                                 float *q,
+                                                 int is_already_decomposed,
+                                                 int *error)
+{
+    elpa_generalized_eigenvectors_f(handle, a, b, ev, q, is_already_decomposed, error);
+}
+
+static inline void elpa_generalized_eigenvectors(elpa_t handle,
+                                                 double complex *a,
+                                                 double complex *b,
+                                                 double *ev,
+                                                 double complex *q,
+                                                 int is_already_decomposed,
+                                                 int *error)
+{
+    elpa_generalized_eigenvectors_dc(handle, a, b, ev, q, is_already_decomposed, error);
+}
+
+static inline void elpa_generalized_eigenvectors(elpa_t handle,
+                                                 float complex *a,
+                                                 float complex *b,
+                                                 float *ev,
+                                                 float complex *q,
+                                                 int is_already_decomposed,
+                                                 int *error)
+{
+    elpa_generalized_eigenvectors_fc(handle, a, b, ev, q, is_already_decomposed, error);
+}
+
+static inline void elpa_eigenvalues(elpa_t handle, double *a, double *ev, int *error)
+{
+    elpa_eigenvalues_all_host_arrays_d(handle, a, ev, error);
+}
+
+static inline void elpa_eigenvalues(elpa_t handle, float *a, float *ev, int *error)
+{
+    elpa_eigenvalues_all_host_arrays_f(handle, a, ev, error);
+}
+
+static inline void elpa_eigenvalues(elpa_t handle, double complex *a, double *ev, int *error)
+{
+    elpa_eigenvalues_all_host_arrays_dc(handle, a, ev, error);
+}
+
+static inline void elpa_eigenvalues(elpa_t handle, float complex *a, float *ev, int *error)
+{
+    elpa_eigenvalues_all_host_arrays_fc(handle, a, ev, error);
+}
+
+static inline void elpa_eigenvalues_double(elpa_t handle, double *a, double *ev, int *error)
+{
+    elpa_eigenvalues_device_pointer_d(handle, a, ev, error);
+}
+
+static inline void elpa_eigenvalues_float(elpa_t handle, float *a, float *ev, int *error)
+{
+    elpa_eigenvalues_device_pointer_f(handle, a, ev, error);
+}
+
+static inline void elpa_eigenvalues_double_complex(elpa_t handle, double complex *a, double *ev, int *error)
+{
+    elpa_eigenvalues_device_pointer_dc(handle, a, ev, error);
+}
+
+static inline void elpa_eigenvalues_float_complex(elpa_t handle, float complex *a, float *ev, int *error)
+{
+    elpa_eigenvalues_device_pointer_fc(handle, a, ev, error);
+}
+
+static inline void elpa_skew_eigenvalues(elpa_t handle, double *a, double *ev, int *error)
+{
+    elpa_eigenvalues_all_host_arrays_d(handle, a, ev, error);
+}
+
+static inline void elpa_skew_eigenvalues(elpa_t handle, float *a, float *ev, int *error)
+{
+    elpa_eigenvalues_all_host_arrays_f(handle, a, ev, error);
+}
+
+static inline void elpa_skew_eigenvalues_double(elpa_t handle, double *a, double *ev, int *error)
+{
+    elpa_eigenvalues_device_pointer_d(handle, a, ev, error);
+}
+
+static inline void elpa_skew_eigenvalues_float(elpa_t handle, float *a, float *ev, int *error)
+{
+    elpa_eigenvalues_device_pointer_f(handle, a, ev, error);
+}
+
+#endif // ELPA_API_VERSION <= 20210430
 
 static inline void elpa_cholesky(elpa_t handle, double complex *a, int *error)
 {

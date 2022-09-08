@@ -20,10 +20,10 @@ extern "C"
 #define complex _Complex
 #include <elpa/elpa_generated.h>
     // #include <elpa/elpa_generic.h>
-
+#undef complex
     const char *elpa_strerr(int elpa_error);
 }
 
 #define complex _Complex
-#include "elpa_generic.hpp"
+#include "elpa_generic.hpp" // This is a wrapper for `elpa/elpa_generic.h`.
 #undef complex
