@@ -20,6 +20,7 @@ VPATH=./src_global\
 :./module_xc\
 :./module_esolver\
 :./module_hsolver\
+:./module_hsolver/genelpa\
 :./module_elecstate\
 :./module_psi\
 :./module_hamilt\
