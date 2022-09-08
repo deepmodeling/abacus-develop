@@ -2,7 +2,9 @@
 
 [back to main page](../../README.md)
 
-[DP-GEN](https://github.com/deepmodeling/dpgen), the deep potential generator, is a package designed to generate deep learning based model of interatomic potential energy and force fields (Yuzhi Zhang, Haidi Wang, Weijie Chen, Jinzhe Zeng, Linfeng Zhang, Han Wang, and Weinan E, DP-GEN: A concurrent learning platform for the generation of reliable deep learning based potential energy models, Computer Physics Communications, 2020, 107206). ABACUS can now interface with DP-GEN to generate deep potentials. In the following, we take the FCC aluminum as an example.
+[DP-GEN](https://github.com/deepmodeling/dpgen), the deep potential generator, is a package designed to generate deep learning based model of interatomic potential energy and force fields (Yuzhi Zhang, Haidi Wang, Weijie Chen, Jinzhe Zeng, Linfeng Zhang, Han Wang, and Weinan E, DP-GEN: A concurrent learning platform for the generation of reliable deep learning based potential energy models, Computer Physics Communications, 2020, 107206). ABACUS can now interface with DP-GEN to generate deep potentials and performe autotests. In the following, we take the FCC aluminum as an example.
+
+## init_bulk and run
 
 This example can be found in examples/dpgen-example/init_and_run directory.
 
@@ -11,7 +13,7 @@ Firstly, one needs to prepare input files for ABACUS calculation, e.g., “INPUT
 Secondly, for the "dpgen init_bulk" step, an `init.json` file should be provided:
 
 
-```
+```json
 {
     "init_fp_style":    "ABACUS",   # abacus interface
     "stages":           [1,2,3,4],
@@ -36,7 +38,7 @@ Secondly, for the "dpgen init_bulk" step, an `init.json` file should be provided
 ```
 
 Next, for the "dpgen run" step, the following `run_param.json` should be provided.
-```
+```json
 {
     "type_map": [
         "Al"
@@ -163,6 +165,7 @@ Next, for the "dpgen run" step, the following `run_param.json` should be provide
     "fp_pp_path": "./",
     "fp_pp_files": ["Al_ONCV_PBE-1.0.upf"],   # the pseudopotential file
     "fp_orb_files": ["Al_gga_9au_100Ry_4s4p1d.orb"],  # the orbital file (use only in LCAO calculation)
+    "k_points":[2, 2, 2, 0, 0, 0],  # k-mesh setting
     "user_fp_params":{  # All the ABACUS input paramters are defined here
     "ntype": 1,         # defining input parameters from INPUT files is not supported yet.
     "ecutwfc": 80,      
@@ -175,11 +178,192 @@ Next, for the "dpgen run" step, the following `run_param.json` should be provide
     "smearing_sigma": 0.002,
     "scf_thr":1e-8,
     "cal_force":1,        # calculate force must be set to 1 in dpgen calculation
-    "k_points":[2, 2, 2, 0, 0, 0],  # k-mesh setting
     "kspacing": 0.01  # when KSPACING is set, the above k_points setting becomes invalid.
     }
 }
 ```
+
+## autotest
+
+This example can be found in examples/dpgen-example/autotest directory.
+
+`dpgen autotest` supports to perform `relaxation`,`eos` (equation of state),`elastic`,`surface`,`vacancy`, and `interstitial` calculations with ABACUS. A `property.json` and `machine.json` file need to be provided. For example,
+
+`property.json`:
+```json
+
+{
+    "structures":    ["confs/"],
+    "interaction": {
+        "type":         "abacus",
+        "incar":        "./INPUT",
+        "potcar_prefix":"./",
+        "potcars":      {"Al": "Al.PD04.PBE.UPF"},
+        "orb_files": {"Al":"Al_gga_10au_100Ry_3s3p2d.orb"}
+    },
+    "_relaxation": {
+            "cal_type": "relaxation",
+            "cal_setting":{
+                    "input_prop": "./INPUT.rlx"
+            }
+     },
+    "properties": [
+        {
+         "type":         "eos",
+         "vol_start":    0.85,
+         "vol_end":      1.15,
+         "vol_step":     0.01,
+         "cal_setting": {
+                         "relax_pos": true,
+                         "relax_shape": true,
+                         "relax_vol": false,
+                         "overwrite_interaction":{
+                                     "type": "abacus",
+                                     "incar": "./INPUT",
+                                     "potcar_prefix":"./",
+                                     "orb_files": {"Al":"Al_gga_10au_100Ry_3s3p2d.orb"},
+                                     "potcars": {"Al": "Al.PD04.PBE.UPF"} }
+                        }
+        },
+         {
+         "type":         "elastic",
+         "skip":         false,
+         "norm_deform":   1e-2,
+         "shear_deform":  1e-2
+        },
+        {
+         "type":         "vacancy",
+         "skip":         false,
+         "supercell":    [2, 2, 2]
+        },
+        {
+         "type":           "surface",
+         "skip":         true,
+         "min_slab_size":  15,
+         "min_vacuum_size":11,
+         "pert_xz":        0.01,
+         "max_miller":     3,
+         "cal_type":       "static"
+        }
+        ]
+}
+```
+
+`machine.json`
+
+```json
+{
+  "api_version": "1.0",
+  "deepmd_version": "2.1.0",
+  "train" :[
+    {
+      "command": "dp",
+      "machine": {
+        "batch_type": "DpCloudServer",
+        "context_type": "DpCloudServerContext",
+        "local_root" : "./",
+        "remote_profile":{
+          "email": "xxx@xxx.xxx",
+          "password": "xxx",
+          "program_id": 000,
+            "input_data":{
+                "api_version":2,
+                "job_type": "indicate",
+                "log_file": "00*/train.log",
+                "grouped":true,
+                "job_name": "Al-train-VASP",
+                "disk_size": 100,
+                "scass_type":"c8_m32_1 * NVIDIA V100",
+                "platform": "ali",
+                "image_name":"LBG_DeePMD-kit_2.1.0_v1",
+                "on_demand":0
+            }
+        }
+      },
+      "resources": {
+        "number_node":123473334635,
+        "local_root":"./",
+        "cpu_per_node": 4,
+        "gpu_per_node": 1,
+        "queue_name": "GPU",
+        "group_size": 1
+      }
+    }],
+  "model_devi":
+    [{
+      "command": "lmp -i input.lammps -v restart 0",
+      "machine": {
+        "batch_type": "DpCloudServer",
+        "context_type": "DpCloudServerContext",
+        "local_root" : "./",
+        "remote_profile":{
+          "email": "xxx@xxx.xxx",
+          "password": "xxx",
+          "program_id": 000,
+            "input_data":{
+              "api_version":2,
+              "job_type": "indicate",
+              "log_file": "*/model_devi.log",
+              "grouped":true,
+              "job_name": "Al-devia-ABACUS",
+              "disk_size": 200,
+              "scass_type":"c8_m32_1 * NVIDIA V100",
+              "platform": "ali",
+              "image_name":"LBG_DeePMD-kit_2.1.0_v1",
+              "on_demand":0
+            }
+        }
+      },
+      "resources": {
+        "number_node": 28348383,
+        "local_root":"./",
+        "cpu_per_node": 4,
+        "gpu_per_node": 1,
+        "queue_name": "GPU",
+        "group_size": 100
+      }
+    }],
+  "fp":
+    [{
+      "command": "OMP_NUM_THREADS=1 mpirun -np 16 abacus",
+      "machine": {
+        "batch_type": "DpCloudServer",
+        "context_type": "DpCloudServerContext",
+        "local_root" : "./",
+        "remote_profile":{
+          "email": "xxx@xxx.xxx",
+          "password": "xxx",
+         "program_id": 000,
+            "input_data":{
+              "api_version":2,
+              "job_type": "indicate",
+              "log_file": "task*/fp.log",
+              "grouped":true,
+              "job_name": "al-DFT-test",
+              "disk_size": 100,
+              "scass_type":"c32_m128_cpu",
+              "platform": "ali",
+              "image_name":"XXXXX",
+              "on_demand":0
+            }
+        }
+      },
+      "resources": {
+        "number_node": 712254638889,
+        "cpu_per_node": 32,
+        "gpu_per_node": 0,
+        "queue_name": "CPU",
+        "group_size": 2,
+        "local_root":"./",
+        "source_list": ["/opt/intel/oneapi/setvars.sh"]
+      }
+    }
+  ]
+}
+
+```
+
+For each property, the command `dpgen autotest make property.json` will generate the input files, `dpgen autotest run property.json machine.json` will run the corresponding tasks, and `dpgen autotest post property.json` will collect the final results. 
 
 
 Notes:

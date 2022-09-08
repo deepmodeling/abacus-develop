@@ -6,6 +6,7 @@
 #include "sto_func.h"
 #include "module_psi/psi.h"
 #include "module_elecstate/elecstate.h"
+#include "module_hamilt/hamilt.h"
 
 //----------------------------------------------
 // Solve for the new electron density and iterate 
@@ -26,7 +27,7 @@ class Stochastic_Iter
 
     void init(const int, int* nchip_in, const int method_in, Stochastic_WF& stowf);
     
-    void sum_stoband(Stochastic_WF& stowf, elecstate::ElecState* pes);
+    void sum_stoband(Stochastic_WF& stowf, elecstate::ElecState* pes,hamilt::Hamilt* pHamilt);
 
     double calne(elecstate::ElecState* pes);
 
@@ -34,7 +35,9 @@ class Stochastic_Iter
 
     void orthog(const int &ik, psi::Psi<std::complex<double>>& psi, Stochastic_WF& stowf);
 
-    void checkemm(const int &ik, const int iter, Stochastic_WF& stowf);
+    void checkemm(const int &ik, const int istep, const int iter, Stochastic_WF& stowf);
+
+    void check_precision(const double ref,const double thr, const string info);
 
     ModuleBase::Chebyshev<double>* p_che = nullptr;
 
@@ -55,10 +58,16 @@ class Stochastic_Iter
     public:
     int method; //different methods 1: slow, less memory  2: fast, more memory
     ModuleBase::ComplexMatrix* chiallorder = nullptr;
+    //chiallorder cost too much memories and should be cleaned after scf.
+    void cleanchiallorder();
+    //cal shchi = \sqrt{f(\hat{H})}|\chi>
+    void calHsqrtchi(Stochastic_WF& stowf);
     //cal Pn = \sum_\chi <\chi|Tn(\hat{h})|\chi>
     void calPn(const int& ik, Stochastic_WF& stowf);
     //cal Tnchi = \sum_n C_n*T_n(\hat{h})|\chi>
-    void calTnchi(const int& ik, Stochastic_WF& stowf);
+    void calTnchi_ik(const int& ik, Stochastic_WF& stowf);
+    //cal v^T*M*v
+    double vTMv(const double *v, const double * M, const int n);
 
 };
 

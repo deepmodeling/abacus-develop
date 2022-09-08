@@ -8,8 +8,16 @@
 namespace hamilt
 {
 
-template<class T>
-class Veff : public T
+#ifndef __VEFFTEMPLATE
+#define __VEFFTEMPLATE
+
+template<class T> class Veff : public T 
+{};
+
+#endif
+
+template<>
+class Veff<OperatorPW> : public OperatorPW
 {
     public:
     Veff(

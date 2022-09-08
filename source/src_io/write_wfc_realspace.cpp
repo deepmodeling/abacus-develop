@@ -63,8 +63,8 @@ namespace Write_Wfc_Realspace
                     write_charge_realspace_1(wfc_i2, file_name + "_imag", mpi_requests.back());
 #else
                 write_charge_realspace_1(wfc_r2, file_name);
-                if (!square)
-                    write_charge_realspace_1(wfc_i2, file_name + "_imag", mpi_requests.back());
+                //if (!square)
+                    //write_charge_realspace_1(wfc_i2, file_name + "_imag", mpi_requests.back());
 #endif
 			}
 		}

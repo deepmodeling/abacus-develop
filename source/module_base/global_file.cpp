@@ -64,7 +64,7 @@ void ModuleBase::Global_File::make_dir_out(
 			}
 			else
 			{
-				std::cout << " PROC " << rank << " CAN NOT MAKE THE DIR !!! " << std::endl;	
+				std::cout << " PROC " << rank << " CAN NOT MAKE THE DIR !!! " << std::endl;
 				make_dir = 0;
 			}
         }
@@ -79,7 +79,7 @@ void ModuleBase::Global_File::make_dir_out(
 	if(make_dir==0)
 	{
 		std::cout << " CAN NOT MAKE THE OUT DIR......." << std::endl;
-		ModuleBase::QUIT();		
+		ModuleBase::QUIT();
 	}
 	MPI_Barrier(MPI_COMM_WORLD);
 #endif
@@ -101,7 +101,7 @@ void ModuleBase::Global_File::make_dir_out(
                 }
                 else
                 {
-                    std::cout << " PROC " << rank << " CAN NOT MAKE THE STRU DIR !!! " << std::endl;	
+                    std::cout << " PROC " << rank << " CAN NOT MAKE THE STRU DIR !!! " << std::endl;
                     make_dir_stru = 0;
                 }
             }
@@ -116,7 +116,7 @@ void ModuleBase::Global_File::make_dir_out(
         if(make_dir_stru==0)
         {
             std::cout << " CAN NOT MAKE THE STRU DIR......." << std::endl;
-            ModuleBase::QUIT();		
+            ModuleBase::QUIT();
         }
         MPI_Barrier(MPI_COMM_WORLD);
 #endif
@@ -141,8 +141,13 @@ void ModuleBase::Global_File::make_dir_out(
 
     if(rank==0)
     {
-	    open_log(GlobalV::ofs_warning, "warning", calculation, restart);
+        open_log(GlobalV::ofs_warning, "warning", calculation, restart);
     }
+
+#ifdef GATHER_INFO
+    open_log(GlobalV::ofs_info, "math_info_" + std::to_string(rank), calculation, restart);
+#endif
+
     return;
 }
 
@@ -220,8 +225,12 @@ void ModuleBase::Global_File::close_all_log(const int rank, const bool out_alllo
 
     if (rank==0)
     {
-        close_log(GlobalV::ofs_warning,"warning.log");
+        close_log(GlobalV::ofs_warning, "warning.log");
     }
+
+#ifdef GATHER_INFO
+    close_log(GlobalV::ofs_info, "math_info");
+#endif
     return;
 }
 }

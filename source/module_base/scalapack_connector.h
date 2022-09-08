@@ -21,6 +21,10 @@ extern "C"
 		double *alpha , double *a , int *ia , int *ja , int *desca ,
 		double *beta ,  double *c , int *ic , int *jc , int *descc );
 
+	void pztranu_(const int *m,const int*n,
+		const double *alpha , std::complex<double> *a , const int *ia , const int *ja ,const int *desca ,
+		const double *beta ,  std::complex<double> *c , const int *ic ,const int *jc ,const int *descc);
+
 	void pzgemv_(
 		const char *transa,
 		const int *M, const int *N,

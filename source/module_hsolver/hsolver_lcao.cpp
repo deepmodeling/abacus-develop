@@ -2,14 +2,19 @@
 
 #include "diago_blas.h"
 #include "diago_elpa.h"
-#include "src_io/write_HS.h"
+#include "diago_lapack.h"
 #include "module_base/timer.h"
+#include "src_io/write_HS.h"
 
 namespace hsolver
 {
 
 template <typename T>
-void HSolverLCAO::solveTemplate(hamilt::Hamilt* pHamilt, psi::Psi<T>& psi, elecstate::ElecState* pes, const std::string method_in, const bool skip_charge)
+void HSolverLCAO::solveTemplate(hamilt::Hamilt* pHamilt,
+                                psi::Psi<T>& psi,
+                                elecstate::ElecState* pes,
+                                const std::string method_in,
+                                const bool skip_charge)
 {
     ModuleBase::TITLE("HSolverLCAO", "solve");
     ModuleBase::timer::tick("HSolverLCAO", "solve");
@@ -25,7 +30,7 @@ void HSolverLCAO::solveTemplate(hamilt::Hamilt* pHamilt, psi::Psi<T>& psi, elecs
                 pdiagh = nullptr;
             }
         }
-        if(pdiagh == nullptr)
+        if (pdiagh == nullptr)
         {
             pdiagh = new DiagoElpa();
             pdiagh->method = this->method;
@@ -41,9 +46,25 @@ void HSolverLCAO::solveTemplate(hamilt::Hamilt* pHamilt, psi::Psi<T>& psi, elecs
                 pdiagh = nullptr;
             }
         }
-        if(pdiagh == nullptr)
+        if (pdiagh == nullptr)
         {
             pdiagh = new DiagoBlas();
+            pdiagh->method = this->method;
+        }
+    }
+    else if (this->method == "lapack")
+    {
+        if (pdiagh != nullptr)
+        {
+            if (pdiagh->method != this->method)
+            {
+                delete[] pdiagh;
+                pdiagh = nullptr;
+            }
+        }
+        if (pdiagh == nullptr)
+        {
+            pdiagh = new DiagoLapack();
             pdiagh->method = this->method;
         }
     }
@@ -60,11 +81,16 @@ void HSolverLCAO::solveTemplate(hamilt::Hamilt* pHamilt, psi::Psi<T>& psi, elecs
         /// update H(k) for each k point
         pHamilt->updateHk(ik);
 
-        bool bit = false; //LiuXh, 2017-03-21
-	    //if set bit = true, there would be error in soc-multi-core calculation, noted by zhengdy-soc
+        bool bit = false; // LiuXh, 2017-03-21
+        // if set bit = true, there would be error in soc-multi-core calculation, noted by zhengdy-soc
         hamilt::MatrixBlock<T> h_mat, s_mat;
         pHamilt->matrix(h_mat, s_mat);
-	    HS_Matrix::saving_HS(h_mat.p, s_mat.p, bit, this->out_mat_hs, "data-"+std::to_string(ik), this->ParaV[0]);//LiuXh, 2017-03-21
+        HS_Matrix::saving_HS(h_mat.p,
+                             s_mat.p,
+                             bit,
+                             this->out_mat_hs,
+                             "data-" + std::to_string(ik),
+                             this->ParaV[0]); // LiuXh, 2017-03-21
 
         psi.fix_k(ik);
 
@@ -78,21 +104,21 @@ void HSolverLCAO::solveTemplate(hamilt::Hamilt* pHamilt, psi::Psi<T>& psi, elecs
         }
     }
 
-    if (this->method != "genelpa" && this->method != "scalapack_gvx")
+    if (this->method != "genelpa" && this->method != "scalapack_gvx" && this->method != "lapack")
     {
         delete pdiagh;
         pdiagh = nullptr;
     }
 
-    //used in nscf calculation
-    if(skip_charge) 
+    // used in nscf calculation
+    if (skip_charge)
     {
         ModuleBase::timer::tick("HSolverLCAO", "solve");
         return;
     }
 
-    //calculate charge by psi
-    //called in scf calculation
+    // calculate charge by psi
+    // called in scf calculation
     pes->psiToRho(psi);
     ModuleBase::timer::tick("HSolverLCAO", "solve");
 }
@@ -100,11 +126,19 @@ void HSolverLCAO::solveTemplate(hamilt::Hamilt* pHamilt, psi::Psi<T>& psi, elecs
 int HSolverLCAO::out_mat_hs = 0;
 int HSolverLCAO::out_mat_hsR = 0;
 
-void HSolverLCAO::solve(hamilt::Hamilt* pHamilt, psi::Psi<std::complex<double>>& psi, elecstate::ElecState* pes, const std::string method_in, const bool skip_charge)
+void HSolverLCAO::solve(hamilt::Hamilt* pHamilt,
+                        psi::Psi<std::complex<double>>& psi,
+                        elecstate::ElecState* pes,
+                        const std::string method_in,
+                        const bool skip_charge)
 {
     this->solveTemplate(pHamilt, psi, pes, method, skip_charge);
 }
-void HSolverLCAO::solve(hamilt::Hamilt* pHamilt, psi::Psi<double>& psi, elecstate::ElecState* pes, const std::string method_in, const bool skip_charge)
+void HSolverLCAO::solve(hamilt::Hamilt* pHamilt,
+                        psi::Psi<double>& psi,
+                        elecstate::ElecState* pes,
+                        const std::string method_in,
+                        const bool skip_charge)
 {
     this->solveTemplate(pHamilt, psi, pes, method, skip_charge);
 }

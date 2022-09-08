@@ -35,7 +35,7 @@ void Exx_Abfs::Inverse_Matrix_Double::cal_inverse( const Method &method )
 
 void Exx_Abfs::Inverse_Matrix_Double::using_dpotrf()
 {
-	LapackConnector::dpotrf('U',dim,A,dim,&info);
+	LapackConnector::dpotrf('U',dim,A,dim,info);
 
 	if(info!=0)
 	{
@@ -45,7 +45,7 @@ void Exx_Abfs::Inverse_Matrix_Double::using_dpotrf()
 		ModuleBase::QUIT();
 	}
 
-	LapackConnector::dpotri('U',dim,A,dim,&info);
+	LapackConnector::dpotri('U',dim,A,dim,info);
 	
 	if(info!=0)
 	{

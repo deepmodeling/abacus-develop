@@ -1,4 +1,6 @@
-list(APPEND objects
+add_library(
+    xc_
+    OBJECT
     xc_functional.cpp
     xc_functional_vxc.cpp
     xc_functional_gradcorr.cpp
@@ -10,12 +12,6 @@ list(APPEND objects
     xc_funct_exch_gga.cpp
     xc_funct_corr_gga.cpp
     xc_funct_hcth.cpp
-    )
-
-add_library(
-    xc
-    OBJECT
-    ${objects}
 )
 
 IF (BUILD_TESTING)

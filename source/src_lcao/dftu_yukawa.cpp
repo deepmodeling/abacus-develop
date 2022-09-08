@@ -17,7 +17,6 @@
 #include "../src_pw/global.h"
 #include "global_fp.h"
 #include "../module_base/global_function.h"
-#include "LOOP_ions.h"
 #include "LCAO_matrix.h"
 
 namespace ModuleDFTU{

@@ -1,0 +1,34 @@
+INPUT_PARAMETERS
+#Parameters	(General)
+suffix                  autotest
+pseudo_dir		./
+ntype			1
+nbands			18
+calculation		md
+
+#Parameter (Accuracy)
+ecutwfc			100
+scf_nmax		30
+
+ks_solver		genelpa
+basis_type		lcao
+out_chg			1
+gamma_only		0
+md_nstep		2
+
+mixing_type		pulay
+mixing_beta		0.7
+scf_thr			1.0e-6
+
+cal_stress          1
+stress_thr      1e-6
+cal_force           1
+force_thr_ev    1.0e-3
+
+tddft			1
+
+md_type		0
+md_dt			0.05
+init_vel                 1
+ocp			1
+ocp_set			8*2 1*1 1*1 8*0

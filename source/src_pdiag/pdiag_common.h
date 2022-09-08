@@ -6,11 +6,12 @@
 #endif
 #include "../module_base/blas_connector.h"
 #include "../module_base/lapack_connector.h"			// Peize Lin add 2016-08-04
+#include <vector>
 
 struct LocalMatrix
 {
-    int *row_set;
-    int *col_set;
+    std::vector<int> row_set;				// Peize Lin change int* to vector 2022.08.03
+    std::vector<int> col_set;
     
 	int col_num;
     int row_num;

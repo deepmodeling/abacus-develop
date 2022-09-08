@@ -12,6 +12,7 @@ Atom::Atom()
     type = 0;
     stapos_wf = 0;
     tau = new ModuleBase::Vector3<double>[1];
+    tau_original = new ModuleBase::Vector3<double>[1];
     taud = new ModuleBase::Vector3<double>[1];
     vel = new ModuleBase::Vector3<double>[1];
     mag = new double[1];
@@ -29,6 +30,7 @@ Atom::Atom()
 Atom::~Atom()
 {
     delete[] tau;
+    delete[] tau_original;
     delete[] taud;
     delete[] vel;
     delete[] mag;
@@ -140,6 +142,7 @@ void Atom::bcast_atom(void)
     {
         assert(na!=0);
         delete[] tau;
+        delete[] tau_original;
 		delete[] taud;
 	    delete[] vel;
         delete[] mag;
@@ -147,6 +150,7 @@ void Atom::bcast_atom(void)
         delete[] angle2;
         delete[] m_loc_;
         tau = new ModuleBase::Vector3<double>[na];
+        tau_original = new ModuleBase::Vector3<double>[na];
 		taud = new ModuleBase::Vector3<double>[na];
 	    vel = new ModuleBase::Vector3<double>[na];
         mag = new double[na];

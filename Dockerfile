@@ -1,5 +1,10 @@
 # To build this Dockerfile, run `docker build -t abacus - < Dockerfile`.
-# Pull image with `docker pull ghcr.io/deepmodeling/abacus:latest`.
+# Alternatively, pull the image with `docker pull ghcr.io/deepmodeling/abacus:latest`.
+# Also available at `docker pull registry.dp.tech/deepmodeling/abacus:latest`.
+
+# Docker images are aimed for evaluating ABACUS.
+# For production use, please compile ABACUS from source code and run in bare-metal for a better performace.
+
 FROM ubuntu:22.04
 RUN apt update && apt install -y --no-install-recommends \
     libopenblas-dev liblapack-dev libscalapack-mpi-dev libelpa-dev libfftw3-dev libcereal-dev libxc-dev \
@@ -17,10 +22,11 @@ RUN git clone https://github.com/deepmodeling/abacus-develop.git --depth 1 && \
 # If you have trouble cloning repo, replace "github.com" with "gitee.com".
 CMD mpirun --use-hwthread-cpus abacus
 
-# To run ABACUS built by this image with all available threads, execute `docker run -v <host>:<wd> -w <wd/input> abacus`.
+# To run ABACUS built by this image with all available threads, execute `docker run -v <host>:<wd> -w <wd/input> abacus:latest`.
 # Replace '<host>' with the path to all files(including pseudopotential files), '<wd>' with a path to working directory, and '<wd/input>' with the path to input folder(containing 'INPUT', 'STRU', etc.).
-# e.g. after clone the repo to `$HOME` and pulled this image, execute `docker run -v ~/abacus-develop/tests/integrate:/workspace -w /workspace/101_PW_15_f_pseudopots abacus`.
-# To run ABACUS with a given MPI process number, execute `docker run -v <host>:<wd> -w <wd/input> -it --entrypoint mpirun abacus -np <processes> abacus`. Note: the first "abacus" is the name of the image, the second "abacus" is the name of the executable file. Do not use '--cpus' flag of 'docker run' to specify the number of processes.
+# e.g. after cloning the repo to `$HOME` and pulling image, execute `docker run -v ~/abacus-develop/tests/integrate:/workspace -w /workspace/101_PW_15_f_pseudopots abacus:latest`.
+# To run ABACUS with a given MPI process number, execute `docker run -v <host>:<wd> -w <wd/input> -it --entrypoint mpirun abacus:latest -np <processes> abacus`.
+# Note: It would be better using all available CPUs. Docker uses CFS to share the CPU resources, which will result in bad CPU affinity.
 
 # To use this image as developing environment, execute `docker run -it --entrypoint /bin/bash abacus`.
 # Please refer to https://docs.docker.com/engine/reference/commandline/run/ for more details.

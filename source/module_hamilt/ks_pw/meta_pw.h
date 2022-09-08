@@ -8,8 +8,16 @@
 namespace hamilt
 {
 
-template<class T>
-class Meta : public T
+#ifndef __METATEMPLATE
+#define __METATEMPLATE
+
+template<class T> class Meta : public T
+{};
+
+#endif
+
+template<>
+class Meta<OperatorPW> : public OperatorPW
 {
     public:
     Meta(

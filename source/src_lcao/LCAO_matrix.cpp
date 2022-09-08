@@ -116,18 +116,18 @@ void LCAO_Matrix::allocate_HS_R(const int &nnR)
     if(GlobalV::NSPIN!=4)
     {	
         this->SlocR.resize(nnR);
-        this->Hloc_fixedR.resize(nnR);
+        if(GlobalV::CALCULATION!="get_S") this->Hloc_fixedR.resize(nnR);
 
         ModuleBase::GlobalFunc::ZEROS(SlocR.data(), nnR);
-        ModuleBase::GlobalFunc::ZEROS(Hloc_fixedR.data(), nnR);
+        if(GlobalV::CALCULATION!="get_S") ModuleBase::GlobalFunc::ZEROS(Hloc_fixedR.data(), nnR);
     }
     else
     {
         this->SlocR_soc.resize(nnR);
-        this->Hloc_fixedR_soc.resize(nnR);
+        if(GlobalV::CALCULATION!="get_S") this->Hloc_fixedR_soc.resize(nnR);
         
         ModuleBase::GlobalFunc::ZEROS(SlocR_soc.data(), nnR);
-        ModuleBase::GlobalFunc::ZEROS(Hloc_fixedR_soc.data(), nnR);
+        if(GlobalV::CALCULATION!="get_S") ModuleBase::GlobalFunc::ZEROS(Hloc_fixedR_soc.data(), nnR);
         
     }
 

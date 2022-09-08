@@ -8,6 +8,38 @@
 
 Charge_Extra::Charge_Extra()
 {
+}
+
+Charge_Extra::~Charge_Extra()
+{
+    if(pot_order > 1)
+    {
+        for(int is=0; is<GlobalV::NSPIN; is++)
+        {
+            delete[] delta_rho1[is];
+            delete[] delta_rho2[is];
+        }
+        delete[] delta_rho1;
+        delete[] delta_rho2;
+    }
+
+    // if(pot_order > 2)
+    // {
+    //     for(int is=0; is<GlobalV::NSPIN; is++)
+    //     {
+    //         delete[] delta_rho3[is];
+    //     }	
+    //     delete[] delta_rho3;
+    // }
+
+    delete[] pos_old1;
+    delete[] pos_old2;
+    delete[] pos_now;
+    delete[] pos_next;
+}
+
+void Charge_Extra::Init_CE()
+{
     if(GlobalC::pot.chg_extrap == "none")
     {
         pot_order = 0;
@@ -61,35 +93,6 @@ Charge_Extra::Charge_Extra()
 
     alpha = 1.0;
     beta  = 0.0;
-}
-
-
-Charge_Extra::~Charge_Extra()
-{
-    if(pot_order > 1)
-    {
-        for(int is=0; is<GlobalV::NSPIN; is++)
-        {
-            delete[] delta_rho1[is];
-            delete[] delta_rho2[is];
-        }
-        delete[] delta_rho1;
-        delete[] delta_rho2;
-    }
-
-    // if(pot_order > 2)
-    // {
-    //     for(int is=0; is<GlobalV::NSPIN; is++)
-    //     {
-    //         delete[] delta_rho3[is];
-    //     }	
-    //     delete[] delta_rho3;
-    // }
-
-    delete[] pos_old1;
-    delete[] pos_old2;
-    delete[] pos_now;
-    delete[] pos_next;
 }
 
 void Charge_Extra::extrapolate_charge()
@@ -491,13 +494,22 @@ void Charge_Extra::find_alpha_and_beta(void)
 
 void Charge_Extra::save_pos_next(const UnitCell_pseudo& ucell)
 {
-    ucell.save_cartesian_position(this->pos_next);
+    ucell.save_cartesian_position_original(this->pos_next);
     return;
 }
 
 void Charge_Extra::update_istep(const int &step)
 {
-    this->istep = step;
+    //This is because md and relaxation are not unified yet
+    //will update later
+    if(GlobalV::CALCULATION=="relax" || GlobalV::CALCULATION=="cell-relax")
+    {
+        this->istep++;
+    }
+    else
+    {
+        this->istep = step;
+    }
     return;
 }
 
@@ -507,7 +519,12 @@ void Charge_Extra::update_all_pos(const UnitCell_pseudo& ucell)
     {
         this->pos_old2[i] = this->pos_old1[i];
         this->pos_old1[i] = this->pos_now[i];
+        if(GlobalV::CALCULATION=="relax"||GlobalV::CALCULATION=="cell-relax")
+        {
+            this->pos_now[i] = this->pos_next[i];
+        }
     }
-    ucell.save_cartesian_position(this->pos_now);
+    if(GlobalV::CALCULATION=="md"||GlobalV::CALCULATION=="sto-md")
+        ucell.save_cartesian_position_original(this->pos_now);
     return;
 }

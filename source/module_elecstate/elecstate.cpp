@@ -20,18 +20,6 @@ void ElecState::calculate_weights()
 {
     ModuleBase::TITLE("ElecState", "calculate_weights");
 
-    if (GlobalV::ocp == 1)
-    {
-        for (int ik = 0; ik < GlobalC::kv.nks; ik++)
-        {
-            for (int ib = 0; ib < GlobalV::NBANDS; ib++)
-            {
-                this->wg(ik, ib) = GlobalV::ocp_kb[ik * GlobalV::NBANDS + ib];
-            }
-        }
-        return;
-    }
-
     // for test
     //	std::cout << " gaussian_broadening = " << use_gaussian_broadening << std::endl;
     //	std::cout << " tetrahedron_method = " << use_tetrahedron_method << std::endl;
@@ -204,7 +192,7 @@ void ElecState::calculate_weights()
 void ElecState::calEBand()
 {
     ModuleBase::TITLE("ElecState", "calEBand");
-    //calculate ebands using wg and ekb
+    // calculate ebands using wg and ekb
     this->eband = 0.0;
     for (int ik = 0; ik < this->ekb.nr; ++ik)
     {
@@ -213,7 +201,7 @@ void ElecState::calEBand()
             this->eband += this->ekb(ik, ibnd) * this->wg(ik, ibnd);
         }
     }
-    if(GlobalV::KPAR != 1 && GlobalV::CALCULATION.substr(0,3) != "sto")
+    if (GlobalV::KPAR != 1 && GlobalV::CALCULATION.substr(0, 3) != "sto")
     {
         //==================================
         // Reduce all the Energy in each cpu

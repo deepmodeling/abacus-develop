@@ -416,8 +416,7 @@ int ORB_control::mat_2d(MPI_Comm vu,
     // (5) row_set, it's a global index :
     // save explicitly : every row in this processor
     // belongs to which row in the global matrix.
-    delete[] LM.row_set;
-    LM.row_set = new int[LM.row_num];
+    LM.row_set.resize(LM.row_num);
     j = 0;
     for (i = 0; i < LM.row_b; i++)
     {
@@ -475,8 +474,7 @@ int ORB_control::mat_2d(MPI_Comm vu,
 
     if (pv->testpb)ModuleBase::GlobalFunc::OUT(ofs_running, "Local columns (including nb)", LM.row_num);
 
-    delete[] LM.col_set;
-    LM.col_set = new int[LM.col_num];
+    LM.col_set.resize(LM.col_num);
 
     j = 0;
     for (i = 0; i < LM.col_b; i++)
@@ -531,6 +529,8 @@ int ORB_control::mat_2d(MPI_Comm vu,
     }
     pv->nloc_wfc = pv->ncol_bands * LM.row_num;
 
+    pv->nloc_Eij= pv->ncol_bands * pv->ncol_bands;
+    
     return 0;
 }
 #endif

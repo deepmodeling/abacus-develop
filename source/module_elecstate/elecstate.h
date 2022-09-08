@@ -52,7 +52,7 @@ class ElecState
     }
 
     // calculate wg from ekb
-    virtual void calculate_weights(void);
+    virtual void calculate_weights();
 
     virtual void print_psi(const psi::Psi<double>& psi_in)
     {

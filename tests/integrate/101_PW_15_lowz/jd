@@ -1,0 +1,1 @@
+test SG15 pseudopotential, symmetry=on, nz is 3 which less than default MPI_threads 4, ewald calculation is skipped in this case

@@ -202,7 +202,7 @@ void surchem::Leps2(const UnitCell &ucell,
     {
         grad_grad_phi[ir] = grad_phi[ir].x;
     }
-    GlobalC::UFFT.ToReciSpace(grad_grad_phi, grad_grad_phi_G, rho_basis);
+    rho_basis->real2recip(grad_grad_phi, grad_grad_phi_G);
     XC_Functional::grad_rho(grad_grad_phi_G, tmp_vector3, rho_basis);
     for (int ir = 0; ir < rho_basis->nrxx; ir++)
     {
@@ -217,7 +217,7 @@ void surchem::Leps2(const UnitCell &ucell,
     {
         grad_grad_phi[ir] = grad_phi[ir].y;
     }
-    GlobalC::UFFT.ToReciSpace(grad_grad_phi, grad_grad_phi_G, rho_basis);
+    rho_basis->real2recip(grad_grad_phi, grad_grad_phi_G);
     XC_Functional::grad_rho(grad_grad_phi_G, tmp_vector3, rho_basis);
     for (int ir = 0; ir < rho_basis->nrxx; ir++)
     {
@@ -232,7 +232,7 @@ void surchem::Leps2(const UnitCell &ucell,
     {
         grad_grad_phi[ir] = grad_phi[ir].z;
     }
-    GlobalC::UFFT.ToReciSpace(grad_grad_phi, grad_grad_phi_G, rho_basis);
+    rho_basis->real2recip(grad_grad_phi, grad_grad_phi_G);
     XC_Functional::grad_rho(grad_grad_phi_G, tmp_vector3, rho_basis);
     for (int ir = 0; ir < rho_basis->nrxx; ir++)
     {
@@ -243,7 +243,7 @@ void surchem::Leps2(const UnitCell &ucell,
     //     cout << lp_real << [i] << endl;
     // }
 
-    GlobalC::UFFT.ToReciSpace(lp_real, lp, rho_basis);
+    rho_basis->real2recip(lp_real, lp);
     // cout<<"lp: "<<endl;
     // test_print(lp, 10);
 

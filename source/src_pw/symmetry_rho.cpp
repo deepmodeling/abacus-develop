@@ -16,7 +16,7 @@ void Symmetry_rho::begin(const int &spin_now, const Charge_Broyden &CHR, const M
 {
 	assert(spin_now < 4);//added by zhengdy-soc
 
-	if(!ModuleSymmetry::Symmetry::symm_flag) return;
+	if(ModuleSymmetry::Symmetry::symm_flag != 1) return;
 #ifdef __MPI
 	// parallel version
 	psymm(CHR.rho[spin_now], rho_basis, Pgrid, symm);

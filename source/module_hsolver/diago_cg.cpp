@@ -10,7 +10,7 @@
 namespace hsolver
 {
 
-typedef hamilt::Operator::hpsi_info hp_info;
+typedef hamilt::Operator<std::complex<double>>::hpsi_info hp_info;
 
 DiagoCG::DiagoCG(const double *precondition_in)
 {
@@ -24,8 +24,7 @@ DiagoCG::~DiagoCG()
 
 void DiagoCG::diag_mock(hamilt::Hamilt *phm_in, psi::Psi<std::complex<double>> &phi, double *eigenvalue_in)
 {
-    if (test_cg == 1)
-        ModuleBase::TITLE("DiagoCG", "diag_once");
+    ModuleBase::TITLE("DiagoCG", "diag_once");
     ModuleBase::timer::tick("DiagoCG", "diag_once");
 
     /// out : record for states of convergence
@@ -49,18 +48,18 @@ void DiagoCG::diag_mock(hamilt::Hamilt *phm_in, psi::Psi<std::complex<double>> &
     // Works for generalized eigenvalue problem (US pseudopotentials) as well
     //-------------------------------------------------------------------
     this->phi_m = new psi::Psi<std::complex<double>>(phi, 1, 1);
-    this->hphi.resize(this->dim, ModuleBase::ZERO);
-    this->sphi.resize(this->dim, ModuleBase::ZERO);
+    this->hphi.resize(this->dmx, ModuleBase::ZERO);
+    this->sphi.resize(this->dmx, ModuleBase::ZERO);
 
     this->cg = new psi::Psi<std::complex<double>>(phi, 1, 1);
-    this->scg.resize(this->dim, ModuleBase::ZERO);
-    this->pphi.resize(this->dim, ModuleBase::ZERO);
+    this->scg.resize(this->dmx, ModuleBase::ZERO);
+    this->pphi.resize(this->dmx, ModuleBase::ZERO);
 
     //in band_by_band CG method, only the first band in phi_m would be calculated
     psi::Range cg_hpsi_range(0);
 
-    this->gradient.resize(this->dim, ModuleBase::ZERO);
-    this->g0.resize(this->dim, ModuleBase::ZERO);
+    this->gradient.resize(this->dmx, ModuleBase::ZERO);
+    this->g0.resize(this->dmx, ModuleBase::ZERO);
     this->lagrange.resize(this->n_band, ModuleBase::ZERO);
 
     for (int m = 0; m < this->n_band; m++)
@@ -80,9 +79,8 @@ void DiagoCG::diag_mock(hamilt::Hamilt *phm_in, psi::Psi<std::complex<double>> &
 
         //do hPsi, actually the result of hpsi stored in Operator,
         //the necessary of copying operation should be checked later
-        hp_info cg_hpsi_in(this->phi_m, cg_hpsi_range);
-        const std::complex<double>* hpsi_out = std::get<0>(phm_in->ops->hPsi(cg_hpsi_in))->get_pointer();
-        ModuleBase::GlobalFunc::COPYARRAY(hpsi_out, this->hphi.data(), this->dim);
+        hp_info cg_hpsi_in(this->phi_m, cg_hpsi_range, this->hphi.data());
+        phm_in->ops->hPsi(cg_hpsi_in);
 
         this->eigenvalue[m] = ModuleBase::GlobalFunc::ddot_real(this->dim, this->phi_m->get_pointer(), this->hphi.data());
 
@@ -97,9 +95,9 @@ void DiagoCG::diag_mock(hamilt::Hamilt *phm_in, psi::Psi<std::complex<double>> &
             this->orthogonal_gradient(phm_in, phi, m);
             this->calculate_gamma_cg(iter, gg_last, cg_norm, theta);
             
-            hp_info cg_hpsi_in(this->cg, cg_hpsi_range);
-            const std::complex<double>* cg_hpsi = std::get<0>(phm_in->ops->hPsi(cg_hpsi_in))->get_pointer();
-            ModuleBase::GlobalFunc::COPYARRAY(cg_hpsi, this->pphi.data(), this->dim);
+            hp_info cg_hpsi_in(this->cg, cg_hpsi_range, this->pphi.data());
+            phm_in->ops->hPsi(cg_hpsi_in);
+
             phm_in->sPsi(this->cg->get_pointer(), this->scg.data(), (size_t)this->dim);
             converged = this->update_psi(cg_norm, theta, this->eigenvalue[m]);
 

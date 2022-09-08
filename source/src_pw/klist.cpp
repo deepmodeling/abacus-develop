@@ -83,7 +83,7 @@ void K_Vectors::set(
     // (2)
     //only berry phase need all kpoints including time-reversal symmetry!
     //if symm_flag is not set, only time-reversal symmetry would be considered.
-    if(!berryphase::berry_phase_flag)
+    if(!berryphase::berry_phase_flag && ModuleSymmetry::Symmetry::symm_flag != -1)
     {
         this->ibz_kpoint(symm, ModuleSymmetry::Symmetry::symm_flag);
         if(ModuleSymmetry::Symmetry::symm_flag || is_mp)

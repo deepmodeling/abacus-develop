@@ -4,6 +4,8 @@
 #include "../src_io/print_info.h"
 #ifdef __MPI
 #include "mpi.h"
+#else
+#include "chrono"
 #endif
 
 //--------------Temporary----------------
@@ -80,23 +82,29 @@ namespace ModuleESolver
         // mohan add 2021-01-30
         Print_Info::setup_parameters(ucell, GlobalC::kv);
 
-        //new plane wave basis
-        this->pw_wfc->initmpi(GlobalV::NPROC_IN_POOL, GlobalV::RANK_IN_POOL, POOL_WORLD);
-        this->pw_wfc->initgrids(ucell.lat0, ucell.latvec, GlobalC::rhopw->nx, GlobalC::rhopw->ny, GlobalC::rhopw->nz);
-        this->pw_wfc->initparameters(false, inp.ecutwfc, GlobalC::kv.nks, GlobalC::kv.kvec_d.data());
-#ifdef __MPI
-        if(INPUT.pw_seed > 0)    MPI_Allreduce(MPI_IN_PLACE, &this->pw_wfc->ggecut, 1, MPI_DOUBLE, MPI_MAX , MPI_COMM_WORLD);
-        //qianrui add 2021-8-13 to make different kpar parameters can get the same results
-#endif
-        this->pw_wfc->setuptransform();
-        for(int ik = 0 ; ik < GlobalC::kv.nks; ++ik)   GlobalC::kv.ngk[ik] = this->pw_wfc->npwk[ik];
-        this->pw_wfc->collect_local_pw(); 
-        print_wfcfft(inp, GlobalV::ofs_running);
-
+        if(GlobalV::BASIS_TYPE=="pw" || GlobalV::CALCULATION=="ienvelope")
+        {
+            //Envelope function is calculated as lcao_in_pw
+            //new plane wave basis
+    #ifdef __MPI
+            this->pw_wfc->initmpi(GlobalV::NPROC_IN_POOL, GlobalV::RANK_IN_POOL, POOL_WORLD);
+    #endif
+            this->pw_wfc->initgrids(ucell.lat0, ucell.latvec, GlobalC::rhopw->nx, GlobalC::rhopw->ny, GlobalC::rhopw->nz);
+            this->pw_wfc->initparameters(false, inp.ecutwfc, GlobalC::kv.nks, GlobalC::kv.kvec_d.data());
+    #ifdef __MPI
+            if(INPUT.pw_seed > 0)    MPI_Allreduce(MPI_IN_PLACE, &this->pw_wfc->ggecut, 1, MPI_DOUBLE, MPI_MAX , MPI_COMM_WORLD);
+            //qianrui add 2021-8-13 to make different kpar parameters can get the same results
+    #endif
+            this->pw_wfc->setuptransform();
+            for(int ik = 0 ; ik < GlobalC::kv.nks; ++ik)   GlobalC::kv.ngk[ik] = this->pw_wfc->npwk[ik];
+            this->pw_wfc->collect_local_pw(); 
+            this->print_wfcfft(inp, GlobalV::ofs_running);
+        }
         // initialize the real-space uniform grid for FFT and parallel
         // distribution of plane waves
         GlobalC::Pgrid.init(GlobalC::rhopw->nx, GlobalC::rhopw->ny, GlobalC::rhopw->nz, GlobalC::rhopw->nplane,
             GlobalC::rhopw->nrxx, GlobalC::bigpw->nbz, GlobalC::bigpw->bz); // mohan add 2010-07-22, update 2011-05-04
+            
         // Calculate Structure factor
         GlobalC::sf.setup_structure_factor(&GlobalC::ucell, GlobalC::rhopw);
 
@@ -105,6 +113,9 @@ namespace ModuleESolver
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT CHARGE");
         // Initializee the potential.
         GlobalC::pot.allocate(GlobalC::rhopw->nrxx);
+
+        // Initialize charge extrapolation
+        CE.Init_CE();
     }
 
     void ESolver_KS::hamilt2density(const int istep, const int iter, const double ethr)
@@ -156,7 +167,6 @@ namespace ModuleESolver
         ModuleBase::GlobalFunc::DONE(ofs, "INIT PLANEWAVE");
     }
 
-
     void ESolver_KS::Run(const int istep, UnitCell_pseudo& ucell)
     {
         if (!(GlobalV::CALCULATION == "scf" || GlobalV::CALCULATION == "md"
@@ -168,7 +178,7 @@ namespace ModuleESolver
         {
             ModuleBase::timer::tick(this->classname, "Run");
 
-            this->printhead(); //print the headline on the screen.
+            if(this->maxniter > 0)  this->printhead(); //print the headline on the screen.
             this->beforescf(istep); //Something else to do before the iter loop
 
             bool firstscf = true;
@@ -193,37 +203,37 @@ namespace ModuleESolver
                 //they do not occupy all processors, for example wavefunctions uses 20 processors while density uses 10.
                 if(GlobalV::MY_STOGROUP == 0)
                 {
-                // double drho = this->estate.caldr2(); 
-                // EState should be used after it is constructed.
-                drho = GlobalC::CHR.get_drho();
-                double hsolver_error = 0.0;
-                if (firstscf)
-                {
-                    firstscf = false;
-                    hsolver_error = this->phsol->cal_hsolerror();
-                    // The error of HSolver is larger than drho, so a more precise HSolver should be excuconv_elected.
-                    if (hsolver_error > drho)
+                    // double drho = this->estate.caldr2(); 
+                    // EState should be used after it is constructed.
+                    drho = GlobalC::CHR.get_drho();
+                    double hsolver_error = 0.0;
+                    if (firstscf)
                     {
-                        diag_ethr = this->phsol->reset_diagethr(GlobalV::ofs_running, hsolver_error, drho);
-                        this->hamilt2density(istep, iter, diag_ethr);
-                        drho = GlobalC::CHR.get_drho();
+                        firstscf = false;
                         hsolver_error = this->phsol->cal_hsolerror();
+                        // The error of HSolver is larger than drho, so a more precise HSolver should be excuconv_elected.
+                        if (hsolver_error > drho)
+                        {
+                            diag_ethr = this->phsol->reset_diagethr(GlobalV::ofs_running, hsolver_error, drho);
+                            this->hamilt2density(istep, iter, diag_ethr);
+                            drho = GlobalC::CHR.get_drho();
+                            hsolver_error = this->phsol->cal_hsolerror();
+                        }
                     }
-                }
 
-                this->conv_elec = (drho < this->scf_thr);
+                    this->conv_elec = (drho < this->scf_thr);
 
-                // If drho < hsolver_error in the first iter or drho < scf_thr, we do not change rho.
-                if (drho < hsolver_error || this->conv_elec)
-                {
-                    if (drho < hsolver_error)    GlobalV::ofs_warning << " drho < hsolver_error, keep charge density unchanged." << std::endl;
-                }
-                else
-                {
-                    //charge mixing
-                    //conv_elec = this->estate.mix_rho();
-                    GlobalC::CHR.mix_rho(iter);
-                }
+                    // If drho < hsolver_error in the first iter or drho < scf_thr, we do not change rho.
+                    if (drho < hsolver_error || this->conv_elec)
+                    {
+                        if (drho < hsolver_error)    GlobalV::ofs_warning << " drho < hsolver_error, keep charge density unchanged." << std::endl;
+                    }
+                    else
+                    {
+                        //charge mixing
+                        //conv_elec = this->estate.mix_rho();
+                        GlobalC::CHR.mix_rho(iter);
+                    }
                 }
 #ifdef __MPI
 		        MPI_Bcast(&drho, 1, MPI_DOUBLE , 0, PARAPW_WORLD);
@@ -243,8 +253,8 @@ namespace ModuleESolver
                 printiter(iter, drho, duration, diag_ethr);
                 if (this->conv_elec)
                 {
-                    int stop = this->do_after_converge(iter);
                     this->niter = iter;
+                    bool stop = this->do_after_converge(iter);
                     if(stop) break;
                 }
             }

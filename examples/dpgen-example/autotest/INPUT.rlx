@@ -1,0 +1,23 @@
+INPUT_PARAMETERS
+# Created by Atomic Simulation Enviroment
+ntype               1
+calculation         cell-relax
+relax_nmax	    100
+stress_thr          0.01
+force_thr_ev        0.001
+relax_method        cg
+pseudo_rcut         10.0
+pseudo_mesh         1
+ecutwfc             50
+basis_type          lcao
+ks_solver           genelpa
+smearing_method     gaussian
+smearing_sigma      0.01
+mixing_type         pulay
+mixing_beta         0.7
+scf_nmax            100
+scf_thr             1e-08
+cal_force           1
+cal_stress          1
+out_stru            1
+kspacing            0.04

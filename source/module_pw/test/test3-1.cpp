@@ -200,4 +200,9 @@ TEST_F(PWTEST,test3_1)
     delete [] tmpx;
     delete [] tmpy;
     delete [] tmpz;
+    for(int ig = 0 ; ig < pwtest.npw ; ++ig)
+    {
+        if(ig < pwtest.ng_xeq0) EXPECT_EQ(pwtest.gdirect[ig].x, 0);
+        else                    EXPECT_NE(pwtest.gdirect[ig].x, 0);
+    }
 }

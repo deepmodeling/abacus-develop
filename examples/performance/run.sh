@@ -4,7 +4,8 @@
 #RUNNING SET
 abacus=abacus #ABACUS running path
 thread=1      #Thread number
-ca=8          #accuracy for comparing energy, force, and stress
+ca=6          #accuracy for comparing energy
+cafs=3	      #accuracy for comparing force, and stress
 #ncpu=8       #parallel core number in mpirun, or use the below value
 ncpu=$(cat /proc/cpuinfo | grep "cpu cores" | uniq | awk '{print $NF}') #the CPU cores in current machine
 ForceRun=0    #if ForceRun = 0, before run a job, it will check the file result.log
@@ -34,25 +35,28 @@ check_out() {
     outfile=$1
     properties=$(awk '{print $1}' $outfile)
     for key in $properties; do
-        cal=$(grep "$key" $outfile | awk '{printf "%.'$ca'f\n",$2}')
-        ref=$(grep "$key" result.ref | awk '{printf "%.'$ca'f\n",$2}')
-        deviation=$(awk 'BEGIN {x='$ref';y='$cal';if (x<y) {a=y-x} else {a=x-y};printf "%.'$ca'f\n",a}')
-        deviation1=$(awk 'BEGIN{print '$deviation'*(10^'$ca')}')
-        
         if [ $key == "totaltimeref" ]; then
             break
+	    elif [[ $key == "totalforceref" || $key == "totalstressref" ]]; then
+	        tca=$cafs
+	    else
+	        tca=$ca
         fi
 
+	    cal=$(grep "$key" $outfile | awk '{printf "%.'$tca'f\n",$2}')
+        ref=$(grep "$key" result.ref | awk '{printf "%.'$tca'f\n",$2}')
+        deviation=$(awk 'BEGIN {x='$ref';y='$cal';if (x<y) {a=y-x} else {a=x-y};printf "%.'$tca'f\n",a}')
+        deviation1=$(awk 'BEGIN{print '$deviation'*(10^'$tca')}')
+
         if [ ! -n "$deviation" ]; then
-            echo "    Error: Fatal Error!"
+            echo "    Error: Fatal Error! $key cal=$cal ref=$ref"
             let failed++
             currentfolder=$(pwd | awk -F '/' '{print $NF}')
             failedfile="${failedfile}${currentfolder}\n"
             break
         else
             if [ $(echo "$deviation1 < 1" | bc) = 0 ]; then
-                echo "    Error: FAILED!"
-                echo "    Error:$key cal=$cal ref=$ref deviation=$deviation"
+                echo "    Error: FAILED! $key cal=$cal ref=$ref deviation=$deviation"
                 let failed++
                 currentfolder=$(pwd | awk -F '/' '{print $NF}')
                 failedfile="${failedfile}${currentfolder}\n"
@@ -80,7 +84,7 @@ run_abacus() {
         lastword=$(tail -1 result.log | awk '{print $1}')
     fi
     if [[ $lastword != "SEE" ]]; then
-        OMP_NUM_THREADS=$2 /usr/bin/time -v mpirun -n $1 $abacus 2>time.log | tee result.log
+        OMP_NUM_THREADS=$2 /usr/bin/time -v mpirun -n $1 $abacus 1>result.log 2>time.log 
     else
         printf "**result.log is normal end, skip this job** "
     fi
@@ -131,7 +135,7 @@ if [[ $DoAllExampleRun != 0 ]]; then
     done
 
     #sum the critical timing information
-    bash sumdat.sh allcase sum.dat
+    python3 sumdat.py -i allcase -o sum.dat
     echo "##AllExampleRun" >>sumall.dat
     cat sum.dat >>sumall.dat
     echo "" >>sumall.dat
@@ -255,5 +259,10 @@ if [[ $failed -eq 0 ]]; then
 else
     echo "Error: $failed jobs failed." | tee $GITHUB_STEP_SUMMARY
     echo -e "$failedfile"
+    for ifile in `echo -e "$failedfile"`;do
+	echo "" | tee $GITHUB_STEP_SUMMARY
+	echo $ifile | tee $GITHUB_STEP_SUMMARY
+	cat $ifile/result.log | tee $GITHUB_STEP_SUMMARY
+    done
     exit 1
 fi

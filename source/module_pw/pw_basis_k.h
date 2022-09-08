@@ -62,7 +62,7 @@ public:
         const int nk_in, //number of k points in this pool
         const ModuleBase::Vector3<double> *kvec_d, // Direct coordinates of k points
         const int distribution_type_in = 1,
-        const bool xprime_in = false
+        const bool xprime_in = true
     );
 
 

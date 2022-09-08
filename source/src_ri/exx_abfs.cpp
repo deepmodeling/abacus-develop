@@ -490,7 +490,6 @@ std::cout<<"I"<<std::endl;
 
 void Exx_Abfs::cal_exx() const
 {
-	// ȫ����ֻһ��
 std::cout<<"A"<<std::endl;
 
 	const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>
@@ -639,7 +638,6 @@ std::cout<<"E"<<std::endl;
 
 std::cout<<"F"<<std::endl;
 
-	// ÿһ�����Ӳ�
 	const std::map<size_t,std::map<size_t,std::map<size_t,std::map<size_t,ModuleBase::matrix>>>>
 		&&ms_abfs_abfs = m_abfs_abfs.cal_overlap_matrix( index_abfs, index_abfs );
 ofs_ms("ms_abfs_abfs",ms_abfs_abfs);
@@ -661,7 +659,6 @@ ofs_ms("ms_C",ms_C);
 
 std::cout<<"H"<<std::endl;
 
-	// ÿһ�����Ӳ�
 	timeval t_begin;
 	gettimeofday( &t_begin, NULL);
 

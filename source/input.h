@@ -46,14 +46,18 @@ class Input
 
     bool init_vel; // read velocity from STRU or not  liuyu 2021-07-14
 
-    bool symmetry; // turn on symmetry or not
+    /* symmetry level: 
+      -1, no symmetry at all; 
+      0, only basic time reversal would be considered; 
+      1, point group symmetry would be considered*/
+    int symmetry; 
     double symmetry_prec; // LiuXh add 2021-08-12, accuracy for symmetry
     int kpar; // ecch pool is for one k point
 
     bool berry_phase; // berry phase calculation
     int gdir; // berry phase calculation
     double kspacing;
-
+    double min_dist_coef;
     //==========================================================
     // Wannier functions
     //==========================================================
@@ -72,6 +76,13 @@ class Input
     int bndpar; //parallel for stochastic/deterministic bands
     int initsto_freq; //frequency to init stochastic orbitals when running md
     int method_sto; //different methods for sdft, 1: slow, less memory  2: fast, more memory
+    int npart_sto; //for method_sto = 2, reduce memory
+    bool cal_cond; //calculate electronic conductivities
+    int cond_nche; //orders of Chebyshev expansions for conductivities
+    double cond_dw; //d\omega for conductivities
+    double cond_wcut; //cutoff \omega for conductivities
+    int cond_wenlarge;
+    double cond_fwhm; //FWHM for conductivities 
 
     //==========================================================
     // electrons / spin
@@ -221,6 +232,9 @@ class Input
     double dos_emax_ev;
     double dos_edelta_ev;
     double dos_scale;
+    int dos_nche; //orders of Chebyshev expansions for dos
+    bool dos_setemin = false; //true: emin is set
+    bool dos_setemax = false; //true: emax is set
 
     double b_coef; //  pengfei 2014-10-13
 
@@ -412,7 +426,8 @@ class Input
     //==========================================================
     // variables for test only
     //==========================================================
-    bool test_just_neighbor;
+    bool test_just_neighbor = false;
+    bool test_skip_ewald = false;
 
   private:
     //==========================================================

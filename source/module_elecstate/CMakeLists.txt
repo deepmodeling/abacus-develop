@@ -5,6 +5,7 @@ add_library(
     elecstate_pw.cpp
     elecstate_pw_sdft.cpp
     elecstate_lcao.cpp
+    elecstate_lcao_tddft.cpp
     dm2d_to_grid.cpp
 )
 

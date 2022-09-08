@@ -16,6 +16,7 @@ namespace hsolver
                            psi::Psi<std::complex<double>>& psi, 
                            elecstate::ElecState* pes, 
                            Stochastic_WF& stowf,
+                           const int istep,
                            const int iter,
                            const std::string method_in, 
                            const bool skip_charge) override;

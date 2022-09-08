@@ -36,7 +36,7 @@ void shape_gradn(const complex<double> *PS_TOTN, ModulePW::PW_Basis* rho_basis, 
 
     double *PS_TOTN_real = new double[rho_basis->nrxx];
     ModuleBase::GlobalFunc::ZEROS(PS_TOTN_real, rho_basis->nrxx);
-    GlobalC::UFFT.ToRealSpace(PS_TOTN, PS_TOTN_real,rho_basis);
+    rho_basis->recip2real(PS_TOTN, PS_TOTN_real);
 
     double epr_c = 1.0 / sqrt(ModuleBase::TWO_PI) / GlobalV::sigma_k;
     double epr_z = 0;
@@ -119,8 +119,8 @@ void surchem::createcavity(const UnitCell &ucell, ModulePW::PW_Basis* rho_basis,
     //  packs the real array into a complex one
     //  to G space
     complex<double> *inv_gn = new complex<double>[rho_basis->npw];
-    GlobalC::UFFT.ToReciSpace(sqrt_nablan_2, inv_gn,rho_basis);
-
+    rho_basis->real2recip(sqrt_nablan_2, inv_gn);
+    
     // \nabla(1 / |\nabla n|), ggn in real space
     ModuleBase::Vector3<double> *ggn = new ModuleBase::Vector3<double>[rho_basis->nrxx];
     XC_Functional::grad_rho(inv_gn, ggn, rho_basis);

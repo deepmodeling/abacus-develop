@@ -7,7 +7,7 @@ ntype               2
 pseudo_type         upf201
 gamma_only          0
 
-calculation         scf
+calculation         test_neighbour
 symmetry            0
 
 #test_force         1
@@ -25,13 +25,10 @@ scf_nmax               100
 
 #Parameters (LCAO)
 basis_type          lcao
-ks_solver           genelpa
 chg_extrap       second-order
 out_dm              0
-pw_diag_thr                0.00001
 
 mixing_type         pulay 
 mixing_beta         0.4
 mixing_ndim         5
 
-test_just_neighbor 1

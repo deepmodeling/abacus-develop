@@ -117,24 +117,20 @@ void IState_Charge::begin(Gint_Gamma &gg)
 		if(bands_picked[ib])
 		{
 			std::cout << " Perform band decomposed charge density for band " << ib+1 << std::endl;
-			// (1)
-			// This has been done once in LOOP_ions.
-			// but here we need to done for each band.
-			//this->loc->allocate_gamma(GridT);	
 			
-			// (2) calculate the density matrix for a partuclar 
+			// (1) calculate the density matrix for a partuclar 
 			// band, whenever it is occupied or not.
 			
 		#ifdef __MPI
 			this->idmatrix(ib);
 		#endif
-			// (3) zero out of charge density array. 
+			// (2) zero out of charge density array. 
 			for(int is=0; is<GlobalV::NSPIN; is++)
 			{
 				ModuleBase::GlobalFunc::ZEROS( GlobalC::CHR.rho[is], GlobalC::rhopw->nrxx );
 			}
 			
-			// (4) calculate charge density for a particular 
+			// (3) calculate charge density for a particular 
 			// band.
 			Gint_inout inout(this->loc->DM, (Charge*)(&GlobalC::CHR), Gint_Tools::job_type::rho);
    			gg.cal_gint(&inout);

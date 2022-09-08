@@ -5,6 +5,10 @@
 #include "../module_base/constants.h"
 #include "../module_base/timer.h"
 
+#ifdef _OPENMP
+#include <omp.h>
+#endif
+
 double ORB_table_phi::dr = -1.0;
 
 ORB_table_phi::ORB_table_phi()
@@ -128,9 +132,7 @@ void ORB_table_phi::cal_ST_Phi12_R
 {
 	ModuleBase::timer::tick("ORB_table_phi", "cal_ST_Phi12_R");
 
-	double* k1_dot_k2 = new double[kmesh];
-	double* k1_dot_k2_dot_kpoint = new double[kmesh];
-
+	std::vector<double> k1_dot_k2(kmesh);
 	// Peize Lin change 2017-12-12
 	switch(job)
 	{
@@ -166,6 +168,7 @@ void ORB_table_phi::cal_ST_Phi12_R
 			break;
 	}
 	
+	std::vector<double> k1_dot_k2_dot_kpoint(kmesh);
 	for (int ik = 0; ik < kmesh; ik++)
 	{
 		k1_dot_k2_dot_kpoint[ik] = k1_dot_k2[ik] * this->kpoint[ik];
@@ -176,14 +179,22 @@ void ORB_table_phi::cal_ST_Phi12_R
 	
 	//previous version
 	
-	double* integrated_func = new double[kmesh];
+	//double* integrated_func = new double[kmesh];
 	
-	const std::vector<std::vector<double>> &jlm1 = pSB->get_jlx()[l-1];
+	int ll;
+	if(l==0) ll=0;
+	else 	 ll=l-1;
+
+	const std::vector<std::vector<double>> &jlm1 = pSB->get_jlx()[ll];
 	const std::vector<std::vector<double>> &jl = pSB->get_jlx()[l];
 	const std::vector<std::vector<double>> &jlp1 = pSB->get_jlx()[l+1];
 	
+#ifdef _OPENMP
+	#pragma omp parallel for schedule(static)
+#endif
 	for (int ir = 0; ir < rmesh; ir++)
 	{
+		std::vector<double> integrated_func(kmesh);
 		const std::vector<double> &jl_r = jl[ir];
 		for (int ik=0; ik<kmesh; ++ik)
 		{
@@ -192,7 +203,7 @@ void ORB_table_phi::cal_ST_Phi12_R
 		// Call simpson integration
 		double temp = 0.0;
 
-		ModuleBase::Integral::Simpson_Integral(kmesh,integrated_func,dk,temp);
+		ModuleBase::Integral::Simpson_Integral(kmesh, integrated_func.data(), dk, temp);
 		rs[ir] = temp * ModuleBase::FOUR_PI ;
 		
 		// Peize Lin accelerate 2017-10-02
@@ -214,7 +225,7 @@ void ORB_table_phi::cal_ST_Phi12_R
 			}
 		}
 
-		ModuleBase::Integral::Simpson_Integral(kmesh,integrated_func,dk,temp);
+		ModuleBase::Integral::Simpson_Integral(kmesh, integrated_func.data(), dk, temp);
 		drs[ir] = -ModuleBase::FOUR_PI*(l+1)/(2.0*l+1) * temp;
 	}
 
@@ -224,25 +235,19 @@ void ORB_table_phi::cal_ST_Phi12_R
 
 	if (l > 0)
 	{
-		ModuleBase::GlobalFunc::ZEROS(integrated_func,kmesh);
+		std::vector<double> integrated_func(kmesh);
 		double temp = 0.0;
 	
 		for (int ik = 0; ik < kmesh; ik++)
 		{
-			integrated_func[ik] = k1_dot_k2[ik] * pow (kpoint[ik], l);
+			integrated_func[ik] = k1_dot_k2[ik] * std::pow (kpoint[ik], l);
 		}
 		
-		ModuleBase::Integral::Simpson_Integral(kmesh,integrated_func,kab,temp);
+		ModuleBase::Integral::Simpson_Integral(kmesh, integrated_func.data(), kab, temp);
 		rs[0] = ModuleBase::FOUR_PI / ModuleBase::Mathzone_Add1::dualfac (2*l+1) * temp;
 	}
 
-	delete [] integrated_func;
-	delete [] k1_dot_k2;
-	delete [] k1_dot_k2_dot_kpoint;	
-
 	ModuleBase::timer::tick("ORB_table_phi", "cal_ST_Phi12_R");
-	
-	return;
 }
 
 #include "../module_base/constants.h"

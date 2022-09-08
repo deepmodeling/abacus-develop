@@ -1,0 +1,8 @@
+This test for:
+*SDFT
+*Al
+*kpoints 2*2*1
+*10 KS + 10 stochastic
+*kpar 2
+*bndpar 2
+*cal_cond 1

@@ -12,3 +12,7 @@ result.out
 html
 *.log
 STRU_READIN_ADJUST.cif
+*.egg
+*.egg-info
+build
+dist

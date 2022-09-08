@@ -1,0 +1,42 @@
+INPUT_PARAMETERS
+#Parameters (1.General)
+suffix			autotest
+calculation     sto-scf
+method_sto      2
+ntype			1
+nbands			10
+nbands_sto		10
+nche_sto		120
+emax_sto		0
+emin_sto		0
+seed_sto        20000
+pseudo_dir      ../tools/PP_ORB
+symmetry	    1
+kpar            2
+bndpar          2
+out_chg         0
+init_chg        file
+
+#Parameters (2.Iteration)
+ecutwfc			20
+scf_thr			1e-6
+scf_nmax	    0
+
+
+#Parameters (3.Basis)
+basis_type		pw
+
+#Parameters (4.Smearing)
+smearing_method		fd
+smearing_sigma			0.6
+
+#Parameters (5.Mixing)
+mixing_type		broyden
+mixing_beta		0.4
+
+cal_cond      1
+cond_nche  18
+cond_fwhm   8
+cond_wcut        20
+cond_dw          0.02
+cond_wenlarge    9

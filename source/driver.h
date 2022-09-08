@@ -18,6 +18,8 @@ class Driver
 	// do stuff, have fun!
 	void atomic_world();
 
+	// interface to the actual calculations
+	void driver_run();
 
 };
 

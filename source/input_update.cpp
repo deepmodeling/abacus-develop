@@ -7,7 +7,7 @@
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
 #include "input.h"
-#include "src_ions/ions_move_basic.h"
+#include "module_relaxation/ions_move_basic.h"
 #include "src_io/optical.h"
 #ifdef __LCAO
 #include "src_lcao/FORCE_STRESS.h"

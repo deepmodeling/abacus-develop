@@ -1,0 +1,56 @@
+{
+    "structures":    ["confs/"],
+    "interaction": {
+        "type":         "abacus",
+        "incar":        "./INPUT",
+        "potcar_prefix":"./",
+        "potcars":      {"Al": "Al.PD04.PBE.UPF"},
+	"orb_files": {"Al":"Al_gga_10au_100Ry_3s3p2d.orb"}
+    },
+    "_relaxation": {
+            "cal_type": "relaxation",
+            "cal_setting":{
+                    "input_prop": "./INPUT.rlx"
+            }
+     },
+    "properties": [
+        {
+         "type":         "eos",
+	 "vol_start":    0.85,
+         "vol_end":      1.15,
+         "vol_step":     0.01,
+         "cal_setting": {
+                         "relax_pos": true, 
+                         "relax_shape": true, 
+                         "relax_vol": false, 
+                         "overwrite_interaction":{
+                                     "type": "abacus", 
+                                     "incar": "./INPUT", 
+                                     "potcar_prefix":"./", 
+				     "orb_files": {"Al":"Al_gga_10au_100Ry_3s3p2d.orb"},
+                                     "potcars": {"Al": "Al.PD04.PBE.UPF"} }
+                        }
+        },
+	 {
+         "type":         "elastic",
+	 "skip":         false,
+         "norm_deform":   1e-2,
+         "shear_deform":  1e-2
+        },
+        {
+         "type":         "vacancy",
+         "skip":         false,
+	 "supercell":    [2, 2, 2]
+        },
+        {
+         "type":           "surface",
+         "skip":         true,
+	 "min_slab_size":  15,
+         "min_vacuum_size":11,
+         "pert_xz":        0.01,
+         "max_miller":     3,
+         "cal_type":       "static"
+        }
+        ]
+}
+

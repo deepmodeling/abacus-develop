@@ -9,7 +9,7 @@ pseudo_type     upf201
 
 #Parameters (2.Iteration)
 ecutwfc			100
-scf_thr				1e-8
+scf_thr				1e-6
 scf_nmax			100
 cal_force 1
 cal_stress 1

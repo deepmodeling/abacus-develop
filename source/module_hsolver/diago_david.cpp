@@ -2,13 +2,14 @@
 
 #include "diago_iter_assist.h"
 #include "module_base/constants.h"
+#include "module_base/blas_connector.h"
 #include "module_base/lapack_connector.h"
 #include "module_base/timer.h"
 #include "src_parallel/parallel_reduce.h"
 
 namespace hsolver
 {
-typedef hamilt::Operator::hpsi_info hp_info;
+typedef hamilt::Operator<std::complex<double>>::hpsi_info hp_info;
 
 int DiagoDavid::PW_DIAG_NDIM = 4;
 
@@ -80,13 +81,13 @@ void DiagoDavid::diag_mock(hamilt::Hamilt* phm_in, psi::Psi<std::complex<double>
 
         //phm_in->sPsi(psi_m.data(), spsi.data(),  (size_t)dim);
         this->SchmitOrth(
-            dim, 
-            nband, 
-            m, 
-            basis, 
+            dim,
+            nband,
+            m,
+            basis,
             sp,
-            &lagrange_matrix(m, 0), 
-            pre_matrix_mm_m[m], 
+            &lagrange_matrix(m, 0),
+            pre_matrix_mm_m[m],
             pre_matrix_mv_m[m]
         );
         phm_in->sPsi(&basis(m, 0), &sp(m, 0),  (size_t)dim);
@@ -104,9 +105,8 @@ void DiagoDavid::diag_mock(hamilt::Hamilt* phm_in, psi::Psi<std::complex<double>
         }*/
     }
     //end of SchmitOrth and calculate H|psi>
-    hp_info dav_hpsi_in(&basis, psi::Range(1, 0, 0, nband-1));
-    auto hp_psi = std::get<0>(phm_in->ops->hPsi(dav_hpsi_in));
-    ModuleBase::GlobalFunc::COPYARRAY(hp_psi->get_pointer(), &hp(0, 0), hp_psi->get_nbasis() * nband);
+    hp_info dav_hpsi_in(&basis, psi::Range(1, 0, 0, nband-1), &hp(0, 0));
+    phm_in->ops->hPsi(dav_hpsi_in);
 
     hc.zero_out();
     sc.zero_out();
@@ -343,7 +343,7 @@ void DiagoDavid::cal_grad(hamilt::Hamilt* phm_in,
     {
         phm_in->sPsi(&basis(nbase + m, 0), &sp(nbase + m, 0),  (size_t)npw);
     }
-    //first nbase bands psi* dot notconv bands spsi to prepare lagrange_matrix 
+    //first nbase bands psi* dot notconv bands spsi to prepare lagrange_matrix
     trans = 'C';
     transb = 'N';
     //calculate the square matrix for future lagranges
@@ -367,22 +367,22 @@ void DiagoDavid::cal_grad(hamilt::Hamilt* phm_in,
         spsi = &sp(nbase + m, 0);
 
         this->SchmitOrth(
-            npw, 
-            nbase + notconv, 
-            nbase + m, 
-            basis, 
-            sp, 
+            npw,
+            nbase + notconv,
+            nbase + m,
+            basis,
+            sp,
             &lagrange_matrix(m, 0),
-            pre_matrix_mm_m[m], 
+            pre_matrix_mm_m[m],
             pre_matrix_mv_m[m]
         );
         phm_in->sPsi(ppsi, spsi, (size_t)npw);
 
     }
-    hp_info dav_hpsi_in(&basis, psi::Range(1, 0, nbase, nbase + notconv-1));
-    auto hp_psi = std::get<0>(phm_in->ops->hPsi(dav_hpsi_in));
-    ModuleBase::GlobalFunc::COPYARRAY(hp_psi->get_pointer(), &hp(nbase, 0), hp_psi->get_nbasis()*notconv);
-
+    //calculate H|psi> for not convergence bands
+    hp_info dav_hpsi_in(&basis, psi::Range(1, 0, nbase, nbase + notconv-1), &hp(nbase, 0));
+    phm_in->ops->hPsi(dav_hpsi_in);
+    
     ModuleBase::timer::tick("DiagoDavid", "cal_grad");
     return;
 }
@@ -598,7 +598,7 @@ void DiagoDavid::refresh(const int &npw,
             &ModuleBase::ZERO, // belta
             &basis(nband, 0), // C
             &basis.get_nbasis()); // LDC: if(N) max(1, m)
-    
+
     /*for (int m = 0; m < nband; m++)
     {
         for (int j = 0; j < nbase; j++)
@@ -835,10 +835,10 @@ void DiagoDavid::planSchmitOrth(
         for(int i=divide_times-1; i>=0; i--)
         {
             divide_points[i*2] = divide_points[i] - matrix_size;
-            divide_points[i*2+1] = divide_points[i*2] + last_matrix_size; 
+            divide_points[i*2+1] = divide_points[i*2] + last_matrix_size;
             pre_matrix_mm_m[ divide_points[i*2] ] = matrix_size;
             pre_matrix_mm_m[ divide_points[i*2+1]] = matrix_size;
-            if(res_nband == matrix_size) 
+            if(res_nband == matrix_size)
             {
                 pre_matrix_mv_m[divide_points[i*2]] = 1;
                 pre_matrix_mv_m[divide_points[i*2+1]] = 1;
@@ -847,7 +847,7 @@ void DiagoDavid::planSchmitOrth(
             {
                 pre_matrix_mv_m[divide_points[i*2]] = 2;
                 pre_matrix_mv_m[divide_points[i*2+1]] = 2;
-            } 
+            }
         }
             divide_times *= 2;
         }

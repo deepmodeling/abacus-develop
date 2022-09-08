@@ -6,8 +6,16 @@
 namespace hamilt
 {
 
-template<class T>
-class Ekinetic : public T
+#ifndef __EKINETICTEMPLATE
+#define __EKINETICTEMPLATE
+
+template<class T> class Ekinetic : public T 
+{};
+
+#endif
+
+template<>
+class Ekinetic<OperatorPW> : public OperatorPW
 {
     public:
     Ekinetic(

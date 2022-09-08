@@ -2,7 +2,8 @@
 #include "exx_lcao.h"
 
 #include "../src_pw/global.h"
-#include "../module_base/global_function.h"
+#include "module_base/timer.h"
+#include "module_base/global_function.h"
 #include "../src_parallel/parallel_reduce.h"
 
 #include "conv_coulomb_pot.h"
@@ -802,6 +803,7 @@ ofs_mpi.close();
 void Exx_Lcao::cal_exx_ions(const Parallel_Orbitals &pv)
 {
 	ModuleBase::TITLE("Exx_Lcao","cal_exx_ions");
+	ModuleBase::timer::tick("Exx_Lcao", "cal_exx_ions");
 std::ofstream ofs_mpi(test_dir.process+"time_"+ModuleBase::GlobalFunc::TO_STRING(GlobalV::MY_RANK),std::ofstream::app);
 timeval t_start, t_start_all;
 gettimeofday( &t_start_all, NULL);
@@ -921,11 +923,13 @@ ofs_mpi.close();
 	#elif TEST_EXX_LCAO==-1
 		#error "TEST_EXX_LCAO"
 	#endif
+	ModuleBase::timer::tick("Exx_Lcao", "cal_exx_ions");
 }
 
 void Exx_Lcao::cal_exx_elec(Local_Orbital_Charge &loc, complex<double>*** wfc_k_grid)
 {
 	ModuleBase::TITLE("Exx_Lcao","cal_exx_elec");
+	ModuleBase::timer::tick("Exx_Lcao", "cal_exx_elec");
 
 static int istep=0;
 	#if TEST_EXX_LCAO==1
@@ -944,6 +948,7 @@ std::ofstream ofs_mpi(test_dir.process+"time_"+ModuleBase::GlobalFunc::TO_STRING
 timeval t_start, t_start_all;
 gettimeofday( &t_start_all, NULL);
 
+ModuleBase::timer::tick("Exx_Lcao", "cal_DM");
 #if EXX_DM==1
 gettimeofday( &t_start, NULL);
 	this->DM_para.cal_DM( Born_von_Karman_period, H_atom_pairs_core, info.dm_threshold, loc.DM, loc.DM_R, wfc_k_grid,);
@@ -958,19 +963,24 @@ gettimeofday( &t_start, NULL);
 	this->DM_para.cal_DM(info.dm_threshold, loc);
 ofs_mpi<<"TIME@ Exx_Lcao::cal_DM\t"<<time_during(t_start)<<std::endl;
 #endif
+ModuleBase::timer::tick("Exx_Lcao", "cal_DM");
 
+ModuleBase::timer::tick("Exx_Lcao", "cal_norm_D_max");
 gettimeofday( &t_start, NULL);
 #ifdef __MPI
 	cauchy.cal_norm_D_max( DM_para.DMr );
 #endif
 ofs_mpi<<"TIME@ cauchy.cal_norm_D_max\t"<<time_during(t_start)<<std::endl;
+ModuleBase::timer::tick("Exx_Lcao", "cal_norm_D_max");
 #ifdef __MPI
 ofs_mpi<<"sizeof_DM\t"<<get_sizeof(DM_para.DMr)<<std::endl;
 #endif
+ModuleBase::timer::tick("Exx_Lcao", "cal_Hexx");
 gettimeofday( &t_start, NULL);
 	// HexxR[is][iat1][iat2][box2]
 	std::vector<std::map<size_t,std::map<size_t,std::map<Abfs::Vector3_Order<int>,ModuleBase::matrix>>>> HexxR = cal_Hexx();
 ofs_mpi<<"TIME@ Exx_Lcao::cal_Hexx\t"<<time_during(t_start)<<std::endl;
+ModuleBase::timer::tick("Exx_Lcao", "cal_Hexx");
 
 ofs_mpi<<"sizeof_HexxR\t"<<get_sizeof(HexxR)<<std::endl;
 
@@ -978,11 +988,13 @@ gettimeofday( &t_start, NULL);
 	this->energy = cal_energy(HexxR);
 ofs_mpi<<"TIME@ Exx_Lcao::cal_energy\t"<<time_during(t_start)<<std::endl;
 
+ModuleBase::timer::tick("Exx_Lcao", "Rexx_to_Km2D");
 gettimeofday( &t_start, NULL);
 #ifdef __MPI
 	Hexx_para.Rexx_to_Km2D(*loc.ParaV, HexxR, {GlobalC::pot.init_chg=="file",GlobalC::CHR.out_chg} );
 #endif
 ofs_mpi<<"TIME@ Hexx_para.Rexx_to_Km2D\t"<<time_during(t_start)<<std::endl;
+ModuleBase::timer::tick("Exx_Lcao", "Rexx_to_Km2D");
 
 #ifdef __MPI
 ofs_mpi<<"sizeof_Hexx2D\t"<<get_sizeof(Hexx_para.HK_Gamma_m2D)+get_sizeof(Hexx_para.HK_K_m2D)<<std::endl;
@@ -1179,6 +1191,8 @@ ofs_mpi.close();
 	#endif
 ++istep;
 
+ModuleBase::timer::tick("Exx_Lcao", "cal_exx_elec");
+
 //	std::cout<<"screen.schwarz"<<std::endl;
 //	std::cout<<Exx_Abfs::Screen::Schwarz::num_screen<<"\t"
 //	    <<Exx_Abfs::Screen::Schwarz::num_cal<<std::endl;
@@ -1187,14 +1201,17 @@ ofs_mpi.close();
 //	    <<Exx_Abfs::Screen::Cauchy::num_screen2<<"\t"
 //		<<Exx_Abfs::Screen::Cauchy::num_screen3<<"\t"
 //		<<Exx_Abfs::Screen::Cauchy::num_cal<<std::endl;
-}
+}//end of cal_exx_elec
+
 
 void Exx_Lcao::cal_exx_elec_nscf(const Parallel_Orbitals &pv)
 {
+	ModuleBase::timer::tick("Exx_Lcao", "cal_exx_elec_nscf");
 	std::vector<std::map<size_t,std::map<size_t,std::map<Abfs::Vector3_Order<int>,ModuleBase::matrix>>>> HexxR;
 #ifdef __MPI
 	Hexx_para.Rexx_to_Km2D(pv, HexxR, {GlobalC::pot.init_chg=="file",GlobalC::CHR.out_chg} );
 #endif
+	ModuleBase::timer::tick("Exx_Lcao", "cal_exx_elec_nscf");
 }
 
 /*

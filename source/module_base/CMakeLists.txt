@@ -7,6 +7,7 @@ add_library(
     export.cpp
     integral.cpp
     inverse_matrix.cpp
+    gather_math_lib_info.cpp
     global_file.cpp
     global_function.cpp
     global_function_ddotreal.cpp
@@ -16,7 +17,7 @@ add_library(
     math_polyint.cpp
     math_sphbes.cpp
     math_ylmreal.cpp
-	math_bspline.cpp
+    math_bspline.cpp
     math_chebyshev.cpp
     mathzone.cpp
     mathzone_add1.cpp

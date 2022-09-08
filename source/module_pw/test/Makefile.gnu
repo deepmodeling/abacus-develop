@@ -6,6 +6,9 @@ CPLUSPLUS = mpicxx
 CUDA_COMPILE = nvcc
 OBJ_DIR = obj
 NP      = 12
+LIBNAME = libpw.a
+GEN     = OFF
+TIME    = OFF
 #==========================
 # Objects
 #==========================
@@ -13,13 +16,11 @@ VPATH=../../src_parallel\
 :../../module_base\
 :../
 
-PW_OBJS_0=matrix.o\
+MATH_OBJS0=matrix.o\
 matrix3.o\
 tool_quit.o\
 mymath3.o\
 timer.o\
-global_variable.o\
-parallel_global.o\
 pw_basis.o\
 pw_distributer.o\
 pw_init.o\
@@ -30,6 +31,9 @@ pw_distributeg_method2.o\
 fft.o\
 pw_basis_k.o\
 pw_transform_k.o
+
+OTHER_OBJS0=global_variable.o\
+parallel_global.o
 
 DOUBLEFILE=test1-1-1.o\
 test1-1-2.o\
@@ -96,7 +100,8 @@ HONG = -D__MPI -D__MIX_PRECISION -D__NORMAL
 #HONG = -D__MPI -D__CUDA -D__MIX_PRECISION -D__NORMAL
 
 
-PW_OBJS=$(patsubst %.o, ${OBJ_DIR}/%.o, ${PW_OBJS_0})
+MATH_OBJS=$(patsubst %.o, ${OBJ_DIR}/%.o, ${MATH_OBJS0})
+OTHER_OBJS=$(patsubst %.o, ${OBJ_DIR}/%.o, ${OTHER_OBJS0})
 TESTFILE=$(patsubst %.o, ${OBJ_DIR}/%.o, ${TESTFILE0})
 
 
@@ -116,18 +121,37 @@ OPTS = -I${FFTW_INCLUDE_DIR} ${HONG} -Ofast -std=c++11 -Wall -g -fsanitize=addre
 # MAKING OPTIONS
 #==========================
 pw : 
-	@ make init
+	@ make lib
 	@ make -j $(NP) pw_test.exe
+	@ if [ $(GEN) == "ON" ]; then make gen.exe ; fi
+	@ if [ $(TIME) == "ON" ]; then make time.exe ; fi
+
+lib :
+	@ make init
+	@ make -j $(NP) $(LIBNAME)
 
 init :
 	@ if [ ! -d $(OBJ_DIR) ]; then mkdir $(OBJ_DIR); fi
 
-pw_test.exe: ${PW_OBJS} ${TESTFILE}
-	${CPLUSPLUS} ${OPTS} ${TESTFILE} pw_test.cpp test_tool.cpp ${PW_OBJS}  ${LIBS} -o pw_test.exe ${GTESTOPTS}
+$(LIBNAME): $(MATH_OBJS)
+	ar -rcv $(LIBNAME) $(MATH_OBJS)
+
+pw_test.exe: ${LIBNAME} ${OTHER_OBJS} ${TESTFILE} pw_test.cpp test_tool.cpp
+	${CPLUSPLUS} ${OPTS} pw_test.cpp test_tool.cpp ${TESTFILE} ${LIBNAME} ${OTHER_OBJS} ${LIBS} -o pw_test.exe ${GTESTOPTS}
+
+gen.exe: ${LIBNAME} ${OTHER_OBJS} generate.cpp test_tool.cpp
+	${CPLUSPLUS} ${OPTS} generate.cpp test_tool.cpp $(LIBNAME) ${OTHER_OBJS} ${LIBS} -o gen.exe
+
+time.exe: ${LIBNAME} time.cpp
+	${CPLUSPLUS} ${OPTS} time.cpp $(LIBNAME)  ${LIBS} -o time.exe
+	
 ${OBJ_DIR}/%.o:%.cpp
 	${CPLUSPLUS} ${OPTS} -c ${HONG} $< -o $@ ${GTESTOPTS}
 
 .PHONY:clean
 clean:
 	@ if [ -d $(OBJ_DIR) ]; then rm -rf $(OBJ_DIR); fi
+	@ if [ -e $(LIBNAME) ]; then rm -f $(LIBNAME); fi
 	@ if [ -e pw_test.exe ]; then rm -f pw_test.exe; fi
+	@ if [ -e gen.exe ]; then rm -f gen.exe; fi
+	@ if [ -e time.exe ]; then rm -f time.exe; fi

@@ -6,9 +6,6 @@
 namespace hamilt
 {
 
-template class Ekinetic<OperatorPW>;
-
-template<>
 Ekinetic<OperatorPW>::Ekinetic(
     double tpiba2_in,
     const double* gk2_in,
@@ -26,7 +23,6 @@ Ekinetic<OperatorPW>::Ekinetic(
     }
 }
 
-template<>
 void Ekinetic<OperatorPW>::act
 (
     const psi::Psi<std::complex<double>> *psi_in, 

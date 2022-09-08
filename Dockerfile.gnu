@@ -16,3 +16,10 @@ RUN wget https://download.pytorch.org/libtorch/cpu/libtorch-cxx11-abi-shared-wit
     unzip -q libtorch.zip && rm libtorch.zip && \
     cd libtorch && cp -r . /usr/local && \
     cd .. && rm -r libtorch
+
+RUN git clone https://github.com/deepmodeling/abacus-develop.git --depth 1 && \
+    cd abacus-develop && \
+    cmake -B build -DENABLE_DEEPKS=ON && \
+    cmake --build build -j`nproc` && \
+    cmake --install build && \
+    cd .. && rm -rf abacus-develop

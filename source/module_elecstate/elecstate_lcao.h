@@ -12,13 +12,13 @@ namespace elecstate
 class ElecStateLCAO : public ElecState
 {
   public:
-    ElecStateLCAO(Charge* chg_in,
-                  const K_Vectors* klist_in, 
-                  int nks_in,
-                  int nbands_in,
-                  Local_Orbital_Charge* loc_in,
-                  LCAO_Hamilt* uhm_in,
-                  Local_Orbital_wfc* lowf_in)
+    ElecStateLCAO(Charge* chg_in = nullptr,
+                        const K_Vectors* klist_in = nullptr,
+                        int nks_in = 1,
+                        int nbands_in = 1,
+                        Local_Orbital_Charge* loc_in = nullptr,
+                        LCAO_Hamilt* uhm_in = nullptr,
+                        Local_Orbital_wfc* lowf_in = nullptr)
     {
         init(chg_in, klist_in, nks_in, nbands_in);
         this->loc = loc_in;
@@ -43,7 +43,7 @@ class ElecStateLCAO : public ElecState
     static int out_wfc_lcao;
     static bool need_psi_grid;
 
-  private:
+  protected:
     // calculate electronic charge density on grid points or density matrix in real space
     // the consequence charge density rho saved into rho_out, preparing for charge mixing.
     // void updateRhoK(const psi::Psi<std::complex<double>>& psi) ;//override;

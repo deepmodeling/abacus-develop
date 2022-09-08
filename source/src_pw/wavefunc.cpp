@@ -345,16 +345,16 @@ void wavefunc::wfcinit_k(psi::Psi<std::complex<double>>* psi_in)
 {
 	ModuleBase::TITLE("wavefunc","wfcinit_k");
 
-	if(GlobalV::CALCULATION=="nscf")
-	{
-		return;
-	}
-
 	if(GlobalV::BASIS_TYPE=="pw") 
 	{
 		this->irindex = new int [GlobalC::wfcpw->fftnxy];
 		GlobalC::wfcpw->getfftixy2is(this->irindex);
 	}
+	if(GlobalV::CALCULATION=="nscf")
+	{
+		return;
+	}
+	
 	for(int ik=0; ik<GlobalC::kv.nks; ik++)
 	{
 		if (GlobalV::BASIS_TYPE=="pw")

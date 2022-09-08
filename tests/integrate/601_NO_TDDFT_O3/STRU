@@ -1,0 +1,23 @@
+ATOMIC_SPECIES
+O 15.99903 ../tools/PP_ORB/O.LDA.UPF
+
+NUMERICAL_ORBITAL
+../tools/PP_ORB/O_lda_8.0au_100Ry_2s2p1d.orb
+
+LATTICE_CONSTANT
+15
+
+LATTICE_VECTORS
+1 0 0 #latvec1
+0 1 0 #latvec2
+0 0 1 #latvec3
+
+ATOMIC_POSITIONS
+Cartesian
+
+O #label
+0 #magnetism
+3 #number of atoms
+0.507492 0.499989 0.512155112  m  1  1  1  v  0.0 0.0 0.0
+0.533616248 0.500059 0.667595587  m  1  1  1  v  0.0 0.0 0.0
+0.358202490 0.499964319 0.461568210  m  1  1  1  v  0.0 0.0 0.0

@@ -40,7 +40,7 @@ void XC_Functional::gcxc(const double &rho, const double &grho, double &sxc,
     double s,v1,v2;
     sxc = v1xc = v2xc = 0.0;
 
-    if (rho <= small || grho < small)
+    if (rho <= small || grho < smallg)
     {
         return;
     }

@@ -11,4 +11,5 @@ add_library(
     corrected_energy.cpp
     minimize_cg.cpp
     efield.cpp
+    sol_force.cpp
 )

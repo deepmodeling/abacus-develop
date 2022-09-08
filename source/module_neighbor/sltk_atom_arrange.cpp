@@ -158,7 +158,6 @@ void atom_arrange::search(
 			}
 		}
 		ofs_in << "search neighboring atoms done." << std::endl;
-		exit(0);//just test neighboring searching!
 	}
 	
 	ModuleBase::timer::tick("atom_arrange","search");

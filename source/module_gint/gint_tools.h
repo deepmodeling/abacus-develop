@@ -242,7 +242,7 @@ namespace Gint_Tools
 		const double*const vldr3,			    	// vldr3[GlobalC::bigpw->bxyz]
 		const double*const*const psir_ylm);		    // psir_ylm[GlobalC::bigpw->bxyz][LD_pool]
 
-	// sum_mu,nu rho_mu,nu psi_nu, for gamma point
+	// sum_nu rho_mu,nu psi_nu, for gamma point
 	void mult_psi_DM(
 		const int na_grid,  					    // how many atoms on this (i,j,k) grid
 		const int LD_pool,
@@ -255,7 +255,7 @@ namespace Gint_Tools
 		const double*const*const DM,
 		const int job);
 
-	// sum_mu,nu,R rho_mu,nu(R) psi_nu, for multi-k
+	// sum_nu,R rho_mu,nu(R) psi_nu, for multi-k
 	void mult_psi_DMR(
         const int &grid_index, 
         const int &na_grid,

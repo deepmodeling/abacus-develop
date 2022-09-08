@@ -21,8 +21,10 @@ We also offer a pre-built docker image containing all the requirements for devel
 
 The project is ready for VS Code development container. Please refer to [Developing inside a Container](https://code.visualstudio.com/docs/remote/containers#_quick-start-try-a-development-container). Choose `Open a Remote Window -> Clone a Repository in Container Volume` in VS Code command palette, and put the [git address](https://github.com/deepmodeling/abacus-develop.git) of `ABACUS` when prompted.
 
-We also support [gitpod](https://www.gitpod.io/) to offer an ready-to-use online development environment.
+We also support [Gitpod](https://www.gitpod.io/) to offer an ready-to-use online development environment.
 [![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/deepmodeling/abacus-develop)
+
+Please note that containers target at developing and testing, but not massively parallel computing. Docker has a bad support to MPI; for production, please compile ABACUS from source code to avoid compatibility issues and gain a better performace.
 
 ### Prerequisites
 
@@ -32,13 +34,15 @@ To compile ABACUS, please make sure that the following prerequisites are present
 
 - C++ compiler, supporting C++11. You can use [Intel® C++ compiler](https://software.intel.com/enus/c-compilers) or [GCC](https://gcc.gnu.org/).
 - MPI compiler. The recommended version are [Intel MPI](https://software.intel.com/enus/mpi-library) or [MPICH](https://www.mpich.org/).
-- Fortran compiler for building `BLAS`, `LAPACK`, `ScaLAPACK` or `ELPA`. You can use[Intel® Fortran Compiler](https://www.intel.com/content/www/us/en/developer/tools/oneapi/fortran-compiler.html) [GFortran](https://gcc.gnu.org/fortran/).
+- Fortran compiler if you are building `BLAS`, `LAPACK`, `ScaLAPACK`, and `ELPA` from source file. You can use[Intel® Fortran Compiler](https://www.intel.com/content/www/us/en/developer/tools/oneapi/fortran-compiler.html) [GFortran](https://gcc.gnu.org/fortran/).
 - [BLAS](http://www.netlib.org/blas/). You can use [OpenBLAS](https://www.openblas.net/).
 - [LAPACK](http://www.netlib.org/lapack/).
 - [ScaLAPACK](http://www.netlib.org/scalapack/).
 - [FFTW3](http://www.fftw.org/).
 - [ELPA](https://elpa.mpcdf.mpg.de/) >= 2017.
 - [CEREAL](https://uscilab.github.io/cereal/).
+
+> GCC version 5.1 or later is required: Intel compilers also use GCC headers and libraries[(ref)](https://www.intel.com/content/www/us/en/develop/documentation/cpp-compiler-developer-guide-and-reference/top/compatibility-and-portability/gcc-compatibility-and-interoperability.html#gcc-compatibility-and-interoperability_GUID-52CB6FE0-83DA-4028-9EF4-0DFAF1652736). 
 
 These packages can be installed with popular package management system, such as `apt` and `yum`:
 
@@ -48,7 +52,7 @@ sudo apt update && sudo apt install -y libopenblas-dev liblapack-dev libscalapac
 
 > Installing ELPA by apt only matches requirements on Ubuntu 22.04. For earlier linux distributions, you may install elpa from source.
 
-Alternatively, you can choose [Intel® oneAPI toolkit](https://software.intel.com/content/www/us/en/develop/tools/oneapi/commercial-base-hpc.html) (former Parallel Studio) as toolchain. The [Intel® oneAPI Base Toolkit](https://software.intel.com/content/www/us/en/develop/tools/oneapi/all-toolkits.html#base-kit) contains Intel® oneAPI Math Kernel Library (aka `MKL`), including `BLAS`, `LAPACK`, `ScaLAPACK` and `FFTW3`,  - this means that no Fortran compiler required anymore. The [Intel® oneAPI HPC Toolkit](https://software.intel.com/content/www/us/en/develop/tools/oneapi/all-toolkits.html#hpc-kit) contains Intel® MPI Library, and C++ compiler(including MPI compiler). Please noted that building `elpa` with a different MPI library may cause conflict between MPI libraries. Don't forget to [set environment variables](https://software.intel.com/content/www/us/en/develop/documentation/get-started-with-intel-oneapi-render-linux/top/configure-your-system.html) before you start! `cmake` will use Intel MKL if the environment variable `MKLROOT` is set.
+Alternatively, you can choose [Intel® oneAPI toolkit](https://software.intel.com/content/www/us/en/develop/tools/oneapi/commercial-base-hpc.html) (former Parallel Studio) as toolchain. The [Intel® oneAPI Base Toolkit](https://software.intel.com/content/www/us/en/develop/tools/oneapi/all-toolkits.html#base-kit) contains Intel® oneAPI Math Kernel Library (aka `MKL`), including `BLAS`, `LAPACK`, `ScaLAPACK` and `FFTW3`. The [Intel® oneAPI HPC Toolkit](https://software.intel.com/content/www/us/en/develop/tools/oneapi/all-toolkits.html#hpc-kit) contains Intel® MPI Library, and C++ compiler(including MPI compiler). Please noted that building `elpa` with a different MPI library may cause conflict between MPI libraries. Don't forget to [set environment variables](https://software.intel.com/content/www/us/en/develop/documentation/get-started-with-intel-oneapi-render-linux/top/configure-your-system.html) before you start! `cmake` will use Intel MKL if the environment variable `MKLROOT` is set.
 
 > Please refer to our [guide](https://github.com/deepmodeling/abacus-develop/wiki/Building-and-Running-ABACUS) on requirements.
 
@@ -93,13 +97,13 @@ cmake -B build -DFFTW3_ROOT=/opt/fftw3
 
 If environment variable `MKLROOT` exists, `cmake` will take MKL as a preference, i.e. not using `LAPACK` and `ScaLAPACK`. To disable MKL, unset environment variable `MKLROOT`, or pass `-DMKLROOT=OFF` to `cmake`.
 
-You can also choose to build with which components.
+You can also choose to build with which components, e.g.:
 
 ```bash
-cmake -B build -DUSE_LIBXC=1 -DUSE_CUDA=1
+cmake -B build -DENABLE_LIBXC=1 -DUSE_CUDA=1
 ```
 
-If Libxc is not installed in standard path (i.e. installed with a custom prefix path), you may add the installation prefix of `FindLibxc.cmake` to `CMAKE_MODULE_PATH` environment variable, or set `Libxc_DIR` to the directory containing the file.
+If Libxc is not installed in standard path (i.e. installed with a custom prefix path), you can set `Libxc_DIR` to the corresponding directory.
 
 ```bash
 cmake -B build -DLibxc_DIR=~/libxc
@@ -239,9 +243,9 @@ This part of installation is based on [Installation](#installation). If DeePKS f
 
 ### Extra prerequisites
 
-- C++ compiler, supporting **C++14**. For example, Intel C++ compiler 18
-- [LibTorch](https://download.pytorch.org/libtorch/cpu/libtorch-cxx11-abi-shared-with-deps-1.9.0%2Bcpu.zip) for cpu, with c++11 ABI;
-- [Libnpy](https://github.com.cnpmjs.org/llohse/libnpy/);
+- C++ compiler, supporting **C++14**
+- [LibTorch](https://pytorch.org/) with cxx11 ABI supporting CPU
+- [Libnpy](https://github.com/llohse/libnpy/)
 
 ### Extra settings for building
 
@@ -281,7 +285,7 @@ OPTS = ${INCLUDES} -Ofast -traceback -std=c++14 -simd -march=native -xHost -m64 
 - src_external
 - src_global
 - src_io
-- src_ions
+- module_relaxation
 - src_lcao
 - src_parallel
 - src_pdiag

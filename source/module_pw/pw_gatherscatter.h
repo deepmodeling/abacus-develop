@@ -50,7 +50,7 @@ void PW_Basis:: gatherp_scatters(std::complex<T> *in, std::complex<T> *out)
     //exchange data
     //(nplane,nstot) to (numz[ip],ns, poolnproc)
     if(typeid(T) == typeid(double))
-	    MPI_Alltoallv(out, numr, startr, mpi_dcomplex, in, numg, startg, mpi_dcomplex, this->pool_world);
+	    MPI_Alltoallv(out, numr, startr, MPI_DOUBLE_COMPLEX, in, numg, startg, MPI_DOUBLE_COMPLEX, this->pool_world);
     else if(typeid(T) == typeid(float))
         MPI_Alltoallv(out, numr, startr, MPI_COMPLEX, in, numg, startg, MPI_COMPLEX, this->pool_world);
     // change (nz,ns) to (numz[ip],ns, poolnproc)
@@ -128,7 +128,7 @@ void PW_Basis:: gathers_scatterp(std::complex<T> *in, std::complex<T> *out)
 	//exchange data
     //(numz[ip],ns, poolnproc) to (nplane,nstot)
     if(typeid(T) == typeid(double))
-	    MPI_Alltoallv(out, numg, startg, mpi_dcomplex, in, numr, startr, mpi_dcomplex, this->pool_world);
+	    MPI_Alltoallv(out, numg, startg, MPI_DOUBLE_COMPLEX, in, numr, startr, MPI_DOUBLE_COMPLEX, this->pool_world);
     else if(typeid(T) == typeid(float))
         MPI_Alltoallv(out, numg, startg, MPI_COMPLEX, in, numr, startr, MPI_COMPLEX, this->pool_world);
     ModuleBase::GlobalFunc::ZEROS(out, this->nrxx);

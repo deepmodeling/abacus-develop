@@ -135,7 +135,7 @@ class Gint
     //------------------------------------------------------
     // in gint_k_rho.cpp 
     //------------------------------------------------------
-    // calculate the charge density via grid integrals
+    // calculate the charge density & kinetic energy density (tau) via grid integrals
     void gint_kernel_rho(
         const int na_grid,
         const int grid_index,
@@ -152,10 +152,6 @@ class Gint
         double** psir_DMR,
         double* rho);
 
-    //------------------------------------------------------
-    // in gint_k_rho.cpp 
-    //------------------------------------------------------
-    // calculate the charge density via grid integrals
     void gint_kernel_tau(
         const int na_grid,
         const int grid_index,

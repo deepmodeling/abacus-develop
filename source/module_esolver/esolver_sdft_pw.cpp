@@ -1,12 +1,11 @@
-#include "./esolver_sdft_pw.h"
-#include "time.h"
 #include <fstream>
 #include <algorithm>
+
+#include "./esolver_sdft_pw.h"
 #include "../module_base/timer.h"
 #include "module_hsolver/hsolver_pw_sdft.h"
 #include "module_elecstate/elecstate_pw_sdft.h"
 #include "module_hsolver/diago_iter_assist.h"
-#include "module_hamilt/hamilt_pw.h"
 
 //-------------------Temporary------------------
 #include "../module_base/global_variable.h"
@@ -34,7 +33,8 @@ ESolver_SDFT_PW::~ESolver_SDFT_PW()
 
 void ESolver_SDFT_PW::Init(Input &inp, UnitCell_pseudo &ucell)
 {
-     ESolver_KS::Init(inp,ucell);
+    this->nche_sto = inp.nche_sto;
+    ESolver_KS::Init(inp,ucell);
     this->Init_GlobalC(inp,ucell);//temporary
 
 	stowf.init(GlobalC::kv.nks);
@@ -73,19 +73,20 @@ void ESolver_SDFT_PW::afterscf()
             GlobalC::wf.wg(ik, ib) = this->pelec->wg(ik, ib);
         }
     }
-	for(int is=0; is<GlobalV::NSPIN; is++)
+    if(GlobalC::CHR.out_chg > 0)
     {
-        std::stringstream ssc;
-        std::stringstream ss1;
-        ssc << GlobalV::global_out_dir << "SPIN" << is + 1 << "_CHG";
-		ss1 << GlobalV::global_out_dir << "SPIN" << is + 1 << "_CHG.cube";
-        GlobalC::CHR.write_rho(GlobalC::CHR.rho_save[is], is, 0, ssc.str() );//mohan add 2007-10-17
-	    GlobalC::CHR.write_rho_cube(GlobalC::CHR.rho_save[is], is, ss1.str(), 3);
+	    for(int is=0; is<GlobalV::NSPIN; is++)
+        {
+            std::stringstream ssc;
+            std::stringstream ss1;
+            ssc << GlobalV::global_out_dir << "SPIN" << is + 1 << "_CHG";
+	    	ss1 << GlobalV::global_out_dir << "SPIN" << is + 1 << "_CHG.cube";
+            GlobalC::CHR.write_rho(GlobalC::CHR.rho_save[is], is, 0, ssc.str() );//mohan add 2007-10-17
+	        GlobalC::CHR.write_rho_cube(GlobalC::CHR.rho_save[is], is, ss1.str(), 3);
+        }
     }
     if(this->conv_elec)
     {
-        //GlobalV::ofs_running << " convergence is achieved" << std::endl;			
-        //GlobalV::ofs_running << " !FINAL_ETOT_IS " << GlobalC::en.etot * ModuleBase::Ry_to_eV << " eV" << std::endl; 
         GlobalV::ofs_running << "\n charge density convergence is achieved" << std::endl;
         GlobalV::ofs_running << " final etot is " << GlobalC::en.etot * ModuleBase::Ry_to_eV << " eV" << std::endl;
     }
@@ -115,7 +116,7 @@ void ESolver_SDFT_PW::hamilt2density(int istep, int iter, double ethr)
 	}
     hsolver::DiagoIterAssist::PW_DIAG_THR = ethr; 
     hsolver::DiagoIterAssist::PW_DIAG_NMAX = GlobalV::PW_DIAG_NMAX;
-    this->phsol->solve(this->phami, this->psi[0], this->pelec,this->stowf, iter, GlobalV::KS_SOLVER);   
+    this->phsol->solve(this->phami, this->psi[0], this->pelec,this->stowf, istep, iter, GlobalV::KS_SOLVER);   
     // transform energy for print
     GlobalC::en.eband = this->pelec->eband;
     GlobalC::en.demet = this->pelec->demet;
@@ -137,6 +138,53 @@ void ESolver_SDFT_PW::cal_Stress(ModuleBase::matrix &stress)
 	Sto_Stress_PW ss;
     ss.cal_stress(stress,this->psi, this->stowf);
 }
+void ESolver_SDFT_PW::postprocess()
+{
 
+    GlobalV::ofs_running << "\n\n --------------------------------------------" << std::endl;
+    GlobalV::ofs_running << std::setprecision(16);
+    GlobalV::ofs_running << " !FINAL_ETOT_IS " << GlobalC::en.etot * ModuleBase::Ry_to_eV << " eV" << std::endl;
+    GlobalV::ofs_running << " --------------------------------------------\n\n" << std::endl;
+    GlobalC::en.print_occ();
+
+    if(this->maxniter == 0)
+    {
+        int iter = 1;
+        int istep = 0;
+        hsolver::DiagoIterAssist::PW_DIAG_NMAX = GlobalV::PW_DIAG_NMAX;
+        hsolver::DiagoIterAssist::PW_DIAG_THR = std::max(std::min(1e-5, 0.1 * GlobalV::SCF_THR / std::max(1.0, GlobalC::CHR.nelec)),1e-12);
+        hsolver::DiagoIterAssist::need_subspace = false;
+        this->phsol->solve(this->phami, this->psi[0], this->pelec,this->stowf,istep, iter, GlobalV::KS_SOLVER, true);
+        ((hsolver::HSolverPW_SDFT*)phsol)->stoiter.cleanchiallorder();//release lots of memories
+    }
+    int nche_test = 0;
+    if(INPUT.cal_cond)  nche_test = std::max(nche_test, INPUT.cond_nche);
+    if(INPUT.out_dos)  nche_test = std::max(nche_test, INPUT.dos_nche);
+    if(nche_test > 0)   check_che(nche_test);
+    
+    if(INPUT.cal_cond)
+	{
+        this->sKG(INPUT.cond_nche,INPUT.cond_fwhm,INPUT.cond_wcut,INPUT.cond_dw,INPUT.cond_wenlarge);
+    }
+    if(INPUT.out_dos)
+	{
+        double emax, emin;
+        if(INPUT.dos_setemax)	
+            emax = INPUT.dos_emax_ev;
+        else
+            emax =  ((hsolver::HSolverPW_SDFT*)phsol)->stoiter.stohchi.Emax*ModuleBase::Ry_to_eV;
+		if(INPUT.dos_setemin)
+        	emin = INPUT.dos_emin_ev;
+        else
+            emin =  ((hsolver::HSolverPW_SDFT*)phsol)->stoiter.stohchi.Emin*ModuleBase::Ry_to_eV;
+		if(!INPUT.dos_setemax && !INPUT.dos_setemin)
+		{
+			double delta=(emax-emin)*INPUT.dos_scale;
+			emax=emax+delta/2.0;
+			emin=emin-delta/2.0;
+		}
+        this->caldos(INPUT.dos_nche, INPUT.b_coef, emin, emax, INPUT.dos_edelta_ev, INPUT.npart_sto );
+    }
+}
 
 }

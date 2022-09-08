@@ -69,7 +69,7 @@ VPATH=../src_global\
 :../module_cell\
 :../src_parallel\
 :../src_io\
-:../src_ions\
+:../module_relaxation\
 :../module_md\
 :../module_symmetry\
 :../\

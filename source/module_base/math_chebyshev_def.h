@@ -349,15 +349,19 @@ void Chebyshev<REAL>::calpolyvec_complex(T *ptr,
 {
 
     assert(N>=0 && LDA >= N);
-    int ndmxt;
-    if(m == 1) ndmxt = N * m;
-    else       ndmxt = LDA * m; 
+    const int ndmxt = LDA * m; 
 
     std::complex<REAL> *arraynp1 = polywaveout + 2 * ndmxt;
 	std::complex<REAL> *arrayn = polywaveout + ndmxt;
 	std::complex<REAL> *arrayn_1 = polywaveout;
-  
-    ModuleBase::GlobalFunc::DCOPY(wavein, arrayn_1, ndmxt);
+    
+    std::complex<REAL> *tmpin = wavein, *tmpout = arrayn_1;
+    for(int i = 0 ; i < m ; ++i)
+    {
+        ModuleBase::GlobalFunc::DCOPY(tmpin, tmpout, N);
+        tmpin += LDA;
+        tmpout += LDA;
+    }
     
     //1-st order
     (ptr->*funA)(arrayn_1, arrayn, m);

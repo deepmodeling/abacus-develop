@@ -2,6 +2,7 @@ INPUT_PARAMETERS
 #Parameters (1.General)
 suffix			autotest
 calculation     sto-md
+method_sto      1
 ntype			1
 symmetry		0
 pseudo_dir      ../tools/PP_ORB/

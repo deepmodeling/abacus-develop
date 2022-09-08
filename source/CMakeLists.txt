@@ -15,7 +15,7 @@ add_subdirectory(module_xc)
 add_subdirectory(module_esolver)
 add_subdirectory(module_gint)
 add_subdirectory(src_io)
-add_subdirectory(src_ions)
+add_subdirectory(module_relaxation)
 add_subdirectory(src_lcao)
 add_subdirectory(src_parallel)
 add_subdirectory(src_pdiag)
@@ -26,9 +26,8 @@ add_library(
     driver
     OBJECT
     driver.cpp
+    driver_run.cpp
     input.cpp
     input_conv.cpp
     input_update.cpp
-    run_lcao.cpp
-    run_pw.cpp
 )

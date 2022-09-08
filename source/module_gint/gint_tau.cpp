@@ -48,6 +48,7 @@ void Gint::gint_kernel_tau(
 		ModuleBase::GlobalFunc::ZEROS(dpsiy_DM.ptr_1D, GlobalC::bigpw->bxyz*LD_pool);
 		ModuleBase::GlobalFunc::ZEROS(dpsiz_DM.ptr_1D, GlobalC::bigpw->bxyz*LD_pool);
 
+		//calculating g_i,mu(r) = sum_nu rho_mu,nu d/dx_i psi_nu(r), x_i=x,y,z
 		if(GlobalV::GAMMA_ONLY_LOCAL)
 		{
 			Gint_Tools::mult_psi_DM(
@@ -74,7 +75,6 @@ void Gint::gint_kernel_tau(
 		}
 		else
 		{
-			//calculating g_mu(r) = sum_nu rho_mu,nu psi_nu(r)
 			Gint_Tools::mult_psi_DMR(
 				grid_index, na_grid,
 				block_index, block_size,
@@ -98,7 +98,7 @@ void Gint::gint_kernel_tau(
 				inout->DM_R[is], 1);
 		}
 
-		//do sum_mu g_mu(r)psi_mu(r) to get electron density on grid
+		//do sum_i,mu g_i,mu(r) * d/dx_i psi_mu(r) to get kinetic energy density on grid
 		if(inout->job==Gint_Tools::job_type::tau)
 		{
 			this->cal_meshball_tau(

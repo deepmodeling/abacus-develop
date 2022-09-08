@@ -15,8 +15,6 @@ list(APPEND objects
     LCAO_hamilt.cpp
     LCAO_matrix.cpp
     LCAO_nnr.cpp
-    LOOP_cell.cpp
-    LOOP_ions.cpp
     build_st_pw.cpp
     center2_orb-orb11.cpp
     center2_orb-orb21.cpp

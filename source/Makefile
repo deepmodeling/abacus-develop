@@ -27,7 +27,7 @@ VPATH=./src_global\
 :./module_gint\
 :./src_pw\
 :./src_lcao\
-:./src_ions\
+:./module_relaxation\
 :./src_io\
 :./src_parallel\
 :./src_pdiag\

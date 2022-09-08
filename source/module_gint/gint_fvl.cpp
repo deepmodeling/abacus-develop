@@ -119,6 +119,9 @@ void Gint::gint_kernel_force_meta(
 	Gint_Tools::Array_Pool<double> ddpsir_ylm_zz(GlobalC::bigpw->bxyz, LD_pool);
 
 	/*
+	//this part is for doing finite difference check
+	//since analytical evaluation of ddpsir is still not working correctly
+	//this part is saved here in case used in the future
 	ModuleBase::GlobalFunc::ZEROS(dpsir_ylm_x.ptr_1D, GlobalC::bigpw->bxyz*LD_pool);
 	ModuleBase::GlobalFunc::ZEROS(dpsir_ylm_y.ptr_1D, GlobalC::bigpw->bxyz*LD_pool);
 	ModuleBase::GlobalFunc::ZEROS(dpsir_ylm_z.ptr_1D, GlobalC::bigpw->bxyz*LD_pool);

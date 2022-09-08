@@ -50,14 +50,14 @@ OBJS_IONS=MD_basic.o\
 MD_thermo.o\
 MD_fire.o\
 MD_func.o\
-ions.o \
+ions.o\
+relaxation.o\
 ions_move_methods.o\
 ions_move_bfgs.o\
 ions_move_cg.o\
 ions_move_sd.o\
 ions_move_basic.o\
 bfgs_basic.o\
-Cell_PW.o\
 run_md_pw.o\
 lattice_change_methods.o \
 lattice_change_cg.o \

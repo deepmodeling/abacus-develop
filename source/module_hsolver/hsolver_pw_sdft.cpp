@@ -14,6 +14,7 @@ namespace hsolver
                            psi::Psi<std::complex<double>>& psi, 
                            elecstate::ElecState* pes, 
                            Stochastic_WF& stowf,
+						   const int istep,
                            const int iter,
                            const std::string method_in, 
                            const bool skip_charge)
@@ -55,7 +56,7 @@ namespace hsolver
 			}
 #endif
 			stoiter.orthog(ik,psi,stowf);
-			stoiter.checkemm(ik,iter, stowf);	//check and reset emax & emin
+			stoiter.checkemm(ik,istep, iter, stowf);	//check and reset emax & emin
 		}
 		// DiagoCG would keep 9*nbasis memory in cache during loop-k
         // it should be deleted before calculating charge
@@ -76,6 +77,12 @@ namespace hsolver
 		}
 
 		stoiter.itermu(iter,pes);
+		stoiter.calHsqrtchi(stowf);
+		if(skip_charge)
+    	{
+    	    ModuleBase::timer::tick(this->classname, "solve");
+    	    return;
+    	}
 		//(5) calculate new charge density 
 		// calculate KS rho.
 		if(nbands > 0)
@@ -93,7 +100,7 @@ namespace hsolver
 			}
 		}
 		// calculate stochastic rho
-		stoiter.sum_stoband(stowf,pes);
+		stoiter.sum_stoband(stowf,pes,pHamilt);
 
 
 		//(6) calculate the delta_harris energy 

@@ -29,6 +29,9 @@ struct Parallel_Orbitals
     /// ncol_bands*nrow
     long nloc_wfc;
 
+    //ncol_bands*ncol_bands
+    long nloc_Eij;
+
     /// block size
     int nb;
 
@@ -52,6 +55,8 @@ struct Parallel_Orbitals
     int blacs_ctxt;
     int desc[9];    //for matrix, nlocal*nlocal
     int desc_wfc[9]; //for wfc, nlocal*nbands
+    int desc_Eij[9]; // for Eij in TDDFT, nbands*nbands
+    int desc_wfc1[9]; // for wfc^T in TDDFT, nbands*nlocal
     /// communicator for 2D-block
     MPI_Comm comm_2D;
 #endif

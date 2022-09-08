@@ -21,9 +21,9 @@ void Stochastic_hchi:: init()
 }
 
 
-void Stochastic_hchi:: hchi_reciprocal(complex<double> *chig, complex<double> *hchig, const int m)
+void Stochastic_hchi:: hchi(complex<double> *chig, complex<double> *hchig, const int m)
 {
-	ModuleBase::timer::tick("Stochastic_hchi","hchi_reciprocal");
+	
 	
 	//---------------------------------------------------
 
@@ -150,10 +150,19 @@ void Stochastic_hchi:: hchi_reciprocal(complex<double> *chig, complex<double> *h
 	}
 	ModuleBase::timer::tick("Stochastic_hchi","vnl");
 
+	return;
+}
+void Stochastic_hchi:: hchi_norm(complex<double> *chig, complex<double> *hchig, const int m)
+{
+	ModuleBase::timer::tick("Stochastic_hchi","hchi_norm");
 
+	this->hchi(chig,hchig,m);
 
-	double Ebar = (Emin + Emax)/2;
-	double DeltaE = (Emax - Emin)/2;
+	const int ik = this->current_ik;
+	const int npwx = GlobalC::wf.npwx;
+	const int npw = GlobalC::kv.ngk[ik];
+	const double Ebar = (Emin + Emax)/2;
+	const double DeltaE = (Emax - Emin)/2;
 	for(int ib = 0 ; ib < m ; ++ib)
 	{
 		for(int ig = 0; ig < npw; ++ig)
@@ -161,9 +170,5 @@ void Stochastic_hchi:: hchi_reciprocal(complex<double> *chig, complex<double> *h
 			hchig[ib*npwx+ig] = (hchig[ib*npwx+ig] - Ebar * chig[ib*npwx+ig]) / DeltaE;
 		}
 	}
-	
-	ModuleBase::timer::tick("Stochastic_hchi","hchi_reciprocal");
-
-
-	return;
+	ModuleBase::timer::tick("Stochastic_hchi","hchi_norm");
 }

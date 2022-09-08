@@ -71,10 +71,22 @@ void Parallel_Kpoints::divide_pools(void)
     }
 
     // (1) per process in each stogroup
-    assert(GlobalV::NPROC%GlobalV::NSTOGROUP==0);
+    if(GlobalV::NPROC%GlobalV::NSTOGROUP!=0)
+    {
+        std::cout<<"\n Error! NPROC="<<GlobalV::NPROC
+        <<" must be divided evenly by BNDPAR="<<GlobalV::NSTOGROUP<<endl;
+        exit(0);
+    }
     GlobalV::NPROC_IN_STOGROUP = GlobalV::NPROC/GlobalV::NSTOGROUP;
     GlobalV::MY_STOGROUP = int(GlobalV::MY_RANK / GlobalV::NPROC_IN_STOGROUP);
     GlobalV::RANK_IN_STOGROUP = GlobalV::MY_RANK%GlobalV::NPROC_IN_STOGROUP;
+    if (GlobalV::NPROC_IN_STOGROUP < GlobalV::KPAR)
+    {
+        std::cout<<"\n Error! NPROC_IN_BNDGROUP=" << GlobalV::NPROC_IN_STOGROUP 
+            <<" is smaller than"<< " KPAR=" << GlobalV::KPAR<<std::endl;
+        std::cout<<" Please reduce KPAR or reduce BNDPAR"<<std::endl;
+        exit(0);
+    }
 
     // (2) per process in each pool
     GlobalV::NPROC_IN_POOL = GlobalV::NPROC_IN_STOGROUP/GlobalV::KPAR;

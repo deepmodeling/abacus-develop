@@ -5,21 +5,23 @@
 #include "module_base/global_variable.h"
 #include "src_parallel/parallel_kpoints.h"
 
+#include <vector>
+
 /************************************************
  *  unit test of functions in parallel_kpoints.cpp
  ***********************************************/
 
 /**
  * The tested functions:
- *   i. Parallel_Kpoints::init_pools() is the public interface 
+ *   i. Parallel_Kpoints::init_pools() is the public interface
  *      to call the private function Parallel_Kpoints::divide_pools(),
  *      which divide all processes into KPAR groups.
  *   ii.Parallel_Kpoints::kinf() is the public interface
- *      to call another three functions: get_nks_pool(), 
+ *      to call another three functions: get_nks_pool(),
  *      get_startk_pool(), get_whichpool(), which divide all kpoints
  *      into KPAR groups.
- * The default number of processes is set to 4 in parallel_kpoints_test.sh. 
- * One may modify it to do more tests, or adapt this unittest to local 
+ * The default number of processes is set to 4 in parallel_kpoints_test.sh.
+ * One may modify it to do more tests, or adapt this unittest to local
  * environment.
  */
 
@@ -36,11 +38,11 @@ public:
 
 void ParaPrepare::test_kinfo(const Parallel_Kpoints* Pkpts)
 {
-	int nks_pool_[KPAR_]={0};
-	int startk_pool_[KPAR_]={0};
-	int whichpool_[nkstot_]={0};
+	std::vector<int> nks_pool_(KPAR_,0);
+    std::vector<int> startk_pool_(KPAR_, 0);
+    std::vector<int> whichpool_(nkstot_, 0);
 
-	int quotient = nkstot_/KPAR_;
+    int quotient = nkstot_/KPAR_;
 	int residue  = nkstot_%KPAR_;
 	// the previous "residue" pools have (quotient+1) kpoints
 	for(int i=0;i<KPAR_;i++)
@@ -114,7 +116,7 @@ void ParaPrepare::test_init_pools()
 class ParaKpoints : public ::testing::TestWithParam<ParaPrepare>
 {
 };
-	
+
 TEST_P(ParaKpoints,DividePools)
 {
 	ParaPrepare pp = GetParam();

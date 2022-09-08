@@ -263,8 +263,7 @@ void MD_func::force_virial(
 					grid_neigh,
 					unit_in, 
 					GlobalV::SEARCH_RADIUS, 
-					GlobalV::test_atom_input,
-					INPUT.test_just_neighbor);
+					GlobalV::test_atom_input);
 
 			potential = LJ_potential::Lennard_Jones(
 								unit_in,

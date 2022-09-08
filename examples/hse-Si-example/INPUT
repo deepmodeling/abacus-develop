@@ -9,8 +9,9 @@ ecutwfc    				100
 scf_thr        				1e-8
 scf_nmax      				100
 gamma_only 				0
-smearing_method   				smearing_method
+smearing_method   			gauss
 mixing_type				pulay
+mixing_beta             0.4
 
 dft_functional			hse
 exx_separate_loop 1

@@ -1,0 +1,21 @@
+INPUT_PARAMETERS
+#Parameters (1.General)
+suffix      	        autotest
+calculation             scf
+pseudo_dir              ../tools/PP_ORB/
+ntype                   2
+nbands                  20
+ecutwfc                 100
+scf_nmax                50
+symmetry                1
+cal_force               1
+
+#Parameters (Compensating charge)
+
+comp_chg               1
+comp_q                 1
+comp_l                 1
+comp_center            5
+comp_dim               2
+
+nelec                  9

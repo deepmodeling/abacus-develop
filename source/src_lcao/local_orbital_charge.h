@@ -63,6 +63,9 @@ class Local_Orbital_Charge
     std::vector<ModuleBase::matrix> dm_gamma;			// dm_gamma[is](iw1,iw2);
     std::vector<ModuleBase::ComplexMatrix> dm_k;		// dm_k[ik](iw1,iw2);
 
+    // use the original formula (Hamiltonian matrix) to calculate energy density matrix	
+    std::vector<ModuleBase::ComplexMatrix> edm_k_tddft;
+
     void init_dm_2d(void);
     
     // dm = wfc.T * wg * wfc.conj(); used in gamma_only
@@ -106,7 +109,7 @@ private:
 	int lgd_last;// sub-FFT-mesh orbitals number in previous step.
 	int lgd_now;// sub-FFT-mesh orbitals number in this step.
 
-	int nnrg_last;// sub-FFT-mesh orbtials number in previous step, with k.
+	int nnrg_last = 0;// sub-FFT-mesh orbtials number in previous step, with k.
 	int nnrg_now; // sub-FFT-mesh orbitals number in this step, with k.
 
 	// add by yshen on 9/22/2014

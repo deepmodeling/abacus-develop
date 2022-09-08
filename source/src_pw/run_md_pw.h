@@ -12,7 +12,6 @@ public:
     ~Run_MD_PW();
 
     void md_ions_pw(ModuleESolver::ESolver *p_esolver);
-    void md_cells_pw(ModuleESolver::ESolver *p_esolver);
     void md_force_virial(
         ModuleESolver::ESolver *p_esolver,
         const int &istep,

@@ -42,7 +42,7 @@ extern "C"
 	void dsygvx_(const int* itype, const char* jobz, const char* range, const char* uplo,
                 const int* n, double* A, const int* lda, double* B, const int* ldb,
                 const double* vl, const double* vu, const int* il, const int* iu,
-                const double* abstol, int* m, double* w, double* Z, const int* ldz, 
+                const double* abstol, int* m, double* w, double* Z, const int* ldz,
                 double* work, int* lwork, int*iwork, int* ifail, int* info);
     // solve the eigenproblem Ax=ex, where A is Symmetric and real double
 	void dsyev_(const char* jobz,const char* uplo,const int* n,double *a,
@@ -60,8 +60,8 @@ extern "C"
     // Peize Lin add dsptrf and dsptri 2016-06-21, to compute inverse real symmetry indefinit matrix.
     // dpotrf computes the Cholesky factorization of a real symmetric positive definite matrix
     // while dpotri taks its output to perform matrix inversion
-    void dpotrf_(const char* uplo,const int* n, double* A, const int* lda, int *info);
-    void dpotri_(const char* uplo,const int* n, double* A, const int* lda, int *info);
+    void dpotrf_(const char*const uplo, const int*const n, double*const A, const int*const lda, int*const info);
+    void dpotri_(const char*const uplo, const int*const n, double*const A, const int*const lda, int*const info);
 
     // zgetrf computes the LU factorization of a general matrix
     // while zgetri takes its output to perform matrix inversion
@@ -70,8 +70,8 @@ extern "C"
 
     // if trans=='N':	C = alpha * A * A.H + beta * C
 	// if trans=='C':	C = alpha * A.H * A + beta * C
-	void zherk_(const char *uplo, const char *trans, const int *n, const int *k, 
-		const double *alpha, const std::complex<double> *A, const int *lda, 
+	void zherk_(const char *uplo, const char *trans, const int *n, const int *k,
+		const double *alpha, const std::complex<double> *A, const int *lda,
 		const double *beta, std::complex<double> *C, const int *ldc);
 
 	// computes all eigenvalues of a symmetric tridiagonal matrix
@@ -110,6 +110,34 @@ extern "C"
 
 }
 
+#ifdef GATHER_INFO
+#define zhegvx_ zhegvx_i
+void zhegvx_i(const int* itype,
+              const char* jobz,
+              const char* range,
+              const char* uplo,
+              const int* n,
+              std::complex<double>* a,
+              const int* lda,
+              std::complex<double>* b,
+              const int* ldb,
+              const double* vl,
+              const double* vu,
+              const int* il,
+              const int* iu,
+              const double* abstol,
+              const int* m,
+              double* w,
+              std::complex<double>* z,
+              const int* ldz,
+              std::complex<double>* work,
+              const int* lwork,
+              double* rwork,
+              int* iwork,
+              int* ifail,
+              int* info);
+#endif // GATHER_INFO
+
 // Class LapackConnector provide the connector to fortran lapack routine.
 // The entire function in this class are static and inline function.
 // Usage example:	LapackConnector::functionname(parameter list).
@@ -143,8 +171,8 @@ private:
             }
         }
     }
-	
-	// Peize Lin add 2015-12-27	
+
+	// Peize Lin add 2015-12-27
 	static inline
 	char change_uplo(const char &uplo)
 	{
@@ -153,9 +181,9 @@ private:
 			case 'U': return 'L';
 			case 'L': return 'U';
 			default: throw std::invalid_argument("uplo must be 'U' or 'L'");
-		}		
+		}
 	}
-	
+
 	// Peize Lin add 2019-04-14
 	static inline
 	char change_trans_NC(const char &trans)
@@ -167,7 +195,7 @@ private:
 			default: throw std::invalid_argument("trans must be 'N' or 'C'");
 		}
 	}
-	
+
 public:
 
     static inline
@@ -224,7 +252,7 @@ public:
         delete[] bux;
         delete[] zux;
 
-    }	
+    }
 
 	// calculate the eigenvalues and eigenfunctions of a real symmetric matrix.
     static inline
@@ -252,7 +280,7 @@ public:
 				b(j,i)=bux[i*lda+j];
 			}
 		}
- 
+
         // free the memory.
         delete[] aux;
         delete[] bux;
@@ -264,16 +292,16 @@ public:
 	{
 		assert(a.nr==a.nc);
 		const char uplo_changed = change_uplo(uplo);
-		
+
 		double work_tmp;
 		constexpr int minus_one = -1;
 		dsyev_(&jobz, &uplo_changed, &a.nr, a.c, &a.nr, w, &work_tmp, &minus_one, &info);		// get best lwork
-		
+
 		const int lwork = work_tmp;
 		std::vector<double> work(std::max(1,lwork));
-		dsyev_(&jobz, &uplo_changed, &a.nr, a.c, &a.nr, w, ModuleBase::GlobalFunc::VECTOR_TO_PTR(work), &lwork, &info);		
+		dsyev_(&jobz, &uplo_changed, &a.nr, a.c, &a.nr, w, ModuleBase::GlobalFunc::VECTOR_TO_PTR(work), &lwork, &info);
 	}
-    
+
     // wrap function of fortran lapack routine zheev.
     static inline
     void zheev( const char jobz,
@@ -317,32 +345,45 @@ public:
 
 	// Peize Lin add 2016-07-09
 	static inline
-	void dpotrf( char uplo, const int n, ModuleBase::matrix &a, const int lda, int *info )
+	void dpotrf( const char &uplo, const int &n, double*const A, const int &lda, int &info )
 	{
 		const char uplo_changed = change_uplo(uplo);
-		dpotrf_( &uplo_changed, &n, a.c, &lda, info );
+		dpotrf_( &uplo_changed, &n, A, &lda, &info );
 	}	
 	
 	// Peize Lin add 2016-07-09
 	static inline
-	void dpotri( char uplo, const int n, ModuleBase::matrix &a, const int lda, int *info )
+	void dpotri( const char &uplo, const int &n, double*const A, const int &lda, int &info )
 	{
 		const char uplo_changed = change_uplo(uplo);
-		dpotri_( &uplo_changed, &n, a.c, &lda, info);		
+		dpotri_( &uplo_changed, &n, A, &lda, &info);		
+	}	
+
+	// Peize Lin add 2016-07-09
+	static inline
+	void dpotrf( const char &uplo, const int &n, ModuleBase::matrix &A, const int &lda, int &info )
+	{
+		dpotrf( uplo, n, A.c, lda, info );
+	}	
+	
+	// Peize Lin add 2016-07-09
+	static inline
+	void dpotri( const char &uplo, const int &n, ModuleBase::matrix &A, const int &lda, int &info )
+	{
+		dpotri( uplo, n, A.c, lda, info);		
 	}	
 	
 	// Peize Lin add 2019-04-14
 	// if trans=='N':	C = a * A * A.H + b * C
 	// if trans=='C':	C = a * A.H * A + b * C
 	static inline
-	void zherk(const char uplo, const char trans, const int n, const int k, 
-		const double alpha, const std::complex<double> *A, const int lda, 
+	void zherk(const char uplo, const char trans, const int n, const int k,
+		const double alpha, const std::complex<double> *A, const int lda,
 		const double beta, std::complex<double> *C, const int ldc)
 	{
 		const char uplo_changed = change_uplo(uplo);
 		const char trans_changed = change_trans_NC(trans);
 		zherk_(&uplo_changed, &trans_changed, &n, &k, &alpha, A, &lda, &beta, C, &ldc);
 	}
-	
 };
 #endif  // LAPACKCONNECTOR_HPP

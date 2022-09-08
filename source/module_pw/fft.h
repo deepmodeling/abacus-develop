@@ -31,7 +31,7 @@ public:
 	
 	// init parameters of fft
 	void initfft(int nx_in, int ny_in, int nz_in, int lixy_in, int rixy_in, int ns_in, int nplane_in, 
-				 int nproc_in, bool gamma_only_in, bool xprime_in = false, bool mpifft_in = false);
+				 int nproc_in, bool gamma_only_in, bool xprime_in = true, bool mpifft_in = false);
 
 	//init fftw_plans
 	void setupFFT(); 
@@ -71,7 +71,7 @@ public:
 	int fftnxy=0;
 	int ny=0, nx=0, nz=0;
 	int nxy=0;
-	bool xprime = false; // true: when do recip2real, x-fft will be done last and when doing real2recip, x-fft will be done first; false: y-fft
+	bool xprime = true; // true: when do recip2real, x-fft will be done last and when doing real2recip, x-fft will be done first; false: y-fft
                          // For gamma_only, true: we use half x; false: we use half y
 	int lixy=0,rixy=0;// lixy: the left edge of the pw ball in the y direction; rixy: the right edge of the pw ball in the x or y direction
 	int ns=0; //number of sticks

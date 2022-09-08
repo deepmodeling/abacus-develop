@@ -4,6 +4,7 @@
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
 #include "module_cell/unitcell.h"
+#include "module_surchem/surchem.h"
 #include "module_symmetry/symmetry.h"
 #include "src_io/berryphase.h"
 #include "src_io/chi0_hilbert.h"
@@ -11,10 +12,9 @@
 #include "src_io/epsilon0_pwscf.h"
 #include "src_io/epsilon0_vasp.h"
 #include "src_io/optical.h"
-#include "src_ions/ions_move_basic.h"
+#include "module_relaxation/ions_move_basic.h"
 #include "src_pw/global.h"
 #include "src_pw/occupy.h"
-#include "module_surchem/surchem.h"
 #ifdef __EXX
 #include "src_ri/exx_abfs-jle.h"
 #endif
@@ -27,10 +27,9 @@
 #include "src_lcao/local_orbital_charge.h"
 #endif
 #include "module_base/timer.h"
-#include "module_surchem/efield.h"
-
 #include "module_elecstate/elecstate_lcao.h"
 #include "module_hsolver/hsolver_lcao.h"
+#include "module_surchem/efield.h"
 
 void Input_Conv::Convert(void)
 {
@@ -53,6 +52,7 @@ void Input_Conv::Convert(void)
     GlobalC::ucell.setup(INPUT.latname, INPUT.ntype, INPUT.lmaxmax, INPUT.init_vel, INPUT.fixed_axes);
 
     GlobalV::KSPACING = INPUT.kspacing;
+    GlobalV::MIN_DIST_COEF = INPUT.min_dist_coef;
     GlobalV::NBANDS = INPUT.nbands;
     GlobalC::wf.pw_seed = INPUT.pw_seed;
     GlobalV::NBANDS_ISTATE = INPUT.nbands_istate;
@@ -89,6 +89,12 @@ void Input_Conv::Convert(void)
     Force_Stress_LCAO::force_invalid_threshold_ev = INPUT.force_thr_ev2;
 #endif
 
+    if((INPUT.calculation=="relax" || INPUT.calculation=="cell-relax") && INPUT.chg_extrap!="atomic")
+    {
+        std::cout << " For relaxation, charge extrapolation is set to atomic." << std::endl;
+        INPUT.chg_extrap="atomic";
+    }
+
     BFGS_Basic::relax_bfgs_w1 = INPUT.relax_bfgs_w1;
     BFGS_Basic::relax_bfgs_w2 = INPUT.relax_bfgs_w2;
 
@@ -96,6 +102,7 @@ void Input_Conv::Convert(void)
     Ions_Move_Basic::relax_bfgs_rmin = INPUT.relax_bfgs_rmin;
     Ions_Move_Basic::relax_bfgs_init = INPUT.relax_bfgs_init;
     Ions_Move_Basic::out_stru = INPUT.out_stru; // mohan add 2012-03-23
+    Lattice_Change_Basic::out_stru = INPUT.out_stru;
 
     GlobalV::CAL_STRESS = INPUT.cal_stress;
 
@@ -134,6 +141,7 @@ void Input_Conv::Convert(void)
     GlobalV::VION_IN_H = INPUT.vion_in_h;
     GlobalV::TEST_FORCE = INPUT.test_force;
     GlobalV::TEST_STRESS = INPUT.test_stress;
+    GlobalV::test_skip_ewald = INPUT.test_skip_ewald;
 
     //----------------------------------------------------------
     // iteration (1/3)
@@ -202,15 +210,15 @@ void Input_Conv::Convert(void)
         GlobalV::NPOL = 1;
     }
 
-//----------------------------------------------------------
-// Yu Liu add 2022-05-18
-//----------------------------------------------------------
+    //----------------------------------------------------------
+    // Yu Liu add 2022-05-18
+    //----------------------------------------------------------
     GlobalV::EFIELD_FLAG = INPUT.efield_flag;
     GlobalV::DIP_COR_FLAG = INPUT.dip_cor_flag;
     Efield::efield_dir = INPUT.efield_dir;
     Efield::efield_pos_max = INPUT.efield_pos_max;
     Efield::efield_pos_dec = INPUT.efield_pos_dec;
-    Efield::efield_amp  = INPUT.efield_amp ;
+    Efield::efield_amp = INPUT.efield_amp;
 
 //----------------------------------------------------------
 // Fuxiang He add 2016-10-26
@@ -307,7 +315,7 @@ void Input_Conv::Convert(void)
         if (GlobalV::MY_RANK == 0)
             system(command0.c_str());
         if (INPUT.dft_functional == "hf" || INPUT.dft_functional == "pbe0" || INPUT.dft_functional == "hse"
-            || INPUT.dft_functional == "opt_orb" || INPUT.dft_functional == "scan0" )
+            || INPUT.dft_functional == "opt_orb" || INPUT.dft_functional == "scan0")
         {
             GlobalC::restart.info_save.save_charge = true;
             GlobalC::restart.info_save.save_H = true;
@@ -365,6 +373,7 @@ void Input_Conv::Convert(void)
 
     if (GlobalC::exx_global.info.hybrid_type != Exx_Global::Hybrid_Type::No)
     {
+        //EXX case, convert all EXX related variables 
         GlobalC::exx_global.info.hybrid_alpha = INPUT.exx_hybrid_alpha;
         XC_Functional::get_hybrid_alpha(INPUT.exx_hybrid_alpha);
         GlobalC::exx_global.info.hse_omega = INPUT.exx_hse_omega;
@@ -398,6 +407,9 @@ void Input_Conv::Convert(void)
         Exx_Abfs::Jle::Lmax = INPUT.exx_opt_orb_lmax;
         Exx_Abfs::Jle::Ecut_exx = INPUT.exx_opt_orb_ecut;
         Exx_Abfs::Jle::tolerence = INPUT.exx_opt_orb_tolerence;
+
+        //EXX does not support any symmetry analyse, force symmetry setting to -1
+        ModuleSymmetry::Symmetry::symm_flag = -1;
     }
 #endif
 #endif
@@ -448,9 +460,13 @@ void Input_Conv::Convert(void)
     hsolver::HSolverLCAO::out_mat_hs = INPUT.out_mat_hs;
     hsolver::HSolverLCAO::out_mat_hsR = INPUT.out_mat_hs2; // LiuXh add 2019-07-16
     elecstate::ElecStateLCAO::out_wfc_lcao = INPUT.out_wfc_lcao;
-    if(INPUT.calculation == "nscf" && !INPUT.towannier90 && !INPUT.berry_phase)
+    if (INPUT.calculation == "nscf" && !INPUT.towannier90 && !INPUT.berry_phase)
     {
         elecstate::ElecStateLCAO::need_psi_grid = false;
+    }
+    if(INPUT.calculation == "test_neighbour" && GlobalV::NPROC>1)
+    {
+        ModuleBase::WARNING_QUIT("Input_conv", "test_neighbour must be done with 1 processor");
     }
 #endif
 

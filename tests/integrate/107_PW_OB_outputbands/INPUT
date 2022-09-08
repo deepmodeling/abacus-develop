@@ -15,6 +15,7 @@ scf_nmax			100
 
 #out_chg      1
 init_chg        file
+init_wfc        random
 out_band            1
 pw_diag_thr                0.00001
 

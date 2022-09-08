@@ -6,6 +6,7 @@
 #include "../src_pw/vdwd3.h"
 #include "../module_base/timer.h"
 #include "../module_surchem/efield.h"        // liuyu add 2022-05-18
+#include "../module_surchem/surchem.h"		 //sunml add 2022-08-10
 #ifdef __DEEPKS
 #include "../module_deepks/LCAO_deepks.h"	//caoyu add for deepks 2021-06-03
 #endif
@@ -184,6 +185,13 @@ void Force_Stress_LCAO::getForceStress(
         fefield.create(nat, 3);
         Efield::compute_force(GlobalC::ucell, fefield);
     }
+	//Force from implicit solvation model
+    ModuleBase::matrix fsol;
+    if(GlobalV::imp_sol&&isforce)
+    {
+        fsol.create(nat, 3);
+		GlobalC::solvent_model.cal_force_sol(GlobalC::ucell,GlobalC::rhopw,fsol);
+    }
 	//Force contribution from DFT+U
 	ModuleBase::matrix force_dftu;
 	ModuleBase::matrix stress_dftu;
@@ -254,6 +262,11 @@ void Force_Stress_LCAO::getForceStress(
 				if(GlobalV::EFIELD_FLAG)
 				{
 					fcs(iat, i) += fefield(iat, i);
+				}
+				//implicit solvation model
+				if(GlobalV::imp_sol)
+				{
+					fcs(iat, i) += fsol(iat, i);
 				}
 #ifdef __DEEPKS
 				// mohan add 2021-08-04
@@ -378,6 +391,11 @@ void Force_Stress_LCAO::getForceStress(
 			{
 				f_pw.print("EFIELD     FORCE", fefield,0);
 				//this->print_force("EFIELD     FORCE",fefield,1,ry);
+			}
+			if(GlobalV::imp_sol)
+			{
+				f_pw.print("IMP_SOL     FORCE", fsol,0);
+				//this->print_force("IMP_SOL     FORCE",fsol,1,ry);
 			}
 			if(GlobalC::vdwd2_para.flag_vdwd2||GlobalC::vdwd3_para.flag_vdwd3)
 			{

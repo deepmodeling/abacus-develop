@@ -10,8 +10,16 @@
 namespace hamilt
 {
 
-template<class T>
-class Nonlocal : public T
+#ifndef __NONLOCALTEMPLATE
+#define __NONLOCALTEMPLATE
+
+template<class T> class Nonlocal : public T
+{};
+
+#endif
+
+template<>
+class Nonlocal<OperatorPW> : public OperatorPW
 {
     public:
     Nonlocal(

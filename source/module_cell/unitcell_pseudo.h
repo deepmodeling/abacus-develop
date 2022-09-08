@@ -98,6 +98,8 @@ public: // member functions
 	void bcast_unitcell_pseudo(void);
 	void bcast_unitcell_pseudo2(void);
 #endif
+
+	void check_structure(double factor);
 };
 
 #endif

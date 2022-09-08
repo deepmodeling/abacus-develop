@@ -26,7 +26,7 @@ ADDTest(
 )
 AddTest(
   TARGET base_vector3
-  SOURCES vector3_test.cpp 
+  SOURCES vector3_test.cpp
 )
 AddTest(
   TARGET base_matrix3
@@ -53,7 +53,7 @@ AddTest(
 AddTest(
   TARGET base_complexmatrix
   LIBS ${math_libs}
-  SOURCES complexmatrix_test.cpp ../complexmatrix.cpp ../matrix.cpp 
+  SOURCES complexmatrix_test.cpp ../complexmatrix.cpp ../matrix.cpp
 )
 AddTest(
   TARGET base_integral
@@ -66,7 +66,7 @@ AddTest(
 AddTest(
   TARGET base_ylmreal
   LIBS ${math_libs}
-  SOURCES math_ylmreal_test.cpp ../math_ylmreal.cpp ../ylm.cpp ../realarray.cpp ../timer.cpp ../matrix.cpp ../vector3.h 
+  SOURCES math_ylmreal_test.cpp ../math_ylmreal.cpp ../ylm.cpp ../realarray.cpp ../timer.cpp ../matrix.cpp ../vector3.h
 )
 AddTest(
   TARGET base_math_sphbes

@@ -116,7 +116,11 @@ namespace ModuleESolver
         {   
             if(this->psi == nullptr)
             {
+                #ifdef __MPI
                 int ncol = this->LOWF.ParaV->ncol_bands;
+                #else
+                int ncol = GlobalV::NBANDS;
+                #endif
 #ifdef __CUSOLVER_LCAO
                 if(GlobalV::KS_SOLVER=="cusolver")
                 {
@@ -227,6 +231,53 @@ namespace ModuleESolver
     {
         ModuleBase::TITLE("ESolver_KS_LCAO", "beforescf");
         ModuleBase::timer::tick("ESolver_KS_LCAO", "beforescf");
+
+        if(GlobalV::CALCULATION=="relax" || GlobalV::CALCULATION=="cell-relax")
+        {
+            if(GlobalC::ucell.ionic_position_updated)
+            {
+                GlobalV::ofs_running << " Setup the extrapolated charge." << std::endl;
+                // charge extrapolation if istep>0.
+                CE.update_istep(istep);
+                CE.update_all_pos(GlobalC::ucell);
+                CE.extrapolate_charge();
+                CE.save_pos_next(GlobalC::ucell);
+
+                GlobalV::ofs_running << " Setup the Vl+Vh+Vxc according to new structure factor and new charge." << std::endl;
+                // calculate the new potential accordint to
+                // the new charge density.
+                GlobalC::pot.init_pot( istep-1, GlobalC::sf.strucFac );
+            }
+        }
+
+        //----------------------------------------------------------
+        // about vdw, jiyy add vdwd3 and linpz add vdwd2
+        //----------------------------------------------------------
+        if (INPUT.vdw_method == "d2")
+        {
+            // setup vdwd2 parameters
+            GlobalC::vdwd2_para.initial_parameters(INPUT);
+            GlobalC::vdwd2_para.initset(GlobalC::ucell);
+        }
+        if (INPUT.vdw_method == "d3_0" || INPUT.vdw_method == "d3_bj")
+        {
+            GlobalC::vdwd3_para.initial_parameters(INPUT);
+        }
+        // Peize Lin add 2014.04.04, update 2021.03.09
+        if (GlobalC::vdwd2_para.flag_vdwd2)
+        {
+            Vdwd2 vdwd2(GlobalC::ucell, GlobalC::vdwd2_para);
+            vdwd2.cal_energy();
+            GlobalC::en.evdw = vdwd2.get_energy();
+        }
+        // jiyy add 2019-05-18, update 2021.05.02
+        else if (GlobalC::vdwd3_para.flag_vdwd3)
+        {
+            Vdwd3 vdwd3(GlobalC::ucell, GlobalC::vdwd3_para);
+            vdwd3.cal_energy();
+            GlobalC::en.evdw = vdwd3.get_energy();
+        }
+        
         this->beforesolver(istep);
 //Peize Lin add 2016-12-03
 #ifdef __MPI
@@ -252,7 +303,10 @@ namespace ModuleESolver
 #endif
         // 1. calculate ewald energy.
         // mohan update 2021-02-25
-        H_Ewald_pw::compute_ewald(GlobalC::ucell, GlobalC::rhopw);
+        if(!GlobalV::test_skip_ewald)
+        {
+            H_Ewald_pw::compute_ewald(GlobalC::ucell, GlobalC::rhopw);
+        }
 
         //2. the electron charge density should be symmetrized,
         // here is the initialization
@@ -278,8 +332,36 @@ namespace ModuleESolver
         if(GlobalV::CALCULATION == "get_S")
         {
             this->get_S();
+            ModuleBase::QUIT();
+        }
+        
+        if(GlobalV::CALCULATION == "test_memory")
+        {
+            Cal_Test::test_memory();
             return;
         }
+
+        if(GlobalV::CALCULATION == "test_neighbour")
+        {
+            //test_search_neighbor();
+            GlobalV::SEARCH_RADIUS = atom_arrange::set_sr_NL(
+                GlobalV::ofs_running,
+                GlobalV::OUT_LEVEL,
+                GlobalC::ORB.get_rcutmax_Phi(),
+                GlobalC::ucell.infoNL.get_rcutmax_Beta(),
+                GlobalV::GAMMA_ONLY_LOCAL);
+
+            atom_arrange::search(
+                GlobalV::SEARCH_PBC,
+                GlobalV::ofs_running,
+                GlobalC::GridD,
+                GlobalC::ucell,
+                GlobalV::SEARCH_RADIUS,
+                GlobalV::test_atom_input,
+                1);
+            return;
+        }
+
         this->beforesolver(istep);
         // self consistent calculations for electronic ground state
         if (GlobalV::CALCULATION == "nscf")
@@ -365,7 +447,7 @@ namespace ModuleESolver
     #endif
 
         // mohan add 2021-02-09
-        // in LOOP_ions, istep starts from 1,
+        // in ions, istep starts from 1,
         // then when the istep is a variable of scf or nscf,
         // istep becomes istep-1, this should be fixed in future
         int istep = 0;
@@ -434,7 +516,7 @@ namespace ModuleESolver
         }
 
         // add by jingan
-        if (berryphase::berry_phase_flag && ModuleSymmetry::Symmetry::symm_flag == 0)
+        if (berryphase::berry_phase_flag && ModuleSymmetry::Symmetry::symm_flag != 1)
         {
             berryphase bp(this->LOWF);
             bp.Macroscopic_polarization(this->psi);

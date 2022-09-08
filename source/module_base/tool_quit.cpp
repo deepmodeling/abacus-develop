@@ -128,4 +128,42 @@ void WARNING_QUIT(const std::string &file,const std::string &description)
     QUIT();
 }
 
+
+//Check and print warning information for all cores.
+//Maybe in the future warning.log should be replaced by error.log.
+void CHECK_WARNING_QUIT(const bool error_in, const std::string &file,const std::string &description)
+{
+#ifdef __NORMAL
+// only for UT, do nothing here
+#else
+	if(error_in)
+	{
+		//All cores will print inforamtion
+		std::cout.clear();
+		if(!GlobalV::ofs_running.is_open()) 
+		{
+			std::string logfile = GlobalV::global_out_dir + "running_" + GlobalV::CALCULATION + ".log";
+			GlobalV::ofs_running.open( logfile.c_str(), std::ios::app );
+		}
+		if(!GlobalV::ofs_warning.is_open()) 
+		{
+			std::string warningfile = GlobalV::global_out_dir + "warning.log";
+			GlobalV::ofs_warning.open( warningfile.c_str(), std::ios::app );
+		}
+
+		//print error information
+		std::cout << " !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
+		std::cout << " ERROR! " << description << std::endl;
+		std::cout << " CHECK IN FILE : " << GlobalV::global_out_dir << "warning.log" << std::endl;
+		std::cout << " !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
+		GlobalV::ofs_running << " ERROR! CHECK IN FILE : " << GlobalV::global_out_dir << "warning.log" << std::endl;
+		GlobalV::ofs_warning << std::endl;
+		GlobalV::ofs_warning << " ERROR! " << file << ", core " << GlobalV::MY_RANK+1 << ": " << description << std::endl;
+		GlobalV::ofs_warning << std::endl;
+		exit(0);
+	}
+#endif
+	return;
+}
+
 }

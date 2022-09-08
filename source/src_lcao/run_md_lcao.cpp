@@ -9,7 +9,7 @@
 #include "../src_io/write_HS.h"
 #include "../src_io/cal_r_overlap_R.h"
 #include "../src_io/print_info.h"
-#include "../src_ions/variable_cell.h" // mohan add 2021-02-01
+#include "../module_relaxation/variable_cell.h" // mohan add 2021-02-01
 #include "../src_ri/exx_abfs.h"
 #include "../src_ri/exx_opt_orb.h"
 #include "../module_neighbor/sltk_atom_arrange.h"
@@ -24,72 +24,60 @@
 Run_MD_LCAO::Run_MD_LCAO()
 {
     cellchange = false;
+    CE.Init_CE();
 }
 
-Run_MD_LCAO::~Run_MD_LCAO(){}
-
-void Run_MD_LCAO::opt_cell(ModuleESolver::ESolver *p_esolver)
+Run_MD_LCAO::~Run_MD_LCAO()
 {
-	ModuleBase::TITLE("Run_MD_LCAO","opt_cell");
-
-    opt_ions(p_esolver);
-    
-    return;
 }
 
-
-void Run_MD_LCAO::opt_ions(ModuleESolver::ESolver *p_esolver)
+void Run_MD_LCAO::opt_ions(ModuleESolver::ESolver* p_esolver)
 {
-    ModuleBase::TITLE("Run_MD_LCAO","opt_ions"); 
-    ModuleBase::timer::tick("Run_MD_LCAO","opt_ions"); 
-		
-    if(GlobalV::OUT_LEVEL=="i")
+    ModuleBase::TITLE("Run_MD_LCAO", "opt_ions");
+    ModuleBase::timer::tick("Run_MD_LCAO", "opt_ions");
+
+    if (GlobalV::OUT_LEVEL == "i")
     {
         std::cout << std::setprecision(12);
-        std::cout<< " " << std::setw(7)<< "ISTEP"
-        <<std::setw(5)<< "NE"
-        <<std::setw(18)<< "ETOT(eV)"
-        <<std::setw(10)<< "dE(meV)"
-        <<std::setw(10)<< "F(eV/A)"
-        <<std::setw(10)<< "T(MIN)"
-        <<std::endl;
+        std::cout << " " << std::setw(7) << "ISTEP" << std::setw(5) << "NE" << std::setw(18) << "ETOT(eV)"
+                  << std::setw(10) << "dE(meV)" << std::setw(10) << "F(eV/A)" << std::setw(10) << "T(MIN)" << std::endl;
     }
 
     //Charge_Extrapolation
     // CE.allocate_ions();
 
     // determine the md_type
-    Verlet *verlet;
-    if(INPUT.mdp.md_type == -1)
+    Verlet* verlet;
+    if (INPUT.mdp.md_type == -1)
     {
-        verlet = new FIRE(INPUT.mdp, GlobalC::ucell); 
+        verlet = new FIRE(INPUT.mdp, GlobalC::ucell);
     }
-    else if(INPUT.mdp.md_type == 0)
+    else if (INPUT.mdp.md_type == 0)
     {
-        verlet = new NVE(INPUT.mdp, GlobalC::ucell); 
+        verlet = new NVE(INPUT.mdp, GlobalC::ucell);
     }
-    else if(INPUT.mdp.md_type == 1)
+    else if (INPUT.mdp.md_type == 1)
     {
         verlet = new NVT_NHC(INPUT.mdp, GlobalC::ucell);
     }
-    else if(INPUT.mdp.md_type == 2)
+    else if (INPUT.mdp.md_type == 2)
     {
         verlet = new Langevin(INPUT.mdp, GlobalC::ucell);
     }
-    else if(INPUT.mdp.md_type == 3)
+    else if (INPUT.mdp.md_type == 3)
     {
         verlet = new NVT_ADS(INPUT.mdp, GlobalC::ucell);
     }
-    else if(INPUT.mdp.md_type == 4)
+    else if (INPUT.mdp.md_type == 4)
     {
-        verlet = new MSST(INPUT.mdp, GlobalC::ucell); 
+        verlet = new MSST(INPUT.mdp, GlobalC::ucell);
         cellchange = true;
     }
 
     // md cycle
     while ((verlet->step_ + verlet->step_rst_) <= GlobalV::MD_NSTEP && !verlet->stop)
     {
-        if(verlet->step_ == 0)
+        if (verlet->step_ == 0)
         {
             verlet->setup(p_esolver);
         }
@@ -100,7 +88,7 @@ void Run_MD_LCAO::opt_ions(ModuleESolver::ESolver *p_esolver)
 
             verlet->first_half();
 
-            if(cellchange)
+            if (cellchange)
             {
                 CE.update_istep(1);
             }
@@ -112,16 +100,22 @@ void Run_MD_LCAO::opt_ions(ModuleESolver::ESolver *p_esolver)
             CE.save_pos_next(GlobalC::ucell);
             CE.extrapolate_charge();
 
-            if(cellchange)
+            if (cellchange)
             {
-                Variable_Cell::init_after_vc(p_esolver);
+                Variable_Cell::init_after_vc();
             }
 
             // reset local potential
             GlobalC::pot.init_pot(verlet->step_, GlobalC::sf.strucFac);
 
             // update force and virial due to the update of atom positions
-            MD_func::force_virial(p_esolver, verlet->step_, verlet->mdp, verlet->ucell, verlet->potential, verlet->force, verlet->virial);
+
+            this->md_force_virial(p_esolver,
+                                  verlet->step_,
+                                  verlet->ucell.nat,
+                                  verlet->potential,
+                                  verlet->force,
+                                  verlet->virial);
 
             verlet->second_half();
 
@@ -130,7 +124,7 @@ void Run_MD_LCAO::opt_ions(ModuleESolver::ESolver *p_esolver)
             verlet->stress += verlet->virial;
         }
 
-        if((verlet->step_ + verlet->step_rst_) % verlet->mdp.md_dumpfreq == 0)
+        if ((verlet->step_ + verlet->step_rst_) % verlet->mdp.md_dumpfreq == 0)
         {
             // Print_Info::print_screen(0, 0, verlet->step_ + verlet->step_rst_);
             verlet->outputMD(GlobalV::ofs_running, GlobalV::CAL_STRESS);
@@ -138,7 +132,7 @@ void Run_MD_LCAO::opt_ions(ModuleESolver::ESolver *p_esolver)
             MD_func::MDdump(verlet->step_ + verlet->step_rst_, verlet->ucell, verlet->virial, verlet->force);
         }
 
-        if((verlet->step_ + verlet->step_rst_) % verlet->mdp.md_restartfreq == 0)
+        if ((verlet->step_ + verlet->step_rst_) % verlet->mdp.md_restartfreq == 0)
         {
             verlet->ucell.update_vel(verlet->vel);
             std::stringstream file;
@@ -160,13 +154,8 @@ void Run_MD_LCAO::opt_ions(ModuleESolver::ESolver *p_esolver)
         std::stringstream ssp_ave;
         ssp << GlobalV::global_out_dir << "ElecStaticPot";
         ssp_ave << GlobalV::global_out_dir << "ElecStaticPot_AVE";
-        GlobalC::pot.write_elecstat_pot(ssp.str(), ssp_ave.str(), GlobalC::rhopw); //output 'Hartree + local pseudopot'
+        GlobalC::pot.write_elecstat_pot(ssp.str(), ssp_ave.str(), GlobalC::rhopw); // output 'Hartree + local pseudopot'
     }
-
-    GlobalV::ofs_running << "\n\n --------------------------------------------" << std::endl;
-    GlobalV::ofs_running << std::setprecision(16);
-    GlobalV::ofs_running << " !FINAL_ETOT_IS " << GlobalC::en.etot * ModuleBase::Ry_to_eV << " eV" << std::endl; 
-    GlobalV::ofs_running << " --------------------------------------------\n\n" << std::endl;
 
 	// mohan update 2021-02-10
     delete verlet;
@@ -174,38 +163,37 @@ void Run_MD_LCAO::opt_ions(ModuleESolver::ESolver *p_esolver)
     return;
 }
 
-void Run_MD_LCAO::md_force_virial(
-    ModuleESolver::ESolver *p_esolver,
-    const int &istep,
-    const int& numIon, 
-    double &potential, 
-    ModuleBase::Vector3<double>* force, 
-    ModuleBase::matrix& virial)
+void Run_MD_LCAO::md_force_virial(ModuleESolver::ESolver* p_esolver,
+                                  const int& istep,
+                                  const int& numIon,
+                                  double& potential,
+                                  ModuleBase::Vector3<double>* force,
+                                  ModuleBase::matrix& virial)
 {
     //----------------------------------------------------------
-	// about vdw, jiyy add vdwd3 and linpz add vdwd2
-	//----------------------------------------------------------	
-	if(INPUT.vdw_method=="d2")
-	{
-		// setup vdwd2 parameters
-		GlobalC::vdwd2_para.initial_parameters(INPUT);
-	    GlobalC::vdwd2_para.initset(GlobalC::ucell);
+    // about vdw, jiyy add vdwd3 and linpz add vdwd2
+    //----------------------------------------------------------
+    if (INPUT.vdw_method == "d2")
+    {
+        // setup vdwd2 parameters
+        GlobalC::vdwd2_para.initial_parameters(INPUT);
+        GlobalC::vdwd2_para.initset(GlobalC::ucell);
     }
-    if(INPUT.vdw_method=="d3_0" || INPUT.vdw_method=="d3_bj")
+    if (INPUT.vdw_method == "d3_0" || INPUT.vdw_method == "d3_bj")
     {
         GlobalC::vdwd3_para.initial_parameters(INPUT);
     }
     // Peize Lin add 2014.04.04, update 2021.03.09
-    if(GlobalC::vdwd2_para.flag_vdwd2)
+    if (GlobalC::vdwd2_para.flag_vdwd2)
     {
-        Vdwd2 vdwd2(GlobalC::ucell,GlobalC::vdwd2_para);
+        Vdwd2 vdwd2(GlobalC::ucell, GlobalC::vdwd2_para);
         vdwd2.cal_energy();
         GlobalC::en.evdw = vdwd2.get_energy();
     }
     // jiyy add 2019-05-18, update 2021.05.02
-    else if(GlobalC::vdwd3_para.flag_vdwd3)
+    else if (GlobalC::vdwd3_para.flag_vdwd3)
     {
-        Vdwd3 vdwd3(GlobalC::ucell,GlobalC::vdwd3_para);
+        Vdwd3 vdwd3(GlobalC::ucell, GlobalC::vdwd3_para);
         vdwd3.cal_energy();
         GlobalC::en.evdw = vdwd3.get_energy();
     }
@@ -214,32 +202,31 @@ void Run_MD_LCAO::md_force_virial(
     // mohan add 2021-02-09
     p_esolver->Run(istep, GlobalC::ucell);
 
-    //to call the force of each atom
-	ModuleBase::matrix fcs;//temp force matrix
+    // to call the force of each atom
+    ModuleBase::matrix fcs; // temp force matrix
     p_esolver->cal_Force(fcs);
-    
+
     for (int ion = 0; ion < numIon; ++ion)
     {
-		force[ion].x = fcs(ion, 0)/2.0;
-		force[ion].y = fcs(ion, 1)/2.0;
-		force[ion].z = fcs(ion, 2)/2.0;
-	}
+        force[ion].x = fcs(ion, 0) / 2.0;
+        force[ion].y = fcs(ion, 1) / 2.0;
+        force[ion].z = fcs(ion, 2) / 2.0;
+    }
 
-    if(GlobalV::CAL_STRESS)
+    if (GlobalV::CAL_STRESS)
     {
         p_esolver->cal_Stress(virial);
         virial = 0.5 * virial;
     }
 
-    potential = GlobalC::en.etot/2;
+    potential = GlobalC::en.etot / 2;
 
-#ifdef __MPI //2015-10-01, xiaohui
-	atom_arrange::delete_vector(
-		GlobalV::ofs_running, 
-		GlobalV::SEARCH_PBC, 
-		GlobalC::GridD, 
-		GlobalC::ucell, 
-		GlobalV::SEARCH_RADIUS, 
-		GlobalV::test_atom_input);
-#endif //2015-10-01, xiaohui
+#ifdef __MPI // 2015-10-01, xiaohui
+    atom_arrange::delete_vector(GlobalV::ofs_running,
+                                GlobalV::SEARCH_PBC,
+                                GlobalC::GridD,
+                                GlobalC::ucell,
+                                GlobalV::SEARCH_RADIUS,
+                                GlobalV::test_atom_input);
+#endif // 2015-10-01, xiaohui
 }

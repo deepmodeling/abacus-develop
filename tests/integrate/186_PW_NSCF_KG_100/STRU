@@ -1,0 +1,18 @@
+ATOMIC_SPECIES
+Si 14 Si.pz-vbc.UPF
+
+LATTICE_CONSTANT
+5  // add lattice constant
+
+LATTICE_VECTORS
+1 0 0
+0 1 0
+0 0 1
+
+ATOMIC_POSITIONS
+Direct 
+
+Si	// Element type	
+0.0	// magnetism
+1	
+0.00 0.00 0.00 1 1 1

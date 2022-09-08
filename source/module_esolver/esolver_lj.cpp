@@ -22,8 +22,7 @@ namespace ModuleESolver
             grid_neigh,
             ucell,
             GlobalV::SEARCH_RADIUS,
-            GlobalV::test_atom_input,
-            inp.test_just_neighbor);
+            GlobalV::test_atom_input);
     }
 
     void ESolver_LJ::Run(const int istep, UnitCell_pseudo& ucell)

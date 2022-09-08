@@ -59,6 +59,7 @@ class HSolver
         psi::Psi<std::complex<double>>& ppsi, 
         elecstate::ElecState* pes, 
         Stochastic_WF& stowf,
+        const int istep,
         const int iter,
         const std::string method, 
         const bool skip_charge=false

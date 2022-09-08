@@ -27,17 +27,16 @@ class Stochastic_hchi
 	double Emin;
 	double Emax;
 
-	void hchi_real(
-		complex<double> *wfin, 
-		complex<double> *wfout, 
-		const int m = 1); //wfin & wfout are wavefunctions in real space
-	
 	void orthogonal_to_psi_reciprocal(
 		complex<double>* wfin, 
 		complex<double> *wfout, 
 		const int& ikk); //wfin & wfout are wavefunctions in reciprocal space
+	void hchi(
+		complex<double> *wfin, 
+		complex<double> *wfout, 
+		const int m = 1); //wfin & wfout are wavefunctions in reciprocal space
 
-	void hchi_reciprocal(
+	void hchi_norm(
 		complex<double> *wfin, 
 		complex<double> *wfout, 
 		const int m = 1); //wfin & wfout are wavefunctions in reciprocal space

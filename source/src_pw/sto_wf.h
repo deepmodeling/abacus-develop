@@ -23,7 +23,8 @@ class Stochastic_WF
 	ModuleBase::ComplexMatrix* chiortho;	// stochastic wavefunctions after in reciprocal space orthogonalized with KS wavefunctions
 	ModuleBase::ComplexMatrix* shchi;     // sqrt(f(H))|chi>
 	int nchi; 				// Total number of stochatic obitals
-	int *nchip; 				// The number of stochatic obitals in current process of each k point.
+	int *nchip; 				// The number of stochatic orbitals in current process of each k point.
+	int nchip_max = 0;             // Max number of stochastic orbitals among all k points.
 	int nks;           //number of k-points
 
 	int nbands_diag; // number of bands obtained from diagonalization

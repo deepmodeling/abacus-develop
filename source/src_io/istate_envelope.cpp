@@ -219,7 +219,7 @@ void IState_Envelope::begin(const psi::Psi<std::complex<double>>* psi, Local_Orb
                 for (int i = 0;i < GlobalV::NBANDS;++i)
                 {
                     for (int j = 0;j < GlobalV::NLOCAL;++j)
-                        wfc_k_grid[ik][i][j] = psi[0](i, j);
+                        lowf.wfc_k_grid[ik][i][j] = psi[0](i, j);
                 }
 #endif
                 //deal with NSPIN=4

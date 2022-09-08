@@ -97,8 +97,8 @@ class Kpt:
     def __init__(self, mode: str, numbers: list = [], special_k: list = [], offset: list = [0.0, 0.0, 0.0], klabel: list = []) -> None:
         """Initialize Kpt object
 
-        :params mode: ‘Gamma’, ‘MP’ or 'Line'
-        :params numbers: for ‘Gamma’ and ‘MP’ mode, list of three integers, for 'Line' mode, list of number of k points between two adjacent special k points.
+        :params mode: 'sGamma', 'MP' or 'Line'
+        :params numbers: for 'Gamma' and 'MP' mode, list of three integers, for 'Line' mode, list of number of k points between two adjacent special k points.
         :params special_k: list of special k-points
         :params offset: offset of the k grid. Default: [0.0, 0.0, 0.0]
         """

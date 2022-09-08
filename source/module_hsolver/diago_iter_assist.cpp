@@ -50,9 +50,14 @@ void DiagoIterAssist::diagH_subspace(hamilt::Hamilt* pHamilt,
     //const std::complex<double> *paux = aux;
     const std::complex<double> *ppsi = psi.get_pointer();
 
+    //allocated hpsi 
+    std::vector<std::complex<double>> hpsi(psi.get_nbands() * psi.get_nbasis());
+    //do hPsi for all bands
     psi::Range all_bands_range(1, psi.get_current_k(), 0, psi.get_nbands()-1);
-    hamilt::Operator::hpsi_info hpsi_in(&psi, all_bands_range);
-    const std::complex<double> *aux = std::get<0>(pHamilt->ops->hPsi(hpsi_in))->get_pointer();
+    hamilt::Operator<std::complex<double>>::hpsi_info hpsi_in(&psi, all_bands_range, hpsi.data());
+    pHamilt->ops->hPsi(hpsi_in);
+    //use aux as a data pointer for hpsi
+    const std::complex<double> *aux = hpsi.data();
 
     char trans1 = 'C';
     char trans2 = 'N';
@@ -187,9 +192,14 @@ void DiagoIterAssist::diagH_subspace_init(hamilt::Hamilt* pHamilt,
     ModuleBase::GlobalFunc::COPYARRAY(psi.c, psi_temp.get_pointer(), psi_temp.size());
     const std::complex<double> *ppsi = psi_temp.get_pointer();
 
-    psi::Range all_bands_range(1, 0, 0, nstart-1);
-    hamilt::Operator::hpsi_info hpsi_in(&psi_temp, all_bands_range);
-    const std::complex<double> *aux = std::get<0>(pHamilt->ops->hPsi(hpsi_in))->get_pointer();
+    //allocated hpsi 
+    std::vector<std::complex<double>> hpsi(psi_temp.get_nbands() * psi_temp.get_nbasis());
+    //do hPsi for all bands
+    psi::Range all_bands_range(1, psi_temp.get_current_k(), 0, psi_temp.get_nbands()-1);
+    hamilt::Operator<std::complex<double>>::hpsi_info hpsi_in(&psi_temp, all_bands_range, hpsi.data());
+    pHamilt->ops->hPsi(hpsi_in);
+    //use aux as a data pointer for hpsi
+    const std::complex<double> *aux = hpsi.data();
 
     char trans1 = 'C';
     char trans2 = 'N';

@@ -16,8 +16,8 @@ void ESolver_KS_LCAO::output_HS_R(
     const bool &binary, 
     const double &sparse_threshold)
 {
-    ModuleBase::TITLE("LOOP_ions","output_HS_R"); 
-    ModuleBase::timer::tick("LOOP_ions","output_HS_R"); 
+    ModuleBase::TITLE("ESolver_KS_LCAO","output_HS_R"); 
+    ModuleBase::timer::tick("ESolver_KS_LCAO","output_HS_R"); 
     
     // add by jingan for out r_R matrix 2019.8.14
     if(INPUT.out_mat_r)
@@ -72,21 +72,21 @@ void ESolver_KS_LCAO::output_HS_R(
         this->UHM.GK.destroy_pvpR();
     } //LiuXh 20181011
 
-    ModuleBase::timer::tick("LOOP_ions","output_HS_R"); 
+    ModuleBase::timer::tick("ESolver_KS_LCAO","output_HS_R"); 
     return;
 }
 
 
 void ESolver_KS_LCAO::output_SR(const std::string &SR_filename, const bool &binary, const double &sparse_threshold)
 {
-    ModuleBase::TITLE("LOOP_ions","output_SR");
-    ModuleBase::timer::tick("LOOP_ions","output_SR"); 
+    ModuleBase::TITLE("ESolver_KS_LCAO","output_SR");
+    ModuleBase::timer::tick("ESolver_KS_LCAO","output_SR"); 
 
     this->UHM.calculate_SR_sparse(sparse_threshold);
     HS_Matrix::save_SR_sparse(*this->UHM.LM, sparse_threshold, binary, SR_filename);
     this->UHM.destroy_all_HSR_sparse();
 
-    ModuleBase::timer::tick("LOOP_ions","output_SR");
+    ModuleBase::timer::tick("ESolver_KS_LCAO","output_SR");
     return;
 }
 }

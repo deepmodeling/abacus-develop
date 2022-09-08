@@ -23,6 +23,7 @@ extern int NBANDS_ISTATE; // 1.05 // mohan add 2011-03-22
 extern int NLOCAL; // 1.1 // mohan add 2009-05-29
 
 extern double KSPACING;
+extern double MIN_DIST_COEF;
 
 extern double PSEUDORCUT;
 extern bool PSEUDO_MESH;
@@ -159,6 +160,7 @@ extern std::string global_stru_dir;   // liuyu add 2022-05-24 for MD STRU
 
 extern std::ofstream ofs_running;
 extern std::ofstream ofs_warning;
+extern std::ofstream ofs_info;
 
 //==========================================================
 // EXPLAIN : test level for each class
@@ -178,6 +180,7 @@ extern int test_wf;
 extern int test_charge;
 extern int test_potential;
 extern int test_energy;
+extern bool test_skip_ewald;
 //==========================================================
 // src_onscaling
 //==========================================================

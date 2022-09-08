@@ -34,7 +34,7 @@ class Hamilt
     int non_first_scf=0;
 
     // first node operator, add operations from each operators
-    Operator* ops = nullptr;
+    Operator<std::complex<double>>* ops = nullptr;
 };
 
 } // namespace hamilt

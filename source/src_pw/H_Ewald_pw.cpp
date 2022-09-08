@@ -7,7 +7,7 @@
 #include "../src_pw/global.h"
 
 double H_Ewald_pw::alpha=0.0;
-int H_Ewald_pw::mxr = 50;
+int H_Ewald_pw::mxr = 200;
 double H_Ewald_pw::ewald_energy=0.0;
 
 H_Ewald_pw::H_Ewald_pw(){};

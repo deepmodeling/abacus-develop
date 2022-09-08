@@ -9,6 +9,7 @@ add_library(
     hsolver_lcao.cpp
     diago_blas.cpp
     diago_elpa.cpp
+    diago_lapack.cpp
 )
 
 add_subdirectory(genelpa)

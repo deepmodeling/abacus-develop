@@ -463,7 +463,16 @@ void LCAO_gen_fixedH::build_Nonlocal_mu_new(double* NLloc, const bool &calc_deri
 
 
 	//Step 1 : generate <psi|beta>
-	//type of atom; distance; atomic basis; projectors
+
+	//This is the data structure for storing <psi|beta>
+	//It is a 4 layer data structure
+	//The outmost layer is std::vector with size being number of atoms in unit cell
+	//The second layer is a map, the key being a combination of 4 number (iat, dRx, dRy, dRz)
+	//which identifies a unique adjacent atom of the first atom
+	//The third layer is an unordered map, with key being the index of atomic basis |psi>
+	//The inner layer is a vector, each element representing a projector |beta>
+	//It then either stores the number <psi|beta> (nlm_tot)
+	//or a vector of 4, storing additionally <d/dx_i psi|beta> (nlm_tot1) x_i=x,y,z
 	std::vector<std::map<key_tuple,std::unordered_map<int,std::vector<double>>>> nlm_tot;
 	std::vector<std::map<key_tuple,std::unordered_map<int,std::vector<std::vector<double>>>>> nlm_tot1;
 
@@ -530,9 +539,9 @@ void LCAO_gen_fixedH::build_Nonlocal_mu_new(double* NLloc, const bool &calc_deri
 				if(iw1_local < 0 && iw2_local < 0)continue;
 				const int iw1_0 = iw1/GlobalV::NPOL;
 				std::vector<std::vector<double>> nlm;
-				//2D, but first dimension is only 1 here
-				//for force, the right hand side is the gradient
-				//and the first dimension is then 3
+				//nlm is a vector of vectors, but size of outer vector is only 1 here
+				//If we are calculating force, we need also to store the gradient
+				//and size of outer vector is then 4
 				//inner loop : all projectors (L0,M0)
 				GlobalC::UOT.snap_psibeta_half(
 					GlobalC::ORB,
@@ -576,7 +585,6 @@ void LCAO_gen_fixedH::build_Nonlocal_mu_new(double* NLloc, const bool &calc_deri
 	int nnr = 0;
 	ModuleBase::Vector3<double> tau1, tau2, dtau;
 	ModuleBase::Vector3<double> dtau1, dtau2, tau0;
-	ModuleBase::Vector3<float> dtau1_f, dtau2_f;
 	double distance = 0.0;
 	double rcut = 0.0;
 	double rcut1, rcut2;

@@ -42,6 +42,8 @@ void Gint::gint_kernel_vlocal(
 	const Gint_Tools::Array_Pool<double> psir_vlbr3 = Gint_Tools::get_psir_vlbr3(
 			na_grid, LD_pool, block_index, cal_flag, vldr3, psir_ylm.ptr_2D);
 
+	//integrate (psi_mu*v(r)*dv) * psi_nu on grid
+	//and accumulates to the corresponding element in Hamiltonian
     if(GlobalV::GAMMA_ONLY_LOCAL)
     {
 		this->cal_meshball_vlocal_gamma(
@@ -103,7 +105,6 @@ void Gint::gint_kernel_vlocal_meta(
 			na_grid, LD_pool, block_index, cal_flag, vldr3, psir_ylm.ptr_2D);
 
 	//calculating df_mu(r) = vofk(r) * dpsi_mu(r) * dv
-
 	const Gint_Tools::Array_Pool<double> dpsix_vlbr3 = Gint_Tools::get_psir_vlbr3(
 			na_grid, LD_pool, block_index, cal_flag, vkdr3, dpsir_ylm_x.ptr_2D);
 	const Gint_Tools::Array_Pool<double> dpsiy_vlbr3 = Gint_Tools::get_psir_vlbr3(
@@ -113,9 +114,13 @@ void Gint::gint_kernel_vlocal_meta(
 
     if(GlobalV::GAMMA_ONLY_LOCAL)
     {
+		//integrate (psi_mu*v(r)*dv) * psi_nu on grid
+		//and accumulates to the corresponding element in Hamiltonian
 		this->cal_meshball_vlocal_gamma(
 			na_grid, LD_pool, block_iw, block_size, block_index, cal_flag,
 			psir_ylm.ptr_2D, psir_vlbr3.ptr_2D, pvpR_in);
+		//integrate (d/dx_i psi_mu*vk(r)*dv) * (d/dx_i psi_nu) on grid (x_i=x,y,z)
+		//and accumulates to the corresponding element in Hamiltonian
 		this->cal_meshball_vlocal_gamma(
 			na_grid, LD_pool, block_iw, block_size, block_index, cal_flag,
 			dpsir_ylm_x.ptr_2D, dpsix_vlbr3.ptr_2D, pvpR_in);

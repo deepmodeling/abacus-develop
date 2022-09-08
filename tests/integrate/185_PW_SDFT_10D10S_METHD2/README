@@ -1,0 +1,9 @@
+This test for:
+*SDFT
+*Si
+*kpoints 1*1*1
+*10 stochastic orbitals + 10 KS orbitals
+*mixing_type broyden
+*mixing_beta 0.4
+*seed_sto > 0
+*method_sto 2

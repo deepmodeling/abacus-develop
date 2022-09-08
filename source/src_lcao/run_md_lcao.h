@@ -14,7 +14,6 @@ class Run_MD_LCAO
 	Run_MD_LCAO();
 	~Run_MD_LCAO();
 
-	void opt_cell(ModuleESolver::ESolver *p_esolver);
 	void opt_ions(ModuleESolver::ESolver *p_esolver);
 	void md_force_virial(ModuleESolver::ESolver *p_esolver,
 		const int &istep,

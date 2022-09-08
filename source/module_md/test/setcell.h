@@ -56,6 +56,7 @@ public:
         delete[] ucell.atoms[0].vel;
         delete[] ucell.atoms[0].mbl;
         ucell.atoms[0].tau = new ModuleBase::Vector3<double>[4];
+        ucell.atoms[0].tau_original = new ModuleBase::Vector3<double>[4];
         ucell.atoms[0].taud = new ModuleBase::Vector3<double>[4];
         ucell.atoms[0].vel = new ModuleBase::Vector3<double>[4];
         ucell.atoms[0].mbl = new ModuleBase::Vector3<int>[4];

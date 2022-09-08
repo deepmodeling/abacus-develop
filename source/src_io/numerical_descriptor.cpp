@@ -48,6 +48,10 @@ void Numerical_Descriptor::output_descriptor(const psi::Psi<std::complex<double>
 
 	assert(nmax>0);
 
+	// Currently we are not considering doing DeePKS in PW basis
+	// hence this subroutine is used only for generating projectors and save to jle.orb
+	// As a result, I will return here and the rest of the code is saved for future use
+	return;
 
 	//-----------------------------------
 	// 2. Open the file

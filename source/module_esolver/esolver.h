@@ -68,7 +68,8 @@ namespace ModuleESolver
         psi::Psi<double>* psid = nullptr;
     };
 
-    void init_esolver(ESolver*& p_esolver, const string use_esol);
+    string determine_type();
+    void init_esolver(ESolver*& p_esolver);
     void clean_esolver(ESolver*& pesolver);
 
 }

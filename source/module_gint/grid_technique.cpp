@@ -57,7 +57,7 @@ Grid_Technique::~Grid_Technique()
 }
 
 
-// This function is called in LOOP_ions.cpp
+// This function is called in esolver_ks_lcao_elec.cpp
 // after the orbital information has been read,
 // this function control the routinue to generate 
 // grid technique parameters.

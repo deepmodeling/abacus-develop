@@ -16,8 +16,7 @@ OBJS_MAIN=driver.o\
 input.o \
 write_input.o\
 input_conv.o\
-run_pw.o\
-run_lcao.o\
+driver_run.o
 
 OBJS_PW=xc_3.o \
 vdwd2.o\
@@ -138,8 +137,6 @@ ORB_gen_tables.o\
 local_orbital_wfc.o\
 local_orbital_charge.o\
 ELEC_evolve.o\
-LOOP_cell.o\
-LOOP_ions.o\
 run_md_lcao.o\
 DM_gamma.o\
 DM_k.o\
@@ -226,8 +223,11 @@ OBJS_ESOLVER=esolver.o\
     esolver_ks.o\
     esolver_fp.o\
     esolver_ks_pw.o\
+    esolver_ks_pw_tool.o\
     esolver_sdft_pw.o\
+	esolver_sdft_pw_tool.o\
     esolver_ks_lcao.o\
+    esolver_ks_lcao_tddft.o\
     esolver_ks_lcao_elec.o\
     esolver_lj.o\
     esolver_dp.o\
@@ -242,6 +242,7 @@ OBJS_SURCHEM=H_correction_pw.o\
     corrected_energy.o\
     minimize_cg.o\
     efield.o\
+    sol_force.o\
 
 OBJS_XC=xc_funct_corr_gga.o \
 xc_funct_corr_lda.o \
@@ -267,6 +268,7 @@ pw_transform.o\
 pw_transform_k.o
 
 OBJ_HSOLVER=diago_blas.o\
+diago_lapack.o\
 diago_cg.o\
 diago_david.o\
 diago_elpa.o\
@@ -278,6 +280,7 @@ hsolver_pw_sdft.o
 OBJ_ELECSTATES=elecstate.o\
 dm2d_to_grid.o\
 elecstate_lcao.o\
+elecstate_lcao_tddft.o\
 elecstate_pw.o\
 elecstate_pw_sdft.o
 
@@ -334,9 +337,9 @@ write_dm.o\
 write_wfc_realspace.o\
 magnetism.o\
 optical.o\
-Cell_PW.o\
 run_md_pw.o\
-ions.o \
+ions.o\
+relaxation.o\
 ions_move_methods.o\
 ions_move_bfgs.o\
 ions_move_cg.o\
@@ -455,3 +458,4 @@ psort_w.o\
 s_cmp.o\
 s_copy.o\
 xerbla.o\
+

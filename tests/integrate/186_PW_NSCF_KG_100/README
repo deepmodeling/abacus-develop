@@ -1,0 +1,8 @@
+This test for:
+*KSDFT NSCF
+*Al
+*kpoints 2*2*1
+*100 KS 
+*kpar 2
+*bndpar 1
+*cal_cond 1

@@ -57,8 +57,7 @@ ModuleBase::matrix surchem::cal_vel(const UnitCell &cell,
     ModuleBase::TITLE("surchem", "cal_vel");
     ModuleBase::timer::tick("surchem", "cal_vel");
 
-    // double *TOTN_real = new double[pwb.nrxx];
-    GlobalC::UFFT.ToRealSpace(TOTN, TOTN_real,rho_basis);
+    rho_basis->recip2real(TOTN, TOTN_real);
 
     // -4pi * TOTN(G)
     complex<double> *B = new complex<double>[rho_basis->npw];
@@ -69,7 +68,7 @@ ModuleBase::matrix surchem::cal_vel(const UnitCell &cell,
 
     // Build a nrxx vector to DO FFT .
     double *PS_TOTN_real = new double[rho_basis->nrxx];
-    GlobalC::UFFT.ToRealSpace(PS_TOTN, PS_TOTN_real,rho_basis);
+    rho_basis->recip2real(PS_TOTN, PS_TOTN_real);
 
     // build epsilon in real space (nrxx)
     double *epsilon = new double[rho_basis->nrxx];
@@ -93,10 +92,9 @@ ModuleBase::matrix surchem::cal_vel(const UnitCell &cell,
 
     double *phi_tilda_R = new double[rho_basis->nrxx];
     double *phi_tilda_R0 = new double[rho_basis->nrxx];
-    // double *delta_phi_R = new double[pwb.nrxx];
 
-    GlobalC::UFFT.ToRealSpace(Sol_phi, phi_tilda_R,rho_basis);
-    GlobalC::UFFT.ToRealSpace(Sol_phi0, phi_tilda_R0,rho_basis);
+    rho_basis->recip2real(Sol_phi, phi_tilda_R);
+    rho_basis->recip2real(Sol_phi0, phi_tilda_R0);
 
     // the 1st item of tmp_Vel
     for (int i = 0; i < rho_basis->nrxx; i++)
@@ -144,11 +142,8 @@ ModuleBase::matrix surchem::cal_vel(const UnitCell &cell,
     delete[] epsilon;
     delete[] epsilon0;
     delete[] tmp_Vel;
-    // delete[] Vel2;
-    // delete[] TOTN_real;
     delete[] phi_tilda_R;
     delete[] phi_tilda_R0;
-    // delete[] delta_phi_R;
 
     ModuleBase::timer::tick("surchem", "cal_vel");
     return Vel;

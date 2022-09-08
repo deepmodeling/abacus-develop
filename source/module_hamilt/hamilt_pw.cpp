@@ -25,7 +25,7 @@ HamiltPW::HamiltPW()
 
     if (GlobalV::T_IN_H)
     {
-        Operator* ekinetic = new Ekinetic<OperatorPW>( 
+        Operator<std::complex<double>>* ekinetic = new Ekinetic<OperatorPW>( 
             tpiba2, 
             gk2,
             GlobalC::wfcpw->npwk_max
@@ -41,7 +41,7 @@ HamiltPW::HamiltPW()
     }
     if (GlobalV::VL_IN_H)
     {
-        Operator* veff = new Veff<OperatorPW>(
+        Operator<std::complex<double>>* veff = new Veff<OperatorPW>(
             isk,
             &(GlobalC::pot.vr_eff),
             GlobalC::wfcpw
@@ -57,7 +57,7 @@ HamiltPW::HamiltPW()
     }
     if (GlobalV::VNL_IN_H)
     {
-        Operator* nonlocal = new Nonlocal<OperatorPW>(
+        Operator<std::complex<double>>* nonlocal = new Nonlocal<OperatorPW>(
             isk,
             &GlobalC::ppcell,
             &GlobalC::ucell
@@ -71,7 +71,7 @@ HamiltPW::HamiltPW()
             this->ops->add(nonlocal);
         }
     }
-    Operator* meta = new Meta<OperatorPW>(
+    Operator<std::complex<double>>* meta = new Meta<OperatorPW>(
         tpiba,
         isk,
         &GlobalC::pot.vofk,

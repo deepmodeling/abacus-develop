@@ -10,9 +10,6 @@
 namespace hamilt
 {
 
-template class Nonlocal<OperatorPW>;
-
-template<>
 Nonlocal<OperatorPW>::Nonlocal
 (
     const int* isk_in,
@@ -30,7 +27,6 @@ Nonlocal<OperatorPW>::Nonlocal
     }
 }
 
-template<>
 void Nonlocal<OperatorPW>::init(const int ik_in)
 {
     this->ik = ik_in;
@@ -49,7 +45,6 @@ void Nonlocal<OperatorPW>::init(const int ik_in)
 //--------------------------------------------------------------------------
 // this function sum up each non-local pseudopotential located on each atom,
 //--------------------------------------------------------------------------
-template<>
 void Nonlocal<OperatorPW>::add_nonlocal_pp(std::complex<double> *hpsi_in, const std::complex<double> *becp, const int m) const
 {
     ModuleBase::timer::tick("Nonlocal", "add_nonlocal_pp");
@@ -170,7 +165,6 @@ void Nonlocal<OperatorPW>::add_nonlocal_pp(std::complex<double> *hpsi_in, const 
     return;
 }
 
-template<>
 void Nonlocal<OperatorPW>::act
 (
     const psi::Psi<std::complex<double>> *psi_in, 

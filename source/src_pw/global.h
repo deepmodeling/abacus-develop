@@ -3,9 +3,8 @@
 
 #include "../module_base/global_function.h"
 #include "../module_base/global_variable.h"
-#include "../run_pw.h"
 #include "../src_io/restart.h"
-#include "../src_ions/ions.h"
+#include "../module_relaxation/ions.h"
 #include "../src_lcao/exx_lip.h"
 #include "VNL_in_pw.h"
 #include "charge_broyden.h"

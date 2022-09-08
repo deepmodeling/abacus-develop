@@ -48,17 +48,14 @@ void Input::Print(const std::string &fn) const
     ModuleBase::GlobalFunc::OUTP(ofs, "ntype", ntype, "atom species number");
     ModuleBase::GlobalFunc::OUTP(ofs, "nspin", nspin, "1: single spin; 2: up and down spin; 4: noncollinear spin");
     ModuleBase::GlobalFunc::OUTP(ofs, "kspacing", kspacing, "unit in 1/bohr, should be > 0, default is 0 which means read KPT file");
+    ModuleBase::GlobalFunc::OUTP(ofs, "min_dist_coef", min_dist_coef, "factor related to the allowed minimum distance between two atoms");
     ModuleBase::GlobalFunc::OUTP(ofs, "nbands", nbands, "number of bands");
     ModuleBase::GlobalFunc::OUTP(ofs, "nbands_sto", nbands_sto, "number of stochastic bands");
     ModuleBase::GlobalFunc::OUTP(ofs,
                                  "nbands_istate",
                                  nbands_istate,
                                  "number of bands around Fermi level for istate calulation");
-    ModuleBase::GlobalFunc::OUTP(ofs,
-                                 "nche_sto",
-                                 nche_sto,
-                                 "number of orders for Chebyshev expansion in stochastic DFT");
-    ModuleBase::GlobalFunc::OUTP(ofs, "symmetry", symmetry, "turn symmetry on or off");
+    ModuleBase::GlobalFunc::OUTP(ofs, "symmetry", symmetry, "the control of symmetry");
     ModuleBase::GlobalFunc::OUTP(ofs, "init_vel", init_vel, "read velocity from STRU or not");
     ModuleBase::GlobalFunc::OUTP(ofs,
                                  "symmetry_prec",
@@ -114,12 +111,19 @@ void Input::Print(const std::string &fn) const
     
     ofs << "\n#Parameters (3.Stochastic DFT)" << std::endl;
     ModuleBase::GlobalFunc::OUTP(ofs, "method_sto", method_sto, "1: slow and save memory, 2: fast and waste memory");
+    ModuleBase::GlobalFunc::OUTP(ofs, "npart_sto", npart_sto, "Reduce memory when calculating Stochastic DOS");
     ModuleBase::GlobalFunc::OUTP(ofs, "nbands_sto", nbands_sto, "number of stochstic orbitals");
     ModuleBase::GlobalFunc::OUTP(ofs, "nche_sto", nche_sto, "Chebyshev expansion orders");
     ModuleBase::GlobalFunc::OUTP(ofs, "emin_sto", emin_sto, "trial energy to guess the lower bound of eigen energies of the Hamitonian operator");
     ModuleBase::GlobalFunc::OUTP(ofs, "emax_sto", emax_sto, "trial energy to guess the upper bound of eigen energies of the Hamitonian operator");
     ModuleBase::GlobalFunc::OUTP(ofs, "seed_sto", seed_sto, "the random seed to generate stochastic orbitals");
     ModuleBase::GlobalFunc::OUTP(ofs, "initsto_freq", initsto_freq, "frequency to generate new stochastic orbitals when running md");
+    ModuleBase::GlobalFunc::OUTP(ofs, "cal_cond", cal_cond, "calculate electronic conductivities");
+    ModuleBase::GlobalFunc::OUTP(ofs, "cond_nche", cond_nche, "orders of Chebyshev expansions for conductivities");
+    ModuleBase::GlobalFunc::OUTP(ofs, "cond_dw", cond_dw, "frequency interval for conductivities");
+    ModuleBase::GlobalFunc::OUTP(ofs, "cond_wcut", cond_wcut, "cutoff frequency (omega) for conductivities");
+    ModuleBase::GlobalFunc::OUTP(ofs, "cond_wenlarge", cond_wenlarge, "control the t interval: dt = PI/wcut/cond_wenlarge");
+    ModuleBase::GlobalFunc::OUTP(ofs, "cond_fwhm", cond_fwhm, "FWHM for conductivities");
     
     ofs << "\n#Parameters (4.Relaxation)" << std::endl;
     ModuleBase::GlobalFunc::OUTP(ofs,
@@ -217,6 +221,7 @@ void Input::Print(const std::string &fn) const
     ModuleBase::GlobalFunc::OUTP(ofs, "dos_edelta_ev", dos_edelta_ev, "delta energy for dos");
     ModuleBase::GlobalFunc::OUTP(ofs, "dos_scale", dos_scale, "scale dos range by");
     ModuleBase::GlobalFunc::OUTP(ofs, "dos_sigma", b_coef, "gauss b coefficeinet(default=0.07)");
+    ModuleBase::GlobalFunc::OUTP(ofs, "dos_nche", dos_nche, "orders of Chebyshev expansions for dos");
 
 	ofs << "\n#Parameters (9.Molecular dynamics)" << std::endl;
 	ModuleBase::GlobalFunc::OUTP(ofs,"md_type",mdp.md_type,"choose ensemble");

@@ -7,6 +7,8 @@
 #include "module_hamilt/hamilt.h"
 #include "module_elecstate/elecstate.h"
 #include "module_pw/pw_basis_k.h"
+#include "src_io/cal_test.h"
+#include "../src_pw/charge_extra.h"
 // #include "estates.h"
 // #include "h2e.h"
 namespace ModuleESolver
@@ -49,8 +51,7 @@ namespace ModuleESolver
         // <Temporary> It should be replaced by a function in Hamilt Class
         virtual void updatepot(const int istep, const int iter) {};
         // choose strategy when charge density convergence achieved
-        virtual bool do_after_converge(int& iter){this->niter = iter; return true;}
-
+        virtual bool do_after_converge(int& iter){return true;}
 
         //TOOLS:
     protected:
@@ -69,10 +70,11 @@ namespace ModuleESolver
     elecstate::ElecState* pelec = nullptr;
     hamilt::Hamilt* phami = nullptr;
     ModulePW::PW_Basis_K* pw_wfc = nullptr;
+    Charge_Extra CE;
 
     protected:
         std::string basisname; //PW or LCAO
-    private:
+    protected:
         void print_wfcfft(Input& inp, ofstream &ofs);
 
     };

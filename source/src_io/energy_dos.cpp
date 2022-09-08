@@ -211,12 +211,15 @@ void energy::perform_dos(
 
 		emax *= ModuleBase::Ry_to_eV;
 		emin *= ModuleBase::Ry_to_eV;
-
-//scale up a little bit so the end peaks are displaced better
-		double delta=(emax-emin)*dos_scale;
-		//std::cout << dos_scale;
-		emax=emax+delta/2.0;
-		emin=emin-delta/2.0;
+		if(INPUT.dos_setemax)	emax = INPUT.dos_emax_ev;
+		if(INPUT.dos_setemin)	emin = INPUT.dos_emin_ev;
+		if(!INPUT.dos_setemax && !INPUT.dos_setemin)
+		{
+			//scale up a little bit so the end peaks are displaced better
+			double delta=(emax-emin)*dos_scale;
+			emax=emax+delta/2.0;
+			emin=emin-delta/2.0;
+		}
 
 			//	OUT(GlobalV::ofs_running,"minimal energy is (eV)", emin);
 			//	OUT(GlobalV::ofs_running,"maximal energy is (eV)", emax);

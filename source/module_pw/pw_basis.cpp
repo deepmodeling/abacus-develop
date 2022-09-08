@@ -6,26 +6,9 @@
 
 namespace ModulePW
 {
-#ifdef __MPI
-MPI_Datatype PW_Basis::mpi_dcomplex;
-int PW_Basis::member = 0;
-#endif
 PW_Basis::PW_Basis()
 {
     classname="PW_Basis";
-#ifdef __MPI
-    if(member == 0)
-    {
-        MPI_Datatype block[2];
-	    block[0]=MPI_DOUBLE;
-	    block[1]=MPI_DOUBLE;
-	    int ac[2]={1,1};
-	    MPI_Aint dipc[2]={0,sizeof(double)};
-	    MPI_Type_create_struct(2,ac,dipc,block,&mpi_dcomplex);
-	    MPI_Type_commit(&mpi_dcomplex);
-        ++member;
-    }
-#endif
 }
 
 PW_Basis:: ~PW_Basis()
@@ -47,13 +30,6 @@ PW_Basis:: ~PW_Basis()
     delete[] startr;
     delete[] ig2igg;
     delete[] gg_uniq;
-#ifdef __MPI
-    --member;
-    if(member==0)
-    {
-        MPI_Type_free(&mpi_dcomplex);
-    }
-#endif
 }
 
 /// 
@@ -118,9 +94,10 @@ void PW_Basis::getstartgr()
 /// 
 void PW_Basis::collect_local_pw()
 {
-   delete[] this->gg; this->gg = new double[this->npw];
-   delete[] this->gdirect; this->gdirect = new ModuleBase::Vector3<double>[this->npw];
-   delete[] this->gcar; this->gcar = new ModuleBase::Vector3<double>[this->npw];
+    if(this->npw <= 0) return;
+    delete[] this->gg; this->gg = new double[this->npw];
+    delete[] this->gdirect; this->gdirect = new ModuleBase::Vector3<double>[this->npw];
+    delete[] this->gcar; this->gcar = new ModuleBase::Vector3<double>[this->npw];
 
     ModuleBase::Vector3<double> f;
     for(int ig = 0 ; ig < this-> npw ; ++ig)
@@ -152,6 +129,7 @@ void PW_Basis::collect_local_pw()
 /// 
 void PW_Basis::collect_uniqgg()
 {
+    if(this->npw <= 0) return;
     delete[] this->ig2igg; this->ig2igg = new int [this->npw];
     int *sortindex = new int [this->npw];
     double *tmpgg = new double [this->npw];
