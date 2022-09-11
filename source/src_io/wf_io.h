@@ -6,10 +6,19 @@
 
 namespace WF_io
 {
-	void write_wfc( const std::string &fn, const psi::Psi<std::complex<double>> &psi, const K_Vectors* p_kv, 
-                    const ModulePW::PW_Basis_K *wfc_basis);
-    void read_wfc(  const std::string &fn, const psi::Psi<std::complex<double>> &psi, const K_Vectors* p_kv, 
-                    const ModulePW::PW_Basis_K *wfc_basis);
-}
+void write_wfc(const std::string &fn,
+               const psi::Psi<std::complex<double>> &psi,
+               const K_Vectors *p_kv,
+               const ModulePW::PW_Basis_K *wfc_basis);
+void read_wfc(const std::string &fn,
+              const int &out_wfc_pw,
+              psi::Psi<std::complex<double>> &psi,
+              K_Vectors *p_kv,
+              ModulePW::PW_Basis_K *wfc_basis,
+              int &ikstot,
+              int &nbands,
+              double &ecut,
+              int &nkstot);
+} // namespace WF_io
 
 #endif

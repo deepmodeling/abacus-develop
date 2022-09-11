@@ -51,3 +51,7 @@ add_library(
     write_rho_dipole.cpp
 	write_wfc_realspace.cpp
 )
+
+IF (BUILD_TESTING)
+  add_subdirectory(test)
+endif()
