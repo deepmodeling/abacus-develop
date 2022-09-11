@@ -263,16 +263,13 @@ void WF_io::read_wfc(const std::string &fn,
                 getline(ifs, dummy);
                 getline(ifs, dummy);
                 assert(dummy == "<Reciprocal Lattice Vector>");
-                // std::cout << " " << wfc_basis->G.e21 << " " << wfc_basis->G.e22 << " " << wfc_basis->G.e23 <<
-                // std::endl; std::cout << " " << wfc_basis->G.e31 << " " << wfc_basis->G.e32 << " " << wfc_basis->G.e33
-                // << std::endl;
             }
             if (dummy == "<G vectors>")
             {
 
                 for (int ig = 0; ig < ikngtot; ig++)
                 {
-                    ifs >> wfc_basis->getgcar(ik, ig).x >> wfc_basis->getgcar(ik, ig).y >> wfc_basis->getgcar(ik, ig).z;
+                    ifs >> wfc_basis->gcar[ig].x >> wfc_basis->gcar[ig].y >> wfc_basis->gcar[ig].z;
                 }
                 getline(ifs, dummy);
                 getline(ifs, dummy);
@@ -288,7 +285,7 @@ void WF_io::read_wfc(const std::string &fn,
                     {
                         double real, imag;
                         ifs >> real >> imag;
-                        psi(ik,ib, ig) = std::complex<double>(real, imag);
+                        psi(ik,ib,ig) = std::complex<double>(real, imag);
                     }
                     getline(ifs, dummy);
                     getline(ifs, dummy);
