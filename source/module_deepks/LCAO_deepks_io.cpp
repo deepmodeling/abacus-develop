@@ -112,7 +112,7 @@ void LCAO_Deepks::save_npy_gvepsl(const int nat)
     ModuleBase::TITLE("LCAO_Deepks", "save_npy_gvepsl");
     if(GlobalV::MY_RANK!=0) return;
     //save grad_vepsl.npy (when  stress label is in use)
-    //unit: /Bohr^3
+    //unit: none
     const long unsigned gshape[] = {(long unsigned) 6, nat, this->des_per_atom};
     vector<double> npy_gvepsl;
     for (int i = 0;i < 6;i++)
