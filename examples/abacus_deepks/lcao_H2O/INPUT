@@ -2,7 +2,7 @@ INPUT_PARAMETERS
 #Parameters (1.General)
 suffix                  abacus
 pseudo_dir              ../../../tests/PP_ORB
-ord_dir                 ../../../tests/PP_ORB
+orbital_dir                 ../../../tests/PP_ORB
 calculation             scf
 ntype                   2
 nbands                  6
