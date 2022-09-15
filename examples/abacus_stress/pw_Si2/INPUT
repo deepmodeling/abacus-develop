@@ -1,0 +1,17 @@
+INPUT_PARAMETERS
+#Parameters	(General)
+pseudo_dir          ../../../tests/PP_ORB
+ntype               1
+nbands              8
+pseudo_type         upf
+calculation         scf
+symmetry            1
+
+#Parameters (3.PW)
+basis_type 		pw
+ecutwfc             	60
+scf_thr                 1e-8
+scf_nmax               	100
+
+cal_stress              1
+

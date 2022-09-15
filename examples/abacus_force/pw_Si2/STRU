@@ -1,0 +1,21 @@
+ATOMIC_SPECIES
+Si 1   Si_ONCV_PBE-1.0.upf
+
+LATTICE_CONSTANT
+7.0  // add lattice constant, 10.58 ang
+
+NUMERICAL_ORBITAL
+Si_lda_10.0au_50Ry_2s2p1d
+
+LATTICE_VECTORS
+      1.00       0.0000000     0.000000
+      0.000000       1.0000     0.00000
+      0.00000       0.00000000     1.000
+ATOMIC_POSITIONS
+Direct //Cartesian or Direct coordinate.
+
+Si              //Element Label
+0
+2              //number of atom
+0.00000000        0.00000000         0.00000000     0 0 0
+0.5000000         0.50000000         0.50000000     0 0 0

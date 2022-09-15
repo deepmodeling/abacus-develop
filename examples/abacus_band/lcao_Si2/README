@@ -1,0 +1,24 @@
+/*******************************************************************************/
+/
+/ This is the examples of ABACUS program.
+/
+/*******************************************************************************/
+
+This example show how to calculate the bands structures of silicon (diamond).
+
+Steps:
+(1) do the scf calculation:
+	cp INPUT1 INPUT
+	mpirun -np 4 abacus
+(2) do the nscf calculation:
+	cp INPUT2 INPUT
+	mpirun -np 4 abacus
+
+Finish! Then you can see BANDS_1.dat in OUT.ABACUS. Plot it!
+
+Note:
+1)If the "out_band" is used, the BANDS_1.dat will appear in the directory.
+2)Learn the "Gamma" and "Line" mode of "KPOINTS".
+3)The charge density needed to be output in scf calculations and be read
+in non-self consistent calculations.
+

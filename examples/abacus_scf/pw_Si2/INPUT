@@ -1,0 +1,10 @@
+INPUT_PARAMETERS
+#Parameters	(General)
+pseudo_dir		../../../tests/PP_ORB	
+ntype			1
+symmetry                1	
+#Parameters (Accuracy)
+basis_type		pw
+ecutwfc			60
+scf_thr                 1e-8
+scf_nmax		100
