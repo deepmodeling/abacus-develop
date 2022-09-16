@@ -17,7 +17,6 @@ smearing_sigma 0.020000
 cal_force 1
 cal_stress 0
 deepks_out_labels 0
-deepks_descriptor_lmax 2
 deepks_scf 1
 deepks_model model.ptg
 

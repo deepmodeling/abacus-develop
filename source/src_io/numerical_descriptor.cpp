@@ -23,7 +23,7 @@ Numerical_Descriptor::~Numerical_Descriptor()
 }
 
 
-void Numerical_Descriptor::output_descriptor(const psi::Psi<std::complex<double>> &psi, const int &lmax_in)
+void Numerical_Descriptor::output_descriptor(const psi::Psi<std::complex<double>> &psi, const int &lmax_in, const double &rcut_in, const double &tol_in)
 {
 	ModuleBase::TITLE("Numerical_Descriptor","output_descriptor");
 	ModuleBase::GlobalFunc::NEW_PART("DeepKS descriptor: D_{Inl}");
@@ -33,15 +33,19 @@ void Numerical_Descriptor::output_descriptor(const psi::Psi<std::complex<double>
 	//-----------------------------------
 
 	//GlobalV::ofs_running << "D_{Inl}_m_m'=sum_{i}<J_Inl_m|Psi_i><Psi_i|J_Inl_m'>" << std::endl;
-	GlobalV::ofs_running << "input lmax = " << lmax << std::endl;
+	GlobalV::ofs_running << "input lmax = " << lmax_in << std::endl;
+	GlobalV::ofs_running << "input rcut = " << rcut_in << std::endl;
+	GlobalV::ofs_running << "input tolerence = " << tol_in << std::endl;
 	this->lmax = lmax_in;
 	assert(lmax>=0);
 
     const int nks = GlobalC::kv.nks;
     int ne = 0; 
 	
+	bool smearing = true;
+	if(INPUT.smearing_method == "fixed") smearing = false;
     // 0 stands for : 'Faln' is not used.
-    this->bessel_basis.init( 0, INPUT.ecutwfc, GlobalC::ucell.ntype, this->lmax );
+    this->bessel_basis.init( 0, INPUT.ecutwfc, GlobalC::ucell.ntype, this->lmax, smearing, INPUT.smearing_sigma, rcut_in, tol_in );
 	this->nmax = Numerical_Descriptor::bessel_basis.get_ecut_number();
     this->init_mu_index();
     this->init_label = true;

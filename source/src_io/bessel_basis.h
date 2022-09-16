@@ -33,6 +33,10 @@ public:
 		const double &ecutwfc,
 		const int &ntype,
 		const int &lmax_in,
+		const bool &smooth = 1,
+		const double &sigma = 0.1,
+		const double &rcut_in = 6.0,
+		const double &tol_in = 1.0e-12,
 		const double &dk = 0.01,
 		const double &dr = 0.01);
 
@@ -75,9 +79,6 @@ private:
 	// MEMBER FUNCTIONS :
 	// NAME : readin ( read in parameters )
 	//========================================================
-	void readin(const std::string &name); 
-	void bcast(void);
-
 	void allocate_C4(
 		const int &ntype,
 		const int &lmax, 

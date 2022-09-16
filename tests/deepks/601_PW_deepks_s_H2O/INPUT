@@ -1,9 +1,8 @@
 INPUT_PARAMETERS
 #Parameters (1.General)
 suffix                  autotest
-calculation             scf
+calculation             gen_bessel
 pseudo_dir              ../../PP_ORB
-orbital_dir             ../../PP_ORB
 ntype                   2
 nbands                  6
 symmetry                0
@@ -19,7 +18,7 @@ gamma_only              1
 
 #Parameters (4.Smearing)
 smearing_method                gaussian
-smearing_sigma                   0.02
+smearing_sigma                   0.1
 
 #Parameters (5.Mixing)
 mixing_type             pulay
@@ -27,4 +26,5 @@ mixing_beta             0.4
 
 #Parameters (6.File)
 deepks_out_labels          1 
-deepks_descriptor_lmax			0
+bessel_lmax			0
+bessel_rcut 2.0

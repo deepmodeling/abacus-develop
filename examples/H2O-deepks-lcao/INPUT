@@ -27,6 +27,5 @@ mixing_beta             0.4
 cal_force			1
 test_force			1
 deepks_out_labels          1
-deepks_descriptor_lmax			2
 deepks_scf	1
 deepks_model	model.ptg

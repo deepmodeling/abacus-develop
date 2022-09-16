@@ -68,8 +68,6 @@ int NB2D = 1;
 
 double SCF_THR = 1.0e-9;
 
-std::string RESTART_MODE = "new";
-
 double DQ = 0.010; // space between Q points of the reciprocal radial tab
 int NQX = 10000; // number of points describing reciprocal radial tab
 

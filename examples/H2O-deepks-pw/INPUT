@@ -1,13 +1,13 @@
 INPUT_PARAMETERS
 #Parameters (1.General)
 suffix                  abacus
-calculation             scf
+calculation             gen_bessel
 ntype                   2
 nbands                  6
 symmetry                0
 
 #Parameters (2.Iteration)
-ecutwfc                 50
+ecutwfc                 100
 scf_thr                     1e-8
 scf_nmax                   50
 
@@ -17,13 +17,14 @@ gamma_only              1
 
 #Parameters (4.Smearing)
 smearing_method                gaussian
-smearing_sigma                   0.02
+smearing_sigma                   0.1
 
 #Parameters (5.Mixing)
 mixing_type             pulay
 mixing_beta             0.4
 
-#Parameters (6.File)
-out_band                0
-deepks_out_labels          1 
-deepks_descriptor_lmax			2
+#Parameters (6. Bessel function)
+bessel_lmax			2
+bessel_rcut 5
+bessel_tol 1.0e-12
+
