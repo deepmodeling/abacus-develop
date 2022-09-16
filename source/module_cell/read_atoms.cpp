@@ -607,7 +607,7 @@ bool UnitCell_pseudo::read_atom_positions(std::ifstream &ifpos, std::ofstream &o
 										if( (int)tmpid[0] < 0 )
 										{
 											std::cout << "read_atom_positions, mismatch in atom number for atom type: " << atoms[it].label << std::endl;
-											exit(0); 
+											exit(1); 
 										}
 
 										bool input_vec_mag=false;
