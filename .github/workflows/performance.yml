@@ -56,7 +56,7 @@ jobs:
       - name: Show Result
         if: always()
         run: |
-          cat examples/performance/sumall.dat
+          cat tests/performance/sumall.dat
 
   stop-runner:
     name: Stop self-hosted EC2 runner
