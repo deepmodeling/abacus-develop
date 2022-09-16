@@ -51,7 +51,7 @@ jobs:
       - name: Test
         run: |
           test -e /opt/intel/oneapi/setvars.sh && . /opt/intel/oneapi/setvars.sh
-          cd examples/performance/
+          cd tests/performance/
           bash run.sh
       - name: Show Result
         if: always()
