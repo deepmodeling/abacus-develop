@@ -13,7 +13,7 @@ Veff<OperatorPW>::Veff(
     ModulePW::PW_Basis_K* wfcpw_in
 )
 {
-    this->cal_type = 11;
+    this->cal_type = pw_veff;
     this->isk = isk_in;
     this->veff = veff_in;
     this->wfcpw = wfcpw_in;

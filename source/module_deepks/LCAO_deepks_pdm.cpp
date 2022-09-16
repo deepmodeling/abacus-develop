@@ -151,6 +151,7 @@ void LCAO_Deepks::cal_projected_DM_k(const std::vector<ModuleBase::ComplexMatrix
 
     if(dm[0].nr == 0 && dm[0].nc ==0)
     {
+        ModuleBase::timer::tick("LCAO_Deepks","cal_projected_DM_k");
         return;
     }
 

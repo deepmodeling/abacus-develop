@@ -65,7 +65,7 @@ void energy::calculate_harris(const int &flag)
 		+ evdw;  						// Peize Lin add evdw 2021.03.09
 
 #ifdef __LCAO
-        if(INPUT.dft_plus_u) 
+        if(GlobalV::dft_plus_u) 
 		{
 			this->etot_harris += GlobalC::dftu.EU;  //Energy correction from DFT+U; Quxin adds on 20201029
 		}
@@ -116,7 +116,7 @@ void energy::calculate_etot(void)
 	// std::cout << " fermienergy= "<<ef<<std::endl;
 
 #ifdef __LCAO
-    if(INPUT.dft_plus_u) 
+    if(GlobalV::dft_plus_u) 
 	{
 		this->etot += GlobalC::dftu.EU;																	  
 	}

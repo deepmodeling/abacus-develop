@@ -73,8 +73,6 @@ void HSolverLCAO::solveTemplate(hamilt::Hamilt* pHamilt,
         ModuleBase::WARNING_QUIT("HSolverLCAO::solve", "This method of DiagH is not supported!");
     }
 
-    pHamilt->constructHamilt();
-
     /// Loop over k points for solve Hamiltonian to charge density
     for (int ik = 0; ik < psi.get_nk(); ++ik)
     {

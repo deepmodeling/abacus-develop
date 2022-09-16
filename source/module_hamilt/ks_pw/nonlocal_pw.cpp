@@ -17,7 +17,7 @@ Nonlocal<OperatorPW>::Nonlocal
     const UnitCell_pseudo* ucell_in
 )
 {
-    this->cal_type = 12;
+    this->cal_type = pw_nonlocal;
     this->isk = isk_in;
     this->ppcell = ppcell_in;
     this->ucell = ucell_in;

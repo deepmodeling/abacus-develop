@@ -238,5 +238,9 @@ extern double nc_k;
 
 // compensating charge
 extern bool comp_chg;
+
+// DFTU control
+extern bool dft_plus_u;
+
 } // namespace GlobalV
 #endif

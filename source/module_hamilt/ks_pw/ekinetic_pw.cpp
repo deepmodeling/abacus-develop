@@ -12,7 +12,7 @@ Ekinetic<OperatorPW>::Ekinetic(
     const int gk2_dim_in
 )
 {
-    this->cal_type = 10;
+    this->cal_type = pw_ekinetic;
     this->tpiba2 = tpiba2_in;
     this->gk2 = gk2_in;
     this->gk2_dim = gk2_dim_in;

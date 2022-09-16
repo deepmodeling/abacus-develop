@@ -115,38 +115,7 @@ void ESolver_KS_LCAO_TDDFT::Init(Input& inp, UnitCell_pseudo& ucell)
                                                             &(this->UHM),
                                                             &(this->LOWF));
     }
-    if (this->phami != nullptr)
-    {
-        if (this->phami->classname != "HamiltLCAO")
-        {
-            delete this->phami;
-            this->phami = nullptr;
-        }
-    }
-    else
-    {
-        // two cases for hamilt class
-        // Gamma_only case
-        if (GlobalV::GAMMA_ONLY_LOCAL)
-        {
-            this->phami = new hamilt::HamiltLCAO<double>(&(this->UHM.GG),
-                                                         &(this->UHM.genH),
-                                                         &(this->LM),
-                                                         &(this->UHM),
-                                                         &(this->LOWF),
-                                                         &(this->LOC));
-        }
-        // multi_k case
-        else
-        {
-            this->phami = new hamilt::HamiltLCAO<std::complex<double>>(&(this->UHM.GK),
-                                                                       &(this->UHM.genH),
-                                                                       &(this->LM),
-                                                                       &(this->UHM),
-                                                                       &(this->LOWF),
-                                                                       &(this->LOC));
-        }
-    }
+
 }
 
 void ESolver_KS_LCAO_TDDFT::eachiterinit(const int istep, const int iter)

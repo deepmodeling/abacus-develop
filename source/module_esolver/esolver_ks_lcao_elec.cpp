@@ -87,14 +87,13 @@ namespace ModuleESolver
         // 1. prepare HS matrices, prepare grid integral
         this->set_matrix_grid(this->RA);
 
-        // 2. density matrix extrapolation and prepare S,T,VNL matrices 
+        // 2. density matrix extrapolation 
 
         // set the augmented orbitals index.
         // after ParaO and GridT, 
         // this information is used to calculate
         // the force.
 
-        // init psi
         // init psi
         if (GlobalV::GAMMA_ONLY_LOCAL)
         {
@@ -130,6 +129,37 @@ namespace ModuleESolver
                 this->psi = new psi::Psi<std::complex<double>>(GlobalC::kv.nks, ncol, this->LOWF.ParaV->nrow, nullptr);
             }
         }
+
+        // init Hamiltonian
+        if (this->phami != nullptr)
+        {
+            delete this->phami;
+            this->phami = nullptr;
+        }
+        if(this->phami == nullptr)
+        {
+            // two cases for hamilt class
+            // Gamma_only case
+            if (GlobalV::GAMMA_ONLY_LOCAL)
+            {
+                this->phami = new hamilt::HamiltLCAO<double>(&(this->UHM.GG),
+                                                            &(this->UHM.genH),
+                                                            &(this->LM),
+                                                            &(this->LOC));
+            }
+            // multi_k case
+            else
+            {
+                this->phami = new hamilt::HamiltLCAO<std::complex<double>>(&(this->UHM.GK),
+                                                                        &(this->UHM.genH),
+                                                                        &(this->LM),
+                                                                        &(this->LOC));
+            }
+        }
+
+        // prepare grid in Gint
+        this->UHM.grid_prepare();
+
         // init density kernel and wave functions.
         this->LOC.allocate_dm_wfc(GlobalC::GridT.lgd, this->LOWF, this->psid, this->psi);
 
@@ -191,10 +221,6 @@ namespace ModuleESolver
             // initialize the potential
             GlobalC::pot.init_pot(istep - 1, GlobalC::sf.strucFac);
         }
-
-
-        // 3. compute S, T, Vnl, Vna matrix.
-        this->UHM.set_lcao_matrices();
 
 #ifdef __DEEPKS
         //for each ionic step, the overlap <psi|alpha> must be rebuilt

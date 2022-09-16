@@ -211,4 +211,6 @@ double sigma_k = 0.6;
 double nc_k = 0.00037;
 
 bool comp_chg = false; // compensating charge
+
+bool dft_plus_u = false; //DFTU control
 } // namespace GlobalV

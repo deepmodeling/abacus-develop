@@ -25,36 +25,25 @@ LCAO_Hamilt::~LCAO_Hamilt()
 }
 
 //--------------------------------------------
-// 'calculate_STNR_gamma' or 
-// 'calculate_STNR_k' functions are called
+// prepare grid network for Gint(grid integral)
 //--------------------------------------------
-void LCAO_Hamilt::set_lcao_matrices(void)
+void LCAO_Hamilt::grid_prepare(void)
 {
-    ModuleBase::TITLE("LCAO_Hamilt","set_lcao_matrices");
-    ModuleBase::timer::tick("LCAO_Hamilt","set_lcao_matrices");
+    ModuleBase::TITLE("LCAO_Hamilt","grid_prepare");
+    ModuleBase::timer::tick("LCAO_Hamilt","grid_prepare");
 
     if(GlobalV::GAMMA_ONLY_LOCAL)
     {   
-        // calulate the 'S', 'T' and 'Vnl' matrix for gamma algorithms.
-        this->calculate_STNR_gamma();
         this->GG.prep_grid(GlobalC::bigpw->nbx, GlobalC::bigpw->nby, GlobalC::bigpw->nbzp, GlobalC::bigpw->nbzp_start, GlobalC::rhopw->nxyz);	
 
     }
     else // multiple k-points
     {
-        // calculate the 'S', 'T' and 'Vnl' matrix for k-points algorithms.
-        this->calculate_STNR_k();
-
         // calculate the grid integration of 'Vl' matrix for l-points algorithms.
         this->GK.prep_grid(GlobalC::bigpw->nbx, GlobalC::bigpw->nby, GlobalC::bigpw->nbzp, GlobalC::bigpw->nbzp_start, GlobalC::rhopw->nxyz);
     }
 
-    // initial the overlap matrix is done.	
-    this->init_s = true;
-    //std::cout << " init_s=" << init_s << std::endl; //delete 2015-09-06, xiaohui
-//	ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"init_s",init_s);
-
-    ModuleBase::timer::tick("LCAO_Hamilt","set_lcao_matrices");
+    ModuleBase::timer::tick("LCAO_Hamilt","grid_prepare");
     return;
 }
 
@@ -786,7 +775,7 @@ void LCAO_Hamilt::calculate_HSR_sparse(const int &current_spin, const double &sp
 
     GK.cal_vlocal_R_sparseMatrix(current_spin, sparse_threshold, this->LM);
 
-    if (INPUT.dft_plus_u)
+    if (GlobalV::dft_plus_u)
     {
         if (GlobalV::NSPIN != 4)
         {
