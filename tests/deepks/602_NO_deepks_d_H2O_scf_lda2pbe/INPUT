@@ -5,6 +5,8 @@ calculation     	scf
 ntype			2
 nbands			6
 symmetry		0
+pseudo_dir		../../PP_ORB
+orbital_dir		../../PP_ORB
 
 #Parameters (2.Iteration)
 ecutwfc			50

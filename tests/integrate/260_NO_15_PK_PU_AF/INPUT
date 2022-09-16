@@ -37,3 +37,5 @@ dft_plus_u    1
 orbital_corr    2 2 -1
 hubbard_u    5.0 5.0 0.0
 hund_j    0.0 0.0 0.0
+pseudo_dir	../../PP_ORB
+orbital_dir	../../PP_ORB

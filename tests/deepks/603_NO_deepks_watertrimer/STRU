@@ -1,10 +1,10 @@
 ATOMIC_SPECIES
-O 1.00 ../../integrate/tools/PP_ORB/O_ONCV_PBE-1.0.upf
-H 1.00 ../../integrate/tools/PP_ORB/H_ONCV_PBE-1.0.upf
+O 1.00 O_ONCV_PBE-1.0.upf
+H 1.00 H_ONCV_PBE-1.0.upf
 
 NUMERICAL_ORBITAL
-../../integrate/tools/PP_ORB/O_gga_6au_60Ry_2s2p1d.orb
-../../integrate/tools/PP_ORB/H_gga_6au_60Ry_2s1p.orb
+O_gga_6au_60Ry_2s2p1d.orb
+H_gga_6au_60Ry_2s1p.orb
 
 NUMERICAL_DESCRIPTOR
 jle.orb

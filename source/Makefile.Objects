@@ -277,6 +277,11 @@ hsolver_lcao.o\
 hsolver_pw.o\
 hsolver_pw_sdft.o
 
+OBJ_GENELPA=elpa_new_complex.o\
+elpa_new_real.o\
+elpa_new.o\
+utils.o
+
 OBJ_ELECSTATES=elecstate.o\
 dm2d_to_grid.o\
 elecstate_lcao.o\
@@ -304,6 +309,7 @@ $(OBJ_HSOLVER)\
 $(OBJ_ELECSTATES)\
 $(OBJ_PSI)\
 ${OBJ_OPERATOR}\
+${OBJ_GENELPA}\
 charge.o \
 charge_mixing.o \
 charge_pulay.o \

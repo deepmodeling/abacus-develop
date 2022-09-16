@@ -32,3 +32,5 @@ exx_dm_threshold 1e-4
 exx_schwarz_threshold 1e-5
 exx_cauchy_threshold 1e-7
 exx_ccp_rmesh_times 10
+pseudo_dir	../../PP_ORB
+orbital_dir	../../PP_ORB

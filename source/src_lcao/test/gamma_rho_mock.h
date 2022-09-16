@@ -77,7 +77,7 @@ Local_Orbital_wfc::~Local_Orbital_wfc()
 
 #endif
 
-bool ModuleSymmetry::Symmetry::symm_flag;
+int ModuleSymmetry::Symmetry::symm_flag;
 
 ModuleSymmetry::Symmetry::Symmetry()
 {

@@ -24,3 +24,4 @@ smearing_sigma			0.002
 #Parameters (5.Mixing)
 mixing_type		plain
 mixing_beta		0.7
+pseudo_dir	../../PP_ORB

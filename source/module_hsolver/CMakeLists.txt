@@ -12,6 +12,8 @@ add_library(
     diago_lapack.cpp
 )
 
+add_subdirectory(genelpa)
+
 IF (BUILD_TESTING)
   add_subdirectory(test)
 endif()

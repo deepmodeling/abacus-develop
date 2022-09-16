@@ -50,9 +50,14 @@ ATOMIC_SPECIES
 Si 28.00 Si_ONCV_PBE-1.0.upf
 ```
 
-The user can download the pseudopotential files from our [website](http://abacus.ustc.edu.cn/pseudo.html).
+You can download the pseudopotential files from our [website](http://abacus.ustc.edu.cn/pseudo/list.htm).
 
-For more information of different types of pseudopotentials, please visit the Quantum espresso [website](http://www.quantum-espresso.org/pseudopotentials/).
+There are pseudopotential files in these websites which are also supported by ABACUS:
+1. [Quantum ESPRESSO](http://www.quantum-espresso.org/pseudopotentials/).
+2. [SG15-ONCV](http://quantum-simulation.org/potentials/sg15_oncv/upf/).
+3. [DOJO](http://www.pseudo-dojo.org/).
+
+If LCAO base is used, the numerical orbital files should match the pseudopotential files. The [official orbitals package](http://abacus.ustc.edu.cn/pseudo/list.htm) only matches SG15-ONCV pseudopotentials.
 
 [back to top](#features)
 

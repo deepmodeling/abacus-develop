@@ -8,7 +8,7 @@
 
 - [System variables](#system-variables)
 
-    [suffix](#suffix) | [ntype](#ntype) | [calculation](#calculation) | [symmetry](#symmetry) | [kpar](#kpar) | [bndpar](#bndpar) | [latname](#latname) | [init_wfc](#init_wfc) | [init_chg](#init_chg) | [init_vel](#init_vel) | [nelec](#nelec) | [tot_magnetization](#tot_magnetization) | [dft_functional](#dft_functional) | [pseudo_type](#pseudo_type) |  [pseudo_rcut](#pseudo_rcut) | [pseudo_mesh](#pseudo_mesh) | [mem_saver](#mem_saver) | [diago_proc](#diago_proc) | [nbspline](#nbspline) | [kspacing](#kspacing)  | [min_dist_coef](#min_dist_coef)
+    [suffix](#suffix) | [ntype](#ntype) | [calculation](#calculation) | [symmetry](#symmetry) | [kpar](#kpar) | [bndpar](#bndpar) | [latname](#latname) | [init_wfc](#init_wfc) | [init_chg](#init_chg) | [init_vel](#init_vel) | [nelec](#nelec) | [tot_magnetization](#tot_magnetization) | [dft_functional](#dft_functional) | [xc_temperature](#xc_temperature) | [pseudo_type](#pseudo_type) |  [pseudo_rcut](#pseudo_rcut) | [pseudo_mesh](#pseudo_mesh) | [mem_saver](#mem_saver) | [diago_proc](#diago_proc) | [nbspline](#nbspline) | [kspacing](#kspacing)  | [min_dist_coef](#min_dist_coef)
 
 - [Variables related to input files](#variables-related-to-input-files)
 
@@ -62,7 +62,7 @@
 
     [tddft](#tddft) | [td_scf_thr](#td_scf_thr) | [td_dt](#td_dt) | [td_force_dt](#td_force_dt) | [td_vext](#td_vext) | [td_vext_dire](#td_vext_dire) | [td_timescale](#td_timescale) | [td_vexttype](#td_vexttype) | [td_vextout](#td_vextout) | [td_dipoleout](#td_dipoleout) | [ocp](#ocp) | [ocp_set](#ocp_set)
 
-- [DFT+U correction](#DFT_U-correction) (Under tests)
+- [DFT+U correction](#DFTU-correction) (Under tests)
 
     [dft_plus_u](#dft_plus_u) | [orbital_corr](#orbital_corr) | [hubbard_u](#hubbard_u) | [hund_j](#hund_j) | [yukawa_potential](#yukawa_potential) | [omc](#omc)
 
@@ -81,6 +81,10 @@
 - [Electronic conductivities](#electronic-conductivities)
 
     [cal_cond](#cal_cond) | [cond_nche](#cond_nche) | [cond_dw](#cond_dw) | [cond_wcut](#cond_wcut) | [cond_wenlarge](#cond_wenlarge) | [cond_fwhm ](#cond_fwhm )
+
+- [Implicit solvation model](#implicit-solvation-model)
+
+    [imp_sol](#imp_sol) | [eb_k](#eb_k) | [tau](#tau) | [sigma_k](#sigma_k) | [nc_k](#nc_k) 
 
 [back to main page](../README.md)
 
@@ -158,7 +162,10 @@ This part of variables are used to control general system parameters.
 #### symmetry
 
 - **Type**: Integer
-- **Description**: takes value 0 and 1, if set to 1, symmetry analysis will be performed to determine the type of Bravais lattice and associated symmetry operations.
+- **Description**: takes value 1, 0 and -1. 
+  - if set to 1, symmetry analysis will be performed to determine the type of Bravais lattice and associated symmetry operations. (point groups only)
+  - if set to 0, only time reversal symmetry would be considered in symmetry operations, which implied k point and -k point would be treated as one double weight k point.
+  - if set to -1, any symmetry will not be considered.
 - **Default**: 0
 
 #### kpar
@@ -258,8 +265,17 @@ This part of variables are used to control general system parameters.
         ```
     According to the information above, this pseudopotential is generated using PBE functional.
     On the other hand, if dft_functional is specified, it will overwrite the functional from pseudopotentials and performs calculation with whichever functional the user prefers. We further offer two ways of supplying exchange-correlation functional. The first is using 'short-hand' names such as 'LDA', 'PBE', 'SCAN'. A complete list of 'short-hand' expressions can be found in [source code](../source/module_xc/xc_functional.cpp). The other way is only available when ***compiling with LIBXC***, and it allows for supplying exchange-correlation functionals as combinations of LIBXC keywords for functional components, joined by plus sign, for example, 'dft_functional='LDA_X_1D_EXPONENTIAL+LDA_C_1D_CSC'. The list of LIBXC keywords can be found on its [website](https://www.tddft.org/programs/libxc/functionals/). In this way, **we support all the LDA,GGA and mGGA functionals provided by LIBXC**.
-    We also provides (under test) two hybrid functionals: PBE0 and HSE. For more information about hybrid functionals, refer to the [section](#exact-exchange) on its input variables.
+
+    Furthermore, the old INPUT parameter exx_hybrid_type for hybrid functionals has been absorbed into dft_functional. Options are `hf` (pure Hartree-Fock), `pbe0`(PBE0), `hse` (Note: in order to use HSE functional, LIBXC is required). Note also that HSE has been tested while PBE0 has NOT been fully tested yet, and the maximum parallel cpus for running exx is Nx(N+1)/2, with N being the number of atoms. And forces for hybrid functionals are not supported yet.
+
+    If set to `opt_orb`, the program will not perform hybrid functional calculation. Instead, it is going to generate opt-ABFs as discussed in this [article](https://pubs.acs.org/doi/abs/10.1021/acs.jpclett.0c00481).
+    
 - **Default**: same as UPF file.
+
+#### xc_temperature
+- **Type**: Double
+- **Description**: specifies temperature when using temperature-dependent XC functionals (KSDT and so on); unit in Rydberg
+- **Default** : 0.0
 
 #### pseudo_type
 
@@ -1033,16 +1049,6 @@ added to the bare ionic potential. If you want no electric field, parameter efie
 
 This part of variables are relevant when using hybrid functionals
 
-#### exx_hybrid_type
-
-- **Type**: String
-- **Description**: Type of hybrid functional used. Options are `hf` (pure Hartree-Fock), `pbe0`(PBE0), `hse` (Note: in order to use HSE functional, LIBXC is required). Note also that HSE has been tested while PBE0 has NOT been fully tested yet, and the maxmum parallel cpus for running exx is Nx(N+1)/2, with N being the number of atoms.
-
-    If set to `no`, then no hybrid functional is used (i.e.,Fock exchange is not included.)
-
-    If set to `opt_orb`, the program will not perform hybrid functional calculation. Instead, it is going to generate opt-ABFs as discussed in this [article](https://pubs.acs.org/doi/abs/10.1021/acs.jpclett.0c00481).
-- **Default**: `no`
-
 #### exx_hybrid_alpha
 
 - **Type**: Real
@@ -1659,3 +1665,39 @@ Thermal conductivities: $\kappa = \lim_{\omega\to 0}\kappa(\omega)$
 - **Type**: Integer
 - **Description**: We use gaussian functions to approxiamte $\delta(E)\approx \frac{1}{\sqrt{2\pi}\Delta E}e^{-\frac{E^2}{2{\Delta E}^2}}$. FWHM for conductivities, $FWHM=2*\sqrt{2\ln2}\cdot \Delta E$. The unit is eV.
 - **Default**: 0.3
+
+### Implicit solvation model
+
+This part of variables are used to control the usage of implicit solvation model. This approach treats the solvent as a continuous medium instead of individual “explicit” solvent molecules, which means that the solute embedded in an implicit solvent and the average over the solvent degrees of freedom becomes implicit in the properties of the solvent bath.
+
+#### imp_sol
+
+- **Type**: Boolean
+- **Description**: If set to 1, an implicit solvation correction is considered.
+- **Default**: 0
+
+#### eb_k
+
+- **Type**: Real
+- **Description**: The relative permittivity of the bulk solvent, 80 for water. Used only if `imp_sol` == true.
+- **Default**: 80
+
+#### tau
+
+- **Type**: Real
+- **Description**: The effective surface tension parameter, which describes the cavitation, the dispersion, and the repulsion interaction between the solute and the solvent that are not captured by the electrostatic terms. The unit is $Ry/Bohr^{2}$.
+- **Default**: 1.0798e-05
+
+#### sigma_k
+
+- **Type**: Real
+- **Description**: We assume a diffuse cavity that is implicitly determined by the electronic structure of the solute.
+`sigma_k` is the parameter that describes the width of the diffuse cavity.
+- **Default**: 0.6
+
+#### nc_k
+
+- **Type**: Real
+- **Description**: It determines at what value of the electron density the dielectric cavity forms. 
+The unit is $Bohr^{-3}$.
+- **Default**: 0.00037

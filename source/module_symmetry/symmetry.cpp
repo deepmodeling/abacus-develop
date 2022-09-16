@@ -22,7 +22,7 @@ Symmetry::~Symmetry()
 }
 
 
-bool Symmetry::symm_flag=false;
+int Symmetry::symm_flag=0;
 
 
 void Symmetry::analy_sys(const UnitCell_pseudo &ucell, std::ofstream &ofs_running)

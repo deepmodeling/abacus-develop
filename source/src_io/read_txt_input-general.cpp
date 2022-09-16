@@ -56,7 +56,7 @@ namespace Read_Txt_Input
 			item.annotation = "turn symmetry on or off";
 			item.convert = [](const Input_Item &self)
 			{
-				ModuleSymmetry::Symmetry::symm_flag = self.values[0].getb();
+				ModuleSymmetry::Symmetry::symm_flag = self.values[0].geti();
 			};
 			this->add_item(item);
 		}

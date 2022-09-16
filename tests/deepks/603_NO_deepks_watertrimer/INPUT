@@ -1,5 +1,7 @@
 INPUT_PARAMETERS
 suffix autotest
+pseudo_dir ../../PP_ORB
+orbital_dir ../../PP_ORB
 calculation scf
 ntype 2
 ecutwfc 50.000000

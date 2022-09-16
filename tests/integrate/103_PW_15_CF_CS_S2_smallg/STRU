@@ -1,6 +1,6 @@
 ATOMIC_SPECIES
-H 1.000 ../tools/PP_ORB/H_ONCV_PBE-1.0.upf
-O 1.000 ../tools/PP_ORB/O_ONCV_PBE-1.0.upf
+H 1.000 H_ONCV_PBE-1.0.upf
+O 1.000 O_ONCV_PBE-1.0.upf
 
 LATTICE_CONSTANT
 10  // add lattice constant, 10.58 ang

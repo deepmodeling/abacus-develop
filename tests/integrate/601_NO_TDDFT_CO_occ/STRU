@@ -1,10 +1,10 @@
 ATOMIC_SPECIES
-C 12.0096 ../tools/PP_ORB/C.LDA.UPF
-O 15.99903 ../tools/PP_ORB/O.LDA.UPF
+C 12.0096 C.LDA.UPF
+O 15.99903 O.LDA.UPF
 
 NUMERICAL_ORBITAL
-../tools/PP_ORB/C_lda_8.0au_100Ry_2s2p1d.orb
-../tools/PP_ORB/O_lda_8.0au_100Ry_2s2p1d.orb
+C_lda_8.0au_100Ry_2s2p1d.orb
+O_lda_8.0au_100Ry_2s2p1d.orb
 
 LATTICE_CONSTANT
 15

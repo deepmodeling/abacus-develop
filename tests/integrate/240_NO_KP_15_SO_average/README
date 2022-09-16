@@ -1,0 +1,17 @@
+This test for:
+*GaAs-soc
+*LCAO
+*kpoints 2*2*2
+*sg15 pseudopotential
+*smearing_method gauss
+*ks_solver genelpa
+*mixing_type pulay-kerker
+*mixing_beta 0.4
+
+Compared with 240*SO, I added parameter soc_lambda = 0 to this test case,
+which means I am performing the calculation in a nspin = 4 manner
+but with soc strength = 0
+Therefore, the result should be consistent with the calculation by turning off
+soc (i.e., set lspinorb to be 0 in the INPUT file)
+This is not the case for the old implementation of soc nonlocal PP (build_Nonlocal_mu)
+but the new implementation (build_Nonlocal_mu_new) fixed it

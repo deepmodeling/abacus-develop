@@ -44,6 +44,7 @@ out_dm=`grep out_dm INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
 out_mul=`grep out_mul INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
 gamma_only=`grep gamma_only INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
 imp_sol=`grep imp_sol INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
+comp_chg=`grep comp_chg INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
 #echo $running_path
 base=`grep -En '(^|[[:space:]])basis_type($|[[:space:]])' INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
 word="driver_line"
@@ -288,6 +289,17 @@ if ! test -z "$imp_sol" && [ $imp_sol == 1 ]; then
 	esol_cav=`grep E_sol_cav $running_path | awk '{print $3}'`
 	echo "esolelref $esol_el" >>$1
 	echo "esolcavref $esol_cav" >>$1
+fi
+
+if ! test -z "$comp_chg" && [ $comp_chg == 1 ]; then
+	ecomp_self=`grep E_comp_self $running_path | awk '{print $3}'`
+	ecomp_electron=`grep E_comp_electron $running_path | awk '{print $3}'`
+	ecomp_nuclear=`grep E_comp_nuclear $running_path | awk '{print $3}'`
+	ecomp_tot=`grep E_comp_tot $running_path | awk '{print $3}'`
+	echo "ecompselfref $ecomp_self" >>$1
+	echo "ecompelectronref $ecomp_electron" >>$1
+	echo "ecompnuclearref $ecomp_nuclear" >>$1
+	echo "ecomptotref $ecomp_tot" >>$1
 fi
 
 #echo $total_band

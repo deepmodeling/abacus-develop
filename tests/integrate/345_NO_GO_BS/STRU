@@ -1,10 +1,10 @@
 ATOMIC_SPECIES
-N		1	../tools/PP_ORB/N_ONCV_PBE-1.0.upf
-N_empty	1	../tools/PP_ORB/N_ONCV_PBE-1.0.upf
+N		1	N_ONCV_PBE-1.0.upf
+N_empty	1	N_ONCV_PBE-1.0.upf
 
 NUMERICAL_ORBITAL
-../tools/PP_ORB/orb_N.dat
-../tools/PP_ORB/orb_N.dat
+orb_N.dat
+orb_N.dat
 
 LATTICE_CONSTANT
 20

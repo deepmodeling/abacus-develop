@@ -1,6 +1,6 @@
 ATOMIC_SPECIES
-H 1.00 ../../integrate/tools/PP_ORB/H_ONCV_PBE-1.0.upf
-O 1.00 ../../integrate/tools/PP_ORB/O_ONCV_PBE-1.0.upf
+H 1.00 H_ONCV_PBE-1.0.upf
+O 1.00 O_ONCV_PBE-1.0.upf
 
 LATTICE_CONSTANT
 1

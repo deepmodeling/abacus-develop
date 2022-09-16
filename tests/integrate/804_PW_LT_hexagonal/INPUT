@@ -5,7 +5,7 @@ ntype			1
 nbands			4
 stru_file		STRU
 kpoint_file		KPT
-pseudo_dir		../tools/PP_ORB/
+pseudo_dir	../../PP_ORB
 calculation             scf 		
 latname			hexagonal
 #Parameters (PW)

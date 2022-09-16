@@ -30,3 +30,5 @@ init_vel        1
 chg_extrap  second-order
 
 read_file_dir   ./
+pseudo_dir	../../PP_ORB
+orbital_dir	../../PP_ORB

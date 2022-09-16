@@ -181,6 +181,15 @@ void energy::print_etot(
 				this->print_format("E_sol_el", esol_el);
 				this->print_format("E_sol_cav", esol_cav);
 			}
+			if (GlobalV::comp_chg)
+			{
+                vector<double> ecomp(3, 0);
+                GlobalC::solvent_model.cal_Acomp(GlobalC::ucell, GlobalC::rhopw, GlobalC::CHR.rho, ecomp);
+				this->print_format("E_comp_self", ecomp[0]);
+				this->print_format("E_comp_electron", ecomp[1]);
+				this->print_format("E_comp_nuclear", ecomp[2]);
+                this->print_format("E_comp_tot", ecomp[0] + ecomp[1] + ecomp[2]);
+            }
 #ifdef __DEEPKS
 			if (GlobalV::deepks_scf)	//caoyu add 2021-08-10
 			{

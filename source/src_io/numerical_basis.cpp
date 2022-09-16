@@ -553,8 +553,15 @@ void Numerical_Basis::output_k(
         ofs << "<WEIGHT_OF_KPOINTS>";
     }
 
+    // only half of nkstot should be output in "NSPIN == 2" case, k_up and k_down has same k infomation 
+    int nkstot = GlobalC::kv.nkstot;
+    if(GlobalV::NSPIN == 2)
+    {
+        nkstot /= 2;
+    }
+
     // (2)
-    for (int ik=0; ik<GlobalC::kv.nkstot; ik++)
+    for (int ik=0; ik<nkstot; ik++)
     {
         double kx, ky, kz, wknow;
 #ifdef __MPI
@@ -651,8 +658,14 @@ void Numerical_Basis::output_overlap_Q(
             overlap_Q[ik].getSize() * sizeof(std::complex<double>));
     }
 
+    // only half of nkstot should be output in "NSPIN == 2" case, k_up and k_down has same k infomation 
+    int nkstot = GlobalC::kv.nkstot;
+    if(GlobalV::NSPIN == 2)
+    {
+        nkstot /= 2;
+    }
     int count = 0;
-    for (int ik=0; ik<GlobalC::kv.nkstot; ik++)
+    for (int ik=0; ik<nkstot; ik++)
     {
         ModuleBase::ComplexArray Qtmp(overlap_Q[ik].getBound1(), overlap_Q[ik].getBound2(), overlap_Q[ik].getBound3());
         Qtmp.zero_out();
@@ -693,8 +706,14 @@ void Numerical_Basis::output_overlap_Sq(
         ofs.close();
     }
 
+    // only half of nkstot should be output in "NSPIN == 2" case, k_up and k_down has same k infomation 
+    int nkstot = GlobalC::kv.nkstot;
+    if(GlobalV::NSPIN == 2)
+    {
+        nkstot /= 2;
+    }
     int count = 0;
-    for (int ik=0; ik< GlobalC::kv.nkstot; ik++)
+    for (int ik=0; ik<nkstot; ik++)
     {
         if ( GlobalV::MY_POOL == GlobalC::Pkpoints.whichpool[ik] )
         {

@@ -94,7 +94,7 @@ struct ENVPrepare
     std::string latname_;
     int ntype_;
     double pseudo_rcut_;
-    bool symm_flag_;
+    int symm_flag_;
     std::string kpoint_card_;
     int nspin_;
     bool gamma_only_;
@@ -128,7 +128,7 @@ struct ENVPrepare
         latname_ = "sc";
         ntype_ = 1;
         pseudo_rcut_ = 15.0;
-        symm_flag_ = false;
+        symm_flag_ = 0;
         kpoint_card_ = "KPT";
         nspin_ = 1;
         gamma_only_ = false;

@@ -1,6 +1,6 @@
 ATOMIC_SPECIES
-Si 1.00 ./Si_ONCV_PBE-1.2.upf
-O 1.00 ./O_ONCV_PBE-1.2.upf
+Si 1.00 Si_ONCV_PBE-1.2.upf
+O 1.00 O_ONCV_PBE-1.2.upf
 
 
 LATTICE_CONSTANT
@@ -28,8 +28,8 @@ O
 1.505294970000 -0.122077649000 0.517874107000 0 0 0
 
 NUMERICAL_ORBITAL
-./Si_gga_8au_60Ry_2s2p1d.orb
-./O_gga_7au_60Ry_2s2p1d.orb
+Si_gga_8au_60Ry_2s2p1d.orb
+O_gga_7au_60Ry_2s2p1d.orb
 
 NUMERICAL_DESCRIPTOR
 ./jle.orb

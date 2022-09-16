@@ -22,3 +22,4 @@ ks_solver       cg
 mixing_type     pulay
 mixing_beta     0.7
 mixing_gg0      1.5
+pseudo_dir	../../PP_ORB

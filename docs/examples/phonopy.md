@@ -3,7 +3,7 @@
 [back to main page](../../README.md)
 
 
-[Phonopy](https://github.com/phonopy/phonopy) is a powerful package to calculate phonon and related properties. It has provided interface with ABACUS. In the following, we take the FCC aluminum as an example:
+[Phonopy](https://github.com/phonopy/phonopy) (Note: please use the `develop` branch, rather than the `master` branch until the abacus interface has been merged into phonopy's `master` branch.) is a powerful package to calculate phonon and related properties. It has provided interface with ABACUS. In the following, we take the FCC aluminum as an example:
 
 
 1. Prepare a 'setting.conf' with following tags:

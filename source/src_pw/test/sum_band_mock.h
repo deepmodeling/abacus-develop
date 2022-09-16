@@ -27,7 +27,7 @@
 #include "module_pw/pw_basis.h"
 #include "src_parallel/parallel_pw.h"
 
-bool ModuleSymmetry::Symmetry::symm_flag;
+int ModuleSymmetry::Symmetry::symm_flag;
 
 LCAO_Orbitals::LCAO_Orbitals(){}
 LCAO_Orbitals::~LCAO_Orbitals(){}

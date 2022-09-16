@@ -24,13 +24,6 @@ LCAO_gen_fixedH::~LCAO_gen_fixedH()
 void LCAO_gen_fixedH::calculate_NL_no(double* HlocR)
 {
     ModuleBase::TITLE("LCAO_gen_fixedH","calculate_NL_no");
-	if(GlobalV::NSPIN==4)
-	{
-		this->build_Nonlocal_mu(HlocR, false);
-		return;
-		//ModuleBase::WARNING_QUIT("LCAO_gen_fixedH::calculate_NL_no","noncollinear case shoule be complex<double>* type");
-	} 
-
 	if(GlobalV::GAMMA_ONLY_LOCAL)
 	{
 	  	//for gamma only.
@@ -63,16 +56,6 @@ void LCAO_gen_fixedH::calculate_NL_no(double* HlocR)
 
     return;
 }
-
-/*void LCAO_gen_fixedH::calculate_NL_no(std::complex<double>* HlocR)
-{
-    ModuleBase::TITLE("LCAO_gen_fixedH","calculate_NL_no");
-	if(GlobalV::NSPIN!=4) ModuleBase::WARNING_QUIT("LCAO_gen_fixedH::calculate_NL_no","complex<double>* type shoule be noncollinear case");
-
-	this->build_Nonlocal_mu(HlocR, false);
-
-    return;
-}*/
 
 void LCAO_gen_fixedH::calculate_T_no(double* HlocR)
 {
@@ -733,39 +716,51 @@ void LCAO_gen_fixedH::build_Nonlocal_mu_new(double* NLloc, const bool &calc_deri
 								{
 									std::vector<double> nlm_1=(*nlm_cur1_e)[iw1_all];
 									std::vector<double> nlm_2=(*nlm_cur2_e)[iw2_all];
-									double nlm_tmp = 0.0;
-
-									const int nproj = GlobalC::ucell.infoNL.nproj[T0];
-									int ib = 0;
-									for (int nb = 0; nb < nproj; nb++)
+									if(GlobalV::NSPIN==4)
 									{
-										const int L0 = GlobalC::ucell.infoNL.Beta[T0].Proj[nb].getL();
-										for(int m=0;m<2*L0+1;m++)
+										std::complex<double> nlm_tmp = ModuleBase::ZERO;
+										int is0 = (j-j0*GlobalV::NPOL) + (k-k0*GlobalV::NPOL)*2;
+										for (int no = 0; no < GlobalC::ucell.atoms[T0].non_zero_count_soc[is0]; no++)
 										{
-											if(nlm_1[ib]!=0.0 && nlm_2[ib]!=0.0)
-											{
-												nlm_tmp += nlm_1[ib]*nlm_2[ib]*GlobalC::ucell.atoms[T0].dion(nb,nb);
-											}
-											ib+=1;
+											const int p1 = GlobalC::ucell.atoms[T0].index1_soc[is0][no];
+											const int p2 = GlobalC::ucell.atoms[T0].index2_soc[is0][no];
+											nlm_tmp += nlm_1[p1] * nlm_2[p2] * GlobalC::ucell.atoms[T0].d_so(is0, p2, p1);
 										}
-									}
-									assert(ib==nlm_1.size());
-
-									if(GlobalV::GAMMA_ONLY_LOCAL)
-									{
-										// mohan add 2010-12-20
-										if( nlm_tmp!=0.0 )
-										{
-											// GlobalV::ofs_running << std::setw(10) << iw1_all << std::setw(10) 
-											// << iw2_all << std::setw(20) << nlm[0] << std::endl; 
-											this->LM->set_HSgamma(iw1_all,iw2_all,nlm_tmp,'N', NLloc);//N stands for nonlocal.
-										}
+										this->LM->Hloc_fixedR_soc[nnr+nnr_inner] += nlm_tmp;
 									}
 									else
 									{
-										if( nlm_tmp!=0.0 )
+										double nlm_tmp = 0.0;
+										const int nproj = GlobalC::ucell.infoNL.nproj[T0];
+										int ib = 0;
+										for (int nb = 0; nb < nproj; nb++)
 										{
-											NLloc[nnr+nnr_inner] += nlm_tmp;
+											const int L0 = GlobalC::ucell.infoNL.Beta[T0].Proj[nb].getL();
+											for(int m=0;m<2*L0+1;m++)
+											{
+												if(nlm_1[ib]!=0.0 && nlm_2[ib]!=0.0)
+												{
+													nlm_tmp += nlm_1[ib]*nlm_2[ib]*GlobalC::ucell.atoms[T0].dion(nb,nb);
+												}
+												ib+=1;
+											}
+										}
+										assert(ib==nlm_1.size());
+
+										if(GlobalV::GAMMA_ONLY_LOCAL)
+										{
+											// mohan add 2010-12-20
+											if( nlm_tmp!=0.0 )
+											{
+												this->LM->set_HSgamma(iw1_all,iw2_all,nlm_tmp,'N', NLloc);//N stands for nonlocal.
+											}
+										}
+										else
+										{
+											if( nlm_tmp!=0.0 )
+											{
+												NLloc[nnr+nnr_inner] += nlm_tmp;
+											}
 										}
 									}
 								}// calc_deri
@@ -874,12 +869,10 @@ void LCAO_gen_fixedH::build_Nonlocal_mu_new(double* NLloc, const bool &calc_deri
 
 	if(!GlobalV::GAMMA_ONLY_LOCAL)
 	{
-	//		std::cout << " nr="  << nnr << std::endl;
-	//		std::cout << " pv->nnr=" << pv->nnr << std::endl;
-	//		GlobalV::ofs_running << " nr="  << nnr << std::endl;
-	//		GlobalV::ofs_running << " pv->nnr=" << pv->nnr << std::endl;
 		if( nnr!=pv->nnr)
 		{
+			GlobalV::ofs_running << " nr="  << nnr << std::endl;
+			GlobalV::ofs_running << " pv->nnr=" << pv->nnr << std::endl;
 			ModuleBase::WARNING_QUIT("LCAO_gen_fixedH::build_Nonlocal_mu_new","nnr!=LNNR.nnr");
 		}
 	}
@@ -1025,6 +1018,13 @@ void LCAO_gen_fixedH::build_Nonlocal_mu(double* NLloc, const bool &calc_deri)
 									if(!calc_deri)
 									{
 										int is0 = (j-j0*GlobalV::NPOL) + (k-k0*GlobalV::NPOL)*2;
+										//Note : there was a bug in the old implementation
+										//of soc nonlocal PP, which does not seem to affect the
+										//converged results though.
+										//However, there is a discrepancy in the integrate test case 
+										//240*soc, when checked against the new method.
+										//The origin of the bug is the mismatch between the indexes
+										//of <psi|beta> and d_so
 										GlobalC::UOT.snap_psibeta(
 												GlobalC::ORB,
 												GlobalC::ucell.infoNL,

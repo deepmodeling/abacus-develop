@@ -158,7 +158,7 @@ void HSolverPW::hamiltSolvePsiK(hamilt::Hamilt* hm, psi::Psi<std::complex<double
 
 void HSolverPW::update_precondition(std::vector<double> &h_diag, const int ik, const int npw)
 {
-    h_diag.resize(h_diag.size(), 1.0);
+    h_diag.assign(h_diag.size(), 1.0);
     int precondition_type = 2;
     const double tpiba2 = this->wfc_basis->tpiba2;
     

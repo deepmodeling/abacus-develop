@@ -1,8 +1,8 @@
 ATOMIC_SPECIES
-Si 1.000 ../tools/PP_ORB/Si_dojo_nsoc.upf
+Si 1.000 Si_dojo_nsoc.upf
 
 NUMERICAL_ORBITAL
-../tools/PP_ORB/Si_dojo_6au.orb
+Si_dojo_6au.orb
 
 LATTICE_CONSTANT
 10.2  			#Lattice constant

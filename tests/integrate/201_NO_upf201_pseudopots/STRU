@@ -1,8 +1,8 @@
 ATOMIC_SPECIES
-Si 28 ../tools/PP_ORB/Si.pz-n-nc.UPF
+Si 28 Si.pz-n-nc.UPF
 
 NUMERICAL_ORBITAL
-../tools/PP_ORB/Si_gga_8au_60Ry_2s2p1d.orb
+Si_gga_8au_60Ry_2s2p1d.orb
 
 LATTICE_CONSTANT
 10.2  // add lattice constant

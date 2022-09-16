@@ -63,7 +63,7 @@ check_out(){
 	#------------------------------------------------------
 	if test -e "jd"; then
 		jd=`cat jd`
- 		echo " [  ------  ] $jd"
+ 		echo "[----------] $jd"
 	fi
 
 	#------------------------------------------------------
@@ -100,20 +100,20 @@ check_out(){
 		# deviation should be positively defined
 		#--------------------------------------------------
 		if [ ! -n "$deviation" ]; then
-            echo -e "\e[1;31m [  FAILED  ]  Fatal Error: key $key not found in output. \e[0m"
-			let failed++
-			failed_case_list+=$dir
+            echo -e "\e[0;31m[ERROR     ] Fatal Error: key $key not found in output.\e[0m"
+			let fatal++
+			fatal_case_list+=$dir'\n'
 			break
         else
 			if [ $(echo "sqrt($deviation*$deviation) < $threshold"|bc) = 0 ]; then
-				echo -e "\e[1;33m [  FAILED  ] \e[0m"\
+				echo -e "[WARNING   ] "\
 					"$key cal=$cal ref=$ref deviation=$deviation"
 				let failed++
-				failed_case_list+=$dir
+				failed_case_list+=$dir'\n'
 				if [ $(echo "sqrt($deviation*$deviation) < $fatal_threshold"|bc) = 0 ]; then
 					let fatal++
 					fatal_case_list+=$dir
-					echo -e "\e[1;31m [  FATAL   ] \e[0m"\
+					echo -e "\e[0;31m[ERROR      ] \e[0m"\
 						"An unacceptable deviation occurs."
 					calculation=`grep calculation INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
 					running_path=`echo "OUT.autotest/running_$calculation"".log"`
@@ -123,7 +123,7 @@ check_out(){
 			else
 				#echo "$key cal=$cal ref=$ref deviation=$deviation"
 				#echo "[ PASS ] $key"
-				echo -e "\e[1;32m [      OK  ] \e[0m $key"
+				echo -e "\e[0;32m[      OK  ] \e[0m $key"
 			fi
 		fi
 		let ok++
@@ -156,8 +156,8 @@ fi
 
 for dir in $testdir; do
 	cd $dir
-	echo -e "\e[1;32m [  RUN     ]\e[0m $dir"
-	TIMEFORMAT=' [  ------  ] Time elapsed: %R seconds'
+	echo -e "\e[0;32m[ RUN      ]\e[0m $dir"
+	TIMEFORMAT='[----------] Time elapsed: %R seconds'
 	#parallel test
 	time {
 		if [ "$sanitize" == true ]; then
@@ -178,9 +178,9 @@ for dir in $testdir; do
 		then
 			../tools/catch_properties.sh result.out
 			if [ $? == 1 ]; then
-				echo -e "\e[1;31m [  FAILED  ]  Fatal Error in catch_properties.sh \e[0m"
-				let failed++
-				failed_case_list+=$dir
+				echo -e "\e[0;31m [ERROR     ]  Fatal Error in catch_properties.sh \e[0m"
+				let fatal++
+				fatal_case_list+=$dir'\n'
 				break
 			else
 				check_out result.out
@@ -205,14 +205,14 @@ if [ -z $g ]
 then
 if [ $failed -eq 0 ]
 then
-	echo -e "\e[1;32m [  PASSED  ] \e[0m $ok test cases passed."
+	echo -e "\e[0;32m[ PASSED   ] \e[0m $ok test cases passed."
 else
-	echo -e "\e[1;33m [  FAILED  ] \e[0m $failed test cases out of $[ $failed + $ok ] failed."
-	echo $failed_case_list
+	echo -e "[WARNING]\e[0m    $failed test cases out of $[ $failed + $ok ] failed."
+	echo -e $failed_case_list
 	if [ $fatal -gt 0 ]
 	then
-		echo -e "\e[1;31m [  FAILED  ] \e[0m $fatal test cases out of $[ $failed + $ok ] produced fatal error."
-		echo $fatal_case_list
+		echo -e "\e[0;31m[ERROR     ]\e[0m $fatal test cases out of $[ $failed + $ok ] produced fatal error."
+		echo -e $fatal_case_list
 		exit 1
 	fi
 fi

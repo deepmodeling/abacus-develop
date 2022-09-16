@@ -5,6 +5,8 @@ ntype 2
 ecutwfc 100.000000
 scf_thr 5.000000e-07
 scf_nmax 35
+pseudo_dir ../../PP_ORB
+orbital_dir ../../PP_ORB
 basis_type lcao
 dft_functional pbe
 gamma_only 0

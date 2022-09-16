@@ -1,8 +1,8 @@
 ATOMIC_SPECIES
-Fe 1.000 ../tools/PP_ORB/Fe_ONCV_PBE-1.0.upf
+Fe 1.000 Fe_ONCV_PBE-1.0.upf
 
 NUMERICAL_ORBITAL
-../tools/PP_ORB/Fe_gga_9au_100Ry_4s2p2d1f.orb
+Fe_gga_9au_100Ry_4s2p2d1f.orb
 
 LATTICE_CONSTANT
 6

@@ -771,7 +771,7 @@ namespace ModuleESolver
         // Do a Berry phase polarization calculation if required
         //=======================================================
 
-        if (berryphase::berry_phase_flag && ModuleSymmetry::Symmetry::symm_flag == 0)
+        if (berryphase::berry_phase_flag && ModuleSymmetry::Symmetry::symm_flag != 1)
         {
             berryphase bp;
             bp.Macroscopic_polarization(this->psi);

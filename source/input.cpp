@@ -164,6 +164,7 @@ void Input::Default(void)
     // electrons / spin
     //----------------------------------------------------------
     dft_functional = "default";
+    xc_temperature = 0.0;
     nspin = 1;
     nelec = 0.0;
     lmaxmax = 2;
@@ -177,7 +178,7 @@ void Input::Default(void)
     ks_solver = "default"; // xiaohui add 2013-09-01
     search_radius = -1.0; // unit: a.u. -1.0 has no meaning.
     search_pbc = true;
-    symmetry = false;
+    symmetry = 0;
     init_vel = false;
     symmetry_prec = 1.0e-5; // LiuXh add 2021-08-12, accuracy for symmetry
     cal_force = 0;
@@ -659,6 +660,10 @@ bool Input::Read(const std::string &fn)
         else if (strcmp("dft_functional", word) == 0)
         {
             read_value(ifs, dft_functional);
+        }
+        else if (strcmp("xc_temperature", word) == 0)
+        {
+            read_value(ifs, xc_temperature);
         }
         else if (strcmp("nspin", word) == 0)
         {
@@ -1419,10 +1424,6 @@ bool Input::Read(const std::string &fn)
         // exx
         // Peize Lin add 2018-06-20
         //----------------------------------------------------------
-        else if (strcmp("dft_functional", word) == 0)
-        {
-            read_value(ifs, dft_functional);
-        }
         else if (strcmp("exx_hybrid_alpha", word) == 0)
         {
             read_value(ifs, exx_hybrid_alpha);
@@ -2004,6 +2005,7 @@ void Input::Bcast()
     Parallel_Common::bcast_string(wannier_spin);
 
     Parallel_Common::bcast_string(dft_functional);
+    Parallel_Common::bcast_double(xc_temperature);
     Parallel_Common::bcast_int(nspin);
     Parallel_Common::bcast_double(nelec);
     Parallel_Common::bcast_int(lmaxmax);
@@ -2015,7 +2017,7 @@ void Input::Bcast()
     Parallel_Common::bcast_double(search_radius);
     Parallel_Common::bcast_bool(search_pbc);
     Parallel_Common::bcast_double(search_radius);
-    Parallel_Common::bcast_bool(symmetry);
+    Parallel_Common::bcast_int(symmetry);
     Parallel_Common::bcast_bool(init_vel); // liuyu 2021-07-14
     Parallel_Common::bcast_double(symmetry_prec); // LiuXh add 2021-08-12, accuracy for symmetry
     Parallel_Common::bcast_int(cal_force);
@@ -2224,7 +2226,6 @@ void Input::Bcast()
     Parallel_Common::bcast_int(out_mul); // qifeng add 2019/9/10
 
     // Peize Lin add 2018-06-20
-    Parallel_Common::bcast_string(dft_functional);
     Parallel_Common::bcast_double(exx_hybrid_alpha);
     Parallel_Common::bcast_double(exx_hse_omega);
     Parallel_Common::bcast_bool(exx_separate_loop);
@@ -2451,7 +2452,7 @@ void Input::Check(void)
     else if (calculation == "md" || calculation == "sto-md") // mohan add 2011-11-04
     {
         GlobalV::CALCULATION = calculation;
-        symmetry = false;
+        symmetry = 0;
         cal_force = 1;
         if (mdp.md_nstep == 0)
         {

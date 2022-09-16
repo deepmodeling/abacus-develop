@@ -336,6 +336,7 @@ target_link_libraries(${ABACUS_BIN_NAME}
     driver
     xc_
     hsolver
+    genelpa
     elecstate
     hamilt
     psi

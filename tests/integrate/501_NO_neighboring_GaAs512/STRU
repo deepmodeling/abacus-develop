@@ -6,8 +6,8 @@ LATTICE_CONSTANT
 42.4 // add lattice constant, 10.58 ang
 
 NUMERICAL_ORBITAL
-../tools/PP_ORB/Ga_dojo.orb
-../tools/PP_ORB/As_dojo.orb
+Ga_dojo.orb
+As_dojo.orb
 
 LATTICE_VECTORS
 0.5 0.5  0.0

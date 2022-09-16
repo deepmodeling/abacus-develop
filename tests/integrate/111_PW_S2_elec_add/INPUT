@@ -5,7 +5,7 @@ calculation     scf
 ntype			1
 nbands			8
 symmetry		1
-pseudo_dir      ../tools/PP_ORB/
+pseudo_dir	../../PP_ORB
 pseudo_type     upf201
 nspin           2
 nelec           9

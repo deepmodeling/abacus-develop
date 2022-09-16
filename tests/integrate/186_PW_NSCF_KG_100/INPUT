@@ -4,9 +4,11 @@ suffix			autotest
 calculation     nscf
 ntype			1
 nbands			100
-pseudo_dir      ../tools/PP_ORB
+pseudo_dir	../../PP_ORB
 symmetry	    1
 kpar            2
+read_file_dir 		./
+init_chg        file
 
 #Parameters (2.Iteration)
 ecutwfc			20

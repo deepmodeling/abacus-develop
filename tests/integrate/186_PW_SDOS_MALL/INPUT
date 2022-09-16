@@ -10,7 +10,7 @@ nche_sto		120
 emax_sto		0
 emin_sto		0
 seed_sto        20000
-pseudo_dir      ../tools/PP_ORB
+pseudo_dir	../../PP_ORB
 symmetry	    1
 kpar            2
 bndpar          2
@@ -19,6 +19,7 @@ bndpar          2
 ecutwfc			20
 scf_thr			1e-6
 scf_nmax	    0
+read_file_dir 		./
 init_chg        file
 
 

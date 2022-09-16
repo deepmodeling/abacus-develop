@@ -12,3 +12,5 @@ smearing_sigma				0.001
 nspin				2
 basis_type			lcao
 ks_solver           genelpa
+pseudo_dir	../../PP_ORB
+orbital_dir	../../PP_ORB

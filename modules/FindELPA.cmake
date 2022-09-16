@@ -38,17 +38,4 @@ if(ELPA_FOUND)
 endif()
 
 set(CMAKE_REQUIRED_INCLUDES ${CMAKE_REQUIRED_INCLUDES} ${ELPA_INCLUDE_DIR})
-include(CheckCXXSourceCompiles)
-check_cxx_source_compiles("
-#include <elpa/elpa_version.h>
-#if ELPA_API_VERSION < 20210430
-#error ELPA version is too old.
-#endif
-int main(){}
-"
-ELPA_VERSION_SATISFIES
-)
-if(NOT ELPA_VERSION_SATISFIES)
-    message(FATAL_ERROR "ELPA version is too old. We support version 2017 or higher.")
-endif()
 mark_as_advanced(ELPA_INCLUDE_DIR ELPA_LIBRARY)

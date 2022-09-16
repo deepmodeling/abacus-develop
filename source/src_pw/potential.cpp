@@ -7,9 +7,9 @@
 #include "global.h"
 #include "math.h"
 // new
+#include "../module_surchem/efield.h"
 #include "../module_surchem/surchem.h"
 #include "H_Hartree_pw.h"
-#include "../module_surchem/efield.h"
 #ifdef __LCAO
 #include "../src_lcao/ELEC_evolve.h"
 #endif
@@ -39,8 +39,10 @@ void Potential::allocate(const int nrxx)
     assert(nrxx >= 0);
 
     delete[] this->vltot;
-    if(nrxx > 0)    this->vltot = new double[nrxx];
-    else            this->vltot = nullptr;
+    if (nrxx > 0)
+        this->vltot = new double[nrxx];
+    else
+        this->vltot = nullptr;
     ModuleBase::Memory::record("Potential", "vltot", nrxx, "double");
 
     this->vr.create(GlobalV::NSPIN, nrxx);
@@ -59,8 +61,10 @@ void Potential::allocate(const int nrxx)
     }
 
     delete[] this->vr_eff1;
-    if(nrxx > 0)    this->vr_eff1 = new double[nrxx];
-    else            this->vr_eff1 = nullptr;
+    if (nrxx > 0)
+        this->vr_eff1 = new double[nrxx];
+    else
+        this->vr_eff1 = nullptr;
 #ifdef __CUDA
     cudaMalloc((void **)&this->d_vr_eff1, nrxx * sizeof(double));
 #endif
@@ -69,7 +73,7 @@ void Potential::allocate(const int nrxx)
     this->vnew.create(GlobalV::NSPIN, nrxx);
     ModuleBase::Memory::record("Potential", "vnew", GlobalV::NSPIN * nrxx, "double");
 
-    if (GlobalV::imp_sol)
+    if (GlobalV::imp_sol || GlobalV::comp_chg)
     {
         GlobalC::solvent_model.allocate(nrxx, GlobalV::NSPIN);
     }
@@ -266,7 +270,7 @@ void Potential::init_pot(const int &istep, // number of ionic steps
 void Potential::set_local_pot(double *vl_pseudo, // store the local pseudopotential
                               const int &ntype, // number of atom types
                               ModuleBase::matrix &vloc, // local pseduopotentials
-                              ModulePW::PW_Basis* rho_basis,
+                              ModulePW::PW_Basis *rho_basis,
                               ModuleBase::ComplexMatrix &sf // structure factors
 ) const
 {
@@ -359,17 +363,11 @@ ModuleBase::matrix Potential::v_of_rho(const double *const *const rho_in, const 
         v += H_Hartree_pw::v_hartree(GlobalC::ucell, GlobalC::rhopw, GlobalV::NSPIN, rho_in);
         if(GlobalV::comp_chg)
         {
-            v += GlobalC::solvent_model.v_compensating(GlobalC::ucell, GlobalC::rhopw);
+            v += GlobalC::solvent_model.v_compensating(GlobalC::ucell, GlobalC::rhopw, GlobalV::NSPIN, rho_in);
         }
         if (GlobalV::imp_sol)
         {
             v += GlobalC::solvent_model.v_correction(GlobalC::ucell, GlobalC::rhopw, GlobalV::NSPIN, rho_in);
-            /*
-            // test energy outside
-            cout << "energy Outside: " << endl;
-            GlobalC::solvent_model.cal_Ael(GlobalC::ucell, GlobalC::rhopw);
-            GlobalC::solvent_model.cal_Acav(GlobalC::ucell, GlobalC::rhopw);
-            */
         }
     }
 
@@ -381,6 +379,11 @@ ModuleBase::matrix Potential::v_of_rho(const double *const *const rho_in, const 
         v += Efield::add_efield(GlobalC::ucell, GlobalC::rhopw, GlobalV::NSPIN, rho_in);
     }
 
+    // test get ntot_reci
+    // complex<double> *tmpn = new complex<double>[GlobalC::rhopw->npw];
+    // ModuleBase::GlobalFunc::ZEROS(tmpn, GlobalC::rhopw->npw);
+    // GlobalC::solvent_model.get_totn_reci(GlobalC::ucell, GlobalC::rhopw, tmpn);
+    // delete[] tmpn;
 
     ModuleBase::timer::tick("Potential", "v_of_rho");
     return v;

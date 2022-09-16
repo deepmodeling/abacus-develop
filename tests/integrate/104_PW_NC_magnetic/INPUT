@@ -25,3 +25,5 @@ mixing_ndim 10
 ks_solver     cg
 basis_type    pw
 symmetry      1
+pseudo_dir	../../PP_ORB
+orbital_dir	../../PP_ORB

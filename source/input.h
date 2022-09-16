@@ -46,7 +46,11 @@ class Input
 
     bool init_vel; // read velocity from STRU or not  liuyu 2021-07-14
 
-    bool symmetry; // turn on symmetry or not
+    /* symmetry level: 
+      -1, no symmetry at all; 
+      0, only basic time reversal would be considered; 
+      1, point group symmetry would be considered*/
+    int symmetry; 
     double symmetry_prec; // LiuXh add 2021-08-12, accuracy for symmetry
     int kpar; // ecch pool is for one k point
 
@@ -84,7 +88,7 @@ class Input
     // electrons / spin
     //==========================================================
     std::string dft_functional; // input DFT functional.
-    bool use_libxc; // whether to use LIBXC
+    double xc_temperature; // only relevant if finite temperature functional is used
     int nspin; // LDA ; LSDA ; non-linear spin
     double nelec; // total number of electrons
     int lmaxmax;
@@ -304,8 +308,6 @@ class Input
     int ocp;
     std::string ocp_set;
     int out_mul; // qifeng add 2019-9-10
-    double *atom_mag;
-    int n_mag_at;
     // added by zhengdy-soc
     bool noncolin;
     bool lspinorb;
@@ -401,8 +403,6 @@ class Input
 
     // the following 3 are used when generating jle.orb
     int deepks_descriptor_lmax; // lmax used in descriptor, mohan added 2021-01-03
-    double deepks_descriptor_rcut;
-    double deepks_descriptor_ecut;
 
     //==========================================================
     //    implicit solvation model       Menglin Sun added on 2022-04-04

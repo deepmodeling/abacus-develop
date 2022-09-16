@@ -14,9 +14,9 @@ class DiagoElpa : public DiagH
     void diag(hamilt::Hamilt* phm_in, psi::Psi<double>& psi, double* eigenvalue_in) override;
 
     void diag(hamilt::Hamilt* phm_in, psi::Psi<std::complex<double>>& psi, double* eigenvalue_in) override;
-
-    static bool is_already_decomposed;
     
+    static int DecomposedState;
+
   private:
 #ifdef __MPI
     bool ifElpaHandle(const bool& newIteration, const bool& ifNSCF);

@@ -542,7 +542,7 @@ namespace ModuleESolver
         }
 
         // add by jingan
-        if (berryphase::berry_phase_flag && ModuleSymmetry::Symmetry::symm_flag == 0)
+        if (berryphase::berry_phase_flag && ModuleSymmetry::Symmetry::symm_flag != 1)
         {
             berryphase bp(this->LOWF);
             bp.Macroscopic_polarization(this->psi);

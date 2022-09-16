@@ -56,6 +56,7 @@ ABACUS provides the following features and functionalities:
 20. (subsidiary tool)Generator for second generation numerical orbital basis.
 21. Interface with DPGEN
 22. Interface with phonopy
+23. Implicit solvation model
 
 [back to top](#readme-top)
 
@@ -161,6 +162,7 @@ The following provides basic sample jobs in ABACUS. More can be found in the dir
 - [BSSE for molecular formation energy](docs/examples/BSSE.md)
 - [ABACUS-DPGEN interface](docs/examples/dpgen.md)
 - [ABACUS-phonopy interface](docs/examples/phonopy.md)
+- [Implicit solvation model](docs/examples/implicit-sol.md)
 
 [back to top](#readme-top)
 

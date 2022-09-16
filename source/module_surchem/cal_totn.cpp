@@ -3,7 +3,7 @@
 void surchem::cal_totn(const UnitCell &cell, ModulePW::PW_Basis* rho_basis,
                        const complex<double> *Porter_g, complex<double> *N,
                        complex<double> *TOTN) {
-    // vloc to N8
+    // vloc to N
     complex<double> *vloc_g = new complex<double>[rho_basis->npw];
     ModuleBase::GlobalFunc::ZEROS(vloc_g, rho_basis->npw);
 
@@ -25,7 +25,6 @@ void surchem::cal_totn(const UnitCell &cell, ModulePW::PW_Basis* rho_basis,
         TOTN[ig] = N[ig] - Porter_g[ig];
     }
 
-    // delete[] comp_real;
     delete[] vloc_g;
     return;
 }

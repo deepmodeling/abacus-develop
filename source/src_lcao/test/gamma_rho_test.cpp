@@ -52,7 +52,7 @@ struct ENVPrepare
     bool        init_vel_;
     std::string fixed_axes_;
     double      pseudo_rcut_;
-    bool        symm_flag_;
+    int        symm_flag_;
     std::string kpoint_card_;
     int         nspin_;
     bool        gamma_only_;
@@ -103,7 +103,7 @@ struct ENVPrepare
     	init_vel_	= false;		
     	fixed_axes_	= "None";		
     	pseudo_rcut_	= 15.0;		
-    	symm_flag_	= false;		
+    	symm_flag_	= 0;		
     	kpoint_card_	= "./support/KPT_Gamma";		
     	nspin_		= 1;		
     	gamma_only_	= true;          

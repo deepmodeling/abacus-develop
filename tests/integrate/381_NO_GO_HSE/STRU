@@ -1,6 +1,6 @@
 ATOMIC_SPECIES
-H 1.00 ../tools/PP_ORB/H_ONCV_PBE-1.0.upf
-O 1.00 ../tools/PP_ORB/O_ONCV_PBE-1.0.upf
+H 1.00 H_ONCV_PBE-1.0.upf
+O 1.00 O_ONCV_PBE-1.0.upf
 
 
 LATTICE_CONSTANT
@@ -25,6 +25,6 @@ O
 -11.914780191125 6.639457242640 4.561988946720 0 0 0
 
 NUMERICAL_ORBITAL
-../tools/PP_ORB/1_H_gga_100Ry_7au_2s1p.orb
-../tools/PP_ORB/8_O_gga_100Ry_7au_2s2p1d.orb
+1_H_gga_100Ry_7au_2s1p.orb
+8_O_gga_100Ry_7au_2s2p1d.orb
 

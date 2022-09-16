@@ -1,8 +1,8 @@
 ATOMIC_SPECIES
-Ce 140.115 ../tools/PP_ORB/58_Ce.UPF
+Ce 140.115 58_Ce.UPF
 
 NUMERICAL_ORBITAL
-../tools/PP_ORB/Ce_gga_8au_80Ry_4s2p2d2f.Orb
+Ce_gga_8au_80Ry_4s2p2d2f.Orb
 
 LATTICE_CONSTANT
 8.92

@@ -13,8 +13,11 @@ public:
 	 Symmetry();
 	~Symmetry();
 
-	// mohan add 2021-02-21
-	static bool symm_flag;
+	//symmetry flag for levels
+	//-1 : no symmetry at all, k points would be total nks in KPT
+	//0 : only basic time-reversal symmetry is considered, point k and -k would fold to k
+	//1 : point group symmetry is considered
+	static int symm_flag;
 
 	void analy_sys(const UnitCell_pseudo &ucell, std::ofstream &ofs_running);
 	bool available;

@@ -5,8 +5,8 @@ calculation     scf
 ntype			1
 nbands			12
 symmetry		1
-pseudo_dir      ../tools/PP_ORB/
-orbital_dir      ../tools/PP_ORB/
+pseudo_dir	../../PP_ORB
+orbital_dir	../../PP_ORB
 pseudo_type     upf201
 
 #Parameters (2.Iteration)

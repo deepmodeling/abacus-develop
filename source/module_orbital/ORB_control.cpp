@@ -206,7 +206,7 @@ void ORB_control::set_parameters(std::ofstream& ofs_running,
         if (pv->loc_size == 0)
         {
             ofs_warning << " loc_size=0" << " in proc " << myrank + 1 << std::endl;
-            ModuleBase::WARNING_QUIT("ORB_control::set_parameters", "NLOCAL < DSIZE");
+            ModuleBase::WARNING_QUIT("ORB_control::set_parameters", "nbands < ncpus");
         }
 
         if (drank < nbands % dsize) pv->loc_size += 1;
@@ -248,7 +248,7 @@ void ORB_control::set_parameters(std::ofstream& ofs_running,
         if (pv->loc_size == 0)
         {
             ofs_warning << " loc_size=0" << " in proc " << myrank + 1 << std::endl;
-            ModuleBase::WARNING_QUIT("ORB_control::set_parameters", "NLOCAL < DSIZE");
+            ModuleBase::WARNING_QUIT("ORB_control::set_parameters", "nbands < ncpus");
         }
 
         if (drank < nlocal % dsize)

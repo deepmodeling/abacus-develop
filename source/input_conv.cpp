@@ -74,6 +74,7 @@ void Input_Conv::Convert(void)
     GlobalV::PSEUDO_MESH = INPUT.pseudo_mesh;
 
     GlobalV::DFT_FUNCTIONAL = INPUT.dft_functional;
+    GlobalV::XC_TEMPERATURE = INPUT.xc_temperature;
     GlobalV::NSPIN = INPUT.nspin;
     GlobalV::CURRENT_SPIN = 0;
 
@@ -374,6 +375,7 @@ void Input_Conv::Convert(void)
 
     if (GlobalC::exx_global.info.hybrid_type != Exx_Global::Hybrid_Type::No)
     {
+        //EXX case, convert all EXX related variables 
         GlobalC::exx_global.info.hybrid_alpha = INPUT.exx_hybrid_alpha;
         XC_Functional::get_hybrid_alpha(INPUT.exx_hybrid_alpha);
         GlobalC::exx_global.info.hse_omega = INPUT.exx_hse_omega;
@@ -407,6 +409,9 @@ void Input_Conv::Convert(void)
         Exx_Abfs::Jle::Lmax = INPUT.exx_opt_orb_lmax;
         Exx_Abfs::Jle::Ecut_exx = INPUT.exx_opt_orb_ecut;
         Exx_Abfs::Jle::tolerence = INPUT.exx_opt_orb_tolerence;
+
+        //EXX does not support any symmetry analyse, force symmetry setting to -1
+        ModuleSymmetry::Symmetry::symm_flag = -1;
     }
 #endif
 #endif

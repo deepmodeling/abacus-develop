@@ -18,3 +18,4 @@ md_type         3
 md_dt           10
 md_tfirst       120
 md_restart        1
+pseudo_dir	../../PP_ORB

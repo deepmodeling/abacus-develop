@@ -124,6 +124,11 @@ class Operator
         //create a new hpsi and delete old hpsi later
         T* hpsi_pointer = std::get<2>(info);
         const T* psi_pointer = std::get<0>(info)->get_pointer();
+        if(this->hpsi != nullptr) 
+        {
+            delete this->hpsi;
+            this->hpsi = nullptr;
+        }
         if(!hpsi_pointer)
         {
             ModuleBase::WARNING_QUIT("Operator::hPsi", "hpsi_pointer can not be nullptr");

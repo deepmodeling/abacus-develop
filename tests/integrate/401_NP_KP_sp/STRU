@@ -2,7 +2,7 @@ ATOMIC_SPECIES
 Be 9 Be_ONCV_PBE-1.0.upf
 
 NUMERICAL_ORBITAL
-../tools/PP_ORB/Be_gga_8au_60Ry_4s1p.orb
+Be_gga_8au_60Ry_4s1p.orb
 
 LATTICE_CONSTANT
 4.30  // add lattice constant

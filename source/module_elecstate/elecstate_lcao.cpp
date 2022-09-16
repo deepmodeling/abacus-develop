@@ -137,7 +137,9 @@ void ElecStateLCAO::print_psi(const psi::Psi<double>& psi_in)
 
     // output but not do "2d-to-grid" conversion
     double** wfc_grid = nullptr;
+#ifdef __MPI
     this->lowf->wfc_2d_to_grid(ElecStateLCAO::out_wfc_lcao, psi_in.get_pointer(), wfc_grid, this->ekb, this->wg);
+#endif
     return;
 }
 void ElecStateLCAO::print_psi(const psi::Psi<std::complex<double>>& psi_in)
@@ -159,7 +161,7 @@ void ElecStateLCAO::print_psi(const psi::Psi<std::complex<double>>& psi_in)
     {
         for (int iw = 0; iw < GlobalV::NLOCAL; iw++)
         {
-            this->lowf->wfc_k_grid[ik][ib][iw] = psi(ib,iw);
+            this->lowf->wfc_k_grid[ik][ib][iw] = psi_in(ib, iw);
         }
     }
 #endif

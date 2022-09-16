@@ -13,7 +13,6 @@
 extern "C"
 {
     #include "../module_base/blacs_connector.h"
-    #include "my_elpa.h"
 	#include "../module_base/scalapack_connector.h"
 }
 #include "pdgseps.h"
@@ -26,47 +25,6 @@ extern "C"
 #ifdef __CUSOLVER_LCAO
 #include "diag_cusolver.cuh"
 #endif
-
-#ifdef __MPI
-inline int set_elpahandle(elpa_t &handle, const int *desc,const int local_nrows,const int local_ncols, const int nbands)
-{
-  int error;
-  int nprows, npcols, myprow, mypcol;
-  Cblacs_gridinfo(desc[1], &nprows, &npcols, &myprow, &mypcol);
-  elpa_init(20210430);
-  handle = elpa_allocate(&error);
-  elpa_set_integer(handle, "na", desc[2], &error);
-  elpa_set_integer(handle, "nev", nbands, &error);
-
-  elpa_set_integer(handle, "local_nrows", local_nrows, &error);
-
-  elpa_set_integer(handle, "local_ncols", local_ncols, &error);
-
-  elpa_set_integer(handle, "nblk", desc[4], &error);
-
-  elpa_set_integer(handle, "mpi_comm_parent", MPI_Comm_c2f(MPI_COMM_WORLD), &error);
-
-  elpa_set_integer(handle, "process_row", myprow, &error);
-
-  elpa_set_integer(handle, "process_col", mypcol, &error);
-
-  elpa_set_integer(handle, "blacs_context", desc[1], &error);
-
-  elpa_set_integer(handle, "cannon_for_generalized", 0, &error);
-   /* Setup */
-  elpa_setup(handle);   /* Set tunables */
-  return 0;
-}
-#endif
-
-
-inline bool ifElpaHandle(const bool& newIteration, const bool& ifNSCF)
-{
-    int doHandle = false;
-	if(newIteration) doHandle = true;
-	if(ifNSCF) doHandle = true;
-	return doHandle;
-}
 
 #ifdef __CUSOLVER_LCAO
 template <typename T>

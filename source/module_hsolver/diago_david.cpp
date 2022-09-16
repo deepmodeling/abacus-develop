@@ -6,6 +6,7 @@
 #include "module_base/lapack_connector.h"
 #include "module_base/timer.h"
 #include "src_parallel/parallel_reduce.h"
+#include "src_parallel/parallel_common.h"
 
 namespace hsolver
 {
@@ -443,8 +444,16 @@ void DiagoDavid::cal_elem(const int &npw,
            &sc.nr);
     sc = transpose(sc, false);
 
-    Parallel_Reduce::reduce_complex_double_pool(hc.c + offset_h, notconv * hc.nr);
-    Parallel_Reduce::reduce_complex_double_pool(sc.c + offset_s, notconv * sc.nr);
+//    Parallel_Reduce::reduce_complex_double_pool(hc.c + offset_h, notconv * hc.nr);
+//    Parallel_Reduce::reduce_complex_double_pool(sc.c + offset_s, notconv * sc.nr);
+#ifdef __MPI
+	std::complex<double> *swap = new std::complex<double>[notconv * hc.nc];
+    ModuleBase::GlobalFunc::COPYARRAY(hc.c+offset_h, swap, notconv * hc.nc);
+    MPI_Reduce(swap,hc.c+offset_h,notconv * hc.nc,MPI_DOUBLE_COMPLEX,MPI_SUM,0,MPI_COMM_WORLD);
+    ModuleBase::GlobalFunc::COPYARRAY(sc.c+offset_h, swap, notconv * hc.nc);
+    MPI_Reduce(swap,sc.c+offset_h,notconv * hc.nc,MPI_DOUBLE_COMPLEX,MPI_SUM,0,MPI_COMM_WORLD);
+	delete[] swap;
+#endif
     /*
         for( int i = nbase; i < nbase+notconv; i++ )
         {
@@ -483,6 +492,8 @@ void DiagoDavid::diag_zhegvx(const int &n,
 {
     //	ModuleBase::TITLE("DiagoDavid","diag_zhegvx");
     ModuleBase::timer::tick("DiagoDavid", "diag_zhegvx");
+if(GlobalV::MY_RANK == 0)
+{
     assert(ldh >= max(1, n));
     int lwork;
     int info = 0;
@@ -547,6 +558,16 @@ void DiagoDavid::diag_zhegvx(const int &n,
     delete[] rwork;
     delete[] iwork;
     delete[] ifail;
+}
+
+#ifdef __MPI
+    for (int i=0;i<n;i++)
+    {
+        Parallel_Common::bcast_complex_double(&vc(i, 0), m);
+    }
+    Parallel_Common::bcast_double(eigenvalue,m);
+#endif
+
     ModuleBase::timer::tick("DiagoDavid", "diag_zhegvx");
     return;
 }

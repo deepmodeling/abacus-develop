@@ -31,3 +31,5 @@ basis_type    lcao
 gamma_only    1
 symmetry      0
 nspin         2
+pseudo_dir	../../PP_ORB
+orbital_dir	../../PP_ORB

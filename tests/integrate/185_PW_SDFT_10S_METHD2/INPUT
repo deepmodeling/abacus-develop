@@ -5,7 +5,7 @@ calculation     sto-scf
 method_sto      2
 ntype			1
 symmetry		0
-pseudo_dir      ../tools/PP_ORB/
+pseudo_dir	../../PP_ORB
 
 nbands			0
 nbands_sto		10

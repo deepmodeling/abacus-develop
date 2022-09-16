@@ -5,7 +5,7 @@ LATTICE_CONSTANT
 10.2  // add lattice constant
 
 NUMERICAL_ORBITAL
-../tools/PP_ORB/Si_lda_8.0au_50Ry_2s2p1d
+Si_lda_8.0au_50Ry_2s2p1d
 
 LATTICE_VECTORS
 0.5 0.5 0.0

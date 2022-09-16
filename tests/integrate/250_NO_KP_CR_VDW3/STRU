@@ -1,10 +1,10 @@
 ATOMIC_SPECIES
-Sn  118.710  ../tools/PP_ORB/Sn_ONCV_PBE-1.0.upf
-Te  127.603  ../tools/PP_ORB/Te_ONCV_PBE-1.0.upf
+Sn  118.710  Sn_ONCV_PBE-1.0.upf
+Te  127.603  Te_ONCV_PBE-1.0.upf
 
 NUMERICAL_ORBITAL
-../tools/PP_ORB/Sn_pbe_9.0au_100Ry_2s2p2d
-../tools/PP_ORB/Te_pbe_9.0au_100Ry_2s2p2d
+Sn_pbe_9.0au_100Ry_2s2p2d
+Te_pbe_9.0au_100Ry_2s2p2d
 
 LATTICE_CONSTANT
 1.89035917
