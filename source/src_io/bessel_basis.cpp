@@ -22,18 +22,18 @@ void Bessel_Basis::init(
 	const double &ecutwfc,
 	const int &ntype,
 	const int &lmax_in,
+	const bool &smooth,
+	const double &sigma,
+	const double &rcut_in,
+	const double &tol_in,	
 	const double &dk,
 	const double &dr)
 {
 	ModuleBase::TITLE("Bessel_Basis", "init");
 	this->Dk = dk;
-
-	//--------------------------
-	// setup ecut, rcut
-	// init label for each type
-	//--------------------------
-	this->readin("INPUTs");
-	this->bcast();
+	this->ecut = ecutwfc;
+	this->rcut = rcut_in;
+	this->tolerence = tol_in;
 
 	//----------------------------------------------
 	// setup Ecut_number
@@ -46,7 +46,8 @@ void Bessel_Basis::init(
 	//------------------
 	// Making a table
 	//------------------
-	this->init_TableOne( this->smooth, this->sigma, ecutwfc, rcut, dr, Dk, lmax_in, Ecut_number, tolerence);
+
+	this->init_TableOne( smooth, sigma, ecutwfc, rcut, dr, Dk, lmax_in, Ecut_number, tolerence);
 
 //-----------------------------------------------
 // for test.
@@ -464,60 +465,5 @@ void Bessel_Basis::allocate_C4(
 			}
 		}
 	}
-	return;
-}
-
-void Bessel_Basis::bcast(void)
-{
-#ifdef __MPI
-	ModuleBase::TITLE("Bessel_Basis", "bcast");
-
-	Parallel_Common::bcast_double( ecut );
-	Parallel_Common::bcast_double( rcut );
-	Parallel_Common::bcast_double( tolerence );
-	return;
-#endif
-}
-
-void Bessel_Basis::readin(const std::string &name)
-{
-	ModuleBase::TITLE("Bessel_Basis", "readin");
-	if (GlobalV::MY_RANK == 0)
-	{
-		std::ifstream ifs(name.c_str());
-		GlobalV::ofs_running << " File name : " << name << std::endl;
-		if (!ifs)
-		{
-			std::cout << " File name : " << name << std::endl;
-			ModuleBase::WARNING_QUIT("Bessel_Basis::readin","Can not find file.");
-		}
-		ModuleBase::CHECK_NAME(ifs, "INPUT_ORBITAL_INFORMATION");
-		if (ModuleBase::GlobalFunc::SCAN_BEGIN(ifs, "<SPHERICAL_BESSEL>"))
-		{
-			ModuleBase::GlobalFunc::READ_VALUE(ifs, this->smooth);
-			ModuleBase::GlobalFunc::READ_VALUE(ifs, this->sigma);
-			assert(sigma!=0.0);
-			ModuleBase::GlobalFunc::READ_VALUE(ifs, this->ecut); // readin ecut
-			ModuleBase::GlobalFunc::READ_VALUE(ifs, this->rcut); // readin rcut
-			ModuleBase::GlobalFunc::READ_VALUE(ifs, this->tolerence);
-			assert(ecut > 0.0);
-			assert(rcut > 0.0);
-			assert(tolerence > 0.0);
-			ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "smooth",smooth);
-			ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "sigma",sigma);
-			ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "ecut", ecut);
-			ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "rcut", rcut);
-			ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "tolerence", tolerence);
-			ModuleBase::GlobalFunc::SCAN_END(ifs, "</SPHERICAL_BESSEL>");
-		}
-		ifs.close();
-	}
-#ifdef __MPI
-	Parallel_Common::bcast_bool(smooth);
-	Parallel_Common::bcast_double(sigma);
-	Parallel_Common::bcast_double(ecut);
-	Parallel_Common::bcast_double(rcut);
-	Parallel_Common::bcast_double(tolerence);
-#endif
 	return;
 }

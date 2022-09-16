@@ -20,7 +20,6 @@ gamma_only		1
 cal_force 1
 
 deepks_out_labels	0
-deepks_descriptor_lmax		2
 
 #Parameters (4.Smearing)
 smearing_method		gaussian

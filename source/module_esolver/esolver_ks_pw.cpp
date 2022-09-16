@@ -236,11 +236,11 @@ namespace ModuleESolver
             return;
         }
 
-        if (GlobalV::CALCULATION == "gen_jle")
+        if (GlobalV::CALCULATION == "gen_bessel")
         {
             // caoyu add 2020-11-24, mohan updat 2021-01-03
             Numerical_Descriptor nc;
-            nc.output_descriptor(this->psi[0], INPUT.deepks_descriptor_lmax);
+            nc.output_descriptor(this->psi[0], INPUT.bessel_lmax, INPUT.bessel_rcut, INPUT.bessel_tol);
             ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running,"GENERATE DESCRIPTOR FOR DEEPKS");
             return;
         }

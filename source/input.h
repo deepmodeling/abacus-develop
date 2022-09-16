@@ -201,7 +201,6 @@ class Input
     //==========================================================
     // potential / charge / wavefunction / energy
     //==========================================================
-    std::string restart_mode; //
 
     std::string init_wfc; // "file","atomic","random"
     std::string init_chg; // "file","atomic"
@@ -402,7 +401,9 @@ class Input
     string deepks_model; // needed when deepks_scf=1
 
     // the following 3 are used when generating jle.orb
-    int deepks_descriptor_lmax; // lmax used in descriptor, mohan added 2021-01-03
+    int bessel_lmax; // lmax used in descriptor, mohan added 2021-01-03
+    double bessel_rcut;
+    double bessel_tol;
 
     //==========================================================
     //    implicit solvation model       Menglin Sun added on 2022-04-04
@@ -422,7 +423,6 @@ class Input
     //==========================================================
     // variables for test only
     //==========================================================
-    bool test_just_neighbor = false;
     bool test_skip_ewald = false;
 
   private:

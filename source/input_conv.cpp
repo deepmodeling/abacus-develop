@@ -152,7 +152,6 @@ void Input_Conv::Convert(void)
     //----------------------------------------------------------
     // wavefunction / charge / potential / (2/4)
     //----------------------------------------------------------
-    GlobalV::RESTART_MODE = INPUT.restart_mode;
     GlobalC::wf.init_wfc = INPUT.init_wfc;
     GlobalC::wf.mem_saver = INPUT.mem_saver; // mohan add 2010-09-07
     GlobalC::en.printe = INPUT.printe; // mohan add 2011-03-16
