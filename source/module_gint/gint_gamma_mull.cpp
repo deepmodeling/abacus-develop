@@ -112,7 +112,7 @@ void Gint_Gamma::cal_mulliken(double** mulliken)
 							+ dr[ib][id][1]*dr[ib][id][1] 
 							+ dr[ib][id][2]*dr[ib][id][2]);
 
-						if(distance[ib][id] <= GlobalC::ORB.Phi[it].getRcut()) 
+						if(distance[ib][id] < GlobalC::ORB.Phi[it].getRcut() - 1.0e-10) 
 						{
 							cal_flag[ib][id]=true;
 						}
