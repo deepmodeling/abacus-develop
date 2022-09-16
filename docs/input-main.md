@@ -842,7 +842,7 @@ This part of variables are used to control the output of properties.
 #### out_dos
 
 - **Type**: Integer
-- **Description**: Controls whether to output the density of state (DOS). For more information, refer to the [worked example](examples/dos.md).
+- **Description**: Controls whether to output the density of state (DOS). The unit of DOS is `(number of states)/(eV * unitcell)`. For more information, refer to the [worked example](examples/dos.md).
 - **Default**: 0
 
 #### out_band
