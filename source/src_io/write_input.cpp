@@ -70,7 +70,7 @@ void Input::Print(const std::string &fn) const
     ModuleBase::GlobalFunc::OUTP(ofs, "kpar", kpar, "devide all processors into kpar groups and k points will be distributed among each group");
     ModuleBase::GlobalFunc::OUTP(ofs, "bndpar", bndpar, "devide all processors into bndpar groups and bands will be distributed among each group");
     ModuleBase::GlobalFunc::OUTP(ofs, "out_freq_elec", out_freq_elec, "the frequency ( >= 0) of electronic iter to output charge density and wavefunction. 0: output only when converged");
-    ModuleBase::GlobalFunc::OUTP(ofs, "dft_plus_dmft", dft_plus_dmft, "true:DFT+U correction; false: standard DFT calcullation(default)");
+    ModuleBase::GlobalFunc::OUTP(ofs, "dft_plus_dmft", dft_plus_dmft, "true:DFT+DMFT; false: standard DFT calcullation(default)");
     ModuleBase::GlobalFunc::OUTP(ofs, "printe", printe, "Print out energy for each band for every printe steps");
     ModuleBase::GlobalFunc::OUTP(ofs, "mem_saver", mem_saver, "Only for nscf calculations. if set to 1, then a memory saving technique will be used for many k point calculations.");
     ModuleBase::GlobalFunc::OUTP(ofs, "diago_proc", diago_proc, "the number of procs used to do diagonalization");
