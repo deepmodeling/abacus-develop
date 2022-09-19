@@ -258,7 +258,7 @@ namespace ModuleESolver
                     if(stop) break;
                 }
             }
-            afterscf();
+            afterscf(istep);
 
             ModuleBase::timer::tick(this->classname, "Run");
         }       

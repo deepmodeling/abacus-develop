@@ -640,7 +640,7 @@ void ESolver_KS_LCAO::eachiterfinish(int iter)
     GlobalC::en.calculate_etot();
 }
 
-void ESolver_KS_LCAO::afterscf()
+void ESolver_KS_LCAO::afterscf(const int istep)
 {
     for (int ik = 0; ik < this->pelec->ekb.nr; ++ik)
     {

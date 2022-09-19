@@ -32,7 +32,7 @@ namespace ModuleESolver
         virtual void hamilt2density(const int istep, const int iter, const double ethr) override;
         virtual void updatepot(const int istep, const int iter) override;
         virtual void eachiterfinish(const int iter) override;
-        virtual void afterscf() override;
+        virtual void afterscf(const int istep) override;
         virtual bool do_after_converge(int& iter) override;
         int two_level_step = 0;
 
