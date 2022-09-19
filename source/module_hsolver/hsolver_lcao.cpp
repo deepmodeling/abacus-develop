@@ -145,12 +145,18 @@ void HSolverLCAO::solve(hamilt::Hamilt* pHamilt,
 
 void HSolverLCAO::hamiltSolvePsiK(hamilt::Hamilt* hm, psi::Psi<std::complex<double>>& psi, double* eigenvalue)
 {
+    ModuleBase::TITLE("HSolverLCAO", "hamiltSolvePsiK");
+    ModuleBase::timer::tick("HSolverLCAO", "hamiltSolvePsiK");
     pdiagh->diag(hm, psi, eigenvalue);
+    ModuleBase::timer::tick("HSolverLCAO", "hamiltSolvePsiK");
 }
 
 void HSolverLCAO::hamiltSolvePsiK(hamilt::Hamilt* hm, psi::Psi<double>& psi, double* eigenvalue)
 {
+    ModuleBase::TITLE("HSolverLCAO", "hamiltSolvePsiK");
+    ModuleBase::timer::tick("HSolverLCAO", "hamiltSolvePsiK");
     pdiagh->diag(hm, psi, eigenvalue);
+    ModuleBase::timer::tick("HSolverLCAO", "hamiltSolvePsiK");
 }
 
 } // namespace hsolver
