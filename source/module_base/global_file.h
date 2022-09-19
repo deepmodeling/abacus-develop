@@ -23,6 +23,7 @@ namespace Global_File
 	// called in input.cpp, after reading parameters.
 	void make_dir_out(const std::string &suffix,
 		const std::string &calculation,
+        const bool &out_hs,
 		const int rank,
         const bool &restart,
 		const bool out_alllog = false); 
