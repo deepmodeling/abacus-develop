@@ -137,12 +137,12 @@ void ModuleBase::Global_File::make_dir_out(
             {
                 if ( system( command1.c_str() ) == 0 )
                 {
-                    std::cout << " MAKE THE STRU DIR    : " << GlobalV::global_stru_dir << std::endl;
+                    std::cout << " MAKE THE MATRIX DIR    : " << GlobalV::global_stru_dir << std::endl;
                     make_dir_matrix = 1;
                 }
                 else
                 {
-                    std::cout << " PROC " << rank << " CAN NOT MAKE THE STRU DIR !!! " << std::endl;
+                    std::cout << " PROC " << rank << " CAN NOT MAKE THE MATRIX DIR !!! " << std::endl;
                     make_dir_matrix = 0;
                 }
             }
