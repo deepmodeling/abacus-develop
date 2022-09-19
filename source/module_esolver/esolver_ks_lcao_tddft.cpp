@@ -520,7 +520,7 @@ void ESolver_KS_LCAO_TDDFT::afterscf(const int istep)
 
     if (Pdiag_Double::out_mat_hsR)
     {
-        this->output_HS_R(); // LiuXh add 2019-07-15
+        this->output_HS_R(istep); // LiuXh add 2019-07-15
     }
 }
 

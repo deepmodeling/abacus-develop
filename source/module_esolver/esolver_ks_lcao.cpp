@@ -945,7 +945,7 @@ void ESolver_KS_LCAO::afterscf(const int istep)
 
     if (hsolver::HSolverLCAO::out_mat_hsR)
     {
-        this->output_HS_R(); // LiuXh add 2019-07-15
+        this->output_HS_R(istep); // LiuXh add 2019-07-15
     }
 
     if(!GlobalV::CAL_FORCE && !GlobalV::CAL_STRESS)
