@@ -32,7 +32,7 @@ add_executable(${ABACUS_BIN_NAME} source/main.cpp)
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 if (CMAKE_COMPILER_IS_GNUCXX AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 5)
-  message(FATAL_ERROR "GCC4 is not supported.")
+  message(WARNING "GCC4 is not fully supported.")
 endif()
 add_compile_options(-Wno-write-strings)
 set(FETCHCONTENT_QUIET FALSE) # Notify user when cloning git repo
