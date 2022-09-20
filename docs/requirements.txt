@@ -1,0 +1,2 @@
+myst_parser[linkify]
+sphinx_rtd_theme
