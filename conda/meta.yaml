@@ -1,0 +1,69 @@
+# {% set name = "abacus" %}
+# {% set version = os.popen('git describe --tags --abbrev=0').read().strip('\n').lstrip('v').replace('-', '_') %}
+
+package:
+  name: abacus
+  # version: {{ version }}
+  version: {{ GIT_DESCRIBE_TAG }}
+
+source:
+  path: ..
+  # git_url: https://github.com/deepmodeling/abacus-develop.git
+  # git_rev: 2.3.5
+  # git_depth: 1
+
+build:
+  script: cmake -B conda_build && cmake --build conda_build -j`nproc` && cmake --install conda_build # [linux]
+  # -DCMAKE_PREFIX_PATH=$PREFIX -DCMAKE_INSTALL_PREFIX=$PREFIX
+  skip: true  # [win]
+  number: {{ GIT_DESCRIBE_NUMBER }}
+  string: {{ GIT_BUILD_STR }}
+
+
+requirements:
+  build:
+    - {{ compiler('cxx') }}
+    - make
+    - cmake
+    - llvm-openmp  # [osx]
+    - libgomp  # [linux]
+
+  host:
+    - {{ mpi }}
+    - elpa=*=mpi*
+    # - libxc
+    - blas=*=openblas
+    # - mkl
+    # - mkl_fft
+    # - scalapack
+    # - lapack
+    - fftw
+
+  run:
+    - {{ mpi }}
+    - elpa=*=mpi*
+    - blas=*=openblas
+    # - scalapack
+
+test:
+  commands:
+    - cmake --build build --target test ARGS="-V"
+
+# outputs:
+#   - name: subpackage-name
+#     files:
+#       - a-file
+
+about:
+  home: https://github.com/deepmodeling/abacus-develop
+  doc_url: https://github.com/deepmodeling/abacus-develop
+  dev_url: https://github.com/deepmodeling/abacus-develop
+  license: LGPL-3.0
+  license_family: LGPL
+  license_file: LICENSE
+  summary: An electronic structure package based on either plane wave basis or numerical atomic orbitals.
+  # description: |
+
+extra:
+  recipe-maintainers:
+    - caic99
