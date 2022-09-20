@@ -43,6 +43,10 @@ namespace Parallel_Reduce
 	void gather_int_all(int &v, int *all);
 
 	bool check_if_equal(double &v);//mohan add 2009-11-11
+
+	void reduce_all(double *object, const int n);
+	void reduce_all(std::complex<double> *object,const int n);
+
 }
 
 #endif

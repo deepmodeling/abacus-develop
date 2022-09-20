@@ -125,7 +125,7 @@ template <> void HamiltLCAO<double>::updateHk(const int ik)
     }
 
     this->hmatrix_k = this->LM->Hloc.data();
-    if ((GlobalC::CHR.get_new_e_iteration() && ik == 0) || hsolver::HSolverLCAO::out_mat_hs)
+    if ((GlobalC::CHR.get_new_e_iteration() && ik == 0) || hsolver::HSolverLCAO::out_mat_hs_k)
     {
         if (this->smatrix_k == nullptr)
         {

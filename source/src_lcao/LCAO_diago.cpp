@@ -45,10 +45,28 @@ void Diago_LCAO_Matrix::using_HPSEPS_complex(const int &ik, Local_Orbital_wfc &l
 {
 	ModuleBase::TITLE("Diago_LCAO_Matrix","using_HPSEPS_complex");
 
-	//lowf.ParaV->out_mat_hs=1;//zhengdy-soc-test
-	bool bit = false; //LiuXh, 2017-03-21
-	//if set bit = true, there would be error in soc-multi-core calculation, noted by zhengdy-soc
-	HS_Matrix::saving_HS(this->LM->Hloc2.data(), this->LM->Sloc2.data(), bit, this->out_mat_hs, "data-"+std::to_string(ik), *lowf.ParaV); //LiuXh, 2017-03-21
+	//lowf.ParaV->out_mat_hs_k=1;//zhengdy-soc-test
+    if(this->out_mat_hs_k)
+    {
+        bool write_binary = false; //LiuXh, 2017-03-21
+        //if set bit = true, there would be error in soc-multi-core calculation, noted by zhengdy-soc
+        int ind_k;//which k point
+        if(GlobalV::NSPIN==1 || GlobalV::NSPIN==4)
+        {
+            ind_k = ik;
+        }
+        else
+        {
+            ind_k = ik%(GlobalC::kv.nkstot/2);
+        }
+        HS_Matrix::save_HS(
+            ik,
+            this->LM->Hloc2.data(),
+            this->LM->Sloc2.data(),
+            write_binary,
+            "data_k" + std::to_string(ind_k+1) + "_s" + std::to_string(GlobalC::kv.isk[ik]+1),
+            *lowf.ParaV); //LiuXh, 2017-03-21
+    }
 	GlobalV::ofs_running << std::setprecision(6); //LiuXh, 2017-03-21
 
 	this->diago_complex_begin(ik, lowf, this->LM->Hloc2.data(), this->LM->Sloc2.data(), this->LM->Sdiag2.data(), GlobalC::wf.ekb[ik]);
@@ -154,14 +172,23 @@ void Diago_LCAO_Matrix::using_LAPACK(const int &ik, Local_Orbital_wfc &lowf) con
     assert(GlobalV::NLOCAL > 0);
 
     // save H and S matrix to disk.
-    //	bool bit = false;
-    bool bit = true; // zhengdy-soc
-    HS_Matrix::saving_HS(this->LM->Hloc.data(),
-                         this->LM->Sloc.data(),
-                         bit,
-                         this->out_mat_hs,
-                         "data-" + std::to_string(ik),
-                         *lowf.ParaV);
+    bool write_binary = true; // zhengdy-soc
+    int ind_k;//which k point
+    if(GlobalV::NSPIN==1 || GlobalV::NSPIN==4)
+    {
+        ind_k = ik;
+    }
+    else
+    {
+        ind_k = ik%(GlobalC::kv.nkstot/2);
+    }
+    HS_Matrix::save_HS(
+        ik,
+        this->LM->Hloc.data(),
+        this->LM->Sloc.data(),
+        write_binary,
+        "data_k" + std::to_string(ind_k+1) + "_s" + std::to_string(GlobalC::kv.isk[ik]+1),
+        *lowf.ParaV);
 
     ModuleBase::matrix Htmp(GlobalV::NLOCAL, GlobalV::NLOCAL);
     ModuleBase::matrix Stmp(GlobalV::NLOCAL, GlobalV::NLOCAL);
@@ -282,13 +309,26 @@ void Diago_LCAO_Matrix::using_HPSEPS_double(const int &ik, Local_Orbital_wfc &lo
     ModuleBase::TITLE("Diago_LCAO_Matrix", "using_HPSEPS_double");
 
     // save H and S matrix to disk.
-    bool bit = false;
-    HS_Matrix::saving_HS(this->LM->Hloc.data(),
-                         this->LM->Sloc.data(),
-                         bit,
-                         this->out_mat_hs,
-                         "data-" + std::to_string(ik),
-                         *lowf.ParaV);
+    if(this->out_mat_hs_k)
+    {
+        bool write_binary = false;
+        int ind_k;//which k point
+        if(GlobalV::NSPIN==1 || GlobalV::NSPIN==4)
+        {
+            ind_k = ik;
+        }
+        else
+        {
+            ind_k = ik%(GlobalC::kv.nkstot/2);
+        }
+        HS_Matrix::save_HS(
+            ik,
+            this->LM->Hloc.data(),
+            this->LM->Sloc.data(),
+            write_binary,
+            "data_k" + std::to_string(ind_k+1) + "_s" + std::to_string(GlobalC::kv.isk[ik]+1),
+            *lowf.ParaV);
+    }
     GlobalV::ofs_running << std::setprecision(6);
 
     // Distribution of matrix for

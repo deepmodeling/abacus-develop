@@ -943,7 +943,7 @@ void ESolver_KS_LCAO::afterscf()
         GlobalC::dmft.out_to_dmft(this->LOWF, *this->UHM.LM);
     }
 
-    if (hsolver::HSolverLCAO::out_mat_hsR)
+    if (hsolver::HSolverLCAO::out_mat_hs_r)
     {
         this->output_HS_R(); // LiuXh add 2019-07-15
     }

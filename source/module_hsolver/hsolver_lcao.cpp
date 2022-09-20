@@ -5,6 +5,7 @@
 #include "diago_lapack.h"
 #include "module_base/timer.h"
 #include "src_io/write_HS.h"
+#include "src_pw/global.h"
 
 namespace hsolver
 {
@@ -77,20 +78,33 @@ void HSolverLCAO::solveTemplate(hamilt::Hamilt* pHamilt,
 
     /// Loop over k points for solve Hamiltonian to charge density
     for (int ik = 0; ik < psi.get_nk(); ++ik)
-    {
+    {  
         /// update H(k) for each k point
         pHamilt->updateHk(ik);
-
-        bool bit = false; // LiuXh, 2017-03-21
-        // if set bit = true, there would be error in soc-multi-core calculation, noted by zhengdy-soc
         hamilt::MatrixBlock<T> h_mat, s_mat;
         pHamilt->matrix(h_mat, s_mat);
-        HS_Matrix::saving_HS(h_mat.p,
-                             s_mat.p,
-                             bit,
-                             this->out_mat_hs,
-                             "data-" + std::to_string(ik),
-                             this->ParaV[0]); // LiuXh, 2017-03-21
+
+        if(this->out_mat_hs_k)
+        {
+            bool write_binary = false; // LiuXh, 2017-03-21
+            // if set write_binary = true, there would be error in soc-multi-core calculation, noted by zhengdy-soc
+            int ind_k;//which k point
+            if(GlobalV::NSPIN==1 || GlobalV::NSPIN==4)
+            {
+                ind_k = ik;
+            }
+            else
+            {
+                ind_k = ik%(GlobalC::kv.nkstot/2);
+            }
+            HS_Matrix::save_HS(
+                ik,
+                h_mat.p,
+                s_mat.p,
+                write_binary,
+                "data_k" + std::to_string(ind_k+1) + "_s" + std::to_string(GlobalC::kv.isk[ik]+1),
+                this->ParaV[0]); // LiuXh, 2017-03-21
+        }
 
         psi.fix_k(ik);
 
@@ -123,8 +137,8 @@ void HSolverLCAO::solveTemplate(hamilt::Hamilt* pHamilt,
     ModuleBase::timer::tick("HSolverLCAO", "solve");
 }
 
-int HSolverLCAO::out_mat_hs = 0;
-int HSolverLCAO::out_mat_hsR = 0;
+int HSolverLCAO::out_mat_hs_k = 0;
+int HSolverLCAO::out_mat_hs_r = 0;
 
 void HSolverLCAO::solve(hamilt::Hamilt* pHamilt,
                         psi::Psi<std::complex<double>>& psi,

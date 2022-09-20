@@ -32,8 +32,8 @@ has_dftu=`grep -En '(^|[[:space:]])dft_plus_u($|[[:space:]])' INPUT | awk '{prin
 has_band=`grep -En '(^|[[:space:]])out_band($|[[:space:]])' INPUT | awk '{print $2}'`
 has_dos=`grep -En '(^|[[:space:]])out_dos($|[[:space:]])' INPUT | awk '{print $2}'`
 has_cond=`grep -En '(^|[[:space:]])cal_cond($|[[:space:]])' INPUT | awk '{print $2}'`
-has_hs=`grep -En '(^|[[:space:]])out_mat_hs($|[[:space:]])' INPUT | awk '{print $2}'`
-has_hs2=`grep -En '(^|[[:space:]])out_mat_hs2($|[[:space:]])' INPUT | awk '{print $2}'`
+has_hs=`grep -En '(^|[[:space:]])out_mat_hs_k($|[[:space:]])' INPUT | awk '{print $2}'`
+has_hs2=`grep -En '(^|[[:space:]])out_mat_hs_r($|[[:space:]])' INPUT | awk '{print $2}'`
 has_r=`grep -En '(^|[[:space:]])out_mat_r($|[[:space:]])' INPUT | awk '{print $2}'`
 deepks_out_labels=`grep deepks_out_labels INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
 deepks_bandgap=`grep deepks_bandgap INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
@@ -118,15 +118,15 @@ fi
 #echo $has_hs
 if ! test -z "$has_hs"  && [  $has_hs == 1 ]; then
 	if ! test -z "$gamma_only"  && [ $gamma_only == 1 ]; then
-		href=data-0-H.ref
-		hcal=OUT.autotest/data-0-H
-		sref=data-0-H.ref
-		scal=OUT.autotest/data-0-H
+		href=data_k1_s1_H.dat.ref
+		hcal=OUT.autotest/data_k1_s1_H.dat
+		sref=data_k1_s1_S.dat.ref
+		scal=OUT.autotest/data_k1_s1_S.dat
 	else
-		href=data-1-H.ref
-		hcal=OUT.autotest/data-1-H
-		sref=data-1-H.ref
-		scal=OUT.autotest/data-1-H
+		href=data_k2_s1_H.dat.ref
+		hcal=OUT.autotest/data_k2_s1_H.dat
+		sref=data_k2_s1_S.dat.ref
+		scal=OUT.autotest/data_k2_s1_S.dat
 	fi
 
 	python3 ../tools/CompareFile.py $href $hcal 8

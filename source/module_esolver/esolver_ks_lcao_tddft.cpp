@@ -518,7 +518,7 @@ void ESolver_KS_LCAO_TDDFT::afterscf()
             std::cout << " !! CONVERGENCE HAS NOT BEEN ACHIEVED !!" << std::endl;
     }
 
-    if (Pdiag_Double::out_mat_hsR)
+    if (Pdiag_Double::out_mat_hs_r)
     {
         this->output_HS_R(); // LiuXh add 2019-07-15
     }

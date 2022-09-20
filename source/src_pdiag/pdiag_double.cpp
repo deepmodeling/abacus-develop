@@ -82,8 +82,8 @@ void cusolver_helper_scatter(const T* mat_glb, T* mat_loc, const Parallel_Orbita
 #endif
 
 
-int Pdiag_Double::out_mat_hs = 0;
-int Pdiag_Double::out_mat_hsR = 0;
+int Pdiag_Double::out_mat_hs_k = 0;
+int Pdiag_Double::out_mat_hs_r = 0;
 int Pdiag_Double::out_wfc_lcao = 0;
 
 Pdiag_Double::Pdiag_Double() {}

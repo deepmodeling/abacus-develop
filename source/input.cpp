@@ -285,8 +285,8 @@ void Input::Default(void)
     out_dos = 0;
     out_band = 0;
     out_proj_band = 0;
-    out_mat_hs = 0;
-    out_mat_hs2 = 0; // LiuXh add 2019-07-15
+    out_mat_hs_k = 0;
+    out_mat_hs_r = 0; // LiuXh add 2019-07-15
     out_mat_r = 0; // jingan add 2019-8-14
     out_wfc_lcao = false;
     out_alllog = false;
@@ -1086,14 +1086,14 @@ bool Input::Read(const std::string &fn)
             read_value(ifs, out_proj_band);
         }
 
-        else if (strcmp("out_mat_hs", word) == 0)
+        else if (strcmp("out_mat_hs_k", word) == 0)
         {
-            read_value(ifs, out_mat_hs);
+            read_value(ifs, out_mat_hs_k);
         }
         // LiuXh add 2019-07-15
-        else if (strcmp("out_mat_hs2", word) == 0)
+        else if (strcmp("out_mat_hs_r", word) == 0)
         {
-            read_value(ifs, out_mat_hs2);
+            read_value(ifs, out_mat_hs_r);
         }
         else if (strcmp("out_mat_r", word) == 0)
         {
@@ -2123,8 +2123,8 @@ void Input::Bcast()
     Parallel_Common::bcast_int(out_dos);
     Parallel_Common::bcast_int(out_band);
     Parallel_Common::bcast_int(out_proj_band);
-    Parallel_Common::bcast_int(out_mat_hs);
-    Parallel_Common::bcast_int(out_mat_hs2); // LiuXh add 2019-07-15
+    Parallel_Common::bcast_int(out_mat_hs_k);
+    Parallel_Common::bcast_int(out_mat_hs_r); // LiuXh add 2019-07-15
     Parallel_Common::bcast_int(out_mat_r); // jingan add 2019-8-14
     Parallel_Common::bcast_bool(out_wfc_lcao);
     Parallel_Common::bcast_bool(out_alllog);

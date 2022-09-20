@@ -22,8 +22,6 @@ void Parallel_Reduce::reduce_int_diag(int &object)
     return;
 }
 
-
-
 void Parallel_Reduce::reduce_double_all(double &object)
 {
 #ifdef __MPI
@@ -284,4 +282,26 @@ void Parallel_Reduce::gather_min_double_all(double &v)
 	}
 	delete[] value;
 #endif
+}
+
+void Parallel_Reduce::reduce_all(double *object, const int n)
+{
+#ifdef __MPI
+	double *swap = new double[n];
+	for(int i=0;i<n;i++) swap[i] = object[i];
+	MPI_Allreduce(swap, object, n, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+	delete[] swap;
+#endif
+	return;
+}
+
+void Parallel_Reduce::reduce_all(std::complex <double> *object, const int n)
+{
+#ifdef __MPI
+	std::complex<double> *swap = new std::complex<double>[n];
+	for(int i=0;i<n;i++) swap[i] = object[i];
+	MPI_Allreduce(swap, object, n, mpicomplex, myOp, MPI_COMM_WORLD);
+	delete[] swap;
+#endif
+	return;
 }

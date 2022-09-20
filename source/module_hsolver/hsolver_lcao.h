@@ -26,8 +26,8 @@ class HSolverLCAO : public HSolver
 
     void solve(hamilt::Hamilt* pHamilt, psi::Psi<double>& psi, elecstate::ElecState* pes, const std::string method_in, const bool skip_charge) override;
 
-    static int out_mat_hs; // mohan add 2010-09-02
-    static int out_mat_hsR; // LiuXh add 2019-07-16
+    static int out_mat_hs_k; // mohan add 2010-09-02
+    static int out_mat_hs_r; // LiuXh add 2019-07-16
 
   private:
     void hamiltSolvePsiK(hamilt::Hamilt* hm, psi::Psi<std::complex<double>>& psi, double* eigenvalue);

@@ -36,7 +36,7 @@
 
 - [Variables related to output information](#variables-related-to-output-information)
 
-    [out_force](#out_force) | [out_mul](#out_mul) | [out_freq_elec](#out_freq_elec) | [out_freq_ion](#out_freq_ion) | [out_chg](#out_chg) | [out_pot](#out_pot) | [out_dm](#out_dm) | [out_wfc_pw](#out_wfc_pw) | [out_wfc_r](#out_wfc_r) | [out_wfc_lcao](#out_wfc_lcao) | [out_dos](#out_dos) | [out_band](#out_band) | [out_proj_band](#out_proj_band) | [out_stru](#out_stru) | [out_level](#out_level) | [out_alllog](#out_alllog) | [out_mat_hs](#out_mat_hs) | [out_mat_r](#out_mat_r) | [out_mat_hs2](#out_mat_hs2) | [out_element_info](#out_element_info) | [restart_save](#restart_save) | [restart_load](#restart_load)
+    [out_force](#out_force) | [out_mul](#out_mul) | [out_freq_elec](#out_freq_elec) | [out_freq_ion](#out_freq_ion) | [out_chg](#out_chg) | [out_pot](#out_pot) | [out_dm](#out_dm) | [out_wfc_pw](#out_wfc_pw) | [out_wfc_r](#out_wfc_r) | [out_wfc_lcao](#out_wfc_lcao) | [out_dos](#out_dos) | [out_band](#out_band) | [out_proj_band](#out_proj_band) | [out_stru](#out_stru) | [out_level](#out_level) | [out_alllog](#out_alllog) | [out_mat_hs_k](#out_mat_hs_k) | [out_mat_r](#out_mat_r) | [out_mat_hs_r](#out_mat_hs_r) | [out_element_info](#out_element_info) | [restart_save](#restart_save) | [restart_load](#restart_load)
 
 - [Density of states](#density-of-states)
 
@@ -874,19 +874,23 @@ This part of variables are used to control the output of properties.
 - **Description**: determines whether to write log from all ranks in an MPI run. If set to be 1, then each rank will write detained running information to a file named running_${calculation}\_(${rank}+1).log. If set to 0, log will only be written from rank 0 into a file named running_${calculation}.log.
 - **Default**: 0
 
-#### out_mat_hs
+#### out_mat_hs_k
 
 - **Type**: Boolean
-- **Description**: Only for LCAO calculations. When set to 1, ABACUS will generate two lists of files `data-$k-H` and `data-$k-S` that store the Hamiltonian and S matrix for each k point in k space, respectively.
+- **Description**: For LCAO calculations, if out_mat_hs_k is set to 1, then ABACUS will print the upper triangular part of the Hamiltonian matrices and overlap matrices for each k point into a series of .dat files in the directory `OUT.${calculation}`. The files are named `data_k$x_s$y_H/S.dat`, where `$x` indicates the k point index, from 1 up to the number of k points, and `$y` indicates the spin component index. For nspin = 1 and nspin = 4, there will be only one spin component, so `$y` only takes value 1; for nspin = 2, `$y` takes values of 1 and 2, for up and down spin, respectively. And H is for Hamiltonian matrix, S is for overlap matrix.
+
+  Each file starts with a header line "Upper triangular part of the Hamiltonian/Overlap matrix", followed by a line giving the k vector, in units of the reciprocal space vectors, then a line giving the spin component (the same as `$y` in file name), and then "size of matrix" which gives the size of the matrix (namely, the number of atomic basis functions in the system).
+
+  The rest of the file contains the upper triangular part of the specified matrices. For example, if there are altogether 5 basis functions, then this part has 5 lines, with 5, 4, 3, 2, 1 numbers in it, respectively. For multi-k calculations, the matrices are Hermitian and the matrix elements are complex; for gamma-only calculations, the matrices are symmetric and the matrix elements are real.
 - **Default**: 0
 
 #### out_mat_r
 
 - **Type**: Boolean
-- **Description**: Only for LCAO and not gamma_only calculations. When set to 1, ABACUS will generate a file with name staring with `data-rR-tr` which stores overlap matrix as a function of R, in units of lattice vectors.
+- **Description**: Only for LCAO and not gamma_only calculations. When set to 1, ABACUS will generate a file with name staring with `data-rR-tr` which stores the position matrix as a function of R, in units of lattice vectors.
 - **Default**: 0
 
-#### out_mat_hs2
+#### out_mat_hs_r
 
 - **Type**: Boolean
 - **Description**: Only for LCAO and not gamma_only calculations. When set to 1, ABACUS will generate two files starting with `data-HR-sparse` and `data-SR-sparse` that store the Hamiltonian and S matrix in real space, respectively, as functions of R, in units of lattice vectors.

@@ -458,8 +458,8 @@ void Input_Conv::Convert(void)
     GlobalC::en.out_proj_band = INPUT.out_proj_band;
 #ifdef __LCAO
     Local_Orbital_Charge::out_dm = INPUT.out_dm;
-    hsolver::HSolverLCAO::out_mat_hs = INPUT.out_mat_hs;
-    hsolver::HSolverLCAO::out_mat_hsR = INPUT.out_mat_hs2; // LiuXh add 2019-07-16
+    hsolver::HSolverLCAO::out_mat_hs_k = INPUT.out_mat_hs_k;
+    hsolver::HSolverLCAO::out_mat_hs_r = INPUT.out_mat_hs_r; // LiuXh add 2019-07-16
     elecstate::ElecStateLCAO::out_wfc_lcao = INPUT.out_wfc_lcao;
     if (INPUT.calculation == "nscf" && !INPUT.towannier90 && !INPUT.berry_phase)
     {
