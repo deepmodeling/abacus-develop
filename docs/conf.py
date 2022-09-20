@@ -22,7 +22,7 @@ copyright = '2022, ABACUS'
 author = 'ABACUS'
 
 # The full version, including alpha/beta/rc tags
-release = '2.3.5'
+# release = '2.3.5'
 
 
 # -- General configuration ---------------------------------------------------
