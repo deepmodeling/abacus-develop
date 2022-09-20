@@ -1,0 +1,9 @@
+INPUT_PARAMETERS
+pseudo_dir              	../../../tests/PP_ORB
+ntype                         	2
+calculation             	scf
+ecutwfc                       	50
+scf_thr                         1e-08
+scf_nmax                        100
+basis_type                    	pw
+latname				so

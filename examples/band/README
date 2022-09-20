@@ -5,12 +5,17 @@
 /*******************************************************************************/
 
 These examples show how to calculate the bands structures.
-Generally, it requires two steps of calculation:
-1. Do the scf calculation and at the same time output the information of charge by
-   setting 'out_chg' to '1' in INPUT file
-2. Do the nscf calculation with reading the charge from step1 (set 'init_chg' to 'file') 
-   and output the information band (set 'out_band' to '1'). You also need to define
-   a KPT file with a 'LINE' mode (a example is in lcao_Si2/KLINES).  
+It requires two steps of calculation:
+1. Do the scf calculation and output the information of charge:
+   - set 'calculation' to 'scf'
+   - set 'out_chg' to '1'
+2. Do the nscf calculation and output the information of band:
+   - set 'calculation' to 'nscf'
+   - set 'init_chg' to 'file'
+   - set 'out_band' to '1'
+   - set 'pw_diag_thr' to a suitable value when basis_type is 'pw'
+Generally, in step 2, the KPT file has the 'LINE' mode (an example is lcao_Si2/KLINES)
+to calculate a series of specified k points.  
 
 Finish! Then you can see BANDS_1.dat in OUT.ABACUS. Plot it!
 

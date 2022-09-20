@@ -2,7 +2,7 @@ INPUT_PARAMETERS
 #Parameters (General)
 kpoint_file             KLINES
 pseudo_dir              ../../../tests/PP_ORB
-orbital_dir                 ../../../tests/PP_ORB
+orbital_dir             ../../../tests/PP_ORB
 calculation             nscf
 ntype                   1
 nbands                  8 
