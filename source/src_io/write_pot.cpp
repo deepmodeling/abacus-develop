@@ -264,6 +264,10 @@ void Potential::write_elecstat_pot(const std::string &fn, const std::string &fn_
         {
             v_elecstat[ir] += v_efield(0, ir);
         }
+        if (GlobalV::imp_sol)
+        {
+            v_elecstat[ir] += GlobalC::solvent_model.delta_phi[ir];
+        }
     }
 
     //-------------------------------------------
