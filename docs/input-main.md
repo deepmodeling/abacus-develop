@@ -592,7 +592,7 @@ calculations.
 #### scf_thr
 
 - **Type**: Real
-- **Description**: An important parameter in ABACUS. It`s the threshold for electronic iteration. It represents the charge density error between two sequential density from electronic iterations. Usually for local orbitals, usually 1e-6 may be accurate enough.
+- **Description**: An important parameter in ABACUS. It's the threshold for electronic iteration. It represents the charge density error between two sequential density from electronic iterations. Usually for local orbitals, usually 1e-6 may be accurate enough.
 - **Default**:1e-06
 
 #### chg_extrap
