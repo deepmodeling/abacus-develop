@@ -14,7 +14,10 @@ source:
 
 build:
   skip: true  # [not linux]
-  script: cmake -B conda_build ${CMAKE_ARGS} && cmake --build conda_build -j`nproc` && cmake --install conda_build # [linux]
+  script: |
+    cmake -B conda_build ${CMAKE_ARGS}
+    cmake --build conda_build -j`nproc`
+    cmake --install conda_build
   string: {{ GIT_BUILD_STR }}
   number: {{ GIT_DESCRIBE_NUMBER }}
 
