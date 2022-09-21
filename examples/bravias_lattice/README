@@ -13,7 +13,7 @@ These examples show how to use standard Bravias lattice type to set the cell.
          - `trigonal`: trigonal.
          - `st`: simple tetragonal.
          - `bct`: body-centered tetragonal.
-         - `so`: orthorhombic.
+         - `so`: simple orthorhombic.
          - `baco`: base-centered orthorhombic.
          - `fco`: face-centered orthorhombic.
          - `bco`: body-centered orthorhombic.
