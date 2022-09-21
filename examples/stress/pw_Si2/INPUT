@@ -3,7 +3,6 @@ INPUT_PARAMETERS
 pseudo_dir          ../../../tests/PP_ORB
 ntype               1
 nbands              8
-pseudo_type         upf
 calculation         scf
 symmetry            1
 

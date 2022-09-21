@@ -4,7 +4,6 @@ suffix			test
 pseudo_dir              ../../../tests/PP_ORB
 ntype               2
 nbands              35
-pseudo_type         upf201
 gamma_only          0
 
 
