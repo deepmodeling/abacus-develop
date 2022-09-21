@@ -908,7 +908,21 @@ This part of variables are used to control the output of properties.
 #### out_mat_hs_r
 
 - **Type**: Boolean
-- **Description**: Only for LCAO and not gamma_only calculations. When set to 1, ABACUS will generate two files starting with `data-HR-sparse` and `data-SR-sparse` that store the Hamiltonian and S matrix in real space, respectively, as functions of R, in units of lattice vectors.
+- **Description**: or LCAO calculations, if out_mat_hs_r is set to 1, ABACUS will generate files containing the Hamiltonian matrix H(R) and overlap matrix S(R).
+  
+  For nspin = 1 or nspin = 4, two files `data-HR-sparse.csr` and `data-SR-sparse.csr` are generated, which contain the Hamiltonian matrix H(R) and overlap matrix S(R) respectively. For nspin = 2, three files `data-HR-sparse_SPIN1.csr` and `data-HR-sparse_SPIN2.csr` and `data-SR-sparse.csr` are created, where the first two contain H(R) for spin up and spin down, respectively.
+
+  Each file start with two lines, the first gives the dimension of the matrix, while the latter indicates how many different `R` are in the file.
+
+  The rest of the file are arranged in blocks. Each block starts with a line giving the lattic vector `R` and the number of nonzero matrix elements. If there is no nonzero matrix element, then the next block starts immediately on the next line. Otherwise, there will be 3 extra lines in the block, which gives the matrix in CSR format. According to Wikipedia:
+    
+      The CSR format stores a sparse m × n matrix M in row form using three (one-dimensional) arrays (V, COL_INDEX, ROW_INDEX). Let NNZ denote the number of nonzero entries in M. (Note that zero-based indices shall be used here.)
+
+      - The arrays V and COL_INDEX are of length NNZ, and contain the non-zero values and the column indices of those values respectively.
+      
+      - The array ROW_INDEX is of length m + 1 and encodes the index in V and COL_INDEX where the given row starts. This is equivalent to ROW_INDEX[j] encoding the total number of nonzeros above row j. The last element is NNZ , i.e., the fictitious index in V immediately after the last valid index NNZ - 1.
+
+  ***Note: This functionality is not available for gamma_only calculations. If you want to use it in gamma_only calculations, you should turn off gamma_only, and explicitly specifies that gamma point is the only k point in the KPT file.***
 - **Default**: 0
 
 #### out_element_info

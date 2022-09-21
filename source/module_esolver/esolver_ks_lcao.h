@@ -56,9 +56,6 @@ namespace ModuleESolver
 
         // output subfuncs: implemented in src_io/write_HS_R.cpp
         void output_HS_R(
-            const std::string& SR_filename = "data-SR-sparse_SPIN0.csr",
-            const std::string& HR_filename_up = "data-HR-sparse_SPIN0.csr",
-            const std::string HR_filename_down = "data-HR-sparse_SPIN1.csr",
             const bool& binary = false,
             const double& sparse_threshold = 1e-10
         ); //LiuXh add 2019-07-15, modify in 2021-12-3

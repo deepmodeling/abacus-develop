@@ -25,10 +25,7 @@ namespace HS_Matrix
     void save_HSR_sparse(
         LCAO_Matrix &lm,
         const double& sparse_threshold,
-        const bool &binary,  
-        const std::string &SR_filename, 
-        const std::string &HR_filename_up, 
-        const std::string &HR_filename_down
+        const bool &binary
     );
     void save_SR_sparse(
         LCAO_Matrix &lm,

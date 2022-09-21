@@ -137,9 +137,9 @@ fi
 
 #echo $has_hs2
 if ! test -z "$has_hs2"  && [  $has_hs2 == 1 ]; then
-    python3 ../tools/CompareFile.py data-HR-sparse_SPIN0.csr.ref OUT.autotest/data-HR-sparse_SPIN0.csr 8
+    python3 ../tools/CompareFile.py data-HR-sparse.csr.ref OUT.autotest/data-HR-sparse.csr 8
     echo "CompareHR_pass $?" >>$1
-    python3 ../tools/CompareFile.py data-SR-sparse_SPIN0.csr.ref OUT.autotest/data-SR-sparse_SPIN0.csr 8
+    python3 ../tools/CompareFile.py data-SR-sparse.csr.ref OUT.autotest/data-SR-sparse.csr 8
     echo "CompareSR_pass $?" >>$1
 fi
 

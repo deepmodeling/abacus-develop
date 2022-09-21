@@ -418,10 +418,7 @@ void HS_Matrix::save_HSR_tr(const int current_spin, LCAO_Matrix &lm)
 void HS_Matrix::save_HSR_sparse(
     LCAO_Matrix &lm,
     const double& sparse_threshold,
-    const bool &binary,  
-    const std::string &SR_filename, 
-    const std::string &HR_filename_up, 
-    const std::string &HR_filename_down = ""
+    const bool &binary
 )
 {
     ModuleBase::TITLE("HS_Matrix","save_HSR_sparse");
@@ -532,9 +529,16 @@ void HS_Matrix::save_HSR_sparse(
 
     std::stringstream ssh[2];
     std::stringstream sss;
-    ssh[0] << GlobalV::global_out_dir << HR_filename_up;
-    ssh[1] << GlobalV::global_out_dir << HR_filename_down;
-    sss << GlobalV::global_out_dir << SR_filename;
+    if(GlobalV::NSPIN==1||GlobalV::NSPIN==4)
+    {
+        ssh[0] << GlobalV::global_out_dir << "data-HR-sparse.csr";
+    }
+    else
+    {
+        ssh[0] << GlobalV::global_out_dir << "data-HR-sparse_SPIN1.csr";
+        ssh[1] << GlobalV::global_out_dir << "data-HR-sparse_SPIN2.csr";
+    }
+    sss << GlobalV::global_out_dir << "data-SR-sparse.csr";
     std::ofstream g1[2];
     std::ofstream g2;
 
@@ -613,9 +617,9 @@ void HS_Matrix::save_HSR_sparse(
             {
                 for (int ispin = 0; ispin < spin_loop; ++ispin)
                 {
-                    g1[ispin] << dRx << " " << dRy << " " << dRz << " " << H_nonzero_num[ispin][count] << std::endl;
+                    g1[ispin] << dRx << " " << dRy << " " << dRz << " " << H_nonzero_num[ispin][count] << "  // R (lattice vector); Number of nonzero matrix elements" << std::endl;
                 }
-                g2 << dRx << " " << dRy << " " << dRz << " " << S_nonzero_num[count] << std::endl;
+                g2 << dRx << " " << dRy << " " << dRz << " " << S_nonzero_num[count] << "  // R (lattice vector); Number of nonzero matrix elements" << std::endl;
             }
         }
 
