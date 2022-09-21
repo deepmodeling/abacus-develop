@@ -1,5 +1,5 @@
 =================================================
-Detailed Introduction of Input Files
+Detailed Introduction of the Input Files
 =================================================
 
 .. toctree::

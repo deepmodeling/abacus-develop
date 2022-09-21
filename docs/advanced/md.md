@@ -1,3 +1,3 @@
-# Molecular dynamics
+# Molecular Dynamics
 
 

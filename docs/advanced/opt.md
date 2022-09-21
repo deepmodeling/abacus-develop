@@ -1,3 +1,3 @@
-# Geometry optimization
+# Geometry Optimization
 
 

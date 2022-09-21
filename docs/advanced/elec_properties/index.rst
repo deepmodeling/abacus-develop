@@ -1,5 +1,5 @@
 =================================================
-Electronic properties and outputs
+Electronic Properties and Outputs
 =================================================
 
 .. toctree::
