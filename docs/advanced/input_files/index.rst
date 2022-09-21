@@ -3,7 +3,7 @@ Detailed Introduction of the Input Files
 =================================================
 
 .. toctree::
-    :maxdepth: 2
+    :maxdepth: 1
 
     input-main
     stru
