@@ -1,1 +1,1 @@
-# Obtaining Wave Functions
+# Extracting Wave Functions

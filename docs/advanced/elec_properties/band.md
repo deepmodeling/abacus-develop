@@ -1,1 +1,1 @@
-# Obtaining Band Structure
+# Extracting Band Structure

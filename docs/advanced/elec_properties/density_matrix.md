@@ -1,1 +1,1 @@
-# Obtaining ensity Matrices
+# Extracting Density Matrices

@@ -1,1 +1,1 @@
-# Obtaining Potential
+# Extracting Potential

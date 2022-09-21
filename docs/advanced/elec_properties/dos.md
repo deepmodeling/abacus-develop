@@ -1,1 +1,1 @@
-# Obtaining DOS and PDOS
+# Calculating DOS and PDOS
