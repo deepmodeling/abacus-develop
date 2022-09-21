@@ -26,12 +26,12 @@ Hi everyone, here are ABACUS Documentations.
    :caption: Advanced
 
    advanced/install
-   advanced/scf
-   advanced/pp_orb
+   advanced/scf/index
+   advanced/pp_orb/index
    advanced/opt
    advanced/md
-   advanced/elec_properties
-   advanced/interface
+   advanced/elec_properties/index
+   advanced/interface/index
    advanced/input-main
 
 .. toctree::
