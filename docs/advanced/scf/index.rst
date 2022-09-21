@@ -3,8 +3,8 @@ Running SCF
 =================================================
 
 .. toctree::
-   :maxdepth: 4
-   
+   :maxdepth: 2
+
    initialization
    construct_H
    hsolver
