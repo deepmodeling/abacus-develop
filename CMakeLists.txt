@@ -1,8 +1,7 @@
-########################################
-# CMake build system
-# This file is part of ABACUS
 cmake_minimum_required(VERSION 3.16)
-########################################
+if(POLICY CMP0131) # From CMake 3.24
+    cmake_policy(SET CMP0135 NEW)
+endif()
 
 project(ABACUS
     VERSION 2.3.0
@@ -243,7 +242,7 @@ endif()
 if(ENABLE_LIBXC)
   find_package(Libxc 5.1.7 HINTS ${Libxc_DIR}/share/cmake/Libxc)
   if(${Libxc_FOUND})
-    message(STATUS "Found Libxc: version "${Libxc_VERSION})
+    message(STATUS "Found Libxc: version" ${Libxc_VERSION})
     target_link_libraries(${ABACUS_BIN_NAME} Libxc::xc)
     include_directories(${Libxc_INCLUDE_DIRS})
   else()
