@@ -205,6 +205,7 @@ namespace elecstate
 
     void ElecState::calculate_weights(void) {}
     void ElecState::calEBand() {}
+    void ElecState::allocateRho(const int &nspin_in, const int &nrxx_in, const int &ngmc_in){}
 }
 
 template<class T>
