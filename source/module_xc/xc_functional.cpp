@@ -236,6 +236,7 @@ std::vector<xc_func_type> XC_Functional::init_func(const int xc_polarized)
             double parameter_finitet[1] = {GlobalV::XC_TEMPERATURE * 0.5}; // converts to Hartree for libxc
             xc_func_set_ext_params(&funcs.back(), parameter_finitet);
         }
+#ifdef __EXX
 		else if( id == XC_HYB_GGA_XC_PBEH ) // PBE0
 		{
 			add_func( XC_HYB_GGA_XC_PBEH );		
@@ -252,6 +253,7 @@ std::vector<xc_func_type> XC_Functional::init_func(const int xc_polarized)
 				GlobalC::exx_global.info.hse_omega };
 			xc_func_set_ext_params(&funcs.back(), parameter_hse);
 		}
+#endif
 		else
 		{
 			add_func( id );

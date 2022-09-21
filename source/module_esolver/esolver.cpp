@@ -1,8 +1,10 @@
 #include "esolver.h"
 #include "esolver_ks_pw.h"
 #include "esolver_sdft_pw.h"
+#ifdef __LCAO
 #include "esolver_ks_lcao.h"
 #include "esolver_ks_lcao_tddft.h"
+#endif
 #include "esolver_of.h"
 #include "esolver_lj.h"
 #include "esolver_dp.h"
@@ -64,6 +66,7 @@ namespace ModuleESolver
         {
             p_esolver = new ESolver_KS_PW();
         }
+#ifdef __LCAO
         else if (esolver_type == "ksdft_lcao")
         {
             p_esolver = new ESolver_KS_LCAO();
@@ -72,6 +75,7 @@ namespace ModuleESolver
         {
             p_esolver = new ESolver_KS_LCAO_TDDFT();
         }
+#endif
         else if (esolver_type == "sdft_pw")
         {
             p_esolver = new ESolver_SDFT_PW();

@@ -11,7 +11,6 @@
 #include "module_xc/xc_functional.h"
 #include "src_parallel/parallel_grid.h"
 #include "src_parallel/parallel_kpoints.h"
-#include "src_parallel/parallel_pw.h"
 #include "src_pw/VNL_in_pw.h"
 #include "src_pw/charge_broyden.h"
 #include "src_pw/energy.h"
@@ -162,12 +161,6 @@ wavefunc::wavefunc()
 {
 }
 wavefunc::~wavefunc()
-{
-}
-Parallel_PW::Parallel_PW()
-{
-}
-Parallel_PW::~Parallel_PW()
 {
 }
 Magnetism::Magnetism()
