@@ -532,14 +532,6 @@ void Input_Conv::Convert(void)
     GlobalV::sigma_k = INPUT.sigma_k;
     GlobalV::nc_k = INPUT.nc_k;
 
-    //-----------------------------------------------
-    // compensating charge
-    //-----------------------------------------------
-    GlobalV::comp_chg = INPUT.comp_chg;
-    GlobalC::solvent_model.comp_q = INPUT.comp_q;
-    GlobalC::solvent_model.comp_l = INPUT.comp_l;
-    GlobalC::solvent_model.comp_center = INPUT.comp_center;
-    GlobalC::solvent_model.comp_dim = INPUT.comp_dim;
     ModuleBase::timer::tick("Input_Conv", "Convert");
     return;
 }

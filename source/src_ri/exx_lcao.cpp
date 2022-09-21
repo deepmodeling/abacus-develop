@@ -648,7 +648,7 @@ gettimeofday( &t_start, NULL);
 		case Exx_Global::Hybrid_Type::PBE0:
 			abfs_ccp = Conv_Coulomb_Pot_K::cal_orbs_ccp( this->abfs, Conv_Coulomb_Pot_K::Ccp_Type::Hf, {}, info.ccp_rmesh_times );		break;
 		case Exx_Global::Hybrid_Type::SCAN0:
-			abfs_ccp = Conv_Coulomb_Pot_K::cal_orbs_ccp( this->abfs, Conv_Coulomb_Pot_K::Ccp_Type::Ccp, {}, info.ccp_rmesh_times );		break;
+			abfs_ccp = Conv_Coulomb_Pot_K::cal_orbs_ccp( this->abfs, Conv_Coulomb_Pot_K::Ccp_Type::Hf, {}, info.ccp_rmesh_times );		break;
 		case Exx_Global::Hybrid_Type::HSE:
 			abfs_ccp = Conv_Coulomb_Pot_K::cal_orbs_ccp( this->abfs, Conv_Coulomb_Pot_K::Ccp_Type::Hse, {{"hse_omega",info.hse_omega}}, info.ccp_rmesh_times );	break;
 		default:

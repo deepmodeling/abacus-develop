@@ -398,7 +398,7 @@ class Input
     //==========================================================
     //    DFT+DMFT       Xin Qu added on 2021-08
     //==========================================================
-    bool dft_plus_dmft; // true:DFT+U correction; false：standard DFT calcullation(default)
+    bool dft_plus_dmft; // true:DFT+DMFT; false：standard DFT calcullation(default)
 
     //==========================================================
     // DeepKS -- added by caoyu and mohan
@@ -425,12 +425,6 @@ class Input
     double tau;
     double sigma_k;
     double nc_k;
-    // compensating charge
-    bool comp_chg;
-    double comp_q;
-    double comp_l;
-    double comp_center;
-    int comp_dim;
 
     //==========================================================
     // variables for test only

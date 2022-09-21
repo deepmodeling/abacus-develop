@@ -106,13 +106,6 @@ void Forces::init(ModuleBase::matrix& force, const psi::Psi<std::complex<double>
         }
     }
 
-    ModuleBase::matrix forcecomp;
-    if (GlobalV::comp_chg)
-    {
-        forcecomp.create(GlobalC::ucell.nat, 3);
-        GlobalC::solvent_model.cal_comp_force(forcecomp, GlobalC::rhopw);
-    }
-
     // impose total force = 0
     int iat = 0;
     for (int ipol = 0; ipol < 3; ipol++)
@@ -141,11 +134,6 @@ void Forces::init(ModuleBase::matrix& force, const psi::Psi<std::complex<double>
                 if (GlobalV::GATE_FLAG)
                 {
                     force(iat, ipol) = force(iat, ipol) + force_gate(iat, ipol);
-                }
-
-                if (GlobalV::comp_chg)
-                {
-                    force(iat, ipol) = force(iat, ipol) + forcecomp(iat, ipol);
                 }
 
                 if(GlobalV::imp_sol)

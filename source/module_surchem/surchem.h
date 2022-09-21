@@ -25,15 +25,6 @@ class surchem
     ModuleBase::matrix Vel;
     double qs;
 
-    // compensating charge (in real space, used to cal_Acomp)
-    double *comp_real;
-    double *phi_comp_R;
-
-    // compensating charge params
-    double comp_q;
-    double comp_l;
-    double comp_center;
-    int comp_dim;
     // get atom info
     atom_in GetAtom;
 
@@ -45,17 +36,6 @@ class surchem
                     ModulePW::PW_Basis *rho_basis,
                     const complex<double> *Porter_g,
                     complex<double> *PS_TOTN);
-
-    void add_comp_chg(const UnitCell &cell,
-                      ModulePW::PW_Basis *rho_basis,
-                      double q,
-                      double l,
-                      double center,
-                      complex<double> *NG,
-                      int dim,
-                      bool flag); // Set value of comp_reci[ig_gge0] when flag is true. 
-
-    void cal_comp_force(ModuleBase::matrix &force_comp, ModulePW::PW_Basis *rho_basis);
 
     void gauss_charge(const UnitCell &cell, ModulePW::PW_Basis *rho_basis, complex<double> *N);
 
@@ -110,11 +90,6 @@ class surchem
                                     ModulePW::PW_Basis *rho_basis,
                                     const int &nspin,
                                     const double *const *const rho);
-
-    ModuleBase::matrix v_compensating(const UnitCell &cell,
-                                      ModulePW::PW_Basis *rho_basis,
-                                      const int &nspin,
-                                      const double *const *const rho);
 
     void test_V_to_N(ModuleBase::matrix &v,
                      const UnitCell &cell,

@@ -74,7 +74,7 @@ void Potential::allocate(const int nrxx)
     this->vnew.create(GlobalV::NSPIN, nrxx);
     ModuleBase::Memory::record("Potential", "vnew", GlobalV::NSPIN * nrxx, "double");
 
-    if (GlobalV::imp_sol || GlobalV::comp_chg)
+    if (GlobalV::imp_sol)
     {
         GlobalC::solvent_model.allocate(nrxx, GlobalV::NSPIN);
     }
@@ -367,10 +367,6 @@ ModuleBase::matrix Potential::v_of_rho(const double *const *const rho_in, const 
     if (GlobalV::VH_IN_H)
     {
         v += H_Hartree_pw::v_hartree(GlobalC::ucell, GlobalC::rhopw, GlobalV::NSPIN, rho_in);
-        if(GlobalV::comp_chg)
-        {
-            v += GlobalC::solvent_model.v_compensating(GlobalC::ucell, GlobalC::rhopw, GlobalV::NSPIN, rho_in);
-        }
         if (GlobalV::imp_sol)
         {
             v += GlobalC::solvent_model.v_correction(GlobalC::ucell, GlobalC::rhopw, GlobalV::NSPIN, rho_in);

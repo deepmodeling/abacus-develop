@@ -237,7 +237,5 @@ extern double tau;
 extern double sigma_k;
 extern double nc_k;
 
-// compensating charge
-extern bool comp_chg;
 } // namespace GlobalV
 #endif

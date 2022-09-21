@@ -70,7 +70,7 @@ void Input::Print(const std::string &fn) const
     ModuleBase::GlobalFunc::OUTP(ofs, "kpar", kpar, "devide all processors into kpar groups and k points will be distributed among each group");
     ModuleBase::GlobalFunc::OUTP(ofs, "bndpar", bndpar, "devide all processors into bndpar groups and bands will be distributed among each group");
     ModuleBase::GlobalFunc::OUTP(ofs, "out_freq_elec", out_freq_elec, "the frequency ( >= 0) of electronic iter to output charge density and wavefunction. 0: output only when converged");
-    ModuleBase::GlobalFunc::OUTP(ofs, "dft_plus_dmft", dft_plus_dmft, "true:DFT+U correction; false: standard DFT calcullation(default)");
+    ModuleBase::GlobalFunc::OUTP(ofs, "dft_plus_dmft", dft_plus_dmft, "true:DFT+DMFT; false: standard DFT calcullation(default)");
     ModuleBase::GlobalFunc::OUTP(ofs, "printe", printe, "Print out energy for each band for every printe steps");
     ModuleBase::GlobalFunc::OUTP(ofs, "mem_saver", mem_saver, "Only for nscf calculations. if set to 1, then a memory saving technique will be used for many k point calculations.");
     ModuleBase::GlobalFunc::OUTP(ofs, "diago_proc", diago_proc, "the number of procs used to do diagonalization");
@@ -372,14 +372,7 @@ void Input::Print(const std::string &fn) const
     ModuleBase::GlobalFunc::OUTP(ofs, "sigma_k", sigma_k, " the width of the diffuse cavity");
     ModuleBase::GlobalFunc::OUTP(ofs, "nc_k", nc_k, " the cut-off charge density");
 
-    ofs << "\n#Parameters (19.compensating_charge)" << std::endl;
-    ModuleBase::GlobalFunc::OUTP(ofs, "comp_chg", comp_chg, " add compensating charge");
-    ModuleBase::GlobalFunc::OUTP(ofs, "comp_q", comp_q, " total charge of compensating charge");
-    ModuleBase::GlobalFunc::OUTP(ofs, "comp_l", comp_l, " total length of compensating charge");
-    ModuleBase::GlobalFunc::OUTP(ofs, "comp_center", comp_center, " center of compensating charge on dim");
-    ModuleBase::GlobalFunc::OUTP(ofs, "comp_dim", comp_dim, " dimension of compensating charge(x, y or z)");
-
-    ofs << "\n#Parameters (20.dft+u)" << std::endl;
+    ofs << "\n#Parameters (19.dft+u)" << std::endl;
     ModuleBase::GlobalFunc::OUTP(ofs, "dft_plus_u", dft_plus_u, "true:DFT+U correction; false: standard DFT calcullation(default)");
     ModuleBase::GlobalFunc::OUTP(ofs, "dftu_type", dftu_type, "1:rotationally invarient formalism; 2:simplified form(default)");
     ModuleBase::GlobalFunc::OUTP(ofs, "double_counting", double_counting, "1:FLL(fully localized limit)(default); 2:AMF(around mean field)");

@@ -211,5 +211,4 @@ double tau = 1.0798 * 1e-5;
 double sigma_k = 0.6;
 double nc_k = 0.00037;
 
-bool comp_chg = false; // compensating charge
 } // namespace GlobalV
