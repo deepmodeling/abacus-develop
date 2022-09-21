@@ -1,4 +1,7 @@
 remove_definitions(-D__LCAO)
+remove_definitions(-D__DEEPKS)
+remove_definitions(-D__CUDA)
+remove_definitions(-D__ROCM)
 
 AddTest(
   TARGET abacus_pw.exe #Test PW ABACUS without LCAO #Please also update Makefile in src_pw
