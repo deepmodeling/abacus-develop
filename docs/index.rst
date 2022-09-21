@@ -14,7 +14,7 @@ Hi everyone, here are ABACUS Documentations.
 .. toctree::
    :maxdepth: 2
    :numbered:
-   :caption: Documentations
+   :caption: Getting Started
 
    install
    features
@@ -26,15 +26,24 @@ Hi everyone, here are ABACUS Documentations.
 .. toctree::
    :maxdepth: 2
    :numbered:
-   :caption: Examples
+   :caption: Advanced
 
    examples/index
 
 .. toctree::
    :maxdepth: 2
    :numbered:
-   :caption: Contributing
+   :caption: Citting ABACUS
 
+.. toctree::
+   :maxdepth: 2
+   :numbered:
+   :caption: Developing team
+
+.. toctree::
+   :maxdepth: 2
+   :numbered:
+   :caption: Contributing to ABACUS
 
    CONTRIBUTING
 
