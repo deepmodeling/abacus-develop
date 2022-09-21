@@ -1,1 +1,5 @@
-# Speed up Calculation
+# Accelerating the Calculation
+
+## K-point Parallelization
+
+## Accelerating Grid Integration
