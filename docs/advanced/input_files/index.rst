@@ -1,5 +1,5 @@
 =================================================
-Electronic properties and outputs
+Detailed Introduction of Input Files
 =================================================
 
 .. toctree::

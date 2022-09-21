@@ -53,7 +53,7 @@ XXXXXXX
 
 For a more detailed description of STRU file, please consult XXXXX
 
-- `KPT`
+## *KPT*
 
 This file contains information of the kpoint grid setting for the Brillouin zone sampling.
     
