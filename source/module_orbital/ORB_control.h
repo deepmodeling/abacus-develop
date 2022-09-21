@@ -45,7 +45,7 @@ public:
         const double& lcao_dr_in, // mohan add 2021-04-16
         const double& lcao_rmax_in, // mohan add 2021-04-16
         const bool& deepks_setorb,
-        const int& out_mat_r,
+        const int& out_mat_pos_r,
         const bool& force_flag, // mohan add 2021-05-07
         const int& my_rank // mohan add 2021-04-26
     );

@@ -223,7 +223,7 @@ class Input
     int out_proj_band; // projected band structure calculation jiyy add 2022-05-11
     int out_mat_hs_k; // output H matrix and S matrix in local basis.
     int out_mat_hs_r; // LiuXh add 2019-07-16, output H(R) matrix and S(R) matrix in local basis.
-    int out_mat_r; // jingan add 2019-8-14, output r(R) matrix.
+    int out_mat_pos_r; // jingan add 2019-8-14, output r(R) matrix.
     bool out_wfc_lcao; // output the wave functions in local basis.
     bool out_alllog; // output all logs.
     bool out_element_info; // output infomation of all element

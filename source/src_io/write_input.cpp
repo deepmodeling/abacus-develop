@@ -197,7 +197,7 @@ void Input::Print(const std::string &fn) const
     ModuleBase::GlobalFunc::OUTP(ofs, "lcao_rmax", lcao_rmax, "max R for 1D two-center integration table");
     ModuleBase::GlobalFunc::OUTP(ofs, "out_mat_hs_k", out_mat_hs_k, "output H and S matrix");
     ModuleBase::GlobalFunc::OUTP(ofs, "out_mat_hs_r", out_mat_hs_r, "output H(R) and S(R) matrix");
-    ModuleBase::GlobalFunc::OUTP(ofs, "out_mat_r", out_mat_r, "output r(R) matrix");
+    ModuleBase::GlobalFunc::OUTP(ofs, "out_mat_pos_r", out_mat_pos_r, "output r(R) matrix");
     ModuleBase::GlobalFunc::OUTP(ofs, "out_wfc_lcao", out_wfc_lcao, "ouput LCAO wave functions");
     ModuleBase::GlobalFunc::OUTP(ofs, "bx", bx, "division of an element grid in FFT grid along x");
     ModuleBase::GlobalFunc::OUTP(ofs, "by", by, "division of an element grid in FFT grid along y");

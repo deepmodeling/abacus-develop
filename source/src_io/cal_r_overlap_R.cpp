@@ -251,7 +251,7 @@ void cal_r_overlap_R::init(const Parallel_Orbitals &pv)
 }
 
 
-void cal_r_overlap_R::out_r_overlap_R(const int nspin)
+void cal_r_overlap_R::out_r_overlap_R()
 {	
 	ModuleBase::TITLE("cal_r_overlap_R","out_r_overlap_R");
 	ModuleBase::timer::tick("cal_r_overlap_R","out_r_overlap_R");
@@ -293,7 +293,8 @@ void cal_r_overlap_R::out_r_overlap_R(const int nspin)
 								int orb_index_row = iw1 / GlobalV::NPOL;
 								int orb_index_col = iw2 / GlobalV::NPOL;
 								
-								// soc中非对角项为零，两个对角项相同
+								// For soc, off-diagonal elements are zero, while the two diagonal blocks
+								// have the same value
 								int new_index = iw1 - GlobalV::NPOL*orb_index_row 
 									+ (iw2 - GlobalV::NPOL*orb_index_col)*GlobalV::NPOL;
 								
@@ -311,19 +312,20 @@ void cal_r_overlap_R::out_r_overlap_R(const int nspin)
 									int L2 = iw2iL(orb_index_col);  
 									int m2 = iw2im(orb_index_col);
 
-									ModuleBase::Vector3<double> r_distance = ( GlobalC::ucell.atoms[it2].tau[ia2] 
-									- GlobalC::ucell.atoms[it1].tau[ia1] + R_car ) * GlobalC::ucell.lat0;	
+									ModuleBase::Vector3<double> r_distance = 
+										( GlobalC::ucell.atoms[it2].tau[ia2] - GlobalC::ucell.atoms[it1].tau[ia1] + R_car ) * GlobalC::ucell.lat0;	
 
-double overlap_o = center2_orb11[it1][it2][L1][N1][L2].at(N2).cal_overlap( origin_point, r_distance, m1, m2 );
-									double overlap_x = -1 * factor * 
-center2_orb21_r[it1][it2][L1][N1][L2].at(N2).cal_overlap( origin_point, r_distance, m1, 1, m2 ); // m = 1
-									double overlap_y = -1 * factor * 
-center2_orb21_r[it1][it2][L1][N1][L2].at(N2).cal_overlap( origin_point, r_distance, m1, 2, m2 ); // m = -1
-									double overlap_z =      factor * 
-center2_orb21_r[it1][it2][L1][N1][L2].at(N2).cal_overlap( origin_point, r_distance, m1, 0, m2 ); // m = 0	
+									double overlap_o = center2_orb11[it1][it2][L1][N1][L2].at(N2).cal_overlap
+										( origin_point, r_distance, m1, m2 );
+									double overlap_x = -1 * factor * center2_orb21_r[it1][it2][L1][N1][L2].at(N2).cal_overlap
+										( origin_point, r_distance, m1, 1, m2 ); // m = 1
+									double overlap_y = -1 * factor * center2_orb21_r[it1][it2][L1][N1][L2].at(N2).cal_overlap
+										( origin_point, r_distance, m1, 2, m2 ); // m = -1
+									double overlap_z =      factor * center2_orb21_r[it1][it2][L1][N1][L2].at(N2).cal_overlap
+										( origin_point, r_distance, m1, 0, m2 ); // m = 0	
 
 									psi_r_psi[ix][iy][iz][icc] = ModuleBase::Vector3<double>( overlap_x,overlap_y,overlap_z ) 
-+ GlobalC::ucell.atoms[it1].tau[ia1] * GlobalC::ucell.lat0 * overlap_o;
+										+ GlobalC::ucell.atoms[it1].tau[ia1] * GlobalC::ucell.lat0 * overlap_o;
 
 								}
 								else
@@ -341,11 +343,11 @@ center2_orb21_r[it1][it2][L1][N1][L2].at(N2).cal_overlap( origin_point, r_distan
 	// out r_overlap_R file
 	std::ofstream out_r;
 	std::stringstream ssh;
-	ssh << GlobalV::global_out_dir << "data-rR-tr_SPIN" << nspin;
+	ssh << GlobalV::global_out_dir << "data-rR-tr.dat";
 	if(GlobalV::DRANK == 0)
 	{
 		out_r.open(ssh.str().c_str());
-		out_r << "Matrix Dimension of std::vector r(R): " << GlobalV::NLOCAL <<std::endl;
+		out_r << "Matrix Dimension (number of basis functions): " << GlobalV::NLOCAL <<std::endl;
 	}
 	
 	for(int ix = 0; ix < R_x_num; ix++)
@@ -398,7 +400,7 @@ center2_orb21_r[it1][it2][L1][N1][L2].at(N2).cal_overlap( origin_point, r_distan
 							if(i==0 && j==0)
 							{
 								out_r << dRx << " " << dRy << " " << dRz  
-								<< "    //R std::vector(R2 - R1,unit: lattice vector)" <<std::endl;
+								<< "    //cell R (unit: lattice vector)" <<std::endl;
 							}
 							
 							out_r << std::setw(20) << std::setprecision(9) << std::setiosflags(ios::scientific) << liner_x[j] << " "

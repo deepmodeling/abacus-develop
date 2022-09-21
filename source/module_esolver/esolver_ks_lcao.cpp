@@ -1,5 +1,5 @@
 #include "esolver_ks_lcao.h"
-
+#include "src_io/cal_r_overlap_R.h"
 //--------------temporary----------------------------
 #include "../module_base/global_function.h"
 #include "../src_io/print_info.h"
@@ -308,7 +308,7 @@ void ESolver_KS_LCAO::Init_Basis_lcao(ORB_control& orb_con, Input& inp, UnitCell
                                  inp.lcao_dr,
                                  inp.lcao_rmax,
                                  GlobalV::deepks_setorb,
-                                 inp.out_mat_r,
+                                 inp.out_mat_pos_r,
                                  GlobalV::CAL_FORCE,
                                  GlobalV::MY_RANK);
 
@@ -941,6 +941,13 @@ void ESolver_KS_LCAO::afterscf()
 
         // Output wave functions, bands, k-points information, and etc.
         GlobalC::dmft.out_to_dmft(this->LOWF, *this->UHM.LM);
+    }
+
+    if(INPUT.out_mat_pos_r)
+    {
+        cal_r_overlap_R r_matrix;
+        r_matrix.init(*this->LOWF.ParaV);
+        r_matrix.out_r_overlap_R();
     }
 
     if (hsolver::HSolverLCAO::out_mat_hs_r)

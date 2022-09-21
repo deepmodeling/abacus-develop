@@ -287,7 +287,7 @@ void Input::Default(void)
     out_proj_band = 0;
     out_mat_hs_k = 0;
     out_mat_hs_r = 0; // LiuXh add 2019-07-15
-    out_mat_r = 0; // jingan add 2019-8-14
+    out_mat_pos_r = 0; // jingan add 2019-8-14
     out_wfc_lcao = false;
     out_alllog = false;
     dos_emin_ev = -15; //(ev)
@@ -1095,9 +1095,9 @@ bool Input::Read(const std::string &fn)
         {
             read_value(ifs, out_mat_hs_r);
         }
-        else if (strcmp("out_mat_r", word) == 0)
+        else if (strcmp("out_mat_pos_r", word) == 0)
         {
-            read_value(ifs, out_mat_r);
+            read_value(ifs, out_mat_pos_r);
         }
         else if (strcmp("out_wfc_lcao", word) == 0)
         {
@@ -1895,6 +1895,11 @@ bool Input::Read(const std::string &fn)
         // std::cout << "gamma_only_local =" << gamma_only_local << std::endl;
     }
 
+    if((out_mat_hs_r || out_mat_pos_r) && gamma_only_local)
+    {
+        ModuleBase::WARNING_QUIT("Input", "printing of H(R)/S(R)/r(R) is not available gamma only calculations");
+    }
+
     return true;
 } // end read_parameters
 
@@ -2125,7 +2130,7 @@ void Input::Bcast()
     Parallel_Common::bcast_int(out_proj_band);
     Parallel_Common::bcast_int(out_mat_hs_k);
     Parallel_Common::bcast_int(out_mat_hs_r); // LiuXh add 2019-07-15
-    Parallel_Common::bcast_int(out_mat_r); // jingan add 2019-8-14
+    Parallel_Common::bcast_int(out_mat_pos_r); // jingan add 2019-8-14
     Parallel_Common::bcast_bool(out_wfc_lcao);
     Parallel_Common::bcast_bool(out_alllog);
     Parallel_Common::bcast_bool(out_element_info);

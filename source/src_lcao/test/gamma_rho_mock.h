@@ -837,7 +837,7 @@ void Run_lcao::lcao_line(ModuleESolver::ESolver *p_esolver)
                            INPUT.lcao_dr,
                            INPUT.lcao_rmax,
                            GlobalV::deepks_setorb,
-                           INPUT.out_mat_r,
+                           INPUT.out_mat_pos_r,
                            GlobalV::CAL_FORCE,
                            GlobalV::MY_RANK);
 
@@ -1244,7 +1244,7 @@ void ORB_control::read_orb_first(
 	const double &lcao_dr_in, // mohan add 2021-04-16
 	const double &lcao_rmax_in, // mohan add 2021-04-16
 	const bool &deepks_setorb,
-	const int &out_mat_r,
+	const int &out_mat_pos_r,
 	const bool &force_flag, // mohan add 2021-05-07
 	const int &my_rank // mohan add 2021-04-26
 ) 
@@ -1277,7 +1277,7 @@ void ORB_control::read_orb_first(
 		ntype, 
 		lmax, 
 		deepks_setorb, 
-		out_mat_r, 
+		out_mat_pos_r, 
 		force_flag,
 		my_rank);
 
@@ -1494,7 +1494,7 @@ void LCAO_Orbitals::Read_Orbitals(
 	const int &ntype_in, 
 	const int &lmax_in,
 	const bool &deepks_setorb,
-	const int &out_mat_r,
+	const int &out_mat_pos_r,
 	const bool &force_flag, // mohan add 2021-05-07
 	const int &my_rank) // mohan add 2021-04-26
 {
@@ -1566,7 +1566,7 @@ void LCAO_Orbitals::Read_Orbitals(
 	}
 
 	// jingan add for calculate r(R) matrix
-	if(out_mat_r) 
+	if(out_mat_pos_r) 
 	{
 		kmesh = kmesh * 4;
 	}

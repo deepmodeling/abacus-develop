@@ -160,7 +160,7 @@ void test_deepks::set_orbs(const double &lat0_in)
 			lcao_dr,
 			lcao_rmax,
 			GlobalV::deepks_setorb,
-			out_mat_r,
+			out_mat_pos_r,
 			GlobalV::CAL_FORCE,
 			my_rank);
 		

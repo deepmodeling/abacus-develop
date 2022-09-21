@@ -52,7 +52,7 @@ void ORB_control::read_orb_first(
     const double& lcao_dr_in, // mohan add 2021-04-16
     const double& lcao_rmax_in, // mohan add 2021-04-16
     const bool& deepks_setorb,
-    const int& out_mat_r,
+    const int& out_mat_pos_r,
     const bool& force_flag, // mohan add 2021-05-07
     const int& my_rank // mohan add 2021-04-26
 )
@@ -85,7 +85,7 @@ void ORB_control::read_orb_first(
         ntype,
         lmax,
         deepks_setorb,
-        out_mat_r,
+        out_mat_pos_r,
         force_flag,
         my_rank);
 

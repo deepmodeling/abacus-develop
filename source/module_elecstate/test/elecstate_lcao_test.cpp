@@ -171,9 +171,9 @@ void init()
     GlobalC::ucell.setup("test", 1, 2, false, "None");
     GlobalC::ucell.setup_cell(GlobalC::ORB, GlobalV::global_pseudo_dir, GlobalV::stru_file, GlobalV::ofs_running);
     GlobalC::CHR.cal_nelec();
-    int out_mat_r = 0;
+    int out_mat_pos_r = 0;
     GlobalC::ORB.Read_Orbitals(GlobalV::ofs_running,GlobalC::ucell.ntype,GlobalC::ucell.lmax,GlobalV::deepks_setorb,
-                                out_mat_r,GlobalV::CAL_FORCE,GlobalV::MY_RANK);
+                                out_mat_pos_r,GlobalV::CAL_FORCE,GlobalV::MY_RANK);
     ModuleBase::Ylm::set_coefficients();   
     set_pw();
     GlobalC::CHR.allocate(GlobalV::NSPIN, GlobalC::rhopw->nrxx, 0);                             
