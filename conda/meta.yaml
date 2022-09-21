@@ -13,46 +13,35 @@ source:
   # git_depth: 1
 
 build:
-  script: cmake -B conda_build && cmake --build conda_build -j`nproc` && cmake --install conda_build # [linux]
-  # -DCMAKE_PREFIX_PATH=$PREFIX -DCMAKE_INSTALL_PREFIX=$PREFIX
-  skip: true  # [win]
-  number: {{ GIT_DESCRIBE_NUMBER }}
+  skip: true  # [not linux]
+  script: cmake -B conda_build ${CMAKE_ARGS} && cmake --build conda_build -j`nproc` && cmake --install conda_build # [linux]
   string: {{ GIT_BUILD_STR }}
-
+  number: {{ GIT_DESCRIBE_NUMBER }}
 
 requirements:
   build:
     - {{ compiler('cxx') }}
     - make
     - cmake
-    - llvm-openmp  # [osx]
-    - libgomp  # [linux]
+    - libgomp # [linux]
 
   host:
     - {{ mpi }}
-    - elpa=*=mpi*
-    # - libxc
     - blas=*=openblas
-    # - mkl
-    # - mkl_fft
-    # - scalapack
-    # - lapack
+    - elpa=*=mpi*
     - fftw
 
   run:
     - {{ mpi }}
     - elpa=*=mpi*
     - blas=*=openblas
-    # - scalapack
+    - fftw
+    - libopenblas
+    - scalapack
 
 test:
   commands:
-    - cmake --build build --target test ARGS="-V"
-
-# outputs:
-#   - name: subpackage-name
-#     files:
-#       - a-file
+    - abacus
 
 about:
   home: https://github.com/deepmodeling/abacus-develop
