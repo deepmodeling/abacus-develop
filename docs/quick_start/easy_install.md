@@ -1,2 +1,2 @@
-# Easy-installation
+# Easy Installation
 

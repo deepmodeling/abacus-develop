@@ -1,1 +1,1 @@
-# Initialized SCF
+# Initializing SCF
