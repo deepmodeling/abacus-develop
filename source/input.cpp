@@ -1900,7 +1900,7 @@ bool Input::Read(const std::string &fn)
 
     if((out_mat_hs_r || out_mat_pos_r) && gamma_only_local)
     {
-        ModuleBase::WARNING_QUIT("Input", "printing of H(R)/S(R)/r(R) is not available gamma only calculations");
+        ModuleBase::WARNING_QUIT("Input", "printing of H(R)/S(R)/r(R) is not available for gamma only calculations");
     }
 
     return true;
