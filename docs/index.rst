@@ -16,32 +16,38 @@ Hi everyone, here are ABACUS Documentations.
    :numbered:
    :caption: Quick Start
 
-   quick_start/index
+   quick_start/easy_install
+   quick_start/hands_on
+   quick_start/input
 
 .. toctree::
    :maxdepth: 2
    :numbered:
    :caption: Advanced
 
-   advanced/index
+   advanced/install
+   advanced/scf
+   advanced/pp_orb
+   advanced/opt
+   advanced/md
+   advanced/elec_properties
+   advanced/interface
+   advanced/input-main
 
 .. toctree::
    :maxdepth: 2
-   :numbered:
    :caption: Citing ABACUS
 
    CITATIONS
 
 .. toctree::
    :maxdepth: 2
-   :numbered:
    :caption: Developing team
 
    DevelopingTeam
 
 .. toctree::
    :maxdepth: 2
-   :numbered:
    :caption: Contributing to ABACUS
 
    CONTRIBUTING
