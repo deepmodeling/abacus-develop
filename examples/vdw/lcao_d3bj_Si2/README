@@ -1,0 +1,18 @@
+/*******************************************************************************/
+/
+/ These are the examples of ABACUS program.
+/
+/*******************************************************************************/
+
+ABACUS provides three Grimme DFT-D methods, including D2, D3(0) and D3(BJ), 
+to describe van der Waals interactions. Among them, the D3 method has been 
+implemented in ABACUS based on the dftd3 program written by Stefan Grimme, 
+Stephan Ehrlich and Helge Krieg.
+
+The user can set the vdW-corrected methods in INPUT file with the parameter, 
+'vdw_method':
+ - none: the vdW corrections are not included
+ - d2: DFT-D2 method
+ - d3_0: DFT-D3(0) method
+ - d3_bj: DFT-D3(BJ) method
+

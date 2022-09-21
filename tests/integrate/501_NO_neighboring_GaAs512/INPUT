@@ -5,7 +5,6 @@ pseudo_dir	../../PP_ORB
 orbital_dir	../../PP_ORB
 ntype               2
 #nbands             40
-pseudo_type         upf201
 gamma_only          0
 
 calculation         test_neighbour

@@ -146,13 +146,12 @@ void LCAO_Deepks::cal_projected_DM_k(const std::vector<ModuleBase::ComplexMatrix
     const int nks,
     const std::vector<ModuleBase::Vector3<double>> &kvec_d)
 {
-
-    ModuleBase::timer::tick("LCAO_Deepks","cal_projected_DM_k");
-
+    //check for skipping
     if(dm[0].nr == 0 && dm[0].nc ==0)
     {
         return;
     }
+    ModuleBase::timer::tick("LCAO_Deepks","cal_projected_DM_k");
 
     const int pdm_size = (this->lmaxd * 2 + 1) * (this->lmaxd * 2 + 1);
     for(int inl=0;inl<inlmax;inl++)

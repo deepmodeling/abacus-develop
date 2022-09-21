@@ -1,5 +1,7 @@
 INPUT_PARAMETERS
 suffix      PbTiO3
+pseudo_dir              ../../../../tests/PP_ORB
+ord_dir                 ../../../../tests/PP_ORB
 ntype       3
 #nbands      25
 ecutwfc     50

@@ -1,5 +1,5 @@
 ATOMIC_SPECIES
-Al 27 Al_ONCV_PBE-1.0.upf
+Al 27 Al_ONCV_PBE-1.0.upf upf201 
 
 LATTICE_CONSTANT
 10   // add lattice constant

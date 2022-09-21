@@ -31,6 +31,8 @@ extern bool PSEUDO_MESH;
 extern std::string CALCULATION; // 2 "scf";"nscf" ;"symmetry"
 extern int EFIELD_FLAG; // 5 add electric field
 extern int DIP_COR_FLAG; // 7 add dipole correction
+extern bool GATE_FLAG;     // add gate field
+extern double NELEC;
 
 extern std::string DFT_FUNCTIONAL; // 6.5 change the DFT functional from input file.
 extern double XC_TEMPERATURE;
@@ -78,8 +80,6 @@ extern double PW_DIAG_THR; // 15 pw_diag_thr
 extern int NB2D; // 16.5 dividsion of 2D_matrix.
 
 extern double SCF_THR; // 17
-
-extern std::string RESTART_MODE; // 18
 
 extern double DQ; // 19 mohan add 2009-09-10
 extern int NQX; // 20 mohan add 2009-09-10
@@ -153,7 +153,7 @@ extern std::string global_kpoint_card;
 extern std::string global_wannier_card;
 
 extern std::string global_pseudo_dir;
-extern std::string global_pseudo_type; // mohan add 2013-05-20 (xiaohui add 2013-06-23)
+// extern std::string global_pseudo_type; // mohan add 2013-05-20 (xiaohui add 2013-06-23)
 extern std::string global_out_dir;
 extern std::string global_orbital_dir; // liuyu add 2021-08-14
 extern std::string global_readin_dir; // zhengdy modified
@@ -237,7 +237,5 @@ extern double tau;
 extern double sigma_k;
 extern double nc_k;
 
-// compensating charge
-extern bool comp_chg;
 } // namespace GlobalV
 #endif

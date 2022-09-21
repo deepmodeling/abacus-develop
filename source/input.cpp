@@ -103,10 +103,10 @@ void Input::Init(const std::string &fn)
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "pseudo_dir", GlobalV::global_pseudo_dir);
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "orbital_dir", GlobalV::global_orbital_dir);
 
-    ModuleBase::GlobalFunc::OUT(
-        GlobalV::ofs_running,
-        "pseudo_type",
-        pseudo_type); // mohan add 2013-05-20 (xiaohui add 2013-06-23, GlobalV::global_pseudo_type -> pseudo_type)
+    // ModuleBase::GlobalFunc::OUT(
+    //     GlobalV::ofs_running,
+    //     "pseudo_type",
+    //     pseudo_type); // mohan add 2013-05-20 (xiaohui add 2013-06-23, GlobalV::global_pseudo_type -> pseudo_type)
 
     ModuleBase::timer::tick("Input", "Init");
     return;
@@ -126,7 +126,7 @@ void Input::Default(void)
     pseudo_dir = "";
     orbital_dir = ""; // liuyu add 2021-08-14
     read_file_dir = "auto";
-    pseudo_type = "auto"; // mohan add 2013-05-20 (xiaohui add 2013-06-23)
+    // pseudo_type = "auto"; // mohan add 2013-05-20 (xiaohui add 2013-06-23)
     wannier_card = "";
     latname = "test";
     // xiaohui modify 2015-09-15, relax -> scf
@@ -260,7 +260,6 @@ void Input::Default(void)
     //----------------------------------------------------------
     // potential / charge / wavefunction / energy
     //----------------------------------------------------------
-    restart_mode = "new";
     init_wfc = "atomic";
     mem_saver = 0;
     printe = 100; // must > 0
@@ -312,6 +311,16 @@ void Input::Default(void)
     efield_pos_max = 0.5;
     efield_pos_dec = 0.1;
     efield_amp  = 0.0;
+    //----------------------------------------------------------
+    // gatefield                        Yu Liu add 2022-09-13
+    //----------------------------------------------------------
+    gate_flag = false;
+    zgate = 0.5;
+    relax = false;
+    block = false;
+    block_down = 0.45;
+    block_up = 0.55;
+    block_height = 0.1;
     //----------------------------------------------------------
     // vdw									//jiyy add 2019-08-04
     //----------------------------------------------------------
@@ -410,7 +419,6 @@ void Input::Default(void)
     //==========================================================
     // test only
     //==========================================================
-    test_just_neighbor = false;
     test_skip_ewald = false;
 
     //==========================================================
@@ -435,15 +443,6 @@ void Input::Default(void)
     tau = 1.0798 * 1e-5;
     sigma_k = 0.6;
     nc_k = 0.00037;
-
-    //==========================================================
-    //    compensating charge        donghs added on 2022-06-23
-    //==========================================================
-    comp_chg = 0;
-    comp_q = 0.0;
-    comp_l = 1.0;
-    comp_center = 0.0;
-    comp_dim = 2;
 
     return;
 }
@@ -513,10 +512,10 @@ bool Input::Read(const std::string &fn)
         {
             read_value(ifs, pseudo_dir);
         }
-        else if (strcmp("pseudo_type", word) == 0) // mohan add 2013-05-20 (xiaohui add 2013-06-23)
-        {
-            read_value(ifs, pseudo_type);
-        }
+        // else if (strcmp("pseudo_type", word) == 0) // mohan add 2013-05-20 (xiaohui add 2013-06-23)
+        // {
+        //     read_value(ifs, pseudo_type);
+        // }
         else if (strcmp("orbital_dir", word) == 0) // liuyu add 2021-08-14
         {
             read_value(ifs, orbital_dir);
@@ -984,10 +983,6 @@ bool Input::Read(const std::string &fn)
         //----------------------------------------------------------
         // charge / potential / wavefunction
         //----------------------------------------------------------
-        else if (strcmp("restart_mode", word) == 0)
-        {
-            read_value(ifs, restart_mode);
-        }
         else if (strcmp("read_file_dir", word) == 0)
         {
             read_value(ifs, read_file_dir);
@@ -1278,6 +1273,38 @@ bool Input::Read(const std::string &fn)
             read_value(ifs, efield_amp );
         }
         //----------------------------------------------------------
+        // gatefield (compensating charge)
+        // Yu Liu add 2022-09-13
+        //----------------------------------------------------------
+        else if (strcmp("gate_flag", word) == 0)
+        {
+            read_value(ifs, gate_flag);
+        }
+        else if (strcmp("zgate", word) == 0)
+        {
+            read_value(ifs, zgate);
+        }
+        else if (strcmp("relax", word) == 0)
+        {
+            read_value(ifs, relax);
+        }
+        else if (strcmp("block", word) == 0)
+        {
+            read_value(ifs, block);
+        }
+        else if (strcmp("block_down", word) == 0)
+        {
+            read_value(ifs, block_down);
+        }
+        else if (strcmp("block_up", word) == 0)
+        {
+            read_value(ifs, block_up);
+        }
+        else if (strcmp("block_height", word) == 0)
+        {
+            read_value(ifs, block_height);
+        }
+        //----------------------------------------------------------
         // tddft
         // Fuxiang He add 2016-10-26
         //----------------------------------------------------------
@@ -1518,10 +1545,6 @@ bool Input::Read(const std::string &fn)
         {
             read_value(ifs, cell_factor);
         }
-        else if (strcmp("test_just_neighbor", word) == 0)
-        {
-            read_value(ifs, test_just_neighbor);
-        }
         else if (strcmp("test_skip_ewald", word) == 0)
         {
             read_value(ifs, test_skip_ewald);
@@ -1579,26 +1602,6 @@ bool Input::Read(const std::string &fn)
         else if (strcmp("nc_k", word) == 0)
         {
             read_value(ifs, nc_k);
-        }
-        else if (strcmp("comp_chg", word) == 0)
-        {
-            read_value(ifs, comp_chg);
-        }
-        else if (strcmp("comp_q", word) == 0)
-        {
-            read_value(ifs, comp_q);
-        }
-        else if (strcmp("comp_l", word) == 0)
-        {
-            read_value(ifs, comp_l);
-        }
-        else if (strcmp("comp_center", word) == 0)
-        {
-            read_value(ifs, comp_center);
-        }
-        else if (strcmp("comp_dim", word) == 0)
-        {
-            read_value(ifs, comp_dim);
         }
         //----------------------------------------------------------------------------------
         else
@@ -1983,7 +1986,7 @@ void Input::Bcast()
     Parallel_Common::bcast_string(suffix);
     Parallel_Common::bcast_string(stru_file); // xiaohui modify 2015-02-01
     Parallel_Common::bcast_string(pseudo_dir);
-    Parallel_Common::bcast_string(pseudo_type); // mohan add 2013-05-20 (xiaohui add 2013-06-23)
+    // Parallel_Common::bcast_string(pseudo_type); // mohan add 2013-05-20 (xiaohui add 2013-06-23)
     Parallel_Common::bcast_string(orbital_dir);
     Parallel_Common::bcast_string(kpoint_file); // xiaohui modify 2015-02-01
     Parallel_Common::bcast_string(wannier_card);
@@ -2101,7 +2104,6 @@ void Input::Bcast()
     Parallel_Common::bcast_int(mixing_ndim);
     Parallel_Common::bcast_double(mixing_gg0); // mohan add 2014-09-27
 
-    Parallel_Common::bcast_string(restart_mode);
     Parallel_Common::bcast_string(read_file_dir);
     Parallel_Common::bcast_string(init_wfc);
     Parallel_Common::bcast_int(mem_saver);
@@ -2187,7 +2189,15 @@ void Input::Bcast()
     Parallel_Common::bcast_int(efield_dir);
     Parallel_Common::bcast_double(efield_pos_max);
     Parallel_Common::bcast_double(efield_pos_dec);
-    Parallel_Common::bcast_double(efield_amp );
+    Parallel_Common::bcast_double(efield_amp);
+    // Yu Liu add 2022-09-13
+    Parallel_Common::bcast_bool(gate_flag);
+    Parallel_Common::bcast_double(zgate);
+    Parallel_Common::bcast_bool(relax);
+    Parallel_Common::bcast_bool(block);
+    Parallel_Common::bcast_double(block_down);
+    Parallel_Common::bcast_double(block_up);
+    Parallel_Common::bcast_double(block_height);
     /* 	// Peize Lin add 2014-04-07
         Parallel_Common::bcast_bool( vdwD2 );
         Parallel_Common::bcast_double( vdwD2_scaling );
@@ -2236,7 +2246,6 @@ void Input::Bcast()
     Parallel_Common::bcast_int(td_vexttype);
     Parallel_Common::bcast_int(td_vextout);
     Parallel_Common::bcast_int(td_dipoleout);
-    Parallel_Common::bcast_bool(test_just_neighbor);
     Parallel_Common::bcast_bool(test_skip_ewald);
     Parallel_Common::bcast_int(GlobalV::ocp);
     Parallel_Common::bcast_string(GlobalV::ocp_set);
@@ -2307,12 +2316,6 @@ void Input::Bcast()
     Parallel_Common::bcast_double(sigma_k);
     Parallel_Common::bcast_double(nc_k);
 
-    Parallel_Common::bcast_bool(comp_chg);
-    Parallel_Common::bcast_double(comp_q);
-    Parallel_Common::bcast_double(comp_l);
-    Parallel_Common::bcast_double(comp_center);
-    Parallel_Common::bcast_int(comp_dim);
-
     return;
 }
 #endif
@@ -2352,6 +2355,16 @@ void Input::Check(void)
     if (nelec < 0.0)
     {
         ModuleBase::WARNING_QUIT("Input", "nelec < 0 is not allowed !");
+    }
+
+    if(dip_cor_flag && !efield_flag)
+    {
+        ModuleBase::WARNING_QUIT("Input", "dipole correction is not active if efield_flag=false !");
+    }
+
+    if(gate_flag && efield_flag && !dip_cor_flag)
+    {
+        ModuleBase::WARNING_QUIT("Input", "gate field cannot be used with efield if dip_cor_flag=false !");
     }
 
     //----------------------------------------------------------

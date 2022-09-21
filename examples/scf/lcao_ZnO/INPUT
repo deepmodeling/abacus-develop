@@ -1,0 +1,21 @@
+INPUT_PARAMETERS
+pseudo_dir              ../../../tests/PP_ORB
+orbital_dir                 ../../../tests/PP_ORB
+ntype		2
+nbands		24
+
+calculation	scf
+ecutwfc		120
+scf_thr		1.0e-8
+scf_nmax		100
+
+smearing_method	gaussian
+smearing_sigma		0.02
+
+mixing_type	pulay
+mixing_beta	0.4
+#mixing_gg0	1.5
+
+basis_type	lcao
+gamma_only	0
+symmetry	1

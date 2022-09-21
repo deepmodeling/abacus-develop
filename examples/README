@@ -1,0 +1,11 @@
+/*******************************************************************************/
+/
+/ These are the examples of ABACUS program.
+/
+/*******************************************************************************/
+
+These examples show how to use ABACUS to do some specify calculations and how to 
+use the interfaces between ABACUS and some extenal softwares.
+
+The examples interface_XXXX show the using of interface of ABACUS and XXXX
+

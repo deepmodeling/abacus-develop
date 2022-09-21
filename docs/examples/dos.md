@@ -55,11 +55,11 @@ Some parameters in the INPUT file are explained:
 
 - out_dos
 
-    output density of state(DOS).
+    output density of state(DOS). The unit of DOS is `(number of states)/(eV * unitcell)`.
 
 - dos_sigma
 
-    the gaussian smearing parameter(DOS).
+    the gaussian smearing parameter(DOS), in unit of eV.
 
 - read_file_dir
 
@@ -72,7 +72,7 @@ K_POINTS
 Gamma
 8 8 8 0 0 0
 ```
-Run the program, and you will see a file named DOS1_smearing.dat in the output directory. The first two columns in the file are the energy and DOS, respectively.Plot file DOS1_smearing.dat with graphing software, and you’ll get the DOS.
+Run the program, and you will see a file named DOS1_smearing.dat in the output directory. The first two columns in the file are the energy and DOS, respectively. Plot file DOS1_smearing.dat with graphing software, and you’ll get the DOS.
 
 # PDOS
 
@@ -104,6 +104,6 @@ The rest of the fileis arranged in sections, each section with a header such as 
 </data>
 
 ```
-which tells the atom and symmetry of the current atomic orbital, and followed by the PDOS values. The values can thus be plotted against the energies.
+which tells the atom and symmetry of the current atomic orbital, and followed by the PDOS values. The values can thus be plotted against the energies. The unit of PDOS is also `(number of states)/(eV * unitcell)`.
 
 [back to top](#Density_of_states)

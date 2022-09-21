@@ -12,4 +12,5 @@ add_library(
     minimize_cg.cpp
     efield.cpp
     sol_force.cpp
+    gatefield.cpp
 )

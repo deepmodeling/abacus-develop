@@ -30,6 +30,7 @@
 #include "module_elecstate/elecstate_lcao.h"
 #include "module_hsolver/hsolver_lcao.h"
 #include "module_surchem/efield.h"
+#include "module_surchem/gatefield.h"
 
 void Input_Conv::Convert(void)
 {
@@ -48,7 +49,7 @@ void Input_Conv::Convert(void)
         GlobalV::global_pseudo_dir = INPUT.pseudo_dir + "/";
     if (INPUT.orbital_dir != "")
         GlobalV::global_orbital_dir = INPUT.orbital_dir + "/";
-    GlobalV::global_pseudo_type = INPUT.pseudo_type;
+    // GlobalV::global_pseudo_type = INPUT.pseudo_type;
     GlobalC::ucell.setup(INPUT.latname, INPUT.ntype, INPUT.lmaxmax, INPUT.init_vel, INPUT.fixed_axes);
 
     GlobalV::KSPACING = INPUT.kspacing;
@@ -152,7 +153,6 @@ void Input_Conv::Convert(void)
     //----------------------------------------------------------
     // wavefunction / charge / potential / (2/4)
     //----------------------------------------------------------
-    GlobalV::RESTART_MODE = INPUT.restart_mode;
     GlobalC::wf.init_wfc = INPUT.init_wfc;
     GlobalC::wf.mem_saver = INPUT.mem_saver; // mohan add 2010-09-07
     GlobalC::en.printe = INPUT.printe; // mohan add 2011-03-16
@@ -220,6 +220,18 @@ void Input_Conv::Convert(void)
     Efield::efield_pos_max = INPUT.efield_pos_max;
     Efield::efield_pos_dec = INPUT.efield_pos_dec;
     Efield::efield_amp = INPUT.efield_amp;
+
+    //----------------------------------------------------------
+    // Yu Liu add 2022-09-13
+    //----------------------------------------------------------
+    GlobalV::GATE_FLAG = INPUT.gate_flag;
+    GlobalV::NELEC = INPUT.nelec;
+    Gatefield::zgate = INPUT.zgate;
+    Gatefield::relax = INPUT.relax;
+    Gatefield::block = INPUT.block;
+    Gatefield::block_down = INPUT.block_down;
+    Gatefield::block_up = INPUT.block_up;
+    Gatefield::block_height = INPUT.block_height;
 
 //----------------------------------------------------------
 // Fuxiang He add 2016-10-26
@@ -520,14 +532,6 @@ void Input_Conv::Convert(void)
     GlobalV::sigma_k = INPUT.sigma_k;
     GlobalV::nc_k = INPUT.nc_k;
 
-    //-----------------------------------------------
-    // compensating charge
-    //-----------------------------------------------
-    GlobalV::comp_chg = INPUT.comp_chg;
-    GlobalC::solvent_model.comp_q = INPUT.comp_q;
-    GlobalC::solvent_model.comp_l = INPUT.comp_l;
-    GlobalC::solvent_model.comp_center = INPUT.comp_center;
-    GlobalC::solvent_model.comp_dim = INPUT.comp_dim;
     ModuleBase::timer::tick("Input_Conv", "Convert");
     return;
 }

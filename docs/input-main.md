@@ -8,7 +8,7 @@
 
 - [System variables](#system-variables)
 
-    [suffix](#suffix) | [ntype](#ntype) | [calculation](#calculation) | [symmetry](#symmetry) | [kpar](#kpar) | [bndpar](#bndpar) | [latname](#latname) | [init_wfc](#init_wfc) | [init_chg](#init_chg) | [init_vel](#init_vel) | [nelec](#nelec) | [tot_magnetization](#tot_magnetization) | [dft_functional](#dft_functional) | [xc_temperature](#xc_temperature) | [pseudo_type](#pseudo_type) |  [pseudo_rcut](#pseudo_rcut) | [pseudo_mesh](#pseudo_mesh) | [mem_saver](#mem_saver) | [diago_proc](#diago_proc) | [nbspline](#nbspline) | [kspacing](#kspacing)  | [min_dist_coef](#min_dist_coef)
+    [suffix](#suffix) | [ntype](#ntype) | [calculation](#calculation) | [symmetry](#symmetry) | [kpar](#kpar) | [bndpar](#bndpar) | [latname](#latname) | [init_wfc](#init_wfc) | [init_chg](#init_chg) | [init_vel](#init_vel) | [nelec](#nelec) | [tot_magnetization](#tot_magnetization) | [dft_functional](#dft_functional) | [xc_temperature](#xc_temperature) | [pseudo_rcut](#pseudo_rcut) | [pseudo_mesh](#pseudo_mesh) | [mem_saver](#mem_saver) | [diago_proc](#diago_proc) | [nbspline](#nbspline) | [kspacing](#kspacing)  | [min_dist_coef](#min_dist_coef) | [symmetry_prec](#symmetry_prec)
 
 - [Variables related to input files](#variables-related-to-input-files)
 
@@ -20,19 +20,19 @@
 
 - [Numerical atomic orbitals related variables](#numerical-atomic-orbitals-related-variables)
 
-    [nb2d](#nb2d) | [lmaxmax](#lmaxmax) | [lcao_ecut](#lcao_ecut) | [lcao_dk](#lcao_dk) | [lcao_dr](#lcao_dr) | [lcao_rmax](#lcao_rmax) | [search_radius](#search_radius) | [search_pbc](#search_pbc)
+    [nb2d](#nb2d) | [lmaxmax](#lmaxmax) | [lcao_ecut](#lcao_ecut) | [lcao_dk](#lcao_dk) | [lcao_dr](#lcao_dr) | [lcao_rmax](#lcao_rmax) | [search_radius](#search_radius) | [search_pbc](#search_pbc) | [bx,by,bz](#bx-by-bz) 
 
 - [Electronic structure](#electronic-structure)
 
-    [basis_type](#basis_type) | [ks_solver](#ks_solver) | [nbands](#nbands) | [nbands_istate](#nbands_istate) | [nspin](#nspin) | [occupations](#occupations) | [smearing_method](#smearing_method) | [smearing_sigma](#smearing_sigma) | [mixing_type](#mixing_type) | [mixing_beta](#mixing_beta) | [mixing_ndim](#mixing_ndim) | [mixing_gg0](#mixing_gg0) | [gamma_only](#gamma_only) | [printe](#printe) | [scf_nmax](#scf_nmax) | [scf_thr](#scf_thr) | [chg_extrap](#chg_extrap)
+    [basis_type](#basis_type) | [ks_solver](#ks_solver) | [nbands](#nbands) | [nbands_istate](#nbands_istate) | [nspin](#nspin) | [smearing_method](#smearing_method) | [smearing_sigma](#smearing_sigma) | [smearing_sigma_temp](#smearing_sigma_temp) | [mixing_type](#mixing_type) | [mixing_beta](#mixing_beta) | [mixing_ndim](#mixing_ndim) | [mixing_gg0](#mixing_gg0) | [gamma_only](#gamma_only) | [printe](#printe) | [scf_nmax](#scf_nmax) | [scf_thr](#scf_thr) | [chg_extrap](#chg_extrap)
 
 - [Electronic structure (SDFT)](#electronic-structure-sdft)
 
-    [method_sto](#method_sto) | [nbands_sto](#nbands_sto) | [nche_sto](#nche_sto) | [emin_sto](#emin_sto) | [emax_sto](#emax_sto) | [seed_sto](#seed_sto) | [initsto_freq](#initsto_freq)
+    [method_sto](#method_sto) | [nbands_sto](#nbands_sto) | [nche_sto](#nche_sto) | [emin_sto](#emin_sto) | [emax_sto](#emax_sto) | [seed_sto](#seed_sto) | [initsto_freq](#initsto_freq) | [npart_sto](#npart_sto)
 
 - [Geometry relaxation](#geometry-relaxation)
 
-    [relax_nmax](#relax_nmax) | [relax_method](#relax_method) | [relax_cg_thr](#relax_cg_thr) | [relax_bfgs_w1](#relax_bfgs_w1) | [relax_bfgs_w2](#relax_bfgs_w2) | [relax_bfgs_rmax](#relax_bfgs_rmax) | [relax_bfgs_rmin](#relax_bfgs_rmin) | [relax_bfgs_init](#relax_bfgs_init) | [cal_force](#cal_force) | [force_thr](#force_thr) | [force_thr_ev](#force_thr_ev) | [cal_stress](#cal_stress) | [stress_thr](#stress_thr) | [press1, press2, press3](#press1-press2-press3) | [fixed_axes](#fixed_axes) | [cell_factor](#cell_factor)
+    [relax_nmax](#relax_nmax) | [relax_method](#relax_method) | [relax_cg_thr](#relax_cg_thr) | [relax_bfgs_w1](#relax_bfgs_w1) | [relax_bfgs_w2](#relax_bfgs_w2) | [relax_bfgs_rmax](#relax_bfgs_rmax) | [relax_bfgs_rmin](#relax_bfgs_rmin) | [relax_bfgs_init](#relax_bfgs_init) | [cal_force](#cal_force) | [force_thr](#force_thr) | [force_thr_ev](#force_thr_ev) | [force_thr_ev2](#force_thr_ev2) | [cal_stress](#cal_stress) | [stress_thr](#stress_thr) | [press1, press2, press3](#press1-press2-press3) | [fixed_axes](#fixed_axes) | [cell_factor](#cell_factor)
 
 - [Variables related to output information](#variables-related-to-output-information)
 
@@ -40,19 +40,19 @@
 
 - [Density of states](#density-of-states)
 
-    [dos_edelta_ev](#dos_edelta_ev) | [dos_sigma](#dos_sigma) | [dos_scale](#dos_scale) | [dos_nche](#dos_nche)
+    [dos_edelta_ev](#dos_edelta_ev) | [dos_sigma](#dos_sigma) | [dos_scale](#dos_scale) | [dos_emin_ev](#dos_emin_ev) | [dos_emax_ev](#dos_emax_ev) | [dos_nche](#dos_nche)
 
 - [Exact exchange](#exact-exchange) (Under tests)
 
-    [exx_hybrid_type](#exx_hybrid_type) | [exx_hybrid_alpha](#exx_hybrid_alpha) | [exx_hse_omega](#exx_hse_omega) | [exx_separate_loop](#exx_separate_loop) | [exx_hybrid_step](#exx_hybrid_step) | [exx_lambda](#exx_lambda) | [exx_pca_threshold](#exx_pca_threshold) | [exx_c_threshold](#exx_c_threshold) | [exx_v_threshold](#exx_v_threshold) | [exx_dm_threshold](#exx_dm_threshold) | [exx_schwarz_threshold](#exx_schwarz_threshold) | [exx_cauchy_threshold](#exx_cauchy_threshold) | [exx_ccp_threshold](#exx_ccp_threshold) | [exx_ccp_rmesh_times](#exx_ccp_rmesh_times) | [exx_distribute_type](#exx_distribute_type) | [exx_opt_orb_lmax](#exx_opt_orb_lmax) | [exx_opt_orb_ecut](#exx_opt_orb_ecut) | [exx_opt_orb_tolerence](#exx_opt_orb_tolerence)
+    [exx_hybrid_alpha](#exx_hybrid_alpha) | [exx_hse_omega](#exx_hse_omega) | [exx_separate_loop](#exx_separate_loop) | [exx_hybrid_step](#exx_hybrid_step) | [exx_lambda](#exx_lambda) | [exx_pca_threshold](#exx_pca_threshold) | [exx_c_threshold](#exx_c_threshold) | [exx_v_threshold](#exx_v_threshold) | [exx_dm_threshold](#exx_dm_threshold) | [exx_schwarz_threshold](#exx_schwarz_threshold) | [exx_cauchy_threshold](#exx_cauchy_threshold) | [exx_ccp_threshold](#exx_ccp_threshold) | [exx_ccp_rmesh_times](#exx_ccp_rmesh_times) | [exx_distribute_type](#exx_distribute_type) | [exx_opt_orb_lmax](#exx_opt_orb_lmax) | [exx_opt_orb_ecut](#exx_opt_orb_ecut) | [exx_opt_orb_tolerence](#exx_opt_orb_tolerence)
 
 - [Molecular dynamics](#molecular-dynamics)
 
-    [md_type](#md_type) | [md_nstep](#md_nstep) | [md_ensolver](#md_ensolver) | [md_restart](#md_restart) | [md_dt](#md_dt) | [md_t](#md_t) | [md_dumpfreq](#md_dumpfreq) | [md_restartfreq](#md_restartfreq) | [md_seed](#md_seed) | [md_tfreq](#md_tfreq) | [md_mnhc](#md_mnhc) | [lj_rcut](#lj_rcut) | [lj_epsilon](#lj_epsilon) | [lj_sigma](#lj_sigma) | [msst_direction](#msst_direction) | [msst_vel](#msst_vel) | [msst_vis](#msst_vis) | [msst_tscale](#msst_tscale) | [msst_qmass](#msst_qmass) | [md_damp](#md_damp)
+    [md_type](#md_type) | [md_nstep](#md_nstep) | [md_ensolver](#md_ensolver) | [md_restart](#md_restart) | [md_dt](#md_dt) | [md_tfirst, md_tlast](#md_tfirst-md_tlast) | [md_dumpfreq](#md_dumpfreq) | [md_restartfreq](#md_restartfreq) | [md_seed](#md_seed) | [md_tfreq](#md_tfreq) | [md_mnhc](#md_mnhc) | [lj_rcut](#lj_rcut) | [lj_epsilon](#lj_epsilon) | [lj_sigma](#lj_sigma) | [msst_direction](#msst_direction) | [msst_vel](#msst_vel) | [msst_vis](#msst_vis) | [msst_tscale](#msst_tscale) | [msst_qmass](#msst_qmass) | [md_damp](#md_damp)
 
 - [vdW correction](#vdw-correction)
 
-    [vdw_method](#vdw_method) | [vdw_s6](#vdw_s6) | [vdw_s8](#vdw_s8) | [vdw_a1](#vdw_a1) | [vdw_a2](#vdw_a2) | [vdw_d](#vdw_d) | [vdw_abc](#vdw_abc) | [vdw_C6_file](#vdw_C6_file) | [vdw_C6_unit](#vdw_C6_unit) | [vdw_R0_file](#vdw_R0_file) | [vdw_R0_unit](#vdw_R0_unit) | [vdw_model](#vdw_model) | [vdw_radius](#vdw_radius) | [vdw_radius_unit](#vdw_radius_unit) | [vdw_cn_radius](#vdw_cn_radius) | [vdw_cn_radius_unit](#vdw_cn_radius_unit) | [vdw_period](#vdw_period)
+    [vdw_method](#vdw_method) | [vdw_s6](#vdw_s6) | [vdw_s8](#vdw_s8) | [vdw_a1](#vdw_a1) | [vdw_a2](#vdw_a2) | [vdw_d](#vdw_d) | [vdw_abc](#vdw_abc) | [vdw_C6_file](#vdw_C6_file) | [vdw_C6_unit](#vdw_C6_unit) | [vdw_R0_file](#vdw_R0_file) | [vdw_R0_unit](#vdw_R0_unit) | [vdw_model](#vdw_model) | [vdw_radius](#vdw_radius) | [vdw_radius_unit](#vdw_radius_unit) | [vdw_period](#vdw_period)
 
 - [Berry phase and wannier90 interface](#berry-phase-and-wannier90-interface)
 
@@ -76,11 +76,15 @@
 
 - [Electric field and dipole correction](#electric-field-and-dipole-correction)
 
-    [efield_flag](#efield_flag) | [dip_cor_flag](#dip_cor_flag) | [efield_dir](#efield_dir) | [efield_pos_max](#efield_pos_max) | [efield_pos_dec](#efield_pos_dec) | [efield_amp ](#efield_amp )
+    [efield_flag](#efield_flag) | [dip_cor_flag](#dip_cor_flag) | [efield_dir](#efield_dir) | [efield_pos_max](#efield_pos_max) | [efield_pos_dec](#efield_pos_dec) | [efield_amp](#efield_amp)
+
+- [Gate field (compensating charge)](#gate-field-compensating-charge)
+
+    [gate_flag](#gate_flag) | [zgate](#zgate) | [block](#block) | [block_down](#block_down) | [block_up](#block_up) | [block_height](#block_height)
 
 - [Electronic conductivities](#electronic-conductivities)
 
-    [cal_cond](#cal_cond) | [cond_nche](#cond_nche) | [cond_dw](#cond_dw) | [cond_wcut](#cond_wcut) | [cond_wenlarge](#cond_wenlarge) | [cond_fwhm ](#cond_fwhm )
+    [cal_cond](#cal_cond) | [cond_nche](#cond_nche) | [cond_dw](#cond_dw) | [cond_wcut](#cond_wcut) | [cond_wenlarge](#cond_wenlarge) | [cond_fwhm](#cond_fwhm)
 
 - [Implicit solvation model](#implicit-solvation-model)
 
@@ -276,16 +280,6 @@ This part of variables are used to control general system parameters.
 - **Description**: specifies temperature when using temperature-dependent XC functionals (KSDT and so on); unit in Rydberg
 - **Default** : 0.0
 
-#### pseudo_type
-
-- **Type**: String
-- **Description**: the format of pseudopotential files. Accepted value s are:
-  - upf : .UPF format
-  - vwr : .vwr format
-  - upf201 : the new UPF format
-  - blps : bulk local pseudopotential
-- **Default** : upf
-
 #### pseudo_rcut
 
 - **Type**: Real
@@ -319,15 +313,21 @@ This part of variables are used to control general system parameters.
 
 #### kspacing
 
-- **Type**: double
+- **Type**: Real
 - **Descrption**: Set the smallest allowed spacing between k points, unit in 1/bohr. It should be larger than 0.0, and suggest smaller than 0.25. When you have set this value > 0.0, then the KPT file is unneccessary, and the number of K points nk_i = max(1,int(|b_i|/KSPACING)+1), where b_i is the reciprocal lattice vector. The default value 0.0 means that ABACUS will read the applied KPT file. Notice: if gamma_only is set to be true, kspacing is invalid.
 - **Default**: 0.0
 
 #### min_dist_coef
 
-- **Type**: double
+- **Type**: Real
 - **Descrption**: a factor related to the allowed minimum distance between two atoms. At the begining, ABACUS will check the structure, and if the distance of two atoms is shorter than min_dist_coef*(standard covalent bond length), we think this structure is unreasonable. If you want to calculate some structures in extreme condition like high pressure, you should set this parameter as a smaller value or even 0.
 - **Default**: 0.2
+
+#### symmetry_prec
+
+- **Type**: Real
+- **Descrption**: The accuracy for symmetry judgment. The unit is Bohr.
+- **Default**: 1.0e-5
 
 ### Variables related to input files
 
@@ -458,6 +458,12 @@ This part of variables are used to control the numerical atomic orbitals related
 - **Description**: In searching for neighbouring atoms, if set to 1, then periodic images will also be searched. If set to 0, then periodic images will not be searched.
 - **Default**: 1
 
+#### bx, by, bz
+
+- **Type**: Integer
+- **Description**: In the matrix operation of grid integral, bx/by/bz grids (in x, y, z drections) are treated as a whole as a matrix element. Different value will affect the calculation speed.
+- **Default**: 2
+
 ### Electronic structure
 
 This part of variables are used to control the electronic structure and geometry relaxation
@@ -516,15 +522,6 @@ calculations.
 - **Description**: Number of spin components of wave functions. There are only two choices now: 1 or 2, meaning non spin or collinear spin.
 - **Default**: 1
 
-#### occupations
-
-- **Type**: String
-- **Description**: Specifies how to calculate the occupations of bands. Available options are:
-  - 'smearing' : gaussian smearing for metals; see also variables `smearing_method` and `smearing_sigma`.
-  - 'tetrahedra' : Tetrahedron method, Bloechl's version: [P.E. Bloechl, PRB 49, 16223 (1994)](https://journals.aps.org/prb/abstract/10.1103/PhysRevB.49.16223). Requires a uniform grid of k-points that are automatically generated. Well suited for calculation of DOS, less so (because not variational) for force/optimization/dynamics calculations.
-  - 'fixed' : for insulators with a gap
-- **Default**: 'smearing'
-
 #### smearing_method
 
 - **Type**: String
@@ -539,6 +536,11 @@ calculations.
 - **Type**: Real
 - **Description**: energy range for smearing, the unit is Rydberg.
 - **Default**: 0.001
+
+#### smearing_sigma_temp
+
+- **Type**: Real
+- **Description**: energy range for smearing, and is same as smearing_sigma, but the unit is K. smearing_sigma = 1/2 * kB * smearing_sigma_temp.
 
 #### mixing_type
 
@@ -590,7 +592,7 @@ calculations.
 #### scf_thr
 
 - **Type**: Real
-- **Description**: An important parameter in ABACUS. It`s the threshold for electronic iteration. It represents the charge density error between two sequential density from electronic iterations. Usually for local orbitals, usually 1e-6 may be accurate enough.
+- **Description**: An important parameter in ABACUS. It's the threshold for electronic iteration. It represents the charge density error between two sequential density from electronic iterations. Usually for local orbitals, usually 1e-6 may be accurate enough.
 - **Default**:1e-06
 
 #### chg_extrap
@@ -692,6 +694,12 @@ This part of variables are used to control the geometry relaxation.
 - **Type**: Real
 - **Description**: The threshold of the force convergence, has the same function as force_thr, just the unit is different, it is eV=Angstrom, you can choose either one as you like. The recommendation value for using atomic orbitals is 0:04 eV/Angstrom.
 - **Default**: 0.01 eV/Angstrom
+
+#### force_thr_ev2
+
+- **Type**: Real
+- **Description**: The calculated force will be set to 0 when it is smaller than force_thr_ev2.
+- **Default**: 0.0 eV/Angstrom
 
 #### relax_bfgs_w1
 
@@ -841,7 +849,7 @@ This part of variables are used to control the output of properties.
 #### out_dos
 
 - **Type**: Integer
-- **Description**: Controls whether to output the density of state (DOS). For more information, refer to the [worked example](examples/dos.md).
+- **Description**: Controls whether to output the density of state (DOS). The unit of DOS is `(number of states)/(eV * unitcell)`. For more information, refer to the [worked example](examples/dos.md).
 - **Default**: 0
 
 #### out_band
@@ -1089,6 +1097,46 @@ added to the bare ionic potential. If you want no electric field, parameter efie
 - **Description**: Amplitude of the electric field, in ***Hartree*** a.u.; 1 a.u. = 51.4220632*10^10 V/m. Used only if efield_flag == true. The saw-like potential increases with slope efield_amp  in the region from (efield_pos_max+efield_pos_dec-1) to (efield_pos_max), then decreases until (efield_pos_max+efield_pos_dec), in units of the crystal vector efield_dir. Important: the change of slope of this potential must be located in the empty region, or else unphysical forces will result.
 - **Default**: 0.0
 
+### Gate field (compensating charge)
+
+This part of variables are relevant to gate field (compensating charge)
+
+#### gate_flag
+
+- **Type**: Boolean
+- **Description**: In the case of charged cells, setting gate_flag == true represents the addition of compensating charge by a charged plate, which is placed at **zgate**. Note that the direction is specified by **efield_dir**.
+- **Default**: false
+
+#### zgate
+
+- **Type**: Real
+- **Description**: Specify the position of the charged plate in units of the unit cell (0 <= **zgate** < 1).
+- **Default**: 0.5
+
+#### block
+
+- **Type**: Boolean
+- **Description**: Add a potential barrier to the total potential to avoid electrons spilling into the vacuum region for electron doping. Potential barrier is from **block_down** to **block_up** and has a height of **block_height**. If **dip_cor_flag** == true, **efield_pos_dec** is used for a smooth increase and decrease of the potential barrier.
+- **Default**: false
+
+#### block_down
+
+- **Type**: Real
+- **Description**: Lower beginning of the potential barrier in units of the unit cell size (0 <= **block_down** < **block_up** < 1).
+- **Default**: 0.45
+
+#### block_up
+
+- **Type**: Real
+- **Description**: Upper beginning of the potential barrier in units of the unit cell size (0 <= **block_down** < **block_up** < 1).
+- **Default**: 0.55
+
+#### block_height
+
+- **Type**: Real
+- **Description**: Height of the potential barrier in Rydberg.
+- **Default**: 0.1
+
 ### Exact Exchange
 
 This part of variables are relevant when using hybrid functionals
@@ -1180,19 +1228,19 @@ This part of variables are relevant when using hybrid functionals
 #### exx_opt_orb_lmax
 
 - **Type**: Integer
-- **Description**: See also the entry [exx_hybrid_type](#exx_hybrid_type). This parameter is only relevant when exx_hybrid_type=`opt_orb`. The radial part of opt-ABFs are generated as linear combinations of spherical Bessel functions. exx_opt_orb_lmax gives the maximum l of the spherical Bessel functions. A reasonable choice is 2.
+- **Description**: See also the entry [dft_functional](#dft_functional). This parameter is only relevant when dft_functional=`opt_orb`. The radial part of opt-ABFs are generated as linear combinations of spherical Bessel functions. exx_opt_orb_lmax gives the maximum l of the spherical Bessel functions. A reasonable choice is 2.
 - **Default**: 0
 
 #### exx_opt_orb_ecut
 
 - **Type**: Real
-- **Description**: See also the entry [exx_hybrid_type](#exx_hybrid_type). This parameter is only relevant when exx_hybrid_type=`opt_orb`. A plane wave basis is used to optimize the radial ABFs. This parameter thus gives the cut-off of plane wave expansion, in Ry. A reasonable choice is 60.
+- **Description**: See also the entry [dft_functional](#dft_functional). This parameter is only relevant when dft_functional=`opt_orb`. A plane wave basis is used to optimize the radial ABFs. This parameter thus gives the cut-off of plane wave expansion, in Ry. A reasonable choice is 60.
 - **Default**: 0
 
 #### exx_opt_orb_tolerence
 
 - **Type**: Real
-- **Description**: See also the entry [exx_hybrid_type](#exx_hybrid_type). This parameter is only relevant when exx_hybrid_type=`opt_orb`. exx_opt_orb_tolerence determines the threshold when solving for the zeros of spherical Bessel functions. A reasonable choice is 1e-12.
+- **Description**: See also the entry [dft_functional](#dft_functional). This parameter is only relevant when dft_functional=`opt_orb`. exx_opt_orb_tolerence determines the threshold when solving for the zeros of spherical Bessel functions. A reasonable choice is 1e-12.
 - **Default**: 0
 
 ### Molecular dynamics
@@ -1242,7 +1290,7 @@ This part of variables are used to control the molecular dynamics calculations.
 - **Description**: This is the time step(fs) used in md simulation .
 - **Default**: 1.0
 
-#### md_tfirst & md_tlast
+#### md_tfirst, md_tlast
 
 - **Type**: Double
 - **Description**: This is the temperature (K) used in md simulation, md_tlast`s default value is md_tfirst. If md_tlast is set to be different from md_tfirst, ABACUS will automatically change the temperature from md_tfirst to md_tlast.
@@ -1464,18 +1512,6 @@ This part of variables are used to control vdW-corrected related parameters.
 
 - **Type**: String
 - **Description**: If vdw_model is set to radius, this variable specifies the unit of vdw_radius. Two kinds of unit is available: A(means Angstrom) and Bohr.
-- **Default**: Bohr
-
-#### vdw_cn_radius
-
-- **Type**: Real
-- **Description**: This cutoff is chosen for the calculation of the coordination number (CN) in DFT-D3 approachs, including D3(0) and D3(BJ).
-- **Default**: 40.0
-
-#### vdw_cn_radius_unit
-
-- **Type**: String
-- **Description**: This variable specifies the unit of vdw_cn_radius. Two kinds of unit is available: A(means Angstrom) and Bohr.
 - **Default**: Bohr
 
 #### vdw_period

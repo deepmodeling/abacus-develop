@@ -194,7 +194,7 @@ To run a subset of unit test, use `ctest -R <test-match-pattern>` to perform tes
 ## Commit Message Guidelines
 
 A well-formatted commit message leads a more readable history when we look through some changes, and helps us generate change log.
-We follow up [The Conventional Commits specification](www.conventionalcommits.org) for commit message format.
+We follow up [The Conventional Commits specification](https://www.conventionalcommits.org) for commit message format.
 The commit message should be structured as follows:
 
 ```text

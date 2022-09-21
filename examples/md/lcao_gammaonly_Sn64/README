@@ -1,0 +1,16 @@
+/*******************************************************************************/
+/
+/ These are the examples of ABACUS program.
+/
+/*******************************************************************************/
+
+This example is a molecular dynamics(md) calculation of 64 Sn atoms.
+
+Note:
+1)"calculation  md" is used.
+2)The system contains 64 atoms, and it's suggested to use 6cores or more.
+3)When do md calculations, turn off symmetry, "symmetry	0".
+4)If the output file is too large, the "out_level	m" option is suggested.
+5)If you are not similar with input parameters, please check in OUT.ABACUS/INPUT
+or manual of ABACUS on	http://abacus.ustc.edu.cn/manual_48.html
+

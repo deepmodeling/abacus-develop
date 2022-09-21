@@ -1,0 +1,10 @@
+This test for: gate field (compensating charge)
+*H2O
+*PW
+*kpoints 2*2*1
+*sg15 pseudopotential
+*smearing_method gauss
+*smearing_sigma 0.001
+*ks_solver cg
+*mixing_type pulay
+*mixing_beta 0.7

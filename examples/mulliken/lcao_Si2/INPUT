@@ -1,0 +1,11 @@
+INPUT_PARAMETERS
+#Parameters	(General)
+pseudo_dir		../../../tests/PP_ORB
+orbital_dir			../../../tests/PP_ORB
+ntype			1	
+#Parameters (Accuracy)
+ecutwfc			50
+scf_nmax		100
+scf_thr                 1e-6
+basis_type		lcao
+out_mul 		1

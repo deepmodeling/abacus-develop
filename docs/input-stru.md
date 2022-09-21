@@ -18,7 +18,7 @@ For this example, no need to supply any input to the variable `latname` in the I
 
 ```
 ATOMIC_SPECIES
-Si 28.00 Si_ONCV_PBE-1.0.upf // label; mass; pseudo_file
+Si 28.00 Si_ONCV_PBE-1.0.upf upf201 // label; mass; pseudo_file
 
 NUMERICAL_ORBITAL
 Si_gga_8au_60Ry_2s2p1d.orb //numerical_orbital_file
@@ -78,10 +78,12 @@ information that comes below.
     In the above example, we see information is provided for the element `Si`:
 
     ```
-    Si 28.00 Si_ONCV_PBE-1.0.upf // label; mass; pseudo_file
+    Si 28.00 Si_ONCV_PBE-1.0.upf upf201 // label; mass; pseudo_file; pseudo_type
     ```
 
     Here `Si_ONCV_PBE-1.0.upf` is the pseudopotential file. When the path is not specified, the file is assumed to be located in work directory. Otherwise, please explicitly specify the location of the pseudopotential files.
+    After the pseudopotential file, `upf201` is the type of pseudopotential. There are five options: `upf`(.UPF format), `upf201`(the new .UPF format), `vwr`(.vwr format), `blps`(bulk-derived local pseudopotential), and `auto`(automatically identified). If no pseudopotential type is assigned, the default value is `auto`, and the pseudopotential type will be automatically identified. 
+    Different types of pseudopotentials can be used for different elements, but note that the XC functionals assigned by all pseudopotentials shouldl be the same one.
 - NUMERICAL_ORBITAL
 
     Numerical atomic orbitals are only needed for `LCAO` calculations. Thus this section will be neglected in calcultions with plane wave basis. In the above example, numerical atomic orbitals is specified for the element `Si`:
@@ -222,7 +224,17 @@ information that comes below.
     where $fac=\frac{\sqrt{1+2*m*n*l-m^2 -n^2 -l^2 }}{\sqrt{1-m^2}}$
 - ATOMIC_POSITIONS
 
-    This section specifies the positions and other information of individual atoms. The first line signifies whether atom positions are given in `Cartesian` or `Direct` coordinates.
+    This section specifies the positions and other information of individual atoms. 
+    
+    The first line signifies method that atom positions are given, the following options are supported:
+    - `Direct` : coordinates of atom positions below would in fraction coordinates.
+    - `Cartesian` : Cartesian coordinates in unit of 'LATTICE_CONSTANT'.
+    - `Cartesian_au` : Cartesian coordinates in unit of Bohr, same as setting of `Cartesian` with `LATTICE_CONSTANT` = 1.0 .
+    - `Cartesian_angstrom` : Cartesian coordinates in unit of Angstrom, same as setting of `Cartesian` with `LATTICE_CONSTANT` = 1.889726125457828 .
+    - `Cartesian_angstrom_center_xy` : Cartesian coordinates in unit of Angstrom, a position vector (x, y, z) refer to (0.5 + x, 0.5 + y, z) with `Cartesian_angstrom`.
+    - `Cartesian_angstrom_center_xz` : Cartesian coordinates in unit of Angstrom, a position vector (x, y, z) refer to (0.5 + x, y, 0.5 + z) with `Cartesian_angstrom`.
+    - `Cartesian_angstrom_center_yz` : Cartesian coordinates in unit of Angstrom, a position vector (x, y, z) refer to (x, 0.5 + y, 0.5 + z) with `Cartesian_angstrom`.
+    - `Cartesian_angstrom_center_xyz` : Cartesian coordinates in unit of Angstrom, a position vector (x, y, z) refer to (0.5 + x, 0.5 + y, 0.5 + z) with `Cartesian_angstrom`.
 
     The following three lines tells the elemental type (`Si`), the initial magnetic moment (`0.0`), and the number of atoms for this particular element (`2`) repsectively. Notice this  magnetic moment will be a default value for every atom of this type but will be overrided if one define it for each atom by keyword(see below).
 

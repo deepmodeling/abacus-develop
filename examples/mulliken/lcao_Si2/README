@@ -1,0 +1,10 @@
+/*******************************************************************************/
+/
+/ These are the examples of ABACUS program.
+/
+/*******************************************************************************/
+
+The Mulliken population analysis can be calculated by setting ‘out_mul’ to ‘1’ 
+in the INPUT file, and there will be an output file named mulliken.txt in the 
+output directory.
+

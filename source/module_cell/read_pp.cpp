@@ -53,7 +53,7 @@ Pseudopot_upf::~Pseudopot_upf()
 	delete [] jchi;
 }
 
-int Pseudopot_upf::init_pseudo_reader(const std::string &fn)
+int Pseudopot_upf::init_pseudo_reader(const std::string &fn, std::string &type)
 {
     ModuleBase::TITLE("Pseudopot_upf","init");
     // First check if this pseudo-potential has spin-orbit information
@@ -65,29 +65,34 @@ int Pseudopot_upf::init_pseudo_reader(const std::string &fn)
         return 1;
     }
 
-    if(GlobalV::global_pseudo_type=="auto") //zws
+    // if(GlobalV::global_pseudo_type=="auto") //zws
+	if (type == "auto")
 	{
-		set_pseudo_type(fn);
+		set_pseudo_type(fn, type);
 	}
 
 	// read in the .UPF type of pseudopotentials
-	if(GlobalV::global_pseudo_type=="upf")
+	// if(GlobalV::global_pseudo_type=="upf")
+	if (type == "upf")
 	{
 		int info = read_pseudo_upf(ifs);
 		return info;
 	}
 	// read in the .vwr type of pseudopotentials
-	else if(GlobalV::global_pseudo_type=="vwr")
+	// else if(GlobalV::global_pseudo_type=="vwr")
+	else if (type == "vwr")
 	{
 		int info = read_pseudo_vwr(ifs);
 		return info;
 	}
-	else if(GlobalV::global_pseudo_type=="upf201")
+	// else if(GlobalV::global_pseudo_type=="upf201")
+	else if (type == "upf201")
 	{
 		int info = read_pseudo_upf201(ifs);
 		return info;
 	}
-	else if(GlobalV::global_pseudo_type=="blps") // sunliang added 2021.7
+	// else if(GlobalV::global_pseudo_type=="blps") // sunliang added 2021.7
+	else if (type == "blps")
 	{
 		int info = read_pseudo_blps(ifs);
 		return info;
@@ -100,7 +105,7 @@ int Pseudopot_upf::init_pseudo_reader(const std::string &fn)
 //----------------------------------------------------------
 // setting the type of the pseudopotential file
 //----------------------------------------------------------
-int Pseudopot_upf::set_pseudo_type(const std::string &fn) //zws add
+int Pseudopot_upf::set_pseudo_type(const std::string &fn, std::string &type) //zws add
 {
     std::ifstream pptype_ifs(fn.c_str(), ios::in);
     std::string dummy;
@@ -116,11 +121,13 @@ int Pseudopot_upf::set_pseudo_type(const std::string &fn) //zws add
 
 		if ( trim(strversion) == "2.0.1" )
 		{
-			GlobalV::global_pseudo_type = "upf201";
+			type = "upf201";
+			// GlobalV::global_pseudo_type = "upf201";
 		}
 		else
 		{
-			GlobalV::global_pseudo_type = "upf";
+			type = "upf";
+			// GlobalV::global_pseudo_type = "upf";
 		}
 	}
 	return 0;

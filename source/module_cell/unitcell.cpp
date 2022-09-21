@@ -47,6 +47,7 @@ UnitCell::UnitCell()
     atom_label = new string[1];
     atom_mass = nullptr;
     pseudo_fn = new string[1];
+    pseudo_type = new string[1];
 }
 
 UnitCell::~UnitCell()
@@ -54,6 +55,7 @@ UnitCell::~UnitCell()
     delete[] atom_label;
     delete[] atom_mass;
     delete[] pseudo_fn;
+    delete[] pseudo_type;
     delete[] iat2it;
     delete[] iat2ia;
     delete[] iwt2iat;

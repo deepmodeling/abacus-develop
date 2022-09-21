@@ -9,6 +9,7 @@
 // new
 #include "../module_surchem/efield.h"
 #include "../module_surchem/surchem.h"
+#include "../module_surchem/gatefield.h"
 #include "H_Hartree_pw.h"
 #ifdef __LCAO
 #include "../src_lcao/ELEC_evolve.h"
@@ -73,7 +74,7 @@ void Potential::allocate(const int nrxx)
     this->vnew.create(GlobalV::NSPIN, nrxx);
     ModuleBase::Memory::record("Potential", "vnew", GlobalV::NSPIN * nrxx, "double");
 
-    if (GlobalV::imp_sol || GlobalV::comp_chg)
+    if (GlobalV::imp_sol)
     {
         GlobalC::solvent_model.allocate(nrxx, GlobalV::NSPIN);
     }
@@ -294,11 +295,16 @@ void Potential::set_local_pot(double *vl_pseudo, // store the local pseudopotent
     if (GlobalV::EFIELD_FLAG && !GlobalV::DIP_COR_FLAG)
     {
         ModuleBase::matrix v_efield(GlobalV::NSPIN, GlobalC::rhopw->nrxx);
-        v_efield = Efield::add_efield(GlobalC::ucell, GlobalC::rhopw, GlobalV::NSPIN, GlobalC::CHR.rho);
+        v_efield = Efield::add_efield(GlobalC::ucell, GlobalC::rhopw, GlobalV::NSPIN, GlobalC::CHR.rho, GlobalC::solvent_model);
         for (int ir = 0; ir < GlobalC::rhopw->nrxx; ++ir)
         {
             vl_pseudo[ir] += v_efield(0, ir);
         }
+    }
+
+    if( GlobalV::GATE_FLAG)
+    {
+        Gatefield::add_gatefield(vl_pseudo, GlobalC::ucell, GlobalC::rhopw, true, true);
     }
 
     delete[] vg;
@@ -361,10 +367,6 @@ ModuleBase::matrix Potential::v_of_rho(const double *const *const rho_in, const 
     if (GlobalV::VH_IN_H)
     {
         v += H_Hartree_pw::v_hartree(GlobalC::ucell, GlobalC::rhopw, GlobalV::NSPIN, rho_in);
-        if(GlobalV::comp_chg)
-        {
-            v += GlobalC::solvent_model.v_compensating(GlobalC::ucell, GlobalC::rhopw, GlobalV::NSPIN, rho_in);
-        }
         if (GlobalV::imp_sol)
         {
             v += GlobalC::solvent_model.v_correction(GlobalC::ucell, GlobalC::rhopw, GlobalV::NSPIN, rho_in);
@@ -376,7 +378,7 @@ ModuleBase::matrix Potential::v_of_rho(const double *const *const rho_in, const 
     //----------------------------------------------------------
     if (GlobalV::EFIELD_FLAG && GlobalV::DIP_COR_FLAG)
     {
-        v += Efield::add_efield(GlobalC::ucell, GlobalC::rhopw, GlobalV::NSPIN, rho_in);
+        v += Efield::add_efield(GlobalC::ucell, GlobalC::rhopw, GlobalV::NSPIN, rho_in, GlobalC::solvent_model);
     }
 
     // test get ntot_reci

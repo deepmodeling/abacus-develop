@@ -106,6 +106,7 @@ public:
     double *atom_mass;
     std::string *atom_label;
     std::string *pseudo_fn;
+    std::string *pseudo_type; // pseudopotential types for each elements, sunliang added 2022-09-15. 
 
 #ifdef __MPI
     void bcast_unitcell(void);

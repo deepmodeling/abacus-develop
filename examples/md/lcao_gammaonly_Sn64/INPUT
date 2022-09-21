@@ -1,0 +1,33 @@
+INPUT_PARAMETERS
+#Parameters (1.General)
+pseudo_dir              ../../../tests/PP_ORB
+orbital_dir                 ../../../tests/PP_ORB
+ntype               1
+nbands              600
+pseudo_type         upf
+gamma_only          1
+
+#Parameters (2.Methods)
+calculation         md
+symmetry            0
+
+md_nstep               10
+out_level           m
+relax_method         cg
+
+smearing_method            gaussian
+smearing_sigma               0.02
+#Parameters (3.PW)
+ecutwfc             30
+scf_thr                 1e-5
+scf_nmax		    100
+
+#Parameters (5.LCAO)
+basis_type          lcao
+mixing_beta         0.4
+chg_extrap       second-order
+ 
+md_type          1
+md_dt              1
+md_tfirst          1373
+md_restart           0

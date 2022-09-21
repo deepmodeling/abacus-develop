@@ -1,0 +1,12 @@
+INPUT_PARAMETERS
+#Parameters	(General)
+pseudo_dir              ../../../tests/PP_ORB
+ntype			2	
+#Parameters (Accuracy)
+ecutwfc			50
+scf_nmax			20
+smearing_sigma		  0.002
+
+basis_type		pw
+
+latname	hexagonal

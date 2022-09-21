@@ -1,0 +1,20 @@
+/*******************************************************************************/
+/
+/ These are the examples of ABACUS program.
+/
+/*******************************************************************************/
+
+This example show how to calculate the DOS(Density of States) of silicon (diamond).
+
+Steps:
+(1) ./step1.sh
+(2) ./step2.sh
+
+Finish! Then you can see DOS1_smearing.dat in OUT.ABACUS. The first column is energy,
+and the second is density of states. Plot it!
+
+Note:
+1)If the "out_dos" is used, the DOS1_smearing.dat will appear in the directory.
+2)The charge density needed to be output in scf calculations and be read
+in non-self consistent calculations.
+

@@ -1,0 +1,22 @@
+/*******************************************************************************/
+/
+/ These are the examples of ABACUS program.
+/
+/*******************************************************************************/
+
+These examples show how to calculate the bands structures.
+Generally, it requires two steps of calculation:
+1. Do the scf calculation and at the same time output the information of charge by
+   setting 'out_chg' to '1' in INPUT file
+2. Do the nscf calculation with reading the charge from step1 (set 'init_chg' to 'file') 
+   and output the information band (set 'out_band' to '1'). You also need to define
+   a KPT file with a 'LINE' mode (a example is in lcao_Si2/KLINES).  
+
+Finish! Then you can see BANDS_1.dat in OUT.ABACUS. Plot it!
+
+Note:
+1)If the "out_band" is used, the BANDS_1.dat will appear in the directory.
+2)Learn the "Gamma" and "Line" mode of "KPOINTS".
+3)The charge density needed to be output in scf calculations and be read
+in non-self consistent calculations.
+

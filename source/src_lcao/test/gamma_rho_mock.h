@@ -2102,7 +2102,7 @@ void UnitCell_pseudo::read_cell_pseudopots(const std::string &pp_dir, std::ofstr
 		if(GlobalV::MY_RANK==0)
 		{
 			pp_address = pp_dir + this->pseudo_fn[i];
-			error = upf.init_pseudo_reader( pp_address ); //xiaohui add 2013-06-23
+			error = upf.init_pseudo_reader( pp_address, this->pseudo_type[i] ); //xiaohui add 2013-06-23
 
 			if(error==0) // mohan add 2021-04-16
 			{
@@ -2242,7 +2242,7 @@ Pseudopot_upf::~Pseudopot_upf()
 	delete [] jchi;
 }
 
-int Pseudopot_upf::init_pseudo_reader(const std::string &fn)
+int Pseudopot_upf::init_pseudo_reader(const std::string &fn, std::string &type)
 {
     ModuleBase::TITLE("Pseudopot_upf","init");
     // First check if this pseudo-potential has spin-orbit information
@@ -2255,12 +2255,14 @@ int Pseudopot_upf::init_pseudo_reader(const std::string &fn)
     }
 
 
-    if(GlobalV::global_pseudo_type=="auto") //zws
+    // if(GlobalV::global_pseudo_type=="auto") //zws
+	if (type == "auto")
 	{
-		set_pseudo_type(fn);
+		set_pseudo_type(fn, type);
 	}
 
-	if(GlobalV::global_pseudo_type=="upf201")
+	// if(GlobalV::global_pseudo_type=="upf201")
+	if (type == "upf201")
 	{
 		int info = read_pseudo_upf201(ifs);
 		return info;
@@ -2273,7 +2275,7 @@ int Pseudopot_upf::init_pseudo_reader(const std::string &fn)
 //----------------------------------------------------------
 // setting the type of the pseudopotential file
 //----------------------------------------------------------
-int Pseudopot_upf::set_pseudo_type(const std::string &fn) //zws add
+int Pseudopot_upf::set_pseudo_type(const std::string &fn, std::string &type) //zws add
 {
     std::ifstream pptype_ifs(fn.c_str(), ios::in);
     std::string dummy;
@@ -2289,11 +2291,13 @@ int Pseudopot_upf::set_pseudo_type(const std::string &fn) //zws add
 
 		if ( trim(strversion) == "2.0.1" )
 		{
-			GlobalV::global_pseudo_type = "upf201";
+			// GlobalV::global_pseudo_type = "upf201";
+			type = "upf201";
 		}
 		else
 		{
-			GlobalV::global_pseudo_type = "upf";
+			// GlobalV::global_pseudo_type = "upf";
+			type = "upf";
 		}
 	}
 	return 0;

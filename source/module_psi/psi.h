@@ -4,11 +4,12 @@
 //#include "Basis.h"
 //#include "Cell.h"
 
-#include <vector>
-#include <cassert>
 #include "module_base/global_variable.h"
 
+#include <cassert>
 #include <complex>
+#include <tuple>
+#include <vector>
 
 namespace psi
 {
@@ -16,7 +17,7 @@ namespace psi
 //structure for getting range of Psi
 //two display method: k index first or bands index first
 //only one k point with multi bands and one band with multi k-points are available for hPsi()
-struct Range 
+struct Range
 {
     //k_first = 0: Psi(nbands, nks, nbasis) ; 1: Psi(nks, nbands, nbasis)
     bool k_first;
@@ -24,7 +25,7 @@ struct Range
     size_t index_1;
     //range_1 is the begin of second index
     size_t range_1;
-    //range_2 is the end of second index 
+    //range_2 is the end of second index
     size_t range_2;
 
     Range(const size_t range_in)
@@ -85,15 +86,15 @@ public:
 
         if(nband_in <= psi_in.get_nbands())
         {
-            // copy from Psi from psi_in(current_k, 0, 0), 
-            // if size of k is 1, current_k in new Psi is psi_in.current_k 
+            // copy from Psi from psi_in(current_k, 0, 0),
+            // if size of k is 1, current_k in new Psi is psi_in.current_k
             const T* tmp = psi_in.get_pointer();
             if(nk_in==1) for(size_t index=0; index<this->size();++index)
             {
                 psi[index] = tmp[index];
                 //current_k for this Psi only keep the spin index same as the copied Psi
                 this->current_k = psi_in.get_current_k();
-            } 
+            }
             else for(size_t index=0; index<this->size();++index) psi[index] = tmp[index];
         }
     }
@@ -116,9 +117,9 @@ public:
     }
     // initialize the wavefunction coefficient
     // only resize and construct function now is used
-    
-    
-    // allocate psi for three dimensions 
+
+
+    // allocate psi for three dimensions
     void resize(
         const int nks_in,
         const int nbands_in,
@@ -133,7 +134,7 @@ public:
         this->psi_current = psi.data();
         return;
     }
-        
+
     // get the pointer for current k point or current band
     T* get_pointer(){return psi_current;}
     T* get_pointer(const int& ibands)
@@ -147,7 +148,7 @@ public:
         assert(ibands>=0 && ibands<this->nbands);
         return &psi_current[ibands*this->nbasis];
     }
-   
+
     // interface to get three dimension size
     const int& get_nk() const {return nk;}
     const int& get_nbands() const {return nbands;}
@@ -186,7 +187,7 @@ public:
     T &operator()(const int ik, const int ibands, const int ibasis)
 	{
         assert(ik>=0 && ik<this->nk);
-		assert(ibands>=0 && ibands<this->nbands);	
+		assert(ibands>=0 && ibands<this->nbands);
         assert(ibasis>=0 && ibasis<this->nbasis);
 		return this->psi[(ik*this->nbands + ibands) * this->nbasis + ibasis];
 	}
@@ -194,7 +195,7 @@ public:
 	const T &operator()(const int ik, const int ibands, const int ibasis) const
 	{
         assert(ik>=0 && ik<this->nk);
-		assert(ibands>=0 && ibands<this->nbands);	
+		assert(ibands>=0 && ibands<this->nbands);
         assert(ibasis>=0 && ibasis<this->nbasis);
 		return this->psi[(ik*this->nbands + ibands) * this->nbasis + ibasis];
 	}
@@ -203,7 +204,7 @@ public:
     T &operator()(const int ibands, const int ibasis)
 	{
         assert(this->current_b==0);
-		assert(ibands>=0 && ibands<this->nbands);	
+		assert(ibands>=0 && ibands<this->nbands);
         assert(ibasis>=0 && ibasis<this->nbasis);
 		return this->psi_current[ibands * this->nbasis + ibasis];
 	}
@@ -211,14 +212,14 @@ public:
 	const T &operator()(const int ibands, const int ibasis) const
 	{
         assert(this->current_b==0);
-		assert(ibands>=0 && ibands<this->nbands);	
+		assert(ibands>=0 && ibands<this->nbands);
         assert(ibasis>=0 && ibasis<this->nbasis);
 		return this->psi_current[ibands * this->nbasis + ibasis];
 	}
 
     //use operator "(ibasis)" to reach target element for current k and current band
     T &operator()(const int ibasis)
-	{	
+	{
         assert(ibasis>=0 && ibasis<this->nbasis);
 		return this->psi_current[this->current_b * this->nbasis + ibasis];
 	}
@@ -228,12 +229,12 @@ public:
         assert(ibasis>=0 && ibasis<this->nbasis);
 		return this->psi_current[this->current_b * this->nbasis + ibasis];
 	}
- 
+
     /* //would be updated later
     int get_basis_type();
     int get_data_type();
     int get_hardware_type();*/
-    
+
     // for example : pass Psi from CPU to GPU, would be updated later
     //Psi& operator=(const Psi &p);
 
@@ -261,7 +262,7 @@ public:
         }
         if(range.k_first != this->k_first || index_1_in<0 || range.range_1<0 || range.range_2<range.range_1
         || (range.k_first && range.range_2>=this->nbands)
-        || (!range.k_first && (range.range_2>=this->nk || range.index_1>=this->nbands) ) ) 
+        || (!range.k_first && (range.range_2>=this->nk || range.index_1>=this->nbands) ) )
         {
             return std::tuple<const T*, int>(nullptr, 0);
         }
@@ -274,10 +275,10 @@ public:
     }
 
     int npol = 1;
- 
- private:   
+
+ private:
     std::vector<T> psi;
- 
+
     // dimensions
     int nk=1; // number of k points
     int nbands=1; // number of bands
@@ -297,16 +298,16 @@ public:
     bool k_first = true;
 
 /*    // control if the system has only gamma point
-    bool gamma_only; 
+    bool gamma_only;
 
     // control which basis for this wavefunction
     int basis_type;
-    
+
     // which hardware does this wavefunction located
     // 1: CPU, 2: GPU, 3: DCU
     int hardware_type;
-    
-    // method for parallelization 
+
+    // method for parallelization
     int parallel_type;
 //would be updated later */
 };
@@ -314,12 +315,14 @@ public:
 //method for initial psi for each base, should be updated later
 template<typename T>
 void initialize(Psi<T> &psi);
-    /*    const bool &gamma_only, 
-        const int &basis_type, 
-        const int &data_type, 
-        const int &hardware_type, 
-        const int &parallel_type 
-    );*/
+/*
+    const bool &gamma_only,
+    const int &basis_type,
+    const int &data_type,
+    const int &hardware_type,
+    const int &parallel_type
+);
+*/
 
 
 }//namespace psi

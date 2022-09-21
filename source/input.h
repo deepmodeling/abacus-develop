@@ -28,8 +28,8 @@ class Input
     std::string pseudo_dir; // directory of pseudopotential
     std::string orbital_dir; // directory of orbital file
     std::string read_file_dir; // directory of files for reading
-    std::string pseudo_type; // the type of pseudopotential, mohan add 2013-05-20, ABACUS supports
-                             // UPF format (default) and vwr format. (xiaohui add 2013-06-23)
+    // std::string pseudo_type; // the type of pseudopotential, mohan add 2013-05-20, ABACUS supports
+    //                          // UPF format (default) and vwr format. (xiaohui add 2013-06-23)
     std::string kpoint_file; // file contains k-points -- xiaohui modify 2015-02-01
     std::string wannier_card; // input card for wannier functions.
     std::string latname; // lattice name
@@ -201,7 +201,6 @@ class Input
     //==========================================================
     // potential / charge / wavefunction / energy
     //==========================================================
-    std::string restart_mode; //
 
     std::string init_wfc; // "file","atomic","random"
     std::string init_chg; // "file","atomic"
@@ -282,6 +281,18 @@ class Input
     double efield_pos_max;     // position of the maximum of the saw-like potential along crystal axis efield_dir
     double efield_pos_dec;      // zone in the unit cell where the saw-like potential decreases
     double efield_amp ;        // amplitude of the electric field
+
+    //==========================================================
+    // gatefield (compensating charge)
+    // Yu Liu add 2022-09-13
+    //==========================================================
+    bool gate_flag;                 // compensating charge or not
+    double zgate;                   // position of charged plate
+    bool relax;                     // allow relaxation along the specific direction
+    bool block;                     // add a block potential or not
+    double block_down;              // low bound of the block
+    double block_up;                // high bound of the block
+    double block_height;            // height of the block
 
     //==========================================================
     // vdw
@@ -387,7 +398,7 @@ class Input
     //==========================================================
     //    DFT+DMFT       Xin Qu added on 2021-08
     //==========================================================
-    bool dft_plus_dmft; // true:DFT+U correction; false：standard DFT calcullation(default)
+    bool dft_plus_dmft; // true:DFT+DMFT; false：standard DFT calcullation(default)
 
     //==========================================================
     // DeepKS -- added by caoyu and mohan
@@ -414,17 +425,10 @@ class Input
     double tau;
     double sigma_k;
     double nc_k;
-    // compensating charge
-    bool comp_chg;
-    double comp_q;
-    double comp_l;
-    double comp_center;
-    int comp_dim;
 
     //==========================================================
     // variables for test only
     //==========================================================
-    bool test_just_neighbor = false;
     bool test_skip_ewald = false;
 
   private:

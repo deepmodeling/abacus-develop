@@ -19,6 +19,7 @@ public:
 
 	ModuleBase::Vector3<int> *mbl; // whether the atoms can move or not
 	std::string pseudo_fn; // File name of pseudopotentials
+	std::string pseudo_type; // Type of pseudopotential. It is added to be on the safe side, thought it seems useless. sunliang 2022-09-15
 	double mass; // the mass of atom
 	bool flag_empty_element = false; // whether is the empty element for bsse.	Peize Lin add 2021.04.07
 

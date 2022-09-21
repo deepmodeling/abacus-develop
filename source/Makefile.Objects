@@ -243,6 +243,7 @@ OBJS_SURCHEM=H_correction_pw.o\
     minimize_cg.o\
     efield.o\
     sol_force.o\
+    gatefield.o\
 
 OBJS_XC=xc_funct_corr_gga.o \
 xc_funct_corr_lda.o \

@@ -250,7 +250,7 @@ void Potential::write_elecstat_pot(const std::string &fn, const std::string &fn_
     if (GlobalV::EFIELD_FLAG && GlobalV::DIP_COR_FLAG)
     {
         v_efield.create(GlobalV::NSPIN, rho_basis->nrxx);
-        v_efield = Efield::add_efield(GlobalC::ucell, GlobalC::rhopw, GlobalV::NSPIN, GlobalC::CHR.rho);
+        v_efield = Efield::add_efield(GlobalC::ucell, GlobalC::rhopw, GlobalV::NSPIN, GlobalC::CHR.rho, GlobalC::solvent_model);
     }
 
     //==========================================

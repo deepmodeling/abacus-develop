@@ -31,7 +31,7 @@ void UnitCell_pseudo::read_cell_pseudopots(const std::string &pp_dir, std::ofstr
 		if(GlobalV::MY_RANK==0)
 		{
 			pp_address = pp_dir + this->pseudo_fn[i];
-			error = upf.init_pseudo_reader( pp_address ); //xiaohui add 2013-06-23
+			error = upf.init_pseudo_reader( pp_address, this->pseudo_type[i] ); //xiaohui add 2013-06-23
 
 			if(error==0) // mohan add 2021-04-16
 			{
