@@ -1,0 +1,1 @@
+# Detailed Description of STRU file

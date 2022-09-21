@@ -9,10 +9,6 @@ Welcome to ABACUS Documentations!
 
 Hi everyone, here are ABACUS Documentations.
 
-
-.. content::
-   testtesttes
-
 .. toctree::
    :maxdepth: 2
    :numbered:
@@ -34,7 +30,7 @@ Hi everyone, here are ABACUS Documentations.
    advanced/md
    advanced/elec_properties/index
    advanced/interface/index
-   advanced/input-main
+   advanced/input_files/index
 
 .. toctree::
    :maxdepth: 2

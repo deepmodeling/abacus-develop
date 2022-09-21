@@ -1,13 +1,8 @@
 =================================================
-Running SCF
+Electronic properties and outputs
 =================================================
 
 .. toctree::
-
-   initialization
-   construct_H
-   hsolver
-   converge
-   performance
-   advanced
-   spin
+    input-main
+    stru
+    kpt
