@@ -59,8 +59,9 @@ smearing_sigma          0.01
 mixing_type             pulay           # or kerker, plain, pulay-kerker
 mixing_beta             0.7
 ```
+The pseudopotential files of `Mg_ONCV_PBE-1.0.upf` and `O_ONCV_PBE-1.0.upf` should be provided under the directory of `pseudo_dir`.
 
-The third mandatory input file is called `KPT`, which sets the k-mesh. Below is an example:
+The next mandatory input file is called `KPT`, which sets the k-mesh. Below is an example:
 
 ```
 K_POINTS
@@ -68,8 +69,6 @@ K_POINTS
 Gamma
 4 4 4 0 0 0
 ```
-
-The pseudopotential files of Mg `Mg_ONCV_PBE-1.0.upf` and O `O_ONCV_PBE-1.0.upf` should be provided under the directory of `pseudo_dir`, i.e. `./`.
 
 Ok, now that all key input files have been set, we should be able to run the first quick example. The simplest way is to use the command line, e.g.:
 
