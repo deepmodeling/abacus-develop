@@ -148,23 +148,6 @@ LIBS = -lifcore -lm -lpthread ${LIBTORCH_LIB} ${LAPACK_LIB} ${FFTW_LIB} ${ELPA_L
 OPTS = ${INCLUDES} -Ofast -traceback -std=c++14 -simd -march=native -xHost -m64 -qopenmp -Werror -Wall -pedantic -g
 ```
 
-- module_base
-- module_cell
-- module_grid
-- module_md
-- module_neighbor
-- module_orbital
-- obj
-- src_external
-- src_global
-- src_io
-- module_relaxation
-- src_lcao
-- src_parallel
-- src_pdiag
-- src_pw
-- src_ri
-
 In `Makefile`, set the Macro as `HONG_DEEPKS`:
 
 ```Makefile
