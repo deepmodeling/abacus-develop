@@ -1,0 +1,15 @@
+INPUT_PARAMETERS
+#Parameters (General)
+pseudo_dir              ../../../tests/PP_ORB
+orbital_dir             ../../../tests/PP_ORB
+calculation        	nscf
+ntype			1
+nbands             	8 
+symmetry		0
+#Parameters (Methos)
+basis_type		lcao
+#Parameters (Accuracy)
+ecutwfc			50
+#Parameters (File)
+init_chg		file
+out_dos			1
