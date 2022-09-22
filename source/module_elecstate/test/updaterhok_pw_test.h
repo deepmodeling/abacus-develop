@@ -20,12 +20,10 @@
 #include "src_pw/structure_factor.h"
 #include "src_pw/VNL_in_pw.h"
 #include "src_pw/hamilt.h"
-#include "src_parallel/parallel_pw.h"
 #include "input.h"
 #include "src_pw/energy.h"
 #include "module_xc/xc_functional.h"
 #include "module_pw/pw_basis_k.h"
-#include "src_parallel/parallel_pw.h"
 
 int ModuleSymmetry::Symmetry::symm_flag;
 
@@ -67,8 +65,6 @@ WF_atomic::WF_atomic(){}
 WF_atomic::~WF_atomic(){}
 wavefunc::wavefunc(){}
 wavefunc::~wavefunc(){}
-Parallel_PW::Parallel_PW(){}
-Parallel_PW::~Parallel_PW(){}
 Magnetism::Magnetism(){}
 Magnetism::~Magnetism(){}
 ORB_gaunt_table::ORB_gaunt_table(){}

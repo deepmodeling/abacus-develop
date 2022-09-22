@@ -291,10 +291,8 @@ void UnitCell_pseudo::setup_cell(
 	// setup the total number of PAOs
 	this->cal_natomwfc(log);
 
-#ifdef __LCAO
 	// setup GlobalV::NLOCAL
 	this->cal_nwfc(log);
-#endif
 
 //	Check whether the number of valence is minimum 
 	if(GlobalV::MY_RANK==0)

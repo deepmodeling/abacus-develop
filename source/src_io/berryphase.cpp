@@ -8,11 +8,13 @@ berryphase::berryphase()
 	GDIR = INPUT.gdir;
 }
 
+#ifdef __LCAO
 berryphase::berryphase(Local_Orbital_wfc &lowf_in) :
     lowf(&lowf_in)
 {
 	GDIR = INPUT.gdir;
 }
+#endif
 
 berryphase::~berryphase()
 {
@@ -35,16 +37,16 @@ void berryphase::get_occupation_bands()
 	//GlobalV::ofs_running << "the berryphase's occ_nbands is " << occ_nbands << std::endl;
 }
 
+#ifdef __LCAO
 void berryphase::lcao_init()
 {
-	#ifdef __LCAO
 	ModuleBase::TITLE("berryphase","lcao_init");
 	lcao_method.init(this->lowf->wfc_k_grid);
 	lcao_method.cal_R_number();
 	lcao_method.cal_orb_overlap();
-	#endif
 	return;
 }
+#endif
 
 // this routine 依赖于 kpoint的mp生成方式
 void berryphase::set_kpoints(const int direction)
@@ -449,9 +451,9 @@ void berryphase::Berry_Phase(int nbands, double &pdl_elec_tot, int &mod_elec_tot
 void berryphase::Macroscopic_polarization(const psi::Psi<std::complex<double>>* psi_in)
 {	
 	get_occupation_bands();
-	
+#ifdef __LCAO	
 	if( GlobalV::BASIS_TYPE == "lcao" ) this->lcao_init();
-	
+#endif
 	
 	GlobalV::ofs_running << "\n\n\n\n";
 	GlobalV::ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;

@@ -263,7 +263,6 @@ endif()
 add_compile_definitions(
   __EXX
   __FFTW3
-  __FP
   __SELINV
   __LCAO
   METIS

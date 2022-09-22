@@ -2,8 +2,9 @@
 #define RESTART_H
 
 #include <string>
+#ifdef __LCAO
 #include "src_lcao/LCAO_matrix.h"
-
+#endif
 class Restart
 {
 public:
