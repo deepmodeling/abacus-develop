@@ -69,7 +69,9 @@ Gamma
 4 4 4 0 0 0
 ```
 
-Ok, now that all three key input files have been set, we should be able to run the first quick example. The simplest way is to use the command line, e.g.:
+The pseudopotential files of Mg `Mg_ONCV_PBE-1.0.upf` and O `O_ONCV_PBE-1.0.upf` should be provided under the directory of `pseudo_dir`, i.e. `./`.
+
+Ok, now that all key input files have been set, we should be able to run the first quick example. The simplest way is to use the command line, e.g.:
 
 ```
 mpirun -np 4 abacus
@@ -164,4 +166,4 @@ mixing_type             pulay           # or kerker, plain, pulay-kerker
 mixing_beta             0.7
 ```
 
-Now we can use the same `KPT` and `STRU` file as above. Run this optimization example, the optimized structure will appear under the directory `OUT.MgO` with the name of `` and ``.
+Now we can use the same `KPT` and `STRU` file as above. Run this optimization example, the final optimized structure will appear under the directory `OUT.MgO` with the name of `STRU_NOW.cif`.
