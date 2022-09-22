@@ -3,12 +3,14 @@
 
 #include "../module_base/global_function.h"
 #include "../module_base/global_variable.h"
+#ifdef __LCAO
 #include "module_esolver/esolver_ks_lcao.h"
-
+#endif
 class Threshold_Elec
 {
-
+#ifdef __LCAO
     friend class ModuleESolver::ESolver_KS_LCAO;
+#endif
 public:
 
     // constructor and deconstructor

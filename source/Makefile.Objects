@@ -216,8 +216,7 @@ OBJS_PARALLEL=parallel_global.o\
 parallel_kpoints.o\
 parallel_common.o\
 parallel_reduce.o\
-parallel_pw.o\
-parallel_grid.o\
+parallel_grid.o
 
 OBJS_ESOLVER=esolver.o\
     esolver_ks.o\
@@ -406,7 +405,7 @@ symmetry_rho.o \
 symm_other.o \
 eximport.o \
 mulliken_charge.o\
-setup_nonlocal.o\
+setup_nonlocal.o
 
 OBJS_PDIAG=pdgseps.o \
 pzgseps.o \
