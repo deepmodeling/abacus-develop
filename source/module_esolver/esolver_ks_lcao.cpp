@@ -63,37 +63,6 @@ void ESolver_KS_LCAO::Init(Input& inp, UnitCell_pseudo& ucell)
     else
     {
         ESolver_KS::Init(inp, ucell);
-
-#ifdef __DEEPKS
-        // wenfei 2021-12-19
-        // if we are performing DeePKS calculations, we need to load a model
-        if (GlobalV::deepks_scf)
-        {
-            // load the DeePKS model from deep neural network
-            GlobalC::ld.load_model(INPUT.deepks_model);
-        }
-#endif
-
-        // Initialize the local wave functions.
-        // npwx, eigenvalues, and weights
-        // npwx may change according to cell change
-        // this function belongs to cell LOOP
-        GlobalC::wf.allocate_ekb_wg(GlobalC::kv.nks);
-
-        // Initialize the FFT.
-        // this function belongs to cell LOOP
-
-        // output is GlobalC::ppcell.vloc 3D local pseudopotentials
-        // without structure factors
-        // this function belongs to cell LOOP
-        GlobalC::ppcell.init_vloc(GlobalC::ppcell.vloc, GlobalC::rhopw);
-
-        // Initialize the sum of all local potentials.
-        // if ion_step==0, read in/initialize the potentials
-        // this function belongs to ions LOOP
-        int ion_step = 0;
-        GlobalC::pot.init_pot(ion_step, GlobalC::sf.strucFac);
-        ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT POTENTIAL");
     } // end ifnot get_S
 
     //------------------init Basis_lcao----------------------
@@ -202,6 +171,44 @@ void ESolver_KS_LCAO::Init(Input& inp, UnitCell_pseudo& ucell)
                                                    &(this->LOC),
                                                    &(this->UHM),
                                                    &(this->LOWF));
+
+
+        // Inititlize the charge density.
+        this->pelec->allocateRho(GlobalV::NSPIN, GlobalC::rhopw->nrxx, GlobalC::rhopw->npw);
+        ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT CHARGE");
+        // Initializee the potential.
+        GlobalC::pot.allocate(GlobalC::rhopw->nrxx);
+
+#ifdef __DEEPKS
+        // wenfei 2021-12-19
+        // if we are performing DeePKS calculations, we need to load a model
+        if (GlobalV::deepks_scf)
+        {
+            // load the DeePKS model from deep neural network
+            GlobalC::ld.load_model(INPUT.deepks_model);
+        }
+#endif
+
+        // Initialize the local wave functions.
+        // npwx, eigenvalues, and weights
+        // npwx may change according to cell change
+        // this function belongs to cell LOOP
+        GlobalC::wf.allocate_ekb_wg(GlobalC::kv.nks);
+
+        // Initialize the FFT.
+        // this function belongs to cell LOOP
+
+        // output is GlobalC::ppcell.vloc 3D local pseudopotentials
+        // without structure factors
+        // this function belongs to cell LOOP
+        GlobalC::ppcell.init_vloc(GlobalC::ppcell.vloc, GlobalC::rhopw);
+
+        // Initialize the sum of all local potentials.
+        // if ion_step==0, read in/initialize the potentials
+        // this function belongs to ions LOOP
+        int ion_step = 0;
+        GlobalC::pot.init_pot(ion_step, GlobalC::sf.strucFac);
+        ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT POTENTIAL");
     }
     if (this->phami != nullptr)
     {

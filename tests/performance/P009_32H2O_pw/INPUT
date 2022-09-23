@@ -1,7 +1,6 @@
 INPUT_PARAMETERS
 #Parameters (1.General)
 suffix                          autotest
-pseudo_type                    upf201	#the type pseudo files
 calculation                    scf	#test; scf; relax; nscf; ienvelope; istate;
 ntype                          2	#atom species number
 symmetry                       0	#turn symmetry on or off

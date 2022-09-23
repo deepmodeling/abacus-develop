@@ -5,7 +5,6 @@ calculation     relax
 ntype			1
 symmetry		1
 pseudo_dir      ./
-pseudo_type     upf201
 
 #Parameters (2.Iteration)
 ecutwfc			40

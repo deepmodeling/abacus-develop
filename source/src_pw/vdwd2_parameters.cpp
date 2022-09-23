@@ -20,21 +20,21 @@ void Vdwd2_Parameters::initial_parameters(const Input &input)
 	this->damping = input.vdw_d;
 	this->C6_input(input.vdw_C6_file, input.vdw_C6_unit);
 	this->R0_input(input.vdw_R0_file, input.vdw_R0_unit);
-	this->model = input.vdw_model;
-	if(input.vdw_model=="radius")
+	this->model = input.vdw_cutoff_type;
+	if(input.vdw_cutoff_type=="radius")
 	{
 		if(input.vdw_radius_unit=="Bohr")
 		{
-			this->radius = std::stod(input.vdw_radius);
+			this->radius = std::stod(input.vdw_cutoff_radius);
 		}
 		else
 		{
-			this->radius = std::stod(input.vdw_radius) * ModuleBase::BOHR_TO_A;
+			this->radius = std::stod(input.vdw_cutoff_radius) * ModuleBase::BOHR_TO_A;
 		}
 	}
-	else if(input.vdw_model=="period")
+	else if(input.vdw_cutoff_type=="period")
 	{
-		this->period = input.vdw_period;
+		this->period = input.vdw_cutoff_period;
 	}
 }
 
@@ -177,7 +177,7 @@ void Vdwd2_Parameters::default_C6()
 		{"Ta",	81.24    },
 		{"W",	81.24    },
 		{"Re",	81.24    },
-		{"Os",	81.24    },
+		{"Os",	81.24    }, 
 		{"Ir",	81.24    },
 		{"Pt",	81.24    },
 		{"Au",	81.24    },

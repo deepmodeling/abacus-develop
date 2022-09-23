@@ -1,0 +1,10 @@
+INPUT_PARAMETERS
+pseudo_dir              ../../../tests/PP_ORB
+ntype                   3
+ecutwfc                 50
+scf_nmax                100
+symmetry                0
+scf_thr                 1e-8
+calculation             scf
+basis_type              pw
+out_chg                 1

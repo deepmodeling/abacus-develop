@@ -9,42 +9,41 @@ Welcome to ABACUS Documentations!
 
 Hi everyone, here are ABACUS Documentations.
 
+.. toctree::
+   :maxdepth: 2
+   :caption: Quick Start
 
+   quick_start/easy_install
+   quick_start/hands_on
+   quick_start/input
 
 .. toctree::
    :maxdepth: 2
-   :numbered:
-   :caption: Getting Started
-
-   install
-   features
-   generate-basis
-   input-kpt
-   input-main
-   input-stru
-
-.. toctree::
-   :maxdepth: 2
-   :numbered:
    :caption: Advanced
 
-   examples/index
+   advanced/install
+   advanced/scf/index
+   advanced/pp_orb
+   advanced/opt
+   advanced/md
+   advanced/elec_properties/index
+   advanced/interface/index
+   advanced/input_files/index
 
 .. toctree::
    :maxdepth: 2
-   :numbered:
-   :caption: Citting ABACUS
+   :caption: Citing ABACUS
 
-   CITATIONS.md
+   CITATIONS
 
 .. toctree::
    :maxdepth: 2
-   :numbered:
    :caption: Developing team
 
+   DevelopingTeam
+
 .. toctree::
    :maxdepth: 2
-   :numbered:
    :caption: Contributing to ABACUS
 
    CONTRIBUTING

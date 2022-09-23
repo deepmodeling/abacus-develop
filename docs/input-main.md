@@ -485,7 +485,7 @@ calculations.
 
   For plane-wave basis,
   - cg: cg method.
-  - dav: the Davidson algorithm. (Currently not working with Intel MKL library).
+  - dav: the Davidson algorithm.
 
   For atomic orbitals basis,
   - genelpa: This method should be used if you choose localized orbitals.

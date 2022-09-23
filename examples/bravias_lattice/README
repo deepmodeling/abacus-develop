@@ -1,0 +1,28 @@
+/*******************************************************************************/
+/
+/ These are the examples of ABACUS program.
+/
+/*******************************************************************************/
+
+These examples show how to use standard Bravias lattice type to set the cell.
+   - set 'latname' to one of the below types:
+         - `sc`: simple cubie.
+         - `fcc`: face-centered cubic.
+         - `bcc`: body-centered cubic.
+         - `hexagonal`: hexagonal.
+         - `trigonal`: trigonal.
+         - `st`: simple tetragonal.
+         - `bct`: body-centered tetragonal.
+         - `so`: simple orthorhombic.
+         - `baco`: base-centered orthorhombic.
+         - `fco`: face-centered orthorhombic.
+         - `bco`: body-centered orthorhombic.
+         - `sm`: simple monoclinic.
+         - `bacm`: base-centered monoclinic.
+         - `triclinic`: triclinic. 
+   - set the value of 'LATTICE_PARAMETERS' in the 'STRU' file.
+
+A detail description of the setting of 'STRU' file can be found in: 
+https://github.com/deepmodeling/abacus-develop/blob/develop/docs/input-stru.md
+
+
