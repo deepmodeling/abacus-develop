@@ -1,4 +1,5 @@
 #include "esolver_ks_lcao_tddft.h"
+#include "src_io/cal_r_overlap_R.h"
 
 //--------------temporary----------------------------
 #include "../module_base/blas_connector.h"
@@ -523,6 +524,14 @@ void ESolver_KS_LCAO_TDDFT::afterscf(const int istep)
         GlobalV::ofs_running << " !! convergence has not been achieved @_@" << std::endl;
         if (GlobalV::OUT_LEVEL == "ie" || GlobalV::OUT_LEVEL == "m") // xiaohui add "m" option, 2015-09-16
             std::cout << " !! CONVERGENCE HAS NOT BEEN ACHIEVED !!" << std::endl;
+    }
+
+    // add by jingan for out r_R matrix 2019.8.14
+    if(INPUT.out_mat_r)
+    {
+        cal_r_overlap_R r_matrix;
+        r_matrix.init(*this->LOWF.ParaV);
+        r_matrix.out_r_overlap_R();
     }
 
     if (Pdiag_Double::out_mat_hsR)
