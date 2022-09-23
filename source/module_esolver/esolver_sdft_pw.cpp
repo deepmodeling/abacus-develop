@@ -75,7 +75,7 @@ void ESolver_SDFT_PW::eachiterfinish(int iter)
 	//print_eigenvalue(GlobalV::ofs_running);
     GlobalC::en.calculate_etot();
 }
-void ESolver_SDFT_PW::afterscf()
+void ESolver_SDFT_PW::afterscf(const int istep)
 {
     for(int ik=0; ik<this->pelec->ekb.nr; ++ik)
     {

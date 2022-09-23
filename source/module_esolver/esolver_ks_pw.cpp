@@ -432,7 +432,7 @@ namespace ModuleESolver
     }
 
 
-    void ESolver_KS_PW::afterscf()
+    void ESolver_KS_PW::afterscf(const int istep)
     {
         for(int ik=0; ik<this->pelec->ekb.nr; ++ik)
         {

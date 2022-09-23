@@ -55,6 +55,7 @@ void Input::Init(const std::string &fn)
     //----------------------------------------------------------
     ModuleBase::Global_File::make_dir_out(this->suffix,
                                           this->calculation,
+                                          this->out_mat_hs2,
                                           GlobalV::MY_RANK,
                                           this->mdp.md_restart,
                                           this->out_alllog); // xiaohui add 2013-09-01
