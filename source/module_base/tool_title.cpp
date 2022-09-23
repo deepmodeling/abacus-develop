@@ -13,7 +13,7 @@ namespace ModuleBase
 //==========================================================
 void TITLE(const std::string &class_function_name)
 {
-	return;//no output
+    return;//no output
 
 #ifdef __NORMAL
     std::cout<<" ==> "<<class_function_name<<std::endl;
@@ -27,7 +27,7 @@ void TITLE(const std::string &class_function_name)
 
 void TITLE(const std::string &class_name,const std::string &function_name)
 {
-	return;//no output
+    return;//no output
 #ifdef __NORMAL
     std::cout<<" ==> "<<class_name<<"::"<<function_name<<std::endl;
 #else
@@ -41,7 +41,7 @@ void TITLE(const std::string &class_name,const std::string &function_name)
 
 void TITLE(std::ofstream &ofs,const std::string &class_name,const std::string &function_name)
 {
-	return;// no output
+    return;// no output
 #ifdef __NORMAL
     std::cout<<"\n\n ==> "<<class_name<<"::"<<function_name<<std::endl;
 #else

@@ -32,7 +32,7 @@ namespace ModuleESolver
         virtual void hamilt2density(const int istep, const int iter, const double ethr) override;
         virtual void updatepot(const int istep, const int iter) override;
         virtual void eachiterfinish(const int iter) override;
-        virtual void afterscf() override;
+        virtual void afterscf(const int istep) override;
         virtual bool do_after_converge(int& iter) override;
         int two_level_step = 0;
 
@@ -56,6 +56,7 @@ namespace ModuleESolver
 
         // output subfuncs: implemented in src_io/write_HS_R.cpp
         void output_HS_R(
+            const int &istep,
             const std::string& SR_filename = "data-SR-sparse_SPIN0.csr",
             const std::string& HR_filename_up = "data-HR-sparse_SPIN0.csr",
             const std::string HR_filename_down = "data-HR-sparse_SPIN1.csr",

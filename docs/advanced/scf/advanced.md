@@ -20,9 +20,9 @@ To use VdW-correction, users need to supply value to the `vdw_method` keyword in
    - d3_0: DFT-D3(0) method
    - d3_bj: DFT-D3(BJ) method
 
-Furthermore, ABACUS also provides a list of keywords to control relevant parmeters used in calculating the VdW correction, such as the scale factor (s6) term. Recommended values of such parameters can be found on the [webpage](https://www.chemie.uni-bonn.de/pctc/mulliken-center/software/dft-d3). The default values of the parameters in ABACUS are set to be the recommended values for PBE.
+Furthermore, ABACUS also provides a [list of keywords](../input_files/input-main.md#vdw-correction) to control relevant parmeters used in calculating the VdW correction, such as the scale factor (s6) term. Recommended values of such parameters can be found on the [webpage](https://www.chemie.uni-bonn.de/pctc/mulliken-center/software/dft-d3). The default values of the parameters in ABACUS are set to be the recommended values for PBE.
 
-Examples of VdW-corrected DFT calculations are provided in this [directory](https://github.com/deepmodeling/abacus-develop/tree/develop/examples/vdw/lcao_d3bj_Si2). There are two input files, where `INPUT1` shows how to apply D2 correction with user-specified $C_6$ parameter, and `INPUT2` shows how to apply D3(BJ) correction with default VdW parameters.
+Examples of VdW-corrected DFT calculations are provided in this [directory](https://github.com/deepmodeling/abacus-develop/tree/develop/examples/vdw/si2). There are two input files, where `INPUT1` shows how to apply D2 correction with user-specified $C_6$ parameter, and `INPUT2` shows how to apply D3(BJ) correction with default VdW parameters.
 
 To run any of the two cases, users may enter the directory, copy the corresponding input file to `INPUT`, and run ABACUS.
 

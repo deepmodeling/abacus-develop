@@ -1,10 +1,4 @@
-# INPUT file
-
-## Table of contents
-
-### [Structure of the file](#structure-of-the-file)
-
-### [List of keywords](#list-of-keywords)
+# Full List of INPUT Keywords
 
 - [System variables](#system-variables)
 

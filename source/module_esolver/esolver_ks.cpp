@@ -50,10 +50,17 @@ namespace ModuleESolver
         // Yu Liu add 2021-07-03
         GlobalC::CHR.cal_nelec();
 
-        // it has been established that that
-        // xc_func is same for all elements, therefore
-        // only the first one if used
-        if (ucell.atoms[0].xc_func == "HSE" || ucell.atoms[0].xc_func == "PBE0")
+        /* it has been established that that
+         xc_func is same for all elements, therefore
+         only the first one if used*/
+        /* In the special "two-level" calculation case, 
+        first scf iteration only calculate the functional without exact exchange.
+        but in "nscf" calculation, there is no need of "two-level" method. */
+        if(GlobalV::CALCULATION == "nscf")
+        {
+            XC_Functional::set_xc_type(ucell.atoms[0].xc_func);
+        }
+        else if (ucell.atoms[0].xc_func == "HSE" || ucell.atoms[0].xc_func == "PBE0")
         {
             XC_Functional::set_xc_type("pbe");
         }
@@ -252,7 +259,7 @@ namespace ModuleESolver
                     if(stop) break;
                 }
             }
-            afterscf();
+            afterscf(istep);
 
             ModuleBase::timer::tick(this->classname, "Run");
         }       

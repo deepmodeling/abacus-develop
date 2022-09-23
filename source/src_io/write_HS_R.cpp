@@ -10,6 +10,7 @@ namespace ModuleESolver
 // The 'sparse_threshold' is the accuracy of the sparse matrix. 
 // If the absolute value of the matrix element is less than or equal to the 'sparse_threshold', it will be ignored.
 void ESolver_KS_LCAO::output_HS_R(
+    const int &istep,
     const std::string &SR_filename,
     const std::string &HR_filename_up,
     const std::string HR_filename_down,
@@ -64,7 +65,7 @@ void ESolver_KS_LCAO::output_HS_R(
         }
     }
 
-    HS_Matrix::save_HSR_sparse(*this->UHM.LM, sparse_threshold, binary, SR_filename, HR_filename_up, HR_filename_down);
+    HS_Matrix::save_HSR_sparse(istep, *this->UHM.LM, sparse_threshold, binary, SR_filename, HR_filename_up, HR_filename_down);
     this->UHM.destroy_all_HSR_sparse();
 
     if(!GlobalV::GAMMA_ONLY_LOCAL) //LiuXh 20181011

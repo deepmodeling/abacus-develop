@@ -432,7 +432,7 @@ void ESolver_KS_LCAO_TDDFT::updatepot(const int istep, const int iter)
     }
 }
 
-void ESolver_KS_LCAO_TDDFT::afterscf()
+void ESolver_KS_LCAO_TDDFT::afterscf(const int istep)
 {
     for (int ik = 0; ik < this->pelec_td->ekb.nr; ++ik)
     {
@@ -527,7 +527,7 @@ void ESolver_KS_LCAO_TDDFT::afterscf()
 
     if (Pdiag_Double::out_mat_hsR)
     {
-        this->output_HS_R(); // LiuXh add 2019-07-15
+        this->output_HS_R(istep); // LiuXh add 2019-07-15
     }
 }
 

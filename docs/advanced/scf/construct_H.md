@@ -2,7 +2,7 @@
 
 ## Exchange-Correlation Functionals
 
-In our package, the XC functional can either be set explicitly using the `dft_functional` keyword in `INPUT` file. If `dft_functional` is not specified, ABACUS will use the xc functional indicated in the pseudopotential file. 
+In our package, the XC functional can be set explicitly using the `dft_functional` keyword in `INPUT` file. If `dft_functional` is not specified, ABACUS will use the xc functional indicated in the pseudopotential file. 
 
 Several common functionals are implemented in ABACUS, such as PZ and PBE. Users can check out this [file](../../../source/module_xc/xc_funcs.h) for a complete list of functionals implemented in ABACUS. Furthermore, if ABACUS is compiled with LIBXC, we also support all the LDA, GGA and meta-GGA functionals provided therein.
 
@@ -50,7 +50,7 @@ Here, we use a simple [example calculation](https://github.com/deepmodeling/abac
     Apart from the 'short-hand' names, ABACUS also allow supplying exchange-correlation functionals as combinations of LIBXC keywords for functional components, joined by plus sign, for example, setting:
 
     ```
-    dft_functional LDA_X_YUKAWA +LDA_C_1D_CSC
+    dft_functional LDA_X_YUKAWA+LDA_C_1D_CSC
     ```
     means we are using the short-range Yukawa attenuated exchange along with the Casula, Sorella & Senatore LDA correlation functional.
 

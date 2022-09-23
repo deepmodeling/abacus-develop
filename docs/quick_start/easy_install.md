@@ -1,6 +1,6 @@
 # Easy Installation
 
-This guide helps you install ABACUS with basic features. For DeePKS, Libxc support or building with `make`, please refer to [the advanced installation guide](../advanced/install.md). We recommend building ABACUS with `cmake` to avoid dependency issues.
+This guide helps you install ABACUS with basic features. **For DeePKS, Libxc support or building with `make`, please refer to [the advanced installation guide](../advanced/install.md).** We recommend building ABACUS with `cmake` to avoid dependency issues.
 
 ## Prerequisites
 

@@ -647,7 +647,7 @@ void ESolver_KS_LCAO::eachiterfinish(int iter)
     GlobalC::en.calculate_etot();
 }
 
-void ESolver_KS_LCAO::afterscf()
+void ESolver_KS_LCAO::afterscf(const int istep)
 {
     for (int ik = 0; ik < this->pelec->ekb.nr; ++ik)
     {
@@ -952,7 +952,7 @@ void ESolver_KS_LCAO::afterscf()
 
     if (hsolver::HSolverLCAO::out_mat_hsR)
     {
-        this->output_HS_R(); // LiuXh add 2019-07-15
+        this->output_HS_R(istep); // LiuXh add 2019-07-15
     }
 
     if(!GlobalV::CAL_FORCE && !GlobalV::CAL_STRESS)

@@ -1,4 +1,4 @@
-# STRU file
+# The STRU file
 
 - [Examples](#examples)
   - [no latname](#no-latname)
