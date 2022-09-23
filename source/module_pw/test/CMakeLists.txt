@@ -11,3 +11,8 @@ AddTest(
           test4-1.cpp test4-2.cpp test4-3.cpp test4-4.cpp  test4-5.cpp
           test_tool.cpp
 )
+
+add_test(NAME pw_test_parallel
+      COMMAND mpirun -np 2 ./pw_test; mpirun -np 3./pw_test
+      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+)
