@@ -126,12 +126,9 @@ The main output information appears in `OUT.MgO/running_scf.log`, which starts w
 If ABAUCS finishes successfully, you will be able to obtain the total energy in `OUT.MgO/running_scf.log`:
 
 ```
-
  --------------------------------------------
  !FINAL_ETOT_IS -1908.456553781335 eV
  --------------------------------------------
-
-
 ```
 
 Congratulations! ABACUS has come under you command from now on!
