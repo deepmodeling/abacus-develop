@@ -25,7 +25,7 @@ Hi everyone, here are ABACUS Documentations.
 
    advanced/install
    advanced/scf/index
-   advanced/pp_orb/index
+   advanced/pp_orb
    advanced/opt
    advanced/md
    advanced/elec_properties/index

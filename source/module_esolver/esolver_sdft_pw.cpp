@@ -35,6 +35,16 @@ void ESolver_SDFT_PW::Init(Input &inp, UnitCell_pseudo &ucell)
 {
     this->nche_sto = inp.nche_sto;
     ESolver_KS::Init(inp,ucell);
+
+    
+    this->pelec = new elecstate::ElecStatePW_SDFT( GlobalC::wfcpw, (Charge*)(&(GlobalC::CHR)), (K_Vectors*)(&(GlobalC::kv)), GlobalV::NBANDS);
+
+    // Inititlize the charge density.
+    this->pelec->allocateRho(GlobalV::NSPIN, GlobalC::rhopw->nrxx, GlobalC::rhopw->npw);
+    ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT CHARGE");
+    // Initializee the potential.
+    GlobalC::pot.allocate(GlobalC::rhopw->nrxx);
+
     this->Init_GlobalC(inp,ucell);//temporary
 
 	stowf.init(GlobalC::kv.nks);
@@ -48,8 +58,10 @@ void ESolver_SDFT_PW::Init(Input &inp, UnitCell_pseudo &ucell)
             this->stowf.chiortho[ik].create(this->stowf.nchip[ik],GlobalC::wf.npwx,false);
         }
     }
+
     this->phsol = new hsolver::HSolverPW_SDFT(GlobalC::wfcpw, this->stowf, inp.method_sto);
-    this->pelec = new elecstate::ElecStatePW_SDFT( GlobalC::wfcpw, (Charge*)(&(GlobalC::CHR)), (K_Vectors*)(&(GlobalC::kv)), GlobalV::NBANDS);
+   
+
 }
 
 void ESolver_SDFT_PW::beforescf(const int istep)

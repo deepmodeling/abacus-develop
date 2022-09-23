@@ -306,17 +306,17 @@ void Input::Print(const std::string &fn) const
     ModuleBase::GlobalFunc::OUTP(ofs, "vdw_R0_file", vdw_R0_file, "filename of R0");
     ModuleBase::GlobalFunc::OUTP(ofs, "vdw_R0_unit", vdw_R0_unit, "unit of R0, A or Bohr");
     ModuleBase::GlobalFunc::OUTP(ofs,
-                                 "vdw_model",
-                                 vdw_model,
+                                 "vdw_cutoff_type",
+                                 vdw_cutoff_type,
                                  "expression model of periodic structure, radius or period");
-    ModuleBase::GlobalFunc::OUTP(ofs, "vdw_radius", vdw_radius, "radius cutoff for periodic structure");
+    ModuleBase::GlobalFunc::OUTP(ofs, "vdw_cutoff_radius", vdw_cutoff_radius, "radius cutoff for periodic structure");
     ModuleBase::GlobalFunc::OUTP(ofs,
                                  "vdw_radius_unit",
                                  vdw_radius_unit,
                                  "unit of radius cutoff for periodic structure");
     ModuleBase::GlobalFunc::OUTP(ofs, "vdw_cn_thr", vdw_cn_thr, "radius cutoff for cn");
     ModuleBase::GlobalFunc::OUTP(ofs, "vdw_cn_thr_unit", vdw_cn_thr_unit, "unit of cn_thr, Bohr or Angstrom");
-    ofs << std::setw(20) << "vdw_period" << vdw_period.x << " " << vdw_period.y << " " << vdw_period.z
+    ofs << std::setw(20) << "vdw_cutoff_period" << vdw_cutoff_period.x << " " << vdw_cutoff_period.y << " " << vdw_cutoff_period.z
         << " #periods of periodic structure" << std::endl;
 
     ofs << "\n#Parameters (14.exx)" << std::endl;

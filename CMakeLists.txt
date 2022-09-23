@@ -5,7 +5,7 @@ cmake_minimum_required(VERSION 3.16)
 ########################################
 
 project(ABACUS
-    VERSION 2.3.0
+    VERSION 3.0.0
     DESCRIPTION "ABACUS is an electronic structure package based on DFT."
     HOMEPAGE_URL "https://github.com/deepmodeling/abacus-develop"
     LANGUAGES CXX
@@ -263,7 +263,6 @@ endif()
 add_compile_definitions(
   __EXX
   __FFTW3
-  __FP
   __SELINV
   __LCAO
   METIS

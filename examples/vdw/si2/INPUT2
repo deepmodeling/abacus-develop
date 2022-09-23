@@ -1,3 +1,7 @@
+#INPUT file for applying D3(BJ) correction
+#with default VdW parameters
+#in pw basis
+
 INPUT_PARAMETERS
 #Parameters	(General)
 pseudo_dir		../../../tests/PP_ORB
@@ -7,5 +11,5 @@ ntype			1
 ecutwfc			50
 scf_nmax		100
 scf_thr                 1e-6
-basis_type		lcao
+basis_type		pw
 vdw_method 		d3_bj

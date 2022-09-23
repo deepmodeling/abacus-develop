@@ -129,9 +129,6 @@ namespace ModuleESolver
     {
         ESolver_KS::Init(inp,ucell);
 
-        //temporary
-        this->Init_GlobalC(inp,ucell);
-
         //init ElecState,
         if(this->pelec == nullptr)
         {
@@ -142,6 +139,16 @@ namespace ModuleESolver
         {
             this->phsol = new hsolver::HSolverPW(GlobalC::wfcpw);
         }
+
+        // Inititlize the charge density.
+        this->pelec->allocateRho(GlobalV::NSPIN, GlobalC::rhopw->nrxx, GlobalC::rhopw->npw);
+        //GlobalC::CHR.allocate(GlobalV::NSPIN, GlobalC::rhopw->nrxx, GlobalC::rhopw->npw);
+        ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT CHARGE");
+        // Initializee the potential.
+        GlobalC::pot.allocate(GlobalC::rhopw->nrxx);
+        
+        //temporary
+        this->Init_GlobalC(inp,ucell);
     }
 
     void ESolver_KS_PW::beforescf(int istep)

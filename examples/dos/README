@@ -4,11 +4,17 @@
 /
 /*******************************************************************************/
 
-This example show how to calculate the DOS(Density of States) of silicon (diamond).
+This example show how to calculate the DOS(Density of States).
 
-Steps:
-(1) ./step1.sh
-(2) ./step2.sh
+It requires two steps of calculation:
+1. Do the scf calculation and output the information of charge:
+   - set 'calculation' to 'scf'
+   - set 'out_chg' to '1'
+2. Do the nscf calculation and output the information of band:
+   - set 'calculation' to 'nscf'
+   - set 'init_chg' to 'file'
+   - set 'out_dos' to '1'
+   - set 'pw_diag_thr' to a suitable value when basis_type is 'pw'
 
 Finish! Then you can see DOS1_smearing.dat in OUT.ABACUS. The first column is energy,
 and the second is density of states. Plot it!

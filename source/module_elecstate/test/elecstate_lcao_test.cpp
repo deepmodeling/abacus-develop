@@ -27,7 +27,6 @@
 #include "module_pw/pw_basis_k.h"
 #include "module_xc/xc_functional.h"
 #include "module_xc/exx_global.h"
-#include "src_parallel/parallel_pw.h"
 
 Magnetism::Magnetism(){}
 Magnetism::~Magnetism(){}
@@ -35,8 +34,6 @@ K_Vectors::K_Vectors(){}
 K_Vectors::~K_Vectors(){}
 Structure_Factor::Structure_Factor(){}
 Structure_Factor::~Structure_Factor(){}
-Parallel_PW::Parallel_PW(){}
-Parallel_PW::~Parallel_PW(){}
 LCAO_Hamilt::LCAO_Hamilt(){}
 LCAO_Hamilt::~LCAO_Hamilt(){}
 LCAO_gen_fixedH::LCAO_gen_fixedH(){}
@@ -205,6 +202,7 @@ namespace elecstate
 
     void ElecState::calculate_weights(void) {}
     void ElecState::calEBand() {}
+    void ElecState::allocateRho(const int &nspin_in, const int &nrxx_in, const int &ngmc_in){}
 }
 
 template<class T>
