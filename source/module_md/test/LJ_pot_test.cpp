@@ -1,6 +1,7 @@
 #include "gtest/gtest.h"
 #include "setcell.h"
 #include "module_md/LJ_potential.h"
+#include "module_esolver/esolver_lj.h"
 
 #define doublethreshold 1e-12
 
@@ -22,14 +23,31 @@ protected:
         stress.create(3,3);
 
         Setcell::parameters();
-        Grid_Driver grid_neigh(0,0,0);
-        Setcell::neighbor(grid_neigh, ucell);
+        // Grid_Driver grid_neigh(0,0,0);
+        // Setcell::neighbor(grid_neigh, ucell);
 
-        potential = LJ_potential::Lennard_Jones(
-                                ucell,
-                                grid_neigh,
-                                force,
-                                stress);
+        // potential = LJ_potential::Lennard_Jones(
+        //                         ucell,
+        //                         grid_neigh,
+        //                         force,
+        //                         stress);
+        ModuleESolver::ESolver *p_esolver = new ModuleESolver::ESolver_LJ();
+        p_esolver->Init(INPUT, ucell);
+        p_esolver->Run(0, ucell);
+
+        p_esolver->cal_Energy(potential);
+
+        ModuleBase::matrix force_temp(ucell.nat, 3); 
+        p_esolver->cal_Force(force_temp);
+        for(int i=0; i<ucell.nat; ++i)
+        {
+            for(int j=0; j<3; ++j)
+            {
+                force[i][j] = force_temp(i, j);
+            }
+        }
+
+        p_esolver->cal_Stress(stress);
     }
 
     void TearDown()

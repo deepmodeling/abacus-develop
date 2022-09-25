@@ -47,7 +47,7 @@ class MD_func
 		ModuleESolver::ESolver *p_esolver,
 		const int &istep,
 		const MD_parameters &mdp,
-		const UnitCell_pseudo &unit_in,
+		UnitCell_pseudo &unit_in,
 		double &potential,
 		ModuleBase::Vector3<double> *force,
 		ModuleBase::matrix &stress);
@@ -76,5 +76,7 @@ class MD_func
 		double* allmass, 
 		ModuleBase::Vector3<int> &frozen,
 		ModuleBase::Vector3<int>* ionmbl);
+
+    static void print(const std::string& name, const ModuleBase::matrix& f, const UnitCell_pseudo &unit_in);
 };
 #endif

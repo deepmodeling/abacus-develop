@@ -16,7 +16,7 @@ namespace ModuleESolver
         ESolver_KS_PW();
         ~ESolver_KS_PW();
         void Init(Input& inp, UnitCell_pseudo& cell) override;
-        void cal_Energy(energy& en) override;
+        void cal_Energy(double& etot) override;
         void cal_Force(ModuleBase::matrix& force) override;
         void cal_Stress(ModuleBase::matrix& stress) override;
         virtual void hamilt2density(const int istep, const int iter, const double ethr) override;

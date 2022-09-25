@@ -81,7 +81,7 @@ namespace ModuleESolver
 #endif
     }
 
-    void ESolver_DP::cal_Energy(energy& en)
+    void ESolver_DP::cal_Energy(double& etot)
     {
 
     }

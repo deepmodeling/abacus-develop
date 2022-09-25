@@ -123,7 +123,7 @@ void ESolver_SDFT_PW::hamilt2density(int istep, int iter, double ethr)
     GlobalC::en.ef = this->pelec->ef; 
 }
 
-void ESolver_SDFT_PW::cal_Energy(energy &en)
+void ESolver_SDFT_PW::cal_Energy(double& etot)
 {
 	
 }
