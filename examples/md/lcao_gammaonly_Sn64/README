@@ -4,13 +4,19 @@
 /
 /*******************************************************************************/
 
-This example is a molecular dynamics(md) calculation of 64 Sn atoms.
+By setting `calculation` to be `md` or `sto-md`, ABACUS currently provides six different MD evolution methods, which is specified by keyword `md_type` in the `INPUT` file:
+
+  - -1: FIRE method
+  - 0: NVE ensemble
+  - 1: NVT ensemble with Nose Hoover Chain
+  - 2: NVT ensemble with Langevin thermostat
+  - 3: NVT ensemble with Anderson thermostat
+  - 4: MSST method
 
 Note:
-1)"calculation  md" is used.
-2)The system contains 64 atoms, and it's suggested to use 6cores or more.
-3)When do md calculations, turn off symmetry, "symmetry	0".
-4)If the output file is too large, the "out_level	m" option is suggested.
-5)If you are not similar with input parameters, please check in OUT.ABACUS/INPUT
-or manual of ABACUS on	http://abacus.ustc.edu.cn/manual_48.html
+1) When doing md calculations, turn off `symmetry`.
+2) If the output file is too large, the `out_level` option is suggested to be `m`.
+3) If you are not similar with input parameters, please check in `docs/input-main.md`.
+4) INPUT_$md_type represents the INPUT file corresponding to the specific MD type.
+
 
