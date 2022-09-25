@@ -47,7 +47,7 @@ namespace ModuleESolver
         // Something to do after hamilt2density function in each iter loop.
         virtual void eachiterfinish(const int iter) {};
         // Something to do after SCF iterations when SCF is converged or comes to the max iter step.
-        virtual void afterscf() {};
+        virtual void afterscf(const int istep) {};
         // <Temporary> It should be replaced by a function in Hamilt Class
         virtual void updatepot(const int istep, const int iter) {};
         // choose strategy when charge density convergence achieved
