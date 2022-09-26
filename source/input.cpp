@@ -144,7 +144,7 @@ void Input::Default(void)
     seed_sto = 0;
     bndpar = 1;
     kpar = 1;
-    initsto_freq = 1000;
+    initsto_freq = 0;
     method_sto = 2;
     npart_sto = 1;
     cal_cond = false;
@@ -1897,6 +1897,10 @@ bool Input::Read(const std::string &fn)
     {
         gamma_only_local = 1;
         // std::cout << "gamma_only_local =" << gamma_only_local << std::endl;
+    }
+    if((out_mat_r || out_mat_hs2) && gamma_only_local)
+    {
+        ModuleBase::WARNING_QUIT("Input", "printing of H(R)/S(R)/r(R) is not available for gamma only calculations");
     }
 
     return true;

@@ -10,12 +10,14 @@ Below is an example `INPUT` file with some of the most important parameters that
 
 ```
 INPUT_PARAMETERS
-#Parameters (General)
-ntype 1
-nbands 4
-
-#Parameters (Accuracy)
-ecutwfc 60
+suffix                  MgO
+ntype                   2
+pseudo_dir              ./
+orbital_dir		./
+ecutwfc                 100             # Rydberg
+scf_thr                 1e-4		# Rydberg
+basis_type              lcao            
+calculation             scf		# this is the key parameter telling abacus to do a scf calculation
 ```
 
 The parameter list always starts with key word `INPUT_PARAMETERS`. Any content before `INPUT_PARAMETERS` will be ignored.
@@ -33,9 +35,14 @@ Furthermore, if a given parameter name appeared more than once in the input file
 
 In the above example, the meanings of the parameters are:
 
+- `suffix` : the name of the system, default `ABACUS`
 - `ntype` : how many types of elements in the unit cell
-- `nbands` : the number of bands to be calculated
+- `pseudo_dir` : the directory where pseudopotential files are provided
+- `orbital_dir` : the directory where orbital files are provided
 - `ecutwfc` : the plane-wave energy cutoff for the wave function expansion (UNIT: Rydberg)    
+- `scf_thr` : the threshold for the convergence of charge density (UNIT: Rydberg)    
+- `basis_type` : the type of basis set for expanding the electronic wave functions
+- `calculation` : the type of calculation to be performed by ABACUS
 
 For a complete list of input parameters, please consult this [instruction](docs/input-main.md)
 
@@ -46,23 +53,64 @@ For a complete list of input parameters, please consult this [instruction](docs/
 The structure file contains structural information about the system, e.g., lattice constant, lattice vectors, and positions of the atoms within a unit cell. The positions can be given either in direct or Cartesian coordinates. 
 
 An example of the `STRU` file is given as follows :
+```
+#This is the atom file containing all the information
+#about the lattice structure.
 
-XXXXXXX
+ATOMIC_SPECIES
+Mg 24.305  Mg_ONCV_PBE-1.0.upf  # element name, atomic mass, pseudopotential file
+O  15.999 O_ONCV_PBE-1.0.upf
 
-> Note : users may choose a different name for their structure file using the keyword XXXXX
+NUMERICAL_ORBITAL
+Mg_gga_8au_100Ry_4s2p1d.orb
+O_gga_8au_100Ry_2s2p1d.orb
 
-For a more detailed description of STRU file, please consult XXXXX
+LATTICE_CONSTANT
+1.8897259886 		# 1.8897259886 Bohr =  1.0 Angstrom
+
+LATTICE_VECTORS
+4.25648 0.00000 0.00000  
+0.00000 4.25648 0.00000
+0.00000 0.00000 4.25648
+
+ATOMIC_POSITIONS
+Direct                  #Cartesian(Unit is LATTICE_CONSTANT)
+Mg                      #Name of element        
+0.0                     #Magnetic for this element.
+4                       #Number of atoms
+0.0  0.0  0.0  0 0 0    #x,y,z, move_x, move_y, move_z
+0.0  0.5  0.5  0 0 0    #x,y,z, move_x, move_y, move_z
+0.5  0.0  0.5  0 0 0    #x,y,z, move_x, move_y, move_z
+0.5  0.5  0.0  0 0 0    #x,y,z, move_x, move_y, move_z
+O                       #Name of element        
+0.0                     #Magnetic for this element.
+4                       #Number of atoms
+0.5  0.0  0.0  0 0 0    #x,y,z, move_x, move_y, move_z
+0.5  0.5  0.5  0 0 0    #x,y,z, move_x, move_y, move_z
+0.0  0.0  0.5  0 0 0    #x,y,z, move_x, move_y, move_z
+0.0  0.5  0.0  0 0 0    #x,y,z, move_x, move_y, move_z
+```
+
+> Note : users may choose a different name for their structure file using the keyword `stru_file`
+
+For a more detailed description of STRU file, please consult [here](../advanced/input_files/stru.md).
 
 ## *KPT*
 
 This file contains information of the kpoint grid setting for the Brillouin zone sampling.
     
-An example of the `KPT` file is given by XXXXXXX
+An example of the `KPT` file is given below:
+```
+K_POINTS
+0 
+Gamma
+4 4 4 0 0 0
+```
 
-> Note : users may choose a different name for their k-point file using keyword XXXXX
+> Note : users may choose a different name for their k-point file using keyword `kpoint_file`
 
 
-For a more detailed description, please consult XXXXX
+For a more detailed description, please consult [here](../advanced/input_files/kpt.md)
 
 - The pseudopotential files
 

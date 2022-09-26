@@ -1,20 +1,23 @@
 # This is the Makefile of ABACUS-PW API
 #======================================================================
-# User set
+# Users set
 # e.g. make INTEL=ON or make INTEL=OFF GPU=OFF
 #======================================================================
-INTEL = ON
-# ON:   use intel compilers  e.g. icpc/mpiicpc
-# OFF:  use gnu compilers  e.g. g++/mpicxx
+CC = mpiicpc
+# mpiicpc:   compile intel parallel version
+# mpicxx:    compile gnu parallel version
+# icpc:      compile gnu serial version
+# g++:       compile gnu serial version
+# We do not support serial version with g++ or icpc yet.
 GPU = OFF    
 # OFF:  do not use GPU
 # CUDA: use CUDA 
 DEBUG = OFF
 # ON:   use gnu compiler and check segmental defaults
 # OFF:  nothing
-FFTW_DIR = /home/qianrui/gnucompile/fftw_3.3.8 
+FFTW_DIR = /home/qianrui/gnucompile/fftw_3.3.8
 # directory of fftw package. only used when INTEL = OFF
-LAPACK_LIB_DIR   = /home/qianrui/gnucompile/lapack_3.9.0/lib 
+OPENBLAS_LIB_DIR   = /home/qianrui/gnucompile/openblas/lib
 # directory of librefblas.a and liblapack.a. Only used when INTEL = OFF
 #======================================================================
 
@@ -24,42 +27,54 @@ LAPACK_LIB_DIR   = /home/qianrui/gnucompile/lapack_3.9.0/lib
 #==========================
 INCLUDES = -I. -Icommands -I../
 LIBS = -lifcore -lm -lpthread
-OPTS = -Ofast -std=c++11 -Wall -m64 -g ${INCLUDES}
+OPTS = -Ofast -march=native -std=c++11 -m64 ${INCLUDES}
+ifeq ($(findstring mpi, $(CC)), mpi)
+     HONG += -D__MPI
+     MPI = ON
+     ifeq ($(findstring mpii, $(CC)), mpii)
+         INTEL=ON
+     endif
+else
+     ifeq ($(findstring i, $(CC)), i)
+         INTEL=ON
+     endif
+endif
+
 ifeq ($(DEBUG), ON)
     INTEL = OFF
     HONG += -D__DEBUG
-    OPTS +=  -fsanitize=address -fno-omit-frame-pointer #It can check segmental defaults
+    ifeq ($(MPI), ON)
+        CC = mpicxx
+    else
+        CC = g++
+    endif
+    OPTS +=  -fsanitize=address -fno-omit-frame-pointer -Wall -g #It can check segmental defaults
 endif
 ifeq ($(INTEL), ON)
-    CPLUSPLUS     = icpc
-    CPLUSPLUS_MPI = mpiicpc
-    # -pedantic turns off more extensions and generates more warnings
-    # -xHost generates instructions for the highest instruction set available on the compilation host processor
-    OPTS += -simd -qopenmp -Werror
+    OPTS += -simd -qopenmp
     ##==========================
     ## MKL package
     ##==========================
     HONG  += -D__FFTW3
     LIBS += -L${MKLROOT}/lib/intel64 -lmkl_intel_lp64 -lmkl_intel_thread\
-    				  -lmkl_core -lmkl_scalapack_lp64 -lmkl_blacs_intelmpi_lp64
+    				  -lmkl_core
     INCLUDES += -I${MKLROOT}/include/fftw
     
 else
-    CPLUSPLUS     = g++
-    CPLUSPLUS_MPI = mpicxx
-    OPTS += -march=native -fopenmp -fpermissive
+    OPTS += -fopenmp -fpermissive
     ##==========================
     ## FFTW package
     ##==========================
     FFTW_INCLUDE_DIR = ${FFTW_DIR}/include
     FFTW_LIB_DIR     = ${FFTW_DIR}/lib
+    HONG  += -D__FFTW3
     LIBS += -L${FFTW_LIB_DIR} -lfftw3 -Wl,-rpath=${FFTW_LIB_DIR}
     INCLUDES += -I${FFTW_INCLUDE_DIR}
     
     #==========================
-    # LAPACK package
+    # OPENBLAS package
     #==========================
-    LIBS += -L${LAPACK_LIB_DIR}  -llapack -lrefblas -lgfortran
+    LIBS += -L${OPENBLAS_LIB_DIR}  -lopenblas -lgfortran
 endif
 
 ##==========================
@@ -94,28 +109,26 @@ include Makefile.Objects
 
 OBJ_DIR = pw_obj
 
-#==========================
-# Define HONG
-#==========================
-HONG += -D__MPI
 
 FP_OBJS=$(patsubst %.o, ${OBJ_DIR}/%.o, ${FP_OBJS_0})
 
 #==========================
 # MAKING OPTIONS
 #==========================
-parallel : ${FP_OBJS} 
-	${CPLUSPLUS_MPI} ${OPTS} $(FP_OBJS) ${LIBS} -o ${VERSION}.x 
+pw : 
+	@ if [ ! -d $(OBJ_DIR) ]; then mkdir $(OBJ_DIR); fi
+	$(MAKE) ${VERSION}.x
 
+${VERSION}.x : ${FP_OBJS} 
+	${CC} ${OPTS} $(FP_OBJS) ${LIBS} -o ${VERSION}.x 
 #==========================
 # rules
 #==========================
 ${OBJ_DIR}/main.o:../main.cpp
-	@ if [ ! -d $(OBJ_DIR) ]; then mkdir $(OBJ_DIR); fi
-	@ echo "This directory contains all of the .o files." > $(OBJ_DIR)/readme.log
-	${CPLUSPLUS_MPI} ${OPTS} -c ${HONG} ../main.cpp -o ${OBJ_DIR}/main.o
+	${CC} ${OPTS} -c ${HONG} ../main.cpp -o ${OBJ_DIR}/main.o
+	
 ${OBJ_DIR}/%.o:%.cpp
-	${CPLUSPLUS_MPI} ${OPTS} -c ${HONG} $< -o $@
+	${CC} ${OPTS} -c ${HONG} $< -o $@
 
 # rules of .cu files
 ${OBJ_DIR}/%.o:%.cu
