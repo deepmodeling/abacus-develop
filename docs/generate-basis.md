@@ -1,5 +1,7 @@
 # Generating atomic orbital bases
 
+[back to main page](../README.md)
+
 In ABACUS, the atomic orbital bases are generated using a scheme developed in the [paper](https://iopscience.iop.org/article/10.1088/0953-8984/22/44/445501). We provide a script named “generate_orbital.sh” under the directory tools/ to generate the atomic orbitals bases. In order to run this script, an ORBITAL_INPUT file is required.
 
 An example of this ORBITAL_INPUT file can be found in $ABACUS/tools/SIAB/SimulatedAnnealing/example_N:
