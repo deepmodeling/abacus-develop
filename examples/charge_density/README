@@ -1,0 +1,10 @@
+/*******************************************************************************/
+/
+/ These are the examples of ABACUS program.
+/
+/*******************************************************************************/
+
+These examples show how to output the charge density of system.
+One only need to set the keyword 'out_chg' to '1' in the INPUT file.
+After the calculation, one can find file SPIN${spin}_CHG in OUT.${suffix}
+
