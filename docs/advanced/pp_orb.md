@@ -146,7 +146,7 @@ The ORBITAL_INPUT file contains 5 parts :
 
         the accept rise of spillage when optimizing the kinetic energy
         
-After preparing the ORBITAL_INPUT file, one just needs to run the script "$PATH_TO/generate_orbital.sh ORBITAL_INPUT" and wait for the results. The results will be written into several output files under the directory $element.id_element/$Rcut/, for example 07_N/6/.
+After preparing the ORBITAL_INPUT file, one just needs to run the script `$PATH_TO/generate_orbital.sh ORBITAL_INPUT` and wait for the results. The results will be written into several output files under the directory $element.id_element/$Rcut/, for example 07_N/6/.
 
 Some output files listed here are useful.
 - ORBITAL_RESULTS.txt
@@ -193,7 +193,7 @@ $$
 \Delta E(\text{H}_2\text{O}) = E(\text{H}_2\text{O}) - E(\text{O}) - E(\text{H}^1) - E(\text{H}^2)
 $$
 
-## $E(\text{H}_2\text{O})$
+### $E(\text{H}_2\text{O})$
 
 ```
 ntype   2
@@ -230,11 +230,126 @@ O
 0.0000 0.0000 0.0000 0 0 0
 ```
 
-## $E(\text{O})$
+### $E(\text{O})$
 
 ```
 ntype   2
 ```
 ```
 ATOMIC_SPECIES
+H_empty	1.008	H_ONCV_PBE-1.0.upf
+O		15.9994	O_ONCV_PBE-1.0.upf
+
+NUMERICAL_ORBITAL
+H_gga_8au_60Ry_2s1p.orb
+O_gga_6au_60Ry_2s2p1d.orb
+
+LATTICE_CONSTANT
+1.889725989
+
+LATTICE_VECTORS
+20 0 0
+0 20 0
+0 0 20
+
+ATOMIC_POSITIONS
+Cartesian    # Cartesian(Unit is LATTICE_CONSTANT)
+
+H_empty
+0.5
+2
+0.9584	0.0000	0.0000	0 0 0
+-0.2392	0.9281	0.0000	0 0 0
+
+O
+0.5
+1
+0.0000 0.0000 0.0000 0 0 0
+```
+
+### $E(\text{H}^1)$
+
+```
+ntype   3
+```
+```
+ATOMIC_SPECIES
+H			1.008	H_ONCV_PBE-1.0.upf
+H_empty_2	1.008	H_ONCV_PBE-1.0.upf
+O_empty		15.9994	O_ONCV_PBE-1.0.upf
+
+NUMERICAL_ORBITAL
+H_gga_8au_60Ry_2s1p.orb
+H_gga_8au_60Ry_2s1p.orb
+O_gga_6au_60Ry_2s2p1d.orb
+
+LATTICE_CONSTANT
+1.889725989
+
+LATTICE_VECTORS
+20 0 0
+0 20 0
+0 0 20
+
+ATOMIC_POSITIONS
+Cartesian    # Cartesian(Unit is LATTICE_CONSTANT)
+
+H
+0.5
+1
+0.9584	0.0000	0.0000	0 0 0
+
+H_empty_2
+0.5
+1
+-0.2392	0.9281	0.0000	0 0 0
+
+O_empty
+0.5
+1
+0.0000 0.0000 0.0000 0 0 0
+```
+
+### $E(\text{H}^2)$
+
+```
+ntype   3
+```
+```
+ATOMIC_SPECIES
+H_empty_1	1.008	H_ONCV_PBE-1.0.upf
+H			1.008	H_ONCV_PBE-1.0.upf
+O_empty		15.9994	O_ONCV_PBE-1.0.upf
+
+NUMERICAL_ORBITAL
+H_gga_8au_60Ry_2s1p.orb
+H_gga_8au_60Ry_2s1p.orb
+O_gga_6au_60Ry_2s2p1d.orb
+
+LATTICE_CONSTANT
+1.889725989
+
+LATTICE_VECTORS
+20 0 0
+0 20 0
+0 0 20
+
+ATOMIC_POSITIONS
+Cartesian    # Cartesian(Unit is LATTICE_CONSTANT)
+
+H_empty_1
+0.5
+1
+0.9584	0.0000	0.0000	0 0 0
+
+H
+0.5
+1
+-0.2392	0.9281	0.0000	0 0 0
+
+O_empty
+0.5
+1
+0.0000 0.0000 0.0000 0 0 0
+```
 
