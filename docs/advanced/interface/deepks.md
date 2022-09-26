@@ -1,1 +1,1 @@
-# Using DeePKS with ABACUS
+# DeePKS

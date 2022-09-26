@@ -11,7 +11,6 @@ Hi everyone, here are ABACUS Documentations.
 
 .. toctree::
    :maxdepth: 2
-   :numbered:
    :caption: Quick Start
 
    quick_start/easy_install
@@ -20,7 +19,6 @@ Hi everyone, here are ABACUS Documentations.
 
 .. toctree::
    :maxdepth: 2
-   :numbered:
    :caption: Advanced
 
    advanced/install

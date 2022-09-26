@@ -1,4 +1,5 @@
 #include "esolver_ks_lcao_tddft.h"
+#include "src_io/cal_r_overlap_R.h"
 
 //--------------temporary----------------------------
 #include "../module_base/blas_connector.h"
@@ -432,7 +433,7 @@ void ESolver_KS_LCAO_TDDFT::updatepot(const int istep, const int iter)
     }
 }
 
-void ESolver_KS_LCAO_TDDFT::afterscf()
+void ESolver_KS_LCAO_TDDFT::afterscf(const int istep)
 {
     for (int ik = 0; ik < this->pelec_td->ekb.nr; ++ik)
     {
@@ -525,9 +526,17 @@ void ESolver_KS_LCAO_TDDFT::afterscf()
             std::cout << " !! CONVERGENCE HAS NOT BEEN ACHIEVED !!" << std::endl;
     }
 
+    // add by jingan for out r_R matrix 2019.8.14
+    if(INPUT.out_mat_r)
+    {
+        cal_r_overlap_R r_matrix;
+        r_matrix.init(*this->LOWF.ParaV);
+        r_matrix.out_r_overlap_R();
+    }
+
     if (Pdiag_Double::out_mat_hsR)
     {
-        this->output_HS_R(); // LiuXh add 2019-07-15
+        this->output_HS_R(istep); // LiuXh add 2019-07-15
     }
 }
 

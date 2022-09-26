@@ -1,10 +1,4 @@
-# INPUT file
-
-## Table of contents
-
-### [Structure of the file](#structure-of-the-file)
-
-### [List of keywords](#list-of-keywords)
+# Full List of INPUT Keywords
 
 - [System variables](#system-variables)
 
@@ -90,9 +84,12 @@
 
     [imp_sol](#imp_sol) | [eb_k](#eb_k) | [tau](#tau) | [sigma_k](#sigma_k) | [nc_k](#nc_k) 
 
+[back to top](#full-list-of-input-keywords)
+
 ### System variables
 
 This part of variables are used to control general system parameters.
+
 
 #### suffix
 
@@ -269,6 +266,8 @@ This part of variables are used to control general system parameters.
 - **Descrption**: The accuracy for symmetry judgment. The unit is Bohr.
 - **Default**: 1.0e-5
 
+[back to top](#full-list-of-input-keywords)
+
 ### Variables related to input files
 
 This part of variables are used to control input files related parameters.
@@ -302,6 +301,8 @@ This part of variables are used to control input files related parameters.
 - **Type**: String
 - **Description**: when the program needs to read files such as electron density(`SPIN1_CHG`) as a starting point, this variables tells the location of the files. For example, './' means the file is located in the working directory.
 - **Default**: OUT.$suffix
+
+[back to top](#full-list-of-input-keywords)
 
 ### Plane wave related variables
 
@@ -342,6 +343,9 @@ This part of variables are used to control the plane wave related parameters.
 - **Type**: Integer
 - **Description**: Only useful when you use `ks_solver = dav`. It indicates the maximal dimension for the Davidson method.
 - **Default**: 10
+
+[back to top](#full-list-of-input-keywords)
+
 
 ### Numerical atomic orbitals related variables
 
@@ -403,6 +407,8 @@ This part of variables are used to control the numerical atomic orbitals related
 - **Type**: Integer
 - **Description**: In the matrix operation of grid integral, bx/by/bz grids (in x, y, z drections) are treated as a whole as a matrix element. Different value will affect the calculation speed.
 - **Default**: 2
+
+[back to top](#full-list-of-input-keywords)
 
 ### Electronic structure
 
@@ -469,6 +475,7 @@ calculations.
   - fixed: use fixed occupations.
   - gauss or gaussian: use gaussian smearing method.
   - mp: use methfessel-paxton smearing method. The method recommends for metals.
+  - fd: Fermi-Dirac smearing method: $f=1/\{1+\exp[(E-\mu)/kT]\}$ and smearing_sigma below is the temperature $T$ (in Ry).
 - **Default**: fixed
 
 #### smearing_sigma
@@ -490,6 +497,7 @@ calculations.
   - kerker: Use kerker method, which is the mixing method in G space.
   - pulay: Standard Pulay method.
   - pulay-kerker:
+  - broyden: Broyden method.
 - **Default**: pulay
 
 #### mixing_beta
@@ -547,6 +555,8 @@ calculations.
  by time(NULL).
 - **Default**:0
 
+[back to top](#full-list-of-input-keywords)
+
 ### Electronic structure (SDFT)
 
 This part of variables are used to control the parameters of stochastic DFT (SDFT),  mix stochastic-deterministic DFT (MDFT), or complete-basis Chebyshev method (CT). To use it,  [calculation](#calculation) need to be set to "sto-scf" and "sto-md". We suggest using SDFT to calculate high-temperature systems and we only support [smearing_method](#smearing_method) "fd".
@@ -600,13 +610,17 @@ This part of variables are used to control the parameters of stochastic DFT (SDF
 
 - **Type**: Integer
 - **Description**: Frequency (once each initsto_freq steps) to generate new stochastic orbitals when running md.
-- **Default**:1000
+  - positive integer: Update stochastic orbitals
+  - 0:                Never change stochastic orbitals.
+- **Default**:0
 
 #### npart_sto
 
 - **Type**: Integer
 - **Description**: Make memory cost to 1/npart_sto times of previous one when running post process of SDFT like DOS with method_sto = 2.
 - **Default**:1
+
+[back to top](#full-list-of-input-keywords)
 
 ### Geometry relaxation
 
@@ -722,6 +736,8 @@ This part of variables are used to control the geometry relaxation.
 - **Description**: Used in the construction of the pseudopotential tables. It should exceed the maximum linear contraction of the cell during a simulation.
 - **Default**: 1.2
 
+[back to top](#full-list-of-input-keywords)
+
 ### Variables related to output information
 
 This part of variables are used to control the output of properties.
@@ -825,19 +841,66 @@ This part of variables are used to control the output of properties.
 #### out_mat_hs
 
 - **Type**: Boolean
-- **Description**: Only for LCAO calculations. When set to 1, ABACUS will generate two lists of files `data-$k-H` and `data-$k-S` that store the Hamiltonian and S matrix for each k point in k space, respectively.
+- **Description**: For LCAO calculations, if out_mat_hs is set to 1, ABACUS will print the upper triangular part of the Hamiltonian matrices and overlap matrices for each k point into a series of files in the directory `OUT.${suffix}`. The files are named `data-$k-H` and `data-$k-S`, where `$k` is a composite index consisting of the k point index as well as the spin index.
+
+  For nspin = 1 and nspin = 4 calculations, there will be only one spin component, so `$k` runs from 0 up to $nkpoints - 1$. For nspin = 2, `$k` runs from $2*nkpoints - 1$. In the latter case, the files are arranged into blocks of up and down spins. For example, if there are 3 k points, then we have the following correspondence:
+
+    data-0-H : 1st k point, spin up
+    data-1-H : 2nd k point, spin up
+    data-2-H : 3rd k point, spin up
+    data-3-H : 1st k point, spin down
+    data-4-H : 2nd k point, spin down
+    data-5-H : 3rd k point, spin down
+
+  As for information on the k points, one may look for the `SETUP K-POINTS` section in the running log.
+
+  The first number of the first line in each file gives the size of the matrix, namely, the number of atomic basis functions in the system.
+
+  The rest of the file contains the upper triangular part of the specified matrices. For multi-k calculations, the matrices are Hermitian and the matrix elements are complex; for gamma-only calculations, the matrices are symmetric and the matrix elements are real.
 - **Default**: 0
 
 #### out_mat_r
 
 - **Type**: Boolean
-- **Description**: Only for LCAO and not gamma_only calculations. When set to 1, ABACUS will generate a file with name staring with `data-rR-tr` which stores overlap matrix as a function of R, in units of lattice vectors.
+- **Description**: For LCAO calculations, if out_mat_pos_r is set to 1, ABACUS will calculate and print the matrix representation of the position matrix, namely $\langle \chi_\mu|\hat{r}|\chi_\nu\rangle$ in a file named `data-rR-tr` in the directory `OUT.${suffix}`.
+
+  The file starts with "Matrix Dimension of r(R): " followed by the dimension of the matrix. The rest of the format are arranged into blocks, such as:
+  ```
+  -5 -5 -5    //R (lattice vector)
+  ...
+  -5 -5 -4    //R (lattice vector)
+  ...
+  -5 -5 -3    //R (lattice vector)
+  ```
+  Each block here contains the matrix for the corresponding cell. There are three columns in each block, giving the matrix elements in x, y, z directions, respectively. There are altogether nbasis * nbasis lines in each block, which emulates the matrix elements.
+  > Note: This functionality is not available for gamma_only calculations. If you want to use it in gamma_only calculations, you should turn off gamma_only, and explicitly specifies that gamma point is the only k point in the KPT file.
+
 - **Default**: 0
 
 #### out_mat_hs2
 
 - **Type**: Boolean
-- **Description**: Only for LCAO and not gamma_only calculations. When set to 1, ABACUS will generate two files starting with `data-HR-sparse` and `data-SR-sparse` that store the Hamiltonian and S matrix in real space, respectively, as functions of R, in units of lattice vectors.
+- **Description**: For LCAO calculations, if out_mat_hs2 is set to 1, ABACUS will generate files containing the Hamiltonian matrix H(R) and overlap matrix S(R).
+  
+  For nspin = 1 or nspin = 4, two files `data-HR-sparse_SPIN0.csr` and `data-SR-sparse_SNPIN0.csr` are generated, which contain the Hamiltonian matrix H(R) and overlap matrix S(R) respectively. For nspin = 2, three files `data-HR-sparse_SPIN0.csr` and `data-HR-sparse_SPIN1.csr` and `data-SR-sparse_SPIN0.csr` are created, where the first two contain H(R) for spin up and spin down, respectively.
+
+  Each file start with two lines, the first gives the dimension of the matrix, while the latter indicates how many different `R` are in the file.
+
+  The rest of the file are arranged in blocks. Each block starts with a line giving the lattic vector `R` and the number of nonzero matrix elements, such as:
+  ```
+  -3 1 1 1020
+  ```
+  which means there are 1020 nonzero elements in the (-3,1,1) cell.
+
+  If there is no nonzero matrix element, then the next block starts immediately on the next line. Otherwise, there will be 3 extra lines in the block, which gives the matrix in CSR format. According to Wikipedia:
+    
+      The CSR format stores a sparse m × n matrix M in row form using three (one-dimensional) arrays (V, COL_INDEX, ROW_INDEX). Let NNZ denote the number of nonzero entries in M. (Note that zero-based indices shall be used here.)
+
+      - The arrays V and COL_INDEX are of length NNZ, and contain the non-zero values and the column indices of those values respectively.
+      
+      - The array ROW_INDEX is of length m + 1 and encodes the index in V and COL_INDEX where the given row starts. This is equivalent to ROW_INDEX[j] encoding the total number of nonzeros above row j. The last element is NNZ , i.e., the fictitious index in V immediately after the last valid index NNZ - 1.
+  > Note: This functionality is not available for gamma_only calculations. If you want to use it in gamma_only calculations, you should turn off gamma_only, and explicitly specifies that gamma point is the only k point in the KPT file.
+
 - **Default**: 0
 
 #### out_element_info
@@ -870,6 +933,8 @@ Si-p2-orbital-dru.dat  Si-s1-orbital-ru.dat" for example.
   - please ensure suffix is same with calculation before and density file and H matrix file is exist.
     restart from stored density file and H matrix file.
 - **Default**: 0
+
+[back to top](#full-list-of-input-keywords)
 
 ### Density of states
 
@@ -910,6 +975,8 @@ This part of variables are used to control the calculation of DOS.
 - **Type**: Integer
 - **Description**: orders of Chebyshev expansions when using SDFT to calculate DOS
 - **Default**: 100
+
+[back to top](#full-list-of-input-keywords)
 
 ### DeePKS
 
@@ -962,6 +1029,8 @@ Warning: this function is not robust enough for the current version. Please try 
 - **Description**: tolerence when searching for the zeros of bessel functions. See also `bessel_lmax`.
 - **Default**: 1.0e-12
 
+[back to top](#full-list-of-input-keywords)
+
 ### Electric field and dipole correction
 
 This part of variables are relevant to electric field and dipole correction
@@ -1004,6 +1073,8 @@ added to the bare ionic potential. If you want no electric field, parameter efie
 - **Description**: Amplitude of the electric field, in ***Hartree*** a.u.; 1 a.u. = 51.4220632*10^10 V/m. Used only if efield_flag == true. The saw-like potential increases with slope efield_amp  in the region from (efield_pos_max+efield_pos_dec-1) to (efield_pos_max), then decreases until (efield_pos_max+efield_pos_dec), in units of the crystal vector efield_dir. Important: the change of slope of this potential must be located in the empty region, or else unphysical forces will result.
 - **Default**: 0.0
 
+[back to top](#full-list-of-input-keywords)
+
 ### Gate field (compensating charge)
 
 This part of variables are relevant to gate field (compensating charge)
@@ -1043,6 +1114,8 @@ This part of variables are relevant to gate field (compensating charge)
 - **Type**: Real
 - **Description**: Height of the potential barrier in Rydberg.
 - **Default**: 0.1
+
+[back to top](#full-list-of-input-keywords)
 
 ### Exact Exchange
 
@@ -1149,6 +1222,8 @@ This part of variables are relevant when using hybrid functionals
 - **Type**: Real
 - **Description**: See also the entry [dft_functional](#dft_functional). This parameter is only relevant when dft_functional=`opt_orb`. exx_opt_orb_tolerence determines the threshold when solving for the zeros of spherical Bessel functions. A reasonable choice is 1e-12.
 - **Default**: 0
+
+[back to top](#full-list-of-input-keywords)
 
 ### Molecular dynamics
 
@@ -1293,6 +1368,8 @@ temperature will fluctuate violently; if it is too small, the temperature will t
 - **Description**: damping parameter (fs) used to add force in Langevin method.
 - **Default**: 1.0
 
+[back to top](#full-list-of-input-keywords)
+
 ### DFT+U correction
 
 This part of variables are used to control DFT+U correlated parameters
@@ -1332,6 +1409,8 @@ This part of variables are used to control DFT+U correlated parameters
 - **Type**: Boolean
 - **Description**: whether turn on occupation matrix control method or not
 - **Default**: 0
+
+[back to top](#full-list-of-input-keywords)
 
 ### vdW correction
 
@@ -1451,6 +1530,8 @@ This part of variables are used to control vdW-corrected related parameters.
 - **Description**: If vdw_cutoff_type is set to `period`, the three integers supplied here will explicitly specify the extent of the supercell in the directions of the three basis lattice vectors. 
 - **Default**: 3 3 3
 
+[back to top](#full-list-of-input-keywords)
+
 ### Berry phase and wannier90 interface
 
 This part of variables are used to control berry phase and wannier90 interfacae parameters.
@@ -1489,6 +1570,8 @@ This part of variables are used to control berry phase and wannier90 interfacae 
   - up: calculate spin up for wannier function.
   - down: calculate spin down for wannier function.
 - **Default**: up
+
+[back to top](#full-list-of-input-keywords)
 
 ### TDDFT: time dependent density functional theory
 
@@ -1579,6 +1662,8 @@ This part of variables are used to control berry phase and wannier90 interfacae 
 - **Description**: If ocp is true, the ocp_set is a string to set the number of occupancy, like 1 10 * 1 0 1 representing the 13 band occupancy, 12th band occupancy 0 and the rest 1, the code is parsing this string into an array through a regular expression.
 - **Default**:none
 
+[back to top](#full-list-of-input-keywords)
+
 ### Variables useful for debugging
 
 #### nurse
@@ -1622,6 +1707,8 @@ This part of variables are used to control berry phase and wannier90 interfacae 
 - **Type**: Boolean
 - **Description**: If set to 1, output to terminal will have some color.
 - **Default**: 0
+
+[back to top](#full-list-of-input-keywords)
 
 ### Electronic conductivities
 
@@ -1677,6 +1764,8 @@ Thermal conductivities: $\kappa = \lim_{\omega\to 0}\kappa(\omega)$
 - **Description**: We use gaussian functions to approxiamte $\delta(E)\approx \frac{1}{\sqrt{2\pi}\Delta E}e^{-\frac{E^2}{2{\Delta E}^2}}$. FWHM for conductivities, $FWHM=2*\sqrt{2\ln2}\cdot \Delta E$. The unit is eV.
 - **Default**: 0.3
 
+[back to top](#full-list-of-input-keywords)
+
 ### Implicit solvation model
 
 This part of variables are used to control the usage of implicit solvation model. This approach treats the solvent as a continuous medium instead of individual “explicit” solvent molecules, which means that the solute embedded in an implicit solvent and the average over the solvent degrees of freedom becomes implicit in the properties of the solvent bath.
@@ -1712,3 +1801,5 @@ This part of variables are used to control the usage of implicit solvation model
 - **Description**: It determines at what value of the electron density the dielectric cavity forms. 
 The unit is $Bohr^{-3}$.
 - **Default**: 0.00037
+
+[back to top](#full-list-of-input-keywords)

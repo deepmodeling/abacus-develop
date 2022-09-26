@@ -513,7 +513,7 @@ calculations.
 #### nbands_istate
 
 - **Type**: Integer
-- **Description**: Only used when `calculation = ienvelope` or `calculation = istate`, this variable indicates how many bands around Fermi level you would like to calculate. `ienvelope` means to calculate the envelope functions of wave functions $\Psi_{i}=\Sigma_{\mu}C_{i\mu}\Phi_{\mu}$, where $\Psi_{i}$ is the ith wave function with the band index $i$ and $\Phi_{\mu}$ is the localized atomic orbital set. `istate` means to calculate the density of each wave function $|\Psi_{i}|^{2}$. Specifically, suppose we have highest occupied bands at 100th wave functions. And if you set this variable to 5, it will print five wave functions from 96th to 105th. But before all this can be carried out, the wave functions coefficients  should be first calculated and written into a file by setting the flag `out_wfc_lcao = 1`.
+- **Description**: Only used when `calculation = ienvelope` or `calculation = istate`, this variable indicates how many bands around Fermi level you would like to calculate. `ienvelope` means to calculate the envelope functions of wave functions $\Psi_{i}=\Sigma_{\mu}C_{i\mu}\Phi_{\mu}$, where $\Psi_{i}$ is the ith wave function with the band index $i$ and $\Phi_{\mu}$ is the localized atomic orbital set. `istate` means to calculate the density of each wave function $|\Psi_{i}|^{2}$. Specifically, suppose we have highest occupied bands at 100th wave functions. And if you set this variable to 5, it will print five wave functions from 96th to 105th. But before all this can be carried out, the wave functions coefficients should be first calculated and written into a file by setting the flag `out_wfc_lcao = 1`.
 - **Default**: 5
 
 #### nspin
@@ -529,6 +529,7 @@ calculations.
   - fixed: use fixed occupations.
   - gauss or gaussian: use gaussian smearing method.
   - mp: use methfessel-paxton smearing method. The method recommends for metals.
+  - fd: Fermi-Dirac smearing method: $f=1/\{1+\exp[(E-\mu)/kT]\}$ and smearing_sigma below is the temperature $T$ (in Ry).
 - **Default**: fixed
 
 #### smearing_sigma
@@ -550,6 +551,7 @@ calculations.
   - kerker: Use kerker method, which is the mixing method in G space.
   - pulay: Standard Pulay method.
   - pulay-kerker:
+  - broyden: Broyden method.
 - **Default**: pulay
 
 #### mixing_beta
@@ -660,7 +662,9 @@ This part of variables are used to control the parameters of stochastic DFT (SDF
 
 - **Type**: Integer
 - **Description**: Frequency (once each initsto_freq steps) to generate new stochastic orbitals when running md.
-- **Default**:1000
+  - positive integer: Update stochastic orbitals
+  - 0:                Never change stochastic orbitals.
+- **Default**:0
 
 #### npart_sto
 
@@ -837,7 +841,7 @@ This part of variables are used to control the output of properties.
 #### out_wfc_r
 
 - **Type**: Integer
-- **Description**: Only used in **planewave basis** and **ienvelope calculation in localized orbitals** set. When set this variable to 1, it outputs real-space wave functions into  `OUT.suffix/wfc_realspace/`. The file names are wfc_realspace$K$B, where $K is the index of k point, $B is the index of band.
+- **Description**: Only used in **planewave basis** and **ienvelope calculation in localized orbitals** set. When set this variable to 1, it outputs real-space wave functions into  `OUT.suffix/wfc_realspace/`. The file names are wfc_realspace_$K_$B, where $K is the index of k point, $B is the index of band.
 - **Default**: 0
 
 #### out_wfc_lcao
@@ -1296,6 +1300,8 @@ temperature will fluctuate violently; if it is too small, the temperature will t
 
 - **Type**: Integer
 - **Description**: Number of Nose-Hoover chains.
+
+  > Note: md_mnhc is relavent to the temperature stability, sometimes md_mnhc=1 performs better.
 - **Default**: 4
 
 #### lj_rcut

@@ -1,153 +1,177 @@
 # This is the Makefile of ABACUS
-
-ifdef GNU
-    include Makefile.gnu
+include Makefile.vars
+#==========================
+# Compiler information 
+#==========================
+INCLUDES = -I. -Icommands -I../
+LIBS = -lifcore -lm -lpthread
+OPTS = -Ofast -march=native -std=c++14 -pedantic -m64 ${INCLUDES}
+HONG = -D__LCAO
+OBJ_DIR = obj
+BIN_DIR = ../bin
+ifeq ($(findstring mpi, $(CC)), mpi)
+     # We do not support EXX in serial version temporarily.
+     HONG += -D__MPI -D__EXX -DEXX_H_COMM=2 -DUSE_CEREAL_SERIALIZATION -DEXX_DM=3 -DEXX_H_COMM=2 -DTEST_EXX_LCAO=0 -DTEST_EXX_RADIAL=1
+     MPI = ON
+     TESTNP = 4
+     suffix = mpi
+     ifeq ($(findstring mpii, $(CC)), mpii)
+         INTEL=ON
+     endif
 else
-    include Makefile.system
+     TESTNP = 1
+     suffix = serial
+     ifeq ($(findstring i, $(CC)), i)
+         INTEL=ON
+     endif
 endif
+
+ifeq ($(DEBUG), ON)
+    INTEL = OFF
+    HONG += -D__DEBUG
+    ifeq ($(MPI), ON)
+        CC = mpicxx
+    else
+        CC = g++
+    endif
+    OPTS +=  -fsanitize=address -fno-omit-frame-pointer -Wall -g #It can check segmental defaults
+endif
+
+ifeq ($(INTEL), ON)
+    OPTS += -simd -qopenmp
+    ##==========================
+    ## MKL package
+    ##==========================
+    HONG  += -D__FFTW3
+    LIBS += -L${MKLROOT}/lib/intel64 -Wl,--start-group -lmkl_intel_lp64\
+	       -lmkl_intel_thread -lmkl_core -lmkl_scalapack_lp64 -lmkl_blacs_intelmpi_lp64 -Wl,--end-group -Wl,-rpath=${MKLROOT}/lib/intel64
+    INCLUDES += -I${MKLROOT}/include/fftw
+
+    #==========================
+    # ELPA package
+    #==========================
+    ELPA_LIB_DIR = ${ELPA_DIR}/lib
+    LIBS     += -L${ELPA_LIB_DIR} -lelpa  -Wl,-rpath=${ELPA_LIB_DIR}
+    INCLUDES += -I${ELPA_INCLUDE_DIR}
+else
+    OPTS += -fopenmp -fpermissive
+    ##==========================
+    ## FFTW package
+    ##==========================
+    FFTW_INCLUDE_DIR = ${FFTW_DIR}/include
+    FFTW_LIB_DIR     = ${FFTW_DIR}/lib
+    HONG  += -D__FFTW3
+    LIBS += -L${FFTW_LIB_DIR} -lfftw3 -Wl,-rpath=${FFTW_LIB_DIR}
+    INCLUDES += -I${FFTW_INCLUDE_DIR}
+    
+    #==========================
+    # OPENBLAS, SCALAPACK, ELPA
+    #==========================
+    LIBS     += -L${OPENBLAS_LIB_DIR} -L${SCALAPACK_LIB_DIR} -L${ELPA_DIR}/lib -lelpa -lscalapack -lopenblas -lgfortran\
+                -Wl,-rpath=${ELPA_DIR}/lib -Wl,-rpath=${SCALAPACK_LIB_DIR} -Wl,-rpath=${OPENBLAS_LIB_DIR}
+    INCLUDES += -I${ELPA_INCLUDE_DIR}
+endif
+
+
+#==========================
+# Cereal package
+#==========================
+INCLUDES += -I${CEREAL_DIR}/include
+
+##==========================
+## CUDA needed 
+##==========================
+ifeq ($(GPU), CUDA)
+    CUDA_COMPILE = nvcc
+    CUDA_DIR            = /usr/local/cuda-11.0
+    CUDA_INCLUDE_DIR	= ${CUDA_DIR}/include 
+    CUDA_LIB_DIR		= ${CUDA_DIR}/lib64
+    CUDA_LIB 			= -L${CUDA_LIB_DIR} -lcufft -lcublas -lcudart
+    HONG += -D__CUDA
+    OPTS_CUDA = ${INCLUDES} -std=c++11 
+    INCLUDES += -I${CUDA_INCLUDE_DIR}
+    LIBS += ${CUDA_LIB}
+endif
+
+ifdef LIBXC_DIR
+    ##==========================
+    ## LIBXC package 
+    ##==========================
+    LIBXC_INCLUDE_DIR	= ${LIBXC_DIR}/include 
+    LIBXC_LIB_DIR		= ${LIBXC_DIR}/lib
+    HONG                += -DUSE_LIBXC
+    INCLUDES            += -I${LIBXC_INCLUDE_DIR}
+    LIBS 			    += -L${LIBXC_LIB_DIR} -Wl,-rpath=${LIBXC_LIB_DIR} -lxc
+endif
+ifdef LIBTORCH_DIR
+ ifdef LIBNPY_DIR
+      LIBTORCH_INCLUDE_DIR =  -I${LIBTORCH_DIR}/include -I${LIBTORCH_DIR}/include/torch/csrc/api/include
+      LIBTORCH_LIB_DIR= ${LIBTORCH_DIR}/lib
+      LIBTORCH_LIB = -L${LIBTORCH_LIB_DIR} -ltorch -lc10 -Wl,-rpath,${LIBTORCH_LIB_DIR} -Wl,--no-as-needed,"${LIBTORCH_LIB_DIR}/libtorch_cpu.so" -Wl,--as-needed ${LIBTORCH_LIB_DIR}/libc10.so -lpthread -Wl,--no-as-needed,"${LIBTORCH_LIB_DIR}/libtorch.so" -Wl,--as-needed 
+      CNPY_INCLUDE_DIR = -I${LIBNPY_DIR}/include
+      HONG += -D__DEEPKS
+      INCLUDES += $(LIBTORCH_INCLUDE_DIR) $(CNPY_INCLUDE_DIR)
+      LIBS += $(LIBTORCH_LIB)
+  endif
+endif
+
 include Makefile.Objects
 
-VPATH=./src_global\
-:./module_orbital\
-:./module_neighbor\
-:./module_symmetry\
-:./module_cell\
-:./module_base\
-:./module_md\
-:./module_pw\
-:./module_surchem\
-:./module_deepks\
-:./module_xc\
-:./module_esolver\
-:./module_hsolver\
-:./module_hsolver/genelpa\
-:./module_elecstate\
-:./module_psi\
-:./module_hamilt\
-:./module_hamilt/ks_pw\
-:./module_gint\
-:./src_pw\
-:./src_lcao\
-:./module_relaxation\
-:./src_io\
-:./src_parallel\
-:./src_pdiag\
-:./src_pdiag/MRRR\
-:./src_ri\
-:./\
-
-
 #==========================
-# Define HONG
+# Optional HONG
 #==========================
-#(1)no mpi
-HONG_SER = -D__LCAO  ${HONG_FFTW}
-HONG_SER_SELINV = -D__LCAO ${HONG_FFTW} -D__SELINV
-HONG_GDB = -g -D__LCAO  ${HONG_FFTW}
-#(2)mpi
-HONG_MPI = -D__LCAO  ${HONG_FFTW} -D__MPI
-# mohan comment out 2021-02-06, add -DUSE_LIBXC=0 if you want to use LIBXC
-#HONG_MPI_SELINV = ${HONG_FFTW} ${HONG_LAPACK} -D__MPI -D__SELINV -DMETIS -DEXX_DM=3 -DEXX_H_COMM=2 -DUSE_LIBXC=0 -DTEST_EXX_LCAO=0 -DTEST_EXX_RADIAL=1 -DUSE_CEREAL_SERIALIZATION
-HONG_MPI_SELINV = ${HONG_FFTW} ${HONG_LAPACK} -D__MPI -D__LCAO -D__SELINV -DMETIS -DEXX_DM=3 -DEXX_H_COMM=2 -DTEST_EXX_LCAO=0 -DTEST_EXX_RADIAL=1 -DUSE_CEREAL_SERIALIZATION
-HONG_MPI_SELINV_20210523 = ${HONG_FFTW} ${HONG_LAPACK} -D__LCAO -D__MPI -D__SELINV -DMETIS -DEXX_DM=3 -DEXX_H_COMM=2 -DTEST_EXX_LCAO=0 -DTEST_EXX_RADIAL=1 -DUSE_CEREAL_SERIALIZATION -D__EXX
-HONG_DEEPKS = ${HONG_MPI_SELINV_20210523} -D__DEEPKS	#caoyu add 2021-07-15 , use it in DeePKS. Add LIBTORCH_DIR and LIBNPY_DIR, modify ${LIBS} and build with std=c++14 !!
-#(3)memory
-#(3)memory
-HONG_MEM = ${HONG_FFTW} -D_MCD_CHECK -DWIN32 -DMCD_VERBOSE
-
-#!!!!!!!!!!!!!!!!!!!! CHANE HERE IF YOU LIKE !!!!!!!!!!!!!!
-#! change series version or parallel version~~~
-HONG=${HONG_MPI_SELINV_20210523}
-#HONG=${HONG_SER_SELINV}
-#!!!!!!!!!!!!!!!!!!!! CHANE HERE IF YOU LIKE !!!!!!!!!!!!!!
-
-#==========================
-# OPTIMIZE OPTIONS
-#==========================
-#(1)gdb
-#xiaohui modify 2013-12-27
-OPTS_GDB = -g -W -I${BOOST_INCLUDE_DIR}
-#(2)gprof
-#POTS = -pg
+HONG += -D__SELINV -DMETIS 
+# ifeq ($(MEM_CHECK), ON)
+#     HONG += -D_MCD_CHECK -DWIN32 -DMCD_VERBOSE
+# endif
 
 #==========================
 # OBJECTS NEEDED
 #==========================
 FP_OBJS_0=$(OBJS_FIRST_PRINCIPLES)\
-$(OBJS_PARALLEL)\
-$(OBJS_TOOLS) \
-$(OBJS_COMMON)\
 main.o\
 
+ifeq ($(MPI), ON)
+    FP_OBJS_0 += $(OBJS_PDIAG) $(PDIAG_MR_0) $(OBJS_EXX)
+endif
+
 FP_OBJS=$(patsubst %.o, ${OBJ_DIR}/%.o, ${FP_OBJS_0})
-FP_OBJS_serial=$(patsubst %.o, ${OBJ_DIR_serial}/%.o, ${FP_OBJS_0})
-PDIAG_OBJS=$(patsubst %.o, ${OBJ_DIR}/%.o, ${OBJS_PDIAG})
-PDIAG_MR=$(patsubst %.o, ${OBJ_DIR}/%.o, ${PDIAG_MR_0})
 
 #==========================
 # MAKING OPTIONS
 #==========================
-fp_mpi : 
-	@ make init
-	@ make -j $(NP) parallel
-
-fp : 
-	@ make init_serial
-	@ make -j $(NP) serial
-
-fp_gbd : 
-	@ make init
-	@ make -j $(NP) serial_gbd
-
-fp_gprof : 
-	@ make init
-	@ make -j $(NP) serial_gprof
-
-fp_mem : 
-	@ make init
-	@ make -j $(NP) serial_mem
-
-init :
+abacus:
 	@ if [ ! -d $(OBJ_DIR) ]; then mkdir $(OBJ_DIR); fi
-	@ if [ ! -d $(OBJ_DIR)/README ]; then echo "This directory contains all of the .o files" > $(OBJ_DIR)/README; fi
-	@ if [ ! -d ../bin ]; then mkdir ../bin; fi
+	@ if [ ! -d $(BIN_DIR) ]; then mkdir $(BIN_DIR); fi
+	@ $(MAKE) $(BIN_DIR)/${VERSION}.$(suffix)
 
-init_serial :
-	@ if [ ! -d $(OBJ_DIR_serial) ]; then mkdir $(OBJ_DIR_serial); fi
-	@ if [ ! -d $(OBJ_DIR_serial)/README ]; then echo "This directory contains all of the .o files" > $(OBJ_DIR_serial)/README; fi
-	@ if [ ! -d ../bin ]; then mkdir ../bin; fi
+test:
+	@ $(MAKE) abacus
+	@ cd ../tests/integrate/;sh Autotest.sh -a ../../../bin/ABACUS.mpi -n $(TESTNP)
 
-parallel : ${FP_OBJS} ${PDIAG_OBJS} ${PDIAG_MR} ${HEADERS}
-	${CPLUSPLUS_MPI} ${OPTS} ${OPTS_MPI} $(FP_OBJS) ${PDIAG_OBJS} ${PDIAG_MR} ${LIBS} -o  ../bin/${VERSION}.mpi
+pw $(BIN_DIR)/${VERSION}-PW.x:
+	@ if [ ! -d $(BIN_DIR) ]; then mkdir $(BIN_DIR); fi
+	@ cd src_pw; $(MAKE) CC=${CC} GPU=${GPU} DEBUG=$(DEBUG) FFTW_DIR=$(FFTW_DIR) OPENBLAS_LIB_DIR=$(OPENBLAS_LIB_DIR)
+	@ cp src_pw/${VERSION}-PW.x $(BIN_DIR)/${VERSION}-PW.x
 
-serial : ${FP_OBJS_serial} ${HEADERS} 
-	${CPLUSPLUS} ${OPTS} $(FP_OBJS_serial) ${LIBS} -o ${VERSION}.fp.x 
+$(BIN_DIR)/${VERSION}.$(suffix) : ${FP_OBJS} ${PDIAG_OBJS} ${PDIAG_MR} ${HEADERS}
+	${CC} ${OPTS} ${OPTS_MPI} $(FP_OBJS) ${PDIAG_OBJS} ${PDIAG_MR} ${LIBS} -o  $(BIN_DIR)/${VERSION}.$(suffix)
 
-serial_gdb : ${FP_OBJS} ${HEADERS}
-	${CPLUSPLUS} ${OPTS_GDB} $(FP_OBJS) ${LIBS} -o ${VERSION}.fp_gdb.x
-
-serial_gprof : ${FP_OBJS} ${HEADERS} 
-	${CPLUSPLUS} ${OPTS} $(FP_OBJS) ${LIBS} -o ${VERSION}.fp_gprof.x 
-
-serial_mem : ${FP_OBJS} ../src_parallel/mcd.o ${HEADERS}
-	${CPLUSPLUS} $(FP_OBJS) ../src_parallel/mcd.o ${LIBS} -o ${VERSION}.fp_mem.x
+# ${VERSION}.fp_mem.x : ${FP_OBJS} ../src_parallel/mcd.o ${HEADERS}
+# 	@ if [ ! -d $(BIN_DIR) ]; then mkdir $(BIN_DIR); fi
+# 	${CC} $(FP_OBJS) ../src_parallel/mcd.o ${LIBS} -o ${VERSION}.fp_mem.x
+# 	@ cp ${VERSION}.fp_mem.x $(BIN_DIR)/${VERSION}.fp_mem.x
 
 #==========================
 # rules
 #==========================
 ${OBJ_DIR}/%.o:%.cpp
-	${CPLUSPLUS_MPI} ${OPTS} ${OPTS_MPI} -c ${HONG} $< -o $@
-${OBJ_DIR}/%.o:%.f
-	${FORTRAN} -c ${HONG} $< -o $@	 
-
-${OBJ_DIR_serial}/%.o:%.cpp
-	${CPLUSPLUS} ${OPTS} ${OPTS_MPI} -c ${HONG} $< -o $@
-${OBJ_DIR_serial}/%.o:%.f
-	${FORTRAN} -c ${HONG} $< -o $@
-
-.PHONY:clean
+	${CC} ${OPTS} ${OPTS_MPI} -c ${HONG} $< -o $@
+	
+.PHONY:clean test
 clean:
 	@ if [ -d $(OBJ_DIR) ]; then rm -rf $(OBJ_DIR); fi
-	@ if [ -d $(OBJ_DIR_serial) ]; then rm -rf $(OBJ_DIR_serial); fi
-	@ if [ -d ../bin ]; then rm -rf ../bin; fi
+	@ if [ -d $(BIN_DIR) ]; then rm -rf $(BIN_DIR); fi
+	@ if [ -e ${VERSION}.* ]; then rm -f ${VERSION}.*; fi
 	@ cd src_pw; make clean
+# @ if [ -e ${VERSION}.fp_mem.x ]; then rm -f ${VERSION}.fp_mem.x; fi
