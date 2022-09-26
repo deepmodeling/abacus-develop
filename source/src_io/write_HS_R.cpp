@@ -1,4 +1,3 @@
-#include "cal_r_overlap_R.h"
 #include "../src_pw/global.h"
 #include "write_HS.h"
 #include "../module_base/timer.h"
@@ -19,14 +18,6 @@ void ESolver_KS_LCAO::output_HS_R(
 {
     ModuleBase::TITLE("ESolver_KS_LCAO","output_HS_R"); 
     ModuleBase::timer::tick("ESolver_KS_LCAO","output_HS_R"); 
-    
-    // add by jingan for out r_R matrix 2019.8.14
-    if(INPUT.out_mat_r)
-    {
-        cal_r_overlap_R r_matrix;
-        r_matrix.init(*this->LOWF.ParaV);
-        r_matrix.out_r_overlap_R(GlobalV::NSPIN);
-    }
 
     if(GlobalV::NSPIN==1||GlobalV::NSPIN==4)
     {
