@@ -67,7 +67,7 @@ void ESolver_SDFT_PW::Init(Input &inp, UnitCell_pseudo &ucell)
 void ESolver_SDFT_PW::beforescf(const int istep)
 {
     ESolver_KS_PW::beforescf(istep);
-	if(istep > 0 && INPUT.nbands_sto != 0 && istep%INPUT.initsto_freq == 0) Update_Sto_Orbitals(this->stowf, INPUT.seed_sto);
+	if(istep > 0 && INPUT.nbands_sto != 0 && INPUT.initsto_freq > 0 && istep%INPUT.initsto_freq == 0) Update_Sto_Orbitals(this->stowf, INPUT.seed_sto);
 }
 
 void ESolver_SDFT_PW::eachiterfinish(int iter)

@@ -529,6 +529,7 @@ calculations.
   - fixed: use fixed occupations.
   - gauss or gaussian: use gaussian smearing method.
   - mp: use methfessel-paxton smearing method. The method recommends for metals.
+  - fd: Fermi-Dirac smearing method: $f=1/\{1+\exp[(E-\mu)/kT]\}$ and smearing_sigma below is the temperature $T$ (in Ry).
 - **Default**: fixed
 
 #### smearing_sigma
@@ -550,6 +551,7 @@ calculations.
   - kerker: Use kerker method, which is the mixing method in G space.
   - pulay: Standard Pulay method.
   - pulay-kerker:
+  - broyden: Broyden method.
 - **Default**: pulay
 
 #### mixing_beta
@@ -660,7 +662,9 @@ This part of variables are used to control the parameters of stochastic DFT (SDF
 
 - **Type**: Integer
 - **Description**: Frequency (once each initsto_freq steps) to generate new stochastic orbitals when running md.
-- **Default**:1000
+  - positive integer: Update stochastic orbitals
+  - 0:                Never change stochastic orbitals.
+- **Default**:0
 
 #### npart_sto
 
@@ -1296,6 +1300,8 @@ temperature will fluctuate violently; if it is too small, the temperature will t
 
 - **Type**: Integer
 - **Description**: Number of Nose-Hoover chains.
+
+  > Note: md_mnhc is relavent to the temperature stability, sometimes md_mnhc=1 performs better.
 - **Default**: 4
 
 #### lj_rcut

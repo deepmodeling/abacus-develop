@@ -1,64 +1,52 @@
 #!/bin/bash
 
-GTEST_DIR=/home/qianrui/intelcompile/impi_gtest
-
-
-GTESTOPTS="-I$GTEST_DIR/include -L$GTEST_DIR/lib -lgtest -lpthread"
-headn=`grep -n "GTEST needed" Makefile.intel |cut -d ':' -f1`
-((headn-=2))
-filen=`wc -l Makefile.intel |cut -d ' ' -f1`
-tailn=`grep -n "PW_OBJS=" Makefile.intel |cut -d ':' -f1`
-((tailn=filen-tailn+2))
-
 make clean > /dev/null 2>&1
-mv Makefile Makefile.bak
-for((i=0;i<4;++i))
-do
-head -n $headn Makefile.intel > Makefile
-if ((i==0)) ;then
-cat >>Makefile<<EOF
-HONG = -D__NORMAL
-CPLUSPLUS = icpc
-GTESTOPTS = $GTESTOPTS
-EOF
-elif ((i==1)) ;then
-cat >>Makefile<<EOF
-HONG = -D__MIX_PRECISION -D__NORMAL
-CPLUSPLUS = icpc
-GTESTOPTS = $GTESTOPTS
-EOF
-elif ((i==2)) ;then
-cat >>Makefile<<EOF
-HONG = -D__MPI -D__CUDA -D__NORMAL
-GTESTOPTS = $GTESTOPTS
-EOF
-elif ((i==3)) ;then
-cat >>Makefile<<EOF
-HONG = -D__MPI -D__MIX_PRECISION -D__NORMAL
-GTESTOPTS = $GTESTOPTS
-EOF
-fi
-tail -n $tailn Makefile.intel >>Makefile
-make > /dev/null
 
-if ((i==0||i==1)) ;then
-    ./pw_test.exe
-else
+for ((i=0;i<4;++i))
+do
+
+if ((i==0)) ;then
+make -j12 CC=icpc > /dev/null
+echo "Test for Serial Version:"
+./pw_test.exe
+
+elif ((i==1)) ;then
+make -j12 CC=icpc FLOAT=ON > /dev/null
+echo "Test for Serial Version with single precision:"
+./pw_test.exe
+
+elif ((i==2)) ;then
+make -j12 CC=mpiicpc > /dev/null
+echo "Test for MPI Version:"
+
+elif ((i==3)) ;then
+make -j12 CC=mpiicpc FLOAT=ON > /dev/null
+echo "Test for MPI Version with single precision:"
+fi
+if ((i>=2)) ; then
     echo "1 processor:"
     ./pw_test.exe
     sleep 1
-    echo "2 processors:"
-    mpirun -np 2 ./pw_test.exe >_tmp.txt 2>&1
+    echo "3 processors:"
+    mpirun -np 3 ./pw_test.exe >_tmp.txt
+    cat _tmp.txt|grep PASSED
+    cat _tmp.txt|grep FAILED
+    sleep 1
+    echo "5 processors:"
+    mpirun -np 5 ./pw_test.exe >_tmp.txt
     cat _tmp.txt|grep PASSED
     cat _tmp.txt|grep FAILED
     sleep 1
     echo "8 processors:"
-    mpirun -np 8 ./pw_test.exe >_tmp.txt 2>&1
+    mpirun -np 8 ./pw_test.exe >_tmp.txt
     cat _tmp.txt|grep PASSED
     cat _tmp.txt|grep FAILED
 fi
+
 make clean > /dev/null 2>&1
+
 done
-mv Makefile.bak Makefile
+
 test -e _tmp.txt && rm -f _tmp.txt
+
 exit 0
