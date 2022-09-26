@@ -2,7 +2,7 @@
 
 ## Basis Set
 
-ABACUS supports both pw and lcao XXXXX
+ABACUS supports both pw and lcao bases.
 
 ## Generating atomic orbital bases
 
@@ -166,6 +166,75 @@ In most cases, you just need to modify the parameters in Section 1, 2. Section 4
 partially modified if you need higher precision orbitals. The users are not encouraged to change
 the settings in sections 5, unless you are very familiar with the code generating algorithms.
 
+## Pseudopotentials
+
+Currently ABACUS uses norm-conserving pseudopotentials in the (old) format of UPF, which
+is the standard pseudopotential format for Quantum ESPRESSO. To run a calculation, the pseudopotential needs to be set in STRU file. For example:
+
+```
+ATOMIC_SPECIES
+Si 28.00 Si_ONCV_PBE-1.0.upf
+```
+
+You can download the pseudopotential files from our [website](http://abacus.ustc.edu.cn/pseudo/list.htm).
+
+There are pseudopotential files in these websites which are also supported by ABACUS:
+1. [Quantum ESPRESSO](http://www.quantum-espresso.org/pseudopotentials/).
+2. [SG15-ONCV](http://quantum-simulation.org/potentials/sg15_oncv/upf/).
+3. [DOJO](http://www.pseudo-dojo.org/).
+
+If LCAO base is used, the numerical orbital files should match the pseudopotential files. The [official orbitals package](http://abacus.ustc.edu.cn/pseudo/list.htm) only matches SG15-ONCV pseudopotentials.
+
 ## BSSE
 
-## Pseudopotentials
+An empty atom is defined in the `STRU` file when an element name contains the "empty" suffix, such as "H_empty" in the following example: calculating the molecular formation energy of H$_2$O by using the BSSE (Basis Set Superposition Errors) method.
+
+$$
+\Delta E(\text{H}_2\text{O}) = E(\text{H}_2\text{O}) - E(\text{O}) - E(\text{H}^1) - E(\text{H}^2)
+$$
+
+## $E(\text{H}_2\text{O})$
+
+```
+ntype   2
+```
+```
+ATOMIC_SPECIES
+H	1.008	H_ONCV_PBE-1.0.upf
+O	15.9994	O_ONCV_PBE-1.0.upf
+
+NUMERICAL_ORBITAL
+H_gga_8au_60Ry_2s1p.orb
+O_gga_6au_60Ry_2s2p1d.orb
+
+LATTICE_CONSTANT
+1.889725989
+
+LATTICE_VECTORS
+20 0 0
+0 20 0
+0 0 20
+
+ATOMIC_POSITIONS
+Cartesian    # Cartesian(Unit is LATTICE_CONSTANT)
+
+H
+0.5
+2
+0.9584	0.0000	0.0000	0 0 0
+-0.2392	0.9281	0.0000	0 0 0
+
+O
+0.5
+1
+0.0000 0.0000 0.0000 0 0 0
+```
+
+## $E(\text{O})$
+
+```
+ntype   2
+```
+```
+ATOMIC_SPECIES
+
