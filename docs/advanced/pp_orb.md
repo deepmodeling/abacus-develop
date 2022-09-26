@@ -22,7 +22,7 @@ In the example, we provide four STRU files:
 
 - STRU_0 : used along with ntype = 2;normal calculation of water molecule ($E(\text{H}_2\text{O})$)
     
-    obtained total energy of -466.4838149140513 eV    
+    obtained total energy of -466.4838149140513 eV
 - STRU_1 : used along with ntype = 2;calculation of single O atom ($E_O$)
     
     obtained total energy of -427.9084406198214 eV
