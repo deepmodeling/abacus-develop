@@ -13,7 +13,7 @@ By setting `calculation` to be `md` or `sto-md`, ABACUS currently provides six d
 
 Furthermore, ABACUS also provides a [list of keywords](./input_files/input-main.md#molecular-dynamics) to control relevant parmeters used in MD simulations.
 
-[Examples](https://github.com/deepmodeling/abacus-develop/tree/develop/examples/vdw/si2) of MD simulations are also provided.
+[Examples](https://github.com/deepmodeling/abacus-develop/tree/develop/examples/md/lcao_gammaonly_Sn64) of MD simulations are also provided.
 There are six INPUT files corresponding to six different MD evolution methods in the directory.
 For examlpe, `INPUT_0` shows how to employ the NVE simulation.
 
