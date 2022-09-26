@@ -2,7 +2,31 @@
 
 ## Basis Set
 
-ABACUS supports both pw and lcao bases.
+In ABACUS, there are 3 types of basis set choices:
+
+1. PW
+
+    Plane wave basis.
+
+2. LCAO
+
+    Localized atomic-orbital basis; these systematically improvable atomic basis are generated with a tool called [SIAB](generate-basis.md).
+
+3. LCAO_in_PW
+
+    Expand the atomic basis in terms of plane waves, and use plane-waves techniques to construct the Hamiltonian matrix, but solve the eigenvalue problem within the LCAO basis set.
+
+In the INPUT file, the keyword basis_type controls what basis type to use:
+
+   1. PW: basis_type = pw
+   2. LCAO: basis_type = lcao
+   3. LCAO_in_PW: basis_type = lcao_in_pw
+
+The default value of basis_type is pw. When choosing lcao or lcao_in_pw, the user should prepare atomic orbitals first.
+
+Information on the keyword basis_type can also be found in [the list of input keywords](../input_files/input-main.md#basis_type).
+
+Below we provide a detailed instruction on generating basis functions.
 
 ## Generating atomic orbital bases
 
