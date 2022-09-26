@@ -144,7 +144,7 @@ void Input::Default(void)
     seed_sto = 0;
     bndpar = 1;
     kpar = 1;
-    initsto_freq = 1000;
+    initsto_freq = 0;
     method_sto = 2;
     npart_sto = 1;
     cal_cond = false;

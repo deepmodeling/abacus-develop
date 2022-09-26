@@ -26,4 +26,4 @@ For that purpose, in `INPUT` file we need to make the following specification of
 calculation get_S
 ```
 
-A file named `SR.csr` will be generated in te working directory, which contains the overlap matrix.
+A file named `SR.csr` will be generated in the working directory, which contains the overlap matrix.

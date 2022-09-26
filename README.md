@@ -62,7 +62,7 @@ ABACUS provides the following features and functionalities:
 
 ABACUS can be downloaded from our [official website](http://abacus.ustc.edu.cn/) or [GitHub release page](https://github.com/deepmodeling/abacus-develop/releases) for stable versions. You can also get the developing version from our [GitHub repository](https://github.com/deepmodeling/abacus-develop).
 
-Please refer to the [installation guide](docs/install.md) for instruction on the structure of the package and how to install ABACUS.
+Please refer to the [installation guide](docs/quick_start/easy_install.md) for instruction on the structure of the package and how to install ABACUS.
 
 [back to top](#readme-top)
 

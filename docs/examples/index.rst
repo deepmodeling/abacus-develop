@@ -13,7 +13,6 @@ Examples
    BSSE
    dispersion
    dos
-   dpgen
    electric_dipole
    force
    hybrid
@@ -21,7 +20,6 @@ Examples
    magnetic
    md
    mulliken
-   phonopy
    potential
    stochastic
    stress

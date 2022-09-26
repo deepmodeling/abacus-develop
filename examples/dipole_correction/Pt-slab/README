@@ -1,0 +1,24 @@
+/*******************************************************************************/
+/
+/ These are the examples of ABACUS program.
+/
+/*******************************************************************************/
+
+ABACUS supports adding a dipole correction to the bare ionic potential, which can compensate for the artificial dipole field within the context of a periodic supercell calculation..
+
+The dipole correction can be taken into account with the following 
+parameters in INPUT file, 
+
+```
+INPUT_PARAMETERS
+efield_flag        1
+dip_cor_flag       1
+efield_dir         2
+efield_pos_max     0.5
+efield_pos_dec     0.1
+efield_amp         0.0
+```
+
+Detailed explaination of these keywords can be found [here](https://github.com/deepmodeling/abacus-develop/blob/develop/docs/input-main.md#electric-field-and-dipole-correction). The dipole correction can be added together with the external electric field  and therefore these two functionalities share common input parameters. INPUT1 added only the dipole correction, while INPUT2 added dipole correction and an external electric field together, corresponding outputs can be found in `running_scf.ref1` and `running_scf.ref2`, respectively. The energy contribution from the dipole correction and/or the added external field is given together as `E_efield` in the output file. Note that both `pw` and `lcao` (specified via `basis type`) are supported for this functionality. 
+
+

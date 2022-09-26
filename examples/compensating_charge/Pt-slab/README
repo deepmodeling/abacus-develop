@@ -1,0 +1,25 @@
+/*******************************************************************************/
+/
+/ These are the examples of ABACUS program.
+/
+/*******************************************************************************/
+
+ABACUS supports adding a distribution of compensating charge to maintain the supercell's neutrality due to the periodic boundary condition. The compensating charge implemented in ABACUS follows the [methodology](http://dx.doi.org/10.1103/PhysRevB.89.245406) developed by Brumme, Calandra, and Mauri in 2014.
+
+The ditrubution of compensating charge can be added with the following 
+parameters in INPUT file, 
+
+```
+INPUT_PARAMETERS
+gate_flag           1
+zgate               0.7
+block_down          0.65
+block_up            0.75
+block_height        0.01
+block               1
+nelec               487
+```
+
+Detailed explaination of these keywords can be found [here](https://github.com/deepmodeling/abacus-develop/blob/develop/docs/input-main.md#gate-field-compensating-charge). An additional electron is included via `nelec` so as to trigger on the positive compensating charge. The energy contribution from the compensating charge is given as `E_gatefield` in the output file. See `running_scf.ref` for the output of this example. Note that both `pw` and `lcao` (specified via `basis type`) are supported for this functionality. 
+
+

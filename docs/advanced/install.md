@@ -36,7 +36,7 @@ cmake -B build -DBUILD_TESTING=1
 
 > Note: We suggest using CMake to configure and compile.
 
-To compile the ABACUS program using legacy `make`, first edit the file `Makefile.vars` under `source` directory:
+To compile the ABACUS program using legacy `make`, users only need to edit the file `Makefile.vars` under `source` directory:
 
 ```bash
 cd source/
@@ -45,115 +45,122 @@ vi Makefile.vars
 
 Specify the location of the compiler and libraries present in your own machine:
 
-```bash
-CPLUSPLUS =
-CPLUSPLUS_MPI =
-FORTRAN =
-LAPACK_DIR =
-FFTW_DIR =
-BOOST_DIR =
-ELPA_DIR =
-CEREAL_DIR =
+```makefile
+# This is the Makefile of ABACUS API
+#======================================================================
+# Users set
+#======================================================================
+CC = mpiicpc
+# mpiicpc:   compile intel parallel version
+# icpc:      compile gnu serial version
+# make: ELPA_DIR, ELPA_INCLUDE_DIR, CEREAL_DIR must also be set.
+# make pw: nothing need to be set except LIBXC_DIR
+# 
+# mpicxx:    compile gnu parallel version
+# g++:       compile gnu serial version
+# make: FFTW_DIR, OPENBLAS_LIB_DIR, SCALAPACK_LIB_DIR, ELPA_DIR, ELPA_INCLUDE_DIR, CEREAL_DIR must also be set.
+# make pw: FFTW_DIR, OPENBLAS_LIB_DIR must be set.
+#======================================================================
+
+#-------  FOR INTEL COMPILER  ------------
+ELPA_DIR      = /public/soft/elpa_21.05.002
+ELPA_INCLUDE_DIR = ${ELPA_DIR}/include/elpa-2021.05.002
+# directory of elpa, which contains include and lib/libelpa.a
+
+CEREAL_DIR    = /public/soft/cereal
+# directory of cereal, which contains a include directory in it.
+
+#-------  FOR GNU COMPILER  ---------------
+# FFTW_DIR = /public/soft/fftw_3.3.8
+# # directory of fftw package, which contains lib/libfftw3.a. Only used when CC = mpicxx/g++
+
+# OPENBLAS_LIB_DIR   = /public/soft/openblas/lib
+# # directory of libopenblas.a, only used when CC = mpicxx/g++
+
+# SCALAPACK_LIB_DIR  = /public/soft/openblas/lib
+# # directory of libscalapack.a, only used when CC = mpicxx/g++
+
+# ELPA_DIR      = /public/soft/elpa_21.05.002
+# ELPA_INCLUDE_DIR = ${ELPA_DIR}/include/elpa-2021.05.002
+# # directory of elpa, which contains include and lib/libelpa.a
+
+# CEREAL_DIR    = /public/soft/cereal
+# # directory of cereal, which contains a include directory in it.
+
+#------  OPTIONAL LIBS  -----------
+
+# LIBTORCH_DIR  = /usr/local
+# LIBNPY_DIR    = /usr/local
+# add them to use DEEPKS
+
+# LIBXC_DIR    		= /public/soft/libxc
+# directory of libxc(>5.1.7), which contains include and lib/libxc.a
+# add LIBXC_DIR to use libxc to compile ABACUS
+#======================================================================
 ```
 
-For example, below is a case where the Intel C++ compiler, Intel MPI are used, along with Intel MKL library. The file Makefile.vars can be set as
+For example, below is a case where the Intel C++ compiler, Intel MPI and CEREAL are used, along with Intel MKL library. The file Makefile.vars can be set as
 follows:
 
-```bash
-CPLUSPLUS = icpc
-CPLUSPLUS_MPI = mpiicpc
-FORTRAN = ifort
-LAPACK_DIR = /opt/intel/.../mkl/lib/intel64/
-FFTW_DIR = /opt/fftw-3.3.8/
-BOOST_DIR = /opt/boost/1.64.0/
-ELPA_DIR = /opt/elpa/2016.05.004/
-CEREAL_DIR = /opt/cereal/
+```makefile
+CC = mpiicpc/icpc
+ELPA_DIR      = /public/soft/elpa_21.05.002
+ELPA_INCLUDE_DIR = ${ELPA_DIR}/include/elpa-2021.05.002
+CEREAL_DIR    = /public/soft/cereal
+```
+When `CC=mpiicpc`, a parallel version will be compiled. When `CC=icpc`, a serial version will be compiled.
+
+
+Another example is where the Gnu C++ compiler, MPICH, OPENBLAS, ScaLAPACK, ELPA and CEREAL are used:
+
+```makefile
+CC = mpicxx/g++
+FFTW_DIR = /public/soft/fftw_3.3.8
+OPENBLAS_LIB_DIR   = /public/soft/openblas/lib
+SCALAPACK_LIB_DIR  = /public/soft/openblas/lib
+ELPA_DIR      = /public/soft/elpa_21.05.002
+ELPA_INCLUDE_DIR = ${ELPA_DIR}/include/elpa-2021.05.002
+CEREAL_DIR    = /public/soft/cereal
+```
+When `CC=mpicxx`, a parallel version will be compiled. When `CC=g++`, a serial version will be compiled.
+
+Except modifying `Makefile.vars`, you can also directly use
+```makefile
+make CC=mpicpc ELPA_DIR=/public/soft/elpa_21.05.002 \
+ELPA_INCLUDE_DIR=${ELPA_DIR}/include/elpa-2021.05.002 \
+CEREAL_DIR=/public/soft/cereal
+```
+ABACUS now support full version and pw version. Use `make` or `make abacus` to compile full version which supports LCAO calculations. Use `make pw` to compile pw version which only supports pw calculations. For pw version, `make pw CC=mpiicpc`, you do not need to provide any libs. For `make pw CC=mpicxx`, you need provide `FFTW_DIR` and `OPENBLAS_LIB_DIR`.
+
+Besides, libxc and deepks are optional libs to compile abacus. 
+They will be used when `LIBXC_DIR` is defined like
+```
+LIBXC_DIR    		= /public/soft/libxc
+```
+or `LIBTORCH_DIR` and `LIBNPY_DIR` like
+```makefile
+LIBTORCH_DIR  = /usr/local
+LIBNPY_DIR    = /usr/local
 ```
 
-Another example is where GCC, GFORTRAN, MPICH and ScaLAPACK are used:
-
-```bash
-CPLUSPLUS = g++
-CPLUSPLUS_MPI = mpicxx
-FORTRAN = gfortran
-SCALAPACK_DIR = /opt/scalapack/
-FFTW3_DIR = /opt/fftw-3.3.8/
-BOOST_DIR = /opt/boost/1.64.0/
-ELPA_DIR = /opt/elpa/2016.05.004/
-CEREAL_DIR = /opt/cereal/
-```
-
-For this option, it is further required to set the parameter `LIBS` in `Makefile.system`:
-
-```bash
-LIBS = \
-  -lgfortran -lm \
-  -openmp -lpthread \
-  ${SCALAPACK_DIR}/lib/libscalapack.a \
-  /opt/lapack/lib/liblapack.a \
-  /opt/blas/lib/libblas.a \
-  /opt/blacs/lib/libblacs.a \
-  ${FFTW_LIB} \
-  ${ELPA_LIB} \
-
-```
-
-After modifying the `Makefile.vars` file, execute `make` to build the program.
-
-```bash
-make -j
-```
+After modifying the `Makefile.vars` file, execute `make` or `make -j12` or `make -j`to build the program.
 
 After the compilation finishes without error messages (except perhaps for some warnings), an executable program `ABACUS.mpi` will be created in directory `bin/`.
 
 ### Add Libxc Support
-To compile ABACUS with Libxc, modifications should be made in three files:
 
-First of all, in the file `Makefile.vars`, apart from the variables above, further provide the location of Libxc:
+The program compiled using the above instructions do not link with LIBXC and use exchange-correlation functionals as written in the ABACUS program. However, for some functionals (such as HSE hybrid functional), LIBXC is required.
 
-```bash
-LIBXC_DIR =
-```
+To compile ABACUS with LIBXC, you need to define `LIBXC_DIR` in the file `Makefile.vars` or use 
+```makefile
+make LIBXC_DIR=/pulic/soft/libxc
+``` 
+directly.
 
-Then, in the file 'Makefile.system', add "${Libxc_LIB}" to the `LIBS` flag, for example:
-
-```bash
-LIBS = -lifcore -lm -lpthread ${LAPACK_LIB} ${FFTW_LIB} ${ELPA_LIB} ${Libxc_LIB}
-```
-
-Finally, in `Makefile`, add "-DUSE_Libxc" to the `HONG` flag, for example:
-
-```bash
-HONG_MPI_SELINV_20210523 = -D__FP ${HONG_FFTW} ${HONG_LAPACK} -D__LCAO -D__MPI -D__OPENMP -D__SELINV -DMETIS -DEXX_DM=3 -DEXX_H_COMM=2 -DTEST_EXX_LCAO=0 -DTEST_EXX_RADIAL=1 -DUSE_CEREAL_SERIALIZATION -D__EXX -DUSE_Libxc
-HONG=${HONG_MPI_SELINV_20210523}
-```
 ### Add DeePKS Support
 
-
-Set `LIBTORCH_DIR`and `LIBNPY_DIR`in `Makefile.vars`. For example:
-
-```Makefile
-LIBTORCH_DIR = /opt/libtorch/
-LIBNPY_DIR = /opt/libnpy/
-```
-
-In `Makefile.system`, add `LIBTORCH_LIB` to  `LIBS`, then set `-std=c++14` in `OPTS`:
-
-```Makefile
-LIBS = -lifcore -lm -lpthread ${LIBTORCH_LIB} ${LAPACK_LIB} ${FFTW_LIB} ${ELPA_LIB} # for DeePKS
-#LIBS = -lifcore -lm -lpthread ${LAPACK_LIB} ${FFTW_LIB} ${ELPA_LIB}
-```
-
-```Makefile
-OPTS = ${INCLUDES} -Ofast -traceback -std=c++14 -simd -march=native -xHost -m64 -qopenmp -Werror -Wall -pedantic -g
-```
-
-In `Makefile`, set the Macro as `HONG_DEEPKS`:
-
-```Makefile
-#!!!!!!!!!!!!!!!!!!!! CHANE HERE IF YOU LIKE !!!!!!!!!!!!!!
-#! change series version or parallel version~~~
-#HONG=${HONG_MPI_SELINV_20210523}
-#HONG=${HONG_SER_SELINV}
-HONG=${HONG_DEEPKS}
-```
+To compile ABACUS with DEEPKS, you need to define `LIBTORCH_DIR` and `LIBNPY_DIR` in the file `Makefile.vars` or use 
+```makefile
+make LIBTORCH_DIR=/opt/libtorch/ LIBNPY_DIR=/opt/libnpy/
+``` 
+directly.
