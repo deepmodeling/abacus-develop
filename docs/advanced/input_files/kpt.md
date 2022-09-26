@@ -8,6 +8,12 @@
 
 ABACUS uses periodic boundary conditions for both crystals and finite systems. For isolated systems, such as atoms, molecules, clusters, etc., one uses the so-called supercell model. Lattice vectors of the supercell are set in the `STRU` file. For the input k-point (`KPT`) file, the file should either contain the k-point coordinates and weights or the mesh size for creating the k-point gird. Both options are allowed in `ABACUS`.
 
+## Gamma-only Calculations
+
+In ABACUS, we offer th option of running gamma-only calculations for LCAO basis by setting [gamma_only](./input-main.md#gammaonly) to be 1. Due to details of implementation, gamma-only calculation will be slightly faster than running a non gamma-only calculation and explicitly setting gamma point to be the only the k-point, but the results should be consistent.
+
+> If gamma_only is set to 1, the KPT file will be overwritten. So make sure to turn off gamma_only for multi-k calculations.
+
 ## Generate k-mesh automatically
 
 To generate k-mesh automatically, it requires the input subdivisions of the Brillouin zone
