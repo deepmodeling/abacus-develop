@@ -1,2 +1,3 @@
 myst_parser[linkify]
 sphinx_rtd_theme
+deepmodeling_sphinx >= 0.1.2
