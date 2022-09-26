@@ -32,6 +32,7 @@ author = 'ABACUS'
 # ones.
 extensions = [
         'myst_parser',
+        'deepmodeling_sphinx',
 ]
 myst_enable_extensions = [
     "amsmath",

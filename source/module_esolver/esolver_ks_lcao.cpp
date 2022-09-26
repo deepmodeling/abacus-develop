@@ -625,9 +625,12 @@ void ESolver_KS_LCAO::eachiterfinish(int iter)
         const int precision = 3;
 
         std::stringstream ssc;
+        std::stringstream ss1;
         ssc << GlobalV::global_out_dir << "tmp"
             << "_SPIN" << is + 1 << "_CHG";
         GlobalC::CHR.write_rho(GlobalC::CHR.rho_save[is], is, iter, ssc.str(), precision); // mohan add 2007-10-17
+        ss1 << GlobalV::global_out_dir << "tmp" << "_SPIN" << is + 1 << "_CHG.cube";
+        GlobalC::CHR.write_rho_cube(GlobalC::CHR.rho_save[is], is, ss1.str(), 3);
 
         std::stringstream ssd;
 
@@ -680,8 +683,11 @@ void ESolver_KS_LCAO::afterscf(const int istep)
         const int precision = 3;
 
         std::stringstream ssc;
+        std::stringstream ss1;
         ssc << GlobalV::global_out_dir << "SPIN" << is + 1 << "_CHG";
+        ss1 << GlobalV::global_out_dir << "SPIN" << is + 1 << "_CHG.cube";
         GlobalC::CHR.write_rho(GlobalC::CHR.rho_save[is], is, 0, ssc.str()); // mohan add 2007-10-17
+        GlobalC::CHR.write_rho_cube(GlobalC::CHR.rho_save[is], is, ss1.str(), 3);
 
         std::stringstream ssd;
         if (GlobalV::GAMMA_ONLY_LOCAL)

@@ -1,6 +1,6 @@
 # Mulliken Charge Analysis
 
-From version 2.1.0, ABACUS has the function of Mulliken population analysis. The example can be found in [examples/mulliken](#https://github.com/deepmodeling/abacus-develop/tree/develop/examples/mulliken). \
+From version 2.1.0, ABACUS has the function of Mulliken population analysis. The example can be found in [examples/mulliken](https://github.com/deepmodeling/abacus-develop/tree/develop/examples/mulliken). \
 To use this function, set ‘out_mul’ to ‘1’ in the INPUT file. After calculation, there will be an output file named mulliken.txt in the output directory. In the file, there are contents like:
 
 ```
