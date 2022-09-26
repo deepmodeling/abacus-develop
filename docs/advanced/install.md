@@ -99,7 +99,7 @@ CEREAL_DIR    = /public/soft/cereal
 #======================================================================
 ```
 
-For example, below is a case where the Intel C++ compiler, Intel MPI and CEREAL_DIR are used, along with Intel MKL library. The file Makefile.vars can be set as
+For example, below is a case where the Intel C++ compiler, Intel MPI and CEREAL are used, along with Intel MKL library. The file Makefile.vars can be set as
 follows:
 
 ```makefile
@@ -111,7 +111,7 @@ CEREAL_DIR    = /public/soft/cereal
 When `CC=mpiicpc`, a parallel version will be compiled. When `CC=icpc`, a serial version will be compiled.
 
 
-Another example is where GCC, GFORTRAN, MPICH, ScaLAPACK, ELPA and CEREAL are used:
+Another example is where the Gnu C++ compiler, MPICH, OPENBLAS, ScaLAPACK, ELPA and CEREAL are used:
 
 ```makefile
 CC = mpicxx/g++
