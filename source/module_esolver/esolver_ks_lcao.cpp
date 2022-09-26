@@ -1,4 +1,5 @@
 #include "esolver_ks_lcao.h"
+#include "src_io/cal_r_overlap_R.h"
 
 //--------------temporary----------------------------
 #include "../module_base/global_function.h"
@@ -950,6 +951,13 @@ void ESolver_KS_LCAO::afterscf(const int istep)
         GlobalC::dmft.out_to_dmft(this->LOWF, *this->UHM.LM);
     }
 
+    // add by jingan for out r_R matrix 2019.8.14
+    if(INPUT.out_mat_r)
+    {
+        cal_r_overlap_R r_matrix;
+        r_matrix.init(*this->LOWF.ParaV);
+        r_matrix.out_r_overlap_R();
+    }
     if (hsolver::HSolverLCAO::out_mat_hsR)
     {
         this->output_HS_R(istep); // LiuXh add 2019-07-15

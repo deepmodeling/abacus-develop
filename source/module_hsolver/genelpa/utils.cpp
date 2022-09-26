@@ -8,7 +8,7 @@
 #include <iostream>
 #include <mpi.h>
 #include <sstream>
-
+#ifdef __MPI
 void initBlacsGrid(int loglevel,
                    MPI_Comm comm,
                    int nFull,
@@ -79,6 +79,7 @@ void initBlacsGrid(int loglevel,
         std::cout << outlog.str();
     }
 }
+#endif
 
 // load matrix from the file
 void loadMatrix(const char FileName[], int nFull, double* a, int* desca, int blacs_ctxt)
@@ -138,7 +139,11 @@ void saveLocalMatrix(const char filePrefix[], int narows, int nacols, double* a)
     char FileName[80];
     int myid;
     ofstream matrixFile;
+#ifdef __MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &myid);
+#else
+    myid = 0;
+#endif
 
     sprintf(FileName, "%s_%3.3d.dat", filePrefix, myid);
     matrixFile.open(FileName);
@@ -273,8 +278,11 @@ void saveLocalMatrix(const char filePrefix[], int narows, int nacols, std::compl
     char FileName[80];
     int myid;
     ofstream matrixFile;
-
+#ifdef __MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &myid);
+#else
+    myid = 0;
+#endif
 
     sprintf(FileName, "%s_%3.3d.dat", filePrefix, myid);
     matrixFile.open(FileName);

@@ -3,7 +3,6 @@
 #
 # This particular makefile defines all the executables and objects
 # files needed, who they depend on, and the compilation defaults.#
-# The file makefile.local is included below.
 # That file defines the actual commands to use to run the C++
 # compiler, library options and directories, etc., all of which are
 # machine specific and depend on the local installation.  Hence the name.
@@ -11,6 +10,35 @@
 
 VERSION = ABACUS
 HEADERS = *.h
+
+VPATH=./src_global\
+:./module_orbital\
+:./module_neighbor\
+:./module_symmetry\
+:./module_cell\
+:./module_base\
+:./module_md\
+:./module_pw\
+:./module_surchem\
+:./module_deepks\
+:./module_xc\
+:./module_esolver\
+:./module_hsolver\
+:./module_hsolver/genelpa\
+:./module_elecstate\
+:./module_psi\
+:./module_hamilt\
+:./module_hamilt/ks_pw\
+:./module_gint\
+:./src_pw\
+:./src_lcao\
+:./module_relaxation\
+:./src_io\
+:./src_parallel\
+:./src_pdiag\
+:./src_pdiag/MRRR\
+:./src_ri\
+:./\
 
 OBJS_MAIN=driver.o\
 input.o \
@@ -178,7 +206,15 @@ center2_orb-orb21.o \
 center2_orb-orb22.o \
 abfs.o \
 abfs-vector3_order.o \
-exx_abfs.o \
+dm_2d.o \
+unk_overlap_lcao.o \
+cal_r_overlap_R.o \
+bessel_basis.o\
+numerical_basis.o\
+numerical_descriptor.o\
+wavefunc_in_pw.o\
+
+OBJS_EXX=exx_abfs.o \
 exx_abfs-abfs_index.o \
 exx_abfs-dm.o \
 exx_abfs-inverse_matrix_double.o \
@@ -203,14 +239,7 @@ exx_abfs-screen-schwarz.o \
 exx_abfs-screen-cauchy.o \
 exx_lcao.o \
 exx_opt_orb.o \
-exx_opt_orb-print.o \
-dm_2d.o \
-unk_overlap_lcao.o \
-cal_r_overlap_R.o \
-bessel_basis.o\
-numerical_basis.o\
-numerical_descriptor.o\
-wavefunc_in_pw.o\
+exx_opt_orb-print.o
 
 OBJS_PARALLEL=parallel_global.o\
 parallel_kpoints.o\
@@ -310,6 +339,9 @@ $(OBJ_ELECSTATES)\
 $(OBJ_PSI)\
 ${OBJ_OPERATOR}\
 ${OBJ_GENELPA}\
+$(OBJS_PARALLEL)\
+$(OBJS_TOOLS) \
+$(OBJS_COMMON)\
 charge.o \
 charge_mixing.o \
 charge_pulay.o \
