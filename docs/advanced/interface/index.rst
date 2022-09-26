@@ -9,6 +9,5 @@ Interfaces to Other Softwares
    deepks
    dpgen
    deeph
-   ase
    phonopy
    Wannier90
