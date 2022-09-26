@@ -63,7 +63,7 @@ class cal_r_overlap_R
 						Center2_Orb::Orb21>>>>>> center2_orb21_r;
 						
 	void init(const Parallel_Orbitals &pv);
-	void out_r_overlap_R(const int nspin);
+	void out_r_overlap_R();
 	
 	int iw2it(int iw);
 	int iw2ia(int iw);
