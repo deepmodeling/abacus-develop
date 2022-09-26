@@ -1301,6 +1301,8 @@ temperature will fluctuate violently; if it is too small, the temperature will t
 
 - **Type**: Integer
 - **Description**: Number of Nose-Hoover chains.
+
+  > Note: md_mnhc is relavent to the temperature stability, sometimes md_mnhc=1 performs better.
 - **Default**: 4
 
 #### lj_rcut
