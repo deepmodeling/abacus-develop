@@ -1,6 +1,6 @@
 # Berry Phase Calculation
 
-From version 2.0.0, ABACUS is capable of calculating macroscopic polarization of insulators by using the Berry phase method, known as the ["modern theory of polarization"](https://www.sciencedirect.com/science/article/abs/pii/S0022459612003234). To calculate the polarization, you need first to do a self-consistent calculation to get the converged charge density. Then, do a non-self-consistent calculation with berry_phase setting to 1. You need also to specify the direction of the polarization you want to calculate. An example is given in the directory [examples/berryphase/lcao_PbTiO3](#https://github.com/deepmodeling/abacus-develop/tree/develop/examples/berryphase/lcao_PbTiO3).
+From version 2.0.0, ABACUS is capable of calculating macroscopic polarization of insulators by using the Berry phase method, known as the ["modern theory of polarization"](https://www.sciencedirect.com/science/article/abs/pii/S0022459612003234). To calculate the polarization, you need first to do a self-consistent calculation to get the converged charge density. Then, do a non-self-consistent calculation with berry_phase setting to 1. You need also to specify the direction of the polarization you want to calculate. An example is given in the directory [examples/berryphase/lcao_PbTiO3](https://github.com/deepmodeling/abacus-develop/tree/develop/examples/berryphase/lcao_PbTiO3).
 
 To run this example, first do a self-consistent calculation:
 ```

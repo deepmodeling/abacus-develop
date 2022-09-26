@@ -2,8 +2,8 @@
 
 ## DOS
 
-ABACUS can calculate the density of states (DOS) of the system, and the exampples can be found in [examples/dos](#https://github.com/deepmodeling/abacus-develop/tree/develop/examples/dos).\
-We first, do a ground-state energy calculation ***with one additional keyword "[out_chg](#https://abacus-rtd.readthedocs.io/en/latest/advanced/input_files/input-main.html#out-chg)" in the INPUT file***:
+ABACUS can calculate the density of states (DOS) of the system, and the exampples can be found in [examples/dos](https://github.com/deepmodeling/abacus-develop/tree/develop/examples/dos).\
+We first, do a ground-state energy calculation ***with one additional keyword "[out_chg](https://abacus-rtd.readthedocs.io/en/latest/advanced/input_files/input-main.html#out-chg)" in the INPUT file***:
 
 ```
 out_chg              1
@@ -43,28 +43,28 @@ Some parameters in the INPUT file are explained:
 - calculation
 
     choose which kind of calculation: scf calculation, nscf calculation, structure relaxation or Molecular Dynamics. Now we need to do one step of nscf calculation.
-    Attention: This is a main variable of ABACUS, and for its more information please see the [here](#https://abacus-rtd--1282.org.readthedocs.build/en/1282/advanced/input_files/input-main.html#calculation).
+    Attention: This is a main variable of ABACUS, and for its more information please see the [here](https://abacus-rtd--1282.org.readthedocs.build/en/1282/advanced/input_files/input-main.html#calculation).
 
 - pw_diag_thr
 
-    threshold for the CG method which diagonalizes the Hamiltonian to get eigenvalues and eigen wave functions. If one wants to do nscf calculation, pw_diag_thr needs to be changed to a smaller account, typically smaller than 1.0e-3. Note that this parameter only apply to plane-wave calculations that employ the CG or Davidson method to diagonalize the Hamiltonian. For its more information please see the [here](#https://abacus-rtd--1282.org.readthedocs.build/en/1282/advanced/input_files/input-main.html#pw_diag_thr).
+    threshold for the CG method which diagonalizes the Hamiltonian to get eigenvalues and eigen wave functions. If one wants to do nscf calculation, pw_diag_thr needs to be changed to a smaller account, typically smaller than 1.0e-3. Note that this parameter only apply to plane-wave calculations that employ the CG or Davidson method to diagonalize the Hamiltonian. For its more information please see the [here](https://abacus-rtd--1282.org.readthedocs.build/en/1282/advanced/input_files/input-main.html#pw_diag_thr).
     
     For LCAO calculations, this parameter will be neglected !
 - init_chg
 
-    the type of starting density. When doing scf calculation, this variable can be set ”atomic”. When doing nscf calculation, the charge density already exists(eg. in SPIN1_CHG), and the variable should be set as ”file”. It means the density will be read from the existing file SPIN1_CHG. For its more information please see the [here](#https://abacus-rtd--1282.org.readthedocs.build/en/1282/advanced/input_files/input-main.html#init_chg).
+    the type of starting density. When doing scf calculation, this variable can be set ”atomic”. When doing nscf calculation, the charge density already exists(eg. in SPIN1_CHG), and the variable should be set as ”file”. It means the density will be read from the existing file SPIN1_CHG. For its more information please see the [here](https://abacus-rtd--1282.org.readthedocs.build/en/1282/advanced/input_files/input-main.html#init_chg).
 
 - out_dos
 
-    output density of state(DOS). The unit of DOS is `(number of states)/(eV * unitcell)`. For its more information please see the [here](#https://abacus-rtd--1282.org.readthedocs.build/en/1282/advanced/input_files/input-main.html#out_dos).
+    output density of state(DOS). The unit of DOS is `(number of states)/(eV * unitcell)`. For its more information please see the [here](https://abacus-rtd--1282.org.readthedocs.build/en/1282/advanced/input_files/input-main.html#out_dos).
 
 - dos_sigma
 
-    the gaussian smearing parameter(DOS), in unit of eV. For its more information please see the [here](#https://abacus-rtd--1282.org.readthedocs.build/en/1282/advanced/input_files/input-main.html#dos_sigma). 
+    the gaussian smearing parameter(DOS), in unit of eV. For its more information please see the [here](https://abacus-rtd--1282.org.readthedocs.build/en/1282/advanced/input_files/input-main.html#dos_sigma). 
 
 - read_file_dir
 
-    the location of electron density file. For its more information please see the [here](#https://abacus-rtd--1282.org.readthedocs.build/en/1282/advanced/input_files/input-main.html#read_file_dir).
+    the location of electron density file. For its more information please see the [here](https://abacus-rtd--1282.org.readthedocs.build/en/1282/advanced/input_files/input-main.html#read_file_dir).
 
 To have an accurate DOS, one needs to have a denser k-point mesh. For example, the KPT file can be set as:
 ```
