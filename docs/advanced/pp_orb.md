@@ -24,7 +24,7 @@ In the INPUT file, the keyword basis_type controls what basis type to use:
 
 The default value of basis_type is pw. When choosing lcao or lcao_in_pw, the user should prepare atomic orbitals first.
 
-Information on the keyword basis_type can also be found in [the list of input keywords](../input_files/input-main.md#basis_type).
+Information on the keyword basis_type can also be found in [the list of input keywords](./input_files/input-main.md#basis_type).
 
 Below we provide a detailed instruction on generating basis functions.
 
