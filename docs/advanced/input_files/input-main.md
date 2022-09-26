@@ -109,7 +109,7 @@ This part of variables are used to control general system parameters.
 - **Description**: Specify the type of calculation.
   - *scf*: do self-consistent electronic structure calculation
   - *relax*: do structure relaxation calculation, one can ues `relax_nmax` to decide how many ionic relaxations you want.
-  - *cell-relax*: do cell relaxation calculation.
+  - *cell-relax*: do variable-cell relaxation calculation.
   - *nscf*: do the non self-consistent electronic structure calculations. For this option, you need a charge density file. For nscf calculations with planewave basis set, pw_diag_thr should be <= 1d-3.
   - *istate*: For LCAO basis. Please see the explanation for variable `nbands_istate`.
   - *ienvelope*: Envelope function for LCAO basis. Please see the explanation for variable `nbands_istate`.
@@ -721,7 +721,11 @@ This part of variables are used to control the geometry relaxation.
 #### relax_method
 
 - **Type**: String
-- **Description**: The method to do geometry optimizations. If set to bfgs, using BFGS algorithm. If set to cg, using cg algorithm. If set to sd, using steepest-descent lgorithm.
+- **Description**: The method to do geometry optimizations:
+  - bfgs: using BFGS algorithm.
+  - sd: using steepest-descent algorithm.
+  - cg: using cg algorithm.
+  - cg-bfgs:
 - **Default**: cg
 
 #### relax_cg_thr

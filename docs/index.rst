@@ -38,7 +38,7 @@ Hi everyone, here are ABACUS Documentations.
 
 .. toctree::
    :maxdepth: 2
-   :caption: Developing team
+   :caption: Developing Team
 
    DevelopingTeam
 
