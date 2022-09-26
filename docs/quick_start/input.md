@@ -31,7 +31,7 @@ Depending on the input variable, the value may be an integer, a real number or a
 
 Furthermore, if a given parameter name appeared more than once in the input file, only the last value will be taken.
 
-> Note: if a parameter name is not recognized by the program, the program will stop with an error message.
+> **Note:** if a parameter name is not recognized by the program, the program will stop with an error message.
 
 In the above example, the meanings of the parameters are:
 
@@ -44,9 +44,9 @@ In the above example, the meanings of the parameters are:
 - `basis_type` : the type of basis set for expanding the electronic wave functions
 - `calculation` : the type of calculation to be performed by ABACUS
 
-For a complete list of input parameters, please consult this [instruction](docs/input-main.md)
+For a complete list of input parameters, please consult this [instruction](../advanced/input_files/input-main.md).
 
-> Note: Users cannot change the filename “INPUT” to other names.
+> **Note:** Users cannot change the filename “INPUT” to other names.
 
 ## *STRU*
 
@@ -91,7 +91,7 @@ O                       #Name of element
 0.0  0.5  0.0  0 0 0    #x,y,z, move_x, move_y, move_z
 ```
 
-> Note : users may choose a different name for their structure file using the keyword `stru_file`
+> **Note:** users may choose a different name for their structure file using the keyword `stru_file`
 
 For a more detailed description of STRU file, please consult [here](../advanced/input_files/stru.md).
 
@@ -107,10 +107,10 @@ Gamma
 4 4 4 0 0 0
 ```
 
-> Note : users may choose a different name for their k-point file using keyword `kpoint_file`
+> **Note:** users may choose a different name for their k-point file using keyword `kpoint_file`
 
 
-For a more detailed description, please consult [here](../advanced/input_files/kpt.md)
+For a more detailed description, please consult [here](../advanced/input_files/kpt.md).
 
 - The pseudopotential files
 
