@@ -20,7 +20,7 @@ For examlpe, `INPUT_0` shows how to employ the NVE simulation.
 To run any of the fix cases, users may enter the directory, copy the corresponding input file to `INPUT`, and run ABACUS.
 
 ## FIRE
-
+[FIRE](https://journals.aps.org/prl/abstract/10.1103/PhysRevLett.97.170201) (fast inertial relaxation engine) is a MD-based minimization algorithm. It is based on conventional molecular dynamics with additional velocity modifications and adaptive time steps. The MD trajectory will descend to an energy-minimum.
 ## NVE
 
 NVE ensemble (i. e. microcanonical ensemble) is a statistical ensemble that represents the possible states of a mechanical system whose total energy is exactly specified. The system is assumed to be isolated in the sense that it cannot exchange energy or particles with its environment, so that the energy of the system does not change with time.
