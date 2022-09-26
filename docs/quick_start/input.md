@@ -116,10 +116,10 @@ For a more detailed description, please consult [here](../advanced/input_files/k
 
     Norm-conserving pseudopotentials are used in ABACUS, in the UPF file format.The filename of each element’s pseudopotential needs to be specified in the STRU file, together with the directory of the pseudopotential files unless they are already present in the working directory.
 
-    More information on pseudopotentials is given [here](docs/features.md#pseudopotentials).
+    More information on pseudopotentials is given [here](../advanced/pp_orb.md#pseudopotentials).
 
 - The numerical orbital files
 
     This part is only required in LCAO calculations.
     The filename for each element’s numerical orbital basis needs to be specified in the STRU file, together with the directory of the orbital files unless they are already present in the working directory.
-    ABACUS provides numerical atomic basis sets of different accuracy levels for most elements commonly used. Users can download these basis sets from the [website](http://abacus.ustc.edu.cn/pseudo/list.htm). Moreover, users can generate numerical atomic orbitals by themselves, and the procedure is provided in this [short introduction](docs/generate-basis.md).
+    ABACUS provides numerical atomic basis sets of different accuracy levels for most elements commonly used. Users can download these basis sets from the [website](http://abacus.ustc.edu.cn/pseudo/list.htm). Moreover, users can generate numerical atomic orbitals by themselves, and the procedure is provided in this [short introduction](../advanced/pp_orb.md#generating-atomic-orbital-bases).
