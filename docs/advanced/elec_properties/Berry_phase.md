@@ -15,7 +15,7 @@ cp KPT-nscf-c KPT
 mpirun -np 4 abacus
 ```
 
-In this example, we calculate the electric polarization along c axis for PbTiO3, and below are the INPUT file (nscf) and KPT file (nscf):
+In this example, we calculate the electric polarization along c axis for PbTiO~3~, and below are the INPUT file (nscf) and KPT file (nscf):
 
 ```
 INPUT_PARAMETERS
@@ -32,8 +32,8 @@ gdir          3 // calculate polarization along c axis
 ```
 
 Note: You need to turn off the symmetry when do Berry phase calculations. Currently, ABACUS support Berry phase calculation with nspin=1 and nspin=2. The Berry phase can be calculated in both pw and lcao bases.
-- berry_phase : 1, calculate berry phase; 0, no calculate berry phase.
-- gdir : 1, 2, 3, the lattice vector direction of the polarization you want to calculate.
+- [berry_phase](../input_files/input-main.md#berry_phase) : 1, calculate berry phase; 0, no calculate berry phase.
+- [gdir](../input_files/input-main.md#gdir) : 1, 2, 3, the lattice vector direction of the polarization you want to calculate.
 
 The KPT file need to be modified according to gdir in the INPUT file. Generally, you need denser k points along this direction. For example, in the following KPT file, 4 k-points are taken along the a and b axes, and 8 k-points are taken along the c-axis. You should check the convergence of the k points when calculating the polarization.
 
@@ -56,9 +56,6 @@ The results are shown as follows:
  |                                                                    |
  <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
-
-
-
  VALUES OF POLARIZATION
 
   The Ionic Phase:   -0.10600
@@ -73,4 +70,4 @@ The results are shown as follows:
  P =    0.8906925  (mod    2.1748536)  (   0.0000000,   0.0000000,   0.8906925) C/m^2
 ```
 
-The electric polarization <b>P</b> is multivalued, which modulo a quantum eR=<sub>Vcell</sub>. Note: the values in parentheses are the components of the <b>P</b> along the c axis in the x, y, z Cartesian coordinates when set gdir = 3 in INPUT file.
+The electric polarization **P** is multivalued, which modulo a quantum e**R**/V~cell~. Note: the values in parentheses are the components of the **P** along the c axis in the x, y, z Cartesian coordinates when set gdir = 3 in INPUT file.

@@ -9,7 +9,7 @@ Setting of **"nspin 2"** in INPUT file means calculation with polarized spin alo
 In this case, electrons with spin up and spin down will be calculated respectively, number of k points would be doubled.
 Potential of electron and charge density will separate to spin-up case and spin-down case.
 
-Magnetic moment Settings in [STRU files](docs/advanced/input_files/stru.md) are not ignored until **"nspin 2"** is set in INPUT file
+Magnetic moment Settings in [STRU files](../input_files/stru.md) are not ignored until **"nspin 2"** is set in INPUT file
 
 When **"nspin 2"** is set, the screen output file will contain magnetic moment information. e.g.
 ```
@@ -17,7 +17,7 @@ When **"nspin 2"** is set, the screen output file will contain magnetic moment i
  GE1    4.16e+00  4.36e+00  -6.440173e+03  0.000000e+00   6.516e-02  1.973e+01
 ```
 where "TMAG" refers to total magnetization and "AMAG" refers to average magnetization.
-For more detailed orbital magnetic moment information, please use [Mulliken charge analysis](docs/advanced/elec_properties/Mulliken.md).
+For more detailed orbital magnetic moment information, please use [Mulliken charge analysis](../elec_properties/Mulliken.md).
 
 ## Noncollinear Spin Polarized Calculations
 The spin non-collinear polarization calculation corresponds to setting **"noncolin 1"**, in which case the coupling between spin up and spin down will be taken into account. 
@@ -25,7 +25,7 @@ In this case, nspin is automatically set to 4, which is usually not required to 
 The weight of each band will not change, but the number of occupied states will be double. 
 If the nbands parameter is set manually, it is generally set to twice what it would be when nspin<4.
 
-In general, non-collinear magnetic moment settings are often used in calculations considering [SOC effects](docs/advanced/scf/soc.md). When **"lspinorb 1"** in INPUT file, "nspin" is also automatically set to 4. 
+In general, non-collinear magnetic moment settings are often used in calculations considering [SOC effects](./soc.md). When **"lspinorb 1"** in INPUT file, "nspin" is also automatically set to 4. 
 Note: different settings for "noncolin" and "lspinorb" correspond to different calculations:
  - noncolin=0 lspinorb=0 nspin<4 : 
 Non-collinear magnetic moments and SOC effects are not considered.
