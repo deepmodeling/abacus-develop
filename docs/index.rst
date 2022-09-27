@@ -48,3 +48,7 @@ Hi everyone, here are ABACUS Documentations.
 
    CONTRIBUTING
 
+.. toctree::
+   :maxdepth: 2
+   :caption: FAQ
+
