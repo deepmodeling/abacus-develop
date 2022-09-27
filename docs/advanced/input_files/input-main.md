@@ -1348,7 +1348,7 @@ temperature will fluctuate violently; if it is too small, the temperature will t
 #### msst_vel
 
 - **Type**: Real
-- **Description**: the velocity of shock wave ($\AA$/fs) for MSST.
+- **Description**: the velocity of shock wave (Angstrom/fs) for MSST.
 - **Default**: 0.0
 
 #### msst_vis
@@ -1720,20 +1720,31 @@ This part of variables are used to control berry phase and wannier90 interfacae 
 ### Electronic conductivities
 
 Frequency-dependent electronic conductivities can be calculated with Kubo-Greenwood formula[Phys. Rev. B 83, 235120 (2011)].
+
 Onsager coefficiencies:
-$$L_{mn}(\omega)=(-1)^{m+n}\frac{2\pi e^2\hbar^2}{3m_e^2\omega\Omega}\\
+
+$L_{mn}(\omega)=(-1)^{m+n}\frac{2\pi e^2\hbar^2}{3m_e^2\omega\Omega}\\
 \times\sum_{ij\alpha\mathbf{k}}W(\mathbf{k})\left(\frac{\epsilon_{i\mathbf{k}}+\epsilon_{j\mathbf{k}}}{2}-\mu\right)^{m+n-2}|
 \langle\Psi_{i\mathbf{k}}|\nabla_\alpha|\Psi_{j\mathbf{k}}\rangle|^2\\
-\times[f(\epsilon_{i\mathbf{k}})-f(\epsilon_{j\mathbf{k}})]\delta(\epsilon_{j\mathbf{k}}-\epsilon_{i\mathbf{k}}-\hbar\omega).$$
-They can also computed by $j$-$j$ correlation function.
-$$L_{mn}=\frac{2e^{m+n-2}}{3\Omega\hbar\omega}\Im[\tilde{C}_{mn}(\omega)]\\
-\tilde{C}_{mn}=\int_0^\infty C_{mn}(t)e^{-i\omega t}e^{-\frac{1}{2}(\Delta E)^2t^2}dt\\
-C_{mn}(t)=-2\theta(t)\Im\left\{Tr\left[\sqrt{\hat f}\hat{j}_m(1-\hat{f})e^{i\frac{\hat{H}}{\hbar}t}\hat{j}_ne^{-i\frac{\hat{H}}{\hbar}t}\sqrt{\hat f}\right]\right\},$$
+\times[f(\epsilon_{i\mathbf{k}})-f(\epsilon_{j\mathbf{k}})]\delta(\epsilon_{j\mathbf{k}}-\epsilon_{i\mathbf{k}}-\hbar\omega).$
+
+They can also be computed by $j$-$j$ correlation function.
+
+$L_{mn}=\frac{2e^{m+n-2}}{3\Omega\hbar\omega}\Im[\tilde{C}_{mn}(\omega)]$
+
+$\tilde{C}_{mn}=\int_0^\infty C_{mn}(t)e^{-i\omega t}e^{-\frac{1}{2}(\Delta E)^2t^2}dt$
+
+$C_{mn}(t)=-2\theta(t)\Im\left\{Tr\left[\sqrt{\hat f}\hat{j}_m(1-\hat{f})e^{i\frac{\hat{H}}{\hbar}t}\hat{j}_ne^{-i\frac{\hat{H}}{\hbar}t}\sqrt{\hat f}\right]\right\}$,
+
 where $j_1$ is electric flux and $j_2$ is thermal flux.
-Frequency-dependent electric conductivities:    $\sigma(\omega)=L_{11}(\omega).$
-Frequency-dependent thermal conductivities: $\kappa(\omega)=\frac{1}{e^2T}\left(L_{22}-\frac{L_{12}^2}{L_{11}}\right).$
-DC electric conductivities: $\sigma = \lim_{\omega\to 0}\sigma(\omega)$
-Thermal conductivities: $\kappa = \lim_{\omega\to 0}\kappa(\omega)$
+
+Frequency-dependent electric conductivities: $\sigma(\omega)=L_{11}(\omega)$.
+
+Frequency-dependent thermal conductivities: $\kappa(\omega)=\frac{1}{e^2T}\left(L_{22}-\frac{L_{12}^2}{L_{11}}\right)$.
+
+DC electric conductivities: $\sigma = \lim_{\omega\to 0}\sigma(\omega)$.
+
+Thermal conductivities: $\kappa = \lim_{\omega\to 0}\kappa(\omega)$.
 
 #### cal_cond
 
