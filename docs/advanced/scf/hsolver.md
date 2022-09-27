@@ -2,12 +2,11 @@
 
 ## Explicit Diagonalization
 
-### Plane Wave
-#### CG
-#### Davidson
+Method of explicit solving KS-equation can be chosen by variable "ks_solver" in INPUT file.
 
-### LCAO
-#### blablabla
+When "basis_type = pw", `ks_solver` can be `cg` or `dav`. The default setting `cg` is recommended, which is band-by-band conjugate gradient diagonalization method. There is a large probability that the use of setting of `dav` , which is block Davidson diagonalization method, can be tried to improve performance.  
+
+When "basis_type = lcao", `ks_solver` can be `genelpa` or `scalapack_gvx`. The default setting `genelpa` is recommended, which is based on ELPA (EIGENVALUE SOLVERS FOR PETAFLOP APPLICATIONS) (https://elpa.mpcdf.mpg.de/) and the kernel is auto choosed by GENELPA(https://github.com/pplab/GenELPA), usually faster than the setting of "scalapack_gvx", which is based on ScaLAPACK(Scalable Linear Algebra PACKage)  
 
 ## Stochasic DFT
 We support stochastic DFT calculation (SDFT) or mixed stochastic-deterministic DFT (MDFT) with plane-wave basis [[Phys. Rev. B 106, 125132 (2022)](https://doi.org/10.1103/PhysRevB.106.125132)]. Different from traditional KSDFT with the explicit diagonalization method, SDFT and MDFT calculate physical quantities with trace of the corresponding operators. The advantages of SDFT and MDFT compared to the traditional KSDFT are the ability to simulate larger sizes and higher temperatures. In our package, SDFT and MDFT can be used by setting the `calculation` parameter to `sto-scf` or `sto-md` for SCF calculations or MD calculations. To start with, you can refer to an easy [example](../../examples/stochastic.md) and an explanation of the [input variables](../../input-main.md#electronic-structure-sdft).
