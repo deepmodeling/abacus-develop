@@ -15,7 +15,7 @@ which would lead to different `PP_NONLOCAL` and `PP_PSWFC` parts.
 Please be careful that `relativistic="full"` version can be used for SOC or non-SOC calculation, but `relativistic="scalar"` version only can be used for non-SOC calculation.
 When full-relativistic pseudopotential is used for non-SOC calculation, ABACUS will automatically transform it to scalar-relativistic version.
 
-Numerical atomic orbitals in ABACUS are unrelated with spin, same orbital file can be used for SOC and non-SOC calculation.
+Numerical atomic orbitals in ABACUS are unrelated with spin, and same orbital file can be used for SOC and non-SOC calculation.
 
 ### Partial-relativistic SOC Effect
 Sometimes, for some real materials, both scalar-relativistic and full-relativistic can not describe the exact spin-orbit coupling. 
