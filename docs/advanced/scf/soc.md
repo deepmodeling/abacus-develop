@@ -7,7 +7,7 @@ Both `basis_type=pw` and `basis_type=lcao` support `scf` and `nscf` calculation 
 Atomic forces and cell stresses can not calculated with SOC effects until now. 
 
 ### Pseudopotentials and Numerical Atomic Orbitals
-For Norm-Conserving pseudopotentials, there are difference between SOC version and non-SOC version.
+For Norm-Conserving pseudopotentials, there are differences between SOC version and non-SOC version.
 
 Please check your pseudopotential files before calculating.
 In `PP_HEADER` part, keyword `has_so=1` and `relativistic="full"` refer to SOC effects have been considered, 
