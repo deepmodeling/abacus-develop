@@ -6,7 +6,7 @@
 
 - [Variables related to input files](#variables-related-to-input-files)
 
-    [stru_file](#stru_file) | [kpoint_file](#kpoint_file) | [pseudo_dir](#pseudo_dir) | [orbital_dir](#orbital_dir) | [read_file_dir](#read_file_dir)
+    [stru_file](#stru_file) | [kpoint_file](#kpoint_file) | [pseudo_dir](#pseudo_dir) | [orbital_dir](#orbital_dir) | [read_file_dir](#read_file_dir) | [wannier_card](#wannier_card)
 
 - [Plane wave related variables](#plane-wave-related-variables)
 
@@ -18,7 +18,7 @@
 
 - [Electronic structure](#electronic-structure)
 
-    [basis_type](#basis_type) | [ks_solver](#ks_solver) | [nbands](#nbands) | [nbands_istate](#nbands_istate) | [nspin](#nspin) | [smearing_method](#smearing_method) | [smearing_sigma](#smearing_sigma) | [smearing_sigma_temp](#smearing_sigma_temp) | [mixing_type](#mixing_type) | [mixing_beta](#mixing_beta) | [mixing_ndim](#mixing_ndim) | [mixing_gg0](#mixing_gg0) | [gamma_only](#gamma_only) | [printe](#printe) | [scf_nmax](#scf_nmax) | [scf_thr](#scf_thr) | [chg_extrap](#chg_extrap)
+    [basis_type](#basis_type) | [ks_solver](#ks_solver) | [nbands](#nbands) | [nbands_istate](#nbands_istate) | [nspin](#nspin) | [smearing_method](#smearing_method) | [smearing_sigma](#smearing_sigma) | [smearing_sigma_temp](#smearing_sigma_temp) | [mixing_type](#mixing_type) | [mixing_beta](#mixing_beta) | [mixing_ndim](#mixing_ndim) | [mixing_gg0](#mixing_gg0) | [gamma_only](#gamma_only) | [printe](#printe) | [scf_nmax](#scf_nmax) | [scf_thr](#scf_thr) | [chg_extrap](#chg_extrap) | [lspinorb](#lspinorb) | [noncolin](#noncolin) | [soc_lambda](#soc_lambda)
 
 - [Electronic structure (SDFT)](#electronic-structure-sdft)
 
@@ -30,7 +30,7 @@
 
 - [Variables related to output information](#variables-related-to-output-information)
 
-    [out_force](#out_force) | [out_mul](#out_mul) | [out_freq_elec](#out_freq_elec) | [out_freq_ion](#out_freq_ion) | [out_chg](#out_chg) | [out_pot](#out_pot) | [out_dm](#out_dm) | [out_wfc_pw](#out_wfc_pw) | [out_wfc_r](#out_wfc_r) | [out_wfc_lcao](#out_wfc_lcao) | [out_dos](#out_dos) | [out_band](#out_band) | [out_proj_band](#out_proj_band) | [out_stru](#out_stru) | [out_level](#out_level) | [out_alllog](#out_alllog) | [out_mat_hs](#out_mat_hs) | [out_mat_r](#out_mat_r) | [out_mat_hs2](#out_mat_hs2) | [out_element_info](#out_element_info) | [restart_save](#restart_save) | [restart_load](#restart_load)
+    [out_force](#out_force) | [out_mul](#out_mul) | [out_freq_elec](#out_freq_elec) | [out_freq_ion](#out_freq_ion) | [out_chg](#out_chg) | [out_pot](#out_pot) | [out_dm](#out_dm) | [out_wfc_pw](#out_wfc_pw) | [out_wfc_r](#out_wfc_r) | [out_wfc_lcao](#out_wfc_lcao) | [out_dos](#out_dos) | [out_band](#out_band) | [out_proj_band](#out_proj_band) | [out_stru](#out_stru) | [out_level](#out_level) | [out_alllog](#out_alllog) | [out_mat_hs](#out_mat_hs) | [out_mat_r](#out_mat_r) | [out_mat_hs2](#out_mat_hs2) | [out_element_info](#out_element_info) | [restart_save](#restart_save) | [restart_load](#restart_load) | [dft_plus_dmft](#dft_plus_dmft)
 
 - [Density of states](#density-of-states)
 
@@ -46,7 +46,7 @@
 
 - [vdW correction](#vdw-correction)
 
-    [vdw_method](#vdw_method) | [vdw_s6](#vdw_s6) | [vdw_s8](#vdw_s8) | [vdw_a1](#vdw_a1) | [vdw_a2](#vdw_a2) | [vdw_d](#vdw_d) | [vdw_abc](#vdw_abc) | [vdw_C6_file](#vdw_C6_file) | [vdw_C6_unit](#vdw_C6_unit) | [vdw_R0_file](#vdw_R0_file) | [vdw_R0_unit](#vdw_R0_unit) | [vdw_cutoff_type](#vdw_cutoff_type) | [vdw_cutoff_radius](#vdw_cutoff_radius) | [vdw_radius_unit](#vdw_radius_unit) | [vdw_cutoff_period](#vdw_cutoff_period)
+    [vdw_method](#vdw_method) | [vdw_s6](#vdw_s6) | [vdw_s8](#vdw_s8) | [vdw_a1](#vdw_a1) | [vdw_a2](#vdw_a2) | [vdw_d](#vdw_d) | [vdw_abc](#vdw_abc) | [vdw_C6_file](#vdw_C6_file) | [vdw_C6_unit](#vdw_C6_unit) | [vdw_R0_file](#vdw_R0_file) | [vdw_R0_unit](#vdw_R0_unit) | [vdw_cutoff_type](#vdw_cutoff_type) | [vdw_cutoff_radius](#vdw_cutoff_radius) | [vdw_radius_unit](#vdw_radius_unit) | [vdw_cutoff_period](#vdw_cutoff_period) | [vdw_cn_thr](#vdw_cn_thr) | [vdw_cn_thr_unit](#vdw_cn_thr_unit)
 
 - [Berry phase and wannier90 interface](#berry-phase-and-wannier90-interface)
 
@@ -58,15 +58,15 @@
 
 - [DFT+*U* correction](#dft-u-correction) (Under development)
 
-    [dft_plus_u](#dft_plus_u) | [orbital_corr](#orbital_corr) | [hubbard_u](#hubbard_u) | [hund_j](#hund_j) | [yukawa_potential](#yukawa_potential) | [omc](#omc)
+    [dft_plus_u](#dft_plus_u) | [orbital_corr](#orbital_corr) | [hubbard_u](#hubbard_u) | [hund_j](#hund_j) | [yukawa_potential](#yukawa_potential) | [yukawa_lambda](#yukawa_lambda) | [omc](#omc)
 
 - [Variables useful for debugging](#variables-useful-for-debugging)
 
-    [nurse](#nurse) | [t_in_h](#t_in_h) | [vl_in_h](#vl_in_h) | [vnl_in_h](#vnl_in_h) | [test_force](#test_force) | [test_stress](#test_stress) | [colour](#colour)
+    [nurse](#nurse) | [t_in_h](#t_in_h) | [vl_in_h](#vl_in_h) | [vnl_in_h](#vnl_in_h) | [test_force](#test_force) | [test_stress](#test_stress) | [colour](#colour) | [test_skip_ewald](#test_skip_ewald)
 
 - [DeePKS](#deepks)
 
-    [deepks_out_labels](#deepks_out_labels) | [deepks_scf](#deepks_scf) | [deepks_model](#deepks_model) | [bessel_lmax](#bessel_lmax) | [bessel_rcut](#bessel_rcut) | [bessel_tol](#bessel_tol)
+    [deepks_out_labels](#deepks_out_labels) | [deepks_scf](#deepks_scf) | [deepks_model](#deepks_model) | [bessel_lmax](#bessel_lmax) | [bessel_rcut](#bessel_rcut) | [bessel_tol](#bessel_tol) | [deepks_bandgap](#deepks_bandgap) | [deepks_out_unittest](#deepks_out_unittest)
 
 - [Electric field and dipole correction](#electric-field-and-dipole-correction)
 
@@ -302,6 +302,11 @@ This part of variables are used to control input files related parameters.
 - **Type**: String
 - **Description**: when the program needs to read files such as electron density(`SPIN1_CHG`) as a starting point, this variables tells the location of the files. For example, './' means the file is located in the working directory.
 - **Default**: OUT.$suffix
+
+#### wannier_card
+- **Type**: String
+- **Description**: Relevant when using ABACUS with wannier90. Tells the name of the input file related to wannier90.
+- **Default**: ""
 
 [back to top](#full-list-of-input-keywords)
 
@@ -555,8 +560,24 @@ calculations.
   - second-order: second-order extrapolation
 - **Default**:atomic
 
- by time(NULL).
-- **Default**:0
+#### lspinorb
+- **Type**: Bool
+- **Description**: whether to consider spin-orbital coupling effect in calculation. When set to 1, `nspin` is also automatically set to 4. 
+- **Default**: 0
+
+#### noncolin
+- **Type**: Bool
+- **Description**: whether to allow non-collinear polarization, in which case the coupling between spin up and spin down will be taken into account. If set to 1, `nspin` is also automatically set to 4. 
+- **Default**: 0
+
+#### soc_lambda
+- **Type**: Real
+- **Description**: Relevant for soc calculations. Sometimes, for some real materials, both scalar-relativistic and full-relativistic can not describe the exact spin-orbit coupling. Artificial modulation may help in such cases. 
+  
+  `soc_lambda`, which has value range [0.0, 1.0] , is used for modulate SOC effect.
+
+  In particular, `soc_lambda 0.0` refers to scalar-relativistic case and `soc_lambda 1.0` refers to full-relativistic case.
+- **Default**: 1.0
 
 [back to top](#full-list-of-input-keywords)
 
@@ -941,6 +962,11 @@ Si-p2-orbital-dru.dat  Si-s1-orbital-ru.dat" for example.
     restart from stored density file and H matrix file.
 - **Default**: 0
 
+#### dft_plus_dmft
+- **Type**: Boolean
+- **Description**: Whether to generate output to be used in dmft. It seems this functionality is not working anymore.
+- **Default**: 0
+
 [back to top](#full-list-of-input-keywords)
 
 ### Density of states
@@ -1035,6 +1061,16 @@ Warning: this function is not robust enough for the current version. Please try 
 - **Type**: Double
 - **Description**: tolerence when searching for the zeros of bessel functions. See also `bessel_lmax`.
 - **Default**: 1.0e-12
+
+#### deepks_bandgap
+- **Type**: Bool
+- **Description**: whether to include deepks bandgap correction.
+- **Default**: False
+
+#### deepks_out_unittest
+- **Type**: Bool
+- **Description**: this is used to generate some files for constructing DeePKS unit test. Not relevant when running actual calculations. When set to 1, ABACUS needs to be ran with only 1 process.
+- **Default**: False
 
 [back to top](#full-list-of-input-keywords)
 
@@ -1411,6 +1447,12 @@ This part of variables are used to control DFT+U correlated parameters
 - **Description**: whether use the local screen Coulomb potential method to calculate the value of U and J. If this is set to 1, hubbard_u and hund_j do not need to be specified.
 - **Default**: 0
 
+#### yukawa_lambda
+
+- **Type**: Real
+- **Description**: The screen length of Yukawa potential. Relevant if `yukawa_potential` is set to 1. If left to default, we will calculate the screen length as an average of the entire system. It's better to stick to the default setting unless there is a very good reason.
+- **Default**: calculated on the fly.
+
 #### omc
 
 - **Type**: Boolean
@@ -1536,6 +1578,18 @@ This part of variables are used to control vdW-corrected related parameters.
 - **Type**: Int Int Int
 - **Description**: If vdw_cutoff_type is set to `period`, the three integers supplied here will explicitly specify the extent of the supercell in the directions of the three basis lattice vectors. 
 - **Default**: 3 3 3
+
+#### vdw_cn_thr
+- **Type**: Real
+- **Description**: Only relevant for D3 correction. The cutoff radius when calculating coordination numbers.
+- **Default**: 40
+
+#### vdw_cn_thr_unit
+
+- **Type**: String
+- **Description**: Unit of the coordination number cutoff. Two values are allowed: `A`(meaning Angstrom) and `Bohr`.
+- **Default**: Bohr
+
 
 [back to top](#full-list-of-input-keywords)
 
@@ -1713,6 +1767,11 @@ This part of variables are used to control berry phase and wannier90 interfacae 
 
 - **Type**: Boolean
 - **Description**: If set to 1, output to terminal will have some color.
+- **Default**: 0
+
+#### test_skip_ewald
+- **Type**: Boolean
+- **Description**: If set to 1, then ewald energy will not be calculated.
 - **Default**: 0
 
 [back to top](#full-list-of-input-keywords)
