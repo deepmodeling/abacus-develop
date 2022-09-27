@@ -1,7 +1,9 @@
 INPUT_PARAMETERS
 
-ntype			1	
-ecutwfc			40
+pseudo_dir              ../../../tests/PP_ORB
+orbital_dir             ../../../tests/PP_ORB
+ntype                   1
+ecutwfc                 50
 calculation             scf
-scf_thr                     1e-13
-out_chg              1
+scf_thr                 1e-13
+out_chg                 1
