@@ -16,7 +16,7 @@ The first stage is during the data preparation phase, where we need to run a ser
 out_mat_hs2 1
 ```
 
-Files named data-HR-sparse_SPIN`${x}`.csr and data-SR-sparse_SPIN`${x}`.csr will be generated, which contain the Hamiltonian and overlap matrices respectively in csr format. `${x}` takes value of 0 or 1, based on the spin component. More details on this keyword can be found in the [list of input keywords](../input_files/input-main.md#outmaths2).
+Files named data-HR-sparse_SPIN`${x}`.csr and data-SR-sparse_SPIN`${x}`.csr will be generated, which contain the Hamiltonian and overlap matrices respectively in csr format. `${x}` takes value of 0 or 1, based on the spin component. More details on this keyword can be found in the [list of input keywords](../input_files/input-main.md#out_mat_hs2).
 
 The second stage is during the inference phase. After DeepH training completes, we can apply the model to predict the Hamiltonian on other systems. For that purpose, we also need the overlap matrices from the new systems, but no SCF calculation is required.
 

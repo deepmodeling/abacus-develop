@@ -12,13 +12,13 @@ and
 
 ## out_mat_hs
 
-Users may set the keyword `out_mat_hs` to 1 for outputting the k-space matrices. It is available for both gamma_only and multi-k and calculations. Detailed description of the naming and formats of the output files are given [here](../input_files/input-main.md#outmaths).
+Users may set the keyword `out_mat_hs` to 1 for outputting the k-space matrices. It is available for both gamma_only and multi-k and calculations. Detailed description of the naming and formats of the output files are given [here](../input_files/input-main.md#out_mat_hs).
 
 ## out_mat_hs2
 
-The output of R-space matrices is controlled by the keyword `out_mat_hs2`. This functionality is not available for gamma_only calculations. To generate such matrices for gamma only calculations, users should turn off [gamma_only](../input_files/input-main.md#gammaonly), and explicitly specify that gamma point is the only k point in the KPT file.
+The output of R-space matrices is controlled by the keyword `out_mat_hs2`. This functionality is not available for gamma_only calculations. To generate such matrices for gamma only calculations, users should turn off [gamma_only](../input_files/input-main.md#gamma_only), and explicitly specify that gamma point is the only k point in the KPT file.
 
-For a more detailed description of the naming and format of the matrices, refer to this [instruction](../input_files/input-main.md#outmaths2).
+For a more detailed description of the naming and format of the matrices, refer to this [instruction](../input_files/input-main.md#out_mat_hs2).
 
 
 ## get_S

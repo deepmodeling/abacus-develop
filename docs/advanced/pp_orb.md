@@ -2,7 +2,7 @@
 
 ## Basis Set
 
-ABACUS supports both PW and LCAO basis set, controlled by keyword [basis_type](./input_files/input-main.md#basistype) in INPUT file.
+ABACUS supports both PW and LCAO basis set, controlled by keyword [basis_type](./input_files/input-main.md#basis_type) in INPUT file.
 
 The default value of basis_type is pw. The size of pw basis set is controlled by imposing an upper bound for the [kinetic energy cutoff](./input_files/input-main.md#ecutwfc) of the plane wave.
 

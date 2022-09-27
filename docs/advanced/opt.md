@@ -16,7 +16,7 @@ indicating that this is the first ionic step of the 3rd cell configuration, and 
 
 
 ## Optimization Algorithms
-In the nested procedure mentioned above, we used CG method to perform cell relaxation, while offering four different algorithms for doing fixed-cell structural relaxation: BFGS, SD(steepest descent), CG(conjugate gradient), as well as a mixed CG-BFGS method. The optimziation algorithm can be selected using keyword [relax_method](./input_files/input-main.md#relaxmethod). We also provide a [list of keywords](./input_files/input-main.md#geometry-relaxation) for controlling the relaxation process.
+In the nested procedure mentioned above, we used CG method to perform cell relaxation, while offering four different algorithms for doing fixed-cell structural relaxation: BFGS, SD(steepest descent), CG(conjugate gradient), as well as a mixed CG-BFGS method. The optimziation algorithm can be selected using keyword [relax_method](./input_files/input-main.md#relax_method). We also provide a [list of keywords](./input_files/input-main.md#geometry-relaxation) for controlling the relaxation process.
 
 ### BFGS method
 
@@ -69,4 +69,4 @@ then the first Al atom will not be allowed to move in z direction.
 Fixing atomic position is sometimes helpful during relaxation of isolated molecule/cluster, to prevent the system from drifting in space.
 
 ### Fixing Cell Parameters
-Sometimes we want to do variable-cell relaxation with some of the cell degrees of freedom fixed. This is achieved by the [fixed_axes](./input_files/input-main.md#fixedaxes) keyword. We offer the options of fixing certain axis(axes), or fixing the volume.
+Sometimes we want to do variable-cell relaxation with some of the cell degrees of freedom fixed. This is achieved by the [fixed_axes](./input_files/input-main.md#fixed_axes) keyword. We offer the options of fixing certain axis(axes), or fixing the volume.

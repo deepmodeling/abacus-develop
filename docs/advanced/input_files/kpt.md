@@ -10,7 +10,7 @@ ABACUS uses periodic boundary conditions for both crystals and finite systems. F
 
 ## Gamma-only Calculations
 
-In ABACUS, we offer th option of running gamma-only calculations for LCAO basis by setting [gamma_only](./input-main.md#gammaonly) to be 1. Due to details of implementation, gamma-only calculation will be slightly faster than running a non gamma-only calculation and explicitly setting gamma point to be the only the k-point, but the results should be consistent.
+In ABACUS, we offer th option of running gamma-only calculations for LCAO basis by setting [gamma_only](./input-main.md#gamma_only) to be 1. Due to details of implementation, gamma-only calculation will be slightly faster than running a non gamma-only calculation and explicitly setting gamma point to be the only the k-point, but the results should be consistent.
 
 > If gamma_only is set to 1, the KPT file will be overwritten. So make sure to turn off gamma_only for multi-k calculations.
 
