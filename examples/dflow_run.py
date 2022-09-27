@@ -114,7 +114,8 @@ def FindPPORB(path):
         raise RuntimeError("Can't find pp_orb file in ../tests/PP_ORB")
     else:
         #print(pporb_list)
-        return pporb_list
+        pporb_list_tmp = list(set(pporb_list))
+        return pporb_list_tmp
 
 
 def main():
@@ -126,8 +127,7 @@ def main():
     for idir in range(len(run_dir)):
         #print("")
         #print(run_dir[idir])
-        pporb_list_tmp = FindPPORB(run_dir[idir])
-        pporb_list = list(set(pporb_list_tmp))
+        pporb_list = FindPPORB(run_dir[idir])
         pporb_files = []
         for ipp in range(len(pporb_list)):
             shutil.copy2(os.path.join(pp_dir,pporb_list[ipp]),os.path.join(jcwd,'PP_ORB'))
