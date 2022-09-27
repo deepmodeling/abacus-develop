@@ -35,7 +35,11 @@ namespace ModuleESolver
 
         double distance;
         int index = 0;
+
+        // Important! potential, force, virial must be zero per step
         lj_potential = 0;
+        lj_force.zero_out();
+        lj_virial.zero_out();
 
         ModuleBase::Vector3<double> tau1, tau2, dtau;
         for (int it = 0; it < ucell.ntype; ++it)
