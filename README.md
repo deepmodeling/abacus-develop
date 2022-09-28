@@ -19,4 +19,4 @@ ABACUS is an open-source DFT software supporting both plane wave and numerical a
 Written in C++, ABACUS strives to provide a general infrastructure to facilitate the application of novel machine learning-assisted DFT methods in molecular and material simulations. We have successfully implemented the DeePKS method, as well as interfaces to DP-GEN and DeepH.
 
 # Online Documentation
-For detailed documentation, please refer to this [website](http://abacus.deepmodeling.com/en/latest/).
+For detailed documentation, please refer to [our documentation website](https://abacus.deepmodeling.com/).
