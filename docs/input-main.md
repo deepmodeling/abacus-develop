@@ -528,48 +528,48 @@ calculations.
 - **Description**: It indicates which occupation and smearing method is used in the calculation.
   - fixed: use fixed occupations.
   - gauss or gaussian: use gaussian smearing method.
-  - mp: use methfessel-paxton smearing method. The method recommends for metals.
+  - mp: use methfessel-paxton smearing method. The method is recommended for metals.
   - fd: Fermi-Dirac smearing method: $f=1/\{1+\exp[(E-\mu)/kT]\}$ and smearing_sigma below is the temperature $T$ (in Ry).
 - **Default**: fixed
 
 #### smearing_sigma
 
 - **Type**: Real
-- **Description**: energy range for smearing, the unit is Rydberg.
+- **Description**: Relevant when `smearing_method` is **NOT** `fixed`.Specified the energy range for smearing, the unit is Rydberg.
 - **Default**: 0.001
 
 #### smearing_sigma_temp
 
 - **Type**: Real
-- **Description**: energy range for smearing, and is same as smearing_sigma, but the unit is K. smearing_sigma = 1/2 * kB * smearing_sigma_temp.
+- **Description**: Do not use this along with smearing_sigma. Energy range for smearing, but with Kelvin as unit. smearing_sigma = 1/2 * kB * smearing_sigma_temp.
 
 #### mixing_type
 
 - **Type**: String
-- **Description**: Charge mixing methods.
-  - plain: Just simple mixing.
-  - kerker: Use kerker method, which is the mixing method in G space.
-  - pulay: Standard Pulay method.
-  - pulay-kerker:
-  - broyden: Broyden method.
+- **Description**: Selecting one of the following mixing methods.
+  - plain: Simple linear mixing: $\rho^{in}_{i+1} = \rho_i^{in} + \beta[\rho_i^{out} - \rho_i^{in}]$.
+  - kerker: Plain mixing with Kerker pre-conditioning, where short wavevectors are suppressed to prevent charge sloshing in metallic systems : $\rho^{in}_{i+1}(G) = \rho_i^{in}(G) + \beta\frac{G^2}{G^2+\lambda^2}[\rho_i^{out}(G) - \rho_i^{in}(G)]$
+  - pulay: Standard Pulay method, also known as direct inversion in the iterative subspace (DIIS). $\rho^{out}$ is obtained as linear combination of previous steps. The expansion coefficients are obtained by inverting a residual matrix.
+  - pulay-kerker : Pulay method with Kerker pre-conditioning to prevent charge sloshing.
+  - broyden: [simplified Broyden](https://journals.aps.org/prb/abstract/10.1103/PhysRevB.38.12807) mixing method.
 - **Default**: pulay
 
 #### mixing_beta
 
 - **Type**: Real
-- **Description**: mixing parameter: 0 means no new charge
+- **Description**: This parameter controls the fraction of $\rho_i^{out}$ in $\rho^{in}_{i+1}$. If set to 0, the electron density is never updated.
 - **Default**: 0.7
 
 #### mixing_ndim
 
 - **Type**: Integer
-- **Description**: It indicates the mixing dimensions in Pulay, Pulay method use the density from previous mixing_ndim steps and do a charge mixing based on these density.
+- **Description**: Relevant when `mixing_type` is set to `pulay` or `pulay-kerker`. It indicates the mixing dimensions in Pulay, Pulay method use the density from previous mixing_ndim steps and do a charge mixing based on these density.
 - **Default**: 8
 
 #### mixing_gg0
 
 - **Type**: Real
-- **Description**: used in pulay-kerker mixing method
+- **Description**: Relevant when `mixing_type` is set to `kerker` or `pulay-kerker`. A larger `mixing_gg0` means increased suppressiong of the short wavevectors.
 - **Default**: 1.5
 
 #### gamma_only

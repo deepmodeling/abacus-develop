@@ -388,7 +388,7 @@ class Input
     double *hund_j; // Hund exchange parameter J(ev)
     bool omc; // whether turn on occupation matrix control method or not
     bool yukawa_potential; // default:false
-    double yukawa_lambda; // default:0.0
+    double yukawa_lambda; // default:-1.0, which means we calculate lambda
 
     // The two parameters below are not usable currently
 

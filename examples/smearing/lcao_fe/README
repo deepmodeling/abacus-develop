@@ -1,0 +1,3 @@
+Example showing the importance of thermal smearing.
+- INPUT_1 : Gaussian smearing with smearing sigma = 0.02; takes 21 steps to converged
+- INPUT_2 : Fixed occupation (no smearing), not converging even at 50 steps

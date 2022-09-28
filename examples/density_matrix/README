@@ -1,0 +1,11 @@
+/*******************************************************************************/
+/
+/ These are the examples of ABACUS program.
+/
+/*******************************************************************************/
+
+These examples show how to output the density matrix of system.
+One only need to set the keyword 'out_dm' to '1' in the INPUT file.
+After the calculation, one can find file SPIN${spin}_DM in OUT.${suffix}
+
+Notice: now this function is valid only for LCAO basis with gamma only method.

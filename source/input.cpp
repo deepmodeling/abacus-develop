@@ -427,6 +427,7 @@ void Input::Default(void)
     //==========================================================
     dft_plus_u = false; // 1:DFT+U correction; 0：standard DFT calcullation
     yukawa_potential = false;
+    yukawa_lambda = -1.0;
     double_counting = 1;
     omc = false;
     dftu_type = 2;

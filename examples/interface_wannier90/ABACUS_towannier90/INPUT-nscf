@@ -1,13 +1,15 @@
 INPUT_PARAMETERS
 
-ntype			1	
-ecutwfc			40
-nbands          	4
-calculation     	nscf
-scf_nmax			40
-pw_diag_thr                    1.0e-12
-scf_thr             	1.0e-15
-init_chg            file
-out_band                1
+pseudo_dir              ../../../tests/PP_ORB
+orbital_dir             ../../../tests/PP_ORB
+ntype                   1
+ecutwfc                 50
+nbands                  4
+calculation             nscf
+scf_nmax                50
+pw_diag_thr             1.0e-12
+scf_thr                 1.0e-15
+init_chg                file
+symmetry                0
 towannier90             1
-nnkpfile                seedname.nnkp
+nnkpfile                diamond.nnkp

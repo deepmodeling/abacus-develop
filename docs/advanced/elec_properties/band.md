@@ -1,7 +1,7 @@
 # Extracting Band Structure
 
-ABACUS can calculate the energy band structure, and the exampples can be found in [examples/band](#https://github.com/deepmodeling/abacus-develop/tree/develop/examples/band).\
-Similar to the [DOS case](#https://abacus-rtd.readthedocs.io/en/latest/advanced/elec_properties/dos.html), we first, do a ground-state energy calculation ***with one additional keyword "[out_chg](#https://abacus-rtd.readthedocs.io/en/latest/advanced/input_files/input-main.html#out-chg)" in the INPUT file***:
+ABACUS can calculate the energy band structure, and the exampples can be found in [examples/band](https://github.com/deepmodeling/abacus-develop/tree/develop/examples/band).\
+Similar to the [DOS case](https://abacus-rtd.readthedocs.io/en/latest/advanced/elec_properties/dos.html), we first, do a ground-state energy calculation ***with one additional keyword "[out_chg](https://abacus-rtd.readthedocs.io/en/latest/advanced/input_files/input-main.html#out-chg)" in the INPUT file***:
 
 ```
 out_chg             1
