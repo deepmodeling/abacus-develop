@@ -4,5 +4,5 @@ channel_sources:
 channel_targets:
   - deepmodeling
 mpi:
-  - openmpi
-  # - mpich
+  - mpich
+  # - openmpi

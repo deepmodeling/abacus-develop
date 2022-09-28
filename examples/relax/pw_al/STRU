@@ -1,0 +1,20 @@
+ATOMIC_SPECIES
+Al 26.982 Al.PD04.PBE.UPF
+
+LATTICE_CONSTANT
+1.8897261254578281     
+
+LATTICE_VECTORS
+4.04 0.0 0.0          
+0.0 4.04 0.0         
+0.0 0.0 4.05
+
+ATOMIC_POSITIONS
+Direct               
+Al
+0.0                   
+4                    
+0.00 0.00 0.00 1 1 1
+0.53 0.50 0.00 1 1 1 
+0.50 0.00 0.52 1 1 1 
+0.00 0.50 0.50 1 1 1

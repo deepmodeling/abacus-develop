@@ -224,7 +224,17 @@ information that comes below.
     where $fac=\frac{\sqrt{1+2*m*n*l-m^2 -n^2 -l^2 }}{\sqrt{1-m^2}}$
 - ATOMIC_POSITIONS
 
-    This section specifies the positions and other information of individual atoms. The first line signifies whether atom positions are given in `Cartesian` or `Direct` coordinates.
+    This section specifies the positions and other information of individual atoms. 
+    
+    The first line signifies method that atom positions are given, the following options are supported:
+    - `Direct` : coordinates of atom positions below would in fraction coordinates.
+    - `Cartesian` : Cartesian coordinates in unit of 'LATTICE_CONSTANT'.
+    - `Cartesian_au` : Cartesian coordinates in unit of Bohr, same as setting of `Cartesian` with `LATTICE_CONSTANT` = 1.0 .
+    - `Cartesian_angstrom` : Cartesian coordinates in unit of Angstrom, same as setting of `Cartesian` with `LATTICE_CONSTANT` = 1.889726125457828 .
+    - `Cartesian_angstrom_center_xy` : Cartesian coordinates in unit of Angstrom, a position vector (x, y, z) refer to (0.5 + x, 0.5 + y, z) with `Cartesian_angstrom`.
+    - `Cartesian_angstrom_center_xz` : Cartesian coordinates in unit of Angstrom, a position vector (x, y, z) refer to (0.5 + x, y, 0.5 + z) with `Cartesian_angstrom`.
+    - `Cartesian_angstrom_center_yz` : Cartesian coordinates in unit of Angstrom, a position vector (x, y, z) refer to (x, 0.5 + y, 0.5 + z) with `Cartesian_angstrom`.
+    - `Cartesian_angstrom_center_xyz` : Cartesian coordinates in unit of Angstrom, a position vector (x, y, z) refer to (0.5 + x, 0.5 + y, 0.5 + z) with `Cartesian_angstrom`.
 
     The following three lines tells the elemental type (`Si`), the initial magnetic moment (`0.0`), and the number of atoms for this particular element (`2`) repsectively. Notice this  magnetic moment will be a default value for every atom of this type but will be overrided if one define it for each atom by keyword(see below).
 

@@ -864,6 +864,7 @@ void HS_Matrix::save_HSR_tr(const int current_spin, LCAO_Matrix &lm)
 }
 
 void HS_Matrix::save_HSR_sparse(
+    const int &istep,
     LCAO_Matrix &lm,
     const double& sparse_threshold,
     const bool &binary,  
@@ -980,9 +981,18 @@ void HS_Matrix::save_HSR_sparse(
 
     std::stringstream ssh[2];
     std::stringstream sss;
-    ssh[0] << GlobalV::global_out_dir << HR_filename_up;
-    ssh[1] << GlobalV::global_out_dir << HR_filename_down;
-    sss << GlobalV::global_out_dir << SR_filename;
+    if(GlobalV::CALCULATION == "md" || GlobalV::CALCULATION == "sto-md")
+    {
+        ssh[0] << GlobalV::global_matrix_dir << istep << "_" << HR_filename_up;
+        ssh[1] << GlobalV::global_matrix_dir << istep << "_" << HR_filename_down;
+        sss << GlobalV::global_matrix_dir << istep << "_" << SR_filename;
+    }
+    else
+    {
+        ssh[0] << GlobalV::global_out_dir << HR_filename_up;
+        ssh[1] << GlobalV::global_out_dir << HR_filename_down;
+        sss << GlobalV::global_out_dir << SR_filename;
+    }
     std::ofstream g1[2];
     std::ofstream g2;
 

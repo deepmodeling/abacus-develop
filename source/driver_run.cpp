@@ -51,8 +51,10 @@ void Driver::driver_run()
     //---------------------------MD/Relax------------------
     if(GlobalV::CALCULATION == "md" && GlobalV::BASIS_TYPE=="lcao")
     {
+#ifdef __LCAO
         Run_MD_LCAO run_md_lcao;
         run_md_lcao.opt_ions(p_esolver);
+#endif
     }
     else if(GlobalV::CALCULATION == "md" || GlobalV::CALCULATION == "sto-md")
     {

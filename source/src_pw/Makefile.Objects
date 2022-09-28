@@ -4,98 +4,93 @@
 VERSION= ABACUS-PW
 HEADERS= *.h
 
-OBJS_BASE=math_integral.o\
-math_sphbes.o\
-math_polyint.o\
-math_ylmreal.o\
-ylm.o\
-memory.o\
-complexarray.o\
-complexmatrix.o\
-matrix.o\
-realarray.o\
-intarray.o\
-sph_bessel.o\
-sph_bessel_recursive-d1.o\
-sph_bessel_recursive-d2.o\
-tool_title.o\
-tool_quit.o\
-tool_check.o\
-timer.o\
-mathzone_add1.o\
-global_variable.o \
-global_function.o \
-matrix3.o\
-export.o\
-print_info.o\
-mathzone.o\
-integral.o \
-polint.o \
-global_file.o \
-element_basis_index.o \
-restart.o \
-mymath1.o \
-mymath3.o \
-inverse_matrix.o \
+FP_OBJS_0=main.o\
+$(OBJS_MAIN)\
+$(OBJS_PW)\
+$(OBJS_TOOLS)\
+${OBJS_PARALLEL}\
+${OBJS_ESOLVER}\
+$(OBJS_SURCHEM)\
+${OBJS_XC}\
+${OBJ_PLANEWAVE}\
+${OBJ_HSOLVER}\
+${OBJ_ELECSTATES}\
+${OBJ_PSI}\
+${OBJ_OPERATOR}\
+${OBJ_RELAX}\
+${OBJS_COMMON}\
+${OBJ_NEIGHBOR}\
+${OBJ_IO}
 
+VPATH=../src_global\
+:../src_parallel\
+:../src_io\
+:../src_pw\
+:../module_base\
+:../module_pw\
+:../module_cell\
+:../module_relaxation\
+:../module_md\
+:../module_symmetry\
+:../module_xc\
+:../module_esolver\
+:../module_hsolver\
+:../module_elecstate\
+:../module_psi\
+:../module_hamilt\
+:../module_hamilt/ks_pw\
+:../module_surchem\
+:../module_neighbor\
+:../
 
-OBJS_MAIN=input.o \
+OBJS_MAIN=driver.o\
+input.o \
 write_input.o\
 input_conv.o\
-driver.o \
-run_pw.o\
-input_update.o
+driver_run.o
 
-OBJS_IONS=MD_basic.o\
-MD_thermo.o\
-MD_fire.o\
-MD_func.o\
-ions.o\
-relaxation.o\
-ions_move_methods.o\
-ions_move_bfgs.o\
-ions_move_cg.o\
-ions_move_sd.o\
-ions_move_basic.o\
-bfgs_basic.o\
-run_md_pw.o\
-lattice_change_methods.o \
-lattice_change_cg.o \
-lattice_change_basic.o \
-variable_cell.o
-
-OBJS_PW=\
-charge.o \
+OBJS_PW=charge.o \
 charge_mixing.o \
 charge_pulay.o \
 charge_broyden.o \
 charge_extra.o \
-diago_david.o\
-diago_cg.o\
-efield.o\
-electrons.o \
-energy.o \
-energy_dos_pw.o\
-dos.o\
-forces.o\
-global.o \
-hamilt_pw_gpu.o \
-hamilt.o \
+potential.o \
 H_Ewald_pw.o\
 H_Hartree_pw.o\
-klist.o  \
+read_rho.o\
+read_atoms.o\
+read_cell_pseudopots.o\
+write_pot.o\
+write_rho.o\
+write_rho_cube.o\
+write_rho_dipole.o\
+write_wfc_realspace.o\
 magnetism.o\
+optical.o\
+run_md_pw.o\
 occupy.o\
-potential.o \
-potential_libxc.o \
-pw_basis.o\
-pw_complement.o\
-soc.o\
-sto_elec.o\
-sto_wf.o\
-sto_iter.o\
-sto_hchi.o\
-sto_che.o\
+cal_test.o\
+winput.o\
+input_update.o\
+xc_3.o \
+vdwd2.o\
+vdwd2_parameters.o\
+vdwd3.o\
+vdwd3_parameters.o\
+read_pp.o \
+read_pp_upf100.o \
+read_pp_upf201.o \
+read_pp_vwr.o \
+read_pp_blps.o \
+pseudo_nc.o \
+VL_in_pw.o\
+VNL_in_pw.o\
+atom_pseudo.o\
+unitcell_pseudo.o\
+threshold_elec.o\
+electrons.o \
+forces.o\
+global.o \
 stress_pw.o\
 stress_func_cc.o\
 stress_func_gga.o\
@@ -106,65 +101,185 @@ stress_func_ewa.o\
 stress_func_har.o\
 stress_func_loc.o\
 stress_func_print.o\
-symmetry.o \
-symmetry_basic.o \
-symmetry_rho.o \
-symm_other.o \
-threshold_elec.o\
-use_fft.o\
-use_fft_kernel.o\
-vdwd2.o\
-vdwd2_parameters.o\
-vdwd3.o\
-vdwd3_parameters.o\
-VL_in_pw.o\
-VNL_in_pw.o\
-wavefunc.o\
-wf_atomic.o \
-wf_igk.o \
-xc_3.o \
-xc_type.o \
-diago_cg_gpu.o
-
-OBJS_IO=berryphase.o\
+chi0_hilbert.o\
+chi0_standard.o\
 epsilon0_pwscf.o\
 epsilon0_vasp.o\
-output.o\
-wf_io.o \
-rwstream.o\
-read_rho.o\
-read_atoms.o\
-read_cell_pseudopots.o\
-write_pot.o\
-write_rho.o\
-write_rho_cube.o\
-chi0_standard.o\
-numerical_basis.o\
-numerical_descriptor.o\
-bessel_basis.o\
+MD_func.o\
+soc.o\
 to_wannier90.o \
 unk_overlap_pw.o \
-optical.o\
-cal_test.o\
-winput.o\
+berryphase.o \
+sto_iter.o\
+sto_wf.o\
+sto_func.o\
+sto_hchi.o\
+sto_forces.o\
+sto_stress_pw.o
 
-OBJS_CELL=unitcell.o\
-atom_spec.o\
-pseudo_nc.o \
-read_pp.o \
-read_pp_upf100.o \
-read_pp_upf201.o \
-read_pp_vwr.o \
-read_pp_blps.o \
-unitcell_pseudo.o\
-atom_pseudo.o\
-
-
+OBJS_TOOLS=complexarray.o\
+complexmatrix.o \
+realarray.o \
+intarray.o\
+matrix.o \
+matrix3.o\
+export.o\
+timer.o\
+memory.o\
+print_info.o\
+mathzone.o\
+math_sphbes.o\
+math_polyint.o\
+math_integral.o\
+math_ylmreal.o\
+mathzone_add1.o\
+math_bspline.o\
+math_chebyshev.o\
+integral.o \
+polint.o \
+sph_bessel.o \
+sph_bessel_recursive-d1.o \
+sph_bessel_recursive-d2.o \
+global_variable.o \
+global_function.o \
+global_function_ddotreal.o \
+tool_title.o\
+tool_quit.o\
+tool_check.o\
+global_file.o \
+element_basis_index.o \
+restart.o \
+mymath1.o \
+mymath3.o
 
 OBJS_PARALLEL=parallel_global.o\
 parallel_kpoints.o\
 parallel_common.o\
 parallel_reduce.o\
-parallel_pw.o\
-ft.o\
-parallel_grid.o\
+parallel_grid.o
+
+OBJS_ESOLVER=esolver.o\
+    esolver_ks.o\
+    esolver_fp.o\
+    esolver_ks_pw.o\
+    esolver_ks_pw_tool.o\
+    esolver_sdft_pw.o\
+	esolver_sdft_pw_tool.o\
+    esolver_lj.o\
+    esolver_dp.o
+
+OBJS_SURCHEM=H_correction_pw.o\
+    cal_epsilon.o\
+    surchem.o\
+    cal_pseudo.o\
+    cal_totn.o\
+    cal_vcav.o\
+    cal_vel.o\
+    corrected_energy.o\
+    minimize_cg.o\
+    efield.o\
+    sol_force.o\
+    gatefield.o
+
+OBJS_XC=xc_funct_corr_gga.o \
+xc_funct_corr_lda.o \
+xc_funct_exch_gga.o \
+xc_funct_exch_lda.o \
+xc_funct_hcth.o \
+xc_functional_gradcorr.o \
+xc_functional_vxc.o \
+xc_functional_wrapper_gcxc.o \
+xc_functional_wrapper_tauxc.o \
+xc_functional_wrapper_xc.o \
+xc_functional.o \
+
+OBJ_PLANEWAVE=fft.o\
+pw_basis.o\
+pw_basis_k.o\
+pw_distributeg.o\
+pw_distributeg_method1.o\
+pw_distributeg_method2.o\
+pw_distributer.o\
+pw_init.o\
+pw_transform.o\
+pw_transform_k.o
+
+OBJ_HSOLVER=diago_cg.o\
+diago_david.o\
+diago_iter_assist.o\
+hsolver_pw.o\
+hsolver_pw_sdft.o
+
+OBJ_ELECSTATES=elecstate.o\
+elecstate_pw.o\
+elecstate_pw_sdft.o
+
+OBJ_PSI=psi.o
+
+OBJ_OPERATOR=hamilt_pw.o\
+ekinetic_pw.o\
+meta_pw.o\
+veff_pw.o\
+nonlocal_pw.o
+
+OBJ_RELAX=bfgs_basic.o\
+ions.o\
+ions_move_basic.o\
+ions_move_bfgs.o\
+ions_move_cg.o\
+ions_move_methods.o\
+ions_move_sd.o\
+lattice_change_basic.o\
+lattice_change_cg.o\
+lattice_change_methods.o\
+variable_cell.o\
+relaxation.o
+
+OBJS_COMMON=atom_spec.o \
+unitcell.o \
+structure_factor.o\
+hamilt.o \
+pw_complement.o\
+hamilt_pw_old.o \
+diago_david_old.o\
+diago_cg_old.o\
+output.o  \
+run_md_classic.o\
+LJ_potential.o\
+DP_potential.o\
+cmd_neighbor.o\
+verlet.o\
+NVE.o\
+MSST.o\
+NVT_ADS.o\
+NVT_NHC.o\
+FIRE.o\
+Langevin.o\
+dos.o \
+inverse_matrix.o \
+energy.o \
+energy_dos_pw.o\
+wavefunc.o\
+wf_io.o \
+rwstream.o\
+wf_atomic.o \
+wf_igk.o \
+use_fft.o\
+klist.o  \
+symmetry.o \
+symmetry_basic.o \
+symmetry_rho.o \
+symm_other.o \
+eximport.o \
+setup_nonlocal.o
+
+OBJ_NEIGHBOR=sltk_grid.o\
+sltk_grid_driver.o \
+sltk_atom_arrange.o\
+sltk_atom.o\
+sltk_adjacent_set.o\
+sltk_atom_input.o
+
+OBJ_IO=numerical_basis.o\
+bessel_basis.o\
+numerical_descriptor.o

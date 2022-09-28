@@ -1,0 +1,25 @@
+INPUT_PARAMETERS
+pseudo_dir	  ./
+ntype		  1
+dft_functional    pbe
+symmetry	  0
+cal_force	  1
+calculation       scf
+ecutwfc		  60
+scf_nmax	  200
+scf_thr		  1.0e-7
+basis_type	  pw
+gamma_only        1
+smearing_method	  gauss
+smearing_sigma	  0.02
+mixing_type       pulay
+mixing_beta       0.4
+
+#Parameters (compensating charge)
+gate_flag           1
+zgate               0.7
+block_down          0.65
+block_up            0.75
+block_height        0.01
+block               1
+nelec               487

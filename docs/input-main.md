@@ -485,7 +485,7 @@ calculations.
 
   For plane-wave basis,
   - cg: cg method.
-  - dav: the Davidson algorithm. (Currently not working with Intel MKL library).
+  - dav: the Davidson algorithm.
 
   For atomic orbitals basis,
   - genelpa: This method should be used if you choose localized orbitals.
@@ -513,7 +513,7 @@ calculations.
 #### nbands_istate
 
 - **Type**: Integer
-- **Description**: Only used when `calculation = ienvelope` or `calculation = istate`, this variable indicates how many bands around Fermi level you would like to calculate. `ienvelope` means to calculate the envelope functions of wave functions $\Psi_{i}=\Sigma_{\mu}C_{i\mu}\Phi_{\mu}$, where $\Psi_{i}$ is the ith wave function with the band index $i$ and $\Phi_{\mu}$ is the localized atomic orbital set. `istate` means to calculate the density of each wave function $|\Psi_{i}|^{2}$. Specifically, suppose we have highest occupied bands at 100th wave functions. And if you set this variable to 5, it will print five wave functions from 96th to 105th. But before all this can be carried out, the wave functions coefficients  should be first calculated and written into a file by setting the flag `out_wfc_lcao = 1`.
+- **Description**: Only used when `calculation = ienvelope` or `calculation = istate`, this variable indicates how many bands around Fermi level you would like to calculate. `ienvelope` means to calculate the envelope functions of wave functions $\Psi_{i}=\Sigma_{\mu}C_{i\mu}\Phi_{\mu}$, where $\Psi_{i}$ is the ith wave function with the band index $i$ and $\Phi_{\mu}$ is the localized atomic orbital set. `istate` means to calculate the density of each wave function $|\Psi_{i}|^{2}$. Specifically, suppose we have highest occupied bands at 100th wave functions. And if you set this variable to 5, it will print five wave functions from 96th to 105th. But before all this can be carried out, the wave functions coefficients should be first calculated and written into a file by setting the flag `out_wfc_lcao = 1`.
 - **Default**: 5
 
 #### nspin
@@ -528,46 +528,48 @@ calculations.
 - **Description**: It indicates which occupation and smearing method is used in the calculation.
   - fixed: use fixed occupations.
   - gauss or gaussian: use gaussian smearing method.
-  - mp: use methfessel-paxton smearing method. The method recommends for metals.
+  - mp: use methfessel-paxton smearing method. The method is recommended for metals.
+  - fd: Fermi-Dirac smearing method: $f=1/\{1+\exp[(E-\mu)/kT]\}$ and smearing_sigma below is the temperature $T$ (in Ry).
 - **Default**: fixed
 
 #### smearing_sigma
 
 - **Type**: Real
-- **Description**: energy range for smearing, the unit is Rydberg.
+- **Description**: Relevant when `smearing_method` is **NOT** `fixed`.Specified the energy range for smearing, the unit is Rydberg.
 - **Default**: 0.001
 
 #### smearing_sigma_temp
 
 - **Type**: Real
-- **Description**: energy range for smearing, and is same as smearing_sigma, but the unit is K. smearing_sigma = 1/2 * kB * smearing_sigma_temp.
+- **Description**: Do not use this along with smearing_sigma. Energy range for smearing, but with Kelvin as unit. smearing_sigma = 1/2 * kB * smearing_sigma_temp.
 
 #### mixing_type
 
 - **Type**: String
-- **Description**: Charge mixing methods.
-  - plain: Just simple mixing.
-  - kerker: Use kerker method, which is the mixing method in G space.
-  - pulay: Standard Pulay method.
-  - pulay-kerker:
+- **Description**: Selecting one of the following mixing methods.
+  - plain: Simple linear mixing: $\rho^{in}_{i+1} = \rho_i^{in} + \beta[\rho_i^{out} - \rho_i^{in}]$.
+  - kerker: Plain mixing with Kerker pre-conditioning, where short wavevectors are suppressed to prevent charge sloshing in metallic systems : $\rho^{in}_{i+1}(G) = \rho_i^{in}(G) + \beta\frac{G^2}{G^2+\lambda^2}[\rho_i^{out}(G) - \rho_i^{in}(G)]$
+  - pulay: Standard Pulay method, also known as direct inversion in the iterative subspace (DIIS). $\rho^{out}$ is obtained as linear combination of previous steps. The expansion coefficients are obtained by inverting a residual matrix.
+  - pulay-kerker : Pulay method with Kerker pre-conditioning to prevent charge sloshing.
+  - broyden: [simplified Broyden](https://journals.aps.org/prb/abstract/10.1103/PhysRevB.38.12807) mixing method.
 - **Default**: pulay
 
 #### mixing_beta
 
 - **Type**: Real
-- **Description**: mixing parameter: 0 means no new charge
+- **Description**: This parameter controls the fraction of $\rho_i^{out}$ in $\rho^{in}_{i+1}$. If set to 0, the electron density is never updated.
 - **Default**: 0.7
 
 #### mixing_ndim
 
 - **Type**: Integer
-- **Description**: It indicates the mixing dimensions in Pulay, Pulay method use the density from previous mixing_ndim steps and do a charge mixing based on these density.
+- **Description**: Relevant when `mixing_type` is set to `pulay` or `pulay-kerker`. It indicates the mixing dimensions in Pulay, Pulay method use the density from previous mixing_ndim steps and do a charge mixing based on these density.
 - **Default**: 8
 
 #### mixing_gg0
 
 - **Type**: Real
-- **Description**: used in pulay-kerker mixing method
+- **Description**: Relevant when `mixing_type` is set to `kerker` or `pulay-kerker`. A larger `mixing_gg0` means increased suppressiong of the short wavevectors.
 - **Default**: 1.5
 
 #### gamma_only
@@ -660,7 +662,9 @@ This part of variables are used to control the parameters of stochastic DFT (SDF
 
 - **Type**: Integer
 - **Description**: Frequency (once each initsto_freq steps) to generate new stochastic orbitals when running md.
-- **Default**:1000
+  - positive integer: Update stochastic orbitals
+  - 0:                Never change stochastic orbitals.
+- **Default**:0
 
 #### npart_sto
 
@@ -837,7 +841,7 @@ This part of variables are used to control the output of properties.
 #### out_wfc_r
 
 - **Type**: Integer
-- **Description**: Only used in **planewave basis** and **ienvelope calculation in localized orbitals** set. When set this variable to 1, it outputs real-space wave functions into  `OUT.suffix/wfc_realspace/`. The file names are wfc_realspace$K$B, where $K is the index of k point, $B is the index of band.
+- **Description**: Only used in **planewave basis** and **ienvelope calculation in localized orbitals** set. When set this variable to 1, it outputs real-space wave functions into  `OUT.suffix/wfc_realspace/`. The file names are wfc_realspace_$K_$B, where $K is the index of k point, $B is the index of band.
 - **Default**: 0
 
 #### out_wfc_lcao
@@ -1036,66 +1040,65 @@ is added to the bare ionic potential.
 #### dip_cor_flag
 
 - **Type**: Boolean
-- **Description**: If dip_cor_flag == true and efield_flag == true,  a dipole correction is also
-added to the bare ionic potential. If you want no electric field, parameter efield_amp  should be zero. Must be used ONLY in a slab geometry for surface calculations, with the discontinuity FALLING IN THE EMPTY SPACE.
+- **Description**: Set to true for dipole correction. For calculations with no applied external field, `efield_amp` should set to 0. Must be used ONLY in a slab geometry for surface calculations, with the discontinuity FALLING IN THE EMPTY SPACE. Used only if `efield_flag` == true.
 - **Default**: false
 
 #### efield_dir
 
 - **Type**: Integer
-- **Description**: The direction of the electric field or dipole correction is parallel to the reciprocal lattice vector, so the potential is constant in planes defined by FFT grid points, efield_dir = 0, 1 or 2. Used only if efield_flag == true.
+- **Description**: The direction of the electric field or dipole correction, which is parallel to the reciprocal lattice vector. `efield_dir` = 0, 1, and 2 correspond to the *x*, *y*, and *z* direction, respectively. Used only if `efield_flag` == true.
 - **Default**: 2
 
 #### efield_pos_max
 
 - **Type**: Real
-- **Description**: Position of the maximum of the saw-like potential along crystal axis efield_dir, within the  unit cell, 0 < efield_pos_max < 1. Used only if efield_flag == true.
+- **Description**: Position of the maximum of the saw-like potential along crystal axis efield_dir, within the  unit cell, which should satisfy 0 < `efield_pos_max` < 1. Used only if `efield_flag` == true. This is a fractional position in the unit of the crystal vector along the direction specified via `efield_dir`.
 - **Default**: 0.5
 
 #### efield_pos_dec
 
 - **Type**: Real
-- **Description**: Zone in the unit cell where the saw-like potential decreases, 0 < efield_pos_dec < 1. Used only if efield_flag == true.
+- **Description**: Zone in the unit cell where the saw-like potential decreases, which should satisfy 0 < `efield_pos_dec` < 1. Used only if `efield_flag` == true. This is a fractional position in the unit of the crystal vector along the direction specified via `efield_dir`.
 - **Default**: 0.1
 
 #### efield_amp
 
 - **Type**: Real
-- **Description**: Amplitude of the electric field, in ***Hartree*** a.u.; 1 a.u. = 51.4220632*10^10 V/m. Used only if efield_flag == true. The saw-like potential increases with slope efield_amp  in the region from (efield_pos_max+efield_pos_dec-1) to (efield_pos_max), then decreases until (efield_pos_max+efield_pos_dec), in units of the crystal vector efield_dir. Important: the change of slope of this potential must be located in the empty region, or else unphysical forces will result.
+- **Description**: Amplitude of the electric field. Used only if `efield_flag` == true. The saw-like potential increases with slope `efield_amp`  in the region from (`efield_pos_max` + `efield_pos_dec`-1) to (`efield_pos_max`), then decreases until (`efield_pos_max` + `efield_pos_dec`). Important: the change of slope of this potential must be located in the empty region, or else unphysical forces will result.
 - **Default**: 0.0
 
 ### Gate field (compensating charge)
 
-This part of variables are relevant to gate field (compensating charge)
+This part of variables control the gate field (compensating charge).
 
 #### gate_flag
 
 - **Type**: Boolean
-- **Description**: In the case of charged cells, setting gate_flag == true represents the addition of compensating charge by a charged plate, which is placed at **zgate**. Note that the direction is specified by **efield_dir**.
+- **Description**: In the case of charged cells, setting `gate_flag` to true enables the addition of compensating charge by a charged plate, which is placed at `zgate`. **Note that the direction is specified by `efield_dir`**.
 - **Default**: false
 
 #### zgate
 
 - **Type**: Real
-- **Description**: Specify the position of the charged plate in units of the unit cell (0 <= **zgate** < 1).
+- **Description**: The position of the charged plate in units of the unit cell, which should satisfy 0 <= `zgate` < 1.
 - **Default**: 0.5
 
 #### block
 
 - **Type**: Boolean
-- **Description**: Add a potential barrier to the total potential to avoid electrons spilling into the vacuum region for electron doping. Potential barrier is from **block_down** to **block_up** and has a height of **block_height**. If **dip_cor_flag** == true, **efield_pos_dec** is used for a smooth increase and decrease of the potential barrier.
+- **Description**: If set to true, a potential barrier will be added to the total potential to avoid electrons spilling into the vacuum region for electron doping. Potential barrier forms from `block_down` to `block_up` and has a height of `block_height`. If `dip_cor_flag` == true, `efield_pos_dec` is used for a smooth increase and decrease of the potential barrier.
 - **Default**: false
 
 #### block_down
 
 - **Type**: Real
-- **Description**: Lower beginning of the potential barrier in units of the unit cell size (0 <= **block_down** < **block_up** < 1).
+- **Description**: Lower limit of the potential barrier in units of the unit cell size, which should satisfy 0 <= `block_down` < `block_up` < 1.
 - **Default**: 0.45
 
 #### block_up
 
 - **Type**: Real
-- **Description**: Upper beginning of the potential barrier in units of the unit cell size (0 <= **block_down** < **block_up** < 1).
+- **Description**: Upper limit of the potential barrier in units of the unit cell size, which should satisfy 0 <= `block_down` < `block_up` < 1).
 - **Default**: 0.55
 
 #### block_height
@@ -1297,6 +1300,8 @@ temperature will fluctuate violently; if it is too small, the temperature will t
 
 - **Type**: Integer
 - **Description**: Number of Nose-Hoover chains.
+
+  > Note: md_mnhc is relavent to the temperature stability, sometimes md_mnhc=1 performs better.
 - **Default**: 4
 
 #### lj_rcut
@@ -1726,25 +1731,24 @@ This part of variables are used to control the usage of implicit solvation model
 #### eb_k
 
 - **Type**: Real
-- **Description**: The relative permittivity of the bulk solvent, 80 for water. Used only if `imp_sol` == true.
+- **Description**: The relative permittivity of the bulk solvent, e.g., 80 for water. Used only if `imp_sol` == true. Set it to be the relative permittivity of any desired solvent. 
 - **Default**: 80
 
 #### tau
 
 - **Type**: Real
-- **Description**: The effective surface tension parameter, which describes the cavitation, the dispersion, and the repulsion interaction between the solute and the solvent that are not captured by the electrostatic terms. The unit is $Ry/Bohr^{2}$.
+- **Description**: The effective surface tension parameter, which describes the cavitation, the dispersion, and the repulsion interaction between the solute and the solvent that are not captured by the electrostatic terms. The unit is $Ry/Bohr^{2}$. Used only if `imp_sol` == true. Default value is recommended. 
 - **Default**: 1.0798e-05
 
 #### sigma_k
 
 - **Type**: Real
-- **Description**: We assume a diffuse cavity that is implicitly determined by the electronic structure of the solute.
-`sigma_k` is the parameter that describes the width of the diffuse cavity.
+- **Description**: The width of the diffuse cavity. Used only if `imp_sol` == true. Default value is recommended. 
 - **Default**: 0.6
 
 #### nc_k
 
 - **Type**: Real
-- **Description**: It determines at what value of the electron density the dielectric cavity forms. 
-The unit is $Bohr^{-3}$.
+- **Description**: `nc_k` is the cut-off charge density, i.e., the value of the electron
+density at which the dielectric cavity forms. The unit is $Bohr^{-3}$. Used only if `imp_sol` == true. Default value is recommended. 
 - **Default**: 0.00037

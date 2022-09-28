@@ -2,6 +2,7 @@
 
 #include "module_base/global_variable.h"
 #include "module_base/tool_title.h"
+#include "module_base/memory.h"
 #include "src_parallel/parallel_reduce.h"
 #include "src_pw/global.h"
 #include "src_pw/occupy.h"
@@ -14,6 +15,73 @@ const double* ElecState::getRho(int spin) const
     // hamilt::MatrixBlock<double> temp{&(this->charge->rho[spin][0]), 1, this->charge->nrxx}; //
     // this->chr->get_nspin(), this->chr->get_nrxx()};
     return &(this->charge->rho[spin][0]);
+}
+
+void ElecState::allocateRho(const int &nspin_in, const int &nrxx_in, const int &ngmc_in)
+{
+    ModuleBase::TITLE("ElecState", "allocateRho");
+    
+    assert(this->charge->get_allocate_rho() == false);
+
+	//  mohan add 2021-02-20
+	this->charge->nspin = nspin_in;
+	this->charge->nrxx = nrxx_in;
+	this->charge->ngmc = ngmc_in;
+
+    if (GlobalV::test_charge > 1)
+    {
+        std::cout << "\n spin_number = " << this->charge->nspin
+             << " real_point_number = " << this->charge->nrxx;
+    }
+
+	// allocate memory
+	this->charge->rho = new double*[this->charge->nspin];
+	this->charge->rhog = new std::complex<double>*[this->charge->nspin];
+	this->charge->rho_save = new double*[this->charge->nspin];
+	this->charge->rhog_save = new std::complex<double>*[this->charge->nspin];
+	if(XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
+	{
+		this->charge->kin_r = new double*[this->charge->nspin];
+		this->charge->kin_r_save = new double*[this->charge->nspin];
+	}
+
+	for(int is=0; is<this->charge->nspin; is++)
+	{
+		this->charge->rho[is] = new double[this->charge->nrxx];
+		this->charge->rhog[is] = new std::complex<double>[this->charge->ngmc];
+		this->charge->rho_save[is] = new double[this->charge->nrxx];
+		this->charge->rhog_save[is] = new std::complex<double>[this->charge->ngmc];			
+		ModuleBase::GlobalFunc::ZEROS(this->charge->rho[is], this->charge->nrxx);
+		ModuleBase::GlobalFunc::ZEROS(this->charge->rhog[is], this->charge->ngmc);
+		ModuleBase::GlobalFunc::ZEROS(this->charge->rho_save[is], this->charge->nrxx);
+		ModuleBase::GlobalFunc::ZEROS(this->charge->rhog_save[is], this->charge->ngmc);
+		if(XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
+		{
+			this->charge->kin_r[is] = new double[this->charge->nrxx];
+			ModuleBase::GlobalFunc::ZEROS(this->charge->kin_r[is], this->charge->nrxx);
+			this->charge->kin_r_save[is] = new double[this->charge->nrxx];
+			ModuleBase::GlobalFunc::ZEROS(this->charge->kin_r_save[is], this->charge->nrxx);
+		}
+	}
+
+    ModuleBase::Memory::record("Charge","rho",this->charge->nspin*this->charge->nrxx,"double");
+    ModuleBase::Memory::record("Charge","rho_save",this->charge->nspin*this->charge->nrxx,"double");
+    ModuleBase::Memory::record("Charge","rhog",this->charge->nspin*this->charge->ngmc,"double");
+    ModuleBase::Memory::record("Charge","rhog_save",this->charge->nspin*this->charge->ngmc,"double");
+    ModuleBase::Memory::record("Charge","kin_r",this->charge->nspin*this->charge->ngmc,"double");
+    ModuleBase::Memory::record("Charge","kin_r_save",this->charge->nspin*this->charge->ngmc,"double");
+
+    this->charge->rho_core = new double[this->charge->nrxx]; // core charge in real space
+    ModuleBase::GlobalFunc::ZEROS( this->charge->rho_core, this->charge->nrxx);
+
+	this->charge->rhog_core = new std::complex<double>[this->charge->ngmc]; // reciprocal core charge
+	ModuleBase::GlobalFunc::ZEROS( this->charge->rhog_core, this->charge->ngmc);
+
+    ModuleBase::Memory::record("Charge","rho_core",this->charge->nrxx,"double");
+    ModuleBase::Memory::record("Charge","rhog_core",this->charge->ngmc,"double");
+
+	this->charge->get_allocate_rho() = true;
+    return;
 }
 
 void ElecState::calculate_weights()

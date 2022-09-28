@@ -55,6 +55,7 @@ void Input::Init(const std::string &fn)
     //----------------------------------------------------------
     ModuleBase::Global_File::make_dir_out(this->suffix,
                                           this->calculation,
+                                          this->out_mat_hs2,
                                           GlobalV::MY_RANK,
                                           this->mdp.md_restart,
                                           this->out_alllog); // xiaohui add 2013-09-01
@@ -143,7 +144,7 @@ void Input::Default(void)
     seed_sto = 0;
     bndpar = 1;
     kpar = 1;
-    initsto_freq = 1000;
+    initsto_freq = 0;
     method_sto = 2;
     npart_sto = 1;
     cal_cond = false;
@@ -331,7 +332,7 @@ void Input::Default(void)
     vdw_a2 = "default";
     vdw_d = 20;
     vdw_abc = false;
-    vdw_radius = "default";
+    vdw_cutoff_radius = "default";
     vdw_radius_unit = "Bohr";
     vdw_cn_thr = 40.0;
     vdw_cn_thr_unit = "Bohr";
@@ -339,8 +340,8 @@ void Input::Default(void)
     vdw_C6_unit = "Jnm6/mol";
     vdw_R0_file = "default";
     vdw_R0_unit = "A";
-    vdw_model = "radius";
-    vdw_period = {3, 3, 3};
+    vdw_cutoff_type = "radius";
+    vdw_cutoff_period = {3, 3, 3};
 
     //----------------------------------------------------------
     // exx										//Peize Lin add 2018-06-20
@@ -426,6 +427,7 @@ void Input::Default(void)
     //==========================================================
     dft_plus_u = false; // 1:DFT+U correction; 0：standard DFT calcullation
     yukawa_potential = false;
+    yukawa_lambda = -1.0;
     double_counting = 1;
     omc = false;
     dftu_type = 2;
@@ -1392,9 +1394,9 @@ bool Input::Read(const std::string &fn)
         {
             read_value(ifs, vdw_abc);
         }
-        else if (strcmp("vdw_radius", word) == 0)
+        else if (strcmp("vdw_cutoff_radius", word) == 0)
         {
-            read_value(ifs, vdw_radius);
+            read_value(ifs, vdw_cutoff_radius);
         }
         else if (strcmp("vdw_radius_unit", word) == 0)
         {
@@ -1424,14 +1426,14 @@ bool Input::Read(const std::string &fn)
         {
             read_value(ifs, vdw_R0_unit);
         }
-        else if (strcmp("vdw_model", word) == 0)
+        else if (strcmp("vdw_cutoff_type", word) == 0)
         {
-            read_value(ifs, vdw_model);
+            read_value(ifs, vdw_cutoff_type);
         }
-        else if (strcmp("vdw_period", word) == 0)
+        else if (strcmp("vdw_cutoff_period", word) == 0)
         {
-            ifs >> vdw_period.x >> vdw_period.y;
-            read_value(ifs, vdw_period.z);
+            ifs >> vdw_cutoff_period.x >> vdw_cutoff_period.y;
+            read_value(ifs, vdw_cutoff_period.z);
         }
         //--------------------------------------------------------
         // restart           Peize Lin 2020-04-04
@@ -1897,6 +1899,10 @@ bool Input::Read(const std::string &fn)
         gamma_only_local = 1;
         // std::cout << "gamma_only_local =" << gamma_only_local << std::endl;
     }
+    if((out_mat_r || out_mat_hs2) && gamma_only_local)
+    {
+        ModuleBase::WARNING_QUIT("Input", "printing of H(R)/S(R)/r(R) is not available for gamma only calculations");
+    }
 
     return true;
 } // end read_parameters
@@ -1951,15 +1957,15 @@ void Input::Default_2(void) // jiyy add 2019-08-04
             vdw_a2 = "4.4407";
         }
     }
-    if (vdw_radius == "default")
+    if (vdw_cutoff_radius == "default")
     {
         if (vdw_method == "d2")
         {
-            vdw_radius = "56.6918";
+            vdw_cutoff_radius = "56.6918";
         }
         else if (vdw_method == "d3_0" || vdw_method == "d3_bj")
         {
-            vdw_radius = "95";
+            vdw_cutoff_radius = "95";
         }
     }
     if(calculation.substr(0,3) != "sto")    bndpar = 1;
@@ -2215,7 +2221,7 @@ void Input::Bcast()
     Parallel_Common::bcast_string(vdw_a2);
     Parallel_Common::bcast_double(vdw_d);
     Parallel_Common::bcast_bool(vdw_abc);
-    Parallel_Common::bcast_string(vdw_radius);
+    Parallel_Common::bcast_string(vdw_cutoff_radius);
     Parallel_Common::bcast_string(vdw_radius_unit);
     Parallel_Common::bcast_double(vdw_cn_thr);
     Parallel_Common::bcast_string(vdw_cn_thr_unit);
@@ -2223,10 +2229,10 @@ void Input::Bcast()
     Parallel_Common::bcast_string(vdw_C6_unit);
     Parallel_Common::bcast_string(vdw_R0_file);
     Parallel_Common::bcast_string(vdw_R0_unit);
-    Parallel_Common::bcast_string(vdw_model);
-    Parallel_Common::bcast_int(vdw_period.x);
-    Parallel_Common::bcast_int(vdw_period.y);
-    Parallel_Common::bcast_int(vdw_period.z);
+    Parallel_Common::bcast_string(vdw_cutoff_type);
+    Parallel_Common::bcast_int(vdw_cutoff_period.x);
+    Parallel_Common::bcast_int(vdw_cutoff_period.y);
+    Parallel_Common::bcast_int(vdw_cutoff_period.z);
     // Fuxiang He add 2016-10-26
     Parallel_Common::bcast_int(tddft);
     Parallel_Common::bcast_int(td_val_elec_01);
@@ -2837,17 +2843,17 @@ void Input::Check(void)
         {
             ModuleBase::WARNING_QUIT("Input", "vdw_R0_unit must be A or Bohr");
         }
-        if ((vdw_model != "radius") && (vdw_model != "period"))
+        if ((vdw_cutoff_type != "radius") && (vdw_cutoff_type != "period"))
         {
-            ModuleBase::WARNING_QUIT("Input", "vdw_model must be radius or period");
+            ModuleBase::WARNING_QUIT("Input", "vdw_cutoff_type must be radius or period");
         }
-        if ((vdw_period.x <= 0) || (vdw_period.y <= 0) || (vdw_period.z <= 0))
+        if ((vdw_cutoff_period.x <= 0) || (vdw_cutoff_period.y <= 0) || (vdw_cutoff_period.z <= 0))
         {
-            ModuleBase::WARNING_QUIT("Input", "vdw_period <= 0 is not allowd");
+            ModuleBase::WARNING_QUIT("Input", "vdw_cutoff_period <= 0 is not allowd");
         }
-        if (std::stod(vdw_radius) <= 0)
+        if (std::stod(vdw_cutoff_radius) <= 0)
         {
-            ModuleBase::WARNING_QUIT("Input", "vdw_radius <= 0 is not allowd");
+            ModuleBase::WARNING_QUIT("Input", "vdw_cutoff_radius <= 0 is not allowd");
         }
         if ((vdw_radius_unit != "A") && (vdw_radius_unit != "Bohr"))
         {

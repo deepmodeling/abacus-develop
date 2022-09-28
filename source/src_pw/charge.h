@@ -96,7 +96,9 @@ public:
 
     void sum_band_k();
 
-	
+    inline bool &get_allocate_rho() {return allocate_rho;}
+    inline bool get_allocate_rho() const {return allocate_rho;}
+
 
 	// mohan add 2021-02-20
 	int nrxx; // number of r vectors in this processor

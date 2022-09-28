@@ -50,10 +50,17 @@ namespace ModuleESolver
         // Yu Liu add 2021-07-03
         GlobalC::CHR.cal_nelec();
 
-        // it has been established that that
-        // xc_func is same for all elements, therefore
-        // only the first one if used
-        if (ucell.atoms[0].xc_func == "HSE" || ucell.atoms[0].xc_func == "PBE0")
+        /* it has been established that that
+         xc_func is same for all elements, therefore
+         only the first one if used*/
+        /* In the special "two-level" calculation case, 
+        first scf iteration only calculate the functional without exact exchange.
+        but in "nscf" calculation, there is no need of "two-level" method. */
+        if(GlobalV::CALCULATION == "nscf")
+        {
+            XC_Functional::set_xc_type(ucell.atoms[0].xc_func);
+        }
+        else if (ucell.atoms[0].xc_func == "HSE" || ucell.atoms[0].xc_func == "PBE0")
         {
             XC_Functional::set_xc_type("pbe");
         }
@@ -107,12 +114,6 @@ namespace ModuleESolver
             
         // Calculate Structure factor
         GlobalC::sf.setup_structure_factor(&GlobalC::ucell, GlobalC::rhopw);
-
-        // Inititlize the charge density.
-        GlobalC::CHR.allocate(GlobalV::NSPIN, GlobalC::rhopw->nrxx, GlobalC::rhopw->npw);
-        ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT CHARGE");
-        // Initializee the potential.
-        GlobalC::pot.allocate(GlobalC::rhopw->nrxx);
 
         // Initialize charge extrapolation
         CE.Init_CE();
@@ -258,7 +259,7 @@ namespace ModuleESolver
                     if(stop) break;
                 }
             }
-            afterscf();
+            afterscf(istep);
 
             ModuleBase::timer::tick(this->classname, "Run");
         }       
