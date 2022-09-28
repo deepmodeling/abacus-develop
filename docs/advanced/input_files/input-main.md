@@ -54,7 +54,7 @@
 
 - [TDDFT: time dependent density functional theory](#tddft-time-dependent-density-functional-theory) (Under tests)
 
-    [tddft](#tddft) | [td_scf_thr](#td_scf_thr) | [td_dt](#td_dt) | [td_force_dt](#td_force_dt) | [td_vext](#td_vext) | [td_vext_dire](#td_vext_dire) | [td_timescale](#td_timescale) | [td_vexttype](#td_vexttype) | [td_vextout](#td_vextout) | [td_dipoleout](#td_dipoleout) | [ocp](#ocp) | [ocp_set](#ocp_set)
+    [tddft](#tddft) | [td_scf_thr](#td_scf_thr) | [td_dt](#td_dt) | [td_force_dt](#td_force_dt) | [td_vext](#td_vext) | [td_vext_dire](#td_vext_dire) | [td_timescale](#td_timescale) | [td_vexttype](#td_vexttype) | [td_vextout](#td_vextout) | [td_dipoleout](#td_dipoleout) | [ocp](#ocp) | [ocp_set](#ocp_set) | [td_val_elec_01](#td_val_elec_01) | [td_val_elec_02](#td_val_elec_02) |[td_val_elec_03](#td_val_elec_03) 
 
 - [DFT+*U* correction](#dft-u-correction) (Under development)
 
@@ -128,7 +128,7 @@ This part of variables are used to control general system parameters.
 - **Type**: Integer
 - **Description**: takes value 1, 0 and -1. 
   - if set to 1, symmetry analysis will be performed to determine the type of Bravais lattice and associated symmetry operations. (point groups only)
-  - if set to 0, only time reversal symmetry would be considered in symmetry operations, which implied k point and -k point would be treated as one double weight k point.
+  - if set to 0, only time reversal symmetry would be considered in symmetry operations, which implied k point and -k point would be treated as a single k point with twice the weight.
   - if set to -1, no symmetry will be considered.
 - **Default**: 0
 
@@ -214,7 +214,7 @@ This part of variables are used to control general system parameters.
 - **Default**: same as UPF file.
 
 #### xc_temperature
-- **Type**: Double
+- **Type**: Real
 - **Description**: specifies temperature when using temperature-dependent XC functionals (KSDT and so on); unit in Rydberg
 - **Default** : 0.0
 
@@ -252,7 +252,7 @@ This part of variables are used to control general system parameters.
 #### kspacing
 
 - **Type**: Real
-- **Descrption**: Set the smallest allowed spacing between k points, unit in 1/bohr. It should be larger than 0.0, and suggest smaller than 0.25. When you have set this value > 0.0, then the KPT file is unneccessary, and the number of K points nk_i = max(1,int(|b_i|/KSPACING)+1), where b_i is the reciprocal lattice vector. The default value 0.0 means that ABACUS will read the applied KPT file. Notice: if gamma_only is set to be true, kspacing is invalid.
+- **Descrption**: Set the smallest allowed spacing between k points, unit in 1/bohr. It should be larger than 0.0, and suggest smaller than 0.25. When you have set this value > 0.0, then the KPT file is unneccessary, and the number of K points nk_i = max(1, int(|b_i|/KSPACING)+1), where b_i is the reciprocal lattice vector. The default value 0.0 means that ABACUS will read the applied KPT file. Notice: if gamma_only is set to be true, kspacing is invalid.
 - **Default**: 0.0
 
 #### min_dist_coef
@@ -561,12 +561,12 @@ calculations.
 - **Default**:atomic
 
 #### lspinorb
-- **Type**: Bool
+- **Type**: Boolean
 - **Description**: whether to consider spin-orbital coupling effect in calculation. When set to 1, `nspin` is also automatically set to 4. 
 - **Default**: 0
 
 #### noncolin
-- **Type**: Bool
+- **Type**: Boolean
 - **Description**: whether to allow non-collinear polarization, in which case the coupling between spin up and spin down will be taken into account. If set to 1, `nspin` is also automatically set to 4. 
 - **Default**: 0
 
@@ -1052,23 +1052,23 @@ Warning: this function is not robust enough for the current version. Please try 
 
 #### bessel_rcut
 
-- **Type**: Double
+- **Type**: Real
 - **Description**: cutoff radius of bessel functions. See also `bessel_lmax`.
 - **Default**: 6.0
 
 #### bessel_tol
 
-- **Type**: Double
+- **Type**: Real
 - **Description**: tolerence when searching for the zeros of bessel functions. See also `bessel_lmax`.
 - **Default**: 1.0e-12
 
 #### deepks_bandgap
-- **Type**: Bool
+- **Type**: Boolean
 - **Description**: whether to include deepks bandgap correction.
 - **Default**: False
 
 #### deepks_out_unittest
-- **Type**: Bool
+- **Type**: Boolean
 - **Description**: this is used to generate some files for constructing DeePKS unit test. Not relevant when running actual calculations. When set to 1, ABACUS needs to be ran with only 1 process.
 - **Default**: False
 
@@ -1311,13 +1311,13 @@ This part of variables are used to control the molecular dynamics calculations.
 
 #### md_dt
 
-- **Type**: Double
+- **Type**: Real
 - **Description**: This is the time step(fs) used in md simulation .
 - **Default**: 1.0
 
 #### md_tfirst, md_tlast
 
-- **Type**: Double
+- **Type**: Real
 - **Description**: This is the temperature (K) used in md simulation, md_tlast`s default value is md_tfirst. If md_tlast is set to be different from md_tfirst, ABACUS will automatically change the temperature from md_tfirst to md_tlast.
 - **Default**: No default
 
@@ -1425,7 +1425,7 @@ This part of variables are used to control DFT+U correlated parameters
 
 #### orbital_corr
 
-- **Type**: Int
+- **Type**: Integer
 - **Description**: $l_1,l_2,l_3,\ldots$ for atom type 1,2,3 respectively.(usually 2 for d electrons and 3 for f electrons) .Specify which orbits need plus U correction for each atom. If set to -1, the correction would not be calculate for this atom.
 - **Default**: None
 
@@ -1575,7 +1575,7 @@ This part of variables are used to control vdW-corrected related parameters.
 
 #### vdw_cutoff_period
 
-- **Type**: Int Int Int
+- **Type**: Integer Integer Integer
 - **Description**: If vdw_cutoff_type is set to `period`, the three integers supplied here will explicitly specify the extent of the supercell in the directions of the three basis lattice vectors. 
 - **Default**: 3 3 3
 
@@ -1646,19 +1646,19 @@ This part of variables are used to control berry phase and wannier90 interfacae 
 
 #### td_scf_thr
 
-- **Type**: Double
+- **Type**: Real
 - **Description**: Accuracy of electron convergence when doing time-dependent evolution.
 - **Default**: 1e-9
 
 #### td_dt
 
-- **Type**: Double
+- **Type**: Real
 - **Description**: Time-dependent evolution time step. (fs)
 - **Default**: 0.02
 
 #### td_force_dt
 
-- **Type**: Double
+- **Type**: Real
 - **Description**: Time-dependent evolution force changes time step. (fs)
 - **Default**: 0.02
 
@@ -1681,7 +1681,7 @@ This part of variables are used to control berry phase and wannier90 interfacae 
 
 #### td_timescale
 
-- **Type**: Double
+- **Type**: Real
 - **Description**: Time range of external electric field application. (fs)
 - **Default**: 0.5
 
@@ -1713,8 +1713,7 @@ This part of variables are used to control berry phase and wannier90 interfacae 
 #### ocp
 
 - **Type**: Boolean
-- **Description**: option for choose whether calcualting constrained DFT or not.
-    Only used for TDDFT.
+- **Description**: option for choose whether calcualting constrained DFT or not. Only used for TDDFT.
 - **Default**:0
 
 #### ocp_set
@@ -1722,6 +1721,24 @@ This part of variables are used to control berry phase and wannier90 interfacae 
 - **Type**: string
 - **Description**: If ocp is true, the ocp_set is a string to set the number of occupancy, like 1 10 * 1 0 1 representing the 13 band occupancy, 12th band occupancy 0 and the rest 1, the code is parsing this string into an array through a regular expression.
 - **Default**:none
+
+#### td_val_elec_01
+
+- **Type**: Integer
+- **Description**: Only useful when calculating the dipole. Specifies the number of valence electron associated with the first element.
+- **Default**: 1.0
+
+#### td_val_elec_02
+
+- **Type**: Integer
+- **Description**: Only useful when calculating the dipole. Specifies the number of valence electron associated with the second element.
+- **Default**: 1.0
+
+#### td_val_elec_03
+
+- **Type**: Integer
+- **Description**: Only useful when calculating the dipole. Specifies the number of valence electron associated with the third element.
+- **Default**: 1.0
 
 [back to top](#full-list-of-input-keywords)
 
