@@ -1713,8 +1713,7 @@ This part of variables are used to control berry phase and wannier90 interfacae 
 #### ocp
 
 - **Type**: Boolean
-- **Description**: option for choose whether calcualting constrained DFT or not.
-    Only used for TDDFT.
+- **Description**: option for choose whether calcualting constrained DFT or not. Only used for TDDFT.
 - **Default**:0
 
 #### ocp_set

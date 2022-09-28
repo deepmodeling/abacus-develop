@@ -13,4 +13,4 @@ ecutwfc                         50
 scf_thr                         1.0e-7  // about iteration
 scf_nmax			100
 #Parameters (File)
-out_chg				1
+out_wfc_lcao				1
