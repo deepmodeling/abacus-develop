@@ -42,7 +42,7 @@ $$
 
 ## Pseudopotentials
 
-In ABACUS, we only supports norm-conserving pseudopotentials. We support four different formats of the pseudopotential files: UPF, UPF2, VWR, and BLPS. For more information, check the `ATOMIC_SPECIES` section in the specification of the [STRU file](./input_files/stru.md).
+In ABACUS, we only support norm-conserving pseudopotentials. We support four different formats of the pseudopotential files: UPF, UPF2, VWR, and BLPS. For more information, check the `ATOMIC_SPECIES` section in the specification of the [STRU file](./input_files/stru.md).
 
 Here we list some common sources of the pseudopotential files:
 1. [Quantum ESPRESSO](http://www.quantum-espresso.org/pseudopotentials/).

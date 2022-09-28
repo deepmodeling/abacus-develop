@@ -160,10 +160,14 @@ def CheckJobStatus(path):
 
 def main(run_params,run_dir):
     jcwd = os.getcwd()
+    ### find all pp_orb files
     pp_dir = os.path.join(jcwd,'../tests/PP_ORB/')
     os.chdir(pp_dir)
     pp_orb = glob.glob('*')
     os.chdir(jcwd)
+    ### strip possible "&&" at the end of run_params["ENV_CMD"]
+    run_params["ENV_CMD"] = run_params["ENV_CMD"].strip().strip("&&")
+    ### define dflow OP
     abacus = PythonOPTemplate(AbacusExample,image=run_params["LBG_IMAGE"] ,command=['python3'])
     job_list = []
     os.makedirs('PP_ORB', exist_ok = True)
