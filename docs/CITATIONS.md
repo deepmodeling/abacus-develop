@@ -1,4 +1,4 @@
-# Citations
+# How to Cite
 
 The following references are required to be cited when using ABACUS. Specifically:
 - **For general purpose:**
