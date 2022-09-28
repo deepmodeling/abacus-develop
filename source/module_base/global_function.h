@@ -72,7 +72,7 @@ void OUT(std::ofstream &ofs,const std::string &name,const T &x, const T &y, cons
 template <class T>
 void OUTP(std::ofstream &ofs, const std::string &name, const T &a, const std::string &explanation="")
 {
-	ofs << std::setw(25) << name << a << " #" << explanation << std::endl;
+	ofs << std::setw(30) << name << " " << a << " #" << explanation << std::endl;
 }
 
 template <class T>

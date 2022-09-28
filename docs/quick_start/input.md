@@ -91,7 +91,7 @@ O                       #Name of element
 0.0  0.5  0.0  0 0 0    #x,y,z, move_x, move_y, move_z
 ```
 
-> **Note:** users may choose a different name for their structure file using the keyword `stru_file`
+> **Note:** users may choose a different name for their structure file using the keyword `stru_file`. The order of the pseudopotential file list and the numerical orbital list (if LCAO is applied) MUST be consistent with that of the atomic type given in `ATOMIC_POSITIONS`.
 
 For a more detailed description of STRU file, please consult [here](../advanced/input_files/stru.md).
 
