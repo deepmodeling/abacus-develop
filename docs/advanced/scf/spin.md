@@ -1,4 +1,4 @@
-# Spin-polarization
+# Spin-polarization and SOC
 
 ## Non-spin-polarized Calculations
 Setting of **"nspin 1"** in INPUT file means calculation with non-polarized spin. 
