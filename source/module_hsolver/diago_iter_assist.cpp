@@ -164,6 +164,18 @@ void DiagoIterAssist::diagH_subspace(hamilt::Hamilt* pHamilt,
     return;
 }
 
+#if ((defined __CUDA) || (defined __ROCM))
+//----------------------------------------------------------------------
+// Hamiltonian diagonalization in the subspace spanned
+// by nstart states psi (atomic or random wavefunctions).
+// Produces on output n_band eigenvectors (n_band <= nstart) in evc.
+//----------------------------------------------------------------------
+void DiagoIterAssist::diagH_subspace(hamilt::Hamilt* pHamilt, const psi::Psi<std::complex<double>, psi::DEVICE_GPU> &psi, psi::Psi<std::complex<double>, psi::DEVICE_GPU> &evc, double *en, int n_band) {
+    ModuleBase::WARNING_QUIT("DiagoIterAssist::diagH_subspace","GPU's implementation is not supported currently!");
+}
+#endif
+
+
 void DiagoIterAssist::diagH_subspace_init(hamilt::Hamilt* pHamilt,
                                      const ModuleBase::ComplexMatrix &psi,
                                      psi::Psi<std::complex<double>> &evc,

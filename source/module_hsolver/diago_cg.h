@@ -5,22 +5,27 @@
 #include "module_base/complexmatrix.h"
 #include "src_pw/structure_factor.h"
 
+#include "module_psi/include/types.h"
+#include "module_psi/include/device.h"
+#include "module_psi/include/memory.h"
+
 namespace hsolver
 {
 
+template<typename FPTYPE = double, typename Device = psi::DEVICE_CPU>
 class DiagoCG : public DiagH
 {
   public:
     // Constructor need:
     // 1. temporary mock of Hamiltonian "Hamilt_PW"
     // 2. precondition pointer should point to place of precondition array.
-    DiagoCG(const double *precondition_in);
+    DiagoCG(const FPTYPE *precondition_in);
     ~DiagoCG();
 
     // virtual void init(){};
-
+    // refactor hpsi_info
     // this is the override function diag() for CG method
-    void diag(hamilt::Hamilt *phm_in, psi::Psi<std::complex<double>> &psi, double *eigenvalue_in) override;
+    void diag(hamilt::Hamilt *phm_in, psi::Psi<std::complex<FPTYPE>, Device> &psi, FPTYPE *eigenvalue_in);
 
   private:
     /// static variables, used for passing control variables
@@ -39,44 +44,50 @@ class DiagoCG : public DiagH
     /// non-zero col size for inputted psi matrix
     int dim = 0;
     /// precondition for cg diag
-    const double *precondition = nullptr;
+    const FPTYPE *precondition = nullptr;
     /// eigenvalue results
-    double *eigenvalue = nullptr;
+    FPTYPE *eigenvalue = nullptr;
+
 
     /// temp vector for new psi for one band, size dim
-    psi::Psi<std::complex<double>>* phi_m = nullptr;
+    psi::Psi<std::complex<FPTYPE>, Device>* phi_m = nullptr;
+    // psi::Psi<std::complex<FPTYPE>, Device>* phi_m = nullptr;
     /// temp vector for S|psi> for one band, size dim
-    std::vector<std::complex<double>> sphi;
+    std::vector<std::complex<FPTYPE>> sphi;
     /// temp vector for H|psi> for one band, size dim
-    std::vector<std::complex<double>> hphi;
+    std::vector<std::complex<FPTYPE>> hphi;
 
     /// temp vector for , size dim
-    psi::Psi<std::complex<double>>* cg = nullptr;
+    psi::Psi<std::complex<FPTYPE>, Device>* cg = nullptr;
+    // psi::Psi<std::complex<FPTYPE>, Device>* cg = nullptr;
     /// temp vector for , size dim
-    std::vector<std::complex<double>> scg;
+    std::vector<std::complex<FPTYPE>> scg;
     /// temp vector for store psi in sorting with eigenvalues, size dim
-    std::vector<std::complex<double>> pphi;
+    std::vector<std::complex<FPTYPE>> pphi;
 
     /// temp vector for , size dim
-    std::vector<std::complex<double>> gradient;
+    std::vector<std::complex<FPTYPE>> gradient;
     /// temp vector for , size dim
-    std::vector<std::complex<double>> g0;
+    std::vector<std::complex<FPTYPE>> g0;
     /// temp vector for matrix eigenvector * vector S|psi> , size m_band
-    std::vector<std::complex<double>> lagrange;
+    std::vector<std::complex<FPTYPE>> lagrange;
 
+    /// device type of psi
+    psi::AbacusDevice_t device = {};
+    Device * ctx = {};
 
     void calculate_gradient();
 
-    void orthogonal_gradient(hamilt::Hamilt *phm_in, const psi::Psi<std::complex<double>> &eigenfunction, const int m);
+    void orthogonal_gradient(hamilt::Hamilt *phm_in, const psi::Psi<std::complex<FPTYPE>> &eigenfunction, const int m);
 
-    void calculate_gamma_cg(const int iter, double &gg_last, const double &cg0, const double &theta);
+    void calculate_gamma_cg(const int iter, FPTYPE &gg_last, const FPTYPE &cg0, const FPTYPE &theta);
 
-    bool update_psi(double &cg_norm, double &theta, double &eigenvalue);
+    bool update_psi(FPTYPE &cg_norm, FPTYPE &theta, FPTYPE &eigenvalue);
 
-    void schmit_orth(const int &m, const psi::Psi<std::complex<double>> &psi);
+    void schmit_orth(const int &m, const psi::Psi<std::complex<FPTYPE>> &psi);
 
     // used in diag() for template replace Hamilt with Hamilt_PW
-    void diag_mock(hamilt::Hamilt *phm_in, psi::Psi<std::complex<double>> &phi, double *eigenvalue_in);
+    void diag_mock(hamilt::Hamilt *phm_in, psi::Psi<std::complex<FPTYPE>, Device> &phi, FPTYPE *eigenvalue_in);
 };
 
 } // namespace hsolver
