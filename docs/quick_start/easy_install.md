@@ -30,7 +30,7 @@ Alternatively, you can choose [Intel® oneAPI toolkit](https://software.intel.co
 
 > Please refer to our [guide](https://github.com/deepmodeling/abacus-develop/wiki/Building-and-Running-ABACUS) on requirements.
 
-And of course, a copy of ABACUS source code is required:
+And of course, a copy of ABACUS source code is required, which can be obtained via one of the following choices:
 
 - Clone the whole repo with git: `git clone https://github.com/deepmodeling/abacus-develop.git`
 - Clone the minimum required part of repo: `git clone https://github.com/deepmodeling/abacus-develop.git --depth=1`

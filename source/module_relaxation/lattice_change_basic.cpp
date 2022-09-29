@@ -150,21 +150,22 @@ void Lattice_Change_Basic::change_lattice(double *move, double *lat)
        "<<std::setprecision(12)<<GlobalC::ucell.latvec.e31<<"   "<<GlobalC::ucell.latvec.e32<<"
        "<<GlobalC::ucell.latvec.e33<<std::endl;
     */
+        //--------------------------------------------
+        // Print out the structure file.
+        //--------------------------------------------
+    std::stringstream ss;
+    ss << GlobalV::global_out_dir << "STRU_ION";
     if (out_stru == 1)
     {
-        //--------------------------------------------
-	    // Print out the structure file.
-	    //--------------------------------------------
-	    std::stringstream ss;
-	    ss << GlobalV::global_out_dir << "STRU_ION" << istep;
-	    ss << "_D";
+        ss << istep;
+        GlobalC::ucell.print_cell_cif("STRU_NOW.cif");
+    }
+    ss << "_D";    
 #ifdef __LCAO
 	    GlobalC::ucell.print_stru_file(GlobalC::ORB,ss.str(), 2, 0);
 #else
 	    GlobalC::ucell.print_stru_file(ss.str(), 2, 0);
 #endif
-        GlobalC::ucell.print_cell_cif("STRU_NOW.cif");
-    }
 
     return;
 }
