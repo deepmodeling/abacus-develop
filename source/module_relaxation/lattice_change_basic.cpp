@@ -8,6 +8,7 @@ bool Lattice_Change_Basic::converged = true;
 double Lattice_Change_Basic::largest_grad = 0.0;
 int Lattice_Change_Basic::update_iter = 0;
 int Lattice_Change_Basic::istep = 0;
+int Lattice_Change_Basic::stress_step = 0;
 
 double Lattice_Change_Basic::ediff = 0.0;
 double Lattice_Change_Basic::etot = 0.0;
@@ -262,7 +263,7 @@ void Lattice_Change_Basic::terminate(void)
     if (Lattice_Change_Basic::converged)
     {
         GlobalV::ofs_running << " end of lattice optimization" << std::endl;
-        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "istep", Lattice_Change_Basic::istep);
+        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "stress_step", Lattice_Change_Basic::stress_step);
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "update iteration", Lattice_Change_Basic::update_iter);
         /*
         GlobalV::ofs_running<<"Saving the approximate inverse hessian"<<std::endl;
@@ -288,7 +289,7 @@ void Lattice_Change_Basic::terminate(void)
 
 void Lattice_Change_Basic::setup_etot(const double &energy_in, const bool judgement)
 {
-    if (Lattice_Change_Basic::istep == 1)
+    if (Lattice_Change_Basic::stress_step == 1)
     {
         // p == previous
         Lattice_Change_Basic::etot_p = energy_in;
