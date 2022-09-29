@@ -549,7 +549,7 @@ calculations.
 
 - **Type**: Real
 - **Description**: An important parameter in ABACUS. It's the threshold for electronic iteration. It represents the charge density error between two sequential density from electronic iterations. Usually for local orbitals, usually 1e-6 may be accurate enough.
-- **Default**:1e-06
+- **Default**: 1.0e-9
 
 #### chg_extrap
 
@@ -665,13 +665,13 @@ This part of variables are used to control the geometry relaxation.
 
 - **Type**: Real
 - **Description**: The threshold of the force convergence, it indicates the largest force among all the atoms, the unit is Ry=Bohr
-- **Default**: 0.000388935 Ry/Bohr = 0.01 eV/Angstrom
+- **Default**: 0.001 Ry/Bohr = 0.0257112 eV/Angstrom
 
 #### force_thr_ev
 
 - **Type**: Real
-- **Description**: The threshold of the force convergence, has the same function as force_thr, just the unit is different, it is eV=Angstrom, you can choose either one as you like. The recommendation value for using atomic orbitals is 0:04 eV/Angstrom.
-- **Default**: 0.01 eV/Angstrom
+- **Description**: The threshold of the force convergence, has the same function as force_thr, just the unit is different, it is eV=Angstrom, you can choose either one as you like. The recommendation value for using atomic orbitals is 0.04 eV/Angstrom.
+- **Default**: 0.0257112 eV/Angstrom
 
 #### force_thr_ev2
 
