@@ -11,6 +11,7 @@ namespace Lattice_Change_Basic
 	extern double largest_grad; // largest gradient among the forces,
 	extern int update_iter; // number of sucesfully updated iterations, 
 	extern int istep; // index of ionic steps, 
+	extern int stress_step; // index of stress step
 	extern double ediff; // energy difference compared to last step,
 	extern double etot; // total energy of this step,
 	extern double etot_p; // total energy of last step,

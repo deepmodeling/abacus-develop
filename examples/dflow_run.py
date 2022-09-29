@@ -160,10 +160,14 @@ def CheckJobStatus(path):
 
 def main(run_params,run_dir):
     jcwd = os.getcwd()
+    ### find all pp_orb files
     pp_dir = os.path.join(jcwd,'../tests/PP_ORB/')
     os.chdir(pp_dir)
     pp_orb = glob.glob('*')
     os.chdir(jcwd)
+    ### strip possible "&&" at the end of run_params["ENV_CMD"]
+    run_params["ENV_CMD"] = run_params["ENV_CMD"].strip().strip("&&")
+    ### define dflow OP
     abacus = PythonOPTemplate(AbacusExample,image=run_params["LBG_IMAGE"] ,command=['python3'])
     job_list = []
     os.makedirs('PP_ORB', exist_ok = True)
@@ -241,6 +245,8 @@ def RandomDisturbParser():
             default=0, help='run dflow: 1 run, default 0')
     parser.add_argument('-post', '--post', type=int,
             default=0, help='checkout job status: 1 check, default 0')
+    parser.add_argument('-find', '--find', type=int,
+            default=0, help='find directories having runall.sh: 1 find, default 0')
     return parser.parse_args()
 
 
@@ -248,6 +254,7 @@ if __name__ == "__main__":
     args = RandomDisturbParser()
     run = args.run
     post = args.post
+    find = args.find
     lebesgue_context = LebesgueContext(
         username="xxx@xxx.xxx",
         password="xxxxxx",
@@ -271,6 +278,15 @@ if __name__ == "__main__":
     #run_dir = ["electrostatic_potential","scf","wfc"]
     if run == 1:
         main(run_params,run_dir)
-    if post == 1:
+    elif post == 1:
         for idir in range(len(run_dir)):
             CheckJobStatus(run_dir[idir])
+    elif find == 1:
+        for idir in range(len(run_dir)):
+            os.chdir(run_dir[idir])
+            allfiles = glob.glob("*")
+            if "runall.sh" in allfiles:
+                print("ok",run_dir[idir],"has runall.sh" )
+            else:
+                print("Warning",run_dir[idir],"has no runall.sh" )
+            os.chdir("../")
