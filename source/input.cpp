@@ -64,7 +64,7 @@ void Input::Init(const std::string &fn)
     time_t time_now = time(NULL);
     GlobalV::ofs_running << "                                                                                     "
                          << std::endl;
-    GlobalV::ofs_running << "                             WELCOME TO ABACUS                                       "
+    GlobalV::ofs_running << "                             WELCOME TO ABACUS v3.0                                  "
                          << std::endl;
     GlobalV::ofs_running << "                                                                                     "
                          << std::endl;

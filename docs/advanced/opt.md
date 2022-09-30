@@ -41,7 +41,7 @@ In ABACUS, we implemented the CG method for doing fixed-cell structural relaxati
 Apart from conventional optimization where all degrees of freedom are allowed to move, we also offer the option of doing constrained optimization in ABACUS.
 
 ### Fixing Atomic Positions  
-Users may note that in the above-mentioned [example](), the atomic positions in STRU file are given along with three integers:
+Users may note that in the above-mentioned example, the atomic positions in STRU file are given along with three integers:
 
 ```
 Al

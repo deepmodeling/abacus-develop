@@ -1,0 +1,13 @@
+/*******************************************************************************/
+/
+/ These are the examples of ABACUS program.
+/
+/*******************************************************************************/
+
+An example showcasing how to run MD with stochastic DFT
+The meanings of some parameters in INPUT are:
+
+- nbands: number of determinisitic KS orbitals
+- nbands_sto: number of stochastic orbitals
+- nche_sto: order of Chebyshev expansion
+- method_sto: method to do stochastic calculations
