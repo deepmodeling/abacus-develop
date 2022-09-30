@@ -3,8 +3,8 @@ INPUT_PARAMETERS
 ntype               1
 calculation         cell-relax
 relax_nmax	    100
-force_thr_ev        0.001
-stress_thr          0.01
+force_thr_ev        0.01
+stress_thr          1
 relax_method        bfgs
 out_stru            1
 out_level           ie
@@ -23,4 +23,5 @@ cal_stress          1
 out_stru            1
 kspacing            0.12
 chg_extrap          second-order #atomic; first-order; second-order; dm:coefficients of SIA
+pseudo_dir	    ../../../tests/PP_ORB
 
