@@ -1,5 +1,5 @@
 INPUT_PARAMETERS
-pseudo_dir	  ./
+pseudo_dir	  ../../../tests/PP_ORB
 ntype		  1
 dft_functional    pbe
 symmetry	  0
