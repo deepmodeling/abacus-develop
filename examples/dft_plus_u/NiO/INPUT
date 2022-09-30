@@ -3,6 +3,9 @@ suffix    NiO
 ntype    2
 nbands    40
 
+pseudo_dir ../../../tests/PP_ORB
+orbital_dir ../../../tests/PP_ORB
+
 calculation    scf
 ecutwfc    100
 scf_thr    1.0e-6
