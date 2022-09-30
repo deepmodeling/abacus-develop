@@ -4,8 +4,6 @@
 - [Set k-points explicitly](#set-k-points-explicitly)
 - [Band structure calculations](#band-structure-calculations)
 
-   [back to main page](../README.md)
-
 ABACUS uses periodic boundary conditions for both crystals and finite systems. For isolated systems, such as atoms, molecules, clusters, etc., one uses the so-called supercell model. Lattice vectors of the supercell are set in the `STRU` file. For the input k-point (`KPT`) file, the file should either contain the k-point coordinates and weights or the mesh size for creating the k-point gird. Both options are allowed in `ABACUS`.
 
 ## Gamma-only Calculations
@@ -39,7 +37,7 @@ The first three numbers of the last line are integers, which give the MP k grid 
 the rest three are real numbers, which give the offset of the k grid. In this example, the numbers
 `0 0 0` means that there is no offset, and this is the a standard 2by2by2 k grid.
 
-[back to top](#kpt-file)
+[back to top](#the-kpt-file)
 
 ## Set k-points explicitly
 
@@ -60,7 +58,7 @@ Direct //`Direct' or `Cartesian' coordinate
 0.5 0.5 0.5 0.125
 ```
 
-[back to top](#kpt-file)
+[back to top](#the-kpt-file)
 
 ## Band structure calculations
 
@@ -84,4 +82,4 @@ Line // line-mode
 The fourth line and the following are special k-point coordinates and number of k-points
 between this special k-point and the next.
 
-[back to top](#kpt-file)
+[back to top](#the-kpt-file)
