@@ -5,8 +5,6 @@
   - [latname fcc](#latname-fcc)
 - [Structure of the file](#structure-of-the-file)
 
-    [back to main page](../README.md)
-
 ## Examples
 
 The `STRU` file contains the information about the lattice geometry, the name(s) and/or location(s) of the pseudopotential and numerical orbital files, as well as the structural information about the system.
