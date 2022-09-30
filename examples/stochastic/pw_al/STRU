@@ -1,0 +1,33 @@
+    ATOMIC_SPECIES
+    Al 26.98 Al_ONCV_PBE_sr.upf	#Element, Mass, Pseudopotential
+
+    LATTICE_CONSTANT
+    12.14569  			#Lattice constant
+
+    LATTICE_VECTORS
+    1.0 0.0 0.0 		#Lattice vector 1
+    0.0 1.0 0.0		    #Lattice vector 2
+    0.0 0.0 1.0 		#Lattice vector 3
+
+    ATOMIC_POSITIONS
+    Cartesian 		#Cartesian(Unit is LATTICE_CONSTANT)
+
+    Al 			#Name of element	
+    0.0			#Magnetic for this element.
+    16			#Number of atoms
+    0.0598184   0.789049    0.599279    1   1   1
+    0.0379145   0.996286    0.225113    1   1   1
+    0.970468    0.216979    0.785658    1   1   1
+    0.625149    0.0674556   0.582236    1   1   1
+    0.744445    0.531421    0.825099    1   1   1
+    0.913838    0.377547    0.417868    1   1   1
+    0.733554    0.756325    0.367093    1   1   1
+    0.348249    0.284465    0.805284    1   1   1
+    0.442703    0.538407    0.0932358   1   1   1
+    0.575306    0.363412    0.338145    1   1   1
+    0.241851    0.860453    0.996106    1   1   1
+    0.717794    0.905869    0.887799    1   1   1
+    0.450016    0.564658    0.611414    1   1   1
+    0.401454    0.9478      0.374336    1   1   1
+    0.662405    0.250878    0.0369698   1   1   1
+    0.0750363   0.548996    0.0543649   1   1   1
