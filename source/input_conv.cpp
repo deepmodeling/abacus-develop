@@ -458,7 +458,7 @@ void Input_Conv::Convert(void)
     //----------------------------------------------------------
     GlobalV::OUT_FREQ_ELEC = INPUT.out_freq_elec;
     GlobalV::OUT_FREQ_ION = INPUT.out_freq_ion;
-    GlobalC::pot.init_chg = INPUT.init_chg;
+    GlobalC::CHR.init_chg = INPUT.init_chg;
     GlobalC::pot.chg_extrap = INPUT.chg_extrap; // xiaohui modify 2015-02-01
     GlobalC::CHR.out_chg = INPUT.out_chg;
     GlobalC::CHR.nelec = INPUT.nelec;
