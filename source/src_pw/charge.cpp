@@ -139,7 +139,7 @@ void Charge::init_rho(const std::string &init_chg)
 {
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "init_chg", init_chg);
 
-    std::cout << " START POTENTIAL      : " << init_chg << std::endl;
+    std::cout << " START CHARGE      : " << init_chg << std::endl;
     if (this->init_chg == "atomic") // mohan add 2007-10-17
     {
     start_from_atomic:
@@ -147,7 +147,7 @@ void Charge::init_rho(const std::string &init_chg)
     }
     else if (this->init_chg == "file")
     {
-        GlobalV::ofs_running << " try to start potential from file : ";
+        GlobalV::ofs_running << " try to ready charge from file : ";
         for (int is = 0; is < GlobalV::NSPIN; is++)
         {
             std::stringstream ssc;
@@ -175,7 +175,7 @@ void Charge::init_rho(const std::string &init_chg)
                 { // read up and down , then rearrange them.
                     if (is == 1)
                     {
-                        ModuleBase::WARNING_QUIT("potential::init_pot", "Incomplete charge density file!");
+                        ModuleBase::WARNING_QUIT("Charge::init_rho", "Incomplete charge density file!");
                     }
                     else if (is == 2)
                     {
@@ -196,7 +196,7 @@ void Charge::init_rho(const std::string &init_chg)
                 }
                 else
                 {
-                    ModuleBase::WARNING_QUIT("potential::init_pot", "Incomplete charge density file!");
+                    ModuleBase::WARNING_QUIT("Charge::init_rho", "Incomplete charge density file!");
                 }
             }
             else
@@ -208,7 +208,7 @@ void Charge::init_rho(const std::string &init_chg)
     }
     else
     {
-        ModuleBase::WARNING_QUIT("potential::init_pot", "init_chg is wrong!");
+        ModuleBase::WARNING_QUIT("Charge::init_rho", "init_chg is wrong!");
     }
 
     // Peize Lin add 2020.04.04
