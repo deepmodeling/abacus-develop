@@ -17,7 +17,10 @@ namespace ModuleESolver
         cell.resize(9);
         atype.resize(ucell.nat);
         coord.resize(3 * ucell.nat);
+    }
 
+    void ESolver_DP::Run(const int istep, UnitCell_pseudo& ucell)
+    {
         cell[0] = ucell.latvec.e11 * ucell.lat0_angstrom;
         cell[1] = ucell.latvec.e12 * ucell.lat0_angstrom;
         cell[2] = ucell.latvec.e13 * ucell.lat0_angstrom;
@@ -41,10 +44,7 @@ namespace ModuleESolver
             }
         }
         assert(ucell.nat == iat);
-    }
 
-    void ESolver_DP::Run(const int istep, UnitCell_pseudo& ucell)
-    {
 #ifdef __DPMD
         if (access("graph.pb", 0) == -1)
         {
@@ -54,6 +54,9 @@ namespace ModuleESolver
         deepmd::DeepPot dp("graph.pb");
 
         std::vector<double> f, v;
+        dp_potential = 0;
+        dp_force.zero_out();
+        dp_virial.zero_out();
 
         dp.compute(dp_potential, f, v, coord, atype, cell);
 
@@ -83,7 +86,7 @@ namespace ModuleESolver
 
     void ESolver_DP::cal_Energy(double& etot)
     {
-
+        etot = dp_potential;
     }
 
     void ESolver_DP::cal_Force(ModuleBase::matrix& force)

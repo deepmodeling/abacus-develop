@@ -240,7 +240,7 @@ void MD_func::force_virial(
 	ModuleBase::TITLE("MD_func", "force_stress");
     ModuleBase::timer::tick("MD_func", "force_stress");
 
-	if(mdp.md_ensolver == "LJ")
+	if(mdp.md_ensolver == "LJ" || mdp.md_ensolver == "DP")
 	{
         p_esolver->Run(istep, unit_in);
 
@@ -258,40 +258,11 @@ void MD_func::force_virial(
         print("   TOTAL-FORCE (eV/Angstrom)", force_temp, unit_in);
 
         p_esolver->cal_Stress(stress);
-		// bool which_method = unit_in.judge_big_cell();
-		// if(which_method)
-		// {
-		// 	CMD_neighbor cmd_neigh;
-		// 	cmd_neigh.neighbor(unit_in);
-
-		// 	potential = LJ_potential::Lennard_Jones(
-		// 						unit_in,
-		// 						cmd_neigh,
-		// 						force,
-		// 						stress);
-		// }
-		// else
-		// {
-		// 	Grid_Driver grid_neigh(GlobalV::test_deconstructor, GlobalV::test_grid_driver, GlobalV::test_grid);
-		// 	atom_arrange::search(
-		// 			GlobalV::SEARCH_PBC,
-		// 			GlobalV::ofs_running,
-		// 			grid_neigh,
-		// 			unit_in, 
-		// 			GlobalV::SEARCH_RADIUS, 
-		// 			GlobalV::test_atom_input);
-
-		// 	potential = LJ_potential::Lennard_Jones(
-		// 						unit_in,
-		// 						grid_neigh,
-		// 						force,
-		// 						stress);
-		// }
 	}
-	else if(mdp.md_ensolver == "DP")
-	{
-		DP_potential::DP_pot(unit_in, potential, force, stress);
-	}
+	// else if(mdp.md_ensolver == "DP")
+	// {
+	// 	DP_potential::DP_pot(unit_in, potential, force, stress);
+	// }
 #ifndef __CMD
 	else if(mdp.md_ensolver == "FP")
 	{

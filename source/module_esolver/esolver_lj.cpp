@@ -101,14 +101,7 @@ namespace ModuleESolver
 
     void ESolver_LJ::cal_Stress(ModuleBase::matrix& stress)
     {
-        // stress = lj_virial;
-        for(int i=0; i<3; ++i)
-        {
-            for(int j=0; j<3; ++j)
-            {
-                stress(i, j) = lj_virial(i, j);
-            }
-        }
+        stress = lj_virial;
     }
 
     double ESolver_LJ::LJ_energy(const double d)
