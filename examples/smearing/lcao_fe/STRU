@@ -1,0 +1,29 @@
+ATOMIC_SPECIES
+Fe1 1.000 Fe_ONCV_PBE-1.0.upf
+Fe2 1.000 Fe_ONCV_PBE-1.0.upf
+
+NUMERICAL_ORBITAL
+Fe_gga_9au_100Ry_4s2p2d1f.orb
+Fe_gga_9au_100Ry_4s2p2d1f.orb
+
+LATTICE_CONSTANT
+15
+
+LATTICE_VECTORS
+ 1.00    0.50     0.50
+ 0.50    1.00     0.50
+ 0.50    0.50     1.00
+ATOMIC_POSITIONS
+Direct
+
+Fe1
+1.0
+1
+0.00            0.00            0.00            1        1       1
+
+Fe2
+-1.0
+1
+0.50            0.50            0.50            1        1       1
+
+

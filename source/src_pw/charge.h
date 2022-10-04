@@ -96,8 +96,6 @@ public:
 
     void sum_band_k();
 
-	
-
 	// mohan add 2021-02-20
 	int nrxx; // number of r vectors in this processor
 	int ngmc; // number of g vectors in this processor

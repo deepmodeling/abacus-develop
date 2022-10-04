@@ -1,0 +1,24 @@
+/*******************************************************************************/
+/
+/ These are the examples of ABACUS program.
+/
+/*******************************************************************************/
+
+ABACUS supports adding a saw-like potential simulating an electric field
+can to the bare ionic potential, which is a simplified simulation to the field-effect measurements, in which the system is separated from the gate electrode by a dielectric such as silicon oxide.
+
+An external electric field can be added with the following 
+parameters in INPUT file, 
+
+```
+INPUT_PARAMETERS
+efield_flag        1
+efield_dir         2
+efield_pos_max     0.5
+efield_pos_dec     0.1
+efield_amp         0.001
+```
+
+Detailed explaination of these keywords can be found [here](https://github.com/deepmodeling/abacus-develop/blob/develop/docs/input-main.md#electric-field-and-dipole-correction). The energy contribution from the added external field is given as `E_efield` in the output file. See `running_scf.ref` for the output of this example. Note that both `pw` and `lcao` (specified via `basis type`) are supported for this functionality. 
+
+

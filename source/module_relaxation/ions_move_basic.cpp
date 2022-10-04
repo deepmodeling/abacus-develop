@@ -118,7 +118,10 @@ void Ions_Move_Basic::move_atoms(double *move, double *pos)
 	//xiaohui modify 2015-03-15, cancel outputfile "STRU_NOW.xyz"
 	//GlobalC::ucell.print_cell_xyz("STRU_NOW.xyz");
 	//xiaohui add out_stru, 2015-09-30
-	if(out_stru==1) GlobalC::ucell.print_cell_cif("STRU_NOW.cif");
+	if(out_stru==1)
+	{
+		GlobalC::ucell.print_cell_cif("STRU_NOW.cif");
+	}
 	return;
 }
 

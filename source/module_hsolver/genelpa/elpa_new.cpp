@@ -3,7 +3,6 @@
 #include "elpa_solver.h"
 #include "my_math.hpp"
 #include "utils.h"
-
 #include <cfloat>
 #include <complex>
 #include <cstring>
@@ -18,7 +17,7 @@
 using namespace std;
 
 map<int, elpa_t> NEW_ELPA_HANDLE_POOL;
-
+#ifdef __MPI
 ELPA_Solver::ELPA_Solver(const bool isReal,
                          const MPI_Comm comm,
                          const int nev,
@@ -134,6 +133,7 @@ ELPA_Solver::ELPA_Solver(const bool isReal,
     this->setKernel(isReal, kernel_id);
     this->setLoglevel(loglevel);
 }
+#endif
 
 void ELPA_Solver::setLoglevel(int loglevel)
 {
@@ -417,7 +417,12 @@ int ELPA_Solver::allocate_work()
 {
     unsigned long nloc = narows * nacols; // local size
     unsigned long maxloc; // maximum local size
+#ifdef __MPI
     MPI_Allreduce(&nloc, &maxloc, 1, MPI_UNSIGNED_LONG, MPI_MAX, comm);
+#else
+    maxloc = nloc;
+#endif
+
     if (isReal)
         dwork.resize(maxloc);
     else
@@ -430,12 +435,20 @@ void ELPA_Solver::timer(int myid, const char function[], const char step[], doub
     double t1;
     if (t0 < 0) // t0 < 0 means this is the init call before the function
     {
+#ifdef __MPI
         t0 = MPI_Wtime();
+#else
+        t0 = (double)clock()/CLOCKS_PER_SEC;
+#endif
         logfile << "DEBUG: Process " << myid << " Call " << function << endl;
     }
     else
     {
+#ifdef __MPI
         t1 = MPI_Wtime();
+#else
+        t1 = (double)clock()/CLOCKS_PER_SEC;
+#endif
         logfile << "DEBUG: Process " << myid << " Step " << step << " " << function << " time: " << t1 - t0 << " s"
                 << endl;
     }

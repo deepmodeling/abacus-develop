@@ -1,0 +1,28 @@
+/*******************************************************************************/
+/
+/ These are the examples of ABACUS program.
+/
+/*******************************************************************************/
+
+ABACUS supports implicit solvation model to address the solvation when 
+simulating the liquid solution environment. The implicit solvation model 
+implemented in ABACUS follows the 
+[methodology](https://aip.scitation.org/doi/10.1063/1.4865107) developed 
+by Mathew, Sundararaman, Letchworth-Weaver, Arias, and Hennig in 2014.
+
+The user can apply implicit solvation model in INPUT file with the following 
+parameters, 
+
+```
+INPUT_PARAMETERS
+imp_sol                 1
+eb_k                    80
+tau                     0.000010798
+sigma_k                 0.6
+nc_k                    0.00037
+```
+
+Detailed explaination of these keywords can be found [here](https://github.com/deepmodeling/abacus-develop/blob/develop/docs/input-main.md#implicit-solvation-model). The type of the solvent is controlled via `eb_k`, i.e., the relative permittivity of the desired solvent. The solvation energy is calculated by taking the difference between the total energy with the solvation model (`imp_sol == 1`) and that without the solvation model (`imp_sol == 0`). Note that both `pw` and `lcao` (specified via `basis type`)
+are supported for implicit solvation model calculation. 
+
+

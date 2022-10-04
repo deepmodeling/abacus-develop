@@ -1,0 +1,15 @@
+INPUT_PARAMETERS
+#Parameters	(General)
+pseudo_dir		../../../tests/PP_ORB
+orbital_dir		../../../tests/PP_ORB
+ntype			3	
+#Parameters (Accuracy)
+ecutwfc			50
+scf_nmax		100
+scf_thr                 1e-6
+basis_type		lcao
+
+gamma_only 1
+
+smearing_method gauss
+smearing_sigma 0.02

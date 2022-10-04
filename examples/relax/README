@@ -1,0 +1,23 @@
+/*******************************************************************************/
+/
+/ These are the examples of ABACUS program.
+/
+/*******************************************************************************/
+
+This example contains the method to optimize the atom positions.
+
+Note:
+
+(1)Optimize atomic positions by setting `calculation` set to `relax`, and optimize
+both lattice parameters and atomic positions by setting `calculation` to `cell-relax`.
+
+
+(2)Use Conjugate Gradient (CG) algorithm to optimize the atom positions.
+set `relax_method` to `cg`(default value)
+
+
+(3)`relax_nmax`: number of ion iteration steps; `force_thr_ev`: force threshold, unit: eV/Angstrom; \
+`stress_ev`: stress threshold, unit: kBar.
+
+(4)Output file OUT.ABACUS/STRU_NOW.cif contains the optimized atom positions.
+

@@ -1,4 +1,5 @@
 #include "esolver_ks_lcao_tddft.h"
+#include "src_io/cal_r_overlap_R.h"
 
 //--------------temporary----------------------------
 #include "../module_base/blas_connector.h"
@@ -43,6 +44,13 @@ ESolver_KS_LCAO_TDDFT::~ESolver_KS_LCAO_TDDFT()
 void ESolver_KS_LCAO_TDDFT::Init(Input& inp, UnitCell_pseudo& ucell)
 {
     ESolver_KS::Init(inp, ucell);
+
+    // Inititlize the charge density.
+    GlobalC::CHR.allocate(GlobalV::NSPIN, GlobalC::rhopw->nrxx, GlobalC::rhopw->npw);
+    //GlobalC::CHR.allocate(GlobalV::NSPIN, GlobalC::rhopw->nrxx, GlobalC::rhopw->npw);
+    ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT CHARGE");
+    // Initializee the potential.
+    GlobalC::pot.allocate(GlobalC::rhopw->nrxx);
 
     // Initialize the local wave functions.
     // npwx, eigenvalues, and weights
@@ -457,8 +465,11 @@ void ESolver_KS_LCAO_TDDFT::afterscf(const int istep)
         const int precision = 3;
 
         std::stringstream ssc;
+        std::stringstream ss1;
         ssc << GlobalV::global_out_dir << "SPIN" << is + 1 << "_CHG";
+        ss1 << GlobalV::global_out_dir << "SPIN" << is + 1 << "_CHG.cube";
         GlobalC::CHR.write_rho(GlobalC::CHR.rho_save[is], is, 0, ssc.str()); // mohan add 2007-10-17
+        GlobalC::CHR.write_rho_cube(GlobalC::CHR.rho_save[is], is, ss1.str(), 3);
 
         std::stringstream ssd;
         if (GlobalV::GAMMA_ONLY_LOCAL)
@@ -516,6 +527,14 @@ void ESolver_KS_LCAO_TDDFT::afterscf(const int istep)
         GlobalV::ofs_running << " !! convergence has not been achieved @_@" << std::endl;
         if (GlobalV::OUT_LEVEL == "ie" || GlobalV::OUT_LEVEL == "m") // xiaohui add "m" option, 2015-09-16
             std::cout << " !! CONVERGENCE HAS NOT BEEN ACHIEVED !!" << std::endl;
+    }
+
+    // add by jingan for out r_R matrix 2019.8.14
+    if(INPUT.out_mat_r)
+    {
+        cal_r_overlap_R r_matrix;
+        r_matrix.init(*this->LOWF.ParaV);
+        r_matrix.out_r_overlap_R();
     }
 
     if (Pdiag_Double::out_mat_hsR)

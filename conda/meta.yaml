@@ -1,0 +1,63 @@
+{% set version = os.popen('git describe --tags --abbrev=0').read().strip('\n').lstrip('v').replace('-', '_') %}
+
+package:
+  name: abacus
+  version: {{ version }}
+
+source:
+  path: ..
+  # git_url: https://github.com/deepmodeling/abacus-develop.git
+  # git_rev: v3.0.0
+
+build:
+  skip: true  # [not linux]
+  script: |
+    cmake -B conda_build ${CMAKE_ARGS}
+    cmake --build conda_build -j`nproc`
+    cmake --install conda_build
+  string: {{ GIT_BUILD_STR }}
+  number: {{ GIT_DESCRIBE_NUMBER }}
+
+requirements:
+  build:
+    - {{ compiler('cxx') }}
+    - make
+    - cmake
+    - libgomp # [linux]
+
+  host:
+    - {{ mpi }}
+    - blas=*=openblas
+    - elpa=*=mpi*
+    - fftw
+
+  run:
+    - {{ mpi }}
+    - elpa=*=mpi*
+    - fftw
+    - blas=*=openblas
+    - libopenblas
+    - scalapack
+
+test:
+  commands:
+    - abacus
+    - mpirun -n 2 abacus
+
+about:
+  home: http://abacus.ustc.edu.cn/
+  doc_url: https://abacus.deepmodeling.com/
+  dev_url: https://github.com/deepmodeling/abacus-develop
+  license: LGPL-3.0
+  license_family: LGPL
+  license_file: LICENSE
+  summary: An electronic structure package based on plane wave and numerical atomic basis sets.
+  description: >
+    ABACUS (Atomic-orbital Based Ab-initio Computation at UStc) is an open-source package based on density functional theory (DFT).
+    The package utilizes both plane wave and numerical atomic basis sets with the usage of norm-conserving pseudopotentials
+    to describe the interactions between nuclear ions and valence electrons. ABACUS supports LDA, GGA, meta-GGA, and hybrid functionals.
+    Apart from single-point calculations, the package allows geometry optimizations and ab-initio molecular dynamics with various ensembles.
+
+extra:
+  recipe-maintainers:
+    - caic99

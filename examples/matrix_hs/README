@@ -1,0 +1,21 @@
+/*******************************************************************************/
+/
+/ These are the examples of ABACUS program.
+/
+/*******************************************************************************/
+
+These examples show how to output the H/S matrix.
+For the H/S matrix in K-space:
+	- set 'out_mat_hs' to '1'
+After finishing the job, the H (S) matrix file 'data-${index_K}-H' (data-${index_K}-S) 
+are outputed in OUT.${suffix}
+
+While, for H/S matrix in real space:
+	- set 'out_mat_hs2' to '1'
+After finishing the job, the H (S) matrix file 'data-HR-sparse_SPIN0.csr' ('data-SR-sparse_SPIN0.csr') 
+are outputed in OUT.${suffix}
+
+Besides, one can directly output the S matrix without SCF calculation by:
+	- set 'calculation' to 'get_s'
+	- set 'out_mat_hs' or 'out_mat_hs2' to '1'
+

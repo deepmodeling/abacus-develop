@@ -2,6 +2,7 @@
 
 #include "module_base/global_variable.h"
 #include "module_base/tool_title.h"
+#include "module_base/memory.h"
 #include "src_parallel/parallel_reduce.h"
 #include "src_pw/global.h"
 #include "src_pw/occupy.h"

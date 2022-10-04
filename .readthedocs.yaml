@@ -7,15 +7,10 @@ version: 2
 
 # Build documentation in the docs/ directory with Sphinx
 sphinx:
-   configuration: source/module_deepks/sphinx/source/conf.py
-#   configuration: source/module_orbital/1_Documents/sphinx/source/conf.py
-
-# Optionally build your docs in additional formats such as PDF
-formats:
-   - pdf
+   configuration: docs/conf.py
 
 # Optionally set the version of Python and requirements required to build your docs
 python:
-   version: 3.7
+   version: 3.8
    install:
-   - requirements: source/module_orbital/1_Documents/sphinx/requirements.txt
+   - requirements: docs/requirements.txt

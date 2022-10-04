@@ -1,0 +1,11 @@
+INPUT_PARAMETERS
+pseudo_dir              ../../../tests/PP_ORB
+orbital_dir             ../../../tests/PP_ORB
+ntype       		3
+ecutwfc     		50
+symmetry    		0
+calculation 		nscf
+basis_type  		lcao
+init_chg  		file
+berry_phase   		1
+gdir          		3

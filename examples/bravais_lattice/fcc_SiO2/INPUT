@@ -1,0 +1,11 @@
+INPUT_PARAMETERS
+#Parameters	(General)
+pseudo_dir              ../../../tests/PP_ORB
+ntype			1	
+calculation		scf
+#Parameters (Accuracy)
+ecutwfc			50
+scf_thr         	1e-8
+scf_nmax		20
+basis_type		pw
+latname			fcc

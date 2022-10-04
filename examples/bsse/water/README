@@ -1,0 +1,12 @@
+example showcasing how to use BSSE correction to calculate formation energy of water
+STRU_0 : used along with ntype = 2;normal calculation of water molecule (E_h2o)
+	 obtained total energy of -466.4838149140513 eV
+STRU_1 : used along with ntype = 2;calculation of single O atom (E_o)
+	 obtained total energy of -427.9084406198214 eV
+STRU_2 : used along with ntype = 3;calculation of 1st H atom (E_h1)
+         obtained total energy of -12.59853381731160 eV
+STRU_3 : used along with ntype = 3;calculation of 2nd H atom (E_h2)
+         obtained total energy of -12.59853378720844 eV
+
+Thus, the formation energy is given by:
+E_h2o - (E_o + E_h1 + E_h2) ~ -13.38 eV

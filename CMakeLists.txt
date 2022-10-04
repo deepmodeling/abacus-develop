@@ -1,11 +1,10 @@
-########################################
-# CMake build system
-# This file is part of ABACUS
 cmake_minimum_required(VERSION 3.16)
-########################################
+if(POLICY CMP0131) # From CMake 3.24
+    cmake_policy(SET CMP0135 NEW)
+endif()
 
 project(ABACUS
-    VERSION 2.3.0
+    VERSION 3.0.0
     DESCRIPTION "ABACUS is an electronic structure package based on DFT."
     HOMEPAGE_URL "https://github.com/deepmodeling/abacus-develop"
     LANGUAGES CXX
@@ -241,29 +240,18 @@ if(DEFINED Libxc_DIR)
   set(ENABLE_LIBXC ON)
 endif()
 if(ENABLE_LIBXC)
-  find_package(Libxc 5.1.7 HINTS ${Libxc_DIR}/share/cmake/Libxc)
+  find_package(Libxc 5.1.7 REQUIRED HINTS ${Libxc_DIR}/share/cmake/Libxc)
   if(${Libxc_FOUND})
-    message(STATUS "Found Libxc: version "${Libxc_VERSION})
+    message(STATUS "Found Libxc: version " ${Libxc_VERSION})
     target_link_libraries(${ABACUS_BIN_NAME} Libxc::xc)
     include_directories(${Libxc_INCLUDE_DIRS})
-  else()
-    include(FetchContent)
-    FetchContent_Declare(
-      Libxc
-      GIT_REPOSITORY https://gitlab.com/libxc/libxc.git
-      GIT_TAG "5.2.3"
-      GIT_SHALLOW TRUE
-      GIT_PROGRESS TRUE
-    )
-    FetchContent_MakeAvailable(Libxc)
+    add_compile_definitions(USE_LIBXC)
   endif()
-  add_compile_definitions(USE_LIBXC)
 endif()
 
 add_compile_definitions(
   __EXX
   __FFTW3
-  __FP
   __SELINV
   __LCAO
   METIS

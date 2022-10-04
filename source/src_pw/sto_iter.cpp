@@ -291,7 +291,7 @@ void Stochastic_Iter::itermu(const int iter, elecstate::ElecState* pes)
     }
     pes->ef = this->stofunc.mu = mu0 = mu3;
     GlobalV::ofs_running<<"Converge fermi energy = "<<mu3<<" Ry in "<<count<<" steps."<<std::endl;
-    this->check_precision(targetne,GlobalV::SCF_THR,"Ne");
+    this->check_precision(targetne,10*GlobalV::SCF_THR,"Ne");
     
     //Set wf.wg 
     if(GlobalV::NBANDS > 0)

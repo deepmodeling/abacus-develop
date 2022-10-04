@@ -1,0 +1,18 @@
+/*******************************************************************************/
+/
+/ These are the examples of ABACUS program.
+/
+/*******************************************************************************/
+
+Here are two examples:
+
+1. Generate projectors (a series of bessel functions) for DeePKS. \
+A file named `jle.orb` will be generated which contains the projectors.
+
+   - see pw_H2O
+
+2. A scf calculation with a trained DeePKS model loaded. A few .npy files will \
+be generated which are for DeePKS training only. The total energy and \
+force will be output in a way as a normal SCF job does. 
+
+   - see lcao_H2O
