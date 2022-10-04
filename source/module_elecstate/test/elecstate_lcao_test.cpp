@@ -50,6 +50,8 @@ pseudopot_cell_vl::pseudopot_cell_vl(){}
 pseudopot_cell_vl::~pseudopot_cell_vl(){}
 energy::energy(){}
 energy::~energy(){}
+Parallel_Grid::Parallel_Grid(){}
+Parallel_Grid::~Parallel_Grid(){}
 namespace GlobalC
 {
     energy en;
@@ -63,6 +65,7 @@ namespace GlobalC
     wavefunc wf;
     Charge CHR;
     Grid_Driver GridD(GlobalV::test_deconstructor, GlobalV::test_grid_driver,GlobalV::test_grid);
+    Parallel_Grid Pgrid;
 }
 
 
@@ -102,6 +105,9 @@ bool Occupy::use_gaussian_broadening = false;
 bool Occupy::use_tetrahedron_method = false;
 double Magnetism::get_nelup(void) {return 0;}
 double Magnetism::get_neldw(void) {return 0;}
+#ifdef __MPI
+void Parallel_Grid::zpiece_to_all(double *zpiece, const int &iz, double *rho){}
+#endif
 
 void set_pw()
 {
