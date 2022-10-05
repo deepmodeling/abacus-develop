@@ -132,7 +132,7 @@ ifeq ($(DPMD), ON)
     LIBS += -L${TensorFlow_LIB_DIR} -ltensorflow_cc -Wl,-rpath=${TensorFlow_LIB_DIR} -Wl,--no-as-needed
     TensorFlow_INCLUDE_DIR = ${TensorFlow_DIR}/include
     INCLUDES += -I${TensorFlow_INCLUDE_DIR}
-else
+endif
 
 include Makefile.Objects
 

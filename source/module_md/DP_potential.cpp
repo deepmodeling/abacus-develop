@@ -1,5 +1,7 @@
 #include <unistd.h>
 #include "DP_potential.h"
+#include "../module_base/constants.h"
+#include "../module_base/timer.h"
 #ifdef __DPMD
 #include "deepmd/DeepPot.h"
 #endif

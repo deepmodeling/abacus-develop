@@ -62,8 +62,8 @@ namespace ModuleESolver
 
         dp_potential /= ModuleBase::Hartree_to_eV;
 
-        double fact_f = ModuleBase::Hartree_to_eV * ModuleBase::ANGSTROM_AU;
-        double fact_v = ModuleBase::Hartree_to_eV * pow(ModuleBase::ANGSTROM_AU, 3);
+        const double fact_f = ModuleBase::Hartree_to_eV * ModuleBase::ANGSTROM_AU;
+        const double fact_v = ucell.omega * ModuleBase::Hartree_to_eV; //  * pow(ModuleBase::ANGSTROM_AU, 3);
 
         for (int i = 0; i < ucell.nat; ++i)
         {
