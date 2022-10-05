@@ -212,7 +212,6 @@ void Charge::init_rho(const std::string &init_chg)
     }
 
     // Peize Lin add 2020.04.04
-	/*
     if (GlobalC::restart.info_load.load_charge && !GlobalC::restart.info_load.load_charge_finish)
     {
         for (int is = 0; is < GlobalV::NSPIN; ++is)
@@ -221,7 +220,6 @@ void Charge::init_rho(const std::string &init_chg)
         }
         GlobalC::restart.info_load.load_charge_finish = true;
     }
-	*/
 }
 
 

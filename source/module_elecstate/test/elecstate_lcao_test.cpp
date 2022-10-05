@@ -27,6 +27,7 @@
 #include "module_pw/pw_basis_k.h"
 #include "module_xc/xc_functional.h"
 #include "module_xc/exx_global.h"
+#include "src_io/restart.h"
 
 Magnetism::Magnetism(){}
 Magnetism::~Magnetism(){}
@@ -66,6 +67,7 @@ namespace GlobalC
     Charge CHR;
     Grid_Driver GridD(GlobalV::test_deconstructor, GlobalV::test_grid_driver,GlobalV::test_grid);
     Parallel_Grid Pgrid;
+    Restart restart;
 }
 
 
@@ -108,6 +110,8 @@ double Magnetism::get_neldw(void) {return 0;}
 #ifdef __MPI
 void Parallel_Grid::zpiece_to_all(double *zpiece, const int &iz, double *rho){}
 #endif
+
+void Restart::load_disk(const std::string mode, const int i) const {}
 
 void set_pw()
 {
