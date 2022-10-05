@@ -115,7 +115,7 @@ ifdef LIBTORCH_DIR
   endif
 endif
 
-ifeq ($(DPMD), ON)
+ifdef DeeP_DIR
     HONG  += -D__DPMD -DHIGH_PREC 
     ##==========================
     ## DeePMD-kit package
