@@ -150,7 +150,7 @@ void Potential::init_pot(const int &istep, // number of ionic steps
     //--------------------------------------------------------------------
     if (istep == 0)
     {
-        GlobalC::CHR.init_rho(GlobalC::CHR.init_chg);
+        GlobalC::CHR.init_rho();
     }
 
     // renormalize the charge density

@@ -51,7 +51,7 @@ public:
     double *start_mag_type;
     double *start_mag_atom;
 
-    void init_rho(const std::string &init_chg);
+    void init_rho();
 	// mohan update 2021-02-20
 	void allocate(const int &nspin_in, const int &nrxx_in, const int &ngmc_in);
 

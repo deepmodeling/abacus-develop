@@ -135,11 +135,11 @@ void Charge::allocate(const int &nspin_in, const int &nrxx_in, const int &ngmc_i
     return;
 }
 
-void Charge::init_rho(const std::string &init_chg)
+void Charge::init_rho()
 {
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "init_chg", init_chg);
+    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "init_chg", this->init_chg);
 
-    std::cout << " START CHARGE      : " << init_chg << std::endl;
+    std::cout << " START CHARGE      : " << this->init_chg << std::endl;
     if (this->init_chg == "atomic") // mohan add 2007-10-17
     {
     start_from_atomic:
