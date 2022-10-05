@@ -1,8 +1,5 @@
 #include <unistd.h>
 #include "esolver_dp.h"
-#ifdef __DPMD
-#include "deepmd/DeepPot.h"
-#endif
 
 
 namespace ModuleESolver
@@ -46,13 +43,6 @@ namespace ModuleESolver
         assert(ucell.nat == iat);
 
 #ifdef __DPMD
-        if (access("graph.pb", 0) == -1)
-        {
-            ModuleBase::WARNING_QUIT("DP_pot", "Can not find graph.pb !");
-        }
-
-        deepmd::DeepPot dp("graph.pb");
-
         std::vector<double> f, v;
         dp_potential = 0;
         dp_force.zero_out();
@@ -63,7 +53,7 @@ namespace ModuleESolver
         dp_potential /= ModuleBase::Hartree_to_eV;
 
         const double fact_f = ModuleBase::Hartree_to_eV * ModuleBase::ANGSTROM_AU;
-        const double fact_v = ucell.omega * ModuleBase::Hartree_to_eV; //  * pow(ModuleBase::ANGSTROM_AU, 3);
+        const double fact_v = ucell.omega * ModuleBase::Hartree_to_eV;
 
         for (int i = 0; i < ucell.nat; ++i)
         {
