@@ -147,7 +147,7 @@ void Charge::init_rho()
     }
     else if (this->init_chg == "file")
     {
-        GlobalV::ofs_running << " try to ready charge from file : ";
+        GlobalV::ofs_running << " try to read charge from file : ";
         for (int is = 0; is < GlobalV::NSPIN; is++)
         {
             std::stringstream ssc;
