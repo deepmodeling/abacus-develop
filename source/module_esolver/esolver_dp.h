@@ -1,6 +1,7 @@
 #ifndef ESOLVER_DP_H
 #define ESOLVER_DP_H
 
+#include <unistd.h>
 #include "./esolver.h"
 #ifdef __DPMD
 #include "deepmd/DeepPot.h"
