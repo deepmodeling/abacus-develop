@@ -49,6 +49,7 @@ class Sphbes : public testing::Test
     double  q   =   1.0;
     double  *r  =   new double[msh];       
     double  *jl =   new double[msh];
+    double  *djl =   new double[msh];
 
     void SetUp()
     {
@@ -59,6 +60,7 @@ class Sphbes : public testing::Test
     {
         delete [] r;
         delete [] jl;
+        delete [] djl;
     }       
 };
 
@@ -124,6 +126,21 @@ TEST_F(Sphbes,SphericalBessel)
     //ModuleBase::Sph_Bessel_Recursive::D1 is 0.0152155566653926
     //reference result is calculated by Sphbes::Spherical_Bessel(msh,r,q,l,jl)
     EXPECT_NEAR(mean(jl,msh)/0.015215556095798710851,   1.0,doublethreshold);
+}
+
+TEST_F(Sphbes,dSpherical_Bessel_dx)
+{
+    for(int il = 0 ; il <= l7 ; ++il)
+    {   
+        ModuleBase::Sphbes::dSpherical_Bessel_dx(msh,r,q,il,djl);
+        ModuleBase::Sphbes::Spherical_Bessel(msh,r,q,il,jl);
+        for(int i = 1; i < msh - 1; ++i)
+        {
+            if(jl[i-1] < 1e-8) continue;
+            double djl_diff = (jl[i+1] - jl[i-1])/(q*(r[i+1] - r[i-1]));
+            EXPECT_NEAR(djl[i], djl_diff, 1e-4);
+        }
+    }
 }
 
 TEST_F(Sphbes,SphericalBesselRoots)
