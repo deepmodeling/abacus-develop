@@ -36,8 +36,9 @@ HamiltLCAO<T>::HamiltLCAO(
     Local_Orbital_Charge* loc_in)
 {
     this->classname = "HamiltLCAO";
-
+    //reset fixed Hamiltonian matrix in real space
     LM_in->zeros_HSgamma('T');
+    //reset Overlap matrix in real space
     LM_in->zeros_HSgamma('S');
 
     // initial operator for Gamma_only case
@@ -49,8 +50,6 @@ HamiltLCAO<T>::HamiltLCAO(
         &(LM_in->Sloc),
         &(LM_in->Sloc)
     );
-    //reset Overlap matrix in real space
-    LM_in->zeros_HSgamma('S'); 
 
     // kinetic term (<psi|T|psi>), 
     // in Gamma_only case, target HR is LCAO_Matrix::Hloc_fixed, while target HK is LCAO_Matrix::Hloc
@@ -64,8 +63,6 @@ HamiltLCAO<T>::HamiltLCAO(
             &(LM_in->Hloc)
         );
         this->opsd->add(ekinetic);
-        //reset fixed Hamiltonian matrix in real space
-        LM_in->zeros_HSgamma('T'); 
     }
 
     // nonlocal term (<psi|beta>D<beta|psi>)
@@ -150,7 +147,9 @@ HamiltLCAO<T>::HamiltLCAO(
 {
     this->classname = "HamiltLCAO";
     
+    //reset fixed Hamiltonian matrix in real space
     LM_in->zeros_HSR('T');
+    //reset Overlap matrix in real space
     LM_in->zeros_HSR('S');
 
     // Effective potential term (\sum_r <psi(r)|Veff(r)|psi(r)>)
@@ -203,8 +202,6 @@ HamiltLCAO<T>::HamiltLCAO(
         &(LM_in->Sloc2)
     );
     this->ops->add(overlap);
-    //reset Overlap matrix in real space
-    LM_in->zeros_HSk('S');
 
     // kinetic term (<psi|T|psi>), 
     // in general case, target HR is LCAO_Matrix::Hloc_fixedR, while target HK is LCAO_Matrix::Hloc2
@@ -217,8 +214,6 @@ HamiltLCAO<T>::HamiltLCAO(
             &(LM_in->Hloc2)
         );
         this->ops->add(ekinetic);
-        //reset fixed Hamiltonian matrix in real space
-        LM_in->zeros_HSk('T');
     }
 
     // nonlocal term (<psi|beta>D<beta|psi>)
