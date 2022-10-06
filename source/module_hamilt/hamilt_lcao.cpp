@@ -37,6 +37,9 @@ HamiltLCAO<T>::HamiltLCAO(
 {
     this->classname = "HamiltLCAO";
 
+    LM_in->zeros_HSgamma('T');
+    LM_in->zeros_HSgamma('S');
+
     // initial operator for Gamma_only case
     // overlap term (<psi|psi>) is indispensable
     // in Gamma_only case, target SR is LCAO_Matrix::Sloc, which is same as SK
@@ -147,6 +150,9 @@ HamiltLCAO<T>::HamiltLCAO(
 {
     this->classname = "HamiltLCAO";
     
+    LM_in->zeros_HSR('T');
+    LM_in->zeros_HSR('S');
+
     // Effective potential term (\sum_r <psi(r)|Veff(r)|psi(r)>)
     // Meta potential term (\sum_r <psi(r)|tau(r)|psi(r)>)
     // in general case, target HR is Gint::pvpR_reduced, while target HK is LCAO_Matrix::Hloc2
