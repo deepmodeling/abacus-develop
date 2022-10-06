@@ -17,6 +17,7 @@ template<>
 void DeePKS<OperatorLCAO<double>>::contributeHR()
 {
     ModuleBase::TITLE("DeePKS", "contributeHR");
+#ifdef __DEEPKS
     if(GlobalC::ld.get_hr_cal())
     {
         ModuleBase::timer::tick("DeePKS", "contributeHR");
@@ -41,6 +42,7 @@ void DeePKS<OperatorLCAO<double>>::contributeHR()
 
         ModuleBase::timer::tick("DeePKS", "contributeHR");
     }
+#endif
 }
 
 template<>
