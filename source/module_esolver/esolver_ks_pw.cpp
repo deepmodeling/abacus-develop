@@ -102,7 +102,8 @@ namespace ModuleESolver
         //=========================================================
         // calculate the total local pseudopotential in real space
         //=========================================================
-        GlobalC::pot.init_pot(0, GlobalC::sf.strucFac); //atomic_rho, v_of_rho, set_vrs
+        GlobalC::CHR.init_rho();
+        GlobalC::pot.init_pot(GlobalC::sf.strucFac); //atomic_rho, v_of_rho, set_vrs
 
         GlobalC::pot.newd();
 

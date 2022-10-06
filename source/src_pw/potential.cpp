@@ -92,7 +92,7 @@ void Potential::init_pot(const int &istep, // number of ionic steps
     ModuleBase::TITLE("Potential", "init_pot");
     ModuleBase::timer::tick("Potential", "init_pot");
 
-    assert(istep >= 0);
+    assert(istep > 0);
 
     // total potential in real space
     this->vr_eff.zero_out();
@@ -148,10 +148,6 @@ void Potential::init_pot(const int &istep, // number of ionic steps
     // (2) other effective potentials need charge density,
     // choose charge density from ionic step 0.
     //--------------------------------------------------------------------
-    if (istep == 0)
-    {
-        GlobalC::CHR.init_rho();
-    }
 
     // renormalize the charge density
     GlobalC::CHR.renormalize_rho();
@@ -172,6 +168,99 @@ void Potential::init_pot(const int &istep, // number of ionic steps
     else
     {
         this->set_vrs_tddft(istep);
+    }
+#else
+    this->set_vr_eff();
+#endif
+
+    // plots
+    // figure::picture(this->vr_eff1,GlobalC::rhopw->nx,GlobalC::rhopw->ny,GlobalC::rhopw->nz);
+    ModuleBase::timer::tick("Potential", "init_pot");
+    return;
+}
+
+// init_pot for step = 0
+void Potential::init_pot(ModuleBase::ComplexMatrix &sf)
+{
+    ModuleBase::TITLE("Potential", "init_pot");
+    ModuleBase::timer::tick("Potential", "init_pot");
+
+    // total potential in real space
+    this->vr_eff.zero_out();
+
+    // the vltot should and must be zero here.
+    ModuleBase::GlobalFunc::ZEROS(this->vltot, GlobalC::rhopw->nrxx);
+
+    if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
+    {
+        this->vofk.zero_out();
+    }
+
+    //-------------------------------------------------------------------
+    // (1) local pseudopotential + electric field (if any) in vltot
+    //-------------------------------------------------------------------
+    if (GlobalV::VION_IN_H)
+    {
+        this->set_local_pot(this->vltot, // 3D local pseudopotentials
+                            GlobalC::ucell.ntype,
+                            GlobalC::ppcell.vloc,
+                            GlobalC::rhopw,
+                            sf // structure factors
+        );
+    }
+    else
+    {
+        for (int ir = 0; ir < GlobalC::rhopw->nrxx; ++ir)
+        {
+            this->vltot[ir] = 0.0;
+        }
+    }
+
+    // zhengdy-soc, pauli matrix, just index 0 has vlocal term
+    int nspin0 = GlobalV::NSPIN;
+
+    if (GlobalV::NSPIN == 4)
+    {
+        nspin0 = 1;
+    }
+
+    for (int is = 0; is < nspin0; ++is)
+    {
+        for (int ir = 0; ir < GlobalC::rhopw->nrxx; ++ir)
+        {
+            this->vr_eff(is, ir) = this->vltot[ir];
+        }
+    }
+
+    // core correction potential.
+    GlobalC::CHR.set_rho_core(GlobalC::sf.strucFac);
+
+    //--------------------------------------------------------------------
+    // (2) other effective potentials need charge density,
+    // choose charge density from ionic step 0.
+    //--------------------------------------------------------------------
+    /*
+    if (istep == 0)
+    {
+        GlobalC::CHR.init_rho();
+    }
+    */
+
+    // renormalize the charge density
+    GlobalC::CHR.renormalize_rho();
+
+    //----------------------------------------------------------
+    // (3) compute Hartree and XC potentials saves in vr
+    //----------------------------------------------------------
+    this->vr = this->v_of_rho(GlobalC::CHR.rho, GlobalC::CHR.rho_core);
+
+    //----------------------------------------------------------
+    // (4) total potentials
+    //----------------------------------------------------------
+#ifdef __LCAO
+    if (ELEC_evolve::td_vext == 0)
+    {
+        this->set_vr_eff();
     }
 #else
     this->set_vr_eff();

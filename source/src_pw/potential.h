@@ -48,6 +48,8 @@ class Potential
                   ModuleBase::ComplexMatrix &sf // structure factors
     );
 
+    void init_pot(ModuleBase::ComplexMatrix &sf);
+
     ModuleBase::matrix v_of_rho(const double *const *const rho_in, const double *const rho_core_in);
 
     void set_vr_eff(void);

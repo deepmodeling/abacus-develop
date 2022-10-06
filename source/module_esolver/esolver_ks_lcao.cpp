@@ -207,8 +207,8 @@ void ESolver_KS_LCAO::Init(Input& inp, UnitCell_pseudo& ucell)
         // Initialize the sum of all local potentials.
         // if ion_step==0, read in/initialize the potentials
         // this function belongs to ions LOOP
-        int ion_step = 0;
-        GlobalC::pot.init_pot(ion_step, GlobalC::sf.strucFac);
+        GlobalC::CHR.init_rho();
+        GlobalC::pot.init_pot(GlobalC::sf.strucFac);
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT POTENTIAL");
     }
     if (this->phami != nullptr)
