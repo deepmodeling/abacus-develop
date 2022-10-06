@@ -229,7 +229,7 @@ class ENVEnvironment : public ::testing::Environment
         GlobalV::test_pw = env->test_pw_;
         GlobalV::NBANDS = env->nbands_;
         INPUT.cell_factor = env->cell_factor_;
-        GlobalC::pot.init_chg = env->init_chg_;
+        GlobalC::CHR.init_chg = env->init_chg_;
         GlobalC::wf.init_wfc = env->init_wfc_;
         GlobalC::wf.out_wfc_pw = env->out_wfc_pw_;
 	GlobalV::global_out_dir = env->out_dir_;

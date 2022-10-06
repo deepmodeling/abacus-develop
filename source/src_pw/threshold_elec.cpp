@@ -33,7 +33,7 @@ void Threshold_Elec::set_pw_diag_thr(void) const
     {
         if (abs(GlobalV::PW_DIAG_THR - 1.0e-2) < 1.0e-10)
         {
-            if (GlobalC::pot.init_chg == "file")
+            if (GlobalC::CHR.init_chg == "file")
             {
                 //======================================================
                 // if you think that the starting potential is good

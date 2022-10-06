@@ -24,6 +24,7 @@
 #include "src_pw/energy.h"
 #include "module_xc/xc_functional.h"
 #include "module_pw/pw_basis_k.h"
+#include "src_io/restart.h"
 
 int ModuleSymmetry::Symmetry::symm_flag;
 
@@ -110,6 +111,7 @@ pseudopot_cell_vnl ppcell;
 Hamilt hm;
 energy en;
 Parallel_Kpoints Pkpoints;
+Restart restart;
 } // namespace GlobalC
 Input INPUT;
 
@@ -122,6 +124,8 @@ void Occupy::calculate_weights()
 	GlobalC::wf.wg(0,3)=0.0;
 }
 */
+
+void Restart::load_disk(const std::string mode, const int i) const {}
 
 
 psi::Psi<complex<double>>* wavefunc::allocate(const int nks)

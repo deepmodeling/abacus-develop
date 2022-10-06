@@ -4,7 +4,7 @@ As in any non-linear systems, numerical instabilities during SCF iterations may 
 
 ## Charge Mixing
 
-By mixing the electron density with that obtained from previous steps, numerical instabilities can be ameliorated. ABACUS offers several mixing schemes, and users may make a selection by adjusting the [mixing_type](../input_files/input-main.md#mixingtype) keyword in INPUT file.
+By mixing the electron density with that obtained from previous steps, numerical instabilities can be ameliorated. ABACUS offers several mixing schemes, and users may make a selection by adjusting the [mixing_type](../input_files/input-main.md#mixing_type) keyword in INPUT file.
 
 For each of the mixing types, we also provide variables for controlling relevant parameters, including `mixing_beta`, `mixing_ndim`, and `mixing_gg0`.
 
@@ -18,7 +18,7 @@ An example showcasing different charge mixing methods can be found in our [repos
 
 Thermal smearing is an efficient tool for accelerating SCF convergence by allowing fractional occupation of molecular orbitals near the band edge. It is important for metallic systems.
 
-In ABACUS, we provide a few smearing methods, which can be controlled using the keyword [smearing_method](../input_files/input-main.md#smearingmethod). We also provide keyword `smearing_sigma` or `smearing_sigma_temp` to control the energy range of smearing. A larger value of smearing sigma leads to a more diffused occupation curve.
+In ABACUS, we provide a few smearing methods, which can be controlled using the keyword [smearing_method](../input_files/input-main.md#smearing_method). We also provide keyword `smearing_sigma` or `smearing_sigma_temp` to control the energy range of smearing. A larger value of smearing sigma leads to a more diffused occupation curve.
 
 > Note : The two keywords `smearing_sigma` and `smearing_sigma_temp` should not be used concurrently.
 

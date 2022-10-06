@@ -93,7 +93,7 @@ void Lattice_Change_CG::start(const ModuleBase::matrix &stress_in, const double&
 	
 	CG_begin:
 	
-	if( Lattice_Change_Basic::istep == 1 )
+	if( Lattice_Change_Basic::stress_step == 1 )
 	{
 		steplength=Lattice_Change_Basic::lattice_change_ini;          // read in the init trust radius
 		//cout<<"Lattice_Change_Basic::lattice_change_ini = "<<Lattice_Change_Basic::lattice_change_ini<<endl;
@@ -281,7 +281,7 @@ void Lattice_Change_CG::start(const ModuleBase::matrix &stress_in, const double&
 void Lattice_Change_CG::setup_cg_grad(double *grad, const double *grad0, double *cg_grad, const double *cg_grad0, const int &ncggrad, int &flag)
 {
 	ModuleBase::TITLE("Lattice_Change_CG","setup_cg_grad");
-	assert(Lattice_Change_Basic::istep > 0);
+	assert(Lattice_Change_Basic::stress_step > 0);
 	double gamma;
 	double cg0_cg,cg0_cg0,cg0_g;
 	

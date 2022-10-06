@@ -37,7 +37,7 @@ efield_amp         0.001
 Example of running DFT calculation with added external electric field is provided in this [directory](https://github.com/deepmodeling/abacus-develop/tree/develop/examples/electric_field/Pt-slab). 
 
 
-## Dipole correction
+## Dipole Correction
 A dipole correction can be added to the bare ionic potential, which can compensate for the artificial dipole field within the context of a periodic supercell calculation. The dipole correction implemented in ABACUS follows the [methodology](https://journals.aps.org/prb/abstract/10.1103/PhysRevB.59.12301) proposed by Bengtsson in 1999. This correction must be used ONLY in a slab geometry, for surface calculations, with the discontinuity FALLING IN THE EMPTY SPACE. Note that the common input parameters shared between the external electric field and dipole correction, with detailed explaination provided [here](https://github.com/deepmodeling/abacus-develop/blob/develop/docs/input-main.md#electric-field-and-dipole-correction). The following keywords settings add dipole correction only without applying any external electric field:
 ```
 INPUT_PARAMETERS

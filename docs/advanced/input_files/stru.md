@@ -5,8 +5,6 @@
   - [latname fcc](#latname-fcc)
 - [Structure of the file](#structure-of-the-file)
 
-    [back to main page](../README.md)
-
 ## Examples
 
 The `STRU` file contains the information about the lattice geometry, the name(s) and/or location(s) of the pseudopotential and numerical orbital files, as well as the structural information about the system.
@@ -85,7 +83,7 @@ information that comes below.
 
     After the pseudopotential file, `upf201` is the type of pseudopotential. There are five options: `upf`(.UPF format), `upf201`(the new .UPF format), `vwr`(.vwr format), `blps`(bulk-derived local pseudopotential), and `auto`(automatically identified). If no pseudopotential type is assigned, the default value is `auto`, and the pseudopotential type will be automatically identified. 
 
-    Different types of pseudopotentials can be used for different elements, but note that the XC functionals assigned by all pseudopotentials should be the same one. If not, the choice of XC functional must be set explicitly using the [dft_functional](./input-main.md#dftfunctional) keyword.
+    Different types of pseudopotentials can be used for different elements, but note that the XC functionals assigned by all pseudopotentials should be the same one. If not, the choice of XC functional must be set explicitly using the [dft_functional](./input-main.md#dft_functional) keyword.
 
     Common sources of the pseudopotential files include:
   1. [Quantum ESPRESSO](http://www.quantum-espresso.org/pseudopotentials/).

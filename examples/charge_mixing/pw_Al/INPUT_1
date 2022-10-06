@@ -1,6 +1,5 @@
 INPUT_PARAMETERS
 #Parameters (1.General)
-suffix			autotest
 calculation     scf
 ntype			1
 nbands			8

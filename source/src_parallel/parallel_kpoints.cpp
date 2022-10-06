@@ -361,8 +361,9 @@ void Parallel_Kpoints::pool_collection(std::complex<double> *value, const Module
     const int ik_now = ik - this->startk_pool[GlobalV::MY_POOL];
     const int begin = ik_now * dim2 * dim3 * dim4;
     std::complex<double>* p = &w.ptr[begin];
-
-    const int pool = this->whichpool[ik];
+    //temprary restrict kpar=1 for NSPIN=2 case for generating_orbitals
+    int pool = 0; 
+    if(GlobalV::NSPIN != 2) pool = this->whichpool[ik];
 
 	GlobalV::ofs_running << "\n ik=" << ik;
 

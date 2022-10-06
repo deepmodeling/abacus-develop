@@ -52,7 +52,7 @@ Specify the location of the compiler and libraries present in your own machine:
 #======================================================================
 CC = mpiicpc
 # mpiicpc:   compile intel parallel version
-# icpc:      compile gnu serial version
+# icpc:      compile intel serial version
 # make: ELPA_DIR, ELPA_INCLUDE_DIR, CEREAL_DIR must also be set.
 # make pw: nothing need to be set except LIBXC_DIR
 # 
@@ -103,7 +103,7 @@ For example, below is a case where the Intel C++ compiler, Intel MPI and CEREAL 
 follows:
 
 ```makefile
-CC = mpiicpc/icpc
+CC = mpiicpc #(or CC = icpc)
 ELPA_DIR      = /public/soft/elpa_21.05.002
 ELPA_INCLUDE_DIR = ${ELPA_DIR}/include/elpa-2021.05.002
 CEREAL_DIR    = /public/soft/cereal
@@ -126,7 +126,7 @@ When `CC=mpicxx`, a parallel version will be compiled. When `CC=g++`, a serial v
 
 Except modifying `Makefile.vars`, you can also directly use
 ```makefile
-make CC=mpicpc ELPA_DIR=/public/soft/elpa_21.05.002 \
+make CC=mpiicpc ELPA_DIR=/public/soft/elpa_21.05.002 \
 ELPA_INCLUDE_DIR=${ELPA_DIR}/include/elpa-2021.05.002 \
 CEREAL_DIR=/public/soft/cereal
 ```

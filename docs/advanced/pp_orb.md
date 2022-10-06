@@ -2,7 +2,7 @@
 
 ## Basis Set
 
-ABACUS supports both PW and LCAO basis set, controlled by keyword [basis_type](./input_files/input-main.md#basistype) in INPUT file.
+ABACUS supports both PW and LCAO basis set, controlled by keyword [basis_type](./input_files/input-main.md#basis_type) in INPUT file.
 
 The default value of basis_type is pw. The size of pw basis set is controlled by imposing an upper bound for the [kinetic energy cutoff](./input_files/input-main.md#ecutwfc) of the plane wave.
 
@@ -16,7 +16,7 @@ Users may also choose to generate their own atomic obitals. In ABACUS, the atomi
 
 For treating BSSE(Basis Set Superposition Error), we allow for the inclusion of "empty" or "ghost" atoms in the calculation. Namely, when expanding the Hamiltonian, basis sets on the atoms are used, while the ionic potentials on those atoms are not included when constructing the Hamiltonian.
 
-An empty atom is defined in the `STRU` file when an element name contains the "empty" suffix, such as "H_empty", "O_empty" and so on. Here we provide an [example]() of calculating the molecular formation energy of $H_2O$ with BSSE correction.
+An empty atom is defined in the `STRU` file when an element name contains the "empty" suffix, such as "H_empty", "O_empty" and so on. Here we provide an [example](https://github.com/deepmodeling/abacus-develop/tree/develop/examples/bsse/water) of calculating the molecular formation energy of $H_2O$ with BSSE correction.
 
 In the example, we provide four STRU files:
 
@@ -42,7 +42,7 @@ $$
 
 ## Pseudopotentials
 
-In ABACUS, we only supports norm-conserving pseudopotentials. We support four different formats of the pseudopotential files: UPF, UPF2, VWR, and BLPS. For more information, check the `ATOMIC_SPECIES` section in the specification of the [STRU file](./input_files/stru.md).
+In ABACUS, we only support norm-conserving pseudopotentials. We support four different formats of the pseudopotential files: UPF, UPF2, VWR, and BLPS. For more information, check the `ATOMIC_SPECIES` section in the specification of the [STRU file](./input_files/stru.md).
 
 Here we list some common sources of the pseudopotential files:
 1. [Quantum ESPRESSO](http://www.quantum-espresso.org/pseudopotentials/).
