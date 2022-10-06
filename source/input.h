@@ -83,6 +83,7 @@ class Input
     double cond_wcut; //cutoff \omega for conductivities
     int cond_wenlarge;
     double cond_fwhm; //FWHM for conductivities 
+    bool cond_nonlocal; //if calculate nonlocal effects
 
     //==========================================================
     // electrons / spin

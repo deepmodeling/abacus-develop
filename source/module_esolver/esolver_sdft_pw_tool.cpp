@@ -8,6 +8,7 @@
 #include "module_base/global_variable.h"
 #include "module_base/global_function.h"
 #include "src_pw/global.h"
+#include "module_hamilt/ks_pw/velocity_pw.h"
 
 #define TWOSQRT2LN2 2.354820045030949 //FWHM = 2sqrt(2ln2) * \sigma
 #define FACTOR 1.839939223835727e7
@@ -146,8 +147,10 @@ void ESolver_SDFT_PW::sKG(const int nche_KG, const double fwhmin, const double w
     int ksbandper,startband;
     parallelks(ksbandper,startband);
     ModuleBase::timer::tick(this->classname,"kloop");
+    hamilt::Velocity velop(GlobalC::wfcpw, GlobalC::kv.isk.data(),&GlobalC::ppcell,&GlobalC::ucell, INPUT.cond_nonlocal);
     for (int ik = 0;ik < nk;++ik)
 	{
+        velop.init(ik);
         if(nk > 1) 
         {
             this->phami->updateHk(ik);
@@ -228,19 +231,9 @@ void ESolver_SDFT_PW::sKG(const int nche_KG, const double fwhmin, const double w
         
 
         //init j1psi,j2psi,j1sfpsi,j2sfpsi
-        for(int id = 0 ; id < ndim ; ++id)
-        {
-            for(int ib = 0 ; ib < totbands_per ; ++ib )
-            {
-                for(int ig = 0; ig < npw ; ++ig)
-                {
-                    double gplusk_a = GlobalC::wfcpw->getgpluskcar(ik,ig)[id];
-                    const int idib = id * totbands_per + ib;
-                    j1psi(idib,ig) = tpiba * gplusk_a * psi0(ib,ig);
-                    j1sfpsi(idib,ig) = tpiba * gplusk_a * sfpsi0(ib,ig);
-                }
-            }
-        }
+        velop.act(this->psi, totbands_per, psi0.get_pointer(), j1psi.get_pointer());
+        velop.act(this->psi, totbands_per, sfpsi0.get_pointer(), j1sfpsi.get_pointer());
+
         // this->phami->hPsi(psi0.get_pointer(), hpsi0.get_pointer(), totbands_per*npwx);
         // this->phami->hPsi(sfpsi0.get_pointer(), hsfpsi0.get_pointer(), totbands_per*npwx);
         // this->phami->hPsi(j1psi.get_pointer(), j2psi.get_pointer(), ndim*totbands_per*npwx);
@@ -287,18 +280,15 @@ void ESolver_SDFT_PW::sKG(const int nche_KG, const double fwhmin, const double w
 	    //     }
         // }*/
 
-        
-        for(int id = 0 ; id < ndim ; ++id)
+        velop.act(this->psi, totbands_per, hpsi0.get_pointer(), j2psi.get_pointer(), true);
+        velop.act(this->psi, totbands_per, hsfpsi0.get_pointer(), j2sfpsi.get_pointer(), true);
+
+        for(int idib = 0 ; idib < ndim * totbands_per; ++idib)
         {
-            for(int ib = 0 ; ib < totbands_per ; ++ib )
+            for(int ig = 0; ig < npw ; ++ig)
             {
-                for(int ig = 0; ig < npw ; ++ig)
-                {
-                    double gplusk_a = GlobalC::wfcpw->getgpluskcar(ik,ig)[id];
-                    const int idib = id * totbands_per + ib;
-                    j2psi(0,idib,ig) = (j2psi(0,idib,ig) + tpiba * gplusk_a * hpsi0(ib,ig))/2.0 - mu * j1psi(0,idib,ig);
-                    j2sfpsi(0,idib,ig) = (j2sfpsi(0,idib,ig) + tpiba * gplusk_a * hsfpsi0(ib,ig))/2.0 - mu * j1sfpsi(0,idib,ig);
-                }
+                j2psi(0,idib,ig) = j2psi(0,idib,ig)/2.0 - mu * j1psi(0,idib,ig);
+                j2sfpsi(0,idib,ig) = j2sfpsi(0,idib,ig)/2.0 - mu * j1sfpsi(0,idib,ig);
             }
         }
 
