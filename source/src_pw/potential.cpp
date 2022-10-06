@@ -145,8 +145,7 @@ void Potential::init_pot(const int &istep, // number of ionic steps
     GlobalC::CHR.set_rho_core(GlobalC::sf.strucFac);
 
     //--------------------------------------------------------------------
-    // (2) other effective potentials need charge density,
-    // choose charge density from ionic step 0.
+    // (2) other effective potentials need charge density.
     //--------------------------------------------------------------------
 
     // renormalize the charge density
@@ -237,14 +236,8 @@ void Potential::init_pot(ModuleBase::ComplexMatrix &sf)
 
     //--------------------------------------------------------------------
     // (2) other effective potentials need charge density,
-    // choose charge density from ionic step 0.
+    // choose charge density from ionic step 0 before call init_pot
     //--------------------------------------------------------------------
-    /*
-    if (istep == 0)
-    {
-        GlobalC::CHR.init_rho();
-    }
-    */
 
     // renormalize the charge density
     GlobalC::CHR.renormalize_rho();
