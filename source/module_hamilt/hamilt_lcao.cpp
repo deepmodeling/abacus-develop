@@ -46,6 +46,8 @@ HamiltLCAO<T>::HamiltLCAO(
         &(LM_in->Sloc),
         &(LM_in->Sloc)
     );
+    //reset Overlap matrix in real space
+    LM_in->zeros_HSgamma('S'); 
 
     // kinetic term (<psi|T|psi>), 
     // in Gamma_only case, target HR is LCAO_Matrix::Hloc_fixed, while target HK is LCAO_Matrix::Hloc
@@ -59,6 +61,8 @@ HamiltLCAO<T>::HamiltLCAO(
             &(LM_in->Hloc)
         );
         this->opsd->add(ekinetic);
+        //reset fixed Hamiltonian matrix in real space
+        LM_in->zeros_HSgamma('T'); 
     }
 
     // nonlocal term (<psi|beta>D<beta|psi>)
@@ -170,7 +174,11 @@ HamiltLCAO<T>::HamiltLCAO(
                 &(LM_in->Hloc2) // no explicit call yet
             );
         }
-        //this->ops->add(veff);
+        //reset spin index and real space Hamiltonian matrix
+        int start_spin = -1;
+        GK_in->reset_spin(start_spin);
+        GK_in->destroy_pvpR();
+        GK_in->allocate_pvpR();
 
         Operator<std::complex<double>>* exx = new OperatorEXX<OperatorLCAO<std::complex<double>>>(
             LM_in,
@@ -189,6 +197,8 @@ HamiltLCAO<T>::HamiltLCAO(
         &(LM_in->Sloc2)
     );
     this->ops->add(overlap);
+    //reset Overlap matrix in real space
+    LM_in->zeros_HSk('S');
 
     // kinetic term (<psi|T|psi>), 
     // in general case, target HR is LCAO_Matrix::Hloc_fixedR, while target HK is LCAO_Matrix::Hloc2
@@ -201,6 +211,8 @@ HamiltLCAO<T>::HamiltLCAO(
             &(LM_in->Hloc2)
         );
         this->ops->add(ekinetic);
+        //reset fixed Hamiltonian matrix in real space
+        LM_in->zeros_HSk('T');
     }
 
     // nonlocal term (<psi|beta>D<beta|psi>)
@@ -263,6 +275,11 @@ template <> void HamiltLCAO<double>::updateHk(const int ik)
 {
     ModuleBase::TITLE("HamiltLCAO", "updateHk");
     ModuleBase::timer::tick("HamiltLCAO", "updateHk");
+    //update global spin index
+    if (GlobalV::NSPIN == 2)
+    {
+        GlobalV::CURRENT_SPIN = GlobalC::kv.isk[ik];
+    }
     this->opsd->init(ik);
     ModuleBase::timer::tick("HamiltLCAO", "updateHk");
 }
@@ -271,6 +288,11 @@ template <> void HamiltLCAO<std::complex<double>>::updateHk(const int ik)
 {
     ModuleBase::TITLE("HamiltLCAO", "updateHk");
     ModuleBase::timer::tick("HamiltLCAO", "updateHk");
+    //update global spin index
+    if (GlobalV::NSPIN == 2)
+    {
+        GlobalV::CURRENT_SPIN = GlobalC::kv.isk[ik];
+    }
     this->ops->init(ik);
     ModuleBase::timer::tick("HamiltLCAO", "updateHk");
 }

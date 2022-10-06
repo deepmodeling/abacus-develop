@@ -224,6 +224,17 @@ void ESolver_KS_LCAO_TDDFT::eachiterinit(const int istep, const int iter)
             }
         }
     }
+
+    if(!GlobalV::GAMMA_ONLY_LOCAL)
+    {
+        if(this->UHM.GK.get_spin() != -1)
+        {
+            int start_spin = -1;
+            this->UHM.GK.reset_spin(start_spin);
+            this->UHM.GK.destroy_pvpR();
+            this->UHM.GK.allocate_pvpR();
+        }
+    }
 }
 
 void ESolver_KS_LCAO_TDDFT::hamilt2density(int istep, int iter, double ethr)

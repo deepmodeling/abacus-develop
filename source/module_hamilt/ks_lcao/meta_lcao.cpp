@@ -34,14 +34,6 @@ template<>
 void Meta<OperatorLCAO<std::complex<double>>>::contributeHR()
 {
     ModuleBase::TITLE("Meta<OperatorLCAO>", "contributeHR");
-    if(!this->allocated_pvpR)
-    {
-        int start_spin = -1;
-        GK->reset_spin(start_spin);
-        GK->destroy_pvpR();
-        GK->allocate_pvpR();
-        this->allocated_pvpR = true;
-    }
     return;
 }
 
@@ -57,10 +49,6 @@ void Meta<OperatorLCAO<double>>::contributeHk(int ik)
     //(1) prepare data for this k point.
     // copy the local potential from array.
     //-----------------------------------------
-    if (GlobalV::NSPIN == 2)
-    {
-        GlobalV::CURRENT_SPIN = GlobalC::kv.isk[ik];
-    }
 
     for (int ir = 0; ir < GlobalC::rhopw->nrxx; ir++)
     {
@@ -99,10 +87,6 @@ void Meta<OperatorLCAO<std::complex<double>>>::contributeHk(int ik)
     //(1) prepare data for this k point.
     // copy the local potential from array.
     //-----------------------------------------
-    if (GlobalV::NSPIN == 2)
-    {
-        GlobalV::CURRENT_SPIN = GlobalC::kv.isk[ik];
-    }
     for (int ir = 0; ir < GlobalC::rhopw->nrxx; ir++)
     {
         GlobalC::pot.vr_eff1[ir] = GlobalC::pot.vr_eff(GlobalV::CURRENT_SPIN, ir);

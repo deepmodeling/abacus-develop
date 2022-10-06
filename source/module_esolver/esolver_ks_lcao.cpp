@@ -417,7 +417,23 @@ void ESolver_KS_LCAO::eachiterinit(const int istep, const int iter)
 
     if (GlobalV::dft_plus_u)
     {
-        GlobalC::dftu.cal_slater_UJ(istep, iter); // Calculate U and J if Yukawa potential is used
+        GlobalC::dftu.cal_slater_UJ(); // Calculate U and J if Yukawa potential is used
+    }
+
+#ifdef __DEEPKS
+    // the density matrixes of DeePKS have been updated in each iter 
+    GlobalC::ld.set_hr_cal(true);
+#endif
+
+    if(!GlobalV::GAMMA_ONLY_LOCAL)
+    {
+        if(this->UHM.GK.get_spin() != -1)
+        {
+            int start_spin = -1;
+            this->UHM.GK.reset_spin(start_spin);
+            this->UHM.GK.destroy_pvpR();
+            this->UHM.GK.allocate_pvpR();
+        }
     }
 }
 void ESolver_KS_LCAO::hamilt2density(int istep, int iter, double ethr)
