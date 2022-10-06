@@ -211,6 +211,7 @@ TEST_F(GlobalFunctionTest, Zero)
     ModuleBase::GlobalFunc::ZEROS(porter, size);
     for (int i = 0; i < size; ++i)
         EXPECT_COMPLEX_EQ(porter[i], zero);
+    delete[] porter;
 }
 
 TEST_F(GlobalFunctionTest, Scan)
