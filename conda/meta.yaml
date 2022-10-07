@@ -23,21 +23,15 @@ requirements:
     - {{ compiler('cxx') }}
     - make
     - cmake
-    - libgomp # [linux]
 
   host:
     - {{ mpi }}
-    - blas=*=openblas
+    - openblas=*=openmp*
     - elpa=*=mpi*
-    - fftw
+    - fftw=*=mpi*
 
   run:
-    - {{ mpi }}
-    - elpa=*=mpi*
-    - fftw
-    - blas=*=openblas
-    - libopenblas
-    - scalapack
+    - libopenblas=*=openmp*
 
 test:
   commands:
