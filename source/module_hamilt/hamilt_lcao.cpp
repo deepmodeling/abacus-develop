@@ -82,30 +82,27 @@ HamiltLCAO<T>::HamiltLCAO(
     // in general case, target HR is Gint::pvpR_grid, while target HK is LCAO_Matrix::Hloc
     if(GlobalV::VL_IN_H)
     {
-        Operator<double>* veff = nullptr;
-        // Meta term
-        if(XC_Functional::get_func_type()==3 || XC_Functional::get_func_type()==5)
-        {
-            veff = new Meta<OperatorLCAO<double>>(
-                GG_in,
-                loc_in,
-                LM_in,
-                nullptr, // no explicit call yet
-                &(LM_in->Hloc) // no explicit call yet
-            );
-        }
-        else
-        {
-            veff = new Veff<OperatorLCAO<double>>(
-                GG_in,
-                loc_in,
-                LM_in,
-                nullptr, // no explicit call yet
-                &(LM_in->Hloc) // no explicit call yet
-            );
-        }
+        //effective potential term
+        Operator<double>* veff = new Veff<OperatorLCAO<double>>(
+            GG_in,
+            loc_in,
+            LM_in,
+            nullptr, // no explicit call yet
+            &(LM_in->Hloc) // no explicit call yet
+        );
         this->opsd->add(veff);
 
+        // Meta term
+        Operator<double>* meta = new Meta<OperatorLCAO<double>>(
+            GG_in,
+            loc_in,
+            LM_in,
+            nullptr, // no explicit call yet
+            &(LM_in->Hloc) // no explicit call yet
+        );
+        this->opsd->add(meta);
+
+        //exact exchange term
         Operator<double>* exx = new OperatorEXX<OperatorLCAO<double>>(
             LM_in,
             nullptr, //no explicit call yet
@@ -157,34 +154,31 @@ HamiltLCAO<T>::HamiltLCAO(
     // in general case, target HR is Gint::pvpR_reduced, while target HK is LCAO_Matrix::Hloc2
     if(GlobalV::VL_IN_H)
     {
-        //Operator<std::complex<double>>* veff = nullptr;
-        // Meta term
-        if(XC_Functional::get_func_type()==3 || XC_Functional::get_func_type()==5)
-        {
-            this->ops = new Meta<OperatorLCAO<std::complex<double>>>(
-                GK_in,
-                loc_in,
-                LM_in,
-                nullptr, // no explicit call yet
-                &(LM_in->Hloc2) // no explicit call yet
-            );
-        }
-        else // Veff term
-        {
-            this->ops = new Veff<OperatorLCAO<std::complex<double>>>(
-                GK_in,
-                loc_in,
-                LM_in,
-                nullptr, // no explicit call yet
-                &(LM_in->Hloc2) // no explicit call yet
-            );
-        }
+        //Veff term
+        this->ops = new Veff<OperatorLCAO<std::complex<double>>>(
+            GK_in,
+            loc_in,
+            LM_in,
+            nullptr, // no explicit call yet
+            &(LM_in->Hloc2) // no explicit call yet
+        );
         //reset spin index and real space Hamiltonian matrix
         int start_spin = -1;
         GK_in->reset_spin(start_spin);
         GK_in->destroy_pvpR();
         GK_in->allocate_pvpR();
 
+        // Meta term
+        Operator<std::complex<double>>* meta = new Meta<OperatorLCAO<std::complex<double>>>(
+            GK_in,
+            loc_in,
+            LM_in,
+            nullptr, // no explicit call yet
+            &(LM_in->Hloc2) // no explicit call yet
+        );
+        this->ops->add(meta);
+
+        //exact exchange term
         Operator<std::complex<double>>* exx = new OperatorEXX<OperatorLCAO<std::complex<double>>>(
             LM_in,
             nullptr, //no explicit call yet

@@ -116,14 +116,20 @@ void OperatorLCAO<T>::init(const int ik_in)
         {
             //cal_type=lcao_gint refer to grid integral operators, which are relied on stucture and potential based on real space grids
             //and should be updated each SCF steps
-            
-            //update HR first
-            //in cal_type=lcao_gint, HR should be updated by most priority sub-chain nodes
-            this->contributeHR();
-            
-            //update HK next
-            //in cal_type=lcao_gint, HK only need to update from one node
-            this->contributeHk(ik_in);
+
+            OperatorLCAO<T>* last = this;
+            while(last != nullptr)
+            {
+                //update HR first
+                //in cal_type=lcao_gint, HR should be updated by every sub-node.
+                last->contributeHR();
+                
+                //update HK next
+                //in cal_type=lcao_gint, HK should be updated by every sub-node.
+                last->contributeHk(ik_in);
+
+                last = dynamic_cast<OperatorLCAO<T>*>(last->next_sub_op);
+            }
 
             break;
         }
@@ -172,35 +178,5 @@ void OperatorLCAO<T>::init(const int ik_in)
 
     ModuleBase::timer::tick("OperatorLCAO", "init");
 }
-
-// Gamma_only case for real space Hamiltonian matrix
-// H_R = <phi_{\mu R}|H|phi_{\nu 0}> 
-// in gamma_only case, if only H_gamma_k( = sum_R H_R) is needed, H_R would not be stored.
-// It needs to be emphasized that H_R has been calculated but not stored in this case.
-// In some extreme cases, H_R or part of H_R should be stored before calculating H_K
-/* template <> void OperatorLCAO<double>::updateHR(double* hr_pointer)
-{
-
-}
-
-// multi_k case for real space Hamiltonian matrix
-// H_R = <phi_{\mu R}|H|phi_{\nu 0}> should be stored in this case
-template <> void OperatorLCAO<std::complex<double>>::updateHR(std::complex<double>* hr_pointer)
-{
-    
-}
-
-// H_k = sum_R H_R in gamma_only case
-template <> void OperatorLCAO<double>::matrixHk()
-{
-
-}
-
-// H_k = sum_R H_R * exp(-iKR) for each k points, 
-// if input kvec_in is gamma_point, only real part would be calculated
-template <> void OperatorLCAO<std::complex<double>>::matrixHk()
-{
-
-}*/
 
 }
