@@ -5,9 +5,7 @@
 # Required
 version: 2
 
-formats:
-  - epub
-  - pdf
+formats: all
 
 # Build documentation in the docs/ directory with Sphinx
 sphinx:
