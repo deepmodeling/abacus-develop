@@ -13,9 +13,9 @@ RUN git clone https://github.com/llohse/libnpy.git && \
 
 RUN wget https://download.pytorch.org/libtorch/cpu/libtorch-cxx11-abi-shared-with-deps-1.9.1%2Bcpu.zip \
         --no-check-certificate --quiet -O libtorch.zip && \
-    unzip -q libtorch.zip && rm libtorch.zip && \
-    cd libtorch && cp -r . /usr/local && \
-    cd .. && rm -r libtorch
+    unzip -q libtorch.zip -d /opt  && rm libtorch.zip
+
+ENV CMAKE_PREFIX_PATH=/opt/libtorch/share/cmake
 
 RUN git clone https://github.com/deepmodeling/abacus-develop.git --depth 1 && \
     cd abacus-develop && \
