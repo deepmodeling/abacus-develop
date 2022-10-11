@@ -214,18 +214,16 @@ void DFT_RPA_interface::out_Cs()
 
 void DFT_RPA_interface::out_coulomb_k()
 {
-    if (GlobalV::MY_RANK != 0)
-        return;
     int all_mu = 0;
-    vector<int> mu_shift(rpa_exx_lcao_.get_Vps().size());
-    for (auto &Ip: rpa_exx_lcao_.get_Vps())
+    vector<int> mu_shift(GlobalC::ucell.nat);
+    for (int I=0;I!=GlobalC::ucell.nat;I++ )
     {
-        auto I = Ip.first;
         mu_shift[I] = all_mu;
         all_mu += rpa_exx_lcao_.get_index_abfs()[GlobalC::ucell.iat2it[I]].count_size;
     }
     std::stringstream ss;
-    ss << "coulomb_mat_0.txt";
+    ss << "coulomb_mat_"<<GlobalV::MY_RANK<<".txt";    
+
     std::ofstream ofs;
     ofs.open(ss.str().c_str(), std::ios::out);
 
