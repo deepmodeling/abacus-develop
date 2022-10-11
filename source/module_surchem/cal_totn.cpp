@@ -28,3 +28,29 @@ void surchem::cal_totn(const UnitCell &cell, ModulePW::PW_Basis* rho_basis,
     delete[] vloc_g;
     return;
 }
+
+void surchem::induced_charge(const UnitCell &cell, ModulePW::PW_Basis* rho_basis, double *induced_rho) 
+{
+    std::complex<double> *delta_phig = new complex<double>[rho_basis->npw];
+    std::complex<double> *induced_rhog = new complex<double>[rho_basis->npw];
+    ModuleBase::GlobalFunc::ZEROS(induced_rhog, rho_basis->npw);
+    rho_basis->real2recip(delta_phi, delta_phig);
+    for (int ig = 0; ig < rho_basis->npw; ig++)
+    {   
+        if(rho_basis->ig_gge0 == ig)
+        {
+            continue;
+        }
+        else
+        {
+            const double fac = ModuleBase::e2 * ModuleBase::FOUR_PI /(cell.tpiba2 * rho_basis->gg[ig]);
+            induced_rhog[ig] = -delta_phig[ig] / fac;
+        }
+    }
+
+    rho_basis->recip2real(induced_rhog, induced_rho);
+
+    delete[] delta_phig;
+    delete[] induced_rhog;
+    return;
+}

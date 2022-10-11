@@ -79,7 +79,7 @@ public:
 	double* wd;// wave function for d
 
 	// return error
-	int init_pseudo_reader(const std::string &fn);
+	int init_pseudo_reader(const std::string &fn, std::string &type);
 	void print_pseudo_upf(std::ofstream &ofs);
 
 	bool functional_error;//xiaohui add 2015-03-24
@@ -88,7 +88,7 @@ public:
 
 private:
 
-	int set_pseudo_type(const std::string &fn);
+	int set_pseudo_type(const std::string &fn, std::string &type);
 	std::string& trim(std::string &in_str);
 	std::string  trimend(std::string &in_str);
 

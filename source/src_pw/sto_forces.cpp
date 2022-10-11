@@ -4,6 +4,7 @@
 #include "vdwd3.h"				  
 #include "../module_symmetry/symmetry.h"
 #include "../module_surchem/efield.h"
+#include "../module_surchem/gatefield.h"
 #include "../module_base/mathzone.h"
 
 // new
@@ -41,7 +42,14 @@ void Sto_Forces::init(ModuleBase::matrix& force, const psi::Psi<std::complex<dou
 		force_e.create( GlobalC::ucell.nat, 3);
 		Efield::compute_force(GlobalC::ucell, force_e);
 	}
-	
+
+    ModuleBase::matrix force_gate;
+    if(GlobalV::GATE_FLAG)
+    {
+        force_gate.create( GlobalC::ucell.nat, 3);
+        Gatefield::compute_force(GlobalC::ucell, force_gate);
+    }
+
 	for (int ipol = 0; ipol < 3; ipol++)
 	{
 		double sum = 0.0;
@@ -63,18 +71,31 @@ void Sto_Forces::init(ModuleBase::matrix& force, const psi::Psi<std::complex<dou
 					force(iat,ipol) = force(iat, ipol) + force_e(iat, ipol);
 				}
 
+                if(GlobalV::GATE_FLAG)
+                {
+                    force(iat,ipol) = force(iat, ipol) + force_gate(iat, ipol);
+                }
+
 				sum += force(iat, ipol);
 
 				iat++;
 			}
 		}
 
-		double compen = sum /  GlobalC::ucell.nat;
-		for(int iat=0; iat<GlobalC::ucell.nat; ++iat)
-		{
-			force(iat, ipol) = force(iat, ipol) - compen;
-		}	
+        if(!(GlobalV::GATE_FLAG || GlobalV::EFIELD_FLAG))
+        {
+            double compen = sum / GlobalC::ucell.nat;
+            for (int iat = 0; iat < GlobalC::ucell.nat; ++iat)
+            {
+                force(iat, ipol) = force(iat, ipol) - compen;
+            }
+        }
 	}
+
+    if(GlobalV::GATE_FLAG || GlobalV::EFIELD_FLAG)
+    {
+        GlobalV::ofs_running << "Atomic forces are not shifted if gate_flag or efield_flag == true!" << std::endl;
+    }
 	
 	if(ModuleSymmetry::Symmetry::symm_flag)
 	{
@@ -134,6 +155,7 @@ void Sto_Forces::init(ModuleBase::matrix& force, const psi::Psi<std::complex<dou
 		Sto_Forces::print("ION      FORCE (Ry/Bohr)", forceion);
 		Sto_Forces::print("SCC      FORCE (Ry/Bohr)", forcescc);
 		if(GlobalV::EFIELD_FLAG) Sto_Forces::print("EFIELD   FORCE (Ry/Bohr)", force_e);
+        if(GlobalV::GATE_FLAG) Sto_Forces::print("GATEFIELD   FORCE (Ry/Bohr)", force_gate);
 	}
 	
 		
@@ -148,6 +170,7 @@ void Sto_Forces::init(ModuleBase::matrix& force, const psi::Psi<std::complex<dou
 		Sto_Forces::print("ION      FORCE (eV/Angstrom)", forceion,0);
 		Sto_Forces::print("SCC      FORCE (eV/Angstrom)", forcescc,0);
 		if(GlobalV::EFIELD_FLAG) Sto_Forces::print("EFIELD   FORCE (eV/Angstrom)", force_e,0);
+        if(GlobalV::GATE_FLAG) Sto_Forces::print("GATEFIELD   FORCE (eV/Angstrom)", force_gate,0);
 	}
 	Sto_Forces::print("   TOTAL-FORCE (eV/Angstrom)", force,0);
 	ModuleBase::timer::tick("Sto_Force","cal_force");

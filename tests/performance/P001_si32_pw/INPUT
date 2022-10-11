@@ -1,0 +1,24 @@
+INPUT_PARAMETERS
+#Parameters (1.General)
+suffix			autotest
+calculation     scf
+ntype			1
+#nbands			8
+symmetry		1
+
+#Parameters (2.Iteration)
+ecutwfc			60
+scf_thr				1e-8
+scf_nmax			100
+cal_force 1
+cal_stress 1
+#Parameters (3.Basis)
+basis_type		pw
+
+#Parameters (4.Smearing)
+smearing_method		gauss
+smearing_sigma			0.002
+
+#Parameters (5.Mixing)
+mixing_type		pulay
+mixing_beta		0.3

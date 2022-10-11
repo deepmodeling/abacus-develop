@@ -31,6 +31,8 @@ bool PSEUDO_MESH;
 std::string CALCULATION = "scf";
 int EFIELD_FLAG = 0; // 5: add electric field
 int DIP_COR_FLAG = 0; // 7: add dipole field
+bool GATE_FLAG = false;    // add gate field
+double NELEC = 0;
 
 std::string DFT_FUNCTIONAL = "default";
 double XC_TEMPERATURE = 0.0;
@@ -67,8 +69,6 @@ double PW_DIAG_THR = 1.0e-2;
 int NB2D = 1;
 
 double SCF_THR = 1.0e-9;
-
-std::string RESTART_MODE = "new";
 
 double DQ = 0.010; // space between Q points of the reciprocal radial tab
 int NQX = 10000; // number of points describing reciprocal radial tab
@@ -130,11 +130,12 @@ std::string global_wannier_card;
 std::string global_pseudo_dir = "";
 std::string global_orbital_dir = ""; // liuyu add 2021-08-14
 
-std::string global_pseudo_type = "auto";
+// std::string global_pseudo_type = "auto";
 std::string global_epm_pseudo_card;
 std::string global_out_dir;
 std::string global_readin_dir; // zhengdy modified
 std::string global_stru_dir;
+std::string global_matrix_dir;
 
 std::ofstream ofs_running;
 std::ofstream ofs_warning;
@@ -210,8 +211,6 @@ double eb_k = 80.0;
 double tau = 1.0798 * 1e-5;
 double sigma_k = 0.6;
 double nc_k = 0.00037;
-
-bool comp_chg = false; // compensating charge
 
 bool dft_plus_u = false; //DFTU control
 } // namespace GlobalV

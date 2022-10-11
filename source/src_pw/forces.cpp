@@ -9,6 +9,7 @@
 #include "../module_base/timer.h"
 #include "../module_surchem/efield.h"
 #include "../module_surchem/surchem.h"
+#include "../module_surchem/gatefield.h"
 
 double Forces::output_acc = 1.0e-8; // (Ryd/angstrom).
 
@@ -83,6 +84,17 @@ void Forces::init(ModuleBase::matrix& force, const psi::Psi<std::complex<double>
         }
     }
 
+    ModuleBase::matrix force_gate;
+    if (GlobalV::GATE_FLAG)
+    {
+        force_gate.create(GlobalC::ucell.nat, 3);
+        Gatefield::compute_force(GlobalC::ucell, force_gate);
+        if (GlobalV::TEST_FORCE)
+        {
+            Forces::print("GATEFIELD      FORCE (Ry/Bohr)", force_gate);
+        }
+    }
+
     ModuleBase::matrix forcesol;
     if (GlobalV::imp_sol)
     {
@@ -92,13 +104,6 @@ void Forces::init(ModuleBase::matrix& force, const psi::Psi<std::complex<double>
         {
             Forces::print("IMP_SOL      FORCE (Ry/Bohr)", forcesol);
         }
-    }
-
-    ModuleBase::matrix forcecomp;
-    if (GlobalV::comp_chg)
-    {
-        forcecomp.create(GlobalC::ucell.nat, 3);
-        GlobalC::solvent_model.cal_comp_force(forcecomp, GlobalC::rhopw);
     }
 
     // impose total force = 0
@@ -126,9 +131,9 @@ void Forces::init(ModuleBase::matrix& force, const psi::Psi<std::complex<double>
                     force(iat, ipol) = force(iat, ipol) + force_e(iat, ipol);
                 }
 
-                if (GlobalV::comp_chg)
+                if (GlobalV::GATE_FLAG)
                 {
-                    force(iat, ipol) = force(iat, ipol) + forcecomp(iat, ipol);
+                    force(iat, ipol) = force(iat, ipol) + force_gate(iat, ipol);
                 }
 
                 if(GlobalV::imp_sol)
@@ -142,7 +147,7 @@ void Forces::init(ModuleBase::matrix& force, const psi::Psi<std::complex<double>
             }
         }
 
-        if(!(GlobalV::comp_chg && GlobalC::solvent_model.comp_q!=0 && ipol==GlobalC::solvent_model.comp_dim))
+        if(!(GlobalV::GATE_FLAG || GlobalV::EFIELD_FLAG))
         {
             double compen = sum / GlobalC::ucell.nat;
             for (int iat = 0; iat < GlobalC::ucell.nat; ++iat)
@@ -150,6 +155,11 @@ void Forces::init(ModuleBase::matrix& force, const psi::Psi<std::complex<double>
                 force(iat, ipol) = force(iat, ipol) - compen;
             }
         }
+    }
+
+    if(GlobalV::GATE_FLAG || GlobalV::EFIELD_FLAG)
+    {
+        GlobalV::ofs_running << "Atomic forces are not shifted if gate_flag or efield_flag == true!" << std::endl;
     }
 
     if (ModuleSymmetry::Symmetry::symm_flag)
@@ -266,6 +276,7 @@ void Forces::init(ModuleBase::matrix& force, const psi::Psi<std::complex<double>
 		Forces::print("ION      FORCE (eV/Angstrom)", forceion,0);
 		Forces::print("SCC      FORCE (eV/Angstrom)", forcescc,0);
 		if(GlobalV::EFIELD_FLAG) Forces::print("EFIELD   FORCE (eV/Angstrom)", force_e,0);
+        if(GlobalV::GATE_FLAG) Forces::print("GATEFIELD   FORCE (eV/Angstrom)", force_gate,0);
         if(GlobalV::imp_sol) Forces::print("IMP_SOL   FORCE (eV/Angstrom)", forcesol,0);
 	}
 	Forces::print("   TOTAL-FORCE (eV/Angstrom)", force,0);

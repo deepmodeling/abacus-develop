@@ -1,5 +1,5 @@
 ATOMIC_SPECIES
-Si 14 si.lda.lps
+Si 14 si.lda.lps blps
 
 LATTICE_CONSTANT
 10.22  // add lattice constant

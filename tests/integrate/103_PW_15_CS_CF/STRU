@@ -1,6 +1,6 @@
 ATOMIC_SPECIES
-As 1   As_dojo.upf
-Ga 1   Ga_dojo.upf
+As 1   As_dojo.upf upf201
+Ga 1   Ga_dojo.upf upf201
 
 LATTICE_CONSTANT
 1  // add lattice constant, 10.58 ang

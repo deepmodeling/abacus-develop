@@ -3,7 +3,6 @@ INPUT_PARAMETERS
 suffix			autotest
 calculation     scf
 ntype			1
-pseudo_type     upf201
 pseudo_dir	../../PP_ORB
 
 #Parameters (2.Iteration)

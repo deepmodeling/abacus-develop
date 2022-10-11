@@ -3,7 +3,6 @@ INPUT_PARAMETERS
 suffix	            autotest
 pseudo_dir	../../PP_ORB
 ntype               2
-pseudo_type         upf201
 gamma_only          0
 calculation         scf
 symmetry            1

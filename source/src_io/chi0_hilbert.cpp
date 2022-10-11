@@ -1481,10 +1481,12 @@ void Chi0_hilbert::Cal_Chi0s(int iq)
 			{
 				Cal_b(iq, ik, iqk, 0, GlobalC::rhopw);
 			}
+#ifdef __LCAO
 			else
 			{
 				Cal_b_lcao(iq, ik, iqk);
 			}
+#endif
 
 			for(int ib1=0; ib1<oband; ib1++)
 			{
@@ -1595,10 +1597,12 @@ void Chi0_hilbert::Cal_Chi0s(int iq)
 			{
 				Cal_b(iq+GlobalC::kv.nks/2, ik, iqk, 0,GlobalC::rhopw);
 			}
+#ifdef __LCAO
 			else
 			{
 				Cal_b_lcao(iq+GlobalC::kv.nks/2, ik, iqk);
 			}
+#endif
 			for(int ib1=0; ib1<oband; ib1++)
 			{
 				for(int ib2=0; ib2<GlobalV::NBANDS; ib2++)
@@ -1653,10 +1657,12 @@ void Chi0_hilbert::Cal_Chi0s(int iq)
 				{
 					Cal_b(iq, ik, iqk, ispin,GlobalC::rhopw);
 				}
+#ifdef __LCAO
 				else
 				{
 					Cal_b_lcao(iq, ik, iqk);
 				}
+#endif
 				std::cout<<"ik = "<<ik<<" ispin = "<<ispin<<std::endl;
 				for(int g=0; g<dim; g++)
 				{

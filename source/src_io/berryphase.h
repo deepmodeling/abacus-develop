@@ -12,7 +12,9 @@ class berryphase
 public:
 
     berryphase();   //for pw-line
+#ifdef __LCAO
     berryphase(Local_Orbital_wfc &lowf_in);   //for lcao-line
+#endif
     ~berryphase();
 
 	// mohan add 2021-02-16
@@ -20,6 +22,7 @@ public:
 	unkOverlap_pw pw_method;
 #ifdef __LCAO
 	unkOverlap_lcao lcao_method;
+	Local_Orbital_wfc* lowf;
 #endif
 
 	int total_string;
@@ -28,8 +31,6 @@ public:
 	int direction;
 	int occ_nbands;
     int GDIR;
-
-    Local_Orbital_wfc* lowf;
 
 	void get_occupation_bands();
 

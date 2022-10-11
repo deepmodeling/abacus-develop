@@ -9,6 +9,7 @@
 // new
 #include "../module_surchem/efield.h"
 #include "../module_surchem/surchem.h"
+#include "../module_surchem/gatefield.h"
 #include "H_Hartree_pw.h"
 #ifdef __LCAO
 #include "../src_lcao/ELEC_evolve.h"
@@ -73,7 +74,7 @@ void Potential::allocate(const int nrxx)
     this->vnew.create(GlobalV::NSPIN, nrxx);
     ModuleBase::Memory::record("Potential", "vnew", GlobalV::NSPIN * nrxx, "double");
 
-    if (GlobalV::imp_sol || GlobalV::comp_chg)
+    if (GlobalV::imp_sol)
     {
         GlobalC::solvent_model.allocate(nrxx, GlobalV::NSPIN);
     }
@@ -149,89 +150,7 @@ void Potential::init_pot(const int &istep, // number of ionic steps
     //--------------------------------------------------------------------
     if (istep == 0)
     {
-        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "init_chg", init_chg);
-
-        std::cout << " START POTENTIAL      : " << init_chg << std::endl;
-        if (this->init_chg == "atomic") // mohan add 2007-10-17
-        {
-        start_from_atomic:
-            GlobalC::CHR.atomic_rho(GlobalV::NSPIN, GlobalC::CHR.rho, GlobalC::rhopw);
-        }
-        else if (this->init_chg == "file")
-        {
-            GlobalV::ofs_running << " try to start potential from file : ";
-            for (int is = 0; is < GlobalV::NSPIN; is++)
-            {
-                std::stringstream ssc;
-                ssc << GlobalV::global_readin_dir << "SPIN" << is + 1 << "_CHG";
-                GlobalV::ofs_running << ssc.str() << std::endl;
-                // mohan update 2012-02-10
-                if (GlobalC::CHR.read_rho(is, ssc.str(), GlobalC::CHR.rho[is]))
-                {
-                    GlobalV::ofs_running << " Read in the charge density: " << ssc.str() << std::endl;
-                }
-                else if (is > 0 && GlobalV::NSPIN == 4)
-                {
-                    // read only spin (up+down)
-                    if (GlobalV::PRENSPIN == 1)
-                    {
-                        GlobalV::ofs_running << " Didn't read in the charge density but autoset it for spin " << is + 1
-                                             << std::endl;
-                        for (int ir = 0; ir < GlobalC::rhopw->nrxx; ir++)
-                        {
-                            GlobalC::CHR.rho[is][ir] = 0.0;
-                        }
-                    }
-                    //
-                    else if (GlobalV::PRENSPIN == 2)
-                    { // read up and down , then rearrange them.
-                        if (is == 1)
-                        {
-                            ModuleBase::WARNING_QUIT("potential::init_pot", "Incomplete charge density file!");
-                        }
-                        else if (is == 2)
-                        {
-                            GlobalV::ofs_running << " Didn't read in the charge density but would rearrange it later. "
-                                                 << std::endl;
-                        }
-                        else if (is == 3)
-                        {
-                            GlobalV::ofs_running << " rearrange charge density " << std::endl;
-                            for (int ir = 0; ir < GlobalC::rhopw->nrxx; ir++)
-                            {
-                                GlobalC::CHR.rho[3][ir] = GlobalC::CHR.rho[0][ir] - GlobalC::CHR.rho[1][ir];
-                                GlobalC::CHR.rho[0][ir] = GlobalC::CHR.rho[0][ir] + GlobalC::CHR.rho[1][ir];
-                                GlobalC::CHR.rho[1][ir] = 0.0;
-                                GlobalC::CHR.rho[2][ir] = 0.0;
-                            }
-                        }
-                    }
-                    else
-                    {
-                        ModuleBase::WARNING_QUIT("potential::init_pot", "Incomplete charge density file!");
-                    }
-                }
-                else
-                {
-                    GlobalV::ofs_running << " Start charge density from atomic charge density." << std::endl;
-                    goto start_from_atomic;
-                }
-            }
-        }
-        else
-        {
-            ModuleBase::WARNING_QUIT("potential::init_pot", "init_chg is wrong!");
-        }
-
-        // Peize Lin add 2020.04.04
-        if (GlobalC::restart.info_load.load_charge && !GlobalC::restart.info_load.load_charge_finish)
-        {
-            for (int is = 0; is < GlobalV::NSPIN; ++is)
-            {
-                GlobalC::restart.load_disk("charge", is);
-            }
-            GlobalC::restart.info_load.load_charge_finish = true;
-        }
+        GlobalC::CHR.init_rho();
     }
 
     // renormalize the charge density
@@ -294,11 +213,16 @@ void Potential::set_local_pot(double *vl_pseudo, // store the local pseudopotent
     if (GlobalV::EFIELD_FLAG && !GlobalV::DIP_COR_FLAG)
     {
         ModuleBase::matrix v_efield(GlobalV::NSPIN, GlobalC::rhopw->nrxx);
-        v_efield = Efield::add_efield(GlobalC::ucell, GlobalC::rhopw, GlobalV::NSPIN, GlobalC::CHR.rho);
+        v_efield = Efield::add_efield(GlobalC::ucell, GlobalC::rhopw, GlobalV::NSPIN, GlobalC::CHR.rho, GlobalC::solvent_model);
         for (int ir = 0; ir < GlobalC::rhopw->nrxx; ++ir)
         {
             vl_pseudo[ir] += v_efield(0, ir);
         }
+    }
+
+    if( GlobalV::GATE_FLAG)
+    {
+        Gatefield::add_gatefield(vl_pseudo, GlobalC::ucell, GlobalC::rhopw, true, true);
     }
 
     delete[] vg;
@@ -361,10 +285,6 @@ ModuleBase::matrix Potential::v_of_rho(const double *const *const rho_in, const 
     if (GlobalV::VH_IN_H)
     {
         v += H_Hartree_pw::v_hartree(GlobalC::ucell, GlobalC::rhopw, GlobalV::NSPIN, rho_in);
-        if(GlobalV::comp_chg)
-        {
-            v += GlobalC::solvent_model.v_compensating(GlobalC::ucell, GlobalC::rhopw, GlobalV::NSPIN, rho_in);
-        }
         if (GlobalV::imp_sol)
         {
             v += GlobalC::solvent_model.v_correction(GlobalC::ucell, GlobalC::rhopw, GlobalV::NSPIN, rho_in);
@@ -376,7 +296,7 @@ ModuleBase::matrix Potential::v_of_rho(const double *const *const rho_in, const 
     //----------------------------------------------------------
     if (GlobalV::EFIELD_FLAG && GlobalV::DIP_COR_FLAG)
     {
-        v += Efield::add_efield(GlobalC::ucell, GlobalC::rhopw, GlobalV::NSPIN, rho_in);
+        v += Efield::add_efield(GlobalC::ucell, GlobalC::rhopw, GlobalV::NSPIN, rho_in, GlobalC::solvent_model);
     }
 
     // test get ntot_reci

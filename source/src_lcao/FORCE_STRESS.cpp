@@ -7,6 +7,7 @@
 #include "../module_base/timer.h"
 #include "../module_surchem/efield.h"        // liuyu add 2022-05-18
 #include "../module_surchem/surchem.h"		 //sunml add 2022-08-10
+#include "../module_surchem/gatefield.h"        // liuyu add 2022-09-13
 #ifdef __DEEPKS
 #include "../module_deepks/LCAO_deepks.h"	//caoyu add for deepks 2021-06-03
 #endif
@@ -185,6 +186,13 @@ void Force_Stress_LCAO::getForceStress(
         fefield.create(nat, 3);
         Efield::compute_force(GlobalC::ucell, fefield);
     }
+    //implement force from gate field
+    ModuleBase::matrix fgate;
+    if(GlobalV::GATE_FLAG&&isforce)
+    {
+        fgate.create(nat, 3);
+        Gatefield::compute_force(GlobalC::ucell, fgate);
+    }
 	//Force from implicit solvation model
     ModuleBase::matrix fsol;
     if(GlobalV::imp_sol&&isforce)
@@ -263,6 +271,11 @@ void Force_Stress_LCAO::getForceStress(
 				{
 					fcs(iat, i) += fefield(iat, i);
 				}
+                //Gate field force
+                if(GlobalV::GATE_FLAG)
+                {
+                    fcs(iat, i) += fgate(iat, i);
+                }
 				//implicit solvation model
 				if(GlobalV::imp_sol)
 				{
@@ -279,10 +292,13 @@ void Force_Stress_LCAO::getForceStress(
 				sum += fcs(iat, i);
 			}
 
-			for(int iat=0; iat<nat; ++iat)
-			{
-				fcs(iat, i) -= sum/nat;
-			}
+            if(!(GlobalV::GATE_FLAG || GlobalV::EFIELD_FLAG))
+            {
+                for(int iat=0; iat<nat; ++iat)
+                {
+                    fcs(iat, i) -= sum/nat;
+                }
+            }
 
 			//xiaohui add "OUT_LEVEL", 2015-09-16
 			if(GlobalV::OUT_LEVEL != "m")
@@ -291,6 +307,11 @@ void Force_Stress_LCAO::getForceStress(
 					<< i+1 << " is " << sum/nat << std::endl;
 			}
 		}
+
+        if(GlobalV::GATE_FLAG || GlobalV::EFIELD_FLAG)
+        {
+            GlobalV::ofs_running << "Atomic forces are not shifted if gate_flag or efield_flag == true!" << std::endl;
+        }
 
 		// pengfei 2016-12-20
 		if(ModuleSymmetry::Symmetry::symm_flag)
@@ -392,6 +413,11 @@ void Force_Stress_LCAO::getForceStress(
 				f_pw.print("EFIELD     FORCE", fefield,0);
 				//this->print_force("EFIELD     FORCE",fefield,1,ry);
 			}
+            if(GlobalV::GATE_FLAG)
+            {
+                f_pw.print("GATEFIELD     FORCE", fgate,0);
+                //this->print_force("GATEFIELD     FORCE",fgate,1,ry);
+            }
 			if(GlobalV::imp_sol)
 			{
 				f_pw.print("IMP_SOL     FORCE", fsol,0);
@@ -473,7 +499,7 @@ void Force_Stress_LCAO::getForceStress(
 #ifdef __DEEPKS
 		if (GlobalV::deepks_out_labels) //not parallelized yet
         {
-			GlobalC::ld.save_npy_s(scs, "s_base.npy", GlobalC::ucell.omega); //Ry/Bohr^3, S_base; no scf case -- same as S_tot
+			GlobalC::ld.save_npy_s(scs, "s_base.npy", GlobalC::ucell.omega); //change to energy unit Ry when printing, S_base;
 			// wenfei add 2021/11/2
 			if (GlobalV::deepks_scf)
 			{
@@ -484,13 +510,13 @@ void Force_Stress_LCAO::getForceStress(
 						scs(i,j) += svnl_dalpha(i,j);
 					}
 				}
-				GlobalC::ld.save_npy_s(scs, "s_tot.npy", GlobalC::ucell.omega); //Ry/Bohr^3, S_tot
+				GlobalC::ld.save_npy_s(scs, "s_tot.npy", GlobalC::ucell.omega); //change to energy unit Ry when printing, S_tot, w/ model
 				GlobalC::ld.cal_gvepsl(GlobalC::ucell.nat);
-				GlobalC::ld.save_npy_gvepsl(GlobalC::ucell.nat);//  /Bohr^3, grad_vepsl
+				GlobalC::ld.save_npy_gvepsl(GlobalC::ucell.nat); //  unitless, grad_vepsl
 			}
 			else
 			{
-				GlobalC::ld.save_npy_s(scs, "s_tot.npy", GlobalC::ucell.omega); //Ry/Bohr^3, S_tot; no scf case -- same as S_base
+				GlobalC::ld.save_npy_s(scs, "s_tot.npy", GlobalC::ucell.omega); //change to energy unit Ry when printing, S_tot, w/o model;
 			}
 		}	
 #endif

@@ -1,5 +1,5 @@
 ATOMIC_SPECIES
-Be 9 Be_ONCV_PBE-1.0.upf
+Be 9 Be_ONCV_PBE-1.0.upf upf201
 
 NUMERICAL_ORBITAL
 Be_gga_8au_60Ry_4s1p.orb

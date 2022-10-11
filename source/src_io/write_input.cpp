@@ -36,7 +36,7 @@ void Input::Print(const std::string &fn) const
                                  "orbital_dir",
                                  GlobalV::global_orbital_dir,
                                  "the directory containing orbital files");
-    ModuleBase::GlobalFunc::OUTP(ofs, "pseudo_type", GlobalV::global_pseudo_type, "the type pseudo files");
+    // ModuleBase::GlobalFunc::OUTP(ofs, "pseudo_type", GlobalV::global_pseudo_type, "the type pseudo files");
     ModuleBase::GlobalFunc::OUTP(ofs, "pseudo_rcut", pseudo_rcut, "cut-off radius for radial integration");
     ModuleBase::GlobalFunc::OUTP(ofs,
                                  "pseudo_mesh",
@@ -69,6 +69,16 @@ void Input::Print(const std::string &fn) const
     ModuleBase::GlobalFunc::OUTP(ofs, "lspinorb", lspinorb, "consider the spin-orbit interaction");
     ModuleBase::GlobalFunc::OUTP(ofs, "kpar", kpar, "devide all processors into kpar groups and k points will be distributed among each group");
     ModuleBase::GlobalFunc::OUTP(ofs, "bndpar", bndpar, "devide all processors into bndpar groups and bands will be distributed among each group");
+    ModuleBase::GlobalFunc::OUTP(ofs, "out_freq_elec", out_freq_elec, "the frequency ( >= 0) of electronic iter to output charge density and wavefunction. 0: output only when converged");
+    ModuleBase::GlobalFunc::OUTP(ofs, "dft_plus_dmft", dft_plus_dmft, "true:DFT+DMFT; false: standard DFT calcullation(default)");
+    ModuleBase::GlobalFunc::OUTP(ofs, "printe", printe, "Print out energy for each band for every printe steps");
+    ModuleBase::GlobalFunc::OUTP(ofs, "mem_saver", mem_saver, "Only for nscf calculations. if set to 1, then a memory saving technique will be used for many k point calculations.");
+    ModuleBase::GlobalFunc::OUTP(ofs, "diago_proc", diago_proc, "the number of procs used to do diagonalization");
+    ModuleBase::GlobalFunc::OUTP(ofs, "nbspline", nbspline, "the order of B-spline basis");
+    ModuleBase::GlobalFunc::OUTP(ofs, "wannier_card", wannier_card, "input card for wannier functions");
+    ModuleBase::GlobalFunc::OUTP(ofs, "soc_lambda", soc_lambda, "The fraction of averaged SOC pseudopotential is given by (1-soc_lambda)");
+    ModuleBase::GlobalFunc::OUTP(ofs, "cal_force", cal_force, "if calculate the force at the end of the electronic iteration");
+    ModuleBase::GlobalFunc::OUTP(ofs, "out_freq_ion", out_freq_ion, "the frequency ( >= 0 ) of ionic step to output charge density and wavefunction. 0: output only when ion steps are finished");
 
     ofs << "\n#Parameters (2.PW)" << std::endl;
     ModuleBase::GlobalFunc::OUTP(ofs, "ecutwfc", ecutwfc, "#energy cutoff for wave functions");
@@ -109,6 +119,7 @@ void Input::Print(const std::string &fn) const
                                  "cell_factor",
                                  cell_factor,
                                  "used in the construction of the pseudopotential tables");
+    ModuleBase::GlobalFunc::OUTP(ofs, "pw_seed", pw_seed, "random seed for initializing wave functions");
     
     ofs << "\n#Parameters (3.Stochastic DFT)" << std::endl;
     ModuleBase::GlobalFunc::OUTP(ofs, "method_sto", method_sto, "1: slow and save memory, 2: fast and waste memory");
@@ -171,9 +182,17 @@ void Input::Print(const std::string &fn) const
     ModuleBase::GlobalFunc::OUTP(ofs, "deepks_model", deepks_model, "file dir of traced pytorch model: 'model.ptg");
 
     ModuleBase::GlobalFunc::OUTP(ofs,
-                                 "deepks_descriptor_lmax",
-                                 deepks_descriptor_lmax,
-                                 "lmax used in generating descriptor");
+                                 "bessel_lmax",
+                                 bessel_lmax,
+                                 "lmax used in generating bessel functions");
+    ModuleBase::GlobalFunc::OUTP(ofs,
+                                 "bessel_rcut",
+                                 bessel_rcut,
+                                 "rcut used in generating bessel functions");
+    ModuleBase::GlobalFunc::OUTP(ofs,
+                                 "bessel_rcut",
+                                 bessel_rcut,
+                                 "tolerence level when generating bessel functions");
 
     ofs << "\n#Parameters (5.LCAO)" << std::endl;
     ModuleBase::GlobalFunc::OUTP(ofs, "basis_type", basis_type, "PW; LCAO in pw; LCAO");
@@ -181,6 +200,7 @@ void Input::Print(const std::string &fn) const
     {
         ModuleBase::GlobalFunc::OUTP(ofs, "nb2d", nb2d, "2d distribution of atoms");
     }
+    ModuleBase::GlobalFunc::OUTP(ofs, "gamma_only", gamma_only, "Only for localized orbitals set and gamma point. If set to 1, a fast algorithm is used");
     ModuleBase::GlobalFunc::OUTP(ofs, "search_radius", search_radius, "input search radius (Bohr)");
     ModuleBase::GlobalFunc::OUTP(ofs, "search_pbc", search_pbc, "input periodic boundary condition");
     ModuleBase::GlobalFunc::OUTP(ofs, "lcao_ecut", lcao_ecut, "energy cutoff for LCAO");
@@ -189,6 +209,7 @@ void Input::Print(const std::string &fn) const
     ModuleBase::GlobalFunc::OUTP(ofs, "lcao_rmax", lcao_rmax, "max R for 1D two-center integration table");
     ModuleBase::GlobalFunc::OUTP(ofs, "out_mat_hs", out_mat_hs, "output H and S matrix");
     ModuleBase::GlobalFunc::OUTP(ofs, "out_mat_hs2", out_mat_hs2, "output H(R) and S(R) matrix");
+    ModuleBase::GlobalFunc::OUTP(ofs, "out_element_info", out_element_info, "output (projected) wavefunction of each element");
     ModuleBase::GlobalFunc::OUTP(ofs, "out_mat_r", out_mat_r, "output r(R) matrix");
     ModuleBase::GlobalFunc::OUTP(ofs, "out_wfc_lcao", out_wfc_lcao, "ouput LCAO wave functions");
     ModuleBase::GlobalFunc::OUTP(ofs, "bx", bx, "division of an element grid in FFT grid along x");
@@ -247,7 +268,16 @@ void Input::Print(const std::string &fn) const
     ModuleBase::GlobalFunc::OUTP(ofs,"efield_pos_dec",efield_pos_dec,"zone in the unit cell where the saw-like potential decreases");
     ModuleBase::GlobalFunc::OUTP(ofs,"efield_amp ",efield_amp ,"amplitude of the electric field");
 
-    ofs << "\n#Parameters (11.Test)" << std::endl;
+    ofs << "\n#Parameters (11.Gate field)" << std::endl;
+    ModuleBase::GlobalFunc::OUTP(ofs,"gate_flag",gate_flag,"compensating charge or not");
+    ModuleBase::GlobalFunc::OUTP(ofs,"zgate",zgate,"position of charged plate");
+    ModuleBase::GlobalFunc::OUTP(ofs,"relax",relax,"allow relaxation along the specific direction");
+    ModuleBase::GlobalFunc::OUTP(ofs,"block",block,"add a block potential or not");
+    ModuleBase::GlobalFunc::OUTP(ofs,"block_down",block_down,"low bound of the block");
+    ModuleBase::GlobalFunc::OUTP(ofs,"block_up",block_up,"high bound of the block");
+    ModuleBase::GlobalFunc::OUTP(ofs,"block_height",block_height,"height of the block");
+
+    ofs << "\n#Parameters (12.Test)" << std::endl;
     ModuleBase::GlobalFunc::OUTP(ofs, "out_alllog", out_alllog, "output information for each processor, when parallel");
     ModuleBase::GlobalFunc::OUTP(ofs, "nurse", nurse, "for coders");
     ModuleBase::GlobalFunc::OUTP(ofs, "colour", colour, "for coders, make their live colourful");
@@ -258,6 +288,7 @@ void Input::Print(const std::string &fn) const
     ModuleBase::GlobalFunc::OUTP(ofs, "vion_in_h", vion_in_h, "calculate the local ionic potential or not");
     ModuleBase::GlobalFunc::OUTP(ofs, "test_force", test_force, "test the force");
     ModuleBase::GlobalFunc::OUTP(ofs, "test_stress", test_stress, "test the force");
+    ModuleBase::GlobalFunc::OUTP(ofs, "test_skip_ewald", test_skip_ewald, "skip ewald energy");
 
     ofs << "\n#Parameters (13.vdW Correction)" << std::endl;
     ModuleBase::GlobalFunc::OUTP(ofs,
@@ -275,17 +306,17 @@ void Input::Print(const std::string &fn) const
     ModuleBase::GlobalFunc::OUTP(ofs, "vdw_R0_file", vdw_R0_file, "filename of R0");
     ModuleBase::GlobalFunc::OUTP(ofs, "vdw_R0_unit", vdw_R0_unit, "unit of R0, A or Bohr");
     ModuleBase::GlobalFunc::OUTP(ofs,
-                                 "vdw_model",
-                                 vdw_model,
+                                 "vdw_cutoff_type",
+                                 vdw_cutoff_type,
                                  "expression model of periodic structure, radius or period");
-    ModuleBase::GlobalFunc::OUTP(ofs, "vdw_radius", vdw_radius, "radius cutoff for periodic structure");
+    ModuleBase::GlobalFunc::OUTP(ofs, "vdw_cutoff_radius", vdw_cutoff_radius, "radius cutoff for periodic structure");
     ModuleBase::GlobalFunc::OUTP(ofs,
                                  "vdw_radius_unit",
                                  vdw_radius_unit,
                                  "unit of radius cutoff for periodic structure");
     ModuleBase::GlobalFunc::OUTP(ofs, "vdw_cn_thr", vdw_cn_thr, "radius cutoff for cn");
     ModuleBase::GlobalFunc::OUTP(ofs, "vdw_cn_thr_unit", vdw_cn_thr_unit, "unit of cn_thr, Bohr or Angstrom");
-    ofs << std::setw(20) << "vdw_period" << vdw_period.x << " " << vdw_period.y << " " << vdw_period.z
+    ofs << std::setw(20) << "vdw_cutoff_period" << vdw_cutoff_period.x << " " << vdw_cutoff_period.y << " " << vdw_cutoff_period.z
         << " #periods of periodic structure" << std::endl;
 
     ofs << "\n#Parameters (14.exx)" << std::endl;
@@ -341,12 +372,33 @@ void Input::Print(const std::string &fn) const
     ModuleBase::GlobalFunc::OUTP(ofs, "sigma_k", sigma_k, " the width of the diffuse cavity");
     ModuleBase::GlobalFunc::OUTP(ofs, "nc_k", nc_k, " the cut-off charge density");
 
-    ofs << "\n#Parameters (19.compensating_charge)" << std::endl;
-    ModuleBase::GlobalFunc::OUTP(ofs, "comp_chg", comp_chg, " add compensating charge");
-    ModuleBase::GlobalFunc::OUTP(ofs, "comp_q", comp_q, " total charge of compensating charge");
-    ModuleBase::GlobalFunc::OUTP(ofs, "comp_l", comp_l, " total length of compensating charge");
-    ModuleBase::GlobalFunc::OUTP(ofs, "comp_center", comp_center, " center of compensating charge on dim");
-    ModuleBase::GlobalFunc::OUTP(ofs, "comp_dim", comp_dim, " dimension of compensating charge(x, y or z)");
+    ofs << "\n#Parameters (19.dft+u)" << std::endl;
+    ModuleBase::GlobalFunc::OUTP(ofs, "dft_plus_u", dft_plus_u, "true:DFT+U correction; false: standard DFT calcullation(default)");
+    ModuleBase::GlobalFunc::OUTP(ofs, "dftu_type", dftu_type, "1:rotationally invarient formalism; 2:simplified form(default)");
+    ModuleBase::GlobalFunc::OUTP(ofs, "double_counting", double_counting, "1:FLL(fully localized limit)(default); 2:AMF(around mean field)");
+    ModuleBase::GlobalFunc::OUTP(ofs, "yukawa_lambda", yukawa_lambda, "default:0.0");
+    ModuleBase::GlobalFunc::OUTP(ofs, "yukawa_potential", yukawa_potential, "default: false");
+    ModuleBase::GlobalFunc::OUTP(ofs, "omc", omc, "whether turn on occupation matrix control method or not");
+    ofs << std::setw(20) << "hund_j ";
+    for (int i = 0; i < ntype; i++)
+    {
+        ofs << hund_j[i]*ModuleBase::Ry_to_eV << " ";
+    }
+    ofs << "#Hund exchange parameter J(ev)" << std::endl;
+    ofs << std::setw(20) << "hubbard_u ";
+    for (int i = 0; i < ntype; i++)
+    {
+        ofs << hubbard_u[i]*ModuleBase::Ry_to_eV << " ";
+    }
+    ofs << "#Hubbard Coulomb interaction parameter U(ev)" << std::endl;
+    ofs << std::setw(20) << "orbital_corr ";
+    for (int i = 0; i < ntype; i++)
+    {
+        ofs << orbital_corr[i] << " ";
+    }
+    ofs << "#which correlated orbitals need corrected ; d:2 ,f:3, do not need correction:-1" << std::endl;
+
+
     ofs.close();
     return;
 }

@@ -200,7 +200,7 @@ void Parallel_Global::read_mpi_parameters(int argc,char **argv)
     {
         std::cout << " *********************************************************" << std::endl;
         std::cout << " *                                                       *" << std::endl;
-        std::cout << " *                  WELCOME TO ABACUS                    *" << std::endl;
+        std::cout << " *                  WELCOME TO ABACUS v3.0               *" << std::endl;
         std::cout << " *                                                       *" << std::endl;
         std::cout << " *            'Atomic-orbital Based Ab-initio            *" << std::endl;
         std::cout << " *                  Computation at UStc'                 *" << std::endl;

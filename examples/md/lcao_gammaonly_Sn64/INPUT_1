@@ -1,0 +1,36 @@
+INPUT_PARAMETERS
+#Parameters (1.General)
+suffix                  Sn_nhc
+calculation             md
+ntype                   1
+nbands                  160
+symmetry                0
+pseudo_dir              ../../../tests/PP_ORB
+orbital_dir             ../../../tests/PP_ORB
+
+#Parameters (2.Iteration)
+ecutwfc                 30
+scf_thr                 1e-5
+scf_nmax                100
+
+#Parameters (3.Basis)
+basis_type             lcao
+ks_solver              genelpa
+gamma_only             1
+
+#Parameters (4.Smearing)
+smearing_method        gaussian
+smearing_sigma         0.01
+
+#Parameters (5.Mixing)
+mixing_type            pulay
+mixing_beta            0.3
+chg_extrap             second-order
+
+#Parameters (6.MD)
+md_type                1
+md_nstep               10
+md_dt                  1
+md_tfirst              300
+md_tfreq               1
+md_mnhc                1

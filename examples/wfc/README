@@ -1,0 +1,22 @@
+/*******************************************************************************/
+/
+/ These are the examples of ABACUS program.
+/
+/*******************************************************************************/
+
+These examples show how to output the wavefunction in G space.
+For PW basis:
+	- set 'out_wfc_pw' to '1'
+The wave function is output in a file called 'WAVEFUNC1.txt'
+
+For LCAO basis:
+	- set 'out_wfc_lcao' to '1'
+Several `LOWF_K_#.dat` files will be output in multi-k calculation and 
+`LOWF_GAMMA_S1.dat` in gamma-only calculation.
+
+
+For the wave functions in Real Space:
+	- set 'out_wfc_r' to '1'
+The wave function is output in files OUT.${suffix}/wfc_realspace/wfc_realspace_$K_$B, 
+where $K and $B is the index of k point and band respectively.
+Note, it is only used in planewave basis and ienvelope calculation in localized orbitals set

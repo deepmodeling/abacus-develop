@@ -1,0 +1,30 @@
+INPUT_PARAMETERS
+#Parameters (1.General)
+suffix                          autotest
+calculation                    scf	#test; scf; relax; nscf; ienvelope; istate;
+ntype                          2	#atom species number
+symmetry                       0	#turn symmetry on or off
+
+#Parameters (2.PW)
+ecutwfc                        100	##energy cutoff for wave functions
+scf_thr                            1e-7	#charge density error
+
+#Parameters (3.Relaxation)
+scf_nmax                          100	##number of electron iterations
+cal_stress                         1	#calculate the cal_stress or not
+cal_force                           1
+
+#Parameters (4.LCAO)
+basis_type                     pw	#PW; LCAO in pw; LCAO
+
+#Parameters (5.Smearing)
+smearing_method                       fixed	#type of smearing_method: gauss; fd; fixed; mp; mp2; mv
+#smearing_sigma                          0.002	#energy range for smearing_method
+
+#Parameters (6.Charge Mixing)
+mixing_type                    pulay	#plain; kerker; pulay; pulay-kerker; broyden
+mixing_beta                    0.7	#mixing parameter: 0 means no new charge
+
+bx 5
+by 5
+bz 5

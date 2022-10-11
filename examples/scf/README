@@ -1,0 +1,42 @@
+/*******************************************************************************/
+/
+/ These are the examples of ABACUS program.
+/
+/*******************************************************************************/
+
+These examples show how to use ABACUS to do the basic SCF calculations.
+
+Note:
+- Three input files are required in the calculation: 
+  - INPUT(control parameters)
+  - STRU(structures) 
+  - KPT(k points)
+  
+- The pseudopotential files (or numerical orbital files) are also needed:
+  - the path of pseudopotential files (or numerical orbital files) are defined 
+    by 'pseudo_dir' (or 'orbital_dir') in INPUT file
+  - the file names are defined in ATOMIC_SPECIES (or NUMBERICAL_ORBITAL) block
+    in STRU file
+
+- set 'calculation' to 'scf' in INPUT file
+
+- set 'basis_type' to 'pw' (Plane Wave basis) or 'lcao' (Linear Combination of 
+  Atomic Orbitals basis) in INPUT file. 
+
+- There are two algorithms implemented within LCAO method:
+  - set "gamma_only" to "1", and only the Gamma point of k-points is used. 
+    This is efficient for cluster or large system.
+  - set "gamma_only" to "0", which is used when k-points are needed, for example, 
+    calculate the band structures.  
+
+- set 'ecutwfc' to define the enegy cutoff
+
+- set 'scf_thr' to define the convergence precision of SCF iteration
+
+- set 'scf_nmax' to define the maximum iteration numbers of the SCF
+
+
+
+
+
+

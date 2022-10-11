@@ -1,5 +1,5 @@
 ATOMIC_SPECIES
-Al 27 Al_ONCV_PBE-1.0.upf
+Al 27 Al_ONCV_PBE-1.0.upf upf201
 
 NUMERICAL_ORBITAL
 Al_gga_8au_100Ry_4s4p1d.orb

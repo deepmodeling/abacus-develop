@@ -28,8 +28,8 @@ class Input
     std::string pseudo_dir; // directory of pseudopotential
     std::string orbital_dir; // directory of orbital file
     std::string read_file_dir; // directory of files for reading
-    std::string pseudo_type; // the type of pseudopotential, mohan add 2013-05-20, ABACUS supports
-                             // UPF format (default) and vwr format. (xiaohui add 2013-06-23)
+    // std::string pseudo_type; // the type of pseudopotential, mohan add 2013-05-20, ABACUS supports
+    //                          // UPF format (default) and vwr format. (xiaohui add 2013-06-23)
     std::string kpoint_file; // file contains k-points -- xiaohui modify 2015-02-01
     std::string wannier_card; // input card for wannier functions.
     std::string latname; // lattice name
@@ -201,7 +201,6 @@ class Input
     //==========================================================
     // potential / charge / wavefunction / energy
     //==========================================================
-    std::string restart_mode; //
 
     std::string init_wfc; // "file","atomic","random"
     std::string init_chg; // "file","atomic"
@@ -284,6 +283,18 @@ class Input
     double efield_amp ;        // amplitude of the electric field
 
     //==========================================================
+    // gatefield (compensating charge)
+    // Yu Liu add 2022-09-13
+    //==========================================================
+    bool gate_flag;                 // compensating charge or not
+    double zgate;                   // position of charged plate
+    bool relax;                     // allow relaxation along the specific direction
+    bool block;                     // add a block potential or not
+    double block_down;              // low bound of the block
+    double block_up;                // high bound of the block
+    double block_height;            // height of the block
+
+    //==========================================================
     // vdw
     // Peize Lin add 2014-03-31, jiyy update 2019-08-01
     //==========================================================
@@ -294,7 +305,7 @@ class Input
     std::string vdw_a2; // damping function parameter
     double vdw_d; // damping function parameter d
     bool vdw_abc; // third-order term?
-    std::string vdw_radius; // cutoff radius for std::pair interactions
+    std::string vdw_cutoff_radius; // cutoff radius for std::pair interactions
     std::string vdw_radius_unit; //"Bohr" or "Angstrom"
     double vdw_cn_thr; // cutoff radius for calculating the coordination number
     std::string vdw_cn_thr_unit; //"Bohr" or "Angstrom"
@@ -302,8 +313,8 @@ class Input
     std::string vdw_C6_unit; //"Bohr" or "Angstrom"
     std::string vdw_R0_file;
     std::string vdw_R0_unit; //"Bohr" or "Angstrom"
-    std::string vdw_model; //"period" or "radius"
-    ModuleBase::Vector3<int> vdw_period;
+    std::string vdw_cutoff_type; //"period" or "radius"
+    ModuleBase::Vector3<int> vdw_cutoff_period;
 
     int ocp;
     std::string ocp_set;
@@ -377,7 +388,7 @@ class Input
     double *hund_j; // Hund exchange parameter J(ev)
     bool omc; // whether turn on occupation matrix control method or not
     bool yukawa_potential; // default:false
-    double yukawa_lambda; // default:0.0
+    double yukawa_lambda; // default:-1.0, which means we calculate lambda
 
     // The two parameters below are not usable currently
 
@@ -387,7 +398,7 @@ class Input
     //==========================================================
     //    DFT+DMFT       Xin Qu added on 2021-08
     //==========================================================
-    bool dft_plus_dmft; // true:DFT+U correction; false：standard DFT calcullation(default)
+    bool dft_plus_dmft; // true:DFT+DMFT; false：standard DFT calcullation(default)
 
     //==========================================================
     // DeepKS -- added by caoyu and mohan
@@ -402,7 +413,9 @@ class Input
     string deepks_model; // needed when deepks_scf=1
 
     // the following 3 are used when generating jle.orb
-    int deepks_descriptor_lmax; // lmax used in descriptor, mohan added 2021-01-03
+    int bessel_lmax; // lmax used in descriptor, mohan added 2021-01-03
+    double bessel_rcut;
+    double bessel_tol;
 
     //==========================================================
     //    implicit solvation model       Menglin Sun added on 2022-04-04
@@ -412,17 +425,10 @@ class Input
     double tau;
     double sigma_k;
     double nc_k;
-    // compensating charge
-    bool comp_chg;
-    double comp_q;
-    double comp_l;
-    double comp_center;
-    int comp_dim;
 
     //==========================================================
     // variables for test only
     //==========================================================
-    bool test_just_neighbor = false;
     bool test_skip_ewald = false;
 
   private:

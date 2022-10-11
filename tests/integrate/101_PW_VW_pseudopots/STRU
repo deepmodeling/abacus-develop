@@ -1,5 +1,5 @@
 ATOMIC_SPECIES
-Si 14 vwr.Si 
+Si 14 vwr.Si vwr
 
 LATTICE_CONSTANT
 10.2  // add lattice constant

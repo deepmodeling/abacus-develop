@@ -76,7 +76,7 @@ struct ENVPrepare
     std::string init_wfc_;
     int         out_wfc_pw_;
     std::string ks_solver_;
-    std::string pseudo_type_; // used in init_pseudo_reader(const std::string &fn)
+    // std::string pseudo_type_; // used in init_pseudo_reader(const std::string &fn)
     int         nb2d_;
     int         colour_;
     int         drank_;
@@ -127,7 +127,7 @@ struct ENVPrepare
 	init_wfc_       = "atomic";
 	out_wfc_pw_     = 1;
 	ks_solver_      = "genelpa"; // default in input.cpp
-	pseudo_type_    = "auto"; // default in input.cpp, not in global_variable.cpp
+	// pseudo_type_    = "auto"; // default in input.cpp, not in global_variable.cpp
 	nb2d_           = 0; // default in input.cpp
 	colour_         = 0; // default in input.cpp
 	drank_          = 0;
@@ -199,7 +199,7 @@ public:
 	  GlobalC::wf.init_wfc       = env->init_wfc_;
 	  GlobalC::wf.out_wfc_pw     = env->out_wfc_pw_;
 	  GlobalV::KS_SOLVER         = env->ks_solver_;
-	  GlobalV::global_pseudo_type= env->pseudo_type_;
+	//   GlobalV::global_pseudo_type= env->pseudo_type_;
 	  GlobalV::NB2D              = env->nb2d_;
 	  GlobalV::DCOLOR            = env->colour_;
 	  GlobalV::DRANK             = env->drank_;

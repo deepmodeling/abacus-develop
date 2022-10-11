@@ -180,11 +180,11 @@ void Exx_Lip::init(K_Vectors *kv_ptr_in, wavefunc *wf_ptr_in,  ModulePW::PW_Basi
 			k_pack->hvec_array[ik].create(GlobalV::NLOCAL,GlobalV::NBANDS);
 		}
 
-		if (GlobalC::pot.init_chg=="atomic")
+		if (GlobalC::CHR.init_chg=="atomic")
 		{
 			q_pack = k_pack;
 		}
-		else if(GlobalC::pot.init_chg=="file")
+		else if(GlobalC::CHR.init_chg=="file")
 		{
 			read_q_pack();
 		}
@@ -301,11 +301,11 @@ Exx_Lip::~Exx_Lip()
 		delete[] k_pack->hvec_array;	k_pack->hvec_array=NULL;
 		delete k_pack;
 
-		if (GlobalC::pot.init_chg=="atomic")
+		if (GlobalC::CHR.init_chg=="atomic")
 		{
 			q_pack = NULL;
 		}
-		else if(GlobalC::pot.init_chg=="file")
+		else if(GlobalC::CHR.init_chg=="file")
 		{
 			delete q_pack->kv_ptr;	q_pack->kv_ptr=NULL;
 			delete q_pack->wf_ptr;	q_pack->wf_ptr=NULL;
@@ -357,7 +357,7 @@ void Exx_Lip::phi_cal(k_package *kq_pack, int ikq)
 void Exx_Lip::psi_cal()
 {
 	ModuleBase::TITLE("Exx_Lip","psi_cal");
-	if (GlobalC::pot.init_chg=="atomic")
+	if (GlobalC::CHR.init_chg=="atomic")
 	{
 		std::complex<double> *porter = new std::complex<double> [wfc_basis->nrxx];
 		for( int iq = 0; iq < q_pack->kv_ptr->nks; ++iq)
@@ -386,7 +386,7 @@ void Exx_Lip::psi_cal()
 		}
 		delete[] porter;
 	}
-	else if(GlobalC::pot.init_chg=="file")
+	else if(GlobalC::CHR.init_chg=="file")
 	{
 		for( int iq=0; iq<q_pack->kv_ptr->nks; ++iq)
 		{
@@ -411,11 +411,11 @@ void Exx_Lip::psi_cal()
 
 void Exx_Lip::judge_singularity( int ik)
 {
-	if (GlobalC::pot.init_chg=="atomic")
+	if (GlobalC::CHR.init_chg=="atomic")
 	{
 		iq_vecik = ik;
 	}
-	else if(GlobalC::pot.init_chg=="file")
+	else if(GlobalC::CHR.init_chg=="file")
 	{
 		double min_q_minus_k(numeric_limits<double>::max());
 		for( int iq=0; iq<q_pack->kv_ptr->nks; ++iq)
@@ -686,6 +686,7 @@ void Exx_Lip::read_q_pack()
 //	q_pack->wf_ptr->init(q_pack->kv_ptr->nks,q_pack->kv_ptr,ucell_ptr,old_pwptr,&ppcell,&GlobalC::ORB,&hm,&Pkpoints);
 	q_pack->wf_ptr->table_local.create(GlobalC::ucell.ntype, GlobalC::ucell.nmax_total, GlobalV::NQX);
 //	q_pack->wf_ptr->table_local.create(q_pack->wf_ptr->ucell_ptr->ntype, q_pack->wf_ptr->ucell_ptr->nmax_total, GlobalV::NQX);
+#ifdef __LCAO
 	Wavefunc_in_pw::make_table_q(GlobalC::ORB.orbital_file, q_pack->wf_ptr->table_local);
 //	Wavefunc_in_pw::make_table_q(q_pack->wf_ptr->ORB_ptr->orbital_file, q_pack->wf_ptr->table_local, q_pack->wf_ptr);
 	for(int iq=0; iq<q_pack->kv_ptr->nks; ++iq)
@@ -693,7 +694,7 @@ void Exx_Lip::read_q_pack()
 		Wavefunc_in_pw::produce_local_basis_in_pw(iq, q_pack->wf_ptr->wanf2[iq], q_pack->wf_ptr->table_local);
 //		Wavefunc_in_pw::produce_local_basis_in_pw(iq, q_pack->wf_ptr->wanf2[iq], q_pack->wf_ptr->table_local, q_pack->wf_ptr);
 	}
-
+#endif
 	q_pack->wf_wg.create(q_pack->kv_ptr->nks,GlobalV::NBANDS);
 	if(!GlobalV::RANK_IN_POOL)
 	{

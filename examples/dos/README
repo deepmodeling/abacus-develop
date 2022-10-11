@@ -1,0 +1,26 @@
+/*******************************************************************************/
+/
+/ These are the examples of ABACUS program.
+/
+/*******************************************************************************/
+
+This example show how to calculate the DOS(Density of States).
+
+It requires two steps of calculation:
+1. Do the scf calculation and output the information of charge:
+   - set 'calculation' to 'scf'
+   - set 'out_chg' to '1'
+2. Do the nscf calculation and output the information of band:
+   - set 'calculation' to 'nscf'
+   - set 'init_chg' to 'file'
+   - set 'out_dos' to '1'
+   - set 'pw_diag_thr' to a suitable value when basis_type is 'pw'
+
+Finish! Then you can see DOS1_smearing.dat in OUT.ABACUS. The first column is energy,
+and the second is density of states. Plot it!
+
+Note:
+1)If the "out_dos" is used, the DOS1_smearing.dat will appear in the directory.
+2)The charge density needed to be output in scf calculations and be read
+in non-self consistent calculations.
+

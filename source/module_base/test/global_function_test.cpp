@@ -139,7 +139,7 @@ TEST_F(GlobalFunctionTest, OutP)
     ofs.close();
     ifs.open("tmp");
     getline(ifs, output);
-    EXPECT_THAT(output, testing::HasSubstr("ecut                400 #energy cutoff"));
+    EXPECT_THAT(output, testing::HasSubstr("ecut                           400 #energy cutoff"));
     ifs.close();
 }
 

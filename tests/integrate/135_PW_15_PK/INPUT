@@ -4,7 +4,6 @@ suffix	            autotest
 pseudo_dir	../../PP_ORB
 ntype               2
 #nbands              40
-pseudo_type         upf201
 
 
 calculation         scf

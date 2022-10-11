@@ -29,6 +29,12 @@ void DFTU_Yukawa::cal_yukawa_lambda()
 {
 	ModuleBase::TITLE("DFTU_Yukawa", "cal_yukawa_lambda");
 	
+	if(INPUT.yukawa_lambda>0)
+	{
+		this->lambda = INPUT.yukawa_lambda;
+		return;
+	}
+	
 	double sum_rho = 0.0;
 	double sum_rho_lambda = 0.0;	
 	for(int is=0; is<GlobalV::NSPIN; is++)
@@ -66,8 +72,6 @@ void DFTU_Yukawa::cal_slater_Fk(const int L, const int T)
 	
 	if(Yukawa)
 	{	 
-		//this->lambda = INPUT.yukawa_lambda;
-		
 		for(int chi=0; chi<GlobalC::ucell.atoms[T].l_nchi[L]; chi++)
 		{
 		 //	if(chi!=0) continue;

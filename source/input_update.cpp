@@ -106,7 +106,7 @@ bool Update_input::Read(const std::string &fn)
 			}
         }
 		// 3
-#ifdef __FP
+#ifdef __LCAO
         else if (strcmp("force_thr_ev2", word) == 0)
         {
             read_value(ifs, force_thr_ev2);
@@ -188,7 +188,7 @@ bool Update_input::Read(const std::string &fn)
 				if(out_dm==0) 
 				{
 					out_dm = 10000;
-#ifdef __FP
+#ifdef __LCAO
 					this->change(GlobalV::ofs_warning,"out_dm",Local_Orbital_Charge::out_dm, out_dm);
 					Local_Orbital_Charge::out_dm=out_dm;
 #endif
@@ -210,7 +210,7 @@ bool Update_input::Read(const std::string &fn)
         else if (strcmp("out_dm", word) == 0)
         {
             read_value(ifs, out_dm);
-#ifdef __FP
+#ifdef __LCAO
 			if(out_dm!=Local_Orbital_Charge::out_dm)
 			{
 				this->change(GlobalV::ofs_warning,"out_dm",Local_Orbital_Charge::out_dm,out_dm);
@@ -232,7 +232,7 @@ bool Update_input::Read(const std::string &fn)
         else if (strcmp("out_wfc_lcao", word) == 0)
         {
             read_value(ifs, out_wfc_lcao);
-#ifdef __FP
+#ifdef __LCAO
 			//if(out_wfc_lcao!=out_wfc_lcao)
 			if(out_wfc_lcao!=Pdiag_Double::out_wfc_lcao)		// Peize Lin change out_wfc_lcao to GlobalC::ParaO.out_wfc_lcao at 2020.01.31
 			{

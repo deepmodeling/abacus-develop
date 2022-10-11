@@ -38,13 +38,20 @@ int Pseudopot_upf::read_pseudo_blps(std::ifstream &ifs)
     int pspcod, pspxc, lloc, r2well;
     ifs >> pspcod >> pspxc >> this->lmax >> lloc >> this->mesh >> r2well;
 
-    if(pspxc == 2)
-    {
-        this->xc_func = "LDA";
+	if(GlobalV::DFT_FUNCTIONAL=="default")
+	{
+        if(pspxc == 2)
+        {
+            this->xc_func = "PZ";
+        }
+        else if (pspxc == 11)
+        {
+            this->xc_func = "PBE";
+        }
     }
-    else if (pspxc == 11)
+    else
     {
-        this->xc_func = "GGA";
+        this->xc_func = GlobalV::DFT_FUNCTIONAL;
     }
 
     ifs.ignore(300, '\n');

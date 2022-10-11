@@ -7,7 +7,6 @@ nbands			8
 symmetry		1
 pseudo_dir	../../PP_ORB
 orbital_dir	../../PP_ORB
-pseudo_type     upf201
 nspin           2
 nelec           9
 

@@ -4,6 +4,7 @@ Atom_pseudo::Atom_pseudo()
 {
 	mbl = new ModuleBase::Vector3<int>[1];
 	pseudo_fn = "not_init";
+	pseudo_type = "not_init";
 	mass = 0.0;
 
 	for(int is=0;is<4;is++) this->index1_soc[is] = nullptr;
@@ -145,6 +146,7 @@ void Atom_pseudo::print_atom(std::ofstream &ofs)
 
 	ModuleBase::GlobalFunc::OUT(ofs,"mass",mass);
 	ModuleBase::GlobalFunc::OUT(ofs,"pseudo_fn",pseudo_fn);
+	ModuleBase::GlobalFunc::OUT(ofs,"pseudo_type",pseudo_type);
 
 	return;
 }
@@ -156,6 +158,7 @@ void Atom_pseudo::bcast_atom_pseudo(const int &na)
 	ModuleBase::TITLE("Atom_pseudo","bcast_atom_pseudo");
 	Parallel_Common::bcast_double( mass );
 	Parallel_Common::bcast_string( pseudo_fn );
+	Parallel_Common::bcast_string( pseudo_type );
 
 	if(GlobalV::MY_RANK!=0)
 	{

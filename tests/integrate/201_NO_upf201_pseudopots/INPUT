@@ -5,7 +5,6 @@ calculation     scf
 ntype			1
 nbands			6
 symmetry		1
-pseudo_type     upf201
 
 #Parameters (2.Iteration)
 ecutwfc			20

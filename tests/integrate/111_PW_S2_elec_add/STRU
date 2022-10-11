@@ -1,5 +1,5 @@
 ATOMIC_SPECIES
-Si 28 Si_ONCV_PBE-1.0.upf
+Si 28 Si_ONCV_PBE-1.0.upf upf201
 
 LATTICE_CONSTANT
 10  // add lattice constant

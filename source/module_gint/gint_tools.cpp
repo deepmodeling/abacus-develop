@@ -142,7 +142,7 @@ namespace Gint_Tools
 					GlobalC::GridT.meshcell_pos[ib][2] + mt[2]};
 				const double distance = std::sqrt(dr[0]*dr[0] + dr[1]*dr[1] + dr[2]*dr[2]);	// distance between atom and grid
 
-				if(distance > (GlobalC::ORB.Phi[it].getRcut()-1.0e-15))
+				if(distance > GlobalC::ORB.Phi[it].getRcut() - 1.0e-10)
 					cal_flag[ib][id]=false;
 				else
 					cal_flag[ib][id]=true;
@@ -1116,7 +1116,6 @@ namespace Gint_Tools
 						break;
 					}
 				}
-
 				if(offset == -1 )
 				{
 					ModuleBase::WARNING_QUIT("gint_k","mult_psi_DMR wrong");

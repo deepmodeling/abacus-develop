@@ -20,7 +20,7 @@ class Numerical_Descriptor
 	Numerical_Descriptor();
 	~Numerical_Descriptor();
 
-	void output_descriptor( const psi::Psi<std::complex<double>> &psi, const int &lmax_in); // mohan added 2021-01-03
+	void output_descriptor( const psi::Psi<std::complex<double>> &psi, const int &lmax_in, const double &rcut_in, const double &tol_in); // mohan added 2021-01-03
 
 	private:
 
