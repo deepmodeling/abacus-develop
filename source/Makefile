@@ -117,6 +117,7 @@ endif
 
 ifdef DeeP_DIR
     HONG  += -D__DPMD -DHIGH_PREC 
+    OPTS  += -Wl,--no-as-needed
     ##==========================
     ## DeePMD-kit package
     ##==========================
@@ -129,7 +130,7 @@ ifdef DeeP_DIR
     # TensorFlow package
     #==========================
     TensorFlow_LIB_DIR = ${TensorFlow_DIR}/lib
-    LIBS += -L${TensorFlow_LIB_DIR} -ltensorflow_cc -Wl,-rpath=${TensorFlow_LIB_DIR} -Wl,--no-as-needed
+    LIBS += -L${TensorFlow_LIB_DIR} -ltensorflow_cc -Wl,-rpath=${TensorFlow_LIB_DIR}
     TensorFlow_INCLUDE_DIR = ${TensorFlow_DIR}/include
     INCLUDES += -I${TensorFlow_INCLUDE_DIR}
 endif

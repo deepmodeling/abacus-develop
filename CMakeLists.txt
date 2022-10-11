@@ -249,6 +249,32 @@ if(ENABLE_LIBXC)
   endif()
 endif()
 
+if(DEFINED DeePMD_DIR)
+  add_compile_definitions(
+    __DPMD 
+    HIGH_PREC
+  )
+  add_compile_options(-Wl,--no-as-needed)
+  find_package(DeePMD REQUIRED)
+  include_directories(${DeePMD_DIR}/include)
+  target_link_libraries(${ABACUS_BIN_NAME} 
+    DeePMD::deepmd_cc
+    DeePMD::deepmd_op
+    DeePMD::deepmd_op_cuda
+    DeePMD::tensorflow_cc
+  )
+  if(NOT DEFINED TensorFlow_DIR)
+    message(FATAL_ERROR "Please define TensorFlow_DIR!")
+  endif()
+endif()
+
+if(DEFINED TensorFlow_DIR)
+  include_directories(${TensorFlow_DIR}/include)
+  if(NOT DEFINED DeePMD_DIR)
+    message(FATAL_ERROR "Please define DeePMD_DIR!")
+  endif()
+endif()
+
 add_compile_definitions(
   __EXX
   __FFTW3
