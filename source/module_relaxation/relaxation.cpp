@@ -39,7 +39,7 @@ bool Ions::relaxation(ModuleBase::matrix force, ModuleBase::matrix stress, const
 	{
 		//do cell relax calculation and generate next structure
 		bool converged = 0;
-		converged = this->do_cellrelax(stress_step, stress, GlobalC::en.etot);
+		converged = this->do_cellrelax(istep,stress_step, stress, GlobalC::en.etot);
 		if(!converged)
 		{
 			GlobalC::ucell.cell_parameter_updated = true;
@@ -100,10 +100,10 @@ bool Ions::do_relax(const int& istep, int& jstep, const ModuleBase::matrix& ioni
 	++jstep;
 	return IMM.get_converged();
 }
-bool Ions::do_cellrelax(const int& istep, const ModuleBase::matrix& stress, const double& total_energy)
+bool Ions::do_cellrelax(const int&istep, const int& stress_step, const ModuleBase::matrix& stress, const double& total_energy)
 {
 	ModuleBase::TITLE("Ions","do_cellrelax");
-	LCM.cal_lattice_change(istep, stress, total_energy);
+	LCM.cal_lattice_change(istep, stress_step, stress, total_energy);
     return LCM.get_converged();
 }
 void Ions::reset_after_relax(const int& istep)

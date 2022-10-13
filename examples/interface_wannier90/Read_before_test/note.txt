@@ -1,7 +1,0 @@
-ABACUS to wannier90 step :
-	1. you need a wannier90 input file "seedname.win". then,you should run "wannier90 -pp seedname.win" and you will get "seedname.nnkp" file that is the necessary file for ABACUS.
-	2. Prepare ABACUS's input file, structure file, kpt file, pseudopotential file, seedname.nnkp file. especially pay attention to kpt file in nscf calculation.
-	3. first, you should do scf calculation, just like you always do. this step doesn't need seedname.nnkp file. second, you should do nscf calculation,the kpt file is similar to "begin kpoints ..." in the seedname.win file.
-	4. after you run ABACUS nscf calculation, you will get "seedname.amn", "seedname.mmn" in OUT.* folder and UNK* file.
-	5. copy seedname.amn, seedname.mmn, UNK* file to wannier folder, then you can run "wannier90 seedname.win", and you will get MLWF.
-there is a important things, you must set "wvfn_formatted = .true." in seedname.win, otherwise the wannier90 code cannot read ABACUS file.

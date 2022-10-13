@@ -27,9 +27,6 @@ class ElecState
     // return current electronic density rho, as a input for constructing Hamiltonian
     virtual const double *getRho(int spin) const;
 
-    // allocate memory for charge
-    virtual void allocateRho(const int &nspin_in, const int &nrxx_in, const int &ngmc_in);
-
     // calculate electronic charge density on grid points or density matrix in real space
     // the consequence charge density rho saved into rho_out, preparing for charge mixing.
     virtual void psiToRho(const psi::Psi<std::complex<double>> &psi)

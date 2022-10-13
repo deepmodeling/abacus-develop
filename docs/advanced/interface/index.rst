@@ -3,12 +3,11 @@ Interfaces to Other Softwares
 =================================================
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    :caption: Examples
 
    deepks
    dpgen
    deeph
-   ase
    phonopy
    Wannier90

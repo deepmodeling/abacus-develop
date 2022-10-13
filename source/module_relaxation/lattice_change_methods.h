@@ -15,7 +15,7 @@ class Lattice_Change_Methods
 
 	void allocate(void);
 
-	void cal_lattice_change(const int &istep, const ModuleBase::matrix &stress, const double &etot);
+	void cal_lattice_change(const int &istep, const int &stress_step, const ModuleBase::matrix &stress, const double &etot);
 
 	bool get_converged(void)const {return Lattice_Change_Basic::converged;}
 

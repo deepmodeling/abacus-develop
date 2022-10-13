@@ -1,6 +1,6 @@
 # Extracting Electrostatic Potential
 
-From version 2.1.0, ABACUS has the function of outputing electrostatic potential, which consists of Hartree potential and the local pseudopotential. To use this function, set ‘[out_pot](#https://abacus-rtd.readthedocs.io/en/latest/advanced/input_files/input-main.html#out-pot)’ to ‘2’ in the INPUT file. Here is an example for the [Si-111 surface](#https://github.com/deepmodeling/abacus-develop/tree/develop/examples/electrostatic_potential/lcao_Si), and the INPUT file is:
+From version 2.1.0, ABACUS has the function of outputing electrostatic potential, which consists of Hartree potential and the local pseudopotential. To use this function, set ‘[out_pot](https://abacus-rtd.readthedocs.io/en/latest/advanced/input_files/input-main.html#out-pot)’ to ‘2’ in the INPUT file. Here is an example for the [Si-111 surface](https://github.com/deepmodeling/abacus-develop/tree/develop/examples/electrostatic_potential/lcao_Si), and the INPUT file is:
 
 ```
 INPUT_PARAMETERS

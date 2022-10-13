@@ -77,8 +77,15 @@ void Charge::write_rho(
 			}
 			else if(GlobalV::NSPIN==2)
 			{
-				if(is==0)ofs << "\n " << GlobalC::en.ef_up << " (fermi energy for spin=1)"; 
-				else if(is==1)ofs << "\n " << GlobalC::en.ef_dw << " (fermi energy for spin=2)";
+				if (GlobalV::TWO_EFERMI)
+				{
+					if(is==0)ofs << "\n " << GlobalC::en.ef_up << " (fermi energy for spin=1)"; 
+					else if(is==1)ofs << "\n " << GlobalC::en.ef_dw << " (fermi energy for spin=2)";
+				}
+				else
+				{
+					ofs << "\n " << GlobalC::en.ef << " (fermi energy)";
+				}
 			}
 			else
 			{

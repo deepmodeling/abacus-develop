@@ -49,7 +49,8 @@ write_input.o\
 input_conv.o\
 driver_run.o
 
-OBJS_PW=charge.o \
+OBJS_PW=read_rho.o\
+charge.o \
 charge_mixing.o \
 charge_pulay.o \
 charge_broyden.o \
@@ -57,7 +58,6 @@ charge_extra.o \
 potential.o \
 H_Ewald_pw.o\
 H_Hartree_pw.o\
-read_rho.o\
 read_atoms.o\
 read_cell_pseudopots.o\
 write_pot.o\

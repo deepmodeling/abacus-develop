@@ -27,6 +27,7 @@
 #include "module_pw/pw_basis_k.h"
 #include "module_xc/xc_functional.h"
 #include "module_xc/exx_global.h"
+#include "src_io/restart.h"
 
 Magnetism::Magnetism(){}
 Magnetism::~Magnetism(){}
@@ -50,6 +51,8 @@ pseudopot_cell_vl::pseudopot_cell_vl(){}
 pseudopot_cell_vl::~pseudopot_cell_vl(){}
 energy::energy(){}
 energy::~energy(){}
+Parallel_Grid::Parallel_Grid(){}
+Parallel_Grid::~Parallel_Grid(){}
 namespace GlobalC
 {
     energy en;
@@ -63,6 +66,8 @@ namespace GlobalC
     wavefunc wf;
     Charge CHR;
     Grid_Driver GridD(GlobalV::test_deconstructor, GlobalV::test_grid_driver,GlobalV::test_grid);
+    Parallel_Grid Pgrid;
+    Restart restart;
 }
 
 
@@ -102,6 +107,11 @@ bool Occupy::use_gaussian_broadening = false;
 bool Occupy::use_tetrahedron_method = false;
 double Magnetism::get_nelup(void) {return 0;}
 double Magnetism::get_neldw(void) {return 0;}
+#ifdef __MPI
+void Parallel_Grid::zpiece_to_all(double *zpiece, const int &iz, double *rho){}
+#endif
+
+void Restart::load_disk(const std::string mode, const int i) const {}
 
 void set_pw()
 {
@@ -202,7 +212,6 @@ namespace elecstate
 
     void ElecState::calculate_weights(void) {}
     void ElecState::calEBand() {}
-    void ElecState::allocateRho(const int &nspin_in, const int &nrxx_in, const int &ngmc_in){}
 }
 
 template<class T>

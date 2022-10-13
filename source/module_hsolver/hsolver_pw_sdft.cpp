@@ -136,7 +136,7 @@ namespace hsolver
     	{
 			if(istep == 0)
     	    {
-    	    	if (GlobalC::pot.init_chg == "file")
+    	    	if (GlobalC::CHR.init_chg == "file")
     	    	{
     	    	    this->diag_ethr = 1.0e-5;
     	    	}

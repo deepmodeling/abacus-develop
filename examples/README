@@ -9,3 +9,21 @@ use the interfaces between ABACUS and some extenal softwares.
 
 The examples interface_XXXX show the using of interface of ABACUS and XXXX
 
+Except for interface examples, a bash script `runall.sh` is required for each example
+directory to be accessed by `dflow_run.py`. Each example directory may contains several
+examples for different systems or input settings, where a bash script `run.sh` is
+required to run the specific example. The `SETENV` is read by `run.sh` to get the 
+executable directory of abacus (`ABACUS_PATH`), number of processes (`ABACUS_NPROCS`) and 
+number of threads (`ABACUS_THREADS`).
+
+How to run dflow_run.py:
+
+- `python3 dflow_run.py --find 1`:
+   find all directories where `runall.sh` has been prepared.
+
+- `python3 dflow_run.py --run 1`:
+   submmit dflow jobs.
+
+- `python3 dflow_run.py --post 1` 
+   checkout the status of jobs.
+

@@ -1,0 +1,80 @@
+{% set version = os.popen('git describe --tags --abbrev=0').read().strip('\n').lstrip('v').replace('-', '_') %}
+
+package:
+  name: abacus
+  version: {{ version }}
+
+# This conda package may be built locally with
+# conda build . -c conda-forge
+source:
+  path: ..
+  # git_url: https://github.com/deepmodeling/abacus-develop.git
+  # git_rev: v3.0.0
+
+build:
+  skip: true  # [not linux]
+  script: |
+    cmake -B conda_build ${CMAKE_ARGS} -DCMAKE_BUILD_TYPE=Release
+    cmake --build conda_build -j`nproc`
+    cmake --install conda_build
+  # ${CMAKE_ARGS} applys restrictions for CMake to search libs under conda building env.
+  # See https://conda-forge.org/docs/maintainer/knowledge_base.html#using-cmake .
+  string: {{ GIT_BUILD_STR }}
+  number: {{ GIT_DESCRIBE_NUMBER }}
+
+requirements:
+  build:
+    - {{ compiler('cxx') }}
+    - make
+    - cmake
+
+  host:
+    - {{ mpi }}
+    - openblas=*=openmp*
+    - elpa=*=mpi*
+    - fftw=*=mpi*
+
+  run:
+    - libopenblas=*=openmp*
+    - scalapack
+    - elpa=*=mpi*
+    - fftw=*=mpi*
+
+test:
+  commands:
+  # Dry run ABACUS to verify dynamic libs are present.
+    - abacus
+    - mpirun -n 2 abacus
+
+  # Run end-to-end tests. This may take long time; disabled by default.
+  # Unit tests are not built here.
+  # Hence, some tests(ienvelope) requiring additional validation components are expected to fail.
+  # Please uncomment the codes below if necessary.
+
+  #   - cd tests/integrate && bash Autotest.sh
+  # source_files:
+  #   - tests/integrate
+  #   - tests/PP_ORB
+
+# Locally built package can be installed by
+# conda create -n my_abacus_env abacus -c local -c conda-forge
+
+# Feedstock: https://github.com/deepmd-kit-recipes/abacus-feedstock
+# Package:   https://anaconda.org/deepmodeling/abacus
+about:
+  home: http://abacus.ustc.edu.cn/
+  doc_url: https://abacus.deepmodeling.com/
+  dev_url: https://github.com/deepmodeling/abacus-develop
+  license: LGPL-3.0
+  license_family: LGPL
+  license_file: LICENSE
+  summary: An electronic structure package based on plane wave and numerical atomic basis sets.
+  description: >
+    ABACUS (Atomic-orbital Based Ab-initio Computation at UStc) is an open-source package based on density functional theory (DFT).
+    The package utilizes both plane wave and numerical atomic basis sets with the usage of norm-conserving pseudopotentials
+    to describe the interactions between nuclear ions and valence electrons. ABACUS supports LDA, GGA, meta-GGA, and hybrid functionals.
+    Apart from single-point calculations, the package allows geometry optimizations and ab-initio molecular dynamics with various ensembles.
+
+extra:
+  recipe-maintainers:
+    - caic99

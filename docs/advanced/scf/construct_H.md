@@ -45,7 +45,7 @@ Here, we use a simple [example calculation](https://github.com/deepmodeling/abac
     dft_functional SCAN
     ```
     
-    Note that in the case of PBE and SCAN, we are using 'short-hand' names to represent the entire functional, which is made up of individual exchange and correlation components. A complete list of 'short-hand' expressions supported by ABACUS can be found in [source code](../source/module_xc/xc_functional.cpp).
+    Note that in the case of PBE and SCAN, we are using 'short-hand' names to represent the entire functional, which is made up of individual exchange and correlation components. A complete list of 'short-hand' expressions supported by ABACUS can be found in [source code](../../../source/module_xc/xc_functional.cpp).
 
     Apart from the 'short-hand' names, ABACUS also allow supplying exchange-correlation functionals as combinations of LIBXC keywords for functional components, joined by plus sign, for example, setting:
 
@@ -67,7 +67,7 @@ Here, we use a simple [example calculation](https://github.com/deepmodeling/abac
 
 5. **Hybrid functional**
 
-    The old INPUT parameter exx_hybrid_type for hybrid functionals has been absorbed into `dft_functional`. Options are `hf` (pure Hartree-Fock), `pbe0`(PBE0), `hse` (Note: in order to use HSE functional, LIBXC is required). Note also that HSE has been tested while PBE0 has NOT been fully tested yet, and the maximum parallel cpus for running exx is Nx(N+1)/2, with N being the number of atoms. And forces for hybrid functionals are not supported yet.
+    ABACUS supports functionals with exact Hartree-Fock exchange in LCAO basis set only. The old INPUT parameter exx_hybrid_type for hybrid functionals has been absorbed into `dft_functional`. Options are `hf` (pure Hartree-Fock), `pbe0`(PBE0), `hse`, and `scan0`(SCAN0) (Note: in order to use HSE or SCAN0 functional, LIBXC is required). Note also that only HSE has been tested while other hybrid functionals have NOT been fully tested yet, and the maximum parallel cpus for running exx is Nx(N+1)/2, with N being the number of atoms. And forces for hybrid functionals are not supported yet.
 
     More information on the hybrid functional can be found from the section [Exact Exchange](../input_files/input-main.md#exact-exchange) in the list of input variables for more information.
 
@@ -80,4 +80,10 @@ Here, we use a simple [example calculation](https://github.com/deepmodeling/abac
     ```
     This is normal and it will not affect the results of calculation.
     
-## DFT+U
+## DFT+*U*
+
+Conventional functionals, e.g., L(S)DA and GGAs, encounter failures in strongly correlated systems, usually characterized by partially filled *d*/*f* shells. These include transition metals (TM) and their oxides, rare-earth compounds, and actinides, to name a few, where L(S)DA/GGAs typically yield quantitatively or even qualitatively wrong results. To address this failure, an efficient and successful method named DFT+*U*, which inherits the efficiency of L(S)DA/GGA but gains the strength of the Hubbard model in describing the physics of strongly correlatedsystems, has been developed.
+
+Now the DFT+*U* method is accessible in ABACUS. The details of the DFT+*U* method could be found in this [paper](https://doi.org/10.1063/5.0090122). It should be noted that the DFT+*U* works only within the NAO scheme, which means that the value of the keyword `basis_type` must be lcao when DFT+*U* is called. To turn on DFT+*U*, users need to set the value of the `dft_plus_u` keyword in the `INPUT` file to be 1. All relevant parmeters used in DFT+*U* calculations are listed in the [DFT+*U* correction](../input_files/input-main.md#dftu-correction) part of the [list of keywords](../input_files/input-main.md).
+
+Examples of DFT+*U* calculations are provided in this [directory](https://github.com/deepmodeling/abacus-develop/tree/develop/examples/dft_plus_u).
