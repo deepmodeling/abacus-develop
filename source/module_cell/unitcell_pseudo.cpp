@@ -944,9 +944,13 @@ void UnitCell_pseudo::check_structure(double factor)
 	if (!all_pass || !no_warning)
 	{
 		std::stringstream mess;
-		mess << "\nWARNING: Some atoms are too close." << std::endl;
-		GlobalV::ofs_running << mess.str() << errorlog.str() << std::endl;
-		std::cout << mess.str() << "Please check the nearest-neighbor list in log file.\n" << std::endl;
+		mess << "\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" << std::endl;
+		mess << "WARNING: Some atoms are too close!!!" << std::endl;
+		GlobalV::ofs_running << mess.str() << errorlog.str();
+		std::cout << mess.str() << "Please check the nearest-neighbor list in log file." << std::endl;
+		GlobalV::ofs_running << "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n" << std::endl;
+		std::cout << "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n" << std::endl;
+
 
 		if (!all_pass)
 		{
@@ -958,6 +962,7 @@ void UnitCell_pseudo::check_structure(double factor)
 			std::cout << mess.str();
 			ModuleBase::WARNING_QUIT("Input", "The structure is unreasonable!");
 		}
+		
 		
 	}
 }
