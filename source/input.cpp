@@ -154,7 +154,7 @@ void Input::Default(void)
     cond_wcut = 10;
     cond_wenlarge = 10;
     cond_fwhm = 0.3;
-    cond_nonlocal = false;
+    cond_nonlocal = true;
     berry_phase = false;
     gdir = 3;
     towannier90 = false;

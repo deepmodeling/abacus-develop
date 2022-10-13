@@ -335,6 +335,7 @@ void ESolver_SDFT_PW::sKG(const int nche_KG, const double fwhmin, const double w
         for (int it = 1 ;it < nt ; ++it)
         {
             if(it%20==0) cout<<it<<" ";
+            ModuleBase::timer::tick(this->classname,"evolution_ks");
             for(int ib = 0; ib < ksbandper; ++ib)
             {
                 for(int ig = 0 ; ig < npw ; ++ig)
@@ -346,20 +347,25 @@ void ESolver_SDFT_PW::sKG(const int nche_KG, const double fwhmin, const double w
                     expsfpsi(ib,ig) *= exp(ModuleBase::NEG_IMAG_UNIT*eigen*dt);
                 }
             }
+            ModuleBase::timer::tick(this->classname,"evolution_ks");
             
+            ModuleBase::timer::tick(this->classname,"evolution_sto");
             //exp(iHdt)|chi>
             chet.calfinalvec_complex(&stohchi, &Stochastic_hchi::hchi_norm, &exppsi(ksbandper,0), &exppsi(ksbandper,0), npw, npwx, nchip);
             //exp(-iHdt)|shchi>
             chet2.calfinalvec_complex(&stohchi, &Stochastic_hchi::hchi_norm, &expsfpsi(ksbandper,0), &expsfpsi(ksbandper,0), npw, npwx, nchip);
+            ModuleBase::timer::tick(this->classname,"evolution_sto");
             psi::Psi<std::complex<double>> *p_exppsi = &exppsi;
 #ifdef __MPI
             psi::Psi<std::complex<double>> exppsi_tot;
             if (GlobalV::NSTOGROUP > 1)
             {
+                ModuleBase::timer::tick(this->classname,"bands_gather");
                 exppsi_tot.resize(1,totbands,npwx);
                 MPI_Allgatherv(&exppsi(0,0), totbands_per * npwx, mpicomplex, 
                                 &exppsi_tot(0,0), nrecv, displs, mpicomplex, PARAPW_WORLD);
                 p_exppsi = &exppsi_tot;
+                ModuleBase::timer::tick(this->classname,"bands_gather");
             }
 #endif
             ModuleBase::ComplexMatrix j1l(ndim,totbands_per*totbands), j2l(ndim,totbands_per*totbands);
@@ -368,6 +374,7 @@ void ESolver_SDFT_PW::sKG(const int nche_KG, const double fwhmin, const double w
             char transb = 'N';
             int totbands_per3 = ndim*totbands_per;
             int totbands3 = ndim*totbands;
+            ModuleBase::timer::tick(this->classname,"matrix_multip");
             for(int id = 0 ; id < ndim ; ++id)
             {
                 const int idnb = id * totbands_per;
@@ -388,12 +395,15 @@ void ESolver_SDFT_PW::sKG(const int nche_KG, const double fwhmin, const double w
                 zgemm_(&transa, &transb,&totbands_per, &totbands, &npw, &ModuleBase::IMAG_UNIT, expsfpsi.get_pointer(), &npwx,
                         &(p_j2psi->operator()(idnb,0)), &npwx, &ModuleBase::ZERO, &j2r(id,0), &totbands_per);
             }
+            ModuleBase::timer::tick(this->classname,"matrix_multip");
 
 #ifdef __MPI
+            ModuleBase::timer::tick(this->classname,"matrix_reduce");
             MPI_Allreduce(MPI_IN_PLACE,j1l.c,ndim*totbands_per*totbands,MPI_DOUBLE_COMPLEX,MPI_SUM,POOL_WORLD);
             MPI_Allreduce(MPI_IN_PLACE,j2l.c,ndim*totbands_per*totbands,MPI_DOUBLE_COMPLEX,MPI_SUM,POOL_WORLD);
             MPI_Allreduce(MPI_IN_PLACE,j1r.c,ndim*totbands_per*totbands,MPI_DOUBLE_COMPLEX,MPI_SUM,POOL_WORLD);
             MPI_Allreduce(MPI_IN_PLACE,j2r.c,ndim*totbands_per*totbands,MPI_DOUBLE_COMPLEX,MPI_SUM,POOL_WORLD);
+            ModuleBase::timer::tick(this->classname,"matrix_reduce");
 #endif
             int totnum = ndim*totbands_per*totbands;
             int num_per = totnum / GlobalV::NPROC_IN_POOL;
@@ -411,9 +421,11 @@ void ESolver_SDFT_PW::sKG(const int nche_KG, const double fwhmin, const double w
             //Re(i<psi|sqrt(f)j(1-f) exp(iHt)|psi><psi|j exp(-iHt)\sqrt(f)|psi>)
             //Im(l_ij*r_ji)=Re(i l^*_ij*r^+_ij)=Re(i l^*_i*r^+_i)
             //ddot_real = real(A^*_i * B_i)
+            ModuleBase::timer::tick(this->classname,"ddot_real");
             ct11[it] += ModuleBase::GlobalFunc::ddot_real(num_per,j1l.c+st_per,j1r.c+st_per,false) * GlobalC::kv.wk[ik] / 2,0;
             ct12[it] -= ModuleBase::GlobalFunc::ddot_real(num_per,j1l.c+st_per,j2r.c+st_per,false) * GlobalC::kv.wk[ik] / 2,0;
             ct22[it] += ModuleBase::GlobalFunc::ddot_real(num_per,j2l.c+st_per,j2r.c+st_per,false) * GlobalC::kv.wk[ik] / 2,0;
+            ModuleBase::timer::tick(this->classname,"ddot_real");
             
         }
         cout<<endl;
@@ -599,9 +611,9 @@ void ESolver_SDFT_PW:: caldos( const int nche_dos, const double sigmain, const d
         ofsdos<<setw(8)<<"## E(eV) "<<setw(20)<<"dos(eV^-1)"<<setw(20)<<"sum"<<setw(20)<<"Error(eV^-1)"<<endl;
         for(int ie = 0 ; ie < ndos ; ++ie)
         {
-            double tmperror = abs(error[ie]);
+            double tmperror = 2.0 * abs(error[ie]);
             if(maxerror < tmperror) maxerror = tmperror;
-            double dos = (ks_dos[ie] + sto_dos[ie]) / ModuleBase::Ry_to_eV;
+            double dos = 2.0 * (ks_dos[ie] + sto_dos[ie]) / ModuleBase::Ry_to_eV;
             sum += dos;
 	    	ofsdos <<setw(8)<< emin + ie * de <<setw(20)<< dos <<setw(20)<< sum * de <<setw(20)<< tmperror <<endl;
         }

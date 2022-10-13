@@ -112,7 +112,7 @@ void Velocity::act
                &ModuleBase::ZERO, becp1.c, &nkb);
         zgemm_(&transC, &transN, &nkb3, &n_npwx, &npw,
                &ModuleBase::ONE, this->ppcell->gradvkb.ptr, &max_npw, psi0, &max_npw,
-               &ModuleBase::ZERO, becp2.c, &nkb);
+               &ModuleBase::ZERO, becp2.c, &nkb3);
     }
     Parallel_Reduce::reduce_complex_double_pool(becp1.c, nkb * n_npwx);
     Parallel_Reduce::reduce_complex_double_pool(becp2.c, nkb3 * n_npwx);
@@ -142,61 +142,71 @@ void Velocity::act
                             int sumip = sum + ip;
                             ps1(sumip2, ib)  += dij * becp1(ib, sumip);
                             ps2(sumip2, ib)  += dij * becp2(ib, sumip);
-                            ps2(sumip2 + nkb, ib)  += dij * becp2(ib + nkb, sumip);
-                            ps2(sumip2 + 2*nkb, ib)  += dij * becp2(ib + 2*nkb, sumip);
-                        } // end ib
-                    } // end ih
-                } // end jh
+                            ps2(sumip2 + nkb, ib)  += dij * becp2(ib, sumip + nkb);
+                            ps2(sumip2 + 2*nkb, ib)  += dij * becp2(ib , sumip + 2*nkb);
+                        }
+                    }
+                }
                 sum += nproj;
                 ++iat;
-            } // end na
-        } // end nt
+            }
+        }
     }
     else
     {
-        // for (int it = 0; it < this->ucell->ntype; it++)
-        // {
-        //     int psind = 0;
-        //     int becpind = 0;
-        //     std::complex<double> pol1becp = std::complex<double>(0.0, 0.0);
-        //     std::complex<double> pol2becp = std::complex<double>(0.0, 0.0);
+        for (int it = 0; it < this->ucell->ntype; it++)
+        {
+            const int nproj = this->ucell->atoms[it].nh;
+            for (int ia = 0; ia < this->ucell->atoms[it].na; ia++)
+            {
+                for (int ip = 0; ip < nproj; ip++)
+                {
+                    for (int ip2 = 0; ip2 < nproj; ip2++)
+                    {
+                        for (int ib = 0; ib < n_npwx; ib+=2)
+                        {
+                            int sumip2 = sum + ip2;
+                            int sumip = sum + ip;
+                            std::complex<double> pol1becp1 = becp1(ib, sumip);
+                            std::complex<double> pol2becp1 = becp1(ib+1, sumip);
+                            std::complex<double> pol1becp2x = becp2(ib, sumip);
+                            std::complex<double> pol2becp2x = becp2(ib+1, sumip);
+                            std::complex<double> pol1becp2y = becp2(ib, sumip + nkb);
+                            std::complex<double> pol2becp2y = becp2(ib+1, sumip + nkb);
+                            std::complex<double> pol1becp2z = becp2(ib, sumip + 2 * nkb);
+                            std::complex<double> pol2becp2z = becp2(ib+1, sumip + 2 * nkb);
+                            std::complex<double> dij0 = this->ppcell->deeq_nc(0, iat, ip2, ip);
+                            std::complex<double> dij1 = this->ppcell->deeq_nc(1, iat, ip2, ip);
+                            std::complex<double> dij2 = this->ppcell->deeq_nc(2, iat, ip2, ip);
+                            std::complex<double> dij3 = this->ppcell->deeq_nc(3, iat, ip2, ip);
 
-        //     const int nproj = this->ucell->atoms[it].nh;
-        //     for (int ia = 0; ia < this->ucell->atoms[it].na; ia++)
-        //     {
-        //         for (int ip = 0; ip < nproj; ip++)
-        //         {
-        //             for (int ip2 = 0; ip2 < nproj; ip2++)
-        //             {
-        //                 for (int ib = 0; ib < n_npwx; ib+=2)
-        //                 {
-        //                     psind = (sum + ip2) * n_npwx + ib;
-        //                     becpind = ib * nkb + sum + ip;
-        //                     pol1becp = becp[becpind];
-        //                     pol2becp = becp[becpind + nkb];
-        //                     ps[psind] += this->ppcell->deeq_nc(0, iat, ip2, ip) * pol1becp
-        //                                  + this->ppcell->deeq_nc(1, iat, ip2, ip) * pol2becp;
-        //                     ps[psind + 1] += this->ppcell->deeq_nc(2, iat, ip2, ip) * pol1becp
-        //                                      + this->ppcell->deeq_nc(3, iat, ip2, ip) * pol2becp;
-        //                 } // end ib
-        //             } // end ih
-        //         } // end jh
-        //         sum += nproj;
-        //         ++iat;
-        //     } // end na
-        // } // end nt
+                            ps1(sumip2, ib)             += dij0 * pol1becp1  + dij1 * pol2becp1;
+                            ps1(sumip2, ib+1)           += dij2 * pol1becp1  + dij3 * pol2becp1;
+                            ps2(sumip2, ib)             += dij0 * pol1becp2x + dij1 * pol2becp2x;
+                            ps2(sumip2, ib+1)           += dij2 * pol1becp2x + dij3 * pol2becp2x;
+                            ps2(sumip2 + nkb, ib)       += dij0 * pol1becp2y + dij1 * pol2becp2y;
+                            ps2(sumip2 + nkb, ib+1)     += dij2 * pol1becp2y + dij3 * pol2becp2y;
+                            ps2(sumip2 + 2*nkb, ib)     += dij0 * pol1becp2z + dij1 * pol2becp2z;
+                            ps2(sumip2 + 2*nkb, ib+1)   += dij2 * pol1becp2z + dij3 * pol2becp2z;
+                        }
+                    }
+                }
+                sum += nproj;
+                ++iat;
+            }
+        }
     }
 
     
     if (n_npwx == 1)
     {
         int inc = 1;
-        for(int i = 0 ; i < 3 ; ++i)
+        for(int id = 0 ; id < 3 ; ++id)
         {
-            int vkbshift = i * max_npw * nkb;
-            int ps2shift = i * nkb;
-            int npwshift = i * max_npw ;
-            zgemv_(&transN, &npw, &nkb3,
+            int vkbshift = id * max_npw * nkb;
+            int ps2shift = id * nkb;
+            int npwshift = id * max_npw ;
+            zgemv_(&transN, &npw, &nkb,
                    &ModuleBase::ONE, this->ppcell->gradvkb.ptr + vkbshift, &max_npw, ps1.c, &inc,
                    &ModuleBase::ONE, vpsi + npwshift, &inc);
             zgemv_(&transN, &npw, &nkb,
@@ -206,11 +216,11 @@ void Velocity::act
     }
     else
     {
-        for(int i = 0 ; i < 3 ; ++i)
+        for(int id = 0 ; id < 3 ; ++id)
         {
-            int vkbshift = i * max_npw * nkb;
-            int ps2shift = i * n_npwx * nkb;
-            int npwshift = i * max_npw * n_npwx;
+            int vkbshift = id * max_npw * nkb;
+            int ps2shift = id * n_npwx * nkb;
+            int npwshift = id * max_npw * n_npwx;
             zgemm_(&transN, &transT, &npw, &npm, &nkb,
                &ModuleBase::ONE, this->ppcell->gradvkb.ptr + vkbshift, &max_npw, ps1.c, &n_npwx,
                &ModuleBase::ONE, vpsi + npwshift, &max_npw);

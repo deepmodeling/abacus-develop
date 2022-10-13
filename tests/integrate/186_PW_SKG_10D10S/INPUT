@@ -41,3 +41,4 @@ cond_fwhm   8
 cond_wcut        20
 cond_dw          0.02
 cond_wenlarge    9
+cond_nonlocal    0

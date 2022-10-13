@@ -1,19 +1,27 @@
 INPUT_PARAMETERS
 #Parameters (1.General)
 suffix			autotest
-calculation     nscf
+calculation     sto-scf
+method_sto      2
 ntype			1
-nbands			100
+nbands			10
+nbands_sto		10
+nche_sto		120
+emax_sto		0
+emin_sto		0
+seed_sto        20000
 pseudo_dir	../../PP_ORB
 symmetry	    1
 kpar            2
-read_file_dir 		./
+bndpar          2
+out_chg         0
 init_chg        file
+read_file_dir 		./
 
 #Parameters (2.Iteration)
 ecutwfc			20
 scf_thr			1e-6
-scf_nmax	    50
+scf_nmax	    0
 
 
 #Parameters (3.Basis)
@@ -33,4 +41,4 @@ cond_fwhm   8
 cond_wcut        20
 cond_dw          0.02
 cond_wenlarge    9
-cond_nonlocal    0
+cond_nonlocal    1

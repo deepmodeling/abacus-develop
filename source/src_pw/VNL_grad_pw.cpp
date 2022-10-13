@@ -18,6 +18,7 @@ void pseudopot_cell_vnl::initgradq_vnl(const UnitCell_pseudo &cell)
 	{
 		this->tab_dq.create(ntype, nbrx_nc, GlobalV::NQX);
 	}
+	gradvkb.create(3,nkb,GlobalC::wf.npwx);
 
     const double pref = ModuleBase::FOUR_PI / sqrt(cell.omega);
     for (int it = 0;it < ntype;it++)  
@@ -100,7 +101,7 @@ void pseudopot_cell_vnl::getgradq_vnl(const int ik)
             int nb = this->indv(it, ih);
             if(nb != nb0)
             {
-                for (int ig = 0;ig < npw;ig++)
+                for (int ig = 0;ig < npw;++ig)
 			    {
 			    	const double gnorm = gk[ig].norm() * GlobalC::ucell.tpiba;
 			    	vq [ig] = ModuleBase::PolyInt::Polynomial_Interpolation(
@@ -113,11 +114,14 @@ void pseudopot_cell_vnl::getgradq_vnl(const int ik)
             for(int id = 0; id < 3; ++id)
             {
                 const int lm = static_cast<int>( nhtolm(it, ih) );
-			    for (int ig = 0;ig < npw;ig++)
+			    for (int ig = 0;ig < npw;++ig)
 			    {
                     ModuleBase::Vector3<double> gg = gk[ig];
                     double ggnorm = gg.norm();
-			    	tmpgradvkb(id, ih, ig) = ylm(lm, ig) * dvq [ig] * gg[id] / ggnorm + dylm[id](lm, ig) * vq [ig];
+					if(ggnorm < 1e-8)
+						tmpgradvkb(id, ih, ig) = 0.0;
+					else
+			    		tmpgradvkb(id, ih, ig) = ylm(lm, ig) * dvq [ig] * gg[id] / ggnorm + dylm[id](lm, ig) * vq [ig];
                     tmpvkb(ih, ig) = ylm(lm,ig) * vq[ig];
 			    }
             }
@@ -128,22 +132,24 @@ void pseudopot_cell_vnl::getgradq_vnl(const int ik)
 		for (int ia=0; ia<GlobalC::ucell.atoms[it].na; ia++) 
 		{
 			std::complex<double> *sk = GlobalC::wf.get_sk(ik, it, ia,GlobalC::wfcpw);
-			for (int id = 0; id < 3 ; ++id)
-            {
-                for (int ih = 0;ih < nh;ih++)
-			    {
-			    	std::complex<double> pref = pow( ModuleBase::NEG_IMAG_UNIT, nhtol(it, ih));
-			    	std::complex<double>* pgvkb = &this->gradvkb(id, jkb, 0);
-                    std::complex<double>* pvkb = &this->vkb(jkb, 0);
-			    	for (int ig = 0;ig < npw;ig++)
-			    	{
-                        std::complex<double> skig = sk[ig];
-                        pvkb[ig] = tmpvkb(ih, ig) * skig * pref;
-			    		pgvkb[ig] = tmpgradvkb(id, ih, ig) * skig * pref;
-			    	}
-			    	++jkb;
-			    } // end ih
-            } //end id
+			
+            for (int ih = 0;ih < nh;++ih)
+			{
+				std::complex<double> pref = pow( ModuleBase::NEG_IMAG_UNIT, nhtol(it, ih));
+				std::complex<double>* pvkb = &this->vkb(jkb, 0);
+				for (int id = 0; id < 3 ; ++id)
+            	{
+					std::complex<double>* pgvkb = &this->gradvkb(id, jkb, 0);
+					for (int ig = 0;ig < npw;++ig)
+					{
+                	    std::complex<double> skig = sk[ig];
+                	    pvkb[ig] = tmpvkb(ih, ig) * skig * pref;
+						pgvkb[ig] = tmpgradvkb(id, ih, ig) * skig * pref;
+					}
+				} //end id
+				++jkb;
+			} // end ih
+            
 			delete [] sk;
 		} // end ia
 	} // enddo
