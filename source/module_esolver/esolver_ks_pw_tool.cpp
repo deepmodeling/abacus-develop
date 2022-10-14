@@ -57,7 +57,7 @@ void ESolver_KS_PW::KG(const int nche_KG, const double fwhmin, const double wcut
     {
         for (int id = 0; id < ndim; ++id)
         {
-            this->phami->updateHk(ik);
+            this->p_hamilt->updateHk(ik);
             const int npw = GlobalC::kv.ngk[ik];
 
             complex<double> *pij = new complex<double>[nbands * nbands];

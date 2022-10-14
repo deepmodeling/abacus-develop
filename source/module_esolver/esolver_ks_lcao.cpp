@@ -460,11 +460,11 @@ void ESolver_KS_LCAO::hamilt2density(int istep, int iter, double ethr)
         GlobalC::en.ef_dw = 0.0;
         if (this->psi != nullptr)
         {
-            this->phsol->solve(this->phami, this->psi[0], this->pelec, GlobalV::KS_SOLVER);
+            this->phsol->solve(this->p_hamilt, this->psi[0], this->pelec, GlobalV::KS_SOLVER);
         }
         else if (this->psid != nullptr)
         {
-            this->phsol->solve(this->phami, this->psid[0], this->pelec, GlobalV::KS_SOLVER);
+            this->phsol->solve(this->p_hamilt, this->psid[0], this->pelec, GlobalV::KS_SOLVER);
         }
 
         // transform energy for print

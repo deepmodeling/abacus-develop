@@ -131,18 +131,18 @@ namespace ModuleESolver
         }
 
         // init Hamiltonian
-        if (this->phami != nullptr)
+        if (this->p_hamilt != nullptr)
         {
-            delete this->phami;
-            this->phami = nullptr;
+            delete this->p_hamilt;
+            this->p_hamilt = nullptr;
         }
-        if(this->phami == nullptr)
+        if(this->p_hamilt == nullptr)
         {
             // two cases for hamilt class
             // Gamma_only case
             if (GlobalV::GAMMA_ONLY_LOCAL)
             {
-                this->phami = new hamilt::HamiltLCAO<double>(&(this->UHM.GG),
+                this->p_hamilt = new hamilt::HamiltLCAO<double>(&(this->UHM.GG),
                                                             &(this->UHM.genH),
                                                             &(this->LM),
                                                             &(this->LOC));
@@ -150,7 +150,7 @@ namespace ModuleESolver
             // multi_k case
             else
             {
-                this->phami = new hamilt::HamiltLCAO<std::complex<double>>(&(this->UHM.GK),
+                this->p_hamilt = new hamilt::HamiltLCAO<std::complex<double>>(&(this->UHM.GK),
                                                                         &(this->UHM.genH),
                                                                         &(this->LM),
                                                                         &(this->LOC));
@@ -342,7 +342,7 @@ namespace ModuleESolver
             srho.begin(is, GlobalC::CHR, GlobalC::rhopw, GlobalC::Pgrid, GlobalC::symm);
         }
 
-        phami->non_first_scf = istep;
+        p_hamilt->non_first_scf = istep;
 
         // for exx two_level scf
         this->two_level_step = 0;
@@ -481,11 +481,11 @@ namespace ModuleESolver
         {
             if(this->psi != nullptr)
             {
-                this->phsol->solve(this->phami, this->psi[0], this->pelec, GlobalV::KS_SOLVER, true);
+                this->phsol->solve(this->p_hamilt, this->psi[0], this->pelec, GlobalV::KS_SOLVER, true);
             }
             else if(this->psid != nullptr)
             {
-                this->phsol->solve(this->phami, this->psid[0], this->pelec, GlobalV::KS_SOLVER, true);
+                this->phsol->solve(this->p_hamilt, this->psid[0], this->pelec, GlobalV::KS_SOLVER, true);
             }
             for(int ik=0; ik<this->pelec->ekb.nr; ++ik)
             {

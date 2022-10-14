@@ -252,7 +252,7 @@ void ESolver_KS_LCAO_TDDFT::hamilt2density(int istep, int iter, double ethr)
 
     if (ELEC_evolve::tddft && istep >= 2 && !GlobalV::GAMMA_ONLY_LOCAL)
     {
-        ELEC_evolve::evolve_psi(istep, this->phami, this->LOWF, this->psi, this->psi_laststep);
+        ELEC_evolve::evolve_psi(istep, this->p_hamilt, this->LOWF, this->psi, this->psi_laststep);
         this->pelec_td->psiToRho_td(this->psi[0]);
         // this->pelec_td->psiToRho(this->psi[0]);
     }
@@ -267,11 +267,11 @@ void ESolver_KS_LCAO_TDDFT::hamilt2density(int istep, int iter, double ethr)
         GlobalC::en.ef_dw = 0.0;
         if (this->psi != nullptr)
         {
-            this->phsol->solve(this->phami, this->psi[0], this->pelec_td, GlobalV::KS_SOLVER);
+            this->phsol->solve(this->p_hamilt, this->psi[0], this->pelec_td, GlobalV::KS_SOLVER);
         }
         else if (this->psid != nullptr)
         {
-            this->phsol->solve(this->phami, this->psid[0], this->pelec_td, GlobalV::KS_SOLVER);
+            this->phsol->solve(this->p_hamilt, this->psid[0], this->pelec_td, GlobalV::KS_SOLVER);
         }
     }
     else
@@ -549,7 +549,7 @@ void ESolver_KS_LCAO_TDDFT::cal_edm_tddft()
         int nrow = this->LOC.ParaV->nrow;
         int ncol = this->LOC.ParaV->ncol;
         hamilt::MatrixBlock<complex<double>> h_mat, s_mat;
-        phami->matrix(h_mat, s_mat);
+        p_hamilt->matrix(h_mat, s_mat);
         zcopy_(&this->LOC.ParaV->nloc, h_mat.p, &inc, Htmp, &inc);
         zcopy_(&this->LOC.ParaV->nloc, s_mat.p, &inc, Sinv, &inc);
 
@@ -715,7 +715,7 @@ void ESolver_KS_LCAO_TDDFT::cal_edm_tddft()
         ModuleBase::ComplexMatrix Sinv(GlobalV::NLOCAL, GlobalV::NLOCAL);
         ModuleBase::ComplexMatrix Htmp(GlobalV::NLOCAL, GlobalV::NLOCAL);
         hamilt::MatrixBlock<complex<double>> h_mat, s_mat;
-        phami->matrix(h_mat, s_mat);
+        p_hamilt->matrix(h_mat, s_mat);
         // cout<<"hmat "<<h_mat.p[0]<<endl;
         for (int i = 0; i < GlobalV::NLOCAL; i++)
         {
