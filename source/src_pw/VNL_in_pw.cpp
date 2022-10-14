@@ -157,6 +157,8 @@ void pseudopot_cell_vnl::getvnl(const int &ik, ModuleBase::ComplexMatrix& vkb_in
 
 	const int npw = GlobalC::kv.ngk[ik];
 
+	// When the internal memory is large enough, it is better to make vkb1 be the number of pseudopot_cell_vnl.
+    // We only need to initialize it once as long as the cell is unchanged.
 	ModuleBase::matrix vkb1(nhm, npw);
 	double *vq = new double[npw];
 	const int x1= (lmaxkb + 1)*(lmaxkb + 1);
@@ -225,7 +227,6 @@ void pseudopot_cell_vnl::getvnl(const int &ik, ModuleBase::ComplexMatrix& vkb_in
 
 	delete [] gk;
 	delete [] vq;
-
 	ModuleBase::timer::tick("pp_cell_vnl","getvnl");
 
 	return;

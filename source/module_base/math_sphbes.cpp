@@ -621,4 +621,52 @@ void Sphbes::Spherical_Bessel
 	return;
 }
 
+void Sphbes::dSpherical_Bessel_dx
+(
+    const int &msh,	 // number of grid points
+    const double *r, // radial grid
+    const double &q, // wave std::vector
+    const int &l,	 // angular momentum
+    double *djl		 // jl(1:msh) = j_l(q*r(i)),spherical bessel function
+)
+{
+    ModuleBase::timer::tick("Sphbes","dSpherical_Bessel_dq");
+    if (l < 0 )
+    {
+		std::cout << "We temporarily only calculate derivative of l >= 0." << std::endl;
+		exit(0);
+    }
+    
+    double djl0 = 0;
+    if(l == 1)
+    {
+        djl[0] = 1.0/3.0;
+    }
+    
+    if(l == 0 )
+    {
+        for (int ir = 1;ir < msh; ir++)
+        {
+            double x1 = q * r[ir];
+            if(x1 < 1e-8) djl[ir] = djl0;
+            djl[ir] = (x1 * std::cos(x1) - std::sin(x1)) / (x1*x1);
+        }
+    }
+    else
+    {
+        double *jl = new double [msh];
+        Spherical_Bessel (msh, r, q, l-1, jl);
+        Spherical_Bessel (msh, r, q, l, djl);
+        for (int ir = 1;ir < msh; ir++)
+        {
+            double x1 = q * r[ir];
+            if(x1 < 1e-8) djl[ir] = djl0;
+            djl[ir] = jl[ir] - double(l+1)/x1 * djl[ir];
+        }
+        delete[] jl;
+    }
+    ModuleBase::timer::tick("Sphbes","dSpherical_Bessel_dq");
+    return;
+}
+
 }

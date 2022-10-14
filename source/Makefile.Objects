@@ -39,6 +39,7 @@ VPATH=./src_global\
 :./src_pdiag\
 :./src_pdiag/MRRR\
 :./src_ri\
+:./module_rpa\
 :./\
 
 OBJS_MAIN=driver.o\
@@ -60,6 +61,7 @@ read_pp_blps.o \
 pseudo_nc.o \
 VL_in_pw.o\
 VNL_in_pw.o\
+VNL_grad_pw.o\
 atom_pseudo.o\
 unitcell_pseudo.o\
 threshold_elec.o\
@@ -327,6 +329,7 @@ ekinetic_pw.o\
 meta_pw.o\
 veff_pw.o\
 nonlocal_pw.o\
+velocity_pw.o\
 deepks_lcao.o\
 ekinetic_lcao.o\
 meta_lcao.o\
@@ -406,6 +409,7 @@ dftu.o\
 dftu_yukawa.o\
 dftu_relax.o\
 dmft.o \
+rpa.o\
 
 OBJS_COMMON=atom_spec.o \
 unitcell.o \

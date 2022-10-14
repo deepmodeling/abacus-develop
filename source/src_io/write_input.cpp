@@ -136,6 +136,7 @@ void Input::Print(const std::string &fn) const
     ModuleBase::GlobalFunc::OUTP(ofs, "cond_wcut", cond_wcut, "cutoff frequency (omega) for conductivities");
     ModuleBase::GlobalFunc::OUTP(ofs, "cond_wenlarge", cond_wenlarge, "control the t interval: dt = PI/wcut/cond_wenlarge");
     ModuleBase::GlobalFunc::OUTP(ofs, "cond_fwhm", cond_fwhm, "FWHM for conductivities");
+    ModuleBase::GlobalFunc::OUTP(ofs, "cond_nonlocal", cond_nonlocal, "Nonlocal effects for conductivities");
     
     ofs << "\n#Parameters (4.Relaxation)" << std::endl;
     ModuleBase::GlobalFunc::OUTP(ofs,

@@ -154,6 +154,7 @@ void Input::Default(void)
     cond_wcut = 10;
     cond_wenlarge = 10;
     cond_fwhm = 0.3;
+    cond_nonlocal = true;
     berry_phase = false;
     gdir = 3;
     towannier90 = false;
@@ -438,6 +439,12 @@ void Input::Default(void)
     dft_plus_dmft = false;
 
     //==========================================================
+    //    RPA    Rong Shi added on 2022-04
+    //==========================================================
+    rpa = false;
+    coulomb_type = "full";
+
+    //==========================================================
     //    implicit solvation model       sunml added on 2022-04-04
     //==========================================================
     imp_sol = 0;
@@ -628,6 +635,10 @@ bool Input::Read(const std::string &fn)
         else if (strcmp("cond_fwhm", word) == 0)
         {
             read_value(ifs, cond_fwhm);
+        }
+        else if (strcmp("cond_nonlocal", word) == 0)
+        {
+            read_value(ifs, cond_nonlocal);
         }
         else if (strcmp("bndpar", word) == 0)
         {
@@ -1583,6 +1594,14 @@ bool Input::Read(const std::string &fn)
             ifs >> dft_plus_dmft;
         }
         //----------------------------------------------------------------------------------
+        //         Rong Shi added for RPA
+        //----------------------------------------------------------------------------------
+        else if (strcmp("rpa", word) == 0)
+        {
+            read_value(ifs, rpa);
+            if (rpa) GlobalV::rpa_setorb = true;
+        }
+        //----------------------------------------------------------------------------------
         //    implicit solvation model       sunml added on 2022-04-04
         //----------------------------------------------------------------------------------
         else if (strcmp("imp_sol", word) == 0)
@@ -2015,6 +2034,7 @@ void Input::Bcast()
     Parallel_Common::bcast_double(cond_wcut);
     Parallel_Common::bcast_int(cond_wenlarge);
     Parallel_Common::bcast_double(cond_fwhm);
+    Parallel_Common::bcast_bool(cond_nonlocal);
     Parallel_Common::bcast_int(bndpar);
     Parallel_Common::bcast_int(kpar);
     Parallel_Common::bcast_bool(berry_phase);
@@ -2307,6 +2327,12 @@ void Input::Bcast()
     // DFT+DMFT (added by Quxin 2020-08)
     //-----------------------------------------------------------------------------------
     Parallel_Common::bcast_bool(dft_plus_dmft);
+
+    //-----------------------------------------------------------------------------------
+    // RPA
+    //-----------------------------------------------------------------------------------
+    Parallel_Common::bcast_bool(rpa);
+    Parallel_Common::bcast_bool(GlobalV::rpa_setorb);
 
     //----------------------------------------------------------------------------------
     //    implicit solvation model        (sunml added on 2022-04-04)

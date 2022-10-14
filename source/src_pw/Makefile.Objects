@@ -85,6 +85,7 @@ read_pp_blps.o \
 pseudo_nc.o \
 VL_in_pw.o\
 VNL_in_pw.o\
+VNL_grad_pw.o\
 atom_pseudo.o\
 unitcell_pseudo.o\
 threshold_elec.o\
@@ -132,6 +133,7 @@ math_sphbes.o\
 math_polyint.o\
 math_integral.o\
 math_ylmreal.o\
+ylm.o\
 mathzone_add1.o\
 math_bspline.o\
 math_chebyshev.o\
@@ -220,7 +222,8 @@ OBJ_OPERATOR=hamilt_pw.o\
 ekinetic_pw.o\
 meta_pw.o\
 veff_pw.o\
-nonlocal_pw.o
+nonlocal_pw.o\
+velocity_pw.o
 
 OBJ_RELAX=bfgs_basic.o\
 ions.o\

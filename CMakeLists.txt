@@ -332,6 +332,7 @@ target_link_libraries(${ABACUS_BIN_NAME}
     hamilt
     psi
     esolver
+    rpa
 )
 
 install(PROGRAMS ${ABACUS_BIN_PATH}

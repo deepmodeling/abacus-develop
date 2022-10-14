@@ -10,7 +10,7 @@ AddTest(
   # src_pw
   ../charge.cpp  ../charge_mixing.cpp  ../charge_pulay.cpp  ../charge_broyden.cpp  ../charge_extra.cpp  ../potential.cpp
   ../H_Ewald_pw.cpp  ../H_Hartree_pw.cpp     ../../src_io/write_wfc_realspace.cpp  ../magnetism.cpp    ../run_md_pw.cpp  ../occupy.cpp
-    ../xc_3.cpp  ../vdwd2.cpp  ../vdwd2_parameters.cpp  ../vdwd3.cpp  ../vdwd3_parameters.cpp  ../VL_in_pw.cpp  ../VNL_in_pw.cpp  
+    ../xc_3.cpp  ../vdwd2.cpp  ../vdwd2_parameters.cpp  ../vdwd3.cpp  ../vdwd3_parameters.cpp  ../VL_in_pw.cpp  ../VNL_in_pw.cpp  ../VNL_grad_pw.cpp
     ../threshold_elec.cpp  ../electrons.cpp  ../forces.cpp  ../global.cpp  ../stress_pw.cpp  ../stress_func_cc.cpp  ../stress_func_gga.cpp
   ../stress_func_mgga.cpp  ../stress_func_kin.cpp  ../stress_func_nl.cpp  ../stress_func_ewa.cpp  ../stress_func_har.cpp  
   ../stress_func_loc.cpp  ../stress_func_print.cpp ../soc.cpp ../energy.cpp

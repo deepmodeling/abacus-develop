@@ -84,7 +84,7 @@ void Symm_Other::print1(const int &ibrav, const double *cel_const, std::ofstream
 	}
 	else if(ibrav==13)
 	{
-		ModuleBase::GlobalFunc::OUT(ofs_running,"BRAVAIS","BASED CENTERED MONOLINIC CELL");
+		ModuleBase::GlobalFunc::OUT(ofs_running,"BRAVAIS","BASE CENTERED MONOLINIC CELL");
     	ModuleBase::GlobalFunc::OUT(ofs_running,"LATTICE CONSTANT A",cel_const[0]);
 		ModuleBase::GlobalFunc::OUT(ofs_running,"B/A RATIO",cel_const[1]);
 		ModuleBase::GlobalFunc::OUT(ofs_running,"C/A RATIO",cel_const[2]);

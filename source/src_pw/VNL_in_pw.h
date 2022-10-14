@@ -53,6 +53,10 @@ public:
 
 	void init_vnl_alpha(void);
 
+	void initgradq_vnl(const UnitCell_pseudo &cell);
+
+	void getgradq_vnl(const int ik);
+
 //===============================================================
 // MEMBER VARIABLES :
 // NAME : nqx(number of interpolation points)
@@ -76,9 +80,10 @@ public:
 	ModuleBase::realArray dvan;		//(:,:,:),  the D functions of the solid
 	ModuleBase::ComplexArray dvan_so;	//(:,:,:),  spin-orbit case,  added by zhengdy-soc
 
-	ModuleBase::realArray tab;		//(:,:,:), interpolation table for PPs
+	ModuleBase::realArray tab;		//(:,:,:), interpolation table for PPs: 4pi/sqrt(V) * \int betar(r)jl(qr)rdr
 	ModuleBase::realArray tab_alpha;
 	ModuleBase::realArray tab_at;	//(:,:,:), interpolation table for atomic wfc
+	ModuleBase::realArray tab_dq;   //4pi/sqrt(V) * \int betar(r)*djl(qr)/d(qr)*r^2 dr
 
 	ModuleBase::realArray deeq;		//(:,:,:,:), the integral of V_eff and Q_{nm}
 	bool multi_proj = false;
@@ -90,6 +95,7 @@ public:
 
 
 	mutable ModuleBase::ComplexMatrix vkb;	// all beta functions in reciprocal space
+	mutable ModuleBase::ComplexArray gradvkb; // gradient of beta functions
 	std::complex<double> ***vkb1_alpha;
 	std::complex<double> ***vkb_alpha;
 
@@ -102,6 +108,8 @@ public:
 	#ifdef __LCAO
 	ORB_gaunt_table MGT;
 	#endif
+private:
+	bool getvkb = false;
 };
 
 #endif // VNL_IN_PW

@@ -10,6 +10,7 @@ threshold=0.0000001
 ca=8
 # regex of case name
 case="^[^#].*_.*$"
+#case="107_PW_OB_outputbands"
 # enable AddressSanitizer
 sanitize=false
 
@@ -170,7 +171,11 @@ for dir in $testdir; do
 				echo -e "\`\`\`\n" >> ${report}
 			done
 		else
-			mpirun -np $np $abacus > log.txt
+			if [ "$case" = "282_NO_RPA" ]; then
+				mpirun -np 1 $abacus > log.txt
+			else
+				mpirun -np $np $abacus > log.txt
+			fi
 		fi
 		#$abacus > log.txt
 		test -d OUT.autotest || (echo "No 'OUT.autotest' dir presented. Some errors may happened in ABACUS." && exit 1)

@@ -6,6 +6,7 @@
 #include "exx_abfs-matrix_orbs11.h" 
 #include "exx_abfs-matrix_orbs21.h" 
 #include "exx_abfs-dm.h"
+#include "exx_abfs-parallel.h"
 #include "exx_abfs-parallel-communicate-hexx.h"
 #include "exx_abfs-screen-schwarz.h"
 #include "exx_abfs-screen-cauchy.h"
@@ -34,6 +35,7 @@ class Exx_Lcao
 public:
 	struct{ std::string process; std::string thread; std::string matrix; } test_dir;	// Peize Lin test
 	Exx_Lcao( const Exx_Global::Exx_Info &info_global );				// Peize Lin test
+    virtual ~Exx_Lcao(){};
 public:
 	void init();
 	void cal_exx_ions(const Parallel_Orbitals &pv);
@@ -44,18 +46,17 @@ private:
 	std::vector<std::map<size_t,std::map<size_t,std::map<Abfs::Vector3_Order<int>,ModuleBase::matrix>>>> cal_Hexx() const;
 	double cal_energy(
 		const std::vector<std::map<size_t,std::map<size_t,std::map<Abfs::Vector3_Order<int>,ModuleBase::matrix>>>> &HexxR ) const;
-	void init_radial_table_ions( const std::set<size_t> &atom_centres_core, const std::vector<std::pair<size_t,size_t>> &atom_pairs_core );
-		
+
 public:
 	enum class Distribute_Type {Htime,Kmeans2,Kmeans1,Order};
 	
 public:
 	double get_energy() const { return energy; }
 	
-private:
+protected:
 	
 	int kmesh_times = 4;				// Peize Lin test
-	
+
 #if EXX_DM==1
 	Exx_Abfs::Parallel::Communicate::DM DM_para;
 #elif EXX_DM==2
@@ -92,6 +93,8 @@ private:
 
 	Exx_Abfs::Screen::Schwarz schwarz;
 	Exx_Abfs::Screen::Cauchy cauchy;
+
+    void init_radial_table_ions( const std::set<size_t> &atom_centres_core, const std::vector<std::pair<size_t,size_t>> &atom_pairs_core );
 		
 public:
 	struct Exx_Info

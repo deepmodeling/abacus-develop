@@ -30,7 +30,7 @@
 
 - [Variables related to output information](#variables-related-to-output-information)
 
-    [out_force](#out_force) | [out_mul](#out_mul) | [out_freq_elec](#out_freq_elec) | [out_freq_ion](#out_freq_ion) | [out_chg](#out_chg) | [out_pot](#out_pot) | [out_dm](#out_dm) | [out_wfc_pw](#out_wfc_pw) | [out_wfc_r](#out_wfc_r) | [out_wfc_lcao](#out_wfc_lcao) | [out_dos](#out_dos) | [out_band](#out_band) | [out_proj_band](#out_proj_band) | [out_stru](#out_stru) | [out_level](#out_level) | [out_alllog](#out_alllog) | [out_mat_hs](#out_mat_hs) | [out_mat_r](#out_mat_r) | [out_mat_hs2](#out_mat_hs2) | [out_element_info](#out_element_info) | [restart_save](#restart_save) | [restart_load](#restart_load) | [dft_plus_dmft](#dft_plus_dmft)
+    [out_force](#out_force) | [out_mul](#out_mul) | [out_freq_elec](#out_freq_elec) | [out_freq_ion](#out_freq_ion) | [out_chg](#out_chg) | [out_pot](#out_pot) | [out_dm](#out_dm) | [out_wfc_pw](#out_wfc_pw) | [out_wfc_r](#out_wfc_r) | [out_wfc_lcao](#out_wfc_lcao) | [out_dos](#out_dos) | [out_band](#out_band) | [out_proj_band](#out_proj_band) | [out_stru](#out_stru) | [out_level](#out_level) | [out_alllog](#out_alllog) | [out_mat_hs](#out_mat_hs) | [out_mat_r](#out_mat_r) | [out_mat_hs2](#out_mat_hs2) | [out_element_info](#out_element_info) | [restart_save](#restart_save) | [restart_load](#restart_load) | [dft_plus_dmft](#dft_plus_dmft) | [rpa](#rpa)
 
 - [Density of states](#density-of-states)
 
@@ -78,7 +78,7 @@
 
 - [Electronic conductivities](#electronic-conductivities)
 
-    [cal_cond](#cal_cond) | [cond_nche](#cond_nche) | [cond_dw](#cond_dw) | [cond_wcut](#cond_wcut) | [cond_wenlarge](#cond_wenlarge) | [cond_fwhm](#cond_fwhm)
+    [cal_cond](#cal_cond) | [cond_nche](#cond_nche) | [cond_dw](#cond_dw) | [cond_wcut](#cond_wcut) | [cond_wenlarge](#cond_wenlarge) | [cond_fwhm](#cond_fwhm) | [cond_nonlocal](#cond_nonlocal)
 
 - [Implicit solvation model](#implicit-solvation-model)
 
@@ -965,6 +965,11 @@ Si-p2-orbital-dru.dat  Si-s1-orbital-ru.dat" for example.
 ### dft_plus_dmft
 - **Type**: Boolean
 - **Description**: Whether to generate output to be used in dmft. It seems this functionality is not working anymore.
+- **Default**: 0
+
+### rpa
+- **Type**: Boolean
+- **Description**: Generate output files used in rpa calculation.
 - **Default**: 0
 
 [back to top](#full-list-of-input-keywords)
@@ -1858,6 +1863,12 @@ Thermal conductivities: $\kappa = \lim_{\omega\to 0}\kappa(\omega)$.
 - **Type**: Integer
 - **Description**: We use gaussian functions to approxiamte $\delta(E)\approx \frac{1}{\sqrt{2\pi}\Delta E}e^{-\frac{E^2}{2{\Delta E}^2}}$. FWHM for conductivities, $FWHM=2*\sqrt{2\ln2}\cdot \Delta E$. The unit is eV.
 - **Default**: 0.3
+
+### cond_nonlocal
+
+- **Type**: Boolean
+- **Description**: Conductivities need to calculate velocity matrix $\bra{\psi_i}\hat{v}\ket{\psi_j}$ and $m\hat{v}=\hat{p}+\frac{im}{\hbar}[\hat{V}_{NL},\hat{r}]$. If `cond_nonlocal` is false, $m\hat{v}\approx\hat{p}$.
+- **Default**: True
 
 [back to top](#full-list-of-input-keywords)
 

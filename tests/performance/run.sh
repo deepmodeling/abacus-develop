@@ -101,11 +101,43 @@ run_abacus() {
 }
 ##############################
 
+usage() {
+    echo ""
+    echo " Usage:"
+    echo " bash run.sh [-n nprocs] [-t Threads] [-a Accuracy] [-f AccuracyForceStress] [...]"
+    echo " -n nprocs:   core number for MPI parallel to run ABACUS"
+    echo " -t Threads:  thread number to run ABACUS"
+    echo " -b abacus:   the command to run ABACUS"
+    echo " -a Accuracy: the accuracy to judge if energy is right, e.g. 6 means 1e-6 eV"
+    echo " -f AccuracyForceStress:    the accuracy to judge if the force and stress is right"
+    echo ""
+}
+
+while getopts 'n:t:b:c:a:f' args;do
+    case $args in
+        n) ncpu=$OPTARG;;
+        t) thread=$OPTARG;;
+        b) abacus=$OPTARG;;
+        a) ca=$OPTARG;;
+        f) cafs=$OPTARG;;
+        ?) usage;;
+    esac
+done
+
+if [ "$ncpu" == "" ];then
+    echo "ncpu=$ncpu"
+    echo "Pleas use -n to set the parallel core number"
+    usage
+    exit 1
+fi
+#echo $ncpu $thread $abacus $ca $cafs
+
 ##############################
 #Begin to RUN
 test -e allcase || echo "Please specify tests in file 'allcase'."
 test -e allcase || exit 1
 which $abacus >/dev/null || echo "Error: ABACUS executable not found. Please check ABACUS installation or \$PATH."
+which $abacus >/dev/null || usage
 which $abacus >/dev/null || exit 1
 
 test -f sumall.dat && mv sumall.dat sumall.old.dat
@@ -115,7 +147,7 @@ cat /proc/version >>sumall.dat
 cat /proc/cpuinfo | grep "model name" | tail -1 | cut -d ':' -f 2 >>sumall.dat
 echo "ABACUS path: `which $abacus`" >>sumall.dat
 echo "Number of Cores: $ncpu" >>sumall.dat
-echo "Accuracy: $ca" >>sumall.dat
+echo "Accuracy for energy: 1e-$ca" >>sumall.dat
 echo >>sumall.dat
 echo "!!!all data will be summarized in file sumall.dat" >>sumall.dat
 echo "" >>sumall.dat

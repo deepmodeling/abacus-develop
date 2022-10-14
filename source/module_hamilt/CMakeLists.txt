@@ -10,6 +10,7 @@ add_library(
     ks_pw/veff_pw.cpp
     ks_pw/nonlocal_pw.cpp
     ks_pw/meta_pw.cpp
+    ks_pw/velocity_pw.cpp    
     ks_lcao/operator_lcao.cpp
     ks_lcao/ekinetic_lcao.cpp
     ks_lcao/nonlocal_lcao.cpp

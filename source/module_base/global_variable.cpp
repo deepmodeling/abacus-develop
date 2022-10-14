@@ -213,4 +213,9 @@ double sigma_k = 0.6;
 double nc_k = 0.00037;
 
 bool dft_plus_u = false; //DFTU control
+
+//Xinyang Dong added for rpa
+bool rpa_setorb = false;
+std::vector<std::string> rpa_orbitals;
+
 } // namespace GlobalV
