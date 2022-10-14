@@ -38,6 +38,7 @@ VPATH=./src_global\
 :./src_pdiag\
 :./src_pdiag/MRRR\
 :./src_ri\
+:./module_rpa\
 :./\
 
 OBJS_MAIN=driver.o\
@@ -398,6 +399,7 @@ dftu.o\
 dftu_yukawa.o\
 dftu_relax.o\
 dmft.o \
+rpa.o\
 
 OBJS_COMMON=atom_spec.o \
 unitcell.o \

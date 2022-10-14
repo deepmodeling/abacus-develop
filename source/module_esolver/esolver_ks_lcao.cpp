@@ -13,6 +13,7 @@
 #include "src_pw/occupy.h"
 #include "src_pw/symmetry_rho.h"
 #include "src_pw/threshold_elec.h"
+#include "module_rpa/rpa.h"
 
 #ifdef __DEEPKS
 #include "../module_deepks/LCAO_deepks.h"
@@ -957,6 +958,13 @@ void ESolver_KS_LCAO::afterscf(const int istep)
         GlobalC::dmft.out_to_dmft(this->LOWF, *this->UHM.LM);
     }
 
+    if(INPUT.rpa)
+    {
+        ModuleRPA::DFT_RPA_interface rpa_interface(GlobalC::exx_global.info);
+        rpa_interface.rpa_exx_lcao().info.files_abfs = GlobalV::rpa_orbitals;
+        rpa_interface.out_for_RPA(*(this->LOWF.ParaV), *(this->psi), this->LOC);
+    }
+
     // add by jingan for out r_R matrix 2019.8.14
     if(INPUT.out_mat_r)
     {
@@ -964,6 +972,7 @@ void ESolver_KS_LCAO::afterscf(const int istep)
         r_matrix.init(*this->LOWF.ParaV);
         r_matrix.out_r_overlap_R();
     }
+    
     if (hsolver::HSolverLCAO::out_mat_hsR)
     {
         this->output_HS_R(istep); // LiuXh add 2019-07-15

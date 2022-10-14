@@ -383,7 +383,7 @@ class Input
     //==========================================================
     //    DFT+U       Xin Qu added on 2020-10-29
     //==========================================================
-    bool dft_plus_u; // true:DFT+U correction; false：standard DFT calcullation(default)
+    bool dft_plus_u; // true:DFT+U correction; false：standard DFT calculation(default)
     int *orbital_corr; // which correlated orbitals need corrected ; d:2 ,f:3, do not need correction:-1
     double *hubbard_u; // Hubbard Coulomb interaction parameter U(ev)
     double *hund_j; // Hund exchange parameter J(ev)
@@ -400,6 +400,12 @@ class Input
     //    DFT+DMFT       Xin Qu added on 2021-08
     //==========================================================
     bool dft_plus_dmft; // true:DFT+DMFT; false：standard DFT calcullation(default)
+
+    //==========================================================
+    //    RPA           Rong Shi added on 2022-04
+    //==========================================================
+    bool rpa;
+    std::string coulomb_type;
 
     //==========================================================
     // DeepKS -- added by caoyu and mohan

@@ -212,4 +212,7 @@ double tau = 1.0798 * 1e-5;
 double sigma_k = 0.6;
 double nc_k = 0.00037;
 
+bool rpa_setorb = false;
+std::vector<std::string> rpa_orbitals;
+
 } // namespace GlobalV
