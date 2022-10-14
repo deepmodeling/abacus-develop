@@ -9,4 +9,5 @@ add_library(
     ks_pw/veff_pw.cpp
     ks_pw/nonlocal_pw.cpp
     ks_pw/meta_pw.cpp
+    ks_pw/velocity_pw.cpp
 )

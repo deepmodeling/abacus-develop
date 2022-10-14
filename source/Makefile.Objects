@@ -60,6 +60,7 @@ read_pp_blps.o \
 pseudo_nc.o \
 VL_in_pw.o\
 VNL_in_pw.o\
+VNL_grad_pw.o\
 atom_pseudo.o\
 unitcell_pseudo.o\
 threshold_elec.o\
@@ -326,7 +327,8 @@ hamilt_pw.o\
 ekinetic_pw.o\
 meta_pw.o\
 veff_pw.o\
-nonlocal_pw.o
+nonlocal_pw.o\
+velocity_pw.o
 
 OBJS_FIRST_PRINCIPLES=$(OBJS_MAIN)\
 $(OBJS_PW)\

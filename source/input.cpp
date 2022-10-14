@@ -154,6 +154,7 @@ void Input::Default(void)
     cond_wcut = 10;
     cond_wenlarge = 10;
     cond_fwhm = 0.3;
+    cond_nonlocal = true;
     berry_phase = false;
     gdir = 3;
     towannier90 = false;
@@ -634,6 +635,10 @@ bool Input::Read(const std::string &fn)
         else if (strcmp("cond_fwhm", word) == 0)
         {
             read_value(ifs, cond_fwhm);
+        }
+        else if (strcmp("cond_nonlocal", word) == 0)
+        {
+            read_value(ifs, cond_nonlocal);
         }
         else if (strcmp("bndpar", word) == 0)
         {
@@ -2029,6 +2034,7 @@ void Input::Bcast()
     Parallel_Common::bcast_double(cond_wcut);
     Parallel_Common::bcast_int(cond_wenlarge);
     Parallel_Common::bcast_double(cond_fwhm);
+    Parallel_Common::bcast_bool(cond_nonlocal);
     Parallel_Common::bcast_int(bndpar);
     Parallel_Common::bcast_int(kpar);
     Parallel_Common::bcast_bool(berry_phase);
