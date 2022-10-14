@@ -1,7 +1,5 @@
 # Testing
 
-## Table of Contents
-
 - [Adding a unit test](#adding-a-unit-test)
 - [Regression tests](#regression-tests)
 - [Test coverage](#test-coverage)

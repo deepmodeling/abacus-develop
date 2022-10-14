@@ -1,7 +1,5 @@
 # Coding
 
-## Table of Contents
-
 - [Getting started](#getting-started)
 - [Structure of the package](#structure-of-the-package)
 - [Code conventions](#code-conventions)
