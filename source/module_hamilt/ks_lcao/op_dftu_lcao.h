@@ -1,5 +1,5 @@
-#ifndef __OPDFTULCAO
-#define __OPDFTULCAO
+#ifndef OPDFTULCAO_H
+#define OPDFTULCAO_H
 #include "operator_lcao.h"
 #include "module_base/timer.h"
 

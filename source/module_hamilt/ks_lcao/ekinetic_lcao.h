@@ -1,5 +1,5 @@
-#ifndef __EKINETICLCAO
-#define __EKINETICLCAO
+#ifndef EKINETICLCAO_H
+#define EKINETICLCAO_H
 #include "operator_lcao.h"
 #include "src_lcao/LCAO_gen_fixedH.h"
 #include "module_base/timer.h"

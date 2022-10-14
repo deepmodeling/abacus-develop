@@ -111,45 +111,42 @@ void Veff<OperatorLCAO<std::complex<double>>>::contributeHk(int ik)
 
         // if you change the place of the following code,
         // rememeber to delete the #include
-        if (GlobalV::VL_IN_H)
+        if(XC_Functional::get_func_type()==3 || XC_Functional::get_func_type()==5)
         {
-            if(XC_Functional::get_func_type()==3 || XC_Functional::get_func_type()==5)
-            {
-                Gint_inout inout(GlobalC::pot.vr_eff1, GlobalC::pot.vofk_eff1, 0, Gint_Tools::job_type::vlocal_meta);
-                this->GK->cal_gint(&inout);
-            }
-            else
-            {
-                // vlocal = Vh[rho] + Vxc[rho] + Vl(pseudo)
-                Gint_inout inout(GlobalC::pot.vr_eff1, 0, Gint_Tools::job_type::vlocal);
-                this->GK->cal_gint(&inout);
-            }
+            Gint_inout inout(GlobalC::pot.vr_eff1, GlobalC::pot.vofk_eff1, 0, Gint_Tools::job_type::vlocal_meta);
+            this->GK->cal_gint(&inout);
+        }
+        else
+        {
+            // vlocal = Vh[rho] + Vxc[rho] + Vl(pseudo)
+            Gint_inout inout(GlobalC::pot.vr_eff1, 0, Gint_Tools::job_type::vlocal);
+            this->GK->cal_gint(&inout);
+        }
 
-            // added by zhengdy-soc, for non-collinear case
-            // integral 4 times, is there any method to simplify?
-            if (GlobalV::NSPIN == 4)
+        // added by zhengdy-soc, for non-collinear case
+        // integral 4 times, is there any method to simplify?
+        if (GlobalV::NSPIN == 4)
+        {
+            for (int is = 1; is < 4; is++)
             {
-                for (int is = 1; is < 4; is++)
+                for (int ir = 0; ir < GlobalC::rhopw->nrxx; ir++)
                 {
-                    for (int ir = 0; ir < GlobalC::rhopw->nrxx; ir++)
-                    {
-                        GlobalC::pot.vr_eff1[ir] = GlobalC::pot.vr_eff(is, ir);
-                        if(XC_Functional::get_func_type()==3 || XC_Functional::get_func_type()==5)
-                        {
-                            GlobalC::pot.vofk_eff1[ir] = GlobalC::pot.vofk(is, ir);
-                        }
-                    }
-                    
+                    GlobalC::pot.vr_eff1[ir] = GlobalC::pot.vr_eff(is, ir);
                     if(XC_Functional::get_func_type()==3 || XC_Functional::get_func_type()==5)
                     {
-                        Gint_inout inout(GlobalC::pot.vr_eff1, GlobalC::pot.vofk_eff1, is, Gint_Tools::job_type::vlocal_meta);
-                        this->GK->cal_gint(&inout);
+                        GlobalC::pot.vofk_eff1[ir] = GlobalC::pot.vofk(is, ir);
                     }
-                    else
-                    {
-                        Gint_inout inout(GlobalC::pot.vr_eff1, is, Gint_Tools::job_type::vlocal);
-                        this->GK->cal_gint(&inout);
-                    }
+                }
+                
+                if(XC_Functional::get_func_type()==3 || XC_Functional::get_func_type()==5)
+                {
+                    Gint_inout inout(GlobalC::pot.vr_eff1, GlobalC::pot.vofk_eff1, is, Gint_Tools::job_type::vlocal_meta);
+                    this->GK->cal_gint(&inout);
+                }
+                else
+                {
+                    Gint_inout inout(GlobalC::pot.vr_eff1, is, Gint_Tools::job_type::vlocal);
+                    this->GK->cal_gint(&inout);
                 }
             }
         }

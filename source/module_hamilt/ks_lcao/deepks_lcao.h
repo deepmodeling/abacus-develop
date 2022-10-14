@@ -1,5 +1,5 @@
-#ifndef __DEEPKSLCAO
-#define __DEEPKSLCAO
+#ifndef DEEPKSLCAO_H
+#define DEEPKSLCAO_H
 #include "operator_lcao.h"
 #include "module_base/timer.h"
 #include "src_lcao/local_orbital_charge.h"
@@ -7,8 +7,8 @@
 namespace hamilt
 {
 
-#ifndef __EXXTEMPLATE
-#define __EXXTEMPLATE
+#ifndef __DEEPKSTEMPLATE
+#define __DEEPKSTEMPLATE
 
 template<class T> class DeePKS : public T 
 {};

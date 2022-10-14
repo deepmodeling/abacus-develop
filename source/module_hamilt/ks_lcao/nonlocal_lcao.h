@@ -1,5 +1,5 @@
-#ifndef __NONLOCALLCAO
-#define __NONLOCALLCAO
+#ifndef NONLOCALLCAO_H
+#define NONLOCALLCAO_H
 #include "operator_lcao.h"
 #include "src_lcao/LCAO_gen_fixedH.h"
 

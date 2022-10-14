@@ -1,5 +1,5 @@
-#ifndef __OPERATORLCAO
-#define __OPERATORLCAO
+#ifndef OPERATORLCAO_H
+#define OPERATORLCAO_H
 #include"module_hamilt/operator.h"
 #include "src_lcao/LCAO_matrix.h"
 #include "../matrixblock.h"

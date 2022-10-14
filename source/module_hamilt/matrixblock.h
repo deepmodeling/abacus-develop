@@ -1,5 +1,5 @@
-#ifndef MATRIXBLOCK
-#define MATRIXBLOCK
+#ifndef MATRIXBLOCK_H
+#define MATRIXBLOCK_H
 
 #include <cstddef>
 namespace hamilt

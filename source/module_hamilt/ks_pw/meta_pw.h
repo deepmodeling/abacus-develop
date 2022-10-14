@@ -1,5 +1,5 @@
-#ifndef __METAPW
-#define __METAPW
+#ifndef METAPW_H
+#define METAPW_H
 
 #include "operator_pw.h"
 #include "module_base/matrix.h"

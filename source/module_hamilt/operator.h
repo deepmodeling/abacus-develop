@@ -1,5 +1,5 @@
-#ifndef __OPERATOR
-#define __OPERATOR
+#ifndef OPERATOR_H
+#define OPERATOR_H
 
 #include<complex>
 #include "module_psi/psi.h"

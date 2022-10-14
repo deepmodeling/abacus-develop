@@ -1,5 +1,5 @@
-#ifndef __VEFFLCAO
-#define __VEFFLCAO
+#ifndef VEFFLCAO_H
+#define VEFFLCAO_H
 #include "operator_lcao.h"
 #include "module_base/timer.h"
 #include "module_gint/gint_gamma.h"

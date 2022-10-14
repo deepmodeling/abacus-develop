@@ -1,5 +1,5 @@
-#ifndef __OVERLAPLCAO
-#define __OVERLAPLCAO
+#ifndef OVERLAPLCAO_H
+#define OVERLAPLCAO_H
 #include "operator_lcao.h"
 #include "src_lcao/LCAO_gen_fixedH.h"
 
