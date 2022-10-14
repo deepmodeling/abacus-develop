@@ -4,6 +4,6 @@
 
 To be done.
 
-## Metting
+## Meetings
 
 To be done.
