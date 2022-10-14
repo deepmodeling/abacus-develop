@@ -1,24 +1,74 @@
-# Contributing to ABACUS
-
-First of all, thank you for taking time making contributions to ABACUS!
-This file provides a guideline for it.
+# Coding
 
 ## Table of Contents
 
-- [Got a question?](#got-a-question)
+- [Getting started](#getting-started)
 - [Structure of the package](#structure-of-the-package)
-- [Submitting an Issue](#submitting-an-issue)
-- [Comment Style for documentation](#comment-style-for-documentation)
-- [Code formatting style](#code-formatting-style)
-- [Adding a unit test](#adding-a-unit-test)
-- [Submitting a Pull Request](#submitting-a-pull-request)
-- [Commit Message Guidelines](#commit-message-guidelines)
+- [Code conventions](#code-conventions)
+- [Doxygen](#doxygen)
+- [Debug](#debug)
+- [Github respository](#github-respository)
+- [Issue](#issue)
+- [Commit](#commit)
+- [Log](#log)
+- [Profiling](#profiling)
 
-## Got a question?
+## Getting started
 
+First of all, thank you for taking time making contributions to ABACUS!
+This file provides a guideline for it.
 Please referring to our GitHub [issue tracker](https://github.com/deepmodeling/abacus-develop/issues), and our developers are willing to help.
 If you find a bug, you can help us by submitting an issue to our GitHub Repository. Even better, you can submit a Pull Request with a patch. You can request a new feature by submitting an issue to our GitHub Repository.
 If you would like to implement a new feature, please submit an issue with a proposal for your work first, and that ensures your work collaborates with our development road map well. For a major feature, first open an issue and outline your proposal so that it can be discussed. This will also allow us to better coordinate our efforts, prevent duplication of work, and help you to craft the change so that it is successfully accepted into the project.
+
+### Submitting a Pull Request
+
+1. [Fork](https://docs.github.com/en/github/getting-started-with-github/fork-a-repo) the ABACUS repo.
+
+2. Pull your forked repository, and create a new git branchmake to your changes in it:
+
+     ```shell
+     git checkout -b my-fix-branch
+     ```
+
+3. Coding your patch, including appropriate test cases and docs.
+To run a subset of unit test, use `ctest -R <test-match-pattern>` to perform tests with name matched by given pattern.
+
+4. After tests passed, commit your changes [with a proper message](#commit-message-guidelines).
+
+5. Push your branch to GitHub:
+
+    ```shell
+    git push origin my-fix-branch
+    ```
+
+6. In GitHub, send a pull request with `deepmodeling/abacus-develop:develop` as the base repository.
+
+7. After your pull request is merged, you can safely delete your branch and sync the changes from the main (upstream) repository:
+
+- Delete the remote branch on GitHub either through the GitHub web UI or your local shell as follows:
+
+    ```shell
+    git push origin --delete my-fix-branch
+    ```
+
+- Check out the master branch:
+
+    ```shell
+    git checkout develop -f
+    ```
+
+- Delete the local branch:
+
+    ```shell
+    git branch -D my-fix-branch
+    ```
+
+- Update your master with the latest upstream version:
+
+    ```shell
+    git pull --ff upstream develop
+    ```
 
 ## Structure of the package
 
@@ -32,12 +82,15 @@ The source code of ABACUS is based on several modules. Under the ABACUS root dir
 - `tests`: End-to-end test cases;
 - `tools`: the script for generating the numerical atomic orbitals.
 
-## Submitting an Issue
+## Code conventions
 
-Before you submit an issue, please search the issue tracker, and maybe your problem has been discussed and fixed. You can [submit new issues](https://github.com/deepmodeling/abacus-develop/issues/new/choose) by filling our issue forms.
-To help us reproduce and confirm a bug, please provide a test case and building environment in your issue.
+### Formatting style
 
-## Comment Style for documentation
+We use `clang-format` as our code formatter. The `.clang-format` file in root directory describes the rules to conform with.
+For Visual Studio Code developers, the [official extension of C/C++](https://marketplace.visualstudio.com/items?itemName=ms-vscode.cpptools) provided by Microsoft can help you format your codes following the rules. With this extension installed, format your code with `shift+command/alt+f`.
+Configure your VS Code settings as `"C_Cpp.clang_format_style": "file"` (you can look up this option by pasting it into the search box of VS Code settings page), and all this stuff will take into effect. You may also set `"editor.formatOnSave": true` to avoid formatting files everytime manually.
+
+### Comment Style for documentation
 
 ABACUS uses Doxygen to generate docs directly from `.h` and `.cpp` code files.
 
@@ -102,96 +155,29 @@ An practical example is class [LCAO_Deepks](https://github.com/deepmodeling/abac
     \f}
     ```
 
-## Code formatting style
+## Doxygen
 
-We use `clang-format` as our code formatter. The `.clang-format` file in root directory describes the rules to conform with.
-For Visual Studio Code developers, the [official extension of C/C++](https://marketplace.visualstudio.com/items?itemName=ms-vscode.cpptools) provided by Microsoft can help you format your codes following the rules. With this extension installed, format your code with `shift+command/alt+f`.
-Configure your VS Code settings as `"C_Cpp.clang_format_style": "file"` (you can look up this option by pasting it into the search box of VS Code settings page), and all this stuff will take into effect. You may also set `"editor.formatOnSave": true` to avoid formatting files everytime manually.
+To be done.
 
-## Adding a unit test
+## Debug
 
-We use GoogleTest as our test framework. Write your test under the corresponding module folder at `abacus-develop/tests`, then append the test to `tests/CMakeLists.txt`. If there are currently no unit tests provided for the module, do as follows. `module_base` provides a simple demonstration.
+To be done.
 
-- Add a folder named `test` under the module.
-- Append the content below to `CMakeLists.txt` of the module:
+## Github respository
 
-```cmake
-IF (BUILD_TESTING)
-  add_subdirectory(test)
-endif()
-```
+The [website](https://github.com/deepmodeling/abacus-develop).
 
-- Add a blank `CMakeLists.txt` under `module*/test`.
+## Issue
 
-To add a unit test:
+Before you submit an issue, please search the [issue tracker](https://github.com/deepmodeling/abacus-develop/issues), and maybe your problem has been discussed and fixed. You can [submit new issues](https://github.com/deepmodeling/abacus-develop/issues/new/choose) by filling our issue forms.
+To help us reproduce and confirm a bug, please provide a test case and building environment in your issue.
 
-- Write your test under `GoogleTest` framework.
-- Add your testing source code with suffix `*_test.cpp` in `test` directory.
-- Append the content below to `CMakeLists.txt` of the module:
 
-```cmake
-AddTest(
-  TARGET <module_name>_<test_name> # this is the executable file name of the test
-  SOURCES <test_name>.cpp
+## Commit
 
-  # OPTIONAL: if this test requires external libraries, add them with "LIBS" statement.
-  LIBS math_libs # `math_libs` includes all math libraries in ABACUS.
-)
-```
+### [Commit tracker](https://github.com/deepmodeling/abacus-develop/commits)
 
-- Build with `-D BUILD_TESTING=1` flag. You can find built testing programs under `build/source/<module_name>/test`.
-- Follow the installing procedure of CMake. The tests will move to `build/test`.
-
-## Submitting a Pull Request
-
-1. [Fork](https://docs.github.com/en/github/getting-started-with-github/fork-a-repo) the ABACUS repo.
-
-2. Pull your forked repository, and create a new git branchmake to your changes in it:
-
-     ```shell
-     git checkout -b my-fix-branch
-     ```
-
-3. Coding your patch, including appropriate test cases and docs.
-To run a subset of unit test, use `ctest -R <test-match-pattern>` to perform tests with name matched by given pattern.
-
-4. After tests passed, commit your changes [with a proper message](#commit-message-guidelines).
-
-5. Push your branch to GitHub:
-
-    ```shell
-    git push origin my-fix-branch
-    ```
-
-6. In GitHub, send a pull request with `deepmodeling/abacus-develop:develop` as the base repository.
-
-7. After your pull request is merged, you can safely delete your branch and sync the changes from the main (upstream) repository:
-
-- Delete the remote branch on GitHub either through the GitHub web UI or your local shell as follows:
-
-    ```shell
-    git push origin --delete my-fix-branch
-    ```
-
-- Check out the master branch:
-
-    ```shell
-    git checkout develop -f
-    ```
-
-- Delete the local branch:
-
-    ```shell
-    git branch -D my-fix-branch
-    ```
-
-- Update your master with the latest upstream version:
-
-    ```shell
-    git pull --ff upstream develop
-    ```
-
-## Commit Message Guidelines
+### Commit Message Guidelines
 
 A well-formatted commit message leads a more readable history when we look through some changes, and helps us generate change log.
 We follow up [The Conventional Commits specification](https://www.conventionalcommits.org) for commit message format.
@@ -231,3 +217,11 @@ fix(lcao): use correct scalapack interface.
 
 Fix #753.
 ```
+
+## Log
+
+To be done.
+
+## Profiling
+
+To be done
