@@ -383,6 +383,8 @@ std::tuple<double,double,ModuleBase::matrix> XC_Functional::v_xc_libxc(
     etxc *= omega / ncxyz;
     vtxc *= omega / ncxyz;
 
+    finish_func(funcs);
+
     ModuleBase::timer::tick("XC_Functional","v_xc");
     return std::make_tuple( etxc, vtxc, std::move(v) );
 }
@@ -649,6 +651,8 @@ tuple<double,double,ModuleBase::matrix,ModuleBase::matrix> XC_Functional::v_xc_m
 
     etxc *= omega / ncxyz;
     vtxc *= omega / ncxyz;
+
+    finish_func(funcs);
 
     ModuleBase::timer::tick("XC_Functional","v_xc_meta");
 	return std::make_tuple( etxc, vtxc, move(v), move(vofk) );
