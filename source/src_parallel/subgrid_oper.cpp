@@ -330,7 +330,7 @@ void SubGrid_oper::dis_subwfc()
 
 #else
 
-// this is for serial version
+// this is for sequential version
 
 	//---------------------------------------------
 	// Transfer the data from totwfc to WFC_GAMMA.

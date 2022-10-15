@@ -9,7 +9,7 @@
 #include "../src_pw/global.h"
 #include "../src_pw/klist.h"
 #include "../src_pw/wavefunc.h"
-#include "wavefunc_in_pw.h"
+#include "../src_lcao/wavefunc_in_pw.h"
 #include "../module_base/lapack_connector.h"
 #include <limits>
 #include "../src_parallel/parallel_global.h"
