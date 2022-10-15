@@ -1,5 +1,5 @@
-#ifndef __EKINETICPW
-#define __EKINETICPW
+#ifndef EKINETICPW_H
+#define EKINETICPW_H
 
 #include "operator_pw.h"
 

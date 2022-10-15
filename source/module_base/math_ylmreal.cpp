@@ -4,6 +4,7 @@
 #include "tool_quit.h"
 #include "realarray.h"
 #include <cassert>
+#include "ylm.h"
 
 namespace ModuleBase
 {
@@ -540,6 +541,58 @@ void YlmReal::Ylm_Real
 
     return;
 } // end subroutine ylmr2
+
+void YlmReal::grad_Ylm_Real
+    (
+        const int lmax2, 		
+        const int ng,				
+        const ModuleBase::Vector3<double> *g, 
+		matrix &ylm,
+        matrix &dylmx,
+		matrix &dylmy,
+		matrix &dylmz	
+    )
+{
+	ModuleBase::Ylm::set_coefficients();
+	int lmax = int(sqrt( double(lmax2) ) + 0.1) - 1;
+
+	for (int ig = 0;ig < ng;ig++)
+    {
+		ModuleBase::Vector3<double> gg = g[ig];
+        double gmod = gg.norm();
+        if (gmod < 1.0e-9)
+        {
+			for(int lm = 0 ; lm < lmax2 ; ++lm)
+			{
+				if(lm == 0) 
+					ylm(lm,ig) = ModuleBase::SQRT_INVERSE_FOUR_PI;
+				else	
+					ylm(lm,ig) = 0;
+				dylmx(lm,ig) = dylmy(lm,ig) = dylmz(lm,ig) = 0;
+			}
+		}
+		else
+		{
+			std::vector<double> tmpylm;
+			std::vector<std::vector<double>> tmpgylm;
+			Ylm::grad_rl_sph_harm(lmax2, gg.x, gg.y, gg.z, tmpylm,tmpgylm);
+			int lm = 0;
+			for(int il = 0 ; il <= lmax ; ++il)
+			{
+				for(int im = 0; im < 2*il+1; ++im, ++lm)
+				{
+					double rlylm = tmpylm[lm];
+					ylm(lm,ig) = rlylm / pow(gmod,il);
+					dylmx(lm,ig) = ( tmpgylm[lm][0] - il*rlylm * gg.x / pow(gmod,2) )/pow(gmod,il);
+					dylmy(lm,ig) = ( tmpgylm[lm][1] - il*rlylm * gg.y / pow(gmod,2) )/pow(gmod,il);
+					dylmz(lm,ig) = ( tmpgylm[lm][2] - il*rlylm * gg.z / pow(gmod,2) )/pow(gmod,il);
+				}
+			}
+			
+		}
+	}
+	return;
+}
 
 
 //==========================================================

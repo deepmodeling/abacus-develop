@@ -44,6 +44,7 @@ out_dm=`grep out_dm INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
 out_mul=`grep out_mul INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
 gamma_only=`grep gamma_only INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
 imp_sol=`grep imp_sol INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
+run_rpa=`grep rpa INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
 #echo $running_path
 base=`grep -En '(^|[[:space:]])basis_type($|[[:space:]])' INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
 word="driver_line"
@@ -288,6 +289,14 @@ if ! test -z "$imp_sol" && [ $imp_sol == 1 ]; then
 	esol_cav=`grep E_sol_cav $running_path | awk '{print $3}'`
 	echo "esolelref $esol_el" >>$1
 	echo "esolcavref $esol_cav" >>$1
+fi
+
+if ! test -z "$run_rpa" && [ $run_rpa == 1 ]; then
+	Etot_without_rpa=`grep Etot_without_rpa log.txt | awk 'BEGIN{FS=":"} {print $2}' `
+	echo "Etot_without_rpa $Etot_without_rpa" >> $1
+	onref=refcoulomb_mat_0.txt
+	oncal=coulomb_mat_0.txt
+	python3 ../tools/CompareFile.py $onref $oncal 8
 fi
 
 #echo $total_band

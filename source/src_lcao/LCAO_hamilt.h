@@ -14,7 +14,7 @@ class LCAO_Hamilt
     LCAO_Hamilt();
     ~LCAO_Hamilt();
 
-    void set_lcao_matrices(void);
+    void grid_prepare(void);
         
     // used fro k-dependent Hamiltonian matrix.
     void calculate_Hk( const int &ik);

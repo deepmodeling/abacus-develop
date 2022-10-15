@@ -158,6 +158,7 @@ void Input_Conv::Convert(void)
 #ifdef __LCAO
     if (INPUT.dft_plus_u)
     {
+        GlobalV::dft_plus_u = INPUT.dft_plus_u;
         GlobalC::dftu.dftu_type = INPUT.dftu_type;
         GlobalC::dftu.double_counting = INPUT.double_counting;
         GlobalC::dftu.Yukawa = INPUT.yukawa_potential;

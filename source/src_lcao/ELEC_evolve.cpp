@@ -36,8 +36,6 @@ void ELEC_evolve::evolve_psi(const int& istep,
     ModuleBase::TITLE("ELEC_evolve", "eveolve_psi");
     ModuleBase::timer::tick("ELEC_evolve", "evolve_psi");
 
-    phm->constructHamilt();
-
     // pool parallization in future -- mohan note 2021-02-09
     for (int ik = 0; ik < GlobalC::kv.nks; ik++)
     {

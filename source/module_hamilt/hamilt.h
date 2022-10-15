@@ -15,8 +15,6 @@ class Hamilt
 {
   public:
     virtual ~Hamilt(){};
-    // construct Hamiltonian matrix with inputed electonic density
-    virtual void constructHamilt() {return;}
 
     // for target K point, update consequence of hPsi() and matrix()
     virtual void updateHk(const int ik){return;}
@@ -35,6 +33,7 @@ class Hamilt
 
     // first node operator, add operations from each operators
     Operator<std::complex<double>>* ops = nullptr;
+    Operator<double>* opsd = nullptr;
 };
 
 } // namespace hamilt

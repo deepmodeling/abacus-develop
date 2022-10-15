@@ -203,7 +203,7 @@ void Force_Stress_LCAO::getForceStress(
 	//Force contribution from DFT+U
 	ModuleBase::matrix force_dftu;
 	ModuleBase::matrix stress_dftu;
-	if (INPUT.dft_plus_u)
+	if (GlobalV::dft_plus_u)
 	{
 		// Quxin add for DFT+U on 20201029
 		GlobalC::dftu.force_stress(loc.dm_gamma, loc.dm_k, *uhm.LM);
@@ -257,7 +257,7 @@ void Force_Stress_LCAO::getForceStress(
 					+ fscc(iat, i);//self consistent corretion force (pw)
 
 				// Force contribution from DFT+U, Quxin add on 20201029
-				if(INPUT.dft_plus_u)
+				if(GlobalV::dft_plus_u)
 				{
 					fcs(iat, i) += force_dftu(iat, i);
 				}
@@ -489,7 +489,7 @@ void Force_Stress_LCAO::getForceStress(
 					scs(i,j) += stress_vdw(i , j);
 				}
 				//DFT plus U stress from qux
-				if(INPUT.dft_plus_u)
+				if(GlobalV::dft_plus_u)
 				{
 					scs(i, j) += stress_dftu(i, j);
 				}
@@ -569,7 +569,7 @@ void Force_Stress_LCAO::getForceStress(
 			{
 				sc_pw.print_stress("VDW      STRESS",sigmaxc,GlobalV::TEST_STRESS,ry);
 			}
-			if(INPUT.dft_plus_u)
+			if(GlobalV::dft_plus_u)
 			{
 				sc_pw.print_stress("DFTU     STRESS",sigmaxc,GlobalV::TEST_STRESS,ry);
 			}

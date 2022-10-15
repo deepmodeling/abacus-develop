@@ -3,6 +3,7 @@ list(APPEND objects
     H_Hartree_pw.cpp
     VL_in_pw.cpp
     VNL_in_pw.cpp
+    VNL_grad_pw.cpp
     charge.cpp
     charge_broyden.cpp
     charge_extra.cpp

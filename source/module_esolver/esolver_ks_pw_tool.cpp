@@ -3,6 +3,7 @@
 #include "module_base/global_variable.h"
 #include "src_pw/global.h"
 #include "src_pw/occupy.h"
+#include "module_hamilt/ks_pw/velocity_pw.h"
 
 namespace ModuleESolver
 {
@@ -53,30 +54,19 @@ void ESolver_KS_PW::KG(const int nche_KG, const double fwhmin, const double wcut
     ModuleBase::GlobalFunc::ZEROS(ct12, nt);
     ModuleBase::GlobalFunc::ZEROS(ct22, nt);
 
+    hamilt::Velocity velop(GlobalC::wfcpw, GlobalC::kv.isk.data(),&GlobalC::ppcell,&GlobalC::ucell, INPUT.cond_nonlocal);
     for (int ik = 0; ik < nk; ++ik)
     {
+        velop.init(ik);
+        const int npw = GlobalC::kv.ngk[ik];
+        complex<double> *levc = &(this->psi[0](ik, 0, 0));
+        complex<double> *prevc = new complex<double>[3 * npwx * nbands];
+        // px|right>
+        velop.act(this->psi, nbands*GlobalV::NPOL, levc, prevc);
         for (int id = 0; id < ndim; ++id)
         {
-            this->phami->updateHk(ik);
-            const int npw = GlobalC::kv.ngk[ik];
-
+            this->p_hamilt->updateHk(ik);
             complex<double> *pij = new complex<double>[nbands * nbands];
-            complex<double> *prevc = new complex<double>[npw * nbands];
-            complex<double> *levc = &(this->psi[0](ik, 0, 0));
-            double *ga = new double[npw];
-            for (int ig = 0; ig < npw; ig++)
-            {
-                ModuleBase::Vector3<double> v3 = GlobalC::wfcpw->getgpluskcar(ik, ig);
-                ga[ig] = v3[id] * tpiba;
-            }
-            // px|right>
-            for (int ib = 0; ib < nbands; ++ib)
-            {
-                for (int ig = 0; ig < npw; ++ig)
-                {
-                    prevc[ib * npw + ig] = ga[ig] * levc[ib * npwx + ig];
-                }
-            }
             zgemm_(&transc,
                    &transn,
                    &nbands,
@@ -85,8 +75,8 @@ void ESolver_KS_PW::KG(const int nche_KG, const double fwhmin, const double wcut
                    &ModuleBase::ONE,
                    levc,
                    &npwx,
-                   prevc,
-                   &npw,
+                   prevc + id * npwx * nbands,
+                   &npwx,
                    &ModuleBase::ZERO,
                    pij,
                    &nbands);
@@ -131,9 +121,8 @@ void ESolver_KS_PW::KG(const int nche_KG, const double fwhmin, const double wcut
                 ct22[it] += tmct22 / 2.0;
             }
             delete[] pij;
-            delete[] prevc;
-            delete[] ga;
         }
+        delete[] prevc;
     }
 #ifdef __MPI
     MPI_Allreduce(MPI_IN_PLACE, ct11, nt, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);

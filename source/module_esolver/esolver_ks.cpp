@@ -40,7 +40,7 @@ namespace ModuleESolver
     {
         delete this->pw_wfc;
         delete this->pelec;
-        delete this->phami;
+        delete this->p_hamilt;
         delete this->phsol;
     }
 

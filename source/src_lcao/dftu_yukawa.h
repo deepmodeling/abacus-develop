@@ -22,7 +22,7 @@ public:
 
     void cal_slater_Fk(const int L, const int T); //L:angular momnet, T:atom type   
     void cal_yukawa_lambda();
-    void cal_slater_UJ(const int istep, const int iter);
+    void cal_slater_UJ();
 
     double spherical_Bessel(const int k, const double r, const double lambda);
     double spherical_Hankel(const int k, const double r, const double lambda);

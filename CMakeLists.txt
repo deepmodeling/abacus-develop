@@ -345,6 +345,7 @@ if(ENABLE_LCAO)
   mrrr
   pdiag
   genelpa
+  rpa
   )
 endif()
 

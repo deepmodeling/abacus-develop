@@ -29,10 +29,12 @@ VPATH=./src_global:\
 ./module_psi:\
 ./module_hamilt:\
 ./module_hamilt/ks_pw:\
+./module_hamilt/ks_lcao:\
 ./module_gint:\
 ./src_pw:\
 ./src_lcao:\
 ./module_relaxation:\
+./module_rpa:\
 ./src_io:\
 ./src_parallel:\
 ./src_pdiag:\
@@ -67,6 +69,7 @@ ${OBJS_ESOLVER_LCAO}\
 ${OBJS_GINT}\
 ${OBJS_HAMILT_LCAO}\
 ${OBJS_HSOLVER_LCAO}\
+${OBJS_RPA}\
 ${OBJS_ORBITAL}\
 ${OBJS_IO_LCAO}\
 ${OBJS_RI_LCAO}\
@@ -188,8 +191,18 @@ OBJS_HAMILT=hamilt_pw.o\
     veff_pw.o\
     nonlocal_pw.o\
     meta_pw.o\
+    velocity_pw.o\
 
 OBJS_HAMILT_LCAO=hamilt_lcao.o\
+    operator_lcao.o\
+    ekinetic_lcao.o\
+    nonlocal_lcao.o\
+    overlap_lcao.o\
+    veff_lcao.o\
+    meta_lcao.o\
+    op_dftu_lcao.o\
+    deepks_lcao.o\
+    op_exx_lcao.o\
 
 OBJS_HSOLVER=diago_cg.o\
     diago_david.o\
@@ -264,6 +277,8 @@ OBJS_RELAXATION=bfgs_basic.o\
     lattice_change_methods.o\
     variable_cell.o\
     relaxation.o\
+
+OBJS_RPA=rpa.o\
 
 OBJS_SURCHEM=surchem.o\
     H_correction_pw.o\
@@ -486,6 +501,7 @@ OBJS_SRCPW=H_Ewald_pw.o\
     H_Hartree_pw.o\
     VL_in_pw.o\
     VNL_in_pw.o\
+    VNL_grad_pw.o\
     charge.o\
     charge_broyden.o\
     charge_extra.o\

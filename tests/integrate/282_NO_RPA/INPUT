@@ -1,0 +1,24 @@
+INPUT_PARAMETERS
+#Parameters	(General)
+suffix			autotest
+pseudo_dir		../../PP_ORB
+orbital_dir		../../PP_ORB
+
+calculation		scf
+ntype			2
+nbands			18
+#Parameters (Accuracy)
+ecutwfc			100
+
+smearing_method 	gaussian
+basis_type		lcao
+ks_solver  		genelpa
+#dft_functional		no
+exx_separate_loop	1
+exx_pca_threshold	1E-3
+exx_ccp_rmesh_times	2
+exx_c_threshold		1E-4	
+exx_dm_threshold	1E-3	
+exx_schwarz_threshold	1E-4	
+exx_cauchy_threshold	1E-6
+rpa   			1
