@@ -339,13 +339,13 @@ target_link_libraries(${ABACUS_BIN_NAME}
 
 if(ENABLE_LCAO)
   target_link_libraries(${ABACUS_BIN_NAME}
-  lcao
-  orb
-  gint
-  mrrr
-  pdiag
-  genelpa
-  rpa
+      lcao
+      orb
+      gint
+      mrrr
+      pdiag
+      genelpa
+      rpa
   )
 endif()
 
