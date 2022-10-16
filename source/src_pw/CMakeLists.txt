@@ -80,3 +80,7 @@ add_library(
     ${objects}
 )
 
+IF (BUILD_TESTING)
+  add_subdirectory(test)
+endif()
+
