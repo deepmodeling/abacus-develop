@@ -4,9 +4,6 @@
 #include "MD_parameters.h"
 #include "../module_cell/unitcell_pseudo.h"
 #include "../module_base/matrix.h"
-#ifdef __LCAO
-#include "../module_orbital/parallel_orbitals.h"
-#endif
 
 #include "module_esolver/esolver.h"
 class MD_func
@@ -15,10 +12,6 @@ class MD_func
 
     MD_func(){};
     ~MD_func() {};
-    
-#ifdef __LCAO
-    static Parallel_Orbitals* ParaV;
-#endif
 
     static double gaussrand();
 	

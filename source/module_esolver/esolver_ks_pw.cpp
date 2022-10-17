@@ -613,7 +613,7 @@ namespace ModuleESolver
 
     void ESolver_KS_PW::cal_Energy(double& etot)
     {
-
+        etot = GlobalC::en.etot;
     }
 
     void ESolver_KS_PW::cal_Force(ModuleBase::matrix& force)

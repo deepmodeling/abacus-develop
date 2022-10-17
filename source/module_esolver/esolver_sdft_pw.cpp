@@ -137,7 +137,7 @@ void ESolver_SDFT_PW::hamilt2density(int istep, int iter, double ethr)
 
 void ESolver_SDFT_PW::cal_Energy(double& etot)
 {
-	
+    etot = GlobalC::en.etot;
 }
 
 void ESolver_SDFT_PW::cal_Force(ModuleBase::matrix &force)

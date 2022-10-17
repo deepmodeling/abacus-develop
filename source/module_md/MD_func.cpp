@@ -8,15 +8,6 @@
 #include "../module_base/global_variable.h"
 #include "../module_base/timer.h"
 
-#ifndef __CMD
-#include "../src_pw/run_md_pw.h"
-#endif
-
-#ifdef __LCAO
-#include "../src_lcao/run_md_lcao.h"
-Parallel_Orbitals* MD_func::ParaV = nullptr;
-#endif
-
 
 double MD_func::gaussrand()
 {
@@ -240,52 +231,31 @@ void MD_func::force_virial(
 	ModuleBase::TITLE("MD_func", "force_stress");
     ModuleBase::timer::tick("MD_func", "force_stress");
 
-	if(mdp.md_ensolver == "LJ" || mdp.md_ensolver == "DP")
-	{
-        p_esolver->Run(istep, unit_in);
+    p_esolver->Run(istep, unit_in);
 
-        p_esolver->cal_Energy(potential);
+    p_esolver->cal_Energy(potential);
 
-        ModuleBase::matrix force_temp(unit_in.nat, 3); 
-        p_esolver->cal_Force(force_temp);
-        for(int i=0; i<unit_in.nat; ++i)
+    ModuleBase::matrix force_temp(unit_in.nat, 3); 
+    p_esolver->cal_Force(force_temp);
+
+    p_esolver->cal_Stress(stress);
+
+    if(mdp.md_ensolver == "FP")
+    {
+        potential *= 0.5;
+        force_temp *= 0.5;
+        stress *= 0.5;
+    }
+
+    for(int i=0; i<unit_in.nat; ++i)
+    {
+        for(int j=0; j<3; ++j)
         {
-            for(int j=0; j<3; ++j)
-            {
-                force[i][j] = force_temp(i, j);
-            }
+            force[i][j] = force_temp(i, j);
         }
-        print("   TOTAL-FORCE (eV/Angstrom)", force_temp, unit_in);
+    }
 
-        p_esolver->cal_Stress(stress);
-	}
-	// else if(mdp.md_ensolver == "DP")
-	// {
-	// 	DP_potential::DP_pot(unit_in, potential, force, stress);
-	// }
-#ifndef __CMD
-	else if(mdp.md_ensolver == "FP")
-	{
-		if(GlobalV::BASIS_TYPE=="pw" || GlobalV::BASIS_TYPE=="lcao_in_pw")
-		{
-			Run_MD_PW md_pw;
-			md_pw.md_force_virial(p_esolver, istep, unit_in.nat, potential, force, stress);
-		}
-#ifdef __LCAO
-		else if(GlobalV::BASIS_TYPE=="lcao")
-		{
-			Run_MD_LCAO md_lcao;
-			md_lcao.md_force_virial(p_esolver,istep, unit_in.nat, potential, force, stress);
-		}
-#endif
-	}
-#endif
-	else
-	{
-		ModuleBase::WARNING_QUIT("md_force_stress", "Unsupported MD potential !");
-	}
-
-	ModuleBase::timer::tick("MD_func", "force_stress");
+    ModuleBase::timer::tick("MD_func", "force_stress");
 }
 
 void MD_func::outStress(const ModuleBase::matrix &virial, const ModuleBase::matrix &stress)

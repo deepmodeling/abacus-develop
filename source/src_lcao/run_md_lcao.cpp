@@ -110,12 +110,7 @@ void Run_MD_LCAO::opt_ions(ModuleESolver::ESolver* p_esolver)
 
             // update force and virial due to the update of atom positions
 
-            this->md_force_virial(p_esolver,
-                                  verlet->step_,
-                                  verlet->ucell.nat,
-                                  verlet->potential,
-                                  verlet->force,
-                                  verlet->virial);
+            MD_func::force_virial(p_esolver, verlet->step_, verlet->mdp, verlet->ucell, verlet->potential, verlet->force, verlet->virial);
 
             verlet->second_half();
 
@@ -157,76 +152,16 @@ void Run_MD_LCAO::opt_ions(ModuleESolver::ESolver* p_esolver)
         GlobalC::pot.write_elecstat_pot(ssp.str(), ssp_ave.str(), GlobalC::rhopw); // output 'Hartree + local pseudopot'
     }
 
-	// mohan update 2021-02-10
-    delete verlet;
-    ModuleBase::timer::tick("Run_MD_LCAO","opt_ions"); 
-    return;
-}
-
-void Run_MD_LCAO::md_force_virial(ModuleESolver::ESolver* p_esolver,
-                                  const int& istep,
-                                  const int& numIon,
-                                  double& potential,
-                                  ModuleBase::Vector3<double>* force,
-                                  ModuleBase::matrix& virial)
-{
-    //----------------------------------------------------------
-    // about vdw, jiyy add vdwd3 and linpz add vdwd2
-    //----------------------------------------------------------
-    if (INPUT.vdw_method == "d2")
-    {
-        // setup vdwd2 parameters
-        GlobalC::vdwd2_para.initial_parameters(INPUT);
-        GlobalC::vdwd2_para.initset(GlobalC::ucell);
-    }
-    if (INPUT.vdw_method == "d3_0" || INPUT.vdw_method == "d3_bj")
-    {
-        GlobalC::vdwd3_para.initial_parameters(INPUT);
-    }
-    // Peize Lin add 2014.04.04, update 2021.03.09
-    if (GlobalC::vdwd2_para.flag_vdwd2)
-    {
-        Vdwd2 vdwd2(GlobalC::ucell, GlobalC::vdwd2_para);
-        vdwd2.cal_energy();
-        GlobalC::en.evdw = vdwd2.get_energy();
-    }
-    // jiyy add 2019-05-18, update 2021.05.02
-    else if (GlobalC::vdwd3_para.flag_vdwd3)
-    {
-        Vdwd3 vdwd3(GlobalC::ucell, GlobalC::vdwd3_para);
-        vdwd3.cal_energy();
-        GlobalC::en.evdw = vdwd3.get_energy();
-    }
-
-    // solve electronic structures in terms of LCAO
-    // mohan add 2021-02-09
-    p_esolver->Run(istep, GlobalC::ucell);
-
-    // to call the force of each atom
-    ModuleBase::matrix fcs; // temp force matrix
-    p_esolver->cal_Force(fcs);
-
-    for (int ion = 0; ion < numIon; ++ion)
-    {
-        force[ion].x = fcs(ion, 0) / 2.0;
-        force[ion].y = fcs(ion, 1) / 2.0;
-        force[ion].z = fcs(ion, 2) / 2.0;
-    }
-
-    if (GlobalV::CAL_STRESS)
-    {
-        p_esolver->cal_Stress(virial);
-        virial = 0.5 * virial;
-    }
-
-    potential = GlobalC::en.etot / 2;
-
-#ifdef __MPI // 2015-10-01, xiaohui
+#ifdef __MPI
     atom_arrange::delete_vector(GlobalV::ofs_running,
                                 GlobalV::SEARCH_PBC,
                                 GlobalC::GridD,
                                 GlobalC::ucell,
                                 GlobalV::SEARCH_RADIUS,
                                 GlobalV::test_atom_input);
-#endif // 2015-10-01, xiaohui
+#endif
+
+    delete verlet;
+    ModuleBase::timer::tick("Run_MD_LCAO","opt_ions"); 
+    return;
 }

@@ -18,15 +18,6 @@ void Run_MD_CLASSIC::classic_md_line(UnitCell_pseudo &unit_in, ModuleESolver::ES
 {
 	ModuleBase::TITLE("Run_MD_CLASSIC", "classic_md_line");
     ModuleBase::timer::tick("Run_MD_CLASSIC", "classic_md_line");
-    // ModuleESolver::ESolver* p_esolver; //qianrui add it temporarily
-
-	// Setup the unitcell.
-// #ifdef __LCAO
-// 	unit_in.setup_cell_classic(GlobalC::ORB, GlobalV::stru_file, GlobalV::ofs_running, GlobalV::ofs_warning);
-// #else
-//     unit_in.setup_cell_classic(GlobalV::stru_file, GlobalV::ofs_running, GlobalV::ofs_warning);
-// #endif
-// 	ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "SETUP UNITCELL");
 
     // determine the md_type
     Verlet *verlet;
