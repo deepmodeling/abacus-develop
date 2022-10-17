@@ -115,7 +115,7 @@ void DFTU_Yukawa::cal_slater_Fk(const int L, const int T)
 }
 
 
-void DFTU_Yukawa::cal_slater_UJ(const int istep, const int iter)
+void DFTU_Yukawa::cal_slater_UJ()
 {
 	ModuleBase::TITLE("DFTU_Yukawa", "cal_slater_UJ");
 	if(!Yukawa) return;

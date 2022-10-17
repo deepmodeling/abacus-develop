@@ -50,6 +50,7 @@ class YlmRealTest : public testing::Test
     int nylm = 64;      //total Ylm number;
 
     ModuleBase::matrix ylm;         //Ylm
+    ModuleBase::matrix *dylm;       //dYlm/dx, dYlm/dy, dYlm/dz
     ModuleBase::Vector3<double> *g; //vectors of the 4 points
     double *ref;        //reference of Ylm
     double *rly;        //Ylm
@@ -188,6 +189,8 @@ class YlmRealTest : public testing::Test
     void SetUp()
     {
         ylm.create(nylm,ng);
+        dylm = new ModuleBase::matrix[3];
+        for(int i = 0 ; i < 3 ; ++i)    dylm[i].create(nylm,ng);
         g = new ModuleBase::Vector3<double>[ng];
         g[0].set(1.0,0.0,0.0);
         g[1].set(0.0,1.0,0.0);
@@ -268,6 +271,7 @@ class YlmRealTest : public testing::Test
 
     void TearDown()
     {
+        delete [] dylm;
         delete [] g;
         delete [] ref;
         delete [] rly;
@@ -285,6 +289,40 @@ TEST_F(YlmRealTest,YlmReal)
             EXPECT_NEAR(ylm(i,j),ref[i*ng+j],doublethreshold)  << "Ylm[" << i << "], example " << j << " not pass";
         }
     } 
+}
+
+
+TEST_F(YlmRealTest,gradYlmReal)
+{
+    ModuleBase::YlmReal::grad_Ylm_Real(nylm,ng,g,ylm,dylm[0],dylm[1],dylm[2]);
+    for(int i=0;i<nylm;++i)
+    {
+        for(int j=0;j<ng;++j) 
+        {
+            EXPECT_NEAR(ylm(i,j),ref[i*ng+j],doublethreshold)  << "Ylm[" << i << "], example " << j << " not pass";
+        }
+    }
+    ModuleBase::matrix ylmplus(nylm,1);
+    ModuleBase::matrix ylmminus(nylm,1);
+    double step = 1e-7;
+    for(int id = 0 ; id < 3 ; ++id)
+    {
+        for(int j=0;j<ng;++j) 
+        {
+            ModuleBase::Vector3<double> gplus = g[j];
+            ModuleBase::Vector3<double> gminus = g[j];
+            gplus[id] += step/2;
+            gminus[id] -= step/2;
+            ModuleBase::YlmReal::Ylm_Real(nylm,1,&gplus,ylmplus);
+            ModuleBase::YlmReal::Ylm_Real(nylm,1,&gminus,ylmminus);
+            for(int i=0;i<nylm;++i)
+            {
+                if(std::abs(ylmplus(i,0)) < 1e-6 && std::abs(ylmminus(i,0)) < 1e-6) continue;
+                double diff = (ylmplus(i,0) - ylmminus(i,0))/step;
+                EXPECT_NEAR(diff,dylm[id](i,j),1e-6) << "dYlm[" << id << "][" << i << "], example " << j << " not pass";
+            }
+        }
+    }
 }
 
 

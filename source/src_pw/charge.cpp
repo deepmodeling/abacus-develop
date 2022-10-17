@@ -135,6 +135,93 @@ void Charge::allocate(const int &nspin_in, const int &nrxx_in, const int &ngmc_i
     return;
 }
 
+void Charge::init_rho()
+{
+    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "init_chg", this->init_chg);
+
+    std::cout << " START CHARGE      : " << this->init_chg << std::endl;
+    if (this->init_chg == "atomic") // mohan add 2007-10-17
+    {
+    start_from_atomic:
+        this->atomic_rho(GlobalV::NSPIN, GlobalC::CHR.rho, GlobalC::rhopw);
+    }
+    else if (this->init_chg == "file")
+    {
+        GlobalV::ofs_running << " try to read charge from file : ";
+        for (int is = 0; is < GlobalV::NSPIN; is++)
+        {
+            std::stringstream ssc;
+            ssc << GlobalV::global_readin_dir << "SPIN" << is + 1 << "_CHG";
+            GlobalV::ofs_running << ssc.str() << std::endl;
+            // mohan update 2012-02-10
+            if (this->read_rho(is, ssc.str(), this->rho[is]))
+            {
+                GlobalV::ofs_running << " Read in the charge density: " << ssc.str() << std::endl;
+            }
+            else if (is > 0 && GlobalV::NSPIN == 4)
+            {
+                // read only spin (up+down)
+                if (GlobalV::PRENSPIN == 1)
+                {
+                    GlobalV::ofs_running << " Didn't read in the charge density but autoset it for spin " << is + 1
+                                         << std::endl;
+                    for (int ir = 0; ir < GlobalC::rhopw->nrxx; ir++)
+                    {
+                        this->rho[is][ir] = 0.0;
+                    }
+                }
+                //
+                else if (GlobalV::PRENSPIN == 2)
+                { // read up and down , then rearrange them.
+                    if (is == 1)
+                    {
+                        ModuleBase::WARNING_QUIT("Charge::init_rho", "Incomplete charge density file!");
+                    }
+                    else if (is == 2)
+                    {
+                        GlobalV::ofs_running << " Didn't read in the charge density but would rearrange it later. "
+                                             << std::endl;
+                    }
+                    else if (is == 3)
+                    {
+                        GlobalV::ofs_running << " rearrange charge density " << std::endl;
+                        for (int ir = 0; ir < GlobalC::rhopw->nrxx; ir++)
+                        {
+                            this->rho[3][ir] = this->rho[0][ir] - this->rho[1][ir];
+                            this->rho[0][ir] = this->rho[0][ir] + this->rho[1][ir];
+                            this->rho[1][ir] = 0.0;
+                            this->rho[2][ir] = 0.0;
+                        }
+                    }
+                }
+                else
+                {
+                    ModuleBase::WARNING_QUIT("Charge::init_rho", "Incomplete charge density file!");
+                }
+            }
+            else
+            {
+                GlobalV::ofs_running << " Start charge density from atomic charge density." << std::endl;
+                goto start_from_atomic;
+            }
+        }
+    }
+    else
+    {
+        ModuleBase::WARNING_QUIT("Charge::init_rho", "init_chg is wrong!");
+    }
+
+    // Peize Lin add 2020.04.04
+    if (GlobalC::restart.info_load.load_charge && !GlobalC::restart.info_load.load_charge_finish)
+    {
+        for (int is = 0; is < GlobalV::NSPIN; ++is)
+        {
+            GlobalC::restart.load_disk("charge", is);
+        }
+        GlobalC::restart.info_load.load_charge_finish = true;
+    }
+}
+
 
 double Charge::sum_rho(void) const
 {

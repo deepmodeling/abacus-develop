@@ -4,6 +4,8 @@ package:
   name: abacus
   version: {{ version }}
 
+# This conda package may be built locally with
+# conda build . -c conda-forge
 source:
   path: ..
   # git_url: https://github.com/deepmodeling/abacus-develop.git
@@ -12,9 +14,11 @@ source:
 build:
   skip: true  # [not linux]
   script: |
-    cmake -B conda_build ${CMAKE_ARGS}
+    cmake -B conda_build ${CMAKE_ARGS} -DCMAKE_BUILD_TYPE=Release
     cmake --build conda_build -j`nproc`
     cmake --install conda_build
+  # ${CMAKE_ARGS} applys restrictions for CMake to search libs under conda building env.
+  # See https://conda-forge.org/docs/maintainer/knowledge_base.html#using-cmake .
   string: {{ GIT_BUILD_STR }}
   number: {{ GIT_DESCRIBE_NUMBER }}
 
@@ -23,27 +27,40 @@ requirements:
     - {{ compiler('cxx') }}
     - make
     - cmake
-    - libgomp # [linux]
 
   host:
     - {{ mpi }}
-    - blas=*=openblas
+    - openblas=*=openmp*
     - elpa=*=mpi*
-    - fftw
+    - fftw=*=mpi*
 
   run:
-    - {{ mpi }}
-    - elpa=*=mpi*
-    - fftw
-    - blas=*=openblas
-    - libopenblas
+    - libopenblas=*=openmp*
     - scalapack
+    - elpa=*=mpi*
+    - fftw=*=mpi*
 
 test:
   commands:
+  # Dry run ABACUS to verify dynamic libs are present.
     - abacus
     - mpirun -n 2 abacus
 
+  # Run end-to-end tests. This may take long time; disabled by default.
+  # Unit tests are not built here.
+  # Hence, some tests(ienvelope) requiring additional validation components are expected to fail.
+  # Please uncomment the codes below if necessary.
+
+  #   - cd tests/integrate && bash Autotest.sh
+  # source_files:
+  #   - tests/integrate
+  #   - tests/PP_ORB
+
+# Locally built package can be installed by
+# conda create -n my_abacus_env abacus -c local -c conda-forge
+
+# Feedstock: https://github.com/deepmd-kit-recipes/abacus-feedstock
+# Package:   https://anaconda.org/deepmodeling/abacus
 about:
   home: http://abacus.ustc.edu.cn/
   doc_url: https://abacus.deepmodeling.com/

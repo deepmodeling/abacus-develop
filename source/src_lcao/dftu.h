@@ -49,8 +49,8 @@ public:
     void cal_energy_correction( const int istep);
 
     //calculate the effective potential
-    void cal_eff_pot_mat_complex(const int ik, const int istep, std::complex<double>* eff_pot);
-    void cal_eff_pot_mat_real(const int ik, const int istep, double* eff_pot);
+    void cal_eff_pot_mat_complex(const int ik, std::complex<double>* eff_pot);
+    void cal_eff_pot_mat_real(const int ik, double* eff_pot);
     void cal_eff_pot_mat_R_double(const int ispin, double* SR, double* HR);
     void cal_eff_pot_mat_R_complex_double(const int ispin, std::complex<double>* SR, std::complex<double>* HR);
 
@@ -62,6 +62,10 @@ public:
 
     double EU;
     int iter_dftu;
+
+    private:
+    //dftu can be calculated only after locale has been initialed
+    bool initialed_locale = false;
 };
 }
 namespace GlobalC

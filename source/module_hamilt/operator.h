@@ -1,5 +1,5 @@
-#ifndef __OPERATOR
-#define __OPERATOR
+#ifndef OPERATOR_H
+#define OPERATOR_H
 
 #include<complex>
 #include "module_psi/psi.h"
@@ -8,6 +8,20 @@
 
 namespace hamilt
 {
+
+enum calculation_type
+{
+    no,
+    pw_ekinetic, 
+    pw_nonlocal,
+    pw_veff,
+    pw_meta,
+    lcao_fixed,
+    lcao_gint,
+    lcao_deepks,
+    lcao_exx,
+    lcao_dftu,
+};
 
 // Basic class for operator module, 
 // it is designed for "O|psi>" and "<psi|O|psi>"
@@ -53,18 +67,33 @@ class Operator
     virtual void add(Operator* next)
     {
         if(next==nullptr) return;
+        next->is_first_node = false;
         if(next->next_op != nullptr) this->add(next->next_op);
         Operator* last = this;
+        //loop to end of the chain
         while(last->next_op != nullptr)
         {
             if(next->cal_type==last->cal_type)
             {
-                last->add(next);
-                return;
+                break;
             }
             last = last->next_op;
         }
-        last->next_op = next; 
+        if(next->cal_type == last->cal_type)
+        {
+            //insert next to sub chain of current node
+            Operator* sub_last = last;
+            while(sub_last->next_sub_op != nullptr)
+            {
+                sub_last = sub_last->next_sub_op;
+            }
+            sub_last->next_sub_op = next;
+            return;
+        }
+        else
+        {
+            last->next_op = next;
+        }    
     }
 
     protected:
@@ -73,8 +102,10 @@ class Operator
     mutable bool in_place = false;
 
     //calculation type, only different type can be in main chain table 
-    int cal_type = 0;
+    enum calculation_type cal_type;
     Operator* next_op = nullptr;
+    Operator* next_sub_op = nullptr;
+    bool is_first_node = true;
 
     //if this Operator is first node in chain table, hpsi would not be empty
     mutable psi::Psi<T>* hpsi = nullptr;

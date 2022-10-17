@@ -73,6 +73,10 @@ public:
     //k index of LUMO for multi-k bandgap label. QO added 2022-01-24
     int l_ind = 0;
 
+    //functions for hr status: 1. get value; 2. set value;
+    int get_hr_cal(){ return this->hr_cal; }
+    void set_hr_cal(bool cal){ this->hr_cal = cal; }
+
 //-------------------
 // private variables
 //-------------------
@@ -143,6 +147,11 @@ private:
 	ModuleBase::IntArray* alpha_index;
 	ModuleBase::IntArray* inl_index;	//caoyu add 2021-05-07
 	int* inl_l;	//inl_l[inl_index] = l of descriptor with inl_index
+
+    // HR status, 
+    // true : HR should be calculated
+    // false : HR has been calculated
+    bool hr_cal = true;
 
 //-------------------
 // subroutines, grouped according to the file they are in:

@@ -32,7 +32,7 @@ AddTest(
             ../../module_gint/gint_vl.cpp
             ../../src_pw/charge.cpp 
             ../../src_pdiag/pdiag_common.cpp
-            ../../src_io/output.cpp ../../src_pw/soc.cpp
+            ../../src_io/output.cpp ../../src_pw/soc.cpp ../../src_io/read_rho.cpp
 )
 target_compile_definitions(EState_psiToRho_lcao PRIVATE __MPI)
 install(FILES elecstate_lcao_parallel_test.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})

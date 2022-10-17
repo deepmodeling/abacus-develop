@@ -1,5 +1,5 @@
-#ifndef __VEFFPW
-#define __VEFFPW
+#ifndef VEFFPW_H
+#define VEFFPW_H
 
 #include "operator_pw.h"
 #include "module_base/matrix.h"

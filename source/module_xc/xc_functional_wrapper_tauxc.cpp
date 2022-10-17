@@ -20,12 +20,12 @@ void XC_Functional::tau_xc(const double &rho, const double &grho, const double &
     for(xc_func_type &func : funcs)
     {
         xc_mgga_exc_vxc(&func,1,&rho,&grho,&lapl_rho,&atau,&s,&v1,&v2,&vlapl_rho,&v3);
-        xc_func_end(&func);
         sxc += s * rho;
         v2xc += v2 * 2.0;
         v1xc += v1;
         v3xc += v3;
     }
+    finish_func(funcs);
 
 	return;
 }

@@ -19,7 +19,6 @@ class Potential
     ~Potential();
 
     //==========================================================
-    // init_chg : "atomic" or "file"
     // chg_extrap : extrapolation methods for potential
     // vr(nspin,ncxyz) : Hartree + xc potentials in real space
     // vr_eff(nspin,ncxyz) : effective potential in real space
@@ -28,7 +27,6 @@ class Potential
     // out_pot: options to print out potentials
     //==========================================================
 
-    std::string init_chg;
     std::string chg_extrap;
     ModuleBase::matrix vr;
     ModuleBase::matrix vr_eff;

@@ -1,5 +1,5 @@
-#ifndef __OPERATORPW
-#define __OPERATORPW
+#ifndef OPERATORPW_H
+#define OPERATORPW_H
 #include"module_hamilt/operator.h"
 #include "module_base/timer.h"
 

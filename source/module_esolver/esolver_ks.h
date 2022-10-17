@@ -68,7 +68,7 @@ namespace ModuleESolver
 
     hsolver::HSolver* phsol = nullptr;
     elecstate::ElecState* pelec = nullptr;
-    hamilt::Hamilt* phami = nullptr;
+    hamilt::Hamilt* p_hamilt = nullptr;
     ModulePW::PW_Basis_K* pw_wfc = nullptr;
     Charge_Extra CE;
 

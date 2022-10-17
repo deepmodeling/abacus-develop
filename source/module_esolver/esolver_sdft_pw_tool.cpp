@@ -8,6 +8,7 @@
 #include "module_base/global_variable.h"
 #include "module_base/global_function.h"
 #include "src_pw/global.h"
+#include "module_hamilt/ks_pw/velocity_pw.h"
 
 #define TWOSQRT2LN2 2.354820045030949 //FWHM = 2sqrt(2ln2) * \sigma
 #define FACTOR 1.839939223835727e7
@@ -41,7 +42,7 @@ void ESolver_SDFT_PW::check_che(const int nche_in)
     int ntest = 2;
     for (int ik = 0;ik < nk; ++ik)
 	{
-        this->phami->updateHk(ik);
+        this->p_hamilt->updateHk(ik);
         stoiter.stohchi.current_ik = ik;
         const int npw = GlobalC::kv.ngk[ik];
         std::complex<double> *pchi = new std::complex<double> [npw];
@@ -146,11 +147,13 @@ void ESolver_SDFT_PW::sKG(const int nche_KG, const double fwhmin, const double w
     int ksbandper,startband;
     parallelks(ksbandper,startband);
     ModuleBase::timer::tick(this->classname,"kloop");
+    hamilt::Velocity velop(GlobalC::wfcpw, GlobalC::kv.isk.data(),&GlobalC::ppcell,&GlobalC::ucell, INPUT.cond_nonlocal);
     for (int ik = 0;ik < nk;++ik)
 	{
+        velop.init(ik);
         if(nk > 1) 
         {
-            this->phami->updateHk(ik);
+            this->p_hamilt->updateHk(ik);
         }
         stoiter.stohchi.current_ik = ik;
         const int npw = GlobalC::kv.ngk[ik];
@@ -228,36 +231,26 @@ void ESolver_SDFT_PW::sKG(const int nche_KG, const double fwhmin, const double w
         
 
         //init j1psi,j2psi,j1sfpsi,j2sfpsi
-        for(int id = 0 ; id < ndim ; ++id)
-        {
-            for(int ib = 0 ; ib < totbands_per ; ++ib )
-            {
-                for(int ig = 0; ig < npw ; ++ig)
-                {
-                    double gplusk_a = GlobalC::wfcpw->getgpluskcar(ik,ig)[id];
-                    const int idib = id * totbands_per + ib;
-                    j1psi(idib,ig) = tpiba * gplusk_a * psi0(ib,ig);
-                    j1sfpsi(idib,ig) = tpiba * gplusk_a * sfpsi0(ib,ig);
-                }
-            }
-        }
-        // this->phami->hPsi(psi0.get_pointer(), hpsi0.get_pointer(), totbands_per*npwx);
-        // this->phami->hPsi(sfpsi0.get_pointer(), hsfpsi0.get_pointer(), totbands_per*npwx);
-        // this->phami->hPsi(j1psi.get_pointer(), j2psi.get_pointer(), ndim*totbands_per*npwx);
-        // this->phami->hPsi(j1sfpsi.get_pointer(), j2sfpsi.get_pointer(), ndim*totbands_per*npwx);
+        velop.act(this->psi, totbands_per, psi0.get_pointer(), j1psi.get_pointer());
+        velop.act(this->psi, totbands_per, sfpsi0.get_pointer(), j1sfpsi.get_pointer());
+
+        // this->p_hamilt->hPsi(psi0.get_pointer(), hpsi0.get_pointer(), totbands_per*npwx);
+        // this->p_hamilt->hPsi(sfpsi0.get_pointer(), hsfpsi0.get_pointer(), totbands_per*npwx);
+        // this->p_hamilt->hPsi(j1psi.get_pointer(), j2psi.get_pointer(), ndim*totbands_per*npwx);
+        // this->p_hamilt->hPsi(j1sfpsi.get_pointer(), j2sfpsi.get_pointer(), ndim*totbands_per*npwx);
         psi::Range allbands(1,0,0,totbands_per-1);
         hamilt::Operator<std::complex<double>>::hpsi_info info_psi0(&psi0, allbands, hpsi0.get_pointer());
-        this->phami->ops->hPsi(info_psi0);
+        this->p_hamilt->ops->hPsi(info_psi0);
 
         hamilt::Operator<std::complex<double>>::hpsi_info info_sfpsi0(&sfpsi0, allbands, hsfpsi0.get_pointer());
-        this->phami->ops->hPsi(info_sfpsi0);
+        this->p_hamilt->ops->hPsi(info_sfpsi0);
 
         psi::Range allndimbands(1,0,0,ndim*totbands_per-1);
         hamilt::Operator<std::complex<double>>::hpsi_info info_j1psi(&j1psi, allndimbands, j2psi.get_pointer());
-        this->phami->ops->hPsi(info_j1psi);
+        this->p_hamilt->ops->hPsi(info_j1psi);
 
         hamilt::Operator<std::complex<double>>::hpsi_info info_j1sfpsi(&j1sfpsi, allndimbands, j2sfpsi.get_pointer());
-        this->phami->ops->hPsi(info_j1sfpsi);
+        this->p_hamilt->ops->hPsi(info_j1sfpsi);
 
         /*
         // stohchi.hchi_norm(psi0.get_pointer(), hpsi0.get_pointer(), totbands_per);
@@ -287,18 +280,15 @@ void ESolver_SDFT_PW::sKG(const int nche_KG, const double fwhmin, const double w
 	    //     }
         // }*/
 
-        
-        for(int id = 0 ; id < ndim ; ++id)
+        velop.act(this->psi, totbands_per, hpsi0.get_pointer(), j2psi.get_pointer(), true);
+        velop.act(this->psi, totbands_per, hsfpsi0.get_pointer(), j2sfpsi.get_pointer(), true);
+
+        for(int idib = 0 ; idib < ndim * totbands_per; ++idib)
         {
-            for(int ib = 0 ; ib < totbands_per ; ++ib )
+            for(int ig = 0; ig < npw ; ++ig)
             {
-                for(int ig = 0; ig < npw ; ++ig)
-                {
-                    double gplusk_a = GlobalC::wfcpw->getgpluskcar(ik,ig)[id];
-                    const int idib = id * totbands_per + ib;
-                    j2psi(0,idib,ig) = (j2psi(0,idib,ig) + tpiba * gplusk_a * hpsi0(ib,ig))/2.0 - mu * j1psi(0,idib,ig);
-                    j2sfpsi(0,idib,ig) = (j2sfpsi(0,idib,ig) + tpiba * gplusk_a * hsfpsi0(ib,ig))/2.0 - mu * j1sfpsi(0,idib,ig);
-                }
+                j2psi(0,idib,ig) = j2psi(0,idib,ig)/2.0 - mu * j1psi(0,idib,ig);
+                j2sfpsi(0,idib,ig) = j2sfpsi(0,idib,ig)/2.0 - mu * j1sfpsi(0,idib,ig);
             }
         }
 
@@ -345,6 +335,7 @@ void ESolver_SDFT_PW::sKG(const int nche_KG, const double fwhmin, const double w
         for (int it = 1 ;it < nt ; ++it)
         {
             if(it%20==0) cout<<it<<" ";
+            ModuleBase::timer::tick(this->classname,"evolution_ks");
             for(int ib = 0; ib < ksbandper; ++ib)
             {
                 for(int ig = 0 ; ig < npw ; ++ig)
@@ -356,20 +347,25 @@ void ESolver_SDFT_PW::sKG(const int nche_KG, const double fwhmin, const double w
                     expsfpsi(ib,ig) *= exp(ModuleBase::NEG_IMAG_UNIT*eigen*dt);
                 }
             }
+            ModuleBase::timer::tick(this->classname,"evolution_ks");
             
+            ModuleBase::timer::tick(this->classname,"evolution_sto");
             //exp(iHdt)|chi>
             chet.calfinalvec_complex(&stohchi, &Stochastic_hchi::hchi_norm, &exppsi(ksbandper,0), &exppsi(ksbandper,0), npw, npwx, nchip);
             //exp(-iHdt)|shchi>
             chet2.calfinalvec_complex(&stohchi, &Stochastic_hchi::hchi_norm, &expsfpsi(ksbandper,0), &expsfpsi(ksbandper,0), npw, npwx, nchip);
+            ModuleBase::timer::tick(this->classname,"evolution_sto");
             psi::Psi<std::complex<double>> *p_exppsi = &exppsi;
 #ifdef __MPI
             psi::Psi<std::complex<double>> exppsi_tot;
             if (GlobalV::NSTOGROUP > 1)
             {
+                ModuleBase::timer::tick(this->classname,"bands_gather");
                 exppsi_tot.resize(1,totbands,npwx);
                 MPI_Allgatherv(&exppsi(0,0), totbands_per * npwx, mpicomplex, 
                                 &exppsi_tot(0,0), nrecv, displs, mpicomplex, PARAPW_WORLD);
                 p_exppsi = &exppsi_tot;
+                ModuleBase::timer::tick(this->classname,"bands_gather");
             }
 #endif
             ModuleBase::ComplexMatrix j1l(ndim,totbands_per*totbands), j2l(ndim,totbands_per*totbands);
@@ -378,6 +374,7 @@ void ESolver_SDFT_PW::sKG(const int nche_KG, const double fwhmin, const double w
             char transb = 'N';
             int totbands_per3 = ndim*totbands_per;
             int totbands3 = ndim*totbands;
+            ModuleBase::timer::tick(this->classname,"matrix_multip");
             for(int id = 0 ; id < ndim ; ++id)
             {
                 const int idnb = id * totbands_per;
@@ -398,12 +395,15 @@ void ESolver_SDFT_PW::sKG(const int nche_KG, const double fwhmin, const double w
                 zgemm_(&transa, &transb,&totbands_per, &totbands, &npw, &ModuleBase::IMAG_UNIT, expsfpsi.get_pointer(), &npwx,
                         &(p_j2psi->operator()(idnb,0)), &npwx, &ModuleBase::ZERO, &j2r(id,0), &totbands_per);
             }
+            ModuleBase::timer::tick(this->classname,"matrix_multip");
 
 #ifdef __MPI
+            ModuleBase::timer::tick(this->classname,"matrix_reduce");
             MPI_Allreduce(MPI_IN_PLACE,j1l.c,ndim*totbands_per*totbands,MPI_DOUBLE_COMPLEX,MPI_SUM,POOL_WORLD);
             MPI_Allreduce(MPI_IN_PLACE,j2l.c,ndim*totbands_per*totbands,MPI_DOUBLE_COMPLEX,MPI_SUM,POOL_WORLD);
             MPI_Allreduce(MPI_IN_PLACE,j1r.c,ndim*totbands_per*totbands,MPI_DOUBLE_COMPLEX,MPI_SUM,POOL_WORLD);
             MPI_Allreduce(MPI_IN_PLACE,j2r.c,ndim*totbands_per*totbands,MPI_DOUBLE_COMPLEX,MPI_SUM,POOL_WORLD);
+            ModuleBase::timer::tick(this->classname,"matrix_reduce");
 #endif
             int totnum = ndim*totbands_per*totbands;
             int num_per = totnum / GlobalV::NPROC_IN_POOL;
@@ -421,9 +421,11 @@ void ESolver_SDFT_PW::sKG(const int nche_KG, const double fwhmin, const double w
             //Re(i<psi|sqrt(f)j(1-f) exp(iHt)|psi><psi|j exp(-iHt)\sqrt(f)|psi>)
             //Im(l_ij*r_ji)=Re(i l^*_ij*r^+_ij)=Re(i l^*_i*r^+_i)
             //ddot_real = real(A^*_i * B_i)
+            ModuleBase::timer::tick(this->classname,"ddot_real");
             ct11[it] += ModuleBase::GlobalFunc::ddot_real(num_per,j1l.c+st_per,j1r.c+st_per,false) * GlobalC::kv.wk[ik] / 2,0;
             ct12[it] -= ModuleBase::GlobalFunc::ddot_real(num_per,j1l.c+st_per,j2r.c+st_per,false) * GlobalC::kv.wk[ik] / 2,0;
             ct22[it] += ModuleBase::GlobalFunc::ddot_real(num_per,j2l.c+st_per,j2r.c+st_per,false) * GlobalC::kv.wk[ik] / 2,0;
+            ModuleBase::timer::tick(this->classname,"ddot_real");
             
         }
         cout<<endl;
@@ -485,7 +487,7 @@ void ESolver_SDFT_PW:: caldos( const int nche_dos, const double sigmain, const d
         cout<<"ik: "<<ik+1<<endl;
 		if(nk > 1) 
         {
-            this->phami->updateHk(ik);
+            this->p_hamilt->updateHk(ik);
         }
         stohchi.current_ik = ik;
         const int npw = GlobalC::kv.ngk[ik];
@@ -609,9 +611,9 @@ void ESolver_SDFT_PW:: caldos( const int nche_dos, const double sigmain, const d
         ofsdos<<setw(8)<<"## E(eV) "<<setw(20)<<"dos(eV^-1)"<<setw(20)<<"sum"<<setw(20)<<"Error(eV^-1)"<<endl;
         for(int ie = 0 ; ie < ndos ; ++ie)
         {
-            double tmperror = abs(error[ie]);
+            double tmperror = 2.0 * abs(error[ie]);
             if(maxerror < tmperror) maxerror = tmperror;
-            double dos = (ks_dos[ie] + sto_dos[ie]) / ModuleBase::Ry_to_eV;
+            double dos = 2.0 * (ks_dos[ie] + sto_dos[ie]) / ModuleBase::Ry_to_eV;
             sum += dos;
 	    	ofsdos <<setw(8)<< emin + ie * de <<setw(20)<< dos <<setw(20)<< sum * de <<setw(20)<< tmperror <<endl;
         }

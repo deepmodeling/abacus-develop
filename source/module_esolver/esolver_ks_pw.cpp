@@ -60,10 +60,10 @@ namespace ModuleESolver
             this->pelec = nullptr;
         }
         //delete Hamilt
-        if(this->phami != nullptr)
+        if(this->p_hamilt != nullptr)
         {
-            delete (hamilt::HamiltPW*)this->phami;
-            this->phami = nullptr;
+            delete (hamilt::HamiltPW*)this->p_hamilt;
+            this->p_hamilt = nullptr;
         }
     }
 
@@ -183,15 +183,15 @@ namespace ModuleESolver
         //init Hamilt, this should be allocated before each scf loop
         //Operators in HamiltPW should be reallocated once cell changed
         //delete Hamilt if not first scf
-        if(this->phami != nullptr)
+        if(this->p_hamilt != nullptr)
         {
-            delete (hamilt::HamiltPW*)this->phami;
-            this->phami = nullptr;
+            delete (hamilt::HamiltPW*)this->p_hamilt;
+            this->p_hamilt = nullptr;
         }
         //allocate HamiltPW
-        if(this->phami == nullptr)
+        if(this->p_hamilt == nullptr)
         {
-            this->phami = new hamilt::HamiltPW();
+            this->p_hamilt = new hamilt::HamiltPW();
         }
 
         //----------------------------------------------------------
@@ -315,7 +315,7 @@ namespace ModuleESolver
 
             hsolver::DiagoIterAssist::PW_DIAG_THR = ethr; 
             hsolver::DiagoIterAssist::PW_DIAG_NMAX = GlobalV::PW_DIAG_NMAX;
-            this->phsol->solve(this->phami, this->psi[0], this->pelec, GlobalV::KS_SOLVER);
+            this->phsol->solve(this->p_hamilt, this->psi[0], this->pelec, GlobalV::KS_SOLVER);
 
             // transform energy for print
             GlobalC::en.eband = this->pelec->eband;
@@ -705,7 +705,7 @@ namespace ModuleESolver
         {
             hsolver::DiagoIterAssist::need_subspace = false;
             hsolver::DiagoIterAssist::PW_DIAG_THR = ethr; 
-            this->phsol->solve(this->phami, this->psi[0], this->pelec, GlobalV::KS_SOLVER, true);
+            this->phsol->solve(this->p_hamilt, this->psi[0], this->pelec, GlobalV::KS_SOLVER, true);
         }
         else
         {

@@ -720,7 +720,6 @@ void Symmetry::lattice_type(
     if ( temp_brav < pre_brav)
     {
         //if the symmetry of the new vectors is higher, store the new ones
-        //brav = temp_brav;
         for (int i = 0; i < 6; ++i)
         {
             cel_const[i] = temp_const[i];
@@ -785,18 +784,16 @@ void Symmetry::lattice_type(
         ofs.close();
         
     }
-    
-    /*else
+    else
     {
         //else, store the original ones
-        brav = pre_brav;
         for (int i = 0; i < 6; ++i)
         {
             cel_const[i] = pre_const[i];
         }
     }
 
-
+    /*
     bool flag3;
     if (pre_brav == temp_brav) 
 	{

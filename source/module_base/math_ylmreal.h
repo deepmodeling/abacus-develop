@@ -29,6 +29,26 @@ class YlmReal
         const ModuleBase::Vector3<double> *g, 
         matrix &ylm 	
     );
+
+	/**
+	 * @brief gradient of spherical harmonic function (real form) an array of vectors
+	 * 
+	 * @param lmax2 [in] lmax2 = (lmax + 1)^2 ; lmax = angular quantum number
+	 * @param ng [in] the number of vectors
+	 * @param g [in] an array of vectors
+	 * @param ylm [out] Ylm; column index represent vector, row index represent Y00, Y10, Y11, Y1-1, Y20,Y21,Y2-1,Y22.Y2-2,...;
+	 * @param dylmx/dylmy/dylmz [out] \nabla Ylm; column index represent vector, row index represent dY00/dxyz, dY10/dxyz,...;
+	 */
+    static void grad_Ylm_Real
+    (
+        const int lmax2, 		
+        const int ng,				
+        const ModuleBase::Vector3<double> *g, 
+		matrix &ylm,
+        matrix &dylmx,
+		matrix &dylmy,
+		matrix &dylmz	
+    );
 	
 	/**
 	 * @brief spherical harmonic function (Herglotz generating form) of an array of vectors

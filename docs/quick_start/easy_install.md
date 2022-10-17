@@ -83,6 +83,6 @@ We also offer a pre-built docker image containing all the requirements for devel
 The project is ready for VS Code development container. Please refer to [Developing inside a Container](https://code.visualstudio.com/docs/remote/containers#_quick-start-try-a-development-container). Choose `Open a Remote Window -> Clone a Repository in Container Volume` in VS Code command palette, and put the [git address](https://github.com/deepmodeling/abacus-develop.git) of `ABACUS` when prompted.
 
 We also support [Gitpod](https://www.gitpod.io/) to offer an ready-to-use online development environment.
-[![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/deepmodeling/abacus-develop)
+[Open in Gitpod](https://gitpod.io/#https://github.com/deepmodeling/abacus-develop)
 
 > Please note that containers target at developing and testing, but not massively parallel computing. Docker has a bad support to MPI; for production, please compile ABACUS from source code to avoid compatibility issues and gain a better performace.

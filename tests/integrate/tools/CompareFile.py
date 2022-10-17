@@ -71,9 +71,9 @@ def IsComplex(x):
 
 def ExitError(iline,line1,line2,jnumber=-1):
     if jnumber < 0:
-        print('Error: line %d\n %s:%s %s:%s'%(iline,file1,line1,file2,line2))
+        print('Compare Error: line %d\n %s:%s %s:%s'%(iline+1,file1,line1,file2,line2))
     else:
-        print('Error: line %d, column %d \n %s: %s\n %s: %s'%(iline,jnumber+1,file1,line1,file2,line2))
+        print('Compare Error: line %d, column %d \n %s: %s\n %s: %s'%(iline+1,jnumber+1,file1,line1,file2,line2))
     sys.exit(1)
 
 

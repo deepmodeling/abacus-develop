@@ -75,3 +75,6 @@ html_static_path = ['_static']
 latex_engine = 'xelatex'
 mathjax_path = 'https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.0/es5/tex-mml-chtml.min.js'
 #deepmodeling_current_site = 'Tutorials'
+latex_elements = {
+    'extraclassoptions':'openany,oneside'
+}
