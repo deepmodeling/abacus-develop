@@ -21,6 +21,7 @@ If you find a bug, you can help us by submitting an issue to our GitHub Reposito
 If you would like to implement a new feature, please submit an issue with a proposal for your work first, and that ensures your work collaborates with our development road map well. For a major feature, first open an issue and outline your proposal so that it can be discussed. This will also allow us to better coordinate our efforts, prevent duplication of work, and help you to craft the change so that it is successfully accepted into the project.
 
 The ABACUS [Github respository](https://github.com/deepmodeling/abacus-develop). 
+
 The ABACUS [releases](https://github.com/deepmodeling/abacus-develop/releases).
 
 ### Submitting a Pull Request
