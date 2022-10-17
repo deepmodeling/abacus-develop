@@ -471,7 +471,7 @@ calculations.
 ### nspin
 
 - **Type**: Integer
-- **Description**: Number of spin components of wave functions. There are only two choices now: 1 or 2, meaning non spin or collinear spin.
+- **Description**: Number of spin components of wave functions. There are only two choices now: 1 or 2, meaning non spin or collinear spin. For case of [noncollinear polarized](http://abacus.deepmodeling.com/en/latest/advanced/scf/spin.html#noncollinear-spin-polarized-calculations), nspin will be auto set to 4 but no need to specify in INPUT by users.
 - **Default**: 1
 
 ### smearing_method
