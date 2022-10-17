@@ -5,7 +5,6 @@
 - [Code conventions](#code-conventions)
 - [Doxygen](#doxygen)
 - [Debugging](#debugging)
-- [Github respository](#github-respository)
 - [Issue](#issue)
 - [Commit](#commit)
 - [Log](#log)
