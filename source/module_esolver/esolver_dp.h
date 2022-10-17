@@ -1,7 +1,6 @@
 #ifndef ESOLVER_DP_H
 #define ESOLVER_DP_H
 
-#include <unistd.h>
 #include "./esolver.h"
 #ifdef __DPMD
 #include "deepmd/DeepPot.h"
@@ -14,16 +13,12 @@ namespace ModuleESolver
     {
     public:
 #ifdef __DPMD
-        ESolver_DP() : dp("graph.pb")
+        ESolver_DP(std::string pot_file) : dp(std::string pot_file)
         {
             classname = "ESolver_DP";
-            if (access("graph.pb", 0) == -1)
-            {
-                ModuleBase::WARNING_QUIT("DP_pot", "Can not find graph.pb !");
-            }
         }
 #else
-        ESolver_DP()
+        ESolver_DP(std::string pot_file)
         {
             classname = "ESolver_DP";
         }

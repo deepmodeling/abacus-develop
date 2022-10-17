@@ -23,6 +23,7 @@ public:
 		lj_rcut = 8.5;        
 		lj_epsilon = 0.01032; 
 		lj_sigma = 3.405;     
+        pot_file = "graph.pb";
 
 		// MSST
 		msst_direction = 2;
@@ -55,6 +56,7 @@ public:
 	double lj_rcut;             // cutoff radius of LJ potential (\AA)
 	double lj_epsilon;          // the value of epsilon for LJ potential (eV)
 	double lj_sigma;            // the value of sigma for LJ potential (\AA)
+    std::string pot_file;       // the filename of potential files for CMD such as DP
 
 	// MSST
 	int msst_direction;              // shock direction: 0, 1, 2

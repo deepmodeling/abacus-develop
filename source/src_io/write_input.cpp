@@ -253,6 +253,7 @@ void Input::Print(const std::string &fn) const
 	ModuleBase::GlobalFunc::OUTP(ofs,"lj_rcut",mdp.lj_rcut,"cutoff radius of LJ potential");
 	ModuleBase::GlobalFunc::OUTP(ofs,"lj_epsilon",mdp.lj_epsilon,"the value of epsilon for LJ potential");
 	ModuleBase::GlobalFunc::OUTP(ofs,"lj_sigma",mdp.lj_sigma,"the value of sigma for LJ potential");
+    ModuleBase::GlobalFunc::OUTP(ofs,"pot_file",mdp.pot_file,"the filename of potential files for CMD such as DP");
 	ModuleBase::GlobalFunc::OUTP(ofs,"msst_direction",mdp.msst_direction,"the direction of shock wave");
 	ModuleBase::GlobalFunc::OUTP(ofs,"msst_vel",mdp.msst_vel,"the velocity of shock wave");
 	ModuleBase::GlobalFunc::OUTP(ofs,"msst_vis",mdp.msst_vis,"artificial viscosity");
