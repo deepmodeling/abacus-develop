@@ -13,7 +13,7 @@ namespace ModuleESolver
     {
     public:
 #ifdef __DPMD
-        ESolver_DP(std::string pot_file) : dp(std::string pot_file)
+        ESolver_DP(std::string pot_file) : dp(pot_file)
         {
             classname = "ESolver_DP";
         }
