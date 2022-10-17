@@ -87,6 +87,9 @@ The source code of ABACUS is based on several modules. Under the ABACUS root dir
 
 This part will introduce core modules of ABACUS in detail. It should include basic introduction, API manual and examples.
 
+[module_hsolver](./core_module_guides/module_hsolver.md)
+[module_operator](./core_module_guides/module_operator.md)
+
 ## Code conventions
 
 ### Formatting style
