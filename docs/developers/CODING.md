@@ -10,6 +10,7 @@
 - [Commit](#commit)
 - [Log](#log)
 - [Profiling](#profiling)
+- [Core modules guide](#core-modules-guide)
 
 ## Getting started
 
@@ -221,5 +222,9 @@ Fix #753.
 To be done.
 
 ## Profiling
+
+To be done
+
+## Core modules guides
 
 To be done

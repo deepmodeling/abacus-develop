@@ -60,7 +60,7 @@ the developments and applications of novel machine-learning-assisted DFT methods
 
 .. toctree::
    :maxdepth: 2
-   :caption: For Developers
+   :caption: Developers Guildes
 
    developers/CODING
    developers/TESTING
