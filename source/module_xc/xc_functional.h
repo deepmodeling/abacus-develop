@@ -87,6 +87,7 @@ class XC_Functional
 #ifdef USE_LIBXC
 	static void set_xc_type_libxc(const std::string xc_func_in);
 	static std::vector<xc_func_type> init_func(const int xc_polarized);
+	static void finish_func(std::vector<xc_func_type> &funcs);	
 #endif
 
 	private:

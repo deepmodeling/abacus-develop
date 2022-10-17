@@ -29,6 +29,7 @@ VPATH=./src_global\
 :./module_psi\
 :./module_hamilt\
 :./module_hamilt/ks_pw\
+:./module_hamilt/ks_lcao\
 :./module_gint\
 :./src_pw\
 :./src_lcao\
@@ -328,7 +329,16 @@ ekinetic_pw.o\
 meta_pw.o\
 veff_pw.o\
 nonlocal_pw.o\
-velocity_pw.o
+velocity_pw.o\
+deepks_lcao.o\
+ekinetic_lcao.o\
+meta_lcao.o\
+nonlocal_lcao.o\
+op_dftu_lcao.o\
+op_exx_lcao.o\
+operator_lcao.o\
+overlap_lcao.o\
+veff_lcao.o
 
 OBJS_FIRST_PRINCIPLES=$(OBJS_MAIN)\
 $(OBJS_PW)\

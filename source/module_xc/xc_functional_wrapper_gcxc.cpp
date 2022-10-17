@@ -343,6 +343,7 @@ void XC_Functional::gcxc_spin_libxc(double rhoup, double rhodw,
     delete[] v1xc;
     delete[] v2xc;
     delete[] sgn;
+    finish_func(funcs);
 
     return;
 #else

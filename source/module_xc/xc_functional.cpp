@@ -261,4 +261,12 @@ std::vector<xc_func_type> XC_Functional::init_func(const int xc_polarized)
 	}
 	return funcs;
 }
+
+void XC_Functional::finish_func(std::vector<xc_func_type> &funcs)
+{
+    for(xc_func_type func : funcs)
+	{
+        xc_func_end(&func);
+    }
+}
 #endif

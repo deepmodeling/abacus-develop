@@ -1,5 +1,5 @@
-#ifndef __NONLOCALPW
-#define __NONLOCALPW
+#ifndef NONLOCALPW_H
+#define NONLOCALPW_H
 
 #include "operator_pw.h"
 
@@ -10,8 +10,8 @@
 namespace hamilt
 {
 
-#ifndef __NONLOCALTEMPLATE
-#define __NONLOCALTEMPLATE
+#ifndef NONLOCALTEMPLATE_H
+#define NONLOCALTEMPLATE_H
 
 template<class T> class Nonlocal : public T
 {};

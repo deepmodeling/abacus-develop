@@ -42,7 +42,7 @@ void ESolver_SDFT_PW::check_che(const int nche_in)
     int ntest = 2;
     for (int ik = 0;ik < nk; ++ik)
 	{
-        this->phami->updateHk(ik);
+        this->p_hamilt->updateHk(ik);
         stoiter.stohchi.current_ik = ik;
         const int npw = GlobalC::kv.ngk[ik];
         std::complex<double> *pchi = new std::complex<double> [npw];
@@ -153,7 +153,7 @@ void ESolver_SDFT_PW::sKG(const int nche_KG, const double fwhmin, const double w
         velop.init(ik);
         if(nk > 1) 
         {
-            this->phami->updateHk(ik);
+            this->p_hamilt->updateHk(ik);
         }
         stoiter.stohchi.current_ik = ik;
         const int npw = GlobalC::kv.ngk[ik];
@@ -234,23 +234,23 @@ void ESolver_SDFT_PW::sKG(const int nche_KG, const double fwhmin, const double w
         velop.act(this->psi, totbands_per, psi0.get_pointer(), j1psi.get_pointer());
         velop.act(this->psi, totbands_per, sfpsi0.get_pointer(), j1sfpsi.get_pointer());
 
-        // this->phami->hPsi(psi0.get_pointer(), hpsi0.get_pointer(), totbands_per*npwx);
-        // this->phami->hPsi(sfpsi0.get_pointer(), hsfpsi0.get_pointer(), totbands_per*npwx);
-        // this->phami->hPsi(j1psi.get_pointer(), j2psi.get_pointer(), ndim*totbands_per*npwx);
-        // this->phami->hPsi(j1sfpsi.get_pointer(), j2sfpsi.get_pointer(), ndim*totbands_per*npwx);
+        // this->p_hamilt->hPsi(psi0.get_pointer(), hpsi0.get_pointer(), totbands_per*npwx);
+        // this->p_hamilt->hPsi(sfpsi0.get_pointer(), hsfpsi0.get_pointer(), totbands_per*npwx);
+        // this->p_hamilt->hPsi(j1psi.get_pointer(), j2psi.get_pointer(), ndim*totbands_per*npwx);
+        // this->p_hamilt->hPsi(j1sfpsi.get_pointer(), j2sfpsi.get_pointer(), ndim*totbands_per*npwx);
         psi::Range allbands(1,0,0,totbands_per-1);
         hamilt::Operator<std::complex<double>>::hpsi_info info_psi0(&psi0, allbands, hpsi0.get_pointer());
-        this->phami->ops->hPsi(info_psi0);
+        this->p_hamilt->ops->hPsi(info_psi0);
 
         hamilt::Operator<std::complex<double>>::hpsi_info info_sfpsi0(&sfpsi0, allbands, hsfpsi0.get_pointer());
-        this->phami->ops->hPsi(info_sfpsi0);
+        this->p_hamilt->ops->hPsi(info_sfpsi0);
 
         psi::Range allndimbands(1,0,0,ndim*totbands_per-1);
         hamilt::Operator<std::complex<double>>::hpsi_info info_j1psi(&j1psi, allndimbands, j2psi.get_pointer());
-        this->phami->ops->hPsi(info_j1psi);
+        this->p_hamilt->ops->hPsi(info_j1psi);
 
         hamilt::Operator<std::complex<double>>::hpsi_info info_j1sfpsi(&j1sfpsi, allndimbands, j2sfpsi.get_pointer());
-        this->phami->ops->hPsi(info_j1sfpsi);
+        this->p_hamilt->ops->hPsi(info_j1sfpsi);
 
         /*
         // stohchi.hchi_norm(psi0.get_pointer(), hpsi0.get_pointer(), totbands_per);
@@ -487,7 +487,7 @@ void ESolver_SDFT_PW:: caldos( const int nche_dos, const double sigmain, const d
         cout<<"ik: "<<ik+1<<endl;
 		if(nk > 1) 
         {
-            this->phami->updateHk(ik);
+            this->p_hamilt->updateHk(ik);
         }
         stohchi.current_ik = ik;
         const int npw = GlobalC::kv.ngk[ik];

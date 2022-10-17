@@ -89,8 +89,10 @@ HamiltPW::HamiltPW()
 
 HamiltPW::~HamiltPW()
 {
-    int index = 0;
-    delete this->ops;
+    if(this->ops!= nullptr)
+    {
+        delete this->ops;
+    }
 }
 
 void HamiltPW::updateHk(const int ik)

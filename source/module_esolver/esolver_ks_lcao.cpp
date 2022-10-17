@@ -126,10 +126,8 @@ void ESolver_KS_LCAO::Init(Input& inp, UnitCell_pseudo& ucell)
     }
 #endif
 
-    // PLEASE do not use INPUT global variable
-    // mohan add 2021-03-25
     // Quxin added for DFT+U
-    if (INPUT.dft_plus_u)
+    if (GlobalV::dft_plus_u)
     {
         GlobalC::dftu.init(ucell, this->LM);
     }
@@ -211,38 +209,6 @@ void ESolver_KS_LCAO::Init(Input& inp, UnitCell_pseudo& ucell)
         int ion_step = 0;
         GlobalC::pot.init_pot(ion_step, GlobalC::sf.strucFac);
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT POTENTIAL");
-    }
-    if (this->phami != nullptr)
-    {
-        if (this->phami->classname != "HamiltLCAO")
-        {
-            delete this->phami;
-            this->phami = nullptr;
-        }
-    }
-    else
-    {
-        // two cases for hamilt class
-        // Gamma_only case
-        if (GlobalV::GAMMA_ONLY_LOCAL)
-        {
-            this->phami = new hamilt::HamiltLCAO<double>(&(this->UHM.GG),
-                                                         &(this->UHM.genH),
-                                                         &(this->LM),
-                                                         &(this->UHM),
-                                                         &(this->LOWF),
-                                                         &(this->LOC));
-        }
-        // multi_k case
-        else
-        {
-            this->phami = new hamilt::HamiltLCAO<std::complex<double>>(&(this->UHM.GK),
-                                                                       &(this->UHM.genH),
-                                                                       &(this->LM),
-                                                                       &(this->UHM),
-                                                                       &(this->LOWF),
-                                                                       &(this->LOC));
-        }
     }
 }
 
@@ -356,7 +322,7 @@ void ESolver_KS_LCAO::eachiterinit(const int istep, const int iter)
     Update_input UI;
     UI.init(ufile);
 
-    if (INPUT.dft_plus_u)
+    if (GlobalV::dft_plus_u)
         GlobalC::dftu.iter_dftu = iter;
 
     // mohan add 2010-07-16
@@ -449,7 +415,6 @@ void ESolver_KS_LCAO::eachiterinit(const int istep, const int iter)
 
 #ifdef __MPI
     // calculate exact-exchange
-    // calculate exact-exchange
     if(Exx_Global::Hybrid_Type::No != GlobalC::exx_global.info.hybrid_type)
     {
         if (!GlobalC::exx_global.info.separate_loop && this->two_level_step)
@@ -459,9 +424,25 @@ void ESolver_KS_LCAO::eachiterinit(const int istep, const int iter)
     }
 #endif
 
-    if (INPUT.dft_plus_u)
+    if (GlobalV::dft_plus_u)
     {
-        GlobalC::dftu.cal_slater_UJ(istep, iter); // Calculate U and J if Yukawa potential is used
+        GlobalC::dftu.cal_slater_UJ(); // Calculate U and J if Yukawa potential is used
+    }
+
+#ifdef __DEEPKS
+    // the density matrixes of DeePKS have been updated in each iter 
+    GlobalC::ld.set_hr_cal(true);
+#endif
+
+    if(!GlobalV::GAMMA_ONLY_LOCAL)
+    {
+        if(this->UHM.GK.get_spin() != -1)
+        {
+            int start_spin = -1;
+            this->UHM.GK.reset_spin(start_spin);
+            this->UHM.GK.destroy_pvpR();
+            this->UHM.GK.allocate_pvpR();
+        }
     }
 }
 void ESolver_KS_LCAO::hamilt2density(int istep, int iter, double ethr)
@@ -480,11 +461,11 @@ void ESolver_KS_LCAO::hamilt2density(int istep, int iter, double ethr)
         GlobalC::en.ef_dw = 0.0;
         if (this->psi != nullptr)
         {
-            this->phsol->solve(this->phami, this->psi[0], this->pelec, GlobalV::KS_SOLVER);
+            this->phsol->solve(this->p_hamilt, this->psi[0], this->pelec, GlobalV::KS_SOLVER);
         }
         else if (this->psid != nullptr)
         {
-            this->phsol->solve(this->phami, this->psid[0], this->pelec, GlobalV::KS_SOLVER);
+            this->phsol->solve(this->p_hamilt, this->psid[0], this->pelec, GlobalV::KS_SOLVER);
         }
 
         // transform energy for print
@@ -523,7 +504,7 @@ void ESolver_KS_LCAO::hamilt2density(int istep, int iter, double ethr)
 
     // if DFT+U calculation is needed, this function will calculate
     // the local occupation number matrix and energy correction
-    if (INPUT.dft_plus_u)
+    if (GlobalV::dft_plus_u)
     {
         if (GlobalV::GAMMA_ONLY_LOCAL)
             GlobalC::dftu.cal_occup_m_gamma(iter, this->LOC.dm_gamma);

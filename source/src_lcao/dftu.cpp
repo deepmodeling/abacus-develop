@@ -486,6 +486,11 @@ void DFTU::cal_occup_m_k(const int iter,  std::vector<ModuleBase::ComplexMatrix>
 	  	}//end ia
 	}//end it
 
+	if(!this->initialed_locale)
+	{
+		this->initialed_locale = true;
+	}
+
 	//GlobalV::ofs_running << "GlobalC::dftu.cpp "<< __LINE__  << std::endl;
 
 	ModuleBase::timer::tick("DFTU", "cal_occup_m_k");
@@ -666,6 +671,11 @@ void DFTU::cal_occup_m_gamma(const int iter,  std::vector<ModuleBase::matrix> &d
 		ofs_elec << "Total number of electrons of the system " << Nele << std::endl;
 	}
 	*/
+
+	if(!this->initialed_locale)
+	{
+		this->initialed_locale = true;
+	}
 
 	//ofs_running << "GlobalC::dftu.cpp "<< __LINE__  << std::endl;
 	ModuleBase::timer::tick("DFTU", "cal_occup_m_gamma");
@@ -1159,11 +1169,11 @@ void DFTU::cal_energy_correction(const int istep)
 	return;
 }
 
-void DFTU::cal_eff_pot_mat_complex(const int ik, const int istep, std::complex<double>* eff_pot)
+void DFTU::cal_eff_pot_mat_complex(const int ik, std::complex<double>* eff_pot)
 {
 	ModuleBase::TITLE("DFTU", "cal_eff_pot_mat");
 	ModuleBase::timer::tick("DFTU", "cal_eff_pot_mat");
- 	if((GlobalV::CALCULATION=="scf" || GlobalV::CALCULATION=="relax" || GlobalV::CALCULATION=="cell-relax") && (!omc) && istep==0 && this->iter_dftu==1 && GlobalC::CHR.init_chg != "file")
+ 	if(!this->initialed_locale && GlobalC::CHR.init_chg != "file")
 	{
 		ModuleBase::timer::tick("DFTU", "cal_eff_pot_mat");
 		return;
@@ -1251,11 +1261,11 @@ void DFTU::cal_eff_pot_mat_complex(const int ik, const int istep, std::complex<d
 	return;	
 }
 
-void DFTU::cal_eff_pot_mat_real(const int ik, const int istep, double* eff_pot)
+void DFTU::cal_eff_pot_mat_real(const int ik, double* eff_pot)
 {
 	ModuleBase::TITLE("DFTU", "cal_eff_pot_mat");
 	ModuleBase::timer::tick("DFTU", "cal_eff_pot_mat");
- 	if((GlobalV::CALCULATION=="scf" || GlobalV::CALCULATION=="relax" || GlobalV::CALCULATION=="cell-relax") && (!omc) && istep==0 && this->iter_dftu==1 && GlobalC::CHR.init_chg != "file")
+ 	if(!this->initialed_locale && GlobalC::CHR.init_chg != "file")
 	{
 		ModuleBase::timer::tick("DFTU", "cal_eff_pot_mat");
 		return;

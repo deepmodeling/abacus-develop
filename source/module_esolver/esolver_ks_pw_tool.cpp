@@ -65,7 +65,7 @@ void ESolver_KS_PW::KG(const int nche_KG, const double fwhmin, const double wcut
         velop.act(this->psi, nbands*GlobalV::NPOL, levc, prevc);
         for (int id = 0; id < ndim; ++id)
         {
-            this->phami->updateHk(ik);
+            this->p_hamilt->updateHk(ik);
             complex<double> *pij = new complex<double>[nbands * nbands];
             zgemm_(&transc,
                    &transn,

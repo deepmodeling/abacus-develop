@@ -17,7 +17,7 @@ Meta<OperatorPW>::Meta(
     ModulePW::PW_Basis_K* wfcpw_in
 )
 {
-    this->cal_type = 13;
+    this->cal_type = pw_meta;
     this->isk = isk_in;
     this->tpiba = tpiba_in;
     this->vk = vk_in;

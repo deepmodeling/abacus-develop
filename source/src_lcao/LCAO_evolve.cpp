@@ -23,7 +23,7 @@ inline int globalIndex(int localindex, int nblk, int nprocs, int myproc)
 }
 
 void Evolve_LCAO_Matrix::evolve_complex_matrix(const int& ik,
-                                               hamilt::Hamilt* phami,
+                                               hamilt::Hamilt* p_hamilt,
                                                Local_Orbital_wfc& lowf,
                                                psi::Psi<std::complex<double>>* psi,
                                                psi::Psi<std::complex<double>>* psi_laststep,
@@ -37,7 +37,7 @@ void Evolve_LCAO_Matrix::evolve_complex_matrix(const int& ik,
     {
 #ifdef __MPI
         this->using_ScaLAPACK_complex(ik,
-                                      phami,
+                                      p_hamilt,
                                       lowf.wfc_k_grid[ik],
                                       psi[0].get_pointer(),
                                       psi_laststep[0].get_pointer(),
@@ -46,7 +46,7 @@ void Evolve_LCAO_Matrix::evolve_complex_matrix(const int& ik,
         // this->using_ScaLAPACK_complex(ik, lowf.wfc_k_grid[ik], lowf.wfc_k[ik], lowf.wfc_k_laststep[ik], lowf, ekb);
 #else
         this->using_LAPACK_complex(ik,
-                                   phami,
+                                   p_hamilt,
                                    lowf.wfc_k_grid[ik],
                                    psi[0].get_pointer(),
                                    psi_laststep[0].get_pointer(),
@@ -66,7 +66,7 @@ void Evolve_LCAO_Matrix::evolve_complex_matrix(const int& ik,
 }
 
 void Evolve_LCAO_Matrix::using_LAPACK_complex(const int& ik,
-                                              hamilt::Hamilt* phami,
+                                              hamilt::Hamilt* p_hamilt,
                                               std::complex<double>** wfc_k_grid,
                                               std::complex<double>* wfc_k,
                                               std::complex<double>* wfc_k_laststep,
@@ -80,7 +80,7 @@ void Evolve_LCAO_Matrix::using_LAPACK_complex(const int& ik,
     ModuleBase::ComplexMatrix Htmp(GlobalV::NLOCAL, GlobalV::NLOCAL);
     ModuleBase::ComplexMatrix Stmp(GlobalV::NLOCAL, GlobalV::NLOCAL);
     hamilt::MatrixBlock<complex<double>> h_mat, s_mat;
-    phami->matrix(h_mat, s_mat);
+    p_hamilt->matrix(h_mat, s_mat);
     for (int i = 0; i < GlobalV::NLOCAL; i++)
     {
         for (int j = 0; j < GlobalV::NLOCAL; j++)
@@ -412,7 +412,7 @@ void Evolve_LCAO_Matrix::using_LAPACK_complex(const int& ik,
 
 #ifdef __MPI
 void Evolve_LCAO_Matrix::using_ScaLAPACK_complex(const int& ik,
-                                                 hamilt::Hamilt* phami,
+                                                 hamilt::Hamilt* p_hamilt,
                                                  std::complex<double>** wfc_k_grid,
                                                  std::complex<double>* wfc_k,
                                                  std::complex<double>* wfc_k_laststep,
@@ -488,7 +488,7 @@ void Evolve_LCAO_Matrix::using_ScaLAPACK_complex(const int& ik,
     // ModuleBase::GlobalFunc::ZEROS(Z, this->loc_size * NLOCAL);
 
     hamilt::MatrixBlock<complex<double>> h_mat, s_mat;
-    phami->matrix(h_mat, s_mat);
+    p_hamilt->matrix(h_mat, s_mat);
     // cout<<"h_mat : "<<h_mat.p[0]<<" "<<h_mat.p[1]<<endl;
 
     zcopy_(&this->ParaV->nloc, s_mat.p, &inc, Stmp, &inc);
