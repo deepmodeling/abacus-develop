@@ -42,16 +42,16 @@ AddTest(
 
 ## Regression tests
 
-To be done.
+How to run E2E tests, how to add a E2E test, how to understand results.
 
 ## Test coverage
 
-To be done.
+Test coverage report table.
 
 ## Dashboard
 
-To be done.
+Clusters, platforms supported table, respective test coverage and running time.
 
 ## Compiling
 
-To be done.
+Compilation environment supportting table.

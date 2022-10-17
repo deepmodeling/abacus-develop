@@ -62,6 +62,5 @@ the developments and applications of novel machine-learning-assisted DFT methods
    :maxdepth: 2
    :caption: Developer Guides
 
-   developers/CODING
-   developers/TESTING
-   developers/NEWS
+   developers/Coding
+   developers/Testing

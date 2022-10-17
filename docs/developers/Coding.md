@@ -4,13 +4,13 @@
 - [Structure of the package](#structure-of-the-package)
 - [Code conventions](#code-conventions)
 - [Doxygen](#doxygen)
-- [Debug](#debug)
+- [Debugging](#debugging)
 - [Github respository](#github-respository)
 - [Issue](#issue)
 - [Commit](#commit)
 - [Log](#log)
 - [Profiling](#profiling)
-- [Core modules guide](#core-modules-guide)
+- [Release Checklist](#release-checklist)
 
 ## Getting started
 
@@ -19,6 +19,9 @@ This file provides a guideline for it.
 Please referring to our GitHub [issue tracker](https://github.com/deepmodeling/abacus-develop/issues), and our developers are willing to help.
 If you find a bug, you can help us by submitting an issue to our GitHub Repository. Even better, you can submit a Pull Request with a patch. You can request a new feature by submitting an issue to our GitHub Repository.
 If you would like to implement a new feature, please submit an issue with a proposal for your work first, and that ensures your work collaborates with our development road map well. For a major feature, first open an issue and outline your proposal so that it can be discussed. This will also allow us to better coordinate our efforts, prevent duplication of work, and help you to craft the change so that it is successfully accepted into the project.
+
+The ABACUS [Github respository](https://github.com/deepmodeling/abacus-develop). 
+The ABACUS [releases](https://github.com/deepmodeling/abacus-develop/releases).
 
 ### Submitting a Pull Request
 
@@ -80,6 +83,10 @@ The source code of ABACUS is based on several modules. Under the ABACUS root dir
 - `source`: the source code in separated modules, under which a `test` folder for its unit tests;
 - `tests`: End-to-end test cases;
 - `tools`: the script for generating the numerical atomic orbitals.
+
+### Core module guides
+
+This part will introduce core modules of ABACUS in detail. It should include basic introduction, API manual and examples.
 
 ## Code conventions
 
@@ -156,15 +163,11 @@ An practical example is class [LCAO_Deepks](https://github.com/deepmodeling/abac
 
 ## Doxygen
 
-To be done.
+This will be the entrance of doxygen documentation.
 
-## Debug
+## Debugging
 
-To be done.
-
-## Github respository
-
-The [website](https://github.com/deepmodeling/abacus-develop).
+This part will include several important guidlines regarding how to debug efficiently.
 
 ## Issue
 
@@ -219,12 +222,12 @@ Fix #753.
 
 ## Log
 
-To be done.
+This part will introduce how to trigger different ranks of log info in ABACUS, and how to use them to analyse the performance of ABACUS and to debug, et al.
 
 ## Profiling
 
-To be done
+This part is about how to analyse the time table reported in log file of ABACUS.
 
-## Core module guides
+## Release Checklist
 
-To be done
+This part introduces the release checlist before releasing a new version or subversion of ABACUS.
