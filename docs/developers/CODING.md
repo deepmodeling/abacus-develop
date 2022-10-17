@@ -225,6 +225,6 @@ To be done.
 
 To be done
 
-## Core modules guides
+## Core module guides
 
 To be done
