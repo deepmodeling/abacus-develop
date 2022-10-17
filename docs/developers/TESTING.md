@@ -1,12 +1,12 @@
 # Testing
 
-- [Adding a unit test](#adding-a-unit-test)
+- [Adding a unittest](#adding-a-unittest)
 - [Regression tests](#regression-tests)
 - [Test coverage](#test-coverage)
 - [Dashboard](#dashboard)
 - [Compiling](#compiling)
 
-## Adding a unit test
+## Adding a unittest
 
 We use GoogleTest as our test framework. Write your test under the corresponding module folder at `abacus-develop/tests`, then append the test to `tests/CMakeLists.txt`. If there are currently no unit tests provided for the module, do as follows. `module_base` provides a simple demonstration.
 
