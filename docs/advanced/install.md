@@ -26,6 +26,18 @@ If DeePKS feature is requied for [DeePKS-kit](https://github.com/deepmodeling/de
 cmake -B build -DENABLE_DEEPKS=1 -DTorch_DIR=~/libtorch/share/cmake/Torch/ -Dlibnpy_INCLUDE_DIR=~/libnpy/include
 ```
 
+## Build with DeePMD-kit
+If the Deep Potential model is employed in Molecule Dynamics calculations, the following prerequisites and steps are needed:
+
+### Extra prerequisites
+
+- [DeePMD-kit](https://github.com/deepmodeling/deepmd-kit)
+- [TensorFlow](https://www.tensorflow.org/)
+
+```bash
+cmake -B build -DDeePMD_DIR=~/deepmd-kit -DTensorFlow_DIR=~/tensorflow
+```
+
 ## Build Unit Tests
 To build tests for ABACUS, define `BUILD_TESTING` flag. You can also specify path to local installation of [Googletest](https://github.com/google/googletest) by setting `GTEST_DIR` flags. If not found in local, the configuration process will try to download it automatically.
 
@@ -60,6 +72,10 @@ CC = mpiicpc
 # g++:       compile gnu serial version
 # make: FFTW_DIR, OPENBLAS_LIB_DIR, SCALAPACK_LIB_DIR, ELPA_DIR, ELPA_INCLUDE_DIR, CEREAL_DIR must also be set.
 # make pw: FFTW_DIR, OPENBLAS_LIB_DIR must be set.
+
+# GPU = OFF  #We do not support GPU yet
+# OFF:  do not use GPU
+# CUDA: use CUDA
 #======================================================================
 
 #-------  FOR INTEL COMPILER  ------------
@@ -96,6 +112,17 @@ CEREAL_DIR    = /public/soft/cereal
 # LIBXC_DIR    		= /public/soft/libxc
 # directory of libxc(>5.1.7), which contains include and lib/libxc.a
 # add LIBXC_DIR to use libxc to compile ABACUS
+
+# DeePMD_DIR = ${deepmd_root}
+# TensorFlow_DIR = ${tensorflow_root}
+# add them to use DEEPMD
+
+# NP = 14 # It is not supported. use make -j14 or make -j to parallelly compile
+
+# DEBUG = OFF
+# Only for developers
+# ON:   use gnu compiler and check segmental defaults
+# OFF:  nothing
 #======================================================================
 ```
 
@@ -162,5 +189,13 @@ directly.
 To compile ABACUS with DEEPKS, you need to define `LIBTORCH_DIR` and `LIBNPY_DIR` in the file `Makefile.vars` or use 
 ```makefile
 make LIBTORCH_DIR=/opt/libtorch/ LIBNPY_DIR=/opt/libnpy/
+``` 
+directly.
+
+### Add DeePMD-kit Support
+
+To compile ABACUS with DeePMD-kit, you need to define `DeePMD_DIR` and `TensorFlow_DIR` in the file `Makefile.vars` or use 
+```makefile
+make DeePMD_DIR=~/deepmd-kit TensorFlow_DIR=~/tensorflow
 ``` 
 directly.
