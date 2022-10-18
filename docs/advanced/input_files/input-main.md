@@ -42,7 +42,7 @@
 
 - [Molecular dynamics](#molecular-dynamics)
 
-    [md_type](#md_type) | [md_nstep](#md_nstep) | [md_ensolver](#md_ensolver) | [md_restart](#md_restart) | [md_dt](#md_dt) | [md_tfirst, md_tlast](#md_tfirst-md_tlast) | [md_dumpfreq](#md_dumpfreq) | [md_restartfreq](#md_restartfreq) | [md_seed](#md_seed) | [md_tfreq](#md_tfreq) | [md_mnhc](#md_mnhc) | [lj_rcut](#lj_rcut) | [lj_epsilon](#lj_epsilon) | [lj_sigma](#lj_sigma) | [msst_direction](#msst_direction) | [msst_vel](#msst_vel) | [msst_vis](#msst_vis) | [msst_tscale](#msst_tscale) | [msst_qmass](#msst_qmass) | [md_damp](#md_damp)
+    [md_type](#md_type) | [md_nstep](#md_nstep) | [md_ensolver](#md_ensolver) | [md_restart](#md_restart) | [md_dt](#md_dt) | [md_tfirst, md_tlast](#md_tfirst-md_tlast) | [md_dumpfreq](#md_dumpfreq) | [md_restartfreq](#md_restartfreq) | [md_seed](#md_seed) | [md_tfreq](#md_tfreq) | [md_mnhc](#md_mnhc) | [lj_rcut](#lj_rcut) | [lj_epsilon](#lj_epsilon) | [lj_sigma](#lj_sigma) | [pot_file](#pot_file) | [msst_direction](#msst_direction) | [msst_vel](#msst_vel) | [msst_vis](#msst_vis) | [msst_tscale](#msst_tscale) | [msst_qmass](#msst_qmass) | [md_damp](#md_damp)
 
 - [vdW correction](#vdw-correction)
 
@@ -1379,6 +1379,12 @@ temperature will fluctuate violently; if it is too small, the temperature will t
 - **Type**: Real
 - **Description**: The value of sigma for Leonard Jones potential (angstrom).
 - **Default**: 3.405 (for He)
+
+### pot_file
+
+- **Type**: String
+- **Description**: The filename of potential files for CMD such as DP.
+- **Default**: graph.pb
 
 ### msst_direction
 
