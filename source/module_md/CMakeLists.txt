@@ -3,9 +3,6 @@ add_library(
     OBJECT
     MD_func.cpp
     run_md_classic.cpp
-    LJ_potential.cpp
-    DP_potential.cpp
-    cmd_neighbor.cpp
 	verlet.cpp
 	NVE.cpp
     MSST.cpp

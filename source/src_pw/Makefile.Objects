@@ -248,9 +248,6 @@ diago_david_old.o\
 diago_cg_old.o\
 output.o  \
 run_md_classic.o\
-LJ_potential.o\
-DP_potential.o\
-cmd_neighbor.o\
 verlet.o\
 NVE.o\
 MSST.o\

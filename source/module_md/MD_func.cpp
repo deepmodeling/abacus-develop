@@ -1,7 +1,4 @@
 #include "MD_func.h"
-#include "cmd_neighbor.h"
-#include "LJ_potential.h"
-#include "DP_potential.h"
 #include "../input.h"
 #include "../module_neighbor/sltk_atom_arrange.h"
 #include "../module_neighbor/sltk_grid_driver.h"

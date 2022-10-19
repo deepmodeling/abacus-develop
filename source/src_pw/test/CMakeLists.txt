@@ -45,8 +45,8 @@ AddTest(
   ../../module_cell/read_pp_upf100.cpp  ../../module_cell/read_pp_upf201.cpp  ../../module_cell/read_pp_vwr.cpp  ../../module_cell/read_pp_blps.cpp
   ../../module_cell/atom_pseudo.cpp  ../../module_cell/pseudo_nc.cpp ../../module_cell/unitcell_pseudo.cpp ../../module_cell/setup_nonlocal.cpp
   # module_md #In fact, md module should not contain any LCAO information. And then we can use lib md directly.
-  ../../module_md/run_md_classic.cpp ../../module_md/LJ_potential.cpp ../../module_md/DP_potential.cpp ../../module_md/MD_func.cpp
-  ../../module_md/cmd_neighbor.cpp ../../module_md/verlet.cpp ../../module_md/NVE.cpp ../../module_md/MSST.cpp 
+  ../../module_md/run_md_classic.cpp  ../../module_md/MD_func.cpp
+  ../../module_md/verlet.cpp ../../module_md/NVE.cpp ../../module_md/MSST.cpp 
   ../../module_md/NVT_ADS.cpp ../../module_md/NVT_NHC.cpp ../../module_md/FIRE.cpp ../../module_md/Langevin.cpp
   # module_re #In fact, relax module should not contain any LCAO information. And then we can use lib relax directly.
   ../../module_relaxation/bfgs_basic.cpp  ../../module_relaxation/ions.cpp  ../../module_relaxation/ions_move_basic.cpp  ../../module_relaxation/ions_move_bfgs.cpp
