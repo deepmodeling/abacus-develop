@@ -130,11 +130,7 @@ void Run_MD_PW::md_ions_pw(ModuleESolver::ESolver *p_esolver)
             verlet->ucell.update_vel(verlet->vel);
             std::stringstream file;
             file << GlobalV::global_stru_dir << "STRU_MD_" << verlet->step_ + verlet->step_rst_;
-#ifdef __LCAO
-            verlet->ucell.print_stru_file(GlobalC::ORB, file.str(), 1, 1);
-#else
             verlet->ucell.print_stru_file(file.str(), 1, 1);
-#endif
             verlet->write_restart();
         }
 
