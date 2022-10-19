@@ -22,6 +22,7 @@ add_subdirectory(src_pdiag)
 add_subdirectory(src_pw)
 add_subdirectory(src_ri)
 add_subdirectory(module_rpa)
+add_subdirectory(module_vdw)
 
 add_library(
     driver

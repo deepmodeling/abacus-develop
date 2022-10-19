@@ -392,6 +392,7 @@ target_link_libraries(${ABACUS_BIN_NAME}
     hamilt
     psi
     esolver
+    vdw
 )
 
 if(ENABLE_LCAO)
