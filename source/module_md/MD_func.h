@@ -4,9 +4,6 @@
 #include "MD_parameters.h"
 #include "../module_cell/unitcell_pseudo.h"
 #include "../module_base/matrix.h"
-#ifdef __LCAO
-#include "../module_orbital/parallel_orbitals.h"
-#endif
 
 #include "module_esolver/esolver.h"
 class MD_func
@@ -15,10 +12,6 @@ class MD_func
 
     MD_func(){};
     ~MD_func() {};
-    
-#ifdef __LCAO
-    static Parallel_Orbitals* ParaV;
-#endif
 
     static double gaussrand();
 	
@@ -47,7 +40,7 @@ class MD_func
 		ModuleESolver::ESolver *p_esolver,
 		const int &istep,
 		const MD_parameters &mdp,
-		const UnitCell_pseudo &unit_in,
+		UnitCell_pseudo &unit_in,
 		double &potential,
 		ModuleBase::Vector3<double> *force,
 		ModuleBase::matrix &stress);
@@ -76,5 +69,7 @@ class MD_func
 		double* allmass, 
 		ModuleBase::Vector3<int> &frozen,
 		ModuleBase::Vector3<int>* ionmbl);
+
+    static void print(const std::string& name, const ModuleBase::matrix& f, const UnitCell_pseudo &unit_in);
 };
 #endif

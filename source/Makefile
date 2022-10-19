@@ -115,6 +115,26 @@ ifdef LIBTORCH_DIR
   endif
 endif
 
+ifdef DeePMD_DIR
+    HONG  += -D__DPMD -DHIGH_PREC 
+    OPTS  += -Wl,--no-as-needed
+    ##==========================
+    ## DeePMD-kit package
+    ##==========================
+    DeeP_LIB_DIR = ${DeePMD_DIR}/lib
+    LIBS += -L${DeeP_LIB_DIR} -ldeepmd_cc -ldeepmd_op -ldeepmd_op_cuda -Wl,-rpath=${DeeP_LIB_DIR}
+    DeeP_INCLUDE_DIR = ${DeePMD_DIR}/include
+    INCLUDES += -I${DeeP_INCLUDE_DIR}
+
+    #==========================
+    # TensorFlow package
+    #==========================
+    TensorFlow_LIB_DIR = ${TensorFlow_DIR}/lib
+    LIBS += -L${TensorFlow_LIB_DIR} -ltensorflow_cc -Wl,-rpath=${TensorFlow_LIB_DIR}
+    TensorFlow_INCLUDE_DIR = ${TensorFlow_DIR}/include
+    INCLUDES += -I${TensorFlow_INCLUDE_DIR}
+endif
+
 include Makefile.Objects
 
 #==========================

@@ -509,17 +509,25 @@ void ESolver_KS_LCAO_TDDFT::afterscf(const int istep)
             std::cout << " !! CONVERGENCE HAS NOT BEEN ACHIEVED !!" << std::endl;
     }
 
+    if (hsolver::HSolverLCAO::out_mat_hsR)
+    {
+        this->output_HS_R(istep); // LiuXh add 2019-07-15
+    }
+
     // add by jingan for out r_R matrix 2019.8.14
     if(INPUT.out_mat_r)
     {
         cal_r_overlap_R r_matrix;
         r_matrix.init(*this->LOWF.ParaV);
-        r_matrix.out_r_overlap_R();
-    }
 
-    if (Pdiag_Double::out_mat_hsR)
-    {
-        this->output_HS_R(istep); // LiuXh add 2019-07-15
+        if (hsolver::HSolverLCAO::out_mat_hsR)
+        {
+            r_matrix.out_rR_other(this->LM.output_R_coor);
+        }
+        else
+        {
+            r_matrix.out_rR();
+        }
     }
 }
 

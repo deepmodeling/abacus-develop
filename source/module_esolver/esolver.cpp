@@ -90,7 +90,7 @@ namespace ModuleESolver
         }
         else if (esolver_type == "dp_pot")
         {
-            p_esolver = new ESolver_DP();
+            p_esolver = new ESolver_DP(INPUT.mdp.pot_file);
         }
     }
 

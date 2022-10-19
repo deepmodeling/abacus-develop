@@ -6,10 +6,10 @@ ABACUS use exchange-correlation functionals by default. However, for some functi
 
 Dependency: [Libxc](https://tddft.org/programs/libxc/)>=5.1.7 .
 
-If Libxc is not installed in standard path (i.e. installed with a custom prefix path), you can set `LIBXC_DIR` to the corresponding directory.
+If Libxc is not installed in standard path (i.e. installed with a custom prefix path), you can set `Libxc_DIR` to the corresponding directory.
 
 ```bash
-cmake -B build -DLIBXC_DIR=~/libxc
+cmake -B build -DLibxc_DIR=~/libxc
 ```
 
 ## Build with DeePKS
@@ -24,6 +24,18 @@ If DeePKS feature is requied for [DeePKS-kit](https://github.com/deepmodeling/de
 
 ```bash
 cmake -B build -DENABLE_DEEPKS=1 -DTorch_DIR=~/libtorch/share/cmake/Torch/ -Dlibnpy_INCLUDE_DIR=~/libnpy/include
+```
+
+## Build with DeePMD-kit
+If the Deep Potential model is employed in Molecule Dynamics calculations, the following prerequisites and steps are needed:
+
+### Extra prerequisites
+
+- [DeePMD-kit](https://github.com/deepmodeling/deepmd-kit)
+- [TensorFlow](https://www.tensorflow.org/)
+
+```bash
+cmake -B build -DDeePMD_DIR=~/deepmd-kit -DTensorFlow_DIR=~/tensorflow
 ```
 
 ## Build Unit Tests
@@ -55,11 +67,15 @@ CC = mpiicpc
 # icpc:      compile intel serial version
 # make: ELPA_DIR, ELPA_INCLUDE_DIR, CEREAL_DIR must also be set.
 # make pw: nothing need to be set except LIBXC_DIR
-# 
+#
 # mpicxx:    compile gnu parallel version
 # g++:       compile gnu serial version
 # make: FFTW_DIR, OPENBLAS_LIB_DIR, SCALAPACK_LIB_DIR, ELPA_DIR, ELPA_INCLUDE_DIR, CEREAL_DIR must also be set.
 # make pw: FFTW_DIR, OPENBLAS_LIB_DIR must be set.
+
+# GPU = OFF  #We do not support GPU yet
+# OFF:  do not use GPU
+# CUDA: use CUDA
 #======================================================================
 
 #-------  FOR INTEL COMPILER  ------------
@@ -96,6 +112,17 @@ CEREAL_DIR    = /public/soft/cereal
 # LIBXC_DIR    		= /public/soft/libxc
 # directory of libxc(>5.1.7), which contains include and lib/libxc.a
 # add LIBXC_DIR to use libxc to compile ABACUS
+
+# DeePMD_DIR = ${deepmd_root}
+# TensorFlow_DIR = ${tensorflow_root}
+# add them to use DEEPMD
+
+# NP = 14 # It is not supported. use make -j14 or make -j to parallelly compile
+
+# DEBUG = OFF
+# Only for developers
+# ON:   use gnu compiler and check segmental defaults
+# OFF:  nothing
 #======================================================================
 ```
 
@@ -132,7 +159,7 @@ CEREAL_DIR=/public/soft/cereal
 ```
 ABACUS now support full version and pw version. Use `make` or `make abacus` to compile full version which supports LCAO calculations. Use `make pw` to compile pw version which only supports pw calculations. For pw version, `make pw CC=mpiicpc`, you do not need to provide any libs. For `make pw CC=mpicxx`, you need provide `FFTW_DIR` and `OPENBLAS_LIB_DIR`.
 
-Besides, libxc and deepks are optional libs to compile abacus. 
+Besides, libxc and deepks are optional libs to compile abacus.
 They will be used when `LIBXC_DIR` is defined like
 ```
 LIBXC_DIR    		= /public/soft/libxc
@@ -151,16 +178,24 @@ After the compilation finishes without error messages (except perhaps for some w
 
 The program compiled using the above instructions do not link with LIBXC and use exchange-correlation functionals as written in the ABACUS program. However, for some functionals (such as HSE hybrid functional), LIBXC is required.
 
-To compile ABACUS with LIBXC, you need to define `LIBXC_DIR` in the file `Makefile.vars` or use 
+To compile ABACUS with LIBXC, you need to define `LIBXC_DIR` in the file `Makefile.vars` or use
 ```makefile
 make LIBXC_DIR=/pulic/soft/libxc
-``` 
+```
 directly.
 
 ### Add DeePKS Support
 
-To compile ABACUS with DEEPKS, you need to define `LIBTORCH_DIR` and `LIBNPY_DIR` in the file `Makefile.vars` or use 
+To compile ABACUS with DEEPKS, you need to define `LIBTORCH_DIR` and `LIBNPY_DIR` in the file `Makefile.vars` or use
 ```makefile
 make LIBTORCH_DIR=/opt/libtorch/ LIBNPY_DIR=/opt/libnpy/
+```
+directly.
+
+### Add DeePMD-kit Support
+
+To compile ABACUS with DeePMD-kit, you need to define `DeePMD_DIR` and `TensorFlow_DIR` in the file `Makefile.vars` or use 
+```makefile
+make DeePMD_DIR=~/deepmd-kit TensorFlow_DIR=~/tensorflow
 ``` 
 directly.

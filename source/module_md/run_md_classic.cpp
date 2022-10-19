@@ -9,51 +9,41 @@
 #include "../input.h"
 #include "../src_io/print_info.h"
 #include "../module_base/timer.h"
-#include "module_esolver/esolver.h"
 
 Run_MD_CLASSIC::Run_MD_CLASSIC(){}
 
 Run_MD_CLASSIC::~Run_MD_CLASSIC(){}
 
-void Run_MD_CLASSIC::classic_md_line(void)
+void Run_MD_CLASSIC::classic_md_line(UnitCell_pseudo &unit_in, ModuleESolver::ESolver *p_esolver)
 {
 	ModuleBase::TITLE("Run_MD_CLASSIC", "classic_md_line");
     ModuleBase::timer::tick("Run_MD_CLASSIC", "classic_md_line");
-    ModuleESolver::ESolver* p_esolver; //qianrui add it temporarily
-
-	// Setup the unitcell.
-#ifdef __LCAO
-	ucell_c.setup_cell_classic(GlobalC::ORB, GlobalV::stru_file, GlobalV::ofs_running, GlobalV::ofs_warning);
-#else
-    ucell_c.setup_cell_classic(GlobalV::stru_file, GlobalV::ofs_running, GlobalV::ofs_warning);
-#endif
-	ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "SETUP UNITCELL");
 
     // determine the md_type
     Verlet *verlet;
     if(INPUT.mdp.md_type == -1)
     {
-        verlet = new FIRE(INPUT.mdp, ucell_c); 
+        verlet = new FIRE(INPUT.mdp, unit_in); 
     }
     else if(INPUT.mdp.md_type == 0)
     {
-        verlet = new NVE(INPUT.mdp, ucell_c); 
+        verlet = new NVE(INPUT.mdp, unit_in); 
     }
     else if(INPUT.mdp.md_type == 1)
     {
-        verlet = new NVT_NHC(INPUT.mdp, ucell_c);
+        verlet = new NVT_NHC(INPUT.mdp, unit_in);
     }
     else if(INPUT.mdp.md_type == 2)
     {
-        verlet = new Langevin(INPUT.mdp, ucell_c);
+        verlet = new Langevin(INPUT.mdp, unit_in);
     }
     else if(INPUT.mdp.md_type == 3)
     {
-        verlet = new NVT_ADS(INPUT.mdp, ucell_c);
+        verlet = new NVT_ADS(INPUT.mdp, unit_in);
     }
     else if(INPUT.mdp.md_type == 4)
     {
-        verlet = new MSST(INPUT.mdp, ucell_c); 
+        verlet = new MSST(INPUT.mdp, unit_in); 
     }
 
     // md cycle

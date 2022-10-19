@@ -16,62 +16,58 @@
 #include "../module_orbital/parallel_orbitals.h"
 #include "../module_base/vector3.h"
 #include "../module_base/ylm.h"
+#include "write_HS.h"
 
 
 // output r_R matrix, added by Jingan
 class cal_r_overlap_R
 {
 
-	public:
+public:
 
-	cal_r_overlap_R();
-	~cal_r_overlap_R();
-	
+    cal_r_overlap_R();
+    ~cal_r_overlap_R();
 
-	ORB_table_phi MOT;
+    double kmesh_times = 4;
+    double sparse_threshold = 1e-10;
+    bool binary = false;
 
-	ORB_gaunt_table MGT;
-
-	Numerical_Orbital_Lm orb_r;
-
-	std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> orbital_phi;
-	
-	int R_x_num;
-    int R_y_num;
-    int R_z_num;
-	int R_minX;
-	int R_minY;
-	int R_minZ;
-	
-	ModuleBase::Vector3<double> ****psi_r_psi;
-	bool allocate_psi_r_psi = false;
-
-	std::map<size_t,
-		std::map<size_t,
-			std::map<size_t,
-				std::map<size_t,
-					std::map<size_t,
-						std::map<size_t,
-						Center2_Orb::Orb11>>>>>> center2_orb11;
-	
-	std::map<size_t,
-		std::map<size_t,
-			std::map<size_t,
-				std::map<size_t,
-					std::map<size_t,
-						std::map<size_t,
-						Center2_Orb::Orb21>>>>>> center2_orb21_r;
-						
-	void init(const Parallel_Orbitals &pv);
-	void out_r_overlap_R();
-	
-	int iw2it(int iw);
-	int iw2ia(int iw);
-	int iw2iL(int iw);
-	int iw2iN(int iw);
-    int iw2im(int iw);
+    void init(const Parallel_Orbitals &pv);
+    void out_rR();
+    void out_rR_other(const std::set<Abfs::Vector3_Order<int>> &output_R_coor);
 
 private:
+    void initialize_orb_table();
+    void construct_orbs_and_orb_r();
+
+    std::vector<int> iw2ia;
+    std::vector<int> iw2iL;
+    std::vector<int> iw2im;
+    std::vector<int> iw2iN;
+    std::vector<int> iw2it;
+
+    ORB_table_phi MOT;
+    ORB_gaunt_table MGT;
+
+    Numerical_Orbital_Lm orb_r;
+    std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> orbs;
+
+    std::map<size_t,
+        std::map<size_t,
+            std::map<size_t,
+                std::map<size_t,
+                    std::map<size_t,
+                        std::map<size_t,
+                        Center2_Orb::Orb11>>>>>> center2_orb11;
+    
+    std::map<size_t,
+        std::map<size_t,
+            std::map<size_t,
+                std::map<size_t,
+                    std::map<size_t,
+                        std::map<size_t,
+                        Center2_Orb::Orb21>>>>>> center2_orb21_r;
+
     const Parallel_Orbitals* ParaV;
     
 };

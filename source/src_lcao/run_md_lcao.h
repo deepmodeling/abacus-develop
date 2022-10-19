@@ -15,12 +15,6 @@ class Run_MD_LCAO
 	~Run_MD_LCAO();
 
 	void opt_ions(ModuleESolver::ESolver *p_esolver);
-	void md_force_virial(ModuleESolver::ESolver *p_esolver,
-		const int &istep,
-        const int& numIon, 
-        double &potential, 
-        ModuleBase::Vector3<double>* force, 
-        ModuleBase::matrix& virial);
 
 	private:
 

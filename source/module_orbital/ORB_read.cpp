@@ -179,10 +179,10 @@ void LCAO_Orbitals::Read_Orbitals(
 	}
 
 	// jingan add for calculate r(R) matrix
-	if(out_mat_r) 
-	{
-		kmesh = kmesh * 4;
-	}
+	// if(out_mat_r) 
+	// {
+	// 	kmesh = kmesh * 4;
+	// }
 
 	//	this->kmesh = static_cast<int> (PI / 0.01 / 4 / this->dk);
 	if(kmesh%2==0) kmesh++;

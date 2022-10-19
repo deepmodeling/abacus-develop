@@ -6,6 +6,7 @@
 #include "src_io/print_info.h"
 #include "src_lcao/run_md_lcao.h"
 #include "src_pw/run_md_pw.h"
+#include "module_md/run_md_classic.h"
 
 // This is the driver function which defines the workflow of ABACUS calculations
 // It relies on the class Esolver, which is a class that organizes workflows of single point calculations.
@@ -55,6 +56,11 @@ void Driver::driver_run()
         Run_MD_LCAO run_md_lcao;
         run_md_lcao.opt_ions(p_esolver);
 #endif
+    }
+    else if(INPUT.mdp.md_ensolver == "LJ" || INPUT.mdp.md_ensolver == "DP")
+    {
+        Run_MD_CLASSIC run_md_classic;
+        run_md_classic.classic_md_line(GlobalC::ucell, p_esolver);
     }
     else if(GlobalV::CALCULATION == "md" || GlobalV::CALCULATION == "sto-md")
     {

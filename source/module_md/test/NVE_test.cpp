@@ -1,7 +1,7 @@
 #include "gtest/gtest.h"
 #include "setcell.h"
 #include "module_md/NVE.h"
-#include "../../module_esolver/esolver.h"
+#include "module_esolver/esolver_lj.h"
 
 #define doublethreshold 1e-12
 
@@ -16,9 +16,11 @@ protected:
     {
         Setcell::setupcell(ucell);
         Setcell::parameters();
-        verlet = new NVE(INPUT.mdp, ucell);
-        ModuleESolver::ESolver *p_esolver;
 
+        ModuleESolver::ESolver *p_esolver = new ModuleESolver::ESolver_LJ();
+        p_esolver->Init(INPUT, ucell);
+
+        verlet = new NVE(INPUT.mdp, ucell);
         verlet->setup(p_esolver);
     }
 
