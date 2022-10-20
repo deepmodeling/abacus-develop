@@ -8,27 +8,27 @@
 void Charge::write_rho_dipole(const double* rho_save, const int &is, const int &iter, const std::string &fn, const int &precision, const bool for_plot)
 {
     ModuleBase::TITLE("Charge","write_rho_dipole");
-    if (out_chg==0) 
+    if (out_chg==0)
 	{
 		return;
 	}
-	else if(iter % out_chg != 0) 
+	else if(iter % out_chg != 0)
 	{
 		return; // mohan add 2010-05-22
 	}
-	
+
 	time_t start, end;
 	std::ofstream ofs;
-	
+
 	if(GlobalV::MY_RANK==0)
 	{
 		start = time(NULL);
-    	
+
 		ofs.open(fn.c_str());
     	if (!ofs)
     	{
         	ModuleBase::WARNING("Charge::write_rho","Can't create Charge File!");
-    	}	
+    	}
 
 		//GlobalV::ofs_running << "\n Output charge file." << std::endl;
 
@@ -72,7 +72,7 @@ void Charge::write_rho_dipole(const double* rho_save, const int &is, const int &
 			}
 			else if(GlobalV::NSPIN==2)
 			{
-				if(is==0)ofs << "\n " << GlobalC::en.ef_up << " (fermi energy for spin=1)"; 
+				if(is==0)ofs << "\n " << GlobalC::en.ef_up << " (fermi energy for spin=1)";
 				else if(is==1)ofs << "\n " << GlobalC::en.ef_dw << " (fermi energy for spin=2)";
 			}
 			else
@@ -114,8 +114,8 @@ void Charge::write_rho_dipole(const double* rho_save, const int &is, const int &
 	//std::cout << "dipole_elec_y: " << dipole_elec_y <<std::endl;
 	//std::cout << "dipole_elec_z: " << dipole_elec_z <<std::endl;
 
-	ofs << " " << "dipole_elec_x: " << dipole_elec_x 
-		<< " " << "dipole_elec_y: " << dipole_elec_y 
+	ofs << " " << "dipole_elec_x: " << dipole_elec_x
+		<< " " << "dipole_elec_y: " << dipole_elec_y
 		<< "dipole_elec_z: " << dipole_elec_z;
 #else
 	double dipole_elec_x=0.0, dipole_elec_y=0.0, dipole_elec_z=0.0;
@@ -125,7 +125,7 @@ void Charge::write_rho_dipole(const double* rho_save, const int &is, const int &
 
 //	for(int ir=0; ir<GlobalC::rhopw->nrxx; ir++) chr.rho[0][ir]=1; // for testing
 //	GlobalV::ofs_running << "\n GlobalV::RANK_IN_POOL = " << GlobalV::RANK_IN_POOL;
-	
+
 	// only do in the first pool.
 	if(GlobalV::MY_POOL==0)
 	{
@@ -136,16 +136,16 @@ void Charge::write_rho_dipole(const double* rho_save, const int &is, const int &
     	{
         	int ip = iz % GlobalV::NPROC_IN_POOL;
         	num_z[ip] += GlobalC::bigpw->bz;
-    	}	
+    	}
 
-		// start_z: start position of z in 
+		// start_z: start position of z in
 		// processor ip.
     	int *start_z = new int[GlobalV::NPROC_IN_POOL];
     	ModuleBase::GlobalFunc::ZEROS(start_z, GlobalV::NPROC_IN_POOL);
     	for (int ip=1;ip<GlobalV::NPROC_IN_POOL;ip++)
     	{
         	start_z[ip] = start_z[ip-1]+num_z[ip-1];
-    	}	
+    	}
 
 		// which_ip: found iz belongs to which ip.
 		int *which_ip = new int[GlobalC::rhopw->nz];
@@ -154,7 +154,7 @@ void Charge::write_rho_dipole(const double* rho_save, const int &is, const int &
 		{
 			for(int ip=0; ip<GlobalV::NPROC_IN_POOL; ip++)
 			{
-				if(iz>=start_z[GlobalV::NPROC_IN_POOL-1]) 
+				if(iz>=start_z[GlobalV::NPROC_IN_POOL-1])
 				{
 					which_ip[iz] = GlobalV::NPROC_IN_POOL-1;
 					break;
@@ -167,7 +167,7 @@ void Charge::write_rho_dipole(const double* rho_save, const int &is, const int &
 			}
 //			GlobalV::ofs_running << "\n iz=" << iz << " ip=" << which_ip[iz];
 		}
-		
+
 		//int count=0;
 		int nxy = GlobalC::rhopw->nx * GlobalC::rhopw->ny;
 		double* zpiece = new double[nxy];
@@ -193,7 +193,7 @@ void Charge::write_rho_dipole(const double* rho_save, const int &is, const int &
 					//GlobalV::ofs_running << "\n get zpiece[" << ir << "]=" << zpiece[ir] << " ir*GlobalC::rhopw->nplane+iz=" << ir*GlobalC::rhopw->nplane+iz;
 				}
 			}
-			// case 2: > first part rho: send the rho to 
+			// case 2: > first part rho: send the rho to
 			// processor 0.
 			else if(which_ip[iz] == GlobalV::RANK_IN_POOL )
 			{
@@ -214,7 +214,7 @@ void Charge::write_rho_dipole(const double* rho_save, const int &is, const int &
 				//GlobalV::ofs_running << "\n Receieve First number = " << zpiece[0];
 			}
 
-			// write data	
+			// write data
 			if(GlobalV::MY_RANK==0)
 			{
 				//	ofs << "\niz=" << iz;
@@ -255,12 +255,13 @@ void Charge::write_rho_dipole(const double* rho_save, const int &is, const int &
 		//std::cout << std::setprecision(8) << "dipole_elec_y: " << dipole_elec_y <<std::endl;
 		//std::cout << std::setprecision(8) << "dipole_elec_z: " << dipole_elec_z <<std::endl;
 
-	
+
 		ofs << " " << "dipole_elec_x: " << dipole_elec_x << std::endl;
 		ofs << " " << "dipole_elec_y: " << dipole_elec_y << std::endl;
 		ofs << " " << "dipole_elec_z: " << dipole_elec_z << std::endl;
 
 		double dipole_ion_x=0.0, dipole_ion_y=0.0, dipole_ion_z=0.0;	// dipole_sum=0.0;
+#ifdef __LCAO
 		if(GlobalC::ucell.ntype == 1)
 		{
 			for(int ia=0; ia<GlobalC::ucell.atoms[0].na; ia++)
@@ -310,7 +311,7 @@ void Charge::write_rho_dipole(const double* rho_save, const int &is, const int &
 		{
 			std::cout << "atom ntype is too large!" << std::endl;
 		}
-
+#endif
 
 /*
 		for(int it=1; it<(GlobalC::ucell.ntype); it++)
@@ -339,7 +340,7 @@ void Charge::write_rho_dipole(const double* rho_save, const int &is, const int &
 		}
 */
 
-/* 
+/*
 
 		std::cout << std::setprecision(8) << "dipole_ion_x: " << dipole_ion_x <<std::endl;
 		std::cout << std::setprecision(8) << "dipole_ion_y: " << dipole_ion_y <<std::endl;
@@ -362,7 +363,7 @@ void Charge::write_rho_dipole(const double* rho_save, const int &is, const int &
 #endif
 
 	// calculate ion dipole;
-	if(GlobalV::MY_RANK==0) 
+	if(GlobalV::MY_RANK==0)
 	{
 		end = time(NULL);
 		ModuleBase::GlobalFunc::OUT_TIME("write_rho_dipole",start,end);
