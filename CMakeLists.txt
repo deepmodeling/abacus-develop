@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
-if(POLICY CMP0131) # From CMake 3.24
-    cmake_policy(SET CMP0135 NEW)
+if(POLICY CMP0135) # https://cmake.org/cmake/help/git-stage/policy/CMP0135.html
+    cmake_policy(SET CMP0135 NEW) # Otherwise this policy generates a warning on CMake 3.24
 endif()
 
 project(ABACUS
@@ -251,13 +251,13 @@ endif()
 
 if(DEFINED DeePMD_DIR)
   add_compile_definitions(
-    __DPMD 
+    __DPMD
     HIGH_PREC
   )
   add_compile_options(-Wl,--no-as-needed)
   find_package(DeePMD REQUIRED)
   include_directories(${DeePMD_DIR}/include)
-  target_link_libraries(${ABACUS_BIN_NAME} 
+  target_link_libraries(${ABACUS_BIN_NAME}
     DeePMD::deepmd_cc
     DeePMD::deepmd_op
     DeePMD::deepmd_op_cuda
