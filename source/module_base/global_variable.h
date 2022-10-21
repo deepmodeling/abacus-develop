@@ -158,7 +158,6 @@ extern std::string global_out_dir;
 extern std::string global_orbital_dir; // liuyu add 2021-08-14
 extern std::string global_readin_dir; // zhengdy modified
 extern std::string global_stru_dir;   // liuyu add 2022-05-24 for MD STRU
-extern std::string global_matrix_dir; // liuyu add 2022-09-19 for HS matrix output 
 
 extern std::ofstream ofs_running;
 extern std::ofstream ofs_warning;
