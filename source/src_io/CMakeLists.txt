@@ -25,7 +25,6 @@ list(APPEND objects
     write_pot.cpp
     write_rho.cpp
     write_rho_cube.cpp
-    write_rho_dipole.cpp
 	write_wfc_realspace.cpp
 )
 

@@ -1143,7 +1143,6 @@ void Symmetry::getgroup(int &nrot, int &nrotk, std::ofstream &ofs_running)
     ModuleBase::TITLE("Symmetry","getgroup");
 
 	//--------------------------------------------------------------------------------
-    //GETGRP (L347 symlib.f VASP)
     //return all possible space group operators that reproduce a lattice with basis
     //out of a (maximum) pool of point group operations that is compatible with
     //the symmetry of the pure translation lattice without any basic.

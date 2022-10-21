@@ -530,7 +530,6 @@ void Symmetry_Basic::veccon(
 }
 
 
-//SGRGEN (L2080 symlib.f VASP)
 //generate all point group symmetry operations from the generation group
 void Symmetry_Basic::matrigen(ModuleBase::Matrix3 *symgen, const int ngen, ModuleBase::Matrix3* symop, int &nop)
 {
@@ -700,7 +699,6 @@ void Symmetry_Basic::matrigen(ModuleBase::Matrix3 *symgen, const int ngen, Modul
 }
 
 //--------------------------------------------------------------
-// SETGRP (L138 symlib.f VASP)
 // set up all possible space group operators 
 // (integer rotation matrices and nontrivial translations
 // given in crystal coordinates) 
@@ -845,7 +843,6 @@ void Symmetry_Basic::setgroup(ModuleBase::Matrix3* symop, int &nop, const int &i
 void Symmetry_Basic::pointgroup(const int &nrot, int &pgnumber, std::string &pgname, const ModuleBase::Matrix3* gmatrix, std::ofstream &ofs_running)
 {
 	//-------------------------------------------------------------------------
-	//PGROUP (L1760 symlib.f VASP)
 	//return the name of the point group
 	//the "name" (Schoenflies mark) of the group defined by following key:
 	//       1 --> C_1       9 --> C_3      17 --> D_4      25 --> C_6v     *

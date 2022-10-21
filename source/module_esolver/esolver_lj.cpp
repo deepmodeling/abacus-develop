@@ -16,6 +16,15 @@ namespace ModuleESolver
         lj_epsilon = inp.mdp.lj_epsilon;
         lj_sigma = inp.mdp.lj_sigma;
 
+        GlobalV::SEARCH_RADIUS = (lj_rcut + 2.0) * ModuleBase::ANGSTROM_AU;
+        lj_rcut *= ModuleBase::ANGSTROM_AU;
+        lj_epsilon /= ModuleBase::Hartree_to_eV;
+        lj_sigma *= ModuleBase::ANGSTROM_AU;
+    }
+
+    void ESolver_LJ::Run(const int istep, UnitCell_pseudo& ucell)
+    {
+        Grid_Driver grid_neigh(GlobalV::test_deconstructor, GlobalV::test_grid_driver, GlobalV::test_grid);
         atom_arrange::search(
             GlobalV::SEARCH_PBC,
             GlobalV::ofs_running,
@@ -23,12 +32,14 @@ namespace ModuleESolver
             ucell,
             GlobalV::SEARCH_RADIUS,
             GlobalV::test_atom_input);
-    }
 
-    void ESolver_LJ::Run(const int istep, UnitCell_pseudo& ucell)
-    {
         double distance;
         int index = 0;
+
+        // Important! potential, force, virial must be zero per step
+        lj_potential = 0;
+        lj_force.zero_out();
+        lj_virial.zero_out();
 
         ModuleBase::Vector3<double> tau1, tau2, dtau;
         for (int it = 0; it < ucell.ntype; ++it)
@@ -67,11 +78,20 @@ namespace ModuleESolver
                 lj_virial(i, j) /= (2.0 * ucell.omega);
             }
         }
+#ifdef __MPI
+        atom_arrange::delete_vector(
+            GlobalV::ofs_running,
+            GlobalV::SEARCH_PBC,
+            grid_neigh,
+            ucell, 
+            GlobalV::SEARCH_RADIUS,
+            GlobalV::test_atom_input);
+#endif
     }
 
-    void ESolver_LJ::cal_Energy(energy& en)
+    void ESolver_LJ::cal_Energy(double& etot)
     {
-
+        etot = lj_potential;
     }
 
     void ESolver_LJ::cal_Force(ModuleBase::matrix& force)

@@ -335,7 +335,6 @@ OBJS_IO=berryphase.o\
     write_pot.o\
     write_rho.o\
     write_rho_cube.o\
-    write_rho_dipole.o\
 	write_wfc_realspace.o\
 
 OBJS_IO_LCAO=cal_r_overlap_R.o\

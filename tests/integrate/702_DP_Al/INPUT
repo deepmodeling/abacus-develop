@@ -1,0 +1,23 @@
+INPUT_PARAMETERS
+#Parameters	(General)
+suffix              autotest
+ntype		    1
+calculation         md
+pseudo_dir          ../../PP_ORB
+
+md_ensolver         DP
+pot_file            ../../PP_ORB/Al-SCAN.pb
+
+cal_force           1
+cal_stress          1
+
+md_nstep            3
+md_type             4
+md_dt               1
+md_tfirst           200
+md_dumpfreq         1
+md_restartfreq      1
+
+msst_qmass          200
+msst_vel            0.028
+msst_vis            0.3

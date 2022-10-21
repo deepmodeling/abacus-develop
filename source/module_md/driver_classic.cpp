@@ -81,6 +81,9 @@ void Driver_classic::classic_world(void)
 {
 	ModuleBase::TITLE("Driver_classic", "classic_world");
 
+    ModuleESolver::ESolver *p_esolver = nullptr;
+    ModuleESolver::init_esolver(p_esolver);
+
 	Run_MD_CLASSIC run_md_classic;
 
 	Driver_classic::convert(run_md_classic.ucell_c);
@@ -90,7 +93,7 @@ void Driver_classic::classic_world(void)
 		ModuleBase::WARNING_QUIT("Driver_classic::classic_world","CALCULATION must be md!");
 	}
 
-    run_md_classic.classic_md_line();
+    run_md_classic.classic_md_line(p_esolver);
 
 	ModuleBase::timer::finish( GlobalV::ofs_running );
 
