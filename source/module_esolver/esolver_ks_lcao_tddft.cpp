@@ -468,14 +468,6 @@ void ESolver_KS_LCAO_TDDFT::afterscf(const int istep)
             ssp << GlobalV::global_out_dir << "SPIN" << is + 1 << "_POT";
             GlobalC::pot.write_potential(is, 0, ssp.str(), GlobalC::pot.vr_eff, precision);
         }
-
-        // LiuXh modify 20200701
-        /*
-        //fuxiang add 2017-03-15
-        std::stringstream sse;
-        sse << GlobalV::global_out_dir << "SPIN" << is + 1 << "_DIPOLE_ELEC";
-        GlobalC::CHR.write_rho_dipole(GlobalC::CHR.rho_save, is, 0, sse.str());
-        */
     }
 
     if (this->conv_elec)

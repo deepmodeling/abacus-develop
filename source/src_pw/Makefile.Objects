@@ -63,7 +63,6 @@ read_cell_pseudopots.o\
 write_pot.o\
 write_rho.o\
 write_rho_cube.o\
-write_rho_dipole.o\
 write_wfc_realspace.o\
 magnetism.o\
 optical.o\

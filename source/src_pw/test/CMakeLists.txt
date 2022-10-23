@@ -35,7 +35,7 @@ AddTest(
   ../../src_io/numerical_basis.cpp ../../src_io/bessel_basis.cpp ../../src_io/numerical_descriptor.cpp ../../src_io/output.cpp
   ../../src_io/dos.cpp ../../src_io/energy_dos_pw.cpp ../../src_io/wf_io.cpp ../../src_io/rwstream.cpp
   ../../src_io/eximport.cpp ../../src_io/write_input.cpp ../../src_io/read_rho.cpp ../../src_io/write_rho.cpp
-  ../../src_io/write_pot.cpp  ../../src_io/write_rho_cube.cpp  ../../src_io/write_rho_dipole.cpp ../../src_io/optical.cpp
+  ../../src_io/write_pot.cpp  ../../src_io/write_rho_cube.cpp  ../../src_io/optical.cpp
   ../../src_io/cal_test.cpp  ../../src_io/winput.cpp ../../src_io/chi0_hilbert.cpp
   ../../src_io/chi0_standard.cpp  ../../src_io/epsilon0_pwscf.cpp  ../../src_io/epsilon0_vasp.cpp
   ../../src_io/to_wannier90.cpp  ../../src_io/unk_overlap_pw.cpp ../../src_io/berryphase.cpp
