@@ -1,7 +1,4 @@
 #include "MD_func.h"
-#include "cmd_neighbor.h"
-#include "LJ_potential.h"
-#include "DP_potential.h"
 #include "../input.h"
 #include "../module_neighbor/sltk_atom_arrange.h"
 #include "../module_neighbor/sltk_grid_driver.h"
@@ -131,51 +128,54 @@ void MD_func::RandomVel(
 	const ModuleBase::Vector3<int>* ionmbl,
 	ModuleBase::Vector3<double>* vel)
 {
-	if(!GlobalV::MY_RANK)
-	{
-		ModuleBase::Vector3<double> average;
-		ModuleBase::Vector3<double> mass;
-		average.set(0,0,0);
-		mass.set(0,0,0);
-		for(int i=0; i<numIon; i++)
-		{
-			for(int k=0; k<3; ++k)
-			{
-				if(ionmbl[i][k]==0)
-				{
-					vel[i][k] = 0;
-				}
-				else
-				{
-					vel[i][k] = rand()/double(RAND_MAX)-0.5;
-					mass[k] += allmass[i];
-				}
-			}
-			average += allmass[i]*vel[i];
-		}
+    if(!GlobalV::MY_RANK)
+    {
+        double tot_mass = 0;
+        ModuleBase::Vector3<double> tot_momentum;
+        for(int i=0; i<numIon; i++)
+        {
+            tot_mass += allmass[i];
+            double sigma = sqrt(temperature / allmass[i]);
+            for(int k=0; k<3; ++k)
+            {
+                if(ionmbl[i][k]==0)
+                {
+                    vel[i][k] = 0;
+                }
+                else
+                {
+                    vel[i][k] = gaussrand() * sigma;
+                }
 
-		for(int i=0; i<numIon; i++)
-    	{
-			for(int k=0; k<3; ++k)
-			{
-				if(ionmbl[i][k] && frozen[k]==0)
-				{
-					vel[i][k] -= average[k] / mass[k];
-				}
-			}
-		}
-	
-		double factor = 0.5*(3*numIon-frozen_freedom)*temperature/GetAtomKE(numIon, vel, allmass);
-		for(int i=0; i<numIon; i++)
-    	{
-        	vel[i] = vel[i]*sqrt(factor);
-    	}
-	}
+                if(frozen[k] == 0)
+                {
+                    tot_momentum[k] += allmass[i] * vel[i][k];
+                }
+            }
+        }
+
+        for(int k=0; k<3; ++k)
+        {
+            if(frozen[k] == 0)
+            {
+                for(int i=0; i<numIon; i++)
+                {
+                    vel[i][k] -= tot_momentum[k] / tot_mass;
+                }
+            }
+        }
+
+        double factor = 0.5*(3*numIon-frozen_freedom)*temperature/GetAtomKE(numIon, vel, allmass);
+        for(int i=0; i<numIon; i++)
+        {
+            vel[i] = vel[i]*sqrt(factor);
+        }
+    }
 
 #ifdef __MPI
-	MPI_Bcast(vel,numIon*3,MPI_DOUBLE,0,MPI_COMM_WORLD);
+    MPI_Bcast(vel,numIon*3,MPI_DOUBLE,0,MPI_COMM_WORLD);
 #endif
-	return;
+    return;
 }
 
 void MD_func::InitVel(

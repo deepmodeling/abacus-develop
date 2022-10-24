@@ -887,6 +887,7 @@ void HS_Matrix::save_HSR_sparse(
     int output_R_number = 0;
     int *H_nonzero_num[2] = {nullptr, nullptr};
     int *S_nonzero_num = nullptr;
+    int step = istep;
 
     S_nonzero_num = new int[total_R_num];
     ModuleBase::GlobalFunc::ZEROS(S_nonzero_num, total_R_num);
@@ -1003,12 +1004,14 @@ void HS_Matrix::save_HSR_sparse(
         {
             for (int ispin = 0; ispin < spin_loop; ++ispin)
             {
-                g1[ispin].open(ssh[ispin].str().c_str(), ios::binary);
+                g1[ispin].open(ssh[ispin].str().c_str(), ios::binary | ios::app);
+                g1[ispin].write(reinterpret_cast<char *>(&step), sizeof(int));
                 g1[ispin].write(reinterpret_cast<char *>(&GlobalV::NLOCAL), sizeof(int));
                 g1[ispin].write(reinterpret_cast<char *>(&output_R_number), sizeof(int));
             }
 
-            g2.open(sss.str().c_str(), ios::binary);
+            g2.open(sss.str().c_str(), ios::binary | ios::app);
+            g2.write(reinterpret_cast<char *>(&step), sizeof(int));
             g2.write(reinterpret_cast<char *>(&GlobalV::NLOCAL), sizeof(int));
             g2.write(reinterpret_cast<char *>(&output_R_number), sizeof(int));
         }
@@ -1016,12 +1019,14 @@ void HS_Matrix::save_HSR_sparse(
         {
             for (int ispin = 0; ispin < spin_loop; ++ispin)
             {
-                g1[ispin].open(ssh[ispin].str().c_str());
+                g1[ispin].open(ssh[ispin].str().c_str(), ios::app);
+                g1[ispin] << "STEP: " << istep << std::endl;
                 g1[ispin] << "Matrix Dimension of H(R): " << GlobalV::NLOCAL <<std::endl;
                 g1[ispin] << "Matrix number of H(R): " << output_R_number << std::endl;
             }
 
-            g2.open(sss.str().c_str());
+            g2.open(sss.str().c_str(), ios::app);
+            g2 << "STEP: " << istep <<std::endl;
             g2 << "Matrix Dimension of S(R): " << GlobalV::NLOCAL <<std::endl;
             g2 << "Matrix number of S(R): " << output_R_number << std::endl;
         }

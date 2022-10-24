@@ -19,6 +19,7 @@ public:
     void temp_target();
 
     double t_target;       // target temperature
+    ModuleBase::Vector3<double> *fictitious_force;  // Langevin fictitious_force
 
 };
 
