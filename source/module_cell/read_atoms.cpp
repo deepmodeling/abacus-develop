@@ -863,7 +863,7 @@ bool UnitCell_pseudo::read_atom_positions(std::ifstream &ifpos, std::ofstream &o
 	}// end scan_begin
 
 //check if any atom can move in MD
-	if(!this->if_atoms_can_move() && (GlobalV::CALCULATION=="md" || GlobalV::CALCULATION=="sto-md"))
+	if(!this->if_atoms_can_move() && (GlobalV::CALCULATION=="md" || GlobalV::CALCULATION=="sto-md" || GlobalV::CALCULATION=="of-md"))
 	{
 		ModuleBase::WARNING("read_atoms", "no atom can move in MD!");
 		return 0;

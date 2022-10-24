@@ -55,6 +55,19 @@ void PW_Basis::count_pw_st(
 
     int iz_end = int(this->nz / 2) + 1;
     int iz_start = -iz_end;
+
+    if (this->full_pw)
+    {
+        ix_end = int(this->nx / 2);
+        ix_start = ix_end - this->nx + 1; 
+
+        iy_end = int(this->ny / 2);
+        iy_start = iy_end - this->ny + 1; 
+
+        iz_end = int(this->nz / 2);
+        iz_start = iz_end - this->nz + 1;
+    }
+
     if (this->gamma_only)
     {
         if(this->xprime)
@@ -95,7 +108,7 @@ void PW_Basis::count_pw_st(
                 f.y = iy;
                 f.z = iz;
                 double modulus = f * (this->GGT * f);
-                if (modulus <= this->ggecut)
+                if (modulus <= this->ggecut || this->full_pw)
                 {
                     if (length == 0) st_bottom2D[index] = iz; // length == 0 means this point is the bottom of stick (x, y).
                     ++this->npwtot;

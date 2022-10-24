@@ -1,0 +1,1 @@
+Test the energy, force, and stress of Wang-Teter (WT) kinetic energy functional (of_method = wt) in OFDFT with very strict convergence criterion (of_tole = 2e-8 Ry), symmetry=on

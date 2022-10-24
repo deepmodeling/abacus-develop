@@ -62,7 +62,7 @@ void Driver::driver_run()
         Run_MD_CLASSIC run_md_classic;
         run_md_classic.classic_md_line(GlobalC::ucell, p_esolver);
     }
-    else if(GlobalV::CALCULATION == "md" || GlobalV::CALCULATION == "sto-md")
+    else if(GlobalV::CALCULATION == "md" || GlobalV::CALCULATION == "sto-md" || GlobalV::CALCULATION == "of-md")
     {
         Run_MD_PW run_md_pw;
         run_md_pw.md_ions_pw(p_esolver);

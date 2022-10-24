@@ -45,7 +45,7 @@ void Input::Print(const std::string &fn) const
     ModuleBase::GlobalFunc::OUTP(ofs, "lmaxmax", lmaxmax, "maximum of l channels used");
     ModuleBase::GlobalFunc::OUTP(ofs, "dft_functional", dft_functional, "exchange correlation functional");
     ModuleBase::GlobalFunc::OUTP(ofs, "xc_temperature", xc_temperature, "temperature for finite temperature functionals");
-    ModuleBase::GlobalFunc::OUTP(ofs, "calculation", calculation, "test; scf; relax; nscf; ienvelope; istate; sto-scf; sto-md");
+    ModuleBase::GlobalFunc::OUTP(ofs, "calculation", calculation, "test; scf; relax; nscf; ienvelope; istate; sto-scf; sto-md; ofdft; of-md");
     ModuleBase::GlobalFunc::OUTP(ofs, "ntype", ntype, "atom species number");
     ModuleBase::GlobalFunc::OUTP(ofs, "nspin", nspin, "1: single spin; 2: up and down spin; 4: noncollinear spin");
     ModuleBase::GlobalFunc::OUTP(ofs, "kspacing", kspacing, "unit in 1/bohr, should be > 0, default is 0 which means read KPT file");
@@ -373,6 +373,23 @@ void Input::Print(const std::string &fn) const
     ModuleBase::GlobalFunc::OUTP(ofs, "tau", tau, "the effective surface tension parameter");
     ModuleBase::GlobalFunc::OUTP(ofs, "sigma_k", sigma_k, " the width of the diffuse cavity");
     ModuleBase::GlobalFunc::OUTP(ofs, "nc_k", nc_k, " the cut-off charge density");
+
+    ofs << "\n#Parameters (19.orbital free density functional theory)" << std::endl;
+    ModuleBase::GlobalFunc::OUTP(ofs, "of_kinetic", of_kinetic, "kinetic energy functional, such as tf, vw, wt");
+    ModuleBase::GlobalFunc::OUTP(ofs, "of_method", of_method, "optimization method used in OFDFT, including cg1, cg2, tn (default)");
+    ModuleBase::GlobalFunc::OUTP(ofs, "of_conv", of_conv, "the convergence criterion, potential, energy (default), or both");
+    ModuleBase::GlobalFunc::OUTP(ofs, "of_tole", of_tole, "tolerance of the energy change (in Ry) for determining the convergence, default=2e-6 Ry");
+    ModuleBase::GlobalFunc::OUTP(ofs, "of_tolp", of_tolp, "tolerance of potential for determining the convergence, default=1e-5 in a.u.");
+    ModuleBase::GlobalFunc::OUTP(ofs, "of_tf_weight", of_tf_weight, "weight of TF KEDF");
+    ModuleBase::GlobalFunc::OUTP(ofs, "of_vw_weight", of_vw_weight, "weight of vW KEDF");
+    ModuleBase::GlobalFunc::OUTP(ofs, "of_wt_alpha", of_wt_alpha, "parameter alpha of WT KEDF");
+    ModuleBase::GlobalFunc::OUTP(ofs, "of_wt_beta", of_wt_beta, "parameter beta of WT KEDF");
+    ModuleBase::GlobalFunc::OUTP(ofs, "of_wt_rho0", of_wt_rho0, "the average density of system, used in WT KEDF, in Bohr^-3");
+    ModuleBase::GlobalFunc::OUTP(ofs, "of_hold_rho0", of_hold_rho0, "If set to 1, the rho0 will be fixed even if the volume of system has changed, it will be set to 1 automaticly if of_wt_rho0 is not zero");
+    ModuleBase::GlobalFunc::OUTP(ofs, "of_full_pw", of_full_pw, "If set to 1, ecut will be ignored when collect planewaves, so that all planewaves will be used");
+    ModuleBase::GlobalFunc::OUTP(ofs, "of_full_pw_dim", of_full_pw_dim, "If of_full_pw = true, dimention of FFT is testricted to be (0) either odd or even; (1) odd only; (2) even only");
+    ModuleBase::GlobalFunc::OUTP(ofs, "of_read_kernel", of_read_kernel, "If set to 1, the kernel of WT KEDF will be filled from file of_kernel_file, not from formula. Only usable for WT KEDF");
+    ModuleBase::GlobalFunc::OUTP(ofs, "of_kernel_file", of_kernel_file, "The name of WT kernel file.");
 
     ofs << "\n#Parameters (19.dft+u)" << std::endl;
     ModuleBase::GlobalFunc::OUTP(ofs, "dft_plus_u", dft_plus_u, "true:DFT+U correction; false: standard DFT calcullation(default)");

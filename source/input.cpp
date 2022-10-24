@@ -454,6 +454,25 @@ void Input::Default(void)
     sigma_k = 0.6;
     nc_k = 0.00037;
 
+    //==========================================================
+    //    OFDFT sunliang added on 2022-05-05
+    //==========================================================
+    of_kinetic = "wt";
+    of_method = "tn";
+    of_conv = "energy";
+    of_tole = 1e-6;
+    of_tolp = 1e-5;
+    of_tf_weight = 1.;
+    of_vw_weight = 1.;
+    of_wt_alpha = 5./6.;
+    of_wt_beta = 5./6.;
+    of_wt_rho0 = 0.;
+    of_hold_rho0 = false;
+    of_full_pw = true;
+    of_full_pw_dim = 0;
+    of_read_kernel = false;
+    of_kernel_file = "WTkernel.txt";
+
     return;
 }
 
@@ -1630,6 +1649,69 @@ bool Input::Read(const std::string &fn)
             read_value(ifs, nc_k);
         }
         //----------------------------------------------------------------------------------
+        //    OFDFT sunliang added on 2022-05-05
+        //----------------------------------------------------------------------------------
+        else if (strcmp("of_kinetic", word) == 0)
+        {
+            read_value(ifs, of_kinetic);
+        }
+        else if (strcmp("of_method", word) == 0)
+        {
+            read_value(ifs, of_method);
+        }
+        else if (strcmp("of_conv", word) == 0)
+        {
+            read_value(ifs, of_conv);
+        }
+        else if (strcmp("of_tole", word) == 0)
+        {
+            read_value(ifs, of_tole);
+        }
+        else if (strcmp("of_tolp", word) == 0)
+        {
+            read_value(ifs, of_tolp);
+        }
+        else if (strcmp("of_tf_weight", word) == 0)
+        {
+            read_value(ifs, of_tf_weight);
+        }
+        else if (strcmp("of_vw_weight", word) == 0)
+        {
+            read_value(ifs, of_vw_weight);
+        }
+        else if (strcmp("of_wt_alpha", word) == 0)
+        {
+            read_value(ifs, of_wt_alpha);
+        }
+        else if (strcmp("of_wt_beta", word) == 0)
+        {
+            read_value(ifs, of_wt_beta);
+        }
+        else if (strcmp("of_wt_rho0", word) == 0)
+        {
+            read_value(ifs, of_wt_rho0);
+        }
+        else if (strcmp("of_hold_rho0", word) == 0)
+        {
+            read_value(ifs, of_hold_rho0);
+        }
+        else if (strcmp("of_full_pw", word) == 0)
+        {
+            read_value(ifs, of_full_pw);
+        }
+        else if (strcmp("of_full_pw_dim", word) == 0)
+        {
+            read_value(ifs, of_full_pw_dim);
+        }
+        else if (strcmp("of_read_kernel", word) == 0)
+        {
+            read_value(ifs, of_read_kernel);
+        }
+        else if (strcmp("of_kernel_file", word) == 0)
+        {
+            read_value(ifs, of_kernel_file);
+        }
+        //----------------------------------------------------------------------------------
         else
         {
             // xiaohui add 2015-09-15
@@ -1998,6 +2080,9 @@ void Input::Default_2(void) // jiyy add 2019-08-04
     {
         method_sto = 2;
     }
+    if(of_wt_rho0 != 0) of_hold_rho0 = true; // sunliang add 2022-06-17
+    if(!of_full_pw) of_full_pw_dim = 0; // sunliang add 2022-08-31
+    if(of_kinetic != "wt") of_read_kernel = false; // sunliang add 2022-09-12
 }
 #ifdef __MPI
 void Input::Bcast()
@@ -2349,6 +2434,25 @@ void Input::Bcast()
     Parallel_Common::bcast_double(sigma_k);
     Parallel_Common::bcast_double(nc_k);
 
+    //----------------------------------------------------------------------------------
+    //    OFDFT sunliang added on 2022-05-05
+    //----------------------------------------------------------------------------------
+    Parallel_Common::bcast_string(of_kinetic);
+    Parallel_Common::bcast_string(of_method);
+    Parallel_Common::bcast_string(of_conv);
+    Parallel_Common::bcast_double(of_tole);
+    Parallel_Common::bcast_double(of_tolp);
+    Parallel_Common::bcast_double(of_tf_weight);
+    Parallel_Common::bcast_double(of_vw_weight);
+    Parallel_Common::bcast_double(of_wt_alpha);
+    Parallel_Common::bcast_double(of_wt_beta);
+    Parallel_Common::bcast_double(of_wt_rho0);
+    Parallel_Common::bcast_bool(of_hold_rho0);
+    Parallel_Common::bcast_bool(of_full_pw);
+    Parallel_Common::bcast_int(of_full_pw_dim);
+    Parallel_Common::bcast_bool(of_read_kernel);
+    Parallel_Common::bcast_string(of_kernel_file);
+
     return;
 }
 #endif
@@ -2403,7 +2507,7 @@ void Input::Check(void)
     //----------------------------------------------------------
     // main parameters / electrons / spin ( 1/16 )
     //----------------------------------------------------------
-    if (calculation == "scf")
+    if (calculation == "scf" || calculation == "ofdft")
     {
         if (mem_saver == 1)
         {
@@ -2512,7 +2616,7 @@ void Input::Check(void)
             ModuleBase::WARNING_QUIT("Input::Check", "calculate = istate is only availble for LCAO.");
         }
     }
-    else if (calculation == "md" || calculation == "sto-md") // mohan add 2011-11-04
+    else if (calculation == "md" || calculation == "sto-md" || calculation == "of-md") // mohan add 2011-11-04
     {
         GlobalV::CALCULATION = calculation;
         symmetry = 0;
@@ -2601,6 +2705,13 @@ void Input::Check(void)
             ModuleBase::WARNING_QUIT("Input","to generate descriptors, please use pw basis");
         }
     }
+    // else if (calculation == "ofdft") // sunliang added on 2022-05-05
+    // {
+    //     if (pseudo_type != "blps")
+    //     {
+    //         ModuleBase::WARNING_QUIT("Input::Check", "pseudo_type in ofdft should be set as blps");
+    //     }
+    // }
     else
     {
         ModuleBase::WARNING_QUIT("Input", "check 'calculation' !");

@@ -105,9 +105,10 @@ void PW_Basis:: initgrids(
 			//n2 = n3 = n5 = n7 = 0;
 			n2 = n3 = n5 = 0;
 			done_factoring = false;
+            if (this->full_pw_dim == 2 && b % 2 != 0) done_factoring = true; // full_pw_dim = 2 means FFT dimensions should be even.
 			while (!done_factoring)
 			{
-				if (b % 2 == 0) 
+				if (b % 2 == 0 && this->full_pw_dim != 1) // full_pw_dim = 1 means FFT dimension should be odd.
 				{
 					n2++;
 					b /= 2;
@@ -238,4 +239,14 @@ void PW_Basis:: initparameters(
     this->distribution_type = distribution_type_in;
 }
 
+// Set parameters about full planewave, used only in OFDFT for now. sunliang added 2022-08-30
+void PW_Basis::setfullpw(
+    const bool inpt_full_pw,
+    const int inpt_full_pw_dim
+)
+{
+    this->full_pw = inpt_full_pw;
+    this->full_pw_dim = inpt_full_pw_dim;
+    if (!this->full_pw) this->full_pw_dim = 0;
+}
 }

@@ -533,6 +533,25 @@ void Input_Conv::Convert(void)
     GlobalV::sigma_k = INPUT.sigma_k;
     GlobalV::nc_k = INPUT.nc_k;
 
+    //-----------------------------------------------
+    // sunliang add for ofdft 2022-05-11
+    //-----------------------------------------------
+    GlobalV::of_kinetic = INPUT.of_kinetic;
+    GlobalV::of_method = INPUT.of_method;
+    GlobalV::of_conv = INPUT.of_conv;
+    GlobalV::of_tole = INPUT.of_tole;
+    GlobalV::of_tolp = INPUT.of_tolp;
+    GlobalV::of_tf_weight = INPUT.of_tf_weight;
+    GlobalV::of_vw_weight = INPUT.of_vw_weight;
+    GlobalV::of_wt_alpha = INPUT.of_wt_alpha;
+    GlobalV::of_wt_beta = INPUT.of_wt_beta;
+    GlobalV::of_wt_rho0 = INPUT.of_wt_rho0;
+    GlobalV::of_hold_rho0 = INPUT.of_hold_rho0;
+    GlobalV::of_full_pw = INPUT.of_full_pw;
+    GlobalV::of_full_pw_dim = INPUT.of_full_pw_dim;
+    GlobalV::of_read_kernel = INPUT.of_read_kernel;
+    GlobalV::of_kernel_file = INPUT.of_kernel_file;
+    
     ModuleBase::timer::tick("Input_Conv", "Convert");
     return;
 }

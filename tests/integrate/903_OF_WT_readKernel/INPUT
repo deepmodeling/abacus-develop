@@ -1,0 +1,25 @@
+INPUT_PARAMETERS
+#Parameters (1.General)
+suffix		autotest
+calculation ofdft
+ntype		1
+symmetry	1	
+pseudo_dir  ../../PP_ORB/
+pseudo_rcut 16
+nspin        1
+
+#Parameters (2.Iteration)
+ecutwfc		20
+scf_nmax	50
+
+#OFDFT
+of_kinetic 	wt
+of_method	tn
+of_conv 	energy
+of_tole 	2e-6
+of_read_kernel  1
+of_kernel_file  kernel.txt
+
+#Parameters (3.Basis)
+basis_type	pw
+

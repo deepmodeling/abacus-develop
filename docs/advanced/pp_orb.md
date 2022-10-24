@@ -21,21 +21,22 @@ An empty atom is defined in the `STRU` file when an element name contains the "e
 In the example, we provide four STRU files:
 
 - STRU_0 : used along with ntype = 2;normal calculation of water molecule ($E(\text{H}_2\text{O})$)
-    
-    obtained total energy of -466.4838149140513 eV
+
+  obtained total energy of -466.4838149140513 eV
 - STRU_1 : used along with ntype = 2;calculation of single O atom ($E_O$)
-    
-    obtained total energy of -427.9084406198214 eV
+
+  obtained total energy of -427.9084406198214 eV
 - STRU_2 : used along with ntype = 3;calculation of 1st H atom ($E_{H1}$)
-    
-    obtained total energy of -12.59853381731160 eV
+
+  obtained total energy of -12.59853381731160 eV
 - STRU_3 : used along with ntype = 3;calculation of 2nd H atom ($E_{H2}$)
 
-    obtained total energy of -12.59853378720844 eV
+  obtained total energy of -12.59853378720844 eV
 
 > Note : Remember to adjust the parameter `ntype` in INPUT file
 
 Thus, the formation energy is given by:
+
 $$
 \Delta E(\text{H}_2\text{O}) = E(\text{H}_2\text{O}) - E(\text{O}) - E(\text{H}^1) - E(\text{H}^2) \approx -13.38 eV
 $$
@@ -45,6 +46,8 @@ $$
 In ABACUS, we only support norm-conserving pseudopotentials. We support four different formats of the pseudopotential files: UPF, UPF2, VWR, and BLPS. For more information, check the `ATOMIC_SPECIES` section in the specification of the [STRU file](./input_files/stru.md).
 
 Here we list some common sources of the pseudopotential files:
+
 1. [Quantum ESPRESSO](http://www.quantum-espresso.org/pseudopotentials/).
 2. [SG15-ONCV](http://quantum-simulation.org/potentials/sg15_oncv/upf/).
 3. [DOJO](http://www.pseudo-dojo.org/).
+4. [BLPS](https://github.com/PrincetonUniversity/BLPSLibrary).
