@@ -1,7 +1,8 @@
 # Contributing to ABACUS
 
-First of all, thank you for taking time making contributions to ABACUS!
-This file provides a guideline for it.
+First of all, thank you for taking time to make contributions to ABACUS!
+This file provides the more technical guidelines on how to realize it.
+For more non-technical aspects, please refer to the [ABACUS Contribution Guide](./community/contribution_guide.md)
 
 ## Table of Contents
 
