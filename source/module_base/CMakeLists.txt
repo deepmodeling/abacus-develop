@@ -26,6 +26,8 @@ add_library(
     memory.cpp
     mymath1.cpp
     mymath3.cpp
+    opt_CG.cpp
+    opt_DCsrch.cpp
     polint.cpp
     realarray.cpp
     sph_bessel.cpp

@@ -115,3 +115,13 @@ AddTest(
   LIBS ${math_libs}
   SOURCES math_chebyshev_test.cpp ../math_chebyshev.cpp ../global_function.cpp ../tool_quit.cpp ../global_variable.cpp ../timer.cpp ../global_file.cpp ../memory.cpp
 )
+
+AddTest(
+  TARGET base_opt_CG
+  SOURCES opt_CG_test.cpp opt_test_tools.cpp ../opt_CG.cpp ../opt_DCsrch.cpp ../global_variable.cpp ../../src_parallel/parallel_reduce.cpp
+)
+
+AddTest(
+  TARGET base_opt_TN
+  SOURCES opt_TN_test.cpp opt_test_tools.cpp ../opt_CG.cpp ../opt_DCsrch.cpp ../global_variable.cpp ../../src_parallel/parallel_reduce.cpp
+)

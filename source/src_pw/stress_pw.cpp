@@ -53,7 +53,12 @@ void Stress_PW::cal_stress(ModuleBase::matrix& sigmatot, const psi::Psi<complex<
 	}
 
 	//kinetic contribution
-	stress_kin(sigmakin, psi_in);
+	if (GlobalV::CALCULATION != "ofdft" && GlobalV::CALCULATION != "of-md") 
+	// kinectic contribution of OFDFT should be calculated by kinetic functional, 
+	// it is calculated in ESolver_OF for now, maybe later will be moved here.
+	{
+		stress_kin(sigmakin, psi_in);
+	}
 	
 	//hartree contribution
 	stress_har(sigmahar, GlobalC::rhopw, 1);

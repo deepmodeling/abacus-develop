@@ -55,6 +55,8 @@ file(GLOB LIB_SRC
      ${LIB_BASE_DIR}/matrix3.cpp
      ${LIB_BASE_DIR}/realarray.cpp
      ${LIB_BASE_DIR}/tool_quit.cpp
+     ${LIB_BASE_DIR}/opt_CG.cpp
+     ${LIB_BASE_DIR}/opt_DCsrch.cpp
 )
 add_library(${libname} ${LIB_SRC})
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")

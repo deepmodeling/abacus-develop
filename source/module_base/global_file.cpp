@@ -19,6 +19,7 @@ namespace ModuleBase
 void ModuleBase::Global_File::make_dir_out(
     const std::string &suffix,
 	const std::string &calculation,
+    const bool &out_hs,
     const int rank,
     const bool &restart,
     const bool out_alllog)
@@ -84,7 +85,7 @@ void ModuleBase::Global_File::make_dir_out(
 	MPI_Barrier(MPI_COMM_WORLD);
 #endif
 
-    if(calculation == "md" || calculation == "sto-md")
+    if(calculation == "md" || calculation == "sto-md" || calculation == "of-md")
     {
         int make_dir_stru = 0;
         std::string command1 =  "test -d " + GlobalV::global_stru_dir + " || mkdir " + GlobalV::global_stru_dir;
@@ -116,6 +117,45 @@ void ModuleBase::Global_File::make_dir_out(
         if(make_dir_stru==0)
         {
             std::cout << " CAN NOT MAKE THE STRU DIR......." << std::endl;
+            ModuleBase::QUIT();
+        }
+        MPI_Barrier(MPI_COMM_WORLD);
+#endif
+    }
+
+    // make dir for HS matrix output in md calculation
+    if(out_hs && (calculation == "md" || calculation == "sto-md" || calculation == "of-md"))
+    {
+        int make_dir_matrix = 0;
+        std::string command1 =  "test -d " + GlobalV::global_matrix_dir + " || mkdir " + GlobalV::global_matrix_dir;
+
+        times = 0;
+        while(times<GlobalV::NPROC)
+        {
+            if(rank==times)
+            {
+                if ( system( command1.c_str() ) == 0 )
+                {
+                    std::cout << " MAKE THE MATRIX DIR    : " << GlobalV::global_stru_dir << std::endl;
+                    make_dir_matrix = 1;
+                }
+                else
+                {
+                    std::cout << " PROC " << rank << " CAN NOT MAKE THE MATRIX DIR !!! " << std::endl;
+                    make_dir_matrix = 0;
+                }
+            }
+#ifdef __MPI
+            Parallel_Reduce::reduce_int_all(make_dir_matrix);
+#endif
+            if(make_dir_matrix>0) break;
+            ++times;
+        }
+
+#ifdef __MPI
+        if(make_dir_matrix==0)
+        {
+            std::cout << " CAN NOT MAKE THE MATRIX DIR......." << std::endl;
             ModuleBase::QUIT();
         }
         MPI_Barrier(MPI_COMM_WORLD);
@@ -173,7 +213,7 @@ void ModuleBase::Global_File::open_log(std::ofstream &ofs, const std::string &fn
     std::stringstream ss;
     ss << GlobalV::global_out_dir << fn << ".log";
 
-    if((calculation == "md" || calculation == "sto-md") && restart)
+    if((calculation == "md" || calculation == "sto-md" || calculation == "of-md") && restart)
     {
         ofs.open( ss.str(), ios::app );
     }

@@ -128,6 +128,8 @@ element_basis_index.o \
 restart.o \
 mymath1.o \
 mymath3.o \
+opt_CG.o\
+opt_DCsrch.o
 
 OBJS_LCAO=sltk_grid.o\
 sltk_grid_driver.o \
@@ -262,6 +264,10 @@ OBJS_ESOLVER=esolver.o\
     esolver_ks_lcao_elec.o\
     esolver_lj.o\
     esolver_dp.o\
+    esolver_of.o\
+    kedf_tf.o\
+    kedf_vw.o\
+    kedf_wt.o\
 
 OBJS_SURCHEM=H_correction_pw.o\
     cal_epsilon.o\
@@ -344,6 +350,7 @@ OBJS_FIRST_PRINCIPLES=$(OBJS_MAIN)\
 $(OBJS_PW)\
 $(OBJS_LCAO)\
 $(OBJS_ESOLVER)\
+$(OBJS_OFOPT)\
 $(OBJS_XC)\
 $(OBJS_SURCHEM)\
 $(OBJ_PLANEWAVE)\

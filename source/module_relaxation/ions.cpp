@@ -58,7 +58,7 @@ void Ions::opt_ions(ModuleESolver::ESolver *p_esolver)
 		time_t eend = time(NULL);
 		time_t fstart = time(NULL);
 
-        if (GlobalV::CALCULATION=="scf" || GlobalV::CALCULATION=="relax" || GlobalV::CALCULATION=="cell-relax" || GlobalV::CALCULATION.substr(0,3)=="sto")
+        if (GlobalV::CALCULATION=="scf" || GlobalV::CALCULATION=="relax" || GlobalV::CALCULATION=="cell-relax" || GlobalV::CALCULATION.substr(0,3)=="sto" || GlobalV::CALCULATION.substr(0,2)=="of")
         {
 			//I'm considering putting force and stress
 			//as part of ucell and use ucell to pass information

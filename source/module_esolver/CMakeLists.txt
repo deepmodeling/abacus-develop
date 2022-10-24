@@ -13,6 +13,10 @@ add_library(
     esolver_ks_lcao_tddft.cpp
     esolver_lj.cpp
     esolver_dp.cpp
+    esolver_of.cpp
+    kedf_tf.cpp
+    kedf_vw.cpp
+    kedf_wt.cpp
 )
 
 

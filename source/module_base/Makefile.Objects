@@ -37,3 +37,5 @@ global_variable.o\
 tool_title.o\
 tool_check.o\
 tool_quit.o\
+opt_CG.o\
+opt_DCsrch.o\

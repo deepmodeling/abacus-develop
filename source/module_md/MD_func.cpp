@@ -201,6 +201,7 @@ void MD_func::InitVel(
     {
         RandomVel(unit_in.nat, temperature, allmass, frozen_freedom, frozen, ionmbl, vel);
     }
+	std::cout << "--------------------------------- INITVEL DONE ------------------------------------" << std::endl;
 }
 
 void MD_func::InitPos(
@@ -238,7 +239,10 @@ void MD_func::force_virial(
     ModuleBase::matrix force_temp(unit_in.nat, 3); 
     p_esolver->cal_Force(force_temp);
 
-    p_esolver->cal_Stress(stress);
+    if(GlobalV::CAL_STRESS)
+    {
+        p_esolver->cal_Stress(stress);
+    }
 
     if(mdp.md_ensolver == "FP")
     {

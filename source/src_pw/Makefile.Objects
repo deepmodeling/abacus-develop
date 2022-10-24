@@ -1,5 +1,5 @@
 # The ABACUS-PW module
-#
+#OBJS_OPT
 
 VERSION= ABACUS-PW
 HEADERS= *.h
@@ -10,6 +10,7 @@ $(OBJS_PW)\
 $(OBJS_TOOLS)\
 ${OBJS_PARALLEL}\
 ${OBJS_ESOLVER}\
+${OBJS_OFOPT}\
 $(OBJS_SURCHEM)\
 ${OBJS_XC}\
 ${OBJ_PLANEWAVE}\
@@ -168,6 +169,13 @@ OBJS_ESOLVER=esolver.o\
 	esolver_sdft_pw_tool.o\
     esolver_lj.o\
     esolver_dp.o
+    esolver_of.o\
+    kedf_tf.o\
+    kedf_vw.o\
+    kedf_wt.o\
+
+OBJS_OFOPT=opt_CG.o\
+    opt_DCsrch.o\
 
 OBJS_SURCHEM=H_correction_pw.o\
     cal_epsilon.o\

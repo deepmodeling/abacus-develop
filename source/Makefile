@@ -26,17 +26,6 @@ else
      endif
 endif
 
-ifeq ($(DEBUG), ON)
-    INTEL = OFF
-    HONG += -D__DEBUG
-    ifeq ($(MPI), ON)
-        CC = mpicxx
-    else
-        CC = g++
-    endif
-    OPTS +=  -fsanitize=address -fno-omit-frame-pointer -Wall -g #It can check segmental defaults
-endif
-
 ifeq ($(INTEL), ON)
     OPTS += -simd -qopenmp
     ##==========================
@@ -46,31 +35,6 @@ ifeq ($(INTEL), ON)
     LIBS += -L${MKLROOT}/lib/intel64 -Wl,--start-group -lmkl_intel_lp64\
 	       -lmkl_intel_thread -lmkl_core -lmkl_scalapack_lp64 -lmkl_blacs_intelmpi_lp64 -Wl,--end-group -Wl,-rpath=${MKLROOT}/lib/intel64
     INCLUDES += -I${MKLROOT}/include/fftw
-
-    #==========================
-    # ELPA package
-    #==========================
-    ELPA_LIB_DIR = ${ELPA_DIR}/lib
-    LIBS     += -L${ELPA_LIB_DIR} -lelpa  -Wl,-rpath=${ELPA_LIB_DIR}
-    INCLUDES += -I${ELPA_INCLUDE_DIR}
-else
-    OPTS += -fopenmp -fpermissive
-    ##==========================
-    ## FFTW package
-    ##==========================
-    FFTW_INCLUDE_DIR = ${FFTW_DIR}/include
-    FFTW_LIB_DIR     = ${FFTW_DIR}/lib
-    HONG  += -D__FFTW3
-    LIBS += -L${FFTW_LIB_DIR} -lfftw3 -Wl,-rpath=${FFTW_LIB_DIR}
-    INCLUDES += -I${FFTW_INCLUDE_DIR}
-    
-    #==========================
-    # OPENBLAS, SCALAPACK, ELPA
-    #==========================
-    LIBS     += -L${OPENBLAS_LIB_DIR} -L${SCALAPACK_LIB_DIR} -L${ELPA_DIR}/lib -lelpa -lscalapack -lopenblas -lgfortran\
-                -Wl,-rpath=${ELPA_DIR}/lib -Wl,-rpath=${SCALAPACK_LIB_DIR} -Wl,-rpath=${OPENBLAS_LIB_DIR}
-    INCLUDES += -I${ELPA_INCLUDE_DIR}
-endif
 
 
 #==========================
