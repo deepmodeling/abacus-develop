@@ -20,15 +20,15 @@ class Vdwd2 : public Vdw
 
     ~Vdwd2() = default;
 
-    void cal_energy() override;
-    void cal_force() override;
-    void cal_stress() override;
-
     Vdwd2Parameters &parameter() { return para_; }
     const Vdwd2Parameters &parameter() const { return para_; }
 
   private:
     Vdwd2Parameters para_;
+
+    void cal_energy() override;
+    void cal_force() override;
+    void cal_stress() override;
 
     template <typename F> void index_loops(F &&f)
     {

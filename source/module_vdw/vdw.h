@@ -17,13 +17,18 @@ class Vdw
 
     virtual ~Vdw(){};
 
-    virtual void cal_energy() { throw std::runtime_error("No cal_energy method in base Vdw class"); }
-    virtual void cal_force() { throw std::runtime_error("No cal_energy method in base Vdw class"); }
-    virtual void cal_stress() { throw std::runtime_error("No cal_energy method in base Vdw class"); }
-
-    inline const double &get_energy() const { return energy_; }
-    inline const std::vector<ModuleBase::Vector3<double>> &get_force() const { return force_; }
-    inline const ModuleBase::Matrix3 &get_stress() const { return stress_; }
+    inline double get_energy(bool cal=true) {
+        if (cal) { cal_energy(); }
+        return energy_;
+    }
+    inline const std::vector<ModuleBase::Vector3<double>> &get_force(bool cal=true) {
+        if (cal) { cal_force(); }
+        return force_;
+    }
+    inline const ModuleBase::Matrix3 &get_stress(bool cal=true) {
+        if (cal) { cal_stress(); }
+        return stress_;
+    }
 
   protected:
     const UnitCell_pseudo &ucell_;
@@ -31,6 +36,10 @@ class Vdw
     double energy_ = 0;
     std::vector<ModuleBase::Vector3<double>> force_;
     ModuleBase::Matrix3 stress_;
+
+    virtual void cal_energy() { throw std::runtime_error("No cal_energy method in base Vdw class"); }
+    virtual void cal_force() { throw std::runtime_error("No cal_energy method in base Vdw class"); }
+    virtual void cal_stress() { throw std::runtime_error("No cal_energy method in base Vdw class"); }
 };
 
 std::unique_ptr<Vdw> make_vdw(const UnitCell_pseudo &ucell, const Input &input);

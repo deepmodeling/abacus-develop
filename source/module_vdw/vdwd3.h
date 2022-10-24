@@ -20,10 +20,6 @@ class Vdwd3 : public Vdw
 
     ~Vdwd3() = default;
 
-    void cal_energy() override;
-    void cal_force() override;
-    void cal_stress() override;
-
     Vdwd3Parameters &parameter() { return para_; }
     const Vdwd3Parameters &parameter() const { return para_; }
 
@@ -35,6 +31,10 @@ class Vdwd3 : public Vdw
     std::vector<ModuleBase::Vector3<double>> xyz_;
     std::vector<int> rep_vdw_;
     std::vector<int> rep_cn_;
+
+    void cal_energy() override;
+    void cal_force() override;
+    void cal_stress() override;
 
     void init();
 
