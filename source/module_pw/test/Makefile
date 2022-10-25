@@ -4,9 +4,9 @@
 #======================================================================
 CC = mpiicpc
 # mpiicpc:   compile intel parallel version
-# icpc:      compile intel serial version
+# icpc:      compile intel sequential version
 # mpicxx:    compile gnu parallel version
-# g++:       compile gnu serial version
+# g++:       compile gnu sequential version
 GPU = OFF
 # OFF:  do not use GPU
 # CUDA: use CUDA 

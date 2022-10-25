@@ -10,6 +10,7 @@ project(ABACUS
     LANGUAGES CXX
 )
 
+option(ENABLE_LCAO "Enable LCAO calculation." ON)
 option(ENABLE_DEEPKS "Enable DeePKS functionality" OFF)
 option(ENABLE_LIBXC "Enable LibXC functionality" OFF)
 option(USE_CUDA "Enable support to CUDA for PW." OFF)
@@ -21,8 +22,12 @@ option(BUILD_TESTING "Build ABACUS unit tests" OFF)
 option(GENERATE_TEST_REPORTS "Enable test report generation" OFF)
 option(INFO "Enable gathering of math library information" OFF)
 
-set(ABACUS_BIN_NAME abacus)
-list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/modules)
+if(ENABLE_LCAO)
+  set(ABACUS_BIN_NAME abacus)
+else()
+  set(ABACUS_BIN_NAME abacus_pw)
+endif()
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 set(ABACUS_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/source)
 set(ABACUS_TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR}/tests)
 set(ABACUS_BIN_PATH ${CMAKE_CURRENT_BINARY_DIR}/${ABACUS_BIN_NAME})
@@ -50,13 +55,18 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
   add_compile_options(-O2 -g) # default flag
 endif()
 
-find_package(Cereal REQUIRED)
-include_directories(${CEREAL_INCLUDE_DIR})
-add_compile_definitions(USE_CEREAL_SERIALIZATION)
-
-find_package(ELPA REQUIRED)
-include_directories(${ELPA_INCLUDE_DIR})
-target_link_libraries(${ABACUS_BIN_NAME} ELPA::ELPA)
+if(ENABLE_LCAO)
+  find_package(Cereal REQUIRED)
+  include_directories(${CEREAL_INCLUDE_DIR})
+  add_compile_definitions(USE_CEREAL_SERIALIZATION)
+  
+  find_package(ELPA REQUIRED)
+  include_directories(${ELPA_INCLUDE_DIR})
+  target_link_libraries(${ABACUS_BIN_NAME} ELPA::ELPA)
+  add_compile_definitions(__LCAO)
+else()
+  set(ENABLE_DEEPKS OFF)
+endif()
 
 find_package(MPI REQUIRED)
 include_directories(${MPI_CXX_INCLUDE_PATH})
@@ -278,11 +288,10 @@ if(DEFINED TensorFlow_DIR)
 endif()
 
 add_compile_definitions(
-  __EXX
   __FFTW3
   __SELINV
-  __LCAO
   METIS
+  __EXX
   EXX_DM=3
   EXX_H_COMM=2
   TEST_EXX_LCAO=0
@@ -342,26 +351,31 @@ target_link_libraries(${ABACUS_BIN_NAME}
     planewave
     surchem
     neighbor
-    orb
     io
     relax
-    lcao
-    gint
-    parallel
-    mrrr
-    pdiag
-    pw
     ri
+    parallel
+    pw
     driver
     xc_
     hsolver
-    genelpa
     elecstate
     hamilt
     psi
     esolver
-    rpa
 )
+
+if(ENABLE_LCAO)
+  target_link_libraries(${ABACUS_BIN_NAME}
+      lcao
+      orb
+      gint
+      mrrr
+      pdiag
+      genelpa
+      rpa
+  )
+endif()
 
 install(PROGRAMS ${ABACUS_BIN_PATH}
     TYPE BIN

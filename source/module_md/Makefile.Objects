@@ -9,9 +9,6 @@ OBJS_MAIN=input.o\
 OBJS_MD=driver_classic.o\
 MD_func.o\
 run_md_classic.o\
-LJ_potential.o\
-DP_potential.o\
-cmd_neighbor.o\
 verlet.o\
 NVE.o\
 MSST.o\

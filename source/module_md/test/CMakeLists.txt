@@ -3,9 +3,6 @@ add_definitions(-D__CMD -D__NORMAL)
 
 list(APPEND depend_files 
   ../MD_func.cpp
-  ../cmd_neighbor.cpp
-  ../LJ_potential.cpp
-  ../DP_potential.cpp
   ../../input.cpp
   ../../module_cell/unitcell_pseudo.cpp
   ../../module_cell/unitcell.cpp

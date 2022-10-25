@@ -48,7 +48,8 @@ list(APPEND objects
     wf_atomic.cpp
     wf_igk.cpp
     xc_3.cpp
-    run_md_pw.cpp)
+    run_md_pw.cpp
+)
 if(USE_CUDA)
     list(APPEND objects
         diago_cg.cu
@@ -82,3 +83,4 @@ add_library(
 IF (BUILD_TESTING)
   add_subdirectory(test)
 endif()
+

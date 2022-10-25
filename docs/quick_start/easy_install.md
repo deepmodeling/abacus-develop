@@ -11,10 +11,10 @@ ABACUS currently supports Linux. To compile ABACUS, please make sure that the fo
 - Fortran compiler if you are building `BLAS`, `LAPACK`, `ScaLAPACK`, and `ELPA` from source file. You can use [Intel® Fortran Compiler](https://www.intel.com/content/www/us/en/developer/tools/oneapi/fortran-compiler.html) or [GFortran](https://gcc.gnu.org/fortran/).
 - [BLAS](http://www.netlib.org/blas/). You can use [OpenBLAS](https://www.openblas.net/).
 - [LAPACK](http://www.netlib.org/lapack/).
-- [ScaLAPACK](http://www.netlib.org/scalapack/).
+- [ScaLAPACK](http://www.netlib.org/scalapack/) (needed by LCAO).
 - [FFTW3](http://www.fftw.org/).
-- [ELPA](https://elpa.mpcdf.mpg.de/) >= 2017.
-- [CEREAL](https://uscilab.github.io/cereal/).
+- [ELPA](https://elpa.mpcdf.mpg.de/) >= 2017 (needed by LCAO).
+- [CEREAL](https://uscilab.github.io/cereal/) (needed by LCAO).
 
 > GCC version 5 or later is required; Intel compilers also use GCC headers and libraries[(ref)](https://www.intel.com/content/www/us/en/develop/documentation/cpp-compiler-developer-guide-and-reference/top/compatibility-and-portability/gcc-compatibility-and-interoperability.html#gcc-compatibility-and-interoperability_GUID-52CB6FE0-83DA-4028-9EF4-0DFAF1652736).
 
@@ -37,6 +37,7 @@ And of course, a copy of ABACUS source code is required, which can be obtained v
 - Download the latest source code without git: `wget https://github.com/deepmodeling/abacus-develop/archive/refs/heads/develop.zip`
 - Get the source code of a stable version [here](https://github.com/deepmodeling/abacus-develop/releases)
 - If you have connection issues accessing GitHub, please try out our official [Gitee repo](https://gitee.com/deepmodeling/abacus-develop/): replacing 'github.com' with 'gitee.com' works for all the links above. e.g. `git clone https://gitee.com/deepmodeling/abacus-develop.git`
+- If you do only need LCAO calculations, ScaLAPACK, ELPA, CEREAL are not needed.
 
 ## Configure
 
@@ -61,6 +62,12 @@ cmake -B build -DFFTW3_ROOT=/opt/fftw3
 ```
 
 If environment variable `MKLROOT` exists, `cmake` will take MKL as a preference, i.e. not using `LAPACK` and `ScaLAPACK`. To disable MKL, unset environment variable `MKLROOT`, or pass `-DMKLROOT=OFF` to `cmake`.
+
+If you do not prepare SCALAPACK, ELPA or CEREAL and only want to do PW calculations, LCAO can be turned off with:
+
+```bash
+cmake -B build -DENABLE_LCAO=OFF
+```
 
 
 ## Build and Install

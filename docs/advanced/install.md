@@ -64,12 +64,12 @@ Specify the location of the compiler and libraries present in your own machine:
 #======================================================================
 CC = mpiicpc
 # mpiicpc:   compile intel parallel version
-# icpc:      compile intel serial version
+# icpc:      compile intel sequential version
 # make: ELPA_DIR, ELPA_INCLUDE_DIR, CEREAL_DIR must also be set.
 # make pw: nothing need to be set except LIBXC_DIR
 #
 # mpicxx:    compile gnu parallel version
-# g++:       compile gnu serial version
+# g++:       compile gnu sequential version
 # make: FFTW_DIR, OPENBLAS_LIB_DIR, SCALAPACK_LIB_DIR, ELPA_DIR, ELPA_INCLUDE_DIR, CEREAL_DIR must also be set.
 # make pw: FFTW_DIR, OPENBLAS_LIB_DIR must be set.
 
@@ -135,7 +135,7 @@ ELPA_DIR      = /public/soft/elpa_21.05.002
 ELPA_INCLUDE_DIR = ${ELPA_DIR}/include/elpa-2021.05.002
 CEREAL_DIR    = /public/soft/cereal
 ```
-When `CC=mpiicpc`, a parallel version will be compiled. When `CC=icpc`, a serial version will be compiled.
+When `CC=mpiicpc`, a parallel version will be compiled. When `CC=icpc`, a sequential version will be compiled.
 
 
 Another example is where the Gnu C++ compiler, MPICH, OPENBLAS, ScaLAPACK, ELPA and CEREAL are used:
@@ -149,7 +149,7 @@ ELPA_DIR      = /public/soft/elpa_21.05.002
 ELPA_INCLUDE_DIR = ${ELPA_DIR}/include/elpa-2021.05.002
 CEREAL_DIR    = /public/soft/cereal
 ```
-When `CC=mpicxx`, a parallel version will be compiled. When `CC=g++`, a serial version will be compiled.
+When `CC=mpicxx`, a parallel version will be compiled. When `CC=g++`, a sequential version will be compiled.
 
 Except modifying `Makefile.vars`, you can also directly use
 ```makefile
