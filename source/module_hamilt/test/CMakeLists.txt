@@ -1,7 +1,7 @@
 if (USE_CUDA)
 AddTest(
   TARGET Hamilt_UTs
-  LIBS ${math_libs} ELPA::ELPA
+  LIBS ${math_libs}
   SOURCES ekinetic_test.cpp nonlocal_test.cpp
           ../src/ekinetic.cpp
           ../src/nonlocal.cpp
@@ -13,7 +13,7 @@ AddTest(
 else()
 AddTest(
   TARGET Hamilt_UTs
-  LIBS ${math_libs} ELPA::ELPA
+  LIBS ${math_libs}
   SOURCES ekinetic_test.cpp nonlocal_test.cpp
           ../src/ekinetic.cpp
           ../src/nonlocal.cpp

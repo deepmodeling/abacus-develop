@@ -33,7 +33,7 @@ endif()
 if (USE_CUDA)
 AddTest(
   TARGET Hsolver_UTs
-  LIBS ${math_libs} ELPA::ELPA base cublas
+  LIBS ${math_libs} base cublas
   SOURCES math_kernel_test.cpp ../../src_parallel/parallel_global.cpp 
           ../../src_parallel/parallel_common.cpp  ../../src_parallel/parallel_reduce.cpp
           ../../module_hsolver/src/math_kernel.cpp
@@ -43,7 +43,7 @@ AddTest(
 else()
 AddTest(
   TARGET Hsolver_UTs
-  LIBS ${math_libs} ELPA::ELPA base
+  LIBS ${math_libs} base
   SOURCES math_kernel_test.cpp ../../src_parallel/parallel_global.cpp 
           ../../src_parallel/parallel_common.cpp  ../../src_parallel/parallel_reduce.cpp
           ../../module_hsolver/src/math_kernel.cpp
