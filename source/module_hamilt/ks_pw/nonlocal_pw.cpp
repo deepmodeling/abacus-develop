@@ -1,8 +1,6 @@
 #include "nonlocal_pw.h"
 
 #include "module_base/blas_connector.h"
-#include "module_base/global_function.h"
-#include "module_base/global_variable.h"
 #include "module_base/timer.h"
 #include "src_parallel/parallel_reduce.h"
 #include "module_base/tool_quit.h"
