@@ -7,10 +7,11 @@
 #include "module_xc/xc_functional.h"
 #include "module_base/tool_quit.h"
 
-using namespace hamilt;
+using hamilt::Meta;
+using hamilt::OperatorPW;
 
 template<typename FPTYPE, typename Device>
-Meta<FPTYPE, Device>::Meta(
+Meta<OperatorPW<FPTYPE, Device>>::Meta(
     FPTYPE tpiba_in, 
     const int* isk_in,
     const ModuleBase::matrix* vk_in,
@@ -29,7 +30,7 @@ Meta<FPTYPE, Device>::Meta(
 }
 
 template<typename FPTYPE, typename Device>
-void Meta<FPTYPE, Device>::act(
+void Meta<OperatorPW<FPTYPE, Device>>::act(
     const psi::Psi<std::complex<FPTYPE>, Device> *psi_in, 
     const int n_npwx, 
     const std::complex<FPTYPE>* tmpsi_in, 
@@ -85,8 +86,8 @@ void Meta<FPTYPE, Device>::act(
 }
 
 namespace hamilt{
-template class Meta<double, psi::DEVICE_CPU>;
+template class Meta<OperatorPW<double, psi::DEVICE_CPU>>;
 #if ((defined __CUDA) || (defined __ROCM))
-template class Meta<double, psi::DEVICE_GPU>;
+template class Meta<OperatorPW<double, psi::DEVICE_GPU>>;
 #endif
 } // namespace hamilt

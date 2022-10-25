@@ -3,10 +3,11 @@
 #include "module_base/timer.h"
 #include "module_base/tool_quit.h"
 
-using namespace hamilt;
+using hamilt::Ekinetic;
+using hamilt::OperatorPW;
 
 template<typename FPTYPE, typename Device>
-Ekinetic<FPTYPE, Device>::Ekinetic(
+Ekinetic<OperatorPW<FPTYPE, Device>>::Ekinetic(
     FPTYPE tpiba2_in,
     const FPTYPE* gk2_in,
     const int gk2_row,
@@ -28,14 +29,14 @@ Ekinetic<FPTYPE, Device>::Ekinetic(
 }
 
 template<typename FPTYPE, typename Device>
-Ekinetic<FPTYPE, Device>::~Ekinetic() {
+Ekinetic<OperatorPW<FPTYPE, Device>>::~Ekinetic() {
 #if ((defined __CUDA) || (defined __ROCM))
   delete_memory_op()(this->ctx, this->gk2);
 #endif // __CUDA || __ROCM
 }
 
 template<typename FPTYPE, typename Device>
-void Ekinetic<FPTYPE, Device>::act(
+void Ekinetic<OperatorPW<FPTYPE, Device>>::act(
     const psi::Psi<std::complex<FPTYPE>, Device> *psi_in, 
     const int n_npwx, 
     const std::complex<FPTYPE>* tmpsi_in, 
@@ -61,8 +62,8 @@ void Ekinetic<FPTYPE, Device>::act(
 }
 
 namespace hamilt{
-template class Ekinetic<double, psi::DEVICE_CPU>;
+template class Ekinetic<OperatorPW<double, psi::DEVICE_CPU>>;
 #if ((defined __CUDA) || (defined __ROCM))
-template class Ekinetic<double, psi::DEVICE_GPU>;
+template class Ekinetic<OperatorPW<double, psi::DEVICE_GPU>>;
 #endif
 } // namespace hamilt

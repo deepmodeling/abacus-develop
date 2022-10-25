@@ -7,15 +7,19 @@
 namespace hamilt {
 
 // Not needed anymore
-// #ifndef __EKINETICTEMPLATE
-// #define __EKINETICTEMPLATE
+#ifndef __EKINETICTEMPLATE
+#define __EKINETICTEMPLATE
 
 // template<class T> class Ekinetic : public T {};
-
-// #endif
-
 template<typename FPTYPE, typename Device = psi::DEVICE_CPU>
-class Ekinetic : public OperatorPW<FPTYPE, Device>
+class Ekinetic : public OperatorPW<FPTYPE, Device> {};
+
+#endif
+
+// template<typename FPTYPE, typename Device = psi::DEVICE_CPU>
+// class Ekinetic : public OperatorPW<FPTYPE, Device>
+template<typename FPTYPE, typename Device>
+class Ekinetic<OperatorPW<FPTYPE, Device>> : public OperatorPW<FPTYPE, Device>
 {
   public:
     Ekinetic(

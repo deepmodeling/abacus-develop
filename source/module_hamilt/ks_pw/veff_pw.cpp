@@ -4,10 +4,11 @@
 #include "src_pw/global.h"
 #include "module_base/tool_quit.h"
 
-using namespace hamilt;
+using hamilt::Veff;
+using hamilt::OperatorPW;
 
 template<typename FPTYPE, typename Device>
-Veff<FPTYPE, Device>::Veff(
+Veff<OperatorPW<FPTYPE, Device>>::Veff(
     const int* isk_in,
     const ModuleBase::matrix* veff_in,
     ModulePW::PW_Basis_K* wfcpw_in)
@@ -23,7 +24,7 @@ Veff<FPTYPE, Device>::Veff(
 }
 
 template<typename FPTYPE, typename Device>
-void Veff<FPTYPE, Device>::act(
+void Veff<OperatorPW<FPTYPE, Device>>::act(
     const psi::Psi<std::complex<FPTYPE>, Device> *psi_in, 
     const int n_npwx, 
     const std::complex<FPTYPE>* tmpsi_in, 
@@ -98,8 +99,8 @@ void Veff<FPTYPE, Device>::act(
 }
 
 namespace hamilt{
-template class Veff<double, psi::DEVICE_CPU>;
+template class Veff<OperatorPW<double, psi::DEVICE_CPU>>;
 #if ((defined __CUDA) || (defined __ROCM))
-template class Veff<double, psi::DEVICE_GPU>;
+template class Veff<OperatorPW<double, psi::DEVICE_GPU>>;
 #endif
 } // namespace hamilt

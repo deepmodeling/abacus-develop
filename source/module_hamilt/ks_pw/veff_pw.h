@@ -7,16 +7,17 @@
 
 namespace hamilt {
 
-// #ifndef __VEFFTEMPLATE
-// #define __VEFFTEMPLATE
+ #ifndef __VEFFTEMPLATE
+ #define __VEFFTEMPLATE
 
-// template<class T> class Veff : public T 
-// {};
-
-// #endif
-
+// template<class T> class Veff : public T {};
 template<typename FPTYPE, typename Device = psi::DEVICE_CPU>
-class Veff: public OperatorPW<FPTYPE, Device>
+class Veff : public OperatorPW<FPTYPE, Device> {};
+
+ #endif
+
+template<typename FPTYPE, typename Device>
+class Veff<OperatorPW<FPTYPE, Device>> : public OperatorPW<FPTYPE, Device>
 {
   public:
     Veff(const int* isk_in,const ModuleBase::matrix* veff_in,ModulePW::PW_Basis_K* wfcpw_in);

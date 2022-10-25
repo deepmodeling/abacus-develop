@@ -11,16 +11,18 @@
 
 namespace hamilt {
 
-// #ifndef NONLOCALTEMPLATE_H
-// #define NONLOCALTEMPLATE_H
+ #ifndef NONLOCALTEMPLATE_H
+ #define NONLOCALTEMPLATE_H
 
-// template<class T> class Nonlocal : public T
-// {};
-
-// #endif
-
+// template<class T> class Nonlocal : public T {};
 template<typename FPTYPE, typename Device = psi::DEVICE_CPU>
-class Nonlocal : public OperatorPW<FPTYPE, Device>
+class Nonlocal : public OperatorPW<FPTYPE, Device> {};
+
+
+ #endif
+
+template<typename FPTYPE, typename Device>
+class Nonlocal<OperatorPW<FPTYPE, Device>> : public OperatorPW<FPTYPE, Device>
 {
     public:
     Nonlocal(const int* isk_in,const pseudopot_cell_vnl* ppcell_in,const UnitCell_pseudo* ucell_in);

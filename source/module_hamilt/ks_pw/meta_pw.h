@@ -7,16 +7,17 @@
 
 namespace hamilt {
 
-// #ifndef __METATEMPLATE
-// #define __METATEMPLATE
+ #ifndef __METATEMPLATE
+ #define __METATEMPLATE
 
-// template<class T> class Meta : public T
-// {};
-
-// #endif
-
+// template<class T> class Meta : public T {};
 template<typename FPTYPE, typename Device = psi::DEVICE_CPU>
-class Meta : public OperatorPW<FPTYPE, Device>
+class Meta : public OperatorPW<FPTYPE, Device> {};
+
+ #endif
+
+template<typename FPTYPE, typename Device>
+class Meta<OperatorPW<FPTYPE, Device>> : public OperatorPW<FPTYPE, Device>
 {
     public:
     Meta(FPTYPE tpiba2_in, const int* isk_in, const ModuleBase::matrix* vk, ModulePW::PW_Basis_K* wfcpw);
