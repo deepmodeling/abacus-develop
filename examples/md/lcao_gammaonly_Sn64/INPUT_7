@@ -29,8 +29,8 @@ chg_extrap             second-order
 
 #Parameters (6.MD)
 md_type                0
-md_thermostat          Anderson
-md_nraise              40
+md_thermostat          Rescale_v
+md_nraise              1
 md_nstep               10
 md_dt                  1
 md_tfirst              300
