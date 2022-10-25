@@ -12,8 +12,9 @@ read_file_dir   ./
 ecutwfc			20
 scf_nmax			20
 
+scf_thr 1E-7
 basis_type		lcao
-md_nstep           2
+md_nstep           3
 
 cal_stress          1
 cal_force           1
@@ -23,9 +24,11 @@ mixing_type     pulay
 mixing_beta     0.7
 
 md_type          0
-md_thermostat    Anderson
-md_nraise        40
+md_thermostat    Rescale_v
+md_nraise        1
 md_tfirst        10
 md_dt            1
 md_restart         0
 init_vel         1
+
+gamma_only       1
