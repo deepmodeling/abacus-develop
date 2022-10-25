@@ -14,3 +14,7 @@ add_library(
     variable_cell.cpp
     relaxation.cpp
 )
+
+if(ENABLE_COVERAGE)
+  add_coverage(relax)
+endif()

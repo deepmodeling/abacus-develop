@@ -3,3 +3,7 @@ add_library(
     OBJECT
     xxx.cpp
 )
+
+if(ENABLE_COVERAGE)
+  add_coverage(base)
+endif()

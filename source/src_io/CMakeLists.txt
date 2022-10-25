@@ -25,7 +25,7 @@ list(APPEND objects
     write_pot.cpp
     write_rho.cpp
     write_rho_cube.cpp
-	write_wfc_realspace.cpp
+    write_wfc_realspace.cpp
 )
 
 if(ENABLE_LCAO)
@@ -59,3 +59,8 @@ add_library(
     OBJECT
     ${objects}
 )
+
+if(ENABLE_COVERAGE)
+  add_coverage(io)
+endif()
+

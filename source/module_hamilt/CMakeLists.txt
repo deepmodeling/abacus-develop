@@ -6,7 +6,7 @@ list(APPEND objects
     ks_pw/veff_pw.cpp
     ks_pw/nonlocal_pw.cpp
     ks_pw/meta_pw.cpp
-    ks_pw/velocity_pw.cpp    
+    ks_pw/velocity_pw.cpp
 )
 
 if(ENABLE_LCAO)
@@ -30,3 +30,6 @@ add_library(
     ${objects}
 )
 
+if(ENABLE_COVERAGE)
+  add_coverage(hamilt)
+endif()

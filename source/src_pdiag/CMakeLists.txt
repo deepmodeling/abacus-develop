@@ -1,12 +1,12 @@
 if(ENABLE_LCAO)
   add_subdirectory(MRRR)
-  
+
   if(USE_CUSOLVER_LCAO)
       list(APPEND objects
           diag_cusolver.cu
       )
   endif()
-  
+
   add_library(
       pdiag
       OBJECT
@@ -30,8 +30,12 @@ if(ENABLE_LCAO)
       diag_scalapack_gvx.cpp
       ${objects}
   )
-  
-  IF (BUILD_TESTING)
+
+  if(ENABLE_COVERAGE)
+    add_coverage(pdiag)
+  endif()
+
+  if(BUILD_TESTING)
     add_subdirectory(test)
   endif()
 endif()
