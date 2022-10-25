@@ -6,7 +6,7 @@ remove_definitions(-D__DEEPKS)
 if(ENABLE_LCAO)
   AddTest(
     TARGET EState_updaterhok_pw
-    LIBS ${math_libs} planewave_serial base_serial
+    LIBS ${math_libs} planewave_serial base_serial psi
     SOURCES updaterhok_pw_test.cpp ../../src_pw/charge.cpp ../../src_parallel/parallel_reduce.cpp 
             ../../src_pw/structure_factor.cpp ../../src_pw/pw_complement.cpp 
             ../../src_pw/klist.cpp ../../src_parallel/parallel_kpoints.cpp ../../src_pw/occupy.cpp  
