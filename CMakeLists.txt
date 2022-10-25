@@ -406,21 +406,6 @@ if(ENABLE_LCAO)
   )
 endif()
 
-if(DEFINED ENV{ABACUSROOT} AND NOT DEFINED ABACUSROOT)
-  set(ABACUSROOT "$ENV{ABACUSROOT}")
-endif()
-if(DEFINED ABACUSROOT)
-  install(PROGRAMS ${ABACUS_BIN_PATH}
-      TYPE BIN
-      #DESTINATION ${ABACUSROOT}
-  )
-else()
-  install(PROGRAMS ${ABACUS_BIN_PATH}
-      TYPE BIN
-      #DESTINATION ${CMAKE_INSTALL_BINDIR}
-  )
-endif()
-
 if(ENABLE_COVERAGE)
   coverage_evaluate()
 endif()
