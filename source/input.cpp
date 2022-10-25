@@ -1192,6 +1192,18 @@ bool Input::Read(const std::string &fn)
         {
             read_value(ifs, mdp.md_type);
         }
+        else if (strcmp("md_thermostat", word) == 0)
+        {
+            read_value(ifs, mdp.md_thermostat);
+        }
+        else if (strcmp("md_nraise", word) == 0)
+        {
+            read_value(ifs, mdp.md_nraise);
+        }
+        else if (strcmp("md_tolerance", word) == 0)
+        {
+            read_value(ifs, mdp.md_tolerance);
+        }
         else if (strcmp("md_nstep", word) == 0)
         {
             read_value(ifs, mdp.md_nstep);
@@ -2274,6 +2286,7 @@ void Input::Bcast()
     */
     // zheng daye add 2014/5/5
     Parallel_Common::bcast_int(mdp.md_type);
+    Parallel_Common::bcast_string(mdp.md_thermostat);
     Parallel_Common::bcast_int(mdp.md_nstep);
     Parallel_Common::bcast_double(mdp.md_dt);
     Parallel_Common::bcast_int(mdp.md_mnhc);
@@ -2295,6 +2308,8 @@ void Input::Bcast()
     Parallel_Common::bcast_double(mdp.md_tfreq);
     Parallel_Common::bcast_double(mdp.md_damp);
     Parallel_Common::bcast_string(mdp.pot_file);
+    Parallel_Common::bcast_int(mdp.md_nraise);
+    Parallel_Common::bcast_string(mdp.md_thermostat);
     // Yu Liu add 2022-05-18
     Parallel_Common::bcast_bool(efield_flag);
     Parallel_Common::bcast_bool(dip_cor_flag);
