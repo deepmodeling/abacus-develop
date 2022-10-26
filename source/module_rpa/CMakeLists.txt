@@ -4,4 +4,8 @@ if(ENABLE_LCAO)
           OBJECT
           rpa.cpp
   )
+
+  if(ENABLE_COVERAGE)
+    add_coverage(rpa)
+  endif()
 endif()

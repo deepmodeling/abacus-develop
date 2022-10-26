@@ -143,6 +143,31 @@ AddTest(
 - Build with `-D BUILD_TESTING=1` flag. You can find built testing programs under `build/source/<module_name>/test`.
 - Follow the installing procedure of CMake. The tests will move to `build/test`.
 
+## Generating code coverage report
+
+We use gcov and lcov to generate code coverage report, and only support gcc.
+
+1. Add -DENABLE_COVERAGE=ON for cmake:
+```
+cmake -B build -DENABLE_COVERAGE=ON
+```
+
+2. Build ABACUS.
+```
+cmake --build build -j`nproc`
+cmake --install build
+```
+
+3. Use ``build/abacus`` to run test cases.
+
+4. Generate html report.
+```
+cd build/
+make lcov
+```
+
+Now you can copy build/lcov to your local device, and view build/lcov/html/all_targets/index.html
+
 ## Submitting a Pull Request
 
 1. [Fork](https://docs.github.com/en/github/getting-started-with-github/fork-a-repo) the ABACUS repo.

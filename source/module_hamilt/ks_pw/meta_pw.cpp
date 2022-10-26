@@ -7,11 +7,12 @@
 #include "module_xc/xc_functional.h"
 #include "module_base/tool_quit.h"
 
-namespace hamilt
-{
+using hamilt::Meta;
+using hamilt::OperatorPW;
 
-Meta<OperatorPW>::Meta(
-    double tpiba_in, 
+template<typename FPTYPE, typename Device>
+Meta<OperatorPW<FPTYPE, Device>>::Meta(
+    FPTYPE tpiba_in, 
     const int* isk_in,
     const ModuleBase::matrix* vk_in,
     ModulePW::PW_Basis_K* wfcpw_in
@@ -28,12 +29,12 @@ Meta<OperatorPW>::Meta(
     }
 }
 
-void Meta<OperatorPW>::act
-(
-    const psi::Psi<std::complex<double>> *psi_in, 
+template<typename FPTYPE, typename Device>
+void Meta<OperatorPW<FPTYPE, Device>>::act(
+    const psi::Psi<std::complex<FPTYPE>, Device> *psi_in, 
     const int n_npwx, 
-    const std::complex<double>* tmpsi_in, 
-    std::complex<double>* tmhpsi
+    const std::complex<FPTYPE>* tmpsi_in, 
+    std::complex<FPTYPE>* tmhpsi
 )const
 {
     if (XC_Functional::get_func_type() != 3)
@@ -49,32 +50,32 @@ void Meta<OperatorPW>::act
     //npol == 2 case has not been considered
     this->npol = psi_in->npol;
 
-    std::complex<double> *porter = new std::complex<double>[wfcpw->nmaxgr];
+    std::complex<FPTYPE> *porter = new std::complex<FPTYPE>[wfcpw->nmaxgr];
     for (int ib = 0; ib < n_npwx; ++ib)
     {
         for (int j = 0; j < 3; j++)
         {
             for (int ig = 0; ig < npw; ig++)
             {
-                double fact = wfcpw->getgpluskcar(ik, ig)[j] * this->tpiba;
-                porter[ig] = tmpsi_in[ig] * complex<double>(0.0, fact);
+                FPTYPE fact = wfcpw->getgpluskcar(this->ik, ig)[j] * this->tpiba;
+                porter[ig] = tmpsi_in[ig] * complex<FPTYPE>(0.0, fact);
             }
 
-            wfcpw->recip2real(porter, porter, ik);
+            wfcpw->recip2real(porter, porter, this->ik);
             if(this->vk->nc != 0)
             {
-                const double* pvk = &(this->vk[0](current_spin, 0));
+                const FPTYPE* pvk = &(this->vk[0](current_spin, 0));
                 for (int ir = 0; ir < this->vk->nc; ir++)
                 {
                     porter[ir] *= pvk[ir];
                 }
             }
-            wfcpw->real2recip(porter, porter, ik);
+            wfcpw->real2recip(porter, porter, this->ik);
 
             for (int ig = 0; ig < npw; ig++)
             {
-                double fact = wfcpw->getgpluskcar(ik, ig)[j] * this->tpiba;
-                tmhpsi[ig] -= complex<double>(0.0, fact) * porter[ig];
+                FPTYPE fact = wfcpw->getgpluskcar(this->ik, ig)[j] * this->tpiba;
+                tmhpsi[ig] -= complex<FPTYPE>(0.0, fact) * porter[ig];
             }
         } // x,y,z directions
         tmhpsi += this->max_npw;
@@ -84,4 +85,9 @@ void Meta<OperatorPW>::act
     ModuleBase::timer::tick("Operator", "MetaPW");
 }
 
+namespace hamilt{
+template class Meta<OperatorPW<double, psi::DEVICE_CPU>>;
+#if ((defined __CUDA) || (defined __ROCM))
+template class Meta<OperatorPW<double, psi::DEVICE_GPU>>;
+#endif
 } // namespace hamilt

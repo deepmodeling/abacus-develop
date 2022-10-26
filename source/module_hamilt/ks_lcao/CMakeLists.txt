@@ -10,3 +10,7 @@ add_library(
     overlap_lcao.cpp
     deepks_lcao.cpp
 )
+
+if(ENABLE_COVERAGE)
+  add_coverage(operator_ks_lcao)
+endif()

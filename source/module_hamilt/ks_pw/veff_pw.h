@@ -5,38 +5,33 @@
 #include "module_base/matrix.h"
 #include "module_pw/pw_basis_k.h"
 
-namespace hamilt
+namespace hamilt {
+
+ #ifndef __VEFFTEMPLATE
+ #define __VEFFTEMPLATE
+
+// template<class T> class Veff : public T {};
+template<typename FPTYPE, typename Device = psi::DEVICE_CPU>
+class Veff : public OperatorPW<FPTYPE, Device> {};
+
+ #endif
+
+template<typename FPTYPE, typename Device>
+class Veff<OperatorPW<FPTYPE, Device>> : public OperatorPW<FPTYPE, Device>
 {
-
-#ifndef __VEFFTEMPLATE
-#define __VEFFTEMPLATE
-
-template<class T> class Veff : public T 
-{};
-
-#endif
-
-template<>
-class Veff<OperatorPW> : public OperatorPW
-{
-    public:
-    Veff(
-        const int* isk_in,
-        const ModuleBase::matrix* veff_in,
-        ModulePW::PW_Basis_K* wfcpw_in
-    );
+  public:
+    Veff(const int* isk_in,const ModuleBase::matrix* veff_in,ModulePW::PW_Basis_K* wfcpw_in);
 
     virtual ~Veff(){};
 
-    virtual void act
-    (
-        const psi::Psi<std::complex<double>> *psi_in, 
+    virtual void act (
+        const psi::Psi<std::complex<FPTYPE>, Device> *psi_in, 
         const int n_npwx, 
-        const std::complex<double>* tmpsi_in, 
-        std::complex<double>* tmhpsi
+        const std::complex<FPTYPE>* tmpsi_in, 
+        std::complex<FPTYPE>* tmhpsi
     )const override;
 
-    private:
+  private:
 
     mutable int max_npw = 0;
 

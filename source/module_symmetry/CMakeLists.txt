@@ -6,6 +6,10 @@ add_library(
     symmetry.cpp
 )
 
-IF (BUILD_TESTING)
+if(ENABLE_COVERAGE)
+  add_coverage(symmetry)
+endif()
+
+if(BUILD_TESTING)
   add_subdirectory(test)
 endif()

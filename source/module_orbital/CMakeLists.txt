@@ -15,8 +15,12 @@ if(ENABLE_LCAO)
       ORB_table_phi.cpp
       parallel_orbitals.cpp
   )
-  
-  IF (BUILD_TESTING)
+
+  if(ENABLE_COVERAGE)
+    add_coverage(orb)
+  endif()
+
+  if(BUILD_TESTING)
     add_subdirectory(test)
   endif()
 endif()

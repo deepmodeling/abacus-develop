@@ -14,3 +14,7 @@ add_library(
     sol_force.cpp
     gatefield.cpp
 )
+
+if(ENABLE_COVERAGE)
+  add_coverage(surchem)
+endif()
