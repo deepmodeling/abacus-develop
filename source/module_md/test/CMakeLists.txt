@@ -3,9 +3,6 @@ add_definitions(-D__CMD -D__NORMAL)
 
 list(APPEND depend_files 
   ../MD_func.cpp
-  ../cmd_neighbor.cpp
-  ../LJ_potential.cpp
-  ../DP_potential.cpp
   ../../input.cpp
   ../../module_cell/unitcell_pseudo.cpp
   ../../module_cell/unitcell.cpp
@@ -44,21 +41,21 @@ list(APPEND depend_files
 
 AddTest(
   TARGET md_LJ_pot
-  LIBS ${math_libs}
+  LIBS ${math_libs} psi
   SOURCES LJ_pot_test.cpp  
   ${depend_files}
 )
 
 AddTest(
   TARGET md_func
-  LIBS ${math_libs}
+  LIBS ${math_libs} psi
   SOURCES MD_func_test.cpp  
   ${depend_files}
 )
 
 AddTest(
   TARGET md_fire
-  LIBS ${math_libs}
+  LIBS ${math_libs} psi
   SOURCES FIRE_test.cpp
   ../verlet.cpp
   ../FIRE.cpp
@@ -67,7 +64,7 @@ AddTest(
 
 AddTest(
   TARGET md_nve
-  LIBS ${math_libs}
+  LIBS ${math_libs} psi
   SOURCES NVE_test.cpp
   ../verlet.cpp
   ../NVE.cpp
@@ -76,7 +73,7 @@ AddTest(
 
 AddTest(
   TARGET md_nvt_ads
-  LIBS ${math_libs}
+  LIBS ${math_libs} psi
   SOURCES NVT_ADS_test.cpp
   ../verlet.cpp
   ../NVT_ADS.cpp
@@ -85,7 +82,7 @@ AddTest(
 
 AddTest(
   TARGET md_nvt_nhc
-  LIBS ${math_libs}
+  LIBS ${math_libs} psi
   SOURCES NVT_NHC_test.cpp
   ../verlet.cpp
   ../NVT_NHC.cpp
@@ -94,7 +91,7 @@ AddTest(
 
 AddTest(
   TARGET md_msst
-  LIBS ${math_libs}
+  LIBS ${math_libs} psi
   SOURCES MSST_test.cpp
   ../verlet.cpp
   ../MSST.cpp
@@ -103,7 +100,7 @@ AddTest(
 
 AddTest(
   TARGET md_lgv
-  LIBS ${math_libs}
+  LIBS ${math_libs} psi
   SOURCES Langevin_test.cpp
   ../verlet.cpp
   ../Langevin.cpp

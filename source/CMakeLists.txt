@@ -32,3 +32,7 @@ add_library(
     input_conv.cpp
     input_update.cpp
 )
+
+if(ENABLE_COVERAGE)
+  add_coverage(driver)
+endif()

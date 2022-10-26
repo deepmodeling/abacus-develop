@@ -57,9 +57,9 @@ void Charge::write_rho_cube(
 						break;
 					}
 				ofs << " " << z << " " << z
-					<< " " << fac*GlobalC::ucell.atoms[it].taud[ia].x
-					<< " " << fac*GlobalC::ucell.atoms[it].taud[ia].y
-					<< " " << fac*GlobalC::ucell.atoms[it].taud[ia].z << std::endl;
+					<< " " << fac*GlobalC::ucell.atoms[it].tau[ia].x
+					<< " " << fac*GlobalC::ucell.atoms[it].tau[ia].y
+					<< " " << fac*GlobalC::ucell.atoms[it].tau[ia].z << std::endl;
 			}
 		}
 

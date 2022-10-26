@@ -41,19 +41,6 @@ TEST_F(Langevin_test, setup)
     EXPECT_NEAR(verlet->stress(2,0), 1.5039983732220751e-06, doublethreshold);
     EXPECT_NEAR(verlet->stress(2,1), -1.251414906590483e-06, doublethreshold);
     EXPECT_NEAR(verlet->stress(2,2), 1.6060561926126463e-06, doublethreshold);
-    
-    EXPECT_NEAR(verlet->force[0].x, 0.56845590974612858, doublethreshold);
-    EXPECT_NEAR(verlet->force[0].y, -0.22894552385324796, doublethreshold);
-    EXPECT_NEAR(verlet->force[0].z, 0.30372719169186396, doublethreshold);
-    EXPECT_NEAR(verlet->force[1].x, 0.023936136015932585, doublethreshold);
-    EXPECT_NEAR(verlet->force[1].y, 0.66317969013068256, doublethreshold);
-    EXPECT_NEAR(verlet->force[1].z, -0.46799715716131773, doublethreshold);
-    EXPECT_NEAR(verlet->force[2].x, 0.072897549417224428, doublethreshold);
-    EXPECT_NEAR(verlet->force[2].y, 0.27055193043529346, doublethreshold);
-    EXPECT_NEAR(verlet->force[2].z, -0.12374098810527463, doublethreshold);
-    EXPECT_NEAR(verlet->force[3].x, -0.14504625941261556, doublethreshold);
-    EXPECT_NEAR(verlet->force[3].y, -0.16104847607824399, doublethreshold);
-    EXPECT_NEAR(verlet->force[3].z, 0.17692510112410081, doublethreshold);
 }
 
 TEST_F(Langevin_test, first_half)
@@ -105,16 +92,16 @@ TEST_F(Langevin_test, second_half)
     EXPECT_NEAR(verlet->pos[3].y, 5.3031968974372354, doublethreshold);
     EXPECT_NEAR(verlet->pos[3].z, 4.9996952920372832, doublethreshold);
     
-    EXPECT_NEAR(verlet->vel[0].x, -0.00011264567421282132, doublethreshold);
-    EXPECT_NEAR(verlet->vel[0].y, 7.3217455425250938e-05, doublethreshold);
-    EXPECT_NEAR(verlet->vel[0].z, -0.00020991266055077719, doublethreshold);
-    EXPECT_NEAR(verlet->vel[1].x, -0.00012678714345051639, doublethreshold);
-    EXPECT_NEAR(verlet->vel[1].y, 0.00025321641200267255, doublethreshold);
-    EXPECT_NEAR(verlet->vel[1].z, -6.6835251309303343e-05, doublethreshold);
-    EXPECT_NEAR(verlet->vel[2].x, 1.0809720799627827e-05, doublethreshold);
-    EXPECT_NEAR(verlet->vel[2].y, 0.00025296508641917993, doublethreshold);
-    EXPECT_NEAR(verlet->vel[2].z, 1.722136542532692e-07, doublethreshold);
-    EXPECT_NEAR(verlet->vel[3].x, -0.00015487279560487432, doublethreshold);
-    EXPECT_NEAR(verlet->vel[3].y, 0.00012385428611483992, doublethreshold);
-    EXPECT_NEAR(verlet->vel[3].z, 0.00013451165281051973, doublethreshold);
+    EXPECT_NEAR(verlet->vel[0].x, -8.2630969616448438e-05, doublethreshold);
+    EXPECT_NEAR(verlet->vel[0].y, 0.0001366029202159129, doublethreshold);
+    EXPECT_NEAR(verlet->vel[0].z, -0.00011334362366793093, doublethreshold);
+    EXPECT_NEAR(verlet->vel[1].x, 5.9181121902101574e-05, doublethreshold);
+    EXPECT_NEAR(verlet->vel[1].y, 4.0359589497484719e-05, doublethreshold);
+    EXPECT_NEAR(verlet->vel[1].z, 6.0216019900454962e-05, doublethreshold);
+    EXPECT_NEAR(verlet->vel[2].x, -5.9703272809828887e-05, doublethreshold);
+    EXPECT_NEAR(verlet->vel[2].y, 0.00015656497429546092, doublethreshold);
+    EXPECT_NEAR(verlet->vel[2].z, -5.8392323248176516e-05, doublethreshold);
+    EXPECT_NEAR(verlet->vel[3].x, -4.1390907965075468e-05, doublethreshold);
+    EXPECT_NEAR(verlet->vel[3].y, 0.00012448732653877297, doublethreshold);
+    EXPECT_NEAR(verlet->vel[3].z, 0.00011355087370269158, doublethreshold);
 }

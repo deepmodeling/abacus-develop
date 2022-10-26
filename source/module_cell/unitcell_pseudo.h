@@ -61,11 +61,7 @@ public: // member functions
 #endif
 	int find_type(const std::string &label);
 	void print_tau(void)const;
-#ifdef __LCAO
-	void print_stru_file(const LCAO_Orbitals &orb, const std::string &fn, const int &type=1, const int &level=0)const; // mohan add 2011-03-22
-#else
 	void print_stru_file(const std::string &fn, const int &type=1, const int &level=0)const; // mohan add 2011-03-22
-#endif
 	void check_dtau(void);
     void setup_cell_after_vc(std::ofstream &log); //LiuXh add 20180515
 

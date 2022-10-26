@@ -107,6 +107,7 @@ public:
     std::string *atom_label;
     std::string *pseudo_fn;
     std::string *pseudo_type; // pseudopotential types for each elements, sunliang added 2022-09-15. 
+    std::string *orbital_fn;   // filenames of orbitals, liuyu add 2022-10-19
 
 #ifdef __MPI
     void bcast_unitcell(void);

@@ -24,3 +24,7 @@ add_library(
     OBJECT
     ${objects}
 )
+
+if(ENABLE_COVERAGE)
+  add_coverage(gint)
+endif()
