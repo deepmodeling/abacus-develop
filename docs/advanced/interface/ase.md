@@ -74,7 +74,6 @@ measure structural similarity. An unique and advanced clustering method is devel
 
 If you use this program and method in your research, please read and cite the publication:
 
-```
-Su C, Lv J, Li Q, Wang H, Zhang L, Wang Y, Ma Y. Construction of crystal structure prototype database: methods and applications. J Phys Condens Matter. 2017 Apr 26;29(16):165901.
-```
+`Su C, Lv J, Li Q, Wang H, Zhang L, Wang Y, Ma Y. Construction of crystal structure prototype database: methods and applications. J Phys Condens Matter. 2017 Apr 26;29(16):165901.`
+
 and you should install it first with command `pip install spap`.
