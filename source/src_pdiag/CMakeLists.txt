@@ -1,6 +1,5 @@
 if(ENABLE_LCAO)
   add_subdirectory(MRRR)
-
   if(USE_CUSOLVER_LCAO)
       list(APPEND objects
           diag_cusolver.cu

@@ -311,7 +311,7 @@ void wavefunc::diago_PAO_in_pw_k2(const int &ik, psi::Psi<std::complex<double>> 
 	{
 		if(phm_in!= nullptr)
 		{
-			hsolver::DiagoIterAssist::diagH_subspace_init(phm_in,
+			hsolver::DiagoIterAssist<double>::diagH_subspace_init(phm_in,
                                wfcatom,
                                wvf,
                                etatom.data());

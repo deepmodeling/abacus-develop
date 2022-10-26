@@ -9,6 +9,7 @@ OPTS = -Ofast -march=native -std=c++14 -pedantic -m64 ${INCLUDES}
 HONG = -D__LCAO
 OBJ_DIR = obj
 BIN_DIR = ../bin
+SOURCE_DIR = .
 ifeq ($(findstring mpi, $(CC)), mpi)
      # We do not support EXX in sequential version temporarily.
      HONG += -D__MPI -D__EXX -DEXX_H_COMM=2 -DUSE_CEREAL_SERIALIZATION -DEXX_DM=3 -DEXX_H_COMM=2 -DTEST_EXX_LCAO=0 -DTEST_EXX_RADIAL=1

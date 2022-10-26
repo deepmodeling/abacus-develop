@@ -26,7 +26,7 @@ OPENBLAS_LIB_DIR   = /home/qianrui/gnucompile/openblas/lib
 # Compiler information 
 #==========================
 INCLUDES = -I. -Icommands -I../
-LIBS = -lifcore -lm -lpthread
+LIBS = -lm -lpthread
 OPTS = -Ofast -march=native -std=c++11 -m64 ${INCLUDES}
 ifeq ($(findstring mpi, $(CC)), mpi)
      HONG += -D__MPI -D__EXX -DEXX_H_COMM=2 -DUSE_CEREAL_SERIALIZATION -DEXX_DM=3 -DEXX_H_COMM=2 -DTEST_EXX_LCAO=0 -DTEST_EXX_RADIAL=1
@@ -51,7 +51,7 @@ ifeq ($(DEBUG), ON)
     OPTS +=  -fsanitize=address -fno-omit-frame-pointer -Wall -g #It can check segmental defaults
 endif
 ifeq ($(INTEL), ON)
-    OPTS += -simd -qopenmp
+    OPTS += -simd -qopenmp -lifcore
     ##==========================
     ## MKL package
     ##==========================

@@ -63,4 +63,3 @@ add_library(
 if(ENABLE_COVERAGE)
   add_coverage(io)
 endif()
-
