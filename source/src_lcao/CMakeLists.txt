@@ -38,4 +38,8 @@ if(ENABLE_LCAO)
       OBJECT
       ${objects}
   )
+
+  if(ENABLE_COVERAGE)
+    add_coverage(lcao)
+  endif()
 endif()

@@ -25,16 +25,16 @@ find_package(Cereal REQUIRED)
 set(libname "module_base")
 set(LIB_BASE_DIR ${CMAKE_SOURCE_DIR}/../../source/module_base)
 include_directories(${LIB_BASE_DIR})
-file(GLOB LIB_SRC 
-     ${LIB_BASE_DIR}/complexarray.cpp 
+file(GLOB LIB_SRC
+     ${LIB_BASE_DIR}/complexarray.cpp
      ${LIB_BASE_DIR}/global_variable.cpp
      ${LIB_BASE_DIR}/math_polyint.cpp
-     ${LIB_BASE_DIR}/matrix.cpp 
+     ${LIB_BASE_DIR}/matrix.cpp
      ${LIB_BASE_DIR}/sph_bessel.cpp
-     ${LIB_BASE_DIR}/tool_title.cpp 
+     ${LIB_BASE_DIR}/tool_title.cpp
      ${LIB_BASE_DIR}/complexmatrix.cpp
-     ${LIB_BASE_DIR}/intarray.cpp 
-     ${LIB_BASE_DIR}/math_sphbes.cpp 
+     ${LIB_BASE_DIR}/intarray.cpp
+     ${LIB_BASE_DIR}/math_sphbes.cpp
      ${LIB_BASE_DIR}/memory.cpp
      ${LIB_BASE_DIR}/sph_bessel_recursive-d1.cpp
      ${LIB_BASE_DIR}/ylm.cpp
@@ -59,24 +59,30 @@ file(GLOB LIB_SRC
      ${LIB_BASE_DIR}/opt_DCsrch.cpp
 )
 add_library(${libname} ${LIB_SRC})
+if(ENABLE_COVERAGE)
+  add_coverage(${libname})
+endif()
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
 
 # compile the test executable
-file(GLOB TEST_SRC 
+file(GLOB TEST_SRC
      test_blas_connector.cpp
      test_matrix3.cpp
 )
 
 add_executable(runUnitTests ${TEST_SRC})
+if(ENABLE_COVERAGE)
+  add_coverage(runUnitTests)
+endif()
 
 
 target_link_libraries(
-    runUnitTests 
-    gtest 
-    gtest_main 
-    ${libname} 
-    pthread 
+    runUnitTests
+    gtest
+    gtest_main
+    ${libname}
+    pthread
     coverage_config
 )
 

@@ -28,6 +28,10 @@ add_library(
     ${objects}
 )
 
+if(ENABLE_COVERAGE)
+  add_coverage(hsolver)
+endif()
+
 if(ENABLE_LCAO)
   add_subdirectory(genelpa)
 endif()

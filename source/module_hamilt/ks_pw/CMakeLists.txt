@@ -21,3 +21,7 @@ add_library(
     OBJECT
     ${operator_ks_pw_srcs}
 )
+
+if(ENABLE_COVERAGE)
+  add_coverage(operator_ks_pw)
+endif()

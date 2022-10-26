@@ -43,3 +43,7 @@ add_library(
     s_copy.cpp
     xerbla.cpp
 )
+
+if(ENABLE_COVERAGE)
+  add_coverage(mrrr)
+endif()

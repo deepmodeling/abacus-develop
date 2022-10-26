@@ -27,4 +27,7 @@ add_library(
     ${objects}
 )
 
+if(ENABLE_COVERAGE)
+  add_coverage(esolver)
+endif()
 
