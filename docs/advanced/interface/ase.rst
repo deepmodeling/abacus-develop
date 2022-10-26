@@ -1,5 +1,5 @@
-Introduction
 ============
+Introduction
 ============
 
 ASE_ (Atomic Simulation Environment) provides a set of Python tools for setting, running, and analysing atomic simulations. We have developed the ABACUS calculator to be used together with the ASE tools, which can be accessed from the website of ASE_. The ABACUS calculator (ase-abacus_) exists as an external project with respect to ASE and is maintained by ABACUS developers.
@@ -7,8 +7,8 @@ ASE_ (Atomic Simulation Environment) provides a set of Python tools for setting,
 .. _ASE: https://wiki.fysik.dtu.dk/ase/
 .. _ase-abacus: https://gitlab.com/1041176461/ase-abacus
 
-Environment variables
 =================
+Environment variables
 =================
 
 ABACUS_ supports two types of basis sets: PW, LCAO. The path of pseudopotential and numerical orbital files can be set throught the environment variables ``ABACUS_PP_PATH`` and ``ABACUS_ORBITAL_PATH``, respectively, e.g.::
@@ -22,8 +22,8 @@ For PW calculations, only ``ABACUS_PP_PATH`` is needed. For LCAO calculations, b
 
 .. _ABACUS: http://abacus.ustc.edu.cn 
 
-ABACUS Calculator
 =================
+ABACUS Calculator
 =================
 
 The default initialization command for the ABACUS calculator is
@@ -64,7 +64,7 @@ keyword          description
 
 For more information on pseudopotentials and numerical orbitals, please visit ABACUS_. The elaboration of input parameters can be found here_.
 
-.. _here: ../input_files/input-main
+.. _here: ../input_files/input-main.html
 
 The input parameters can be set like::
 
@@ -78,14 +78,14 @@ The command to run jobs can be set by specifying ``AbacusProfile``::
 
 in which ``abacus`` sets the absolute path of the ``abacus`` executable.
 
-MD Analysis
 =================
+MD Analysis
 =================
 After molecular dynamics calculations, the log file `running_md.log` can be read. If the 'STRU_MD_*' files are not continuous (e.g. 'STRU_MD_0', 'STRU_MD_5', 'STRU_MD_10'...), the index parameter of read should be as a slice object. For example, when using the command ``read('running_md.log', index=slice(0, 15, 5), format='abacus-out')`` to parse 'running_md.log', 'STRU_MD_0', 'STRU_MD_5' and 'STRU_MD_10' will be read.
 
 
-SPAP Analysis
 =================
+SPAP Analysis
 =================
 
 SPAP_ (Structure Prototype Analysis Package) is written by Dr. Chuanxun Su to analyze symmetry and compare similarity of large amount of atomic structures. The coordination characterization function (CCF) is used to 
