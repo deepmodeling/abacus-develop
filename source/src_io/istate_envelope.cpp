@@ -19,10 +19,6 @@ void IState_Envelope::begin(const psi::Psi<double>* psid, Local_Orbital_wfc& low
     std::cout << " perform |psi(band, r)| for selected bands." << std::endl;
 
     // (1) 
-    // (1.1) allocate the space for GlobalC::LOWF.WFC_GAMMA
-
-    // (1.2) read in LOWF_GAMMA.dat
-
     // mohan update 2011-03-21
     // if ucell is odd, it's correct,
     // if ucell is even, it's also correct.
@@ -88,11 +84,6 @@ void IState_Envelope::begin(const psi::Psi<double>* psid, Local_Orbital_wfc& low
                 std::cout << " Perform envelope function for band " << ib + 1 << std::endl;
                 ModuleBase::GlobalFunc::ZEROS(GlobalC::CHR.rho[is], GlobalC::wfcpw->nrxx);
 
-
-                //---------------------------------------------------------
-                // GlobalC::LOWF.WFC_GAMMA has been replaced by wfc_dm_2d.cpp 
-                // and 2d-to-grid conversion is unified into `wfc_2d_to_grid`.
-                //---------------------------------------------------------
                 psid->fix_k(is);
 #ifdef __MPI
                 lowf.wfc_2d_to_grid(0, psid->get_pointer(), wfc_gamma_grid[is], this->pes->ekb, this->pes->wg);
@@ -153,10 +144,6 @@ void IState_Envelope::begin(const psi::Psi<std::complex<double>>* psi, Local_Orb
     std::cout << " perform |psi(band, r)| for selected bands." << std::endl;
 
     // (1) 
-    // (1.1) allocate the space for GlobalC::LOWF.WFC_GAMMA
-
-    // (1.2) read in LOWF_GAMMA.dat
-
     // mohan update 2011-03-21
     // if ucell is odd, it's correct,
     // if ucell is even, it's also correct.

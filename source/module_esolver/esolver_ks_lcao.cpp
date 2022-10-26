@@ -9,7 +9,6 @@
 #include "src_io/chi0_hilbert.h"
 #include "src_lcao/ELEC_evolve.h"
 #include "src_lcao/dftu.h"
-#include "src_lcao/dmft.h"
 #include "src_pw/occupy.h"
 #include "src_pw/symmetry_rho.h"
 #include "src_pw/threshold_elec.h"
@@ -131,9 +130,6 @@ void ESolver_KS_LCAO::Init(Input& inp, UnitCell_pseudo& ucell)
     {
         GlobalC::dftu.init(ucell, this->LM);
     }
-
-    if (INPUT.dft_plus_dmft)
-        GlobalC::dmft.init(INPUT, ucell);
 
     // pass Hamilt-pointer to Operator
     this->UHM.genH.LM = this->UHM.LM = &this->LM;
@@ -931,15 +927,6 @@ void ESolver_KS_LCAO::afterscf(const int istep)
     }
 #endif
     // 4. some outputs
-    if (INPUT.dft_plus_dmft)
-    {
-        // Output sparse overlap matrix S(R)
-        this->output_SR("outputs_to_DMFT/overlap_matrix/SR.csr");
-
-        // Output wave functions, bands, k-points information, and etc.
-        GlobalC::dmft.out_to_dmft(this->LOWF, *this->UHM.LM);
-    }
-
     if(INPUT.rpa)
     {
         ModuleRPA::DFT_RPA_interface rpa_interface(GlobalC::exx_global.info);
