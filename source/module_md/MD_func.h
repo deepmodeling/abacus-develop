@@ -70,6 +70,11 @@ class MD_func
 		ModuleBase::Vector3<int> &frozen,
 		ModuleBase::Vector3<int>* ionmbl);
 
-    static void print(const std::string& name, const ModuleBase::matrix& f, const UnitCell_pseudo &unit_in);
+    static double target_temp(const int &istep, const double &tfirst, const double &tlast);
+
+    static double current_temp(const int &natom, 
+            const int &frozen_freedom, 
+            const double *allmass,
+            const ModuleBase::Vector3<double> *vel);
 };
 #endif

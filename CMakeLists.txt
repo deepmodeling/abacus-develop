@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
-if(POLICY CMP0131) # From CMake 3.24
-    cmake_policy(SET CMP0135 NEW)
+if(POLICY CMP0135) # https://cmake.org/cmake/help/git-stage/policy/CMP0135.html
+    cmake_policy(SET CMP0135 NEW) # Otherwise this policy generates a warning on CMake 3.24
 endif()
 
 project(ABACUS
@@ -85,7 +85,6 @@ if(ENABLE_LCAO)
   find_package(Cereal REQUIRED)
   include_directories(${CEREAL_INCLUDE_DIR})
   add_compile_definitions(USE_CEREAL_SERIALIZATION)
-
   find_package(ELPA REQUIRED)
   include_directories(${ELPA_INCLUDE_DIR})
   target_link_libraries(${ABACUS_BIN_NAME} ELPA::ELPA)
@@ -163,6 +162,7 @@ if(USE_CUDA OR USE_CUSOLVER_LCAO)
   include_directories(${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
   if (USE_CUDA)
     add_compile_definitions(__CUDA)
+    add_compile_definitions(__UT_USE_CUDA)
   endif()
   if (USE_CUSOLVER_LCAO)
     add_compile_definitions(__CUSOLVER_LCAO)
@@ -193,6 +193,7 @@ if(USE_ROCM)
     roc::hipblas
   )
   add_compile_definitions(__ROCM)
+  add_compile_definitions(__UT_USE_ROCM)
 endif()
 
 if(ENABLE_ASAN)
@@ -410,5 +411,3 @@ endif()
 if(ENABLE_COVERAGE)
   coverage_evaluate()
 endif()
-
-

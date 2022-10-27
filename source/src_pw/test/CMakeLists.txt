@@ -2,6 +2,7 @@ remove_definitions(-D__LCAO)
 remove_definitions(-D__DEEPKS)
 remove_definitions(-D__CUDA)
 remove_definitions(-D__ROCM)
+
 AddTest(
   TARGET klist_test
   LIBS ${math_libs} base symmetry

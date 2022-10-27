@@ -30,9 +30,11 @@
 - [Exact exchange](#exact-exchange) (Under tests)
 
   [exx_hybrid_alpha](#exx_hybrid_alpha) | [exx_hse_omega](#exx_hse_omega) | [exx_separate_loop](#exx_separate_loop) | [exx_hybrid_step](#exx_hybrid_step) | [exx_lambda](#exx_lambda) | [exx_pca_threshold](#exx_pca_threshold) | [exx_c_threshold](#exx_c_threshold) | [exx_v_threshold](#exx_v_threshold) | [exx_dm_threshold](#exx_dm_threshold) | [exx_schwarz_threshold](#exx_schwarz_threshold) | [exx_cauchy_threshold](#exx_cauchy_threshold) | [exx_ccp_threshold](#exx_ccp_threshold) | [exx_ccp_rmesh_times](#exx_ccp_rmesh_times) | [exx_distribute_type](#exx_distribute_type) | [exx_opt_orb_lmax](#exx_opt_orb_lmax) | [exx_opt_orb_ecut](#exx_opt_orb_ecut) | [exx_opt_orb_tolerence](#exx_opt_orb_tolerence)
+
 - [Molecular dynamics](#molecular-dynamics)
 
-  [md_type](#md_type) | [md_nstep](#md_nstep) | [md_ensolver](#md_ensolver) | [md_restart](#md_restart) | [md_dt](#md_dt) | [md_tfirst, md_tlast](#md_tfirst-md_tlast) | [md_dumpfreq](#md_dumpfreq) | [md_restartfreq](#md_restartfreq) | [md_seed](#md_seed) | [md_tfreq](#md_tfreq) | [md_mnhc](#md_mnhc) | [lj_rcut](#lj_rcut) | [lj_epsilon](#lj_epsilon) | [lj_sigma](#lj_sigma) | [pot_file](#pot_file) | [msst_direction](#msst_direction) | [msst_vel](#msst_vel) | [msst_vis](#msst_vis) | [msst_tscale](#msst_tscale) | [msst_qmass](#msst_qmass) | [md_damp](#md_damp)
+  [md_type](#md_type) | [md_thermostat](#md_thermostat) | [md_nstep](#md_nstep) | [md_ensolver](#md_ensolver) | [md_restart](#md_restart) | [md_dt](#md_dt) | [md_tfirst, md_tlast](#md_tfirst-md_tlast) | [md_dumpfreq](#md_dumpfreq) | [md_restartfreq](#md_restartfreq) | [md_seed](#md_seed) | [md_tfreq](#md_tfreq) | [md_mnhc](#md_mnhc) | [lj_rcut](#lj_rcut) | [lj_epsilon](#lj_epsilon) | [lj_sigma](#lj_sigma) | [pot_file](#pot_file) | [msst_direction](#msst_direction) | [msst_vel](#msst_vel) | [msst_vis](#msst_vis) | [msst_tscale](#msst_tscale) | [msst_qmass](#msst_qmass) | [md_damp](#md_damp) | [md_tolerance](#md_tolerance) | [md_nraise](#md_nraise)
+
 - [vdW correction](#vdw-correction)
 
   [vdw_method](#vdw_method) | [vdw_s6](#vdw_s6) | [vdw_s8](#vdw_s8) | [vdw_a1](#vdw_a1) | [vdw_a2](#vdw_a2) | [vdw_d](#vdw_d) | [vdw_abc](#vdw_abc) | [vdw_C6_file](#vdw_c6_file) | [vdw_C6_unit](#vdw_c6_unit) | [vdw_R0_file](#vdw_r0_file) | [vdw_R0_unit](#vdw_r0_unit) | [vdw_cutoff_type](#vdw_cutoff_type) | [vdw_cutoff_radius](#vdw_cutoff_radius) | [vdw_radius_unit](#vdw_radius_unit) | [vdw_cutoff_period](#vdw_cutoff_period) | [vdw_cn_thr](#vdw_cn_thr) | [vdw_cn_thr_unit](#vdw_cn_thr_unit)
@@ -1385,17 +1387,29 @@ This part of variables are used to control the molecular dynamics calculations.
 ### md_type
 
 - **Type**: Integer
-- **Description**: control the ensemble to run md.
+- **Description**: control the algorithm to integrate the equation of motion for md. When `md_type` is set to 0, `md_thermostat` is used to specify the thermostat based on the velocity Verlet algorithm.
 
   - -1: FIRE method to relax;
-  - 0: NVE ensemble;
+  - 0: velocity Verlet algorithm (default: NVE ensemble);
   - 1: NVT ensemble with Nose Hoover Chain;
   - 2: NVT ensemble with Langevin method;
-  - 3: NVT ensemble with Anderson thermostat;
   - 4: MSST method;
 
   ***Note: when md_type is set to 1, md_tfreq is required to stablize temperature. It is an empirical parameter whose value is system-dependent, ranging from 1/(40\*md_dt) to 1/(100\*md_dt). An improper choice of its value might lead to failure of job.***
 - **Default**: 1
+
+### md_thermostat
+
+- **Type**: String
+- **Description**: specify the thermostat based on the velocity Verlet algorithm (useful when `md_type` is set to 0).
+
+  - NVE: NVE ensemble.
+  - Anderson: NVT ensemble with Anderson thermostat, see the parameter `md_nraise`.
+  - Berendsen: NVT ensemble with Berendsen thermostat, see the parameter `md_nraise`.
+  - Rescaling: NVT ensemble with velocity Rescaling method 1, see the parameter `md_tolerance`.
+  - Rescale_v: NVT ensemble with velocity Rescaling method 2, see the parameter `md_nraise`.
+
+- **Default**: NVE
 
 ### md_nstep
 
@@ -1455,11 +1469,7 @@ This part of variables are used to control the molecular dynamics calculations.
 ### md_tfreq
 
 - **Type**: Real
-- **Description**:
-  - When md_type = 1, md_tfreq controls the frequency of the temperature oscillations during the simulation. If it is too large, the
-    temperature will fluctuate violently; if it is too small, the temperature will take a very long time to equilibrate with the atomic system.
-  - When md_type = 3, md_tfreq*md_dt is the collision probability in Anderson method.
-  - If md_tfreq is not set in INPUT, md_tfreq will be autoset to be 1/40/md_dt.
+- **Description**: control the frequency of the temperature oscillations during the simulation. If it is too large, the temperature will fluctuate violently; if it is too small, the temperature will take a very long time to equilibrate with the atomic system.
 - **Default**: 1/40/md_dt
 
 ### md_mnhc
@@ -1527,6 +1537,21 @@ This part of variables are used to control the molecular dynamics calculations.
 - **Type**: Real
 - **Description**: damping parameter (fs) used to add force in Langevin method.
 - **Default**: 1.0
+
+### md_tolerance
+
+- **Type**: Real
+- **Description**: Tolerance for velocity rescaling. Velocities are rescaled if the current and target temperature differ more than `md_tolerance` (Kelvin).
+- **Default**: 100.0
+
+### md_nraise
+
+- **Type**: Integer
+- **Description**:
+  - Anderson: the "collision frequency" parameter is given as 1/`md_nraise`;
+  - Berendsen: the "rise time" parameter is given in units of the time step: tau = `md_nraise`*`md_dt`, so `md_dt`/tau = 1/`md_nraise`;
+  - Rescale_v: every `md_nraise` steps the current temperature is rescaled to target temperature;
+- **Default**: 1
 
 [back to top](#full-list-of-input-keywords)
 
