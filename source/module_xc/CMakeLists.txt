@@ -14,6 +14,10 @@ add_library(
     xc_funct_hcth.cpp
 )
 
-IF (BUILD_TESTING)
+if(ENABLE_COVERAGE)
+  add_coverage(xc_)
+endif()
+
+if(BUILD_TESTING)
   add_subdirectory(test)
 endif()

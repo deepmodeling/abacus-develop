@@ -40,6 +40,10 @@ add_library(
     ylm.cpp
 )
 
-IF (BUILD_TESTING)
+if(ENABLE_COVERAGE)
+  add_coverage(base)
+endif()
+
+if(BUILD_TESTING)
   add_subdirectory(test)
 endif()

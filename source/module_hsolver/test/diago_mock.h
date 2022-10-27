@@ -248,7 +248,7 @@ void hamilt::HamiltPW::sPsi
 
 //Mock function h_psi
 #include "module_hamilt/ks_pw/operator_pw.h"
-class OperatorMock : public hamilt::OperatorPW
+class OperatorMock : public hamilt::OperatorPW<double>
 {
     virtual void act
     (

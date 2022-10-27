@@ -306,15 +306,15 @@ namespace ModuleESolver
             // be careful that istep start from 0 and iter start from 1
             if((istep==0||istep==1)&&iter==1) 
             {
-                hsolver::DiagoIterAssist::need_subspace = false;
+                hsolver::DiagoIterAssist<double>::need_subspace = false;
             }
             else 
             {
-                hsolver::DiagoIterAssist::need_subspace = true;
+                hsolver::DiagoIterAssist<double>::need_subspace = true;
             }
 
-            hsolver::DiagoIterAssist::PW_DIAG_THR = ethr; 
-            hsolver::DiagoIterAssist::PW_DIAG_NMAX = GlobalV::PW_DIAG_NMAX;
+            hsolver::DiagoIterAssist<double>::PW_DIAG_THR = ethr; 
+            hsolver::DiagoIterAssist<double>::PW_DIAG_NMAX = GlobalV::PW_DIAG_NMAX;
             this->phsol->solve(this->p_hamilt, this->psi[0], this->pelec, GlobalV::KS_SOLVER);
 
             // transform energy for print
@@ -703,8 +703,8 @@ namespace ModuleESolver
     {
         if(this->phsol != nullptr)
         {
-            hsolver::DiagoIterAssist::need_subspace = false;
-            hsolver::DiagoIterAssist::PW_DIAG_THR = ethr; 
+            hsolver::DiagoIterAssist<double>::need_subspace = false;
+            hsolver::DiagoIterAssist<double>::PW_DIAG_THR = ethr; 
             this->phsol->solve(this->p_hamilt, this->psi[0], this->pelec, GlobalV::KS_SOLVER, true);
         }
         else

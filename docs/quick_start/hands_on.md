@@ -77,23 +77,23 @@ mpirun -np 2 abacus
 The main output information is stored in the file `OUT.MgO/running_scf.log`, which starts with
 
 ```
-                             WELCOME TO ABACUS                                       
-                                                                                     
-               'Atomic-orbital Based Ab-initio Computation at UStc'                  
-                                                                                     
-                     Website: http://abacus.ustc.edu.cn/                             
-                                                                                     
+                             WELCOME TO ABACUS v3.0
+
+               'Atomic-orbital Based Ab-initio Computation at UStc'
+
+                     Website: http://abacus.ustc.edu.cn/
+
     Version: Parallel, in development
     Processor Number is 2
-    Start Time is Sat Sep 24 13:06:35 2022
-                                                                                     
+    Start Time is Mon Oct 24 01:47:54 2022
+
  ------------------------------------------------------------------------------------
 
  READING GENERAL INFORMATION
                            global_out_dir = OUT.MgO/
                            global_in_card = INPUT
-                               pseudo_dir = 
-                              orbital_dir = 
+                               pseudo_dir =
+                              orbital_dir =
                                     DRANK = 1
                                     DSIZE = 2
                                    DCOLOR = 1
@@ -117,6 +117,7 @@ The main output information is stored in the file `OUT.MgO/running_scf.log`, whi
  | in real and reciprocal space is also shown.                        |
  |                                                                    |
  <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
 ......
 
 ```

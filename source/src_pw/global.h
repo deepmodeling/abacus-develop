@@ -5,7 +5,7 @@
 #include "../module_base/global_variable.h"
 #include "../src_io/restart.h"
 #include "../module_relaxation/ions.h"
-#include "../src_lcao/exx_lip.h"
+#include "../src_ri/exx_lip.h"
 #include "VNL_in_pw.h"
 #include "charge_broyden.h"
 #include "energy.h"

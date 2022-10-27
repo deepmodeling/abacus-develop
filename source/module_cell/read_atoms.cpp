@@ -24,10 +24,12 @@ int UnitCell_pseudo::read_atom_species(std::ifstream &ifa, std::ofstream &ofs_ru
     delete[] atom_mass;
     delete[] pseudo_fn;
 	delete[] pseudo_type;
+    delete[] orbital_fn;
 	this->atom_mass  = new double[ntype]; //atom masses
 	this->atom_label = new std::string[ntype]; //atom labels
 	this->pseudo_fn  = new std::string[ntype]; //file name of pseudopotential
 	this->pseudo_type = new std::string[ntype]; // type of pseudopotential
+    this->orbital_fn = new std::string[ntype]; // filename of orbitals
 
 	std::string word;
 	//==========================================
@@ -98,17 +100,14 @@ int UnitCell_pseudo::read_atom_species(std::ifstream &ifa, std::ofstream &ofs_ru
 			orb.read_in_flag = true;
 			for(int i=0; i<ntype; i++)
 			{
-				std::string ofile;
-
 				//-----------------------------------
 				// Turn off the read in NONLOCAL file
 				// function since 2013-08-02 by mohan
 				//-----------------------------------
-				//std::string nfile;
 
-				ifa >> ofile;
+                ifa >> orbital_fn[i];
 
-				ofile = GlobalV::global_orbital_dir + ofile;
+                std::string ofile = GlobalV::global_orbital_dir + orbital_fn[i];
 				//-----------------------------------
 				// Turn off the read in NONLOCAL file
 				// function since 2013-08-02 by mohan
@@ -955,11 +954,7 @@ bool UnitCell_pseudo::check_tau(void)const
 	return 1;
 }
 
-#ifdef __LCAO
-void UnitCell_pseudo::print_stru_file(const LCAO_Orbitals &orb, const std::string &fn, const int &type, const int &level)const
-#else
 void UnitCell_pseudo::print_stru_file(const std::string &fn, const int &type, const int &level)const
-#endif
 {
 	ModuleBase::TITLE("UnitCell_pseudo","print_stru_file");
 	
@@ -976,22 +971,14 @@ void UnitCell_pseudo::print_stru_file(const std::string &fn, const int &type, co
 		ofs << atom_label[it] << " " << atom_mass[it] << " " << pseudo_fn[it] << " " << pseudo_type[it] << std::endl;
 	}
 
-#ifdef __LCAO
 	if(GlobalV::BASIS_TYPE=="lcao" || GlobalV::BASIS_TYPE=="lcao_in_pw") //xiaohui add 2013-09-02. Attention...
 	{	
 		ofs << "\nNUMERICAL_ORBITAL" << std::endl;
 		for(int it=0; it<ntype; it++)
 		{
-			//-----------------------------------
-			// Turn off the read in NONLOCAL file
-			// function since 2013-08-02 by mohan
-			//-----------------------------------
-//			ofs << orb.orbital_file[it] << " " << orb.nonlocal_file[it] << " #local_orbital; non-local projector" << std::endl;
-			//modified by zhengdy 2015-07-24
-                        ofs << orb.orbital_file[it] << std::endl;
+            ofs << orbital_fn[it] << std::endl;
 		}
 	}
-#endif
 
 	ofs << "\nLATTICE_CONSTANT" << std::endl;
         //modified by zhengdy 2015-07-24

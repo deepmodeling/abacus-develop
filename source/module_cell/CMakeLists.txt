@@ -15,3 +15,8 @@ add_library(
     read_cell_pseudopots.cpp
     setup_nonlocal.cpp
 )
+
+if(ENABLE_COVERAGE)
+  add_coverage(cell)
+endif()
+
