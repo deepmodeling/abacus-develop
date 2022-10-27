@@ -6,7 +6,7 @@
 
 ## Installation
 
-```
+```bash
 git clone https://gitlab.com/1041176461/ase-abacus.git
 cd ase-abacus
 python3 setup install
