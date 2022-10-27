@@ -129,6 +129,9 @@ public:
         INPUT.mdp.md_mnhc = 4;
 
         INPUT.mdp.md_damp = 1;
+
+        INPUT.mdp.md_nraise = 2;
+        INPUT.mdp.md_tolerance = 0;
     };
 };
 

@@ -5,11 +5,18 @@ Molecular dynamics (MD) is a computer simulation method for analyzing the physic
 By setting `calculation` to be `md` or `sto-md`, ABACUS currently provides six different MD evolution methods, which is specified by keyword `md_type` in the `INPUT` file:
 
   - -1: FIRE method
-  - 0: NVE ensemble
+  - 0: velocity Verlet algorithm (default: NVE ensemble)
   - 1: NVT ensemble with Nose Hoover Chain
   - 2: NVT ensemble with Langevin thermostat
-  - 3: NVT ensemble with Anderson thermostat
   - 4: MSST method
+
+When `md_type` is set to 0, `md_thermostat` is used to specify the thermostat based on the velocity Verlet algorithm.
+
+  - NVE: NVE ensemble
+  - Anderson: NVT ensemble with Anderson thermostat
+  - Berendsen: NVT ensemble with Berendsen thermostat
+  - Rescaling: NVT ensemble with velocity Rescaling method 1
+  - Rescale_v: NVT ensemble with velocity Rescaling method 2
 
 Furthermore, ABACUS also provides a [list of keywords](./input_files/input-main.md#molecular-dynamics) to control relevant parmeters used in MD simulations.
 
@@ -17,7 +24,7 @@ To employ CMD calculations, `md_ensolver` should be set to be `LJ` or `DP`.
 If DP model is selected, the filename of DP model is specified by keyword `pot_file`.
 
 [Examples](https://github.com/deepmodeling/abacus-develop/tree/develop/examples/md/lcao_gammaonly_Sn64) of MD simulations are also provided.
-There are six INPUT files corresponding to six different MD evolution methods in the directory.
+There are eight INPUT files corresponding to eight different MD evolution methods in the directory.
 For examlpe, `INPUT_0` shows how to employ the NVE simulation.
 
 To run any of the fix cases, users may enter the directory, copy the corresponding input file to `INPUT`, and run ABACUS.
@@ -52,6 +59,17 @@ ABACUS perform time integration on [Nose-Hoover style non-Hamiltonian equations 
 
 [Anderson thermostat](https://aip.scitation.org/doi/abs/10.1063/1.439486) couples the system to a heat bath that imposes the desired temperature to simulate the NVT ensemble. The coupling to a heat bath is represented by stochastic collision that act occasionally on randomly selected particles.
 
+## Berendsen
+
+Reset the temperature of a group of atoms by using a [Berendsen thermostat](https://aip.scitation.org/doi/10.1063/1.448118), which rescales their velocities every timestep. In this scheme, the system is weakly coupled to a heat bath with some temperature. Though the thermostat does not generate a correct canonical ensemble (especially for small systems), for large systems on the order of hundreds or thousands of atoms/molecules, the approximation yields roughly correct results for most calculated properties.
+
+## Rescaling
+
+Reset the temperature of a group of atoms by explicitly rescaling their velocities. Velocities are rescaled if the current and target temperature differ more than `md_tolerance` (Kelvin).
+
+## Rescale_v
+
+Reset the temperature of a group of atoms by explicitly rescaling their velocities. Every `md_nraise` steps the current temperature is rescaled to target temperature.
 
 ## MSST
 ABACUS performs the [Multi-Scale Shock Technique (MSST) integration](https://journals.aps.org/prl/abstract/10.1103/PhysRevLett.90.235503) to update positions and velocities each timestep to mimic a compressive shock wave passing over the system. The MSST varies the cell volume and temperature in such a way as to restrain the system to the shock Hugoniot and the Rayleigh line. These restraints correspond to the macroscopic conservation laws dictated by a shock front.

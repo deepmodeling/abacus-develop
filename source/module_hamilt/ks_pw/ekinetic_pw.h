@@ -10,9 +10,10 @@ namespace hamilt {
 #ifndef __EKINETICTEMPLATE
 #define __EKINETICTEMPLATE
 
-// template<class T> class Ekinetic : public T {};
-template<typename FPTYPE, typename Device = psi::DEVICE_CPU>
-class Ekinetic : public OperatorPW<FPTYPE, Device> {};
+template<class T> class Ekinetic : public T
+{};
+// template<typename FPTYPE, typename Device = psi::DEVICE_CPU>
+// class Ekinetic : public OperatorPW<FPTYPE, Device> {};
 
 #endif
 
