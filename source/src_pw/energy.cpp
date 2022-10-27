@@ -166,11 +166,11 @@ void energy::print_etot(
 			this->print_format("E_Ewald", H_Ewald_pw::ewald_energy);
 			this->print_format("E_demet", demet); //mohan add 2011-12-02
 			this->print_format("E_descf", descf);
-			if (GlobalC::vdwd2_para.flag_vdwd2)					//Peize Lin add 2014-04, update 2021-03-09
+			if (INPUT.vdw_method == "d2") 				//Peize Lin add 2014-04, update 2021-03-09
 			{
 				this->print_format("E_vdwD2", evdw);
 			}
-			if(GlobalC::vdwd3_para.flag_vdwd3)					//jiyy add 2019-05, update 2021-05-02
+            else if (INPUT.vdw_method == "d3_0" || INPUT.vdw_method == "d3_bj")					//jiyy add 2019-05, update 2021-05-02
 			{
 				this->print_format("E_vdwD3", evdw);
 			}

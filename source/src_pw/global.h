@@ -334,8 +334,6 @@ extern Potential pot;
 extern ModuleSymmetry::Symmetry symm;
 extern Parallel_Grid Pgrid;
 extern Parallel_Kpoints Pkpoints;
-extern Vdwd2_Parameters vdwd2_para; // Peize Lin add 2021.03.09
-extern Vdwd3_Parameters vdwd3_para; // jiyy add 2021-05-02
 extern Restart restart; // Peize Lin add 2020.04.04
 } // namespace GlobalC
 
