@@ -2,8 +2,6 @@
 #include "../src_pw/global.h"
 #include "./dftu.h"  //Quxin add for DFT+U on 20201029
 // new
-#include "../src_pw/vdwd2.h"
-#include "../src_pw/vdwd3.h"
 #include "../module_base/timer.h"
 #include "../module_surchem/efield.h"        // liuyu add 2022-05-18
 #include "../module_surchem/surchem.h"		 //sunml add 2022-08-10

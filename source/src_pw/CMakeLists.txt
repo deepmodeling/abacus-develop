@@ -40,10 +40,6 @@ list(APPEND objects
     symmetry_rho.cpp
     threshold_elec.cpp
     use_fft.cpp
-    vdwd2.cpp
-    vdwd2_parameters.cpp
-    vdwd3.cpp
-    vdwd3_parameters.cpp
     wavefunc.cpp
     wf_atomic.cpp
     wf_igk.cpp

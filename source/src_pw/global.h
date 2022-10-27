@@ -17,10 +17,6 @@
 #include "structure_factor.h"
 #include "../module_pw/pw_basis_k.h"
 #include "use_fft.h"
-#include "vdwd2.h"
-#include "vdwd2_parameters.h"
-#include "vdwd3.h"
-#include "vdwd3_parameters.h"
 #include "wavefunc.h"
 #include "../module_xc/xc_functional.h"
 
