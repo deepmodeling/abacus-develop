@@ -32,19 +32,19 @@ void Vdwd3Parameters::initial_parameters(const Input &input)
     {
         if (input.vdw_radius_unit == "Bohr")
         {
-            rthr2_ = pow(std::stod(input.vdw_cutoff_radius), 2);
+            rthr2_ = std::pow(std::stod(input.vdw_cutoff_radius), 2);
         }
         else
         {
-            rthr2_ = pow((std::stod(input.vdw_cutoff_radius) * ModuleBase::BOHR_TO_A), 2);
+            rthr2_ = std::pow((std::stod(input.vdw_cutoff_radius) * ModuleBase::BOHR_TO_A), 2);
         }
         if (input.vdw_cn_thr_unit == "Bohr")
         {
-            cn_thr2_ = pow(input.vdw_cn_thr, 2);
+            cn_thr2_ = std::pow(input.vdw_cn_thr, 2);
         }
         else
         {
-            cn_thr2_ = pow((input.vdw_cn_thr * ModuleBase::BOHR_TO_A), 2);
+            cn_thr2_ = std::pow((input.vdw_cn_thr * ModuleBase::BOHR_TO_A), 2);
         }
     }
     else if (input.vdw_cutoff_type == "period")
