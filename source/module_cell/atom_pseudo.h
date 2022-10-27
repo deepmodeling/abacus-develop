@@ -37,8 +37,6 @@ public:
 		const int &nproj_in_so,
 		const bool has_so);
 	
-protected:
-
 	void print_atom(std::ofstream &ofs);
 
 #ifdef __MPI

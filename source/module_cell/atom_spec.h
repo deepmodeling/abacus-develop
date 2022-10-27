@@ -3,13 +3,15 @@
 
 #include "atom_pseudo.h"
 #include "../src_io/output.h"
-class Atom: public Atom_pseudo
+class Atom
 {
 public:
 
     // constructor and destructor
     Atom();
     ~Atom();
+
+    Atom_pseudo atom_pp;
 
     int *iw2m; // use iw to find m
     int *iw2n; // use iw to find n

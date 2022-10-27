@@ -23,9 +23,9 @@ void Vdwd2::cal_energy()
 	{
 		for( int it2=0; it2!=ucell.ntype; ++it2 )
 		{
-			const double C6_product = sqrt( para.C6.at(ucell.atoms[it1].psd) 
-				* para.C6.at(ucell.atoms[it2].psd) )/pow(ucell.lat0,6) ;
-			const double R0_sum = ( para.R0.at(ucell.atoms[it1].psd) + para.R0.at(ucell.atoms[it2].psd) )/ucell.lat0;
+			const double C6_product = sqrt( para.C6.at(ucell.atoms[it1].atom_pp.psd) 
+				* para.C6.at(ucell.atoms[it2].atom_pp.psd) )/pow(ucell.lat0,6) ;
+			const double R0_sum = ( para.R0.at(ucell.atoms[it1].atom_pp.psd) + para.R0.at(ucell.atoms[it2].atom_pp.psd) )/ucell.lat0;
 			if(!R0_sum)
 			{
 				ModuleBase::WARNING_QUIT("Input", "R0_sum can not be 0");		
@@ -71,9 +71,9 @@ void Vdwd2::cal_force()
 	{
 		for( int it2=0; it2!=ucell.ntype; ++it2 )
 		{
-			const double C6_product = sqrt( para.C6.at(ucell.atoms[it1].psd) 
-				* para.C6.at(ucell.atoms[it2].psd) )/pow(ucell.lat0,6);
-			const double R0_sum = ( para.R0.at(ucell.atoms[it1].psd) + para.R0.at(ucell.atoms[it2].psd) )/ucell.lat0;
+			const double C6_product = sqrt( para.C6.at(ucell.atoms[it1].atom_pp.psd) 
+				* para.C6.at(ucell.atoms[it2].atom_pp.psd) )/pow(ucell.lat0,6);
+			const double R0_sum = ( para.R0.at(ucell.atoms[it1].atom_pp.psd) + para.R0.at(ucell.atoms[it2].atom_pp.psd) )/ucell.lat0;
 			if(!R0_sum)
 			{
 				ModuleBase::WARNING_QUIT("Input", "R0_sum can not be 0");
@@ -126,9 +126,9 @@ void Vdwd2::cal_stress(void)
 	{
 		for( int it2=0; it2!=ucell.ntype; ++it2 )
 		{
-			const double C6_product = sqrt( para.C6.at(ucell.atoms[it1].psd) 
-			* para.C6.at(ucell.atoms[it2].psd) )/pow(ucell.lat0,6);
-			const double R0_sum = ( para.R0.at(ucell.atoms[it1].psd) + para.R0.at(ucell.atoms[it2].psd) )/ucell.lat0;
+			const double C6_product = sqrt( para.C6.at(ucell.atoms[it1].atom_pp.psd) 
+			* para.C6.at(ucell.atoms[it2].atom_pp.psd) )/pow(ucell.lat0,6);
+			const double R0_sum = ( para.R0.at(ucell.atoms[it1].atom_pp.psd) + para.R0.at(ucell.atoms[it2].atom_pp.psd) )/ucell.lat0;
 			if(!R0_sum)
 			{
 				ModuleBase::WARNING_QUIT("Input", "R0_sum can not be 0");

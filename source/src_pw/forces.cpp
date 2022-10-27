@@ -492,7 +492,7 @@ void Forces::cal_force_ew(ModuleBase::matrix& forceion, ModulePW::PW_Basis* rho_
         {
             if (ig == rho_basis->ig_gge0)
                 continue;
-            aux[ig] += static_cast<double>(GlobalC::ucell.atoms[it].zv) * conj(GlobalC::sf.strucFac(it, ig));
+            aux[ig] += static_cast<double>(GlobalC::ucell.atoms[it].atom_pp.zv) * conj(GlobalC::sf.strucFac(it, ig));
         }
     }
 
@@ -500,7 +500,7 @@ void Forces::cal_force_ew(ModuleBase::matrix& forceion, ModulePW::PW_Basis* rho_
     double charge = 0.0;
     for (int it = 0; it < GlobalC::ucell.ntype; it++)
     {
-        charge += GlobalC::ucell.atoms[it].na * GlobalC::ucell.atoms[it].zv; // mohan modify 2007-11-7
+        charge += GlobalC::ucell.atoms[it].na * GlobalC::ucell.atoms[it].atom_pp.zv; // mohan modify 2007-11-7
     }
 
     double alpha = 1.1;
@@ -547,7 +547,7 @@ void Forces::cal_force_ew(ModuleBase::matrix& forceion, ModulePW::PW_Basis* rho_
             }
             for (int ipol = 0; ipol < 3; ipol++)
             {
-                forceion(iat, ipol) *= GlobalC::ucell.atoms[it].zv * ModuleBase::e2 * GlobalC::ucell.tpiba
+                forceion(iat, ipol) *= GlobalC::ucell.atoms[it].atom_pp.zv * ModuleBase::e2 * GlobalC::ucell.tpiba
                                        * ModuleBase::TWO_PI / GlobalC::ucell.omega * fact;
             }
 
@@ -597,7 +597,7 @@ void Forces::cal_force_ew(ModuleBase::matrix& forceion, ModulePW::PW_Basis* rho_
                                 const double rr = sqrt(r2[n]) * GlobalC::ucell.lat0;
 
                                 double factor
-                                    = GlobalC::ucell.atoms[T1].zv * GlobalC::ucell.atoms[T2].zv * ModuleBase::e2
+                                    = GlobalC::ucell.atoms[T1].atom_pp.zv * GlobalC::ucell.atoms[T2].atom_pp.zv * ModuleBase::e2
                                       / (rr * rr)
                                       * (erfc(sqrt(alpha) * rr) / rr
                                          + sqrt(8.0 * alpha / ModuleBase::TWO_PI) * exp(-1.0 * alpha * rr * rr))
@@ -704,14 +704,14 @@ void Forces::cal_force_cc(ModuleBase::matrix& forcecc, ModulePW::PW_Basis* rho_b
     int iat = 0;
     for (int T1 = 0; T1 < GlobalC::ucell.ntype; T1++)
     {
-        if (GlobalC::ucell.atoms[T1].nlcc)
+        if (GlobalC::ucell.atoms[T1].atom_pp.nlcc)
         {
             // call drhoc
             GlobalC::CHR.non_linear_core_correction(GlobalC::ppcell.numeric,
-                                                    GlobalC::ucell.atoms[T1].msh,
-                                                    GlobalC::ucell.atoms[T1].r,
-                                                    GlobalC::ucell.atoms[T1].rab,
-                                                    GlobalC::ucell.atoms[T1].rho_atc,
+                                                    GlobalC::ucell.atoms[T1].atom_pp.msh,
+                                                    GlobalC::ucell.atoms[T1].atom_pp.r,
+                                                    GlobalC::ucell.atoms[T1].atom_pp.rab,
+                                                    GlobalC::ucell.atoms[T1].atom_pp.rho_atc,
                                                     rhocg,
                                                     rho_basis);
 
@@ -868,7 +868,7 @@ void Forces::cal_force_nl(ModuleBase::matrix& forcenl, const psi::Psi<complex<do
         	int sum = 0;
 			for (int it=0; it<GlobalC::ucell.ntype; it++)
 			{
-				const int Nprojs = GlobalC::ucell.atoms[it].nh;
+				const int Nprojs = GlobalC::ucell.atoms[it].atom_pp.nh;
 				for (int ia=0; ia<GlobalC::ucell.atoms[it].na; ia++)
 				{
 					for (int ip=0; ip<Nprojs; ip++)
@@ -947,9 +947,9 @@ void Forces::cal_force_scc(ModuleBase::matrix& forcescc, ModulePW::PW_Basis* rho
 
     for (int it = 0; it < GlobalC::ucell.ntype; it++)
     {
-        if (ndm < GlobalC::ucell.atoms[it].msh)
+        if (ndm < GlobalC::ucell.atoms[it].atom_pp.msh)
         {
-            ndm = GlobalC::ucell.atoms[it].msh;
+            ndm = GlobalC::ucell.atoms[it].atom_pp.msh;
         }
     }
 
@@ -971,24 +971,24 @@ void Forces::cal_force_scc(ModuleBase::matrix& forcescc, ModulePW::PW_Basis* rho
     for (int nt = 0; nt < GlobalC::ucell.ntype; nt++)
     {
         //		Here we compute the G.ne.0 term
-        const int mesh = GlobalC::ucell.atoms[nt].msh;
+        const int mesh = GlobalC::ucell.atoms[nt].atom_pp.msh;
 
         for (int ig = igg0; ig < rho_basis->ngg; ++ig)
         {
             const double gx = sqrt(rho_basis->gg_uniq[ig]) * GlobalC::ucell.tpiba;
             for (int ir = 0; ir < mesh; ir++)
             {
-                if (GlobalC::ucell.atoms[nt].r[ir] < 1.0e-8)
+                if (GlobalC::ucell.atoms[nt].atom_pp.r[ir] < 1.0e-8)
                 {
-                    aux[ir] = GlobalC::ucell.atoms[nt].rho_at[ir];
+                    aux[ir] = GlobalC::ucell.atoms[nt].atom_pp.rho_at[ir];
                 }
                 else
                 {
-                    const double gxx = gx * GlobalC::ucell.atoms[nt].r[ir];
-                    aux[ir] = GlobalC::ucell.atoms[nt].rho_at[ir] * sin(gxx) / gxx;
+                    const double gxx = gx * GlobalC::ucell.atoms[nt].atom_pp.r[ir];
+                    aux[ir] = GlobalC::ucell.atoms[nt].atom_pp.rho_at[ir] * sin(gxx) / gxx;
                 }
             }
-            ModuleBase::Integral::Simpson_Integral(mesh, aux, GlobalC::ucell.atoms[nt].rab, rhocgnt[ig]);
+            ModuleBase::Integral::Simpson_Integral(mesh, aux, GlobalC::ucell.atoms[nt].atom_pp.rab, rhocgnt[ig]);
         }
 
         int iat = 0;

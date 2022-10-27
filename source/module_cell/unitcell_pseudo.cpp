@@ -215,36 +215,36 @@ void UnitCell_pseudo::setup_cell(
 
 			ofs << "<HEADER>" << std::endl;
 			ofs << std::setw(10) << atom->label << "\t" << "label" << std::endl;
-			ofs << std::setw(10) << atom->pp_type << "\t" << "pseudopotential type" << std::endl;
-			ofs << std::setw(10) << atom->lmax << "\t" << "lmax" << std::endl;
+			ofs << std::setw(10) << atom->atom_pp.pp_type << "\t" << "pseudopotential type" << std::endl;
+			ofs << std::setw(10) << atom->atom_pp.lmax << "\t" << "lmax" << std::endl;
 			ofs << "</HEADER>" << std::endl;
 
 			ofs << "\n<DIJ>" << std::endl;
-			ofs << std::setw(10) << atom->nbeta << "\t" << "nummber of projectors." << std::endl;
+			ofs << std::setw(10) << atom->atom_pp.nbeta << "\t" << "nummber of projectors." << std::endl;
 			
-			for(int ib=0; ib<atom->nbeta; ib++)
+			for(int ib=0; ib<atom->atom_pp.nbeta; ib++)
 			{
-				for(int ib2=0; ib2<atom->nbeta; ib2++)
+				for(int ib2=0; ib2<atom->atom_pp.nbeta; ib2++)
 				{
-					ofs<<std::setw(10) << atom->lll[ib] 
-						<< " " << atom->lll[ib2]
-						<< " " << atom->dion(ib,ib2)<<std::endl;
+					ofs<<std::setw(10) << atom->atom_pp.lll[ib] 
+						<< " " << atom->atom_pp.lll[ib2]
+						<< " " << atom->atom_pp.dion(ib,ib2)<<std::endl;
 				}
 			}
 			ofs << "</DIJ>" << std::endl;
 			
-			for(int i=0; i<atom->nbeta; i++)
+			for(int i=0; i<atom->atom_pp.nbeta; i++)
 			{
 				ofs << "<PP_BETA>" << std::endl;
 				ofs << std::setw(10) << i << "\t" << "the index of projectors." <<std::endl;
-				ofs << std::setw(10) << atom->lll[i] << "\t" << "the angular momentum." <<std::endl;
+				ofs << std::setw(10) << atom->atom_pp.lll[i] << "\t" << "the angular momentum." <<std::endl;
 
 				// mohan add
 				// only keep the nonzero part.
-				int cut_mesh = atom->mesh; 
-				for(int j=atom->mesh-1; j>=0; --j)
+				int cut_mesh = atom->atom_pp.mesh; 
+				for(int j=atom->atom_pp.mesh-1; j>=0; --j)
 				{
-					if( abs( atom->betar(i,j) ) > 1.0e-10 )
+					if( abs( atom->atom_pp.betar(i,j) ) > 1.0e-10 )
 					{
 						cut_mesh = j; 
 						break;
@@ -257,9 +257,9 @@ void UnitCell_pseudo::setup_cell(
 
 				for(int j=0; j<cut_mesh; ++j)
 				{
-					ofs << std::setw(15) << atom->r[j]
-						<< std::setw(15) << atom->betar(i, j)
-						<< std::setw(15) << atom->rab[j] << std::endl;
+					ofs << std::setw(15) << atom->atom_pp.r[j]
+						<< std::setw(15) << atom->atom_pp.betar(i, j)
+						<< std::setw(15) << atom->atom_pp.rab[j] << std::endl;
 				}
 				ofs << "</PP_BETA>" << std::endl;
 			}
@@ -274,13 +274,13 @@ void UnitCell_pseudo::setup_cell(
 
 	for(int it=0; it<ntype; it++)
 	{
-		if(atoms[0].xc_func !=atoms[it].xc_func)
+		if(atoms[0].atom_pp.xc_func !=atoms[it].atom_pp.xc_func)
 		{
 			GlobalV::ofs_warning << "\n type " << atoms[0].label << " functional is " 
-			<< atoms[0].xc_func;
+			<< atoms[0].atom_pp.xc_func;
 			
 			GlobalV::ofs_warning << "\n type " << atoms[it].label << " functional is " 
-			<< atoms[it].xc_func << std::endl;
+			<< atoms[it].atom_pp.xc_func << std::endl;
 			
 			ModuleBase::WARNING_QUIT("setup_cell","All DFT functional must consistent.");
 		}
@@ -300,9 +300,9 @@ void UnitCell_pseudo::setup_cell(
 		int abtype = 0;
 		for(int it=0; it<ntype; it++)
 		{
-			if(ModuleBase::MinZval.find(atoms[it].psd) != ModuleBase::MinZval.end())
+			if(ModuleBase::MinZval.find(atoms[it].atom_pp.psd) != ModuleBase::MinZval.end())
 			{
-				if(atoms[it].zv > ModuleBase::MinZval.at(atoms[it].psd))
+				if(atoms[it].atom_pp.zv > ModuleBase::MinZval.at(atoms[it].atom_pp.psd))
 				{
 					abtype += 1;
 					if(abtype == 1)
@@ -310,10 +310,10 @@ void UnitCell_pseudo::setup_cell(
 						std::cout << "\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%"<<std::endl;
 						log << "\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%"<<std::endl;
 					}
-					std::cout<<" Warning: number valence electrons > " << ModuleBase::MinZval.at(atoms[it].psd);
-					std::cout<<" for " << atoms[it].psd << ": " << ModuleBase::EleConfig.at(atoms[it].psd) << std::endl;
-					log << " Warning: number valence electrons > " << ModuleBase::MinZval.at(atoms[it].psd);
-					log << " for " << atoms[it].psd << ": " << ModuleBase::EleConfig.at(atoms[it].psd) << std::endl;
+					std::cout<<" Warning: number valence electrons > " << ModuleBase::MinZval.at(atoms[it].atom_pp.psd);
+					std::cout<<" for " << atoms[it].atom_pp.psd << ": " << ModuleBase::EleConfig.at(atoms[it].atom_pp.psd) << std::endl;
+					log << " Warning: number valence electrons > " << ModuleBase::MinZval.at(atoms[it].atom_pp.psd);
+					log << " for " << atoms[it].atom_pp.psd << ": " << ModuleBase::EleConfig.at(atoms[it].atom_pp.psd) << std::endl;
 				}
 			}
 		}
@@ -590,11 +590,11 @@ void UnitCell_pseudo::cal_nwfc(std::ofstream &log)
 	this->lmax_ppwf = 0;
 	for(int it=0; it< ntype; it++)
 	{
-		for(int ic=0; ic<atoms[it].nchi; ic++)
+		for(int ic=0; ic<atoms[it].atom_pp.nchi; ic++)
 		{
-			if( lmax_ppwf < atoms[it].lchi[ic] )
+			if( lmax_ppwf < atoms[it].atom_pp.lchi[ic] )
 			{
-				this->lmax_ppwf = atoms[it].lchi[ic]; 
+				this->lmax_ppwf = atoms[it].atom_pp.lchi[ic]; 
 			}
 		}
 	}
@@ -643,7 +643,7 @@ void UnitCell_pseudo::cal_meshx()
 	this->meshx = 0;
 	for (int it = 0;it < this->ntype;it++)
 	{
-		const int mesh = this->atoms[it].msh;
+		const int mesh = this->atoms[it].atom_pp.msh;
 		if (mesh > this->meshx)
 		{
 			this->meshx = mesh;
@@ -670,25 +670,25 @@ void UnitCell_pseudo::cal_natomwfc(std::ofstream &log)
 		// Use pseudo-atomic orbitals
 		//============================
 		int tmp=0;
-		for (int l = 0;l < atoms[it].nchi;l++)
+		for (int l = 0;l < atoms[it].atom_pp.nchi;l++)
 		{
-			if (atoms[it].oc[l] >= 0)
+			if (atoms[it].atom_pp.oc[l] >= 0)
 			{
 				if(GlobalV::NSPIN==4)
 				{
-					if(atoms[it].has_so)
+					if(atoms[it].atom_pp.has_so)
 					{
-						tmp += 2 * atoms[it].lchi[l];
-						if(fabs(atoms[it].jchi[l] - atoms[it].lchi[l] - 0.5)<1e-6)
+						tmp += 2 * atoms[it].atom_pp.lchi[l];
+						if(fabs(atoms[it].atom_pp.jchi[l] - atoms[it].atom_pp.lchi[l] - 0.5)<1e-6)
 						tmp += 2 ;
 					}
 					else
 					{
-						tmp += 2 * (2 * atoms[it].lchi[l] + 1);
+						tmp += 2 * (2 * atoms[it].atom_pp.lchi[l] + 1);
 					}
 				}
 				else
-					tmp += 2 * atoms[it].lchi[l] + 1;
+					tmp += 2 * atoms[it].atom_pp.lchi[l] + 1;
 			}
 		}
 		natomwfc += tmp * atoms[it].na;
@@ -753,7 +753,7 @@ bool UnitCell_pseudo::if_atoms_can_move()const
         Atom* atom = &atoms[it];
         for(int ia =0;ia< atom->na;ia++)
         {
-            if(atom->mbl[ia].x||atom->mbl[ia].y||atom->mbl[ia].z) return 1;
+            if(atom->atom_pp.mbl[ia].x||atom->atom_pp.mbl[ia].y||atom->atom_pp.mbl[ia].z) return 1;
 		}
 	}
 	return 0;
@@ -855,7 +855,7 @@ void UnitCell_pseudo::check_structure(double factor)
 	bool no_warning = true;
 	for (int it1 = 0;it1 < ntype; it1++)
 	{ 
-		std::string symbol1 = this->atoms[it1].psd;
+		std::string symbol1 = this->atoms[it1].atom_pp.psd;
 		double symbol1_covalent_radius;
 		if (ModuleBase::CovalentRadius.find(symbol1) != ModuleBase::CovalentRadius.end())
 		{
@@ -879,7 +879,7 @@ void UnitCell_pseudo::check_structure(double factor)
 
 			for(int it2=0;it2 <ntype;it2++)
 			{
-				std::string symbol2 = this->atoms[it2].psd;
+				std::string symbol2 = this->atoms[it2].atom_pp.psd;
 				double symbol2_covalent_radius;
 				if (ModuleBase::CovalentRadius.find(symbol2) != ModuleBase::CovalentRadius.end())
 				{
