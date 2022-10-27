@@ -43,9 +43,9 @@ void Print_Info::setup_parameters(UnitCell_pseudo &ucell, K_Vectors &kv)
             }
             else if(INPUT.mdp.md_type == 0)
             {
-                std::cout << " ENSEMBLE                 : " << "NVE" << std::endl;
+                std::cout << " ENSEMBLE                 : " << INPUT.mdp.md_thermostat << std::endl;
             }
-            else if(INPUT.mdp.md_type == 1 || INPUT.mdp.md_type == 3)
+            else if(INPUT.mdp.md_type == 1)
             {
                 std::cout << " ENSEMBLE                 : " << "NVT" << std::endl;
             }

@@ -5,7 +5,7 @@
 #endif
 #include "../module_base/timer.h"
 
-NVT_NHC::NVT_NHC(MD_parameters& MD_para_in, UnitCell_pseudo &unit_in) : Verlet(MD_para_in, unit_in)
+NVT_NHC::NVT_NHC(MD_parameters& MD_para_in, UnitCell_pseudo &unit_in) : MDrun(MD_para_in, unit_in)
 {
     if(mdp.md_tfirst == 0)
     {
@@ -47,9 +47,9 @@ void NVT_NHC::setup(ModuleESolver::ESolver *p_ensolve)
     ModuleBase::TITLE("NVT_NHC", "setup");
     ModuleBase::timer::tick("NVT_NHC", "setup");
 
-    Verlet::setup(p_ensolve);
+    MDrun::setup(p_ensolve);
 
-    temp_target();
+    t_target = MD_func::target_temp(step_ + step_rst_, mdp.md_tfirst, mdp.md_tlast);
     
     update_mass();
     
@@ -67,11 +67,11 @@ void NVT_NHC::first_half()
     ModuleBase::timer::tick("NVT_NHC", "first_half");
 
     // update target T
-    temp_target();
+    t_target = MD_func::target_temp(step_ + step_rst_, mdp.md_tfirst, mdp.md_tlast);
 
     integrate();
 
-    Verlet::first_half();
+    MDrun::first_half();
 
     ModuleBase::timer::tick("NVT_NHC", "first_half");
 }
@@ -81,7 +81,7 @@ void NVT_NHC::second_half()
     ModuleBase::TITLE("NVT_NHC", "second_half");
     ModuleBase::timer::tick("NVT_NHC", "second_half");
 
-    Verlet::second_half();
+    MDrun::second_half();
 
     integrate();
 
@@ -90,7 +90,7 @@ void NVT_NHC::second_half()
 
 void NVT_NHC::outputMD(std::ofstream &ofs, bool cal_stress)
 {
-    Verlet::outputMD(ofs, cal_stress);
+    MDrun::outputMD(ofs, cal_stress);
 }
 
 void NVT_NHC::write_restart()
@@ -168,11 +168,11 @@ void NVT_NHC::restart()
 
     if(!ok)
     {
-        ModuleBase::WARNING_QUIT("verlet", "no Restart_md.dat !");
+        ModuleBase::WARNING_QUIT("mdrun", "no Restart_md.dat !");
     }
     if(!ok2)
     {
-        ModuleBase::WARNING_QUIT("verlet", "Num of NHC is not the same !");
+        ModuleBase::WARNING_QUIT("mdrun", "Num of NHC is not the same !");
     }
 
 #ifdef __MPI
@@ -256,12 +256,6 @@ void NVT_NHC::integrate()
     {
         vel[i] *= scale;
     }
-}
-
-void NVT_NHC::temp_target()
-{
-    double delta = (double)(step_ + step_rst_) / GlobalV::MD_NSTEP;
-    t_target = mdp.md_tfirst + delta * (mdp.md_tlast - mdp.md_tfirst);
 }
 
 void NVT_NHC::update_mass()
