@@ -25,7 +25,7 @@ list(APPEND objects
     sto_hchi.cpp
     sto_wf.cpp
     sto_func.cpp
-    sto_forces.cpp 
+    sto_forces.cpp
     sto_stress_pw.cpp
     stress_func_cc.cpp
     stress_func_ewa.cpp
@@ -80,7 +80,11 @@ add_library(
     ${objects}
 )
 
-IF (BUILD_TESTING)
+if(ENABLE_COVERAGE)
+  add_coverage(pw)
+endif()
+
+if(BUILD_TESTING)
   add_subdirectory(test)
 endif()
 

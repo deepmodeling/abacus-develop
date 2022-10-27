@@ -120,14 +120,14 @@ void ESolver_SDFT_PW::hamilt2density(int istep, int iter, double ethr)
     // be careful that istep start from 0 and iter start from 1
     if(istep==0&&iter==1) 
     {
-        hsolver::DiagoIterAssist::need_subspace = false;
+        hsolver::DiagoIterAssist<double>::need_subspace = false;
     }
     else 
     {
-        hsolver::DiagoIterAssist::need_subspace = true;
+        hsolver::DiagoIterAssist<double>::need_subspace = true;
 	}
-    hsolver::DiagoIterAssist::PW_DIAG_THR = ethr; 
-    hsolver::DiagoIterAssist::PW_DIAG_NMAX = GlobalV::PW_DIAG_NMAX;
+    hsolver::DiagoIterAssist<double>::PW_DIAG_THR = ethr; 
+    hsolver::DiagoIterAssist<double>::PW_DIAG_NMAX = GlobalV::PW_DIAG_NMAX;
     this->phsol->solve(this->p_hamilt, this->psi[0], this->pelec,this->stowf, istep, iter, GlobalV::KS_SOLVER);   
     // transform energy for print
     GlobalC::en.eband = this->pelec->eband;
@@ -163,9 +163,9 @@ void ESolver_SDFT_PW::postprocess()
     {
         int iter = 1;
         int istep = 0;
-        hsolver::DiagoIterAssist::PW_DIAG_NMAX = GlobalV::PW_DIAG_NMAX;
-        hsolver::DiagoIterAssist::PW_DIAG_THR = std::max(std::min(1e-5, 0.1 * GlobalV::SCF_THR / std::max(1.0, GlobalC::CHR.nelec)),1e-12);
-        hsolver::DiagoIterAssist::need_subspace = false;
+        hsolver::DiagoIterAssist<double>::PW_DIAG_NMAX = GlobalV::PW_DIAG_NMAX;
+        hsolver::DiagoIterAssist<double>::PW_DIAG_THR = std::max(std::min(1e-5, 0.1 * GlobalV::SCF_THR / std::max(1.0, GlobalC::CHR.nelec)),1e-12);
+        hsolver::DiagoIterAssist<double>::need_subspace = false;
         this->phsol->solve(this->p_hamilt, this->psi[0], this->pelec,this->stowf,istep, iter, GlobalV::KS_SOLVER, true);
         ((hsolver::HSolverPW_SDFT*)phsol)->stoiter.cleanchiallorder();//release lots of memories
     }

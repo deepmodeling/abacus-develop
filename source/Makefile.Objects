@@ -24,12 +24,15 @@ VPATH=./src_global:\
 ./module_xc:\
 ./module_esolver:\
 ./module_hsolver:\
+./module_hsolver/src:\
 ./module_hsolver/genelpa:\
 ./module_elecstate:\
 ./module_psi:\
+./module_psi/src:\
 ./module_hamilt:\
 ./module_hamilt/ks_pw:\
 ./module_hamilt/ks_lcao:\
+./module_hamilt/src:\
 ./module_gint:\
 ./src_pw:\
 ./src_lcao:\
@@ -193,6 +196,10 @@ OBJS_GINT=gint.o\
       grid_technique.o\
 
 OBJS_HAMILT=hamilt_pw.o\
+    operator.o\
+    operator_pw.o\
+    ekinetic.o\
+    nonlocal.o\
     ekinetic_pw.o\
     veff_pw.o\
     nonlocal_pw.o\
@@ -215,6 +222,7 @@ OBJS_HSOLVER=diago_cg.o\
     hsolver_pw.o\
     hsolver_pw_sdft.o\
     diago_iter_assist.o\
+    math_kernel.o\
 
 OBJS_HSOLVER_LCAO=hsolver_lcao.o\
       diago_blas.o\
@@ -256,6 +264,8 @@ OBJS_ORBITAL=ORB_atomic.o\
       parallel_orbitals.o\
 
 OBJS_PSI=psi.o\
+    memory_psi.o\
+    device.o\
 
 OBJS_PW=fft.o\
     pw_basis.o\

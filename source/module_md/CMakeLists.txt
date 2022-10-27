@@ -3,8 +3,8 @@ add_library(
     OBJECT
     MD_func.cpp
     run_md_classic.cpp
-	verlet.cpp
-	NVE.cpp
+    verlet.cpp
+    NVE.cpp
     MSST.cpp
     NVT_ADS.cpp
     NVT_NHC.cpp
@@ -12,6 +12,10 @@ add_library(
     Langevin.cpp
 )
 
-IF (BUILD_TESTING)
+if(ENABLE_COVERAGE)
+  add_coverage(md)
+endif()
+
+if(BUILD_TESTING)
     add_subdirectory(test)
 endif()

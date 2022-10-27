@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
-if(POLICY CMP0131) # From CMake 3.24
-    cmake_policy(SET CMP0135 NEW)
+if(POLICY CMP0135) # https://cmake.org/cmake/help/git-stage/policy/CMP0135.html
+    cmake_policy(SET CMP0135 NEW) # Otherwise this policy generates a warning on CMake 3.24
 endif()
 
 project(ABACUS
@@ -21,18 +21,40 @@ option(ENABLE_ASAN "Enable AddressSanitizer" OFF)
 option(BUILD_TESTING "Build ABACUS unit tests" OFF)
 option(GENERATE_TEST_REPORTS "Enable test report generation" OFF)
 option(INFO "Enable gathering of math library information" OFF)
+option(ENABLE_COVERAGE "Enable coverage build." OFF)
 
 if(ENABLE_LCAO)
   set(ABACUS_BIN_NAME abacus)
 else()
   set(ABACUS_BIN_NAME abacus_pw)
 endif()
-list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/modules)
+
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
+
+if(ENABLE_COVERAGE)
+  find_package(codecov)
+  if(NOT codecov)
+    include(FetchContent)
+    FetchContent_Declare(
+      cmakecodecov
+      URL https://github.com/RWTH-HPC/CMake-codecov/archive/refs/heads/master.zip
+    )
+    FetchContent_Populate(cmakecodecov)
+    list(APPEND CMAKE_MODULE_PATH ${cmakecodecov_SOURCE_DIR}/cmake)
+    find_package(codecov REQUIRED)
+  endif()
+endif()
+
 set(ABACUS_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/source)
 set(ABACUS_TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR}/tests)
 set(ABACUS_BIN_PATH ${CMAKE_CURRENT_BINARY_DIR}/${ABACUS_BIN_NAME})
 include_directories(${ABACUS_SOURCE_DIR})
+
 add_executable(${ABACUS_BIN_NAME} source/main.cpp)
+if(ENABLE_COVERAGE)
+  add_coverage(${ABACUS_BIN_NAME})
+endif()
+
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 if (CMAKE_COMPILER_IS_GNUCXX AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 5)
@@ -52,14 +74,17 @@ endif()
 # Other default configurations are also available, see:
 # https://cmake.org/cmake/help/latest/manual/cmake-buildsystem.7.html#default-and-custom-configurations
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
-  add_compile_options(-O2 -g) # default flag
+  if(NOT ENABLE_COVERAGE)
+    add_compile_options(-O2 -g) # default flag
+  else()
+    add_compile_options(-g)
+  endif()
 endif()
 
 if(ENABLE_LCAO)
   find_package(Cereal REQUIRED)
   include_directories(${CEREAL_INCLUDE_DIR})
   add_compile_definitions(USE_CEREAL_SERIALIZATION)
-  
   find_package(ELPA REQUIRED)
   include_directories(${ELPA_INCLUDE_DIR})
   target_link_libraries(${ABACUS_BIN_NAME} ELPA::ELPA)
@@ -137,6 +162,7 @@ if(USE_CUDA OR USE_CUSOLVER_LCAO)
   include_directories(${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
   if (USE_CUDA)
     add_compile_definitions(__CUDA)
+    add_compile_definitions(__UT_USE_CUDA)
   endif()
   if (USE_CUSOLVER_LCAO)
     add_compile_definitions(__CUSOLVER_LCAO)
@@ -167,6 +193,7 @@ if(USE_ROCM)
     roc::hipblas
   )
   add_compile_definitions(__ROCM)
+  add_compile_definitions(__UT_USE_ROCM)
 endif()
 
 if(ENABLE_ASAN)
@@ -261,13 +288,13 @@ endif()
 
 if(DEFINED DeePMD_DIR)
   add_compile_definitions(
-    __DPMD 
+    __DPMD
     HIGH_PREC
   )
   add_compile_options(-Wl,--no-as-needed)
   find_package(DeePMD REQUIRED)
   include_directories(${DeePMD_DIR}/include)
-  target_link_libraries(${ABACUS_BIN_NAME} 
+  target_link_libraries(${ABACUS_BIN_NAME}
     DeePMD::deepmd_cc
     DeePMD::deepmd_op
     DeePMD::deepmd_op_cuda
@@ -325,6 +352,11 @@ IF (BUILD_TESTING)
   function(AddTest) # function for UT
     cmake_parse_arguments(UT "DYN" "TARGET" "LIBS;DYN_LIBS;STATIC_LIBS;SOURCES;DEPENDS" ${ARGN})
     add_executable(${UT_TARGET} ${UT_SOURCES})
+
+    if(ENABLE_COVERAGE)
+      add_coverage(${UT_TARGET})
+    endif()
+
     #dependencies & link library
     target_link_libraries(${UT_TARGET} ${UT_LIBS}
       Threads::Threads GTest::gtest_main GTest::gmock_main)
@@ -375,7 +407,6 @@ if(ENABLE_LCAO)
   )
 endif()
 
-install(PROGRAMS ${ABACUS_BIN_PATH}
-    TYPE BIN
-    #DESTINATION ${CMAKE_INSTALL_BINDIR}
-)
+if(ENABLE_COVERAGE)
+  coverage_evaluate()
+endif()
