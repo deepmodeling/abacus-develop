@@ -761,7 +761,7 @@ int wavefunc::iw2ia( int iw)    // pengfei 2016-11-23
 
 //LiuXh add a new function here,
 //20180515
-void wavefunc::init_after_vc(const int nks, psi::Psi<std::complex<double>>* psi_in)
+void wavefunc::init_after_vc(const int nks)
 {
     ModuleBase::TITLE("wavefunc","init");
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"npwx",this->npwx);
@@ -804,8 +804,6 @@ void wavefunc::init_after_vc(const int nks, psi::Psi<std::complex<double>>* psi_
 			this->wanf2[ik].create(GlobalV::NLOCAL, nbasis);
 		}
 	}
-
-	psi_in->resize(nks2, GlobalV::NBANDS, nbasis);
 
 	std::cout << " MEMORY FOR PSI (MB)  : " <<
 	ModuleBase::Memory::record("wavefunc","psi",nks*GlobalV::NBANDS*nbasis,"complexmatrix") << std::endl;

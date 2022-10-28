@@ -378,36 +378,18 @@ void MD_func::getMassMbl(const UnitCell_pseudo &unit_in,
 	}
 }
 
-void MD_func::print(const std::string& name, const ModuleBase::matrix& f, const UnitCell_pseudo &unit_in)
+double MD_func::target_temp(const int &istep, const double &tfirst, const double &tlast)
 {
-    ModuleBase::GlobalFunc::NEW_PART(name);
+    double delta = (double)(istep) / GlobalV::MD_NSTEP;
+    return tfirst + delta * (tlast - tfirst);
+}
 
-    GlobalV::ofs_running << " " << std::setw(8) << "atom" << std::setw(15) << "x" << std::setw(15) << "y"
-                         << std::setw(15) << "z" << std::endl;
-    GlobalV::ofs_running << std::setiosflags(ios::showpos);
-    GlobalV::ofs_running << std::setprecision(8);
+double MD_func::current_temp(const int &natom, 
+            const int &frozen_freedom, 
+            const double *allmass,
+            const ModuleBase::Vector3<double> *vel)
+{
+    double ke = GetAtomKE(natom, vel, allmass);
 
-    const double fac = ModuleBase::Hartree_to_eV / 0.529177;
-
-    int iat = 0;
-    for (int it = 0; it < unit_in.ntype; it++)
-    {
-        for (int ia = 0; ia < unit_in.atoms[it].na; ia++)
-        {
-            std::stringstream ss;
-            ss << unit_in.atoms[it].label << ia + 1;
-
-            GlobalV::ofs_running << " " << std::setw(8) << ss.str();
-            GlobalV::ofs_running << std::setw(15) << f(iat, 0) * fac;
-            GlobalV::ofs_running << std::setw(15) << f(iat, 1) * fac;
-            GlobalV::ofs_running << std::setw(15) << f(iat, 2) * fac;
-            GlobalV::ofs_running << std::endl;
-
-            iat++;
-        }
-    }
-
-    GlobalV::ofs_running << std::resetiosflags(ios::showpos);
-    std::cout << std::resetiosflags(ios::showpos);
-    return;
+    return 2 * ke / (3 * natom - frozen_freedom) * ModuleBase::Hartree_to_K;
 }

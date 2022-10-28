@@ -3,7 +3,7 @@
 #include "../src_parallel/parallel_common.h"
 #include "../module_base/timer.h"
 
-Langevin::Langevin(MD_parameters& MD_para_in, UnitCell_pseudo &unit_in) : Verlet(MD_para_in, unit_in)
+Langevin::Langevin(MD_parameters& MD_para_in, UnitCell_pseudo &unit_in) : MDrun(MD_para_in, unit_in)
 {
     // convert to a.u. unit
     mdp.md_damp /= ModuleBase::AU_to_FS;
@@ -21,7 +21,7 @@ void Langevin::setup(ModuleESolver::ESolver *p_ensolve)
     ModuleBase::TITLE("Langevin", "setup");
     ModuleBase::timer::tick("Langevin", "setup");
     
-    Verlet::setup(p_ensolve);
+    MDrun::setup(p_ensolve);
 
     post_force();
 
@@ -83,22 +83,22 @@ void Langevin::second_half()
 
 void Langevin::outputMD(std::ofstream &ofs, bool cal_stress)
 {
-    Verlet::outputMD(ofs, cal_stress);
+    MDrun::outputMD(ofs, cal_stress);
 }
 
 void Langevin::write_restart()
 {
-    Verlet::write_restart();
+    MDrun::write_restart();
 }
 
 void Langevin::restart()
 {
-    Verlet::restart();
+    MDrun::restart();
 }
 
 void Langevin::post_force()
 {
-    temp_target();
+    double t_target = MD_func::target_temp(step_ + step_rst_, mdp.md_tfirst, mdp.md_tlast);
 
     if(GlobalV::MY_RANK==0)
     {
@@ -115,10 +115,4 @@ void Langevin::post_force()
 #ifdef __MPI
     MPI_Bcast(fictitious_force, ucell.nat*3, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 #endif
-}
-
-void Langevin::temp_target()
-{
-    double delta = (double)(step_ + step_rst_) / GlobalV::MD_NSTEP;
-    t_target = mdp.md_tfirst + delta * (mdp.md_tlast - mdp.md_tfirst);
 }

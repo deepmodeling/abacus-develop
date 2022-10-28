@@ -57,26 +57,17 @@ AddTest(
   TARGET md_fire
   LIBS ${math_libs} psi
   SOURCES FIRE_test.cpp
-  ../verlet.cpp
+  ../mdrun.cpp
   ../FIRE.cpp
   ${depend_files}
 )
 
 AddTest(
-  TARGET md_nve
+  TARGET md_verlet
   LIBS ${math_libs} psi
-  SOURCES NVE_test.cpp
+  SOURCES verlet_test.cpp
+  ../mdrun.cpp
   ../verlet.cpp
-  ../NVE.cpp
-  ${depend_files}
-)
-
-AddTest(
-  TARGET md_nvt_ads
-  LIBS ${math_libs} psi
-  SOURCES NVT_ADS_test.cpp
-  ../verlet.cpp
-  ../NVT_ADS.cpp
   ${depend_files}
 )
 
@@ -84,7 +75,7 @@ AddTest(
   TARGET md_nvt_nhc
   LIBS ${math_libs} psi
   SOURCES NVT_NHC_test.cpp
-  ../verlet.cpp
+  ../mdrun.cpp
   ../NVT_NHC.cpp
   ${depend_files}
 )
@@ -93,7 +84,7 @@ AddTest(
   TARGET md_msst
   LIBS ${math_libs} psi
   SOURCES MSST_test.cpp
-  ../verlet.cpp
+  ../mdrun.cpp
   ../MSST.cpp
   ${depend_files}
 )
@@ -102,7 +93,7 @@ AddTest(
   TARGET md_lgv
   LIBS ${math_libs} psi
   SOURCES Langevin_test.cpp
-  ../verlet.cpp
+  ../mdrun.cpp
   ../Langevin.cpp
   ${depend_files}
 )

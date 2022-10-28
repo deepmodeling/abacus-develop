@@ -177,7 +177,7 @@ namespace ModuleESolver
             GlobalC::wfcpw->initgrids(GlobalC::ucell.lat0, GlobalC::ucell.latvec, GlobalC::wfcpw->nx, GlobalC::wfcpw->ny, GlobalC::wfcpw->nz);
             GlobalC::wfcpw->initparameters(false, INPUT.ecutwfc, GlobalC::kv.nks, GlobalC::kv.kvec_d.data());
             GlobalC::wfcpw->collect_local_pw(); 
-            GlobalC::wf.init_after_vc(GlobalC::kv.nks, this->psi);
+            GlobalC::wf.init_after_vc(GlobalC::kv.nks);
             GlobalC::wf.init_at_1();
         }
         //init Hamilt, this should be allocated before each scf loop
