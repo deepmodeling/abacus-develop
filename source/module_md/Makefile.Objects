@@ -9,10 +9,9 @@ OBJS_MAIN=input.o\
 OBJS_MD=driver_classic.o\
 MD_func.o\
 run_md_classic.o\
+mdrun.o\
 verlet.o\
-NVE.o\
 MSST.o\
-NVT_ADS.o\
 NVT_NHC.o\
 FIRE.o\
 Langevin.o\

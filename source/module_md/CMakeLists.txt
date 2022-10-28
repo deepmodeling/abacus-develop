@@ -3,10 +3,9 @@ add_library(
     OBJECT
     MD_func.cpp
     run_md_classic.cpp
-    verlet.cpp
-    NVE.cpp
+	mdrun.cpp
+	verlet.cpp
     MSST.cpp
-    NVT_ADS.cpp
     NVT_NHC.cpp
     FIRE.cpp
     Langevin.cpp
