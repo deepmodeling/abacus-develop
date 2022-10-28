@@ -6,60 +6,12 @@
 #include "vdwd3_parameters.h"
 #include "../module_base/constants.h"
 
-Vdwd3_Parameters::Vdwd3_Parameters()
+namespace vdw
 {
-}
 
-void Vdwd3_Parameters::initial_parameters(const Input &input)
+void Vdwd3Parameters::init_C6()
 {
-    this->mxc.resize(max_elem, 1);
-    this->r0ab.resize(max_elem,
-      std::vector<double>(max_elem, 0.0));
-    this->c6ab.resize(3,std::vector<std::vector<std::vector<std::vector<double>>>>(
-      5, std::vector<std::vector<std::vector<double>>>(
-      5, std::vector<std::vector<double>>(
-      max_elem,
-      std::vector<double>(max_elem, 0.0)))));
-    init_C6();
-    init_r2r4();
-    init_rcov();
-    init_r0ab();
-    this->flag_vdwd3 = true;
-    this->s6 = std::stod(input.vdw_s6);
-    this->s18 = std::stod(input.vdw_s8);
-    this->rs6 = std::stod(input.vdw_a1);
-    this->rs18 = std::stod(input.vdw_a2);
-    this->abc = input.vdw_abc;
-    this->version = input.vdw_method;
-    this->model = input.vdw_cutoff_type;
-    if(input.vdw_cutoff_type=="radius") 
-    {
-        if(input.vdw_radius_unit=="Bohr")
-        {
-            this->rthr2 = pow(std::stod(input.vdw_cutoff_radius),2);
-        } 
-        else
-        {
-            this->rthr2 = pow((std::stod(input.vdw_cutoff_radius) * ModuleBase::BOHR_TO_A),2);
-        }
-        if(input.vdw_cn_thr_unit=="Bohr")
-        {
-            this->cn_thr2 = pow(input.vdw_cn_thr,2);
-        }
-        else
-        {
-            this->cn_thr2 = pow((input.vdw_cn_thr * ModuleBase::BOHR_TO_A),2);
-        }
-      }
-      else if(input.vdw_cutoff_type=="period")
-      {
-            this->period = input.vdw_cutoff_period.x;
-      }
-}
-
-void Vdwd3_Parameters::init_C6()
-{
-	std::vector<double> C6_tmp={
+    std::vector<double> C6_tmp = {
       0.30267000E+1,0.100E+1,0.100E+1,0.91180000E+0,0.91180000E+0
      ,0.20835000E+1,0.200E+1,0.100E+1,0.00000000E+0,0.91180000E+0
      ,0.15583000E+1,0.200E+1,0.200E+1,0.00000000E+0,0.00000000E+0
@@ -32447,47 +32399,33 @@ void Vdwd3_Parameters::init_C6()
      ,0.45528540E+3,0.482E+3,0.482E+3,0.39098000E+1,0.39098000E+1
      };
 
-      int k = 0, nline = 32385;
-      int iat, jat, iatcn, jatcn;
-      for(size_t n=0; n!=nline; n++)
-	{
-		k = n*5;
-		
-		iat = static_cast<int>(C6_tmp[k+1])-1;
-		jat = static_cast<int>(C6_tmp[k+2])-1;
-            iatcn = limit(iat);
-            jatcn = limit(jat);
+    int k, nline = 32385;
+    int iat, jat, iatcn, jatcn;
+    for (size_t n = 0; n != nline; n++)
+    {
+        k = n * 5;
 
-		mxc[iat] = std::max(mxc[iat], iatcn);
-		mxc[jat] = std::max(mxc[jat], jatcn);
+        iat = static_cast<int>(C6_tmp[k + 1]) - 1;
+        jat = static_cast<int>(C6_tmp[k + 2]) - 1;
+        iatcn = limit(iat);
+        jatcn = limit(jat);
 
-		c6ab[0][jatcn-1][iatcn-1][jat][iat] = C6_tmp[k];
-		c6ab[1][jatcn-1][iatcn-1][jat][iat] = C6_tmp[k+3];
-		c6ab[2][jatcn-1][iatcn-1][jat][iat] = C6_tmp[k+4];
+        mxc_[iat] = std::max(mxc_[iat], iatcn);
+        mxc_[jat] = std::max(mxc_[jat], jatcn);
 
-		c6ab[0][iatcn-1][jatcn-1][iat][jat] = C6_tmp[k];
-		c6ab[1][iatcn-1][jatcn-1][iat][jat] = C6_tmp[k+4];
-		c6ab[2][iatcn-1][jatcn-1][iat][jat] = C6_tmp[k+3];
+        c6ab_[0][jatcn - 1][iatcn - 1][jat][iat] = C6_tmp[k];
+        c6ab_[1][jatcn - 1][iatcn - 1][jat][iat] = C6_tmp[k + 3];
+        c6ab_[2][jatcn - 1][iatcn - 1][jat][iat] = C6_tmp[k + 4];
 
-	}
-      
-      return ;
+        c6ab_[0][iatcn - 1][jatcn - 1][iat][jat] = C6_tmp[k];
+        c6ab_[1][iatcn - 1][jatcn - 1][iat][jat] = C6_tmp[k + 4];
+        c6ab_[2][iatcn - 1][jatcn - 1][iat][jat] = C6_tmp[k + 3];
+    }
 }
 
-int Vdwd3_Parameters::limit(int &i)
+void Vdwd3Parameters::init_r2r4()
 {
-	int icn = 1;
-	while(i>=100)
-	{
-		i-=100;
-		icn+=1;
-	}
-	return icn;
-}
-
-void Vdwd3_Parameters::init_r2r4()
-{
-      r2r4={
+      r2r4_ = {
       2.00734898,  1.56637132,  5.01986934,  3.85379032,  3.64446594,
       3.10492822,  2.71175247,  2.59361680,  2.38825250,  2.21522516,
       6.58585536,  5.46295967,  5.65216669,  4.88284902,  4.29727576,
@@ -32510,9 +32448,9 @@ void Vdwd3_Parameters::init_r2r4()
       };
 }
 
-void Vdwd3_Parameters::init_rcov()
+void Vdwd3Parameters::init_rcov()
 {
-	rcov={
+    rcov_ = {
       0.80628308, 1.15903197, 3.02356173, 2.36845659, 1.94011865,
       1.88972601, 1.78894056, 1.58736983, 1.61256616, 1.68815527,
       3.52748848, 3.14954334, 2.84718717, 2.62041997, 2.77159820,
@@ -32535,9 +32473,9 @@ void Vdwd3_Parameters::init_rcov()
       };
 }
 
-void Vdwd3_Parameters::init_r0ab()
+void Vdwd3Parameters::init_r0ab()
 {
-      std::vector<double> r={
+      std::vector<double> r = {
       2.1823,  1.8547,  1.7347,  2.9086,  2.5732,  3.4956,  2.3550,  
       2.5095,  2.9802,  3.0982,  2.5141,  2.3917,  2.9977,  2.9484, 
       3.2160,  2.4492,  2.2527,  3.1933,  3.0214,  2.9531,  2.9103,  
@@ -33178,12 +33116,16 @@ void Vdwd3_Parameters::init_r0ab()
       4.5158,  4.3291,  4.3609,  4.3462,  4.3265,  4.4341   
       };
 
-      int k = 0;
-      for (size_t i=0; i!=max_elem; i++)
-            for (size_t j=0; j<=i; j++)
-            {
-                  r0ab[j][i] = r[k]/ModuleBase::BOHR_TO_A;
-                  r0ab[i][j] = r[k]/ModuleBase::BOHR_TO_A;
-                  k += 1;
-            }
+    int k = 0;
+    for (size_t i = 0; i != max_elem_; i++)
+    {
+        for (size_t j = 0; j <= i; j++)
+        {
+            r0ab_[j][i] = r[k] / ModuleBase::BOHR_TO_A;
+            r0ab_[i][j] = r[k] / ModuleBase::BOHR_TO_A;
+            k += 1;
+        }
+    }
 }
+
+} // namespace vdw
