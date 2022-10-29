@@ -54,8 +54,6 @@ class Potential
 
     void set_vrs_tddft(const int istep);
 
-    void newd(void);
-
   public:
     // mohan add 2011-02-28
     // here vh is std::complex because the array is got after std::complex FFT.

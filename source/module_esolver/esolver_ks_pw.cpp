@@ -101,7 +101,7 @@ namespace ModuleESolver
         //=========================================================
         GlobalC::pot.init_pot(0, GlobalC::sf.strucFac); //atomic_rho, v_of_rho, set_vrs
 
-        GlobalC::pot.newd();
+        GlobalC::ppcell.cal_effective_D();
 
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT POTENTIAL");
 
