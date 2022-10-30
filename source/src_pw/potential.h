@@ -74,11 +74,6 @@ class Potential
                        ModuleBase::ComplexMatrix &sf // structure factors
     ) const;
 
-    // TDDFT related, fuxiang add
-    double *vext;
-
-    double *vextold;
-
 };
 
 #endif // POTENTIAL_H
