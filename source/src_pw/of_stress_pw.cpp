@@ -1,13 +1,15 @@
-#include "./stress_pw.h"
+#include "./of_stress_pw.h"
 #include "vdwd2.h"
 #include "vdwd3.h"
 #include "../module_base/timer.h"
 #include "global.h"
 
-void Stress_PW::cal_stress(ModuleBase::matrix& sigmatot, const psi::Psi<complex<double>>* psi_in)
+
+// Since the kinetic stress of OFDFT is calculated by kinetic functionals in esolver_of.cpp, here we regard it as an input variable.
+void OF_Stress_PW::cal_stress(ModuleBase::matrix& sigmatot, ModuleBase::matrix& kinetic_stress, const psi::Psi<complex<double>>* psi_in)
 {
-	ModuleBase::TITLE("Stress_PW","cal_stress");
-	ModuleBase::timer::tick("Stress_PW","cal_stress");    
+	ModuleBase::TITLE("OF_Stress_PW","cal_stress");
+	ModuleBase::timer::tick("OF_Stress_PW","cal_stress");    
 
 	// total stress
 	sigmatot.create(3,3);
@@ -43,7 +45,8 @@ void Stress_PW::cal_stress(ModuleBase::matrix& sigmatot, const psi::Psi<complex<
 			sigmatot(i,j) = 0.0;
 			sigmaxc(i,j) = 0.0;
 			sigmahar(i,j) = 0.0;
-			sigmakin(i,j) = 0.0;
+			//kinetic contribution
+			sigmakin(i,j) = kinetic_stress(i,j);
 			sigmaloc(i,j) = 0.0;
 			sigmanl(i,j) = 0.0;
 			sigmaewa(i,j) = 0.0;
@@ -51,9 +54,6 @@ void Stress_PW::cal_stress(ModuleBase::matrix& sigmatot, const psi::Psi<complex<
 			sigmavdw(i,j) = 0.0;
 		}
 	}
-
-	//kinetic contribution
-	stress_kin(sigmakin, psi_in);
 	
 	//hartree contribution
 	stress_har(sigmahar, GlobalC::rhopw, 1);
@@ -118,12 +118,12 @@ void Stress_PW::cal_stress(ModuleBase::matrix& sigmatot, const psi::Psi<complex<
 		this->print_stress("NLCC    STRESS",sigmaxcc,GlobalV::TEST_STRESS,ry);
 		this->print_stress("TOTAL    STRESS",sigmatot,GlobalV::TEST_STRESS,ry);
 	}
-	ModuleBase::timer::tick("Stress_PW","cal_stress");
+	ModuleBase::timer::tick("OF_Stress_PW","cal_stress");
 	return;
     
 }
 
-void Stress_PW::stress_vdw(ModuleBase::matrix& sigma)
+void OF_Stress_PW::stress_vdw(ModuleBase::matrix& sigma)
 {
 	ModuleBase::matrix force;
 	if(GlobalC::vdwd2_para.flag_vdwd2) //Peize Lin add 2014-04-04, update 2021-03-09

@@ -37,6 +37,7 @@ list(APPEND objects
     stress_func_nl.cpp
     stress_func_print.cpp
     stress_pw.cpp
+    of_stress_pw.cpp
     symmetry_rho.cpp
     threshold_elec.cpp
     use_fft.cpp

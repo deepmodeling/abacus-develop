@@ -18,7 +18,7 @@ scf_nmax	50
 
 #OFDFT
 of_kinetic 	wt
-of_vw_weight    0.5
+of_vw_weight    1.1
 of_method	tn
 of_conv 	energy
 of_tole 	2e-6
