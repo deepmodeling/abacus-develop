@@ -10,5 +10,5 @@ add_library(
 )
 
 if(ENABLE_COVERAGE)
-  add_coverage(base)
+  add_coverage(vdw)
 endif()
