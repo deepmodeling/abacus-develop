@@ -21,19 +21,8 @@ public:
 	/// which is got after the diagonalization of 
     /// std::complex Hamiltonian matrix.
     ///=========================================
-    //( Old Name: WFC_K)
     std::complex<double>*** wfc_k_grid; // [NK, GlobalV::NBANDS, GlobalV::NLOCAL]	
-    //( Old Name: WFC_K_POOL)
     std::complex<double>* wfc_k_grid2; // [NK*GlobalV::NBANDS*GlobalV::NLOCAL]
-
-    ///=========================================
-    /// 2d wfc
-    /// directly output from elpa interface
-    /// used to calculate density matrix LOC.dm_gamma and LOC.dm_k
-    ///=========================================
-    std::vector<ModuleBase::matrix> wfc_gamma;			// dm_gamma[is](iw1,iw2);
-    std::vector<ModuleBase::ComplexMatrix> wfc_k;		// dm_k[ik](iw1,iw2);
-    std::vector<ModuleBase::ComplexMatrix> wfc_k_laststep;      // store the last step's 2d wfc
 
     const Parallel_Orbitals *ParaV;
 

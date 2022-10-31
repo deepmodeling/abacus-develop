@@ -10,7 +10,7 @@
 namespace ModuleBase
 {
 
-const std::vector<std::string> element_name = {
+static const std::vector<std::string> element_name = {
 "H"	,
 "He"	,
 "Li"	,

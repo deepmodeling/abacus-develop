@@ -28,10 +28,7 @@ void ElecStateLCAO_TDDFT::psiToRho_td(const psi::Psi<std::complex<double>>& psi)
         cal_dm(this->loc->ParaV, this->wg, psi, this->loc->dm_k);
     }
 
-    // this part for steps:
-    // 1. psi_k transform from 2d-block to grid format
-    // 2. psi_k_grid -> DM_R
-    // 3. DM_R -> rho(r)
+
     if (GlobalV::KS_SOLVER == "genelpa" || GlobalV::KS_SOLVER == "scalapack_gvx" || GlobalV::KS_SOLVER == "lapack")
     {
         for (int ik = 0; ik < psi.get_nk(); ik++)

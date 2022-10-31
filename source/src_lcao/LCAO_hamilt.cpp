@@ -1033,8 +1033,6 @@ void LCAO_Hamilt::calculat_HR_dftu_soc_sparse(const int &current_spin, const dou
 
 }
 
-#include "src_external/src_test/src_global/matrix-test.h"
-
 #ifdef __MPI
 // Peize Lin add 2021.11.16
 void LCAO_Hamilt::calculate_HR_exx_sparse(const int &current_spin, const double &sparse_threshold)

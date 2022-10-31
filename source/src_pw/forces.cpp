@@ -2,14 +2,13 @@
 
 #include "../module_symmetry/symmetry.h"
 #include "global.h"
-#include "vdwd2.h"
-#include "vdwd3.h"
 // new
 #include "../module_base/math_integral.h"
 #include "../module_base/timer.h"
 #include "../module_surchem/efield.h"
 #include "../module_surchem/surchem.h"
 #include "../module_surchem/gatefield.h"
+#include "module_vdw/vdw.h"
 
 double Forces::output_acc = 1.0e-8; // (Ryd/angstrom).
 
@@ -42,30 +41,14 @@ void Forces::init(ModuleBase::matrix& force, const psi::Psi<std::complex<double>
     ModuleBase::matrix stress_vdw_pw; //.create(3,3);
     ModuleBase::matrix force_vdw;
     force_vdw.create(nat, 3);
-    if (GlobalC::vdwd2_para.flag_vdwd2) // Peize Lin add 2014.04.03, update 2021.03.09
+    auto vdw_solver = vdw::make_vdw(GlobalC::ucell, INPUT);
+    if (vdw_solver != nullptr)
     {
-        Vdwd2 vdwd2(GlobalC::ucell, GlobalC::vdwd2_para);
-        vdwd2.cal_force();
         for (int iat = 0; iat < GlobalC::ucell.nat; ++iat)
         {
-            force_vdw(iat, 0) = vdwd2.get_force()[iat].x;
-            force_vdw(iat, 1) = vdwd2.get_force()[iat].y;
-            force_vdw(iat, 2) = vdwd2.get_force()[iat].z;
-        }
-        if (GlobalV::TEST_FORCE)
-        {
-            Forces::print("VDW      FORCE (Ry/Bohr)", force_vdw);
-        }
-    }
-    else if (GlobalC::vdwd3_para.flag_vdwd3) // jiyy add 2019-05-18, update 2021-05-02
-    {
-        Vdwd3 vdwd3(GlobalC::ucell, GlobalC::vdwd3_para);
-        vdwd3.cal_force();
-        for (int iat = 0; iat < GlobalC::ucell.nat; ++iat)
-        {
-            force_vdw(iat, 0) = vdwd3.get_force()[iat].x;
-            force_vdw(iat, 1) = vdwd3.get_force()[iat].y;
-            force_vdw(iat, 2) = vdwd3.get_force()[iat].z;
+            force_vdw(iat, 0) = vdw_solver->get_force()[iat].x;
+            force_vdw(iat, 1) = vdw_solver->get_force()[iat].y;
+            force_vdw(iat, 2) = vdw_solver->get_force()[iat].z;
         }
         if (GlobalV::TEST_FORCE)
         {
@@ -120,8 +103,7 @@ void Forces::init(ModuleBase::matrix& force, const psi::Psi<std::complex<double>
                 force(iat, ipol) = forcelc(iat, ipol) + forceion(iat, ipol) + forcenl(iat, ipol) + forcecc(iat, ipol)
                                    + forcescc(iat, ipol);
 
-                if (GlobalC::vdwd2_para.flag_vdwd2
-                    || GlobalC::vdwd3_para.flag_vdwd3) // linpz and jiyy added vdw force, modified by zhengdy
+                if (vdw_solver != nullptr) // linpz and jiyy added vdw force, modified by zhengdy
                 {
                     force(iat, ipol) += force_vdw(iat, ipol);
                 }

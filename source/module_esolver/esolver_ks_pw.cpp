@@ -6,10 +6,6 @@
 #include "../src_pw/global.h"
 #include "../module_base/global_function.h"
 #include "../module_symmetry/symmetry.h"
-#include "../src_pw/vdwd2.h"
-#include "../src_pw/vdwd3.h"
-#include "../src_pw/vdwd2_parameters.h"
-#include "../src_pw/vdwd3_parameters.h"
 #include "../src_pw/pw_complement.h"
 #include "../src_pw/structure_factor.h"
 #include "../src_pw/symmetry_rho.h"
@@ -30,6 +26,7 @@
 #include "module_elecstate/elecstate_pw.h"
 #include "module_hamilt/hamilt_pw.h"
 #include "module_hsolver/diago_iter_assist.h"
+#include "module_vdw/vdw.h"
 
 #include "src_io/write_wfc_realspace.h"
 #include "src_io/winput.h"
@@ -196,29 +193,12 @@ namespace ModuleESolver
 
         //----------------------------------------------------------
         // about vdw, jiyy add vdwd3 and linpz add vdwd2
-        //----------------------------------------------------------	
-        if(INPUT.vdw_method=="d2")
+        //----------------------------------------------------------
+        auto vdw_solver = vdw::make_vdw(GlobalC::ucell, INPUT);
+        if (vdw_solver != nullptr)
         {
-			// setup vdwd2 parameters
-			GlobalC::vdwd2_para.initial_parameters(INPUT);
-	        GlobalC::vdwd2_para.initset(GlobalC::ucell);
+            GlobalC::en.evdw = vdw_solver->get_energy();
         }
-        if(INPUT.vdw_method=="d3_0" || INPUT.vdw_method=="d3_bj")
-        {
-            GlobalC::vdwd3_para.initial_parameters(INPUT);
-        }
-		if(GlobalC::vdwd2_para.flag_vdwd2)		//Peize Lin add 2014-04-03, update 2021-03-09
-		{
-			Vdwd2 vdwd2(GlobalC::ucell,GlobalC::vdwd2_para);
-			vdwd2.cal_energy();
-			GlobalC::en.evdw = vdwd2.get_energy();
-		}
-		if(GlobalC::vdwd3_para.flag_vdwd3)		//jiyy add 2019-05-18, update 2021-05-02
-		{
-			Vdwd3 vdwd3(GlobalC::ucell,GlobalC::vdwd3_para);
-			vdwd3.cal_energy();
-			GlobalC::en.evdw = vdwd3.get_energy();
-		}
 
         //calculate ewald energy
         if(!GlobalV::test_skip_ewald)

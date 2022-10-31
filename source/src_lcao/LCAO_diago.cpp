@@ -15,6 +15,8 @@ Diago_LCAO_Matrix::~Diago_LCAO_Matrix()
 {
 }
 
+//wfc_k has been replaced by psi, this part needs rewriting
+/*
 void Diago_LCAO_Matrix::solve_complex_matrix(const int &ik, Local_Orbital_wfc &lowf)
 {
     ModuleBase::TITLE("Diago_LCAO_Matrix", "solve_complex_matrix");
@@ -39,6 +41,7 @@ void Diago_LCAO_Matrix::solve_complex_matrix(const int &ik, Local_Orbital_wfc &l
 
     return;
 }
+*/
 
 #ifdef __MPI
 void Diago_LCAO_Matrix::using_HPSEPS_complex(const int &ik, Local_Orbital_wfc &lowf)
@@ -76,6 +79,8 @@ void Diago_LCAO_Matrix::using_HPSEPS_complex(const int &ik, Local_Orbital_wfc &l
 }
 #endif
 
+//wfc_k has been replaced by psi, this part needs rewriting
+/*
 void Diago_LCAO_Matrix::using_LAPACK_complex(const int &ik,
                                              std::complex<double> **wfc_k_grid,
                                              ModuleBase::ComplexMatrix &wfc_k) const
@@ -147,6 +152,7 @@ void Diago_LCAO_Matrix::using_LAPACK_complex(const int &ik,
     delete[] en;
     return;
 }
+*/
 
 void Diago_LCAO_Matrix::using_LAPACK(const int &ik, Local_Orbital_wfc &lowf) const
 {

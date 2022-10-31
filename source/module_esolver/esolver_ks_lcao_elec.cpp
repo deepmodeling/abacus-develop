@@ -16,13 +16,12 @@
 #include "../src_ri/exx_opt_orb.h"
 #include "../src_io/berryphase.h"
 #include "../src_io/to_wannier90.h"
-#include "../src_pw/vdwd2.h"
-#include "../src_pw/vdwd3.h"
 #include "../module_base/timer.h"
 #ifdef __DEEPKS
 #include "../module_deepks/LCAO_deepks.h"
 #endif
 #include "../src_pw/H_Ewald_pw.h"
+#include "module_vdw/vdw.h"
 
 namespace ModuleESolver
 {
@@ -279,29 +278,10 @@ namespace ModuleESolver
         //----------------------------------------------------------
         // about vdw, jiyy add vdwd3 and linpz add vdwd2
         //----------------------------------------------------------
-        if (INPUT.vdw_method == "d2")
+        auto vdw_solver = vdw::make_vdw(GlobalC::ucell, INPUT);
+        if (vdw_solver != nullptr)
         {
-            // setup vdwd2 parameters
-            GlobalC::vdwd2_para.initial_parameters(INPUT);
-            GlobalC::vdwd2_para.initset(GlobalC::ucell);
-        }
-        if (INPUT.vdw_method == "d3_0" || INPUT.vdw_method == "d3_bj")
-        {
-            GlobalC::vdwd3_para.initial_parameters(INPUT);
-        }
-        // Peize Lin add 2014.04.04, update 2021.03.09
-        if (GlobalC::vdwd2_para.flag_vdwd2)
-        {
-            Vdwd2 vdwd2(GlobalC::ucell, GlobalC::vdwd2_para);
-            vdwd2.cal_energy();
-            GlobalC::en.evdw = vdwd2.get_energy();
-        }
-        // jiyy add 2019-05-18, update 2021.05.02
-        else if (GlobalC::vdwd3_para.flag_vdwd3)
-        {
-            Vdwd3 vdwd3(GlobalC::ucell, GlobalC::vdwd3_para);
-            vdwd3.cal_energy();
-            GlobalC::en.evdw = vdwd3.get_energy();
+            GlobalC::en.evdw = vdw_solver->get_energy();
         }
         
         this->beforesolver(istep);
