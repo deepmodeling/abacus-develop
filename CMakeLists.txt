@@ -33,11 +33,11 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
 if(ENABLE_COVERAGE)
   find_package(codecov)
-  if(NOT codecov)
+  if(NOT codecov_FOUND)
     include(FetchContent)
     FetchContent_Declare(
       cmakecodecov
-      URL https://github.com/RWTH-HPC/CMake-codecov/archive/refs/heads/master.zip
+      URL https://github.com/baixiaokuang/CMake-codecov/archive/refs/heads/master.zip
     )
     FetchContent_Populate(cmakecodecov)
     list(APPEND CMAKE_MODULE_PATH ${cmakecodecov_SOURCE_DIR}/cmake)
