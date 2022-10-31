@@ -1,6 +1,4 @@
 #include "./sto_stress_pw.h"
-#include "vdwd2.h"
-#include "vdwd3.h"
 #include "../module_base/timer.h"
 #include "global.h"
 

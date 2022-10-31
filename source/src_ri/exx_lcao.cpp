@@ -1097,13 +1097,7 @@ ofs_mpi.close();
 				{
 					for( size_t iwt=0; iwt!=GlobalV::NLOCAL; ++iwt )
 					{
-						//---------------------------------------------------------
-						// GlobalC::LOWF.WFC_GAMMA has been replaced by wfc_dm_2d.cpp 
-						// we need to fix this function in near future.
-						// -- mohan add 2021-02-09
-						//---------------------------------------------------------
 						ModuleBase::WARNING_QUIT("Exx_Abfs::DM::cal_DMk_raw","need to update GlobalC::LOWF.WFC_GAMMA");
-						//ofs<<GlobalC::LOWF.WFC_GAMMA[ik][ib][iwt]<<"\t";
 					}
 					ofs<<std::endl;
 				}
@@ -1148,15 +1142,14 @@ ofs_mpi.close();
 	};
 #endif
 
-	auto print_wfc=[&](std::vector<ModuleBase::matrix>& wfc_gamma,
-        std::vector<ModuleBase::ComplexMatrix>& wfc_k)		// Peize Lin test 2019-11-14
+	auto print_wfc=[&](std::vector<ModuleBase::matrix>& psi_gamma)		// Peize Lin test 2019-11-14
 	{
 		if(GlobalV::GAMMA_ONLY_LOCAL)
 		{
 			for(int is=0; is<GlobalV::NSPIN; ++is)
 			{		
 				std::ofstream ofs("wfc_"+ModuleBase::GlobalFunc::TO_STRING(istep)+"_"+ModuleBase::GlobalFunc::TO_STRING(is)+"_"+ModuleBase::GlobalFunc::TO_STRING(GlobalV::MY_RANK));
-				wfc_gamma[is].print(ofs, 1E-10)<<std::endl;
+				psi_gamma[is].print(ofs, 1E-10)<<std::endl;
 			}
 		}
 		else
@@ -1164,7 +1157,7 @@ ofs_mpi.close();
 			for(int ik=0; ik<GlobalC::kv.nks; ++ik)
 			{
 				std::ofstream ofs("wfc_"+ModuleBase::GlobalFunc::TO_STRING(istep)+"_"+ModuleBase::GlobalFunc::TO_STRING(ik)+"_"+ModuleBase::GlobalFunc::TO_STRING(GlobalV::MY_RANK));
-				wfc_gamma[ik].print(ofs, 1E-10)<<std::endl;
+				psi_gamma[ik].print(ofs, 1E-10)<<std::endl;
 			}
 		}
 	};

@@ -112,15 +112,7 @@ std::map<size_t,std::map<size_t,std::vector<ModuleBase::ComplexMatrix>>> Exx_Abf
 					{
 						if( GlobalV::GAMMA_ONLY_LOCAL )
 						{
-							//---------------------------------------------------------
-							// GlobalC::LOWF.WFC_GAMMA has been replaced by wfc_dm_2d.cpp 
-							// we need to fix this function in near future.
-							// -- mohan add 2021-02-09
-							//---------------------------------------------------------
 							ModuleBase::WARNING_QUIT("Exx_Abfs::DM::cal_DMk_raw","need to update GlobalC::LOWF.WFC_GAMMA");
-//							DMk_raw[iat1][iat2][ik](iw1,iw2) += GlobalC::wf.wg(ik,ib) 
-//								* GlobalC::LOWF.WFC_GAMMA[ik][ib][GlobalC::ucell.itiaiw2iwt(it1,ia1,iw1)] 
-//								* GlobalC::LOWF.WFC_GAMMA[ik][ib][GlobalC::ucell.itiaiw2iwt(it2,ia2,iw2)];
 						}
 						else
 						{

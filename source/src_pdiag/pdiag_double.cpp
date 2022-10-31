@@ -20,8 +20,6 @@ extern "C"
 #include "../module_base/lapack_connector.h"
 #endif
 
-#include "../src_external/src_test/test_function.h"
-
 #ifdef __CUSOLVER_LCAO
 #include "diag_cusolver.cuh"
 #endif
@@ -203,9 +201,11 @@ void Pdiag_Double::diago_double_begin(
         ModuleBase::timer::tick("Diago_LCAO_Matrix","gath_eig");
         //delete[] Z; //LiuXh 20171109
 	}// HPSEPS method
+//wfc_gamma has been replaced by psi, this part needs rewriting
+/*
 	else if(GlobalV::KS_SOLVER=="lapack_gv")
 	{
-		lowf.wfc_gamma[ik].create(pv->ncol_bands, pv->nrow, false);
+		lowf.wfc_gamma[ik].create(pv->ncol_bands, pv->nrow, false); 
 		memcpy( lowf.wfc_gamma[ik].c, h_mat, sizeof(double)*pv->ncol*pv->nrow );
 		ModuleBase::matrix s_tmp(pv->ncol, pv->nrow, false);
 		memcpy( s_tmp.c, s_mat, sizeof(double)*pv->ncol*pv->nrow );
@@ -234,7 +234,6 @@ void Pdiag_Double::diago_double_begin(
 			throw std::runtime_error("info="+ModuleBase::GlobalFunc::TO_STRING(info)+". "+ModuleBase::GlobalFunc::TO_STRING(__FILE__)+" line "+ModuleBase::GlobalFunc::TO_STRING(__LINE__));
 		}
 		memcpy( ekb, ekb_tmp.data(), sizeof(double)*GlobalV::NBANDS );
-
 	}
 	else if(GlobalV::KS_SOLVER=="lapack_gvx")
 	{
@@ -275,8 +274,8 @@ void Pdiag_Double::diago_double_begin(
 		{
 			throw std::runtime_error("M="+ModuleBase::GlobalFunc::TO_STRING(M)+". GlobalV::NBANDS="+ModuleBase::GlobalFunc::TO_STRING(GlobalV::NBANDS)+". "+ModuleBase::GlobalFunc::TO_STRING(__FILE__)+" line "+ModuleBase::GlobalFunc::TO_STRING(__LINE__));
 		}
-
 	}
+*/
     //delete[] Stmp; //LiuXh 20171109
 #ifdef __CUSOLVER_LCAO
 	else if(GlobalV::KS_SOLVER=="cusolver")
@@ -329,10 +328,14 @@ void Pdiag_Double::diago_double_begin(
 		delete[] vtot;
 	}
 #endif	//__CUSOLVER_LCAO
+
 #endif
 
 #ifdef TEST_DIAG
 	{
+		//wfc_gamma has been replaced by psi
+		//this part nees rewriting
+		/*
 		static int istep = 0;
 		{
 			std::ofstream ofs("ekb_"+ModuleBase::GlobalFunc::TO_STRING(istep)+"_"+ModuleBase::GlobalFunc::TO_STRING(GlobalV::MY_RANK));
@@ -350,6 +353,7 @@ void Pdiag_Double::diago_double_begin(
 			ofs<<transpose(lowf.wfc_gamma[ik])<<std::endl;
 		}
 		++istep;
+		*/
 	}
 #endif
 
@@ -506,7 +510,7 @@ void Pdiag_Double::diago_complex_begin(
 		ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"eigenvalues were copied to ekb");
 
 		ModuleBase::timer::tick("Diago_LCAO_Matrix","DIVIDE_EIG");
-		cusolver_helper_scatter<std::complex<double> >(vtot, lowf.wfc_k[ik].c, pv);
+		//cusolver_helper_scatter<std::complex<double> >(vtot, lowf.wfc_k[ik].c, pv); //lowf.wfc_k has been replaced by psi
 		ModuleBase::timer::tick("Diago_LCAO_Matrix","DIVIDE_EIG");
 
 		lowf.wfc_2d_to_grid(this->out_wfc_lcao, lowf.wfc_k[ik].c, lowf.wfc_k_grid[ik], ik);
@@ -1105,13 +1109,6 @@ MPI_Barrier(comm);
 		Occupy::calculate_weights();
 		WF_Local::write_lowf( ss.str(), ctot, GlobalC::wf.wg/*ekb*/, GlobalC::wf.wg );//mohan add 2010-09-09        
 	}
-
-	// mohan add 2010-09-10
-	// distribution of local wave functions 
-	// to each processor.
-	// only used for GlobalV::GAMMA_ONLY_LOCAL
-	//WF_Local::distri_lowf( ctot, wfc);
-
 
 	// clean staff.
 	if(myid==0)

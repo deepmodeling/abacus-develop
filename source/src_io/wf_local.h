@@ -13,7 +13,6 @@ namespace WF_Local
 	void write_lowf(const std::string &name, double** ctot, const ModuleBase::matrix& ekb, const ModuleBase::matrix& wg);
 	void write_lowf_complex(const std::string &name, std::complex<double>** ctot, const int &ik, const ModuleBase::matrix& ekb, const ModuleBase::matrix& wg);
 
-	void distri_lowf(double** ctot, double **c);
 	void distri_lowf_complex(std::complex<double>** ctot, std::complex<double> **cc);
 
     void distri_lowf_new(double** ctot, const int& is,

@@ -1,9 +1,9 @@
 #ifndef NVT_NHC_H
 #define NVT_NHC_H
 
-#include "verlet.h"
+#include "mdrun.h"
 
-class NVT_NHC : public Verlet
+class NVT_NHC : public MDrun
 {
 public:
     NVT_NHC(MD_parameters& MD_para_in, UnitCell_pseudo &unit_in);
@@ -16,7 +16,6 @@ public:
     void write_restart();
     void restart();
     void integrate();
-    void temp_target();
     void update_mass();
 
     double t_target;       // target temperature

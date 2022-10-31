@@ -235,10 +235,9 @@ OBJS_HSOLVER_LCAO=hsolver_lcao.o\
 
 OBJS_MD=MD_func.o\
     run_md_classic.o\
+	mdrun.o\
 	verlet.o\
-	NVE.o\
     MSST.o\
-    NVT_ADS.o\
     NVT_NHC.o\
     FIRE.o\
     Langevin.o\
@@ -402,8 +401,6 @@ OBJS_LCAO=DM_gamma.o\
       wavefunc_in_pw.o\
   	H_TDDFT_pw.o\
       run_md_lcao.o\
-      dmft.o\
-
 OBJS_RI=exx_lip.o\
 
 OBJS_RI_LCAO=abfs-vector3_order.o\
@@ -443,8 +440,6 @@ OBJS_PARALLEL=parallel_common.o\
     parallel_grid.o\
     parallel_kpoints.o\
     parallel_reduce.o\
-
-OBJS_PARALLEL_LCAO=subgrid_oper.o\
 
 OBJS_PDIAG=pdiag_common.o\
       pdiag_double.o\

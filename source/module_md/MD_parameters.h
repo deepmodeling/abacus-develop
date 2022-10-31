@@ -10,6 +10,7 @@ public:
 	{
 		md_restart = 0;
 		md_type = 1;
+        md_thermostat = "NVE";
         md_nstep = 10;
 		md_dt = 1.0;
 		md_tfirst = -1.0;
@@ -38,12 +39,17 @@ public:
 
 		// Langevin
 		md_damp = 1.0;
+
+        // thermostats when md_type = 0
+        md_tolerance = 100.0; 
+        md_nraise = 1;
 	};
     ~MD_parameters(){};
 
     int md_nstep;                 // md nstep
     bool md_restart;              // 1: restart MD, 0: no restart MD
-	int md_type;                  // -1: FIRE, 0: NVE, 1: NVT NHC, 2: LGV, 3: NVT ADS, 4: MSST 
+    int md_type;                  // -1: FIRE, 0: velocity Verlet, 1: NVT NHC, 2: LGV, 4: MSST 
+    std::string md_thermostat;    // specify the thermostat based on the velocity Verlet algorithm
     double md_dt;                 // Time increment (hbar/E_hartree)
     double md_tfirst;             // Temperature (in Hartree, 1 Hartree ~ 3E5 K)
     double md_tlast;              // Target temperature
@@ -71,6 +77,11 @@ public:
 
 	// Langevin
 	double md_damp;                // damping parameter (time units)
+
+    // thermostats when md_type = 0
+    double md_tolerance;           // tolerance for velocity rescaling (K)
+    int md_nraise;                 // parameters used when md_type=0
+
 };
 
 
