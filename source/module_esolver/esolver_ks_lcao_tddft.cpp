@@ -1,5 +1,4 @@
 #include "esolver_ks_lcao_tddft.h"
-
 #include "src_io/cal_r_overlap_R.h"
 
 //--------------temporary----------------------------
