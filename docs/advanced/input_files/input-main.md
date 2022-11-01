@@ -1476,7 +1476,7 @@ This part of variables are used to control the molecular dynamics calculations.
 
 - **Type**: Integer
 - **Description**: Number of Nose-Hoover chains.
-- **Default**: 4
+- **Default**: 1
 
 ### lj_rcut
 

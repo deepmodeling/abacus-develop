@@ -34,8 +34,13 @@ public:
 		msst_tscale = 0.01;
 
 		// NHC
-		md_tfreq = 0.0;
-		md_tchain = 4;
+        md_pmode = "none";
+        md_tfreq = 0.0;
+        md_pfirst = -1.0;
+        md_plast = -1.0;
+        md_pfreq = 0.0;
+        md_tchain = 1;
+        md_pchain = 1;
 
 		// Langevin
 		md_damp = 1.0;
@@ -77,7 +82,8 @@ public:
     double md_pfirst;             // Initial pressure
     double md_plast;              // Final pressure
     double md_pfreq;               // Oscillation frequency, used to determine qmass of thermostats coupled with barostat
-    int md_tchain;                   // num of NHC
+    int md_tchain;                   // num of thermostats coupled with particles
+    int md_pchain;                   // num of thermostats coupled with barostat
 
 	// Langevin
 	double md_damp;                // damping parameter (time units)
