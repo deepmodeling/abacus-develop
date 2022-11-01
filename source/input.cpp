@@ -203,6 +203,7 @@ void Input::Default(void)
     relax_bfgs_rmax = 0.8; // bohr
     relax_bfgs_rmin = 1e-5;
     relax_bfgs_init = 0.5; // bohr
+    relax_scale_force = 0.5;
     nbspline = -1;
     //----------------------------------------------------------
     // ecutwfc
@@ -814,12 +815,11 @@ bool Input::Read(const std::string &fn)
         {
             read_value(ifs, relax_bfgs_init);
         }
-        //		else if (strcmp("gauss_pao_flag", word) == 0)
-        //		else if (strcmp("gauss_pao_flag", word) == 0)
-        //		else if (strcmp("gauss_pao_flag", word) == 0)
-        //		{
-        //			read_value(ifs, gauss_PAO_flag);
-        //		}
+        else if (strcmp("relax_scale_force", word) == 0)
+        {
+            read_value(ifs, relax_scale_force);
+        }
+
         //----------------------------------------------------------
         // plane waves
         //----------------------------------------------------------
@@ -2083,6 +2083,7 @@ void Input::Bcast()
     Parallel_Common::bcast_double(relax_bfgs_rmax);
     Parallel_Common::bcast_double(relax_bfgs_rmin);
     Parallel_Common::bcast_double(relax_bfgs_init);
+    Parallel_Common::bcast_double(relax_scale_force);
 
     Parallel_Common::bcast_bool(gamma_only);
     Parallel_Common::bcast_bool(gamma_only_local);

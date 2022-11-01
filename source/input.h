@@ -130,6 +130,8 @@ class Input
     double relax_bfgs_rmin; // trust radius min
     double relax_bfgs_init; // initial move
 
+    double relax_scale_force;
+
     //==========================================================
     // Planewave
     //==========================================================

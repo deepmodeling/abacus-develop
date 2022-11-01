@@ -9,7 +9,7 @@
 #include "ions_move_methods.h"
 #include "lattice_change_methods.h"
 #include "module_esolver/esolver.h"
-
+#include "module_relax/relax.h"
 
 //The workflow opt_ions should be moved outside module_relaxation
 //since the latter is intended to perform the sole task of
@@ -35,11 +35,11 @@ class Ions
 	// mohan moved this variable from electrons.h to ions.h
     int istep;
 
+	//old relaxation method
 	Ions_Move_Methods IMM;
-
-	//MD md; //mohan add 2011-11-07
-
 	Lattice_Change_Methods LCM;
+	//new relaxation method
+	Relax rl;
 
 	//seperate force_stress function first
 	bool relaxation(ModuleBase::matrix force,ModuleBase::matrix stress,const int &istep, int &force_step, int &stress_step);

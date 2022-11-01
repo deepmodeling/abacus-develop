@@ -36,7 +36,11 @@ void Ions::opt_ions(ModuleESolver::ESolver *p_esolver)
         IMM.allocate();
         // allocate arrays related to changes of lattice vectors
         LCM.allocate();
-    } 
+    }
+	if(GlobalV::CALCULATION=="relax" || GlobalV::CALCULATION=="cell-relax")
+	{
+		rl.init_relax(GlobalC::ucell.nat);
+	}
 
     this->istep = 1;
 	int force_step = 1;           // pengfei Li 2018-05-14
@@ -77,7 +81,8 @@ void Ions::opt_ions(ModuleESolver::ESolver *p_esolver)
 			{
 				p_esolver->cal_Stress(stress);
 			}
-			stop = this->relaxation(force, stress, istep, force_step, stress_step);    // pengfei Li 2018-05-14
+			//stop = this->relaxation(force, stress, istep, force_step, stress_step);    // pengfei Li 2018-05-14
+			stop = rl.relax_step(force, stress, GlobalC::en.etot);
 		}
 		time_t fend = time(NULL);
 

@@ -343,6 +343,7 @@ target_link_libraries(${ABACUS_BIN_NAME}
     orb
     io
     relax
+    relax1
     lcao
     gint
     parallel

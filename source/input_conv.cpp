@@ -108,6 +108,7 @@ void Input_Conv::Convert(void)
     GlobalV::CAL_STRESS = INPUT.cal_stress;
 
     GlobalV::RELAX_METHOD = INPUT.relax_method;
+    GlobalV::relax_scale_force = INPUT.relax_scale_force;
     GlobalV::OUT_LEVEL = INPUT.out_level;
     Ions_Move_CG::RELAX_CG_THR = INPUT.relax_cg_thr; // pengfei add 2013-09-09
 

@@ -53,6 +53,8 @@ extern std::string OUT_LEVEL;
 extern int OUT_FREQ_ELEC;
 extern int OUT_FREQ_ION;
 
+extern double relax_scale_force;
+
 extern int RELAX_NMAX; // 8.3
 extern int SCF_NMAX; // 8.4
 extern int MD_NSTEP;
