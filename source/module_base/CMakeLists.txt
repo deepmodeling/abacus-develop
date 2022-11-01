@@ -26,6 +26,8 @@ add_library(
     memory.cpp
     mymath1.cpp
     mymath3.cpp
+    opt_CG.cpp
+    opt_DCsrch.cpp
     polint.cpp
     realarray.cpp
     sph_bessel.cpp
@@ -38,6 +40,10 @@ add_library(
     ylm.cpp
 )
 
-IF (BUILD_TESTING)
+if(ENABLE_COVERAGE)
+  add_coverage(base)
+endif()
+
+if(BUILD_TESTING)
   add_subdirectory(test)
 endif()

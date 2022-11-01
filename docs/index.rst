@@ -56,11 +56,13 @@ the developments and applications of novel machine-learning-assisted DFT methods
 
 .. toctree::
    :maxdepth: 2
-   :caption: Contributing to ABACUS
+   :caption: Community
 
+   community/contribution_guide
    CONTRIBUTING
 
 .. toctree::
-   :maxdepth: 2
-   :caption: FAQ
+   :glob:
+   :titlesonly:
 
+   community/faq

@@ -16,3 +16,4 @@ STRU_READIN_ADJUST.cif
 *.egg-info
 build
 dist
+.idea

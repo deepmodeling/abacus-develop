@@ -5,7 +5,7 @@
 #include "../module_base/global_variable.h"
 #include "../src_io/restart.h"
 #include "../module_relaxation/ions.h"
-#include "../src_lcao/exx_lip.h"
+#include "../src_ri/exx_lip.h"
 #include "VNL_in_pw.h"
 #include "charge_broyden.h"
 #include "energy.h"
@@ -17,10 +17,6 @@
 #include "structure_factor.h"
 #include "../module_pw/pw_basis_k.h"
 #include "use_fft.h"
-#include "vdwd2.h"
-#include "vdwd2_parameters.h"
-#include "vdwd3.h"
-#include "vdwd3_parameters.h"
 #include "wavefunc.h"
 #include "../module_xc/xc_functional.h"
 
@@ -334,8 +330,6 @@ extern Potential pot;
 extern ModuleSymmetry::Symmetry symm;
 extern Parallel_Grid Pgrid;
 extern Parallel_Kpoints Pkpoints;
-extern Vdwd2_Parameters vdwd2_para; // Peize Lin add 2021.03.09
-extern Vdwd3_Parameters vdwd3_para; // jiyy add 2021-05-02
 extern Restart restart; // Peize Lin add 2020.04.04
 } // namespace GlobalC
 

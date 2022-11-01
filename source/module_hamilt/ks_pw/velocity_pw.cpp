@@ -1,4 +1,5 @@
 #include "velocity_pw.h"
+#include "module_base/timer.h"
 #include "src_parallel/parallel_reduce.h"
 namespace hamilt
 {

@@ -524,7 +524,7 @@ void Charge_Extra::update_all_pos(const UnitCell_pseudo& ucell)
             this->pos_now[i] = this->pos_next[i];
         }
     }
-    if(GlobalV::CALCULATION=="md"||GlobalV::CALCULATION=="sto-md")
+    if(GlobalV::CALCULATION=="md"||GlobalV::CALCULATION=="sto-md"||GlobalV::CALCULATION=="of-md")
         ucell.save_cartesian_position_original(this->pos_now);
     return;
 }

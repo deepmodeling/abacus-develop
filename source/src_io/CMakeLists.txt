@@ -1,53 +1,65 @@
-add_library(
-    io
-    OBJECT
+list(APPEND objects
     berryphase.cpp
     bessel_basis.cpp
-    cal_r_overlap_R.cpp
     cal_test.cpp
     chi0_hilbert.cpp
     chi0_standard.cpp
     dos.cpp
-    energy_dos.cpp
     energy_dos_pw.cpp
     epsilon0_pwscf.cpp
     epsilon0_vasp.cpp
     eximport.cpp
-    istate_charge.cpp
-    istate_envelope.cpp
-    mulliken_charge.cpp
     numerical_basis.cpp
     numerical_descriptor.cpp
     optical.cpp
     output.cpp
     print_info.cpp
-    read_dm.cpp
     read_rho.cpp
-    read_txt_tools.cpp
-    read_txt_input_value.cpp
-    read_txt_input_item.cpp
-	read_txt_input_list.cpp
-	read_txt_input_process.cpp
-	read_txt_input_process_global.cpp
-	read_txt_input-general.cpp
-	read_txt_input-pw.cpp
-	read_txt_input-spectrum.cpp
-    read_txt_stru.cpp
     restart.cpp
     rwstream.cpp
     to_wannier90.cpp
-    unk_overlap_lcao.cpp
     unk_overlap_pw.cpp
     wf_io.cpp
-    wf_local.cpp
     winput.cpp
-    write_HS.cpp
-    write_HS_R.cpp
-    write_dm.cpp
     write_input.cpp
     write_pot.cpp
     write_rho.cpp
     write_rho_cube.cpp
-    write_rho_dipole.cpp
-	write_wfc_realspace.cpp
+    write_wfc_realspace.cpp
 )
+
+if(ENABLE_LCAO)
+  list(APPEND objects
+      cal_r_overlap_R.cpp
+      energy_dos.cpp
+      istate_charge.cpp
+      istate_envelope.cpp
+      mulliken_charge.cpp
+      read_dm.cpp
+      read_txt_tools.cpp
+      read_txt_input_value.cpp
+      read_txt_input_item.cpp
+      read_txt_input_list.cpp
+      read_txt_input_process.cpp
+      read_txt_input_process_global.cpp
+      read_txt_input-general.cpp
+      read_txt_input-pw.cpp
+      read_txt_input-spectrum.cpp
+      read_txt_stru.cpp
+      unk_overlap_lcao.cpp
+      wf_local.cpp
+      write_HS.cpp
+      write_HS_R.cpp
+      write_dm.cpp
+  )
+endif()
+
+add_library(
+    io
+    OBJECT
+    ${objects}
+)
+
+if(ENABLE_COVERAGE)
+  add_coverage(io)
+endif()

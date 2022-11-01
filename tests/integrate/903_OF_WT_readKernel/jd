@@ -1,0 +1,1 @@
+Test the energy, force, and stress of Wang-Teter (WT) kinetic energy functional (of_method = wt, of_read_kernel = 1) in OFDFT, with WT kernel read from kernel.txt, symmetry=on

@@ -7,9 +7,9 @@
 #include "../module_base/blas_connector.h"
 
 IState_Charge::IState_Charge(
-    psi::Psi<double>* wfc_gamma_in,
+    psi::Psi<double>* psi_gamma_in,
     Local_Orbital_Charge& loc_in) :
-    wfc_gamma(wfc_gamma_in),
+    psi_gamma(psi_gamma_in),
     loc(&loc_in)
 {}
 
@@ -44,7 +44,6 @@ void IState_Charge::begin(Gint_Gamma &gg)
 	ModuleBase::GlobalFunc::ZEROS(bands_picked, GlobalV::NBANDS);
 
 	// (1) 
-	// (1.1) allocate the space for GlobalC::LOWF.WFC_GAMMA
 
 	// (1.2) read in LOWF_GAMMA.dat
 	std::cout << " number of electrons = " << GlobalC::CHR.nelec << std::endl;
@@ -157,88 +156,58 @@ void IState_Charge::begin(Gint_Gamma &gg)
 void IState_Charge::idmatrix(const int &ib)
 {
 	ModuleBase::TITLE("IState_Charge","idmatrix");
-/*		
-	for(int is=0; is<NSPIN; is++)
+
+	assert(GlobalC::wf.wg.nr==GlobalV::NSPIN);
+	for(int is=0; is!=GlobalV::NSPIN; ++is)
 	{
-		for (int i=0; i<GlobalV::NLOCAL; i++)
+		std::vector<double> wg_local(this->loc->ParaV->ncol,0.0);
+		const int ib_local = this->loc->ParaV->trace_loc_col[ib];
+
+		int fermi_band=0;
+		fermi_band = static_cast<int>( (GlobalC::CHR.nelec+1)/2 + 1.0e-8 ) ;
+
+		if(ib_local>=0)
 		{
-			const int mu_local = GlobalC::GridT.trace_lo[i];
-			if ( mu_local >= 0)
+			if(ib<fermi_band)
 			{
-				// set a pointer.
-				//double *alpha = this->loc->DM[is][mu_local];
-				for (int j=i; j<GlobalV::NLOCAL; j++)
-				{
-					const int nu_local = GlobalC::GridT.trace_lo[j];
-					if ( nu_local >= 0)
-					{
-						//---------------------------------------------------------
-						// GlobalC::LOWF.WFC_GAMMA has been replaced by wfc_dm_2d.cpp 
-						// we need to fix this function in near future.
-						// -- mohan add 2021-02-09
-						//---------------------------------------------------------
-						ModuleBase::WARNING_QUIT("IState_Charge::idmatrix","need to update GlobalC::LOWF.WFC_GAMMA");
-						// 2 stands for degeneracy.
-						//alpha[nu_local] += 2.0 * GlobalC::LOWF.WFC_GAMMA[is][ib][mu_local] * GlobalC::LOWF.WFC_GAMMA[is][ib][nu_local];
-					}
-				}
+				wg_local[ib_local] = GlobalC::wf.wg(is,ib);
 			}
+			else
+			{
+				wg_local[ib_local] = GlobalC::wf.wg(is,fermi_band-1);
+			}//unoccupied bands, use occupation of homo
 		}
-	}
-	return;
-*/
-
-		assert(GlobalC::wf.wg.nr==GlobalV::NSPIN);
-		for(int is=0; is!=GlobalV::NSPIN; ++is)
-		{
-			std::vector<double> wg_local(this->loc->ParaV->ncol,0.0);
-			const int ib_local = this->loc->ParaV->trace_loc_col[ib];
-
-			int fermi_band=0;
-			fermi_band = static_cast<int>( (GlobalC::CHR.nelec+1)/2 + 1.0e-8 ) ;
-
-			if(ib_local>=0)
-			{
-				if(ib<fermi_band)
-				{
-					wg_local[ib_local] = GlobalC::wf.wg(is,ib);
-				}
-				else
-				{
-					wg_local[ib_local] = GlobalC::wf.wg(is,fermi_band-1);
-				}//unoccupied bands, use occupation of homo
-			}
-		
-			// wg_wfc(ib,iw) = wg[ib] * wfc(ib,iw);
-			this->wfc_gamma->fix_k(is);
-			psi::Psi<double> wg_wfc(this->wfc_gamma[0], 1);
 	
-			for(int ir=0; ir!=wg_wfc.get_nbands(); ++ir)
-			{
-				BlasConnector::scal( wg_wfc.get_nbasis(), wg_local[ir], wg_wfc.get_pointer()+ir*wg_wfc.get_nbasis(), 1 );
-			}
+		// wg_wfc(ib,iw) = wg[ib] * wfc(ib,iw);
+		this->psi_gamma->fix_k(is);
+		psi::Psi<double> wg_wfc(this->psi_gamma[0], 1);
 
-			// C++: dm(iw1,iw2) = wfc(ib,iw1).T * wg_wfc(ib,iw2)
-			const double one_float=1.0, zero_float=0.0;
-			const int one_int=1;
-			const char N_char='N', T_char='T';
-			this->loc->dm_gamma.at(is).create( wg_wfc.get_nbands(), wg_wfc.get_nbasis() );
-
-			pdgemm_(
-				&N_char, &T_char,
-				&GlobalV::NLOCAL, &GlobalV::NLOCAL, &GlobalC::wf.wg.nc,
-				&one_float,
-				wg_wfc.get_pointer(), &one_int, &one_int, this->loc->ParaV->desc,
-				this->wfc_gamma->get_pointer(), &one_int, &one_int, this->loc->ParaV->desc,
-				&zero_float,
-				this->loc->dm_gamma.at(is).c, &one_int, &one_int, this->loc->ParaV->desc);
+		for(int ir=0; ir!=wg_wfc.get_nbands(); ++ir)
+		{
+			BlasConnector::scal( wg_wfc.get_nbasis(), wg_local[ir], wg_wfc.get_pointer()+ir*wg_wfc.get_nbasis(), 1 );
 		}
 
-		std::cout << " finished calc dm_2d : " << std::endl;
+		// C++: dm(iw1,iw2) = wfc(ib,iw1).T * wg_wfc(ib,iw2)
+		const double one_float=1.0, zero_float=0.0;
+		const int one_int=1;
+		const char N_char='N', T_char='T';
+		this->loc->dm_gamma.at(is).create( wg_wfc.get_nbands(), wg_wfc.get_nbasis() );
 
-		this->loc->cal_dk_gamma_from_2D_pub();
-		
-		std::cout << " finished convert : " << std::endl;
+		pdgemm_(
+			&N_char, &T_char,
+			&GlobalV::NLOCAL, &GlobalV::NLOCAL, &GlobalC::wf.wg.nc,
+			&one_float,
+			wg_wfc.get_pointer(), &one_int, &one_int, this->loc->ParaV->desc,
+			this->psi_gamma->get_pointer(), &one_int, &one_int, this->loc->ParaV->desc,
+			&zero_float,
+			this->loc->dm_gamma.at(is).c, &one_int, &one_int, this->loc->ParaV->desc);
+	}
+
+	std::cout << " finished calc dm_2d : " << std::endl;
+
+	this->loc->cal_dk_gamma_from_2D_pub();
+	
+	std::cout << " finished convert : " << std::endl;
 
 }
 #endif

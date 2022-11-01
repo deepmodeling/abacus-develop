@@ -170,7 +170,7 @@ void XC_Functional::pbec(const double &rho, const double &grho, const int &iflag
 
 	sc = rho * h0;
 	v1c = h0 + dh0;
-	v2c = ddh0;
+    v2c = ddh0;
 	
 	return;
 }

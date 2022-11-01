@@ -4,9 +4,9 @@
 #======================================================================
 CC = mpiicpc
 # mpiicpc:   compile intel parallel version
-# icpc:      compile intel serial version
+# icpc:      compile intel sequential version
 # mpicxx:    compile gnu parallel version
-# g++:       compile gnu serial version
+# g++:       compile gnu sequential version
 GPU = OFF
 # OFF:  do not use GPU
 # CUDA: use CUDA 
@@ -149,7 +149,29 @@ test4-1.o\
 test4-2.o\
 test4-3.o\
 test4-4.o\
-test4-5.o
+test4-5.o\
+test5-1-1.o\
+test5-1-2.o\
+test5-2-1.o\
+test5-2-2.o\
+test5-3-1.o\
+test5-4-1.o\
+test5-4-2.o\
+test6-1-1.o\
+test6-1-2.o\
+test6-2-1.o\
+test6-2-2.o\
+test6-3-1.o\
+test6-4-1.o\
+test6-4-2.o\
+test7-1.o\
+test7-2-1.o\
+test7-3-1.o\
+test7-3-2.o\
+test8-1.o\
+test8-2-1.o\
+test8-3-1.o\
+test8-3-2.o
 
 MATH_OBJS=$(patsubst %.o, ${OBJ_DIR}/%.o, ${MATH_OBJS0})
 OTHER_OBJS=$(patsubst %.o, ${OBJ_DIR}/%.o, ${OTHER_OBJS0})

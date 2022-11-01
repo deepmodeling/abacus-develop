@@ -1,7 +1,4 @@
 #include "MD_func.h"
-#include "cmd_neighbor.h"
-#include "LJ_potential.h"
-#include "DP_potential.h"
 #include "../input.h"
 #include "../module_neighbor/sltk_atom_arrange.h"
 #include "../module_neighbor/sltk_grid_driver.h"
@@ -131,51 +128,54 @@ void MD_func::RandomVel(
 	const ModuleBase::Vector3<int>* ionmbl,
 	ModuleBase::Vector3<double>* vel)
 {
-	if(!GlobalV::MY_RANK)
-	{
-		ModuleBase::Vector3<double> average;
-		ModuleBase::Vector3<double> mass;
-		average.set(0,0,0);
-		mass.set(0,0,0);
-		for(int i=0; i<numIon; i++)
-		{
-			for(int k=0; k<3; ++k)
-			{
-				if(ionmbl[i][k]==0)
-				{
-					vel[i][k] = 0;
-				}
-				else
-				{
-					vel[i][k] = rand()/double(RAND_MAX)-0.5;
-					mass[k] += allmass[i];
-				}
-			}
-			average += allmass[i]*vel[i];
-		}
+    if(!GlobalV::MY_RANK)
+    {
+        double tot_mass = 0;
+        ModuleBase::Vector3<double> tot_momentum;
+        for(int i=0; i<numIon; i++)
+        {
+            tot_mass += allmass[i];
+            double sigma = sqrt(temperature / allmass[i]);
+            for(int k=0; k<3; ++k)
+            {
+                if(ionmbl[i][k]==0)
+                {
+                    vel[i][k] = 0;
+                }
+                else
+                {
+                    vel[i][k] = gaussrand() * sigma;
+                }
 
-		for(int i=0; i<numIon; i++)
-    	{
-			for(int k=0; k<3; ++k)
-			{
-				if(ionmbl[i][k] && frozen[k]==0)
-				{
-					vel[i][k] -= average[k] / mass[k];
-				}
-			}
-		}
-	
-		double factor = 0.5*(3*numIon-frozen_freedom)*temperature/GetAtomKE(numIon, vel, allmass);
-		for(int i=0; i<numIon; i++)
-    	{
-        	vel[i] = vel[i]*sqrt(factor);
-    	}
-	}
+                if(frozen[k] == 0)
+                {
+                    tot_momentum[k] += allmass[i] * vel[i][k];
+                }
+            }
+        }
+
+        for(int k=0; k<3; ++k)
+        {
+            if(frozen[k] == 0)
+            {
+                for(int i=0; i<numIon; i++)
+                {
+                    vel[i][k] -= tot_momentum[k] / tot_mass;
+                }
+            }
+        }
+
+        double factor = 0.5*(3*numIon-frozen_freedom)*temperature/GetAtomKE(numIon, vel, allmass);
+        for(int i=0; i<numIon; i++)
+        {
+            vel[i] = vel[i]*sqrt(factor);
+        }
+    }
 
 #ifdef __MPI
-	MPI_Bcast(vel,numIon*3,MPI_DOUBLE,0,MPI_COMM_WORLD);
+    MPI_Bcast(vel,numIon*3,MPI_DOUBLE,0,MPI_COMM_WORLD);
 #endif
-	return;
+    return;
 }
 
 void MD_func::InitVel(
@@ -201,6 +201,7 @@ void MD_func::InitVel(
     {
         RandomVel(unit_in.nat, temperature, allmass, frozen_freedom, frozen, ionmbl, vel);
     }
+	std::cout << "--------------------------------- INITVEL DONE ------------------------------------" << std::endl;
 }
 
 void MD_func::InitPos(
@@ -238,7 +239,10 @@ void MD_func::force_virial(
     ModuleBase::matrix force_temp(unit_in.nat, 3); 
     p_esolver->cal_Force(force_temp);
 
-    p_esolver->cal_Stress(stress);
+    if(GlobalV::CAL_STRESS)
+    {
+        p_esolver->cal_Stress(stress);
+    }
 
     if(mdp.md_ensolver == "FP")
     {
@@ -374,36 +378,18 @@ void MD_func::getMassMbl(const UnitCell_pseudo &unit_in,
 	}
 }
 
-void MD_func::print(const std::string& name, const ModuleBase::matrix& f, const UnitCell_pseudo &unit_in)
+double MD_func::target_temp(const int &istep, const double &tfirst, const double &tlast)
 {
-    ModuleBase::GlobalFunc::NEW_PART(name);
+    double delta = (double)(istep) / GlobalV::MD_NSTEP;
+    return tfirst + delta * (tlast - tfirst);
+}
 
-    GlobalV::ofs_running << " " << std::setw(8) << "atom" << std::setw(15) << "x" << std::setw(15) << "y"
-                         << std::setw(15) << "z" << std::endl;
-    GlobalV::ofs_running << std::setiosflags(ios::showpos);
-    GlobalV::ofs_running << std::setprecision(8);
+double MD_func::current_temp(const int &natom, 
+            const int &frozen_freedom, 
+            const double *allmass,
+            const ModuleBase::Vector3<double> *vel)
+{
+    double ke = GetAtomKE(natom, vel, allmass);
 
-    const double fac = ModuleBase::Hartree_to_eV / 0.529177;
-
-    int iat = 0;
-    for (int it = 0; it < unit_in.ntype; it++)
-    {
-        for (int ia = 0; ia < unit_in.atoms[it].na; ia++)
-        {
-            std::stringstream ss;
-            ss << unit_in.atoms[it].label << ia + 1;
-
-            GlobalV::ofs_running << " " << std::setw(8) << ss.str();
-            GlobalV::ofs_running << std::setw(15) << f(iat, 0) * fac;
-            GlobalV::ofs_running << std::setw(15) << f(iat, 1) * fac;
-            GlobalV::ofs_running << std::setw(15) << f(iat, 2) * fac;
-            GlobalV::ofs_running << std::endl;
-
-            iat++;
-        }
-    }
-
-    GlobalV::ofs_running << std::resetiosflags(ios::showpos);
-    std::cout << std::resetiosflags(ios::showpos);
-    return;
+    return 2 * ke / (3 * natom - frozen_freedom) * ModuleBase::Hartree_to_K;
 }

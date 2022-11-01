@@ -4,7 +4,6 @@ list(APPEND objects
     parallel_grid.cpp
     parallel_kpoints.cpp
     parallel_reduce.cpp
-    subgrid_oper.cpp
 )
 
 add_library(
@@ -13,6 +12,10 @@ add_library(
     ${objects}
 )
 
-IF (BUILD_TESTING)
+if(ENABLE_COVERAGE)
+  add_coverage(parallel)
+endif()
+
+if(BUILD_TESTING)
   add_subdirectory(test)
 endif()

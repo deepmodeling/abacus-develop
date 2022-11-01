@@ -1,0 +1,26 @@
+INPUT_PARAMETERS
+#Parameters (1.General)
+suffix		autotest
+calculation ofdft
+ntype		1
+symmetry	1	
+pseudo_dir  ../../PP_ORB/
+pseudo_rcut 16
+nspin        1
+cal_force	1
+test_force	1
+cal_stress	1
+test_stress	1
+
+#Parameters (2.Iteration)
+ecutwfc		30
+scf_nmax	50
+
+#OFDFT
+of_kinetic 	wt
+of_method   tn
+of_full_pw  0
+
+#Parameters (3.Basis)
+basis_type	pw
+

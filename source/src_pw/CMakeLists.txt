@@ -25,7 +25,7 @@ list(APPEND objects
     sto_hchi.cpp
     sto_wf.cpp
     sto_func.cpp
-    sto_forces.cpp 
+    sto_forces.cpp
     sto_stress_pw.cpp
     stress_func_cc.cpp
     stress_func_ewa.cpp
@@ -40,15 +40,12 @@ list(APPEND objects
     symmetry_rho.cpp
     threshold_elec.cpp
     use_fft.cpp
-    vdwd2.cpp
-    vdwd2_parameters.cpp
-    vdwd3.cpp
-    vdwd3_parameters.cpp
     wavefunc.cpp
     wf_atomic.cpp
     wf_igk.cpp
     xc_3.cpp
-    run_md_pw.cpp)
+    run_md_pw.cpp
+)
 if(USE_CUDA)
     list(APPEND objects
         diago_cg.cu
@@ -79,6 +76,11 @@ add_library(
     ${objects}
 )
 
-IF (BUILD_TESTING)
+if(ENABLE_COVERAGE)
+  add_coverage(pw)
+endif()
+
+if(BUILD_TESTING)
   add_subdirectory(test)
 endif()
+

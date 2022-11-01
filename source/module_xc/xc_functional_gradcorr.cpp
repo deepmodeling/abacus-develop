@@ -194,6 +194,7 @@ void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v, 
 					// first term of the gradient correction:
 					// D(rho*Exc)/D(rho)
 					v(0, ir) += ModuleBase::e2 * v1xc;
+					// cout << "v    " << v(0, ir) << endl;
 					
 					// h contains
 					// D(rho*Exc) / D(|grad rho|) * (grad rho) / |grad rho|

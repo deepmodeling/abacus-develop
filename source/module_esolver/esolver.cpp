@@ -24,6 +24,8 @@ namespace ModuleESolver
         {
             if (GlobalV::CALCULATION.substr(0, 3) == "sto")
                 esolver_type = "sdft_pw";
+            else if (GlobalV::CALCULATION.substr(0, 2) == "of")
+                esolver_type = "ofdft";
             else
                 esolver_type = "ksdft_pw";
         }
@@ -80,10 +82,10 @@ namespace ModuleESolver
         {
             p_esolver = new ESolver_SDFT_PW();
         }
-        //  else if(esolver_type == "ofdft")
-        //  {
-        //      p_esolver = new OFDFT();
-        //  }
+        else if(esolver_type == "ofdft")
+        {
+            p_esolver = new ESolver_OF();
+        }
         else if (esolver_type == "lj_pot")
         {
             p_esolver = new ESolver_LJ();

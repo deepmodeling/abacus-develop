@@ -1,0 +1,1 @@
+Test the energy, force, and stress of Wang-Teter (WT) kinetic energy functional (of_method = wt) in OFDFT with of_full_pw = 1, and even FFT dimesion (of_full_pw_dim 2), symmetry=on

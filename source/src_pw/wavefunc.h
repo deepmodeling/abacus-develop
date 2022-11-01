@@ -59,7 +59,7 @@ class wavefunc : public WF_atomic
     int iw2it(int iw);
     int iw2ia(int iw);
 
-    void init_after_vc(const int nks, psi::Psi<std::complex<double>>* psi_in=nullptr); //LiuXh 20180515
+    void init_after_vc(const int nks); //LiuXh 20180515
 
     private: // pengfei 2016-11-23
 

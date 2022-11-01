@@ -6,7 +6,7 @@
 #include "../module_base/timer.h"
 #include "module_esolver/esolver.h"
 
-MSST::MSST(MD_parameters& MD_para_in, UnitCell_pseudo &unit_in) : Verlet(MD_para_in, unit_in)
+MSST::MSST(MD_parameters& MD_para_in, UnitCell_pseudo &unit_in) : MDrun(MD_para_in, unit_in)
 {
     std::cout << "MSST" << std::endl;
 
@@ -38,7 +38,7 @@ void MSST::setup(ModuleESolver::ESolver *p_esolver)
     ModuleBase::TITLE("MSST", "setup");
     ModuleBase::timer::tick("MSST", "setup");
 
-    Verlet::setup(p_esolver);
+    MDrun::setup(p_esolver);
 
     int sd = mdp.msst_direction;
 
@@ -160,7 +160,7 @@ void MSST::second_half()
 
 void MSST::outputMD(std::ofstream &ofs, bool cal_stress)
 {
-    Verlet::outputMD(ofs, cal_stress);
+    MDrun::outputMD(ofs, cal_stress);
 }
 
 void MSST::write_restart()
@@ -213,7 +213,7 @@ void MSST::restart()
 
     if(!ok)
     {
-        ModuleBase::WARNING_QUIT("verlet", "no Restart_md.dat !");
+        ModuleBase::WARNING_QUIT("mdrun", "no Restart_md.dat !");
     }
 
 #ifdef __MPI

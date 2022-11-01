@@ -10,7 +10,7 @@
 class IState_Charge
 {
 public:
-    IState_Charge(psi::Psi<double>* wfc_gamma_in,
+    IState_Charge(psi::Psi<double>* psi_gamma_in,
         Local_Orbital_Charge &loc_in);
     ~IState_Charge();
 
@@ -23,7 +23,7 @@ private:
 #ifdef __MPI
 	void idmatrix(const int &ib);
 #endif
-    psi::Psi<double>* wfc_gamma;
+    psi::Psi<double>* psi_gamma;
     Local_Orbital_Charge* loc;
 
 };

@@ -5,7 +5,7 @@
 #include "../module_base/ylm.h"
 #include "../module_base/timer.h"
 
-void Gint_k::cal_env_k(int ik, const std::complex<double>* wfc_k, double* rho)
+void Gint_k::cal_env_k(int ik, const std::complex<double>* psi_k, double* rho)
 {
     ModuleBase::TITLE("Gint_k", "cal_env_k");
     ModuleBase::timer::tick("Gint_k", "cal_env_k");
@@ -81,14 +81,14 @@ void Gint_k::cal_env_k(int ik, const std::complex<double>* wfc_k, double* rho)
                             {
                                 iw1_lo = GlobalC::GridT.trace_lo[start1] / GlobalV::NPOL + GlobalC::GridT.lgd / GlobalV::NPOL * is;
                                 for (int iw = 0;iw < atom1->nw;++iw, ++iw1_lo)
-                                    tmp += std::complex<double>(psi1[iw], 0.0) * wfc_k[iw1_lo] * kphase;
+                                    tmp += std::complex<double>(psi1[iw], 0.0) * psi_k[iw1_lo] * kphase;
                             }
                         }
                         else
                         {
                             iw1_lo = GlobalC::GridT.trace_lo[start1];
                             for (int iw = 0; iw < atom1->nw; ++iw, ++iw1_lo)
-                                tmp += std::complex<double>(psi1[iw], 0.0) * wfc_k[iw1_lo] * kphase;
+                                tmp += std::complex<double>(psi1[iw], 0.0) * psi_k[iw1_lo] * kphase;
                         }
                         rho[vindex[ib]] += tmp.real();
                     }// cal_flag

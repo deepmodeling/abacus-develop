@@ -4,13 +4,14 @@ include Makefile.vars
 # Compiler information 
 #==========================
 INCLUDES = -I. -Icommands -I../
-LIBS = -lifcore -lm -lpthread
+LIBS = -lm -lpthread
 OPTS = -Ofast -march=native -std=c++14 -pedantic -m64 ${INCLUDES}
 HONG = -D__LCAO
 OBJ_DIR = obj
 BIN_DIR = ../bin
+SOURCE_DIR = .
 ifeq ($(findstring mpi, $(CC)), mpi)
-     # We do not support EXX in serial version temporarily.
+     # We do not support EXX in sequential version temporarily.
      HONG += -D__MPI -D__EXX -DEXX_H_COMM=2 -DUSE_CEREAL_SERIALIZATION -DEXX_DM=3 -DEXX_H_COMM=2 -DTEST_EXX_LCAO=0 -DTEST_EXX_RADIAL=1
      MPI = ON
      TESTNP = 4
@@ -28,17 +29,19 @@ endif
 
 ifeq ($(DEBUG), ON)
     INTEL = OFF
-    HONG += -D__DEBUG
+    HONG += -DDEBUG
     ifeq ($(MPI), ON)
         CC = mpicxx
     else
         CC = g++
     endif
     OPTS +=  -fsanitize=address -fno-omit-frame-pointer -Wall -g #It can check segmental defaults
+else
+    HONG += -DNDEBUG
 endif
 
 ifeq ($(INTEL), ON)
-    OPTS += -simd -qopenmp
+    OPTS += -lifcore -simd -qopenmp
     ##==========================
     ## MKL package
     ##==========================
@@ -102,6 +105,7 @@ ifdef LIBXC_DIR
     HONG                += -DUSE_LIBXC
     INCLUDES            += -I${LIBXC_INCLUDE_DIR}
     LIBS 			    += -L${LIBXC_LIB_DIR} -Wl,-rpath=${LIBXC_LIB_DIR} -lxc
+    PWTAG               += 'LIBXC_DIR=${LIBXC_DIR}'
 endif
 ifdef LIBTORCH_DIR
  ifdef LIBNPY_DIR
@@ -148,14 +152,12 @@ HONG += -D__SELINV -DMETIS
 #==========================
 # OBJECTS NEEDED
 #==========================
-FP_OBJS_0=$(OBJS_FIRST_PRINCIPLES)\
-main.o\
 
 ifeq ($(MPI), ON)
-    FP_OBJS_0 += $(OBJS_PDIAG) $(PDIAG_MR_0) $(OBJS_EXX)
+    OBJS_ABACUS += $(OBJS_PDIAG_MPI) $(OBJS_PDIAG_MRRR) $(OBJS_EXX)
 endif
 
-FP_OBJS=$(patsubst %.o, ${OBJ_DIR}/%.o, ${FP_OBJS_0})
+FP_OBJS=$(patsubst %.o, ${OBJ_DIR}/%.o, ${OBJS_ABACUS})
 
 #==========================
 # MAKING OPTIONS
@@ -171,7 +173,7 @@ test:
 
 pw $(BIN_DIR)/${VERSION}-PW.x:
 	@ if [ ! -d $(BIN_DIR) ]; then mkdir $(BIN_DIR); fi
-	@ cd src_pw; $(MAKE) CC=${CC} GPU=${GPU} DEBUG=$(DEBUG) FFTW_DIR=$(FFTW_DIR) OPENBLAS_LIB_DIR=$(OPENBLAS_LIB_DIR)
+	@ cd src_pw; $(MAKE) CC=${CC} GPU=${GPU} DEBUG=$(DEBUG) FFTW_DIR=$(FFTW_DIR) OPENBLAS_LIB_DIR=$(OPENBLAS_LIB_DIR) ${PWTAG}
 	@ cp src_pw/${VERSION}-PW.x $(BIN_DIR)/${VERSION}-PW.x
 
 $(BIN_DIR)/${VERSION}.$(suffix) : ${FP_OBJS} ${PDIAG_OBJS} ${PDIAG_MR} ${HEADERS}
@@ -192,6 +194,4 @@ ${OBJ_DIR}/%.o:%.cpp
 clean:
 	@ if [ -d $(OBJ_DIR) ]; then rm -rf $(OBJ_DIR); fi
 	@ if [ -d $(BIN_DIR) ]; then rm -rf $(BIN_DIR); fi
-	@ if [ -e ${VERSION}.* ]; then rm -f ${VERSION}.*; fi
 	@ cd src_pw; make clean
-# @ if [ -e ${VERSION}.fp_mem.x ]; then rm -f ${VERSION}.fp_mem.x; fi

@@ -5,3 +5,11 @@ add_library(
     symmetry_basic.cpp
     symmetry.cpp
 )
+
+if(ENABLE_COVERAGE)
+  add_coverage(symmetry)
+endif()
+
+if(BUILD_TESTING)
+  add_subdirectory(test)
+endif()
