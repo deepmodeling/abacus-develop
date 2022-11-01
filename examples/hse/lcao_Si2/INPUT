@@ -10,12 +10,12 @@ ks_solver  				genelpa
 ecutwfc    				100
 scf_thr        				1e-8
 scf_nmax      				100
-gamma_only 				1
+gamma_only 				0
 smearing_method   			gauss
 mixing_type				pulay
 mixing_beta             0.4
 
-dft_functional			scan
+dft_functional			hse
 exx_separate_loop 1
 exx_pca_threshold 1e-4
 exx_c_threshold 1e-4
