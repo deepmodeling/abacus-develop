@@ -1,1 +1,1 @@
-Test the energy, force, and stress of `WT + 0.5 * TF + vW`, with of_tf_weight=0.5, symmetry=on
+Test the energy, force, and stress of `WT + 1.1 * TF + vW`, with of_tf_weight=1.1, symmetry=on

@@ -33,11 +33,11 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
 if(ENABLE_COVERAGE)
   find_package(codecov)
-  if(NOT codecov)
+  if(NOT codecov_FOUND)
     include(FetchContent)
     FetchContent_Declare(
       cmakecodecov
-      URL https://github.com/RWTH-HPC/CMake-codecov/archive/refs/heads/master.zip
+      URL https://github.com/baixiaokuang/CMake-codecov/archive/refs/heads/master.zip
     )
     FetchContent_Populate(cmakecodecov)
     list(APPEND CMAKE_MODULE_PATH ${cmakecodecov_SOURCE_DIR}/cmake)
@@ -163,6 +163,9 @@ if(USE_CUDA OR USE_CUSOLVER_LCAO)
   if (USE_CUDA)
     add_compile_definitions(__CUDA)
     add_compile_definitions(__UT_USE_CUDA)
+    if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+      set(CMAKE_CUDA_FLAGS ${CMAKE_CUDA_FLAGS} "-g -G")
+    endif()
   endif()
   if (USE_CUSOLVER_LCAO)
     add_compile_definitions(__CUSOLVER_LCAO)

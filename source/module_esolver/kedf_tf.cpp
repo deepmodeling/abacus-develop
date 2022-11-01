@@ -79,7 +79,7 @@ void KEDF_TF::tf_potential(const double * const *prho, ModuleBase::matrix &rpote
 void KEDF_TF::get_stress(double cellVol)
 {
     double temp = 0.;
-    temp = 2. * this->TFenergy / (3. * cellVol) * this->tf_weight;
+    temp = 2. * this->TFenergy / (3. * cellVol);
 
     for (int i = 0; i < 3; ++i)
     {
