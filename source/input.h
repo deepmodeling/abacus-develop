@@ -122,6 +122,13 @@ class Input
     std::string fixed_axes; // which axes are fixed
     std::string relax_method; // methods to move_ion: sd, bfgs, cg...
 
+    //For now, this is only relevant if we choose to use
+    //CG relaxation method. If set to true, then the new
+    //implementation will be used; if set to false, then
+    //the original implementation will be used
+    //Default is true
+    bool relax_new;
+
     double relax_cg_thr; // threshold when cg to bfgs, pengfei add 2011-08-15
 
     double relax_bfgs_w1; // wolfe condition 1

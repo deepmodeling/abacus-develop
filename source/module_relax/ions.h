@@ -6,16 +6,11 @@
 #include "../module_base/global_variable.h"
 #include "../module_base/matrix.h"
 #include "../src_pw/charge_extra.h"
-#include "ions_move_methods.h"
-#include "lattice_change_methods.h"
+#include "relax_old/ions_move_methods.h"
+#include "relax_old/lattice_change_methods.h"
+#include "relax_new/relax.h"
 #include "module_esolver/esolver.h"
-#include "module_relax/relax.h"
 
-//The workflow opt_ions should be moved outside module_relaxation
-//since the latter is intended to perform the sole task of
-//creating the next step structure based on force and stress
-//according to some relaxation algorithm
-//However, it will remain this way until the ucell class and MD module are sorted out
 class Ions
 {
 

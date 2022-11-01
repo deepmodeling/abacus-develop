@@ -1,6 +1,6 @@
 #include "run_md_pw.h"
 #include "global.h" // use chr.
-#include "../module_relaxation/variable_cell.h" // mohan add 2021-02-01
+#include "../module_relax/relax_old/variable_cell.h" // mohan add 2021-02-01
 #include "../module_md/MD_func.h"
 #include "../module_md/FIRE.h"
 #include "../module_md/verlet.h"

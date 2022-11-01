@@ -36,7 +36,9 @@ VPATH=./src_global:\
 ./module_gint:\
 ./src_pw:\
 ./src_lcao:\
-./module_relaxation:\
+./module_relax:\
+./module_relax/relax_old:\
+./module_relax/relax_new:\
 ./module_rpa:\
 ./src_io:\
 ./src_parallel:\
@@ -289,6 +291,8 @@ OBJS_RELAXATION=bfgs_basic.o\
     lattice_change_methods.o\
     variable_cell.o\
     relaxation.o\
+    relax.o\
+    line_search.o\
 
 OBJS_RPA=rpa.o\
 

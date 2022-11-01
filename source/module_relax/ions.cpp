@@ -1,7 +1,7 @@
 #include "ions.h"
 #include "../src_pw/global.h" // use chr.
 #include "../src_io/print_info.h"
-#include "variable_cell.h" // mohan add 2021-02-01
+#include "relax_old/variable_cell.h" // mohan add 2021-02-01
 #include "src_io/write_wfc_realspace.h"
 
 void Ions::opt_ions(ModuleESolver::ESolver *p_esolver)
@@ -81,8 +81,16 @@ void Ions::opt_ions(ModuleESolver::ESolver *p_esolver)
 			{
 				p_esolver->cal_Stress(stress);
 			}
-			//stop = this->relaxation(force, stress, istep, force_step, stress_step);    // pengfei Li 2018-05-14
-			stop = rl.relax_step(force, stress, GlobalC::en.etot);
+
+			if(GlobalV::relax_new)
+			{
+				stop = rl.relax_step(force, stress, GlobalC::en.etot);
+			}
+			else
+			{
+				stop = this->relaxation(force, stress, istep, force_step, stress_step);    // pengfei Li 2018-05-14
+			}
+			
 		}
 		time_t fend = time(NULL);
 

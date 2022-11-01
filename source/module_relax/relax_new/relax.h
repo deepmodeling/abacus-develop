@@ -11,8 +11,6 @@ class Relax
 
     Relax(){};
     ~Relax(){};
-    
-    int debug_step = 0;
 
     //prepare for relaxation
     void init_relax(const int nat);

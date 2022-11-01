@@ -6,7 +6,7 @@
 #include "../src_io/write_HS.h"
 #include "../src_io/cal_r_overlap_R.h"
 #include "../src_io/print_info.h"
-#include "../module_relaxation/variable_cell.h" // mohan add 2021-02-01
+#include "../module_relax/relax_old/variable_cell.h" // mohan add 2021-02-01
 #include "../src_ri/exx_abfs.h"
 #include "../src_ri/exx_opt_orb.h"
 #include "../module_neighbor/sltk_atom_arrange.h"

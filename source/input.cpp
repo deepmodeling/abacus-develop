@@ -198,6 +198,7 @@ void Input::Default(void)
     relax_cg_thr = 0.5; // pengfei add 2013-08-15
     out_level = "ie";
     out_md_control = false;
+    relax_new = true;
     relax_bfgs_w1 = 0.01; // mohan add 2011-03-13
     relax_bfgs_w2 = 0.5;
     relax_bfgs_rmax = 0.8; // bohr
@@ -837,6 +838,10 @@ bool Input::Read(const std::string &fn)
         else if (strcmp("relax_scale_force", word) == 0)
         {
             read_value(ifs, relax_scale_force);
+        }
+        else if (strcmp("relax_new", word) == 0)
+        {
+            read_value(ifs, relax_new);
         }
 
         //----------------------------------------------------------
@@ -2181,6 +2186,7 @@ void Input::Bcast()
     Parallel_Common::bcast_double(relax_bfgs_rmin);
     Parallel_Common::bcast_double(relax_bfgs_init);
     Parallel_Common::bcast_double(relax_scale_force);
+    Parallel_Common::bcast_bool(relax_new);
 
     Parallel_Common::bcast_bool(gamma_only);
     Parallel_Common::bcast_bool(gamma_only_local);

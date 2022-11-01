@@ -1,6 +1,6 @@
-#include "ions.h"
-#include "../src_pw/global.h" // use chr.
-#include "../src_io/print_info.h"
+#include "../ions.h"
+#include "src_pw/global.h" // use chr.
+#include "src_io/print_info.h"
 #include "variable_cell.h" // mohan add 2021-02-01
 
 // The interface for relaxation

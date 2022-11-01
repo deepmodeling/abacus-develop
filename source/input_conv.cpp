@@ -11,7 +11,7 @@
 #include "src_io/epsilon0_pwscf.h"
 #include "src_io/epsilon0_vasp.h"
 #include "src_io/optical.h"
-#include "module_relaxation/ions_move_basic.h"
+#include "module_relax/relax_old/ions_move_basic.h"
 #include "src_pw/global.h"
 #include "src_pw/occupy.h"
 #ifdef __EXX
@@ -109,6 +109,8 @@ void Input_Conv::Convert(void)
 
     GlobalV::RELAX_METHOD = INPUT.relax_method;
     GlobalV::relax_scale_force = INPUT.relax_scale_force;
+    GlobalV::relax_new = INPUT.relax_new;
+
     GlobalV::OUT_LEVEL = INPUT.out_level;
     Ions_Move_CG::RELAX_CG_THR = INPUT.relax_cg_thr; // pengfei add 2013-09-09
 

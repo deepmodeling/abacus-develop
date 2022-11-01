@@ -271,7 +271,12 @@ void Print_Info::print_screen(const int &stress_step, const int &force_step, con
     std::cout << " -------------------------------------------" << std::endl;
 	GlobalV::ofs_running << "\n -------------------------------------------" << std::endl;
 
-	if(GlobalV::CALCULATION=="relax") //pengfei 2014-10-13
+	if(GlobalV::relax_new)
+	{
+		std::cout << " STEP OF RELAXATION : " << unsigned(istep) << std::endl;
+		GlobalV::ofs_running << " STEP OF RELAXATION : " << unsigned(istep) << std::endl;
+	}
+	else if(GlobalV::CALCULATION=="relax") //pengfei 2014-10-13
 	{
         std::cout << " STEP OF ION RELAXATION : " << unsigned(istep) << std::endl;
 		GlobalV::ofs_running << " STEP OF ION RELAXATION : " << unsigned(istep) << std::endl;

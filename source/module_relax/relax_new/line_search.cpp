@@ -13,7 +13,6 @@ bool Line_Search::line_search(
     const double conv_thr)
 {
     if(restart) ls_step = 0;
-    GlobalV::ofs_running << "ls_step : " << ls_step << std::endl;
 
     if(ls_step == 0) //first point: make a trial step into trial direction
     {

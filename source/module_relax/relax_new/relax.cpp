@@ -2,6 +2,7 @@
 #include <cmath>
 #include "src_pw/global.h"
 #include "module_base/matrix3.h"
+#include "../relax_old/ions_move_basic.h"
 
 #include "module_base/tool_title.h"
 
@@ -87,6 +88,8 @@ void Relax::setup_gradient(const ModuleBase::matrix& force, const ModuleBase::ma
     //set gradient for ions degrees of freedom
     grad_ion.zero_out();
 
+    double grad_norm = 0.0;
+
 	int iat=0;
 	for(int it = 0;it < GlobalC::ucell.ntype;it++)
 	{
@@ -96,14 +99,17 @@ void Relax::setup_gradient(const ModuleBase::matrix& force, const ModuleBase::ma
 			if(atom->mbl[ia].x == 1)
 			{
 				grad_ion(iat, 0) = force_eva(iat, 0);
+                grad_norm += pow(grad_ion(iat, 0), 2);
 			}
 			if(atom->mbl[ia].y == 1)
 			{
 				grad_ion(iat, 1) = force_eva(iat, 1);
+                grad_norm += pow(grad_ion(iat, 1), 2);
 			}
 			if(atom->mbl[ia].z == 1)
 			{
 				grad_ion(iat, 2) = force_eva(iat, 2);
+                grad_norm += pow(grad_ion(iat, 2), 2);
 			}
 			++iat;
 		}
@@ -123,6 +129,7 @@ void Relax::setup_gradient(const ModuleBase::matrix& force, const ModuleBase::ma
             for(int j=0;j<3;j++)
             {
                 grad_cell(i,j) = stress_ev(i,j) * iforceh(i,j); // apply constraints
+                grad_norm += pow(grad_cell(i,j) / nat, 2);
             }
         }
     }
@@ -230,7 +237,6 @@ void Relax::perform_line_search()
     double x=dmovel, y=etot;
     double xnew, yd;
 
-    GlobalV::ofs_running << "perform_line_search" << std::endl;
     brent_done = this->ls.line_search(restart_brent, x, y, f, xnew, force_thr_eva);
     dmove  = xnew;
 
@@ -314,7 +320,6 @@ void Relax::new_direction()
     double x=0, y=etot;
     double xnew, yd;
 
-    GlobalV::ofs_running << "new_direction" << std::endl;
     this->ls.line_search(restart, x, y, f, xnew, yd);
 
     dmovel = 1.0;
@@ -462,19 +467,26 @@ void Relax::move_cell_ions(const bool is_new_dir)
 #endif
     }
 
+    // =================================================================
     // Step 5 : print the new structure
-    debug_step ++;
+    // =================================================================
     std::stringstream ss;
-    ss << GlobalV::global_out_dir << "STRU_ION" << debug_step;
+    ss << GlobalV::global_out_dir << "STRU_ION";
 #ifdef __LCAO
-	GlobalC::ucell.print_stru_file(GlobalC::ORB,ss.str(), 2, 0);
+	GlobalC::ucell.print_stru_file(ss.str(), 2, 0);
 #else
 	GlobalC::ucell.print_stru_file(ss.str(), 2, 0);
 #endif
 
     GlobalC::ucell.print_tau();
+	if(Ions_Move_Basic::out_stru==1)
+	{
+		GlobalC::ucell.print_cell_cif("STRU_NOW.cif");
+	}
 
+    // =================================================================
     // Step 6 : prepare something for next SCF
+    // =================================================================
     //I have a strong feeling that this part should be
     //at the beginning of the next step (namely 'beforescf'),
     //but before we have a better organized Esolver
