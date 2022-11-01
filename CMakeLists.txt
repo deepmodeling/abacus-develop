@@ -386,8 +386,6 @@ target_link_libraries(${ABACUS_BIN_NAME}
     neighbor
     io
     relax
-    lcao
-    gint
     ri
     parallel
     pw
