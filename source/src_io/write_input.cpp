@@ -244,7 +244,7 @@ void Input::Print(const std::string &fn) const
     ModuleBase::GlobalFunc::OUTP(ofs,"md_nstep",mdp.md_nstep,"md steps");
 	ModuleBase::GlobalFunc::OUTP(ofs,"md_ensolver",mdp.md_ensolver,"choose potential");
 	ModuleBase::GlobalFunc::OUTP(ofs,"md_dt",mdp.md_dt,"time step");
-	ModuleBase::GlobalFunc::OUTP(ofs,"md_mnhc",mdp.md_mnhc,"number of Nose-Hoover chains");
+	ModuleBase::GlobalFunc::OUTP(ofs,"md_tchain",mdp.md_tchain,"number of Nose-Hoover chains");
 	ModuleBase::GlobalFunc::OUTP(ofs,"md_tfirst",mdp.md_tfirst,"temperature first");
 	ModuleBase::GlobalFunc::OUTP(ofs,"md_tlast",mdp.md_tlast,"temperature last");
 	ModuleBase::GlobalFunc::OUTP(ofs,"md_dumpfreq",mdp.md_dumpfreq,"The period to dump MD information");

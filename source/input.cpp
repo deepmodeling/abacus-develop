@@ -1212,9 +1212,9 @@ bool Input::Read(const std::string &fn)
         {
             read_value(ifs, mdp.md_dt);
         }
-        else if (strcmp("md_mnhc", word) == 0)
+        else if (strcmp("md_tchain", word) == 0)
         {
-            read_value(ifs, mdp.md_mnhc);
+            read_value(ifs, mdp.md_tchain);
         }
         else if (strcmp("md_tfirst", word) == 0)
         {
@@ -2289,7 +2289,7 @@ void Input::Bcast()
     Parallel_Common::bcast_string(mdp.md_thermostat);
     Parallel_Common::bcast_int(mdp.md_nstep);
     Parallel_Common::bcast_double(mdp.md_dt);
-    Parallel_Common::bcast_int(mdp.md_mnhc);
+    Parallel_Common::bcast_int(mdp.md_tchain);
     Parallel_Common::bcast_double(mdp.msst_qmass);
     Parallel_Common::bcast_double(mdp.md_tfirst);
     Parallel_Common::bcast_double(mdp.md_tlast);
