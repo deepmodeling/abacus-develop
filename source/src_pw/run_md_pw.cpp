@@ -5,7 +5,7 @@
 #include "../module_md/FIRE.h"
 #include "../module_md/verlet.h"
 #include "../module_md/MSST.h"
-#include "../module_md/NVT_NHC.h"
+#include "../module_md/Nose_Hoover.h"
 #include "../module_md/Langevin.h"
 #include "../src_io/print_info.h"
 
@@ -52,7 +52,7 @@ void Run_MD_PW::md_ions_pw(ModuleESolver::ESolver *p_esolver)
     }
     else if(INPUT.mdp.md_type==1)
     {
-        mdrun = new NVT_NHC(INPUT.mdp, GlobalC::ucell);
+        mdrun = new Nose_Hoover(INPUT.mdp, GlobalC::ucell);
     }
     else if(INPUT.mdp.md_type==2)
     {

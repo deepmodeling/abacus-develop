@@ -1,15 +1,15 @@
-#include "NVT_NHC.h"
+#include "Nose_Hoover.h"
 #include "MD_func.h"
 #ifdef __MPI
 #include "mpi.h"
 #endif
 #include "../module_base/timer.h"
 
-NVT_NHC::NVT_NHC(MD_parameters& MD_para_in, UnitCell_pseudo &unit_in) : MDrun(MD_para_in, unit_in)
+Nose_Hoover::Nose_Hoover(MD_parameters& MD_para_in, UnitCell_pseudo &unit_in) : MDrun(MD_para_in, unit_in)
 {
     if(mdp.md_tfirst == 0)
     {
-        ModuleBase::WARNING_QUIT("NVT_NHC", " md_tfirst must be larger than 0 in NHC !!! ");
+        ModuleBase::WARNING_QUIT("Nose_Hoover", " md_tfirst must be larger than 0 in NHC !!! ");
     }
 
     // init NHC
@@ -34,7 +34,7 @@ NVT_NHC::NVT_NHC(MD_parameters& MD_para_in, UnitCell_pseudo &unit_in) : MDrun(MD
 	w[3] = 1-w[0]-w[1]-w[2]-w[4]-w[5]-w[6];
 }
 
-NVT_NHC::~NVT_NHC()
+Nose_Hoover::~Nose_Hoover()
 {
     delete []Q;
     delete []G;
@@ -42,10 +42,10 @@ NVT_NHC::~NVT_NHC()
     delete []veta;
 }
 
-void NVT_NHC::setup(ModuleESolver::ESolver *p_ensolve)
+void Nose_Hoover::setup(ModuleESolver::ESolver *p_ensolve)
 {
-    ModuleBase::TITLE("NVT_NHC", "setup");
-    ModuleBase::timer::tick("NVT_NHC", "setup");
+    ModuleBase::TITLE("Nose_Hoover", "setup");
+    ModuleBase::timer::tick("Nose_Hoover", "setup");
 
     MDrun::setup(p_ensolve);
 
@@ -58,13 +58,13 @@ void NVT_NHC::setup(ModuleESolver::ESolver *p_ensolve)
         G[m] = (Q[m-1]*veta[m-1]*veta[m-1]-t_target) / Q[m];
     }
 
-    ModuleBase::timer::tick("NVT_NHC", "setup");
+    ModuleBase::timer::tick("Nose_Hoover", "setup");
 }
 
-void NVT_NHC::first_half()
+void Nose_Hoover::first_half()
 {
-    ModuleBase::TITLE("NVT_NHC", "first_half");
-    ModuleBase::timer::tick("NVT_NHC", "first_half");
+    ModuleBase::TITLE("Nose_Hoover", "first_half");
+    ModuleBase::timer::tick("Nose_Hoover", "first_half");
 
     // update target T
     t_target = MD_func::target_temp(step_ + step_rst_, mdp.md_tfirst, mdp.md_tlast);
@@ -73,27 +73,27 @@ void NVT_NHC::first_half()
 
     MDrun::first_half();
 
-    ModuleBase::timer::tick("NVT_NHC", "first_half");
+    ModuleBase::timer::tick("Nose_Hoover", "first_half");
 }
 
-void NVT_NHC::second_half()
+void Nose_Hoover::second_half()
 {
-    ModuleBase::TITLE("NVT_NHC", "second_half");
-    ModuleBase::timer::tick("NVT_NHC", "second_half");
+    ModuleBase::TITLE("Nose_Hoover", "second_half");
+    ModuleBase::timer::tick("Nose_Hoover", "second_half");
 
     MDrun::second_half();
 
     integrate();
 
-    ModuleBase::timer::tick("NVT_NHC", "second_half");
+    ModuleBase::timer::tick("Nose_Hoover", "second_half");
 }
 
-void NVT_NHC::outputMD(std::ofstream &ofs, bool cal_stress)
+void Nose_Hoover::outputMD(std::ofstream &ofs, bool cal_stress)
 {
     MDrun::outputMD(ofs, cal_stress);
 }
 
-void NVT_NHC::write_restart()
+void Nose_Hoover::write_restart()
 {
     if(!GlobalV::MY_RANK)
     {
@@ -119,7 +119,7 @@ void NVT_NHC::write_restart()
 #endif
 }
 
-void NVT_NHC::restart()
+void Nose_Hoover::restart()
 {
     bool ok = true;
     bool ok2 = true;
@@ -182,7 +182,7 @@ void NVT_NHC::restart()
 #endif
 }
 
-void NVT_NHC::integrate()
+void Nose_Hoover::integrate()
 {
     double scale = 1.0;
     kinetic = MD_func::GetAtomKE(ucell.nat, vel, allmass);
@@ -219,7 +219,7 @@ void NVT_NHC::integrate()
             scale *= exp(-veta[0]*delta/2.0);
             if(!isfinite(scale))
             {
-                ModuleBase::WARNING_QUIT("NVT_NHC", " Please set a proper md_tfreq !!! ");
+                ModuleBase::WARNING_QUIT("Nose_Hoover", " Please set a proper md_tfreq !!! ");
             }
             
             KE = kinetic * scale * scale;
@@ -258,7 +258,7 @@ void NVT_NHC::integrate()
     }
 }
 
-void NVT_NHC::update_mass()
+void Nose_Hoover::update_mass()
 {
     Q[0] = (3*ucell.nat - frozen_freedom_) * t_target / mdp.md_tfreq / mdp.md_tfreq;
     for(int m=1; m<mdp.md_tchain; ++m)

@@ -1,6 +1,6 @@
 #include "gtest/gtest.h"
 #include "setcell.h"
-#include "module_md/NVT_NHC.h"
+#include "module_md/Nose_Hoover.h"
 #include "module_esolver/esolver_lj.h"
 
 #define doublethreshold 1e-12
@@ -19,7 +19,7 @@ protected:
         ModuleESolver::ESolver *p_esolver = new ModuleESolver::ESolver_LJ();
         p_esolver->Init(INPUT, ucell);
 
-        mdrun = new NVT_NHC(INPUT.mdp, ucell);
+        mdrun = new Nose_Hoover(INPUT.mdp, ucell);
         mdrun->setup(p_esolver);
     }
 

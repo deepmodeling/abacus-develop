@@ -3,11 +3,11 @@
 
 #include "mdrun.h"
 
-class NVT_NHC : public MDrun
+class Nose_Hoover : public MDrun
 {
 public:
-    NVT_NHC(MD_parameters& MD_para_in, UnitCell_pseudo &unit_in);
-    ~NVT_NHC();
+    Nose_Hoover(MD_parameters& MD_para_in, UnitCell_pseudo &unit_in);
+    ~Nose_Hoover();
 
     void setup(ModuleESolver::ESolver *p_ensolve);
     void first_half();

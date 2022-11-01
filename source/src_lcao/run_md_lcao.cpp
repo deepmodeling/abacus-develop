@@ -14,7 +14,7 @@
 #include "../module_md/FIRE.h"
 #include "../module_md/verlet.h"
 #include "../module_md/MSST.h"
-#include "../module_md/NVT_NHC.h"
+#include "../module_md/Nose_Hoover.h"
 #include "../module_md/Langevin.h"
 
 Run_MD_LCAO::Run_MD_LCAO()
@@ -54,7 +54,7 @@ void Run_MD_LCAO::opt_ions(ModuleESolver::ESolver* p_esolver)
     }
     else if (INPUT.mdp.md_type == 1)
     {
-        mdrun = new NVT_NHC(INPUT.mdp, GlobalC::ucell);
+        mdrun = new Nose_Hoover(INPUT.mdp, GlobalC::ucell);
     }
     else if (INPUT.mdp.md_type == 2)
     {
