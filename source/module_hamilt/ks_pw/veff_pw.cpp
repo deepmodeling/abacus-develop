@@ -1,7 +1,6 @@
 #include "veff_pw.h"
 
 #include "module_base/timer.h"
-#include "src_pw/global.h"
 #include "module_base/tool_quit.h"
 
 using hamilt::Veff;
@@ -15,11 +14,26 @@ Veff<OperatorPW<FPTYPE, Device>>::Veff(
 {
     this->cal_type = pw_veff;
     this->isk = isk_in;
-    this->veff = veff_in;
+    // this->veff = veff_in;
+    // TODO: add an GPU veff array
+    this->veff = veff_in[0].c;
+    this->veff_col = veff_in[0].nc;
     this->wfcpw = wfcpw_in;
-    if( this->isk == nullptr || this->veff == nullptr || this->wfcpw == nullptr)
-    {
+    resize_memory_op()(this->ctx, this->porter, this->wfcpw->nmaxgr);
+    if (this->npol != 1) {
+        resize_memory_op()(this->ctx, this->porter1, this->wfcpw->nmaxgr);
+    }
+    if (this->isk == nullptr || this->veff == nullptr || this->wfcpw == nullptr) {
         ModuleBase::WARNING_QUIT("VeffPW", "Constuctor of Operator::VeffPW is failed, please check your code!");
+    }
+}
+
+template<typename FPTYPE, typename Device>
+Veff<OperatorPW<FPTYPE, Device>>::~Veff()
+{
+    delete_memory_op()(this->ctx, this->porter);
+    if (this->npol != 1) {
+        delete_memory_op()(this->ctx, this->porter1);
     }
 }
 
@@ -37,65 +51,64 @@ void Veff<OperatorPW<FPTYPE, Device>>::act(
     const int current_spin = this->isk[this->ik];
     this->npol = psi_in->npol;
     
-    std::complex<FPTYPE> *porter = new std::complex<FPTYPE>[wfcpw->nmaxgr];
+    // std::complex<FPTYPE> *porter = new std::complex<FPTYPE>[wfcpw->nmaxgr];
     for (int ib = 0; ib < n_npwx; ib += this->npol)
     {
         if (this->npol == 1)
         {
-            wfcpw->recip2real(tmpsi_in, porter, this->ik);
+            // wfcpw->recip2real(tmpsi_in, porter, this->ik);
+            wfcpw->recip_to_real(this->ctx, tmpsi_in, this->porter, this->ik);
             // NOTICE: when MPI threads are larger than number of Z grids
             // veff would contain nothing, and nothing should be done in real space
             // but the 3DFFT can not be skipped, it will cause hanging
-            if(this->veff->nc != 0)
+            if(this->veff_col != 0)
             {
-                const FPTYPE* current_veff = &(this->veff[0](current_spin, 0));
-                for (int ir = 0; ir < this->veff->nc; ++ir)
-                {
-                    porter[ir] *= current_veff[ir];
-                }
+                // const FPTYPE* current_veff = &(this->veff[0](current_spin, 0));
+                // for (int ir = 0; ir < this->veff->nc; ++ir)
+                // {
+                //     porter[ir] *= current_veff[ir];
+                // }
+                veff_op()(this->ctx, this->veff_col, this->porter, this->veff + current_spin * this->veff_col);
             }
-            wfcpw->real2recip(porter, tmhpsi, this->ik, true);
+            // wfcpw->real2recip(porter, tmhpsi, this->ik, true);
+            wfcpw->real_to_recip(this->ctx, this->porter, tmhpsi, this->ik, true);
         }
         else
         {
-            std::complex<FPTYPE> *porter1 = new std::complex<FPTYPE>[wfcpw->nmaxgr];
+            // std::complex<FPTYPE> *porter1 = new std::complex<FPTYPE>[wfcpw->nmaxgr];
             // fft to real space and doing things.
-            wfcpw->recip2real(tmpsi_in, porter, this->ik);
-            wfcpw->recip2real(tmpsi_in + this->max_npw, porter1, this->ik);
+            wfcpw->recip2real(tmpsi_in, this->porter, this->ik);
+            wfcpw->recip2real(tmpsi_in + this->max_npw, this->porter1, this->ik);
             std::complex<FPTYPE> sup, sdown;
-            if(this->veff->nc != 0)
+            if(this->veff_col != 0)
             {
                 const FPTYPE* current_veff[4];
                 for(int is=0;is<4;is++)
                 {
-                    current_veff[is] = &(this->veff[0](is, 0));
+                    current_veff[is] = this->veff + is * this->veff_col;
                 }
-                for (int ir = 0; ir < this->veff->nc; ir++)
+                for (int ir = 0; ir < this->veff_col; ir++)
                 {
-                    sup = porter[ir] * (current_veff[0][ir] + current_veff[3][ir])
-                        + porter1[ir]
+                    sup = this->porter[ir] * (current_veff[0][ir] + current_veff[3][ir])
+                        + this->porter1[ir]
                                 * (current_veff[1][ir]
                                 - std::complex<FPTYPE>(0.0, 1.0) * current_veff[2][ir]);
-                    sdown = porter1[ir] * (current_veff[0][ir] - current_veff[3][ir])
-                            + porter[ir]
+                    sdown = this->porter1[ir] * (current_veff[0][ir] - current_veff[3][ir])
+                            + this->porter[ir]
                                 * (current_veff[1][ir]
                                     + std::complex<FPTYPE>(0.0, 1.0) * current_veff[2][ir]);
-                    porter[ir] = sup;
-                    porter1[ir] = sdown;
+                    this->porter[ir] = sup;
+                    this->porter1[ir] = sdown;
                 }
             }
             // (3) fft back to G space.
-            wfcpw->real2recip(porter, tmhpsi, this->ik, true);
-            wfcpw->real2recip(porter1, tmhpsi + this->max_npw, this->ik, true);
-
-            delete[] porter1;
+            wfcpw->real2recip(this->porter, tmhpsi, this->ik, true);
+            wfcpw->real2recip(this->porter1, tmhpsi + this->max_npw, this->ik, true);
         }
         tmhpsi += this->max_npw * this->npol;
         tmpsi_in += this->max_npw * this->npol;
     }
-    delete[] porter;
     ModuleBase::timer::tick("Operator", "VeffPW");
-    return;
 }
 
 namespace hamilt{

@@ -38,6 +38,7 @@ VPATH=./src_global:\
 ./src_lcao:\
 ./module_relaxation:\
 ./module_rpa:\
+./module_vdw:\
 ./src_io:\
 ./src_parallel:\
 ./src_pdiag:\
@@ -78,7 +79,8 @@ ${OBJS_IO_LCAO}\
 ${OBJS_RI_LCAO}\
 ${OBJS_LCAO}\
 ${OBJS_PARALLEL_LCAO}\
-${OBJS_PDIAG}
+${OBJS_PDIAG}\
+${OBJS_VDW}
 
 
 OBJS_MAIN=main.o\
@@ -399,8 +401,9 @@ OBJS_LCAO=DM_gamma.o\
       record_adj.o\
       dm_2d.o\
       wavefunc_in_pw.o\
-  	H_TDDFT_pw.o\
+  	  H_TDDFT_pw.o\
       run_md_lcao.o\
+
 OBJS_RI=exx_lip.o\
 
 OBJS_RI_LCAO=abfs-vector3_order.o\
@@ -546,10 +549,6 @@ OBJS_SRCPW=H_Ewald_pw.o\
     symmetry_rho.o\
     threshold_elec.o\
     use_fft.o\
-    vdwd2.o\
-    vdwd2_parameters.o\
-    vdwd3.o\
-    vdwd3_parameters.o\
     wavefunc.o\
     wf_atomic.o\
     wf_igk.o\
@@ -559,4 +558,10 @@ OBJS_SRCPW=H_Ewald_pw.o\
     hamilt_pw_old.o\
     electrons.o
 
+OBJS_VDW=vdw.o\
+    vdwd2_parameters.o\
+    vdwd3_parameters.o\
+    vdwd2.o\
+    vdwd3.o\
+    vdwd3_parameters_tab.o
 

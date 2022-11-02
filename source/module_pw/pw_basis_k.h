@@ -2,6 +2,7 @@
 #define PWBASISK_H
 
 #include "pw_basis.h"
+#include "module_psi/psi.h"
 namespace ModulePW
 {
 
@@ -65,8 +66,9 @@ public:
         const bool xprime_in = true
     );
 
+    void get_ig2ixyz_k();
 
-public:
+  public:
     int nks=0;//number of k points in this pool
     ModuleBase::Vector3<double> *kvec_d=nullptr; // Direct coordinates of k points
     ModuleBase::Vector3<double> *kvec_c=nullptr; // Cartesian coordinates of k points
@@ -81,6 +83,8 @@ public:
 
     int *igl2isz_k=nullptr; //[npwk_max*nks] map (igl,ik) to (is,iz) 
     int *igl2ig_k=nullptr;//[npwk_max*nks] map (igl,ik) to ig
+    int *ig2ixyz_k=nullptr;
+    int *ig2ixyz_k_=nullptr;
 
     double *gk2=nullptr; // modulus (G+K)^2 of G vectors [npwk_max*nks]
 
@@ -93,11 +97,18 @@ private:
     //calculate G+K, it is a private function
     ModuleBase::Vector3<double> cal_GplusK_cartesian(const int ik, const int ig) const;
 
-public:
+  public:
     void real2recip(const double* in, std::complex<double>* out, const int ik, const bool add = false, const double factor = 1.0); //in:(nplane,nx*ny)  ; out(nz, ns)
     void real2recip(const std::complex<double>* in, std::complex<double>* out, const int ik, const bool add = false, const double factor = 1.0); //in:(nplane,nx*ny)  ; out(nz, ns)
     void recip2real(const std::complex<double>* in, double* out, const int ik, const bool add = false, const double factor = 1.0); //in:(nz, ns)  ; out(nplane,nx*ny)
     void recip2real(const std::complex<double>* in, std::complex<double> * out, const int ik, const bool add = false, const double factor = 1.0); //in:(nz, ns)  ; out(nplane,nx*ny)
+
+    void real_to_recip(const psi::DEVICE_CPU *dev, const std::complex<double> * in, std::complex<double> * out, const int ik, const bool add = false, const double factor = 1.0); //in:(nplane,nx*ny)  ; out(nz, ns)
+    void recip_to_real(const psi::DEVICE_CPU *dev, const std::complex<double> * in, std::complex<double> * out, const int ik, const bool add = false, const double factor = 1.0); //in:(nz, ns)  ; out(nplane,nx*ny)
+#if defined(__CUDA) || defined(__UT_USE_CUDA)
+    void real_to_recip(const psi::DEVICE_GPU *dev, const std::complex<double> * in, std::complex<double> * out, const int ik, const bool add = false, const double factor = 1.0); //in:(nplane,nx*ny)  ; out(nz, ns)
+    void recip_to_real(const psi::DEVICE_GPU *dev, const std::complex<double> * in, std::complex<double> * out, const int ik, const bool add = false, const double factor = 1.0); //in:(nz, ns)  ; out(nplane,nx*ny)
+#endif
 
 #ifdef __MIX_PRECISION
     void real2recip(const float* in, std::complex<float>* out, const int ik, const bool add = false, const float factor = 1.0); //in:(nplane,nx*ny)  ; out(nz, ns)
