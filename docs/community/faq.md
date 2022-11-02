@@ -2,7 +2,7 @@
 
  - [General Questions](#general-questions)
  - [Installation](#installation)
- - [How to set up jobs](#how-to-set-up-jobs)
+ - [Setting up jobs](#setting-up-jobs)
  - [Failed jobs](#failed-jobs)
  - [Miscellaneous](#miscellaneous)
 
