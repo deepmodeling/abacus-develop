@@ -35,6 +35,7 @@ public:
 
 		// NHC
         md_pmode = "none";
+        md_pcouple = "none";
         md_tfreq = 0.0;
         md_pfirst = -1.0;
         md_plast = -1.0;
@@ -78,6 +79,7 @@ public:
 
 	// NHC
     std::string md_pmode;          // NPT ensemble mode: none, iso, aniso, tri
+    std::string md_pcouple;        // whether couple different components: xyz, xy, yz, xz, none
     double md_tfreq;               // Oscillation frequency, used to determine qmass of thermostats coupled with particles
     double md_pfirst;             // Initial pressure
     double md_plast;              // Final pressure

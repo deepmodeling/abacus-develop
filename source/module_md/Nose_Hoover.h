@@ -1,5 +1,5 @@
-#ifndef NVT_NHC_H
-#define NVT_NHC_H
+#ifndef NOSE_HOOVER_H
+#define NOSE_HOOVER_H
 
 #include "mdrun.h"
 
@@ -15,18 +15,50 @@ public:
     void outputMD(std::ofstream &ofs, bool cal_stress);
     void write_restart();
     void restart();
-    void integrate();
-    void update_mass();
 
-    double t_target;       // target temperature
-    const static int nc = 1;
+    // perform half-step update of thermostats coupled with particles
+    void temp_integrate();
+
+    // perform half-step update of thermostats coupled with barostat
+    void stress_integrate();
+
+    // determine target stress 
+    void target_stress();
+
+    // couple stress component due to md_pcouple
+    void couple_stress();
+
+
+    const static int nc_tchain = 1;
+    const static int nc_pchain = 1;
     const static int nsy = 7;
-    double w[nsy];         // scale evolution operator
+    double w[nsy];                // scale evolution operator
 
-    double *Q;             // MHC mass
-    double *G;             // NHC acceleration
-    double *eta;           // NHC position
-    double *veta;          // NHC velocity
+    // thermostats
+    double t_target;              // target temperature
+    double *mass_eta;             // mass of thermostats coupled with particles
+    double *eta;                  // position of thermostats coupled with particles
+    double *v_eta;                // velocity of thermostats coupled with particles
+    double *g_eta;                // acceleration of thermostats coupled with particles
+
+    // barostat, Voigt notation: x, y, z, yz, xz, xy
+    int npt_flag;                 // whether NPT ensemble
+    double mass_omega[6];         // mass of lattice component
+    double omega[6];              // lattice component
+    double v_omega[6];            // velocity of lattice component
+    double pstart[6];             // initial stress components
+    double pstop[6];              // final stress components
+    double pfreq[6];              // Oscillation frequency, used to determine qmass of thermostats coupled with barostat
+    double pfreq_max;             // maximum oscillation frequency
+    int pflag[6];                 // control stress components
+    int pdim;                     // pdim = pflag[0] + pflag[1] + pflag[2], number of barostatted dims
+    double p_target[6];           // target stress components
+    double p_hydro;               // target hydrostatic target pressure
+    double p_current[6];          // current stress after coupled
+    double *mass_peta;            // mass of thermostats coupled with barostat
+    double *peta;                 // position of thermostats coupled with barostat
+    double *v_peta;               // velocity of thermostats coupled with barostat
+    double *g_peta;               // acceleration of thermostats coupled with barostat
 
 };
 

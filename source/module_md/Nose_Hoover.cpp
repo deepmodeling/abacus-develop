@@ -12,15 +12,91 @@ Nose_Hoover::Nose_Hoover(MD_parameters& MD_para_in, UnitCell_pseudo &unit_in) : 
         ModuleBase::WARNING_QUIT("Nose_Hoover", " md_tfirst must be larger than 0 in NHC !!! ");
     }
 
-    // init NHC
-    Q = new double [mdp.md_tchain];
-	G = new double [mdp.md_tchain];
-	eta = new double [mdp.md_tchain];
-	veta = new double [mdp.md_tchain];
+    // init NPT related variables
+    for(int i=0; i<6; ++i)
+    {
+        pstart[i] = pstop[i] = pfreq[i] = p_target[i] = pflag[i] = 0;
+    }
 
+    // determine the NPT methods
+    if(mdp.md_pmode == "iso")
+    {
+        mdp.md_pcouple = "xyz";
+        pstart[0] = pstart[1] = pstart[2] = mdp.md_pfirst;
+        pstop[0] = pstop[1] = pstop[2] = mdp.md_plast;
+        pfreq[0] = pfreq[1] = pfreq[2] = mdp.md_pfreq;
+        pflag[0] = pflag[1] = pflag[2] = 1;
+    }
+    else if(mdp.md_pmode == "aniso")
+    {
+        if(mdp.md_pcouple == "xyz")
+        {
+            ModuleBase::WARNING_QUIT("Nose_Hoover", "md_pcouple==xyz will convert aniso to iso!");
+        }
+        pstart[0] = pstart[1] = pstart[2] = mdp.md_pfirst;
+        pstop[0] = pstop[1] = pstop[2] = mdp.md_plast;
+        pfreq[0] = pfreq[1] = pfreq[2] = mdp.md_pfreq;
+        pflag[0] = pflag[1] = pflag[2] = 1;
+    }
+    else if(mdp.md_pmode == "tri")
+    {
+        pstart[0] = pstart[1] = pstart[2] = mdp.md_pfirst;
+        pstop[0] = pstop[1] = pstop[2] = mdp.md_plast;
+        pfreq[0] = pfreq[1] = pfreq[2] = mdp.md_pfreq;
+        pflag[0] = pflag[1] = pflag[2] = 1;
+
+        pstart[3] = pstart[4] = pstart[5] = 0;
+        pstop[3] = pstop[4] = pstop[5] = 0;
+        pfreq[3] = pfreq[4] = pfreq[5] = mdp.md_pfreq;
+        pflag[3] = pflag[4] = pflag[5] = 1;
+    }
+    else if(mdp.md_pmode != "none")
+    {
+        ModuleBase::WARNING_QUIT("Nose_Hoover", "No such md_pmode yet!");
+    }
+
+    // determine whether NPT ensemble
+    npt_flag = 0;
+    for(int i=0; i<6; ++i)
+    {
+        npt_flag += pflag[i];
+    }
+    pdim = pflag[0] + pflag[1] + pflag[2];
+
+
+    // allocate thermostats coupled with particles
+    mass_eta = new double [mdp.md_tchain];
+    eta = new double [mdp.md_tchain];
+    v_eta = new double [mdp.md_tchain+1];
+    g_eta = new double [mdp.md_tchain];
+
+    v_eta[mdp.md_tchain] = 0;
     for(int i=0; i<mdp.md_tchain; ++i)
     {
-        eta[i] = veta[i] = G[i] = 0;
+        eta[i] = v_eta[i] = g_eta[i] = 0;
+    }
+
+    // allocate barostat and thermostats coupled with barostat
+    if(npt_flag)
+    {
+        for(int i=0; i<6; ++i)
+        {
+            omega[i] = v_omega[i] = mass_omega[i] = 0;
+        }
+
+        if(mdp.md_pchain)
+        {
+            mass_peta = new double [mdp.md_pchain];
+            peta = new double [mdp.md_pchain];
+            v_peta = new double [mdp.md_pchain+1];
+            g_peta = new double [mdp.md_pchain];
+
+            v_peta[mdp.md_pchain] = 0;
+            for(int i=0; i<mdp.md_pchain; ++i)
+            {
+                peta[i] = v_peta[i] = g_peta[i] = 0;
+            }
+        }
     }
 
     //w[0] = 1;
@@ -36,10 +112,18 @@ Nose_Hoover::Nose_Hoover(MD_parameters& MD_para_in, UnitCell_pseudo &unit_in) : 
 
 Nose_Hoover::~Nose_Hoover()
 {
-    delete []Q;
-    delete []G;
+    delete []mass_eta;
     delete []eta;
-    delete []veta;
+    delete []v_eta;
+    delete []g_eta;
+
+    if(npt_flag && mdp.md_pchain)
+    {
+        delete []mass_peta;
+        delete []peta;
+        delete []v_peta;
+        delete []g_peta;
+    }
 }
 
 void Nose_Hoover::setup(ModuleESolver::ESolver *p_ensolve)
@@ -49,13 +133,47 @@ void Nose_Hoover::setup(ModuleESolver::ESolver *p_ensolve)
 
     MDrun::setup(p_ensolve);
 
+    // determine target temperature
     t_target = MD_func::target_temp(step_ + step_rst_, mdp.md_tfirst, mdp.md_tlast);
-    
-    update_mass();
-    
+
+    // init thermostats coupled with particles
+    mass_eta[0] = (3*ucell.nat - frozen_freedom_) * t_target / mdp.md_tfreq / mdp.md_tfreq;
     for(int m=1; m<mdp.md_tchain; ++m)
     {
-        G[m] = (Q[m-1]*veta[m-1]*veta[m-1]-t_target) / Q[m];
+        mass_eta[m] = t_target / mdp.md_tfreq / mdp.md_tfreq;
+        g_eta[m] = (mass_eta[m-1]*v_eta[m-1]*v_eta[m-1]-t_target) / mass_eta[m];
+    }
+
+    // NPT ensemble
+    if(npt_flag)  
+    {
+        // determine target stress 
+        target_stress();
+
+        // couple stress component due to md_pcouple
+        couple_stress();
+
+        // init barostat
+        double nkt = (ucell.nat + 1) * t_target;
+
+        for(int i=0; i<6; ++i)
+        {
+            if(pflag[i])
+            {
+                mass_omega[i] = nkt / pfreq[i] / pfreq[i];
+            }
+        }
+
+        // init thermostats coupled with barostat
+        if(mdp.md_pchain)
+        {
+            mass_peta[0] = t_target / mdp.md_pfreq / mdp.md_pfreq;
+            for(int m=1; m<mdp.md_tchain; ++m)
+            {
+                mass_peta[m] = t_target / mdp.md_pfreq / mdp.md_pfreq;
+                g_peta[m] = (mass_peta[m-1]*v_peta[m-1]*v_peta[m-1]-t_target) / mass_peta[m];
+            }
+        }
     }
 
     ModuleBase::timer::tick("Nose_Hoover", "setup");
@@ -66,10 +184,19 @@ void Nose_Hoover::first_half()
     ModuleBase::TITLE("Nose_Hoover", "first_half");
     ModuleBase::timer::tick("Nose_Hoover", "first_half");
 
+    // update v_peta if NPT ensemble
+    if(npt_flag && mdp.md_tchain)
+    {
+        stress_integrate();
+    }
+
     // update target T
     t_target = MD_func::target_temp(step_ + step_rst_, mdp.md_tfirst, mdp.md_tlast);
 
-    integrate();
+    // update v_eta
+    temp_integrate();
+
+
 
     MDrun::first_half();
 
@@ -83,7 +210,7 @@ void Nose_Hoover::second_half()
 
     MDrun::second_half();
 
-    integrate();
+    temp_integrate();
 
     ModuleBase::timer::tick("Nose_Hoover", "second_half");
 }
@@ -110,7 +237,7 @@ void Nose_Hoover::write_restart()
         file << std::endl;
         for(int i=0; i<mdp.md_tchain; ++i)
         {
-            file << veta[i] << "   ";
+            file << v_eta[i] << "   ";
         }
 		file.close();
 	}
@@ -153,7 +280,7 @@ void Nose_Hoover::restart()
                 }
                 for(int i=0; i<mdp.md_tchain; ++i)
                 {
-                    file >> veta[i];
+                    file >> v_eta[i];
                 }
             }
 
@@ -178,77 +305,86 @@ void Nose_Hoover::restart()
 #ifdef __MPI
 	MPI_Bcast(&step_rst_, 1, MPI_INT, 0, MPI_COMM_WORLD);
     MPI_Bcast(eta, mdp.md_tchain, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Bcast(veta, mdp.md_tchain, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Bcast(v_eta, mdp.md_tchain, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 #endif
 }
 
-void Nose_Hoover::integrate()
+void Nose_Hoover::temp_integrate()
 {
     double scale = 1.0;
+    double factor;
     kinetic = MD_func::GetAtomKE(ucell.nat, vel, allmass);
     double KE = kinetic;
 
     // update mass
-    update_mass();
+    mass_eta[0] = (3*ucell.nat - frozen_freedom_) * t_target / mdp.md_tfreq / mdp.md_tfreq;
+    for(int m=1; m<mdp.md_tchain; ++m)
+    {
+        mass_eta[m] = t_target / mdp.md_tfreq / mdp.md_tfreq;
+    }
 
     // update force
-    if(Q[0] > 0) 
+    if(mass_eta[0] > 0) 
     {
-        G[0] = (2*KE - (3*ucell.nat - frozen_freedom_)*t_target) / Q[0];
+        g_eta[0] = (2*KE - (3*ucell.nat - frozen_freedom_)*t_target) / mass_eta[0];
     }
     else 
     {
-        G[0] = 0;
+        g_eta[0] = 0;
     }
 
-    for(int i=0; i<nc; ++i)
+    for(int i=0; i<nc_tchain; ++i)
     {
         for(int j=0; j<nsy; ++j)
         {
-            double delta = w[j] * mdp.md_dt / nc;
+            double delta = w[j] * mdp.md_dt / nc_tchain;
 
-            // propogate veta
-            veta[mdp.md_tchain-1] += G[mdp.md_tchain-1] * delta /4.0;
-
-            for(int m=mdp.md_tchain-2; m>=0; --m)
+            // propogate v_eta
+            for(int m=mdp.md_tchain-1; m>=0; --m)
             {
-                double aa = exp(-veta[m]*delta/8.0);
-                veta[m] = veta[m] * aa * aa + G[m] * aa * delta /4.0;
+                factor = exp(-v_eta[m+1] * delta / 8.0);
+                v_eta[m] *= factor;
+                v_eta[m] += g_eta[m] * delta /4.0;
+                v_eta[m] *= factor;
             }
 
-            scale *= exp(-veta[0]*delta/2.0);
+            // rescale temperature due to velocity scaling
+            scale *= exp(-v_eta[0] * delta / 2.0);
             if(!isfinite(scale))
             {
                 ModuleBase::WARNING_QUIT("Nose_Hoover", " Please set a proper md_tfreq !!! ");
             }
-            
             KE = kinetic * scale * scale;
 
             // update force
-            if(Q[0] > 0) 
+            if(mass_eta[0] > 0) 
             {
-                G[0] = (2*KE - (3*ucell.nat - frozen_freedom_)*t_target) / Q[0];
+                g_eta[0] = (2*KE - (3*ucell.nat - frozen_freedom_)*t_target) / mass_eta[0];
             }
             else 
             {
-                G[0] = 0;
+                g_eta[0] = 0;
             }
 
             // propogate eta
             for(int m=0; m<mdp.md_tchain; ++m)
             {
-                eta[m] += veta[m] * delta / 2.0;
+                eta[m] += v_eta[m] * delta / 2.0;
             }
 
-            // propogate veta
-            for(int m=0; m<mdp.md_tchain-1; ++m)
+            // propogate v_eta
+            v_eta[0] *= factor;
+            v_eta[0] += g_eta[0] * delta /4.0;
+            v_eta[0] *= factor;
+
+            for(int m=1; m<mdp.md_tchain; ++m)
             {
-                double aa = exp(-veta[m+1]*delta/8.0);
-                veta[m] = veta[m] * aa * aa + G[m] * aa * delta /4.0;
-
-                G[m+1] = (Q[m]*veta[m]*veta[m]-t_target) / Q[m+1];
+                factor = exp(-v_eta[m+1] * delta / 8.0);
+                v_eta[m] *= factor;
+                g_eta[m] = (mass_eta[m-1] * v_eta[m-1] * v_eta[m-1] - t_target) / mass_eta[m];
+                v_eta[m] += g_eta[m] * delta / 4.0;
+                v_eta[m] *= factor;
             }
-            veta[mdp.md_tchain-1] += G[mdp.md_tchain-1] * delta /4.0;
         }
     }
     
@@ -258,11 +394,102 @@ void Nose_Hoover::integrate()
     }
 }
 
-void Nose_Hoover::update_mass()
+void Nose_Hoover::stress_integrate()
 {
-    Q[0] = (3*ucell.nat - frozen_freedom_) * t_target / mdp.md_tfreq / mdp.md_tfreq;
-    for(int m=1; m<mdp.md_tchain; ++m)
+    double kecurrent = 0;
+    int pdof = npt_flag;
+
+    for(int i=0; i<6; ++i)
     {
-        Q[m] = t_target / mdp.md_tfreq / mdp.md_tfreq;
+        if(pflag[i])
+        {
+            kecurrent += mass_omega[i] * v_omega[i] * v_omega[i];
+        }
+    }
+
+    double lkt_press = t_target;
+    if(mdp.md_pmode != "iso")
+    {
+        lkt_press *= pdof;
+    }
+    g_peta[0] = (kecurrent - lkt_press) / mass_peta[0];
+
+
+
+
+
+}
+
+void Nose_Hoover::target_stress()
+{
+    double delta = (double)(step_ + step_rst_) / GlobalV::MD_NSTEP;
+
+    p_hydro = 0;
+    for(int i=0; i<3; ++i)
+    {
+        if(pflag[i])
+        {
+            p_target[i] = pstart[i] + delta * (pstop[i] - pstart[i]);
+            p_hydro += p_target[i];
+        }
+    }
+    if(pdim)
+    {
+        p_hydro /= pdim;
+    }
+
+    for(int i=3; i<6; ++i)
+    {
+        if(pflag[i])
+        {
+            p_target[i] = pstart[i] + delta * (pstop[i] - pstart[i]);
+        }
+    }
+}
+
+void Nose_Hoover::couple_stress()
+{
+    if(mdp.md_pcouple == "xyz")
+    {
+        double ave = (stress(0,0) + stress(1,1) + stress(2,2)) / 3.0;
+        p_current[0] = p_current[1] = p_current[2] = ave;
+    }
+    else if(mdp.md_pcouple == "xy")
+    {
+        double ave = (stress(0,0) + stress(1,1)) / 2.0;
+        p_current[0] = p_current[1] = ave;
+        p_current[2] = stress(2,2);
+    }
+    else if(mdp.md_pcouple == "yz")
+    {
+        double ave = (stress(1,1) + stress(2,2)) / 2.0;
+        p_current[1] = p_current[2] = ave;
+        p_current[0] = stress(0,0);
+    }
+    else if(mdp.md_pcouple == "xz")
+    {
+        double ave = (stress(0,0) + stress(2,2)) / 2.0;
+        p_current[0] = p_current[2] = ave;
+        p_current[1] = stress(1,1);
+    }
+    else
+    {
+        p_current[0] = stress(0,0);
+        p_current[1] = stress(1,1);
+        p_current[2] = stress(2,2);
+    }
+
+    if(!isfinite(p_current[0]) || !isfinite(p_current[1]) || !isfinite(p_current[2]))
+    {
+        ModuleBase::WARNING_QUIT("Nose_Hoover", "Non-numeric stress component!");
+    }
+
+    p_current[3] = stress(1,2);
+    p_current[4] = stress(0,2);
+    p_current[5] = stress(0,1);
+
+    if(!isfinite(p_current[3]) || !isfinite(p_current[4]) || !isfinite(p_current[5]))
+    {
+        ModuleBase::WARNING_QUIT("Nose_Hoover", "Non-numeric stress component!");
     }
 }
