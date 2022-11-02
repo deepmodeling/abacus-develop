@@ -4,6 +4,7 @@
 #include "module_base/timer.h"
 #include "src_parallel/parallel_reduce.h"
 #include "module_base/tool_quit.h"
+#include "module_psi/include/device.h"
 
 using hamilt::Nonlocal;
 using hamilt::OperatorPW;
@@ -19,6 +20,9 @@ Nonlocal<OperatorPW<FPTYPE, Device>>::Nonlocal(
     this->isk = isk_in;
     this->ppcell = ppcell_in;
     this->ucell = ucell_in;
+    this->deeq = psi::device::get_device_type<Device>(this->ctx) == psi::GpuDevice ?
+            this->ppcell->d_deeq :  // for GpuDevice
+            this->ppcell->deeq.ptr; // for CpuDevice
     if( this->isk == nullptr || this->ppcell == nullptr || this->ucell == nullptr)
     {
         ModuleBase::WARNING_QUIT("NonlocalPW", "Constuctor of Operator::NonlocalPW is failed, please check your code!");
@@ -78,7 +82,7 @@ void Nonlocal<OperatorPW<FPTYPE, Device>>::add_nonlocal_pp(std::complex<FPTYPE> 
                 this->ucell->atoms[it].na, m, nproj, // four loop size
                 sum, iat, current_spin, nkb,   // additional index params
                 this->ppcell->deeq.getBound2(), this->ppcell->deeq.getBound3(), this->ppcell->deeq.getBound4(), // realArray operator()
-                this->ppcell->deeq.ptr, // array of data
+                this->deeq, // array of data
                 this->ps, this->becp); //  array of data
             // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
             // for (int ia = 0; ia < this->ucell->atoms[it].na; ia++)
@@ -104,6 +108,9 @@ void Nonlocal<OperatorPW<FPTYPE, Device>>::add_nonlocal_pp(std::complex<FPTYPE> 
     }
     else
     {
+#if defined(__CUDA) || defined(__ROCM)
+        ModuleBase::WARNING_QUIT("NonlocalPW", " gpu implementation of this->npol != 1 is not supported currently !!! ");
+#endif
         for (int it = 0; it < this->ucell->ntype; it++)
         {
             int psind = 0;

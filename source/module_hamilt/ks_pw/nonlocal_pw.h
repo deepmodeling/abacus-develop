@@ -56,6 +56,7 @@ class Nonlocal<OperatorPW<FPTYPE, Device>> : public OperatorPW<FPTYPE, Device>
     mutable std::complex<FPTYPE>* becp = nullptr;
     mutable std::complex<FPTYPE> *ps = nullptr;
     Device* ctx = {};
+    FPTYPE * deeq = nullptr;
     // using nonlocal_op = nonlocal_pw_op<FPTYPE, Device>;
     using gemv_op = hsolver::gemv_op<FPTYPE, Device>;
     using gemm_op = hsolver::gemm_op<FPTYPE, Device>;
