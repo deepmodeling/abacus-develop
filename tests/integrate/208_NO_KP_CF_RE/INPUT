@@ -21,3 +21,5 @@ force_thr_ev    1.0e-3
 ks_solver       genelpa
 mixing_type     pulay
 mixing_beta     0.7
+
+relax_new 0
