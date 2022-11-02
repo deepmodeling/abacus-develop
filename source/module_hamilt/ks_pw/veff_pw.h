@@ -4,6 +4,7 @@
 #include "operator_pw.h"
 #include "module_base/matrix.h"
 #include "module_pw/pw_basis_k.h"
+#include "module_hamilt/include/veff.h"
 
 namespace hamilt {
 
@@ -23,7 +24,7 @@ class Veff<OperatorPW<FPTYPE, Device>> : public OperatorPW<FPTYPE, Device>
   public:
     Veff(const int* isk_in,const ModuleBase::matrix* veff_in,ModulePW::PW_Basis_K* wfcpw_in);
 
-    virtual ~Veff(){};
+    virtual ~Veff();
 
     virtual void act (
         const psi::Psi<std::complex<FPTYPE>, Device> *psi_in, 
@@ -40,9 +41,20 @@ class Veff<OperatorPW<FPTYPE, Device>> : public OperatorPW<FPTYPE, Device>
 
     const int* isk = nullptr;
 
-    const ModuleBase::matrix* veff = nullptr;
 
     ModulePW::PW_Basis_K* wfcpw = nullptr;
+
+    Device* ctx = {};
+
+    int veff_col = 0;
+    FPTYPE *veff = nullptr;
+    std::complex<FPTYPE> *porter = nullptr;
+    std::complex<FPTYPE> *porter1 = nullptr;
+
+    using veff_op = veff_pw_op<FPTYPE, Device>;
+
+    using resize_memory_op = psi::memory::resize_memory_op<std::complex<FPTYPE>, Device>;
+    using delete_memory_op = psi::memory::delete_memory_op<std::complex<FPTYPE>, Device>;
 };
 
 } // namespace hamilt

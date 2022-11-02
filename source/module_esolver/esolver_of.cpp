@@ -17,7 +17,7 @@
 //-----force-------------------
 #include "../src_pw/forces.h"
 //-----stress------------------
-#include "../src_pw/stress_pw.h"
+#include "../src_pw/of_stress_pw.h"
 //---------------------------------------------------
 #include "module_elecstate/elecstate_pw.h"
 #include "module_hamilt/hamilt_pw.h"
@@ -75,7 +75,7 @@ void ESolver_OF::Init(Input &inp, UnitCell_pseudo &ucell)
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT BASIS");
 
     this->nrxx = this->pw_rho->nrxx;
-    this->dV = ucell.omega / GlobalC::rhopw->nxyz; // volume of one point in real space
+    this->dV = ucell.omega / this->pw_rho->nxyz; // volume of one point in real space
 
     //----------------------------------------------------------
     // 1 read in initial data:
@@ -846,9 +846,9 @@ void ESolver_OF::afterOpt()
             std::stringstream ssc;
             std::stringstream ss1;
             ssc << GlobalV::global_out_dir << "tmp" << "_SPIN" << is + 1 << "_CHG";
-            GlobalC::CHR.write_rho(GlobalC::CHR.rho_save[is], is, iter, ssc.str(), 3);//mohan add 2007-10-17
+            GlobalC::CHR.write_rho(GlobalC::CHR.rho[is], is, iter, ssc.str(), 3);//mohan add 2007-10-17
             ss1 << GlobalV::global_out_dir << "tmp" << "_SPIN" << is + 1 << "_CHG.cube";
-            GlobalC::CHR.write_rho_cube(GlobalC::CHR.rho_save[is], is, ss1.str(), 3);
+            GlobalC::CHR.write_rho_cube(GlobalC::CHR.rho[is], is, ss1.str(), 3);
         }
     }
 }
@@ -999,31 +999,42 @@ void ESolver_OF::cal_Force(ModuleBase::matrix& force)
 
 void ESolver_OF::cal_Stress(ModuleBase::matrix& stress)
 {
-    Stress_PW ss;
-    ss.cal_stress(stress);
+    ModuleBase::matrix kinetic_stress;
+    kinetic_stress.create(3,3);
+    for (int i = 0; i < 3; ++i)
+    {
+        for (int j = 0; j < 3; ++j)
+        {
+            kinetic_stress(i,j) = 0.0;
+        }
+    }
+
     if (this->of_kinetic == "tf")
     {    
         this->tf.get_stress(GlobalC::ucell.omega);
-        stress += this->tf.stress;
+        kinetic_stress += this->tf.stress;
     }
     else if (this->of_kinetic == "vw")
     {
         this->vw.get_stress(this->pphi, this->pw_rho);
-        stress += this->vw.stress;
+        kinetic_stress += this->vw.stress;
     }
     else if (this->of_kinetic == "wt")
     {
         this->tf.get_stress(GlobalC::ucell.omega);
         this->vw.get_stress(this->pphi, this->pw_rho);
         this->wt.get_stress(GlobalC::ucell.omega, GlobalC::CHR.rho, this->pw_rho, GlobalV::of_vw_weight);
-        stress += this->tf.stress + this->vw.stress + this->wt.stress;
+        kinetic_stress += this->tf.stress + this->vw.stress + this->wt.stress;
     }
     else if (this->of_kinetic == "tf+")
     {
         this->tf.get_stress(GlobalC::ucell.omega);
         this->vw.get_stress(this->pphi, this->pw_rho);
-        stress += this->tf.stress + this->vw.stress;
+        kinetic_stress += this->tf.stress + this->vw.stress;
     }
+
+    OF_Stress_PW ss;
+    ss.cal_stress(stress, kinetic_stress);
 }
 
 // Calculated kinetic potential and plus it to &rpot, return (rpot + kietic potential) * 2 * pphiInpt

@@ -6,6 +6,7 @@ list(APPEND objects
     hamilt_pw.cpp
     src/ekinetic.cpp
     src/nonlocal.cpp
+    src/veff.cpp
     ks_pw/ekinetic_pw.cpp
     ks_pw/veff_pw.cpp
     ks_pw/nonlocal_pw.cpp
@@ -30,9 +31,9 @@ if(ENABLE_LCAO)
 endif()
 
 if (USE_CUDA)
-    list(APPEND objects src/cuda/ekinetic.cu src/cuda/nonlocal.cu)
+    list(APPEND objects src/cuda/ekinetic.cu src/cuda/nonlocal.cu src/cuda/veff.cu)
 elseif(USE_ROCM)
-    list(APPEND objects src/rocm/ekinetic.cu src/cuda/nonlocal.cu)
+    list(APPEND objects src/rocm/ekinetic.cu src/cuda/nonlocal.cu src/rocm/veff.cu)
 endif()
 
 add_library(

@@ -4,9 +4,10 @@ suffix      	autotest
 pseudo_dir	../../PP_ORB
 orbital_dir	../../PP_ORB
 ntype			2	
+gamma_only              1
 nbands			20
 calculation 	scf
-basis_type		pw
+basis_type		lcao
 cal_force           1
 
 #Parameters (Accuracy)
