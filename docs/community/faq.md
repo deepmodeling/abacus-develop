@@ -16,7 +16,7 @@ Users are referred to the introduction of features of ABACUS in the [feature lis
 ## Installation
 
 
-## How to set up jobs
+## Setting up jobs
 
 **1. Why pseudopotential files must be provided in LCAO calculation?**
 
