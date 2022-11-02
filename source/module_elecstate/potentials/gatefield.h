@@ -1,9 +1,11 @@
 #ifndef GATEFIELD_H
 #define GATEFIELD_H
 
-#include "../module_cell/unitcell.h"
-#include "../module_pw/pw_basis.h"
+#include "module_cell/unitcell.h"
+#include "module_pw/pw_basis.h"
 
+namespace elecstate
+{
 class Gatefield
 {
 public:
@@ -29,5 +31,7 @@ public:
     static double block_up;                // high bound of the block
     static double block_height;            // height of the block
 };
+
+}//namespace elecstate
 
 #endif

@@ -27,6 +27,7 @@ VPATH=./src_global:\
 ./module_hsolver/src:\
 ./module_hsolver/genelpa:\
 ./module_elecstate:\
+./module_elecstate/potentials:\
 ./module_psi:\
 ./module_psi/src:\
 ./module_hamilt:\
@@ -153,6 +154,8 @@ OBJS_DEEPKS=LCAO_deepks.o\
 OBJS_ELECSTAT=elecstate.o\
     elecstate_pw.o\
     elecstate_pw_sdft.o\
+    efield.o\
+    gatefield.o
 
 OBJS_ELECSTAT_LCAO=elecstate_lcao.o\
       elecstate_lcao_tddft.o\
@@ -301,9 +304,7 @@ OBJS_SURCHEM=surchem.o\
     cal_vel.o\
     corrected_energy.o\
     minimize_cg.o\
-    efield.o\
     sol_force.o\
-    gatefield.o\
 
 OBJS_SYMMETRY=symm_other.o\
     symmetry_basic.o\

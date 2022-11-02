@@ -1,7 +1,7 @@
-#include "../src_pw/potential.h"
-#include "../src_pw/global.h"
-#include "../module_surchem/efield.h"
-#include "../module_base/timer.h"
+#include "src_pw/potential.h"
+#include "src_pw/global.h"
+#include "module_elecstate/potentials/efield.h"
+#include "module_base/timer.h"
 
 // translate from write_rho in charge.cpp.
 void Potential::write_potential(
@@ -250,7 +250,7 @@ void Potential::write_elecstat_pot(const std::string &fn, const std::string &fn_
     if (GlobalV::EFIELD_FLAG && GlobalV::DIP_COR_FLAG)
     {
         v_efield.create(GlobalV::NSPIN, rho_basis->nrxx);
-        v_efield = Efield::add_efield(GlobalC::ucell, GlobalC::rhopw, GlobalV::NSPIN, GlobalC::CHR.rho, GlobalC::solvent_model);
+        v_efield = elecstate::Efield::add_efield(GlobalC::ucell, GlobalC::rhopw, GlobalV::NSPIN, GlobalC::CHR.rho, GlobalC::solvent_model);
     }
 
     //==========================================

@@ -1,9 +1,12 @@
 #include "efield.h"
 #include "gatefield.h"
-#include "../module_base/constants.h"
-#include "../module_base/timer.h"
-#include "../module_base/global_variable.h"
-#include "../src_parallel/parallel_reduce.h"
+#include "module_base/constants.h"
+#include "module_base/timer.h"
+#include "module_base/global_variable.h"
+#include "src_parallel/parallel_reduce.h"
+
+namespace elecstate
+{
 
 double Efield::etotefield = 0.0;
 double Efield::tot_dipole;
@@ -294,3 +297,5 @@ void Efield::prepare(const UnitCell &cell, double &latvec, double &area)
     }
     bmod = sqrt(pow(bvec[0],2) + pow(bvec[1],2) + pow(bvec[2],2));
 }
+
+}//namespace elecstate

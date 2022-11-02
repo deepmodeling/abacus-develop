@@ -1,6 +1,9 @@
 #include "gatefield.h"
 #include "efield.h"
-#include "../module_base/timer.h"
+#include "module_base/timer.h"
+
+namespace elecstate
+{
 
 double Gatefield::etotgatefield = 0.0;
 double Gatefield::rho_surface;
@@ -187,3 +190,5 @@ void Gatefield::compute_force(const UnitCell &cell, ModuleBase::matrix &fgate)
         }
     }
 }
+
+}//namespace elecstate

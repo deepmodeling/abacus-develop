@@ -1,10 +1,12 @@
 #ifndef EFIELD_H
 #define EFIELD_H
 
-#include "../module_cell/unitcell.h"
-#include "../module_pw/pw_basis.h"
-#include "surchem.h"
+#include "module_cell/unitcell.h"
+#include "module_pw/pw_basis.h"
+#include "module_surchem/surchem.h"
 
+namespace elecstate
+{
 class Efield
 {
 public:
@@ -47,7 +49,7 @@ public:
     static double bmod;
 };
 
-
+}//namespace elecstate
 
 
 

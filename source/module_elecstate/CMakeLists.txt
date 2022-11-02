@@ -2,6 +2,8 @@ list(APPEND objects
     elecstate.cpp
     elecstate_pw.cpp
     elecstate_pw_sdft.cpp
+    potentials/gatefield.cpp
+    potentials/efield.cpp
 )
 
 if(ENABLE_LCAO)

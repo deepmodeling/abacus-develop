@@ -3,11 +3,11 @@
 #include "../module_symmetry/symmetry.h"
 #include "global.h"
 // new
-#include "../module_base/math_integral.h"
-#include "../module_base/timer.h"
-#include "../module_surchem/efield.h"
-#include "../module_surchem/surchem.h"
-#include "../module_surchem/gatefield.h"
+#include "module_base/math_integral.h"
+#include "module_base/timer.h"
+#include "module_elecstate/potentials/efield.h"
+#include "module_surchem/surchem.h"
+#include "module_elecstate/potentials/gatefield.h"
 #include "module_vdw/vdw.h"
 
 double Forces::output_acc = 1.0e-8; // (Ryd/angstrom).
@@ -60,7 +60,7 @@ void Forces::init(ModuleBase::matrix& force, const psi::Psi<std::complex<double>
     if (GlobalV::EFIELD_FLAG)
     {
         force_e.create(GlobalC::ucell.nat, 3);
-        Efield::compute_force(GlobalC::ucell, force_e);
+        elecstate::Efield::compute_force(GlobalC::ucell, force_e);
         if (GlobalV::TEST_FORCE)
         {
             Forces::print("EFIELD      FORCE (Ry/Bohr)", force_e);
@@ -71,7 +71,7 @@ void Forces::init(ModuleBase::matrix& force, const psi::Psi<std::complex<double>
     if (GlobalV::GATE_FLAG)
     {
         force_gate.create(GlobalC::ucell.nat, 3);
-        Gatefield::compute_force(GlobalC::ucell, force_gate);
+        elecstate::Gatefield::compute_force(GlobalC::ucell, force_gate);
         if (GlobalV::TEST_FORCE)
         {
             Forces::print("GATEFIELD      FORCE (Ry/Bohr)", force_gate);

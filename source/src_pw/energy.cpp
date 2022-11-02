@@ -16,9 +16,9 @@
 //new
 #include "H_Ewald_pw.h"
 #include "H_Hartree_pw.h"
-#include "../module_surchem/efield.h"    // liuyu add 2022-05-06
-#include "../module_surchem/gatefield.h"    // liuyu add 2022-09-13
-#include "../module_surchem/surchem.h"
+#include "module_elecstate/potentials/efield.h"    // liuyu add 2022-05-06
+#include "module_elecstate/potentials/gatefield.h"    // liuyu add 2022-09-13
+#include "module_surchem/surchem.h"
 #ifdef __DEEPKS
 #include "../module_deepks/LCAO_deepks.h"
 #endif
@@ -62,8 +62,8 @@ void energy::calculate_harris(const int &flag)
 		+ H_Hartree_pw::hartree_energy 
 		+ demet
 		+ exx
-		+ Efield::etotefield
-        + Gatefield::etotgatefield
+		+ elecstate::Efield::etotefield
+        + elecstate::Gatefield::etotgatefield
 		+ evdw;  						// Peize Lin add evdw 2021.03.09
 
 #ifdef __LCAO
@@ -94,8 +94,8 @@ void energy::calculate_etot(void)
 	+ demet
 	+ descf
 	+ exx
-	+ Efield::etotefield
-    + Gatefield::etotgatefield
+	+ elecstate::Efield::etotefield
+    + elecstate::Gatefield::etotgatefield
 	+ evdw;							// Peize Lin add evdw 2021.03.09
 	if (GlobalV::imp_sol)
     {
@@ -185,11 +185,11 @@ void energy::print_etot(
 			}
             if(GlobalV::EFIELD_FLAG)
             {
-                this->print_format("E_efield", Efield::etotefield);
+                this->print_format("E_efield", elecstate::Efield::etotefield);
             }
             if(GlobalV::GATE_FLAG)
             {
-                this->print_format("E_gatefield", Gatefield::etotgatefield);
+                this->print_format("E_gatefield", elecstate::Gatefield::etotgatefield);
             }
 
 #ifdef __DEEPKS
