@@ -10,6 +10,12 @@
 //#include "fftw3-mpi_mkl.h"
 #endif
 
+#if defined(__CUDA) || defined(__UT_USE_CUDA)
+#include "cufft.h"
+#include "cuda_runtime.h"
+#endif
+
+#include "module_psi/psi.h"
 // #ifdef __MIX_PRECISION
 // #include "fftw3f.h"
 // #if defined(__FFTW3_MPI) && defined(__MPI)
@@ -45,7 +51,10 @@ public:
 	void fftxybac(std::complex<double>* & in, std::complex<double>* & out);
 	void fftxyr2c(double * &in, std::complex<double>* & out);
 	void fftxyc2r(std::complex<double>* & in, double* & out);
-
+#if defined(__CUDA) || defined(__UT_USE_CUDA)
+    void fft3D_forward(std::complex<double>* & in, std::complex<double>* & out);
+    void fft3D_backward(std::complex<double>* & in, std::complex<double>* & out);
+#endif
 #ifdef __MIX_PRECISION
 	void cleanfFFT();
 	void fftfzfor(std::complex<float>* & in, std::complex<float>* & out);
@@ -77,8 +86,13 @@ public:
 	int ns=0; //number of sticks
 	int nplane=0; //number of x-y planes
 	int nproc=1; // number of proc.
-	std::complex<double> *auxg=nullptr, *auxr=nullptr; //fft space
+    std::complex<double> *auxg=nullptr, *auxr=nullptr; //fft space
 	double *r_rspace=nullptr; //real number space for r, [nplane * nx *ny]
+
+#if defined(__CUDA) || defined(__UT_USE_CUDA)
+    std::complex<double> *auxg_3d=nullptr, *auxr_3d=nullptr; //fft space
+#endif
+
 #ifdef __MIX_PRECISION
 	std::complex<float> *auxfg=nullptr, *auxfr=nullptr; //fft space,
 	float *rf_rspace=nullptr; //real number space for r, [nplane * nx *ny]
@@ -102,6 +116,13 @@ private:
 	fftw_plan planxc2r;
 	fftw_plan planyr2c;
 	fftw_plan planyc2r;
+//	fftw_plan plan3dforward;
+//	fftw_plan plan3dbackward;
+
+#if defined(__CUDA) || defined(__UT_USE_CUDA)
+    cufftHandle fft_handle;
+#endif
+
 #ifdef __MIX_PRECISION
 	bool destroypf=true;
 	fftwf_plan planfzfor;

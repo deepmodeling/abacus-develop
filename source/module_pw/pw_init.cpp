@@ -105,10 +105,10 @@ void PW_Basis:: initgrids(
 			//n2 = n3 = n5 = n7 = 0;
 			n2 = n3 = n5 = 0;
 			done_factoring = false;
-            if (this->full_pw_dim == 2 && b % 2 != 0) done_factoring = true; // full_pw_dim = 2 means FFT dimensions should be even.
+            if ((this->full_pw && this->full_pw_dim == 2) && b % 2 != 0) done_factoring = true; // full_pw_dim = 2 means FFT dimensions should be even.
 			while (!done_factoring)
 			{
-				if (b % 2 == 0 && this->full_pw_dim != 1) // full_pw_dim = 1 means FFT dimension should be odd.
+				if (b % 2 == 0 && (!this->full_pw || this->full_pw_dim != 1)) // full_pw_dim = 1 means FFT dimension should be odd.
 				{
 					n2++;
 					b /= 2;

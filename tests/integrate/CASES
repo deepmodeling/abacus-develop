@@ -142,7 +142,6 @@
 212_NO_wfc_ienvelope
 213_NO_mulliken
 215_NO_sol_H2
-215_NO_sol_H2O
 220_NO_KP_MD_ADS
 220_NO_KP_MD_Berendsen
 220_NO_KP_MD_FIRE
@@ -181,6 +180,7 @@
 312_NO_GO_wfc_istate
 313_NO_GO_mulliken
 314_NO_GO_dm_out
+315_NO_sol_H2O
 320_NO_GO_MD_ADS
 320_NO_GO_MD_Berendsen
 320_NO_GO_MD_FIRE

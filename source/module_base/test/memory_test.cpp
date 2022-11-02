@@ -23,7 +23,7 @@
 class MemoryTest : public testing::Test
 {
 protected:
-	// definition according to ../memory.cpp
+	// definition according to ../memory_psi.cpp
 	double factor = 1.0 / 1024.0 / 1024.0; // MB
 	double complex_matrix_mem = 2*sizeof(double) * factor; // byte to MB
 	double double_mem = sizeof(double) * factor;

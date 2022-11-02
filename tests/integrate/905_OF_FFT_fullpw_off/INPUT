@@ -7,10 +7,6 @@ symmetry	1
 pseudo_dir  ../../PP_ORB/
 pseudo_rcut 16
 nspin        1
-cal_force	1
-test_force	1
-cal_stress	1
-test_stress	1
 
 #Parameters (2.Iteration)
 ecutwfc		30
