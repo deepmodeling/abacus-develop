@@ -357,6 +357,11 @@ void Input_Conv::Convert(void)
         }
     }
 
+    if(GlobalV::CALCULATION=="cell-relax" && INPUT.cell_factor < 2.0)
+    {
+        INPUT.cell_factor = 2.0; //follows QE
+    }
+
 //----------------------------------------------------------
 // about exx, Peize Lin add 2018-06-20
 //----------------------------------------------------------
