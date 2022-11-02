@@ -11,7 +11,7 @@
 
 **1. What are the merits of ABACUS in respect of functionality, performance, and/or accuracy?**
 
-Users are referred to the introduction of features of ABACUS in the [feature lists](http://abacus.ustc.edu.cn/features/list.htm).
+Users are referred to the introduction of features of ABACUS in the [feature list](http://abacus.ustc.edu.cn/features/list.htm).
 
 ## Installation
 
