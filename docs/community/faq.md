@@ -66,9 +66,6 @@ This is usually caused by the difficulty in converging charge density. Reducing 
 
 
 
-
-[back to top](#frequently-asked-questions)
-
 ## Miscellaneous
 
 [back to top](#frequently-asked-questions)
