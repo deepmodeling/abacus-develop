@@ -23,6 +23,7 @@ mixing_beta     0.7
 
 chg_extrap  first-order
 
+md_tchain      4
 md_tfirst      10
 md_tfreq       0.1
 init_vel       1
