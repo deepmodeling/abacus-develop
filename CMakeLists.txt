@@ -411,6 +411,11 @@ if(ENABLE_LCAO)
   )
 endif()
 
+install(PROGRAMS ${ABACUS_BIN_PATH}
+    TYPE BIN
+    #DESTINATION ${CMAKE_INSTALL_BINDIR}
+)
+
 if(ENABLE_COVERAGE)
   coverage_evaluate()
 endif()

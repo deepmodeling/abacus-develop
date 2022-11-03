@@ -1,10 +1,9 @@
-#include "fft.h"
 #include <complex>
 #include "pw_basis_k.h"
 #include <cassert>
-#include "../module_base/global_function.h"
 #include "../module_base/timer.h"
 #include "pw_gatherscatter.h"
+#include "module_pw/include/pw_multi_device.h"
 
 namespace ModulePW
 {
@@ -180,6 +179,112 @@ void PW_Basis_K:: recip2real(const std::complex<double> * in, double * out, cons
     ModuleBase::timer::tick(this->classname, "recip2real");
     return;
 }
+
+void PW_Basis_K::real_to_recip(const psi::DEVICE_CPU * /*dev*/, const std::complex<double> * in, std::complex<double> * out, const int ik, const bool add, const double factor)
+{
+    this->real2recip(in, out, ik, add, factor);
+}
+
+void PW_Basis_K::recip_to_real(const psi::DEVICE_CPU * /*dev*/, const std::complex<double> * in, std::complex<double> * out, const int ik, const bool add, const double factor)
+{
+    this->recip2real(in, out, ik, add, factor);
+}
+
+#if defined(__CUDA) || defined(__UT_USE_CUDA)
+void PW_Basis_K::real_to_recip(const psi::DEVICE_GPU * ctx, const std::complex<double> * in, std::complex<double> * out, const int ik, const bool add, const double factor)
+{
+    ModuleBase::timer::tick(this->classname, "real_to_recip gpu");
+    assert(this->gamma_only == false);
+    assert(this->poolnproc == 1);
+
+    // for(int ir = 0; ir < this->nrxx ; ++ir) {
+    //     this->ft.auxr[ir] = in[ir];
+    // }
+    // psi::DEVICE_CPU *cpu_ctx = {};
+     psi::memory::synchronize_memory_op<std::complex<double>, psi::DEVICE_GPU, psi::DEVICE_GPU>()(
+         ctx, ctx,
+         this->ft.auxr_3d, in,
+         this->nrxx);
+    // psi::memory::synchronize_memory_op<std::complex<double>, psi::DEVICE_GPU, psi::DEVICE_GPU>()(
+    //     ctx, ctx,
+    //     this->ft.auxr_3d, in,
+    //     this->nrxx);
+    // cudaMemcpy(this->ft.auxr_3d, this->ft.auxr, sizeof(std::complex<double>) * this->nxyz, cudaMemcpyHostToDevice);
+    this->ft.fft3D_forward(this->ft.auxr_3d, this->ft.auxr_3d);
+    // cudaMemcpy(this->ft.auxr, this->ft.auxr_3d, sizeof(std::complex<double>) * this->nxyz, cudaMemcpyDeviceToHost);
+
+    const int startig = ik*this->npwk_max;
+    const int npw_k = this->npwk[ik];
+    // if(add) {
+    //     for(int ig = 0; ig < npw_k; ++ig) {
+    //         out[ig] += factor / static_cast<double>(this->nxyz) * this->ft.auxr[this->ig2ixyz_k[ig + startig]];
+    //     }
+    // }
+    // else {
+    //     for(int ig = 0; ig < npw_k; ++ig) {
+    //         out[ig] = this->ft.auxr[this->ig2ixyz_k[ig + startig]] / static_cast<double>(this->nxyz);
+    //     }
+    // }
+    // std::complex<double> * d_out = nullptr;
+    // cudaMalloc(reinterpret_cast<void**>(&d_out), sizeof(std::complex<double>) * this->nxyz);
+    // cudaMemcpy(d_out, out, sizeof(std::complex<double>) * this->nxyz, cudaMemcpyHostToDevice);
+    set_real_to_recip_output_op<double, psi::DEVICE_GPU>()(
+        ctx, npw_k, this->nxyz, add, factor,  this->ig2ixyz_k + startig, this->ft.auxr_3d, out);
+    // cudaMemcpy(out, d_out, sizeof(std::complex<double>) * this->nxyz, cudaMemcpyDeviceToHost);
+    // cudaFree(d_out);
+    ModuleBase::timer::tick(this->classname, "real_to_recip gpu");
+}
+
+void PW_Basis_K::recip_to_real(const psi::DEVICE_GPU * ctx, const std::complex<double> * in, std::complex<double> * out, const int ik, const bool add, const double factor)
+{
+    ModuleBase::timer::tick(this->classname, "recip_to_real gpu");
+    assert(this->gamma_only == false);
+    assert(this->poolnproc == 1);
+    // ModuleBase::GlobalFunc::ZEROS(ft.auxr_3d, this->nxyz);
+    psi::memory::set_memory_op<std::complex<double>, psi::DEVICE_GPU>()(
+        ctx, this->ft.auxr_3d, 0, this->nxyz);
+
+    const int startig = ik*this->npwk_max;
+    const int npw_k = this->npwk[ik];
+
+    // for(int ig = 0; ig < npw_k; ++ig)
+    // {
+    //     this->ft.auxr[this->ig2ixyz_k[ig + startig]] = in[ig];
+    // }
+    // std::complex<double> * d_in = nullptr;
+    // cudaMalloc(reinterpret_cast<void**>(&d_in), sizeof(std::complex<double>) * this->nxyz);
+    // cudaMemcpy(d_in, in, sizeof(std::complex<double>) * this->nxyz, cudaMemcpyHostToDevice);
+    // set_3d_fft_box_op<double, psi::DEVICE_GPU>()(
+    //     ctx, npw_k, d_in, this->ft.auxr_3d, this->ig2ixyz_k + startig);
+    set_3d_fft_box_op<double, psi::DEVICE_GPU>()(
+        ctx, npw_k, this->ig2ixyz_k + startig, in, this->ft.auxr_3d);
+    //auxg should be "auxg = new complex<double>[nxyz]“
+    // cudaMemcpy(this->ft.auxr_3d, this->ft.auxr, sizeof(std::complex<double>) * this->nxyz, cudaMemcpyHostToDevice);
+    this->ft.fft3D_backward(this->ft.auxr_3d, this->ft.auxr_3d);
+    // cudaMemcpy(this->ft.auxr, this->ft.auxr_3d, sizeof(std::complex<double>) * this->nxyz, cudaMemcpyDeviceToHost);
+
+    // if(add) {
+    //     for(int ir = 0 ; ir < this->nrxx ; ++ir) {
+    //         out[ir] += factor * this->ft.auxr[ir];
+    //     }
+    // }
+    // else {
+    //     for(int ir = 0; ir < this->nrxx ; ++ir) {
+    //         out[ir] = this->ft.auxr[ir];
+    //     }
+    // }
+    // std::complex<double> * d_out = nullptr;
+    // cudaMalloc(reinterpret_cast<void**>(&d_out), sizeof(std::complex<double>) * this->nxyz);
+    // cudaMemcpy(d_out, out, sizeof(std::complex<double>) * this->nxyz, cudaMemcpyHostToDevice);
+    set_recip_to_real_output_op<double, psi::DEVICE_GPU>()(
+        ctx, this->nrxx, add, factor, this->ft.auxr_3d, out);
+    // cudaMemcpy(out, d_out, sizeof(std::complex<double>) * this->nxyz, cudaMemcpyDeviceToHost);
+    // cudaFree(d_in);
+    // cudaFree(d_out);
+
+    ModuleBase::timer::tick(this->classname, "recip_to_real gpu");
+}
+#endif //defined(__CUDA) || defined(__UT_USE_CUDA)
 
 #ifdef __MIX_PRECISION
 ///

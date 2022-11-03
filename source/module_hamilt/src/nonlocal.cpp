@@ -1,9 +1,6 @@
 #include "module_hamilt/include/nonlocal.h"
 
-#include <iomanip>
-#include <iostream>
-
-using namespace hamilt; 
+using namespace hamilt;
 
 template <typename FPTYPE> 
 struct hamilt::nonlocal_pw_op<FPTYPE, psi::DEVICE_CPU> {
