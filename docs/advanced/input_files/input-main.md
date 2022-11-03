@@ -725,13 +725,13 @@ This part of variables are used to control the geometry relaxation.
 - **Description**:which axes are fixed when do cell relaxation. Possible choices are:
   - None : default; all can relax
   - volume : relaxation with fixed volume
+  - shape : fix shape but change volume (i.e. only lattice constant changes)
   - a : fix a axis during relaxation
   - b : fix b axis during relaxation
   - c : fix c axis during relaxation
   - ab : fix both a and b axes during relaxation
   - ac : fix both a and c axes during relaxation
   - bc : fix both b and c axes during relaxation
-  - abc : fix all three axes during relaxation
 - **Default**: None
 
 ### relax_method

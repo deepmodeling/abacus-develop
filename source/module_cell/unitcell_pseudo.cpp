@@ -703,6 +703,7 @@ void UnitCell_pseudo::cal_natomwfc(std::ofstream &log)
 //20180515
 void UnitCell_pseudo::setup_cell_after_vc(std::ofstream &log)
 {
+	ModuleBase::TITLE("UnitCell_pseudo","setup_cell_after_vc");
     assert(lat0 > 0.0);
     this->omega = abs(latvec.Det()) * this->lat0 * lat0 * lat0;
     if(this->omega <= 0)
@@ -792,6 +793,17 @@ void UnitCell_pseudo::setup(const std::string &latname_in,
 		this->lc[0] = 1;
 		this->lc[1] = 1;
 		this->lc[2] = 1;
+		if(!GlobalV::relax_new)
+		{
+			ModuleBase::WARNING_QUIT("Input","there are bugs in the old implementation; set relax_new to be 1 for fixed_volume relaxation");
+		}
+	}
+	else if (fixed_axes_in == "shape")
+	{
+		if(!GlobalV::relax_new)
+		{
+			ModuleBase::WARNING_QUIT("Input","set relax_new to be 1 for fixed_shape relaxation");
+		}
 	}
 	else if (fixed_axes_in == "a")
 	{
@@ -837,7 +849,7 @@ void UnitCell_pseudo::setup(const std::string &latname_in,
 	}
 	else
 	{
-		ModuleBase::WARNING_QUIT("Input", "fixed_axes should be None,a,b,c,ab,ac,bc or abc!");
+		ModuleBase::WARNING_QUIT("Input", "fixed_axes should be None,volume,shape,a,b,c,ab,ac,bc or abc!");
 	}
 	return;
 }

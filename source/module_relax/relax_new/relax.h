@@ -19,11 +19,13 @@ class Relax
 
     private:
 
-    //setup information based on constraint
-    void setup_constraint();
+    int istep; //count ionic step
 
     //setup gradient based on force and stress
-    void setup_gradient(const ModuleBase::matrix& force, const ModuleBase::matrix &stress);
+    //constraints are considered here
+    //also check if relaxation has converged
+    //based on threshold in force & stress
+    bool setup_gradient(const ModuleBase::matrix& force, const ModuleBase::matrix &stress);
 
     //check whether previous line search is done
     bool check_line_search();
@@ -62,7 +64,6 @@ class Relax
 
     // Used for applyting constraints
     bool if_cell_moves;
-    ModuleBase::matrix iforceh; //3*3 matrix, indicates which cell degree of freedom can move
 
     //Keeps track of how many CG trial steps have been performed,
     //namely the number of CG directions followed
