@@ -130,7 +130,7 @@ void Input::Default(void)
     read_file_dir = "auto";
     // pseudo_type = "auto"; // mohan add 2013-05-20 (xiaohui add 2013-06-23)
     wannier_card = "";
-    latname = "test";
+    latname = "none";
     // xiaohui modify 2015-09-15, relax -> scf
     // calculation = "relax";
     calculation = "scf";
@@ -194,6 +194,7 @@ void Input::Default(void)
     press3 = 0.0;
     cal_stress = false;
     fixed_axes = "None"; // pengfei 2018-11-9
+    fixed_ibrav = false;
     relax_method = "cg"; // pengfei  2014-10-13
     relax_cg_thr = 0.5; // pengfei add 2013-08-15
     out_level = "ie";
@@ -801,6 +802,10 @@ bool Input::Read(const std::string &fn)
         else if (strcmp("fixed_axes", word) == 0)
         {
             read_value(ifs, fixed_axes);
+        }
+        else if (strcmp("fixed_ibrav", word) == 0)
+        {
+            read_value(ifs, fixed_ibrav);
         }
         else if (strcmp("relax_method", word) == 0)
         {
@@ -2176,6 +2181,7 @@ void Input::Bcast()
     Parallel_Common::bcast_double(press3);
     Parallel_Common::bcast_bool(cal_stress);
     Parallel_Common::bcast_string(fixed_axes);
+    Parallel_Common::bcast_bool(fixed_ibrav);
     Parallel_Common::bcast_string(relax_method);
     Parallel_Common::bcast_double(relax_cg_thr); // pengfei add 2013-08-15
     Parallel_Common::bcast_string(out_level);

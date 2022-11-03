@@ -458,6 +458,10 @@ void Relax::move_cell_ions(const bool is_new_dir)
             double omega_new = abs(GlobalC::ucell.latvec.Det()) * pow(GlobalC::ucell.lat0, 3);
             GlobalC::ucell.latvec *= pow(GlobalC::ucell.omega / omega_new, 1.0/3.0);
         }
+        if(INPUT.fixed_ibrav)
+        {
+            GlobalC::ucell.remake_cell();
+        }
     }
 
     // =================================================================
@@ -467,7 +471,6 @@ void Relax::move_cell_ions(const bool is_new_dir)
     // Calculating displacement in Cartesian coordinate (in Angstrom)
     double move_ion[nat * 3];
     ModuleBase::zeros(move_ion, nat*3);
-    double move_threshold = 1.0e-10;
 
     for(int iat=0; iat<nat; iat++)
     {

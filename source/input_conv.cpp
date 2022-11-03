@@ -50,6 +50,14 @@ void Input_Conv::Convert(void)
         GlobalV::global_orbital_dir = INPUT.orbital_dir + "/";
     // GlobalV::global_pseudo_type = INPUT.pseudo_type;
     GlobalC::ucell.setup(INPUT.latname, INPUT.ntype, INPUT.lmaxmax, INPUT.init_vel, INPUT.fixed_axes);
+    if(INPUT.fixed_ibrav && !INPUT.relax_new)
+    {
+        ModuleBase::WARNING_QUIT("Input_Conv","fixed_ibrav only available for relax_new = 1");
+    }
+    if(INPUT.latname=="none" && INPUT.fixed_ibrav)
+    {
+        ModuleBase::WARNING_QUIT("Input_Conv","to use fixed_ibrav, latname must be provided");
+    }
 
     GlobalV::KSPACING = INPUT.kspacing;
     GlobalV::MIN_DIST_COEF = INPUT.min_dist_coef;

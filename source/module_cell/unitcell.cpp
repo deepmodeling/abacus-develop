@@ -351,7 +351,6 @@ void UnitCell::update_pos_tau(const ModuleBase::Vector3<double>* posd_in)
 // and is only meaningful in the context of MD
 void UnitCell::update_pos_taud(double* posd_in)
 {
-
     int iat = 0;
     for (int it = 0; it < this->ntype; it++)
     {

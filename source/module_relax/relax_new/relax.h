@@ -1,3 +1,5 @@
+//Wenfei Li, November 2022
+//A new implementation of CG relaxation
 #ifndef RELAX1_H
 #define RELAX1_H
 

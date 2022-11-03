@@ -64,6 +64,10 @@ public: // member functions
 	void print_stru_file(const std::string &fn, const int &type=1, const int &level=0)const; // mohan add 2011-03-22
 	void check_dtau(void);
     void setup_cell_after_vc(std::ofstream &log); //LiuXh add 20180515
+	
+	//for constrained vc-relaxation where type of lattice
+	//is fixed, adjust the lattice vectors
+	void remake_cell();
 
 	bool set_atom_flag;//added on 2009-3-8 by mohan
 
