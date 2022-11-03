@@ -43,7 +43,7 @@ auto RI_2D_Comm::split_m2D_ktoR(const std::vector<Tmatrix> &mks_2D, const Parall
 				const Tdata_m frac = SPIN_multiple
 					* Global_Func::convert<Tdata_m>( std::exp(
 						- ModuleBase::TWO_PI*ModuleBase::IMAG_UNIT * (GlobalC::kv.kvec_c[ik] * (RI_Util::array3_to_Vector3(cell)*GlobalC::ucell.latvec))));
-				if(!mR_2D)
+				if(mR_2D.empty())
 					mR_2D = Global_Func::convert<Tdata>(mk_2D * frac);
 				else
 					mR_2D = mR_2D + Global_Func::convert<Tdata>(mk_2D * frac);
@@ -70,7 +70,7 @@ auto RI_2D_Comm::split_m2D_ktoR(const std::vector<Tmatrix> &mks_2D, const Parall
 
 					const int is_b = RI_2D_Comm::get_is_block(is_k, is0_b, is1_b);
 					Tensor<Tdata> &mR_a2D = mRs_a2D[is_b][iat0][{iat1,cell}];
-					if(!mR_a2D)
+					if(mR_a2D.empty())
 						mR_a2D = Tensor<Tdata>({static_cast<size_t>(GlobalC::ucell.atoms[it0].nw), static_cast<size_t>(GlobalC::ucell.atoms[it1].nw)});
 					mR_a2D(iw0_b,iw1_b) = mR_2D(iwt0_2D, iwt1_2D);
 				}

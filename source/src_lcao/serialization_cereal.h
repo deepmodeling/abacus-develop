@@ -60,7 +60,7 @@ namespace Read_Txt_Input
 
 
 
-#include "mpi.h"
+#include <mpi.h>
 #include <sstream>
 
 namespace ModuleBase

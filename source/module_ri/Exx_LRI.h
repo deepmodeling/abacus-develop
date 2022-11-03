@@ -6,9 +6,10 @@
 #ifndef EXX_LRI_H
 #define EXX_LRI_H
 
+#include "LRI_CV.h"
 #include "module_xc/exx_info.h"
 #include "module_orbital/ORB_atomic_lm.h"
-#include "LRI_CV.h"
+#include "module_base/matrix.h"
 #include <RI/physics/Exx.h>
 
 #include <vector>
@@ -36,9 +37,12 @@ public:
 	void init(const MPI_Comm &mpi_comm_in);
 	void cal_exx_ions();
 	void cal_exx_elec(const Local_Orbital_Charge &loc, const Parallel_Orbitals &pv);
+	void cal_exx_force();
 
 	std::vector< std::map<TA, std::map<TAC, Tensor<Tdata>>>> Hexxs;
 	Tdata Eexx;
+	ModuleBase::matrix Fexx;
+
 	void write_Hexxs(const std::string &file_name) const;
 	void read_Hexxs(const std::string &file_name);
 

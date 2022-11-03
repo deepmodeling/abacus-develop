@@ -40,18 +40,22 @@ public:
 		const double &kmesh_times,
 		const double &ccp_rmesh_times_in);
 
-	std::map<TA,std::map<TAC,Tensor<Tdata>>>
+	inline std::map<TA,std::map<TAC,Tensor<Tdata>>>
 	cal_Vs(
 		const std::vector<TA> &list_A0,
 		const std::vector<TAC> &list_A1,
-		const double threshold_V,
-		const bool flag_writable);
-	std::map<TA,std::map<TAC,Tensor<Tdata>>>
-	cal_Cs(
+		const std::map<std::string,bool> &flags);						// "writable_Vws"
+	inline std::array<std::map<TA,std::map<TAC,Tensor<Tdata>>>,3>
+	cal_dVs(
 		const std::vector<TA> &list_A0,
 		const std::vector<TAC> &list_A1,
-		const double threshold_C,
-		const bool flag_writable);			
+		const std::map<std::string,bool> &flags);						// "writable_dVws"
+	std::pair<std::map<TA,std::map<TAC,Tensor<Tdata>>>,
+	          std::array<std::map<TA,std::map<TAC,Tensor<Tdata>>>,3>>
+	cal_Cs_dCs(
+		const std::vector<TA> &list_A0,
+		const std::vector<TAC> &list_A1,
+		const std::map<std::string,bool> &flags);						// "cal_dC", "writable_Cws", "writable_dCws", "writable_Vws", "writable_dVws"
 
 private:
 	std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> lcaos;
@@ -63,43 +67,59 @@ private:
 
 	std::map<int,std::map<int,std::map<Abfs::Vector3_Order<double>,Tensor<Tdata>>>> Vws;
 	std::map<int,std::map<int,std::map<Abfs::Vector3_Order<double>,Tensor<Tdata>>>> Cws;
+	std::map<int,std::map<int,std::map<Abfs::Vector3_Order<double>,std::array<Tensor<Tdata>,3>>>> dVws;
+	std::map<int,std::map<int,std::map<Abfs::Vector3_Order<double>,std::array<Tensor<Tdata>,3>>>> dCws;
 	pthread_rwlock_t rwlock_Vw;
 	pthread_rwlock_t rwlock_Cw;
+	pthread_rwlock_t rwlock_dVw;
+	pthread_rwlock_t rwlock_dCw;
 
 	Matrix_Orbs11 m_abfs_abfs;
 	Matrix_Orbs21 m_abfslcaos_lcaos;
 
-	using T_func_DPcal_data = std::function<Tensor<Tdata>(
+	template<typename Tresult>
+	using T_func_DPcal_data = std::function<Tresult(
 		const int it0,
 		const int it1,
 		const Abfs::Vector3_Order<double> &R,
-		const bool flag_writable)>;
-	std::map<TA,std::map<TAC,Tensor<Tdata>>>
+		const std::map<std::string,bool> &flags)>;
+	template<typename Tresult>
+	std::map<TA,std::map<TAC,Tresult>>
 	cal_datas(
 		const std::vector<TA> &list_A0,
 		const std::vector<TAC> &list_A1,
-		const double threshold,
-		const bool flag_writable,
-		const T_func_DPcal_data &func_DPcal_data);
+		const std::map<std::string,bool> &flags,
+		const double &rmesh_times,
+		const T_func_DPcal_data<Tresult> &func_DPcal_data);
 
-	Tensor<Tdata>
+	inline Tensor<Tdata>
 	DPcal_V(
 		const int it0,
 		const int it1,
 		const Abfs::Vector3_Order<double> &R,
-		const bool flag_writable);	
-	Tensor<Tdata>
-	DPcal_C(
+		const std::map<std::string,bool> &flags);						// "writable_Vws"
+	inline std::array<Tensor<Tdata>,3>
+	DPcal_dV(
 		const int it0,
 		const int it1,
 		const Abfs::Vector3_Order<double> &R,
-		const bool flag_writable);	
+		const std::map<std::string,bool> &flags);						// "writable_dVws"
+	std::pair<Tensor<Tdata>, std::array<Tensor<Tdata>,3>>
+	DPcal_C_dC(
+		const int it0,
+		const int it1,
+		const Abfs::Vector3_Order<double> &R,
+		const std::map<std::string,bool> &flags);						// "cal_dC", "writable_Cws", "writable_dCws", "writable_Vws", "writable_dVws"
 
-	Tensor<Tdata>
-	cal_I( const Tensor<Tdata> &m );	
-	std::vector<std::vector<Tensor<Tdata>>>
-	cal_I( const std::vector<std::vector<Tensor<Tdata>>> &ms );	
-
+	template<typename To11, typename Tfunc>
+	To11 DPcal_o11(
+		const int it0,
+		const int it1,
+		const Abfs::Vector3_Order<double> &R,
+		const bool &flag_writable_o11ws,
+		pthread_rwlock_t &rwlock_o11,
+		std::map<int,std::map<int,std::map<Abfs::Vector3_Order<double>,To11>>> &o11ws,
+		const Tfunc &func_cal_o11);
 };
 
 #include "LRI_CV.hpp"
