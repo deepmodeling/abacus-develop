@@ -466,6 +466,7 @@ void Relax::move_cell_ions(const bool is_new_dir)
     
     // Calculating displacement in Cartesian coordinate (in Angstrom)
     double move_ion[nat * 3];
+    ModuleBase::zeros(move_ion, nat*3);
     double move_threshold = 1.0e-10;
 
     for(int iat=0; iat<nat; iat++)
@@ -481,9 +482,22 @@ void Relax::move_cell_ions(const bool is_new_dir)
         //note here the old GT is used
         ModuleBase::Vector3<double> move_ion_dr = move_ion_cart * GlobalC::ucell.GT;
 
-        move_ion[iat * 3] = move_ion_dr.x * fac;
-        move_ion[iat * 3 + 1] = move_ion_dr.y * fac;
-        move_ion[iat * 3 + 2] = move_ion_dr.z * fac;
+        int it = GlobalC::ucell.iat2it[iat];
+        int ia = GlobalC::ucell.iat2ia[iat];
+        Atom* atom = &GlobalC::ucell.atoms[it];
+
+        if(atom->mbl[ia].x == 1)
+        {
+            move_ion[iat * 3] = move_ion_dr.x * fac;
+        }
+        if(atom->mbl[ia].y == 1)
+        {
+            move_ion[iat * 3 + 1] = move_ion_dr.y * fac;
+        }
+        if(atom->mbl[ia].z == 1)
+        {
+            move_ion[iat * 3 + 2] = move_ion_dr.z * fac;
+        }
     }
 
 	GlobalC::ucell.update_pos_taud(move_ion);
@@ -545,14 +559,12 @@ void Relax::move_cell_ions(const bool is_new_dir)
     if (Lattice_Change_Basic::out_stru == 1)
     {
         ss << istep;
+        istep ++;
         GlobalC::ucell.print_cell_cif("STRU_NOW.cif");
     }
     ss << "_D";    
     GlobalC::ucell.print_stru_file(ss.str(), 2, 0);
-
     GlobalC::ucell.print_tau();
-
-    istep ++;
 
     // =================================================================
     // Step 6 : prepare something for next SCF
