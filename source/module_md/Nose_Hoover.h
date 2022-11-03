@@ -22,6 +22,9 @@ public:
     // perform half-step update of thermostats coupled with barostat
     void stress_integrate();
 
+    // perform half-step update of lattice
+    void omega_integrate();
+
     // determine target stress 
     void target_stress();
 
@@ -29,10 +32,10 @@ public:
     void couple_stress();
 
 
-    const static int nc_tchain = 1;
-    const static int nc_pchain = 1;
-    const static int nsy = 7;
-    double w[nsy];                // scale evolution operator
+    const int nc_tchain = 1;
+    const int nc_pchain = 1;
+    const static int nys = 7;
+    double w[nys];                // scale evolution operator
 
     // thermostats
     double t_target;              // target temperature

@@ -184,7 +184,7 @@ void Nose_Hoover::first_half()
     ModuleBase::TITLE("Nose_Hoover", "first_half");
     ModuleBase::timer::tick("Nose_Hoover", "first_half");
 
-    // update v_peta if NPT ensemble
+    // update thermostats coupled with barostat if NPT ensemble
     if(npt_flag && mdp.md_tchain)
     {
         stress_integrate();
@@ -193,8 +193,23 @@ void Nose_Hoover::first_half()
     // update target T
     t_target = MD_func::target_temp(step_ + step_rst_, mdp.md_tfirst, mdp.md_tlast);
 
-    // update v_eta
+    // update thermostats coupled with particles
     temp_integrate();
+
+    if(npt_flag)
+    {
+        // update temperature and stress due to velocity rescaling
+        t_current = MD_func::current_temp(kinetic, ucell.nat, frozen_freedom_, allmass, vel);
+        MD_func::compute_stress(ucell, vel, allmass, virial, stress);
+
+        // couple stress component due to md_pcouple
+        couple_stress();
+
+        // determine target stress 
+        target_stress();
+
+
+    }
 
 
 
@@ -311,31 +326,32 @@ void Nose_Hoover::restart()
 
 void Nose_Hoover::temp_integrate()
 {
-    double scale = 1.0;
-    double factor;
-    kinetic = MD_func::GetAtomKE(ucell.nat, vel, allmass);
-    double KE = kinetic;
+    t_current = MD_func::current_temp(kinetic, ucell.nat, frozen_freedom_, allmass, vel);
 
-    // update mass
+    // update mass_eta
     mass_eta[0] = (3*ucell.nat - frozen_freedom_) * t_target / mdp.md_tfreq / mdp.md_tfreq;
     for(int m=1; m<mdp.md_tchain; ++m)
     {
         mass_eta[m] = t_target / mdp.md_tfreq / mdp.md_tfreq;
     }
 
-    // update force
+    // propogate g_eta
     if(mass_eta[0] > 0) 
     {
-        g_eta[0] = (2*KE - (3*ucell.nat - frozen_freedom_)*t_target) / mass_eta[0];
+        g_eta[0] = (2*kinetic - (3*ucell.nat - frozen_freedom_)*t_target) / mass_eta[0];
     }
     else 
     {
         g_eta[0] = 0;
     }
 
+    // integrate loop
+    double factor;
+    double scale = 1.0;
+    double KE = kinetic;
     for(int i=0; i<nc_tchain; ++i)
     {
-        for(int j=0; j<nsy; ++j)
+        for(int j=0; j<nys; ++j)
         {
             double delta = w[j] * mdp.md_dt / nc_tchain;
 
@@ -348,15 +364,21 @@ void Nose_Hoover::temp_integrate()
                 v_eta[m] *= factor;
             }
 
-            // rescale temperature due to velocity scaling
+            // propogate eta
+            for(int m=0; m<mdp.md_tchain; ++m)
+            {
+                eta[m] += v_eta[m] * delta / 2.0;
+            }
+
+            // update rescale factor of particle velocity
             scale *= exp(-v_eta[0] * delta / 2.0);
             if(!isfinite(scale))
             {
-                ModuleBase::WARNING_QUIT("Nose_Hoover", " Please set a proper md_tfreq !!! ");
+                ModuleBase::WARNING_QUIT("Nose_Hoover", "Please set a proper md_tfreq!");
             }
             KE = kinetic * scale * scale;
 
-            // update force
+            // propogate g_eta
             if(mass_eta[0] > 0) 
             {
                 g_eta[0] = (2*KE - (3*ucell.nat - frozen_freedom_)*t_target) / mass_eta[0];
@@ -364,12 +386,6 @@ void Nose_Hoover::temp_integrate()
             else 
             {
                 g_eta[0] = 0;
-            }
-
-            // propogate eta
-            for(int m=0; m<mdp.md_tchain; ++m)
-            {
-                eta[m] += v_eta[m] * delta / 2.0;
             }
 
             // propogate v_eta
@@ -387,7 +403,8 @@ void Nose_Hoover::temp_integrate()
             }
         }
     }
-    
+
+    // rescale velocity due to thermostats
     for(int i=0; i<ucell.nat; ++i)
     {
         vel[i] *= scale;
@@ -396,29 +413,92 @@ void Nose_Hoover::temp_integrate()
 
 void Nose_Hoover::stress_integrate()
 {
-    double kecurrent = 0;
+    // the freedom of lattice
     int pdof = npt_flag;
 
+    // update kenetic energy of lattice
+    double ke_omega = 0;
     for(int i=0; i<6; ++i)
     {
         if(pflag[i])
         {
-            kecurrent += mass_omega[i] * v_omega[i] * v_omega[i];
+            ke_omega += mass_omega[i] * v_omega[i] * v_omega[i];
         }
     }
 
+    // update force
     double lkt_press = t_target;
     if(mdp.md_pmode != "iso")
     {
         lkt_press *= pdof;
     }
-    g_peta[0] = (kecurrent - lkt_press) / mass_peta[0];
+    g_peta[0] = (ke_omega - lkt_press) / mass_peta[0];
 
+    // integrate loop
+    double factor;
+    double scale = 1.0;
+    double kecurrent = ke_omega;
+    for(int i=0; i<nc_pchain; ++i)
+    {
+        for(int j=0; j<nys; ++j)
+        {
+            double delta = w[j] * mdp.md_dt / nc_pchain;
 
+            // propogate v_peta
+            for(int m=mdp.md_pchain-1; m>=0; --m)
+            {
+                factor = exp(-v_peta[m+1] * delta / 8.0);
+                v_peta[m] *= factor;
+                v_peta[m] += g_peta[m] * delta /4.0;
+                v_peta[m] *= factor;
+            }
 
+            // propogate peta
+            for(int m=0; m<mdp.md_pchain; ++m)
+            {
+                peta[m] += v_peta[m] * delta / 2.0;
+            }
+
+            // update rescale factor of lattice velocity
+            scale *= exp(-v_peta[0] * delta / 2.0);
+            kecurrent = ke_omega * scale * scale;
+
+            // propogate g_peta
+            g_peta[0] = (kecurrent - lkt_press) / mass_peta[0];
+
+            // propogate v_peta
+            v_peta[0] *= factor;
+            v_peta[0] += g_peta[0] * delta /4.0;
+            v_peta[0] *= factor;
+
+            for(int m=1; m<mdp.md_pchain; ++m)
+            {
+                factor = exp(-v_peta[m+1] * delta / 8.0);
+                v_peta[m] *= factor;
+                g_peta[m] = (mass_peta[m-1] * v_peta[m-1] * v_peta[m-1] - t_target) / mass_peta[m];
+                v_peta[m] += g_eta[m] * delta / 4.0;
+                v_peta[m] *= factor;
+            }
+        }
+    }
+
+    // rescale lattice due to thermostats
+    for(int i=0; i<6; ++i)
+    {
+        if(pflag[i])
+        {
+            v_omega[i] *= scale;
+        }
+    }
+}
+
+void Nose_Hoover::omega_integrate()
+{
+    double term_one = 0;
 
 
 }
+
 
 void Nose_Hoover::target_stress()
 {

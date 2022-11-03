@@ -63,8 +63,8 @@ void MSST::setup(ModuleESolver::ESolver *p_esolver)
             }
         }
 
-        MD_func::kinetic_stress(ucell, vel, allmass, kinetic, stress);
-        stress += virial;
+        MD_func::compute_stress(ucell, vel, allmass, virial, stress);
+        t_current = MD_func::current_temp(kinetic, ucell.nat, frozen_freedom_, allmass, vel);
     }
 
     ModuleBase::timer::tick("MSST", "setup");
@@ -146,8 +146,8 @@ void MSST::second_half()
     propagate_vel();
 
     vsum = vel_sum();
-    MD_func::kinetic_stress(ucell, vel, allmass, kinetic, stress);
-    stress += virial;
+    MD_func::compute_stress(ucell, vel, allmass, virial, stress);
+    t_current = MD_func::current_temp(kinetic, ucell.nat, frozen_freedom_, allmass, vel);
 
     // propagate the time derivative of volume 1/2 step
     propagate_voldot();

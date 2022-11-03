@@ -51,48 +51,29 @@ double MD_func::GetAtomKE(
 	return ke;
 }
 
-void MD_func::kinetic_stress(
+void MD_func::compute_stress(
 		const UnitCell_pseudo &unit_in,
 		const ModuleBase::Vector3<double> *vel, 
 		const double *allmass, 
-		double &kinetic,
+        const ModuleBase::matrix &virial,
 		ModuleBase::matrix &stress)
 {
-//---------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
 // DESCRIPTION:
-//   This function calculates the classical kinetic energy of atoms
-//   and its contribution to stress.
-//----------------------------------------------------------------------------
-    kinetic = MD_func::GetAtomKE(unit_in.nat, vel, allmass);
+//   This function calculates the contribution of classical kinetic energy of atoms to stress.
+//--------------------------------------------------------------------------------------------
 
     if(GlobalV::CAL_STRESS)
     {
-        ModuleBase::matrix temp;
-        temp.create(3,3);    // initialize
+        ModuleBase::matrix t_vector;
 
-        for(int ion=0; ion<unit_in.nat; ++ion)
-        {
-            for(int i=0; i<3; ++i)
-            {
-                for(int j=i; j<3; ++j)
-                {
-                    temp(i, j) += allmass[ion] * vel[ion][i] * vel[ion][j];
-                }
-            }
-        }
+        temp_vector(unit_in.nat, vel, allmass, t_vector);
 
         for(int i=0; i<3; ++i)
         {
             for(int j=0; j<3; ++j)
             {
-                if(j<i) 
-                {
-                    stress(i, j) = stress(j, i);
-                }
-                else
-                {
-                    stress(i, j) = temp(i, j)/unit_in.omega;
-                }
+                stress(i, j) = virial(i, j) + t_vector(i, j) / unit_in.omega;
             }
         }
     }
@@ -227,7 +208,7 @@ void MD_func::force_virial(
 		UnitCell_pseudo &unit_in,
 		double &potential,
 		ModuleBase::Vector3<double> *force,
-		ModuleBase::matrix &stress)
+		ModuleBase::matrix &virial)
 {
 	ModuleBase::TITLE("MD_func", "force_stress");
     ModuleBase::timer::tick("MD_func", "force_stress");
@@ -241,14 +222,14 @@ void MD_func::force_virial(
 
     if(GlobalV::CAL_STRESS)
     {
-        p_esolver->cal_Stress(stress);
+        p_esolver->cal_Stress(virial);
     }
 
     if(mdp.md_ensolver == "FP")
     {
         potential *= 0.5;
         force_temp *= 0.5;
-        stress *= 0.5;
+        virial *= 0.5;
     }
 
     for(int i=0; i<unit_in.nat; ++i)
@@ -384,12 +365,32 @@ double MD_func::target_temp(const int &istep, const double &tfirst, const double
     return tfirst + delta * (tlast - tfirst);
 }
 
-double MD_func::current_temp(const int &natom, 
+double MD_func::current_temp(double &kinetic,
+            const int &natom, 
             const int &frozen_freedom, 
             const double *allmass,
             const ModuleBase::Vector3<double> *vel)
 {
-    double ke = GetAtomKE(natom, vel, allmass);
+    kinetic = GetAtomKE(natom, vel, allmass);
 
-    return 2 * ke / (3 * natom - frozen_freedom) * ModuleBase::Hartree_to_K;
+    return 2 * kinetic / (3 * natom - frozen_freedom) * ModuleBase::Hartree_to_K;
+}
+
+void MD_func::temp_vector(const int &natom, 
+            const ModuleBase::Vector3<double> *vel, 
+            const double *allmass, 
+            ModuleBase::matrix &t_vector)
+{
+    t_vector.create(3, 3);
+
+    for(int ion=0; ion<natom; ++ion)
+    {
+        for(int i=0; i<3; ++i)
+        {
+            for(int j=0; j<3; ++j)
+            {
+                t_vector(i, j) += allmass[ion] * vel[ion][i] * vel[ion][j];
+            }
+        }
+    }
 }

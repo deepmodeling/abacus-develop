@@ -106,9 +106,8 @@ void Run_MD_LCAO::opt_ions(ModuleESolver::ESolver* p_esolver)
 
             mdrun->second_half();
 
-            MD_func::kinetic_stress(mdrun->ucell, mdrun->vel, mdrun->allmass, mdrun->kinetic, mdrun->stress);
-
-            mdrun->stress += mdrun->virial;
+            MD_func::compute_stress(mdrun->ucell, mdrun->vel, mdrun->allmass, mdrun->virial, mdrun->stress);
+            mdrun->t_current = MD_func::current_temp(mdrun->kinetic, mdrun->ucell.nat, mdrun->frozen_freedom_, mdrun->allmass, mdrun->vel);
         }
 
         if ((mdrun->step_ + mdrun->step_rst_) % mdrun->mdp.md_dumpfreq == 0)
