@@ -234,6 +234,7 @@ void Force_Stress_LCAO::getForceStress(
 		}
 	}
 	//Force contribution from exx
+#ifdef __EXX
 	ModuleBase::matrix fexx;
 	switch (GlobalC::exx_info.info_global.hybrid_type)
 	{
@@ -253,6 +254,7 @@ void Force_Stress_LCAO::getForceStress(
 			}
 			break;
 	}
+#endif
 	//--------------------------------
 	//begin calculate and output force
 	//--------------------------------
@@ -281,6 +283,7 @@ void Force_Stress_LCAO::getForceStress(
 				{
 					fcs(iat, i) += force_dftu(iat, i);
 				}
+#ifdef __EXX
 				// Force contribution from exx
 				switch (GlobalC::exx_info.info_global.hybrid_type)
 				{
@@ -291,6 +294,7 @@ void Force_Stress_LCAO::getForceStress(
 						fcs(iat,i) += fexx(iat,i);
 						break;
 				}
+#endif
 				//VDW force of vdwd2 or vdwd3
 				if(GlobalC::vdwd2_para.flag_vdwd2||GlobalC::vdwd3_para.flag_vdwd3)
 				{
