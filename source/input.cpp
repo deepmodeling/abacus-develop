@@ -195,6 +195,7 @@ void Input::Default(void)
     cal_stress = false;
     fixed_axes = "None"; // pengfei 2018-11-9
     fixed_ibrav = false;
+    fixed_atoms = false;
     relax_method = "cg"; // pengfei  2014-10-13
     relax_cg_thr = 0.5; // pengfei add 2013-08-15
     out_level = "ie";
@@ -806,6 +807,10 @@ bool Input::Read(const std::string &fn)
         else if (strcmp("fixed_ibrav", word) == 0)
         {
             read_value(ifs, fixed_ibrav);
+        }
+        else if (strcmp("fixed_atoms", word) == 0)
+        {
+            read_value(ifs, fixed_atoms);
         }
         else if (strcmp("relax_method", word) == 0)
         {
@@ -2182,6 +2187,7 @@ void Input::Bcast()
     Parallel_Common::bcast_bool(cal_stress);
     Parallel_Common::bcast_string(fixed_axes);
     Parallel_Common::bcast_bool(fixed_ibrav);
+    Parallel_Common::bcast_bool(fixed_atoms);
     Parallel_Common::bcast_string(relax_method);
     Parallel_Common::bcast_double(relax_cg_thr); // pengfei add 2013-08-15
     Parallel_Common::bcast_string(out_level);

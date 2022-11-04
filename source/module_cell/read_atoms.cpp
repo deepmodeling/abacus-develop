@@ -854,7 +854,15 @@ bool UnitCell_pseudo::read_atom_positions(std::ifstream &ifpos, std::ofstream &o
 
 					}
 					
-					atoms[it].mbl[ia] = mv;
+					if(!INPUT.fixed_atoms)
+					{
+						atoms[it].mbl[ia] = mv;
+					}
+					else
+					{
+						atoms[it].mbl[ia] = 0.0;
+						atoms[it].mbl[ia].print();
+					}
 					atoms[it].tau_original[ia] = atoms[it].tau[ia];
 				}//endj
 			}// end na

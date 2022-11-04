@@ -121,6 +121,7 @@ class Input
 
     std::string fixed_axes; // which axes are fixed
     bool fixed_ibrav; //whether to keep type of lattice; must be used along with latname
+    bool fixed_atoms; //whether to fix atoms during vc-relax
     std::string relax_method; // methods to move_ion: sd, bfgs, cg...
 
     //For now, this is only relevant if we choose to use

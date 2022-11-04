@@ -58,6 +58,10 @@ void Input_Conv::Convert(void)
     {
         ModuleBase::WARNING_QUIT("Input_Conv","to use fixed_ibrav, latname must be provided");
     }
+    if(INPUT.calculation == "relax" && INPUT.fixed_atoms)
+    {
+        ModuleBase::WARNING_QUIT("Input_Conv","fixed_atoms is not meant to be used for calculation = relax");
+    }
 
     GlobalV::KSPACING = INPUT.kspacing;
     GlobalV::MIN_DIST_COEF = INPUT.min_dist_coef;

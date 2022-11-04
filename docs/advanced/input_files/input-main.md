@@ -745,6 +745,12 @@ This part of variables are used to control the geometry relaxation.
 
 - **Default**: False
 
+### fixed_atoms
+
+- **Type**: Boolean
+- **Description**: when set to true, the direct coordinates of atoms will be preserved during variable-cell relaxation. If set to false, users can still fix certain components of certain atoms by using the `m` keyword in `STRU` file. For the latter option, check the end of this [instruction](stru.md).
+- **Default**: False
+
 ### relax_method
 
 - **Type**: String
