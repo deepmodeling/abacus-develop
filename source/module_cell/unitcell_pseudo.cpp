@@ -804,6 +804,9 @@ void UnitCell_pseudo::setup(const std::string &latname_in,
 		{
 			ModuleBase::WARNING_QUIT("Input","set relax_new to be 1 for fixed_shape relaxation");
 		}
+		this->lc[0] = 1;
+		this->lc[1] = 1;
+		this->lc[2] = 1;
 	}
 	else if (fixed_axes_in == "a")
 	{
