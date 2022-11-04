@@ -4,7 +4,6 @@
 #endif
 #include "../module_base/timer.h"
 #include "../module_base/constants.h"
-#include "input.h"
 
 #ifndef __CELL
 #include "../src_pw/global.h"
@@ -855,7 +854,7 @@ bool UnitCell_pseudo::read_atom_positions(std::ifstream &ifpos, std::ofstream &o
 
 					}
 					
-					if(!INPUT.fixed_atoms)
+					if(!GlobalV::fixed_atoms)
 					{
 						atoms[it].mbl[ia] = mv;
 					}

@@ -62,6 +62,7 @@ void Input_Conv::Convert(void)
     {
         ModuleBase::WARNING_QUIT("Input_Conv","fixed_atoms is not meant to be used for calculation = relax");
     }
+    GlobalV::fixed_atoms = INPUT.fixed_atoms;
 
     GlobalV::KSPACING = INPUT.kspacing;
     GlobalV::MIN_DIST_COEF = INPUT.min_dist_coef;
