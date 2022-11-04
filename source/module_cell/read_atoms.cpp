@@ -4,6 +4,7 @@
 #endif
 #include "../module_base/timer.h"
 #include "../module_base/constants.h"
+#include "input.h"
 
 #ifndef __CELL
 #include "../src_pw/global.h"
