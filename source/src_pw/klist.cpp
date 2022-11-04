@@ -6,7 +6,6 @@
 #include "../src_parallel/parallel_common.h"
 #include "../module_base/memory.h"
 #include "src_io/berryphase.h"
-#include <iostream>
 
 K_Vectors::K_Vectors()
 {	
@@ -617,8 +616,6 @@ void K_Vectors::ibz_kpoint(const ModuleSymmetry::Symmetry &symm, bool use_symm,s
 //	}
     // output in kpoints file
     std::stringstream ss;
-	//ss << GlobalV::global_readin_dir << "kpoints" ;
-	//std::ofstream ofkpt( ss.str().c_str()); // clear kpoints
     ss << " " << std::setw(40) <<"nkstot" << " = " << nkstot
         << std::setw(66) << "ibzkpt" << std::endl;
     ss << " " << std::setw(8) << "KPT"
