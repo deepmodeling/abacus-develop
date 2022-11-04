@@ -47,7 +47,7 @@ void ESolver_KS_LCAO_TDDFT::Init(Input& inp, UnitCell_pseudo& ucell)
 
     // Inititlize the charge density.
     GlobalC::CHR.allocate(GlobalV::NSPIN, GlobalC::rhopw->nrxx, GlobalC::rhopw->npw);
-    //GlobalC::CHR.allocate(GlobalV::NSPIN, GlobalC::rhopw->nrxx, GlobalC::rhopw->npw);
+    // GlobalC::CHR.allocate(GlobalV::NSPIN, GlobalC::rhopw->nrxx, GlobalC::rhopw->npw);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT CHARGE");
     // Initializee the potential.
     GlobalC::pot.allocate(GlobalC::rhopw->nrxx);
@@ -123,7 +123,6 @@ void ESolver_KS_LCAO_TDDFT::Init(Input& inp, UnitCell_pseudo& ucell)
                                                             &(this->UHM),
                                                             &(this->LOWF));
     }
-
 }
 
 void ESolver_KS_LCAO_TDDFT::eachiterinit(const int istep, const int iter)
@@ -180,7 +179,7 @@ void ESolver_KS_LCAO_TDDFT::eachiterinit(const int istep, const int iter)
                 for (int ib = 0; ib < this->pelec_td->ekb.nc; ++ib)
                 {
                     this->pelec_td->ekb(ik, ib) = GlobalC::wf.ekb[ik][ib];
-                    this->pelec_td->wg(ik, ib) = GlobalC::wf.wg(ik, ib);
+                    GlobalC::wf.wg(ik, ib) = this->pelec_td->wg(ik, ib);
                 }
             }
             if (this->psi != nullptr)
@@ -233,9 +232,9 @@ void ESolver_KS_LCAO_TDDFT::eachiterinit(const int istep, const int iter)
         }
     }
 
-    if(!GlobalV::GAMMA_ONLY_LOCAL)
+    if (!GlobalV::GAMMA_ONLY_LOCAL)
     {
-        if(this->UHM.GK.get_spin() != -1)
+        if (this->UHM.GK.get_spin() != -1)
         {
             int start_spin = -1;
             this->UHM.GK.reset_spin(start_spin);
@@ -279,17 +278,21 @@ void ESolver_KS_LCAO_TDDFT::hamilt2density(int istep, int iter, double ethr)
         ModuleBase::WARNING_QUIT("ESolver_KS_LCAO", "HSolver has not been initialed!");
     }
 
-    if (iter == 1)
+    if (iter == 1 && istep <= 2)
     {
         GlobalV::ofs_running
             << "------------------------------------------------------------------------------------------------"
             << endl;
-        GlobalV::ofs_running << "occupation : ";
+        GlobalV::ofs_running << "occupation : " << endl;
+        GlobalV::ofs_running << "ik  iband     occ " << endl;
+        GlobalV::ofs_running << std::setprecision(6);
+        GlobalV::ofs_running << std::setiosflags(ios::showpoint);
         for (int ik = 0; ik < GlobalC::kv.nks; ik++)
         {
             for (int ib = 0; ib < GlobalV::NBANDS; ib++)
             {
-                GlobalV::ofs_running << this->pelec_td->wg(ik, ib) << " ";
+                std::setprecision(6);
+                GlobalV::ofs_running << ik + 1 << "     " << ib + 1 << "      " << this->pelec_td->wg(ik, ib) << endl;
             }
         }
         GlobalV::ofs_running << endl;
@@ -374,7 +377,7 @@ void ESolver_KS_LCAO_TDDFT::updatepot(const int istep, const int iter)
     }
 
     // store wfc
-    if (istep >= 1 && this->conv_elec )
+    if (istep >= 1 && this->conv_elec)
     {
         if (this->psi_laststep == nullptr)
 #ifdef __MPI
@@ -393,17 +396,35 @@ void ESolver_KS_LCAO_TDDFT::updatepot(const int istep, const int iter)
             this->cal_edm_tddft();
     }
 
+    for (int ik = 0; ik < this->pelec_td->ekb.nr; ++ik)
+    {
+        for (int ib = 0; ib < this->pelec_td->ekb.nc; ++ib)
+        {
+            GlobalC::wf.wg(ik, ib) = this->pelec_td->wg(ik, ib);
+        }
+    }
     if (this->conv_elec)
     {
+        for (int ik = 0; ik < this->pelec_td->ekb.nr; ++ik)
+        {
+            for (int ib = 0; ib < this->pelec_td->ekb.nc; ++ib)
+            {
+                this->pelec_td->ekb(ik, ib) = GlobalC::wf.ekb[ik][ib];
+            }
+        }
         GlobalV::ofs_running
             << "------------------------------------------------------------------------------------------------"
             << endl;
-        GlobalV::ofs_running << "Eii : ";
+        GlobalV::ofs_running << "Eii : " << endl;
+        GlobalV::ofs_running << "ik  iband    Eii (eV)" << endl;
+        GlobalV::ofs_running << std::setprecision(6);
+        GlobalV::ofs_running << std::setiosflags(ios::showpoint);
         for (int ik = 0; ik < GlobalC::kv.nks; ik++)
         {
             for (int ib = 0; ib < GlobalV::NBANDS; ib++)
             {
-                GlobalV::ofs_running << this->pelec_td->ekb(ik, ib) << " ";
+                GlobalV::ofs_running << ik + 1 << "     " << ib + 1 << "      "
+                                     << this->pelec_td->ekb(ik, ib) * ModuleBase::Ry_to_eV << endl;
             }
         }
         GlobalV::ofs_running << endl;
@@ -415,14 +436,6 @@ void ESolver_KS_LCAO_TDDFT::updatepot(const int istep, const int iter)
 
 void ESolver_KS_LCAO_TDDFT::afterscf(const int istep)
 {
-    for (int ik = 0; ik < this->pelec_td->ekb.nr; ++ik)
-    {
-        for (int ib = 0; ib < this->pelec_td->ekb.nc; ++ib)
-        {
-            GlobalC::wf.ekb[ik][ib] = this->pelec_td->ekb(ik, ib);
-            GlobalC::wf.wg(ik, ib) = this->pelec_td->wg(ik, ib);
-        }
-    }
     // if (this->conv_elec || iter == GlobalV::SCF_NMAX)
     // {
     //--------------------------------------
@@ -507,7 +520,7 @@ void ESolver_KS_LCAO_TDDFT::afterscf(const int istep)
     }
 
     // add by jingan for out r_R matrix 2019.8.14
-    if(INPUT.out_mat_r)
+    if (INPUT.out_mat_r)
     {
         cal_r_overlap_R r_matrix;
         r_matrix.init(*this->LOWF.ParaV);

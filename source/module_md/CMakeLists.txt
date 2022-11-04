@@ -6,7 +6,7 @@ add_library(
 	mdrun.cpp
 	verlet.cpp
     MSST.cpp
-    NVT_NHC.cpp
+    Nose_Hoover.cpp
     FIRE.cpp
     Langevin.cpp
 )

@@ -600,11 +600,30 @@ void K_Vectors::ibz_kpoint(const ModuleSymmetry::Symmetry &symm, bool use_symm)
 //	{
 //		out.printM3("rot matrix",kgmatrix[i]);
 //	}
-	
+    // output in kpoints file
+    std::stringstream ss;
+	ss << GlobalV::global_readin_dir << "kpoints" ;
+	std::ofstream ofkpt( ss.str().c_str()); // clear kpoints
+    ofkpt<< " " << std::setw(40) <<"nkstot" << " = " << nkstot
+        << std::setw(66) << "ibzkpt" << std::endl;
+    ofkpt << " " << std::setw(8) << "KPT"
+        << std::setw(20) << "DirectX"
+	    << std::setw(20) << "DirectY"
+        << std::setw(20) << "DirectZ"
+         << std::setw(8) << "IBZ"
+        << std::setw(20) << "DirectX"
+	    << std::setw(20) << "DirectY"
+        << std::setw(20) << "DirectZ" << std::endl;
 	
 	// search in all k-poins.
     for (int i = 0; i < nkstot; ++i)
     {
+        // output in kpoints file
+        ofkpt << " "
+            << std::setw(8) << i+1
+            << std::setw(20) << this->kvec_d[i].x
+            << std::setw(20) << this->kvec_d[i].y
+            << std::setw(20) << this->kvec_d[i].z;
 		//std::cout << "\n kpoint = " << i << std::endl;
 		//std::cout << "\n kvec_d = " << kvec_d[i].x << " " << kvec_d[i].y << " " << kvec_d[i].z;
         bool already_exist = false;
@@ -637,10 +656,15 @@ void K_Vectors::ibz_kpoint(const ModuleSymmetry::Symmetry &symm, bool use_symm)
                             symm.equal(kvec_rot.z, this->kvec_d_ibz[k].z))
                     {
                         already_exist = true;
-
 						// find another ibz k point,
 						// but is already in the ibz_kpoint list.
-						// so the weight need to +1; 
+						// so the weight need to +1;
+                        // output in kpoints file
+                        ofkpt << std::setw(8) << k+1
+                            << std::setw(20) << this->kvec_d_ibz[k].x
+                            << std::setw(20) << this->kvec_d_ibz[k].y
+                            << std::setw(20) << this->kvec_d_ibz[k].z << std::endl;
+
                         this->wk_ibz[k] += weight;
 						exist_number = k;
                         break;
@@ -654,6 +678,11 @@ void K_Vectors::ibz_kpoint(const ModuleSymmetry::Symmetry &symm, bool use_symm)
 			//if it's a new ibz kpoint.
 			//nkstot_ibz indicate the index of ibz kpoint.
             this->kvec_d_ibz[nkstot_ibz] = kvec_rot;
+            // output in kpoints file
+            ofkpt << std::setw(8) << nkstot_ibz+1
+                << std::setw(20) << this->kvec_d_ibz[nkstot_ibz].x
+                << std::setw(20) << this->kvec_d_ibz[nkstot_ibz].y
+                << std::setw(20) << this->kvec_d_ibz[nkstot_ibz].z << std::endl;
 
 			//the weight should be averged k-point weight.
             this->wk_ibz[nkstot_ibz] = weight;
@@ -692,6 +721,9 @@ void K_Vectors::ibz_kpoint(const ModuleSymmetry::Symmetry &symm, bool use_symm)
 		}
 //		BLOCK_HERE("check k point");
     }
+
+    ofkpt.close();
+
 	ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"nkstot_ibz",nkstot_ibz);
 
 	GlobalV::ofs_running << " " << std::setw(8) << "IBZ" << std::setw(20) << "DirectX"
@@ -793,6 +825,27 @@ void K_Vectors::set_both_kvec(const ModuleBase::Matrix3 &G, const ModuleBase::Ma
              << std::setw(20) << this->kvec_d[i].y
              << std::setw(20) << this->kvec_d[i].z
              << std::setw(20) << this->wk[i] << std::endl;
+	}
+
+	if(GlobalV::MY_RANK==0)
+	{
+        std::stringstream ss;
+	    ss << GlobalV::global_readin_dir << "kpoints" ;
+		std::ofstream ofkpt( ss.str().c_str(), ios::app ); // clear kpoints
+        ofkpt << " " << std::setw(40) <<"nkstot now" << " = " << nkstot << std::endl;
+        ofkpt << " " << std::setw(8) << "KPT" << std::setw(20) << "DirectX"
+	        << std::setw(20) << "DirectY" << std::setw(20) << "DirectZ"
+	        << std::setw(20) << "Weight" << std::endl;
+        for (int ik=0; ik<nkstot; ik++)
+        {
+            ofkpt << " " << std::setw(8) << ik+1
+                << std::setw(20) << this->kvec_d[ik].x
+                << std::setw(20) << this->kvec_d[ik].y
+                << std::setw(20) << this->kvec_d[ik].z
+                << std::setw(20) << this->wk[ik] << std::endl;
+              //  << std::setw(10) << this->ibz2bz[ik] << std::endl;
+        }
+		ofkpt.close();
 	}
 
     return;

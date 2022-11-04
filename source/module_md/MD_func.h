@@ -43,18 +43,18 @@ class MD_func
 		UnitCell_pseudo &unit_in,
 		double &potential,
 		ModuleBase::Vector3<double> *force,
-		ModuleBase::matrix &stress);
+		ModuleBase::matrix &virial);
 
 	static double GetAtomKE(
 		const int &numIon,
 		const ModuleBase::Vector3<double> *vel, 
 		const double *allmass);
 
-	static void kinetic_stress(
+	static void compute_stress(
 		const UnitCell_pseudo &unit_in,
 		const ModuleBase::Vector3<double> *vel, 
 		const double *allmass, 
-		double &kinetic,
+        const ModuleBase::matrix &virial,
 		ModuleBase::matrix &stress);
 
 	static void outStress(const ModuleBase::matrix &virial, const ModuleBase::matrix &stress);
@@ -72,9 +72,15 @@ class MD_func
 
     static double target_temp(const int &istep, const double &tfirst, const double &tlast);
 
-    static double current_temp(const int &natom, 
+    static double current_temp(double &kinetic,
+            const int &natom, 
             const int &frozen_freedom, 
             const double *allmass,
             const ModuleBase::Vector3<double> *vel);
+
+    static void temp_vector(const int &natom, 
+            const ModuleBase::Vector3<double> *vel, 
+            const double *allmass, 
+            ModuleBase::matrix &t_vector);
 };
 #endif

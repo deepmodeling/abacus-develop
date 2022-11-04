@@ -3,7 +3,7 @@
 #include "verlet.h"
 #include "MSST.h"
 #include "FIRE.h"
-#include "NVT_NHC.h"
+#include "Nose_Hoover.h"
 #include "Langevin.h"
 #include "../input.h"
 #include "../src_io/print_info.h"
@@ -30,7 +30,7 @@ void Run_MD_CLASSIC::classic_md_line(UnitCell_pseudo &unit_in, ModuleESolver::ES
     }
     else if(INPUT.mdp.md_type == 1)
     {
-        mdrun = new NVT_NHC(INPUT.mdp, unit_in);
+        mdrun = new Nose_Hoover(INPUT.mdp, unit_in);
     }
     else if(INPUT.mdp.md_type == 2)
     {
@@ -58,9 +58,8 @@ void Run_MD_CLASSIC::classic_md_line(UnitCell_pseudo &unit_in, ModuleESolver::ES
 
             mdrun->second_half();
 
-            MD_func::kinetic_stress(mdrun->ucell, mdrun->vel, mdrun->allmass, mdrun->kinetic, mdrun->stress);
-
-            mdrun->stress +=  mdrun->virial;
+            MD_func::compute_stress(mdrun->ucell, mdrun->vel, mdrun->allmass, mdrun->virial, mdrun->stress);
+            mdrun->t_current = MD_func::current_temp(mdrun->kinetic, mdrun->ucell.nat, mdrun->frozen_freedom_, mdrun->allmass, mdrun->vel);
         }
 
         if((mdrun->step_ + mdrun->step_rst_) % mdrun->mdp.md_dumpfreq == 0)

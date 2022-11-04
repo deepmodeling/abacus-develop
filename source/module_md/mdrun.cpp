@@ -58,10 +58,8 @@ void MDrun::setup(ModuleESolver::ESolver *p_esolver)
     Print_Info::print_screen(0, 0, step_ + step_rst_);
 
     MD_func::force_virial(p_esolver, step_, mdp, ucell, potential, force, virial);
-    MD_func::kinetic_stress(ucell, vel, allmass, kinetic, stress);
-    stress += virial;
-
-    temperature_ = 2*kinetic/(double(3*ucell.nat-frozen_freedom_))*ModuleBase::Hartree_to_K;
+    MD_func::compute_stress(ucell, vel, allmass, virial, stress);
+    t_current = MD_func::current_temp(kinetic, ucell.nat, frozen_freedom_, allmass, vel);
 }
 
 void MDrun::first_half()
@@ -106,7 +104,7 @@ void MDrun::outputMD(std::ofstream &ofs, bool cal_stress)
 {
     if(GlobalV::MY_RANK) return;
 
-    temperature_ = 2*kinetic/(double(3*ucell.nat-frozen_freedom_))*ModuleBase::Hartree_to_K;
+    t_current = MD_func::current_temp(kinetic, ucell.nat, frozen_freedom_, allmass, vel);
 
     const double unit_transform = ModuleBase::HARTREE_SI / pow(ModuleBase::BOHR_RADIUS_SI,3) * 1.0e-8;
     double press = 0.0;
@@ -128,7 +126,7 @@ void MDrun::outputMD(std::ofstream &ofs, bool cal_stress)
     std::cout << " " << std::left << std::setw(20) << potential+kinetic
             << std::left << std::setw(20) << potential
             << std::left << std::setw(20) << kinetic
-            << std::left << std::setw(20) << temperature_;
+            << std::left << std::setw(20) << t_current;
     if(cal_stress)
     {
         std::cout << std::left << std::setw(20) << press*unit_transform;
@@ -152,7 +150,7 @@ void MDrun::outputMD(std::ofstream &ofs, bool cal_stress)
     ofs << " " << std::left << std::setw(20) << potential+kinetic
         << std::left << std::setw(20) << potential
         << std::left << std::setw(20) << kinetic
-        << std::left << std::setw(20) << temperature_;
+        << std::left << std::setw(20) << t_current;
     if(cal_stress)
     {
         ofs << std::left << std::setw(20) << press*unit_transform;

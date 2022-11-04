@@ -76,7 +76,7 @@ AddTest(
   LIBS ${math_libs} psi
   SOURCES NVT_NHC_test.cpp
   ../mdrun.cpp
-  ../NVT_NHC.cpp
+  ../Nose_Hoover.cpp
   ${depend_files}
 )
 
