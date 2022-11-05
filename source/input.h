@@ -37,7 +37,7 @@ class Input
     std::string calculation; // "scf" : self consistent calculation.
                              // "nscf" : non-self consistent calculation.
                              // "relax" : cell relaxations
-    std::string esolver_type;    // the energy solver: KSDFT, SDFT, OFDFT, TDDFT, LJ, DP
+    std::string esolver_type;    // the energy solver: ksdft, sdft, ofdft, tddft, lj, dp
     double pseudo_rcut; // cut-off radius for calculating msh
     bool pseudo_mesh; // 0: use msh to normalize radial wave functions;  1: use mesh, which is used in QE.
     int ntype; // number of atom types

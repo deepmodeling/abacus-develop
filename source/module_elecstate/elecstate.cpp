@@ -202,7 +202,7 @@ void ElecState::calEBand()
             this->eband += this->ekb(ik, ibnd) * this->wg(ik, ibnd);
         }
     }
-    if (GlobalV::KPAR != 1 && GlobalV::ESOLVER_TYPE != "SDFT")
+    if (GlobalV::KPAR != 1 && GlobalV::ESOLVER_TYPE != "sdft")
     {
         //==================================
         // Reduce all the Energy in each cpu

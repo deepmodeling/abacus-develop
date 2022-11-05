@@ -32,7 +32,7 @@ void Evolve_LCAO_Matrix::evolve_complex_matrix(const int& ik,
     time_t time_start = time(NULL);
     GlobalV::ofs_running << " Start Time : " << ctime(&time_start);
 
-    if (GlobalV::ESOLVER_TYPE == "TDDFT")
+    if (GlobalV::ESOLVER_TYPE == "tddft")
     {
 #ifdef __MPI
         this->using_ScaLAPACK_complex(ik,
@@ -50,7 +50,7 @@ void Evolve_LCAO_Matrix::evolve_complex_matrix(const int& ik,
     }
     else
     {
-        ModuleBase::WARNING_QUIT("Evolve_LCAO_Matrix::evolve_complex_matrix", "only esolver_type == TDDFT cando evolve");
+        ModuleBase::WARNING_QUIT("Evolve_LCAO_Matrix::evolve_complex_matrix", "only esolver_type == tddft cando evolve");
     }
 
     time_t time_end = time(NULL);

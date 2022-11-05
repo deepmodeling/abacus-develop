@@ -149,7 +149,10 @@ void wavefunc::wfcinit(psi::Psi<std::complex<double>>* psi_in)
 		// in nscf, occupations is not needed,
 		if(GlobalV::CALCULATION=="scf" || GlobalV::CALCULATION=="md" || GlobalV::CALCULATION=="relax") //pengfei 2014-10-13
 		{
-    		Occupy::calculate_weights();
+            if(GlobalV::ESOLVER_TYPE != "sdft")
+            {
+                Occupy::calculate_weights();
+            }
 		}
 	}
     if (GlobalV::test_wf>2)

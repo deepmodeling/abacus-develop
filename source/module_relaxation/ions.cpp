@@ -130,7 +130,7 @@ void Ions::force_stress(ModuleESolver::ESolver *p_esolver, double &energy, Modul
     }
 
     // LJ and DP output Hartree units instead of Rydberg
-    if(GlobalV::ESOLVER_TYPE == "LJ" || GlobalV::ESOLVER_TYPE == "DP")
+    if(GlobalV::ESOLVER_TYPE == "lj" || GlobalV::ESOLVER_TYPE == "dp")
     {
         energy *= 2;
         force *= 2;

@@ -109,13 +109,13 @@ This part of variables are used to control general system parameters.
 
 - **Type**: String
 - **Description**: choose the energy solver.
-  - KSDFT: Kokn-Sham density functional theory;
-  - OFDFT: orbital-free density functional theory;
-  - SDFT: [stochastic density functional theory](#electronic-structure-sdft);
-  - TDDFT: real time time dependent density functional theory (TDDFT);
-  - LJ: Leonard Jones potential;
-  - DP: DeeP potential;
-- **Default**: FP
+  - ksdft: Kokn-Sham density functional theory;
+  - ofdft: orbital-free density functional theory;
+  - sdft: [stochastic density functional theory](#electronic-structure-sdft);
+  - tddft: real time time dependent density functional theory (TDDFT);
+  - lj: Leonard Jones potential;
+  - dp: DeeP potential;
+- **Default**: ksdft
 
 ### symmetry
 

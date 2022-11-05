@@ -113,7 +113,7 @@ namespace ModuleESolver
         //================================
         // Initial start wave functions
         //================================
-        if (GlobalV::NBANDS != 0 || GlobalV::ESOLVER_TYPE != "SDFT")
+        if (GlobalV::NBANDS != 0 || GlobalV::ESOLVER_TYPE != "sdft")
         // qianrui add temporarily. In the future, wfcinit() should be compatible with cases when NBANDS=0
         {
             GlobalC::wf.wfcinit(this->psi);

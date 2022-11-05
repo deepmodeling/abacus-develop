@@ -53,7 +53,7 @@ void Driver::driver_run()
     if(GlobalV::CALCULATION == "md")
     {
         // In the future, I will universalize pw, lcao and classic line
-        if(GlobalV::ESOLVER_TYPE == "LJ" || GlobalV::ESOLVER_TYPE == "DP")
+        if(GlobalV::ESOLVER_TYPE == "lj" || GlobalV::ESOLVER_TYPE == "dp")
         {
             Run_MD_CLASSIC run_md_classic;
             run_md_classic.classic_md_line(GlobalC::ucell, p_esolver);

@@ -22,15 +22,15 @@ namespace ModuleESolver
         string esolver_type = "none";
         if (GlobalV::BASIS_TYPE == "pw")
         {
-            if(GlobalV::ESOLVER_TYPE == "SDFT")
+            if(GlobalV::ESOLVER_TYPE == "sdft")
             {
                 esolver_type = "sdft_pw";
             }
-            else if(GlobalV::ESOLVER_TYPE == "OFDFT")
+            else if(GlobalV::ESOLVER_TYPE == "ofdft")
             {
                 esolver_type = "ofdft";
             }
-            else if(GlobalV::ESOLVER_TYPE == "KSDFT")
+            else if(GlobalV::ESOLVER_TYPE == "ksdft")
             {
                 esolver_type = "ksdft_pw";
             }
@@ -38,11 +38,11 @@ namespace ModuleESolver
         else if (GlobalV::BASIS_TYPE == "lcao_in_pw")
         {
 #ifdef __LCAO
-            if(GlobalV::ESOLVER_TYPE == "SDFT")
+            if(GlobalV::ESOLVER_TYPE == "sdft")
             {
                 esolver_type = "sdft_pw";
             }
-            else if(GlobalV::ESOLVER_TYPE == "KSDFT")
+            else if(GlobalV::ESOLVER_TYPE == "ksdft")
             {
                 esolver_type = "ksdft_pw";
             }
@@ -53,11 +53,11 @@ namespace ModuleESolver
         else if (GlobalV::BASIS_TYPE == "lcao")
         {
 #ifdef __LCAO
-            if(GlobalV::ESOLVER_TYPE == "TDDFT")
+            if(GlobalV::ESOLVER_TYPE == "tddft")
             {
                 esolver_type = "ksdft_lcao_tddft";
             }
-            else if(GlobalV::ESOLVER_TYPE == "KSDFT")
+            else if(GlobalV::ESOLVER_TYPE == "ksdft")
             {
                 esolver_type = "ksdft_lcao";
             }
@@ -66,11 +66,11 @@ namespace ModuleESolver
 #endif
         }
 
-        if(GlobalV::ESOLVER_TYPE == "LJ")
+        if(GlobalV::ESOLVER_TYPE == "lj")
         {
             esolver_type = "lj_pot";
         }
-        else if(GlobalV::ESOLVER_TYPE == "DP")
+        else if(GlobalV::ESOLVER_TYPE == "dp")
         {
             esolver_type = "dp_pot";
         }

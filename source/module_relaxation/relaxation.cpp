@@ -110,7 +110,7 @@ void Ions::reset_after_relax(const int& istep)
 {
 	ModuleBase::TITLE("Ions","reset_after_relax");
     // Temporary  liuyu add 2022-11-04
-    if(!(GlobalV::ESOLVER_TYPE == "LJ" || GlobalV::ESOLVER_TYPE == "DP"))
+    if(!(GlobalV::ESOLVER_TYPE == "lj" || GlobalV::ESOLVER_TYPE == "dp"))
     {
         GlobalV::ofs_running << " Setup the structure factor in plane wave basis." << std::endl;
         GlobalC::sf.setup_structure_factor(&GlobalC::ucell,GlobalC::rhopw);
@@ -121,7 +121,7 @@ void Ions::reset_after_cellrelax(int& f_step, int& s_step)
 {
 	ModuleBase::TITLE("Ions","reset_after_cellrelax");
     // Temporary  liuyu add 2022-11-04
-    if(GlobalV::ESOLVER_TYPE == "LJ" || GlobalV::ESOLVER_TYPE == "DP")
+    if(GlobalV::ESOLVER_TYPE == "lj" || GlobalV::ESOLVER_TYPE == "dp")
     {
         GlobalC::ucell.setup_cell_after_vc(GlobalV::ofs_running);
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "SETUP UNITCELL");

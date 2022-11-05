@@ -20,7 +20,7 @@ When `md_type` is set to 0, `md_thermostat` is used to specify the thermostat ba
 
 Furthermore, ABACUS also provides a [list of keywords](./input_files/input-main.md#molecular-dynamics) to control relevant parmeters used in MD simulations.
 
-To employ CMD calculations, `esolver_type` should be set to be `LJ` or `DP`.
+To employ CMD calculations, `esolver_type` should be set to be `lj` or `dp`.
 If DP model is selected, the filename of DP model is specified by keyword `pot_file`.
 
 [Examples](https://github.com/deepmodeling/abacus-develop/tree/develop/examples/md/lcao_gammaonly_Sn64) of MD simulations are also provided.

@@ -134,7 +134,7 @@ void Input::Default(void)
     // xiaohui modify 2015-09-15, relax -> scf
     // calculation = "relax";
     calculation = "scf";
-    esolver_type = "KSDFT";
+    esolver_type = "ksdft";
     pseudo_rcut = 15.0; // qianrui add this parameter 2021-5
     pseudo_mesh = false; // qianrui add this pararmeter
     ntype = 0;
@@ -2082,7 +2082,7 @@ void Input::Default_2(void) // jiyy add 2019-08-04
             vdw_cutoff_radius = "95";
         }
     }
-    if(esolver_type != "SDFT")    bndpar = 1;
+    if(esolver_type != "sdft")    bndpar = 1;
     if(bndpar > GlobalV::NPROC) bndpar = GlobalV::NPROC;
     if(method_sto != 1 && method_sto != 2) 
     {
@@ -2619,7 +2619,7 @@ void Input::Check(void)
     }
     else if (calculation == "md") // mohan add 2011-11-04
     {
-        GlobalV::CALCULATION = calculation;
+        GlobalV::CALCULATION = "md";
         symmetry = 0;
         cal_force = 1;
         if (mdp.md_nstep == 0)
@@ -2633,7 +2633,7 @@ void Input::Check(void)
         // deal with input parameters , 2019-04-30
         if (mdp.md_dt < 0)
             ModuleBase::WARNING_QUIT("Input::Check", "time interval of MD calculation should be set!");
-        if (mdp.md_tfirst < 0 && esolver_type != "TDDFT")
+        if (mdp.md_tfirst < 0 && esolver_type != "tddft")
             ModuleBase::WARNING_QUIT("Input::Check", "temperature of MD calculation should be set!");
         if (mdp.md_tlast < 0.0)
             mdp.md_tlast = mdp.md_tfirst;
@@ -2654,7 +2654,7 @@ void Input::Check(void)
         {
             init_vel = 1;
         }
-        if(esolver_type == "LJ" || esolver_type == "DP" || mdp.md_type == 4)
+        if(esolver_type == "lj" || esolver_type == "dp" || mdp.md_type == 4)
         {
             cal_stress = 1;
         }
@@ -2665,7 +2665,7 @@ void Input::Check(void)
                 ModuleBase::WARNING_QUIT("Input::Check", "msst_qmass must be greater than 0!");
             }
         }
-        if(esolver_type == "DP")
+        if(esolver_type == "dp")
         {
             if (access(mdp.pot_file.c_str(), 0) == -1)
             {

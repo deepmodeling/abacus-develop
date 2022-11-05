@@ -46,7 +46,7 @@ void Input::Print(const std::string &fn) const
     ModuleBase::GlobalFunc::OUTP(ofs, "dft_functional", dft_functional, "exchange correlation functional");
     ModuleBase::GlobalFunc::OUTP(ofs, "xc_temperature", xc_temperature, "temperature for finite temperature functionals");
     ModuleBase::GlobalFunc::OUTP(ofs, "calculation", calculation, "test; scf; relax; nscf; ienvelope; istate");
-    ModuleBase::GlobalFunc::OUTP(ofs,"esolver_type",esolver_type,"the energy solver: KSDFT, SDFT, OFDFT, TDDFT, LJ, DP");
+    ModuleBase::GlobalFunc::OUTP(ofs,"esolver_type",esolver_type,"the energy solver: ksdft, sdft, ofdft, tddft, lj, dp");
     ModuleBase::GlobalFunc::OUTP(ofs, "ntype", ntype, "atom species number");
     ModuleBase::GlobalFunc::OUTP(ofs, "nspin", nspin, "1: single spin; 2: up and down spin; 4: noncollinear spin");
     ModuleBase::GlobalFunc::OUTP(ofs, "kspacing", kspacing, "unit in 1/bohr, should be > 0, default is 0 which means read KPT file");
