@@ -69,6 +69,7 @@ void Input_Conv::Convert(void)
     GlobalV::NSTOGROUP = INPUT.bndpar;
 #endif
     GlobalV::CALCULATION = INPUT.calculation;
+    GlobalV::ESOLVER_TYPE = INPUT.esolver_type;
 
     GlobalV::PSEUDORCUT = INPUT.pseudo_rcut;
     GlobalV::PSEUDO_MESH = INPUT.pseudo_mesh;
@@ -238,7 +239,6 @@ void Input_Conv::Convert(void)
 // Fuxiang He add 2016-10-26
 //----------------------------------------------------------
 #ifdef __LCAO
-    ELEC_evolve::tddft = INPUT.tddft;
     ELEC_evolve::td_scf_thr = INPUT.td_scf_thr;
     ELEC_evolve::td_dt = INPUT.td_dt;
     ELEC_evolve::td_force_dt = INPUT.td_force_dt;

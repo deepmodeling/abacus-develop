@@ -29,6 +29,7 @@ extern double PSEUDORCUT;
 extern bool PSEUDO_MESH;
 
 extern std::string CALCULATION; // 2 "scf";"nscf" ;"symmetry"
+extern std::string ESOLVER_TYPE;
 extern int EFIELD_FLAG; // 5 add electric field
 extern int DIP_COR_FLAG; // 7 add dipole correction
 extern bool GATE_FLAG;     // add gate field

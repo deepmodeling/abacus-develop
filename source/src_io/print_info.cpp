@@ -12,10 +12,10 @@ void Print_Info::setup_parameters(UnitCell_pseudo &ucell, K_Vectors &kv)
 	ModuleBase::TITLE("Print_Info","setup_parameters");
 	
     if(GlobalV::CALCULATION=="scf" || GlobalV::CALCULATION=="relax" || GlobalV::CALCULATION=="cell-relax" || GlobalV::CALCULATION=="nscf"
-	        || GlobalV::CALCULATION=="istate" || GlobalV::CALCULATION=="ienvelope" || GlobalV::CALCULATION=="md"||GlobalV::CALCULATION.substr(0,3) == "sto")
+	        || GlobalV::CALCULATION=="istate" || GlobalV::CALCULATION=="ienvelope" || GlobalV::CALCULATION=="md")
 	{
 		std::cout << " ---------------------------------------------------------" << std::endl;
-		if(GlobalV::CALCULATION=="scf"||GlobalV::CALCULATION=="sto-scf"||GlobalV::CALCULATION=="ofdft")
+		if(GlobalV::CALCULATION=="scf")
 		{
 			std::cout << " Self-consistent calculations for electrons" << std::endl;
 		}
@@ -31,7 +31,7 @@ void Print_Info::setup_parameters(UnitCell_pseudo &ucell, K_Vectors &kv)
         {
             std::cout << " Cell relaxation calculations" << std::endl;
         }
-		if(GlobalV::CALCULATION=="md"||GlobalV::CALCULATION=="sto-md"||GlobalV::CALCULATION=="of-md")
+		if(GlobalV::CALCULATION=="md")
 		{
 			std::cout << " Molecular Dynamics simulations" << std::endl;
 
@@ -248,7 +248,7 @@ void Print_Info::print_scf(const int &istep, const int &iter)
         GlobalV::ofs_running << "\n LCAO ALGORITHM ------------- ";
     }
 
-    if(GlobalV::CALCULATION=="scf"||GlobalV::CALCULATION=="sto-scf"||GlobalV::CALCULATION=="ofdft")
+    if(GlobalV::CALCULATION=="scf")
     {
         GlobalV::ofs_running << "ELEC = " << std::setw(4) << unsigned(iter);
     }
@@ -257,7 +257,7 @@ void Print_Info::print_scf(const int &istep, const int &iter)
 		GlobalV::ofs_running << "ION = " << std::setw(4) << unsigned(istep+1)
 		    				 << "  ELEC = " << std::setw(4) << unsigned(iter);
 	}
-	else if(GlobalV::CALCULATION=="md"||GlobalV::CALCULATION=="sto-md"||GlobalV::CALCULATION=="of-md")
+	else if(GlobalV::CALCULATION=="md")
 	{
 		GlobalV::ofs_running << "MD = " << std::setw(4) << unsigned(istep+1)
 		    				 << "  ELEC = " << std::setw(4) << unsigned(iter);
@@ -283,7 +283,7 @@ void Print_Info::print_screen(const int &stress_step, const int &force_step, con
 		GlobalV::ofs_running << " RELAX CELL : " << unsigned(stress_step) << std::endl;
         GlobalV::ofs_running << " RELAX IONS : " << unsigned(force_step) << " (in total: " << unsigned(istep) << ")" << std::endl;
     }
-	else if(GlobalV::CALCULATION=="scf"||GlobalV::CALCULATION=="sto-scf"||GlobalV::CALCULATION=="ofdft") //add 4 lines 2015-09-06, xiaohui
+	else if(GlobalV::CALCULATION=="scf") //add 4 lines 2015-09-06, xiaohui
 	{
         std::cout << " SELF-CONSISTENT : " << std::endl;
 		GlobalV::ofs_running << " SELF-CONSISTENT" << std::endl;
@@ -293,7 +293,7 @@ void Print_Info::print_screen(const int &stress_step, const int &force_step, con
         std::cout << " NONSELF-CONSISTENT : " << std::endl;
 		GlobalV::ofs_running << " NONSELF-CONSISTENT" << std::endl;
 	}
-	else if(GlobalV::CALCULATION=="md"||GlobalV::CALCULATION=="sto-md"||GlobalV::CALCULATION=="of-md")
+	else if(GlobalV::CALCULATION=="md")
 	{
         std::cout << " STEP OF MOLECULAR DYNAMICS : " << unsigned(istep) << std::endl;
 		GlobalV::ofs_running << " STEP OF MOLECULAR DYNAMICS : " << unsigned(istep) << std::endl;

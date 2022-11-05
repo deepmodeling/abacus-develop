@@ -58,7 +58,7 @@ void Ions::opt_ions(ModuleESolver::ESolver *p_esolver)
 		time_t eend = time(NULL);
 		time_t fstart = time(NULL);
 
-        if (GlobalV::CALCULATION=="scf" || GlobalV::CALCULATION=="relax" || GlobalV::CALCULATION=="cell-relax" || GlobalV::CALCULATION.substr(0,3)=="sto" || GlobalV::CALCULATION.substr(0,2)=="of")
+        if (GlobalV::CALCULATION=="scf" || GlobalV::CALCULATION=="relax" || GlobalV::CALCULATION=="cell-relax")
         {
 			//I'm considering putting force and stress
 			//as part of ucell and use ucell to pass information
@@ -66,17 +66,19 @@ void Ions::opt_ions(ModuleESolver::ESolver *p_esolver)
 			//but I'll use force and stress explicitly here for now
 			
 			//calculate and gather all parts of total ionic forces
-			ModuleBase::matrix force;
-			if(GlobalV::CAL_FORCE)
-			{
-				p_esolver->cal_Force(force);
-			}
-			//calculate and gather all parts of stress
-			ModuleBase::matrix stress;
-			if(GlobalV::CAL_STRESS)
-			{
-				p_esolver->cal_Stress(stress);
-			}
+            ModuleBase::matrix force, stress;
+            this->force_stress(p_esolver, GlobalC::en.etot, force, stress);
+			// ModuleBase::matrix force;
+			// if(GlobalV::CAL_FORCE)
+			// {
+			// 	p_esolver->cal_Force(force);
+			// }
+			// //calculate and gather all parts of stress
+			// ModuleBase::matrix stress;
+			// if(GlobalV::CAL_STRESS)
+			// {
+			// 	p_esolver->cal_Stress(stress);
+			// }
 			stop = this->relaxation(force, stress, istep, force_step, stress_step);    // pengfei Li 2018-05-14
 		}
 		time_t fend = time(NULL);
@@ -111,4 +113,27 @@ void Ions::opt_ions(ModuleESolver::ESolver *p_esolver)
 
 	ModuleBase::timer::tick("Ions","opt_ions_pw");
     return;
+}
+
+void Ions::force_stress(ModuleESolver::ESolver *p_esolver, double &energy, ModuleBase::matrix &force, ModuleBase::matrix &stress)
+{
+    p_esolver->cal_Energy(energy);
+
+    if(GlobalV::CAL_FORCE)
+    {
+        p_esolver->cal_Force(force);
+    }
+
+    if(GlobalV::CAL_STRESS)
+    {
+        p_esolver->cal_Stress(stress);
+    }
+
+    // LJ and DP output Hartree units instead of Rydberg
+    if(GlobalV::ESOLVER_TYPE == "LJ" || GlobalV::ESOLVER_TYPE == "DP")
+    {
+        energy *= 2;
+        force *= 2;
+        stress *= 2;
+    }
 }

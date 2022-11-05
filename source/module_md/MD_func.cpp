@@ -225,7 +225,7 @@ void MD_func::force_virial(
         p_esolver->cal_Stress(virial);
     }
 
-    if(mdp.md_ensolver == "FP")
+    if(GlobalV::ESOLVER_TYPE != "LJ" && GlobalV::ESOLVER_TYPE != "DP")
     {
         potential *= 0.5;
         force_temp *= 0.5;

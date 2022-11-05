@@ -249,7 +249,7 @@ void ESolver_KS_LCAO_TDDFT::hamilt2density(int istep, int iter, double ethr)
 
     GlobalC::CHR.save_rho_before_sum_band();
 
-    if (ELEC_evolve::tddft && istep >= 2 && !GlobalV::GAMMA_ONLY_LOCAL)
+    if (GlobalV::ESOLVER_TYPE == "TDDFT" && istep >= 2 && !GlobalV::GAMMA_ONLY_LOCAL)
     {
         ELEC_evolve::evolve_psi(istep, this->p_hamilt, this->LOWF, this->psi, this->psi_laststep);
         this->pelec_td->psiToRho_td(this->psi[0]);
