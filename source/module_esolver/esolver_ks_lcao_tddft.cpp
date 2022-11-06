@@ -38,7 +38,6 @@ ESolver_KS_LCAO_TDDFT::~ESolver_KS_LCAO_TDDFT()
 {
     // this->orb_con.clear_after_ions(GlobalC::UOT, GlobalC::ORB, GlobalV::deepks_setorb, GlobalC::ucell.infoNL.nproj);
     delete psi_laststep;
-    delete pelec_td;
 }
 
 void ESolver_KS_LCAO_TDDFT::Init(Input& inp, UnitCell_pseudo& ucell)
@@ -105,17 +104,17 @@ void ESolver_KS_LCAO_TDDFT::Init(Input& inp, UnitCell_pseudo& ucell)
         this->phsol = new hsolver::HSolverLCAO(this->LOWF.ParaV);
         this->phsol->method = GlobalV::KS_SOLVER;
     }
-    if (this->pelec_td != nullptr)
+    if (this->pelec != nullptr)
     {
-        if (this->pelec_td->classname != "ElecStateLCAO")
+        if (this->pelec->classname != "ElecStateLCAO")
         {
-            delete this->pelec_td;
-            this->pelec_td = nullptr;
+            delete this->pelec;
+            this->pelec = nullptr;
         }
     }
     else
     {
-        this->pelec_td = new elecstate::ElecStateLCAO_TDDFT((Charge*)(&(GlobalC::CHR)),
+        this->pelec = new elecstate::ElecStateLCAO_TDDFT((Charge*)(&(GlobalC::CHR)),
                                                             &(GlobalC::kv),
                                                             GlobalC::kv.nks,
                                                             GlobalV::NBANDS,
@@ -123,6 +122,7 @@ void ESolver_KS_LCAO_TDDFT::Init(Input& inp, UnitCell_pseudo& ucell)
                                                             &(this->UHM),
                                                             &(this->LOWF));
     }
+    this->pelec_td = dynamic_cast<elecstate::ElecStateLCAO_TDDFT*>(this->pelec);
 }
 
 void ESolver_KS_LCAO_TDDFT::eachiterinit(const int istep, const int iter)
