@@ -122,13 +122,7 @@ void Restart::load_disk(const std::string mode, const int i) const {}
 psi::Psi<complex<double>>* wavefunc::allocate(const int nks)
 {
 	this->npwx = GlobalC::wfcpw->npwk_max;
-	this->wg.create(nks,GlobalV::NBANDS);
-	this->ekb = new double*[nks];
 	psi::Psi<std::complex<double>>* psi = new psi::Psi<std::complex<double>>(nks, GlobalV::NBANDS,npwx, nullptr);
-	for (int ik=0;ik<nks;ik++)
-	{
-		this->ekb[ik] = new double[GlobalV::NBANDS];
-	}
 	return psi;
 }
 

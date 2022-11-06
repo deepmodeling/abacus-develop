@@ -17,16 +17,9 @@ class wavefunc : public WF_atomic
 
     // allocate memory
     psi::Psi<std::complex<double>>* allocate(const int nks);
-    void allocate_ekb_wg(const int nks);
 
     int out_wfc_pw; //qianrui modify 2020-10-19
     int out_wfc_r=0; // Peize Lin add 2021.11.21
-
-    // et    : (nks,nbnd),eigenvalues of the hamiltonian
-    // wg	 : the weight of each k point and band
-	double **ekb;		   // band energy at each k point, each band.
-	bool   allocate_ekb;   // flag
-    ModuleBase::matrix wg;
 
     // init_wfc : "random",or "atomic" or "file"
     std::string init_wfc;

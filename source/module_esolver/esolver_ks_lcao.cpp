@@ -186,12 +186,6 @@ void ESolver_KS_LCAO::Init(Input& inp, UnitCell_pseudo& ucell)
         }
 #endif
 
-        // Initialize the local wave functions.
-        // npwx, eigenvalues, and weights
-        // npwx may change according to cell change
-        // this function belongs to cell LOOP
-        GlobalC::wf.allocate_ekb_wg(GlobalC::kv.nks);
-
         // Initialize the FFT.
         // this function belongs to cell LOOP
 

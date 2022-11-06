@@ -36,9 +36,9 @@ void DFT_RPA_interface::out_for_RPA(const Parallel_Orbitals &parav,
     this->out_Cs();
     this->out_coulomb_k();
 
-    std::cout << "etxc(Ha):" << std::fixed << std::setprecision(15) << GlobalC::en.etxc / 2.0 << std::endl;
-    std::cout << "etot(Ha):" << std::fixed << std::setprecision(15) << GlobalC::en.etot / 2.0 << std::endl;
-    std::cout << "Etot_without_rpa(Ha):" << std::fixed << std::setprecision(15)
+    std::cout << "etxc(Ha): " << std::fixed << std::setprecision(15) << GlobalC::en.etxc / 2.0 << std::endl;
+    std::cout << "etot(Ha): " << std::fixed << std::setprecision(15) << GlobalC::en.etot / 2.0 << std::endl;
+    std::cout << "Etot_without_rpa(Ha): " << std::fixed << std::setprecision(15)
               << (GlobalC::en.etot - GlobalC::en.etxc + rpa_exx_lcao_.get_energy()) / 2.0 << std::endl;
 
     return;

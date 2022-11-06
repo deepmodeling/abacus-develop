@@ -51,12 +51,6 @@ void ESolver_KS_LCAO_TDDFT::Init(Input& inp, UnitCell_pseudo& ucell)
     // Initializee the potential.
     GlobalC::pot.allocate(GlobalC::rhopw->nrxx);
 
-    // Initialize the local wave functions.
-    // npwx, eigenvalues, and weights
-    // npwx may change according to cell change
-    // this function belongs to cell LOOP
-    GlobalC::wf.allocate_ekb_wg(GlobalC::kv.nks);
-
     // Initialize the FFT.
     // this function belongs to cell LOOP
 
@@ -386,13 +380,6 @@ void ESolver_KS_LCAO_TDDFT::updatepot(const int istep, const int iter)
             this->cal_edm_tddft();
     }
 
-    for (int ik = 0; ik < this->pelec_td->ekb.nr; ++ik)
-    {
-        for (int ib = 0; ib < this->pelec_td->ekb.nc; ++ib)
-        {
-            GlobalC::wf.wg(ik, ib) = this->pelec_td->wg(ik, ib);
-        }
-    }
     if (this->conv_elec)
     {
         GlobalV::ofs_running

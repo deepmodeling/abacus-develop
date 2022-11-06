@@ -195,7 +195,7 @@ void IState_Charge::idmatrix(const int &ib, ModuleBase::matrix& wg)
 
 		pdgemm_(
 			&N_char, &T_char,
-			&GlobalV::NLOCAL, &GlobalV::NLOCAL, &GlobalC::wf.wg.nc,
+			&GlobalV::NLOCAL, &GlobalV::NLOCAL, &wg.nc,
 			&one_float,
 			wg_wfc.get_pointer(), &one_int, &one_int, this->loc->ParaV->desc,
 			this->psi_gamma->get_pointer(), &one_int, &one_int, this->loc->ParaV->desc,
