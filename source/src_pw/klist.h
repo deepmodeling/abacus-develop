@@ -38,7 +38,7 @@ public:
         const ModuleBase::Matrix3 &reciprocal_vec,
         const ModuleBase::Matrix3 &latvec);
 
-    void ibz_kpoint( const ModuleSymmetry::Symmetry &symm, bool use_symm);
+    void ibz_kpoint( const ModuleSymmetry::Symmetry &symm, bool use_symm,std::string& skpt);
     //LiuXh add 20180515
     void set_after_vc(
             const ModuleSymmetry::Symmetry &symm,
@@ -66,7 +66,7 @@ private:
 
     // step 2 : set both kvec and kved; normalize weight
     void update_use_ibz( void );
-    void set_both_kvec(const ModuleBase::Matrix3 &G,const ModuleBase::Matrix3 &R);
+    void set_both_kvec(const ModuleBase::Matrix3 &G,const ModuleBase::Matrix3 &R, std::string& skpt);
     void normalize_wk( const int &degspin );
 
     // step 3 : mpi kpoints information.

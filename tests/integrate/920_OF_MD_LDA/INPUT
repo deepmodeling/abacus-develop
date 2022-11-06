@@ -28,5 +28,5 @@ md_dt		0.25
 md_tfirst	58022.52706
 md_dumpfreq	10
 md_tfreq	1.08
-md_mnhc		1
+md_tchain		1
 nbspline    10 # be sure fft dimension is odd

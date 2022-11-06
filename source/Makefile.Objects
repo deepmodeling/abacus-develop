@@ -240,7 +240,7 @@ OBJS_MD=MD_func.o\
 	mdrun.o\
 	verlet.o\
     MSST.o\
-    NVT_NHC.o\
+    Nose_Hoover.o\
     FIRE.o\
     Langevin.o\
 

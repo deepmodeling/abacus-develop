@@ -1212,9 +1212,9 @@ bool Input::Read(const std::string &fn)
         {
             read_value(ifs, mdp.md_dt);
         }
-        else if (strcmp("md_mnhc", word) == 0)
+        else if (strcmp("md_tchain", word) == 0)
         {
-            read_value(ifs, mdp.md_mnhc);
+            read_value(ifs, mdp.md_tchain);
         }
         else if (strcmp("md_tfirst", word) == 0)
         {
@@ -2289,7 +2289,7 @@ void Input::Bcast()
     Parallel_Common::bcast_string(mdp.md_thermostat);
     Parallel_Common::bcast_int(mdp.md_nstep);
     Parallel_Common::bcast_double(mdp.md_dt);
-    Parallel_Common::bcast_int(mdp.md_mnhc);
+    Parallel_Common::bcast_int(mdp.md_tchain);
     Parallel_Common::bcast_double(mdp.msst_qmass);
     Parallel_Common::bcast_double(mdp.md_tfirst);
     Parallel_Common::bcast_double(mdp.md_tlast);
@@ -2645,17 +2645,24 @@ void Input::Check(void)
             out_level = "m"; // zhengdy add 2019-04-07
 
         // deal with input parameters , 2019-04-30
-        // if(basis_type == "pw" ) ModuleBase::WARNING_QUIT("Input::Check","calculate = MD is only availble for LCAO.");
         if (mdp.md_dt < 0)
             ModuleBase::WARNING_QUIT("Input::Check", "time interval of MD calculation should be set!");
         if (mdp.md_tfirst < 0 && tddft==0)
             ModuleBase::WARNING_QUIT("Input::Check", "temperature of MD calculation should be set!");
         if (mdp.md_tlast < 0.0)
             mdp.md_tlast = mdp.md_tfirst;
+        if(mdp.md_pmode != "none" && mdp.md_pfirst < 0)
+            ModuleBase::WARNING_QUIT("Input::Check", "pressure of MD calculation should be set!");
+        if (mdp.md_plast < 0.0)
+            mdp.md_plast = mdp.md_pfirst;
 
         if(mdp.md_tfreq == 0)
         {
-            mdp.md_tfreq = 1.0/40.0/mdp.md_dt;
+            mdp.md_tfreq = 1.0/40/mdp.md_dt;
+        }
+        if(mdp.md_pfreq == 0)
+        {
+            mdp.md_pfreq = 1.0/400/mdp.md_dt;
         }
         if(mdp.md_restart) 
         {
@@ -2679,23 +2686,6 @@ void Input::Check(void)
                 ModuleBase::WARNING_QUIT("Input::Check", "Can not find DP model !");
             }
         }
-        // if(mdp.md_tfirst!=mdp.md_tlast)
-        // {
-        //     std::ifstream file1;
-        //     file1.open("ChangeTemp.dat");
-        //     if(!file1)                      // Peize Lin fix bug 2016-08-06
-        //    {
-        //         std::ofstream file;
-        //         file.open("ChangeTemp.dat");
-        //         for(int ii=0;ii<30;ii++)
-        //         {
-        //             file<<mdp.md_tfirst+(mdp.md_tlast-mdp.md_tfirst)/double(30)*double(ii+1)<<" ";
-        //         }
-        //         file.close();
-        //     }
-        //     else
-        //         file1.close();
-        // }
     }
     else if (calculation == "cell-relax") // mohan add 2011-11-04
     {

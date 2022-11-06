@@ -80,12 +80,16 @@ void K_Vectors::set(
 		ModuleBase::WARNING_QUIT("K_Vectors::set","Something wrong while reading KPOINTS.");
 	}
 
+    // output kpoints file
+    std::string skpt1="";
+    std::string skpt2="";
+
     // (2)
     //only berry phase need all kpoints including time-reversal symmetry!
     //if symm_flag is not set, only time-reversal symmetry would be considered.
     if(!berryphase::berry_phase_flag && ModuleSymmetry::Symmetry::symm_flag != -1)
     {
-        this->ibz_kpoint(symm, ModuleSymmetry::Symmetry::symm_flag);
+        this->ibz_kpoint(symm, ModuleSymmetry::Symmetry::symm_flag,skpt1);
         if(ModuleSymmetry::Symmetry::symm_flag || is_mp)
         {
             this->update_use_ibz();
@@ -94,7 +98,17 @@ void K_Vectors::set(
     }
 
     // (3)
-    this->set_both_kvec(reciprocal_vec, latvec);
+    this->set_both_kvec(reciprocal_vec, latvec, skpt2);
+
+	if(GlobalV::MY_RANK==0)
+	{
+        // output kpoints file
+        std::stringstream skpt;
+        skpt << GlobalV::global_readin_dir << "kpoints" ;
+	    std::ofstream ofkpt( skpt.str().c_str()); // clear kpoints
+        ofkpt << skpt2 <<skpt1;
+        ofkpt.close();
+    }
 
 	int deg = 0;
 	if(GlobalV::NSPIN == 1)
@@ -534,7 +548,7 @@ void K_Vectors::update_use_ibz( void )
     return;
 }
 
-void K_Vectors::ibz_kpoint(const ModuleSymmetry::Symmetry &symm, bool use_symm)
+void K_Vectors::ibz_kpoint(const ModuleSymmetry::Symmetry &symm, bool use_symm,std::string& skpt)
 {
     if (GlobalV::MY_RANK!=0) return;
     ModuleBase::TITLE("K_Vectors", "ibz_kpoint");
@@ -600,11 +614,28 @@ void K_Vectors::ibz_kpoint(const ModuleSymmetry::Symmetry &symm, bool use_symm)
 //	{
 //		out.printM3("rot matrix",kgmatrix[i]);
 //	}
-	
+    // output in kpoints file
+    std::stringstream ss;
+    ss << " " << std::setw(40) <<"nkstot" << " = " << nkstot
+        << std::setw(66) << "ibzkpt" << std::endl;
+    ss << " " << std::setw(8) << "KPT"
+        << std::setw(20) << "DirectX"
+	    << std::setw(20) << "DirectY"
+        << std::setw(20) << "DirectZ"
+         << std::setw(8) << "IBZ"
+        << std::setw(20) << "DirectX"
+	    << std::setw(20) << "DirectY"
+        << std::setw(20) << "DirectZ" << std::endl;
 	
 	// search in all k-poins.
     for (int i = 0; i < nkstot; ++i)
     {
+        // output in kpoints file
+        ss << " "
+            << std::setw(8) << i+1
+            << std::setw(20) << this->kvec_d[i].x
+            << std::setw(20) << this->kvec_d[i].y
+            << std::setw(20) << this->kvec_d[i].z;
 		//std::cout << "\n kpoint = " << i << std::endl;
 		//std::cout << "\n kvec_d = " << kvec_d[i].x << " " << kvec_d[i].y << " " << kvec_d[i].z;
         bool already_exist = false;
@@ -637,10 +668,15 @@ void K_Vectors::ibz_kpoint(const ModuleSymmetry::Symmetry &symm, bool use_symm)
                             symm.equal(kvec_rot.z, this->kvec_d_ibz[k].z))
                     {
                         already_exist = true;
-
 						// find another ibz k point,
 						// but is already in the ibz_kpoint list.
-						// so the weight need to +1; 
+						// so the weight need to +1;
+                        // output in kpoints file
+                        ss << std::setw(8) << k+1
+                            << std::setw(20) << this->kvec_d_ibz[k].x
+                            << std::setw(20) << this->kvec_d_ibz[k].y
+                            << std::setw(20) << this->kvec_d_ibz[k].z << std::endl;
+
                         this->wk_ibz[k] += weight;
 						exist_number = k;
                         break;
@@ -654,6 +690,11 @@ void K_Vectors::ibz_kpoint(const ModuleSymmetry::Symmetry &symm, bool use_symm)
 			//if it's a new ibz kpoint.
 			//nkstot_ibz indicate the index of ibz kpoint.
             this->kvec_d_ibz[nkstot_ibz] = kvec_rot;
+            // output in kpoints file
+            ss << std::setw(8) << nkstot_ibz+1
+                << std::setw(20) << this->kvec_d_ibz[nkstot_ibz].x
+                << std::setw(20) << this->kvec_d_ibz[nkstot_ibz].y
+                << std::setw(20) << this->kvec_d_ibz[nkstot_ibz].z << std::endl;
 
 			//the weight should be averged k-point weight.
             this->wk_ibz[nkstot_ibz] = weight;
@@ -692,6 +733,9 @@ void K_Vectors::ibz_kpoint(const ModuleSymmetry::Symmetry &symm, bool use_symm)
 		}
 //		BLOCK_HERE("check k point");
     }
+
+    skpt = ss.str();
+
 	ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"nkstot_ibz",nkstot_ibz);
 
 	GlobalV::ofs_running << " " << std::setw(8) << "IBZ" << std::setw(20) << "DirectX"
@@ -712,7 +756,7 @@ void K_Vectors::ibz_kpoint(const ModuleSymmetry::Symmetry &symm, bool use_symm)
 }
 
 
-void K_Vectors::set_both_kvec(const ModuleBase::Matrix3 &G, const ModuleBase::Matrix3 &R)
+void K_Vectors::set_both_kvec(const ModuleBase::Matrix3 &G, const ModuleBase::Matrix3 &R,std::string& skpt)
 {
 
     if(GlobalV::FINAL_SCF) //LiuXh add 20180606
@@ -793,6 +837,25 @@ void K_Vectors::set_both_kvec(const ModuleBase::Matrix3 &G, const ModuleBase::Ma
              << std::setw(20) << this->kvec_d[i].y
              << std::setw(20) << this->kvec_d[i].z
              << std::setw(20) << this->wk[i] << std::endl;
+	}
+
+	if(GlobalV::MY_RANK==0)
+	{
+        std::stringstream ss;
+        ss << " " << std::setw(40) <<"nkstot now" << " = " << nkstot << std::endl;
+        ss << " " << std::setw(8) << "KPT" << std::setw(20) << "DirectX"
+	        << std::setw(20) << "DirectY" << std::setw(20) << "DirectZ"
+	        << std::setw(20) << "Weight" << std::endl;
+        for (int ik=0; ik<nkstot; ik++)
+        {
+            ss << " " << std::setw(8) << ik+1
+                << std::setw(20) << this->kvec_d[ik].x
+                << std::setw(20) << this->kvec_d[ik].y
+                << std::setw(20) << this->kvec_d[ik].z
+                << std::setw(20) << this->wk[ik] << std::endl;
+              //  << std::setw(10) << this->ibz2bz[ik] << std::endl;
+        }
+        skpt = ss.str();
 	}
 
     return;

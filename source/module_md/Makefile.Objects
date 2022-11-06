@@ -12,7 +12,7 @@ run_md_classic.o\
 mdrun.o\
 verlet.o\
 MSST.o\
-NVT_NHC.o\
+Nose_Hoover.o\
 FIRE.o\
 Langevin.o\
 
