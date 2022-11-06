@@ -115,15 +115,6 @@ Restart restart;
 } // namespace GlobalC
 Input INPUT;
 
-/*
-void Occupy::calculate_weights()
-{
-	GlobalC::wf.wg(0,0)=2.0;
-	GlobalC::wf.wg(0,1)=0.0;
-	GlobalC::wf.wg(0,2)=0.0;
-	GlobalC::wf.wg(0,3)=0.0;
-}
-*/
 
 void Restart::load_disk(const std::string mode, const int i) const {}
 

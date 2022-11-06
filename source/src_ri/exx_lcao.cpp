@@ -1161,17 +1161,6 @@ ofs_mpi.close();
 			}
 		}
 	};
-
-	auto print_ekb=[&]()		// Peize Lin test 2019-11-14
-	{
-		for(int ik=0; ik<GlobalC::kv.nks; ++ik)
-		{
-			std::ofstream ofs("ekb_"+ModuleBase::GlobalFunc::TO_STRING(ik)+"_"+ModuleBase::GlobalFunc::TO_STRING(GlobalV::MY_RANK), std::ofstream::app);
-			for(int ib=0; ib<GlobalV::NBANDS; ++ib)
-				ofs<<GlobalC::wf.ekb[ik][ib]<<"\t";
-			ofs<<std::endl;
-		}
-	};	
 	
 	#if TEST_EXX_LCAO==1
 	//	ofs_matrixes("Cws_"+ModuleBase::GlobalFunc::TO_STRING(istep)+"_end.dat",Cws);

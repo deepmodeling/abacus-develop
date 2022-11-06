@@ -28,7 +28,8 @@ private:
 		const bool isforce,
         const bool isstress,
         const psi::Psi<double>* psid,
-        Local_Orbital_Charge &loc, 
+        Local_Orbital_Charge &loc,
+		const elecstate::ElecState* pelec, 
         ModuleBase::matrix& foverlap,
 		ModuleBase::matrix& ftvnl_dphi,
 		ModuleBase::matrix& fvnl_dbeta,	
@@ -64,6 +65,7 @@ private:
         const bool isstress,
         const psi::Psi<double>* psid,
         Local_Orbital_Charge &loc,
+		const elecstate::ElecState* pelec,
         ModuleBase::matrix& foverlap,
 		ModuleBase::matrix& soverlap);	
 

@@ -11,7 +11,6 @@
 #include "chi0_hilbert.h"
 #include "../src_pw/hamilt.h"
 #include "../src_lcao/wavefunc_in_pw.h"
-#include "optical.h"
 #include "../src_pw/klist.h"
 #include <iostream>
 #ifdef __LCAO
@@ -58,7 +57,7 @@ Chi0_hilbert::~Chi0_hilbert()
 
 // begin calculate
 #include "../src_pw/occupy.h"
-void Chi0_hilbert::Chi()
+void Chi0_hilbert::Chi(const ModuleBase::matrix& ekb)
 {
 	ModuleBase::TITLE("Chi0_hilbert","Chi");
 	//---------------------------------------
@@ -71,9 +70,9 @@ void Chi0_hilbert::Chi()
 	{
 		for(int ik2=0; ik2<GlobalC::kv.nks; ik2++)
 		{
-			if(max_e < (GlobalC::wf.ekb[ik1][GlobalV::NBANDS-1] - GlobalC::wf.ekb[ik2][0]))
+			if(max_e < (ekb(ik1, GlobalV::NBANDS-1) - ekb(ik2, 0)))
 			{
-				max_e = GlobalC::wf.ekb[ik1][GlobalV::NBANDS-1] - GlobalC::wf.ekb[ik2][0];
+				max_e = ekb(ik1, GlobalV::NBANDS-1) - ekb(ik2, 0);
 			}
 		}
 	}
@@ -282,18 +281,18 @@ void Chi0_hilbert::Chi()
 			//----------------------------------------------------------
 			if(INPUT.smearing_method == "gauss" || INPUT.smearing_method == "gaussian")
 			{
-				cweight[ik][ib] = GlobalC::kv.wk[ik] * Occupy::wgauss( (energy - GlobalC::wf.ekb[ik][ib] )/INPUT.smearing_sigma, 0);
+				cweight[ik][ib] = GlobalC::kv.wk[ik] * Occupy::wgauss( (energy - ekb(ik, ib) )/INPUT.smearing_sigma, 0);
 			}
 			//----------------------------------------------------------
 			//  fixed smearing
 			//----------------------------------------------------------
 			else if(INPUT.smearing_method == "fixed")
 			{
-				if((GlobalC::wf.ekb[ik][ib]-energy)<-0.0001 )
+				if((ekb(ik, ib) - energy)<-0.0001 )
 				{
 					cweight[ik][ib] = GlobalC::kv.wk[ik] * 1.0;
 				}
-				else if(fabs(GlobalC::wf.ekb[ik][ib]-energy)<0.0001 )
+				else if(fabs(ekb(ik, ib)-energy)<0.0001 )
 				{
 					cweight[ik][ib] = GlobalC::kv.wk[ik] * 0.5;
 				}
@@ -307,7 +306,7 @@ void Chi0_hilbert::Chi()
 			//----------------------------------------------------------
 			else if(INPUT.smearing_method == "fd")
 			{
-				cweight[ik][ib] = GlobalC::kv.wk[ik] * Occupy::wgauss( (energy - GlobalC::wf.ekb[ik][ib] )/INPUT.smearing_sigma, -99);
+				cweight[ik][ib] = GlobalC::kv.wk[ik] * Occupy::wgauss( (energy - ekb(ik, ib) )/INPUT.smearing_sigma, -99);
 			}
 			else
 			{
@@ -377,7 +376,7 @@ void Chi0_hilbert::Chi()
 			{
 				time_t start,end;
 				start = time(NULL);
-				Cal_Chi0s(iq);  // calculate chi0s
+				Cal_Chi0s(iq, ekb);  // calculate chi0s
 				end = time(NULL);
 				std::cout<<"chi0s time:: "<<end-start<<" s"<<std::endl;
 
@@ -541,7 +540,7 @@ void Chi0_hilbert::Chi()
 
 				time_t start,end;
 				start = time(NULL);
-				Cal_Chi0s(iq);  // calculate chi0s
+				Cal_Chi0s(iq, ekb);  // calculate chi0s
 				end = time(NULL);
 				std::cout<<"chi0s time:: "<<end-start<<" s"<<std::endl;
 
@@ -632,7 +631,7 @@ void Chi0_hilbert::Chi()
 		{
 			time_t start, end;
 			start = time(NULL);
-			Cal_Chi0s(iq);
+			Cal_Chi0s(iq, ekb);
 			end = time(NULL);
 			std::cout<<"chi0s time:: "<<end-start<<" s"<<std::endl;
 
@@ -1335,7 +1334,7 @@ void Chi0_hilbert::Cal_b(int iq, int ik, int iqk, int ispin, ModulePW::PW_Basis 
 	//			{
 	//				b[ig][ib1][ib2] += conj(GlobalC::wf.evc[ik](ib1,ig)) * sqrt(((GlobalC::kv.kvec_c[ik]+GlobalC::sf.gcar[ig])*(-ModuleBase::TWO_PI/GlobalC::ucell.lat0)).norm2()) * GlobalC::wf.evc[ik](ib2,ig);
 	//			}
-	//			b[ig][ib1][ib2] /=(GlobalC::wf.ekb[ik][ib1] - GlobalC::wf.ekb[ik][ib2]);
+	//			b[ig][ib1][ib2] /=ekb(ik, ib1) - ekb(ik, ib2));
 	//		}
 	//	}
 	//}
@@ -1439,7 +1438,7 @@ void Chi0_hilbert::Cal_b(int iq, int ik, int iqk, int ispin, ModulePW::PW_Basis 
 }*/
 
 // calculate the chi0s matrix
-void Chi0_hilbert::Cal_Chi0s(int iq)
+void Chi0_hilbert::Cal_Chi0s(int iq, const ModuleBase::matrix& ekb)
 {
 	ModuleBase::TITLE("Chi0_hilbert","Cal_Chi0s");
 	double delta_e,e1,e2;
@@ -1492,7 +1491,7 @@ void Chi0_hilbert::Cal_Chi0s(int iq)
 			{
 				for(int ib2=0; ib2<GlobalV::NBANDS; ib2++)
 				{
-					delta_e = GlobalC::wf.ekb[iqk][ib2] - GlobalC::wf.ekb[ik][ib1];
+					delta_e = ekb(ik, ib2) - ekb(ik, ib1);
 					//delta_e = Q[ik][ib2] - Q[ik][ib1];
 					if ((delta_e > 0 || delta_e == 0) && delta_e < ((nomega-1) * domega) )
 					{
@@ -1552,14 +1551,14 @@ void Chi0_hilbert::Cal_Chi0s(int iq)
 			{
 				for(int ib2=0; ib2<GlobalV::NBANDS; ib2++)
 				{
-					delta_e = GlobalC::wf.ekb[iqk][ib2] - GlobalC::wf.ekb[ik][ib1];
+					delta_e = ekb(ik, ib2) - ekb(ik, ib1);
 					if ((delta_e > 0 || delta_e == 0) && delta_e < ((nomega-1) * domega) )
 					{
 						int n = int(delta_e/domega);
 						e1 = double(n) * domega;
 						e2 = double(n+1) * domega;
-						//weight1 = std::complex<double>( (GlobalC::wf.wg(ik,ib1) - GlobalC::wf.wg(iqk,ib2)) * (e2 - delta_e)/domega/GlobalC::ucell.omega, 0.0);
-						//weight2 = std::complex<double>( (GlobalC::wf.wg(ik,ib1) - GlobalC::wf.wg(iqk,ib2)) * (delta_e - e1)/domega/GlobalC::ucell.omega, 0.0);
+						//weight1 = std::complex<double>( (wg(ik,ib1) - wg(iqk,ib2)) * (e2 - delta_e)/domega/GlobalC::ucell.omega, 0.0);
+						//weight2 = std::complex<double>( (wg(ik,ib1) - wg(iqk,ib2)) * (delta_e - e1)/domega/GlobalC::ucell.omega, 0.0);
 						weight1 = std::complex<double>( (cweight[ik][ib1] - cweight[iqk][ib2]) * (e2 - delta_e)/domega/GlobalC::ucell.omega, 0.0);
 						weight2 = std::complex<double>( (cweight[ik][ib1] - cweight[iqk][ib2]) * (delta_e - e1)/domega/GlobalC::ucell.omega, 0.0);
 						for(int g0=0; g0<dim; g0++)
@@ -1576,7 +1575,6 @@ void Chi0_hilbert::Cal_Chi0s(int iq)
 						int n = int(delta_e/domega);
 						e1 = double(n) * domega;
 						e2 = double(n+1) * domega;
-						//weight1 = std::complex<double>( (GlobalC::wf.wg(ik,ib1) - GlobalC::wf.wg(iqk,ib2)) * (e2 - delta_e)/domega/GlobalC::ucell.omega, 0.0);
 						weight1 = std::complex<double>( (cweight[ik][ib1] - cweight[iqk][ib2]) * (e2 - delta_e)/domega/GlobalC::ucell.omega, 0.0);
 						for(int g0=0; g0<dim; g0++)
 						{
@@ -1607,14 +1605,14 @@ void Chi0_hilbert::Cal_Chi0s(int iq)
 			{
 				for(int ib2=0; ib2<GlobalV::NBANDS; ib2++)
 				{
-					delta_e = GlobalC::wf.ekb[iqk][ib2] - GlobalC::wf.ekb[ik][ib1];
+					delta_e = ekb(iqk, ib2) - ekb(ik, ib1);
 					if ((delta_e > 0 || delta_e == 0) && delta_e < ((nomega-1) * domega) )
 					{
 						int n = int(delta_e/domega);
 						e1 = double(n) * domega;
 						e2 = double(n+1) * domega;
-						//weight1 = std::complex<double>( (GlobalC::wf.wg(ik,ib1) - GlobalC::wf.wg(iqk,ib2)) * (e2 - delta_e)/domega/GlobalC::ucell.omega, 0.0);
-						//weight2 = std::complex<double>( (GlobalC::wf.wg(ik,ib1) - GlobalC::wf.wg(iqk,ib2)) * (delta_e - e1)/domega/GlobalC::ucell.omega, 0.0);
+						//weight1 = std::complex<double>( (wg(ik,ib1) - wg(iqk,ib2)) * (e2 - delta_e)/domega/GlobalC::ucell.omega, 0.0);
+						//weight2 = std::complex<double>( (wg(ik,ib1) - wg(iqk,ib2)) * (delta_e - e1)/domega/GlobalC::ucell.omega, 0.0);
 						weight1 = std::complex<double>( (cweight[ik][ib1] - cweight[iqk][ib2]) * (e2 - delta_e)/domega/GlobalC::ucell.omega, 0.0);
 						weight2 = std::complex<double>( (cweight[ik][ib1] - cweight[iqk][ib2]) * (delta_e - e1)/domega/GlobalC::ucell.omega, 0.0);
 						for(int g0=0; g0<dim; g0++)
@@ -1631,7 +1629,7 @@ void Chi0_hilbert::Cal_Chi0s(int iq)
 						int n = int(delta_e/domega);
 						e1 = double(n) * domega;
 						e2 = double(n+1) * domega;
-						//weight1 = std::complex<double>( (GlobalC::wf.wg(ik,ib1) - GlobalC::wf.wg(iqk,ib2)) * (e2 - delta_e)/domega/GlobalC::ucell.omega, 0.0);
+						//weight1 = std::complex<double>( (wg(ik,ib1) - wg(iqk,ib2)) * (e2 - delta_e)/domega/GlobalC::ucell.omega, 0.0);
 						weight1 = std::complex<double>( (cweight[ik][ib1] - cweight[iqk][ib2]) * (e2 - delta_e)/domega/GlobalC::ucell.omega, 0.0);
 						for(int g0=0; g0<dim; g0++)
 						{
@@ -1673,7 +1671,7 @@ void Chi0_hilbert::Cal_Chi0s(int iq)
 				{
 					for(int ib2=0; ib2<GlobalV::NBANDS; ib2++)
 					{
-						delta_e = GlobalC::wf.ekb[iqk][ib2] - GlobalC::wf.ekb[ik][ib1];
+						delta_e = ekb(iqk, ib2) - ekb(ik, ib1);
 						//delta_e = Q[ik][ib2] - Q[ik][ib1];
 						if ((delta_e > 0 || delta_e == 0) && delta_e < ((nomega-1) * domega) )
 						{

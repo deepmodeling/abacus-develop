@@ -19,7 +19,8 @@ void Force_LCAO_gamma::ftable_gamma (
 	const bool isforce,
     const bool isstress,
     const psi::Psi<double>* psid,
-    Local_Orbital_Charge &loc, 
+    Local_Orbital_Charge &loc,
+    const elecstate::ElecState* pelec, 
     ModuleBase::matrix& foverlap,
 	ModuleBase::matrix& ftvnl_dphi,
 	ModuleBase::matrix& fvnl_dbeta,	
@@ -46,7 +47,7 @@ void Force_LCAO_gamma::ftable_gamma (
     this->allocate_gamma(*loc.ParaV);
 
     // calculate the 'energy density matrix' here.
-    this->cal_foverlap(isforce, isstress, psid, loc, foverlap, soverlap);
+    this->cal_foverlap(isforce, isstress, psid, loc, pelec, foverlap, soverlap);
 
     this->cal_ftvnl_dphi(loc.dm_gamma, isforce, isstress, ftvnl_dphi, stvnl_dphi);
     this->calFvnlDbeta(loc.dm_gamma, isforce, isstress, fvnl_dbeta, svnl_dbeta, GlobalV::vnl_method);

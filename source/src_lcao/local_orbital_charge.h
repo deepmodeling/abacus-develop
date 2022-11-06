@@ -11,6 +11,7 @@
 #include "src_lcao/local_orbital_wfc.h"
 #include "src_lcao/LCAO_hamilt.h"
 #include "module_psi/psi.h"
+#include "module_elecstate/elecstate.h"
 
 class Local_Orbital_Charge
 {
@@ -21,6 +22,7 @@ class Local_Orbital_Charge
 
 	// mohan added 2021-02-08
     void allocate_dm_wfc(const int& lgd,
+        elecstate::ElecState* pelec,
         Local_Orbital_wfc &lowf,
         psi::Psi<double>* psid,
         psi::Psi<std::complex<double>>* psi);
@@ -28,9 +30,9 @@ class Local_Orbital_Charge
 	//-----------------
 	// in DM_gamma.cpp
 	//-----------------
-	void allocate_gamma(const int &lgd, psi::Psi<double>* psid);
+	void allocate_gamma(const int &lgd, psi::Psi<double>* psid, elecstate::ElecState* pelec);
 
-    void gamma_file(psi::Psi<double>* psid, Local_Orbital_wfc &lowf);
+    void gamma_file(psi::Psi<double>* psid, Local_Orbital_wfc &lowf, elecstate::ElecState* pelec);
     void cal_dk_gamma_from_2D_pub(void);
     //transformation from 2d block to grid, only gamma_only used it now
     //template<typename T>
@@ -91,7 +93,7 @@ private:
 	// whether the DM(R) array has been allocated
 	bool init_DM_R;
 
-	void cal_dk_gamma(void);
+	void cal_dk_gamma(ModuleBase::matrix& wg);
 
 	// mohan add 2010-09-06
 	int lgd_last;// sub-FFT-mesh orbitals number in previous step.

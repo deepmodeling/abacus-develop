@@ -130,7 +130,6 @@ psi::Psi<std::complex<double>>* wavefunc::allocate(const int nks)
 // This routine computes an estimate of the start_ wavefunctions
 // from superposition of atomic wavefunctions or random wave functions.
 //===================================================================
-#include "occupy.h"
 void wavefunc::wfcinit(psi::Psi<std::complex<double>>* psi_in)
 {
     ModuleBase::TITLE("wavefunc","wfcinit");
@@ -140,18 +139,6 @@ void wavefunc::wfcinit(psi::Psi<std::complex<double>>* psi_in)
 
     GlobalC::en.demet = 0.0;
 
-    //================================
-    // Occupations are computed here
-    //================================
-	if(GlobalV::BASIS_TYPE=="pw")
-	{
-		// mohan fix bug 2011-02-25,
-		// in nscf, occupations is not needed,
-		if(GlobalV::CALCULATION=="scf" || GlobalV::CALCULATION=="md" || GlobalV::CALCULATION=="relax") //pengfei 2014-10-13
-		{
-    		Occupy::calculate_weights();
-		}
-	}
     if (GlobalV::test_wf>2)
     {
         output::printrm(GlobalV::ofs_running, " wg  ",  wg);
@@ -227,7 +214,7 @@ void wavefunc::LCAO_in_pw_k(const int &ik, ModuleBase::ComplexMatrix &wvf)
 	Wavefunc_in_pw::produce_local_basis_in_pw(ik, wvf, this->table_local);
 
 	//-------------------------------------------------------------
-	// (2) diago to get GlobalC::wf.ekb, then the weights can be calculated.
+	// (2) diago to get ElecState::ekb, then the weights can be calculated.
 	//-------------------------------------------------------------
     GlobalC::hm.hpw.allocate(this->npwx, GlobalV::NPOL, GlobalC::ppcell.nkb, GlobalC::wfcpw->nrxx);
 	GlobalC::hm.hpw.init_k(ik);

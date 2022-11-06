@@ -994,7 +994,7 @@ void ESolver_OF::cal_Energy(double& etot)
 void ESolver_OF::cal_Force(ModuleBase::matrix& force)
 {
     Forces ff;
-    ff.init(force);
+    ff.init(force, GlobalC::wf.wg);
 }
 
 void ESolver_OF::cal_Stress(ModuleBase::matrix& stress)
@@ -1034,7 +1034,7 @@ void ESolver_OF::cal_Stress(ModuleBase::matrix& stress)
     }
 
     OF_Stress_PW ss;
-    ss.cal_stress(stress, kinetic_stress);
+    ss.cal_stress(stress, GlobalC::wf.wg, kinetic_stress);
 }
 
 // Calculated kinetic potential and plus it to &rpot, return (rpot + kietic potential) * 2 * pphiInpt

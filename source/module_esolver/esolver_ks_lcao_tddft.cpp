@@ -173,16 +173,6 @@ void ESolver_KS_LCAO_TDDFT::eachiterinit(const int istep, const int iter)
 
             // calculate the density matrix using read in wave functions
             // and the ncalculate the charge density on grid.
-
-            // transform wg and ekb to elecstate first
-            for (int ik = 0; ik < this->pelec_td->ekb.nr; ++ik)
-            {
-                for (int ib = 0; ib < this->pelec_td->ekb.nc; ++ib)
-                {
-                    this->pelec_td->ekb(ik, ib) = GlobalC::wf.ekb[ik][ib];
-                    this->pelec_td->wg(ik, ib) = GlobalC::wf.wg(ik, ib);
-                }
-            }
             if (this->psi != nullptr)
             {
                 if (istep >= 2)
@@ -252,7 +242,7 @@ void ESolver_KS_LCAO_TDDFT::hamilt2density(int istep, int iter, double ethr)
 
     if (ELEC_evolve::tddft && istep >= 2 && !GlobalV::GAMMA_ONLY_LOCAL)
     {
-        ELEC_evolve::evolve_psi(istep, this->p_hamilt, this->LOWF, this->psi, this->psi_laststep);
+        ELEC_evolve::evolve_psi(istep, this->p_hamilt, this->LOWF, this->psi, this->psi_laststep, this->pelec_td->ekb);
         this->pelec_td->psiToRho_td(this->psi[0]);
         // this->pelec_td->psiToRho(this->psi[0]);
     }
@@ -308,7 +298,7 @@ void ESolver_KS_LCAO_TDDFT::hamilt2density(int istep, int iter, double ethr)
 
     for (int ik = 0; ik < GlobalC::kv.nks; ++ik)
     {
-        GlobalC::en.print_band(ik);
+        this->pelec_td->print_band(ik, GlobalC::en.printe, iter);
     }
 
     // (4) mohan add 2010-06-24
@@ -419,8 +409,8 @@ void ESolver_KS_LCAO_TDDFT::afterscf(const int istep)
     {
         for (int ib = 0; ib < this->pelec_td->ekb.nc; ++ib)
         {
-            GlobalC::wf.ekb[ik][ib] = this->pelec_td->ekb(ik, ib);
-            GlobalC::wf.wg(ik, ib) = this->pelec_td->wg(ik, ib);
+            this->pelec->ekb(ik, ib) = this->pelec_td->ekb(ik, ib);
+            this->pelec->wg(ik, ib) = this->pelec_td->wg(ik, ib);
         }
     }
     // if (this->conv_elec || iter == GlobalV::SCF_NMAX)
@@ -437,7 +427,7 @@ void ESolver_KS_LCAO_TDDFT::afterscf(const int istep)
         std::cout << "dim = " << GlobalC::chi0_hilbert.dim << std::endl;
         // std::cout <<"oband = "<<GlobalC::chi0_hilbert.oband<<std::endl;
         GlobalC::chi0_hilbert.wfc_k_grid = this->LOWF.wfc_k_grid;
-        GlobalC::chi0_hilbert.Chi();
+        GlobalC::chi0_hilbert.Chi(this->pelec_td->ekb);
     }
 
     for (int is = 0; is < GlobalV::NSPIN; is++)
