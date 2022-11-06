@@ -395,13 +395,6 @@ void ESolver_KS_LCAO_TDDFT::updatepot(const int istep, const int iter)
     }
     if (this->conv_elec)
     {
-        for (int ik = 0; ik < this->pelec_td->ekb.nr; ++ik)
-        {
-            for (int ib = 0; ib < this->pelec_td->ekb.nc; ++ib)
-            {
-                this->pelec_td->ekb(ik, ib) = GlobalC::wf.ekb[ik][ib];
-            }
-        }
         GlobalV::ofs_running
             << "------------------------------------------------------------------------------------------------"
             << endl;
