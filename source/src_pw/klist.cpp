@@ -671,11 +671,6 @@ void K_Vectors::ibz_kpoint(const ModuleSymmetry::Symmetry &symm, bool use_symm,s
 						// find another ibz k point,
 						// but is already in the ibz_kpoint list.
 						// so the weight need to +1;
-                        // output in kpoints file
-                        ss << std::setw(8) << k+1
-                            << std::setw(20) << this->kvec_d_ibz[k].x
-                            << std::setw(20) << this->kvec_d_ibz[k].y
-                            << std::setw(20) << this->kvec_d_ibz[k].z << std::endl;
 
                         this->wk_ibz[k] += weight;
 						exist_number = k;
@@ -730,6 +725,11 @@ void K_Vectors::ibz_kpoint(const ModuleSymmetry::Symmetry &symm, bool use_symm,s
 			{
 				kvec_d_ibz[exist_number] = kvec_d[i];
 			}
+            // output in kpoints file
+		    ss << std::setw(8) << exist_number+1
+                << std::setw(20) << this->kvec_d_ibz[exist_number].x
+                << std::setw(20) << this->kvec_d_ibz[exist_number].y
+                << std::setw(20) << this->kvec_d_ibz[exist_number].z << std::endl;
 		}
 //		BLOCK_HERE("check k point");
     }
