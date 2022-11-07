@@ -285,6 +285,12 @@ void matrix::zero_out(void)
 		c[i] = 0.0;
 }
 
+void matrix::fill_out(const double x)
+{
+	const int size = nr*nc;
+	for(int i = 0; i < size; i++)
+		c[i] = x;
+}
 
 matrix transpose(const matrix &m)
 {
@@ -337,11 +343,13 @@ void matrix::get_extreme_eigen_values(double &ev_lower, double &ev_upper)const
 }
 
 // Peize Lin add 2017-05-27
-void matrix::reshape( const double nr_new, const double nc_new )
+void matrix::reshape( const double nr_new, const double nc_new, const bool flag_zero )
 {
 	assert( nr*nc == nr_new*nc_new );
 	nr=nr_new;
 	nc=nc_new;
+
+	if(flag_zero) this-> zero_out();
 }
 
 double trace_on(const matrix &A, const matrix &B)

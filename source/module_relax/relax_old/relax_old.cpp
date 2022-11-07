@@ -1,12 +1,29 @@
-#include "ions.h"
-#include "../src_pw/global.h" // use chr.
-#include "../src_io/print_info.h"
+#include "relax_old.h"
+#include "src_pw/global.h" // use chr.
+#include "src_io/print_info.h"
 #include "variable_cell.h" // mohan add 2021-02-01
 
-// The interface for relaxation
-bool Ions::relaxation(ModuleBase::matrix force, ModuleBase::matrix stress, const int &istep, int &force_step, int &stress_step)
+void Relax_old::init_relax()
 {
-	ModuleBase::TITLE("Ions","after_scf");
+	// Geometry optimization algorithm setup.
+	if (GlobalV::CALCULATION=="relax")
+	{
+		//Ions_Move_Methods
+		IMM.allocate();
+	}
+	if (GlobalV::CALCULATION=="cell-relax")
+	{
+		//Ions_Move_Methods
+		IMM.allocate();
+		// allocate arrays related to changes of lattice vectors
+		LCM.allocate();
+	}
+}
+
+// The interface for relaxation
+bool Relax_old::relax_step(ModuleBase::matrix force, ModuleBase::matrix stress, const int &istep, int &force_step, int &stress_step)
+{
+	ModuleBase::TITLE("Relax_old","relax_step");
 
 	// should not do it this way, will change after the refactor of ucell class
 	GlobalC::ucell.ionic_position_updated = false;
@@ -51,9 +68,9 @@ bool Ions::relaxation(ModuleBase::matrix force, ModuleBase::matrix stress, const
     return 1;
 }
 
-bool Ions::if_do_relax()
+bool Relax_old::if_do_relax()
 {
-	ModuleBase::TITLE("Ions","if_do_relax");
+	ModuleBase::TITLE("Relax_old","if_do_relax");
 	if(GlobalV::CALCULATION=="relax"||GlobalV::CALCULATION=="cell-relax")
 	{
 		if(!GlobalC::ucell.if_atoms_can_move()) 
@@ -70,9 +87,9 @@ bool Ions::if_do_relax()
 	}
 	else return 0;
 }
-bool Ions::if_do_cellrelax()
+bool Relax_old::if_do_cellrelax()
 {
-	ModuleBase::TITLE("Ions","if_do_cellrelax");
+	ModuleBase::TITLE("Relax_old","if_do_cellrelax");
 	if(GlobalV::CALCULATION=="cell-relax")
 	{
 		if(!GlobalC::ucell.if_cell_can_change()) 
@@ -93,22 +110,22 @@ bool Ions::if_do_cellrelax()
 	}
 	else return 0;
 }
-bool Ions::do_relax(const int& istep, int& jstep, const ModuleBase::matrix& ionic_force, const double& total_energy)
+bool Relax_old::do_relax(const int& istep, int& jstep, const ModuleBase::matrix& ionic_force, const double& total_energy)
 {
-	ModuleBase::TITLE("Ions","do_relax");
+	ModuleBase::TITLE("Relax_old","do_relax");
 	IMM.cal_movement(istep, jstep, ionic_force, total_energy);
 	++jstep;
 	return IMM.get_converged();
 }
-bool Ions::do_cellrelax(const int&istep, const int& stress_step, const ModuleBase::matrix& stress, const double& total_energy)
+bool Relax_old::do_cellrelax(const int&istep, const int& stress_step, const ModuleBase::matrix& stress, const double& total_energy)
 {
-	ModuleBase::TITLE("Ions","do_cellrelax");
+	ModuleBase::TITLE("Relax_old","do_cellrelax");
 	LCM.cal_lattice_change(istep, stress_step, stress, total_energy);
     return LCM.get_converged();
 }
-void Ions::reset_after_relax(const int& istep)
+void Relax_old::reset_after_relax(const int& istep)
 {
-	ModuleBase::TITLE("Ions","reset_after_relax");
+	ModuleBase::TITLE("Relax_old","reset_after_relax");
     // Temporary  liuyu add 2022-11-04
     if(!(GlobalV::ESOLVER_TYPE == "lj" || GlobalV::ESOLVER_TYPE == "dp"))
     {
@@ -117,9 +134,9 @@ void Ions::reset_after_relax(const int& istep)
     }
 }
 
-void Ions::reset_after_cellrelax(int& f_step, int& s_step)
+void Relax_old::reset_after_cellrelax(int& f_step, int& s_step)
 {
-	ModuleBase::TITLE("Ions","reset_after_cellrelax");
+	ModuleBase::TITLE("Relax_old","reset_after_cellrelax");
     // Temporary  liuyu add 2022-11-04
     if(GlobalV::ESOLVER_TYPE == "lj" || GlobalV::ESOLVER_TYPE == "dp")
     {

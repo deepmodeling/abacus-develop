@@ -20,7 +20,7 @@
   [method_sto](#method_sto) | [nbands_sto](#nbands_sto) | [nche_sto](#nche_sto) | [emin_sto](#emin_sto) | [emax_sto](#emax_sto) | [seed_sto](#seed_sto) | [initsto_freq](#initsto_freq) | [npart_sto](#npart_sto)
 - [Geometry relaxation](#geometry-relaxation)
 
-  [relax_nmax](#relax_nmax) | [relax_method](#relax_method) | [relax_cg_thr](#relax_cg_thr) | [relax_bfgs_w1](#relax_bfgs_w1) | [relax_bfgs_w2](#relax_bfgs_w2) | [relax_bfgs_rmax](#relax_bfgs_rmax) | [relax_bfgs_rmin](#relax_bfgs_rmin) | [relax_bfgs_init](#relax_bfgs_init) | [cal_force](#cal_force) | [force_thr](#force_thr) | [force_thr_ev](#force_thr_ev) | [force_thr_ev2](#force_thr_ev2) | [cal_stress](#cal_stress) | [stress_thr](#stress_thr) | [press1, press2, press3](#press1-press2-press3) | [fixed_axes](#fixed_axes) | [cell_factor](#cell_factor)
+  [relax_nmax](#relax_nmax) | [relax_method](#relax_method) | [relax_cg_thr](#relax_cg_thr) | [relax_bfgs_w1](#relax_bfgs_w1) | [relax_bfgs_w2](#relax_bfgs_w2) | [relax_bfgs_rmax](#relax_bfgs_rmax) | [relax_bfgs_rmin](#relax_bfgs_rmin) | [relax_bfgs_init](#relax_bfgs_init) | [cal_force](#cal_force) | [force_thr](#force_thr) | [force_thr_ev](#force_thr_ev) | [force_thr_ev2](#force_thr_ev2) | [cal_stress](#cal_stress) | [stress_thr](#stress_thr) | [press1, press2, press3](#press1-press2-press3) | [fixed_axes](#fixed_axes) | [cell_factor](#cell_factor) | [fixed_ibrav](#fixed_ibrav) | [relax_new](#relax_new)
 - [Variables related to output information](#variables-related-to-output-information)
 
   [out_force](#out_force) | [out_mul](#out_mul) | [out_freq_elec](#out_freq_elec) | [out_freq_ion](#out_freq_ion) | [out_chg](#out_chg) | [out_pot](#out_pot) | [out_dm](#out_dm) | [out_wfc_pw](#out_wfc_pw) | [out_wfc_r](#out_wfc_r) | [out_wfc_lcao](#out_wfc_lcao) | [out_dos](#out_dos) | [out_band](#out_band) | [out_proj_band](#out_proj_band) | [out_stru](#out_stru) | [out_level](#out_level) | [out_alllog](#out_alllog) | [out_mat_hs](#out_mat_hs) | [out_mat_r](#out_mat_r) | [out_mat_hs2](#out_mat_hs2) | [out_element_info](#out_element_info) | [restart_save](#restart_save) | [restart_load](#restart_load) | [dft_plus_dmft](#dft_plus_dmft) | [rpa](#rpa)
@@ -141,24 +141,24 @@ This part of variables are used to control general system parameters.
 ### latname
 
 - **Type**: String
-- **Description**: Specifies the type of Bravias lattice. When set to `test`, the three lattice vectors are supplied explicitly in STRU file. When set to certain Bravais lattice type, there is no need to provide lattice vector, but a few lattice parameters might be required. For more information regarding this parameter, consult the [page on STRU file](stru.md).
-  Available options are:
-  - `test`: free strcture.
-  - `sc`: simple cubie.
-  - `fcc`: face-centered cubic.
-  - `bcc`: body-centered cubic.
-  - `hexagonal`: hexagonal.
-  - `trigonal`: trigonal.
-  - `st`: simple tetragonal.
-  - `bct`: body-centered tetragonal.
-  - `so`: orthorhombic.
-  - `baco`: base-centered orthorhombic.
-  - `fco`: face-centered orthorhombic.
-  - `bco`: body-centered orthorhombic.
-  - `sm`: simple monoclinic.
-  - `bacm`: base-centered monoclinic.
-  - `triclinic`: triclinic.
-- **Default**: `test`
+- **Description**: Specifies the type of Bravias lattice. When set to `none`, the three lattice vectors are supplied explicitly in STRU file. When set to certain Bravais lattice type, there is no need to provide lattice vector, but a few lattice parameters might be required. For more information regarding this parameter, consult the [page on STRU file](stru.md).
+  Available options are (correspondence with ibrav in QE is given in parenthesis):
+  - `none`: free strcture.
+  - `sc`: simple cubic. (1)
+  - `fcc`: face-centered cubic. (2)
+  - `bcc`: body-centered cubic. (3)
+  - `hexagonal`: hexagonal. (4)
+  - `trigonal`: trigonal. (5)
+  - `st`: simple tetragonal. (6)
+  - `bct`: body-centered tetragonal. (7)
+  - `so`: orthorhombic. (8)
+  - `baco`: base-centered orthorhombic. (9)
+  - `fco`: face-centered orthorhombic. (10)
+  - `bco`: body-centered orthorhombic. (11)
+  - `sm`: simple monoclinic. (12)
+  - `bacm`: base-centered monoclinic. (13)
+  - `triclinic`: triclinic. (14)
+- **Default**: `none`
 
 ### init_wfc
 
@@ -733,19 +733,36 @@ This part of variables are used to control the geometry relaxation.
 - **Description**:which axes are fixed when do cell relaxation. Possible choices are:
   - None : default; all can relax
   - volume : relaxation with fixed volume
+  - shape : fix shape but change volume (i.e. only lattice constant changes)
   - a : fix a axis during relaxation
   - b : fix b axis during relaxation
   - c : fix c axis during relaxation
   - ab : fix both a and b axes during relaxation
   - ac : fix both a and c axes during relaxation
   - bc : fix both b and c axes during relaxation
-  - abc : fix all three axes during relaxation
+
+> Note : fixed_axes = "shape" and "volume" are only available for [relax_new](#relax_new) = 1
 - **Default**: None
+
+### fixed_ibrav
+
+- **Type**: Boolean
+- **Description**: when set to true, the lattice type will be preserved during relaxation. Must be used along with [relax_new](#relax_new) set to true, and a specific [latname](#latname) must be provided
+
+> Note: it is possible to use fixed_ibrav with fixed_axes, but please make sure you know what you are doing. For example, if we are doing relaxation of a simple cubic lattic (latname = "sc"), and we use fixed_ibrav along with fixed_axes = "volume", then the cell is never allowed to move and as a result the relaxation never converges.
+
+- **Default**: False
+
+### fixed_atoms
+
+- **Type**: Boolean
+- **Description**: when set to true, the direct coordinates of atoms will be preserved during variable-cell relaxation. If set to false, users can still fix certain components of certain atoms by using the `m` keyword in `STRU` file. For the latter option, check the end of this [instruction](stru.md).
+- **Default**: False
 
 ### relax_method
 
 - **Type**: String
-- **Description**: The method to do geometry optimizations:
+- **Description**: The method to do geometry optimizations, note that if relax_new is set to 1, then only cg is available:
   - bfgs: using BFGS algorithm.
   - sd: using steepest-descent algorithm.
   - cg: using cg algorithm.
@@ -757,6 +774,13 @@ This part of variables are used to control the geometry relaxation.
 - **Type**: Real
 - **Description**: When move-method is set to 'cg-bfgs', a mixed cg-bfgs algorithm is used. The ions first move according to cg method, then switched to bfgs when maximum of force on atoms is reduced below cg-threshold. Unit is eV/Angstrom.
 - **Default**: 0.5
+
+### relax_new
+
+- **Type**: Boolean
+- **Description**: At around end of 2022 we mad a new implemention of the CG method for relax and cell-relax calculations. But the old implementation was also kept. To use the new method, set relax_new to be true. To use the old one, set it to be false.
+
+- **Default**: True
 
 ### cell_factor
 

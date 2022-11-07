@@ -130,7 +130,7 @@ void Input::Default(void)
     read_file_dir = "auto";
     // pseudo_type = "auto"; // mohan add 2013-05-20 (xiaohui add 2013-06-23)
     wannier_card = "";
-    latname = "test";
+    latname = "none";
     // xiaohui modify 2015-09-15, relax -> scf
     // calculation = "relax";
     calculation = "scf";
@@ -195,15 +195,19 @@ void Input::Default(void)
     press3 = 0.0;
     cal_stress = false;
     fixed_axes = "None"; // pengfei 2018-11-9
+    fixed_ibrav = false;
+    fixed_atoms = false;
     relax_method = "cg"; // pengfei  2014-10-13
     relax_cg_thr = 0.5; // pengfei add 2013-08-15
     out_level = "ie";
     out_md_control = false;
+    relax_new = true;
     relax_bfgs_w1 = 0.01; // mohan add 2011-03-13
     relax_bfgs_w2 = 0.5;
     relax_bfgs_rmax = 0.8; // bohr
     relax_bfgs_rmin = 1e-5;
     relax_bfgs_init = 0.5; // bohr
+    relax_scale_force = 0.5;
     nbspline = -1;
     //----------------------------------------------------------
     // ecutwfc
@@ -804,6 +808,14 @@ bool Input::Read(const std::string &fn)
         {
             read_value(ifs, fixed_axes);
         }
+        else if (strcmp("fixed_ibrav", word) == 0)
+        {
+            read_value(ifs, fixed_ibrav);
+        }
+        else if (strcmp("fixed_atoms", word) == 0)
+        {
+            read_value(ifs, fixed_atoms);
+        }
         else if (strcmp("relax_method", word) == 0)
         {
             read_value(ifs, relax_method);
@@ -837,12 +849,15 @@ bool Input::Read(const std::string &fn)
         {
             read_value(ifs, relax_bfgs_init);
         }
-        //		else if (strcmp("gauss_pao_flag", word) == 0)
-        //		else if (strcmp("gauss_pao_flag", word) == 0)
-        //		else if (strcmp("gauss_pao_flag", word) == 0)
-        //		{
-        //			read_value(ifs, gauss_PAO_flag);
-        //		}
+        else if (strcmp("relax_scale_force", word) == 0)
+        {
+            read_value(ifs, relax_scale_force);
+        }
+        else if (strcmp("relax_new", word) == 0)
+        {
+            read_value(ifs, relax_new);
+        }
+
         //----------------------------------------------------------
         // plane waves
         //----------------------------------------------------------
@@ -2168,6 +2183,8 @@ void Input::Bcast()
     Parallel_Common::bcast_double(press3);
     Parallel_Common::bcast_bool(cal_stress);
     Parallel_Common::bcast_string(fixed_axes);
+    Parallel_Common::bcast_bool(fixed_ibrav);
+    Parallel_Common::bcast_bool(fixed_atoms);
     Parallel_Common::bcast_string(relax_method);
     Parallel_Common::bcast_double(relax_cg_thr); // pengfei add 2013-08-15
     Parallel_Common::bcast_string(out_level);
@@ -2177,6 +2194,8 @@ void Input::Bcast()
     Parallel_Common::bcast_double(relax_bfgs_rmax);
     Parallel_Common::bcast_double(relax_bfgs_rmin);
     Parallel_Common::bcast_double(relax_bfgs_init);
+    Parallel_Common::bcast_double(relax_scale_force);
+    Parallel_Common::bcast_bool(relax_new);
 
     Parallel_Common::bcast_bool(gamma_only);
     Parallel_Common::bcast_bool(gamma_only_local);

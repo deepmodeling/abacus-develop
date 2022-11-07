@@ -11,7 +11,7 @@
 #include "src_io/epsilon0_pwscf.h"
 #include "src_io/epsilon0_vasp.h"
 #include "src_io/optical.h"
-#include "module_relaxation/ions_move_basic.h"
+#include "module_relax/relax_old/ions_move_basic.h"
 #include "src_pw/global.h"
 #include "src_pw/occupy.h"
 #ifdef __EXX
@@ -50,6 +50,23 @@ void Input_Conv::Convert(void)
         GlobalV::global_orbital_dir = INPUT.orbital_dir + "/";
     // GlobalV::global_pseudo_type = INPUT.pseudo_type;
     GlobalC::ucell.setup(INPUT.latname, INPUT.ntype, INPUT.lmaxmax, INPUT.init_vel, INPUT.fixed_axes);
+    if(INPUT.fixed_ibrav && !INPUT.relax_new)
+    {
+        ModuleBase::WARNING_QUIT("Input_Conv","fixed_ibrav only available for relax_new = 1");
+    }
+    if(INPUT.latname=="none" && INPUT.fixed_ibrav)
+    {
+        ModuleBase::WARNING_QUIT("Input_Conv","to use fixed_ibrav, latname must be provided");
+    }
+    if(INPUT.calculation == "relax" && INPUT.fixed_atoms)
+    {
+        ModuleBase::WARNING_QUIT("Input_Conv","fixed_atoms is not meant to be used for calculation = relax");
+    }
+    if(INPUT.relax_new && INPUT.relax_method!="cg")
+    {
+        ModuleBase::WARNING_QUIT("Input_Conv","only CG has been implemented for relax_new");
+    }
+    GlobalV::fixed_atoms = INPUT.fixed_atoms;
 
     GlobalV::KSPACING = INPUT.kspacing;
     GlobalV::MIN_DIST_COEF = INPUT.min_dist_coef;
@@ -109,6 +126,9 @@ void Input_Conv::Convert(void)
     GlobalV::CAL_STRESS = INPUT.cal_stress;
 
     GlobalV::RELAX_METHOD = INPUT.relax_method;
+    GlobalV::relax_scale_force = INPUT.relax_scale_force;
+    GlobalV::relax_new = INPUT.relax_new;
+
     GlobalV::OUT_LEVEL = INPUT.out_level;
     Ions_Move_CG::RELAX_CG_THR = INPUT.relax_cg_thr; // pengfei add 2013-09-09
 
@@ -352,6 +372,11 @@ void Input_Conv::Convert(void)
             GlobalC::restart.info_load.load_charge = true;
             GlobalC::restart.info_load.load_H = true;
         }
+    }
+
+    if(GlobalV::CALCULATION=="cell-relax" && INPUT.cell_factor < 2.0)
+    {
+        INPUT.cell_factor = 2.0; //follows QE
     }
 
 //----------------------------------------------------------

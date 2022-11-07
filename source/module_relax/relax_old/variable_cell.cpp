@@ -1,6 +1,6 @@
 #include "variable_cell.h"
-#include "../src_pw/global.h"
-#include "../input.h"
+#include "src_pw/global.h"
+#include "input.h"
 
 Variable_Cell::Variable_Cell(){}
 Variable_Cell::~Variable_Cell(){}

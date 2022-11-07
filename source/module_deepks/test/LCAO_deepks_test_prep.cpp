@@ -33,7 +33,7 @@ void test_deepks::set_parameters()
 	ifs >> GlobalV::GAMMA_ONLY_LOCAL;
 	ifs.close();
 
-	ucell.latName = "test";
+	ucell.latName = "none";
 	ucell.ntype = ntype;
 	return;
 }

@@ -169,7 +169,10 @@ void Input::Print(const std::string &fn) const
     ModuleBase::GlobalFunc::OUTP(ofs, "relax_bfgs_init", relax_bfgs_init, "initial trust radius, unit: Bohr");
     ModuleBase::GlobalFunc::OUTP(ofs, "cal_stress", cal_stress, "calculate the stress or not");
     ModuleBase::GlobalFunc::OUTP(ofs, "fixed_axes", fixed_axes, "which axes are fixed");
+    ModuleBase::GlobalFunc::OUTP(ofs, "fixed_ibrav", fixed_axes, "whether to preseve lattice type during relaxation");
+    ModuleBase::GlobalFunc::OUTP(ofs, "fixed_atoms", fixed_atoms, "whether to preseve direct coordinates of atoms during relaxation");
     ModuleBase::GlobalFunc::OUTP(ofs, "relax_method", relax_method, "bfgs; sd; cg; cg_bfgs;"); // pengfei add 2013-08-15
+    ModuleBase::GlobalFunc::OUTP(ofs, "relax_new", relax_new, "whether to use the new relaxation method");
     ModuleBase::GlobalFunc::OUTP(ofs, "out_level", out_level, "ie(for electrons); i(for ions);");
     ModuleBase::GlobalFunc::OUTP(ofs, "out_dm", out_dm, ">0 output density matrix");
 
