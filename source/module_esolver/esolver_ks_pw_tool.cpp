@@ -23,7 +23,7 @@ namespace ModuleESolver
 //------------------------------------------------------------------
 #define TWOSQRT2LN2 2.354820045030949 // FWHM = 2sqrt(2ln2) * \sigma
 #define FACTOR      1.839939223835727e7
-void ESolver_KS_PW::KG(const int nche_KG, const double fwhmin, const double wcut, const double dw_in, const int times)
+void ESolver_KS_PW::KG(const int nche_KG, const double fwhmin, const double wcut, const double dw_in, const int times, ModuleBase::matrix& wg)
 {
     //-----------------------------------------------------------
     //               KS conductivity
@@ -105,11 +105,11 @@ void ESolver_KS_PW::KG(const int nche_KG, const double fwhmin, const double wcut
                 for (int ib = 0; ib < nbands; ++ib)
                 {
                     double ei = enb[ib];
-                    double fi = GlobalC::wf.wg(ik, ib);
+                    double fi = wg(ik, ib);
                     for (int jb = ib + 1; jb < nbands; ++jb)
                     {
                         double ej = enb[jb];
-                        double fj = GlobalC::wf.wg(ik, jb);
+                        double fj = wg(ik, jb);
                         double tmct = sin((ej - ei) * (it)*dt) * (fi - fj) * norm(pij[ib * nbands + jb]);
                         tmct11 += tmct;
                         tmct12 += -tmct * ((ei + ej) / 2 - ef);

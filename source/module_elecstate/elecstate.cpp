@@ -215,52 +215,53 @@ void ElecState::calEBand()
 
 void ElecState::print_band(const int& ik, const int& printe, const int& iter)
 {
-    // check the band energy.
+    //check the band energy.
     bool wrong = false;
-    int nbands = this->ekb.nc;
-    for (int ib = 0; ib < nbands; ++ib)
+	for(int ib=0; ib<GlobalV::NBANDS; ++ib)
+	{
+		if( abs( this->ekb(ik, ib) ) > 1.0e10)
+		{
+			GlobalV::ofs_warning << " ik=" << ik+1 << " ib=" << ib+1 << " " << this->ekb(ik, ib) << " Ry" << std::endl;
+			wrong = true;
+		}
+	}
+	if(wrong)
     {
-        if (abs(this->ekb(ik, ib)) > 1.0e10)
-        {
-            GlobalV::ofs_warning << " ik=" << ik + 1 << " ib=" << ib + 1 << " " << this->ekb(ik, ib) << " Ry"
-                                 << std::endl;
-            wrong = true;
-        }
-    }
-    if (wrong)
-    {
-        ModuleBase::WARNING_QUIT("Threshold_Elec::print_eigenvalue", "Eigenvalues are too large!");
+        ModuleBase::WARNING_QUIT("Threshold_Elec::print_eigenvalue","Eigenvalues are too large!");
     }
 
-    if (GlobalV::MY_RANK == 0)
-    {
-        // if( GlobalV::DIAGO_TYPE == "selinv" ) xiaohui modify 2013-09-02
-        if (GlobalV::KS_SOLVER == "selinv") // xiaohui add 2013-09-02
-        {
-            GlobalV::ofs_running << " No eigenvalues are available for selected inversion methods." << std::endl;
-        }
-        else
-        {
-            if (printe > 0 && ((iter + 1) % printe == 0))
-            {
-                //	NEW_PART("ENERGY BANDS (Rydberg), (eV)");
-                GlobalV::ofs_running << std::setprecision(6);
-                GlobalV::ofs_running << " Energy (eV) & Occupations  for spin=" << GlobalV::CURRENT_SPIN + 1
-                                     << " K-point=" << ik + 1 << std::endl;
-                GlobalV::ofs_running << std::setiosflags(ios::showpoint);
-                for (int ib = 0; ib < nbands; ib++)
-                {
-                    GlobalV::ofs_running << " " << std::setw(6) << ib + 1 << std::setw(15)
-                                         << this->ekb(ik, ib) * ModuleBase::Ry_to_eV;
-                    // for the first electron iteration, we don't have the energy
-                    // spectrum, so we can't get the occupations.
-                    GlobalV::ofs_running << std::setw(15) << this->wg(ik, ib);
-                    GlobalV::ofs_running << std::endl;
-                }
-            }
-        }
-    }
-    return;
+
+
+	if(GlobalV::MY_RANK==0)
+	{
+		//if( GlobalV::DIAGO_TYPE == "selinv" ) xiaohui modify 2013-09-02
+		if(GlobalV::KS_SOLVER=="selinv") //xiaohui add 2013-09-02
+		{
+			GlobalV::ofs_running << " No eigenvalues are available for selected inversion methods." << std::endl;	
+		}
+		else
+		{
+			if( printe>0 && ((iter+1) % printe == 0))
+			{
+				//	NEW_PART("ENERGY BANDS (Rydberg), (eV)");
+
+                
+				GlobalV::ofs_running << std::setprecision(6);
+				GlobalV::ofs_running << " Energy (eV) & Occupations  for spin=" << GlobalV::CURRENT_SPIN+1 << " K-point=" << ik+1 << std::endl;
+				GlobalV::ofs_running << std::setiosflags(ios::showpoint);
+				for(int ib=0;ib<GlobalV::NBANDS;ib++)
+				{
+					GlobalV::ofs_running << " "<< std::setw(6) << ib+1  
+						<< std::setw(15) << this->ekb(ik, ib) * ModuleBase::Ry_to_eV;
+					// for the first electron iteration, we don't have the energy
+					// spectrum, so we can't get the occupations. 
+					GlobalV::ofs_running << std::setw(15) << this->wg(ik,ib);
+					GlobalV::ofs_running << std::endl;
+				}
+			}
+		}
+	}
+	return;
 }
 
 } // namespace elecstate

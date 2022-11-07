@@ -13,7 +13,7 @@
 
 
 
-void Sto_Forces::init(ModuleBase::matrix& force, const psi::Psi<std::complex<double>>* psi_in, Stochastic_WF& stowf)
+void Sto_Forces::init(ModuleBase::matrix& force, const ModuleBase::matrix& wg, const psi::Psi<std::complex<double>>* psi_in, Stochastic_WF& stowf)
 {
 	ModuleBase::timer::tick("Sto_Force","cal_force");
 	ModuleBase::TITLE("Sto_Forces", "init");
@@ -27,7 +27,7 @@ void Sto_Forces::init(ModuleBase::matrix& force, const psi::Psi<std::complex<dou
 	ModuleBase::matrix forcescc(nat, 3);
     this->cal_force_loc(forcelc, GlobalC::rhopw);
     this->cal_force_ew(forceion, GlobalC::rhopw);
-    this->cal_sto_force_nl(forcenl,psi_in,stowf);
+    this->cal_sto_force_nl(forcenl, wg, psi_in,stowf);
 	this->cal_force_cc(forcecc, GlobalC::rhopw);
 	this->cal_force_scc(forcescc, GlobalC::rhopw);
 	
@@ -175,7 +175,7 @@ void Sto_Forces::init(ModuleBase::matrix& force, const psi::Psi<std::complex<dou
     return;
 }
 
-void Sto_Forces::cal_sto_force_nl(ModuleBase::matrix& forcenl, const psi::Psi<complex<double>>* psi_in, Stochastic_WF& stowf)
+void Sto_Forces::cal_sto_force_nl(ModuleBase::matrix& forcenl, const ModuleBase::matrix& wg, const psi::Psi<complex<double>>* psi_in, Stochastic_WF& stowf)
 {
 	ModuleBase::TITLE("Sto_Forces","cal_force_nl");
 	ModuleBase::timer::tick("Sto_Forces","cal_force_nl");
@@ -279,7 +279,7 @@ void Sto_Forces::cal_sto_force_nl(ModuleBase::matrix& forcenl, const psi::Psi<co
 		{
 			double fac;
 			if(ib < nksbands)
-				fac = GlobalC::wf.wg(ik, ib) * 2.0 * GlobalC::ucell.tpiba;
+				fac = wg(ik, ib) * 2.0 * GlobalC::ucell.tpiba;
 			else
 				fac = GlobalC::kv.wk[ik] * 2.0 * GlobalC::ucell.tpiba;
         	int iat = 0;

@@ -160,7 +160,7 @@ namespace ModuleESolver
         this->UHM.grid_prepare();
 
         // init density kernel and wave functions.
-        this->LOC.allocate_dm_wfc(GlobalC::GridT.lgd, this->LOWF, this->psid, this->psi);
+        this->LOC.allocate_dm_wfc(GlobalC::GridT.lgd, this->pelec, this->LOWF, this->psid, this->psi);
 
         //======================================
         // do the charge extrapolation before the density matrix is regenerated.
@@ -377,7 +377,7 @@ namespace ModuleESolver
         else if (GlobalV::CALCULATION == "istate")
         {
             IState_Charge ISC(this->psid, this->LOC);
-            ISC.begin(this->UHM.GG);
+            ISC.begin(this->UHM.GG, this->pelec->wg);
         }
         else if (GlobalV::CALCULATION == "ienvelope")
         {
@@ -467,13 +467,6 @@ namespace ModuleESolver
             {
                 this->phsol->solve(this->p_hamilt, this->psid[0], this->pelec, GlobalV::KS_SOLVER, true);
             }
-            for(int ik=0; ik<this->pelec->ekb.nr; ++ik)
-            {
-                for(int ib=0; ib<this->pelec->ekb.nc; ++ib)
-                {
-                    GlobalC::wf.ekb[ik][ib] = this->pelec->ekb(ik, ib);
-                }
-            }
         }
         else
         {
@@ -508,8 +501,8 @@ namespace ModuleESolver
             {
                 GlobalV::ofs_running << " spin" << GlobalC::kv.isk[ik] + 1
                     << "final_state " << ib + 1 << " "
-                    << GlobalC::wf.ekb[ik][ib] * ModuleBase::Ry_to_eV
-                    << " " << GlobalC::wf.wg(ik, ib) * GlobalC::kv.nks << std::endl;
+                    << this->pelec->ekb(ik, ib) * ModuleBase::Ry_to_eV
+                    << " " << this->pelec->wg(ik, ib) * GlobalC::kv.nks << std::endl;
             }
             GlobalV::ofs_running << std::endl;
         }
@@ -518,7 +511,7 @@ namespace ModuleESolver
         if (GlobalV::CALCULATION == "nscf" && INPUT.towannier90)
         {
             toWannier90 myWannier(GlobalC::kv.nkstot, GlobalC::ucell.G, this->LOWF.wfc_k_grid);
-            myWannier.init_wannier(nullptr);
+            myWannier.init_wannier(this->pelec->ekb, nullptr);
         }
 
         // add by jingan

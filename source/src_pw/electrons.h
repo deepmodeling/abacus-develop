@@ -30,11 +30,6 @@ public:
 
     double delta_total_energy;
 
-    // It should be replaced by ESolver_KS::Run. GPU still use it temperarily.
-    void self_consistent(const int &istep);
-
-    void c_bands(const int &istep);
-
 private:
     bool check_stop_now(void);
 
