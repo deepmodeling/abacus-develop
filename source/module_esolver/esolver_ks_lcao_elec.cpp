@@ -22,7 +22,7 @@
 #endif
 #include "../src_pw/H_Ewald_pw.h"
 #include "module_vdw/vdw.h"
-#include "../module_relaxation/variable_cell.h"    // liuyu 2022-11-07
+#include "../module_relax/relax_old/variable_cell.h"    // liuyu 2022-11-07
 
 namespace ModuleESolver
 {

@@ -17,7 +17,7 @@
 #include "../src_io/chi0_hilbert.h"
 #include "../src_io/epsilon0_pwscf.h"
 #include "../src_io/epsilon0_vasp.h"
-#include "../module_relaxation/variable_cell.h"    // liuyu 2022-11-07
+#include "../module_relax/relax_old/variable_cell.h"    // liuyu 2022-11-07
 //-----force-------------------
 #include "../src_pw/forces.h"
 //-----stress------------------
