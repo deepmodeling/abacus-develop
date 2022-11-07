@@ -33,4 +33,4 @@ md_nstep               10
 md_dt                  1
 md_tfirst              300
 md_tfreq               1
-md_mnhc                1
+md_tchain                1

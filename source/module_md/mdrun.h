@@ -50,7 +50,7 @@ public:
     bool stop;                           // MD stop or not
 
     // All parameters are in a.u. unit.
-    double temperature_;                 // current temperature
+    double t_current;                    // current temperature
     int step_;                           // the MD step finished in current calculation
     int step_rst_;                       // the MD step finished in previous calculations
     double energy_;                      // total energy of the system

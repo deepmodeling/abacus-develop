@@ -126,7 +126,7 @@ public:
         INPUT.mdp.msst_tscale = 0.01;
 
         INPUT.mdp.md_tfreq = 1;
-        INPUT.mdp.md_mnhc = 4;
+        INPUT.mdp.md_tchain = 4;
 
         INPUT.mdp.md_damp = 1;
 

@@ -25,6 +25,7 @@ ks_solver       genelpa
 mixing_type     pulay
 mixing_beta     0.7
 
+md_tchain        4
 md_type          1
 md_tfirst        10
 md_dt            1

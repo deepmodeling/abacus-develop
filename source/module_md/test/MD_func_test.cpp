@@ -121,12 +121,10 @@ TEST_F(MD_func_test, readvel)
     EXPECT_DOUBLE_EQ(vel[3].z, -2.83313122596e-05);
 }
 
-TEST_F(MD_func_test, kinetic_stress)
+TEST_F(MD_func_test, compute_stress)
 {
-    double kinetic;
     MD_func::InitVel(ucell, temperature, allmass, frozen_freedom, ionmbl, vel);
-    MD_func::kinetic_stress(ucell, vel, allmass, kinetic, stress);
-    EXPECT_DOUBLE_EQ(kinetic, 0.004275200820433157);
+    MD_func::compute_stress(ucell, vel, allmass, virial, stress);
     EXPECT_DOUBLE_EQ(stress(0,0), 5.2064533063673623e-06);
     EXPECT_DOUBLE_EQ(stress(0,1), -1.6467487572445481e-06);
     EXPECT_DOUBLE_EQ(stress(0,2), 1.5039983732220751e-06);
