@@ -34,7 +34,7 @@ void calculate()
 	UnitCell_pseudo ucell;
 	ModuleSymmetry::Symmetry symm;
 	ifs >> ucell.ntype;
-	ucell.latName = "test";
+	ucell.latName = "none";
 	ifs.close();
 	output out;
 	ucell.setup_cell_classic(

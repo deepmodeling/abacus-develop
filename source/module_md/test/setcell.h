@@ -114,7 +114,7 @@ public:
         INPUT.mdp.md_dt = 1;
         INPUT.mdp.md_tfirst = INPUT.mdp.md_tlast = 300;
 
-        INPUT.mdp.md_ensolver = "LJ";
+        GlobalV::ESOLVER_TYPE = "lj";
         INPUT.mdp.lj_rcut = 8.5;
         INPUT.mdp.lj_epsilon = 0.01032;
         INPUT.mdp.lj_sigma = 3.405;

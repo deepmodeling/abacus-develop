@@ -61,6 +61,14 @@ template <class T> class Vector3
         return *this;
     }
 
+    Vector3<T> &operator=(const T &u)
+    {
+        x = u;
+        y = u;
+        z = u;
+        return *this;
+    }
+
     /**
      * @brief Overload operator "+=" for Vector3
      *

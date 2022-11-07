@@ -89,8 +89,8 @@ namespace GlobalC
 
 namespace WF_Local
 {
-    int read_lowf(double** ctot, const int& is, const Parallel_Orbitals* ParaV, psi::Psi<double>*) {return 1;};
-    int read_lowf_complex(std::complex<double>** ctot, const int& ik, const Parallel_Orbitals* ParaV, psi::Psi<std::complex<double> >*) {return 1;}
+    int read_lowf(double** ctot, const int& is, const Parallel_Orbitals* ParaV, psi::Psi<double>*, elecstate::ElecState*) {return 1;};
+    int read_lowf_complex(std::complex<double>** ctot, const int& ik, const Parallel_Orbitals* ParaV, psi::Psi<std::complex<double> >*, elecstate::ElecState*) {return 1;}
     void write_lowf(const std::string &name, double **ctot, const ModuleBase::matrix& ekb, const ModuleBase::matrix& wg) {}
     void write_lowf_complex(const std::string &name, std::complex<double>** ctot, const int &ik, const ModuleBase::matrix& ekb, const ModuleBase::matrix& wg) {}
 }
@@ -309,7 +309,6 @@ class ElecStateLCAOPrepare
     void set_env()
     {
         GlobalV::NBANDS = nbands;
-        GlobalC::wf.wg = this->wg;
 
         GlobalC::kv.nks = GlobalC::kv.nkstot = nk;
         GlobalC::kv.isk.resize(nk,0);
@@ -505,7 +504,7 @@ class ElecStateLCAOPrepare
         {
             psik = (psi::Psi<std::complex<double>>*)(&(this->psi));
         }
-        loc.allocate_dm_wfc(GlobalC::GridT.lgd, lowf, psigo, psik);
+        loc.allocate_dm_wfc(GlobalC::GridT.lgd, nullptr, lowf, psigo, psik);
 
         elecstate::MockElecStateLCAO mesl(&GlobalC::CHR,&GlobalC::kv,nk,nbands,&loc,&uhm,&lowf,this->wg);
 

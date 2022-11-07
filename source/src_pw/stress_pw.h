@@ -10,7 +10,7 @@ class Stress_PW: public Stress_Func
 	Stress_PW (){};
 
 	//calculate the stress in PW basis
-	void cal_stress(ModuleBase::matrix& smearing_sigmatot, const psi::Psi<complex<double>>* psi_in=nullptr);
+	void cal_stress(ModuleBase::matrix& smearing_sigmatot, const ModuleBase::matrix& wg, const psi::Psi<complex<double>>* psi_in=nullptr);
 
 	protected :
 

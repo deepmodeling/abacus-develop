@@ -14,14 +14,14 @@ public:
         Local_Orbital_Charge &loc_in);
     ~IState_Charge();
 
-	void begin(Gint_Gamma &gg);
+	void begin(Gint_Gamma &gg, ModuleBase::matrix& wg);
 
 private:
 
 	int *bands_picked;
 
 #ifdef __MPI
-	void idmatrix(const int &ib);
+	void idmatrix(const int &ib, ModuleBase::matrix& wg);
 #endif
     psi::Psi<double>* psi_gamma;
     Local_Orbital_Charge* loc;

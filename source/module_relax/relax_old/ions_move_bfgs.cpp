@@ -1,5 +1,5 @@
 #include "ions_move_bfgs.h"
-#include "../src_pw/global.h"
+#include "src_pw/global.h"
 //xiaohui modified 2013-04-25
 //#include "../src_algorithms/myfunc.h"
 #include "ions_move_basic.h"

@@ -61,8 +61,6 @@ public:
 
     void cal_nelec();  // calculate total number of electrons  Yu Liu add 2021-07-03
 
-    void sum_band(void); // it is useless now and should be removed.
-
     void renormalize_rho(void);
 
     void save_rho_before_sum_band(void);
@@ -93,8 +91,6 @@ public:
 
     bool read_rho(const int &is, const std::string &fn, double* rho);//mohan add 2007-10-17
     void rho_mpi(void);
-
-    void sum_band_k();
 
 	// mohan add 2021-02-20
 	int nrxx; // number of r vectors in this processor

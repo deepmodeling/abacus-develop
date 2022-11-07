@@ -32,7 +32,7 @@ void Evolve_LCAO_Matrix::evolve_complex_matrix(const int& ik,
     time_t time_start = time(NULL);
     GlobalV::ofs_running << " Start Time : " << ctime(&time_start);
 
-    if (INPUT.tddft == 1)
+    if (GlobalV::ESOLVER_TYPE == "tddft")
     {
 #ifdef __MPI
         this->using_ScaLAPACK_complex(ik,
@@ -50,7 +50,7 @@ void Evolve_LCAO_Matrix::evolve_complex_matrix(const int& ik,
     }
     else
     {
-        ModuleBase::WARNING_QUIT("Evolve_LCAO_Matrix::evolve_complex_matrix", "only tddft==1 cando evolve");
+        ModuleBase::WARNING_QUIT("Evolve_LCAO_Matrix::evolve_complex_matrix", "only esolver_type == tddft cando evolve");
     }
 
     time_t time_end = time(NULL);
@@ -773,7 +773,7 @@ void Evolve_LCAO_Matrix::using_ScaLAPACK_complex(const int& ik,
                         {
                             Cij[j * naroc[0] + i] = {0.0, 0.0};
                         }
-                        // info = MPI_Bcast(&GlobalC::wf.ekb[ik][igcol], 1, MPI_DOUBLE, src_rank,
+                        // info = MPI_Bcast(&ekb[igcol], 1, MPI_DOUBLE, src_rank,
                         // uhm.LM->ParaV->comm_2D);
                     }
                 }
@@ -1007,7 +1007,7 @@ void Evolve_LCAO_Matrix::using_ScaLAPACK_complex(const int& ik,
             }
         } // loop ipcol
     } // loop iprow
-    info = MPI_Allreduce(Eii, GlobalC::wf.ekb[ik], GlobalV::NBANDS, MPI_DOUBLE, MPI_SUM, this->ParaV->comm_2D);
+    info = MPI_Allreduce(Eii, ekb, GlobalV::NBANDS, MPI_DOUBLE, MPI_SUM, this->ParaV->comm_2D);
 
     // the eigenvalues.
     // dcopy_(&NBANDS, eigen, &inc, ekb, &inc);

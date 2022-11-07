@@ -1,9 +1,9 @@
 #ifndef LATTICE_CHANGE_CG_H
 #define LATTICE_CHANGE_CG_H
 
-#include "../module_base/global_function.h"
-#include "../module_base/global_variable.h"
-#include "../module_base/matrix.h"
+#include "module_base/global_function.h"
+#include "module_base/global_variable.h"
+#include "module_base/matrix.h"
 class Lattice_Change_CG
 {
 

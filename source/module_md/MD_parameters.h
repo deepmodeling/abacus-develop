@@ -20,7 +20,6 @@ public:
         md_seed = -1;
 
 		// Classic MD 
-		md_ensolver = "FP";
 		lj_rcut = 8.5;        
 		lj_epsilon = 0.01032; 
 		lj_sigma = 3.405;     
@@ -64,7 +63,6 @@ public:
     int md_seed;                  // random seed for MD
 
 	// Classic MD               // liuyu 2021-07-30
-	std::string md_ensolver;    // choose potential: LJ, DP, FP
 	double lj_rcut;             // cutoff radius of LJ potential (\AA)
 	double lj_epsilon;          // the value of epsilon for LJ potential (eV)
 	double lj_sigma;            // the value of sigma for LJ potential (\AA)

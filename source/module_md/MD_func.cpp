@@ -1,7 +1,4 @@
 #include "MD_func.h"
-#include "../input.h"
-#include "../module_neighbor/sltk_atom_arrange.h"
-#include "../module_neighbor/sltk_grid_driver.h"
 #include "../module_base/global_variable.h"
 #include "../module_base/timer.h"
 
@@ -204,7 +201,6 @@ void MD_func::InitPos(
 void MD_func::force_virial(
 		ModuleESolver::ESolver *p_esolver,
 		const int &istep,
-		const MD_parameters &mdp,
 		UnitCell_pseudo &unit_in,
 		double &potential,
 		ModuleBase::Vector3<double> *force,
@@ -225,12 +221,10 @@ void MD_func::force_virial(
         p_esolver->cal_Stress(virial);
     }
 
-    if(mdp.md_ensolver == "FP")
-    {
-        potential *= 0.5;
-        force_temp *= 0.5;
-        virial *= 0.5;
-    }
+    // convert Rydberg to Hartree
+    potential *= 0.5;
+    force_temp *= 0.5;
+    virial *= 0.5;
 
     for(int i=0; i<unit_in.nat; ++i)
     {

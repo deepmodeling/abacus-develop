@@ -994,7 +994,8 @@ void ESolver_OF::cal_Energy(double& etot)
 void ESolver_OF::cal_Force(ModuleBase::matrix& force)
 {
     Forces ff;
-    ff.init(force);
+    ModuleBase::matrix placeholder_wg;//using a placeholder for this template interface, would be refactor later
+    ff.init(force, placeholder_wg);
 }
 
 void ESolver_OF::cal_Stress(ModuleBase::matrix& stress)
@@ -1034,7 +1035,8 @@ void ESolver_OF::cal_Stress(ModuleBase::matrix& stress)
     }
 
     OF_Stress_PW ss;
-    ss.cal_stress(stress, kinetic_stress);
+    ModuleBase::matrix placeholder_wg;//using a placeholder for this template interface, would be refactor later
+    ss.cal_stress(stress, placeholder_wg, kinetic_stress);
 }
 
 // Calculated kinetic potential and plus it to &rpot, return (rpot + kietic potential) * 2 * pphiInpt

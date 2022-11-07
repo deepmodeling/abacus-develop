@@ -10,7 +10,7 @@ class OF_Stress_PW: public Stress_Func
 	OF_Stress_PW (){};
 
 	//calculate the stress in OFDFT
-	void cal_stress(ModuleBase::matrix& sigmatot, ModuleBase::matrix& kinetic_stress, const psi::Psi<complex<double>>* psi_in=nullptr);
+	void cal_stress(ModuleBase::matrix& sigmatot, const ModuleBase::matrix& wg, ModuleBase::matrix& kinetic_stress, const psi::Psi<complex<double>>* psi_in=nullptr);
 
 	protected :
 

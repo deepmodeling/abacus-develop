@@ -23,9 +23,6 @@ class Hamilt
 
 	void clear_after_ions(void);
 
-	// diagH_subspace then full space in pw
-	void diagH_pw(const int &istep, const int &iter, const int &ik, const double *precondition, double &avg_iter);
-
 	// generate H and S then call diagH_subspace
 	void diagH_subspace(const int ik,
 						const int nstart,

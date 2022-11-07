@@ -152,7 +152,13 @@ void Exx_Lip::cal_exx()
 }
 */
 
-void Exx_Lip::init(K_Vectors *kv_ptr_in, wavefunc *wf_ptr_in,  ModulePW::PW_Basis_K *wfc_basis_in, ModulePW::PW_Basis *rho_basis_in, UnitCell_pseudo *ucell_ptr_in)
+void Exx_Lip::init(
+	K_Vectors *kv_ptr_in, 
+	wavefunc *wf_ptr_in,  
+	ModulePW::PW_Basis_K *wfc_basis_in, 
+	ModulePW::PW_Basis *rho_basis_in, 
+	UnitCell_pseudo *ucell_ptr_in,
+	const elecstate::ElecState* pelec_in)
 {
 	ModuleBase::TITLE("Exx_Lip","init");
 	try
@@ -160,6 +166,7 @@ void Exx_Lip::init(K_Vectors *kv_ptr_in, wavefunc *wf_ptr_in,  ModulePW::PW_Basi
 		k_pack = new k_package;
 		k_pack->kv_ptr = kv_ptr_in;
 		k_pack->wf_ptr = wf_ptr_in;
+		k_pack->pelec = pelec_in;
 		wfc_basis = wfc_basis_in;
 		rho_basis = rho_basis_in;
 		ucell_ptr = ucell_ptr_in;
@@ -321,11 +328,11 @@ void Exx_Lip::wf_wg_cal()
 	if(GlobalV::NSPIN==1)
 		for( int ik=0; ik<k_pack->kv_ptr->nks; ++ik)
 			for( int ib=0; ib<GlobalV::NBANDS; ++ib)
-				k_pack->wf_wg(ik,ib) = k_pack->wf_ptr->wg(ik,ib)/2;
+				k_pack->wf_wg(ik,ib) = k_pack->pelec->wg(ik,ib)/2;
 	else if(GlobalV::NSPIN==2)
 		for( int ik=0; ik<k_pack->kv_ptr->nks; ++ik)
 			for( int ib=0; ib<GlobalV::NBANDS; ++ib)
-				k_pack->wf_wg(ik,ib) = k_pack->wf_ptr->wg(ik,ib);
+				k_pack->wf_wg(ik,ib) = k_pack->pelec->wg(ik,ib);
 }
 
 void Exx_Lip::phi_cal(k_package *kq_pack, int ikq)

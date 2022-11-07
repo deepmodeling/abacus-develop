@@ -1,6 +1,6 @@
 #include "run_md_pw.h"
 #include "global.h" // use chr.
-#include "../module_relaxation/variable_cell.h" // mohan add 2021-02-01
+#include "../module_relax/relax_old/variable_cell.h" // mohan add 2021-02-01
 #include "../module_md/MD_func.h"
 #include "../module_md/FIRE.h"
 #include "../module_md/verlet.h"
@@ -103,7 +103,7 @@ void Run_MD_PW::md_ions_pw(ModuleESolver::ESolver *p_esolver)
             //GlobalC::wf.wfcinit();
 
             // update force and virial due to the update of atom positions
-            MD_func::force_virial(p_esolver, mdrun->step_, mdrun->mdp, mdrun->ucell, mdrun->potential, mdrun->force, mdrun->virial);
+            MD_func::force_virial(p_esolver, mdrun->step_, mdrun->ucell, mdrun->potential, mdrun->force, mdrun->virial);
 
             mdrun->second_half();
 
