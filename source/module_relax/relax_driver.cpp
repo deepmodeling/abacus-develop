@@ -1,45 +1,24 @@
-#include "ions.h"
+#include "relax_driver.h"
 #include "../src_pw/global.h" // use chr.
 #include "../src_io/print_info.h"
 #include "relax_old/variable_cell.h" // mohan add 2021-02-01
 #include "src_io/write_wfc_realspace.h"
 
-void Ions::opt_ions(ModuleESolver::ESolver *p_esolver)
+void Relax_Driver::relax_driver(ModuleESolver::ESolver *p_esolver)
 {
 	ModuleBase::TITLE("Ions","opt_ions");
 	ModuleBase::timer::tick("Ions","opt_ions");
-	
-	if(GlobalV::OUT_LEVEL=="i")
-	{
-		std::cout << std::setprecision(12);
-    	std::cout<< " " << std::setw(7)<< "ISTEP" 
-		<<std::setw(5)<< "NE"
-		<<std::setw(15)<< "ETOT(eV)"
-		<<std::setw(15)<< "EDIFF(eV)"
-        <<std::setw(15)<< "MAX_F(eV/A)"
-        <<std::setw(15)<< "TRADIUS(Bohr)"
-		<<std::setw(8)<< "UPDATE"
-		<<std::setw(11)<< "ETIME(MIN)"
-		<<std::setw(11)<< "FTIME(MIN)"
-        <<std::endl;
-	}
 
-    // Geometry optimization algorithm setup.
-    if (GlobalV::CALCULATION=="relax")
-    {
-        //Ions_Move_Methods
-        IMM.allocate();
-    }
-    if (GlobalV::CALCULATION=="cell-relax")
-    {
-        //Ions_Move_Methods
-        IMM.allocate();
-        // allocate arrays related to changes of lattice vectors
-        LCM.allocate();
-    }
 	if(GlobalV::CALCULATION=="relax" || GlobalV::CALCULATION=="cell-relax")
 	{
-		rl.init_relax(GlobalC::ucell.nat);
+		if(!GlobalV::relax_new)
+		{
+			rl_old.init_relax();
+		}
+		else
+		{
+			rl.init_relax(GlobalC::ucell.nat);
+		}
 	}
 
     this->istep = 1;
@@ -91,30 +70,11 @@ void Ions::opt_ions(ModuleESolver::ESolver *p_esolver)
 			}
 			else
 			{
-				stop = this->relaxation(force, stress, istep, force_step, stress_step);    // pengfei Li 2018-05-14
+				stop = rl_old.relax_step(force, stress, istep, force_step, stress_step);    // pengfei Li 2018-05-14
 			}
 			
 		}
 		time_t fend = time(NULL);
-
-		if(GlobalV::OUT_LEVEL=="i")
-		{
-			double etime_min = difftime(eend, estart)/60.0; 
-			double ftime_min = difftime(fend, fstart)/60.0; 
-			std::stringstream ss;
-			ss << GlobalV::RELAX_METHOD << istep;
-			
-			std::cout << " " << std::setw(7) << ss.str() 
-			<< std::setw(5) << p_esolver->getniter()
-			<< std::setw(15) << std::setprecision(6) << GlobalC::en.etot * ModuleBase::Ry_to_eV 
-			<< std::setw(15) << IMM.get_ediff() * ModuleBase::Ry_to_eV
-			<< std::setprecision(3)
-			<< std::setw(15) << IMM.get_largest_grad() * ModuleBase::Ry_to_eV / 0.529177
-			<< std::setw(15) << IMM.get_trust_radius()
-			<< std::setw(8) << IMM.get_update_iter()
-			<< std::setprecision(2) << std::setw(11) << etime_min
-			<< std::setw(11) << ftime_min << std::endl;
-		}
 
 		++istep;
 
