@@ -194,7 +194,7 @@ int UnitCell_pseudo::read_atom_species(std::ifstream &ifa, std::ofstream &ofs_ru
 	//===========================
 	// Read in latticies vector
 	//===========================
-	if(latName=="test"){	
+	if(latName=="none"){	
 		if( ModuleBase::GlobalFunc::SCAN_BEGIN(ifa, "LATTICE_VECTORS") )
 		{
 			// Reading lattice vectors. notice
@@ -217,22 +217,22 @@ int UnitCell_pseudo::read_atom_species(std::ifstream &ifa, std::ofstream &ofs_ru
 		{
 			ModuleBase::WARNING_QUIT("UnitCell_pseudo::read_atom_species","do not use LATTICE_VECTORS along with explicit specification of lattice type");
 		}
-		if(latName=="sc"){//simple-cubic
+		if(latName=="sc"){//simple-cubic, ibrav = 1
 			latvec.e11 = 1.0; latvec.e12 = 0.0; latvec.e13 = 0.0;
 			latvec.e21 = 0.0; latvec.e22 = 1.0;	latvec.e23 = 0.0;
 			latvec.e31 = 0.0; latvec.e32 = 0.0;	latvec.e33 = 1.0;
 		}
-		else if(latName=="fcc"){//face-centered cubic
+		else if(latName=="fcc"){//face-centered cubic, ibrav = 2
 			latvec.e11 =-0.5; latvec.e12 = 0.0; latvec.e13 = 0.5;
 			latvec.e21 = 0.0; latvec.e22 = 0.5;	latvec.e23 = 0.5;
 			latvec.e31 =-0.5; latvec.e32 = 0.5;	latvec.e33 = 0.0;
 		}
-		else if(latName=="bcc"){//body-centered cubic
+		else if(latName=="bcc"){//body-centered cubic, ibrav = 3
 			latvec.e11 = 0.5; latvec.e12 = 0.5; latvec.e13 = 0.5;
 			latvec.e21 =-0.5; latvec.e22 = 0.5;	latvec.e23 = 0.5;
 			latvec.e31 =-0.5; latvec.e32 =-0.5;	latvec.e33 = 0.5;
 		}
-		else if(latName=="hexagonal"){//hexagonal
+		else if(latName=="hexagonal"){//hexagonal, ibrav = 4
 			double e22 = sqrt(3.0) / 2.0;
 			latvec.e11 = 1.0; latvec.e12 = 0.0; latvec.e13 = 0.0;
 			latvec.e21 =-0.5; latvec.e22 = e22; latvec.e23 = 0.0;
@@ -242,7 +242,7 @@ int UnitCell_pseudo::read_atom_species(std::ifstream &ifa, std::ofstream &ofs_ru
 				ModuleBase::GlobalFunc::READ_VALUE(ifa, latvec.e33);
 			}
 		}
-		else if(latName=="trigonal"){//trigonal
+		else if(latName=="trigonal"){//trigonal, ibrav = 5
 			double t1 = 0.0;
 			double t2 = 0.0;
 			if( ModuleBase::GlobalFunc::SCAN_BEGIN(ifa, "LATTICE_PARAMETERS") )
@@ -261,7 +261,7 @@ int UnitCell_pseudo::read_atom_species(std::ifstream &ifa, std::ofstream &ofs_ru
 			latvec.e21 = 0.0; latvec.e22 = e22;	latvec.e23 = e13;
 			latvec.e31 =-e11; latvec.e32 = e12;	latvec.e33 = e13;
 		}
-		else if(latName=="st"){//simple tetragonal
+		else if(latName=="st"){//simple tetragonal, ibrav= 6
 			latvec.e11 = 1.0; latvec.e12 = 0.0; latvec.e13 = 0.0;
 			latvec.e21 = 0.0; latvec.e22 = 1.0; latvec.e23 = 0.0;
 			latvec.e31 = 0.0; latvec.e32 = 0.0;	latvec.e33 = 0.0;
@@ -270,7 +270,7 @@ int UnitCell_pseudo::read_atom_species(std::ifstream &ifa, std::ofstream &ofs_ru
 				ModuleBase::GlobalFunc::READ_VALUE(ifa, latvec.e33);
 			}
 		}
-		else if(latName=="bct"){//body-centered tetragonal
+		else if(latName=="bct"){//body-centered tetragonal, ibrav = 7
 			double cba = 0.0;
 			if( ModuleBase::GlobalFunc::SCAN_BEGIN(ifa, "LATTICE_PARAMETERS") )
 			{
@@ -281,7 +281,7 @@ int UnitCell_pseudo::read_atom_species(std::ifstream &ifa, std::ofstream &ofs_ru
 			latvec.e21 = 0.5; latvec.e22 = 0.5; latvec.e23 = cba;
 			latvec.e31 =-0.5; latvec.e32 =-0.5;	latvec.e33 = cba;
 		}
-		else if(latName=="so"){//simple orthorhombic
+		else if(latName=="so"){//simple orthorhombic, ibrav = 8
 			latvec.e11 = 1.0; latvec.e12 = 0.0; latvec.e13 = 0.0;
 			latvec.e21 = 0.0; latvec.e22 = 0.0;	latvec.e23 = 0.0;
 			latvec.e31 = 0.0; latvec.e32 = 0.0;	latvec.e33 = 0.0;
@@ -291,7 +291,7 @@ int UnitCell_pseudo::read_atom_species(std::ifstream &ifa, std::ofstream &ofs_ru
 				ModuleBase::GlobalFunc::READ_VALUE(ifa, latvec.e33);
 			}
 		}
-		else if(latName=="baco"){//base-centered orthorhombic
+		else if(latName=="baco"){//base-centered orthorhombic, ibrav = 9
 			latvec.e11 = 0.5; latvec.e12 = 0.0; latvec.e13 = 0.0;
 			latvec.e21 =-0.5; latvec.e22 = 0.0;	latvec.e23 = 0.0;
 			latvec.e31 = 0.0; latvec.e32 = 0.0;	latvec.e33 = 0.0;
@@ -303,7 +303,7 @@ int UnitCell_pseudo::read_atom_species(std::ifstream &ifa, std::ofstream &ofs_ru
 				ModuleBase::GlobalFunc::READ_VALUE(ifa, latvec.e33);
 			}
 		}
-		else if(latName=="fco"){//face-centered orthorhombic
+		else if(latName=="fco"){//face-centered orthorhombic, ibrav = 10
 			double bba = 0.0; double cba = 0.0;
 			if( ModuleBase::GlobalFunc::SCAN_BEGIN(ifa, "LATTICE_PARAMETERS") )
 			{
@@ -315,7 +315,7 @@ int UnitCell_pseudo::read_atom_species(std::ifstream &ifa, std::ofstream &ofs_ru
 			latvec.e21 = 0.5; latvec.e22 = bba;	latvec.e23 = 0.0;
 			latvec.e31 = 0.0; latvec.e32 = bba;	latvec.e33 = cba;
 		}
-		else if(latName=="bco"){//body-centered orthorhombic
+		else if(latName=="bco"){//body-centered orthorhombic, ibrav = 11
 			double bba = 0.0; double cba = 0.0;
 			if( ModuleBase::GlobalFunc::SCAN_BEGIN(ifa, "LATTICE_PARAMETERS") )
 			{
@@ -327,7 +327,7 @@ int UnitCell_pseudo::read_atom_species(std::ifstream &ifa, std::ofstream &ofs_ru
 			latvec.e21 =-0.5; latvec.e22 = bba;	latvec.e23 = cba;
 			latvec.e31 =-0.5; latvec.e32 =-bba;	latvec.e33 = cba;
 		}
-		else if(latName=="sm"){//simple monoclinic
+		else if(latName=="sm"){//simple monoclinic, ibrav = 12
 			double bba = 0.0; double cba = 0.0;
 			double cosab = 0.0;
 			double e21 = 0.0; double e22 = 0.0;
@@ -342,7 +342,7 @@ int UnitCell_pseudo::read_atom_species(std::ifstream &ifa, std::ofstream &ofs_ru
 			latvec.e21 = e21; latvec.e22 = e22;	latvec.e23 = 0.0;
 			latvec.e31 = 0.0; latvec.e32 = 0.0;	latvec.e33 = cba;
 		}
-		else if(latName=="bacm"){//base-centered monoclinic
+		else if(latName=="bacm"){//base-centered monoclinic, ibrav = 13
 			double bba = 0.0; double cba = 0.0;
 			double cosab = 0.0;
 			double e21 = 0.0; double e22 = 0.0;
@@ -358,7 +358,7 @@ int UnitCell_pseudo::read_atom_species(std::ifstream &ifa, std::ofstream &ofs_ru
 			latvec.e21 = e21; latvec.e22 = e22;	latvec.e23 = 0.0;
 			latvec.e31 = 0.5; latvec.e32 = 0.0;	latvec.e33 = cba;
 		}
-		else if(latName=="triclinic"){//triclinic
+		else if(latName=="triclinic"){//triclinic, ibrav = 14
 			double bba = 0.0; double cba = 0.0;
 			double cosab = 0.0; double cosac = 0.0;
 			double cosbc = 0.0; double sinab = 0.0;
@@ -854,7 +854,15 @@ bool UnitCell_pseudo::read_atom_positions(std::ifstream &ifpos, std::ofstream &o
 
 					}
 					
-					atoms[it].mbl[ia] = mv;
+					if(!GlobalV::fixed_atoms)
+					{
+						atoms[it].mbl[ia] = mv;
+					}
+					else
+					{
+						atoms[it].mbl[ia] = 0.0;
+						atoms[it].mbl[ia].print();
+					}
 					atoms[it].tau_original[ia] = atoms[it].tau[ia];
 				}//endj
 			}// end na

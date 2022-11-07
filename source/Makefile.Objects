@@ -36,7 +36,9 @@ VPATH=./src_global:\
 ./module_gint:\
 ./src_pw:\
 ./src_lcao:\
-./module_relaxation:\
+./module_relax:\
+./module_relax/relax_old:\
+./module_relax/relax_new:\
 ./module_rpa:\
 ./module_vdw:\
 ./src_io:\
@@ -280,7 +282,7 @@ OBJS_PW=fft.o\
     pw_transform_k.o\
 
 OBJS_RELAXATION=bfgs_basic.o\
-    ions.o\
+    relax_driver.o\
     ions_move_basic.o\
     ions_move_bfgs.o\
     ions_move_cg.o\
@@ -290,7 +292,9 @@ OBJS_RELAXATION=bfgs_basic.o\
     lattice_change_cg.o\
     lattice_change_methods.o\
     variable_cell.o\
-    relaxation.o\
+    relax_old.o\
+    relax.o\
+    line_search.o\
 
 OBJS_RPA=rpa.o\
 

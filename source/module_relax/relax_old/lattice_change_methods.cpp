@@ -1,6 +1,6 @@
 #include "lattice_change_methods.h"
 #include "lattice_change_basic.h"
-#include "../src_pw/global.h"
+#include "src_pw/global.h"
 
 Lattice_Change_Methods::Lattice_Change_Methods(){}
 Lattice_Change_Methods::~Lattice_Change_Methods(){}
