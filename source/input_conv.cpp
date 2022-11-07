@@ -62,6 +62,10 @@ void Input_Conv::Convert(void)
     {
         ModuleBase::WARNING_QUIT("Input_Conv","fixed_atoms is not meant to be used for calculation = relax");
     }
+    if(INPUT.relax_new && INPUT.relax_method!="cg")
+    {
+        ModuleBase::WARNING_QUIT("Input_Conv","only CG has been implemented for relax_new");
+    }
     GlobalV::fixed_atoms = INPUT.fixed_atoms;
 
     GlobalV::KSPACING = INPUT.kspacing;
