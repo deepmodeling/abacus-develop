@@ -52,9 +52,6 @@ class Ions
 
     void update_pot(void);
 
-    // calculate force and stress  liuyu add 2022-11-04
-    void force_stress(ModuleESolver::ESolver *p_esolver, double &energy, ModuleBase::matrix &force, ModuleBase::matrix &stress);
-
 };
 
 #endif

@@ -64,21 +64,22 @@ void Ions::opt_ions(ModuleESolver::ESolver *p_esolver)
 			//as part of ucell and use ucell to pass information
 			//back and forth between esolver and relaxation
 			//but I'll use force and stress explicitly here for now
-			
+
+            // calculate the total energy
+            p_esolver->cal_Energy(GlobalC::en.etot);
+
 			//calculate and gather all parts of total ionic forces
-            ModuleBase::matrix force, stress;
-            this->force_stress(p_esolver, GlobalC::en.etot, force, stress);
-			// ModuleBase::matrix force;
-			// if(GlobalV::CAL_FORCE)
-			// {
-			// 	p_esolver->cal_Force(force);
-			// }
-			// //calculate and gather all parts of stress
-			// ModuleBase::matrix stress;
-			// if(GlobalV::CAL_STRESS)
-			// {
-			// 	p_esolver->cal_Stress(stress);
-			// }
+			ModuleBase::matrix force;
+			if(GlobalV::CAL_FORCE)
+			{
+				p_esolver->cal_Force(force);
+			}
+			//calculate and gather all parts of stress
+			ModuleBase::matrix stress;
+			if(GlobalV::CAL_STRESS)
+			{
+				p_esolver->cal_Stress(stress);
+			}
 			stop = this->relaxation(force, stress, istep, force_step, stress_step);    // pengfei Li 2018-05-14
 		}
 		time_t fend = time(NULL);
@@ -113,27 +114,4 @@ void Ions::opt_ions(ModuleESolver::ESolver *p_esolver)
 
 	ModuleBase::timer::tick("Ions","opt_ions_pw");
     return;
-}
-
-void Ions::force_stress(ModuleESolver::ESolver *p_esolver, double &energy, ModuleBase::matrix &force, ModuleBase::matrix &stress)
-{
-    p_esolver->cal_Energy(energy);
-
-    if(GlobalV::CAL_FORCE)
-    {
-        p_esolver->cal_Force(force);
-    }
-
-    if(GlobalV::CAL_STRESS)
-    {
-        p_esolver->cal_Stress(stress);
-    }
-
-    // LJ and DP output Hartree units instead of Rydberg
-    if(GlobalV::ESOLVER_TYPE == "lj" || GlobalV::ESOLVER_TYPE == "dp")
-    {
-        energy *= 2;
-        force *= 2;
-        stress *= 2;
-    }
 }
