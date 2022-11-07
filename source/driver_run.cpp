@@ -4,9 +4,7 @@
 #include "src_io/winput.h"
 #include "module_neighbor/sltk_atom_arrange.h"
 #include "src_io/print_info.h"
-#include "src_lcao/run_md_lcao.h"
-#include "src_pw/run_md_pw.h"
-#include "module_md/run_md_classic.h"
+#include "module_md/run_md.h"
 
 // This is the driver function which defines the workflow of ABACUS calculations
 // It relies on the class Esolver, which is a class that organizes workflows of single point calculations.
@@ -52,24 +50,8 @@ void Driver::driver_run()
     //---------------------------MD/Relax-------------------------
     if(GlobalV::CALCULATION == "md")
     {
-        // In the future, I will universalize pw, lcao and classic line
-        if(GlobalV::ESOLVER_TYPE == "lj" || GlobalV::ESOLVER_TYPE == "dp")
-        {
-            Run_MD_CLASSIC run_md_classic;
-            run_md_classic.classic_md_line(GlobalC::ucell, p_esolver);
-        }
-        else if(GlobalV::BASIS_TYPE == "lcao")
-        {
-#ifdef __LCAO
-            Run_MD_LCAO run_md_lcao;
-            run_md_lcao.opt_ions(p_esolver);
-#endif
-        }
-        else
-        {
-            Run_MD_PW run_md_pw;
-            run_md_pw.md_ions_pw(p_esolver);
-        }
+        Run_MD run_md;
+        run_md.md_line(GlobalC::ucell, p_esolver);
     }
     else // scf; cell relaxation; nscf; etc
     {

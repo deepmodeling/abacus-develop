@@ -104,6 +104,14 @@ namespace ModuleESolver
         stress = lj_virial;
     }
 
+    void ESolver_LJ::postprocess()
+    {
+        GlobalV::ofs_running << "\n\n --------------------------------------------" << std::endl;
+        GlobalV::ofs_running << std::setprecision(16);
+        GlobalV::ofs_running << " !FINAL_ETOT_IS " << lj_potential * ModuleBase::Ry_to_eV << " eV" << std::endl;
+        GlobalV::ofs_running << " --------------------------------------------\n\n" << std::endl;
+    }
+
     double ESolver_LJ::LJ_energy(const double d)
     {
         double temp = pow(lj_sigma / d, 6);

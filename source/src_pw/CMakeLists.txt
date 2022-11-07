@@ -45,7 +45,6 @@ list(APPEND objects
     wf_atomic.cpp
     wf_igk.cpp
     xc_3.cpp
-    run_md_pw.cpp
 )
 if(USE_CUDA)
     list(APPEND objects
