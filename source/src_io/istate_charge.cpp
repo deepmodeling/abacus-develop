@@ -16,7 +16,7 @@ IState_Charge::IState_Charge(
 IState_Charge::~IState_Charge(){}
 
 
-void IState_Charge::begin(Gint_Gamma &gg)
+void IState_Charge::begin(Gint_Gamma &gg, ModuleBase::matrix& wg)
 {
 	ModuleBase::TITLE("IState_Charge","begin");
 
@@ -121,7 +121,7 @@ void IState_Charge::begin(Gint_Gamma &gg)
 			// band, whenever it is occupied or not.
 			
 		#ifdef __MPI
-			this->idmatrix(ib);
+			this->idmatrix(ib, wg);
 		#endif
 			// (2) zero out of charge density array. 
 			for(int is=0; is<GlobalV::NSPIN; is++)
@@ -153,11 +153,11 @@ void IState_Charge::begin(Gint_Gamma &gg)
 }
 
 #ifdef __MPI
-void IState_Charge::idmatrix(const int &ib)
+void IState_Charge::idmatrix(const int &ib, ModuleBase::matrix& wg)
 {
 	ModuleBase::TITLE("IState_Charge","idmatrix");
 
-	assert(GlobalC::wf.wg.nr==GlobalV::NSPIN);
+	assert(wg.nr==GlobalV::NSPIN);
 	for(int is=0; is!=GlobalV::NSPIN; ++is)
 	{
 		std::vector<double> wg_local(this->loc->ParaV->ncol,0.0);
@@ -170,11 +170,11 @@ void IState_Charge::idmatrix(const int &ib)
 		{
 			if(ib<fermi_band)
 			{
-				wg_local[ib_local] = GlobalC::wf.wg(is,ib);
+				wg_local[ib_local] = wg(is,ib);
 			}
 			else
 			{
-				wg_local[ib_local] = GlobalC::wf.wg(is,fermi_band-1);
+				wg_local[ib_local] = wg(is,fermi_band-1);
 			}//unoccupied bands, use occupation of homo
 		}
 	
@@ -195,7 +195,7 @@ void IState_Charge::idmatrix(const int &ib)
 
 		pdgemm_(
 			&N_char, &T_char,
-			&GlobalV::NLOCAL, &GlobalV::NLOCAL, &GlobalC::wf.wg.nc,
+			&GlobalV::NLOCAL, &GlobalV::NLOCAL, &wg.nc,
 			&one_float,
 			wg_wfc.get_pointer(), &one_int, &one_int, this->loc->ParaV->desc,
 			this->psi_gamma->get_pointer(), &one_int, &one_int, this->loc->ParaV->desc,

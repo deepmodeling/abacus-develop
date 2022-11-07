@@ -54,8 +54,12 @@ inline int CTOT2q_c(
 }
 
 // be called in local_orbital_wfc::allocate_k
-int WF_Local::read_lowf_complex(std::complex<double>** ctot, const int& ik, 
-    const Parallel_Orbitals* ParaV, psi::Psi<std::complex<double>>* psi)
+int WF_Local::read_lowf_complex(
+    std::complex<double>** ctot, 
+    const int& ik, 
+    const Parallel_Orbitals* ParaV, 
+    psi::Psi<std::complex<double>>* psi, 
+    elecstate::ElecState* pelec)
 {
     ModuleBase::TITLE("WF_Local","read_lowf_complex");
     ModuleBase::timer::tick("WF_Local","read_lowf_complex");
@@ -144,8 +148,8 @@ int WF_Local::read_lowf_complex(std::complex<double>** ctot, const int& ik,
 			// read the eigenvalues!
 			// very important to determine the occupations.
 			//------------------------------------------------
-			ModuleBase::GlobalFunc::READ_VALUE(ifs, GlobalC::wf.ekb[ik][ib]);
-			ModuleBase::GlobalFunc::READ_VALUE(ifs, GlobalC::wf.wg(ik,ib));
+			ModuleBase::GlobalFunc::READ_VALUE(ifs, pelec->ekb(ik, ib));
+			ModuleBase::GlobalFunc::READ_VALUE(ifs, pelec->wg(ik,ib));
             assert( i==ib );
 			double a, b;
             for (int j=0; j<GlobalV::NLOCAL; ++j)
@@ -200,8 +204,12 @@ int WF_Local::read_lowf_complex(std::complex<double>** ctot, const int& ik,
 	return 0;
 }
 
-int WF_Local::read_lowf(double** ctot, const int& is,
-    const Parallel_Orbitals* ParaV, psi::Psi<double>* psid)
+int WF_Local::read_lowf(
+    double** ctot, 
+    const int& is,
+    const Parallel_Orbitals* ParaV, 
+    psi::Psi<double>* psid, 
+    elecstate::ElecState* pelec)
 {
     ModuleBase::TITLE("WF_Local","read_lowf");
     ModuleBase::timer::tick("WF_Local", "read_lowf");
@@ -271,8 +279,8 @@ int WF_Local::read_lowf(double** ctot, const int& is,
         {
             int ib;
             ModuleBase::GlobalFunc::READ_VALUE(ifs, ib);
-			ModuleBase::GlobalFunc::READ_VALUE(ifs, GlobalC::wf.ekb[GlobalV::CURRENT_SPIN][i]);
-			ModuleBase::GlobalFunc::READ_VALUE(ifs, GlobalC::wf.wg(GlobalV::CURRENT_SPIN,i));
+			ModuleBase::GlobalFunc::READ_VALUE(ifs, pelec->ekb(is, i));
+			ModuleBase::GlobalFunc::READ_VALUE(ifs, pelec->wg(is, i));
             assert( (i+1)==ib);
 			//std::cout << " ib=" << ib << std::endl;
             for (int j=0; j<GlobalV::NLOCAL; j++)
@@ -287,8 +295,8 @@ int WF_Local::read_lowf(double** ctot, const int& is,
 
 #ifdef __MPI
     Parallel_Common::bcast_int(error);
-	Parallel_Common::bcast_double( GlobalC::wf.ekb[is], GlobalV::NBANDS);
-	Parallel_Common::bcast_double( GlobalC::wf.wg.c, GlobalV::NSPIN*GlobalV::NBANDS);
+	Parallel_Common::bcast_double( &(pelec->ekb(is, 0)), GlobalV::NBANDS);
+	Parallel_Common::bcast_double( &(pelec->wg(is, 0)), GlobalV::NBANDS);
 #endif
 	if(error==2) return 2;
 	if(error==3) return 3;

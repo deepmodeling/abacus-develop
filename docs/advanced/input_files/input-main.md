@@ -2,7 +2,7 @@
 
 - [System variables](#system-variables)
 
-  [suffix](#suffix) | [ntype](#ntype) | [calculation](#calculation) | [symmetry](#symmetry) | [kpar](#kpar) | [bndpar](#bndpar) | [latname](#latname) | [init_wfc](#init_wfc) | [init_chg](#init_chg) | [init_vel](#init_vel) | [nelec](#nelec) | [tot_magnetization](#tot_magnetization) | [dft_functional](#dft_functional) | [xc_temperature](#xc_temperature) | [pseudo_rcut](#pseudo_rcut) | [pseudo_mesh](#pseudo_mesh) | [mem_saver](#mem_saver) | [diago_proc](#diago_proc) | [nbspline](#nbspline) | [kspacing](#kspacing)  | [min_dist_coef](#min_dist_coef) | [symmetry_prec](#symmetry_prec)
+  [suffix](#suffix) | [ntype](#ntype) | [calculation](#calculation) | [esolver_type](#esolver_type) | [symmetry](#symmetry) | [kpar](#kpar) | [bndpar](#bndpar) | [latname](#latname) | [init_wfc](#init_wfc) | [init_chg](#init_chg) | [init_vel](#init_vel) | [nelec](#nelec) | [tot_magnetization](#tot_magnetization) | [dft_functional](#dft_functional) | [xc_temperature](#xc_temperature) | [pseudo_rcut](#pseudo_rcut) | [pseudo_mesh](#pseudo_mesh) | [mem_saver](#mem_saver) | [diago_proc](#diago_proc) | [nbspline](#nbspline) | [kspacing](#kspacing)  | [min_dist_coef](#min_dist_coef) | [symmetry_prec](#symmetry_prec)
 - [Variables related to input files](#variables-related-to-input-files)
 
   [stru_file](#stru_file) | [kpoint_file](#kpoint_file) | [pseudo_dir](#pseudo_dir) | [orbital_dir](#orbital_dir) | [read_file_dir](#read_file_dir) | [wannier_card](#wannier_card)
@@ -33,7 +33,7 @@
 
 - [Molecular dynamics](#molecular-dynamics)
 
-  [md_type](#md_type) | [md_thermostat](#md_thermostat) | [md_nstep](#md_nstep) | [md_ensolver](#md_ensolver) | [md_restart](#md_restart) | [md_dt](#md_dt) | [md_tfirst, md_tlast](#md_tfirst-md_tlast) | [md_dumpfreq](#md_dumpfreq) | [md_restartfreq](#md_restartfreq) | [md_seed](#md_seed) | [md_tfreq](#md_tfreq) | [md_tchain](#md_tchain) | [lj_rcut](#lj_rcut) | [lj_epsilon](#lj_epsilon) | [lj_sigma](#lj_sigma) | [pot_file](#pot_file) | [msst_direction](#msst_direction) | [msst_vel](#msst_vel) | [msst_vis](#msst_vis) | [msst_tscale](#msst_tscale) | [msst_qmass](#msst_qmass) | [md_damp](#md_damp) | [md_tolerance](#md_tolerance) | [md_nraise](#md_nraise)
+  [md_type](#md_type) | [md_thermostat](#md_thermostat) | [md_nstep](#md_nstep) | [md_restart](#md_restart) | [md_dt](#md_dt) | [md_tfirst, md_tlast](#md_tfirst-md_tlast) | [md_dumpfreq](#md_dumpfreq) | [md_restartfreq](#md_restartfreq) | [md_seed](#md_seed) | [md_tfreq](#md_tfreq) | [md_tchain](#md_tchain) | [lj_rcut](#lj_rcut) | [lj_epsilon](#lj_epsilon) | [lj_sigma](#lj_sigma) | [pot_file](#pot_file) | [msst_direction](#msst_direction) | [msst_vel](#msst_vel) | [msst_vis](#msst_vis) | [msst_tscale](#msst_tscale) | [msst_qmass](#msst_qmass) | [md_damp](#md_damp) | [md_tolerance](#md_tolerance) | [md_nraise](#md_nraise)
 
 - [vdW correction](#vdw-correction)
 
@@ -43,7 +43,7 @@
   [berry_phase](#berry_phase) | [gdir](#gdir) | [towannier90](#towannier90) | [nnkpfile](#nnkpfile) | [wannier_spin](#wannier_spin)
 - [TDDFT: time dependent density functional theory](#tddft-time-dependent-density-functional-theory) (Under tests)
 
-  [tddft](#tddft) | [td_scf_thr](#td_scf_thr) | [td_dt](#td_dt) | [td_force_dt](#td_force_dt) | [td_vext](#td_vext) | [td_vext_dire](#td_vext_dire) | [td_timescale](#td_timescale) | [td_vexttype](#td_vexttype) | [td_vextout](#td_vextout) | [td_dipoleout](#td_dipoleout) | [ocp](#ocp) | [ocp_set](#ocp_set) | [td_val_elec_01](#td_val_elec_01) | [td_val_elec_02](#td_val_elec_02) |[td_val_elec_03](#td_val_elec_03)
+  [td_scf_thr](#td_scf_thr) | [td_dt](#td_dt) | [td_force_dt](#td_force_dt) | [td_vext](#td_vext) | [td_vext_dire](#td_vext_dire) | [td_timescale](#td_timescale) | [td_vexttype](#td_vexttype) | [td_vextout](#td_vextout) | [td_dipoleout](#td_dipoleout) | [ocp](#ocp) | [ocp_set](#ocp_set) | [td_val_elec_01](#td_val_elec_01) | [td_val_elec_02](#td_val_elec_02) |[td_val_elec_03](#td_val_elec_03)
 - [DFT+*U* correction](#dftu-correction) (Under development)
 
   [dft_plus_u](#dft_plus_u) | [orbital_corr](#orbital_corr) | [hubbard_u](#hubbard_u) | [hund_j](#hund_j) | [yukawa_potential](#yukawa_potential) | [yukawa_lambda](#yukawa_lambda) | [omc](#omc)
@@ -99,15 +99,23 @@ This part of variables are used to control general system parameters.
   - *istate*: For LCAO basis. Please see the explanation for variable `nbands_istate`.
   - *ienvelope*: Envelope function for LCAO basis. Please see the explanation for variable `nbands_istate`.
   - *md*: molecular dynamics
-  - *ofdft*: do orbital-free dft calculation.
-  - *of-md*: do molecular dynamics with OFDFT.
-  - *sto-scf*: do self-consistent electronic structure calculation with [stochastic DFT](#electronic-structure-sdft)
-  - *sto-md*: molecular dynamics with [stochastic DFT](#electronic-structure-sdft)
   - *test_memory* : checks memory required for the calculation. The number is not quite reliable, please use with care
   - *test_neighbour* : only performs neighbouring atom search
   - *gen_bessel* : generates projectors (a series of bessel functions) for DeePKS; see also keywords bessel_lmax, bessel_rcut and bessel_tol. A file named `jle.orb` will be generated which contains the projectors. An example is provided in examples/H2O-deepks-pw.
   - *get_S* : only works for multi-k calculation with LCAO basis. Generates and writes the overlap matrix to a file names `SR.csr` in the working directory. The format of the file will be the same as that generated by [out_mat_hs2](#out_mat_hs2).
 - **Default**: scf
+
+### esolver_type
+
+- **Type**: String
+- **Description**: choose the energy solver.
+  - ksdft: Kokn-Sham density functional theory;
+  - ofdft: orbital-free density functional theory;
+  - sdft: [stochastic density functional theory](#electronic-structure-sdft);
+  - tddft: real time time dependent density functional theory (TDDFT);
+  - lj: Leonard Jones potential;
+  - dp: DeeP potential;
+- **Default**: ksdft
 
 ### symmetry
 
@@ -575,7 +583,7 @@ calculations.
 
 ## Electronic structure (SDFT)
 
-This part of variables are used to control the parameters of stochastic DFT (SDFT),  mix stochastic-deterministic DFT (MDFT), or complete-basis Chebyshev method (CT). To use it,  [calculation](#calculation) need to be set to "sto-scf" and "sto-md". We suggest using SDFT to calculate high-temperature systems and we only support [smearing_method](#smearing_method) "fd".
+This part of variables are used to control the parameters of stochastic DFT (SDFT),  mix stochastic-deterministic DFT (MDFT), or complete-basis Chebyshev method (CT). We suggest using SDFT to calculate high-temperature systems and we only support [smearing_method](#smearing_method) "fd".
 
 ### method_sto
 
@@ -1441,15 +1449,6 @@ This part of variables are used to control the molecular dynamics calculations.
 - **Description**: the total number of md steps.
 - **Default**: 10
 
-### md_ensolver
-
-- **Type**: String
-- **Description**: choose the energy solver for MD.
-  - FP: First-Principles MD;
-  - LJ: Leonard Jones potential;
-  - DP: DeeP potential;
-- **Default**: FP
-
 ### md_restart
 
 - **Type**: Boolean
@@ -1804,14 +1803,6 @@ This part of variables are used to control berry phase and wannier90 interfacae 
 [back to top](#full-list-of-input-keywords)
 
 ## TDDFT: time dependent density functional theory
-
-### tddft
-
-- **Type**: Integer
-- **Description**:
-  - 1: calculate the real time time dependent density functional theory (TDDFT).
-  - 0: do not calculate TDDFT.
-- **Default**: 0
 
 ### td_scf_thr
 

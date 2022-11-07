@@ -21,22 +21,26 @@ public:
 
 public:
 	void cal_DM(
+        const ModuleBase::matrix& wg,
 		const std::set<std::pair<size_t,size_t>> &atom_pairs,
         const std::vector<Abfs::Vector3_Order<int>>& Born_von_Karman_boxes,
         std::complex<double>*** wfc_k_grid);
-    std::map<size_t, std::map<size_t, std::vector<ModuleBase::ComplexMatrix>>> cal_DMk_raw(const std::set<std::pair<size_t, size_t>>& atom_pairs, std::complex<double>*** wfc_k_grid) const;
+    std::map<size_t, std::map<size_t, std::vector<ModuleBase::ComplexMatrix>>> cal_DMk_raw(const std::set<std::pair<size_t, size_t>>& atom_pairs, const ModuleBase::matrix& wg, std::complex<double>*** wfc_k_grid) const;
 		
 private:
 	void cal_DMk_mixing(
 		const Charge_Broyden &charge,
+        const ModuleBase::matrix& wg,
         const std::set<std::pair<size_t, size_t>>& atom_pairs,
         std::complex<double>*** wfc_k_grid);
     void plain_mixing(
 		const Charge_Broyden &charge,
+        const ModuleBase::matrix& wg,
         const std::set<std::pair<size_t, size_t>>& atom_pairs,
         std::complex<double>*** wfc_k_grid);
     void pulay_mixing(
 		const Charge_Broyden &charge,
+        const ModuleBase::matrix& wg,
         const std::set<std::pair<size_t, size_t>>& atom_pairs,
         complex<double>*** wfc_k_grid);
 

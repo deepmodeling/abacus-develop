@@ -103,7 +103,7 @@ void Run_MD_PW::md_ions_pw(ModuleESolver::ESolver *p_esolver)
             //GlobalC::wf.wfcinit();
 
             // update force and virial due to the update of atom positions
-            MD_func::force_virial(p_esolver, mdrun->step_, mdrun->mdp, mdrun->ucell, mdrun->potential, mdrun->force, mdrun->virial);
+            MD_func::force_virial(p_esolver, mdrun->step_, mdrun->ucell, mdrun->potential, mdrun->force, mdrun->virial);
 
             mdrun->second_half();
 

@@ -1,7 +1,8 @@
 INPUT_PARAMETERS
 #Parameters (1.General)
 suffix		autotest
-calculation     of-md
+calculation     md
+esolver_type    ofdft
 ntype		1
 pseudo_dir      ../../PP_ORB
 pseudo_rcut     16

@@ -9,7 +9,6 @@
 
 wavefunc::wavefunc()
 {
-	allocate_ekb = false;
 	out_wfc_pw = 0;
 }
 
@@ -19,38 +18,11 @@ wavefunc::~wavefunc()
 	{
 		std::cout << " ~wavefunc()" << std::endl;
 	}
-	if(allocate_ekb)
-	{
-		for(int ik=0; ik<GlobalC::kv.nks; ik++) delete[] ekb[ik];
-		delete[] ekb;
-	}
 	if(this->irindex == nullptr) 
 	{
 		delete[] this->irindex;		
 		this->irindex=nullptr;
 	}
-}
-
-void wavefunc::allocate_ekb_wg(const int nks)
-{
-    ModuleBase::TITLE("wavefunc","init_local");
-    this->npwx = GlobalC::wfcpw->npwk_max;
-
-	// band energies
-	this->ekb = new double*[nks];
-	for(int ik=0; ik<nks; ik++)
-	{
-		ekb[ik] = new double[GlobalV::NBANDS];
-		ModuleBase::GlobalFunc::ZEROS(ekb[ik],GlobalV::NBANDS);
-	}
-	this->allocate_ekb = true;
-
-	// the weight of each k point and band
-    this->wg.create(nks, GlobalV::NBANDS);
-    ModuleBase::Memory::record("wavefunc","ekb",nks*GlobalV::NBANDS,"double");
-    ModuleBase::Memory::record("wavefunc","wg",nks*GlobalV::NBANDS,"double");
-
-    return;
 }
 
 psi::Psi<std::complex<double>>* wavefunc::allocate(const int nks)
@@ -68,19 +40,6 @@ psi::Psi<std::complex<double>>* wavefunc::allocate(const int nks)
 	// if use spin orbital, do not double nks but double allocate evc and wanf2.
 	int prefactor = 1;
 	if(GlobalV::NSPIN==4) prefactor = GlobalV::NPOL;//added by zhengdy-soc
-
-	this->ekb = new double*[nks];
-	for(int ik=0; ik<nks; ik++)
-	{
-		ekb[ik] = new double[GlobalV::NBANDS];
-		ModuleBase::GlobalFunc::ZEROS(ekb[ik], GlobalV::NBANDS);
-	}
-	this->allocate_ekb = true;
-
-	// the weight of each k point and band
-	this->wg.create(nks, GlobalV::NBANDS);
-	ModuleBase::Memory::record("wavefunc","et",nks*GlobalV::NBANDS,"double");
-	ModuleBase::Memory::record("wavefunc","wg",nks*GlobalV::NBANDS,"double");
 
 	const int nks2 = nks;
 
@@ -130,7 +89,6 @@ psi::Psi<std::complex<double>>* wavefunc::allocate(const int nks)
 // This routine computes an estimate of the start_ wavefunctions
 // from superposition of atomic wavefunctions or random wave functions.
 //===================================================================
-#include "occupy.h"
 void wavefunc::wfcinit(psi::Psi<std::complex<double>>* psi_in)
 {
     ModuleBase::TITLE("wavefunc","wfcinit");
@@ -139,28 +97,6 @@ void wavefunc::wfcinit(psi::Psi<std::complex<double>>* psi_in)
     this->wfcinit_k(psi_in);
 
     GlobalC::en.demet = 0.0;
-
-    //================================
-    // Occupations are computed here
-    //================================
-	if(GlobalV::BASIS_TYPE=="pw")
-	{
-		// mohan fix bug 2011-02-25,
-		// in nscf, occupations is not needed,
-		if(GlobalV::CALCULATION=="scf" || GlobalV::CALCULATION=="md" || GlobalV::CALCULATION=="relax") //pengfei 2014-10-13
-		{
-    		Occupy::calculate_weights();
-		}
-	}
-    if (GlobalV::test_wf>2)
-    {
-        output::printrm(GlobalV::ofs_running, " wg  ",  wg);
-        if(this->evc!=nullptr) 
-		{
-			this->check_evc();
-		}
-		//lack of check for psi
-    }
 
     ModuleBase::timer::tick("wavefunc","wfcinit");
     return;
@@ -227,7 +163,7 @@ void wavefunc::LCAO_in_pw_k(const int &ik, ModuleBase::ComplexMatrix &wvf)
 	Wavefunc_in_pw::produce_local_basis_in_pw(ik, wvf, this->table_local);
 
 	//-------------------------------------------------------------
-	// (2) diago to get GlobalC::wf.ekb, then the weights can be calculated.
+	// (2) diago to get ElecState::ekb, then the weights can be calculated.
 	//-------------------------------------------------------------
     GlobalC::hm.hpw.allocate(this->npwx, GlobalV::NPOL, GlobalC::ppcell.nkb, GlobalC::wfcpw->nrxx);
 	GlobalC::hm.hpw.init_k(ik);
@@ -772,28 +708,6 @@ void wavefunc::init_after_vc(const int nks)
     assert(this->npwx > 0);
     assert(nks > 0);
     assert(GlobalV::NBANDS > 0);
-
-	if(allocate_ekb)
-	{
-		for(int ik=0; ik<nks; ik++) delete[] ekb[ik];
-		delete[] ekb;
-	}
-
-
-    this->ekb = new double*[nks];
-    for(int ik=0; ik<nks; ik++)
-    {
-        ekb[ik] = new double[GlobalV::NBANDS];
-        ModuleBase::GlobalFunc::ZEROS(ekb[ik], GlobalV::NBANDS);
-    }
-    this->allocate_ekb = true;
-
-    this->wg.create(nks, GlobalV::NBANDS);       // the weight of each k point and band
-    ModuleBase::Memory::record("wavefunc","et",nks*GlobalV::NBANDS,"double");
-    ModuleBase::Memory::record("wavefunc","wg",nks*GlobalV::NBANDS,"double");
-    if(GlobalV::test_wf)ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "et allocation","Done");
-    if(GlobalV::test_wf)ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "wg allocation","Done");
-
 
     const int nks2 = nks;
 	const int nbasis = this->npwx * GlobalV::NPOL;

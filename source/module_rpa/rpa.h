@@ -4,6 +4,7 @@
 #include "../input.h"
 #include "../module_base/complexmatrix.h"
 #include "../module_base/matrix.h"
+#include "module_elecstate/elecstate.h"
 #include "../src_ri/abfs-vector3_order.h"
 #include "src_lcao/local_orbital_charge.h"
 #include "src_pw/global.h"
@@ -89,10 +90,11 @@ class DFT_RPA_interface
 
     void out_for_RPA(const Parallel_Orbitals &parav,
                      const psi::Psi<std::complex<double>> &psi,
-                     Local_Orbital_Charge &loc);
+                     Local_Orbital_Charge &loc,
+                     const elecstate::ElecState* pelec);
     void out_eigen_vector(const Parallel_Orbitals &parav, const psi::Psi<std::complex<double>> &psi);
     void out_struc();
-    void out_bands();
+    void out_bands(const elecstate::ElecState* pelec);
     void out_Cs();
     void out_coulomb_k();
     void print_matrix(char *desc, const ModuleBase::matrix &mat);

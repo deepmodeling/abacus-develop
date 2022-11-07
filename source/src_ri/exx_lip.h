@@ -10,6 +10,7 @@
 #include "../src_pw/hamilt.h"
 #include "../module_xc/exx_global.h"
 #include "../module_pw/pw_basis_k.h"
+#include "module_elecstate/elecstate.h"
 
 class K_Vectors;
 class wavefunc;
@@ -33,7 +34,13 @@ public:
 	};
 	Exx_Info info;
 
-	void init(K_Vectors *kv_ptr_in, wavefunc *wf_ptr_in, ModulePW::PW_Basis_K *wfc_basis_in, ModulePW::PW_Basis *rho_basis_in, UnitCell_pseudo *ucell_ptr_in);
+	void init(
+		K_Vectors *kv_ptr_in, 
+		wavefunc *wf_ptr_in, 
+		ModulePW::PW_Basis_K *wfc_basis_in, 
+		ModulePW::PW_Basis *rho_basis_in, 
+		UnitCell_pseudo *ucell_ptr_in,
+		const elecstate::ElecState* pelec_in);
 	void cal_exx();
 	const std::complex<double> * const * const * get_exx_matrix() const { return exx_matrix; }
 	double get_exx_energy() const { return exx_energy; }
@@ -51,7 +58,8 @@ private:
 		K_Vectors *kv_ptr;
 		wavefunc *wf_ptr;
 		ModuleBase::matrix wf_wg;
-		ModuleBase::ComplexMatrix *hvec_array;		
+		ModuleBase::ComplexMatrix *hvec_array;	
+		const elecstate::ElecState* pelec;	
 	} *k_pack, *q_pack;
 
 	int iq_vecik;

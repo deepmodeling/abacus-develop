@@ -153,7 +153,7 @@ bool Dos::calculate_dos
 	const std::vector<double> &wk,//weight of k points
 	const ModuleBase::matrix &wg,//weight of (kpoint,bands)
 	const int &nbands,// number of bands
-	double** ekb//store energy for each k point and each band
+	const ModuleBase::matrix &ekb//store energy for each k point and each band
 )
 {
 	ModuleBase::TITLE("Dos","calculae_dos");
@@ -223,7 +223,7 @@ bool Dos::calculate_dos
 				for(int ib = 0; ib < nbands; ib++)
 				{
 					//  compare et and e_old(e_new) in ev unit.
-					if( ekb[ik][ib]*ModuleBase::Ry_to_eV >= e_old && ekb[ik][ib]*ModuleBase::Ry_to_eV < e_new)
+					if( ekb(ik, ib)*ModuleBase::Ry_to_eV >= e_old && ekb(ik, ib)*ModuleBase::Ry_to_eV < e_new)
 					{
 						// because count is 'double' type,so
 						// we can't write count++ or ++count
@@ -300,14 +300,12 @@ bool Dos::calculate_dos
 void Dos::nscf_fermi_surface(const std::string &out_band_dir,
 	const int &nks,
 	const int &nband,
-	double **ekb)
+	const ModuleBase::matrix &ekb)
 {
 #ifdef __MPI
 
 	int start = 1;
 	int end = GlobalV::NBANDS;
-
-	assert(GlobalC::wf.allocate_ekb);
 
 	std::ofstream ofs;
 	if(GlobalV::MY_RANK==0)
@@ -354,7 +352,7 @@ void Dos::nscf_fermi_surface(const std::string &out_band_dir,
 
 				for(int ib = 0; ib < nband; ib++)
 				{
-					ofs << " " << ekb[ik_now][ib] * ModuleBase::Ry_to_eV;
+					ofs << " " << ekb(ik_now, ib) * ModuleBase::Ry_to_eV;
 				}
 				ofs << std::endl;
 
@@ -385,7 +383,7 @@ void Dos::nscf_band(
 	const int &nks, 
 	const int &nband,
 	const double &fermie,
-	double** ekb)
+	const ModuleBase::matrix& ekb)
 {
 	ModuleBase::TITLE("Dos","nscf_band");
 
@@ -421,7 +419,7 @@ void Dos::nscf_band(
 					ofs << " " << klength[ik] << " ";
 					for(int ib = 0; ib < nband; ib++)
 					{
-						ofs << " " << (ekb[ik_now+is*nks][ib]-fermie) * ModuleBase::Ry_to_eV;
+						ofs << " " << (ekb(ik_now+is*nks, ib)-fermie) * ModuleBase::Ry_to_eV;
 					}
 					ofs << std::endl;
 					ofs.close();	
@@ -464,7 +462,7 @@ void Dos::nscf_band(
 			ofs<<std::setw(12)<<ik + 1;
 			for(int ibnd = 0; ibnd < nband; ibnd++)
 			{
-				ofs <<std::setw(15) << (ekb[ik][ibnd]-fermie) * ModuleBase::Ry_to_eV;
+				ofs <<std::setw(15) << (ekb(ik, ibnd)-fermie) * ModuleBase::Ry_to_eV;
 			}
 			ofs<<std::endl;
 		}

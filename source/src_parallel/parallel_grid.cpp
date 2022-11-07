@@ -68,7 +68,7 @@ void Parallel_Grid::init(
 
 	this->nproc_in_pool = new int[GlobalV::KPAR];
 	int nprocgroup;
-	if(GlobalV::CALCULATION.substr(0,3)=="sto")		nprocgroup = GlobalV::NPROC_IN_STOGROUP;
+	if(GlobalV::ESOLVER_TYPE == "sdft")		nprocgroup = GlobalV::NPROC_IN_STOGROUP;
 	else											nprocgroup = GlobalV::NPROC;
 
 	const int remain_pro = nprocgroup%GlobalV::KPAR;
@@ -188,7 +188,7 @@ void Parallel_Grid::z_distribution(void)
 #ifdef __MPI
 void Parallel_Grid::zpiece_to_all(double *zpiece, const int &iz, double *rho)
 {
-	if(GlobalV::CALCULATION.substr(0,3)=="sto")
+	if(GlobalV::ESOLVER_TYPE == "sdft")
 	{
 		this->zpiece_to_stogroup(zpiece,iz,rho);
 		return;

@@ -49,23 +49,27 @@ void Driver::driver_run()
 
     //------------------------------------------------------------
     // This part onward needs to be refactored.
-    //---------------------------MD/Relax------------------
-    if(GlobalV::CALCULATION == "md" && GlobalV::BASIS_TYPE=="lcao")
+    //---------------------------MD/Relax-------------------------
+    if(GlobalV::CALCULATION == "md")
     {
+        // In the future, I will universalize pw, lcao and classic line
+        if(GlobalV::ESOLVER_TYPE == "lj" || GlobalV::ESOLVER_TYPE == "dp")
+        {
+            Run_MD_CLASSIC run_md_classic;
+            run_md_classic.classic_md_line(GlobalC::ucell, p_esolver);
+        }
+        else if(GlobalV::BASIS_TYPE == "lcao")
+        {
 #ifdef __LCAO
-        Run_MD_LCAO run_md_lcao;
-        run_md_lcao.opt_ions(p_esolver);
+            Run_MD_LCAO run_md_lcao;
+            run_md_lcao.opt_ions(p_esolver);
 #endif
-    }
-    else if(INPUT.mdp.md_ensolver == "LJ" || INPUT.mdp.md_ensolver == "DP")
-    {
-        Run_MD_CLASSIC run_md_classic;
-        run_md_classic.classic_md_line(GlobalC::ucell, p_esolver);
-    }
-    else if(GlobalV::CALCULATION == "md" || GlobalV::CALCULATION == "sto-md" || GlobalV::CALCULATION == "of-md")
-    {
-        Run_MD_PW run_md_pw;
-        run_md_pw.md_ions_pw(p_esolver);
+        }
+        else
+        {
+            Run_MD_PW run_md_pw;
+            run_md_pw.md_ions_pw(p_esolver);
+        }
     }
     else // scf; cell relaxation; nscf; etc
     {

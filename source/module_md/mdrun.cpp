@@ -57,7 +57,7 @@ void MDrun::setup(ModuleESolver::ESolver *p_esolver)
 
     Print_Info::print_screen(0, 0, step_ + step_rst_);
 
-    MD_func::force_virial(p_esolver, step_, mdp, ucell, potential, force, virial);
+    MD_func::force_virial(p_esolver, step_, ucell, potential, force, virial);
     MD_func::compute_stress(ucell, vel, allmass, virial, stress);
     t_current = MD_func::current_temp(kinetic, ucell.nat, frozen_freedom_, allmass, vel);
 }

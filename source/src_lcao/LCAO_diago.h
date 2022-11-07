@@ -15,23 +15,14 @@ class Diago_LCAO_Matrix : Pdiag_Double
 	Diago_LCAO_Matrix(LCAO_Matrix* lm);
 	~Diago_LCAO_Matrix();
 
-	//void solve_double_matrix(const int &ik, double **wfc, ModuleBase::matrix &wfc_2d)const;
-	void solve_double_matrix(const int &ik, Local_Orbital_wfc &lowf); //LiuXh add 2021-09-06, clear memory, totwfc not used now
-	void solve_complex_matrix(const int &ik, Local_Orbital_wfc &lowf);
-
 private:
     
     LCAO_Matrix* LM;
 
-	void using_LAPACK(const int &ik, Local_Orbital_wfc &lowf)const;
+	void using_LAPACK(const int &ik, Local_Orbital_wfc &lowf, double* ekb_ik)const;
 	void using_LAPACK_complex(const int &ik, std::complex<double> **wfc_k_grid ,ModuleBase::ComplexMatrix &wfc_k)const;
 	void using_CG(const int &ik, double **c)const;
 
-#ifdef __MPI
-	//void using_HPSEPS_double(const int &ik, double **wfc, ModuleBase::matrix &wfc_2d)const;
-	void using_HPSEPS_double(const int &ik, Local_Orbital_wfc &lowf); //LiuXh add 2021-09-06, clear memory, totwfc not used now
-	void using_HPSEPS_complex(const int &ik, Local_Orbital_wfc &lowf);
-#endif
 
 };
 

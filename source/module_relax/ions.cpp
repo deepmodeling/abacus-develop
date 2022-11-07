@@ -62,13 +62,16 @@ void Ions::opt_ions(ModuleESolver::ESolver *p_esolver)
 		time_t eend = time(NULL);
 		time_t fstart = time(NULL);
 
-        if (GlobalV::CALCULATION=="scf" || GlobalV::CALCULATION=="relax" || GlobalV::CALCULATION=="cell-relax" || GlobalV::CALCULATION.substr(0,3)=="sto" || GlobalV::CALCULATION.substr(0,2)=="of")
+        if (GlobalV::CALCULATION=="scf" || GlobalV::CALCULATION=="relax" || GlobalV::CALCULATION=="cell-relax")
         {
 			//I'm considering putting force and stress
 			//as part of ucell and use ucell to pass information
 			//back and forth between esolver and relaxation
 			//but I'll use force and stress explicitly here for now
-			
+
+            // calculate the total energy
+            p_esolver->cal_Energy(GlobalC::en.etot);
+
 			//calculate and gather all parts of total ionic forces
 			ModuleBase::matrix force;
 			if(GlobalV::CAL_FORCE)

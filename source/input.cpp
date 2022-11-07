@@ -134,6 +134,7 @@ void Input::Default(void)
     // xiaohui modify 2015-09-15, relax -> scf
     // calculation = "relax";
     calculation = "scf";
+    esolver_type = "ksdft";
     pseudo_rcut = 15.0; // qianrui add this parameter 2021-5
     pseudo_mesh = false; // qianrui add this pararmeter
     ntype = 0;
@@ -387,7 +388,6 @@ void Input::Default(void)
     //----------------------------------------------------------			//Fuxiang He add 2016-10-26
     // tddft
     //----------------------------------------------------------
-    tddft = 0;
     td_scf_thr = 1e-9;
     td_dt = 0.02;
     td_force_dt = 0.02;
@@ -576,6 +576,10 @@ bool Input::Read(const std::string &fn)
         else if (strcmp("calculation", word) == 0) // which type calculation
         {
             read_value(ifs, calculation);
+        }
+        else if (strcmp("esolver_type", word) == 0)
+        {
+            read_value(ifs, esolver_type);
         }
         else if (strcmp("ntype", word) == 0) // number of atom types
         {
@@ -1272,10 +1276,6 @@ bool Input::Read(const std::string &fn)
         {
             read_value(ifs, mdp.lj_sigma);
         }
-        else if (strcmp("md_ensolver", word) == 0)
-        {
-            read_value(ifs, mdp.md_ensolver);
-        }
         else if (strcmp("msst_direction", word) == 0)
         {
             read_value(ifs, mdp.msst_direction);
@@ -1372,10 +1372,6 @@ bool Input::Read(const std::string &fn)
         // tddft
         // Fuxiang He add 2016-10-26
         //----------------------------------------------------------
-        else if (strcmp("tddft", word) == 0)
-        {
-            read_value(ifs, tddft);
-        }
         else if (strcmp("td_scf_thr", word) == 0)
         {
             read_value(ifs, td_scf_thr);
@@ -2101,7 +2097,7 @@ void Input::Default_2(void) // jiyy add 2019-08-04
             vdw_cutoff_radius = "95";
         }
     }
-    if(calculation.substr(0,3) != "sto")    bndpar = 1;
+    if(esolver_type != "sdft")    bndpar = 1;
     if(bndpar > GlobalV::NPROC) bndpar = GlobalV::NPROC;
     if(method_sto != 1 && method_sto != 2) 
     {
@@ -2129,6 +2125,7 @@ void Input::Bcast()
     Parallel_Common::bcast_string(wannier_card);
     Parallel_Common::bcast_string(latname);
     Parallel_Common::bcast_string(calculation);
+    Parallel_Common::bcast_string(esolver_type);
     Parallel_Common::bcast_double(pseudo_rcut);
     Parallel_Common::bcast_bool(pseudo_mesh);
     Parallel_Common::bcast_int(ntype);
@@ -2319,7 +2316,6 @@ void Input::Bcast()
     Parallel_Common::bcast_double(mdp.lj_rcut);
     Parallel_Common::bcast_double(mdp.lj_epsilon);
     Parallel_Common::bcast_double(mdp.lj_sigma);
-    Parallel_Common::bcast_string(mdp.md_ensolver);
     Parallel_Common::bcast_int(mdp.msst_direction);
     Parallel_Common::bcast_double(mdp.msst_vel);
     Parallel_Common::bcast_double(mdp.msst_vis);
@@ -2379,7 +2375,6 @@ void Input::Bcast()
     Parallel_Common::bcast_int(vdw_cutoff_period.y);
     Parallel_Common::bcast_int(vdw_cutoff_period.z);
     // Fuxiang He add 2016-10-26
-    Parallel_Common::bcast_int(tddft);
     Parallel_Common::bcast_int(td_val_elec_01);
     Parallel_Common::bcast_int(td_val_elec_02);
     Parallel_Common::bcast_int(td_val_elec_03);
@@ -2541,7 +2536,7 @@ void Input::Check(void)
     //----------------------------------------------------------
     // main parameters / electrons / spin ( 1/16 )
     //----------------------------------------------------------
-    if (calculation == "scf" || calculation == "ofdft")
+    if (calculation == "scf")
     {
         if (mem_saver == 1)
         {
@@ -2560,15 +2555,6 @@ void Input::Check(void)
            version!"<<std::endl;
                 }
         */
-        this->relax_nmax = 1;
-    }
-    else if (calculation == "sto-scf") // qianrui 2021-2-20
-    {
-        if (mem_saver == 1)
-        {
-            mem_saver = 0;
-            ModuleBase::GlobalFunc::AUTO_SET("mem_savre", "0");
-        }
         this->relax_nmax = 1;
     }
     else if (calculation == "relax") // pengfei 2014-10-13
@@ -2650,9 +2636,9 @@ void Input::Check(void)
             ModuleBase::WARNING_QUIT("Input::Check", "calculate = istate is only availble for LCAO.");
         }
     }
-    else if (calculation == "md" || calculation == "sto-md" || calculation == "of-md") // mohan add 2011-11-04
+    else if (calculation == "md") // mohan add 2011-11-04
     {
-        GlobalV::CALCULATION = calculation;
+        GlobalV::CALCULATION = "md";
         symmetry = 0;
         cal_force = 1;
         if (mdp.md_nstep == 0)
@@ -2666,7 +2652,7 @@ void Input::Check(void)
         // deal with input parameters , 2019-04-30
         if (mdp.md_dt < 0)
             ModuleBase::WARNING_QUIT("Input::Check", "time interval of MD calculation should be set!");
-        if (mdp.md_tfirst < 0 && tddft==0)
+        if (mdp.md_tfirst < 0 && esolver_type != "tddft")
             ModuleBase::WARNING_QUIT("Input::Check", "temperature of MD calculation should be set!");
         if (mdp.md_tlast < 0.0)
             mdp.md_tlast = mdp.md_tfirst;
@@ -2687,7 +2673,7 @@ void Input::Check(void)
         {
             init_vel = 1;
         }
-        if(mdp.md_ensolver == "LJ" || mdp.md_ensolver == "DP" || mdp.md_type == 4)
+        if(esolver_type == "lj" || esolver_type == "dp" || mdp.md_type == 4)
         {
             cal_stress = 1;
         }
@@ -2698,7 +2684,7 @@ void Input::Check(void)
                 ModuleBase::WARNING_QUIT("Input::Check", "msst_qmass must be greater than 0!");
             }
         }
-        if(mdp.md_ensolver == "DP")
+        if(esolver_type == "dp")
         {
             if (access(mdp.pot_file.c_str(), 0) == -1)
             {

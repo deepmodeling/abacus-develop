@@ -102,7 +102,7 @@ void Run_MD_LCAO::opt_ions(ModuleESolver::ESolver* p_esolver)
 
             // update force and virial due to the update of atom positions
 
-            MD_func::force_virial(p_esolver, mdrun->step_, mdrun->mdp, mdrun->ucell, mdrun->potential, mdrun->force, mdrun->virial);
+            MD_func::force_virial(p_esolver, mdrun->step_, mdrun->ucell, mdrun->potential, mdrun->force, mdrun->virial);
 
             mdrun->second_half();
 
