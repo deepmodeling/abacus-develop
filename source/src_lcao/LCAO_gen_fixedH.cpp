@@ -382,12 +382,12 @@ void LCAO_gen_fixedH::test_Nonlocal()
 											atom2->iw2l[ k0 ], // L2
 											atom2->iw2m[ k0 ], // m2
 											atom2->iw2n[ k0 ], // n2
-											tau0, T0, GlobalC::ucell.atoms[T0].dion, GlobalV::NSPIN,
-											GlobalC::ucell.atoms[T0].d_so, // mohan  add 2021-05-07
-											GlobalC::ucell.atoms[T0].non_zero_count_soc[0], // 0 stands for spin
-											GlobalC::ucell.atoms[T0].index1_soc[0],
-											GlobalC::ucell.atoms[T0].index2_soc[0],
-											GlobalC::ucell.atoms[T0].nproj_soc
+											tau0, T0, GlobalC::ucell.atoms[T0].ncpp.dion, GlobalV::NSPIN,
+											GlobalC::ucell.atoms[T0].ncpp.d_so, // mohan  add 2021-05-07
+											GlobalC::ucell.atoms[T0].ncpp.non_zero_count_soc[0], // 0 stands for spin
+											GlobalC::ucell.atoms[T0].ncpp.index1_soc[0],
+											GlobalC::ucell.atoms[T0].ncpp.index2_soc[0],
+											GlobalC::ucell.atoms[T0].ncpp.nproj_soc
 											);
 									
 									//vnltest[ mu * pv->ncol + nu ] += nlm[0];
@@ -720,11 +720,11 @@ void LCAO_gen_fixedH::build_Nonlocal_mu_new(double* NLloc, const bool &calc_deri
 									{
 										std::complex<double> nlm_tmp = ModuleBase::ZERO;
 										int is0 = (j-j0*GlobalV::NPOL) + (k-k0*GlobalV::NPOL)*2;
-										for (int no = 0; no < GlobalC::ucell.atoms[T0].non_zero_count_soc[is0]; no++)
+										for (int no = 0; no < GlobalC::ucell.atoms[T0].ncpp.non_zero_count_soc[is0]; no++)
 										{
-											const int p1 = GlobalC::ucell.atoms[T0].index1_soc[is0][no];
-											const int p2 = GlobalC::ucell.atoms[T0].index2_soc[is0][no];
-											nlm_tmp += nlm_1[p1] * nlm_2[p2] * GlobalC::ucell.atoms[T0].d_so(is0, p2, p1);
+											const int p1 = GlobalC::ucell.atoms[T0].ncpp.index1_soc[is0][no];
+											const int p2 = GlobalC::ucell.atoms[T0].ncpp.index2_soc[is0][no];
+											nlm_tmp += nlm_1[p1] * nlm_2[p2] * GlobalC::ucell.atoms[T0].ncpp.d_so(is0, p2, p1);
 										}
 										this->LM->Hloc_fixedR_soc[nnr+nnr_inner] += nlm_tmp;
 									}
@@ -740,7 +740,7 @@ void LCAO_gen_fixedH::build_Nonlocal_mu_new(double* NLloc, const bool &calc_deri
 											{
 												if(nlm_1[ib]!=0.0 && nlm_2[ib]!=0.0)
 												{
-													nlm_tmp += nlm_1[ib]*nlm_2[ib]*GlobalC::ucell.atoms[T0].dion(nb,nb);
+													nlm_tmp += nlm_1[ib]*nlm_2[ib]*GlobalC::ucell.atoms[T0].ncpp.dion(nb,nb);
 												}
 												ib+=1;
 											}
@@ -790,7 +790,7 @@ void LCAO_gen_fixedH::build_Nonlocal_mu_new(double* NLloc, const bool &calc_deri
 											{
 												for(int ir=0;ir<3;ir++)
 												{
-													nlm[ir] += nlm_2[ir][ib]*nlm_1[ib]*GlobalC::ucell.atoms[T0].dion(nb,nb);
+													nlm[ir] += nlm_2[ir][ib]*nlm_1[ib]*GlobalC::ucell.atoms[T0].ncpp.dion(nb,nb);
 												}
 												ib+=1;
 											}
@@ -825,7 +825,7 @@ void LCAO_gen_fixedH::build_Nonlocal_mu_new(double* NLloc, const bool &calc_deri
 											{
 												for(int ir=0;ir<3;ir++)
 												{
-													nlm[ir] += nlm_2[ir][ib]*nlm_1[ib]*GlobalC::ucell.atoms[T0].dion(nb,nb);
+													nlm[ir] += nlm_2[ir][ib]*nlm_1[ib]*GlobalC::ucell.atoms[T0].ncpp.dion(nb,nb);
 												}
 												ib+=1;
 											}
@@ -1036,12 +1036,12 @@ void LCAO_gen_fixedH::build_Nonlocal_mu(double* NLloc, const bool &calc_deri)
 												atom2->iw2l[ k0 ], // L2
 												atom2->iw2m[ k0 ], // m2
 												atom2->iw2n[ k0 ], // n2
-												tau0, T0, GlobalC::ucell.atoms[T0].dion, GlobalV::NSPIN,
-												GlobalC::ucell.atoms[T0].d_so, // mohan  add 2021-05-07
-												GlobalC::ucell.atoms[T0].non_zero_count_soc[is0], // index stands for spin
-												GlobalC::ucell.atoms[T0].index1_soc[is0],
-												GlobalC::ucell.atoms[T0].index2_soc[is0],
-												GlobalC::ucell.atoms[T0].nproj_soc,
+												tau0, T0, GlobalC::ucell.atoms[T0].ncpp.dion, GlobalV::NSPIN,
+												GlobalC::ucell.atoms[T0].ncpp.d_so, // mohan  add 2021-05-07
+												GlobalC::ucell.atoms[T0].ncpp.non_zero_count_soc[is0], // index stands for spin
+												GlobalC::ucell.atoms[T0].ncpp.index1_soc[is0],
+												GlobalC::ucell.atoms[T0].ncpp.index2_soc[is0],
+												GlobalC::ucell.atoms[T0].ncpp.nproj_soc,
 												nlm2, is0 //for soc
 												);
 
@@ -1084,12 +1084,12 @@ void LCAO_gen_fixedH::build_Nonlocal_mu(double* NLloc, const bool &calc_deri)
 													atom2->iw2l[ k0 ], // L2
 													atom2->iw2m[ k0 ], // m2
 													atom2->iw2n[ k0 ], // n2
-													tau0, T0, GlobalC::ucell.atoms[T0].dion, GlobalV::NSPIN,
-													GlobalC::ucell.atoms[T0].d_so, // mohan  add 2021-05-07
-													GlobalC::ucell.atoms[T0].non_zero_count_soc[0], // index stands for spin
-													GlobalC::ucell.atoms[T0].index1_soc[0],
-													GlobalC::ucell.atoms[T0].index2_soc[0],
-													GlobalC::ucell.atoms[T0].nproj_soc
+													tau0, T0, GlobalC::ucell.atoms[T0].ncpp.dion, GlobalV::NSPIN,
+													GlobalC::ucell.atoms[T0].ncpp.d_so, // mohan  add 2021-05-07
+													GlobalC::ucell.atoms[T0].ncpp.non_zero_count_soc[0], // index stands for spin
+													GlobalC::ucell.atoms[T0].ncpp.index1_soc[0],
+													GlobalC::ucell.atoms[T0].ncpp.index2_soc[0],
+													GlobalC::ucell.atoms[T0].ncpp.nproj_soc
 													);
 
 											// sum all projectors for one atom.
@@ -1114,12 +1114,12 @@ void LCAO_gen_fixedH::build_Nonlocal_mu(double* NLloc, const bool &calc_deri)
 													atom1->iw2l[ j0 ], // L1
 													atom1->iw2m[ j0 ], // m1
 													atom1->iw2n[ j0 ], // N1
-													tau0, T0, GlobalC::ucell.atoms[T0].dion, GlobalV::NSPIN,
-													GlobalC::ucell.atoms[T0].d_so, // mohan  add 2021-05-07
-													GlobalC::ucell.atoms[T0].non_zero_count_soc[0], // index stands for spin
-													GlobalC::ucell.atoms[T0].index1_soc[0],
-													GlobalC::ucell.atoms[T0].index2_soc[0],
-													GlobalC::ucell.atoms[T0].nproj_soc
+													tau0, T0, GlobalC::ucell.atoms[T0].ncpp.dion, GlobalV::NSPIN,
+													GlobalC::ucell.atoms[T0].ncpp.d_so, // mohan  add 2021-05-07
+													GlobalC::ucell.atoms[T0].ncpp.non_zero_count_soc[0], // index stands for spin
+													GlobalC::ucell.atoms[T0].ncpp.index1_soc[0],
+													GlobalC::ucell.atoms[T0].ncpp.index2_soc[0],
+													GlobalC::ucell.atoms[T0].ncpp.nproj_soc
 													);
 
 
@@ -1324,9 +1324,9 @@ void LCAO_gen_fixedH::build_Nonlocal_beta_new(double* HSloc) //update by liuyu 2
                                 for(int m=0;m<2*L0+1;m++)
                                 {
                                     #ifdef _OPENMP
-                                        nlm_thread += nlm1[ib]*nlm2[ib]*GlobalC::ucell.atoms[T0].dion(nb,nb);
+                                        nlm_thread += nlm1[ib]*nlm2[ib]*GlobalC::ucell.atoms[T0].ncpp.dion(nb,nb);
                                     #else 
-                                        nlm += nlm1[ib]*nlm2[ib]*GlobalC::ucell.atoms[T0].dion(nb,nb);
+                                        nlm += nlm1[ib]*nlm2[ib]*GlobalC::ucell.atoms[T0].ncpp.dion(nb,nb);
                                     #endif
                                     ib+=1;
                                 }
@@ -1479,12 +1479,12 @@ void LCAO_gen_fixedH::build_Nonlocal_beta(double* NLloc, const bool& calc_deri) 
 										atom2->iw2l[ iw2_0 ], // L2
 										atom2->iw2m[ iw2_0 ], // m2
 										atom2->iw2n[ iw2_0 ], // n2
-										GlobalC::ucell.atoms[T0].tau[I0], T0, GlobalC::ucell.atoms[T0].dion, GlobalV::NSPIN,
-										GlobalC::ucell.atoms[T0].d_so,
-										GlobalC::ucell.atoms[T0].non_zero_count_soc[0], // index stands for spin
-										GlobalC::ucell.atoms[T0].index1_soc[0],
-										GlobalC::ucell.atoms[T0].index2_soc[0],
-										GlobalC::ucell.atoms[T0].nproj_soc
+										GlobalC::ucell.atoms[T0].tau[I0], T0, GlobalC::ucell.atoms[T0].ncpp.dion, GlobalV::NSPIN,
+										GlobalC::ucell.atoms[T0].ncpp.d_so,
+										GlobalC::ucell.atoms[T0].ncpp.non_zero_count_soc[0], // index stands for spin
+										GlobalC::ucell.atoms[T0].ncpp.index1_soc[0],
+										GlobalC::ucell.atoms[T0].ncpp.index2_soc[0],
+										GlobalC::ucell.atoms[T0].ncpp.nproj_soc
 										);
 									//if(GlobalV::GAMMA_ONLY_LOCAL)
 									//{
@@ -1512,12 +1512,12 @@ void LCAO_gen_fixedH::build_Nonlocal_beta(double* NLloc, const bool& calc_deri) 
 											atom2->iw2l[ iw2_0 ], // L2
 											atom2->iw2m[ iw2_0 ], // m2
 											atom2->iw2n[ iw2_0 ], // n2
-											GlobalC::ucell.atoms[T0].tau[I0], T0, GlobalC::ucell.atoms[T0].dion, GlobalV::NSPIN,
-											GlobalC::ucell.atoms[T0].d_so,
-											GlobalC::ucell.atoms[T0].non_zero_count_soc[0], // index stands for spin
-											GlobalC::ucell.atoms[T0].index1_soc[0],
-											GlobalC::ucell.atoms[T0].index2_soc[0],
-											GlobalC::ucell.atoms[T0].nproj_soc
+											GlobalC::ucell.atoms[T0].tau[I0], T0, GlobalC::ucell.atoms[T0].ncpp.dion, GlobalV::NSPIN,
+											GlobalC::ucell.atoms[T0].ncpp.d_so,
+											GlobalC::ucell.atoms[T0].ncpp.non_zero_count_soc[0], // index stands for spin
+											GlobalC::ucell.atoms[T0].ncpp.index1_soc[0],
+											GlobalC::ucell.atoms[T0].ncpp.index2_soc[0],
+											GlobalC::ucell.atoms[T0].ncpp.nproj_soc
 											);
 
 									//if(GlobalV::GAMMA_ONLY_LOCAL)

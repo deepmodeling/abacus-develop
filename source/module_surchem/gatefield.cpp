@@ -30,7 +30,7 @@ void Gatefield::add_gatefield(double *vltot,
     double ion_charge = 0;
     for(int it=0; it<cell.ntype; ++it)
     {
-        ion_charge += cell.atoms[it].na * cell.atoms[it].zv;
+        ion_charge += cell.atoms[it].na * cell.atoms[it].ncpp.zv;
     }
     rho_surface = - (GlobalV::NELEC - ion_charge) / area * ModuleBase::TWO_PI;
 
@@ -42,7 +42,7 @@ void Gatefield::add_gatefield(double *vltot,
     double factor = 0;
     for(int it=0; it<cell.ntype; ++it)
     {
-        double zval = cell.atoms[it].zv;
+        double zval = cell.atoms[it].ncpp.zv;
         for(int ia=0; ia<cell.atoms[it].na; ++ia)
         {
             double pos = cell.atoms[it].taud[ia][Efield::efield_dir];
@@ -164,7 +164,7 @@ void Gatefield::compute_force(const UnitCell &cell, ModuleBase::matrix &fgate)
     int iat = 0;
     for(int it=0; it<cell.ntype; ++it)
     {
-        double zval = cell.atoms[it].zv;
+        double zval = cell.atoms[it].ncpp.zv;
         for(int ia=0; ia<cell.atoms[it].na; ++ia)
         {
             double pos = cell.atoms[it].taud[ia][Efield::efield_dir];

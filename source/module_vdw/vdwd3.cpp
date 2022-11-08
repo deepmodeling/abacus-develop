@@ -67,7 +67,7 @@ std::vector<double> Vdwd3::atom_kind()
     std::vector<double> atom_kind(ucell_.ntype);
     for (size_t i = 0; i != ucell_.ntype; i++)
         for (int j = 0; j != ModuleBase::element_name.size(); j++)
-            if (ucell_.atoms[i].psd == ModuleBase::element_name[j])
+            if (ucell_.atoms[i].ncpp.psd == ModuleBase::element_name[j])
             {
                 atom_kind[i] = j;
                 break;

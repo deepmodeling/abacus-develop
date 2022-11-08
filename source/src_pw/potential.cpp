@@ -366,7 +366,7 @@ void Potential::newd(void)
     for (int iat = 0; iat < GlobalC::ucell.nat; iat++)
     {
         const int it = GlobalC::ucell.iat2it[iat];
-        const int nht = GlobalC::ucell.atoms[it].nh;
+        const int nht = GlobalC::ucell.atoms[it].ncpp.nh;
         // nht: number of beta functions per atom type
         for (int is = 0; is < GlobalV::NSPIN; is++)
         {

@@ -286,7 +286,7 @@ void Sto_Forces::cal_sto_force_nl(ModuleBase::matrix& forcenl, const ModuleBase:
         	int sum = 0;
 			for (int it=0; it< GlobalC::ucell.ntype; it++)
 			{
-				const int Nprojs =  GlobalC::ucell.atoms[it].nh;
+				const int Nprojs =  GlobalC::ucell.atoms[it].ncpp.nh;
 				for (int ia=0; ia< GlobalC::ucell.atoms[it].na; ia++)
 				{
 					for (int ip=0; ip<Nprojs; ip++)
