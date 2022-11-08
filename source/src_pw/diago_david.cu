@@ -129,7 +129,9 @@ void Diago_David_CUDA::diag
 
         this->SchmitOrth(npw, nband, m, basis, psi_m, spsi);
 
+        /*obsolete: globalc::hm has been removed
         GlobalC::hm.hpw.h_1psi_cuda(npw, psi_m, hpsi, spsi);
+        */
 
         // basis(m) = psi_m, hp(m) = H |psi_m>, sp(m) = S |psi_m>
         CHECK_CUDA(cudaMemcpy(basis[npw*m], psi_m, npw*sizeof(double2), cudaMemcpyDeviceToDevice));

@@ -181,7 +181,8 @@ void Hamilt_PW::diagH_subspace(
 	}
 
 	// after generation of H and S matrix, diag them
-    GlobalC::hm.diagH_LAPACK(nstart, n_band, hc, sc, nstart, en, hvec);
+	//obsolete: globalc::hm has been removed
+    //GlobalC::hm.diagH_LAPACK(nstart, n_band, hc, sc, nstart, en, hvec);
 
 
 	// Peize Lin add 2019-03-09
