@@ -96,17 +96,17 @@ bool Relax::setup_gradient(const ModuleBase::matrix& force, const ModuleBase::ma
 		for(int ia =0;ia< GlobalC::ucell.atoms[it].na;ia++)
 		{	
             double force2 = 0.0;
-			if(atom->mbl[ia].x == 1)
+			if(atom->atom_pp.mbl[ia].x == 1)
 			{
 				grad_ion(iat, 0) = force_eva(iat, 0);
                 force2 += pow(grad_ion(iat, 0), 2);
 			}
-			if(atom->mbl[ia].y == 1)
+			if(atom->atom_pp.mbl[ia].y == 1)
 			{
 				grad_ion(iat, 1) = force_eva(iat, 1);
                 force2 += pow(grad_ion(iat, 1), 2);
 			}
-			if(atom->mbl[ia].z == 1)
+			if(atom->atom_pp.mbl[ia].z == 1)
 			{
 				grad_ion(iat, 2) = force_eva(iat, 2);
                 force2 += pow(grad_ion(iat, 2), 2);
@@ -489,15 +489,15 @@ void Relax::move_cell_ions(const bool is_new_dir)
         int ia = GlobalC::ucell.iat2ia[iat];
         Atom* atom = &GlobalC::ucell.atoms[it];
 
-        if(atom->mbl[ia].x == 1)
+        if(atom->atom_pp.mbl[ia].x == 1)
         {
             move_ion[iat * 3] = move_ion_dr.x * fac;
         }
-        if(atom->mbl[ia].y == 1)
+        if(atom->atom_pp.mbl[ia].y == 1)
         {
             move_ion[iat * 3 + 1] = move_ion_dr.y * fac;
         }
-        if(atom->mbl[ia].z == 1)
+        if(atom->atom_pp.mbl[ia].z == 1)
         {
             move_ion[iat * 3 + 2] = move_ion_dr.z * fac;
         }
@@ -606,15 +606,15 @@ bool Relax::check_convergence(const ModuleBase::matrix& force, const ModuleBase:
 		for(int ia =0;ia< GlobalC::ucell.atoms[it].na;ia++)
 		{
             double force2 = 0.0;	
-			if(atom->mbl[ia].x == 1)
+			if(atom->atom_pp.mbl[ia].x == 1)
 			{
                 force2 += force_eva(iat, 0) * force_eva(iat, 0);
 			}
-			if(atom->mbl[ia].y == 1)
+			if(atom->atom_pp.mbl[ia].y == 1)
 			{
                 force2 += force_eva(iat, 1) * force_eva(iat, 1);
 			}
-			if(atom->mbl[ia].z == 1)
+			if(atom->atom_pp.mbl[ia].z == 1)
 			{
                 force2 += force_eva(iat, 2) * force_eva(iat, 2);
 			}
