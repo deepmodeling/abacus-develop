@@ -614,28 +614,12 @@ void K_Vectors::ibz_kpoint(const ModuleSymmetry::Symmetry &symm, bool use_symm,s
 //	{
 //		out.printM3("rot matrix",kgmatrix[i]);
 //	}
-    // output in kpoints file
-    std::stringstream ss;
-    ss << " " << std::setw(40) <<"nkstot" << " = " << nkstot
-        << std::setw(66) << "ibzkpt" << std::endl;
-    ss << " " << std::setw(8) << "KPT"
-        << std::setw(20) << "DirectX"
-	    << std::setw(20) << "DirectY"
-        << std::setw(20) << "DirectZ"
-         << std::setw(8) << "IBZ"
-        << std::setw(20) << "DirectX"
-	    << std::setw(20) << "DirectY"
-        << std::setw(20) << "DirectZ" << std::endl;
-	
+
+    // for output in kpoints file
+    int ibz_index[nkstot]={0};
 	// search in all k-poins.
     for (int i = 0; i < nkstot; ++i)
     {
-        // output in kpoints file
-        ss << " "
-            << std::setw(8) << i+1
-            << std::setw(20) << this->kvec_d[i].x
-            << std::setw(20) << this->kvec_d[i].y
-            << std::setw(20) << this->kvec_d[i].z;
 		//std::cout << "\n kpoint = " << i << std::endl;
 		//std::cout << "\n kvec_d = " << kvec_d[i].x << " " << kvec_d[i].y << " " << kvec_d[i].z;
         bool already_exist = false;
@@ -671,11 +655,6 @@ void K_Vectors::ibz_kpoint(const ModuleSymmetry::Symmetry &symm, bool use_symm,s
 						// find another ibz k point,
 						// but is already in the ibz_kpoint list.
 						// so the weight need to +1;
-                        // output in kpoints file
-                        ss << std::setw(8) << k+1
-                            << std::setw(20) << this->kvec_d_ibz[k].x
-                            << std::setw(20) << this->kvec_d_ibz[k].y
-                            << std::setw(20) << this->kvec_d_ibz[k].z << std::endl;
 
                         this->wk_ibz[k] += weight;
 						exist_number = k;
@@ -691,10 +670,7 @@ void K_Vectors::ibz_kpoint(const ModuleSymmetry::Symmetry &symm, bool use_symm,s
 			//nkstot_ibz indicate the index of ibz kpoint.
             this->kvec_d_ibz[nkstot_ibz] = kvec_rot;
             // output in kpoints file
-            ss << std::setw(8) << nkstot_ibz+1
-                << std::setw(20) << this->kvec_d_ibz[nkstot_ibz].x
-                << std::setw(20) << this->kvec_d_ibz[nkstot_ibz].y
-                << std::setw(20) << this->kvec_d_ibz[nkstot_ibz].z << std::endl;
+            ibz_index[i] = nkstot_ibz;
 
 			//the weight should be averged k-point weight.
             this->wk_ibz[nkstot_ibz] = weight;
@@ -715,6 +691,8 @@ void K_Vectors::ibz_kpoint(const ModuleSymmetry::Symmetry &symm, bool use_symm,s
 			double kmol_new = kvec_d[i].norm2();
 			double kmol_old = kvec_d_ibz[exist_number].norm2();
 
+            ibz_index[i] = exist_number;
+
 //			std::cout << "\n kmol_new = " << kmol_new;
 //			std::cout << "\n kmol_old = " << kmol_old;
 			
@@ -729,9 +707,34 @@ void K_Vectors::ibz_kpoint(const ModuleSymmetry::Symmetry &symm, bool use_symm,s
 			if(kmol_new > kmol_old)
 			{
 				kvec_d_ibz[exist_number] = kvec_d[i];
-			}
+            }
 		}
 //		BLOCK_HERE("check k point");
+    }
+
+    // output in kpoints file
+    std::stringstream ss;
+    ss << " " << std::setw(40) <<"nkstot" << " = " << nkstot
+        << std::setw(66) << "ibzkpt" << std::endl;
+    ss << " " << std::setw(8) << "KPT"
+        << std::setw(20) << "DirectX"
+	    << std::setw(20) << "DirectY"
+        << std::setw(20) << "DirectZ"
+         << std::setw(8) << "IBZ"
+        << std::setw(20) << "DirectX"
+	    << std::setw(20) << "DirectY"
+        << std::setw(20) << "DirectZ" << std::endl;
+    for (int i = 0; i < nkstot; ++i)
+    {
+        ss << " "
+            << std::setw(8) << i+1
+            << std::setw(20) << this->kvec_d[i].x
+            << std::setw(20) << this->kvec_d[i].y
+            << std::setw(20) << this->kvec_d[i].z;
+        ss << std::setw(8) << ibz_index[i]+1
+                << std::setw(20) << this->kvec_d_ibz[ibz_index[i]].x
+                << std::setw(20) << this->kvec_d_ibz[ibz_index[i]].y
+                << std::setw(20) << this->kvec_d_ibz[ibz_index[i]].z << std::endl;
     }
 
     skpt = ss.str();
