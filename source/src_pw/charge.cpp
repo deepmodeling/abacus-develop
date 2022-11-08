@@ -356,8 +356,8 @@ void Charge::atomic_rho(const int spin_number_need, double** rho_in, ModulePW::P
 						return rhoatm;
 					}();
 
-					assert(GlobalC::ucell.meshx>0);
-					std::vector<double> rho1d(GlobalC::ucell.meshx);
+					assert(mesh>0);
+					std::vector<double> rho1d(mesh);
 					//----------------------------------------------------------
 					// Here we compute the G=0 term
 					//----------------------------------------------------------

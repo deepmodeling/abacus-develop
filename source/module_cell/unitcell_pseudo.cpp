@@ -330,8 +330,6 @@ void UnitCell_pseudo::setup_cell(
 	// setup GlobalV::NBANDS
 	//this->cal_nelec();
 
-	this->cal_meshx();
-
 	// setup vdwd2 parameters
 	//vdwd2_para.initset(*this);		// Peize Lin add 2021.03.09
 
@@ -633,24 +631,6 @@ void UnitCell_pseudo::cal_nwfc(std::ofstream &log)
 	return;
 }
 
-//======================
-// Target : meshx
-// Demand : atoms[].msh
-//======================
-void UnitCell_pseudo::cal_meshx()
-{
-	if(GlobalV::test_pseudo_cell) ModuleBase::TITLE("UnitCell_pseudo","cal_meshx");
-	this->meshx = 0;
-	for (int it = 0;it < this->ntype;it++)
-	{
-		const int mesh = this->atoms[it].ncpp.msh;
-		if (mesh > this->meshx)
-		{
-			this->meshx = mesh;
-		}
-	}
-	return;
-}
 
 //=========================
 // Target : natomwfc

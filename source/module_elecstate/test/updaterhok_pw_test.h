@@ -261,8 +261,6 @@ void UnitCell_pseudo::setup_cell(
 	this->GGT = G * GT;
 	this->invGGT = GGT.Inverse();
 
-	//this->cal_meshx();
-
 	return;
 }
 
