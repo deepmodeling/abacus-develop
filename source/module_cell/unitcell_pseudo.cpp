@@ -754,7 +754,7 @@ bool UnitCell_pseudo::if_atoms_can_move()const
         Atom* atom = &atoms[it];
         for(int ia =0;ia< atom->na;ia++)
         {
-            if(atom->ncpp.mbl[ia].x||atom->ncpp.mbl[ia].y||atom->ncpp.mbl[ia].z) return 1;
+            if(atom->mbl[ia].x||atom->mbl[ia].y||atom->mbl[ia].z) return 1;
 		}
 	}
 	return 0;

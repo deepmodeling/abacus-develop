@@ -87,7 +87,7 @@ int UnitCell_pseudo::read_atom_species(std::ifstream &ifa, std::ofstream &ofs_ru
 
 			// Peize Lin test for bsse 2021.04.07
 			const std::string bsse_label = "empty";
-			this->atoms[i].ncpp.flag_empty_element = 
+			this->atoms[i].flag_empty_element = 
 				(search( atom_label[i].begin(), atom_label[i].end(), bsse_label.begin(), bsse_label.end() ) != atom_label[i].end())
 				? true : false;
 		}
@@ -616,7 +616,7 @@ bool UnitCell_pseudo::read_atom_positions(std::ifstream &ifpos, std::ofstream &o
 				delete[] atoms[it].tau_original;
 				delete[] atoms[it].taud;
 				delete[] atoms[it].vel;
-       			delete[] atoms[it].ncpp.mbl;
+       			delete[] atoms[it].mbl;
 				delete[] atoms[it].mag;
                 delete[] atoms[it].angle1;
                 delete[] atoms[it].angle2;
@@ -625,12 +625,12 @@ bool UnitCell_pseudo::read_atom_positions(std::ifstream &ifpos, std::ofstream &o
 				atoms[it].tau_original = new ModuleBase::Vector3<double>[na];
        			atoms[it].taud = new ModuleBase::Vector3<double>[na];
 				atoms[it].vel = new ModuleBase::Vector3<double>[na];
-       			atoms[it].ncpp.mbl = new ModuleBase::Vector3<int>[na];
+       			atoms[it].mbl = new ModuleBase::Vector3<int>[na];
 				atoms[it].mag = new double[na];
 				atoms[it].angle1 = new double[na];
 				atoms[it].angle2 = new double[na];
 				atoms[it].m_loc_ = new ModuleBase::Vector3<double>[na];
-				atoms[it].ncpp.mass = this->atom_mass[it]; //mohan add 2011-11-07 
+				atoms[it].mass = this->atom_mass[it]; //mohan add 2011-11-07 
 				ModuleBase::GlobalFunc::ZEROS(atoms[it].mag,na);
 				for (int ia = 0;ia < na; ia++)
 				{
@@ -856,12 +856,12 @@ bool UnitCell_pseudo::read_atom_positions(std::ifstream &ifpos, std::ofstream &o
 					
 					if(!GlobalV::fixed_atoms)
 					{
-						atoms[it].ncpp.mbl[ia] = mv;
+						atoms[it].mbl[ia] = mv;
 					}
 					else
 					{
-						atoms[it].ncpp.mbl[ia] = 0.0;
-						atoms[it].ncpp.mbl[ia].print();
+						atoms[it].mbl[ia] = 0.0;
+						atoms[it].mbl[ia].print();
 					}
 					atoms[it].tau_original[ia] = atoms[it].tau[ia];
 				}//endj
@@ -1017,7 +1017,7 @@ void UnitCell_pseudo::print_stru_file(const std::string &fn, const int &type, co
 			for(int ia=0; ia<atoms[it].na; ia++)
 			{
 				ofs << atoms[it].tau[ia].x << "  " << atoms[it].tau[ia].y << "  " << atoms[it].tau[ia].z
-					<< "  m  " << atoms[it].ncpp.mbl[ia].x << "  " << atoms[it].ncpp.mbl[ia].y << "  " << atoms[it].ncpp.mbl[ia].z;
+					<< "  m  " << atoms[it].mbl[ia].x << "  " << atoms[it].mbl[ia].y << "  " << atoms[it].mbl[ia].z;
 
 				if(level == 1)
 				{
@@ -1056,7 +1056,7 @@ void UnitCell_pseudo::print_stru_file(const std::string &fn, const int &type, co
 			for(int ia=0; ia<atoms[it].na; ia++)
 			{
 				ofs << atoms[it].taud[ia].x << "  " << atoms[it].taud[ia].y << "  " << atoms[it].taud[ia].z
-					<< "  m  " << atoms[it].ncpp.mbl[ia].x << "  " << atoms[it].ncpp.mbl[ia].y << "  " << atoms[it].ncpp.mbl[ia].z;
+					<< "  m  " << atoms[it].mbl[ia].x << "  " << atoms[it].mbl[ia].y << "  " << atoms[it].mbl[ia].z;
 
 				if(level == 1)
 				{

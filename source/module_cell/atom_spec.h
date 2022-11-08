@@ -12,6 +12,9 @@ public:
     ~Atom();
 
     Atom_pseudo ncpp;
+    double mass; // the mass of atom
+    ModuleBase::Vector3<int> *mbl; // whether the atoms can move or not
+	bool flag_empty_element = false; // whether is the empty element for bsse.	Peize Lin add 2021.04.07
 
     int *iw2m; // use iw to find m
     int *iw2n; // use iw to find n

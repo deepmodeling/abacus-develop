@@ -35,7 +35,7 @@ void UnitCell_pseudo::read_cell_pseudopots(const std::string &pp_dir, std::ofstr
 
 			if(error==0) // mohan add 2021-04-16
 			{
-				if(this->atoms[i].ncpp.flag_empty_element)	// Peize Lin add for bsse 2021.04.07
+				if(this->atoms[i].flag_empty_element)	// Peize Lin add for bsse 2021.04.07
 				{
 					upf.set_empty_element();			
 				}

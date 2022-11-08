@@ -285,17 +285,17 @@ void UnitCell::update_pos_tau(const double* pos)
         Atom* atom = &this->atoms[it];
         for (int ia = 0; ia < atom->na; ia++)
         {
-            if (atom->ncpp.mbl[ia].x != 0)
+            if (atom->mbl[ia].x != 0)
             {
                 atom->tau_original[ia].x += (pos[3 * iat] / this->lat0 - atom->tau[ia].x);
                 atom->tau[ia].x = pos[3 * iat] / this->lat0;
             }
-            if (atom->ncpp.mbl[ia].y != 0)
+            if (atom->mbl[ia].y != 0)
             {
                 atom->tau_original[ia].y += (pos[3 * iat + 1] / this->lat0 - atom->tau[ia].y);
                 atom->tau[ia].y = pos[3 * iat + 1] / this->lat0;
             }
-            if (atom->ncpp.mbl[ia].z != 0)
+            if (atom->mbl[ia].z != 0)
             {
                 atom->tau_original[ia].z += (pos[3 * iat + 2] / this->lat0 - atom->tau[ia].z);
                 atom->tau[ia].z = pos[3 * iat + 2] / this->lat0;
@@ -318,17 +318,17 @@ void UnitCell::update_pos_tau(const ModuleBase::Vector3<double>* posd_in)
         Atom* atom = &this->atoms[it];
         for (int ia = 0; ia < atom->na; ++ia)
         {
-            if (atom->ncpp.mbl[ia].x != 0)
+            if (atom->mbl[ia].x != 0)
             {
                 atom->tau_original[ia].x += (posd_in[iat].x / this->lat0 - atom->tau[ia].x);
                 atom->tau[ia].x = posd_in[iat].x / this->lat0;
             }
-            if (atom->ncpp.mbl[ia].y != 0)
+            if (atom->mbl[ia].y != 0)
             {
                 atom->tau_original[ia].y += (posd_in[iat].y / this->lat0 - atom->tau[ia].y);
                 atom->tau[ia].y = posd_in[iat].y / this->lat0;
             }
-            if (atom->ncpp.mbl[ia].z != 0)
+            if (atom->mbl[ia].z != 0)
             {
                 atom->tau_original[ia].z += (posd_in[iat].z / this->lat0 - atom->tau[ia].z);
                 atom->tau[ia].z = posd_in[iat].z / this->lat0;

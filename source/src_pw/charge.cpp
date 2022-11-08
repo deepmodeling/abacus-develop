@@ -311,7 +311,7 @@ void Charge::atomic_rho(const int spin_number_need, double** rho_in, ModulePW::P
 		{
 			const Atom* const atom = &GlobalC::ucell.atoms[it];
 
-			if(!atom->ncpp.flag_empty_element)		// Peize Lin add for bsse 2021.04.07
+			if(!atom->flag_empty_element)		// Peize Lin add for bsse 2021.04.07
 			{		
 				const std::vector<double> rho_lgl = [&]()->std::vector<double>
 				{

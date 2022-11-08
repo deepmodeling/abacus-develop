@@ -43,16 +43,16 @@ void Ions_Move_Basic::setup_gradient(double* pos, double *grad, const ModuleBase
 		Atom* atom = &GlobalC::ucell.atoms[it];
 		for(int ia =0;ia< GlobalC::ucell.atoms[it].na;ia++)
 		{	
-			if(atom->ncpp.mbl[ia].x == 1)
+			if(atom->mbl[ia].x == 1)
 			{
 				grad[3*iat  ] = -force(iat, 0)*GlobalC::ucell.lat0;
 				//this->grad[3*iat  ] = -force(iat, 0);
 			}
-			if(atom->ncpp.mbl[ia].y == 1)
+			if(atom->mbl[ia].y == 1)
 			{
 				grad[3*iat+1] = -force(iat, 1)*GlobalC::ucell.lat0;
 			}
-			if(atom->ncpp.mbl[ia].z == 1)
+			if(atom->mbl[ia].z == 1)
 			{
 				grad[3*iat+2] = -force(iat, 2)*GlobalC::ucell.lat0;
 				//std::cout << " grad=" << grad[3*iat+2] << std::endl;
