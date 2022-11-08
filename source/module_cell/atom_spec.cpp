@@ -89,6 +89,56 @@ void Atom::set_index(void)
     return;
 }
 
+int Atom::ntype = 0;
+int Atom::natomwfc = 0;
+
+//=========================
+// Target : natomwfc
+// Demand : atoms[].nchi
+// 			atoms[].lchi
+// 			atoms[].oc
+// 			atoms[].na
+//=========================
+void Atom::cal_natomwfc(const Atom *atoms, std::ofstream &log)
+{
+	if(GlobalV::test_pseudo_cell) ModuleBase::TITLE("Atom","cal_natomwfc");
+
+	natomwfc = 0;
+	for (int it = 0;it < ntype;it++)
+	{
+		//============================
+		// Use pseudo-atomic orbitals
+		//============================
+		int tmp=0;
+		for (int l = 0;l < atoms[it].ncpp.nchi;l++)
+		{
+			if (atoms[it].ncpp.oc[l] >= 0)
+			{
+				if(GlobalV::NSPIN==4)
+				{
+					if(atoms[it].ncpp.has_so)
+					{
+						tmp += 2 * atoms[it].ncpp.lchi[l];
+						if(fabs(atoms[it].ncpp.jchi[l] - atoms[it].ncpp.lchi[l] - 0.5)<1e-6)
+						tmp += 2 ;
+					}
+					else
+					{
+						tmp += 2 * (2 * atoms[it].ncpp.lchi[l] + 1);
+					}
+				}
+				else
+					tmp += 2 * atoms[it].ncpp.lchi[l] + 1;
+			}
+		}
+		natomwfc += tmp * atoms[it].na;
+	}
+	ModuleBase::GlobalFunc::OUT(log,"initial pseudo atomic orbital number",natomwfc);
+	return;
+}
+
+
+
 void Atom::print_Atom(std::ofstream &ofs)
 {
     //OUT(ofs,"print_Atom()");

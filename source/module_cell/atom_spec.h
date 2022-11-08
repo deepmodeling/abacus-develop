@@ -15,6 +15,8 @@ public:
     double mass; // the mass of atom
     ModuleBase::Vector3<int> *mbl; // whether the atoms can move or not
 	bool flag_empty_element = false; // whether is the empty element for bsse.	Peize Lin add 2021.04.07
+    static int ntype; // total types of atoms
+    static int natomwfc; // number of starting wavefunctions
 
     int *iw2m; // use iw to find m
     int *iw2n; // use iw to find n
@@ -48,6 +50,9 @@ public:
 
     void print_Atom(std::ofstream &ofs);
     void update_force(ModuleBase::matrix &fcs);
+
+    // cal_natomwfc : calculate total number of atomic wavefunctions
+    static void cal_natomwfc(const Atom* atoms,std::ofstream &log);
 #ifdef __MPI
     void bcast_atom(void);
     void bcast_atom2(void);

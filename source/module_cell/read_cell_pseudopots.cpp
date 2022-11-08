@@ -140,7 +140,7 @@ void UnitCell_pseudo::print_unitcell_pseudo(const std::string &fn)
 #ifdef __MPI
 void UnitCell_pseudo::bcast_unitcell_pseudo(void)
 {
-	Parallel_Common::bcast_int( natomwfc );
+	Parallel_Common::bcast_int( Atom::natomwfc );
 	Parallel_Common::bcast_int( lmax );
 	Parallel_Common::bcast_int( lmax_ppwf );
 	//Parallel_Common::bcast_double( GlobalC::CHR.nelec );

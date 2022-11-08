@@ -383,7 +383,7 @@ void WF_atomic::atomic_wfc
                                 for(int m = 0;m<2*l+1;m++)
                                 {
                                     const int lm = l*l +m;
-                                    if(index+2*l+1>GlobalC::ucell.natomwfc) ModuleBase::WARNING_QUIT("GlobalC::wf.atomic_wfc()","error: too many wfcs");
+                                    if(index+2*l+1>Atom::natomwfc) ModuleBase::WARNING_QUIT("GlobalC::wf.atomic_wfc()","error: too many wfcs");
                                     for(int ig = 0;ig<np;ig++)
                                     {
                                         aux[ig] = sk[ig] * ylm(lm,ig) * chiaux[ig];
@@ -420,7 +420,7 @@ void WF_atomic::atomic_wfc
                             for(int m = 0;m<2*l+1;m++)
                             {
                                 const int lm = l*l +m;
-                                if(index+2*l+1>GlobalC::ucell.natomwfc) ModuleBase::WARNING_QUIT("GlobalC::wf.atomic_wfc()","error: too many wfcs");
+                                if(index+2*l+1>Atom::natomwfc) ModuleBase::WARNING_QUIT("GlobalC::wf.atomic_wfc()","error: too many wfcs");
                                 for(int ig = 0;ig<np;ig++)
                                 {
                                      aux[ig] = sk[ig] * ylm(lm,ig) * flq[ig];
@@ -473,9 +473,9 @@ void WF_atomic::atomic_wfc
 
 	if(GlobalV::test_wf)ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"wf_index",index);
 
-    if (index != GlobalC::ucell.natomwfc)
+    if (index != Atom::natomwfc)
     {
-        ModuleBase::WARNING_QUIT("GlobalC::wf.atomic_wfc()","index != GlobalC::ucell.natomwfc");
+        ModuleBase::WARNING_QUIT("GlobalC::wf.atomic_wfc()","index != Atom::natomwfc");
     }
     delete[] flq;
     delete [] gk;

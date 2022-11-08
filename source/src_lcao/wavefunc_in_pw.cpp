@@ -358,7 +358,7 @@ void Wavefunc_in_pw::produce_local_basis_in_pw(const int &ik,ModuleBase::Complex
 									for(int m = 0;m<2*L+1;m++)
 									{
 										const int lm = L*L +m;
-										if(iwall+2*L+1>GlobalC::ucell.natomwfc) ModuleBase::WARNING_QUIT("GlobalC::wf.atomic_wfc()","error: too many wfcs");
+										if(iwall+2*L+1>Atom::natomwfc) ModuleBase::WARNING_QUIT("GlobalC::wf.atomic_wfc()","error: too many wfcs");
 										for(int ig = 0;ig<npw;ig++)
 										{
 											aux[ig] = sk[ig] * ylm(lm,ig) * chiaux[ig];
@@ -395,7 +395,7 @@ void Wavefunc_in_pw::produce_local_basis_in_pw(const int &ik,ModuleBase::Complex
 								for(int m = 0;m<2*L+1;m++)
 								{
 									const int lm = L*L +m;
-									if(iwall+2*L+1>GlobalC::ucell.natomwfc) ModuleBase::WARNING_QUIT("GlobalC::wf.atomic_wfc()","error: too many wfcs");
+									if(iwall+2*L+1>Atom::natomwfc) ModuleBase::WARNING_QUIT("GlobalC::wf.atomic_wfc()","error: too many wfcs");
 									for(int ig = 0;ig<npw;ig++)
 									{
 										aux[ig] = sk[ig] * ylm(lm,ig) * flq[ig];
@@ -579,7 +579,7 @@ void Wavefunc_in_pw::produce_local_basis_q_in_pw(const int &ik, ModuleBase::Comp
 									for(int m = 0;m<2*L+1;m++)
 									{
 										const int lm = L*L +m;
-										//if(iwall+2*l+1>GlobalC::ucell.natomwfc) ModuleBase::WARNING_QUIT("GlobalC::wf.atomic_wfc()","error: too many wfcs");
+										//if(iwall+2*l+1>Atom::natomwfc) ModuleBase::WARNING_QUIT("GlobalC::wf.atomic_wfc()","error: too many wfcs");
 										for(int ig = 0;ig<npw;ig++)
 										{
 											aux[ig] = skq[ig] * ylm(lm,ig) * chiaux[ig];
@@ -616,7 +616,7 @@ void Wavefunc_in_pw::produce_local_basis_q_in_pw(const int &ik, ModuleBase::Comp
 								for(int m = 0;m<2*L+1;m++)
 								{
 									const int lm = L*L +m;
-								//   if(iwall+2*l+1>GlobalC::ucell.natomwfc) ModuleBase::WARNING_QUIT("GlobalC::wf.atomic_wfc()","error: too many wfcs");
+								//   if(iwall+2*l+1>Atom::natomwfc) ModuleBase::WARNING_QUIT("GlobalC::wf.atomic_wfc()","error: too many wfcs");
 									for(int ig = 0;ig<npw;ig++)
 									{
 										aux[ig] = skq[ig] * ylm(lm,ig) * flq[ig];

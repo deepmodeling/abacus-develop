@@ -15,14 +15,12 @@ class UnitCell_pseudo : public UnitCell
 {
 public: // member variables
 	//============================================================
-	// natomwfc : number of starting wavefunctions
 	// lmax  : Max L used for localized orbital.
 	// nmax  : Max N used for localized orbital.
 	// lmax_ppwf : Max L of pseudo wave functinos
 	// nelec : total number of electrons
 	// lmaxmax : revert from INPUT
 	//============================================================
-	int natomwfc;
 	int lmax;
 	int nmax;
 	int nmax_total;//mohan add 2009-09-10
@@ -61,7 +59,7 @@ public: // member functions
 	void print_tau(void)const;
 	void print_stru_file(const std::string &fn, const int &type=1, const int &level=0)const; // mohan add 2011-03-22
 	void check_dtau(void);
-    void setup_cell_after_vc(std::ofstream &log); //LiuXh add 20180515
+	void setup_cell_after_vc(std::ofstream &log); //LiuXh add 20180515
 	
 	//for constrained vc-relaxation where type of lattice
 	//is fixed, adjust the lattice vectors
@@ -73,13 +71,13 @@ public: // member functions
 	void read_cell_pseudopots(const std::string &fn, std::ofstream &log);
 
 	//================================================================
-	// cal_natomwfc : calculate total number of atomic wavefunctions
+	
 	// cal_nwfc     : calculate total number of local basis and lmax
 	// cal_nelec    : calculate total number of electrons
 	//================================================================
 	void cal_nwfc(std::ofstream &log);
 	//void cal_nelec();
-	void cal_natomwfc(std::ofstream &log); 
+	
 	void print_unitcell_pseudo(const std::string &fn);
 	bool check_tau(void)const; //mohan add 2011-03-03
 	bool if_atoms_can_move()const;

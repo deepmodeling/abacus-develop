@@ -47,7 +47,7 @@ void UnitCell_pseudo::setup_cell(
 #endif
 
 	// (2) init *Atom class array.
-	this->atoms = new Atom[this->ntype]; // atom species.
+	this->atoms = new Atom[Atom::ntype]; // atom species.
 	this->set_atom_flag = true;
 
 
@@ -289,7 +289,7 @@ void UnitCell_pseudo::setup_cell(
 	this->check_structure(GlobalV::MIN_DIST_COEF);
 
 	// setup the total number of PAOs
-	this->cal_natomwfc(log);
+	Atom::cal_natomwfc(atoms, log);
 
 	// setup GlobalV::NLOCAL
 	this->cal_nwfc(log);
@@ -632,50 +632,7 @@ void UnitCell_pseudo::cal_nwfc(std::ofstream &log)
 }
 
 
-//=========================
-// Target : natomwfc
-// Demand : atoms[].nchi
-// 			atoms[].lchi
-// 			atoms[].oc
-// 			atoms[].na
-//=========================
-void UnitCell_pseudo::cal_natomwfc(std::ofstream &log)
-{
-	if(GlobalV::test_pseudo_cell) ModuleBase::TITLE("UnitCell_pseudo","cal_natomwfc");
 
-	this->natomwfc = 0;
-	for (int it = 0;it < ntype;it++)
-	{
-		//============================
-		// Use pseudo-atomic orbitals
-		//============================
-		int tmp=0;
-		for (int l = 0;l < atoms[it].ncpp.nchi;l++)
-		{
-			if (atoms[it].ncpp.oc[l] >= 0)
-			{
-				if(GlobalV::NSPIN==4)
-				{
-					if(atoms[it].ncpp.has_so)
-					{
-						tmp += 2 * atoms[it].ncpp.lchi[l];
-						if(fabs(atoms[it].ncpp.jchi[l] - atoms[it].ncpp.lchi[l] - 0.5)<1e-6)
-						tmp += 2 ;
-					}
-					else
-					{
-						tmp += 2 * (2 * atoms[it].ncpp.lchi[l] + 1);
-					}
-				}
-				else
-					tmp += 2 * atoms[it].ncpp.lchi[l] + 1;
-			}
-		}
-		natomwfc += tmp * atoms[it].na;
-	}
-	ModuleBase::GlobalFunc::OUT(log,"initial pseudo atomic orbital number",natomwfc);
-	return;
-}
 
 
 
@@ -759,6 +716,7 @@ void UnitCell_pseudo::setup(const std::string &latname_in,
 {
 	this->latName = latname_in;
 	this->ntype = ntype_in;
+	Atom::ntype = ntype_in;
 	this->lmaxmax = lmaxmax_in;
 	this->init_vel = init_vel_in;
 	// pengfei Li add 2018-11-11

@@ -114,17 +114,17 @@ int wavefunc::get_starting_nw(void)const
     }
     else if (init_wfc.substr(0,6) == "atomic")
     {
-        if (GlobalC::ucell.natomwfc >= GlobalV::NBANDS)
+        if (Atom::natomwfc >= GlobalV::NBANDS)
         {
             if(GlobalV::test_wf)GlobalV::ofs_running << " Start wave functions are all pseudo atomic wave functions." << std::endl;
         }
         else
         {
             if(GlobalV::test_wf)GlobalV::ofs_running << " Start wave functions are atomic + "
-            << GlobalV::NBANDS - GlobalC::ucell.natomwfc
+            << GlobalV::NBANDS - Atom::natomwfc
             << " random wave functions." << std::endl;
         }
-        return max(GlobalC::ucell.natomwfc,  GlobalV::NBANDS);
+        return max(Atom::natomwfc,  GlobalV::NBANDS);
     }
     else if (init_wfc == "random")
     {
@@ -224,7 +224,7 @@ void wavefunc::diago_PAO_in_pw_k2(const int &ik, psi::Psi<std::complex<double>> 
 	if(init_wfc.substr(0,6)=="atomic")
 	{
 		this->atomic_wfc(ik, current_nbasis, GlobalC::ucell.lmax_ppwf, wfcatom, GlobalC::ppcell.tab_at, GlobalV::NQX, GlobalV::DQ);
-		if( init_wfc == "atomic+random" && starting_nw == GlobalC::ucell.natomwfc )//added by qianrui 2021-5-16
+		if( init_wfc == "atomic+random" && starting_nw == Atom::natomwfc )//added by qianrui 2021-5-16
 		{
 			this->atomicrandom(wfcatom,0,starting_nw,ik, GlobalC::wfcpw);
 		}
@@ -233,7 +233,7 @@ void wavefunc::diago_PAO_in_pw_k2(const int &ik, psi::Psi<std::complex<double>> 
 		// If not enough atomic wfc are available, complete
 		// with random wfcs
 		//====================================================
-		this->random(wfcatom, GlobalC::ucell.natomwfc, nbands, ik, GlobalC::wfcpw);
+		this->random(wfcatom, Atom::natomwfc, nbands, ik, GlobalC::wfcpw);
 	}
 	else if(init_wfc=="random")
 	{
@@ -759,7 +759,7 @@ void wavefunc::diago_PAO_in_pw_k2(const int &ik, ModuleBase::ComplexMatrix &wvf)
 	if(init_wfc.substr(0,6)=="atomic")
 	{
 		this->atomic_wfc(ik, this->npw, GlobalC::ucell.lmax_ppwf, wfcatom, GlobalC::ppcell.tab_at, GlobalV::NQX, GlobalV::DQ);
-		if( init_wfc == "atomic+random" && starting_nw == GlobalC::ucell.natomwfc )//added by qianrui 2021-5-16
+		if( init_wfc == "atomic+random" && starting_nw == Atom::natomwfc )//added by qianrui 2021-5-16
 		{
 			this->atomicrandom(wfcatom,0,starting_nw,ik, GlobalC::wfcpw);
 		}
@@ -768,7 +768,7 @@ void wavefunc::diago_PAO_in_pw_k2(const int &ik, ModuleBase::ComplexMatrix &wvf)
 		// If not enough atomic wfc are available, complete
 		// with random wfcs
 		//====================================================
-		this->random(wfcatom, GlobalC::ucell.natomwfc, GlobalV::NBANDS, ik, GlobalC::wfcpw);
+		this->random(wfcatom, Atom::natomwfc, GlobalV::NBANDS, ik, GlobalC::wfcpw);
 	}
 	else if(init_wfc=="random")
 	{

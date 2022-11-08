@@ -631,12 +631,12 @@ void eximport::out_evc(std::ofstream &out_data)
 {
 	//std::cout << "=== out_evc ===" << std::endl;
 	out_data << std::setw(20) << "EVC" << std::endl;
-	out_data << std::setw(20) << GlobalC::ucell.natomwfc << std::endl; //4.1
+	out_data << std::setw(20) << Atom::natomwfc << std::endl; //4.1
 	int iw;
 	int ik;
 	int ig;
 
-	for (iw = 0;iw < GlobalC::ucell.natomwfc;iw++)
+	for (iw = 0;iw < Atom::natomwfc;iw++)
 	{
 		for (ik = 0;ik < GlobalC::kv.nks;ik++)
 		{
