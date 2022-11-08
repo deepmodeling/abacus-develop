@@ -1,3 +1,6 @@
+//obsolete code
+//please remove the globalc::hm
+
 #include "../module_base/global_function.h"
 #include "../module_base/global_variable.h"
 #include "global.h"
@@ -323,7 +326,8 @@ void Hamilt_PW::diagH_subspace(
 	}
 
 	// after generation of H and S matrix, diag them
-    GlobalC::hm.diagH_LAPACK(nstart, n_band, hc, sc, nstart, en, hvec);
+	//obsolete: globalc::hm has been removed
+    //GlobalC::hm.diagH_LAPACK(nstart, n_band, hc, sc, nstart, en, hvec);
 
 
 	// Peize Lin add 2019-03-09
@@ -554,7 +558,8 @@ void Hamilt_PW::diagH_subspace_cuda(
 	CHECK_CUDA(cudaMemcpy(h_hc.c, hc, nstart*nstart*sizeof(double2), cudaMemcpyDeviceToHost));
 	CHECK_CUDA(cudaMemcpy(h_sc.c, sc, nstart*nstart*sizeof(double2), cudaMemcpyDeviceToHost));
 
-	GlobalC::hm.diagH_LAPACK(nstart, n_band, h_hc, h_sc, nstart, h_en, h_hvec);
+	//obsolete: globalc::hm has been removed
+	//GlobalC::hm.diagH_LAPACK(nstart, n_band, h_hc, h_sc, nstart, h_en, h_hvec);
 	CHECK_CUDA(cudaMemcpy(hvec, h_hvec.c, nstart*n_band*sizeof(double2), cudaMemcpyHostToDevice));
 	CHECK_CUDA(cudaMemcpy(en, h_en, n_band*sizeof(double), cudaMemcpyHostToDevice));
     delete [] h_en;
@@ -1010,7 +1015,9 @@ void Hamilt_PW::h_psi_cuda(const double2 *psi_in, double2 *hpsi, double2 *vkb_c,
         tmpsi_in = psi_in;
         for(int ib = 0 ; ib < m; ++ib)
         {
+/*I comment out here because globalc::ufft is removed
             CHECK_CUDA(cudaMemset(GlobalC::UFFT.d_porter, 0, GlobalC::rhopw->nrxx * sizeof(double2)));
+*/
             // GlobalC::UFFT.RoundTrip( tmpsi_in, GlobalC::pot.d_vr_eff1, GR_index_d, GlobalC::UFFT.d_porter );
 			// GlobalC::wfcpw->recip2real(tmpsi_in, f_porter, ik);
 			// for (int ir=0; ir< nrxx; ir++)
@@ -1021,8 +1028,9 @@ void Hamilt_PW::h_psi_cuda(const double2 *psi_in, double2 *hpsi, double2 *vkb_c,
 
             int thread = 512;
             int block = (GlobalC::wf.npw + thread - 1) / thread;
+/*I comment out here because globalc::ufft is removed
             kernel_add_tmhpsi<double2><<<block, thread>>>(GlobalC::wf.npw, tmhpsi, GlobalC::UFFT.d_porter, GR_index_d);
-
+*/
             tmhpsi += dmax;
             tmpsi_in += dmax;
         }

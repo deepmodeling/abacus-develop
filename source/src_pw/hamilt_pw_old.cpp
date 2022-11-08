@@ -1,3 +1,6 @@
+//obsolete code, not compiled
+//please remove the globalc::hm
+
 #include "../module_base/global_function.h"
 #include "../module_base/global_variable.h"
 #include "../src_parallel/parallel_reduce.h"

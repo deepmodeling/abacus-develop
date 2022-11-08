@@ -29,11 +29,8 @@ class Charge_Mixing: public Charge
         const std::string &mixing_mode_in,
         const double &mixing_beta_in,
         const int &mixing_ndim_in,
-	const double &mixing_gg0_in
+		const double &mixing_gg0_in
     );//mohan add mixing_gg0_in 2014-09-27
-	
-	// also be used by namespace: GGA_pw
-    void set_rhog(double *rho_in, std::complex<double> *rhog_in)const;
 	
 	protected:
 
@@ -46,7 +43,6 @@ class Charge_Mixing: public Charge
 	void Kerker_mixing( double *rho, const std::complex<double> *residual_g, double *rho_save);
 	
 	// tools
-	void set_rhor(std::complex<double> *rhog, double *rho)const;
 	double rhog_dot_product(const std::complex<double>*const*const rhog1, const std::complex<double>*const*const rhog2) const;		// Peize Lin add const 2019-05-01
 	
 };

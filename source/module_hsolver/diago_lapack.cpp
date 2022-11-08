@@ -1,3 +1,6 @@
+//Obsolete code, not compiled
+//Please fix it by removing globalc::hm
+
 #include "diago_lapack.h"
 
 #include "../src_pw/global.h"

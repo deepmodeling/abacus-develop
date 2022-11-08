@@ -1,3 +1,6 @@
+//Obsolete code
+//Please fix it by removing globalc::hm
+
 #include "diago_cg.cuh"
 #include "cuda_runtime.h"
 #include "global.h"
@@ -184,12 +187,13 @@ void Diago_CG_CUDA<T, T2>::diag
 
         CHECK_CUDA(cudaMemcpy(phi_m, &phi[m*dmx], dim*sizeof(T2), cudaMemcpyDeviceToDevice));
 
+        /*obsolete: globalc::hm has been removed
         GlobalC::hm.hpw.s_1psi_cuda(dim, phi_m, sphi);
 
         this->schmit_orth(dim, dmx, m, phi, sphi, phi_m);
 
         GlobalC::hm.hpw.h_1psi_cuda(dim, phi_m, hphi, sphi, vkb_c);
-
+        */
         T em_host = 0;
         em_host = ddot_real(dim, phi_m, hphi);
 

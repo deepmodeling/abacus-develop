@@ -231,7 +231,6 @@ OBJS_HSOLVER=diago_cg.o\
 OBJS_HSOLVER_LCAO=hsolver_lcao.o\
       diago_blas.o\
       diago_elpa.o\
-      diago_lapack.o\
       elpa_new.o\
       elpa_new_real.o\
       elpa_new_complex.o\
@@ -521,8 +520,6 @@ OBJS_SRCPW=H_Ewald_pw.o\
     charge_extra.o\
     charge_mixing.o\
     charge_pulay.o\
-    diago_cg_old.o\
-    diago_david_old.o\
     energy.o\
     forces.o\
     global.o\
@@ -552,14 +549,12 @@ OBJS_SRCPW=H_Ewald_pw.o\
     of_stress_pw.o\
     symmetry_rho.o\
     threshold_elec.o\
-    use_fft.o\
     wavefunc.o\
     wf_atomic.o\
     wf_igk.o\
     xc_3.o\
     run_md_pw.o\
     hamilt.o\
-    hamilt_pw_old.o\
     electrons.o
 
 OBJS_VDW=vdw.o\

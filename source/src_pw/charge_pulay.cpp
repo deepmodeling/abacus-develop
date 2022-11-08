@@ -580,7 +580,7 @@ void Charge_Pulay::generate_datas(const int &irstep, const int &idstep, const in
 			std::complex<double> *kerpulay = new std::complex<double>[GlobalC::rhopw->npw];
 			double* kerpulayR = new double[GlobalC::rhopw->nrxx];
 			
-			set_rhog(Rrho[is][irstep], kerpulay);
+			GlobalC::rhopw->real2recip(Rrho[is][irstep], kerpulay);
 
 			const double fac = this->mixing_gg0;
 			const double gg0 = std::pow(fac * 0.529177 /GlobalC::ucell.tpiba, 2);
@@ -592,7 +592,7 @@ void Charge_Pulay::generate_datas(const int &irstep, const int &idstep, const in
 				kerpulay[ig] = (1 - filter_g[ig]) * kerpulay[ig];
 			}
 
-			set_rhor(kerpulay, kerpulayR);
+			GlobalC::rhopw->recip2real(kerpulay, kerpulayR);
 			for(int ir=0; ir<GlobalC::rhopw->nrxx; ir++)
 			{
 				Rrho[is][irstep][ir] = Rrho[is][irstep][ir] - kerpulayR[ir];
