@@ -1,7 +1,6 @@
 #include "global.h"
 #include "hip/hip_runtime.h"
 #include "hipfft.h"
-#include "use_fft.h"
 using namespace HipCheck;
 
 template <class T2> __global__ void kernel_set(int size, T2 *dst, const T2 *src, const int *index_list)

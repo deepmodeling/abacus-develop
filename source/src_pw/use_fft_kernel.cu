@@ -1,4 +1,3 @@
-#include "use_fft.h"
 #include "global.h"
 #include "cufft.h"
 using namespace CudaCheck;
