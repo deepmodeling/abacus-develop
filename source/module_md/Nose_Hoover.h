@@ -17,19 +17,31 @@ public:
     void restart();
 
     // perform half-step update of thermostats coupled with particles
-    void temp_integrate();
+    void particle_thermo();
 
     // perform half-step update of thermostats coupled with barostat
-    void stress_integrate();
+    void baro_thermo();
 
-    // perform half-step update of lattice
-    void omega_integrate();
+    // perform half-step update of barostat velocity
+    void update_baro();
+
+    // perform half-step update of velocity due to barostat
+    void vel_baro();
 
     // determine target stress 
     void target_stress();
 
     // couple stress component due to md_pcouple
     void couple_stress();
+
+    // perform half-step update of vel due to atomic force
+    void update_vel();
+
+    // perform one step update of pos due to atomic velocity
+    void update_pos();
+
+    // perform half-step update of volume
+    void update_volume();
 
 
     const int nc_tchain = 1;
@@ -38,6 +50,7 @@ public:
     double w[nys];                // scale evolution operator
 
     // thermostats
+    int tdof;                     // particle degree of freedom 
     double t_target;              // target temperature
     double *mass_eta;             // mass of thermostats coupled with particles
     double *eta;                  // position of thermostats coupled with particles
@@ -47,12 +60,10 @@ public:
     // barostat, Voigt notation: x, y, z, yz, xz, xy
     int npt_flag;                 // whether NPT ensemble
     double mass_omega[6];         // mass of lattice component
-    double omega[6];              // lattice component
     double v_omega[6];            // velocity of lattice component
     double pstart[6];             // initial stress components
     double pstop[6];              // final stress components
     double pfreq[6];              // Oscillation frequency, used to determine qmass of thermostats coupled with barostat
-    double pfreq_max;             // maximum oscillation frequency
     int pflag[6];                 // control stress components
     int pdim;                     // pdim = pflag[0] + pflag[1] + pflag[2], number of barostatted dims
     double p_target[6];           // target stress components
@@ -62,6 +73,7 @@ public:
     double *peta;                 // position of thermostats coupled with barostat
     double *v_peta;               // velocity of thermostats coupled with barostat
     double *g_peta;               // acceleration of thermostats coupled with barostat
+    double mtk_term;              // mtk correction
 
 };
 

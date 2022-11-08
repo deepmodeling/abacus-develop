@@ -726,6 +726,19 @@ void UnitCell_pseudo::setup_cell_after_vc(std::ofstream &log)
     this->GGT = G * GT;
     this->invGGT = GGT.Inverse();
 
+    // lattice vectors in another form.
+    a1.x = latvec.e11;
+    a1.y = latvec.e12;
+    a1.z = latvec.e13;
+
+    a2.x = latvec.e21;
+    a2.y = latvec.e22;
+    a2.z = latvec.e23;
+
+    a3.x = latvec.e31;
+    a3.y = latvec.e32;
+    a3.z = latvec.e33;
+
     for(int it=0; it<ntype; it++)
     {
         Atom* atom = &atoms[it];

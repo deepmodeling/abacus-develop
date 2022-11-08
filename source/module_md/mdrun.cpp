@@ -126,7 +126,7 @@ void MDrun::outputMD(std::ofstream &ofs, bool cal_stress)
     std::cout << " " << std::left << std::setw(20) << potential+kinetic
             << std::left << std::setw(20) << potential
             << std::left << std::setw(20) << kinetic
-            << std::left << std::setw(20) << t_current;
+            << std::left << std::setw(20) << t_current * ModuleBase::Hartree_to_K;
     if(cal_stress)
     {
         std::cout << std::left << std::setw(20) << press*unit_transform;
@@ -150,7 +150,7 @@ void MDrun::outputMD(std::ofstream &ofs, bool cal_stress)
     ofs << " " << std::left << std::setw(20) << potential+kinetic
         << std::left << std::setw(20) << potential
         << std::left << std::setw(20) << kinetic
-        << std::left << std::setw(20) << t_current;
+        << std::left << std::setw(20) << t_current * ModuleBase::Hartree_to_K;
     if(cal_stress)
     {
         ofs << std::left << std::setw(20) << press*unit_transform;

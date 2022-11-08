@@ -251,9 +251,6 @@ void MSST::rescale(double volume)
     ucell.latvec.e11 *= dilation[0];
     ucell.latvec.e22 *= dilation[1];
     ucell.latvec.e33 *= dilation[2];
-    ucell.a1 *= dilation[0];
-    ucell.a2 *= dilation[1];
-    ucell.a3 *= dilation[2];
 
     ucell.setup_cell_after_vc(GlobalV::ofs_running);
     MD_func::InitPos(ucell, pos);
