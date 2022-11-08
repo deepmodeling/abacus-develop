@@ -17,13 +17,14 @@ Veff<OperatorPW<FPTYPE, Device>>::Veff(
     // this->veff = veff_in;
     // TODO: add an GPU veff array
     this->veff = veff_in[0].c;
+    //note: "veff = nullptr" means that this core does not treat potential but still treats wf. 
     this->veff_col = veff_in[0].nc;
     this->wfcpw = wfcpw_in;
     resize_memory_op()(this->ctx, this->porter, this->wfcpw->nmaxgr);
     if (this->npol != 1) {
         resize_memory_op()(this->ctx, this->porter1, this->wfcpw->nmaxgr);
     }
-    if (this->isk == nullptr || this->veff == nullptr || this->wfcpw == nullptr) {
+    if (this->isk == nullptr || this->wfcpw == nullptr) {
         ModuleBase::WARNING_QUIT("VeffPW", "Constuctor of Operator::VeffPW is failed, please check your code!");
     }
 }
