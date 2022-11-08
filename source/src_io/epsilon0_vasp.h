@@ -22,13 +22,13 @@ public:
 
 		void Cal_psi_nu(int ik);
 		
-		void cal_epsilon0();
+		void cal_epsilon0(const elecstate::ElecState* pelec);
 		void Init();
 		void Delete();
 		void Cal_b(int ik);
 		void Cal_psi(int ik);
 		void Cal_psi_nabla(int ik);
-		void Cal_epsilon0s();
+		void Cal_epsilon0s(const elecstate::ElecState* pelec);
 		void Cal_T();
 		void Cal_epsilon0();
 		void CMatrixMul(int m, int n, int l, std::complex<double>** A, std::complex<double>** B, std::complex<double>** C);

@@ -1,11 +1,11 @@
 #include "run_md_pw.h"
 #include "global.h" // use chr.
-#include "../module_relaxation/variable_cell.h" // mohan add 2021-02-01
+#include "../module_relax/relax_old/variable_cell.h" // mohan add 2021-02-01
 #include "../module_md/MD_func.h"
 #include "../module_md/FIRE.h"
 #include "../module_md/verlet.h"
 #include "../module_md/MSST.h"
-#include "../module_md/NVT_NHC.h"
+#include "../module_md/Nose_Hoover.h"
 #include "../module_md/Langevin.h"
 #include "../src_io/print_info.h"
 
@@ -52,7 +52,7 @@ void Run_MD_PW::md_ions_pw(ModuleESolver::ESolver *p_esolver)
     }
     else if(INPUT.mdp.md_type==1)
     {
-        mdrun = new NVT_NHC(INPUT.mdp, GlobalC::ucell);
+        mdrun = new Nose_Hoover(INPUT.mdp, GlobalC::ucell);
     }
     else if(INPUT.mdp.md_type==2)
     {
@@ -103,13 +103,12 @@ void Run_MD_PW::md_ions_pw(ModuleESolver::ESolver *p_esolver)
             //GlobalC::wf.wfcinit();
 
             // update force and virial due to the update of atom positions
-            MD_func::force_virial(p_esolver, mdrun->step_, mdrun->mdp, mdrun->ucell, mdrun->potential, mdrun->force, mdrun->virial);
+            MD_func::force_virial(p_esolver, mdrun->step_, mdrun->ucell, mdrun->potential, mdrun->force, mdrun->virial);
 
             mdrun->second_half();
 
-            MD_func::kinetic_stress(mdrun->ucell, mdrun->vel, mdrun->allmass, mdrun->kinetic, mdrun->stress);
-
-            mdrun->stress += mdrun->virial;
+            MD_func::compute_stress(mdrun->ucell, mdrun->vel, mdrun->allmass, mdrun->virial, mdrun->stress);
+            mdrun->t_current = MD_func::current_temp(mdrun->kinetic, mdrun->ucell.nat, mdrun->frozen_freedom_, mdrun->allmass, mdrun->vel);
         }
 
         if((mdrun->step_ + mdrun->step_rst_) % mdrun->mdp.md_dumpfreq == 0)

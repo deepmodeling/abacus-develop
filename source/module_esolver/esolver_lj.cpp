@@ -18,7 +18,7 @@ namespace ModuleESolver
 
         GlobalV::SEARCH_RADIUS = (lj_rcut + 2.0) * ModuleBase::ANGSTROM_AU;
         lj_rcut *= ModuleBase::ANGSTROM_AU;
-        lj_epsilon /= ModuleBase::Hartree_to_eV;
+        lj_epsilon /= ModuleBase::Ry_to_eV;
         lj_sigma *= ModuleBase::ANGSTROM_AU;
     }
 

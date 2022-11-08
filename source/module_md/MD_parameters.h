@@ -20,7 +20,6 @@ public:
         md_seed = -1;
 
 		// Classic MD 
-		md_ensolver = "FP";
 		lj_rcut = 8.5;        
 		lj_epsilon = 0.01032; 
 		lj_sigma = 3.405;     
@@ -34,8 +33,14 @@ public:
 		msst_tscale = 0.01;
 
 		// NHC
-		md_tfreq = 0.0;
-		md_mnhc = 4;
+        md_pmode = "none";
+        md_pcouple = "none";
+        md_tfreq = 0.0;
+        md_pfirst = -1.0;
+        md_plast = -1.0;
+        md_pfreq = 0.0;
+        md_tchain = 1;
+        md_pchain = 1;
 
 		// Langevin
 		md_damp = 1.0;
@@ -58,7 +63,6 @@ public:
     int md_seed;                  // random seed for MD
 
 	// Classic MD               // liuyu 2021-07-30
-	std::string md_ensolver;    // choose potential: LJ, DP, FP
 	double lj_rcut;             // cutoff radius of LJ potential (\AA)
 	double lj_epsilon;          // the value of epsilon for LJ potential (eV)
 	double lj_sigma;            // the value of sigma for LJ potential (\AA)
@@ -72,8 +76,14 @@ public:
 	double msst_tscale;              // reduction in initial temperature (0~1)
 
 	// NHC
-	double md_tfreq;               // Oscillation frequency, used to determine msst_qmass of NHC
-	int md_mnhc;                   // num of NHC
+    std::string md_pmode;          // NPT ensemble mode: none, iso, aniso, tri
+    std::string md_pcouple;        // whether couple different components: xyz, xy, yz, xz, none
+    double md_tfreq;               // Oscillation frequency, used to determine qmass of thermostats coupled with particles
+    double md_pfirst;             // Initial pressure
+    double md_plast;              // Final pressure
+    double md_pfreq;               // Oscillation frequency, used to determine qmass of thermostats coupled with barostat
+    int md_tchain;                   // num of thermostats coupled with particles
+    int md_pchain;                   // num of thermostats coupled with barostat
 
 	// Langevin
 	double md_damp;                // damping parameter (time units)

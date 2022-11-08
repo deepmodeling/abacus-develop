@@ -171,7 +171,7 @@ namespace ModuleESolver
     void ESolver_KS::Run(const int istep, UnitCell_pseudo& ucell)
     {
         if (!(GlobalV::CALCULATION == "scf" || GlobalV::CALCULATION == "md"
-            || GlobalV::CALCULATION == "relax" || GlobalV::CALCULATION == "cell-relax" || GlobalV::CALCULATION.substr(0,3) == "sto"))
+            || GlobalV::CALCULATION == "relax" || GlobalV::CALCULATION == "cell-relax"))
         {
             this->othercalculation(istep);
         }

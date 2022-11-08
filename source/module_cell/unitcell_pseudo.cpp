@@ -703,6 +703,7 @@ void UnitCell_pseudo::cal_natomwfc(std::ofstream &log)
 //20180515
 void UnitCell_pseudo::setup_cell_after_vc(std::ofstream &log)
 {
+	ModuleBase::TITLE("UnitCell_pseudo","setup_cell_after_vc");
     assert(lat0 > 0.0);
     this->omega = abs(latvec.Det()) * this->lat0 * lat0 * lat0;
     if(this->omega <= 0)
@@ -792,6 +793,20 @@ void UnitCell_pseudo::setup(const std::string &latname_in,
 		this->lc[0] = 1;
 		this->lc[1] = 1;
 		this->lc[2] = 1;
+		if(!GlobalV::relax_new)
+		{
+			ModuleBase::WARNING_QUIT("Input","there are bugs in the old implementation; set relax_new to be 1 for fixed_volume relaxation");
+		}
+	}
+	else if (fixed_axes_in == "shape")
+	{
+		if(!GlobalV::relax_new)
+		{
+			ModuleBase::WARNING_QUIT("Input","set relax_new to be 1 for fixed_shape relaxation");
+		}
+		this->lc[0] = 1;
+		this->lc[1] = 1;
+		this->lc[2] = 1;
 	}
 	else if (fixed_axes_in == "a")
 	{
@@ -837,7 +852,7 @@ void UnitCell_pseudo::setup(const std::string &latname_in,
 	}
 	else
 	{
-		ModuleBase::WARNING_QUIT("Input", "fixed_axes should be None,a,b,c,ab,ac,bc or abc!");
+		ModuleBase::WARNING_QUIT("Input", "fixed_axes should be None,volume,shape,a,b,c,ab,ac,bc or abc!");
 	}
 	return;
 }
@@ -964,5 +979,198 @@ void UnitCell_pseudo::check_structure(double factor)
 		}
 		
 		
+	}
+}
+
+void UnitCell_pseudo::remake_cell()
+{
+	ModuleBase::TITLE("UnitCell_pseudo","rmake_cell");
+
+	//The idea is as follows: for each type of lattice, first calculate
+	//from current latvec the lattice parameters, then use the parameters
+	//to reconstruct latvec
+
+	if(latName == "none")
+	{
+		ModuleBase::WARNING_QUIT("UnitCell_pseudo","to use fixed_ibrav, latname must be provided");
+	}
+	else if(latName == "sc") //ibrav = 1
+	{
+		double celldm = std::sqrt(pow(latvec.e11,2)+pow(latvec.e12,2)+pow(latvec.e13,2));
+		
+		latvec.Zero();
+		latvec.e11 = latvec.e22 = latvec.e33 = celldm;
+	}
+	else if(latName == "fcc") //ibrav = 2
+	{
+		double celldm = std::sqrt(pow(latvec.e11,2)+pow(latvec.e12,2)+pow(latvec.e13,2)) / std::sqrt(2.0);
+		
+		latvec.e11 =-celldm; latvec.e12 = 0.0;    latvec.e13 = celldm;
+		latvec.e21 = 0.0;    latvec.e22 = celldm; latvec.e23 = celldm;
+		latvec.e31 =-celldm; latvec.e32 = celldm; latvec.e33 = 0.0;
+	}
+	else if(latName == "bcc") //ibrav = 3
+	{
+		double celldm = std::sqrt(pow(latvec.e11,2)+pow(latvec.e12,2)+pow(latvec.e13,2)) / std::sqrt(3.0);
+		
+		latvec.e11 = celldm; latvec.e12 = celldm; latvec.e13 = celldm;
+		latvec.e21 =-celldm; latvec.e22 = celldm; latvec.e23 = celldm;
+		latvec.e31 =-celldm; latvec.e32 =-celldm; latvec.e33 = celldm;
+	}
+	else if(latName == "hexagonal") //ibrav = 4
+	{
+		double celldm1 = std::sqrt(pow(latvec.e11,2)+pow(latvec.e12,2)+pow(latvec.e13,2));
+		double celldm3 = std::sqrt(pow(latvec.e31,2)+pow(latvec.e32,2)+pow(latvec.e33,2));
+		double e22 = sqrt(3.0) / 2.0;
+
+		latvec.e11 = celldm1;     latvec.e12 = 0.0;           latvec.e13 = 0.0;
+		latvec.e21 =-0.5*celldm1; latvec.e22 = celldm1 * e22; latvec.e23 = 0.0;
+		latvec.e31 = 0.0;         latvec.e32 = 0.0;	          latvec.e33 = celldm3;
+	}
+	else if(latName == "trigonal") //ibrav = 5
+	{
+		double celldm1  = std::sqrt(pow(latvec.e11,2)+pow(latvec.e12,2)+pow(latvec.e13,2));
+		double celldm2  = std::sqrt(pow(latvec.e21,2)+pow(latvec.e22,2)+pow(latvec.e23,2));
+		double celldm12 = (latvec.e11 * latvec.e21 + latvec.e12 * latvec.e22 + latvec.e13 * latvec.e23);
+		double cos12 = celldm12 / celldm1 / celldm2;
+
+		if(cos12 <= 0.5 || cos12 >= 1.0)
+		{
+			ModuleBase::WARNING_QUIT("unitcell_pseudo","wrong cos12!");
+		}
+		double t1 = sqrt(1.0 + 2.0*cos12);
+		double t2 = sqrt(1.0 - cos12);
+
+		double e11 =  celldm1 * t2 / sqrt(2.0);
+		double e12 = -celldm1 * t2 / sqrt(6.0);
+		double e13 =  celldm1 * t1 / sqrt(3.0);
+		double e22 =  celldm1 * sqrt(2.0) * t2 / sqrt(3.0);
+	
+		latvec.e11 = e11; latvec.e12 = e12; latvec.e13 = e13;
+		latvec.e21 = 0.0; latvec.e22 = e22;	latvec.e23 = e13;
+		latvec.e31 =-e11; latvec.e32 = e12;	latvec.e33 = e13;		
+	}
+	else if(latName == "st") //ibrav = 6
+	{
+		double celldm1 = std::sqrt(pow(latvec.e11,2)+pow(latvec.e12,2)+pow(latvec.e13,2));
+		double celldm3 = std::sqrt(pow(latvec.e31,2)+pow(latvec.e32,2)+pow(latvec.e33,2));
+		latvec.e11 = celldm1; latvec.e12 = 0.0;     latvec.e13 = 0.0;
+		latvec.e21 = 0.0;     latvec.e22 = celldm1; latvec.e23 = 0.0;
+		latvec.e31 = 0.0;      latvec.e32 = 0.0;	latvec.e33 = celldm3;
+	}
+	else if(latName == "bct") //ibrav = 7
+	{
+		double celldm1 = std::abs(latvec.e11);
+		double celldm2 = std::abs(latvec.e13);
+			
+		latvec.e11 = celldm1; latvec.e12 =-celldm1; latvec.e13 = celldm2;
+		latvec.e21 = celldm1; latvec.e22 = celldm1; latvec.e23 = celldm2;
+		latvec.e31 =-celldm1; latvec.e32 =-celldm1;	latvec.e33 = celldm2;	
+	}
+	else if(latName == "so") //ibrav = 8
+	{
+		double celldm1 = std::sqrt(pow(latvec.e11,2)+pow(latvec.e12,2)+pow(latvec.e13,2));
+		double celldm2 = std::sqrt(pow(latvec.e21,2)+pow(latvec.e22,2)+pow(latvec.e23,2));
+		double celldm3 = std::sqrt(pow(latvec.e31,2)+pow(latvec.e32,2)+pow(latvec.e33,2));
+		
+		latvec.e11 = celldm1; latvec.e12 = 0.0;     latvec.e13 = 0.0;
+		latvec.e21 = 0.0;     latvec.e22 = celldm2;	latvec.e23 = 0.0;
+		latvec.e31 = 0.0;     latvec.e32 = 0.0;     latvec.e33 = celldm3;
+	}
+	else if(latName == "baco") //ibrav = 9
+	{
+		double celldm1 = std::abs(latvec.e11);
+		double celldm2 = std::abs(latvec.e22);
+		double celldm3 = std::abs(latvec.e33);
+
+		latvec.e11 = celldm1; latvec.e12 = celldm2; latvec.e13 = 0.0;
+		latvec.e21 =-celldm1; latvec.e22 = celldm2;	latvec.e23 = 0.0;
+		latvec.e31 = 0.0;     latvec.e32 = 0.0;   	latvec.e33 = celldm3;
+	}
+	else if(latName == "fco") //ibrav = 10
+	{
+		double celldm1 = std::abs(latvec.e11);
+		double celldm2 = std::abs(latvec.e22);
+		double celldm3 = std::abs(latvec.e33);
+
+		latvec.e11 = celldm1; latvec.e12 = 0.0;     latvec.e13 = celldm3;
+		latvec.e21 = celldm1; latvec.e22 = celldm2;	latvec.e23 = 0.0;
+		latvec.e31 = 0.0;     latvec.e32 = celldm2;	latvec.e33 = celldm3;
+	}
+	else if(latName == "bco") //ibrav = 11
+	{
+		double celldm1 = std::abs(latvec.e11);
+		double celldm2 = std::abs(latvec.e12);
+		double celldm3 = std::abs(latvec.e13);
+
+		latvec.e11 = celldm1; latvec.e12 = celldm2; latvec.e13 = celldm3;
+		latvec.e21 =-celldm1; latvec.e22 = celldm2;	latvec.e23 = celldm3;
+		latvec.e31 =-celldm1; latvec.e32 =-celldm2;	latvec.e33 = celldm3;		
+	}
+	else if(latName == "sm") //ibrav = 12
+	{
+		double celldm1 = std::sqrt(pow(latvec.e11,2)+pow(latvec.e12,2)+pow(latvec.e13,2));
+		double celldm2 = std::sqrt(pow(latvec.e21,2)+pow(latvec.e22,2)+pow(latvec.e23,2));
+		double celldm3 = std::sqrt(pow(latvec.e31,2)+pow(latvec.e32,2)+pow(latvec.e33,2));
+		double celldm12 = (latvec.e11 * latvec.e21 + latvec.e12 * latvec.e22 + latvec.e13 * latvec.e23);
+		double cos12 = celldm12 / celldm1 / celldm2;
+
+		double e21 = celldm2 * cos12;
+		double e22 = celldm2 * std::sqrt(1.0 - cos12 * cos12);
+
+		latvec.e11 = celldm1; latvec.e12 = 0.0; latvec.e13 = 0.0;
+		latvec.e21 = e21;     latvec.e22 = e22;	latvec.e23 = 0.0;
+		latvec.e31 = 0.0;     latvec.e32 = 0.0;	latvec.e33 = celldm3;
+	}
+	else if (latName == "bacm") //ibrav = 13
+	{
+		double celldm1 = std::abs(latvec.e11);
+		double celldm2 = std::sqrt(pow(latvec.e21,2)+pow(latvec.e22,2)+pow(latvec.e23,2));
+		double celldm3 = std::abs(latvec.e13);
+
+		double cos12 = latvec.e21 / celldm2;
+		if(cos12 >= 1.0)
+		{
+			ModuleBase::WARNING_QUIT("unitcell_pseudo","wrong cos12!");
+		}
+
+		double e21 = celldm2 * cos12;
+		double e22 = celldm2 * std::sqrt(1.0 - cos12 * cos12);
+
+		latvec.e11 = celldm1; latvec.e12 = 0.0; latvec.e13 =-celldm3;
+		latvec.e21 = e21;     latvec.e22 = e22;	latvec.e23 = 0.0;
+		latvec.e31 = celldm1; latvec.e32 = 0.0;	latvec.e33 = celldm3;		
+	}
+	else if(latName == "triclinic") //ibrav = 14
+	{
+		double celldm1 = std::sqrt(pow(latvec.e11,2)+pow(latvec.e12,2)+pow(latvec.e13,2));
+		double celldm2 = std::sqrt(pow(latvec.e21,2)+pow(latvec.e22,2)+pow(latvec.e23,2));
+		double celldm3 = std::sqrt(pow(latvec.e31,2)+pow(latvec.e32,2)+pow(latvec.e33,2));
+		double celldm12 = (latvec.e11 * latvec.e21 + latvec.e12 * latvec.e22 + latvec.e13 * latvec.e23);
+		double cos12 = celldm12 / celldm1 / celldm2;
+		double celldm13 = (latvec.e11 * latvec.e31 + latvec.e12 * latvec.e32 + latvec.e13 * latvec.e33);
+		double cos13 = celldm13 / celldm1 / celldm3;
+		double celldm23 = (latvec.e21 * latvec.e31 + latvec.e22 * latvec.e32 + latvec.e23 * latvec.e33);
+		double cos23 = celldm23 / celldm1 / celldm3;
+
+		double sin12 = std::sqrt(1.0 - cos12 * cos12);
+		if(cos12 >= 1.0)
+		{
+			ModuleBase::WARNING_QUIT("unitcell_pseudo","wrong cos12!");
+		}
+
+		latvec.e11 = celldm1; latvec.e12 = 0.0; latvec.e13 = 0.0;
+		latvec.e21 = celldm2 * cos12;
+		latvec.e22 = celldm2 * sin12;
+		latvec.e23 = 0.0;
+		latvec.e31 = celldm3 * cos13;
+		latvec.e32 = celldm3 * (cos23 - cos13*cos12) / sin12;
+		double term = 1.0 + 2.0 * cos12*cos13*cos23 - cos12*cos12 - cos13*cos13 - cos23*cos23;
+		term = sqrt(term)/sin12;
+		latvec.e33 = celldm3 * term;
+	}
+	else{ 
+		std::cout << "latname is : " << latName << std::endl;
+		ModuleBase::WARNING_QUIT("UnitCell_pseudo::read_atom_species","latname not supported!");
 	}
 }

@@ -12,6 +12,7 @@ void Force_LCAO_gamma::cal_foverlap(
     const bool isstress,
     const psi::Psi<double>* psid,
     Local_Orbital_Charge &loc,
+    const elecstate::ElecState* pelec,
     ModuleBase::matrix& foverlap,
 	ModuleBase::matrix& soverlap)
 {
@@ -27,7 +28,7 @@ void Force_LCAO_gamma::cal_foverlap(
     {
         for(int ib=0; ib<GlobalV::NBANDS; ib++)
         {
-            wgEkb(is,ib) = GlobalC::wf.wg(is,ib) * GlobalC::wf.ekb[is][ib];
+            wgEkb(is,ib) = pelec->wg(is,ib) * pelec->ekb(is, ib);
         }
     }
 

@@ -21,7 +21,7 @@ Forces::~Forces()
 }
 
 #include "../module_base/mathzone.h"
-void Forces::init(ModuleBase::matrix& force, const psi::Psi<std::complex<double>>* psi_in)
+void Forces::init(ModuleBase::matrix& force, const ModuleBase::matrix& wg, const psi::Psi<std::complex<double>>* psi_in)
 {
     ModuleBase::TITLE("Forces", "init");
     this->nat = GlobalC::ucell.nat;
@@ -34,7 +34,7 @@ void Forces::init(ModuleBase::matrix& force, const psi::Psi<std::complex<double>
     ModuleBase::matrix forcescc(nat, 3);
     this->cal_force_loc(forcelc, GlobalC::rhopw);
     this->cal_force_ew(forceion, GlobalC::rhopw);
-    this->cal_force_nl(forcenl, psi_in);
+    this->cal_force_nl(forcenl, wg, psi_in);
     this->cal_force_cc(forcecc, GlobalC::rhopw);
     this->cal_force_scc(forcescc, GlobalC::rhopw);
 
@@ -736,7 +736,7 @@ void Forces::cal_force_cc(ModuleBase::matrix& forcecc, ModulePW::PW_Basis* rho_b
 
 #include "../module_base/complexarray.h"
 #include "../module_base/complexmatrix.h"
-void Forces::cal_force_nl(ModuleBase::matrix& forcenl, const psi::Psi<complex<double>>* psi_in)
+void Forces::cal_force_nl(ModuleBase::matrix& forcenl, const ModuleBase::matrix& wg, const psi::Psi<complex<double>>* psi_in)
 {
     ModuleBase::TITLE("Forces", "cal_force_nl");
     ModuleBase::timer::tick("Forces", "cal_force_nl");
@@ -775,7 +775,7 @@ void Forces::cal_force_nl(ModuleBase::matrix& forcenl, const psi::Psi<complex<do
         /// only occupied band should be calculated.
         ///
         int nbands_occ = GlobalV::NBANDS;
-        while (GlobalC::wf.wg(ik, nbands_occ - 1) < ModuleBase::threshold_wg)
+        while (wg(ik, nbands_occ - 1) < ModuleBase::threshold_wg)
         {
             nbands_occ--;
         }
@@ -845,7 +845,7 @@ void Forces::cal_force_nl(ModuleBase::matrix& forcenl, const psi::Psi<complex<do
 //		ModuleBase::GlobalFunc::ZEROS(cf, GlobalC::ucell.nat);
 		for (int ib=0; ib<nbands_occ; ib++)
 		{
-			double fac = GlobalC::wf.wg(ik, ib) * 2.0 * GlobalC::ucell.tpiba;
+			double fac = wg(ik, ib) * 2.0 * GlobalC::ucell.tpiba;
         	int iat = 0;
         	int sum = 0;
 			for (int it=0; it<GlobalC::ucell.ntype; it++)

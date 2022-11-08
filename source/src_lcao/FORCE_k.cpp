@@ -27,6 +27,7 @@ void Force_LCAO_k::ftable_k(const bool isforce,
                             Record_adj& ra,
                             const psi::Psi<std::complex<double>>* psi,
                             Local_Orbital_Charge& loc,
+                            const elecstate::ElecState* pelec,
                             ModuleBase::matrix& foverlap,
                             ModuleBase::matrix& ftvnl_dphi,
                             ModuleBase::matrix& fvnl_dbeta,
@@ -52,7 +53,7 @@ void Force_LCAO_k::ftable_k(const bool isforce,
 
     // calculate the energy density matrix
     // and the force related to overlap matrix and energy density matrix.
-    this->cal_foverlap_k(isforce, isstress, ra, psi, loc, foverlap, soverlap);
+    this->cal_foverlap_k(isforce, isstress, ra, psi, loc, foverlap, soverlap, pelec);
 
     // calculate the density matrix
     double** dm2d = new double*[GlobalV::NSPIN];
@@ -273,7 +274,9 @@ void Force_LCAO_k::cal_foverlap_k(const bool isforce,
                                   const psi::Psi<std::complex<double>>* psi,
                                   Local_Orbital_Charge& loc,
                                   ModuleBase::matrix& foverlap,
-                                  ModuleBase::matrix& soverlap)
+                                  ModuleBase::matrix& soverlap,
+                                  const elecstate::ElecState* pelec
+                                  )
 {
     ModuleBase::TITLE("Force_LCAO_k", "cal_foverlap_k");
     ModuleBase::timer::tick("Force_LCAO_k", "cal_foverlap_k");
@@ -301,7 +304,7 @@ void Force_LCAO_k::cal_foverlap_k(const bool isforce,
     {
         for (int ib = 0; ib < GlobalV::NBANDS; ib++)
         {
-            wgEkb(ik, ib) = GlobalC::wf.wg(ik, ib) * GlobalC::wf.ekb[ik][ib];
+            wgEkb(ik, ib) = pelec->wg(ik, ib) * pelec->ekb(ik, ib);
         }
     }
     std::vector<ModuleBase::ComplexMatrix> edm_k(GlobalC::kv.nks);

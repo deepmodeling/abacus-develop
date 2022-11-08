@@ -19,8 +19,6 @@ public:
     Occupy();
     ~Occupy();
 
-    static void calculate_weights(void);
-
     static void decision(const std::string &name,const std::string &smearing_method,const double &smearing_sigma);
 
     static const bool& gauss(void) 

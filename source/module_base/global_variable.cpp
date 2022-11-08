@@ -29,6 +29,7 @@ double PSEUDORCUT;
 bool PSEUDO_MESH;
 
 std::string CALCULATION = "scf";
+std::string ESOLVER_TYPE = "ksdft";
 int EFIELD_FLAG = 0; // 5: add electric field
 int DIP_COR_FLAG = 0; // 7: add dipole field
 bool GATE_FLAG = false;    // add gate field
@@ -49,6 +50,9 @@ double PRESS3 = 0.0;
 double PRESSURE = 0.0;
 std::string RELAX_METHOD = "bfgs";
 std::string OUT_LEVEL = "ie";
+double relax_scale_force = 0.5;
+bool relax_new = true;
+bool fixed_atoms = false;
 int OUT_FREQ_ELEC = 0;
 int OUT_FREQ_ION = 0;
 int RELAX_NMAX = 20;

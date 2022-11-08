@@ -121,7 +121,9 @@ void pseudopot_cell_vnl::getgradq_vnl(const int ik)
 					if(ggnorm < 1e-8)
 						tmpgradvkb(id, ih, ig) = 0.0;
 					else
-			    		tmpgradvkb(id, ih, ig) = ylm(lm, ig) * dvq [ig] * gg[id] / ggnorm + dylm[id](lm, ig) * vq [ig];
+
+			    		tmpgradvkb(id, ih, ig) = ylm(lm, ig) * dvq [ig] * gg[id] / ggnorm 
+												+ dylm[id](lm, ig)/GlobalC::wfcpw->tpiba * vq [ig];//note: dylm/d(tpiba * gx) = 1/tpiba * dylm/dgx
                     tmpvkb(ih, ig) = ylm(lm,ig) * vq[ig];
 			    }
             }
@@ -143,8 +145,9 @@ void pseudopot_cell_vnl::getgradq_vnl(const int ik)
 					for (int ig = 0;ig < npw;++ig)
 					{
                 	    std::complex<double> skig = sk[ig];
+						std::complex<double> dskig = ModuleBase::NEG_IMAG_UNIT * (GlobalC::ucell.atoms[it].tau[ia][id] * GlobalC::wfcpw->lat0) * skig;
                 	    pvkb[ig] = tmpvkb(ih, ig) * skig * pref;
-						pgvkb[ig] = tmpgradvkb(id, ih, ig) * skig * pref;
+						pgvkb[ig] = tmpgradvkb(id, ih, ig) * skig * pref +  tmpvkb(ih, ig) * dskig * pref;;
 					}
 				} //end id
 				++jkb;

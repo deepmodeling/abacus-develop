@@ -77,14 +77,6 @@ void ESolver_SDFT_PW::eachiterfinish(int iter)
 }
 void ESolver_SDFT_PW::afterscf(const int istep)
 {
-    for(int ik=0; ik<this->pelec->ekb.nr; ++ik)
-    {
-        for(int ib=0; ib<this->pelec->ekb.nc; ++ib)
-        {
-            GlobalC::wf.ekb[ik][ib] = this->pelec->ekb(ik, ib);
-            GlobalC::wf.wg(ik, ib) = this->pelec->wg(ik, ib);
-        }
-    }
     if(GlobalC::CHR.out_chg > 0)
     {
 	    for(int is=0; is<GlobalV::NSPIN; is++)
@@ -143,12 +135,12 @@ void ESolver_SDFT_PW::cal_Energy(double& etot)
 void ESolver_SDFT_PW::cal_Force(ModuleBase::matrix &force)
 {
 	Sto_Forces ff;
-    ff.init(force, this->psi, this->stowf);
+    ff.init(force, this->pelec->wg, this->psi, this->stowf);
 }
 void ESolver_SDFT_PW::cal_Stress(ModuleBase::matrix &stress)
 {
 	Sto_Stress_PW ss;
-    ss.cal_stress(stress,this->psi, this->stowf);
+    ss.cal_stress(stress, this->pelec->wg, this->psi, this->stowf);
 }
 void ESolver_SDFT_PW::postprocess()
 {
@@ -157,7 +149,7 @@ void ESolver_SDFT_PW::postprocess()
     GlobalV::ofs_running << std::setprecision(16);
     GlobalV::ofs_running << " !FINAL_ETOT_IS " << GlobalC::en.etot * ModuleBase::Ry_to_eV << " eV" << std::endl;
     GlobalV::ofs_running << " --------------------------------------------\n\n" << std::endl;
-    GlobalC::en.print_occ();
+    GlobalC::en.print_occ(this->pelec);
 
     if(this->maxniter == 0)
     {

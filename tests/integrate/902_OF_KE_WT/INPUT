@@ -1,7 +1,8 @@
 INPUT_PARAMETERS
 #Parameters (1.General)
 suffix		autotest
-calculation ofdft
+calculation scf
+esolver_type    ofdft
 ntype		1
 symmetry	1	
 pseudo_dir  ../../PP_ORB/

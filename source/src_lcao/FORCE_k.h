@@ -30,6 +30,7 @@ private:
         Record_adj &ra, 
         const psi::Psi<std::complex<double>>* psi,
         Local_Orbital_Charge &loc,
+		const elecstate::ElecState* pelec,
         ModuleBase::matrix& foverlap,
 		ModuleBase::matrix& ftvnl_dphi,
 		ModuleBase::matrix& fvnl_dbeta,	
@@ -56,7 +57,7 @@ private:
 
 	// calculate the overlap force
     void cal_foverlap_k(const bool isforce, const bool isstress, Record_adj &ra, const psi::Psi<std::complex<double>>* psi,
-        Local_Orbital_Charge& loc, ModuleBase::matrix& foverlap, ModuleBase::matrix& soverlap);
+        Local_Orbital_Charge& loc, ModuleBase::matrix& foverlap, ModuleBase::matrix& soverlap, const elecstate::ElecState* pelec);
 
 	// calculate the force due to < phi | Vlocal | dphi >
 	void cal_fvl_dphi_k(const bool isforce, const bool isstress, ModuleBase::matrix& fvl_dphi, ModuleBase::matrix& svl_dphi, double **DM_R);

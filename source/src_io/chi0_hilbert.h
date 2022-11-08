@@ -46,14 +46,14 @@ class Chi0_hilbert
         
 	void Init();
 	void Delete();
-	void Chi();
+	void Chi(const ModuleBase::matrix& ekb);
 	void Parallel_G();
 	void Cal_Psi(int iq, std::complex<double> **psi_r);
 	void Cal_Psi_down(int iq, std::complex<double> **psi_r);
 	void Cal_lcao_psi();
 	void Cal_b(int iq, int ik, int iqk, int ispin, ModulePW::PW_Basis *rho_basis);
 	void Cal_b_lcao( int iq, int ik, int iqk);
-	void Cal_Chi0s(int iq);
+	void Cal_Chi0s(int iq, const ModuleBase::matrix& ekb);
 	void Cal_T();
 	void Cal_Chi0();
 	std::complex<double> f(int k, int j);

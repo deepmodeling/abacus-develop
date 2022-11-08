@@ -23,7 +23,7 @@ public:
     Forces();
     ~Forces();
 
-    void init(ModuleBase::matrix& force, const psi::Psi<std::complex<double>>* psi_in=nullptr);
+    void init(ModuleBase::matrix& force, const ModuleBase::matrix& wg, const psi::Psi<std::complex<double>>* psi_in=nullptr);
 
 protected:
 
@@ -33,7 +33,7 @@ protected:
     void cal_force_loc(ModuleBase::matrix& forcelc, ModulePW::PW_Basis* rho_basis);
     void cal_force_ew(ModuleBase::matrix& forceion, ModulePW::PW_Basis* rho_basis);
     void cal_force_cc(ModuleBase::matrix& forcecc, ModulePW::PW_Basis* rho_basis);
-    void cal_force_nl(ModuleBase::matrix& forcenl, const psi::Psi<std::complex<double>>* psi_in=nullptr);
+    void cal_force_nl(ModuleBase::matrix& forcenl, const ModuleBase::matrix& wg, const psi::Psi<std::complex<double>>* psi_in=nullptr);
     void cal_force_scc(ModuleBase::matrix& forcescc, ModulePW::PW_Basis* rho_basis);
 
     static void print( const std::string &name, const ModuleBase::matrix &f, bool rv=true );

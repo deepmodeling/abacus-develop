@@ -40,15 +40,15 @@ void Verlet::second_half()
 void Verlet::apply_thermostat()
 {
     double t_target = 0;
-    temperature_ = MD_func::current_temp(ucell.nat, frozen_freedom_, allmass, vel);
+    t_current = MD_func::current_temp(kinetic, ucell.nat, frozen_freedom_, allmass, vel);
 
     if(mdp.md_thermostat == "NVE"){}
     else if(mdp.md_thermostat == "Rescaling")
     {
         t_target = MD_func::target_temp(step_ + step_rst_, mdp.md_tfirst, mdp.md_tlast) * ModuleBase::Hartree_to_K;
-        if(abs(t_target - temperature_) > mdp.md_tolerance)
+        if(abs(t_target - t_current) > mdp.md_tolerance)
         {
-            thermalize(0, temperature_, t_target);
+            thermalize(0, t_current, t_target);
         }
     }
     else if(mdp.md_thermostat == "Rescale_v")
@@ -56,7 +56,7 @@ void Verlet::apply_thermostat()
         if((step_+step_rst_) % mdp.md_nraise == 0)
         {
             t_target = MD_func::target_temp(step_ + step_rst_, mdp.md_tfirst, mdp.md_tlast) * ModuleBase::Hartree_to_K;
-            thermalize(0, temperature_, t_target);
+            thermalize(0, t_current, t_target);
         }
     }
     else if(mdp.md_thermostat == "Anderson")
@@ -86,7 +86,7 @@ void Verlet::apply_thermostat()
     else if(mdp.md_thermostat == "Berendsen")
     {
         t_target = MD_func::target_temp(step_ + step_rst_, mdp.md_tfirst, mdp.md_tlast) * ModuleBase::Hartree_to_K;
-        thermalize(mdp.md_nraise, temperature_, t_target);
+        thermalize(mdp.md_nraise, t_current, t_target);
     }
     else
     {

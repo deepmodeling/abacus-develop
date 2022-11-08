@@ -42,15 +42,19 @@ struct delete_memory_op<FPTYPE, psi::DEVICE_CPU> {
   }
 };
 
+template struct resize_memory_op<int, psi::DEVICE_CPU>;
 template struct resize_memory_op<double, psi::DEVICE_CPU>;
 template struct resize_memory_op<std::complex<double>, psi::DEVICE_CPU>;
 
+template struct set_memory_op<int, psi::DEVICE_CPU>;
 template struct set_memory_op<double, psi::DEVICE_CPU>;
 template struct set_memory_op<std::complex<double>, psi::DEVICE_CPU>;
 
+template struct synchronize_memory_op<int, psi::DEVICE_CPU, psi::DEVICE_CPU>;
 template struct synchronize_memory_op<double, psi::DEVICE_CPU, psi::DEVICE_CPU>;
 template struct synchronize_memory_op<std::complex<double>, psi::DEVICE_CPU, psi::DEVICE_CPU>;
 
+template struct delete_memory_op<int, psi::DEVICE_CPU>;
 template struct delete_memory_op<double, psi::DEVICE_CPU>;
 template struct delete_memory_op<std::complex<double>, psi::DEVICE_CPU>;
 

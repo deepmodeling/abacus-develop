@@ -99,7 +99,7 @@ bool Charge::read_rho(const int &is, const std::string &fn, double* rho) //add b
 	for(int iz=0; iz<GlobalC::rhopw->nz; iz++)
 	{
 		ModuleBase::GlobalFunc::ZEROS(zpiece, nxy);
-		if(GlobalV::MY_RANK==0||(GlobalV::CALCULATION.substr(0,3) == "sto"&&GlobalV::RANK_IN_STOGROUP==0))
+		if(GlobalV::MY_RANK==0||(GlobalV::ESOLVER_TYPE == "sdft"&&GlobalV::RANK_IN_STOGROUP==0))
 		{
 			//				GlobalV::ofs_running << " Read charge density iz=" << iz << std::endl;
 			for(int j=0; j<GlobalC::rhopw->ny; j++)
@@ -115,6 +115,6 @@ bool Charge::read_rho(const int &is, const std::string &fn, double* rho) //add b
 	delete[] zpiece;
 #endif
 
-    if(GlobalV::MY_RANK==0||(GlobalV::CALCULATION.substr(0,3) == "sto"&&GlobalV::RANK_IN_STOGROUP==0)) ifs.close();
+    if(GlobalV::MY_RANK==0||(GlobalV::ESOLVER_TYPE == "sdft"&&GlobalV::RANK_IN_STOGROUP==0)) ifs.close();
     return true;
 }
