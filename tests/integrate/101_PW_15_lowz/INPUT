@@ -3,7 +3,7 @@ INPUT_PARAMETERS
 suffix			autotest
 calculation     scf
 ntype			1
-nbands			6
+nbands			10
 symmetry		1
 pseudo_dir	../../PP_ORB
 dft_functional  scan
@@ -18,8 +18,8 @@ scf_nmax			2
 basis_type		pw
 
 #Parameters (4.Smearing)
-smearing_method		gauss
-smearing_sigma		0.002
+smearing_method		fd
+smearing_sigma		0.1
 
 #Parameters (5.Mixing)
 mixing_type		pulay

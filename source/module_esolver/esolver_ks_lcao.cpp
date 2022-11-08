@@ -98,7 +98,7 @@ void ESolver_KS_LCAO::Init(Input& inp, UnitCell_pseudo& ucell)
         case Exx_Global::Hybrid_Type::PBE0:
         case Exx_Global::Hybrid_Type::SCAN0:
         case Exx_Global::Hybrid_Type::HSE:
-            XC_Functional::set_xc_type(ucell.atoms[0].xc_func);
+            XC_Functional::set_xc_type(ucell.atoms[0].ncpp.xc_func);
             break;
         }
     }
@@ -472,7 +472,7 @@ void ESolver_KS_LCAO::hamilt2density(int istep, int iter, double ethr)
         if (GlobalC::restart.info_load.load_H && GlobalC::restart.info_load.load_H_finish
             && !GlobalC::restart.info_load.restart_exx)
         {
-            XC_Functional::set_xc_type(GlobalC::ucell.atoms[0].xc_func);
+            XC_Functional::set_xc_type(GlobalC::ucell.atoms[0].ncpp.xc_func);
             GlobalC::exx_lcao.cal_exx_elec(this->LOC, this->LOWF.wfc_k_grid);
             GlobalC::restart.info_load.restart_exx = true;
         }
@@ -953,7 +953,7 @@ bool ESolver_KS_LCAO::do_after_converge(int& iter)
             else
             {
                 //update exx and redo scf
-                XC_Functional::set_xc_type(GlobalC::ucell.atoms[0].xc_func);
+                XC_Functional::set_xc_type(GlobalC::ucell.atoms[0].ncpp.xc_func);
                 iter = 0;
                 std::cout << " Entering 2nd SCF, where EXX is updated" << std::endl;
                 this->two_level_step++;
@@ -969,7 +969,7 @@ bool ESolver_KS_LCAO::do_after_converge(int& iter)
         else
         {
             //update exx and redo scf
-            XC_Functional::set_xc_type(GlobalC::ucell.atoms[0].xc_func);
+            XC_Functional::set_xc_type(GlobalC::ucell.atoms[0].ncpp.xc_func);
             GlobalC::exx_lcao.cal_exx_elec(this->LOC, this->LOWF.wfc_k_grid);
             
             iter = 0;

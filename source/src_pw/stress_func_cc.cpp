@@ -22,7 +22,7 @@ void Stress_Func::stress_cc(ModuleBase::matrix& sigma, ModulePW::PW_Basis* rho_b
 	int judge=0;
 	for(int nt=0;nt<GlobalC::ucell.ntype;nt++)
 	{
-		if(GlobalC::ucell.atoms[nt].nlcc) 
+		if(GlobalC::ucell.atoms[nt].ncpp.nlcc) 
 		{
 			judge++;
 		}
@@ -88,15 +88,15 @@ void Stress_Func::stress_cc(ModuleBase::matrix& sigma, ModulePW::PW_Basis* rho_b
 	sigmadiag=0.0;
 	for(int nt=0;nt<GlobalC::ucell.ntype;nt++)
 	{
-		if(GlobalC::ucell.atoms[nt].nlcc)
+		if(GlobalC::ucell.atoms[nt].ncpp.nlcc)
 		{
 			//drhoc();
 			GlobalC::CHR.non_linear_core_correction(
 				GlobalC::ppcell.numeric,
-				GlobalC::ucell.atoms[nt].msh,
-				GlobalC::ucell.atoms[nt].r,
-				GlobalC::ucell.atoms[nt].rab,
-				GlobalC::ucell.atoms[nt].rho_atc,
+				GlobalC::ucell.atoms[nt].ncpp.msh,
+				GlobalC::ucell.atoms[nt].ncpp.r,
+				GlobalC::ucell.atoms[nt].ncpp.rab,
+				GlobalC::ucell.atoms[nt].ncpp.rho_atc,
 				rhocg,
 				rho_basis);
 
@@ -111,10 +111,10 @@ void Stress_Func::stress_cc(ModuleBase::matrix& sigma, ModulePW::PW_Basis* rho_b
 			}
 			this->deriv_drhoc (
 				GlobalC::ppcell.numeric,
-				GlobalC::ucell.atoms[nt].msh,
-				GlobalC::ucell.atoms[nt].r,
-				GlobalC::ucell.atoms[nt].rab,
-				GlobalC::ucell.atoms[nt].rho_atc,
+				GlobalC::ucell.atoms[nt].ncpp.msh,
+				GlobalC::ucell.atoms[nt].ncpp.r,
+				GlobalC::ucell.atoms[nt].ncpp.rab,
+				GlobalC::ucell.atoms[nt].ncpp.rho_atc,
 				rhocg,
 				rho_basis);
 			// non diagonal term (g=0 contribution missing)

@@ -111,7 +111,7 @@ void Stochastic_hchi:: hchi(complex<double> *chig, complex<double> *hchig, const
     		int iat = 0;
     		for (int it=0; it<GlobalC::ucell.ntype; it++)
     		{
-    		    const int Nprojs = GlobalC::ucell.atoms[it].nh;
+    		    const int Nprojs = GlobalC::ucell.atoms[it].ncpp.nh;
     		    for (int ia=0; ia<GlobalC::ucell.atoms[it].na; ia++)
     		    {
     		        // each atom has Nprojs, means this is with structure factor;

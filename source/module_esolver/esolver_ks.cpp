@@ -58,19 +58,19 @@ namespace ModuleESolver
         but in "nscf" calculation, there is no need of "two-level" method. */
         if(GlobalV::CALCULATION == "nscf")
         {
-            XC_Functional::set_xc_type(ucell.atoms[0].xc_func);
+            XC_Functional::set_xc_type(ucell.atoms[0].ncpp.xc_func);
         }
-        else if (ucell.atoms[0].xc_func == "HSE" || ucell.atoms[0].xc_func == "PBE0")
+        else if (ucell.atoms[0].ncpp.xc_func == "HSE" || ucell.atoms[0].ncpp.xc_func == "PBE0")
         {
             XC_Functional::set_xc_type("pbe");
         }
-        else if (ucell.atoms[0].xc_func == "SCAN0")
+        else if (ucell.atoms[0].ncpp.xc_func == "SCAN0")
         {
             XC_Functional::set_xc_type("scan");
         }
         else
         {
-            XC_Functional::set_xc_type(ucell.atoms[0].xc_func);
+            XC_Functional::set_xc_type(ucell.atoms[0].ncpp.xc_func);
         }
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "SETUP UNITCELL");
 

@@ -39,14 +39,14 @@ void ESolver_OF::Init(Input &inp, UnitCell_pseudo &ucell)
 
     GlobalC::CHR.cal_nelec();
 
-	if(ucell.atoms[0].xc_func=="HSE"||ucell.atoms[0].xc_func=="PBE0")
+	if(ucell.atoms[0].ncpp.xc_func=="HSE"||ucell.atoms[0].ncpp.xc_func=="PBE0")
 	{
         ModuleBase::WARNING_QUIT("esolver_of", "Hybrid functionals are not supported by OFDFT.");
 		// XC_Functional::set_xc_type("pbe");
 	}
 	else
 	{
-		XC_Functional::set_xc_type(ucell.atoms[0].xc_func);
+		XC_Functional::set_xc_type(ucell.atoms[0].ncpp.xc_func);
 	}
 
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "SETUP UNITCELL");

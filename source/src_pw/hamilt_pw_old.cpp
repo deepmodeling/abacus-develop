@@ -572,7 +572,7 @@ void Hamilt_PW::add_nonlocal_pp(
 	{
 		for (int it=0; it<GlobalC::ucell.ntype; it++)
 		{
-			const int nproj = GlobalC::ucell.atoms[it].nh;
+			const int nproj = GlobalC::ucell.atoms[it].ncpp.nh;
 			for (int ia=0; ia<GlobalC::ucell.atoms[it].na; ia++)
 			{
 				// each atom has nproj, means this is with structure factor;
@@ -604,7 +604,7 @@ void Hamilt_PW::add_nonlocal_pp(
 			std::complex<double> becp1=std::complex<double>(0.0,0.0);
 			std::complex<double> becp2=std::complex<double>(0.0,0.0);
 
-			const int nproj = GlobalC::ucell.atoms[it].nh;
+			const int nproj = GlobalC::ucell.atoms[it].ncpp.nh;
 			for (int ia=0; ia<GlobalC::ucell.atoms[it].na; ia++)
 			{
 				// each atom has nproj, means this is with structure factor;

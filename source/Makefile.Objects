@@ -206,6 +206,7 @@ OBJS_HAMILT=hamilt_pw.o\
     nonlocal.o\
     ekinetic_pw.o\
     veff_pw.o\
+    veff.o\
     nonlocal_pw.o\
     meta_pw.o\
     velocity_pw.o\
