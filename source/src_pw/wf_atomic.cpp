@@ -54,7 +54,7 @@ void WF_atomic::init_at_1(void)
     int ndm = 0;
     for (int it=0; it<GlobalC::ucell.ntype; it++)
     {
-        ndm = (GlobalC::ucell.atoms[it].atom_pp.msh > ndm) ? GlobalC::ucell.atoms[it].atom_pp.msh : ndm;
+        ndm = (GlobalC::ucell.atoms[it].ncpp.msh > ndm) ? GlobalC::ucell.atoms[it].ncpp.msh : ndm;
     }
 	ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"max mesh points in Pseudopotential",ndm);
 
@@ -83,25 +83,25 @@ void WF_atomic::init_at_1(void)
 		Atom* atom = &GlobalC::ucell.atoms[it];
 
 		GlobalV::ofs_running <<"\n number of pseudo atomic orbitals for "
-		<< atom->label << " is " << atom->atom_pp.nchi << std::endl;
+		<< atom->label << " is " << atom->ncpp.nchi << std::endl;
 
-        for (int ic=0; ic<atom->atom_pp.nchi ;ic++)
+        for (int ic=0; ic<atom->ncpp.nchi ;ic++)
         {
 			//std::cout << "\n T=" << it << " ic=" << ic << std::endl;
             int nmesh;
             if(GlobalV::PSEUDO_MESH)
-                nmesh = atom->atom_pp.mesh;
+                nmesh = atom->ncpp.mesh;
             else
-                nmesh = atom->atom_pp.msh;
+                nmesh = atom->ncpp.msh;
 
             // check the unit condition
             double *inner_part = new double[nmesh];
             for (int ir=0; ir<nmesh; ir++)
             {
-                inner_part[ir] = atom->atom_pp.chi(ic,ir) * atom->atom_pp.chi(ic,ir);
+                inner_part[ir] = atom->ncpp.chi(ic,ir) * atom->ncpp.chi(ic,ir);
             }
             double unit = 0.0;
-            ModuleBase::Integral::Simpson_Integral(nmesh, inner_part, atom->atom_pp.rab, unit);
+            ModuleBase::Integral::Simpson_Integral(nmesh, inner_part, atom->ncpp.rab, unit);
             delete[] inner_part;
 
 			GlobalV::ofs_running << " the unit of pseudo atomic orbital is " << unit;
@@ -111,7 +111,7 @@ void WF_atomic::init_at_1(void)
             //=================================
             for (int ir=0; ir<nmesh; ir++)
             {
-                atom->atom_pp.chi(ic,ir) /= sqrt(unit);
+                atom->ncpp.chi(ic,ir) /= sqrt(unit);
             }
 
             //===========
@@ -120,28 +120,28 @@ void WF_atomic::init_at_1(void)
             inner_part = new double[nmesh];
             for (int ir=0; ir<nmesh; ir++)
             {
-                inner_part[ir] = atom->atom_pp.chi(ic,ir) * atom->atom_pp.chi(ic,ir);
+                inner_part[ir] = atom->ncpp.chi(ic,ir) * atom->ncpp.chi(ic,ir);
             }
             unit = 0.0;
-            ModuleBase::Integral::Simpson_Integral(nmesh, inner_part, atom->atom_pp.rab, unit);
+            ModuleBase::Integral::Simpson_Integral(nmesh, inner_part, atom->ncpp.rab, unit);
             delete[] inner_part;
 
 			GlobalV::ofs_running << ", renormalize to " << unit << std::endl;
 
-            if (atom->atom_pp.oc[ic] >= 0.0)
+            if (atom->ncpp.oc[ic] >= 0.0)
             {
-                const int l = atom->atom_pp.lchi[ic];
+                const int l = atom->ncpp.lchi[ic];
                 for (int iq=startq; iq<GlobalV::NQX; iq++)
                 {
                     const double q = GlobalV::DQ * iq;
-                    ModuleBase::Sphbes::Spherical_Bessel(atom->atom_pp.msh, atom->atom_pp.r, q, l, aux);
-                    for (int ir = 0;ir < atom->atom_pp.msh;ir++)
+                    ModuleBase::Sphbes::Spherical_Bessel(atom->ncpp.msh, atom->ncpp.r, q, l, aux);
+                    for (int ir = 0;ir < atom->ncpp.msh;ir++)
                     {
-                        vchi[ir] = atom->atom_pp.chi(ic,ir) * aux[ir] * atom->atom_pp.r[ir];
+                        vchi[ir] = atom->ncpp.chi(ic,ir) * aux[ir] * atom->ncpp.r[ir];
                     }
 
                     double vqint = 0.0;
-                    ModuleBase::Integral::Simpson_Integral(atom->atom_pp.msh, vchi, atom->atom_pp.rab, vqint);
+                    ModuleBase::Integral::Simpson_Integral(atom->ncpp.msh, vchi, atom->ncpp.rab, vqint);
 
                     GlobalC::ppcell.tab_at(it, ic, iq) =  vqint * pref;
                     //				if( it == 0 && ic == 0 )
@@ -170,7 +170,7 @@ void WF_atomic::print_PAOs(void)const
     if (GlobalV::MY_RANK!=0) return;
     for (int it=0; it<GlobalC::ucell.ntype; it++)
     {
-        for (int icc=0; icc<GlobalC::ucell.atoms[it].atom_pp.nchi ;icc++)
+        for (int icc=0; icc<GlobalC::ucell.atoms[it].ncpp.nchi ;icc++)
         {
             int ic = icc;
             if(GlobalV::NSPIN==4) ic = icc/2;
@@ -182,7 +182,7 @@ void WF_atomic::print_PAOs(void)const
 			else if (ic == 4) orbital_type = "G"; // liuyu add 2021-05-07
             else
             {
-				GlobalV::ofs_warning << "\n nchi = " << GlobalC::ucell.atoms[it].atom_pp.nchi << std::endl;
+				GlobalV::ofs_warning << "\n nchi = " << GlobalC::ucell.atoms[it].ncpp.nchi << std::endl;
                 ModuleBase::WARNING_QUIT("WF_atomic::print_PAOs", "unknown PAO type.");
             }
 
@@ -193,16 +193,16 @@ void WF_atomic::print_PAOs(void)const
             << orbital_type << ".ORBITAL";
 
             std::ofstream ofs(ss.str().c_str());
-            ofs << "Mesh " << GlobalC::ucell.atoms[it].atom_pp.msh;
+            ofs << "Mesh " << GlobalC::ucell.atoms[it].ncpp.msh;
             ofs << "\n" << std::setw(15) << "Radial"
             << std::setw(15) << "Psi"
             << std::setw(15) << "Rab";
 
-            for (int i=0;i<GlobalC::ucell.atoms[it].atom_pp.msh;i++)
+            for (int i=0;i<GlobalC::ucell.atoms[it].ncpp.msh;i++)
             {
-                ofs << "\n" << std::setw(15) << GlobalC::ucell.atoms[it].atom_pp.r[i]
-                << std::setw(15) << GlobalC::ucell.atoms[it].atom_pp.chi(icc,i)
-                << std::setw(15) << GlobalC::ucell.atoms[it].atom_pp.rab[i];
+                ofs << "\n" << std::setw(15) << GlobalC::ucell.atoms[it].ncpp.r[i]
+                << std::setw(15) << GlobalC::ucell.atoms[it].ncpp.chi(icc,i)
+                << std::setw(15) << GlobalC::ucell.atoms[it].ncpp.rab[i];
             }
             ofs.close();
         }
@@ -280,11 +280,11 @@ void WF_atomic::atomic_wfc
             //-------------------------------------------------------
             // Calculate G space 3D wave functions
             //-------------------------------------------------------
-            for (int iw = 0;iw < GlobalC::ucell.atoms[it].atom_pp.nchi;iw++)
+            for (int iw = 0;iw < GlobalC::ucell.atoms[it].ncpp.nchi;iw++)
             {
-                if (GlobalC::ucell.atoms[it].atom_pp.oc[iw] >= 0.0)
+                if (GlobalC::ucell.atoms[it].ncpp.oc[iw] >= 0.0)
                 {
-                    const int l = GlobalC::ucell.atoms[it].atom_pp.lchi[iw];
+                    const int l = GlobalC::ucell.atoms[it].ncpp.lchi[iw];
                     std::complex<double> lphase = pow(ModuleBase::NEG_IMAG_UNIT, l);
                     //-----------------------------------------------------
                     //  the factor i^l MUST BE PRESENT in order to produce
@@ -303,11 +303,11 @@ void WF_atomic::atomic_wfc
 
                     if(GlobalV::NSPIN==4)
                     {
-                        if(GlobalC::ucell.atoms[it].atom_pp.has_so)
+                        if(GlobalC::ucell.atoms[it].ncpp.has_so)
                         {
                             Soc soc;
 						    soc.rot_ylm(l+1);
-                            const double j = GlobalC::ucell.atoms[it].atom_pp.jchi[iw];
+                            const double j = GlobalC::ucell.atoms[it].ncpp.jchi[iw];
                             if ( !(GlobalV::DOMAG||GlobalV::DOMAG_Z))
                             {//atomic_wfc_so
                                 double fact[2];
@@ -356,9 +356,9 @@ void WF_atomic::atomic_wfc
                                     }
                                 else
                                 {
-                                    for(int ib = 0;ib < GlobalC::ucell.atoms[it].atom_pp.nchi;ib++)
+                                    for(int ib = 0;ib < GlobalC::ucell.atoms[it].ncpp.nchi;ib++)
                                     {
-                                        if((GlobalC::ucell.atoms[it].atom_pp.lchi[ib] == l)&&(fabs(GlobalC::ucell.atoms[it].atom_pp.jchi[ib]-l+0.5)<1e-4))
+                                        if((GlobalC::ucell.atoms[it].ncpp.lchi[ib] == l)&&(fabs(GlobalC::ucell.atoms[it].ncpp.jchi[ib]-l+0.5)<1e-4))
                                         {
                                         nc=ib;
                                         break;

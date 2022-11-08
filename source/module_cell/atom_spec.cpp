@@ -101,7 +101,7 @@ void Atom::print_Atom(std::ofstream &ofs)
     //===================
     // call print atom
     //===================
-    this->atom_pp.print_atom(ofs);
+    this->ncpp.print_atom(ofs);
 
     output::printv31_d(ofs,"atom_position(cartesian)",tau,na);
     /*
@@ -136,7 +136,7 @@ void Atom::bcast_atom(void)
         l_nchi = new int[nwl+1];
     }
     Parallel_Common::bcast_int( l_nchi, nwl+1);
-    Parallel_Common::bcast_bool( this->atom_pp.flag_empty_element );
+    Parallel_Common::bcast_bool( this->ncpp.flag_empty_element );
 
     if (GlobalV::MY_RANK!=0)
     {
@@ -178,14 +178,14 @@ void Atom::bcast_atom(void)
         Parallel_Common::bcast_double(m_loc_[i].z);
     }
 
-    this->atom_pp.bcast_atom_pseudo( na );
+    this->ncpp.bcast_atom_pseudo( na );
 
     return;
 }
 
 void Atom::bcast_atom2()
 {
-    this->atom_pp.bcast_atom_pseudo2();
+    this->ncpp.bcast_atom_pseudo2();
 }
 
 #endif

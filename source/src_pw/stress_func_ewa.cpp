@@ -13,7 +13,7 @@ void Stress_Func::stress_ewa(ModuleBase::matrix& sigma, ModulePW::PW_Basis* rho_
 	{
 		for(int i=0; i<GlobalC::ucell.atoms[it].na; i++)
 		{
-			charge = charge + GlobalC::ucell.atoms[it].atom_pp.zv;
+			charge = charge + GlobalC::ucell.atoms[it].ncpp.zv;
 		}
 	}
     //choose alpha in order to have convergence in the sum over G
@@ -63,7 +63,7 @@ void Stress_Func::stress_ewa(ModuleBase::matrix& sigma, ModulePW::PW_Basis* rho_
 			for(int i=0; i<GlobalC::ucell.atoms[it].na; i++)
 			{
 				arg = (rho_basis->gcar[ig] * GlobalC::ucell.atoms[it].tau[i]) * (ModuleBase::TWO_PI);
-				rhostar = rhostar + std::complex<double>(GlobalC::ucell.atoms[it].atom_pp.zv * cos(arg),GlobalC::ucell.atoms[it].atom_pp.zv * sin(arg));
+				rhostar = rhostar + std::complex<double>(GlobalC::ucell.atoms[it].ncpp.zv * cos(arg),GlobalC::ucell.atoms[it].ncpp.zv * sin(arg));
 			}
 		}
 		rhostar /= GlobalC::ucell.omega;
@@ -115,7 +115,7 @@ void Stress_Func::stress_ewa(ModuleBase::matrix& sigma, ModulePW::PW_Basis* rho_
 						for(int nr=0 ; nr<nrm ; nr++)
 						{
 							rr=sqrt(r2[nr]) * GlobalC::ucell.lat0;
-							fac = -ModuleBase::e2/2.0/GlobalC::ucell.omega*pow(GlobalC::ucell.lat0,2)*GlobalC::ucell.atoms[it].atom_pp.zv * GlobalC::ucell.atoms[jt].atom_pp.zv / pow(rr,3) * (erfc(sqrt(alpha)*rr)+rr * sqrt(8 * alpha / (ModuleBase::TWO_PI)) * exp(-alpha * pow(rr,2)));
+							fac = -ModuleBase::e2/2.0/GlobalC::ucell.omega*pow(GlobalC::ucell.lat0,2)*GlobalC::ucell.atoms[it].ncpp.zv * GlobalC::ucell.atoms[jt].ncpp.zv / pow(rr,3) * (erfc(sqrt(alpha)*rr)+rr * sqrt(8 * alpha / (ModuleBase::TWO_PI)) * exp(-alpha * pow(rr,2)));
 							for(int l=0; l<3; l++)
 							{
 								for(int m=0; m<l+1; m++)

@@ -36,26 +36,26 @@ void InfoNonlocal::Set_NonLocal(
 	//Atom* atom = &GlobalC::ucell.atoms[it];
 
 	// get the number of non-local projectors
-	n_projectors = atom->atom_pp.nbeta;
+	n_projectors = atom->ncpp.nbeta;
 
-	const int nh = atom->atom_pp.nh;//zhengdy-soc
+	const int nh = atom->ncpp.nh;//zhengdy-soc
 
 	// set the nonlocal projector objects
 	Numerical_Nonlocal_Lm* tmpBeta_lm = new Numerical_Nonlocal_Lm[n_projectors];
 
 	ModuleBase::ComplexMatrix coefficient_D_nc_in(nh*2, nh*2);//zhengdy-soc
 
-	if(!atom->atom_pp.has_so)
+	if(!atom->ncpp.has_so)
 	{
 		for(int p1 = 0; p1<n_projectors; p1++)
 		{
-			const int lnow = atom->atom_pp.lll[p1];
+			const int lnow = atom->ncpp.lll[p1];
 
 			// only keep the nonzero part.
-			int cut_mesh = atom->atom_pp.mesh; 
-			for(int ir=atom->atom_pp.mesh-1; ir>=0; --ir)
+			int cut_mesh = atom->ncpp.mesh; 
+			for(int ir=atom->ncpp.mesh-1; ir>=0; --ir)
 			{
-				if( abs( atom->atom_pp.betar(p1,ir) ) > 1.0e-10 )
+				if( abs( atom->ncpp.betar(p1,ir) ) > 1.0e-10 )
 				{
 					cut_mesh = ir; 
 					break;
@@ -68,7 +68,7 @@ void InfoNonlocal::Set_NonLocal(
 			ModuleBase::GlobalFunc::ZEROS(beta_r, cut_mesh);
 			for(int ir=0; ir<cut_mesh; ++ir)
 			{
-				beta_r[ir] = atom->atom_pp.betar(p1,ir);
+				beta_r[ir] = atom->ncpp.betar(p1,ir);
 			}
 
 			tmpBeta_lm[p1].set_NL_proj(
@@ -76,8 +76,8 @@ void InfoNonlocal::Set_NonLocal(
 					it, //type
 					lnow, // angular momentum L
 					cut_mesh, // number of radial mesh
-					atom->atom_pp.rab,
-					atom->atom_pp.r, // radial mesh value (a.u.)
+					atom->ncpp.rab,
+					atom->ncpp.r, // radial mesh value (a.u.)
 					beta_r,
 					kmesh,
 					dk,
@@ -97,39 +97,39 @@ void InfoNonlocal::Set_NonLocal(
 		this->Beta[it].set_type_info(
 			it, 
 			atom->label, 
-			atom->atom_pp.pp_type, 
-			atom->atom_pp.lmax, 
+			atom->ncpp.pp_type, 
+			atom->ncpp.lmax, 
 			n_projectors, 
 			tmpBeta_lm);//LiuXh 2016-01-14, 2016-07-19
 
 		// mohan add 2021-05-07
-		atom->atom_pp.set_d_so(coefficient_D_nc_in,n_projectors,0,0);
+		atom->ncpp.set_d_so(coefficient_D_nc_in,n_projectors,0,0);
 	}
 	else//added by zhengdy-soc
 	{
 		int lmaxkb = - 1;
-		for (int ibeta = 0; ibeta < atom->atom_pp.nbeta; ibeta++)
+		for (int ibeta = 0; ibeta < atom->ncpp.nbeta; ibeta++)
 		{
-			lmaxkb = max( lmaxkb, atom->atom_pp.lll[ibeta]);
+			lmaxkb = max( lmaxkb, atom->ncpp.lll[ibeta]);
 		}
 		Soc soc;
 		soc.rot_ylm(lmaxkb);
-		soc.fcoef.create(1, atom->atom_pp.nh, atom->atom_pp.nh);
+		soc.fcoef.create(1, atom->ncpp.nh, atom->ncpp.nh);
 
 		int ip1=0;
 		for(int p1 = 0; p1<n_projectors; p1++)//nbeta
 		{
-			const int lnow = atom->atom_pp.lll[p1];
+			const int lnow = atom->ncpp.lll[p1];
 			
-			const int l1 = atom->atom_pp.lll[p1];
-			const double j1 = atom->atom_pp.jjj[p1];
+			const int l1 = atom->ncpp.lll[p1];
+			const double j1 = atom->ncpp.jjj[p1];
 			for(int m1=0; m1<2*l1+1; m1++)
 			{
 				int ip2=0;
 				for(int p2 = 0; p2<n_projectors; p2++)
 				{
-					const int l2 = atom->atom_pp.lll[p2];
-					const double j2 = atom->atom_pp.jjj[p2];
+					const int l2 = atom->ncpp.lll[p2];
+					const double j2 = atom->ncpp.jjj[p2];
 					for(int m2 = 0;m2<2*l2+1;m2++)
 					{
 						if(l1==l2 && fabs(j1-j2)<1e-7)
@@ -143,7 +143,7 @@ void InfoNonlocal::Set_NonLocal(
 										m1, m2,
 										j1, j2,
 										0, ip1, ip2);
-									coefficient_D_nc_in(ip1 + nh*is1, ip2 + nh*is2) = atom->atom_pp.dion(p1,p2) 
+									coefficient_D_nc_in(ip1 + nh*is1, ip2 + nh*is2) = atom->ncpp.dion(p1,p2) 
 									* soc.fcoef(0, is1, is2, ip1, ip2);
 									if(p1 != p2) 
 									{
@@ -160,10 +160,10 @@ void InfoNonlocal::Set_NonLocal(
 			}// end m1
 
 			// only keep the nonzero part.
-			int cut_mesh = atom->atom_pp.mesh; 
-			for(int ir=atom->atom_pp.mesh-1; ir>=0; --ir)
+			int cut_mesh = atom->ncpp.mesh; 
+			for(int ir=atom->ncpp.mesh-1; ir>=0; --ir)
 			{
-				if( abs( atom->atom_pp.betar(p1,ir) ) > 1.0e-10 )
+				if( abs( atom->ncpp.betar(p1,ir) ) > 1.0e-10 )
 				{
 					cut_mesh = ir; 
 					break;
@@ -178,7 +178,7 @@ void InfoNonlocal::Set_NonLocal(
 			ModuleBase::GlobalFunc::ZEROS(beta_r, cut_mesh);
 			for(int ir=0; ir<cut_mesh; ++ir)
 			{
-				beta_r[ir] = atom->atom_pp.betar(p1,ir);
+				beta_r[ir] = atom->ncpp.betar(p1,ir);
 			}
 
 			tmpBeta_lm[p1].set_NL_proj(
@@ -186,8 +186,8 @@ void InfoNonlocal::Set_NonLocal(
 					it, //type
 					lnow, // angular momentum L
 					cut_mesh, // number of radial mesh
-					atom->atom_pp.rab,
-					atom->atom_pp.r, // radial mesh value (a.u.)
+					atom->ncpp.rab,
+					atom->ncpp.r, // radial mesh value (a.u.)
 					beta_r,
 				    kmesh,
 					dk,
@@ -203,13 +203,13 @@ void InfoNonlocal::Set_NonLocal(
 		this->Beta[it].set_type_info(
 			it, 
 			atom->label, 
-			atom->atom_pp.pp_type, 
-			atom->atom_pp.lmax, 
+			atom->ncpp.pp_type, 
+			atom->ncpp.lmax, 
 			n_projectors, 
 			tmpBeta_lm);//zhengdy-soc 2018-09-10
 
 		// mohan add 2021-05-07
-		atom->atom_pp.set_d_so(coefficient_D_nc_in,n_projectors,nh,1);
+		atom->ncpp.set_d_so(coefficient_D_nc_in,n_projectors,nh,1);
 
 	}//end if
 
@@ -292,9 +292,9 @@ void InfoNonlocal::Read_NonLocal(
 	if( nlmax != -1 )
 	{
 		bool find_lmax = false;
-		for(int ic=0; ic<atom->atom_pp.nbeta; ic++)
+		for(int ic=0; ic<atom->ncpp.nbeta; ic++)
 		{
-			if( nlmax == atom->atom_pp.lll[ic] )
+			if( nlmax == atom->ncpp.lll[ic] )
 			{
 				//			std::cout << " nlmax = " << nlmax << std::endl;
 				//			std::cout << " lchi = " << atom->lll[ic] << std::endl;
@@ -307,9 +307,9 @@ void InfoNonlocal::Read_NonLocal(
 		{
 			std::cout << " For element " << label << std::endl;
 			std::cout << " Max L Read in from NONLOCAL = " << nlmax << std::endl;
-			for(int ib=0; ib<atom->atom_pp.nbeta; ++ib)
+			for(int ib=0; ib<atom->ncpp.nbeta; ++ib)
 			{
-				std::cout << " Max L Read in from pseudopotential file = " << atom->atom_pp.lll[ib] << std::endl;
+				std::cout << " Max L Read in from pseudopotential file = " << atom->ncpp.lll[ib] << std::endl;
 			}
 			ModuleBase::WARNING_QUIT("InfoNonlocal::Read_NonLocal","nlmax != atom->lll");
 		}

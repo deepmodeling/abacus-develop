@@ -11,7 +11,7 @@ public:
     Atom();
     ~Atom();
 
-    Atom_pseudo atom_pp;
+    Atom_pseudo ncpp;
 
     int *iw2m; // use iw to find m
     int *iw2n; // use iw to find n

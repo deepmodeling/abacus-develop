@@ -54,13 +54,13 @@ public:
         delete[] ucell.atoms[0].tau;
         delete[] ucell.atoms[0].taud;
         delete[] ucell.atoms[0].vel;
-        delete[] ucell.atoms[0].atom_pp.mbl;
+        delete[] ucell.atoms[0].ncpp.mbl;
         ucell.atoms[0].tau = new ModuleBase::Vector3<double>[4];
         ucell.atoms[0].tau_original = new ModuleBase::Vector3<double>[4];
         ucell.atoms[0].taud = new ModuleBase::Vector3<double>[4];
         ucell.atoms[0].vel = new ModuleBase::Vector3<double>[4];
-        ucell.atoms[0].atom_pp.mbl = new ModuleBase::Vector3<int>[4];
-        ucell.atoms[0].atom_pp.mass = ucell.atom_mass[0];
+        ucell.atoms[0].ncpp.mbl = new ModuleBase::Vector3<int>[4];
+        ucell.atoms[0].ncpp.mass = ucell.atom_mass[0];
 
         ucell.atoms[0].angle1 = new double[4];
         ucell.atoms[0].angle2 = new double[4];
@@ -77,7 +77,7 @@ public:
         for (int ia = 0; ia < 4; ++ia)
         {
             ucell.atoms[0].tau[ia] = ucell.atoms[0].taud[ia] * ucell.latvec;
-            ucell.atoms[0].atom_pp.mbl[ia].set(1, 1, 1);
+            ucell.atoms[0].ncpp.mbl[ia].set(1, 1, 1);
         }
 
         ucell.omega = abs(ucell.latvec.Det()) * ucell.lat0 * ucell.lat0 * ucell.lat0;

@@ -87,9 +87,9 @@ void MD_func::ReadVel(
         for(int ia=0; ia<unit_in.atoms[it].na; ++ia)
         {
             vel[iat] = unit_in.atoms[it].vel[ia];
-			if(unit_in.atoms[it].atom_pp.mbl[ia].x==0) vel[iat].x = 0;
-			if(unit_in.atoms[it].atom_pp.mbl[ia].y==0) vel[iat].y = 0;
-			if(unit_in.atoms[it].atom_pp.mbl[ia].z==0) vel[iat].z = 0;
+			if(unit_in.atoms[it].ncpp.mbl[ia].x==0) vel[iat].x = 0;
+			if(unit_in.atoms[it].ncpp.mbl[ia].y==0) vel[iat].y = 0;
+			if(unit_in.atoms[it].ncpp.mbl[ia].z==0) vel[iat].z = 0;
             ++iat;
         }
     }
@@ -342,8 +342,8 @@ void MD_func::getMassMbl(const UnitCell_pseudo &unit_in,
 	for(int it=0;it<unit_in.ntype;it++){
 		for(int i=0;i<unit_in.atoms[it].na;i++)
 		{
-			allmass[ion]=unit_in.atoms[it].atom_pp.mass/ModuleBase::AU_to_MASS;
-			ionmbl[ion]=unit_in.atoms[it].atom_pp.mbl[i];
+			allmass[ion]=unit_in.atoms[it].ncpp.mass/ModuleBase::AU_to_MASS;
+			ionmbl[ion]=unit_in.atoms[it].ncpp.mbl[i];
 			if (ionmbl[ion].x==0) ++frozen.x;
 			if (ionmbl[ion].y==0) ++frozen.y;
 			if (ionmbl[ion].z==0) ++frozen.z;
