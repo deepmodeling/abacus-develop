@@ -14,8 +14,9 @@ namespace Gint_Tools
 	//Hamiltonian, electron density, force, kinetic energy density, Hamiltonian for mGGA
 }
 
-//the class used to pass input/output variables
+//the class is used to pass input/output variables
 //into the unified interface gint
+//not sure if this is the best practice though ..
 class Gint_inout
 {
     public:
