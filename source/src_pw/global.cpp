@@ -19,7 +19,8 @@ Exx_Lip exx_lip(exx_global.info);
 #endif
 pseudopot_cell_vnl ppcell;
 UnitCell_pseudo ucell;
-Charge_Broyden CHR;
+Charge CHR;
+Charge_Broyden CHR_MIX;
 Potential pot;
 ModuleSymmetry::Symmetry symm;
 Parallel_Grid Pgrid; //mohan add 2010-06-06 

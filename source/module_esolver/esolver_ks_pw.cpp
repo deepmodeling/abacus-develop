@@ -131,7 +131,7 @@ namespace ModuleESolver
         //init ElecState,
         if(this->pelec == nullptr)
         {
-            this->pelec = new elecstate::ElecStatePW( GlobalC::wfcpw, (Charge*)(&(GlobalC::CHR)), (K_Vectors*)(&(GlobalC::kv)), GlobalV::NBANDS);
+            this->pelec = new elecstate::ElecStatePW( GlobalC::wfcpw, &(GlobalC::CHR), (K_Vectors*)(&(GlobalC::kv)), GlobalV::NBANDS);
         }
         //init HSolver
         if(this->phsol == nullptr)
@@ -266,14 +266,14 @@ namespace ModuleESolver
     void ESolver_KS_PW::eachiterinit(const int istep, const int iter)
     {
         // mohan add 2010-07-16
-        if (iter == 1) GlobalC::CHR.set_new_e_iteration(true);
-        else GlobalC::CHR.set_new_e_iteration(false);
+        if (iter == 1) GlobalC::CHR_MIX.set_new_e_iteration(true);
+        else GlobalC::CHR_MIX.set_new_e_iteration(false);
 
         if (GlobalV::FINAL_SCF && iter == 1)
         {
-            GlobalC::CHR.irstep = 0;
-            GlobalC::CHR.idstep = 0;
-            GlobalC::CHR.totstep = 0;
+            GlobalC::CHR_MIX.irstep = 0;
+            GlobalC::CHR_MIX.idstep = 0;
+            GlobalC::CHR_MIX.totstep = 0;
         }
 
         // mohan move harris functional to here, 2012-06-05

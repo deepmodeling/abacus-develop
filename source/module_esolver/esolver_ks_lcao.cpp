@@ -161,7 +161,7 @@ void ESolver_KS_LCAO::Init(Input& inp, UnitCell_pseudo& ucell)
     }
     else
     {
-        this->pelec = new elecstate::ElecStateLCAO((Charge*)(&(GlobalC::CHR)),
+        this->pelec = new elecstate::ElecStateLCAO(&(GlobalC::CHR),
                                                    &(GlobalC::kv),
                                                    GlobalC::kv.nks,
                                                    GlobalV::NBANDS,
@@ -320,20 +320,14 @@ void ESolver_KS_LCAO::eachiterinit(const int istep, const int iter)
 
     // mohan add 2010-07-16
     // used for pulay mixing.
-    if (iter == 1)
-    {
-        GlobalC::CHR.set_new_e_iteration(true);
-    }
-    else
-    {
-        GlobalC::CHR.set_new_e_iteration(false);
-    }
+    if (iter == 1) GlobalC::CHR_MIX.set_new_e_iteration(true);
+    else GlobalC::CHR_MIX.set_new_e_iteration(false);
 
     if (GlobalV::FINAL_SCF && iter == 1)
     {
-        GlobalC::CHR.irstep = 0;
-        GlobalC::CHR.idstep = 0;
-        GlobalC::CHR.totstep = 0;
+        GlobalC::CHR_MIX.irstep = 0;
+        GlobalC::CHR_MIX.idstep = 0;
+        GlobalC::CHR_MIX.totstep = 0;
     }
 
     // mohan update 2012-06-05

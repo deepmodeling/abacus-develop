@@ -53,7 +53,7 @@ Charge_Pulay::~Charge_Pulay()
 }
 
 
-void Charge_Pulay::Pulay_mixing(void)
+void Charge_Pulay::Pulay_mixing(double** rho, double** rho_save)
 {
 //  ModuleBase::TITLE("Charge_Pulay","Pulay_mixing");
 	rstep = this->mixing_ndim;
@@ -95,7 +95,7 @@ void Charge_Pulay::Pulay_mixing(void)
 	// calculate "dR^{i} = R^{i+1} - R^{i}"
 	// calculate "drho^{i} = rho^{i+1} - rho^{i}"
 	//----------------------------------------------
-	this->generate_datas(irstep, idstep, totstep);
+	this->generate_datas(irstep, idstep, totstep, rho, rho_save);
 
 	// not enough steps, not full matrix.
 	if(totstep < dstep) 
@@ -142,7 +142,7 @@ void Charge_Pulay::Pulay_mixing(void)
 
 			for(int is=0; is<GlobalV::NSPIN; is++)
 			{
-				this->generate_new_rho(is,irstep);
+				this->generate_new_rho(is,irstep,rho,rho_save);
 			}
 		}
 
@@ -151,8 +151,7 @@ void Charge_Pulay::Pulay_mixing(void)
 			// if not enough step, take kerker mixing method.	
 			for(int is=0; is<GlobalV::NSPIN; is++)
 			{
-				//this->Kerker_mixing( this->rho[is], this->rhog[is], this->rho_save[is] );
-				this->plain_mixing( this->rho[is], this->rho_save[is]);
+				this->plain_mixing( rho[is], rho_save[is]);
 			}
 		}
 
@@ -181,7 +180,7 @@ void Charge_Pulay::Pulay_mixing(void)
 
 		for(int is=0; is<GlobalV::NSPIN; is++)
 		{
-			this->generate_new_rho(is,irstep);
+			this->generate_new_rho(is,irstep,rho,rho_save);
 		}
 
 		++irstep;
@@ -498,7 +497,7 @@ void Charge_Pulay::generate_alpha(const int &scheme)
 	return;
 }
 
-void Charge_Pulay::generate_new_rho(const int &is, const int &m)
+void Charge_Pulay::generate_new_rho(const int &is, const int &m, double** rho, double** rho_save)
 {
 //	ModuleBase::TITLE("Charge_Pulay","generate_new_rho");
 
@@ -514,7 +513,7 @@ void Charge_Pulay::generate_new_rho(const int &is, const int &m)
 	
 	for(int ir=0; ir<GlobalC::rhopw->nrxx; ir++)
 	{
-		rhonew[ir] = this->rho_save[is][ir] + mixp * this->Rrho[is][m][ir];
+		rhonew[ir] = rho_save[is][ir] + mixp * this->Rrho[is][m][ir];
 		for(int i=0; i<dstep; i++)
 		{
 			rhonew[ir] += this->alpha[i] * ( this->drho[is][i][ir] + mixp * this->dRrho[is][i][ir] );
@@ -559,7 +558,7 @@ double Charge_Pulay::calculate_residual_norm(double *residual1, double* residual
 
 // calculate "dR^{i} = R^{i+1} - R^{i}"
 // calculate "drho^{i} = rho^{i+1} - rho^{i}"
-void Charge_Pulay::generate_datas(const int &irstep, const int &idstep, const int &totstep)
+void Charge_Pulay::generate_datas(const int &irstep, const int &idstep, const int &totstep, double** rho, double** rho_save)
 {
 	//===============================================
 	// calculate the important "Rrho".
@@ -573,7 +572,7 @@ void Charge_Pulay::generate_datas(const int &irstep, const int &idstep, const in
 //		std::cout << " generate datas , spin=" << is << std::endl;
 //		double c1=check_ne(rho[is]);
 //		double c2=check_ne(rho_save[is]);
-		this->generate_residual_vector( this->Rrho[is][irstep], this->rho[is], this->rho_save[is]);
+		this->generate_residual_vector( this->Rrho[is][irstep], rho[is], rho_save[is]);
 
 		if(this->mixing_gg0 > 0.0)
 		{
@@ -626,7 +625,7 @@ void Charge_Pulay::generate_datas(const int &irstep, const int &idstep, const in
 			for (int ir=0; ir<GlobalC::rhopw->nrxx; ir++)
 			{
 				this->dRrho[is][idstep][ir] = this->Rrho[is][nowR][ir] - this->Rrho[is][lastR][ir];
-				this->drho[is][idstep][ir] = this->rho_save[is][ir] - this->rho_save2[is][ir];
+				this->drho[is][idstep][ir] = rho_save[is][ir] - this->rho_save2[is][ir];
 			}
 			//std::cout << "\n Calculate <dR|dR> norm = " 
 			//<< calculate_residual_norm(dRrho[is][idstep], dRrho[is][idstep]);
@@ -641,7 +640,7 @@ void Charge_Pulay::generate_datas(const int &irstep, const int &idstep, const in
 	ModuleBase::GlobalFunc::NOTE("Calculate drho = rho_{in}^{i+1} - rho_{in}^{i}");
 	for(int is=0; is<GlobalV::NSPIN; is++)
 	{
-		ModuleBase::GlobalFunc::DCOPY(this->rho_save[is], this->rho_save2[is], GlobalC::rhopw->nrxx);
+		ModuleBase::GlobalFunc::DCOPY(rho_save[is], this->rho_save2[is], GlobalC::rhopw->nrxx);
 	}
 	return;
 }

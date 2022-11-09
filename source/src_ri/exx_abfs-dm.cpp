@@ -18,7 +18,7 @@ void Exx_Abfs::DM::cal_DM(
 {
 	ModuleBase::TITLE("Exx_Abfs::DM::cal_DM");
 	
-	cal_DMk_mixing( GlobalC::CHR, wg, atom_pairs, wfc_k_grid);
+	cal_DMk_mixing( GlobalC::CHR_MIX, wg, atom_pairs, wfc_k_grid);
 
 	for( const std::pair<size_t,size_t> & atom_pair : atom_pairs )
 	{

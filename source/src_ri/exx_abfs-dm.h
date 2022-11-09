@@ -3,12 +3,11 @@
 
 #include "exx_abfs.h"
 #include "abfs-vector3_order.h"
+#include "src_pw/charge_broyden.h"
 
 #include <vector>
 #include <map>
 #include <deque>
-
-class Charge_Broyden;
 
 class Exx_Abfs::DM
 {
@@ -42,7 +41,7 @@ private:
 		const Charge_Broyden &charge,
         const ModuleBase::matrix& wg,
         const std::set<std::pair<size_t, size_t>>& atom_pairs,
-        complex<double>*** wfc_k_grid);
+        std::complex<double>*** wfc_k_grid);
 
 //	double cal_DM_delta();
 

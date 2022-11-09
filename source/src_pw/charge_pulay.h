@@ -12,11 +12,6 @@
 #include "../module_base/matrix.h"
 #include "charge_mixing.h"
 
-#ifdef __EXX // mohan add 2021-05-23
-#include "../src_ri/exx_abfs-dm.h"
-#include "../src_ri/exx_abfs-parallel-communicate-hexx.h"
-#endif
-
 class Charge_Pulay: public Charge_Mixing
 {
 	public:
@@ -41,7 +36,7 @@ class Charge_Pulay: public Charge_Mixing
 
 	
 	// Pulay mixing method.
-	void Pulay_mixing();
+	void Pulay_mixing(double** rho, double**rho_save);
 	double*** Rrho;// Rrho(i) = rho(i) - rho_save(i), (GlobalV::NSPIN, rstep, pw.nrxx)
 	double*** dRrho;// dRrho(i) = Rrho(i+1) - Rrho(i), (GlobalV::NSPIN, dstep, pw.nrxx)
 	double*** drho;// drho(i)= rho_save(i+1) - rho_save2(i), (GlobalV::NSPIN, dstep, pw.nrxx)
@@ -54,26 +49,16 @@ class Charge_Pulay: public Charge_Mixing
 	double* dRR; // <dR_j|R_m>
 	
 	void allocate_pulay(const int &scheme);
-	void generate_datas(const int &irstep, const int &idstep, const int &totstep);
+	void generate_datas(const int &irstep, const int &idstep, const int &totstep, double** rho, double** rho_save);
 	void generate_Abar(const int &scheme, ModuleBase::matrix &A)const;
 	void inverse_preA(const int &dim, ModuleBase::matrix &preA)const;
 	void inverse_real_symmetry_matrix(const int &scheme, ModuleBase::matrix &A)const; // indicate the spin.
 	void generate_dRR(const int &m);
 	void generate_alpha(const int &scheme);
-	void generate_new_rho(const int &is,const int &m);
+	void generate_new_rho(const int &is,const int &m, double**rho, double** rho_save);
 
 	void generate_residual_vector(double *residual, const double* rho_out, const double* rho_in)const;
 	double calculate_residual_norm(double *residual1, double *residual2)const;
-
-	// Sophisticated mixing method.
-	void Modified_Broyden_mixing();
-
-#ifdef __EXX
-    friend class Exx_Abfs::DM;
-    #ifdef __MPI
-    friend class Exx_Abfs::Parallel::Communicate::Hexx;
-    #endif
-#endif
 
 };
 

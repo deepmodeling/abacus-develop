@@ -323,7 +323,8 @@ extern pseudopot_cell_vnl ppcell;
 namespace GlobalC
 {
 extern UnitCell_pseudo ucell;
-extern Charge_Broyden CHR;
+extern Charge CHR;
+extern Charge_Broyden CHR_MIX;
 extern Potential pot;
 extern ModuleSymmetry::Symmetry symm;
 extern Parallel_Grid Pgrid;

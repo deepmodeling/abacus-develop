@@ -20,24 +20,29 @@ class Charge_Broyden: public Charge_Pulay
 	public:
 	Charge_Broyden();
 	~Charge_Broyden();
-	double get_drho();
+	double get_drho(double** rho, double** rho_save,
+		std::complex<double>** rhog, std::complex<double>** rhog_save, const double nelec);
 
-    void mix_rho(const int &iter);// mix rho
-	//tmp , it should be replaced by get_drho and mix_rho after all KS_ESolver uses the same scf process
-	void tmp_mixrho(double &scf_thr,const double &tr2_min,
-                 const double &tr2,const int &iter,
-                 bool &converged);
+    void mix_rho(const int &iter,
+		double** rho,
+		double** rho_save,
+		std::complex<double>** rhog,
+		std::complex<double>** rhog_save
+	);// mix rho
 
 	private:
 
 	// Sophisticated mixing method.
-	void Modified_Broyden_mixing(void);
-	void Simplified_Broyden_mixing(const int &iter); //qianrui created 2021-5-15
+	void Modified_Broyden_mixing(double** rho, double** rho_save, std::complex<double> **rhog);
+	void Simplified_Broyden_mixing(const int &iter,
+		double** rho,
+		double** rho_save,
+		std::complex<double>** rhog,
+		std::complex<double>** rhog_save); //qianrui created 2021-5-15
 	void allocate_Broyden();
 
 	void generate_beta(const int &is);
 	void generate_Zmk(const int &totstep, const int &irstep, const int &idstep, const int &is);
-	void generate_new_broyden_rho(const int &is, const int &irstep);
 
 	bool initb; // b stands for Broyden algorithms.
 	double w0;

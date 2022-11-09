@@ -76,7 +76,8 @@ Charge_Broyden::~Charge_Broyden()
 	}
 }
 
-double Charge_Broyden::get_drho()
+double Charge_Broyden::get_drho(double** rho, double** rho_save,
+	std::complex<double>** rhog, std::complex<double>** rhog_save, const double nelec)
 {
 	double scf_thr;
 	for (int is=0; is<GlobalV::NSPIN; is++)
@@ -91,13 +92,13 @@ double Charge_Broyden::get_drho()
 		ModuleBase::GlobalFunc::NOTE("Calculate the charge difference between rho(G) and rho_save(G)");
         for (int ig=0; ig<GlobalC::rhopw->npw; ig++)
         {
-            this->rhog[is][ig] -= this->rhog_save[is][ig];
+            rhog[is][ig] -= rhog_save[is][ig];
         }
 
     }
 
 	ModuleBase::GlobalFunc::NOTE("Calculate the norm of the Residual std::vector: < R[rho] | R[rho_save] >");
-    scf_thr = this->rhog_dot_product( this->rhog, this->rhog);
+    scf_thr = this->rhog_dot_product( rhog, rhog);
 	
 	if(GlobalV::test_charge)GlobalV::ofs_running << " scf_thr from rhog_dot_product is " << scf_thr << std::endl;
 
@@ -130,7 +131,11 @@ double Charge_Broyden::get_drho()
 
 void Charge_Broyden::mix_rho
 (
-    const int &iter
+    const int &iter,
+	double** rho,
+	double** rho_save,
+	std::complex<double>** rhog,
+	std::complex<double>** rhog_save
 )
 {
     ModuleBase::TITLE("Charge_Broyden","mix_rho");
@@ -144,38 +149,36 @@ void Charge_Broyden::mix_rho
 		ModuleBase::GlobalFunc::ZEROS(rho123[is], GlobalC::rhopw->nrxx);
 		for(int ir=0; ir<GlobalC::rhopw->nrxx; ++ir)
 		{
-			rho123[is][ir] = this->rho[is][ir];
+			rho123[is][ir] = rho[is][ir];
 		}
 	}
-	
 	
 	if ( this->mixing_mode == "plain")
     {
         // calculate mixing change, and save it in rho1.
         for (int is=0; is<GlobalV::NSPIN; is++)
         {
-            this->plain_mixing( this->rho[is], this->rho_save[is]);
+            this->plain_mixing( rho[is], rho_save[is]);
         }
     }
     else if ( this->mixing_mode == "kerker")
     {
         for (int is=0; is<GlobalV::NSPIN; is++)
         {
-            this->Kerker_mixing( this->rho[is], this->rhog[is], this->rho_save[is] );
+            this->Kerker_mixing( rho[is], rhog[is], rho_save[is] );
         }
     }
     else if ( this->mixing_mode == "pulay")
     {
-        this->Pulay_mixing();
+        this->Pulay_mixing(rho, rho_save);
     }
     else if ( this->mixing_mode == "pulay-kerker")//2015-06-15
     {
-        this->Pulay_mixing();
+        this->Pulay_mixing(rho, rho_save);
     }
     else if ( this->mixing_mode == "broyden")
     {
-		this->Simplified_Broyden_mixing(iter);
-        //this->Modified_Broyden_mixing();
+		this->Simplified_Broyden_mixing(iter, rho, rho_save, rhog, rhog_save);
     }
     else
     {
@@ -208,32 +211,11 @@ void Charge_Broyden::mix_rho
     return;
 }
 
-void Charge_Broyden::tmp_mixrho
-(
-    double &scf_thr,
-    const double &diago_error,
-    const double &tr2,
-    const int &iter,
-    bool &converged
-)
-{
-	scf_thr = get_drho();
-	if ( scf_thr < diago_error )
-    {
-        GlobalV::ofs_warning << " scf_thr < diago_error, keep charge density unchanged." << std::endl;
-    	ModuleBase::timer::tick("Charge","mix_rho");
-        return;
-    }
-    else if (scf_thr < tr2)
-    {
-        converged = true;
-    	ModuleBase::timer::tick("Charge","mix_rho");
-		return;
-    }
-	mix_rho(iter);
-}
-
-void Charge_Broyden::Simplified_Broyden_mixing(const int &iter)
+void Charge_Broyden::Simplified_Broyden_mixing(const int &iter,
+	double** rho,
+	double** rho_save,
+    std::complex<double>** rhog,
+    std::complex<double>** rhog_save)
 {
 	//It is a simplified modified broyden_mixing method.
 	//Ref: D.D. Johnson PRB 38, 12807 (1988)
@@ -252,8 +234,8 @@ void Charge_Broyden::Simplified_Broyden_mixing(const int &iter)
 		{
 			for(int ig = 0 ; ig < GlobalC::rhopw->npw; ++ig)
 			{
-				dF[ipos][is][ig] -= this->rhog[is][ig];
-				dn[ipos][is][ig] -= this->rhog_save[is][ig];
+				dF[ipos][is][ig] -= rhog[is][ig];
+				dn[ipos][is][ig] -= rhog_save[is][ig];
 			}
 		}
 	}
@@ -297,7 +279,7 @@ void Charge_Broyden::Simplified_Broyden_mixing(const int &iter)
 		}
 		for(int i = 0 ; i < iter_used ; ++i)
 		{
-			work[i] = rhog_dot_product( this->dF[i], this->rhog );
+			work[i] = rhog_dot_product( this->dF[i], rhog );
 		}
 		for(int i = 0 ; i < iter_used ; ++i)
 		{
@@ -310,8 +292,8 @@ void Charge_Broyden::Simplified_Broyden_mixing(const int &iter)
 			{
 				for(int ig = 0 ; ig < GlobalC::rhopw->npw; ++ig)
 				{
-					this->rhog[is][ig] -= gamma0 * dF[i][is][ig];
-					this->rhog_save[is][ig] -= gamma0 * dn[i][is][ig];
+					rhog[is][ig] -= gamma0 * dF[i][is][ig];
+					rhog_save[is][ig] -= gamma0 * dn[i][is][ig];
 				}
 			}
 			
@@ -348,7 +330,7 @@ void Charge_Broyden::Simplified_Broyden_mixing(const int &iter)
 	return;
 }
 
-void Charge_Broyden::Modified_Broyden_mixing(void)
+void Charge_Broyden::Modified_Broyden_mixing(double** rho, double** rho_save, std::complex<double> **rhog)
 {
     //ModuleBase::TITLE("Charge_Broyden","Modified_Broyden_Mixing");
 
@@ -371,38 +353,19 @@ void Charge_Broyden::Modified_Broyden_mixing(void)
 	if (irstep==rstep) irstep=0;
 	if (idstep==dstep) idstep=0;
 
-	//std::cout << "\n irstep = " << irstep;
-	//std::cout << "\n idstep = " << idstep;
-	//std::cout << "\n totstep = " << totstep;
-
-	this->generate_datas(irstep, idstep, totstep);
+	this->generate_datas(irstep, idstep, totstep, rho, rho_save);
 
 	// if not enough step, take kerker mixing method.
 	if(totstep < dstep)
 	{
 		for(int is=0; is<GlobalV::NSPIN; is++)
 		{
-			this->Kerker_mixing( this->rho[is], this->rhog[is], this->rho_save[is] );
+			this->Kerker_mixing( rho[is], rhog[is], rho_save[is] );
 		}
 		++irstep;
 		++idstep;
 		++totstep;
 		return;
-	}
-	else
-	
-	{
-		/*
-		for(int is=0; is<GlobalV::NSPIN; is++)
-		{
-			// irstep is m, 
-			this->generate_beta(is);
-			this->generate_Zmk(totstep, irstep, idstep, is);				
-			this->generate_dRR(irstep);
-			this->generate_new_broyden_rho(is,irstep);
-		}
-		*/
-		// need to be update like pulay mixing.		
 	}
 	
 	++irstep;
@@ -610,60 +573,5 @@ void Charge_Broyden::generate_Zmk(const int &totstep, const int &irstep, const i
 
 	*/	
 
-	return;
-}
-
-
-void Charge_Broyden::generate_new_broyden_rho(const int &is, const int &m)
-{
-//	ModuleBase::TITLE("Charge_Broyden","generate_new_broyden_rho");
-	double mixp = this->mixing_beta;
-
-	// gamma save how much 'u' to mix.
-	double* gamma = new double[dstep];
-	ModuleBase::GlobalFunc::ZEROS(gamma, dstep);
-	for(int i=0; i<dstep; i++)
-	{
-		for(int k=0; k<dstep; k++)
-		{
-			gamma[i] += this->Zmk[is](k,i) * this->dRR[k];
-		}
-		//std::cout << "\n gamma[" << i << "]=" << gamma[i];
-	}
-	//std::cout << std::endl;
-	
-	for(int ir=0; ir<GlobalC::rhopw->nrxx; ir++)
-	{
-		this->rho[is][ir] = this->rho_save[is][ir] + mixp * this->Rrho[is][m][ir];
-	
-		for(int i=0; i<dstep; i++)
-		{
-			this->rho[is][ir] -= gamma[i] * ( this->drho[is][i][ir] + mixp * this->dRrho[is][i][ir] );
-		}
-	}
-
-	/*
-	std::cout << "\n check E: " << std::endl;
-	
-	double* rhot = new double[GlobalC::rhopw->nrxx];
-	ModuleBase::GlobalFunc::ZEROS(rhot, GlobalC::rhopw->nrxx);
-
-	for(int i=0; i<dstep; i++)
-	{
-		for(int ir=0; ir<GlobalC::rhopw->nrxx; ir++)
-		{
-			rhot[ir] = this->drho[is][i][ir] + gamma[i] * this->dRrho[is][i][ir];
-		}
-		std::cout << "\n residual_norm = " << this->calculate_residual_norm(rhot,rhot) << std::endl;
-	}	
-
-	BLOCK_HERE("haha");
-
-	delete[] rhot;
-	*/
-
-	ModuleBase::GlobalFunc::DCOPY(rho[is], rho_save[is], GlobalC::rhopw->nrxx);
-
-	delete[] gamma;
 	return;
 }
