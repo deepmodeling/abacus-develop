@@ -18,11 +18,6 @@ class Charge_Mixing
 	Charge_Mixing();
 	~Charge_Mixing();
 
-    std::string mixing_mode;
-    double mixing_beta;
-    int mixing_ndim;
-	double mixing_gg0; //mohan add 2014-09-27
-
     void set_mixing
     (
         const std::string &mixing_mode_in,
@@ -31,7 +26,17 @@ class Charge_Mixing
 		const double &mixing_gg0_in
     );//mohan add mixing_gg0_in 2014-09-27
 	
+    const std::string &get_mixing_mode() const {return mixing_mode;}
+    double get_mixing_beta() const {return mixing_beta;}
+    int get_mixing_ndim() const {return mixing_ndim;}
+    double get_mixing_gg0() const {return mixing_gg0;}
+
 	protected:
+
+    std::string mixing_mode;
+    double mixing_beta;
+    int mixing_ndim;
+	double mixing_gg0; //mohan add 2014-09-27
 
 	// simple plain mixing method.	
     void plain_mixing( double *rho_in, double *rho_save_in ) const;

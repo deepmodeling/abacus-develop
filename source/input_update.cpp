@@ -160,10 +160,18 @@ bool Update_input::Read(const std::string &fn)
         else if (strcmp("mixing_beta", word) == 0)
         {
             read_value(ifs, mixing_beta);
-			if(mixing_beta!=GlobalC::CHR_MIX.mixing_beta)
+#ifdef __MPI
+            Parallel_Common::bcast_double( mixing_beta );
+#endif
+			if(mixing_beta!=GlobalC::CHR_MIX.get_mixing_beta())
 			{
-				this->change(GlobalV::ofs_warning,"mixing_beta",GlobalC::CHR_MIX.mixing_beta,mixing_beta);
-    			GlobalC::CHR_MIX.mixing_beta = mixing_beta;
+                double mixing_beta_old = GlobalC::CHR_MIX.get_mixing_beta();
+				this->change(GlobalV::ofs_warning,"mixing_beta",mixing_beta_old,mixing_beta);
+    			GlobalC::CHR_MIX.set_mixing(
+                    GlobalC::CHR_MIX.get_mixing_mode(),
+                    mixing_beta,
+                    GlobalC::CHR_MIX.get_mixing_ndim(),
+                    GlobalC::CHR_MIX.get_mixing_gg0());
 			}
         }
 		// 8
@@ -288,7 +296,6 @@ void Update_input::Bcast()
     Parallel_Common::bcast_double( GlobalV::SCF_THR );
     Parallel_Common::bcast_int( GlobalV::SCF_NMAX );
     Parallel_Common::bcast_int( GlobalV::RELAX_NMAX );
-    Parallel_Common::bcast_double( GlobalC::CHR_MIX.mixing_beta );
     Parallel_Common::bcast_int( GlobalC::en.printe );
     Parallel_Common::bcast_string( GlobalC::pot.chg_extrap );//xiaohui modify 2015-02-01
     Parallel_Common::bcast_int( GlobalC::CHR.out_chg );

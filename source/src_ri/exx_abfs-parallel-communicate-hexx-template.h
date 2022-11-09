@@ -185,7 +185,7 @@ Tmatrix Exx_Abfs::Parallel::Communicate::Hexx::pulay_mixing(
 	else
 	{
 		H_seq.push_back( 
-			(1-GlobalC::CHR_MIX.mixing_beta) * H_pulay_old + GlobalC::CHR_MIX.mixing_beta * H_new );
+			(1-GlobalC::CHR_MIX.get_mixing_beta()) * H_pulay_old + GlobalC::CHR_MIX.get_mixing_beta() * H_new );
 		if( H_seq.size() > GlobalC::CHR_MIX.dstep+1 )
 			H_seq.pop_front();
 		

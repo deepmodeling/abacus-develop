@@ -50,11 +50,11 @@ void Exx_Abfs::DM::cal_DMk_mixing(
 
 	if(flag_mix)
 	{
-		if ( charge.mixing_mode == "plain" )
+		if ( charge.get_mixing_mode() == "plain" )
 		{
 			plain_mixing( charge, wg, atom_pairs,wfc_k_grid );
 		}
-		else if ( charge.mixing_mode == "pulay" )
+		else if ( charge.get_mixing_mode() == "pulay" )
 		{
 			pulay_mixing( charge, wg, atom_pairs, wfc_k_grid );
 		}
@@ -146,7 +146,7 @@ void Exx_Abfs::DM::plain_mixing(
 	if(DMk.empty())
 		DMk = cal_DMk_raw(atom_pairs, wg, wfc_k_grid);
 	else
-		DMk = charge.mixing_beta * cal_DMk_raw(atom_pairs, wg, wfc_k_grid) + (1-charge.mixing_beta) * DMk;
+		DMk = charge.get_mixing_beta() * cal_DMk_raw(atom_pairs, wg, wfc_k_grid) + (1-charge.get_mixing_beta()) * DMk;
 }
 
 
@@ -162,7 +162,7 @@ void Exx_Abfs::DM::pulay_mixing(
 		DMk_pulay_seq.clear();
 	}
 	
-	DMk_pulay_seq.push_back( charge.mixing_beta * cal_DMk_raw(atom_pairs, wg, wfc_k_grid) + (1-charge.mixing_beta) * DMk );
+	DMk_pulay_seq.push_back( charge.get_mixing_beta() * cal_DMk_raw(atom_pairs, wg, wfc_k_grid) + (1-charge.get_mixing_beta()) * DMk );
 	if( charge.totstep > charge.rstep )
 		DMk_pulay_seq.pop_front();
 	
