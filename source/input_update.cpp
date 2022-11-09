@@ -9,6 +9,7 @@
 #include "input.h"
 #include "module_relax/relax_old/ions_move_basic.h"
 #include "src_io/optical.h"
+#include "src_parallel/parallel_common.h"
 #ifdef __LCAO
 #include "src_lcao/FORCE_STRESS.h"
 #include "src_lcao/local_orbital_charge.h"
@@ -282,7 +283,6 @@ bool Update_input::Read(const std::string &fn)
     return true;
 }//end read_parameters
 
-#include "src_parallel/parallel_common.h"
 #ifdef __MPI
 void Update_input::Bcast()
 {
