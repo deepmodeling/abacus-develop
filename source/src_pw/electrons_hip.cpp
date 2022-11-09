@@ -73,9 +73,9 @@ void Electrons::init_mixstep_final_scf(void)
 {
 	ModuleBase::TITLE("electrons", "init_mixstep_final_scf");
 
-	GlobalC::CHR.irstep = 0;
-	GlobalC::CHR.idstep = 0;
-	GlobalC::CHR.totstep = 0;
+	GlobalC::CHR_MIX.irstep = 0;
+	GlobalC::CHR_MIX.idstep = 0;
+	GlobalC::CHR_MIX.totstep = 0;
 
 	return;
 }
