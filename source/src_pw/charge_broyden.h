@@ -40,17 +40,8 @@ class Charge_Broyden: public Charge_Pulay
 		std::complex<double>** rhog_save); //qianrui created 2021-5-15
 	void allocate_Broyden();
 
-	void generate_beta(const int &is);
-	void generate_Zmk(const int &totstep, const int &irstep, const int &idstep, const int &is);
-
 	bool initb; // b stands for Broyden algorithms.
-	double w0;
-	double* w;
-	int broyden_type;
 	ModuleBase::matrix beta; // (dstep, dstep)
-	ModuleBase::matrix betabar; // (dstep, dstep)
-	ModuleBase::matrix* Zmk;
-	ModuleBase::matrix* Zmk_old;
 };
 
 #endif

@@ -15,61 +15,18 @@ Charge_Broyden::~Charge_Broyden()
 {
     if (initb)
 	{
-		if(broyden_type==0)
+		for (int i=0; i<mixing_ndim+1; ++i)
 		{
-			for (int i=0; i<mixing_ndim+1; ++i)
+			for(int is = 0 ; is < GlobalV::NSPIN ; ++is)
 			{
-				for(int is = 0 ; is < GlobalV::NSPIN ; ++is)
-				{
-					delete[] dF[i][is];
-					delete[] dn[i][is];
-				}
-				delete[] dF[i];
-				delete[] dn[i];
+				delete[] dF[i][is];
+				delete[] dn[i][is];
 			}
-			delete[] dF;
-			delete[] dn;
+			delete[] dF[i];
+			delete[] dn[i];
 		}
-		else
-		{
-			// delete: Rrho[i] = rho_out[i] - rho_in[i];
-			for (int is=0; is<GlobalV::NSPIN; is++)
-			{
-				for (int i=0; i<rstep; i++)
-				{
-					delete[] Rrho[is][i];
-				}
-				delete[] Rrho[is];
-			}
-
-			// delete: dRrho[i] = Rrho[i+1] - Rrho[i]
-			for (int is=0; is<GlobalV::NSPIN; is++)
-			{
-				for (int i=0; i<dstep; i++)
-				{
-					delete[] dRrho[is][i];
-					delete[] drho[is][i];
-				}
-				delete[] dRrho[is];
-				delete[] drho[is];
-			}
-			delete[] dRrho;
-			delete[] drho;
-
-			// dimension : dstep
-			delete[] w;
-			delete[] dRR;
-
-			// dimension of rho_save2(GlobalV::NSPIN, GlobalC::rhopw->nrxx)
-			for (int is=0; is<GlobalV::NSPIN; is++)
-			{
-				delete[] rho_save2[is];
-			}
-			delete[] rho_save2;
-
-			// dimension (GlobalV::NSPIN, dstep, dstep)
-			delete[] Zmk;
-		}
+		delete[] dF;
+		delete[] dn;
 	}
 }
 
@@ -205,7 +162,6 @@ void Charge_Broyden::Simplified_Broyden_mixing(const int &iter,
 	//the error of each previous iteration is set to same.
 
 	// (1)
-	this->broyden_type=0;
 	this->allocate_Broyden();
 	
 	int iter_used = min(iter-1, mixing_ndim);
@@ -311,190 +267,24 @@ void Charge_Broyden::allocate_Broyden()
 {
 	if(!initb)
 	{
-		if(broyden_type==0)
+		int npdim = mixing_ndim + 1; // another array is used for temporarily store
+		this->dF = new std::complex<double>**[npdim];
+		this->dn = new std::complex<double>**[npdim];
+		
+		for (int i=0; i<npdim; i++)
 		{
-			int npdim = mixing_ndim + 1; // another array is used for temporarily store
-			this->dF = new std::complex<double>**[npdim];
-    		this->dn = new std::complex<double>**[npdim];
-			
-			for (int i=0; i<npdim; i++)
-    		{
-				dF[i] = new std::complex<double>*[GlobalV::NSPIN]; 
-    	    	dn[i] = new std::complex<double>*[GlobalV::NSPIN]; 
-				for (int is=0; is<GlobalV::NSPIN; is++)
-    	    	{
-    	        	dF[i][is] = new std::complex<double>[GlobalC::rhopw->npw];
-    	        	dn[i][is] = new std::complex<double>[GlobalC::rhopw->npw];
-    	    	}
-			}
-			ModuleBase::Memory::record("Charge_Broyden","dF", GlobalV::NSPIN*npdim*GlobalC::rhopw->npw,"cdouble");
-    		ModuleBase::Memory::record("Charge_Broyden","dn", GlobalV::NSPIN*npdim*GlobalC::rhopw->npw,"cdouble");
-		}
-		else
-		{
-    		assert(rstep > 0);
-
-			// weight
-    		this->w0 = 0.01;
-    		this->w = new double[rstep];
-    		for (int i=0; i<rstep; i++)
-    		{
-    	    	w[i] = 1.0/static_cast<double>(rstep);
-    		}
-
-			// R[rho_in] = rho_out - rho_in
-    		this->Rrho = new double**[GlobalV::NSPIN];
-    		for (int is=0; is<GlobalV::NSPIN; is++)
-    		{
-    	    	this->Rrho[is] = new double*[rstep];
-    	    	for (int i=0; i<rstep; i++)
-    	    	{
-    	        	this->Rrho[is][i] = new double[GlobalC::rhopw->nrxx];
-    	        	ModuleBase::GlobalFunc::ZEROS(Rrho[is][i],GlobalC::rhopw->nrxx);
-    	    	}	
-    		}
-    		ModuleBase::Memory::record("Charge_Broyden","Rrho", GlobalV::NSPIN*rstep*GlobalC::rhopw->nrxx,"double");
-
-    		// (2) allocate dRrho[i]: Rrho[i+1] - Rrho[i]
-    		this->dRrho = new double**[GlobalV::NSPIN];
-    		this->drho = new double**[GlobalV::NSPIN];
-    		this->rho_save2 = new double*[GlobalV::NSPIN];
-    		for (int is=0; is<GlobalV::NSPIN; is++)
-    		{
-    	    	dRrho[is] = new double*[dstep];
-    	    	drho[is] = new double*[dstep];
-    	    	rho_save2[is] = new double[GlobalC::rhopw->nrxx];
-    	    	for (int i=0; i<dstep; i++)
-    	    	{
-    	        	dRrho[is][i] = new double[GlobalC::rhopw->nrxx];
-    	        	drho[is][i] = new double[GlobalC::rhopw->nrxx];
-    	        	ModuleBase::GlobalFunc::ZEROS( dRrho[is][i], GlobalC::rhopw->nrxx );
-    	        	ModuleBase::GlobalFunc::ZEROS( drho[is][i], GlobalC::rhopw->nrxx);
-    	    	}
-    		}
-    		ModuleBase::Memory::record("Charge_Broyden","dRrho", GlobalV::NSPIN*dstep*GlobalC::rhopw->nrxx,"double");
-    		ModuleBase::Memory::record("Charge_Broyden","drho", GlobalV::NSPIN*dstep*GlobalC::rhopw->nrxx,"double");
-    		ModuleBase::Memory::record("Charge_Broyden","rho_save2", GlobalV::NSPIN*GlobalC::rhopw->nrxx,"double");
-
-			this->dRR = new double[dstep];
-			ModuleBase::GlobalFunc::ZEROS(dRR, dstep);
-
-			this->beta.create(dstep, dstep);
-			this->betabar.create(dstep, dstep);
-			this->Abar.create(dstep, dstep);
-			
-
-			this->Zmk = new ModuleBase::matrix[GlobalV::NSPIN];
-			for(int is=0; is<GlobalV::NSPIN; is++)
+			dF[i] = new std::complex<double>*[GlobalV::NSPIN]; 
+			dn[i] = new std::complex<double>*[GlobalV::NSPIN]; 
+			for (int is=0; is<GlobalV::NSPIN; is++)
 			{
-				this->Zmk[is].create(dstep, dstep);
+				dF[i][is] = new std::complex<double>[GlobalC::rhopw->npw];
+				dn[i][is] = new std::complex<double>[GlobalC::rhopw->npw];
 			}
 		}
+		ModuleBase::Memory::record("Charge_Broyden","dF", GlobalV::NSPIN*npdim*GlobalC::rhopw->npw,"cdouble");
+		ModuleBase::Memory::record("Charge_Broyden","dn", GlobalV::NSPIN*npdim*GlobalC::rhopw->npw,"cdouble");
 		this->initb = true;
 	}
 
     return;
-}
-
-void Charge_Broyden::generate_beta(const int &is)
-{
-	//ModuleBase::TITLE("Charge_Broyden","generate_beta");
-
-	//(1) generate Abar(k,n) = w(k)*w(n)*<dR(n)|dR(k)>
-	for(int k=0; k<dstep; k++)
-	{
-		for(int n=0; n<dstep; n++)
-		{
-			this->Abar(k,n) = this->w[k]*this->w[n]*
-			this->calculate_residual_norm( this->dRrho[is][n], this->dRrho[is][k] );
-			this->Abar(n,k) = this->Abar(k,n);
-		}
-	}
-
-	//out.printrm("Abar",Abar,1.0e-15);
-
-	//(2) generate beta(k,n)=(w0*w0+Abar)(k,n)^-1
-	for(int k=0; k<dstep; k++)
-	{
-		for(int n=0; n<dstep; n++)
-		{
-			this->beta(k,n) = this->Abar(k,n);
-			if(n==k) this->beta(k,n) += this->w0 * this->w0;
-		}
-	}
-
-	// scheme == 1: 
-	const int scheme = 1;
-	this->inverse_real_symmetry_matrix(scheme,this->beta);
-	
-	//(3) generate betabar
-	for(int k=0; k<dstep; k++)
-	{
-		for(int n=0; n<dstep; n++)
-		{
-			if(k==n) this->betabar(k,n) = 1.0;
-			else this->betabar(k,n) = 0.0;
-			for(int j=0; j<dstep; j++)
-			{
-				this->betabar(k,n) -= w[k]*w[j]*beta(k,j)*(Abar(n,j)/w[n]*w[j]);
-			}
-		}
-	}
-	
-//	out.printrm("beta",beta,1.0e-15);
-//	out.printrm("betabar",betabar,1.0e-15);
-//	std::cout << std::endl;
-		
-	return;
-}
-
-void Charge_Broyden::generate_Zmk(const int &totstep, const int &irstep, const int &idstep, const int &is)
-{
-	//ModuleBase::TITLE("Charge_Bryoden","generate_Zmk");
-	this->Zmk[is].zero_out();
-		
-	for(int k=0; k<dstep; k++)
-	{
-		for(int n=0; n<dstep; n++)
-		{
-			this->Zmk[is](k,n) = this->beta(k,n)*w[k]*w[n];;
-		}
-	}
-//	out.printrm("Zmk",Zmk[is],1.0e-15);
-//	out.printrm("Zmk_old",Zmk_old[is],1.0e-15);
-
-	/*	
-	for(int k=0; k<dstep; k++)
-	{		
-		// Zmk = sum( betabar(k,n) * Zmk_old(n) )
- 		for(int n=0; n<dstep; n++)
-		{
-			// only do (dstep-1) step.
-			if(n==irstep)continue;
-			for(int nn=0; nn<dstep; nn++)
-			{
-				if(nn==irstep)continue;
-				this->Zmk[is](k,n) += this->betabar(k,nn) * this->Zmk_old[is](nn,n);
-			}
-		}
-	}
-
-	std::cout << "\n irstep=" << irstep;
-	out.printrm("Zmk",Zmk[is],1.0e-15);
-	out.printrm("Zmk_old",Zmk_old[is],1.0e-15);
-	std::cout << std::endl;
-	
-	// save Zmk old
-	// sacrifice liite memory to make coding convenient!
-	for(int i=0; i<dstep; i++)
-	{
-		for(int j=0; j<dstep; j++)
-		{
-			this->Zmk_old[is](i,j) = this->Zmk[is](i,j);
-		}
-	}
-
-	*/	
-
-	return;
 }
