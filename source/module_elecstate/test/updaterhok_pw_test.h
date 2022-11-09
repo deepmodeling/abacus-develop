@@ -94,7 +94,7 @@ namespace GlobalC
 {
 K_Vectors kv;
 wavefunc wf;
-Charge_Broyden CHR;
+Charge CHR;
 Potential pot;
 UnitCell_pseudo ucell;
 ModuleSymmetry::Symmetry symm;

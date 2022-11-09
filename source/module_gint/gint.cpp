@@ -13,6 +13,9 @@
 
 void Gint::cal_gint(Gint_inout *inout)
 {
+
+	ModuleBase::timer::tick("Gint_interface", "cal_gint");
+
 	if(inout->job==Gint_Tools::job_type::vlocal) ModuleBase::TITLE("Gint_interface","cal_gint_vlocal");
 	if(inout->job==Gint_Tools::job_type::vlocal_meta) ModuleBase::TITLE("Gint_interface","cal_gint_vlocal_meta");
 	if(inout->job==Gint_Tools::job_type::rho) ModuleBase::TITLE("Gint_interface","cal_gint_rho");
@@ -244,6 +247,8 @@ void Gint::cal_gint(Gint_inout *inout)
     mkl_set_num_threads(mkl_threads);
 #endif
     } // end of if (max_size)	
+
+	ModuleBase::timer::tick("Gint_interface", "cal_gint");
 
 	if(inout->job==Gint_Tools::job_type::vlocal) ModuleBase::timer::tick("Gint_interface", "cal_gint_vlocal");
 	if(inout->job==Gint_Tools::job_type::vlocal_meta) ModuleBase::timer::tick("Gint_interface","cal_gint_vlocal_meta");
