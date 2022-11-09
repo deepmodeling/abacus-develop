@@ -266,8 +266,7 @@ namespace ModuleESolver
     void ESolver_KS_PW::eachiterinit(const int istep, const int iter)
     {
         // mohan add 2010-07-16
-        if (iter == 1) GlobalC::CHR_MIX.set_new_e_iteration(true);
-        else GlobalC::CHR_MIX.set_new_e_iteration(false);
+        if (iter == 1) GlobalC::CHR_MIX.reset();
 
         if (GlobalV::FINAL_SCF && iter == 1)
         {

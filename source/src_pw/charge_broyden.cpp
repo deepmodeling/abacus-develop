@@ -69,9 +69,6 @@ Charge_Broyden::~Charge_Broyden()
 
 			// dimension (GlobalV::NSPIN, dstep, dstep)
 			delete[] Zmk;
-
-			// dimension (GlobalV::NSPIN, dstep-1, dstep-1)
-//		delete[] Zmk_old;
 		}
 	}
 }
@@ -174,9 +171,6 @@ void Charge_Broyden::mix_rho
         ModuleBase::WARNING_QUIT("Charge_Pulay","Not implemended yet,coming soon.");
     }
 
-	// mohan add 2011-06-07
-	//this->renormalize_rho();
-
 	// mohan add 2012-06-05
 	// rho_save is the charge before mixing
 	for(int is=0; is<GlobalV::NSPIN; is++)
@@ -187,14 +181,13 @@ void Charge_Broyden::mix_rho
 		}
     }
 
-//	for(int is=0; is<GlobalV::NSPIN; ++is)
-  //	ModuleBase::GlobalFunc::DCOPY(rho[is],rho_save[is],GlobalC::rhopw->nrxx);
-	//2014-06-22
 	for(int is=0; is<GlobalV::NSPIN; ++is)
 	{
 		delete[] rho123[is];
 	}
 	delete[] rho123;
+
+	if(new_e_iteration) new_e_iteration = false;
 
     ModuleBase::timer::tick("Charge","mix_rho");
     return;
@@ -301,9 +294,6 @@ void Charge_Broyden::Simplified_Broyden_mixing(const int &iter,
 		}
 	}
 
-	//kerker part if needed
-	{
-	}
 
 	for(int is=0; is<GlobalV::NSPIN; is++)
 	{
@@ -314,55 +304,8 @@ void Charge_Broyden::Simplified_Broyden_mixing(const int &iter,
 		GlobalC::rhopw->recip2real( rhog_save[is], rho[is]);
 	}
 
-
-
 	return;
 }
-
-void Charge_Broyden::Modified_Broyden_mixing(double** rho, double** rho_save, std::complex<double> **rhog)
-{
-    //ModuleBase::TITLE("Charge_Broyden","Modified_Broyden_Mixing");
-
-    this->rstep = this->mixing_ndim;
-    this->dstep = this->rstep - 1;
-
-	//std::cout << "\n initb = " << initb << std::endl;
-    
-	// (1)
-	this->broyden_type=1;
-	this->allocate_Broyden();
-	
-	// irstep: iteration step for rstep (Rrho)
-	// icstep: iteration step for dstep (dRrho)
-	// totstep only used for the first few iterations.
-	static int irstep = 0; // count step for rstep
-	static int idstep = 0; // coutn step for dstep
-	static int totstep = 0;
-
-	if (irstep==rstep) irstep=0;
-	if (idstep==dstep) idstep=0;
-
-	this->generate_datas(irstep, idstep, totstep, rho, rho_save);
-
-	// if not enough step, take kerker mixing method.
-	if(totstep < dstep)
-	{
-		for(int is=0; is<GlobalV::NSPIN; is++)
-		{
-			this->plain_mixing( rho[is], rho_save[is] );
-		}
-		++irstep;
-		++idstep;
-		++totstep;
-		return;
-	}
-	
-	++irstep;
-	++idstep;
-	++totstep;
-    return;
-}
-
 
 void Charge_Broyden::allocate_Broyden()
 {
@@ -398,13 +341,6 @@ void Charge_Broyden::allocate_Broyden()
     		{
     	    	w[i] = 1.0/static_cast<double>(rstep);
     		}
-
-			//special test: Pulay mixing
-			//this->w0 = 0.00;
-			//for(int i=0; i<rstep; i++)
-			//{
-			//	w[i] = 1.0;
-			//}
 
 			// R[rho_in] = rho_out - rho_in
     		this->Rrho = new double**[GlobalV::NSPIN];
@@ -449,11 +385,9 @@ void Charge_Broyden::allocate_Broyden()
 			
 
 			this->Zmk = new ModuleBase::matrix[GlobalV::NSPIN];
-//			this->Zmk_old = new matrix[GlobalV::NSPIN];
 			for(int is=0; is<GlobalV::NSPIN; is++)
 			{
 				this->Zmk[is].create(dstep, dstep);
-//				this->Zmk_old[is].create(dstep, dstep);
 			}
 		}
 		this->initb = true;

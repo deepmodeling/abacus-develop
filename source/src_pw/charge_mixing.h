@@ -36,11 +36,6 @@ class Charge_Mixing
 	// simple plain mixing method.	
     void plain_mixing( double *rho_in, double *rho_save_in ) const;
 	
-	// Kerker mixing method.
-	// Kerker method must use plane wave basis, change the high energy plane wave 
-	// more than low energy plane wave.
-	void Kerker_mixing( double *rho, const std::complex<double> *residual_g, double *rho_save);
-	
 	// tools
 	double rhog_dot_product(const std::complex<double>*const*const rhog1, const std::complex<double>*const*const rhog2) const;		// Peize Lin add const 2019-05-01
 	

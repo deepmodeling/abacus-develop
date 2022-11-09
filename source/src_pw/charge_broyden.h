@@ -33,7 +33,6 @@ class Charge_Broyden: public Charge_Pulay
 	private:
 
 	// Sophisticated mixing method.
-	void Modified_Broyden_mixing(double** rho, double** rho_save, std::complex<double> **rhog);
 	void Simplified_Broyden_mixing(const int &iter,
 		double** rho,
 		double** rho_save,

@@ -25,16 +25,13 @@ class Charge_Pulay: public Charge_Mixing
 	int dstep; // Delta step " dstep = rstep-1 ".
 	double* alpha; // - sum (Abar * dRR)
 	
-	// Peize Lin add 2018-11-01, and set new_e_iteration protected
-	const bool &get_new_e_iteration(){ return new_e_iteration; }
-	void set_new_e_iteration( const bool new_e_iteration_in );			
+	void reset(); //if first electronic step, then reset charge mixing
 
 	// mohan add 2010-07-16
 	bool new_e_iteration;
 
 	protected:
 
-	
 	// Pulay mixing method.
 	void Pulay_mixing(double** rho, double**rho_save);
 	double*** Rrho;// Rrho(i) = rho(i) - rho_save(i), (GlobalV::NSPIN, rstep, pw.nrxx)

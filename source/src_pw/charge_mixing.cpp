@@ -20,11 +20,6 @@ void Charge_Mixing::set_mixing
     this->mixing_ndim = mixing_ndim_in;
 	this->mixing_gg0 = mixing_gg0_in; //mohan add 2014-09-27
 
-//    if (mixing_mode != "plain") // "TF","local-TF","potential"
-//    {
-//        ModuleBase::WARNING_QUIT("set_mixing","only plain mixing availabel.");
-//    }
-
     return;
 }
 
@@ -35,16 +30,6 @@ void Charge_Mixing::plain_mixing( double *rho, double *rho_save_in ) const
     // on the contrary, if mixing_beta == 0,
     // no new charge will be generated!
     const double mix_old = 1 - mixing_beta;
-	
-//	this->check_ne(rho);
-//	this->check_ne(rho_save_in);
-
-    // in real space
-	// mohan modify 2010-02-05
-	// after mixing, the charge density become 
-	// the input charge density of next iteration.
-    //double* rho_tmp = new double[GlobalC::rhopw->nrxx];
-    //ModuleBase::GlobalFunc::DCOPY( rho, rho_tmp, GlobalC::rhopw->nrxx);
 
 //xiaohui add 2014-12-09
 	if(this->mixing_gg0 > 0.0)
@@ -91,7 +76,6 @@ void Charge_Mixing::plain_mixing( double *rho, double *rho_save_in ) const
 	}
 
 	ModuleBase::GlobalFunc::DCOPY( rho, rho_save_in, GlobalC::rhopw->nrxx);
-//    delete[] rho_tmp;
 
     return;
 }

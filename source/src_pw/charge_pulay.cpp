@@ -72,18 +72,6 @@ void Charge_Pulay::Pulay_mixing(double** rho, double** rho_save)
     if(GlobalV::FINAL_SCF && totstep==0) initp = false;
 	this->allocate_pulay(scheme);
 
-	// irstep: iteration step for rstep (Rrho)
-	// idstep: iteration step for dstep (dRrho)
-	// totstep only used for the first few iterations.
-	// At the beginning of each ion iteration, reset the three variables.
-	// mohan add 2010-07-16
-	if(this->new_e_iteration)
-	{
-		irstep = 0;
-		idstep = 0;
-		totstep = 0;
-	}
-
     if (irstep==rstep) irstep=0;
 	if (idstep==dstep) idstep=0;
 
@@ -214,16 +202,13 @@ void Charge_Pulay::Pulay_mixing(double** rho, double** rho_save)
 	return;		
 }
 
-void Charge_Pulay::set_new_e_iteration( const bool new_e_iteration_in )		// Peize Lin add 2018-11-01
+void Charge_Pulay::reset()		// Peize Lin add 2018-11-01
 {
-	this->new_e_iteration = new_e_iteration_in;
+	this->new_e_iteration = true;
 	
-	if(this->new_e_iteration)
-	{
-		irstep = 0;
-		idstep = 0;
-		totstep = 0;
-	}	
+	irstep = 0;
+	idstep = 0;
+	totstep = 0;
 }
 
 void Charge_Pulay::allocate_pulay(const int &scheme)
