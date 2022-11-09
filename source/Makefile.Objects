@@ -238,7 +238,7 @@ OBJS_HSOLVER_LCAO=hsolver_lcao.o\
       utils.o\
 
 OBJS_MD=MD_func.o\
-    run_md_classic.o\
+    run_md.o\
 	mdrun.o\
 	verlet.o\
     MSST.o\
@@ -406,7 +406,6 @@ OBJS_LCAO=DM_gamma.o\
       dm_2d.o\
       wavefunc_in_pw.o\
   	  H_TDDFT_pw.o\
-      run_md_lcao.o\
 
 OBJS_RI=exx_lip.o\
 
@@ -554,7 +553,6 @@ OBJS_SRCPW=H_Ewald_pw.o\
     wf_atomic.o\
     wf_igk.o\
     xc_3.o\
-    run_md_pw.o\
     hamilt.o\
     electrons.o
 

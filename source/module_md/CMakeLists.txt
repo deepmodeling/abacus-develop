@@ -2,7 +2,7 @@ add_library(
     md
     OBJECT
     MD_func.cpp
-    run_md_classic.cpp
+    run_md.cpp
 	mdrun.cpp
 	verlet.cpp
     MSST.cpp

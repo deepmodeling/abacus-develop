@@ -17,6 +17,7 @@
 #include "../src_io/chi0_hilbert.h"
 #include "../src_io/epsilon0_pwscf.h"
 #include "../src_io/epsilon0_vasp.h"
+#include "../module_relax/relax_old/variable_cell.h"    // liuyu 2022-11-07
 //-----force-------------------
 #include "../src_pw/forces.h"
 //-----stress------------------
@@ -153,13 +154,28 @@ namespace ModuleESolver
     {
         ModuleBase::TITLE("ESolver_KS_PW", "beforescf");
 
+        // Temporary, md and relax will merge later   liuyu add 2022-11-07
+        if(GlobalV::CALCULATION == "md" && istep)
+        {
+            CE.update_istep();
+            CE.save_pos_next(GlobalC::ucell);
+            CE.extrapolate_charge();
+
+            if(GlobalC::ucell.cell_parameter_updated)
+            {
+                Variable_Cell::init_after_vc();
+            }
+
+            GlobalC::pot.init_pot(istep, GlobalC::sf.strucFac);
+        }
+
         if(GlobalV::CALCULATION=="relax" || GlobalV::CALCULATION=="cell-relax")
         {
             if(GlobalC::ucell.ionic_position_updated)
             {
                 GlobalV::ofs_running << " Setup the extrapolated charge." << std::endl;
                 // charge extrapolation if istep>0.
-                CE.update_istep(istep);
+                CE.update_istep();
                 CE.update_all_pos(GlobalC::ucell);
                 CE.extrapolate_charge();
                 CE.save_pos_next(GlobalC::ucell);
@@ -415,6 +431,9 @@ namespace ModuleESolver
 
     void ESolver_KS_PW::afterscf(const int istep)
     {
+        // Temporary liuyu add 2022-11-07
+        CE.update_all_pos(GlobalC::ucell);
+
 #ifdef __LCAO
         if (GlobalC::chi0_hilbert.epsilon)                 // pengfei 2016-11-23
         {

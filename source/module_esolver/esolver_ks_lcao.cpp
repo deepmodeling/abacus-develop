@@ -612,6 +612,9 @@ void ESolver_KS_LCAO::eachiterfinish(int iter)
 
 void ESolver_KS_LCAO::afterscf(const int istep)
 {
+    // Temporary liuyu add 2022-11-07
+    CE.update_all_pos(GlobalC::ucell);
+
     // if (this->conv_elec || iter == GlobalV::SCF_NMAX)
     // {
     //--------------------------------------
