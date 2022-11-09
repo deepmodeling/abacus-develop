@@ -141,6 +141,10 @@ int wavefunc::get_starting_nw(void)const
 
 
 #ifdef __LCAO
+//We are not goint to support lcao_in_paw until
+//the obsolete GlobalC::hm is replaced by the 
+//refactored moeules (psi, hamilt, etc.)
+/*
 void wavefunc::LCAO_in_pw_k(const int &ik, ModuleBase::ComplexMatrix &wvf)
 {
 	ModuleBase::TITLE("wavefunc","LCAO_in_pw_k");
@@ -193,14 +197,31 @@ void wavefunc::LCAO_in_pw_k_q(const int &ik, ModuleBase::ComplexMatrix &wvf, Mod
 	ModuleBase::timer::tick("wavefunc","LCAO_in_pw_k_q");
 	return;
 }
+*/
 #endif
-
 
 void wavefunc::diago_PAO_in_pw_k(const int &ik, psi::Psi<std::complex<double>> &wvf)
 {
 	ModuleBase::TITLE("wavefunc","diago_PAO_in_pw_k");
 
-	GlobalC::hm.hpw.init_k(ik);
+	if(GlobalV::NSPIN==2)
+	{
+		GlobalV::CURRENT_SPIN = GlobalC::kv.isk[ik];
+	}
+
+	for (int ir=0; ir<GlobalC::rhopw->nrxx; ir++)
+	{
+		GlobalC::pot.vr_eff1[ir] = GlobalC::pot.vr_eff(GlobalV::CURRENT_SPIN, ir);//mohan add 2007-11-12
+	}
+
+	if(GlobalC::ppcell.nkb > 0 && (GlobalV::BASIS_TYPE=="pw" || GlobalV::BASIS_TYPE=="lcao_in_pw")) //xiaohui add 2013-09-02. Attention...
+	{
+		GlobalC::ppcell.getvnl(ik, GlobalC::ppcell.vkb);
+	}
+
+	GlobalC::wf.npw = GlobalC::kv.ngk[ik];
+	GlobalV::CURRENT_K = ik;
+
 	wvf.fix_k(ik);
     this->diago_PAO_in_pw_k2(ik, wvf);
 
@@ -255,17 +276,10 @@ void wavefunc::diago_PAO_in_pw_k2(const int &ik, psi::Psi<std::complex<double>> 
 		}
 		else
 		{
-			GlobalC::hm.diagH_subspace(ik ,starting_nw, nbands, wfcatom, wfcatom, etatom.data());
+			//this diagonalization method is obsoleted now
+			//GlobalC::hm.diagH_subspace(ik ,starting_nw, nbands, wfcatom, wfcatom, etatom.data());
 		}
 	}
-
-	/*
-	GlobalV::ofs_running << " " << "ik = " << ik << " Bands(eV)" << std::endl;
-	for (int ib=0;ib<starting_nw;ib++)
-	{
-		GlobalV::ofs_running << " " << std::setw(15) << etatom[ib]*Ry_to_eV << std::endl;
-	}
-	*/
 
 	assert(nbands <= wfcatom.nr);
 	for (int ib=0; ib<nbands; ib++)
@@ -304,12 +318,18 @@ void wavefunc::wfcinit_k(psi::Psi<std::complex<double>>* psi_in)
 			//this->diago_PAO_in_pw_k(ik, *psi_in);
 		}
 #ifdef __LCAO
+//We are not goint to support lcao_in_paw until
+//the obsolete GlobalC::hm is replaced by the 
+//refactored moeules (psi, hamilt, etc.)
+/*
+/*
 		else if(GlobalV::BASIS_TYPE=="lcao_in_pw")
 		{
 			// just get the numerical local basis wave functions
 			// in plane wave basis
 			this->LCAO_in_pw_k(ik, GlobalC::wf.wanf2[ik]);
 		}
+*/
 #endif
 	}
 
@@ -317,6 +337,10 @@ void wavefunc::wfcinit_k(psi::Psi<std::complex<double>>* psi_in)
 	//  calculte the overlap <i,0 | e^{i(q+G)r} | j,R>
 	//---------------------------------------------------
 #ifdef __LCAO
+//We are not goint to support lcao_in_paw until
+//the obsolete GlobalC::hm is replaced by the 
+//refactored moeules (psi, hamilt, etc.)
+/*
 	if((!GlobalC::chi0_hilbert.epsilon) && GlobalC::chi0_hilbert.kmesh_interpolation )    // pengfei  2016-11-23
 	{
 		GlobalC::chi0_hilbert.Parallel_G();    // for parallel: make sure in each core, G(all_gcars(GlobalC::sf.gcars))  are the same
@@ -572,8 +596,8 @@ void wavefunc::wfcinit_k(psi::Psi<std::complex<double>>* psi_in)
 		delete[] wanf2_q;
 
 	}
+*/
 #endif
-
 	return;
 }
 
@@ -737,12 +761,30 @@ void wavefunc::init_after_vc(const int nks)
     return;
 }
 
+/*
+//obsolete now
 //temporary function for nscf
 void wavefunc::diago_PAO_in_pw_k(const int &ik, ModuleBase::ComplexMatrix &wvf)
 {
 	ModuleBase::TITLE("wavefunc","diago_PAO_in_pw_k");
 
-	GlobalC::hm.hpw.init_k(ik);
+	if(GlobalV::NSPIN==2)
+	{
+		GlobalV::CURRENT_SPIN = GlobalC::kv.isk[ik];
+	}
+
+	for (int ir=0; ir<GlobalC::rhopw->nrxx; ir++)
+	{
+		GlobalC::pot.vr_eff1[ir] = GlobalC::pot.vr_eff(GlobalV::CURRENT_SPIN, ir);//mohan add 2007-11-12
+	}
+
+	if(GlobalC::ppcell.nkb > 0 && (GlobalV::BASIS_TYPE=="pw" || GlobalV::BASIS_TYPE=="lcao_in_pw")) //xiaohui add 2013-09-02. Attention...
+	{
+		GlobalC::ppcell.getvnl(ik, GlobalC::ppcell.vkb);
+	}
+
+	GlobalC::wf.npw = GlobalC::kv.ngk[ik];
+	GlobalV::CURRENT_K = ik;
     this->diago_PAO_in_pw_k2(ik, wvf);
 
 	return;
@@ -784,13 +826,6 @@ void wavefunc::diago_PAO_in_pw_k2(const int &ik, ModuleBase::ComplexMatrix &wvf)
 		GlobalC::hm.diagH_subspace(ik ,starting_nw, GlobalV::NBANDS, wfcatom, wfcatom, etatom);
 	}
 
-	/*
-	GlobalV::ofs_running << " " << "ik = " << ik << " Bands(eV)" << std::endl;
-	for (int ib=0;ib<starting_nw;ib++)
-	{
-		GlobalV::ofs_running << " " << std::setw(15) << etatom[ib]*Ry_to_eV << std::endl;
-	}
-	*/
 	assert(wvf.nr <= wfcatom.nr);
 	for (int ib=0; ib<GlobalV::NBANDS; ib++)
 	{
@@ -801,10 +836,6 @@ void wavefunc::diago_PAO_in_pw_k2(const int &ik, ModuleBase::ComplexMatrix &wvf)
 		}
 	}
 
-	//added by zhengdy-soc
-/*	for(int i = 0;i<starting_nw;i++)
-	{
-		ekb[ik][i] = etatom[i];
-	}*/
 	delete[] etatom;
 }
+*/

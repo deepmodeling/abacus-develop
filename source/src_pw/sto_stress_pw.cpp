@@ -339,7 +339,7 @@ void Sto_Stress_PW::sto_stress_nl(ModuleBase::matrix& sigma, const ModuleBase::m
 					int sum = 0;
 					for (int it=0; it<GlobalC::ucell.ntype; ++it)
 					{
-						const int Nprojs = GlobalC::ucell.atoms[it].nh;
+						const int Nprojs = GlobalC::ucell.atoms[it].ncpp.nh;
 						for (int ia=0; ia<GlobalC::ucell.atoms[it].na; ++ia)
 						{
 							for (int ip=0; ip<Nprojs; ++ip)

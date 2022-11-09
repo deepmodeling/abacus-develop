@@ -58,8 +58,6 @@ UnitCell_pseudo::UnitCell_pseudo(){}
 UnitCell_pseudo::~UnitCell_pseudo(){}
 Parallel_Grid::Parallel_Grid(){}
 Parallel_Grid::~Parallel_Grid(){}
-Use_FFT::Use_FFT(){}
-Use_FFT::~Use_FFT(){}
 WF_igk::WF_igk(){}
 WF_igk::~WF_igk(){}
 WF_atomic::WF_atomic(){}
@@ -74,8 +72,6 @@ pseudopot_cell_vl::pseudopot_cell_vl(){}
 pseudopot_cell_vl::~pseudopot_cell_vl(){}
 pseudopot_cell_vnl::pseudopot_cell_vnl(){}
 pseudopot_cell_vnl::~pseudopot_cell_vnl(){}
-Hamilt_PW::Hamilt_PW(){}
-Hamilt_PW::~Hamilt_PW(){}
 Hamilt::Hamilt(){}
 Hamilt::~Hamilt(){}
 energy::energy(){}
@@ -103,7 +99,6 @@ Potential pot;
 UnitCell_pseudo ucell;
 ModuleSymmetry::Symmetry symm;
 Parallel_Grid Pgrid;
-Use_FFT UFFT;
 Structure_Factor sf;
 ModulePW::PW_Basis* rhopw;
 ModulePW::PW_Basis_K* wfcpw;
@@ -203,8 +198,6 @@ bool Charge::read_rho(const int &is, const std::string &fn, double* rho) //add b
 	return true;
 }
 
-void Use_FFT::ToRealSpace(int const&is, const ModuleBase::ComplexMatrix &vg, double*vr, ModulePW::PW_Basis* rho_basis){}
-void Use_FFT::ToRealSpace(const std::complex<double> *vg, double*vr, ModulePW::PW_Basis* rho_basis){}
 //bool Occupy::use_gaussian_broadening=false;
 //bool Occupy::use_tetrahedron_method = false;
 double Magnetism::get_nelup(){return 0;}

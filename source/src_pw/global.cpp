@@ -5,14 +5,12 @@
 namespace GlobalC
 {
 K_Vectors kv; // mem check in in here.
-Use_FFT UFFT; // mohan add 2010-07-22
 Structure_Factor sf;
 ModulePW::PW_Basis* rhopw;
 ModulePW::PW_Basis_Big* bigpw;
 ModulePW::PW_Basis_K* wfcpw;
 energy en;
 wavefunc wf;
-Hamilt hm;
 #ifdef __MPI
 #ifdef __EXX
 Exx_Global exx_global;

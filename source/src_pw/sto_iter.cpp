@@ -398,7 +398,28 @@ void Stochastic_Iter::calHsqrtchi(Stochastic_WF& stowf)
     for(int ik = 0; ik < GlobalC::kv.nks; ++ik)
     {
         //init k
-        if(GlobalC::kv.nks > 1) GlobalC::hm.hpw.init_k(ik);
+        if(GlobalC::kv.nks > 1)
+        {
+
+            if(GlobalV::NSPIN==2)
+            {
+                GlobalV::CURRENT_SPIN = GlobalC::kv.isk[ik];
+            }
+
+            for (int ir=0; ir<GlobalC::rhopw->nrxx; ir++)
+            {
+                GlobalC::pot.vr_eff1[ir] = GlobalC::pot.vr_eff(GlobalV::CURRENT_SPIN, ir);//mohan add 2007-11-12
+            }
+
+            if(GlobalC::ppcell.nkb > 0 && (GlobalV::BASIS_TYPE=="pw" || GlobalV::BASIS_TYPE=="lcao_in_pw")) //xiaohui add 2013-09-02. Attention...
+            {
+                GlobalC::ppcell.getvnl(ik, GlobalC::ppcell.vkb);
+            }
+
+            GlobalC::wf.npw = GlobalC::kv.ngk[ik];
+            GlobalV::CURRENT_K = ik;
+
+        }
         stohchi.current_ik = ik;
 
         this->calTnchi_ik(ik, stowf);

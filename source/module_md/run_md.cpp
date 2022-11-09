@@ -1,4 +1,4 @@
-#include "run_md_classic.h"
+#include "run_md.h"
 #include "MD_func.h"
 #include "verlet.h"
 #include "MSST.h"
@@ -9,14 +9,14 @@
 #include "../src_io/print_info.h"
 #include "../module_base/timer.h"
 
-Run_MD_CLASSIC::Run_MD_CLASSIC(){}
+Run_MD::Run_MD(){}
 
-Run_MD_CLASSIC::~Run_MD_CLASSIC(){}
+Run_MD::~Run_MD(){}
 
-void Run_MD_CLASSIC::classic_md_line(UnitCell_pseudo &unit_in, ModuleESolver::ESolver *p_esolver)
+void Run_MD::md_line(UnitCell_pseudo &unit_in, ModuleESolver::ESolver *p_esolver)
 {
-	ModuleBase::TITLE("Run_MD_CLASSIC", "classic_md_line");
-    ModuleBase::timer::tick("Run_MD_CLASSIC", "classic_md_line");
+	ModuleBase::TITLE("Run_MD", "md_line");
+    ModuleBase::timer::tick("Run_MD", "md_line");
 
     // determine the md_type
     MDrun *mdrun;
@@ -38,7 +38,8 @@ void Run_MD_CLASSIC::classic_md_line(UnitCell_pseudo &unit_in, ModuleESolver::ES
     }
     else if(INPUT.mdp.md_type == 4)
     {
-        mdrun = new MSST(INPUT.mdp, unit_in); 
+        mdrun = new MSST(INPUT.mdp, unit_in);
+        unit_in.cell_parameter_updated = true;
     }
 
     // md cycle
@@ -82,12 +83,7 @@ void Run_MD_CLASSIC::classic_md_line(UnitCell_pseudo &unit_in, ModuleESolver::ES
         mdrun->step_++;
     }
 
-	GlobalV::ofs_running << "\n\n --------------------------------------------" << std::endl;
-    GlobalV::ofs_running << std::setprecision(16);
-    GlobalV::ofs_running << " !FINAL_ETOT_IS " << mdrun->potential*ModuleBase::Hartree_to_eV << " eV" << std::endl; 
-    GlobalV::ofs_running << " --------------------------------------------\n\n" << std::endl;
-
     delete mdrun;
-    ModuleBase::timer::tick("Run_MD_CLASSIC", "classic_md_line");
+    ModuleBase::timer::tick("Run_MD", "md_line");
     return;
 }

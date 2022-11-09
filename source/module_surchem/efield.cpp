@@ -125,7 +125,7 @@ double Efield::cal_ion_dipole(const UnitCell &cell, const double &bmod)
         {
             sum += saw_function(efield_pos_max, efield_pos_dec, cell.atoms[it].taud[ia][efield_dir]);
         }
-        ion_dipole += sum * cell.atoms[it].zv;
+        ion_dipole += sum * cell.atoms[it].ncpp.zv;
     }
 
     if(GlobalV::GATE_FLAG && GlobalV::DIP_COR_FLAG)
@@ -133,7 +133,7 @@ double Efield::cal_ion_dipole(const UnitCell &cell, const double &bmod)
         double ion_charge = 0;
         for(int it=0; it<cell.ntype; ++it)
         {
-            ion_charge += cell.atoms[it].na * cell.atoms[it].zv;
+            ion_charge += cell.atoms[it].na * cell.atoms[it].ncpp.zv;
         }
         ion_dipole += (GlobalV::NELEC - ion_charge) * saw_function(efield_pos_max, efield_pos_dec, Gatefield::zgate);
     }
@@ -239,7 +239,7 @@ void Efield::compute_force(const UnitCell &cell, ModuleBase::matrix &fdip)
             {
                 for(int jj=0; jj<3; ++jj)
                 {
-                    fdip(iat, jj) = ModuleBase::e2 * (efield_amp  - tot_dipole) * cell.atoms[it].zv * bvec[jj] / bmod;
+                    fdip(iat, jj) = ModuleBase::e2 * (efield_amp  - tot_dipole) * cell.atoms[it].ncpp.zv * bvec[jj] / bmod;
                 }
                 ++iat;
             }
@@ -254,7 +254,7 @@ void Efield::compute_force(const UnitCell &cell, ModuleBase::matrix &fdip)
             {
                 for(int jj=0; jj<3; ++jj)
                 {
-                    fdip(iat, jj) = ModuleBase::e2 * efield_amp  * cell.atoms[it].zv * bvec[jj] / bmod;
+                    fdip(iat, jj) = ModuleBase::e2 * efield_amp  * cell.atoms[it].ncpp.zv * bvec[jj] / bmod;
                 }
                 ++iat;
             }

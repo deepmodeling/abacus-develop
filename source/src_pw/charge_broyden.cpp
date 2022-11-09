@@ -82,10 +82,10 @@ double Charge_Broyden::get_drho()
 	for (int is=0; is<GlobalV::NSPIN; is++)
     {
 		ModuleBase::GlobalFunc::NOTE("Perform FFT on rho(r) to obtain rho(G).");
-        this->set_rhog(rho[is], rhog[is]);
+        GlobalC::rhopw->real2recip(rho[is], rhog[is]);
 
 		ModuleBase::GlobalFunc::NOTE("Perform FFT on rho_save(r) to obtain rho_save(G).");
-        this->set_rhog(rho_save[is], rhog_save[is]);
+        GlobalC::rhopw->real2recip(rho_save[is], rhog_save[is]);
 
 
 		ModuleBase::GlobalFunc::NOTE("Calculate the charge difference between rho(G) and rho_save(G)");
@@ -340,7 +340,7 @@ void Charge_Broyden::Simplified_Broyden_mixing(const int &iter)
 		{
 			rhog_save[is][ig] += mixing_beta * rhog[is][ig];
 		}
-		this->set_rhor( rhog_save[is], rho[is]);
+		GlobalC::rhopw->recip2real( rhog_save[is], rho[is]);
 	}
 
 

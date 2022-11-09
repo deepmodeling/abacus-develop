@@ -28,7 +28,7 @@ void force_cor_one(const UnitCell &cell, ModulePW::PW_Basis* rho_basis , ModuleB
                 vloc_at[ig] = GlobalC::ppcell.vloc(it, rho_basis->ig2igg[ig]) * phase;
                 if(rho_basis->ig_gge0 == ig)
                 {
-                    N[ig] = GlobalC::ucell.atoms[it].zv / GlobalC::ucell.omega;
+                    N[ig] = GlobalC::ucell.atoms[it].ncpp.zv / GlobalC::ucell.omega;
                 }
                 else
                 {
@@ -93,7 +93,7 @@ void force_cor_two(const UnitCell &cell, ModulePW::PW_Basis* rho_basis , ModuleB
     double Ael1 = 0;
     for (int it = 0;it < cell.ntype;it++)
     {
-        double RCS = GlobalC::solvent_model.GetAtom.atom_RCS[cell.atoms[it].psd];
+        double RCS = GlobalC::solvent_model.GetAtom.atom_RCS[cell.atoms[it].ncpp.psd];
         double sigma_rc_k = RCS / 2.5;
         for (int ia = 0;ia < cell.atoms[it].na;ia++)
         {
@@ -107,9 +107,9 @@ void force_cor_two(const UnitCell &cell, ModulePW::PW_Basis* rho_basis , ModuleB
                 gg = gg * cell.tpiba2;
                 complex<double> phase = exp( ModuleBase::NEG_IMAG_UNIT *ModuleBase::TWO_PI * ( rho_basis->gcar[ig] * cell.atoms[it].tau[ia]));
 
-                n_pseudo[ig].real((GlobalC::solvent_model.GetAtom.atom_Z[cell.atoms[it].psd] - cell.atoms[it].zv) * phase.real()
+                n_pseudo[ig].real((GlobalC::solvent_model.GetAtom.atom_Z[cell.atoms[it].ncpp.psd] - cell.atoms[it].ncpp.zv) * phase.real()
                              * exp(-0.5 * gg * (sigma_rc_k * sigma_rc_k)));
-                n_pseudo[ig].imag((GlobalC::solvent_model.GetAtom.atom_Z[cell.atoms[it].psd] - cell.atoms[it].zv) * phase.imag()
+                n_pseudo[ig].imag((GlobalC::solvent_model.GetAtom.atom_Z[cell.atoms[it].ncpp.psd] - cell.atoms[it].ncpp.zv) * phase.imag()
                              * exp(-0.5 * gg * (sigma_rc_k * sigma_rc_k)));
             }
             
