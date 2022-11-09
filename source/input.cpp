@@ -1014,11 +1014,6 @@ bool Input::Read(const std::string &fn)
         else if (strcmp("mixing_type", word) == 0)
         {
             read_value(ifs, mixing_mode);
-            // 2015-06-15, xiaohui
-            if (mixing_mode == "pulay-kerker")
-            {
-                mixing_gg0 = 1.5;
-            }
         }
         else if (strcmp("mixing_beta", word) == 0)
         {
@@ -3063,12 +3058,6 @@ void Input::Check(void)
         {
             ModuleBase::WARNING_QUIT("INPUT", "exx_opt_orb_tolerence must >=0");
         }
-    }
-
-    // 2015-06-15, xiaohui
-    if (mixing_mode == "pulay" && mixing_gg0 > 0.0)
-    {
-        ModuleBase::WARNING("Input", "To use pulay-kerker mixing method, please set mixing_type=pulay-kerker");
     }
 
     if (berry_phase)

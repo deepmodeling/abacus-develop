@@ -161,18 +161,7 @@ void Charge_Broyden::mix_rho
             this->plain_mixing( rho[is], rho_save[is]);
         }
     }
-    else if ( this->mixing_mode == "kerker")
-    {
-        for (int is=0; is<GlobalV::NSPIN; is++)
-        {
-            this->Kerker_mixing( rho[is], rhog[is], rho_save[is] );
-        }
-    }
     else if ( this->mixing_mode == "pulay")
-    {
-        this->Pulay_mixing(rho, rho_save);
-    }
-    else if ( this->mixing_mode == "pulay-kerker")//2015-06-15
     {
         this->Pulay_mixing(rho, rho_save);
     }
@@ -360,7 +349,7 @@ void Charge_Broyden::Modified_Broyden_mixing(double** rho, double** rho_save, st
 	{
 		for(int is=0; is<GlobalV::NSPIN; is++)
 		{
-			this->Kerker_mixing( rho[is], rhog[is], rho_save[is] );
+			this->plain_mixing( rho[is], rho_save[is] );
 		}
 		++irstep;
 		++idstep;

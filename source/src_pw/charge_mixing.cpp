@@ -96,62 +96,6 @@ void Charge_Mixing::plain_mixing( double *rho, double *rho_save_in ) const
     return;
 }
 
-
-void Charge_Mixing::Kerker_mixing( double *rho, const std::complex<double> *residual_g, double *rho_save)
-{
-//  ModuleBase::TITLE("Charge_Mixing","Kerker");
-    ModuleBase::timer::tick("Charge_Mixing","Kerker");
-
-//	std::cout << " here is Kerker" << std::endl;
-//	this->check_ne(rho);
-//	this->check_ne(rho_save);
-
-    // (1) do kerker mixing in reciprocal space.
-    std::complex<double> *rhog = new std::complex<double>[GlobalC::rhopw->npw];
-    ModuleBase::GlobalFunc::ZEROS(rhog, GlobalC::rhopw->npw);
-
-	// mohan modify 2010-02-03, rhog should store the old
-	// charge density. " rhog = FFT^{-1}(rho_save) "
-    GlobalC::rhopw->real2recip(rho_save, rhog);
-
-    // (2) set up filter
-    //const double a = 0.8; // suggested by VASP.
-
-	// mohan fixed bug 2010/03/25
-	// suggested by VASP, 1.5(angstrom^-1) is always satisfied.
-    const double gg0 = std::pow(1.5 * 0.529177 / GlobalC::ucell.tpiba, 2);
-    double *filter_g = new double[GlobalC::rhopw->npw];
-    for (int ig=0; ig<GlobalC::rhopw->npw; ig++)
-    {
-        double gg = GlobalC::rhopw->gg[ig];
-//      filter_g[ig] = a * gg / (gg+gg0);
-		filter_g[ig] = mixing_beta * gg / (gg+gg0);//mohan modify 2010/03/25
-    }
-
-    // (3)
-    for (int ig=0; ig<GlobalC::rhopw->npw; ig++)
-    {
-        rhog[ig] += filter_g[ig] * residual_g[ig];
-    }
-
-    // (4) transform rhog from G-space to real space.
-	// get the new charge. " FFT(rhog) = rho "
-    GlobalC::rhopw->recip2real( rhog, rho);
-
-    // (5)
-	// mohan change the order of (4) (5), 2010-02-05
-    ModuleBase::GlobalFunc::DCOPY(rho, rho_save, GlobalC::rhopw->nrxx);
-
-    //this->renormalize_rho();
-
-
-    delete[] filter_g;
-    delete[] rhog;
-    ModuleBase::timer::tick("Charge_Mixing","Kerker");
-    return;
-}
-
-
 double Charge_Mixing::rhog_dot_product(
 	const std::complex<double>*const*const rhog1,
 	const std::complex<double>*const*const rhog2

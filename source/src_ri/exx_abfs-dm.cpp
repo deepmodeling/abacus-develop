@@ -54,17 +54,9 @@ void Exx_Abfs::DM::cal_DMk_mixing(
 		{
 			plain_mixing( charge, wg, atom_pairs,wfc_k_grid );
 		}
-		else if ( charge.mixing_mode == "kerker" )
-		{
-			throw std::invalid_argument("mixing density matrix can't be kerker. In "+ModuleBase::GlobalFunc::TO_STRING(__FILE__)+" line "+ModuleBase::GlobalFunc::TO_STRING(__LINE__));
-		}
 		else if ( charge.mixing_mode == "pulay" )
 		{
 			pulay_mixing( charge, wg, atom_pairs, wfc_k_grid );
-		}
-		else if ( charge.mixing_mode == "pulay-kerker" )
-		{
-			throw std::invalid_argument("mixing density matrix can't be pulay-kerker. In "+ModuleBase::GlobalFunc::TO_STRING(__FILE__)+" line "+ModuleBase::GlobalFunc::TO_STRING(__LINE__));
 		}
 		else
 		{
