@@ -13,8 +13,22 @@
 
 void Gint::cal_gint(Gint_inout *inout)
 {
-	ModuleBase::TITLE("Gint_interface","cal_gint");
-    ModuleBase::timer::tick("Gint_interface", "cal_gint");
+
+	ModuleBase::timer::tick("Gint_interface", "cal_gint");
+
+	if(inout->job==Gint_Tools::job_type::vlocal) ModuleBase::TITLE("Gint_interface","cal_gint_vlocal");
+	if(inout->job==Gint_Tools::job_type::vlocal_meta) ModuleBase::TITLE("Gint_interface","cal_gint_vlocal_meta");
+	if(inout->job==Gint_Tools::job_type::rho) ModuleBase::TITLE("Gint_interface","cal_gint_rho");
+	if(inout->job==Gint_Tools::job_type::tau) ModuleBase::TITLE("Gint_interface","cal_gint_tau");
+	if(inout->job==Gint_Tools::job_type::force) ModuleBase::TITLE("Gint_interface","cal_gint_force");
+	if(inout->job==Gint_Tools::job_type::force_meta) ModuleBase::TITLE("Gint_interface","cal_gint_force_meta");
+    
+	if(inout->job==Gint_Tools::job_type::vlocal) ModuleBase::timer::tick("Gint_interface", "cal_gint_vlocal");
+	if(inout->job==Gint_Tools::job_type::vlocal_meta) ModuleBase::timer::tick("Gint_interface","cal_gint_vlocal_meta");
+	if(inout->job==Gint_Tools::job_type::rho) ModuleBase::timer::tick("Gint_interface","cal_gint_rho");
+	if(inout->job==Gint_Tools::job_type::tau) ModuleBase::timer::tick("Gint_interface","cal_gint_tau");
+	if(inout->job==Gint_Tools::job_type::force) ModuleBase::timer::tick("Gint_interface","cal_gint_force");
+	if(inout->job==Gint_Tools::job_type::force_meta) ModuleBase::timer::tick("Gint_interface","cal_gint_force_meta");
 
 	const int max_size = GlobalC::GridT.max_atom;
 	const int LD_pool = max_size*GlobalC::ucell.nwmax;
@@ -234,7 +248,14 @@ void Gint::cal_gint(Gint_inout *inout)
 #endif
     } // end of if (max_size)	
 
-	ModuleBase::timer::tick("Gint_interface","cal_gint");
+	ModuleBase::timer::tick("Gint_interface", "cal_gint");
+
+	if(inout->job==Gint_Tools::job_type::vlocal) ModuleBase::timer::tick("Gint_interface", "cal_gint_vlocal");
+	if(inout->job==Gint_Tools::job_type::vlocal_meta) ModuleBase::timer::tick("Gint_interface","cal_gint_vlocal_meta");
+	if(inout->job==Gint_Tools::job_type::rho) ModuleBase::timer::tick("Gint_interface","cal_gint_rho");
+	if(inout->job==Gint_Tools::job_type::tau) ModuleBase::timer::tick("Gint_interface","cal_gint_tau");
+	if(inout->job==Gint_Tools::job_type::force) ModuleBase::timer::tick("Gint_interface","cal_gint_force");
+	if(inout->job==Gint_Tools::job_type::force_meta) ModuleBase::timer::tick("Gint_interface","cal_gint_force_meta");
 	return;
 }
 

@@ -4,13 +4,13 @@
 #include "../module_cell/unitcell_pseudo.h"
 #include "../module_esolver/esolver.h"
 
-class Run_MD_CLASSIC
+class Run_MD
 {
 public:
-    Run_MD_CLASSIC();
-    ~Run_MD_CLASSIC();
+    Run_MD();
+    ~Run_MD();
 
-    void classic_md_line(UnitCell_pseudo &unit_in, ModuleESolver::ESolver *p_esolver);
+    void md_line(UnitCell_pseudo &unit_in, ModuleESolver::ESolver *p_esolver);
 
 };
 

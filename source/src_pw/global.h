@@ -16,7 +16,6 @@
 #include "potential.h"
 #include "structure_factor.h"
 #include "../module_pw/pw_basis_k.h"
-#include "use_fft.h"
 #include "wavefunc.h"
 #include "../module_xc/xc_functional.h"
 
@@ -305,7 +304,6 @@ static const char *_hipfftGetErrorString(hipfftResult_t error)
 namespace GlobalC
 {
 extern K_Vectors kv;
-extern Use_FFT UFFT;
 extern Structure_Factor sf;
 extern ModulePW::PW_Basis* rhopw;
 extern ModulePW::PW_Basis_Big* bigpw;

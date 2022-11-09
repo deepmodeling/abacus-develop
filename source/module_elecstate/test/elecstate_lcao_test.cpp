@@ -96,13 +96,7 @@ namespace WF_Local
 }
 
 //mock the unrelated functions in charge.cpp
-#include "src_pw/use_fft.h"
 #include "src_pw/occupy.h"
-namespace GlobalC {Use_FFT UFFT;}
-Use_FFT::Use_FFT(){}
-Use_FFT::~Use_FFT(){}
-void Use_FFT::ToRealSpace(const int &is, const ModuleBase::ComplexMatrix &vg, double *vr, ModulePW::PW_Basis* rho_basis) {return;}
-void Use_FFT::ToRealSpace(const std::complex<double> *vg, double *vr, ModulePW::PW_Basis* rho_basis) {return;};
 bool Occupy::use_gaussian_broadening = false;
 bool Occupy::use_tetrahedron_method = false;
 double Magnetism::get_nelup(void) {return 0;}
@@ -175,7 +169,7 @@ void init()
     tmp2->setbxyz(GlobalC::bigpw->bx,GlobalC::bigpw->by,GlobalC::bigpw->bz);
 
     //GlobalC::ucell.setup(INPUT.latname, INPUT.ntype, INPUT.lmaxmax, INPUT.init_vel, INPUT.fixed_axes);
-    GlobalC::ucell.setup("test", 1, 2, false, "None");
+    GlobalC::ucell.setup("none", 1, 2, false, "None");
     GlobalC::ucell.setup_cell(GlobalC::ORB, GlobalV::global_pseudo_dir, GlobalV::stru_file, GlobalV::ofs_running);
     GlobalC::CHR.cal_nelec();
     int out_mat_r = 0;

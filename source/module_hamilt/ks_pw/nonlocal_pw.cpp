@@ -74,7 +74,7 @@ void Nonlocal<OperatorPW<FPTYPE, Device>>::add_nonlocal_pp(std::complex<FPTYPE> 
         const int current_spin = this->isk[this->ik];
         for (int it = 0; it < this->ucell->ntype; it++)
         {
-            const int nproj = this->ucell->atoms[it].nh;
+            const int nproj = this->ucell->atoms[it].ncpp.nh;
             // denghui replace 2022-10-20
             // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
             nonlocal_op()(
@@ -118,7 +118,7 @@ void Nonlocal<OperatorPW<FPTYPE, Device>>::add_nonlocal_pp(std::complex<FPTYPE> 
             std::complex<FPTYPE> becp1 = std::complex<FPTYPE>(0.0, 0.0);
             std::complex<FPTYPE> becp2 = std::complex<FPTYPE>(0.0, 0.0);
 
-            const int nproj = this->ucell->atoms[it].nh;
+            const int nproj = this->ucell->atoms[it].ncpp.nh;
             for (int ia = 0; ia < this->ucell->atoms[it].na; ia++)
             {
                 // each atom has nproj, means this is with structure factor;

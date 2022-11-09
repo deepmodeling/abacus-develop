@@ -186,7 +186,7 @@ void Stress_Func::stress_nl(ModuleBase::matrix& sigma, const ModuleBase::matrix&
 					int sum = 0;
 					for (int it=0; it<GlobalC::ucell.ntype; it++)
 					{
-						const int Nprojs = GlobalC::ucell.atoms[it].nh;
+						const int Nprojs = GlobalC::ucell.atoms[it].ncpp.nh;
 						for (int ia=0; ia<GlobalC::ucell.atoms[it].na; ia++)
 						{
 							for (int ip1=0; ip1<Nprojs; ip1++)
@@ -295,8 +295,8 @@ void Stress_Func::get_dvnl1
 	{
 		if(GlobalV::test_pp>1) ModuleBase::GlobalFunc::OUT("it",it);
 		// calculate beta in G-space using an interpolation table
-		const int nbeta = GlobalC::ucell.atoms[it].nbeta;
-		const int nh = GlobalC::ucell.atoms[it].nh;
+		const int nbeta = GlobalC::ucell.atoms[it].ncpp.nbeta;
+		const int nh = GlobalC::ucell.atoms[it].ncpp.nh;
 
 		if(GlobalV::test_pp>1) ModuleBase::GlobalFunc::OUT("nbeta",nbeta);
 
@@ -386,8 +386,8 @@ void Stress_Func::get_dvnl2(ModuleBase::ComplexMatrix &vkb,
 	{
 		if(GlobalV::test_pp>1) ModuleBase::GlobalFunc::OUT("it",it);
 		// calculate beta in G-space using an interpolation table
-		const int nbeta = GlobalC::ucell.atoms[it].nbeta;
-		const int nh = GlobalC::ucell.atoms[it].nh;
+		const int nbeta = GlobalC::ucell.atoms[it].ncpp.nbeta;
+		const int nh = GlobalC::ucell.atoms[it].ncpp.nh;
 
 		if(GlobalV::test_pp>1) ModuleBase::GlobalFunc::OUT("nbeta",nbeta);
 

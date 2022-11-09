@@ -1,3 +1,6 @@
+//Obsolete code
+//Please fix it by removing globalc::hm
+
 #include "diago_cg.cuh"
 #include "cuda_runtime.h"
 #include "global.h"
@@ -184,12 +187,13 @@ void Diago_CG_CUDA<T, T2>::diag
 
         CHECK_CUDA(cudaMemcpy(phi_m, &phi[m*dmx], dim*sizeof(T2), cudaMemcpyDeviceToDevice));
 
+        /*obsolete: globalc::hm has been removed
         GlobalC::hm.hpw.s_1psi_cuda(dim, phi_m, sphi);
 
         this->schmit_orth(dim, dmx, m, phi, sphi, phi_m);
 
         GlobalC::hm.hpw.h_1psi_cuda(dim, phi_m, hphi, sphi, vkb_c);
-
+        */
         T em_host = 0;
         em_host = ddot_real(dim, phi_m, hphi);
 
@@ -336,8 +340,9 @@ void Diago_CG_CUDA<T, T2>::orthogonal_gradient( const int &dim, const int &dmx,
     if (test_cg==1) ModuleBase::TITLE("Diago_CG_CUDA","orthogonal_gradient");
     ModuleBase::timer::tick("Diago_CG_CUDA","orth_grad");
 
+    /*obsolete: globalc::hm has been removed
     GlobalC::hm.hpw.s_1psi_cuda(dim, g, sg);
-
+    */
     int inc=1;
 
     // cublasHandle_t handle;
@@ -368,7 +373,9 @@ void Diago_CG_CUDA<T, T2>::orthogonal_gradient( const int &dim, const int &dmx,
     if (test_cg==1) ModuleBase::TITLE("Diago_CG_CUDA","orthogonal_gradient");
     ModuleBase::timer::tick("Diago_CG_CUDA","orth_grad");
 
+    /*obsolete: globalc::hm has been removed
     GlobalC::hm.hpw.s_1psi_cuda(dim, g, sg);
+    */
 
     int inc=1;
 
@@ -481,7 +488,9 @@ bool Diago_CG_CUDA<T, T2>::update_psi(
     int block = (dim + thread - 1) / thread;
     // pw.h_1psi(dim, cg, hcg, scg); // TODO
     // to cpu
+    /*obsolete: globalc::hm has been removed
     GlobalC::hm.hpw.h_1psi_cuda(dim, cg, hcg, scg, vkb_c);
+    */
     // hpsi end
 
     cg_norm = sqrt( this->ddot_real(dim, cg, scg) );
@@ -563,7 +572,9 @@ void Diago_CG_CUDA<T, T2>::schmit_orth
     int block = (dim + thread - 1) / thread;
     kernel_normalization<float, float2><<<block, thread>>>(psi_m, dim, psi_norm);
 
+    /*obsolete: globalc::hm has been removed
     GlobalC::hm.hpw.s_1psi_cuda(dim, psi_m, sphi);
+    */
 
     ModuleBase::timer::tick("Diago_CG_CUDA","schmit_orth");
     CHECK_CUDA(cudaFree(lagrange));
@@ -608,7 +619,9 @@ void Diago_CG_CUDA<T, T2>::schmit_orth
     int block = (dim + thread - 1) / thread;
     kernel_normalization<double, double2><<<block, thread>>>(psi_m, dim, psi_norm);
 
+    /*obsolete: globalc::hm has been removed
     GlobalC::hm.hpw.s_1psi_cuda(dim, psi_m, sphi);
+    */
 
     ModuleBase::timer::tick("Diago_CG_CUDA","schmit_orth");
     CHECK_CUDA(cudaFree(lagrange));

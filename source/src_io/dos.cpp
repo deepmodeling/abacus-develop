@@ -107,7 +107,7 @@ void Dos::calculate_Mulliken(const std::string &fa, Gint_Gamma &gg)
 							delete[] mmm;
 						}
 				
-						ofs << sum << "/" << atom->zv/GlobalV::NSPIN;
+						ofs << sum << "/" << atom->ncpp.zv/GlobalV::NSPIN;
 						ofs << std::endl;
 
 						scht += sum;

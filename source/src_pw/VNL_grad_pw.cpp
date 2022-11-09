@@ -23,8 +23,8 @@ void pseudopot_cell_vnl::initgradq_vnl(const UnitCell_pseudo &cell)
     const double pref = ModuleBase::FOUR_PI / sqrt(cell.omega);
     for (int it = 0;it < ntype;it++)  
 	{
-		const int nbeta = cell.atoms[it].nbeta;
-		int kkbeta = cell.atoms[it].kkbeta;
+		const int nbeta = cell.atoms[it].ncpp.nbeta;
+		int kkbeta = cell.atoms[it].ncpp.kkbeta;
 		if ( (kkbeta%2 == 0) && kkbeta>0 )
 		{
 			kkbeta--;
@@ -35,19 +35,19 @@ void pseudopot_cell_vnl::initgradq_vnl(const UnitCell_pseudo &cell)
 
 		for (int ib = 0;ib < nbeta;ib++)
 		{
-			const int l = cell.atoms[it].lll[ib];
+			const int l = cell.atoms[it].ncpp.lll[ib];
 			for (int iq=0; iq<GlobalV::NQX; iq++)  
 			{
 				const double q = iq * GlobalV::DQ;
-				ModuleBase::Sphbes::dSpherical_Bessel_dx(kkbeta, cell.atoms[it].r, q, l, djl);
+				ModuleBase::Sphbes::dSpherical_Bessel_dx(kkbeta, cell.atoms[it].ncpp.r, q, l, djl);
 
 				for (int ir = 0;ir < kkbeta;ir++)
 				{
-					aux[ir] = cell.atoms[it].betar(ib, ir) *
-					          djl[ir] * pow(cell.atoms[it].r[ir],2);
+					aux[ir] = cell.atoms[it].ncpp.betar(ib, ir) *
+					          djl[ir] * pow(cell.atoms[it].ncpp.r[ir],2);
 				} 
 				double vqint;
-				ModuleBase::Integral::Simpson_Integral(kkbeta, aux, cell.atoms[it].rab, vqint);
+				ModuleBase::Integral::Simpson_Integral(kkbeta, aux, cell.atoms[it].ncpp.rab, vqint);
 				this->tab_dq(it, ib, iq) = vqint * pref;
 			} 
 		} 
@@ -93,8 +93,8 @@ void pseudopot_cell_vnl::getgradq_vnl(const int ik)
 	for(int it = 0;it < GlobalC::ucell.ntype;it++)
 	{
 		// calculate beta in G-space using an interpolation table
-		const int nbeta = GlobalC::ucell.atoms[it].nbeta;
-		const int nh = GlobalC::ucell.atoms[it].nh;
+		const int nbeta = GlobalC::ucell.atoms[it].ncpp.nbeta;
+		const int nh = GlobalC::ucell.atoms[it].ncpp.nh;
         int nb0 = -1;
         for( int ih = 0; ih < nh; ++ih)
         {

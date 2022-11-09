@@ -30,6 +30,8 @@ bool Hamilt::test_exit_cond(const int &ntry, const int &notconv)
     return  ( f1 && ( f2 || f3 ) );
 }
 
+/*
+//not used anymore
 void Hamilt::diagH_subspace(
     const int ik,
     const int nstart,
@@ -53,7 +55,7 @@ void Hamilt::diagH_subspace(
     }
     return;
 }
-
+*/
 
 
 //====================================================================

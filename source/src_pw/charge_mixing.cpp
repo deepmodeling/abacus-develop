@@ -28,27 +28,6 @@ void Charge_Mixing::set_mixing
     return;
 }
 
-    
-// Fourier transform of rho(g) to rho(r) in real space.
-void Charge_Mixing::set_rhor(std::complex<double> *rhog, double *rho)const
-{
-    if (GlobalV::test_charge)ModuleBase::TITLE("Charge_Mixing","set_rhor");
-    for (int is=0; is < GlobalV::NSPIN; is++)
-    {
-		GlobalC::UFFT.ToRealSpace(rhog, rho,GlobalC::rhopw);
-    }
-    return;
-}
-
-
-void Charge_Mixing::set_rhog(double *rho_in, std::complex<double> *rhog_in)const
-{
-    if (GlobalV::test_charge)ModuleBase::TITLE("Charge_Mixing","set_rhog");
-	GlobalC::UFFT.ToReciSpace(rho_in, rhog_in, GlobalC::rhopw);
-    return;
-}
-
-
 void Charge_Mixing::plain_mixing( double *rho, double *rho_save_in ) const
 {
     // if mixing_beta == 1, each electron iteration,
@@ -78,7 +57,7 @@ void Charge_Mixing::plain_mixing( double *rho, double *rho_save_in ) const
 		{
 			Rrho[ir] = rho[ir] - rho_save_in[ir];
 		}
-		set_rhog(Rrho, kerpulay);
+		GlobalC::rhopw->real2recip(Rrho, kerpulay);
 
 		const double fac = this->mixing_gg0;
 		const double gg0 = std::pow(fac * 0.529177 / GlobalC::ucell.tpiba, 2);
@@ -90,7 +69,7 @@ void Charge_Mixing::plain_mixing( double *rho, double *rho_save_in ) const
 
 			kerpulay[ig] = (1 - filter_g[ig]) * kerpulay[ig];
 		}
-		set_rhor(kerpulay, kerpulayR);
+		GlobalC::rhopw->recip2real(kerpulay, kerpulayR);
 
 		for(int ir=0; ir<GlobalC::rhopw->nrxx; ir++)
 		{
@@ -133,7 +112,7 @@ void Charge_Mixing::Kerker_mixing( double *rho, const std::complex<double> *resi
 
 	// mohan modify 2010-02-03, rhog should store the old
 	// charge density. " rhog = FFT^{-1}(rho_save) "
-    this->set_rhog(rho_save, rhog);
+    GlobalC::rhopw->real2recip(rho_save, rhog);
 
     // (2) set up filter
     //const double a = 0.8; // suggested by VASP.
@@ -157,7 +136,7 @@ void Charge_Mixing::Kerker_mixing( double *rho, const std::complex<double> *resi
 
     // (4) transform rhog from G-space to real space.
 	// get the new charge. " FFT(rhog) = rho "
-    this->set_rhor( rhog, rho);
+    GlobalC::rhopw->recip2real( rhog, rho);
 
     // (5)
 	// mohan change the order of (4) (5), 2010-02-05
