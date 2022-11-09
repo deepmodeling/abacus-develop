@@ -15,15 +15,15 @@ public:
 	enum class Method{potrf};	//, syev};
 	void cal_inverse(const Method &method);
 
-	void input(const Tensor<Tdata> &m);
-	void input(const std::vector<std::vector<Tensor<Tdata>>> &ms);
-	Tensor<Tdata> output() const;
-	std::vector<std::vector<Tensor<Tdata>>> output(const std::vector<size_t> &n0, const std::vector<size_t> &n1) const;
+	void input(const RI::Tensor<Tdata> &m);
+	void input(const std::vector<std::vector<RI::Tensor<Tdata>>> &ms);
+	RI::Tensor<Tdata> output() const;
+	std::vector<std::vector<RI::Tensor<Tdata>>> output(const std::vector<size_t> &n0, const std::vector<size_t> &n1) const;
 
 private:
 	void using_potrf();
 	void copy_down_triangle();
-	Tensor<Tdata> A;
+	RI::Tensor<Tdata> A;
 };
 
 #include "Inverse_Matrix.hpp"

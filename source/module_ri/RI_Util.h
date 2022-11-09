@@ -34,13 +34,13 @@ namespace RI_Util
 	}
 
 	template<typename Tdata, typename Tmatrix>
-	Tensor<Tdata>
+	RI::Tensor<Tdata>
 	Matrix_to_Tensor(const Tmatrix &m_old)
 	{
-		Tensor<Tdata> m_new({static_cast<size_t>(m_old.nr), static_cast<size_t>(m_old.nc)});
+		RI::Tensor<Tdata> m_new({static_cast<size_t>(m_old.nr), static_cast<size_t>(m_old.nc)});
 		for(int ir=0; ir<m_old.nr; ++ir)
 			for(int ic=0; ic<m_old.nc; ++ic)
-				m_new(ir,ic) = Global_Func::convert<Tdata>(m_old(ir,ic));
+				m_new(ir,ic) = RI::Global_Func::convert<Tdata>(m_old(ir,ic));
 		return m_new;
 	}
 }

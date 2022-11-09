@@ -11,7 +11,7 @@
 #include "src_pw/global.h"
 
 template<typename Tdata>
-Tensor<Tdata> Matrix_Orbs21::cal_overlap_matrix(
+RI::Tensor<Tdata> Matrix_Orbs21::cal_overlap_matrix(
 	const size_t TA,
 	const size_t TB,
 	const ModuleBase::Vector3<double> &tauA,
@@ -21,18 +21,18 @@ Tensor<Tdata> Matrix_Orbs21::cal_overlap_matrix(
 	const ModuleBase::Element_Basis_Index::IndexLNM &index_B,
 	const Matrix_Order &matrix_order) const
 {
-	Tensor<Tdata> m;
+	RI::Tensor<Tdata> m;
 	const size_t sizeA1 = index_A1[TA].count_size;
 	const size_t sizeA2 = index_A2[TA].count_size;
 	const size_t sizeB = index_B[TB].count_size;
 	switch(matrix_order)
 	{
-		case Matrix_Order::A1A2B: m = Tensor<Tdata>({sizeA1, sizeA2, sizeB});	break;
-		case Matrix_Order::A1BA2: m = Tensor<Tdata>({sizeA1, sizeB, sizeA2});	break;
-		case Matrix_Order::BA1A2: m = Tensor<Tdata>({sizeB, sizeA1, sizeA2});	break;
-		case Matrix_Order::BA2A1: m = Tensor<Tdata>({sizeB, sizeA2, sizeA1});	break;
-		case Matrix_Order::A2A1B: m = Tensor<Tdata>({sizeA2, sizeA1, sizeB});	break;
-		case Matrix_Order::A2BA1: m = Tensor<Tdata>({sizeA2, sizeB, sizeA1});	break;
+		case Matrix_Order::A1A2B: m = RI::Tensor<Tdata>({sizeA1, sizeA2, sizeB});	break;
+		case Matrix_Order::A1BA2: m = RI::Tensor<Tdata>({sizeA1, sizeB, sizeA2});	break;
+		case Matrix_Order::BA1A2: m = RI::Tensor<Tdata>({sizeB, sizeA1, sizeA2});	break;
+		case Matrix_Order::BA2A1: m = RI::Tensor<Tdata>({sizeB, sizeA2, sizeA1});	break;
+		case Matrix_Order::A2A1B: m = RI::Tensor<Tdata>({sizeA2, sizeA1, sizeB});	break;
+		case Matrix_Order::A2BA1: m = RI::Tensor<Tdata>({sizeA2, sizeB, sizeA1});	break;
 		default:	throw std::invalid_argument(std::string(__FILE__)+" line "+std::to_string(__LINE__));
 	}
 
@@ -87,7 +87,7 @@ Tensor<Tdata> Matrix_Orbs21::cal_overlap_matrix(
 }
 
 template<typename Tdata>
-std::array<Tensor<Tdata>,3> Matrix_Orbs21::cal_grad_overlap_matrix(
+std::array<RI::Tensor<Tdata>,3> Matrix_Orbs21::cal_grad_overlap_matrix(
 	const size_t TA,
 	const size_t TB,
 	const ModuleBase::Vector3<double> &tauA,
@@ -97,7 +97,7 @@ std::array<Tensor<Tdata>,3> Matrix_Orbs21::cal_grad_overlap_matrix(
 	const ModuleBase::Element_Basis_Index::IndexLNM &index_B,
 	const Matrix_Order &matrix_order) const
 {
-	std::array<Tensor<Tdata>,3> m;
+	std::array<RI::Tensor<Tdata>,3> m;
 	const size_t sizeA1 = index_A1[TA].count_size;
 	const size_t sizeA2 = index_A2[TA].count_size;
 	const size_t sizeB = index_B[TB].count_size;
@@ -105,12 +105,12 @@ std::array<Tensor<Tdata>,3> Matrix_Orbs21::cal_grad_overlap_matrix(
 	{
 		switch(matrix_order)
 		{
-			case Matrix_Order::A1A2B: m[i] = Tensor<Tdata>({sizeA1, sizeA2, sizeB});	break;
-			case Matrix_Order::A1BA2: m[i] = Tensor<Tdata>({sizeA1, sizeB, sizeA2});	break;
-			case Matrix_Order::BA1A2: m[i] = Tensor<Tdata>({sizeB, sizeA1, sizeA2});	break;
-			case Matrix_Order::BA2A1: m[i] = Tensor<Tdata>({sizeB, sizeA2, sizeA1});	break;
-			case Matrix_Order::A2A1B: m[i] = Tensor<Tdata>({sizeA2, sizeA1, sizeB});	break;
-			case Matrix_Order::A2BA1: m[i] = Tensor<Tdata>({sizeA2, sizeB, sizeA1});	break;
+			case Matrix_Order::A1A2B: m[i] = RI::Tensor<Tdata>({sizeA1, sizeA2, sizeB});	break;
+			case Matrix_Order::A1BA2: m[i] = RI::Tensor<Tdata>({sizeA1, sizeB, sizeA2});	break;
+			case Matrix_Order::BA1A2: m[i] = RI::Tensor<Tdata>({sizeB, sizeA1, sizeA2});	break;
+			case Matrix_Order::BA2A1: m[i] = RI::Tensor<Tdata>({sizeB, sizeA2, sizeA1});	break;
+			case Matrix_Order::A2A1B: m[i] = RI::Tensor<Tdata>({sizeA2, sizeA1, sizeB});	break;
+			case Matrix_Order::A2BA1: m[i] = RI::Tensor<Tdata>({sizeA2, sizeB, sizeA1});	break;
 			default:	throw std::invalid_argument(std::string(__FILE__)+" line "+std::to_string(__LINE__));
 		}
 	}

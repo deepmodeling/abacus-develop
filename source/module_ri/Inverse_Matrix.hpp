@@ -13,7 +13,7 @@
 
 template<typename Tdata>
 void Inverse_Matrix<Tdata>::cal_inverse( const Method &method )
-{	
+{
 	switch(method)
 	{
 		case Method::potrf:		using_potrf();			break;
@@ -32,7 +32,7 @@ void Inverse_Matrix<Tdata>::using_potrf()
 	LapackConnector::potri('U', A.shape[0], A.ptr(), A.shape[0], info);
 	if(info)
 		throw std::range_error("info="+std::to_string(info)+"\n"+std::string(__FILE__)+" line "+std::to_string(__LINE__));
-	
+
 	copy_down_triangle();
 }
 
@@ -41,12 +41,12 @@ void Inverse_Matrix::using_syev( const double &threshold_condition_number )
 {
 	std::vector<double> eigen_value(A.nr);
 	LapackConnector::dsyev('V','U',A,eigen_value.data(),info);
-	
+
 	double eigen_value_max = 0;
 	for( const double &ie : eigen_value )
 		eigen_value_max = std::max( ie, eigen_value_max );
 	const double threshold = eigen_value_max * threshold_condition_number;
-	
+
 	ModuleBase::matrix eA( A.nr, A.nc );
 	int ie=0;
 	for( int i=0; i!=A.nr; ++i )
@@ -60,7 +60,7 @@ void Inverse_Matrix::using_syev( const double &threshold_condition_number )
 */
 
 template<typename Tdata>
-void Inverse_Matrix<Tdata>::input( const Tensor<Tdata> &m )
+void Inverse_Matrix<Tdata>::input( const RI::Tensor<Tdata> &m )
 {
 	assert(m.shape.size()==2);
 	assert(m.shape[0]==m.shape[1]);
@@ -69,7 +69,7 @@ void Inverse_Matrix<Tdata>::input( const Tensor<Tdata> &m )
 
 
 template<typename Tdata>
-void Inverse_Matrix<Tdata>::input(const std::vector<std::vector<Tensor<Tdata>>> &ms)
+void Inverse_Matrix<Tdata>::input(const std::vector<std::vector<RI::Tensor<Tdata>>> &ms)
 {
 	const size_t N0 = ms.size();
 	assert(N0>0);
@@ -95,7 +95,7 @@ void Inverse_Matrix<Tdata>::input(const std::vector<std::vector<Tensor<Tdata>>> 
 
 	const size_t n_all = std::accumulate(n0.begin(), n0.end(), 0);
 	assert(n_all == std::accumulate(n1.begin(), n1.end(), 0));
-	this->A = Tensor<Tdata>({n_all, n_all});
+	this->A = RI::Tensor<Tdata>({n_all, n_all});
 
 	std::vector<size_t> n0_partial(N0+1);
 	std::partial_sum(n0.begin(), n0.end(), n0_partial.begin()+1);
@@ -105,7 +105,7 @@ void Inverse_Matrix<Tdata>::input(const std::vector<std::vector<Tensor<Tdata>>> 
 	for(size_t Im0=0; Im0<N0; ++Im0)
 		for(size_t Im1=0; Im1<N1; ++Im1)
 		{
-			const Tensor<Tdata> &m_tmp = ms.at(Im0).at(Im1);
+			const RI::Tensor<Tdata> &m_tmp = ms.at(Im0).at(Im1);
 			for(size_t im0=0; im0<m_tmp.shape[0]; ++im0)
 				for(size_t im1=0; im1<m_tmp.shape[1]; ++im1)
 					this->A(im0+n0_partial[Im0], im1+n1_partial[Im1]) = m_tmp(im0,im1);
@@ -114,14 +114,14 @@ void Inverse_Matrix<Tdata>::input(const std::vector<std::vector<Tensor<Tdata>>> 
 
 
 template<typename Tdata>
-Tensor<Tdata> Inverse_Matrix<Tdata>::output() const
+RI::Tensor<Tdata> Inverse_Matrix<Tdata>::output() const
 {
 	return this->A.copy();
 }
 
 
 template<typename Tdata>
-std::vector<std::vector<Tensor<Tdata>>>
+std::vector<std::vector<RI::Tensor<Tdata>>>
 Inverse_Matrix<Tdata>::output(const std::vector<size_t> &n0, const std::vector<size_t> &n1) const
 {
 	assert( std::accumulate(n0.begin(), n0.end(), 0) == this->A.shape[0] );
@@ -135,11 +135,11 @@ Inverse_Matrix<Tdata>::output(const std::vector<size_t> &n0, const std::vector<s
 	std::vector<size_t> n1_partial(N1+1);
 	std::partial_sum(n1.begin(), n1.end(), n1_partial.begin()+1);
 
-	std::vector<std::vector<Tensor<Tdata>>> ms(N0, std::vector<Tensor<Tdata>>(N1));
+	std::vector<std::vector<RI::Tensor<Tdata>>> ms(N0, std::vector<RI::Tensor<Tdata>>(N1));
 	for(size_t Im0=0; Im0<N0; ++Im0)
 		for(size_t Im1=0; Im1<N1; ++Im1)
 		{
-			Tensor<Tdata> &m_tmp = ms[Im0][Im1] = Tensor<Tdata>({n0[Im0], n1[Im1]});
+			RI::Tensor<Tdata> &m_tmp = ms[Im0][Im1] = RI::Tensor<Tdata>({n0[Im0], n1[Im1]});
 			for(size_t im0=0; im0<n0[Im0]; ++im0)
 				for(size_t im1=0; im1<n1[Im1]; ++im1)
 					m_tmp(im0,im1) = this->A(im0+n0_partial[Im0], im1+n1_partial[Im1]);

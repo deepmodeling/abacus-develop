@@ -25,6 +25,11 @@
 #include <fstream>
 #include <string>
 
+//test
+#include "/share/home/linpz/ABACUS/LibRI/unittests/global/Tensor-test.h"
+#include "/share/home/linpz/ABACUS/abacus-develop_force/source/src_external/src_test/test_function.h"
+#include <iomanip>
+
 template<typename Tdata>
 void Exx_LRI<Tdata>::init(const MPI_Comm &mpi_comm_in)
 {
@@ -57,7 +62,7 @@ void Exx_LRI<Tdata>::init(const MPI_Comm &mpi_comm_in)
 //	#endif
 
 	const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>
-		abfs_same_atom = Exx_Abfs::Construct_Orbs::abfs_same_atom( this->lcaos, this->info.kmesh_times, this->info.pca_threshold );
+		abfs_same_atom = Exx_Abfs::Construct_Orbs::abfs_same_atom( this->lcaos, this->info.kmesh_times, this->info.pca_threshold );		// Peize Lin test
 	if(this->info.files_abfs.empty())
 		this->abfs = abfs_same_atom;
 	else
@@ -83,6 +88,11 @@ void Exx_LRI<Tdata>::init(const MPI_Comm &mpi_comm_in)
 
 	this->exx_lri.set_csm_threshold(this->info.cauchy_threshold);
 
+//	this->m_abfs_abfs.init( 2, this->kmesh_times, (1+this->info.ccp_rmesh_times)/2.0 );
+//	this->m_abfs_abfs.init_radial( abfs_ccp, abfs );
+//
+//	this->m_abfslcaos_lcaos.init( 1, this->kmesh_times, 1 );
+//	this->m_abfslcaos_lcaos.init_radial( abfs_ccp, lcaos, lcaos );
 	ModuleBase::timer::tick("Exx_LRI", "init");
 }
 
@@ -114,14 +124,14 @@ void Exx_LRI<Tdata>::cal_exx_ions()
 	// std::max(3) for gamma_only, list_A2 should contain cell {-1,0,1}. In the future distribute will be neighbour.
 	const std::array<Tcell,Ndim> period_tmp = {std::max(3,GlobalC::kv.nmp[0]), std::max(3,GlobalC::kv.nmp[1]), std::max(3,GlobalC::kv.nmp[2])};
 	std::pair<std::vector<TA>, std::vector<std::vector<std::pair<TA,std::array<Tcell,Ndim>>>>>
-		list_As = RI::Distribute_Equally::distribute_atoms_periods(this->mpi_comm, atoms, period_tmp, 2);
+		list_As = Distribute_Equally::distribute_atoms_periods(this->mpi_comm, atoms, period_tmp, 2);
 	const std::vector<TA> list_A1 = std::move(list_As.first);
 	const std::vector<TAC> list_A2 = std::move(list_As.second[0]);
 
 	std::map<TA,std::map<TAC,RI::Tensor<Tdata>>> Vs = this->cv.cal_Vs(list_A1, list_A2, {{"writable_Vws",true}});
 	this->exx_lri.set_Vs(std::move(Vs), this->info.V_threshold);
 
-	if(GlobalV::CAL_FORCE || GlobalV::CAL_STRESS)
+	if(this->test_Fexx)
 	{
 		std::array<std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>,3> dVs = this->cv.cal_dVs(list_A1, list_A2, {{"writable_dVws",true}});
 		this->exx_lri.set_dVs(std::move(dVs), this->info.V_threshold);
@@ -129,22 +139,23 @@ void Exx_LRI<Tdata>::cal_exx_ions()
 
 	std::pair<std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>, std::array<std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>,3>>
 		Cs_dCs = this->cv.cal_Cs_dCs(list_A1, list_A2,
-			{{"cal_dC",GlobalV::CAL_FORCE||GlobalV::CAL_STRESS},
-			 {"writable_Cws",true}, {"writable_dCws",true}, {"writable_Vws",false}, {"writable_dVws",false}});
+			{{"cal_dC",this->test_Fexx}, {"writable_Cws",true}, {"writable_dCws",true}, {"writable_Vws",false}, {"writable_dVws",false}});
 	std::map<TA,std::map<TAC,RI::Tensor<Tdata>>> &Cs = std::get<0>(Cs_dCs);
 	this->exx_lri.set_Cs(std::move(Cs), this->info.C_threshold);
 
-	if(GlobalV::CAL_FORCE || GlobalV::CAL_STRESS)
+	if(this->test_Fexx)
 	{
 		std::array<std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>,3> &dCs = std::get<1>(Cs_dCs);
 		this->exx_lri.set_dCs(std::move(dCs), this->info.C_threshold);
 	}
+
 	ModuleBase::timer::tick("Exx_LRI", "cal_exx_ions");
 }
 
 template<typename Tdata>
 void Exx_LRI<Tdata>::cal_exx_elec(const Local_Orbital_Charge &loc, const Parallel_Orbitals &pv)
 {
+	const bool flag_cal_dCV = true;			// tmp
 	ModuleBase::TITLE("Exx_LRI","cal_exx_elec");
 	ModuleBase::timer::tick("Exx_LRI", "cal_exx_elec");
 
@@ -159,7 +170,7 @@ void Exx_LRI<Tdata>::cal_exx_elec(const Local_Orbital_Charge &loc, const Paralle
 	this->Eexx = 0;
 	for(int is=0; is<GlobalV::NSPIN; ++is)
 	{
-		if(!(GlobalV::CAL_FORCE || GlobalV::CAL_STRESS))
+		if(!this->test_Fexx)
 		{
 			this->exx_lri.set_Ds(std::move(Ds[is]), this->info.dm_threshold);
 			this->exx_lri.cal_Hs();
@@ -169,15 +180,20 @@ void Exx_LRI<Tdata>::cal_exx_elec(const Local_Orbital_Charge &loc, const Paralle
 			this->exx_lri.set_Ds(std::move(Ds[is]), this->info.dm_threshold, std::to_string(is));
 			this->exx_lri.cal_Hs({"","",std::to_string(is)});
 		}
-        this->Hexxs[is] = RI::Communicate_Tensors_Map_Judge::comm_map2_first(this->mpi_comm,
-                                                                             std::move(this->exx_lri.Hs),
-                                                                             std::get<0>(judge[is]),
-                                                                             std::get<1>(judge[is]));
-        this->Eexx += this->exx_lri.energy;
-        post_process_Hexx(this->Hexxs[is]);
+		this->Hexxs[is] = Communicate_Tensors_Map_Judge::comm_map2_first(this->mpi_comm, std::move(this->exx_lri.Hs), std::get<0>(judge[is]), std::get<1>(judge[is]));
+		this->Eexx += this->exx_lri.energy;
+		post_process_Hexx(this->Hexxs[is]);
 	}
 	this->Eexx = post_process_Eexx(this->Eexx);
-	ModuleBase::timer::tick("Exx_LRI", "cal_exx_elec");	
+	ModuleBase::timer::tick("Exx_LRI", "cal_exx_elec");
+
+	for(int is=0; is<GlobalV::NSPIN; ++is)
+		if(this->test_Fexx)
+		{
+std::cout<<__FILE__<<__LINE__<<std::endl;
+			this->exx_lri.cal_Fs({"","",std::to_string(is),"",""});
+			GlobalV::ofs_running<<"Fexx\t"<<this->exx_lri.force<<std::endl;
+		}
 }
 
 template<typename Tdata>
@@ -188,7 +204,7 @@ void Exx_LRI<Tdata>::post_process_Hexx( std::map<TA, std::map<TAC, RI::Tensor<Td
 	const std::function<void(RI::Tensor<Tdata>&)>
 		multiply_frac = [&frac](RI::Tensor<Tdata> &t)
 		{ t = t*frac; };
-	RI::Map_Operator::for_each( Hexxs_io, multiply_frac );
+	Map_Operator::for_each( Hexxs_io, multiply_frac );
 }
 
 template<typename Tdata>
@@ -218,27 +234,6 @@ post_process_old
 */
 
 template<typename Tdata>
-void Exx_LRI<Tdata>::cal_exx_force()
-{
-	ModuleBase::TITLE("Exx_LRI","cal_exx_force");
-	ModuleBase::timer::tick("Exx_LRI", "cal_exx_force");
-
-	this->Fexx.create(GlobalC::ucell.nat, Ndim);
-	for(int is=0; is<GlobalV::NSPIN; ++is)
-	{
-		this->exx_lri.cal_Fs({"","",std::to_string(is),"",""});
-		for(std::size_t ix=0; ix<Ndim; ++ix)
-			for(const auto &force_item : this->exx_lri.force[ix])
-				this->Fexx(force_item.first, ix) += std::real(force_item.second);
-	}
-
-	const double SPIN_multiple = std::map<int,double>{{1,2}, {2,1}, {4,1}}.at(GlobalV::NSPIN);				// why?
-	const double frac = -2 * SPIN_multiple;		// why?
-	this->Fexx *= frac;
-	ModuleBase::timer::tick("Exx_LRI", "cal_exx_force");
-}
-
-template<typename Tdata>
 void Exx_LRI<Tdata>::write_Hexxs(const std::string &file_name) const
 {
 	ModuleBase::TITLE("Exx_LRI","write_Hexxs");
@@ -259,5 +254,7 @@ void Exx_LRI<Tdata>::read_Hexxs(const std::string &file_name)
 	iar(this->Hexxs);
 	ModuleBase::timer::tick("Exx_LRI", "read_Hexxs");
 }
+
+
 
 #endif

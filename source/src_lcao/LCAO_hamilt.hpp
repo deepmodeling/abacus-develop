@@ -21,7 +21,7 @@
 // Peize Lin add 2022.09.13
 template<typename Tdata>
 void LCAO_Hamilt::calculate_HR_exx_sparse(const int &current_spin, const double &sparse_threshold,
-	const std::vector< std::map<int, std::map<std::pair<int,std::array<int,3>>, Tensor<Tdata>>>> &Hexxs)
+	const std::vector< std::map<int, std::map<std::pair<int,std::array<int,3>>, RI::Tensor<Tdata>>>> &Hexxs)
 {
 	ModuleBase::TITLE("LCAO_Hamilt","calculate_HR_exx_sparse");
 	ModuleBase::timer::tick("LCAO_Hamilt","calculate_HR_exx_sparse");
@@ -40,7 +40,7 @@ void LCAO_Hamilt::calculate_HR_exx_sparse(const int &current_spin, const double 
 			{
 				const int iat1 = HexxB.first.first;
 				const Abfs::Vector3_Order<int> R = ModuleBase::Vector3<int>(HexxB.first.second);
-				const Tensor<Tdata> &Hexx = HexxB.second;
+				const RI::Tensor<Tdata> &Hexx = HexxB.second;
 				for(size_t iw0=0; iw0<Hexx.shape[0]; ++iw0)
 				{
 					const int iwt0 = RI_2D_Comm::get_iwt(iat0, iw0, is0_b);
@@ -58,7 +58,7 @@ void LCAO_Hamilt::calculate_HR_exx_sparse(const int &current_spin, const double 
 							{
 								auto &HR_sparse_ptr = this->LM->HR_sparse[current_spin][R][iwt0];
 								double &HR_sparse = HR_sparse_ptr[iwt1];
-								HR_sparse += Global_Func::convert<double>(frac * Hexx(iw0,iw1));
+								HR_sparse += RI::Global_Func::convert<double>(frac * Hexx(iw0,iw1));
 								if(std::abs(HR_sparse) <= sparse_threshold)
 									HR_sparse_ptr.erase(iwt1);
 							}
@@ -66,7 +66,7 @@ void LCAO_Hamilt::calculate_HR_exx_sparse(const int &current_spin, const double 
 							{
 								auto &HR_sparse_ptr = this->LM->HR_soc_sparse[R][iwt0];
 								std::complex<double> &HR_sparse = HR_sparse_ptr[iwt1];
-								HR_sparse += Global_Func::convert<std::complex<double>>(frac * Hexx(iw0,iw1));
+								HR_sparse += RI::Global_Func::convert<std::complex<double>>(frac * Hexx(iw0,iw1));
 								if(std::abs(HR_sparse) <= sparse_threshold)
 									HR_sparse_ptr.erase(iwt1);
 							}

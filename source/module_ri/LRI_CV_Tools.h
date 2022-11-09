@@ -14,18 +14,19 @@
 
 namespace LRI_CV_Tools
 {
-	template<typename Tdata> extern Tensor<Tdata>                           cal_I( const Tensor<Tdata>                           &m  );	
-	template<typename Tdata> extern std::vector<std::vector<Tensor<Tdata>>> cal_I( const std::vector<std::vector<Tensor<Tdata>>> &ms );	
+	template<typename Tdata> extern RI::Tensor<Tdata>                           cal_I( const RI::Tensor<Tdata>                           &m  );
+	template<typename Tdata> extern std::vector<std::vector<RI::Tensor<Tdata>>> cal_I( const std::vector<std::vector<RI::Tensor<Tdata>>> &ms );
 
-	template<typename Tdata> inline Tensor<Tdata>               transform_Rm(const Tensor<Tdata>               &V );
-	template<typename Tdata> inline std::array<Tensor<Tdata>,3> transform_Rm(const std::array<Tensor<Tdata>,3> &dV);
-	
+	template<typename Tdata> inline RI::Tensor<Tdata>               transform_Rm(const RI::Tensor<Tdata>               &V );
+	template<typename Tdata> inline std::array<RI::Tensor<Tdata>,3> transform_Rm(const std::array<RI::Tensor<Tdata>,3> &dV);
+
 	template<typename T> inline bool exist(const T &V);
 
 	template<typename T1, typename T2, typename Treturn>
 	extern Treturn mul1(const T1 &t1, const T2 &t2);
 	template<typename T1, typename T2, typename Treturn>
-	extern Treturn mul2(const T1 &mat, const T2 &vec);	
+
+	extern Treturn mul2(const T1 &mat, const T2 &vec);
 
 	//template<typename T, std::size_t N>
 	//std::array<T,N> operator-(const std::array<T,N> &v1, const std::array<T,N> &v2);

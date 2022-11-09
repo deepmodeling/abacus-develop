@@ -21,7 +21,7 @@ namespace RI_Util
 	std::vector<std::array<Tcell,1>>
 	get_Born_von_Karmen_cells( const std::array<Tcell,1> &Born_von_Karman_period )
 	{
-		using namespace Array_Operator;
+		using namespace RI::Array_Operator;
 		std::vector<std::array<Tcell,1>> Born_von_Karman_cells;
 		for( int c=0; c<Born_von_Karman_period[0]; ++c )
 			Born_von_Karman_cells.emplace_back( std::array<Tcell,1>{c} % Born_von_Karman_period );
@@ -32,7 +32,7 @@ namespace RI_Util
 	std::vector<std::array<Tcell,Ndim>>
 	get_Born_von_Karmen_cells( const std::array<Tcell,Ndim> &Born_von_Karman_period )
 	{
-		using namespace Array_Operator;
+		using namespace RI::Array_Operator;
 
 		std::array<Tcell,Ndim-1> sub_Born_von_Karman_period;
 		for(int i=0; i<Ndim-1; ++i)
@@ -50,7 +50,7 @@ namespace RI_Util
 			}
 		return Born_von_Karman_cells;
 	}
-			
+
 	/* example for Ndim=3:
 	template<typename Tcell, size_t Ndim>
 	std::vector<std::array<Tcell,Ndim>>
@@ -64,7 +64,7 @@ namespace RI_Util
 					Born_von_Karman_cells.push_back( std::array<Tcell,Ndim>{ix,iy,iz} % Born_von_Karman_period );
 		return Born_von_Karman_cells;
 	}
-	*/	
+	*/
 }
 
 #endif

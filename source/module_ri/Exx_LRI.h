@@ -30,7 +30,7 @@ private:
 	using TC = std::array<Tcell,Ndim>;
 	using TAC = std::pair<TA,TC>;
 	using TatomR = std::array<double,Ndim>;		// tmp
-	
+
 public:
 	Exx_LRI( const Exx_Info::Exx_Info_RI &info_in ) :info(info_in){}
 
@@ -39,7 +39,7 @@ public:
 	void cal_exx_elec(const Local_Orbital_Charge &loc, const Parallel_Orbitals &pv);
 	void cal_exx_force();
 
-	std::vector< std::map<TA, std::map<TAC, Tensor<Tdata>>>> Hexxs;
+	std::vector< std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>> Hexxs;
 	Tdata Eexx;
 	ModuleBase::matrix Fexx;
 
@@ -55,9 +55,9 @@ private:
 	std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> abfs_ccp;
 
 	LRI_CV<Tdata> cv;
-	Exx<TA,Tcell,Ndim,Tdata> exx_lri;
+	RI::Exx<TA,Tcell,Ndim,Tdata> exx_lri;
 
-	void post_process_Hexx( std::map<TA, std::map<TAC, Tensor<Tdata>>> &Hexxs_io ) const;
+	void post_process_Hexx( std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> &Hexxs_io ) const;
 	Tdata post_process_Eexx( const Tdata &Eexx_in ) const;
 };
 

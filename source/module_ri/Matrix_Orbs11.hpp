@@ -11,7 +11,7 @@
 #include "src_pw/global.h"
 
 template<typename Tdata>
-Tensor<Tdata> Matrix_Orbs11::cal_overlap_matrix(
+RI::Tensor<Tdata> Matrix_Orbs11::cal_overlap_matrix(
 	const size_t TA,
 	const size_t TB,
 	const ModuleBase::Vector3<double> &tauA,
@@ -20,13 +20,13 @@ Tensor<Tdata> Matrix_Orbs11::cal_overlap_matrix(
 	const ModuleBase::Element_Basis_Index::IndexLNM &index_B,
 	const Matrix_Order &matrix_order) const
 {
-	Tensor<Tdata> m;
+	RI::Tensor<Tdata> m;
 	const size_t sizeA = index_A[TA].count_size;
 	const size_t sizeB = index_B[TB].count_size;
 	switch(matrix_order)
 	{
-		case Matrix_Order::AB: m = Tensor<Tdata>({sizeA, sizeB});	break;
-		case Matrix_Order::BA: m = Tensor<Tdata>({sizeB, sizeA});	break;
+		case Matrix_Order::AB: m = RI::Tensor<Tdata>({sizeA, sizeB});	break;
+		case Matrix_Order::BA: m = RI::Tensor<Tdata>({sizeB, sizeA});	break;
 		default:	throw std::invalid_argument(std::string(__FILE__)+" line "+std::to_string(__LINE__));
 	}
 
@@ -65,7 +65,7 @@ Tensor<Tdata> Matrix_Orbs11::cal_overlap_matrix(
 }
 
 template<typename Tdata>
-std::array<Tensor<Tdata>,3> Matrix_Orbs11::cal_grad_overlap_matrix(
+std::array<RI::Tensor<Tdata>,3> Matrix_Orbs11::cal_grad_overlap_matrix(
 	const size_t TA,
 	const size_t TB,
 	const ModuleBase::Vector3<double> &tauA,
@@ -74,15 +74,15 @@ std::array<Tensor<Tdata>,3> Matrix_Orbs11::cal_grad_overlap_matrix(
 	const ModuleBase::Element_Basis_Index::IndexLNM &index_B,
 	const Matrix_Order &matrix_order) const
 {
-	std::array<Tensor<Tdata>,3> m;
+	std::array<RI::Tensor<Tdata>,3> m;
 	const size_t sizeA = index_A[TA].count_size;
 	const size_t sizeB = index_B[TB].count_size;
 	for(int i=0; i<m.size(); ++i)
 	{
 		switch(matrix_order)
 		{
-			case Matrix_Order::AB: m[i] = Tensor<Tdata>({sizeA, sizeB});	break;
-			case Matrix_Order::BA: m[i] = Tensor<Tdata>({sizeB, sizeA});	break;
+			case Matrix_Order::AB: m[i] = RI::Tensor<Tdata>({sizeA, sizeB});	break;
+			case Matrix_Order::BA: m[i] = RI::Tensor<Tdata>({sizeB, sizeA});	break;
 			default:	throw std::invalid_argument(std::string(__FILE__)+" line "+std::to_string(__LINE__));
 		}
 	}

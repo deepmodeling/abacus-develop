@@ -27,7 +27,7 @@ namespace RI_2D_Comm
 
 //public:
 	template<typename Tdata, typename Tmatrix>
-	extern std::vector<std::map<TA,std::map<TAC,Tensor<Tdata>>>>
+	extern std::vector<std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>>
 	split_m2D_ktoR(const std::vector<Tmatrix> &mks_2D, const Parallel_Orbitals &pv);
 
 	// judge[is] = {s0, s1}
@@ -37,8 +37,8 @@ namespace RI_2D_Comm
 	template<typename Tdata>
 	extern void add_Hexx(
 		const int ik,
-		const double alpha, 
-		const std::vector<std::map<TA,std::map<TAC,Tensor<Tdata>>>> &Hs,
+		const double alpha,
+		const std::vector<std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>> &Hs,
 		const Parallel_Orbitals &pv,
 		LCAO_Matrix &lm);
 

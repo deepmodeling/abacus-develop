@@ -27,7 +27,7 @@ private:
 	using TA = int;
 	using TC = std::array<int,3>;
 	using TAC = std::pair<TA,TC>;
-	using Tdata_real = Global_Func::To_Real_t<Tdata>;
+	using Tdata_real = RI::Global_Func::To_Real_t<Tdata>;
 
 public:
 	LRI_CV();
@@ -39,19 +39,20 @@ public:
 		const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> &abfs_ccp_in,
 		const double &kmesh_times,
 		const double &ccp_rmesh_times_in);
-
-	inline std::map<TA,std::map<TAC,Tensor<Tdata>>>
+	inline std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>
 	cal_Vs(
 		const std::vector<TA> &list_A0,
 		const std::vector<TAC> &list_A1,
 		const std::map<std::string,bool> &flags);						// "writable_Vws"
-	inline std::array<std::map<TA,std::map<TAC,Tensor<Tdata>>>,3>
+
+    inline std::array<std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>,3>
 	cal_dVs(
 		const std::vector<TA> &list_A0,
 		const std::vector<TAC> &list_A1,
 		const std::map<std::string,bool> &flags);						// "writable_dVws"
-	std::pair<std::map<TA,std::map<TAC,Tensor<Tdata>>>,
-	          std::array<std::map<TA,std::map<TAC,Tensor<Tdata>>>,3>>
+
+	std::pair<std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>,
+	          std::array<std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>,3>>
 	cal_Cs_dCs(
 		const std::vector<TA> &list_A0,
 		const std::vector<TAC> &list_A1,
@@ -65,10 +66,11 @@ private:
 	ModuleBase::Element_Basis_Index::IndexLNM index_abfs;
 	double ccp_rmesh_times;
 
-	std::map<int,std::map<int,std::map<Abfs::Vector3_Order<double>,Tensor<Tdata>>>> Vws;
-	std::map<int,std::map<int,std::map<Abfs::Vector3_Order<double>,Tensor<Tdata>>>> Cws;
-	std::map<int,std::map<int,std::map<Abfs::Vector3_Order<double>,std::array<Tensor<Tdata>,3>>>> dVws;
-	std::map<int,std::map<int,std::map<Abfs::Vector3_Order<double>,std::array<Tensor<Tdata>,3>>>> dCws;
+	std::map<int,std::map<int,std::map<Abfs::Vector3_Order<double>,RI::Tensor<Tdata>>>> Vws;
+	std::map<int,std::map<int,std::map<Abfs::Vector3_Order<double>,RI::Tensor<Tdata>>>> Cws;
+	std::map<int,std::map<int,std::map<Abfs::Vector3_Order<double>,std::array<RI::Tensor<Tdata>,3>>>> dVws;
+	std::map<int,std::map<int,std::map<Abfs::Vector3_Order<double>,std::array<RI::Tensor<Tdata>,3>>>> dCws;
+
 	pthread_rwlock_t rwlock_Vw;
 	pthread_rwlock_t rwlock_Cw;
 	pthread_rwlock_t rwlock_dVw;
@@ -92,19 +94,21 @@ private:
 		const double &rmesh_times,
 		const T_func_DPcal_data<Tresult> &func_DPcal_data);
 
-	inline Tensor<Tdata>
+	inline RI::Tensor<Tdata>
 	DPcal_V(
 		const int it0,
 		const int it1,
 		const Abfs::Vector3_Order<double> &R,
 		const std::map<std::string,bool> &flags);						// "writable_Vws"
-	inline std::array<Tensor<Tdata>,3>
+
+	inline std::array<RI::Tensor<Tdata>,3>
 	DPcal_dV(
 		const int it0,
 		const int it1,
 		const Abfs::Vector3_Order<double> &R,
 		const std::map<std::string,bool> &flags);						// "writable_dVws"
-	std::pair<Tensor<Tdata>, std::array<Tensor<Tdata>,3>>
+
+	std::pair<RI::Tensor<Tdata>, std::array<RI::Tensor<Tdata>,3>>
 	DPcal_C_dC(
 		const int it0,
 		const int it1,

@@ -10,8 +10,8 @@
 #include "Inverse_Matrix.h"
 
 template<typename Tdata>
-Tensor<Tdata>
-LRI_CV_Tools::cal_I( const Tensor<Tdata> &m )
+RI::Tensor<Tdata>
+LRI_CV_Tools::cal_I( const RI::Tensor<Tdata> &m )
 {
 	Inverse_Matrix<Tdata> I;
 	I.input(m);
@@ -20,8 +20,8 @@ LRI_CV_Tools::cal_I( const Tensor<Tdata> &m )
 }
 
 template<typename Tdata>
-std::vector<std::vector<Tensor<Tdata>>>
-LRI_CV_Tools::cal_I( const std::vector<std::vector<Tensor<Tdata>>> &ms )
+std::vector<std::vector<RI::Tensor<Tdata>>>
+LRI_CV_Tools::cal_I( const std::vector<std::vector<RI::Tensor<Tdata>>> &ms )
 {
 	Inverse_Matrix<Tdata> I;
 	I.input(ms);
@@ -29,22 +29,20 @@ LRI_CV_Tools::cal_I( const std::vector<std::vector<Tensor<Tdata>>> &ms )
 	return I.output({ms[0][0].shape[0], ms[1][0].shape[0]}, {ms[0][0].shape[1], ms[0][1].shape[1]});
 }
 
-
-
 template<typename Tdata>
-Tensor<Tdata> LRI_CV_Tools::transform_Rm(const Tensor<Tdata> &V)
+RI::Tensor<Tdata> LRI_CV_Tools::transform_Rm(const RI::Tensor<Tdata> &V)
 {
 	return V.transpose();
 }
 
 template<typename Tdata>
-std::array<Tensor<Tdata>,3> LRI_CV_Tools::transform_Rm(const std::array<Tensor<Tdata>,3> &dV)
+std::array<RI::Tensor<Tdata>,3> LRI_CV_Tools::transform_Rm(const std::array<RI::Tensor<Tdata>,3> &dV)
 {
-	return std::array<Tensor<Tdata>,3>{-dV[0].transpose(), -dV[1].transpose(), -dV[2].transpose()};
+	return std::array<RI::Tensor<Tdata>,3>{-dV[0].transpose(), -dV[1].transpose(), -dV[2].transpose()};
 }
 
 template<typename Tdata>
-bool LRI_CV_Tools::exist(const Tensor<Tdata> &V)
+bool LRI_CV_Tools::exist(const RI::Tensor<Tdata> &V)
 {
 	return !V.empty();
 }
@@ -60,17 +58,18 @@ bool LRI_CV_Tools::exist(const std::array<T,N> &dV)
 
 
 template<typename Tdata>
-Tensor<Tdata> LRI_CV_Tools::mul1(
-	const Tensor<Tdata> &t1,
-	const Tensor<Tdata> &t2) 
+RI::Tensor<Tdata> LRI_CV_Tools::mul1(
+	const RI::Tensor<Tdata> &t1,
+	const RI::Tensor<Tdata> &t2)
 {
 	const size_t sa0=t1.shape[0], sa1=t2.shape[0], sl0=t2.shape[1], sl1=t2.shape[2];
 	return (t1 * t2.reshape({sa1,sl0*sl1})).reshape({sa0,sl0,sl1});
 }
+
 template<typename T>
 std::array<T,3> LRI_CV_Tools::mul1(
 	const std::array<T,3> &t1,
-	const T &t2) 
+	const T &t2)
 {
 	return std::array<T,3>{
 		mul1(t1[0],t2), mul1(t1[1],t2), mul1(t1[2],t2) };
@@ -79,38 +78,38 @@ std::array<T,3> LRI_CV_Tools::mul1(
 template<typename T>
 std::array<T,3> LRI_CV_Tools::mul1(
 	const T &t1,
-	const std::array<T,3> &t2) 
+	const std::array<T,3> &t2)
 {
 	return std::array<T,3>{
 		mul1(t1,t2[0]), mul1(t1,t2[1]), mul1(t1,t2[2]) };
 }
 */
 
-template<typename Tdata>
-std::vector<Tensor<Tdata>> LRI_CV_Tools::mul2(
-	const std::vector<std::vector<Tensor<Tdata>>> &mat,
-	const std::vector<Tensor<Tdata>> &vec)
+template <typename Tdata>
+std::vector<RI::Tensor<Tdata>> LRI_CV_Tools::mul2(const std::vector<std::vector<RI::Tensor<Tdata>>> &mat,
+                                                  const std::vector<RI::Tensor<Tdata>> &vec)
 {
-	const size_t sa0=vec[0].shape[0], sa1=vec[1].shape[0], sl0=vec[0].shape[1], sl1=vec[0].shape[2];
-	const Tensor<Tdata> vec0=vec[0].reshape({sa0,sl0*sl1}), vec1=vec[1].reshape({sa1,sl0*sl1});
-	return std::vector<Tensor<Tdata>>
-		{( mat[0][0]*vec0 + mat[0][1]*vec1 ).reshape({sa0,sl0,sl1}),
-		 ( mat[1][0]*vec0 + mat[1][1]*vec1 ).reshape({sa1,sl0,sl1})};
+    const size_t sa0 = vec[0].shape[0], sa1 = vec[1].shape[0], sl0 = vec[0].shape[1], sl1 = vec[0].shape[2];
+    const RI::Tensor<Tdata> vec0 = vec[0].reshape({sa0, sl0 * sl1}), vec1 = vec[1].reshape({sa1, sl0 * sl1});
+    return std::vector<RI::Tensor<Tdata>>{(mat[0][0] * vec0 + mat[0][1] * vec1).reshape({sa0, sl0, sl1}),
+                                          (mat[1][0] * vec0 + mat[1][1] * vec1).reshape({sa1, sl0, sl1})};
 }
+
 /*
 template<typename T1, typename T2>
 std::array<T2,3> LRI_CV_Tools::mul2(
 	const std::array<T1,3> &t1,
-	const T2 &t2) 
+	const T2 &t2)
 {
 	return std::array<T2,3>{
 		mul2(t1[0],t2), mul2(t1[1],t2), mul2(t1[2],t2) };
 }
 */
+
 template<typename T1, typename T2>
 std::array<T2,3> LRI_CV_Tools::mul2(
 	const T1 &t1,
-	const std::array<T2,3> &t2) 
+	const std::array<T2,3> &t2)
 {
 	return std::array<T2,3>{
 		mul2(t1,t2[0]), mul2(t1,t2[1]), mul2(t1,t2[2]) };
@@ -159,11 +158,10 @@ std::array<T,N> LRI_CV_Tools::negative(const std::array<T,N> &v_in)
 }
 
 
-
 template<typename Tdata>
-Tensor<Tdata> LRI_CV_Tools::transpose12(const Tensor<Tdata> &c_in)
+RI::Tensor<Tdata> LRI_CV_Tools::transpose12(const RI::Tensor<Tdata> &c_in)
 {
-	Tensor<Tdata> c_out({c_in.shape[0], c_in.shape[2], c_in.shape[1]});
+	RI::Tensor<Tdata> c_out({c_in.shape[0], c_in.shape[2], c_in.shape[1]});
 	for(size_t i0=0; i0<c_in.shape[0]; ++i0)
 		for(size_t i1=0; i1<c_in.shape[1]; ++i1)
 			for(size_t i2=0; i2<c_in.shape[2]; ++i2)

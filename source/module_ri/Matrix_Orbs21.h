@@ -44,7 +44,7 @@ public:
 	enum class Matrix_Order{ A1A2B, A1BA2, A2A1B, A2BA1, BA1A2, BA2A1 };
 
 	template<typename Tdata>
-	Tensor<Tdata> cal_overlap_matrix(
+	RI::Tensor<Tdata> cal_overlap_matrix(
 		const size_t TA,
 		const size_t TB,
 		const ModuleBase::Vector3<double> &tauA,												// unit: ucell.lat0
@@ -54,7 +54,7 @@ public:
 		const ModuleBase::Element_Basis_Index::IndexLNM &index_B,
 		const Matrix_Order &matrix_order) const;
 	template<typename Tdata>
-	std::array<Tensor<Tdata>,3> cal_grad_overlap_matrix(
+	std::array<RI::Tensor<Tdata>,3> cal_grad_overlap_matrix(
 		const size_t TA,
 		const size_t TB,
 		const ModuleBase::Vector3<double> &tauA,												// unit: ucell.lat0

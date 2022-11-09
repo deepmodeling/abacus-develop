@@ -25,6 +25,11 @@
 #include <fstream>
 #include <string>
 
+//test
+#include "/share/home/linpz/ABACUS/LibRI/unittests/global/Tensor-test.h"
+#include "/share/home/linpz/ABACUS/abacus-develop_force/source/src_external/src_test/test_function.h"
+#include <iomanip>
+
 template<typename Tdata>
 void Exx_LRI<Tdata>::init(const MPI_Comm &mpi_comm_in)
 {
@@ -114,7 +119,7 @@ void Exx_LRI<Tdata>::cal_exx_ions()
 	// std::max(3) for gamma_only, list_A2 should contain cell {-1,0,1}. In the future distribute will be neighbour.
 	const std::array<Tcell,Ndim> period_tmp = {std::max(3,GlobalC::kv.nmp[0]), std::max(3,GlobalC::kv.nmp[1]), std::max(3,GlobalC::kv.nmp[2])};
 	std::pair<std::vector<TA>, std::vector<std::vector<std::pair<TA,std::array<Tcell,Ndim>>>>>
-		list_As = RI::Distribute_Equally::distribute_atoms_periods(this->mpi_comm, atoms, period_tmp, 2);
+		list_As = Distribute_Equally::distribute_atoms_periods(this->mpi_comm, atoms, period_tmp, 2);
 	const std::vector<TA> list_A1 = std::move(list_As.first);
 	const std::vector<TAC> list_A2 = std::move(list_As.second[0]);
 
@@ -134,11 +139,17 @@ void Exx_LRI<Tdata>::cal_exx_ions()
 	std::map<TA,std::map<TAC,RI::Tensor<Tdata>>> &Cs = std::get<0>(Cs_dCs);
 	this->exx_lri.set_Cs(std::move(Cs), this->info.C_threshold);
 
+std::ofstream ofs_Vs("exx_Vs_"+std::to_string(GlobalV::MY_RANK));
+ofs_Vs<<Vs<<std::endl;
+std::ofstream ofs_Cs("exx_Cs_"+std::to_string(GlobalV::MY_RANK));
+ofs_Cs<<Cs<<std::endl;
+
 	if(GlobalV::CAL_FORCE || GlobalV::CAL_STRESS)
 	{
 		std::array<std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>,3> &dCs = std::get<1>(Cs_dCs);
 		this->exx_lri.set_dCs(std::move(dCs), this->info.C_threshold);
 	}
+
 	ModuleBase::timer::tick("Exx_LRI", "cal_exx_ions");
 }
 
@@ -155,10 +166,13 @@ void Exx_LRI<Tdata>::cal_exx_elec(const Local_Orbital_Charge &loc, const Paralle
 		? RI_2D_Comm::split_m2D_ktoR<Tdata>(loc.dm_gamma, pv)
 		: RI_2D_Comm::split_m2D_ktoR<Tdata>(loc.dm_k, pv);
 
+static int istep=-1;	++istep;
 	this->Hexxs.resize(GlobalV::NSPIN);
 	this->Eexx = 0;
 	for(int is=0; is<GlobalV::NSPIN; ++is)
 	{
+std::ofstream ofs_Ds("exx_Ds_"+std::to_string(istep)+"_"+std::to_string(is)+"_"+std::to_string(GlobalV::MY_RANK));
+ofs_Ds<<Ds[is];
 		if(!(GlobalV::CAL_FORCE || GlobalV::CAL_STRESS))
 		{
 			this->exx_lri.set_Ds(std::move(Ds[is]), this->info.dm_threshold);
@@ -169,15 +183,14 @@ void Exx_LRI<Tdata>::cal_exx_elec(const Local_Orbital_Charge &loc, const Paralle
 			this->exx_lri.set_Ds(std::move(Ds[is]), this->info.dm_threshold, std::to_string(is));
 			this->exx_lri.cal_Hs({"","",std::to_string(is)});
 		}
-        this->Hexxs[is] = RI::Communicate_Tensors_Map_Judge::comm_map2_first(this->mpi_comm,
-                                                                             std::move(this->exx_lri.Hs),
-                                                                             std::get<0>(judge[is]),
-                                                                             std::get<1>(judge[is]));
-        this->Eexx += this->exx_lri.energy;
-        post_process_Hexx(this->Hexxs[is]);
+		this->Hexxs[is] = Communicate_Tensors_Map_Judge::comm_map2_first(this->mpi_comm, std::move(this->exx_lri.Hs), std::get<0>(judge[is]), std::get<1>(judge[is]));
+		this->Eexx += this->exx_lri.energy;
+		post_process_Hexx(this->Hexxs[is]);
+std::ofstream ofs_Hs("exx_Hs_a2D_"+std::to_string(istep)+"_"+std::to_string(is)+"_"+std::to_string(GlobalV::MY_RANK));
+ofs_Hs<<this->Hexxs[is];
 	}
 	this->Eexx = post_process_Eexx(this->Eexx);
-	ModuleBase::timer::tick("Exx_LRI", "cal_exx_elec");	
+	ModuleBase::timer::tick("Exx_LRI", "cal_exx_elec");
 }
 
 template<typename Tdata>
@@ -188,7 +201,7 @@ void Exx_LRI<Tdata>::post_process_Hexx( std::map<TA, std::map<TAC, RI::Tensor<Td
 	const std::function<void(RI::Tensor<Tdata>&)>
 		multiply_frac = [&frac](RI::Tensor<Tdata> &t)
 		{ t = t*frac; };
-	RI::Map_Operator::for_each( Hexxs_io, multiply_frac );
+	Map_Operator::for_each( Hexxs_io, multiply_frac );
 }
 
 template<typename Tdata>
