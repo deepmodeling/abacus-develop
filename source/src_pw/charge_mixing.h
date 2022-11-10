@@ -33,6 +33,7 @@ class Charge_Mixing
 
 	protected:
 
+    //General parameters
     std::string mixing_mode;
     double mixing_beta;
     int mixing_ndim;

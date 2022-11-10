@@ -13,7 +13,6 @@
 #include "../src_pw/symmetry_rho.h"
 #include "../src_io/print_info.h"
 #include "../src_pw/H_Ewald_pw.h"
-#include "../src_pw/electrons.h"
 //-----force-------------------
 #include "../src_pw/forces.h"
 //-----stress------------------

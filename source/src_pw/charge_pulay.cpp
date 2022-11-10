@@ -202,9 +202,9 @@ void Charge_Pulay::Pulay_mixing(double** rho, double** rho_save)
 	return;		
 }
 
-void Charge_Pulay::reset()		// Peize Lin add 2018-11-01
+void Charge_Pulay::reset(const bool final_scf)		// Peize Lin add 2018-11-01
 {
-	this->new_e_iteration = true;
+	if(!final_scf) this->new_e_iteration = true;
 	
 	irstep = 0;
 	idstep = 0;

@@ -17,6 +17,21 @@ class Charge_Pulay: public Charge_Mixing
 	public:
 	Charge_Pulay();
 	~Charge_Pulay();
+	
+	void reset(const bool final_scf); //if first electronic step, then reset charge mixing
+
+	// mohan add 2010-07-16
+	bool new_e_iteration;
+
+	// normally these parameters will not be used
+	// outside charge mixing, but Exx is using them
+	int get_totstep() const {return totstep;}
+	int get_rstep() const {return rstep;}
+	int get_dstep() const {return dstep;}
+	int get_idstep() const {return idstep;}
+	double* get_alpha() const {return alpha;}
+
+	protected:
 
 	int irstep; //mohan add 2012-02-10
 	int idstep;
@@ -24,13 +39,6 @@ class Charge_Pulay: public Charge_Mixing
 	int rstep; // the record step;
 	int dstep; // Delta step " dstep = rstep-1 ".
 	double* alpha; // - sum (Abar * dRR)
-	
-	void reset(); //if first electronic step, then reset charge mixing
-
-	// mohan add 2010-07-16
-	bool new_e_iteration;
-
-	protected:
 
 	// Pulay mixing method.
 	void Pulay_mixing(double** rho, double**rho_save);

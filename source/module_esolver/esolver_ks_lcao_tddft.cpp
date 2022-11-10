@@ -127,14 +127,7 @@ void ESolver_KS_LCAO_TDDFT::eachiterinit(const int istep, const int iter)
 
     // mohan add 2010-07-16
     // used for pulay mixing.
-    if (iter == 1) GlobalC::CHR_MIX.reset();
-
-    if (GlobalV::FINAL_SCF && iter == 1)
-    {
-        GlobalC::CHR_MIX.irstep = 0;
-        GlobalC::CHR_MIX.idstep = 0;
-        GlobalC::CHR_MIX.totstep = 0;
-    }
+    if (iter == 1) GlobalC::CHR_MIX.reset(GlobalV::FINAL_SCF);
 
     // mohan update 2012-06-05
     GlobalC::en.calculate_harris(1);
