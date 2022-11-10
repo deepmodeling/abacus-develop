@@ -11,7 +11,7 @@
 //--------------Temporary----------------
 #include "../module_base/global_variable.h"
 #include "../src_pw/global.h"
-#include "../src_pw/charge_broyden.h"
+#include "../src_pw/charge_mixing.h"
 #include "../module_base/timer.h"
 //---------------------------------------
 

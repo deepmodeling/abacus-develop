@@ -3,7 +3,7 @@
 
 #include "exx_abfs.h"
 #include "abfs-vector3_order.h"
-#include "src_pw/charge_broyden.h"
+#include "src_pw/charge_mixing.h"
 
 #include <vector>
 #include <map>
@@ -28,17 +28,17 @@ public:
 		
 private:
 	void cal_DMk_mixing(
-		const Charge_Broyden &charge,
+		const Charge_Mixing &charge,
         const ModuleBase::matrix& wg,
         const std::set<std::pair<size_t, size_t>>& atom_pairs,
         std::complex<double>*** wfc_k_grid);
     void plain_mixing(
-		const Charge_Broyden &charge,
+		const Charge_Mixing &charge,
         const ModuleBase::matrix& wg,
         const std::set<std::pair<size_t, size_t>>& atom_pairs,
         std::complex<double>*** wfc_k_grid);
     void pulay_mixing(
-		const Charge_Broyden &charge,
+		const Charge_Mixing &charge,
         const ModuleBase::matrix& wg,
         const std::set<std::pair<size_t, size_t>>& atom_pairs,
         std::complex<double>*** wfc_k_grid);

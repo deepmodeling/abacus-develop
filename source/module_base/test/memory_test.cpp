@@ -113,8 +113,8 @@ TEST_F(MemoryTest, printall)
 {
 	ofs.open("tmp");
 	// total memory is an internal parameter and added inside the class Memory
-	ModuleBase::Memory::record("Charge_Pulay","Rrho",1024*1024,"ModuleBase::Vector3<double>");
-	ModuleBase::Memory::record("Charge_pulay","drho",1024*1024,"AtomLink");
+	ModuleBase::Memory::record("Charge_Mixing","Rrho",1024*1024,"ModuleBase::Vector3<double>");
+	ModuleBase::Memory::record("Charge_Mixing","drho",1024*1024,"AtomLink");
 	ModuleBase::Memory::record("wavefunc","evc",1024*1024,"float");
 	ModuleBase::Memory::print_all(ofs);
 	ofs.close();

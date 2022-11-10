@@ -2,7 +2,7 @@
 
 #include "../src_pw/global.h"
 #include "../module_base/mathzone.h"
-#include "../src_pw/charge_pulay.h"
+#include "../src_pw/charge_mixing.h"
 #include "../module_base/container_operator.h"
 
 #include "../src_external/src_test/src_global/matrix-test.h"
@@ -41,7 +41,7 @@ void Exx_Abfs::DM::cal_DM(
 
 
 void Exx_Abfs::DM::cal_DMk_mixing(
-	const Charge_Broyden &charge,
+	const Charge_Mixing &charge,
 	const ModuleBase::matrix& wg,
     const std::set<std::pair<size_t, size_t>>& atom_pairs,
      std::complex<double>*** wfc_k_grid)
@@ -136,7 +136,7 @@ std::map<size_t,std::map<size_t,std::vector<ModuleBase::ComplexMatrix>>> Exx_Abf
 
 
 void Exx_Abfs::DM::plain_mixing(
-	const Charge_Broyden &charge,
+	const Charge_Mixing &charge,
 	const ModuleBase::matrix& wg,
     const std::set<std::pair<size_t, size_t>>& atom_pairs,
     complex<double>*** wfc_k_grid)
@@ -152,7 +152,7 @@ void Exx_Abfs::DM::plain_mixing(
 
 
 void Exx_Abfs::DM::pulay_mixing(
-	const Charge_Broyden &charge,
+	const Charge_Mixing &charge,
 	const ModuleBase::matrix& wg,
     const std::set<std::pair<size_t, size_t>>& atom_pairs,
     complex<double>*** wfc_k_grid)

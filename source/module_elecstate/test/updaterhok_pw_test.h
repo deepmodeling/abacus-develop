@@ -5,7 +5,7 @@
 #include "src_pw/magnetism.h"
 #include "src_pw/wf_atomic.h"
 #include "src_pw/wavefunc.h"
-#include "src_pw/charge_broyden.h"
+#include "src_pw/charge_mixing.h"
 #include "src_pw/potential.h"
 #include "module_cell/atom_pseudo.h"
 #include "module_cell/atom_spec.h"
@@ -44,10 +44,6 @@ Atom_pseudo::Atom_pseudo(){}
 Atom_pseudo::~Atom_pseudo(){}
 Charge_Mixing::Charge_Mixing(){}
 Charge_Mixing::~Charge_Mixing(){}
-Charge_Pulay::Charge_Pulay(){}
-Charge_Pulay::~Charge_Pulay(){}
-Charge_Broyden::Charge_Broyden(){}
-Charge_Broyden::~Charge_Broyden(){}
 Potential::Potential(){}
 Potential::~Potential(){}
 InfoNonlocal::InfoNonlocal(){}
