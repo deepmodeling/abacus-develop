@@ -44,11 +44,12 @@ void Forces::init(ModuleBase::matrix& force, const ModuleBase::matrix& wg, const
     auto vdw_solver = vdw::make_vdw(GlobalC::ucell, INPUT);
     if (vdw_solver != nullptr)
     {
+        const std::vector<ModuleBase::Vector3<double>> &force_vdw_temp = vdw_solver->get_force();
         for (int iat = 0; iat < GlobalC::ucell.nat; ++iat)
         {
-            force_vdw(iat, 0) = vdw_solver->get_force()[iat].x;
-            force_vdw(iat, 1) = vdw_solver->get_force()[iat].y;
-            force_vdw(iat, 2) = vdw_solver->get_force()[iat].z;
+            force_vdw(iat, 0) = force_vdw_temp[iat].x;
+            force_vdw(iat, 1) = force_vdw_temp[iat].y;
+            force_vdw(iat, 2) = force_vdw_temp[iat].z;
         }
         if (GlobalV::TEST_FORCE)
         {
