@@ -149,7 +149,6 @@ void Nose_Hoover::setup(ModuleESolver::ESolver *p_ensolve)
     ModuleBase::timer::tick("Nose_Hoover", "setup");
 
     MDrun::setup(p_ensolve);
-    // std::cout << std::setprecision(12) << std::setiosflags(ios::fixed) << "t_current = " << t_current * ModuleBase::Hartree_to_K << std::endl;
 
     // determine target temperature
     t_target = MD_func::target_temp(step_ + step_rst_, mdp.md_tfirst, mdp.md_tlast);
@@ -219,7 +218,6 @@ void Nose_Hoover::first_half()
         // update temperature and stress due to velocity rescaling
         t_current = MD_func::current_temp(kinetic, ucell.nat, frozen_freedom_, allmass, vel);
         MD_func::compute_stress(ucell, vel, allmass, virial, stress);
-        // std::cout << std::setprecision(12) << std::setiosflags(ios::fixed) << "t_current = " << t_current * ModuleBase::Hartree_to_K << std::endl;
 
         // couple stress component due to md_pcouple
         couple_stress();
@@ -305,9 +303,9 @@ void Nose_Hoover::write_restart()
 {
     if(!GlobalV::MY_RANK)
     {
-		std::stringstream ssc;
-		ssc << GlobalV::global_out_dir << "Restart_md.dat";
-		std::ofstream file(ssc.str().c_str());
+        std::stringstream ssc;
+        ssc << GlobalV::global_out_dir << "Restart_md.dat";
+        std::ofstream file(ssc.str().c_str());
 
         file << step_ + step_rst_ << std::endl;
         file << mdp.md_tchain << std::endl;
@@ -320,10 +318,33 @@ void Nose_Hoover::write_restart()
         {
             file << v_eta[i] << "   ";
         }
-		file.close();
-	}
+        file << std::endl;
+
+        // npt
+        if(npt_flag)
+        {
+            for(int i=0; i<6; ++i)
+            {
+                file << v_omega[i] << "   ";
+            }
+            file << std::endl;
+
+            file << mdp.md_pchain << std::endl;
+            for(int i=0; i<mdp.md_pchain; ++i)
+            {
+                file << peta[i] << "   ";
+            }
+            file << std::endl;
+            for(int i=0; i<mdp.md_pchain; ++i)
+            {
+                file << v_peta[i] << "   ";
+            }
+            file << std::endl;
+        }
+        file.close();
+    }
 #ifdef __MPI
-	MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Barrier(MPI_COMM_WORLD);
 #endif
 }
 
@@ -331,6 +352,7 @@ void Nose_Hoover::restart()
 {
     bool ok = true;
     bool ok2 = true;
+    bool ok3 = true;
 
     if(!GlobalV::MY_RANK)
     {
@@ -365,6 +387,33 @@ void Nose_Hoover::restart()
                 }
             }
 
+            // npt
+            if(npt_flag)
+            {
+                for(int i=0; i<6; ++i)
+                {
+                    file >> v_omega[i];
+                }
+
+                file >> Mnum;
+                if(Mnum != mdp.md_pchain)
+                {
+                    ok3 = false;
+                }
+
+                if(ok3)
+                {
+                    for(int i=0; i<mdp.md_pchain; ++i)
+                    {
+                        file >> peta[i];
+                    }
+                    for(int i=0; i<mdp.md_pchain; ++i)
+                    {
+                        file >> v_peta[i];
+                    }
+                }
+            }
+
             file.close();
         }
     }
@@ -372,21 +421,32 @@ void Nose_Hoover::restart()
 #ifdef __MPI
     MPI_Bcast(&ok, 1, MPI_INT, 0, MPI_COMM_WORLD);
     MPI_Bcast(&ok2, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&ok3, 1, MPI_INT, 0, MPI_COMM_WORLD);
 #endif
 
     if(!ok)
     {
-        ModuleBase::WARNING_QUIT("mdrun", "no Restart_md.dat !");
+        ModuleBase::WARNING_QUIT("Nose_Hoover", "no Restart_md.dat !");
     }
     if(!ok2)
     {
-        ModuleBase::WARNING_QUIT("mdrun", "Num of NHC is not the same !");
+        ModuleBase::WARNING_QUIT("Nose_Hoover", "Num of thermostats coupled with particles is not the same !");
+    }
+    if(!ok3)
+    {
+        ModuleBase::WARNING_QUIT("Nose_Hoover", "Num of thermostats coupled with barostat is not the same !");
     }
 
 #ifdef __MPI
-	MPI_Bcast(&step_rst_, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&step_rst_, 1, MPI_INT, 0, MPI_COMM_WORLD);
     MPI_Bcast(eta, mdp.md_tchain, MPI_DOUBLE, 0, MPI_COMM_WORLD);
     MPI_Bcast(v_eta, mdp.md_tchain, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    if(npt_flag)
+    {
+        MPI_Bcast(v_omega, 6, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+        MPI_Bcast(peta, mdp.md_pchain, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+        MPI_Bcast(v_peta, mdp.md_pchain, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    }
 #endif
 }
 
@@ -468,8 +528,6 @@ void Nose_Hoover::particle_thermo()
         }
     }
 
-    // std::cout << std::setprecision(12) << std::setiosflags(ios::fixed) << "scale = " << scale << std::endl;
-
     // rescale velocity due to thermostats
     for(int i=0; i<ucell.nat; ++i)
     {
@@ -548,8 +606,6 @@ void Nose_Hoover::baro_thermo()
         }
     }
 
-    // std::cout << std::setprecision(12) << std::setiosflags(ios::fixed) << "scale = " << scale << std::endl;
-
     // rescale lattice due to thermostats
     for(int i=0; i<6; ++i)
     {
@@ -614,8 +670,6 @@ void Nose_Hoover::vel_baro()
     {
         factor[i] = exp(-(v_omega[i] + mtk_term) * mdp.md_dt / 4);
     }
-
-    // std::cout << std::setprecision(12) << std::setiosflags(ios::fixed) << "factor[0] = " << factor[0] << std::endl;
 
     for(int i=0; i<ucell.nat; ++i)
     {
