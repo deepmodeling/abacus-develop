@@ -50,23 +50,27 @@ void Input_Conv::Convert(void)
         GlobalV::global_orbital_dir = INPUT.orbital_dir + "/";
     // GlobalV::global_pseudo_type = INPUT.pseudo_type;
     GlobalC::ucell.setup(INPUT.latname, INPUT.ntype, INPUT.lmaxmax, INPUT.init_vel, INPUT.fixed_axes);
-    if(INPUT.fixed_ibrav && !INPUT.relax_new)
+
+    if(INPUT.calculation=="relax" || INPUT.calculation=="cell-relax")
     {
-        ModuleBase::WARNING_QUIT("Input_Conv","fixed_ibrav only available for relax_new = 1");
+        if(INPUT.fixed_ibrav && !INPUT.relax_new)
+        {
+            ModuleBase::WARNING_QUIT("Input_Conv","fixed_ibrav only available for relax_new = 1");
+        }
+        if(INPUT.latname=="none" && INPUT.fixed_ibrav)
+        {
+            ModuleBase::WARNING_QUIT("Input_Conv","to use fixed_ibrav, latname must be provided");
+        }
+        if(INPUT.calculation == "relax" && INPUT.fixed_atoms)
+        {
+            ModuleBase::WARNING_QUIT("Input_Conv","fixed_atoms is not meant to be used for calculation = relax");
+        }
+        if(INPUT.relax_new && INPUT.relax_method!="cg")
+        {
+            ModuleBase::WARNING_QUIT("Input_Conv","only CG has been implemented for relax_new");
+        }
+        GlobalV::fixed_atoms = INPUT.fixed_atoms;
     }
-    if(INPUT.latname=="none" && INPUT.fixed_ibrav)
-    {
-        ModuleBase::WARNING_QUIT("Input_Conv","to use fixed_ibrav, latname must be provided");
-    }
-    if(INPUT.calculation == "relax" && INPUT.fixed_atoms)
-    {
-        ModuleBase::WARNING_QUIT("Input_Conv","fixed_atoms is not meant to be used for calculation = relax");
-    }
-    if(INPUT.relax_new && INPUT.relax_method!="cg")
-    {
-        ModuleBase::WARNING_QUIT("Input_Conv","only CG has been implemented for relax_new");
-    }
-    GlobalV::fixed_atoms = INPUT.fixed_atoms;
 
     GlobalV::KSPACING = INPUT.kspacing;
     GlobalV::MIN_DIST_COEF = INPUT.min_dist_coef;
