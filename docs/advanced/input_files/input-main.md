@@ -1435,11 +1435,11 @@ This part of variables are used to control the molecular dynamics calculations.
 - **Type**: String
 - **Description**: specify the thermostat based on the velocity Verlet algorithm (useful when `md_type` is set to 0).
 
-  - NVE: NVE ensemble.
-  - Anderson: NVT ensemble with Anderson thermostat, see the parameter `md_nraise`.
-  - Berendsen: NVT ensemble with Berendsen thermostat, see the parameter `md_nraise`.
-  - Rescaling: NVT ensemble with velocity Rescaling method 1, see the parameter `md_tolerance`.
-  - Rescale_v: NVT ensemble with velocity Rescaling method 2, see the parameter `md_nraise`.
+  - nve: NVE ensemble.
+  - anderson: NVT ensemble with Anderson thermostat, see the parameter `md_nraise`.
+  - berendsen: NVT ensemble with Berendsen thermostat, see the parameter `md_nraise`.
+  - rescaling: NVT ensemble with velocity Rescaling method 1, see the parameter `md_tolerance`.
+  - rescale_v: NVT ensemble with velocity Rescaling method 2, see the parameter `md_nraise`.
 
 - **Default**: NVE
 

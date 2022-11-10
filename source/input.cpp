@@ -2324,7 +2324,7 @@ void Input::Bcast()
     Parallel_Common::bcast_double(mdp.md_damp);
     Parallel_Common::bcast_string(mdp.pot_file);
     Parallel_Common::bcast_int(mdp.md_nraise);
-    Parallel_Common::bcast_string(mdp.md_thermostat);
+    Parallel_Common::bcast_double(mdp.md_tolerance);
     // Yu Liu add 2022-05-18
     Parallel_Common::bcast_bool(efield_flag);
     Parallel_Common::bcast_bool(dip_cor_flag);
