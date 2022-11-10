@@ -316,13 +316,13 @@ extern Exx_Lip exx_lip;
 extern pseudopot_cell_vnl ppcell;
 } // namespace GlobalC
 
-#include "../module_cell/unitcell_pseudo.h"
+#include "../module_cell/unitcell.h"
 #include "../module_symmetry/symmetry.h"
 #include "../src_parallel/parallel_grid.h"
 #include "../src_parallel/parallel_kpoints.h"
 namespace GlobalC
 {
-extern UnitCell_pseudo ucell;
+extern UnitCell ucell;
 extern Charge_Broyden CHR;
 extern Potential pot;
 extern ModuleSymmetry::Symmetry symm;

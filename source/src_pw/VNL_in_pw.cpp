@@ -234,7 +234,7 @@ void pseudopot_cell_vnl::getvnl(const int &ik, ModuleBase::ComplexMatrix& vkb_in
 
 
 
-void pseudopot_cell_vnl::init_vnl(UnitCell_pseudo &cell)
+void pseudopot_cell_vnl::init_vnl(UnitCell &cell)
 {
 	ModuleBase::TITLE("pseudopot_cell_vnl","init_vnl");
 	ModuleBase::timer::tick("ppcell_vnl","init_vnl");

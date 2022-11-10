@@ -9,7 +9,7 @@ Velocity::Velocity
     const ModulePW::PW_Basis_K* wfcpw_in,
     const int* isk_in,
     pseudopot_cell_vnl* ppcell_in,
-    const UnitCell_pseudo* ucell_in,
+    const UnitCell* ucell_in,
     const bool nonlocal_in
 )
 {

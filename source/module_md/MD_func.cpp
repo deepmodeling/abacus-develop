@@ -49,7 +49,7 @@ double MD_func::GetAtomKE(
 }
 
 void MD_func::compute_stress(
-		const UnitCell_pseudo &unit_in,
+		const UnitCell &unit_in,
 		const ModuleBase::Vector3<double> *vel, 
 		const double *allmass, 
         const ModuleBase::matrix &virial,
@@ -78,7 +78,7 @@ void MD_func::compute_stress(
 
 // Read Velocity from STRU liuyu 2021-09-24
 void MD_func::ReadVel(
-	const UnitCell_pseudo &unit_in, 
+	const UnitCell &unit_in, 
 	ModuleBase::Vector3<double>* vel)
 {
 	int iat=0;
@@ -157,7 +157,7 @@ void MD_func::RandomVel(
 }
 
 void MD_func::InitVel(
-	const UnitCell_pseudo &unit_in, 
+	const UnitCell &unit_in, 
 	const double& temperature, 
 	double* allmass,
 	int& frozen_freedom,
@@ -183,7 +183,7 @@ void MD_func::InitVel(
 }
 
 void MD_func::InitPos(
-	const UnitCell_pseudo &unit_in, 
+	const UnitCell &unit_in, 
 	ModuleBase::Vector3<double>* pos)
 {
 	int ion=0;
@@ -201,7 +201,7 @@ void MD_func::InitPos(
 void MD_func::force_virial(
 		ModuleESolver::ESolver *p_esolver,
 		const int &istep,
-		UnitCell_pseudo &unit_in,
+		UnitCell &unit_in,
 		double &potential,
 		ModuleBase::Vector3<double> *force,
 		ModuleBase::matrix &virial)
@@ -265,7 +265,7 @@ void MD_func::outStress(const ModuleBase::matrix &virial, const ModuleBase::matr
 }
 
 void MD_func::MDdump(const int &step, 
-        const UnitCell_pseudo &unit_in,
+        const UnitCell &unit_in,
         const ModuleBase::matrix &virial, 
         const ModuleBase::Vector3<double> *force)
 {
@@ -330,7 +330,7 @@ void MD_func::MDdump(const int &step,
     ofs.close();
 }
 
-void MD_func::getMassMbl(const UnitCell_pseudo &unit_in, 
+void MD_func::getMassMbl(const UnitCell &unit_in, 
 			double* allmass, 
 			ModuleBase::Vector3<int> &frozen,
 			ModuleBase::Vector3<int>* ionmbl)

@@ -6,7 +6,7 @@
 class Verlet : public MDrun
 {
 public:
-    Verlet(MD_parameters& MD_para_in, UnitCell_pseudo &unit_in);
+    Verlet(MD_parameters& MD_para_in, UnitCell &unit_in);
     ~Verlet();
 
     void setup(ModuleESolver::ESolver *p_ensolve);

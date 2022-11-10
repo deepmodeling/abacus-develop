@@ -75,7 +75,7 @@ void LCAO_gen_fixedH::calculate_S_no(double* SlocR)
 
 
 //liaochen modify interface 2010-3-22
-void LCAO_gen_fixedH::build_ST_new(const char& dtype, const bool& calc_deri, const UnitCell_pseudo &ucell, double* HSloc)
+void LCAO_gen_fixedH::build_ST_new(const char& dtype, const bool& calc_deri, const UnitCell &ucell, double* HSloc)
 {
     ModuleBase::TITLE("LCAO_gen_fixedH","build_ST_new");
 

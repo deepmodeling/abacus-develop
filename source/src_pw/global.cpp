@@ -18,7 +18,7 @@ Exx_Lip exx_lip(exx_global.info);
 #endif
 #endif
 pseudopot_cell_vnl ppcell;
-UnitCell_pseudo ucell;
+UnitCell ucell;
 Charge_Broyden CHR;
 Potential pot;
 ModuleSymmetry::Symmetry symm;

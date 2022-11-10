@@ -25,7 +25,7 @@ Symmetry::~Symmetry()
 int Symmetry::symm_flag=0;
 
 
-void Symmetry::analy_sys(const UnitCell_pseudo &ucell, std::ofstream &ofs_running)
+void Symmetry::analy_sys(const UnitCell &ucell, std::ofstream &ofs_running)
 {
     if (available == false) return;
     ModuleBase::TITLE("Symmetry","init");
@@ -505,7 +505,7 @@ void Symmetry::lattice_type(
     int &brav,
     double *cel_const,
     std::string &bravname,
-    const UnitCell_pseudo &ucell
+    const UnitCell &ucell
 )
 {
     ModuleBase::TITLE("Symmetry","lattice_type");
@@ -854,7 +854,7 @@ void Symmetry::change_lattice(void)
     return;
 }
 /*
-void Symmetry::pricell(const UnitCell_pseudo &ucell)
+void Symmetry::pricell(const UnitCell &ucell)
 {
     //detect the generating cell (primitive cell) of a supercell
     if (GlobalV::test_symmetry) ModuleBase::TITLE("Symmetry","pricell");
@@ -1524,7 +1524,7 @@ void Symmetry::rho_symmetry( double *rho,
     ModuleBase::timer::tick("Symmetry","rho_symmetry");
 }
 
-void Symmetry::force_symmetry(ModuleBase::matrix &force , double* pos, const UnitCell_pseudo &ucell)   // pengfei 2016-12-20
+void Symmetry::force_symmetry(ModuleBase::matrix &force , double* pos, const UnitCell &ucell)   // pengfei 2016-12-20
 {
 	ModuleBase::TITLE("Symmetry","force_symmetry");
 	double *protpos;
@@ -1604,7 +1604,7 @@ void Symmetry::force_symmetry(ModuleBase::matrix &force , double* pos, const Uni
 	return;
 }
 
-void Symmetry::stress_symmetry(ModuleBase::matrix& sigma, const UnitCell_pseudo &ucell)   //zhengdy added 2017
+void Symmetry::stress_symmetry(ModuleBase::matrix& sigma, const UnitCell &ucell)   //zhengdy added 2017
 {
 	double *tot_sigma, *temp;
 	tot_sigma = new double[9];
