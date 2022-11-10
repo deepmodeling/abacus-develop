@@ -142,7 +142,17 @@ namespace ModuleESolver
         //GlobalC::CHR.allocate(GlobalV::NSPIN, GlobalC::rhopw->nrxx, GlobalC::rhopw->npw);
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT CHARGE");
         // Initializee the potential.
-        GlobalC::pot.allocate(GlobalC::rhopw->nrxx);
+        if(this->pelec->pot == nullptr)
+        {
+            this->pelec->pot = new elecstate::Potential(
+                GlobalC::rhopw,
+                &GlobalC::ucell,
+                &(GlobalC::ppcell.vloc),
+                &(GlobalC::sf.strucFac),
+                &(GlobalC::en.etxc),
+                &(GlobalC::en.vtxc)
+            );
+        }
         
         //temporary
         this->Init_GlobalC(inp,ucell);
@@ -188,7 +198,7 @@ namespace ModuleESolver
         //allocate HamiltPW
         if(this->p_hamilt == nullptr)
         {
-            this->p_hamilt = new hamilt::HamiltPW();
+            this->p_hamilt = new hamilt::HamiltPW(this->pelec->pot);
         }
 
         //----------------------------------------------------------

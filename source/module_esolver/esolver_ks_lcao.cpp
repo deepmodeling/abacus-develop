@@ -174,7 +174,14 @@ void ESolver_KS_LCAO::Init(Input& inp, UnitCell_pseudo& ucell)
         this->pelec->charge->allocate(GlobalV::NSPIN, GlobalC::rhopw->nrxx, GlobalC::rhopw->npw);
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT CHARGE");
         // Initializee the potential.
-        GlobalC::pot.allocate(GlobalC::rhopw->nrxx);
+        this->pelec->pot = new elecstate::Potential(
+            GlobalC::rhopw,
+            &GlobalC::ucell,
+            &(GlobalC::ppcell.vloc),
+            &(GlobalC::sf.strucFac),
+            &(GlobalC::en.etxc),
+            &(GlobalC::en.vtxc)
+        );
 
 #ifdef __DEEPKS
         // wenfei 2021-12-19

@@ -51,6 +51,54 @@ public:
 
 }//namespace elecstate
 
+#include "pot_base.h"
+namespace elecstate
+{
+//new interface for elecstate::Potential
+class PotEfield : public PotBase
+{
+    public:
+    PotEfield(
+        const ModulePW::PW_Basis* rho_basis_in,
+        const UnitCell_pseudo* ucell_in,
+        bool dipole):ucell_(ucell_in)
+    {
+        this->rho_basis_ = rho_basis_in;
+        if(!dipole)
+        {
+            this->fixed_mode = true;
+            this->dynamic_mode = false;
+        }
+        else
+        {
+            this->fixed_mode = false;
+            this->dynamic_mode = true;
+        }
+        
+    };
+
+    void cal_fixed_v(double *vl_pseudo)override{
+        ModuleBase::matrix v_efield(GlobalV::NSPIN, rho_basis_->nrxx);
+        v_efield = Efield::add_efield(*ucell_, const_cast<ModulePW::PW_Basis *>(rho_basis_), GlobalV::NSPIN, nullptr, GlobalC::solvent_model);
+        for (int ir = 0; ir < rho_basis_->nrxx; ++ir)
+        {
+            vl_pseudo[ir] += v_efield(0, ir);
+        }
+    }
+
+    void cal_v_eff(
+        const Charge* chg, 
+        const UnitCell_pseudo* ucell, 
+        ModuleBase::matrix& v_eff)override
+    {
+        v_eff += Efield::add_efield(*ucell, const_cast<ModulePW::PW_Basis *>(rho_basis_), v_eff.nr, chg->rho, GlobalC::solvent_model);
+    }
+
+    private:
+    const UnitCell_pseudo* ucell_ = nullptr;
+};
+
+}//namespace elecstate
 
 
 #endif

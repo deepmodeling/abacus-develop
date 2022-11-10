@@ -32,6 +32,37 @@ public:
     static double block_height;            // height of the block
 };
 
+}
+#include "pot_base.h"
+namespace elecstate
+{
+//new interface for elecstate::Potential
+class PotGate : public PotBase
+{
+    public:
+    PotGate(
+        const ModulePW::PW_Basis* rho_basis_in,
+        const UnitCell_pseudo* ucell_in):ucell_(ucell_in)
+    {
+        this->rho_basis_ = rho_basis_in;
+        this->fixed_mode = true;
+        this->dynamic_mode = false;
+    };
+
+    void cal_fixed_v(double *vl_pseudo)override{
+        Gatefield::add_gatefield(
+            vl_pseudo, 
+            *ucell_, 
+            this->rho_basis_, 
+            true, 
+            true
+        );
+    }
+
+    private:
+    const UnitCell_pseudo* ucell_ = nullptr;
+};
+
 }//namespace elecstate
 
 #endif

@@ -144,7 +144,8 @@ namespace ModuleESolver
                 this->p_hamilt = new hamilt::HamiltLCAO<double>(&(this->UHM.GG),
                                                             &(this->UHM.genH),
                                                             &(this->LM),
-                                                            &(this->LOC));
+                                                            &(this->LOC),
+                                                            this->pelec->pot);
             }
             // multi_k case
             else
@@ -152,7 +153,8 @@ namespace ModuleESolver
                 this->p_hamilt = new hamilt::HamiltLCAO<std::complex<double>>(&(this->UHM.GK),
                                                                         &(this->UHM.genH),
                                                                         &(this->LM),
-                                                                        &(this->LOC));
+                                                                        &(this->LOC),
+                                                                        this->pelec->pot);
             }
         }
 

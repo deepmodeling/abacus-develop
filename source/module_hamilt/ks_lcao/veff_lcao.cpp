@@ -49,14 +49,11 @@ void Veff<OperatorLCAO<double>>::contributeHk(int ik)
     //(1) prepare data for this k point.
     // copy the local potential from array.
     //-----------------------------------------
-
-    for (int ir = 0; ir < GlobalC::rhopw->nrxx; ir++)
+    double* vr_eff1 = &(this->pot->get_effective_v()(GlobalV::CURRENT_SPIN, 0));
+    double* vofk_eff1 = nullptr;
+    if(XC_Functional::get_func_type()==3 || XC_Functional::get_func_type()==5)
     {
-        GlobalC::pot.vr_eff1[ir] = GlobalC::pot.vr_eff(GlobalV::CURRENT_SPIN, ir);
-        if(XC_Functional::get_func_type()==3 || XC_Functional::get_func_type()==5)
-        {
-            GlobalC::pot.vofk_eff1[ir] = GlobalC::pot.vofk(GlobalV::CURRENT_SPIN, ir);
-        }
+        vofk_eff1 = &(this->pot->get_effective_vofk()(GlobalV::CURRENT_SPIN, 0));
     }
 
     //--------------------------------------------
@@ -66,12 +63,12 @@ void Veff<OperatorLCAO<double>>::contributeHk(int ik)
 
     if(XC_Functional::get_func_type()==3 || XC_Functional::get_func_type()==5)
     {
-        Gint_inout inout(GlobalC::pot.vr_eff1, GlobalC::pot.vofk_eff1, this->LM, Gint_Tools::job_type::vlocal_meta);
+        Gint_inout inout(vr_eff1, vofk_eff1, this->LM, Gint_Tools::job_type::vlocal_meta);
         this->GG->cal_vlocal(&inout);
     }
     else
     {
-        Gint_inout inout(GlobalC::pot.vr_eff1, this->LM, Gint_Tools::job_type::vlocal);
+        Gint_inout inout(vr_eff1, this->LM, Gint_Tools::job_type::vlocal);
         this->GG->cal_vlocal(&inout);
     }
 
@@ -87,13 +84,11 @@ void Veff<OperatorLCAO<std::complex<double>>>::contributeHk(int ik)
     //(1) prepare data for this k point.
     // copy the local potential from array.
     //-----------------------------------------
-    for (int ir = 0; ir < GlobalC::rhopw->nrxx; ir++)
+    double* vr_eff1 = &(this->pot->get_effective_v()(GlobalV::CURRENT_SPIN, 0));
+    double* vofk_eff1 = nullptr;
+    if(XC_Functional::get_func_type()==3 || XC_Functional::get_func_type()==5)
     {
-        GlobalC::pot.vr_eff1[ir] = GlobalC::pot.vr_eff(GlobalV::CURRENT_SPIN, ir);
-        if(XC_Functional::get_func_type()==3 || XC_Functional::get_func_type()==5)
-        {
-            GlobalC::pot.vofk_eff1[ir] = GlobalC::pot.vofk(GlobalV::CURRENT_SPIN, ir);
-        }
+        vofk_eff1 = &(this->pot->get_effective_vofk()(GlobalV::CURRENT_SPIN, 0));
     }
 
     //--------------------------------------------
@@ -113,13 +108,13 @@ void Veff<OperatorLCAO<std::complex<double>>>::contributeHk(int ik)
         // rememeber to delete the #include
         if(XC_Functional::get_func_type()==3 || XC_Functional::get_func_type()==5)
         {
-            Gint_inout inout(GlobalC::pot.vr_eff1, GlobalC::pot.vofk_eff1, 0, Gint_Tools::job_type::vlocal_meta);
+            Gint_inout inout(vr_eff1, vofk_eff1, 0, Gint_Tools::job_type::vlocal_meta);
             this->GK->cal_gint(&inout);
         }
         else
         {
             // vlocal = Vh[rho] + Vxc[rho] + Vl(pseudo)
-            Gint_inout inout(GlobalC::pot.vr_eff1, 0, Gint_Tools::job_type::vlocal);
+            Gint_inout inout(vr_eff1, 0, Gint_Tools::job_type::vlocal);
             this->GK->cal_gint(&inout);
         }
 
@@ -129,23 +124,20 @@ void Veff<OperatorLCAO<std::complex<double>>>::contributeHk(int ik)
         {
             for (int is = 1; is < 4; is++)
             {
-                for (int ir = 0; ir < GlobalC::rhopw->nrxx; ir++)
+                vr_eff1 = &(this->pot->get_effective_v()(is, 0));
+                if(XC_Functional::get_func_type()==3 || XC_Functional::get_func_type()==5)
                 {
-                    GlobalC::pot.vr_eff1[ir] = GlobalC::pot.vr_eff(is, ir);
-                    if(XC_Functional::get_func_type()==3 || XC_Functional::get_func_type()==5)
-                    {
-                        GlobalC::pot.vofk_eff1[ir] = GlobalC::pot.vofk(is, ir);
-                    }
+                    vofk_eff1 = &(this->pot->get_effective_vofk()(is, 0));
                 }
                 
                 if(XC_Functional::get_func_type()==3 || XC_Functional::get_func_type()==5)
                 {
-                    Gint_inout inout(GlobalC::pot.vr_eff1, GlobalC::pot.vofk_eff1, is, Gint_Tools::job_type::vlocal_meta);
+                    Gint_inout inout(vr_eff1, vofk_eff1, is, Gint_Tools::job_type::vlocal_meta);
                     this->GK->cal_gint(&inout);
                 }
                 else
                 {
-                    Gint_inout inout(GlobalC::pot.vr_eff1, is, Gint_Tools::job_type::vlocal);
+                    Gint_inout inout(vr_eff1, is, Gint_Tools::job_type::vlocal);
                     this->GK->cal_gint(&inout);
                 }
             }

@@ -15,7 +15,7 @@
 namespace hamilt
 {
 
-HamiltPW::HamiltPW()
+HamiltPW::HamiltPW(elecstate::Potential* pot_in)
 {
     this->classname = "HamiltPW";
     const double tpiba2 = GlobalC::ucell.tpiba2;
@@ -43,18 +43,54 @@ HamiltPW::HamiltPW()
     }
     if (GlobalV::VL_IN_H)
     {
-        Operator<std::complex<double>>* veff = new Veff<OperatorPW<double>>(
-            isk,
-            &(GlobalC::pot.vr_eff),
-            GlobalC::wfcpw
-        );
-        if(this->ops == nullptr)
+        std::vector<string> pot_register_in;
+        if (GlobalV::VION_IN_H)
         {
-            this->ops = veff;
+            pot_register_in.push_back("local");
         }
-        else
+        if (GlobalV::VH_IN_H)
         {
-            this->ops->add(veff);
+            pot_register_in.push_back("hartree");
+        }
+        //no variable can choose xc, maybe it is necessary
+        pot_register_in.push_back("xc");
+        if (GlobalV::imp_sol)
+        {
+            pot_register_in.push_back("surchem");
+        }
+        if (GlobalV::EFIELD_FLAG)
+        {
+            pot_register_in.push_back("efield");
+        }
+        if (GlobalV::GATE_FLAG)
+        {
+            pot_register_in.push_back("gate");
+        }
+        //only Potential is not empty, Veff and Meta are available
+        if(pot_register_in.size()>0)
+        {
+            //register Potential by gathered operator
+            pot_in->pot_register(pot_register_in);
+            Operator<std::complex<double>>* veff = new Veff<OperatorPW<double>>(
+                isk,
+                &(pot_in->get_effective_v()),
+                GlobalC::wfcpw
+            );
+            if(this->ops == nullptr)
+            {
+                this->ops = veff;
+            }
+            else
+            {
+                this->ops->add(veff);
+            }
+            Operator<std::complex<double>>* meta = new Meta<OperatorPW<double>>(
+                tpiba,
+                isk,
+                &(pot_in->get_effective_vofk()),
+                GlobalC::wfcpw
+            );
+            this->ops->add(meta);
         }
     }
     if (GlobalV::VNL_IN_H)
@@ -73,20 +109,7 @@ HamiltPW::HamiltPW()
             this->ops->add(nonlocal);
         }
     }
-    Operator<std::complex<double>>* meta = new Meta<OperatorPW<double>>(
-        tpiba,
-        isk,
-        &GlobalC::pot.vofk,
-        GlobalC::wfcpw
-    );
-    if(this->ops == nullptr)
-    {
-        this->ops = meta;
-    }
-    else
-    {
-        this->ops->add(meta);
-    }
+    return;
 }
 
 HamiltPW::~HamiltPW()

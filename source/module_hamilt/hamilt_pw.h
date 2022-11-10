@@ -2,6 +2,7 @@
 #define HAMILTPW_H
 
 #include "hamilt.h"
+#include "module_elecstate/potentials/potential_new.h"
 
 namespace hamilt
 {
@@ -9,7 +10,7 @@ namespace hamilt
 class HamiltPW : public Hamilt
 {
   public:
-    HamiltPW();
+    HamiltPW(elecstate::Potential* pot_in);
     ~HamiltPW();
 
     // for target K point, update consequence of hPsi() and matrix()
