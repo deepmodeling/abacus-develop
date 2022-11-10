@@ -19,6 +19,7 @@ namespace ModuleESolver
         void cal_Energy(double& etot) override;
         void cal_Force(ModuleBase::matrix& force) override;
         void cal_Stress(ModuleBase::matrix& stress) override;
+        void postprocess() override;
 
 
         double LJ_energy(const double d);

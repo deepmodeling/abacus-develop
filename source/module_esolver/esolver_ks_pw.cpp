@@ -17,6 +17,7 @@
 #include "../src_io/chi0_hilbert.h"
 #include "../src_io/epsilon0_pwscf.h"
 #include "../src_io/epsilon0_vasp.h"
+#include "../module_relax/relax_old/variable_cell.h"    // liuyu 2022-11-07
 //-----force-------------------
 #include "../src_pw/forces.h"
 //-----stress------------------
@@ -82,7 +83,8 @@ namespace ModuleESolver
         // init hamiltonian
         // only allocate in the beginning of ELEC LOOP!
         //=====================
-        GlobalC::hm.hpw.allocate(GlobalC::wf.npwx, GlobalV::NPOL, GlobalC::ppcell.nkb, GlobalC::rhopw->nrxx);
+        //not used anymore
+        //GlobalC::hm.hpw.allocate(GlobalC::wf.npwx, GlobalV::NPOL, GlobalC::ppcell.nkb, GlobalC::rhopw->nrxx);
 
         //=================================
         // initalize local pseudopotential
@@ -113,7 +115,7 @@ namespace ModuleESolver
         //================================
         // Initial start wave functions
         //================================
-        if (GlobalV::NBANDS != 0 || GlobalV::CALCULATION.substr(0,3) != "sto")
+        if (GlobalV::NBANDS != 0 || GlobalV::ESOLVER_TYPE != "sdft")
         // qianrui add temporarily. In the future, wfcinit() should be compatible with cases when NBANDS=0
         {
             GlobalC::wf.wfcinit(this->psi);
@@ -162,13 +164,28 @@ namespace ModuleESolver
     {
         ModuleBase::TITLE("ESolver_KS_PW", "beforescf");
 
+        // Temporary, md and relax will merge later   liuyu add 2022-11-07
+        if(GlobalV::CALCULATION == "md" && istep)
+        {
+            CE.update_istep();
+            CE.save_pos_next(GlobalC::ucell);
+            CE.extrapolate_charge();
+
+            if(GlobalC::ucell.cell_parameter_updated)
+            {
+                Variable_Cell::init_after_vc();
+            }
+
+            GlobalC::pot.init_pot(istep, GlobalC::sf.strucFac);
+        }
+
         if(GlobalV::CALCULATION=="relax" || GlobalV::CALCULATION=="cell-relax")
         {
             if(GlobalC::ucell.ionic_position_updated)
             {
                 GlobalV::ofs_running << " Setup the extrapolated charge." << std::endl;
                 // charge extrapolation if istep>0.
-                CE.update_istep(istep);
+                CE.update_istep();
                 CE.update_all_pos(GlobalC::ucell);
                 CE.extrapolate_charge();
                 CE.save_pos_next(GlobalC::ucell);
@@ -424,14 +441,9 @@ namespace ModuleESolver
 
     void ESolver_KS_PW::afterscf(const int istep)
     {
-        for(int ik=0; ik<this->pelec->ekb.nr; ++ik)
-        {
-            for(int ib=0; ib<this->pelec->ekb.nc; ++ib)
-            {
-                GlobalC::wf.ekb[ik][ib] = this->pelec->ekb(ik, ib);
-                GlobalC::wf.wg(ik, ib) = this->pelec->wg(ik, ib);
-            }
-        }
+        // Temporary liuyu add 2022-11-07
+        CE.update_all_pos(GlobalC::ucell);
+
 #ifdef __LCAO
         if (GlobalC::chi0_hilbert.epsilon)                 // pengfei 2016-11-23
         {
@@ -440,7 +452,7 @@ namespace ModuleESolver
             std::cout << "nomega = " << GlobalC::chi0_hilbert.nomega << std::endl;
             std::cout << "dim = " << GlobalC::chi0_hilbert.dim << std::endl;
             //std::cout <<"oband = "<<GlobalC::chi0_hilbert.oband<<std::endl;
-            GlobalC::chi0_hilbert.Chi();
+            GlobalC::chi0_hilbert.Chi(this->pelec->ekb);
         }
 #endif
 
@@ -451,15 +463,15 @@ namespace ModuleESolver
             std::cout << "nomega = " << GlobalC::chi0_standard.nomega << std::endl;
             std::cout << "dim = " << GlobalC::chi0_standard.dim << std::endl;
             //std::cout <<"oband = "<<GlobalC::chi0_standard.oband<<std::endl;
-            GlobalC::chi0_standard.Chi();
+            GlobalC::chi0_standard.Chi(this->pelec);
         }
         if (GlobalC::epsilon0_pwscf.epsilon)
         {
-            GlobalC::epsilon0_pwscf.Cal_epsilon0();
+            GlobalC::epsilon0_pwscf.Cal_epsilon0(this->pelec);
         }
         if (GlobalC::epsilon0_vasp.epsilon)
         {
-            GlobalC::epsilon0_vasp.cal_epsilon0();
+            GlobalC::epsilon0_vasp.cal_epsilon0(this->pelec);
         }
 
         for (int is = 0; is < GlobalV::NSPIN; is++)
@@ -503,9 +515,9 @@ namespace ModuleESolver
         {
             for (int ib = 0; ib < GlobalV::NBANDS; ++ib)
             {
-                if (abs(GlobalC::wf.ekb[ik][ib]) > 1.0e10)
+                if (abs(this->pelec->ekb(ik, ib)) > 1.0e10)
                 {
-                    GlobalV::ofs_warning << " ik=" << ik + 1 << " ib=" << ib + 1 << " " << GlobalC::wf.ekb[ik][ib] << " Ry" << std::endl;
+                    GlobalV::ofs_warning << " ik=" << ik + 1 << " ib=" << ib + 1 << " " << this->pelec->ekb(ik, ib) << " Ry" << std::endl;
                     wrong = true;
                 }
             }
@@ -590,8 +602,8 @@ namespace ModuleESolver
                 for (int ib = 0; ib < GlobalV::NBANDS; ib++)
                 {
                     ofs << std::setw(8) << ib + 1
-                        << std::setw(15) << GlobalC::wf.ekb[ik][ib] * ModuleBase::Ry_to_eV
-                        << std::setw(15) << GlobalC::wf.wg(ik, ib) << std::endl;
+                        << std::setw(15) << this->pelec->ekb(ik, ib) * ModuleBase::Ry_to_eV
+                        << std::setw(15) << this->pelec->wg(ik, ib) << std::endl;
                 }
                 ofs << std::endl;
             }
@@ -609,13 +621,13 @@ namespace ModuleESolver
     void ESolver_KS_PW::cal_Force(ModuleBase::matrix& force)
     {
         Forces ff;
-        ff.init(force, this->psi);
+        ff.init(force, this->pelec->wg, this->psi);
     }
 
     void ESolver_KS_PW::cal_Stress(ModuleBase::matrix& stress)
     {
         Stress_PW ss;
-        ss.cal_stress(stress, this->psi);
+        ss.cal_stress(stress, this->pelec->wg, this->psi);
 
         //external stress
         double unit_transform = 0.0;
@@ -637,15 +649,19 @@ namespace ModuleESolver
         GlobalV::ofs_running << " --------------------------------------------\n\n" << std::endl;
         
         //print occupation in istate.info
-	    GlobalC::en.print_occ();
+	    GlobalC::en.print_occ(this->pelec);
         // compute density of states
-        GlobalC::en.perform_dos_pw();
+        GlobalC::en.perform_dos_pw(this->pelec);
 
         if(GlobalV::BASIS_TYPE=="pw" && winput::out_spillage) //xiaohui add 2013-09-01
         {
             //std::cout << "\n Output Spillage Information : " << std::endl;
             // calculate spillage value.
 #ifdef __LCAO
+//We are not goint to support lcao_in_paw until
+//the obsolete GlobalC::hm is replaced by the 
+//refactored moeules (psi, hamilt, etc.)
+/*
             if ( winput::out_spillage == 3)
             {
                 GlobalV::BASIS_TYPE="pw"; 
@@ -667,6 +683,7 @@ namespace ModuleESolver
                 //Spillage sp;
                 //sp.get_both(GlobalV::NBANDS, GlobalV::NLOCAL, GlobalC::wf.wanf2, GlobalC::wf.evc);
             }
+*/
 #endif
 
             // output overlap
@@ -685,7 +702,7 @@ namespace ModuleESolver
 
         if(INPUT.cal_cond)
 	    {
-            this->KG(INPUT.cond_nche,INPUT.cond_fwhm,INPUT.cond_wcut,INPUT.cond_dw,INPUT.cond_wenlarge);
+            this->KG(INPUT.cond_nche,INPUT.cond_fwhm,INPUT.cond_wcut,INPUT.cond_dw,INPUT.cond_wenlarge, this->pelec->wg);
         }
     }
 
@@ -720,15 +737,6 @@ namespace ModuleESolver
         this->hamilt2estates(diag_ethr);
         this->pelec->calculate_weights();
 
-        for(int ik=0; ik<this->pelec->ekb.nr; ++ik)
-        {
-            for(int ib=0; ib<this->pelec->ekb.nc; ++ib)
-            {
-                GlobalC::wf.ekb[ik][ib] = this->pelec->ekb(ik, ib);
-                GlobalC::wf.wg(ik, ib) = this->pelec->wg(ik, ib);
-            }
-        }
-
         GlobalV::ofs_running << "\n End of Band Structure Calculation \n" << std::endl;
 
 
@@ -752,7 +760,7 @@ namespace ModuleESolver
                 GlobalV::ofs_running << " spin" << GlobalC::kv.isk[ik]+1
                 << "_final_band " << ib+1
                 << " " << this->pelec->ekb(ik, ib) * ModuleBase::Ry_to_eV
-                << " " << GlobalC::wf.wg(ik, ib)*GlobalC::kv.nks << std::endl;
+                << " " << this->pelec->wg(ik, ib)*GlobalC::kv.nks << std::endl;
             }
             GlobalV::ofs_running << std::endl;
         }
@@ -761,7 +769,7 @@ namespace ModuleESolver
         if(INPUT.towannier90)
         {
             toWannier90 myWannier(GlobalC::kv.nkstot,GlobalC::ucell.G);
-            myWannier.init_wannier(this->psi);
+            myWannier.init_wannier(this->pelec->ekb, this->psi);
         }
 
         //=======================================================

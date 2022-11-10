@@ -58,8 +58,6 @@ UnitCell_pseudo::UnitCell_pseudo(){}
 UnitCell_pseudo::~UnitCell_pseudo(){}
 Parallel_Grid::Parallel_Grid(){}
 Parallel_Grid::~Parallel_Grid(){}
-Use_FFT::Use_FFT(){}
-Use_FFT::~Use_FFT(){}
 WF_igk::WF_igk(){}
 WF_igk::~WF_igk(){}
 WF_atomic::WF_atomic(){}
@@ -74,8 +72,6 @@ pseudopot_cell_vl::pseudopot_cell_vl(){}
 pseudopot_cell_vl::~pseudopot_cell_vl(){}
 pseudopot_cell_vnl::pseudopot_cell_vnl(){}
 pseudopot_cell_vnl::~pseudopot_cell_vnl(){}
-Hamilt_PW::Hamilt_PW(){}
-Hamilt_PW::~Hamilt_PW(){}
 Hamilt::Hamilt(){}
 Hamilt::~Hamilt(){}
 energy::energy(){}
@@ -98,12 +94,11 @@ namespace GlobalC
 {
 K_Vectors kv;
 wavefunc wf;
-Charge_Broyden CHR;
+Charge CHR;
 Potential pot;
 UnitCell_pseudo ucell;
 ModuleSymmetry::Symmetry symm;
 Parallel_Grid Pgrid;
-Use_FFT UFFT;
 Structure_Factor sf;
 ModulePW::PW_Basis* rhopw;
 ModulePW::PW_Basis_K* wfcpw;
@@ -115,15 +110,6 @@ Restart restart;
 } // namespace GlobalC
 Input INPUT;
 
-/*
-void Occupy::calculate_weights()
-{
-	GlobalC::wf.wg(0,0)=2.0;
-	GlobalC::wf.wg(0,1)=0.0;
-	GlobalC::wf.wg(0,2)=0.0;
-	GlobalC::wf.wg(0,3)=0.0;
-}
-*/
 
 void Restart::load_disk(const std::string mode, const int i) const {}
 
@@ -131,13 +117,7 @@ void Restart::load_disk(const std::string mode, const int i) const {}
 psi::Psi<complex<double>>* wavefunc::allocate(const int nks)
 {
 	this->npwx = GlobalC::wfcpw->npwk_max;
-	this->wg.create(nks,GlobalV::NBANDS);
-	this->ekb = new double*[nks];
 	psi::Psi<std::complex<double>>* psi = new psi::Psi<std::complex<double>>(nks, GlobalV::NBANDS,npwx, nullptr);
-	for (int ik=0;ik<nks;ik++)
-	{
-		this->ekb[ik] = new double[GlobalV::NBANDS];
-	}
 	return psi;
 }
 
@@ -218,8 +198,6 @@ bool Charge::read_rho(const int &is, const std::string &fn, double* rho) //add b
 	return true;
 }
 
-void Use_FFT::ToRealSpace(int const&is, const ModuleBase::ComplexMatrix &vg, double*vr, ModulePW::PW_Basis* rho_basis){}
-void Use_FFT::ToRealSpace(const std::complex<double> *vg, double*vr, ModulePW::PW_Basis* rho_basis){}
 //bool Occupy::use_gaussian_broadening=false;
 //bool Occupy::use_tetrahedron_method = false;
 double Magnetism::get_nelup(){return 0;}

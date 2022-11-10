@@ -215,36 +215,36 @@ void UnitCell_pseudo::setup_cell(
 
 			ofs << "<HEADER>" << std::endl;
 			ofs << std::setw(10) << atom->label << "\t" << "label" << std::endl;
-			ofs << std::setw(10) << atom->pp_type << "\t" << "pseudopotential type" << std::endl;
-			ofs << std::setw(10) << atom->lmax << "\t" << "lmax" << std::endl;
+			ofs << std::setw(10) << atom->ncpp.pp_type << "\t" << "pseudopotential type" << std::endl;
+			ofs << std::setw(10) << atom->ncpp.lmax << "\t" << "lmax" << std::endl;
 			ofs << "</HEADER>" << std::endl;
 
 			ofs << "\n<DIJ>" << std::endl;
-			ofs << std::setw(10) << atom->nbeta << "\t" << "nummber of projectors." << std::endl;
+			ofs << std::setw(10) << atom->ncpp.nbeta << "\t" << "nummber of projectors." << std::endl;
 			
-			for(int ib=0; ib<atom->nbeta; ib++)
+			for(int ib=0; ib<atom->ncpp.nbeta; ib++)
 			{
-				for(int ib2=0; ib2<atom->nbeta; ib2++)
+				for(int ib2=0; ib2<atom->ncpp.nbeta; ib2++)
 				{
-					ofs<<std::setw(10) << atom->lll[ib] 
-						<< " " << atom->lll[ib2]
-						<< " " << atom->dion(ib,ib2)<<std::endl;
+					ofs<<std::setw(10) << atom->ncpp.lll[ib] 
+						<< " " << atom->ncpp.lll[ib2]
+						<< " " << atom->ncpp.dion(ib,ib2)<<std::endl;
 				}
 			}
 			ofs << "</DIJ>" << std::endl;
 			
-			for(int i=0; i<atom->nbeta; i++)
+			for(int i=0; i<atom->ncpp.nbeta; i++)
 			{
 				ofs << "<PP_BETA>" << std::endl;
 				ofs << std::setw(10) << i << "\t" << "the index of projectors." <<std::endl;
-				ofs << std::setw(10) << atom->lll[i] << "\t" << "the angular momentum." <<std::endl;
+				ofs << std::setw(10) << atom->ncpp.lll[i] << "\t" << "the angular momentum." <<std::endl;
 
 				// mohan add
 				// only keep the nonzero part.
-				int cut_mesh = atom->mesh; 
-				for(int j=atom->mesh-1; j>=0; --j)
+				int cut_mesh = atom->ncpp.mesh; 
+				for(int j=atom->ncpp.mesh-1; j>=0; --j)
 				{
-					if( abs( atom->betar(i,j) ) > 1.0e-10 )
+					if( abs( atom->ncpp.betar(i,j) ) > 1.0e-10 )
 					{
 						cut_mesh = j; 
 						break;
@@ -257,9 +257,9 @@ void UnitCell_pseudo::setup_cell(
 
 				for(int j=0; j<cut_mesh; ++j)
 				{
-					ofs << std::setw(15) << atom->r[j]
-						<< std::setw(15) << atom->betar(i, j)
-						<< std::setw(15) << atom->rab[j] << std::endl;
+					ofs << std::setw(15) << atom->ncpp.r[j]
+						<< std::setw(15) << atom->ncpp.betar(i, j)
+						<< std::setw(15) << atom->ncpp.rab[j] << std::endl;
 				}
 				ofs << "</PP_BETA>" << std::endl;
 			}
@@ -274,13 +274,13 @@ void UnitCell_pseudo::setup_cell(
 
 	for(int it=0; it<ntype; it++)
 	{
-		if(atoms[0].xc_func !=atoms[it].xc_func)
+		if(atoms[0].ncpp.xc_func !=atoms[it].ncpp.xc_func)
 		{
 			GlobalV::ofs_warning << "\n type " << atoms[0].label << " functional is " 
-			<< atoms[0].xc_func;
+			<< atoms[0].ncpp.xc_func;
 			
 			GlobalV::ofs_warning << "\n type " << atoms[it].label << " functional is " 
-			<< atoms[it].xc_func << std::endl;
+			<< atoms[it].ncpp.xc_func << std::endl;
 			
 			ModuleBase::WARNING_QUIT("setup_cell","All DFT functional must consistent.");
 		}
@@ -300,9 +300,9 @@ void UnitCell_pseudo::setup_cell(
 		int abtype = 0;
 		for(int it=0; it<ntype; it++)
 		{
-			if(ModuleBase::MinZval.find(atoms[it].psd) != ModuleBase::MinZval.end())
+			if(ModuleBase::MinZval.find(atoms[it].ncpp.psd) != ModuleBase::MinZval.end())
 			{
-				if(atoms[it].zv > ModuleBase::MinZval.at(atoms[it].psd))
+				if(atoms[it].ncpp.zv > ModuleBase::MinZval.at(atoms[it].ncpp.psd))
 				{
 					abtype += 1;
 					if(abtype == 1)
@@ -310,10 +310,10 @@ void UnitCell_pseudo::setup_cell(
 						std::cout << "\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%"<<std::endl;
 						log << "\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%"<<std::endl;
 					}
-					std::cout<<" Warning: number valence electrons > " << ModuleBase::MinZval.at(atoms[it].psd);
-					std::cout<<" for " << atoms[it].psd << ": " << ModuleBase::EleConfig.at(atoms[it].psd) << std::endl;
-					log << " Warning: number valence electrons > " << ModuleBase::MinZval.at(atoms[it].psd);
-					log << " for " << atoms[it].psd << ": " << ModuleBase::EleConfig.at(atoms[it].psd) << std::endl;
+					std::cout<<" Warning: number valence electrons > " << ModuleBase::MinZval.at(atoms[it].ncpp.psd);
+					std::cout<<" for " << atoms[it].ncpp.psd << ": " << ModuleBase::EleConfig.at(atoms[it].ncpp.psd) << std::endl;
+					log << " Warning: number valence electrons > " << ModuleBase::MinZval.at(atoms[it].ncpp.psd);
+					log << " for " << atoms[it].ncpp.psd << ": " << ModuleBase::EleConfig.at(atoms[it].ncpp.psd) << std::endl;
 				}
 			}
 		}
@@ -590,11 +590,11 @@ void UnitCell_pseudo::cal_nwfc(std::ofstream &log)
 	this->lmax_ppwf = 0;
 	for(int it=0; it< ntype; it++)
 	{
-		for(int ic=0; ic<atoms[it].nchi; ic++)
+		for(int ic=0; ic<atoms[it].ncpp.nchi; ic++)
 		{
-			if( lmax_ppwf < atoms[it].lchi[ic] )
+			if( lmax_ppwf < atoms[it].ncpp.lchi[ic] )
 			{
-				this->lmax_ppwf = atoms[it].lchi[ic]; 
+				this->lmax_ppwf = atoms[it].ncpp.lchi[ic]; 
 			}
 		}
 	}
@@ -643,7 +643,7 @@ void UnitCell_pseudo::cal_meshx()
 	this->meshx = 0;
 	for (int it = 0;it < this->ntype;it++)
 	{
-		const int mesh = this->atoms[it].msh;
+		const int mesh = this->atoms[it].ncpp.msh;
 		if (mesh > this->meshx)
 		{
 			this->meshx = mesh;
@@ -670,25 +670,25 @@ void UnitCell_pseudo::cal_natomwfc(std::ofstream &log)
 		// Use pseudo-atomic orbitals
 		//============================
 		int tmp=0;
-		for (int l = 0;l < atoms[it].nchi;l++)
+		for (int l = 0;l < atoms[it].ncpp.nchi;l++)
 		{
-			if (atoms[it].oc[l] >= 0)
+			if (atoms[it].ncpp.oc[l] >= 0)
 			{
 				if(GlobalV::NSPIN==4)
 				{
-					if(atoms[it].has_so)
+					if(atoms[it].ncpp.has_so)
 					{
-						tmp += 2 * atoms[it].lchi[l];
-						if(fabs(atoms[it].jchi[l] - atoms[it].lchi[l] - 0.5)<1e-6)
+						tmp += 2 * atoms[it].ncpp.lchi[l];
+						if(fabs(atoms[it].ncpp.jchi[l] - atoms[it].ncpp.lchi[l] - 0.5)<1e-6)
 						tmp += 2 ;
 					}
 					else
 					{
-						tmp += 2 * (2 * atoms[it].lchi[l] + 1);
+						tmp += 2 * (2 * atoms[it].ncpp.lchi[l] + 1);
 					}
 				}
 				else
-					tmp += 2 * atoms[it].lchi[l] + 1;
+					tmp += 2 * atoms[it].ncpp.lchi[l] + 1;
 			}
 		}
 		natomwfc += tmp * atoms[it].na;
@@ -703,6 +703,7 @@ void UnitCell_pseudo::cal_natomwfc(std::ofstream &log)
 //20180515
 void UnitCell_pseudo::setup_cell_after_vc(std::ofstream &log)
 {
+	ModuleBase::TITLE("UnitCell_pseudo","setup_cell_after_vc");
     assert(lat0 > 0.0);
     this->omega = abs(latvec.Det()) * this->lat0 * lat0 * lat0;
     if(this->omega <= 0)
@@ -792,6 +793,20 @@ void UnitCell_pseudo::setup(const std::string &latname_in,
 		this->lc[0] = 1;
 		this->lc[1] = 1;
 		this->lc[2] = 1;
+		if(!GlobalV::relax_new)
+		{
+			ModuleBase::WARNING_QUIT("Input","there are bugs in the old implementation; set relax_new to be 1 for fixed_volume relaxation");
+		}
+	}
+	else if (fixed_axes_in == "shape")
+	{
+		if(!GlobalV::relax_new)
+		{
+			ModuleBase::WARNING_QUIT("Input","set relax_new to be 1 for fixed_shape relaxation");
+		}
+		this->lc[0] = 1;
+		this->lc[1] = 1;
+		this->lc[2] = 1;
 	}
 	else if (fixed_axes_in == "a")
 	{
@@ -837,7 +852,7 @@ void UnitCell_pseudo::setup(const std::string &latname_in,
 	}
 	else
 	{
-		ModuleBase::WARNING_QUIT("Input", "fixed_axes should be None,a,b,c,ab,ac,bc or abc!");
+		ModuleBase::WARNING_QUIT("Input", "fixed_axes should be None,volume,shape,a,b,c,ab,ac,bc or abc!");
 	}
 	return;
 }
@@ -855,7 +870,7 @@ void UnitCell_pseudo::check_structure(double factor)
 	bool no_warning = true;
 	for (int it1 = 0;it1 < ntype; it1++)
 	{ 
-		std::string symbol1 = this->atoms[it1].psd;
+		std::string symbol1 = this->atoms[it1].ncpp.psd;
 		double symbol1_covalent_radius;
 		if (ModuleBase::CovalentRadius.find(symbol1) != ModuleBase::CovalentRadius.end())
 		{
@@ -879,7 +894,7 @@ void UnitCell_pseudo::check_structure(double factor)
 
 			for(int it2=0;it2 <ntype;it2++)
 			{
-				std::string symbol2 = this->atoms[it2].psd;
+				std::string symbol2 = this->atoms[it2].ncpp.psd;
 				double symbol2_covalent_radius;
 				if (ModuleBase::CovalentRadius.find(symbol2) != ModuleBase::CovalentRadius.end())
 				{
@@ -964,5 +979,198 @@ void UnitCell_pseudo::check_structure(double factor)
 		}
 		
 		
+	}
+}
+
+void UnitCell_pseudo::remake_cell()
+{
+	ModuleBase::TITLE("UnitCell_pseudo","rmake_cell");
+
+	//The idea is as follows: for each type of lattice, first calculate
+	//from current latvec the lattice parameters, then use the parameters
+	//to reconstruct latvec
+
+	if(latName == "none")
+	{
+		ModuleBase::WARNING_QUIT("UnitCell_pseudo","to use fixed_ibrav, latname must be provided");
+	}
+	else if(latName == "sc") //ibrav = 1
+	{
+		double celldm = std::sqrt(pow(latvec.e11,2)+pow(latvec.e12,2)+pow(latvec.e13,2));
+		
+		latvec.Zero();
+		latvec.e11 = latvec.e22 = latvec.e33 = celldm;
+	}
+	else if(latName == "fcc") //ibrav = 2
+	{
+		double celldm = std::sqrt(pow(latvec.e11,2)+pow(latvec.e12,2)+pow(latvec.e13,2)) / std::sqrt(2.0);
+		
+		latvec.e11 =-celldm; latvec.e12 = 0.0;    latvec.e13 = celldm;
+		latvec.e21 = 0.0;    latvec.e22 = celldm; latvec.e23 = celldm;
+		latvec.e31 =-celldm; latvec.e32 = celldm; latvec.e33 = 0.0;
+	}
+	else if(latName == "bcc") //ibrav = 3
+	{
+		double celldm = std::sqrt(pow(latvec.e11,2)+pow(latvec.e12,2)+pow(latvec.e13,2)) / std::sqrt(3.0);
+		
+		latvec.e11 = celldm; latvec.e12 = celldm; latvec.e13 = celldm;
+		latvec.e21 =-celldm; latvec.e22 = celldm; latvec.e23 = celldm;
+		latvec.e31 =-celldm; latvec.e32 =-celldm; latvec.e33 = celldm;
+	}
+	else if(latName == "hexagonal") //ibrav = 4
+	{
+		double celldm1 = std::sqrt(pow(latvec.e11,2)+pow(latvec.e12,2)+pow(latvec.e13,2));
+		double celldm3 = std::sqrt(pow(latvec.e31,2)+pow(latvec.e32,2)+pow(latvec.e33,2));
+		double e22 = sqrt(3.0) / 2.0;
+
+		latvec.e11 = celldm1;     latvec.e12 = 0.0;           latvec.e13 = 0.0;
+		latvec.e21 =-0.5*celldm1; latvec.e22 = celldm1 * e22; latvec.e23 = 0.0;
+		latvec.e31 = 0.0;         latvec.e32 = 0.0;	          latvec.e33 = celldm3;
+	}
+	else if(latName == "trigonal") //ibrav = 5
+	{
+		double celldm1  = std::sqrt(pow(latvec.e11,2)+pow(latvec.e12,2)+pow(latvec.e13,2));
+		double celldm2  = std::sqrt(pow(latvec.e21,2)+pow(latvec.e22,2)+pow(latvec.e23,2));
+		double celldm12 = (latvec.e11 * latvec.e21 + latvec.e12 * latvec.e22 + latvec.e13 * latvec.e23);
+		double cos12 = celldm12 / celldm1 / celldm2;
+
+		if(cos12 <= 0.5 || cos12 >= 1.0)
+		{
+			ModuleBase::WARNING_QUIT("unitcell_pseudo","wrong cos12!");
+		}
+		double t1 = sqrt(1.0 + 2.0*cos12);
+		double t2 = sqrt(1.0 - cos12);
+
+		double e11 =  celldm1 * t2 / sqrt(2.0);
+		double e12 = -celldm1 * t2 / sqrt(6.0);
+		double e13 =  celldm1 * t1 / sqrt(3.0);
+		double e22 =  celldm1 * sqrt(2.0) * t2 / sqrt(3.0);
+	
+		latvec.e11 = e11; latvec.e12 = e12; latvec.e13 = e13;
+		latvec.e21 = 0.0; latvec.e22 = e22;	latvec.e23 = e13;
+		latvec.e31 =-e11; latvec.e32 = e12;	latvec.e33 = e13;		
+	}
+	else if(latName == "st") //ibrav = 6
+	{
+		double celldm1 = std::sqrt(pow(latvec.e11,2)+pow(latvec.e12,2)+pow(latvec.e13,2));
+		double celldm3 = std::sqrt(pow(latvec.e31,2)+pow(latvec.e32,2)+pow(latvec.e33,2));
+		latvec.e11 = celldm1; latvec.e12 = 0.0;     latvec.e13 = 0.0;
+		latvec.e21 = 0.0;     latvec.e22 = celldm1; latvec.e23 = 0.0;
+		latvec.e31 = 0.0;      latvec.e32 = 0.0;	latvec.e33 = celldm3;
+	}
+	else if(latName == "bct") //ibrav = 7
+	{
+		double celldm1 = std::abs(latvec.e11);
+		double celldm2 = std::abs(latvec.e13);
+			
+		latvec.e11 = celldm1; latvec.e12 =-celldm1; latvec.e13 = celldm2;
+		latvec.e21 = celldm1; latvec.e22 = celldm1; latvec.e23 = celldm2;
+		latvec.e31 =-celldm1; latvec.e32 =-celldm1;	latvec.e33 = celldm2;	
+	}
+	else if(latName == "so") //ibrav = 8
+	{
+		double celldm1 = std::sqrt(pow(latvec.e11,2)+pow(latvec.e12,2)+pow(latvec.e13,2));
+		double celldm2 = std::sqrt(pow(latvec.e21,2)+pow(latvec.e22,2)+pow(latvec.e23,2));
+		double celldm3 = std::sqrt(pow(latvec.e31,2)+pow(latvec.e32,2)+pow(latvec.e33,2));
+		
+		latvec.e11 = celldm1; latvec.e12 = 0.0;     latvec.e13 = 0.0;
+		latvec.e21 = 0.0;     latvec.e22 = celldm2;	latvec.e23 = 0.0;
+		latvec.e31 = 0.0;     latvec.e32 = 0.0;     latvec.e33 = celldm3;
+	}
+	else if(latName == "baco") //ibrav = 9
+	{
+		double celldm1 = std::abs(latvec.e11);
+		double celldm2 = std::abs(latvec.e22);
+		double celldm3 = std::abs(latvec.e33);
+
+		latvec.e11 = celldm1; latvec.e12 = celldm2; latvec.e13 = 0.0;
+		latvec.e21 =-celldm1; latvec.e22 = celldm2;	latvec.e23 = 0.0;
+		latvec.e31 = 0.0;     latvec.e32 = 0.0;   	latvec.e33 = celldm3;
+	}
+	else if(latName == "fco") //ibrav = 10
+	{
+		double celldm1 = std::abs(latvec.e11);
+		double celldm2 = std::abs(latvec.e22);
+		double celldm3 = std::abs(latvec.e33);
+
+		latvec.e11 = celldm1; latvec.e12 = 0.0;     latvec.e13 = celldm3;
+		latvec.e21 = celldm1; latvec.e22 = celldm2;	latvec.e23 = 0.0;
+		latvec.e31 = 0.0;     latvec.e32 = celldm2;	latvec.e33 = celldm3;
+	}
+	else if(latName == "bco") //ibrav = 11
+	{
+		double celldm1 = std::abs(latvec.e11);
+		double celldm2 = std::abs(latvec.e12);
+		double celldm3 = std::abs(latvec.e13);
+
+		latvec.e11 = celldm1; latvec.e12 = celldm2; latvec.e13 = celldm3;
+		latvec.e21 =-celldm1; latvec.e22 = celldm2;	latvec.e23 = celldm3;
+		latvec.e31 =-celldm1; latvec.e32 =-celldm2;	latvec.e33 = celldm3;		
+	}
+	else if(latName == "sm") //ibrav = 12
+	{
+		double celldm1 = std::sqrt(pow(latvec.e11,2)+pow(latvec.e12,2)+pow(latvec.e13,2));
+		double celldm2 = std::sqrt(pow(latvec.e21,2)+pow(latvec.e22,2)+pow(latvec.e23,2));
+		double celldm3 = std::sqrt(pow(latvec.e31,2)+pow(latvec.e32,2)+pow(latvec.e33,2));
+		double celldm12 = (latvec.e11 * latvec.e21 + latvec.e12 * latvec.e22 + latvec.e13 * latvec.e23);
+		double cos12 = celldm12 / celldm1 / celldm2;
+
+		double e21 = celldm2 * cos12;
+		double e22 = celldm2 * std::sqrt(1.0 - cos12 * cos12);
+
+		latvec.e11 = celldm1; latvec.e12 = 0.0; latvec.e13 = 0.0;
+		latvec.e21 = e21;     latvec.e22 = e22;	latvec.e23 = 0.0;
+		latvec.e31 = 0.0;     latvec.e32 = 0.0;	latvec.e33 = celldm3;
+	}
+	else if (latName == "bacm") //ibrav = 13
+	{
+		double celldm1 = std::abs(latvec.e11);
+		double celldm2 = std::sqrt(pow(latvec.e21,2)+pow(latvec.e22,2)+pow(latvec.e23,2));
+		double celldm3 = std::abs(latvec.e13);
+
+		double cos12 = latvec.e21 / celldm2;
+		if(cos12 >= 1.0)
+		{
+			ModuleBase::WARNING_QUIT("unitcell_pseudo","wrong cos12!");
+		}
+
+		double e21 = celldm2 * cos12;
+		double e22 = celldm2 * std::sqrt(1.0 - cos12 * cos12);
+
+		latvec.e11 = celldm1; latvec.e12 = 0.0; latvec.e13 =-celldm3;
+		latvec.e21 = e21;     latvec.e22 = e22;	latvec.e23 = 0.0;
+		latvec.e31 = celldm1; latvec.e32 = 0.0;	latvec.e33 = celldm3;		
+	}
+	else if(latName == "triclinic") //ibrav = 14
+	{
+		double celldm1 = std::sqrt(pow(latvec.e11,2)+pow(latvec.e12,2)+pow(latvec.e13,2));
+		double celldm2 = std::sqrt(pow(latvec.e21,2)+pow(latvec.e22,2)+pow(latvec.e23,2));
+		double celldm3 = std::sqrt(pow(latvec.e31,2)+pow(latvec.e32,2)+pow(latvec.e33,2));
+		double celldm12 = (latvec.e11 * latvec.e21 + latvec.e12 * latvec.e22 + latvec.e13 * latvec.e23);
+		double cos12 = celldm12 / celldm1 / celldm2;
+		double celldm13 = (latvec.e11 * latvec.e31 + latvec.e12 * latvec.e32 + latvec.e13 * latvec.e33);
+		double cos13 = celldm13 / celldm1 / celldm3;
+		double celldm23 = (latvec.e21 * latvec.e31 + latvec.e22 * latvec.e32 + latvec.e23 * latvec.e33);
+		double cos23 = celldm23 / celldm1 / celldm3;
+
+		double sin12 = std::sqrt(1.0 - cos12 * cos12);
+		if(cos12 >= 1.0)
+		{
+			ModuleBase::WARNING_QUIT("unitcell_pseudo","wrong cos12!");
+		}
+
+		latvec.e11 = celldm1; latvec.e12 = 0.0; latvec.e13 = 0.0;
+		latvec.e21 = celldm2 * cos12;
+		latvec.e22 = celldm2 * sin12;
+		latvec.e23 = 0.0;
+		latvec.e31 = celldm3 * cos13;
+		latvec.e32 = celldm3 * (cos23 - cos13*cos12) / sin12;
+		double term = 1.0 + 2.0 * cos12*cos13*cos23 - cos12*cos12 - cos13*cos13 - cos23*cos23;
+		term = sqrt(term)/sin12;
+		latvec.e33 = celldm3 * term;
+	}
+	else{ 
+		std::cout << "latname is : " << latName << std::endl;
+		ModuleBase::WARNING_QUIT("UnitCell_pseudo::read_atom_species","latname not supported!");
 	}
 }

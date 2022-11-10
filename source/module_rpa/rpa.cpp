@@ -17,10 +17,11 @@ namespace ModuleRPA
 {
 void DFT_RPA_interface::out_for_RPA(const Parallel_Orbitals &parav,
                                     const psi::Psi<std::complex<double>> &psi,
-                                    Local_Orbital_Charge &loc)
+                                    Local_Orbital_Charge &loc,
+                                    const elecstate::ElecState* pelec)
 {
     ModuleBase::TITLE("DFT_RPA_interface", "out_for_RPA");
-    this->out_bands();
+    this->out_bands(pelec);
     this->out_eigen_vector(parav, psi);
     this->out_struc();
 
@@ -35,9 +36,9 @@ void DFT_RPA_interface::out_for_RPA(const Parallel_Orbitals &parav,
     this->out_Cs();
     this->out_coulomb_k();
 
-    std::cout << "etxc(Ha):" << std::fixed << std::setprecision(15) << GlobalC::en.etxc / 2.0 << std::endl;
-    std::cout << "etot(Ha):" << std::fixed << std::setprecision(15) << GlobalC::en.etot / 2.0 << std::endl;
-    std::cout << "Etot_without_rpa(Ha):" << std::fixed << std::setprecision(15)
+    std::cout << "etxc(Ha): " << std::fixed << std::setprecision(15) << GlobalC::en.etxc / 2.0 << std::endl;
+    std::cout << "etot(Ha): " << std::fixed << std::setprecision(15) << GlobalC::en.etot / 2.0 << std::endl;
+    std::cout << "Etot_without_rpa(Ha): " << std::fixed << std::setprecision(15)
               << (GlobalC::en.etot - GlobalC::en.etxc + rpa_exx_lcao_.get_energy()) / 2.0 << std::endl;
 
     return;
@@ -131,7 +132,7 @@ void DFT_RPA_interface::out_struc()
     return;
 }
 
-void DFT_RPA_interface::out_bands()
+void DFT_RPA_interface::out_bands(const elecstate::ElecState* pelec)
 {
     ModuleBase::TITLE("DFT_RPA_interface", "out_bands");
     if (GlobalV::MY_RANK != 0)
@@ -154,10 +155,10 @@ void DFT_RPA_interface::out_bands()
         {
             ofs << std::setw(6) << ik + 1 << std::setw(6) << is + 1 << std::endl;
             for (int ib = 0; ib != GlobalV::NBANDS; ib++)
-                ofs << std::setw(5) << ib + 1 << "   " << std::setw(8) << GlobalC::wf.wg(ik, ib) * nks_tot
+                ofs << std::setw(5) << ib + 1 << "   " << std::setw(8) << pelec->wg(ik, ib) * nks_tot
                     << std::setw(18) << std::fixed << std::setprecision(8)
-                    << GlobalC::wf.ekb[ik + is * nks_tot][ib] / 2.0 << std::setw(18) << std::fixed
-                    << std::setprecision(8) << GlobalC::wf.ekb[ik + is * nks_tot][ib] * ModuleBase::Ry_to_eV
+                    << pelec->ekb(ik + is * nks_tot, ib) / 2.0 << std::setw(18) << std::fixed
+                    << std::setprecision(8) << pelec->ekb(ik + is * nks_tot, ib) * ModuleBase::Ry_to_eV
                     << std::endl;
         }
     }

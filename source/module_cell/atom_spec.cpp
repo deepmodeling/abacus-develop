@@ -11,6 +11,7 @@ Atom::Atom()
     Rcut = 0.0; // pengfei Li 16-2-29
     type = 0;
     stapos_wf = 0;
+    mass = 0.0;
     tau = new ModuleBase::Vector3<double>[1];
     tau_original = new ModuleBase::Vector3<double>[1];
     taud = new ModuleBase::Vector3<double>[1];
@@ -25,6 +26,7 @@ Atom::Atom()
     iw2m = new int[1];
 	iw2_ylm = new int[1];
 	iw2_new = new bool[1];
+    mbl = new ModuleBase::Vector3<int>[1];
 }
 
 Atom::~Atom()
@@ -43,6 +45,7 @@ Atom::~Atom()
     delete[] iw2m;
 	delete[] iw2_ylm;
 	delete[] iw2_new;
+    delete[] mbl;
 }
 
 void Atom::set_index(void)
@@ -96,12 +99,8 @@ void Atom::print_Atom(std::ofstream &ofs)
     ModuleBase::GlobalFunc::OUT(ofs,"Rcut", Rcut); // pengfei Li 16-2-29
     ModuleBase::GlobalFunc::OUT(ofs,"nw",nw);
     ModuleBase::GlobalFunc::OUT(ofs,"stapos_wf",stapos_wf);
+    ModuleBase::GlobalFunc::OUT(ofs,"mass",mass);
     ofs<<std::endl;
-
-    //===================
-    // call print atom
-    //===================
-    this->print_atom(ofs);
 
     output::printv31_d(ofs,"atom_position(cartesian)",tau,na);
     /*
@@ -136,7 +135,8 @@ void Atom::bcast_atom(void)
         l_nchi = new int[nwl+1];
     }
     Parallel_Common::bcast_int( l_nchi, nwl+1);
-    Parallel_Common::bcast_bool( flag_empty_element );
+    Parallel_Common::bcast_bool( this->flag_empty_element );
+    Parallel_Common::bcast_double( mass );
 
     if (GlobalV::MY_RANK!=0)
     {
@@ -149,6 +149,7 @@ void Atom::bcast_atom(void)
         delete[] angle1;
         delete[] angle2;
         delete[] m_loc_;
+        delete[] mbl;
         tau = new ModuleBase::Vector3<double>[na];
         tau_original = new ModuleBase::Vector3<double>[na];
 		taud = new ModuleBase::Vector3<double>[na];
@@ -157,6 +158,7 @@ void Atom::bcast_atom(void)
         angle1 = new double[na];
         angle2 = new double[na];
         m_loc_ = new ModuleBase::Vector3<double>[na];
+		mbl = new ModuleBase::Vector3<int>[na];
     }
 
     for (int i=0;i<na;i++)
@@ -176,16 +178,17 @@ void Atom::bcast_atom(void)
         Parallel_Common::bcast_double(m_loc_[i].x);
         Parallel_Common::bcast_double(m_loc_[i].y);
         Parallel_Common::bcast_double(m_loc_[i].z);
+        Parallel_Common::bcast_int( mbl[i].x );
+		Parallel_Common::bcast_int( mbl[i].y );
+		Parallel_Common::bcast_int( mbl[i].z );
     }
-
-    bcast_atom_pseudo( na );
 
     return;
 }
 
 void Atom::bcast_atom2()
 {
-    bcast_atom_pseudo2();
+    this->ncpp.bcast_atom_pseudo();
 }
 
 #endif

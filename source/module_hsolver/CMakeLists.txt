@@ -12,7 +12,6 @@ if(ENABLE_LCAO)
       hsolver_lcao.cpp
       diago_blas.cpp
       diago_elpa.cpp
-      diago_lapack.cpp
   )
 endif()
 

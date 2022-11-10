@@ -44,14 +44,6 @@ protected:
 private:
 
     const Parallel_Orbitals* ParaV;
-    
-#ifdef __MPI
-	//void gath_eig(MPI_Comm comm,int n,double **c,double *Z);
-	void gath_eig(MPI_Comm comm,int n,double *Z); //LiuXh add 2021-09-06, clear memory, totwfc not used now
-	void gath_eig_complex(MPI_Comm comm,int n,std::complex<double> **c,std::complex<double> *Z, const int &ik); //mohan add 2012-01-09
-	void gath_full_eig(MPI_Comm comm,int n,double **c,double *Z);
-	void gath_full_eig_complex(MPI_Comm comm,int n,std::complex<double> **c, std::complex<double> *Z);
-#endif
 
 };
 

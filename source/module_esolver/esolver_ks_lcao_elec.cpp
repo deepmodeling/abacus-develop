@@ -22,6 +22,7 @@
 #endif
 #include "../src_pw/H_Ewald_pw.h"
 #include "module_vdw/vdw.h"
+#include "../module_relax/relax_old/variable_cell.h"    // liuyu 2022-11-07
 
 namespace ModuleESolver
 {
@@ -162,7 +163,7 @@ namespace ModuleESolver
         this->UHM.grid_prepare();
 
         // init density kernel and wave functions.
-        this->LOC.allocate_dm_wfc(GlobalC::GridT.lgd, this->LOWF, this->psid, this->psi);
+        this->LOC.allocate_dm_wfc(GlobalC::GridT.lgd, this->pelec, this->LOWF, this->psid, this->psi);
 
         //======================================
         // do the charge extrapolation before the density matrix is regenerated.
@@ -189,7 +190,7 @@ namespace ModuleESolver
             // calculate the charge density
             if (GlobalV::GAMMA_ONLY_LOCAL)
             {
-                Gint_inout inout(this->LOC.DM, (Charge*)(&GlobalC::CHR), Gint_Tools::job_type::rho);
+                Gint_inout inout(this->LOC.DM, &GlobalC::CHR, Gint_Tools::job_type::rho);
                 this->UHM.GG.cal_gint(&inout);
                 if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type()==5)
                 {
@@ -197,13 +198,13 @@ namespace ModuleESolver
                     {
                         ModuleBase::GlobalFunc::ZEROS(GlobalC::CHR.kin_r[0], GlobalC::rhopw->nrxx);
                     }
-                    Gint_inout inout1(this->LOC.DM, (Charge*)(&GlobalC::CHR), Gint_Tools::job_type::tau);
+                    Gint_inout inout1(this->LOC.DM, &GlobalC::CHR, Gint_Tools::job_type::tau);
                     this->UHM.GG.cal_gint(&inout1);
                 }
             }
             else
             {
-                Gint_inout inout(this->LOC.DM_R, (Charge*)(&GlobalC::CHR), Gint_Tools::job_type::rho);
+                Gint_inout inout(this->LOC.DM_R, &GlobalC::CHR, Gint_Tools::job_type::rho);
                 this->UHM.GK.cal_gint(&inout);
                 if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type()==5)
                 {
@@ -211,7 +212,7 @@ namespace ModuleESolver
                     {
                         ModuleBase::GlobalFunc::ZEROS(GlobalC::CHR.kin_r[0], GlobalC::rhopw->nrxx);
                     }
-                    Gint_inout inout1(this->LOC.DM_R, (Charge*)(&GlobalC::CHR), Gint_Tools::job_type::tau);
+                    Gint_inout inout1(this->LOC.DM_R, &GlobalC::CHR, Gint_Tools::job_type::tau);
                     this->UHM.GK.cal_gint(&inout1);
                 }
             }
@@ -259,13 +260,28 @@ namespace ModuleESolver
         ModuleBase::TITLE("ESolver_KS_LCAO", "beforescf");
         ModuleBase::timer::tick("ESolver_KS_LCAO", "beforescf");
 
+        // Temporary, md and relax will merge later   liuyu add 2022-11-07
+        if(GlobalV::CALCULATION == "md" && istep)
+        {
+            CE.update_istep();
+            CE.save_pos_next(GlobalC::ucell);
+            CE.extrapolate_charge();
+
+            if(GlobalC::ucell.cell_parameter_updated)
+            {
+                Variable_Cell::init_after_vc();
+            }
+
+            GlobalC::pot.init_pot(istep, GlobalC::sf.strucFac);
+        }
+
         if(GlobalV::CALCULATION=="relax" || GlobalV::CALCULATION=="cell-relax")
         {
             if(GlobalC::ucell.ionic_position_updated)
             {
                 GlobalV::ofs_running << " Setup the extrapolated charge." << std::endl;
                 // charge extrapolation if istep>0.
-                CE.update_istep(istep);
+                CE.update_istep();
                 CE.update_all_pos(GlobalC::ucell);
                 CE.extrapolate_charge();
                 CE.save_pos_next(GlobalC::ucell);
@@ -379,7 +395,7 @@ namespace ModuleESolver
         else if (GlobalV::CALCULATION == "istate")
         {
             IState_Charge ISC(this->psid, this->LOC);
-            ISC.begin(this->UHM.GG);
+            ISC.begin(this->UHM.GG, this->pelec->wg);
         }
         else if (GlobalV::CALCULATION == "ienvelope")
         {
@@ -469,13 +485,6 @@ namespace ModuleESolver
             {
                 this->phsol->solve(this->p_hamilt, this->psid[0], this->pelec, GlobalV::KS_SOLVER, true);
             }
-            for(int ik=0; ik<this->pelec->ekb.nr; ++ik)
-            {
-                for(int ib=0; ib<this->pelec->ekb.nc; ++ib)
-                {
-                    GlobalC::wf.ekb[ik][ib] = this->pelec->ekb(ik, ib);
-                }
-            }
         }
         else
         {
@@ -510,8 +519,8 @@ namespace ModuleESolver
             {
                 GlobalV::ofs_running << " spin" << GlobalC::kv.isk[ik] + 1
                     << "final_state " << ib + 1 << " "
-                    << GlobalC::wf.ekb[ik][ib] * ModuleBase::Ry_to_eV
-                    << " " << GlobalC::wf.wg(ik, ib) * GlobalC::kv.nks << std::endl;
+                    << this->pelec->ekb(ik, ib) * ModuleBase::Ry_to_eV
+                    << " " << this->pelec->wg(ik, ib) * GlobalC::kv.nks << std::endl;
             }
             GlobalV::ofs_running << std::endl;
         }
@@ -520,7 +529,7 @@ namespace ModuleESolver
         if (GlobalV::CALCULATION == "nscf" && INPUT.towannier90)
         {
             toWannier90 myWannier(GlobalC::kv.nkstot, GlobalC::ucell.G, this->LOWF.wfc_k_grid);
-            myWannier.init_wannier(nullptr);
+            myWannier.init_wannier(this->pelec->ekb, nullptr);
         }
 
         // add by jingan

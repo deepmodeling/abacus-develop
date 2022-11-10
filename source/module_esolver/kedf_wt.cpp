@@ -114,7 +114,7 @@ void KEDF_WT::WT_potential(const double * const *prho, ModulePW::PW_Basis *pw_rh
         {
             rpotential(is, ir) += this->cTF * 
                                     (this->alpha * pow(prho[is][ir], this->alpha-1.) * kernelRhoBeta[is][ir]
-                                    + this->beta *pow(prho[is][ir], this->beta-1.) * kernelRhoAlpha[is][ir]);
+                                    + this->beta * pow(prho[is][ir], this->beta-1.) * kernelRhoAlpha[is][ir]);
         }
     }
 

@@ -208,7 +208,7 @@ void Potential::set_local_pot(double *vl_pseudo, // store the local pseudopotent
         }
     }
 
-    GlobalC::UFFT.ToRealSpace(vg, vl_pseudo, rho_basis);
+    rho_basis->recip2real(vg, vl_pseudo);
 
     if (GlobalV::EFIELD_FLAG && !GlobalV::DIP_COR_FLAG)
     {

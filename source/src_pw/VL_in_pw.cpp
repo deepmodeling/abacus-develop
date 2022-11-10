@@ -38,16 +38,16 @@ void pseudopot_cell_vl::init_vloc(ModuleBase::matrix &vloc_in, ModulePW::PW_Basi
 
 		ModuleBase::GlobalFunc::ZEROS(vloc1d, rho_basis->ngg);
 
-		this->zp[it] = atom->zv;
+		this->zp[it] = atom->ncpp.zv;
 
 		// compute V_loc(G) for a given type of atom
 		if(numeric[it]==true)
 		{
 			this->vloc_of_g(
-					atom->msh, // after cutoff 
-					atom->rab,
-		          	atom->r, 
-					atom->vloc_at, // local potential in real space radial form.  
+					atom->ncpp.msh, // after cutoff 
+					atom->ncpp.rab,
+		          	atom->ncpp.r, 
+					atom->ncpp.vloc_at, // local potential in real space radial form.  
 		          	this->zp[it],
 					vloc1d,
 					GlobalC::rhopw);

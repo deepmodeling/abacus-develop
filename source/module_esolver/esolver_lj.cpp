@@ -18,7 +18,7 @@ namespace ModuleESolver
 
         GlobalV::SEARCH_RADIUS = (lj_rcut + 2.0) * ModuleBase::ANGSTROM_AU;
         lj_rcut *= ModuleBase::ANGSTROM_AU;
-        lj_epsilon /= ModuleBase::Hartree_to_eV;
+        lj_epsilon /= ModuleBase::Ry_to_eV;
         lj_sigma *= ModuleBase::ANGSTROM_AU;
     }
 
@@ -102,6 +102,14 @@ namespace ModuleESolver
     void ESolver_LJ::cal_Stress(ModuleBase::matrix& stress)
     {
         stress = lj_virial;
+    }
+
+    void ESolver_LJ::postprocess()
+    {
+        GlobalV::ofs_running << "\n\n --------------------------------------------" << std::endl;
+        GlobalV::ofs_running << std::setprecision(16);
+        GlobalV::ofs_running << " !FINAL_ETOT_IS " << lj_potential * ModuleBase::Ry_to_eV << " eV" << std::endl;
+        GlobalV::ofs_running << " --------------------------------------------\n\n" << std::endl;
     }
 
     double ESolver_LJ::LJ_energy(const double d)

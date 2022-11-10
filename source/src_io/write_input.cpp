@@ -45,7 +45,8 @@ void Input::Print(const std::string &fn) const
     ModuleBase::GlobalFunc::OUTP(ofs, "lmaxmax", lmaxmax, "maximum of l channels used");
     ModuleBase::GlobalFunc::OUTP(ofs, "dft_functional", dft_functional, "exchange correlation functional");
     ModuleBase::GlobalFunc::OUTP(ofs, "xc_temperature", xc_temperature, "temperature for finite temperature functionals");
-    ModuleBase::GlobalFunc::OUTP(ofs, "calculation", calculation, "test; scf; relax; nscf; ienvelope; istate; sto-scf; sto-md; ofdft; of-md");
+    ModuleBase::GlobalFunc::OUTP(ofs, "calculation", calculation, "test; scf; relax; nscf; ienvelope; istate");
+    ModuleBase::GlobalFunc::OUTP(ofs,"esolver_type",esolver_type,"the energy solver: ksdft, sdft, ofdft, tddft, lj, dp");
     ModuleBase::GlobalFunc::OUTP(ofs, "ntype", ntype, "atom species number");
     ModuleBase::GlobalFunc::OUTP(ofs, "nspin", nspin, "1: single spin; 2: up and down spin; 4: noncollinear spin");
     ModuleBase::GlobalFunc::OUTP(ofs, "kspacing", kspacing, "unit in 1/bohr, should be > 0, default is 0 which means read KPT file");
@@ -168,7 +169,10 @@ void Input::Print(const std::string &fn) const
     ModuleBase::GlobalFunc::OUTP(ofs, "relax_bfgs_init", relax_bfgs_init, "initial trust radius, unit: Bohr");
     ModuleBase::GlobalFunc::OUTP(ofs, "cal_stress", cal_stress, "calculate the stress or not");
     ModuleBase::GlobalFunc::OUTP(ofs, "fixed_axes", fixed_axes, "which axes are fixed");
+    ModuleBase::GlobalFunc::OUTP(ofs, "fixed_ibrav", fixed_axes, "whether to preseve lattice type during relaxation");
+    ModuleBase::GlobalFunc::OUTP(ofs, "fixed_atoms", fixed_atoms, "whether to preseve direct coordinates of atoms during relaxation");
     ModuleBase::GlobalFunc::OUTP(ofs, "relax_method", relax_method, "bfgs; sd; cg; cg_bfgs;"); // pengfei add 2013-08-15
+    ModuleBase::GlobalFunc::OUTP(ofs, "relax_new", relax_new, "whether to use the new relaxation method");
     ModuleBase::GlobalFunc::OUTP(ofs, "out_level", out_level, "ie(for electrons); i(for ions);");
     ModuleBase::GlobalFunc::OUTP(ofs, "out_dm", out_dm, ">0 output density matrix");
 
@@ -242,9 +246,8 @@ void Input::Print(const std::string &fn) const
 	ModuleBase::GlobalFunc::OUTP(ofs,"md_type",mdp.md_type,"choose ensemble");
     ModuleBase::GlobalFunc::OUTP(ofs,"md_thermostat",mdp.md_thermostat,"choose thermostat");
     ModuleBase::GlobalFunc::OUTP(ofs,"md_nstep",mdp.md_nstep,"md steps");
-	ModuleBase::GlobalFunc::OUTP(ofs,"md_ensolver",mdp.md_ensolver,"choose potential");
 	ModuleBase::GlobalFunc::OUTP(ofs,"md_dt",mdp.md_dt,"time step");
-	ModuleBase::GlobalFunc::OUTP(ofs,"md_mnhc",mdp.md_mnhc,"number of Nose-Hoover chains");
+	ModuleBase::GlobalFunc::OUTP(ofs,"md_tchain",mdp.md_tchain,"number of Nose-Hoover chains");
 	ModuleBase::GlobalFunc::OUTP(ofs,"md_tfirst",mdp.md_tfirst,"temperature first");
 	ModuleBase::GlobalFunc::OUTP(ofs,"md_tlast",mdp.md_tlast,"temperature last");
 	ModuleBase::GlobalFunc::OUTP(ofs,"md_dumpfreq",mdp.md_dumpfreq,"The period to dump MD information");
@@ -344,7 +347,6 @@ void Input::Print(const std::string &fn) const
     ModuleBase::GlobalFunc::OUTP(ofs, "exx_opt_orb_tolerence", exx_opt_orb_tolerence, "");
 
     ofs << "\n#Parameters (16.tddft)" << std::endl;
-    ModuleBase::GlobalFunc::OUTP(ofs, "tddft", tddft, "calculate tddft or not");
     ModuleBase::GlobalFunc::OUTP(ofs, "td_scf_thr", td_scf_thr, "threshold for electronic iteration of tddft");
     ModuleBase::GlobalFunc::OUTP(ofs, "td_dt", td_dt, "time of ion step");
     ModuleBase::GlobalFunc::OUTP(ofs, "td_force_dt", td_force_dt, "time of force change");

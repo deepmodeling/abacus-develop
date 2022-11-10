@@ -20,7 +20,8 @@ eximport::~eximport()
 void eximport::write_data
 (
 	const std::string &fn,
-	const std::string &type
+	const std::string &type,
+	const elecstate::ElecState* pelec
 )
 {
 	ModuleBase::TITLE("eximport","write_data");
@@ -38,7 +39,7 @@ void eximport::write_data
 //           so I don't output it.
 //==========================================================
 //		this->out_evc(ofs);
-		this->out_band(ofs);
+		this->out_band(ofs, pelec);
 		this->out_charge(ofs);
 		this->out_energy(ofs);
 	}
@@ -56,7 +57,7 @@ void eximport::write_data
 //==========================================================
 	if (type == "band")
 	{
-		this->out_band(ofs);
+		this->out_band(ofs, pelec);
 	}
 
 //==========================================================
@@ -581,7 +582,7 @@ void eximport::in_input(std::ifstream &in)
 //**********
 // out_band
 //**********
-void eximport::out_band(std::ofstream &out_data)
+void eximport::out_band(std::ofstream &out_data, const elecstate::ElecState* pelec)
 {
 	//std::cout << "\n ==> out_band" << std::endl;
 	out_data << std::setw(20) << "BAND" << std::endl;//6.0
@@ -589,7 +590,7 @@ void eximport::out_band(std::ofstream &out_data)
 	{
 		for (int ib = 0; ib < GlobalV::NBANDS; ib++)
 		{
-			out_data << std::setw(10) << std::setprecision(6) << GlobalC::wf.ekb[ik][ib]*ModuleBase::Ry_to_eV;//6.1
+			out_data << std::setw(10) << std::setprecision(6) << pelec->ekb(ik, ib)*ModuleBase::Ry_to_eV;//6.1
 		}
 		out_data << std::endl;
 	}

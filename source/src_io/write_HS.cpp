@@ -983,7 +983,7 @@ void HS_Matrix::save_HSR_sparse(
 
     std::stringstream ssh[2];
     std::stringstream sss;
-    if(GlobalV::CALCULATION == "md" || GlobalV::CALCULATION == "sto-md" || GlobalV::CALCULATION == "of-md")
+    if(GlobalV::CALCULATION == "md")
     {
         ssh[0] << GlobalV::global_matrix_dir << istep << "_" << HR_filename_up;
         ssh[1] << GlobalV::global_matrix_dir << istep << "_" << HR_filename_down;

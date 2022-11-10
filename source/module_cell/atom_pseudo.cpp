@@ -2,10 +2,6 @@
 
 Atom_pseudo::Atom_pseudo()
 {
-	mbl = new ModuleBase::Vector3<int>[1];
-	pseudo_fn = "not_init";
-	pseudo_type = "not_init";
-	mass = 0.0;
 
 	for(int is=0;is<4;is++) this->index1_soc[is] = nullptr;
 	for(int is=0;is<4;is++) this->index2_soc[is] = nullptr;
@@ -14,8 +10,6 @@ Atom_pseudo::Atom_pseudo()
 
 Atom_pseudo::~Atom_pseudo()
 {
-	delete[] mbl;
-
 	for(int is=0;is<4;is++) delete[] this->index1_soc[is];
 	for(int is=0;is<4;is++) delete[] this->index2_soc[is];
 }
@@ -140,44 +134,12 @@ void Atom_pseudo::set_d_so(
 	return;
 }
 
-void Atom_pseudo::print_atom(std::ofstream &ofs)
-{
-	if(GlobalV::test_atom) ModuleBase::TITLE("atom_pseudo","print_atom");
-
-	ModuleBase::GlobalFunc::OUT(ofs,"mass",mass);
-	ModuleBase::GlobalFunc::OUT(ofs,"pseudo_fn",pseudo_fn);
-	ModuleBase::GlobalFunc::OUT(ofs,"pseudo_type",pseudo_type);
-
-	return;
-}
-
 #include "../src_parallel/parallel_common.h"
 #ifdef __MPI
-void Atom_pseudo::bcast_atom_pseudo(const int &na)
+
+void Atom_pseudo::bcast_atom_pseudo(void)
 {
 	ModuleBase::TITLE("Atom_pseudo","bcast_atom_pseudo");
-	Parallel_Common::bcast_double( mass );
-	Parallel_Common::bcast_string( pseudo_fn );
-	Parallel_Common::bcast_string( pseudo_type );
-
-	if(GlobalV::MY_RANK!=0)
-	{
-		delete[] mbl;
-		mbl = new ModuleBase::Vector3<int>[na];
-	}
-
-	for(int i=0;i<na;i++)
-	{
-		Parallel_Common::bcast_int( mbl[i].x );
-		Parallel_Common::bcast_int( mbl[i].y );
-		Parallel_Common::bcast_int( mbl[i].z );
-	}
-	return;
-}
-
-void Atom_pseudo::bcast_atom_pseudo2(void)
-{
-	ModuleBase::TITLE("Atom_pseudo","bcast_atom_pseudo2");
 // == pseudo_h ==
 //int
 	Parallel_Common::bcast_int( lmax );

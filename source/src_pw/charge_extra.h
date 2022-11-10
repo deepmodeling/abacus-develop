@@ -24,7 +24,7 @@ class Charge_Extra
     void Init_CE();
     void extrapolate_charge(void);
     void save_pos_next(const UnitCell_pseudo& ucell);
-    void update_istep(const int &step);
+    void update_istep();
     void update_all_pos(const UnitCell_pseudo& ucell);
 
     private:

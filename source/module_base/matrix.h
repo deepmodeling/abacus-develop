@@ -64,10 +64,13 @@ public:
 
 	/* zero out all the entries */
 	void zero_out(void);
+	
+	/* fill all entries with number */
+	void fill_out(const double x);
 
 	void get_extreme_eigen_values(double &ev_lower, double &ev_upper) const;	// mohan add 2011-01-13
 
-	void reshape( const double nr_new, const double nc_new );		// Peize Lin add 2017-05-27
+	void reshape( const double nr_new, const double nc_new,  const bool flag_zero = true );		// Peize Lin add 2017-05-27
 
 	double max() const;					// Peize Lin add 2016-09-08
 	double min() const;					// Peize Lin add 2016-09-08

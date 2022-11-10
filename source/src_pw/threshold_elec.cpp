@@ -96,16 +96,16 @@ void Threshold_Elec::update_pw_diag_thr(const int &iter)
     return;
 }
 
-void Threshold_Elec::print_eigenvalue(std::ofstream &ofs)
+void Threshold_Elec::print_eigenvalue(std::ofstream &ofs, const elecstate::ElecState* pelec)
 {
 	bool wrong = false;
 	for(int ik=0; ik<GlobalC::kv.nks; ++ik)
 	{
 		for(int ib=0; ib<GlobalV::NBANDS; ++ib)
 		{
-			if( abs( GlobalC::wf.ekb[ik][ib] ) > 1.0e10)
+			if( abs( pelec->ekb(ik, ib) ) > 1.0e10)
 			{
-				GlobalV::ofs_warning << " ik=" << ik+1 << " ib=" << ib+1 << " " << GlobalC::wf.ekb[ik][ib] << " Ry" << std::endl;
+				GlobalV::ofs_warning << " ik=" << ik+1 << " ib=" << ib+1 << " " << pelec->ekb(ik, ib) << " Ry" << std::endl;
 				wrong = true;
 			}
 		}
@@ -190,8 +190,8 @@ void Threshold_Elec::print_eigenvalue(std::ofstream &ofs)
 			for (int ib = 0; ib < GlobalV::NBANDS; ib++)
 			{
 				ofs << std::setw(8) << ib+1 
-				    << std::setw(15) << GlobalC::wf.ekb[ik][ib] * ModuleBase::Ry_to_eV 
-                    << std::setw(15) << GlobalC::wf.wg(ik, ib) << std::endl;
+				    << std::setw(15) << pelec->ekb(ik, ib) * ModuleBase::Ry_to_eV 
+                    << std::setw(15) << pelec->wg(ik, ib) << std::endl;
 			}
 			ofs << std::endl;
 		}

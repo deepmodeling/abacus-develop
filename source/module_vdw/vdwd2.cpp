@@ -5,6 +5,7 @@
 //==========================================================
 
 #include "module_vdw/vdwd2.h"
+#include "module_base/timer.h"
 
 namespace vdw
 {
@@ -12,6 +13,7 @@ namespace vdw
 void Vdwd2::cal_energy()
 {
     ModuleBase::TITLE("Vdwd2", "energy");
+    ModuleBase::timer::tick("Vdwd2", "energy");
     para_.initset(ucell_);
     energy_ = 0;
 
@@ -28,11 +30,13 @@ void Vdwd2::cal_energy()
     };
     index_loops(energy);
     energy_ *= para_.scaling();
+    ModuleBase::timer::tick("Vdwd2", "energy");
 }
 
 void Vdwd2::cal_force()
 {
     ModuleBase::TITLE("Vdwd2", "force");
+    ModuleBase::timer::tick("Vdwd2", "force");
     para_.initset(ucell_);
     force_.clear();
     force_.resize(ucell_.nat);
@@ -55,11 +59,13 @@ void Vdwd2::cal_force()
     std::for_each(force_.begin(), force_.end(), [&](ModuleBase::Vector3<double> &f) {
         f *= para_.scaling() / ucell_.lat0;
     });
+    ModuleBase::timer::tick("Vdwd2", "force");
 }
 
 void Vdwd2::cal_stress()
 {
     ModuleBase::TITLE("Vdwd2", "stress");
+    ModuleBase::timer::tick("Vdwd2", "stress");
     para_.initset(ucell_);
     stress_.Zero();
 
@@ -83,6 +89,7 @@ void Vdwd2::cal_stress()
 
     index_loops(stress);
     stress_ *= para_.scaling() / ucell_.omega;
+    ModuleBase::timer::tick("Vdwd2", "stress");
 }
 
 } // namespace vdw

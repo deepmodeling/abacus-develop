@@ -1,7 +1,7 @@
 add_definitions(-D__NORMAL)
 AddTest(
   TARGET pw_test
-  LIBS ${math_libs} planewave
+  LIBS ${math_libs} planewave psi
   SOURCES ../../module_base/matrix.cpp ../../module_base/matrix3.cpp ../../module_base/tool_quit.cpp 
           ../../module_base/mymath3.cpp ../../module_base/timer.cpp ../../module_base/global_variable.cpp 
           ../../src_parallel/parallel_global.cpp
@@ -15,6 +15,28 @@ AddTest(
           test8-1.cpp test8-2-1.cpp test8-3-1.cpp test8-3-2.cpp
           test_tool.cpp
 )
+
+if (USE_CUDA)
+target_link_libraries(pw_test cufft)
+AddTest(
+    TARGET PW_UTs
+    LIBS ${math_libs} psi
+    SOURCES
+    ../../module_base/tool_quit.cpp ../../module_base/global_variable.cpp
+    ../src/pw_multi_device.cpp
+    ../src/cuda/pw_multi_device.cu
+    pw_multi_device_test.cpp
+)
+else()
+AddTest(
+    TARGET PW_UTs
+    LIBS ${math_libs} psi
+    SOURCES
+    ../../module_base/tool_quit.cpp ../../module_base/global_variable.cpp
+    ../src/pw_multi_device.cpp
+    pw_multi_device_test.cpp
+)
+endif()
 
 add_test(NAME pw_test_parallel
       COMMAND mpirun -np 2 ./pw_test; mpirun -np 3./pw_test

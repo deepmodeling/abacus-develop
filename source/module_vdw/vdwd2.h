@@ -41,10 +41,10 @@ class Vdwd2 : public Vdw
             for (int it2 = 0; it2 != ucell_.ntype; ++it2)
             {
                 const double C6_product
-                    = sqrt(para_.C6().at(ucell_.atoms[it1].psd) * para_.C6().at(ucell_.atoms[it2].psd))
+                    = sqrt(para_.C6().at(ucell_.atoms[it1].ncpp.psd) * para_.C6().at(ucell_.atoms[it2].ncpp.psd))
                       / pow(ucell_.lat0, 6);
                 const double R0_sum
-                    = (para_.R0().at(ucell_.atoms[it1].psd) + para_.R0().at(ucell_.atoms[it2].psd)) / ucell_.lat0;
+                    = (para_.R0().at(ucell_.atoms[it1].ncpp.psd) + para_.R0().at(ucell_.atoms[it2].ncpp.psd)) / ucell_.lat0;
                 if (!R0_sum)
                 {
                     ModuleBase::WARNING_QUIT("Input", "R0_sum can not be 0");
