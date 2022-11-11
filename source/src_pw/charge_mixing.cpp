@@ -4,8 +4,25 @@
 #include "../src_parallel/parallel_reduce.h"
 #include "../module_base/timer.h"
 
-Charge_Mixing::Charge_Mixing(){}
-Charge_Mixing::~Charge_Mixing(){}
+Charge_Mixing::Charge_Mixing()
+{
+	rstep = 0;
+	dstep = rstep - 1;//alway like this.
+    initp = false;
+	initb = false;
+}
+
+Charge_Mixing::~Charge_Mixing()
+{
+	if (initp)
+    {
+		deallocate_Pulay();
+    }
+	if(initb)
+	{
+		deallocate_Broyden();
+	}
+}
 
 void Charge_Mixing::set_mixing
 (
@@ -20,11 +37,126 @@ void Charge_Mixing::set_mixing
     this->mixing_ndim = mixing_ndim_in;
 	this->mixing_gg0 = mixing_gg0_in; //mohan add 2014-09-27
 
-//    if (mixing_mode != "plain") // "TF","local-TF","potential"
-//    {
-//        ModuleBase::WARNING_QUIT("set_mixing","only plain mixing availabel.");
-//    }
+    return;
+}
 
+double Charge_Mixing::get_drho(double** rho, double** rho_save,
+	std::complex<double>** rhog, std::complex<double>** rhog_save, const double nelec)
+{
+	double scf_thr;
+	for (int is=0; is<GlobalV::NSPIN; is++)
+    {
+		ModuleBase::GlobalFunc::NOTE("Perform FFT on rho(r) to obtain rho(G).");
+        GlobalC::rhopw->real2recip(rho[is], rhog[is]);
+
+		ModuleBase::GlobalFunc::NOTE("Perform FFT on rho_save(r) to obtain rho_save(G).");
+        GlobalC::rhopw->real2recip(rho_save[is], rhog_save[is]);
+
+
+		ModuleBase::GlobalFunc::NOTE("Calculate the charge difference between rho(G) and rho_save(G)");
+        for (int ig=0; ig<GlobalC::rhopw->npw; ig++)
+        {
+            rhog[is][ig] -= rhog_save[is][ig];
+        }
+
+    }
+
+	ModuleBase::GlobalFunc::NOTE("Calculate the norm of the Residual std::vector: < R[rho] | R[rho_save] >");
+    scf_thr = this->rhog_dot_product( rhog, rhog);
+	
+	if(GlobalV::test_charge)GlobalV::ofs_running << " scf_thr from rhog_dot_product is " << scf_thr << std::endl;
+
+	// scf_thr calculated from real space.
+	double scf_thr2 = 0.0;
+	for(int is=0; is<GlobalV::NSPIN; is++)
+	{
+		for(int ir=0; ir<GlobalC::rhopw->nrxx; ir++)
+		{
+			scf_thr2 += abs( rho[is][ir] - rho_save[is][ir] );
+		}
+	}
+
+	Parallel_Reduce::reduce_double_pool( scf_thr2 );
+	assert( nelec != 0);
+	assert( GlobalC::ucell.omega > 0);
+	assert( GlobalC::rhopw->nxyz > 0);
+	scf_thr2 *= GlobalC::ucell.omega / static_cast<double>( GlobalC::rhopw->nxyz );
+	scf_thr2 /= nelec;
+	if(GlobalV::test_charge)GlobalV::ofs_running << " scf_thr from real space grid is " << scf_thr2 << std::endl;
+
+	// mohan add 2011-01-22
+	//if(LINEAR_SCALING && LOCAL_BASIS) xiaohui modify 2013-09-01
+	if(GlobalV::BASIS_TYPE=="lcao" )
+	{
+		scf_thr = scf_thr2;	
+	}
+	return scf_thr;
+}
+
+void Charge_Mixing::mix_rho
+(
+    const int &iter,
+	double** rho,
+	double** rho_save,
+	std::complex<double>** rhog,
+	std::complex<double>** rhog_save
+)
+{
+    ModuleBase::TITLE("Charge_Mixing","mix_rho");
+	ModuleBase::timer::tick("Charge", "mix_rho");
+
+	// the charge before mixing.
+	double **rho123 = new double*[GlobalV::NSPIN];
+	for(int is=0; is<GlobalV::NSPIN; ++is)
+	{
+		rho123[is] = new double[GlobalC::rhopw->nrxx];
+		ModuleBase::GlobalFunc::ZEROS(rho123[is], GlobalC::rhopw->nrxx);
+		for(int ir=0; ir<GlobalC::rhopw->nrxx; ++ir)
+		{
+			rho123[is][ir] = rho[is][ir];
+		}
+	}
+	
+	if ( this->mixing_mode == "plain")
+    {
+        // calculate mixing change, and save it in rho1.
+        for (int is=0; is<GlobalV::NSPIN; is++)
+        {
+            this->plain_mixing( rho[is], rho_save[is]);
+        }
+    }
+    else if ( this->mixing_mode == "pulay")
+    {
+        this->Pulay_mixing(rho, rho_save);
+    }
+    else if ( this->mixing_mode == "broyden")
+    {
+		this->Simplified_Broyden_mixing(iter, rho, rho_save, rhog, rhog_save);
+    }
+    else
+    {
+        ModuleBase::WARNING_QUIT("Charge_Mixing","Not implemended yet,coming soon.");
+    }
+
+	// mohan add 2012-06-05
+	// rho_save is the charge before mixing
+	for(int is=0; is<GlobalV::NSPIN; is++)
+	{
+		for(int ir=0; ir<GlobalC::rhopw->nrxx; ++ir)
+		{
+			rho_save[is][ir] = rho123[is][ir];
+		}
+    }
+
+	for(int is=0; is<GlobalV::NSPIN; ++is)
+	{
+		delete[] rho123[is];
+	}
+	delete[] rho123;
+
+	if(new_e_iteration) new_e_iteration = false;
+
+    ModuleBase::timer::tick("Charge","mix_rho");
     return;
 }
 
@@ -35,16 +167,6 @@ void Charge_Mixing::plain_mixing( double *rho, double *rho_save_in ) const
     // on the contrary, if mixing_beta == 0,
     // no new charge will be generated!
     const double mix_old = 1 - mixing_beta;
-	
-//	this->check_ne(rho);
-//	this->check_ne(rho_save_in);
-
-    // in real space
-	// mohan modify 2010-02-05
-	// after mixing, the charge density become 
-	// the input charge density of next iteration.
-    //double* rho_tmp = new double[GlobalC::rhopw->nrxx];
-    //ModuleBase::GlobalFunc::DCOPY( rho, rho_tmp, GlobalC::rhopw->nrxx);
 
 //xiaohui add 2014-12-09
 	if(this->mixing_gg0 > 0.0)
@@ -91,66 +213,9 @@ void Charge_Mixing::plain_mixing( double *rho, double *rho_save_in ) const
 	}
 
 	ModuleBase::GlobalFunc::DCOPY( rho, rho_save_in, GlobalC::rhopw->nrxx);
-//    delete[] rho_tmp;
 
     return;
 }
-
-
-void Charge_Mixing::Kerker_mixing( double *rho, const std::complex<double> *residual_g, double *rho_save)
-{
-//  ModuleBase::TITLE("Charge_Mixing","Kerker");
-    ModuleBase::timer::tick("Charge_Mixing","Kerker");
-
-//	std::cout << " here is Kerker" << std::endl;
-//	this->check_ne(rho);
-//	this->check_ne(rho_save);
-
-    // (1) do kerker mixing in reciprocal space.
-    std::complex<double> *rhog = new std::complex<double>[GlobalC::rhopw->npw];
-    ModuleBase::GlobalFunc::ZEROS(rhog, GlobalC::rhopw->npw);
-
-	// mohan modify 2010-02-03, rhog should store the old
-	// charge density. " rhog = FFT^{-1}(rho_save) "
-    GlobalC::rhopw->real2recip(rho_save, rhog);
-
-    // (2) set up filter
-    //const double a = 0.8; // suggested by VASP.
-
-	// mohan fixed bug 2010/03/25
-	// suggested by VASP, 1.5(angstrom^-1) is always satisfied.
-    const double gg0 = std::pow(1.5 * 0.529177 / GlobalC::ucell.tpiba, 2);
-    double *filter_g = new double[GlobalC::rhopw->npw];
-    for (int ig=0; ig<GlobalC::rhopw->npw; ig++)
-    {
-        double gg = GlobalC::rhopw->gg[ig];
-//      filter_g[ig] = a * gg / (gg+gg0);
-		filter_g[ig] = mixing_beta * gg / (gg+gg0);//mohan modify 2010/03/25
-    }
-
-    // (3)
-    for (int ig=0; ig<GlobalC::rhopw->npw; ig++)
-    {
-        rhog[ig] += filter_g[ig] * residual_g[ig];
-    }
-
-    // (4) transform rhog from G-space to real space.
-	// get the new charge. " FFT(rhog) = rho "
-    GlobalC::rhopw->recip2real( rhog, rho);
-
-    // (5)
-	// mohan change the order of (4) (5), 2010-02-05
-    ModuleBase::GlobalFunc::DCOPY(rho, rho_save, GlobalC::rhopw->nrxx);
-
-    //this->renormalize_rho();
-
-
-    delete[] filter_g;
-    delete[] rhog;
-    ModuleBase::timer::tick("Charge_Mixing","Kerker");
-    return;
-}
-
 
 double Charge_Mixing::rhog_dot_product(
 	const std::complex<double>*const*const rhog1,

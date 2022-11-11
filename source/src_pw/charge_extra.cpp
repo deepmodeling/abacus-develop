@@ -470,7 +470,7 @@ void Charge_Extra::find_alpha_and_beta(void)
     return;
 }
 
-void Charge_Extra::save_pos_next(const UnitCell_pseudo& ucell)
+void Charge_Extra::save_pos_next(const UnitCell& ucell)
 {
     ucell.save_cartesian_position_original(this->pos_next);
     return;
@@ -482,7 +482,7 @@ void Charge_Extra::update_istep()
     return;
 }
 
-void Charge_Extra::update_all_pos(const UnitCell_pseudo& ucell)
+void Charge_Extra::update_all_pos(const UnitCell& ucell)
 {
     for(int i=0; i<natom; ++i)
     {

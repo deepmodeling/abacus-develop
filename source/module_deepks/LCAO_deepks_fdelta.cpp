@@ -35,7 +35,7 @@ void stress_fill(
 //force for gamma only calculations
 //Pulay and HF terms are calculated together
 void LCAO_Deepks::cal_f_delta_gamma(const ModuleBase::matrix& dm,
-    const UnitCell_pseudo &ucell,
+    const UnitCell &ucell,
     const LCAO_Orbitals &orb,
     Grid_Driver &GridD,
     const int* trace_loc_row,
@@ -213,7 +213,7 @@ void LCAO_Deepks::cal_f_delta_gamma(const ModuleBase::matrix& dm,
 //Pulay and HF terms are calculated together
 
 void LCAO_Deepks::cal_f_delta_k(const std::vector<ModuleBase::ComplexMatrix>& dm/**<[in] density matrix*/,
-    const UnitCell_pseudo &ucell,
+    const UnitCell &ucell,
     const LCAO_Orbitals &orb,
     Grid_Driver &GridD,
     const int* trace_loc_row,

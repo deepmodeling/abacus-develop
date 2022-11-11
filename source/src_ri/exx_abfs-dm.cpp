@@ -2,7 +2,7 @@
 
 #include "../src_pw/global.h"
 #include "../module_base/mathzone.h"
-#include "../src_pw/charge_pulay.h"
+#include "../src_pw/charge_mixing.h"
 #include "../module_base/container_operator.h"
 
 #include "../src_external/src_test/src_global/matrix-test.h"
@@ -18,7 +18,7 @@ void Exx_Abfs::DM::cal_DM(
 {
 	ModuleBase::TITLE("Exx_Abfs::DM::cal_DM");
 	
-	cal_DMk_mixing( GlobalC::CHR, wg, atom_pairs, wfc_k_grid);
+	cal_DMk_mixing( GlobalC::CHR_MIX, wg, atom_pairs, wfc_k_grid);
 
 	for( const std::pair<size_t,size_t> & atom_pair : atom_pairs )
 	{
@@ -41,7 +41,7 @@ void Exx_Abfs::DM::cal_DM(
 
 
 void Exx_Abfs::DM::cal_DMk_mixing(
-	const Charge_Broyden &charge,
+	const Charge_Mixing &charge,
 	const ModuleBase::matrix& wg,
     const std::set<std::pair<size_t, size_t>>& atom_pairs,
      std::complex<double>*** wfc_k_grid)
@@ -50,21 +50,13 @@ void Exx_Abfs::DM::cal_DMk_mixing(
 
 	if(flag_mix)
 	{
-		if ( charge.mixing_mode == "plain" )
+		if ( charge.get_mixing_mode() == "plain" )
 		{
 			plain_mixing( charge, wg, atom_pairs,wfc_k_grid );
 		}
-		else if ( charge.mixing_mode == "kerker" )
-		{
-			throw std::invalid_argument("mixing density matrix can't be kerker. In "+ModuleBase::GlobalFunc::TO_STRING(__FILE__)+" line "+ModuleBase::GlobalFunc::TO_STRING(__LINE__));
-		}
-		else if ( charge.mixing_mode == "pulay" )
+		else if ( charge.get_mixing_mode() == "pulay" )
 		{
 			pulay_mixing( charge, wg, atom_pairs, wfc_k_grid );
-		}
-		else if ( charge.mixing_mode == "pulay-kerker" )
-		{
-			throw std::invalid_argument("mixing density matrix can't be pulay-kerker. In "+ModuleBase::GlobalFunc::TO_STRING(__FILE__)+" line "+ModuleBase::GlobalFunc::TO_STRING(__LINE__));
 		}
 		else
 		{
@@ -144,7 +136,7 @@ std::map<size_t,std::map<size_t,std::vector<ModuleBase::ComplexMatrix>>> Exx_Abf
 
 
 void Exx_Abfs::DM::plain_mixing(
-	const Charge_Broyden &charge,
+	const Charge_Mixing &charge,
 	const ModuleBase::matrix& wg,
     const std::set<std::pair<size_t, size_t>>& atom_pairs,
     complex<double>*** wfc_k_grid)
@@ -154,50 +146,50 @@ void Exx_Abfs::DM::plain_mixing(
 	if(DMk.empty())
 		DMk = cal_DMk_raw(atom_pairs, wg, wfc_k_grid);
 	else
-		DMk = charge.mixing_beta * cal_DMk_raw(atom_pairs, wg, wfc_k_grid) + (1-charge.mixing_beta) * DMk;
+		DMk = charge.get_mixing_beta() * cal_DMk_raw(atom_pairs, wg, wfc_k_grid) + (1-charge.get_mixing_beta()) * DMk;
 }
 
 
 
 void Exx_Abfs::DM::pulay_mixing(
-	const Charge_Broyden &charge,
+	const Charge_Mixing &charge,
 	const ModuleBase::matrix& wg,
     const std::set<std::pair<size_t, size_t>>& atom_pairs,
     complex<double>*** wfc_k_grid)
 {
-	if( 1==charge.totstep )
+	if( 1==charge.get_totstep() )
 	{
 		DMk_pulay_seq.clear();
 	}
 	
-	DMk_pulay_seq.push_back( charge.mixing_beta * cal_DMk_raw(atom_pairs, wg, wfc_k_grid) + (1-charge.mixing_beta) * DMk );
-	if( charge.totstep > charge.rstep )
+	DMk_pulay_seq.push_back( charge.get_mixing_beta() * cal_DMk_raw(atom_pairs, wg, wfc_k_grid) + (1-charge.get_mixing_beta()) * DMk );
+	if( charge.get_totstep() > charge.get_rstep() )
 		DMk_pulay_seq.pop_front();
 	
-	if( 1==charge.totstep )
+	if( 1==charge.get_totstep() )
 	{
 		DMk = DMk_pulay_seq.front();
 	}
 	else
 	{
 		const int alpha_size = DMk_pulay_seq.size()-1;
-		const int alpha_end = charge.idstep;
+		const int alpha_end = charge.get_idstep();
 		const int alpha_begin = alpha_end - alpha_size;
-		auto alpha_index = [&](const int i){ return ((alpha_begin+i)%charge.dstep+charge.dstep)%charge.dstep; };
+		auto alpha_index = [&](const int i){ return ((alpha_begin+i)%charge.get_dstep()+charge.get_dstep())%charge.get_dstep(); };
 		
-		DMk = (1+charge.alpha[alpha_index(alpha_size-1)]) * DMk_pulay_seq.back();
+		DMk = (1+charge.get_alpha()[alpha_index(alpha_size-1)]) * DMk_pulay_seq.back();
 		for( size_t i=1; i<DMk_pulay_seq.size()-1; ++i )
-			DMk = DMk + ( charge.alpha[alpha_index(i-1)] - charge.alpha[alpha_index(i)] ) * DMk_pulay_seq[i];
-		DMk = DMk - charge.alpha[alpha_index(0)] * DMk_pulay_seq.front();
+			DMk = DMk + ( charge.get_alpha()[alpha_index(i-1)] - charge.get_alpha()[alpha_index(i)] ) * DMk_pulay_seq[i];
+		DMk = DMk - charge.get_alpha()[alpha_index(0)] * DMk_pulay_seq.front();
 				
 		#if TEST_EXX_LCAO==1
 		{
-			std::cout<<"charge.alpha"<<std::endl;
+			std::cout<<"charge.get_alpha()"<<std::endl;
 			std::cout<<alpha_begin<<"\t"<<alpha_end<<"\t"<<alpha_size<<std::endl;
-			std::cout<<charge.alpha[alpha_index(alpha_size-1)]<<std::endl;
+			std::cout<<charge.get_alpha()[alpha_index(alpha_size-1)]<<std::endl;
 			for( size_t i=1; i<DMk_pulay_seq.size()-1; ++i )
-				std::cout<<charge.alpha[alpha_index(i-1)]<<"\t"<<charge.alpha[alpha_index(i)]<<std::endl;
-			std::cout<<charge.alpha[alpha_index(0)]<<std::endl;
+				std::cout<<charge.get_alpha()[alpha_index(i-1)]<<"\t"<<charge.get_alpha()[alpha_index(i)]<<std::endl;
+			std::cout<<charge.get_alpha()[alpha_index(0)]<<std::endl;
 		}
 		#elif TEST_EXX_LCAO==-1
 			#error
@@ -207,8 +199,8 @@ void Exx_Abfs::DM::pulay_mixing(
 	#if TEST_EXX_LCAO==1
 	{
 		std::cout<<"charge.alpha_all"<<std::endl;
-		for( size_t i=0; i!=charge.dstep; ++i )
-			std::cout<<charge.alpha[i]<<"\t";
+		for( size_t i=0; i!=charge.get_dstep(); ++i )
+			std::cout<<charge.get_alpha()[i]<<"\t";
 		std::cout<<std::endl;
 	}
 	#elif TEST_EXX_LCAO==-1

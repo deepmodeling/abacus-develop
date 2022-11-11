@@ -38,12 +38,6 @@ UnitCell::UnitCell()
 UnitCell::~UnitCell()
 {
 }
-UnitCell_pseudo::UnitCell_pseudo()
-{
-}
-UnitCell_pseudo::~UnitCell_pseudo()
-{
-}
 Magnetism::Magnetism()
 {
 }
@@ -229,7 +223,7 @@ std::vector<stru_> stru_lib{
 class SymmetryTest : public testing::Test
 {
   protected:
-    UnitCell_pseudo ucell;
+    UnitCell ucell;
     std::ofstream ofs_running;
 
     void construct_ucell(stru_ &stru)

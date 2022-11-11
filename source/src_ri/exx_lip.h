@@ -14,7 +14,7 @@
 
 class K_Vectors;
 class wavefunc;
-class UnitCell_pseudo;
+class UnitCell;
 
 class Exx_Lip
 {
@@ -39,7 +39,7 @@ public:
 		wavefunc *wf_ptr_in, 
 		ModulePW::PW_Basis_K *wfc_basis_in, 
 		ModulePW::PW_Basis *rho_basis_in, 
-		UnitCell_pseudo *ucell_ptr_in,
+		UnitCell *ucell_ptr_in,
 		const elecstate::ElecState* pelec_in);
 	void cal_exx();
 	const std::complex<double> * const * const * get_exx_matrix() const { return exx_matrix; }
@@ -102,7 +102,7 @@ public:
 	ModulePW::PW_Basis *rho_basis;
 	ModulePW::PW_Basis_K *wfc_basis;
 
-	UnitCell_pseudo *ucell_ptr;
+	UnitCell *ucell_ptr;
 };
 
 

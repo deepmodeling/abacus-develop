@@ -1,7 +1,7 @@
 #ifndef VELOCITY_PW_H
 #define VELOCITY_PW_H
 #include "operator_pw.h"
-#include "module_cell/unitcell_pseudo.h"
+#include "module_cell/unitcell.h"
 #include "src_pw/VNL_in_pw.h"
 #include "module_pw/pw_basis_k.h"
 namespace hamilt
@@ -15,7 +15,7 @@ class Velocity
         const ModulePW::PW_Basis_K* wfcpw_in,
         const int* isk_in,
         pseudopot_cell_vnl* ppcell_in,
-        const UnitCell_pseudo* ucell_in,
+        const UnitCell* ucell_in,
         const bool nonlocal_in = true
     );
 
@@ -41,7 +41,7 @@ class Velocity
 
     pseudopot_cell_vnl* ppcell = nullptr;
 
-    const UnitCell_pseudo* ucell = nullptr;
+    const UnitCell* ucell = nullptr;
 
     int ik;
 

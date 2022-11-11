@@ -144,6 +144,7 @@ std::string global_matrix_dir;
 std::ofstream ofs_running;
 std::ofstream ofs_warning;
 std::ofstream ofs_info; // output math lib info
+std::ofstream ofs_device; // output device info
 
 //----------------------------------------------------------
 // EXPLAIN : test level for each class

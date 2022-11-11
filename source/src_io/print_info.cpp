@@ -7,7 +7,7 @@ Print_Info::Print_Info(){}
 Print_Info::~Print_Info(){}
 
 
-void Print_Info::setup_parameters(UnitCell_pseudo &ucell, K_Vectors &kv)
+void Print_Info::setup_parameters(UnitCell &ucell, K_Vectors &kv)
 {
 	ModuleBase::TITLE("Print_Info","setup_parameters");
 	

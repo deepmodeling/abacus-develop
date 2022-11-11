@@ -6,7 +6,7 @@
 class Nose_Hoover : public MDrun
 {
 public:
-    Nose_Hoover(MD_parameters& MD_para_in, UnitCell_pseudo &unit_in);
+    Nose_Hoover(MD_parameters& MD_para_in, UnitCell &unit_in);
     ~Nose_Hoover();
 
     void setup(ModuleESolver::ESolver *p_ensolve);

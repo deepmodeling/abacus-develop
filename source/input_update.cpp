@@ -9,6 +9,7 @@
 #include "input.h"
 #include "module_relax/relax_old/ions_move_basic.h"
 #include "src_io/optical.h"
+#include "src_parallel/parallel_common.h"
 #ifdef __LCAO
 #include "src_lcao/FORCE_STRESS.h"
 #include "src_lcao/local_orbital_charge.h"
@@ -160,10 +161,18 @@ bool Update_input::Read(const std::string &fn)
         else if (strcmp("mixing_beta", word) == 0)
         {
             read_value(ifs, mixing_beta);
-			if(mixing_beta!=GlobalC::CHR.mixing_beta)
+#ifdef __MPI
+            Parallel_Common::bcast_double( mixing_beta );
+#endif
+			if(mixing_beta!=GlobalC::CHR_MIX.get_mixing_beta())
 			{
-				this->change(GlobalV::ofs_warning,"mixing_beta",GlobalC::CHR.mixing_beta,mixing_beta);
-    			GlobalC::CHR.mixing_beta = mixing_beta;
+                double mixing_beta_old = GlobalC::CHR_MIX.get_mixing_beta();
+				this->change(GlobalV::ofs_warning,"mixing_beta",mixing_beta_old,mixing_beta);
+    			GlobalC::CHR_MIX.set_mixing(
+                    GlobalC::CHR_MIX.get_mixing_mode(),
+                    mixing_beta,
+                    GlobalC::CHR_MIX.get_mixing_ndim(),
+                    GlobalC::CHR_MIX.get_mixing_gg0());
 			}
         }
 		// 8
@@ -274,7 +283,6 @@ bool Update_input::Read(const std::string &fn)
     return true;
 }//end read_parameters
 
-#include "src_parallel/parallel_common.h"
 #ifdef __MPI
 void Update_input::Bcast()
 {
@@ -288,7 +296,6 @@ void Update_input::Bcast()
     Parallel_Common::bcast_double( GlobalV::SCF_THR );
     Parallel_Common::bcast_int( GlobalV::SCF_NMAX );
     Parallel_Common::bcast_int( GlobalV::RELAX_NMAX );
-    Parallel_Common::bcast_double( GlobalC::CHR.mixing_beta );
     Parallel_Common::bcast_int( GlobalC::en.printe );
     Parallel_Common::bcast_string( GlobalC::pot.chg_extrap );//xiaohui modify 2015-02-01
     Parallel_Common::bcast_int( GlobalC::CHR.out_chg );

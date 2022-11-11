@@ -7,7 +7,7 @@
 #include "../module_relax/relax_driver.h"
 #include "../src_ri/exx_lip.h"
 #include "VNL_in_pw.h"
-#include "charge_broyden.h"
+#include "charge_mixing.h"
 #include "energy.h"
 #include "../module_xc/exx_global.h"
 #include "hamilt.h"
@@ -316,14 +316,15 @@ extern Exx_Lip exx_lip;
 extern pseudopot_cell_vnl ppcell;
 } // namespace GlobalC
 
-#include "../module_cell/unitcell_pseudo.h"
+#include "../module_cell/unitcell.h"
 #include "../module_symmetry/symmetry.h"
 #include "../src_parallel/parallel_grid.h"
 #include "../src_parallel/parallel_kpoints.h"
 namespace GlobalC
 {
-extern UnitCell_pseudo ucell;
-extern Charge_Broyden CHR;
+extern UnitCell ucell;
+extern Charge CHR;
+extern Charge_Mixing CHR_MIX;
 extern Potential pot;
 extern ModuleSymmetry::Symmetry symm;
 extern Parallel_Grid Pgrid;

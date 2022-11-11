@@ -5,7 +5,7 @@
 #endif
 #include "../module_base/timer.h"
 
-Nose_Hoover::Nose_Hoover(MD_parameters& MD_para_in, UnitCell_pseudo &unit_in) : MDrun(MD_para_in, unit_in)
+Nose_Hoover::Nose_Hoover(MD_parameters& MD_para_in, UnitCell &unit_in) : MDrun(MD_para_in, unit_in)
 {
     const double unit_transform = ModuleBase::HARTREE_SI / pow(ModuleBase::BOHR_RADIUS_SI,3) * 1.0e-8;
     mdp.md_pfirst /= unit_transform;

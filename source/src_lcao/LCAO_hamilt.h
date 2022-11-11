@@ -15,14 +15,6 @@ class LCAO_Hamilt
     ~LCAO_Hamilt();
 
     void grid_prepare(void);
-        
-    // used fro k-dependent Hamiltonian matrix.
-    void calculate_Hk( const int &ik);
-    
-    // used for Gamma only Hamiltonian matrix.
-    void calculate_Hgamma( const int &ik , vector<ModuleBase::matrix> dm_gamma);						// Peize Lin add ik 2016-12-03
-
-    void calculate_STN_R(void); //LiuXh add 2019-07-15
 
     // jingan add 2021-6-4
     void set_R_range_sparse();
@@ -46,19 +38,6 @@ class LCAO_Hamilt
     LCAO_gen_fixedH genH;
 
     LCAO_Matrix* LM;
-    
-    // init S (overlap matrix) flag.
-    bool init_s;
-
-    private:
-
-    // used for gamma only algorithms.
-    void calculate_STNR_gamma(void);
-
-    void calculate_STNR_gamma_B(void); //mohan add 2012-04-14
-
-    void calculate_STNR_k(void);
-
 };
 
 #endif

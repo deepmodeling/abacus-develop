@@ -3,7 +3,7 @@
 #include "../src_parallel/parallel_common.h"
 #include "../module_base/timer.h"
 
-Langevin::Langevin(MD_parameters& MD_para_in, UnitCell_pseudo &unit_in) : MDrun(MD_para_in, unit_in)
+Langevin::Langevin(MD_parameters& MD_para_in, UnitCell &unit_in) : MDrun(MD_para_in, unit_in)
 {
     // convert to a.u. unit
     mdp.md_damp /= ModuleBase::AU_to_FS;

@@ -9,7 +9,7 @@
 
 #include <map>
 #include "input.h"
-#include "module_cell/unitcell_pseudo.h"
+#include "module_cell/unitcell.h"
 #include "module_vdw/vdw_parameters.h"
 
 namespace vdw
@@ -30,7 +30,7 @@ class Vdwd2Parameters : public VdwParameters
     void C6_input(const std::string &file, const std::string &unit);
     void R0_input(const std::string &file, const std::string &unit);
 
-    void initset(const UnitCell_pseudo &ucell); // init sets of vdwd2 once this correction is called
+    void initset(const UnitCell &ucell); // init sets of vdwd2 once this correction is called
     void initial_parameters(const Input &input); // initial parameters of Vdwd2 with INPUT file
 
     inline const std::map<std::string, double> C6() const { return C6_; }

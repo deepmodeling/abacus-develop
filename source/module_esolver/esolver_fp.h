@@ -12,7 +12,7 @@ namespace ModuleESolver
         ModulePW::PW_Basis* pw_rho;
         ESolver_FP();
         virtual ~ESolver_FP();
-        virtual void Init(Input& inp, UnitCell_pseudo& cell) override;
+        virtual void Init(Input& inp, UnitCell& cell) override;
         // Hamilt* phamilt;
     private:
         void print_rhofft(Input& inp, ofstream &ofs);
