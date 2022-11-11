@@ -13,7 +13,7 @@ template<typename FPTYPE, typename Device>
 Nonlocal<OperatorPW<FPTYPE, Device>>::Nonlocal(
     const int* isk_in,
     const pseudopot_cell_vnl* ppcell_in,
-    const UnitCell_pseudo* ucell_in
+    const UnitCell* ucell_in
 )
 {
     this->cal_type = pw_nonlocal;

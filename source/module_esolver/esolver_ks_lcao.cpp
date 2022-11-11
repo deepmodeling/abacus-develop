@@ -42,7 +42,7 @@ ESolver_KS_LCAO::~ESolver_KS_LCAO()
     this->orb_con.clear_after_ions(GlobalC::UOT, GlobalC::ORB, GlobalV::deepks_setorb, GlobalC::ucell.infoNL.nproj);
 }
 
-void ESolver_KS_LCAO::Init(Input& inp, UnitCell_pseudo& ucell)
+void ESolver_KS_LCAO::Init(Input& inp, UnitCell& ucell)
 {
     ModuleBase::TITLE("ESolver_KS_LCAO", "Init");
     // if we are only calculating S, then there is no need
@@ -249,7 +249,7 @@ void ESolver_KS_LCAO::postprocess()
     GlobalC::en.perform_dos(this->psid, this->psi, this->UHM, this->pelec);
 }
 
-void ESolver_KS_LCAO::Init_Basis_lcao(ORB_control& orb_con, Input& inp, UnitCell_pseudo& ucell)
+void ESolver_KS_LCAO::Init_Basis_lcao(ORB_control& orb_con, Input& inp, UnitCell& ucell)
 {
     // Set the variables first
     this->orb_con.gamma_only = GlobalV::GAMMA_ONLY_LOCAL;

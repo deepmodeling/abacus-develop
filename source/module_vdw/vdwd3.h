@@ -16,7 +16,7 @@ class Vdwd3 : public Vdw
 {
 
   public:
-    Vdwd3(const UnitCell_pseudo &unit_in) : Vdw(unit_in) { }
+    Vdwd3(const UnitCell &unit_in) : Vdw(unit_in) { }
 
     ~Vdwd3() = default;
 
