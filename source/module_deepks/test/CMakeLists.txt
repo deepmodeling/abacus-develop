@@ -12,10 +12,16 @@ target_link_libraries(
     test_deepks
     base cell symmetry md surchem xc_
     neighbor orb io relax gint lcao parallel mrrr pdiag pw ri driver esolver hsolver psi elecstate hamilt planewave
-    pthread genelpa vdw
+    pthread vdw
     deepks rpa
     ${ABACUS_LINK_LIBRARIES}
 )
+if(USE_ELPA)
+  target_link_libraries(
+      test_deepks
+      genelpa
+  )
+endif()
 
 install(
     TARGETS test_deepks

@@ -22,6 +22,7 @@ option(BUILD_TESTING "Build ABACUS unit tests" OFF)
 option(GENERATE_TEST_REPORTS "Enable test report generation" OFF)
 option(INFO "Enable gathering of math library information" OFF)
 option(ENABLE_COVERAGE "Enable coverage build." OFF)
+option(USE_ELPA "Enable ELPA" ON)
 
 if(ENABLE_LCAO)
   set(ABACUS_BIN_NAME abacus)
@@ -85,10 +86,13 @@ if(ENABLE_LCAO)
   find_package(Cereal REQUIRED)
   include_directories(${CEREAL_INCLUDE_DIR})
   add_compile_definitions(USE_CEREAL_SERIALIZATION)
-  find_package(ELPA REQUIRED)
-  include_directories(${ELPA_INCLUDE_DIR})
-  target_link_libraries(${ABACUS_BIN_NAME} ELPA::ELPA)
   add_compile_definitions(__LCAO)
+  if (USE_ELPA)
+    find_package(ELPA REQUIRED)
+    include_directories(${ELPA_INCLUDE_DIR})
+    target_link_libraries(${ABACUS_BIN_NAME} ELPA::ELPA)
+    add_compile_definitions(__ELPA)
+  endif()
 else()
   set(ENABLE_DEEPKS OFF)
 endif()
@@ -406,9 +410,13 @@ if(ENABLE_LCAO)
       gint
       mrrr
       pdiag
-      genelpa
       rpa
   )
+  if (USE_ELPA)
+    target_link_libraries(${ABACUS_BIN_NAME}
+      genelpa
+    )
+  endif ()
 endif()
 
 install(PROGRAMS ${ABACUS_BIN_PATH}

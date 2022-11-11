@@ -7,6 +7,7 @@ INCLUDES = -I. -Icommands -I../
 LIBS = -lm -lpthread
 OPTS = -Ofast -march=native -std=c++14 -pedantic -m64 ${INCLUDES}
 HONG = -D__LCAO
+HONG += -D__ELPA
 OBJ_DIR = obj
 BIN_DIR = ../bin
 SOURCE_DIR = .

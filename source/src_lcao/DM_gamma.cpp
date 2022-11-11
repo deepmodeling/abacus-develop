@@ -274,7 +274,7 @@ void Local_Orbital_Charge::gamma_file(psi::Psi<double>* psid, Local_Orbital_wfc 
 
     //allocate psi
     int ncol = this->ParaV->ncol_bands;
-    if(GlobalV::KS_SOLVER=="genelpa" || GlobalV::KS_SOLVER=="lapack_gvx"
+    if(GlobalV::KS_SOLVER=="genelpa" || GlobalV::KS_SOLVER=="lapack_gvx" || GlobalV::KS_SOLVER == "scalapack_gvx"
 #ifdef __CUSOLVER_LCAO
     ||GlobalV::KS_SOLVER=="cusolver"
 #endif
