@@ -9,7 +9,7 @@
 #include "src_pw/potential.h"
 #include "module_cell/atom_pseudo.h"
 #include "module_cell/atom_spec.h"
-#include "module_cell/unitcell_pseudo.h"
+#include "module_cell/unitcell.h"
 #include "module_cell/pseudo_nc.h"
 #include "module_symmetry/symmetry_basic.h"
 #include "module_symmetry/symmetry.h"
@@ -54,8 +54,6 @@ InfoNonlocal::InfoNonlocal(){}
 InfoNonlocal::~InfoNonlocal(){}
 UnitCell::UnitCell(){}
 UnitCell::~UnitCell(){}
-UnitCell_pseudo::UnitCell_pseudo(){}
-UnitCell_pseudo::~UnitCell_pseudo(){}
 Parallel_Grid::Parallel_Grid(){}
 Parallel_Grid::~Parallel_Grid(){}
 WF_igk::WF_igk(){}
@@ -96,7 +94,7 @@ K_Vectors kv;
 wavefunc wf;
 Charge CHR;
 Potential pot;
-UnitCell_pseudo ucell;
+UnitCell ucell;
 ModuleSymmetry::Symmetry symm;
 Parallel_Grid Pgrid;
 Structure_Factor sf;
@@ -205,7 +203,7 @@ double Magnetism::get_neldw(){return 0;}
 
 bool ModuleSymmetry::Symmetry_Basic::equal(double const&m, double const&n) const{return false;}
 
-void UnitCell_pseudo::setup_cell(
+void UnitCell::setup_cell(
 #ifdef __LCAO
 		LCAO_Orbitals &orb,
 #endif
@@ -259,7 +257,7 @@ void UnitCell_pseudo::setup_cell(
 	return;
 }
 
-int UnitCell_pseudo::read_atom_species(LCAO_Orbitals &orb, std::ifstream &ifa, std::ofstream &ofs_running)
+int UnitCell::read_atom_species(LCAO_Orbitals &orb, std::ifstream &ifa, std::ofstream &ofs_running)
 {
 	delete[] atom_label;
 	delete[] atom_mass;
@@ -301,7 +299,7 @@ int UnitCell_pseudo::read_atom_species(LCAO_Orbitals &orb, std::ifstream &ifa, s
 	return 0;
 }
 
-bool UnitCell_pseudo::read_atom_positions(LCAO_Orbitals &orb, std::ifstream &ifpos, std::ofstream &ofs_running, std::ofstream &ofs_warning)
+bool UnitCell::read_atom_positions(LCAO_Orbitals &orb, std::ifstream &ifpos, std::ofstream &ofs_running, std::ofstream &ofs_warning)
 {
 	if( ModuleBase::GlobalFunc::SCAN_BEGIN(ifpos, "ATOMIC_POSITIONS"))
 	{

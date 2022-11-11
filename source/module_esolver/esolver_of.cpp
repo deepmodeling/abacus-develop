@@ -26,7 +26,7 @@
 namespace ModuleESolver
 {
 
-void ESolver_OF::Init(Input &inp, UnitCell_pseudo &ucell)
+void ESolver_OF::Init(Input &inp, UnitCell &ucell)
 {
     ESolver_FP::Init(inp, ucell);
 
@@ -208,7 +208,7 @@ void ESolver_OF::Init(Input &inp, UnitCell_pseudo &ucell)
     CE.Init_CE();
 }
 
-void ESolver_OF::Run(int istep, UnitCell_pseudo& ucell)
+void ESolver_OF::Run(int istep, UnitCell& ucell)
 {
     ModuleBase::timer::tick("ESolver_OF", "Run");
     // get Ewald energy, initial rho and phi if necessary

@@ -14,8 +14,8 @@ namespace ModuleESolver
             classname = "ESolver_LJ";
         }
 
-        void Init(Input& inp, UnitCell_pseudo& cell) override;
-        void Run(const int istep, UnitCell_pseudo& cell) override;
+        void Init(Input& inp, UnitCell& cell) override;
+        void Run(const int istep, UnitCell& cell) override;
         void cal_Energy(double& etot) override;
         void cal_Force(ModuleBase::matrix& force) override;
         void cal_Stress(ModuleBase::matrix& stress) override;

@@ -5,7 +5,7 @@
 #endif
 #include "../module_base/timer.h"
 
-Nose_Hoover::Nose_Hoover(MD_parameters& MD_para_in, UnitCell_pseudo &unit_in) : MDrun(MD_para_in, unit_in)
+Nose_Hoover::Nose_Hoover(MD_parameters& MD_para_in, UnitCell &unit_in) : MDrun(MD_para_in, unit_in)
 {
     if(mdp.md_tfirst == 0)
     {

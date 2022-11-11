@@ -139,7 +139,6 @@ OBJS_CELL=atom_pseudo.o\
     read_pp_blps.o\
     read_pp_vwr.o\
     unitcell.o\
-    unitcell_pseudo.o\
     read_atoms.o\
     read_cell_pseudopots.o\
     setup_nonlocal.o\

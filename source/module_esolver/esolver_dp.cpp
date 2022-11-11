@@ -4,7 +4,7 @@
 namespace ModuleESolver
 {
 
-    void ESolver_DP::Init(Input& inp, UnitCell_pseudo& ucell)
+    void ESolver_DP::Init(Input& inp, UnitCell& ucell)
     {
         dp_potential = 0;
         dp_force.create(ucell.nat, 3);
@@ -15,7 +15,7 @@ namespace ModuleESolver
         coord.resize(3 * ucell.nat);
     }
 
-    void ESolver_DP::Run(const int istep, UnitCell_pseudo& ucell)
+    void ESolver_DP::Run(const int istep, UnitCell& ucell)
     {
         cell[0] = ucell.latvec.e11 * ucell.lat0_angstrom;
         cell[1] = ucell.latvec.e12 * ucell.lat0_angstrom;

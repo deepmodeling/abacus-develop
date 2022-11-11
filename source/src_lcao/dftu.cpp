@@ -71,7 +71,7 @@ DFTU::DFTU(){}
 DFTU::~DFTU(){}
 
 void DFTU::init(
-	UnitCell_pseudo &cell, // unitcell class
+	UnitCell &cell, // unitcell class
     LCAO_Matrix &lm
     )
 {

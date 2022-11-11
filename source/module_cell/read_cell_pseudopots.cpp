@@ -1,4 +1,4 @@
-#include "unitcell_pseudo.h"
+#include "unitcell.h"
 #include "../src_parallel/parallel_common.h"
 #include "../input.h"
 #ifdef __LCAO
@@ -11,9 +11,9 @@
 //==========================================================
 // Read pseudopotential according to the dir
 //==========================================================
-void UnitCell_pseudo::read_cell_pseudopots(const std::string &pp_dir, std::ofstream &log)
+void UnitCell::read_cell_pseudopots(const std::string &pp_dir, std::ofstream &log)
 {
-	ModuleBase::TITLE("UnitCell_pseudo","read_cell_pseudopots");
+	ModuleBase::TITLE("UnitCell","read_cell_pseudopots");
 	// setup reading log for pseudopot_upf
 	std::stringstream ss;
 	ss << GlobalV::global_out_dir << "atom_pseudo.log";
@@ -51,7 +51,7 @@ void UnitCell_pseudo::read_cell_pseudopots(const std::string &pp_dir, std::ofstr
 
 		if(error_ap) 
 		{
-			ModuleBase::WARNING_QUIT("UnitCell_pseudo::read_pseudopot","error when average the pseudopotential.");
+			ModuleBase::WARNING_QUIT("UnitCell::read_pseudopot","error when average the pseudopotential.");
 		}
 
 		if(error==1)
@@ -121,9 +121,9 @@ void UnitCell_pseudo::read_cell_pseudopots(const std::string &pp_dir, std::ofstr
 }
 
 
-void UnitCell_pseudo::print_unitcell_pseudo(const std::string &fn)
+void UnitCell::print_unitcell_pseudo(const std::string &fn)
 {
-	if(GlobalV::test_pseudo_cell) ModuleBase::TITLE("UnitCell_pseudo","print_unitcell_pseudo");
+	if(GlobalV::test_pseudo_cell) ModuleBase::TITLE("UnitCell","print_unitcell_pseudo");
 	std::ofstream ofs( fn.c_str() );
 
 	this->print_cell(ofs);
@@ -138,7 +138,7 @@ void UnitCell_pseudo::print_unitcell_pseudo(const std::string &fn)
 
 
 #ifdef __MPI
-void UnitCell_pseudo::bcast_unitcell_pseudo(void)
+void UnitCell::bcast_unitcell_pseudo(void)
 {
 	Parallel_Common::bcast_int( meshx );
 	Parallel_Common::bcast_int( natomwfc );
@@ -149,7 +149,7 @@ void UnitCell_pseudo::bcast_unitcell_pseudo(void)
 	bcast_unitcell();
 }
 
-void UnitCell_pseudo::bcast_unitcell_pseudo2(void)
+void UnitCell::bcast_unitcell_pseudo2(void)
 {
 	bcast_unitcell2();
 }
