@@ -15,7 +15,6 @@ class Force_Stress_LCAO
 {
 	// mohan add 2021-02-09
 	friend class md;
-	friend class Run_MD_LCAO;
 	friend void Input_Conv::Convert();
 	friend class Update_input;
 	friend class ions;
@@ -32,6 +31,7 @@ class Force_Stress_LCAO
 		const bool istestf, 
         const bool istests,
         Local_Orbital_Charge& loc,
+		const elecstate::ElecState* pelec,
         const psi::Psi<double>* psid,
 		const psi::Psi<std::complex<double>>* psi,
         LCAO_Hamilt &uhm,
@@ -63,6 +63,7 @@ private:
 		const bool isforce,
         const bool isstress,
         Local_Orbital_Charge& loc,
+		const elecstate::ElecState* pelec,
         const psi::Psi<double>* psid,
 		const psi::Psi<std::complex<double>>* psi,
         ModuleBase::matrix& foverlap,

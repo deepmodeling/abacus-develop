@@ -1,10 +1,9 @@
 #include "./stress_pw.h"
-#include "vdwd2.h"
-#include "vdwd3.h"
 #include "../module_base/timer.h"
 #include "global.h"
+#include "module_vdw/vdw.h"
 
-void Stress_PW::cal_stress(ModuleBase::matrix& sigmatot, const psi::Psi<complex<double>>* psi_in)
+void Stress_PW::cal_stress(ModuleBase::matrix& sigmatot, const ModuleBase::matrix& wg, const psi::Psi<complex<double>>* psi_in)
 {
 	ModuleBase::TITLE("Stress_PW","cal_stress");
 	ModuleBase::timer::tick("Stress_PW","cal_stress");    
@@ -53,12 +52,7 @@ void Stress_PW::cal_stress(ModuleBase::matrix& sigmatot, const psi::Psi<complex<
 	}
 
 	//kinetic contribution
-	if (GlobalV::CALCULATION != "ofdft" && GlobalV::CALCULATION != "of-md") 
-	// kinectic contribution of OFDFT should be calculated by kinetic functional, 
-	// it is calculated in ESolver_OF for now, maybe later will be moved here.
-	{
-		stress_kin(sigmakin, psi_in);
-	}
+	stress_kin(sigmakin, wg, psi_in);
 	
 	//hartree contribution
 	stress_har(sigmahar, GlobalC::rhopw, 1);
@@ -72,7 +66,7 @@ void Stress_PW::cal_stress(ModuleBase::matrix& sigmatot, const psi::Psi<complex<
        sigmaxc(i,i) = - (GlobalC::en.etxc - GlobalC::en.vtxc) / GlobalC::ucell.omega;
     }
     stress_gga(sigmaxc);
-    if(XC_Functional::get_func_type() == 3) stress_mgga(sigmaxc, psi_in);
+    if(XC_Functional::get_func_type() == 3) stress_mgga(sigmaxc, wg, psi_in);
 
     //local contribution
     stress_loc(sigmaloc, GlobalC::rhopw, 1);
@@ -81,7 +75,7 @@ void Stress_PW::cal_stress(ModuleBase::matrix& sigmatot, const psi::Psi<complex<
     stress_cc(sigmaxcc, GlobalC::rhopw, 1);
    
     //nonlocal
-	stress_nl(sigmanl, psi_in);
+	stress_nl(sigmanl, wg, psi_in);
 
 	//vdw term
 	stress_vdw(sigmavdw);
@@ -130,18 +124,10 @@ void Stress_PW::cal_stress(ModuleBase::matrix& sigmatot, const psi::Psi<complex<
 
 void Stress_PW::stress_vdw(ModuleBase::matrix& sigma)
 {
-	ModuleBase::matrix force;
-	if(GlobalC::vdwd2_para.flag_vdwd2) //Peize Lin add 2014-04-04, update 2021-03-09
-	{
-		Vdwd2 vdwd2(GlobalC::ucell,GlobalC::vdwd2_para);
-		vdwd2.cal_stress();
-		sigma = vdwd2.get_stress().to_matrix();
-	}
-	if(GlobalC::vdwd3_para.flag_vdwd3) //jiyy add 2019-05-18, update 2021-05-02
-	{
-		Vdwd3 vdwd3(GlobalC::ucell,GlobalC::vdwd3_para);
-		vdwd3.cal_stress();
-		sigma = vdwd3.get_stress().to_matrix();
-	}              
+    auto vdw_solver = vdw::make_vdw(GlobalC::ucell, INPUT);
+    if (vdw_solver != nullptr)
+    {
+    sigma = vdw_solver->get_stress().to_matrix();
+    }
 	return;
 }

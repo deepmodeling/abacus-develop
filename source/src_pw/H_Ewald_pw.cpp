@@ -60,7 +60,7 @@ void H_Ewald_pw::compute_ewald(const UnitCell &cell, ModulePW::PW_Basis* rho_bas
     double charge = 0.0;
     for (int it = 0;it < cell.ntype;it++)
     {
-        charge += cell.atoms[it].na * cell.atoms[it].zv;//mohan modify 2007-11-7
+        charge += cell.atoms[it].na * cell.atoms[it].ncpp.zv;//mohan modify 2007-11-7
     }
     if(GlobalV::test_energy)ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"Total ionic charge",charge);
 
@@ -114,7 +114,7 @@ void H_Ewald_pw::compute_ewald(const UnitCell &cell, ModulePW::PW_Basis* rho_bas
         std::complex<double> rhon = ModuleBase::ZERO;
         for (int it=0; it<cell.ntype; it++)
         {
-            rhon += static_cast<double>( cell.atoms[it].zv ) * conj( GlobalC::sf.strucFac(it, ig));
+            rhon += static_cast<double>( cell.atoms[it].ncpp.zv ) * conj( GlobalC::sf.strucFac(it, ig));
         }
         ewaldg += fact * abs(rhon) * abs(rhon)
                   * exp(- rho_basis->gg[ig] * cell.tpiba2 / alpha / 4.0 ) / rho_basis->gg[ig] / cell.tpiba2;
@@ -129,7 +129,7 @@ void H_Ewald_pw::compute_ewald(const UnitCell &cell, ModulePW::PW_Basis* rho_bas
 	{
     	for (int it = 0; it < cell.ntype;it++)
     	{
-        	ewaldg = ewaldg - cell.atoms[it].na * cell.atoms[it].zv * cell.atoms[it].zv * sqrt(8.0 / ModuleBase::TWO_PI * alpha);
+        	ewaldg = ewaldg - cell.atoms[it].na * cell.atoms[it].ncpp.zv * cell.atoms[it].ncpp.zv * sqrt(8.0 / ModuleBase::TWO_PI * alpha);
 		}
     }//mohan modify 2007-11-7, 2010-07-26
 
@@ -168,7 +168,7 @@ void H_Ewald_pw::compute_ewald(const UnitCell &cell, ModulePW::PW_Basis* rho_bas
                         for (nr = 0;nr < nrm;nr++)
                         {
                             rr = sqrt(r2 [nr]) * cell.lat0;
-                            ewaldr = ewaldr + cell.atoms[nt1].zv * cell.atoms[nt2].zv *
+                            ewaldr = ewaldr + cell.atoms[nt1].ncpp.zv * cell.atoms[nt2].ncpp.zv *
                                      erfc(sqrt(alpha) * rr) / rr;
 
                         } // enddo

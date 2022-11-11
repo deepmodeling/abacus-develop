@@ -53,7 +53,7 @@ void Stress_Func::stress_loc(ModuleBase::matrix& sigma, ModulePW::PW_Basis* rho_
 		//
 		// special case: pseudopotential is coulomb 1/r potential
 		//
-			this->dvloc_coul (atom->zv, dvloc, rho_basis);
+			this->dvloc_coul (atom->ncpp.zv, dvloc, rho_basis);
 		//
 		}
 		else
@@ -61,8 +61,8 @@ void Stress_Func::stress_loc(ModuleBase::matrix& sigma, ModulePW::PW_Basis* rho_
 		//
 		// normal case: dvloc contains dV_loc(G)/dG
 		//
-			this->dvloc_of_g ( atom->msh, atom->rab, atom->r,
-					atom->vloc_at, atom->zv, dvloc, rho_basis);
+			this->dvloc_of_g ( atom->ncpp.msh, atom->ncpp.rab, atom->ncpp.r,
+					atom->ncpp.vloc_at, atom->ncpp.zv, dvloc, rho_basis);
 		//
 		}
 

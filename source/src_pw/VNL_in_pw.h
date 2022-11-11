@@ -11,7 +11,7 @@
 #include "../module_orbital/ORB_gen_tables.h"
 #endif
 #include "../src_lcao/wavefunc_in_pw.h"
-#include "../module_cell/unitcell_pseudo.h"
+#include "../module_cell/unitcell.h"
 
 //==========================================================
 // Calculate the non-local pseudopotential in reciprocal
@@ -43,7 +43,7 @@ public:
 
 	int lmaxkb; // max angular momentum for non-local projectors
 
-	void init_vnl(UnitCell_pseudo &cell);
+	void init_vnl(UnitCell &cell);
 
 
 
@@ -53,7 +53,7 @@ public:
 
 	void init_vnl_alpha(void);
 
-	void initgradq_vnl(const UnitCell_pseudo &cell);
+	void initgradq_vnl(const UnitCell &cell);
 
 	void getgradq_vnl(const int ik);
 
@@ -87,9 +87,7 @@ public:
 
 	ModuleBase::realArray deeq;		//(:,:,:,:), the integral of V_eff and Q_{nm}
 	bool multi_proj = false;
-#ifdef __CUDA
 	double *d_deeq;
-#endif
 	ModuleBase::ComplexArray deeq_nc;	//(:,:,:,:), the spin-orbit case
 	ModuleBase::realArray becsum;	//(:,:,:,:), \sum_i  f(i) <psi(i)/beta_1><beta_m/psi(i)> //used in charge
 

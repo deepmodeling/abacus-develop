@@ -54,8 +54,12 @@ inline int CTOT2q_c(
 }
 
 // be called in local_orbital_wfc::allocate_k
-int WF_Local::read_lowf_complex(std::complex<double>** ctot, const int& ik, 
-    const Parallel_Orbitals* ParaV, psi::Psi<std::complex<double>>* psi)
+int WF_Local::read_lowf_complex(
+    std::complex<double>** ctot, 
+    const int& ik, 
+    const Parallel_Orbitals* ParaV, 
+    psi::Psi<std::complex<double>>* psi, 
+    elecstate::ElecState* pelec)
 {
     ModuleBase::TITLE("WF_Local","read_lowf_complex");
     ModuleBase::timer::tick("WF_Local","read_lowf_complex");
@@ -144,8 +148,8 @@ int WF_Local::read_lowf_complex(std::complex<double>** ctot, const int& ik,
 			// read the eigenvalues!
 			// very important to determine the occupations.
 			//------------------------------------------------
-			ModuleBase::GlobalFunc::READ_VALUE(ifs, GlobalC::wf.ekb[ik][ib]);
-			ModuleBase::GlobalFunc::READ_VALUE(ifs, GlobalC::wf.wg(ik,ib));
+			ModuleBase::GlobalFunc::READ_VALUE(ifs, pelec->ekb(ik, ib));
+			ModuleBase::GlobalFunc::READ_VALUE(ifs, pelec->wg(ik,ib));
             assert( i==ib );
 			double a, b;
             for (int j=0; j<GlobalV::NLOCAL; ++j)
@@ -163,22 +167,12 @@ int WF_Local::read_lowf_complex(std::complex<double>** ctot, const int& ik,
 	if(error==2) return 2;
 	if(error==3) return 3;
 	if(error==4) return 4;
-
-	// mohan add 2012-02-15,
-	// GlobalC::SGO.cal_totwfc();
-
-	// distri_lowf need all processors.
-	// otherwise, read in sucessfully.
-    // if GlobalV::DRANK!=0, ctot is not used,
-    // so it's save.
 	
-    //WF_Local::distri_lowf(ctot, GlobalC::SGO.totwfc[0]);
 	WF_Local::distri_lowf_complex_new(ctot, ik, ParaV, psi);
 	
 	// mohan add 2012-02-15,
 	// still have bugs, but can solve it later.
 	// distribute the wave functions again.
-	// GlobalC::SGO.dis_subwfc();
 
     if (GlobalV::DRANK==0)
     {
@@ -210,8 +204,12 @@ int WF_Local::read_lowf_complex(std::complex<double>** ctot, const int& ik,
 	return 0;
 }
 
-int WF_Local::read_lowf(double** ctot, const int& is,
-    const Parallel_Orbitals* ParaV, psi::Psi<double>* psid)
+int WF_Local::read_lowf(
+    double** ctot, 
+    const int& is,
+    const Parallel_Orbitals* ParaV, 
+    psi::Psi<double>* psid, 
+    elecstate::ElecState* pelec)
 {
     ModuleBase::TITLE("WF_Local","read_lowf");
     ModuleBase::timer::tick("WF_Local", "read_lowf");
@@ -281,8 +279,8 @@ int WF_Local::read_lowf(double** ctot, const int& is,
         {
             int ib;
             ModuleBase::GlobalFunc::READ_VALUE(ifs, ib);
-			ModuleBase::GlobalFunc::READ_VALUE(ifs, GlobalC::wf.ekb[GlobalV::CURRENT_SPIN][i]);
-			ModuleBase::GlobalFunc::READ_VALUE(ifs, GlobalC::wf.wg(GlobalV::CURRENT_SPIN,i));
+			ModuleBase::GlobalFunc::READ_VALUE(ifs, pelec->ekb(is, i));
+			ModuleBase::GlobalFunc::READ_VALUE(ifs, pelec->wg(is, i));
             assert( (i+1)==ib);
 			//std::cout << " ib=" << ib << std::endl;
             for (int j=0; j<GlobalV::NLOCAL; j++)
@@ -297,20 +295,11 @@ int WF_Local::read_lowf(double** ctot, const int& is,
 
 #ifdef __MPI
     Parallel_Common::bcast_int(error);
-	Parallel_Common::bcast_double( GlobalC::wf.ekb[is], GlobalV::NBANDS);
-	Parallel_Common::bcast_double( GlobalC::wf.wg.c, GlobalV::NSPIN*GlobalV::NBANDS);
+	Parallel_Common::bcast_double( &(pelec->ekb(is, 0)), GlobalV::NBANDS);
+	Parallel_Common::bcast_double( &(pelec->wg(is, 0)), GlobalV::NBANDS);
 #endif
 	if(error==2) return 2;
 	if(error==3) return 3;
-
-	// mohan add 2012-02-15,
-	// mohan comment out 2021-02-09
-	//GlobalC::SGO.cal_totwfc();
-
-	// distri_lowf need all processors.
-	// otherwise, read in sucessfully.
-    // if GlobalV::DRANK!=0, ctot is not used,
-    // so it's save.
 
 	WF_Local::distri_lowf_new(ctot, is, ParaV, psid);
 	
@@ -318,7 +307,6 @@ int WF_Local::read_lowf(double** ctot, const int& is,
 	// still have bugs, but can solve it later.
 	// distribute the wave functions again.
 	// mohan comment out 2021-02-09
-	// GlobalC::SGO.dis_subwfc();
 
     if (GlobalV::MY_RANK==0)
     {
@@ -444,7 +432,7 @@ void WF_Local::distri_lowf_new(double** ctot, const int& is,
 	int info;
 	int naroc[2]; // maximum number of row or column
 	
-//2. copy from ctot to wfc_gamma
+//2. copy from ctot to psi
 	for(int iprow=0; iprow<ParaV->dim0; ++iprow)
 	{
 		for(int ipcol=0; ipcol<ParaV->dim1; ++ipcol)
@@ -469,7 +457,7 @@ void WF_Local::distri_lowf_new(double** ctot, const int& is,
 				//GlobalV::ofs_running << *(work+i)<<" ";
 			//}
 			//GlobalV::ofs_running << std::endl;
-//2.3 copy from work to wfc_gamma
+//2.3 copy from work to psi
 			const int inc=1;
 			if(myid==src_rank)
 			{
@@ -523,7 +511,7 @@ void WF_Local::distri_lowf_complex_new(std::complex<double>** ctot, const int& i
 	int info;
 	int naroc[2]; // maximum number of row or column
 	
-//2. copy from ctot to wfc_gamma
+//2. copy from ctot to psi
 	for(int iprow=0; iprow<ParaV->dim0; ++iprow)
 	{
 		for(int ipcol=0; ipcol<ParaV->dim1; ++ipcol)
@@ -548,7 +536,7 @@ void WF_Local::distri_lowf_complex_new(std::complex<double>** ctot, const int& i
 				//ofs_running << *(work+i)<<" ";
 			//}
 			//ofs_running << std::endl;
-//2.3 copy from work to wfc_k
+//2.3 copy from work to psi_k
             const int inc = 1;
 			if(myid==src_rank)
 			{
@@ -563,137 +551,6 @@ void WF_Local::distri_lowf_complex_new(std::complex<double>** ctot, const int& i
 #endif
     return;
 }
-
-void WF_Local::distri_lowf(double **ctot, double **c)
-{
-    ModuleBase::TITLE("WF_Local","distri_lowf");
-#ifdef __MPI
-
-    MPI_Status status;
-    for (int i=0; i<GlobalV::DSIZE; i++)
-    {
-        if (GlobalV::DRANK==0)
-        {
-            if (i==0)
-            {
-                // get the wave functions from 'ctot',
-                // save them in the matrix 'c'.
-                for (int iw=0; iw<GlobalV::NLOCAL; iw++)
-                {
-					// mohan update 2012-01-12
-//                  const int mu_local = GlobalC::GridT.trace_lo[iw]; 
-                    const int mu_local = GlobalC::SGO.trace_lo_tot[iw];
-
-                    if (mu_local >= 0)
-                    {
-                        for (int ib=0; ib<GlobalV::NBANDS; ib++)
-                        {
-                            c[ib][mu_local] = ctot[ib][iw];
-                        }
-                    }
-                }
-            }
-            else
-            {
-                int tag;
-                // receive trace_lo2
-                tag = i * 3;
-                int* trace_lo2 = new int[GlobalV::NLOCAL];
-                MPI_Recv(trace_lo2, GlobalV::NLOCAL, MPI_INT, i, tag, DIAG_WORLD, &status);
-
-                // receive lgd2
-                int lgd2 = 0;
-                tag = i * 3 + 1;
-                MPI_Recv(&lgd2, 1, MPI_INT, i, tag, DIAG_WORLD, &status);
-
-                // send csend
-                double* csend = new double[GlobalV::NBANDS*lgd2];
-                ModuleBase::GlobalFunc::ZEROS(csend, GlobalV::NBANDS*lgd2);
-
-                for (int ib=0; ib<GlobalV::NBANDS; ib++)
-                {
-                    for (int iw=0; iw<GlobalV::NLOCAL; iw++)
-                    {
-                        const int mu_local = trace_lo2[iw];
-                        if (mu_local>=0)
-                        {
-                            csend[mu_local*GlobalV::NBANDS+ib] = ctot[ib][iw];
-                        }
-                    }
-                }
-
-                tag = i * 3 + 2;
-                MPI_Send(csend,GlobalV::NBANDS*lgd2,MPI_DOUBLE,i,tag,DIAG_WORLD);
-
-                delete[] trace_lo2;
-                delete[] csend;
-            }
-        }// end GlobalV::DRANK=0
-        else if ( i == GlobalV::DRANK)
-        {
-            int tag;
-
-            // send trace_lo
-            tag = GlobalV::DRANK * 3;
-			// mohan update 2012-01-12
-            //MPI_Send(GlobalC::GridT.trace_lo, GlobalV::NLOCAL, MPI_INT, 0, tag, DIAG_WORLD);
-            MPI_Send(GlobalC::SGO.trace_lo_tot, GlobalV::NLOCAL, MPI_INT, 0, tag, DIAG_WORLD);
-
-            // send lgd
-            tag = GlobalV::DRANK * 3 + 1;
-
-			// mohan update 2012-01-12
-			int lgdnow = GlobalC::SGO.lgd;
-            MPI_Send(&lgdnow, 1, MPI_INT, 0, tag, DIAG_WORLD);
-
-            // receive c
-			GlobalV::ofs_running << " lgdnow=" << lgdnow << std::endl;
-            double* crecv = new double[GlobalV::NBANDS*lgdnow];
-            ModuleBase::GlobalFunc::ZEROS(crecv, GlobalV::NBANDS*lgdnow);
-            tag = GlobalV::DRANK * 3 + 2;
-            MPI_Recv(crecv, GlobalV::NBANDS*lgdnow, MPI_DOUBLE, 0, tag, DIAG_WORLD, &status);
-
-            for (int ib=0; ib<GlobalV::NBANDS; ib++)
-            {
-                for (int mu=0; mu<lgdnow; mu++)
-                {
-                    c[ib][mu] = crecv[mu*GlobalV::NBANDS+ib];
-                }
-            }
-
-            delete[] crecv;
-        }// end i==GlobalV::DRANK
-        MPI_Barrier(DIAG_WORLD);
-    }// end i
-
-    //-----------
-    // for test,
-    //-----------
-    /*
-    GlobalV::ofs_running << " Wave Functions in local basis: " << std::endl;
-    for(int i=0; i<GlobalV::NBANDS; i++)
-    {
-        for(int j=0; j<GlobalC::GridT.lgd; j++)
-        {
-            if(j%8==0) GlobalV::ofs_running << std::endl;
-            if( abs(c[i][j]) > 1.0e-5  )
-            {
-                GlobalV::ofs_running << std::setw(15) << c[i][j];
-            }
-            else
-            {
-                GlobalV::ofs_running << std::setw(15) << "0";
-            }
-        }
-    }
-    GlobalV::ofs_running << std::endl;
-    */
-#else
-	ModuleBase::WARNING_QUIT("WF_Local::distri_lowf","check the code without MPI.");
-#endif
-    return;
-}
-
 
 void WF_Local::distri_lowf_complex(std::complex<double> **ctot, std::complex<double> **cc)
 {

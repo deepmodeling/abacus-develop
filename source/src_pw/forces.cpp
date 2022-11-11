@@ -2,14 +2,13 @@
 
 #include "../module_symmetry/symmetry.h"
 #include "global.h"
-#include "vdwd2.h"
-#include "vdwd3.h"
 // new
 #include "../module_base/math_integral.h"
 #include "../module_base/timer.h"
 #include "../module_surchem/efield.h"
 #include "../module_surchem/surchem.h"
 #include "../module_surchem/gatefield.h"
+#include "module_vdw/vdw.h"
 
 double Forces::output_acc = 1.0e-8; // (Ryd/angstrom).
 
@@ -22,7 +21,7 @@ Forces::~Forces()
 }
 
 #include "../module_base/mathzone.h"
-void Forces::init(ModuleBase::matrix& force, const psi::Psi<std::complex<double>>* psi_in)
+void Forces::init(ModuleBase::matrix& force, const ModuleBase::matrix& wg, const psi::Psi<std::complex<double>>* psi_in)
 {
     ModuleBase::TITLE("Forces", "init");
     this->nat = GlobalC::ucell.nat;
@@ -35,37 +34,22 @@ void Forces::init(ModuleBase::matrix& force, const psi::Psi<std::complex<double>
     ModuleBase::matrix forcescc(nat, 3);
     this->cal_force_loc(forcelc, GlobalC::rhopw);
     this->cal_force_ew(forceion, GlobalC::rhopw);
-    this->cal_force_nl(forcenl, psi_in);
+    this->cal_force_nl(forcenl, wg, psi_in);
     this->cal_force_cc(forcecc, GlobalC::rhopw);
     this->cal_force_scc(forcescc, GlobalC::rhopw);
 
     ModuleBase::matrix stress_vdw_pw; //.create(3,3);
     ModuleBase::matrix force_vdw;
     force_vdw.create(nat, 3);
-    if (GlobalC::vdwd2_para.flag_vdwd2) // Peize Lin add 2014.04.03, update 2021.03.09
+    auto vdw_solver = vdw::make_vdw(GlobalC::ucell, INPUT);
+    if (vdw_solver != nullptr)
     {
-        Vdwd2 vdwd2(GlobalC::ucell, GlobalC::vdwd2_para);
-        vdwd2.cal_force();
+        const std::vector<ModuleBase::Vector3<double>> &force_vdw_temp = vdw_solver->get_force();
         for (int iat = 0; iat < GlobalC::ucell.nat; ++iat)
         {
-            force_vdw(iat, 0) = vdwd2.get_force()[iat].x;
-            force_vdw(iat, 1) = vdwd2.get_force()[iat].y;
-            force_vdw(iat, 2) = vdwd2.get_force()[iat].z;
-        }
-        if (GlobalV::TEST_FORCE)
-        {
-            Forces::print("VDW      FORCE (Ry/Bohr)", force_vdw);
-        }
-    }
-    else if (GlobalC::vdwd3_para.flag_vdwd3) // jiyy add 2019-05-18, update 2021-05-02
-    {
-        Vdwd3 vdwd3(GlobalC::ucell, GlobalC::vdwd3_para);
-        vdwd3.cal_force();
-        for (int iat = 0; iat < GlobalC::ucell.nat; ++iat)
-        {
-            force_vdw(iat, 0) = vdwd3.get_force()[iat].x;
-            force_vdw(iat, 1) = vdwd3.get_force()[iat].y;
-            force_vdw(iat, 2) = vdwd3.get_force()[iat].z;
+            force_vdw(iat, 0) = force_vdw_temp[iat].x;
+            force_vdw(iat, 1) = force_vdw_temp[iat].y;
+            force_vdw(iat, 2) = force_vdw_temp[iat].z;
         }
         if (GlobalV::TEST_FORCE)
         {
@@ -120,8 +104,7 @@ void Forces::init(ModuleBase::matrix& force, const psi::Psi<std::complex<double>
                 force(iat, ipol) = forcelc(iat, ipol) + forceion(iat, ipol) + forcenl(iat, ipol) + forcecc(iat, ipol)
                                    + forcescc(iat, ipol);
 
-                if (GlobalC::vdwd2_para.flag_vdwd2
-                    || GlobalC::vdwd3_para.flag_vdwd3) // linpz and jiyy added vdw force, modified by zhengdy
+                if (vdw_solver != nullptr) // linpz and jiyy added vdw force, modified by zhengdy
                 {
                     force(iat, ipol) += force_vdw(iat, ipol);
                 }
@@ -492,7 +475,7 @@ void Forces::cal_force_ew(ModuleBase::matrix& forceion, ModulePW::PW_Basis* rho_
         {
             if (ig == rho_basis->ig_gge0)
                 continue;
-            aux[ig] += static_cast<double>(GlobalC::ucell.atoms[it].zv) * conj(GlobalC::sf.strucFac(it, ig));
+            aux[ig] += static_cast<double>(GlobalC::ucell.atoms[it].ncpp.zv) * conj(GlobalC::sf.strucFac(it, ig));
         }
     }
 
@@ -500,7 +483,7 @@ void Forces::cal_force_ew(ModuleBase::matrix& forceion, ModulePW::PW_Basis* rho_
     double charge = 0.0;
     for (int it = 0; it < GlobalC::ucell.ntype; it++)
     {
-        charge += GlobalC::ucell.atoms[it].na * GlobalC::ucell.atoms[it].zv; // mohan modify 2007-11-7
+        charge += GlobalC::ucell.atoms[it].na * GlobalC::ucell.atoms[it].ncpp.zv; // mohan modify 2007-11-7
     }
 
     double alpha = 1.1;
@@ -547,7 +530,7 @@ void Forces::cal_force_ew(ModuleBase::matrix& forceion, ModulePW::PW_Basis* rho_
             }
             for (int ipol = 0; ipol < 3; ipol++)
             {
-                forceion(iat, ipol) *= GlobalC::ucell.atoms[it].zv * ModuleBase::e2 * GlobalC::ucell.tpiba
+                forceion(iat, ipol) *= GlobalC::ucell.atoms[it].ncpp.zv * ModuleBase::e2 * GlobalC::ucell.tpiba
                                        * ModuleBase::TWO_PI / GlobalC::ucell.omega * fact;
             }
 
@@ -597,7 +580,7 @@ void Forces::cal_force_ew(ModuleBase::matrix& forceion, ModulePW::PW_Basis* rho_
                                 const double rr = sqrt(r2[n]) * GlobalC::ucell.lat0;
 
                                 double factor
-                                    = GlobalC::ucell.atoms[T1].zv * GlobalC::ucell.atoms[T2].zv * ModuleBase::e2
+                                    = GlobalC::ucell.atoms[T1].ncpp.zv * GlobalC::ucell.atoms[T2].ncpp.zv * ModuleBase::e2
                                       / (rr * rr)
                                       * (erfc(sqrt(alpha) * rr) / rr
                                          + sqrt(8.0 * alpha / ModuleBase::TWO_PI) * exp(-1.0 * alpha * rr * rr))
@@ -704,14 +687,14 @@ void Forces::cal_force_cc(ModuleBase::matrix& forcecc, ModulePW::PW_Basis* rho_b
     int iat = 0;
     for (int T1 = 0; T1 < GlobalC::ucell.ntype; T1++)
     {
-        if (GlobalC::ucell.atoms[T1].nlcc)
+        if (GlobalC::ucell.atoms[T1].ncpp.nlcc)
         {
             // call drhoc
             GlobalC::CHR.non_linear_core_correction(GlobalC::ppcell.numeric,
-                                                    GlobalC::ucell.atoms[T1].msh,
-                                                    GlobalC::ucell.atoms[T1].r,
-                                                    GlobalC::ucell.atoms[T1].rab,
-                                                    GlobalC::ucell.atoms[T1].rho_atc,
+                                                    GlobalC::ucell.atoms[T1].ncpp.msh,
+                                                    GlobalC::ucell.atoms[T1].ncpp.r,
+                                                    GlobalC::ucell.atoms[T1].ncpp.rab,
+                                                    GlobalC::ucell.atoms[T1].ncpp.rho_atc,
                                                     rhocg,
                                                     rho_basis);
 
@@ -754,7 +737,7 @@ void Forces::cal_force_cc(ModuleBase::matrix& forcecc, ModulePW::PW_Basis* rho_b
 
 #include "../module_base/complexarray.h"
 #include "../module_base/complexmatrix.h"
-void Forces::cal_force_nl(ModuleBase::matrix& forcenl, const psi::Psi<complex<double>>* psi_in)
+void Forces::cal_force_nl(ModuleBase::matrix& forcenl, const ModuleBase::matrix& wg, const psi::Psi<complex<double>>* psi_in)
 {
     ModuleBase::TITLE("Forces", "cal_force_nl");
     ModuleBase::timer::tick("Forces", "cal_force_nl");
@@ -793,7 +776,7 @@ void Forces::cal_force_nl(ModuleBase::matrix& forcenl, const psi::Psi<complex<do
         /// only occupied band should be calculated.
         ///
         int nbands_occ = GlobalV::NBANDS;
-        while (GlobalC::wf.wg(ik, nbands_occ - 1) < ModuleBase::threshold_wg)
+        while (wg(ik, nbands_occ - 1) < ModuleBase::threshold_wg)
         {
             nbands_occ--;
         }
@@ -863,12 +846,12 @@ void Forces::cal_force_nl(ModuleBase::matrix& forcenl, const psi::Psi<complex<do
 //		ModuleBase::GlobalFunc::ZEROS(cf, GlobalC::ucell.nat);
 		for (int ib=0; ib<nbands_occ; ib++)
 		{
-			double fac = GlobalC::wf.wg(ik, ib) * 2.0 * GlobalC::ucell.tpiba;
+			double fac = wg(ik, ib) * 2.0 * GlobalC::ucell.tpiba;
         	int iat = 0;
         	int sum = 0;
 			for (int it=0; it<GlobalC::ucell.ntype; it++)
 			{
-				const int Nprojs = GlobalC::ucell.atoms[it].nh;
+				const int Nprojs = GlobalC::ucell.atoms[it].ncpp.nh;
 				for (int ia=0; ia<GlobalC::ucell.atoms[it].na; ia++)
 				{
 					for (int ip=0; ip<Nprojs; ip++)
@@ -947,9 +930,9 @@ void Forces::cal_force_scc(ModuleBase::matrix& forcescc, ModulePW::PW_Basis* rho
 
     for (int it = 0; it < GlobalC::ucell.ntype; it++)
     {
-        if (ndm < GlobalC::ucell.atoms[it].msh)
+        if (ndm < GlobalC::ucell.atoms[it].ncpp.msh)
         {
-            ndm = GlobalC::ucell.atoms[it].msh;
+            ndm = GlobalC::ucell.atoms[it].ncpp.msh;
         }
     }
 
@@ -971,24 +954,24 @@ void Forces::cal_force_scc(ModuleBase::matrix& forcescc, ModulePW::PW_Basis* rho
     for (int nt = 0; nt < GlobalC::ucell.ntype; nt++)
     {
         //		Here we compute the G.ne.0 term
-        const int mesh = GlobalC::ucell.atoms[nt].msh;
+        const int mesh = GlobalC::ucell.atoms[nt].ncpp.msh;
 
         for (int ig = igg0; ig < rho_basis->ngg; ++ig)
         {
             const double gx = sqrt(rho_basis->gg_uniq[ig]) * GlobalC::ucell.tpiba;
             for (int ir = 0; ir < mesh; ir++)
             {
-                if (GlobalC::ucell.atoms[nt].r[ir] < 1.0e-8)
+                if (GlobalC::ucell.atoms[nt].ncpp.r[ir] < 1.0e-8)
                 {
-                    aux[ir] = GlobalC::ucell.atoms[nt].rho_at[ir];
+                    aux[ir] = GlobalC::ucell.atoms[nt].ncpp.rho_at[ir];
                 }
                 else
                 {
-                    const double gxx = gx * GlobalC::ucell.atoms[nt].r[ir];
-                    aux[ir] = GlobalC::ucell.atoms[nt].rho_at[ir] * sin(gxx) / gxx;
+                    const double gxx = gx * GlobalC::ucell.atoms[nt].ncpp.r[ir];
+                    aux[ir] = GlobalC::ucell.atoms[nt].ncpp.rho_at[ir] * sin(gxx) / gxx;
                 }
             }
-            ModuleBase::Integral::Simpson_Integral(mesh, aux, GlobalC::ucell.atoms[nt].rab, rhocgnt[ig]);
+            ModuleBase::Integral::Simpson_Integral(mesh, aux, GlobalC::ucell.atoms[nt].ncpp.rab, rhocgnt[ig]);
         }
 
         int iat = 0;

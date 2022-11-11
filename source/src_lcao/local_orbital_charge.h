@@ -11,6 +11,7 @@
 #include "src_lcao/local_orbital_wfc.h"
 #include "src_lcao/LCAO_hamilt.h"
 #include "module_psi/psi.h"
+#include "module_elecstate/elecstate.h"
 
 class Local_Orbital_Charge
 {
@@ -21,18 +22,17 @@ class Local_Orbital_Charge
 
 	// mohan added 2021-02-08
     void allocate_dm_wfc(const int& lgd,
+        elecstate::ElecState* pelec,
         Local_Orbital_wfc &lowf,
         psi::Psi<double>* psid,
         psi::Psi<std::complex<double>>* psi);
-    // sum bands to compute the electron charge density
-	void sum_bands(LCAO_Hamilt &UHM);
 
 	//-----------------
 	// in DM_gamma.cpp
 	//-----------------
-	void allocate_gamma(const int &lgd, psi::Psi<double>* psid);
+	void allocate_gamma(const int &lgd, psi::Psi<double>* psid, elecstate::ElecState* pelec);
 
-    void gamma_file(psi::Psi<double>* psid, Local_Orbital_wfc &lowf);
+    void gamma_file(psi::Psi<double>* psid, Local_Orbital_wfc &lowf, elecstate::ElecState* pelec);
     void cal_dk_gamma_from_2D_pub(void);
     //transformation from 2d block to grid, only gamma_only used it now
     //template<typename T>
@@ -68,16 +68,6 @@ class Local_Orbital_Charge
 
     void init_dm_2d(void);
     
-    // dm = wfc.T * wg * wfc.conj(); used in gamma_only
-    void cal_dm(const ModuleBase::matrix& wg,   // wg(ik,ib), cal all dm 
-        std::vector<ModuleBase::matrix>& wfc_gamma,
-        std::vector<ModuleBase::matrix>& dm_gamma);
-
-    // in multi-k,  it is dm(k)
-    void cal_dm(const ModuleBase::matrix& wg,    // wg(ik,ib), cal all dm 
-        std::vector<ModuleBase::ComplexMatrix>& wfc_k,
-        std::vector<ModuleBase::ComplexMatrix>& dm_k);
-
     // dm(R) = wfc.T * wg * wfc.conj()*kphase, only used in multi-k 
     void cal_dm_R(
         std::vector<ModuleBase::ComplexMatrix>& dm_k,
@@ -103,7 +93,7 @@ private:
 	// whether the DM(R) array has been allocated
 	bool init_DM_R;
 
-	void cal_dk_gamma(void);
+	void cal_dk_gamma(ModuleBase::matrix& wg);
 
 	// mohan add 2010-09-06
 	int lgd_last;// sub-FFT-mesh orbitals number in previous step.

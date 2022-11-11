@@ -27,6 +27,7 @@ void Force_LCAO_k::ftable_k(const bool isforce,
                             Record_adj& ra,
                             const psi::Psi<std::complex<double>>* psi,
                             Local_Orbital_Charge& loc,
+                            const elecstate::ElecState* pelec,
                             ModuleBase::matrix& foverlap,
                             ModuleBase::matrix& ftvnl_dphi,
                             ModuleBase::matrix& fvnl_dbeta,
@@ -52,7 +53,7 @@ void Force_LCAO_k::ftable_k(const bool isforce,
 
     // calculate the energy density matrix
     // and the force related to overlap matrix and energy density matrix.
-    this->cal_foverlap_k(isforce, isstress, ra, psi, loc, foverlap, soverlap);
+    this->cal_foverlap_k(isforce, isstress, ra, psi, loc, foverlap, soverlap, pelec);
 
     // calculate the density matrix
     double** dm2d = new double*[GlobalV::NSPIN];
@@ -273,7 +274,9 @@ void Force_LCAO_k::cal_foverlap_k(const bool isforce,
                                   const psi::Psi<std::complex<double>>* psi,
                                   Local_Orbital_Charge& loc,
                                   ModuleBase::matrix& foverlap,
-                                  ModuleBase::matrix& soverlap)
+                                  ModuleBase::matrix& soverlap,
+                                  const elecstate::ElecState* pelec
+                                  )
 {
     ModuleBase::TITLE("Force_LCAO_k", "cal_foverlap_k");
     ModuleBase::timer::tick("Force_LCAO_k", "cal_foverlap_k");
@@ -301,7 +304,7 @@ void Force_LCAO_k::cal_foverlap_k(const bool isforce,
     {
         for (int ib = 0; ib < GlobalV::NBANDS; ib++)
         {
-            wgEkb(ik, ib) = GlobalC::wf.wg(ik, ib) * GlobalC::wf.ekb[ik][ib];
+            wgEkb(ik, ib) = pelec->wg(ik, ib) * pelec->ekb(ik, ib);
         }
     }
     std::vector<ModuleBase::ComplexMatrix> edm_k(GlobalC::kv.nks);
@@ -727,13 +730,13 @@ void Force_LCAO_k::cal_fvnl_dbeta_k(double** dm2d,
                                         atom1->iw2n[j], // N1
                                         tau0,
                                         T0,
-                                        GlobalC::ucell.atoms[T0].dion,
+                                        GlobalC::ucell.atoms[T0].ncpp.dion,
                                         GlobalV::NSPIN,
-                                        GlobalC::ucell.atoms[T0].d_so,
-                                        GlobalC::ucell.atoms[T0].non_zero_count_soc[0], // index stands for spin
-                                        GlobalC::ucell.atoms[T0].index1_soc[0],
-                                        GlobalC::ucell.atoms[T0].index2_soc[0],
-                                        GlobalC::ucell.atoms[T0].nproj_soc); // mohan  add 2021-05-07
+                                        GlobalC::ucell.atoms[T0].ncpp.d_so,
+                                        GlobalC::ucell.atoms[T0].ncpp.non_zero_count_soc[0], // index stands for spin
+                                        GlobalC::ucell.atoms[T0].ncpp.index1_soc[0],
+                                        GlobalC::ucell.atoms[T0].ncpp.index2_soc[0],
+                                        GlobalC::ucell.atoms[T0].ncpp.nproj_soc); // mohan  add 2021-05-07
 
                                     double nlm1[3] = {0, 0, 0};
                                     if (isstress)
@@ -755,13 +758,13 @@ void Force_LCAO_k::cal_fvnl_dbeta_k(double** dm2d,
                                             atom2->iw2n[k], // N2
                                             tau0,
                                             T0,
-                                            GlobalC::ucell.atoms[T0].dion,
+                                            GlobalC::ucell.atoms[T0].ncpp.dion,
                                             GlobalV::NSPIN,
-                                            GlobalC::ucell.atoms[T0].d_so,
-                                            GlobalC::ucell.atoms[T0].non_zero_count_soc[0], // index stands for spin
-                                            GlobalC::ucell.atoms[T0].index1_soc[0],
-                                            GlobalC::ucell.atoms[T0].index2_soc[0],
-                                            GlobalC::ucell.atoms[T0].nproj_soc); // mohan  add 2021-05-07
+                                            GlobalC::ucell.atoms[T0].ncpp.d_so,
+                                            GlobalC::ucell.atoms[T0].ncpp.non_zero_count_soc[0], // index stands for spin
+                                            GlobalC::ucell.atoms[T0].ncpp.index1_soc[0],
+                                            GlobalC::ucell.atoms[T0].ncpp.index2_soc[0],
+                                            GlobalC::ucell.atoms[T0].ncpp.nproj_soc); // mohan  add 2021-05-07
                                     }
                                     /// only one projector for each atom force, but another projector for stress
                                     for (int is = 0; is < GlobalV::NSPIN; ++is)
@@ -1063,7 +1066,7 @@ void Force_LCAO_k::cal_fvnl_dbeta_k_new(double** dm2d,
                                         for (int ir = 0; ir < 3; ir++)
                                         {
                                             nlm[ir]
-                                                += nlm_2[ir][ib] * nlm_1[ib] * GlobalC::ucell.atoms[T0].dion(nb, nb);
+                                                += nlm_2[ir][ib] * nlm_1[ib] * GlobalC::ucell.atoms[T0].ncpp.dion(nb, nb);
                                         }
                                         ib += 1;
                                     }
@@ -1093,7 +1096,7 @@ void Force_LCAO_k::cal_fvnl_dbeta_k_new(double** dm2d,
                                             for (int ir = 0; ir < 3; ir++)
                                             {
                                                 nlm1[ir] += nlm_2[ir][ib] * nlm_1[ib]
-                                                            * GlobalC::ucell.atoms[T0].dion(nb, nb);
+                                                            * GlobalC::ucell.atoms[T0].ncpp.dion(nb, nb);
                                             }
                                             ib += 1;
                                         }

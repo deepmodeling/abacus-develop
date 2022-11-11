@@ -17,15 +17,16 @@
 //-----force-------------------
 #include "../src_pw/forces.h"
 //-----stress------------------
-#include "../src_pw/stress_pw.h"
+#include "../src_pw/of_stress_pw.h"
 //---------------------------------------------------
 #include "module_elecstate/elecstate_pw.h"
 #include "module_hamilt/hamilt_pw.h"
+#include "module_relax/relax_old/variable_cell.h"    // liuyu 2022-11-07
 
 namespace ModuleESolver
 {
 
-void ESolver_OF::Init(Input &inp, UnitCell_pseudo &ucell)
+void ESolver_OF::Init(Input &inp, UnitCell &ucell)
 {
     ESolver_FP::Init(inp, ucell);
 
@@ -39,14 +40,14 @@ void ESolver_OF::Init(Input &inp, UnitCell_pseudo &ucell)
 
     GlobalC::CHR.cal_nelec();
 
-	if(ucell.atoms[0].xc_func=="HSE"||ucell.atoms[0].xc_func=="PBE0")
+	if(ucell.atoms[0].ncpp.xc_func=="HSE"||ucell.atoms[0].ncpp.xc_func=="PBE0")
 	{
         ModuleBase::WARNING_QUIT("esolver_of", "Hybrid functionals are not supported by OFDFT.");
 		// XC_Functional::set_xc_type("pbe");
 	}
 	else
 	{
-		XC_Functional::set_xc_type(ucell.atoms[0].xc_func);
+		XC_Functional::set_xc_type(ucell.atoms[0].ncpp.xc_func);
 	}
 
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "SETUP UNITCELL");
@@ -75,7 +76,7 @@ void ESolver_OF::Init(Input &inp, UnitCell_pseudo &ucell)
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT BASIS");
 
     this->nrxx = this->pw_rho->nrxx;
-    this->dV = ucell.omega / GlobalC::rhopw->nxyz; // volume of one point in real space
+    this->dV = ucell.omega / this->pw_rho->nxyz; // volume of one point in real space
 
     //----------------------------------------------------------
     // 1 read in initial data:
@@ -202,13 +203,16 @@ void ESolver_OF::Init(Input &inp, UnitCell_pseudo &ucell)
     this->vw.set_para(this->nrxx, this->dV, GlobalV::of_vw_weight);
     this->wt.set_para(this->nrxx, this->dV, GlobalV::of_wt_alpha, GlobalV::of_wt_beta, this->nelec[0], GlobalV::of_tf_weight, GlobalV::of_vw_weight, GlobalV::of_read_kernel, GlobalV::of_kernel_file, this->pw_rho);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT KEDF");
+
+    // Initialize charge extrapolation
+    CE.Init_CE();
 }
 
-void ESolver_OF::Run(int istep, UnitCell_pseudo& ucell)
+void ESolver_OF::Run(int istep, UnitCell& ucell)
 {
     ModuleBase::timer::tick("ESolver_OF", "Run");
     // get Ewald energy, initial rho and phi if necessary
-    this->beforeOpt();
+    this->beforeOpt(istep);
     this->iter = 0;
 
     while(true)
@@ -242,8 +246,23 @@ void ESolver_OF::Run(int istep, UnitCell_pseudo& ucell)
 // 
 // Calculate ewald energy, initialize the rho, phi, theta
 // 
-void ESolver_OF::beforeOpt()
+void ESolver_OF::beforeOpt(const int istep)
 {
+    // Temporary, md and relax will merge later   liuyu add 2022-11-07
+    if(GlobalV::CALCULATION == "md" && istep)
+    {
+        CE.update_istep();
+        CE.save_pos_next(GlobalC::ucell);
+        CE.extrapolate_charge();
+
+        if(GlobalC::ucell.cell_parameter_updated)
+        {
+            Variable_Cell::init_after_vc();
+        }
+
+        GlobalC::pot.init_pot(istep, GlobalC::sf.strucFac);
+    }
+
     //calculate ewald energy
     H_Ewald_pw::compute_ewald(GlobalC::ucell, this->pw_rho);
 
@@ -829,6 +848,9 @@ void ESolver_OF::printInfo()
 
 void ESolver_OF::afterOpt()
 {
+    // Temporary liuyu add 2022-11-07
+    CE.update_all_pos(GlobalC::ucell);
+
     if (this->conv)
     {
         GlobalV::ofs_running << "\n charge density convergence is achieved" << std::endl;
@@ -846,9 +868,9 @@ void ESolver_OF::afterOpt()
             std::stringstream ssc;
             std::stringstream ss1;
             ssc << GlobalV::global_out_dir << "tmp" << "_SPIN" << is + 1 << "_CHG";
-            GlobalC::CHR.write_rho(GlobalC::CHR.rho_save[is], is, iter, ssc.str(), 3);//mohan add 2007-10-17
+            GlobalC::CHR.write_rho(GlobalC::CHR.rho[is], is, iter, ssc.str(), 3);//mohan add 2007-10-17
             ss1 << GlobalV::global_out_dir << "tmp" << "_SPIN" << is + 1 << "_CHG.cube";
-            GlobalC::CHR.write_rho_cube(GlobalC::CHR.rho_save[is], is, ss1.str(), 3);
+            GlobalC::CHR.write_rho_cube(GlobalC::CHR.rho[is], is, ss1.str(), 3);
         }
     }
 }
@@ -994,36 +1016,49 @@ void ESolver_OF::cal_Energy(double& etot)
 void ESolver_OF::cal_Force(ModuleBase::matrix& force)
 {
     Forces ff;
-    ff.init(force);
+    ModuleBase::matrix placeholder_wg;//using a placeholder for this template interface, would be refactor later
+    ff.init(force, placeholder_wg);
 }
 
 void ESolver_OF::cal_Stress(ModuleBase::matrix& stress)
 {
-    Stress_PW ss;
-    ss.cal_stress(stress);
+    ModuleBase::matrix kinetic_stress;
+    kinetic_stress.create(3,3);
+    for (int i = 0; i < 3; ++i)
+    {
+        for (int j = 0; j < 3; ++j)
+        {
+            kinetic_stress(i,j) = 0.0;
+        }
+    }
+
     if (this->of_kinetic == "tf")
     {    
         this->tf.get_stress(GlobalC::ucell.omega);
-        stress += this->tf.stress;
+        kinetic_stress += this->tf.stress;
     }
     else if (this->of_kinetic == "vw")
     {
         this->vw.get_stress(this->pphi, this->pw_rho);
-        stress += this->vw.stress;
+        kinetic_stress += this->vw.stress;
     }
     else if (this->of_kinetic == "wt")
     {
         this->tf.get_stress(GlobalC::ucell.omega);
         this->vw.get_stress(this->pphi, this->pw_rho);
         this->wt.get_stress(GlobalC::ucell.omega, GlobalC::CHR.rho, this->pw_rho, GlobalV::of_vw_weight);
-        stress += this->tf.stress + this->vw.stress + this->wt.stress;
+        kinetic_stress += this->tf.stress + this->vw.stress + this->wt.stress;
     }
     else if (this->of_kinetic == "tf+")
     {
         this->tf.get_stress(GlobalC::ucell.omega);
         this->vw.get_stress(this->pphi, this->pw_rho);
-        stress += this->tf.stress + this->vw.stress;
+        kinetic_stress += this->tf.stress + this->vw.stress;
     }
+
+    OF_Stress_PW ss;
+    ModuleBase::matrix placeholder_wg;//using a placeholder for this template interface, would be refactor later
+    ss.cal_stress(stress, placeholder_wg, kinetic_stress);
 }
 
 // Calculated kinetic potential and plus it to &rpot, return (rpot + kietic potential) * 2 * pphiInpt

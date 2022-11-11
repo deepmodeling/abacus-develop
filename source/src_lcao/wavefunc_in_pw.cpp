@@ -294,7 +294,7 @@ void Wavefunc_in_pw::produce_local_basis_in_pw(const int &ik,ModuleBase::Complex
 						for(int is_N = 0; is_N < 1; is_N++)
 						{
 							if(L==0 && is_N==1) continue;
-							if(GlobalC::ucell.atoms[it].has_so)
+							if(GlobalC::ucell.atoms[it].ncpp.has_so)
 							{
 								const double j = abs(double(L+is_N) - 0.5);
 								if (!(GlobalV::DOMAG||GlobalV::DOMAG_Z))
@@ -501,7 +501,7 @@ void Wavefunc_in_pw::produce_local_basis_q_in_pw(const int &ik, ModuleBase::Comp
 						for(int is_N = 0; is_N < 2; is_N++)
 						{
 							if(L==0&&is_N==1) continue;
-							if(GlobalC::ucell.atoms[it].has_so)
+							if(GlobalC::ucell.atoms[it].ncpp.has_so)
 							{
 								const double j = double(L+is_N) - 0.5;
 								if ( !(GlobalV::DOMAG||GlobalV::DOMAG_Z))

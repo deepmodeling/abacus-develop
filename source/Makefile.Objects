@@ -36,8 +36,11 @@ VPATH=./src_global:\
 ./module_gint:\
 ./src_pw:\
 ./src_lcao:\
-./module_relaxation:\
+./module_relax:\
+./module_relax/relax_old:\
+./module_relax/relax_new:\
 ./module_rpa:\
+./module_vdw:\
 ./src_io:\
 ./src_parallel:\
 ./src_pdiag:\
@@ -78,7 +81,8 @@ ${OBJS_IO_LCAO}\
 ${OBJS_RI_LCAO}\
 ${OBJS_LCAO}\
 ${OBJS_PARALLEL_LCAO}\
-${OBJS_PDIAG}
+${OBJS_PDIAG}\
+${OBJS_VDW}
 
 
 OBJS_MAIN=main.o\
@@ -135,7 +139,6 @@ OBJS_CELL=atom_pseudo.o\
     read_pp_blps.o\
     read_pp_vwr.o\
     unitcell.o\
-    unitcell_pseudo.o\
     read_atoms.o\
     read_cell_pseudopots.o\
     setup_nonlocal.o\
@@ -202,6 +205,7 @@ OBJS_HAMILT=hamilt_pw.o\
     nonlocal.o\
     ekinetic_pw.o\
     veff_pw.o\
+    veff.o\
     nonlocal_pw.o\
     meta_pw.o\
     velocity_pw.o\
@@ -227,18 +231,17 @@ OBJS_HSOLVER=diago_cg.o\
 OBJS_HSOLVER_LCAO=hsolver_lcao.o\
       diago_blas.o\
       diago_elpa.o\
-      diago_lapack.o\
       elpa_new.o\
       elpa_new_real.o\
       elpa_new_complex.o\
       utils.o\
 
 OBJS_MD=MD_func.o\
-    run_md_classic.o\
+    run_md.o\
 	mdrun.o\
 	verlet.o\
     MSST.o\
-    NVT_NHC.o\
+    Nose_Hoover.o\
     FIRE.o\
     Langevin.o\
 
@@ -278,7 +281,7 @@ OBJS_PW=fft.o\
     pw_transform_k.o\
 
 OBJS_RELAXATION=bfgs_basic.o\
-    ions.o\
+    relax_driver.o\
     ions_move_basic.o\
     ions_move_bfgs.o\
     ions_move_cg.o\
@@ -288,7 +291,9 @@ OBJS_RELAXATION=bfgs_basic.o\
     lattice_change_cg.o\
     lattice_change_methods.o\
     variable_cell.o\
-    relaxation.o\
+    relax_old.o\
+    relax.o\
+    line_search.o\
 
 OBJS_RPA=rpa.o\
 
@@ -399,9 +404,7 @@ OBJS_LCAO=DM_gamma.o\
       record_adj.o\
       dm_2d.o\
       wavefunc_in_pw.o\
-  	H_TDDFT_pw.o\
-      run_md_lcao.o\
-      dmft.o\
+  	  H_TDDFT_pw.o\
 
 OBJS_RI=exx_lip.o\
 
@@ -442,8 +445,6 @@ OBJS_PARALLEL=parallel_common.o\
     parallel_grid.o\
     parallel_kpoints.o\
     parallel_reduce.o\
-
-OBJS_PARALLEL_LCAO=subgrid_oper.o\
 
 OBJS_PDIAG=pdiag_common.o\
       pdiag_double.o\
@@ -518,8 +519,6 @@ OBJS_SRCPW=H_Ewald_pw.o\
     charge_extra.o\
     charge_mixing.o\
     charge_pulay.o\
-    diago_cg_old.o\
-    diago_david_old.o\
     energy.o\
     forces.o\
     global.o\
@@ -546,20 +545,20 @@ OBJS_SRCPW=H_Ewald_pw.o\
     stress_func_nl.o\
     stress_func_print.o\
     stress_pw.o\
+    of_stress_pw.o\
     symmetry_rho.o\
     threshold_elec.o\
-    use_fft.o\
-    vdwd2.o\
-    vdwd2_parameters.o\
-    vdwd3.o\
-    vdwd3_parameters.o\
     wavefunc.o\
     wf_atomic.o\
     wf_igk.o\
     xc_3.o\
-    run_md_pw.o\
     hamilt.o\
-    hamilt_pw_old.o\
     electrons.o
 
+OBJS_VDW=vdw.o\
+    vdwd2_parameters.o\
+    vdwd3_parameters.o\
+    vdwd2.o\
+    vdwd3.o\
+    vdwd3_parameters_tab.o
 

@@ -33,8 +33,8 @@ public:
 
 	private:
 
-	void build_ST_new(const char& dtype, const bool& cal_deri, const UnitCell_pseudo &ucell, double* SHlocR);
-	//void build_ST_new(const char& dtype, const bool& cal_deri, const UnitCell_pseudo &ucell, std::complex<double>* SHlocR);	
+	void build_ST_new(const char& dtype, const bool& cal_deri, const UnitCell &ucell, double* SHlocR);
+	//void build_ST_new(const char& dtype, const bool& cal_deri, const UnitCell &ucell, std::complex<double>* SHlocR);	
 	
 	// can used in gamma algorithm.
 	void build_Nonlocal_beta (double* Hloc, const bool& calc_deri);

@@ -2,7 +2,7 @@
 
 Molecular dynamics (MD) is a computer simulation method for analyzing the physical movements of atoms and molecules. The atoms and molecules are allowed to interact for a fixed period of time, giving a view of the dynamic "evolution" of the system. In the most common version, the trajectories of atoms and molecules are determined by numerically solving Newton's equations of motion for a system of interacting particles, where forces between the particles and their potential energies are calculated using first-principles calculations (first-principles molecular dynamics, FPMD), or interatomic potentials and molecular mechanics force fields (classical molecular dynamics, CMD).
 
-By setting `calculation` to be `md` or `sto-md`, ABACUS currently provides six different MD evolution methods, which is specified by keyword `md_type` in the `INPUT` file:
+By setting `calculation` to be `md`, ABACUS currently provides six different MD evolution methods, which is specified by keyword `md_type` in the `INPUT` file:
 
   - -1: FIRE method
   - 0: velocity Verlet algorithm (default: NVE ensemble)
@@ -20,7 +20,7 @@ When `md_type` is set to 0, `md_thermostat` is used to specify the thermostat ba
 
 Furthermore, ABACUS also provides a [list of keywords](./input_files/input-main.md#molecular-dynamics) to control relevant parmeters used in MD simulations.
 
-To employ CMD calculations, `md_ensolver` should be set to be `LJ` or `DP`.
+To employ CMD calculations, `esolver_type` should be set to be `lj` or `dp`.
 If DP model is selected, the filename of DP model is specified by keyword `pot_file`.
 
 [Examples](https://github.com/deepmodeling/abacus-develop/tree/develop/examples/md/lcao_gammaonly_Sn64) of MD simulations are also provided.

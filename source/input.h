@@ -37,7 +37,7 @@ class Input
     std::string calculation; // "scf" : self consistent calculation.
                              // "nscf" : non-self consistent calculation.
                              // "relax" : cell relaxations
-                             // "ofdft" : orbital free dft calculations.
+    std::string esolver_type;    // the energy solver: ksdft, sdft, ofdft, tddft, lj, dp
     double pseudo_rcut; // cut-off radius for calculating msh
     bool pseudo_mesh; // 0: use msh to normalize radial wave functions;  1: use mesh, which is used in QE.
     int ntype; // number of atom types
@@ -120,7 +120,16 @@ class Input
     bool cal_stress; // calculate the stress
 
     std::string fixed_axes; // which axes are fixed
+    bool fixed_ibrav; //whether to keep type of lattice; must be used along with latname
+    bool fixed_atoms; //whether to fix atoms during vc-relax
     std::string relax_method; // methods to move_ion: sd, bfgs, cg...
+
+    //For now, this is only relevant if we choose to use
+    //CG relaxation method. If set to true, then the new
+    //implementation will be used; if set to false, then
+    //the original implementation will be used
+    //Default is true
+    bool relax_new;
 
     double relax_cg_thr; // threshold when cg to bfgs, pengfei add 2011-08-15
 
@@ -130,6 +139,8 @@ class Input
     double relax_bfgs_rmax; // trust radius max
     double relax_bfgs_rmin; // trust radius min
     double relax_bfgs_init; // initial move
+
+    double relax_scale_force;
 
     //==========================================================
     // Planewave
@@ -357,7 +368,6 @@ class Input
     // tddft
     // Fuxiang He add 2016-10-26
     //==========================================================
-    int tddft; // calculate tddft or not
     double td_scf_thr; // threshold for electronic iteration of tddft
     double td_dt; //"fs"
     double td_force_dt; //"fs"

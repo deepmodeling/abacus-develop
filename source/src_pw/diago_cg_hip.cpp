@@ -1,3 +1,5 @@
+//obsolete code
+//please remove the globalc::hm
 #include "diago_cg_hip.h"
 
 #include "global.h"
@@ -159,9 +161,11 @@ void Diago_CG_CUDA<T, T2, T3>::diag(T2 *phi, // matrix nband*dim
 			GlobalV::ofs_running << "Diagonal Band : " << m << endl;
 		hipDeviceSynchronize();
 		CHECK_CUDA(hipMemcpy(phi_m, &phi[m * dmx], dim * sizeof(T2), hipMemcpyDeviceToDevice));
+		/*obsolete: globalc::hm has been removed
 		GlobalC::hm.hpw.s_1psi_cuda(dim, phi_m, sphi);
 		this->schmit_orth(dim, dmx, m, phi, sphi, phi_m);
 		GlobalC::hm.hpw.h_1psi_cuda(dim, phi_m, hphi, sphi, vkb_c);
+		*/
 		T em_host = 0;
 		em_host = ddot_real(dim, phi_m, hphi);
 
@@ -350,7 +354,9 @@ void Diago_CG_CUDA<T, T2, T3>::orthogonal_gradient(const int &dim,
 		ModuleBase::TITLE("Diago_CG_HIP", "orthogonal_gradient");
 	ModuleBase::timer::tick("Diago_CG_HIP", "orth_grad");
 
+	/*obsolete: globalc::hm has been removed
 	GlobalC::hm.hpw.s_1psi_cuda(dim, g, sg);
+	*/
 
 	int inc = 1;
 
@@ -385,8 +391,9 @@ void Diago_CG_CUDA<T, T2, T3>::orthogonal_gradient(const int &dim,
 		ModuleBase::TITLE("Diago_CG_HIP", "orthogonal_gradient");
 	ModuleBase::timer::tick("Diago_CG_HIP", "orth_grad");
 
+	/*obsolete: globalc::hm has been removed
 	GlobalC::hm.hpw.s_1psi_cuda(dim, g, sg);
-
+	*/
 	int inc = 1;
 
 	hipblasOperation_t trans1 = HIPBLAS_OP_C;
@@ -515,7 +522,9 @@ bool Diago_CG_CUDA<T, T2, T3>::update_psi(const int dim,
 	int block = (dim + thread - 1) / thread;
 	// pw.h_1psi(dim, cg, hcg, scg); // TODO
 	// to cpu
+	/*obsolete: globalc::hm has been removed
 	GlobalC::hm.hpw.h_1psi_cuda(dim, cg, hcg, scg, vkb_c);
+	*/
 	// hpsi end
 
 	cg_norm = sqrt(this->ddot_real(dim, cg, scg));
@@ -632,8 +641,9 @@ void Diago_CG_CUDA<T, T2, T3>::schmit_orth(const int &dim,
 					   reinterpret_cast<float2 *>(psi_m),
 					   dim,
 					   psi_norm);
-
+	/*obsolete: globalc::hm has been removed
 	GlobalC::hm.hpw.s_1psi_cuda(dim, psi_m, sphi);
+	*/
 
 	ModuleBase::timer::tick("Diago_CG_HIP", "schmit_orth");
 	CHECK_CUDA(hipFree(lagrange));
@@ -681,8 +691,9 @@ void Diago_CG_CUDA<T, T2, T3>::schmit_orth(const int &dim,
 					   reinterpret_cast<double2 *>(psi_m),
 					   dim,
 					   psi_norm);
-
+	/*obsolete: globalc::hm has been removed
 	GlobalC::hm.hpw.s_1psi_cuda(dim, psi_m, sphi);
+	*/
 
 	ModuleBase::timer::tick("Diago_CG_HIP", "schmit_orth");
 	CHECK_CUDA(hipFree(lagrange));

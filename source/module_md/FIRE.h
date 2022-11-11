@@ -6,7 +6,7 @@
 class FIRE : public MDrun
 {
 public:
-    FIRE(MD_parameters& MD_para_in, UnitCell_pseudo &unit_in);
+    FIRE(MD_parameters& MD_para_in, UnitCell &unit_in);
     ~FIRE();
 
     void setup(ModuleESolver::ESolver *p_ensolve);

@@ -50,7 +50,7 @@ void ElecStatePW::parallelK()
 {
 #ifdef __MPI
     charge->rho_mpi();
-    if(GlobalV::CALCULATION.substr(0,3) == "sto") //qinarui add it 2021-7-21
+    if(GlobalV::ESOLVER_TYPE == "sdft") //qinarui add it 2021-7-21
 	{
 		this->eband /= GlobalV::NPROC_IN_POOL;
 		MPI_Allreduce(MPI_IN_PLACE, &this->eband, 1, MPI_DOUBLE, MPI_SUM , STO_WORLD);

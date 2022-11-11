@@ -16,6 +16,10 @@ PW_Basis_K::~PW_Basis_K()
     delete[] igl2isz_k;
     delete[] igl2ig_k;
     delete[] gk2;
+    delete[] ig2ixyz_k_;
+#if defined(__CUDA) || defined(__UT_USE_CUDA)
+    cudaFree(this->ig2ixyz_k);
+#endif
 }
 
 void PW_Basis_K:: initparameters(
@@ -214,4 +218,30 @@ int& PW_Basis_K::getigl2ig(const int ik, const int igl) const
     return this->igl2ig_k[ik*this->npwk_max + igl];
 }
 
+#if defined(__CUDA) || defined(__UT_USE_CUDA)
+void PW_Basis_K::get_ig2ixyz_k()
+{
+    cudaMalloc(
+        reinterpret_cast<void **>(&this->ig2ixyz_k),
+        sizeof(int) * this->npwk_max * this->nks);
+    this->ig2ixyz_k_ = new int [this->npwk_max * this->nks];
+    assert(gamma_only == false); //We only finish non-gamma_only fft on GPU temperarily.
+    for(int ik = 0; ik < this->nks; ++ik)
+    {
+        for(int igl = 0; igl < this->npwk[ik]; ++igl)
+        {
+            int isz = this->igl2isz_k[igl + ik * npwk_max];
+            int iz = isz % this->nz;
+            int is = isz / this->nz;
+            int ixy = this->is2fftixy[is];
+            int iy = ixy % this->ny;
+            int ix = ixy / this->ny;
+            ig2ixyz_k_[igl + ik * npwk_max] = iz + iy * nz + ix * ny * nz;
+        }
+    }
+    cudaMemcpy(this->ig2ixyz_k, ig2ixyz_k_, sizeof(int) * this->npwk_max * this->nks, cudaMemcpyHostToDevice);
+    // delete [] ig2ixyz_k_;
 }
+#endif
+
+}  // namespace ModulePW

@@ -5,7 +5,7 @@
 /*******************************************************************************/
 
 These examples show how to do a md calculation.
-One can set 'calculation' to be 'md' or 'sto-md' to do the MD calculation.
+One can set 'calculation' to be 'md' to do the MD calculation.
 
 More detail introduction can be found in ../../docs/advanced/md.md
 

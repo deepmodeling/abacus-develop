@@ -6,7 +6,7 @@
 #include "../module_base/timer.h"
 #include "module_esolver/esolver.h"
 
-MSST::MSST(MD_parameters& MD_para_in, UnitCell_pseudo &unit_in) : MDrun(MD_para_in, unit_in)
+MSST::MSST(MD_parameters& MD_para_in, UnitCell &unit_in) : MDrun(MD_para_in, unit_in)
 {
     std::cout << "MSST" << std::endl;
 
@@ -63,8 +63,8 @@ void MSST::setup(ModuleESolver::ESolver *p_esolver)
             }
         }
 
-        MD_func::kinetic_stress(ucell, vel, allmass, kinetic, stress);
-        stress += virial;
+        MD_func::compute_stress(ucell, vel, allmass, virial, stress);
+        t_current = MD_func::current_temp(kinetic, ucell.nat, frozen_freedom_, allmass, vel);
     }
 
     ModuleBase::timer::tick("MSST", "setup");
@@ -146,8 +146,8 @@ void MSST::second_half()
     propagate_vel();
 
     vsum = vel_sum();
-    MD_func::kinetic_stress(ucell, vel, allmass, kinetic, stress);
-    stress += virial;
+    MD_func::compute_stress(ucell, vel, allmass, virial, stress);
+    t_current = MD_func::current_temp(kinetic, ucell.nat, frozen_freedom_, allmass, vel);
 
     // propagate the time derivative of volume 1/2 step
     propagate_voldot();

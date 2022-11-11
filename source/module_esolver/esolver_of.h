@@ -2,6 +2,7 @@
 #include "../module_base/opt_TN.hpp"
 #include "../module_base/opt_DCsrch.h"
 #include "../module_psi/psi.h"
+#include "../src_pw/charge_extra.h"    // liuyu add 2022-11-07
 #include "./kedf_tf.h"
 #include "./kedf_vw.h"
 #include "./kedf_wt.h"
@@ -70,8 +71,8 @@ public:
         if (this->opt_cg_mag != NULL) delete this->opt_cg_mag;
     }
 
-    virtual void Init(Input &inp, UnitCell_pseudo &ucell) override;
-    virtual void Run(int istep, UnitCell_pseudo& ucell) override;
+    virtual void Init(Input &inp, UnitCell &ucell) override;
+    virtual void Run(int istep, UnitCell& ucell) override;
     virtual void postprocess() override;
 
     virtual void cal_Energy(double& etot) override;
@@ -87,6 +88,9 @@ private:
     KEDF_TF tf;
     KEDF_vW vw;
     KEDF_WT wt;
+
+    // charge extrapolation liuyu add 2022-11-07
+    Charge_Extra CE;
 
     // optimization methods
     ModuleBase::Opt_CG opt_cg;
@@ -136,7 +140,7 @@ private:
     double normdLdphi = 100.;
 
     // main process of OFDFT
-    void beforeOpt();
+    void beforeOpt(const int istep);
     void updateV();
     void solveV();
     void getNextDirect();

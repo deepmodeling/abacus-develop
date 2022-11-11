@@ -8,154 +8,6 @@ Hamilt::Hamilt() {}
 Hamilt::~Hamilt() {}
 
 
-void Hamilt::diagH_pw(
-    const int &istep,
-    const int &iter,
-    const int &ik,
-    const double *precondition,
-    double &avg_iter)
-{
-	ModuleBase::TITLE("Hamilt","diagH_pw");
-    ModuleBase::timer::tick("Hamilt", "diagH_pw");
-    double avg = 0.0;
-
-	// set ik0 because of mem_saver.
-	// if mem_saver is not used, ik0=ik, as usual.
-	// but if mem_saver is used, ik0=0.
-	int ik0 = ik;
-
-	if(GlobalV::CALCULATION=="nscf")
-	{
-		if(GlobalV::BASIS_TYPE=="pw")
-		{
-			// generate PAOs first, then diagonalize to get
-			// inital wavefunctions.
-            if(GlobalC::wf.mem_saver==1)
-            {
-			    GlobalC::wf.diago_PAO_in_pw_k2(ik, GlobalC::wf.evc[0]);
-                ik0 = 0;
-            }
-            else
-            {
-                GlobalC::wf.diago_PAO_in_pw_k2(ik, GlobalC::wf.evc[ik0]);
-            }
-		}
-#ifdef __LCAO
-		else if(GlobalV::BASIS_TYPE=="lcao_in_pw")
-		{
-            if(GlobalC::wf.mem_saver==1)
-            {
-			    GlobalC::wf.LCAO_in_pw_k(ik, GlobalC::wf.wanf2[0]);
-                ik0 = 0;
-            }
-            else
-            {
-                GlobalC::wf.LCAO_in_pw_k(ik, GlobalC::wf.wanf2[ik0]);
-            }
-		}
-#endif
-	}
-
-    if(GlobalV::BASIS_TYPE=="lcao_in_pw")
-    {
-		if(GlobalV::KS_SOLVER=="lapack")
-		{
-			assert(GlobalV::NLOCAL >= GlobalV::NBANDS);
-        	this->diagH_subspace(
-				ik,
-				GlobalV::NLOCAL,
-				GlobalV::NBANDS,
-				GlobalC::wf.wanf2[ik0],
-				GlobalC::wf.evc[ik0],
-				GlobalC::wf.ekb[ik]);
-		}
-		else
-		{
-			GlobalV::ofs_warning << " The diago_type " << GlobalV::KS_SOLVER
-				<< " not implemented yet." << std::endl; //xiaohui add 2013-09-02
-			ModuleBase::WARNING_QUIT("Hamilt::diago","no implemt yet.");
-		}
-    }
-    else
-    {
-        int ntry = 0;
-        int notconv = 0;
-        do
-        {
-	   		if(GlobalV::KS_SOLVER=="cg")
-            {
-				// qian change it, because it has been executed in diago_PAO_in_pw_k2
-                if ( iter > 1 || istep > 1 ||  ntry > 0)
-                {
-                    this->diagH_subspace(
-						ik,
-						GlobalV::NBANDS,
-						GlobalV::NBANDS,
-						GlobalC::wf.evc[ik0],
-						GlobalC::wf.evc[ik0],
-						GlobalC::wf.ekb[ik]);
-
-                    avg_iter += 1.0;
-                }
-                Diago_CG cg(&GlobalC::hm.hpw);
-
-				bool reorder = true;
-
-				if(GlobalV::NPOL==1)
-				{
-						cg.diag(GlobalC::wf.evc[ik0], GlobalC::wf.ekb[ik], GlobalC::kv.ngk[ik], GlobalC::wf.npwx,
-						GlobalV::NBANDS, precondition, GlobalV::PW_DIAG_THR,
-						GlobalV::PW_DIAG_NMAX, reorder, notconv, avg);
-				}
-				else
-				{
-					cg.diag(GlobalC::wf.evc[ik0], GlobalC::wf.ekb[ik], GlobalC::wf.npwx*GlobalV::NPOL, GlobalC::wf.npwx*GlobalV::NPOL,
-						GlobalV::NBANDS, precondition, GlobalV::PW_DIAG_THR,
-						GlobalV::PW_DIAG_NMAX, reorder, notconv, avg);
-				}
-				// P.S. : nscf is the flag about reorder.
-				// if diagH_subspace is done once,
-				// we don't need to reorder the eigenvectors order.
-				// if diagH_subspace has not been called,
-				// we need to reorder the eigenvectors.
-            }
-	   		else if(GlobalV::KS_SOLVER=="dav")
-        	{
-				Diago_David david(&GlobalC::hm.hpw);
-				if(GlobalV::NPOL==1)
-				{
-					david.diag(GlobalC::wf.evc[ik0], GlobalC::wf.ekb[ik], GlobalC::kv.ngk[ik],
-						GlobalV::NBANDS, precondition, GlobalV::PW_DIAG_NDIM,
-				 		GlobalV::PW_DIAG_THR, GlobalV::PW_DIAG_NMAX, notconv, avg);
-				}
-				else
-				{
-					david.diag(GlobalC::wf.evc[ik0], GlobalC::wf.ekb[ik], GlobalC::wf.npwx*GlobalV::NPOL,
-						GlobalV::NBANDS, precondition, GlobalV::PW_DIAG_NDIM,
-						GlobalV::PW_DIAG_THR, GlobalV::PW_DIAG_NMAX, notconv, avg);
-				}
-        	}
-        	else
-        	{
-				ModuleBase::WARNING_QUIT("calculate_bands","Check ks_solver !");
-        	}
-            avg_iter += avg;
-            ++ntry;
-        }
-        while ( this->test_exit_cond(ntry, notconv) );
-
-        if ( notconv > max(5, GlobalV::NBANDS/4) )
-        {
-            std::cout << "\n notconv = " << notconv;
-            std::cout << "\n Hamilt::diago', too many bands are not converged! \n";
-        }
-    }
-
-	ModuleBase::timer::tick("Hamilt","diagH_pw");
-    return;
-}
-
-
 bool Hamilt::test_exit_cond(const int &ntry, const int &notconv)
 {
     //================================================================
@@ -178,6 +30,8 @@ bool Hamilt::test_exit_cond(const int &ntry, const int &notconv)
     return  ( f1 && ( f2 || f3 ) );
 }
 
+/*
+//not used anymore
 void Hamilt::diagH_subspace(
     const int ik,
     const int nstart,
@@ -201,7 +55,7 @@ void Hamilt::diagH_subspace(
     }
     return;
 }
-
+*/
 
 
 //====================================================================

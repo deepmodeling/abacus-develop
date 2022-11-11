@@ -166,11 +166,11 @@ void energy::print_etot(
 			this->print_format("E_Ewald", H_Ewald_pw::ewald_energy);
 			this->print_format("E_demet", demet); //mohan add 2011-12-02
 			this->print_format("E_descf", descf);
-			if (GlobalC::vdwd2_para.flag_vdwd2)					//Peize Lin add 2014-04, update 2021-03-09
+			if (INPUT.vdw_method == "d2") 				//Peize Lin add 2014-04, update 2021-03-09
 			{
 				this->print_format("E_vdwD2", evdw);
 			}
-			if(GlobalC::vdwd3_para.flag_vdwd3)					//jiyy add 2019-05, update 2021-05-02
+            else if (INPUT.vdw_method == "d3_0" || INPUT.vdw_method == "d3_bj")					//jiyy add 2019-05, update 2021-05-02
 			{
 				this->print_format("E_vdwD3", evdw);
 			}
@@ -487,56 +487,6 @@ void energy::delta_escf(void)
 
     this->descf *= GlobalC::ucell.omega / GlobalC::rhopw->nxyz;
     return;
-}
-
-
-void energy::print_band(const int &ik)
-{
-	//check the band energy.
-    bool wrong = false;
-	for(int ib=0; ib<GlobalV::NBANDS; ++ib)
-	{
-		if( abs( GlobalC::wf.ekb[ik][ib] ) > 1.0e10)
-		{
-			GlobalV::ofs_warning << " ik=" << ik+1 << " ib=" << ib+1 << " " << GlobalC::wf.ekb[ik][ib] << " Ry" << std::endl;
-			wrong = true;
-		}
-	}
-	if(wrong)
-    {
-        ModuleBase::WARNING_QUIT("Threshold_Elec::print_eigenvalue","Eigenvalues are too large!");
-    }
-
-
-
-	if(GlobalV::MY_RANK==0)
-	{
-		//if( GlobalV::DIAGO_TYPE == "selinv" ) xiaohui modify 2013-09-02
-		if(GlobalV::KS_SOLVER=="selinv") //xiaohui add 2013-09-02
-		{
-			GlobalV::ofs_running << " No eigenvalues are available for selected inversion methods." << std::endl;	
-		}
-		else
-		{
-			if( printe>0 && ((this->iter+1) % this->printe == 0))
-			{
-				//	NEW_PART("ENERGY BANDS (Rydberg), (eV)");
-				GlobalV::ofs_running << std::setprecision(6);
-				GlobalV::ofs_running << " Energy (eV) & Occupations  for spin=" << GlobalV::CURRENT_SPIN+1 << " K-point=" << ik+1 << std::endl;
-				GlobalV::ofs_running << std::setiosflags(ios::showpoint);
-				for(int ib=0;ib<GlobalV::NBANDS;ib++)
-				{
-					GlobalV::ofs_running << " "<< std::setw(6) << ib+1  
-						<< std::setw(15) << GlobalC::wf.ekb[ik][ib] * ModuleBase::Ry_to_eV;
-					// for the first electron iteration, we don't have the energy
-					// spectrum, so we can't get the occupations. 
-					GlobalV::ofs_running << std::setw(15) << GlobalC::wf.wg(ik,ib);
-					GlobalV::ofs_running << std::endl;
-				}
-			}
-		}
-	}
-	return;
 }
 
 // Peize Lin add 2016-12-03

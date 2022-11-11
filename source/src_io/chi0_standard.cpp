@@ -11,7 +11,6 @@
 #include "chi0_standard.h"
 #include "../src_pw/hamilt.h"
 #include "../src_lcao/wavefunc_in_pw.h"
-#include "optical.h"
 #include "../src_pw/klist.h"
 #include <iostream>
 #include <cstring>
@@ -44,7 +43,7 @@ Chi0_standard:: ~Chi0_standard()
 {
 }
 
-void Chi0_standard:: Chi()
+void Chi0_standard:: Chi(const elecstate::ElecState* pelec)
 {
 	ModuleBase::TITLE("Chi0_standard","Chi");
 
@@ -229,7 +228,7 @@ void Chi0_standard:: Chi()
 		occ_flag = false;
 		for(int ik=0; ik<GlobalC::kv.nks; ik++)
 		{
-			if( GlobalC::wf.wg(ik,ib)> 0.0001)
+			if( pelec->wg(ik,ib)> 0.0001)
 			{
 				occ_flag = true;
 				continue;
@@ -256,7 +255,7 @@ void Chi0_standard:: Chi()
 		int count =0;
 		for(double omega=0.0; omega<(domega*nomega); omega=omega+domega)
 		{
-			Cal_chi0(iq,omega);
+			Cal_chi0(iq,omega, pelec);
 			std::cout<<"chi0 iq= "<<iq<<" omega= "<<omega<<"  "<<chi0[0][0].real()<<" "<<chi0[0][0].imag()<<std::endl;
 			if(system == "surface")
 			{
@@ -616,14 +615,14 @@ void Chi0_standard::Cal_b(int iq, int ik, int iqk,  ModulePW::PW_Basis *rho_basi
 	return;
 }
 
-void Chi0_standard:: Cal_weight(int iq, int ik, double omega)
+void Chi0_standard:: Cal_weight(int iq, int ik, double omega, const elecstate::ElecState* pelec)
 {
 	int iqk = Cal_iq(ik, iq, GlobalC::kv.nmp[0], GlobalC::kv.nmp[1], GlobalC::kv.nmp[2]);
 	for(int ib1=0; ib1<oband; ib1++)
 		for(int ib2=0; ib2<GlobalV::NBANDS; ib2++)
 		{
-			std::complex<double> factor = std::complex<double>( (omega + GlobalC::wf.ekb[ik][ib1] - GlobalC::wf.ekb[iqk][ib2]), eta);
-			weight[ib2+ib1*GlobalV::NBANDS] = ( GlobalC::wf.wg(ik,ib1)  - GlobalC::wf.wg(iqk,ib2) )/factor/GlobalC::ucell.omega;
+			std::complex<double> factor = std::complex<double>( (omega + pelec->ekb(ik, ib1) - pelec->ekb(iqk, ib2)), eta);
+			weight[ib2+ib1*GlobalV::NBANDS] = ( pelec->wg(ik,ib1)  - pelec->wg(iqk,ib2) )/factor/GlobalC::ucell.omega;
 		}
 
 	return;
@@ -652,7 +651,7 @@ void Chi0_standard:: Cal_first()
 	return;
 }
 
-void Chi0_standard:: Cal_chi0(int iq, double omega)
+void Chi0_standard:: Cal_chi0(int iq, double omega, const elecstate::ElecState* pelec)
 {
 	for(int g0=0; g0<dim; g0++)
 		for(int g1=0; g1<dim; g1++)
@@ -664,7 +663,7 @@ void Chi0_standard:: Cal_chi0(int iq, double omega)
 	{
 		int iqk = Cal_iq(ik, iq, GlobalC::kv.nmp[0], GlobalC::kv.nmp[1], GlobalC::kv.nmp[2]);
 		Cal_b(iq, ik, iqk,GlobalC::rhopw);
-		Cal_weight(iq, ik, omega);
+		Cal_weight(iq, ik, omega, pelec);
 		Cal_last();
 		Cal_first();
 		std::vector<std::vector<std::complex<double>>> A1(dim, std::vector<std::complex<double>>(oband*GlobalV::NBANDS));       // Peize Lin change ptr to std::vector at 2020.01.31

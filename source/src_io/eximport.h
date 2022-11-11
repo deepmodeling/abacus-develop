@@ -7,6 +7,7 @@
 #include <fstream>
 #include "../module_base/complexmatrix.h"
 #include "../module_base/matrix.h"
+#include "module_elecstate/elecstate.h"
 
 using namespace std;
 
@@ -28,8 +29,8 @@ public:
 	void write_data
 	(
 		const std::string &fn, // file name of output file
-		const std::string &type// choice : "all" "evc" "band"
-						  // "energy" "charge"
+		const std::string &type, // choice : "all" "evc" "band"
+		const elecstate::ElecState* pelec  // "energy" "charge"
 	);
 
 //==========================================================
@@ -255,7 +256,7 @@ public:
 // NAME : rho_nc(total points of charge FFT grid,rho_nc = ncxyz)
 // NAME : rho(charge density)
 //==========================================================
-	void out_band(std::ofstream &out);
+	void out_band(std::ofstream &out, const elecstate::ElecState* pelec);
 	void in_band(std::ifstream &in);
 
 	double **band_energy;

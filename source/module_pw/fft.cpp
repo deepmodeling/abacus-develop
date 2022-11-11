@@ -16,6 +16,10 @@ void FFT::clear()
 	if(auxg!=nullptr) {fftw_free(auxg); auxg = nullptr;}
 	if(auxr!=nullptr) {fftw_free(auxr); auxr = nullptr;}
 	r_rspace = nullptr;
+#if defined(__CUDA) || defined(__UT_USE_CUDA)
+    if(auxg_3d!=nullptr) {cudaFree(auxg_3d); auxg_3d = nullptr;}
+    if(auxr_3d!=nullptr) {cudaFree(auxr_3d); auxr_3d = nullptr;}
+#endif
 #ifdef __MIX_PRECISION
 	this->cleanfFFT();
 	if(auxfg!=nullptr) {fftw_free(auxfg); auxfg = nullptr;}
@@ -53,6 +57,16 @@ void FFT:: initfft(int nx_in, int ny_in, int nz_in, int lixy_in, int rixy_in, in
 		auxg  = (std::complex<double> *) fftw_malloc(sizeof(fftw_complex) * maxgrids);
 		auxr  = (std::complex<double> *) fftw_malloc(sizeof(fftw_complex) * maxgrids);
 		r_rspace = (double *) auxg;
+        // auxg_3d = static_cast<std::complex<double> *>(
+        //     fftw_malloc(sizeof(fftw_complex) * (this->nx * this->ny * this->nz)));
+        // auxr_3d = static_cast<std::complex<double> *>(
+        //     fftw_malloc(sizeof(fftw_complex) * (this->nx * this->ny * this->nz)));
+        #if defined(__CUDA) || defined(__UT_USE_CUDA)
+        cudaMalloc(reinterpret_cast<void**>(&auxg_3d),
+                   this->nx * this->ny * this->nz * sizeof(std::complex<double>));
+        cudaMalloc(reinterpret_cast<void**>(&auxr_3d),
+                   this->nx * this->ny * this->nz * sizeof(std::complex<double>));
+        #endif
 #ifdef __MIX_PRECISION
 		auxfg  = (std::complex<float> *) fftw_malloc(sizeof(fftwf_complex) * maxgrids);
 		auxfr  = (std::complex<float> *) fftw_malloc(sizeof(fftwf_complex) * maxgrids);
@@ -161,7 +175,24 @@ void FFT :: initplan()
 		}
 	}
 
-	
+    //---------------------------------------------------------
+    //                              3 D - XYZ
+    //---------------------------------------------------------
+    //in-place fft test
+    //this->plan3dforward = fftw_plan_dft_3d(
+    //    this->nx, this->ny, this->nz,
+    //    reinterpret_cast<fftw_complex *>(auxr_3d),
+    //    reinterpret_cast<fftw_complex *>(auxr_3d),
+    //    FFTW_FORWARD, FFTW_MEASURE);
+    //this->plan3dbackward = fftw_plan_dft_3d(
+    //    this->nx, this->ny, this->nz,
+    //    reinterpret_cast<fftw_complex *>(auxr_3d),
+    //    reinterpret_cast<fftw_complex *>(auxr_3d),
+    //    FFTW_BACKWARD, FFTW_MEASURE);
+
+    #if defined(__CUDA) || defined(__UT_USE_CUDA)
+    cufftPlan3d(&fft_handle, this->nx, this->ny, this->nz, CUFFT_Z2Z);
+    #endif
 
 	destroyp = false;
 }
@@ -290,6 +321,11 @@ void FFT:: cleanFFT()
 			fftw_destroy_plan(planybac);
 		}
 	}
+    // fftw_destroy_plan(this->plan3dforward);
+    // fftw_destroy_plan(this->plan3dbackward);
+    #if defined(__CUDA) || defined(__UT_USE_CUDA)
+    cufftDestroy(fft_handle);
+    #endif
 	destroyp = true;
 	return;
 }
@@ -455,6 +491,34 @@ void FFT::fftxyc2r(std::complex<double>* & in, double* & out)
 	}
 	return;
 }
+
+#if defined(__CUDA) || defined(__UT_USE_CUDA)
+void FFT::fft3D_forward(std::complex<double>* & in, std::complex<double>* & out)
+{
+//    fftw_execute_dft(
+//        this->plan3dforward,
+//        reinterpret_cast<fftw_complex *>(in),
+//        reinterpret_cast<fftw_complex *>(out));
+    cufftExecZ2Z(this->fft_handle,
+          reinterpret_cast<cufftDoubleComplex*>(in),
+          reinterpret_cast<cufftDoubleComplex*>(out),
+          CUFFT_FORWARD);
+    cudaDeviceSynchronize();
+}
+
+void FFT::fft3D_backward(std::complex<double>* & in, std::complex<double>* & out)
+{
+//    fftw_execute_dft(
+//        this->plan3dbackward,
+//        reinterpret_cast<fftw_complex *>(in),
+//        reinterpret_cast<fftw_complex *>(out));
+    cufftExecZ2Z(this->fft_handle,
+             reinterpret_cast<cufftDoubleComplex*>(in),
+             reinterpret_cast<cufftDoubleComplex*>(out),
+             CUFFT_INVERSE);
+    cudaDeviceSynchronize();
+}
+#endif
 
 
 #ifdef __MIX_PRECISION

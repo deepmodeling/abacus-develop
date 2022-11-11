@@ -10,6 +10,7 @@
 
 #include "../src_pw/global.h"
 #include "xc_functional.h"
+#include "module_pw/pw_basis_k.h"
 
 // from gradcorr.f90
 void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v, std::vector<double> &stress_gga, const bool is_stress)
@@ -39,12 +40,12 @@ void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v, 
 	}
 
 	// doing FFT to get rho in G space: rhog1 
-    GlobalC::CHR.set_rhog(GlobalC::CHR.rho[0], GlobalC::CHR.rhog[0]);
+    GlobalC::rhopw->real2recip(GlobalC::CHR.rho[0], GlobalC::CHR.rhog[0]);
 	if(GlobalV::NSPIN==2)//mohan fix bug 2012-05-28
 	{
-		GlobalC::CHR.set_rhog(GlobalC::CHR.rho[1], GlobalC::CHR.rhog[1]);
+		GlobalC::rhopw->real2recip(GlobalC::CHR.rho[1], GlobalC::CHR.rhog[1]);
 	}
-    GlobalC::CHR.set_rhog(GlobalC::CHR.rho_core, GlobalC::CHR.rhog_core);
+    GlobalC::rhopw->real2recip(GlobalC::CHR.rho_core, GlobalC::CHR.rhog_core);
 		
 	// sum up (rho_core+rho) for each spin in real space
 	// and reciprocal space.
@@ -116,8 +117,8 @@ void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v, 
 
 		rhogsum2 = new std::complex<double>[GlobalC::rhopw->npw];
 		ModuleBase::GlobalFunc::ZEROS(rhogsum2, GlobalC::rhopw->npw);
-		GlobalC::CHR.set_rhog(rhotmp1, rhogsum1);
-		GlobalC::CHR.set_rhog(rhotmp2, rhogsum2);
+		GlobalC::rhopw->real2recip(rhotmp1, rhogsum1);
+		GlobalC::rhopw->real2recip(rhotmp2, rhogsum2);
 		for(int ir=0; ir<GlobalC::rhopw->nrxx; ir++)
 		{
 			rhotmp2[ir] += fac * GlobalC::CHR.rho_core[ir];
@@ -474,8 +475,6 @@ void XC_Functional::grad_rho( const std::complex<double> *rhog, ModuleBase::Vect
 {
 	std::complex<double> *gdrtmp = new std::complex<double>[rho_basis->nmaxgr];
 	ModuleBase::GlobalFunc::ZEROS(gdrtmp, rho_basis->nmaxgr);
-
-	
 
 	// the formula is : rho(r)^prime = \int iG * rho(G)e^{iGr} dG
 	for(int i = 0 ; i < 3 ; ++i)

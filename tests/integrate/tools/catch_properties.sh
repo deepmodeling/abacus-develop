@@ -120,13 +120,13 @@ if ! test -z "$has_hs"  && [  $has_hs == 1 ]; then
 	if ! test -z "$gamma_only"  && [ $gamma_only == 1 ]; then
 		href=data-0-H.ref
 		hcal=OUT.autotest/data-0-H
-		sref=data-0-H.ref
-		scal=OUT.autotest/data-0-H
+		sref=data-0-S.ref
+		scal=OUT.autotest/data-0-S
 	else
 		href=data-1-H.ref
 		hcal=OUT.autotest/data-1-H
-		sref=data-1-H.ref
-		scal=OUT.autotest/data-1-H
+		sref=data-1-S.ref
+		scal=OUT.autotest/data-1-S
 	fi
 
 	python3 ../tools/CompareFile.py $href $hcal 8
