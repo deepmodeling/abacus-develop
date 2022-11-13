@@ -7,7 +7,7 @@
 
 #include <string>
 
-#include "../src_pw/charge_broyden.h"
+#include "../src_pw/charge_mixing.h"
 #include "dftu_relax.h"
 
 #include "../module_cell/unitcell.h"

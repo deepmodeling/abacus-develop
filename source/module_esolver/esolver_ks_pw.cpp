@@ -11,7 +11,6 @@
 #include "../src_pw/symmetry_rho.h"
 #include "../src_io/print_info.h"
 #include "../src_pw/H_Ewald_pw.h"
-#include "../src_pw/electrons.h"
 #include "../src_pw/occupy.h"
 #include "../src_io/chi0_standard.h"
 #include "../src_io/chi0_hilbert.h"
@@ -131,7 +130,7 @@ namespace ModuleESolver
         //init ElecState,
         if(this->pelec == nullptr)
         {
-            this->pelec = new elecstate::ElecStatePW( GlobalC::wfcpw, (Charge*)(&(GlobalC::CHR)), (K_Vectors*)(&(GlobalC::kv)), GlobalV::NBANDS);
+            this->pelec = new elecstate::ElecStatePW( GlobalC::wfcpw, &(GlobalC::CHR), (K_Vectors*)(&(GlobalC::kv)), GlobalV::NBANDS);
         }
         //init HSolver
         if(this->phsol == nullptr)
@@ -266,15 +265,7 @@ namespace ModuleESolver
     void ESolver_KS_PW::eachiterinit(const int istep, const int iter)
     {
         // mohan add 2010-07-16
-        if (iter == 1) GlobalC::CHR.set_new_e_iteration(true);
-        else GlobalC::CHR.set_new_e_iteration(false);
-
-        if (GlobalV::FINAL_SCF && iter == 1)
-        {
-            GlobalC::CHR.irstep = 0;
-            GlobalC::CHR.idstep = 0;
-            GlobalC::CHR.totstep = 0;
-        }
+        if (iter == 1) GlobalC::CHR_MIX.reset(GlobalV::FINAL_SCF);
 
         // mohan move harris functional to here, 2012-06-05
         // use 'rho(in)' and 'v_h and v_xc'(in)

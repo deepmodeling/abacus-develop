@@ -87,8 +87,9 @@ public:
 
 	ModuleBase::realArray deeq;		//(:,:,:,:), the integral of V_eff and Q_{nm}
 	bool multi_proj = false;
-	double *d_deeq;
+	double *d_deeq = nullptr;
 	ModuleBase::ComplexArray deeq_nc;	//(:,:,:,:), the spin-orbit case
+	std::complex<double> *d_deeq_nc = nullptr; // GPU array of deeq_nc
 	ModuleBase::realArray becsum;	//(:,:,:,:), \sum_i  f(i) <psi(i)/beta_1><beta_m/psi(i)> //used in charge
 
 

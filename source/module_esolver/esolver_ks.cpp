@@ -11,7 +11,7 @@
 //--------------Temporary----------------
 #include "../module_base/global_variable.h"
 #include "../src_pw/global.h"
-#include "../src_pw/charge_broyden.h"
+#include "../src_pw/charge_mixing.h"
 #include "../module_base/timer.h"
 //---------------------------------------
 
@@ -206,7 +206,8 @@ namespace ModuleESolver
                 {
                     // double drho = this->estate.caldr2(); 
                     // EState should be used after it is constructed.
-                    drho = GlobalC::CHR.get_drho();
+                    drho = GlobalC::CHR_MIX.get_drho(GlobalC::CHR.rho, GlobalC::CHR.rho_save,
+                        GlobalC::CHR.rhog, GlobalC::CHR.rhog_save, GlobalC::CHR.nelec);
                     double hsolver_error = 0.0;
                     if (firstscf)
                     {
@@ -217,7 +218,8 @@ namespace ModuleESolver
                         {
                             diag_ethr = this->phsol->reset_diagethr(GlobalV::ofs_running, hsolver_error, drho);
                             this->hamilt2density(istep, iter, diag_ethr);
-                            drho = GlobalC::CHR.get_drho();
+                            drho = GlobalC::CHR_MIX.get_drho(GlobalC::CHR.rho, GlobalC::CHR.rho_save,
+                                GlobalC::CHR.rhog, GlobalC::CHR.rhog_save, GlobalC::CHR.nelec);
                             hsolver_error = this->phsol->cal_hsolerror();
                         }
                     }
@@ -233,7 +235,7 @@ namespace ModuleESolver
                     {
                         //charge mixing
                         //conv_elec = this->estate.mix_rho();
-                        GlobalC::CHR.mix_rho(iter);
+                        GlobalC::CHR_MIX.mix_rho(iter, GlobalC::CHR.rho, GlobalC::CHR.rho_save, GlobalC::CHR.rhog, GlobalC::CHR.rhog_save);
                     }
                 }
 #ifdef __MPI

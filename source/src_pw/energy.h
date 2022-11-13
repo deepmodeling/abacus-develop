@@ -10,7 +10,6 @@
 class energy
 {
 	public:
-	friend class Electrons; 
 	friend class Electrons_Stochastic;//mohan add 2021-01-31 
 	friend class LOOP_elec;
 	friend class Local_Orbital_Charge;

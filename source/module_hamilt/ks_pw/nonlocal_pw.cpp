@@ -20,9 +20,16 @@ Nonlocal<OperatorPW<FPTYPE, Device>>::Nonlocal(
     this->isk = isk_in;
     this->ppcell = ppcell_in;
     this->ucell = ucell_in;
-    this->deeq = psi::device::get_device_type<Device>(this->ctx) == psi::GpuDevice ?
-            this->ppcell->d_deeq :  // for GpuDevice
-            this->ppcell->deeq.ptr; // for CpuDevice
+    if (psi::device::get_device_type<Device>(this->ctx) == psi::GpuDevice) {
+        this->deeq = this->ppcell->d_deeq;
+        this->deeq_nc = this->ppcell->d_deeq_nc;
+        resize_memory_op()(this->ctx, this->vkb, this->ppcell->vkb.size);
+    }
+    else {
+        this->deeq = this->ppcell->deeq.ptr;
+        this->deeq_nc = this->ppcell->deeq_nc.ptr;
+        this->vkb = this->ppcell->vkb.c;
+    }
     if( this->isk == nullptr || this->ppcell == nullptr || this->ucell == nullptr)
     {
         ModuleBase::WARNING_QUIT("NonlocalPW", "Constuctor of Operator::NonlocalPW is failed, please check your code!");
@@ -33,6 +40,9 @@ template<typename FPTYPE, typename Device>
 Nonlocal<OperatorPW<FPTYPE, Device>>::~Nonlocal() {
     delete_memory_op()(this->ctx, this->ps);
     delete_memory_op()(this->ctx, this->becp);
+    if (psi::device::get_device_type<Device>(this->ctx) == psi::GpuDevice) {
+        delete_memory_op()(this->ctx, this->vkb);
+    }
 }
 
 template<typename FPTYPE, typename Device>
@@ -108,42 +118,44 @@ void Nonlocal<OperatorPW<FPTYPE, Device>>::add_nonlocal_pp(std::complex<FPTYPE> 
     }
     else
     {
-#if defined(__CUDA) || defined(__ROCM)
-        ModuleBase::WARNING_QUIT("NonlocalPW", " gpu implementation of this->npol != 1 is not supported currently !!! ");
-#endif
         for (int it = 0; it < this->ucell->ntype; it++)
         {
-            int psind = 0;
-            int becpind = 0;
-            std::complex<FPTYPE> becp1 = std::complex<FPTYPE>(0.0, 0.0);
-            std::complex<FPTYPE> becp2 = std::complex<FPTYPE>(0.0, 0.0);
-
             const int nproj = this->ucell->atoms[it].ncpp.nh;
-            for (int ia = 0; ia < this->ucell->atoms[it].na; ia++)
-            {
-                // each atom has nproj, means this is with structure factor;
-                // each projector (each atom) must multiply coefficient
-                // with all the other projectors.
-                for (int ip = 0; ip < nproj; ip++)
-                {
-                    for (int ip2 = 0; ip2 < nproj; ip2++)
-                    {
-                        for (int ib = 0; ib < m; ib+=2)
-                        {
-                            psind = (sum + ip2) * m + ib;
-                            becpind = ib * nkb + sum + ip;
-                            becp1 = becp[becpind];
-                            becp2 = becp[becpind + nkb];
-                            ps[psind] += this->ppcell->deeq_nc(0, iat, ip2, ip) * becp1
-                                         + this->ppcell->deeq_nc(1, iat, ip2, ip) * becp2;
-                            ps[psind + 1] += this->ppcell->deeq_nc(2, iat, ip2, ip) * becp1
-                                             + this->ppcell->deeq_nc(3, iat, ip2, ip) * becp2;
-                        } // end ib
-                    } // end ih
-                } // end jh
-                sum += nproj;
-                ++iat;
-            } // end na
+            // added by denghui at 20221109
+            // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+            nonlocal_op()(
+                this->ctx,   // device context
+                this->ucell->atoms[it].na, m, nproj, // four loop size
+                sum, iat, nkb,   // additional index params
+                this->ppcell->deeq_nc.getBound2(), this->ppcell->deeq_nc.getBound3(), this->ppcell->deeq_nc.getBound4(), // realArray operator()
+                this->deeq_nc, // array of data
+                this->ps, this->becp); //  array of data
+            // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+            // for (int ia = 0; ia < this->ucell->atoms[it].na; ia++)
+            // {
+            //     // each atom has nproj, means this is with structure factor;
+            //     // each projector (each atom) must multiply coefficient
+            //     // with all the other projectors.
+            //     for (int ib = 0; ib < m; ib+=2)
+            //     {
+            //         for (int ip2 = 0; ip2 < nproj; ip2++)
+            //         {
+            //             for (int ip = 0; ip < nproj; ip++)
+            //             {
+            //                 psind = (sum + ip2) * m + ib;
+            //                 becpind = ib * nkb + sum + ip;
+            //                 becp1 = becp[becpind];
+            //                 becp2 = becp[becpind + nkb];
+            //                 ps[psind] += this->ppcell->deeq_nc(0, iat, ip2, ip) * becp1
+            //                              + this->ppcell->deeq_nc(1, iat, ip2, ip) * becp2;
+            //                 ps[psind + 1] += this->ppcell->deeq_nc(2, iat, ip2, ip) * becp1
+            //                                  + this->ppcell->deeq_nc(3, iat, ip2, ip) * becp2;
+            //             } // end ib
+            //         } // end ih
+            //     } // end jh
+            //     sum += nproj;
+            //     ++iat;
+            // } // end na
         } // end nt
     }
 
@@ -162,7 +174,7 @@ void Nonlocal<OperatorPW<FPTYPE, Device>>::add_nonlocal_pp(std::complex<FPTYPE> 
                   this->npw,
                   this->ppcell->nkb,
                   &ModuleBase::ONE,
-                  this->ppcell->vkb.c,
+                  this->vkb,
                   this->ppcell->vkb.nc,
                   this->ps,
                   inc,
@@ -194,7 +206,7 @@ void Nonlocal<OperatorPW<FPTYPE, Device>>::add_nonlocal_pp(std::complex<FPTYPE> 
             npm,
             this->ppcell->nkb,
             &ModuleBase::ONE,
-            this->ppcell->vkb.c,
+            this->vkb,
             this->ppcell->vkb.nc,
             this->ps,
             npm,
@@ -232,6 +244,9 @@ void Nonlocal<OperatorPW<FPTYPE, Device>>::act
     this->max_npw = psi_in->get_nbasis() / psi_in->npol;
     this->npol = psi_in->npol;
 
+    if (psi::device::get_device_type<Device>(this->ctx) == psi::GpuDevice) {
+        syncmem_complex_h2d_op()(this->ctx, this->cpu_ctx, this->vkb, this->ppcell->vkb.c, this->ppcell->vkb.size);
+    }
     if (this->ppcell->nkb > 0)
     {
         //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
@@ -251,7 +266,7 @@ void Nonlocal<OperatorPW<FPTYPE, Device>>::act
                       this->npw,
                       nkb,
                       &ModuleBase::ONE,
-                      this->ppcell->vkb.c,
+                      this->vkb,
                       this->ppcell->vkb.nc,
                       tmpsi_in,
                       inc,
@@ -284,7 +299,7 @@ void Nonlocal<OperatorPW<FPTYPE, Device>>::act
                 npm,
                 this->npw,
                 &ModuleBase::ONE,
-                this->ppcell->vkb.c,
+                this->vkb,
                 this->ppcell->vkb.nc,
                 tmpsi_in,
                 this->max_npw,
