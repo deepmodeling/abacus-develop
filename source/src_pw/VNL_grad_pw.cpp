@@ -5,7 +5,7 @@
 #include "module_base/math_integral.h"
 #include "module_base/math_polyint.h"
 #include "src_pw/global.h"
-void pseudopot_cell_vnl::initgradq_vnl(const UnitCell_pseudo &cell)
+void pseudopot_cell_vnl::initgradq_vnl(const UnitCell &cell)
 {
     const int nbrx = 10;
 	const int nbrx_nc = 20;

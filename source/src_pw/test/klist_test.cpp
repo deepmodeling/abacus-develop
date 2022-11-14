@@ -3,7 +3,7 @@
 #include "src_pw/VNL_in_pw.h"
 #include "module_cell/atom_pseudo.h"
 #include "module_cell/atom_spec.h"
-#include "module_cell/unitcell_pseudo.h"
+#include "module_cell/unitcell.h"
 #include "module_cell/pseudo_nc.h"
 #include "module_cell/setup_nonlocal.h"
 #include "src_parallel/parallel_grid.h"
@@ -24,8 +24,6 @@ InfoNonlocal::InfoNonlocal(){}
 InfoNonlocal::~InfoNonlocal(){}
 UnitCell::UnitCell(){}
 UnitCell::~UnitCell(){}
-UnitCell_pseudo::UnitCell_pseudo(){}
-UnitCell_pseudo::~UnitCell_pseudo(){}
 Magnetism::Magnetism(){}
 Magnetism::~Magnetism(){}
 ORB_gaunt_table::ORB_gaunt_table(){}
@@ -38,7 +36,7 @@ pseudopot_cell_vnl::~pseudopot_cell_vnl(){}
 namespace GlobalC
 {
 	Parallel_Kpoints Pkpoints;
-	UnitCell_pseudo ucell;
+	UnitCell ucell;
 }
 
 /************************************************

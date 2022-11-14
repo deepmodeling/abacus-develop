@@ -1,6 +1,6 @@
 #ifndef SYMMETRY_RHO_H
 #define SYMMETRY_RHO_H
-#include "../src_pw/charge_broyden.h"
+#include "../src_pw/charge.h"
 #include "../module_pw/pw_basis.h"
 #include "../src_parallel/parallel_grid.h"
 
@@ -12,7 +12,7 @@ class Symmetry_rho
 	Symmetry_rho();
 	~Symmetry_rho();
 
-	void begin(const int &spin_now, const Charge_Broyden &CHR, const ModulePW::PW_Basis *pw, Parallel_Grid &Pgrid, ModuleSymmetry::Symmetry &symm) const;
+	void begin(const int &spin_now, const Charge &CHR, const ModulePW::PW_Basis *pw, Parallel_Grid &Pgrid, ModuleSymmetry::Symmetry &symm) const;
 
 	private:
 

@@ -6,7 +6,7 @@
 #include "../module_base/timer.h"
 #include "module_esolver/esolver.h"
 
-MSST::MSST(MD_parameters& MD_para_in, UnitCell_pseudo &unit_in) : MDrun(MD_para_in, unit_in)
+MSST::MSST(MD_parameters& MD_para_in, UnitCell &unit_in) : MDrun(MD_para_in, unit_in)
 {
     std::cout << "MSST" << std::endl;
 
@@ -251,9 +251,6 @@ void MSST::rescale(double volume)
     ucell.latvec.e11 *= dilation[0];
     ucell.latvec.e22 *= dilation[1];
     ucell.latvec.e33 *= dilation[2];
-    ucell.a1 *= dilation[0];
-    ucell.a2 *= dilation[1];
-    ucell.a3 *= dilation[2];
 
     ucell.setup_cell_after_vc(GlobalV::ofs_running);
     MD_func::InitPos(ucell, pos);

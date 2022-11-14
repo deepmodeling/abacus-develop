@@ -15,7 +15,7 @@ namespace ModuleESolver
     public:
         ESolver_KS_PW();
         ~ESolver_KS_PW();
-        void Init(Input& inp, UnitCell_pseudo& cell) override;
+        void Init(Input& inp, UnitCell& cell) override;
         void cal_Energy(double& etot) override;
         void cal_Force(ModuleBase::matrix& force) override;
         void cal_Stress(ModuleBase::matrix& stress) override;
@@ -37,7 +37,7 @@ namespace ModuleESolver
 
         //temporary, this will be removed in the future;
         //Init Global class
-        void Init_GlobalC(Input& inp, UnitCell_pseudo& cell);
+        void Init_GlobalC(Input& inp, UnitCell& cell);
         //calculate conductivities from j-j correlation function
         void calcondw(const int nt,const double dt,const double fwhmin,const double wcut,const double dw_in,double*ct11,double*ct12,double *ct22);
 

@@ -2,7 +2,7 @@
 #define ORB_CONTROL_H 
 
 #include "input.h"
-#include "module_cell/unitcell_pseudo.h"
+#include "module_cell/unitcell.h"
 #include "parallel_orbitals.h"
 #include "ORB_gen_tables.h"
 #include "ORB_read.h"
@@ -32,7 +32,7 @@ public:
 
     ~ORB_control();
 
-    void Init(Input& inp, UnitCell_pseudo& ucell);
+    void Init(Input& inp, UnitCell& ucell);
 
     //first step: read orbital file
     void read_orb_first(

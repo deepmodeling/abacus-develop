@@ -44,7 +44,7 @@ using::testing::Assign;
 namespace elecstate
 {
 
-class MockElecStatePW : public ElecStatePW
+class MockElecStatePW : public ElecStatePW<double>
 {
 public:
   MockElecStatePW( ModulePW::PW_Basis_K* wfc_basis, Charge* chg_in, K_Vectors *pkv_in, int nbands_in):ElecStatePW(wfc_basis, chg_in, pkv_in, nbands_in){}
@@ -261,7 +261,7 @@ class EState : public testing::Test
 TEST_F(EState,RhoPW)
 {
     // Here GlobalC::ucell is used directly without asserting a new
-    // UnitCell_pseudo object.
+    // UnitCell object.
     // this function will read STRU and pseudopotential files
     // should add more EXPECTs after calling
     GlobalC::ucell.setup_cell(orb, GlobalV::global_pseudo_dir, GlobalV::stru_file, GlobalV::ofs_running);

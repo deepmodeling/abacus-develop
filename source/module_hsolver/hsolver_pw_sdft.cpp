@@ -113,7 +113,7 @@ namespace hsolver
 			Symmetry_rho srho;
 			for(int is=0; is < GlobalV::NSPIN; is++)
 			{
-				srho.begin(is, GlobalC::CHR,GlobalC::rhopw, GlobalC::Pgrid, GlobalC::symm);
+				srho.begin(is, GlobalC::CHR, GlobalC::rhopw, GlobalC::Pgrid, GlobalC::symm);
 			}
 		}
 		else
