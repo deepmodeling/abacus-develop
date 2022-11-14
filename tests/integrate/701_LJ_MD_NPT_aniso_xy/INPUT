@@ -11,12 +11,10 @@ lj_rcut             8.5
 lj_epsilon          0.01032
 lj_sigma            3.405
 
-
 cal_force           1
 cal_stress          1
 
 #Parameters (MD)
-# MD
 md_nstep            5
 md_type             1
 md_dt               1
@@ -28,8 +26,8 @@ md_tfreq            0.01
 init_vel            1
 
 #Parameters (NPT)
-md_pmode            iso
-md_pcouple          xyz
+md_pmode            aniso
+md_pcouple          xy
 md_pchain           3
 md_pfirst           10
 md_plast            10

@@ -172,8 +172,6 @@
 345_NO_GO_BS
 #381_NO_GO_HSE
 
-420_LJ_MD_NPT_iso
-
 #401_NP_KP_sp
 #401_NP_KP_spd
 601_NO_TDDFT_H2
@@ -187,6 +185,12 @@
 701_LJ_MD_Langevin
 701_LJ_MD_MSST
 701_LJ_MD_NHC_NVT
+701_LJ_MD_NPT_aniso_none
+701_LJ_MD_NPT_aniso_xy
+701_LJ_MD_NPT_aniso_xz
+701_LJ_MD_NPT_aniso_yz
+701_LJ_MD_NPT_iso
+701_LJ_MD_NPT_tri
 701_LJ_MD_NVE
 701_LJ_MD_rescale_v
 701_LJ_MD_rescaling
