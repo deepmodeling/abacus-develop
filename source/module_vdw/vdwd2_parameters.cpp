@@ -30,7 +30,7 @@ void Vdwd2Parameters::initial_parameters(const Input &input)
     }
 }
 
-void Vdwd2Parameters::initset(const UnitCell_pseudo &ucell)
+void Vdwd2Parameters::initset(const UnitCell &ucell)
 {
     if (model_ == "radius")
     {

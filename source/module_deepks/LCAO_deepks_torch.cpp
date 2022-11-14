@@ -74,7 +74,7 @@ void LCAO_Deepks::cal_descriptor(void)
     return;
 }
 
-void LCAO_Deepks::check_descriptor(const UnitCell_pseudo &ucell)
+void LCAO_Deepks::check_descriptor(const UnitCell &ucell)
 {
     ModuleBase::TITLE("LCAO_Deepks", "check_descriptor");
     if(GlobalV::MY_RANK!=0) return;
@@ -415,7 +415,7 @@ void LCAO_Deepks::check_gedm()
 // orbital_pdm_shells[1,Inl,nm*nm] = dm_hl * overlap * overlap;
 void LCAO_Deepks::cal_orbital_precalc(const std::vector<ModuleBase::matrix> &dm_hl,
     const int nat,
-    const UnitCell_pseudo &ucell,
+    const UnitCell &ucell,
     const LCAO_Orbitals &orb,
     Grid_Driver &GridD,
     const Parallel_Orbitals &ParaO)
@@ -580,7 +580,7 @@ void LCAO_Deepks::cal_orbital_precalc_k(const std::vector<ModuleBase::ComplexMat
     const int nat,
     const int nks,
     const std::vector<ModuleBase::Vector3<double>> &kvec_d,
-    const UnitCell_pseudo &ucell,
+    const UnitCell &ucell,
     const LCAO_Orbitals &orb,
     Grid_Driver &GridD,
     const Parallel_Orbitals &ParaO)

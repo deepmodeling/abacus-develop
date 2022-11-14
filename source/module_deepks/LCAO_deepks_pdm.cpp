@@ -26,7 +26,7 @@
 //this subroutine performs the calculation of projected density matrices
 //pdm_m,m'=\sum_{mu,nu} rho_{mu,nu} <chi_mu|alpha_m><alpha_m'|chi_nu>
 void LCAO_Deepks::cal_projected_DM(const ModuleBase::matrix &dm, 
-    const UnitCell_pseudo &ucell,
+    const UnitCell &ucell,
     const LCAO_Orbitals &orb,
     Grid_Driver &GridD,
     const int* trace_loc_row,
@@ -138,7 +138,7 @@ void LCAO_Deepks::cal_projected_DM(const ModuleBase::matrix &dm,
 }
 
 void LCAO_Deepks::cal_projected_DM_k(const std::vector<ModuleBase::ComplexMatrix>& dm,
-    const UnitCell_pseudo &ucell,
+    const UnitCell &ucell,
     const LCAO_Orbitals &orb,
     Grid_Driver &GridD,
     const int* trace_loc_row,
@@ -290,7 +290,7 @@ void LCAO_Deepks::check_projected_dm(void)
 //gdm_epsl = d/d\epsilon_{ab} * 
 //           sum_{mu,nu} rho_{mu,nu} <chi_mu|alpha_m><alpha_m'|chi_nu>
 void LCAO_Deepks::cal_gdmx(const ModuleBase::matrix &dm,
-    const UnitCell_pseudo &ucell,
+    const UnitCell &ucell,
     const LCAO_Orbitals &orb,
     Grid_Driver &GridD,
     const int* trace_loc_row,
@@ -504,7 +504,7 @@ void LCAO_Deepks::cal_gdmx(const ModuleBase::matrix &dm,
 }
 
 void LCAO_Deepks::cal_gdmx_k(const std::vector<ModuleBase::ComplexMatrix>& dm,
-    const UnitCell_pseudo &ucell,
+    const UnitCell &ucell,
     const LCAO_Orbitals &orb,
     Grid_Driver &GridD,
     const int* trace_loc_row,

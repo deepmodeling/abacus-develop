@@ -7,10 +7,10 @@
 
 #include <string>
 
-#include "../src_pw/charge_broyden.h"
+#include "../src_pw/charge_mixing.h"
 #include "dftu_relax.h"
 
-#include "../module_cell/unitcell_pseudo.h"
+#include "../module_cell/unitcell.h"
 #include "../module_orbital/parallel_orbitals.h"
 
 using namespace std;
@@ -30,7 +30,7 @@ public:
     ~DFTU();                     // deconstructor
 
 	// initialize the input terms of  U, J, double_counting etc
-    void init(UnitCell_pseudo &cell, // unitcell class
+    void init(UnitCell &cell, // unitcell class
         LCAO_Matrix &lm
 	);
     

@@ -17,7 +17,7 @@ namespace ModuleESolver
         ESolver_KS_LCAO();
         ~ESolver_KS_LCAO();
 
-        void Init(Input& inp, UnitCell_pseudo& cell) override;
+        void Init(Input& inp, UnitCell& cell) override;
 
         void cal_Energy(double& etot) override;
         void cal_Force(ModuleBase::matrix& force) override;
@@ -52,7 +52,7 @@ namespace ModuleESolver
         ModuleBase::matrix scs;
         bool have_force = false;
 
-        void Init_Basis_lcao(ORB_control& orb_con, Input& inp, UnitCell_pseudo& ucell);
+        void Init_Basis_lcao(ORB_control& orb_con, Input& inp, UnitCell& ucell);
 
         // output subfuncs: implemented in src_io/write_HS_R.cpp
         void output_HS_R(

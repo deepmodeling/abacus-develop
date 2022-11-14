@@ -1,7 +1,7 @@
 #ifndef CHARGE_EXTRA_H
 #define CHARGE_EXTRA_H
 
-#include "../module_cell/unitcell_pseudo.h"
+#include "../module_cell/unitcell.h"
 
 using namespace std;
 
@@ -23,9 +23,9 @@ class Charge_Extra
     //Init_CE will be removed and everything put back in the constructor
     void Init_CE();
     void extrapolate_charge(void);
-    void save_pos_next(const UnitCell_pseudo& ucell);
+    void save_pos_next(const UnitCell& ucell);
     void update_istep();
-    void update_all_pos(const UnitCell_pseudo& ucell);
+    void update_all_pos(const UnitCell& ucell);
 
     private:
     int istep = 0;

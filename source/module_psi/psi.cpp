@@ -64,6 +64,9 @@ Psi<T, Device>::Psi(
     this->npol = GlobalV::NPOL;
     this->device = device::get_device_type<Device>(this->ctx);
     this->resize(nk_in, nbd_in, nbs_in);
+    // Currently only GPU's implementation is supported for device recording!
+    device::print_device_info<Device>(this->ctx, GlobalV::ofs_device);
+    device::record_device_memory<Device>(this->ctx, GlobalV::ofs_device, "Psi->resize()", sizeof(T) * nk_in * nbd_in * nbs_in);
 }
 
 template<typename T, typename Device>
@@ -160,6 +163,7 @@ void Psi<T, Device>::resize(
     this->nbasis = nbasis_in;
     this->current_nbasis = nbasis_in;
     this->psi_current = this->psi;
+    // GlobalV::ofs_device << "allocated xxx MB memory for psi" << std::endl;
 }
 
 template<typename T, typename Device>

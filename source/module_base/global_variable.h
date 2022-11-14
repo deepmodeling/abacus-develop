@@ -169,6 +169,7 @@ extern std::string global_matrix_dir; // liuyu add 2022-09-19 for HS matrix outp
 extern std::ofstream ofs_running;
 extern std::ofstream ofs_warning;
 extern std::ofstream ofs_info;
+extern std::ofstream ofs_device;
 
 //==========================================================
 // EXPLAIN : test level for each class

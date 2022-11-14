@@ -13,7 +13,7 @@
 #include "../module_base/timer.h"
 
 void LCAO_Deepks::build_psialpha(const bool& calc_deri,
-    const UnitCell_pseudo &ucell,
+    const UnitCell &ucell,
     const LCAO_Orbitals &orb,
     Grid_Driver &GridD,
     const int* trace_loc_row,
@@ -129,7 +129,7 @@ void LCAO_Deepks::build_psialpha(const bool& calc_deri,
 }
 
 void LCAO_Deepks::check_psialpha(const bool& calc_deri,
-    const UnitCell_pseudo &ucell,
+    const UnitCell &ucell,
     const LCAO_Orbitals &orb,
     Grid_Driver &GridD,
     const int* trace_loc_row,

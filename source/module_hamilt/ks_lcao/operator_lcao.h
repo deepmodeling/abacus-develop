@@ -76,6 +76,9 @@ class OperatorLCAO : public Operator<T>
     // Hamiltonian matrix which are stored in LCAO_Matrix and calculated in OperatorLCAO
     LCAO_Matrix* LM = nullptr;
 
+    protected:
+    bool new_e_iteration = true;
+
     private:
     void get_hs_pointers();
 
@@ -86,7 +89,6 @@ class OperatorLCAO : public Operator<T>
 
     //only used for Gamma_only case
     bool allocated_smatrix = false;
-    bool new_e_iteration = true;
 
     //fixed HR matrix folding to HK
     void folding_fixed(const int ik);

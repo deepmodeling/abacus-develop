@@ -71,8 +71,8 @@ public:
         if (this->opt_cg_mag != NULL) delete this->opt_cg_mag;
     }
 
-    virtual void Init(Input &inp, UnitCell_pseudo &ucell) override;
-    virtual void Run(int istep, UnitCell_pseudo& ucell) override;
+    virtual void Init(Input &inp, UnitCell &ucell) override;
+    virtual void Run(int istep, UnitCell& ucell) override;
     virtual void postprocess() override;
 
     virtual void cal_Energy(double& etot) override;

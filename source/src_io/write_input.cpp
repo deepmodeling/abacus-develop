@@ -229,7 +229,7 @@ void Input::Print(const std::string &fn) const
     ModuleBase::GlobalFunc::OUTP(ofs, "smearing_sigma", smearing_sigma, "energy range for smearing");
 
     ofs << "\n#Parameters (7.Charge Mixing)" << std::endl;
-    ModuleBase::GlobalFunc::OUTP(ofs, "mixing_type", mixing_mode, "plain; kerker; pulay; pulay-kerker; broyden");
+    ModuleBase::GlobalFunc::OUTP(ofs, "mixing_type", mixing_mode, "plain; pulay; broyden");
     ModuleBase::GlobalFunc::OUTP(ofs, "mixing_beta", mixing_beta, "mixing parameter: 0 means no new charge");
     ModuleBase::GlobalFunc::OUTP(ofs, "mixing_ndim", mixing_ndim, "mixing dimension in pulay");
     ModuleBase::GlobalFunc::OUTP(ofs, "mixing_gg0", mixing_gg0, "mixing parameter in kerker");

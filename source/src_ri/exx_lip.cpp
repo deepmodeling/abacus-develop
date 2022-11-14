@@ -157,7 +157,7 @@ void Exx_Lip::init(
 	wavefunc *wf_ptr_in,  
 	ModulePW::PW_Basis_K *wfc_basis_in, 
 	ModulePW::PW_Basis *rho_basis_in, 
-	UnitCell_pseudo *ucell_ptr_in,
+	UnitCell *ucell_ptr_in,
 	const elecstate::ElecState* pelec_in)
 {
 	ModuleBase::TITLE("Exx_Lip","init");

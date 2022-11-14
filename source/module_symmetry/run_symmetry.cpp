@@ -31,7 +31,7 @@ void calculate()
 	//std::ofstream ofs("useless.txt");
 	std::ofstream ofs_warning("warning.txt");
 	std::ifstream ifs("INPUT");
-	UnitCell_pseudo ucell;
+	UnitCell ucell;
 	ModuleSymmetry::Symmetry symm;
 	ifs >> ucell.ntype;
 	ucell.latName = "none";

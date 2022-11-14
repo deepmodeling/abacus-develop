@@ -1,6 +1,6 @@
 #!/bin/bash
 
-for module in "_PW_" "_NO_" "_NP_" "_LJ_" "_OF_"; do
+for module in "_PW_" "_NO_" "_NP_" "_LJ_" "_OF_" "tools"; do
 
 echo $module
 
@@ -44,6 +44,36 @@ for directory in `ls | grep $module`; do
 	#--------------------------------------------
 	projected_DM="$directory/projected_DM.dat"
 	test -e "$projected_DM" && rm -rf $projected_DM
+
+	#--------------------------------------------
+	# delete Onsager.txt (if it exists)
+	#--------------------------------------------
+	onsager_file="$directory/Onsager.txt"
+	test -e "$onsager_file" && rm -rf $onsager_file
+
+	#--------------------------------------------
+	# delete kpoints (if it exists)
+	#--------------------------------------------
+	kpoints_file="$directory/kpoints"
+	test -e "$kpoints_file" && rm -rf $kpoints_file
+
+	#--------------------------------------------
+	# delete exec files in tools directory (if it exists)
+	#--------------------------------------------
+	sumfile1="$directory/sum_BAND_CHG_H2"
+	sumfile2="$directory/sum_BAND_CHG_H2_cube"
+	sumfile3="$directory/sum_ENV_H2"
+	test -e "$sumfile1" && rm -rf $sumfile1
+	test -e "$sumfile2" && rm -rf $sumfile2
+	test -e "$sumfile3" && rm -rf $sumfile3
+
+	#--------------------------------------------
+	# delete KPT file in kspacing test (if it exists)
+	#--------------------------------------------
+	if [ ${directory} == "121_PW_kspacing" ]; then
+		KPT_file="$directory/KPT"
+		test -e "$KPT_file" && rm -rf $KPT_file
+	fi
 
 	#--------------------------------------------
 	# delete *.npy (if it exists) 

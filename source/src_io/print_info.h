@@ -6,7 +6,7 @@
 #define PRINT_INFO_H
 
 #include "../module_base/timer.h"
-#include "../module_cell/unitcell_pseudo.h"
+#include "../module_cell/unitcell.h"
 #include "../src_pw/klist.h"
 
 class Print_Info
@@ -17,7 +17,7 @@ class Print_Info
 	~Print_Info();
 
 	// print out to screen about the readin parameters
-	static void setup_parameters(UnitCell_pseudo &ucell, K_Vectors &kv);
+	static void setup_parameters(UnitCell &ucell, K_Vectors &kv);
 
 	static void print_time(time_t &time_start, time_t &time_finish);
     static void print_scf(const int &istep, const int &iter);
