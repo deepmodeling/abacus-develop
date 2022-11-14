@@ -706,7 +706,7 @@ namespace ModuleESolver
         ModuleBase::TITLE("ESolver_KS_PW","nscf");
         ModuleBase::timer::tick("ESolver_KS_PW","nscf");
 
-        this->beforescf(1);
+        this->beforescf(0);
         //========================================
         // diagonalization of the KS hamiltonian
         // =======================================
