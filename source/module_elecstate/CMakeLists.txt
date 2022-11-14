@@ -9,6 +9,7 @@ list(APPEND objects
     potentials/pot_local.cpp
     potentials/potential_new.cpp
     potentials/H_TDDFT_pw.cpp
+    potentials/write_pot.cpp
 )
 
 if(ENABLE_LCAO)

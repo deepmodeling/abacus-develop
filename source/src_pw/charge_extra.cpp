@@ -28,19 +28,19 @@ Charge_Extra::~Charge_Extra()
 
 void Charge_Extra::Init_CE()
 {
-    if(GlobalC::pot.chg_extrap == "none")
+    if(GlobalV::chg_extrap == "none")
     {
         pot_order = 0;
     }
-    else if(GlobalC::pot.chg_extrap == "atomic")
+    else if(GlobalV::chg_extrap == "atomic")
     {
         pot_order = 1;
     }
-    else if(GlobalC::pot.chg_extrap == "first-order")
+    else if(GlobalV::chg_extrap == "first-order")
     {
         pot_order = 2;
     }
-    else if(GlobalC::pot.chg_extrap == "second-order")
+    else if(GlobalV::chg_extrap == "second-order")
     {
         pot_order = 3;
     }
@@ -217,7 +217,7 @@ void Charge_Extra::extrapolate_charge()
 
 
 
-	// if(GlobalC::pot.chg_extrap == "dm")//xiaohui modify 2015-02-01
+	// if(GlobalV::chg_extrap == "dm")//xiaohui modify 2015-02-01
 	// {
 	// 	if(GlobalV::BASIS_TYPE=="pw" || GlobalV::BASIS_TYPE=="lcao_in_pw")
 	// 	{
@@ -229,7 +229,7 @@ void Charge_Extra::extrapolate_charge()
 	// 	}
 	// }
 	// // "atomic" extrapolation
-	// else if(GlobalC::pot.chg_extrap == "atomic")
+	// else if(GlobalV::chg_extrap == "atomic")
 	// {
 	// 	double** rho_atom_old = new double*[GlobalV::NSPIN];
 	// 	double** rho_atom_new = new double*[GlobalV::NSPIN];
@@ -276,7 +276,7 @@ void Charge_Extra::extrapolate_charge()
 
 	// }
 	// // "first-order" extrapolation
-	// else if(GlobalC::pot.chg_extrap == "first-order")
+	// else if(GlobalV::chg_extrap == "first-order")
 	// {
 	// 	double** rho_atom_old = new double*[GlobalV::NSPIN];
 	// 	double** rho_atom_new = new double*[GlobalV::NSPIN];
@@ -334,7 +334,7 @@ void Charge_Extra::extrapolate_charge()
 	// }
 
 	// // "second-order" extrapolation of charge density
-	// else if(GlobalC::pot.chg_extrap == "second-order")
+	// else if(GlobalV::chg_extrap == "second-order")
 	// {
 	// 	double** rho_atom_old = new double*[GlobalV::NSPIN];
 	// 	double** rho_atom_new = new double*[GlobalV::NSPIN];

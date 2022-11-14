@@ -31,7 +31,10 @@ class Potential : public PotBase
     void update_from_charge(const Charge* chg, const UnitCell_pseudo* ucell);
     //update potential for purpose of TDDFT
     void update_for_tddft(int istep);
+    //interface for SCF-converged, etxc vtxc for Energy, vnew for force_scc 
+    void get_vnew(const Charge* chg, ModuleBase::matrix& vnew);
     
+    //interfaces to get values
     ModuleBase::matrix& get_effective_v()
     {
         return this->v_effective;
@@ -48,14 +51,26 @@ class Potential : public PotBase
     {
         return this->vofk_effective;
     }
-    ModuleBase::matrix& get_vnew()
+    double* get_fixed_v()
     {
-        return this->vnew;
+        return this->v_effective_fixed.data();
     }
-    const ModuleBase::matrix& get_vnew()const
+    const double* get_fixed_v() const
     {
-        return this->vnew;
+        return this->v_effective_fixed.data();
     }
+
+    //interface for printing
+    // mohan add 2011-02-28
+    // here vh is std::complex because the array is got after std::complex FFT.
+    void write_potential(const int &is,
+                         const int &iter,
+                         const std::string &fn,
+                         const ModuleBase::matrix &v,
+                         const int &precision,
+                         const int &hartree = 0) const;
+
+    void write_elecstat_pot(const std::string &fn, const std::string &fn_ave, ModulePW::PW_Basis *rho_basis);
 
   private:
 
@@ -71,9 +86,6 @@ class Potential : public PotBase
     ModuleBase::matrix v_effective;
 
     ModuleBase::matrix vofk_effective;
-
-    //vnew(nspin,ncxyz) : V_out - V_in, needed in Force for PW base
-    ModuleBase::matrix vnew;
 
     bool fixed_done = false;
 

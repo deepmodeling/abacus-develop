@@ -43,7 +43,8 @@ class surchem
                   ModulePW::PW_Basis *rho_basis,
                   const complex<double> *Porter_g,
                   complex<double> *N,
-                  complex<double> *TOTN);
+                  complex<double> *TOTN,
+                  const double * vlocal);
     void createcavity(const UnitCell &ucell,
                       ModulePW::PW_Basis *rho_basis,
                       const complex<double> *PS_TOTN,
@@ -89,7 +90,8 @@ class surchem
     ModuleBase::matrix v_correction(const UnitCell &cell,
                                     ModulePW::PW_Basis *rho_basis,
                                     const int &nspin,
-                                    const double *const *const rho);
+                                    const double *const *const rho,
+                                    const double * vlocal);
 
     void test_V_to_N(ModuleBase::matrix &v,
                      const UnitCell &cell,

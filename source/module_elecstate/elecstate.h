@@ -13,6 +13,7 @@ class ElecState
 {
   public:
     ElecState(){};
+    ElecState(Charge* charge_in){this->charge = charge_in;};
     virtual ~ElecState()
     {
         if(this->pot != nullptr) 

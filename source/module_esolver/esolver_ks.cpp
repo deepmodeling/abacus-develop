@@ -39,7 +39,6 @@ namespace ModuleESolver
     ESolver_KS::~ESolver_KS()
     {
         delete this->pw_wfc;
-        delete this->pelec;
         delete this->p_hamilt;
         delete this->phsol;
     }

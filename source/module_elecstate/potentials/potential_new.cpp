@@ -106,6 +106,7 @@ void Potential::pot_register(std::vector<std::string>& components_list)
             case 4: //"surchem"
                 tmp = new PotSurChem(
                     this->rho_basis_,
+                    this->v_effective_fixed.data(),
                     &GlobalC::solvent_model
                 );
                 break;
@@ -150,9 +151,6 @@ void Potential::allocate()
         this->vofk_effective.create(GlobalV::NSPIN, nrxx);
         ModuleBase::Memory::record("Potential", "vofk", GlobalV::NSPIN * nrxx, "double");
     }
-
-    this->vnew.create(GlobalV::NSPIN, nrxx);
-    ModuleBase::Memory::record("Potential", "vnew", GlobalV::NSPIN * nrxx, "double");
 }
 
 void Potential::update_from_charge(const Charge* chg, const UnitCell_pseudo* ucell)
@@ -240,6 +238,22 @@ void Potential::init_pot(int istep, const Charge* chg)
     // plots
     // figure::picture(this->vr_eff1,GlobalC::rhopw->nx,GlobalC::rhopw->ny,GlobalC::rhopw->nz);
     ModuleBase::timer::tick("Potential", "init_pot");
+    return;
+}
+
+void Potential::get_vnew(const Charge* chg, ModuleBase::matrix& vnew)
+{
+    ModuleBase::TITLE("Potential", "get_vnew");
+    vnew.create(this->v_effective.nr, this->v_effective.nc);
+    vnew = this->v_effective;
+    
+    this->update_from_charge(chg, this->ucell_);
+    //(used later for scf correction to the forces )
+    for(int iter = 0; iter < vnew.nr * vnew.nc; ++iter)
+    {
+        vnew.c[iter] = this->v_effective.c[iter] - vnew.c[iter];
+    }
+
     return;
 }
 

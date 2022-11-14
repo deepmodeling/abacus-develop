@@ -92,9 +92,6 @@ void ESolver_OF::Init(Input &inp, UnitCell_pseudo &ucell)
     GlobalC::CHR.allocate(GlobalV::NSPIN, GlobalC::rhopw->nrxx, GlobalC::rhopw->npw);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT CHARGE");
 
-    // Initialize the potential.
-    GlobalC::pot.allocate(GlobalC::rhopw->nrxx);
-
     // Initialize the "wavefunction", which is sqrt(rho)
     this->psi = new psi::Psi<double>(1, GlobalV::NSPIN, this->nrxx);
     this->pphi = new double*[GlobalV::NSPIN];
@@ -103,6 +100,21 @@ void ESolver_OF::Init(Input &inp, UnitCell_pseudo &ucell)
         this->pphi[is] = this->psi->get_pointer(is);
     }
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT PHI");
+
+    if(this->pelec == nullptr)
+    {
+        this->pelec = new elecstate::ElecState((Charge*)(&GlobalC::CHR));
+        this->pelec->pot = new elecstate::Potential(
+            GlobalC::rhopw,
+            &GlobalC::ucell,
+            &GlobalC::ppcell.vloc,
+            &GlobalC::sf.strucFac,
+            &(GlobalC::en.etxc),
+            &(GlobalC::en.vtxc)
+        );
+    }
+    
+
  
     //=======================
     // init pseudopotential
@@ -130,7 +142,7 @@ void ESolver_OF::Init(Input &inp, UnitCell_pseudo &ucell)
     //=========================================================
     // calculate the total local pseudopotential in real space
     //=========================================================
-    GlobalC::pot.init_pot(0, GlobalC::sf.strucFac); //atomic_rho, v_of_rho, set_vrs
+    this->pelec->init_scf(0, GlobalC::sf.strucFac); //atomic_rho, v_of_rho, set_vrs
 
     GlobalC::ppcell.cal_effective_D();
 
@@ -260,7 +272,7 @@ void ESolver_OF::beforeOpt(const int istep)
             Variable_Cell::init_after_vc();
         }
 
-        GlobalC::pot.init_pot(istep, GlobalC::sf.strucFac);
+        this->pelec->init_scf(istep, GlobalC::sf.strucFac);
     }
 
     //calculate ewald energy
@@ -313,14 +325,14 @@ void ESolver_OF::beforeOpt(const int istep)
 void ESolver_OF::updateV()
 {
     // (1) get dL/dphi
-    GlobalC::pot.vr = GlobalC::pot.v_of_rho(GlobalC::CHR.rho, GlobalC::CHR.rho_core); // Hartree + XC
-    GlobalC::pot.set_vr_eff(); // Hartree + XC + external
-    this->kineticPotential(GlobalC::CHR.rho, this->pphi, GlobalC::pot.vr_eff); // (kinetic + Hartree + XC + external) * 2 * phi
+    this->pelec->pot->update_from_charge(&GlobalC::CHR, &GlobalC::ucell); // Hartree + XC + external
+    this->kineticPotential(GlobalC::CHR.rho, this->pphi, this->pelec->pot->get_effective_v()); // (kinetic + Hartree + XC + external) * 2 * phi
     for (int is = 0; is < GlobalV::NSPIN; ++is)
     {
+        double* vr_eff = &(this->pelec->pot->get_effective_v()(is, 0));
         for (int ir = 0; ir < this->nrxx; ++ir)
         { 
-            this->pdEdphi[is][ir] = GlobalC::pot.vr_eff(is,ir);
+            this->pdEdphi[is][ir] = vr_eff[ir];
         }
         this->mu[is] = this->cal_mu(this->pphi[is], this->pdEdphi[is], this->nelec[is]);
 
@@ -377,15 +389,16 @@ void ESolver_OF::solveV()
     }
     // initialize tempPhi and tempRho used in line search
     double **ptempPhi = new double*[GlobalV::NSPIN];
-    double **ptempRho = new double*[GlobalV::NSPIN];
+    Charge* ptempRho = new Charge();
+    ptempRho->rho = new double*[GlobalV::NSPIN];
     for (int is = 0; is < GlobalV::NSPIN; ++is)
     {
         ptempPhi[is] = new double[this->nrxx];
-        ptempRho[is] = new double[this->nrxx];
+        ptempRho->rho[is] = new double[this->nrxx];
         for (int ir = 0; ir < this->nrxx; ++ir)
         {
             ptempPhi[is][ir] = this->pphi[is][ir];
-            ptempRho[is][ir] = ptempPhi[is][ir] * ptempPhi[is][ir];
+            ptempRho->rho[is][ir] = ptempPhi[is][ir] * ptempPhi[is][ir];
         }
     }
     
@@ -472,7 +485,7 @@ void ESolver_OF::solveV()
             GlobalC::en.calculate_etot();
             E = GlobalC::en.etot;
             eKE = this->kineticEnergy();
-            ePP = this->inner_product(GlobalC::pot.vltot, ptempRho[0], this->nrxx, this->dV);
+            ePP = this->inner_product(this->pelec->pot->get_fixed_v(), ptempRho->rho[0], this->nrxx, this->dV);
             Parallel_Reduce::reduce_double_all(ePP);
             E += eKE + ePP;
 
@@ -487,7 +500,7 @@ void ESolver_OF::solveV()
                 for (int i = 0; i < this->nrxx; ++i)
                 {
                     ptempPhi[0][i] = this->pphi[0][i] * cos(this->theta[0]) + this->pdirect[0][i] * sin(this->theta[0]);
-                    ptempRho[0][i] = ptempPhi[0][i] * ptempPhi[0][i];
+                    ptempRho->rho[0][i] = ptempPhi[0][i] * ptempPhi[0][i];
                 }
                 // get dEdtheta of new tempPhi and tempRho
                 this->caldEdtheta(ptempPhi, ptempRho, this->theta, dEdtheta);
@@ -620,10 +633,11 @@ void ESolver_OF::solveV()
     for (int is = 0; is < GlobalV::NSPIN; ++is)
     {
         delete[] ptempPhi[is];
-        delete[] ptempRho[is];
+        delete[] ptempRho->rho[is];
     }
     delete[] ptempPhi;
-    delete[] ptempRho;
+    delete[] ptempRho->rho;
+    delete ptempRho;
     delete[] dEdtheta;
 }
 
@@ -911,11 +925,12 @@ void ESolver_OF::calV(double *ptempPhi, double *rdLdphi)
     double **dEdtempPhi = new double*[GlobalV::NSPIN];
     double **tempPhi = new double*[GlobalV::NSPIN];
 
-    double **tempRho = new double*[GlobalV::NSPIN];
+    Charge* tempRho = new Charge();
+    tempRho->rho = new double*[GlobalV::NSPIN];
     for (int is = 0; is < GlobalV::NSPIN; ++is)
     {
         dEdtempPhi[is] = new double[this->nrxx];
-        tempRho[is] = new double[this->nrxx];
+        tempRho->rho[is] = new double[this->nrxx];
         if (is == this->tnSpinFlag)
         {
             tempPhi[is] = ptempPhi;
@@ -926,17 +941,17 @@ void ESolver_OF::calV(double *ptempPhi, double *rdLdphi)
         }
         for (int ir = 0; ir < this->nrxx; ++ir)
         {
-            tempRho[is][ir] = tempPhi[is][ir] * tempPhi[is][ir];
+            tempRho->rho[is][ir] = tempPhi[is][ir] * tempPhi[is][ir];
         }
     }
 
-    GlobalC::pot.vr = GlobalC::pot.v_of_rho(tempRho, GlobalC::CHR.rho_core);
-    GlobalC::pot.set_vr_eff();
+    this->pelec->pot->update_from_charge(tempRho, &GlobalC::ucell);
+    ModuleBase::matrix& vr_eff = this->pelec->pot->get_effective_v();
 
-    this->kineticPotential(tempRho, tempPhi, GlobalC::pot.vr_eff);
+    this->kineticPotential(tempRho->rho, tempPhi, vr_eff);
     for (int i = 0; i < this->nrxx; ++i)
     {
-        dEdtempPhi[this->tnSpinFlag][i] = GlobalC::pot.vr_eff(this->tnSpinFlag,i);
+        dEdtempPhi[this->tnSpinFlag][i] = vr_eff(this->tnSpinFlag,i);
     }
     double tempMu = this->cal_mu(ptempPhi, dEdtempPhi[this->tnSpinFlag], this->nelec[this->tnSpinFlag]);
     for (int i = 0; i < this->nrxx; ++i)
@@ -946,10 +961,11 @@ void ESolver_OF::calV(double *ptempPhi, double *rdLdphi)
     for (int is = 0; is < GlobalV::NSPIN; ++is)
     {
         delete[] dEdtempPhi[is];
-        delete[] tempRho[is];
+        delete[] tempRho->rho[is];
     } 
     delete[] dEdtempPhi;
-    delete[] tempRho;
+    delete[] tempRho->rho;
+    delete tempRho;
     delete[] tempPhi;
 } 
 
@@ -958,19 +974,19 @@ void ESolver_OF::calV(double *ptempPhi, double *rdLdphi)
 // dE/dTheta = <dE/dtempPhi|dtempPhi/dTheta>
 //           = <dE/dtempPhi|-phi*sin(theta)+d*cos(theta)>
 //
-void ESolver_OF::caldEdtheta(double **ptempPhi, double **ptempRho, double *ptheta, double *rdEdtheta)
+void ESolver_OF::caldEdtheta(double **ptempPhi, Charge* ptempRho, double *ptheta, double *rdEdtheta)
 {
     double *pdPhidTheta = new double[this->nrxx];
 
-    GlobalC::pot.vr = GlobalC::pot.v_of_rho(ptempRho, GlobalC::CHR.rho_core);
-    GlobalC::pot.set_vr_eff();
+    this->pelec->pot->update_from_charge(ptempRho, &GlobalC::ucell);
+    ModuleBase::matrix& vr_eff = this->pelec->pot->get_effective_v();
 
-    this->kineticPotential(ptempRho, ptempPhi, GlobalC::pot.vr_eff);
+    this->kineticPotential(ptempRho->rho, ptempPhi, vr_eff);
     for (int is = 0; is < GlobalV::NSPIN; ++is)
     {
         for (int ir = 0; ir < this->nrxx; ++ir)
         {
-            this->pdEdphi[is][ir] = GlobalC::pot.vr_eff(is,ir);
+            this->pdEdphi[is][ir] = vr_eff(is,ir);
             pdPhidTheta[ir] = - this->pphi[is][ir] * sin(ptheta[is]) + this->pdirect[is][ir] * cos(ptheta[is]);
         }
         rdEdtheta[is] = this->inner_product(this->pdEdphi[is], pdPhidTheta, this->nrxx, this->dV);
@@ -1002,7 +1018,7 @@ void ESolver_OF::cal_Energy(double& etot)
     double ePP = 0.;                    // electron-ion interaction energy
     for (int is = 0; is < GlobalV::NSPIN; ++is)
     {
-        ePP += this->inner_product(GlobalC::pot.vltot, GlobalC::CHR.rho[is], this->nrxx, this->dV);
+        ePP += this->inner_product(this->pelec->pot->get_fixed_v(), GlobalC::CHR.rho[is], this->nrxx, this->dV);
     }
     Parallel_Reduce::reduce_double_all(ePP);
     GlobalC::en.etot += eKE + ePP;
@@ -1056,9 +1072,8 @@ void ESolver_OF::cal_Stress(ModuleBase::matrix& stress)
         kinetic_stress += this->tf.stress + this->vw.stress;
     }
 
-    OF_Stress_PW ss;
-    ModuleBase::matrix placeholder_wg;//using a placeholder for this template interface, would be refactor later
-    ss.cal_stress(stress, placeholder_wg, kinetic_stress);
+    OF_Stress_PW ss(this->pelec);
+    ss.cal_stress(stress, kinetic_stress);
 }
 
 // Calculated kinetic potential and plus it to &rpot, return (rpot + kietic potential) * 2 * pphiInpt

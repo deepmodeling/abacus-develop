@@ -53,6 +53,7 @@ void ESolver_SDFT_PW::Init(Input &inp, UnitCell_pseudo &ucell)
             &(GlobalC::en.etxc),
             &(GlobalC::en.vtxc)
         );
+        GlobalTemp::veff = &(this->pelec->pot->get_effective_v());
     }
 
     this->Init_GlobalC(inp,ucell);//temporary

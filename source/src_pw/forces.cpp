@@ -913,7 +913,7 @@ void Forces::cal_force_scc(ModuleBase::matrix& forcescc, ModulePW::PW_Basis* rho
     {
         for (int i = 0; i < rho_basis->nrxx; i++)
         {
-            psic[i] = GlobalC::pot.vnew(0, i);
+            psic[i] = GlobalC::en.vnew(0, i);
         }
     }
     else
@@ -922,9 +922,11 @@ void Forces::cal_force_scc(ModuleBase::matrix& forcescc, ModulePW::PW_Basis* rho
         int isdw = 1;
         for (int i = 0; i < rho_basis->nrxx; i++)
         {
-            psic[i] = (GlobalC::pot.vnew(isup, i) + GlobalC::pot.vnew(isdw, i)) * 0.5;
+            psic[i] = (GlobalC::en.vnew(isup, i) + GlobalC::en.vnew(isdw, i)) * 0.5;
         }
     }
+    //delete vnew memory
+    GlobalC::en.vnew.create(0,0);
 
     int ndm = 0;
 

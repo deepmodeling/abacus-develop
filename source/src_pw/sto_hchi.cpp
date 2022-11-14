@@ -3,6 +3,7 @@
 #include "../module_base/tool_title.h"
 #include "../module_base/timer.h"
 #include "../src_parallel/parallel_reduce.h"
+#include "module_esolver/esolver_sdft_pw.h"
 
 
 Stochastic_hchi::Stochastic_hchi()
@@ -62,7 +63,7 @@ void Stochastic_hchi:: hchi(complex<double> *chig, complex<double> *hchig, const
 	{
 		chibg = chig;
 		hchibg = hchig;
-		const double* pveff = &(GlobalC::pot.vr_eff(current_spin, 0));
+		const double* pveff = &((*GlobalTemp::veff)(current_spin, 0));
 		for(int ib = 0 ; ib < m ; ++ib)
 		{
 			GlobalC::wfcpw->recip2real(chibg, porter, ik);

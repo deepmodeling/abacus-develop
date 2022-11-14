@@ -146,7 +146,6 @@ void Relax_old::reset_after_cellrelax(int& f_step, int& s_step)
     else
     {
         Variable_Cell::init_after_vc();
-        GlobalC::pot.init_pot(s_step, GlobalC::sf.strucFac); //LiuXh add 20180619
     }
 
 	f_step = 1;

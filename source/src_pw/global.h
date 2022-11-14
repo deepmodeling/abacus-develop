@@ -13,7 +13,6 @@
 #include "hamilt.h"
 #include "klist.h"
 #include "magnetism.h"
-#include "potential.h"
 #include "structure_factor.h"
 #include "../module_pw/pw_basis_k.h"
 #include "wavefunc.h"
@@ -324,7 +323,6 @@ namespace GlobalC
 {
 extern UnitCell_pseudo ucell;
 extern Charge_Broyden CHR;
-extern Potential pot;
 extern ModuleSymmetry::Symmetry symm;
 extern Parallel_Grid Pgrid;
 extern Parallel_Kpoints Pkpoints;

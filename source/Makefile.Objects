@@ -406,7 +406,6 @@ OBJS_LCAO=DM_gamma.o\
       record_adj.o\
       dm_2d.o\
       wavefunc_in_pw.o\
-  	  H_TDDFT_pw.o\
 
 OBJS_RI=exx_lip.o\
 

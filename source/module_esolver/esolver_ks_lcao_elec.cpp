@@ -176,7 +176,7 @@ namespace ModuleESolver
         // REALLOCATE DENSITY MATRIX FIRST, THEN READ IN DENSITY MATRIX,
         // AND USE DENSITY MATRIX TO DO RHO GlobalV::CALCULATION.-- mohan 2013-03-31
         //======================================
-        if (GlobalC::pot.chg_extrap == "dm" && istep > 1)//xiaohui modify 2015-02-01
+        if (GlobalV::chg_extrap == "dm" && istep > 1)//xiaohui modify 2015-02-01
         {
             for (int is = 0; is < GlobalV::NSPIN; is++)
             {
@@ -221,7 +221,7 @@ namespace ModuleESolver
             GlobalC::CHR.renormalize_rho();
 
             // initialize the potential
-            GlobalC::pot.init_pot(istep - 1, GlobalC::sf.strucFac);
+            this->pelec->init_scf(istep - 1, GlobalC::sf.strucFac);
         }
 
 #ifdef __DEEPKS
@@ -272,7 +272,7 @@ namespace ModuleESolver
                 Variable_Cell::init_after_vc();
             }
 
-            GlobalC::pot.init_pot(istep, GlobalC::sf.strucFac);
+            this->pelec->init_scf(istep, GlobalC::sf.strucFac);
         }
 
         if(GlobalV::CALCULATION=="relax" || GlobalV::CALCULATION=="cell-relax")
@@ -289,7 +289,7 @@ namespace ModuleESolver
                 GlobalV::ofs_running << " Setup the Vl+Vh+Vxc according to new structure factor and new charge." << std::endl;
                 // calculate the new potential accordint to
                 // the new charge density.
-                GlobalC::pot.init_pot( istep-1, GlobalC::sf.strucFac );
+                this->pelec->init_scf( istep-1, GlobalC::sf.strucFac );
             }
         }
 

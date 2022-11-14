@@ -15,7 +15,6 @@ list(APPEND objects
     klist.cpp
     magnetism.cpp
     occupy.cpp
-    potential.cpp
     structure_factor.cpp
     pw_complement.cpp
     soc.cpp

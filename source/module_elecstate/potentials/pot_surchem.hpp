@@ -14,8 +14,9 @@ class PotSurChem : public PotBase
     //meta-GGA should input matrix of kinetic potential, it is optional
     PotSurChem(
         const ModulePW::PW_Basis* rho_basis_in,
+        const double* vlocal_in,
         surchem* surchem_in
-    ):surchem_(surchem_in)
+    ):vlocal(vlocal_in), surchem_(surchem_in)
     {
         this->rho_basis_ = rho_basis_in;
         this->dynamic_mode = true;
@@ -27,15 +28,17 @@ class PotSurChem : public PotBase
         const UnitCell_pseudo* ucell, 
         ModuleBase::matrix& v_eff)override
     {
-            surchem_->v_correction(
+            v_eff += surchem_->v_correction(
                 *ucell, 
                 const_cast<ModulePW::PW_Basis *>(this->rho_basis_), 
                 v_eff.nr, 
-                chg->rho);
+                chg->rho,
+                this->vlocal);
     }
 
     private:
-    surchem* surchem_;
+    surchem* surchem_ = nullptr;
+    const double* vlocal = nullptr;
 };
 
 }

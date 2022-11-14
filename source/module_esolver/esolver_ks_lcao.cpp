@@ -205,7 +205,7 @@ void ESolver_KS_LCAO::Init(Input& inp, UnitCell_pseudo& ucell)
         // if ion_step==0, read in/initialize the potentials
         // this function belongs to ions LOOP
         int ion_step = 0;
-        GlobalC::pot.init_pot(ion_step, GlobalC::sf.strucFac);
+        this->pelec->init_scf(ion_step, GlobalC::sf.strucFac);
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT POTENTIAL");
     }
 }
@@ -344,7 +344,7 @@ void ESolver_KS_LCAO::eachiterinit(const int istep, const int iter)
     }
 
     // mohan update 2012-06-05
-    GlobalC::en.calculate_harris(1);
+    GlobalC::en.deband_harris = GlobalC::en.delta_e(this->pelec->pot);
 
     // mohan move it outside 2011-01-13
     // first need to calculate the weight according to
@@ -389,11 +389,8 @@ void ESolver_KS_LCAO::eachiterinit(const int istep, const int iter)
             // so be careful here, make sure
             // rho1 and rho2 are the same rho.
             // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-            GlobalC::pot.vr = GlobalC::pot.v_of_rho(GlobalC::CHR.rho, GlobalC::CHR.rho_core);
-            GlobalC::en.delta_escf();
-
-            GlobalC::pot.set_vr_eff();
-            // liyuanbo 2022/8/2 delete tddft vext setting
+            this->pelec->pot->update_from_charge(this->pelec->charge, &GlobalC::ucell);
+            GlobalC::en.delta_escf(this->pelec->pot);
         }
     }
 
@@ -520,7 +517,7 @@ void ESolver_KS_LCAO::hamilt2density(int istep, int iter, double ethr)
 #endif
     // (4) mohan add 2010-06-24
     // using new charge density.
-    GlobalC::en.calculate_harris(2);
+    GlobalC::en.calculate_harris();
 
     // (5) symmetrize the charge density
     Symmetry_rho srho;
@@ -540,7 +537,7 @@ void ESolver_KS_LCAO::hamilt2density(int istep, int iter, double ethr)
     //-------------------------------------------------------------------------
 
     // (7) calculate delta energy
-    GlobalC::en.deband = GlobalC::en.delta_e();
+    GlobalC::en.deband = GlobalC::en.delta_e(this->pelec->pot);
 }
 void ESolver_KS_LCAO::updatepot(const int istep, const int iter)
 {
@@ -548,27 +545,20 @@ void ESolver_KS_LCAO::updatepot(const int istep, const int iter)
 
     if (this->conv_elec || iter == GlobalV::SCF_NMAX)
     {
-        if (GlobalC::pot.out_pot < 0) // mohan add 2011-10-10
+        if (GlobalV::out_pot < 0) // mohan add 2011-10-10
         {
-            GlobalC::pot.out_pot = -2;
+            GlobalV::out_pot = -2;
         }
     }
     if (!this->conv_elec)
     {
-        GlobalC::pot.vr = GlobalC::pot.v_of_rho(GlobalC::CHR.rho, GlobalC::CHR.rho_core);
-        GlobalC::en.delta_escf();
+        this->pelec->pot->update_from_charge(this->pelec->charge, &GlobalC::ucell);
+        GlobalC::en.delta_escf(this->pelec->pot);
     }
     else
     {
-        GlobalC::pot.vnew = GlobalC::pot.v_of_rho(GlobalC::CHR.rho, GlobalC::CHR.rho_core);
-        //(used later for scf correction to the forces )
-        GlobalC::pot.vnew -= GlobalC::pot.vr;
-        GlobalC::en.descf = 0.0;
+        GlobalC::en.cal_converged(this->pelec);
     }
-
-    // add Vloc to Vhxc.
-
-    GlobalC::pot.set_vr_eff();
 }
 void ESolver_KS_LCAO::eachiterfinish(int iter)
 {
@@ -661,21 +651,21 @@ void ESolver_KS_LCAO::afterscf(const int istep)
         }
         this->LOC.write_dm(is, 0, ssd.str(), precision);
 
-        if (GlobalC::pot.out_pot == 1) // LiuXh add 20200701
+        if (GlobalV::out_pot == 1) // LiuXh add 20200701
         {
             std::stringstream ssp;
             ssp << GlobalV::global_out_dir << "SPIN" << is + 1 << "_POT";
-            GlobalC::pot.write_potential(is, 0, ssp.str(), GlobalC::pot.vr_eff, precision);
+            this->pelec->pot->write_potential(is, 0, ssp.str(), this->pelec->pot->get_effective_v(), precision);
         }
     }
 
-    if (GlobalC::pot.out_pot == 2)
+    if (GlobalV::out_pot == 2)
     {
         std::stringstream ssp;
         std::stringstream ssp_ave;
         ssp << GlobalV::global_out_dir << "ElecStaticPot";
         ssp_ave << GlobalV::global_out_dir << "ElecStaticPot_AVE";
-        GlobalC::pot.write_elecstat_pot(ssp.str(), ssp_ave.str(), GlobalC::rhopw); //output 'Hartree + local pseudopot'
+        this->pelec->pot->write_elecstat_pot(ssp.str(), ssp_ave.str(), GlobalC::rhopw); //output 'Hartree + local pseudopot'
     }
 
     if (this->conv_elec)
@@ -917,7 +907,7 @@ void ESolver_KS_LCAO::afterscf(const int istep)
     }
     if (hsolver::HSolverLCAO::out_mat_hsR)
     {
-        this->output_HS_R(istep); // LiuXh add 2019-07-15
+        this->output_HS_R(istep, this->pelec->pot->get_effective_v()); // LiuXh add 2019-07-15
     }
 
     // add by jingan for out r_R matrix 2019.8.14

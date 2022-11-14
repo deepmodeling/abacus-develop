@@ -15,12 +15,6 @@ class LCAO_Hamilt
     ~LCAO_Hamilt();
 
     void grid_prepare(void);
-        
-    // used fro k-dependent Hamiltonian matrix.
-    void calculate_Hk( const int &ik);
-    
-    // used for Gamma only Hamiltonian matrix.
-    void calculate_Hgamma( const int &ik , vector<ModuleBase::matrix> dm_gamma);						// Peize Lin add ik 2016-12-03
 
     void calculate_STN_R(void); //LiuXh add 2019-07-15
 
