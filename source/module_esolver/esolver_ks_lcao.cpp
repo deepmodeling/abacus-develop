@@ -320,7 +320,7 @@ void ESolver_KS_LCAO::eachiterinit(const int istep, const int iter)
 
     // mohan add 2010-07-16
     // used for pulay mixing.
-    if (iter == 1) GlobalC::CHR_MIX.reset(GlobalV::FINAL_SCF);
+    if (iter == 1) GlobalC::CHR_MIX.reset();
 
     // mohan update 2012-06-05
     GlobalC::en.calculate_harris(1);

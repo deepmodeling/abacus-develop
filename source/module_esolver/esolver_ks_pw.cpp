@@ -265,7 +265,7 @@ namespace ModuleESolver
     void ESolver_KS_PW::eachiterinit(const int istep, const int iter)
     {
         // mohan add 2010-07-16
-        if (iter == 1) GlobalC::CHR_MIX.reset(GlobalV::FINAL_SCF);
+        if (iter == 1) GlobalC::CHR_MIX.reset();
 
         // mohan move harris functional to here, 2012-06-05
         // use 'rho(in)' and 'v_h and v_xc'(in)
