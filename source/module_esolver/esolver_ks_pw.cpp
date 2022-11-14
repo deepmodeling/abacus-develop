@@ -53,7 +53,7 @@ namespace ModuleESolver
         }
         if(this->pelec != nullptr)
         {
-            delete (elecstate::ElecStatePW*)this->pelec;
+            delete (elecstate::ElecStatePW<double>*)this->pelec;
             this->pelec = nullptr;
         }
         //delete Hamilt
@@ -130,9 +130,7 @@ namespace ModuleESolver
         //init ElecState,
         if(this->pelec == nullptr)
         {
-            this->pelec = new elecstate::ElecStatePW( GlobalC::wfcpw, &(GlobalC::CHR), (K_Vectors*)(&(GlobalC::kv)), GlobalV::NBANDS);
-            GlobalV::ofs_running << GlobalV::NBANDS << std::endl;
-            GlobalV::ofs_running << pelec->ekb.nr << " " << pelec->ekb.nc << std::endl;
+            this->pelec = new elecstate::ElecStatePW<double>( GlobalC::wfcpw, &(GlobalC::CHR), (K_Vectors*)(&(GlobalC::kv)), GlobalV::NBANDS);
         }
         //init HSolver
         if(this->phsol == nullptr)

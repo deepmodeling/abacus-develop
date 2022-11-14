@@ -12,6 +12,7 @@ if(ENABLE_LCAO)
             ../../src_pw/charge.cpp ../../src_parallel/parallel_reduce.cpp
             ../../src_pw/structure_factor.cpp ../../src_pw/pw_complement.cpp
             ../../src_pw/klist.cpp ../../src_parallel/parallel_kpoints.cpp ../../src_pw/occupy.cpp
+            ../src/elecstate_multi_device.cpp
   )
   if(USE_CUDA)
     target_link_libraries(EState_updaterhok_pw cufft)
@@ -112,6 +113,27 @@ add_library(
   OBJECT
   ${planewave_serial_srcs}
 )
+
+if (USE_CUDA)
+AddTest(
+  TARGET Elecstate_UTs
+  LIBS ${math_libs} psi base
+  SOURCES elecstate_multi_device_test.cpp
+          ../src/elecstate_multi_device.cpp
+          ../src/cuda/elecstate_multi_device.cu
+          ../../src_parallel/parallel_reduce.cpp 
+          ../../src_parallel/parallel_global.cpp 
+)
+else()
+AddTest(
+  TARGET Elecstate_UTs
+  LIBS ${math_libs} psi base
+  SOURCES elecstate_multi_device_test.cpp
+          ../src/elecstate_multi_device.cpp
+          ../../src_parallel/parallel_reduce.cpp 
+          ../../src_parallel/parallel_global.cpp 
+)
+endif()
 
 if(ENABLE_COVERAGE)
   add_coverage(base_serial)
