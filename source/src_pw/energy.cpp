@@ -15,7 +15,7 @@
 #include "myfunc.h"
 //new
 #include "H_Ewald_pw.h"
-#include "H_Hartree_pw.h"
+#include "module_elecstate/potentials/H_Hartree_pw.h"
 #include "module_elecstate/potentials/efield.h"    // liuyu add 2022-05-06
 #include "module_elecstate/potentials/gatefield.h"    // liuyu add 2022-09-13
 #include "module_surchem/surchem.h"
@@ -52,7 +52,7 @@ void energy::calculate_harris()
 	this->etot_harris = eband + deband_harris 
 	+ (etxc - etxcc) 
 	+ H_Ewald_pw::ewald_energy 
-	+ H_Hartree_pw::hartree_energy 
+	+ elecstate::H_Hartree_pw::hartree_energy 
 	+ demet
 	+ exx
 	+ elecstate::Efield::etotefield
@@ -82,7 +82,7 @@ void energy::calculate_etot(void)
 	this->etot = eband + deband 
 	+ (etxc - etxcc) 
 	+ H_Ewald_pw::ewald_energy 
-	+ H_Hartree_pw::hartree_energy 
+	+ elecstate::H_Hartree_pw::hartree_energy 
 	+ demet
 	+ descf
 	+ exx
@@ -94,6 +94,8 @@ void energy::calculate_etot(void)
 	this->etot += GlobalC::solvent_model.cal_Ael(GlobalC::ucell, GlobalC::rhopw)
 				 + GlobalC::solvent_model.cal_Acav(GlobalC::ucell, GlobalC::rhopw);
 	}
+
+	std::cout<<__FILE__<<__LINE__<<" "<<this->etot<<" "<<eband<<" "<<deband<<" "<<(etxc - etxcc)<<" "<<demet<<" "<<descf<<" "<<elecstate::Efield::etotefield<<std::endl;
     //Quxin adds for DFT+U energy correction on 20201029
 
 	// std::cout << std::resetiosflags(ios::scientific) << std::endl;
@@ -153,7 +155,7 @@ void energy::print_etot(
 			this->print_format("E_Harris", etot_harris);
 			this->print_format("E_band", eband);
 			this->print_format("E_one_elec", eband + deband);
-			this->print_format("E_Hartree", H_Hartree_pw::hartree_energy);
+			this->print_format("E_Hartree", elecstate::H_Hartree_pw::hartree_energy);
 			this->print_format("E_xc", etxc - etxcc);
 			this->print_format("E_Ewald", H_Ewald_pw::ewald_energy);
 			this->print_format("E_demet", demet); //mohan add 2011-12-02
@@ -391,43 +393,47 @@ double energy::delta_e(const elecstate::Potential* pot)
 
 	// only potential related with charge is used here for energy correction
 	// on the fly calculate it here by v_effective - v_fixed
-	const double* v_eff = &(pot->get_effective_v()(0, 0));
+	const double* v_eff = pot->get_effective_v(0);
 	const double* v_fixed = pot->get_fixed_v();
-	const double* v_ofk = &(pot->get_effective_vofk()(0, 0));
+	const double* v_ofk = nullptr;
+	if(XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
+	{
+		v_ofk = pot->get_effective_vofk(0);
+	}
 
-    for (int ir=0; ir<GlobalC::rhopw->nrxx; ir++)
-    {
-    	deband_aux -= GlobalC::CHR.rho[0][ir] * (v_eff[ir] - v_fixed[ir]);
+	for (int ir=0; ir<GlobalC::rhopw->nrxx; ir++)
+	{
+		deband_aux -= GlobalC::CHR.rho[0][ir] * (v_eff[ir] - v_fixed[ir]);
 		if(XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
 		{
 			deband_aux -= GlobalC::CHR.kin_r[0][ir] * v_ofk[ir];
 		}
 	}
 
-    if (GlobalV::NSPIN == 2)
-    {
-		v_eff = &(pot->get_effective_v()(1, 0));
-		v_ofk = &(pot->get_effective_vofk()(1, 0));
-    	for (int ir=0; ir<GlobalC::rhopw->nrxx; ir++)
-    	{
-    		deband_aux -= GlobalC::CHR.rho[1][ir] * (v_eff[ir] - v_fixed[ir]);
+	if (GlobalV::NSPIN == 2)
+	{
+		v_eff = pot->get_effective_v(1);
+		v_ofk = pot->get_effective_vofk(1);
+		for (int ir=0; ir<GlobalC::rhopw->nrxx; ir++)
+		{
+			deband_aux -= GlobalC::CHR.rho[1][ir] * (v_eff[ir] - v_fixed[ir]);
 			if(XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
 			{
 				deband_aux -= GlobalC::CHR.kin_r[1][ir] * v_ofk[ir];
 			}
 		}
-    }
-    else if(GlobalV::NSPIN == 4)
-    {
+	}
+	else if(GlobalV::NSPIN == 4)
+	{
 		for(int is = 1;is<4;is++)
 		{
-			v_eff = &(pot->get_effective_v()(is, 0));
+			v_eff = pot->get_effective_v(is);
 			for(int ir=0; ir<GlobalC::rhopw->nrxx; ir++)
 			{
 				deband_aux -= GlobalC::CHR.rho[is][ir] * v_eff[ir];
 			}
 		}
-    }
+	}
 
 #ifdef __MPI
     MPI_Allreduce(&deband_aux,&deband0,1,MPI_DOUBLE,MPI_SUM,POOL_WORLD);
@@ -454,46 +460,52 @@ void energy::delta_escf(const elecstate::Potential* pot)
 	// and rho1_save is "output" charge density
 	// because in "deband" the energy is calculated from "output" charge density,
 	// so here is the correction.
-
 	// only potential related with charge is used here for energy correction
 	// on the fly calculate it here by v_effective - v_fixed
-	const double* v_eff = &(pot->get_effective_v()(0, 0));
+	const double* v_eff = pot->get_effective_v(0);
 	const double* v_fixed = pot->get_fixed_v();
-	const double* v_ofk = &(pot->get_effective_vofk()(0, 0));
+	const double* v_ofk = nullptr;
+	if(XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
+	{
+		v_ofk = pot->get_effective_vofk(0);
+	}
 
-    for (int ir=0; ir<GlobalC::rhopw->nrxx; ir++)
-    {
+	for (int ir=0; ir<GlobalC::rhopw->nrxx; ir++)
+	{
 		this->descf -= ( GlobalC::CHR.rho[0][ir] - GlobalC::CHR.rho_save[0][ir] ) * (v_eff[ir] - v_fixed[ir]);
 		if(XC_Functional::get_func_type() == 3)
 		{
-         	this->descf -= ( GlobalC::CHR.kin_r[0][ir] - GlobalC::CHR.kin_r_save[0][ir] ) * v_ofk[ir];
+			this->descf -= ( GlobalC::CHR.kin_r[0][ir] - GlobalC::CHR.kin_r_save[0][ir] ) * v_ofk[ir];
 		}
-    }
+	}
 
-    if (GlobalV::NSPIN==2)
-    {
-		v_eff = &(pot->get_effective_v()(1, 0));
-		v_ofk = &(pot->get_effective_vofk()(1, 0));
-       	for (int ir=0; ir<GlobalC::rhopw->nrxx; ir++)
-       	{
-           	this->descf -= ( GlobalC::CHR.rho[1][ir] - GlobalC::CHR.rho_save[1][ir] ) * (v_eff[ir] - v_fixed[ir]);
-			if(XC_Functional::get_func_type() == 3)
+	if (GlobalV::NSPIN==2)
+	{
+		v_eff = pot->get_effective_v(1);
+		if(XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
+		{
+			v_ofk = pot->get_effective_vofk(1);
+		}
+		for (int ir=0; ir<GlobalC::rhopw->nrxx; ir++)
+		{
+			this->descf -= ( GlobalC::CHR.rho[1][ir] - GlobalC::CHR.rho_save[1][ir] ) * (v_eff[ir] - v_fixed[ir]);
+			if(XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
 			{
-           		this->descf -= ( GlobalC::CHR.kin_r[1][ir] - GlobalC::CHR.kin_r_save[1][ir] ) * v_ofk[ir];
+				this->descf -= ( GlobalC::CHR.kin_r[1][ir] - GlobalC::CHR.kin_r_save[1][ir] ) * v_ofk[ir];
 			}
-       	}
-    }
-    if (GlobalV::NSPIN==4)
-    {
+		}
+	}
+	if (GlobalV::NSPIN==4)
+	{
 		for(int is = 1;is<4;is++)
 		{
-			v_eff = &(pot->get_effective_v()(is, 0));
+			v_eff = pot->get_effective_v(is);
 			for(int ir=0; ir<GlobalC::rhopw->nrxx; ir++)
 			{
 				this->descf -= ( GlobalC::CHR.rho[is][ir] - GlobalC::CHR.rho_save[is][ir] ) * v_eff[ir];
 			}
 		}
-    }
+	}
 
     Parallel_Reduce::reduce_double_pool( descf );
 

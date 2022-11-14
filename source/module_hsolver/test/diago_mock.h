@@ -289,7 +289,7 @@ void hamilt::HamiltPW::updateHk(const int ik)
     return;
 }
 
-hamilt::HamiltPW::HamiltPW()
+hamilt::HamiltPW::HamiltPW(elecstate::Potential* pot_in)
 {
     this->ops = new OperatorMock;
 }

@@ -219,9 +219,6 @@ namespace ModuleESolver
 
             // renormalize the charge density
             GlobalC::CHR.renormalize_rho();
-
-            // initialize the potential
-            this->pelec->init_scf(istep - 1, GlobalC::sf.strucFac);
         }
 
 #ifdef __DEEPKS
@@ -271,8 +268,6 @@ namespace ModuleESolver
             {
                 Variable_Cell::init_after_vc();
             }
-
-            this->pelec->init_scf(istep, GlobalC::sf.strucFac);
         }
 
         if(GlobalV::CALCULATION=="relax" || GlobalV::CALCULATION=="cell-relax")
@@ -289,9 +284,15 @@ namespace ModuleESolver
                 GlobalV::ofs_running << " Setup the Vl+Vh+Vxc according to new structure factor and new charge." << std::endl;
                 // calculate the new potential accordint to
                 // the new charge density.
-                this->pelec->init_scf( istep-1, GlobalC::sf.strucFac );
             }
         }
+        int istep0 = istep;
+        if(GlobalV::CALCULATION=="relax" || GlobalV::CALCULATION=="cell-relax")
+        {
+            istep0 = std::max(0, istep - 1);
+        }
+        this->pelec->init_scf( istep0, GlobalC::sf.strucFac );
+        ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT POTENTIAL");
 
         //----------------------------------------------------------
         // about vdw, jiyy add vdwd3 and linpz add vdwd2

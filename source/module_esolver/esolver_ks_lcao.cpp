@@ -205,8 +205,6 @@ void ESolver_KS_LCAO::Init(Input& inp, UnitCell_pseudo& ucell)
         // if ion_step==0, read in/initialize the potentials
         // this function belongs to ions LOOP
         int ion_step = 0;
-        this->pelec->init_scf(ion_step, GlobalC::sf.strucFac);
-        ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT POTENTIAL");
     }
 }
 

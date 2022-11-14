@@ -27,8 +27,8 @@ void PotXC::cal_v_eff(
 #ifdef USE_LIBXC
         const std::tuple<double, double, ModuleBase::matrix, ModuleBase::matrix> etxc_vtxc_v
             = XC_Functional::v_xc_meta(nrxx_current,
-                                       GlobalC::rhopw->nxyz,
-                                       ucell_in->omega,
+                                       this->rho_basis_->nxyz,
+                                       ucell->omega,
                                        rho_in,
                                        rho_core_in,
                                        chg->kin_r);

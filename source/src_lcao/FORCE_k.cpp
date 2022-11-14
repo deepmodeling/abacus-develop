@@ -1194,11 +1194,11 @@ void Force_LCAO_k::cal_fvl_dphi_k(const bool isforce,
     {
         GlobalV::CURRENT_SPIN = is;
 
-        const double* vr_eff1 = &(pot_in->get_effective_v()(GlobalV::CURRENT_SPIN, 0));
+        const double* vr_eff1 = pot_in->get_effective_v(GlobalV::CURRENT_SPIN);
         const double* vofk_eff1 = nullptr;
         if(XC_Functional::get_func_type()==3 || XC_Functional::get_func_type()==5)
         {
-            vofk_eff1 = &(pot_in->get_effective_vofk()(GlobalV::CURRENT_SPIN, 0));
+            vofk_eff1 = pot_in->get_effective_vofk(GlobalV::CURRENT_SPIN);
         }
 
         //--------------------------------

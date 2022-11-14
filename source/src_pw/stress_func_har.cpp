@@ -1,6 +1,6 @@
 #include "./stress_func.h"
 #include "./myfunc.h"
-#include "./H_Hartree_pw.h"
+#include "module_elecstate/potentials/H_Hartree_pw.h"
 #include "../module_base/timer.h"
 #include "global.h"
 
@@ -80,8 +80,8 @@ void Stress_Func::stress_har(ModuleBase::matrix& sigma, ModulePW::PW_Basis* rho_
 	
 	for(int l=0;l<3;l++)
 	{
-		if(is_pw) sigma(l,l) -= H_Hartree_pw::hartree_energy /GlobalC::ucell.omega;
-		else sigma(l,l) += H_Hartree_pw::hartree_energy /GlobalC::ucell.omega;
+		if(is_pw) sigma(l,l) -= elecstate::H_Hartree_pw::hartree_energy /GlobalC::ucell.omega;
+		else sigma(l,l) += elecstate::H_Hartree_pw::hartree_energy /GlobalC::ucell.omega;
 		for(int m=0;m<l;m++)
 		{
 			sigma(m,l)=sigma(l,m);

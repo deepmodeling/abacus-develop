@@ -12,6 +12,8 @@ namespace elecstate
 class Potential : public PotBase
 {
   public:
+    //default constructor for UT
+    Potential(){};
     //In constructor, size of every potential components should be allocated
     Potential(
         const ModulePW::PW_Basis* rho_basis_in,
@@ -43,6 +45,28 @@ class Potential : public PotBase
     {
         return this->v_effective;
     }
+    double* get_effective_v(int is)
+    {
+        if(this->v_effective.nc > 0)
+        {
+            return &(this->v_effective(is, 0));
+        }
+        else
+        {
+            return nullptr;
+        }
+    }
+    const double* get_effective_v(int is)const
+    {
+        if(this->v_effective.nc > 0)
+        {
+            return &(this->v_effective(is, 0));
+        }
+        else
+        {
+            return nullptr;
+        }
+    }
     ModuleBase::matrix& get_effective_vofk()
     {
         return this->vofk_effective;
@@ -50,6 +74,28 @@ class Potential : public PotBase
     const ModuleBase::matrix& get_effective_vofk()const
     {
         return this->vofk_effective;
+    }
+    double* get_effective_vofk(int is)
+    {
+        if(this->vofk_effective.nc > 0)
+        {
+            return &(this->vofk_effective(is, 0));
+        }
+        else
+        {
+            return nullptr;
+        }
+    }
+    const double* get_effective_vofk(int is)const
+    {
+        if(this->vofk_effective.nc > 0)
+        {
+            return &(this->vofk_effective(is, 0));
+        }
+        else
+        {
+            return nullptr;
+        }
     }
     double* get_fixed_v()
     {

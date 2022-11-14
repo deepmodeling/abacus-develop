@@ -98,11 +98,6 @@ namespace ModuleESolver
         GlobalC::ppcell.init_vnl(GlobalC::ucell);
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "NON-LOCAL POTENTIAL");
 
-        //=========================================================
-        // calculate the total local pseudopotential in real space
-        //=========================================================
-        this->pelec->init_scf(0, GlobalC::sf.strucFac); //atomic_rho, v_of_rho, set_vrs
-
         GlobalC::ppcell.cal_effective_D();
 
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT POTENTIAL");
@@ -157,7 +152,7 @@ namespace ModuleESolver
         }
         
         //temporary
-        this->Init_GlobalC(inp,ucell);
+        this->Init_GlobalC(inp,ucell); 
     }
 
     void ESolver_KS_PW::beforescf(int istep)
@@ -176,7 +171,7 @@ namespace ModuleESolver
                 Variable_Cell::init_after_vc();
             }
 
-            this->pelec->init_scf(istep, GlobalC::sf.strucFac);
+            //this->pelec->init_scf(istep, GlobalC::sf.strucFac);
         }
 
         if(GlobalV::CALCULATION=="relax" || GlobalV::CALCULATION=="cell-relax")
@@ -193,7 +188,7 @@ namespace ModuleESolver
                 GlobalV::ofs_running << " Setup the Vl+Vh+Vxc according to new structure factor and new charge." << std::endl;
                 // calculate the new potential accordint to
                 // the new charge density.
-                this->pelec->init_scf( istep, GlobalC::sf.strucFac );
+                //this->pelec->init_scf( istep, GlobalC::sf.strucFac );
             }
         }
         if(GlobalC::ucell.cell_parameter_updated)
@@ -238,6 +233,11 @@ namespace ModuleESolver
         {
             srho.begin(is, GlobalC::CHR, GlobalC::rhopw, GlobalC::Pgrid, GlobalC::symm);
         }
+
+        //=========================================================
+        // calculate the total local pseudopotential in real space
+        //=========================================================
+        this->pelec->init_scf(istep, GlobalC::sf.strucFac);
     } 
 
     void ESolver_KS_PW::othercalculation(const int istep)

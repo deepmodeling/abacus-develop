@@ -49,12 +49,8 @@ void Veff<OperatorLCAO<double>>::contributeHk(int ik)
     //(1) prepare data for this k point.
     // copy the local potential from array.
     //-----------------------------------------
-    double* vr_eff1 = &(this->pot->get_effective_v()(GlobalV::CURRENT_SPIN, 0));
-    double* vofk_eff1 = nullptr;
-    if(XC_Functional::get_func_type()==3 || XC_Functional::get_func_type()==5)
-    {
-        vofk_eff1 = &(this->pot->get_effective_vofk()(GlobalV::CURRENT_SPIN, 0));
-    }
+    const double* vr_eff1 = this->pot->get_effective_v(GlobalV::CURRENT_SPIN);
+    const double* vofk_eff1 = this->pot->get_effective_vofk(GlobalV::CURRENT_SPIN);
 
     //--------------------------------------------
     // (3) folding matrix,
@@ -84,12 +80,8 @@ void Veff<OperatorLCAO<std::complex<double>>>::contributeHk(int ik)
     //(1) prepare data for this k point.
     // copy the local potential from array.
     //-----------------------------------------
-    double* vr_eff1 = &(this->pot->get_effective_v()(GlobalV::CURRENT_SPIN, 0));
-    double* vofk_eff1 = nullptr;
-    if(XC_Functional::get_func_type()==3 || XC_Functional::get_func_type()==5)
-    {
-        vofk_eff1 = &(this->pot->get_effective_vofk()(GlobalV::CURRENT_SPIN, 0));
-    }
+    double* vr_eff1 = this->pot->get_effective_v(GlobalV::CURRENT_SPIN);
+    double* vofk_eff1 = this->pot->get_effective_vofk(GlobalV::CURRENT_SPIN);
 
     //--------------------------------------------
     //(2) check if we need to calculate
@@ -124,10 +116,10 @@ void Veff<OperatorLCAO<std::complex<double>>>::contributeHk(int ik)
         {
             for (int is = 1; is < 4; is++)
             {
-                vr_eff1 = &(this->pot->get_effective_v()(is, 0));
+                vr_eff1 = this->pot->get_effective_v(is);
                 if(XC_Functional::get_func_type()==3 || XC_Functional::get_func_type()==5)
                 {
-                    vofk_eff1 = &(this->pot->get_effective_vofk()(is, 0));
+                    vofk_eff1 = this->pot->get_effective_vofk(is);
                 }
                 
                 if(XC_Functional::get_func_type()==3 || XC_Functional::get_func_type()==5)

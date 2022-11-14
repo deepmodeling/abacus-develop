@@ -511,7 +511,6 @@ OBJS_PDIAG_MRRR=dcopy.o\
     xerbla.o\
 
 OBJS_SRCPW=H_Ewald_pw.o\
-    H_Hartree_pw.o\
     VL_in_pw.o\
     VNL_in_pw.o\
     VNL_grad_pw.o\

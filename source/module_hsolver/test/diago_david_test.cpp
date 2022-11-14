@@ -81,7 +81,7 @@ public:
 		//do Diago_David::diag()
 		double* en = new double[npw];		
 		hamilt::Hamilt *phm;
-		phm = new hamilt::HamiltPW();
+		phm = new hamilt::HamiltPW(nullptr);
 		hsolver::DiagoDavid<double> dav(precondition);
 		hsolver::DiagoDavid<double>::PW_DIAG_NDIM = order;
 		hsolver::DiagoIterAssist<double>::PW_DIAG_NMAX = maxiter;

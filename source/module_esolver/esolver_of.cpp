@@ -112,6 +112,36 @@ void ESolver_OF::Init(Input &inp, UnitCell_pseudo &ucell)
             &(GlobalC::en.etxc),
             &(GlobalC::en.vtxc)
         );
+        //There is no Operator in ESolver_OF, register Potentials here!
+        std::vector<string> pot_register_in;
+        if (GlobalV::VION_IN_H)
+        {
+            pot_register_in.push_back("local");
+        }
+        if (GlobalV::VH_IN_H)
+        {
+            pot_register_in.push_back("hartree");
+        }
+        //no variable can choose xc, maybe it is necessary
+        pot_register_in.push_back("xc");
+        if (GlobalV::imp_sol)
+        {
+            pot_register_in.push_back("surchem");
+        }
+        if (GlobalV::EFIELD_FLAG)
+        {
+            pot_register_in.push_back("efield");
+        }
+        if (GlobalV::GATE_FLAG)
+        {
+            pot_register_in.push_back("gate");
+        }
+        //only Potential is not empty, Veff and Meta are available
+        if(pot_register_in.size()>0)
+        {
+            //register Potential by gathered operator
+            this->pelec->pot->pot_register(pot_register_in);
+        }
     }
     
 
@@ -329,7 +359,7 @@ void ESolver_OF::updateV()
     this->kineticPotential(GlobalC::CHR.rho, this->pphi, this->pelec->pot->get_effective_v()); // (kinetic + Hartree + XC + external) * 2 * phi
     for (int is = 0; is < GlobalV::NSPIN; ++is)
     {
-        double* vr_eff = &(this->pelec->pot->get_effective_v()(is, 0));
+        const double* vr_eff = this->pelec->pot->get_effective_v(is);
         for (int ir = 0; ir < this->nrxx; ++ir)
         { 
             this->pdEdphi[is][ir] = vr_eff[ir];

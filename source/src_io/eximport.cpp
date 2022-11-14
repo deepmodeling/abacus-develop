@@ -701,7 +701,7 @@ void eximport::in_evc(std::ifstream &in)
 //	energy
 //===========
 #include "../src_pw/H_Ewald_pw.h"
-#include "../src_pw/H_Hartree_pw.h"
+#include "module_elecstate/potentials/H_Hartree_pw.h"
 void eximport::out_energy(std::ofstream &out_data)
 {
 	//std::cout << "\n ==> out_energy" << std::endl;
@@ -710,7 +710,7 @@ void eximport::out_energy(std::ofstream &out_data)
 	//out_data << std::setw(20) << elec.dE << std::endl;              //6.3
 	out_data << std::setw(20) << GlobalC::en.eband << std::endl;				//6.4
 	out_data << std::setw(20) << GlobalC::en.eband + GlobalC::en.deband << std::endl;   //6.5
-	out_data << std::setw(20) << H_Hartree_pw::hartree_energy << std::endl;
+	out_data << std::setw(20) << elecstate::H_Hartree_pw::hartree_energy << std::endl;
 	out_data << std::setw(20) << GlobalC::en.etxc - GlobalC::en.etxcc << std::endl;     //6.7
 	out_data << std::setw(20) << H_Ewald_pw::ewald_energy << std::endl;                //6.8
 }

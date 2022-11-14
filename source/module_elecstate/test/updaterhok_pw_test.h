@@ -6,7 +6,7 @@
 #include "src_pw/wf_atomic.h"
 #include "src_pw/wavefunc.h"
 #include "src_pw/charge_broyden.h"
-#include "src_pw/potential.h"
+#include "module_elecstate/potentials/potential_new.h"
 #include "module_cell/atom_pseudo.h"
 #include "module_cell/atom_spec.h"
 #include "module_cell/unitcell_pseudo.h"
@@ -48,8 +48,8 @@ Charge_Pulay::Charge_Pulay(){}
 Charge_Pulay::~Charge_Pulay(){}
 Charge_Broyden::Charge_Broyden(){}
 Charge_Broyden::~Charge_Broyden(){}
-Potential::Potential(){}
-Potential::~Potential(){}
+//elecstate::Potential::Potential(){}
+//elecstate::Potential::~Potential(){}
 InfoNonlocal::InfoNonlocal(){}
 InfoNonlocal::~InfoNonlocal(){}
 UnitCell::UnitCell(){}
@@ -95,7 +95,7 @@ namespace GlobalC
 K_Vectors kv;
 wavefunc wf;
 Charge CHR;
-Potential pot;
+//elecstate::Potential pot;
 UnitCell_pseudo ucell;
 ModuleSymmetry::Symmetry symm;
 Parallel_Grid Pgrid;
@@ -338,4 +338,9 @@ bool UnitCell_pseudo::read_atom_positions(LCAO_Orbitals &orb, std::ifstream &ifp
 		}
 	}
         return true;
+}
+
+void elecstate::Potential::init_pot(int istep, const Charge* chg)
+{
+	return;
 }
