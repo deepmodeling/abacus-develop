@@ -178,7 +178,7 @@ namespace ModuleESolver
         {
             for (int is = 0; is < GlobalV::NSPIN; is++)
             {
-                ModuleBase::GlobalFunc::ZEROS(GlobalC::CHR.rho[is], GlobalC::rhopw->nrxx);
+                ModuleBase::GlobalFunc::ZEROS(pelec->charge->rho[is], GlobalC::rhopw->nrxx);
                 std::stringstream ssd;
                 ssd << GlobalV::global_out_dir << "SPIN" << is + 1 << "_DM";
                 // reading density matrix,
@@ -188,35 +188,35 @@ namespace ModuleESolver
             // calculate the charge density
             if (GlobalV::GAMMA_ONLY_LOCAL)
             {
-                Gint_inout inout(this->LOC.DM, &GlobalC::CHR, Gint_Tools::job_type::rho);
+                Gint_inout inout(this->LOC.DM, pelec->charge, Gint_Tools::job_type::rho);
                 this->UHM.GG.cal_gint(&inout);
                 if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type()==5)
                 {
                     for(int is=0; is<GlobalV::NSPIN; is++)
                     {
-                        ModuleBase::GlobalFunc::ZEROS(GlobalC::CHR.kin_r[0], GlobalC::rhopw->nrxx);
+                        ModuleBase::GlobalFunc::ZEROS(pelec->charge->kin_r[0], GlobalC::rhopw->nrxx);
                     }
-                    Gint_inout inout1(this->LOC.DM, &GlobalC::CHR, Gint_Tools::job_type::tau);
+                    Gint_inout inout1(this->LOC.DM, pelec->charge, Gint_Tools::job_type::tau);
                     this->UHM.GG.cal_gint(&inout1);
                 }
             }
             else
             {
-                Gint_inout inout(this->LOC.DM_R, &GlobalC::CHR, Gint_Tools::job_type::rho);
+                Gint_inout inout(this->LOC.DM_R, pelec->charge, Gint_Tools::job_type::rho);
                 this->UHM.GK.cal_gint(&inout);
                 if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type()==5)
                 {
                     for(int is=0; is<GlobalV::NSPIN; is++)
                     {
-                        ModuleBase::GlobalFunc::ZEROS(GlobalC::CHR.kin_r[0], GlobalC::rhopw->nrxx);
+                        ModuleBase::GlobalFunc::ZEROS(pelec->charge->kin_r[0], GlobalC::rhopw->nrxx);
                     }
-                    Gint_inout inout1(this->LOC.DM_R, &GlobalC::CHR, Gint_Tools::job_type::tau);
+                    Gint_inout inout1(this->LOC.DM_R, pelec->charge, Gint_Tools::job_type::tau);
                     this->UHM.GK.cal_gint(&inout1);
                 }
             }
 
             // renormalize the charge density
-            GlobalC::CHR.renormalize_rho();
+            pelec->charge->renormalize_rho();
 
             // initialize the potential
             GlobalC::pot.init_pot(istep - 1, GlobalC::sf.strucFac);
@@ -335,7 +335,7 @@ namespace ModuleESolver
         Symmetry_rho srho;
         for (int is = 0; is < GlobalV::NSPIN; is++)
         {
-            srho.begin(is, GlobalC::CHR, GlobalC::rhopw, GlobalC::Pgrid, GlobalC::symm);
+            srho.begin(is, *(pelec->charge), GlobalC::rhopw, GlobalC::Pgrid, GlobalC::symm);
         }
 
         p_hamilt->non_first_scf = istep;

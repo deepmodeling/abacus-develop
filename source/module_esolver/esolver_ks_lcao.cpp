@@ -186,9 +186,6 @@ void ESolver_KS_LCAO::Init(Input& inp, UnitCell& ucell)
         }
 #endif
 
-        // Initialize the FFT.
-        // this function belongs to cell LOOP
-
         // output is GlobalC::ppcell.vloc 3D local pseudopotentials
         // without structure factors
         // this function belongs to cell LOOP
@@ -368,7 +365,7 @@ void ESolver_KS_LCAO::eachiterinit(const int istep, const int iter)
             // so be careful here, make sure
             // rho1 and rho2 are the same rho.
             // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-            GlobalC::pot.vr = GlobalC::pot.v_of_rho(GlobalC::CHR.rho, GlobalC::CHR.rho_core);
+            GlobalC::pot.vr = GlobalC::pot.v_of_rho(pelec->charge->rho, pelec->charge->rho_core);
             GlobalC::en.delta_escf();
 
             GlobalC::pot.set_vr_eff();
@@ -411,7 +408,7 @@ void ESolver_KS_LCAO::eachiterinit(const int istep, const int iter)
 void ESolver_KS_LCAO::hamilt2density(int istep, int iter, double ethr)
 {
     // save input rho
-    GlobalC::CHR.save_rho_before_sum_band();
+    pelec->charge->save_rho_before_sum_band();
 
     // using HSolverLCAO::solve()
     if (this->phsol != nullptr)
@@ -505,18 +502,11 @@ void ESolver_KS_LCAO::hamilt2density(int istep, int iter, double ethr)
     Symmetry_rho srho;
     for (int is = 0; is < GlobalV::NSPIN; is++)
     {
-        srho.begin(is, GlobalC::CHR, GlobalC::rhopw, GlobalC::Pgrid, GlobalC::symm);
+        srho.begin(is, *(pelec->charge), GlobalC::rhopw, GlobalC::Pgrid, GlobalC::symm);
     }
 
     // (6) compute magnetization, only for spin==2
     GlobalC::ucell.magnet.compute_magnetization();
-
-    // resume codes!
-    //-------------------------------------------------------------------------
-    // this->GlobalC::LOWF.init_Cij( 0 ); // check the orthogonality of local orbital.
-    // GlobalC::CHR.sum_band(); use local orbital in plane wave basis to calculate bands.
-    // but must has evc first!
-    //-------------------------------------------------------------------------
 
     // (7) calculate delta energy
     GlobalC::en.deband = GlobalC::en.delta_e();
@@ -534,12 +524,12 @@ void ESolver_KS_LCAO::updatepot(const int istep, const int iter)
     }
     if (!this->conv_elec)
     {
-        GlobalC::pot.vr = GlobalC::pot.v_of_rho(GlobalC::CHR.rho, GlobalC::CHR.rho_core);
+        GlobalC::pot.vr = GlobalC::pot.v_of_rho(pelec->charge->rho, pelec->charge->rho_core);
         GlobalC::en.delta_escf();
     }
     else
     {
-        GlobalC::pot.vnew = GlobalC::pot.v_of_rho(GlobalC::CHR.rho, GlobalC::CHR.rho_core);
+        GlobalC::pot.vnew = GlobalC::pot.v_of_rho(pelec->charge->rho, pelec->charge->rho_core);
         //(used later for scf correction to the forces )
         GlobalC::pot.vnew -= GlobalC::pot.vr;
         GlobalC::en.descf = 0.0;
@@ -573,9 +563,9 @@ void ESolver_KS_LCAO::eachiterfinish(int iter)
         std::stringstream ss1;
         ssc << GlobalV::global_out_dir << "tmp"
             << "_SPIN" << is + 1 << "_CHG";
-        GlobalC::CHR.write_rho(GlobalC::CHR.rho_save[is], is, iter, ssc.str(), precision); // mohan add 2007-10-17
+        pelec->charge->write_rho(pelec->charge->rho_save[is], is, iter, ssc.str(), precision); // mohan add 2007-10-17
         ss1 << GlobalV::global_out_dir << "tmp" << "_SPIN" << is + 1 << "_CHG.cube";
-        GlobalC::CHR.write_rho_cube(GlobalC::CHR.rho_save[is], is, ss1.str(), 3);
+        pelec->charge->write_rho_cube(pelec->charge->rho_save[is], is, ss1.str(), 3);
 
         std::stringstream ssd;
 
@@ -626,8 +616,8 @@ void ESolver_KS_LCAO::afterscf(const int istep)
         std::stringstream ss1;
         ssc << GlobalV::global_out_dir << "SPIN" << is + 1 << "_CHG";
         ss1 << GlobalV::global_out_dir << "SPIN" << is + 1 << "_CHG.cube";
-        GlobalC::CHR.write_rho(GlobalC::CHR.rho_save[is], is, 0, ssc.str()); // mohan add 2007-10-17
-        GlobalC::CHR.write_rho_cube(GlobalC::CHR.rho_save[is], is, ss1.str(), 3);
+        pelec->charge->write_rho(pelec->charge->rho_save[is], is, 0, ssc.str()); // mohan add 2007-10-17
+        pelec->charge->write_rho_cube(pelec->charge->rho_save[is], is, ss1.str(), 3);
 
         std::stringstream ssd;
         if (GlobalV::GAMMA_ONLY_LOCAL)
@@ -694,7 +684,7 @@ void ESolver_KS_LCAO::afterscf(const int istep)
 
     if (GlobalV::deepks_out_labels) // caoyu add 2021-06-04
     {
-        int nocc = GlobalC::CHR.nelec / 2;
+        int nocc = pelec->charge->nelec / 2;
         if (GlobalV::deepks_bandgap)
         {
             if (GlobalV::GAMMA_ONLY_LOCAL)
@@ -733,7 +723,7 @@ void ESolver_KS_LCAO::afterscf(const int istep)
                                    "e_base.npy"); // ebase :no deepks E_delta including
             if (GlobalV::deepks_bandgap)
             {
-                int nocc = GlobalC::CHR.nelec / 2;
+                int nocc = pelec->charge->nelec / 2;
 
                 ModuleBase::matrix wg_hl;
                 if (GlobalV::GAMMA_ONLY_LOCAL)

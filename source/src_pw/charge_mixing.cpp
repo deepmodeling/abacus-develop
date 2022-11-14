@@ -18,7 +18,7 @@ Charge_Mixing::~Charge_Mixing()
     {
 		deallocate_Pulay();
     }
-	if(initb)
+	if (initb)
 	{
 		deallocate_Broyden();
 	}

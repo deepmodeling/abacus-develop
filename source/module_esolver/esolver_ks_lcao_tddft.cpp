@@ -43,47 +43,6 @@ ESolver_KS_LCAO_TDDFT::~ESolver_KS_LCAO_TDDFT()
 void ESolver_KS_LCAO_TDDFT::Init(Input& inp, UnitCell& ucell)
 {
     ESolver_KS::Init(inp, ucell);
-
-    // Inititlize the charge density.
-    GlobalC::CHR.allocate(GlobalV::NSPIN, GlobalC::rhopw->nrxx, GlobalC::rhopw->npw);
-    // GlobalC::CHR.allocate(GlobalV::NSPIN, GlobalC::rhopw->nrxx, GlobalC::rhopw->npw);
-    ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT CHARGE");
-    // Initializee the potential.
-    GlobalC::pot.allocate(GlobalC::rhopw->nrxx);
-
-    // Initialize the FFT.
-    // this function belongs to cell LOOP
-
-    // output is GlobalC::ppcell.vloc 3D local pseudopotentials
-    // without structure factors
-    // this function belongs to cell LOOP
-    GlobalC::ppcell.init_vloc(GlobalC::ppcell.vloc, GlobalC::rhopw);
-
-    // Initialize the sum of all local potentials.
-    // if ion_step==0, read in/initialize the potentials
-    // this function belongs to ions LOOP
-    int ion_step = 0;
-    GlobalC::pot.init_pot(ion_step, GlobalC::sf.strucFac);
-    ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT POTENTIAL");
-
-    //------------------init Basis_lcao----------------------
-    // Init Basis should be put outside of Ensolver.
-    // * reading the localized orbitals/projectors
-    // * construct the interpolation tables.
-    this->Init_Basis_lcao(this->orb_con, inp, ucell);
-    //------------------init Basis_lcao----------------------
-
-    //------------------init Hamilt_lcao----------------------
-    // * allocate H and S matrices according to computational resources
-    // * set the 'trace' between local H/S and global H/S
-    this->LM.divide_HS_in_frag(GlobalV::GAMMA_ONLY_LOCAL, orb_con.ParaV);
-    //------------------init Hamilt_lcao----------------------
-
-    // pass Hamilt-pointer to Operator
-    this->UHM.genH.LM = this->UHM.LM = &this->LM;
-    // pass basis-pointer to EState and Psi
-    this->LOC.ParaV = this->LOWF.ParaV = this->LM.ParaV;
-
     // init Psi, HSolver, ElecState, Hamilt
     if (this->phsol != nullptr)
     {
@@ -117,6 +76,42 @@ void ESolver_KS_LCAO_TDDFT::Init(Input& inp, UnitCell& ucell)
                                                             &(this->LOWF));
     }
     this->pelec_td = dynamic_cast<elecstate::ElecStateLCAO_TDDFT*>(this->pelec);
+
+    // Inititlize the charge density.
+    pelec->charge->allocate(GlobalV::NSPIN, GlobalC::rhopw->nrxx, GlobalC::rhopw->npw);
+    ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT CHARGE");
+    // Initializee the potential.
+    GlobalC::pot.allocate(GlobalC::rhopw->nrxx);
+
+    // output is GlobalC::ppcell.vloc 3D local pseudopotentials
+    // without structure factors
+    // this function belongs to cell LOOP
+    GlobalC::ppcell.init_vloc(GlobalC::ppcell.vloc, GlobalC::rhopw);
+
+    // Initialize the sum of all local potentials.
+    // if ion_step==0, read in/initialize the potentials
+    // this function belongs to ions LOOP
+    int ion_step = 0;
+    GlobalC::pot.init_pot(ion_step, GlobalC::sf.strucFac);
+    ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT POTENTIAL");
+
+    //------------------init Basis_lcao----------------------
+    // Init Basis should be put outside of Ensolver.
+    // * reading the localized orbitals/projectors
+    // * construct the interpolation tables.
+    this->Init_Basis_lcao(this->orb_con, inp, ucell);
+    //------------------init Basis_lcao----------------------
+
+    //------------------init Hamilt_lcao----------------------
+    // * allocate H and S matrices according to computational resources
+    // * set the 'trace' between local H/S and global H/S
+    this->LM.divide_HS_in_frag(GlobalV::GAMMA_ONLY_LOCAL, orb_con.ParaV);
+    //------------------init Hamilt_lcao----------------------
+
+    // pass Hamilt-pointer to Operator
+    this->UHM.genH.LM = this->UHM.LM = &this->LM;
+    // pass basis-pointer to EState and Psi
+    this->LOC.ParaV = this->LOWF.ParaV = this->LM.ParaV;
 }
 
 void ESolver_KS_LCAO_TDDFT::eachiterinit(const int istep, const int iter)
@@ -189,7 +184,7 @@ void ESolver_KS_LCAO_TDDFT::eachiterinit(const int istep, const int iter)
             // so be careful here, make sure
             // rho1 and rho2 are the same rho.
             // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-            GlobalC::pot.vr = GlobalC::pot.v_of_rho(GlobalC::CHR.rho, GlobalC::CHR.rho_core);
+            GlobalC::pot.vr = GlobalC::pot.v_of_rho(pelec->charge->rho, pelec->charge->rho_core);
             GlobalC::en.delta_escf();
             if (ELEC_evolve::td_vext == 0)
             {
@@ -217,7 +212,7 @@ void ESolver_KS_LCAO_TDDFT::eachiterinit(const int istep, const int iter)
 void ESolver_KS_LCAO_TDDFT::hamilt2density(int istep, int iter, double ethr)
 {
 
-    GlobalC::CHR.save_rho_before_sum_band();
+    pelec->charge->save_rho_before_sum_band();
 
     if (GlobalV::ESOLVER_TYPE == "tddft" && istep >= 2 && !GlobalV::GAMMA_ONLY_LOCAL)
     {
@@ -294,19 +289,12 @@ void ESolver_KS_LCAO_TDDFT::hamilt2density(int istep, int iter, double ethr)
         Symmetry_rho srho;
         for (int is = 0; is < GlobalV::NSPIN; is++)
         {
-            srho.begin(is, GlobalC::CHR, GlobalC::rhopw, GlobalC::Pgrid, GlobalC::symm);
+            srho.begin(is, *(pelec->charge), GlobalC::rhopw, GlobalC::Pgrid, GlobalC::symm);
         }
     }
 
     // (6) compute magnetization, only for spin==2
     GlobalC::ucell.magnet.compute_magnetization();
-
-    // resume codes!
-    //-------------------------------------------------------------------------
-    // this->GlobalC::LOWF.init_Cij( 0 ); // check the orthogonality of local orbital.
-    // GlobalC::CHR.sum_band(); use local orbital in plane wave basis to calculate bands.
-    // but must has evc first!
-    //-------------------------------------------------------------------------
 
     // (7) calculate delta energy
     GlobalC::en.deband = GlobalC::en.delta_e();
@@ -325,12 +313,12 @@ void ESolver_KS_LCAO_TDDFT::updatepot(const int istep, const int iter)
     }
     if (!this->conv_elec)
     {
-        GlobalC::pot.vr = GlobalC::pot.v_of_rho(GlobalC::CHR.rho, GlobalC::CHR.rho_core);
+        GlobalC::pot.vr = GlobalC::pot.v_of_rho(pelec->charge->rho, pelec->charge->rho_core);
         GlobalC::en.delta_escf();
     }
     else
     {
-        GlobalC::pot.vnew = GlobalC::pot.v_of_rho(GlobalC::CHR.rho, GlobalC::CHR.rho_core);
+        GlobalC::pot.vnew = GlobalC::pot.v_of_rho(pelec->charge->rho, pelec->charge->rho_core);
         //(used later for scf correction to the forces )
         GlobalC::pot.vnew -= GlobalC::pot.vr;
         GlobalC::en.descf = 0.0;
@@ -417,8 +405,8 @@ void ESolver_KS_LCAO_TDDFT::afterscf(const int istep)
         std::stringstream ss1;
         ssc << GlobalV::global_out_dir << "SPIN" << is + 1 << "_CHG";
         ss1 << GlobalV::global_out_dir << "SPIN" << is + 1 << "_CHG.cube";
-        GlobalC::CHR.write_rho(GlobalC::CHR.rho_save[is], is, 0, ssc.str()); // mohan add 2007-10-17
-        GlobalC::CHR.write_rho_cube(GlobalC::CHR.rho_save[is], is, ss1.str(), 3);
+        pelec->charge->write_rho(pelec->charge->rho_save[is], is, 0, ssc.str()); // mohan add 2007-10-17
+        pelec->charge->write_rho_cube(pelec->charge->rho_save[is], is, ss1.str(), 3);
 
         std::stringstream ssd;
         if (GlobalV::GAMMA_ONLY_LOCAL)

@@ -41,7 +41,7 @@ void Stress_Func::stress_cc(ModuleBase::matrix& sigma, ModulePW::PW_Basis* rho_b
 #ifdef USE_LIBXC
     	const auto etxc_vtxc_v = XC_Functional::v_xc_meta(
             rho_basis->nrxx, rho_basis->nxyz, GlobalC::ucell.omega,
-            GlobalC::CHR.rho, GlobalC::CHR.rho_core, GlobalC::CHR.kin_r);
+            &GlobalC::CHR);
         
         GlobalC::en.etxc = std::get<0>(etxc_vtxc_v);
         GlobalC::en.vtxc = std::get<1>(etxc_vtxc_v);
@@ -52,7 +52,7 @@ void Stress_Func::stress_cc(ModuleBase::matrix& sigma, ModulePW::PW_Basis* rho_b
 	}
 	else
 	{
-    	const auto etxc_vtxc_v = XC_Functional::v_xc(rho_basis->nrxx, rho_basis->nxyz, GlobalC::ucell.omega, GlobalC::CHR.rho, GlobalC::CHR.rho_core);
+    	const auto etxc_vtxc_v = XC_Functional::v_xc(rho_basis->nrxx, rho_basis->nxyz, GlobalC::ucell.omega, &GlobalC::CHR);
 		GlobalC::en.etxc    = std::get<0>(etxc_vtxc_v);			// may delete?
 		GlobalC::en.vtxc    = std::get<1>(etxc_vtxc_v);			// may delete?
 		vxc = std::get<2>(etxc_vtxc_v);
