@@ -2,9 +2,6 @@
 #include "../module_base/global_function.h"
 #include "../module_base/global_variable.h"
 #include "global.h"
-// #ifdef __LCAO
-// #include "../src_lcao/global_fp.h"
-// #endif
 
 Charge_Extra::Charge_Extra()
 {
@@ -22,15 +19,6 @@ Charge_Extra::~Charge_Extra()
         delete[] delta_rho1;
         delete[] delta_rho2;
     }
-
-    // if(pot_order > 2)
-    // {
-    //     for(int is=0; is<GlobalV::NSPIN; is++)
-    //     {
-    //         delete[] delta_rho3[is];
-    //     }	
-    //     delete[] delta_rho3;
-    // }
 
     delete[] pos_old1;
     delete[] pos_old2;
@@ -73,16 +61,6 @@ void Charge_Extra::Init_CE()
             ModuleBase::GlobalFunc::ZEROS(delta_rho2[is], GlobalC::rhopw->nrxx);
         }
     }
-
-    // if(pot_order > 2)
-    // {
-    //     delta_rho3 = new double*[GlobalV::NSPIN];
-    //     for(int is=0; is<GlobalV::NSPIN; is++)
-    //     {
-    //         delta_rho3[is] = new double[GlobalC::rhopw->nrxx];
-    //         ModuleBase::GlobalFunc::ZEROS(delta_rho3[is], GlobalC::rhopw->nrxx);
-    //     }
-    // }
 
     natom = GlobalC::ucell.nat;
 
@@ -492,28 +470,19 @@ void Charge_Extra::find_alpha_and_beta(void)
     return;
 }
 
-void Charge_Extra::save_pos_next(const UnitCell_pseudo& ucell)
+void Charge_Extra::save_pos_next(const UnitCell& ucell)
 {
     ucell.save_cartesian_position_original(this->pos_next);
     return;
 }
 
-void Charge_Extra::update_istep(const int &step)
+void Charge_Extra::update_istep()
 {
-    //This is because md and relaxation are not unified yet
-    //will update later
-    if(GlobalV::CALCULATION=="relax" || GlobalV::CALCULATION=="cell-relax")
-    {
-        this->istep++;
-    }
-    else
-    {
-        this->istep = step;
-    }
+    this->istep++;
     return;
 }
 
-void Charge_Extra::update_all_pos(const UnitCell_pseudo& ucell)
+void Charge_Extra::update_all_pos(const UnitCell& ucell)
 {
     for(int i=0; i<natom; ++i)
     {
@@ -524,7 +493,7 @@ void Charge_Extra::update_all_pos(const UnitCell_pseudo& ucell)
             this->pos_now[i] = this->pos_next[i];
         }
     }
-    if(GlobalV::CALCULATION=="md"||GlobalV::CALCULATION=="sto-md"||GlobalV::CALCULATION=="of-md")
+    if(GlobalV::CALCULATION=="md")
         ucell.save_cartesian_position_original(this->pos_now);
     return;
 }

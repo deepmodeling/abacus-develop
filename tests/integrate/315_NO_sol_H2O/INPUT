@@ -1,0 +1,22 @@
+INPUT_PARAMETERS
+#Parameters	(General)
+suffix      	autotest
+pseudo_dir	../../PP_ORB
+orbital_dir	../../PP_ORB
+ntype			2	
+gamma_only              1
+nbands			20
+calculation 	scf
+basis_type		lcao
+cal_force           1
+
+#Parameters (Accuracy)
+ecutwfc			20
+scf_nmax	    50
+
+#Parameters (Solvation Model)
+imp_sol                 1
+eb_k                    80
+tau                     0.000010798
+sigma_k                 0.6
+nc_k                    0.00037

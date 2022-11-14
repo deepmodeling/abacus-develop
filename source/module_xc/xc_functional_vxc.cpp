@@ -239,7 +239,7 @@ std::tuple<double,double,ModuleBase::matrix> XC_Functional::v_xc_libxc(
             // bring electron charge density from real space to reciprocal space
             //------------------------------------------
             std::vector<std::complex<double>> rhog(GlobalC::rhopw->npw);
-            GlobalC::CHR.set_rhog(rhor.data(), rhog.data());
+            GlobalC::rhopw->real2recip(rhor.data(), rhog.data());
 
             //-------------------------------------------
             // compute the gradient of charge density and
@@ -463,7 +463,7 @@ tuple<double,double,ModuleBase::matrix,ModuleBase::matrix> XC_Functional::v_xc_m
         // bring electron charge density from real space to reciprocal space
         //------------------------------------------
         std::vector<std::complex<double>> rhog(GlobalC::rhopw->npw);
-        GlobalC::CHR.set_rhog(rhor.data(), rhog.data());
+        GlobalC::rhopw->real2recip(rhor.data(), rhog.data());
 
         //-------------------------------------------
         // compute the gradient of charge density and

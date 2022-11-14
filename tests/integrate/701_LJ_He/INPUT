@@ -5,7 +5,7 @@ ntype		    1
 calculation         md
 pseudo_dir          ../../PP_ORB
 
-md_ensolver         LJ
+esolver_type        lj
 lj_rcut             8.5
 lj_epsilon          0.01032
 lj_sigma            3.405

@@ -22,11 +22,11 @@ public:
 		 double smearing_sigma;
 		 
 		 void Init();
-		 void Cal_epsilon0();
+		 void Cal_epsilon0(const elecstate::ElecState* pelec);
 		 void Delete();
 		 double wgrid(int iw);
-		 double focc(int ib, int ik);
-		 void Cal_dipole(int ik);
+		 double focc(int ib, int ik, const elecstate::ElecState* pelec);
+		 void Cal_dipole(int ik, const elecstate::ElecState* pelec);
 		 
 		 double **epsr;
 		 double **epsi;

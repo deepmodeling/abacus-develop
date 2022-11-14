@@ -2,7 +2,6 @@
 
 #include "diago_blas.h"
 #include "diago_elpa.h"
-#include "diago_lapack.h"
 #include "module_base/timer.h"
 #include "src_io/write_HS.h"
 
@@ -54,6 +53,10 @@ void HSolverLCAO::solveTemplate(hamilt::Hamilt* pHamilt,
     }
     else if (this->method == "lapack")
     {
+        //We are not supporting diagonalization with lapack
+        //until the obsolete globalc::hm is removed from
+        //diago_lapack.cpp
+        /*
         if (pdiagh != nullptr)
         {
             if (pdiagh->method != this->method)
@@ -67,6 +70,7 @@ void HSolverLCAO::solveTemplate(hamilt::Hamilt* pHamilt,
             pdiagh = new DiagoLapack();
             pdiagh->method = this->method;
         }
+        */
     }
     else
     {

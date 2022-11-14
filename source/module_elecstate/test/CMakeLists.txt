@@ -13,6 +13,9 @@ if(ENABLE_LCAO)
             ../../src_pw/structure_factor.cpp ../../src_pw/pw_complement.cpp
             ../../src_pw/klist.cpp ../../src_parallel/parallel_kpoints.cpp ../../src_pw/occupy.cpp
   )
+  if(USE_CUDA)
+    target_link_libraries(EState_updaterhok_pw cufft)
+  endif()
 
   install(DIRECTORY support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
@@ -35,6 +38,9 @@ if(ENABLE_LCAO)
               ../../src_pdiag/pdiag_common.cpp
               ../../src_io/output.cpp ../../src_pw/soc.cpp ../../src_io/read_rho.cpp
   )
+  if(USE_CUDA)
+    target_link_libraries(EState_psiToRho_lcao cufft)
+  endif()
   target_compile_definitions(EState_psiToRho_lcao PRIVATE __MPI)
   install(FILES elecstate_lcao_parallel_test.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
@@ -83,9 +89,7 @@ add_library(
   ../../module_base/ylm.cpp
 )
 
-add_library(
-  planewave_serial
-  OBJECT
+list(APPEND planewave_serial_srcs
   ../../module_pw/fft.cpp
   ../../module_pw/pw_basis.cpp
   ../../module_pw/pw_basis_k.cpp
@@ -96,6 +100,17 @@ add_library(
   ../../module_pw/pw_init.cpp
   ../../module_pw/pw_transform.cpp
   ../../module_pw/pw_transform_k.cpp
+  ../../module_pw/src/pw_multi_device.cpp
+)
+
+if (USE_CUDA)
+  list(APPEND planewave_serial_srcs ../../module_pw/src/cuda/pw_multi_device.cu)
+endif()
+
+add_library(
+  planewave_serial
+  OBJECT
+  ${planewave_serial_srcs}
 )
 
 if(ENABLE_COVERAGE)

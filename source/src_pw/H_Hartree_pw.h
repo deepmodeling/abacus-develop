@@ -5,7 +5,6 @@
 #include "../module_base/global_variable.h"
 #include "../module_base/matrix.h"
 #include "../module_cell/unitcell.h"
-#include "use_fft.h"
 #include "module_pw/pw_basis.h"
 
 class H_Hartree_pw

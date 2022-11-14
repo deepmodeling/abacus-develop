@@ -9,8 +9,6 @@ list(APPEND objects
     charge_extra.cpp
     charge_mixing.cpp
     charge_pulay.cpp
-    diago_cg_old.cpp
-    diago_david_old.cpp
     energy.cpp
     forces.cpp
     global.cpp
@@ -40,17 +38,14 @@ list(APPEND objects
     of_stress_pw.cpp
     symmetry_rho.cpp
     threshold_elec.cpp
-    use_fft.cpp
     wavefunc.cpp
     wf_atomic.cpp
     wf_igk.cpp
     xc_3.cpp
-    run_md_pw.cpp
 )
 if(USE_CUDA)
     list(APPEND objects
         diago_cg.cu
-        electrons.cu
         hamilt.cu
         hamilt_pw.cu
         use_fft_kernel.cu
@@ -58,7 +53,6 @@ if(USE_CUDA)
 elseif(USE_ROCM)
     list(APPEND objects
         diago_cg_hip.cpp
-        electrons_hip.cpp
         hamilt_hip.cpp
         hamilt_pw_hip.cpp
         use_fft_kernel_hip.cpp
@@ -66,8 +60,6 @@ elseif(USE_ROCM)
 else()
     list(APPEND objects
         hamilt.cpp
-        hamilt_pw_old.cpp
-        electrons.cpp
     )
 endif()
 

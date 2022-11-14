@@ -29,6 +29,7 @@ extern double PSEUDORCUT;
 extern bool PSEUDO_MESH;
 
 extern std::string CALCULATION; // 2 "scf";"nscf" ;"symmetry"
+extern std::string ESOLVER_TYPE;
 extern int EFIELD_FLAG; // 5 add electric field
 extern int DIP_COR_FLAG; // 7 add dipole correction
 extern bool GATE_FLAG;     // add gate field
@@ -52,6 +53,11 @@ extern std::string RELAX_METHOD;
 extern std::string OUT_LEVEL;
 extern int OUT_FREQ_ELEC;
 extern int OUT_FREQ_ION;
+
+extern double relax_scale_force;
+extern bool relax_new;
+
+extern bool fixed_atoms;
 
 extern int RELAX_NMAX; // 8.3
 extern int SCF_NMAX; // 8.4
@@ -163,6 +169,7 @@ extern std::string global_matrix_dir; // liuyu add 2022-09-19 for HS matrix outp
 extern std::ofstream ofs_running;
 extern std::ofstream ofs_warning;
 extern std::ofstream ofs_info;
+extern std::ofstream ofs_device;
 
 //==========================================================
 // EXPLAIN : test level for each class

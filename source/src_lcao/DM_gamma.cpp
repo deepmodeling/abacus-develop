@@ -192,7 +192,7 @@ int Local_Orbital_Charge::setAlltoallvParameter(MPI_Comm comm_2D, int blacs_ctxt
 
 // allocate density kernel may change once the ion
 // positions change
-void Local_Orbital_Charge::allocate_gamma(const int& lgd, psi::Psi<double>* psid)
+void Local_Orbital_Charge::allocate_gamma(const int& lgd, psi::Psi<double>* psid, elecstate::ElecState* pelec)
 {
      ModuleBase::TITLE("Local_Orbital_Charge","allocate_gamma");
 
@@ -258,12 +258,12 @@ void Local_Orbital_Charge::allocate_gamma(const int& lgd, psi::Psi<double>* psid
 
     if(GlobalC::wf.init_wfc=="file")
     {
-        this->gamma_file(psid, this->LOWF[0]);
+        this->gamma_file(psid, this->LOWF[0], pelec);
     }
     return;
 }
 
-void Local_Orbital_Charge::gamma_file(psi::Psi<double>* psid, Local_Orbital_wfc &lowf)
+void Local_Orbital_Charge::gamma_file(psi::Psi<double>* psid, Local_Orbital_wfc &lowf, elecstate::ElecState* pelec)
 {
 	ModuleBase::TITLE("Local_Orbital_Charge","gamma_file");
 
@@ -296,7 +296,7 @@ void Local_Orbital_Charge::gamma_file(psi::Psi<double>* psid, Local_Orbital_wfc 
 	{
 
 		GlobalV::ofs_running << " Read in wave functions " << is << std::endl;
-		error = WF_Local::read_lowf( ctot , is, this->ParaV, psid);
+		error = WF_Local::read_lowf( ctot , is, this->ParaV, psid, pelec);
 #ifdef __MPI
 		Parallel_Common::bcast_int(error);
 #endif
@@ -443,7 +443,7 @@ void Local_Orbital_Charge::cal_dk_gamma_from_2D(void)
 }
 
 //--------------------------------------------------------------
-void Local_Orbital_Charge::cal_dk_gamma(void)
+void Local_Orbital_Charge::cal_dk_gamma(ModuleBase::matrix& wg)
 {
     ModuleBase::TITLE("Local_Orbital_Charge","cal_density_kernal");
     ModuleBase::timer::tick("LocalOrbital_Charge","cal_dk_gamma");
@@ -503,7 +503,7 @@ void Local_Orbital_Charge::cal_dk_gamma(void)
 			{
 				for (int ib=0; ib<bands_local[myid]; ib++)
 				{
-					wg_local(is,ib) = GlobalC::wf.wg(is,Total_Bands+ib);
+					wg_local(is,ib) = wg(is,Total_Bands+ib);
 				}
 			}
 		}

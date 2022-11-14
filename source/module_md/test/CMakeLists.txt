@@ -4,7 +4,6 @@ add_definitions(-D__CMD -D__NORMAL)
 list(APPEND depend_files 
   ../MD_func.cpp
   ../../input.cpp
-  ../../module_cell/unitcell_pseudo.cpp
   ../../module_cell/unitcell.cpp
   ../../module_cell/atom_spec.cpp
   ../../module_cell/atom_pseudo.cpp
@@ -76,7 +75,7 @@ AddTest(
   LIBS ${math_libs} psi
   SOURCES NVT_NHC_test.cpp
   ../mdrun.cpp
-  ../NVT_NHC.cpp
+  ../Nose_Hoover.cpp
   ${depend_files}
 )
 

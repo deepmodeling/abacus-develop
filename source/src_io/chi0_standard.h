@@ -4,6 +4,7 @@
 #include "../src_pw/wavefunc.h"
 #include "../src_parallel/parallel_global.h"
 #include "../module_pw/pw_basis.h"
+#include "module_elecstate/elecstate.h"
 
 class Chi0_standard
 {
@@ -26,16 +27,16 @@ public:
 	  int nq;
 	  bool out_epsilon;
 	  
-	  void Chi();
+	  void Chi(const elecstate::ElecState* pelec);
 	  void Parallel_G();
 	  void Init();
 	  void Delete();
 	  void Cal_Psi(int iq, std::complex<double> **psi_r);
 	  void Cal_b(int iq, int ik, int iqk,  ModulePW::PW_Basis *rho_basis);
-	  void Cal_weight(int iq, int ik, double omega);
+	  void Cal_weight(int iq, int ik, double omega, const elecstate::ElecState* pelec);
 	  void Cal_last();
 	  void Cal_first();
-	  void Cal_chi0(int iq, double omega);
+	  void Cal_chi0(int iq, double omega, const elecstate::ElecState* pelec);
 	  void Cal_rpa(int iq);
 	  void Cal_chi();
 	  double qg2( int iq, int g0);

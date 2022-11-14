@@ -19,9 +19,10 @@ class ESolver_KS_LCAO_TDDFT : public ESolver_KS_LCAO
   public:
     ESolver_KS_LCAO_TDDFT();
     ~ESolver_KS_LCAO_TDDFT();
-    void Init(Input& inp, UnitCell_pseudo& cell) override;
+    void Init(Input& inp, UnitCell& cell) override;
 
     psi::Psi<std::complex<double>>* psi_laststep = nullptr;
+    //same as pelec
     elecstate::ElecStateLCAO_TDDFT* pelec_td = nullptr;
 
   protected:

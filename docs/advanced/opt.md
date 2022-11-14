@@ -69,4 +69,12 @@ then the first Al atom will not be allowed to move in z direction.
 Fixing atomic position is sometimes helpful during relaxation of isolated molecule/cluster, to prevent the system from drifting in space.
 
 ### Fixing Cell Parameters
-Sometimes we want to do variable-cell relaxation with some of the cell degrees of freedom fixed. This is achieved by the [fixed_axes](./input_files/input-main.md#fixed_axes) keyword. We offer the options of fixing certain axis(axes), or fixing the volume.
+Sometimes we want to do variable-cell relaxation with some of the cell degrees of freedom fixed. This is achieved by keywords such as [fixed_axes](./input_files/input-main.md#fixed_axes), [fixed_ibrav](./input_files/input-main.md#fixed_ibrav) and [fixed_atoms](./input_files/input-main.md#fixed_atoms). Specifically, if users are familiar with the `ISIF` option from VASP, then we offer the following correspondence:
+
+- ISIF = 0 : calculation = "relax"
+- ISIF = 1, 2 : calculation = "relax", cal_stress = 1
+- ISIF = 3 : calculation = "cell-relax"
+- ISIF = 4 : calculation = "cell-relax", fixed_axes = "volume"
+- ISIF = 5 : calculation = "cell-relax", fixed_axes = "volume", fixed_atoms = True
+- ISIF = 6 : calculation = "cell-relax", fixed_atoms = True
+- ISIF = 7 : calculation = "cell-realx", fixed_axes = "shape", fixed_atoms = True

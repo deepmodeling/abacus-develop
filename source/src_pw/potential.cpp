@@ -208,7 +208,7 @@ void Potential::set_local_pot(double *vl_pseudo, // store the local pseudopotent
         }
     }
 
-    GlobalC::UFFT.ToRealSpace(vg, vl_pseudo, rho_basis);
+    rho_basis->recip2real(vg, vl_pseudo);
 
     if (GlobalV::EFIELD_FLAG && !GlobalV::DIP_COR_FLAG)
     {
@@ -366,7 +366,7 @@ void Potential::newd(void)
     for (int iat = 0; iat < GlobalC::ucell.nat; iat++)
     {
         const int it = GlobalC::ucell.iat2it[iat];
-        const int nht = GlobalC::ucell.atoms[it].nh;
+        const int nht = GlobalC::ucell.atoms[it].ncpp.nh;
         // nht: number of beta functions per atom type
         for (int is = 0; is < GlobalV::NSPIN; is++)
         {
@@ -423,6 +423,10 @@ void Potential::newd(void)
                GlobalC::ppcell.deeq.ptr,
                GlobalV::NSPIN * GlobalC::ucell.nat * GlobalC::ppcell.nhm * GlobalC::ppcell.nhm * sizeof(double),
                cudaMemcpyHostToDevice);
+    cudaMemcpy(GlobalC::ppcell.d_deeq_nc,
+           GlobalC::ppcell.deeq_nc.ptr,
+           GlobalV::NSPIN * GlobalC::ucell.nat * GlobalC::ppcell.nhm * GlobalC::ppcell.nhm * sizeof(std::complex<double>),
+           cudaMemcpyHostToDevice);
 #endif
     return;
 } // end subroutine newd

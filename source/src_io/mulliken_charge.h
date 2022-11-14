@@ -36,9 +36,9 @@ class Mulliken_Charge
 
 	std::complex<double> *mug;
 
-	void cal_mulliken(LCAO_Hamilt &uhm);
+	void cal_mulliken(LCAO_Hamilt &uhm, const ModuleBase::matrix& wg);
 
-	void stdout_mulliken(LCAO_Hamilt &uhm );
+	void stdout_mulliken(LCAO_Hamilt &uhm, const ModuleBase::matrix &wg);
 
 	private:
 

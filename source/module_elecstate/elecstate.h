@@ -81,12 +81,12 @@ class ElecState
 
     std::string classname = "none";
 
+    // print and check for band energy and occupations
+    void print_band(const int &ik, const int &printe, const int &iter);
+
   protected:
     // calculate ebands for all k points and all occupied bands
     void calEBand();
-
-    // print and check for band energy and occupations
-    void print_band(const int &ik, const int &printe, const int &iter);
 };
 
 } // namespace elecstate

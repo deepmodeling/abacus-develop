@@ -4,10 +4,10 @@
 #include "../module_base/global_function.h"
 #include "../module_base/global_variable.h"
 #include "../src_io/restart.h"
-#include "../module_relaxation/ions.h"
+#include "../module_relax/relax_driver.h"
 #include "../src_ri/exx_lip.h"
 #include "VNL_in_pw.h"
-#include "charge_broyden.h"
+#include "charge_mixing.h"
 #include "energy.h"
 #include "../module_xc/exx_global.h"
 #include "hamilt.h"
@@ -16,7 +16,6 @@
 #include "potential.h"
 #include "structure_factor.h"
 #include "../module_pw/pw_basis_k.h"
-#include "use_fft.h"
 #include "wavefunc.h"
 #include "../module_xc/xc_functional.h"
 
@@ -305,7 +304,6 @@ static const char *_hipfftGetErrorString(hipfftResult_t error)
 namespace GlobalC
 {
 extern K_Vectors kv;
-extern Use_FFT UFFT;
 extern Structure_Factor sf;
 extern ModulePW::PW_Basis* rhopw;
 extern ModulePW::PW_Basis_Big* bigpw;
@@ -318,14 +316,15 @@ extern Exx_Lip exx_lip;
 extern pseudopot_cell_vnl ppcell;
 } // namespace GlobalC
 
-#include "../module_cell/unitcell_pseudo.h"
+#include "../module_cell/unitcell.h"
 #include "../module_symmetry/symmetry.h"
 #include "../src_parallel/parallel_grid.h"
 #include "../src_parallel/parallel_kpoints.h"
 namespace GlobalC
 {
-extern UnitCell_pseudo ucell;
-extern Charge_Broyden CHR;
+extern UnitCell ucell;
+extern Charge CHR;
+extern Charge_Mixing CHR_MIX;
 extern Potential pot;
 extern ModuleSymmetry::Symmetry symm;
 extern Parallel_Grid Pgrid;

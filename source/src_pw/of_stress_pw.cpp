@@ -4,7 +4,7 @@
 #include "module_vdw/vdw.h"
 
 // Since the kinetic stress of OFDFT is calculated by kinetic functionals in esolver_of.cpp, here we regard it as an input variable.
-void OF_Stress_PW::cal_stress(ModuleBase::matrix& sigmatot, ModuleBase::matrix& kinetic_stress, const psi::Psi<complex<double>>* psi_in)
+void OF_Stress_PW::cal_stress(ModuleBase::matrix& sigmatot, const ModuleBase::matrix& wg, ModuleBase::matrix& kinetic_stress, const psi::Psi<complex<double>>* psi_in)
 {
 	ModuleBase::TITLE("OF_Stress_PW","cal_stress");
 	ModuleBase::timer::tick("OF_Stress_PW","cal_stress");    
@@ -65,7 +65,7 @@ void OF_Stress_PW::cal_stress(ModuleBase::matrix& sigmatot, ModuleBase::matrix& 
        sigmaxc(i,i) = - (GlobalC::en.etxc - GlobalC::en.vtxc) / GlobalC::ucell.omega;
     }
     stress_gga(sigmaxc);
-    if(XC_Functional::get_func_type() == 3) stress_mgga(sigmaxc, psi_in);
+    if(XC_Functional::get_func_type() == 3) stress_mgga(sigmaxc, wg, psi_in);
 
     //local contribution
     stress_loc(sigmaloc, GlobalC::rhopw, 1);
@@ -74,7 +74,7 @@ void OF_Stress_PW::cal_stress(ModuleBase::matrix& sigmatot, ModuleBase::matrix& 
     stress_cc(sigmaxcc, GlobalC::rhopw, 1);
    
     //nonlocal
-	stress_nl(sigmanl, psi_in);
+	stress_nl(sigmanl, wg, psi_in);
 
 	//vdw term
 	stress_vdw(sigmavdw);

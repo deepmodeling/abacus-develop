@@ -10,7 +10,6 @@ add_library(
     read_pp_blps.cpp
     read_pp_vwr.cpp
     unitcell.cpp
-    unitcell_pseudo.cpp
     read_atoms.cpp
     read_cell_pseudopots.cpp
     setup_nonlocal.cpp

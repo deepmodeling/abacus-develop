@@ -232,7 +232,7 @@ public:
 
     //calculates <chi|alpha>
     void build_psialpha(const bool& cal_deri/**< [in] 0 for 2-center intergration, 1 for its derivation*/,
-        const UnitCell_pseudo &ucell,
+        const UnitCell &ucell,
         const LCAO_Orbitals &orb,
         Grid_Driver &GridD,
         const int* trace_loc_row,
@@ -240,7 +240,7 @@ public:
         const ORB_gen_tables &UOT);
 
     void check_psialpha(const bool& cal_deri/**< [in] 0 for 2-center intergration, 1 for its derivation*/,
-        const UnitCell_pseudo &ucell,
+        const UnitCell &ucell,
         const LCAO_Orbitals &orb,
         Grid_Driver &GridD,
         const int* trace_loc_row,
@@ -273,13 +273,13 @@ public:
     ///calculate projected density matrix:
     ///pdm = sum_i,occ <phi_i|alpha1><alpha2|phi_k>
     void cal_projected_DM(const ModuleBase::matrix& dm/**< [in] density matrix*/,
-        const UnitCell_pseudo &ucell,
+        const UnitCell &ucell,
         const LCAO_Orbitals &orb,
         Grid_Driver &GridD,
         const int* trace_loc_row,
         const int* trace_loc_col);
     void cal_projected_DM_k(const std::vector<ModuleBase::ComplexMatrix>& dm,
-        const UnitCell_pseudo &ucell,
+        const UnitCell &ucell,
         const LCAO_Orbitals &orb,
         Grid_Driver &GridD,
         const int* trace_loc_row,
@@ -291,14 +291,14 @@ public:
     //calculate the gradient of pdm with regard to atomic positions
     //d/dX D_{Inl,mm'}
     void cal_gdmx(const ModuleBase::matrix& dm,
-        const UnitCell_pseudo &ucell,
+        const UnitCell &ucell,
         const LCAO_Orbitals &orb,
         Grid_Driver &GridD,
         const int* trace_loc_row,
         const int* trace_loc_col,
         const bool isstress);
     void cal_gdmx_k(const std::vector<ModuleBase::ComplexMatrix>& dm,
-        const UnitCell_pseudo &ucell,
+        const UnitCell &ucell,
         const LCAO_Orbitals &orb,
         Grid_Driver &GridD,
         const int* trace_loc_row,
@@ -329,14 +329,14 @@ public:
 public:
 
     ///add dV to the Hamiltonian matrix
-    void add_v_delta(const UnitCell_pseudo &ucell,
+    void add_v_delta(const UnitCell &ucell,
         const LCAO_Orbitals &orb,
         Grid_Driver &GridD,
         const int* trace_loc_row,
         const int* trace_loc_col,
 	    const int nrow,
         const int ncol);
-    void add_v_delta_k(const UnitCell_pseudo &ucell,
+    void add_v_delta_k(const UnitCell &ucell,
         const LCAO_Orbitals &orb,
         Grid_Driver &GridD,
         const int* trace_loc_row,
@@ -374,7 +374,7 @@ public:
 
     //for gamma only, pulay and HF terms of force are calculated together
     void cal_f_delta_gamma(const ModuleBase::matrix& dm/**< [in] density matrix*/,
-        const UnitCell_pseudo &ucell,
+        const UnitCell &ucell,
         const LCAO_Orbitals &orb,
         Grid_Driver &GridD,
         const int* trace_loc_row,
@@ -383,7 +383,7 @@ public:
 
     //for multi-k, pulay and HF terms of force are calculated together
     void cal_f_delta_k(const std::vector<ModuleBase::ComplexMatrix>& dm/**<[in] density matrix*/,
-        const UnitCell_pseudo &ucell,
+        const UnitCell &ucell,
         const LCAO_Orbitals &orb,
         Grid_Driver &GridD,
         const int* trace_loc_row,
@@ -453,7 +453,7 @@ public:
     ///which are eigenvalues of pdm in blocks of I_n_l
 	void cal_descriptor(void);
     ///print descriptors based on LCAO basis
-    void check_descriptor(const UnitCell_pseudo &ucell);
+    void check_descriptor(const UnitCell &ucell);
 
     ///calculates gradient of descriptors w.r.t atomic positions
     ///----------------------------------------------------
@@ -480,7 +480,7 @@ public:
     //calculates orbital_precalc
     void cal_orbital_precalc(const std::vector<ModuleBase::matrix>& dm_hl/**<[in] density matrix*/,
         const int nat,
-        const UnitCell_pseudo &ucell,
+        const UnitCell &ucell,
         const LCAO_Orbitals &orb,
         Grid_Driver &GridD,
         const Parallel_Orbitals &ParaO);
@@ -490,7 +490,7 @@ public:
         const int nat,
         const int nks,
         const std::vector<ModuleBase::Vector3<double>> &kvec_d,
-        const UnitCell_pseudo &ucell,
+        const UnitCell &ucell,
         const LCAO_Orbitals &orb,
         Grid_Driver &GridD,
         const Parallel_Orbitals &ParaO);

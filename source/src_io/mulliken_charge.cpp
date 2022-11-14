@@ -101,7 +101,7 @@ Mulliken_Charge::~Mulliken_Charge()
 }
 
   
-void Mulliken_Charge::cal_mulliken(LCAO_Hamilt &uhm)
+void Mulliken_Charge::cal_mulliken(LCAO_Hamilt &uhm, const ModuleBase::matrix& wg)
 {
     ModuleBase::TITLE("Mulliken_Charge", "cal_mulliken");
     const Parallel_Orbitals* pv = uhm.LM->ParaV;
@@ -150,7 +150,7 @@ void Mulliken_Charge::cal_mulliken(LCAO_Hamilt &uhm)
 
 						const double x = mug[j].real();
 
-						MecMulP[is][j] +=x*GlobalC::wf.wg(0,i);
+						MecMulP[is][j] += x * wg(0,i);
 					}
 				} 
 			}//ib
@@ -233,7 +233,7 @@ void Mulliken_Charge::cal_mulliken(LCAO_Hamilt &uhm)
 
 								mug[j] = mud[0](ic,ir)*this->psi_k[0](ic,ir);
 								const double x = mug[j].real();
-								MecMulP[is][j] +=x*GlobalC::wf.wg(ik,i);
+								MecMulP[is][j] += x * wg(ik,i);
 								// std::cout <<   wavog[j] << std::endl; 
 							}
 						}                             
@@ -276,9 +276,9 @@ void Mulliken_Charge::cal_mulliken(LCAO_Hamilt &uhm)
 	return;                									
 }				   
 
-void Mulliken_Charge::stdout_mulliken(LCAO_Hamilt &uhm)
+void Mulliken_Charge::stdout_mulliken(LCAO_Hamilt &uhm, const ModuleBase::matrix &wg)
 {                    
-	this->cal_mulliken(uhm);
+	this->cal_mulliken(uhm, wg);
 	
 	if(GlobalV::MY_RANK == 0)
 	{

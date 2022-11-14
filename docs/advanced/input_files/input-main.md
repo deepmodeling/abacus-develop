@@ -2,7 +2,7 @@
 
 - [System variables](#system-variables)
 
-  [suffix](#suffix) | [ntype](#ntype) | [calculation](#calculation) | [symmetry](#symmetry) | [kpar](#kpar) | [bndpar](#bndpar) | [latname](#latname) | [init_wfc](#init_wfc) | [init_chg](#init_chg) | [init_vel](#init_vel) | [nelec](#nelec) | [tot_magnetization](#tot_magnetization) | [dft_functional](#dft_functional) | [xc_temperature](#xc_temperature) | [pseudo_rcut](#pseudo_rcut) | [pseudo_mesh](#pseudo_mesh) | [mem_saver](#mem_saver) | [diago_proc](#diago_proc) | [nbspline](#nbspline) | [kspacing](#kspacing)  | [min_dist_coef](#min_dist_coef) | [symmetry_prec](#symmetry_prec)
+  [suffix](#suffix) | [ntype](#ntype) | [calculation](#calculation) | [esolver_type](#esolver_type) | [symmetry](#symmetry) | [kpar](#kpar) | [bndpar](#bndpar) | [latname](#latname) | [init_wfc](#init_wfc) | [init_chg](#init_chg) | [init_vel](#init_vel) | [nelec](#nelec) | [tot_magnetization](#tot_magnetization) | [dft_functional](#dft_functional) | [xc_temperature](#xc_temperature) | [pseudo_rcut](#pseudo_rcut) | [pseudo_mesh](#pseudo_mesh) | [mem_saver](#mem_saver) | [diago_proc](#diago_proc) | [nbspline](#nbspline) | [kspacing](#kspacing)  | [min_dist_coef](#min_dist_coef) | [symmetry_prec](#symmetry_prec)
 - [Variables related to input files](#variables-related-to-input-files)
 
   [stru_file](#stru_file) | [kpoint_file](#kpoint_file) | [pseudo_dir](#pseudo_dir) | [orbital_dir](#orbital_dir) | [read_file_dir](#read_file_dir) | [wannier_card](#wannier_card)
@@ -20,7 +20,7 @@
   [method_sto](#method_sto) | [nbands_sto](#nbands_sto) | [nche_sto](#nche_sto) | [emin_sto](#emin_sto) | [emax_sto](#emax_sto) | [seed_sto](#seed_sto) | [initsto_freq](#initsto_freq) | [npart_sto](#npart_sto)
 - [Geometry relaxation](#geometry-relaxation)
 
-  [relax_nmax](#relax_nmax) | [relax_method](#relax_method) | [relax_cg_thr](#relax_cg_thr) | [relax_bfgs_w1](#relax_bfgs_w1) | [relax_bfgs_w2](#relax_bfgs_w2) | [relax_bfgs_rmax](#relax_bfgs_rmax) | [relax_bfgs_rmin](#relax_bfgs_rmin) | [relax_bfgs_init](#relax_bfgs_init) | [cal_force](#cal_force) | [force_thr](#force_thr) | [force_thr_ev](#force_thr_ev) | [force_thr_ev2](#force_thr_ev2) | [cal_stress](#cal_stress) | [stress_thr](#stress_thr) | [press1, press2, press3](#press1-press2-press3) | [fixed_axes](#fixed_axes) | [cell_factor](#cell_factor)
+  [relax_nmax](#relax_nmax) | [relax_method](#relax_method) | [relax_cg_thr](#relax_cg_thr) | [relax_bfgs_w1](#relax_bfgs_w1) | [relax_bfgs_w2](#relax_bfgs_w2) | [relax_bfgs_rmax](#relax_bfgs_rmax) | [relax_bfgs_rmin](#relax_bfgs_rmin) | [relax_bfgs_init](#relax_bfgs_init) | [cal_force](#cal_force) | [force_thr](#force_thr) | [force_thr_ev](#force_thr_ev) | [force_thr_ev2](#force_thr_ev2) | [cal_stress](#cal_stress) | [stress_thr](#stress_thr) | [press1, press2, press3](#press1-press2-press3) | [fixed_axes](#fixed_axes) | [cell_factor](#cell_factor) | [fixed_ibrav](#fixed_ibrav) | [relax_new](#relax_new)
 - [Variables related to output information](#variables-related-to-output-information)
 
   [out_force](#out_force) | [out_mul](#out_mul) | [out_freq_elec](#out_freq_elec) | [out_freq_ion](#out_freq_ion) | [out_chg](#out_chg) | [out_pot](#out_pot) | [out_dm](#out_dm) | [out_wfc_pw](#out_wfc_pw) | [out_wfc_r](#out_wfc_r) | [out_wfc_lcao](#out_wfc_lcao) | [out_dos](#out_dos) | [out_band](#out_band) | [out_proj_band](#out_proj_band) | [out_stru](#out_stru) | [out_level](#out_level) | [out_alllog](#out_alllog) | [out_mat_hs](#out_mat_hs) | [out_mat_r](#out_mat_r) | [out_mat_hs2](#out_mat_hs2) | [out_element_info](#out_element_info) | [restart_save](#restart_save) | [restart_load](#restart_load) | [dft_plus_dmft](#dft_plus_dmft) | [rpa](#rpa)
@@ -33,7 +33,7 @@
 
 - [Molecular dynamics](#molecular-dynamics)
 
-  [md_type](#md_type) | [md_thermostat](#md_thermostat) | [md_nstep](#md_nstep) | [md_ensolver](#md_ensolver) | [md_restart](#md_restart) | [md_dt](#md_dt) | [md_tfirst, md_tlast](#md_tfirst-md_tlast) | [md_dumpfreq](#md_dumpfreq) | [md_restartfreq](#md_restartfreq) | [md_seed](#md_seed) | [md_tfreq](#md_tfreq) | [md_mnhc](#md_mnhc) | [lj_rcut](#lj_rcut) | [lj_epsilon](#lj_epsilon) | [lj_sigma](#lj_sigma) | [pot_file](#pot_file) | [msst_direction](#msst_direction) | [msst_vel](#msst_vel) | [msst_vis](#msst_vis) | [msst_tscale](#msst_tscale) | [msst_qmass](#msst_qmass) | [md_damp](#md_damp) | [md_tolerance](#md_tolerance) | [md_nraise](#md_nraise)
+  [md_type](#md_type) | [md_thermostat](#md_thermostat) | [md_nstep](#md_nstep) | [md_restart](#md_restart) | [md_dt](#md_dt) | [md_tfirst, md_tlast](#md_tfirst-md_tlast) | [md_dumpfreq](#md_dumpfreq) | [md_restartfreq](#md_restartfreq) | [md_seed](#md_seed) | [md_tfreq](#md_tfreq) | [md_tchain](#md_tchain) | [lj_rcut](#lj_rcut) | [lj_epsilon](#lj_epsilon) | [lj_sigma](#lj_sigma) | [pot_file](#pot_file) | [msst_direction](#msst_direction) | [msst_vel](#msst_vel) | [msst_vis](#msst_vis) | [msst_tscale](#msst_tscale) | [msst_qmass](#msst_qmass) | [md_damp](#md_damp) | [md_tolerance](#md_tolerance) | [md_nraise](#md_nraise)
 
 - [vdW correction](#vdw-correction)
 
@@ -43,7 +43,7 @@
   [berry_phase](#berry_phase) | [gdir](#gdir) | [towannier90](#towannier90) | [nnkpfile](#nnkpfile) | [wannier_spin](#wannier_spin)
 - [TDDFT: time dependent density functional theory](#tddft-time-dependent-density-functional-theory) (Under tests)
 
-  [tddft](#tddft) | [td_scf_thr](#td_scf_thr) | [td_dt](#td_dt) | [td_force_dt](#td_force_dt) | [td_vext](#td_vext) | [td_vext_dire](#td_vext_dire) | [td_timescale](#td_timescale) | [td_vexttype](#td_vexttype) | [td_vextout](#td_vextout) | [td_dipoleout](#td_dipoleout) | [ocp](#ocp) | [ocp_set](#ocp_set) | [td_val_elec_01](#td_val_elec_01) | [td_val_elec_02](#td_val_elec_02) |[td_val_elec_03](#td_val_elec_03)
+  [td_scf_thr](#td_scf_thr) | [td_dt](#td_dt) | [td_force_dt](#td_force_dt) | [td_vext](#td_vext) | [td_vext_dire](#td_vext_dire) | [td_timescale](#td_timescale) | [td_vexttype](#td_vexttype) | [td_vextout](#td_vextout) | [td_dipoleout](#td_dipoleout) | [ocp](#ocp) | [ocp_set](#ocp_set) | [td_val_elec_01](#td_val_elec_01) | [td_val_elec_02](#td_val_elec_02) |[td_val_elec_03](#td_val_elec_03)
 - [DFT+*U* correction](#dftu-correction) (Under development)
 
   [dft_plus_u](#dft_plus_u) | [orbital_corr](#orbital_corr) | [hubbard_u](#hubbard_u) | [hund_j](#hund_j) | [yukawa_potential](#yukawa_potential) | [yukawa_lambda](#yukawa_lambda) | [omc](#omc)
@@ -99,15 +99,23 @@ This part of variables are used to control general system parameters.
   - *istate*: For LCAO basis. Please see the explanation for variable `nbands_istate`.
   - *ienvelope*: Envelope function for LCAO basis. Please see the explanation for variable `nbands_istate`.
   - *md*: molecular dynamics
-  - *ofdft*: do orbital-free dft calculation.
-  - *of-md*: do molecular dynamics with OFDFT.
-  - *sto-scf*: do self-consistent electronic structure calculation with [stochastic DFT](#electronic-structure-sdft)
-  - *sto-md*: molecular dynamics with [stochastic DFT](#electronic-structure-sdft)
   - *test_memory* : checks memory required for the calculation. The number is not quite reliable, please use with care
   - *test_neighbour* : only performs neighbouring atom search
   - *gen_bessel* : generates projectors (a series of bessel functions) for DeePKS; see also keywords bessel_lmax, bessel_rcut and bessel_tol. A file named `jle.orb` will be generated which contains the projectors. An example is provided in examples/H2O-deepks-pw.
   - *get_S* : only works for multi-k calculation with LCAO basis. Generates and writes the overlap matrix to a file names `SR.csr` in the working directory. The format of the file will be the same as that generated by [out_mat_hs2](#out_mat_hs2).
 - **Default**: scf
+
+### esolver_type
+
+- **Type**: String
+- **Description**: choose the energy solver.
+  - ksdft: Kokn-Sham density functional theory;
+  - ofdft: orbital-free density functional theory;
+  - sdft: [stochastic density functional theory](#electronic-structure-sdft);
+  - tddft: real time time dependent density functional theory (TDDFT);
+  - lj: Leonard Jones potential;
+  - dp: DeeP potential;
+- **Default**: ksdft
 
 ### symmetry
 
@@ -133,24 +141,24 @@ This part of variables are used to control general system parameters.
 ### latname
 
 - **Type**: String
-- **Description**: Specifies the type of Bravias lattice. When set to `test`, the three lattice vectors are supplied explicitly in STRU file. When set to certain Bravais lattice type, there is no need to provide lattice vector, but a few lattice parameters might be required. For more information regarding this parameter, consult the [page on STRU file](stru.md).
-  Available options are:
-  - `test`: free strcture.
-  - `sc`: simple cubie.
-  - `fcc`: face-centered cubic.
-  - `bcc`: body-centered cubic.
-  - `hexagonal`: hexagonal.
-  - `trigonal`: trigonal.
-  - `st`: simple tetragonal.
-  - `bct`: body-centered tetragonal.
-  - `so`: orthorhombic.
-  - `baco`: base-centered orthorhombic.
-  - `fco`: face-centered orthorhombic.
-  - `bco`: body-centered orthorhombic.
-  - `sm`: simple monoclinic.
-  - `bacm`: base-centered monoclinic.
-  - `triclinic`: triclinic.
-- **Default**: `test`
+- **Description**: Specifies the type of Bravias lattice. When set to `none`, the three lattice vectors are supplied explicitly in STRU file. When set to certain Bravais lattice type, there is no need to provide lattice vector, but a few lattice parameters might be required. For more information regarding this parameter, consult the [page on STRU file](stru.md).
+  Available options are (correspondence with ibrav in QE is given in parenthesis):
+  - `none`: free strcture.
+  - `sc`: simple cubic. (1)
+  - `fcc`: face-centered cubic. (2)
+  - `bcc`: body-centered cubic. (3)
+  - `hexagonal`: hexagonal. (4)
+  - `trigonal`: trigonal. (5)
+  - `st`: simple tetragonal. (6)
+  - `bct`: body-centered tetragonal. (7)
+  - `so`: orthorhombic. (8)
+  - `baco`: base-centered orthorhombic. (9)
+  - `fco`: face-centered orthorhombic. (10)
+  - `bco`: body-centered orthorhombic. (11)
+  - `sm`: simple monoclinic. (12)
+  - `bacm`: base-centered monoclinic. (13)
+  - `triclinic`: triclinic. (14)
+- **Default**: `none`
 
 ### init_wfc
 
@@ -486,11 +494,9 @@ calculations.
 ### mixing_type
 
 - **Type**: String
-- **Description**: Charge mixing methods.
+- **Description**: Charge mixing methods. We offer the following 3 options:
   - plain: Just simple mixing.
-  - kerker: Use kerker method, which is the mixing method in G space.
   - pulay: Standard Pulay method.
-  - pulay-kerker:
   - broyden: Broyden method.
 - **Default**: pulay
 
@@ -509,8 +515,8 @@ calculations.
 ### mixing_gg0
 
 - **Type**: Real
-- **Description**: used in pulay-kerker mixing method
-- **Default**: 1.5
+- **Description**: When set to a positive number, the high frequency wave vectors will be suppressed by multiplying a scaling factor $\frac{k^2}{k^2+gg0^2}$; if set to 0, then no Kerker scaling is performed.
+- **Default**: 0.0
 
 ### gamma_only
 
@@ -575,7 +581,7 @@ calculations.
 
 ## Electronic structure (SDFT)
 
-This part of variables are used to control the parameters of stochastic DFT (SDFT),  mix stochastic-deterministic DFT (MDFT), or complete-basis Chebyshev method (CT). To use it,  [calculation](#calculation) need to be set to "sto-scf" and "sto-md". We suggest using SDFT to calculate high-temperature systems and we only support [smearing_method](#smearing_method) "fd".
+This part of variables are used to control the parameters of stochastic DFT (SDFT),  mix stochastic-deterministic DFT (MDFT), or complete-basis Chebyshev method (CT). We suggest using SDFT to calculate high-temperature systems and we only support [smearing_method](#smearing_method) "fd".
 
 ### method_sto
 
@@ -725,19 +731,36 @@ This part of variables are used to control the geometry relaxation.
 - **Description**:which axes are fixed when do cell relaxation. Possible choices are:
   - None : default; all can relax
   - volume : relaxation with fixed volume
+  - shape : fix shape but change volume (i.e. only lattice constant changes)
   - a : fix a axis during relaxation
   - b : fix b axis during relaxation
   - c : fix c axis during relaxation
   - ab : fix both a and b axes during relaxation
   - ac : fix both a and c axes during relaxation
   - bc : fix both b and c axes during relaxation
-  - abc : fix all three axes during relaxation
+
+> Note : fixed_axes = "shape" and "volume" are only available for [relax_new](#relax_new) = 1
 - **Default**: None
+
+### fixed_ibrav
+
+- **Type**: Boolean
+- **Description**: when set to true, the lattice type will be preserved during relaxation. Must be used along with [relax_new](#relax_new) set to true, and a specific [latname](#latname) must be provided
+
+> Note: it is possible to use fixed_ibrav with fixed_axes, but please make sure you know what you are doing. For example, if we are doing relaxation of a simple cubic lattic (latname = "sc"), and we use fixed_ibrav along with fixed_axes = "volume", then the cell is never allowed to move and as a result the relaxation never converges.
+
+- **Default**: False
+
+### fixed_atoms
+
+- **Type**: Boolean
+- **Description**: when set to true, the direct coordinates of atoms will be preserved during variable-cell relaxation. If set to false, users can still fix certain components of certain atoms by using the `m` keyword in `STRU` file. For the latter option, check the end of this [instruction](stru.md).
+- **Default**: False
 
 ### relax_method
 
 - **Type**: String
-- **Description**: The method to do geometry optimizations:
+- **Description**: The method to do geometry optimizations, note that if relax_new is set to 1, then only cg is available:
   - bfgs: using BFGS algorithm.
   - sd: using steepest-descent algorithm.
   - cg: using cg algorithm.
@@ -749,6 +772,13 @@ This part of variables are used to control the geometry relaxation.
 - **Type**: Real
 - **Description**: When move-method is set to 'cg-bfgs', a mixed cg-bfgs algorithm is used. The ions first move according to cg method, then switched to bfgs when maximum of force on atoms is reduced below cg-threshold. Unit is eV/Angstrom.
 - **Default**: 0.5
+
+### relax_new
+
+- **Type**: Boolean
+- **Description**: At around end of 2022 we mad a new implemention of the CG method for relax and cell-relax calculations. But the old implementation was also kept. To use the new method, set relax_new to be true. To use the old one, set it to be false.
+
+- **Default**: True
 
 ### cell_factor
 
@@ -1417,15 +1447,6 @@ This part of variables are used to control the molecular dynamics calculations.
 - **Description**: the total number of md steps.
 - **Default**: 10
 
-### md_ensolver
-
-- **Type**: String
-- **Description**: choose the energy solver for MD.
-  - FP: First-Principles MD;
-  - LJ: Leonard Jones potential;
-  - DP: DeeP potential;
-- **Default**: FP
-
 ### md_restart
 
 - **Type**: Boolean
@@ -1472,11 +1493,11 @@ This part of variables are used to control the molecular dynamics calculations.
 - **Description**: control the frequency of the temperature oscillations during the simulation. If it is too large, the temperature will fluctuate violently; if it is too small, the temperature will take a very long time to equilibrate with the atomic system.
 - **Default**: 1/40/md_dt
 
-### md_mnhc
+### md_tchain
 
 - **Type**: Integer
 - **Description**: Number of Nose-Hoover chains.
-- **Default**: 4
+- **Default**: 1
 
 ### lj_rcut
 
@@ -1780,14 +1801,6 @@ This part of variables are used to control berry phase and wannier90 interfacae 
 [back to top](#full-list-of-input-keywords)
 
 ## TDDFT: time dependent density functional theory
-
-### tddft
-
-- **Type**: Integer
-- **Description**:
-  - 1: calculate the real time time dependent density functional theory (TDDFT).
-  - 0: do not calculate TDDFT.
-- **Default**: 0
 
 ### td_scf_thr
 

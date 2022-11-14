@@ -2,6 +2,7 @@
 #define ENERGY_H
 #include "../module_base/global_function.h"
 #include "../module_base/global_variable.h"
+#include "module_elecstate/elecstate.h"
 #include "src_lcao/local_orbital_wfc.h"
 #include "src_lcao/LCAO_hamilt.h"
 #include "module_psi/psi.h"
@@ -9,7 +10,6 @@
 class energy
 {
 	public:
-	friend class Electrons; 
 	friend class Electrons_Stochastic;//mohan add 2021-01-31 
 	friend class LOOP_elec;
 	friend class Local_Orbital_Charge;
@@ -29,11 +29,14 @@ class energy
     energy();
     ~energy();
 
+	//calculate density of states(DOS) and partial density of states(PDOS) and mulliken charge for LCAO base
 	void perform_dos(
 		const psi::Psi<double> *psid, 
 		const psi::Psi<std::complex<double>> *psi, 
-		LCAO_Hamilt &uhm);
-    void perform_dos_pw(void);
+		LCAO_Hamilt &uhm,
+		const elecstate::ElecState* pelec);
+	//calculate density of states(DOS) for PW base
+    void perform_dos_pw(const elecstate::ElecState* pelec);
 
     double etot;    	   // the total energy of the solid
     double ef;             // the fermi energy
@@ -92,8 +95,7 @@ class energy
 	void print_etot(const bool converged, const int &iter, 
 	const double &scf_thr, const double &duration, const double &pw_diag_thr=0, const double &avg_iter=0, bool print = true);
 
-	void print_occ();
-	void print_band(const int &ik);
+	void print_occ(const elecstate::ElecState* pelec);
 
 	void print_format(const std::string &name, const double &value);
 

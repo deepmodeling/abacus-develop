@@ -9,7 +9,7 @@ class Verlet_test : public testing::Test
 {
 protected:
     MDrun *mdrun;
-    UnitCell_pseudo ucell;
+    UnitCell ucell;
 
 
     void SetUp()
@@ -32,7 +32,7 @@ protected:
 
 TEST_F(Verlet_test, setup)
 {   
-    EXPECT_NEAR(mdrun->temperature_, 299.99999999999665, doublethreshold);
+    EXPECT_NEAR(mdrun->t_current, 299.99999999999665, doublethreshold);
     EXPECT_NEAR(mdrun->stress(0,0), 6.0100555286436806e-06, doublethreshold);
     EXPECT_NEAR(mdrun->stress(0,1), -1.4746713013791574e-06, doublethreshold);
     EXPECT_NEAR(mdrun->stress(0,2), 1.5039983732220751e-06, doublethreshold);

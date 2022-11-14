@@ -4,7 +4,7 @@
 /
 /*******************************************************************************/
 
-By setting `calculation` to be `md` or `sto-md`, ABACUS currently provides five different algorithms to integrate the equation of motion, which is specified by keyword `md_type` in the `INPUT` file:
+By setting `calculation` to be `md`, ABACUS currently provides five different algorithms to integrate the equation of motion, which is specified by keyword `md_type` in the `INPUT` file:
 
   - -1: FIRE method
   - 0: velocity Verlet algorithm (default: NVE ensemble)

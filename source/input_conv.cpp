@@ -11,7 +11,7 @@
 #include "src_io/epsilon0_pwscf.h"
 #include "src_io/epsilon0_vasp.h"
 #include "src_io/optical.h"
-#include "module_relaxation/ions_move_basic.h"
+#include "module_relax/relax_old/ions_move_basic.h"
 #include "src_pw/global.h"
 #include "src_pw/occupy.h"
 #ifdef __EXX
@@ -51,6 +51,27 @@ void Input_Conv::Convert(void)
     // GlobalV::global_pseudo_type = INPUT.pseudo_type;
     GlobalC::ucell.setup(INPUT.latname, INPUT.ntype, INPUT.lmaxmax, INPUT.init_vel, INPUT.fixed_axes);
 
+    if(INPUT.calculation=="relax" || INPUT.calculation=="cell-relax")
+    {
+        if(INPUT.fixed_ibrav && !INPUT.relax_new)
+        {
+            ModuleBase::WARNING_QUIT("Input_Conv","fixed_ibrav only available for relax_new = 1");
+        }
+        if(INPUT.latname=="none" && INPUT.fixed_ibrav)
+        {
+            ModuleBase::WARNING_QUIT("Input_Conv","to use fixed_ibrav, latname must be provided");
+        }
+        if(INPUT.calculation == "relax" && INPUT.fixed_atoms)
+        {
+            ModuleBase::WARNING_QUIT("Input_Conv","fixed_atoms is not meant to be used for calculation = relax");
+        }
+        if(INPUT.relax_new && INPUT.relax_method!="cg")
+        {
+            ModuleBase::WARNING_QUIT("Input_Conv","only CG has been implemented for relax_new");
+        }
+        GlobalV::fixed_atoms = INPUT.fixed_atoms;
+    }
+
     GlobalV::KSPACING = INPUT.kspacing;
     GlobalV::MIN_DIST_COEF = INPUT.min_dist_coef;
     GlobalV::NBANDS = INPUT.nbands;
@@ -69,6 +90,7 @@ void Input_Conv::Convert(void)
     GlobalV::NSTOGROUP = INPUT.bndpar;
 #endif
     GlobalV::CALCULATION = INPUT.calculation;
+    GlobalV::ESOLVER_TYPE = INPUT.esolver_type;
 
     GlobalV::PSEUDORCUT = INPUT.pseudo_rcut;
     GlobalV::PSEUDO_MESH = INPUT.pseudo_mesh;
@@ -108,6 +130,9 @@ void Input_Conv::Convert(void)
     GlobalV::CAL_STRESS = INPUT.cal_stress;
 
     GlobalV::RELAX_METHOD = INPUT.relax_method;
+    GlobalV::relax_scale_force = INPUT.relax_scale_force;
+    GlobalV::relax_new = INPUT.relax_new;
+
     GlobalV::OUT_LEVEL = INPUT.out_level;
     Ions_Move_CG::RELAX_CG_THR = INPUT.relax_cg_thr; // pengfei add 2013-09-09
 
@@ -238,7 +263,6 @@ void Input_Conv::Convert(void)
 // Fuxiang He add 2016-10-26
 //----------------------------------------------------------
 #ifdef __LCAO
-    ELEC_evolve::tddft = INPUT.tddft;
     ELEC_evolve::td_scf_thr = INPUT.td_scf_thr;
     ELEC_evolve::td_dt = INPUT.td_dt;
     ELEC_evolve::td_force_dt = INPUT.td_force_dt;
@@ -324,7 +348,7 @@ void Input_Conv::Convert(void)
     //----------------------------------------------------------
     if (INPUT.restart_save)
     {
-        GlobalC::restart.folder = GlobalV::global_out_dir + "restart/";
+        GlobalC::restart.folder = GlobalV::global_readin_dir + "restart/";
         const std::string command0 = "test -d " + GlobalC::restart.folder + " || mkdir " + GlobalC::restart.folder;
         if (GlobalV::MY_RANK == 0)
             system(command0.c_str());
@@ -341,7 +365,7 @@ void Input_Conv::Convert(void)
     }
     if (INPUT.restart_load)
     {
-        GlobalC::restart.folder = GlobalV::global_out_dir + "restart/";
+        GlobalC::restart.folder = GlobalV::global_readin_dir + "restart/";
         if (INPUT.dft_functional == "hf" || INPUT.dft_functional == "pbe0" || INPUT.dft_functional == "hse"
             || INPUT.dft_functional == "opt_orb" || INPUT.dft_functional == "scan0")
         {
@@ -352,6 +376,11 @@ void Input_Conv::Convert(void)
             GlobalC::restart.info_load.load_charge = true;
             GlobalC::restart.info_load.load_H = true;
         }
+    }
+
+    if(GlobalV::CALCULATION=="cell-relax" && INPUT.cell_factor < 2.0)
+    {
+        INPUT.cell_factor = 2.0; //follows QE
     }
 
 //----------------------------------------------------------
@@ -442,7 +471,7 @@ void Input_Conv::Convert(void)
     //----------------------------------------------------------
     // charge mixing(3/3)
     //----------------------------------------------------------
-    GlobalC::CHR.set_mixing(INPUT.mixing_mode,
+    GlobalC::CHR_MIX.set_mixing(INPUT.mixing_mode,
                             INPUT.mixing_beta,
                             INPUT.mixing_ndim,
                             INPUT.mixing_gg0); // mohan modify 2014-09-27, add mixing_gg0

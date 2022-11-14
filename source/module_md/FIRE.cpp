@@ -5,7 +5,7 @@
 #endif
 #include "../module_base/timer.h"
 
-FIRE::FIRE(MD_parameters& MD_para_in, UnitCell_pseudo &unit_in) : MDrun(MD_para_in, unit_in)
+FIRE::FIRE(MD_parameters& MD_para_in, UnitCell &unit_in) : MDrun(MD_para_in, unit_in)
 {
     dt_max = -1.0;
     alpha_start = 0.10;

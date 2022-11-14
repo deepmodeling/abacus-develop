@@ -4,7 +4,7 @@
 #include "../../module_orbital/ORB_control.h"	
 #include "../../module_orbital/ORB_read.h"
 
-#include "../../module_cell/unitcell_pseudo.h"
+#include "../../module_cell/unitcell.h"
 
 #include "../../module_neighbor/sltk_grid_driver.h"
 #include "../../module_neighbor/sltk_atom_arrange.h"
@@ -34,7 +34,7 @@ public:
 	ORB_gen_tables OGT;
 	ORB_control ooo;
 
-	UnitCell_pseudo ucell;
+	UnitCell ucell;
 
 	Test_Deepks::Parallel_Orbitals ParaO;
 	Test_Deepks::K_Vectors kv;

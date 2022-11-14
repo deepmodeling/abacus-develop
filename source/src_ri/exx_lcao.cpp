@@ -539,11 +539,11 @@ gettimeofday( &t_start_all, NULL);
 	}
 	else
 	{
-		if("plain"==GlobalC::CHR.mixing_mode)
+		if("plain"==GlobalC::CHR_MIX.get_mixing_mode())
 		{
 			Hexx_para.mixing_mode = Exx_Abfs::Parallel::Communicate::Hexx::Mixing_Mode::Plain;
 		}
-		else if("pulay"==GlobalC::CHR.mixing_mode)
+		else if("pulay"==GlobalC::CHR_MIX.get_mixing_mode())
 		{
 			Hexx_para.mixing_mode = Exx_Abfs::Parallel::Communicate::Hexx::Mixing_Mode::Pulay;
 		}
@@ -551,7 +551,7 @@ gettimeofday( &t_start_all, NULL);
 		{
 			throw std::invalid_argument("exx mixing error. exx_separate_loop==false, mixing_mode!=plain or pulay");
 		}
-		Hexx_para.mixing_beta = GlobalC::CHR.mixing_beta;
+		Hexx_para.mixing_beta = GlobalC::CHR_MIX.get_mixing_beta();
 	}
 #endif
 
@@ -1161,17 +1161,6 @@ ofs_mpi.close();
 			}
 		}
 	};
-
-	auto print_ekb=[&]()		// Peize Lin test 2019-11-14
-	{
-		for(int ik=0; ik<GlobalC::kv.nks; ++ik)
-		{
-			std::ofstream ofs("ekb_"+ModuleBase::GlobalFunc::TO_STRING(ik)+"_"+ModuleBase::GlobalFunc::TO_STRING(GlobalV::MY_RANK), std::ofstream::app);
-			for(int ib=0; ib<GlobalV::NBANDS; ++ib)
-				ofs<<GlobalC::wf.ekb[ik][ib]<<"\t";
-			ofs<<std::endl;
-		}
-	};	
 	
 	#if TEST_EXX_LCAO==1
 	//	ofs_matrixes("Cws_"+ModuleBase::GlobalFunc::TO_STRING(istep)+"_end.dat",Cws);

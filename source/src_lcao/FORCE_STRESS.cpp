@@ -24,6 +24,7 @@ void Force_Stress_LCAO::getForceStress(
 	const bool istestf,
     const bool istests,
     Local_Orbital_Charge& loc,
+	const elecstate::ElecState* pelec,
     const psi::Psi<double>* psid,
 	const psi::Psi<std::complex<double>>* psi,
     LCAO_Hamilt &uhm,
@@ -115,6 +116,7 @@ void Force_Stress_LCAO::getForceStress(
 				isforce,
 				isstress,
                 loc,
+				pelec,
                 psid,
 				psi,
                 foverlap,
@@ -142,11 +144,12 @@ void Force_Stress_LCAO::getForceStress(
         if(isforce)
         {
             force_vdw.create(nat,3);
+            const std::vector<ModuleBase::Vector3<double>> &force_vdw_temp = vdw_solver->get_force();
             for(int iat=0; iat<GlobalC::ucell.nat; ++iat)
             {
-                force_vdw(iat,0) = vdw_solver->get_force()[iat].x;
-                force_vdw(iat,1) = vdw_solver->get_force()[iat].y;
-                force_vdw(iat,2) = vdw_solver->get_force()[iat].z;
+                force_vdw(iat,0) = force_vdw_temp[iat].x;
+                force_vdw(iat,1) = force_vdw_temp[iat].y;
+                force_vdw(iat,2) = force_vdw_temp[iat].z;
             }
         }
         if(isstress)
@@ -741,6 +744,7 @@ void Force_Stress_LCAO::calForceStressIntegralPart(
 	const bool isforce,
     const bool isstress,
     Local_Orbital_Charge& loc,
+	const elecstate::ElecState* pelec,
     const psi::Psi<double>* psid,
 	const psi::Psi<std::complex<double>>* psi,
     ModuleBase::matrix& foverlap,
@@ -765,6 +769,7 @@ void Force_Stress_LCAO::calForceStressIntegralPart(
 				isstress,
                 psid,
                 loc,
+				pelec,
                 foverlap,
 				ftvnl_dphi,
 				fvnl_dbeta,
@@ -788,6 +793,7 @@ void Force_Stress_LCAO::calForceStressIntegralPart(
                 *this->RA,
                 psi,
                 loc,
+				pelec,
                 foverlap,
 				ftvnl_dphi,
 				fvnl_dbeta,

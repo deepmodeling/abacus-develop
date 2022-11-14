@@ -1,3 +1,6 @@
+//obsolete code
+//please remove the globalc::hm
+
 #include "global.h"
 #include "hip/hip_runtime.h"
 #include "../module_base/global_function.h"
@@ -334,7 +337,8 @@ void Hamilt_PW::diagH_subspace(const int ik,
 	}
 
 	// after generation of H and S matrix, diag them
-	GlobalC::hm.diagH_LAPACK(nstart, n_band, hc, sc, nstart, en, hvec);
+	//obsolete: globalc::hm has been removed
+	//GlobalC::hm.diagH_LAPACK(nstart, n_band, hc, sc, nstart, en, hvec);
 
 	// Peize Lin add 2019-03-09
 #ifdef __LCAO
@@ -633,7 +637,8 @@ void Hamilt_PW::diagH_subspace_cuda(const int ik,
 	CHECK_CUDA(hipMemcpy(h_hc.c, hc, nstart * nstart * sizeof(hipblasDoubleComplex), hipMemcpyDeviceToHost));
 	CHECK_CUDA(hipMemcpy(h_sc.c, sc, nstart * nstart * sizeof(hipblasDoubleComplex), hipMemcpyDeviceToHost));
 
-	GlobalC::hm.diagH_LAPACK(nstart, n_band, h_hc, h_sc, nstart, h_en, h_hvec);
+	//obsolete: globalc::hm has been removed
+	//GlobalC::hm.diagH_LAPACK(nstart, n_band, h_hc, h_sc, nstart, h_en, h_hvec);
 	CHECK_CUDA(hipMemcpy(hvec, h_hvec.c, nstart * n_band * sizeof(hipblasDoubleComplex), hipMemcpyHostToDevice));
 	CHECK_CUDA(hipMemcpy(en, h_en, n_band * sizeof(double), hipMemcpyHostToDevice));
 	delete[] h_en;

@@ -2,14 +2,14 @@
 #define MDRUN_H
 
 #include "MD_parameters.h"
-#include "../module_cell/unitcell_pseudo.h"
+#include "../module_cell/unitcell.h"
 #include "../module_base/matrix.h"
 #include "module_esolver/esolver.h"
 
 class MDrun
 {
 public:
-    MDrun(MD_parameters& MD_para_in, UnitCell_pseudo &unit_in);
+    MDrun(MD_parameters& MD_para_in, UnitCell &unit_in);
     virtual ~MDrun();
 
     /**
@@ -46,11 +46,11 @@ public:
     virtual void restart();
 
     MD_parameters &mdp;
-	UnitCell_pseudo &ucell;
+	UnitCell &ucell;
     bool stop;                           // MD stop or not
 
     // All parameters are in a.u. unit.
-    double temperature_;                 // current temperature
+    double t_current;                    // current temperature
     int step_;                           // the MD step finished in current calculation
     int step_rst_;                       // the MD step finished in previous calculations
     double energy_;                      // total energy of the system
