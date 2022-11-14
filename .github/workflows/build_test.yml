@@ -25,7 +25,7 @@ jobs:
           build_args: "-DENABLE_LCAO=OFF"
           name: "Build without LCAO"
     name: ${{ matrix.name }}
-    container: ghcr.io/deepmodeling/abacus-development-kit:${{ matrix.tag }}
+    container: ghcr.io/deepmodeling/abacus-${{ matrix.tag }}
     steps:
       - name: Checkout
         uses: actions/checkout@v3
