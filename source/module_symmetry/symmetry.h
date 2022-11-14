@@ -1,7 +1,7 @@
 #ifndef SYMMETRY_H
 #define SYMMETRY_H
 
-#include "../module_cell/unitcell_pseudo.h"
+#include "../module_cell/unitcell.h"
 #include "symmetry_basic.h"
 
 namespace ModuleSymmetry
@@ -19,7 +19,7 @@ public:
 	//1 : point group symmetry is considered
 	static int symm_flag;
 
-	void analy_sys(const UnitCell_pseudo &ucell, std::ofstream &ofs_running);
+	void analy_sys(const UnitCell &ucell, std::ofstream &ofs_running);
 	bool available;
 
 	ModuleBase::Vector3<double> s1, s2, s3;
@@ -73,7 +73,7 @@ public:
 	int standard_lat(ModuleBase::Vector3<double> &a,ModuleBase::Vector3<double> &b,ModuleBase::Vector3<double> &c,double *celconst );
 
 	void lattice_type(ModuleBase::Vector3<double> &v1,ModuleBase::Vector3<double> &v2,ModuleBase::Vector3<double> &v3, 
-			int &ibrav,double *cel_const,std::string &bravname, const UnitCell_pseudo &ucell);
+			int &ibrav,double *cel_const,std::string &bravname, const UnitCell &ucell);
 
 	void recip(
 			const double a,
@@ -88,12 +88,12 @@ public:
 	void change_lattice(void);
 
 	// check if the input cell is a primitive cell.
-	//void pricell(const UnitCell_pseudo &ucell);
+	//void pricell(const UnitCell &ucell);
 	void getgroup(int &nrot, int &nrotk, std::ofstream &ofs_running);
 	void checksym(ModuleBase::Matrix3 &s, ModuleBase::Vector3<double> &gtrans, double *pos);
 	void rho_symmetry(double *rho, const int &nr1, const int &nr2, const int &nr3);
-	void force_symmetry(ModuleBase::matrix &force, double* pos, const UnitCell_pseudo &ucell);
-	void stress_symmetry(ModuleBase::matrix &sigma, const UnitCell_pseudo &ucell);
+	void force_symmetry(ModuleBase::matrix &force, double* pos, const UnitCell &ucell);
+	void stress_symmetry(ModuleBase::matrix &sigma, const UnitCell &ucell);
 	void write();
 
 	void print_pos(const double* pos, const int &nat);

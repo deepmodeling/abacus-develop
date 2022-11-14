@@ -15,7 +15,7 @@ protected:
 
     void SetUp()
     {
-        UnitCell_pseudo ucell;
+        UnitCell ucell;
         Setcell::setupcell(ucell);
 
         natom = ucell.nat;

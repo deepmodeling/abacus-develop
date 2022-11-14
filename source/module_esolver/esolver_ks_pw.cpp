@@ -64,7 +64,7 @@ namespace ModuleESolver
         }
     }
 
-    void ESolver_KS_PW::Init_GlobalC(Input& inp, UnitCell_pseudo& cell)
+    void ESolver_KS_PW::Init_GlobalC(Input& inp, UnitCell& cell)
     {
         this->psi = GlobalC::wf.allocate(GlobalC::kv.nks);
 
@@ -123,7 +123,7 @@ namespace ModuleESolver
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT BASIS");
     }
 
-    void ESolver_KS_PW::Init(Input& inp, UnitCell_pseudo& ucell)
+    void ESolver_KS_PW::Init(Input& inp, UnitCell& ucell)
     {
         ESolver_KS::Init(inp,ucell);
 

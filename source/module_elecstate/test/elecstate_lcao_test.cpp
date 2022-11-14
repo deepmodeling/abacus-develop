@@ -58,7 +58,7 @@ namespace GlobalC
     energy en;
     Structure_Factor sf;
     K_Vectors kv;
-    UnitCell_pseudo ucell;
+    UnitCell ucell;
     pseudopot_cell_vnl ppcell;
     ModulePW::PW_Basis* rhopw;
     ModulePW::PW_Basis_Big *bigpw = static_cast<ModulePW::PW_Basis_Big*>(rhopw);

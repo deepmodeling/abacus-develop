@@ -6,7 +6,7 @@
 namespace ModuleESolver
 {
 
-    void ESolver_LJ::Init(Input& inp, UnitCell_pseudo& ucell)
+    void ESolver_LJ::Init(Input& inp, UnitCell& ucell)
     {
         lj_potential = 0;
         lj_force.create(ucell.nat, 3);
@@ -22,7 +22,7 @@ namespace ModuleESolver
         lj_sigma *= ModuleBase::ANGSTROM_AU;
     }
 
-    void ESolver_LJ::Run(const int istep, UnitCell_pseudo& ucell)
+    void ESolver_LJ::Run(const int istep, UnitCell& ucell)
     {
         Grid_Driver grid_neigh(GlobalV::test_deconstructor, GlobalV::test_grid_driver, GlobalV::test_grid);
         atom_arrange::search(

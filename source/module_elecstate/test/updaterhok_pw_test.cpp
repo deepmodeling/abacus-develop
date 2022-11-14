@@ -261,7 +261,7 @@ class EState : public testing::Test
 TEST_F(EState,RhoPW)
 {
     // Here GlobalC::ucell is used directly without asserting a new
-    // UnitCell_pseudo object.
+    // UnitCell object.
     // this function will read STRU and pseudopotential files
     // should add more EXPECTs after calling
     GlobalC::ucell.setup_cell(orb, GlobalV::global_pseudo_dir, GlobalV::stru_file, GlobalV::ofs_running);

@@ -44,7 +44,7 @@ namespace ModuleESolver
         delete this->phsol;
     }
 
-    void ESolver_KS::Init(Input& inp, UnitCell_pseudo& ucell)
+    void ESolver_KS::Init(Input& inp, UnitCell& ucell)
     {
         ESolver_FP::Init(inp,ucell);
         // Yu Liu add 2021-07-03
@@ -168,7 +168,7 @@ namespace ModuleESolver
         ModuleBase::GlobalFunc::DONE(ofs, "INIT PLANEWAVE");
     }
 
-    void ESolver_KS::Run(const int istep, UnitCell_pseudo& ucell)
+    void ESolver_KS::Run(const int istep, UnitCell& ucell)
     {
         if (!(GlobalV::CALCULATION == "scf" || GlobalV::CALCULATION == "md"
             || GlobalV::CALCULATION == "relax" || GlobalV::CALCULATION == "cell-relax"))

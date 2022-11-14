@@ -7,7 +7,7 @@
 class MD_func_test : public testing::Test
 {
 protected:
-    UnitCell_pseudo ucell;
+    UnitCell ucell;
     double *allmass;                     // atom mass 
     ModuleBase::Vector3<double> *pos;    // atom position
     ModuleBase::Vector3<double> *vel;    // atom velocity

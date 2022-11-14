@@ -9,7 +9,7 @@ class MSST_test : public testing::Test
 {
 protected:
     MDrun *mdrun;
-    UnitCell_pseudo ucell;
+    UnitCell ucell;
 
     void SetUp()
     {

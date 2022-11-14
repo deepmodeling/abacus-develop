@@ -40,7 +40,7 @@ ESolver_KS_LCAO_TDDFT::~ESolver_KS_LCAO_TDDFT()
     delete psi_laststep;
 }
 
-void ESolver_KS_LCAO_TDDFT::Init(Input& inp, UnitCell_pseudo& ucell)
+void ESolver_KS_LCAO_TDDFT::Init(Input& inp, UnitCell& ucell)
 {
     ESolver_KS::Init(inp, ucell);
 

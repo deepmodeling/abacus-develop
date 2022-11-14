@@ -3,7 +3,7 @@
 
 #include "operator_pw.h"
 
-#include "module_cell/unitcell_pseudo.h"
+#include "module_cell/unitcell.h"
 #include "module_hamilt/include/nonlocal.h"
 #include "module_hsolver/include/math_kernel.h"
 
@@ -25,7 +25,7 @@ template<typename FPTYPE, typename Device>
 class Nonlocal<OperatorPW<FPTYPE, Device>> : public OperatorPW<FPTYPE, Device>
 {
     public:
-    Nonlocal(const int* isk_in,const pseudopot_cell_vnl* ppcell_in,const UnitCell_pseudo* ucell_in);
+    Nonlocal(const int* isk_in,const pseudopot_cell_vnl* ppcell_in,const UnitCell* ucell_in);
 
     virtual ~Nonlocal();
 
@@ -51,12 +51,15 @@ class Nonlocal<OperatorPW<FPTYPE, Device>> : public OperatorPW<FPTYPE, Device>
 
     const pseudopot_cell_vnl* ppcell = nullptr;
 
-    const UnitCell_pseudo* ucell = nullptr;
+    const UnitCell* ucell = nullptr;
 
-    mutable std::complex<FPTYPE>* becp = nullptr;
     mutable std::complex<FPTYPE> *ps = nullptr;
+    mutable std::complex<FPTYPE> *vkb = nullptr;
+    mutable std::complex<FPTYPE> *becp = nullptr;
     Device* ctx = {};
+    psi::DEVICE_CPU* cpu_ctx = {};
     FPTYPE * deeq = nullptr;
+    std::complex<FPTYPE> * deeq_nc = nullptr;
     // using nonlocal_op = nonlocal_pw_op<FPTYPE, Device>;
     using gemv_op = hsolver::gemv_op<FPTYPE, Device>;
     using gemm_op = hsolver::gemm_op<FPTYPE, Device>;
@@ -64,6 +67,7 @@ class Nonlocal<OperatorPW<FPTYPE, Device>> : public OperatorPW<FPTYPE, Device>
     using set_memory_op = psi::memory::set_memory_op<std::complex<FPTYPE>, Device>;
     using resize_memory_op = psi::memory::resize_memory_op<std::complex<FPTYPE>, Device>;
     using delete_memory_op = psi::memory::delete_memory_op<std::complex<FPTYPE>, Device>;
+    using syncmem_complex_h2d_op = psi::memory::synchronize_memory_op<std::complex<FPTYPE>, Device, psi::DEVICE_CPU>;
 };
 
 } // namespace hamilt
