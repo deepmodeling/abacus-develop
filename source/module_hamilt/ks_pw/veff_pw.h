@@ -24,6 +24,9 @@ class Veff<OperatorPW<FPTYPE, Device>> : public OperatorPW<FPTYPE, Device>
   public:
     Veff(const int* isk_in,const ModuleBase::matrix* veff_in,ModulePW::PW_Basis_K* wfcpw_in);
 
+    template<typename T_in, typename Device_in = Device>
+    explicit Veff(const Veff<OperatorPW<T_in, Device_in>>* veff);
+
     virtual ~Veff();
 
     virtual void act (
@@ -32,6 +35,14 @@ class Veff<OperatorPW<FPTYPE, Device>> : public OperatorPW<FPTYPE, Device>
         const std::complex<FPTYPE>* tmpsi_in, 
         std::complex<FPTYPE>* tmhpsi
     )const override;
+
+    // denghui added for copy constructor at 20221105
+    FPTYPE *get_veff() const {return this->veff;}
+    int get_veff_col() const {return this->veff_col;}
+    int get_veff_row() const {return this->veff_row;}
+    int get_npol() const {return this->npol;}
+    const int *get_isk() const {return isk;}
+    ModulePW::PW_Basis_K* get_wfcpw() const {return this->wfcpw;}
 
   private:
 

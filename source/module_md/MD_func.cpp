@@ -367,7 +367,7 @@ double MD_func::current_temp(double &kinetic,
 {
     kinetic = GetAtomKE(natom, vel, allmass);
 
-    return 2 * kinetic / (3 * natom - frozen_freedom) * ModuleBase::Hartree_to_K;
+    return 2 * kinetic / (3 * natom - frozen_freedom);
 }
 
 void MD_func::temp_vector(const int &natom, 

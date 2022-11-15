@@ -15,7 +15,7 @@ namespace hamilt
 
 // template first for type of k space H matrix elements
 // template second for type of temporary matrix, gamma_only fix-gamma-matrix + S-gamma, multi-k fix-Real + S-Real
-template <typename T> class HamiltLCAO : public Hamilt
+template <typename T> class HamiltLCAO : public Hamilt<double>
 {
   public:
     HamiltLCAO(

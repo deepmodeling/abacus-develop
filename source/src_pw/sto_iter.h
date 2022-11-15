@@ -27,7 +27,7 @@ class Stochastic_Iter
 
     void init(const int, int* nchip_in, const int method_in, Stochastic_WF& stowf);
     
-    void sum_stoband(Stochastic_WF& stowf, elecstate::ElecState* pes,hamilt::Hamilt* pHamilt);
+    void sum_stoband(Stochastic_WF& stowf, elecstate::ElecState* pes,hamilt::Hamilt<double>* pHamilt);
 
     double calne(elecstate::ElecState* pes);
 

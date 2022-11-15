@@ -16,7 +16,7 @@ else()
 AddTest(
   TARGET Hamilt_UTs
   LIBS ${math_libs}
-  SOURCES ekinetic_test.cpp nonlocal_test.cpp
+  SOURCES ekinetic_test.cpp nonlocal_test.cpp veff_test.cpp
           ../src/ekinetic.cpp
           ../src/nonlocal.cpp
           ../src/veff.cpp

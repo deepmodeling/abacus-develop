@@ -27,7 +27,7 @@ DiagoDavid<FPTYPE, Device>::DiagoDavid(const FPTYPE* precondition_in)
 }
 
 template<typename FPTYPE, typename Device>
-void DiagoDavid<FPTYPE, Device>::cal_grad(hamilt::Hamilt* phm_in,
+void DiagoDavid<FPTYPE, Device>::cal_grad(hamilt::Hamilt<FPTYPE, Device>* phm_in,
                           const int &npw,
                           const int &nbase, // current dimension of the reduced basis
                           const int &notconv,
@@ -197,7 +197,7 @@ void DiagoDavid<FPTYPE, Device>::cal_grad(hamilt::Hamilt* phm_in,
 
 #if ((defined __CUDA) || (defined __ROCM))
 template<>
-void DiagoDavid<double, psi::DEVICE_GPU>::cal_grad(hamilt::Hamilt* phm_in,
+void DiagoDavid<double, psi::DEVICE_GPU>::cal_grad(hamilt::Hamilt<double, psi::DEVICE_GPU>* phm_in,
                           const int &npw,
                           const int &nbase, // current dimension of the reduced basis
                           const int &notconv,
@@ -366,7 +366,7 @@ void DiagoDavid<double, psi::DEVICE_GPU>::cal_grad(hamilt::Hamilt* phm_in,
 
 
 template<>
-void DiagoDavid<double, psi::DEVICE_GPU>::diag_mock(hamilt::Hamilt* phm_in, psi::Psi<std::complex<double>, psi::DEVICE_GPU> &psi, double* eigenvalue_in)
+void DiagoDavid<double, psi::DEVICE_GPU>::diag_mock(hamilt::Hamilt<double, psi::DEVICE_GPU>* phm_in, psi::Psi<std::complex<double>, psi::DEVICE_GPU> &psi, double* eigenvalue_in)
 {
     if (test_david == 1)
         ModuleBase::TITLE("DiagoDavid", "diag_mock");
@@ -563,7 +563,7 @@ void DiagoDavid<double, psi::DEVICE_GPU>::diag_mock(hamilt::Hamilt* phm_in, psi:
 #endif // ((defined __CUDA) || (defined __ROCM))
 
 template<typename FPTYPE, typename Device>
-void DiagoDavid<FPTYPE, Device>::diag_mock(hamilt::Hamilt* phm_in, psi::Psi<std::complex<FPTYPE>, Device> &psi, FPTYPE *eigenvalue_in)
+void DiagoDavid<FPTYPE, Device>::diag_mock(hamilt::Hamilt<FPTYPE, Device>* phm_in, psi::Psi<std::complex<FPTYPE>, Device> &psi, FPTYPE *eigenvalue_in)
 {
     if (test_david == 1)
         ModuleBase::TITLE("DiagoDavid", "diag_mock");
@@ -1350,7 +1350,7 @@ void DiagoDavid<FPTYPE, Device>::planSchmitOrth(
 }
 
 template<typename FPTYPE, typename Device>
-void DiagoDavid<FPTYPE, Device>::diag(hamilt::Hamilt *phm_in, psi::Psi<std::complex<FPTYPE>, Device> &psi, FPTYPE* eigenvalue_in)
+void DiagoDavid<FPTYPE, Device>::diag(hamilt::Hamilt<FPTYPE, Device> *phm_in, psi::Psi<std::complex<FPTYPE>, Device> &psi, FPTYPE* eigenvalue_in)
 {
     /// record the times of trying iterative diagonalization
     int ntry = 0;

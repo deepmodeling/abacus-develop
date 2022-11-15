@@ -44,7 +44,7 @@ using::testing::Assign;
 namespace elecstate
 {
 
-class MockElecStatePW : public ElecStatePW
+class MockElecStatePW : public ElecStatePW<double>
 {
 public:
   MockElecStatePW( ModulePW::PW_Basis_K* wfc_basis, Charge* chg_in, K_Vectors *pkv_in, int nbands_in):ElecStatePW(wfc_basis, chg_in, pkv_in, nbands_in){}

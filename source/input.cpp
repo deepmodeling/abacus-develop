@@ -1200,8 +1200,10 @@ bool Input::Read(const std::string &fn)
         {
             read_value(ifs, lcao_rmax);
         }
-        // about molecular dynamics
-        // added begin by zheng daye
+        //----------------------------------------------------------
+        // Molecule Dynamics
+        // Yu Liu add 2021-07-30
+        //----------------------------------------------------------
         else if (strcmp("md_type", word) == 0)
         {
             read_value(ifs, mdp.md_type);
@@ -1254,11 +1256,30 @@ bool Input::Read(const std::string &fn)
         {
             read_value(ifs, mdp.md_restart);
         }
-        // added by zheng daye
-        //----------------------------------------------------------
-        // Classic MD
-        // Yu Liu add 2021-07-30
-        //----------------------------------------------------------
+        else if (strcmp("md_pmode", word) == 0)
+        {
+            read_value(ifs, mdp.md_pmode);
+        }
+        else if (strcmp("md_pcouple", word) == 0)
+        {
+            read_value(ifs, mdp.md_pcouple);
+        }
+        else if (strcmp("md_pchain", word) == 0)
+        {
+            read_value(ifs, mdp.md_pchain);
+        }
+        else if (strcmp("md_pfirst", word) == 0)
+        {
+            read_value(ifs, mdp.md_pfirst);
+        }
+        else if (strcmp("md_plast", word) == 0)
+        {
+            read_value(ifs, mdp.md_plast);
+        }
+        else if (strcmp("md_pfreq", word) == 0)
+        {
+            read_value(ifs, mdp.md_pfreq);
+        }
         else if (strcmp("lj_rcut", word) == 0)
         {
             read_value(ifs, mdp.lj_rcut);
@@ -2320,6 +2341,12 @@ void Input::Bcast()
     Parallel_Common::bcast_string(mdp.pot_file);
     Parallel_Common::bcast_int(mdp.md_nraise);
     Parallel_Common::bcast_string(mdp.md_thermostat);
+    Parallel_Common::bcast_string(mdp.md_pmode);
+    Parallel_Common::bcast_string(mdp.md_pcouple);
+    Parallel_Common::bcast_int(mdp.md_pchain);
+    Parallel_Common::bcast_double(mdp.md_pfirst);
+    Parallel_Common::bcast_double(mdp.md_plast);
+    Parallel_Common::bcast_double(mdp.md_pfreq);
     // Yu Liu add 2022-05-18
     Parallel_Common::bcast_bool(efield_flag);
     Parallel_Common::bcast_bool(dip_cor_flag);
@@ -2651,7 +2678,7 @@ void Input::Check(void)
             ModuleBase::WARNING_QUIT("Input::Check", "temperature of MD calculation should be set!");
         if (mdp.md_tlast < 0.0)
             mdp.md_tlast = mdp.md_tfirst;
-        if(mdp.md_pmode != "none" && mdp.md_pfirst < 0)
+        if(mdp.md_type == 1 && mdp.md_pmode != "none" && mdp.md_pfirst < 0)
             ModuleBase::WARNING_QUIT("Input::Check", "pressure of MD calculation should be set!");
         if (mdp.md_plast < 0.0)
             mdp.md_plast = mdp.md_pfirst;
@@ -2668,7 +2695,7 @@ void Input::Check(void)
         {
             init_vel = 1;
         }
-        if(esolver_type == "lj" || esolver_type == "dp" || mdp.md_type == 4)
+        if(esolver_type == "lj" || esolver_type == "dp" || mdp.md_type == 4 || (mdp.md_type == 1 && mdp.md_pmode != "none"))
         {
             cal_stress = 1;
         }
