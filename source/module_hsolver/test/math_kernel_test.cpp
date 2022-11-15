@@ -554,10 +554,7 @@ TEST_F(TestModuleHsolverMathKernel, matrixSetToAnother_op_gpu)
     {0.61158728, -0.45754102}, {-0.54274745,-0.09682102}, {0.30232967,  0.49411249}
   };
 
-  const std::vector<std::complex<double> > B = {
-    {0.0,  0.0}, {0.0,  0.0}, {0.0,  0.0}, {0.0,  0.0}, 
-    {0.0,  0.0}, {0.0,  0.0}, {0.0,  0.0}, {0.0,  0.0}
-  };
+  const std::vector<complex<double> > B(8);
 
   int n = 2;
   int LDA = 3;
@@ -582,20 +579,10 @@ TEST_F(TestModuleHsolverMathKernel, matrixSetToAnother_op_gpu)
       device_B,
       LDB);
 
-  std::vector<complex<double> > B_gpu2cpu = {
-        {0.0,  0.0}, {0.0,  0.0},
-        {0.0,  0.0}, {0.0,  0.0},
-        {0.0,  0.0}, {0.0,  0.0},
-        {0.0,  0.0}, {0.0,  0.0},
-  };
+  std::vector<complex<double> > B_gpu2cpu(8);
   psi::memory::synchronize_memory_op<std::complex<double>, psi::DEVICE_CPU, psi::DEVICE_GPU>()(cpu_ctx, gpu_ctx, B_gpu2cpu.data(), device_B, B_gpu2cpu.size());
 
-  std::vector<complex<double> > B_cpu = {
-        {0.0,  0.0}, {0.0,  0.0},
-        {0.0,  0.0}, {0.0,  0.0},
-        {0.0,  0.0}, {0.0,  0.0},
-        {0.0,  0.0}, {0.0,  0.0},
-  };
+  std::vector<complex<double> > B_cpu(8);
   hsolver::matrixSetToAnother<double, psi::DEVICE_CPU>()(
       cpu_ctx,
       n,
