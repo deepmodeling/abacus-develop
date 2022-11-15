@@ -318,17 +318,7 @@ void energy::print_etot(
 	//			std::cout << std::setw(11) << H_Hartree_pw::hartree_energy;
 	//			std::cout << std::setw(11) << GlobalC::en.etxc - GlobalC::en.etxcc;
 				std::cout << std::resetiosflags(ios::scientific);
-				//if(GlobalV::DIAGO_TYPE=="cg") xiaohui modify 2013-09-02
-				// if(GlobalV::KS_SOLVER=="cg") //xiaohui add 2013-09-02
-				// {
-				// 	std::cout << std::setw(11) << avg_iter;
-				// }
-				//xiaohui modified 2013-03-23
-				//else if(GlobalV::DIAGO_TYPE=="selinv")
-				//{
-					// because Selinv::iter starts from 0.
-				//	std::cout << std::setw(11) << Selinv::iter;
-				//}
+				
 				std::cout << std::setw(11) << duration;
 				std::cout << std::endl;
 			}

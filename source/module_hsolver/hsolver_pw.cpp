@@ -2,6 +2,7 @@
 
 #include "diago_cg.h"
 #include "diago_david.h"
+#include "diago_iter_assist.h"
 #include "module_base/tool_quit.h"
 #include "module_base/timer.h"
 #include "module_hamilt/hamilt_pw.h"
@@ -135,6 +136,13 @@ void HSolverPW::endDiagh()
         delete (DiagoDavid<double>*)pdiagh;
         pdiagh = nullptr;
     }
+
+    //in PW base, average iteration steps for each band and k-point should be printing
+    GlobalV::ofs_running<< "Average iterative diagonalization steps: "<<DiagoIterAssist<double>::avg_iter / this->wfc_basis->nks
+        <<" ; where current threshold is: "<<DiagoIterAssist<double>::PW_DIAG_THR<<" . "<<std::endl;
+    //reset avg_iter
+    DiagoIterAssist<double>::avg_iter = 0.0;
+
     //psi only should be initialed once for PW
     if(!this->initialed_psi)
     {
