@@ -529,38 +529,63 @@ void DiagoIterAssist<FPTYPE, Device>::diagH_LAPACK(
     
     const bool all_eigenvalues = (nstart == nbands);
 
+#if defined(__CUDA) || defined(__ROCM)
+    const psi::DEVICE_CPU * cpu_ctx = {};
+    const psi::DEVICE_GPU * gpu_ctx = {};
+
+    FPTYPE* e_gpu = nullptr;
+    psi::memory::resize_memory_op<FPTYPE, psi::DEVICE_GPU>()(gpu_ctx, e_gpu, nbands);
+    
+    // set e in CPU value to e_gpu
+    psi::memory::synchronize_memory_op<FPTYPE, psi::DEVICE_GPU, psi::DEVICE_CPU>()(
+        gpu_ctx,
+        cpu_ctx,
+        e_gpu,
+        e,
+        nbands
+    );
+
     if (all_eigenvalues)
     {
         //===========================
         // calculate all eigenvalues
         //===========================
-        dngv_op<FPTYPE, Device>()(
-            ctx,
-            nstart,
-            ldh,
-            hcc,
-            scc,
-            e,
-            vcc
-        );
+        dngv_op<FPTYPE, Device>()(ctx, nstart, ldh, hcc, scc, e_gpu, vcc);
     }
     else
     {
         //=====================================
         // calculate only m lowest eigenvalues
         //=====================================
-        dngvx_op<FPTYPE, Device>()(
-            ctx,
-            nstart,
-            ldh,
-            hcc,
-            scc,
-            nbands,
-            e,
-            vcc
-        );
+        dngvx_op<FPTYPE, Device>()(ctx, nstart, ldh, hcc, scc, nbands, e_gpu, vcc);
     }
 
+    // set e_gpu value to e in CPU
+    psi::memory::synchronize_memory_op<FPTYPE, psi::DEVICE_CPU, psi::DEVICE_GPU>()(
+        cpu_ctx,
+        gpu_ctx,
+        e,
+        e_gpu,
+        nbands
+    );
+#else
+
+    if (all_eigenvalues)
+    {
+        //===========================
+        // calculate all eigenvalues
+        //===========================
+        dngv_op<FPTYPE, Device>()(ctx, nstart, ldh, hcc, scc, e, vcc);
+    }
+    else
+    {
+        //=====================================
+        // calculate only m lowest eigenvalues
+        //=====================================
+        dngvx_op<FPTYPE, Device>()(ctx, nstart, ldh, hcc, scc, nbands, e, vcc);
+    }
+
+#endif
 
     ModuleBase::timer::tick("DiagoIterAssist", "LAPACK_subspace");
     return;
