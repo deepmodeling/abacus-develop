@@ -10,7 +10,7 @@ public:
 	{
 		md_restart = 0;
 		md_type = 1;
-        md_thermostat = "NVE";
+        md_thermostat = "nve";
         md_nstep = 10;
 		md_dt = 1.0;
 		md_tfirst = -1.0;
