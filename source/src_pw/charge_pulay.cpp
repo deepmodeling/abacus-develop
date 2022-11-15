@@ -11,10 +11,6 @@ void Charge_Mixing::Pulay_mixing(double** rho, double** rho_save)
 	dstep = this->mixing_ndim - 1;
 	assert(dstep>0);
 
-	GlobalV::ofs_running << "before : irstep, idstep, totstep, rstep, dstep :" << std::endl;
-	GlobalV::ofs_running << irstep << " " << idstep << " " << totstep << " "
-		<< rstep << " " << dstep << std::endl;
-
 	// (1) allocate
 	this->allocate_Pulay();
 
@@ -118,10 +114,6 @@ void Charge_Mixing::Pulay_mixing(double** rho, double** rho_save)
 		++idstep;
 		++totstep;	
 	}
-
-	GlobalV::ofs_running << "after : irstep, idstep, totstep, rstep, dstep :" << std::endl;
-	GlobalV::ofs_running << irstep << " " << idstep << " " << totstep << " "
-		<< rstep << " " << dstep << std::endl;
 
 	return;		
 }
