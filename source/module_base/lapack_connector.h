@@ -159,6 +159,20 @@ private:
         return aux;
     }
 
+    static inline
+    std::complex<double>* transpose(const std::complex<double>* a, const int n, const int lda, const int nbase_x)
+    {
+        std::complex<double>* aux = new std::complex<double>[lda*n];
+        for (int i = 0; i < n; ++i)
+        {
+            for (int j = 0; j < lda; ++j)
+            {
+                aux[j * n + i] = a[i * nbase_x + j];
+            }
+        }
+        return aux;
+    }
+
     // Transpose the fortran-form real-std::complex array to the std::complex matrix.
     static inline
     void transpose(const std::complex<double>* aux, ModuleBase::ComplexMatrix& a, const int n, const int lda)
@@ -224,6 +238,31 @@ public:
         delete[] aux;
         delete[] bux;
     }
+    // wrap function of fortran lapack routine zhegv.
+    static inline
+    void zhegv(	const int itype, const char jobz, const char uplo, const int n, std::complex<double>* a,
+                const int lda, const std::complex<double>* b, const int ldb, double* w, std::complex<double>* work,
+                int lwork, double* rwork, int info, int ld_real)
+    {	// Transpose the std::complex matrix to the fortran-form real-std::complex array.
+        std::complex<double>* aux = LapackConnector::transpose(a, n, lda, ld_real);
+        std::complex<double>* bux = LapackConnector::transpose(b, n, ldb, ld_real);
+
+        // call the fortran routine
+        zhegv_(&itype, &jobz, &uplo, &n, aux, &lda, bux, &ldb, w, work, &lwork, rwork, &info);
+        // Transpose the fortran-form real-std::complex array to the std::complex matrix.
+        // LapackConnector::transpose(aux, a, n, lda);
+        // LapackConnector::transpose(bux, b, n, ldb);
+        for (int i = 0; i < n; ++i)
+        {
+            for (int j = 0; j < lda; ++j)
+            {
+                a[j * ld_real + i] = aux[i*lda+j];
+            }
+        }
+        // free the memory.
+        delete[] aux;
+        delete[] bux;
+    }
 
     // wrap function of fortran lapack routine zheev.
     static inline
@@ -252,6 +291,38 @@ public:
         delete[] bux;
         delete[] zux;
 
+    }
+    // wrap function of fortran lapack routine zheev.
+    static inline
+    void zhegvx( const int itype, const char jobz, const char range, const char uplo,
+                 const int n, const std::complex<double>* a, const int lda, const std::complex<double>* b,
+                 const int ldb, const double vl, const double vu, const int il, const int iu,
+                 const double abstol, const int m, double* w, std::complex<double>* z, const int ldz,
+                 std::complex<double>* work, const int lwork, double* rwork, int* iwork,
+                 int* ifail, int info, int nbase_x)
+    {
+        // Transpose the std::complex matrix to the fortran-form real-std::complex array.
+        std::complex<double>* aux = LapackConnector::transpose(a, n, lda, nbase_x);
+        std::complex<double>* bux = LapackConnector::transpose(b, n, ldb, nbase_x);
+        std::complex<double>* zux = new std::complex<double>[n*iu];// mohan modify 2009-08-02
+
+        // call the fortran routine
+        zhegvx_(&itype, &jobz, &range, &uplo, &n, aux, &lda, bux, &ldb, &vl,
+                &vu, &il,&iu, &abstol, &m, w, zux, &ldz, work, &lwork, rwork, iwork, ifail, &info);
+
+        // Transpose the fortran-form real-std::complex array to the std::complex matrix
+        for (int i = 0; i < iu; ++i)
+        {
+            for (int j = 0; j < n; ++j)
+            {
+                z[j * nbase_x + i] = zux[i*n+j];
+            }
+        }
+
+        // free the memory.
+        delete[] aux;
+        delete[] bux;
+        delete[] zux;
     }
 
 	// calculate the eigenvalues and eigenfunctions of a real symmetric matrix.
