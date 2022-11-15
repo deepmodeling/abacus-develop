@@ -8,7 +8,6 @@ list(APPEND objects
     potentials/pot_xc.cpp
     potentials/pot_local.cpp
     potentials/potential_new.cpp
-    potentials/H_TDDFT_pw.cpp
     potentials/write_pot.cpp
     src/elecstate_multi_device.cpp
 )
@@ -24,6 +23,7 @@ if(ENABLE_LCAO)
       elecstate_lcao.cpp
       elecstate_lcao_tddft.cpp
       dm2d_to_grid.cpp
+      potentials/H_TDDFT_pw.cpp
   )
 endif()
 
