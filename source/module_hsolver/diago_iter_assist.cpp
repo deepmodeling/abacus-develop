@@ -519,7 +519,7 @@ void DiagoIterAssist<FPTYPE, Device>::diagH_LAPACK(
     const std::complex<FPTYPE>* hcc,
     const std::complex<FPTYPE>* scc,
     const int ldh, // nstart
-    FPTYPE *e,
+    FPTYPE *e, // always in CPU
     std::complex<FPTYPE>* vcc)
 {
     ModuleBase::TITLE("DiagoIterAssist", "LAPACK_subspace");
@@ -535,7 +535,6 @@ void DiagoIterAssist<FPTYPE, Device>::diagH_LAPACK(
 
     FPTYPE* e_gpu = nullptr;
     psi::memory::resize_memory_op<FPTYPE, psi::DEVICE_GPU>()(gpu_ctx, e_gpu, nbands);
-    
     // set e in CPU value to e_gpu
     psi::memory::synchronize_memory_op<FPTYPE, psi::DEVICE_GPU, psi::DEVICE_CPU>()(
         gpu_ctx,
@@ -568,6 +567,7 @@ void DiagoIterAssist<FPTYPE, Device>::diagH_LAPACK(
         e_gpu,
         nbands
     );
+    psi::memory::delete_memory_op<FPTYPE, psi::DEVICE_GPU>()(gpu_ctx, e_gpu);
 #else
 
     if (all_eigenvalues)
