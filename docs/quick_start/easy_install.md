@@ -11,10 +11,13 @@ ABACUS currently supports Linux. To compile ABACUS, please make sure that the fo
 - Fortran compiler if you are building `BLAS`, `LAPACK`, `ScaLAPACK`, and `ELPA` from source file. You can use [Intel® Fortran Compiler](https://www.intel.com/content/www/us/en/developer/tools/oneapi/fortran-compiler.html) or [GFortran](https://gcc.gnu.org/fortran/).
 - [BLAS](http://www.netlib.org/blas/). You can use [OpenBLAS](https://www.openblas.net/).
 - [LAPACK](http://www.netlib.org/lapack/).
-- [ScaLAPACK](http://www.netlib.org/scalapack/) (needed by LCAO).
 - [FFTW3](http://www.fftw.org/).
-- [ELPA](https://elpa.mpcdf.mpg.de/) >= 2017 (needed by LCAO).
-- [CEREAL](https://uscilab.github.io/cereal/) (needed by LCAO).
+
+These requirements support the calculation of plane-wave basis in ABACUS. For LCAO basis calculation, additional components are required:
+
+- [ScaLAPACK](http://www.netlib.org/scalapack/).
+- [ELPA](https://elpa.mpcdf.mpg.de/) >= 2017.
+- [CEREAL](https://uscilab.github.io/cereal/).
 
 > GCC version 5 or later is required; Intel compilers also use GCC headers and libraries[(ref)](https://www.intel.com/content/www/us/en/develop/documentation/cpp-compiler-developer-guide-and-reference/top/compatibility-and-portability/gcc-compatibility-and-interoperability.html#gcc-compatibility-and-interoperability_GUID-52CB6FE0-83DA-4028-9EF4-0DFAF1652736).
 
@@ -37,11 +40,10 @@ And of course, a copy of ABACUS source code is required, which can be obtained v
 - Download the latest source code without git: `wget https://github.com/deepmodeling/abacus-develop/archive/refs/heads/develop.zip`
 - Get the source code of a stable version [here](https://github.com/deepmodeling/abacus-develop/releases)
 - If you have connection issues accessing GitHub, please try out our official [Gitee repo](https://gitee.com/deepmodeling/abacus-develop/): replacing 'github.com' with 'gitee.com' works for all the links above. e.g. `git clone https://gitee.com/deepmodeling/abacus-develop.git`
-- If you do only need LCAO calculations, ScaLAPACK, ELPA, CEREAL are not needed.
 
 ## Configure
 
-ABACUS requires a minimum `cmake` version of `3.16`. Check the version of `cmake` on your machine with:
+ABACUS requires a minimum CMake version of `3.16`. Check the version of CMake on your machine with:
 
 ```bash
 cmake --version
@@ -53,7 +55,7 @@ You can specify the bin path of ABACUS binary to install by `CMAKE_INSTALL_PREFI
 cmake -B build -DCMAKE_INSTALL_PREFIX=${YOUR_PATH_TO_ABACUS_BINARY}
 ```
 
-You can provide path of each dependent package if the package can not be automatically found by cmake.
+You can provide path of each dependent package if the package can not be automatically found by CMake.
 Keys `LAPACK_DIR`, `SCALAPACK_DIR`, `ELPA_DIR`, `FFTW3_DIR`, `CEREAL_INCLUDE_DIR`, `MPI_CXX_COMPILER` and `MKLROOT` are currently available to specify.
 For example:
 
@@ -63,7 +65,7 @@ cmake -B build -DFFTW3_ROOT=/opt/fftw3
 
 If environment variable `MKLROOT` exists, `cmake` will take MKL as a preference, i.e. not using `LAPACK` and `ScaLAPACK`. To disable MKL, unset environment variable `MKLROOT`, or pass `-DMKLROOT=OFF` to `cmake`.
 
-If you do not prepare SCALAPACK, ELPA or CEREAL and only want to do PW calculations, LCAO can be turned off with:
+If SCALAPACK, ELPA or CEREAL is absent and only require plane-wave calculations, the feature of calculating LCAO basis can be turned off with:
 
 ```bash
 cmake -B build -DENABLE_LCAO=OFF

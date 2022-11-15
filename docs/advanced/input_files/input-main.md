@@ -668,7 +668,7 @@ This part of variables are used to control the geometry relaxation.
 ### force_thr_ev
 
 - **Type**: Real
-- **Description**: The threshold of the force convergence, has the same function as force_thr, just the unit is different, it is eV=Angstrom, you can choose either one as you like. The recommendation value for using atomic orbitals is 0.04 eV/Angstrom.
+- **Description**: The threshold of the force convergence, has the same function as force_thr, just the unit is different, it is eV/Angstrom, you can choose either one as you like. The recommendation value for using atomic orbitals is 0.04 eV/Angstrom.
 - **Default**: 0.0257112 eV/Angstrom
 
 ### force_thr_ev2
