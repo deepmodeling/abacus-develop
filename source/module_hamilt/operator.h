@@ -45,7 +45,7 @@ class Operator
 
     virtual void add(Operator* next);
 
-    virtual const int get_ik() const {return this->ik;}
+    virtual int get_ik() const {return this->ik;}
 
 #if ((defined __CUDA) || (defined __ROCM))
     typedef std::tuple<const psi::Psi<FPTYPE, psi::DEVICE_GPU>*, const psi::Range, FPTYPE*> hpsi_info_gpu;
