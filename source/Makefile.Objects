@@ -158,7 +158,13 @@ OBJS_ELECSTAT=elecstate.o\
     elecstate_pw.o\
     elecstate_pw_sdft.o\
     efield.o\
-    gatefield.o
+    gatefield.o\
+    potential_new.o\
+    pot_local.o\
+    H_Hartree_pw.o\
+    H_TDDFT_pw.o\
+    write_pot.o\
+    pot_xc.o\
 
 OBJS_ELECSTAT_LCAO=elecstate_lcao.o\
       elecstate_lcao_tddft.o\
@@ -350,7 +356,6 @@ OBJS_IO=berryphase.o\
     wf_io.o\
     winput.o\
     write_input.o\
-    write_pot.o\
     write_rho.o\
     write_rho_cube.o\
 	write_wfc_realspace.o\
@@ -524,7 +529,6 @@ OBJS_SRCPW=H_Ewald_pw.o\
     klist.o\
     magnetism.o\
     occupy.o\
-    potential.o\
     structure_factor.o\
     pw_complement.o\
     soc.o\
@@ -551,7 +555,6 @@ OBJS_SRCPW=H_Ewald_pw.o\
     wf_atomic.o\
     wf_igk.o\
     xc_3.o\
-    hamilt.o\  
 
 OBJS_VDW=vdw.o\
     vdwd2_parameters.o\
