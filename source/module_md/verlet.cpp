@@ -42,8 +42,8 @@ void Verlet::apply_thermostat()
     double t_target = 0;
     t_current = MD_func::current_temp(kinetic, ucell.nat, frozen_freedom_, allmass, vel);
 
-    if(mdp.md_thermostat == "NVE"){}
-    else if(mdp.md_thermostat == "Rescaling")
+    if(mdp.md_thermostat == "nve"){}
+    else if(mdp.md_thermostat == "rescaling")
     {
         t_target = MD_func::target_temp(step_ + step_rst_, mdp.md_tfirst, mdp.md_tlast);
         if(abs(t_target - t_current) * ModuleBase::Hartree_to_K > mdp.md_tolerance)
@@ -51,7 +51,7 @@ void Verlet::apply_thermostat()
             thermalize(0, t_current, t_target);
         }
     }
-    else if(mdp.md_thermostat == "Rescale_v")
+    else if(mdp.md_thermostat == "rescale_v")
     {
         if((step_+step_rst_) % mdp.md_nraise == 0)
         {
@@ -59,7 +59,7 @@ void Verlet::apply_thermostat()
             thermalize(0, t_current, t_target);
         }
     }
-    else if(mdp.md_thermostat == "Anderson")
+    else if(mdp.md_thermostat == "anderson")
     {
         if(GlobalV::MY_RANK==0)
         {
@@ -83,7 +83,7 @@ void Verlet::apply_thermostat()
         MPI_Bcast(vel, ucell.nat*3, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 #endif
     }
-    else if(mdp.md_thermostat == "Berendsen")
+    else if(mdp.md_thermostat == "berendsen")
     {
         t_target = MD_func::target_temp(step_ + step_rst_, mdp.md_tfirst, mdp.md_tlast);
         thermalize(mdp.md_nraise, t_current, t_target);

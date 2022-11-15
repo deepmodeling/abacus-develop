@@ -2,21 +2,28 @@
 
 Molecular dynamics (MD) is a computer simulation method for analyzing the physical movements of atoms and molecules. The atoms and molecules are allowed to interact for a fixed period of time, giving a view of the dynamic "evolution" of the system. In the most common version, the trajectories of atoms and molecules are determined by numerically solving Newton's equations of motion for a system of interacting particles, where forces between the particles and their potential energies are calculated using first-principles calculations (first-principles molecular dynamics, FPMD), or interatomic potentials and molecular mechanics force fields (classical molecular dynamics, CMD).
 
-By setting `calculation` to be `md`, ABACUS currently provides six different MD evolution methods, which is specified by keyword `md_type` in the `INPUT` file:
+By setting `calculation` to be `md`, ABACUS currently provides several different MD evolution methods, which is specified by keyword `md_type` in the `INPUT` file:
 
   - -1: FIRE method
   - 0: velocity Verlet algorithm (default: NVE ensemble)
-  - 1: NVT ensemble with Nose Hoover Chain
+  - 1: Nose-Hoover style non-Hamiltonian equations of motion
   - 2: NVT ensemble with Langevin thermostat
   - 4: MSST method
 
 When `md_type` is set to 0, `md_thermostat` is used to specify the thermostat based on the velocity Verlet algorithm.
 
-  - NVE: NVE ensemble
-  - Anderson: NVT ensemble with Anderson thermostat
-  - Berendsen: NVT ensemble with Berendsen thermostat
-  - Rescaling: NVT ensemble with velocity Rescaling method 1
-  - Rescale_v: NVT ensemble with velocity Rescaling method 2
+  - nve: NVE ensemble
+  - anderson: NVT ensemble with Anderson thermostat
+  - berendsen: NVT ensemble with Berendsen thermostat
+  - rescaling: NVT ensemble with velocity Rescaling method 1
+  - rescale_v: NVT ensemble with velocity Rescaling method 2
+
+When `md_type` is set to 1, `md_pmode` is used to specify the NVT or NPT ensemble based on the Nose-Hoover style non-Hamiltonian equations of motion.
+
+  - none: NVT ensemble
+  - iso: NPT ensemble with isotropic cetl fluctuations
+  - aniso: NPT ensemble with anisotropic cetl fluctuations
+  - tri: NPT ensemble with non-orthogonal (triclinic) simulation box
 
 Furthermore, ABACUS also provides a [list of keywords](./input_files/input-main.md#molecular-dynamics) to control relevant parmeters used in MD simulations.
 
@@ -47,7 +54,10 @@ NVT ensemble (i. e. canonical ensemble)  is the statistical ensemble that repres
 
 The principal thermodynamic variable of the canonical ensemble, determining the probability distribution of states, is the absolute temperature (symbol: T). The ensemble typically also depends on mechanical variables such as the number of particles in the system (symbol: N) and the system's volume (symbol: V), each of which influence the nature of the system's internal states. An ensemble with these three parameters is sometimes called the NVT ensemble.
 
-ABACUS perform time integration on [Nose-Hoover style non-Hamiltonian equations of motion](https://journals.aps.org/pra/abstract/10.1103/PhysRevA.31.1695) which are designed to generate positions and velocities sampled from NVT ensemble.
+
+The isothermal–isobaric ensemble (constant temperature and constant pressure ensemble), also called NPT ensemble, is a statistical mechanical ensemble that maintains the number of particles N, constant temperature T, and constant pressure P. This ensemble plays an important role in chemistry as chemical reactions are usually carried out under constant pressure condition. The NPT ensemble is also useful for measuring the equation of state of model systems whose virial expansion for pressure cannot be evaluated, or systems near first-order phase transitions.
+
+ABACUS perform time integration on [Nose-Hoover style non-Hamiltonian equations of motion](https://journals.aps.org/pra/abstract/10.1103/PhysRevA.31.1695) which are designed to generate positions and velocities sampled from NVT and NPT ensemble.
 
 
 
