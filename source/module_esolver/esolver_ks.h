@@ -25,9 +25,9 @@ namespace ModuleESolver
         int niter;        // iter steps actually used in scf
         bool conv_elec;   // If electron density is converged in scf.
         int out_freq_elec;// frequency for output
-        virtual void Init(Input& inp, UnitCell_pseudo& cell) override;
+        virtual void Init(Input& inp, UnitCell& cell) override;
 
-        virtual void Run(const int istep, UnitCell_pseudo& cell) override;
+        virtual void Run(const int istep, UnitCell& cell) override;
 
         // calculate electron density from a specific Hamiltonian
         virtual void hamilt2density(const int istep, const int iter, const double ethr);
@@ -66,8 +66,9 @@ namespace ModuleESolver
 
 
     hsolver::HSolver* phsol = nullptr;
-    hamilt::Hamilt* p_hamilt = nullptr;
+    hamilt::Hamilt<double>* p_hamilt = nullptr;
     ModulePW::PW_Basis_K* pw_wfc = nullptr;
+
     Charge_Extra CE;
 
     protected:

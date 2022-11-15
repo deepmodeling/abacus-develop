@@ -275,11 +275,11 @@ void RPAExxLcao::exx_init()
     }
     else
     {
-        if ("plain" == GlobalC::CHR.mixing_mode)
+        if ("plain" == GlobalC::CHR_MIX.get_mixing_mode())
         {
             Hexx_para.mixing_mode = Exx_Abfs::Parallel::Communicate::Hexx::Mixing_Mode::Plain;
         }
-        else if ("pulay" == GlobalC::CHR.mixing_mode)
+        else if ("pulay" == GlobalC::CHR_MIX.get_mixing_mode())
         {
             Hexx_para.mixing_mode = Exx_Abfs::Parallel::Communicate::Hexx::Mixing_Mode::Pulay;
         }
@@ -287,7 +287,7 @@ void RPAExxLcao::exx_init()
         {
             throw std::invalid_argument("exx mixing error. exx_separate_loop==false, mixing_mode!=plain or pulay");
         }
-        Hexx_para.mixing_beta = GlobalC::CHR.mixing_beta;
+        Hexx_para.mixing_beta = GlobalC::CHR_MIX.get_mixing_beta();
     }
 #endif
 

@@ -23,7 +23,7 @@ inline int globalIndex(int localindex, int nblk, int nprocs, int myproc)
 }
 
 void Evolve_LCAO_Matrix::evolve_complex_matrix(const int& ik,
-                                               hamilt::Hamilt* p_hamilt,
+                                               hamilt::Hamilt<double>* p_hamilt,
                                                psi::Psi<std::complex<double>>* psi_k,
                                                psi::Psi<std::complex<double>>* psi_k_laststep,
                                                double* ekb) const
@@ -60,7 +60,7 @@ void Evolve_LCAO_Matrix::evolve_complex_matrix(const int& ik,
 }
 
 void Evolve_LCAO_Matrix::using_LAPACK_complex(const int& ik,
-                                              hamilt::Hamilt* p_hamilt,
+                                              hamilt::Hamilt<double>* p_hamilt,
                                               std::complex<double>* psi_k,
                                               std::complex<double>* psi_k_laststep,
                                               double* ekb) const
@@ -346,7 +346,7 @@ void Evolve_LCAO_Matrix::using_LAPACK_complex(const int& ik,
 
 #ifdef __MPI
 void Evolve_LCAO_Matrix::using_ScaLAPACK_complex(const int& ik,
-                                                 hamilt::Hamilt* p_hamilt,
+                                                 hamilt::Hamilt<double>* p_hamilt,
                                                  std::complex<double>* psi_k,
                                                  std::complex<double>* psi_k_laststep,
                                                  double* ekb) const

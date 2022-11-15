@@ -7,7 +7,7 @@ Print_Info::Print_Info(){}
 Print_Info::~Print_Info(){}
 
 
-void Print_Info::setup_parameters(UnitCell_pseudo &ucell, K_Vectors &kv)
+void Print_Info::setup_parameters(UnitCell &ucell, K_Vectors &kv)
 {
 	ModuleBase::TITLE("Print_Info","setup_parameters");
 	
@@ -45,9 +45,13 @@ void Print_Info::setup_parameters(UnitCell_pseudo &ucell, K_Vectors &kv)
             {
                 std::cout << " ENSEMBLE                 : " << INPUT.mdp.md_thermostat << std::endl;
             }
-            else if(INPUT.mdp.md_type == 1)
+            else if(INPUT.mdp.md_type == 1 && INPUT.mdp.md_pmode == "none")
             {
                 std::cout << " ENSEMBLE                 : " << "NVT" << std::endl;
+            }
+            else if(INPUT.mdp.md_type == 1 && INPUT.mdp.md_pmode != "none")
+            {
+                std::cout << " ENSEMBLE                 : " << "NPT    mode: " << INPUT.mdp.md_pmode << std::endl;
             }
             else if(INPUT.mdp.md_type==2)
             {

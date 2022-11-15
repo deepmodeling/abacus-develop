@@ -13,7 +13,7 @@ Run_MD::Run_MD(){}
 
 Run_MD::~Run_MD(){}
 
-void Run_MD::md_line(UnitCell_pseudo &unit_in, ModuleESolver::ESolver *p_esolver)
+void Run_MD::md_line(UnitCell &unit_in, ModuleESolver::ESolver *p_esolver)
 {
 	ModuleBase::TITLE("Run_MD", "md_line");
     ModuleBase::timer::tick("Run_MD", "md_line");

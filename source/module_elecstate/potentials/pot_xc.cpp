@@ -6,7 +6,7 @@ namespace elecstate
 
 void PotXC::cal_v_eff(
     const Charge* chg, 
-    const UnitCell_pseudo* ucell, 
+    const UnitCell* ucell, 
     ModuleBase::matrix& v_eff)
 {
     ModuleBase::TITLE("PotXC", "cal_v_eff");

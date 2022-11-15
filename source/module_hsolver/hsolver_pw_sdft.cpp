@@ -10,7 +10,7 @@
 #include "src_pw/global.h"
 namespace hsolver
 {
-    void HSolverPW_SDFT::solve(hamilt::Hamilt* pHamilt, 
+    void HSolverPW_SDFT::solve(hamilt::Hamilt<double>* pHamilt,
                            psi::Psi<std::complex<double>>& psi, 
                            elecstate::ElecState* pes, 
                            Stochastic_WF& stowf,
@@ -113,7 +113,7 @@ namespace hsolver
 			Symmetry_rho srho;
 			for(int is=0; is < GlobalV::NSPIN; is++)
 			{
-				srho.begin(is, GlobalC::CHR,GlobalC::rhopw, GlobalC::Pgrid, GlobalC::symm);
+				srho.begin(is, GlobalC::CHR, GlobalC::rhopw, GlobalC::Pgrid, GlobalC::symm);
 			}
 		}
 		else

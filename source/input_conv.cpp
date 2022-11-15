@@ -471,7 +471,7 @@ void Input_Conv::Convert(void)
     //----------------------------------------------------------
     // charge mixing(3/3)
     //----------------------------------------------------------
-    GlobalC::CHR.set_mixing(INPUT.mixing_mode,
+    GlobalC::CHR_MIX.set_mixing(INPUT.mixing_mode,
                             INPUT.mixing_beta,
                             INPUT.mixing_ndim,
                             INPUT.mixing_gg0); // mohan modify 2014-09-27, add mixing_gg0

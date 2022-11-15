@@ -42,7 +42,7 @@ class PotGate : public PotBase
     public:
     PotGate(
         const ModulePW::PW_Basis* rho_basis_in,
-        const UnitCell_pseudo* ucell_in):ucell_(ucell_in)
+        const UnitCell* ucell_in):ucell_(ucell_in)
     {
         this->rho_basis_ = rho_basis_in;
         this->fixed_mode = true;
@@ -60,7 +60,7 @@ class PotGate : public PotBase
     }
 
     private:
-    const UnitCell_pseudo* ucell_ = nullptr;
+    const UnitCell* ucell_ = nullptr;
 };
 
 }//namespace elecstate

@@ -13,7 +13,6 @@
 #include "../src_pw/symmetry_rho.h"
 #include "../src_io/print_info.h"
 #include "../src_pw/H_Ewald_pw.h"
-#include "../src_pw/electrons.h"
 //-----force-------------------
 #include "../src_pw/forces.h"
 //-----stress------------------
@@ -26,7 +25,7 @@
 namespace ModuleESolver
 {
 
-void ESolver_OF::Init(Input &inp, UnitCell_pseudo &ucell)
+void ESolver_OF::Init(Input &inp, UnitCell &ucell)
 {
     ESolver_FP::Init(inp, ucell);
 
@@ -250,7 +249,7 @@ void ESolver_OF::Init(Input &inp, UnitCell_pseudo &ucell)
     CE.Init_CE();
 }
 
-void ESolver_OF::Run(int istep, UnitCell_pseudo& ucell)
+void ESolver_OF::Run(int istep, UnitCell& ucell)
 {
     ModuleBase::timer::tick("ESolver_OF", "Run");
     // get Ewald energy, initial rho and phi if necessary

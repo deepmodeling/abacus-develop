@@ -29,7 +29,7 @@ bool DiagoIterAssist<FPTYPE, Device>::need_subspace = false;
 //----------------------------------------------------------------------
 template<typename FPTYPE, typename Device>
 void DiagoIterAssist<FPTYPE, Device>::diagH_subspace(
-    hamilt::Hamilt* pHamilt,
+    hamilt::Hamilt<FPTYPE, Device>* pHamilt,
     const psi::Psi<std::complex<FPTYPE>, Device> &psi,
     psi::Psi<std::complex<FPTYPE>, Device> &evc,
     FPTYPE *en,
@@ -174,7 +174,7 @@ void DiagoIterAssist<FPTYPE, Device>::diagH_subspace(
 
 template<typename FPTYPE, typename Device>
 void DiagoIterAssist<FPTYPE, Device>::diagH_subspace_init(
-    hamilt::Hamilt* pHamilt,
+    hamilt::Hamilt<FPTYPE, Device>* pHamilt,
     const ModuleBase::ComplexMatrix &psi,
     psi::Psi<std::complex<FPTYPE>, Device> &evc,
     FPTYPE *en)
@@ -335,12 +335,12 @@ void DiagoIterAssist<FPTYPE, Device>::diagH_subspace_init(
 // Produces on output n_band eigenvectors (n_band <= nstart) in evc.
 //----------------------------------------------------------------------
 template<>
-void DiagoIterAssist<double, psi::DEVICE_GPU>::diagH_subspace(hamilt::Hamilt* pHamilt, const psi::Psi<std::complex<double>, psi::DEVICE_GPU> &psi, psi::Psi<std::complex<double>, psi::DEVICE_GPU> &evc, double *en, int n_band) {
+void DiagoIterAssist<double, psi::DEVICE_GPU>::diagH_subspace(hamilt::Hamilt<double, psi::DEVICE_GPU>* pHamilt, const psi::Psi<std::complex<double>, psi::DEVICE_GPU> &psi, psi::Psi<std::complex<double>, psi::DEVICE_GPU> &evc, double *en, int n_band) {
     ModuleBase::WARNING_QUIT("DiagoIterAssist::diagH_subspace","GPU's implementation is not supported currently!");
 }
 
 template<>
-void DiagoIterAssist<double, psi::DEVICE_GPU>::diagH_subspace_init(hamilt::Hamilt* pHamilt, const ModuleBase::ComplexMatrix &psi, psi::Psi<std::complex<double>, psi::DEVICE_GPU> &evc, double *en) {
+void DiagoIterAssist<double, psi::DEVICE_GPU>::diagH_subspace_init(hamilt::Hamilt<double, psi::DEVICE_GPU>* pHamilt, const ModuleBase::ComplexMatrix &psi, psi::Psi<std::complex<double>, psi::DEVICE_GPU> &evc, double *en) {
     ModuleBase::WARNING_QUIT("DiagoIterAssist::diagH_subspace_init","GPU's implementation is not supported currently!");
 }
 #endif

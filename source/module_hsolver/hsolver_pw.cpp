@@ -4,6 +4,7 @@
 #include "diago_david.h"
 #include "module_base/tool_quit.h"
 #include "module_base/timer.h"
+#include "module_hamilt/hamilt_pw.h"
 #include "module_elecstate/elecstate_pw.h"
 #include "src_pw/global.h"
 #include <algorithm>
@@ -44,6 +45,11 @@ void HSolverPW::initDiagh()
         {
             pdiagh = new DiagoCG<double>(precondition.data());
             pdiagh->method = this->method;
+            // temperary added for debugging!
+            #if defined(__CUDA) || defined(__ROCM)
+            gpu_diagh = new DiagoCG<double, psi::DEVICE_GPU>(precondition.data());
+            gpu_diagh->method = this->method;
+            #endif
         }
     }
     else if (this->method == "dav")
@@ -70,7 +76,7 @@ void HSolverPW::initDiagh()
     }
 }
 
-void HSolverPW::solve(hamilt::Hamilt* pHamilt, psi::Psi<std::complex<double>>& psi, elecstate::ElecState* pes, const std::string method_in, const bool skip_charge)
+void HSolverPW::solve(hamilt::Hamilt<double>* pHamilt, psi::Psi<std::complex<double>>& psi, elecstate::ElecState* pes, const std::string method_in, const bool skip_charge)
 {
     ModuleBase::TITLE("HSolverPW", "solve");
     ModuleBase::timer::tick("HSolverPW", "solve");
@@ -119,6 +125,10 @@ void HSolverPW::endDiagh()
     {
         delete (DiagoCG<double>*)pdiagh;
         pdiagh = nullptr;
+        #if defined(__CUDA) || defined(__ROCM)
+        delete (DiagoCG<double, psi::DEVICE_GPU>*)gpu_diagh;
+        gpu_diagh = nullptr;
+        #endif
     }
     if(this->method == "dav")
     {
@@ -132,7 +142,7 @@ void HSolverPW::endDiagh()
     }
 }
 
-void HSolverPW::updatePsiK(hamilt::Hamilt* pHamilt, psi::Psi<std::complex<double>>& psi, const int ik)
+void HSolverPW::updatePsiK(hamilt::Hamilt<double>* pHamilt, psi::Psi<std::complex<double>>& psi, const int ik)
 {
     psi.fix_k(ik);
     if(!this->initialed_psi)
@@ -151,9 +161,44 @@ void HSolverPW::updatePsiK(hamilt::Hamilt* pHamilt, psi::Psi<std::complex<double
     }
 }
 
-void HSolverPW::hamiltSolvePsiK(hamilt::Hamilt* hm, psi::Psi<std::complex<double>>& psi, double* eigenvalue)
+void HSolverPW::hamiltSolvePsiK(hamilt::Hamilt<double>* hm, psi::Psi<std::complex<double>>& psi, double* eigenvalue)
 {
+    /// a huge victory here!
+    /// psi::Psi<std::complex<double>, psi::DEVICE_GPU> gpu_psi = psi;
+    /// psi::Psi<std::complex<double>, psi::DEVICE_CPU> cpu_psi = gpu_psi;
+    /// pdiagh->diag(hm, psi, eigenvalue);
+    /// psi::memory::synchronize_memory_op<std::complex<double>, psi::DEVICE_CPU, psi::DEVICE_CPU>()(
+    ///     psi.get_device(),
+    ///     cpu_psi.get_device(),
+    ///     psi.get_pointer() - psi.get_psi_bias(),
+    ///     cpu_psi.get_pointer() - cpu_psi.get_psi_bias(),
+    ///     psi.size());
+
+
+    /// hamilt::Hamilt<double, psi::DEVICE_CPU>* h_phm_in =
+    ///         new hamilt::HamiltPW<double, psi::DEVICE_CPU>(
+    ///                 reinterpret_cast<hamilt::HamiltPW<double, psi::DEVICE_GPU>*>(d_phm_in));
+    ///
+    /// pdiagh->diag(h_phm_in, psi, eigenvalue);
+    /// new era
+    /// if this works, then everything done!
+
+#if defined(__CUDA) || defined(__ROCM)
+    psi::Psi<std::complex<double>, psi::DEVICE_GPU> gpu_psi = psi;
+    hamilt::Hamilt<double, psi::DEVICE_GPU>* d_phm_in =
+            new hamilt::HamiltPW<double, psi::DEVICE_GPU>(
+                    reinterpret_cast<hamilt::HamiltPW<double, psi::DEVICE_CPU>*>(hm));
+    gpu_diagh->diag(d_phm_in, gpu_psi, eigenvalue);
+    psi::memory::synchronize_memory_op<std::complex<double>, psi::DEVICE_CPU, psi::DEVICE_GPU>()(
+         psi.get_device(),
+         gpu_psi.get_device(),
+         psi.get_pointer() - psi.get_psi_bias(),
+         gpu_psi.get_pointer() - gpu_psi.get_psi_bias(),
+         psi.size());
+    delete reinterpret_cast<hamilt::HamiltPW<double, psi::DEVICE_GPU>*>(d_phm_in);
+#else
     pdiagh->diag(hm, psi, eigenvalue);
+#endif
 }
 
 void HSolverPW::update_precondition(std::vector<double> &h_diag, const int ik, const int npw)

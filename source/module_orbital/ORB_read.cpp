@@ -41,7 +41,7 @@ LCAO_Orbitals::~LCAO_Orbitals()
 }
 
 #ifdef __MPI
-// be called in unitcell_pseudo.
+// be called in UnitCell.
 void LCAO_Orbitals::bcast_files(
 	const int &ntype_in, 
 	const int &my_rank)

@@ -26,7 +26,7 @@ class PotXC : public PotBase
 
     void cal_v_eff(
         const Charge* chg, 
-        const UnitCell_pseudo* ucell, 
+        const UnitCell* ucell, 
         ModuleBase::matrix& v_eff) override;
 
     ModuleBase::matrix* vofk = nullptr;

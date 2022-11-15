@@ -17,7 +17,7 @@ namespace ModuleESolver
         delete pw_rho;
         delete this->pelec;
     }
-    void ESolver_FP::Init(Input& inp, UnitCell_pseudo& cell)
+    void ESolver_FP::Init(Input& inp, UnitCell& cell)
     {
 #ifdef __MPI
             this->pw_rho->initmpi(GlobalV::NPROC_IN_POOL, GlobalV::RANK_IN_POOL, POOL_WORLD);

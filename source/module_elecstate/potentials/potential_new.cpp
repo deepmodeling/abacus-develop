@@ -21,7 +21,7 @@ namespace elecstate
 {
 Potential::Potential(
     const ModulePW::PW_Basis* rho_basis_in,
-    const UnitCell_pseudo* ucell_in,
+    const UnitCell* ucell_in,
     const ModuleBase::matrix* vloc_in,
     const ModuleBase::ComplexMatrix* structure_factors_in,
     double* etxc_in,
@@ -156,7 +156,7 @@ void Potential::allocate()
     }
 }
 
-void Potential::update_from_charge(const Charge* chg, const UnitCell_pseudo* ucell)
+void Potential::update_from_charge(const Charge* chg, const UnitCell* ucell)
 {
     ModuleBase::TITLE("Potential", "update_from_charge");
     ModuleBase::timer::tick("Potential", "update_from_charge");
@@ -187,7 +187,7 @@ void Potential::cal_fixed_v(double *vl_pseudo)
     ModuleBase::timer::tick("Potential", "cal_fixed_v");
 }
 
-void Potential::cal_v_eff(const Charge* chg, const UnitCell_pseudo* ucell, ModuleBase::matrix& v_eff)
+void Potential::cal_v_eff(const Charge* chg, const UnitCell* ucell, ModuleBase::matrix& v_eff)
 {
     ModuleBase::TITLE("Potential", "cal_v_eff");
     int nspin_current = this->v_effective.nr;

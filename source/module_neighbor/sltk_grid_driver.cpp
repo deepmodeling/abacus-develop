@@ -315,7 +315,7 @@ ModuleBase::Vector3<double> Grid_Driver::Calculate_adjacent_site
 	return adjacent_site;
 }
 
-std::vector<std::tuple<int, int, ModuleBase::Vector3<int>, ModuleBase::Vector3<double>>> Grid_Driver::get_adjs(const UnitCell_pseudo& ucell_in, const size_t &iat)
+std::vector<std::tuple<int, int, ModuleBase::Vector3<int>, ModuleBase::Vector3<double>>> Grid_Driver::get_adjs(const UnitCell& ucell_in, const size_t &iat)
 {
     const int it = ucell_in.iat2it[iat];
     const int ia = ucell_in.iat2ia[iat];
@@ -335,7 +335,7 @@ std::vector<std::tuple<int, int, ModuleBase::Vector3<int>, ModuleBase::Vector3<d
     return adjs;
 }
 
-std::vector<std::vector<std::tuple<int, int, ModuleBase::Vector3<int>, ModuleBase::Vector3<double>>>> Grid_Driver::get_adjs(const UnitCell_pseudo& ucell_in)
+std::vector<std::vector<std::tuple<int, int, ModuleBase::Vector3<int>, ModuleBase::Vector3<double>>>> Grid_Driver::get_adjs(const UnitCell& ucell_in)
 {
     std::vector<std::vector<std::tuple<int, int, ModuleBase::Vector3<int>, ModuleBase::Vector3<double>>>> adjs(ucell_in.nat);
     for(size_t iat=0; iat<ucell_in.nat; iat++)

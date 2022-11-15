@@ -7,33 +7,41 @@
 #include "module_base/timer.h"
 #include "src_parallel/parallel_reduce.h"
 #include "module_hsolver/include/math_kernel.h"
+#include "module_hamilt/hamilt_pw.h"
 
 using namespace hsolver;
 
 template<typename FPTYPE, typename Device>
 DiagoCG<FPTYPE, Device>::DiagoCG(const FPTYPE* precondition_in)
 {
+    this->device = psi::device::get_device_type<Device>(this->ctx);
     this->precondition = precondition_in;
     test_cg = 0;
     reorder = false;
     this->device = psi::device::get_device_type<Device>(this->ctx);
+#if defined(__CUDA) || defined(__ROCM)
+    hsolver::createBLAShandle();
+#endif
 }
 
 template<typename FPTYPE, typename Device>
 DiagoCG<FPTYPE, Device>::~DiagoCG() {
     // delete this->cg;
     // delete this->phi_m;
-    delete_memory_op()(this->ctx, this->sphi);
-    delete_memory_op()(this->ctx, this->hphi);
-    delete_memory_op()(this->ctx, this->scg);
-    delete_memory_op()(this->ctx, this->pphi);
-    delete_memory_op()(this->ctx, this->gradient);
-    delete_memory_op()(this->ctx, this->g0);
-    delete_memory_op()(this->ctx, this->lagrange);
+    delete_memory_complex_op()(this->ctx, this->sphi);
+    delete_memory_complex_op()(this->ctx, this->hphi);
+    delete_memory_complex_op()(this->ctx, this->scg);
+    delete_memory_complex_op()(this->ctx, this->pphi);
+    delete_memory_complex_op()(this->ctx, this->gradient);
+    delete_memory_complex_op()(this->ctx, this->g0);
+    delete_memory_complex_op()(this->ctx, this->lagrange);
+#if defined(__CUDA) || defined(__ROCM)
+    hsolver::destoryBLAShandle();
+#endif
 }
 
 template<typename FPTYPE, typename Device>
-void DiagoCG<FPTYPE, Device>::diag_mock(hamilt::Hamilt *phm_in, psi::Psi<std::complex<FPTYPE>, Device> &phi, FPTYPE *eigenvalue_in)
+void DiagoCG<FPTYPE, Device>::diag_mock(hamilt::Hamilt<FPTYPE, Device> *phm_in, psi::Psi<std::complex<FPTYPE>, Device> &phi, FPTYPE *eigenvalue_in)
 {
     ModuleBase::TITLE("DiagoCG", "diag_once");
     ModuleBase::timer::tick("DiagoCG", "diag_once");
@@ -47,8 +55,7 @@ void DiagoCG<FPTYPE, Device>::diag_mock(hamilt::Hamilt *phm_in, psi::Psi<std::co
     this->n_band = phi.get_nbands();
     this->eigenvalue = eigenvalue_in;
 
-    // haozhihan replace ZEROS 
-    psi::memory::set_memory_op<FPTYPE, Device>()(this->ctx, this->eigenvalue, 0, this->n_band);
+    set_memory_var_cpu_op()(this->cpu_ctx, this->eigenvalue, 0, this->n_band);
     // ModuleBase::GlobalFunc::ZEROS(this->eigenvalue, this->n_band);
 
     /// record for how many loops in cg convergence
@@ -63,32 +70,32 @@ void DiagoCG<FPTYPE, Device>::diag_mock(hamilt::Hamilt *phm_in, psi::Psi<std::co
     //-------------------------------------------------------------------
     this->phi_m = new psi::Psi<std::complex<FPTYPE>, Device>(phi, 1, 1);
     // this->hphi.resize(this->dmx, ModuleBase::ZERO);
-    resize_memory_op()(this->ctx, this->hphi, this->dmx);
-    set_memory_op()(this->ctx, this->hphi, 0, this->dmx);
+    resize_memory_complex_op()(this->ctx, this->hphi, this->dmx);
+    set_memory_complex_op()(this->ctx, this->hphi, 0, this->dmx);
     // this->sphi.resize(this->dmx, ModuleBase::ZERO);
-    resize_memory_op()(this->ctx, this->sphi, this->dmx);
-    set_memory_op()(this->ctx, this->sphi, 0, this->dmx);
+    resize_memory_complex_op()(this->ctx, this->sphi, this->dmx);
+    set_memory_complex_op()(this->ctx, this->sphi, 0, this->dmx);
 
     this->cg = new psi::Psi<std::complex<FPTYPE>, Device>(phi, 1, 1);
     // this->scg.resize(this->dmx, ModuleBase::ZERO);
-    resize_memory_op()(this->ctx, this->scg, this->dmx);
-    set_memory_op()(this->ctx, this->scg, 0, this->dmx);
+    resize_memory_complex_op()(this->ctx, this->scg, this->dmx);
+    set_memory_complex_op()(this->ctx, this->scg, 0, this->dmx);
     // this->pphi.resize(this->dmx, ModuleBase::ZERO);
-    resize_memory_op()(this->ctx, this->pphi, this->dmx);
-    set_memory_op()(this->ctx, this->pphi, 0, this->dmx);
+    resize_memory_complex_op()(this->ctx, this->pphi, this->dmx);
+    set_memory_complex_op()(this->ctx, this->pphi, 0, this->dmx);
 
     //in band_by_band CG method, only the first band in phi_m would be calculated
     psi::Range cg_hpsi_range(0);
 
     // this->gradient.resize(this->dmx, ModuleBase::ZERO);
-    resize_memory_op()(this->ctx, this->gradient, this->dmx);
-    set_memory_op()(this->ctx, this->gradient, 0, this->dmx);
+    resize_memory_complex_op()(this->ctx, this->gradient, this->dmx);
+    set_memory_complex_op()(this->ctx, this->gradient, 0, this->dmx);
     // this->g0.resize(this->dmx, ModuleBase::ZERO);
-    resize_memory_op()(this->ctx, this->g0, this->dmx);
-    set_memory_op()(this->ctx, this->g0, 0, this->dmx);
+    resize_memory_complex_op()(this->ctx, this->g0, this->dmx);
+    set_memory_complex_op()(this->ctx, this->g0, 0, this->dmx);
     // this->lagrange.resize(this->n_band, ModuleBase::ZERO);
-    resize_memory_op()(this->ctx, this->lagrange, this->n_band);
-    set_memory_op()(this->ctx, this->lagrange, 0, this->n_band);
+    resize_memory_complex_op()(this->ctx, this->lagrange, this->n_band);
+    set_memory_complex_op()(this->ctx, this->lagrange, 0, this->n_band);
 
     for (int m = 0; m < this->n_band; m++)
     {
@@ -124,7 +131,7 @@ void DiagoCG<FPTYPE, Device>::diag_mock(hamilt::Hamilt *phm_in, psi::Psi<std::co
         FPTYPE cg_norm = 0.0;
         FPTYPE theta = 0.0;
         bool converged = false;
-        for (iter = 0; iter < DiagoIterAssist<FPTYPE, Device>::PW_DIAG_NMAX; iter++)
+        for (iter = 0; iter < DiagoIterAssist<FPTYPE>::PW_DIAG_NMAX; iter++)
         {
             this->calculate_gradient();
             this->orthogonal_gradient(phm_in, phi, m);
@@ -136,8 +143,9 @@ void DiagoCG<FPTYPE, Device>::diag_mock(hamilt::Hamilt *phm_in, psi::Psi<std::co
             phm_in->sPsi(this->cg->get_pointer(), this->scg, (size_t)this->dim);
             converged = this->update_psi(cg_norm, theta, this->eigenvalue[m]);
 
-            if (converged)
+            if (converged) {
                 break;
+            }
         } // end iter
 
         std::complex<FPTYPE>* psi_temp = &(phi(m, 0));
@@ -157,13 +165,13 @@ void DiagoCG<FPTYPE, Device>::diag_mock(hamilt::Hamilt *phm_in, psi::Psi<std::co
         if (m > 0 && reorder)
         {
             ModuleBase::GlobalFunc::NOTE("reorder bands!");
-            if (eigenvalue[m] - eigenvalue[m - 1] < -2.0 * DiagoIterAssist<FPTYPE, Device>::PW_DIAG_THR)
+            if (eigenvalue[m] - eigenvalue[m - 1] < -2.0 * DiagoIterAssist<FPTYPE>::PW_DIAG_THR)
             {
                 // if the last calculated eigenvalue is not the largest...
                 int i = 0;
                 for (i = m - 2; i >= 0; i--)
                 {
-                    if (eigenvalue[m] - eigenvalue[i] > 2.0 * DiagoIterAssist<FPTYPE, Device>::PW_DIAG_THR)
+                    if (eigenvalue[m] - eigenvalue[i] > 2.0 * DiagoIterAssist<FPTYPE>::PW_DIAG_THR)
                         break;
                 }
                 i++;
@@ -200,182 +208,20 @@ void DiagoCG<FPTYPE, Device>::diag_mock(hamilt::Hamilt *phm_in, psi::Psi<std::co
     } // end m
 
     avg /= this->n_band;
-    DiagoIterAssist<FPTYPE, Device>::avg_iter += avg;
+    DiagoIterAssist<FPTYPE>::avg_iter += avg;
 
     delete this->phi_m;
     delete this->cg;
 
     ModuleBase::timer::tick("DiagoCG", "diag_once");
-    return;
 } // end subroutine ccgdiagg
-
-#if ((defined __CUDA) || (defined __ROCM))
-template<>
-void DiagoCG<double, psi::DEVICE_GPU>::diag_mock(hamilt::Hamilt *phm_in, psi::Psi<std::complex<double>, psi::DEVICE_GPU> &phi, double *eigenvalue_in)
-{
-    ModuleBase::TITLE("DiagoCG", "diag_once");
-    ModuleBase::timer::tick("DiagoCG", "diag_once");
-    
-    /// out : record for states of convergence
-    this->notconv = 0;
-
-    /// initialize variables
-    this->dim = phi.get_current_nbas();
-    this->dmx = phi.get_nbasis();
-    this->n_band = phi.get_nbands();
-    this->eigenvalue = eigenvalue_in;
-    ModuleBase::GlobalFunc::ZEROS(this->eigenvalue, this->n_band);
-
-    /// record for how many loops in cg convergence
-    double avg = 0.0;
-
-    //-------------------------------------------------------------------
-    // "poor man" iterative diagonalization of a complex hermitian matrix
-    // through preconditioned conjugate gradient algorithm
-    // Band-by-band algorithm with minimal use of memory
-    // Calls hPhi and sPhi to calculate H|phi> and S|phi>
-    // Works for generalized eigenvalue problem (US pseudopotentials) as well
-    //-------------------------------------------------------------------
-    this->phi_m = new psi::Psi<std::complex<double>, psi::DEVICE_GPU>(phi, 1, 1);
-    // this->hphi.resize(this->dmx, ModuleBase::ZERO);
-    resize_memory_op()(this->ctx, this->hphi, this->dmx);
-    set_memory_op()(this->ctx, this->hphi, 0, this->dmx);
-    // this->sphi.resize(this->dmx, ModuleBase::ZERO);
-    resize_memory_op()(this->ctx, this->sphi, this->dmx);
-    set_memory_op()(this->ctx, this->sphi, 0, this->dmx);
-
-    this->cg = new psi::Psi<std::complex<double>, psi::DEVICE_GPU>(phi, 1, 1);
-    // this->scg.resize(this->dmx, ModuleBase::ZERO);
-    resize_memory_op()(this->ctx, this->scg, this->dmx);
-    set_memory_op()(this->ctx, this->scg, 0, this->dmx);
-    // this->pphi.resize(this->dmx, ModuleBase::ZERO);
-    resize_memory_op()(this->ctx, this->pphi, this->dmx);
-    set_memory_op()(this->ctx, this->pphi, 0, this->dmx);
-
-    //in band_by_band CG method, only the first band in phi_m would be calculated
-    psi::Range cg_hpsi_range(0);
-
-    // this->gradient.resize(this->dmx, ModuleBase::ZERO);
-    resize_memory_op()(this->ctx, this->gradient, this->dmx);
-    set_memory_op()(this->ctx, this->gradient, 0, this->dmx);
-    // this->g0.resize(this->dmx, ModuleBase::ZERO);
-    resize_memory_op()(this->ctx, this->g0, this->dmx);
-    set_memory_op()(this->ctx, this->g0, 0, this->dmx);
-    // this->lagrange.resize(this->n_band, ModuleBase::ZERO);
-    resize_memory_op()(this->ctx, this->lagrange, this->n_band);
-    set_memory_op()(this->ctx, this->lagrange, 0, this->dmx);
-
-    for (int m = 0; m < this->n_band; m++)
-    {
-        if (test_cg > 2)
-            GlobalV::ofs_running << "Diagonal Band : " << m << std::endl;
-        //copy psi_in into internal psi, m=0 has been done in Constructor
-        if(m>0)
-        {
-            const std::complex<double>* psi_m_in = &(phi(m, 0));
-            auto pphi_m = this->phi_m->get_pointer();
-            ModuleBase::GlobalFunc::COPYARRAY(psi_m_in, pphi_m, this->dim);
-        }
-        phm_in->sPsi(this->phi_m->get_pointer(), this->sphi, (size_t)this->dim); // sphi = S|psi(m)>
-        this->schmit_orth(m, phi);
-        phm_in->sPsi(this->phi_m->get_pointer(), this->sphi, (size_t)this->dim); // sphi = S|psi(m)>
-
-        //do hPsi, actually the result of hpsi stored in Operator,
-        //the necessary of copying operation should be checked later
-        hpsi_info_gpu cg_hpsi_in(this->phi_m, cg_hpsi_range, this->hphi);
-        phm_in->ops->hPsi_gpu(cg_hpsi_in);
-
-        this->eigenvalue[m] = zdot_real_op()(this->ctx, this->dim, this->phi_m->get_pointer(), this->hphi, this->phi_m->get_device());
-
-        int iter = 0;
-        double gg_last = 0.0;
-        double cg_norm = 0.0;
-        double theta = 0.0;
-        bool converged = false;
-        for (iter = 0; iter < DiagoIterAssist<double, psi::DEVICE_GPU>::PW_DIAG_NMAX; iter++)
-        {
-            this->calculate_gradient();
-            this->orthogonal_gradient(phm_in, phi, m);
-            this->calculate_gamma_cg(iter, gg_last, cg_norm, theta);
-            
-            hpsi_info_gpu cg_hpsi_in(this->cg, cg_hpsi_range, this->pphi);
-            phm_in->ops->hPsi_gpu(cg_hpsi_in);
-
-            phm_in->sPsi(this->cg->get_pointer(), this->scg, (size_t)this->dim);
-            converged = this->update_psi(cg_norm, theta, this->eigenvalue[m]);
-
-            if (converged)
-                break;
-        } // end iter
-
-        std::complex<double>* psi_temp = &(phi(m, 0));
-        ModuleBase::GlobalFunc::COPYARRAY(this->phi_m->get_pointer(), psi_temp, this->dim);
-
-        if (!converged)
-        {
-            ++this->notconv;
-        }
-        avg += static_cast<double>(iter) + 1.00;
-
-        // reorder eigenvalues if they are not in the right order
-        // (this CAN and WILL happen in not-so-special cases)
-
-        if (m > 0 && reorder)
-        {
-            ModuleBase::GlobalFunc::NOTE("reorder bands!");
-            if (eigenvalue[m] - eigenvalue[m - 1] < -2.0 * DiagoIterAssist<double, psi::DEVICE_GPU>::PW_DIAG_THR)
-            {
-                // if the last calculated eigenvalue is not the largest...
-                int i = 0;
-                for (i = m - 2; i >= 0; i--)
-                {
-                    if (eigenvalue[m] - eigenvalue[i] > 2.0 * DiagoIterAssist<double, psi::DEVICE_GPU>::PW_DIAG_THR)
-                        break;
-                }
-                i++;
-
-                // last calculated eigenvalue should be in the i-th position: reorder
-                double e0 = eigenvalue[m];
-                ModuleBase::GlobalFunc::COPYARRAY(psi_temp, this->pphi, this->dim);
-
-                for (int j = m; j >= i + 1; j--)
-                {
-                    eigenvalue[j] = eigenvalue[j - 1];
-                    std::complex<double>* phi_j = &phi(j, 0);
-                    std::complex<double>* phi_j1 = &phi(j-1, 0);
-                    ModuleBase::GlobalFunc::COPYARRAY(phi_j1, phi_j, this->dim);
-                }
-
-                eigenvalue[i] = e0;
-                // dcopy(pphi, phi, i);
-                std::complex<double>* phi_pointer = &phi(i, 0);
-                ModuleBase::GlobalFunc::COPYARRAY(this->pphi, phi_pointer, this->dim);
-                // this procedure should be good if only a few inversions occur,
-                // extremely inefficient if eigenvectors are often in bad order
-                // (but this should not happen)
-            } // endif
-        } // end reorder
-
-    } // end m
-
-    avg /= this->n_band;
-    DiagoIterAssist<double, psi::DEVICE_GPU>::avg_iter += avg;
-
-    delete this->phi_m;
-    delete this->cg;
-
-    ModuleBase::timer::tick("DiagoCG", "diag_once");
-    return;
-} // end subroutine ccgdiagg
-#endif // ((defined __CUDA) || (defined __ROCM))
 
 template<typename FPTYPE, typename Device>
 void DiagoCG<FPTYPE, Device>::calculate_gradient()
 {
-    if (this->test_cg == 1)
+    if (this->test_cg == 1) {
         ModuleBase::TITLE("DiagoCG", "calculate_gradient");
-    // ModuleBase::timer::tick("DiagoCG","grad");
-
+    }
     // for (int i = 0; i < this->dim; i++)
     // {
     //     //(2) PH|psi>
@@ -383,11 +229,16 @@ void DiagoCG<FPTYPE, Device>::calculate_gradient()
     //     //(3) PS|psi>
     //     this->pphi[i] = this->sphi[i] / this->precondition[i];
     // }
-    // haozhihan replace this 2022-10-6
-    vector_div_vector_op<FPTYPE, Device>()(this->ctx, this->dim, this->gradient, this->hphi, this->precondition);
-    vector_div_vector_op<FPTYPE, Device>()(this->ctx, this->dim, this->pphi, this->sphi, this->precondition);
-
-
+    // denghui replace this at 20221106
+    // TODO: use GPU precondition to initialize CG class
+    if (this->device == psi::GpuDevice) {
+        vector_div_vector_op<FPTYPE, Device>()(this->ctx, this->dim, this->gradient, this->hphi, this->d_precondition);
+        vector_div_vector_op<FPTYPE, Device>()(this->ctx, this->dim, this->pphi, this->sphi, this->d_precondition);
+    }
+    else {
+        vector_div_vector_op<FPTYPE, Device>()(this->ctx, this->dim, this->gradient, this->hphi, this->precondition);
+        vector_div_vector_op<FPTYPE, Device>()(this->ctx, this->dim, this->pphi, this->sphi, this->precondition);
+    }
 
     // Update lambda !
     // (4) <psi|SPH|psi >
@@ -408,17 +259,14 @@ void DiagoCG<FPTYPE, Device>::calculate_gradient()
     // }
     // haozhihan replace this 2022-10-6
     constantvector_addORsub_constantVector_op<FPTYPE, Device>()(this->ctx, this->dim, this->gradient, this->gradient, 1.0, this->pphi, (-lambda));
-
-
-    // ModuleBase::timer::tick("DiagoCG","grad");
-    return;
 }
 
 template<typename FPTYPE, typename Device>
-void DiagoCG<FPTYPE, Device>::orthogonal_gradient(hamilt::Hamilt *phm_in, const psi::Psi<std::complex<FPTYPE>> &eigenfunction, const int m)
+void DiagoCG<FPTYPE, Device>::orthogonal_gradient(hamilt::Hamilt<FPTYPE, Device> *phm_in, const psi::Psi<std::complex<FPTYPE>, Device> &eigenfunction, const int m)
 {
-    if (test_cg == 1)
+    if (test_cg == 1) {
         ModuleBase::TITLE("DiagoCG", "orthogonal_gradient");
+    }
     // ModuleBase::timer::tick("DiagoCG","orth_grad");
 
     phm_in->sPsi(this->gradient, this->scg, (size_t)this->dim);
@@ -527,17 +375,14 @@ void DiagoCG<FPTYPE, Device>::orthogonal_gradient(hamilt::Hamilt *phm_in, const 
         }
     }*/
     //>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-
-    // ModuleBase::timer::tick("DiagoCG","orth_grad");
-    return;
 }
 
 template<typename FPTYPE, typename Device>
 void DiagoCG<FPTYPE, Device>::calculate_gamma_cg(const int iter, FPTYPE &gg_last, const FPTYPE &cg_norm, const FPTYPE &theta)
 {
-    if (test_cg == 1)
+    if (test_cg == 1) {
         ModuleBase::TITLE("DiagoCG", "calculate_gamma_cg");
-    // ModuleBase::timer::tick("DiagoCG","gamma_cg");
+    }
     auto pcg = this->cg->get_pointer();
     auto pphi_m = this->phi_m->get_pointer();
     FPTYPE gg_inter;
@@ -559,8 +404,14 @@ void DiagoCG<FPTYPE, Device>::calculate_gamma_cg(const int iter, FPTYPE &gg_last
     // {
     //     this->g0[i] = this->precondition[i] * this->scg[i];
     // }
-    // haozhihan replace this 2022-10-6
-    vector_mul_vector_op<FPTYPE, Device>()(this->ctx, this->dim, this->g0, this->scg, this->precondition);
+    // denghui replace this 20221106
+    // TODO: use GPU precondition instead
+    if (this->device == psi::GpuDevice) {
+        vector_mul_vector_op<FPTYPE, Device>()(this->ctx, this->dim, this->g0, this->scg, this->d_precondition);
+    }
+    else {
+        vector_mul_vector_op<FPTYPE, Device>()(this->ctx, this->dim, this->g0, this->scg, this->precondition);
+    }
 
     // (3) Update gg_now!
     // gg_now = < g|P|scg > = < g|g0 >
@@ -572,7 +423,6 @@ void DiagoCG<FPTYPE, Device>::calculate_gamma_cg(const int iter, FPTYPE &gg_last
         gg_last = gg_now;
         // (50) cg direction first value : |g>
         // |cg> = |g>
-
         // haozhihan replace COPY_ARRAY
         psi::memory::synchronize_memory_op<std::complex<FPTYPE>, Device, Device>()(this->ctx, this->ctx, pcg, this->gradient, this->dim);
         // ModuleBase::GlobalFunc::COPYARRAY(this->gradient, pcg, this->dim);
@@ -606,8 +456,6 @@ void DiagoCG<FPTYPE, Device>::calculate_gamma_cg(const int iter, FPTYPE &gg_last
             pcg[i] -= norma * pphi_m[i];
         }*/
     }
-    // ModuleBase::timer::tick("DiagoCG","gamma_cg");
-    return;
 }
 
 template<typename FPTYPE, typename Device>
@@ -615,7 +463,6 @@ bool DiagoCG<FPTYPE, Device>::update_psi(FPTYPE &cg_norm, FPTYPE &theta, FPTYPE 
 {
     if (test_cg == 1)
         ModuleBase::TITLE("DiagoCG", "update_psi");
-    // ModuleBase::timer::tick("DiagoCG","update");
     cg_norm = sqrt(hsolver::zdot_real_op<FPTYPE, Device>()(this->ctx, this->dim, this->cg->get_pointer(), this->scg));
 
     if (cg_norm < 1.0e-10)
@@ -663,7 +510,7 @@ bool DiagoCG<FPTYPE, Device>::update_psi(FPTYPE &cg_norm, FPTYPE &theta, FPTYPE 
 
     //	std::cout << "\n overlap2 = "  << this->ddot(dim, phi_m, phi_m);
 
-    if (abs(eigenvalue - e0) < DiagoIterAssist<FPTYPE, Device>::PW_DIAG_THR)
+    if (abs(eigenvalue - e0) < DiagoIterAssist<FPTYPE>::PW_DIAG_THR)
     {
         // ModuleBase::timer::tick("DiagoCG","update");
         return 1;
@@ -700,7 +547,8 @@ void DiagoCG<FPTYPE, Device>::schmit_orth(
     assert(m >= 0);
     assert(psi.get_nbands() >= m);
 
-    std::vector<std::complex<FPTYPE>> lagrange_so(m + 1, ModuleBase::ZERO);
+    std::complex<FPTYPE> * lagrange_so = nullptr;
+    resize_memory_complex_op()(this->ctx, lagrange_so, m + 1);
 
     //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     // haozhihan replace 2022-10-6
@@ -715,7 +563,7 @@ void DiagoCG<FPTYPE, Device>::schmit_orth(
                             this->sphi,
                             inc,
                             &ModuleBase::ZERO,
-                            lagrange_so.data(),
+                            lagrange_so,
                             inc);
     //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     // qianrui replace 2021-3-15
@@ -744,9 +592,11 @@ void DiagoCG<FPTYPE, Device>::schmit_orth(
     //>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
     // be careful , here reduce m+1
-    Parallel_Reduce::reduce_complex_double_pool(lagrange_so.data(), m + 1);
+    Parallel_Reduce::reduce_complex_double_pool(lagrange_so, m + 1);
 
-    FPTYPE psi_norm = lagrange_so[m].real();
+    std::complex<FPTYPE> var = {0, 0};
+    syncmem_complex_d2h_op()(this->cpu_ctx, this->ctx, &var, lagrange_so + m, 1);
+    FPTYPE psi_norm = var.real();
 
     //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     // haozhihan replace 2022-10-6
@@ -757,7 +607,7 @@ void DiagoCG<FPTYPE, Device>::schmit_orth(
                             &ModuleBase::NEG_ONE,
                             psi.get_pointer(),
                             this->dmx,
-                            lagrange_so.data(),
+                            lagrange_so,
                             inc,
                             &ModuleBase::ONE,
                             this->phi_m->get_pointer(),
@@ -777,7 +627,7 @@ void DiagoCG<FPTYPE, Device>::schmit_orth(
     //        this->phi_m->get_pointer(),
     //        &inc);
 
-    psi_norm -= hsolver::zdot_real_op<FPTYPE, Device>()(this->ctx, m, lagrange_so.data(), lagrange_so.data(), false);
+    psi_norm -= hsolver::zdot_real_op<FPTYPE, Device>()(this->ctx, m, lagrange_so, lagrange_so, false);
     //======================================================================
     /*for (int j = 0; j < m; j++)
     {
@@ -816,37 +666,54 @@ void DiagoCG<FPTYPE, Device>::schmit_orth(
     // }
 
     // ModuleBase::timer::tick("DiagoCG","schmit_orth");
-    return;
+    delete_memory_complex_op()(this->ctx, lagrange_so);
 }
 
 template<typename FPTYPE, typename Device>
-void DiagoCG<FPTYPE, Device>::diag(hamilt::Hamilt *phm_in, psi::Psi<std::complex<FPTYPE>, Device> &psi, FPTYPE *eigenvalue_in)
+void DiagoCG<FPTYPE, Device>::diag(hamilt::Hamilt<FPTYPE, Device> *phm_in, psi::Psi<std::complex<FPTYPE>, Device> &psi, FPTYPE *eigenvalue_in)
 {
     /// record the times of trying iterative diagonalization
     int ntry = 0;
     this->notconv = 0;
+    if (this->device == psi::GpuDevice) {
+        resize_memory_var_op()(this->ctx, this->d_precondition, psi.get_nbasis());
+        syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, this->d_precondition, this->precondition, psi.get_nbasis());
+    }
     do
     {
-        if(DiagoIterAssist<FPTYPE, Device>::need_subspace || ntry > 0)
+        if(DiagoIterAssist<FPTYPE>::need_subspace || ntry > 0)
         {
-            DiagoIterAssist<FPTYPE, Device>::diagH_subspace(phm_in, psi, psi, eigenvalue_in);
+            #if defined(__CUDA) || defined(__ROCM)
+            psi::Psi<std::complex<FPTYPE>, psi::DEVICE_CPU> cpu_psi = psi;
+            // hamilt::Hamilt<FPTYPE>* h_phm_in = new hamilt::HamiltPW<FPTYPE>(reinterpret_cast<hamilt::HamiltPW<FPTYPE>*>(phm_in));
+            hamilt::Hamilt<FPTYPE, psi::DEVICE_CPU>* h_phm_in =
+                    new hamilt::HamiltPW<FPTYPE, psi::DEVICE_CPU>(
+                            reinterpret_cast<hamilt::HamiltPW<FPTYPE, psi::DEVICE_GPU>*>(phm_in));
+            DiagoIterAssist<FPTYPE>::diagH_subspace(h_phm_in, cpu_psi, cpu_psi, eigenvalue_in);
+            psi::memory::synchronize_memory_op<std::complex<FPTYPE>, Device, psi::DEVICE_CPU>()(
+                    psi.get_device(),
+                    cpu_psi.get_device(),
+                    psi.get_pointer() - psi.get_psi_bias(),
+                    cpu_psi.get_pointer() - cpu_psi.get_psi_bias(),
+                    psi.size());
+            delete reinterpret_cast<hamilt::HamiltPW<FPTYPE, psi::DEVICE_CPU>*>(h_phm_in);
+            #else
+            DiagoIterAssist<FPTYPE>::diagH_subspace(phm_in, psi, psi, eigenvalue_in);
+            #endif
         }
 
-        DiagoIterAssist<FPTYPE, Device>::avg_iter += 1.0;
+        DiagoIterAssist<FPTYPE>::avg_iter += 1.0;
         this->reorder = true;
 
         this->diag_mock(phm_in, psi, eigenvalue_in);
 
         ++ntry;
-    } while (DiagoIterAssist<FPTYPE, Device>::test_exit_cond(ntry, this->notconv));
+    } while (DiagoIterAssist<FPTYPE>::test_exit_cond(ntry, this->notconv));
 
-    if (notconv > max(5, psi.get_nbands() / 4))
-    {
+    if (notconv > max(5, psi.get_nbands() / 4)) {
         std::cout << "\n notconv = " << this->notconv;
         std::cout << "\n DiagoCG::diag', too many bands are not converged! \n";
     }
-
-    return;
 }
 
 namespace hsolver{

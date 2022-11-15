@@ -494,11 +494,9 @@ calculations.
 ### mixing_type
 
 - **Type**: String
-- **Description**: Charge mixing methods.
+- **Description**: Charge mixing methods. We offer the following 3 options:
   - plain: Just simple mixing.
-  - kerker: Use kerker method, which is the mixing method in G space.
   - pulay: Standard Pulay method.
-  - pulay-kerker:
   - broyden: Broyden method.
 - **Default**: pulay
 
@@ -517,8 +515,8 @@ calculations.
 ### mixing_gg0
 
 - **Type**: Real
-- **Description**: used in pulay-kerker mixing method
-- **Default**: 1.5
+- **Description**: When set to a positive number, the high frequency wave vectors will be suppressed by multiplying a scaling factor $\frac{k^2}{k^2+gg0^2}$; if set to 0, then no Kerker scaling is performed.
+- **Default**: 0.0
 
 ### gamma_only
 

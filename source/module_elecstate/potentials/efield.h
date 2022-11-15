@@ -60,7 +60,7 @@ class PotEfield : public PotBase
     public:
     PotEfield(
         const ModulePW::PW_Basis* rho_basis_in,
-        const UnitCell_pseudo* ucell_in,
+        const UnitCell* ucell_in,
         bool dipole):ucell_(ucell_in)
     {
         this->rho_basis_ = rho_basis_in;
@@ -88,14 +88,14 @@ class PotEfield : public PotBase
 
     void cal_v_eff(
         const Charge* chg, 
-        const UnitCell_pseudo* ucell, 
+        const UnitCell* ucell, 
         ModuleBase::matrix& v_eff)override
     {
         v_eff += Efield::add_efield(*ucell, const_cast<ModulePW::PW_Basis *>(rho_basis_), v_eff.nr, chg->rho, GlobalC::solvent_model);
     }
 
     private:
-    const UnitCell_pseudo* ucell_ = nullptr;
+    const UnitCell* ucell_ = nullptr;
 };
 
 }//namespace elecstate

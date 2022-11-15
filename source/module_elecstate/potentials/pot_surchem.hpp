@@ -25,7 +25,7 @@ class PotSurChem : public PotBase
 
     void cal_v_eff(
         const Charge* chg, 
-        const UnitCell_pseudo* ucell, 
+        const UnitCell* ucell, 
         ModuleBase::matrix& v_eff)override
     {
             v_eff += surchem_->v_correction(

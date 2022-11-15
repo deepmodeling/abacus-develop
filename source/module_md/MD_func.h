@@ -2,7 +2,7 @@
 #define MD_FUNC_H
 
 #include "MD_parameters.h"
-#include "../module_cell/unitcell_pseudo.h"
+#include "../module_cell/unitcell.h"
 #include "../module_base/matrix.h"
 
 #include "module_esolver/esolver.h"
@@ -15,17 +15,17 @@ class MD_func
 
     static double gaussrand();
 	
-	static void InitPos( const UnitCell_pseudo &unit_in, ModuleBase::Vector3<double>* pos);
+	static void InitPos( const UnitCell &unit_in, ModuleBase::Vector3<double>* pos);
 
 	static void InitVel(
-		const UnitCell_pseudo &unit_in, 
+		const UnitCell &unit_in, 
 		const double& temperature, 
 		double* allmass,
 		int& frozen_freedom,
 		ModuleBase::Vector3<int>* ionmbl,
 		ModuleBase::Vector3<double>* vel);
 
-	static void ReadVel(const UnitCell_pseudo &unit_in, ModuleBase::Vector3<double>* vel);
+	static void ReadVel(const UnitCell &unit_in, ModuleBase::Vector3<double>* vel);
 
 	static void RandomVel(
 		const int& numIon, 
@@ -39,7 +39,7 @@ class MD_func
 	static void force_virial(
 		ModuleESolver::ESolver *p_esolver,
 		const int &istep,
-		UnitCell_pseudo &unit_in,
+		UnitCell &unit_in,
 		double &potential,
 		ModuleBase::Vector3<double> *force,
 		ModuleBase::matrix &virial);
@@ -50,7 +50,7 @@ class MD_func
 		const double *allmass);
 
 	static void compute_stress(
-		const UnitCell_pseudo &unit_in,
+		const UnitCell &unit_in,
 		const ModuleBase::Vector3<double> *vel, 
 		const double *allmass, 
         const ModuleBase::matrix &virial,
@@ -60,11 +60,11 @@ class MD_func
 
 	static void MDdump(
 		const int &step, 
-		const UnitCell_pseudo &unit_in,
+		const UnitCell &unit_in,
 		const ModuleBase::matrix &virial, 
 		const ModuleBase::Vector3<double> *force);
 
-	static void getMassMbl(const UnitCell_pseudo &unit_in, 
+	static void getMassMbl(const UnitCell &unit_in, 
 		double* allmass, 
 		ModuleBase::Vector3<int> &frozen,
 		ModuleBase::Vector3<int>* ionmbl);

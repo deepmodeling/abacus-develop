@@ -1106,7 +1106,7 @@ void Charge::init_final_scf()
 #include "occupy.h"
 void Charge::cal_nelec(void)
 {
-	ModuleBase::TITLE("UnitCell_pseudo","cal_nelec");
+	ModuleBase::TITLE("UnitCell","cal_nelec");
 	//=======================================================
 	// calculate the total number of electrons in the system
 	// if nelec <>0; use input number (setup.f90)
@@ -1151,7 +1151,7 @@ void Charge::cal_nelec(void)
 	{
 		if( Occupy::gauss() || Occupy::tetra() )
 		{
-			ModuleBase::WARNING_QUIT("UnitCell_pseudo::cal_nelec","for smearing, num. of bands > num. of occupied bands");
+			ModuleBase::WARNING_QUIT("UnitCell::cal_nelec","for smearing, num. of bands > num. of occupied bands");
 		}
 	}
 	
@@ -1195,7 +1195,7 @@ void Charge::cal_nelec(void)
     {
         if( GlobalV::NBANDS > GlobalV::NLOCAL )
         {
-            ModuleBase::WARNING_QUIT("UnitCell_pseudo::cal_nwfc","NLOCAL < NBANDS");
+            ModuleBase::WARNING_QUIT("UnitCell::cal_nwfc","NLOCAL < NBANDS");
         }
         else
         {

@@ -6,7 +6,7 @@
 class Langevin : public MDrun
 {
 public:
-    Langevin(MD_parameters& MD_para_in, UnitCell_pseudo &unit_in);
+    Langevin(MD_parameters& MD_para_in, UnitCell &unit_in);
     ~Langevin();
 
     void setup(ModuleESolver::ESolver *p_ensolve);

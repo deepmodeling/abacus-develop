@@ -1,7 +1,6 @@
 #ifndef RELAX_DRIVER_H
 #define RELAX_DRIVER_H
 
-#include "../src_pw/electrons.h"
 #include "../module_base/global_function.h"
 #include "../module_base/global_variable.h"
 #include "../module_base/matrix.h"
@@ -21,9 +20,6 @@ class Relax_Driver
     void relax_driver(ModuleESolver::ESolver *p_esolver);
 
 	private:
-
-	// mohan add 2021-01-28
-    Electrons elec;
 
 	// mohan add 2021-01-28
 	// mohan moved this variable from electrons.h to relax_driver.h

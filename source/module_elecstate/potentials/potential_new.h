@@ -17,7 +17,7 @@ class Potential : public PotBase
     //In constructor, size of every potential components should be allocated
     Potential(
         const ModulePW::PW_Basis* rho_basis_in,
-        const UnitCell_pseudo* ucell_in,
+        const UnitCell* ucell_in,
         const ModuleBase::matrix* vloc_in,
         const ModuleBase::ComplexMatrix* structure_factors_in,
         double* etxc_in,
@@ -30,7 +30,7 @@ class Potential : public PotBase
     //initialize potential components before SCF
     void pot_register(std::vector<std::string>& components_list);
     //update potential from current charge
-    void update_from_charge(const Charge* chg, const UnitCell_pseudo* ucell);
+    void update_from_charge(const Charge* chg, const UnitCell* ucell);
     //update potential for purpose of TDDFT
     void update_for_tddft(int istep);
     //interface for SCF-converged, etxc vtxc for Energy, vnew for force_scc 
@@ -122,7 +122,7 @@ class Potential : public PotBase
 
     void cal_v_eff(
       const Charge* chg, 
-      const UnitCell_pseudo* ucell, 
+      const UnitCell* ucell, 
       ModuleBase::matrix& v_eff) override;
     void cal_fixed_v(double *vl_pseudo) override;
 
@@ -141,7 +141,7 @@ class Potential : public PotBase
 
     std::vector<PotBase*> components;
 
-    const UnitCell_pseudo* ucell_ = nullptr;
+    const UnitCell* ucell_ = nullptr;
     const ModuleBase::matrix* vloc_ = nullptr;
     const ModuleBase::ComplexMatrix* structure_factors_ = nullptr;
 };

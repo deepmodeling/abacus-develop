@@ -5,7 +5,7 @@
 #include "module_base/matrix.h"
 #include "module_pw/pw_basis.h"
 #include "src_pw/charge.h"
-#include "module_cell/unitcell_pseudo.h"
+#include "module_cell/unitcell.h"
 
 
 namespace elecstate
@@ -19,7 +19,7 @@ class PotBase
 
     virtual void cal_v_eff(
         const Charge* chg, 
-        const UnitCell_pseudo* ucell, 
+        const UnitCell* ucell, 
         ModuleBase::matrix& v_eff)
     {return;}
 

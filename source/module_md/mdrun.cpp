@@ -7,7 +7,7 @@
 #include "module_esolver/esolver.h"
 #include "../src_io/print_info.h"
 
-MDrun::MDrun(MD_parameters& MD_para_in, UnitCell_pseudo &unit_in):
+MDrun::MDrun(MD_parameters& MD_para_in, UnitCell &unit_in):
     mdp(MD_para_in),
     ucell(unit_in)
 {
@@ -126,7 +126,7 @@ void MDrun::outputMD(std::ofstream &ofs, bool cal_stress)
     std::cout << " " << std::left << std::setw(20) << potential+kinetic
             << std::left << std::setw(20) << potential
             << std::left << std::setw(20) << kinetic
-            << std::left << std::setw(20) << t_current;
+            << std::left << std::setw(20) << t_current * ModuleBase::Hartree_to_K;
     if(cal_stress)
     {
         std::cout << std::left << std::setw(20) << press*unit_transform;
@@ -150,7 +150,7 @@ void MDrun::outputMD(std::ofstream &ofs, bool cal_stress)
     ofs << " " << std::left << std::setw(20) << potential+kinetic
         << std::left << std::setw(20) << potential
         << std::left << std::setw(20) << kinetic
-        << std::left << std::setw(20) << t_current;
+        << std::left << std::setw(20) << t_current * ModuleBase::Hartree_to_K;
     if(cal_stress)
     {
         ofs << std::left << std::setw(20) << press*unit_transform;

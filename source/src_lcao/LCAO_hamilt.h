@@ -16,8 +16,6 @@ class LCAO_Hamilt
 
     void grid_prepare(void);
 
-    void calculate_STN_R(void); //LiuXh add 2019-07-15
-
     // jingan add 2021-6-4
     void set_R_range_sparse();
     void calculate_STN_R_sparse(const int &current_spin, const double &sparse_threshold);
@@ -40,19 +38,6 @@ class LCAO_Hamilt
     LCAO_gen_fixedH genH;
 
     LCAO_Matrix* LM;
-    
-    // init S (overlap matrix) flag.
-    bool init_s;
-
-    private:
-
-    // used for gamma only algorithms.
-    void calculate_STNR_gamma(void);
-
-    void calculate_STNR_gamma_B(void); //mohan add 2012-04-14
-
-    void calculate_STNR_k(void);
-
 };
 
 #endif
