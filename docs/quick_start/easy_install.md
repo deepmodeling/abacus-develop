@@ -21,7 +21,7 @@ ABACUS currently supports Linux. To compile ABACUS, please make sure that the fo
 These packages can be installed with popular package management system, such as `apt` and `yum`:
 
 ```bash
-sudo apt update && sudo apt install -y libopenblas-dev liblapack-dev libscalapack-mpi-dev libelpa-dev libfftw3-dev libcereal-dev libxc-dev g++ make cmake bc git
+sudo apt update && sudo apt install -y libopenblas-openmp-dev liblapack-dev libscalapack-mpi-dev libelpa-dev libfftw3-dev libcereal-dev libxc-dev g++ make cmake bc git
 ```
 
 > Installing ELPA by apt only matches requirements on Ubuntu 22.04. For earlier linux distributions, you should install elpa from source.

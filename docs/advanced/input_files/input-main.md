@@ -33,7 +33,7 @@
 
 - [Molecular dynamics](#molecular-dynamics)
 
-  [md_type](#md_type) | [md_thermostat](#md_thermostat) | [md_nstep](#md_nstep) | [md_restart](#md_restart) | [md_dt](#md_dt) | [md_tfirst, md_tlast](#md_tfirst-md_tlast) | [md_dumpfreq](#md_dumpfreq) | [md_restartfreq](#md_restartfreq) | [md_seed](#md_seed) | [md_tfreq](#md_tfreq) | [md_tchain](#md_tchain) | [lj_rcut](#lj_rcut) | [lj_epsilon](#lj_epsilon) | [lj_sigma](#lj_sigma) | [pot_file](#pot_file) | [msst_direction](#msst_direction) | [msst_vel](#msst_vel) | [msst_vis](#msst_vis) | [msst_tscale](#msst_tscale) | [msst_qmass](#msst_qmass) | [md_damp](#md_damp) | [md_tolerance](#md_tolerance) | [md_nraise](#md_nraise)
+  [md_type](#md_type) | [md_thermostat](#md_thermostat) | [md_nstep](#md_nstep) | [md_restart](#md_restart) | [md_dt](#md_dt) | [md_tfirst, md_tlast](#md_tfirst-md_tlast) | [md_dumpfreq](#md_dumpfreq) | [md_restartfreq](#md_restartfreq) | [md_seed](#md_seed) | [md_tfreq](#md_tfreq) | [md_tchain](#md_tchain) | [md_pmode](#md_pmode) | [md_pcouple](#md_pcouple) | [md_pfirst, md_plast](#md_pfirst-md_plast) | [md_pfreq](#md_pfreq) | [md_pchain](#md_pchain) | [lj_rcut](#lj_rcut) | [lj_epsilon](#lj_epsilon) | [lj_sigma](#lj_sigma) | [pot_file](#pot_file) | [msst_direction](#msst_direction) | [msst_vel](#msst_vel) | [msst_vis](#msst_vis) | [msst_tscale](#msst_tscale) | [msst_qmass](#msst_qmass) | [md_damp](#md_damp) | [md_tolerance](#md_tolerance) | [md_nraise](#md_nraise)
 
 - [vdW correction](#vdw-correction)
 
@@ -1421,7 +1421,7 @@ This part of variables are used to control the molecular dynamics calculations.
 
   - -1: FIRE method to relax;
   - 0: velocity Verlet algorithm (default: NVE ensemble);
-  - 1: NVT ensemble with Nose Hoover Chain;
+  - 1: Nose-Hoover style non-Hamiltonian equations of motion;
   - 2: NVT ensemble with Langevin method;
   - 4: MSST method;
 
@@ -1433,11 +1433,11 @@ This part of variables are used to control the molecular dynamics calculations.
 - **Type**: String
 - **Description**: specify the thermostat based on the velocity Verlet algorithm (useful when `md_type` is set to 0).
 
-  - NVE: NVE ensemble.
-  - Anderson: NVT ensemble with Anderson thermostat, see the parameter `md_nraise`.
-  - Berendsen: NVT ensemble with Berendsen thermostat, see the parameter `md_nraise`.
-  - Rescaling: NVT ensemble with velocity Rescaling method 1, see the parameter `md_tolerance`.
-  - Rescale_v: NVT ensemble with velocity Rescaling method 2, see the parameter `md_nraise`.
+  - nve: NVE ensemble.
+  - anderson: NVT ensemble with Anderson thermostat, see the parameter `md_nraise`.
+  - berendsen: NVT ensemble with Berendsen thermostat, see the parameter `md_nraise`.
+  - rescaling: NVT ensemble with velocity Rescaling method 1, see the parameter `md_tolerance`.
+  - rescale_v: NVT ensemble with velocity Rescaling method 2, see the parameter `md_nraise`.
 
 - **Default**: NVE
 
@@ -1496,7 +1496,46 @@ This part of variables are used to control the molecular dynamics calculations.
 ### md_tchain
 
 - **Type**: Integer
-- **Description**: Number of Nose-Hoover chains.
+- **Description**: number of theremostats coupled with the particles in the Nose Hoover Chain method.
+- **Default**: 1
+
+### md_pmode
+
+- **Type**: String
+- **Description**: specify the NVT or NPT ensemble based on the Nose-Hoover style non-Hamiltonian equations of motion.
+  - none: NVT ensemble.
+  - iso: NPT ensemble with isotropic cetl fluctuations.
+  - aniso: NPT ensemble with anisotropic cetl fluctuations.
+  - tri: NPT ensemble with non-orthogonal (triclinic) simulation box.
+- **Default**: none
+
+### md_pcouple
+
+- **Type**: String
+- **Description**: the coupled lattice vectors will scale proportionally.
+  - none: three lattice vectors scale independently.
+  - xyz: lattice vectors x, y, and z scale proportionally.
+  - xy: lattice vectors x and y scale proportionally.
+  - xz: lattice vectors x and z scale proportionally.
+  - yz: lattice vectors y and z scale proportionally.
+- **Default**: none
+
+### md_pfirst, md_plast
+
+- **Type**: Real
+- **Description**: This is the target pressure (KBar) used in npt ensemble simulation, the default value of `md_plast` is `md_pfirst`. If `md_plast` is set to be different from `md_pfirst`, ABACUS will automatically change the target pressure from `md_pfirst` to `md_plast`.
+- **Default**: No default
+
+### md_pfreq
+
+- **Type**: Real
+- **Description**: control the frequency of the pressure oscillations during the NPT ensemble simulation. If it is too large, the pressure will fluctuate violently; if it is too small, the pressure will take a very long time to equilibrate with the atomic system.
+- **Default**: 1/400/md_dt
+
+### md_pchain
+
+- **Type**: Integer
+- **Description**: number of theremostats coupled with the barostat in the Nose Hoover Chain method.
 - **Default**: 1
 
 ### lj_rcut
