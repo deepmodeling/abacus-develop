@@ -45,11 +45,14 @@ class Operator
 
     virtual void add(Operator* next);
 
-    #if ((defined __CUDA) || (defined __ROCM))
+    virtual const int get_ik() const {return this->ik;}
+
+#if ((defined __CUDA) || (defined __ROCM))
     typedef std::tuple<const psi::Psi<FPTYPE, psi::DEVICE_GPU>*, const psi::Range, FPTYPE*> hpsi_info_gpu;
-    virtual hpsi_info_gpu hPsi_gpu(hpsi_info_gpu& input) const; 
+    virtual hpsi_info_gpu hPsi_gpu(hpsi_info_gpu& input) const;
     #endif // ((defined __CUDA) || (defined __ROCM))
 
+    Operator* next_op = nullptr;
 
     protected:
     int ik = 0;
@@ -58,7 +61,6 @@ class Operator
 
     //calculation type, only different type can be in main chain table 
     enum calculation_type cal_type;
-    Operator* next_op = nullptr;
     Operator* next_sub_op = nullptr;
     bool is_first_node = true;
 
@@ -73,6 +75,9 @@ class Operator
     2. hpsi_pointer != nullptr && psi_pointer != hpsi_pointer , this is the commonly case 
     */
     FPTYPE* get_hpsi(const hpsi_info& info)const;
+
+    Device *ctx = {};
+    using set_memory_op = psi::memory::set_memory_op<FPTYPE, Device>;
 
 };
 

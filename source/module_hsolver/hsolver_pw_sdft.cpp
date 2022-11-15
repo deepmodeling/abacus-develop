@@ -10,7 +10,7 @@
 #include "src_pw/global.h"
 namespace hsolver
 {
-    void HSolverPW_SDFT::solve(hamilt::Hamilt* pHamilt, 
+    void HSolverPW_SDFT::solve(hamilt::Hamilt<double>* pHamilt,
                            psi::Psi<std::complex<double>>& psi, 
                            elecstate::ElecState* pes, 
                            Stochastic_WF& stowf,

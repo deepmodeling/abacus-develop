@@ -27,6 +27,9 @@ class Nonlocal<OperatorPW<FPTYPE, Device>> : public OperatorPW<FPTYPE, Device>
     public:
     Nonlocal(const int* isk_in,const pseudopot_cell_vnl* ppcell_in,const UnitCell* ucell_in);
 
+    template<typename T_in, typename Device_in = Device>
+    explicit Nonlocal(const Nonlocal<OperatorPW<T_in, Device_in>>* nonlocal);
+
     virtual ~Nonlocal();
 
     virtual void init(const int ik_in)override;
@@ -37,6 +40,10 @@ class Nonlocal<OperatorPW<FPTYPE, Device>> : public OperatorPW<FPTYPE, Device>
         const std::complex<FPTYPE>* tmpsi_in, 
         std::complex<FPTYPE>* tmhpsi
     )const override;
+
+    const int *get_isk() const {return this->isk;}
+    const pseudopot_cell_vnl *get_ppcell() const {return this->ppcell;}
+    const UnitCell *get_ucell() const {return this->ucell;}
 
     private:
     void add_nonlocal_pp(std::complex<FPTYPE> *hpsi_in, const std::complex<FPTYPE> *becp, const int m) const;

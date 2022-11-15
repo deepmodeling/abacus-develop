@@ -53,13 +53,13 @@ namespace ModuleESolver
         }
         if(this->pelec != nullptr)
         {
-            delete (elecstate::ElecStatePW*)this->pelec;
+            delete (elecstate::ElecStatePW<double>*)this->pelec;
             this->pelec = nullptr;
         }
         //delete Hamilt
         if(this->p_hamilt != nullptr)
         {
-            delete (hamilt::HamiltPW*)this->p_hamilt;
+            delete (hamilt::HamiltPW<double>*)this->p_hamilt;
             this->p_hamilt = nullptr;
         }
     }
@@ -130,7 +130,7 @@ namespace ModuleESolver
         //init ElecState,
         if(this->pelec == nullptr)
         {
-            this->pelec = new elecstate::ElecStatePW( GlobalC::wfcpw, &(GlobalC::CHR), (K_Vectors*)(&(GlobalC::kv)), GlobalV::NBANDS);
+            this->pelec = new elecstate::ElecStatePW<double>( GlobalC::wfcpw, &(GlobalC::CHR), (K_Vectors*)(&(GlobalC::kv)), GlobalV::NBANDS);
         }
         //init HSolver
         if(this->phsol == nullptr)
@@ -198,13 +198,13 @@ namespace ModuleESolver
         //delete Hamilt if not first scf
         if(this->p_hamilt != nullptr)
         {
-            delete (hamilt::HamiltPW*)this->p_hamilt;
+            delete (hamilt::HamiltPW<double>*)this->p_hamilt;
             this->p_hamilt = nullptr;
         }
         //allocate HamiltPW
         if(this->p_hamilt == nullptr)
         {
-            this->p_hamilt = new hamilt::HamiltPW();
+            this->p_hamilt = new hamilt::HamiltPW<double>();
         }
 
         //----------------------------------------------------------

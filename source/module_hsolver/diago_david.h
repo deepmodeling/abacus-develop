@@ -17,13 +17,13 @@
 namespace hsolver {
 
 template<typename FPTYPE = double, typename Device = psi::DEVICE_CPU>
-class DiagoDavid : public DiagH
+class DiagoDavid : public DiagH<FPTYPE, Device>
 {
   public:
     DiagoDavid(const FPTYPE* precondition_in);
 
     // this is the override function diag() for CG method
-    void diag(hamilt::Hamilt* phm_in, psi::Psi<std::complex<FPTYPE>, Device>& phi, FPTYPE* eigenvalue_in);
+    void diag(hamilt::Hamilt<FPTYPE, Device>* phm_in, psi::Psi<std::complex<FPTYPE>, Device>& phi, FPTYPE* eigenvalue_in);
 
     static int PW_DIAG_NDIM;
 
@@ -37,7 +37,7 @@ class DiagoDavid : public DiagH
     psi::AbacusDevice_t device = {};
     psi::DEVICE_CPU * ctx = {};
 
-    void cal_grad(hamilt::Hamilt* phm_in,
+    void cal_grad(hamilt::Hamilt<FPTYPE, Device>* phm_in,
                   const int& npw,
                   const int& nbase,
                   const int& notconv,
@@ -99,7 +99,7 @@ class DiagoDavid : public DiagH
                      FPTYPE* e,
                      ModuleBase::ComplexMatrix& vc);
 
-    void diag_mock(hamilt::Hamilt* phm_in, psi::Psi<std::complex<FPTYPE>, Device>& psi, FPTYPE* eigenvalue_in);
+    void diag_mock(hamilt::Hamilt<FPTYPE, Device>* phm_in, psi::Psi<std::complex<FPTYPE>, Device>& psi, FPTYPE* eigenvalue_in);
 
     const FPTYPE* precondition = nullptr;
 

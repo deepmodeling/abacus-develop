@@ -13,6 +13,7 @@ Ekinetic<OperatorPW<FPTYPE, Device>>::Ekinetic(
     const int gk2_row,
     const int gk2_col)
 {
+  this->classname = "Ekinetic";
   this->cal_type = pw_ekinetic;
   this->tpiba2 = tpiba2_in;
   this->gk2_row = gk2_row;
@@ -61,9 +62,32 @@ void Ekinetic<OperatorPW<FPTYPE, Device>>::act(
   ModuleBase::timer::tick("Operator", "EkineticPW");
 }
 
+// copy construct added by denghui at 20221105
+template<typename FPTYPE, typename Device>
+template<typename T_in, typename Device_in>
+hamilt::Ekinetic<OperatorPW<FPTYPE, Device>>::Ekinetic(const Ekinetic<OperatorPW<T_in, Device_in>> *ekinetic) {
+    this->classname = "Ekinetic";
+    this->cal_type = pw_ekinetic;
+    this->ik = ekinetic->get_ik();
+    this->tpiba2 = ekinetic->get_tpiba2();
+    this->gk2_row = ekinetic->get_gk2_row();
+    this->gk2_col = ekinetic->get_gk2_col();
+    resize_memory_op()(this->ctx, this->gk2, this->gk2_row * this->gk2_col);
+    psi::memory::synchronize_memory_op<FPTYPE, Device, Device_in>()(
+        this->ctx, ekinetic->get_ctx(),
+        this->gk2, ekinetic->get_gk2(),
+        this->gk2_row * this->gk2_col);
+
+    if( this->tpiba2 < 1e-10 || this->gk2 == nullptr) {
+        ModuleBase::WARNING_QUIT("EkineticPW", "Copy Constuctor of Operator::EkineticPW is failed, please check your code!");
+    }
+}
+
 namespace hamilt{
 template class Ekinetic<OperatorPW<double, psi::DEVICE_CPU>>;
 #if ((defined __CUDA) || (defined __ROCM))
 template class Ekinetic<OperatorPW<double, psi::DEVICE_GPU>>;
+template Ekinetic<OperatorPW<double, psi::DEVICE_CPU>>::Ekinetic(const Ekinetic<OperatorPW<double, psi::DEVICE_GPU>> *ekinetic);
+template Ekinetic<OperatorPW<double, psi::DEVICE_GPU>>::Ekinetic(const Ekinetic<OperatorPW<double, psi::DEVICE_CPU>> *ekinetic);
 #endif
 } // namespace hamilt
