@@ -130,6 +130,9 @@ void Potential::pot_register(std::vector<std::string>& components_list)
         this->components.push_back(tmp);
     }
 
+    //after register, reset fixed_done to false
+    this->fixed_done = false;
+
     return;
 
 }

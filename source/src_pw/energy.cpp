@@ -95,7 +95,6 @@ void energy::calculate_etot(void)
 				 + GlobalC::solvent_model.cal_Acav(GlobalC::ucell, GlobalC::rhopw);
 	}
 
-	std::cout<<__FILE__<<__LINE__<<" "<<this->etot<<" "<<eband<<" "<<deband<<" "<<(etxc - etxcc)<<" "<<demet<<" "<<descf<<" "<<elecstate::Efield::etotefield<<std::endl;
     //Quxin adds for DFT+U energy correction on 20201029
 
 	// std::cout << std::resetiosflags(ios::scientific) << std::endl;

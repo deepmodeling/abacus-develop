@@ -291,8 +291,6 @@ namespace ModuleESolver
         {
             istep0 = std::max(0, istep - 1);
         }
-        this->pelec->init_scf( istep0, GlobalC::sf.strucFac );
-        ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT POTENTIAL");
 
         //----------------------------------------------------------
         // about vdw, jiyy add vdwd3 and linpz add vdwd2
@@ -304,6 +302,8 @@ namespace ModuleESolver
         }
         
         this->beforesolver(istep);
+        this->pelec->init_scf( istep0, GlobalC::sf.strucFac );
+        ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT POTENTIAL");
 //Peize Lin add 2016-12-03
 #ifdef __MPI
         if(Exx_Global::Hybrid_Type::No != GlobalC::exx_global.info.hybrid_type)
