@@ -100,6 +100,31 @@ void ESolver_OF::Init(Input &inp, UnitCell &ucell)
     }
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT PHI");
 
+    //=======================
+    // init pseudopotential
+    //=======================
+    GlobalC::ppcell.init(GlobalC::ucell.ntype);
+
+    //=====================
+    // init hamiltonian
+    // only allocate in the beginning of ELEC LOOP!
+    //=====================
+    // GlobalC::hm.hpw.allocate(GlobalC::wf.npwx, GlobalV::NPOL, GlobalC::ppcell.nkb, GlobalC::rhopw->nrxx);
+
+    //=================================
+    // initalize local pseudopotential
+    //=================================
+    GlobalC::ppcell.init_vloc(GlobalC::ppcell.vloc,GlobalC::rhopw);
+    ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "LOCAL POTENTIAL");
+
+    //======================================
+    // Initalize non local pseudopotential
+    //======================================
+    GlobalC::ppcell.init_vnl(GlobalC::ucell);
+    ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "NON-LOCAL POTENTIAL");
+
+    GlobalC::ppcell.cal_effective_D();
+
     if(this->pelec == nullptr)
     {
         this->pelec = new elecstate::ElecState((Charge*)(&GlobalC::CHR));
@@ -142,38 +167,11 @@ void ESolver_OF::Init(Input &inp, UnitCell &ucell)
             this->pelec->pot->pot_register(pot_register_in);
         }
     }
-    
-
- 
-    //=======================
-    // init pseudopotential
-    //=======================
-    GlobalC::ppcell.init(GlobalC::ucell.ntype);
-
-    //=====================
-    // init hamiltonian
-    // only allocate in the beginning of ELEC LOOP!
-    //=====================
-    // GlobalC::hm.hpw.allocate(GlobalC::wf.npwx, GlobalV::NPOL, GlobalC::ppcell.nkb, GlobalC::rhopw->nrxx);
-
-    //=================================
-    // initalize local pseudopotential
-    //=================================
-    GlobalC::ppcell.init_vloc(GlobalC::ppcell.vloc,GlobalC::rhopw);
-    ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "LOCAL POTENTIAL");
-
-    //======================================
-    // Initalize non local pseudopotential
-    //======================================
-    GlobalC::ppcell.init_vnl(GlobalC::ucell);
-    ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "NON-LOCAL POTENTIAL");
 
     //=========================================================
     // calculate the total local pseudopotential in real space
     //=========================================================
     this->pelec->init_scf(0, GlobalC::sf.strucFac); //atomic_rho, v_of_rho, set_vrs
-
-    GlobalC::ppcell.cal_effective_D();
 
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT POTENTIAL");
 
@@ -954,7 +952,12 @@ void ESolver_OF::calV(double *ptempPhi, double *rdLdphi)
     double **dEdtempPhi = new double*[GlobalV::NSPIN];
     double **tempPhi = new double*[GlobalV::NSPIN];
 
+    //here is a temporary charge, should use a constructor of class Charge in the future!
+    //modified by zhengdy-2022-11-15 
     Charge* tempRho = new Charge();
+    tempRho->nspin = GlobalV::NSPIN;
+    tempRho->nrxx = this->nrxx;
+    tempRho->rho_core = this->pelec->charge->rho_core;
     tempRho->rho = new double*[GlobalV::NSPIN];
     for (int is = 0; is < GlobalV::NSPIN; ++is)
     {
