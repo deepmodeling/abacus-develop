@@ -54,7 +54,7 @@ Potential::~Potential()
 
 void Potential::pot_register(std::vector<std::string>& components_list)
 {
-    ModuleBase::TITLE("Potential", "Init");
+    ModuleBase::TITLE("Potential", "pot_register");
     //delete old components first.
     if(this->components.size()>0)
     {

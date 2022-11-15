@@ -44,11 +44,6 @@ void ESolver_KS_LCAO_TDDFT::Init(Input& inp, UnitCell& ucell)
 {
     ESolver_KS::Init(inp, ucell);
 
-    // Inititlize the charge density.
-    GlobalC::CHR.allocate(GlobalV::NSPIN, GlobalC::rhopw->nrxx, GlobalC::rhopw->npw);
-    // GlobalC::CHR.allocate(GlobalV::NSPIN, GlobalC::rhopw->nrxx, GlobalC::rhopw->npw);
-    ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT CHARGE");
-
     // Initialize the FFT.
     // this function belongs to cell LOOP
 
@@ -96,7 +91,7 @@ void ESolver_KS_LCAO_TDDFT::Init(Input& inp, UnitCell& ucell)
     }
     if (this->pelec != nullptr)
     {
-        if (this->pelec->classname != "ElecStateLCAO")
+        if (this->pelec->classname != "ElecStateLCAO_TDDFT")
         {
             delete this->pelec;
             this->pelec = nullptr;
@@ -111,6 +106,18 @@ void ESolver_KS_LCAO_TDDFT::Init(Input& inp, UnitCell& ucell)
                                                             &(this->LOC),
                                                             &(this->UHM),
                                                             &(this->LOWF));
+        // Inititlize the charge density.
+        this->pelec->charge->allocate(GlobalV::NSPIN, GlobalC::rhopw->nrxx, GlobalC::rhopw->npw);
+        ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT CHARGE");
+        // Initializee the potential.
+        this->pelec->pot = new elecstate::Potential(
+            GlobalC::rhopw,
+            &GlobalC::ucell,
+            &(GlobalC::ppcell.vloc),
+            &(GlobalC::sf.strucFac),
+            &(GlobalC::en.etxc),
+            &(GlobalC::en.vtxc)
+        );
     }
     this->pelec_td = dynamic_cast<elecstate::ElecStateLCAO_TDDFT*>(this->pelec);
 
@@ -315,16 +322,16 @@ void ESolver_KS_LCAO_TDDFT::updatepot(const int istep, const int iter)
     if (!this->conv_elec)
     {
         this->pelec->pot->update_from_charge(this->pelec->charge, &GlobalC::ucell);
+        //It is recommanded to add into register of Potential in the future
+        if (ELEC_evolve::td_vext != 0 && istep < ELEC_evolve::td_timescale)
+        {
+            this->pelec->pot->update_for_tddft(istep);
+        }
         GlobalC::en.delta_escf(this->pelec->pot);
     }
     else
     {
         GlobalC::en.cal_converged(this->pelec);
-    }
-
-    if (ELEC_evolve::td_vext != 0 && istep < ELEC_evolve::td_timescale)
-    {
-        this->pelec->pot->update_for_tddft(istep);
     }
 
     // store wfc

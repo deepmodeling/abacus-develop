@@ -132,6 +132,11 @@ void ESolver_KS_LCAO::Init(Input& inp, UnitCell& ucell)
         GlobalC::dftu.init(ucell, this->LM);
     }
 
+    // output is GlobalC::ppcell.vloc 3D local pseudopotentials
+    // without structure factors
+    // this function belongs to cell LOOP
+    GlobalC::ppcell.init_vloc(GlobalC::ppcell.vloc, GlobalC::rhopw);
+
     // pass Hamilt-pointer to Operator
     this->UHM.genH.LM = this->UHM.LM = &this->LM;
     // pass basis-pointer to EState and Psi
@@ -195,11 +200,6 @@ void ESolver_KS_LCAO::Init(Input& inp, UnitCell& ucell)
 
         // Initialize the FFT.
         // this function belongs to cell LOOP
-
-        // output is GlobalC::ppcell.vloc 3D local pseudopotentials
-        // without structure factors
-        // this function belongs to cell LOOP
-        GlobalC::ppcell.init_vloc(GlobalC::ppcell.vloc, GlobalC::rhopw);
 
         // Initialize the sum of all local potentials.
         // if ion_step==0, read in/initialize the potentials
