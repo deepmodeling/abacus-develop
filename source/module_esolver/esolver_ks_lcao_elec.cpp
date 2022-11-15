@@ -287,7 +287,7 @@ namespace ModuleESolver
                 GlobalV::ofs_running << " Setup the Vl+Vh+Vxc according to new structure factor and new charge." << std::endl;
                 // calculate the new potential accordint to
                 // the new charge density.
-                GlobalC::pot.init_pot( istep-1, GlobalC::sf.strucFac );
+                GlobalC::pot.init_pot( istep, GlobalC::sf.strucFac );
             }
         }
 
