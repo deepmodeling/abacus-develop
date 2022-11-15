@@ -683,23 +683,37 @@ void DiagoCG<FPTYPE, Device>::diag(hamilt::Hamilt<FPTYPE, Device> *phm_in, psi::
     {
         if(DiagoIterAssist<FPTYPE>::need_subspace || ntry > 0)
         {
-            #if defined(__CUDA) || defined(__ROCM)
-            psi::Psi<std::complex<FPTYPE>, psi::DEVICE_CPU> cpu_psi = psi;
-            // hamilt::Hamilt<FPTYPE>* h_phm_in = new hamilt::HamiltPW<FPTYPE>(reinterpret_cast<hamilt::HamiltPW<FPTYPE>*>(phm_in));
-            hamilt::Hamilt<FPTYPE, psi::DEVICE_CPU>* h_phm_in =
-                    new hamilt::HamiltPW<FPTYPE, psi::DEVICE_CPU>(
-                            reinterpret_cast<hamilt::HamiltPW<FPTYPE, psi::DEVICE_GPU>*>(phm_in));
-            DiagoIterAssist<FPTYPE>::diagH_subspace(h_phm_in, cpu_psi, cpu_psi, eigenvalue_in);
-            psi::memory::synchronize_memory_op<std::complex<FPTYPE>, Device, psi::DEVICE_CPU>()(
-                    psi.get_device(),
-                    cpu_psi.get_device(),
-                    psi.get_pointer() - psi.get_psi_bias(),
-                    cpu_psi.get_pointer() - cpu_psi.get_psi_bias(),
-                    psi.size());
-            delete reinterpret_cast<hamilt::HamiltPW<FPTYPE, psi::DEVICE_CPU>*>(h_phm_in);
-            #else
-            DiagoIterAssist<FPTYPE>::diagH_subspace(phm_in, psi, psi, eigenvalue_in);
-            #endif
+        #if defined(__CUDA) || defined(__ROCM)
+            const psi::DEVICE_CPU * cpu_ctx = {};
+            const psi::DEVICE_GPU * gpu_ctx = {};
+
+            FPTYPE* eigenvalue_gpu = nullptr;
+            psi::memory::resize_memory_op<FPTYPE, psi::DEVICE_GPU>()(gpu_ctx, eigenvalue_gpu, psi.get_nbands());
+            
+            // set eigenvalue_in value to eigenvalue_gpu
+            psi::memory::synchronize_memory_op<FPTYPE, psi::DEVICE_GPU, psi::DEVICE_CPU>()(
+                gpu_ctx,
+                cpu_ctx,
+                eigenvalue_gpu,
+                eigenvalue_in,
+                psi.get_nbands()
+            );
+
+            // run in GPU
+            DiagoIterAssist<FPTYPE, Device>::diagH_subspace(phm_in, psi, psi, eigenvalue_gpu);
+
+            // set eigenvalue_in value to eigenvalue_gpu
+            psi::memory::synchronize_memory_op<FPTYPE, psi::DEVICE_CPU, psi::DEVICE_GPU>()(
+                cpu_ctx,
+                gpu_ctx,
+                eigenvalue_in,
+                eigenvalue_gpu,
+                psi.get_nbands()
+            );
+        #else
+            // run in CPU
+            DiagoIterAssist<FPTYPE, Device>::diagH_subspace(phm_in, psi, psi, eigenvalue_in);
+        #endif
         }
 
         DiagoIterAssist<FPTYPE>::avg_iter += 1.0;
