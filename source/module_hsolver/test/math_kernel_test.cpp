@@ -542,6 +542,97 @@ TEST_F(TestModuleHsolverMathKernel, gemv_op_gpu)
 
 
 
+TEST_F(TestModuleHsolverMathKernel, matrixSetToAnother_op_gpu)
+{
+  // const std::vector<std::complex<double> > expect_result = {
+  //   {-0.11893203,-0.13492526}, {-0.40314756, 0.07734553}, {0.06892412, 0.14837423}, {0.0,  0.0},
+  //   {0.61158728, -0.45754102}, {-0.54274745,-0.09682102}, {0.30232967, 0.49411249}, {0.0,  0.0}
+  // };
+
+  const std::vector<std::complex<double> > A = {
+    {-0.11893203,-0.13492526}, {-0.40314756, 0.07734553}, {0.06892412,  0.14837423},
+    {0.61158728, -0.45754102}, {-0.54274745,-0.09682102}, {0.30232967,  0.49411249}
+  };
+
+  const std::vector<std::complex<double> > B = {
+    {0.0,  0.0}, {0.0,  0.0}, {0.0,  0.0}, {0.0,  0.0}, 
+    {0.0,  0.0}, {0.0,  0.0}, {0.0,  0.0}, {0.0,  0.0}
+  };
+
+  int n = 2;
+  int LDA = 3;
+  int LDB = 4;
+
+
+  std::complex<double>* device_A = nullptr;
+  psi::memory::resize_memory_op<std::complex<double>, psi::DEVICE_GPU>()(gpu_ctx, device_A, A.size());
+  psi::memory::synchronize_memory_op<std::complex<double>, psi::DEVICE_GPU, psi::DEVICE_CPU>()(gpu_ctx, cpu_ctx, device_A, A.data(), A.size());
+
+  std::complex<double>* device_B = nullptr;
+  psi::memory::resize_memory_op<std::complex<double>, psi::DEVICE_GPU>()(gpu_ctx, device_B, B.size());
+  psi::memory::synchronize_memory_op<std::complex<double>, psi::DEVICE_GPU, psi::DEVICE_CPU>()(gpu_ctx, cpu_ctx, device_B, B.data(), B.size());
+
+
+  // run
+  hsolver::matrixSetToAnother<double, psi::DEVICE_GPU>()(
+      gpu_ctx,
+      n,
+      device_A,
+      LDA,
+      device_B,
+      LDB);
+
+  std::vector<complex<double> > B_gpu2cpu = {
+        {0.0,  0.0}, {0.0,  0.0},
+        {0.0,  0.0}, {0.0,  0.0},
+        {0.0,  0.0}, {0.0,  0.0},
+        {0.0,  0.0}, {0.0,  0.0},
+  };
+  psi::memory::synchronize_memory_op<std::complex<double>, psi::DEVICE_CPU, psi::DEVICE_GPU>()(cpu_ctx, gpu_ctx, B_gpu2cpu.data(), device_B, B_gpu2cpu.size());
+
+  std::vector<complex<double> > B_cpu = {
+        {0.0,  0.0}, {0.0,  0.0},
+        {0.0,  0.0}, {0.0,  0.0},
+        {0.0,  0.0}, {0.0,  0.0},
+        {0.0,  0.0}, {0.0,  0.0},
+  };
+  hsolver::matrixSetToAnother<double, psi::DEVICE_CPU>()(
+      cpu_ctx,
+      n,
+      A.data(),
+      LDA,
+      B_cpu.data(),
+      LDB);
+
+  // for (int i = 0; i < 4; i++)
+  // {
+  //   for (int j = 0; j < 2; j++)
+  //   {
+  //     std::cout << B_gpu2cpu[i * 2 + j];
+  //   }
+  //   std::cout << std::endl;
+  // }
+  // std::cout << std::endl;
+
+  // for (int i = 0; i < 4; i++)
+  // {
+  //   for (int j = 0; j < 2; j++)
+  //   {
+  //     std::cout << B_cpu[i * 2 + j];
+  //   }
+  //   std::cout << std::endl;
+  // }
+
+  for (int i = 0; i < B_cpu.size(); i++)
+  {
+    EXPECT_LT(fabs(B_gpu2cpu[i].imag() - B_cpu[i].imag()), 1e-12);
+    EXPECT_LT(fabs(B_gpu2cpu[i].real() - B_cpu[i].real()), 1e-12);
+  }
+
+  delete_memory_op()(gpu_ctx, device_A);
+  delete_memory_op()(gpu_ctx, device_B);
+}
+
 
 #endif // __UT_USE_CUDA || __UT_USE_ROCM
 
