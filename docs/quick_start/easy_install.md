@@ -106,4 +106,4 @@ conda activate abacus_env
 mpirun -n 4 abacus
 ```
 
-For more details on building a conda package of ABACUS, please refer to the [conda recipe file](/conda/meta.yaml).
+For more details on building a conda package of ABACUS, please refer to the [conda recipe file](/conda/meta.yaml) [online](https://github.com/deepmodeling/abacus-develop/blob/develop/conda/meta.yaml).
