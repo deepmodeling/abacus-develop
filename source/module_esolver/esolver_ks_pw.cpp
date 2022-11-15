@@ -346,7 +346,7 @@ namespace ModuleESolver
         if (!this->conv_elec)
         {
             // not converged yet, calculate new potential from mixed charge density
-            GlobalC::pot.vr = GlobalC::pot.v_of_rho(pelec->charge->rho, pelec->charge->rho_core);
+            GlobalC::pot.vr = GlobalC::pot.v_of_rho(pelec->charge);
             // because <T+V(ionic)> = <eband+deband> are calculated after sum
             // band, using output charge density.
             // but E_Hartree and Exc(GlobalC::en.etxc) are calculated in v_of_rho above,
@@ -364,7 +364,7 @@ namespace ModuleESolver
                 }
             }
             // the new potential V(PL)+V(H)+V(xc)
-            GlobalC::pot.vr = GlobalC::pot.v_of_rho(pelec->charge->rho, pelec->charge->rho_core);
+            GlobalC::pot.vr = GlobalC::pot.v_of_rho(pelec->charge);
             //std::cout<<"Exc = "<<GlobalC::en.etxc<<std::endl;
             //( vnew used later for scf correction to the forces )
             GlobalC::pot.vnew = GlobalC::pot.vr - GlobalC::pot.vnew;

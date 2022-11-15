@@ -6,6 +6,7 @@
 #include "../module_base/global_variable.h"
 #include "../module_base/matrix.h"
 #include "../module_pw/pw_basis.h"
+#include "src_pw/charge.h"
 
 class Potential
 {
@@ -48,7 +49,7 @@ class Potential
                   ModuleBase::ComplexMatrix &sf // structure factors
     );
 
-    ModuleBase::matrix v_of_rho(const double *const *const rho_in, const double *const rho_core_in);
+    ModuleBase::matrix v_of_rho(const Charge* const chr);
 
     void set_vr_eff(void);
 

@@ -159,7 +159,7 @@ void Potential::init_pot(const int &istep, // number of ionic steps
     //----------------------------------------------------------
     // (3) compute Hartree and XC potentials saves in vr
     //----------------------------------------------------------
-    this->vr = this->v_of_rho(GlobalC::CHR.rho, GlobalC::CHR.rho_core);
+    this->vr = this->v_of_rho(&GlobalC::CHR);
 
     //----------------------------------------------------------
     // (4) total potentials
@@ -238,7 +238,7 @@ void Potential::set_local_pot(double *vl_pseudo, // store the local pseudopotent
 // The XC potential is computed in real space, while the
 // Hartree potential is computed in reciprocal space.
 //==========================================================
-ModuleBase::matrix Potential::v_of_rho(const double *const *const rho_in, const double *const rho_core_in)
+ModuleBase::matrix Potential::v_of_rho(const Charge* const chr)
 {
     ModuleBase::TITLE("Potential", "v_of_rho");
     ModuleBase::timer::tick("Potential", "v_of_rho");
@@ -256,7 +256,7 @@ ModuleBase::matrix Potential::v_of_rho(const double *const *const rho_in, const 
             = XC_Functional::v_xc_meta(GlobalC::rhopw->nrxx,
                                        GlobalC::rhopw->nxyz,
                                        GlobalC::ucell.omega,
-                                       &GlobalC::CHR);
+                                       chr);
         GlobalC::en.etxc = std::get<0>(etxc_vtxc_v);
         GlobalC::en.vtxc = std::get<1>(etxc_vtxc_v);
         v += std::get<2>(etxc_vtxc_v);
@@ -270,7 +270,7 @@ ModuleBase::matrix Potential::v_of_rho(const double *const *const rho_in, const 
         const std::tuple<double, double, ModuleBase::matrix> etxc_vtxc_v = XC_Functional::v_xc(GlobalC::rhopw->nrxx,
                                                                                                GlobalC::rhopw->nxyz,
                                                                                                GlobalC::ucell.omega,
-                                                                                               &GlobalC::CHR);
+                                                                                               chr);
         GlobalC::en.etxc = std::get<0>(etxc_vtxc_v);
         GlobalC::en.vtxc = std::get<1>(etxc_vtxc_v);
         v += std::get<2>(etxc_vtxc_v);
@@ -281,10 +281,10 @@ ModuleBase::matrix Potential::v_of_rho(const double *const *const rho_in, const 
     //----------------------------------------------------------
     if (GlobalV::VH_IN_H)
     {
-        v += H_Hartree_pw::v_hartree(GlobalC::ucell, GlobalC::rhopw, GlobalV::NSPIN, rho_in);
+        v += H_Hartree_pw::v_hartree(GlobalC::ucell, GlobalC::rhopw, GlobalV::NSPIN, chr->rho);
         if (GlobalV::imp_sol)
         {
-            v += GlobalC::solvent_model.v_correction(GlobalC::ucell, GlobalC::rhopw, GlobalV::NSPIN, rho_in);
+            v += GlobalC::solvent_model.v_correction(GlobalC::ucell, GlobalC::rhopw, GlobalV::NSPIN, chr->rho);
         }
     }
 
@@ -293,7 +293,7 @@ ModuleBase::matrix Potential::v_of_rho(const double *const *const rho_in, const 
     //----------------------------------------------------------
     if (GlobalV::EFIELD_FLAG && GlobalV::DIP_COR_FLAG)
     {
-        v += Efield::add_efield(GlobalC::ucell, GlobalC::rhopw, GlobalV::NSPIN, rho_in, GlobalC::solvent_model);
+        v += Efield::add_efield(GlobalC::ucell, GlobalC::rhopw, GlobalV::NSPIN, chr->rho, GlobalC::solvent_model);
     }
 
     // test get ntot_reci

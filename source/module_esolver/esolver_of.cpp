@@ -312,7 +312,7 @@ void ESolver_OF::beforeOpt(const int istep)
 void ESolver_OF::updateV()
 {
     // (1) get dL/dphi
-    GlobalC::pot.vr = GlobalC::pot.v_of_rho(GlobalC::CHR.rho, GlobalC::CHR.rho_core); // Hartree + XC
+    GlobalC::pot.vr = GlobalC::pot.v_of_rho(&GlobalC::CHR); // Hartree + XC
     GlobalC::pot.set_vr_eff(); // Hartree + XC + external
     this->kineticPotential(GlobalC::CHR.rho, this->pphi, GlobalC::pot.vr_eff); // (kinetic + Hartree + XC + external) * 2 * phi
     for (int is = 0; is < GlobalV::NSPIN; ++is)
@@ -910,11 +910,12 @@ void ESolver_OF::calV(double *ptempPhi, double *rdLdphi)
     double **dEdtempPhi = new double*[GlobalV::NSPIN];
     double **tempPhi = new double*[GlobalV::NSPIN];
 
-    double **tempRho = new double*[GlobalV::NSPIN];
+    Charge* tempRho = new Charge();
+    tempRho->rho = new double*[GlobalV::NSPIN];
     for (int is = 0; is < GlobalV::NSPIN; ++is)
     {
         dEdtempPhi[is] = new double[this->nrxx];
-        tempRho[is] = new double[this->nrxx];
+        tempRho->rho[is] = new double[this->nrxx];
         if (is == this->tnSpinFlag)
         {
             tempPhi[is] = ptempPhi;
@@ -925,14 +926,15 @@ void ESolver_OF::calV(double *ptempPhi, double *rdLdphi)
         }
         for (int ir = 0; ir < this->nrxx; ++ir)
         {
-            tempRho[is][ir] = tempPhi[is][ir] * tempPhi[is][ir];
+            tempRho->rho[is][ir] = tempPhi[is][ir] * tempPhi[is][ir];
         }
     }
+    tempRho->rho_core = GlobalC::CHR.rho_core;
 
-    GlobalC::pot.vr = GlobalC::pot.v_of_rho(tempRho, GlobalC::CHR.rho_core);
+    GlobalC::pot.vr = GlobalC::pot.v_of_rho(tempRho);
     GlobalC::pot.set_vr_eff();
 
-    this->kineticPotential(tempRho, tempPhi, GlobalC::pot.vr_eff);
+    this->kineticPotential(tempRho->rho, tempPhi, GlobalC::pot.vr_eff);
     for (int i = 0; i < this->nrxx; ++i)
     {
         dEdtempPhi[this->tnSpinFlag][i] = GlobalC::pot.vr_eff(this->tnSpinFlag,i);
@@ -945,10 +947,10 @@ void ESolver_OF::calV(double *ptempPhi, double *rdLdphi)
     for (int is = 0; is < GlobalV::NSPIN; ++is)
     {
         delete[] dEdtempPhi[is];
-        delete[] tempRho[is];
+        delete[] tempRho->rho[is];
     } 
-    delete[] dEdtempPhi;
-    delete[] tempRho;
+    delete[] tempRho->rho;
+    delete tempRho;
     delete[] tempPhi;
 } 
 
@@ -960,8 +962,10 @@ void ESolver_OF::calV(double *ptempPhi, double *rdLdphi)
 void ESolver_OF::caldEdtheta(double **ptempPhi, double **ptempRho, double *ptheta, double *rdEdtheta)
 {
     double *pdPhidTheta = new double[this->nrxx];
-
-    GlobalC::pot.vr = GlobalC::pot.v_of_rho(ptempRho, GlobalC::CHR.rho_core);
+    Charge* tempRho = new Charge();
+    tempRho->rho = ptempRho;
+    tempRho->rho_core = GlobalC::CHR.rho_core;
+    GlobalC::pot.vr = GlobalC::pot.v_of_rho(tempRho);
     GlobalC::pot.set_vr_eff();
 
     this->kineticPotential(ptempRho, ptempPhi, GlobalC::pot.vr_eff);
@@ -976,6 +980,7 @@ void ESolver_OF::caldEdtheta(double **ptempPhi, double **ptempRho, double *pthet
         Parallel_Reduce::reduce_double_all(rdEdtheta[is]);
     }
     delete[] pdPhidTheta;
+    delete tempRho;
 }
 
 // 

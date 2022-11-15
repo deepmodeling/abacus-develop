@@ -365,7 +365,7 @@ void ESolver_KS_LCAO::eachiterinit(const int istep, const int iter)
             // so be careful here, make sure
             // rho1 and rho2 are the same rho.
             // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-            GlobalC::pot.vr = GlobalC::pot.v_of_rho(pelec->charge->rho, pelec->charge->rho_core);
+            GlobalC::pot.vr = GlobalC::pot.v_of_rho(pelec->charge);
             GlobalC::en.delta_escf();
 
             GlobalC::pot.set_vr_eff();
@@ -524,12 +524,12 @@ void ESolver_KS_LCAO::updatepot(const int istep, const int iter)
     }
     if (!this->conv_elec)
     {
-        GlobalC::pot.vr = GlobalC::pot.v_of_rho(pelec->charge->rho, pelec->charge->rho_core);
+        GlobalC::pot.vr = GlobalC::pot.v_of_rho(pelec->charge);
         GlobalC::en.delta_escf();
     }
     else
     {
-        GlobalC::pot.vnew = GlobalC::pot.v_of_rho(pelec->charge->rho, pelec->charge->rho_core);
+        GlobalC::pot.vnew = GlobalC::pot.v_of_rho(pelec->charge);
         //(used later for scf correction to the forces )
         GlobalC::pot.vnew -= GlobalC::pot.vr;
         GlobalC::en.descf = 0.0;

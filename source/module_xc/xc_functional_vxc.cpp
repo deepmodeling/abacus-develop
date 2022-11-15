@@ -408,11 +408,6 @@ tuple<double,double,ModuleBase::matrix,ModuleBase::matrix> XC_Functional::v_xc_m
     ModuleBase::TITLE("XC_Functional","v_xc");
     ModuleBase::timer::tick("XC_Functional","v_xc");
 
-    if(GlobalV::NSPIN==4)
-    {
-        ModuleBase::WARNING_QUIT("v_xc_meta","meta-GGA has not been implemented for nspin = 4 yet");
-    }
-
     double e2 = 2.0;
 
 	//output of the subroutine
