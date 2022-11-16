@@ -177,7 +177,7 @@ void ESolver_KS_LCAO::Init(Input& inp, UnitCell& ucell)
 
         // Inititlize the charge density.
         this->pelec->charge->allocate(GlobalV::NSPIN, GlobalC::rhopw->nrxx, GlobalC::rhopw->npw);
-        ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT CHARGE");
+
         // Initializee the potential.
         this->pelec->pot = new elecstate::Potential(
             GlobalC::rhopw,

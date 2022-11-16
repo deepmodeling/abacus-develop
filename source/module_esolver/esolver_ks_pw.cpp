@@ -135,7 +135,7 @@ namespace ModuleESolver
 
         // Inititlize the charge density.
         this->pelec->charge->allocate(GlobalV::NSPIN, GlobalC::rhopw->nrxx, GlobalC::rhopw->npw);
-        ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT CHARGE");
+
         // Initializee the potential.
         if(this->pelec->pot == nullptr)
         {

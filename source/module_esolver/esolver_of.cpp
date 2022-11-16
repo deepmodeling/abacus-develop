@@ -89,7 +89,6 @@ void ESolver_OF::Init(Input &inp, UnitCell &ucell)
 
     // Inititlize the charge density.
     GlobalC::CHR.allocate(GlobalV::NSPIN, GlobalC::rhopw->nrxx, GlobalC::rhopw->npw);
-    ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT CHARGE");
 
     // Initialize the "wavefunction", which is sqrt(rho)
     this->psi = new psi::Psi<double>(1, GlobalV::NSPIN, this->nrxx);

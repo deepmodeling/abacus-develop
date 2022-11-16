@@ -298,6 +298,13 @@ namespace ModuleESolver
         
         this->beforesolver(istep);
         this->pelec->init_scf( istep, GlobalC::sf.strucFac );
+        // the electron charge density should be symmetrized,
+        // here is the initialization
+        Symmetry_rho srho;
+        for (int is = 0; is < GlobalV::NSPIN; is++)
+        {
+            srho.begin(is, *(pelec->charge), GlobalC::rhopw, GlobalC::Pgrid, GlobalC::symm);
+        }
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT POTENTIAL");
 //Peize Lin add 2016-12-03
 #ifdef __MPI
@@ -326,14 +333,6 @@ namespace ModuleESolver
         if(!GlobalV::test_skip_ewald)
         {
             H_Ewald_pw::compute_ewald(GlobalC::ucell, GlobalC::rhopw);
-        }
-
-        //2. the electron charge density should be symmetrized,
-        // here is the initialization
-        Symmetry_rho srho;
-        for (int is = 0; is < GlobalV::NSPIN; is++)
-        {
-            srho.begin(is, *(pelec->charge), GlobalC::rhopw, GlobalC::Pgrid, GlobalC::symm);
         }
 
         p_hamilt->non_first_scf = istep;
@@ -383,6 +382,9 @@ namespace ModuleESolver
         }
 
         this->beforesolver(istep);
+        //pelec should be initialized before these calculations
+        this->pelec->init_scf( istep, GlobalC::sf.strucFac );
+        ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT POTENTIAL");
         // self consistent calculations for electronic ground state
         if (GlobalV::CALCULATION == "nscf")
         {
