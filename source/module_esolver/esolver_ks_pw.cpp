@@ -225,17 +225,18 @@ namespace ModuleESolver
         {
             H_Ewald_pw::compute_ewald(GlobalC::ucell, GlobalC::rhopw);
         }
-        //Symmetry_rho should be moved to Init()
+
+        //=========================================================
+        // calculate the total local pseudopotential in real space
+        //=========================================================
+        this->pelec->init_scf(istep, GlobalC::sf.strucFac);
+        //Symmetry_rho should behind init_scf, because charge should be initialized first.
         Symmetry_rho srho;
         for (int is = 0; is < GlobalV::NSPIN; is++)
         {
             srho.begin(is, *(pelec->charge), GlobalC::rhopw, GlobalC::Pgrid, GlobalC::symm);
         }
 
-        //=========================================================
-        // calculate the total local pseudopotential in real space
-        //=========================================================
-        this->pelec->init_scf(istep, GlobalC::sf.strucFac);
     } 
 
     void ESolver_KS_PW::othercalculation(const int istep)
