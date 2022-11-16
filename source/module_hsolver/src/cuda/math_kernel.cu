@@ -404,7 +404,7 @@ void matrixTranspose_op<double, psi::DEVICE_GPU>::operator()(const psi::DEVICE_G
         ZERO.x = ZERO.y = 0.0;
 
         // use 'geam' API todo transpose.
-        cublasErrcheck( cublasZgeam(diag_handle, CUBLAS_OP_T, CUBLAS_OP_N, col, row, &ONE, (double2*)input_matrix, col, &ZERO, (double2*)input_matrix, col, (double2*)device_temp, col) );
+        cublasErrcheck(cublasZgeam(diag_handle, CUBLAS_OP_T, CUBLAS_OP_N, col, row, &ONE, (double2*)input_matrix, col, &ZERO, (double2*)input_matrix, col, (double2*)device_temp, col));
     } else
     {
         int thread = 1024;
