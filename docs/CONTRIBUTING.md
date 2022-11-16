@@ -11,6 +11,7 @@ For more non-technical aspects, please refer to the [ABACUS Contribution Guide](
 - [Submitting an Issue](#submitting-an-issue)
 - [Comment Style for documentation](#comment-style-for-documentation)
 - [Code formatting style](#code-formatting-style)
+- [Generating code coverage report](#generating-code-coverage-report)
 - [Adding a unit test](#adding-a-unit-test)
 - [Submitting a Pull Request](#submitting-a-pull-request)
 - [Commit Message Guidelines](#commit-message-guidelines)
@@ -166,7 +167,8 @@ cd build/
 make lcov
 ```
 
-Now you can copy build/lcov to your local device, and view build/lcov/html/all_targets/index.html
+Now you can copy build/lcov to your local device, and view build/lcov/html/all_targets/index.html.
+The current test coverage of ABACUS is reported in [Test Coverage](./community/contribution_guide.md#test-coverage).
 
 ## Submitting a Pull Request
 
