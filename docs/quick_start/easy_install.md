@@ -1,6 +1,7 @@
 # Easy Installation
 
-This guide helps you install ABACUS with basic features. **For DeePKS, Libxc support or building with `make`, please refer to [the advanced installation guide](../advanced/install.md).** We recommend building ABACUS with `cmake` to avoid dependency issues.
+This guide helps you install ABACUS with basic features. **For DeePKS, Libxc support or building with `make`, please refer to [the advanced installation guide](../advanced/install.md).** We recommend building ABACUS with `cmake` to avoid dependency issues. We recommend compiling ABACUS(and possibly its requirements) from the source code using the latest compiler for the best performace. You can also deploy ABACUS without buiding by [docker](#container-deployment) or [conda](#install-by-conda).
+
 
 ## Prerequisites
 
@@ -71,7 +72,6 @@ If SCALAPACK, ELPA or CEREAL is absent and only require plane-wave calculations,
 cmake -B build -DENABLE_LCAO=OFF
 ```
 
-
 ## Build and Install
 
 After configuring, start build and install by:
@@ -85,6 +85,8 @@ You can change the number after `-j` on your need: set to the number of CPU core
 
 ## Container Deployment
 
+> Please note that containers target at developing and testing, but not massively parallel computing for production. Docker has a bad support to MPI, which may cause performance degradation.
+
 We've built a ready-for-use version of ABACUS with docker [here](https://github.com/deepmodeling/abacus-develop/pkgs/container/abacus). For a quick start: pull the image, prepare the data, run container. Instructions on using the image can be accessed in [Dockerfile](../../Dockerfile). A mirror is available by `docker pull registry.dp.tech/deepmodeling/abacus`.
 
 We also offer a pre-built docker image containing all the requirements for development. Please refer to our [Package Page](https://github.com/deepmodeling/abacus-develop/pkgs/container/abacus-development-kit).
@@ -94,4 +96,16 @@ The project is ready for VS Code development container. Please refer to [Develop
 We also support [Gitpod](https://www.gitpod.io/) to offer an ready-to-use online development environment.
 [Open in Gitpod](https://gitpod.io/#https://github.com/deepmodeling/abacus-develop)
 
-> Please note that containers target at developing and testing, but not massively parallel computing. Docker has a bad support to MPI; for production, please compile ABACUS from source code to avoid compatibility issues and gain a better performace.
+## Install by conda
+
+Conda is a package management system with separated environment, not requiring system privileges. A pre-built ABACUS binary with all requirements is available at [deepmodeling conda channel](https://anaconda.org/deepmodeling/abacus). Install ABACUS by the commands below:
+
+```bash
+# We recommend installing ABACUS in a new environment to avoid potential conflicts:
+conda create -n abacus_env abacus -c deepmodeling -c conda-forge
+conda activate abacus_env
+# ABACUS is ready to go:
+mpirun -n 4 abacus
+```
+
+For more details on building a conda package of ABACUS, please refer to the [conda recipe file](/conda/meta.yaml) [online](https://github.com/deepmodeling/abacus-develop/blob/develop/conda/meta.yaml).

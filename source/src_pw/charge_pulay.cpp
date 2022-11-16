@@ -11,8 +11,7 @@ void Charge_Mixing::Pulay_mixing(double** rho, double** rho_save)
 	dstep = this->mixing_ndim - 1;
 	assert(dstep>0);
 
-	// (1) allocate 
-    if(GlobalV::FINAL_SCF && totstep==0) initp = false;
+	// (1) allocate
 	this->allocate_Pulay();
 
     if (irstep==rstep) irstep=0;
@@ -119,9 +118,9 @@ void Charge_Mixing::Pulay_mixing(double** rho, double** rho_save)
 	return;		
 }
 
-void Charge_Mixing::reset(const bool final_scf)		// Peize Lin add 2018-11-01
+void Charge_Mixing::reset()		// Peize Lin add 2018-11-01
 {
-	if(!final_scf) this->new_e_iteration = true;
+	this->new_e_iteration = true;
 	
 	irstep = 0;
 	idstep = 0;

@@ -6,15 +6,16 @@
 #include "module_base/blas_connector.h"
 #include "module_psi/psi.h"
 #include "src_parallel/parallel_reduce.h"
+#include "module_psi/include/memory.h"
 
 
 #if defined(__CUDA) || defined(__UT_USE_CUDA)
 #include <cuda_runtime.h>
 #include "cublas_v2.h"
 
-#define cublasErrcheck(res) { cudaAssert((res), __FILE__, __LINE__); }
+#define cublasErrcheck(res) { cublasAssert((res), __FILE__, __LINE__); }
 
-static const char *_cudaGetErrorEnum(cublasStatus_t error) {
+static const char *_cublasGetErrorEnum(cublasStatus_t error) {
     switch (error) {
         case CUBLAS_STATUS_SUCCESS:
             return "CUBLAS_STATUS_SUCCESS";
@@ -43,9 +44,9 @@ static const char *_cudaGetErrorEnum(cublasStatus_t error) {
     return "<unknown>";
 }
 
-inline void cudaAssert(cublasStatus_t code, const char *file, int line, bool abort=true) {
+inline void cublasAssert(cublasStatus_t code, const char *file, int line, bool abort=true) {
     if (code != CUBLAS_STATUS_SUCCESS) {
-        fprintf(stderr,"cuBLAS Assert: %s %s %d\n", _cudaGetErrorEnum(code), file, line);
+        fprintf(stderr,"cuBLAS Assert: %s %s %d\n", _cublasGetErrorEnum(code), file, line);
         if (abort) exit(code);
     }
 }
@@ -165,6 +166,25 @@ template <typename FPTYPE, typename Device> struct gemm_op
                     const int& ldc);
 };
 
+template <typename FPTYPE, typename Device> struct matrixTranspose_op
+{
+    void operator()(const Device* d,
+                    const int& row,
+                    const int& col,
+                    const std::complex<FPTYPE>* input_matrix,
+                    std::complex<FPTYPE>* output_matrix);
+};
+
+template <typename FPTYPE, typename Device> struct matrixSetToAnother
+{
+    void operator()(const Device* d,
+                    const int& n,
+                    const std::complex<FPTYPE>* A,
+                    const int& LDA,
+                    std::complex<FPTYPE>* B,
+                    const int& LDB);
+};
+
 #if __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
 
 // Partially specialize functor for psi::GpuDevice.
@@ -219,6 +239,17 @@ template <typename FPTYPE> struct constantvector_addORsub_constantVector_op<FPTY
                     const std::complex<FPTYPE>* vector2,
                     const FPTYPE constant2);
 };
+
+template <typename FPTYPE> struct matrixSetToAnother<FPTYPE, psi::DEVICE_GPU>
+{
+    void operator()(const psi::DEVICE_GPU* d,
+                    const int& n,
+                    const std::complex<FPTYPE>* A,
+                    const int& LDA,
+                    std::complex<FPTYPE>* B,
+                    const int& LDB);
+};
+
 
 void createBLAShandle();
 void destoryBLAShandle();

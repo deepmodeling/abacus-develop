@@ -14,3 +14,7 @@ It is suggested to [submit new issues](https://github.com/deepmodeling/abacus-de
 
 - **Iterate the pull request.**
 All pull requests need to be tested through CI before reviewing. A pull request might need to be iterated several times before accepted, so splitting a long PR into parts reduces reviewing difficulty for us.
+
+## Test Coverage
+
+The current test coverage of ABACUS is reported with 50.9% line coverage and 69.8% function coverage. Efforts to increase test coverage is appreciated. For more details, developers are referred to [Code Coverage Report](./test-coverage.md).

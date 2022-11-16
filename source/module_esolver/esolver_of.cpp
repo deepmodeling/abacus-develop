@@ -979,6 +979,7 @@ void ESolver_OF::calV(double *ptempPhi, double *rdLdphi)
             tempRho->rho[is][ir] = tempPhi[is][ir] * tempPhi[is][ir];
         }
     }
+    tempRho->rho_core = GlobalC::CHR.rho_core;
 
     this->pelec->pot->update_from_charge(tempRho, &GlobalC::ucell);
     ModuleBase::matrix& vr_eff = this->pelec->pot->get_effective_v();

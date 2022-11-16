@@ -194,6 +194,7 @@ inline int setBufferParameter(
 
 void Gint_Gamma::vl_grid_to_2D(const int lgd_now, LCAO_Matrix &lm, const bool new_e_iteration)
 {
+    ModuleBase::timer::tick("Gint_Gamma","distri_vl");
     // setup send buffer and receive buffer size
     // OUT(GlobalV::ofs_running, "Start transforming vlocal from grid distribute to 2D block");
     if(new_e_iteration)

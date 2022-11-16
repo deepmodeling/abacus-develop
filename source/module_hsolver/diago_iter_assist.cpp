@@ -7,6 +7,8 @@
 #include "module_base/lapack_connector.h"
 #include "module_base/timer.h"
 #include "src_parallel/parallel_reduce.h"
+#include "module_hsolver/include/math_kernel.h"
+#include "module_hsolver/include/dngvd_op.h"
 
 using namespace hsolver;
 
@@ -46,67 +48,94 @@ void DiagoIterAssist<FPTYPE, Device>::diagH_subspace(
         n_band = nstart;
     assert(n_band <= nstart);
 
-    ModuleBase::ComplexMatrix hc(nstart, nstart);
-    ModuleBase::ComplexMatrix sc(nstart, nstart);
-    ModuleBase::ComplexMatrix hvec(nstart, n_band);
+    Device* ctx = {};
+
+    std::complex<FPTYPE>* hcc = nullptr;
+    std::complex<FPTYPE>* scc = nullptr;
+    std::complex<FPTYPE>* vcc = nullptr;
+    psi::memory::resize_memory_op<std::complex<FPTYPE>, Device>()(ctx, hcc, nstart * nstart);
+    psi::memory::resize_memory_op<std::complex<FPTYPE>, Device>()(ctx, scc, nstart * nstart);
+    psi::memory::resize_memory_op<std::complex<FPTYPE>, Device>()(ctx, vcc, nstart * nstart);
+    psi::memory::set_memory_op<std::complex<FPTYPE>, Device>()(ctx, hcc, 0, nstart * nstart);
+    psi::memory::set_memory_op<std::complex<FPTYPE>, Device>()(ctx, scc, 0, nstart * nstart);
+    psi::memory::set_memory_op<std::complex<FPTYPE>, Device>()(ctx, vcc, 0, nstart * nstart);
 
     const int dmin = psi.get_current_nbas();
     const int dmax = psi.get_nbasis();
 
     // qianrui improve this part 2021-3-14
-    //std::complex<double> *aux = new std::complex<double>[dmax * nstart];
-    //const std::complex<double> *paux = aux;
     const std::complex<FPTYPE>* ppsi = psi.get_pointer();
 
-    //allocated hpsi 
-    std::vector<std::complex<FPTYPE>> hpsi(psi.get_nbands() * psi.get_nbasis());
-    //do hPsi for all bands
+    // allocated hpsi 
+    // std::vector<std::complex<FPTYPE>> hpsi(psi.get_nbands() * psi.get_nbasis());
+    std::complex<FPTYPE>* hphi = nullptr;
+    psi::memory::resize_memory_op<std::complex<FPTYPE>, Device>()(ctx, hphi, psi.get_nbands() * psi.get_nbasis());
+    psi::memory::set_memory_op<std::complex<FPTYPE>, Device>()(ctx, hphi, 0, psi.get_nbands() * psi.get_nbasis());
+    // do hPsi for all bands
     psi::Range all_bands_range(1, psi.get_current_k(), 0, psi.get_nbands()-1);
-    hpsi_info hpsi_in(&psi, all_bands_range, hpsi.data());
+    hpsi_info hpsi_in(&psi, all_bands_range, hphi);
     pHamilt->ops->hPsi(hpsi_in);
-    //use aux as a data pointer for hpsi
-    const std::complex<FPTYPE> *aux = hpsi.data();
 
-    char trans1 = 'C';
-    char trans2 = 'N';
-    zgemm_(&trans1,
-           &trans2,
-           &nstart,
-           &nstart,
-           &dmin,
-           &ModuleBase::ONE,
-           ppsi,
-           &dmax,
-           aux,
-           &dmax,
-           &ModuleBase::ZERO,
-           hc.c,
-           &nstart);
-    hc = transpose(hc, false);
+    gemm_op<FPTYPE, Device>()(
+        ctx,
+        'C',
+        'N',
+        nstart,
+        nstart,
+        dmin,
+        &ModuleBase::ONE,
+        ppsi,
+        dmax,
+        hphi,
+        dmax,
+        &ModuleBase::ZERO,
+        hcc,
+        nstart
+    );
+    matrixTranspose_op<FPTYPE, Device>()(
+        ctx,
+        nstart,
+        nstart,
+        hcc,
+        hcc
+    );
 
-    zgemm_(&trans1,
-           &trans2,
-           &nstart,
-           &nstart,
-           &dmin,
-           &ModuleBase::ONE,
-           ppsi,
-           &dmax,
-           ppsi,
-           &dmax,
-           &ModuleBase::ZERO,
-           sc.c,
-           &nstart);
-    sc = transpose(sc, false);
+    gemm_op<FPTYPE, Device>()(
+        ctx,
+        'C',
+        'N',
+        nstart,
+        nstart,
+        dmin,
+        &ModuleBase::ONE,
+        ppsi,
+        dmax,
+        ppsi,
+        dmax,
+        &ModuleBase::ZERO,
+        scc,
+        nstart
+    );
+    matrixTranspose_op<FPTYPE, Device>()(
+        ctx,
+        nstart,
+        nstart,
+        scc,
+        scc
+    );
 
     if (GlobalV::NPROC_IN_POOL > 1)
     {
-        Parallel_Reduce::reduce_complex_double_pool(hc.c, nstart * nstart);
-        Parallel_Reduce::reduce_complex_double_pool(sc.c, nstart * nstart);
+        Parallel_Reduce::reduce_complex_double_pool(hcc, nstart * nstart);
+        Parallel_Reduce::reduce_complex_double_pool(scc, nstart * nstart);
     }
 
     // after generation of H and S matrix, diag them
-    DiagoIterAssist::diagH_LAPACK(nstart, n_band, hc, sc, nstart, en, hvec);
+    DiagoIterAssist::diagH_LAPACK(nstart, n_band, hcc, scc, nstart, en, vcc);
+
+#if defined(__CUDA) || defined(__ROCM)
+    hsolver::createBLAShandle();
+#endif
 
     //=======================
     // diagonize the H-matrix
@@ -122,51 +151,64 @@ void DiagoIterAssist<FPTYPE, Device>::diagH_subspace(
         // because psi and evc are different here,
         // I think if psi and evc are the same,
         // there may be problems, mohan 2011-01-01
-        char transa = 'N';
-        char transb = 'T';
-        zgemm_(&transa,
-               &transb,
-               &dmax, // m: row of A,C
-               &n_band, // n: col of B,C
-               &nstart, // k: col of A, row of B
-               &ModuleBase::ONE, // alpha
-               ppsi, // A
-               &dmax, // LDA: if(N) max(1,m) if(T) max(1,k)
-               hvec.c, // B
-               &n_band, // LDB: if(N) max(1,k) if(T) max(1,n)
-               &ModuleBase::ZERO, // belta
-               evc.get_pointer(), // C
-               &dmax); // LDC: if(N) max(1, m)
+        gemm_op<FPTYPE, Device>()(
+            ctx,
+            'N',
+            'T',
+            dmax,
+            n_band,
+            nstart,
+            &ModuleBase::ONE,
+            ppsi,
+            dmax,
+            vcc,
+            n_band,
+            &ModuleBase::ZERO,
+            evc.get_pointer(),
+            dmax
+        );
     }
     else
     {
         // As the evc and psi may refer to the same matrix, we first
         // create a temporary matrix to store the result. (by wangjp)
         // qianrui improve this part 2021-3-13
-        char transa = 'N';
-        char transb = 'T';
-        ModuleBase::ComplexMatrix evctmp(n_band, dmin, false);
-        zgemm_(&transa,
-               &transb,
-               &dmin,
-               &n_band,
-               &nstart,
-               &ModuleBase::ONE,
-               ppsi,
-               &dmax,
-               hvec.c,
-               &n_band,
-               &ModuleBase::ZERO,
-               evctmp.c,
-               &dmin);
-        for (int ib = 0; ib < n_band; ib++)
-        {
-            for (int ig = 0; ig < dmin; ig++)
-            {
-                evc(ib, ig) = evctmp(ib, ig);
-            }
-        }
+        std::complex<FPTYPE>* evctemp = nullptr;
+        psi::memory::resize_memory_op<std::complex<FPTYPE>, Device>()(ctx, evctemp, n_band * dmin);
+        psi::memory::set_memory_op<std::complex<FPTYPE>, Device>()(ctx, evctemp, 0, n_band * dmin);
+        
+        gemm_op<FPTYPE, Device>()(
+            ctx,
+            'N',
+            'T',
+            dmin,
+            n_band,
+            nstart,
+            &ModuleBase::ONE,
+            ppsi,
+            dmax,
+            vcc,
+            n_band,
+            &ModuleBase::ZERO,
+            evctemp,
+            dmin
+        );
+
+        matrixSetToAnother<FPTYPE, Device>()(ctx, n_band, evctemp, dmin, evc.get_pointer(), dmax);
+        // for (int ib = 0; ib < n_band; ib++)
+        // {
+        //     for (int ig = 0; ig < dmin; ig++)
+        //     {
+                // evc(ib, ig) = evctmp(ib, ig);
+        //     }
+        // }
+        psi::memory::delete_memory_op<std::complex<double>, Device>()(ctx, evctemp);
     }
+
+    psi::memory::delete_memory_op<std::complex<FPTYPE>, Device>()(ctx, hcc);
+    psi::memory::delete_memory_op<std::complex<FPTYPE>, Device>()(ctx, scc);
+    psi::memory::delete_memory_op<std::complex<FPTYPE>, Device>()(ctx, vcc);
+    psi::memory::delete_memory_op<std::complex<FPTYPE>, Device>()(ctx, hphi);
 
     ModuleBase::timer::tick("DiagoIterAssist", "diagH_subspace");
     return;
@@ -334,10 +376,10 @@ void DiagoIterAssist<FPTYPE, Device>::diagH_subspace_init(
 // by nstart states psi (atomic or random wavefunctions).
 // Produces on output n_band eigenvectors (n_band <= nstart) in evc.
 //----------------------------------------------------------------------
-template<>
-void DiagoIterAssist<double, psi::DEVICE_GPU>::diagH_subspace(hamilt::Hamilt<double, psi::DEVICE_GPU>* pHamilt, const psi::Psi<std::complex<double>, psi::DEVICE_GPU> &psi, psi::Psi<std::complex<double>, psi::DEVICE_GPU> &evc, double *en, int n_band) {
-    ModuleBase::WARNING_QUIT("DiagoIterAssist::diagH_subspace","GPU's implementation is not supported currently!");
-}
+// template<>
+// void DiagoIterAssist<double, psi::DEVICE_GPU>::diagH_subspace(hamilt::Hamilt<double, psi::DEVICE_GPU>* pHamilt, const psi::Psi<std::complex<double>, psi::DEVICE_GPU> &psi, psi::Psi<std::complex<double>, psi::DEVICE_GPU> &evc, double *en, int n_band) {
+//     ModuleBase::WARNING_QUIT("DiagoIterAssist::diagH_subspace","GPU's implementation is not supported currently!");
+// }
 
 template<>
 void DiagoIterAssist<double, psi::DEVICE_GPU>::diagH_subspace_init(hamilt::Hamilt<double, psi::DEVICE_GPU>* pHamilt, const ModuleBase::ComplexMatrix &psi, psi::Psi<std::complex<double>, psi::DEVICE_GPU> &evc, double *en) {
@@ -466,6 +508,86 @@ void DiagoIterAssist<FPTYPE, Device>::diagH_LAPACK(
     delete[] work;
 
     ModuleBase::timer::tick("DiagoIterAssist", "diagH_LAPACK");
+    return;
+}
+
+
+template<typename FPTYPE, typename Device>
+void DiagoIterAssist<FPTYPE, Device>::diagH_LAPACK(
+    const int nstart,
+    const int nbands,
+    const std::complex<FPTYPE>* hcc,
+    const std::complex<FPTYPE>* scc,
+    const int ldh, // nstart
+    FPTYPE *e, // always in CPU
+    std::complex<FPTYPE>* vcc)
+{
+    ModuleBase::TITLE("DiagoIterAssist", "LAPACK_subspace");
+    ModuleBase::timer::tick("DiagoIterAssist", "LAPACK_subspace");
+
+    Device* ctx = {};
+    
+    const bool all_eigenvalues = (nstart == nbands);
+
+#if defined(__CUDA) || defined(__ROCM)
+    const psi::DEVICE_CPU * cpu_ctx = {};
+    const psi::DEVICE_GPU * gpu_ctx = {};
+
+    FPTYPE* e_gpu = nullptr;
+    psi::memory::resize_memory_op<FPTYPE, psi::DEVICE_GPU>()(gpu_ctx, e_gpu, nbands);
+    // set e in CPU value to e_gpu
+    psi::memory::synchronize_memory_op<FPTYPE, psi::DEVICE_GPU, psi::DEVICE_CPU>()(
+        gpu_ctx,
+        cpu_ctx,
+        e_gpu,
+        e,
+        nbands
+    );
+
+    if (all_eigenvalues)
+    {
+        //===========================
+        // calculate all eigenvalues
+        //===========================
+        dngv_op<FPTYPE, Device>()(ctx, nstart, ldh, hcc, scc, e_gpu, vcc);
+    }
+    else
+    {
+        //=====================================
+        // calculate only m lowest eigenvalues
+        //=====================================
+        dngvx_op<FPTYPE, Device>()(ctx, nstart, ldh, hcc, scc, nbands, e_gpu, vcc);
+    }
+
+    // set e_gpu value to e in CPU
+    psi::memory::synchronize_memory_op<FPTYPE, psi::DEVICE_CPU, psi::DEVICE_GPU>()(
+        cpu_ctx,
+        gpu_ctx,
+        e,
+        e_gpu,
+        nbands
+    );
+    psi::memory::delete_memory_op<FPTYPE, psi::DEVICE_GPU>()(gpu_ctx, e_gpu);
+#else
+
+    if (all_eigenvalues)
+    {
+        //===========================
+        // calculate all eigenvalues
+        //===========================
+        dngv_op<FPTYPE, Device>()(ctx, nstart, ldh, hcc, scc, e, vcc);
+    }
+    else
+    {
+        //=====================================
+        // calculate only m lowest eigenvalues
+        //=====================================
+        dngvx_op<FPTYPE, Device>()(ctx, nstart, ldh, hcc, scc, nbands, e, vcc);
+    }
+
+#endif
+
+    ModuleBase::timer::tick("DiagoIterAssist", "LAPACK_subspace");
     return;
 }
 

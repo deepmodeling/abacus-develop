@@ -42,9 +42,18 @@ class DiagoIterAssist
         FPTYPE *e,
         ModuleBase::ComplexMatrix &hvec);
 
+    static void diagH_LAPACK(
+        const int nstart,
+        const int nbands,
+        const std::complex<FPTYPE>* hcc,
+        const std::complex<FPTYPE>* sc,
+        const int ldh, // nstart
+        FPTYPE *e,
+        std::complex<FPTYPE>* vcc);
+
     static bool test_exit_cond(const int &ntry, const int &notconv);
 
-    using hpsi_info = typename hamilt::Operator<std::complex<FPTYPE>, psi::DEVICE_CPU>::hpsi_info;
+    using hpsi_info = typename hamilt::Operator<std::complex<FPTYPE>, Device>::hpsi_info;
 };
 
 } // namespace hsolver

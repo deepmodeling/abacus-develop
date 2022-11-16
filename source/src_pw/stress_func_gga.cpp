@@ -22,7 +22,7 @@ void Stress_Func::stress_gga(ModuleBase::matrix& sigma)
 	// call gradcorr to evaluate gradient correction to stress
 	// the first three terms are etxc, vtxc and v, which
 	// is not used here, so dummy variables are used.
-	XC_Functional::gradcorr(dum1, dum2, dum3, stress_gga, 1);
+	XC_Functional::gradcorr(dum1, dum2, dum3, &GlobalC::CHR, stress_gga, 1);
 
 	for(int l = 0;l< 3;l++)
 	{

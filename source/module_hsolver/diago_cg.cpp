@@ -683,23 +683,7 @@ void DiagoCG<FPTYPE, Device>::diag(hamilt::Hamilt<FPTYPE, Device> *phm_in, psi::
     {
         if(DiagoIterAssist<FPTYPE>::need_subspace || ntry > 0)
         {
-            #if defined(__CUDA) || defined(__ROCM)
-            psi::Psi<std::complex<FPTYPE>, psi::DEVICE_CPU> cpu_psi = psi;
-            // hamilt::Hamilt<FPTYPE>* h_phm_in = new hamilt::HamiltPW<FPTYPE>(reinterpret_cast<hamilt::HamiltPW<FPTYPE>*>(phm_in));
-            hamilt::Hamilt<FPTYPE, psi::DEVICE_CPU>* h_phm_in =
-                    new hamilt::HamiltPW<FPTYPE, psi::DEVICE_CPU>(
-                            reinterpret_cast<hamilt::HamiltPW<FPTYPE, psi::DEVICE_GPU>*>(phm_in));
-            DiagoIterAssist<FPTYPE>::diagH_subspace(h_phm_in, cpu_psi, cpu_psi, eigenvalue_in);
-            psi::memory::synchronize_memory_op<std::complex<FPTYPE>, Device, psi::DEVICE_CPU>()(
-                    psi.get_device(),
-                    cpu_psi.get_device(),
-                    psi.get_pointer() - psi.get_psi_bias(),
-                    cpu_psi.get_pointer() - cpu_psi.get_psi_bias(),
-                    psi.size());
-            delete reinterpret_cast<hamilt::HamiltPW<FPTYPE, psi::DEVICE_CPU>*>(h_phm_in);
-            #else
-            DiagoIterAssist<FPTYPE>::diagH_subspace(phm_in, psi, psi, eigenvalue_in);
-            #endif
+            DiagoIterAssist<FPTYPE, Device>::diagH_subspace(phm_in, psi, psi, eigenvalue_in);
         }
 
         DiagoIterAssist<FPTYPE>::avg_iter += 1.0;

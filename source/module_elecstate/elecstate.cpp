@@ -80,11 +80,6 @@ void ElecState::calculate_weights()
     else if (Occupy::use_tetrahedron_method)
     {
         ModuleBase::WARNING_QUIT("calculate_weights", "not implemented yet,coming soon!");
-        //		if(my_rank == 0)
-        //		{
-        //			tweights(GlobalC::kv.nkstot, nspin, nbands, this->charge->nelec, ntetra,tetra, GlobalC::wf.et,
-        // this->ef, this->wg);
-        //		}
     }
     else if (Occupy::use_gaussian_broadening)
     {

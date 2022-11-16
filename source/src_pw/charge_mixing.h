@@ -42,7 +42,7 @@ class Charge_Mixing
 
     //for Pulay method
     //if first electronic step, then reset charge mixing
-	void reset(const bool final_scf);
+	void reset();
 
     // extracting parameters
 	// normally these parameters will not be used

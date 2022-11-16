@@ -639,9 +639,7 @@ void Forces::cal_force_cc(ModuleBase::matrix& forcecc, ModulePW::PW_Basis* rho_b
         const auto etxc_vtxc_v = XC_Functional::v_xc_meta(rho_basis->nrxx,
                                                           rho_basis->nxyz,
                                                           GlobalC::ucell.omega,
-                                                          GlobalC::CHR.rho,
-                                                          GlobalC::CHR.rho_core,
-                                                          GlobalC::CHR.kin_r);
+                                                          &GlobalC::CHR);
 
         GlobalC::en.etxc = std::get<0>(etxc_vtxc_v);
         GlobalC::en.vtxc = std::get<1>(etxc_vtxc_v);
@@ -655,8 +653,7 @@ void Forces::cal_force_cc(ModuleBase::matrix& forcecc, ModulePW::PW_Basis* rho_b
         const auto etxc_vtxc_v = XC_Functional::v_xc(rho_basis->nrxx,
                                                      rho_basis->nxyz,
                                                      GlobalC::ucell.omega,
-                                                     GlobalC::CHR.rho,
-                                                     GlobalC::CHR.rho_core);
+                                                     &GlobalC::CHR);
 
         GlobalC::en.etxc = std::get<0>(etxc_vtxc_v);
         GlobalC::en.vtxc = std::get<1>(etxc_vtxc_v);

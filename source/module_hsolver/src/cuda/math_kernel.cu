@@ -1,5 +1,6 @@
 #include "module_hsolver/include/math_kernel.h"
 #include "module_psi/psi.h"
+#include "module_psi/include/memory.h"
 
 #include <thrust/complex.h>
 #include <thrust/inner_product.h>
@@ -368,6 +369,88 @@ void gemm_op<double, psi::DEVICE_GPU>::operator()(const psi::DEVICE_GPU* d,
 }
 
 
+template <typename FPTYPE>
+__global__ void matrix_transpose_kernel(
+        const int row,
+        const int col,
+        const thrust::complex<FPTYPE>* in,
+        thrust::complex<FPTYPE>* out) 
+{
+    int i = blockIdx.x * blockDim.x + threadIdx.x;
+    if (i < row)
+    {
+        for (int j = 0; j < col; j++)
+        {
+            out[j * row + i] = in[i * col + j];
+        }
+    }
+}
+
+template <>
+void matrixTranspose_op<double, psi::DEVICE_GPU>::operator()(const psi::DEVICE_GPU* d,
+                                                             const int& row,
+                                                             const int& col,
+                                                             const std::complex<double>* input_matrix,
+                                                             std::complex<double>* output_matrix)
+{
+    std::complex<double>* device_temp = nullptr;
+    psi::memory::resize_memory_op<std::complex<double>, psi::DEVICE_GPU>()(d, device_temp, row * col);
+
+    if (row == col)
+    {
+        double2 ONE, ZERO;
+        ONE.x = 1.0;
+        ONE.y = 0.0;
+        ZERO.x = ZERO.y = 0.0;
+
+        // use 'geam' API todo transpose.
+        cublasErrcheck(cublasZgeam(diag_handle, CUBLAS_OP_T, CUBLAS_OP_N, col, row, &ONE, (double2*)input_matrix, col, &ZERO, (double2*)input_matrix, col, (double2*)device_temp, col));
+    } else
+    {
+        int thread = 1024;
+        int block = (row + col + thread - 1) / thread;
+        matrix_transpose_kernel<double><<<block, thread>>>(row, col, (thrust::complex<double>*)input_matrix, (thrust::complex<double>*)device_temp);
+    }
+    
+    psi::memory::synchronize_memory_op<std::complex<double>, psi::DEVICE_GPU, psi::DEVICE_GPU>()(d, d, output_matrix, device_temp, row * col);
+    
+}
+
+
+template <typename FPTYPE>
+__global__ void matrix_setTo_another_kernel(
+        const int n,
+        const int LDA,
+        const int LDB,
+        const thrust::complex<FPTYPE>* matrix_A,
+        thrust::complex<FPTYPE>* matrix_B)
+{
+    int j = blockIdx.x * blockDim.x + threadIdx.x;
+    if (j < LDA)
+    {
+        for (int i = 0; i < n; i++)
+        {
+            matrix_B[i * LDB + j] = matrix_A[i * LDA + j];
+        }
+    }
+}
+
+
+template <typename FPTYPE> 
+void matrixSetToAnother<FPTYPE, psi::DEVICE_GPU>::operator()(
+            const psi::DEVICE_GPU* d,
+            const int& n,
+            const std::complex<FPTYPE>* A,
+            const int& LDA,
+            std::complex<FPTYPE>* B,
+            const int& LDB)
+{
+    int thread = 1024;
+    int block = (LDA + thread - 1) / thread;
+    matrix_setTo_another_kernel<FPTYPE><<<block, thread>>>(n, LDA, LDB, (thrust::complex<double>*)A, (thrust::complex<double>*)B);
+}
+
+
 
 // Explicitly instantiate functors for the types of functor registered.
 template struct zdot_real_op<double, psi::DEVICE_GPU>;
@@ -376,5 +459,6 @@ template struct vector_mul_vector_op<double, psi::DEVICE_GPU>;
 template struct vector_div_vector_op<double, psi::DEVICE_GPU>;
 template struct constantvector_addORsub_constantVector_op<double, psi::DEVICE_GPU>;
 
+template struct matrixSetToAnother<double, psi::DEVICE_GPU>;
 
 }
