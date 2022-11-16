@@ -103,7 +103,7 @@ HamiltLCAO<T>::HamiltLCAO(
         }
         if (GlobalV::GATE_FLAG)
         {
-            pot_register_in.push_back("gate");
+            pot_register_in.push_back("gatefield");
         }
         //only Potential is not empty, Veff and Meta are available
         if(pot_register_in.size()>0)
@@ -206,7 +206,7 @@ HamiltLCAO<T>::HamiltLCAO(
         }
         if (GlobalV::GATE_FLAG)
         {
-            pot_register_in.push_back("gate");
+            pot_register_in.push_back("gatefield");
         }
         //only Potential is not empty, Veff and Meta are available
         if(pot_register_in.size()>0)

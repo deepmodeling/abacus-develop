@@ -63,7 +63,7 @@ HamiltPW<FPTYPE, Device>::HamiltPW(elecstate::Potential* pot_in)
         }
         if (GlobalV::GATE_FLAG)
         {
-            pot_register_in.push_back("gate");
+            pot_register_in.push_back("gatefield");
         }
         //only Potential is not empty, Veff and Meta are available
         if(pot_register_in.size()>0)

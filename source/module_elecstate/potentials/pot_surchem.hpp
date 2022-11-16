@@ -22,23 +22,37 @@ class PotSurChem : public PotBase
         this->dynamic_mode = true;
         this->fixed_mode = false;
     }
+    ~PotSurChem()
+    {
+        if(this->allocated)
+        {
+            this->surchem_->clear();
+        }
+    }
 
     void cal_v_eff(
         const Charge* chg, 
         const UnitCell* ucell, 
         ModuleBase::matrix& v_eff)override
     {
-            v_eff += surchem_->v_correction(
-                *ucell, 
-                const_cast<ModulePW::PW_Basis *>(this->rho_basis_), 
-                v_eff.nr, 
-                chg->rho,
-                this->vlocal);
+        if(!this->allocated)
+        {
+            this->surchem_->allocate(this->rho_basis_->nrxx, v_eff.nr);
+            this->allocated = true;
+        }
+
+        v_eff += this->surchem_->v_correction(
+            *ucell, 
+            const_cast<ModulePW::PW_Basis *>(this->rho_basis_), 
+            v_eff.nr, 
+            chg->rho,
+            this->vlocal);
     }
 
     private:
     surchem* surchem_ = nullptr;
     const double* vlocal = nullptr;
+    bool allocated = false;
 };
 
 }

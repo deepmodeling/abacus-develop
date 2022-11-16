@@ -28,7 +28,9 @@ class surchem
     // get atom info
     atom_in GetAtom;
 
+    //allocate memory and deallocate them
     void allocate(const int &nrxx, const int &nspin);
+    void clear();
 
     void cal_epsilon(ModulePW::PW_Basis *rho_basis, const double *PS_TOTN_real, double *epsilon, double *epsilon0);
 
