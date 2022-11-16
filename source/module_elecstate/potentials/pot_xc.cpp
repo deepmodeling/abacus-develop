@@ -16,8 +16,6 @@ void PotXC::cal_v_eff(
     const double * const * const rho_in(chg->rho);
     const double * const rho_core_in(chg->rho_core);
 
-    ModuleBase::matrix v(nspin_current, nrxx_current);
-
     //----------------------------------------------------------
     //  calculate the exchange-correlation potential
     //----------------------------------------------------------

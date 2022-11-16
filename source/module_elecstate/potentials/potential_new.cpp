@@ -193,7 +193,6 @@ void Potential::cal_v_eff(const Charge* chg, const UnitCell* ucell, ModuleBase::
     ModuleBase::TITLE("Potential", "cal_v_eff");
     int nspin_current = this->v_effective.nr;
     int nrxx = this->v_effective.nc;
-    if(nrxx==0)return;
     ModuleBase::timer::tick("Potential", "cal_v_eff");
     //first of all, set v_effective to zero.
     this->v_effective.zero_out();
@@ -205,7 +204,7 @@ void Potential::cal_v_eff(const Charge* chg, const UnitCell* ucell, ModuleBase::
     {
         if(i==0 || nspin_current==2)
         {
-            ModuleBase::GlobalFunc::COPYARRAY(this->v_effective_fixed.data(), &(this->v_effective(i, 0)), nrxx);
+            ModuleBase::GlobalFunc::COPYARRAY(this->v_effective_fixed.data(), this->get_effective_v(i), nrxx);
         }
     }
 
