@@ -21,6 +21,8 @@ class OperatorPW : public Operator<std::complex<FPTYPE>, Device>
         const int n_npwx, 
         const std::complex<FPTYPE>* tmpsi_in, 
         std::complex<FPTYPE>* tmhpsi)const;
+
+    std::string classname = "";
 };
 
 }//end namespace hamilt

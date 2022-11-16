@@ -23,6 +23,9 @@ class Meta<OperatorPW<FPTYPE, Device>> : public OperatorPW<FPTYPE, Device>
     public:
     Meta(FPTYPE tpiba2_in, const int* isk_in, const ModuleBase::matrix* vk, ModulePW::PW_Basis_K* wfcpw);
 
+    template<typename T_in, typename Device_in = Device>
+    explicit Meta(const Meta<OperatorPW<T_in, Device_in>>* meta);
+
     virtual ~Meta(){};
 
     virtual void act(
@@ -31,6 +34,12 @@ class Meta<OperatorPW<FPTYPE, Device>> : public OperatorPW<FPTYPE, Device>
         const std::complex<FPTYPE>* tmpsi_in, 
         std::complex<FPTYPE>* tmhpsi
     )const override;
+
+    // denghui added for copy constructor at 20221105
+    FPTYPE get_tpiba() const {return this->tpiba;}
+    const int * get_isk() const {return this->isk;}
+    const ModuleBase::matrix* get_vk() const {return this->vk;}
+    ModulePW::PW_Basis_K* get_wfcpw() const {return this->wfcpw;}
 
     private:
 

@@ -44,7 +44,7 @@ class ELEC_evolve
 
   private:
     static void evolve_psi(const int& istep,
-                           hamilt::Hamilt* phm,
+                           hamilt::Hamilt<double>* phm,
                            Local_Orbital_wfc& lowf,
                            psi::Psi<std::complex<double>>* psi,
                            psi::Psi<std::complex<double>>* psi_laststep,

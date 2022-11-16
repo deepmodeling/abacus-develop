@@ -107,7 +107,9 @@ FPTYPE* Operator<FPTYPE, Device>::get_hpsi(const hpsi_info& info) const
     
     hpsi_pointer = this->hpsi->get_pointer();
     size_t total_hpsi_size = nbands_range * this->hpsi->get_nbasis();
-    ModuleBase::GlobalFunc::ZEROS(hpsi_pointer, total_hpsi_size);
+    // ModuleBase::GlobalFunc::ZEROS(hpsi_pointer, total_hpsi_size);
+    // denghui replaced at 20221104
+    set_memory_op()(this->ctx, hpsi_pointer, 0, total_hpsi_size);
     return hpsi_pointer;
 }
 

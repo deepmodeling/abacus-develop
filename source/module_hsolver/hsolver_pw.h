@@ -19,7 +19,7 @@ class HSolverPW : public HSolver
     void update(//Input &in
     ) override;*/
 
-    void solve(hamilt::Hamilt* pHamilt, psi::Psi<std::complex<double>>& psi, elecstate::ElecState* pes, const std::string method_in, const bool skip_charge) override;
+    void solve(hamilt::Hamilt<double>* pHamilt, psi::Psi<std::complex<double>>& psi, elecstate::ElecState* pes, const std::string method_in, const bool skip_charge) override;
 
     virtual double cal_hsolerror() override;
     virtual double set_diagethr(const int istep, const int iter, const double drho) override;
@@ -27,9 +27,9 @@ class HSolverPW : public HSolver
   protected:
     void initDiagh();
     void endDiagh();
-    void hamiltSolvePsiK(hamilt::Hamilt* hm, psi::Psi<std::complex<double>>& psi, double* eigenvalue);
+    void hamiltSolvePsiK(hamilt::Hamilt<double>* hm, psi::Psi<std::complex<double>>& psi, double* eigenvalue);
 
-    void updatePsiK(hamilt::Hamilt* pHamilt, psi::Psi<std::complex<double>>& psi, const int ik);
+    void updatePsiK(hamilt::Hamilt<double>* pHamilt, psi::Psi<std::complex<double>>& psi, const int ik);
 
     ModulePW::PW_Basis_K* wfc_basis = nullptr;
 

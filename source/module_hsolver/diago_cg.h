@@ -14,7 +14,7 @@
 namespace hsolver {
 
 template<typename FPTYPE = double, typename Device = psi::DEVICE_CPU>
-class DiagoCG : public DiagH
+class DiagoCG : public DiagH<FPTYPE, Device>
 {
   public:
     // Constructor need:
@@ -26,7 +26,7 @@ class DiagoCG : public DiagH
     // virtual void init(){};
     // refactor hpsi_info
     // this is the override function diag() for CG method
-    void diag(hamilt::Hamilt *phm_in, psi::Psi<std::complex<FPTYPE>, Device> &psi, FPTYPE *eigenvalue_in);
+    void diag(hamilt::Hamilt<FPTYPE, Device> *phm_in, psi::Psi<std::complex<FPTYPE>, Device> &psi, FPTYPE *eigenvalue_in) override;
 
   private:
     /// static variables, used for passing control variables
@@ -48,7 +48,7 @@ class DiagoCG : public DiagH
     const FPTYPE *precondition = nullptr;
     /// eigenvalue results
     FPTYPE *eigenvalue = nullptr;
-
+    FPTYPE *d_precondition = nullptr;
 
     /// temp vector for new psi for one band, size dim
     psi::Psi<std::complex<FPTYPE>, Device>* phi_m = nullptr;
@@ -76,10 +76,11 @@ class DiagoCG : public DiagH
     /// device type of psi
     psi::AbacusDevice_t device = {};
     Device * ctx = {};
+    psi::DEVICE_CPU *cpu_ctx = {};
 
     void calculate_gradient();
 
-    void orthogonal_gradient(hamilt::Hamilt *phm_in, const psi::Psi<std::complex<FPTYPE>> &eigenfunction, const int m);
+    void orthogonal_gradient(hamilt::Hamilt<FPTYPE, Device> *phm_in, const psi::Psi<std::complex<FPTYPE>, Device> &eigenfunction, const int m);
 
     void calculate_gamma_cg(const int iter, FPTYPE &gg_last, const FPTYPE &cg0, const FPTYPE &theta);
 
@@ -88,16 +89,19 @@ class DiagoCG : public DiagH
     void schmit_orth(const int &m, const psi::Psi<std::complex<FPTYPE>, Device> &psi);
 
     // used in diag() for template replace Hamilt with Hamilt_PW
-    void diag_mock(hamilt::Hamilt *phm_in, psi::Psi<std::complex<FPTYPE>, Device> &phi, FPTYPE *eigenvalue_in);
+    void diag_mock(hamilt::Hamilt<FPTYPE, Device> *phm_in, psi::Psi<std::complex<FPTYPE>, Device> &phi, FPTYPE *eigenvalue_in);
 
+    using hpsi_info = typename hamilt::Operator<std::complex<FPTYPE>, Device>::hpsi_info;
     using zdot_real_op = hsolver::zdot_real_op<FPTYPE, Device>;
-    using set_memory_op = psi::memory::set_memory_op<std::complex<FPTYPE>, Device>;
-    using delete_memory_op = psi::memory::delete_memory_op<std::complex<FPTYPE>, Device>;
-    using resize_memory_op = psi::memory::resize_memory_op<std::complex<FPTYPE>, Device>;
-    using hpsi_info = typename hamilt::Operator<std::complex<FPTYPE>, psi::DEVICE_CPU>::hpsi_info;
-#if ((defined __CUDA) || (defined __ROCM))
-    using hpsi_info_gpu = typename hamilt::Operator<std::complex<FPTYPE>, psi::DEVICE_GPU>::hpsi_info_gpu;
-#endif
+
+    using set_memory_complex_op = psi::memory::set_memory_op<std::complex<FPTYPE>, Device>;
+    using delete_memory_complex_op = psi::memory::delete_memory_op<std::complex<FPTYPE>, Device>;
+    using resize_memory_complex_op = psi::memory::resize_memory_op<std::complex<FPTYPE>, Device>;
+    using syncmem_complex_d2h_op = psi::memory::synchronize_memory_op<std::complex<FPTYPE>, psi::DEVICE_CPU, Device>;
+
+    using set_memory_var_cpu_op = psi::memory::set_memory_op<FPTYPE, psi::DEVICE_CPU>;
+    using resize_memory_var_op = psi::memory::resize_memory_op<FPTYPE, Device>;
+    using syncmem_var_h2d_op = psi::memory::synchronize_memory_op<FPTYPE, Device, psi::DEVICE_CPU>;
 };
 
 } // namespace hsolver

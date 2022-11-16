@@ -59,7 +59,7 @@ namespace ModuleESolver
         //delete Hamilt
         if(this->p_hamilt != nullptr)
         {
-            delete (hamilt::HamiltPW*)this->p_hamilt;
+            delete (hamilt::HamiltPW<double>*)this->p_hamilt;
             this->p_hamilt = nullptr;
         }
     }
@@ -197,13 +197,13 @@ namespace ModuleESolver
         //delete Hamilt if not first scf
         if(this->p_hamilt != nullptr)
         {
-            delete (hamilt::HamiltPW*)this->p_hamilt;
+            delete (hamilt::HamiltPW<double>*)this->p_hamilt;
             this->p_hamilt = nullptr;
         }
         //allocate HamiltPW
         if(this->p_hamilt == nullptr)
         {
-            this->p_hamilt = new hamilt::HamiltPW();
+            this->p_hamilt = new hamilt::HamiltPW<double>();
         }
 
         //----------------------------------------------------------

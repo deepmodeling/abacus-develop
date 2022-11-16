@@ -6,7 +6,7 @@
 
 #include <complex>
 
-using namespace psi;
+namespace psi {
 
 Range::Range(const size_t range_in) 
 {
@@ -121,9 +121,8 @@ Psi<T, Device>::Psi(
 }
 
 template<typename T, typename Device>
-template<typename T_in, typename Device_in>
 Psi<T, Device>::Psi(
-    const Psi<T_in, Device_in>& psi_in)
+    const Psi& psi_in)
 {
     this->ngk = psi_in.get_ngk_pointer();
     this->npol = psi_in.npol;
@@ -132,17 +131,45 @@ Psi<T, Device>::Psi(
     this->nbasis = psi_in.get_nbasis();
     this->current_k = psi_in.get_current_k();
     this->current_b = psi_in.get_current_b();
+    this->k_first = psi_in.get_k_first();
+    // this function will copy psi_in.psi to this->psi no matter the device types of each other.
+    this->device = device::get_device_type<Device>(this->ctx);
+    this->resize(psi_in.get_nk(), psi_in.get_nbands(), psi_in.get_nbasis());
+    memory::synchronize_memory_op<T, Device, Device>()(
+        this->ctx,
+        psi_in.get_device(),
+        this->psi,
+        psi_in.get_pointer() - psi_in.get_psi_bias(),
+        psi_in.size());
+    this->psi_bias = psi_in.get_psi_bias();
     this->current_nbasis = psi_in.get_current_nbas();
+    this->psi_current = this->psi + psi_in.get_psi_bias();
+}
+
+template<typename T, typename Device>
+template<typename T_in, typename Device_in>
+Psi<T, Device>::Psi(
+        const Psi<T_in, Device_in>& psi_in)
+{
+    this->ngk = psi_in.get_ngk_pointer();
+    this->npol = psi_in.npol;
+    this->nk = psi_in.get_nk();
+    this->nbands = psi_in.get_nbands();
+    this->nbasis = psi_in.get_nbasis();
+    this->current_k = psi_in.get_current_k();
+    this->current_b = psi_in.get_current_b();
     this->k_first = psi_in.get_k_first();
     // this function will copy psi_in.psi to this->psi no matter the device types of each other.
     this->device = device::get_device_type<Device>(this->ctx);
     this->resize(psi_in.get_nk(), psi_in.get_nbands(), psi_in.get_nbasis());
     memory::synchronize_memory_op<T, Device, Device_in>()(
-        this->ctx,
-        psi_in.get_device(),
-        this->psi,
-        psi_in.get_pointer(), 
-        psi_in.size());
+            this->ctx,
+            psi_in.get_device(),
+            this->psi,
+            psi_in.get_pointer() - psi_in.get_psi_bias(),
+            psi_in.size());
+    this->psi_bias = psi_in.get_psi_bias();
+    this->current_nbasis = psi_in.get_current_nbas();
     this->psi_current = this->psi + psi_in.get_psi_bias();
 }
 
@@ -275,11 +302,6 @@ T& Psi<T, Device>::operator()(const int ik, const int ibands, const int ibasis)
     assert(ik >= 0 && ik < this->nk);
 	assert(ibands >= 0 && ibands < this->nbands);	
     assert(ibasis >= 0 && ibasis < this->nbasis);
-    if (this->device != CpuDevice) {
-        #if ((defined __CUDA) || (defined __ROCM))
-        ModuleBase::WARNING_QUIT("Psi operator ()", "GPU psi cannot fetch value by an overloaded operator ()!");
-        #endif 
-    }
 	return this->psi[(ik * this->nbands + ibands) * this->nbasis + ibasis];
 }
 
@@ -289,11 +311,6 @@ const T& Psi<T, Device>::operator()(const int ik, const int ibands, const int ib
     assert(ik >= 0 && ik < this->nk);
 	assert(ibands >= 0 && ibands < this->nbands);	
     assert(ibasis >= 0 && ibasis < this->nbasis);
-    if (this->device != CpuDevice) {
-        #if ((defined __CUDA) || (defined __ROCM))
-        ModuleBase::WARNING_QUIT("Psi operator ()", "GPU psi cannot fetch value by an overloaded operator ()!");
-        #endif 
-    }
 	return this->psi[(ik * this->nbands + ibands) * this->nbasis + ibasis];
 }
 
@@ -303,11 +320,6 @@ T& Psi<T, Device>::operator()(const int ibands, const int ibasis)
     assert(this->current_b == 0);
 	assert(ibands >= 0 && ibands < this->nbands);	
     assert(ibasis >= 0 && ibasis < this->nbasis);
-    if (this->device != CpuDevice) {
-        #if ((defined __CUDA) || (defined __ROCM))
-        ModuleBase::WARNING_QUIT("Psi operator ()", "GPU psi cannot fetch value by an overloaded operator ()!");
-        #endif 
-    }
 	return this->psi_current[ibands * this->nbasis + ibasis];
 }
 
@@ -317,11 +329,6 @@ const T& Psi<T, Device>::operator()(const int ibands, const int ibasis) const
     assert(this->current_b==0);
 	assert(ibands >= 0 && ibands < this->nbands);	
     assert(ibasis >= 0 && ibasis < this->nbasis);
-    if (this->device != CpuDevice) {
-        #if ((defined __CUDA) || (defined __ROCM))
-        ModuleBase::WARNING_QUIT("Psi operator ()", "GPU psi cannot fetch value by an overloaded operator ()!");
-        #endif 
-    }
 	return this->psi_current[ibands * this->nbasis + ibasis];
 }
 
@@ -329,11 +336,6 @@ template<typename T, typename Device>
 T& Psi<T, Device>::operator()(const int ibasis)
 {	
     assert(ibasis >= 0 && ibasis < this->nbasis);
-    if (this->device != CpuDevice) {
-        #if ((defined __CUDA) || (defined __ROCM))
-        ModuleBase::WARNING_QUIT("Psi operator ()", "GPU psi cannot fetch value by an overloaded operator ()!");
-        #endif 
-    }
 	return this->psi_current[this->current_b * this->nbasis + ibasis];
 }
 
@@ -341,11 +343,6 @@ template<typename T, typename Device>
 const T& Psi<T, Device>::operator()(const int ibasis) const
 {	
     assert(ibasis >= 0 && ibasis < this->nbasis);
-    if (this->device != CpuDevice) {
-        #if ((defined __CUDA) || (defined __ROCM))
-        ModuleBase::WARNING_QUIT("Psi operator ()", "GPU psi cannot fetch value by an overloaded operator ()!");
-        #endif 
-    }
 	return this->psi_current[this->current_b * this->nbasis + ibasis];
 }
 
@@ -418,19 +415,14 @@ void initialize(Psi<double> &psi)
 }
 
 
-namespace psi {
-template class Psi<std::complex<double>, DEVICE_CPU>;
 template class Psi<double, DEVICE_CPU>;
-template Psi<std::complex<double>, DEVICE_CPU>::Psi<std::complex<double>, DEVICE_CPU>(const Psi<std::complex<double>, DEVICE_CPU>&);
-template Psi<double, DEVICE_CPU>::Psi<double, DEVICE_CPU>(const Psi<double, DEVICE_CPU>&);
+template class Psi<std::complex<double>, DEVICE_CPU>;
 #if ((defined __CUDA) || (defined __ROCM))
-template class Psi<std::complex<double>, DEVICE_GPU>;
 template class Psi<double, DEVICE_GPU>;
-template Psi<std::complex<double>, DEVICE_GPU>::Psi<std::complex<double>, DEVICE_GPU>(const Psi<std::complex<double>, DEVICE_GPU>&);
-template Psi<double, DEVICE_GPU>::Psi<double, DEVICE_GPU>(const Psi<double, DEVICE_GPU>&);
-template Psi<std::complex<double>, DEVICE_GPU>::Psi<std::complex<double>, DEVICE_CPU>(const Psi<std::complex<double>, DEVICE_CPU>&);
-template Psi<double, DEVICE_GPU>::Psi<double, DEVICE_CPU>(const Psi<double, DEVICE_CPU>&);
-template Psi<std::complex<double>, DEVICE_CPU>::Psi<std::complex<double>, DEVICE_GPU>(const Psi<std::complex<double>, DEVICE_GPU>&);
-template Psi<double, DEVICE_CPU>::Psi<double, DEVICE_GPU>(const Psi<double, DEVICE_GPU>&);
+template class Psi<std::complex<double>, DEVICE_GPU>;
+template Psi<double, DEVICE_CPU>::Psi(const Psi<double, DEVICE_GPU>&);
+template Psi<double, DEVICE_GPU>::Psi(const Psi<double, DEVICE_CPU>&);
+template Psi<std::complex<double>, DEVICE_CPU>::Psi(const Psi<std::complex<double>, DEVICE_GPU>&);
+template Psi<std::complex<double>, DEVICE_GPU>::Psi(const Psi<std::complex<double>, DEVICE_CPU>&);
 #endif
 } // namespace psi

@@ -27,7 +27,7 @@ int ELEC_evolve::td_dipoleout;
 
 // this routine only serves for TDDFT using LCAO basis set
 void ELEC_evolve::evolve_psi(const int& istep,
-                             hamilt::Hamilt* phm,
+                             hamilt::Hamilt<double>* phm,
                              Local_Orbital_wfc& lowf,
                              psi::Psi<std::complex<double>>* psi,
                              psi::Psi<std::complex<double>>* psi_laststep,

@@ -11,6 +11,7 @@
 namespace hamilt
 {
 
+template<typename FPTYPE, typename Device = psi::DEVICE_CPU>
 class Hamilt
 {
   public:
@@ -32,8 +33,9 @@ class Hamilt
     int non_first_scf=0;
 
     // first node operator, add operations from each operators
-    Operator<std::complex<double>>* ops = nullptr;
-    Operator<double>* opsd = nullptr;
+    Operator<std::complex<FPTYPE>, Device>* ops = nullptr;
+    Operator<double, Device>* opsd = nullptr;
+
 };
 
 } // namespace hamilt

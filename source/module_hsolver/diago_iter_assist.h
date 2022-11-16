@@ -21,14 +21,14 @@ class DiagoIterAssist
 
     // for CG diagonalization only
     static void diagH_subspace(
-        hamilt::Hamilt* pHamilt,
+        hamilt::Hamilt<FPTYPE, Device>* pHamilt,
         const psi::Psi<std::complex<FPTYPE>, Device> &psi,
         psi::Psi<std::complex<FPTYPE>, Device> &evc,
         FPTYPE *en,
         int n_band = 0);
     // for initializing wave function , this is a template function
     static void diagH_subspace_init(
-        hamilt::Hamilt* pHamilt,
+        hamilt::Hamilt<FPTYPE, Device>* pHamilt,
         const ModuleBase::ComplexMatrix &psi,
         psi::Psi<std::complex<FPTYPE>, Device> &evc,
         FPTYPE *en);
@@ -45,9 +45,6 @@ class DiagoIterAssist
     static bool test_exit_cond(const int &ntry, const int &notconv);
 
     using hpsi_info = typename hamilt::Operator<std::complex<FPTYPE>, psi::DEVICE_CPU>::hpsi_info;
-#if ((defined __CUDA) || (defined __ROCM))
-    using hpsi_info_gpu = typename hamilt::Operator<std::complex<FPTYPE>, psi::DEVICE_GPU>::hpsi_info_gpu;
-#endif
 };
 
 } // namespace hsolver

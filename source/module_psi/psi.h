@@ -47,6 +47,8 @@ public:
     //in this case, fix_k can not be used
     Psi(T* psi_pointer, const Psi& psi_in, const int nk_in, int nband_in=0);
     //Constructor 6: initialize a new psi from the given psi_in
+    Psi(const Psi& psi_in);
+    //Constructor 7: initialize a new psi from the given psi_in with a different class template
     //in this case, psi_in may have a different device type.
     template<typename T_in, typename Device_in = Device> Psi(const Psi<T_in, Device_in>& psi_in);
     //Destructor for deleting the psi array manually

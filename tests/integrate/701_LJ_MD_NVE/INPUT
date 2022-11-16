@@ -1,0 +1,23 @@
+INPUT_PARAMETERS
+#Parameters (General)
+suffix              autotest
+ntype               1
+calculation         md
+pseudo_dir          ../../PP_ORB
+
+#Parameters (esolver)
+esolver_type        lj
+lj_rcut             8.5
+lj_epsilon          0.01032
+lj_sigma            3.405
+
+cal_force           1
+cal_stress          1
+
+#Parameters (MD)
+md_nstep            5
+md_type             0
+md_dt               1
+md_tfirst           300
+
+init_vel            1

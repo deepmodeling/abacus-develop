@@ -2340,7 +2340,7 @@ void Input::Bcast()
     Parallel_Common::bcast_double(mdp.md_damp);
     Parallel_Common::bcast_string(mdp.pot_file);
     Parallel_Common::bcast_int(mdp.md_nraise);
-    Parallel_Common::bcast_string(mdp.md_thermostat);
+    Parallel_Common::bcast_double(mdp.md_tolerance);
     Parallel_Common::bcast_string(mdp.md_pmode);
     Parallel_Common::bcast_string(mdp.md_pcouple);
     Parallel_Common::bcast_int(mdp.md_pchain);

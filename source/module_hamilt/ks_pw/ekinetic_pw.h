@@ -29,6 +29,9 @@ class Ekinetic<OperatorPW<FPTYPE, Device>> : public OperatorPW<FPTYPE, Device>
         const int gk2_row, 
         const int gk2_col);
 
+    template<typename T_in, typename Device_in = Device>
+    explicit Ekinetic(const Ekinetic<OperatorPW<T_in, Device_in>>* ekinetic);
+
     virtual ~Ekinetic();
 
     virtual void act(
@@ -37,6 +40,13 @@ class Ekinetic<OperatorPW<FPTYPE, Device>> : public OperatorPW<FPTYPE, Device>
         const std::complex<FPTYPE>* tmpsi_in, 
         std::complex<FPTYPE>* tmhpsi)const override;
 
+    // denghuilu added for copy construct at 20221105
+    int get_gk2_row() const {return this->gk2_row;}
+    int get_gk2_col() const {return this->gk2_col;}
+    FPTYPE get_tpiba2() const {return this->tpiba2;}
+    const FPTYPE* get_gk2() const {return this->gk2;}
+    Device* get_ctx() const {return this->ctx;}
+
   private:
 
     mutable int max_npw = 0;
@@ -44,7 +54,6 @@ class Ekinetic<OperatorPW<FPTYPE, Device>> : public OperatorPW<FPTYPE, Device>
     mutable int npol = 0;
 
     FPTYPE tpiba2 = 0.0;
-
 #if ((defined __CUDA) || (defined __ROCM))
     FPTYPE* gk2 = nullptr;
 #else

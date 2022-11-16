@@ -27,6 +27,9 @@ cmake -B build -DENABLE_DEEPKS=1 -DTorch_DIR=~/libtorch/share/cmake/Torch/ -Dlib
 ```
 
 ## Build with DeePMD-kit
+
+> Note: This part is only required if you want to load a trained DeeP Potential and run molecular dynamics with that. To train the DeeP Potential with DP-GEN, no extra prerequisite is needed and please refer to [this page](http://abacus.deepmodeling.com/en/latest/advanced/interface/dpgen.html) for ABACUS interface with DP-GEN. 
+
 If the Deep Potential model is employed in Molecule Dynamics calculations, the following prerequisites and steps are needed:
 
 ### Extra prerequisites
@@ -193,6 +196,8 @@ make LIBTORCH_DIR=/opt/libtorch/ LIBNPY_DIR=/opt/libnpy/
 directly.
 
 ### Add DeePMD-kit Support
+
+> Note: This part is only required if you want to load a trained DeeP Potential and run molecular dynamics with that. To train the DeeP Potential with DP-GEN, no extra prerequisite is needed and please refer to [this page](http://abacus.deepmodeling.com/en/latest/advanced/interface/dpgen.html) for ABACUS interface with DP-GEN. 
 
 To compile ABACUS with DeePMD-kit, you need to define `DeePMD_DIR` and `TensorFlow_DIR` in the file `Makefile.vars` or use 
 ```makefile
