@@ -517,6 +517,7 @@ void energy::cal_converged(elecstate::ElecState* pelec)
 	//update etxc and vtxc
 	//allocate vnew in get_vnew()
 	pelec->pot->get_vnew(pelec->charge, this->vnew);
+	this->vnew_exist = true;
 	//vnew will be used in force_scc()
 
 	//set descf to 0

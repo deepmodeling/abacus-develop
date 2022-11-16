@@ -110,6 +110,7 @@ class energy
 
 	void cal_converged(elecstate::ElecState* pelec);
 	ModuleBase::matrix vnew;
+	bool vnew_exist = false;
 
     
     void set_exx();       // Peize Lin add 2016-12-03

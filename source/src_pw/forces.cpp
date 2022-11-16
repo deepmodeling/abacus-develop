@@ -413,6 +413,7 @@ void Forces::print(const std::string& name, const ModuleBase::matrix& f, bool ry
 
 void Forces::cal_force_loc(ModuleBase::matrix& forcelc, ModulePW::PW_Basis* rho_basis)
 {
+    ModuleBase::TITLE("Forces", "cal_force_loc");
     ModuleBase::timer::tick("Forces", "cal_force_loc");
 
     std::complex<double>* aux = new std::complex<double>[rho_basis->nmaxgr];
@@ -463,6 +464,7 @@ void Forces::cal_force_loc(ModuleBase::matrix& forcelc, ModulePW::PW_Basis* rho_
 #include "H_Ewald_pw.h"
 void Forces::cal_force_ew(ModuleBase::matrix& forceion, ModulePW::PW_Basis* rho_basis)
 {
+    ModuleBase::TITLE("Forces", "cal_force_ew");
     ModuleBase::timer::tick("Forces", "cal_force_ew");
 
     double fact = 2.0;
@@ -627,6 +629,7 @@ void Forces::cal_force_ew(ModuleBase::matrix& forceion, ModulePW::PW_Basis* rho_
 void Forces::cal_force_cc(ModuleBase::matrix& forcecc, ModulePW::PW_Basis* rho_basis)
 {
     // recalculate the exchange-correlation potential.
+    ModuleBase::TITLE("Forces", "cal_force_cc");
 
     ModuleBase::matrix v(GlobalV::NSPIN, rho_basis->nrxx);
 
@@ -907,26 +910,37 @@ void Forces::cal_force_nl(ModuleBase::matrix& forcenl, const ModuleBase::matrix&
 
 void Forces::cal_force_scc(ModuleBase::matrix& forcescc, ModulePW::PW_Basis* rho_basis)
 {
+    ModuleBase::TITLE("Forces", "cal_force_scc");
     std::complex<double>* psic = new std::complex<double>[rho_basis->nmaxgr];
 
-    if (GlobalV::NSPIN == 1 || GlobalV::NSPIN == 4)
+    //for orbital free case
+    if(!GlobalC::en.vnew_exist)
     {
-        for (int i = 0; i < rho_basis->nrxx; i++)
+        return;
+    }
+    ModuleBase::matrix& v_current = GlobalC::en.vnew;
+    const int nrxx = v_current.nc;
+    const int nspin = v_current.nr;
+
+    if (nspin == 1 || nspin == 4)
+    {
+        for (int i = 0; i < nrxx; i++)
         {
-            psic[i] = GlobalC::en.vnew(0, i);
+            psic[i] = v_current(0, i);
         }
     }
     else
     {
         int isup = 0;
         int isdw = 1;
-        for (int i = 0; i < rho_basis->nrxx; i++)
+        for (int i = 0; i < nrxx; i++)
         {
-            psic[i] = (GlobalC::en.vnew(isup, i) + GlobalC::en.vnew(isdw, i)) * 0.5;
+            psic[i] = (v_current(isup, i) + v_current(isdw, i)) * 0.5;
         }
     }
     //delete vnew memory
-    GlobalC::en.vnew.create(0,0);
+    v_current.create(0,0);
+    GlobalC::en.vnew_exist = false;
 
     int ndm = 0;
 

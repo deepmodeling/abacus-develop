@@ -417,6 +417,9 @@ void ESolver_OF::solveV()
     // initialize tempPhi and tempRho used in line search
     double **ptempPhi = new double*[GlobalV::NSPIN];
     Charge* ptempRho = new Charge();
+    ptempRho->nspin = GlobalV::NSPIN;
+    ptempRho->nrxx = this->nrxx;
+    ptempRho->rho_core = this->pelec->charge->rho_core;
     ptempRho->rho = new double*[GlobalV::NSPIN];
     for (int is = 0; is < GlobalV::NSPIN; ++is)
     {
