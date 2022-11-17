@@ -5,8 +5,7 @@ on: [push, pull_request]
 jobs:
   test-coverage:
     name: Generate Coverage Report
-    runs-on: self-hosted
-    if: github.repository_owner == 'deepmodeling'
+    runs-on: ubuntu-latest
     container: ghcr.io/deepmodeling/abacus-development-kit:gnu
     steps:
       - name: Checkout
