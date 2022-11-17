@@ -23,6 +23,7 @@ jobs:
           cmake --build build --target test ARGS="-V"
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
+        if: ${{ always() }}
         with:
           gcov: true
           verbose: true
