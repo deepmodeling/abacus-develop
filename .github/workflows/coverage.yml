@@ -2,7 +2,9 @@ name: Coverage Analysis
 
 on:
   workflow_dispatch:
-
+  push:
+    tags:
+      - 'v*'
 jobs:
   test-coverage:
     name: Generate Coverage Report
