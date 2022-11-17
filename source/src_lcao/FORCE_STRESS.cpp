@@ -2,10 +2,10 @@
 #include "../src_pw/global.h"
 #include "./dftu.h"  //Quxin add for DFT+U on 20201029
 // new
-#include "../module_base/timer.h"
-#include "../module_surchem/efield.h"        // liuyu add 2022-05-18
-#include "../module_surchem/surchem.h"		 //sunml add 2022-08-10
-#include "../module_surchem/gatefield.h"        // liuyu add 2022-09-13
+#include "module_base/timer.h"
+#include "module_elecstate/potentials/efield.h"        // liuyu add 2022-05-18
+#include "module_surchem/surchem.h"		 //sunml add 2022-08-10
+#include "module_elecstate/potentials/gatefield.h"        // liuyu add 2022-09-13
 #include "module_vdw/vdw.h"
 #ifdef __DEEPKS
 #include "../module_deepks/LCAO_deepks.h"	//caoyu add for deepks 2021-06-03
@@ -163,14 +163,14 @@ void Force_Stress_LCAO::getForceStress(
     if(GlobalV::EFIELD_FLAG&&isforce)
     {
         fefield.create(nat, 3);
-        Efield::compute_force(GlobalC::ucell, fefield);
+        elecstate::Efield::compute_force(GlobalC::ucell, fefield);
     }
     //implement force from gate field
     ModuleBase::matrix fgate;
     if(GlobalV::GATE_FLAG&&isforce)
     {
         fgate.create(nat, 3);
-        Gatefield::compute_force(GlobalC::ucell, fgate);
+        elecstate::Gatefield::compute_force(GlobalC::ucell, fgate);
     }
 	//Force from implicit solvation model
     ModuleBase::matrix fsol;

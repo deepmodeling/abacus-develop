@@ -6,6 +6,7 @@
 #include "./kedf_tf.h"
 #include "./kedf_vw.h"
 #include "./kedf_wt.h"
+#include "src_pw/charge.h"
 
 namespace ModuleESolver
 {
@@ -151,7 +152,7 @@ private:
 
     // tools
     void calV(double *ptempPhi, double *rdLdphi);
-    void caldEdtheta(double **ptempPhi, double **ptempRho, double *ptheta, double *rdEdtheta);
+    void caldEdtheta(double **ptempPhi, Charge* ptempRho, double *ptheta, double *rdEdtheta);
     double cal_mu(double *pphi, double *pdEdphi, double nelec);
     double inner_product(double *pa, double *pb, int length, double dV=1)
     {

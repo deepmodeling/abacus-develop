@@ -6,7 +6,7 @@
 #include "src_pw/wf_atomic.h"
 #include "src_pw/wavefunc.h"
 #include "src_pw/charge_mixing.h"
-#include "src_pw/potential.h"
+#include "module_elecstate/potentials/potential_new.h"
 #include "module_cell/atom_pseudo.h"
 #include "module_cell/atom_spec.h"
 #include "module_cell/unitcell.h"
@@ -42,10 +42,6 @@ Atom::Atom(){}
 Atom::~Atom(){}
 Atom_pseudo::Atom_pseudo(){}
 Atom_pseudo::~Atom_pseudo(){}
-Charge_Mixing::Charge_Mixing(){}
-Charge_Mixing::~Charge_Mixing(){}
-Potential::Potential(){}
-Potential::~Potential(){}
 InfoNonlocal::InfoNonlocal(){}
 InfoNonlocal::~InfoNonlocal(){}
 UnitCell::UnitCell(){}
@@ -89,7 +85,6 @@ namespace GlobalC
 K_Vectors kv;
 wavefunc wf;
 Charge CHR;
-Potential pot;
 UnitCell ucell;
 ModuleSymmetry::Symmetry symm;
 Parallel_Grid Pgrid;
@@ -332,4 +327,9 @@ bool UnitCell::read_atom_positions(LCAO_Orbitals &orb, std::ifstream &ifpos, std
 		}
 	}
         return true;
+}
+
+void elecstate::Potential::init_pot(int istep, const Charge* chg)
+{
+	return;
 }

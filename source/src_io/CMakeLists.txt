@@ -21,8 +21,7 @@ list(APPEND objects
     unk_overlap_pw.cpp
     wf_io.cpp
     winput.cpp
-    write_input.cpp
-    write_pot.cpp
+    write_input.cpp    
     write_rho.cpp
     write_rho_cube.cpp
     write_wfc_realspace.cpp

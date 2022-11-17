@@ -190,10 +190,10 @@ bool Update_input::Read(const std::string &fn)
         {
             read_value(ifs, chg_extrap);
 
-			if(chg_extrap!=GlobalC::pot.chg_extrap)
+			if(chg_extrap!=GlobalV::chg_extrap)
 			{
-				this->change(GlobalV::ofs_warning,"chg_extrap",GlobalC::pot.chg_extrap,chg_extrap);
-				GlobalC::pot.chg_extrap = this->chg_extrap;
+				this->change(GlobalV::ofs_warning,"chg_extrap",GlobalV::chg_extrap,chg_extrap);
+				GlobalV::chg_extrap = this->chg_extrap;
 				if(out_dm==0) 
 				{
 					out_dm = 10000;
@@ -297,7 +297,7 @@ void Update_input::Bcast()
     Parallel_Common::bcast_int( GlobalV::SCF_NMAX );
     Parallel_Common::bcast_int( GlobalV::RELAX_NMAX );
     Parallel_Common::bcast_int( GlobalC::en.printe );
-    Parallel_Common::bcast_string( GlobalC::pot.chg_extrap );//xiaohui modify 2015-02-01
+    Parallel_Common::bcast_string( GlobalV::chg_extrap );//xiaohui modify 2015-02-01
     Parallel_Common::bcast_int( GlobalC::CHR.out_chg );
 	Parallel_Common::bcast_int( GlobalC::en.out_dos );
     Parallel_Common::bcast_double( GlobalC::CHR.nelec );

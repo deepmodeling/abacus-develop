@@ -43,7 +43,6 @@ void Charge_Mixing::set_mixing
 double Charge_Mixing::get_drho(double** rho, double** rho_save,
 	std::complex<double>** rhog, std::complex<double>** rhog_save, const double nelec)
 {
-	double scf_thr;
 	for (int is=0; is<GlobalV::NSPIN; is++)
     {
 		ModuleBase::GlobalFunc::NOTE("Perform FFT on rho(r) to obtain rho(G).");
@@ -62,9 +61,14 @@ double Charge_Mixing::get_drho(double** rho, double** rho_save,
     }
 
 	ModuleBase::GlobalFunc::NOTE("Calculate the norm of the Residual std::vector: < R[rho] | R[rho_save] >");
-    scf_thr = this->rhog_dot_product( rhog, rhog);
+    double scf_thr = this->rhog_dot_product( rhog, rhog);
 	
 	if(GlobalV::test_charge)GlobalV::ofs_running << " scf_thr from rhog_dot_product is " << scf_thr << std::endl;
+	
+	if(GlobalV::BASIS_TYPE=="pw" && !GlobalV::test_charge)
+	{
+		return scf_thr;
+	}
 
 	// scf_thr calculated from real space.
 	double scf_thr2 = 0.0;

@@ -239,4 +239,7 @@ int of_full_pw_dim = 0;
 bool of_read_kernel = false;
 std::string of_kernel_file = "WTkernel.txt";
 
+std::string chg_extrap = "";
+int out_pot = 0;
+
 } // namespace GlobalV

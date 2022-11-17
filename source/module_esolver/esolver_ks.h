@@ -5,7 +5,6 @@
 #include "fstream"
 #include "module_hsolver/hsolver.h"
 #include "module_hamilt/hamilt.h"
-#include "module_elecstate/elecstate.h"
 #include "module_pw/pw_basis_k.h"
 #include "src_io/cal_test.h"
 #include "../src_pw/charge_extra.h"
@@ -67,9 +66,9 @@ namespace ModuleESolver
 
 
     hsolver::HSolver* phsol = nullptr;
-    elecstate::ElecState* pelec = nullptr;
     hamilt::Hamilt<double>* p_hamilt = nullptr;
     ModulePW::PW_Basis_K* pw_wfc = nullptr;
+
     Charge_Extra CE;
 
     protected:

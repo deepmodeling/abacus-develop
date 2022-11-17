@@ -71,7 +71,7 @@ void Force_LCAO_k::ftable_k(const bool isforce,
     // ---------------------------------------
     // doing on the real space grid.
     // ---------------------------------------
-    this->cal_fvl_dphi_k(isforce, isstress, fvl_dphi, svl_dphi, loc.DM_R);
+    this->cal_fvl_dphi_k(isforce, isstress, pelec->pot, fvl_dphi, svl_dphi, loc.DM_R);
 
     this->calFvnlDbeta(dm2d, isforce, isstress, fvnl_dbeta, svnl_dbeta, GlobalV::vnl_method);
 
@@ -1171,6 +1171,7 @@ void Force_LCAO_k::cal_fvnl_dbeta_k_new(double** dm2d,
 // calculate the force due to < phi | Vlocal | dphi >
 void Force_LCAO_k::cal_fvl_dphi_k(const bool isforce,
                                   const bool isstress,
+                                  const elecstate::Potential* pot_in,
                                   ModuleBase::matrix& fvl_dphi,
                                   ModuleBase::matrix& svl_dphi,
                                   double** DM_R)
@@ -1189,16 +1190,15 @@ void Force_LCAO_k::cal_fvl_dphi_k(const bool isforce,
 
     int istep = 1;
 
-    // if Vna potential is not used.
-    GlobalC::pot.init_pot(istep, GlobalC::sf.strucFac);
-
     for (int is = 0; is < GlobalV::NSPIN; ++is)
     {
         GlobalV::CURRENT_SPIN = is;
 
-        for (int ir = 0; ir < GlobalC::rhopw->nrxx; ir++)
+        const double* vr_eff1 = pot_in->get_effective_v(GlobalV::CURRENT_SPIN);
+        const double* vofk_eff1 = nullptr;
+        if(XC_Functional::get_func_type()==3 || XC_Functional::get_func_type()==5)
         {
-            GlobalC::pot.vr_eff1[ir] = GlobalC::pot.vr_eff(GlobalV::CURRENT_SPIN, ir);
+            vofk_eff1 = pot_in->get_effective_vofk(GlobalV::CURRENT_SPIN);
         }
 
         //--------------------------------
@@ -1210,8 +1210,8 @@ void Force_LCAO_k::cal_fvl_dphi_k(const bool isforce,
             if (XC_Functional::get_func_type() == 3)
             {
                 Gint_inout inout(DM_R,
-                                 GlobalC::pot.vr_eff1,
-                                 GlobalC::pot.vofk_eff1,
+                                 vr_eff1,
+                                 vofk_eff1,
                                  isforce,
                                  isstress,
                                  &fvl_dphi,
@@ -1222,7 +1222,7 @@ void Force_LCAO_k::cal_fvl_dphi_k(const bool isforce,
             else
             {
                 Gint_inout inout(DM_R,
-                                 GlobalC::pot.vr_eff1,
+                                 vr_eff1,
                                  isforce,
                                  isstress,
                                  &fvl_dphi,

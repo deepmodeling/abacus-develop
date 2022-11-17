@@ -28,8 +28,8 @@
 #include "module_base/timer.h"
 #include "module_elecstate/elecstate_lcao.h"
 #include "module_hsolver/hsolver_lcao.h"
-#include "module_surchem/efield.h"
-#include "module_surchem/gatefield.h"
+#include "module_elecstate/potentials/efield.h"
+#include "module_elecstate/potentials/gatefield.h"
 
 void Input_Conv::Convert(void)
 {
@@ -242,22 +242,22 @@ void Input_Conv::Convert(void)
     //----------------------------------------------------------
     GlobalV::EFIELD_FLAG = INPUT.efield_flag;
     GlobalV::DIP_COR_FLAG = INPUT.dip_cor_flag;
-    Efield::efield_dir = INPUT.efield_dir;
-    Efield::efield_pos_max = INPUT.efield_pos_max;
-    Efield::efield_pos_dec = INPUT.efield_pos_dec;
-    Efield::efield_amp = INPUT.efield_amp;
+    elecstate::Efield::efield_dir = INPUT.efield_dir;
+    elecstate::Efield::efield_pos_max = INPUT.efield_pos_max;
+    elecstate::Efield::efield_pos_dec = INPUT.efield_pos_dec;
+    elecstate::Efield::efield_amp = INPUT.efield_amp;
 
     //----------------------------------------------------------
     // Yu Liu add 2022-09-13
     //----------------------------------------------------------
     GlobalV::GATE_FLAG = INPUT.gate_flag;
     GlobalV::NELEC = INPUT.nelec;
-    Gatefield::zgate = INPUT.zgate;
-    Gatefield::relax = INPUT.relax;
-    Gatefield::block = INPUT.block;
-    Gatefield::block_down = INPUT.block_down;
-    Gatefield::block_up = INPUT.block_up;
-    Gatefield::block_height = INPUT.block_height;
+    elecstate::Gatefield::zgate = INPUT.zgate;
+    elecstate::Gatefield::relax = INPUT.relax;
+    elecstate::Gatefield::block = INPUT.block;
+    elecstate::Gatefield::block_down = INPUT.block_down;
+    elecstate::Gatefield::block_up = INPUT.block_up;
+    elecstate::Gatefield::block_height = INPUT.block_height;
 
 //----------------------------------------------------------
 // Fuxiang He add 2016-10-26
@@ -489,10 +489,10 @@ void Input_Conv::Convert(void)
     GlobalV::OUT_FREQ_ELEC = INPUT.out_freq_elec;
     GlobalV::OUT_FREQ_ION = INPUT.out_freq_ion;
     GlobalC::CHR.init_chg = INPUT.init_chg;
-    GlobalC::pot.chg_extrap = INPUT.chg_extrap; // xiaohui modify 2015-02-01
+    GlobalV::chg_extrap = INPUT.chg_extrap; // xiaohui modify 2015-02-01
     GlobalC::CHR.out_chg = INPUT.out_chg;
     GlobalC::CHR.nelec = INPUT.nelec;
-    GlobalC::pot.out_pot = INPUT.out_pot;
+    GlobalV::out_pot = INPUT.out_pot;
     GlobalC::wf.out_wfc_pw = INPUT.out_wfc_pw;
     GlobalC::wf.out_wfc_r = INPUT.out_wfc_r;
     GlobalC::en.out_dos = INPUT.out_dos;

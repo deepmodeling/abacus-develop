@@ -1,0 +1,30 @@
+name: Coverage Analysis
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'v*'
+jobs:
+  test-coverage:
+    name: Generate Coverage Report
+    runs-on: self-hosted
+    container: ghcr.io/deepmodeling/abacus-development-kit:gnu
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Install Requirements for Coverage Testing
+        run: |
+          apt install -y lcov
+      - name: Building
+        run: |
+          cmake -B build -DBUILD_TESTING=ON -DENABLE_COVERAGE=ON
+          cmake --build build -j`nproc`
+          cmake --install build
+      - name: Testing
+        run: |
+          cmake --build build --target test ARGS="-V"
+      - name: Upload Coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          gcov: true

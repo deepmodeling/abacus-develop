@@ -5,6 +5,7 @@
 #include "module_gint/gint_gamma.h"
 #include "module_gint/gint_k.h"
 #include "src_lcao/local_orbital_charge.h"
+#include "module_elecstate/potentials/potential_new.h"
 
 namespace hamilt
 {
@@ -26,8 +27,9 @@ class Veff<OperatorLCAO<T>> : public OperatorLCAO<T>
         Gint_k* GK_in,
         Local_Orbital_Charge* loc_in,
         LCAO_Matrix* LM_in,
+        elecstate::Potential* pot_in,
         std::vector<double>* HR_pointer_in,
-        std::vector<T>* HK_pointer_in):GK(GK_in), loc(loc_in), HR_pointer(HR_pointer_in), HK_pointer(HK_pointer_in)
+        std::vector<T>* HK_pointer_in):GK(GK_in), loc(loc_in), pot(pot_in), HR_pointer(HR_pointer_in), HK_pointer(HK_pointer_in)
     {
         this->LM = LM_in;
         this->cal_type = lcao_gint;
@@ -36,8 +38,9 @@ class Veff<OperatorLCAO<T>> : public OperatorLCAO<T>
         Gint_Gamma* GG_in,
         Local_Orbital_Charge* loc_in,
         LCAO_Matrix* LM_in,
+        elecstate::Potential* pot_in,
         std::vector<double>* HR_pointer_in,
-        std::vector<T>* HK_pointer_in):GG(GG_in), loc(loc_in), HR_pointer(HR_pointer_in), HK_pointer(HK_pointer_in)
+        std::vector<T>* HK_pointer_in):GG(GG_in), loc(loc_in), pot(pot_in), HR_pointer(HR_pointer_in), HK_pointer(HK_pointer_in)
     {
         this->LM = LM_in;
         this->cal_type = lcao_gint;
@@ -63,6 +66,8 @@ class Veff<OperatorLCAO<T>> : public OperatorLCAO<T>
     std::vector<double>* HR_pointer = nullptr;
 
     std::vector<T>* HK_pointer = nullptr;
+
+    elecstate::Potential* pot = nullptr;
 
     bool allocated_pvpR = false;
 

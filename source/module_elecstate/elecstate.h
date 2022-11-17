@@ -4,6 +4,7 @@
 #include "module_psi/psi.h"
 #include "src_pw/charge.h"
 #include "src_pw/klist.h"
+#include "potentials/potential_new.h"
 
 namespace elecstate
 {
@@ -12,7 +13,15 @@ class ElecState
 {
   public:
     ElecState(){};
-    virtual ~ElecState(){};
+    ElecState(Charge* charge_in){this->charge = charge_in;};
+    virtual ~ElecState()
+    {
+        if(this->pot != nullptr) 
+        {
+            delete this->pot;
+            this->pot = nullptr;
+        }
+    };
     virtual void init(Charge *chg_in, // pointer for class Charge
                       const K_Vectors *klist_in,
                       int nk_in, // number of k points
@@ -63,6 +72,10 @@ class ElecState
         return;
     }
 
+    void init_scf(const int istep, const ModuleBase::ComplexMatrix& strucfac);
+
+    // pointer to potential
+    Potential* pot = nullptr;
     // pointer to charge density
     Charge *charge = nullptr;
     // pointer to k points lists

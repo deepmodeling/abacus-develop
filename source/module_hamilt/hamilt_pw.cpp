@@ -14,7 +14,7 @@ namespace hamilt
 {
 
 template<typename FPTYPE, typename Device>
-HamiltPW<FPTYPE, Device>::HamiltPW()
+HamiltPW<FPTYPE, Device>::HamiltPW(elecstate::Potential* pot_in)
 {
     this->classname = "HamiltPW";
     const double tpiba2 = GlobalC::ucell.tpiba2;
@@ -42,18 +42,54 @@ HamiltPW<FPTYPE, Device>::HamiltPW()
     }
     if (GlobalV::VL_IN_H)
     {
-        Operator<std::complex<FPTYPE>, Device>* veff = new Veff<OperatorPW<FPTYPE, Device>>(
-            isk,
-            &(GlobalC::pot.vr_eff),
-            GlobalC::wfcpw
-        );
-        if(this->ops == nullptr)
+        std::vector<string> pot_register_in;
+        if (GlobalV::VION_IN_H)
         {
-            this->ops = veff;
+            pot_register_in.push_back("local");
         }
-        else
+        if (GlobalV::VH_IN_H)
         {
-            this->ops->add(veff);
+            pot_register_in.push_back("hartree");
+        }
+        //no variable can choose xc, maybe it is necessary
+        pot_register_in.push_back("xc");
+        if (GlobalV::imp_sol)
+        {
+            pot_register_in.push_back("surchem");
+        }
+        if (GlobalV::EFIELD_FLAG)
+        {
+            pot_register_in.push_back("efield");
+        }
+        if (GlobalV::GATE_FLAG)
+        {
+            pot_register_in.push_back("gatefield");
+        }
+        //only Potential is not empty, Veff and Meta are available
+        if(pot_register_in.size()>0)
+        {
+            //register Potential by gathered operator
+            pot_in->pot_register(pot_register_in);
+            Operator<std::complex<FPTYPE>, Device>* veff = new Veff<OperatorPW<FPTYPE, Device>>(
+                isk,
+                &(pot_in->get_effective_v()),
+                GlobalC::wfcpw
+            );
+            if(this->ops == nullptr)
+            {
+                this->ops = veff;
+            }
+            else
+            {
+                this->ops->add(veff);
+            }
+            Operator<std::complex<FPTYPE>, Device>* meta = new Meta<OperatorPW<FPTYPE, Device>>(
+                tpiba,
+                isk,
+                &(pot_in->get_effective_vofk()),
+                GlobalC::wfcpw
+            );
+            this->ops->add(meta);
         }
     }
     if (GlobalV::VNL_IN_H)
@@ -72,20 +108,7 @@ HamiltPW<FPTYPE, Device>::HamiltPW()
             this->ops->add(nonlocal);
         }
     }
-    Operator<std::complex<FPTYPE>, Device>* meta = new Meta<OperatorPW<FPTYPE, Device>>(
-        tpiba,
-        isk,
-        &GlobalC::pot.vofk,
-        GlobalC::wfcpw
-    );
-    if(this->ops == nullptr)
-    {
-        this->ops = meta;
-    }
-    else
-    {
-        this->ops->add(meta);
-    }
+    return;
 }
 
 template<typename FPTYPE, typename Device>

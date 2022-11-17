@@ -259,4 +259,26 @@ void ElecState::print_band(const int& ik, const int& printe, const int& iter)
 	return;
 }
 
+void ElecState::init_scf(const int istep, const ModuleBase::ComplexMatrix& strucfac)
+{
+    //---------Charge part-----------------
+    // core correction potential.
+    this->charge->set_rho_core(strucfac);
+
+    //--------------------------------------------------------------------
+    // (2) other effective potentials need charge density,
+    // choose charge density from ionic step 0.
+    //--------------------------------------------------------------------
+    if (istep == 0)
+    {
+        this->charge->init_rho();
+    }
+
+    // renormalize the charge density
+    this->charge->renormalize_rho();
+
+    //---------Potential part--------------
+    this->pot->init_pot(istep, this->charge);
+}
+
 } // namespace elecstate

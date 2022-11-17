@@ -145,7 +145,8 @@ namespace ModuleESolver
                 this->p_hamilt = new hamilt::HamiltLCAO<double>(&(this->UHM.GG),
                                                             &(this->UHM.genH),
                                                             &(this->LM),
-                                                            &(this->LOC));
+                                                            &(this->LOC),
+                                                            this->pelec->pot);
             }
             // multi_k case
             else
@@ -153,7 +154,8 @@ namespace ModuleESolver
                 this->p_hamilt = new hamilt::HamiltLCAO<std::complex<double>>(&(this->UHM.GK),
                                                                         &(this->UHM.genH),
                                                                         &(this->LM),
-                                                                        &(this->LOC));
+                                                                        &(this->LOC),
+                                                                        this->pelec->pot);
             }
         }
 
@@ -174,7 +176,7 @@ namespace ModuleESolver
         // REALLOCATE DENSITY MATRIX FIRST, THEN READ IN DENSITY MATRIX,
         // AND USE DENSITY MATRIX TO DO RHO GlobalV::CALCULATION.-- mohan 2013-03-31
         //======================================
-        if (GlobalC::pot.chg_extrap == "dm" && istep > 1)//xiaohui modify 2015-02-01
+        if (GlobalV::chg_extrap == "dm" && istep > 1)//xiaohui modify 2015-02-01
         {
             for (int is = 0; is < GlobalV::NSPIN; is++)
             {
@@ -216,10 +218,7 @@ namespace ModuleESolver
             }
 
             // renormalize the charge density
-            pelec->charge->renormalize_rho();
-
-            // initialize the potential
-            GlobalC::pot.init_pot(istep - 1, GlobalC::sf.strucFac);
+            GlobalC::CHR.renormalize_rho();
         }
 
 #ifdef __DEEPKS
@@ -269,8 +268,6 @@ namespace ModuleESolver
             {
                 Variable_Cell::init_after_vc();
             }
-
-            GlobalC::pot.init_pot(istep, GlobalC::sf.strucFac);
         }
 
         if(GlobalV::CALCULATION=="relax" || GlobalV::CALCULATION=="cell-relax")
@@ -287,7 +284,6 @@ namespace ModuleESolver
                 GlobalV::ofs_running << " Setup the Vl+Vh+Vxc according to new structure factor and new charge." << std::endl;
                 // calculate the new potential accordint to
                 // the new charge density.
-                GlobalC::pot.init_pot( istep, GlobalC::sf.strucFac );
             }
         }
 
@@ -301,6 +297,14 @@ namespace ModuleESolver
         }
         
         this->beforesolver(istep);
+        this->pelec->init_scf( istep, GlobalC::sf.strucFac );
+        // the electron charge density should be symmetrized,
+        // here is the initialization
+        Symmetry_rho srho;
+        for (int is = 0; is < GlobalV::NSPIN; is++)
+        {
+            srho.begin(is, *(pelec->charge), GlobalC::rhopw, GlobalC::Pgrid, GlobalC::symm);
+        }
 //Peize Lin add 2016-12-03
 #ifdef __MPI
         if(Exx_Global::Hybrid_Type::No != GlobalC::exx_global.info.hybrid_type)
@@ -328,14 +332,6 @@ namespace ModuleESolver
         if(!GlobalV::test_skip_ewald)
         {
             H_Ewald_pw::compute_ewald(GlobalC::ucell, GlobalC::rhopw);
-        }
-
-        //2. the electron charge density should be symmetrized,
-        // here is the initialization
-        Symmetry_rho srho;
-        for (int is = 0; is < GlobalV::NSPIN; is++)
-        {
-            srho.begin(is, *(pelec->charge), GlobalC::rhopw, GlobalC::Pgrid, GlobalC::symm);
         }
 
         p_hamilt->non_first_scf = istep;
@@ -385,6 +381,8 @@ namespace ModuleESolver
         }
 
         this->beforesolver(istep);
+        //pelec should be initialized before these calculations
+        this->pelec->init_scf( istep, GlobalC::sf.strucFac );
         // self consistent calculations for electronic ground state
         if (GlobalV::CALCULATION == "nscf")
         {

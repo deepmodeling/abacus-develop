@@ -678,7 +678,5 @@ void Relax::init_after_vc()
         GlobalC::ppcell.init_vnl(GlobalC::ucell);
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running,"NON-LOCAL POTENTIAL");
     }
-
-    GlobalC::pot.init_pot(1, GlobalC::sf.strucFac); //LiuXh add 20180619
     return;
 }

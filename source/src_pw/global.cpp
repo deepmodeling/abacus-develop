@@ -21,7 +21,6 @@ pseudopot_cell_vnl ppcell;
 UnitCell ucell;
 Charge CHR;
 Charge_Mixing CHR_MIX;
-Potential pot;
 ModuleSymmetry::Symmetry symm;
 Parallel_Grid Pgrid; //mohan add 2010-06-06 
 Parallel_Kpoints Pkpoints; // mohan add 2010-06-07

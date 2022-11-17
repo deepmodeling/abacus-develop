@@ -289,7 +289,7 @@ template<> void hamilt::HamiltPW<double>::updateHk(const int ik)
     return;
 }
 
-template<> hamilt::HamiltPW<double>::HamiltPW()
+template<> hamilt::HamiltPW<double>::HamiltPW(elecstate::Potential* pot_in)
 {
     this->ops = new OperatorMock;
 }

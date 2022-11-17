@@ -3,7 +3,7 @@
 #include "global.h"
 #include "module_vdw/vdw.h"
 
-void Stress_PW::cal_stress(ModuleBase::matrix& sigmatot, const ModuleBase::matrix& wg, const psi::Psi<complex<double>>* psi_in)
+void Stress_PW::cal_stress(ModuleBase::matrix& sigmatot, const psi::Psi<complex<double>>* psi_in)
 {
 	ModuleBase::TITLE("Stress_PW","cal_stress");
 	ModuleBase::timer::tick("Stress_PW","cal_stress");    
@@ -52,7 +52,7 @@ void Stress_PW::cal_stress(ModuleBase::matrix& sigmatot, const ModuleBase::matri
 	}
 
 	//kinetic contribution
-	stress_kin(sigmakin, wg, psi_in);
+	stress_kin(sigmakin, this->pelec->wg, psi_in);
 	
 	//hartree contribution
 	stress_har(sigmahar, GlobalC::rhopw, 1);
@@ -66,7 +66,7 @@ void Stress_PW::cal_stress(ModuleBase::matrix& sigmatot, const ModuleBase::matri
        sigmaxc(i,i) = - (GlobalC::en.etxc - GlobalC::en.vtxc) / GlobalC::ucell.omega;
     }
     stress_gga(sigmaxc);
-    if(XC_Functional::get_func_type() == 3) stress_mgga(sigmaxc, wg, psi_in);
+    if(XC_Functional::get_func_type() == 3) stress_mgga(sigmaxc, this->pelec->wg, this->pelec->pot->get_effective_vofk(), psi_in);
 
     //local contribution
     stress_loc(sigmaloc, GlobalC::rhopw, 1);
@@ -75,7 +75,7 @@ void Stress_PW::cal_stress(ModuleBase::matrix& sigmatot, const ModuleBase::matri
     stress_cc(sigmaxcc, GlobalC::rhopw, 1);
    
     //nonlocal
-	stress_nl(sigmanl, wg, psi_in);
+	stress_nl(sigmanl, this->pelec->wg, psi_in);
 
 	//vdw term
 	stress_vdw(sigmavdw);

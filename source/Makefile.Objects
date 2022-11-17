@@ -27,6 +27,7 @@ VPATH=./src_global:\
 ./module_hsolver/src:\
 ./module_hsolver/genelpa:\
 ./module_elecstate:\
+./module_elecstate/potentials:\
 ./module_psi:\
 ./module_psi/src:\
 ./module_hamilt:\
@@ -156,6 +157,14 @@ OBJS_DEEPKS=LCAO_deepks.o\
 OBJS_ELECSTAT=elecstate.o\
     elecstate_pw.o\
     elecstate_pw_sdft.o\
+    efield.o\
+    gatefield.o\
+    potential_new.o\
+    pot_local.o\
+    H_Hartree_pw.o\
+    H_TDDFT_pw.o\
+    write_pot.o\
+    pot_xc.o\
 
 OBJS_ELECSTAT_LCAO=elecstate_lcao.o\
       elecstate_lcao_tddft.o\
@@ -306,9 +315,7 @@ OBJS_SURCHEM=surchem.o\
     cal_vel.o\
     corrected_energy.o\
     minimize_cg.o\
-    efield.o\
     sol_force.o\
-    gatefield.o\
 
 OBJS_SYMMETRY=symm_other.o\
     symmetry_basic.o\
@@ -349,7 +356,6 @@ OBJS_IO=berryphase.o\
     wf_io.o\
     winput.o\
     write_input.o\
-    write_pot.o\
     write_rho.o\
     write_rho_cube.o\
 	write_wfc_realspace.o\
@@ -404,7 +410,6 @@ OBJS_LCAO=DM_gamma.o\
       record_adj.o\
       dm_2d.o\
       wavefunc_in_pw.o\
-  	  H_TDDFT_pw.o\
 
 OBJS_RI=exx_lip.o\
 
@@ -510,7 +515,6 @@ OBJS_PDIAG_MRRR=dcopy.o\
     xerbla.o\
 
 OBJS_SRCPW=H_Ewald_pw.o\
-    H_Hartree_pw.o\
     VL_in_pw.o\
     VNL_in_pw.o\
     VNL_grad_pw.o\
@@ -525,7 +529,6 @@ OBJS_SRCPW=H_Ewald_pw.o\
     klist.o\
     magnetism.o\
     occupy.o\
-    potential.o\
     structure_factor.o\
     pw_complement.o\
     soc.o\
@@ -552,7 +555,6 @@ OBJS_SRCPW=H_Ewald_pw.o\
     wf_atomic.o\
     wf_igk.o\
     xc_3.o\
-    hamilt.o\  
 
 OBJS_VDW=vdw.o\
     vdwd2_parameters.o\

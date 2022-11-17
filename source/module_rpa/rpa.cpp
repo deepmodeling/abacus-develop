@@ -63,9 +63,7 @@ void DFT_RPA_interface::out_eigen_vector(const Parallel_Orbitals &parav, const p
             ofs.open(ss.str().c_str(), std::ios::out);
         std::vector<ModuleBase::ComplexMatrix> is_wfc_ib_iw(npsin_tmp);
         for (int is = 0; is < npsin_tmp; is++)
-        {
-            ofs << ik + 1 << std::endl;
-            
+        {   
             is_wfc_ib_iw[is].create(GlobalV::NBANDS,GlobalV::NLOCAL);
             for (int ib_global = 0; ib_global < GlobalV::NBANDS; ++ib_global)
             {
@@ -85,6 +83,7 @@ void DFT_RPA_interface::out_eigen_vector(const Parallel_Orbitals &parav, const p
                     is_wfc_ib_iw[is](ib_global,iw)=wfc_iks[iw];
             } // ib
         } // is
+        ofs << ik + 1 << std::endl;
         for(int iw=0; iw<GlobalV::NLOCAL; iw++)
         {
             for(int ib=0; ib<GlobalV::NBANDS; ib++)
@@ -143,7 +142,7 @@ void DFT_RPA_interface::out_bands(const elecstate::ElecState* pelec)
     ss << "band_out";
     std::ofstream ofs;
     ofs.open(ss.str().c_str(), std::ios::out);
-    ofs << GlobalC::kv.nks << std::endl;
+    ofs << nks_tot << std::endl;
     ofs << GlobalV::NSPIN << std::endl;
     ofs << GlobalV::NBANDS << std::endl;
     ofs << GlobalV::NLOCAL << std::endl;
@@ -220,14 +219,14 @@ void DFT_RPA_interface::out_coulomb_k()
         mu_shift[I] = all_mu;
         all_mu += rpa_exx_lcao_.get_index_abfs()[GlobalC::ucell.iat2it[I]].count_size;
     }
-
+    const int nks_tot = GlobalV::NSPIN == 2 ? (int)GlobalC::kv.nks / 2 : GlobalC::kv.nks;
     std::stringstream ss;
     ss << "coulomb_mat_"<<GlobalV::MY_RANK<<".txt";
 
     std::ofstream ofs;
     ofs.open(ss.str().c_str(), std::ios::out);
 
-    ofs << GlobalC::kv.nks << std::endl;
+    ofs << nks_tot << std::endl;
     for (auto &Ip: rpa_exx_lcao_.get_Vps())
     {
         auto I = Ip.first;
@@ -237,13 +236,13 @@ void DFT_RPA_interface::out_coulomb_k()
             auto J = Jp.first;
             size_t nu_num = rpa_exx_lcao_.get_index_abfs()[GlobalC::ucell.iat2it[J]].count_size;
 
-            for (int ik = 0; ik != GlobalC::kv.nks; ik++)
+            for (int ik = 0; ik != nks_tot; ik++)
             {
                 ModuleBase::ComplexMatrix tmp_Vk(mu_num, nu_num);
                 tmp_Vk.zero_out();
                 ofs << all_mu << "   " << mu_shift[I] + 1 << "   " << mu_shift[I] + mu_num << "  " << mu_shift[J] + 1
                     << "   " << mu_shift[J] + nu_num << std::endl;
-                ofs << ik + 1 << "  " << GlobalC::kv.wk[ik] / 2.0 << std::endl;
+                ofs << ik + 1 << "  " << GlobalC::kv.wk[ik] / 2.0 * GlobalV::NSPIN << std::endl;
                 for (auto &Rp: Jp.second)
                 {
                     auto R = Rp.first;

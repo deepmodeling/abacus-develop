@@ -198,11 +198,11 @@ void Hamilt_PW::init_k(const int ik)
 
 	for (int ir=0; ir<GlobalC::rhopw->nrxx; ir++)
 	{
-		GlobalC::pot.vr_eff1[ir] = GlobalC::pot.vr_eff(GlobalV::CURRENT_SPIN, ir);//mohan add 2007-11-12
+//		GlobalC::pot.vr_eff1[ir] = GlobalC::pot.vr_eff(GlobalV::CURRENT_SPIN, ir);//mohan add 2007-11-12
 	}
-#ifdef __CUDA
+/*#ifdef __CUDA
 	cudaMemcpy(GlobalC::pot.d_vr_eff1, GlobalC::pot.vr_eff1, GlobalC::rhopw->nrxx*sizeof(double), cudaMemcpyHostToDevice);
-#endif
+#endif*/
 
 	// (4) Calculate nonlocal pseudopotential vkb
 	//if (GlobalC::ppcell.nkb > 0 && !LINEAR_SCALING) xiaohui modify 2013-09-02
@@ -810,7 +810,7 @@ void Hamilt_PW::h_psi_cuda(const float2 *psi_in, float2 *hpsi, float2 *vkb_c, co
 		CHECK_CUDA(cudaMalloc((void**)&f_vr_eff1, GlobalC::rhopw->nrxx * sizeof(float)));
         CHECK_CUDA(cudaMalloc((void**)&f_porter, GlobalC::rhopw->nrxx * sizeof(float2)));
 
-        CHECK_CUDA(cudaMemcpy(d_vr_eff1, GlobalC::pot.vr_eff1, GlobalC::rhopw->nrxx*sizeof(double), cudaMemcpyHostToDevice));
+ //       CHECK_CUDA(cudaMemcpy(d_vr_eff1, GlobalC::pot.vr_eff1, GlobalC::rhopw->nrxx*sizeof(double), cudaMemcpyHostToDevice));
         
 		int thread2 = 512;
 		int block2 = (GlobalC::rhopw->nrxx + thread2 - 1) / thread2;
@@ -1195,7 +1195,7 @@ void Hamilt_PW::h_psi(const std::complex<double> *psi_in, std::complex<double> *
 				GlobalC::wfcpw->recip2real(tmpsi_in, porter, ik);
 				for (int ir=0; ir< nrxx; ir++)
 				{
-					porter[ir] *=  GlobalC::pot.vr_eff1[ir];
+//					porter[ir] *=  GlobalC::pot.vr_eff1[ir];
 				}
 				GlobalC::wfcpw->real2recip(porter, tmhpsi, ik, true);
 			}
@@ -1208,12 +1208,12 @@ void Hamilt_PW::h_psi(const std::complex<double> *psi_in, std::complex<double> *
 				std::complex<double> sup,sdown;
 				for (int ir=0; ir< nrxx; ir++)
 				{
-					sup = porter[ir] * (GlobalC::pot.vr_eff(0,ir) + GlobalC::pot.vr_eff(3,ir)) +
+					/*sup = porter[ir] * (GlobalC::pot.vr_eff(0,ir) + GlobalC::pot.vr_eff(3,ir)) +
 						porter1[ir] * (GlobalC::pot.vr_eff(1,ir) - std::complex<double>(0.0,1.0) * GlobalC::pot.vr_eff(2,ir));
 					sdown = porter1[ir] * (GlobalC::pot.vr_eff(0,ir) - GlobalC::pot.vr_eff(3,ir)) +
 					porter[ir] * (GlobalC::pot.vr_eff(1,ir) + std::complex<double>(0.0,1.0) * GlobalC::pot.vr_eff(2,ir));
 					porter[ir] = sup;
-					porter1[ir] = sdown;
+					porter1[ir] = sdown;*/
 				}
 				// (3) fft back to G space.
 				GlobalC::wfcpw->real2recip(porter, tmhpsi, ik, true);
@@ -1318,7 +1318,7 @@ void Hamilt_PW::h_psi(const std::complex<double> *psi_in, std::complex<double> *
 
 				for (int ir = 0; ir < nrxx; ir++)
 				{
-					porter[ir] *= GlobalC::pot.vofk(GlobalV::CURRENT_SPIN,ir);
+					//porter[ir] *= GlobalC::pot.vofk(GlobalV::CURRENT_SPIN,ir);
 				}
 				GlobalC::wfcpw->real2recip(porter,porter,ik);
 

@@ -9,6 +9,7 @@
 #include "module_gint/gint_k.h"
 #include "src_lcao/local_orbital_charge.h"
 #include "src_lcao/local_orbital_wfc.h"
+#include "module_elecstate/potentials/potential_new.h"
 
 namespace hamilt
 {
@@ -22,13 +23,15 @@ template <typename T> class HamiltLCAO : public Hamilt<double>
       Gint_Gamma* GG_in, 
       LCAO_gen_fixedH* genH_in, 
       LCAO_Matrix* LM_in, 
-      Local_Orbital_Charge* loc_in);
+      Local_Orbital_Charge* loc_in,
+      elecstate::Potential* pot_in);
 
     HamiltLCAO(
       Gint_k* GK_in, 
       LCAO_gen_fixedH* genH_in, 
       LCAO_Matrix* LM_in, 
-      Local_Orbital_Charge* loc_in);
+      Local_Orbital_Charge* loc_in,
+      elecstate::Potential* pot_in);
 
     ~HamiltLCAO(){
       if(this->ops!= nullptr)

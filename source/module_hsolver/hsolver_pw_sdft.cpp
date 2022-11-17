@@ -106,7 +106,7 @@ namespace hsolver
 		//(6) calculate the delta_harris energy 
 		// according to new charge density.
 		// mohan add 2009-01-23
-		//en.calculate_harris(2);
+		//en.calculate_harris();
 
 		if(GlobalV::MY_STOGROUP==0)
 		{
@@ -125,7 +125,7 @@ namespace hsolver
 
 		if(GlobalV::MY_STOGROUP == 0)
 		{
-        	GlobalC::en.deband = GlobalC::en.delta_e();
+        	GlobalC::en.deband = GlobalC::en.delta_e(pes->pot);
 		}
         ModuleBase::timer::tick(this->classname, "solve");
         return;

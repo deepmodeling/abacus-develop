@@ -104,6 +104,9 @@ public:
 	double CG(int l1, int m1, int l2, int m2, int L, int M);
 
 	void print_vnl(std::ofstream &ofs);
+
+	//calculate the effective coefficient matrix for non-local pseudopotential projectors
+	void cal_effective_D();
 	#ifdef __LCAO
 	ORB_gaunt_table MGT;
 	#endif

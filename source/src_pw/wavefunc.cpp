@@ -200,34 +200,6 @@ void wavefunc::LCAO_in_pw_k_q(const int &ik, ModuleBase::ComplexMatrix &wvf, Mod
 */
 #endif
 
-void wavefunc::diago_PAO_in_pw_k(const int &ik, psi::Psi<std::complex<double>> &wvf)
-{
-	ModuleBase::TITLE("wavefunc","diago_PAO_in_pw_k");
-
-	if(GlobalV::NSPIN==2)
-	{
-		GlobalV::CURRENT_SPIN = GlobalC::kv.isk[ik];
-	}
-
-	for (int ir=0; ir<GlobalC::rhopw->nrxx; ir++)
-	{
-		GlobalC::pot.vr_eff1[ir] = GlobalC::pot.vr_eff(GlobalV::CURRENT_SPIN, ir);//mohan add 2007-11-12
-	}
-
-	if(GlobalC::ppcell.nkb > 0 && (GlobalV::BASIS_TYPE=="pw" || GlobalV::BASIS_TYPE=="lcao_in_pw")) //xiaohui add 2013-09-02. Attention...
-	{
-		GlobalC::ppcell.getvnl(ik, GlobalC::ppcell.vkb);
-	}
-
-	GlobalC::wf.npw = GlobalC::kv.ngk[ik];
-	GlobalV::CURRENT_K = ik;
-
-	wvf.fix_k(ik);
-    this->diago_PAO_in_pw_k2(ik, wvf);
-
-	return;
-}
-
 void wavefunc::diago_PAO_in_pw_k2(const int &ik, psi::Psi<std::complex<double>> &wvf, hamilt::Hamilt<double>* phm_in)
 {
 	ModuleBase::TITLE("wavefunc","diago_PAO_in_pw_k2");
@@ -306,31 +278,6 @@ void wavefunc::wfcinit_k(psi::Psi<std::complex<double>>* psi_in)
 	if(GlobalV::CALCULATION=="nscf")
 	{
 		return;
-	}
-	
-	for(int ik=0; ik<GlobalC::kv.nks; ik++)
-	{
-		if (GlobalV::BASIS_TYPE=="pw")
-		{
-			// get the wave functions
-			// by first diagolize PAO
-			// wave functions.
-			//this->diago_PAO_in_pw_k(ik, *psi_in);
-		}
-#ifdef __LCAO
-//We are not goint to support lcao_in_paw until
-//the obsolete GlobalC::hm is replaced by the 
-//refactored moeules (psi, hamilt, etc.)
-/*
-/*
-		else if(GlobalV::BASIS_TYPE=="lcao_in_pw")
-		{
-			// just get the numerical local basis wave functions
-			// in plane wave basis
-			this->LCAO_in_pw_k(ik, GlobalC::wf.wanf2[ik]);
-		}
-*/
-#endif
 	}
 
 	//---------------------------------------------------
@@ -760,82 +707,3 @@ void wavefunc::init_after_vc(const int nks)
 
     return;
 }
-
-/*
-//obsolete now
-//temporary function for nscf
-void wavefunc::diago_PAO_in_pw_k(const int &ik, ModuleBase::ComplexMatrix &wvf)
-{
-	ModuleBase::TITLE("wavefunc","diago_PAO_in_pw_k");
-
-	if(GlobalV::NSPIN==2)
-	{
-		GlobalV::CURRENT_SPIN = GlobalC::kv.isk[ik];
-	}
-
-	for (int ir=0; ir<GlobalC::rhopw->nrxx; ir++)
-	{
-		GlobalC::pot.vr_eff1[ir] = GlobalC::pot.vr_eff(GlobalV::CURRENT_SPIN, ir);//mohan add 2007-11-12
-	}
-
-	if(GlobalC::ppcell.nkb > 0 && (GlobalV::BASIS_TYPE=="pw" || GlobalV::BASIS_TYPE=="lcao_in_pw")) //xiaohui add 2013-09-02. Attention...
-	{
-		GlobalC::ppcell.getvnl(ik, GlobalC::ppcell.vkb);
-	}
-
-	GlobalC::wf.npw = GlobalC::kv.ngk[ik];
-	GlobalV::CURRENT_K = ik;
-    this->diago_PAO_in_pw_k2(ik, wvf);
-
-	return;
-}
-void wavefunc::diago_PAO_in_pw_k2(const int &ik, ModuleBase::ComplexMatrix &wvf)
-{
-	ModuleBase::TITLE("wavefunc","diago_PAO_in_pw_k2");
-	// (6) Prepare for atmoic orbitals or random orbitals
-	const int starting_nw = this->get_starting_nw();
-	assert(starting_nw > 0);
-
-	ModuleBase::ComplexMatrix wfcatom(starting_nw, npwx * GlobalV::NPOL);//added by zhengdy-soc
-	if(GlobalV::test_wf)ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "starting_nw", starting_nw);
-	if(init_wfc.substr(0,6)=="atomic")
-	{
-		this->atomic_wfc(ik, this->npw, GlobalC::ucell.lmax_ppwf, wfcatom, GlobalC::ppcell.tab_at, GlobalV::NQX, GlobalV::DQ);
-		if( init_wfc == "atomic+random" && starting_nw == GlobalC::ucell.natomwfc )//added by qianrui 2021-5-16
-		{
-			this->atomicrandom(wfcatom,0,starting_nw,ik, GlobalC::wfcpw);
-		}
-
-		//====================================================
-		// If not enough atomic wfc are available, complete
-		// with random wfcs
-		//====================================================
-		this->random(wfcatom, GlobalC::ucell.natomwfc, GlobalV::NBANDS, ik, GlobalC::wfcpw);
-	}
-	else if(init_wfc=="random")
-	{
-		this->random(wfcatom,0,GlobalV::NBANDS,ik, GlobalC::wfcpw);
-	}
-
-	// (7) Diago with cg method.
-	double *etatom  = new double[starting_nw];
-	ModuleBase::GlobalFunc::ZEROS(etatom, starting_nw);
-	//if(GlobalV::DIAGO_TYPE == "cg") xiaohui modify 2013-09-02
-	if(GlobalV::KS_SOLVER=="cg") //xiaohui add 2013-09-02
-	{
-		GlobalC::hm.diagH_subspace(ik ,starting_nw, GlobalV::NBANDS, wfcatom, wfcatom, etatom);
-	}
-
-	assert(wvf.nr <= wfcatom.nr);
-	for (int ib=0; ib<GlobalV::NBANDS; ib++)
-	{
-		for (int ig=0; ig<this->npwx; ig++)
-		{
-			wvf(ib, ig) = wfcatom(ib, ig);
-			if(GlobalV::NPOL==2) wvf(ib,ig + this->npwx) = wfcatom(ib,ig + this->npwx);
-		}
-	}
-
-	delete[] etatom;
-}
-*/
