@@ -1010,7 +1010,7 @@ This part of variables are used to control the calculation of DOS.
 
 - **Type**: Real
 - **Description**: controls the step size in writing DOS (in eV).
-- **Default**: 0.1
+- **Default**: 0.01
 
 ### dos_sigma
 
