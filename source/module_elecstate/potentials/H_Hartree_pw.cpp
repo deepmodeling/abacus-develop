@@ -13,7 +13,7 @@ double H_Hartree_pw::hartree_energy = 0.0;
 // Transform charge density to hartree potential.
 //--------------------------------------------------------------------
 ModuleBase::matrix H_Hartree_pw::v_hartree(const UnitCell &cell,
-                                           ModulePW::PW_Basis* rho_basis,
+                                           ModulePW::PW_Basis *rho_basis,
                                            const int &nspin,
                                            const double *const *const rho)
 {
@@ -109,6 +109,6 @@ ModuleBase::matrix H_Hartree_pw::v_hartree(const UnitCell &cell,
 
     ModuleBase::timer::tick("H_Hartree_pw", "v_hartree");
     return v;
-} // end subroutine v_h 
+} // end subroutine v_h
 
-}// namespace elecstate
+} // namespace elecstate

@@ -5,8 +5,8 @@
 #include "module_base/global_variable.h"
 #include "module_base/matrix.h"
 #include "module_cell/unitcell.h"
-#include "src_pw/use_fft.h"
 #include "module_pw/pw_basis.h"
+#include "src_pw/use_fft.h"
 
 namespace elecstate
 {
@@ -22,7 +22,7 @@ class H_Hartree_pw
 
     // compute the Hartree energy
     static ModuleBase::matrix v_hartree(const UnitCell &cell,
-                                        ModulePW::PW_Basis* rho_basis,
+                                        ModulePW::PW_Basis *rho_basis,
                                         const int &nspin,
                                         const double *const *const rho);
 
@@ -32,16 +32,16 @@ class H_Hartree_pw
 
     static void lapl_rho(const std::complex<double> *rhog, double *lapn);
 
-    static void shape_gradn(const complex<double> *PS_TOTN, ModulePW::PW_Basis* rho_basis, double *eprime);
+    static void shape_gradn(const complex<double> *PS_TOTN, ModulePW::PW_Basis *rho_basis, double *eprime);
 
     static void eps_pot(const complex<double> *PS_TOTN,
                         const complex<double> *phi,
-                        ModulePW::PW_Basis* rho_basis,
+                        ModulePW::PW_Basis *rho_basis,
                         double *d_eps,
                         double *vwork);
 
     static void test_res(const UnitCell &ucell,
-                         ModulePW::PW_Basis* rho_basis,
+                         ModulePW::PW_Basis *rho_basis,
                          const complex<double> *tot_N,
                          complex<double> *phi,
                          double *d_eps);
@@ -49,39 +49,30 @@ class H_Hartree_pw
   private:
 };
 
-}//namespace elecstate
+} // namespace elecstate
 
 #include "pot_base.h"
 namespace elecstate
 {
-//new interface for elecstate::Potential
+// new interface for elecstate::Potential
 class PotHartree : public PotBase
 {
   public:
-    PotHartree(
-        const ModulePW::PW_Basis* rho_basis_in
-    )
+    PotHartree(const ModulePW::PW_Basis *rho_basis_in)
     {
         this->rho_basis_ = rho_basis_in;
         this->dynamic_mode = true;
         this->fixed_mode = false;
     }
 
-    void cal_v_eff(
-        const Charge* chg, 
-        const UnitCell* ucell, 
-        ModuleBase::matrix& v_eff) override
+    void cal_v_eff(const Charge *chg, const UnitCell *ucell, ModuleBase::matrix &v_eff) override
     {
-        v_eff += H_Hartree_pw::v_hartree(
-            *ucell, 
-            const_cast<ModulePW::PW_Basis *>(this->rho_basis_), 
-            v_eff.nr, 
-            chg->rho
-        );
+        v_eff
+            += H_Hartree_pw::v_hartree(*ucell, const_cast<ModulePW::PW_Basis *>(this->rho_basis_), v_eff.nr, chg->rho);
         return;
     }
 };
 
-}//namespace elecstate
+} // namespace elecstate
 
 #endif // Hartree energy
