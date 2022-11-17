@@ -36,6 +36,7 @@ void PotXC::cal_v_eff(const Charge* chg, const UnitCell* ucell, ModuleBase::matr
         *(this->vtxc_) = std::get<1>(etxc_vtxc_v);
         v_eff += std::get<2>(etxc_vtxc_v);
     }
+    ModuleBase::timer::tick("PotXC", "cal_v_eff");
 }
 
 } // namespace elecstate

@@ -99,7 +99,6 @@ namespace ModuleESolver
 
         GlobalC::ppcell.cal_effective_D();
 
-        ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT POTENTIAL");
 
         //==================================================
         // create GlobalC::ppcell.tab_at , for trial wave functions.

@@ -305,7 +305,6 @@ namespace ModuleESolver
         {
             srho.begin(is, *(pelec->charge), GlobalC::rhopw, GlobalC::Pgrid, GlobalC::symm);
         }
-        ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT POTENTIAL");
 //Peize Lin add 2016-12-03
 #ifdef __MPI
         if(Exx_Global::Hybrid_Type::No != GlobalC::exx_global.info.hybrid_type)
@@ -384,7 +383,6 @@ namespace ModuleESolver
         this->beforesolver(istep);
         //pelec should be initialized before these calculations
         this->pelec->init_scf( istep, GlobalC::sf.strucFac );
-        ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT POTENTIAL");
         // self consistent calculations for electronic ground state
         if (GlobalV::CALCULATION == "nscf")
         {

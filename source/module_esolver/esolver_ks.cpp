@@ -177,8 +177,9 @@ namespace ModuleESolver
         {
             ModuleBase::timer::tick(this->classname, "Run");
 
-            if(this->maxniter > 0)  this->printhead(); //print the headline on the screen.
             this->beforescf(istep); //Something else to do before the iter loop
+            ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT SCF");
+            if(this->maxniter > 0)  this->printhead(); //print the headline on the screen.
 
             bool firstscf = true;
             this->conv_elec = false;
