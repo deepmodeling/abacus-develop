@@ -146,7 +146,7 @@ To add a unit test:
 
 ## Generating code coverage report
 
-We use `gcov` and `lcov` to generate code coverage report.
+This feature requires using GCC compiler. We use `gcov` and `lcov` to generate code coverage report.
 
 1. Add `-DENABLE_COVERAGE=ON` for CMake configure command.
 
@@ -156,7 +156,7 @@ We use `gcov` and `lcov` to generate code coverage report.
 
 2. Build, install ABACUS, and run test cases.
 
-3. Generate html report.
+3. Generate HTML report.
 
     ```bash
     cd build/
