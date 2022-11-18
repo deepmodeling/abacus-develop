@@ -70,10 +70,12 @@ Here, 'build' is the path for building ABACUS; and '-D' is used for setting up s
   - `SCALAPACK_DIR`: Path to ScaLAPACK library `libscalapack.so`
   - `ELPA_DIR`: Path to ELPA install directory; should be the folder containing 'include' and 'lib'.
   > Note: If you install ELPA from source, please add a symlink to avoid the additional include file folder with version name: `ln -s elpa/include/elpa-2021.05.002/elpa elpa/include/elpa`. This is a known behavior of ELPA.
+
   - `FFTW3_DIR`: Path to FFTW3.
   - `CEREAL_INCLUDE_DIR`: Path to the parent folder of `cereal/cereal.hpp`. Will download from GitHub if absent.
   - `Libxc_DIR`: (Optional) Path to Libxc.
   > Note: Building Libxc from source with Makefile does NOT support using it in CMake here. Please compile Libxc with CMake instead.
+
 - Components: The value for these variables should be 'ON', '1' or 'OFF', '0'. The default value is appended below.
   - `ENABLE_LCAO=ON`: Enable LCAO calculation. If SCALAPACK, ELPA or CEREAL is absent and only require plane-wave calculations, the feature of calculating LCAO basis can be turned off.
   - `ENABLE_LIBXC=OFF`: Suppport variety of functionals. If `Libxc_DIR` is defined, `ENABLE_LIBXC` will set to 'ON'.
