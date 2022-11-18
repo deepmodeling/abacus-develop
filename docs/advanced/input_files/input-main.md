@@ -427,7 +427,7 @@ calculations.
 ### ks_solver
 
 - **Type**: String
-- **Description**: It`s about choice of diagonalization methods for hamiltonian matrix expanded in a certain basis set.
+- **Description**: It's about choice of diagonalization methods for hamiltonian matrix expanded in a certain basis set.
 
   For plane-wave basis,
 
@@ -1464,7 +1464,7 @@ This part of variables are used to control the molecular dynamics calculations.
 ### md_tfirst, md_tlast
 
 - **Type**: Real
-- **Description**: This is the temperature (K) used in md simulation, md_tlast`s default value is md_tfirst. If md_tlast is set to be different from md_tfirst, ABACUS will automatically change the temperature from md_tfirst to md_tlast.
+- **Description**: This is the temperature (K) used in md simulation. The default value of md_tlast is md_tfirst. If md_tlast is set to be different from md_tfirst, ABACUS will automatically change the temperature from md_tfirst to md_tlast.
 - **Default**: No default
 
 ### md_dumpfreq
