@@ -117,11 +117,11 @@ We use GoogleTest as our test framework. Write your test under the corresponding
 - Add a folder named `test` under the module.
 - Append the content below to `CMakeLists.txt` of the module:
 
-```cmake
-IF (BUILD_TESTING)
-  add_subdirectory(test)
-endif()
-```
+    ```cmake
+    IF (BUILD_TESTING)
+      add_subdirectory(test)
+    endif()
+    ```
 
 - Add a blank `CMakeLists.txt` under `module*/test`.
 
@@ -131,15 +131,15 @@ To add a unit test:
 - Add your testing source code with suffix `*_test.cpp` in `test` directory.
 - Append the content below to `CMakeLists.txt` of the module:
 
-```cmake
-AddTest(
-  TARGET <module_name>_<test_name> # this is the executable file name of the test
-  SOURCES <test_name>.cpp
+    ```cmake
+    AddTest(
+      TARGET <module_name>_<test_name> # this is the executable file name of the test
+      SOURCES <test_name>.cpp
 
-  # OPTIONAL: if this test requires external libraries, add them with "LIBS" statement.
-  LIBS math_libs # `math_libs` includes all math libraries in ABACUS.
-)
-```
+      # OPTIONAL: if this test requires external libraries, add them with "LIBS" statement.
+      LIBS math_libs # `math_libs` includes all math libraries in ABACUS.
+    )
+    ```
 
 - Build with `-D BUILD_TESTING=1` flag. You can find built testing programs under `build/source/<module_name>/test`.
 - Follow the installing procedure of CMake. The tests will move to `build/test`.
@@ -158,10 +158,10 @@ We use `gcov` and `lcov` to generate code coverage report.
 
 3. Generate html report.
 
-```bash
-cd build/
-make lcov
-```
+    ```bash
+    cd build/
+    make lcov
+    ```
 
 Now you can copy `build/lcov` to your local device, and view `build/lcov/html/all_targets/index.html`.
 
