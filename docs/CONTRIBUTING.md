@@ -9,12 +9,12 @@ For more non-technical aspects, please refer to the [ABACUS Contribution Guide](
 - [Got a question?](#got-a-question)
 - [Structure of the package](#structure-of-the-package)
 - [Submitting an Issue](#submitting-an-issue)
-- [Comment Style for documentation](#comment-style-for-documentation)
+- [Comment style for documentation](#comment-style-for-documentation)
 - [Code formatting style](#code-formatting-style)
 - [Generating code coverage report](#generating-code-coverage-report)
 - [Adding a unit test](#adding-a-unit-test)
 - [Submitting a Pull Request](#submitting-a-pull-request)
-- [Commit Message Guidelines](#commit-message-guidelines)
+- [Commit message guidelines](#commit-message-guidelines)
 
 ## Got a question?
 
@@ -39,7 +39,7 @@ The source code of ABACUS is based on several modules. Under the ABACUS root dir
 Before you submit an issue, please search the issue tracker, and maybe your problem has been discussed and fixed. You can [submit new issues](https://github.com/deepmodeling/abacus-develop/issues/new/choose) by filling our issue forms.
 To help us reproduce and confirm a bug, please provide a test case and building environment in your issue.
 
-## Comment Style for documentation
+## Comment style for documentation
 
 ABACUS uses Doxygen to generate docs directly from `.h` and `.cpp` code files.
 
@@ -146,29 +146,26 @@ AddTest(
 
 ## Generating code coverage report
 
-We use gcov and lcov to generate code coverage report, and only support gcc.
+We use `gcov` and `lcov` to generate code coverage report.
 
-1. Add -DENABLE_COVERAGE=ON for cmake:
-```
-cmake -B build -DENABLE_COVERAGE=ON
-```
+1. Add `-DENABLE_COVERAGE=ON` for CMake configure command.
 
-2. Build ABACUS.
-```
-cmake --build build -j`nproc`
-cmake --install build
-```
+    ```bash
+    cmake -B build -DBUILD_TESTING=ON -DENABLE_COVERAGE=ON
+    ```
 
-3. Use ``build/abacus`` to run test cases.
+2. Build, install ABACUS, and run test cases.
 
-4. Generate html report.
-```
+3. Generate html report.
+
+```bash
 cd build/
 make lcov
 ```
 
-Now you can copy build/lcov to your local device, and view build/lcov/html/all_targets/index.html.
-The current test coverage of ABACUS is reported in [Test Coverage](./community/contribution_guide.md#test-coverage).
+Now you can copy `build/lcov` to your local device, and view `build/lcov/html/all_targets/index.html`.
+
+We use [Codecov](https://codecov.io/) to host and visualize our [**code coverage report**](https://app.codecov.io/gh/deepmodeling/abacus-develop). Analysis is scheduled after a new version releases; this [action](https://github.com/deepmodeling/abacus-develop/actions/workflows/coverage.yml) can also be manually triggered.
 
 ## Submitting a Pull Request
 
@@ -219,7 +216,7 @@ To run a subset of unit test, use `ctest -R <test-match-pattern>` to perform tes
     git pull --ff upstream develop
     ```
 
-## Commit Message Guidelines
+## Commit message guidelines
 
 A well-formatted commit message leads a more readable history when we look through some changes, and helps us generate change log.
 We follow up [The Conventional Commits specification](https://www.conventionalcommits.org) for commit message format.
