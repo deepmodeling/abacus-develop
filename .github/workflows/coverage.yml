@@ -23,7 +23,7 @@ jobs:
           cmake --install build
       - name: Testing
         run: |
-          cmake --build build --target test ARGS="-V --timeout 7200"
+          cmake --build build --target test ARGS="-V --timeout 21600"
       - name: Upload Coverage to Codecov
         uses: codecov/codecov-action@v3
         if: ${{ ! cancelled() }}
