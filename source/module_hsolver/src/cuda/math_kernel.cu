@@ -425,8 +425,8 @@ __global__ void matrix_setTo_another_kernel(
         const thrust::complex<FPTYPE>* matrix_A,
         thrust::complex<FPTYPE>* matrix_B)
 {
-    int j = blockIdx.x * blockDim.x + threadIdx.x;
-    if (j < LDA)
+    int j = blockIdx.x * blockDim.x + threadIdx.x;    
+    if (j < LDA && j < LDB)
     {
         for (int i = 0; i < n; i++)
         {

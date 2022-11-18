@@ -69,6 +69,11 @@ void HSolverPW::initDiagh()
         {
             pdiagh = new DiagoDavid<double>( precondition.data());
             pdiagh->method = this->method;
+            // temperary added for debugging!
+#if defined(__CUDA) || defined(__ROCM)
+            gpu_diagh = new DiagoDavid<double, psi::DEVICE_GPU>(precondition.data());
+            gpu_diagh->method = this->method;
+#endif
         }
     }
     else
@@ -135,6 +140,10 @@ void HSolverPW::endDiagh()
     {
         delete (DiagoDavid<double>*)pdiagh;
         pdiagh = nullptr;
+#if defined(__CUDA) || defined(__ROCM)
+        delete (DiagoDavid<double, psi::DEVICE_GPU>*)gpu_diagh;
+        gpu_diagh = nullptr;
+#endif
     }
 
     //in PW base, average iteration steps for each band and k-point should be printing
@@ -196,7 +205,9 @@ void HSolverPW::hamiltSolvePsiK(hamilt::Hamilt<double>* hm, psi::Psi<std::comple
     hamilt::Hamilt<double, psi::DEVICE_GPU>* d_phm_in =
             new hamilt::HamiltPW<double, psi::DEVICE_GPU>(
                     reinterpret_cast<hamilt::HamiltPW<double, psi::DEVICE_CPU>*>(hm));
+    
     gpu_diagh->diag(d_phm_in, gpu_psi, eigenvalue);
+    
     psi::memory::synchronize_memory_op<std::complex<double>, psi::DEVICE_CPU, psi::DEVICE_GPU>()(
          psi.get_device(),
          gpu_psi.get_device(),

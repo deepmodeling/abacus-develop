@@ -68,11 +68,26 @@ void dngvx_op<double, psi::DEVICE_GPU>::operator()(const psi::DEVICE_GPU* d,
 
     // init A_eigenvectors, transpose_B and all_W
     double2 *A_eigenvectors, *transpose_B;
-    checkCudaErrors(cudaMalloc((void**)&A_eigenvectors, sizeof(double2) * row * col));
-    checkCudaErrors(cudaMalloc((void**)&transpose_B, sizeof(double2) * row * col));
+    if (row == col)
+    {
+        checkCudaErrors(cudaMalloc((void**)&A_eigenvectors, sizeof(double2) * row * col));
+        checkCudaErrors(cudaMalloc((void**)&transpose_B, sizeof(double2) * row * col));
 
-    matrixTranspose_op<double, psi::DEVICE_GPU>()(d, col, row, A, (std::complex<double>*)A_eigenvectors);
-    matrixTranspose_op<double, psi::DEVICE_GPU>()(d, col, row, B, (std::complex<double>*)transpose_B);
+        matrixTranspose_op<double, psi::DEVICE_GPU>()(d, col, row, A, (std::complex<double>*)A_eigenvectors);
+        matrixTranspose_op<double, psi::DEVICE_GPU>()(d, col, row, B, (std::complex<double>*)transpose_B);
+    } else
+    {
+        // row max
+        // col min
+        checkCudaErrors(cudaMalloc((void**)&A_eigenvectors, sizeof(double2) * col * col));
+        checkCudaErrors(cudaMalloc((void**)&transpose_B, sizeof(double2) * col * col));
+
+        matrixSetToAnother<double, psi::DEVICE_GPU>()(d, col, A, row, (std::complex<double>*)A_eigenvectors, col);
+        matrixSetToAnother<double, psi::DEVICE_GPU>()(d, col, B, row, (std::complex<double>*)transpose_B, col);
+
+        matrixTranspose_op<double, psi::DEVICE_GPU>()(d, col, col, (std::complex<double>*)A_eigenvectors, (std::complex<double>*)A_eigenvectors);
+        matrixTranspose_op<double, psi::DEVICE_GPU>()(d, col, col, (std::complex<double>*)transpose_B, (std::complex<double>*)transpose_B);
+    }
 
     double* all_W;
     checkCudaErrors(cudaMalloc((void**)&all_W, sizeof(double) * col));
@@ -92,11 +107,9 @@ void dngvx_op<double, psi::DEVICE_GPU>::operator()(const psi::DEVICE_GPU* d,
         CUBLAS_FILL_MODE_LOWER,
         col,
         A_eigenvectors,
-        // (double2)A,
-        row,
+        col,
         transpose_B,
-        // (double2)B,
-        row,
+        col,
         all_W,
         &lwork));
 
@@ -112,11 +125,9 @@ void dngvx_op<double, psi::DEVICE_GPU>::operator()(const psi::DEVICE_GPU* d,
         CUBLAS_FILL_MODE_LOWER,
         col,
         A_eigenvectors,
-        // (double2)A,
-        row,
+        col,
         transpose_B,
-        // (double2)B,
-        row,
+        col,
         all_W,
         d_work,
         lwork,
@@ -127,9 +138,18 @@ void dngvx_op<double, psi::DEVICE_GPU>::operator()(const psi::DEVICE_GPU* d,
     // get eigenvalues and eigenvectors.  only m !
     checkCudaErrors(cudaMemcpy(W, all_W, sizeof(double) * m, cudaMemcpyDeviceToDevice));
 
-    checkCudaErrors(cudaMemcpy(V, A_eigenvectors, sizeof(std::complex<double>) * col * m, cudaMemcpyDeviceToDevice));
+    if (row == col)
+    {
+        checkCudaErrors(cudaMemcpy(V, A_eigenvectors, sizeof(std::complex<double>) * col * m, cudaMemcpyDeviceToDevice));
 
-    matrixTranspose_op<double, psi::DEVICE_GPU>()(d, col, row, V, V);
+        matrixTranspose_op<double, psi::DEVICE_GPU>()(d, col, row, V, V);
+    } else
+    {
+        matrixTranspose_op<double, psi::DEVICE_GPU>()(d, col, col, (std::complex<double>*)A_eigenvectors, (std::complex<double>*)A_eigenvectors);
+
+        matrixSetToAnother<double, psi::DEVICE_GPU>()(d, col, (std::complex<double>*)A_eigenvectors, col, V, row);
+    }
+    
 
     int info_gpu;
     checkCudaErrors(cudaMemcpy(&info_gpu, devInfo, sizeof(int), cudaMemcpyDeviceToHost));
