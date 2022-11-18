@@ -17,9 +17,25 @@ const double* ElecState::getRho(int spin) const
     return &(this->charge->rho[spin][0]);
 }
 
+void ElecState::fixed_weights(const double * const ocp_kb)
+{
+    for (int ik = 0; ik < this->wg.nr; ik++)
+    {
+        for (int ib = 0; ib < this->wg.nc; ib++)
+        {
+            this->wg(ik, ib) = ocp_kb[ik * this->wg.nc + ib];
+        }
+    }
+    this->skip_weights = true;
+}
+
 void ElecState::calculate_weights()
 {
     ModuleBase::TITLE("ElecState", "calculate_weights");
+    if(this->skip_weights)
+    {
+        return;
+    }
 
     // for test
     //	std::cout << " gaussian_broadening = " << use_gaussian_broadening << std::endl;

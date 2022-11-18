@@ -62,6 +62,8 @@ class ElecState
 
     // calculate wg from ekb
     virtual void calculate_weights();
+    // use occupied weights from INPUT and skip calculate_weights
+    void fixed_weights(const double * const ocp_kb);
 
     virtual void print_psi(const psi::Psi<double>& psi_in)
     {
@@ -100,6 +102,9 @@ class ElecState
   protected:
     // calculate ebands for all k points and all occupied bands
     void calEBand();
+
+  private:
+    bool skip_weights = false;
 };
 
 } // namespace elecstate

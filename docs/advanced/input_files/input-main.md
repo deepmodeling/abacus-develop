@@ -1010,7 +1010,7 @@ This part of variables are used to control the calculation of DOS.
 
 - **Type**: Real
 - **Description**: controls the step size in writing DOS (in eV).
-- **Default**: 0.1
+- **Default**: 0.01
 
 ### dos_sigma
 
@@ -1910,7 +1910,10 @@ This part of variables are used to control berry phase and wannier90 interfacae 
 ### ocp
 
 - **Type**: Boolean
-- **Description**: option for choose whether calcualting constrained DFT or not. Only used for TDDFT.
+- **Description**: option for choose whether calcualting constrained DFT or not. 
+  - For PW and LCAO code. if set to 1, occupations of bands will be setting of "ocp_set".
+  - For TDDFT in LCAO code. if set to 1, occupations will be constrained since second ionic step.   
+  - For OFDFT, this feature can't be used.
 - **Default**:0
 
 ### ocp_set

@@ -184,6 +184,12 @@ void ESolver_KS_LCAO::Init(Input& inp, UnitCell& ucell)
         GlobalC::ld.load_model(INPUT.deepks_model);
     }
 #endif
+
+    //Fix pelec->wg by ocp_kb
+    if(GlobalV::ocp)
+    {
+        this->pelec->fixed_weights(GlobalV::ocp_kb.data());
+    }
 }
 
 void ESolver_KS_LCAO::cal_Energy(double& etot)
