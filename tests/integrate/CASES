@@ -134,6 +134,7 @@
 212_NO_wfc_ienvelope
 213_NO_mulliken
 215_NO_sol_H2
+216_NO_scan_Si2
 220_NO_KP_MD_MSST
 220_NO_KP_MD_NHC
 #230_NO_KP_MD_TD
@@ -167,6 +168,7 @@
 313_NO_GO_mulliken
 314_NO_GO_dm_out
 315_NO_sol_H2O
+316_NO_scan_Si2
 320_NO_GO_MD_MSST
 320_NO_GO_MD_NHC
 345_NO_GO_BS
