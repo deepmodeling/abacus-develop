@@ -1139,7 +1139,7 @@ void Charge::cal_nelec(void)
     //std::cout << "nbands(GlobalC::ucell) = " <<GlobalV::NBANDS <<std::endl;
 	if(GlobalV::NBANDS==occupied_bands)
 	{
-		if( Occupy::gauss() || Occupy::tetra() )
+		if( Occupy::gauss())
 		{
 			ModuleBase::WARNING_QUIT("UnitCell::cal_nelec","for smearing, num. of bands > num. of occupied bands");
 		}

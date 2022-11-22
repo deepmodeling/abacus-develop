@@ -17,7 +17,6 @@ Occupy::~Occupy(){}
 bool Occupy::use_gaussian_broadening = false;
 int Occupy::gaussian_type;
 double Occupy::gaussian_parameter;
-bool Occupy::use_tetrahedron_method = false;
 bool Occupy::fixed_occupations = false;
 
 
@@ -25,7 +24,6 @@ void Occupy::decision(const std::string &name,const std::string &smearing_method
 {
 	ModuleBase::TITLE("Occupy","decision");
     use_gaussian_broadening = false;
-    use_tetrahedron_method = false;
     fixed_occupations = false;
 
     gaussian_type = 0;
@@ -87,7 +85,7 @@ void Occupy::decision(const std::string &name,const std::string &smearing_method
     }
     else if (name == "tetrahedra")
     {
-        use_tetrahedron_method = true;
+        ModuleBase::WARNING_QUIT("occupy","not implemented yet!");
     }
     else if (name == "from_input")
     {

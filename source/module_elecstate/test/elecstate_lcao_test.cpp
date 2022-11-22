@@ -98,7 +98,6 @@ namespace WF_Local
 //mock the unrelated functions in charge.cpp
 #include "src_pw/occupy.h"
 bool Occupy::use_gaussian_broadening = false;
-bool Occupy::use_tetrahedron_method = false;
 double Magnetism::get_nelup(void) {return 0;}
 double Magnetism::get_neldw(void) {return 0;}
 #ifdef __MPI
