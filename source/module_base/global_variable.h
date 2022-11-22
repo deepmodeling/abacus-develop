@@ -29,6 +29,7 @@ extern double PSEUDORCUT;
 extern bool PSEUDO_MESH;
 
 extern std::string CALCULATION; // 2 "scf";"nscf" ;"symmetry"
+extern std::string ESOLVER_TYPE;
 extern int EFIELD_FLAG; // 5 add electric field
 extern int DIP_COR_FLAG; // 7 add dipole correction
 extern bool GATE_FLAG;     // add gate field
@@ -52,6 +53,11 @@ extern std::string RELAX_METHOD;
 extern std::string OUT_LEVEL;
 extern int OUT_FREQ_ELEC;
 extern int OUT_FREQ_ION;
+
+extern double relax_scale_force;
+extern bool relax_new;
+
+extern bool fixed_atoms;
 
 extern int RELAX_NMAX; // 8.3
 extern int SCF_NMAX; // 8.4
@@ -163,6 +169,7 @@ extern std::string global_matrix_dir; // liuyu add 2022-09-19 for HS matrix outp
 extern std::ofstream ofs_running;
 extern std::ofstream ofs_warning;
 extern std::ofstream ofs_info;
+extern std::ofstream ofs_device;
 
 //==========================================================
 // EXPLAIN : test level for each class
@@ -260,6 +267,17 @@ extern bool of_full_pw;     // If set to 1, ecut will be ignored while collectin
 extern int of_full_pw_dim;  // If of_full_pw = 1, the dimention of FFT will be testricted to be (0) either odd or even; (1) odd only; (2) even only.
 extern bool of_read_kernel; // If set to 1, the kernel of WT KEDF will be filled from file of_kernel_file, not from formula. Only usable for WT KEDF.
 extern std::string of_kernel_file; // The name of WT kernel file.
+
+extern std::string chg_extrap;
+extern int out_pot;
+
+extern std::string init_chg; //  output charge if out_chg > 0, and output every "out_chg" elec step.
+extern int out_chg;
+
+//Note : this is different from the capitalized NELEC
+//NELEC gives the total charge of the system
+//while nelec is the total number of valence electrons 
+extern double nelec;
 
 } // namespace GlobalV
 #endif

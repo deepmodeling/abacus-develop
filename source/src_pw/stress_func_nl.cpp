@@ -5,7 +5,7 @@
 #include "global.h"
 
 //calculate the nonlocal pseudopotential stress in PW
-void Stress_Func::stress_nl(ModuleBase::matrix& sigma, const psi::Psi<complex<double>>* psi_in)
+void Stress_Func::stress_nl(ModuleBase::matrix& sigma, const ModuleBase::matrix& wg, const psi::Psi<complex<double>>* psi_in)
 {
 	ModuleBase::TITLE("Stress_Func","stres_nl");
 	ModuleBase::timer::tick("Stress_Func","stres_nl");
@@ -66,7 +66,7 @@ void Stress_Func::stress_nl(ModuleBase::matrix& sigma, const psi::Psi<complex<do
         ///only occupied band should be calculated.
         ///
         int nbands_occ = GlobalV::NBANDS;
-        while(GlobalC::wf.wg(ik, nbands_occ-1) < ModuleBase::threshold_wg)
+        while(wg(ik, nbands_occ-1) < ModuleBase::threshold_wg)
         {
             nbands_occ--;
         }
@@ -181,12 +181,12 @@ void Stress_Func::stress_nl(ModuleBase::matrix& sigma, const psi::Psi<complex<do
 				//              GlobalC::ucell.nat);
 				for (int ib=0; ib<nbands_occ; ib++)
 				{
-					double fac = GlobalC::wf.wg(ik, ib) * 1.0;
+					double fac = wg(ik, ib) * 1.0;
 					int iat = 0;
 					int sum = 0;
 					for (int it=0; it<GlobalC::ucell.ntype; it++)
 					{
-						const int Nprojs = GlobalC::ucell.atoms[it].nh;
+						const int Nprojs = GlobalC::ucell.atoms[it].ncpp.nh;
 						for (int ia=0; ia<GlobalC::ucell.atoms[it].na; ia++)
 						{
 							for (int ip1=0; ip1<Nprojs; ip1++)
@@ -295,8 +295,8 @@ void Stress_Func::get_dvnl1
 	{
 		if(GlobalV::test_pp>1) ModuleBase::GlobalFunc::OUT("it",it);
 		// calculate beta in G-space using an interpolation table
-		const int nbeta = GlobalC::ucell.atoms[it].nbeta;
-		const int nh = GlobalC::ucell.atoms[it].nh;
+		const int nbeta = GlobalC::ucell.atoms[it].ncpp.nbeta;
+		const int nh = GlobalC::ucell.atoms[it].ncpp.nh;
 
 		if(GlobalV::test_pp>1) ModuleBase::GlobalFunc::OUT("nbeta",nbeta);
 
@@ -386,8 +386,8 @@ void Stress_Func::get_dvnl2(ModuleBase::ComplexMatrix &vkb,
 	{
 		if(GlobalV::test_pp>1) ModuleBase::GlobalFunc::OUT("it",it);
 		// calculate beta in G-space using an interpolation table
-		const int nbeta = GlobalC::ucell.atoms[it].nbeta;
-		const int nh = GlobalC::ucell.atoms[it].nh;
+		const int nbeta = GlobalC::ucell.atoms[it].ncpp.nbeta;
+		const int nh = GlobalC::ucell.atoms[it].ncpp.nh;
 
 		if(GlobalV::test_pp>1) ModuleBase::GlobalFunc::OUT("nbeta",nbeta);
 

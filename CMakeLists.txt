@@ -23,6 +23,7 @@ option(GENERATE_TEST_REPORTS "Enable test report generation" OFF)
 option(INFO "Enable gathering of math library information" OFF)
 option(ENABLE_COVERAGE "Enable coverage build." OFF)
 option(ENABLE_LIBRI "Enable EXX with LibRI." OFF)
+option(USE_ELPA "Enable ELPA" ON)
 
 if(ENABLE_LCAO)
   set(ABACUS_BIN_NAME abacus)
@@ -34,11 +35,11 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
 if(ENABLE_COVERAGE)
   find_package(codecov)
-  if(NOT codecov)
+  if(NOT codecov_FOUND)
     include(FetchContent)
     FetchContent_Declare(
       cmakecodecov
-      URL https://github.com/RWTH-HPC/CMake-codecov/archive/refs/heads/master.zip
+      URL https://github.com/baixiaokuang/CMake-codecov/archive/refs/heads/master.zip
     )
     FetchContent_Populate(cmakecodecov)
     list(APPEND CMAKE_MODULE_PATH ${cmakecodecov_SOURCE_DIR}/cmake)
@@ -86,10 +87,13 @@ if(ENABLE_LCAO)
   find_package(Cereal REQUIRED)
   include_directories(${CEREAL_INCLUDE_DIR})
   add_compile_definitions(USE_CEREAL_SERIALIZATION)
-  find_package(ELPA REQUIRED)
-  include_directories(${ELPA_INCLUDE_DIR})
-  target_link_libraries(${ABACUS_BIN_NAME} ELPA::ELPA)
   add_compile_definitions(__LCAO)
+  if (USE_ELPA)
+    find_package(ELPA REQUIRED)
+    include_directories(${ELPA_INCLUDE_DIR})
+    target_link_libraries(${ABACUS_BIN_NAME} ELPA::ELPA)
+    add_compile_definitions(__ELPA)
+  endif()
 else()
   set(ENABLE_DEEPKS OFF)
 endif()
@@ -164,6 +168,9 @@ if(USE_CUDA OR USE_CUSOLVER_LCAO)
   if (USE_CUDA)
     add_compile_definitions(__CUDA)
     add_compile_definitions(__UT_USE_CUDA)
+    if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+      set(CMAKE_CUDA_FLAGS ${CMAKE_CUDA_FLAGS} "-g -G")
+    endif()
   endif()
   if (USE_CUSOLVER_LCAO)
     add_compile_definitions(__CUSOLVER_LCAO)
@@ -415,6 +422,7 @@ target_link_libraries(${ABACUS_BIN_NAME}
     hamilt
     psi
     esolver
+    vdw
 )
 
 if(ENABLE_LCAO)
@@ -424,8 +432,13 @@ if(ENABLE_LCAO)
       gint
       mrrr
       pdiag
-      genelpa
+      rpa
   )
+  if (USE_ELPA)
+    target_link_libraries(${ABACUS_BIN_NAME}
+      genelpa
+    )
+  endif ()
 endif()
 
 if (ENABLE_LIBRI)
@@ -434,6 +447,11 @@ if (ENABLE_LIBRI)
           libri
           rpa)
 endif()
+
+install(PROGRAMS ${ABACUS_BIN_PATH}
+    TYPE BIN
+    #DESTINATION ${CMAKE_INSTALL_BINDIR}
+)
 
 if(ENABLE_COVERAGE)
   coverage_evaluate()

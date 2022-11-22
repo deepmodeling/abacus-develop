@@ -41,7 +41,7 @@ void Stochastic_Iter::init(const int dim, int* nchip_in, const int method_in, St
 {
     p_che = new ModuleBase::Chebyshev<double>(INPUT.nche_sto);
     nchip = nchip_in;
-    targetne = GlobalC::CHR.nelec;
+    targetne = GlobalV::nelec;
     stohchi.init();
     delete[] spolyv;
     const int norder = p_che->norder;
@@ -225,13 +225,13 @@ void Stochastic_Iter::itermu(const int iter, elecstate::ElecState* pes)
     if (iter == 1)
     {
         dmu = 2;
-        th_ne = 0.1 * GlobalV::SCF_THR * GlobalC::CHR.nelec;
+        th_ne = 0.1 * GlobalV::SCF_THR * GlobalV::nelec;
         // std::cout<<"th_ne "<<th_ne<<std::endl;
     }
     else
     {
         dmu = 0.1;
-        th_ne = 1e-2 * GlobalV::SCF_THR * GlobalC::CHR.nelec;
+        th_ne = 1e-2 * GlobalV::SCF_THR * GlobalV::nelec;
         th_ne = std::min(th_ne, 1e-5);
     }
     this->stofunc.mu = mu0 - dmu;
@@ -398,14 +398,30 @@ void Stochastic_Iter::calHsqrtchi(Stochastic_WF& stowf)
     for(int ik = 0; ik < GlobalC::kv.nks; ++ik)
     {
         //init k
-        if(GlobalC::kv.nks > 1) GlobalC::hm.hpw.init_k(ik);
+        if(GlobalC::kv.nks > 1)
+        {
+
+            if(GlobalV::NSPIN==2)
+            {
+                GlobalV::CURRENT_SPIN = GlobalC::kv.isk[ik];
+            }
+
+            if(GlobalC::ppcell.nkb > 0 && (GlobalV::BASIS_TYPE=="pw" || GlobalV::BASIS_TYPE=="lcao_in_pw")) //xiaohui add 2013-09-02. Attention...
+            {
+                GlobalC::ppcell.getvnl(ik, GlobalC::ppcell.vkb);
+            }
+
+            GlobalC::wf.npw = GlobalC::kv.ngk[ik];
+            GlobalV::CURRENT_K = ik;
+
+        }
         stohchi.current_ik = ik;
 
         this->calTnchi_ik(ik, stowf);
     }
 }
 
-void Stochastic_Iter::sum_stoband(Stochastic_WF& stowf, elecstate::ElecState* pes,hamilt::Hamilt* pHamilt)
+void Stochastic_Iter::sum_stoband(Stochastic_WF& stowf, elecstate::ElecState* pes,hamilt::Hamilt<double>* pHamilt)
 {  
     ModuleBase::TITLE("Stochastic_Iter","sum_stoband");
     ModuleBase::timer::tick("Stochastic_Iter","sum_stoband");

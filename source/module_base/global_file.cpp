@@ -86,7 +86,7 @@ void ModuleBase::Global_File::make_dir_out(
 	MPI_Barrier(MPI_COMM_WORLD);
 #endif
 
-    if(calculation == "md" || calculation == "sto-md" || calculation == "of-md")
+    if(calculation == "md")
     {
         int make_dir_stru = 0;
         std::string command1 =  "test -d " + GlobalV::global_stru_dir + " || mkdir " + GlobalV::global_stru_dir;
@@ -125,7 +125,7 @@ void ModuleBase::Global_File::make_dir_out(
     }
 
     // make dir for HS matrix output in md calculation
-    if(out_hs && (calculation == "md" || calculation == "sto-md" || calculation == "of-md"))
+    if(out_hs && calculation == "md")
     {
         int make_dir_matrix = 0;
         std::string command1 =  "test -d " + GlobalV::global_matrix_dir + " || mkdir " + GlobalV::global_matrix_dir;
@@ -170,6 +170,9 @@ void ModuleBase::Global_File::make_dir_out(
     {
 	    ss << "running_" << calculation << "_" << rank + 1;
 	    open_log(GlobalV::ofs_running, ss.str(), calculation, restart);
+        #if defined(__CUDA) || defined(__ROCM)
+        open_log(GlobalV::ofs_device, "device" + std::to_string(rank), calculation, restart);
+        #endif
     }
     else
     {
@@ -177,6 +180,9 @@ void ModuleBase::Global_File::make_dir_out(
 	    {
 		    ss << "running_" << calculation;
 		    open_log(GlobalV::ofs_running, ss.str(), calculation, restart);
+            #if defined(__CUDA) || defined(__ROCM)
+            open_log(GlobalV::ofs_device, "device", calculation, restart);
+            #endif
 	    }
     }
 
@@ -214,7 +220,7 @@ void ModuleBase::Global_File::open_log(std::ofstream &ofs, const std::string &fn
     std::stringstream ss;
     ss << GlobalV::global_out_dir << fn << ".log";
 
-    if((calculation == "md" || calculation == "sto-md" || calculation == "of-md") && restart)
+    if(calculation == "md" && restart)
     {
         ofs.open( ss.str(), ios::app );
     }
@@ -254,6 +260,9 @@ void ModuleBase::Global_File::close_all_log(const int rank, const bool out_alllo
 	{
     	ss << "running_" << GlobalV::CALCULATION << "_cpu" << rank << ".log";
     	close_log(GlobalV::ofs_running,ss.str());
+        #if defined(__CUDA) || defined(__ROCM)
+        close_log(GlobalV::ofs_device, "device" + std::to_string(rank));
+        #endif
 	}
 	else
 	{
@@ -261,6 +270,9 @@ void ModuleBase::Global_File::close_all_log(const int rank, const bool out_alllo
 		{
     		ss << "running_" << GlobalV::CALCULATION << ".log";
     		close_log(GlobalV::ofs_running,ss.str());
+            #if defined(__CUDA) || defined(__ROCM)
+            close_log(GlobalV::ofs_device, "device");
+            #endif
 		}
 	}
 

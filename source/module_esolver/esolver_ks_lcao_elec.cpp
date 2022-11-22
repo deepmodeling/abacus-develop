@@ -2,7 +2,6 @@
 #include "src_lcao/LCAO_diago.h"
 #include "../src_pw/global.h"
 #include "../src_pw/symmetry_rho.h"
-#include "input_update.h"
 #include "../src_io/chi0_hilbert.h"
 #include "src_lcao/LCAO_evolve.h"
 #include "src_lcao/dftu.h"
@@ -16,13 +15,13 @@
 #include "../src_ri/exx_opt_orb.h"
 #include "../src_io/berryphase.h"
 #include "../src_io/to_wannier90.h"
-#include "../src_pw/vdwd2.h"
-#include "../src_pw/vdwd3.h"
 #include "../module_base/timer.h"
 #ifdef __DEEPKS
 #include "../module_deepks/LCAO_deepks.h"
 #endif
 #include "../src_pw/H_Ewald_pw.h"
+#include "module_vdw/vdw.h"
+#include "../module_relax/relax_old/variable_cell.h"    // liuyu 2022-11-07
 
 namespace ModuleESolver
 {
@@ -145,7 +144,8 @@ namespace ModuleESolver
                 this->p_hamilt = new hamilt::HamiltLCAO<double>(&(this->UHM.GG),
                                                             &(this->UHM.genH),
                                                             &(this->LM),
-                                                            &(this->LOC));
+                                                            &(this->LOC),
+                                                            this->pelec->pot);
             }
             // multi_k case
             else
@@ -153,7 +153,8 @@ namespace ModuleESolver
                 this->p_hamilt = new hamilt::HamiltLCAO<std::complex<double>>(&(this->UHM.GK),
                                                                         &(this->UHM.genH),
                                                                         &(this->LM),
-                                                                        &(this->LOC));
+                                                                        &(this->LOC),
+                                                                        this->pelec->pot);
             }
         }
 
@@ -161,7 +162,7 @@ namespace ModuleESolver
         this->UHM.grid_prepare();
 
         // init density kernel and wave functions.
-        this->LOC.allocate_dm_wfc(GlobalC::GridT.lgd, this->LOWF, this->psid, this->psi);
+        this->LOC.allocate_dm_wfc(GlobalC::GridT.lgd, this->pelec, this->LOWF, this->psid, this->psi);
 
         //======================================
         // do the charge extrapolation before the density matrix is regenerated.
@@ -174,11 +175,11 @@ namespace ModuleESolver
         // REALLOCATE DENSITY MATRIX FIRST, THEN READ IN DENSITY MATRIX,
         // AND USE DENSITY MATRIX TO DO RHO GlobalV::CALCULATION.-- mohan 2013-03-31
         //======================================
-        if (GlobalC::pot.chg_extrap == "dm" && istep > 1)//xiaohui modify 2015-02-01
+        if (GlobalV::chg_extrap == "dm" && istep > 1)//xiaohui modify 2015-02-01
         {
             for (int is = 0; is < GlobalV::NSPIN; is++)
             {
-                ModuleBase::GlobalFunc::ZEROS(GlobalC::CHR.rho[is], GlobalC::rhopw->nrxx);
+                ModuleBase::GlobalFunc::ZEROS(pelec->charge->rho[is], GlobalC::rhopw->nrxx);
                 std::stringstream ssd;
                 ssd << GlobalV::global_out_dir << "SPIN" << is + 1 << "_DM";
                 // reading density matrix,
@@ -188,38 +189,35 @@ namespace ModuleESolver
             // calculate the charge density
             if (GlobalV::GAMMA_ONLY_LOCAL)
             {
-                Gint_inout inout(this->LOC.DM, (Charge*)(&GlobalC::CHR), Gint_Tools::job_type::rho);
+                Gint_inout inout(this->LOC.DM, pelec->charge, Gint_Tools::job_type::rho);
                 this->UHM.GG.cal_gint(&inout);
                 if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type()==5)
                 {
                     for(int is=0; is<GlobalV::NSPIN; is++)
                     {
-                        ModuleBase::GlobalFunc::ZEROS(GlobalC::CHR.kin_r[0], GlobalC::rhopw->nrxx);
+                        ModuleBase::GlobalFunc::ZEROS(pelec->charge->kin_r[0], GlobalC::rhopw->nrxx);
                     }
-                    Gint_inout inout1(this->LOC.DM, (Charge*)(&GlobalC::CHR), Gint_Tools::job_type::tau);
+                    Gint_inout inout1(this->LOC.DM, pelec->charge, Gint_Tools::job_type::tau);
                     this->UHM.GG.cal_gint(&inout1);
                 }
             }
             else
             {
-                Gint_inout inout(this->LOC.DM_R, (Charge*)(&GlobalC::CHR), Gint_Tools::job_type::rho);
+                Gint_inout inout(this->LOC.DM_R, pelec->charge, Gint_Tools::job_type::rho);
                 this->UHM.GK.cal_gint(&inout);
                 if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type()==5)
                 {
                     for(int is=0; is<GlobalV::NSPIN; is++)
                     {
-                        ModuleBase::GlobalFunc::ZEROS(GlobalC::CHR.kin_r[0], GlobalC::rhopw->nrxx);
+                        ModuleBase::GlobalFunc::ZEROS(pelec->charge->kin_r[0], GlobalC::rhopw->nrxx);
                     }
-                    Gint_inout inout1(this->LOC.DM_R, (Charge*)(&GlobalC::CHR), Gint_Tools::job_type::tau);
+                    Gint_inout inout1(this->LOC.DM_R, pelec->charge, Gint_Tools::job_type::tau);
                     this->UHM.GK.cal_gint(&inout1);
                 }
             }
 
             // renormalize the charge density
-            GlobalC::CHR.renormalize_rho();
-
-            // initialize the potential
-            GlobalC::pot.init_pot(istep - 1, GlobalC::sf.strucFac);
+            pelec->charge->renormalize_rho();
         }
 
 #ifdef __DEEPKS
@@ -258,53 +256,54 @@ namespace ModuleESolver
         ModuleBase::TITLE("ESolver_KS_LCAO", "beforescf");
         ModuleBase::timer::tick("ESolver_KS_LCAO", "beforescf");
 
+        // Temporary, md and relax will merge later   liuyu add 2022-11-07
+        if(GlobalV::CALCULATION == "md" && istep)
+        {
+            CE.update_istep();
+            CE.save_pos_next(GlobalC::ucell);
+            CE.extrapolate_charge(pelec->charge);
+
+            if(GlobalC::ucell.cell_parameter_updated)
+            {
+                Variable_Cell::init_after_vc();
+            }
+        }
+
         if(GlobalV::CALCULATION=="relax" || GlobalV::CALCULATION=="cell-relax")
         {
             if(GlobalC::ucell.ionic_position_updated)
             {
                 GlobalV::ofs_running << " Setup the extrapolated charge." << std::endl;
                 // charge extrapolation if istep>0.
-                CE.update_istep(istep);
+                CE.update_istep();
                 CE.update_all_pos(GlobalC::ucell);
-                CE.extrapolate_charge();
+                CE.extrapolate_charge(pelec->charge);
                 CE.save_pos_next(GlobalC::ucell);
 
                 GlobalV::ofs_running << " Setup the Vl+Vh+Vxc according to new structure factor and new charge." << std::endl;
                 // calculate the new potential accordint to
                 // the new charge density.
-                GlobalC::pot.init_pot( istep-1, GlobalC::sf.strucFac );
             }
         }
 
         //----------------------------------------------------------
         // about vdw, jiyy add vdwd3 and linpz add vdwd2
         //----------------------------------------------------------
-        if (INPUT.vdw_method == "d2")
+        auto vdw_solver = vdw::make_vdw(GlobalC::ucell, INPUT);
+        if (vdw_solver != nullptr)
         {
-            // setup vdwd2 parameters
-            GlobalC::vdwd2_para.initial_parameters(INPUT);
-            GlobalC::vdwd2_para.initset(GlobalC::ucell);
-        }
-        if (INPUT.vdw_method == "d3_0" || INPUT.vdw_method == "d3_bj")
-        {
-            GlobalC::vdwd3_para.initial_parameters(INPUT);
-        }
-        // Peize Lin add 2014.04.04, update 2021.03.09
-        if (GlobalC::vdwd2_para.flag_vdwd2)
-        {
-            Vdwd2 vdwd2(GlobalC::ucell, GlobalC::vdwd2_para);
-            vdwd2.cal_energy();
-            GlobalC::en.evdw = vdwd2.get_energy();
-        }
-        // jiyy add 2019-05-18, update 2021.05.02
-        else if (GlobalC::vdwd3_para.flag_vdwd3)
-        {
-            Vdwd3 vdwd3(GlobalC::ucell, GlobalC::vdwd3_para);
-            vdwd3.cal_energy();
-            GlobalC::en.evdw = vdwd3.get_energy();
+            GlobalC::en.evdw = vdw_solver->get_energy();
         }
         
         this->beforesolver(istep);
+        this->pelec->init_scf( istep, GlobalC::sf.strucFac );
+        // the electron charge density should be symmetrized,
+        // here is the initialization
+        Symmetry_rho srho;
+        for (int is = 0; is < GlobalV::NSPIN; is++)
+        {
+            srho.begin(is, *(pelec->charge), GlobalC::rhopw, GlobalC::Pgrid, GlobalC::symm);
+        }
 //Peize Lin add 2016-12-03
 #ifdef __EXX
 #ifdef __MPI
@@ -332,14 +331,6 @@ namespace ModuleESolver
         if(!GlobalV::test_skip_ewald)
         {
             H_Ewald_pw::compute_ewald(GlobalC::ucell, GlobalC::rhopw);
-        }
-
-        //2. the electron charge density should be symmetrized,
-        // here is the initialization
-        Symmetry_rho srho;
-        for (int is = 0; is < GlobalV::NSPIN; is++)
-        {
-            srho.begin(is, GlobalC::CHR, GlobalC::rhopw, GlobalC::Pgrid, GlobalC::symm);
         }
 
         p_hamilt->non_first_scf = istep;
@@ -389,6 +380,8 @@ namespace ModuleESolver
         }
 
         this->beforesolver(istep);
+        //pelec should be initialized before these calculations
+        this->pelec->init_scf( istep, GlobalC::sf.strucFac );
         // self consistent calculations for electronic ground state
         if (GlobalV::CALCULATION == "nscf")
         {
@@ -397,7 +390,7 @@ namespace ModuleESolver
         else if (GlobalV::CALCULATION == "istate")
         {
             IState_Charge ISC(this->psid, this->LOC);
-            ISC.begin(this->UHM.GG);
+            ISC.begin(this->UHM.GG, this->pelec);
         }
         else if (GlobalV::CALCULATION == "ienvelope")
         {
@@ -489,13 +482,6 @@ namespace ModuleESolver
             {
                 this->phsol->solve(this->p_hamilt, this->psid[0], this->pelec, GlobalV::KS_SOLVER, true);
             }
-            for(int ik=0; ik<this->pelec->ekb.nr; ++ik)
-            {
-                for(int ib=0; ib<this->pelec->ekb.nc; ++ib)
-                {
-                    GlobalC::wf.ekb[ik][ib] = this->pelec->ekb(ik, ib);
-                }
-            }
         }
         else
         {
@@ -530,8 +516,8 @@ namespace ModuleESolver
             {
                 GlobalV::ofs_running << " spin" << GlobalC::kv.isk[ik] + 1
                     << "final_state " << ib + 1 << " "
-                    << GlobalC::wf.ekb[ik][ib] * ModuleBase::Ry_to_eV
-                    << " " << GlobalC::wf.wg(ik, ib) * GlobalC::kv.nks << std::endl;
+                    << this->pelec->ekb(ik, ib) * ModuleBase::Ry_to_eV
+                    << " " << this->pelec->wg(ik, ib) * GlobalC::kv.nks << std::endl;
             }
             GlobalV::ofs_running << std::endl;
         }
@@ -540,7 +526,7 @@ namespace ModuleESolver
         if (GlobalV::CALCULATION == "nscf" && INPUT.towannier90)
         {
             toWannier90 myWannier(GlobalC::kv.nkstot, GlobalC::ucell.G, this->LOWF.wfc_k_grid);
-            myWannier.init_wannier(nullptr);
+            myWannier.init_wannier(this->pelec->ekb, nullptr);
         }
 
         // add by jingan

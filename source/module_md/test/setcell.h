@@ -5,14 +5,14 @@
 #define SETCELL_H
 
 #include "input.h"
-#include "module_cell/unitcell_pseudo.h"
+#include "module_cell/unitcell.h"
 #include "module_neighbor/sltk_atom_arrange.h"
 #include "module_neighbor/sltk_grid_driver.h"
 
 class Setcell
 {
 public:
-    static void setupcell(UnitCell_pseudo &ucell)
+    static void setupcell(UnitCell &ucell)
     {
         ucell.ntype = 1;
 
@@ -95,7 +95,7 @@ public:
         ucell.set_iat2itia();
     };
 
-    static void neighbor(Grid_Driver &grid_neigh, UnitCell_pseudo &ucell)
+    static void neighbor(Grid_Driver &grid_neigh, UnitCell &ucell)
     {
         GlobalV::SEARCH_RADIUS = 8.5 * ModuleBase::ANGSTROM_AU;
         INPUT.mdp.lj_rcut = 8.5 * ModuleBase::ANGSTROM_AU;
@@ -114,7 +114,7 @@ public:
         INPUT.mdp.md_dt = 1;
         INPUT.mdp.md_tfirst = INPUT.mdp.md_tlast = 300;
 
-        INPUT.mdp.md_ensolver = "LJ";
+        GlobalV::ESOLVER_TYPE = "lj";
         INPUT.mdp.lj_rcut = 8.5;
         INPUT.mdp.lj_epsilon = 0.01032;
         INPUT.mdp.lj_sigma = 3.405;
@@ -126,9 +126,12 @@ public:
         INPUT.mdp.msst_tscale = 0.01;
 
         INPUT.mdp.md_tfreq = 1;
-        INPUT.mdp.md_mnhc = 4;
+        INPUT.mdp.md_tchain = 4;
 
         INPUT.mdp.md_damp = 1;
+
+        INPUT.mdp.md_nraise = 2;
+        INPUT.mdp.md_tolerance = 0;
     };
 };
 

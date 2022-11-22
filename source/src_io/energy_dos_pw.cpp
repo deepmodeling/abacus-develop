@@ -2,7 +2,9 @@
 #include "../src_pw/global.h"
 #include "../src_pw/energy.h"
 #include "../src_parallel/parallel_reduce.h"
-void energy::print_occ()
+#include "module_elecstate/elecstate.h"
+
+void energy::print_occ(const elecstate::ElecState* pelec)
 {
 	
 		std::stringstream ss;
@@ -36,7 +38,7 @@ void energy::print_occ()
 						<<std::setw(25)<<"("<<GlobalC::kv.kvec_d[ik].x<<" "<<GlobalC::kv.kvec_d[ik].y<<" "<<GlobalC::kv.kvec_d[ik].z<<")"<<std::endl;
 						for(int ib=0;ib<GlobalV::NBANDS;ib++)
 						{
-							ofsi2<<std::setw(6)<<ib+1<<std::setw(25)<<GlobalC::wf.ekb[ik][ib]* ModuleBase::Ry_to_eV<<std::setw(25)<<GlobalC::wf.wg(ik,ib)<<std::endl;
+							ofsi2<<std::setw(6)<<ib+1<<std::setw(25)<<pelec->ekb(ik,ib)* ModuleBase::Ry_to_eV<<std::setw(25)<<pelec->wg(ik,ib)<<std::endl;
 						}
 						ofsi2 <<std::endl;
 						ofsi2 <<std::endl;
@@ -61,10 +63,10 @@ void energy::print_occ()
 						for(int ib=0;ib<GlobalV::NBANDS;ib++)
 						{
 							ofsi2<<std::setw(6)<<ib+1
-							<<std::setw(25)<<GlobalC::wf.ekb[ik][ib]* ModuleBase::Ry_to_eV
-							<<std::setw(25)<<GlobalC::wf.wg(ik,ib)
-							<<std::setw(25)<<GlobalC::wf.ekb[(ik+GlobalC::kv.nks/2)][ib]* ModuleBase::Ry_to_eV
-							<<std::setw(25)<<GlobalC::wf.wg(ik+GlobalC::kv.nks/2,ib)<<std::endl;
+							<<std::setw(25)<<pelec->ekb(ik, ib)* ModuleBase::Ry_to_eV
+							<<std::setw(25)<<pelec->wg(ik,ib)
+							<<std::setw(25)<<pelec->ekb((ik+GlobalC::kv.nks/2), ib)* ModuleBase::Ry_to_eV
+							<<std::setw(25)<<pelec->wg(ik+GlobalC::kv.nks/2,ib)<<std::endl;
 						}
 						ofsi2 <<std::endl;
 						ofsi2 <<std::endl;
@@ -79,7 +81,7 @@ void energy::print_occ()
 #endif
 }
 
-void energy::perform_dos_pw(void)
+void energy::perform_dos_pw(const elecstate::ElecState* pelec)
 {
 	ModuleBase::TITLE("energy","perform_dos_pw");
 
@@ -104,14 +106,14 @@ void energy::perform_dos_pw(void)
 	if(this->out_dos)
 	{
 //find energy range
-		double emax = GlobalC::wf.ekb[0][0];
-		double emin = GlobalC::wf.ekb[0][0];
+		double emax = pelec->ekb(0, 0);
+		double emin = pelec->ekb(0, 0);
 		for(int ik=0; ik<GlobalC::kv.nks; ++ik)
 		{
 			for(int ib=0; ib<GlobalV::NBANDS; ++ib)
 			{
-				emax = std::max( emax, GlobalC::wf.ekb[ik][ib] );
-				emin = std::min( emin, GlobalC::wf.ekb[ik][ib] );
+				emax = std::max( emax, pelec->ekb(ik, ib) );
+				emin = std::min( emin, pelec->ekb(ik, ib) );
 			}
 		}
 
@@ -161,7 +163,7 @@ void energy::perform_dos_pw(void)
 					 this->dos_edelta_ev, 
 					 emax, 
 					 emin, 
-					 GlobalC::kv.nks, GlobalC::kv.nkstot, GlobalC::kv.wk, GlobalC::wf.wg, GlobalV::NBANDS, GlobalC::wf.ekb );
+					 GlobalC::kv.nks, GlobalC::kv.nkstot, GlobalC::kv.wk, pelec->wg, GlobalV::NBANDS, pelec->ekb );
 	 	}
 
 	}//out_dos=1
@@ -182,7 +184,7 @@ void energy::perform_dos_pw(void)
 			std::stringstream ss2;
 			ss2 << GlobalV::global_out_dir << "BANDS_" << is+1 << ".dat";
 			GlobalV::ofs_running << "\n Output bands in file: " << ss2.str() << std::endl;
-			Dos::nscf_band(is, ss2.str(), nks, GlobalV::NBANDS, this->ef*0, GlobalC::wf.ekb);
+			Dos::nscf_band(is, ss2.str(), nks, GlobalV::NBANDS, this->ef*0, pelec->ekb);
 		}
 
 	}

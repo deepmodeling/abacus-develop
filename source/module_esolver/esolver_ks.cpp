@@ -11,7 +11,7 @@
 //--------------Temporary----------------
 #include "../module_base/global_variable.h"
 #include "../src_pw/global.h"
-#include "../src_pw/charge_broyden.h"
+#include "../src_pw/charge_mixing.h"
 #include "../module_base/timer.h"
 //---------------------------------------
 
@@ -39,16 +39,14 @@ namespace ModuleESolver
     ESolver_KS::~ESolver_KS()
     {
         delete this->pw_wfc;
-        delete this->pelec;
         delete this->p_hamilt;
         delete this->phsol;
     }
 
-    void ESolver_KS::Init(Input& inp, UnitCell_pseudo& ucell)
+    void ESolver_KS::Init(Input& inp, UnitCell& ucell)
     {
         ESolver_FP::Init(inp,ucell);
-        // Yu Liu add 2021-07-03
-        GlobalC::CHR.cal_nelec();
+        chr.cal_nelec();
 
         /* it has been established that that
          xc_func is same for all elements, therefore
@@ -58,19 +56,19 @@ namespace ModuleESolver
         but in "nscf" calculation, there is no need of "two-level" method. */
         if(GlobalV::CALCULATION == "nscf")
         {
-            XC_Functional::set_xc_type(ucell.atoms[0].xc_func);
+            XC_Functional::set_xc_type(ucell.atoms[0].ncpp.xc_func);
         }
-        else if (ucell.atoms[0].xc_func == "HSE" || ucell.atoms[0].xc_func == "PBE0")
+        else if (ucell.atoms[0].ncpp.xc_func == "HSE" || ucell.atoms[0].ncpp.xc_func == "PBE0")
         {
             XC_Functional::set_xc_type("pbe");
         }
-        else if (ucell.atoms[0].xc_func == "SCAN0")
+        else if (ucell.atoms[0].ncpp.xc_func == "SCAN0")
         {
             XC_Functional::set_xc_type("scan");
         }
         else
         {
-            XC_Functional::set_xc_type(ucell.atoms[0].xc_func);
+            XC_Functional::set_xc_type(ucell.atoms[0].ncpp.xc_func);
         }
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "SETUP UNITCELL");
 
@@ -168,10 +166,10 @@ namespace ModuleESolver
         ModuleBase::GlobalFunc::DONE(ofs, "INIT PLANEWAVE");
     }
 
-    void ESolver_KS::Run(const int istep, UnitCell_pseudo& ucell)
+    void ESolver_KS::Run(const int istep, UnitCell& ucell)
     {
         if (!(GlobalV::CALCULATION == "scf" || GlobalV::CALCULATION == "md"
-            || GlobalV::CALCULATION == "relax" || GlobalV::CALCULATION == "cell-relax" || GlobalV::CALCULATION.substr(0,3) == "sto"))
+            || GlobalV::CALCULATION == "relax" || GlobalV::CALCULATION == "cell-relax"))
         {
             this->othercalculation(istep);
         }
@@ -179,8 +177,9 @@ namespace ModuleESolver
         {
             ModuleBase::timer::tick(this->classname, "Run");
 
-            if(this->maxniter > 0)  this->printhead(); //print the headline on the screen.
             this->beforescf(istep); //Something else to do before the iter loop
+            ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT SCF");
+            if(this->maxniter > 0)  this->printhead(); //print the headline on the screen.
 
             bool firstscf = true;
             this->conv_elec = false;
@@ -206,7 +205,7 @@ namespace ModuleESolver
                 {
                     // double drho = this->estate.caldr2(); 
                     // EState should be used after it is constructed.
-                    drho = GlobalC::CHR.get_drho();
+                    drho = GlobalC::CHR_MIX.get_drho(pelec->charge, GlobalV::nelec);
                     double hsolver_error = 0.0;
                     if (firstscf)
                     {
@@ -217,7 +216,7 @@ namespace ModuleESolver
                         {
                             diag_ethr = this->phsol->reset_diagethr(GlobalV::ofs_running, hsolver_error, drho);
                             this->hamilt2density(istep, iter, diag_ethr);
-                            drho = GlobalC::CHR.get_drho();
+                            drho = GlobalC::CHR_MIX.get_drho(pelec->charge, GlobalV::nelec);
                             hsolver_error = this->phsol->cal_hsolerror();
                         }
                     }
@@ -233,13 +232,13 @@ namespace ModuleESolver
                     {
                         //charge mixing
                         //conv_elec = this->estate.mix_rho();
-                        GlobalC::CHR.mix_rho(iter);
+                        GlobalC::CHR_MIX.mix_rho(iter, pelec->charge);
                     }
                 }
 #ifdef __MPI
 		        MPI_Bcast(&drho, 1, MPI_DOUBLE , 0, PARAPW_WORLD);
 		        MPI_Bcast(&this->conv_elec, 1, MPI_DOUBLE , 0, PARAPW_WORLD);
-		        MPI_Bcast(GlobalC::CHR.rho[0], GlobalC::rhopw->nrxx, MPI_DOUBLE, 0, PARAPW_WORLD);
+		        MPI_Bcast(pelec->charge->rho[0], GlobalC::rhopw->nrxx, MPI_DOUBLE, 0, PARAPW_WORLD);
 #endif
 
                 // Hamilt should be used after it is constructed.

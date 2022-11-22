@@ -10,6 +10,7 @@ namespace ModuleESolver
 // If the absolute value of the matrix element is less than or equal to the 'sparse_threshold', it will be ignored.
 void ESolver_KS_LCAO::output_HS_R(
     const int &istep,
+    const ModuleBase::matrix& v_eff,
     const std::string &SR_filename,
     const std::string &HR_filename_up,
     const std::string HR_filename_down,
@@ -37,16 +38,13 @@ void ESolver_KS_LCAO::output_HS_R(
                     GlobalV::CURRENT_SPIN = GlobalC::kv.isk[ik];
                 }
 
-                for(int ir = 0; ir < GlobalC::rhopw->nrxx; ir++)
-                {
-                    GlobalC::pot.vr_eff1[ir] = GlobalC::pot.vr_eff( GlobalV::CURRENT_SPIN, ir);
-                }
+                const double* vr_eff1 = &(v_eff(GlobalV::CURRENT_SPIN, 0));
                     
                 if(!GlobalV::GAMMA_ONLY_LOCAL)
                 {
                     if(GlobalV::VL_IN_H)
                     {
-                        Gint_inout inout(GlobalC::pot.vr_eff1, GlobalV::CURRENT_SPIN, Gint_Tools::job_type::vlocal);
+                        Gint_inout inout(vr_eff1, GlobalV::CURRENT_SPIN, Gint_Tools::job_type::vlocal);
                         this->UHM.GK.cal_gint(&inout);
                     }
                 }

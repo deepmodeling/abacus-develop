@@ -27,7 +27,7 @@ extern "C"
     void Cblacs_pcoord(int icontxt, int pnum, int *prow, int *pcol);
 }
 
-void Gint_Gamma::cal_vlocal(Gint_inout *inout)
+void Gint_Gamma::cal_vlocal(Gint_inout *inout, const bool new_e_iteration)
 {
 	const int max_size = GlobalC::GridT.max_atom;
 	const int lgd = GlobalC::GridT.lgd;
@@ -42,7 +42,7 @@ void Gint_Gamma::cal_vlocal(Gint_inout *inout)
 
         this->cal_gint(inout);
 
-		this->vl_grid_to_2D(lgd,inout->lm[0]);
+		this->vl_grid_to_2D(lgd,inout->lm[0], new_e_iteration);
 
 		if (max_size >0 && lgd > 0) delete[] pvpR_grid;
 	}
@@ -192,11 +192,12 @@ inline int setBufferParameter(
 }
 #endif
 
-void Gint_Gamma::vl_grid_to_2D(const int lgd_now, LCAO_Matrix &lm)
+void Gint_Gamma::vl_grid_to_2D(const int lgd_now, LCAO_Matrix &lm, const bool new_e_iteration)
 {
+    ModuleBase::timer::tick("Gint_Gamma","distri_vl");
     // setup send buffer and receive buffer size
     // OUT(GlobalV::ofs_running, "Start transforming vlocal from grid distribute to 2D block");
-    if(GlobalC::CHR.get_new_e_iteration())
+    if(new_e_iteration)
     {
         ModuleBase::timer::tick("Gint_Gamma","distri_vl_index");
         #ifdef __MPI

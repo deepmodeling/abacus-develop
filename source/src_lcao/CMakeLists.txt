@@ -28,9 +28,6 @@ if(ENABLE_LCAO)
       record_adj.cpp
       dm_2d.cpp
       wavefunc_in_pw.cpp
-  	H_TDDFT_pw.cpp
-      run_md_lcao.cpp
-      dmft.cpp
   )
 
   add_library(

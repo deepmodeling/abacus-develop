@@ -1,18 +1,22 @@
 if (USE_CUDA)
 AddTest(
   TARGET Module_Psi_UTs
-  LIBS ${math_libs}
+  LIBS ${math_libs} base
   SOURCES memory_test.cpp device_test.cpp
-          ../../module_psi/src/memory_psi.cpp
-          ../../module_psi/src/device.cpp
-          ../../module_psi/src/cuda/memory.cu
+          ../src/memory_psi.cpp
+          ../src/device.cpp
+          ../src/cuda/memory.cu
+          ../../src_parallel/parallel_reduce.cpp 
+          ../../src_parallel/parallel_global.cpp 
 )
 else()
 AddTest(
   TARGET Module_Psi_UTs
-  LIBS ${math_libs}
+  LIBS ${math_libs} base
   SOURCES memory_test.cpp device_test.cpp
-          ../../module_psi/src/memory_psi.cpp
-          ../../module_psi/src/device.cpp
+          ../src/memory_psi.cpp
+          ../src/device.cpp
+          ../../src_parallel/parallel_reduce.cpp 
+          ../../src_parallel/parallel_global.cpp 
 )
 endif()

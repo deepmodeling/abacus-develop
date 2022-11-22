@@ -10,7 +10,6 @@
 #include "../src_lcao/LCAO_matrix.h"
 #include "../src_lcao/global_fp.h"
 #include "../src_pdiag/pdiag_double.h"
-#include "../src_pdiag/GenELPA.h"
 #endif
 #include "../module_base/lapack_connector.h"
 #include "../module_base/scalapack_connector.h"
@@ -24,21 +23,21 @@ class Mulliken_Charge
 {
 	public:
 
-	Mulliken_Charge(const psi::Psi<double> *wfc_gamma_in, 
-        const psi::Psi<std::complex<double>> *wfc_k_in);
+	Mulliken_Charge(const psi::Psi<double> *psi_gamma_in, 
+        const psi::Psi<std::complex<double>> *psi_k_in);
 	~Mulliken_Charge();
 
 	double**  DecMulP ;
 	double**  MecMulP ;
 	double***  ADecMulP ;
-    const psi::Psi<double> *wfc_gamma;
-    const psi::Psi<std::complex<double>> *wfc_k;
+    const psi::Psi<double> *psi_gamma;
+    const psi::Psi<std::complex<double>> *psi_k;
 
 	std::complex<double> *mug;
 
-	void cal_mulliken(LCAO_Hamilt &uhm);
+	void cal_mulliken(LCAO_Hamilt &uhm, const ModuleBase::matrix& wg);
 
-	void stdout_mulliken(LCAO_Hamilt &uhm );
+	void stdout_mulliken(LCAO_Hamilt &uhm, const ModuleBase::matrix &wg);
 
 	private:
 

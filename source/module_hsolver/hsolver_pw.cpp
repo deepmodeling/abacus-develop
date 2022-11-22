@@ -2,8 +2,10 @@
 
 #include "diago_cg.h"
 #include "diago_david.h"
+#include "diago_iter_assist.h"
 #include "module_base/tool_quit.h"
 #include "module_base/timer.h"
+#include "module_hamilt/hamilt_pw.h"
 #include "module_elecstate/elecstate_pw.h"
 #include "src_pw/global.h"
 #include <algorithm>
@@ -44,6 +46,11 @@ void HSolverPW::initDiagh()
         {
             pdiagh = new DiagoCG<double>(precondition.data());
             pdiagh->method = this->method;
+            // temperary added for debugging!
+            #if defined(__CUDA) || defined(__ROCM)
+            gpu_diagh = new DiagoCG<double, psi::DEVICE_GPU>(precondition.data());
+            gpu_diagh->method = this->method;
+            #endif
         }
     }
     else if (this->method == "dav")
@@ -70,7 +77,7 @@ void HSolverPW::initDiagh()
     }
 }
 
-void HSolverPW::solve(hamilt::Hamilt* pHamilt, psi::Psi<std::complex<double>>& psi, elecstate::ElecState* pes, const std::string method_in, const bool skip_charge)
+void HSolverPW::solve(hamilt::Hamilt<double>* pHamilt, psi::Psi<std::complex<double>>& psi, elecstate::ElecState* pes, const std::string method_in, const bool skip_charge)
 {
     ModuleBase::TITLE("HSolverPW", "solve");
     ModuleBase::timer::tick("HSolverPW", "solve");
@@ -119,12 +126,23 @@ void HSolverPW::endDiagh()
     {
         delete (DiagoCG<double>*)pdiagh;
         pdiagh = nullptr;
+        #if defined(__CUDA) || defined(__ROCM)
+        delete (DiagoCG<double, psi::DEVICE_GPU>*)gpu_diagh;
+        gpu_diagh = nullptr;
+        #endif
     }
     if(this->method == "dav")
     {
         delete (DiagoDavid<double>*)pdiagh;
         pdiagh = nullptr;
     }
+
+    //in PW base, average iteration steps for each band and k-point should be printing
+    GlobalV::ofs_running<< "Average iterative diagonalization steps: "<<DiagoIterAssist<double>::avg_iter / this->wfc_basis->nks
+        <<" ; where current threshold is: "<<DiagoIterAssist<double>::PW_DIAG_THR<<" . "<<std::endl;
+    //reset avg_iter
+    DiagoIterAssist<double>::avg_iter = 0.0;
+
     //psi only should be initialed once for PW
     if(!this->initialed_psi)
     {
@@ -132,7 +150,7 @@ void HSolverPW::endDiagh()
     }
 }
 
-void HSolverPW::updatePsiK(hamilt::Hamilt* pHamilt, psi::Psi<std::complex<double>>& psi, const int ik)
+void HSolverPW::updatePsiK(hamilt::Hamilt<double>* pHamilt, psi::Psi<std::complex<double>>& psi, const int ik)
 {
     psi.fix_k(ik);
     if(!this->initialed_psi)
@@ -151,9 +169,44 @@ void HSolverPW::updatePsiK(hamilt::Hamilt* pHamilt, psi::Psi<std::complex<double
     }
 }
 
-void HSolverPW::hamiltSolvePsiK(hamilt::Hamilt* hm, psi::Psi<std::complex<double>>& psi, double* eigenvalue)
+void HSolverPW::hamiltSolvePsiK(hamilt::Hamilt<double>* hm, psi::Psi<std::complex<double>>& psi, double* eigenvalue)
 {
+    /// a huge victory here!
+    /// psi::Psi<std::complex<double>, psi::DEVICE_GPU> gpu_psi = psi;
+    /// psi::Psi<std::complex<double>, psi::DEVICE_CPU> cpu_psi = gpu_psi;
+    /// pdiagh->diag(hm, psi, eigenvalue);
+    /// psi::memory::synchronize_memory_op<std::complex<double>, psi::DEVICE_CPU, psi::DEVICE_CPU>()(
+    ///     psi.get_device(),
+    ///     cpu_psi.get_device(),
+    ///     psi.get_pointer() - psi.get_psi_bias(),
+    ///     cpu_psi.get_pointer() - cpu_psi.get_psi_bias(),
+    ///     psi.size());
+
+
+    /// hamilt::Hamilt<double, psi::DEVICE_CPU>* h_phm_in =
+    ///         new hamilt::HamiltPW<double, psi::DEVICE_CPU>(
+    ///                 reinterpret_cast<hamilt::HamiltPW<double, psi::DEVICE_GPU>*>(d_phm_in));
+    ///
+    /// pdiagh->diag(h_phm_in, psi, eigenvalue);
+    /// new era
+    /// if this works, then everything done!
+
+#if defined(__CUDA) || defined(__ROCM)
+    psi::Psi<std::complex<double>, psi::DEVICE_GPU> gpu_psi = psi;
+    hamilt::Hamilt<double, psi::DEVICE_GPU>* d_phm_in =
+            new hamilt::HamiltPW<double, psi::DEVICE_GPU>(
+                    reinterpret_cast<hamilt::HamiltPW<double, psi::DEVICE_CPU>*>(hm));
+    gpu_diagh->diag(d_phm_in, gpu_psi, eigenvalue);
+    psi::memory::synchronize_memory_op<std::complex<double>, psi::DEVICE_CPU, psi::DEVICE_GPU>()(
+         psi.get_device(),
+         gpu_psi.get_device(),
+         psi.get_pointer() - psi.get_psi_bias(),
+         gpu_psi.get_pointer() - gpu_psi.get_psi_bias(),
+         psi.size());
+    delete reinterpret_cast<hamilt::HamiltPW<double, psi::DEVICE_GPU>*>(d_phm_in);
+#else
     pdiagh->diag(hm, psi, eigenvalue);
+#endif
 }
 
 void HSolverPW::update_precondition(std::vector<double> &h_diag, const int ik, const int npw)
@@ -195,7 +248,7 @@ void HSolverPW::update_precondition(std::vector<double> &h_diag, const int ik, c
 
 double HSolverPW::cal_hsolerror()
 {
-    return this->diag_ethr * std::max(1.0, GlobalC::CHR.nelec);
+    return this->diag_ethr * std::max(1.0, GlobalV::nelec);
 }
 
 double HSolverPW::set_diagethr(const int istep, const int iter, const double drho)
@@ -205,7 +258,7 @@ double HSolverPW::set_diagethr(const int istep, const int iter, const double drh
     {
         if (abs(this->diag_ethr - 1.0e-2) < 1.0e-10)
         {
-            if (GlobalC::CHR.init_chg == "file")
+            if (GlobalV::init_chg == "file")
             {
                 //======================================================
                 // if you think that the starting potential is good
@@ -235,7 +288,7 @@ double HSolverPW::set_diagethr(const int istep, const int iter, const double drh
         {
             this->diag_ethr = 1.e-2;
         }
-        this->diag_ethr = std::min(this->diag_ethr, 0.1 * drho / std::max(1.0, GlobalC::CHR.nelec));
+        this->diag_ethr = std::min(this->diag_ethr, 0.1 * drho / std::max(1.0, GlobalV::nelec));
     }
     return this->diag_ethr;
 }
@@ -246,7 +299,7 @@ double HSolverPW::reset_diagethr(std::ofstream& ofs_running, const double hsover
     ModuleBase::WARNING("scf", "Threshold on eigenvalues was too large.");
     ofs_running << " hsover_error=" << hsover_error << " > DRHO=" << drho << std::endl;
     ofs_running << " Origin diag_ethr = " << this->diag_ethr << std::endl;
-    this->diag_ethr = 0.1 * drho / GlobalC::CHR.nelec;
+    this->diag_ethr = 0.1 * drho / GlobalV::nelec;
     ofs_running << " New    diag_ethr = " << this->diag_ethr << std::endl;
     return this->diag_ethr;
 }

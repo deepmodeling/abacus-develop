@@ -2,12 +2,11 @@ add_library(
     md
     OBJECT
     MD_func.cpp
-    run_md_classic.cpp
-    verlet.cpp
-    NVE.cpp
+    run_md.cpp
+	mdrun.cpp
+	verlet.cpp
     MSST.cpp
-    NVT_ADS.cpp
-    NVT_NHC.cpp
+    Nose_Hoover.cpp
     FIRE.cpp
     Langevin.cpp
 )

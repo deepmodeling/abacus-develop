@@ -7,7 +7,7 @@
 #ifdef __LCAO
 	namespace ModuleESolver{ class ESolver_KS_LCAO; }
 #endif
-
+#include "module_elecstate/elecstate.h"
 class Threshold_Elec
 {
 #ifdef __LCAO
@@ -30,7 +30,7 @@ public:
     void update_pw_diag_thr(const int &iter);
 
 	// this should be moved to other places, mohan note 2021-03-03
-    static void print_eigenvalue(std::ofstream &ofs);
+    static void print_eigenvalue(std::ofstream &ofs, const elecstate::ElecState* pelec);
 };
 
 #endif

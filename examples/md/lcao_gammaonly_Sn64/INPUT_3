@@ -1,6 +1,6 @@
 INPUT_PARAMETERS
 #Parameters (1.General)
-suffix                  Sn_ads
+suffix                  Sn_anderson
 calculation             md
 ntype                   1
 nbands                  160
@@ -28,7 +28,9 @@ mixing_beta            0.3
 chg_extrap             second-order
 
 #Parameters (6.MD)
-md_type                3
+md_type                0
+md_thermostat          anderson
+md_nraise              40
 md_nstep               10
 md_dt                  1
 md_tfirst              300

@@ -4,7 +4,6 @@ add_definitions(-D__CMD -D__NORMAL)
 list(APPEND depend_files 
   ../MD_func.cpp
   ../../input.cpp
-  ../../module_cell/unitcell_pseudo.cpp
   ../../module_cell/unitcell.cpp
   ../../module_cell/atom_spec.cpp
   ../../module_cell/atom_pseudo.cpp
@@ -57,26 +56,17 @@ AddTest(
   TARGET md_fire
   LIBS ${math_libs} psi
   SOURCES FIRE_test.cpp
-  ../verlet.cpp
+  ../mdrun.cpp
   ../FIRE.cpp
   ${depend_files}
 )
 
 AddTest(
-  TARGET md_nve
+  TARGET md_verlet
   LIBS ${math_libs} psi
-  SOURCES NVE_test.cpp
+  SOURCES verlet_test.cpp
+  ../mdrun.cpp
   ../verlet.cpp
-  ../NVE.cpp
-  ${depend_files}
-)
-
-AddTest(
-  TARGET md_nvt_ads
-  LIBS ${math_libs} psi
-  SOURCES NVT_ADS_test.cpp
-  ../verlet.cpp
-  ../NVT_ADS.cpp
   ${depend_files}
 )
 
@@ -84,8 +74,8 @@ AddTest(
   TARGET md_nvt_nhc
   LIBS ${math_libs} psi
   SOURCES NVT_NHC_test.cpp
-  ../verlet.cpp
-  ../NVT_NHC.cpp
+  ../mdrun.cpp
+  ../Nose_Hoover.cpp
   ${depend_files}
 )
 
@@ -93,7 +83,7 @@ AddTest(
   TARGET md_msst
   LIBS ${math_libs} psi
   SOURCES MSST_test.cpp
-  ../verlet.cpp
+  ../mdrun.cpp
   ../MSST.cpp
   ${depend_files}
 )
@@ -102,7 +92,7 @@ AddTest(
   TARGET md_lgv
   LIBS ${math_libs} psi
   SOURCES Langevin_test.cpp
-  ../verlet.cpp
+  ../mdrun.cpp
   ../Langevin.cpp
   ${depend_files}
 )

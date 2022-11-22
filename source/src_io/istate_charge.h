@@ -10,20 +10,20 @@
 class IState_Charge
 {
 public:
-    IState_Charge(psi::Psi<double>* wfc_gamma_in,
+    IState_Charge(psi::Psi<double>* psi_gamma_in,
         Local_Orbital_Charge &loc_in);
     ~IState_Charge();
 
-	void begin(Gint_Gamma &gg);
+	void begin(Gint_Gamma &gg, elecstate::ElecState* pelec);
 
 private:
 
 	int *bands_picked;
 
 #ifdef __MPI
-	void idmatrix(const int &ib);
+	void idmatrix(const int &ib, elecstate::ElecState* pelec);
 #endif
-    psi::Psi<double>* wfc_gamma;
+    psi::Psi<double>* psi_gamma;
     Local_Orbital_Charge* loc;
 
 };

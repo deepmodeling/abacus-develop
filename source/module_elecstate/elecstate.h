@@ -4,6 +4,7 @@
 #include "module_psi/psi.h"
 #include "src_pw/charge.h"
 #include "src_pw/klist.h"
+#include "potentials/potential_new.h"
 
 namespace elecstate
 {
@@ -12,7 +13,15 @@ class ElecState
 {
   public:
     ElecState(){};
-    virtual ~ElecState(){};
+    ElecState(Charge* charge_in){this->charge = charge_in;};
+    virtual ~ElecState()
+    {
+        if(this->pot != nullptr) 
+        {
+            delete this->pot;
+            this->pot = nullptr;
+        }
+    };
     virtual void init(Charge *chg_in, // pointer for class Charge
                       const K_Vectors *klist_in,
                       int nk_in, // number of k points
@@ -53,6 +62,8 @@ class ElecState
 
     // calculate wg from ekb
     virtual void calculate_weights();
+    // use occupied weights from INPUT and skip calculate_weights
+    void fixed_weights(const double * const ocp_kb);
 
     virtual void print_psi(const psi::Psi<double>& psi_in)
     {
@@ -63,6 +74,10 @@ class ElecState
         return;
     }
 
+    void init_scf(const int istep, const ModuleBase::ComplexMatrix& strucfac);
+
+    // pointer to potential
+    Potential* pot = nullptr;
     // pointer to charge density
     Charge *charge = nullptr;
     // pointer to k points lists
@@ -81,12 +96,15 @@ class ElecState
 
     std::string classname = "none";
 
+    // print and check for band energy and occupations
+    void print_band(const int &ik, const int &printe, const int &iter);
+
   protected:
     // calculate ebands for all k points and all occupied bands
     void calEBand();
 
-    // print and check for band energy and occupations
-    void print_band(const int &ik, const int &printe, const int &iter);
+  private:
+    bool skip_weights = false;
 };
 
 } // namespace elecstate

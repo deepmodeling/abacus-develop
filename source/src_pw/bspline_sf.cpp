@@ -14,7 +14,7 @@ using namespace std;
 //    1. Use "r2c" fft
 //    2. Add parallel algorithm for fftw or na loop
 //
-void Structure_Factor::bspline_sf(const int norder,UnitCell_pseudo* Ucell,ModulePW::PW_Basis* rho_basis)
+void Structure_Factor::bspline_sf(const int norder,UnitCell* Ucell,ModulePW::PW_Basis* rho_basis)
 {
     double *r = new double [rho_basis->nxyz]; 
     double *tmpr = new double[rho_basis->nrxx];

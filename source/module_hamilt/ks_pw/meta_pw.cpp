@@ -18,6 +18,7 @@ Meta<OperatorPW<FPTYPE, Device>>::Meta(
     ModulePW::PW_Basis_K* wfcpw_in
 )
 {
+    this->classname = "Meta";
     this->cal_type = pw_meta;
     this->isk = isk_in;
     this->tpiba = tpiba_in;
@@ -85,9 +86,27 @@ void Meta<OperatorPW<FPTYPE, Device>>::act(
     ModuleBase::timer::tick("Operator", "MetaPW");
 }
 
+template<typename FPTYPE, typename Device>
+template<typename T_in, typename Device_in>
+hamilt::Meta<OperatorPW<FPTYPE, Device>>::Meta(const Meta<OperatorPW<T_in, Device_in>> *meta) {
+    this->classname = "Meta";
+    this->cal_type = pw_meta;
+    this->ik = meta->get_ik();
+    this->isk = meta->get_isk();
+    this->tpiba = meta->get_tpiba();
+    this->vk = meta->get_vk();
+    this->wfcpw = meta->get_wfcpw();
+    if(this->isk == nullptr || this->tpiba < 1e-10 || this->vk == nullptr || this->wfcpw == nullptr)
+    {
+        ModuleBase::WARNING_QUIT("MetaPW", "Constuctor of Operator::MetaPW is failed, please check your code!");
+    }
+}
+
 namespace hamilt{
 template class Meta<OperatorPW<double, psi::DEVICE_CPU>>;
 #if ((defined __CUDA) || (defined __ROCM))
 template class Meta<OperatorPW<double, psi::DEVICE_GPU>>;
+template Meta<OperatorPW<double, psi::DEVICE_CPU>>::Meta(const Meta<OperatorPW<double, psi::DEVICE_GPU>> *meta);
+template Meta<OperatorPW<double, psi::DEVICE_GPU>>::Meta(const Meta<OperatorPW<double, psi::DEVICE_CPU>> *meta);
 #endif
 } // namespace hamilt

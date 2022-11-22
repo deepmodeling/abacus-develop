@@ -631,4 +631,11 @@ void ESolver_SDFT_PW:: caldos( const int nche_dos, const double sigmain, const d
     return;
 }
 
+}//namespace ModuleESolver
+
+namespace GlobalTemp
+{
+
+const ModuleBase::matrix* veff;
+
 }

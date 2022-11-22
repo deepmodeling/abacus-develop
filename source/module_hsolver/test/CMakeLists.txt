@@ -9,6 +9,7 @@ AddTest(
           ../../module_hamilt/operator.cpp
           ../../module_hamilt/ks_pw/operator_pw.cpp
           ../src/math_kernel.cpp
+          ../src/dngvd_op.cpp
 )
 AddTest(
   TARGET HSolver_dav
@@ -19,15 +20,25 @@ AddTest(
           ../../module_hamilt/operator.cpp
           ../../module_hamilt/ks_pw/operator_pw.cpp
           ../src/math_kernel.cpp
+          ../src/dngvd_op.cpp
 )
 
 if(ENABLE_LCAO)
+  if(USE_ELPA)
   AddTest(
     TARGET HSolver_LCAO
     LIBS ${math_libs} ELPA::ELPA base genelpa psi
     SOURCES diago_lcao_test.cpp ../diago_elpa.cpp ../diago_blas.cpp ../../src_parallel/parallel_global.cpp 
             ../../src_parallel/parallel_common.cpp ../../src_parallel/parallel_reduce.cpp
   )
+  else()
+    AddTest(
+      TARGET HSolver_LCAO
+      LIBS ${math_libs} base psi
+      SOURCES diago_lcao_test.cpp ../diago_blas.cpp ../../src_parallel/parallel_global.cpp
+      ../../src_parallel/parallel_common.cpp ../../src_parallel/parallel_reduce.cpp
+    )
+  endif()
 endif()
 
 if (USE_CUDA)
@@ -36,9 +47,24 @@ AddTest(
   LIBS ${math_libs} base cublas
   SOURCES math_kernel_test.cpp ../../src_parallel/parallel_global.cpp 
           ../../src_parallel/parallel_common.cpp  ../../src_parallel/parallel_reduce.cpp
+          ../../module_psi/src/memory_psi.cpp
           ../../module_hsolver/src/math_kernel.cpp
           ../../module_psi/src/cuda/memory.cu
-          ../../module_hsolver/src/cuda/math_kernel.cu
+          ../src/cuda/math_kernel.cu
+)
+AddTest(
+  TARGET Dngvd_UTs
+  LIBS ${math_libs} base cublas cusolver
+  SOURCES math_dngvd_test.cpp 
+          ../../src_parallel/parallel_global.cpp 
+          ../../src_parallel/parallel_common.cpp  ../../src_parallel/parallel_reduce.cpp
+          ../../module_psi/src/memory_psi.cpp
+          ../../module_psi/src/cuda/memory.cu
+          ../../module_hsolver/src/math_kernel.cpp
+          ../src/cuda/math_kernel.cu
+          ../../module_hsolver/src/dngvd_op.cpp
+          ../src/cuda/dngvd_op.cu
+
 )
 else()
 AddTest(
@@ -46,7 +72,8 @@ AddTest(
   LIBS ${math_libs} base
   SOURCES math_kernel_test.cpp ../../src_parallel/parallel_global.cpp 
           ../../src_parallel/parallel_common.cpp  ../../src_parallel/parallel_reduce.cpp
-          ../../module_hsolver/src/math_kernel.cpp
+          ../../module_psi/src/memory_psi.cpp
+          ../src/math_kernel.cpp
 )
 endif()
 

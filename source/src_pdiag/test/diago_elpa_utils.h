@@ -11,10 +11,13 @@
 #include <random>
 #include <type_traits>
 #include <vector>
+
+#ifdef __ELPA
 extern "C"
 {
-#include "../my_elpa.h"
+#include "module_hsolver/my_elpa.h"
 }
+#endif
 
 namespace LCAO_DIAGO_TEST
 {
@@ -162,6 +165,7 @@ template <class T> bool read_hs(std::string fname, T &matrix)
     return true;
 }
 
+#ifdef __ELPA
 int elpa_sethandle(elpa_t &handle,
                    int nFull,
                    int nev,
@@ -334,6 +338,7 @@ void elpa_diago(T *hmatrix,
     delete[] new_smatrix;
     delete[] q_elpa;
 }
+#endif
 
 void lapack_diago(double *hmatrix, double *smatrix, double *e, int &nFull)
 {

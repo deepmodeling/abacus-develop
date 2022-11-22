@@ -4,7 +4,7 @@
 #include "global.h"
 
 //calculate the Pulay term of mGGA stress correction in PW
-void Stress_Func::stress_mgga(ModuleBase::matrix& sigma, const psi::Psi<complex<double>>* psi_in) 
+void Stress_Func::stress_mgga(ModuleBase::matrix& sigma, const ModuleBase::matrix& wg, const ModuleBase::matrix& v_ofk, const Charge* const chr, const psi::Psi<complex<double>>* psi_in) 
 {
 	ModuleBase::timer::tick("Stress_Func","stress_mgga");
 
@@ -43,7 +43,7 @@ void Stress_Func::stress_mgga(ModuleBase::matrix& sigma, const psi::Psi<complex<
 
 		for (int ibnd = 0; ibnd < GlobalV::NBANDS; ibnd++)
 		{
-			const double w1 = GlobalC::wf.wg(ik, ibnd) / GlobalC::ucell.omega;
+			const double w1 = wg(ik, ibnd) / GlobalC::ucell.omega;
 			const std::complex<double>* ppsi=nullptr;
 			if(psi_in!=nullptr)
 			{
@@ -98,7 +98,7 @@ void Stress_Func::stress_mgga(ModuleBase::matrix& sigma, const psi::Psi<complex<
 				sigma_mgga[ix][iy] = 0.0;
 				for(int ir = 0;ir<GlobalC::wfcpw->nrxx;ir++)
 				{
-					double x = GlobalC::pot.vofk(is,ir) * (GlobalC::CHR.kin_r[is][ir] * delta + crosstaus[ir][ipol2xy[ix][iy]][is]);
+					double x = v_ofk(is, ir) * (chr->kin_r[is][ir] * delta + crosstaus[ir][ipol2xy[ix][iy]][is]);
 					sigma_mgga[ix][iy] += x;
 				}
 			}

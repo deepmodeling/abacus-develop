@@ -542,11 +542,11 @@ gettimeofday( &t_start_all, NULL);
 	}
 	else
 	{
-		if("plain"==GlobalC::CHR.mixing_mode)
+		if("plain"==GlobalC::CHR_MIX.get_mixing_mode())
 		{
 			Hexx_para.mixing_mode = Exx_Abfs::Parallel::Communicate::Hexx::Mixing_Mode::Plain;
 		}
-		else if("pulay"==GlobalC::CHR.mixing_mode)
+		else if("pulay"==GlobalC::CHR_MIX.get_mixing_mode())
 		{
 			Hexx_para.mixing_mode = Exx_Abfs::Parallel::Communicate::Hexx::Mixing_Mode::Pulay;
 		}
@@ -554,7 +554,7 @@ gettimeofday( &t_start_all, NULL);
 		{
 			throw std::invalid_argument("exx mixing error. exx_separate_loop==false, mixing_mode!=plain or pulay");
 		}
-		Hexx_para.mixing_beta = GlobalC::CHR.mixing_beta;
+		Hexx_para.mixing_beta = GlobalC::CHR_MIX.get_mixing_beta();
 	}
 #endif
 
@@ -992,7 +992,7 @@ ofs_mpi<<"TIME@ Exx_Lcao::cal_energy\t"<<time_during(t_start)<<std::endl;
 ModuleBase::timer::tick("Exx_Lcao", "Rexx_to_Km2D");
 gettimeofday( &t_start, NULL);
 #ifdef __MPI
-	Hexx_para.Rexx_to_Km2D(*loc.ParaV, HexxR, {GlobalC::CHR.init_chg=="file",GlobalC::CHR.out_chg} );
+	Hexx_para.Rexx_to_Km2D(*loc.ParaV, HexxR, {GlobalV::init_chg=="file",GlobalV::out_chg} );
 #endif
 ofs_mpi<<"TIME@ Hexx_para.Rexx_to_Km2D\t"<<time_during(t_start)<<std::endl;
 ModuleBase::timer::tick("Exx_Lcao", "Rexx_to_Km2D");
@@ -1098,13 +1098,7 @@ ofs_mpi.close();
 				{
 					for( size_t iwt=0; iwt!=GlobalV::NLOCAL; ++iwt )
 					{
-						//---------------------------------------------------------
-						// GlobalC::LOWF.WFC_GAMMA has been replaced by wfc_dm_2d.cpp 
-						// we need to fix this function in near future.
-						// -- mohan add 2021-02-09
-						//---------------------------------------------------------
 						ModuleBase::WARNING_QUIT("Exx_Abfs::DM::cal_DMk_raw","need to update GlobalC::LOWF.WFC_GAMMA");
-						//ofs<<GlobalC::LOWF.WFC_GAMMA[ik][ib][iwt]<<"\t";
 					}
 					ofs<<std::endl;
 				}
@@ -1149,15 +1143,14 @@ ofs_mpi.close();
 	};
 #endif
 
-	auto print_wfc=[&](std::vector<ModuleBase::matrix>& wfc_gamma,
-        std::vector<ModuleBase::ComplexMatrix>& wfc_k)		// Peize Lin test 2019-11-14
+	auto print_wfc=[&](std::vector<ModuleBase::matrix>& psi_gamma)		// Peize Lin test 2019-11-14
 	{
 		if(GlobalV::GAMMA_ONLY_LOCAL)
 		{
 			for(int is=0; is<GlobalV::NSPIN; ++is)
 			{		
 				std::ofstream ofs("wfc_"+ModuleBase::GlobalFunc::TO_STRING(istep)+"_"+ModuleBase::GlobalFunc::TO_STRING(is)+"_"+ModuleBase::GlobalFunc::TO_STRING(GlobalV::MY_RANK));
-				wfc_gamma[is].print(ofs, 1E-10)<<std::endl;
+				psi_gamma[is].print(ofs, 1E-10)<<std::endl;
 			}
 		}
 		else
@@ -1165,21 +1158,10 @@ ofs_mpi.close();
 			for(int ik=0; ik<GlobalC::kv.nks; ++ik)
 			{
 				std::ofstream ofs("wfc_"+ModuleBase::GlobalFunc::TO_STRING(istep)+"_"+ModuleBase::GlobalFunc::TO_STRING(ik)+"_"+ModuleBase::GlobalFunc::TO_STRING(GlobalV::MY_RANK));
-				wfc_gamma[ik].print(ofs, 1E-10)<<std::endl;
+				psi_gamma[ik].print(ofs, 1E-10)<<std::endl;
 			}
 		}
 	};
-
-	auto print_ekb=[&]()		// Peize Lin test 2019-11-14
-	{
-		for(int ik=0; ik<GlobalC::kv.nks; ++ik)
-		{
-			std::ofstream ofs("ekb_"+ModuleBase::GlobalFunc::TO_STRING(ik)+"_"+ModuleBase::GlobalFunc::TO_STRING(GlobalV::MY_RANK), std::ofstream::app);
-			for(int ib=0; ib<GlobalV::NBANDS; ++ib)
-				ofs<<GlobalC::wf.ekb[ik][ib]<<"\t";
-			ofs<<std::endl;
-		}
-	};	
 	
 	#if TEST_EXX_LCAO==1
 	//	ofs_matrixes("Cws_"+ModuleBase::GlobalFunc::TO_STRING(istep)+"_end.dat",Cws);
@@ -1210,7 +1192,7 @@ void Exx_Lcao::cal_exx_elec_nscf(const Parallel_Orbitals &pv)
 	ModuleBase::timer::tick("Exx_Lcao", "cal_exx_elec_nscf");
 	std::vector<std::map<size_t,std::map<size_t,std::map<Abfs::Vector3_Order<int>,ModuleBase::matrix>>>> HexxR;
 #ifdef __MPI
-	Hexx_para.Rexx_to_Km2D(pv, HexxR, {GlobalC::CHR.init_chg=="file",GlobalC::CHR.out_chg} );
+	Hexx_para.Rexx_to_Km2D(pv, HexxR, {GlobalV::init_chg=="file",GlobalV::out_chg} );
 #endif
 	ModuleBase::timer::tick("Exx_Lcao", "cal_exx_elec_nscf");
 }

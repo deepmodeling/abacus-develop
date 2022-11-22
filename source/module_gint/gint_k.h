@@ -45,7 +45,7 @@ class Gint_k : public Gint
     // calculate the envelop function via grid integrals
     void cal_env_k(
         int ik, 
-        const std::complex<double>* wfc_k,
+        const std::complex<double>* psi_k,
         double* rho);
 
     //------------------------------------------------------

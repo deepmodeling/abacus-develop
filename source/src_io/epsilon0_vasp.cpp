@@ -9,7 +9,6 @@
 #include "../src_pw/global.h"
 #include "../src_pw/hamilt.h"
 #include "../src_lcao/wavefunc_in_pw.h"
-#include "optical.h"
 #include "epsilon0_vasp.h"
 #include <iostream>
 #include <math.h>
@@ -34,13 +33,13 @@ Epsilon0_vasp::~Epsilon0_vasp()
 {
 }
 
-void Epsilon0_vasp::cal_epsilon0()
+void Epsilon0_vasp::cal_epsilon0(const elecstate::ElecState* pelec)
 {
 	std::cout << "domega = "<<domega<<std::endl;
 	std::cout << "nomega = "<<nomega<<std::endl;
 	std::cout << "eta = "<<eta<<std::endl;
 	
-	double occupied_bands = static_cast<double>(GlobalC::CHR.nelec/ModuleBase::DEGSPIN);
+	double occupied_bands = static_cast<double>(GlobalV::nelec/ModuleBase::DEGSPIN);
 	if( (occupied_bands - std::floor(occupied_bands)) > 0.0 )
 	{
 		occupied_bands = std::floor(occupied_bands) + 1.0;
@@ -67,7 +66,7 @@ void Epsilon0_vasp::cal_epsilon0()
 
 	//GlobalC::ppcell.init_vnl_alpha();
 
-	Cal_epsilon0s();
+	Cal_epsilon0s(pelec);
 
 	Cal_T();
 	Cal_epsilon0();
@@ -453,7 +452,7 @@ void Epsilon0_vasp:: Cal_psi_nu(int ik)
 }
 #endif
 
-void Epsilon0_vasp:: Cal_epsilon0s()
+void Epsilon0_vasp:: Cal_epsilon0s(const elecstate::ElecState* pelec)
 {
 	for(int i=0; i<9; i++)
 		for(int j=0; j<nomega; j++)
@@ -473,14 +472,14 @@ void Epsilon0_vasp:: Cal_epsilon0s()
 		for(int ib1=0; ib1<oband; ib1++)
 			for(int ib2=0; ib2<uband; ib2++)
 			{
-				double delta_e = GlobalC::wf.ekb[ik][oband+ib2] - GlobalC::wf.ekb[ik][ib1];
+				double delta_e = pelec->ekb(ik, oband+ib2) - pelec->ekb(ik, ib1);
 				if ((delta_e > 0 || delta_e == 0) && delta_e < ((nomega-1) * domega) )
 				{
 					int n = int(delta_e/domega);
 					double e1 = double(n) * domega;
 					double e2 = double(n+1) * domega;
-					std::complex<double> weight1 = std::complex<double>(32 * (GlobalC::wf.wg(ik,ib1) - GlobalC::wf.wg(ik,oband+ib2)) * (e2 - delta_e)/domega/GlobalC::ucell.omega * ModuleBase::PI * ModuleBase::PI /delta_e/delta_e/domega, 0.0);
-					std::complex<double> weight2 = std::complex<double>(32 * (GlobalC::wf.wg(ik,ib1) - GlobalC::wf.wg(ik,oband+ib2)) * (delta_e - e1)/domega/GlobalC::ucell.omega * ModuleBase::PI * ModuleBase::PI /delta_e/delta_e/domega, 0.0);
+					std::complex<double> weight1 = std::complex<double>(32 * (pelec->wg(ik,ib1) - pelec->wg(ik,oband+ib2)) * (e2 - delta_e)/domega/GlobalC::ucell.omega * ModuleBase::PI * ModuleBase::PI /delta_e/delta_e/domega, 0.0);
+					std::complex<double> weight2 = std::complex<double>(32 * (pelec->wg(ik,ib1) - pelec->wg(ik,oband+ib2)) * (delta_e - e1)/domega/GlobalC::ucell.omega * ModuleBase::PI * ModuleBase::PI /delta_e/delta_e/domega, 0.0);
 					
 					eps0s[0][n] += weight1 * b[ib1][ib2][0] * conj(b[ib1][ib2][0]);
 					eps0s[1][n] += weight1 * b[ib1][ib2][0] * conj(b[ib1][ib2][1]);
@@ -508,7 +507,7 @@ void Epsilon0_vasp:: Cal_epsilon0s()
 					int n = int(delta_e/domega);
 					double e1 = double(n) * domega;
 					double e2 = double(n+1) * domega;					
-					std::complex<double> weight1 = std::complex<double>(32 * (GlobalC::wf.wg(ik,ib1) - GlobalC::wf.wg(ik,oband+ib2)) * (e2 - delta_e)/domega/GlobalC::ucell.omega * ModuleBase::PI * ModuleBase::PI /delta_e/delta_e/domega, 0.0);
+					std::complex<double> weight1 = std::complex<double>(32 * (pelec->wg(ik,ib1) - pelec->wg(ik,oband+ib2)) * (e2 - delta_e)/domega/GlobalC::ucell.omega * ModuleBase::PI * ModuleBase::PI /delta_e/delta_e/domega, 0.0);
 
 					eps0s[0][n] += weight1 * b[ib1][ib2][0] * conj(b[ib1][ib2][0]);
 					eps0s[1][n] += weight1 * b[ib1][ib2][0] * conj(b[ib1][ib2][1]);

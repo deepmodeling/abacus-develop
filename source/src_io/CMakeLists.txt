@@ -8,7 +8,6 @@ list(APPEND objects
     energy_dos_pw.cpp
     epsilon0_pwscf.cpp
     epsilon0_vasp.cpp
-    eximport.cpp
     numerical_basis.cpp
     numerical_descriptor.cpp
     optical.cpp
@@ -21,8 +20,7 @@ list(APPEND objects
     unk_overlap_pw.cpp
     wf_io.cpp
     winput.cpp
-    write_input.cpp
-    write_pot.cpp
+    write_input.cpp    
     write_rho.cpp
     write_rho_cube.cpp
     write_wfc_realspace.cpp

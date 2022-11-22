@@ -1,21 +1,19 @@
 #include "sto_forces.h"
 #include "global.h"
-#include "vdwd2.h"
-#include "vdwd3.h"				  
-#include "../module_symmetry/symmetry.h"
-#include "../module_surchem/efield.h"
-#include "../module_surchem/gatefield.h"
-#include "../module_base/mathzone.h"
+#include "module_symmetry/symmetry.h"
+#include "module_elecstate/potentials/efield.h"
+#include "module_elecstate/potentials/gatefield.h"
+#include "module_base/mathzone.h"
 
 // new
-#include "../module_xc/xc_functional.h"
-#include "../module_base/math_integral.h"
-#include "../src_parallel/parallel_reduce.h"
-#include "../module_base/timer.h"
+#include "module_xc/xc_functional.h"
+#include "module_base/math_integral.h"
+#include "src_parallel/parallel_reduce.h"
+#include "module_base/timer.h"
 
 
 
-void Sto_Forces::init(ModuleBase::matrix& force, const psi::Psi<std::complex<double>>* psi_in, Stochastic_WF& stowf)
+void Sto_Forces::init(ModuleBase::matrix& force, const ModuleBase::matrix& wg, const psi::Psi<std::complex<double>>* psi_in, Stochastic_WF& stowf, const Charge* const chr)
 {
 	ModuleBase::timer::tick("Sto_Force","cal_force");
 	ModuleBase::TITLE("Sto_Forces", "init");
@@ -27,10 +25,10 @@ void Sto_Forces::init(ModuleBase::matrix& force, const psi::Psi<std::complex<dou
 	ModuleBase::matrix forcecc(nat, 3);
 	ModuleBase::matrix forcenl(nat, 3);
 	ModuleBase::matrix forcescc(nat, 3);
-    this->cal_force_loc(forcelc, GlobalC::rhopw);
+    this->cal_force_loc(forcelc, GlobalC::rhopw, chr);
     this->cal_force_ew(forceion, GlobalC::rhopw);
-    this->cal_sto_force_nl(forcenl,psi_in,stowf);
-	this->cal_force_cc(forcecc, GlobalC::rhopw);
+    this->cal_sto_force_nl(forcenl, wg, psi_in,stowf);
+	this->cal_force_cc(forcecc, GlobalC::rhopw, chr);
 	this->cal_force_scc(forcescc, GlobalC::rhopw);
 	
     //impose total force = 0
@@ -40,14 +38,14 @@ void Sto_Forces::init(ModuleBase::matrix& force, const psi::Psi<std::complex<dou
 	if(GlobalV::EFIELD_FLAG)
 	{
 		force_e.create( GlobalC::ucell.nat, 3);
-		Efield::compute_force(GlobalC::ucell, force_e);
+		elecstate::Efield::compute_force(GlobalC::ucell, force_e);
 	}
 
     ModuleBase::matrix force_gate;
     if(GlobalV::GATE_FLAG)
     {
         force_gate.create( GlobalC::ucell.nat, 3);
-        Gatefield::compute_force(GlobalC::ucell, force_gate);
+        elecstate::Gatefield::compute_force(GlobalC::ucell, force_gate);
     }
 
 	for (int ipol = 0; ipol < 3; ipol++)
@@ -177,7 +175,7 @@ void Sto_Forces::init(ModuleBase::matrix& force, const psi::Psi<std::complex<dou
     return;
 }
 
-void Sto_Forces::cal_sto_force_nl(ModuleBase::matrix& forcenl, const psi::Psi<complex<double>>* psi_in, Stochastic_WF& stowf)
+void Sto_Forces::cal_sto_force_nl(ModuleBase::matrix& forcenl, const ModuleBase::matrix& wg, const psi::Psi<complex<double>>* psi_in, Stochastic_WF& stowf)
 {
 	ModuleBase::TITLE("Sto_Forces","cal_force_nl");
 	ModuleBase::timer::tick("Sto_Forces","cal_force_nl");
@@ -281,14 +279,14 @@ void Sto_Forces::cal_sto_force_nl(ModuleBase::matrix& forcenl, const psi::Psi<co
 		{
 			double fac;
 			if(ib < nksbands)
-				fac = GlobalC::wf.wg(ik, ib) * 2.0 * GlobalC::ucell.tpiba;
+				fac = wg(ik, ib) * 2.0 * GlobalC::ucell.tpiba;
 			else
 				fac = GlobalC::kv.wk[ik] * 2.0 * GlobalC::ucell.tpiba;
         	int iat = 0;
         	int sum = 0;
 			for (int it=0; it< GlobalC::ucell.ntype; it++)
 			{
-				const int Nprojs =  GlobalC::ucell.atoms[it].nh;
+				const int Nprojs =  GlobalC::ucell.atoms[it].ncpp.nh;
 				for (int ia=0; ia< GlobalC::ucell.atoms[it].na; ia++)
 				{
 					for (int ip=0; ip<Nprojs; ip++)

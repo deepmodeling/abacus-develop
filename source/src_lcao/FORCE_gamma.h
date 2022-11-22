@@ -22,13 +22,15 @@ private:
 
     LCAO_Hamilt *UHM;
     const Parallel_Orbitals* ParaV;
+	elecstate::Potential* pot;
 
 	//orthonormal force + contribution from T and VNL
 	void ftable_gamma (
 		const bool isforce,
         const bool isstress,
         const psi::Psi<double>* psid,
-        Local_Orbital_Charge &loc, 
+        Local_Orbital_Charge &loc,
+		const elecstate::ElecState* pelec, 
         ModuleBase::matrix& foverlap,
 		ModuleBase::matrix& ftvnl_dphi,
 		ModuleBase::matrix& fvnl_dbeta,	
@@ -64,6 +66,7 @@ private:
         const bool isstress,
         const psi::Psi<double>* psid,
         Local_Orbital_Charge &loc,
+		const elecstate::ElecState* pelec,
         ModuleBase::matrix& foverlap,
 		ModuleBase::matrix& soverlap);	
 
@@ -119,6 +122,7 @@ private:
 		double*** DM_in,
 		const bool isforce, 
         const bool isstress,
+		const elecstate::Potential* pot_in,
         ModuleBase::matrix& fvl_dphi,
 		ModuleBase::matrix& svl_dphi);
 

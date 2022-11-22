@@ -177,13 +177,6 @@ void Parallel_Global::read_mpi_parameters(int argc,char **argv)
     MPI_Comm_size(shmcomm, &process_num);
     MPI_Comm_rank(shmcomm, &local_rank);
     MPI_Comm_free(&shmcomm);
-    int desired_thread_num = max_thread_num / process_num;
-    if (desired_thread_num != current_thread_num && current_thread_num == max_thread_num)
-    {
-        // OpenMP thread num not set
-        omp_set_num_threads(desired_thread_num);
-        current_thread_num = omp_get_max_threads();
-    }
     if (current_thread_num * process_num != max_thread_num && local_rank==0)
     {
 		// only output info in local rank 0

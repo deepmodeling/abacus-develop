@@ -197,7 +197,7 @@ void Force_LCAO_gamma::cal_fvnl_dbeta_new(
 							{
                                 for(int ir=0;ir<3;ir++)
                                 {
-                                    nlm[ir] += nlm2[ir][ib]*nlm1[ib]*GlobalC::ucell.atoms[T0].dion(nb,nb);
+                                    nlm[ir] += nlm2[ir][ib]*nlm1[ib]*GlobalC::ucell.atoms[T0].ncpp.dion(nb,nb);
                                 }
 								ib+=1;
 							}
@@ -223,7 +223,7 @@ void Force_LCAO_gamma::cal_fvnl_dbeta_new(
 				    			{
                                    for(int ir=0;ir<3;ir++)
                                     {
-                                        nlm_t[ir] += nlm2[ir][ib]*nlm1[ib]*GlobalC::ucell.atoms[T0].dion(nb,nb);
+                                        nlm_t[ir] += nlm2[ir][ib]*nlm1[ib]*GlobalC::ucell.atoms[T0].ncpp.dion(nb,nb);
                                     }
 					    			ib+=1;
 					    		}
@@ -413,7 +413,7 @@ void Force_LCAO_gamma::cal_fvnl_dbeta_new(
 							{
                                 for(int ir=0;ir<3;ir++)
                                 {
-                                    nlm[ir] += nlm2[ir][ib]*nlm1[ib]*GlobalC::ucell.atoms[T0].dion(nb,nb);
+                                    nlm[ir] += nlm2[ir][ib]*nlm1[ib]*GlobalC::ucell.atoms[T0].ncpp.dion(nb,nb);
                                 }
 								ib+=1;
 							}
@@ -439,7 +439,7 @@ void Force_LCAO_gamma::cal_fvnl_dbeta_new(
 				    			{
                                    for(int ir=0;ir<3;ir++)
                                     {
-                                        nlm_t[ir] += nlm2[ir][ib]*nlm1[ib]*GlobalC::ucell.atoms[T0].dion(nb,nb);
+                                        nlm_t[ir] += nlm2[ir][ib]*nlm1[ib]*GlobalC::ucell.atoms[T0].ncpp.dion(nb,nb);
                                     }
 					    			ib+=1;
 					    		}
@@ -572,12 +572,12 @@ void Force_LCAO_gamma::cal_fvnl_dbeta(
                             atom2->iw2l[kk], // L1
                             atom2->iw2m[kk], // m1
                             atom2->iw2n[kk], // n1
-                            tau0, it, GlobalC::ucell.atoms[it].dion, GlobalV::NSPIN,
-							GlobalC::ucell.atoms[it].d_so,
-							GlobalC::ucell.atoms[it].non_zero_count_soc[0], // index stands for spin
-							GlobalC::ucell.atoms[it].index1_soc[0],
-							GlobalC::ucell.atoms[it].index2_soc[0],
-							GlobalC::ucell.atoms[it].nproj_soc
+                            tau0, it, GlobalC::ucell.atoms[it].ncpp.dion, GlobalV::NSPIN,
+							GlobalC::ucell.atoms[it].ncpp.d_so,
+							GlobalC::ucell.atoms[it].ncpp.non_zero_count_soc[0], // index stands for spin
+							GlobalC::ucell.atoms[it].ncpp.index1_soc[0],
+							GlobalC::ucell.atoms[it].ncpp.index2_soc[0],
+							GlobalC::ucell.atoms[it].ncpp.nproj_soc
 							); // mohan  add 2021-05-07
 
                         double nlm1[3] = {0,0,0};
@@ -596,12 +596,12 @@ void Force_LCAO_gamma::cal_fvnl_dbeta(
                                 atom1->iw2l[jj], // L1
                                 atom1->iw2m[jj], // m1
                                 atom1->iw2n[jj], // n1
-                                tau0, it, GlobalC::ucell.atoms[it].dion, GlobalV::NSPIN,
-								GlobalC::ucell.atoms[it].d_so,
-								GlobalC::ucell.atoms[it].non_zero_count_soc[0], // index stands for spin
-								GlobalC::ucell.atoms[it].index1_soc[0],
-								GlobalC::ucell.atoms[it].index2_soc[0],
-								GlobalC::ucell.atoms[it].nproj_soc);
+                                tau0, it, GlobalC::ucell.atoms[it].ncpp.dion, GlobalV::NSPIN,
+								GlobalC::ucell.atoms[it].ncpp.d_so,
+								GlobalC::ucell.atoms[it].ncpp.non_zero_count_soc[0], // index stands for spin
+								GlobalC::ucell.atoms[it].ncpp.index1_soc[0],
+								GlobalC::ucell.atoms[it].ncpp.index2_soc[0],
+								GlobalC::ucell.atoms[it].ncpp.nproj_soc);
 						}
 
                         const int index = mu * this->ParaV->ncol + nu;
@@ -791,12 +791,12 @@ void Force_LCAO_gamma::cal_fvnl_dbeta(
                                         atom2->iw2l[kk], // L1
                                         atom2->iw2m[kk], // m1
                                         atom2->iw2n[kk], // n1
-										tau0, it, GlobalC::ucell.atoms[it].dion, GlobalV::NSPIN,
-										GlobalC::ucell.atoms[it].d_so,
-										GlobalC::ucell.atoms[it].non_zero_count_soc[0], // index stands for spin
-										GlobalC::ucell.atoms[it].index1_soc[0],
-										GlobalC::ucell.atoms[it].index2_soc[0],
-										GlobalC::ucell.atoms[it].nproj_soc
+										tau0, it, GlobalC::ucell.atoms[it].ncpp.dion, GlobalV::NSPIN,
+										GlobalC::ucell.atoms[it].ncpp.d_so,
+										GlobalC::ucell.atoms[it].ncpp.non_zero_count_soc[0], // index stands for spin
+										GlobalC::ucell.atoms[it].ncpp.index1_soc[0],
+										GlobalC::ucell.atoms[it].ncpp.index2_soc[0],
+										GlobalC::ucell.atoms[it].ncpp.nproj_soc
 								); // mohan  add 2021-05-07
 
                         double nlm1[3] = {0,0,0};
@@ -812,12 +812,12 @@ void Force_LCAO_gamma::cal_fvnl_dbeta(
                                                    atom1->iw2l[jj], // L1
                                                    atom1->iw2m[jj], // m1
                                                    atom1->iw2n[jj], // n1
-                                                   tau0, it, GlobalC::ucell.atoms[it].dion, GlobalV::NSPIN,
-												   GlobalC::ucell.atoms[it].d_so,
-												   GlobalC::ucell.atoms[it].non_zero_count_soc[0], // index stands for spin
-												   GlobalC::ucell.atoms[it].index1_soc[0],
-												   GlobalC::ucell.atoms[it].index2_soc[0],
-												   GlobalC::ucell.atoms[it].nproj_soc
+                                                   tau0, it, GlobalC::ucell.atoms[it].ncpp.dion, GlobalV::NSPIN,
+												   GlobalC::ucell.atoms[it].ncpp.d_so,
+												   GlobalC::ucell.atoms[it].ncpp.non_zero_count_soc[0], // index stands for spin
+												   GlobalC::ucell.atoms[it].ncpp.index1_soc[0],
+												   GlobalC::ucell.atoms[it].ncpp.index2_soc[0],
+												   GlobalC::ucell.atoms[it].ncpp.nproj_soc
 								); // mohan  add 2021-05-07
 
                         //const int index = mu * this->ParaV->ncol + nu;

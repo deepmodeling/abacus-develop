@@ -25,7 +25,7 @@ Symmetry::~Symmetry()
 int Symmetry::symm_flag=0;
 
 
-void Symmetry::analy_sys(const UnitCell_pseudo &ucell, std::ofstream &ofs_running)
+void Symmetry::analy_sys(const UnitCell &ucell, std::ofstream &ofs_running)
 {
     if (available == false) return;
     ModuleBase::TITLE("Symmetry","init");
@@ -121,6 +121,20 @@ void Symmetry::analy_sys(const UnitCell_pseudo &ucell, std::ofstream &ofs_runnin
   //      std::cout << "a1 = " << a2.x << " " << a2.y << " " << a2.z <<std::endl;
   //      std::cout << "a1 = " << a3.x << " " << a3.y << " " << a3.z <<std::endl;
 
+	//Symm_Other::print1(ibrav, cel_const, ofs_running);
+        Symm_Other::print1(real_brav, cel_const, ofs_running);
+	this->change_lattice();
+    //this->pricell();         // pengfei Li 2018-05-14 
+         //for( iat =0 ; iat < ucell.nat ; iat++)   
+//         std::cout << " newpos_now = " << newpos[3*iat] << " " << newpos[3*iat+1] << " " << newpos[3*iat+2] << std::endl;
+	test_brav = true; // output the real ibrav and point group
+	ModuleBase::GlobalFunc::OUT(ofs_running,"ibrav",real_brav);
+	this->setgroup(this->symop, this->nop, this->real_brav);
+	this->getgroup(this->nrot, this->nrotk, ofs_running);
+	this->pointgroup(this->nrot, this->pgnumber, this->pgname, this->gmatrix, ofs_running);
+	ModuleBase::GlobalFunc::OUT(ofs_running,"POINT GROUP", this->pgname);
+    ofs_running<<"Warning : If the optimal symmetric configuration is not the input configuration, "<<'\n';
+    ofs_running<<"you have to manually change configurations, ABACUS would only calculate the input structure."<<'\n';
 
 	// the atom position coordinates are changed to 
 	// crystal coordinates of a1,a2,a3
@@ -155,22 +169,6 @@ void Symmetry::analy_sys(const UnitCell_pseudo &ucell, std::ofstream &ofs_runnin
 			++iat;
 		}
 	}
-
-
-	//Symm_Other::print1(ibrav, cel_const, ofs_running);
-        Symm_Other::print1(real_brav, cel_const, ofs_running);
-	this->change_lattice();
-    //this->pricell();         // pengfei Li 2018-05-14 
-         //for( iat =0 ; iat < ucell.nat ; iat++)   
-//         std::cout << " newpos_now = " << newpos[3*iat] << " " << newpos[3*iat+1] << " " << newpos[3*iat+2] << std::endl;
-	test_brav = true; // output the real ibrav and point group
-	ModuleBase::GlobalFunc::OUT(ofs_running,"ibrav",real_brav);
-	this->setgroup(this->symop, this->nop, this->real_brav);
-	this->getgroup(this->nrot, this->nrotk, ofs_running);
-	this->pointgroup(this->nrot, this->pgnumber, this->pgname, this->gmatrix, ofs_running);
-	ModuleBase::GlobalFunc::OUT(ofs_running,"POINT GROUP", this->pgname);
-    ofs_running<<"Warning : If the optimal symmetric configuration is not the input configuration, "<<'\n';
-    ofs_running<<"you have to manually change configurations, ABACUS would only calculate the input structure."<<'\n';
 
 	test_brav = false;  // use the input ibrav to calculate
 	//ModuleBase::GlobalFunc::OUT(ofs_running,"ibrav",ibrav);
@@ -507,7 +505,7 @@ void Symmetry::lattice_type(
     int &brav,
     double *cel_const,
     std::string &bravname,
-    const UnitCell_pseudo &ucell
+    const UnitCell &ucell
 )
 {
     ModuleBase::TITLE("Symmetry","lattice_type");
@@ -856,7 +854,7 @@ void Symmetry::change_lattice(void)
     return;
 }
 /*
-void Symmetry::pricell(const UnitCell_pseudo &ucell)
+void Symmetry::pricell(const UnitCell &ucell)
 {
     //detect the generating cell (primitive cell) of a supercell
     if (GlobalV::test_symmetry) ModuleBase::TITLE("Symmetry","pricell");
@@ -1526,7 +1524,7 @@ void Symmetry::rho_symmetry( double *rho,
     ModuleBase::timer::tick("Symmetry","rho_symmetry");
 }
 
-void Symmetry::force_symmetry(ModuleBase::matrix &force , double* pos, const UnitCell_pseudo &ucell)   // pengfei 2016-12-20
+void Symmetry::force_symmetry(ModuleBase::matrix &force , double* pos, const UnitCell &ucell)   // pengfei 2016-12-20
 {
 	ModuleBase::TITLE("Symmetry","force_symmetry");
 	double *protpos;
@@ -1606,7 +1604,7 @@ void Symmetry::force_symmetry(ModuleBase::matrix &force , double* pos, const Uni
 	return;
 }
 
-void Symmetry::stress_symmetry(ModuleBase::matrix& sigma, const UnitCell_pseudo &ucell)   //zhengdy added 2017
+void Symmetry::stress_symmetry(ModuleBase::matrix& sigma, const UnitCell &ucell)   //zhengdy added 2017
 {
 	double *tot_sigma, *temp;
 	tot_sigma = new double[9];

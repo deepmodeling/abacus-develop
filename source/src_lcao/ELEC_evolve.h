@@ -29,7 +29,6 @@ class ELEC_evolve
 
     // fuxiang add 2021-05-25
 
-    static int tddft;
     static double td_scf_thr;
     static double td_dt;
     static double td_force_dt;
@@ -45,10 +44,11 @@ class ELEC_evolve
 
   private:
     static void evolve_psi(const int& istep,
-                           hamilt::Hamilt* phm,
+                           hamilt::Hamilt<double>* phm,
                            Local_Orbital_wfc& lowf,
                            psi::Psi<std::complex<double>>* psi,
-                           psi::Psi<std::complex<double>>* psi_laststep);
+                           psi::Psi<std::complex<double>>* psi_laststep,
+                           ModuleBase::matrix& ekb);
 };
 
 #endif

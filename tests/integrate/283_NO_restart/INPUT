@@ -30,4 +30,5 @@ orbital_dir		../../PP_ORB
 
 #restart_save		1
 restart_load		1
+read_file_dir   ./
 

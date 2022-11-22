@@ -5,11 +5,6 @@ list(APPEND objects
     parallel_kpoints.cpp
     parallel_reduce.cpp
 )
-if(ENABLE_LCAO)
-  list(APPEND objects
-    subgrid_oper.cpp
-  )
-endif()
 
 add_library(
     parallel

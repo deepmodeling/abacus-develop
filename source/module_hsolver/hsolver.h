@@ -32,7 +32,7 @@ class HSolver
     // solve Hamiltonian to electronic density in ElecState
     virtual void solve
     (
-        hamilt::Hamilt* phm, 
+        hamilt::Hamilt<double>* phm,
         psi::Psi<std::complex<double>>& ppsi, 
         elecstate::ElecState* pes, 
         const std::string method, 
@@ -43,7 +43,7 @@ class HSolver
     }
     virtual void solve
     (
-        hamilt::Hamilt* phm, 
+        hamilt::Hamilt<double>* phm,
         psi::Psi<double>& ppsi, 
         elecstate::ElecState* pes, 
         const std::string method, 
@@ -55,7 +55,7 @@ class HSolver
 
     virtual void solve
     (
-        hamilt::Hamilt* phm, 
+        hamilt::Hamilt<double>* phm,
         psi::Psi<std::complex<double>>& ppsi, 
         elecstate::ElecState* pes, 
         Stochastic_WF& stowf,
@@ -94,7 +94,8 @@ class HSolver
     };
 
   protected:
-    DiagH* pdiagh = nullptr; // for single Hamiltonian matrix diagonal solver
+    DiagH<double>* pdiagh = nullptr; // for single Hamiltonian matrix diagonal solver
+    DiagH<double, psi::DEVICE_GPU>* gpu_diagh = nullptr;
 
 };
 

@@ -2,13 +2,15 @@
 
 #include "module_base/global_variable.h"
 #include "module_base/timer.h"
-#include "module_hsolver/diago_elpa.h"
 #include "src_lcao/dftu.h"
 #include "src_lcao/global_fp.h"
 #include "src_pw/global.h"
 #ifdef __DEEPKS
 #include "module_deepks/LCAO_deepks.h"
 #include "ks_lcao/deepks_lcao.h"
+#endif
+#ifdef __ELPA
+#include "module_hsolver/diago_elpa.h"
 #endif
 #include "ks_lcao/op_dftu_lcao.h"
 #include "ks_lcao/ekinetic_lcao.h"
@@ -33,7 +35,8 @@ HamiltLCAO<T>::HamiltLCAO(
     Gint_Gamma* GG_in,
     LCAO_gen_fixedH* genH_in,
     LCAO_Matrix* LM_in,
-    Local_Orbital_Charge* loc_in)
+    Local_Orbital_Charge* loc_in,
+    elecstate::Potential* pot_in)
 {
     this->classname = "HamiltLCAO";
     //reset fixed Hamiltonian matrix in real space
@@ -82,25 +85,54 @@ HamiltLCAO<T>::HamiltLCAO(
     // in general case, target HR is Gint::pvpR_grid, while target HK is LCAO_Matrix::Hloc
     if(GlobalV::VL_IN_H)
     {
-        //effective potential term
-        Operator<double>* veff = new Veff<OperatorLCAO<double>>(
-            GG_in,
-            loc_in,
-            LM_in,
-            nullptr, // no explicit call yet
-            &(LM_in->Hloc) // no explicit call yet
-        );
-        this->opsd->add(veff);
+        std::vector<string> pot_register_in;
+        if (GlobalV::VION_IN_H)
+        {
+            pot_register_in.push_back("local");
+        }
+        if (GlobalV::VH_IN_H)
+        {
+            pot_register_in.push_back("hartree");
+        }
+        pot_register_in.push_back("xc");
+        if (GlobalV::imp_sol)
+        {
+            pot_register_in.push_back("surchem");
+        }
+        if (GlobalV::EFIELD_FLAG)
+        {
+            pot_register_in.push_back("efield");
+        }
+        if (GlobalV::GATE_FLAG)
+        {
+            pot_register_in.push_back("gatefield");
+        }
+        //only Potential is not empty, Veff and Meta are available
+        if(pot_register_in.size()>0)
+        {
+            //register Potential by gathered operator
+            pot_in->pot_register(pot_register_in);
+            //effective potential term
+            Operator<double>* veff = new Veff<OperatorLCAO<double>>(
+                GG_in,
+                loc_in,
+                LM_in,
+                pot_in,
+                nullptr, // no explicit call yet
+                &(LM_in->Hloc) // no explicit call yet
+            );
+            this->opsd->add(veff);
 
-        // Meta term
-        Operator<double>* meta = new Meta<OperatorLCAO<double>>(
-            GG_in,
-            loc_in,
-            LM_in,
-            nullptr, // no explicit call yet
-            &(LM_in->Hloc) // no explicit call yet
-        );
-        this->opsd->add(meta);
+            // Meta term
+            Operator<double>* meta = new Meta<OperatorLCAO<double>>(
+                GG_in,
+                loc_in,
+                LM_in,
+                nullptr, // no explicit call yet
+                &(LM_in->Hloc) // no explicit call yet
+            );
+            this->opsd->add(meta);
+        }
 
         //exact exchange term
         Operator<double>* exx = new OperatorEXX<OperatorLCAO<double>>(
@@ -133,6 +165,7 @@ HamiltLCAO<T>::HamiltLCAO(
         this->opsd->add(deepks);
     }
 #endif
+    return;
 }
 
 template<typename T>
@@ -140,7 +173,8 @@ HamiltLCAO<T>::HamiltLCAO(
     Gint_k* GK_in,
     LCAO_gen_fixedH* genH_in,
     LCAO_Matrix* LM_in,
-    Local_Orbital_Charge* loc_in)
+    Local_Orbital_Charge* loc_in,
+    elecstate::Potential* pot_in)
 {
     this->classname = "HamiltLCAO";
     
@@ -154,29 +188,58 @@ HamiltLCAO<T>::HamiltLCAO(
     // in general case, target HR is Gint::pvpR_reduced, while target HK is LCAO_Matrix::Hloc2
     if(GlobalV::VL_IN_H)
     {
-        //Veff term
-        this->ops = new Veff<OperatorLCAO<std::complex<double>>>(
-            GK_in,
-            loc_in,
-            LM_in,
-            nullptr, // no explicit call yet
-            &(LM_in->Hloc2) // no explicit call yet
-        );
-        //reset spin index and real space Hamiltonian matrix
-        int start_spin = -1;
-        GK_in->reset_spin(start_spin);
-        GK_in->destroy_pvpR();
-        GK_in->allocate_pvpR();
+        std::vector<std::string> pot_register_in;
+        if (GlobalV::VION_IN_H)
+        {
+            pot_register_in.push_back("local");
+        }
+        if (GlobalV::VH_IN_H)
+        {
+            pot_register_in.push_back("hartree");
+        }
+        pot_register_in.push_back("xc");
+        if (GlobalV::imp_sol)
+        {
+            pot_register_in.push_back("surchem");
+        }
+        if (GlobalV::EFIELD_FLAG)
+        {
+            pot_register_in.push_back("efield");
+        }
+        if (GlobalV::GATE_FLAG)
+        {
+            pot_register_in.push_back("gatefield");
+        }
+        //only Potential is not empty, Veff and Meta are available
+        if(pot_register_in.size()>0)
+        {
+            //register Potential by gathered operator
+            pot_in->pot_register(pot_register_in);
+            //Veff term
+            this->ops = new Veff<OperatorLCAO<std::complex<double>>>(
+                GK_in,
+                loc_in,
+                LM_in,
+                pot_in,
+                nullptr, // no explicit call yet
+                &(LM_in->Hloc2) // no explicit call yet
+            );
+            //reset spin index and real space Hamiltonian matrix
+            int start_spin = -1;
+            GK_in->reset_spin(start_spin);
+            GK_in->destroy_pvpR();
+            GK_in->allocate_pvpR();
 
-        // Meta term
-        Operator<std::complex<double>>* meta = new Meta<OperatorLCAO<std::complex<double>>>(
-            GK_in,
-            loc_in,
-            LM_in,
-            nullptr, // no explicit call yet
-            &(LM_in->Hloc2) // no explicit call yet
-        );
-        this->ops->add(meta);
+            // Meta term
+            Operator<std::complex<double>>* meta = new Meta<OperatorLCAO<std::complex<double>>>(
+                GK_in,
+                loc_in,
+                LM_in,
+                nullptr, // no explicit call yet
+                &(LM_in->Hloc2) // no explicit call yet
+            );
+            this->ops->add(meta);
+        }
 
         //exact exchange term
         Operator<std::complex<double>>* exx = new OperatorEXX<OperatorLCAO<std::complex<double>>>(

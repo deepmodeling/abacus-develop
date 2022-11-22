@@ -192,7 +192,7 @@ int Local_Orbital_Charge::setAlltoallvParameter(MPI_Comm comm_2D, int blacs_ctxt
 
 // allocate density kernel may change once the ion
 // positions change
-void Local_Orbital_Charge::allocate_gamma(const int& lgd, psi::Psi<double>* psid)
+void Local_Orbital_Charge::allocate_gamma(const int& lgd, psi::Psi<double>* psid, elecstate::ElecState* pelec)
 {
      ModuleBase::TITLE("Local_Orbital_Charge","allocate_gamma");
 
@@ -258,12 +258,12 @@ void Local_Orbital_Charge::allocate_gamma(const int& lgd, psi::Psi<double>* psid
 
     if(GlobalC::wf.init_wfc=="file")
     {
-        this->gamma_file(psid, this->LOWF[0]);
+        this->gamma_file(psid, this->LOWF[0], pelec);
     }
     return;
 }
 
-void Local_Orbital_Charge::gamma_file(psi::Psi<double>* psid, Local_Orbital_wfc &lowf)
+void Local_Orbital_Charge::gamma_file(psi::Psi<double>* psid, Local_Orbital_wfc &lowf, elecstate::ElecState* pelec)
 {
 	ModuleBase::TITLE("Local_Orbital_Charge","gamma_file");
 
@@ -274,7 +274,7 @@ void Local_Orbital_Charge::gamma_file(psi::Psi<double>* psid, Local_Orbital_wfc 
 
     //allocate psi
     int ncol = this->ParaV->ncol_bands;
-    if(GlobalV::KS_SOLVER=="genelpa" || GlobalV::KS_SOLVER=="lapack_gvx"
+    if(GlobalV::KS_SOLVER=="genelpa" || GlobalV::KS_SOLVER=="lapack_gvx" || GlobalV::KS_SOLVER == "scalapack_gvx"
 #ifdef __CUSOLVER_LCAO
     ||GlobalV::KS_SOLVER=="cusolver"
 #endif
@@ -296,7 +296,7 @@ void Local_Orbital_Charge::gamma_file(psi::Psi<double>* psid, Local_Orbital_wfc 
 	{
 
 		GlobalV::ofs_running << " Read in wave functions " << is << std::endl;
-		error = WF_Local::read_lowf( ctot , is, this->ParaV, psid);
+		error = WF_Local::read_lowf( ctot , is, this->ParaV, psid, pelec);
 #ifdef __MPI
 		Parallel_Common::bcast_int(error);
 #endif

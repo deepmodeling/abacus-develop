@@ -156,13 +156,13 @@ void XC_Functional::set_xc_type(const std::string xc_func_in)
 		std::cerr << "\n OPTX untested please test,";
 	}
 
-    if((func_type == 3 || func_type == 5) && GlobalV::BASIS_TYPE != "pw" && (GlobalV::CAL_STRESS || GlobalV::CAL_FORCE))
-    {
-        //ModuleBase::WARNING_QUIT("set_xc_type","mGGA stress & force not finished for LCAO yet");
-    }
     if((func_type == 4 || func_type == 5) && GlobalV::BASIS_TYPE == "pw")
     {
         ModuleBase::WARNING_QUIT("set_xc_type","hybrid functional not realized for planewave yet");
+    }
+    if((func_type == 3 || func_type == 5) && GlobalV::NSPIN==4)
+    {
+        ModuleBase::WARNING_QUIT("set_xc_type","meta-GGA has not been implemented for nspin = 4 yet");
     }
     if((func_type == 3 || func_type == 5) && GlobalV::CAL_STRESS == 1 && GlobalV::NSPIN!=1)
     {

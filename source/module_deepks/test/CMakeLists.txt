@@ -12,10 +12,16 @@ target_link_libraries(
     test_deepks
     base cell symmetry md surchem xc_
     neighbor orb io relax gint lcao parallel mrrr pdiag pw driver esolver hsolver psi elecstate hamilt planewave
-    pthread genelpa
+    pthread vdw
     deepks
     ${ABACUS_LINK_LIBRARIES}
 )
+if(USE_ELPA)
+  target_link_libraries(
+      test_deepks
+      genelpa
+  )
+endif()
 
 if (ENABLE_LIBRI)
   target_link_libraries(test_deepks
