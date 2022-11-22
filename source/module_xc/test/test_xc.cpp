@@ -1,7 +1,7 @@
 #include "../xc_functional.h"
 #include "gtest/gtest.h"
+#include "../exx_global.h"
 
-//a mock function of WARNING_QUIT, to avoid the uncorrected call by matrix.cpp at line 37.
 namespace ModuleBase
 {
     void WARNING_QUIT(const std::string &file,const std::string &description) {return ;}
@@ -13,6 +13,12 @@ namespace GlobalV
     bool CAL_STRESS = 0;
     int CAL_FORCE = 0;
     int NSPIN = 1;
+    double XC_TEMPERATURE;
+}
+
+namespace GlobalC
+{
+	Exx_Global exx_global;
 }
 
 class XCTest_PBE : public testing::Test
@@ -239,7 +245,7 @@ TEST_F(XCTest_BLYP, set_xc_type)
     }
 }
 
-class XCTest_HCTH : public testing::Test
+class XCTest_PW91 : public testing::Test
 {
     protected:
         std::vector<double> e_lda, v_lda;
@@ -247,11 +253,11 @@ class XCTest_HCTH : public testing::Test
 
         void SetUp()
         {
-            XC_Functional::set_xc_type("HCTH");
-            std::vector<double> rho  = {0.17E+01, 0.17E+01, 0.15E+01, 0.88E-01};
-            std::vector<double> grho = {0.81E-11, 0.17E+01, 0.36E+02, 0.87E-01};
+            XC_Functional::set_xc_type("PW91");
+            std::vector<double> rho  = {0.17E+01, 0.17E+01, 0.15E+01, 0.88E-01, 0.18E+04};
+            std::vector<double> grho = {0.81E-11, 0.17E+01, 0.36E+02, 0.87E-01, 0.55E+00};
 
-            for(int i=0;i<4;i++)
+            for(int i=0;i<5;i++)
             {
                 double e,v,v1,v2;
                 XC_Functional::xc(rho[i],e,v);
@@ -265,16 +271,16 @@ class XCTest_HCTH : public testing::Test
         }
 };
 
-TEST_F(XCTest_HCTH, set_xc_type)
+TEST_F(XCTest_PW91, set_xc_type)
 {
     EXPECT_EQ(XC_Functional::get_func_type(),2);
-    std::vector<double> e_lda_ref  = {0,0,0,0};
-    std::vector<double> v_lda_ref  = {0,0,0,0};
-    std::vector<double> e_gga_ref  = {0,-1.69759307165,-1.43450950992,-0.0379281863915};
-    std::vector<double> v1_gga_ref = {0,-1.32696036531,-1.22452673027,-0.417946684263};
-    std::vector<double> v2_gga_ref = {0,0.00296525371089,-0.00118057767393,-0.112470272644};
+    std::vector<double> e_lda_ref  = {-0.957090637829,-0.957090637829,-0.920017147403,-0.38082917306,-9.12486298288};
+    std::vector<double> v_lda_ref  = {-1.25935895511 , -1.25935895511, -1.21023488409,-0.497576833567,-12.1295218848};
+    std::vector<double> e_gga_ref  = {0.0          , 6.43004695777e-05,-0.0438528949486,-0.00342032994996,6.51882950017e-08};
+    std::vector<double> v1_gga_ref = {0.0          ,0.00179434688187,0.0464532357723,0.0467404236193,0.0         };
+    std::vector<double> v2_gga_ref = {0.0          ,-0.00132500065922,-0.00280082132252,-0.0793620638752,2.37048336664e-07};
 
-    for (int i = 0;i<4;++i)
+    for (int i = 0;i<5;++i)
     {
         EXPECT_NEAR(e_lda[i],e_lda_ref[i],1.0e-8);
         EXPECT_NEAR(v_lda[i],v_lda_ref[i],1.0e-8);
@@ -318,6 +324,52 @@ TEST_F(XCTest_OLYP, set_xc_type)
     std::vector<double> e_gga_ref  = {0,-1.57545926183,-1.34838480556,-0.0344400770416};
     std::vector<double> v1_gga_ref = {0,-1.2359683886,-1.14365644338,-0.352882289038};
     std::vector<double> v2_gga_ref = {0,0.000199903898453,-0.00175935413007,-0.130465630292};
+
+    for (int i = 0;i<4;++i)
+    {
+        EXPECT_NEAR(e_lda[i],e_lda_ref[i],1.0e-8);
+        EXPECT_NEAR(v_lda[i],v_lda_ref[i],1.0e-8);
+        EXPECT_NEAR(e_gga[i],e_gga_ref[i],1.0e-8);
+        EXPECT_NEAR(v1_gga[i],v1_gga_ref[i],1.0e-8);
+        EXPECT_NEAR(v2_gga[i],v2_gga_ref[i],1.0e-8);
+    }
+}
+
+
+class XCTest_HCTH : public testing::Test
+{
+    protected:
+        std::vector<double> e_lda, v_lda;
+        std::vector<double> e_gga, v1_gga, v2_gga;
+
+        void SetUp()
+        {
+            XC_Functional::set_xc_type("HCTH");
+            std::vector<double> rho  = {0.17E+01, 0.17E+01, 0.15E+01, 0.88E-01};
+            std::vector<double> grho = {0.81E-11, 0.17E+01, 0.36E+02, 0.87E-01};
+
+            for(int i=0;i<4;i++)
+            {
+                double e,v,v1,v2;
+                XC_Functional::xc(rho[i],e,v);
+                e_lda.push_back(e);
+                v_lda.push_back(v);
+                XC_Functional::gcxc(rho[i],grho[i],e,v1,v2);
+                e_gga.push_back(e);
+                v1_gga.push_back(v1);
+                v2_gga.push_back(v2);
+            }
+        }
+};
+
+TEST_F(XCTest_HCTH, set_xc_type)
+{
+    EXPECT_EQ(XC_Functional::get_func_type(),2);
+    std::vector<double> e_lda_ref  = {0,0,0,0};
+    std::vector<double> v_lda_ref  = {0,0,0,0};
+    std::vector<double> e_gga_ref  = {0,-1.69759307165,-1.43450950992,-0.0379281863915};
+    std::vector<double> v1_gga_ref = {0,-1.32696036531,-1.22452673027,-0.417946684263};
+    std::vector<double> v2_gga_ref = {0,0.00296525371089,-0.00118057767393,-0.112470272644};
 
     for (int i = 0;i<4;++i)
     {
@@ -612,51 +664,6 @@ TEST_F(XCTest_GL, set_xc_type)
     }
 }
 
-class XCTest_PW91 : public testing::Test
-{
-    protected:
-        std::vector<double> e_lda, v_lda;
-        std::vector<double> e_gga, v1_gga, v2_gga;
-
-        void SetUp()
-        {
-            XC_Functional::set_xc_type("PW91");
-            std::vector<double> rho  = {0.17E+01, 0.17E+01, 0.15E+01, 0.88E-01, 0.18E+04};
-            std::vector<double> grho = {0.81E-11, 0.17E+01, 0.36E+02, 0.87E-01, 0.55E+00};
-
-            for(int i=0;i<5;i++)
-            {
-                double e,v,v1,v2;
-                XC_Functional::xc(rho[i],e,v);
-                e_lda.push_back(e);
-                v_lda.push_back(v);
-                XC_Functional::gcxc(rho[i],grho[i],e,v1,v2);
-                e_gga.push_back(e);
-                v1_gga.push_back(v1);
-                v2_gga.push_back(v2);
-            }
-        }
-};
-
-TEST_F(XCTest_PW91, set_xc_type)
-{
-    EXPECT_EQ(XC_Functional::get_func_type(),2);
-    std::vector<double> e_lda_ref  = {-0.957090637829,-0.957090637829,-0.920017147403,-0.38082917306,-9.12486298288};
-    std::vector<double> v_lda_ref  = {-1.25935895511 , -1.25935895511, -1.21023488409,-0.497576833567,-12.1295218848};
-    std::vector<double> e_gga_ref  = {0.0          , 6.43004695777e-05,-0.0438528949486,-0.00342032994996,6.51882950017e-08};
-    std::vector<double> v1_gga_ref = {0.0          ,0.00179434688187,0.0464532357723,0.0467404236193,0.0         };
-    std::vector<double> v2_gga_ref = {0.0          ,-0.00132500065922,-0.00280082132252,-0.0793620638752,2.37048336664e-07};
-
-    for (int i = 0;i<5;++i)
-    {
-        EXPECT_NEAR(e_lda[i],e_lda_ref[i],1.0e-8);
-        EXPECT_NEAR(v_lda[i],v_lda_ref[i],1.0e-8);
-        EXPECT_NEAR(e_gga[i],e_gga_ref[i],1.0e-8);
-        EXPECT_NEAR(v1_gga[i],v1_gga_ref[i],1.0e-8);
-        EXPECT_NEAR(v2_gga[i],v2_gga_ref[i],1.0e-8);
-    }
-}
-
 class XCTest_OPTX : public testing::Test
 {
     protected:
@@ -717,13 +724,59 @@ class XCTest_WCX : public testing::Test
 
 TEST_F(XCTest_WCX, set_xc_type)
 {
-    EXPECT_EQ(XC_Functional::get_func_type(),2);
+    EXPECT_EQ(XC_Functional::get_func_type(),1);
     std::vector<double> e_gga_ref  = {0.0          ,-0.0035227366077,-0.0734928155169,-0.0052181684189,-0.0000001063768 };
     std::vector<double> v1_gga_ref = {0.0          ,0.0027230912249,0.0436861496717,0.0272641442833,0.0000000000788 };
     std::vector<double> v2_gga_ref = {-4.1745209791E-03,-4.1145164232E-03,-3.4066592749E-03,-8.0662091283E-02,-3.8681965771E-07};
 
     for (int i = 0;i<5;++i)
     {
+        EXPECT_NEAR(e_gga[i],e_gga_ref[i],1.0e-8);
+        EXPECT_NEAR(v1_gga[i],v1_gga_ref[i],1.0e-8);
+        EXPECT_NEAR(v2_gga[i],v2_gga_ref[i],1.0e-8);
+    }
+}
+
+class XCTest_PBE0 : public testing::Test
+{
+    protected:
+        std::vector<double> e_lda, v_lda;
+        std::vector<double> e_gga, v1_gga, v2_gga;
+
+        void SetUp()
+        {
+            XC_Functional::set_xc_type("PBE0");
+            XC_Functional::get_hybrid_alpha(0.5);
+            std::vector<double> rho  = {0.17E+01, 0.17E+01, 0.15E+01, 0.88E-01, 0.18E+04};
+            std::vector<double> grho = {0.81E-11, 0.17E+01, 0.36E+02, 0.87E-01, 0.55E+00};
+
+            for(int i=0;i<5;i++)
+            {
+                double e,v,v1,v2;
+                XC_Functional::xc(rho[i],e,v);
+                e_lda.push_back(e);
+                v_lda.push_back(v);
+                XC_Functional::gcxc(rho[i],grho[i],e,v1,v2);
+                e_gga.push_back(e);
+                v1_gga.push_back(v1);
+                v2_gga.push_back(v2);
+            }
+        }
+};
+
+TEST_F(XCTest_PBE0, set_xc_type)
+{
+    EXPECT_EQ(XC_Functional::get_func_type(),4);
+    std::vector<double> e_lda_ref  = {-0.516361900865,-0.516361900865,-0.497297777983,-0.216575173845,-4.63279938014};
+    std::vector<double> v_lda_ref  = {-0.671720639159,-0.671720639159,-0.646609058192,-0.27857150128,-6.14010374778};
+    std::vector<double> e_gga_ref  = {0,0.00166521130532,0.00796707553969,0.00012199188186,5.31869959642e-08};
+    std::vector<double> v1_gga_ref = {0,-0.00116390343176,0.0188323045143,0.0322482444605,-3.93988214247e-11};
+    std::vector<double> v2_gga_ref = {0,0.00183640210141,-0.000497223695012,-0.0277065830152,1.9340982813e-07};
+
+    for (int i = 0;i<5;++i)
+    {
+        EXPECT_NEAR(e_lda[i],e_lda_ref[i],1.0e-8);
+        EXPECT_NEAR(v_lda[i],v_lda_ref[i],1.0e-8);
         EXPECT_NEAR(e_gga[i],e_gga_ref[i],1.0e-8);
         EXPECT_NEAR(v1_gga[i],v1_gga_ref[i],1.0e-8);
         EXPECT_NEAR(v2_gga[i],v2_gga_ref[i],1.0e-8);
