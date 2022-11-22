@@ -1,5 +1,6 @@
 #include"stress_func.h"
 #include "global.h"
+#include "module_base/timer.h"
 
 //calculate the kinetic stress in PW base
 void Stress_Func::stress_kin(ModuleBase::matrix& sigma, const psi::Psi<complex<double>>* psi_in)
