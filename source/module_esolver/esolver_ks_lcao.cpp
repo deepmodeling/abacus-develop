@@ -425,17 +425,12 @@ void ESolver_KS_LCAO::hamilt2density(int istep, int iter, double ethr)
         if (GlobalC::restart.info_load.load_H && GlobalC::restart.info_load.load_H_finish
             && !GlobalC::restart.info_load.restart_exx)
         {
-<<<<<<< HEAD
-            XC_Functional::set_xc_type(GlobalC::ucell.atoms[0].xc_func);
+            XC_Functional::set_xc_type(GlobalC::ucell.atoms[0].ncpp.xc_func);
             //GlobalC::exx_lcao.cal_exx_elec(this->LOC, this->LOWF.wfc_k_grid);
             if(GlobalV::GAMMA_ONLY_LOCAL)
                 GlobalC::exx_lri_double.cal_exx_elec(this->LOC, *this->LOWF.ParaV);
             else
                 GlobalC::exx_lri_complex.cal_exx_elec(this->LOC, *this->LOWF.ParaV);
-=======
-            XC_Functional::set_xc_type(GlobalC::ucell.atoms[0].ncpp.xc_func);
-            GlobalC::exx_lcao.cal_exx_elec(this->LOC, this->LOWF.wfc_k_grid);
->>>>>>> develop
             GlobalC::restart.info_load.restart_exx = true;
         }
     }
@@ -610,7 +605,6 @@ void ESolver_KS_LCAO::afterscf(const int istep)
         }
     }
 
-<<<<<<< HEAD
 #ifdef __EXX
     if (GlobalC::exx_info.info_global.cal_exx)                         // Peize Lin add if 2022.11.14
     {
@@ -621,11 +615,7 @@ void ESolver_KS_LCAO::afterscf(const int istep)
             GlobalC::exx_lri_complex.write_Hexxs(file_name_exx);
     }
 #endif
-
-    if (GlobalC::pot.out_pot == 2)
-=======
     if (GlobalV::out_pot == 2)
->>>>>>> develop
     {
         std::stringstream ssp;
         std::stringstream ssp_ave;
@@ -865,19 +855,7 @@ void ESolver_KS_LCAO::afterscf(const int istep)
     }
 #endif
     // 4. some outputs
-<<<<<<< HEAD
-    if (INPUT.dft_plus_dmft)
-    {
-        // Output sparse overlap matrix S(R)
-        this->output_SR("outputs_to_DMFT/overlap_matrix/SR.csr");
-
-        // Output wave functions, bands, k-points information, and etc.
-        GlobalC::dmft.out_to_dmft(this->LOWF, *this->UHM.LM);
-    }
-
 #ifdef __EXX
-=======
->>>>>>> develop
     if(INPUT.rpa)
     {
         ModuleRPA::DFT_RPA_interface rpa_interface(GlobalC::exx_info.info_global);
@@ -949,18 +927,12 @@ bool ESolver_KS_LCAO::do_after_converge(int& iter)
         else
         {
             //update exx and redo scf
-<<<<<<< HEAD
-            XC_Functional::set_xc_type(GlobalC::ucell.atoms[0].xc_func);
+            XC_Functional::set_xc_type(GlobalC::ucell.atoms[0].ncpp.xc_func);
             //GlobalC::exx_lcao.cal_exx_elec(this->LOC, this->LOWF.wfc_k_grid);
 			if(GlobalV::GAMMA_ONLY_LOCAL)
 				GlobalC::exx_lri_double.cal_exx_elec(this->LOC, *this->LOWF.ParaV);
 			else
 				GlobalC::exx_lri_complex.cal_exx_elec(this->LOC, *this->LOWF.ParaV);
-=======
-            XC_Functional::set_xc_type(GlobalC::ucell.atoms[0].ncpp.xc_func);
-            GlobalC::exx_lcao.cal_exx_elec(this->LOC, this->LOWF.wfc_k_grid);
-            
->>>>>>> develop
             iter = 0;
             std::cout << " Updating EXX and rerun SCF" << std::endl;
             this->two_level_step++;

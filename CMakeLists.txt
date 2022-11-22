@@ -432,7 +432,6 @@ if(ENABLE_LCAO)
       gint
       mrrr
       pdiag
-      rpa
   )
   if (USE_ELPA)
     target_link_libraries(${ABACUS_BIN_NAME}

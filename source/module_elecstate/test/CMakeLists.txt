@@ -41,7 +41,7 @@ if(ENABLE_LCAO)
               ../../src_pw/charge.cpp
               ../../src_pdiag/pdiag_common.cpp
               ../../src_io/output.cpp ../../src_pw/soc.cpp ../../src_io/read_rho.cpp
-  )]]
+  )
   if(USE_CUDA)
     target_link_libraries(EState_psiToRho_lcao cufft)
   endif()
@@ -52,7 +52,7 @@ if(ENABLE_LCAO)
   add_test(NAME EState_psiToRho_lcao_parallel
         COMMAND ${BASH} elecstate_lcao_parallel_test.sh
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-      )
+      )]]
 endif()
 add_library(
   base_serial
