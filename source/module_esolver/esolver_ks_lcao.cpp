@@ -608,12 +608,14 @@ void ESolver_KS_LCAO::afterscf(const int istep)
         }
         this->LOC.write_dm(is, 0, ssd.str(), precision);
 
+/* Broken, please fix it
         if (GlobalV::out_pot == 1) // LiuXh add 20200701
         {
             std::stringstream ssp;
             ssp << GlobalV::global_out_dir << "SPIN" << is + 1 << "_POT";
             this->pelec->pot->write_potential(is, 0, ssp.str(), this->pelec->pot->get_effective_v(), precision);
         }
+*/
     }
 
     if (GlobalV::out_pot == 2)

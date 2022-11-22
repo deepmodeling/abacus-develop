@@ -281,13 +281,6 @@ void ESolver_KS_LCAO_TDDFT::updatepot(const int istep, const int iter)
 {
     // (9) Calculate new potential according to new Charge Density.
 
-    if (this->conv_elec || iter == GlobalV::SCF_NMAX)
-    {
-        if (GlobalV::out_pot < 0) // mohan add 2011-10-10
-        {
-            GlobalV::out_pot = -2;
-        }
-    }
     if (!this->conv_elec)
     {
         this->pelec->pot->update_from_charge(this->pelec->charge, &GlobalC::ucell);
@@ -388,12 +381,14 @@ void ESolver_KS_LCAO_TDDFT::afterscf(const int istep)
         }
         this->LOC.write_dm(is, 0, ssd.str(), precision);
 
+/* Broken, please fix it
         if (GlobalV::out_pot == 1) // LiuXh add 20200701
         {
             std::stringstream ssp;
             ssp << GlobalV::global_out_dir << "SPIN" << is + 1 << "_POT";
             this->pelec->pot->write_potential(is, 0, ssp.str(), this->pelec->pot->get_effective_v(), precision);
         }
+*/
     }
 
     if (this->conv_elec)

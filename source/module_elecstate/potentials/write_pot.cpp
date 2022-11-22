@@ -4,7 +4,7 @@
 #include "module_base/timer.h"
 namespace elecstate
 {
-
+/*Broken, please fix it
 // translate from write_rho in charge.cpp.
 void Potential::write_potential(
 	const int &is, 
@@ -15,20 +15,6 @@ void Potential::write_potential(
 	const int &hartree)const
 {
     ModuleBase::TITLE("potential","write_potential");
-
-    if(GlobalV::out_pot == 0) 
-    {
-        return;
-    }
-    else if(GlobalV::out_pot < 0)
-    {
-        if(hartree==0) return;
-    }
-    else if(iter % GlobalV::out_pot != 0)
-    {
-        return;
-    }
-    ModuleBase::timer::tick("potential","write_potential");
 
     std::ofstream ofs;
 
@@ -198,7 +184,7 @@ void Potential::write_potential(
     ModuleBase::timer::tick("potential","write_potential");
     return;
 }
-
+*/
 
 void Potential::write_elecstat_pot(const std::string &fn, const std::string &fn_ave, ModulePW::PW_Basis* rho_basis, const Charge* const chr)
 {
