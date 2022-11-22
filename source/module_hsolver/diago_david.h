@@ -12,6 +12,7 @@
 
 #include "diagh.h"
 #include "module_base/complexmatrix.h"
+#include "module_psi/include/device.h"
 #include "src_pw/structure_factor.h"
 
 namespace hsolver
@@ -46,6 +47,7 @@ template <typename FPTYPE = double, typename Device = psi::DEVICE_CPU> class Dia
     int nbase_x = 0;
     /// precondition for cg diag
     const FPTYPE* precondition = nullptr;
+    FPTYPE* d_precondition = nullptr;
 
     /// eigenvalue results
     FPTYPE* eigenvalue = nullptr;
@@ -64,7 +66,8 @@ template <typename FPTYPE = double, typename Device = psi::DEVICE_CPU> class Dia
 
     /// device type of psi
     Device* ctx = {};
-    psi::DEVICE_CPU *cpu_ctx = {};
+    psi::DEVICE_CPU* cpu_ctx = {};
+    psi::AbacusDevice_t device = {};
 
     void cal_grad(hamilt::Hamilt<FPTYPE, Device>* phm_in,
                   const int& npw,
@@ -126,7 +129,8 @@ template <typename FPTYPE = double, typename Device = psi::DEVICE_CPU> class Dia
     using delete_memory_op = psi::memory::delete_memory_op<std::complex<FPTYPE>, Device>;
 
     using syncmem_complex_d2h_op = psi::memory::synchronize_memory_op<std::complex<FPTYPE>, psi::DEVICE_CPU, Device>;
-    using syncmem_complex_h2h_op = psi::memory::synchronize_memory_op<std::complex<FPTYPE>, psi::DEVICE_CPU, psi::DEVICE_CPU>;
+    using syncmem_complex_h2h_op
+        = psi::memory::synchronize_memory_op<std::complex<FPTYPE>, psi::DEVICE_CPU, psi::DEVICE_CPU>;
     using syncmem_complex_h2d_op = psi::memory::synchronize_memory_op<std::complex<FPTYPE>, Device, psi::DEVICE_CPU>;
 
     using syncmem_var_d2h_op = psi::memory::synchronize_memory_op<FPTYPE, psi::DEVICE_CPU, Device>;
