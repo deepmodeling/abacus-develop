@@ -162,7 +162,7 @@ void LCAO_Matrix::set_HSgamma(
     else
     {
         index=ir*this->ParaV->ncol+ic;
-      }
+    }
    
        if( index >= this->ParaV->nloc)
     {
@@ -175,25 +175,6 @@ void LCAO_Matrix::set_HSgamma(
         ModuleBase::WARNING_QUIT("LCAO_Matrix","set_HSgamma");
     }	 
 
-    //-----------------------------------
-    // dtype: type of the matrix.
-    // S : S matrix element.
-    // T : T matrix element.
-    // N : nonlocal H matrix element.
-    // L : local H matrix element.
-    //-----------------------------------
-    /*if (dtype=='S')
-    {
-        this->Sloc[index] += v;
-    }
-    else if (dtype=='T' || dtype=='N')
-    {
-        this->Hloc_fixed[index] += v;
-    }
-    else if (dtype=='L')
-    {
-        this->Hloc[index] += v;
-    }*/
     //using input pointer HSloc
     HSloc[index] += v;
 

@@ -607,7 +607,10 @@ void ESolver_KS_LCAO::afterscf(const int istep)
             ssd << GlobalV::global_out_dir << "SPIN" << is + 1 << "_DM_R";
         }
         this->LOC.write_dm(is, 0, ssd.str(), precision);
-
+        if(this->LOC.out_dm1 == 1)
+        {
+            this->LOC.write_dm1(is, istep);
+        }
 /* Broken, please fix it
         if (GlobalV::out_pot == 1) // LiuXh add 20200701
         {

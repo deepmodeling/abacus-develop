@@ -504,6 +504,7 @@ void Input_Conv::Convert(void)
     GlobalC::en.out_proj_band = INPUT.out_proj_band;
 #ifdef __LCAO
     Local_Orbital_Charge::out_dm = INPUT.out_dm;
+    Local_Orbital_Charge::out_dm1 = INPUT.out_dm1;
     hsolver::HSolverLCAO::out_mat_hs = INPUT.out_mat_hs;
     hsolver::HSolverLCAO::out_mat_hsR = INPUT.out_mat_hs2; // LiuXh add 2019-07-16
     elecstate::ElecStateLCAO::out_wfc_lcao = INPUT.out_wfc_lcao;
