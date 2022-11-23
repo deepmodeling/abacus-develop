@@ -602,59 +602,25 @@ void DiagoDavid<FPTYPE, Device>::cal_elem(const int& npw,
     // sc = transpose(sc, false);
     //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
-//    Parallel_Reduce::reduce_complex_double_pool(hc.c + offset_h, notconv * hc.nr);
-//    Parallel_Reduce::reduce_complex_double_pool(sc.c + offset_s, notconv * sc.nr);
 #ifdef __MPI
+    if (GlobalV::NPROC_IN_POOL > 1)
+    {
+        std::complex<double>* swap = new std::complex<double>[notconv * this->nbase_x];
+        psi::memory::synchronize_memory_op<std::complex<FPTYPE>, Device, Device>()(this->ctx,
+                                                                                   this->ctx,
+                                                                                   swap,
+                                                                                   hcc + offset_h,
+                                                                                   notconv * this->nbase_x);
+        MPI_Reduce(swap, hcc + offset_h, notconv * this->nbase_x, MPI_DOUBLE_COMPLEX, MPI_SUM, 0, MPI_COMM_WORLD);
 
-#if defined(__CUDA) || defined(__ROCM)
-
-    std::complex<double>* swap = new std::complex<double>[notconv * this->nbase_x];
-    std::complex<double>* temp_host = new std::complex<double>[notconv * this->nbase_x];
-
-    // ModuleBase::GlobalFunc::COPYARRAY(hcc+offset_h, swap, notconv * this->nbase_x);
-    syncmem_complex_d2h_op()(this->cpu_ctx, this->ctx, swap, hcc + offset_h, notconv * this->nbase_x);
-    syncmem_complex_h2h_op()(this->cpu_ctx, this->cpu_ctx, temp_host, swap, notconv * this->nbase_x);
-
-    MPI_Reduce(swap, temp_host, notconv * this->nbase_x, MPI_DOUBLE_COMPLEX, MPI_SUM, 0, MPI_COMM_WORLD);
-
-    syncmem_complex_h2d_op()(this->ctx, this->cpu_ctx, hcc + offset_h, temp_host, notconv * this->nbase_x);
-
-    // ModuleBase::GlobalFunc::COPYARRAY(scc+offset_h, swap, notconv * this->nbase_x);
-    syncmem_complex_d2h_op()(this->cpu_ctx, this->ctx, swap, scc + offset_h, notconv * this->nbase_x);
-    syncmem_complex_h2h_op()(this->cpu_ctx, this->cpu_ctx, temp_host, swap, notconv * this->nbase_x);
-
-    MPI_Reduce(swap, temp_host, notconv * this->nbase_x, MPI_DOUBLE_COMPLEX, MPI_SUM, 0, MPI_COMM_WORLD);
-
-    syncmem_complex_h2d_op()(this->ctx, this->cpu_ctx, scc + offset_h, temp_host, notconv * this->nbase_x);
-
-    delete[] swap;
-    delete[] temp_host;
-
-#else
-
-    std::complex<double>* swap = new std::complex<double>[notconv * this->nbase_x];
-
-    // ModuleBase::GlobalFunc::COPYARRAY(hcc+offset_h, swap, notconv * this->nbase_x);
-    psi::memory::synchronize_memory_op<std::complex<FPTYPE>, Device, Device>()(this->ctx,
-                                                                               this->ctx,
-                                                                               swap,
-                                                                               hcc + offset_h,
-                                                                               notconv * this->nbase_x);
-
-    MPI_Reduce(swap, hcc + offset_h, notconv * this->nbase_x, MPI_DOUBLE_COMPLEX, MPI_SUM, 0, MPI_COMM_WORLD);
-
-    // ModuleBase::GlobalFunc::COPYARRAY(scc+offset_h, swap, notconv * this->nbase_x);
-    psi::memory::synchronize_memory_op<std::complex<FPTYPE>, Device, Device>()(this->ctx,
-                                                                               this->ctx,
-                                                                               swap,
-                                                                               scc + offset_h,
-                                                                               notconv * this->nbase_x);
-
-    MPI_Reduce(swap, scc + offset_h, notconv * this->nbase_x, MPI_DOUBLE_COMPLEX, MPI_SUM, 0, MPI_COMM_WORLD);
-    delete[] swap;
-
-#endif
-
+        psi::memory::synchronize_memory_op<std::complex<FPTYPE>, Device, Device>()(this->ctx,
+                                                                                   this->ctx,
+                                                                                   swap,
+                                                                                   scc + offset_h,
+                                                                                   notconv * this->nbase_x);
+        MPI_Reduce(swap, scc + offset_h, notconv * this->nbase_x, MPI_DOUBLE_COMPLEX, MPI_SUM, 0, MPI_COMM_WORLD);
+        delete[] swap;
+    }
 #endif
     /*
         for( int i = nbase; i < nbase+notconv; i++ )
@@ -758,27 +724,14 @@ void DiagoDavid<FPTYPE, Device>::diag_zhegvx(const int& n, // nbase
     }
 
 #ifdef __MPI
-
-#if defined(__CUDA) || defined(__ROCM)
-
-    std::complex<double>* host_vcc = new std::complex<double>[this->nbase_x * this->nbase_x];
-    syncmem_complex_d2h_op()(this->cpu_ctx, this->ctx, host_vcc, vcc, this->nbase_x * this->nbase_x);
-    for (int i = 0; i < n; i++)
+    if (GlobalV::NPROC_IN_POOL > 1)
     {
-        Parallel_Common::bcast_complex_double(&host_vcc[i * this->nbase_x], m);
+        for (int i = 0; i < n; i++)
+        {
+            Parallel_Common::bcast_complex_double(&vcc[i * this->nbase_x], m);
+        }
+        Parallel_Common::bcast_double(this->eigenvalue, m);
     }
-    syncmem_complex_h2d_op()(this->ctx, this->cpu_ctx, vcc, host_vcc, this->nbase_x * this->nbase_x);
-    delete[] host_vcc;
-
-    Parallel_Common::bcast_double(this->eigenvalue, m);
-
-#else
-    for (int i = 0; i < n; i++)
-    {
-        Parallel_Common::bcast_complex_double(&vcc[i * this->nbase_x], m);
-    }
-    Parallel_Common::bcast_double(this->eigenvalue, m);
-#endif
 #endif
 
     ModuleBase::timer::tick("DiagoDavid", "diag_zhegvx");

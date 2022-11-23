@@ -58,6 +58,13 @@ template <typename FPTYPE, typename Device> struct dngv_op
                     std::complex<FPTYPE>* V);
 };
 
+#if __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
+
+void createCUSOLVERhandle();
+void destoryCUSOLVERhandle();
+
+#endif
+
 } // namespace hsolver
 
 #endif // !MODULE_HSOLVER_DNGVD_H

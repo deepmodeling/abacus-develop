@@ -54,6 +54,23 @@ inline void cusolverAssert(cusolverStatus_t code, const char* file, int line, bo
 namespace hsolver
 {
 
+
+static cusolverDnHandle_t cusolverH = nullptr;
+
+
+void createCUSOLVERhandle(){
+    if (cusolverH == nullptr) {
+        cusolverErrcheck(cusolverDnCreate(&cusolverH));
+    }
+}
+
+void destoryCUSOLVERhandle(){
+    if (cusolverH != nullptr) {
+        cusolverErrcheck(cusolverDnDestroy(cusolverH));
+        cusolverH = nullptr;
+    }
+}
+
 template <>
 void dngvx_op<double, psi::DEVICE_GPU>::operator()(const psi::DEVICE_GPU* d,
                                                    const int row,
