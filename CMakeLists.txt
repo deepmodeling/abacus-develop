@@ -408,7 +408,6 @@ if(ENABLE_LCAO)
       lcao
       orb
       gint
-      mrrr
       pdiag
       rpa
   )
