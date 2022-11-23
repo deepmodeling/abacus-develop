@@ -463,7 +463,7 @@ void energy::delta_escf(const elecstate::ElecState* pelec)
 	for (int ir=0; ir<GlobalC::rhopw->nrxx; ir++)
 	{
 		this->descf -= ( pelec->charge->rho[0][ir] - pelec->charge->rho_save[0][ir] ) * (v_eff[ir] - v_fixed[ir]);
-		if(XC_Functional::get_func_type() == 3)
+		if(XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
 		{
 			this->descf -= ( pelec->charge->kin_r[0][ir] - pelec->charge->kin_r_save[0][ir] ) * v_ofk[ir];
 		}

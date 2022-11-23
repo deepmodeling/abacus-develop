@@ -634,7 +634,7 @@ void Forces::cal_force_cc(ModuleBase::matrix& forcecc, ModulePW::PW_Basis* rho_b
 
     ModuleBase::matrix v(GlobalV::NSPIN, rho_basis->nrxx);
 
-    if (XC_Functional::get_func_type() == 3)
+    if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
     {
 #ifdef USE_LIBXC
         const auto etxc_vtxc_v = XC_Functional::v_xc_meta(rho_basis->nrxx,

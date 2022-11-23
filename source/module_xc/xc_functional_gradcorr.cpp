@@ -163,7 +163,7 @@ void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v, 
 
 				if( rhotmp1[ir] >= 0.0 ) segno = 1.0;
 				if( rhotmp1[ir] < 0.0 ) segno = -1.0;
-				if(func_type == 3 && is_stress) //the gradcorr part to stress of mGGA
+				if((func_type == 3 || func_type == 5) && is_stress) //the gradcorr part to stress of mGGA
 				{
 #ifdef USE_LIBXC
 					double v3xc;
