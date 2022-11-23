@@ -18,40 +18,28 @@
 #include <mkl_service.h>
 #endif
 
-#include "../src_external/src_test/src_ri/exx_lcao-test.h"
-
-
 template< typename T >
 T Exx_Abfs::Parallel::Communicate::Allreduce::allreduce(
 	T & data_local,
 	std::function<void(T&,T&)> & insert_function)
-{
-std::ofstream ofs_mpi( "allreduce_"+ModuleBase::GlobalFunc::TO_STRING(my_rank), std::ofstream::app );
-timeval t_start;
-double t_probe=0, t_recv=0;
-	
+{	
 	std::vector<std::thread> threads;
 	atomic_flag insert_lock = ATOMIC_FLAG_INIT;
 	atomic<int> rank_delta=1;
 	for( int i=0; i<2; ++i )
 		ask(rank_delta++);
 
-gettimeofday(&t_start,NULL);
 	boost::mpi::packed_oarchive oar(mpi_comm);
 	oar << data_local;
-ofs_mpi<<"sizeof_oar:\t"<<get_sizeof(data_local)<<"\t"<<oar.size()<<std::endl;
-ofs_mpi<<"oar<<\t"<<time_during(t_start)<<std::endl;
 
 	std::vector<MPI_Request> request_isends(comm_sz);
 	boost::dynamic_bitset<> flag_isends(comm_sz,false);
 	flag_isends[my_rank] = true;
 
-gettimeofday(&t_start,NULL);
 	T data_all;
 	insert_function( data_all, data_local );
 	boost::dynamic_bitset<> flag_irecvs(comm_sz,false);
 	flag_irecvs[my_rank] = true;
-ofs_mpi<<"insert\t"<<time_during(t_start)<<std::endl;
 
 	std::vector<boost::mpi::packed_iarchive*> iarps( comm_sz );
 	for( auto &iarp : iarps )
@@ -65,18 +53,14 @@ ofs_mpi<<"insert\t"<<time_during(t_start)<<std::endl;
 	while( !flag_irecvs.all() || !flag_isends.all() )
 	{
 		MPI_Status status;
-gettimeofday(&t_start,NULL);
 		MPI_Probe( MPI_ANY_SOURCE, MPI_ANY_TAG, mpi_comm, &status );
-t_probe+=time_during(t_start);
 		switch(status.MPI_TAG)
 		{
 			case tag_ask:
 			{
 				const int rank_send = status.MPI_SOURCE;
 				int message_ignore;
-gettimeofday(&t_start,NULL);
 				MPI_Recv( &message_ignore, 1, MPI_INT, rank_send, tag_ask, mpi_comm, MPI_STATUS_IGNORE );
-t_recv+=time_during(t_start);
 				MPI_Isend( oar.address(), oar.size(), MPI_PACKED, rank_send, tag_data, mpi_comm, &request_isends[rank_send] );
 				flag_isends[rank_send] = true;
 				break;
@@ -89,10 +73,7 @@ t_recv+=time_during(t_start);
 				MPI_Get_count( &status, MPI_PACKED, &data_size );
 				boost::mpi::packed_iarchive & iar = *iarps[rank_recv];
 				iar.resize(data_size);
-
-gettimeofday(&t_start,NULL);
 				MPI_Recv( iar.address(), data_size, MPI_PACKED, rank_recv, tag_data, mpi_comm, MPI_STATUS_IGNORE );
-t_recv+=time_during(t_start);
 
 				threads.push_back(std::thread(
 					&Exx_Abfs::Parallel::Communicate::Allreduce::allreduce_thread<T>, this,

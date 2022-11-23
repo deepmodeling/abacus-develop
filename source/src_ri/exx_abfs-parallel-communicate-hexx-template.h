@@ -6,49 +6,6 @@
 #include "../src_lcao/global_fp.h"
 #include <cassert>
 #ifdef __MPI
-/*
-template< typename T >
-T Exx_Abfs::Parallel::Communicate::Hexx::a2D_to_m2D( const std::map<size_t,std::map<size_t,T>> & H_a2D ) const
-{
-	ModuleBase::TITLE("Exx_Abfs::Parallel::Communicate::Hexx::a2D_to_m2D");
-	
-	T H_m2D;s
-	if(GlobalV::KS_SOLVER=="genelpa")
-		H_m2D.create( GlobalC::ParaO.ncol, GlobalC::ParaO.nrow );
-	else
-		H_m2D.create( GlobalC::ParaO.nrow, GlobalC::ParaO.ncol );
-	
-	for( const auto H_a2DA : H_a2D )
-	{
-		const size_t iat1 = H_a2DA.first;
-		for( const auto H_a2DB : H_a2DA.second )
-		{
-			const size_t iat2 = H_a2DB.first;
-			const T & H = H_a2DB.second;
-			
-			for( int iw1=0; iw1!=H.nr; ++iw1 )
-			{
-				const int iwt1 = GlobalC::ucell.itiaiw2iwt( GlobalC::ucell.iat2it[iat1], GlobalC::ucell.iat2ia[iat1], iw1 );
-				const int iwt1_m2D = GlobalC::ParaO.trace_loc_row[iwt1];
-				if( iwt1_m2D == -1 )	continue;
-				
-				for( int iw2=0; iw2!=H.nc; ++iw2 )
-				{
-					const int iwt2 = GlobalC::ucell.itiaiw2iwt( GlobalC::ucell.iat2it[iat2], GlobalC::ucell.iat2ia[iat2], iw2 );
-					const int iwt2_m2D = GlobalC::ParaO.trace_loc_col[iwt2];
-					if( iwt2_m2D == -1 )	continue;
-					
-					if(GlobalV::KS_SOLVER=="genelpa")
-						H_m2D( iwt2_m2D, iwt1_m2D ) = H(iw1,iw2);
-					else
-						H_m2D( iwt1_m2D, iwt2_m2D ) = H(iw1,iw2);
-				}
-			}
-		}
-	}
-	return H_m2D;
-}
-*/
 
 template<>
 ModuleBase::matrix Exx_Abfs::Parallel::Communicate::Hexx::H_phase<ModuleBase::matrix>(
@@ -143,11 +100,6 @@ void Exx_Abfs::Parallel::Communicate::Hexx::Ra2D_to_Km2D_mixing(const Parallel_O
 	HK_m2D_pulay_seq.resize(GlobalC::kv.nks);
 	for( int ik=0; ik!=GlobalC::kv.nks; ++ik )
 	{
-//gettimeofday( &t_start, NULL);
-//			const std::map<size_t,std::map<size_t,ModuleBase::matrix>> HK_a2D = R_to_K(HR_a2D[ik]);
-//ofs_time<<"TIME@ Exx_Abfs::Parallel::Communicate::Hexx::R_to_K\t"<<time_during(t_start)<<std::endl;
-//ofs_matrixes( exx_lcao.test_dir+"test-HK_a2D_"+ModuleBase::GlobalFunc::TO_STRING(ik)+"_"+ModuleBase::GlobalFunc::TO_STRING(GlobalV::MY_RANK), HK_a2D );
-//gettimeofday( &t_start, NULL);
 		switch(mixing_mode)
 		{
 			case Mixing_Mode::No:
@@ -165,9 +117,7 @@ void Exx_Abfs::Parallel::Communicate::Hexx::Ra2D_to_Km2D_mixing(const Parallel_O
 			default:
 				throw std::domain_error(ModuleBase::GlobalFunc::TO_STRING(__FILE__)+" line "+ModuleBase::GlobalFunc::TO_STRING(__LINE__));	break;
 		}
-//ofs_time<<"TIME@ Exx_Abfs::Parallel::Communicate::Hexx::a2D_to_m2D\t"<<time_during(t_start)<<std::endl;
 	}
-//ofs_matrixes( exx_lcao.test_dir+"test-HK_m2D_"+ModuleBase::GlobalFunc::TO_STRING(GlobalV::MY_RANK), HK_m2D );
 }
 
 template<typename Tmatrix>

@@ -3,8 +3,6 @@
 #include "../src_pw/global.h"
 #include <random>
 
-#include "../src_external/src_test/test_function.h"
-
 std::pair< std::vector<Exx_Abfs::Parallel::Distribute::Kmeans::Atom>, std::vector<Exx_Abfs::Parallel::Distribute::Kmeans::Cluster> >
 Exx_Abfs::Parallel::Distribute::Kmeans::cluster( const int Nc )
 {
@@ -256,7 +254,6 @@ Exx_Abfs::Parallel::Distribute::Kmeans::distribute_kmeans1( const MPI_Comm & mpi
 {
 	int comm_size;	MPI_Comm_size( mpi_comm, &comm_size );
 	int my_rank;	MPI_Comm_rank( mpi_comm, &my_rank );
-std::ofstream ofs_mpi(GlobalC::exx_lcao.test_dir.process+"kmeans_"+ModuleBase::GlobalFunc::TO_STRING(my_rank),std::ofstream::app);
 
 	auto classify_atom = []( const int Ng, const std::vector<Exx_Abfs::Parallel::Distribute::Kmeans::Atom> &atoms ) -> std::vector<std::vector<size_t>>
 	{
@@ -275,11 +272,6 @@ std::ofstream ofs_mpi(GlobalC::exx_lcao.test_dir.process+"kmeans_"+ModuleBase::G
 	const std::vector<Exx_Abfs::Parallel::Distribute::Kmeans::Atom> &atoms = atoms_clusters_tmp.first;
 	const std::vector<Exx_Abfs::Parallel::Distribute::Kmeans::Cluster> &clusters = atoms_clusters_tmp.second;
 	const std::vector<std::vector<size_t>> clusters_atoms = classify_atom(comm_size,atoms);
-	
-for(const auto cluster_atoms : clusters_atoms)
-	ofs_mpi<<cluster_atoms<<std::endl;
-for(const auto cluster : clusters)
-	ofs_mpi<<cluster.tau<<std::endl;
 	
 	std::vector<std::pair<size_t,size_t>> rank_work;
 	for(const size_t iat1 : clusters_atoms[my_rank])
@@ -338,9 +330,6 @@ for(const auto cluster : clusters)
 			}
 		}
 	}
-  
-ofs_mpi<<rank_work<<std::endl;
-ofs_mpi.close();
 	return rank_work;
 }
 #endif

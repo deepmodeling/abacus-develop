@@ -7,8 +7,6 @@
 #include <mkl_service.h>
 #endif
 
-#include "../src_external/src_test/src_ri/exx_lcao-test.h"
-
 Exx_Abfs::Parallel::Communicate::DM::Allreduce::Allreduce( 
 	const MPI_Comm & mpi_comm_in, 
 	std::vector<std::map<size_t,std::map<size_t,std::map<Abfs::Vector3_Order<int>,ModuleBase::matrix>>>> &data_local_in,
@@ -65,8 +63,6 @@ Exx_Abfs::Parallel::Communicate::DM::Allreduce::Allreduce(
 
 Exx_Abfs::Parallel::Communicate::DM::Allreduce::~Allreduce()
 {
-//std::ofstream ofs_mpi("allreduce_"+ModuleBase::GlobalFunc::TO_STRING(GlobalV::MY_RANK),std::ofstream::app);
-//ofs_mpi<<"delete_begin\t"<<__FILE__<<__LINE__<<std::endl;
 	for( auto &oarp_isend_data : oarps_isend_data )
 		if(oarp_isend_data)
 			delete oarp_isend_data;
@@ -83,8 +79,6 @@ Exx_Abfs::Parallel::Communicate::DM::Allreduce::~Allreduce()
 		delete flags_isend_data[irank];
 	for( int irank=0; irank!=comm_sz; ++irank )
 		delete flags_ask_atom[irank];
-//ofs_mpi<<"delete_end\t"<<__FILE__<<__LINE__<<std::endl;
-//ofs_mpi.close();
 }
 
 
@@ -92,9 +86,6 @@ Exx_Abfs::Parallel::Communicate::DM::Allreduce::~Allreduce()
 std::vector<std::map<size_t,std::map<size_t,std::map<Abfs::Vector3_Order<int>,ModuleBase::matrix>>>>
 Exx_Abfs::Parallel::Communicate::DM::Allreduce::grid_to_exx()
 {
-timeval t_start;
-std::ofstream ofs_mpi("allreduce_"+ModuleBase::GlobalFunc::TO_STRING(GlobalV::MY_RANK),std::ofstream::app);
-	
 	auto clear_oars = [&]( std::vector<MPI_Request> &requests, boost::dynamic_bitset<> &flags, std::vector<boost::mpi::packed_oarchive*> &oarps, const std::string &s )
 	{
 		if( flags.none() )	return;
@@ -106,10 +97,8 @@ std::ofstream ofs_mpi("allreduce_"+ModuleBase::GlobalFunc::TO_STRING(GlobalV::MY
 				if(MPI_SUCCESS!=MPI_Test( &requests[irank], &flag_finish, MPI_STATUS_IGNORE ))	throw std::runtime_error(ModuleBase::GlobalFunc::TO_STRING(__FILE__)+ModuleBase::GlobalFunc::TO_STRING(__LINE__));
 				if( flag_finish )
 				{
-//ofs_mpi<<"delete_begin\t"<<s<<"\t"<<irank<<std::endl;
 					delete oarps[irank];
 					oarps[irank] = nullptr;
-//ofs_mpi<<"delete_end\t"<<s<<"\t"<<irank<<std::endl;
 				}
 				flags[irank] = false;
 			}
@@ -124,29 +113,10 @@ std::ofstream ofs_mpi("allreduce_"+ModuleBase::GlobalFunc::TO_STRING(GlobalV::MY
 		return sum == flags.size()*2;
 	};
 	
-//	auto test_flags = [&]( const std::string & s )
-//	{
-//		ofs_mpi<<s<<std::endl;
-//		for( int irank=0; irank!=comm_sz; ++irank )
-//			ofs_mpi<<*flags_ask_atom[irank]<<" ";	ofs_mpi<<std::endl;
-//		for( int irank=0; irank!=comm_sz; ++irank )
-//			ofs_mpi<<*flags_isend_data[irank]<<" ";	ofs_mpi<<std::endl;
-//		for( int irank=0; irank!=comm_sz; ++irank )
-//			ofs_mpi<<flags_recv_data[irank]<<" ";	ofs_mpi<<std::endl;
-//	};
-	
-//test_flags(ModuleBase::GlobalFunc::TO_STRING(__FILE__)+ModuleBase::GlobalFunc::TO_STRING(__LINE__));
-		
-gettimeofday(&t_start, NULL);		
 	data_localw = get_data_local_wrapper();
-ofs_mpi<<"TIME@ get_data_local_wrapper\t"<<time_during(t_start)<<std::endl;
 		
-gettimeofday(&t_start, NULL);		
 	do{ while( lock_atom_unset_read ); } while( lock_insert.test_and_set() );
-ofs_mpi<<"TIME@ wait locks 2\t"<<time_during(t_start)<<std::endl;
-gettimeofday(&t_start, NULL);
 	insert_data( data_local );
-ofs_mpi<<"TIME@ insert_data\t"<<time_during(t_start)<<std::endl;	
 	lock_insert.clear();
 	
 	if( atom_unset.empty() )
@@ -184,31 +154,25 @@ ofs_mpi<<"TIME@ insert_data\t"<<time_during(t_start)<<std::endl;
 				{
 					const int rank_asked = status.MPI_SOURCE;
 
-gettimeofday(&t_start, NULL);
 					iarps_atom_asked[rank_asked]->resize(message_size);
 					if(MPI_SUCCESS!=MPI_Recv( iarps_atom_asked[rank_asked]->address(), message_size, MPI_PACKED, rank_asked, tag_ask, mpi_comm, MPI_STATUS_IGNORE ))	throw std::runtime_error(ModuleBase::GlobalFunc::TO_STRING(__FILE__)+ModuleBase::GlobalFunc::TO_STRING(__LINE__));	
-ofs_mpi<<"TIME@ MPI_Recv tag_ask\t"<<time_during(t_start)<<std::endl;					
 
 					threads.push_back(std::thread(
 						&Exx_Abfs::Parallel::Communicate::DM::Allreduce::send_data_process, this,
 						rank_asked ));
-ofs_mpi<<"tag_ask\t"<<rank_asked<<"\t"<<threads.back().get_id()<<std::endl;
 					break;
 				}
 				case tag_data:
 				{
 					const int rank_data = status.MPI_SOURCE;
 							
-gettimeofday(&t_start, NULL);
 					iarps_recv_data[rank_data]->resize(message_size);
 					if(MPI_SUCCESS!=MPI_Recv( iarps_recv_data[rank_data]->address(), message_size, MPI_PACKED, rank_data, tag_data, mpi_comm, MPI_STATUS_IGNORE ))	throw std::runtime_error(ModuleBase::GlobalFunc::TO_STRING(__FILE__)+ModuleBase::GlobalFunc::TO_STRING(__LINE__));
 					flags_recv_data[rank_data] = true;
-ofs_mpi<<"TIME@ MPI_Recv tag_data\t"<<time_during(t_start)<<std::endl;					
 					
 					threads.push_back(std::thread(
 						&Exx_Abfs::Parallel::Communicate::DM::Allreduce::recv_data_process, this,
 						rank_data ));
-ofs_mpi<<"tag_data\t"<<rank_data<<"\t"<<threads.back().get_id()<<std::endl;
 					break;
 				}
 				default:
@@ -219,22 +183,16 @@ ofs_mpi<<"tag_data\t"<<rank_data<<"\t"<<threads.back().get_id()<<std::endl;
 		for( int rank_ask=0; rank_ask!=comm_sz; ++rank_ask )
 			if( *flags_ask_atom[rank_ask] == 1 )
 			{
-ofs_mpi<<"isend oarps_atom_unset\t"<<rank_ask<<std::endl;
-gettimeofday(&t_start, NULL);
 				if(MPI_SUCCESS!=MPI_Isend( oarps_atom_unset[rank_ask]->address(), oarps_atom_unset[rank_ask]->size(), MPI_PACKED, rank_ask, tag_ask, mpi_comm, &requests_ask[rank_ask] ))	throw std::runtime_error(ModuleBase::GlobalFunc::TO_STRING(__FILE__)+ModuleBase::GlobalFunc::TO_STRING(__LINE__));
 				flags_request_ask[rank_ask] = true;
 				*flags_ask_atom[rank_ask] = 2;
-ofs_mpi<<"TIME@ MPI_Isend atom_unset\t"<<time_during(t_start)<<std::endl;					
 			}
 		for( int rank_asked=0; rank_asked!=comm_sz; ++rank_asked )
 			if( *flags_isend_data[rank_asked] == 1 )
 			{
-ofs_mpi<<"isend oarps_isend_data\t"<<rank_asked<<std::endl;
-gettimeofday(&t_start, NULL);
 				if(MPI_SUCCESS!=MPI_Isend( oarps_isend_data[rank_asked]->address(), oarps_isend_data[rank_asked]->size(), MPI_PACKED, rank_asked, tag_data, mpi_comm, &requests_isend_data[rank_asked] ))	throw std::runtime_error(ModuleBase::GlobalFunc::TO_STRING(__FILE__)+ModuleBase::GlobalFunc::TO_STRING(__LINE__));
 				flags_request_isend_data[rank_asked] = true;
 				*flags_isend_data[rank_asked] = 2;
-ofs_mpi<<"TIME@ MPI_Isend isend_data\t"<<time_during(t_start)<<std::endl;					
 			}
 		
 		clear_oars( requests_ask, flags_request_ask, oarps_atom_unset, "oarps_atom_unset" );
@@ -254,8 +212,6 @@ ofs_mpi<<"TIME@ MPI_Isend isend_data\t"<<time_during(t_start)<<std::endl;
 	#ifdef __MKL
     mkl_set_num_threads(mkl_threads);
 	#endif
-ofs_mpi.close();
-	
 	return data_all;
 }
 
@@ -264,22 +220,13 @@ void Exx_Abfs::Parallel::Communicate::DM::Allreduce::ask( const int rank_delta_n
 {
 	if( rank_delta_now < comm_sz )
 	{
-timeval t_start;		
-std::ofstream ofs_thread("allreduce_"+ModuleBase::GlobalFunc::TO_STRING(GlobalV::MY_RANK)+"_"+ModuleBase::GlobalFunc::TO_STRING(this_thread::get_id()),std::ofstream::app);
 		const int rank_ask = ( my_rank + rank_delta_now ) % comm_sz;
-ofs_thread<<"ask_begin\t"<<rank_delta_now<<"\t"<<rank_ask<<std::endl;
-gettimeofday(&t_start, NULL);
 		while( lock_insert.test_and_set() );
-ofs_thread<<"TIME@ wait lock ask\t"<<time_during(t_start)<<std::endl;					
 		++lock_atom_unset_read;
 		lock_insert.clear();
-gettimeofday(&t_start, NULL);
 		*oarps_atom_unset[rank_ask] << atom_unset;
-ofs_thread<<"TIME@ oarps_atom_unset <<\t"<<time_during(t_start)<<std::endl;					
 		--lock_atom_unset_read;
 		*flags_ask_atom[rank_ask] = 1;
-ofs_thread<<"ask_finish\t"<<rank_delta_now<<"\t"<<rank_ask<<"\t"<<oarps_atom_unset[rank_ask]->size()<<std::endl;
-ofs_thread.close();
 	}
 }
 
@@ -293,28 +240,16 @@ void Exx_Abfs::Parallel::Communicate::DM::Allreduce::recv_data_process( const in
 			if(!i.empty())	return false;
 		return true;
 	};
-timeval t_start;	
-std::ofstream ofs_thread("allreduce_"+ModuleBase::GlobalFunc::TO_STRING(GlobalV::MY_RANK)+"_"+ModuleBase::GlobalFunc::TO_STRING(this_thread::get_id()),std::ofstream::app);
-ofs_thread<<"recv\t"<<rank_data<<std::endl;
 
 	std::vector<std::map<size_t,std::map<size_t,std::map<Abfs::Vector3_Order<int>,ModuleBase::Matrix_Wrapper>>>> data_rank;
-gettimeofday(&t_start, NULL);
 	*iarps_recv_data[rank_data] >> data_rank;
-ofs_thread<<"finish iarps_recv_data >>\t"<<iarps_recv_data[rank_data]->size()<<std::endl;
-ofs_thread<<"TIME@ iarps_recv_data >>\t"<<time_during(t_start)<<std::endl;					
-//ofs_thread<<"delete_begin\t"<<"iarps_recv_data\t"<<rank_data<<"\t"<<iarps_recv_data[rank_data]->size()<<std::endl;
 //	delete iarps_recv_data[rank_data];		iarps_recv_data[rank_data]=nullptr;
 	iarps_recv_data[rank_data]->resize(0);
-//ofs_thread<<"delete_end\t"<<"iarps_recv_data\t"<<rank_data<<std::endl;
 	
 	if(!vector_empty(data_rank))
 	{
-gettimeofday(&t_start, NULL);
 		do{ while( lock_atom_unset_read ); } while( lock_insert.test_and_set() );
-ofs_thread<<"TIME@ wait locks 2\t"<<time_during(t_start)<<std::endl;
-gettimeofday(&t_start, NULL);
 		insert_data(data_rank);
-ofs_thread<<"TIME@ insert_data\t"<<time_during(t_start)<<std::endl;
 		lock_insert.clear();
 	}
 	
@@ -323,7 +258,6 @@ ofs_thread<<"TIME@ insert_data\t"<<time_during(t_start)<<std::endl;
 			ask(rank_delta++);
 	else
 		ask(rank_delta++);	
-ofs_thread.close();
 
 
 	#ifdef MATRIX_WRAPPER_TIANHE2
@@ -343,29 +277,24 @@ void Exx_Abfs::Parallel::Communicate::DM::Allreduce::insert_data(
 	std::vector<const std::map<size_t,std::map<Abfs::Vector3_Order<int>,ModuleBase::matrix>>*> data_rank_Ap(GlobalV::NSPIN,nullptr);
 	std::vector<const std::map<Abfs::Vector3_Order<int>,ModuleBase::matrix>*> data_rank_Bp(GlobalV::NSPIN,nullptr);
 	std::vector<const ModuleBase::matrix*> data_rank_Cp(GlobalV::NSPIN,nullptr);
-std::ofstream ofs_mpi("allreduce_"+ModuleBase::GlobalFunc::TO_STRING(GlobalV::MY_RANK),std::ofstream::app);	
-ofs_mpi<<"insert_data"<<std::endl;
 	
 	for( auto atom_unset_Ap=atom_unset.begin(); atom_unset_Ap!=atom_unset.end(); )
 	{
 		const size_t iat1 = atom_unset_Ap->first;
 		for( int is=0; is!=GlobalV::NSPIN; ++is )	data_rank_Ap[is] = static_cast<const std::map<size_t,std::map<Abfs::Vector3_Order<int>,ModuleBase::matrix>>*>( ModuleBase::GlobalFunc::MAP_EXIST( data_rank[is], iat1 ) );
 		if( !data_rank_Ap[0] ){ ++atom_unset_Ap; continue; }
-//ofs_mpi<<" "<<iat1<<std::endl;
 		
 		for( auto atom_unset_Bp=atom_unset_Ap->second.begin(); atom_unset_Bp!=atom_unset_Ap->second.end(); )
 		{
 			const size_t iat2 = atom_unset_Bp->first;
 			for( int is=0; is!=GlobalV::NSPIN; ++is )	data_rank_Bp[is] = static_cast<const std::map<Abfs::Vector3_Order<int>,ModuleBase::matrix>*>( ModuleBase::GlobalFunc::MAP_EXIST( *data_rank_Ap[is], iat2 ) );
 			if( !data_rank_Bp[0] ){ ++atom_unset_Bp; continue; }
-//ofs_mpi<<"  "<<iat2<<std::endl;
 		
 			for( auto atom_unset_Cp=atom_unset_Bp->second.begin(); atom_unset_Cp!=atom_unset_Bp->second.end(); )
 			{
 				const Abfs::Vector3_Order<int> &box2 = *atom_unset_Cp;
 				for( int is=0; is!=GlobalV::NSPIN; ++is )	data_rank_Cp[is] = static_cast<const ModuleBase::matrix*>( ModuleBase::GlobalFunc::MAP_EXIST( *data_rank_Bp[is], box2 ) );
 				if( !data_rank_Cp[0] ){ ++atom_unset_Cp; continue; }
-//ofs_mpi<<"   "<<box2<<std::endl;
 				
 				for( int is=0; is!=GlobalV::NSPIN; ++is )
 					if( data_rank_Cp[is]->c )
@@ -387,8 +316,6 @@ ofs_mpi<<"insert_data"<<std::endl;
 		else
 			++atom_unset_Ap;
 	}
-ofs_mpi<<"finish insert"<<std::endl;
-ofs_mpi.close();
 }
 
 void Exx_Abfs::Parallel::Communicate::DM::Allreduce::insert_data( 
@@ -397,29 +324,24 @@ void Exx_Abfs::Parallel::Communicate::DM::Allreduce::insert_data(
 	std::vector<std::map<size_t,std::map<Abfs::Vector3_Order<int>,ModuleBase::Matrix_Wrapper>>*> data_rank_Ap(GlobalV::NSPIN,nullptr);
 	std::vector<std::map<Abfs::Vector3_Order<int>,ModuleBase::Matrix_Wrapper>*> data_rank_Bp(GlobalV::NSPIN,nullptr);
 	std::vector<ModuleBase::Matrix_Wrapper*> data_rank_Cp(GlobalV::NSPIN,nullptr);
-std::ofstream ofs_thread("allreduce_"+ModuleBase::GlobalFunc::TO_STRING(GlobalV::MY_RANK)+"_"+ModuleBase::GlobalFunc::TO_STRING(this_thread::get_id()),std::ofstream::app);
-ofs_thread<<"insert_data"<<std::endl;
 	
 	for( auto atom_unset_Ap=atom_unset.begin(); atom_unset_Ap!=atom_unset.end(); )
 	{
 		const size_t iat1 = atom_unset_Ap->first;
 		for( int is=0; is!=GlobalV::NSPIN; ++is )	data_rank_Ap[is] = static_cast<std::map<size_t,std::map<Abfs::Vector3_Order<int>,ModuleBase::Matrix_Wrapper>>*>(ModuleBase::GlobalFunc::MAP_EXIST( data_rank[is], iat1 ));
 		if( !data_rank_Ap[0] ){ ++atom_unset_Ap; continue; }
-//ofs_thread<<" "<<iat1<<std::endl;
 		
 		for( auto atom_unset_Bp=atom_unset_Ap->second.begin(); atom_unset_Bp!=atom_unset_Ap->second.end(); )
 		{
 			const size_t iat2 = atom_unset_Bp->first;
 			for( int is=0; is!=GlobalV::NSPIN; ++is )	data_rank_Bp[is] = static_cast<std::map<Abfs::Vector3_Order<int>,ModuleBase::Matrix_Wrapper>*>(ModuleBase::GlobalFunc::MAP_EXIST( *data_rank_Ap[is], iat2 ));
 			if( !data_rank_Bp[0] ){ ++atom_unset_Bp; continue; }
-//ofs_thread<<"  "<<iat2<<std::endl;
 		
 			for( auto atom_unset_Cp=atom_unset_Bp->second.begin(); atom_unset_Cp!=atom_unset_Bp->second.end(); )
 			{
 				const Abfs::Vector3_Order<int> &box2 = *atom_unset_Cp;
 				for( int is=0; is!=GlobalV::NSPIN; ++is )	data_rank_Cp[is] = static_cast<ModuleBase::Matrix_Wrapper*>(ModuleBase::GlobalFunc::MAP_EXIST( *data_rank_Bp[is], box2 ));
 				if( !data_rank_Cp[0] ){ ++atom_unset_Cp; continue; }
-//ofs_thread<<"   "<<box2<<std::endl;
 				
 				for( int is=0; is!=GlobalV::NSPIN; ++is )
 					if( data_rank_Cp[is]->c )
@@ -441,39 +363,22 @@ ofs_thread<<"insert_data"<<std::endl;
 		else
 			++atom_unset_Ap;
 	}
-ofs_thread<<"finish insert"<<std::endl;
-ofs_thread.close();
 }
 
 
 
 void Exx_Abfs::Parallel::Communicate::DM::Allreduce::send_data_process( const int rank_asked )
 {
-timeval t_start;
-std::ofstream ofs_thread("allreduce_"+ModuleBase::GlobalFunc::TO_STRING(GlobalV::MY_RANK)+"_"+ModuleBase::GlobalFunc::TO_STRING(this_thread::get_id()),std::ofstream::app);
-ofs_thread<<"send\t"<<rank_asked<<std::endl;
 	
 	std::map<size_t,std::map<size_t,set<Abfs::Vector3_Order<int>>>> atom_asked;
-gettimeofday(&t_start, NULL);
 	*iarps_atom_asked[rank_asked] >> atom_asked;
-ofs_thread<<"finish iarps_atom_asked >>\t"<<iarps_atom_asked[rank_asked]->size()<<std::endl;
-ofs_thread<<"TIME@ iarps_atom_asked >>\t"<<time_during(t_start)<<std::endl;					
-//ofs_thread<<"delete_begin\t"<<"iarps_atom_asked\t"<<rank_asked<<"\t"<<atom_asked.size()<<std::endl;
 //	delete iarps_atom_asked[rank_asked];		iarps_atom_asked[rank_asked]=nullptr;
 	iarps_atom_asked[rank_asked]->resize(0);
-//ofs_thread<<"delete_end\t"<<"iarps_atom_asked\t"<<rank_asked<<std::endl;
 	
-gettimeofday(&t_start, NULL);
 	const std::vector<std::map<size_t,std::map<size_t,std::map<Abfs::Vector3_Order<int>,ModuleBase::Matrix_Wrapper>>>> matrix_wrapped = get_data_local_wrapper(atom_asked);
-ofs_thread<<"finish get_data_local_wrapper"<<std::endl;
-ofs_thread<<"TIME@ get_data_local_wrapper\t"<<time_during(t_start)<<std::endl;					
-gettimeofday(&t_start, NULL);
 	*oarps_isend_data[rank_asked] << matrix_wrapped;	
-ofs_thread<<"finish oarps_isend_data <<\t"<<oarps_isend_data[rank_asked]->size()<<std::endl;
-ofs_thread<<"TIME@ oarps_isend_data <<\t"<<time_during(t_start)<<std::endl;					
 	
 	*flags_isend_data[rank_asked] = 1;
-ofs_thread.close();
 }
 
 /*
@@ -481,8 +386,6 @@ std::vector<std::map<size_t,std::map<size_t,std::map<Abfs::Vector3_Order<int>,Mo
 Exx_Abfs::Parallel::Communicate::DM::Allreduce::get_data_local_wrapper( 
 	const std::map<size_t,std::map<size_t,set<Abfs::Vector3_Order<int>>>> & atom_asked ) const
 {
-//std::ofstream ofs_thread("allreduce_"+ModuleBase::GlobalFunc::TO_STRING(GlobalV::MY_RANK)+"_"+ModuleBase::GlobalFunc::TO_STRING(this_thread::get_id()),std::ofstream::app);
-//ofs_thread<<"get_data_local_wrapper"<<std::endl;	
 
 	std::vector<std::map<size_t,std::map<size_t,std::map<Abfs::Vector3_Order<int>,ModuleBase::Matrix_Wrapper>>>> mw(GlobalV::NSPIN);
 	for( int is=0; is!=GlobalV::NSPIN; ++is )
@@ -514,7 +417,6 @@ Exx_Abfs::Parallel::Communicate::DM::Allreduce::get_data_local_wrapper(
 			}
 		}
 	}
-//ofs_thread.close();
 	return mw;
 }
 */
@@ -523,8 +425,6 @@ std::vector<std::map<size_t,std::map<size_t,std::map<Abfs::Vector3_Order<int>,Mo
 Exx_Abfs::Parallel::Communicate::DM::Allreduce::get_data_local_wrapper( 
 	const std::map<size_t,std::map<size_t,set<Abfs::Vector3_Order<int>>>> & atom_asked ) const
 {
-std::ofstream ofs_thread("allreduce_"+ModuleBase::GlobalFunc::TO_STRING(GlobalV::MY_RANK)+"_"+ModuleBase::GlobalFunc::TO_STRING(this_thread::get_id()),std::ofstream::app);
-ofs_thread<<"get_data_local_wrapper"<<std::endl;	
 
 	std::vector<std::map<size_t,std::map<size_t,std::map<Abfs::Vector3_Order<int>,ModuleBase::Matrix_Wrapper>>>> mw(GlobalV::NSPIN);
 	for( int is=0; is!=GlobalV::NSPIN; ++is )
@@ -556,15 +456,12 @@ ofs_thread<<"get_data_local_wrapper"<<std::endl;
 			}
 		}
 	}
-ofs_thread.close();
 	return mw;
 }
 
 std::vector<std::map<size_t,std::map<size_t,std::map<Abfs::Vector3_Order<int>,ModuleBase::Matrix_Wrapper>>>>
 Exx_Abfs::Parallel::Communicate::DM::Allreduce::get_data_local_wrapper() const
 {
-std::ofstream ofs_thread("allreduce_"+ModuleBase::GlobalFunc::TO_STRING(GlobalV::MY_RANK)+"_"+ModuleBase::GlobalFunc::TO_STRING(this_thread::get_id()),std::ofstream::app);
-ofs_thread<<"get_data_local_wrapper"<<std::endl;	
 
 	std::vector<std::map<size_t,std::map<size_t,std::map<Abfs::Vector3_Order<int>,ModuleBase::Matrix_Wrapper>>>> mw(GlobalV::NSPIN);
 	for( int is=0; is!=GlobalV::NSPIN; ++is )
@@ -587,6 +484,5 @@ ofs_thread<<"get_data_local_wrapper"<<std::endl;
 			}
 		}
 	}
-ofs_thread.close();
 	return mw;
 }

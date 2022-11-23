@@ -116,7 +116,6 @@ void ESolver_KS_LCAO::Init(Input& inp, UnitCell& ucell)
             GlobalC::exx_lcao.init();
             break;
         case Exx_Global::Hybrid_Type::No:
-        case Exx_Global::Hybrid_Type::Generate_Matrix:
             break;
         default:
             throw std::invalid_argument(ModuleBase::GlobalFunc::TO_STRING(__FILE__)

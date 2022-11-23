@@ -15,12 +15,6 @@ using std::map;
 class Exx_Abfs
 {
 public:
-
-	void test_all() const;	
-	void generate_matrix() const;
-	void test_abfs1() const;
-	void test_abfs2() const;
-	void cal_exx() const;
 	
 	class Util;
 	class Abfs_Index;

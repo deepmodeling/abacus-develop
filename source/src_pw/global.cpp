@@ -14,7 +14,6 @@ wavefunc wf;
 #ifdef __MPI
 #ifdef __EXX
 Exx_Global exx_global;
-Exx_Lip exx_lip(exx_global.info);
 #endif
 #endif
 pseudopot_cell_vnl ppcell;

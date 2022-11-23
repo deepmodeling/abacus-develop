@@ -523,11 +523,7 @@ void energy::set_exx()
 
 	auto exx_energy = []() -> double
 	{
-		if("lcao_in_pw"==GlobalV::BASIS_TYPE)
-		{
-			return GlobalC::exx_lip.get_exx_energy();
-		}
-		else if("lcao"==GlobalV::BASIS_TYPE)
+		if("lcao"==GlobalV::BASIS_TYPE)
 		{
 			return GlobalC::exx_lcao.get_energy();
 		}

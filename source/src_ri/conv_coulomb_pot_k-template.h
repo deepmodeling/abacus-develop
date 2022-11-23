@@ -5,8 +5,6 @@
 #include <vector>
 #include <cmath>
 
-#include "../src_external/src_test/src_ri/exx_abfs-construct_orbs-test.h"
-
 template<typename T>
 T Conv_Coulomb_Pot_K::cal_orbs_ccp_rmesh(
 	const T & orbs,

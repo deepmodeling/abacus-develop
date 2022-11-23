@@ -65,7 +65,6 @@ ${OBJS_SURCHEM}\
 ${OBJS_SYMMETRY}\
 ${OBJS_XC}\
 ${OBJS_IO}\
-${OBJS_RI}\
 ${OBJS_PARALLEL}\
 ${OBJS_SRCPW}
 
@@ -406,8 +405,6 @@ OBJS_LCAO=DM_gamma.o\
       record_adj.o\
       dm_2d.o\
       wavefunc_in_pw.o\
-
-OBJS_RI=exx_lip.o\
 
 OBJS_RI_LCAO=abfs-vector3_order.o\
       abfs.o\

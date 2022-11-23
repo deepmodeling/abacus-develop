@@ -5,7 +5,6 @@
 #include "../module_base/global_variable.h"
 #include "../src_io/restart.h"
 #include "../module_relax/relax_driver.h"
-#include "../src_ri/exx_lip.h"
 #include "VNL_in_pw.h"
 #include "charge_mixing.h"
 #include "energy.h"
@@ -311,7 +310,6 @@ extern energy en;
 extern wavefunc wf;
 extern Hamilt hm;
 extern Exx_Global exx_global;
-extern Exx_Lip exx_lip;
 extern pseudopot_cell_vnl ppcell;
 } // namespace GlobalC
 

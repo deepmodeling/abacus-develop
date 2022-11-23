@@ -1,7 +1,3 @@
-list(APPEND objects
-    exx_lip.cpp
-)
-
 if(ENABLE_LCAO)
   list(APPEND objects
       abfs-vector3_order.cpp
@@ -37,8 +33,6 @@ if(ENABLE_LCAO)
       exx_abfs-util.cpp
       exx_abfs.cpp
       exx_lcao.cpp
-      exx_opt_orb-print.cpp
-      exx_opt_orb.cpp
   )
 endif()
 add_library(

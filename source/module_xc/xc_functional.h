@@ -144,7 +144,7 @@ class XC_Functional
 
 // The difference between our realization (gcxc/gcx_spin/gcc_spin) and
 // LIBXC, and the reason for not having gcxc_libxc is explained
-// in the NOTE in the comment for xc_functional_wrapper_wc.cpp part
+// in the NOTE in the comment for xc_functional_wrapper_xc.cpp part
 
 	// GGA
 	static void gcxc(const double &rho, const double &grho,

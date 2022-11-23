@@ -6,10 +6,6 @@
 #include "../module_orbital/ORB_read.h"
 #include "../module_base/ylm.h"
 #include "../module_base/global_function.h"
-
-#include<sys/time.h>					// Peize Lin test
-#include "../src_external/src_test/test_function.h"			// Peize Lin test 2016-04-05
-#include "../src_external/src_test/src_ri/exx_lcao-test.h"
 #include "../src_lcao/global_fp.h"
 
 void Exx_Abfs::Matrix_Orbs11::init(
@@ -22,9 +18,6 @@ void Exx_Abfs::Matrix_Orbs11::init(
 	// (1) MOT: make overlap table.
 	//=========================================
 
-//std::ofstream ofs(exx_lcao.test_dir.process+"time_"+ModuleBase::GlobalFunc::TO_STRING(GlobalV::MY_RANK),std::ofstream::app);	
-//timeval t_start;	
-//gettimeofday( &t_start, NULL);
 	MOT.allocate(
 		GlobalC::ORB.get_ntype(),							// number of atom types
 		std::max( GlobalC::ORB.get_lmax(), Exx_Abfs::Lmax ),	// max L used to calculate overlap
@@ -33,39 +26,28 @@ void Exx_Abfs::Matrix_Orbs11::init(
 		GlobalC::ORB.get_dR(),								// delta R, for making radial table
 //		GlobalC::ORB.get_dk() / kmesh_times);				// delta k, for integration in k space
 		GlobalC::ORB.get_dk());											// Peize Lin change 2017-04-16
-//ofs<<"TIME@Exx_Abfs::Matrix_Orbs11::init::MOT.allocate\t"<<time_during(t_start)<<std::endl;
 	int Lmax_used, Lmax;
-//gettimeofday( &t_start, NULL);
 	MOT.init_Table_Spherical_Bessel (2, mode, Lmax_used, Lmax, Exx_Abfs::Lmax,GlobalC::ORB, GlobalC::ucell.infoNL.Beta);
 //	MOT.init_OV_Tpair();							// for MOT.OV_L2plus1
 //	MOT.Destroy_Table_Spherical_Bessel (Lmax_used);				// why?
-//ofs<<"TIME@Exx_Abfs::Matrix_Orbs11::init::MOT.init_Table_Spherical_Bessel\t"<<time_during(t_start)<<std::endl;
 
 	//=========================================
 	// (2) init Ylm Coef
 	//=========================================
 	//liaochen add 2010/4/29
-//gettimeofday( &t_start, NULL);
 	ModuleBase::Ylm::set_coefficients ();
-//ofs<<"TIME@Exx_Abfs::Matrix_Orbs11::init::Ylm\t"<<time_during(t_start)<<std::endl;
 	
 	//=========================================
 	// (3) make Gaunt coefficients table
 	//=========================================
-//gettimeofday( &t_start, NULL);
 	MGT.init_Gaunt_CH( Lmax );
 	MGT.init_Gaunt( Lmax );
-//ofs<<"TIME@Exx_Abfs::Matrix_Orbs11::init::MGT\t"<<time_during(t_start)<<std::endl;
-//ofs.close();
 }
 
 void Exx_Abfs::Matrix_Orbs11::init_radial(
 	const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> &orb_A, 
 	const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> &orb_B)
 { 
-//std::ofstream ofs(exx_lcao.test_dir.process+"time_"+ModuleBase::GlobalFunc::TO_STRING(GlobalV::MY_RANK),std::ofstream::app);
-//timeval t_start;
-//gettimeofday( &t_start, NULL);
 	ModuleBase::TITLE("Exx_Abfs::Matrix_Orbs11","init_radial");
 	for( size_t TA = 0; TA!=orb_A.size(); ++TA )
 		for( size_t TB=0; TB!=orb_B.size(); ++TB )
@@ -78,17 +60,12 @@ void Exx_Abfs::Matrix_Orbs11::init_radial(
 									orb_A[TA][LA][NA], 
 									orb_B[TB][LB][NB],
 									MOT, MGT)));
-//ofs<<"TIME@Exx_Abfs::Matrix_Orbs11::init_radial\t"<<time_during(t_start)<<std::endl;
-//ofs.close();
 }
 
 void Exx_Abfs::Matrix_Orbs11::init_radial(
 	const LCAO_Orbitals &orb_A, 
 	const LCAO_Orbitals &orb_B)
 { 
-//std::ofstream ofs(exx_lcao.test_dir.process+"time_"+ModuleBase::GlobalFunc::TO_STRING(GlobalV::MY_RANK),std::ofstream::app);
-//timeval t_start;
-//gettimeofday( &t_start, NULL);
 	ModuleBase::TITLE("Exx_Abfs::Matrix_Orbs11","init_radial");
 	for( size_t TA = 0; TA!=orb_A.get_ntype(); ++TA )
 		for( size_t TB=0; TB!=orb_B.get_ntype(); ++TB )
@@ -101,15 +78,10 @@ void Exx_Abfs::Matrix_Orbs11::init_radial(
 									orb_A.Phi[TA].PhiLN(LA,NA),								
 									orb_B.Phi[TB].PhiLN(LB,NB),
 									MOT, MGT)));
-//ofs<<"TIME@Exx_Abfs::Matrix_Orbs11::init_radial\t"<<time_during(t_start)<<std::endl;
-//ofs.close();
 }
 
 void Exx_Abfs::Matrix_Orbs11::init_radial_table()
 {
-//std::ofstream ofs(exx_lcao.test_dir.process+"time_"+ModuleBase::GlobalFunc::TO_STRING(GlobalV::MY_RANK),std::ofstream::app);
-//timeval t_start;
-//gettimeofday( &t_start, NULL);
 	ModuleBase::TITLE("Exx_Abfs::Matrix_Orbs11","init_radial_table");
 	for( auto &coA : center2_orb11_s )
 		for( auto &coB : coA.second )
@@ -118,15 +90,10 @@ void Exx_Abfs::Matrix_Orbs11::init_radial_table()
 					for( auto &coE : coD.second )
 						for( auto &coF : coE.second )
 							coF.second.init_radial_table();
-//ofs<<"TIME@Exx_Abfs::Matrix_Orbs11::init_radial_table\t"<<time_during(t_start)<<std::endl;
-//ofs.close();
 }
 
 void Exx_Abfs::Matrix_Orbs11::init_radial_table( const std::map<size_t,std::map<size_t,std::set<double>>> &Rs )
 {	
-std::ofstream ofs(GlobalC::exx_lcao.test_dir.process+"time_"+ModuleBase::GlobalFunc::TO_STRING(GlobalV::MY_RANK),std::ofstream::app);
-timeval t_start;
-gettimeofday( &t_start, NULL);
 	ModuleBase::TITLE("Exx_Abfs::Matrix_Orbs11","init_radial_table_Rs");
 	for( const auto &RsA : Rs )
 		for( const auto &RsB : RsA.second )
@@ -135,7 +102,6 @@ gettimeofday( &t_start, NULL);
 						ModuleBase::GlobalFunc::MAP_EXIST(center2_orb11_s, RsA.first, RsB.first)) )
 			{
 timeval t_small;
-gettimeofday(&t_small, NULL);
 				std::set<size_t> radials;
 				for( const double &R : RsB.second )
 				{
@@ -144,18 +110,13 @@ gettimeofday(&t_small, NULL);
 					for( size_t i=0; i!=4; ++i )
 						radials.insert(iq+i);
 				}
-ofs<<"\t"<<RsA.first<<"\t"<<RsB.first<<"\t"<<time_during(t_small)<<"\t"<<flush;
-gettimeofday(&t_small, NULL);
 				for( auto &coC : *center2_orb11_sAB )
 					for( auto &coD : coC.second )
 						for( auto &coE : coD.second )
 							for( auto &coF : coE.second )
 								coF.second.init_radial_table(radials);
-ofs<<time_during(t_small)<<std::endl;
 			}
 		}
-ofs<<"TIME@Exx_Abfs::Matrix_Orbs11::init_radial_table_Rs\t"<<time_during(t_start)<<std::endl;
-ofs.close();
 }
 
 /*
@@ -294,9 +255,6 @@ std::map<size_t,std::map<size_t,std::map<size_t,std::map<size_t,ModuleBase::matr
 	const ModuleBase::Element_Basis_Index::IndexLNM &index_r, 
 	const ModuleBase::Element_Basis_Index::IndexLNM &index_c ) const
 {
-std::ofstream ofs(GlobalC::exx_lcao.test_dir.process+"time_"+ModuleBase::GlobalFunc::TO_STRING(GlobalV::MY_RANK),std::ofstream::app);
-timeval t_start;
-gettimeofday( &t_start, NULL);
 	ModuleBase::TITLE("Exx_Abfs::Matrix_Orbs11","cal_overlap_matrix");
 	
 	std::map<size_t,std::map<size_t,std::map<size_t,std::map<size_t,ModuleBase::matrix>>>> matrixes;
@@ -320,7 +278,5 @@ gettimeofday( &t_start, NULL);
 			}
 		}
 	}
-ofs<<"TIME@Exx_Abfs::Matrix_Orbs11::cal_overlap_matrix\t"<<time_during(t_start)<<std::endl;
-ofs.close();
 	return matrixes;
 }

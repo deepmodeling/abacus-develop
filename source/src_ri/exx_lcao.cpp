@@ -37,12 +37,6 @@
 // Peize Lin test
 #include<stdexcept>	
 #include<sys/time.h>
-#include "../src_external/src_test/src_global/element_basis_index-test.h"
-#include "../src_external/src_test/src_global/matrix-test.h"
-#include "../src_external/src_test/print_tmp.h"
-#include "../src_external/src_test/src_global/sph_bessel-unittest.h"
-#include "../src_external/src_test/src_ri/exx_lcao-test.h"
-#include "../src_external/src_test/src_ri/abfs-test.h"
 
 /*
 // m_new( i2*n1+i1, i3 ) = m( i1*n2+i2, i3 )
@@ -154,24 +148,18 @@ Exx_Lcao::Exx_Lcao( const Exx_Global::Exx_Info &info_global )
 		constexpr int S=10000;
 		constexpr int N=1000;
 		ModuleBase::matrix m1(N,N), m2(N,N), m3(N,N);	
-		timeval time;		
-		gettimeofday(&time, NULL);
 		
 		for(int s=0; s<S; ++s)
 			BlasConnector::gemm('N', 'N', N, N, N, 1, m1.c, N, m2.c, N, 0, m3.c, N);
-		std::cout<<"NN\t"<<cut_time(time)<<std::endl;
 		
 		for(int s=0; s<S; ++s)
 			BlasConnector::gemm('N', 'T', N, N, N, 1, m1.c, N, m2.c, N, 0, m3.c, N);
-		std::cout<<"NT\t"<<cut_time(time)<<std::endl;
 		
 		for(int s=0; s<S; ++s)
 			BlasConnector::gemm('T', 'N', N, N, N, 1, m1.c, N, m2.c, N, 0, m3.c, N);
-		std::cout<<"TN\t"<<cut_time(time)<<std::endl;
 		
 		for(int s=0; s<S; ++s)
 			BlasConnector::gemm('T', 'T', N, N, N, 1, m1.c, N, m2.c, N, 0, m3.c, N);
-		std::cout<<"TT\t"<<cut_time(time)<<std::endl;
 	};
 
 	auto test_gemm_3 = []()
@@ -181,13 +169,11 @@ Exx_Lcao::Exx_Lcao( const Exx_Global::Exx_Info &info_global )
 		for(int N=1; N<=4096; N*=2)
 		{
 			ModuleBase::matrix a(N,N), b(N,N);
-			timeval t;	gettimeofday(&t,NULL);
 			for(int m=0; m<M; ++m)
 			{
 				ModuleBase::matrix c = a * b;
 				s+=c(0,0);
 			}
-			std::cout<<N<<"\t"<<cal_time(t)<<"\t"<<s<<std::endl;
 		}
 	};
 }
@@ -524,10 +510,6 @@ void Exx_Lcao::init()
 
 mkdir_test_dir();
 
-std::ofstream ofs_mpi(test_dir.process+"time_"+ModuleBase::GlobalFunc::TO_STRING(GlobalV::MY_RANK),std::ofstream::app);
-timeval t_start,t_start_all;
-gettimeofday( &t_start_all, NULL);
-
 //	DM.flag_mix = info.separate_loop ? false : true;
 //	DM.flag_mix = false;		// Peize Lin test
 
@@ -555,17 +537,12 @@ gettimeofday( &t_start_all, NULL);
 	}
 #endif
 
-gettimeofday( &t_start, NULL);
 	this->lcaos = Exx_Abfs::Construct_Orbs::change_orbs( GlobalC::ORB, this->kmesh_times );
-ofs_mpi<<"TIME@ Exx_Abfs::Construct_Orbs::change_orbs\t"<<time_during(t_start)<<std::endl;
 
-ofs_mpi<<info.files_abfs<<std::endl;
 #ifdef __MPI
 	Exx_Abfs::Util::bcast( info.files_abfs, 0, MPI_COMM_WORLD );
 #endif
-ofs_mpi<<info.files_abfs<<std::endl;
 
-gettimeofday( &t_start, NULL);
 	const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>
 		abfs_same_atom = Exx_Abfs::Construct_Orbs::abfs_same_atom( lcaos, this->kmesh_times, info.pca_threshold );		// Peize Lin test
 	if(info.files_abfs.empty())
@@ -576,8 +553,6 @@ gettimeofday( &t_start, NULL);
 	{
 		this->abfs = Exx_Abfs::IO::construct_abfs( abfs_same_atom, GlobalC::ORB, info.files_abfs, this->kmesh_times );
 	}
-//	this->abfs = Exx_Abfs::Construct_Orbs::orth_orbs( abfs_origin );		// Peize Lin test
-ofs_mpi<<"TIME@ Exx_Abfs::Construct_Orbs::abfs\t"<<time_during(t_start)<<std::endl;
 
 	auto print_psi1 = [](const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> &orbs)
 	{
@@ -640,7 +615,6 @@ ofs_mpi<<"TIME@ Exx_Abfs::Construct_Orbs::abfs\t"<<time_during(t_start)<<std::en
 //	ofs.close();
 //}
 
-gettimeofday( &t_start, NULL);
 	switch(info.hybrid_type)
 	{
 		case Exx_Global::Hybrid_Type::HF:
@@ -654,7 +628,6 @@ gettimeofday( &t_start, NULL);
 		default:
 			throw std::domain_error(ModuleBase::GlobalFunc::TO_STRING(__FILE__)+" line "+ModuleBase::GlobalFunc::TO_STRING(__LINE__));	break;
 	}
-ofs_mpi<<"TIME@ Conv_Coulomb_Pot_K::cal_orbs_ccp\t"<<time_during(t_start)<<std::endl;
 
 	auto print_psik = [](
 		const std::string & file_name,
@@ -691,8 +664,6 @@ ofs_mpi<<"TIME@ Conv_Coulomb_Pot_K::cal_orbs_ccp\t"<<time_during(t_start)<<std::
 		Exx_Abfs::Lmax = std::max( Exx_Abfs::Lmax, static_cast<int>(abfs[T].size())-1 );
 	}
 
-ofs_mpi<<"Exx_Abfs::Lmax:\t"<<Exx_Abfs::Lmax<<std::endl;
-
 	const ModuleBase::Element_Basis_Index::Range
 		&&range_lcaos = Exx_Abfs::Abfs_Index::construct_range( lcaos );
 	index_lcaos = ModuleBase::Element_Basis_Index::construct_index( range_lcaos );
@@ -700,9 +671,6 @@ ofs_mpi<<"Exx_Abfs::Lmax:\t"<<Exx_Abfs::Lmax<<std::endl;
 	const ModuleBase::Element_Basis_Index::Range
 		&&range_abfs = Exx_Abfs::Abfs_Index::construct_range( abfs );
 	index_abfs = ModuleBase::Element_Basis_Index::construct_index( range_abfs );
-
-ofs_mpi<<range_lcaos<<std::endl;
-ofs_mpi<<range_abfs<<std::endl;
 
 	auto test_mll = [&]()
 	{
@@ -715,29 +683,13 @@ ofs_mpi<<range_abfs<<std::endl;
 		mll.cal_overlap_matrix(0,0,GlobalC::ucell.atoms[0].tau[0],GlobalC::ucell.atoms[0].tau[1],index_lcaos,index_lcaos).print(ofsS, 1E-10)<<std::endl<<std::endl;
 	};
 
-gettimeofday( &t_start, NULL);
 	m_abfs_abfs.init( 2, this->kmesh_times, (1+info.ccp_rmesh_times)/2.0 );
-ofs_mpi<<"TIME@ m_abfs_abfs.init\t"<<time_during(t_start)<<std::endl;
-gettimeofday( &t_start, NULL);
 	m_abfs_abfs.init_radial( abfs_ccp, abfs );
-ofs_mpi<<"TIME@ m_abfs_abfs.init_radial\t"<<time_during(t_start)<<std::endl;
-//gettimeofday( &t_start, NULL);
-//	m_abfs_abfs.init_radial_table();
-//ofs_mpi<<"TIME@ m_abfs_abfs.init_radial_table\t"<<time_during(t_start)<<std::endl;
 
-gettimeofday( &t_start, NULL);
 	m_abfslcaos_lcaos.init( 1, this->kmesh_times, 1 );
-ofs_mpi<<"TIME@ m_abfslcaos_lcaos.init\t"<<time_during(t_start)<<std::endl;
-gettimeofday( &t_start, NULL);
 	m_abfslcaos_lcaos.init_radial( abfs_ccp, lcaos, lcaos );
-ofs_mpi<<"TIME@ m_abfslcaos_lcaos.init_radial\t"<<time_during(t_start)<<std::endl;
-//gettimeofday( &t_start, NULL);
-//	m_abfslcaos_lcaos.init_radial_table();
-//ofs_mpi<<"TIME@ m_abfslcaos_lcaos.init_radial_table\t"<<time_during(t_start)<<std::endl;
 
 	Born_von_Karman_period = ModuleBase::Vector3<int>{GlobalC::kv.nmp[0],GlobalC::kv.nmp[1],GlobalC::kv.nmp[2]};
-ofs_mpi<<"TIME@ Exx_Lcao::init\t"<<time_during(t_start_all)<<std::endl;
-ofs_mpi.close();
 
 	auto PCA_test = [&]()
 	{
@@ -804,9 +756,6 @@ void Exx_Lcao::cal_exx_ions(const Parallel_Orbitals &pv)
 {
 	ModuleBase::TITLE("Exx_Lcao","cal_exx_ions");
 	ModuleBase::timer::tick("Exx_Lcao", "cal_exx_ions");
-std::ofstream ofs_mpi(test_dir.process+"time_"+ModuleBase::GlobalFunc::TO_STRING(GlobalV::MY_RANK),std::ofstream::app);
-timeval t_start, t_start_all;
-gettimeofday( &t_start_all, NULL);
 
 	auto cal_atom_centres_core = [](const std::vector<std::pair<size_t,size_t>> &atom_pairs_core) -> std::set<size_t>
 	{
@@ -819,7 +768,6 @@ gettimeofday( &t_start_all, NULL);
 		return atom_centres_core;
 	};
 	
-gettimeofday( &t_start, NULL);
 #ifdef __MPI
 	if(atom_pairs_core_origin.empty())
 		switch(this->info.distribute_type)
@@ -837,12 +785,6 @@ gettimeofday( &t_start, NULL);
 				//throw std::domain_error(ModuleBase::GlobalFunc::TO_STRING(static_cast<std::underlying_type<Exx_Lcao::Distribute_Type>::type>(info.distribute_type))+"\t"+ModuleBase::GlobalFunc::TO_STRING(__FILE__)+" line "+ModuleBase::GlobalFunc::TO_STRING(__LINE__));	break;
 		}
 #endif
-ofs_mpi<<"atom_pairs_core_origin\t"<<atom_pairs_core_origin.size()<<std::endl;
-ofs_mpi<<"TIME@ Htime::distribute\t"<<time_during(t_start)<<std::endl;
-//std::ofstream ofs_atom_pair("atom_pair+"+ModuleBase::GlobalFunc::TO_STRING(GlobalV::MY_RANK));
-//for( const auto & i : atom_pairs_core_origin )
-//	ofs_atom_pair<<i.first<<"\t"<<i.second<<std::endl;
-//ofs_atom_pair.close();
 	
 	#if TEST_EXX_LCAO==1
 		std::ofstream ofs_adjs("adjs.dat");
@@ -852,45 +794,31 @@ ofs_mpi<<"TIME@ Htime::distribute\t"<<time_during(t_start)<<std::endl;
 		#error "TEST_EXX_LCAO"
 	#endif
 
-gettimeofday( &t_start, NULL);
 	init_radial_table_ions( cal_atom_centres_core(atom_pairs_core_origin), atom_pairs_core_origin );
-ofs_mpi<<"TIME@ init_radial_table_ions\t"<<time_during(t_start)<<std::endl;
 
-gettimeofday( &t_start, NULL);
 	Vs = Abfs::cal_Vs( atom_pairs_core_origin, m_abfs_abfs, index_abfs, info.ccp_rmesh_times, info.v_threshold, Vws );
-ofs_mpi<<"TIME@ Abfs::cal_Vs\t"<<time_during(t_start)<<std::endl;
+
 	Abfs::delete_empty_ptrs( Vws );
-gettimeofday( &t_start, NULL);
+
 	Vps = Abfs::cal_mps( Born_von_Karman_period, Vs );
-ofs_mpi<<"TIME@ Abfs::cal_Vps\t"<<time_during(t_start)<<std::endl;
 	atom_pairs_core = Abfs::get_atom_pair(Vps);
-ofs_mpi<<"atom_pairs_core\t"<<atom_pairs_core.size()<<std::endl;
 
 	const std::set<size_t> atom_centres_core = cal_atom_centres_core(atom_pairs_core);
-ofs_mpi<<"atom_centres_core\t"<<atom_centres_core.size()<<std::endl;
 
-gettimeofday( &t_start, NULL);
 	H_atom_pairs_core = Abfs::get_H_pairs_core( atom_pairs_core );
-ofs_mpi<<"H_atom_pairs_core\t"<<H_atom_pairs_core.size()<<std::endl;
-ofs_mpi<<"TIME@ Exx_Lcao::allocate_Hexx\t"<<time_during(t_start)<<std::endl;
 	
-gettimeofday( &t_start, NULL);
 	Cs = Abfs::cal_Cs( atom_centres_core, m_abfs_abfs,m_abfslcaos_lcaos, index_abfs,index_lcaos, info.c_threshold, Cws,Vws );
-ofs_mpi<<"TIME@ Abfs::cal_Cs\t"<<time_during(t_start)<<std::endl;
-	Abfs::delete_empty_ptrs( Cws );
-gettimeofday( &t_start, NULL);
-	Cps = Abfs::cal_mps( Born_von_Karman_period, Cs );
-ofs_mpi<<"TIME@ Abfs::cal_Cps\t"<<time_during(t_start)<<std::endl;
 
-gettimeofday( &t_start, NULL);
+	Abfs::delete_empty_ptrs( Cws );
+
+	Cps = Abfs::cal_mps( Born_von_Karman_period, Cs );
+
 	schwarz.init( info.schwarz_threshold, info.schwarz_threshold );
 	schwarz.cal_max_pair_fock( atom_centres_core, m_abfs_abfs,m_abfslcaos_lcaos, index_abfs,index_lcaos, Born_von_Karman_period, Cws,Vws );
-ofs_mpi<<"TIME@ schwarz::init\t"<<time_during(t_start)<<std::endl;
-gettimeofday( &t_start, NULL);
+
 	cauchy.init( info.cauchy_threshold, info.cauchy_threshold, Born_von_Karman_period );
 	cauchy.cal_norm_C_max( Cps, index_lcaos, index_abfs );
 	cauchy.cal_norm_V( Vps );
-ofs_mpi<<"TIME@ cauchy::init\t"<<time_during(t_start)<<std::endl;
 
 	#if EXX_DM==2
 	DM_para.init( H_atom_pairs_core, info.dm_threshold );
@@ -901,17 +829,6 @@ ofs_mpi<<"TIME@ cauchy::init\t"<<time_during(t_start)<<std::endl;
 	#if EXX_H_COMM==2
 	Hexx_para.allreduce2.init(MPI_COMM_WORLD, H_atom_pairs_core, pv);
 	#endif
-	
-ofs_mpi<<"TIME@ Exx_Lcao::cal_exx_ions\t"<<time_during(t_start_all)<<std::endl;
-
-ofs_mpi<<"sizeof_Cs:\t"<<get_sizeof(Cs)<<std::endl;
-ofs_mpi<<"sizeof_Vs:\t"<<get_sizeof(Vs)<<std::endl;
-ofs_mpi<<"sizeof_Cps:\t"<<get_sizeof(Cps)<<std::endl;
-ofs_mpi<<"sizeof_Vps:\t"<<get_sizeof(Vps)<<std::endl;
-ofs_mpi<<"sizeof_Cws:\t"<<get_sizeof(Cws)<<std::endl;
-ofs_mpi<<"sizeof_Vws:\t"<<get_sizeof(Vws)<<std::endl;
-
-ofs_mpi.close();
 
 	#if TEST_EXX_LCAO==1
 		ofs_matrixes(test_dir.matrix+"Cws_"+ModuleBase::GlobalFunc::TO_STRING(GlobalV::MY_RANK),Cws);
@@ -942,66 +859,39 @@ static int istep=0;
 		#error "TEST_EXX_LCAO"
 	#endif
 
-//	if( exx_lcao.cal_DM_delta() < exx_lcao.get_DM_threshold() )	break;
-
-std::ofstream ofs_mpi(test_dir.process+"time_"+ModuleBase::GlobalFunc::TO_STRING(GlobalV::MY_RANK),std::ofstream::app);
-timeval t_start, t_start_all;
-gettimeofday( &t_start_all, NULL);
-
 ModuleBase::timer::tick("Exx_Lcao", "cal_DM");
 #if EXX_DM==1
-gettimeofday( &t_start, NULL);
 	this->DM_para.cal_DM( Born_von_Karman_period, H_atom_pairs_core, info.dm_threshold, loc.DM, loc.DM_R, wfc_k_grid,);
-ofs_mpi<<"TIME@ Exx_Lcao::cal_DM\t"<<time_during(t_start)<<std::endl;
 #elif EXX_DM==2
-gettimeofday( &t_start, NULL);
 	if(!GlobalV::GAMMA_ONLY_LOCAL)
 		this->DM_para.cal_DM_k( Born_von_Karman_period, H_atom_pairs_core, info.dm_threshold );
-ofs_mpi<<"TIME@ Exx_Lcao::cal_DM\t"<<time_during(t_start)<<std::endl;
 #elif EXX_DM==3
-gettimeofday( &t_start, NULL);
 	this->DM_para.cal_DM(info.dm_threshold, loc);
-ofs_mpi<<"TIME@ Exx_Lcao::cal_DM\t"<<time_during(t_start)<<std::endl;
 #endif
 ModuleBase::timer::tick("Exx_Lcao", "cal_DM");
 
 ModuleBase::timer::tick("Exx_Lcao", "cal_norm_D_max");
-gettimeofday( &t_start, NULL);
 #ifdef __MPI
 	cauchy.cal_norm_D_max( DM_para.DMr );
 #endif
-ofs_mpi<<"TIME@ cauchy.cal_norm_D_max\t"<<time_during(t_start)<<std::endl;
 ModuleBase::timer::tick("Exx_Lcao", "cal_norm_D_max");
-#ifdef __MPI
-ofs_mpi<<"sizeof_DM\t"<<get_sizeof(DM_para.DMr)<<std::endl;
-#endif
+
 ModuleBase::timer::tick("Exx_Lcao", "cal_Hexx");
-gettimeofday( &t_start, NULL);
+
 	// HexxR[is][iat1][iat2][box2]
 	std::vector<std::map<size_t,std::map<size_t,std::map<Abfs::Vector3_Order<int>,ModuleBase::matrix>>>> HexxR = cal_Hexx();
-ofs_mpi<<"TIME@ Exx_Lcao::cal_Hexx\t"<<time_during(t_start)<<std::endl;
+
 ModuleBase::timer::tick("Exx_Lcao", "cal_Hexx");
 
-ofs_mpi<<"sizeof_HexxR\t"<<get_sizeof(HexxR)<<std::endl;
-
-gettimeofday( &t_start, NULL);
 	this->energy = cal_energy(HexxR);
-ofs_mpi<<"TIME@ Exx_Lcao::cal_energy\t"<<time_during(t_start)<<std::endl;
 
 ModuleBase::timer::tick("Exx_Lcao", "Rexx_to_Km2D");
-gettimeofday( &t_start, NULL);
+
 #ifdef __MPI
 	Hexx_para.Rexx_to_Km2D(*loc.ParaV, HexxR, {GlobalV::init_chg=="file",GlobalV::out_chg} );
 #endif
-ofs_mpi<<"TIME@ Hexx_para.Rexx_to_Km2D\t"<<time_during(t_start)<<std::endl;
+
 ModuleBase::timer::tick("Exx_Lcao", "Rexx_to_Km2D");
-
-#ifdef __MPI
-ofs_mpi<<"sizeof_Hexx2D\t"<<get_sizeof(Hexx_para.HK_Gamma_m2D)+get_sizeof(Hexx_para.HK_K_m2D)<<std::endl;
-#endif
-
-ofs_mpi<<"TIME@ Exx_Lcao::cal_exx_elec\t"<<time_during(t_start_all)<<std::endl;
-ofs_mpi.close();
 
 #ifdef __MPI
 	auto print_Hexxk = [&]()
@@ -1240,9 +1130,6 @@ double Exx_Lcao::cal_energy(
 	const std::vector<std::map<size_t,std::map<size_t,std::map<Abfs::Vector3_Order<int>,ModuleBase::matrix>>>> &HexxR ) const
 {
 	ModuleBase::TITLE("Exx_Lcao","cal_energy");
-std::ofstream ofs_mpi(test_dir.process+"time_"+ModuleBase::GlobalFunc::TO_STRING(GlobalV::MY_RANK),std::ofstream::app);
-timeval t_start;
-gettimeofday( &t_start, NULL);
 
 	double energy = 0;
 	for( size_t is=0; is!=GlobalV::NSPIN; ++is )
@@ -1271,10 +1158,8 @@ gettimeofday( &t_start, NULL);
 	energy *= SPIN_multiple.at(GlobalV::NSPIN);			// ?
 	energy /= 2;					// /2 for Ry
 	
-ofs_mpi<<"TIME@ Exx_Lcao::cal_energy_cal\t"<<time_during(t_start)<<std::endl;
 	Parallel_Reduce::reduce_double_all(energy);
-ofs_mpi<<"E_exx\t"<<energy<<std::endl;
-ofs_mpi.close();
+
 	return energy;
 }
 
@@ -1304,9 +1189,6 @@ void Exx_Lcao::add_Hexx( const size_t ik, const double alpha, LCAO_Matrix &lm) c
 void Exx_Lcao::init_radial_table_ions( const std::set<size_t> &atom_centres_core, const std::vector<std::pair<size_t,size_t>> &atom_pairs_core )
 {
 	ModuleBase::TITLE("Exx_Lcao::init_radial_table_ions");
-	
-std::ofstream ofs_mpi(test_dir.process+"time_"+ModuleBase::GlobalFunc::TO_STRING(GlobalV::MY_RANK),std::ofstream::app);
-timeval t_start;
 
 	std::map<size_t,std::map<size_t,std::set<double>>> radial_R;
 	
@@ -1353,7 +1235,6 @@ timeval t_start;
 		#error "TEST_EXX_LCAO"
 	#endif
 
-gettimeofday( &t_start, NULL);
 	for( const int iat1 : atom_centres_core )
 	{
 		const size_t it1 = GlobalC::ucell.iat2it[iat1];
@@ -1383,7 +1264,6 @@ gettimeofday( &t_start, NULL);
 			}
 		}
 	}
-ofs_mpi<<"TIME@ radial_R_C\t"<<time_during(t_start)<<std::endl;
 
 	#if TEST_EXX_LCAO==1
 		ofs_C.close();
@@ -1391,20 +1271,18 @@ ofs_mpi<<"TIME@ radial_R_C\t"<<time_during(t_start)<<std::endl;
 		#error "TEST_EXX_LCAO"
 	#endif
 
-gettimeofday( &t_start, NULL);
 #if TEST_EXX_RADIAL>=1
 	m_abfslcaos_lcaos.init_radial_table(radial_R);
 #else
 	m_abfslcaos_lcaos.init_radial_table();
 #endif
-ofs_mpi<<"TIME@ m_abfslcaos_lcaos.init_radial_table\t"<<time_during(t_start)<<std::endl;
 
 	#if TEST_EXX_LCAO==1
 		std::ofstream ofs_V("delta_R_V.dat");
 	#elif TEST_EXX_LCAO==-1
 		#error "TEST_EXX_LCAO"
 	#endif
-gettimeofday( &t_start, NULL);
+
 	std::vector<Abfs::Vector3_Order<int>> Coulomb_potential_boxes = Abfs::get_Coulomb_potential_boxes(info.ccp_rmesh_times);
 	for( const std::pair<size_t,size_t> & atom_pair : atom_pairs_core )
 	{
@@ -1435,7 +1313,7 @@ gettimeofday( &t_start, NULL);
 			}
 		}
 	}
-ofs_mpi<<"TIME@ radial_R_V\t"<<time_during(t_start)<<std::endl;
+
 	#if TEST_EXX_LCAO==1
 		ofs_V.close();
 	#elif TEST_EXX_LCAO==-1
@@ -1451,14 +1329,11 @@ ofs_mpi<<"TIME@ radial_R_V\t"<<time_during(t_start)<<std::endl;
 		#error "TEST_EXX_LCAO"
 	#endif
 
-gettimeofday( &t_start, NULL);
 #if TEST_EXX_RADIAL>=1
 	m_abfs_abfs.init_radial_table(radial_R);
 #else
 	m_abfs_abfs.init_radial_table();
 #endif
-ofs_mpi<<"TIME@ m_abfs_abfs.init_radial_table\t"<<time_during(t_start)<<std::endl;
-ofs_mpi.close();
 }
 
 

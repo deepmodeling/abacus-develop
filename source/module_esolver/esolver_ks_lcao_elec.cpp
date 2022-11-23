@@ -12,7 +12,6 @@
 #include "src_lcao/ELEC_evolve.h"
 //
 #include "../src_ri/exx_abfs.h"
-#include "../src_ri/exx_opt_orb.h"
 #include "../src_io/berryphase.h"
 #include "../src_io/to_wannier90.h"
 #include "../module_base/timer.h"
@@ -314,15 +313,6 @@ namespace ModuleESolver
                 || Exx_Global::Hybrid_Type::SCAN0 == GlobalC::exx_lcao.info.hybrid_type)
             {
                 GlobalC::exx_lcao.cal_exx_ions(*this->LOWF.ParaV);
-            }
-
-            if (Exx_Global::Hybrid_Type::Generate_Matrix == GlobalC::exx_global.info.hybrid_type)
-            {
-                //program should be stopped after this judgement
-                Exx_Opt_Orb exx_opt_orb;
-                exx_opt_orb.generate_matrix();
-                ModuleBase::timer::tick("ESolver_KS_LCAO", "beforescf");
-                return;
             }
         }
 #endif

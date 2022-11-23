@@ -11,8 +11,6 @@
 #include <cassert>
 #include <limits>
 
-#include "../src_external/src_test/src_global/element_basis_index-test.h"		// Peize Lin test
-#include "../src_external/src_test/src_ri/exx_lcao-test.h"		// Peize Lin test
 #include <sys/time.h>			// Peize Lin test
 #include "../src_lcao/global_fp.h"		// Peize Lin test
 
@@ -34,9 +32,6 @@ timeval t_start;
 		&& range_abfs = Exx_Abfs::Abfs_Index::construct_range( abfs );
 	const ModuleBase::Element_Basis_Index::IndexLNM
 		&& index_abfs = ModuleBase::Element_Basis_Index::construct_index( range_abfs );
-		
-ofs<<range_lcaos<<std::endl;
-ofs<<range_abfs<<std::endl;
 
 	const int Lmax_bak = Exx_Abfs::Lmax;
 	Exx_Abfs::Lmax = std::numeric_limits<int>::min();
@@ -44,19 +39,15 @@ ofs<<range_abfs<<std::endl;
 		Exx_Abfs::Lmax = std::max( Exx_Abfs::Lmax, static_cast<int>(abfs[T].size())-1 );
 
 	Exx_Abfs::Matrix_Orbs21 m_abfslcaos_lcaos;
-//gettimeofday( &t_start, NULL);
+
 	m_abfslcaos_lcaos.init( 1, kmesh_times, 1 );
-//ofs<<"TIME@m_abfslcaos_lcaos.init\t"<<time_during(t_start)<<std::endl;
-//gettimeofday( &t_start, NULL);
 	m_abfslcaos_lcaos.init_radial( abfs, lcaos, lcaos );
-//ofs<<"TIME@m_abfslcaos_lcaos.init_radial\t"<<time_during(t_start)<<std::endl;
 
 	std::map<size_t,std::map<size_t,set<double>>> delta_R;
 	for( size_t it=0; it!=abfs.size(); ++it )
 		delta_R[it][it] = {0.0};
-//gettimeofday( &t_start, NULL);
+
 	m_abfslcaos_lcaos.init_radial_table(delta_R);
-//ofs<<"TIME@m_abfslcaos_lcaos.init_radial_table\t"<<time_during(t_start)<<std::endl;
 
 	Exx_Abfs::Lmax = Lmax_bak;
 	
@@ -90,7 +81,6 @@ ofs<<range_abfs<<std::endl;
 			int info;
 gettimeofday( &t_start, NULL);
 			LapackConnector::dsyev( 'V', 'U', mm, ModuleBase::GlobalFunc::VECTOR_TO_PTR(eig_value), info );
-ofs<<"TIME@LapackConnector::dsyev\t"<<time_during(t_start)<<std::endl;
 			if( info )
 			{
 				std::cout<<std::endl<<"info_dsyev = "<<info<<std::endl;

@@ -301,35 +301,6 @@ void Hamilt_PW::diagH_subspace(const int ik,
 
 	delete[] aux;
 
-	// Peize Lin add 2019-03-09
-#ifdef __LCAO
-	if (GlobalV::BASIS_TYPE == "lcao_in_pw")
-	{
-		auto add_Hexx = [&](const double alpha) {
-			for (int m = 0; m < nstart; ++m)
-			{
-				for (int n = 0; n < nstart; ++n)
-				{
-					hc(m, n) += alpha * GlobalC::exx_lip.get_exx_matrix()[ik][m][n];
-				}
-			}
-		};
-		if(XC_Functional::get_func_type()==4 || XC_Functional::get_func_type()==5)
-		{
-			if ( Exx_Global::Hybrid_Type::HF   == GlobalC::exx_lcao.info.hybrid_type ) // HF
-			{
-				add_Hexx(1);
-			}
-			else if (Exx_Global::Hybrid_Type::PBE0 == GlobalC::exx_lcao.info.hybrid_type || 
-					Exx_Global::Hybrid_Type::SCAN0  == GlobalC::exx_lcao.info.hybrid_type ||
-					Exx_Global::Hybrid_Type::HSE  == GlobalC::exx_lcao.info.hybrid_type) // SCAN0, PBE0 or HSE
-			{
-				add_Hexx(GlobalC::exx_global.info.hybrid_alpha);
-			}
-		}
-	}
-#endif
-
 	if (GlobalV::NPROC_IN_POOL > 1)
 	{
 		Parallel_Reduce::reduce_complex_double_pool(hc.c, nstart * nstart);
@@ -339,22 +310,6 @@ void Hamilt_PW::diagH_subspace(const int ik,
 	// after generation of H and S matrix, diag them
 	//obsolete: globalc::hm has been removed
 	//GlobalC::hm.diagH_LAPACK(nstart, n_band, hc, sc, nstart, en, hvec);
-
-	// Peize Lin add 2019-03-09
-#ifdef __LCAO
-	if ("lcao_in_pw" == GlobalV::BASIS_TYPE)
-	{
-		switch (GlobalC::exx_global.info.hybrid_type)
-		{
-		case Exx_Global::Hybrid_Type::HF:
-		case Exx_Global::Hybrid_Type::PBE0:
-		case Exx_Global::Hybrid_Type::SCAN0:
-		case Exx_Global::Hybrid_Type::HSE:
-			GlobalC::exx_lip.k_pack->hvec_array[ik] = hvec;
-			break;
-		}
-	}
-#endif
 
 	//=======================
 	// diagonize the H-matrix
@@ -645,23 +600,6 @@ void Hamilt_PW::diagH_subspace_cuda(const int ik,
 
 	// Method2 : Do with diagH_CUSOLVER
 	// GlobalC::hm.diagH_CUSOLVER(nstart, n_band, hc, sc, nstart, en, hvec);
-
-	// Peize Lin add 2019-03-09
-	/*
-	#ifdef __LCAO
-		if("lcao_in_pw"==GlobalV::BASIS_TYPE)
-		{
-			switch(GlobalC::exx_global.info.hybrid_type)
-			{
-				case Exx_Global::Hybrid_Type::HF:
-				case Exx_Global::Hybrid_Type::PBE0:
-				case Exx_Global::Hybrid_Type::HSE:
-					GlobalC::exx_lip.k_pack->hvec_array[ik] = hvec;
-					break;
-			}
-		}
-	#endif
-	*/
 
 	std::cout << std::setprecision(5);
 

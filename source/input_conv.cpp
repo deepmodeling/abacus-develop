@@ -413,7 +413,7 @@ void Input_Conv::Convert(void)
     }
     else if (INPUT.dft_functional == "opt_orb")
     {
-        GlobalC::exx_global.info.hybrid_type = Exx_Global::Hybrid_Type::Generate_Matrix;
+        ModuleBase::WARNING("input_conv","opt_orb removed, use older version!");
     }
     else
     {
@@ -428,7 +428,6 @@ void Input_Conv::Convert(void)
         GlobalC::exx_global.info.hse_omega = INPUT.exx_hse_omega;
         GlobalC::exx_global.info.separate_loop = INPUT.exx_separate_loop;
         GlobalC::exx_global.info.hybrid_step = INPUT.exx_hybrid_step;
-        GlobalC::exx_lip.info.lambda = INPUT.exx_lambda;
         GlobalC::exx_lcao.info.pca_threshold = INPUT.exx_pca_threshold;
         GlobalC::exx_lcao.info.c_threshold = INPUT.exx_c_threshold;
         GlobalC::exx_lcao.info.v_threshold = INPUT.exx_v_threshold;
