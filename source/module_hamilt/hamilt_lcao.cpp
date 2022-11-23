@@ -2,13 +2,15 @@
 
 #include "module_base/global_variable.h"
 #include "module_base/timer.h"
-#include "module_hsolver/diago_elpa.h"
 #include "src_lcao/dftu.h"
 #include "src_lcao/global_fp.h"
 #include "src_pw/global.h"
 #ifdef __DEEPKS
 #include "module_deepks/LCAO_deepks.h"
 #include "ks_lcao/deepks_lcao.h"
+#endif
+#ifdef __ELPA
+#include "module_hsolver/diago_elpa.h"
 #endif
 #include "ks_lcao/op_dftu_lcao.h"
 #include "ks_lcao/ekinetic_lcao.h"

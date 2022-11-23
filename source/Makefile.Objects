@@ -45,7 +45,6 @@ VPATH=./src_global:\
 ./src_io:\
 ./src_parallel:\
 ./src_pdiag:\
-./src_pdiag/MRRR:\
 ./src_ri:\
 ./\
 
@@ -91,7 +90,6 @@ OBJS_MAIN=main.o\
     input.o \
     input_conv.o\
     driver_run.o\
-    input_update.o
 
 OBJS_BASE=complexarray.o\
     complexmatrix.o\
@@ -168,7 +166,6 @@ OBJS_ELECSTAT=elecstate.o\
 
 OBJS_ELECSTAT_LCAO=elecstate_lcao.o\
       elecstate_lcao_tddft.o\
-      dm2d_to_grid.o\
 
 OBJS_ESOLVER=esolver.o\
     esolver_ks.o\
@@ -191,7 +188,6 @@ OBJS_ESOLVER_LCAO=esolver_ks_lcao.o\
 OBJS_GINT=gint.o\
       gint_gamma.o\
       gint_gamma_env.o\
-      gint_gamma_mull.o\
       gint_gamma_vl.o\
       gint_fvl.o\
       gint_rho.o\
@@ -341,7 +337,6 @@ OBJS_IO=berryphase.o\
     energy_dos_pw.o\
     epsilon0_pwscf.o\
     epsilon0_vasp.o\
-    eximport.o\
     dos.o\
     numerical_descriptor.o\
     numerical_basis.o\
@@ -455,65 +450,6 @@ OBJS_PDIAG=pdiag_common.o\
       pdiag_double.o\
       diag_scalapack_gvx.o\
       
-OBJS_PDIAG_MPI=pdgseps.o\
-      pdst2g.o\
-      pdstebz.o\
-      pdsteiz.o\
-      pdsyg2st.o\
-      pdsytrd.o\
-      pdt2s.o\
-      pdtrsm.o\
-      pzgseps.o\
-      pzheg2st.o\
-      pzhetrd.o\
-      pzhtrsm.o\
-      pzst2g.o\
-      pzsteiz.o\
-      pzt2s.o\
-      
-
-OBJS_PDIAG_MRRR=dcopy.o\
-    dlae2.o\
-    dlaebz.o\
-    dlaev2.o\
-    dlaneg.o\
-    dlanst.o\
-    dlar1v.o\
-    dlarnv.o\
-    dlarra.o\
-    dlarrb.o\
-    dlarrc.o\
-    dlarrd.o\
-    dlarre.o\
-    dlarrf.o\
-    dlarrj.o\
-    dlarrk.o\
-    dlarrr.o\
-    dlarrv.o\
-    dlaruv.o\
-    dlas2.o\
-    dlascl.o\
-    dlaset.o\
-    dlasq2.o\
-    dlasq3.o\
-    dlasq4.o\
-    dlasq5.o\
-    dlasq6.o\
-    dlasrt.o\
-    dlassq.o\
-    dscal.o\
-    dstemr_mpi.o\
-    dswap.o\
-    ieeeck.o\
-    ilaenv.o\
-    i_nint.o\
-    iparmq.o\
-    lsame.o\
-    psort_w.o\
-    s_cmp.o\
-    s_copy.o\
-    xerbla.o\
-
 OBJS_SRCPW=H_Ewald_pw.o\
     VL_in_pw.o\
     VNL_in_pw.o\

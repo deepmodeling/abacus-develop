@@ -40,28 +40,27 @@ void Charge_Mixing::set_mixing
     return;
 }
 
-double Charge_Mixing::get_drho(double** rho, double** rho_save,
-	std::complex<double>** rhog, std::complex<double>** rhog_save, const double nelec)
+double Charge_Mixing::get_drho(Charge* chr, const double nelec)
 {
 	for (int is=0; is<GlobalV::NSPIN; is++)
     {
 		ModuleBase::GlobalFunc::NOTE("Perform FFT on rho(r) to obtain rho(G).");
-        GlobalC::rhopw->real2recip(rho[is], rhog[is]);
+        GlobalC::rhopw->real2recip(chr->rho[is], chr->rhog[is]);
 
 		ModuleBase::GlobalFunc::NOTE("Perform FFT on rho_save(r) to obtain rho_save(G).");
-        GlobalC::rhopw->real2recip(rho_save[is], rhog_save[is]);
+        GlobalC::rhopw->real2recip(chr->rho_save[is], chr->rhog_save[is]);
 
 
 		ModuleBase::GlobalFunc::NOTE("Calculate the charge difference between rho(G) and rho_save(G)");
         for (int ig=0; ig<GlobalC::rhopw->npw; ig++)
         {
-            rhog[is][ig] -= rhog_save[is][ig];
+           chr->rhog[is][ig] -= chr->rhog_save[is][ig];
         }
 
     }
 
 	ModuleBase::GlobalFunc::NOTE("Calculate the norm of the Residual std::vector: < R[rho] | R[rho_save] >");
-    double scf_thr = this->rhog_dot_product( rhog, rhog);
+    double scf_thr = this->rhog_dot_product( chr->rhog, chr->rhog);
 	
 	if(GlobalV::test_charge)GlobalV::ofs_running << " scf_thr from rhog_dot_product is " << scf_thr << std::endl;
 	
@@ -76,7 +75,7 @@ double Charge_Mixing::get_drho(double** rho, double** rho_save,
 	{
 		for(int ir=0; ir<GlobalC::rhopw->nrxx; ir++)
 		{
-			scf_thr2 += abs( rho[is][ir] - rho_save[is][ir] );
+			scf_thr2 += abs( chr->rho[is][ir] - chr->rho_save[is][ir] );
 		}
 	}
 
@@ -97,14 +96,7 @@ double Charge_Mixing::get_drho(double** rho, double** rho_save,
 	return scf_thr;
 }
 
-void Charge_Mixing::mix_rho
-(
-    const int &iter,
-	double** rho,
-	double** rho_save,
-	std::complex<double>** rhog,
-	std::complex<double>** rhog_save
-)
+void Charge_Mixing::mix_rho(const int &iter, Charge* chr)
 {
     ModuleBase::TITLE("Charge_Mixing","mix_rho");
 	ModuleBase::timer::tick("Charge", "mix_rho");
@@ -117,25 +109,21 @@ void Charge_Mixing::mix_rho
 		ModuleBase::GlobalFunc::ZEROS(rho123[is], GlobalC::rhopw->nrxx);
 		for(int ir=0; ir<GlobalC::rhopw->nrxx; ++ir)
 		{
-			rho123[is][ir] = rho[is][ir];
+			rho123[is][ir] = chr->rho[is][ir];
 		}
 	}
 	
 	if ( this->mixing_mode == "plain")
     {
-        // calculate mixing change, and save it in rho1.
-        for (int is=0; is<GlobalV::NSPIN; is++)
-        {
-            this->plain_mixing( rho[is], rho_save[is]);
-        }
+		this->plain_mixing(chr);
     }
     else if ( this->mixing_mode == "pulay")
     {
-        this->Pulay_mixing(rho, rho_save);
+        this->Pulay_mixing(chr);
     }
     else if ( this->mixing_mode == "broyden")
     {
-		this->Simplified_Broyden_mixing(iter, rho, rho_save, rhog, rhog_save);
+		this->Simplified_Broyden_mixing(iter, chr);
     }
     else
     {
@@ -148,7 +136,7 @@ void Charge_Mixing::mix_rho
 	{
 		for(int ir=0; ir<GlobalC::rhopw->nrxx; ++ir)
 		{
-			rho_save[is][ir] = rho123[is][ir];
+			chr->rho_save[is][ir] = rho123[is][ir];
 		}
     }
 
@@ -164,7 +152,7 @@ void Charge_Mixing::mix_rho
     return;
 }
 
-void Charge_Mixing::plain_mixing( double *rho, double *rho_save_in ) const
+void Charge_Mixing::plain_mixing(Charge* chr) const
 {
     // if mixing_beta == 1, each electron iteration,
     // use all new charge density,
@@ -173,50 +161,53 @@ void Charge_Mixing::plain_mixing( double *rho, double *rho_save_in ) const
     const double mix_old = 1 - mixing_beta;
 
 //xiaohui add 2014-12-09
-	if(this->mixing_gg0 > 0.0)
+	for (int is=0; is<GlobalV::NSPIN; is++)
 	{
-		double* Rrho = new double[GlobalC::rhopw->nrxx];
-		std::complex<double> *kerpulay = new std::complex<double>[GlobalC::rhopw->npw];
-		double* kerpulayR = new double[GlobalC::rhopw->nrxx];
-
-		for(int ir=0; ir<GlobalC::rhopw->nrxx; ir++)
+		if(this->mixing_gg0 > 0.0)
 		{
-			Rrho[ir] = rho[ir] - rho_save_in[ir];
-		}
-		GlobalC::rhopw->real2recip(Rrho, kerpulay);
+			double* Rrho = new double[GlobalC::rhopw->nrxx];
+			std::complex<double> *kerpulay = new std::complex<double>[GlobalC::rhopw->npw];
+			double* kerpulayR = new double[GlobalC::rhopw->nrxx];
 
-		const double fac = this->mixing_gg0;
-		const double gg0 = std::pow(fac * 0.529177 / GlobalC::ucell.tpiba, 2);
-		double* filter_g = new double[GlobalC::rhopw->npw];
-		for(int ig=0; ig<GlobalC::rhopw->npw; ig++)
+			for(int ir=0; ir<GlobalC::rhopw->nrxx; ir++)
+			{
+				Rrho[ir] = chr->rho[is][ir] - chr->rho_save[is][ir];
+			}
+			GlobalC::rhopw->real2recip(Rrho, kerpulay);
+
+			const double fac = this->mixing_gg0;
+			const double gg0 = std::pow(fac * 0.529177 / GlobalC::ucell.tpiba, 2);
+			double* filter_g = new double[GlobalC::rhopw->npw];
+			for(int ig=0; ig<GlobalC::rhopw->npw; ig++)
+			{
+				double gg = GlobalC::rhopw->gg[ig];
+				filter_g[ig] = max(gg / (gg + gg0), 0.1);
+
+				kerpulay[ig] = (1 - filter_g[ig]) * kerpulay[ig];
+			}
+			GlobalC::rhopw->recip2real(kerpulay, kerpulayR);
+
+			for(int ir=0; ir<GlobalC::rhopw->nrxx; ir++)
+			{
+				Rrho[ir] = Rrho[ir] - kerpulayR[ir];
+				chr->rho[is][ir] = Rrho[ir] * mixing_beta + chr->rho_save[is][ir];
+			}
+
+			delete[] Rrho;
+			delete[] kerpulay;
+			delete[] kerpulayR;
+			delete[] filter_g;
+		}
+		else
 		{
-			double gg = GlobalC::rhopw->gg[ig];
-			filter_g[ig] = max(gg / (gg + gg0), 0.1);
-
-			kerpulay[ig] = (1 - filter_g[ig]) * kerpulay[ig];
-		}
-		GlobalC::rhopw->recip2real(kerpulay, kerpulayR);
-
-		for(int ir=0; ir<GlobalC::rhopw->nrxx; ir++)
-		{
-			Rrho[ir] = Rrho[ir] - kerpulayR[ir];
-			rho[ir] = Rrho[ir] * mixing_beta + rho_save_in[ir];
+			for (int ir=0; ir<GlobalC::rhopw->nrxx; ir++)
+			{
+				chr->rho[is][ir] = chr->rho[is][ir]*mixing_beta + mix_old*chr->rho_save[is][ir];
+			}
 		}
 
-		delete[] Rrho;
-		delete[] kerpulay;
-		delete[] kerpulayR;
-		delete[] filter_g;
+		ModuleBase::GlobalFunc::DCOPY( chr->rho[is], chr->rho_save[is], GlobalC::rhopw->nrxx);
 	}
-	else
-	{
-		for (int ir=0; ir<GlobalC::rhopw->nrxx; ir++)
-		{
-			rho[ir] = rho[ir]*mixing_beta + mix_old*rho_save_in[ir];
-		}
-	}
-
-	ModuleBase::GlobalFunc::DCOPY( rho, rho_save_in, GlobalC::rhopw->nrxx);
 
     return;
 }

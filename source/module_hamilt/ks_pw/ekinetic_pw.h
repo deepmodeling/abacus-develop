@@ -44,7 +44,7 @@ class Ekinetic<OperatorPW<FPTYPE, Device>> : public OperatorPW<FPTYPE, Device>
     int get_gk2_row() const {return this->gk2_row;}
     int get_gk2_col() const {return this->gk2_col;}
     FPTYPE get_tpiba2() const {return this->tpiba2;}
-    const FPTYPE* get_gk2() const {return this->gk2;}
+    const FPTYPE* get_gk2() const {return this->gk2_in;}
     Device* get_ctx() const {return this->ctx;}
 
   private:
@@ -54,21 +54,20 @@ class Ekinetic<OperatorPW<FPTYPE, Device>> : public OperatorPW<FPTYPE, Device>
     mutable int npol = 0;
 
     FPTYPE tpiba2 = 0.0;
-#if ((defined __CUDA) || (defined __ROCM))
-    FPTYPE* gk2 = nullptr;
-#else
+    FPTYPE* _gk2 = nullptr;
     const FPTYPE* gk2 = nullptr;
-#endif
+    const FPTYPE* gk2_in = nullptr;
     int gk2_row = 0;
     int gk2_col = 0;
 
     Device* ctx = {};
     psi::DEVICE_CPU* cpu_ctx = {};
+    psi::AbacusDevice_t device = {};
 
     using ekinetic_op = ekinetic_pw_op<FPTYPE, Device>;
-    using resize_memory_op = psi::memory::resize_memory_op<FPTYPE, Device>;
-    using delete_memory_op = psi::memory::delete_memory_op<FPTYPE, Device>;
-    using synchronize_memory_op = psi::memory::synchronize_memory_op<FPTYPE, Device, psi::DEVICE_CPU>;
+    using resmem_var_op = psi::memory::resize_memory_op<FPTYPE, Device>;
+    using delmem_var_op = psi::memory::delete_memory_op<FPTYPE, Device>;
+    using syncmem_var_h2d_op = psi::memory::synchronize_memory_op<FPTYPE, Device, psi::DEVICE_CPU>;
 };
 
 } // namespace hamilt

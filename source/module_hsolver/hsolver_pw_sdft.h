@@ -4,7 +4,7 @@
 #include "src_pw/sto_iter.h"
 namespace hsolver
 {
-    class HSolverPW_SDFT : public HSolverPW
+    class HSolverPW_SDFT : public HSolverPW<double>
     {
         public:
         HSolverPW_SDFT(ModulePW::PW_Basis_K* wfc_basis_in, Stochastic_WF& stowf, const int method_sto):HSolverPW(wfc_basis_in)

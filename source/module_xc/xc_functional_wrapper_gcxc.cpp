@@ -281,7 +281,8 @@ void XC_Functional::gcc_spin(double rho, double &zeta, double grho, double &sc,
             case XC_GGA_C_P86: //P86
                 XC_Functional::perdew86_spin(rho, zeta, grho, sc, v1cup, v1cdw, v2c);break;
             case XC_GGA_C_PW91: //PW91_C
-                XC_Functional::ggac_spin(rho, zeta, grho, sc, v1cup, v1cdw, v2c);break;
+                ModuleBase::WARNING_QUIT("xc_wrapper_gcxc","there seems to be something wrong with ggac_spin, better use libxc version instead");break;
+                //XC_Functional::ggac_spin(rho, zeta, grho, sc, v1cup, v1cdw, v2c);
             case XC_GGA_C_PBE: //PBC
                 XC_Functional::pbec_spin(rho, zeta, grho, 1, sc, v1cup, v1cdw, v2c);break;
             case XC_GGA_C_PBE_SOL: //PBCsol

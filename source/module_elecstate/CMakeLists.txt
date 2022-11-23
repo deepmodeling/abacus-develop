@@ -22,7 +22,6 @@ if(ENABLE_LCAO)
   list(APPEND objects
       elecstate_lcao.cpp
       elecstate_lcao_tddft.cpp
-      dm2d_to_grid.cpp
       potentials/H_TDDFT_pw.cpp
   )
 endif()

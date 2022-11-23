@@ -47,6 +47,17 @@ To build tests for ABACUS, define `BUILD_TESTING` flag. You can also specify pat
 ```bash
 cmake -B build -DBUILD_TESTING=1
 ```
+
+## Build with CUDA support
+
+### Extra prerequisites
+- [CUDA-Toolkit](https://developer.nvidia.com/cuda-toolkit)
+
+To build cuda gpu support for ABACUS, define `USE_CUDA` flag. You can also specify path to local installation of cuda toolkit by setting `CUDA_TOOLKIT_ROOT_DIR` flags.
+```bash
+cmake -B build -DUSE_CUDA=1
+```
+
 ## Build ABACUS with make
 
 > Note: We suggest using CMake to configure and compile.

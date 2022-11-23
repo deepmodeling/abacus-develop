@@ -100,7 +100,7 @@ Restart restart;
 Input INPUT;
 
 
-void Restart::load_disk(const std::string mode, const int i) const {}
+void Restart::load_disk(const std::string mode, const int i, double** rho) const {}
 
 
 psi::Psi<complex<double>>* wavefunc::allocate(const int nks)
@@ -188,7 +188,6 @@ bool Charge::read_rho(const int &is, const std::string &fn, double* rho) //add b
 }
 
 //bool Occupy::use_gaussian_broadening=false;
-//bool Occupy::use_tetrahedron_method = false;
 double Magnetism::get_nelup(){return 0;}
 double Magnetism::get_neldw(){return 0;}
 

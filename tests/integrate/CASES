@@ -1,5 +1,7 @@
 101_PW_15_f_pseudopots
 101_PW_15_pseudopots
+101_PW_15_pseudopots_LDA
+101_PW_15_pseudopots_LibxcLDA
 101_PW_blps_pseudopots
 101_PW_OU_pseudopots
 101_PW_upf100_Al_pseudopots
@@ -47,7 +49,6 @@
 109_PW_CR_fix_b
 109_PW_CR_fix_bc
 109_PW_CR_fix_c
-109_PW_CR_fix_volume
 109_PW_CR_moveatoms
 110_PW_SY
 110_PW_SY_symmetry
@@ -62,6 +63,7 @@
 115_PW_sol_H2
 115_PW_sol_H2O
 116_PW_scan_Si2
+116_PW_scan_Si2_nspin2
 120_PW_KP_MD_MSST
 120_PW_KP_MD_NHC
 121_PW_KPAR
@@ -135,6 +137,7 @@
 212_NO_wfc_ienvelope
 213_NO_mulliken
 215_NO_sol_H2
+216_NO_scan_Si2
 220_NO_KP_MD_MSST
 220_NO_KP_MD_NHC
 #230_NO_KP_MD_TD
@@ -154,6 +157,7 @@
 304_NO_GO_AF
 304_NO_GO_AF_atommag
 304_NO_GO_FM
+304_NO_GO_ocp
 307_NO_GO_OH
 308_NO_GO_CF_RE
 308_NO_GO_RE_MB
@@ -167,6 +171,7 @@
 313_NO_GO_mulliken
 314_NO_GO_dm_out
 315_NO_sol_H2O
+316_NO_scan_Si2
 320_NO_GO_MD_MSST
 320_NO_GO_MD_NHC
 345_NO_GO_BS
@@ -175,6 +180,9 @@
 #401_NP_KP_sp
 #401_NP_KP_spd
 601_NO_TDDFT_H2
+601_NO_TDDFT_H2_vext1
+601_NO_TDDFT_H2_vext2
+601_NO_TDDFT_H2_vext3
 601_NO_TDDFT_CO
 601_NO_TDDFT_CO_occ
 601_NO_TDDFT_O3

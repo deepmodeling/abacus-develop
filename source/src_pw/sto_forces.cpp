@@ -13,7 +13,7 @@
 
 
 
-void Sto_Forces::init(ModuleBase::matrix& force, const ModuleBase::matrix& wg, const psi::Psi<std::complex<double>>* psi_in, Stochastic_WF& stowf)
+void Sto_Forces::init(ModuleBase::matrix& force, const ModuleBase::matrix& wg, const psi::Psi<std::complex<double>>* psi_in, Stochastic_WF& stowf, const Charge* const chr)
 {
 	ModuleBase::timer::tick("Sto_Force","cal_force");
 	ModuleBase::TITLE("Sto_Forces", "init");
@@ -25,10 +25,10 @@ void Sto_Forces::init(ModuleBase::matrix& force, const ModuleBase::matrix& wg, c
 	ModuleBase::matrix forcecc(nat, 3);
 	ModuleBase::matrix forcenl(nat, 3);
 	ModuleBase::matrix forcescc(nat, 3);
-    this->cal_force_loc(forcelc, GlobalC::rhopw);
+    this->cal_force_loc(forcelc, GlobalC::rhopw, chr);
     this->cal_force_ew(forceion, GlobalC::rhopw);
     this->cal_sto_force_nl(forcenl, wg, psi_in,stowf);
-	this->cal_force_cc(forcecc, GlobalC::rhopw);
+	this->cal_force_cc(forcecc, GlobalC::rhopw, chr);
 	this->cal_force_scc(forcescc, GlobalC::rhopw);
 	
     //impose total force = 0

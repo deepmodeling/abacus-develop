@@ -7,7 +7,6 @@
 #include "../module_base/scalapack_connector.h"
 #include "../src_io/print_info.h"
 #include "../src_pw/global.h"
-#include "input_update.h"
 #include "src_io/chi0_hilbert.h"
 #include "src_lcao/ELEC_evolve.h"
 #include "src_pw/occupy.h"
@@ -52,11 +51,6 @@ void ESolver_KS_LCAO_TDDFT::Init(Input& inp, UnitCell& ucell)
     // this function belongs to cell LOOP
     GlobalC::ppcell.init_vloc(GlobalC::ppcell.vloc, GlobalC::rhopw);
 
-    // Initialize the sum of all local potentials.
-    // if ion_step==0, read in/initialize the potentials
-    // this function belongs to ions LOOP
-    int ion_step = 0;
-
     //------------------init Basis_lcao----------------------
     // Init Basis should be put outside of Ensolver.
     // * reading the localized orbitals/projectors
@@ -76,65 +70,47 @@ void ESolver_KS_LCAO_TDDFT::Init(Input& inp, UnitCell& ucell)
     this->LOC.ParaV = this->LOWF.ParaV = this->LM.ParaV;
 
     // init Psi, HSolver, ElecState, Hamilt
-    if (this->phsol != nullptr)
-    {
-        if (this->phsol->classname != "HSolverLCAO")
-        {
-            delete this->phsol;
-            this->phsol = nullptr;
-        }
-    }
-    else
+    if(this->phsol == nullptr)
     {
         this->phsol = new hsolver::HSolverLCAO(this->LOWF.ParaV);
         this->phsol->method = GlobalV::KS_SOLVER;
     }
-    if (this->pelec != nullptr)
+
+    if(this->pelec == nullptr)
     {
-        if (this->pelec->classname != "ElecStateLCAO_TDDFT")
-        {
-            delete this->pelec;
-            this->pelec = nullptr;
-        }
-    }
-    else
-    {
-        this->pelec = new elecstate::ElecStateLCAO_TDDFT(   &(GlobalC::CHR),
+        this->pelec = new elecstate::ElecStateLCAO_TDDFT(   &(chr),
                                                             &(GlobalC::kv),
                                                             GlobalC::kv.nks,
                                                             GlobalV::NBANDS,
                                                             &(this->LOC),
                                                             &(this->UHM),
                                                             &(this->LOWF));
-        // Inititlize the charge density.
-        this->pelec->charge->allocate(GlobalV::NSPIN, GlobalC::rhopw->nrxx, GlobalC::rhopw->npw);
-
-        // Initializee the potential.
-        this->pelec->pot = new elecstate::Potential(
-            GlobalC::rhopw,
-            &GlobalC::ucell,
-            &(GlobalC::ppcell.vloc),
-            &(GlobalC::sf.strucFac),
-            &(GlobalC::en.etxc),
-            &(GlobalC::en.vtxc)
-        );
     }
+    
+    // Inititlize the charge density.
+    this->pelec->charge->allocate(GlobalV::NSPIN, GlobalC::rhopw->nrxx, GlobalC::rhopw->npw);
+
+    // Initializee the potential.
+    this->pelec->pot = new elecstate::Potential(
+        GlobalC::rhopw,
+        &GlobalC::ucell,
+        &(GlobalC::ppcell.vloc),
+        &(GlobalC::sf.strucFac),
+        &(GlobalC::en.etxc),
+        &(GlobalC::en.vtxc)
+    );
     this->pelec_td = dynamic_cast<elecstate::ElecStateLCAO_TDDFT*>(this->pelec);
 
 }
 
 void ESolver_KS_LCAO_TDDFT::eachiterinit(const int istep, const int iter)
 {
-    std::string ufile = "CHANGE";
-    Update_input UI;
-    UI.init(ufile);
-
     // mohan add 2010-07-16
     // used for pulay mixing.
     if (iter == 1) GlobalC::CHR_MIX.reset();
 
     // mohan update 2012-06-05
-    GlobalC::en.deband_harris = GlobalC::en.delta_e(this->pelec->pot);
+    GlobalC::en.deband_harris = GlobalC::en.delta_e(this->pelec);
 
     // mohan move it outside 2011-01-13
     // first need to calculate the weight according to
@@ -194,7 +170,7 @@ void ESolver_KS_LCAO_TDDFT::eachiterinit(const int istep, const int iter)
             // rho1 and rho2 are the same rho.
             // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
             this->pelec->pot->init_pot(istep, this->pelec->charge);
-            GlobalC::en.delta_escf(this->pelec->pot);
+            GlobalC::en.delta_escf(this->pelec);
         }
     }
 
@@ -295,23 +271,16 @@ void ESolver_KS_LCAO_TDDFT::hamilt2density(int istep, int iter, double ethr)
     }
 
     // (6) compute magnetization, only for spin==2
-    GlobalC::ucell.magnet.compute_magnetization();
+    GlobalC::ucell.magnet.compute_magnetization(pelec->charge);
 
     // (7) calculate delta energy
-    GlobalC::en.deband = GlobalC::en.delta_e(this->pelec->pot);
+    GlobalC::en.deband = GlobalC::en.delta_e(this->pelec);
 }
 
 void ESolver_KS_LCAO_TDDFT::updatepot(const int istep, const int iter)
 {
     // (9) Calculate new potential according to new Charge Density.
 
-    if (this->conv_elec || iter == GlobalV::SCF_NMAX)
-    {
-        if (GlobalV::out_pot < 0) // mohan add 2011-10-10
-        {
-            GlobalV::out_pot = -2;
-        }
-    }
     if (!this->conv_elec)
     {
         this->pelec->pot->update_from_charge(this->pelec->charge, &GlobalC::ucell);
@@ -320,7 +289,7 @@ void ESolver_KS_LCAO_TDDFT::updatepot(const int istep, const int iter)
         {
             this->pelec->pot->update_for_tddft(istep);
         }
-        GlobalC::en.delta_escf(this->pelec->pot);
+        GlobalC::en.delta_escf(this->pelec);
     }
     else
     {
@@ -412,12 +381,14 @@ void ESolver_KS_LCAO_TDDFT::afterscf(const int istep)
         }
         this->LOC.write_dm(is, 0, ssd.str(), precision);
 
+/* Broken, please fix it
         if (GlobalV::out_pot == 1) // LiuXh add 20200701
         {
             std::stringstream ssp;
             ssp << GlobalV::global_out_dir << "SPIN" << is + 1 << "_POT";
             this->pelec->pot->write_potential(is, 0, ssp.str(), this->pelec->pot->get_effective_v(), precision);
         }
+*/
     }
 
     if (this->conv_elec)

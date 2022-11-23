@@ -10,7 +10,6 @@
 #include "../src_lcao/LCAO_matrix.h"
 #include "../src_lcao/global_fp.h"
 #include "../src_pdiag/pdiag_double.h"
-#include "../src_pdiag/GenELPA.h"
 #endif
 #include "../module_base/lapack_connector.h"
 #include "../module_base/scalapack_connector.h"

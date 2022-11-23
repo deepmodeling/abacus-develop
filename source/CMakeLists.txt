@@ -31,7 +31,6 @@ add_library(
     driver_run.cpp
     input.cpp
     input_conv.cpp
-    input_update.cpp
 )
 
 if(ENABLE_COVERAGE)

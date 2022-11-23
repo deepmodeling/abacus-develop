@@ -113,7 +113,7 @@ namespace hsolver
 			Symmetry_rho srho;
 			for(int is=0; is < GlobalV::NSPIN; is++)
 			{
-				srho.begin(is, GlobalC::CHR, GlobalC::rhopw, GlobalC::Pgrid, GlobalC::symm);
+				srho.begin(is, *(pes->charge), GlobalC::rhopw, GlobalC::Pgrid, GlobalC::symm);
 			}
 		}
 		else
@@ -125,18 +125,19 @@ namespace hsolver
 
 		if(GlobalV::MY_STOGROUP == 0)
 		{
-        	GlobalC::en.deband = GlobalC::en.delta_e(pes->pot);
+        	GlobalC::en.deband = GlobalC::en.delta_e(pes);
 		}
         ModuleBase::timer::tick(this->classname, "solve");
         return;
     }
+	
     double HSolverPW_SDFT::set_diagethr(const int istep, const int iter, const double drho)
 	{
 		if (iter == 1)
     	{
 			if(istep == 0)
     	    {
-    	    	if (GlobalC::CHR.init_chg == "file")
+    	    	if (GlobalV::init_chg == "file")
     	    	{
     	    	    this->diag_ethr = 1.0e-5;
     	    	}

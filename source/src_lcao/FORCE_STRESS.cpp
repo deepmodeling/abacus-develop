@@ -67,7 +67,7 @@ void Force_Stress_LCAO::getForceStress(
 		fcc.create (nat, 3);
 		fscc.create (nat, 3);
 		//calculate basic terms in Force, same method with PW base
-		this->calForcePwPart(fvl_dvl, fewalds, fcc, fscc);
+		this->calForcePwPart(fvl_dvl, fewalds, fcc, fscc, pelec->charge);
 	}
 
 	//total stress : ModuleBase::matrix scs
@@ -106,7 +106,8 @@ void Force_Stress_LCAO::getForceStress(
 				sigmahar,
 				sigmaewa,
 				sigmacc,
-				sigmaxc);
+				sigmaxc,
+				pelec->charge);
 	}
 	//--------------------------------------------------------
 	// implement four terms which needs integration
@@ -716,13 +717,14 @@ void Force_Stress_LCAO::calForcePwPart(
 	ModuleBase::matrix &fvl_dvl,
 	ModuleBase::matrix &fewalds,
 	ModuleBase::matrix &fcc,
-	ModuleBase::matrix &fscc)
+	ModuleBase::matrix &fscc,
+	const Charge* const chr)
 {
 	//--------------------------------------------------------
 	// local pseudopotential force:
 	// use charge density; plane wave; local pseudopotential;
 	//--------------------------------------------------------
-	f_pw.cal_force_loc (fvl_dvl, GlobalC::rhopw);
+	f_pw.cal_force_loc (fvl_dvl, GlobalC::rhopw, chr);
 	//--------------------------------------------------------
 	// ewald force: use plane wave only.
 	//--------------------------------------------------------
@@ -730,7 +732,7 @@ void Force_Stress_LCAO::calForcePwPart(
 	//--------------------------------------------------------
 	// force due to core correlation.
 	//--------------------------------------------------------
-	f_pw.cal_force_cc(fcc, GlobalC::rhopw);
+	f_pw.cal_force_cc(fcc, GlobalC::rhopw, chr);
 	//--------------------------------------------------------
 	// force due to self-consistent charge.
 	//--------------------------------------------------------
@@ -818,19 +820,19 @@ void Force_Stress_LCAO::calStressPwPart(
 	ModuleBase::matrix& sigmahar,
 	ModuleBase::matrix& sigmaewa,
 	ModuleBase::matrix& sigmacc,
-	ModuleBase::matrix& sigmaxc
-)
+	ModuleBase::matrix& sigmaxc,
+	const Charge* const chr)
 {
 	//--------------------------------------------------------
 	// local pseudopotential stress:
 	// use charge density; plane wave; local pseudopotential;
 	//--------------------------------------------------------
-    sc_pw.stress_loc (sigmadvl, GlobalC::rhopw, 0);
+    sc_pw.stress_loc (sigmadvl, GlobalC::rhopw, 0, chr);
 
 	//--------------------------------------------------------
 	//hartree term
 	//--------------------------------------------------------
-	sc_pw.stress_har (sigmahar, GlobalC::rhopw, 0);
+	sc_pw.stress_har (sigmahar, GlobalC::rhopw, 0, chr);
 
 	//--------------------------------------------------------
 	// ewald stress: use plane wave only.
@@ -841,7 +843,7 @@ void Force_Stress_LCAO::calStressPwPart(
 	//--------------------------------------------------------
 	// stress due to core correlation.
 	//--------------------------------------------------------
-	sc_pw.stress_cc(sigmacc,  GlobalC::rhopw, 0);
+	sc_pw.stress_cc(sigmacc,  GlobalC::rhopw, 0, chr);
 
 	//--------------------------------------------------------
 	// stress due to self-consistent charge.
@@ -851,7 +853,7 @@ void Force_Stress_LCAO::calStressPwPart(
 		sigmaxc(i,i) =  -(GlobalC::en.etxc) / GlobalC::ucell.omega;
 	}
 	//Exchange-correlation for PBE
-	sc_pw.stress_gga(sigmaxc);
+	sc_pw.stress_gga(sigmaxc, chr);
 
 	return;
 }

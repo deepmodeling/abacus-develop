@@ -1,15 +1,16 @@
 
-#include <stdio.h>
-#include <complex>
-#include <fstream>
 #include <iostream>
-#include "module_psi/psi.h"
+#include <cstring>
 #include "module_psi/include/types.h"
 #include "module_psi/include/device.h"
 #include "module_base/tool_quit.h"
 
 #if defined(__CUDA)
 #include <cuda_runtime.h>
+#endif
+
+#ifdef __MPI
+#include "mpi.h"
 #endif
 
 namespace psi{
@@ -26,6 +27,16 @@ template<> AbacusDevice_t get_device_type <DEVICE_CPU> (const DEVICE_CPU* dev) {
 #if ((defined __CUDA) || (defined __ROCM))
 template<> AbacusDevice_t get_device_type <DEVICE_GPU> (const DEVICE_GPU* dev) {
     return GpuDevice;
+}
+
+void set_device(const int rank) {
+    cudaSetDevice(rank);
+}
+
+int get_device_num() {
+    int device_num = -1;
+    cudaGetDeviceCount(&device_num);
+    return device_num;
 }
 #endif
 
@@ -54,7 +65,7 @@ template<> void print_device_info <DEVICE_GPU> (const DEVICE_GPU* ctx, std::ofst
   // Console log
   cudaDriverGetVersion(&driverVersion);
   cudaRuntimeGetVersion(&runtimeVersion);
-  char msg[256];
+  char msg[1024];
   sprintf(msg,
           "  CUDA Driver Version / Runtime Version          %d.%d / %d.%d\n",
           driverVersion / 1000, (driverVersion % 100) / 10,
@@ -256,6 +267,117 @@ template<> void record_device_memory<DEVICE_GPU> (const DEVICE_GPU* ctx, std::of
 }
 
 #endif
+
+#if __MPI
+int stringCmp(const void *a, const void* b)
+{
+    char* m = (char*)a;
+    char* n = (char*)b;
+    int i, sum = 0;
+
+    for(i = 0; i < MPI_MAX_PROCESSOR_NAME; i++)
+        if (m[i] == n[i])
+            continue;
+        else
+        {
+            sum = m[i] - n[i];
+            break;
+        }
+    return sum;
+}
+
+int get_node_rank() {
+    char host_name[MPI_MAX_PROCESSOR_NAME];
+    memset(host_name, '\0', sizeof(char) * MPI_MAX_PROCESSOR_NAME);
+    char (*host_names)[MPI_MAX_PROCESSOR_NAME];
+    int n, namelen, color, rank, nprocs, myrank;
+    size_t bytes;
+    MPI_Comm nodeComm;
+    
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
+    MPI_Get_processor_name(host_name,&namelen);
+
+    bytes = nprocs * sizeof(char[MPI_MAX_PROCESSOR_NAME]);
+    host_names = (char (*)[MPI_MAX_PROCESSOR_NAME]) malloc(bytes);
+    for (int ii = 0; ii < nprocs; ii++) {
+        memset(host_names[ii], '\0', sizeof(char) * MPI_MAX_PROCESSOR_NAME);
+    }
+
+    strcpy(host_names[rank], host_name);
+
+    for (n=0; n<nprocs; n++)
+        MPI_Bcast(&(host_names[n]),MPI_MAX_PROCESSOR_NAME, MPI_CHAR, n, MPI_COMM_WORLD);
+    qsort(host_names, nprocs,  sizeof(char[MPI_MAX_PROCESSOR_NAME]), stringCmp);
+
+    color = 0;
+    for (n=0; n<nprocs-1; n++)
+    {
+        if(strcmp(host_name, host_names[n]) == 0)
+        {
+            break;
+        }
+        if(strcmp(host_names[n], host_names[n+1]))
+        {
+            color++;
+        }
+    }
+
+    MPI_Comm_split(MPI_COMM_WORLD, color, 0, &nodeComm);
+    MPI_Comm_rank(nodeComm, &myrank);
+
+    MPI_Barrier(MPI_COMM_WORLD);
+    int looprank=myrank;
+    // printf (" Assigning device %d  to process on node %s rank %d, OK\n",looprank,  host_name, rank );
+    free(host_names);
+    return looprank;
+}
+#endif
+
+std::string get_device_flag(const std::string& device, const std::string& ks_solver, const std::string& basis_type) {
+std::string str = "gpu";
+#if ((defined __CUDA) || (defined __ROCM))
+    if (device::get_device_num() <= 0) {
+        str = "cpu";
+    }
+#else
+    str = "cpu";
+#endif
+    if (ks_solver != "cg") {
+        str = "cpu";
+    }
+    if (basis_type != "pw") {
+        str = "cpu";
+    }
+    if (device == "cpu") {
+        str = "cpu";
+    }
+    if (str == device) {
+        return str;
+    }
+    else {
+        ModuleBase::WARNING_QUIT("device", "INPUT device setting does not match the request!");
+        return "unknown";
+    }
+}
+
+int get_device_kpar(const int& kpar) {
+#if __MPI && (__CUDA || __ROCM)
+    int temp_nproc;
+    MPI_Comm_size(MPI_COMM_WORLD, &temp_nproc);
+    if (temp_nproc != kpar)
+    {
+        ModuleBase::WARNING("Input_conv", "None kpar set in INPUT file, auto set kpar value.");
+    }
+    // GlobalV::KPAR = temp_nproc;
+    // band the CPU processor to the devices
+    int node_rank = psi::device::get_node_rank();
+    int device_num = psi::device::get_device_num();
+    psi::device::set_device(node_rank % device_num);
+    return temp_nproc;
+#endif
+    return kpar;
+}
 
 } // end of namespace device
 } // end of namespace psi

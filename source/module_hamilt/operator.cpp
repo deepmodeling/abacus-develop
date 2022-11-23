@@ -27,14 +27,6 @@ typename Operator<FPTYPE, Device>::hpsi_info Operator<FPTYPE, Device>::hPsi(hpsi
     return hpsi_info(nullptr, 0, nullptr);
 }
 
-#if ((defined __CUDA) || (defined __ROCM))
-template<typename FPTYPE, typename Device>
-typename Operator<FPTYPE, Device>::hpsi_info_gpu Operator<FPTYPE, Device>::hPsi_gpu(hpsi_info_gpu&) const {
-    ModuleBase::WARNING_QUIT("Operator::hPsi_gpu", "GPU's implementation is not supported!");
-    return hpsi_info_gpu(nullptr, 0, nullptr);
-}
-#endif // ((defined __CUDA) || (defined __ROCM))
-
 template<typename FPTYPE, typename Device>
 void Operator<FPTYPE, Device>::init(const int ik_in) 
 {

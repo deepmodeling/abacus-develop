@@ -25,7 +25,7 @@ DFTU_Yukawa::DFTU_Yukawa(){}
 DFTU_Yukawa::~DFTU_Yukawa(){}
 
 
-void DFTU_Yukawa::cal_yukawa_lambda()
+void DFTU_Yukawa::cal_yukawa_lambda(double** rho)
 {
 	ModuleBase::TITLE("DFTU_Yukawa", "cal_yukawa_lambda");
 	
@@ -41,7 +41,7 @@ void DFTU_Yukawa::cal_yukawa_lambda()
 	{
 		for(int ir=0; ir<GlobalC::rhopw->nrxx; ir++) 
 		{
-			double rho_ir = GlobalC::CHR.rho[is][ir];
+			double rho_ir = rho[is][ir];
 			sum_rho += rho_ir;
 
 			double lambda_ir = 2*pow(3*rho_ir/ModuleBase::PI, (double)1.0/6.0);
@@ -115,12 +115,12 @@ void DFTU_Yukawa::cal_slater_Fk(const int L, const int T)
 }
 
 
-void DFTU_Yukawa::cal_slater_UJ()
+void DFTU_Yukawa::cal_slater_UJ(double** rho)
 {
 	ModuleBase::TITLE("DFTU_Yukawa", "cal_slater_UJ");
 	if(!Yukawa) return;
 
-	this->cal_yukawa_lambda();
+	this->cal_yukawa_lambda(rho);
 	
 	for(int it=0; it<GlobalC::ucell.ntype; it++)
 	{			

@@ -144,7 +144,6 @@ void UnitCell::bcast_unitcell_pseudo(void)
 	Parallel_Common::bcast_int( natomwfc );
 	Parallel_Common::bcast_int( lmax );
 	Parallel_Common::bcast_int( lmax_ppwf );
-	//Parallel_Common::bcast_double( GlobalC::CHR.nelec );
 
 	bcast_unitcell();
 }

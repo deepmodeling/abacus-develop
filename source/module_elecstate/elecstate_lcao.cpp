@@ -93,8 +93,6 @@ void ElecStateLCAO::psiToRho(const psi::Psi<double>& psi)
                 psi.fix_k(ik);
                 this->print_psi(psi);
             }
-            // this->loc->dm2dToGrid(this->loc->dm_gamma[ik], this->loc->DM[ik]); // transform dm_gamma[is].c to
-            // this->loc->DM[is]
             this->loc->cal_dk_gamma_from_2D_pub();
         }
     }

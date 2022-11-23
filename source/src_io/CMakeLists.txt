@@ -8,7 +8,6 @@ list(APPEND objects
     energy_dos_pw.cpp
     epsilon0_pwscf.cpp
     epsilon0_vasp.cpp
-    eximport.cpp
     numerical_basis.cpp
     numerical_descriptor.cpp
     optical.cpp

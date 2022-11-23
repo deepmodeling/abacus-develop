@@ -20,7 +20,7 @@ public:
     Sto_Forces(){};
     ~Sto_Forces(){};
 
-    void init(ModuleBase::matrix& matrix, const ModuleBase::matrix& wg, const psi::Psi<std::complex<double>>* psi_in,Stochastic_WF& stowf);
+    void init(ModuleBase::matrix& matrix, const ModuleBase::matrix& wg, const psi::Psi<std::complex<double>>* psi_in,Stochastic_WF& stowf, const Charge* const chr);
 
 private:
     void cal_sto_force_nl(ModuleBase::matrix& forcenl, const ModuleBase::matrix& wg, const psi::Psi<complex<double>>* psi_in, Stochastic_WF& stowf);

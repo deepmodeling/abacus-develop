@@ -24,12 +24,21 @@ AddTest(
 )
 
 if(ENABLE_LCAO)
+  if(USE_ELPA)
   AddTest(
     TARGET HSolver_LCAO
     LIBS ${math_libs} ELPA::ELPA base genelpa psi
     SOURCES diago_lcao_test.cpp ../diago_elpa.cpp ../diago_blas.cpp ../../src_parallel/parallel_global.cpp 
             ../../src_parallel/parallel_common.cpp ../../src_parallel/parallel_reduce.cpp
   )
+  else()
+    AddTest(
+      TARGET HSolver_LCAO
+      LIBS ${math_libs} base psi
+      SOURCES diago_lcao_test.cpp ../diago_blas.cpp ../../src_parallel/parallel_global.cpp
+      ../../src_parallel/parallel_common.cpp ../../src_parallel/parallel_reduce.cpp
+    )
+  endif()
 endif()
 
 if (USE_CUDA)

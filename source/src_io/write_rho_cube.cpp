@@ -9,7 +9,7 @@ void Charge::write_rho_cube(
 	const int &precision) 
 {
     ModuleBase::TITLE("Charge","write_rho_cube");
-	if (out_chg==0) 
+	if (GlobalV::out_chg==0) 
 	{
 		return;
 	}

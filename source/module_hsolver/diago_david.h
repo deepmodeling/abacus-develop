@@ -140,10 +140,6 @@ template <typename FPTYPE = double, typename Device = psi::DEVICE_CPU> class Dia
     // using resize_memory_var_op = psi::memory::resize_memory_op<FPTYPE, Device>;
 
     using hpsi_info = typename hamilt::Operator<std::complex<FPTYPE>, Device>::hpsi_info;
-
-#if ((defined __CUDA) || (defined __ROCM))
-    using hpsi_info_gpu = typename hamilt::Operator<std::complex<FPTYPE>, psi::DEVICE_GPU>::hpsi_info_gpu;
-#endif
 };
 
 } // namespace hsolver

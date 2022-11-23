@@ -19,7 +19,6 @@ Exx_Lip exx_lip(exx_global.info);
 #endif
 pseudopot_cell_vnl ppcell;
 UnitCell ucell;
-Charge CHR;
 Charge_Mixing CHR_MIX;
 ModuleSymmetry::Symmetry symm;
 Parallel_Grid Pgrid; //mohan add 2010-06-06 

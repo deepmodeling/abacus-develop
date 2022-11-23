@@ -30,6 +30,7 @@
 #include "module_hsolver/hsolver_lcao.h"
 #include "module_elecstate/potentials/efield.h"
 #include "module_elecstate/potentials/gatefield.h"
+#include "module_psi/include/device.h"
 
 void Input_Conv::Convert(void)
 {
@@ -69,6 +70,10 @@ void Input_Conv::Convert(void)
         {
             ModuleBase::WARNING_QUIT("Input_Conv","only CG has been implemented for relax_new");
         }
+        if(!INPUT.relax_new && (INPUT.fixed_axes == "shape" || INPUT.fixed_axes == "volume"))
+        {
+            ModuleBase::WARNING_QUIT("Input_Conv","fixed shape and fixed volume only supported for relax_new = 1");
+        }
         GlobalV::fixed_atoms = INPUT.fixed_atoms;
     }
 
@@ -77,18 +82,19 @@ void Input_Conv::Convert(void)
     GlobalV::NBANDS = INPUT.nbands;
     GlobalC::wf.pw_seed = INPUT.pw_seed;
     GlobalV::NBANDS_ISTATE = INPUT.nbands_istate;
-#if ((defined __CUDA) || (defined __ROCM))
-    int temp_nproc;
-    MPI_Comm_size(MPI_COMM_WORLD, &temp_nproc);
-    if (temp_nproc != INPUT.kpar)
-    {
-        ModuleBase::WARNING("Input_conv", "None kpar set in INPUT file, auto set kpar value.");
+    GlobalV::device_flag = 
+        psi::device::get_device_flag(
+            INPUT.device,
+            INPUT.ks_solver, 
+            INPUT.basis_type);
+
+    if (GlobalV::device_flag == "gpu") {
+        GlobalV::KPAR = psi::device::get_device_kpar(INPUT.kpar);
     }
-    GlobalV::KPAR = temp_nproc;
-#else
-    GlobalV::KPAR = INPUT.kpar;
-    GlobalV::NSTOGROUP = INPUT.bndpar;
-#endif
+    else {
+        GlobalV::KPAR = INPUT.kpar;
+        GlobalV::NSTOGROUP = INPUT.bndpar;
+    }
     GlobalV::CALCULATION = INPUT.calculation;
     GlobalV::ESOLVER_TYPE = INPUT.esolver_type;
 
@@ -251,7 +257,7 @@ void Input_Conv::Convert(void)
     // Yu Liu add 2022-09-13
     //----------------------------------------------------------
     GlobalV::GATE_FLAG = INPUT.gate_flag;
-    GlobalV::NELEC = INPUT.nelec;
+    GlobalV::nelec = INPUT.nelec;
     elecstate::Gatefield::zgate = INPUT.zgate;
     elecstate::Gatefield::relax = INPUT.relax;
     elecstate::Gatefield::block = INPUT.block;
@@ -488,10 +494,10 @@ void Input_Conv::Convert(void)
     //----------------------------------------------------------
     GlobalV::OUT_FREQ_ELEC = INPUT.out_freq_elec;
     GlobalV::OUT_FREQ_ION = INPUT.out_freq_ion;
-    GlobalC::CHR.init_chg = INPUT.init_chg;
+    GlobalV::init_chg = INPUT.init_chg;
     GlobalV::chg_extrap = INPUT.chg_extrap; // xiaohui modify 2015-02-01
-    GlobalC::CHR.out_chg = INPUT.out_chg;
-    GlobalC::CHR.nelec = INPUT.nelec;
+    GlobalV::out_chg = INPUT.out_chg;
+    GlobalV::nelec = INPUT.nelec;
     GlobalV::out_pot = INPUT.out_pot;
     GlobalC::wf.out_wfc_pw = INPUT.out_wfc_pw;
     GlobalC::wf.out_wfc_r = INPUT.out_wfc_r;

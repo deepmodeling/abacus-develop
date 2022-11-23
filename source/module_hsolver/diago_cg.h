@@ -94,13 +94,14 @@ class DiagoCG : public DiagH<FPTYPE, Device>
     using hpsi_info = typename hamilt::Operator<std::complex<FPTYPE>, Device>::hpsi_info;
     using zdot_real_op = hsolver::zdot_real_op<FPTYPE, Device>;
 
-    using set_memory_complex_op = psi::memory::set_memory_op<std::complex<FPTYPE>, Device>;
-    using delete_memory_complex_op = psi::memory::delete_memory_op<std::complex<FPTYPE>, Device>;
-    using resize_memory_complex_op = psi::memory::resize_memory_op<std::complex<FPTYPE>, Device>;
+    using setmem_complex_op = psi::memory::set_memory_op<std::complex<FPTYPE>, Device>;
+    using delmem_complex_op = psi::memory::delete_memory_op<std::complex<FPTYPE>, Device>;
+    using resmem_complex_op = psi::memory::resize_memory_op<std::complex<FPTYPE>, Device>;
+    using syncmem_complex_op = psi::memory::synchronize_memory_op<std::complex<FPTYPE>, Device, Device>;
     using syncmem_complex_d2h_op = psi::memory::synchronize_memory_op<std::complex<FPTYPE>, psi::DEVICE_CPU, Device>;
 
-    using set_memory_var_cpu_op = psi::memory::set_memory_op<FPTYPE, psi::DEVICE_CPU>;
-    using resize_memory_var_op = psi::memory::resize_memory_op<FPTYPE, Device>;
+    using resmem_var_op = psi::memory::resize_memory_op<FPTYPE, Device>;
+    using setmem_var_h_op = psi::memory::set_memory_op<FPTYPE, psi::DEVICE_CPU>;
     using syncmem_var_h2d_op = psi::memory::synchronize_memory_op<FPTYPE, Device, psi::DEVICE_CPU>;
 };
 

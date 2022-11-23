@@ -464,6 +464,11 @@ class Input
     string of_kernel_file; // The name of WT kernel file.
 
     //==========================================================
+    //    device control denghui added on 2022-11-15
+    //==========================================================
+    std::string device;
+
+    //==========================================================
     // variables for test only
     //==========================================================
     bool test_skip_ewald = false;

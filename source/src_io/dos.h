@@ -22,7 +22,7 @@ namespace Dos
 		const int &nbands,// number of bands
 		const ModuleBase::matrix &ekb);//store energy for each k point and each band
 
-	void calculate_Mulliken(const std::string &fn, Gint_Gamma &gg);
+	void calculate_Mulliken(const std::string &fn, Gint_Gamma &gg, double** rho);
 
 	void nscf_band(
 		const int &is,

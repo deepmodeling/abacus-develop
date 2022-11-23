@@ -34,9 +34,6 @@ class Local_Orbital_Charge
 
     void gamma_file(psi::Psi<double>* psid, Local_Orbital_wfc &lowf, elecstate::ElecState* pelec);
     void cal_dk_gamma_from_2D_pub(void);
-    //transformation from 2d block to grid, only gamma_only used it now
-    //template<typename T>
-    void dm2dToGrid(const psi::Psi<double>& dm2d, double** dm_grid);
 
 	//-----------------
 	// in DM_k.cpp

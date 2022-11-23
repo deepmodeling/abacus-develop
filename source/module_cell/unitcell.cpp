@@ -909,17 +909,7 @@ void UnitCell::setup_cell(
 		}
 	}
 
-	// setup GlobalV::NBANDS
-	//this->cal_nelec();
-
 	this->cal_meshx();
-
-	// setup vdwd2 parameters
-	//vdwd2_para.initset(*this);		// Peize Lin add 2021.03.09
-
-//	std::stringstream ss;
-//	ss << GlobalV::global_out_dir << "unitcell_pp.log";
-//	print_unitcell_pseudo( ss.str() );
 	return;
 }
 

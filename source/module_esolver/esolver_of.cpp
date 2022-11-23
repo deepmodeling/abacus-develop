@@ -37,7 +37,7 @@ void ESolver_OF::Init(Input &inp, UnitCell &ucell)
     this->of_tolp = inp.of_tolp;
     this->maxIter = inp.scf_nmax;
 
-    GlobalC::CHR.cal_nelec();
+    chr.cal_nelec();
 
 	if(ucell.atoms[0].ncpp.xc_func=="HSE"||ucell.atoms[0].ncpp.xc_func=="PBE0")
 	{
@@ -87,9 +87,6 @@ void ESolver_OF::Init(Input &inp, UnitCell &ucell)
     // 4 initialize charge desity and warefunctios in real space
     //----------------------------------------------------------
 
-    // Inititlize the charge density.
-    GlobalC::CHR.allocate(GlobalV::NSPIN, GlobalC::rhopw->nrxx, GlobalC::rhopw->npw);
-
     // Initialize the "wavefunction", which is sqrt(rho)
     this->psi = new psi::Psi<double>(1, GlobalV::NSPIN, this->nrxx);
     this->pphi = new double*[GlobalV::NSPIN];
@@ -103,12 +100,6 @@ void ESolver_OF::Init(Input &inp, UnitCell &ucell)
     // init pseudopotential
     //=======================
     GlobalC::ppcell.init(GlobalC::ucell.ntype);
-
-    //=====================
-    // init hamiltonian
-    // only allocate in the beginning of ELEC LOOP!
-    //=====================
-    // GlobalC::hm.hpw.allocate(GlobalC::wf.npwx, GlobalV::NPOL, GlobalC::ppcell.nkb, GlobalC::rhopw->nrxx);
 
     //=================================
     // initalize local pseudopotential
@@ -126,45 +117,48 @@ void ESolver_OF::Init(Input &inp, UnitCell &ucell)
 
     if(this->pelec == nullptr)
     {
-        this->pelec = new elecstate::ElecState((Charge*)(&GlobalC::CHR));
-        this->pelec->pot = new elecstate::Potential(
-            GlobalC::rhopw,
-            &GlobalC::ucell,
-            &GlobalC::ppcell.vloc,
-            &GlobalC::sf.strucFac,
-            &(GlobalC::en.etxc),
-            &(GlobalC::en.vtxc)
-        );
-        //There is no Operator in ESolver_OF, register Potentials here!
-        std::vector<string> pot_register_in;
-        if (GlobalV::VION_IN_H)
-        {
-            pot_register_in.push_back("local");
-        }
-        if (GlobalV::VH_IN_H)
-        {
-            pot_register_in.push_back("hartree");
-        }
-        //no variable can choose xc, maybe it is necessary
-        pot_register_in.push_back("xc");
-        if (GlobalV::imp_sol)
-        {
-            pot_register_in.push_back("surchem");
-        }
-        if (GlobalV::EFIELD_FLAG)
-        {
-            pot_register_in.push_back("efield");
-        }
-        if (GlobalV::GATE_FLAG)
-        {
-            pot_register_in.push_back("gatefield");
-        }
-        //only Potential is not empty, Veff and Meta are available
-        if(pot_register_in.size()>0)
-        {
-            //register Potential by gathered operator
-            this->pelec->pot->pot_register(pot_register_in);
-        }
+        this->pelec = new elecstate::ElecState((Charge*)(&chr));
+    }
+
+    this->pelec->charge->allocate(GlobalV::NSPIN, GlobalC::rhopw->nrxx, GlobalC::rhopw->npw);
+        
+    this->pelec->pot = new elecstate::Potential(
+        GlobalC::rhopw,
+        &GlobalC::ucell,
+        &GlobalC::ppcell.vloc,
+        &GlobalC::sf.strucFac,
+        &(GlobalC::en.etxc),
+        &(GlobalC::en.vtxc)
+    );
+    //There is no Operator in ESolver_OF, register Potentials here!
+    std::vector<string> pot_register_in;
+    if (GlobalV::VION_IN_H)
+    {
+        pot_register_in.push_back("local");
+    }
+    if (GlobalV::VH_IN_H)
+    {
+        pot_register_in.push_back("hartree");
+    }
+    //no variable can choose xc, maybe it is necessary
+    pot_register_in.push_back("xc");
+    if (GlobalV::imp_sol)
+    {
+        pot_register_in.push_back("surchem");
+    }
+    if (GlobalV::EFIELD_FLAG)
+    {
+        pot_register_in.push_back("efield");
+    }
+    if (GlobalV::GATE_FLAG)
+    {
+        pot_register_in.push_back("gatefield");
+    }
+    //only Potential is not empty, Veff and Meta are available
+    if(pot_register_in.size()>0)
+    {
+        //register Potential by gathered operator
+        this->pelec->pot->pot_register(pot_register_in);
     }
 
     //=========================================================
@@ -178,7 +172,7 @@ void ESolver_OF::Init(Input &inp, UnitCell &ucell)
     this->nelec = new double[GlobalV::NSPIN];
     if (GlobalV::NSPIN == 1)
     {
-        this->nelec[0] = GlobalC::CHR.nelec;
+        this->nelec[0] = GlobalV::nelec;
     }
     else if (GlobalV::NSPIN == 2)
     {
@@ -291,7 +285,7 @@ void ESolver_OF::beforeOpt(const int istep)
     {
         CE.update_istep();
         CE.save_pos_next(GlobalC::ucell);
-        CE.extrapolate_charge();
+        CE.extrapolate_charge(pelec->charge);
 
         if(GlobalC::ucell.cell_parameter_updated)
         {
@@ -307,26 +301,26 @@ void ESolver_OF::beforeOpt(const int istep)
     Symmetry_rho srho;
     for (int is = 0; is < GlobalV::NSPIN; is++)
     {
-        srho.begin(is, GlobalC::CHR, this->pw_rho, GlobalC::Pgrid, GlobalC::symm);
+        srho.begin(is, *(pelec->charge), this->pw_rho, GlobalC::Pgrid, GlobalC::symm);
     }
 
     for (int is = 0; is < GlobalV::NSPIN; ++is)
     {
-        if (GlobalC::CHR.init_chg != "file")
+        if (GlobalV::init_chg != "file")
         {
             for (int ibs = 0; ibs < this->nrxx; ++ibs)
             {
                 // Here we initialize rho to be uniform, 
                 // because the rho got by pot.init_pot -> Charge::atomic_rho may contain minus elements.
-                GlobalC::CHR.rho[is][ibs] = this->nelec[is]/GlobalC::ucell.omega;
-                this->pphi[is][ibs] = sqrt(GlobalC::CHR.rho[is][ibs]);
+                pelec->charge->rho[is][ibs] = this->nelec[is]/GlobalC::ucell.omega;
+                this->pphi[is][ibs] = sqrt(pelec->charge->rho[is][ibs]);
             }
         }
         else
         {
             for (int ibs = 0; ibs < this->nrxx; ++ibs)
             {
-                this->pphi[is][ibs] = sqrt(GlobalC::CHR.rho[is][ibs]);
+                this->pphi[is][ibs] = sqrt(pelec->charge->rho[is][ibs]);
             }
         }
     }
@@ -351,8 +345,8 @@ void ESolver_OF::beforeOpt(const int istep)
 void ESolver_OF::updateV()
 {
     // (1) get dL/dphi
-    this->pelec->pot->update_from_charge(&GlobalC::CHR, &GlobalC::ucell); // Hartree + XC + external
-    this->kineticPotential(GlobalC::CHR.rho, this->pphi, this->pelec->pot->get_effective_v()); // (kinetic + Hartree + XC + external) * 2 * phi
+    this->pelec->pot->update_from_charge(pelec->charge, &GlobalC::ucell); // Hartree + XC + external
+    this->kineticPotential(pelec->charge->rho, this->pphi, this->pelec->pot->get_effective_v()); // (kinetic + Hartree + XC + external) * 2 * phi
     for (int is = 0; is < GlobalV::NSPIN; ++is)
     {
         const double* vr_eff = this->pelec->pot->get_effective_v(is);
@@ -751,7 +745,7 @@ void ESolver_OF::updateRho()
         for (int ir = 0; ir < this->nrxx; ++ir)
         {
             this->pphi[is][ir] = this->pphi[is][ir] * cos(this->theta[is]) + this->pdirect[is][ir] * sin(this->theta[is]);
-            GlobalC::CHR.rho[is][ir] = this->pphi[is][ir] * this->pphi[is][ir];
+            pelec->charge->rho[is][ir] = this->pphi[is][ir] * this->pphi[is][ir];
         }
     }
     // ============================ for test ===========================
@@ -760,10 +754,10 @@ void ESolver_OF::updateRho()
     //     Symmetry_rho srho;
     //     for (int is = 0; is < GlobalV::NSPIN; is++)
     //     {
-    //         srho.begin(is, GlobalC::CHR, this->pw_rho, GlobalC::Pgrid, GlobalC::symm);
+    //         srho.begin(is, pelec->charge, this->pw_rho, GlobalC::Pgrid, GlobalC::symm);
     //         for (int ibs = 0; ibs < this->nrxx; ++ibs)
     //         {
-    //             this->pphi[is][ibs] = sqrt(GlobalC::CHR.rho[is][ibs]);
+    //             this->pphi[is][ibs] = sqrt(pelec->charge->rho[is][ibs]);
     //         }
     //     }
     // }
@@ -772,8 +766,8 @@ void ESolver_OF::updateRho()
     // {
     //     for (int ir = 0; ir < this->nrxx; ++ir)
     //     {
-    //         GlobalC::CHR.rho_save[is][ir] = GlobalC::CHR.rho[is][ir];
-    //         this->pdeltaRho[is][ir] = GlobalC::CHR.rho[is][ir] - GlobalC::CHR.rho_save[is][ir];
+    //         pelec->charge->rho_save[is][ir] = pelec->charge->rho[is][ir];
+    //         this->pdeltaRho[is][ir] = pelec->charge->rho[is][ir] - pelec->charge->rho_save[is][ir];
     //         this->deltaRhoR += abs(this->pdeltaRho[is][ir]);
 
     //     }
@@ -863,14 +857,14 @@ void ESolver_OF::printInfo()
         // cout << "Iter        Etot(Ha)          Theta       PotNorm        deltaRhoG       deltaRhoR   deltaE" << endl;
     } 
     // ============ used to compare with PROFESS3.0 ================
-    // double minDen = GlobalC::CHR.rho[0][0];
-    // double maxDen = GlobalC::CHR.rho[0][0];
+    // double minDen = pelec->charge->rho[0][0];
+    // double maxDen = pelec->charge->rho[0][0];
     // double minPot = this->pdEdphi[0][0];
     // double maxPot = this->pdEdphi[0][0];
     // for (int i = 0; i < this->nrxx; ++i)
     // {
-    //     if (GlobalC::CHR.rho[0][i] < minDen) minDen = GlobalC::CHR.rho[0][i];
-    //     if (GlobalC::CHR.rho[0][i] > maxDen) maxDen = GlobalC::CHR.rho[0][i];
+    //     if (pelec->charge->rho[0][i] < minDen) minDen = pelec->charge->rho[0][i];
+    //     if (pelec->charge->rho[0][i] > maxDen) maxDen = pelec->charge->rho[0][i];
     //     if (this->pdEdphi[0][i] < minPot) minPot = this->pdEdphi[0][i];
     //     if (this->pdEdphi[0][i] > maxPot) maxPot = this->pdEdphi[0][i];
     // }
@@ -904,16 +898,16 @@ void ESolver_OF::afterOpt()
         GlobalV::ofs_running << " convergence has NOT been achieved!" << std::endl;
     }
 
-    if (GlobalC::CHR.out_chg > 0)
+    if (GlobalV::out_chg > 0)
     {
         for (int is = 0; is < GlobalV::NSPIN; is++)
         {
             std::stringstream ssc;
             std::stringstream ss1;
             ssc << GlobalV::global_out_dir << "tmp" << "_SPIN" << is + 1 << "_CHG";
-            GlobalC::CHR.write_rho(GlobalC::CHR.rho[is], is, iter, ssc.str(), 3);//mohan add 2007-10-17
+            pelec->charge->write_rho(pelec->charge->rho[is], is, iter, ssc.str(), 3);//mohan add 2007-10-17
             ss1 << GlobalV::global_out_dir << "tmp" << "_SPIN" << is + 1 << "_CHG.cube";
-            GlobalC::CHR.write_rho_cube(GlobalC::CHR.rho[is], is, ss1.str(), 3);
+            pelec->charge->write_rho_cube(pelec->charge->rho[is], is, ss1.str(), 3);
         }
     }
 }
@@ -978,7 +972,7 @@ void ESolver_OF::calV(double *ptempPhi, double *rdLdphi)
             tempRho->rho[is][ir] = tempPhi[is][ir] * tempPhi[is][ir];
         }
     }
-    tempRho->rho_core = GlobalC::CHR.rho_core;
+    tempRho->rho_core = pelec->charge->rho_core;
 
     this->pelec->pot->update_from_charge(tempRho, &GlobalC::ucell);
     ModuleBase::matrix& vr_eff = this->pelec->pot->get_effective_v();
@@ -1053,7 +1047,7 @@ void ESolver_OF::cal_Energy(double& etot)
     double ePP = 0.;                    // electron-ion interaction energy
     for (int is = 0; is < GlobalV::NSPIN; ++is)
     {
-        ePP += this->inner_product(this->pelec->pot->get_fixed_v(), GlobalC::CHR.rho[is], this->nrxx, this->dV);
+        ePP += this->inner_product(this->pelec->pot->get_fixed_v(), pelec->charge->rho[is], this->nrxx, this->dV);
     }
     Parallel_Reduce::reduce_double_all(ePP);
     GlobalC::en.etot += eKE + ePP;
@@ -1068,7 +1062,7 @@ void ESolver_OF::cal_Force(ModuleBase::matrix& force)
 {
     Forces ff;
     ModuleBase::matrix placeholder_wg;//using a placeholder for this template interface, would be refactor later
-    ff.init(force, placeholder_wg);
+    ff.init(force, placeholder_wg, pelec->charge);
 }
 
 void ESolver_OF::cal_Stress(ModuleBase::matrix& stress)
@@ -1097,7 +1091,7 @@ void ESolver_OF::cal_Stress(ModuleBase::matrix& stress)
     {
         this->tf.get_stress(GlobalC::ucell.omega);
         this->vw.get_stress(this->pphi, this->pw_rho);
-        this->wt.get_stress(GlobalC::ucell.omega, GlobalC::CHR.rho, this->pw_rho, GlobalV::of_vw_weight);
+        this->wt.get_stress(GlobalC::ucell.omega, pelec->charge->rho, this->pw_rho, GlobalV::of_vw_weight);
         kinetic_stress += this->tf.stress + this->vw.stress + this->wt.stress;
     }
     else if (this->of_kinetic == "tf+")
