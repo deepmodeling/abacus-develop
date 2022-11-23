@@ -244,9 +244,9 @@ template <typename FPTYPE> struct matrixSetToAnother<FPTYPE, psi::DEVICE_GPU>
 {
     void operator()(const psi::DEVICE_GPU* d,
                     const int& n,
-                    const std::complex<FPTYPE>* A,
+                    const std::complex<FPTYPE>* A, // input
                     const int& LDA,
-                    std::complex<FPTYPE>* B,
+                    std::complex<FPTYPE>* B, // output
                     const int& LDB);
 };
 

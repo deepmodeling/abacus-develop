@@ -16,18 +16,14 @@ template <typename FPTYPE, typename Device> int DiagoDavid<FPTYPE, Device>::PW_D
 
 template <typename FPTYPE, typename Device> DiagoDavid<FPTYPE, Device>::DiagoDavid(const FPTYPE* precondition_in)
 {
-    this->precondition = precondition_in;
     this->device = psi::device::get_device_type<Device>(this->ctx);
+    this->precondition = precondition_in;
 
     test_david = 2;
     // 1: check which function is called and which step is executed
     // 2: check the eigenvalues of the result of each iteration
     // 3: check the eigenvalues and errors of the last result
     // default: no check
-
-#if defined(__CUDA) || defined(__ROCM)
-    hsolver::createBLAShandle();
-#endif
 }
 
 template <typename FPTYPE, typename Device> DiagoDavid<FPTYPE, Device>::~DiagoDavid()
@@ -38,10 +34,6 @@ template <typename FPTYPE, typename Device> DiagoDavid<FPTYPE, Device>::~DiagoDa
     delete_memory_op()(this->ctx, this->scc);
     delete_memory_op()(this->ctx, this->vcc);
     psi::memory::delete_memory_op<FPTYPE, Device>()(this->ctx, this->eigenvalue);
-
-#if defined(__CUDA) || defined(__ROCM)
-    hsolver::destoryBLAShandle();
-#endif
 }
 
 template <typename FPTYPE, typename Device>

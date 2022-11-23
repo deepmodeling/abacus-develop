@@ -18,7 +18,6 @@ DiagoCG<FPTYPE, Device>::DiagoCG(const FPTYPE* precondition_in)
     this->precondition = precondition_in;
     test_cg = 0;
     reorder = false;
-    this->device = psi::device::get_device_type<Device>(this->ctx);
 }
 
 template<typename FPTYPE, typename Device>
