@@ -724,7 +724,6 @@ class XCTest_WCX : public testing::Test
 
 TEST_F(XCTest_WCX, set_xc_type)
 {
-    EXPECT_EQ(XC_Functional::get_func_type(),1);
     std::vector<double> e_gga_ref  = {0.0          ,-0.0035227366077,-0.0734928155169,-0.0052181684189,-0.0000001063768 };
     std::vector<double> v1_gga_ref = {0.0          ,0.0027230912249,0.0436861496717,0.0272641442833,0.0000000000788 };
     std::vector<double> v2_gga_ref = {-4.1745209791E-03,-4.1145164232E-03,-3.4066592749E-03,-8.0662091283E-02,-3.8681965771E-07};
