@@ -27,6 +27,7 @@ VPATH=./src_global:\
 ./module_hsolver/src:\
 ./module_hsolver/genelpa:\
 ./module_elecstate:\
+./module_elecstate/src:\
 ./module_elecstate/potentials:\
 ./module_psi:\
 ./module_psi/src:\
@@ -154,6 +155,7 @@ OBJS_DEEPKS=LCAO_deepks.o\
 OBJS_ELECSTAT=elecstate.o\
     elecstate_pw.o\
     elecstate_pw_sdft.o\
+    elecstate_multi_device.o\
     efield.o\
     gatefield.o\
     potential_new.o\
@@ -231,6 +233,7 @@ OBJS_HSOLVER=diago_cg.o\
     hsolver_pw_sdft.o\
     diago_iter_assist.o\
     math_kernel.o\
+    dngvd_op.o\
 
 OBJS_HSOLVER_LCAO=hsolver_lcao.o\
       diago_blas.o\
