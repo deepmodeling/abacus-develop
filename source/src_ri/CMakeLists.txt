@@ -34,13 +34,14 @@ if(ENABLE_LCAO)
       exx_abfs.cpp
       exx_lcao.cpp
   )
-endif()
-add_library(
+
+  add_library(
     ri
     OBJECT
     ${objects}
-)
+  )
 
-if(ENABLE_COVERAGE)
-  add_coverage(ri)
+  if(ENABLE_COVERAGE)
+    add_coverage(ri)
+  endif()
 endif()

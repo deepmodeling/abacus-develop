@@ -390,7 +390,6 @@ target_link_libraries(${ABACUS_BIN_NAME}
     neighbor
     io
     relax
-    ri
     parallel
     pw
     driver
@@ -410,6 +409,7 @@ if(ENABLE_LCAO)
       gint
       pdiag
       rpa
+      ri
   )
   if (USE_ELPA)
     target_link_libraries(${ABACUS_BIN_NAME}
