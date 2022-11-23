@@ -715,6 +715,10 @@ bool Input::Read(const std::string &fn)
         {
             read_value(ifs, nelec);
         }
+        else if (strcmp("nupdown", word) == 0)
+        {
+            read_value(ifs, nupdown);
+        }
         else if (strcmp("lmaxmax", word) == 0)
         {
             read_value(ifs, lmaxmax);
@@ -2179,6 +2183,7 @@ void Input::Bcast()
     Parallel_Common::bcast_double(xc_temperature);
     Parallel_Common::bcast_int(nspin);
     Parallel_Common::bcast_double(nelec);
+    Parallel_Common::bcast_double(nupdown);
     Parallel_Common::bcast_int(lmaxmax);
 
     Parallel_Common::bcast_double(tot_magnetization);

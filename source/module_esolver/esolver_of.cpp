@@ -176,8 +176,10 @@ void ESolver_OF::Init(Input &inp, UnitCell &ucell)
     }
     else if (GlobalV::NSPIN == 2)
     {
-        this->nelec[0] = GlobalC::ucell.magnet.get_nelup();
-        this->nelec[1] = GlobalC::ucell.magnet.get_neldw();
+        //in fact, nelec_spin will not be used anymore
+        this->pelec->init_nelec_spin();
+        this->nelec[0] = this->pelec->nelec_spin[0];
+        this->nelec[1] = this->pelec->nelec_spin[1];
     }
 
     // ================================

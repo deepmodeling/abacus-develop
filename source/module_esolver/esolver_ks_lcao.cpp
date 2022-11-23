@@ -153,7 +153,6 @@ void ESolver_KS_LCAO::Init(Input& inp, UnitCell& ucell)
         this->pelec = new elecstate::ElecStateLCAO(&(chr),
                                                    &(GlobalC::kv),
                                                    GlobalC::kv.nks,
-                                                   GlobalV::NBANDS,
                                                    &(this->LOC),
                                                    &(this->UHM),
                                                    &(this->LOWF));
@@ -491,7 +490,7 @@ void ESolver_KS_LCAO::hamilt2density(int istep, int iter, double ethr)
     }
 
     // (6) compute magnetization, only for spin==2
-    GlobalC::ucell.magnet.compute_magnetization(pelec->charge);
+    GlobalC::ucell.magnet.compute_magnetization(pelec->charge, pelec->nelec_spin.data());
 
     // (7) calculate delta energy
     GlobalC::en.deband = GlobalC::en.delta_e(this->pelec);

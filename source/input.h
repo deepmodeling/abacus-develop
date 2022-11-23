@@ -92,6 +92,7 @@ class Input
     std::string dft_functional; // input DFT functional.
     double xc_temperature; // only relevant if finite temperature functional is used
     int nspin; // LDA ; LSDA ; non-linear spin
+    double nupdown = 0.0;
     double nelec; // total number of electrons
     int lmaxmax;
     double tot_magnetization;

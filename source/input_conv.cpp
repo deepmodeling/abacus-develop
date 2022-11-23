@@ -256,6 +256,11 @@ void Input_Conv::Convert(void)
     //----------------------------------------------------------
     GlobalV::GATE_FLAG = INPUT.gate_flag;
     GlobalV::nelec = INPUT.nelec;
+    if(std::abs(INPUT.nupdown) > 1e-6)
+    {
+        GlobalV::TWO_EFERMI = true;
+        GlobalV::nupdown = INPUT.nupdown;
+    }
     elecstate::Gatefield::zgate = INPUT.zgate;
     elecstate::Gatefield::relax = INPUT.relax;
     elecstate::Gatefield::block = INPUT.block;

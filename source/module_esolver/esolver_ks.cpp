@@ -47,6 +47,7 @@ namespace ModuleESolver
     {
         ESolver_FP::Init(inp,ucell);
         chr.cal_nelec();
+        this->pelec->cal_nbands();
 
         /* it has been established that that
          xc_func is same for all elements, therefore

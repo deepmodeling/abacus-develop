@@ -12,7 +12,11 @@ template<typename FPTYPE, typename Device = psi::DEVICE_CPU>
 class ElecStatePW : public ElecState
 {
   public:
-    ElecStatePW(ModulePW::PW_Basis_K *wfc_basis_in, Charge* chg_in, K_Vectors *pkv_in, int nbands_in);
+    ElecStatePW(
+      ModulePW::PW_Basis_K *wfc_basis_in, 
+      Charge* chg_in, 
+      K_Vectors *pkv_in
+    );
     // void init(Charge* chg_in):charge(chg_in){} override;
 
     ~ElecStatePW();

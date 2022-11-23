@@ -38,7 +38,8 @@ extern double NELEC;
 extern std::string DFT_FUNCTIONAL; // 6.5 change the DFT functional from input file.
 extern double XC_TEMPERATURE;
 extern int NSPIN; // 7
-extern bool TWO_EFERMI; // 7.5 mohan add 2011-04-03, two fermi energy, exist if magnetization is fixed.
+extern bool TWO_EFERMI; // 7.5 two fermi energy, exist if nupdown isn't zero.
+extern double nupdown;
 extern int CURRENT_SPIN; // 8
 extern int CURRENT_K; // 8
 

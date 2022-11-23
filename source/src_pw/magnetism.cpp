@@ -17,7 +17,7 @@ Magnetism::~Magnetism()
 }
 
 #ifndef __CELL
-void Magnetism::compute_magnetization(const Charge* const chr)
+void Magnetism::compute_magnetization(const Charge* const chr, double* nelec_spin)
 {
     if (GlobalV::NSPIN==2)
     {
@@ -39,14 +39,14 @@ void Magnetism::compute_magnetization(const Charge* const chr)
 		ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"total magnetism (Bohr mag/cell)",this->tot_magnetization);
 		ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"absolute magnetism (Bohr mag/cell)",this->abs_magnetization);
 		
-		if(GlobalV::TWO_EFERMI)
+		//update number of electrons for each spin
+		//if TWO_EFERMI, no need to update
+		if(!GlobalV::TWO_EFERMI)
 		{
-			ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"nelup",get_nelup());
-			ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"neldw",get_neldw());
-		}
-		else
-		{
-			ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"nelec",GlobalV::nelec);
+			nelec_spin[0] = (GlobalV::nelec + this->tot_magnetization) / 2;
+			nelec_spin[1] = (GlobalV::nelec - this->tot_magnetization) / 2;
+			ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"nelec for spin up", nelec_spin[0]);
+			ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"nelec for spin down", nelec_spin[0]);
 		}
     }
 
@@ -72,42 +72,6 @@ void Magnetism::compute_magnetization(const Charge* const chr)
 	}
 
     return;
-}
-
-
-double Magnetism::get_nelup(void)
-{
-	double nelup = 0.0;
-	if(GlobalV::TWO_EFERMI)
-	{
-//===============================================================
-//  this type of electrons are used as "fixed" magnetization.
-//===============================================================
-		nelup = 0.5 * GlobalV::nelec + 0.5 * tot_magnetization;
-	}
-	else
-	{
-		nelup = 0.5 * GlobalV::nelec;
-	}
-    return nelup;
-}
-
-
-double Magnetism::get_neldw(void)
-{
-	double neldw = 0.0;
-	if(GlobalV::TWO_EFERMI)
-	{
-//===============================================================
-//  this type of electrons are used as "fixed" magnetization.
-//===============================================================
-		neldw = 0.5 * GlobalV::nelec - 0.5 * tot_magnetization;
-	}
-	else
-	{
-		neldw = 0.5 * GlobalV::nelec;
-	}
-    return neldw ;
 }
 
 bool Magnetism::judge_parallel(double a[3], ModuleBase::Vector3<double> b)
