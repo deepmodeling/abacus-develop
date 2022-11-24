@@ -207,8 +207,6 @@ bool deepks_out_unittest = false;
 
 bool deepks_setorb = false;
 
-int vnl_method = 1; // set defauld vnl method as old, added by zhengdy 2021-10-11
-
 bool out_element_info = false; // added by zhengdy 2021-11-26
 
 bool imp_sol = false; // implicit solvation.  sunml added 2022-04-04

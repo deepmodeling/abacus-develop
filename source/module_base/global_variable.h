@@ -232,9 +232,6 @@ extern int bessel_lmax; // lmax used in descriptor, mohan added 2021-01-03
 extern double bessel_rcut;
 extern double bessel_tol;
 
-// method for dealing with non-local potential in Hamiltonian matrix, 0 for old, 1 for new
-extern int vnl_method;
-
 // whether or not output information for each element
 extern bool out_element_info;
 

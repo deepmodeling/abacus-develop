@@ -233,6 +233,11 @@ void Input_Conv::Convert(void)
         }
         GlobalV::LSPINORB = INPUT.lspinorb;
         GlobalV::soc_lambda = INPUT.soc_lambda;
+
+        if(INPUT.cal_force || INPUT.cal_stress)
+        {
+            ModuleBase::WARNING_QUIT("input_conv","force & stress not ready for soc yet!");
+        }
     }
     else
     {
