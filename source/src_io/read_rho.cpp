@@ -7,7 +7,7 @@ bool Charge::read_rho(const int &is, const std::string &fn, double* rho) //add b
     std::ifstream ifs(fn.c_str());
     if (!ifs) 
 	{
-		ModuleBase::WARNING_QUIT("read_rho","!!! Couldn't find the charge file !!!");
+		ModuleBase::WARNING_QUIT("read_rho","!!! Couldn't find the charge file !!! The default directory \n of SPIN1_CHG is OUT.suffix, or you must set read_file_dir \n to a specific directory. ");
 	}
 	else
 	{
