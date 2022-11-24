@@ -15,8 +15,6 @@ extern "C"
     #include "../module_base/blacs_connector.h"
 	#include "../module_base/scalapack_connector.h"
 }
-#include "pdgseps.h"
-#include "pzgseps.h"
 #include "../module_base/lapack_connector.h"
 #endif
 

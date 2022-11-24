@@ -178,8 +178,8 @@ std::tuple<double,double,ModuleBase::matrix> XC_Functional::v_xc_libxc(
         const double &omega, // volume of cell
         const Charge* const chr)
 {
-    ModuleBase::TITLE("XC_Functional","v_xc");
-    ModuleBase::timer::tick("XC_Functional","v_xc");
+    ModuleBase::TITLE("XC_Functional","v_xc_libxc");
+    ModuleBase::timer::tick("XC_Functional","v_xc_libxc");
 
     const int nspin = GlobalV::NSPIN;
 

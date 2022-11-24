@@ -477,6 +477,10 @@ void Input::Default(void)
     of_read_kernel = false;
     of_kernel_file = "WTkernel.txt";
 
+    //==========================================================
+    //    OFDFT sunliang added on 2022-11-15
+    //==========================================================
+    device = "cpu";
     return;
 }
 
@@ -1755,6 +1759,12 @@ bool Input::Read(const std::string &fn)
             read_value(ifs, of_kernel_file);
         }
         //----------------------------------------------------------------------------------
+        //    device control denghui added on 2022-11-05
+        //----------------------------------------------------------------------------------     
+        else if (strcmp("device", word) == 0) {
+            read_value(ifs, device);
+        }
+        //----------------------------------------------------------------------------------
         else
         {
             // xiaohui add 2015-09-15
@@ -2510,6 +2520,10 @@ void Input::Bcast()
     Parallel_Common::bcast_int(of_full_pw_dim);
     Parallel_Common::bcast_bool(of_read_kernel);
     Parallel_Common::bcast_string(of_kernel_file);
+    //----------------------------------------------------------------------------------
+    //    device control denghui added on 2022-11-05
+    //----------------------------------------------------------------------------------
+    Parallel_Common::bcast_string(device);
 
     return;
 }

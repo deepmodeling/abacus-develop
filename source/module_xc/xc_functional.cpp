@@ -56,7 +56,7 @@ void XC_Functional::set_xc_type(const std::string xc_func_in)
         func_type = 2;
         use_libxc = false;
 	} 
-	else if( xc_func == "revPBE" ) //PBX_r+PBC
+	else if( xc_func == "REVPBE" ) //PBX_r+PBC
 	{
 		func_id.push_back(XC_GGA_X_PBE_R);
         func_id.push_back(XC_GGA_C_PBE);

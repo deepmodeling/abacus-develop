@@ -98,7 +98,6 @@ namespace WF_Local
 //mock the unrelated functions in charge.cpp
 #include "src_pw/occupy.h"
 bool Occupy::use_gaussian_broadening = false;
-bool Occupy::use_tetrahedron_method = false;
 #ifdef __MPI
 void Parallel_Grid::zpiece_to_all(double *zpiece, const int &iz, double *rho){}
 #endif

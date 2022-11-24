@@ -76,6 +76,38 @@ class Potential : public PotBase
     {
         return this->v_effective;
     }
+    double* get_effective_v_data()
+    {
+        if (this->v_effective.nc > 0)
+        {
+            #if (defined(__CUDA) || defined(__ROCM))
+            if (GlobalV::device_flag == "gpu") {
+                return this->d_v_effective;
+            }
+            #endif
+            return &(this->v_effective(0, 0));
+        }
+        else
+        {
+            return nullptr;
+        }
+    }
+    const double* get_effective_v_data() const
+    {
+        if (this->v_effective.nc > 0)
+        {
+            #if (defined(__CUDA) || defined(__ROCM))
+            if (GlobalV::device_flag == "gpu") {
+                return this->d_v_effective;
+            }
+            #endif
+            return &(this->v_effective(0, 0));
+        }
+        else
+        {
+            return nullptr;
+        }
+    }
     double* get_effective_v(int is)
     {
         if (this->v_effective.nc > 0)
@@ -140,13 +172,14 @@ class Potential : public PotBase
     // interface for printing
     //  mohan add 2011-02-28
     //  here vh is std::complex because the array is got after std::complex FFT.
+    /* Broken, please fix it
     void write_potential(const int& is,
                          const int& iter,
                          const std::string& fn,
                          const ModuleBase::matrix& v,
                          const int& precision,
                          const int& hartree = 0) const;
-
+    */
     void write_elecstat_pot(const std::string& fn, const std::string& fn_ave, ModulePW::PW_Basis* rho_basis, const Charge* const chr);
 
   private:
@@ -157,6 +190,15 @@ class Potential : public PotBase
 
     std::vector<double> v_effective_fixed;
     ModuleBase::matrix v_effective;
+
+#if (defined(__CUDA) || defined(__ROCM))
+    double * d_v_effective = nullptr;
+    psi::DEVICE_CPU * cpu_ctx = nullptr;
+    psi::DEVICE_GPU * gpu_ctx = nullptr;
+    using resmem_var_op = psi::memory::resize_memory_op<double, psi::DEVICE_GPU>;
+    using delmem_var_op = psi::memory::delete_memory_op<double, psi::DEVICE_GPU>;
+    using syncmem_var_h2d_op = psi::memory::synchronize_memory_op<double, psi::DEVICE_GPU, psi::DEVICE_CPU>;
+#endif
 
     ModuleBase::matrix vofk_effective;
 

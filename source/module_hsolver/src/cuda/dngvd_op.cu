@@ -155,8 +155,6 @@ void dngv_op<double, psi::DEVICE_GPU>::operator()(const psi::DEVICE_GPU* d,
                                                   double* W,
                                                   std::complex<double>* V)
 {
-    createBLAShandle();
-
     // init A_eigenvectors & transpose_B
     double2 *A_eigenvectors, *transpose_B;
     checkCudaErrors(cudaMalloc((void**)&A_eigenvectors, sizeof(double2) * row * col));
@@ -228,8 +226,6 @@ void dngv_op<double, psi::DEVICE_GPU>::operator()(const psi::DEVICE_GPU* d,
     checkCudaErrors(cudaFree(all_W));
     checkCudaErrors(cudaFree(devInfo));
     cusolverErrcheck(cusolverDnDestroy(cusolverH));
-
-    destoryBLAShandle();
 }
 
 } // namespace hsolver

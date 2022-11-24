@@ -10,9 +10,10 @@
 #include "src_pw/global.h"
 #include <algorithm>
 
-namespace hsolver
-{
-HSolverPW::HSolverPW(ModulePW::PW_Basis_K* wfc_basis_in)
+namespace hsolver {
+
+template<typename FPTYPE, typename Device>
+HSolverPW<FPTYPE, Device>::HSolverPW(ModulePW::PW_Basis_K* wfc_basis_in)
 {
     this->wfc_basis = wfc_basis_in;
     this->classname = "HSolverPW";
@@ -29,46 +30,42 @@ void HSolverPW::update()
 {
     return;
 }*/
-void HSolverPW::initDiagh()
+template<typename FPTYPE, typename Device>
+void HSolverPW<FPTYPE, Device>::initDiagh()
 {
     if (this->method == "cg")
     {
-        if(pdiagh!=nullptr)
+        if(this->pdiagh!=nullptr)
         {
-            if(pdiagh->method != this->method)
+            if(this->pdiagh->method != this->method)
             {
-                delete[] pdiagh;
-                pdiagh = new DiagoCG<double>(precondition.data());
-                pdiagh->method = this->method;
+                delete (DiagoCG<FPTYPE, Device>*)this->pdiagh;
+                this->pdiagh = new DiagoCG<FPTYPE, Device>(precondition.data());
+                this->pdiagh->method = this->method;
             }
         }
         else
         {
-            pdiagh = new DiagoCG<double>(precondition.data());
-            pdiagh->method = this->method;
-            // temperary added for debugging!
-            #if defined(__CUDA) || defined(__ROCM)
-            gpu_diagh = new DiagoCG<double, psi::DEVICE_GPU>(precondition.data());
-            gpu_diagh->method = this->method;
-            #endif
+            this->pdiagh = new DiagoCG<FPTYPE, Device>(precondition.data());
+            this->pdiagh->method = this->method;
         }
     }
     else if (this->method == "dav")
     {
         DiagoDavid<double>::PW_DIAG_NDIM = GlobalV::PW_DIAG_NDIM;
-        if (pdiagh != nullptr)
+        if (this->pdiagh != nullptr)
         {
-            if (pdiagh->method != this->method)
+            if (this->pdiagh->method != this->method)
             {
-                delete[] pdiagh;
-                pdiagh = new DiagoDavid<double>( precondition.data());
-                pdiagh->method = this->method;
+                delete (DiagoDavid<FPTYPE, Device>*)this->pdiagh;
+                this->pdiagh = new DiagoDavid<FPTYPE, Device>(precondition.data());
+                this->pdiagh->method = this->method;
             }
         }
         else
         {
-            pdiagh = new DiagoDavid<double>( precondition.data());
-            pdiagh->method = this->method;
+            this->pdiagh = new DiagoDavid<FPTYPE, Device>( precondition.data());
+            this->pdiagh->method = this->method;
         }
     }
     else
@@ -77,7 +74,8 @@ void HSolverPW::initDiagh()
     }
 }
 
-void HSolverPW::solve(hamilt::Hamilt<double>* pHamilt, psi::Psi<std::complex<double>>& psi, elecstate::ElecState* pes, const std::string method_in, const bool skip_charge)
+template<typename FPTYPE, typename Device>
+void HSolverPW<FPTYPE, Device>::solve(hamilt::Hamilt<FPTYPE, Device>* pHamilt, psi::Psi<std::complex<FPTYPE>, Device>& psi, elecstate::ElecState* pes, const std::string method_in, const bool skip_charge)
 {
     ModuleBase::TITLE("HSolverPW", "solve");
     ModuleBase::timer::tick("HSolverPW", "solve");
@@ -112,29 +110,26 @@ void HSolverPW::solve(hamilt::Hamilt<double>* pHamilt, psi::Psi<std::complex<dou
         ModuleBase::timer::tick("HSolverPW", "solve");
         return;
     }
-    pes->psiToRho(psi);
+    reinterpret_cast<elecstate::ElecStatePW<FPTYPE, Device>*>(pes)->psiToRho(psi);
 
     ModuleBase::timer::tick("HSolverPW", "solve");
     return;
 }
 
-void HSolverPW::endDiagh()
+template<typename FPTYPE, typename Device>
+void HSolverPW<FPTYPE, Device>::endDiagh()
 {
     // DiagoCG would keep 9*nbasis memory in cache during loop-k
     // it should be deleted before calculating charge
     if(this->method == "cg")
     {
-        delete (DiagoCG<double>*)pdiagh;
-        pdiagh = nullptr;
-        #if defined(__CUDA) || defined(__ROCM)
-        delete (DiagoCG<double, psi::DEVICE_GPU>*)gpu_diagh;
-        gpu_diagh = nullptr;
-        #endif
+        delete (DiagoCG<FPTYPE, Device>*)this->pdiagh;
+        this->pdiagh = nullptr;
     }
     if(this->method == "dav")
     {
-        delete (DiagoDavid<double>*)pdiagh;
-        pdiagh = nullptr;
+        delete (DiagoDavid<FPTYPE, Device>*)this->pdiagh;
+        this->pdiagh = nullptr;
     }
 
     //in PW base, average iteration steps for each band and k-point should be printing
@@ -150,7 +145,8 @@ void HSolverPW::endDiagh()
     }
 }
 
-void HSolverPW::updatePsiK(hamilt::Hamilt<double>* pHamilt, psi::Psi<std::complex<double>>& psi, const int ik)
+template<typename FPTYPE, typename Device>
+void HSolverPW<FPTYPE, Device>::updatePsiK(hamilt::Hamilt<FPTYPE, Device>* pHamilt, psi::Psi<std::complex<FPTYPE>, Device>& psi, const int ik)
 {
     psi.fix_k(ik);
     if(!this->initialed_psi)
@@ -159,62 +155,28 @@ void HSolverPW::updatePsiK(hamilt::Hamilt<double>* pHamilt, psi::Psi<std::comple
         {
             // generate PAOs first, then diagonalize to get
             // inital wavefunctions.
-            GlobalC::wf.diago_PAO_in_pw_k2(ik, psi, pHamilt);
+            GlobalC::wf.diago_PAO_in_pw_k2_device(this->ctx, ik, psi, pHamilt);
         }
         else
         {
             ModuleBase::WARNING_QUIT("HSolverPW::updatePsiK", "lcao_in_pw is not supported now.");
         }
-        return;
     }
 }
 
-void HSolverPW::hamiltSolvePsiK(hamilt::Hamilt<double>* hm, psi::Psi<std::complex<double>>& psi, double* eigenvalue)
+template<typename FPTYPE, typename Device>
+void HSolverPW<FPTYPE, Device>::hamiltSolvePsiK(hamilt::Hamilt<FPTYPE, Device>* hm, psi::Psi<std::complex<FPTYPE>, Device>& psi, FPTYPE* eigenvalue)
 {
-    /// a huge victory here!
-    /// psi::Psi<std::complex<double>, psi::DEVICE_GPU> gpu_psi = psi;
-    /// psi::Psi<std::complex<double>, psi::DEVICE_CPU> cpu_psi = gpu_psi;
-    /// pdiagh->diag(hm, psi, eigenvalue);
-    /// psi::memory::synchronize_memory_op<std::complex<double>, psi::DEVICE_CPU, psi::DEVICE_CPU>()(
-    ///     psi.get_device(),
-    ///     cpu_psi.get_device(),
-    ///     psi.get_pointer() - psi.get_psi_bias(),
-    ///     cpu_psi.get_pointer() - cpu_psi.get_psi_bias(),
-    ///     psi.size());
-
-
-    /// hamilt::Hamilt<double, psi::DEVICE_CPU>* h_phm_in =
-    ///         new hamilt::HamiltPW<double, psi::DEVICE_CPU>(
-    ///                 reinterpret_cast<hamilt::HamiltPW<double, psi::DEVICE_GPU>*>(d_phm_in));
-    ///
-    /// pdiagh->diag(h_phm_in, psi, eigenvalue);
-    /// new era
-    /// if this works, then everything done!
-
-#if defined(__CUDA) || defined(__ROCM)
-    psi::Psi<std::complex<double>, psi::DEVICE_GPU> gpu_psi = psi;
-    hamilt::Hamilt<double, psi::DEVICE_GPU>* d_phm_in =
-            new hamilt::HamiltPW<double, psi::DEVICE_GPU>(
-                    reinterpret_cast<hamilt::HamiltPW<double, psi::DEVICE_CPU>*>(hm));
-    gpu_diagh->diag(d_phm_in, gpu_psi, eigenvalue);
-    psi::memory::synchronize_memory_op<std::complex<double>, psi::DEVICE_CPU, psi::DEVICE_GPU>()(
-         psi.get_device(),
-         gpu_psi.get_device(),
-         psi.get_pointer() - psi.get_psi_bias(),
-         gpu_psi.get_pointer() - gpu_psi.get_psi_bias(),
-         psi.size());
-    delete reinterpret_cast<hamilt::HamiltPW<double, psi::DEVICE_GPU>*>(d_phm_in);
-#else
-    pdiagh->diag(hm, psi, eigenvalue);
-#endif
+    this->pdiagh->diag(hm, psi, eigenvalue);
 }
 
-void HSolverPW::update_precondition(std::vector<double> &h_diag, const int ik, const int npw)
+template<typename FPTYPE, typename Device>
+void HSolverPW<FPTYPE, Device>::update_precondition(std::vector<FPTYPE> &h_diag, const int ik, const int npw)
 {
     h_diag.assign(h_diag.size(), 1.0);
     int precondition_type = 2;
-    const double tpiba2 = this->wfc_basis->tpiba2;
-    
+    const FPTYPE tpiba2 = this->wfc_basis->tpiba2;
+
     //===========================================
     // Conjugate-Gradient diagonalization
     // h_diag is the precondition matrix
@@ -224,7 +186,7 @@ void HSolverPW::update_precondition(std::vector<double> &h_diag, const int ik, c
     {
         for (int ig = 0; ig < npw; ig++)
         {
-            double g2kin = this->wfc_basis->getgk2(ik,ig) * tpiba2;    
+            FPTYPE g2kin = this->wfc_basis->getgk2(ik,ig) * tpiba2;    
             h_diag[ig] = std::max(1.0, g2kin);
         }
     }
@@ -232,7 +194,7 @@ void HSolverPW::update_precondition(std::vector<double> &h_diag, const int ik, c
     {
         for (int ig = 0; ig < npw; ig++)
         {
-            double g2kin = this->wfc_basis->getgk2(ik,ig) * tpiba2;
+            FPTYPE g2kin = this->wfc_basis->getgk2(ik,ig) * tpiba2;
             h_diag[ig] = 1 + g2kin + sqrt(1 + (g2kin - 1) * (g2kin - 1));
         }
     }
@@ -246,12 +208,14 @@ void HSolverPW::update_precondition(std::vector<double> &h_diag, const int ik, c
     }
 }
 
-double HSolverPW::cal_hsolerror()
+template<typename FPTYPE, typename Device>
+FPTYPE HSolverPW<FPTYPE, Device>::cal_hsolerror()
 {
     return this->diag_ethr * std::max(1.0, GlobalV::nelec);
 }
 
-double HSolverPW::set_diagethr(const int istep, const int iter, const double drho)
+template<typename FPTYPE, typename Device>
+FPTYPE HSolverPW<FPTYPE, Device>::set_diagethr(const int istep, const int iter, const FPTYPE drho)
 {
     //It is too complex now and should be modified.
     if (iter == 1)
@@ -293,7 +257,8 @@ double HSolverPW::set_diagethr(const int istep, const int iter, const double drh
     return this->diag_ethr;
 }
 
-double HSolverPW::reset_diagethr(std::ofstream& ofs_running, const double hsover_error, const double drho)
+template<typename FPTYPE, typename Device>
+FPTYPE HSolverPW<FPTYPE, Device>::reset_diagethr(std::ofstream& ofs_running, const FPTYPE hsover_error, const FPTYPE drho)
 {
     ofs_running << " Notice: Threshold on eigenvalues was too large.\n";
     ModuleBase::WARNING("scf", "Threshold on eigenvalues was too large.");
@@ -304,5 +269,9 @@ double HSolverPW::reset_diagethr(std::ofstream& ofs_running, const double hsover
     return this->diag_ethr;
 }
 
+template class HSolverPW<double, psi::DEVICE_CPU>;
+#if ((defined __CUDA) || (defined __ROCM))
+template class HSolverPW<double, psi::DEVICE_GPU>;
+#endif
 
 } // namespace hsolver
