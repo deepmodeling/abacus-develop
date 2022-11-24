@@ -373,8 +373,6 @@ bool K_Vectors::read_kpoints(const std::string &fn)
 				wk[ik] = 1.0;
 			}
 			
-			GlobalV::ofs_warning << " Error : nkstot == -1, not implemented yet." << std::endl;
-
             this->kc_done = true;
 
 		}
@@ -452,8 +450,6 @@ bool K_Vectors::read_kpoints(const std::string &fn)
 				wk[ik] = 1.0;
 			}
 			
-			GlobalV::ofs_warning << " Error : nkstot == -1, not implemented yet." << std::endl;
-
             this->kd_done = true;
 
 		}

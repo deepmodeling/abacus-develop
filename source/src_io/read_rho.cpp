@@ -7,8 +7,7 @@ bool Charge::read_rho(const int &is, const std::string &fn, double* rho) //add b
     std::ifstream ifs(fn.c_str());
     if (!ifs) 
 	{
-		GlobalV::ofs_running << " !!! Couldn't find the charge file !!!" << std::endl;
-		return false;
+		ModuleBase::WARNING_QUIT("read_rho","!!! Couldn't find the charge file !!!");
 	}
 	else
 	{
