@@ -324,7 +324,7 @@ void ElecState::init_ks(
 
 void ElecState::cal_nbands()
 {
-    if ( GlobalV::ESOLVER_TYPE != "sdft" ) //qianrui 2021-2-20
+    if ( GlobalV::ESOLVER_TYPE == "sdft" ) //qianrui 2021-2-20
 	{
         return;
     }
