@@ -17,8 +17,8 @@ template <typename FPTYPE, typename Device> struct dngvx_op
     ///
     /// Input Parameters
     ///     @param d : the type of device
-    ///     @param row : the number of rows of the matrix
-    ///     @param col : the number of cols of the matrix
+    ///     @param nstart : the number of cols of the matrix
+    ///     @param ldh : the number of rows of the matrix
     ///     @param A : the hermitian matrix A in A x=lambda B x (row major)
     ///     @param B : the overlap matrix B in A x=lambda B x (row major)
     ///     @param m : the number of the first m eigenvalues to calculate
@@ -26,8 +26,8 @@ template <typename FPTYPE, typename Device> struct dngvx_op
     ///     @param W : calculated eigenvalues
     ///     @param V : calculated eigenvectors (row major)
     void operator()(const Device* d,
-                    const int row,
-                    const int col,
+                    const int nstart,
+                    const int ldh,
                     const std::complex<FPTYPE>* A,
                     const std::complex<FPTYPE>* B,
                     const int m,
@@ -42,16 +42,16 @@ template <typename FPTYPE, typename Device> struct dngv_op
     ///
     /// Input Parameters
     ///     @param d : the type of device
-    ///     @param row : the number of rows of the matrix
-    ///     @param col : the number of cols of the matrix
+    ///     @param nstart : the number of cols of the matrix
+    ///     @param ldh : the number of rows of the matrix
     ///     @param A : the hermitian matrix A in A x=lambda B x (row major)
     ///     @param B : the overlap matrix B in A x=lambda B x (row major)
     /// Output Parameter
     ///     @param W : calculated eigenvalues
     ///     @param V : calculated eigenvectors (row major)
     void operator()(const Device* d,
-                    const int row,
-                    const int col,
+                    const int nstart,
+                    const int ldh,
                     const std::complex<FPTYPE>* A,
                     const std::complex<FPTYPE>* B,
                     double* W,

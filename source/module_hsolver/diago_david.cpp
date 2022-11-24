@@ -34,6 +34,11 @@ template <typename FPTYPE, typename Device> DiagoDavid<FPTYPE, Device>::~DiagoDa
     delete_memory_op()(this->ctx, this->scc);
     delete_memory_op()(this->ctx, this->vcc);
     psi::memory::delete_memory_op<FPTYPE, Device>()(this->ctx, this->eigenvalue);
+    delete_memory_op()(this->ctx, this->lagrange_matrix);
+    if (this->device == psi::GpuDevice)
+    {
+        psi::memory::delete_memory_op<FPTYPE, Device>()(this->ctx, this->d_precondition);
+    }
 }
 
 template <typename FPTYPE, typename Device>
@@ -486,6 +491,9 @@ void DiagoDavid<FPTYPE, Device>::cal_grad(hamilt::Hamilt<FPTYPE, Device>* phm_in
                           &hphi[nbase * this->dim]); // &hp(nbase, 0)
     phm_in->ops->hPsi(dav_hpsi_in);
 
+    delete_memory_op()(this->ctx, lagrange);
+    delete_memory_op()(this->ctx, vc_ev_vector);
+    
     ModuleBase::timer::tick("DiagoDavid", "cal_grad");
     return;
 }
@@ -662,11 +670,11 @@ void DiagoDavid<FPTYPE, Device>::diag_zhegvx(const int& n, // nbase
         psi::memory::resize_memory_op<FPTYPE, Device>()(this->ctx, eigenvalue_gpu, this->nbase_x);
         syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, eigenvalue_gpu, eigenvalue, this->nbase_x);
 
-        dngvx_op<FPTYPE, Device>()(this->ctx, this->nbase_x, n, this->hcc, this->scc, m, eigenvalue_gpu, this->vcc);
+        dngvx_op<FPTYPE, Device>()(this->ctx, n, this->nbase_x, this->hcc, this->scc, m, eigenvalue_gpu, this->vcc);
 
         syncmem_var_d2h_op()(this->cpu_ctx, this->ctx, eigenvalue, eigenvalue_gpu, this->nbase_x);
         psi::memory::delete_memory_op<FPTYPE, Device>()(this->ctx, eigenvalue_gpu);
-        hsolver::createBLAShandle();
+        // hsolver::createBLAShandle();
 
         // std::complex<FPTYPE>* hcc_cpu = nullptr;
         // std::complex<FPTYPE>* scc_cpu = nullptr;
@@ -711,7 +719,7 @@ void DiagoDavid<FPTYPE, Device>::diag_zhegvx(const int& n, // nbase
         // psi::memory::delete_memory_op<std::complex<FPTYPE>, Device>()(this->ctx, vcc_cpu);
 
 #else
-        dngvx_op<FPTYPE, Device>()(this->ctx, this->nbase_x, n, this->hcc, this->scc, m, this->eigenvalue, this->vcc);
+        dngvx_op<FPTYPE, Device>()(this->ctx, n, this->nbase_x, this->hcc, this->scc, m, this->eigenvalue, this->vcc);
 #endif
     }
 
