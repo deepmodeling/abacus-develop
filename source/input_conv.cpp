@@ -233,6 +233,11 @@ void Input_Conv::Convert(void)
         }
         GlobalV::LSPINORB = INPUT.lspinorb;
         GlobalV::soc_lambda = INPUT.soc_lambda;
+
+        if(INPUT.cal_force || INPUT.cal_stress)
+        {
+            ModuleBase::WARNING_QUIT("input_conv","force & stress not ready for soc yet!");
+        }
     }
     else
     {
@@ -258,6 +263,11 @@ void Input_Conv::Convert(void)
     //----------------------------------------------------------
     GlobalV::GATE_FLAG = INPUT.gate_flag;
     GlobalV::nelec = INPUT.nelec;
+    if(std::abs(INPUT.nupdown) > 1e-6)
+    {
+        GlobalV::TWO_EFERMI = true;
+        GlobalV::nupdown = INPUT.nupdown;
+    }
     elecstate::Gatefield::zgate = INPUT.zgate;
     elecstate::Gatefield::relax = INPUT.relax;
     elecstate::Gatefield::block = INPUT.block;
@@ -506,6 +516,7 @@ void Input_Conv::Convert(void)
     GlobalC::en.out_proj_band = INPUT.out_proj_band;
 #ifdef __LCAO
     Local_Orbital_Charge::out_dm = INPUT.out_dm;
+    Local_Orbital_Charge::out_dm1 = INPUT.out_dm1;
     hsolver::HSolverLCAO::out_mat_hs = INPUT.out_mat_hs;
     hsolver::HSolverLCAO::out_mat_hsR = INPUT.out_mat_hs2; // LiuXh add 2019-07-16
     elecstate::ElecStateLCAO::out_wfc_lcao = INPUT.out_wfc_lcao;

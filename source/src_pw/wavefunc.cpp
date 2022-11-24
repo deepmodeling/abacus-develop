@@ -213,6 +213,23 @@ void wavefunc::diago_PAO_in_pw_k2(const int &ik, psi::Psi<std::complex<double>> 
 	const int nbands = wvf.get_nbands();
 	const int current_nbasis = GlobalC::kv.ngk[ik];
 
+	//special case here! use Psi(k-1) for the initialization of Psi(k)
+	//this method should be tested.
+	/*if(GlobalV::CALCULATION == "nscf" && GlobalC::ucell.natomwfc == 0 && ik>0)
+	{
+		//this is memsaver case
+		if(wvf.get_nk() == 1)
+		{
+			return;
+		}
+		else
+		{
+			ModuleBase::GlobalFunc::COPYARRAY(&wvf(ik-1, 0, 0), &wvf(ik, 0, 0), wvf.get_nbasis()* wvf.get_nbands());
+			return;
+		}
+	}
+	*/
+
 	ModuleBase::ComplexMatrix wfcatom(starting_nw, nbasis);//added by zhengdy-soc
 	if(GlobalV::test_wf)ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "starting_nw", starting_nw);
 	if(init_wfc.substr(0,6)=="atomic")
@@ -255,6 +272,7 @@ void wavefunc::diago_PAO_in_pw_k2(const int &ik, psi::Psi<std::complex<double>> 
 		}
 		else
 		{
+			ModuleBase::WARNING_QUIT("wavefunc","Psi does not exist!");
 			//this diagonalization method is obsoleted now
 			//GlobalC::hm.diagH_subspace(ik ,starting_nw, nbands, wfcatom, wfcatom, etatom.data());
 		}

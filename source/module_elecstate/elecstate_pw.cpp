@@ -10,10 +10,10 @@ namespace elecstate
 {
 
 template<typename FPTYPE, typename Device>
-ElecStatePW<FPTYPE, Device>::ElecStatePW(ModulePW::PW_Basis_K *wfc_basis_in, Charge* chg_in, K_Vectors *pkv_in, int nbands_in) : basis(wfc_basis_in)  
+ElecStatePW<FPTYPE, Device>::ElecStatePW(ModulePW::PW_Basis_K *wfc_basis_in, Charge* chg_in, K_Vectors *pkv_in) : basis(wfc_basis_in)  
 {
     this->classname = "ElecStatePW";
-    this->init(chg_in, pkv_in, pkv_in->nks, nbands_in);
+    this->init_ks(chg_in, pkv_in, pkv_in->nks);
 }
 
 template<typename FPTYPE, typename Device>

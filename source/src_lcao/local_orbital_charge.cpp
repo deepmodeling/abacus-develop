@@ -17,6 +17,7 @@ extern "C"
 }
 
 int Local_Orbital_Charge::out_dm = 0;
+int Local_Orbital_Charge::out_dm1 = 0;
 
 Local_Orbital_Charge::Local_Orbital_Charge()
 {

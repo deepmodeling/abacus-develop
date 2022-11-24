@@ -277,6 +277,7 @@ void Input::Default(void)
     out_freq_ion = 0;
     out_chg = 0;
     out_dm = 0;
+    out_dm1 = 0;
 
     deepks_out_labels = 0; // caoyu added 2020-11-24, mohan added 2021-01-03
     deepks_scf = 0;
@@ -719,6 +720,10 @@ bool Input::Read(const std::string &fn)
         {
             read_value(ifs, nelec);
         }
+        else if (strcmp("nupdown", word) == 0)
+        {
+            read_value(ifs, nupdown);
+        }
         else if (strcmp("lmaxmax", word) == 0)
         {
             read_value(ifs, lmaxmax);
@@ -1073,6 +1078,10 @@ bool Input::Read(const std::string &fn)
         else if (strcmp("out_dm", word) == 0)
         {
             read_value(ifs, out_dm);
+        }
+        else if (strcmp("out_dm1", word) == 0)
+        {
+            read_value(ifs, out_dm1);
         }
         else if (strcmp("deepks_out_labels", word) == 0) // caoyu added 2020-11-24, mohan modified 2021-01-03
         {
@@ -2189,6 +2198,7 @@ void Input::Bcast()
     Parallel_Common::bcast_double(xc_temperature);
     Parallel_Common::bcast_int(nspin);
     Parallel_Common::bcast_double(nelec);
+    Parallel_Common::bcast_double(nupdown);
     Parallel_Common::bcast_int(lmaxmax);
 
     Parallel_Common::bcast_double(tot_magnetization);
@@ -2281,6 +2291,7 @@ void Input::Bcast()
     Parallel_Common::bcast_int(out_freq_ion);
     Parallel_Common::bcast_int(out_chg);
     Parallel_Common::bcast_int(out_dm);
+    Parallel_Common::bcast_int(out_dm1);
 
     Parallel_Common::bcast_bool(deepks_out_labels); // caoyu added 2020-11-24, mohan modified 2021-01-03
     Parallel_Common::bcast_bool(deepks_scf);
@@ -2645,6 +2656,7 @@ void Input::Check(void)
         chg_extrap = "atomic"; // xiaohui modify 2015-02-01
         out_chg = 1; // this leads to the calculation of state charge.
         out_dm = 0;
+        out_dm1 = 0;
         out_pot = 0;
 
         // if(!local_basis || !linear_scaling) xiaohui modify 2013-09-01
@@ -2667,6 +2679,7 @@ void Input::Check(void)
         chg_extrap = "atomic"; // xiaohui modify 2015-02-01
         out_chg = 1;
         out_dm = 0;
+        out_dm1 = 0;
         out_pot = 0;
         // if(!local_basis || !linear_scaling) xiaohui modify 2013-09-01
         if (basis_type == "pw") // xiaohui add 2013-09-01
@@ -2780,6 +2793,13 @@ void Input::Check(void)
             ModuleBase::WARNING_QUIT("Input", "out_dm with k-point algorithm is not implemented yet.");
         }
     }
+    else
+    {
+        if(out_dm1 == 1)
+        {
+            ModuleBase::WARNING_QUIT("Input", "out_dm1 is only for multi-k");
+        }
+    }
 
     // if(chg_extrap==4 && local_basis==0) xiaohui modify 2013-09-01
     if (chg_extrap == "dm" && basis_type == "pw") // xiaohui add 2013-09-01, xiaohui modify 2015-02-01
@@ -2788,22 +2808,6 @@ void Input::Check(void)
             "Input",
             "wrong 'chg_extrap=dm' is only available for local orbitals."); // xiaohui modify 2015-02-01
     }
-
-    if (chg_extrap == "dm" || cal_force > 1)
-    {
-        // if(out_dm==0) out_dm = 10000;//at least must output the density matrix at the last electron iteration step.
-    }
-    // if(chg_extrap != "dm")//xiaohui add 2015-02-01
-    //{
-    //	if(calculation=="relax")//xiaohui add 2015-02-01
-    //	{
-    //		chg_extrap = "first-order";
-    //	}
-    //	if(calculation=="md")//xiaohui add 2015-02-01
-    //	{
-    //		chg_extrap = "second-order";
-    //	}
-    // }
 
     if (GlobalV::CALCULATION == "nscf" && init_chg != "file")
     {

@@ -98,8 +98,6 @@ namespace WF_Local
 //mock the unrelated functions in charge.cpp
 #include "src_pw/occupy.h"
 bool Occupy::use_gaussian_broadening = false;
-double Magnetism::get_nelup(void) {return 0;}
-double Magnetism::get_neldw(void) {return 0;}
 #ifdef __MPI
 void Parallel_Grid::zpiece_to_all(double *zpiece, const int &iz, double *rho){}
 #endif
@@ -192,7 +190,7 @@ namespace elecstate
                       LCAO_Hamilt* uhm_in,
                       Local_Orbital_wfc* lowf_in,
                       ModuleBase::matrix &wg_in)
-                      :elecstate::ElecStateLCAO(chg_in,klist_in,nks_in,nbands_in,loc_in,uhm_in,lowf_in)
+                      :elecstate::ElecStateLCAO(chg_in,klist_in,nks_in,loc_in,uhm_in,lowf_in)
                       {
                           this->wg = wg_in;
                       }               
@@ -205,6 +203,16 @@ namespace elecstate
 
     void ElecState::calculate_weights(void) {}
     void ElecState::calEBand() {}
+    void ElecState::init_ks(
+        Charge *chg_in, // pointer for class Charge
+        const K_Vectors *klist_in,
+        int nk_in
+    ) {
+        this->charge = chg_in;
+        this->klist = klist_in;
+        this->ekb.create(nk_in, GlobalV::NBANDS);
+        this->wg.create(nk_in, GlobalV::NBANDS);
+    }
 }
 
 template<class T>

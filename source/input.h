@@ -92,6 +92,7 @@ class Input
     std::string dft_functional; // input DFT functional.
     double xc_temperature; // only relevant if finite temperature functional is used
     int nspin; // LDA ; LSDA ; non-linear spin
+    double nupdown = 0.0;
     double nelec; // total number of electrons
     int lmaxmax;
     double tot_magnetization;
@@ -227,6 +228,7 @@ class Input
     int out_freq_ion;  // the frequency ( >= 0 ) of ionic step to output charge density and wavefunction. 0: output only when ion steps are finished
     int out_chg; // output charge density. 0: no; 1: yes
     int out_dm; // output density matrix.
+    int out_dm1;
     int out_pot; // yes or no
     int out_wfc_pw; // 0: no; 1: txt; 2: dat
     int out_wfc_r; // 0: no; 1: yes

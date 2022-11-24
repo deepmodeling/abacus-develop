@@ -37,7 +37,7 @@ void ESolver_SDFT_PW::Init(Input &inp, UnitCell &ucell)
     ESolver_KS::Init(inp,ucell);
 
     
-    this->pelec = new elecstate::ElecStatePW_SDFT( GlobalC::wfcpw, &(chr), (K_Vectors*)(&(GlobalC::kv)), GlobalV::NBANDS);
+    this->pelec = new elecstate::ElecStatePW_SDFT( GlobalC::wfcpw, &(chr), (K_Vectors*)(&(GlobalC::kv)));
 
     // Inititlize the charge density.
     this->pelec->charge->allocate(GlobalV::NSPIN, GlobalC::rhopw->nrxx, GlobalC::rhopw->npw);
@@ -56,6 +56,12 @@ void ESolver_SDFT_PW::Init(Input &inp, UnitCell &ucell)
         GlobalTemp::veff = &(this->pelec->pot->get_effective_v());
     }
 
+    //Maybe NSPIN=2 is not considered in this ESolver, but FYI
+    //Fix pelec->wg by ocp_kb
+    if(GlobalV::ocp)
+    {
+        this->pelec->fixed_weights(GlobalV::ocp_kb.data());
+    }
 
     this->Init_GlobalC(inp,ucell);//temporary
 

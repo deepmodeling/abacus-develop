@@ -51,6 +51,16 @@ void ESolver_KS_LCAO_TDDFT::Init(Input& inp, UnitCell& ucell)
     // this function belongs to cell LOOP
     GlobalC::ppcell.init_vloc(GlobalC::ppcell.vloc, GlobalC::rhopw);
 
+    if(this->pelec == nullptr)
+    {
+        this->pelec = new elecstate::ElecStateLCAO_TDDFT(   &(chr),
+                                                            &(GlobalC::kv),
+                                                            GlobalC::kv.nks,
+                                                            &(this->LOC),
+                                                            &(this->UHM),
+                                                            &(this->LOWF));
+    }
+    
     //------------------init Basis_lcao----------------------
     // Init Basis should be put outside of Ensolver.
     // * reading the localized orbitals/projectors
@@ -74,17 +84,6 @@ void ESolver_KS_LCAO_TDDFT::Init(Input& inp, UnitCell& ucell)
     {
         this->phsol = new hsolver::HSolverLCAO(this->LOWF.ParaV);
         this->phsol->method = GlobalV::KS_SOLVER;
-    }
-
-    if(this->pelec == nullptr)
-    {
-        this->pelec = new elecstate::ElecStateLCAO_TDDFT(   &(chr),
-                                                            &(GlobalC::kv),
-                                                            GlobalC::kv.nks,
-                                                            GlobalV::NBANDS,
-                                                            &(this->LOC),
-                                                            &(this->UHM),
-                                                            &(this->LOWF));
     }
     
     // Inititlize the charge density.
@@ -271,7 +270,7 @@ void ESolver_KS_LCAO_TDDFT::hamilt2density(int istep, int iter, double ethr)
     }
 
     // (6) compute magnetization, only for spin==2
-    GlobalC::ucell.magnet.compute_magnetization(pelec->charge);
+    GlobalC::ucell.magnet.compute_magnetization(pelec->charge, pelec->nelec_spin.data());
 
     // (7) calculate delta energy
     GlobalC::en.deband = GlobalC::en.delta_e(this->pelec);

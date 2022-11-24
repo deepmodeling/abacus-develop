@@ -29,6 +29,14 @@ void ElecState::fixed_weights(const double * const ocp_kb)
     this->skip_weights = true;
 }
 
+void ElecState::init_nelec_spin()
+{
+    this->nelec_spin.resize(GlobalV::NSPIN);
+    //in fact, when nupdown is not 0.0, nelec_spin will be fixed.
+    this->nelec_spin[0] = (GlobalV::nelec + GlobalV::nupdown) / 2.0 ;
+    this->nelec_spin[1] = (GlobalV::nelec - GlobalV::nupdown) / 2.0 ;
+}
+
 void ElecState::calculate_weights()
 {
     ModuleBase::TITLE("ElecState", "calculate_weights");
@@ -58,7 +66,7 @@ void ElecState::calculate_weights()
             Occupy::iweights(nks,
                              this->klist->wk,
                              nbands,
-                             GlobalC::ucell.magnet.get_nelup(),
+                             this->nelec_spin[0],
                              ekb_tmp,
                              GlobalC::en.ef_up,
                              this->wg,
@@ -67,7 +75,7 @@ void ElecState::calculate_weights()
             Occupy::iweights(nks,
                              this->klist->wk,
                              nbands,
-                             GlobalC::ucell.magnet.get_neldw(),
+                             this->nelec_spin[1],
                              ekb_tmp,
                              GlobalC::en.ef_dw,
                              this->wg,
@@ -98,7 +106,7 @@ void ElecState::calculate_weights()
             Occupy::gweights(nks,
                              this->klist->wk,
                              nbands,
-                             GlobalC::ucell.magnet.get_nelup(),
+                             this->nelec_spin[0],
                              Occupy::gaussian_parameter,
                              Occupy::gaussian_type,
                              ekb_tmp,
@@ -110,7 +118,7 @@ void ElecState::calculate_weights()
             Occupy::gweights(nks,
                              this->klist->wk,
                              nbands,
-                             GlobalC::ucell.magnet.get_neldw(),
+                             this->nelec_spin[1],
                              Occupy::gaussian_parameter,
                              Occupy::gaussian_type,
                              ekb_tmp,
@@ -287,6 +295,104 @@ void ElecState::init_scf(const int istep, const ModuleBase::ComplexMatrix& struc
 
     //---------Potential part--------------
     this->pot->init_pot(istep, this->charge);
+}
+
+void ElecState::init_ks(
+    Charge *chg_in, // pointer for class Charge
+    const K_Vectors *klist_in,
+    int nk_in
+)
+{
+    this->charge = chg_in;
+    this->klist = klist_in;
+    //init nelec_spin with nelec and nupdown
+    this->init_nelec_spin();
+    //autoset and check GlobalV::NBANDS, nelec_spin is used when NSPIN==2
+    this->cal_nbands();
+    //initialize ekb and wg
+    this->ekb.create(nk_in, GlobalV::NBANDS);
+    this->wg.create(nk_in, GlobalV::NBANDS);
+}
+
+void ElecState::cal_nbands()
+{
+    if ( GlobalV::ESOLVER_TYPE == "sdft" ) //qianrui 2021-2-20
+	{
+        return;
+    }
+    //=======================================
+	// calculate number of bands (setup.f90)
+	//=======================================
+	double occupied_bands = static_cast<double>(GlobalV::nelec/ModuleBase::DEGSPIN);	
+	if(GlobalV::LSPINORB==1) occupied_bands = static_cast<double>(GlobalV::nelec);
+
+	if( (occupied_bands - std::floor(occupied_bands)) > 0.0 )
+	{
+		occupied_bands = std::floor(occupied_bands) + 1.0; //mohan fix 2012-04-16
+	}
+
+	ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"occupied bands",occupied_bands);
+
+	// mohan add 2010-09-04
+    //std::cout << "nbands(GlobalC::ucell) = " <<GlobalV::NBANDS <<std::endl;
+	if(GlobalV::NBANDS==occupied_bands)
+	{
+		if( Occupy::gauss() )
+		{
+			ModuleBase::WARNING_QUIT("ElecState::cal_nbands","for smearing, num. of bands > num. of occupied bands");
+		}
+	}
+	
+	if(GlobalV::NBANDS == 0)
+	{
+		if(GlobalV::NSPIN == 1)
+		{
+			const int nbands1 = static_cast<int>(occupied_bands) + 10;
+			const int nbands2 = static_cast<int>(1.2 * occupied_bands);
+			GlobalV::NBANDS = std::max(nbands1, nbands2);
+			if(GlobalV::BASIS_TYPE!="pw") GlobalV::NBANDS = std::min(GlobalV::NBANDS, GlobalV::NLOCAL);
+		}
+		else if (GlobalV::NSPIN ==2 || GlobalV::NSPIN == 4)
+		{
+			const int nbands3 = GlobalV::nelec + 20;
+			const int nbands4 = 1.2 * GlobalV::nelec;
+			GlobalV::NBANDS = std::max(nbands3, nbands4);
+			if(GlobalV::BASIS_TYPE!="pw") GlobalV::NBANDS = std::min(GlobalV::NBANDS, GlobalV::NLOCAL);
+		}
+		ModuleBase::GlobalFunc::AUTO_SET("NBANDS",GlobalV::NBANDS);
+	}
+	//else if ( GlobalV::CALCULATION=="scf" || GlobalV::CALCULATION=="md" || GlobalV::CALCULATION=="relax") //pengfei 2014-10-13
+	else
+	{
+		if(GlobalV::NBANDS < occupied_bands) ModuleBase::WARNING_QUIT("unitcell","Too few bands!");
+		if(GlobalV::NBANDS < this->nelec_spin[0] ) 
+		{
+			ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"nelec_up", this->nelec_spin[0]);
+			ModuleBase::WARNING_QUIT("ElecState::cal_nbands","Too few spin up bands!");
+		}
+		if(GlobalV::NBANDS < this->nelec_spin[1] )
+		{
+            ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"nelec_down", this->nelec_spin[1]);
+			ModuleBase::WARNING_QUIT("ElecState::cal_nbands","Too few spin down bands!");
+		}
+	}
+
+	// mohan update 2021-02-19
+    // mohan add 2011-01-5
+    if(GlobalV::BASIS_TYPE=="lcao" || GlobalV::BASIS_TYPE=="lcao_in_pw")
+    {
+        if( GlobalV::NBANDS > GlobalV::NLOCAL )
+        {
+            ModuleBase::WARNING_QUIT("ElecState::cal_nbandsc","NLOCAL < NBANDS");
+        }
+        else
+        {
+            ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"NLOCAL",GlobalV::NLOCAL);
+            ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"NBANDS",GlobalV::NBANDS);
+        }
+    }
+
+	ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"NBANDS",GlobalV::NBANDS);
 }
 
 } // namespace elecstate

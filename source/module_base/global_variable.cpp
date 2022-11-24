@@ -39,6 +39,7 @@ std::string DFT_FUNCTIONAL = "default";
 double XC_TEMPERATURE = 0.0;
 int NSPIN = 1; // LDA
 bool TWO_EFERMI = 0; // two fermi energy, exist only magnetization is fixed.
+double nupdown = 0.0;
 int CURRENT_SPIN = 0;
 int CURRENT_K = 0;
 int CAL_FORCE = 0; // if cal_force >1, means do the grid integration 'cal_force' times.
@@ -206,8 +207,6 @@ bool deepks_bandgap = false; // for bandgap label. QO added 2021-12-15
 bool deepks_out_unittest = false;
 
 bool deepks_setorb = false;
-
-int vnl_method = 1; // set defauld vnl method as old, added by zhengdy 2021-10-11
 
 bool out_element_info = false; // added by zhengdy 2021-11-26
 

@@ -188,8 +188,6 @@ bool Charge::read_rho(const int &is, const std::string &fn, double* rho) //add b
 }
 
 //bool Occupy::use_gaussian_broadening=false;
-double Magnetism::get_nelup(){return 0;}
-double Magnetism::get_neldw(){return 0;}
 
 bool ModuleSymmetry::Symmetry_Basic::equal(double const&m, double const&n) const{return false;}
 

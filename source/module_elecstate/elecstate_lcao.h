@@ -15,12 +15,11 @@ class ElecStateLCAO : public ElecState
     ElecStateLCAO(Charge* chg_in = nullptr,
                         const K_Vectors* klist_in = nullptr,
                         int nks_in = 1,
-                        int nbands_in = 1,
                         Local_Orbital_Charge* loc_in = nullptr,
                         LCAO_Hamilt* uhm_in = nullptr,
                         Local_Orbital_wfc* lowf_in = nullptr)
     {
-        init(chg_in, klist_in, nks_in, nbands_in);
+        init_ks(chg_in, klist_in, nks_in);
         this->loc = loc_in;
         this->uhm = uhm_in;
         this->lowf = lowf_in;
