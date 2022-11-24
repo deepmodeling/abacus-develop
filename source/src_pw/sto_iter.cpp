@@ -41,7 +41,7 @@ void Stochastic_Iter::init(const int dim, int* nchip_in, const int method_in, St
 {
     p_che = new ModuleBase::Chebyshev<double>(INPUT.nche_sto);
     nchip = nchip_in;
-    targetne = GlobalC::CHR.nelec;
+    targetne = GlobalV::nelec;
     stohchi.init();
     delete[] spolyv;
     const int norder = p_che->norder;
@@ -225,13 +225,13 @@ void Stochastic_Iter::itermu(const int iter, elecstate::ElecState* pes)
     if (iter == 1)
     {
         dmu = 2;
-        th_ne = 0.1 * GlobalV::SCF_THR * GlobalC::CHR.nelec;
+        th_ne = 0.1 * GlobalV::SCF_THR * GlobalV::nelec;
         // std::cout<<"th_ne "<<th_ne<<std::endl;
     }
     else
     {
         dmu = 0.1;
-        th_ne = 1e-2 * GlobalV::SCF_THR * GlobalC::CHR.nelec;
+        th_ne = 1e-2 * GlobalV::SCF_THR * GlobalV::nelec;
         th_ne = std::min(th_ne, 1e-5);
     }
     this->stofunc.mu = mu0 - dmu;

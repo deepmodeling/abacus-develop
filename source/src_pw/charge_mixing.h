@@ -13,6 +13,7 @@
 #include "../module_base/global_function.h"
 #include "../module_base/global_variable.h"
 #include "../module_base/matrix.h"
+#include "charge.h"
 class Charge_Mixing
 {
 	public:
@@ -30,15 +31,9 @@ class Charge_Mixing
 		const double &mixing_gg0_in
     );//mohan add mixing_gg0_in 2014-09-27
 
-	double get_drho(double** rho, double** rho_save,
-		std::complex<double>** rhog, std::complex<double>** rhog_save, const double nelec);
+	double get_drho(Charge* chr, const double nelec);
 
-    void mix_rho(const int &iter,
-		double** rho,
-		double** rho_save,
-		std::complex<double>** rhog,
-		std::complex<double>** rhog_save
-	);// mix rho
+    void mix_rho(const int &iter, Charge* chr);// mix rho
 
     //for Pulay method
     //if first electronic step, then reset charge mixing
@@ -74,7 +69,7 @@ class Charge_Mixing
 //======================================
 // simple plain mixing method, in charge_mixing.cpp
 //======================================
-    void plain_mixing( double *rho_in, double *rho_save_in ) const;
+    void plain_mixing(Charge* chr) const;
 
     double rhog_dot_product(const std::complex<double>*const*const rhog1, const std::complex<double>*const*const rhog2) const;
 
@@ -82,7 +77,7 @@ class Charge_Mixing
 // Pulay mixing method, in charge_pulay.cpp
 //======================================
 
-    void Pulay_mixing(double** rho, double**rho_save);
+    void Pulay_mixing(Charge* chr);
 
 	bool initp; // p stands for pulay algorithms
 	void allocate_Pulay();
@@ -122,10 +117,7 @@ class Charge_Mixing
 //======================================
 
 	void Simplified_Broyden_mixing(const int &iter,
-		double** rho,
-		double** rho_save,
-		std::complex<double>** rhog,
-		std::complex<double>** rhog_save); //qianrui created 2021-5-15
+		Charge* chr); //qianrui created 2021-5-15
 
 	bool initb; // b stands for Broyden algorithms.
 	void allocate_Broyden();

@@ -17,6 +17,7 @@ namespace ModuleESolver
         // Hamilt* phamilt;
 
         elecstate::ElecState* pelec = nullptr;
+        Charge chr;
     private:
         void print_rhofft(Input& inp, ofstream &ofs);
     };

@@ -13,20 +13,20 @@ template<typename FPTYPE, typename Device>
 ElecStatePW<FPTYPE, Device>::ElecStatePW(ModulePW::PW_Basis_K *wfc_basis_in, Charge* chg_in, K_Vectors *pkv_in, int nbands_in) : basis(wfc_basis_in)  
 {
     this->classname = "ElecStatePW";
-    init(chg_in, pkv_in, pkv_in->nks, nbands_in);
+    this->init(chg_in, pkv_in, pkv_in->nks, nbands_in);
 }
 
 template<typename FPTYPE, typename Device>
 ElecStatePW<FPTYPE, Device>::~ElecStatePW() 
 {
     if (psi::device::get_device_type<Device>(this->ctx) == psi::GpuDevice) {
-        delete_memory_var_op()(this->ctx, this->rho_data);
+        delmem_var_op()(this->ctx, this->rho_data);
         if (XC_Functional::get_func_type() == 3) {
-            delete_memory_var_op()(this->ctx, this->kin_r_data);
+            delmem_var_op()(this->ctx, this->kin_r_data);
         }
     }
-    delete_memory_complex_op()(this->ctx, this->wfcr);
-    delete_memory_complex_op()(this->ctx, this->wfcr_another_spin);
+    delmem_complex_op()(this->ctx, this->wfcr);
+    delmem_complex_op()(this->ctx, this->wfcr_another_spin);
 }
 
 template<typename FPTYPE, typename Device>
@@ -34,13 +34,13 @@ void ElecStatePW<FPTYPE, Device>::init_rho_data()
 {
     if (psi::device::get_device_type<Device>(this->ctx) == psi::GpuDevice) {
         this->rho = new FPTYPE*[this->charge->nspin];
-        resize_memory_var_op()(this->ctx, this->rho_data, this->charge->nspin * this->charge->nrxx);
+        resmem_var_op()(this->ctx, this->rho_data, this->charge->nspin * this->charge->nrxx);
         for (int ii = 0; ii < this->charge->nspin; ii++) {
             this->rho[ii] = this->rho_data + ii * this->charge->nrxx;
         }
         if (XC_Functional::get_func_type() == 3) {
             this->kin_r = new FPTYPE*[this->charge->nspin];
-            resize_memory_var_op()(this->ctx, this->kin_r_data, this->charge->nspin * this->charge->nrxx);
+            resmem_var_op()(this->ctx, this->kin_r_data, this->charge->nspin * this->charge->nrxx);
             for (int ii = 0; ii < this->charge->nspin; ii++) {
                 this->kin_r[ii] = this->kin_r_data + ii * this->charge->nrxx;
             }
@@ -52,8 +52,8 @@ void ElecStatePW<FPTYPE, Device>::init_rho_data()
             this->kin_r = this->charge->kin_r;
         }
     }
-    resize_memory_complex_op()(this->ctx, this->wfcr, this->basis->nmaxgr);
-    resize_memory_complex_op()(this->ctx, this->wfcr_another_spin, this->charge->nrxx);
+    resmem_complex_op()(this->ctx, this->wfcr, this->basis->nmaxgr);
+    resmem_complex_op()(this->ctx, this->wfcr_another_spin, this->charge->nrxx);
     this->init_rho = true;
 }
 
@@ -74,11 +74,11 @@ void ElecStatePW<FPTYPE, Device>::psiToRho(const psi::Psi<std::complex<FPTYPE>, 
 	{
         // denghui replaced at 20221110
 		// ModuleBase::GlobalFunc::ZEROS(this->rho[is], this->charge->nrxx);
-        set_memory_var_op()(this->ctx, this->rho[is], 0,  this->charge->nrxx);
+        setmem_var_op()(this->ctx, this->rho[is], 0,  this->charge->nrxx);
 		if (XC_Functional::get_func_type() == 3)
 		{
             // ModuleBase::GlobalFunc::ZEROS(this->charge->kin_r[is], this->charge->nrxx);
-            set_memory_var_op()(this->ctx, this->kin_r[is], 0,  this->charge->nrxx);
+            setmem_var_op()(this->ctx, this->kin_r[is], 0,  this->charge->nrxx);
         }
 	}
 
@@ -86,6 +86,16 @@ void ElecStatePW<FPTYPE, Device>::psiToRho(const psi::Psi<std::complex<FPTYPE>, 
     {
         psi.fix_k(ik);
         this->updateRhoK(psi);
+    }
+    if (psi::device::get_device_type<Device>(this->ctx) == psi::GpuDevice) {
+        for (int ii = 0; ii < GlobalV::NSPIN; ii++) {
+            syncmem_var_d2h_op()(
+                this->cpu_ctx, 
+                this->ctx,
+                this->charge->rho[ii],
+                this->rho[ii],
+                this->charge->nrxx);
+        }
     }
     this->parallelK();
     ModuleBase::timer::tick("ElecStatePW", "psiToRho");
@@ -97,16 +107,11 @@ void ElecStatePW<FPTYPE, Device>::updateRhoK(const psi::Psi<std::complex<FPTYPE>
     this->rhoBandK(psi);
 }
 
-/*void ElecStatePW::getNewRho()
-{
-    return;
-}*/
-
 template<typename FPTYPE, typename Device>
 void ElecStatePW<FPTYPE, Device>::parallelK()
 {
 #ifdef __MPI
-    charge->rho_mpi();
+    this->charge->rho_mpi();
     if(GlobalV::ESOLVER_TYPE == "sdft") //qinarui add it 2021-7-21
 	{
 		this->eband /= GlobalV::NPROC_IN_POOL;
@@ -144,14 +149,14 @@ void ElecStatePW<FPTYPE, Device>::rhoBandK(const psi::Psi<std::complex<FPTYPE>, 
     if (GlobalV::NSPIN == 4)
     {
         int npwx = npw / 2;
-        npw = this->klist->ngk[ik];
         for (int ibnd = 0; ibnd < nbands; ibnd++)
         {
             ///
             /// only occupied band should be calculated.
             ///
-            if (this->wg(ik, ibnd) < ModuleBase::threshold_wg)
+            if (this->wg(ik, ibnd) < ModuleBase::threshold_wg) {
                 continue;
+            }
 
             this->basis->recip_to_real(this->ctx, &psi(ibnd,0), this->wfcr, ik);
 
@@ -210,8 +215,9 @@ void ElecStatePW<FPTYPE, Device>::rhoBandK(const psi::Psi<std::complex<FPTYPE>, 
             ///
             /// only occupied band should be calculated.
             ///
-            if (this->wg(ik, ibnd) < ModuleBase::threshold_wg)
+            if (this->wg(ik, ibnd) < ModuleBase::threshold_wg) {
                 continue;
+            }
 
             this->basis->recip_to_real(this->ctx, &psi(ibnd,0), this->wfcr, ik);
 

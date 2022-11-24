@@ -4,7 +4,7 @@
 #include "global.h"
 
 //calculate local pseudopotential stress in PW or VL_dVL stress in LCAO
-void Stress_Func::stress_loc(ModuleBase::matrix& sigma, ModulePW::PW_Basis* rho_basis, const bool is_pw)
+void Stress_Func::stress_loc(ModuleBase::matrix& sigma, ModulePW::PW_Basis* rho_basis, const bool is_pw, const Charge* const chr)
 {
     ModuleBase::timer::tick("Stress_Func","stress_loc");
 
@@ -23,7 +23,7 @@ void Stress_Func::stress_loc(ModuleBase::matrix& sigma, ModulePW::PW_Basis* rho_
 	{
 		for (int ir=0; ir<rho_basis->nrxx; ir++)
 		{
-			aux[ir] += std::complex<double>(GlobalC::CHR.rho[is][ir], 0.0 );
+			aux[ir] += std::complex<double>(chr->rho[is][ir], 0.0 );
 		}
 	}
 	rho_basis->real2recip(aux,aux);

@@ -11,7 +11,7 @@
 namespace ModuleESolver
 {
 
-    class ESolver_KS_LCAO : public ESolver_KS
+    class ESolver_KS_LCAO : public ESolver_KS<double>
     {
     public:
         ESolver_KS_LCAO();

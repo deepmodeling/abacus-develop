@@ -182,11 +182,9 @@ public:
 	//================================================================
 	// cal_natomwfc : calculate total number of atomic wavefunctions
 	// cal_nwfc     : calculate total number of local basis and lmax
-	// cal_nelec    : calculate total number of electrons
 	// cal_meshx	: calculate max number of mesh points in pp file
 	//================================================================
 	void cal_nwfc(std::ofstream &log);
-	//void cal_nelec();
 	void cal_meshx();
 	void cal_natomwfc(std::ofstream &log); 
 	void print_unitcell_pseudo(const std::string &fn);

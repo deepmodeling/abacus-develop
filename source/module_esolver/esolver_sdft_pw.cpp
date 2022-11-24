@@ -37,7 +37,7 @@ void ESolver_SDFT_PW::Init(Input &inp, UnitCell &ucell)
     ESolver_KS::Init(inp,ucell);
 
     
-    this->pelec = new elecstate::ElecStatePW_SDFT( GlobalC::wfcpw, &(GlobalC::CHR), (K_Vectors*)(&(GlobalC::kv)), GlobalV::NBANDS);
+    this->pelec = new elecstate::ElecStatePW_SDFT( GlobalC::wfcpw, &(chr), (K_Vectors*)(&(GlobalC::kv)), GlobalV::NBANDS);
 
     // Inititlize the charge density.
     this->pelec->charge->allocate(GlobalV::NSPIN, GlobalC::rhopw->nrxx, GlobalC::rhopw->npw);
@@ -89,7 +89,7 @@ void ESolver_SDFT_PW::eachiterfinish(int iter)
 }
 void ESolver_SDFT_PW::afterscf(const int istep)
 {
-    if(pelec->charge->out_chg > 0)
+    if(GlobalV::out_chg > 0)
     {
 	    for(int is=0; is<GlobalV::NSPIN; is++)
         {
@@ -147,12 +147,12 @@ void ESolver_SDFT_PW::cal_Energy(double& etot)
 void ESolver_SDFT_PW::cal_Force(ModuleBase::matrix &force)
 {
 	Sto_Forces ff;
-    ff.init(force, this->pelec->wg, this->psi, this->stowf);
+    ff.init(force, this->pelec->wg, this->psi, this->stowf, pelec->charge);
 }
 void ESolver_SDFT_PW::cal_Stress(ModuleBase::matrix &stress)
 {
 	Sto_Stress_PW ss;
-    ss.cal_stress(stress, this->pelec->wg, this->psi, this->stowf);
+    ss.cal_stress(stress, this->pelec->wg, this->psi, this->stowf, pelec->charge);
 }
 void ESolver_SDFT_PW::postprocess()
 {
@@ -168,7 +168,7 @@ void ESolver_SDFT_PW::postprocess()
         int iter = 1;
         int istep = 0;
         hsolver::DiagoIterAssist<double>::PW_DIAG_NMAX = GlobalV::PW_DIAG_NMAX;
-        hsolver::DiagoIterAssist<double>::PW_DIAG_THR = std::max(std::min(1e-5, 0.1 * GlobalV::SCF_THR / std::max(1.0, pelec->charge->nelec)),1e-12);
+        hsolver::DiagoIterAssist<double>::PW_DIAG_THR = std::max(std::min(1e-5, 0.1 * GlobalV::SCF_THR / std::max(1.0, GlobalV::nelec)),1e-12);
         hsolver::DiagoIterAssist<double>::need_subspace = false;
         this->phsol->solve(this->p_hamilt, this->psi[0], this->pelec,this->stowf,istep, iter, GlobalV::KS_SOLVER, true);
         ((hsolver::HSolverPW_SDFT*)phsol)->stoiter.cleanchiallorder();//release lots of memories

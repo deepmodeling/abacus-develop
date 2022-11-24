@@ -20,7 +20,6 @@ class energy
 	friend class Potential;
 	friend class Occupy;
 	friend class wavefunc;
-	friend class eximport;
 	friend class Ions;
 	friend class Update_input;
 	friend class Force_Lo;
@@ -104,9 +103,9 @@ class energy
 
 	void calculate_harris(); //mohan add 2012-06-05
 
-    double delta_e(const elecstate::Potential* pot);
+    double delta_e(const elecstate::ElecState* pelec);
 
-    void delta_escf(const elecstate::Potential* pot);
+    void delta_escf(const elecstate::ElecState* pelec);
 
 	void cal_converged(elecstate::ElecState* pelec);
 	ModuleBase::matrix vnew;

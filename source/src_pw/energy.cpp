@@ -372,7 +372,7 @@ void energy::print_format(const std::string &name, const double &value)
 
 
 // from ddelta_e.f90
-double energy::delta_e(const elecstate::Potential* pot)
+double energy::delta_e(const elecstate::ElecState* pelec)
 {
     // out potentials from potential mixing
     // total energy and band energy corrections
@@ -382,33 +382,33 @@ double energy::delta_e(const elecstate::Potential* pot)
 
 	// only potential related with charge is used here for energy correction
 	// on the fly calculate it here by v_effective - v_fixed
-	const double* v_eff = pot->get_effective_v(0);
-	const double* v_fixed = pot->get_fixed_v();
+	const double* v_eff = pelec->pot->get_effective_v(0);
+	const double* v_fixed = pelec->pot->get_fixed_v();
 	const double* v_ofk = nullptr;
 	if(XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
 	{
-		v_ofk = pot->get_effective_vofk(0);
+		v_ofk = pelec->pot->get_effective_vofk(0);
 	}
 
 	for (int ir=0; ir<GlobalC::rhopw->nrxx; ir++)
 	{
-		deband_aux -= GlobalC::CHR.rho[0][ir] * (v_eff[ir] - v_fixed[ir]);
+		deband_aux -= pelec->charge->rho[0][ir] * (v_eff[ir] - v_fixed[ir]);
 		if(XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
 		{
-			deband_aux -= GlobalC::CHR.kin_r[0][ir] * v_ofk[ir];
+			deband_aux -= pelec->charge->kin_r[0][ir] * v_ofk[ir];
 		}
 	}
 
 	if (GlobalV::NSPIN == 2)
 	{
-		v_eff = pot->get_effective_v(1);
-		v_ofk = pot->get_effective_vofk(1);
+		v_eff = pelec->pot->get_effective_v(1);
+		v_ofk = pelec->pot->get_effective_vofk(1);
 		for (int ir=0; ir<GlobalC::rhopw->nrxx; ir++)
 		{
-			deband_aux -= GlobalC::CHR.rho[1][ir] * (v_eff[ir] - v_fixed[ir]);
+			deband_aux -= pelec->charge->rho[1][ir] * (v_eff[ir] - v_fixed[ir]);
 			if(XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
 			{
-				deband_aux -= GlobalC::CHR.kin_r[1][ir] * v_ofk[ir];
+				deband_aux -= pelec->charge->kin_r[1][ir] * v_ofk[ir];
 			}
 		}
 	}
@@ -416,10 +416,10 @@ double energy::delta_e(const elecstate::Potential* pot)
 	{
 		for(int is = 1;is<4;is++)
 		{
-			v_eff = pot->get_effective_v(is);
+			v_eff = pelec->pot->get_effective_v(is);
 			for(int ir=0; ir<GlobalC::rhopw->nrxx; ir++)
 			{
-				deband_aux -= GlobalC::CHR.rho[is][ir] * v_eff[ir];
+				deband_aux -= pelec->charge->rho[is][ir] * v_eff[ir];
 			}
 		}
 	}
@@ -440,7 +440,7 @@ double energy::delta_e(const elecstate::Potential* pot)
 
 
 
-void energy::delta_escf(const elecstate::Potential* pot)
+void energy::delta_escf(const elecstate::ElecState* pelec)
 {
 	ModuleBase::TITLE("energy","delta_escf");
     this->descf = 0.0;
@@ -451,36 +451,36 @@ void energy::delta_escf(const elecstate::Potential* pot)
 	// so here is the correction.
 	// only potential related with charge is used here for energy correction
 	// on the fly calculate it here by v_effective - v_fixed
-	const double* v_eff = pot->get_effective_v(0);
-	const double* v_fixed = pot->get_fixed_v();
+	const double* v_eff = pelec->pot->get_effective_v(0);
+	const double* v_fixed = pelec->pot->get_fixed_v();
 	const double* v_ofk = nullptr;
 	if(XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
 	{
-		v_ofk = pot->get_effective_vofk(0);
+		v_ofk = pelec->pot->get_effective_vofk(0);
 	}
 
 	for (int ir=0; ir<GlobalC::rhopw->nrxx; ir++)
 	{
-		this->descf -= ( GlobalC::CHR.rho[0][ir] - GlobalC::CHR.rho_save[0][ir] ) * (v_eff[ir] - v_fixed[ir]);
+		this->descf -= ( pelec->charge->rho[0][ir] - pelec->charge->rho_save[0][ir] ) * (v_eff[ir] - v_fixed[ir]);
 		if(XC_Functional::get_func_type() == 3)
 		{
-			this->descf -= ( GlobalC::CHR.kin_r[0][ir] - GlobalC::CHR.kin_r_save[0][ir] ) * v_ofk[ir];
+			this->descf -= ( pelec->charge->kin_r[0][ir] - pelec->charge->kin_r_save[0][ir] ) * v_ofk[ir];
 		}
 	}
 
 	if (GlobalV::NSPIN==2)
 	{
-		v_eff = pot->get_effective_v(1);
+		v_eff = pelec->pot->get_effective_v(1);
 		if(XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
 		{
-			v_ofk = pot->get_effective_vofk(1);
+			v_ofk = pelec->pot->get_effective_vofk(1);
 		}
 		for (int ir=0; ir<GlobalC::rhopw->nrxx; ir++)
 		{
-			this->descf -= ( GlobalC::CHR.rho[1][ir] - GlobalC::CHR.rho_save[1][ir] ) * (v_eff[ir] - v_fixed[ir]);
+			this->descf -= ( pelec->charge->rho[1][ir] - pelec->charge->rho_save[1][ir] ) * (v_eff[ir] - v_fixed[ir]);
 			if(XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
 			{
-				this->descf -= ( GlobalC::CHR.kin_r[1][ir] - GlobalC::CHR.kin_r_save[1][ir] ) * v_ofk[ir];
+				this->descf -= ( pelec->charge->kin_r[1][ir] - pelec->charge->kin_r_save[1][ir] ) * v_ofk[ir];
 			}
 		}
 	}
@@ -488,10 +488,10 @@ void energy::delta_escf(const elecstate::Potential* pot)
 	{
 		for(int is = 1;is<4;is++)
 		{
-			v_eff = pot->get_effective_v(is);
+			v_eff = pelec->pot->get_effective_v(is);
 			for(int ir=0; ir<GlobalC::rhopw->nrxx; ir++)
 			{
-				this->descf -= ( GlobalC::CHR.rho[is][ir] - GlobalC::CHR.rho_save[is][ir] ) * v_eff[ir];
+				this->descf -= ( pelec->charge->rho[is][ir] - pelec->charge->rho_save[is][ir] ) * v_eff[ir];
 			}
 		}
 	}

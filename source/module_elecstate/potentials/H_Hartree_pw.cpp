@@ -80,33 +80,6 @@ ModuleBase::matrix H_Hartree_pw::v_hartree(const UnitCell &cell,
                 v(is, ir) = Porter[ir].real();
     }
 
-    //-----------------------------------------------------------
-    // we need to add this out_pot funciton back
-    // in near future, 2021-02-25
-    //-----------------------------------------------------------
-    //-------------------------------------------
-    // output the Hartree potential into a file.
-    //-------------------------------------------
-    /*
-        if(out_pot==-2)
-        {
-            std::cout << " output VH" << std::endl;
-            int is = 0;
-            int iter = 0;
-            int precision = 3;
-            std::string fn = "VH.dat";
-            std::stringstream ss;
-            ss << GlobalV::global_out_dir << fn;
-            ModuleBase::matrix v;
-            v.create(1,pwb.nrxx);
-            for(int ir=0; ir<pwb.nrxx; ++ir)
-            {
-                v(0,ir) = Porter[ir].real();
-            }
-            this->write_potential( is, iter, ss.str(), v, precision, 1 );
-        }
-    */
-
     ModuleBase::timer::tick("H_Hartree_pw", "v_hartree");
     return v;
 } // end subroutine v_h

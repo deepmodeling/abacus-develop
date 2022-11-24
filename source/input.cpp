@@ -477,6 +477,10 @@ void Input::Default(void)
     of_read_kernel = false;
     of_kernel_file = "WTkernel.txt";
 
+    //==========================================================
+    //    OFDFT sunliang added on 2022-11-15
+    //==========================================================
+    device = "cpu";
     return;
 }
 
@@ -1751,6 +1755,12 @@ bool Input::Read(const std::string &fn)
             read_value(ifs, of_kernel_file);
         }
         //----------------------------------------------------------------------------------
+        //    device control denghui added on 2022-11-05
+        //----------------------------------------------------------------------------------     
+        else if (strcmp("device", word) == 0) {
+            read_value(ifs, device);
+        }
+        //----------------------------------------------------------------------------------
         else
         {
             // xiaohui add 2015-09-15
@@ -1921,7 +1931,7 @@ bool Input::Read(const std::string &fn)
         if (strcmp("genelpa", ks_solver.c_str()) != 0 && strcmp(ks_solver.c_str(), "scalapack_gvx") != 0)
         {
             std::cout
-                << " WRONG ARGUMENTS OF ks_solver in DFT+U routine, only genelpa and scalapack_gvx are supportted "
+                << " WRONG ARGUMENTS OF ks_solver in DFT+U routine, only genelpa and scalapack_gvx are supported "
                 << std::endl;
             exit(0);
         }
@@ -2015,11 +2025,13 @@ bool Input::Read(const std::string &fn)
             exit(0);
         }
 
+        /*
         if (strcmp("genelpa", ks_solver.c_str()) != 0)
         {
             std::cout << " WRONG ARGUMENTS OF ks_solver in DFT+DMFT routine, only genelpa is support " << std::endl;
             exit(0);
         }
+         */
     }
 
     if (basis_type == "pw" && gamma_only !=0) // pengfei Li add 2015-1-31
@@ -2503,6 +2515,10 @@ void Input::Bcast()
     Parallel_Common::bcast_int(of_full_pw_dim);
     Parallel_Common::bcast_bool(of_read_kernel);
     Parallel_Common::bcast_string(of_kernel_file);
+    //----------------------------------------------------------------------------------
+    //    device control denghui added on 2022-11-05
+    //----------------------------------------------------------------------------------
+    Parallel_Common::bcast_string(device);
 
     return;
 }
@@ -2859,8 +2875,13 @@ void Input::Check(void)
     {
         if (ks_solver == "default")
         {
+#ifdef __ELPA
             ks_solver = "genelpa";
             ModuleBase::GlobalFunc::AUTO_SET("ks_solver", "genelpa");
+#else
+            ks_solver = "scalapack_gvx";
+            ModuleBase::GlobalFunc::AUTO_SET("ks_solver", "scalapack_gvx");
+#endif
         }
         else if (ks_solver == "cg")
         {
@@ -2872,6 +2893,10 @@ void Input::Check(void)
 //				GlobalV::ofs_warning << "genelpa is under testing" << std::endl;
 #else
             ModuleBase::WARNING_QUIT("Input", "genelpa can not be used for series version.");
+#endif
+#ifndef __ELPA
+            ModuleBase::WARNING_QUIT("Input",
+                                     "Can not use genelpa if abacus is not compiled with ELPA. Please change ks_solver to scalapack_gvx.");
 #endif
         }
         else if (ks_solver == "scalapack_gvx")

@@ -16,7 +16,7 @@ IState_Charge::IState_Charge(
 IState_Charge::~IState_Charge(){}
 
 
-void IState_Charge::begin(Gint_Gamma &gg, ModuleBase::matrix& wg)
+void IState_Charge::begin(Gint_Gamma &gg, elecstate::ElecState* pelec)
 {
 	ModuleBase::TITLE("IState_Charge","begin");
 
@@ -46,13 +46,13 @@ void IState_Charge::begin(Gint_Gamma &gg, ModuleBase::matrix& wg)
 	// (1) 
 
 	// (1.2) read in LOWF_GAMMA.dat
-	std::cout << " number of electrons = " << GlobalC::CHR.nelec << std::endl;
+	std::cout << " number of electrons = " << GlobalV::nelec << std::endl;
 
 	// mohan update 2011-03-21
 	// if ucell is odd, it's correct,
 	// if ucell is even, it's also correct.
 	// +1.0e-8 in case like (2.999999999+1)/2
-	fermi_band = static_cast<int>( (GlobalC::CHR.nelec+1)/2 + 1.0e-8 ) ;
+	fermi_band = static_cast<int>( (GlobalV::nelec+1)/2 + 1.0e-8 ) ;
 	std::cout << " number of occupied bands = " << fermi_band << std::endl;
 
 	if(mode == 1)
@@ -121,19 +121,19 @@ void IState_Charge::begin(Gint_Gamma &gg, ModuleBase::matrix& wg)
 			// band, whenever it is occupied or not.
 			
 		#ifdef __MPI
-			this->idmatrix(ib, wg);
+			this->idmatrix(ib, pelec);
 		#endif
 			// (2) zero out of charge density array. 
 			for(int is=0; is<GlobalV::NSPIN; is++)
 			{
-				ModuleBase::GlobalFunc::ZEROS( GlobalC::CHR.rho[is], GlobalC::rhopw->nrxx );
+				ModuleBase::GlobalFunc::ZEROS( pelec->charge->rho[is], GlobalC::rhopw->nrxx );
 			}
 			
 			// (3) calculate charge density for a particular 
 			// band.
-			Gint_inout inout(this->loc->DM, &GlobalC::CHR, Gint_Tools::job_type::rho);
+			Gint_inout inout(this->loc->DM, pelec->charge, Gint_Tools::job_type::rho);
    			gg.cal_gint(&inout);
-			GlobalC::CHR.save_rho_before_sum_band(); //xiaohui add 2014-12-09
+			pelec->charge->save_rho_before_sum_band(); //xiaohui add 2014-12-09
 			std::stringstream ss;
 			std::stringstream ss1;
 			ss << GlobalV::global_out_dir << "BAND" << ib + 1 << "_CHG";
@@ -142,8 +142,8 @@ void IState_Charge::begin(Gint_Gamma &gg, ModuleBase::matrix& wg)
 			{
 				ss1 << GlobalV::global_out_dir << "BAND" << ib + 1 << "_SPIN" << is << "_CHG.cube";
 				bool for_plot = true;
-				GlobalC::CHR.write_rho(GlobalC::CHR.rho_save[is], is, 0, ss.str(), 3, for_plot );
-				GlobalC::CHR.write_rho_cube(GlobalC::CHR.rho_save[is], is, ss1.str(), 3);
+				pelec->charge->write_rho(pelec->charge->rho_save[is], is, 0, ss.str(), 3, for_plot );
+				pelec->charge->write_rho_cube(pelec->charge->rho_save[is], is, ss1.str(), 3);
 			}
 		}
 	}
@@ -153,32 +153,32 @@ void IState_Charge::begin(Gint_Gamma &gg, ModuleBase::matrix& wg)
 }
 
 #ifdef __MPI
-void IState_Charge::idmatrix(const int &ib, ModuleBase::matrix& wg)
+void IState_Charge::idmatrix(const int &ib, elecstate::ElecState* pelec)
 {
 	ModuleBase::TITLE("IState_Charge","idmatrix");
 
-	assert(wg.nr==GlobalV::NSPIN);
+	assert(pelec->wg.nr==GlobalV::NSPIN);
 	for(int is=0; is!=GlobalV::NSPIN; ++is)
 	{
 		std::vector<double> wg_local(this->loc->ParaV->ncol,0.0);
 		const int ib_local = this->loc->ParaV->trace_loc_col[ib];
 
 		int fermi_band=0;
-		fermi_band = static_cast<int>( (GlobalC::CHR.nelec+1)/2 + 1.0e-8 ) ;
+		fermi_band = static_cast<int>( (GlobalV::nelec+1)/2 + 1.0e-8 ) ;
 
 		if(ib_local>=0)
 		{
 			if(ib<fermi_band)
 			{
-				wg_local[ib_local] = wg(is,ib);
+				wg_local[ib_local] = pelec->wg(is,ib);
 			}
 			else
 			{
-				wg_local[ib_local] = wg(is,fermi_band-1);
+				wg_local[ib_local] = pelec->wg(is,fermi_band-1);
 			}//unoccupied bands, use occupation of homo
 		}
 	
-		// wg_wfc(ib,iw) = wg[ib] * wfc(ib,iw);
+		// wg_wfc(ib,iw) = pelec->wg[ib] * wfc(ib,iw);
 		this->psi_gamma->fix_k(is);
 		psi::Psi<double> wg_wfc(this->psi_gamma[0], 1);
 
@@ -195,7 +195,7 @@ void IState_Charge::idmatrix(const int &ib, ModuleBase::matrix& wg)
 
 		pdgemm_(
 			&N_char, &T_char,
-			&GlobalV::NLOCAL, &GlobalV::NLOCAL, &wg.nc,
+			&GlobalV::NLOCAL, &GlobalV::NLOCAL, &pelec->wg.nc,
 			&one_float,
 			wg_wfc.get_pointer(), &one_int, &one_int, this->loc->ParaV->desc,
 			this->psi_gamma->get_pointer(), &one_int, &one_int, this->loc->ParaV->desc,

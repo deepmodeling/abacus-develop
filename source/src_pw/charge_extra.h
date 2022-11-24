@@ -2,6 +2,7 @@
 #define CHARGE_EXTRA_H
 
 #include "../module_cell/unitcell.h"
+#include "charge.h"
 
 using namespace std;
 
@@ -22,7 +23,7 @@ class Charge_Extra
     //But after ucell and Esolver are fully decoupled
     //Init_CE will be removed and everything put back in the constructor
     void Init_CE();
-    void extrapolate_charge(void);
+    void extrapolate_charge(Charge* chr);
     void save_pos_next(const UnitCell& ucell);
     void update_istep();
     void update_all_pos(const UnitCell& ucell);

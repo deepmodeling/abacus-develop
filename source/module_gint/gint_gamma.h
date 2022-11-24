@@ -39,12 +39,6 @@ class Gint_Gamma : public Gint
 	// calcualte the envelope function
 	void cal_env(const double* wfc, double* rho);
 
-    //------------------------------------------------------
-    // in gint_gamma_mull.cpp 
-    //------------------------------------------------------
-	// calculate the Mulliken charge
-	void cal_mulliken(double** mulliken);
-
 private:
 
     double***  DM;   //pointer to LOC.DM

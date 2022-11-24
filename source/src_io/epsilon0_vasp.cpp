@@ -39,7 +39,7 @@ void Epsilon0_vasp::cal_epsilon0(const elecstate::ElecState* pelec)
 	std::cout << "nomega = "<<nomega<<std::endl;
 	std::cout << "eta = "<<eta<<std::endl;
 	
-	double occupied_bands = static_cast<double>(GlobalC::CHR.nelec/ModuleBase::DEGSPIN);
+	double occupied_bands = static_cast<double>(GlobalV::nelec/ModuleBase::DEGSPIN);
 	if( (occupied_bands - std::floor(occupied_bands)) > 0.0 )
 	{
 		occupied_bands = std::floor(occupied_bands) + 1.0;

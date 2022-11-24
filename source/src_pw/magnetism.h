@@ -4,6 +4,7 @@
 #include "../module_base/global_function.h"
 #include "../module_base/global_variable.h"
 #include "../module_base/vector3.h"
+#include "charge.h"
 
 class Magnetism
 {
@@ -32,7 +33,7 @@ public:
         return 0.5 * (1.0 - start_magnetization[it]) ;
     }
 
-    void compute_magnetization();
+    void compute_magnetization(const Charge* const chr);
 
     ModuleBase::Vector3<double> *m_loc_;   //magnetization for each element along c-axis
 	double *angle1_;           //angle between c-axis and real spin std::vector

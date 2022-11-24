@@ -56,7 +56,8 @@ private:
 		ModuleBase::matrix &fvl_dvl, 
 		ModuleBase::matrix &fewalds, 
 		ModuleBase::matrix &fcc, 
-		ModuleBase::matrix &fscc);
+		ModuleBase::matrix &fscc,
+		const Charge* const chr);
 
 	void calForceStressIntegralPart(
 		const bool isGammaOnly,
@@ -88,7 +89,8 @@ private:
 		ModuleBase::matrix &sigmahar,
 		ModuleBase::matrix &sigmaewa,
 		ModuleBase::matrix &sigmacc,
-		ModuleBase::matrix &sigmaxc);
+		ModuleBase::matrix &sigmaxc,
+		const Charge* const chr);
 	
 	static double force_invalid_threshold_ev;
 	static double output_acc; // control the accuracy

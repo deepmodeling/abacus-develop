@@ -137,15 +137,15 @@ void Charge::allocate(const int &nspin_in, const int &nrxx_in, const int &ngmc_i
 
 void Charge::init_rho()
 {
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "init_chg", this->init_chg);
+    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "init_chg", GlobalV::init_chg);
 
-    std::cout << " START CHARGE      : " << this->init_chg << std::endl;
-    if (this->init_chg == "atomic") // mohan add 2007-10-17
+    std::cout << " START CHARGE      : " << GlobalV::init_chg << std::endl;
+    if (GlobalV::init_chg == "atomic") // mohan add 2007-10-17
     {
     start_from_atomic:
-        this->atomic_rho(GlobalV::NSPIN, GlobalC::CHR.rho, GlobalC::rhopw);
+        this->atomic_rho(GlobalV::NSPIN, rho, GlobalC::rhopw);
     }
-    else if (this->init_chg == "file")
+    else if (GlobalV::init_chg == "file")
     {
         GlobalV::ofs_running << " try to read charge from file : ";
         for (int is = 0; is < GlobalV::NSPIN; is++)
@@ -216,7 +216,7 @@ void Charge::init_rho()
     {
         for (int is = 0; is < GlobalV::NSPIN; ++is)
         {
-            GlobalC::restart.load_disk("charge", is);
+            GlobalC::restart.load_disk("charge", is, rho);
         }
         GlobalC::restart.info_load.load_charge_finish = true;
     }
@@ -265,7 +265,7 @@ void Charge::renormalize_rho(void)
     const double sr = this->sum_rho();
 	GlobalV::ofs_warning << std::setprecision(15);
 	ModuleBase::GlobalFunc::OUT(GlobalV::ofs_warning,"charge before normalized",sr);
-    const double normalize_factor = nelec / sr;
+    const double normalize_factor = GlobalV::nelec / sr;
 
 	for(int is=0; is<nspin; is++)
 	{
@@ -592,10 +592,10 @@ void Charge::atomic_rho(const int spin_number_need, double** rho_in, ModulePW::P
 		ne_tot += ne[is];
 	}
 	ModuleBase::GlobalFunc::OUT(GlobalV::ofs_warning,"total electron number from rho",ne_tot);
-	ModuleBase::GlobalFunc::OUT(GlobalV::ofs_warning,"should be",nelec);
+	ModuleBase::GlobalFunc::OUT(GlobalV::ofs_warning,"should be",GlobalV::nelec);
 	for(int is=0; is<spin_number_need; ++is)
 		for(int ir=0; ir<rho_basis->nrxx; ++ir)
-			rho_in[is][ir] = rho_in[is][ir] / ne_tot * nelec;
+			rho_in[is][ir] = rho_in[is][ir] / ne_tot * GlobalV::nelec;
 
 	//wenfei 2021-7-29 : initial tau = 3/5 rho^2/3, Thomas-Fermi
 	if(XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
@@ -611,14 +611,6 @@ void Charge::atomic_rho(const int spin_number_need, double** rho_in, ModulePW::P
 				//test_tau0 << rho_in[is][ir] << " " << kin_r[is][ir] << endl;
 			}
 	}
-
-	// if TWO_EFEMI, 
-	// the total magnetism will affect the calculation of
-	// occupations.
-	// GlobalC::ucell.magnet.compute_magnetization();
-
-	//GlobalV::ofs_running << " Superposition of atomic wave function as First-Charge done." << std::endl;
-	//2014-06-22
 
     ModuleBase::timer::tick("Charge","atomic_rho");
     return;
@@ -750,7 +742,7 @@ void Charge::non_linear_core_correction
     const double *rab,
     const double *rhoc,
     double *rhocg,
-	ModulePW::PW_Basis* rho_basis)
+	ModulePW::PW_Basis* rho_basis) const
 {
     ModuleBase::TITLE("charge","drhoc");
     double gx = 0.0;
@@ -1100,7 +1092,7 @@ void Charge::init_final_scf()
 }
 
 //=========================================================
-// calculate total number of electrons (nelec) and default
+// calculate total number of electrons (GlobalV::nelec) and default
 // number of bands (GlobalV::NBANDS).
 //=========================================================
 #include "occupy.h"
@@ -1109,19 +1101,19 @@ void Charge::cal_nelec(void)
 	ModuleBase::TITLE("UnitCell","cal_nelec");
 	//=======================================================
 	// calculate the total number of electrons in the system
-	// if nelec <>0; use input number (setup.f90)
+	// if GlobalV::nelec <>0; use input number (setup.f90)
 	//=======================================================
 
 	GlobalV::ofs_running << "\n SETUP THE ELECTRONS NUMBER" << std::endl;
 
-	if (nelec == 0)
+	if (GlobalV::nelec == 0)
 	{
 		for (int it = 0; it < GlobalC::ucell.ntype;it++)
 		{
 			std::stringstream ss1, ss2;
 			ss1 << "electron number of element " << GlobalC::ucell.atoms[it].label;
 			const int nelec_it = GlobalC::ucell.atoms[it].ncpp.zv * GlobalC::ucell.atoms[it].na;
-			nelec += nelec_it;
+			GlobalV::nelec += nelec_it;
 			ss2 << "total electron number of element " << GlobalC::ucell.atoms[it].label; 
 			
 			ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,ss1.str(),GlobalC::ucell.atoms[it].ncpp.zv);
@@ -1129,13 +1121,11 @@ void Charge::cal_nelec(void)
 		}
 	}
 
-	//ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"Total nelec",nelec);
-
 	//=======================================
 	// calculate number of bands (setup.f90)
 	//=======================================
-	double occupied_bands = static_cast<double>(nelec/ModuleBase::DEGSPIN);	
-	if(GlobalV::LSPINORB==1) occupied_bands = static_cast<double>(nelec);
+	double occupied_bands = static_cast<double>(GlobalV::nelec/ModuleBase::DEGSPIN);	
+	if(GlobalV::LSPINORB==1) occupied_bands = static_cast<double>(GlobalV::nelec);
 
 	if( (occupied_bands - std::floor(occupied_bands)) > 0.0 )
 	{
@@ -1149,7 +1139,7 @@ void Charge::cal_nelec(void)
     //std::cout << "nbands(GlobalC::ucell) = " <<GlobalV::NBANDS <<std::endl;
 	if(GlobalV::NBANDS==occupied_bands)
 	{
-		if( Occupy::gauss() || Occupy::tetra() )
+		if( Occupy::gauss())
 		{
 			ModuleBase::WARNING_QUIT("UnitCell::cal_nelec","for smearing, num. of bands > num. of occupied bands");
 		}
@@ -1166,8 +1156,8 @@ void Charge::cal_nelec(void)
 		}
 		else if (GlobalV::NSPIN ==2 || GlobalV::NSPIN == 4)
 		{
-			const int nbands3 = nelec + 20;
-			const int nbands4 = 1.2 * nelec;
+			const int nbands3 = GlobalV::nelec + 20;
+			const int nbands4 = 1.2 * GlobalV::nelec;
 			GlobalV::NBANDS = std::max(nbands3, nbands4);
 			if(GlobalV::BASIS_TYPE!="pw") GlobalV::NBANDS = std::min(GlobalV::NBANDS, GlobalV::NLOCAL);
 		}
