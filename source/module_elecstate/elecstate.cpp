@@ -337,7 +337,7 @@ void ElecState::cal_nbands()
     //std::cout << "nbands(GlobalC::ucell) = " <<GlobalV::NBANDS <<std::endl;
 	if(GlobalV::NBANDS==occupied_bands)
 	{
-		if( Occupy::gauss() || Occupy::tetra() )
+		if( Occupy::gauss() )
 		{
 			ModuleBase::WARNING_QUIT("ElecState::cal_nbands","for smearing, num. of bands > num. of occupied bands");
 		}
