@@ -1032,3 +1032,5 @@ void ORB_gen_tables::snap_psialpha_half(
 	ModuleBase::timer::tick("ORB_gen_tables", "snap_psialpha_half");
 	return;
 }
+
+#endif
