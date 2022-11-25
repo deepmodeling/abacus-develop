@@ -110,6 +110,37 @@ void AUTO_SET(const std::string &name,const T &a)
 //==========================================================
 void DONE(std::ofstream &ofs,const std::string &description, bool only_rank0 = false);
 
+
+//==========================================================
+// GLOBAL FUNCTION :
+// NAME : TASK_DIST_1D
+// Distributing 1d tasks by worker id
+//==========================================================
+template <typename T_task, typename T_out>
+static inline void TASK_DIST_1D(int nworker, int iworker, T_task ntask, T_out& start, T_out& len)
+{
+    if (nworker == 1)
+    {
+        start = 0;
+        len = ntask;
+    }
+    else
+    {
+        const T_task tlen = ntask / nworker;
+        const T_task trem = ntask - tlen * nworker;
+        if (iworker < trem)
+        {
+            start = tlen * iworker + iworker;
+            len = tlen + 1;
+        }
+        else
+        {
+            start = tlen * iworker + trem;
+            len = tlen;
+        }
+    }
+}
+
 //==========================================================
 // GLOBAL FUNCTION :
 // NAME : ZEROS
