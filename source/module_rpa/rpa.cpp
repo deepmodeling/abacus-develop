@@ -154,7 +154,7 @@ void DFT_RPA_interface::out_bands(const elecstate::ElecState* pelec)
         {
             ofs << std::setw(6) << ik + 1 << std::setw(6) << is + 1 << std::endl;
             for (int ib = 0; ib != GlobalV::NBANDS; ib++)
-                ofs << std::setw(5) << ib + 1 << "   " << std::setw(8) << pelec->wg(ik, ib) * nks_tot
+                ofs << std::setw(5) << ib + 1 << "   " << std::setw(8) << pelec->wg(ik + is*nks_tot, ib) * nks_tot
                     << std::setw(18) << std::fixed << std::setprecision(8)
                     << pelec->ekb(ik + is * nks_tot, ib) / 2.0 << std::setw(18) << std::fixed
                     << std::setprecision(8) << pelec->ekb(ik + is * nks_tot, ib) * ModuleBase::Ry_to_eV

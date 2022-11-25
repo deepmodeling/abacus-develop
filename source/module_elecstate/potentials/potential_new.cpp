@@ -47,6 +47,11 @@ Potential::~Potential()
         }
         this->components.clear();
     }
+    #if (defined(__CUDA) || defined(__ROCM))
+    if (GlobalV::device_flag == "gpu") {
+        delmem_var_op()(this->gpu_ctx, d_v_effective);
+    }
+    #endif
 }
 
 void Potential::pot_register(std::vector<std::string>& components_list)
@@ -124,6 +129,11 @@ void Potential::allocate()
         this->vofk_effective.create(GlobalV::NSPIN, nrxx);
         ModuleBase::Memory::record("Potential", "vofk", GlobalV::NSPIN * nrxx, "double");
     }
+    #if (defined(__CUDA) || defined(__ROCM))
+    if (GlobalV::device_flag == "gpu") {
+        resmem_var_op()(this->gpu_ctx, d_v_effective, GlobalV::NSPIN * nrxx);
+    }
+    #endif
 }
 
 void Potential::update_from_charge(const Charge* chg, const UnitCell* ucell)
@@ -137,6 +147,12 @@ void Potential::update_from_charge(const Charge* chg, const UnitCell* ucell)
     }
 
     this->cal_v_eff(chg, ucell, this->v_effective);
+
+    #if (defined(__CUDA) || defined(__ROCM))
+    if (GlobalV::device_flag == "gpu") {
+        syncmem_var_h2d_op()(this->gpu_ctx, this->cpu_ctx, d_v_effective, this->v_effective.c, this->v_effective.nr * this->v_effective.nc);
+    }
+    #endif
 
     ModuleBase::timer::tick("Potential", "update_from_charge");
 }

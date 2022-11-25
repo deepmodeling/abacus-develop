@@ -51,6 +51,16 @@ void ESolver_KS_LCAO_TDDFT::Init(Input& inp, UnitCell& ucell)
     // this function belongs to cell LOOP
     GlobalC::ppcell.init_vloc(GlobalC::ppcell.vloc, GlobalC::rhopw);
 
+    if(this->pelec == nullptr)
+    {
+        this->pelec = new elecstate::ElecStateLCAO_TDDFT(   &(chr),
+                                                            &(GlobalC::kv),
+                                                            GlobalC::kv.nks,
+                                                            &(this->LOC),
+                                                            &(this->UHM),
+                                                            &(this->LOWF));
+    }
+    
     //------------------init Basis_lcao----------------------
     // Init Basis should be put outside of Ensolver.
     // * reading the localized orbitals/projectors
@@ -74,17 +84,6 @@ void ESolver_KS_LCAO_TDDFT::Init(Input& inp, UnitCell& ucell)
     {
         this->phsol = new hsolver::HSolverLCAO(this->LOWF.ParaV);
         this->phsol->method = GlobalV::KS_SOLVER;
-    }
-
-    if(this->pelec == nullptr)
-    {
-        this->pelec = new elecstate::ElecStateLCAO_TDDFT(   &(chr),
-                                                            &(GlobalC::kv),
-                                                            GlobalC::kv.nks,
-                                                            GlobalV::NBANDS,
-                                                            &(this->LOC),
-                                                            &(this->UHM),
-                                                            &(this->LOWF));
     }
     
     // Inititlize the charge density.
@@ -271,7 +270,7 @@ void ESolver_KS_LCAO_TDDFT::hamilt2density(int istep, int iter, double ethr)
     }
 
     // (6) compute magnetization, only for spin==2
-    GlobalC::ucell.magnet.compute_magnetization(pelec->charge);
+    GlobalC::ucell.magnet.compute_magnetization(pelec->charge, pelec->nelec_spin.data());
 
     // (7) calculate delta energy
     GlobalC::en.deband = GlobalC::en.delta_e(this->pelec);
@@ -281,13 +280,6 @@ void ESolver_KS_LCAO_TDDFT::updatepot(const int istep, const int iter)
 {
     // (9) Calculate new potential according to new Charge Density.
 
-    if (this->conv_elec || iter == GlobalV::SCF_NMAX)
-    {
-        if (GlobalV::out_pot < 0) // mohan add 2011-10-10
-        {
-            GlobalV::out_pot = -2;
-        }
-    }
     if (!this->conv_elec)
     {
         this->pelec->pot->update_from_charge(this->pelec->charge, &GlobalC::ucell);
@@ -388,12 +380,14 @@ void ESolver_KS_LCAO_TDDFT::afterscf(const int istep)
         }
         this->LOC.write_dm(is, 0, ssd.str(), precision);
 
+/* Broken, please fix it
         if (GlobalV::out_pot == 1) // LiuXh add 20200701
         {
             std::stringstream ssp;
             ssp << GlobalV::global_out_dir << "SPIN" << is + 1 << "_POT";
             this->pelec->pot->write_potential(is, 0, ssp.str(), this->pelec->pot->get_effective_v(), precision);
         }
+*/
     }
 
     if (this->conv_elec)

@@ -68,6 +68,18 @@ void ESolver_KS_LCAO::Init(Input& inp, UnitCell& ucell)
         ESolver_KS::Init(inp, ucell);
     } // end ifnot get_S
 
+    //init ElecState
+    //autoset nbands in ElecState, it should before basis_init (for Psi 2d divid)
+    if(this->pelec == nullptr)
+    {
+        this->pelec = new elecstate::ElecStateLCAO(&(chr),
+                                                   &(GlobalC::kv),
+                                                   GlobalC::kv.nks,
+                                                   &(this->LOC),
+                                                   &(this->UHM),
+                                                   &(this->LOWF));
+    }
+
     //------------------init Basis_lcao----------------------
     // Init Basis should be put outside of Ensolver.
     // * reading the localized orbitals/projectors
@@ -75,12 +87,13 @@ void ESolver_KS_LCAO::Init(Input& inp, UnitCell& ucell)
     this->Init_Basis_lcao(this->orb_con, inp, ucell);
     //------------------init Basis_lcao----------------------
 
+    // pass Hamilt-pointer to Operator
+    this->UHM.genH.LM = this->UHM.LM = &this->LM;
+    // pass basis-pointer to EState and Psi
+    this->LOC.ParaV = this->LOWF.ParaV = this->LM.ParaV = &(this->orb_con.ParaV);
+
     if (GlobalV::CALCULATION == "get_S")
     {
-        // pass Hamilt-pointer to Operator
-        this->UHM.genH.LM = this->UHM.LM = &this->LM;
-        // pass basis-pointer to EState and Psi
-        this->LOC.ParaV = this->LOWF.ParaV = this->LM.ParaV;
         return;
     }
 
@@ -126,27 +139,11 @@ void ESolver_KS_LCAO::Init(Input& inp, UnitCell& ucell)
     // this function belongs to cell LOOP
     GlobalC::ppcell.init_vloc(GlobalC::ppcell.vloc, GlobalC::rhopw);
 
-    // pass Hamilt-pointer to Operator
-    this->UHM.genH.LM = this->UHM.LM = &this->LM;
-    // pass basis-pointer to EState and Psi
-    this->LOC.ParaV = this->LOWF.ParaV = this->LM.ParaV;
-
-    // init Psi, HSolver, ElecState, Hamilt
+    // init HSolver
     if(this->phsol == nullptr)
     {
         this->phsol = new hsolver::HSolverLCAO(this->LOWF.ParaV);
         this->phsol->method = GlobalV::KS_SOLVER;
-    }
-
-    if(this->pelec == nullptr)
-    {
-        this->pelec = new elecstate::ElecStateLCAO(&(chr),
-                                                   &(GlobalC::kv),
-                                                   GlobalC::kv.nks,
-                                                   GlobalV::NBANDS,
-                                                   &(this->LOC),
-                                                   &(this->UHM),
-                                                   &(this->LOWF));
     }
 
     // Inititlize the charge density.
@@ -480,7 +477,7 @@ void ESolver_KS_LCAO::hamilt2density(int istep, int iter, double ethr)
     }
 
     // (6) compute magnetization, only for spin==2
-    GlobalC::ucell.magnet.compute_magnetization(pelec->charge);
+    GlobalC::ucell.magnet.compute_magnetization(pelec->charge, pelec->nelec_spin.data());
 
     // (7) calculate delta energy
     GlobalC::en.deband = GlobalC::en.delta_e(this->pelec);
@@ -596,13 +593,18 @@ void ESolver_KS_LCAO::afterscf(const int istep)
             ssd << GlobalV::global_out_dir << "SPIN" << is + 1 << "_DM_R";
         }
         this->LOC.write_dm(is, 0, ssd.str(), precision);
-
+        if(this->LOC.out_dm1 == 1)
+        {
+            this->LOC.write_dm1(is, istep);
+        }
+/* Broken, please fix it
         if (GlobalV::out_pot == 1) // LiuXh add 20200701
         {
             std::stringstream ssp;
             ssp << GlobalV::global_out_dir << "SPIN" << is + 1 << "_POT";
             this->pelec->pot->write_potential(is, 0, ssp.str(), this->pelec->pot->get_effective_v(), precision);
         }
+*/
     }
 
 #ifdef __EXX

@@ -430,7 +430,6 @@ if(ENABLE_LCAO)
       lcao
       orb
       gint
-      mrrr
       pdiag
   )
   if (USE_ELPA)

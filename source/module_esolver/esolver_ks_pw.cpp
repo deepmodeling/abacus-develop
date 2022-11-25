@@ -4,10 +4,6 @@
 
 //--------------temporary----------------------------
 #include "../src_pw/global.h"
-#include "../module_base/global_function.h"
-#include "../module_symmetry/symmetry.h"
-#include "../src_pw/pw_complement.h"
-#include "../src_pw/structure_factor.h"
 #include "../src_pw/symmetry_rho.h"
 #include "../src_io/print_info.h"
 #include "../src_pw/H_Ewald_pw.h"
@@ -34,37 +30,55 @@
 #include "src_io/numerical_basis.h"
 #include "src_io/to_wannier90.h"
 #include "src_io/berryphase.h"
+#include "module_psi/include/device.h"
+#include "module_hsolver/include/math_kernel.h"
 
 namespace ModuleESolver
 {
 
-    ESolver_KS_PW::ESolver_KS_PW()
+    template<typename FPTYPE, typename Device>
+    ESolver_KS_PW<FPTYPE, Device>::ESolver_KS_PW()
     {
-        classname = "ESolver_KS_PW";
-        basisname = "PW";
+        this->classname = "ESolver_KS_PW";
+        this->basisname = "PW";
+        this->device = psi::device::get_device_type<Device>(this->ctx);
+    #if ((defined __CUDA) || (defined __ROCM))
+        if (this->device == psi::GpuDevice) {
+            hsolver::createBLAShandle();
+        }
+    #endif
     }
-    ESolver_KS_PW::~ESolver_KS_PW()
+
+    template<typename FPTYPE, typename Device>
+    ESolver_KS_PW<FPTYPE, Device>::~ESolver_KS_PW()
     {
         //delete HSolver and ElecState
         if(this->phsol != nullptr)
         {
-            delete (hsolver::HSolverPW*)this->phsol;
+            delete reinterpret_cast<hsolver::HSolverPW<FPTYPE, Device>*>(this->phsol);
             this->phsol = nullptr;
         }
         if(this->pelec != nullptr)
         {
-            delete (elecstate::ElecStatePW<double>*)this->pelec;
+            delete reinterpret_cast<elecstate::ElecStatePW<FPTYPE, Device>*>(this->pelec);
             this->pelec = nullptr;
         }
         //delete Hamilt
         if(this->p_hamilt != nullptr)
         {
-            delete (hamilt::HamiltPW<double>*)this->p_hamilt;
+            delete reinterpret_cast<hamilt::HamiltPW<FPTYPE, Device>*>(this->p_hamilt);
             this->p_hamilt = nullptr;
         }
+    #if ((defined __CUDA) || (defined __ROCM))
+        if (this->device == psi::GpuDevice) {
+            delete reinterpret_cast<psi::Psi<std::complex<FPTYPE>, Device>*>(this->kspw_psi);
+            hsolver::destoryBLAShandle();
+        }
+    #endif
     }
 
-    void ESolver_KS_PW::Init_GlobalC(Input& inp, UnitCell& cell)
+    template<typename FPTYPE, typename Device>
+    void ESolver_KS_PW<FPTYPE, Device>::Init_GlobalC(Input& inp, UnitCell& cell)
     {
         this->psi = GlobalC::wf.allocate(GlobalC::kv.nks);
 
@@ -114,23 +128,30 @@ namespace ModuleESolver
             GlobalC::wf.wfcinit(this->psi);
         }
 
+        // denghui added 20221116
+        this->kspw_psi = this->device == psi::GpuDevice ?
+                         new psi::Psi<std::complex<FPTYPE>, Device>(this->psi[0]) :
+                         reinterpret_cast<psi::Psi<std::complex<FPTYPE>, Device>*> (this->psi);
+
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT BASIS");
     }
 
-    void ESolver_KS_PW::Init(Input& inp, UnitCell& ucell)
+
+    template<typename FPTYPE, typename Device>
+    void ESolver_KS_PW<FPTYPE, Device>::Init(Input& inp, UnitCell& ucell)
     {
-        ESolver_KS::Init(inp,ucell);
+        ESolver_KS<FPTYPE, Device>::Init(inp,ucell);
 
         //init HSolver
         if(this->phsol == nullptr)
         {
-            this->phsol = new hsolver::HSolverPW(GlobalC::wfcpw);
+            this->phsol = new hsolver::HSolverPW<FPTYPE, Device>(GlobalC::wfcpw);
         }
 
         //init ElecState,
         if(this->pelec == nullptr)
         {
-            this->pelec = new elecstate::ElecStatePW<double>( GlobalC::wfcpw, &(chr), (K_Vectors*)(&(GlobalC::kv)), GlobalV::NBANDS);
+            this->pelec = new elecstate::ElecStatePW<FPTYPE, Device>( GlobalC::wfcpw, &(this->chr), (K_Vectors*)(&(GlobalC::kv)));
         }
 
         // Inititlize the charge density.
@@ -159,16 +180,17 @@ namespace ModuleESolver
         }
     }
 
-    void ESolver_KS_PW::beforescf(int istep)
+    template<typename FPTYPE, typename Device>
+    void ESolver_KS_PW<FPTYPE, Device>::beforescf(int istep)
     {
         ModuleBase::TITLE("ESolver_KS_PW", "beforescf");
 
         // Temporary, md and relax will merge later   liuyu add 2022-11-07
         if(GlobalV::CALCULATION == "md" && istep)
         {
-            CE.update_istep();
-            CE.save_pos_next(GlobalC::ucell);
-            CE.extrapolate_charge(pelec->charge);
+            this->CE.update_istep();
+            this->CE.save_pos_next(GlobalC::ucell);
+            this->CE.extrapolate_charge(this->pelec->charge);
 
             if(GlobalC::ucell.cell_parameter_updated)
             {
@@ -184,10 +206,10 @@ namespace ModuleESolver
             {
                 GlobalV::ofs_running << " Setup the extrapolated charge." << std::endl;
                 // charge extrapolation if istep>0.
-                CE.update_istep();
-                CE.update_all_pos(GlobalC::ucell);
-                CE.extrapolate_charge(pelec->charge);
-                CE.save_pos_next(GlobalC::ucell);
+                this->CE.update_istep();
+                this->CE.update_all_pos(GlobalC::ucell);
+                this->CE.extrapolate_charge(this->pelec->charge);
+                this->CE.save_pos_next(GlobalC::ucell);
 
                 GlobalV::ofs_running << " Setup the Vl+Vh+Vxc according to new structure factor and new charge." << std::endl;
                 // calculate the new potential accordint to
@@ -208,13 +230,13 @@ namespace ModuleESolver
         //delete Hamilt if not first scf
         if(this->p_hamilt != nullptr)
         {
-            delete (hamilt::HamiltPW<double>*)this->p_hamilt;
+            delete reinterpret_cast<hamilt::HamiltPW<FPTYPE, Device>*>(this->p_hamilt);
             this->p_hamilt = nullptr;
         }
         //allocate HamiltPW
         if(this->p_hamilt == nullptr)
         {
-            this->p_hamilt = new hamilt::HamiltPW<double>(this->pelec->pot);
+            this->p_hamilt = new hamilt::HamiltPW<FPTYPE, Device>(this->pelec->pot);
         }
 
         //----------------------------------------------------------
@@ -240,12 +262,13 @@ namespace ModuleESolver
         Symmetry_rho srho;
         for (int is = 0; is < GlobalV::NSPIN; is++)
         {
-            srho.begin(is, *(pelec->charge), GlobalC::rhopw, GlobalC::Pgrid, GlobalC::symm);
+            srho.begin(is, *(this->pelec->charge), GlobalC::rhopw, GlobalC::Pgrid, GlobalC::symm);
         }
 
     } 
 
-    void ESolver_KS_PW::othercalculation(const int istep)
+    template<typename FPTYPE, typename Device>
+    void ESolver_KS_PW<FPTYPE, Device>::othercalculation(const int istep)
     {
         ModuleBase::TITLE("ESolver_KS_PW", "othercalculation");
         ModuleBase::timer::tick("ESolver_KS_PW", "othercalculation");
@@ -278,7 +301,8 @@ namespace ModuleESolver
         return;
     }
 
-    void ESolver_KS_PW::eachiterinit(const int istep, const int iter)
+    template<typename FPTYPE, typename Device>
+    void ESolver_KS_PW<FPTYPE, Device>::eachiterinit(const int istep, const int iter)
     {
         // mohan add 2010-07-16
         if (iter == 1) GlobalC::CHR_MIX.reset();
@@ -291,12 +315,13 @@ namespace ModuleESolver
         // prepared fox mixing.
         if(GlobalV::MY_STOGROUP == 0)
 	    {
-            pelec->charge->save_rho_before_sum_band();
+            this->pelec->charge->save_rho_before_sum_band();
         }
     }
 
     //Temporary, it should be replaced by hsolver later.
-    void ESolver_KS_PW:: hamilt2density(const int istep, const int iter, const double ethr)
+    template<typename FPTYPE, typename Device>
+    void ESolver_KS_PW<FPTYPE, Device>::hamilt2density(const int istep, const int iter, const FPTYPE ethr)
     {
         if(this->phsol != nullptr)
         {
@@ -310,17 +335,16 @@ namespace ModuleESolver
             // be careful that istep start from 0 and iter start from 1
             if((istep==0||istep==1)&&iter==1) 
             {
-                hsolver::DiagoIterAssist<double>::need_subspace = false;
+                hsolver::DiagoIterAssist<FPTYPE>::need_subspace = false;
             }
             else 
             {
-                hsolver::DiagoIterAssist<double>::need_subspace = true;
+                hsolver::DiagoIterAssist<FPTYPE>::need_subspace = true;
             }
 
-            hsolver::DiagoIterAssist<double>::PW_DIAG_THR = ethr; 
-            hsolver::DiagoIterAssist<double>::PW_DIAG_NMAX = GlobalV::PW_DIAG_NMAX;
-            this->phsol->solve(this->p_hamilt, this->psi[0], this->pelec, GlobalV::KS_SOLVER);
-
+            hsolver::DiagoIterAssist<FPTYPE>::PW_DIAG_THR = ethr; 
+            hsolver::DiagoIterAssist<FPTYPE>::PW_DIAG_NMAX = GlobalV::PW_DIAG_NMAX;
+            this->phsol->solve(this->p_hamilt, this->kspw_psi[0], this->pelec, GlobalV::KS_SOLVER);
             // transform energy for print
             GlobalC::en.eband = this->pelec->eband;
             GlobalC::en.demet = this->pelec->demet;
@@ -344,11 +368,11 @@ namespace ModuleESolver
         Symmetry_rho srho;
         for (int is = 0; is < GlobalV::NSPIN; is++)
         {
-            srho.begin(is, *(pelec->charge), GlobalC::rhopw, GlobalC::Pgrid, GlobalC::symm);
+            srho.begin(is, *(this->pelec->charge), GlobalC::rhopw, GlobalC::Pgrid, GlobalC::symm);
         }
 
         // compute magnetization, only for LSDA(spin==2)
-        GlobalC::ucell.magnet.compute_magnetization(pelec->charge);
+        GlobalC::ucell.magnet.compute_magnetization(this->pelec->charge, this->pelec->nelec_spin.data());
         // deband is calculated from "output" charge density calculated
         // in sum_band
         // need 'rho(out)' and 'vr (v_h(in) and v_xc(in))'
@@ -358,7 +382,8 @@ namespace ModuleESolver
     }
 
     //Temporary, it should be rewritten with Hamilt class. 
-    void ESolver_KS_PW::updatepot(const int istep, const int iter)
+    template<typename FPTYPE, typename Device>
+    void ESolver_KS_PW<FPTYPE, Device>::updatepot(const int istep, const int iter)
     {
         if (!this->conv_elec)
         {
@@ -371,7 +396,8 @@ namespace ModuleESolver
         }
     }
 
-    void ESolver_KS_PW::eachiterfinish(const int iter)
+    template<typename FPTYPE, typename Device>
+    void ESolver_KS_PW<FPTYPE, Device>::eachiterfinish(const int iter)
     {
         //print_eigenvalue(GlobalV::ofs_running);
         GlobalC::en.calculate_etot();
@@ -395,9 +421,9 @@ namespace ModuleESolver
                     std::stringstream ssc;
                     std::stringstream ss1;
                     ssc << GlobalV::global_out_dir << "tmp" << "_SPIN" << is + 1 << "_CHG";
-                    pelec->charge->write_rho(pelec->charge->rho_save[is], is, iter, ssc.str(), 3);//mohan add 2007-10-17
+                    this->pelec->charge->write_rho(this->pelec->charge->rho_save[is], is, iter, ssc.str(), 3);//mohan add 2007-10-17
                     ss1 << GlobalV::global_out_dir << "tmp" << "_SPIN" << is + 1 << "_CHG.cube";
-                    pelec->charge->write_rho_cube(pelec->charge->rho_save[is], is, ss1.str(), 3);
+                    this->pelec->charge->write_rho_cube(this->pelec->charge->rho_save[is], is, ss1.str(), 3);
                 }
             }
             //output wavefunctions
@@ -410,17 +436,14 @@ namespace ModuleESolver
                 WF_io::write_wfc(ssw.str(), this->psi[0], &GlobalC::kv, GlobalC::wfcpw);
                 //ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running,"write wave functions into file WAVEFUNC.dat");
             }
-
         }
-
-
     }
 
-
-    void ESolver_KS_PW::afterscf(const int istep)
+    template<typename FPTYPE, typename Device>
+    void ESolver_KS_PW<FPTYPE, Device>::afterscf(const int istep)
     {
         // Temporary liuyu add 2022-11-07
-        CE.update_all_pos(GlobalC::ucell);
+        this->CE.update_all_pos(GlobalC::ucell);
 
 #ifdef __LCAO
         if (GlobalC::chi0_hilbert.epsilon)                 // pengfei 2016-11-23
@@ -458,8 +481,8 @@ namespace ModuleESolver
             std::stringstream ss1;
             ssc << GlobalV::global_out_dir << "SPIN" << is + 1 << "_CHG";
             ss1 << GlobalV::global_out_dir << "SPIN" << is + 1 << "_CHG.cube";
-            pelec->charge->write_rho(pelec->charge->rho_save[is], is, 0, ssc.str());//mohan add 2007-10-17
-            pelec->charge->write_rho_cube(pelec->charge->rho_save[is], is, ss1.str(), 3);
+            this->pelec->charge->write_rho(this->pelec->charge->rho_save[is], is, 0, ssc.str());//mohan add 2007-10-17
+            this->pelec->charge->write_rho_cube(this->pelec->charge->rho_save[is], is, ss1.str(), 3);
         }
         if (this->conv_elec)
         {
@@ -477,16 +500,25 @@ namespace ModuleESolver
 			std::stringstream ssp_ave;
 			ssp << GlobalV::global_out_dir << "ElecStaticPot";
 			ssp_ave << GlobalV::global_out_dir << "ElecStaticPot_AVE";
-			this->pelec->pot->write_elecstat_pot(ssp.str(), ssp_ave.str(), GlobalC::rhopw, pelec->charge); //output 'Hartree + local pseudopot'
+			this->pelec->pot->write_elecstat_pot(ssp.str(), ssp_ave.str(), GlobalC::rhopw, this->pelec->charge); //output 'Hartree + local pseudopot'
 		}
 
         if (GlobalV::OUT_LEVEL != "m")
         {
             this->print_eigenvalue(GlobalV::ofs_running);
         }
+        if (this->device == psi::GpuDevice) {
+            syncmem_complex_d2h_op()(
+                this->psi[0].get_device(),
+                this->kspw_psi[0].get_device(),
+                this->psi[0].get_pointer() - this->psi[0].get_psi_bias(),
+                this->kspw_psi[0].get_pointer() - this->kspw_psi[0].get_psi_bias(),
+                this->psi[0].size());
+        }
     }
 
-    void ESolver_KS_PW::print_eigenvalue(std::ofstream& ofs)
+    template<typename FPTYPE, typename Device>
+    void ESolver_KS_PW<FPTYPE, Device>::print_eigenvalue(std::ofstream& ofs)
     {
         bool wrong = false;
         for (int ik = 0; ik < GlobalC::kv.nks; ++ik)
@@ -591,26 +623,29 @@ namespace ModuleESolver
 
 
 
-    void ESolver_KS_PW::cal_Energy(double& etot)
+    template<typename FPTYPE, typename Device>
+    void ESolver_KS_PW<FPTYPE, Device>::cal_Energy(FPTYPE& etot)
     {
         etot = GlobalC::en.etot;
     }
 
-    void ESolver_KS_PW::cal_Force(ModuleBase::matrix& force)
+    template<typename FPTYPE, typename Device>
+    void ESolver_KS_PW<FPTYPE, Device>::cal_Force(ModuleBase::matrix& force)
     {
         Forces ff;
-        ff.init(force, this->pelec->wg, pelec->charge, this->psi);
+        ff.init(force, this->pelec->wg, this->pelec->charge, this->psi);
     }
 
-    void ESolver_KS_PW::cal_Stress(ModuleBase::matrix& stress)
+    template<typename FPTYPE, typename Device>
+    void ESolver_KS_PW<FPTYPE, Device>::cal_Stress(ModuleBase::matrix& stress)
     {
         Stress_PW ss(this->pelec);
         ss.cal_stress(stress, this->psi);
 
         //external stress
-        double unit_transform = 0.0;
+        FPTYPE unit_transform = 0.0;
         unit_transform = ModuleBase::RYDBERG_SI / pow(ModuleBase::BOHR_RADIUS_SI,3) * 1.0e-8;
-        double external_stress[3] = {GlobalV::PRESS1,GlobalV::PRESS2,GlobalV::PRESS3};
+        FPTYPE external_stress[3] = {GlobalV::PRESS1,GlobalV::PRESS2,GlobalV::PRESS3};
         for(int i=0;i<3;i++)
         {
             stress(i,i) -= external_stress[i]/unit_transform;
@@ -618,7 +653,8 @@ namespace ModuleESolver
         GlobalV::PRESSURE = (stress(0,0)+stress(1,1)+stress(2,2))/3;
     }
 
-    void ESolver_KS_PW::postprocess()
+    template<typename FPTYPE, typename Device>
+    void ESolver_KS_PW<FPTYPE, Device>::postprocess()
     {
 
         GlobalV::ofs_running << "\n\n --------------------------------------------" << std::endl;
@@ -627,6 +663,7 @@ namespace ModuleESolver
         GlobalV::ofs_running << " --------------------------------------------\n\n" << std::endl;
         
         //print occupation in istate.info
+
 	    GlobalC::en.print_occ(this->pelec);
         // compute density of states
         GlobalC::en.perform_dos_pw(this->pelec);
@@ -684,13 +721,14 @@ namespace ModuleESolver
         }
     }
 
-    void ESolver_KS_PW::hamilt2estates(const double ethr)
+    template<typename FPTYPE, typename Device>
+    void ESolver_KS_PW<FPTYPE, Device>::hamilt2estates(const FPTYPE ethr)
     {
         if(this->phsol != nullptr)
         {
-            hsolver::DiagoIterAssist<double>::need_subspace = false;
-            hsolver::DiagoIterAssist<double>::PW_DIAG_THR = ethr; 
-            this->phsol->solve(this->p_hamilt, this->psi[0], this->pelec, GlobalV::KS_SOLVER, true);
+            hsolver::DiagoIterAssist<FPTYPE, Device>::need_subspace = false;
+            hsolver::DiagoIterAssist<FPTYPE, Device>::PW_DIAG_THR = ethr; 
+            this->phsol->solve(this->p_hamilt, this->kspw_psi[0], this->pelec, GlobalV::KS_SOLVER, true);
         }
         else
         {
@@ -698,7 +736,8 @@ namespace ModuleESolver
         }
     }
 
-    void ESolver_KS_PW::nscf()
+    template<typename FPTYPE, typename Device>
+    void ESolver_KS_PW<FPTYPE, Device>::nscf()
     {
         ModuleBase::TITLE("ESolver_KS_PW","nscf");
         ModuleBase::timer::tick("ESolver_KS_PW","nscf");
@@ -707,7 +746,7 @@ namespace ModuleESolver
         //========================================
         // diagonalization of the KS hamiltonian
         // =======================================
-        double diag_ethr = GlobalV::PW_DIAG_THR;
+        FPTYPE diag_ethr = GlobalV::PW_DIAG_THR;
         if(diag_ethr - 1e-2 > -1e-5)   
             diag_ethr = std::max(1e-13, 0.1*std::min(1e-2,GlobalV::SCF_THR / GlobalV::nelec));
         GlobalV::ofs_running << " PW_DIAG_THR  = "<< diag_ethr << std::endl;
@@ -764,4 +803,8 @@ namespace ModuleESolver
         return;
     }
 
+template class ESolver_KS_PW<double, psi::DEVICE_CPU>;
+#if ((defined __CUDA) || (defined __ROCM))
+template class ESolver_KS_PW<double, psi::DEVICE_GPU>;
+#endif
 }

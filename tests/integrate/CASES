@@ -1,5 +1,7 @@
 101_PW_15_f_pseudopots
 101_PW_15_pseudopots
+101_PW_15_pseudopots_LDA
+101_PW_15_pseudopots_LibxcLDA
 101_PW_blps_pseudopots
 101_PW_OU_pseudopots
 101_PW_upf100_Al_pseudopots
@@ -61,6 +63,7 @@
 115_PW_sol_H2
 115_PW_sol_H2O
 116_PW_scan_Si2
+116_PW_scan_Si2_nspin2
 120_PW_KP_MD_MSST
 120_PW_KP_MD_NHC
 121_PW_KPAR
@@ -177,6 +180,9 @@
 #401_NP_KP_sp
 #401_NP_KP_spd
 601_NO_TDDFT_H2
+601_NO_TDDFT_H2_vext1
+601_NO_TDDFT_H2_vext2
+601_NO_TDDFT_H2_vext3
 601_NO_TDDFT_CO
 601_NO_TDDFT_CO_occ
 601_NO_TDDFT_O3

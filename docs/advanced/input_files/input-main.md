@@ -2,7 +2,7 @@
 
 - [System variables](#system-variables)
 
-  [suffix](#suffix) | [ntype](#ntype) | [calculation](#calculation) | [esolver_type](#esolver_type) | [symmetry](#symmetry) | [kpar](#kpar) | [bndpar](#bndpar) | [latname](#latname) | [init_wfc](#init_wfc) | [init_chg](#init_chg) | [init_vel](#init_vel) | [nelec](#nelec) | [tot_magnetization](#tot_magnetization) | [dft_functional](#dft_functional) | [xc_temperature](#xc_temperature) | [pseudo_rcut](#pseudo_rcut) | [pseudo_mesh](#pseudo_mesh) | [mem_saver](#mem_saver) | [diago_proc](#diago_proc) | [nbspline](#nbspline) | [kspacing](#kspacing)  | [min_dist_coef](#min_dist_coef) | [symmetry_prec](#symmetry_prec)
+  [suffix](#suffix) | [ntype](#ntype) | [calculation](#calculation) | [esolver_type](#esolver_type) | [symmetry](#symmetry) | [kpar](#kpar) | [bndpar](#bndpar) | [latname](#latname) | [init_wfc](#init_wfc) | [init_chg](#init_chg) | [init_vel](#init_vel) | [nelec](#nelec) | [nupdown](#nupdown) | [tot_magnetization](#tot_magnetization) | [dft_functional](#dft_functional) | [xc_temperature](#xc_temperature) | [pseudo_rcut](#pseudo_rcut) | [pseudo_mesh](#pseudo_mesh) | [mem_saver](#mem_saver) | [diago_proc](#diago_proc) | [nbspline](#nbspline) | [kspacing](#kspacing)  | [min_dist_coef](#min_dist_coef) | [symmetry_prec](#symmetry_prec) | [device](#device)
 - [Variables related to input files](#variables-related-to-input-files)
 
   [stru_file](#stru_file) | [kpoint_file](#kpoint_file) | [pseudo_dir](#pseudo_dir) | [orbital_dir](#orbital_dir) | [read_file_dir](#read_file_dir) | [wannier_card](#wannier_card)
@@ -189,6 +189,12 @@ This part of variables are used to control general system parameters.
 - **Description**: If >0.0, this denotes total number of electrons in the system. Must be less than 2*nbands. If set to 0.0, the total number of electrons will be calculated by the sum of valence electrons (i.e. assuming neutral system).
 - **Default**: 0.0
 
+### nupdown
+
+- **Type**: Real
+- **Description**: If >0.0, this denotes difference number of electrons between spin-up and spin-down in the system. Range of value must in [-nelec ~ nelec]. It is one method of constraint DFT, the fermi energy level will seperate to E_Fermi_up and E_Fermi_down. If set to 0.0, no constrain apply to system.
+- **Default**: 0.0
+
 ### tot_magnetization
 
 - **Type**: Real
@@ -260,6 +266,19 @@ This part of variables are used to control general system parameters.
 - **Type**: Real
 - **Descrption**: The accuracy for symmetry judgment. The unit is Bohr.
 - **Default**: 1.0e-5
+
+### device
+- **Type**: String
+- **Descrption**: Specifies the computing device for ABACUS.
+  
+  Available options are:
+  - `cpu`: for CPUs via Intel, AMD, or Other supported CPU devices
+  - `gpu`: for GPUs via CUDA.
+  
+  Known limitations: 
+  - `pw basis`: required by the `gpu` acceleraion options
+  - `cg ks_solver`: required by the `gpu` acceleraion options
+- **Default**: `cpu`
 
 [back to top](#full-list-of-input-keywords)
 
@@ -427,7 +446,7 @@ calculations.
 ### ks_solver
 
 - **Type**: String
-- **Description**: It`s about choice of diagonalization methods for hamiltonian matrix expanded in a certain basis set.
+- **Description**: It's about choice of diagonalization methods for hamiltonian matrix expanded in a certain basis set.
 
   For plane-wave basis,
 
@@ -826,6 +845,9 @@ This part of variables are used to control the output of properties.
 
 - **Type**: Integer
 - **Description**: If set to 1, ABACUS will output the local potential on real space grid. The name of the file is SPIN1_POT and SPIN2_POT (if nspin = 2). If set to 2, ABACUS will output the electrostatic potential on real space grid. The name of the file is ElecStaticPot and ElecStaticP ot_AV E (along the z-axis).
+
+> Note : output = 1 is currently broken as of v3.0.2
+
 - **Default**: 0
 
 ### out_dm
@@ -1464,7 +1486,7 @@ This part of variables are used to control the molecular dynamics calculations.
 ### md_tfirst, md_tlast
 
 - **Type**: Real
-- **Description**: This is the temperature (K) used in md simulation, md_tlast`s default value is md_tfirst. If md_tlast is set to be different from md_tfirst, ABACUS will automatically change the temperature from md_tfirst to md_tlast.
+- **Description**: This is the temperature (K) used in md simulation. The default value of md_tlast is md_tfirst. If md_tlast is set to be different from md_tfirst, ABACUS will automatically change the temperature from md_tfirst to md_tlast.
 - **Default**: No default
 
 ### md_dumpfreq

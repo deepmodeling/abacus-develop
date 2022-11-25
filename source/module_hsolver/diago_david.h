@@ -103,10 +103,7 @@ class DiagoDavid : public DiagH<FPTYPE, Device>
 
     const FPTYPE* precondition = nullptr;
 
-    using hpsi_info = typename hamilt::Operator<std::complex<FPTYPE>, psi::DEVICE_CPU>::hpsi_info;
-#if ((defined __CUDA) || (defined __ROCM))
-    using hpsi_info_gpu = typename hamilt::Operator<std::complex<FPTYPE>, psi::DEVICE_GPU>::hpsi_info_gpu;
-#endif
+    using hpsi_info = typename hamilt::Operator<std::complex<FPTYPE>, Device>::hpsi_info;
 };
 
 } // namespace hsolver

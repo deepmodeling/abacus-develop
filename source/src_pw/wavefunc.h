@@ -41,7 +41,11 @@ class wavefunc : public WF_atomic
 
 	void diago_PAO_in_pw_k2(const int &ik, psi::Psi<std::complex<double>> &wvf, hamilt::Hamilt<double>* phm_in = nullptr);
     void diago_PAO_in_pw_k2(const int &ik, ModuleBase::ComplexMatrix &wvf);
-
+	
+    void diago_PAO_in_pw_k2_device(const psi::DEVICE_CPU* ctx, const int &ik, psi::Psi<std::complex<double>, psi::DEVICE_CPU> &wvf, hamilt::Hamilt<double, psi::DEVICE_CPU>* phm_in = nullptr);
+#if ((defined __CUDA) || (defined __ROCM))
+    void diago_PAO_in_pw_k2_device(const psi::DEVICE_GPU* ctx, const int &ik, psi::Psi<std::complex<double>, psi::DEVICE_GPU> &wvf, hamilt::Hamilt<double, psi::DEVICE_GPU>* phm_in = nullptr);
+#endif
     int get_R(int ix, int iy, int iz);     // pengfei 2016-11-23
 
     int iw2it(int iw);
@@ -53,6 +57,10 @@ class wavefunc : public WF_atomic
 
     ModuleBase::Vector3<int> ***R;
     int ** Rmax;
+
+    using resmem_complex_op = psi::memory::resize_memory_op<std::complex<double>, psi::DEVICE_GPU>;
+    using delmem_complex_op = psi::memory::delete_memory_op<std::complex<double>, psi::DEVICE_GPU>;
+    using syncmem_complex_h2d_op = psi::memory::synchronize_memory_op<std::complex<double>, psi::DEVICE_GPU, psi::DEVICE_CPU>;
 };
 
 #endif //wavefunc
