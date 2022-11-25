@@ -160,14 +160,16 @@ void dngvx_op<double, psi::DEVICE_GPU>::operator()(const psi::DEVICE_GPU* d,
 
     if (ldh == nstart)
     {
+        matrixTranspose_op<double, psi::DEVICE_GPU>()(d, nstart, nstart, V, V);
         checkCudaErrors(cudaMemcpy(V, A_eigenvectors, sizeof(std::complex<double>) * nstart * m, cudaMemcpyDeviceToDevice));
-
-        matrixTranspose_op<double, psi::DEVICE_GPU>()(d, nstart, m, V, V);
+        matrixTranspose_op<double, psi::DEVICE_GPU>()(d, nstart, nstart, V, V);
     } else
     {
         matrixTranspose_op<double, psi::DEVICE_GPU>()(d, ldh, ldh, V, V);
         matrixSetToAnother<double, psi::DEVICE_GPU>()(d, m, (std::complex<double>*)A_eigenvectors, nstart, V, ldh);
         matrixTranspose_op<double, psi::DEVICE_GPU>()(d, ldh, ldh, V, V);
+        // matrixTranspose_op<double, psi::DEVICE_GPU>()(d, nstart, nstart, (std::complex<double>*)A_eigenvectors, (std::complex<double>*)A_eigenvectors);
+        // matrixSetToAnother<double, psi::DEVICE_GPU>()(d, nstart, (std::complex<double>*)A_eigenvectors, nstart, V, ldh);
     }
     
 
@@ -185,6 +187,7 @@ void dngvx_op<double, psi::DEVICE_GPU>::operator()(const psi::DEVICE_GPU* d,
     cusolverErrcheck(cusolverDnDestroy(cusolverH));
 
     // destoryBLAShandle();
+
 }
 
 template <>

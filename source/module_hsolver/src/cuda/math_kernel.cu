@@ -414,6 +414,8 @@ void matrixTranspose_op<double, psi::DEVICE_GPU>::operator()(const psi::DEVICE_G
     }
     
     psi::memory::synchronize_memory_op<std::complex<double>, psi::DEVICE_GPU, psi::DEVICE_GPU>()(d, d, output_matrix, device_temp, row * col);
+
+    psi::memory::delete_memory_op<std::complex<double>, psi::DEVICE_GPU>()(d, device_temp);
     
 }
 
