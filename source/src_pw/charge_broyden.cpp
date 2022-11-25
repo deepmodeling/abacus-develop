@@ -7,10 +7,7 @@
 #include "../module_base/timer.h"
 
 void Charge_Mixing::Simplified_Broyden_mixing(const int &iter,
-	double** rho,
-	double** rho_save,
-    std::complex<double>** rhog,
-    std::complex<double>** rhog_save)
+	Charge* chr)
 {
 	ModuleBase::TITLE("Charge_Mixing","Simplified_Broyden_mixing");
 	//It is a simplified modified broyden_mixing method.
@@ -29,8 +26,8 @@ void Charge_Mixing::Simplified_Broyden_mixing(const int &iter,
 		{
 			for(int ig = 0 ; ig < GlobalC::rhopw->npw; ++ig)
 			{
-				dF[ipos][is][ig] -= rhog[is][ig];
-				dn[ipos][is][ig] -= rhog_save[is][ig];
+				dF[ipos][is][ig] -= chr->rhog[is][ig];
+				dn[ipos][is][ig] -= chr->rhog_save[is][ig];
 			}
 		}
 	}
@@ -38,8 +35,8 @@ void Charge_Mixing::Simplified_Broyden_mixing(const int &iter,
 	{
 		for(int ig = 0 ; ig < GlobalC::rhopw->npw; ++ig)
 		{
-			dF[mixing_ndim][is][ig] = rhog[is][ig];
-			dn[mixing_ndim][is][ig] = rhog_save[is][ig];
+			dF[mixing_ndim][is][ig] = chr->rhog[is][ig];
+			dn[mixing_ndim][is][ig] = chr->rhog_save[is][ig];
 		}
 	}
 	
@@ -74,7 +71,7 @@ void Charge_Mixing::Simplified_Broyden_mixing(const int &iter,
 		}
 		for(int i = 0 ; i < iter_used ; ++i)
 		{
-			work[i] = rhog_dot_product( this->dF[i], rhog );
+			work[i] = rhog_dot_product( this->dF[i], chr->rhog );
 		}
 		for(int i = 0 ; i < iter_used ; ++i)
 		{
@@ -87,8 +84,8 @@ void Charge_Mixing::Simplified_Broyden_mixing(const int &iter,
 			{
 				for(int ig = 0 ; ig < GlobalC::rhopw->npw; ++ig)
 				{
-					rhog[is][ig] -= gamma0 * dF[i][is][ig];
-					rhog_save[is][ig] -= gamma0 * dn[i][is][ig];
+					chr->rhog[is][ig] -= gamma0 * dF[i][is][ig];
+					chr->rhog_save[is][ig] -= gamma0 * dn[i][is][ig];
 				}
 			}
 			
@@ -112,9 +109,9 @@ void Charge_Mixing::Simplified_Broyden_mixing(const int &iter,
 	{
 		for(int ig = 0 ; ig < GlobalC::rhopw->npw; ++ig)
 		{
-			rhog_save[is][ig] += mixing_beta * rhog[is][ig];
+			chr->rhog_save[is][ig] += mixing_beta * chr->rhog[is][ig];
 		}
-		GlobalC::rhopw->recip2real( rhog_save[is], rho[is]);
+		GlobalC::rhopw->recip2real( chr->rhog_save[is], chr->rho[is]);
 	}
 
 	return;

@@ -104,9 +104,11 @@ hamilt::Meta<OperatorPW<FPTYPE, Device>>::Meta(const Meta<OperatorPW<T_in, Devic
 
 namespace hamilt{
 template class Meta<OperatorPW<double, psi::DEVICE_CPU>>;
+template Meta<OperatorPW<double, psi::DEVICE_CPU>>::Meta(const Meta<OperatorPW<double, psi::DEVICE_CPU>> *meta);
 #if ((defined __CUDA) || (defined __ROCM))
 template class Meta<OperatorPW<double, psi::DEVICE_GPU>>;
 template Meta<OperatorPW<double, psi::DEVICE_CPU>>::Meta(const Meta<OperatorPW<double, psi::DEVICE_GPU>> *meta);
 template Meta<OperatorPW<double, psi::DEVICE_GPU>>::Meta(const Meta<OperatorPW<double, psi::DEVICE_CPU>> *meta);
+template Meta<OperatorPW<double, psi::DEVICE_GPU>>::Meta(const Meta<OperatorPW<double, psi::DEVICE_GPU>> *meta);
 #endif
 } // namespace hamilt

@@ -2,7 +2,6 @@
 #include "src_lcao/LCAO_diago.h"
 #include "../src_pw/global.h"
 #include "../src_pw/symmetry_rho.h"
-#include "input_update.h"
 #include "../src_io/chi0_hilbert.h"
 #include "src_lcao/LCAO_evolve.h"
 #include "src_lcao/dftu.h"
@@ -218,7 +217,7 @@ namespace ModuleESolver
             }
 
             // renormalize the charge density
-            GlobalC::CHR.renormalize_rho();
+            pelec->charge->renormalize_rho();
         }
 
 #ifdef __DEEPKS
@@ -262,7 +261,7 @@ namespace ModuleESolver
         {
             CE.update_istep();
             CE.save_pos_next(GlobalC::ucell);
-            CE.extrapolate_charge();
+            CE.extrapolate_charge(pelec->charge);
 
             if(GlobalC::ucell.cell_parameter_updated)
             {
@@ -278,7 +277,7 @@ namespace ModuleESolver
                 // charge extrapolation if istep>0.
                 CE.update_istep();
                 CE.update_all_pos(GlobalC::ucell);
-                CE.extrapolate_charge();
+                CE.extrapolate_charge(pelec->charge);
                 CE.save_pos_next(GlobalC::ucell);
 
                 GlobalV::ofs_running << " Setup the Vl+Vh+Vxc according to new structure factor and new charge." << std::endl;
@@ -391,7 +390,7 @@ namespace ModuleESolver
         else if (GlobalV::CALCULATION == "istate")
         {
             IState_Charge ISC(this->psid, this->LOC);
-            ISC.begin(this->UHM.GG, this->pelec->wg);
+            ISC.begin(this->UHM.GG, this->pelec);
         }
         else if (GlobalV::CALCULATION == "ienvelope")
         {

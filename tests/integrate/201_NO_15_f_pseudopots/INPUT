@@ -23,3 +23,6 @@ smearing_sigma			0.002
 #Parameters (5.Mixing)
 mixing_type		pulay
 mixing_beta		0.7
+
+out_pot 2
+out_dm1 1

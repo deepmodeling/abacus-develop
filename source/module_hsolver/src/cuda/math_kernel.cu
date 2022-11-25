@@ -9,19 +9,19 @@
 namespace hsolver {
 
 
-static cublasHandle_t diag_handle = nullptr;
+static cublasHandle_t cublas_handle = nullptr;
 
 
 void createBLAShandle(){
-    if (diag_handle == nullptr) {
-        cublasErrcheck(cublasCreate(&diag_handle));
+    if (cublas_handle == nullptr) {
+        cublasErrcheck(cublasCreate(&cublas_handle));
     }
 }
 
 void destoryBLAShandle(){
-    if (diag_handle != nullptr) {
-        cublasErrcheck(cublasDestroy(diag_handle));
-        diag_handle = nullptr;
+    if (cublas_handle != nullptr) {
+        cublasErrcheck(cublasDestroy(cublas_handle));
+        cublas_handle = nullptr;
     }
 }
 
@@ -101,7 +101,8 @@ FPTYPE zdot_real_op<FPTYPE, psi::DEVICE_GPU>::operator()(
   // Note that  ddot_(2*dim,a,1,b,1) = REAL( zdotc_(dim,a,1,b,1) )
   const FPTYPE* pL = reinterpret_cast<const FPTYPE*>(psi_L);
   const FPTYPE* pR = reinterpret_cast<const FPTYPE*>(psi_R);
-  FPTYPE result = thrust::inner_product(thrust::device, pL, pL + dim * 2, pR, FPTYPE(0.0));
+  FPTYPE result = 0.0;
+  cublasErrcheck(cublasDdot(cublas_handle, dim * 2, pL, 1, pR, 1, &result));
   if (reduce) {
       Parallel_Reduce::reduce_double_pool(result);
   }
@@ -190,7 +191,7 @@ void axpy_op<float, psi::DEVICE_GPU>::operator()(
     std::complex<float> *Y,
     const int& incY)
 {
-    cublasErrcheck(cublasCaxpy(diag_handle, N, (float2*)alpha, (float2*)X, incX, (float2*)Y, incY));
+    cublasErrcheck(cublasCaxpy(cublas_handle, N, (float2*)alpha, (float2*)X, incX, (float2*)Y, incY));
 }
 
 template <> 
@@ -203,7 +204,7 @@ void axpy_op<double, psi::DEVICE_GPU>::operator()(
     std::complex<double> *Y,
     const int& incY)
 {
-    cublasErrcheck(cublasZaxpy(diag_handle, N, (double2*)alpha, (double2*)X, incX, (double2*)Y, incY));
+    cublasErrcheck(cublasZaxpy(cublas_handle, N, (double2*)alpha, (double2*)X, incX, (double2*)Y, incY));
 }
 
 template <> 
@@ -231,7 +232,7 @@ void gemv_op<float, psi::DEVICE_GPU>::operator()(
     else if (trans == 'C'){
         cutrans = CUBLAS_OP_C;
     }
-    cublasErrcheck(cublasCgemv(diag_handle, cutrans, m, n, (float2*)alpha, (float2*)A, lda, (float2*)X, incx, (float2*)beta, (float2*)Y, incx));
+    cublasErrcheck(cublasCgemv(cublas_handle, cutrans, m, n, (float2*)alpha, (float2*)A, lda, (float2*)X, incx, (float2*)beta, (float2*)Y, incx));
 }
 
 template <> 
@@ -259,7 +260,7 @@ void gemv_op<double, psi::DEVICE_GPU>::operator()(
     else if (trans == 'C'){
         cutrans = CUBLAS_OP_C;
     }
-    cublasErrcheck(cublasZgemv(diag_handle, cutrans, m, n, (double2*)alpha, (double2*)A, lda, (double2*)X, incx, (double2*)beta, (double2*)Y, incx));
+    cublasErrcheck(cublasZgemv(cublas_handle, cutrans, m, n, (double2*)alpha, (double2*)A, lda, (double2*)X, incx, (double2*)beta, (double2*)Y, incx));
 }
 
 
@@ -271,7 +272,7 @@ void scal_op<double, psi::DEVICE_GPU>::operator()(const psi::DEVICE_GPU* d,
                                                   std::complex<double>* X,
                                                   const int& incx)
 {
-    cublasErrcheck(cublasZscal(diag_handle, N, (double2*)alpha, (double2*)X, incx));
+    cublasErrcheck(cublasZscal(cublas_handle, N, (double2*)alpha, (double2*)X, incx));
 }
 
 template <>
@@ -282,7 +283,7 @@ void scal_op<float, psi::DEVICE_GPU>::operator()(const psi::DEVICE_GPU* d,
                                                  const int& incx)
 
 {
-    cublasErrcheck(cublasCscal(diag_handle, N, (float2*)alpha, (float2*)X, incx));
+    cublasErrcheck(cublasCscal(cublas_handle, N, (float2*)alpha, (float2*)X, incx));
 }
 
 
@@ -324,7 +325,7 @@ void gemm_op<float, psi::DEVICE_GPU>::operator()(const psi::DEVICE_GPU* d,
     else if (transb == 'C'){
         cutransB = CUBLAS_OP_C;
     }
-    cublasErrcheck(cublasCgemm(diag_handle, cutransA, cutransB, m, n ,k, (float2*)alpha, (float2*)a , lda, (float2*)b, ldb, (float2*)beta, (float2*)c, ldc));
+    cublasErrcheck(cublasCgemm(cublas_handle, cutransA, cutransB, m, n ,k, (float2*)alpha, (float2*)a , lda, (float2*)b, ldb, (float2*)beta, (float2*)c, ldc));
 }
 
 template <>
@@ -365,7 +366,7 @@ void gemm_op<double, psi::DEVICE_GPU>::operator()(const psi::DEVICE_GPU* d,
     else if (transb == 'C'){
         cutransB = CUBLAS_OP_C;
     }
-    cublasErrcheck(cublasZgemm(diag_handle, cutransA, cutransB, m, n ,k, (double2*)alpha, (double2*)a , lda, (double2*)b, ldb, (double2*)beta, (double2*)c, ldc));
+    cublasErrcheck(cublasZgemm(cublas_handle, cutransA, cutransB, m, n ,k, (double2*)alpha, (double2*)a , lda, (double2*)b, ldb, (double2*)beta, (double2*)c, ldc));
 }
 
 
@@ -404,7 +405,7 @@ void matrixTranspose_op<double, psi::DEVICE_GPU>::operator()(const psi::DEVICE_G
         ZERO.x = ZERO.y = 0.0;
 
         // use 'geam' API todo transpose.
-        cublasErrcheck(cublasZgeam(diag_handle, CUBLAS_OP_T, CUBLAS_OP_N, col, row, &ONE, (double2*)input_matrix, col, &ZERO, (double2*)input_matrix, col, (double2*)device_temp, col));
+        cublasErrcheck(cublasZgeam(cublas_handle, CUBLAS_OP_T, CUBLAS_OP_N, col, row, &ONE, (double2*)input_matrix, col, &ZERO, (double2*)input_matrix, col, (double2*)device_temp, col));
     } else
     {
         int thread = 1024;

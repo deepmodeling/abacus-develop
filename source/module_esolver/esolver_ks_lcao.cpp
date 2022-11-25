@@ -5,7 +5,6 @@
 #include "../module_base/global_function.h"
 #include "../src_io/print_info.h"
 #include "../src_pw/global.h"
-#include "input_update.h"
 #include "src_io/chi0_hilbert.h"
 #include "src_lcao/ELEC_evolve.h"
 #include "src_lcao/dftu.h"
@@ -67,6 +66,18 @@ void ESolver_KS_LCAO::Init(Input& inp, UnitCell& ucell)
         ESolver_KS::Init(inp, ucell);
     } // end ifnot get_S
 
+    //init ElecState
+    //autoset nbands in ElecState, it should before basis_init (for Psi 2d divid)
+    if(this->pelec == nullptr)
+    {
+        this->pelec = new elecstate::ElecStateLCAO(&(chr),
+                                                   &(GlobalC::kv),
+                                                   GlobalC::kv.nks,
+                                                   &(this->LOC),
+                                                   &(this->UHM),
+                                                   &(this->LOWF));
+    }
+
     //------------------init Basis_lcao----------------------
     // Init Basis should be put outside of Ensolver.
     // * reading the localized orbitals/projectors
@@ -74,12 +85,13 @@ void ESolver_KS_LCAO::Init(Input& inp, UnitCell& ucell)
     this->Init_Basis_lcao(this->orb_con, inp, ucell);
     //------------------init Basis_lcao----------------------
 
+    // pass Hamilt-pointer to Operator
+    this->UHM.genH.LM = this->UHM.LM = &this->LM;
+    // pass basis-pointer to EState and Psi
+    this->LOC.ParaV = this->LOWF.ParaV = this->LM.ParaV = &(this->orb_con.ParaV);
+
     if (GlobalV::CALCULATION == "get_S")
     {
-        // pass Hamilt-pointer to Operator
-        this->UHM.genH.LM = this->UHM.LM = &this->LM;
-        // pass basis-pointer to EState and Psi
-        this->LOC.ParaV = this->LOWF.ParaV = this->LM.ParaV;
         return;
     }
 
@@ -137,48 +149,19 @@ void ESolver_KS_LCAO::Init(Input& inp, UnitCell& ucell)
     // this function belongs to cell LOOP
     GlobalC::ppcell.init_vloc(GlobalC::ppcell.vloc, GlobalC::rhopw);
 
-    // pass Hamilt-pointer to Operator
-    this->UHM.genH.LM = this->UHM.LM = &this->LM;
-    // pass basis-pointer to EState and Psi
-    this->LOC.ParaV = this->LOWF.ParaV = this->LM.ParaV;
-
-    // init Psi, HSolver, ElecState, Hamilt
-    if (this->phsol != nullptr)
-    {
-        if (this->phsol->classname != "HSolverLCAO")
-        {
-            delete this->phsol;
-            this->phsol = nullptr;
-        }
-    }
-    else
+    // init HSolver
+    if(this->phsol == nullptr)
     {
         this->phsol = new hsolver::HSolverLCAO(this->LOWF.ParaV);
         this->phsol->method = GlobalV::KS_SOLVER;
     }
-    if (this->pelec != nullptr)
+
+    // Inititlize the charge density.
+    this->pelec->charge->allocate(GlobalV::NSPIN, GlobalC::rhopw->nrxx, GlobalC::rhopw->npw);
+
+        // Initialize the potential.
+    if(this->pelec->pot == nullptr)
     {
-        if (this->pelec->classname != "ElecStateLCAO")
-        {
-            delete this->pelec;
-            this->pelec = nullptr;
-        }
-    }
-    else
-    {
-        this->pelec = new elecstate::ElecStateLCAO(&(GlobalC::CHR),
-                                                   &(GlobalC::kv),
-                                                   GlobalC::kv.nks,
-                                                   GlobalV::NBANDS,
-                                                   &(this->LOC),
-                                                   &(this->UHM),
-                                                   &(this->LOWF));
-
-
-        // Inititlize the charge density.
-        this->pelec->charge->allocate(GlobalV::NSPIN, GlobalC::rhopw->nrxx, GlobalC::rhopw->npw);
-
-        // Initializee the potential.
         this->pelec->pot = new elecstate::Potential(
             GlobalC::rhopw,
             &GlobalC::ucell,
@@ -187,24 +170,22 @@ void ESolver_KS_LCAO::Init(Input& inp, UnitCell& ucell)
             &(GlobalC::en.etxc),
             &(GlobalC::en.vtxc)
         );
+    }
 
 #ifdef __DEEPKS
-        // wenfei 2021-12-19
-        // if we are performing DeePKS calculations, we need to load a model
-        if (GlobalV::deepks_scf)
-        {
-            // load the DeePKS model from deep neural network
-            GlobalC::ld.load_model(INPUT.deepks_model);
-        }
+    // wenfei 2021-12-19
+    // if we are performing DeePKS calculations, we need to load a model
+    if (GlobalV::deepks_scf)
+    {
+        // load the DeePKS model from deep neural network
+        GlobalC::ld.load_model(INPUT.deepks_model);
+    }
 #endif
 
-        // Initialize the FFT.
-        // this function belongs to cell LOOP
-
-        // Initialize the sum of all local potentials.
-        // if ion_step==0, read in/initialize the potentials
-        // this function belongs to ions LOOP
-        int ion_step = 0;
+    //Fix pelec->wg by ocp_kb
+    if(GlobalV::ocp)
+    {
+        this->pelec->fixed_weights(GlobalV::ocp_kb.data());
     }
 }
 
@@ -316,10 +297,6 @@ void ESolver_KS_LCAO::Init_Basis_lcao(ORB_control& orb_con, Input& inp, UnitCell
 
 void ESolver_KS_LCAO::eachiterinit(const int istep, const int iter)
 {
-    std::string ufile = "CHANGE";
-    Update_input UI;
-    UI.init(ufile);
-
     if (GlobalV::dft_plus_u)
         GlobalC::dftu.iter_dftu = iter;
 
@@ -328,7 +305,7 @@ void ESolver_KS_LCAO::eachiterinit(const int istep, const int iter)
     if (iter == 1) GlobalC::CHR_MIX.reset();
 
     // mohan update 2012-06-05
-    GlobalC::en.deband_harris = GlobalC::en.delta_e(this->pelec->pot);
+    GlobalC::en.deband_harris = GlobalC::en.delta_e(this->pelec);
 
     // mohan move it outside 2011-01-13
     // first need to calculate the weight according to
@@ -374,7 +351,7 @@ void ESolver_KS_LCAO::eachiterinit(const int istep, const int iter)
             // rho1 and rho2 are the same rho.
             // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
             this->pelec->pot->update_from_charge(this->pelec->charge, &GlobalC::ucell);
-            GlobalC::en.delta_escf(this->pelec->pot);
+            GlobalC::en.delta_escf(this->pelec);
         }
     }
 
@@ -391,7 +368,7 @@ void ESolver_KS_LCAO::eachiterinit(const int istep, const int iter)
 
     if (GlobalV::dft_plus_u)
     {
-        GlobalC::dftu.cal_slater_UJ(); // Calculate U and J if Yukawa potential is used
+        GlobalC::dftu.cal_slater_UJ(pelec->charge->rho); // Calculate U and J if Yukawa potential is used
     }
 
 #ifdef __DEEPKS
@@ -511,10 +488,10 @@ void ESolver_KS_LCAO::hamilt2density(int istep, int iter, double ethr)
     }
 
     // (6) compute magnetization, only for spin==2
-    GlobalC::ucell.magnet.compute_magnetization();
+    GlobalC::ucell.magnet.compute_magnetization(pelec->charge, pelec->nelec_spin.data());
 
     // (7) calculate delta energy
-    GlobalC::en.deband = GlobalC::en.delta_e(this->pelec->pot);
+    GlobalC::en.deband = GlobalC::en.delta_e(this->pelec);
 }
 void ESolver_KS_LCAO::updatepot(const int istep, const int iter)
 {
@@ -530,7 +507,7 @@ void ESolver_KS_LCAO::updatepot(const int istep, const int iter)
     if (!this->conv_elec)
     {
         this->pelec->pot->update_from_charge(this->pelec->charge, &GlobalC::ucell);
-        GlobalC::en.delta_escf(this->pelec->pot);
+        GlobalC::en.delta_escf(this->pelec);
     }
     else
     {
@@ -547,7 +524,7 @@ void ESolver_KS_LCAO::eachiterfinish(int iter)
     {
         for (int is = 0; is < GlobalV::NSPIN; ++is)
         {
-            GlobalC::restart.save_disk(*this->UHM.LM, "charge", is);
+            GlobalC::restart.save_disk(*this->UHM.LM, "charge", is, pelec->charge->rho);
         }
     }
     //-----------------------------------
@@ -627,13 +604,18 @@ void ESolver_KS_LCAO::afterscf(const int istep)
             ssd << GlobalV::global_out_dir << "SPIN" << is + 1 << "_DM_R";
         }
         this->LOC.write_dm(is, 0, ssd.str(), precision);
-
+        if(this->LOC.out_dm1 == 1)
+        {
+            this->LOC.write_dm1(is, istep);
+        }
+/* Broken, please fix it
         if (GlobalV::out_pot == 1) // LiuXh add 20200701
         {
             std::stringstream ssp;
             ssp << GlobalV::global_out_dir << "SPIN" << is + 1 << "_POT";
             this->pelec->pot->write_potential(is, 0, ssp.str(), this->pelec->pot->get_effective_v(), precision);
         }
+*/
     }
 
     if (GlobalV::out_pot == 2)
@@ -642,7 +624,7 @@ void ESolver_KS_LCAO::afterscf(const int istep)
         std::stringstream ssp_ave;
         ssp << GlobalV::global_out_dir << "ElecStaticPot";
         ssp_ave << GlobalV::global_out_dir << "ElecStaticPot_AVE";
-        this->pelec->pot->write_elecstat_pot(ssp.str(), ssp_ave.str(), GlobalC::rhopw); //output 'Hartree + local pseudopot'
+        this->pelec->pot->write_elecstat_pot(ssp.str(), ssp_ave.str(), GlobalC::rhopw, pelec->charge); //output 'Hartree + local pseudopot'
     }
 
     if (this->conv_elec)
@@ -682,7 +664,7 @@ void ESolver_KS_LCAO::afterscf(const int istep)
 
     if (GlobalV::deepks_out_labels) // caoyu add 2021-06-04
     {
-        int nocc = pelec->charge->nelec / 2;
+        int nocc = GlobalV::nelec / 2;
         if (GlobalV::deepks_bandgap)
         {
             if (GlobalV::GAMMA_ONLY_LOCAL)
@@ -721,7 +703,7 @@ void ESolver_KS_LCAO::afterscf(const int istep)
                                    "e_base.npy"); // ebase :no deepks E_delta including
             if (GlobalV::deepks_bandgap)
             {
-                int nocc = pelec->charge->nelec / 2;
+                int nocc = GlobalV::nelec / 2;
 
                 ModuleBase::matrix wg_hl;
                 if (GlobalV::GAMMA_ONLY_LOCAL)

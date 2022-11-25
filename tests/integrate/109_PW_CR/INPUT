@@ -11,6 +11,7 @@ scf_nmax			20
 
 basis_type		pw
 relax_nmax                   2
+relax_new 0
 
 cal_stress                  1
 stress_thr              1e-6

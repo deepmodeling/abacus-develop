@@ -304,8 +304,8 @@ class XC_Functional
 
 	static void perdew86_spin(double rho, double zeta, double grho, double &sc,
 		double &v1cup, double &v1cdw, double &v2c);
-	static void ggac_spin(double rho, double zeta, double grho, double &sc,
-		double &v1cup, double &v1cdw, double &v2c);
+	//static void ggac_spin(double rho, double zeta, double grho, double &sc,
+	//	double &v1cup, double &v1cdw, double &v2c);
 	static void pbec_spin(double rho, double zeta, double grho, const int &flag, double &sc,
 		double &v1cup, double &v1cdw, double &v2c);
 

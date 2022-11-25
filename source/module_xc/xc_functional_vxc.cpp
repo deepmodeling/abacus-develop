@@ -178,8 +178,8 @@ std::tuple<double,double,ModuleBase::matrix> XC_Functional::v_xc_libxc(
         const double &omega, // volume of cell
         const Charge* const chr)
 {
-    ModuleBase::TITLE("XC_Functional","v_xc");
-    ModuleBase::timer::tick("XC_Functional","v_xc");
+    ModuleBase::TITLE("XC_Functional","v_xc_libxc");
+    ModuleBase::timer::tick("XC_Functional","v_xc_libxc");
 
     const int nspin = GlobalV::NSPIN;
 
@@ -511,7 +511,7 @@ tuple<double,double,ModuleBase::matrix,ModuleBase::matrix> XC_Functional::v_xc_m
     {
         for( size_t ir=0; ir!=nrxx; ++ir )
         {
-            if ( rho[ir]<rho_th || sqrt(abs(sigma[ir]))<grho_th || abs(kin_r[ir]<tau_th))
+            if ( rho[ir]<rho_th || sqrt(abs(sigma[ir]))<grho_th || abs(kin_r[ir])<tau_th)
             {
                 sgn[ir] = 0.0;
             }
@@ -521,9 +521,9 @@ tuple<double,double,ModuleBase::matrix,ModuleBase::matrix> XC_Functional::v_xc_m
     {
         for( size_t ir=0; ir!=nrxx; ++ir )
         {
-            if ( rho[ir*2]<rho_th || sqrt(abs(sigma[ir*3]))<grho_th || abs(kin_r[ir*2]<tau_th))
+            if ( rho[ir*2]<rho_th || sqrt(abs(sigma[ir*3]))<grho_th || abs(kin_r[ir*2])<tau_th)
                 sgn[ir*2] = 0.0;
-            if ( rho[ir*2+1]<rho_th || sqrt(abs(sigma[ir*3+2]))<grho_th || abs(kin_r[ir*2+1]<tau_th))
+            if ( rho[ir*2+1]<rho_th || sqrt(abs(sigma[ir*3+2]))<grho_th || abs(kin_r[ir*2+1])<tau_th)
                 sgn[ir*2+1] = 0.0;
         }
     }

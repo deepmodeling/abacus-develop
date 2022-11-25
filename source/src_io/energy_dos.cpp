@@ -510,15 +510,6 @@ void energy::perform_dos(
 				 GlobalC::kv.nks, GlobalC::kv.nkstot, GlobalC::kv.wk, pelec->wg, GlobalV::NBANDS, pelec->ekb );
 	 }
 
-
-		// GlobalV::mulliken charge analysis
-		if(out_dos == 2)
-		{
-			std::stringstream sp;
-			sp << GlobalV::global_out_dir << "Mulliken.dat";
-			Dos::calculate_Mulliken(sp.str(), uhm.GG);
-		}
-	
 		if(nspin0==1)
 		{
 			GlobalV::ofs_running << " Fermi energy is " << this->ef << " Rydberg" << std::endl;

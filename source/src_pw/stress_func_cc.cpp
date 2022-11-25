@@ -5,7 +5,7 @@
 #include "global.h"
 
 //NLCC term, need to be tested
-void Stress_Func::stress_cc(ModuleBase::matrix& sigma, ModulePW::PW_Basis* rho_basis, const bool is_pw)
+void Stress_Func::stress_cc(ModuleBase::matrix& sigma, ModulePW::PW_Basis* rho_basis, const bool is_pw, const Charge* const chr)
 {
 	ModuleBase::timer::tick("Stress_Func","stress_cc");
         
@@ -41,7 +41,7 @@ void Stress_Func::stress_cc(ModuleBase::matrix& sigma, ModulePW::PW_Basis* rho_b
 #ifdef USE_LIBXC
     	const auto etxc_vtxc_v = XC_Functional::v_xc_meta(
             rho_basis->nrxx, rho_basis->nxyz, GlobalC::ucell.omega,
-            &GlobalC::CHR);
+            chr);
         
         GlobalC::en.etxc = std::get<0>(etxc_vtxc_v);
         GlobalC::en.vtxc = std::get<1>(etxc_vtxc_v);
@@ -52,7 +52,7 @@ void Stress_Func::stress_cc(ModuleBase::matrix& sigma, ModulePW::PW_Basis* rho_b
 	}
 	else
 	{
-    	const auto etxc_vtxc_v = XC_Functional::v_xc(rho_basis->nrxx, rho_basis->nxyz, GlobalC::ucell.omega, &GlobalC::CHR);
+    	const auto etxc_vtxc_v = XC_Functional::v_xc(rho_basis->nrxx, rho_basis->nxyz, GlobalC::ucell.omega, chr);
 		GlobalC::en.etxc    = std::get<0>(etxc_vtxc_v);			// may delete?
 		GlobalC::en.vtxc    = std::get<1>(etxc_vtxc_v);			// may delete?
 		vxc = std::get<2>(etxc_vtxc_v);
@@ -91,7 +91,7 @@ void Stress_Func::stress_cc(ModuleBase::matrix& sigma, ModulePW::PW_Basis* rho_b
 		if(GlobalC::ucell.atoms[nt].ncpp.nlcc)
 		{
 			//drhoc();
-			GlobalC::CHR.non_linear_core_correction(
+			chr->non_linear_core_correction(
 				GlobalC::ppcell.numeric,
 				GlobalC::ucell.atoms[nt].ncpp.msh,
 				GlobalC::ucell.atoms[nt].ncpp.r,

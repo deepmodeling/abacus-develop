@@ -39,6 +39,7 @@ std::string DFT_FUNCTIONAL = "default";
 double XC_TEMPERATURE = 0.0;
 int NSPIN = 1; // LDA
 bool TWO_EFERMI = 0; // two fermi energy, exist only magnetization is fixed.
+double nupdown = 0.0;
 int CURRENT_SPIN = 0;
 int CURRENT_K = 0;
 int CAL_FORCE = 0; // if cal_force >1, means do the grid integration 'cal_force' times.
@@ -207,8 +208,6 @@ bool deepks_out_unittest = false;
 
 bool deepks_setorb = false;
 
-int vnl_method = 1; // set defauld vnl method as old, added by zhengdy 2021-10-11
-
 bool out_element_info = false; // added by zhengdy 2021-11-26
 
 bool imp_sol = false; // implicit solvation.  sunml added 2022-04-04
@@ -239,7 +238,12 @@ int of_full_pw_dim = 0;
 bool of_read_kernel = false;
 std::string of_kernel_file = "WTkernel.txt";
 
+// denghui added for device flag
+std::string device_flag = "unknown";
 std::string chg_extrap = "";
 int out_pot = 0;
 
+std::string init_chg = "";
+int out_chg = 0;
+double nelec = 0;
 } // namespace GlobalV

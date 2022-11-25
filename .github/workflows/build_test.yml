@@ -28,6 +28,9 @@ jobs:
         - tag: intel
           build_args: "-DENABLE_LCAO=OFF"
           name: "Build without LCAO"
+        - tag: gnu
+          build_args: "-DENABLE_LIBXC=1 -DENABLE_DEEPKS=1 -DUSE_ELPA=0"
+          name: "Build with GNU compilers and extra components without ELPA"
     name: ${{ matrix.name }}
     container: ghcr.io/deepmodeling/abacus-development-kit:${{ matrix.tag }}
     steps:

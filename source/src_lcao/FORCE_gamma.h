@@ -74,39 +74,11 @@ private:
 	// forces related to kinetic and non-local pseudopotentials
 	//--------------------------------------------------------------
 	void cal_ftvnl_dphi(
-		ModuleBase::matrix& dm2d, 
-		const bool isforce, 
-		const bool isstress, 
-		ModuleBase::matrix& ftvnl_dphi, 
-		ModuleBase::matrix& stvnl_dphi);
-
-	void cal_ftvnl_dphi(
 		const std::vector<ModuleBase::matrix> &dm2d, 
 		const bool isforce, 
 		const bool isstress, 
 		ModuleBase::matrix& ftvnl_dphi, 
 		ModuleBase::matrix& stvnl_dphi);
-
-	void cal_fvnl_dbeta(
-		ModuleBase::matrix& dm2d, 
-		const bool isforce, 
-		const bool isstress, 
-		ModuleBase::matrix& fvnl_dbeta, 
-		ModuleBase::matrix& svnl_dbeta);
-
-	void cal_fvnl_dbeta(
-		const std::vector<ModuleBase::matrix> &dm2d, 
-		const bool isforce, 
-		const bool isstress, 
-		ModuleBase::matrix& fvnl_dbeta, 
-		ModuleBase::matrix& svnl_dbeta);
-
-	void cal_fvnl_dbeta_new(
-		ModuleBase::matrix& dm2d, 
-		const bool isforce, 
-		const bool isstress, 
-		ModuleBase::matrix& fvnl_dbeta, 
-		ModuleBase::matrix& svnl_dbeta);
 
 	void cal_fvnl_dbeta_new(
 		const std::vector<ModuleBase::matrix> &dm2d, 
@@ -125,19 +97,6 @@ private:
 		const elecstate::Potential* pot_in,
         ModuleBase::matrix& fvl_dphi,
 		ModuleBase::matrix& svl_dphi);
-
-	void calFvnlDbeta(
-		const std::vector<ModuleBase::matrix> &dm2d, 
-		const bool &isforce, 
-		const bool &isstress, 
-		ModuleBase::matrix& fvnl_dbeta, 
-		ModuleBase::matrix& svnl_dbeta,
-		const int &vnl_method);
-
-	public:
-	// calculate dVnl=<phi|dVnl|dphi> in LCAO
-    void NonlocalDphi(const int& nspin, const int& vnl_method, const bool& cal_deri,
-        LCAO_gen_fixedH &genH);
 };
 
 // this namespace used to store global function for some stress operation

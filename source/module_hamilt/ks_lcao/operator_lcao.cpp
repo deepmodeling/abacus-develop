@@ -1,8 +1,11 @@
 #include "operator_lcao.h"
 #include "module_base/timer.h"
 #include "module_base/tool_title.h"
-#include "module_hsolver/diago_elpa.h"
 #include "module_hsolver/hsolver_lcao.h"
+
+#ifdef __ELPA
+#include "module_hsolver/diago_elpa.h"
+#endif
 
 namespace hamilt
 {
@@ -24,7 +27,9 @@ void OperatorLCAO<double>::get_hs_pointers()
         }
         const int inc = 1;
         BlasConnector::copy(this->LM->Sloc.size(), this->LM->Sloc.data(), inc, this->smatrix_k, inc);
+#ifdef __ELPA
         hsolver::DiagoElpa::DecomposedState = 0;
+#endif
         this->new_e_iteration = false;
     }
 }

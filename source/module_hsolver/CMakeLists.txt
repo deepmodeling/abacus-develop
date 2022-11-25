@@ -12,8 +12,12 @@ if(ENABLE_LCAO)
   list(APPEND objects
       hsolver_lcao.cpp
       diago_blas.cpp
-      diago_elpa.cpp
   )
+  if (USE_ELPA)
+    list(APPEND objects
+        diago_elpa.cpp
+    )
+  endif ()
 endif()
 
 if (USE_CUDA)
@@ -35,7 +39,7 @@ if(ENABLE_COVERAGE)
   add_coverage(hsolver)
 endif()
 
-if(ENABLE_LCAO)
+if(ENABLE_LCAO AND USE_ELPA)
   add_subdirectory(genelpa)
 endif()
 

@@ -9,7 +9,7 @@
 namespace ModuleESolver
 {
 
-class ESolver_SDFT_PW: public ESolver_KS_PW
+class ESolver_SDFT_PW: public ESolver_KS_PW<double>
 {
 public:
     ESolver_SDFT_PW();

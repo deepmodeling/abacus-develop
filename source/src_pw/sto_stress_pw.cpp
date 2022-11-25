@@ -2,7 +2,7 @@
 #include "../module_base/timer.h"
 #include "global.h"
 
-void Sto_Stress_PW::cal_stress(ModuleBase::matrix& sigmatot, const ModuleBase::matrix& wg, const psi::Psi<complex<double>>* psi_in, Stochastic_WF& stowf)
+void Sto_Stress_PW::cal_stress(ModuleBase::matrix& sigmatot, const ModuleBase::matrix& wg, const psi::Psi<complex<double>>* psi_in, Stochastic_WF& stowf, const Charge* const chr)
 {
 	ModuleBase::TITLE("Sto_Stress_PW","cal_stress");
 	ModuleBase::timer::tick("Sto_Stress_PW","cal_stress");    
@@ -20,7 +20,7 @@ void Sto_Stress_PW::cal_stress(ModuleBase::matrix& sigmatot, const ModuleBase::m
 	sto_stress_kin(sigmakin, wg, psi_in, stowf);
 	
 	//hartree contribution
-	stress_har(sigmahar, GlobalC::rhopw, 1);
+	stress_har(sigmahar, GlobalC::rhopw, 1, chr);
 
     //ewald contribution
     stress_ewa(sigmaewa, GlobalC::rhopw, 1);
@@ -30,13 +30,13 @@ void Sto_Stress_PW::cal_stress(ModuleBase::matrix& sigmatot, const ModuleBase::m
 	{
        sigmaxc(i,i) = - (GlobalC::en.etxc - GlobalC::en.vtxc) / GlobalC::ucell.omega;
     }
-    stress_gga(sigmaxc);
+    stress_gga(sigmaxc, chr);
 
     //local contribution
-    stress_loc(sigmaloc, GlobalC::rhopw, 1);
+    stress_loc(sigmaloc, GlobalC::rhopw, 1, chr);
     
     //nlcc
-    stress_cc(sigmaxcc, GlobalC::rhopw, 1);
+    stress_cc(sigmaxcc, GlobalC::rhopw, 1, chr);
    
     //nonlocal
 	sto_stress_nl(sigmanl, wg, psi_in, stowf);

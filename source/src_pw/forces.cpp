@@ -21,7 +21,7 @@ Forces::~Forces()
 }
 
 #include "../module_base/mathzone.h"
-void Forces::init(ModuleBase::matrix& force, const ModuleBase::matrix& wg, const psi::Psi<std::complex<double>>* psi_in)
+void Forces::init(ModuleBase::matrix& force, const ModuleBase::matrix& wg, const Charge* const chr, const psi::Psi<std::complex<double>>* psi_in)
 {
     ModuleBase::TITLE("Forces", "init");
     this->nat = GlobalC::ucell.nat;
@@ -32,10 +32,10 @@ void Forces::init(ModuleBase::matrix& force, const ModuleBase::matrix& wg, const
     ModuleBase::matrix forcecc(nat, 3);
     ModuleBase::matrix forcenl(nat, 3);
     ModuleBase::matrix forcescc(nat, 3);
-    this->cal_force_loc(forcelc, GlobalC::rhopw);
+    this->cal_force_loc(forcelc, GlobalC::rhopw, chr);
     this->cal_force_ew(forceion, GlobalC::rhopw);
     this->cal_force_nl(forcenl, wg, psi_in);
-    this->cal_force_cc(forcecc, GlobalC::rhopw);
+    this->cal_force_cc(forcecc, GlobalC::rhopw, chr);
     this->cal_force_scc(forcescc, GlobalC::rhopw);
 
     ModuleBase::matrix stress_vdw_pw; //.create(3,3);
@@ -411,7 +411,7 @@ void Forces::print(const std::string& name, const ModuleBase::matrix& f, bool ry
     return;
 }
 
-void Forces::cal_force_loc(ModuleBase::matrix& forcelc, ModulePW::PW_Basis* rho_basis)
+void Forces::cal_force_loc(ModuleBase::matrix& forcelc, ModulePW::PW_Basis* rho_basis, const Charge* const chr)
 {
     ModuleBase::TITLE("Forces", "cal_force_loc");
     ModuleBase::timer::tick("Forces", "cal_force_loc");
@@ -426,7 +426,7 @@ void Forces::cal_force_loc(ModuleBase::matrix& forcelc, ModulePW::PW_Basis* rho_
     {
         for (int ir = 0; ir < rho_basis->nrxx; ir++)
         {
-            aux[ir] += std::complex<double>(GlobalC::CHR.rho[is][ir], 0.0);
+            aux[ir] += std::complex<double>(chr->rho[is][ir], 0.0);
         }
     }
 
@@ -626,7 +626,7 @@ void Forces::cal_force_ew(ModuleBase::matrix& forceion, ModulePW::PW_Basis* rho_
     return;
 }
 
-void Forces::cal_force_cc(ModuleBase::matrix& forcecc, ModulePW::PW_Basis* rho_basis)
+void Forces::cal_force_cc(ModuleBase::matrix& forcecc, ModulePW::PW_Basis* rho_basis, const Charge* const chr)
 {
     // recalculate the exchange-correlation potential.
     ModuleBase::TITLE("Forces", "cal_force_cc");
@@ -639,7 +639,7 @@ void Forces::cal_force_cc(ModuleBase::matrix& forcecc, ModulePW::PW_Basis* rho_b
         const auto etxc_vtxc_v = XC_Functional::v_xc_meta(rho_basis->nrxx,
                                                           rho_basis->nxyz,
                                                           GlobalC::ucell.omega,
-                                                          &GlobalC::CHR);
+                                                          chr);
 
         GlobalC::en.etxc = std::get<0>(etxc_vtxc_v);
         GlobalC::en.vtxc = std::get<1>(etxc_vtxc_v);
@@ -653,7 +653,7 @@ void Forces::cal_force_cc(ModuleBase::matrix& forcecc, ModulePW::PW_Basis* rho_b
         const auto etxc_vtxc_v = XC_Functional::v_xc(rho_basis->nrxx,
                                                      rho_basis->nxyz,
                                                      GlobalC::ucell.omega,
-                                                     &GlobalC::CHR);
+                                                     chr);
 
         GlobalC::en.etxc = std::get<0>(etxc_vtxc_v);
         GlobalC::en.vtxc = std::get<1>(etxc_vtxc_v);
@@ -690,7 +690,7 @@ void Forces::cal_force_cc(ModuleBase::matrix& forcecc, ModulePW::PW_Basis* rho_b
         if (GlobalC::ucell.atoms[T1].ncpp.nlcc)
         {
             // call drhoc
-            GlobalC::CHR.non_linear_core_correction(GlobalC::ppcell.numeric,
+            chr->non_linear_core_correction(GlobalC::ppcell.numeric,
                                                     GlobalC::ucell.atoms[T1].ncpp.msh,
                                                     GlobalC::ucell.atoms[T1].ncpp.r,
                                                     GlobalC::ucell.atoms[T1].ncpp.rab,
