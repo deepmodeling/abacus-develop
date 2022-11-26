@@ -147,7 +147,7 @@ void XC_Functional::set_xc_type(const std::string xc_func_in)
         set_xc_type_libxc(xc_func);
         use_libxc = true;
 #else
-        std::cout << "functional name not recognized!" << std::endl;
+        ModuleBase::WARNING_QUIT("xc_functional.cpp","functional name not recognized!");
 #endif
     }
 
