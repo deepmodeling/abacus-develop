@@ -293,6 +293,10 @@ void ESolver_KS_LCAO_TDDFT::updatepot(const int istep, const int iter)
     else
     {
         GlobalC::en.cal_converged(this->pelec);
+        if (ELEC_evolve::td_vext != 0 && istep < ELEC_evolve::td_timescale)
+        {
+            this->pelec->pot->update_for_tddft(istep);
+        }
     }
 
     // store wfc
