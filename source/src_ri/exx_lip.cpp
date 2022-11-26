@@ -14,49 +14,44 @@
 #include <limits>
 #include "../src_parallel/parallel_global.h"
 
-#include "../src_external/src_test/test_function.h"
-
-Exx_Lip::Exx_Lip( const Exx_Global::Exx_Info &info_global )
+Exx_Lip::Exx_Lip( const Exx_Info::Exx_Info_Lip &info_in )
 	:init_finish(false),
-	 info(info_global),
+	 info(info_in),
 	 exx_matrix(NULL),
 	 exx_energy(0){}
-
-Exx_Lip::Exx_Info::Exx_Info( const Exx_Global::Exx_Info &info_global )
-	:hybrid_type(info_global.hybrid_type),
-	 hse_omega(info_global.hse_omega){}
 
 void Exx_Lip::cal_exx()
 {
 	ModuleBase::TITLE("Exx_Lip","cal_exx");
-	auto my_time = [](timeval &t_begin) -> double
-	{
-		const double time_during = cal_time(t_begin);
-		gettimeofday(&t_begin, NULL);
-		return time_during;
-	};
-	auto cout_t = [](const std::string &name, const double t)
-	{
-		std::cout<<name<<"\t"<<t<<std::endl;
-	};
+	
+//	auto my_time = [](timeval &t_begin) -> double
+//	{
+//		const double time_during = cal_time(t_begin);
+//		gettimeofday(&t_begin, NULL);
+//		return time_during;
+//	};
+//	auto cout_t = [](const std::string &name, const double t)
+//	{
+//		std::cout<<name<<"\t"<<t<<std::endl;
+//	};
 
-timeval t;
-gettimeofday(&t, NULL);
-double t_phi_cal=0, t_qkg2_exp=0, t_b_cal=0, t_sum3_cal=0, t_b_sum=0, t_sum_all=0;
+//timeval t;
+//gettimeofday(&t, NULL);
+//double t_phi_cal=0, t_qkg2_exp=0, t_b_cal=0, t_sum3_cal=0, t_b_sum=0, t_sum_all=0;
 	wf_wg_cal();
-cout_t("wf_wg_cal",my_time(t));
+//cout_t("wf_wg_cal",my_time(t));
 	psi_cal();
-cout_t("psi_cal",my_time(t));
+//cout_t("psi_cal",my_time(t));
 	for( int ik=0; ik<k_pack->kv_ptr->nks; ++ik)
 	{
 		phi_cal(k_pack, ik);
-t_phi_cal += my_time(t);
+//t_phi_cal += my_time(t);
 
 		judge_singularity(ik);
 		for( int iw_l=0; iw_l<GlobalV::NLOCAL; ++iw_l)
 			for( int iw_r=0; iw_r<GlobalV::NLOCAL; ++iw_r)
 				sum1[iw_l*GlobalV::NLOCAL+iw_r] = std::complex<double> (0.0,0.0);
-		if( Exx_Global::Hybrid_Type::HF==info.hybrid_type || Exx_Global::Hybrid_Type::PBE0==info.hybrid_type || Exx_Global::Hybrid_Type::SCAN0==info.hybrid_type)
+		if( Conv_Coulomb_Pot_K::Ccp_Type::Ccp==info.ccp_type || Conv_Coulomb_Pot_K::Ccp_Type::Hf==info.ccp_type )
 		{
 			sum2_factor = 0.0;
 			if(gzero_rank_in_pool==GlobalV::RANK_IN_POOL)
@@ -69,30 +64,30 @@ t_phi_cal += my_time(t);
 		{
 			int iq = (ik<(k_pack->kv_ptr->nks/GlobalV::NSPIN)) ? (iq_tmp%(q_pack->kv_ptr->nks/GlobalV::NSPIN)) : (iq_tmp%(q_pack->kv_ptr->nks/GlobalV::NSPIN)+(q_pack->kv_ptr->nks/GlobalV::NSPIN));
 			qkg2_exp(ik, iq);
-t_qkg2_exp += my_time(t);
+//t_qkg2_exp += my_time(t);
 			for( int ib=0; ib<GlobalV::NBANDS; ++ib)
 			{
 				b_cal(ik, iq, ib);
-t_b_cal += my_time(t);
-				if( Exx_Global::Hybrid_Type::HF==info.hybrid_type || Exx_Global::Hybrid_Type::PBE0==info.hybrid_type || Exx_Global::Hybrid_Type::SCAN0==info.hybrid_type)
+//t_b_cal += my_time(t);
+				if( Conv_Coulomb_Pot_K::Ccp_Type::Ccp==info.ccp_type || Conv_Coulomb_Pot_K::Ccp_Type::Hf==info.ccp_type )
 					if(iq==iq_vecik)
 						sum3_cal(iq,ib);
-t_sum3_cal += my_time(t);
+//t_sum3_cal += my_time(t);
 				b_sum(iq, ib);
-t_b_sum += my_time(t);
+//t_b_sum += my_time(t);
 			}
 		}
 		sum_all(ik);
-t_sum_all += my_time(t);
+//t_sum_all += my_time(t);
 	}
 	exx_energy_cal();
-cout_t("exx_energy_cal",my_time(t));
-cout_t("phi_cal",t_phi_cal);
-cout_t("qkg2_exp",t_qkg2_exp);
-cout_t("b_cal",t_b_cal);
-cout_t("sum3_cal",t_sum3_cal);
-cout_t("b_sum",t_b_sum);
-cout_t("sum_all",t_sum_all);
+//cout_t("exx_energy_cal",my_time(t));
+//cout_t("phi_cal",t_phi_cal);
+//cout_t("qkg2_exp",t_qkg2_exp);
+//cout_t("b_cal",t_b_cal);
+//cout_t("sum3_cal",t_sum3_cal);
+//cout_t("b_sum",t_b_sum);
+//cout_t("sum_all",t_sum_all);
 
 	auto print_Hexxk = [&]()
 	{
@@ -124,7 +119,7 @@ void Exx_Lip::cal_exx()
 		for( int iw_l=0; iw_l<GlobalV::NLOCAL; ++iw_l)
 			for( int iw_r=0; iw_r<GlobalV::NLOCAL; ++iw_r)
 				sum1[iw_l*GlobalV::NLOCAL+iw_r] = std::complex<double>(0.0,0.0);
-		if( Exx_Global::Hybrid_Type::HF==info.hybrid_type || Exx_Global::Hybrid_Type::PBE0==info.hybrid_type )
+		if( Exx_Info::Hybrid_Type::HF==info.hybrid_type || Exx_Info::Hybrid_Type::PBE0==info.hybrid_type || Exx_Info::Hybrid_Type::SCAN0==info.hybrid_type )
 		{
 			sum2_factor = 0.0;
 			if(gzero_rank_in_pool==GlobalV::RANK_IN_POOL)
@@ -140,7 +135,7 @@ void Exx_Lip::cal_exx()
 			for( int ib=0; ib<GlobalV::NBANDS; ++ib)
 			{
 				b_cal(ik, iq, ib);
-				if( Exx_Global::Hybrid_Type::HF==info.hybrid_type || Exx_Global::Hybrid_Type::PBE0==info.hybrid_type )
+				if( Exx_Info::Hybrid_Type::HF==info.hybrid_type || Exx_Info::Hybrid_Type::PBE0==info.hybrid_type || Exx_Info::Hybrid_Type::SCAN0==info.hybrid_type )
 					if(iq==iq_vecik)
 						sum3_cal(iq,ib);
 					b_sum(iq, ib);
@@ -218,7 +213,7 @@ void Exx_Lip::init(
 
 		sum1 = new std::complex<double> [GlobalV::NLOCAL*GlobalV::NLOCAL];
 
-		if( Exx_Global::Hybrid_Type::HF==info.hybrid_type || Exx_Global::Hybrid_Type::PBE0==info.hybrid_type || Exx_Global::Hybrid_Type::SCAN0==info.hybrid_type)
+		if( Conv_Coulomb_Pot_K::Ccp_Type::Ccp==info.ccp_type || Conv_Coulomb_Pot_K::Ccp_Type::Hf==info.ccp_type )
 			if(gzero_rank_in_pool==GlobalV::RANK_IN_POOL)
 			{
 				b0 = new std::complex<double> [GlobalV::NLOCAL];
@@ -284,7 +279,7 @@ Exx_Lip::~Exx_Lip()
 
 		delete[] sum1;		sum1=NULL;
 
-		if( Exx_Global::Hybrid_Type::HF==info.hybrid_type || Exx_Global::Hybrid_Type::PBE0==info.hybrid_type || Exx_Global::Hybrid_Type::SCAN0==info.hybrid_type)
+		if( Conv_Coulomb_Pot_K::Ccp_Type::Ccp==info.ccp_type || Conv_Coulomb_Pot_K::Ccp_Type::Hf==info.ccp_type )
 			if(gzero_rank_in_pool==GlobalV::RANK_IN_POOL)
 			{
 				delete[] b0;	b0=NULL;
@@ -443,7 +438,7 @@ void Exx_Lip::qkg2_exp(int ik, int iq)
 	for( int ig=0; ig<rho_basis->npw; ++ig)
 	{
 		const double qkg2 = ( (q_pack->kv_ptr->kvec_c[iq] - k_pack->kv_ptr->kvec_c[ik] + rho_basis->gcar[ig]) *(ModuleBase::TWO_PI/ucell_ptr->lat0)).norm2();
-		if( (Exx_Global::Hybrid_Type::PBE0==info.hybrid_type) || (Exx_Global::Hybrid_Type::HF==info.hybrid_type) || (Exx_Global::Hybrid_Type::SCAN0==info.hybrid_type))
+		if( Conv_Coulomb_Pot_K::Ccp_Type::Ccp==info.ccp_type || Conv_Coulomb_Pot_K::Ccp_Type::Hf==info.ccp_type )
 		{
 			if( abs(qkg2)<1e-10 )
 				recip_qkg2[ig] = 0.0;												// 0 to ignore bb/qkg2 when qkg2==0
@@ -452,7 +447,7 @@ void Exx_Lip::qkg2_exp(int ik, int iq)
 			sum2_factor += recip_qkg2[ig] * exp(-info.lambda*qkg2) ;
 			recip_qkg2[ig] = sqrt(recip_qkg2[ig]);
 		}
-		else if(Exx_Global::Hybrid_Type::HSE==info.hybrid_type)
+		else if( Conv_Coulomb_Pot_K::Ccp_Type::Hse==info.ccp_type )
 		{
 			if( abs(qkg2)<1e-10 )
 				recip_qkg2[ig] = 1.0/(2*info.hse_omega);
@@ -495,7 +490,7 @@ void Exx_Lip::b_cal( int ik, int iq, int ib)
 		}
 		std::complex<double> * const b_w = b+iw*rho_basis->npw;
 		rho_basis->real2recip( porter, b_w);
-		if( Exx_Global::Hybrid_Type::HF==info.hybrid_type || Exx_Global::Hybrid_Type::PBE0==info.hybrid_type || Exx_Global::Hybrid_Type::SCAN0==info.hybrid_type)
+		if( Conv_Coulomb_Pot_K::Ccp_Type::Ccp==info.ccp_type || Conv_Coulomb_Pot_K::Ccp_Type::Hf==info.ccp_type )
 			if((iq==iq_vecik) && (gzero_rank_in_pool==GlobalV::RANK_IN_POOL))							/// need to check while use k_point parallel
 				b0[iw] = b_w[rho_basis->ig_gge0];
 		
@@ -532,10 +527,10 @@ void Exx_Lip::b_sum( int iq, int ib)			// Peize Lin change 2019-04-14
 void Exx_Lip::sum_all(int ik)
 {
 	double sum2_factor_g(0.0);
-	if( Exx_Global::Hybrid_Type::HF==info.hybrid_type || Exx_Global::Hybrid_Type::PBE0==info.hybrid_type || Exx_Global::Hybrid_Type::SCAN0==info.hybrid_type)
-		#ifdef __MPI
+	#ifdef __MPI
+	if( Conv_Coulomb_Pot_K::Ccp_Type::Ccp==info.ccp_type || Conv_Coulomb_Pot_K::Ccp_Type::Hf==info.ccp_type )
 		MPI_Reduce( &sum2_factor, &sum2_factor_g, 1, MPI_DOUBLE, MPI_SUM, gzero_rank_in_pool, POOL_WORLD);
-		#endif
+	#endif
 	for( size_t iw_l=1; iw_l<GlobalV::NLOCAL; ++iw_l)
 		for( size_t iw_r=0; iw_r<iw_l; ++iw_r)
 			sum1[iw_l*GlobalV::NLOCAL+iw_r] = conj(sum1[iw_r*GlobalV::NLOCAL+iw_l]);		// Peize Lin add conj 2019-04-14
@@ -545,7 +540,7 @@ void Exx_Lip::sum_all(int ik)
 		for( int iw_r=0; iw_r<GlobalV::NLOCAL; ++iw_r)
 		{
 			exx_matrix[ik][iw_l][iw_r] = 2.0* (-4*ModuleBase::PI/ucell_ptr->omega *sum1[iw_l*GlobalV::NLOCAL+iw_r]);
-			if( Exx_Global::Hybrid_Type::HF==info.hybrid_type || Exx_Global::Hybrid_Type::PBE0==info.hybrid_type || Exx_Global::Hybrid_Type::SCAN0==info.hybrid_type)
+			if( Conv_Coulomb_Pot_K::Ccp_Type::Ccp==info.ccp_type || Conv_Coulomb_Pot_K::Ccp_Type::Hf==info.ccp_type )
 				if(gzero_rank_in_pool==GlobalV::RANK_IN_POOL)
 				{
 					exx_matrix[ik][iw_l][iw_r] += 2.0* (4*ModuleBase::PI/ucell_ptr->omega *sum3[iw_l][iw_r] *sum2_factor_g );

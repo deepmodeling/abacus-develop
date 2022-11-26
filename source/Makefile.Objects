@@ -47,6 +47,7 @@ VPATH=./src_global:\
 ./src_parallel:\
 ./src_pdiag:\
 ./src_ri:\
+./module_ri:\
 ./\
 
 OBJS_ABACUS_PW=${OBJS_MAIN}\
@@ -409,39 +410,41 @@ OBJS_LCAO=DM_gamma.o\
       dm_2d.o\
       wavefunc_in_pw.o\
 
-OBJS_RI=exx_lip.o\
-
 OBJS_RI_LCAO=abfs-vector3_order.o\
       abfs.o\
       conv_coulomb_pot.o\
       conv_coulomb_pot_k.o\
+      exx_abfs.o \
+      exx_abfs-abfs_index.o \
+      exx_abfs-dm.o \
+      exx_abfs-inverse_matrix_double.o \
+      exx_abfs-jle.o \
+      exx_abfs-io.o \
+      exx_abfs-construct_orbs.o \
+      exx_abfs-matrix_orbs11.o \
+      exx_abfs-matrix_orbs21.o \
+      exx_abfs-matrix_orbs22.o \
+      exx_abfs-matrix_lcaoslcaos_lcaoslcaos.o \
+      exx_abfs-pca.o \
+      exx_abfs-parallel-communicate-function.o \
+      exx_abfs-parallel-communicate-dm3.o \
+      exx_abfs-parallel-communicate-dm3-allreduce.o \
+      exx_abfs-parallel-communicate-hexx.o \
+      exx_abfs-parallel-communicate-hexx-allreduce2.o \
+      exx_abfs-parallel-distribute-htime.o \
+      exx_abfs-parallel-distribute-kmeans.o \
+      exx_abfs-parallel-distribute-order.o \
+      exx_abfs-util.o \
+      exx_abfs-screen-schwarz.o \
+      exx_abfs-screen-cauchy.o \
+      exx_lcao.o \
+      exx_opt_orb.o \
+      exx_opt_orb-print.o \
+      exx_lip.o\
 
-OBJS_EXX=exx_abfs-abfs_index.o\
-      exx_abfs-construct_orbs.o\
-      exx_abfs-dm.o\
-      exx_abfs-inverse_matrix_double.o\
-      exx_abfs-io.o\
-      exx_abfs-jle.o\
-      exx_abfs-matrix_lcaoslcaos_lcaoslcaos.o\
-      exx_abfs-matrix_orbs11.o\
-      exx_abfs-matrix_orbs21.o\
-      exx_abfs-matrix_orbs22.o\
-      exx_abfs-parallel-communicate-dm3-allreduce.o\
-      exx_abfs-parallel-communicate-dm3.o\
-      exx_abfs-parallel-communicate-function.o\
-      exx_abfs-parallel-communicate-hexx-allreduce2.o\
-      exx_abfs-parallel-communicate-hexx.o\
-      exx_abfs-parallel-distribute-htime.o\
-      exx_abfs-parallel-distribute-kmeans.o\
-      exx_abfs-parallel-distribute-order.o\
-      exx_abfs-pca.o\
-      exx_abfs-screen-cauchy.o\
-      exx_abfs-screen-schwarz.o\
-      exx_abfs-util.o\
-      exx_abfs.o\
-      exx_lcao.o\
-      exx_opt_orb-print.o\
-      exx_opt_orb.o\
+OBJS_RI=Matrix_Orbs11.o\
+      Matrix_Orbs21.o\
+      RI_2D_Comm.o
 
 OBJS_PARALLEL=parallel_common.o\
     parallel_global.o\

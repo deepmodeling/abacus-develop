@@ -978,7 +978,7 @@ void Force_LCAO_k::cal_fvl_dphi_k(const bool isforce,
         // fvl_dphi can not be set to zero here if Vna is used
         if (isstress || isforce)
         {
-            if (XC_Functional::get_func_type() == 3)
+            if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
             {
                 Gint_inout inout(DM_R,
                                  vr_eff1,

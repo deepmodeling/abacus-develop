@@ -290,6 +290,7 @@ void Hamilt_PW::diagH_subspace(
 	delete []aux;
 
 	// Peize Lin add 2019-03-09
+#ifdef __EXX
 #ifdef __LCAO
 	if(GlobalV::BASIS_TYPE=="lcao_in_pw")
 	{
@@ -305,19 +306,14 @@ void Hamilt_PW::diagH_subspace(
 		};
 		if(XC_Functional::get_func_type()==4 || XC_Functional::get_func_type()==5)
 		{
-			if ( Exx_Global::Hybrid_Type::HF   == GlobalC::exx_lcao.info.hybrid_type ) // HF
-			{
-				add_Hexx(1);
-			}
-			else if (Exx_Global::Hybrid_Type::PBE0 == GlobalC::exx_lcao.info.hybrid_type || 
-					Exx_Global::Hybrid_Type::SCAN0 == GlobalC::exx_lcao.info.hybrid_type ||
-					Exx_Global::Hybrid_Type::HSE  == GlobalC::exx_lcao.info.hybrid_type) // PBE0 or HSE
+			if( GlobalC::exx_info.info_global.cal_exx )
 			{
 				add_Hexx(GlobalC::exx_global.info.hybrid_alpha);
 			}
 		}
 	}
-#endif
+#endif // __LCAO
+#endif // __EXX
 
 	if(GlobalV::NPROC_IN_POOL>1)
 	{
@@ -331,20 +327,17 @@ void Hamilt_PW::diagH_subspace(
 
 
 	// Peize Lin add 2019-03-09
+#ifdef __EXX
 #ifdef __LCAO
 	if("lcao_in_pw"==GlobalV::BASIS_TYPE)
 	{
-		switch(GlobalC::exx_global.info.hybrid_type)
+		if( GlobalC::exx_info.info_global.cal_exx )
 		{
-			case Exx_Global::Hybrid_Type::HF:
-			case Exx_Global::Hybrid_Type::PBE0:
-			case Exx_Global::Hybrid_Type::SCAN0:
-			case Exx_Global::Hybrid_Type::HSE:
-				GlobalC::exx_lip.k_pack->hvec_array[ik] = hvec;
-				break;
+			GlobalC::exx_lip.k_pack->hvec_array[ik] = hvec;
 		}
 	}
-#endif
+#endif // __LCAO
+#endif // __EXX
 
     //=======================
     //diagonize the H-matrix

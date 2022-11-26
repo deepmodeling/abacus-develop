@@ -1,6 +1,6 @@
 #include "../xc_functional.h"
 #include "gtest/gtest.h"
-#include "../exx_global.h"
+#include "../exx_info.h"
 
 namespace ModuleBase
 {
@@ -18,7 +18,7 @@ namespace GlobalV
 
 namespace GlobalC
 {
-	Exx_Global exx_global;
+	Exx_Info exx_info;
 }
 
 class XCTest_SLATER1_SPN : public testing::Test

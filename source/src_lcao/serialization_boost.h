@@ -12,7 +12,7 @@
 #include <boost/serialization/std::string.hpp>
 
 #include "../module_base/vector3.h"
-#include "../src_ri/abfs-vector3_order.h"
+#include "../module_base/abfs-vector3_order.h"
 #include "../module_base/matrix.h"
 #include "../module_base/matrix_wrapper.h"
 

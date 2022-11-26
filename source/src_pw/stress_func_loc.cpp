@@ -6,6 +6,7 @@
 //calculate local pseudopotential stress in PW or VL_dVL stress in LCAO
 void Stress_Func::stress_loc(ModuleBase::matrix& sigma, ModulePW::PW_Basis* rho_basis, const bool is_pw, const Charge* const chr)
 {
+    ModuleBase::TITLE("Stress_Func","stress_loc");
     ModuleBase::timer::tick("Stress_Func","stress_loc");
 
     double *dvloc = new double[rho_basis->npw];

@@ -60,8 +60,14 @@ extern "C"
     // Peize Lin add dsptrf and dsptri 2016-06-21, to compute inverse real symmetry indefinit matrix.
     // dpotrf computes the Cholesky factorization of a real symmetric positive definite matrix
     // while dpotri taks its output to perform matrix inversion
+    void spotrf_(const char*const uplo, const int*const n, float*const A, const int*const lda, int*const info);
     void dpotrf_(const char*const uplo, const int*const n, double*const A, const int*const lda, int*const info);
+    void cpotrf_(const char*const uplo, const int*const n, std::complex<float>*const A, const int*const lda, int*const info);
+    void zpotrf_(const char*const uplo, const int*const n, std::complex<double>*const A, const int*const lda, int*const info);
+    void spotri_(const char*const uplo, const int*const n, float*const A, const int*const lda, int*const info);
     void dpotri_(const char*const uplo, const int*const n, double*const A, const int*const lda, int*const info);
+    void cpotri_(const char*const uplo, const int*const n, std::complex<float>*const A, const int*const lda, int*const info);
+    void zpotri_(const char*const uplo, const int*const n, std::complex<double>*const A, const int*const lda, int*const info);
 
     // zgetrf computes the LU factorization of a general matrix
     // while zgetri takes its output to perform matrix inversion
@@ -416,32 +422,79 @@ public:
 
 	// Peize Lin add 2016-07-09
 	static inline
-	void dpotrf( const char &uplo, const int &n, double*const A, const int &lda, int &info )
+	void potrf( const char &uplo, const int &n, float*const A, const int &lda, int &info )
+	{
+		const char uplo_changed = change_uplo(uplo);
+		spotrf_( &uplo_changed, &n, A, &lda, &info );
+	}	
+	static inline
+	void potrf( const char &uplo, const int &n, double*const A, const int &lda, int &info )
 	{
 		const char uplo_changed = change_uplo(uplo);
 		dpotrf_( &uplo_changed, &n, A, &lda, &info );
 	}	
+	static inline
+	void potrf( const char &uplo, const int &n, std::complex<float>*const A, const int &lda, int &info )
+	{
+		const char uplo_changed = change_uplo(uplo);
+		cpotrf_( &uplo_changed, &n, A, &lda, &info );
+	}	
+	static inline
+	void potrf( const char &uplo, const int &n, std::complex<double>*const A, const int &lda, int &info )
+	{
+		const char uplo_changed = change_uplo(uplo);
+		zpotrf_( &uplo_changed, &n, A, &lda, &info );
+	}	
+
 	
 	// Peize Lin add 2016-07-09
 	static inline
-	void dpotri( const char &uplo, const int &n, double*const A, const int &lda, int &info )
+	void potri( const char &uplo, const int &n, float*const A, const int &lda, int &info )
+	{
+		const char uplo_changed = change_uplo(uplo);
+		spotri_( &uplo_changed, &n, A, &lda, &info);		
+	}	
+	static inline
+	void potri( const char &uplo, const int &n, double*const A, const int &lda, int &info )
 	{
 		const char uplo_changed = change_uplo(uplo);
 		dpotri_( &uplo_changed, &n, A, &lda, &info);		
-	}	
+	}
+	static inline
+	void potri( const char &uplo, const int &n, std::complex<float>*const A, const int &lda, int &info )
+	{
+		const char uplo_changed = change_uplo(uplo);
+		cpotri_( &uplo_changed, &n, A, &lda, &info);		
+	}
+	static inline
+	void potri( const char &uplo, const int &n, std::complex<double>*const A, const int &lda, int &info )
+	{
+		const char uplo_changed = change_uplo(uplo);
+		zpotri_( &uplo_changed, &n, A, &lda, &info);		
+	}
 
 	// Peize Lin add 2016-07-09
 	static inline
-	void dpotrf( const char &uplo, const int &n, ModuleBase::matrix &A, const int &lda, int &info )
+	void potrf( const char &uplo, const int &n, ModuleBase::matrix &A, const int &lda, int &info )
 	{
-		dpotrf( uplo, n, A.c, lda, info );
+		potrf( uplo, n, A.c, lda, info );
+	}	
+	static inline
+	void potrf( const char &uplo, const int &n, ModuleBase::ComplexMatrix &A, const int &lda, int &info )
+	{
+		potrf( uplo, n, A.c, lda, info );
 	}	
 	
 	// Peize Lin add 2016-07-09
 	static inline
-	void dpotri( const char &uplo, const int &n, ModuleBase::matrix &A, const int &lda, int &info )
+	void potri( const char &uplo, const int &n, ModuleBase::matrix &A, const int &lda, int &info )
 	{
-		dpotri( uplo, n, A.c, lda, info);		
+		potri( uplo, n, A.c, lda, info);		
+	}	
+	static inline
+	void potri( const char &uplo, const int &n, ModuleBase::ComplexMatrix &A, const int &lda, int &info )
+	{
+		potri( uplo, n, A.c, lda, info);		
 	}	
 	
 	// Peize Lin add 2019-04-14

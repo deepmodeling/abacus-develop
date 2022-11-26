@@ -26,7 +26,6 @@
 #include "module_neighbor/sltk_atom_arrange.h"
 #include "module_pw/pw_basis_k.h"
 #include "module_xc/xc_functional.h"
-#include "module_xc/exx_global.h"
 #include "src_io/restart.h"
 
 Magnetism::Magnetism(){}
@@ -74,18 +73,6 @@ namespace GlobalC
 XC_Functional::XC_Functional(){}
 XC_Functional::~XC_Functional(){}
 int XC_Functional::get_func_type(){return 0;}
-
-#ifdef __MPI
-#include "src_ri/exx_lcao.h"
-Exx_Lcao::Exx_Info::Exx_Info( const Exx_Global::Exx_Info &info_global )
-    :hybrid_type(info_global.hybrid_type),hse_omega(info_global.hse_omega){}
-Exx_Lcao::Exx_Lcao(const Exx_Global::Exx_Info &info_global ):info(info_global){}
-namespace GlobalC
-{
-    Exx_Global exx_global;
-    Exx_Lcao exx_lcao(GlobalC::exx_global.info); 
-}
-#endif
 
 namespace WF_Local
 {

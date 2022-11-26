@@ -7,6 +7,7 @@
 //calculate the Hartree part in PW or LCAO base
 void Stress_Func::stress_har(ModuleBase::matrix& sigma, ModulePW::PW_Basis* rho_basis, const bool is_pw, const Charge* const chr)
 {
+    ModuleBase::TITLE("Stress_Func","stress_har");
 	ModuleBase::timer::tick("Stress_Func","stress_har");
 	double shart;
 

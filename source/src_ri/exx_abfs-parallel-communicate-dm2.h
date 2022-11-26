@@ -3,7 +3,7 @@
 
 #include "exx_abfs-parallel.h"
 #include "../module_base/matrix.h"
-#include "abfs-vector3_order.h"
+#include "module_base/abfs-vector3_order.h"
 #include <vector>
 #include <map>
 

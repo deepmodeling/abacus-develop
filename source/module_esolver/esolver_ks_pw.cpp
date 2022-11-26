@@ -357,7 +357,7 @@ namespace ModuleESolver
 
     // add exx
 #ifdef __LCAO
-#ifdef __MPI
+#ifdef __EXX
         GlobalC::en.set_exx();		// Peize Lin add 2019-03-09
 #endif
 #endif

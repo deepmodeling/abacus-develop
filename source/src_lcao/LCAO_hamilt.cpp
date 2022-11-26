@@ -323,18 +323,20 @@ void LCAO_Hamilt::calculate_HSR_sparse(const int &current_spin, const double &sp
         }
     }
 
+#ifdef __EXX
 #ifdef __MPI
-    if (GlobalC::exx_global.info.hybrid_type==Exx_Global::Hybrid_Type::HF
-        || GlobalC::exx_global.info.hybrid_type==Exx_Global::Hybrid_Type::PBE0
-        || GlobalC::exx_global.info.hybrid_type==Exx_Global::Hybrid_Type::HSE
-        || GlobalC::exx_global.info.hybrid_type==Exx_Global::Hybrid_Type::SCAN0)
+    if( GlobalC::exx_info.info_global.cal_exx )
     {
-        calculate_HR_exx_sparse(current_spin, sparse_threshold);
+        //calculate_HR_exx_sparse(current_spin, sparse_threshold);
+        if(GlobalV::GAMMA_ONLY_LOCAL)
+            this->calculate_HR_exx_sparse(current_spin, sparse_threshold, GlobalC::exx_lri_double.Hexxs);
+        else
+            this->calculate_HR_exx_sparse(current_spin, sparse_threshold, GlobalC::exx_lri_complex.Hexxs);
     }
-#endif
+#endif // __MPI
+#endif // __EXX
 
     clear_zero_elements(current_spin, sparse_threshold);
-
 }
 
 void LCAO_Hamilt::calculate_SR_sparse(const double &sparse_threshold)
@@ -569,7 +571,7 @@ void LCAO_Hamilt::calculat_HR_dftu_soc_sparse(const int &current_spin, const dou
 
 }
 
-#ifdef __MPI
+#ifdef __EXX
 // Peize Lin add 2021.11.16
 void LCAO_Hamilt::calculate_HR_exx_sparse(const int &current_spin, const double &sparse_threshold)
 {
@@ -593,11 +595,11 @@ void LCAO_Hamilt::calculate_HR_exx_sparse(const int &current_spin, const double 
 		{
 			ModuleBase::matrix HexxR_tmp;
 			if(GlobalV::GAMMA_ONLY_LOCAL)
-				HexxR_tmp = GlobalC::exx_global.info.hybrid_alpha
+				HexxR_tmp = GlobalC::exx_info.info_global.hybrid_alpha
 					* GlobalC::exx_lcao.Hexx_para.HK_Gamma_m2D[ik]
 					* (GlobalC::kv.wk[ik] * frac);
 			else
-				HexxR_tmp = GlobalC::exx_global.info.hybrid_alpha
+				HexxR_tmp = GlobalC::exx_info.info_global.hybrid_alpha
 					* (GlobalC::exx_lcao.Hexx_para.HK_K_m2D[ik]
 					* std::exp( ModuleBase::TWO_PI*ModuleBase::IMAG_UNIT * (GlobalC::kv.kvec_c[ik] * (R*GlobalC::ucell.latvec)) )).real()
 					* (GlobalC::kv.wk[ik] * frac);
@@ -646,7 +648,7 @@ void LCAO_Hamilt::calculate_HR_exx_sparse(const int &current_spin, const double 
     
 	ModuleBase::timer::tick("LCAO_Hamilt","calculate_HR_exx_sparse");	
 }
-#endif
+#endif // __EXX
 
 // in case there are elements smaller than the threshold
 void LCAO_Hamilt::clear_zero_elements(const int &current_spin, const double &sparse_threshold)
@@ -735,9 +737,7 @@ void LCAO_Hamilt::clear_zero_elements(const int &current_spin, const double &spa
                 }
             }
         }
-
     }
-
 }
 
 void LCAO_Hamilt::destroy_all_HSR_sparse(void)
