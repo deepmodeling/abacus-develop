@@ -595,28 +595,15 @@ namespace ModuleESolver
                 ofs << std::setprecision(6);
             }
 
-            //----------------------
-            // no energy to output
-            //----------------------
-            if (GlobalV::KS_SOLVER == "selinv")
+            GlobalV::ofs_running << std::setprecision(6);
+            GlobalV::ofs_running << std::setiosflags(ios::showpoint);
+            for (int ib = 0; ib < GlobalV::NBANDS; ib++)
             {
-                ofs << " USING SELINV, NO BAND ENERGY IS AVAILABLE." << std::endl;
+                ofs << std::setw(8) << ib + 1
+                    << std::setw(15) << this->pelec->ekb(ik, ib) * ModuleBase::Ry_to_eV
+                    << std::setw(15) << this->pelec->wg(ik, ib) << std::endl;
             }
-            //----------------------
-            // output energy
-            //----------------------
-            else
-            {
-                GlobalV::ofs_running << std::setprecision(6);
-                GlobalV::ofs_running << std::setiosflags(ios::showpoint);
-                for (int ib = 0; ib < GlobalV::NBANDS; ib++)
-                {
-                    ofs << std::setw(8) << ib + 1
-                        << std::setw(15) << this->pelec->ekb(ik, ib) * ModuleBase::Ry_to_eV
-                        << std::setw(15) << this->pelec->wg(ik, ib) << std::endl;
-                }
-                ofs << std::endl;
-            }
+            ofs << std::endl;
         }//end ik
         return;
     }

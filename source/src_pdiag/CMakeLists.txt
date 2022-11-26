@@ -8,7 +8,6 @@ if(ENABLE_LCAO)
   add_library(
       pdiag
       OBJECT
-      pdiag_common.cpp
       pdiag_double.cpp
       diag_scalapack_gvx.cpp
       ${objects}

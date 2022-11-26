@@ -5,8 +5,6 @@
 #include "../src_io/write_HS.h"
 #include "../src_pdiag/pdiag_double.h"
 #include "../src_pw/global.h"
-// xiaohui modified 2013-03-23
-//#include "../src_develop/src_siao/selinv.h"
 
 Diago_LCAO_Matrix::Diago_LCAO_Matrix(LCAO_Matrix *lm) : LM(lm)
 {

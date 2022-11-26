@@ -92,8 +92,6 @@ private:
 	// whether the DM(R) array has been allocated
 	bool init_DM_R;
 
-	void cal_dk_gamma(ModuleBase::matrix& wg);
-
 	// mohan add 2010-09-06
 	int lgd_last;// sub-FFT-mesh orbitals number in previous step.
 	int lgd_now;// sub-FFT-mesh orbitals number in this step.

@@ -449,8 +449,7 @@ OBJS_PARALLEL=parallel_common.o\
     parallel_kpoints.o\
     parallel_reduce.o\
 
-OBJS_PDIAG=pdiag_common.o\
-      pdiag_double.o\
+OBJS_PDIAG=pdiag_double.o\
       diag_scalapack_gvx.o\
       
 OBJS_SRCPW=H_Ewald_pw.o\

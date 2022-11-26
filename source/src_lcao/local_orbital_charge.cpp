@@ -3,10 +3,6 @@
 #include "../module_base/blas_connector.h"
 #include "../module_base/timer.h"
 
-//#include "../src_onscaling/on_tests.h"
-//#include "../src_siao/selinv.h"
-// 2014.10.29 add memory pool for DM and by yshen
-
 // Shen Yu add 2019/5/9
 extern "C"
 {

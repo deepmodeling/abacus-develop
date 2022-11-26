@@ -176,8 +176,6 @@ void Input::Default(void)
     //----------------------------------------------------------
     // new function
     //----------------------------------------------------------
-    // local_basis=0; xiaohui modify 2013-09-01
-    // linear_scaling=false; xiaohui modify 2013-09-01
     basis_type = "pw"; // xiaohui add 2013-09-01
     ks_solver = "default"; // xiaohui add 2013-09-01
     search_radius = -1.0; // unit: a.u. -1.0 has no meaning.
@@ -736,18 +734,10 @@ bool Input::Read(const std::string &fn)
         //----------------------------------------------------------
         // new function
         //----------------------------------------------------------
-        // else if (strcmp("local_basis", word) == 0)
-        //{
-        //    read_value(ifs, local_basis);
-        //} xiaohui modify 2013-09-01
         else if (strcmp("basis_type", word) == 0)
         {
             read_value(ifs, basis_type);
         } // xiaohui add 2013-09-01
-        // else if (strcmp("linear_scaling", word) == 0)
-        //{
-        //     read_value(ifs, linear_scaling);
-        // } xiaohui modify 2013-09-01
         else if (strcmp("ks_solver", word) == 0)
         {
             read_value(ifs, ks_solver);
@@ -2623,7 +2613,6 @@ void Input::Check(void)
         this->relax_nmax = 1;
         out_stru = 0;
 
-        // if (local_basis == 0 && linear_scaling == 0) xiaohui modify 2013-09-01
         if (basis_type == "pw" && calculation == "get_S") // xiaohui add 2013-09-01. Attention! maybe there is some problem
         {
             if (pw_diag_thr > 1.0e-3)
@@ -2659,7 +2648,6 @@ void Input::Check(void)
         out_dm1 = 0;
         out_pot = 0;
 
-        // if(!local_basis || !linear_scaling) xiaohui modify 2013-09-01
         if (basis_type == "pw") // xiaohui add 2013-09-01
         {
             ModuleBase::WARNING_QUIT("Input::Check", "calculate = istate is only availble for LCAO.");
@@ -2681,7 +2669,6 @@ void Input::Check(void)
         out_dm = 0;
         out_dm1 = 0;
         out_pot = 0;
-        // if(!local_basis || !linear_scaling) xiaohui modify 2013-09-01
         if (basis_type == "pw") // xiaohui add 2013-09-01
         {
             ModuleBase::WARNING_QUIT("Input::Check", "calculate = istate is only availble for LCAO.");
@@ -2856,16 +2843,6 @@ void Input::Check(void)
         {
             ModuleBase::WARNING_QUIT("Input", "scalapack_gvx can not be used with plane wave basis.");
         }
-        else if (ks_solver == "hpseps")
-        {
-            ModuleBase::WARNING_QUIT("Input", "hpseps can not be used with plane wave basis."); // xiaohui add
-                                                                                                // 2013-09-04
-        }
-        else if (ks_solver == "selinv")
-        {
-            ModuleBase::WARNING_QUIT("Input", "selinv can not be used with plane wave basis."); // xiaohui add
-                                                                                                // 2013-09-04
-        }
         else if (ks_solver == "lapack")
         {
             ModuleBase::WARNING_QUIT("Input", "lapack can not be used with plane wave basis.");
@@ -2893,9 +2870,7 @@ void Input::Check(void)
         }
         else if (ks_solver == "genelpa")
         {
-#ifdef __MPI
-//				GlobalV::ofs_warning << "genelpa is under testing" << std::endl;
-#else
+#ifndef __MPI
             ModuleBase::WARNING_QUIT("Input", "genelpa can not be used for series version.");
 #endif
 #ifndef __ELPA
@@ -2911,32 +2886,14 @@ void Input::Check(void)
             ModuleBase::WARNING_QUIT("Input", "scalapack_gvx can not be used for series version.");
 #endif
         }
-        else if (ks_solver == "hpseps")
-        {
-#ifdef __MPI
-            GlobalV::ofs_warning << "It's not a good choice to use hpseps!" << std::endl;
-            if (gamma_only)
-                ModuleBase::WARNING_QUIT("Input", "hpseps can not be used for gamma_only.");
-#else
-            ModuleBase::WARNING_QUIT("Input", "hpseps can not be used for series version.");
-#endif
-        }
         else if (ks_solver == "lapack")
         {
 #ifdef __MPI
             ModuleBase::WARNING_QUIT("Input",
-                                     "ks_solver=lapack is not an option for parallel version of ABACUS (try hpseps).");
+                                     "ks_solver=lapack is not an option for parallel version of ABACUS (try genelpa).");
 #else
             GlobalV::ofs_warning << " It's ok to use lapack." << std::endl;
 #endif
-        }
-        else if (ks_solver == "selinv")
-        {
-            ModuleBase::WARNING_QUIT("Input", "not ready for selinv method in lcao .");
-        }
-        else if (ks_solver == "linear_scaling")
-        {
-            ModuleBase::WARNING_QUIT("Input", "not ready for linear_scaling method in lcao .");
         }
         else if (ks_solver == "cusolver")
         {
@@ -2999,11 +2956,7 @@ void Input::Check(void)
 
     if (GlobalV::NPROC > 1 && ks_solver == "lapack") // xiaohui add 2013-09-01
     {
-        // if(local_basis ==4 && linear_scaling==0) xiaohui modify 2013-09-01
-        if (basis_type == "lcao_in_pw") // xiaohui add 2013-09-01
-        {
-        }
-        else
+        if (basis_type != "lcao_in_pw") // xiaohui add 2013-09-01
         {
             ModuleBase::WARNING_QUIT("Input", "lapack can not be used when nproc > 1");
         }
