@@ -430,13 +430,15 @@ if(ENABLE_LCAO)
       lcao
       orb
       gint
-      pdiag
   )
   if (USE_ELPA)
     target_link_libraries(${ABACUS_BIN_NAME}
       genelpa
     )
   endif ()
+  if(USE_CUSOLVER_LCAO)
+    target_link_libraries(pdiag)
+  endif()
 endif()
 
 if (ENABLE_LIBRI)
