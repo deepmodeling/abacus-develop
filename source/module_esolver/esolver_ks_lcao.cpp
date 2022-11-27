@@ -5,7 +5,6 @@
 #include "../module_base/global_function.h"
 #include "../src_io/print_info.h"
 #include "../src_pw/global.h"
-#include "src_io/chi0_hilbert.h"
 #include "src_lcao/ELEC_evolve.h"
 #include "src_lcao/dftu.h"
 #include "src_lcao/dmft.h"
@@ -561,16 +560,6 @@ void ESolver_KS_LCAO::afterscf(const int istep)
     // 1. output charge density for converged,
     // 0 means don't need to consider iter,
     //--------------------------------------
-    if (GlobalC::chi0_hilbert.epsilon) // pengfei 2016-11-23
-    {
-        std::cout << "eta = " << GlobalC::chi0_hilbert.eta << std::endl;
-        std::cout << "domega = " << GlobalC::chi0_hilbert.domega << std::endl;
-        std::cout << "nomega = " << GlobalC::chi0_hilbert.nomega << std::endl;
-        std::cout << "dim = " << GlobalC::chi0_hilbert.dim << std::endl;
-        // std::cout <<"oband = "<<GlobalC::chi0_hilbert.oband<<std::endl;
-        GlobalC::chi0_hilbert.wfc_k_grid = this->LOWF.wfc_k_grid;
-        GlobalC::chi0_hilbert.Chi(this->pelec->ekb);
-    }
 
     for (int is = 0; is < GlobalV::NSPIN; is++)
     {

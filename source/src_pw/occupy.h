@@ -11,9 +11,6 @@ using namespace std;
 class Occupy
 {
 
-	// pengfei 2016-11-23
-    friend class Chi0_hilbert;
-
 public:
 
     Occupy();

@@ -335,15 +335,10 @@ OBJS_XC=xc_functional.o\
 OBJS_IO=berryphase.o\
     bessel_basis.o\
     cal_test.o\
-    chi0_hilbert.o\
-    chi0_standard.o\
     energy_dos_pw.o\
-    epsilon0_pwscf.o\
-    epsilon0_vasp.o\
     dos.o\
     numerical_descriptor.o\
     numerical_basis.o\
-    optical.o\
     output.o\
     print_info.o\
     read_rho.o\
