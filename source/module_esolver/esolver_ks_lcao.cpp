@@ -5,14 +5,15 @@
 #include "../module_base/global_function.h"
 #include "../src_io/print_info.h"
 #include "../src_pw/global.h"
-#include "src_io/chi0_hilbert.h"
 #include "src_lcao/ELEC_evolve.h"
 #include "src_lcao/dftu.h"
 #include "src_lcao/dmft.h"
 #include "src_pw/occupy.h"
 #include "src_pw/symmetry_rho.h"
 #include "src_pw/threshold_elec.h"
+#ifdef __EXX
 #include "module_rpa/rpa.h"
+#endif
 
 #ifdef __DEEPKS
 #include "../module_deepks/LCAO_deepks.h"
@@ -66,6 +67,18 @@ void ESolver_KS_LCAO::Init(Input& inp, UnitCell& ucell)
         ESolver_KS::Init(inp, ucell);
     } // end ifnot get_S
 
+    //init ElecState
+    //autoset nbands in ElecState, it should before basis_init (for Psi 2d divid)
+    if(this->pelec == nullptr)
+    {
+        this->pelec = new elecstate::ElecStateLCAO(&(chr),
+                                                   &(GlobalC::kv),
+                                                   GlobalC::kv.nks,
+                                                   &(this->LOC),
+                                                   &(this->UHM),
+                                                   &(this->LOWF));
+    }
+
     //------------------init Basis_lcao----------------------
     // Init Basis should be put outside of Ensolver.
     // * reading the localized orbitals/projectors
@@ -73,12 +86,13 @@ void ESolver_KS_LCAO::Init(Input& inp, UnitCell& ucell)
     this->Init_Basis_lcao(this->orb_con, inp, ucell);
     //------------------init Basis_lcao----------------------
 
+    // pass Hamilt-pointer to Operator
+    this->UHM.genH.LM = this->UHM.LM = &this->LM;
+    // pass basis-pointer to EState and Psi
+    this->LOC.ParaV = this->LOWF.ParaV = this->LM.ParaV = &(this->orb_con.ParaV);
+
     if (GlobalV::CALCULATION == "get_S")
     {
-        // pass Hamilt-pointer to Operator
-        this->UHM.genH.LM = this->UHM.LM = &this->LM;
-        // pass basis-pointer to EState and Psi
-        this->LOC.ParaV = this->LOWF.ParaV = this->LM.ParaV;
         return;
     }
 
@@ -88,17 +102,12 @@ void ESolver_KS_LCAO::Init(Input& inp, UnitCell& ucell)
     this->LM.divide_HS_in_frag(GlobalV::GAMMA_ONLY_LOCAL, orb_con.ParaV);
     //------------------init Hamilt_lcao----------------------
 
-#ifdef __MPI
+#ifdef __EXX
     if (GlobalV::CALCULATION == "nscf")
     {
-        switch (GlobalC::exx_global.info.hybrid_type)
+        if (GlobalC::exx_info.info_global.cal_exx)
         {
-        case Exx_Global::Hybrid_Type::HF:
-        case Exx_Global::Hybrid_Type::PBE0:
-        case Exx_Global::Hybrid_Type::SCAN0:
-        case Exx_Global::Hybrid_Type::HSE:
             XC_Functional::set_xc_type(ucell.atoms[0].ncpp.xc_func);
-            break;
         }
     }
 
@@ -107,20 +116,13 @@ void ESolver_KS_LCAO::Init(Input& inp, UnitCell& ucell)
     // Peize Lin 2016-12-03
     if (GlobalV::CALCULATION == "scf" || GlobalV::CALCULATION == "relax" || GlobalV::CALCULATION == "cell-relax")
     {
-        switch (GlobalC::exx_global.info.hybrid_type)
+        if (GlobalC::exx_info.info_global.cal_exx)
         {
-        case Exx_Global::Hybrid_Type::HF:
-        case Exx_Global::Hybrid_Type::PBE0:
-        case Exx_Global::Hybrid_Type::SCAN0:
-        case Exx_Global::Hybrid_Type::HSE:
-            GlobalC::exx_lcao.init();
-            break;
-        case Exx_Global::Hybrid_Type::No:
-        case Exx_Global::Hybrid_Type::Generate_Matrix:
-            break;
-        default:
-            throw std::invalid_argument(ModuleBase::GlobalFunc::TO_STRING(__FILE__)
-                                        + ModuleBase::GlobalFunc::TO_STRING(__LINE__));
+			// GlobalC::exx_lcao.init();
+            if(GlobalV::GAMMA_ONLY_LOCAL)
+                GlobalC::exx_lri_double.init(MPI_COMM_WORLD);
+            else
+                GlobalC::exx_lri_complex.init(MPI_COMM_WORLD);
         }
     }
 #endif
@@ -136,27 +138,11 @@ void ESolver_KS_LCAO::Init(Input& inp, UnitCell& ucell)
     // this function belongs to cell LOOP
     GlobalC::ppcell.init_vloc(GlobalC::ppcell.vloc, GlobalC::rhopw);
 
-    // pass Hamilt-pointer to Operator
-    this->UHM.genH.LM = this->UHM.LM = &this->LM;
-    // pass basis-pointer to EState and Psi
-    this->LOC.ParaV = this->LOWF.ParaV = this->LM.ParaV;
-
-    // init Psi, HSolver, ElecState, Hamilt
+    // init HSolver
     if(this->phsol == nullptr)
     {
         this->phsol = new hsolver::HSolverLCAO(this->LOWF.ParaV);
         this->phsol->method = GlobalV::KS_SOLVER;
-    }
-
-    if(this->pelec == nullptr)
-    {
-        this->pelec = new elecstate::ElecStateLCAO(&(chr),
-                                                   &(GlobalC::kv),
-                                                   GlobalC::kv.nks,
-                                                   GlobalV::NBANDS,
-                                                   &(this->LOC),
-                                                   &(this->UHM),
-                                                   &(this->LOWF));
     }
 
     // Inititlize the charge density.
@@ -271,18 +257,10 @@ void ESolver_KS_LCAO::Init_Basis_lcao(ORB_control& orb_con, Input& inp, UnitCell
 
     ucell.infoNL.setupNonlocal(ucell.ntype, ucell.atoms, GlobalV::ofs_running, GlobalC::ORB);
 
-#ifdef __MPI
-    this->orb_con.set_orb_tables(GlobalV::ofs_running,
-                                 GlobalC::UOT,
-                                 GlobalC::ORB,
-                                 ucell.lat0,
-                                 GlobalV::deepks_setorb,
-                                 Exx_Abfs::Lmax,
-                                 ucell.infoNL.nprojmax,
-                                 ucell.infoNL.nproj,
-                                 ucell.infoNL.Beta);
-#else
     int Lmax = 0;
+#ifdef __EXX
+    Lmax = GlobalC::exx_info.info_ri.abfs_Lmax;
+#endif
     this->orb_con.set_orb_tables(GlobalV::ofs_running,
                                  GlobalC::UOT,
                                  GlobalC::ORB,
@@ -292,7 +270,6 @@ void ESolver_KS_LCAO::Init_Basis_lcao(ORB_control& orb_con, Input& inp, UnitCell
                                  ucell.infoNL.nprojmax,
                                  ucell.infoNL.nproj,
                                  ucell.infoNL.Beta);
-#endif
 
     if (this->orb_con.setup_2d)
         this->orb_con.setup_2d_division(GlobalV::ofs_running, GlobalV::ofs_warning);
@@ -358,13 +335,17 @@ void ESolver_KS_LCAO::eachiterinit(const int istep, const int iter)
         }
     }
 
-#ifdef __MPI
+#ifdef __EXX
     // calculate exact-exchange
-    if(Exx_Global::Hybrid_Type::No != GlobalC::exx_global.info.hybrid_type)
+    if (GlobalC::exx_info.info_global.cal_exx)
     {
-        if (!GlobalC::exx_global.info.separate_loop && this->two_level_step)
+        if (!GlobalC::exx_info.info_global.separate_loop && this->two_level_step)
         {
-            GlobalC::exx_lcao.cal_exx_elec(this->LOC, this->LOWF.wfc_k_grid);
+            //GlobalC::exx_lcao.cal_exx_elec(this->LOC, this->LOWF.wfc_k_grid);
+            if(GlobalV::GAMMA_ONLY_LOCAL)
+                GlobalC::exx_lri_double.cal_exx_elec(this->LOC, *this->LOWF.ParaV);
+            else
+                GlobalC::exx_lri_complex.cal_exx_elec(this->LOC, *this->LOWF.ParaV);
         }
     }
 #endif
@@ -429,7 +410,7 @@ void ESolver_KS_LCAO::hamilt2density(int istep, int iter, double ethr)
         this->pelec->print_band(ik, GlobalC::en.printe, iter);
     }
 
-#ifdef __MPI
+#ifdef __EXX
     // add exx
     // Peize Lin add 2016-12-03
     GlobalC::en.set_exx();
@@ -441,7 +422,11 @@ void ESolver_KS_LCAO::hamilt2density(int istep, int iter, double ethr)
             && !GlobalC::restart.info_load.restart_exx)
         {
             XC_Functional::set_xc_type(GlobalC::ucell.atoms[0].ncpp.xc_func);
-            GlobalC::exx_lcao.cal_exx_elec(this->LOC, this->LOWF.wfc_k_grid);
+            //GlobalC::exx_lcao.cal_exx_elec(this->LOC, this->LOWF.wfc_k_grid);
+            if(GlobalV::GAMMA_ONLY_LOCAL)
+                GlobalC::exx_lri_double.cal_exx_elec(this->LOC, *this->LOWF.ParaV);
+            else
+                GlobalC::exx_lri_complex.cal_exx_elec(this->LOC, *this->LOWF.ParaV);
             GlobalC::restart.info_load.restart_exx = true;
         }
     }
@@ -491,7 +476,7 @@ void ESolver_KS_LCAO::hamilt2density(int istep, int iter, double ethr)
     }
 
     // (6) compute magnetization, only for spin==2
-    GlobalC::ucell.magnet.compute_magnetization(pelec->charge);
+    GlobalC::ucell.magnet.compute_magnetization(pelec->charge, pelec->nelec_spin.data());
 
     // (7) calculate delta energy
     GlobalC::en.deband = GlobalC::en.delta_e(this->pelec);
@@ -575,16 +560,6 @@ void ESolver_KS_LCAO::afterscf(const int istep)
     // 1. output charge density for converged,
     // 0 means don't need to consider iter,
     //--------------------------------------
-    if (GlobalC::chi0_hilbert.epsilon) // pengfei 2016-11-23
-    {
-        std::cout << "eta = " << GlobalC::chi0_hilbert.eta << std::endl;
-        std::cout << "domega = " << GlobalC::chi0_hilbert.domega << std::endl;
-        std::cout << "nomega = " << GlobalC::chi0_hilbert.nomega << std::endl;
-        std::cout << "dim = " << GlobalC::chi0_hilbert.dim << std::endl;
-        // std::cout <<"oband = "<<GlobalC::chi0_hilbert.oband<<std::endl;
-        GlobalC::chi0_hilbert.wfc_k_grid = this->LOWF.wfc_k_grid;
-        GlobalC::chi0_hilbert.Chi(this->pelec->ekb);
-    }
 
     for (int is = 0; is < GlobalV::NSPIN; is++)
     {
@@ -607,7 +582,10 @@ void ESolver_KS_LCAO::afterscf(const int istep)
             ssd << GlobalV::global_out_dir << "SPIN" << is + 1 << "_DM_R";
         }
         this->LOC.write_dm(is, 0, ssd.str(), precision);
-
+        if(this->LOC.out_dm1 == 1)
+        {
+            this->LOC.write_dm1(is, istep);
+        }
 /* Broken, please fix it
         if (GlobalV::out_pot == 1) // LiuXh add 20200701
         {
@@ -618,6 +596,16 @@ void ESolver_KS_LCAO::afterscf(const int istep)
 */
     }
 
+#ifdef __EXX
+    if (GlobalC::exx_info.info_global.cal_exx)                         // Peize Lin add if 2022.11.14
+    {
+        const std::string file_name_exx = GlobalV::global_out_dir + "HexxR_" + std::to_string(GlobalV::MY_RANK);
+        if(GlobalV::GAMMA_ONLY_LOCAL)
+            GlobalC::exx_lri_double.write_Hexxs(file_name_exx);
+        else
+            GlobalC::exx_lri_complex.write_Hexxs(file_name_exx);
+    }
+#endif
     if (GlobalV::out_pot == 2)
     {
         std::stringstream ssp;
@@ -858,12 +846,14 @@ void ESolver_KS_LCAO::afterscf(const int istep)
     }
 #endif
     // 4. some outputs
+#ifdef __EXX
     if(INPUT.rpa)
     {
-        ModuleRPA::DFT_RPA_interface rpa_interface(GlobalC::exx_global.info);
+        ModuleRPA::DFT_RPA_interface rpa_interface(GlobalC::exx_info.info_global);
         rpa_interface.rpa_exx_lcao().info.files_abfs = GlobalV::rpa_orbitals;
         rpa_interface.out_for_RPA(*(this->LOWF.ParaV), *(this->psi), this->LOC, this->pelec);
     }
+#endif
     if (hsolver::HSolverLCAO::out_mat_hsR)
     {
         this->output_HS_R(istep, this->pelec->pot->get_effective_v()); // LiuXh add 2019-07-15
@@ -893,13 +883,13 @@ void ESolver_KS_LCAO::afterscf(const int istep)
 
 bool ESolver_KS_LCAO::do_after_converge(int& iter)
 {
-#ifdef __MPI
-    if (Exx_Global::Hybrid_Type::No != GlobalC::exx_global.info.hybrid_type)
+#ifdef __EXX
+    if (GlobalC::exx_info.info_global.cal_exx)
     {
         //no separate_loop case
-        if (!GlobalC::exx_global.info.separate_loop)
+        if (!GlobalC::exx_info.info_global.separate_loop)
         {
-            GlobalC::exx_global.info.hybrid_step = 1;
+            GlobalC::exx_info.info_global.hybrid_step = 1;
                 
             //in no_separate_loop case, scf loop only did twice
             //in first scf loop, exx updated once in beginning,
@@ -921,7 +911,7 @@ bool ESolver_KS_LCAO::do_after_converge(int& iter)
         }
         //has separate_loop case
         //exx converged or get max exx steps
-        else if(this->two_level_step == GlobalC::exx_global.info.hybrid_step || (iter==1 && this->two_level_step!=0))
+        else if(this->two_level_step == GlobalC::exx_info.info_global.hybrid_step || (iter==1 && this->two_level_step!=0))
         {
             return true;
         }
@@ -929,15 +919,18 @@ bool ESolver_KS_LCAO::do_after_converge(int& iter)
         {
             //update exx and redo scf
             XC_Functional::set_xc_type(GlobalC::ucell.atoms[0].ncpp.xc_func);
-            GlobalC::exx_lcao.cal_exx_elec(this->LOC, this->LOWF.wfc_k_grid);
-            
+            //GlobalC::exx_lcao.cal_exx_elec(this->LOC, this->LOWF.wfc_k_grid);
+			if(GlobalV::GAMMA_ONLY_LOCAL)
+				GlobalC::exx_lri_double.cal_exx_elec(this->LOC, *this->LOWF.ParaV);
+			else
+				GlobalC::exx_lri_complex.cal_exx_elec(this->LOC, *this->LOWF.ParaV);
             iter = 0;
             std::cout << " Updating EXX and rerun SCF" << std::endl;
             this->two_level_step++;
             return false;
         }
     }
-#endif // __MPI
+#endif // __EXX
     return true;
 }
 

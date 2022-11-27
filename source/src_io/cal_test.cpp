@@ -170,16 +170,7 @@ void Cal_Test::print_mem(const int &nproc)
 	mvrs + mvrs1 + mvnew + mrhog + mrhog_save + mrhog_core +
 	mgvec + mgg + mig2fftw + mig2fftc + mig123 +
 	mstrucFac + meigts123; 
-
-	//if(GlobalV::DIAGO_TYPE=="selinv") xiaohui modify 2013-09-02
-	if(GlobalV::KS_SOLVER=="selinv") //xiaohui add 2013-09-02
-	{
-		mtot += mnonzero + mspar_hsrho;
-	}
-	else
-	{
-		mtot += mwf + mhs;
-	}
+	mtot += mwf + mhs;
 
 	std::cout << " If you use " << nproc << " processors: " << std::endl;
 	std::cout << " MEMORY FOR porter       : " << std::setw(15) << mporter/nproc << " MB" << std::endl;

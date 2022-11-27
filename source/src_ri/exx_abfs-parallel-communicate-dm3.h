@@ -2,10 +2,9 @@
 #define EXX_ABFS_PARALLEL_COMMUNICATE_DM3_H
 
 #include "exx_abfs-parallel.h"
-#include "abfs-vector3_order.h"
+#include "module_base/abfs-vector3_order.h"
 #include "../module_base/complexmatrix.h"
 #include "module_orbital/parallel_orbitals.h"
-#include "src_lcao/local_orbital_charge.h"
 #ifdef __MPI
 #include "mpi.h"
 #endif
@@ -15,6 +14,8 @@
 #include <set>
 #include <memory>
 #include <atomic>
+
+	class Local_Orbital_Charge;
 
 #ifdef __MPI
 class Exx_Abfs::Parallel::Communicate::DM3

@@ -6,6 +6,7 @@
 #include "../module_base/mathzone.h"
 #include "../module_base/math_sphbes.h" // mohan add 2021-05-06
 
+bool Exx_Abfs::Jle::generate_matrix = false;
 int Exx_Abfs::Jle::Lmax = 2;
 double Exx_Abfs::Jle::Ecut_exx = 60;
 double Exx_Abfs::Jle::tolerence = 1.0e-12;	

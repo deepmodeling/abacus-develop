@@ -143,10 +143,8 @@ int UnitCell::read_atom_species(std::ifstream &ifa, std::ofstream &ofs_running)
 	// Peize Lin add 2016-09-23
 #ifndef __CELL
 #ifdef __MPI 
-	if( Exx_Global::Hybrid_Type::HF   == GlobalC::exx_lcao.info.hybrid_type || 
-	    Exx_Global::Hybrid_Type::PBE0 == GlobalC::exx_lcao.info.hybrid_type || 
-		Exx_Global::Hybrid_Type::HSE  == GlobalC::exx_lcao.info.hybrid_type ||
-		Exx_Global::Hybrid_Type::SCAN0  == GlobalC::exx_lcao.info.hybrid_type)
+#ifdef __EXX
+	if( GlobalC::exx_info.info_global.cal_exx )
 	{
 		if( ModuleBase::GlobalFunc::SCAN_BEGIN(ifa, "ABFS_ORBITAL") )
 		{
@@ -154,7 +152,7 @@ int UnitCell::read_atom_species(std::ifstream &ifa, std::ofstream &ofs_running)
 			{
 				std::string ofile;
 				ifa >> ofile;
-				GlobalC::exx_lcao.info.files_abfs.push_back(ofile);
+				GlobalC::exx_info.info_ri.files_abfs.push_back(ofile);
 			}
 		}
 	}
@@ -171,6 +169,7 @@ int UnitCell::read_atom_species(std::ifstream &ifa, std::ofstream &ofs_running)
             }
         }
     }
+#endif // __EXX
 #endif // __MPI
 #endif // __CELL
 #endif // __LCAO

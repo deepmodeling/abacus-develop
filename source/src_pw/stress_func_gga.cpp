@@ -6,6 +6,7 @@
 //calculate the GGA stress correction in PW and LCAO
 void Stress_Func::stress_gga(ModuleBase::matrix& sigma, const Charge* const chr) 
 {
+    ModuleBase::TITLE("Stress_Func","stress_gga");
 	ModuleBase::timer::tick("Stress_Func","stress_gga");
      
 	int func_type = XC_Functional::get_func_type();

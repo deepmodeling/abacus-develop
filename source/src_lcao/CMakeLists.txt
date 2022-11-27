@@ -9,7 +9,6 @@ if(ENABLE_LCAO)
       FORCE_gamma_tvnl.cpp
       FORCE_gamma_vl.cpp
       FORCE_k.cpp
-      LCAO_diago.cpp
       LCAO_evolve.cpp
       LCAO_gen_fixedH.cpp
       LCAO_hamilt.cpp

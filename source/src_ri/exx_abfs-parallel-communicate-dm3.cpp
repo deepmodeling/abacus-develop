@@ -3,6 +3,7 @@
 #include "../src_pw/global.h"
 #include "../src_lcao/global_fp.h"
 #include "abfs-template.h"
+#include "../src_lcao/local_orbital_charge.h"
 
 #include "../src_external/src_test/test_function.h"
 #include "../src_external/src_test/src_global/complexmatrix-test.h"

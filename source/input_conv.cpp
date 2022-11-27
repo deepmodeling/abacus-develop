@@ -6,11 +6,6 @@
 #include "module_surchem/surchem.h"
 #include "module_symmetry/symmetry.h"
 #include "src_io/berryphase.h"
-#include "src_io/chi0_hilbert.h"
-#include "src_io/chi0_standard.h"
-#include "src_io/epsilon0_pwscf.h"
-#include "src_io/epsilon0_vasp.h"
-#include "src_io/optical.h"
 #include "module_relax/relax_old/ions_move_basic.h"
 #include "src_pw/global.h"
 #include "src_pw/occupy.h"
@@ -233,6 +228,11 @@ void Input_Conv::Convert(void)
         }
         GlobalV::LSPINORB = INPUT.lspinorb;
         GlobalV::soc_lambda = INPUT.soc_lambda;
+
+        if(INPUT.cal_force || INPUT.cal_stress)
+        {
+            ModuleBase::WARNING_QUIT("input_conv","force & stress not ready for soc yet!");
+        }
     }
     else
     {
@@ -258,6 +258,11 @@ void Input_Conv::Convert(void)
     //----------------------------------------------------------
     GlobalV::GATE_FLAG = INPUT.gate_flag;
     GlobalV::nelec = INPUT.nelec;
+    if(std::abs(INPUT.nupdown) > 1e-6)
+    {
+        GlobalV::TWO_EFERMI = true;
+        GlobalV::nupdown = INPUT.nupdown;
+    }
     elecstate::Gatefield::zgate = INPUT.zgate;
     elecstate::Gatefield::relax = INPUT.relax;
     elecstate::Gatefield::block = INPUT.block;
@@ -392,67 +397,52 @@ void Input_Conv::Convert(void)
 //----------------------------------------------------------
 // about exx, Peize Lin add 2018-06-20
 //----------------------------------------------------------
-#ifdef __MPI // liyuanbo 2022/2/23
+#ifdef __EXX
 #ifdef __LCAO
 
-    if (INPUT.dft_functional == "hf")
+    if (INPUT.dft_functional == "hf" ||
+	    INPUT.dft_functional == "pbe0" ||
+		INPUT.dft_functional == "scan0" )
     {
-        GlobalC::exx_global.info.hybrid_type = Exx_Global::Hybrid_Type::HF;
-    }
-    else if (INPUT.dft_functional == "pbe0")
-    {
-        GlobalC::exx_global.info.hybrid_type = Exx_Global::Hybrid_Type::PBE0;
-    }
-    else if (INPUT.dft_functional == "scan0")
-    {
-        GlobalC::exx_global.info.hybrid_type = Exx_Global::Hybrid_Type::SCAN0;
+        GlobalC::exx_info.info_global.cal_exx = true;
+        GlobalC::exx_info.info_global.ccp_type = Conv_Coulomb_Pot_K::Ccp_Type::Hf;
     }
     else if (INPUT.dft_functional == "hse")
     {
-        GlobalC::exx_global.info.hybrid_type = Exx_Global::Hybrid_Type::HSE;
+        GlobalC::exx_info.info_global.cal_exx = true;
+        GlobalC::exx_info.info_global.ccp_type = Conv_Coulomb_Pot_K::Ccp_Type::Hse;
     }
     else if (INPUT.dft_functional == "opt_orb")
     {
-        GlobalC::exx_global.info.hybrid_type = Exx_Global::Hybrid_Type::Generate_Matrix;
+        GlobalC::exx_info.info_global.cal_exx = false;
+        Exx_Abfs::Jle::generate_matrix = true;
     }
     else
     {
-        GlobalC::exx_global.info.hybrid_type = Exx_Global::Hybrid_Type::No;
+        GlobalC::exx_info.info_global.cal_exx = false;
     }
 
-    if (GlobalC::exx_global.info.hybrid_type != Exx_Global::Hybrid_Type::No)
+    if (GlobalC::exx_info.info_global.cal_exx || Exx_Abfs::Jle::generate_matrix)
     {
         //EXX case, convert all EXX related variables 
-        GlobalC::exx_global.info.hybrid_alpha = INPUT.exx_hybrid_alpha;
-        XC_Functional::get_hybrid_alpha(INPUT.exx_hybrid_alpha);
-        GlobalC::exx_global.info.hse_omega = INPUT.exx_hse_omega;
-        GlobalC::exx_global.info.separate_loop = INPUT.exx_separate_loop;
-        GlobalC::exx_global.info.hybrid_step = INPUT.exx_hybrid_step;
-        GlobalC::exx_lip.info.lambda = INPUT.exx_lambda;
-        GlobalC::exx_lcao.info.pca_threshold = INPUT.exx_pca_threshold;
-        GlobalC::exx_lcao.info.c_threshold = INPUT.exx_c_threshold;
-        GlobalC::exx_lcao.info.v_threshold = INPUT.exx_v_threshold;
-        GlobalC::exx_lcao.info.dm_threshold = INPUT.exx_dm_threshold;
-        GlobalC::exx_lcao.info.schwarz_threshold = INPUT.exx_schwarz_threshold;
-        GlobalC::exx_lcao.info.cauchy_threshold = INPUT.exx_cauchy_threshold;
-        GlobalC::exx_lcao.info.ccp_threshold = INPUT.exx_ccp_threshold;
-        GlobalC::exx_lcao.info.ccp_rmesh_times = INPUT.exx_ccp_rmesh_times;
-        if (INPUT.exx_distribute_type == "htime")
-        {
-            GlobalC::exx_lcao.info.distribute_type = Exx_Lcao::Distribute_Type::Htime;
-        }
-        else if (INPUT.exx_distribute_type == "kmeans2")
-        {
-            GlobalC::exx_lcao.info.distribute_type = Exx_Lcao::Distribute_Type::Kmeans2;
-        }
-        else if (INPUT.exx_distribute_type == "kmeans1")
-        {
-            GlobalC::exx_lcao.info.distribute_type = Exx_Lcao::Distribute_Type::Kmeans1;
-        }
-        else if (INPUT.exx_distribute_type == "order")
-        {
-            GlobalC::exx_lcao.info.distribute_type = Exx_Lcao::Distribute_Type::Order;
-        }
+        GlobalC::exx_info.info_global.hybrid_alpha = std::stod(INPUT.exx_hybrid_alpha);
+        XC_Functional::get_hybrid_alpha(std::stod(INPUT.exx_hybrid_alpha));
+        GlobalC::exx_info.info_global.hse_omega = INPUT.exx_hse_omega;
+        GlobalC::exx_info.info_global.separate_loop = INPUT.exx_separate_loop;
+        GlobalC::exx_info.info_global.hybrid_step = INPUT.exx_hybrid_step;
+        GlobalC::exx_info.info_lip.lambda = INPUT.exx_lambda;
+
+        GlobalC::exx_info.info_ri.pca_threshold = INPUT.exx_pca_threshold;
+        GlobalC::exx_info.info_ri.C_threshold = INPUT.exx_c_threshold;
+        GlobalC::exx_info.info_ri.V_threshold = INPUT.exx_v_threshold;
+        GlobalC::exx_info.info_ri.dm_threshold = INPUT.exx_dm_threshold;
+        GlobalC::exx_info.info_ri.cauchy_threshold = INPUT.exx_cauchy_threshold;
+        GlobalC::exx_info.info_ri.C_grad_threshold = INPUT.exx_c_grad_threshold;
+        GlobalC::exx_info.info_ri.V_grad_threshold = INPUT.exx_v_grad_threshold;
+        GlobalC::exx_info.info_ri.cauchy_grad_threshold = INPUT.exx_cauchy_grad_threshold;
+        GlobalC::exx_info.info_ri.ccp_threshold = INPUT.exx_ccp_threshold;
+        GlobalC::exx_info.info_ri.ccp_rmesh_times = std::stod(INPUT.exx_ccp_rmesh_times);
+
         Exx_Abfs::Jle::Lmax = INPUT.exx_opt_orb_lmax;
         Exx_Abfs::Jle::Ecut_exx = INPUT.exx_opt_orb_ecut;
         Exx_Abfs::Jle::tolerence = INPUT.exx_opt_orb_tolerence;
@@ -460,8 +450,8 @@ void Input_Conv::Convert(void)
         //EXX does not support any symmetry analyse, force symmetry setting to -1
         ModuleSymmetry::Symmetry::symm_flag = -1;
     }
-#endif
-#endif
+#endif // __LCAO
+#endif // __EXX
     GlobalC::ppcell.cell_factor = INPUT.cell_factor; // LiuXh add 20180619
 
     //----------------------------------------------------------
@@ -506,6 +496,7 @@ void Input_Conv::Convert(void)
     GlobalC::en.out_proj_band = INPUT.out_proj_band;
 #ifdef __LCAO
     Local_Orbital_Charge::out_dm = INPUT.out_dm;
+    Local_Orbital_Charge::out_dm1 = INPUT.out_dm1;
     hsolver::HSolverLCAO::out_mat_hs = INPUT.out_mat_hs;
     hsolver::HSolverLCAO::out_mat_hsR = INPUT.out_mat_hs2; // LiuXh add 2019-07-16
     elecstate::ElecStateLCAO::out_wfc_lcao = INPUT.out_wfc_lcao;

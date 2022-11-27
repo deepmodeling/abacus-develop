@@ -7,6 +7,7 @@
 //NLCC term, need to be tested
 void Stress_Func::stress_cc(ModuleBase::matrix& sigma, ModulePW::PW_Basis* rho_basis, const bool is_pw, const Charge* const chr)
 {
+    ModuleBase::TITLE("Stress_Func","stress_cc");
 	ModuleBase::timer::tick("Stress_Func","stress_cc");
         
 	double fact=1.0;
@@ -36,7 +37,7 @@ void Stress_Func::stress_cc(ModuleBase::matrix& sigma, ModulePW::PW_Basis* rho_b
 
 	//recalculate the exchange-correlation potential
 	ModuleBase::matrix vxc;
-	if(XC_Functional::get_func_type() == 3)
+	if(XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
 	{
 #ifdef USE_LIBXC
     	const auto etxc_vtxc_v = XC_Functional::v_xc_meta(

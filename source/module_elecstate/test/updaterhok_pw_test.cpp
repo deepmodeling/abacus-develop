@@ -47,7 +47,7 @@ namespace elecstate
 class MockElecStatePW : public ElecStatePW<double>
 {
 public:
-  MockElecStatePW( ModulePW::PW_Basis_K* wfc_basis, Charge* chg_in, K_Vectors *pkv_in, int nbands_in):ElecStatePW(wfc_basis, chg_in, pkv_in, nbands_in){}
+  MockElecStatePW( ModulePW::PW_Basis_K* wfc_basis, Charge* chg_in, K_Vectors *pkv_in):ElecStatePW(wfc_basis, chg_in, pkv_in){}
   MOCK_METHOD0(calculate_weights,void());
   MOCK_METHOD0(init_scf,void());
 };
@@ -333,7 +333,7 @@ TEST_F(EState,RhoPW)
     delete psi;
     // using class ElecStatePW to calculate rho
     elecstate::MockElecStatePW* kk;
-    kk = new elecstate::MockElecStatePW(GlobalC::wfcpw,&GlobalC::CHR,&GlobalC::kv,GlobalV::NBANDS);
+    kk = new elecstate::MockElecStatePW(GlobalC::wfcpw,&GlobalC::CHR,&GlobalC::kv);
     EXPECT_CALL(*kk,calculate_weights()).Times(AtLeast(1));
     ModuleBase::matrix wg_tmp;
     wg_tmp.create(GlobalC::kv.nks,GlobalV::NBANDS);

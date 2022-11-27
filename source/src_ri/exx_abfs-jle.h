@@ -17,6 +17,7 @@ public:
 
 	void init_jle( const double kmesh_times );
 
+	static bool generate_matrix;
 	static int Lmax;
 	static double Ecut_exx;
 	static double tolerence;

@@ -13,7 +13,7 @@ ecutwfc			100
 scf_nmax		50
 
 #ks_solver		lapack
-ks_solver		genelpa
+ks_solver		scalapack_gvx
 basis_type		lcao
 gamma_only		0
 md_nstep		2

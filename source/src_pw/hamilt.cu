@@ -1,7 +1,5 @@
 #include "global.h"
 #include "hamilt.h"
-#include "diago_david.h"
-#include "diago_cg.cuh"
 #include "cufft.h"
 #include "../module_base/timer.h"
 
@@ -57,78 +55,6 @@ __global__ void hamilt_cast_f2d(double2 *dst, float2 *src, int size)
         dst[i].x = (double)(src[i].x);
         dst[i].y = (double)(src[i].y);
     }
-}
-
-
-bool Hamilt::test_exit_cond(const int &ntry, const int &notconv)
-{
-    //================================================================
-    // If this logical function is true, need to do diagH_subspace
-	// and cg again.
-    //================================================================
-
-	bool scf = true;
-	if(GlobalV::CALCULATION=="nscf") scf=false;
-
-    // If ntry <=5, try to do it better, if ntry > 5, exit.
-    const bool f1 = (ntry <= 5);
-
-    // In non-self consistent calculation, do until totally converged.
-    const bool f2 = ( (!scf && (notconv > 0)) );
-
-    // if self consistent calculation, if not converged > 5,
-    // using diagH_subspace and cg method again. ntry++
-    const bool f3 = ( ( scf && (notconv > 5)) );
-    return  ( f1 && ( f2 || f3 ) );
-}
-
-void Hamilt::diagH_subspace(
-    const int ik,
-    const int nstart,
-    const int n_band,
-    const ModuleBase::ComplexMatrix &psi,
-    ModuleBase::ComplexMatrix &evc,
-    double *en)
-{
-	if(nstart < n_band)
-	{
-		ModuleBase::WARNING_QUIT("diagH_subspace","nstart < n_band!");
-	}
-
-    if(GlobalV::BASIS_TYPE=="pw" || GlobalV::BASIS_TYPE=="lcao_in_pw")
-    {
-        this->hpw.diagH_subspace(ik, nstart, n_band, psi, evc, en);
-    }
-    else
-    {
-		ModuleBase::WARNING_QUIT("diagH_subspace","Check parameters: GlobalV::BASIS_TYPE. ");
-    }
-    return;
-}
-
-void Hamilt::diagH_subspace_cuda(
-    const int ik,
-    const int nstart,
-    const int n_band,
-    const double2* psi,
-    double2* evc,
-    double *en,
-    double2 *d_vkb_c)
-{
-	if(nstart < n_band)
-	{
-		ModuleBase::WARNING_QUIT("diagH_subspace_cuda","nstart < n_band!");
-	}
-
-    if(GlobalV::BASIS_TYPE=="pw" || GlobalV::BASIS_TYPE=="lcao_in_pw")
-    {
-        this->hpw.diagH_subspace_cuda(ik, nstart, n_band, psi, evc, en, d_vkb_c);
-    }
-    else
-    {
-		ModuleBase::WARNING_QUIT("diagH_subspace_cuda","Check parameters: GlobalV::BASIS_TYPE. ");
-    }
-    return;
 }
 
 

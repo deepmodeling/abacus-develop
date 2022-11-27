@@ -19,6 +19,15 @@ When **"nspin 2"** is set, the screen output file will contain magnetic moment i
 where "TMAG" refers to total magnetization and "AMAG" refers to average magnetization.
 For more detailed orbital magnetic moment information, please use [Mulliken charge analysis](../elec_properties/Mulliken.md).
 
+### Constraint DFT for collinear spin polarized calculations
+For some special need, there are two method to constrain electronic spin.
+
+1. **"ocp"** and **"ocp_set"**
+If **"ocp=1"** and **"ocp_set"** is set in INPUT file, the occupations of states would be fixed by **"ocp_set"**, this method is often used for excited states calculation. Be careful that: when **"nspin=1"**, spin-up and spin-down electrons will both be set, and when **"nspin=2"**, you should set spin-up and spin-down respectively.
+
+2. **"nupdown"**
+If **"nupdown"** is set to non-zero, number of spin-up and spin-down electrons will be fixed, and Fermi energy level will split to E_Fermi_up and E_Fermi_down. By the way, total magnetization will also be fixed, and will be the value of **"nupdown"**.
+
 ## Noncollinear Spin Polarized Calculations
 The spin non-collinear polarization calculation corresponds to setting **"noncolin 1"**, in which case the coupling between spin up and spin down will be taken into account. 
 In this case, nspin is automatically set to 4, which is usually not required to be specified manually.

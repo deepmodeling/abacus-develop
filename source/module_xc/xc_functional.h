@@ -15,7 +15,7 @@
 #include "../module_base/global_variable.h"
 #include "../module_base/vector3.h"
 #include "../module_base/matrix.h"
-#include "exx_global.h"
+#include "exx_info.h"
 #include "../module_pw/pw_basis_k.h"
 #include "src_pw/charge.h"
 class XC_Functional
@@ -140,7 +140,8 @@ class XC_Functional
 // 1. gcxc, which is the wrapper for gradient correction part
 // 2. gcx_spin, spin polarized, exchange only
 // 3. gcc_spin, spin polarized, correlation only
-// 4. gcxc_spin_libxc, the entire GGA functional, LIBXC
+// 4. gcxc_libxc, the entire GGA functional, LIBXC, for nspin=1 case
+// 5. gcxc_spin_libxc, the entire GGA functional, LIBXC, for nspin=2 case
 
 // The difference between our realization (gcxc/gcx_spin/gcc_spin) and
 // LIBXC, and the reason for not having gcxc_libxc is explained
@@ -148,6 +149,8 @@ class XC_Functional
 
 	// GGA
 	static void gcxc(const double &rho, const double &grho,
+			double &sxc, double &v1xc, double &v2xc);
+	static void gcxc_libxc(const double &rho, const double &grho,
 			double &sxc, double &v1xc, double &v2xc);
 
 	// spin polarized GGA

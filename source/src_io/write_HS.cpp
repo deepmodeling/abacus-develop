@@ -296,52 +296,6 @@ void HS_Matrix::save_HS(const double *H, const double *S, const bool bit, const 
             g1.close();
             g2.close();
         }
-
-/*LiuXH add 2015-12-17,begin
-    //int nprocs,myid;
-    //MPI_Status status;
-    //MPI_Comm_size(DIAG_HPSEPS_WORLD,&nprocs);
-    //MPI_Comm_rank(DIAG_HPSEPS_WORLD,&myid);
-
-    std::string H_fn;
-    std::stringstream H_fn2;
-    H_fn2<< "data-H-"  << GlobalV::DRANK ;
-    H_fn=H_fn2.str();
-    std::ofstream ofs_H;
-    ofs_H.open(H_fn.c_str());
-    ofs_H<<std::setprecision(8) << std::setw(12);
-
-    std::string S_fn;
-    std::stringstream S_fn2;
-    S_fn2<< "data-S-"  << GlobalV::DRANK ;
-    S_fn=S_fn2.str();
-    std::ofstream ofs_S;
-    ofs_S.open(S_fn.c_str());
-    ofs_S<<std::setprecision(8) << std::setw(12);
-
-        int irr,icc;
-        for (int i=0; i<GlobalV::NLOCAL; i++)
-        {
-            irr = pv.trace_loc_row[i];
-            if (irr>=0)
-            {
-                // data collection
-                for (int j=0; j<GlobalV::NLOCAL; j++)
-                {
-            icc = pv.trace_loc_col[j];
-            if (icc>=0)
-            {
-                //if(abs(H[irr*pv.ncol+icc]) < 1.0e-10) H[irr*pv.ncol+icc] = 0.0;
-                //if(abs(S[irr*pv.ncol+icc]) < 1.0e-10) S[irr*pv.ncol+icc] = 0.0;
-                ofs_H << " " << H[irr*pv.ncol+icc];
-                ofs_S << " " << S[irr*pv.ncol+icc];
-            }
-        }
-        ofs_H << std::endl;
-        ofs_S << std::endl;
-         }
-         }
-//LiuXH add 2015-12-17,end*/
 #else
         std::ofstream g1(ssh.str().c_str());
         std::ofstream g2(sss.str().c_str());
@@ -575,52 +529,6 @@ void HS_Matrix::save_HS_complex(std::complex<double> *H, std::complex<double> *S
             g1.close();
             g2.close();
         }
-
-/*LiuXH add 2015-12-17,begin
-        //int nprocs,myid;
-        //MPI_Status status;
-        //MPI_Comm_size(DIAG_HPSEPS_WORLD,&nprocs);
-        //MPI_Comm_rank(DIAG_HPSEPS_WORLD,&myid);
-
-        std::string H_fn;
-        std::stringstream H_fn2;
-        H_fn2<< "data-H-"  << GlobalV::DRANK ;
-        H_fn=H_fn2.str();
-        std::ofstream ofs_H;
-        ofs_H.open(H_fn.c_str());
-        ofs_H<<std::setprecision(8) << std::setw(12);
-
-        std::string S_fn;
-        std::stringstream S_fn2;
-        S_fn2<< "data-S-"  << GlobalV::DRANK ;
-        S_fn=S_fn2.str();
-        std::ofstream ofs_S;
-        ofs_S.open(S_fn.c_str());
-        ofs_S<<std::setprecision(8) << std::setw(12);
-
-        int irr,icc;
-        for (int i=0; i<GlobalV::NLOCAL; i++)
-        {
-            irr = pv.trace_loc_row[i];
-            if (irr>=0)
-            {
-                // data collection
-                for (int j=0; j<GlobalV::NLOCAL; j++)
-                {
-                        icc = pv.trace_loc_col[j];
-                        if (icc>=0)
-                        {
-                                //if(abs(H[irr*pv.ncol+icc]) < 1.0e-10) H[irr*pv.ncol+icc] = 0.0;
-                                //if(abs(S[irr*pv.ncol+icc]) < 1.0e-10) S[irr*pv.ncol+icc] = 0.0;
-                                ofs_H << " " << H[irr*pv.ncol+icc];
-                                ofs_S << " " << S[irr*pv.ncol+icc];
-                        }
-                }
-                ofs_H << std::endl;
-                ofs_S << std::endl;
-             }
-         }
-//LiuXH add 2015-12-17,end*/
 #else
         std::ofstream g1(ssh.str().c_str());
         std::ofstream g2(sss.str().c_str());

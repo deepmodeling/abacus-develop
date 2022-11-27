@@ -143,7 +143,7 @@ void Input::Print(const std::string &fn) const
     ModuleBase::GlobalFunc::OUTP(ofs,
                                  "ks_solver",
                                  GlobalV::KS_SOLVER,
-                                 "cg; dav; lapack; genelpa; hpseps; scalapack_gvx; cusolver");
+                                 "cg; dav; lapack; genelpa; scalapack_gvx; cusolver");
     ModuleBase::GlobalFunc::OUTP(ofs, "scf_nmax", scf_nmax, "#number of electron iterations");
     ModuleBase::GlobalFunc::OUTP(ofs, "out_force", out_force, "output the out_force or not");
     ModuleBase::GlobalFunc::OUTP(ofs, "relax_nmax", relax_nmax, "number of ion iteration steps");
@@ -345,6 +345,9 @@ void Input::Print(const std::string &fn) const
     ModuleBase::GlobalFunc::OUTP(ofs, "exx_dm_threshold", exx_dm_threshold, "");
     ModuleBase::GlobalFunc::OUTP(ofs, "exx_schwarz_threshold", exx_schwarz_threshold, "");
     ModuleBase::GlobalFunc::OUTP(ofs, "exx_cauchy_threshold", exx_cauchy_threshold, "");
+    ModuleBase::GlobalFunc::OUTP(ofs, "exx_c_grad_threshold", exx_c_grad_threshold, "");
+    ModuleBase::GlobalFunc::OUTP(ofs, "exx_v_grad_threshold", exx_v_grad_threshold, "");
+    ModuleBase::GlobalFunc::OUTP(ofs, "exx_cauchy_grad_threshold", exx_cauchy_grad_threshold, "");
     ModuleBase::GlobalFunc::OUTP(ofs, "exx_ccp_threshold", exx_ccp_threshold, "");
     ModuleBase::GlobalFunc::OUTP(ofs, "exx_ccp_rmesh_times", exx_ccp_rmesh_times, "");
     ModuleBase::GlobalFunc::OUTP(ofs, "exx_distribute_type", exx_distribute_type, "htime or kmeans1 or kmeans2");

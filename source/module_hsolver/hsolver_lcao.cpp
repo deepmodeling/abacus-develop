@@ -58,6 +58,7 @@ void HSolverLCAO::solveTemplate(hamilt::Hamilt<double>* pHamilt,
 #endif
     else if (this->method == "lapack")
     {
+        ModuleBase::WARNING_QUIT("hsolver_lcao","please fix lapack solver!!!");
         //We are not supporting diagonalization with lapack
         //until the obsolete globalc::hm is removed from
         //diago_lapack.cpp

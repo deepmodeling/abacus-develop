@@ -154,7 +154,7 @@ void DFT_RPA_interface::out_bands(const elecstate::ElecState* pelec)
         {
             ofs << std::setw(6) << ik + 1 << std::setw(6) << is + 1 << std::endl;
             for (int ib = 0; ib != GlobalV::NBANDS; ib++)
-                ofs << std::setw(5) << ib + 1 << "   " << std::setw(8) << pelec->wg(ik, ib) * nks_tot
+                ofs << std::setw(5) << ib + 1 << "   " << std::setw(8) << pelec->wg(ik + is*nks_tot, ib) * nks_tot
                     << std::setw(18) << std::fixed << std::setprecision(8)
                     << pelec->ekb(ik + is * nks_tot, ib) / 2.0 << std::setw(18) << std::fixed
                     << std::setprecision(8) << pelec->ekb(ik + is * nks_tot, ib) * ModuleBase::Ry_to_eV
@@ -267,7 +267,7 @@ void RPAExxLcao::exx_init()
 {
     std::cout << "rpa_exx_init!!!" << std::endl;
 #ifdef __MPI
-    if (GlobalC::exx_global.info.separate_loop)
+    if (GlobalC::exx_info.info_global.separate_loop)
     {
         Hexx_para.mixing_mode = Exx_Abfs::Parallel::Communicate::Hexx::Mixing_Mode::No;
         Hexx_para.mixing_beta = 0;
@@ -306,31 +306,26 @@ void RPAExxLcao::exx_init()
         abfs = Exx_Abfs::IO::construct_abfs(abfs_same_atom, GlobalC::ORB, info.files_abfs, kmesh_times);
     }
 
-    switch (info.hybrid_type)
-    {
-    case Exx_Global::Hybrid_Type::HF:
-        abfs_ccp = Conv_Coulomb_Pot_K::cal_orbs_ccp(abfs, Conv_Coulomb_Pot_K::Ccp_Type::Hf, {}, info.ccp_rmesh_times);
-        break;
-    case Exx_Global::Hybrid_Type::No:
-        abfs_ccp = Conv_Coulomb_Pot_K::cal_orbs_ccp(abfs, Conv_Coulomb_Pot_K::Ccp_Type::Hf, {}, info.ccp_rmesh_times);
-        break;
-    case Exx_Global::Hybrid_Type::PBE0:
-        abfs_ccp = Conv_Coulomb_Pot_K::cal_orbs_ccp(abfs, Conv_Coulomb_Pot_K::Ccp_Type::Hf, {}, info.ccp_rmesh_times);
-        break;
-    case Exx_Global::Hybrid_Type::HSE:
-        abfs_ccp = Conv_Coulomb_Pot_K::cal_orbs_ccp(abfs,
-                                                    Conv_Coulomb_Pot_K::Ccp_Type::Hse,
-                                                    {{"hse_omega", info.hse_omega}},
-                                                    info.ccp_rmesh_times);
-        break;
-    default:
-        throw std::domain_error(ModuleBase::GlobalFunc::TO_STRING(__FILE__) + " line "
-                                + ModuleBase::GlobalFunc::TO_STRING(__LINE__));
-    }
+
+	auto get_ccp_parameter = [this]() -> std::map<std::string,double>
+	{
+		switch(this->info.ccp_type)
+		{
+			case Conv_Coulomb_Pot_K::Ccp_Type::Ccp:
+				return {};
+			case Conv_Coulomb_Pot_K::Ccp_Type::Hf:
+				return {};
+			case Conv_Coulomb_Pot_K::Ccp_Type::Hse:
+				return {{"hse_omega", this->info.hse_omega}};
+			default:
+				throw std::domain_error(std::string(__FILE__)+" line "+std::to_string(__LINE__));	break;
+		}
+	};
+	this->abfs_ccp = Conv_Coulomb_Pot_K::cal_orbs_ccp( this->abfs, info.ccp_type, get_ccp_parameter(), this->info.ccp_rmesh_times );
 
     for (size_t T = 0; T != abfs.size(); ++T)
     {
-        Exx_Abfs::Lmax = std::max(Exx_Abfs::Lmax, static_cast<int>(abfs[T].size()) - 1);
+        GlobalC::exx_info.info_ri.abfs_Lmax = std::max(GlobalC::exx_info.info_ri.abfs_Lmax, static_cast<int>(abfs[T].size()) - 1);
     }
 
     const ModuleBase::Element_Basis_Index::Range &&range_lcaos = Exx_Abfs::Abfs_Index::construct_range(lcaos);

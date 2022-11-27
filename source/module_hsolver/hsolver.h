@@ -71,7 +71,7 @@ class HSolver
 
     std::string classname = "none";
     // choose method of DiagH for solve Hamiltonian matrix
-    // cg, dav, elpa, scalapack, hpseps, cusolver
+    // cg, dav, elpa, scalapack-gvx, cusolver
     std::string method = "none";
   public:
     FPTYPE diag_ethr=0.0; //threshold for diagonalization

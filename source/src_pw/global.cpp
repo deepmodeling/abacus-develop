@@ -11,11 +11,9 @@ ModulePW::PW_Basis_Big* bigpw;
 ModulePW::PW_Basis_K* wfcpw;
 energy en;
 wavefunc wf;
-#ifdef __MPI
 #ifdef __EXX
-Exx_Global exx_global;
-Exx_Lip exx_lip(exx_global.info);
-#endif
+Exx_Info exx_info;
+Exx_Lip exx_lip(exx_info.info_lip);
 #endif
 pseudopot_cell_vnl ppcell;
 UnitCell ucell;

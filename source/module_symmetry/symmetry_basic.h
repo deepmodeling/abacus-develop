@@ -18,9 +18,6 @@ class Symmetry_Basic
 	~Symmetry_Basic();
 
 	double epsilon;
-
-	void maxmin(const double, const double, const double, double &, double &, double &);
-	void maxmin(const double, const double, double &, double &);
 	
 	// control accuray
 	bool equal(const double &m, const double &n)const;
@@ -28,20 +25,7 @@ class Symmetry_Basic
 	double get_translation_vector(const double &x1, const double &x2);
 	void check_translation(double &x, const double &t);
 	double check_diff(const double &x1, const double &x2);
-	void change_value(double &x1, double &x2);
-	void change_value(int &x1, int &x2);
 	
-	void shortest_vector(ModuleBase::Vector3<double> &t1,ModuleBase::Vector3<double> &t2,ModuleBase::Vector3<double> &t3);
-	void shorter_vector(ModuleBase::Vector3<double> &t1,ModuleBase::Vector3<double> &t2,double &abs0,double &abs1,bool &flag1);
-	void recip(
-			const double a,
-			const ModuleBase::Vector3<double> &a1,
-			const ModuleBase::Vector3<double> &a2,
-			const ModuleBase::Vector3<double> &a3,
-			ModuleBase::Vector3<double> &b1,
-			ModuleBase::Vector3<double> &b2,
-			ModuleBase::Vector3<double> &b3
-			);
 	void veccon(
 			double *va,
 			double *vb,

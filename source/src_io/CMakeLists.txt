@@ -2,15 +2,10 @@ list(APPEND objects
     berryphase.cpp
     bessel_basis.cpp
     cal_test.cpp
-    chi0_hilbert.cpp
-    chi0_standard.cpp
     dos.cpp
     energy_dos_pw.cpp
-    epsilon0_pwscf.cpp
-    epsilon0_vasp.cpp
     numerical_basis.cpp
     numerical_descriptor.cpp
-    optical.cpp
     output.cpp
     print_info.cpp
     read_rho.cpp

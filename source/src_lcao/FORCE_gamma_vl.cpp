@@ -25,7 +25,7 @@ void Force_LCAO_gamma::cal_fvl_dphi(
             vofk_eff1 = pot_in->get_effective_vofk(GlobalV::CURRENT_SPIN);
         }
 
-        if(XC_Functional::get_func_type()==3)
+        if(XC_Functional::get_func_type()==3 || XC_Functional::get_func_type()==5)
         {
             Gint_inout inout(DM_in, vr_eff1, vofk_eff1, isforce, isstress, &fvl_dphi, &svl_dphi, Gint_Tools::job_type::force_meta);
             this->UHM->GG.cal_gint(&inout);

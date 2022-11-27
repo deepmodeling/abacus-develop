@@ -43,14 +43,12 @@ list(APPEND objects
 )
 if(USE_CUDA)
     list(APPEND objects
-        diago_cg.cu
         hamilt.cu
         hamilt_pw.cu
         use_fft_kernel.cu
     )
 elseif(USE_ROCM)
     list(APPEND objects
-        diago_cg_hip.cpp
         hamilt_hip.cpp
         hamilt_pw_hip.cpp
         use_fft_kernel_hip.cpp

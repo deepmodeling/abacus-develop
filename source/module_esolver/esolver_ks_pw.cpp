@@ -8,10 +8,6 @@
 #include "../src_io/print_info.h"
 #include "../src_pw/H_Ewald_pw.h"
 #include "../src_pw/occupy.h"
-#include "../src_io/chi0_standard.h"
-#include "../src_io/chi0_hilbert.h"
-#include "../src_io/epsilon0_pwscf.h"
-#include "../src_io/epsilon0_vasp.h"
 #include "../module_relax/relax_old/variable_cell.h"    // liuyu 2022-11-07
 //-----force-------------------
 #include "../src_pw/forces.h"
@@ -151,7 +147,7 @@ namespace ModuleESolver
         //init ElecState,
         if(this->pelec == nullptr)
         {
-            this->pelec = new elecstate::ElecStatePW<FPTYPE, Device>( GlobalC::wfcpw, &(this->chr), (K_Vectors*)(&(GlobalC::kv)), GlobalV::NBANDS);
+            this->pelec = new elecstate::ElecStatePW<FPTYPE, Device>( GlobalC::wfcpw, &(this->chr), (K_Vectors*)(&(GlobalC::kv)));
         }
 
         // Inititlize the charge density.
@@ -357,7 +353,7 @@ namespace ModuleESolver
 
     // add exx
 #ifdef __LCAO
-#ifdef __MPI
+#ifdef __EXX
         GlobalC::en.set_exx();		// Peize Lin add 2019-03-09
 #endif
 #endif
@@ -372,7 +368,7 @@ namespace ModuleESolver
         }
 
         // compute magnetization, only for LSDA(spin==2)
-        GlobalC::ucell.magnet.compute_magnetization(this->pelec->charge);
+        GlobalC::ucell.magnet.compute_magnetization(this->pelec->charge, this->pelec->nelec_spin.data());
         // deband is calculated from "output" charge density calculated
         // in sum_band
         // need 'rho(out)' and 'vr (v_h(in) and v_xc(in))'
@@ -444,36 +440,6 @@ namespace ModuleESolver
     {
         // Temporary liuyu add 2022-11-07
         this->CE.update_all_pos(GlobalC::ucell);
-
-#ifdef __LCAO
-        if (GlobalC::chi0_hilbert.epsilon)                 // pengfei 2016-11-23
-        {
-            std::cout << "eta = " << GlobalC::chi0_hilbert.eta << std::endl;
-            std::cout << "domega = " << GlobalC::chi0_hilbert.domega << std::endl;
-            std::cout << "nomega = " << GlobalC::chi0_hilbert.nomega << std::endl;
-            std::cout << "dim = " << GlobalC::chi0_hilbert.dim << std::endl;
-            //std::cout <<"oband = "<<GlobalC::chi0_hilbert.oband<<std::endl;
-            GlobalC::chi0_hilbert.Chi(this->pelec->ekb);
-        }
-#endif
-
-        if (GlobalC::chi0_standard.epsilon)
-        {
-            std::cout << "eta = " << GlobalC::chi0_standard.eta << std::endl;
-            std::cout << "domega = " << GlobalC::chi0_standard.domega << std::endl;
-            std::cout << "nomega = " << GlobalC::chi0_standard.nomega << std::endl;
-            std::cout << "dim = " << GlobalC::chi0_standard.dim << std::endl;
-            //std::cout <<"oband = "<<GlobalC::chi0_standard.oband<<std::endl;
-            GlobalC::chi0_standard.Chi(this->pelec);
-        }
-        if (GlobalC::epsilon0_pwscf.epsilon)
-        {
-            GlobalC::epsilon0_pwscf.Cal_epsilon0(this->pelec);
-        }
-        if (GlobalC::epsilon0_vasp.epsilon)
-        {
-            GlobalC::epsilon0_vasp.cal_epsilon0(this->pelec);
-        }
 
         for (int is = 0; is < GlobalV::NSPIN; is++)
         {
@@ -595,28 +561,15 @@ namespace ModuleESolver
                 ofs << std::setprecision(6);
             }
 
-            //----------------------
-            // no energy to output
-            //----------------------
-            if (GlobalV::KS_SOLVER == "selinv")
+            GlobalV::ofs_running << std::setprecision(6);
+            GlobalV::ofs_running << std::setiosflags(ios::showpoint);
+            for (int ib = 0; ib < GlobalV::NBANDS; ib++)
             {
-                ofs << " USING SELINV, NO BAND ENERGY IS AVAILABLE." << std::endl;
+                ofs << std::setw(8) << ib + 1
+                    << std::setw(15) << this->pelec->ekb(ik, ib) * ModuleBase::Ry_to_eV
+                    << std::setw(15) << this->pelec->wg(ik, ib) << std::endl;
             }
-            //----------------------
-            // output energy
-            //----------------------
-            else
-            {
-                GlobalV::ofs_running << std::setprecision(6);
-                GlobalV::ofs_running << std::setiosflags(ios::showpoint);
-                for (int ib = 0; ib < GlobalV::NBANDS; ib++)
-                {
-                    ofs << std::setw(8) << ib + 1
-                        << std::setw(15) << this->pelec->ekb(ik, ib) * ModuleBase::Ry_to_eV
-                        << std::setw(15) << this->pelec->wg(ik, ib) << std::endl;
-                }
-                ofs << std::endl;
-            }
+            ofs << std::endl;
         }//end ik
         return;
     }

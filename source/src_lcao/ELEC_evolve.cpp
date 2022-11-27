@@ -4,7 +4,6 @@
 #include "../src_parallel/parallel_reduce.h"
 #include "../src_pw/global.h"
 #include "../src_pw/symmetry_rho.h"
-#include "LCAO_diago.h"
 #include "LCAO_evolve.h"
 #include "dftu.h"
 #include "module_hamilt/hamilt_lcao.h"

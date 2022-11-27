@@ -4,6 +4,7 @@
 #include "global.h"
 #include "energy.h"
 #include "../module_base/mymath.h"
+#include "../src_lcao/LCAO_hamilt.h"
 #include <vector>
 #ifdef __MPI
 #include "mpi.h"
@@ -228,10 +229,6 @@ void energy::print_etot(
 	{
 		label = "LA";
 	}
-    else if(GlobalV::KS_SOLVER=="hpseps")
-	{
-		label = "HP";
-	}
     else if(GlobalV::KS_SOLVER=="genelpa")
 	{
         label = "GE";
@@ -332,20 +329,6 @@ void energy::print_etot(
                         std::cout << std::setprecision(3);
                         std::cout << std::setw(11) << scf_thr;
 			std::cout << std::setprecision(3);
-	//		std::cout << std::setw(11) << GlobalC::en.eband;
-	//		std::cout << std::setw(11) << H_Hartree_pw::hartree_energy;
-	//		std::cout << std::setw(11) << GlobalC::en.etxc - GlobalC::en.etxcc;
-			//if(GlobalV::DIAGO_TYPE=="cg") xiaohui modify 2013-09-02
-			// if(GlobalV::KS_SOLVER=="cg") //xiaohui add 2013-09-02
-			// {
-			// 	std::cout << std::setw(11) << avg_iter;
-			// }
-			//xiaohui modified 2013-03-23
-			//else if(GlobalV::DIAGO_TYPE=="selinv")
-			//{
-				// because Selinv::iter starts from 0.
-			//	std::cout << std::setw(11) << Selinv::iter+1;
-			//}
 			std::cout << std::setw(11) << duration;
 			std::cout << std::endl;
 		}
@@ -462,7 +445,7 @@ void energy::delta_escf(const elecstate::ElecState* pelec)
 	for (int ir=0; ir<GlobalC::rhopw->nrxx; ir++)
 	{
 		this->descf -= ( pelec->charge->rho[0][ir] - pelec->charge->rho_save[0][ir] ) * (v_eff[ir] - v_fixed[ir]);
-		if(XC_Functional::get_func_type() == 3)
+		if(XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
 		{
 			this->descf -= ( pelec->charge->kin_r[0][ir] - pelec->charge->kin_r_save[0][ir] ) * v_ofk[ir];
 		}
@@ -515,8 +498,8 @@ void energy::cal_converged(elecstate::ElecState* pelec)
 }
 
 // Peize Lin add 2016-12-03
+#ifdef __EXX
 #ifdef __LCAO
-#ifdef __MPI
 void energy::set_exx()
 {
 	ModuleBase::TITLE("energy", "set_exx");
@@ -529,25 +512,22 @@ void energy::set_exx()
 		}
 		else if("lcao"==GlobalV::BASIS_TYPE)
 		{
-			return GlobalC::exx_lcao.get_energy();
+			if(GlobalV::GAMMA_ONLY_LOCAL)
+				return GlobalC::exx_lri_double.Eexx;
+			else
+				return std::real(GlobalC::exx_lri_complex.Eexx);
 		}
 		else
 		{
 			throw std::invalid_argument(ModuleBase::GlobalFunc::TO_STRING(__FILE__)+ModuleBase::GlobalFunc::TO_STRING(__LINE__));
 		}
 	};
-	if( Exx_Global::Hybrid_Type::HF   == GlobalC::exx_lcao.info.hybrid_type )				// HF
+	if( GlobalC::exx_info.info_global.cal_exx )
 	{
-		this->exx = exx_energy();
-	}
-	else if( Exx_Global::Hybrid_Type::PBE0 == GlobalC::exx_lcao.info.hybrid_type ||
-			Exx_Global::Hybrid_Type::SCAN0 == GlobalC::exx_lcao.info.hybrid_type || 
-			 Exx_Global::Hybrid_Type::HSE  == GlobalC::exx_lcao.info.hybrid_type )			// PBE0 or HSE
-	{
-		this->exx = GlobalC::exx_global.info.hybrid_alpha * exx_energy();
+		this->exx = GlobalC::exx_info.info_global.hybrid_alpha * exx_energy();
 	}
 
 	return;
 }
-#endif //__MPI
-#endif //_LCAO
+#endif //__LCAO
+#endif //__EXX

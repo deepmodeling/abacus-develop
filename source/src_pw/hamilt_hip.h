@@ -50,16 +50,6 @@ class Hamilt
 							 hipblasDoubleComplex *evc,
 							 double *en,
 							 hipblasDoubleComplex *d_ekb_c);
-/*
-	void diagH_CUSOLVER(
-		const int nstart,
-		const int nbands,
-		hipblasDoubleComplex* hc,  // nstart * nstart
-		hipblasDoubleComplex* sc,  // nstart * nstart
-		const int ldh, // nstart
-		double *e,
-		hipblasDoubleComplex* hvec);
-*/
 #endif
 
 	Hamilt_PW hpw;

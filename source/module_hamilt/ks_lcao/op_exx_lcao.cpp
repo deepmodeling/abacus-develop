@@ -21,28 +21,22 @@ void OperatorEXX<OperatorLCAO<T>>::contributeHR()
 template<>
 void OperatorEXX<OperatorLCAO<double>>::contributeHk(int ik)
 {
-#ifdef __MPI //liyuanbo 2022/2/23
+#ifdef __EXX
     // Peize Lin add 2016-12-03
-    auto &exx_lcao = GlobalC::exx_lcao;
-    auto &exx_global = GlobalC::exx_global;
+    auto &exx_lri = GlobalC::exx_lri_double;
+    auto &exx_info = GlobalC::exx_info;
     if(XC_Functional::get_func_type()==4 || XC_Functional::get_func_type()==5)
     {
-        if( Exx_Global::Hybrid_Type::HF == exx_lcao.info.hybrid_type ) //HF
-        {
-            exx_lcao.add_Hexx(ik, 1, *this->LM);
-        }
-        else if( Exx_Global::Hybrid_Type::PBE0 == exx_lcao.info.hybrid_type )			// PBE0
-        {
-            exx_lcao.add_Hexx(ik, exx_global.info.hybrid_alpha, *this->LM);
-        }
-        else if( Exx_Global::Hybrid_Type::SCAN0 == exx_lcao.info.hybrid_type )			// SCAN0
-        {
-            exx_lcao.add_Hexx(ik, exx_global.info.hybrid_alpha, *this->LM);
-        }
-        else if( Exx_Global::Hybrid_Type::HSE  == exx_lcao.info.hybrid_type )			// HSE
-        {
-            exx_lcao.add_Hexx(ik, exx_global.info.hybrid_alpha, *this->LM);
-        }
+        //if(Exx_Info::Hybrid_Type::HF  == GlobalC::exx_info.info_global.hybrid_type)	// Peize Lin delete 2022.11.13
+        //{
+        //    exx_info.info_global.hybrid_alpha = 1.0;
+        //}
+        RI_2D_Comm::add_Hexx(
+            ik,
+            exx_info.info_global.hybrid_alpha,
+            exx_lri.Hexxs,
+            *this->LM->ParaV,
+            *this->LM);
     }
 #endif
 }
@@ -50,30 +44,23 @@ void OperatorEXX<OperatorLCAO<double>>::contributeHk(int ik)
 template<>
 void OperatorEXX<OperatorLCAO<std::complex<double>>>::contributeHk(int ik)
 {
-#ifdef __MPI //liyuanbo 2022/2/23
+#ifdef __EXX
     // Peize Lin add 2016-12-03
-    auto &exx_lcao = GlobalC::exx_lcao;
-    auto &exx_global = GlobalC::exx_global;
+    auto &exx_lri = GlobalC::exx_lri_complex;
+    auto &exx_info = GlobalC::exx_info;
     if(XC_Functional::get_func_type()==4 || XC_Functional::get_func_type()==5)
     {
-        if( Exx_Global::Hybrid_Type::HF  == exx_lcao.info.hybrid_type )				// HF
-        {
-            exx_lcao.add_Hexx(ik,1, *this->LM);
-        }
-        else if( Exx_Global::Hybrid_Type::PBE0  == exx_lcao.info.hybrid_type )			// PBE0
-        {
-            exx_lcao.add_Hexx(ik,exx_global.info.hybrid_alpha, *this->LM);
-        }
-        else if( Exx_Global::Hybrid_Type::SCAN0  == exx_lcao.info.hybrid_type )			// SCAN0
-        {
-            exx_lcao.add_Hexx(ik,exx_global.info.hybrid_alpha, *this->LM);
-        }
-        else if( Exx_Global::Hybrid_Type::HSE  == exx_lcao.info.hybrid_type )			// HSE
-        {
-            exx_lcao.add_Hexx(ik,exx_global.info.hybrid_alpha, *this->LM);
-        }
+        //if(Exx_Info::Hybrid_Type::HF  == GlobalC::exx_info.info_global.hybrid_type)	// Peize Lin delete 2022.11.13
+        //{
+        //    exx_info.info_global.hybrid_alpha = 1.0;
+        //}
+        RI_2D_Comm::add_Hexx(
+            ik,
+            exx_info.info_global.hybrid_alpha,
+            exx_lri.Hexxs,
+            *this->LM->ParaV,
+            *this->LM);
     }
 #endif
 }
-
-}
+} // namespace hamilt

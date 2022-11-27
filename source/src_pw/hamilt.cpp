@@ -1,34 +1,9 @@
 #include "global.h"
 #include "hamilt.h"
-#include "diago_cg.h"
-#include "diago_david.h"
 #include "../module_base/timer.h"
 
 Hamilt::Hamilt() {}
 Hamilt::~Hamilt() {}
-
-
-bool Hamilt::test_exit_cond(const int &ntry, const int &notconv)
-{
-    //================================================================
-    // If this logical function is true, need to do diagH_subspace
-	// and cg again.
-    //================================================================
-
-	bool scf = true;
-	if(GlobalV::CALCULATION=="nscf") scf=false;
-
-    // If ntry <=5, try to do it better, if ntry > 5, exit.
-    const bool f1 = (ntry <= 5);
-
-    // In non-self consistent calculation, do until totally converged.
-    const bool f2 = ( (!scf && (notconv > 0)) );
-
-    // if self consistent calculation, if not converged > 5,
-    // using diagH_subspace and cg method again. ntry++
-    const bool f3 = ( ( scf && (notconv > 5)) );
-    return  ( f1 && ( f2 || f3 ) );
-}
 
 /*
 //not used anymore

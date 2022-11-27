@@ -22,16 +22,9 @@ class ElecState
             this->pot = nullptr;
         }
     };
-    virtual void init(Charge *chg_in, // pointer for class Charge
+    void init_ks(Charge *chg_in, // pointer for class Charge
                       const K_Vectors *klist_in,
-                      int nk_in, // number of k points
-                      int nb_in) // number of bands
-    {
-        this->charge = chg_in;
-        this->klist = klist_in;
-        this->ekb.create(nk_in, nb_in);
-        this->wg.create(nk_in, nb_in);
-    }
+                      int nk_in); // number of k points
 
     // return current electronic density rho, as a input for constructing Hamiltonian
     virtual const double *getRho(int spin) const;
@@ -64,6 +57,16 @@ class ElecState
     virtual void calculate_weights();
     // use occupied weights from INPUT and skip calculate_weights
     void fixed_weights(const double * const ocp_kb);
+    // if nupdown is not 0(TWO_EFERMI case), 
+    // nelec_spin will be fixed and weights will be constrained 
+    void init_nelec_spin();
+    //used to record number of electrons per spin index
+    //for NSPIN=2, it will record number of spin up and number of spin down
+    //for NSPIN=4, it will record total number, magnetization for x, y, z direction  
+    std::vector<double> nelec_spin;
+
+    //calculate nbands and 
+    void cal_nbands();
 
     virtual void print_psi(const psi::Psi<double>& psi_in)
     {

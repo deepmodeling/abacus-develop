@@ -65,7 +65,7 @@ void OF_Stress_PW::cal_stress(ModuleBase::matrix& sigmatot, ModuleBase::matrix& 
        sigmaxc(i,i) = - (GlobalC::en.etxc - GlobalC::en.vtxc) / GlobalC::ucell.omega;
     }
     stress_gga(sigmaxc, pelec->charge);
-    if(XC_Functional::get_func_type() == 3) stress_mgga(sigmaxc, this->pelec->pot->get_effective_vofk(), this->pelec->wg, pelec->charge, psi_in);
+    if(XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5) stress_mgga(sigmaxc, this->pelec->pot->get_effective_vofk(), this->pelec->wg, pelec->charge, psi_in);
 
     //local contribution
     stress_loc(sigmaloc, GlobalC::rhopw, 1, pelec->charge);

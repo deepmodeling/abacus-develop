@@ -82,6 +82,8 @@ endif
 #==========================
 INCLUDES += -I${CEREAL_DIR}/include
 
+
+
 ##==========================
 ## CUDA needed 
 ##==========================
@@ -108,6 +110,14 @@ ifdef LIBXC_DIR
     LIBS 			    += -L${LIBXC_LIB_DIR} -Wl,-rpath=${LIBXC_LIB_DIR} -lxc
     PWTAG               += 'LIBXC_DIR=${LIBXC_DIR}'
 endif
+
+ifdef LIBRI_DIR
+    INCLUDES += -I${LIBRI_DIR}/include
+    INCLUDES += -I${LIBCOMM_DIR}/include
+    HONG                += -DUSE_LIBRI
+    HONG += -D__EXX
+endif
+
 ifdef LIBTORCH_DIR
  ifdef LIBNPY_DIR
       LIBTORCH_INCLUDE_DIR =  -I${LIBTORCH_DIR}/include -I${LIBTORCH_DIR}/include/torch/csrc/api/include
