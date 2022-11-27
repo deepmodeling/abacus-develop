@@ -42,10 +42,10 @@ void dngvx_op<double, psi::DEVICE_CPU>::operator()(const psi::DEVICE_CPU* d,
     ModuleBase::GlobalFunc::ZEROS(ifail, nstart);
 
     // The A and B storage space is (nstart * ldh), and the data that really participates in the zhegvx
-    // operation is (nstart * nstart). In this function, the data that A and B participate in the operation will 
+    // operation is (nstart * nstart). In this function, the data that A and B participate in the operation will
     // be extracted into the new local variables aux and bux (the internal of the function).
-    // V is the output of the function, the storage space is also (nstart * ldh), and the data size of valid V 
-    // obtained by the zhegvx operation is (nstart * nstart) and stored in zux (internal to the function). When 
+    // V is the output of the function, the storage space is also (nstart * ldh), and the data size of valid V
+    // obtained by the zhegvx operation is (nstart * nstart) and stored in zux (internal to the function). When
     // the function is output, the data of zux will be mapped to the corresponding position of V.
     LapackConnector::zhegvx(
         1, // ITYPE = 1:  A*x = (lambda)*B*x
@@ -116,12 +116,12 @@ void dngv_op<double, psi::DEVICE_CPU>::operator()(const psi::DEVICE_CPU* d,
     {
         V[i] = A[i];
     }
-    
+
     // The A and B storage space is (nstart * ldh), and the data that really participates in the zhegvx
-    // operation is (nstart * nstart). In this function, the data that A and B participate in the operation will 
+    // operation is (nstart * nstart). In this function, the data that A and B participate in the operation will
     // be extracted into the new local variables aux and bux (the internal of the function).
-    // V is the output of the function, the storage space is also (nstart * ldh), and the data size of valid V 
-    // obtained by the zhegvx operation is (nstart * nstart) and stored in zux (internal to the function). When 
+    // V is the output of the function, the storage space is also (nstart * ldh), and the data size of valid V
+    // obtained by the zhegvx operation is (nstart * nstart) and stored in zux (internal to the function). When
     // the function is output, the data of zux will be mapped to the corresponding position of V.
     LapackConnector::zhegv(1, 'V', 'U', nstart, V, nstart, B, nstart, W, work, lwork, rwork, info, ldh);
 

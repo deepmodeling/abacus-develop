@@ -28,17 +28,19 @@ template <typename FPTYPE, typename Device> DiagoDavid<FPTYPE, Device>::DiagoDav
 
 template <typename FPTYPE, typename Device> DiagoDavid<FPTYPE, Device>::~DiagoDavid()
 {
-    delete_memory_op()(this->ctx, this->hphi);
-    delete_memory_op()(this->ctx, this->sphi);
-    delete_memory_op()(this->ctx, this->hcc);
-    delete_memory_op()(this->ctx, this->scc);
-    delete_memory_op()(this->ctx, this->vcc);
-    psi::memory::delete_memory_op<FPTYPE, Device>()(this->ctx, this->eigenvalue);
-    delete_memory_op()(this->ctx, this->lagrange_matrix);
+    delmem_complex_op()(this->ctx, this->hphi);
+    delmem_complex_op()(this->ctx, this->sphi);
+    delmem_complex_op()(this->ctx, this->hcc);
+    delmem_complex_op()(this->ctx, this->scc);
+    delmem_complex_op()(this->ctx, this->vcc);
+    delmem_complex_op()(this->ctx, this->lagrange_matrix);
+    psi::memory::delete_memory_op<FPTYPE, psi::DEVICE_CPU>()(this->cpu_ctx, this->eigenvalue);
+#if defined(__CUDA) || defined(__ROCM)
     if (this->device == psi::GpuDevice)
     {
-        psi::memory::delete_memory_op<FPTYPE, Device>()(this->ctx, this->d_precondition);
+        delmem_var_op()(this->ctx, this->d_precondition);
     }
+#endif
 }
 
 template <typename FPTYPE, typename Device>
@@ -62,6 +64,10 @@ void DiagoDavid<FPTYPE, Device>::diag_mock(hamilt::Hamilt<FPTYPE, Device>* phm_i
     this->n_band = psi.get_nbands();
     this->nbase_x = DiagoDavid::PW_DIAG_NDIM * this->n_band; // maximum dimension of the reduced basis set
 
+    // the lowest N eigenvalues
+    psi::memory::resize_memory_op<FPTYPE, psi::DEVICE_CPU>()(this->cpu_ctx, this->eigenvalue, this->nbase_x);
+    psi::memory::set_memory_op<FPTYPE, psi::DEVICE_CPU>()(this->cpu_ctx, this->eigenvalue, 0, this->nbase_x);
+
     psi::Psi<std::complex<FPTYPE>, Device> basis(1,
                                                  this->nbase_x,
                                                  this->dim,
@@ -69,29 +75,25 @@ void DiagoDavid<FPTYPE, Device>::diag_mock(hamilt::Hamilt<FPTYPE, Device>* phm_i
 
     //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     // ModuleBase::ComplexMatrix hp(nbase_x, this->dim); // the product of H and psi in the reduced basis set
-    resize_memory_op()(this->ctx, this->hphi, this->nbase_x * this->dim);
-    set_memory_op()(this->ctx, this->hphi, 0, this->nbase_x * this->dim);
+    resmem_complex_op()(this->ctx, this->hphi, this->nbase_x * this->dim);
+    setmem_complex_op()(this->ctx, this->hphi, 0, this->nbase_x * this->dim);
 
     // ModuleBase::ComplexMatrix sp(nbase_x, this->dim); // the Product of S and psi in the reduced basis set
-    resize_memory_op()(this->ctx, this->sphi, this->nbase_x * this->dim);
-    set_memory_op()(this->ctx, this->sphi, 0, this->nbase_x * this->dim);
+    resmem_complex_op()(this->ctx, this->sphi, this->nbase_x * this->dim);
+    setmem_complex_op()(this->ctx, this->sphi, 0, this->nbase_x * this->dim);
 
     // ModuleBase::ComplexMatrix hc(this->nbase_x, this->nbase_x); // Hamiltonian on the reduced basis
-    resize_memory_op()(this->ctx, this->hcc, this->nbase_x * this->nbase_x);
-    set_memory_op()(this->ctx, this->hcc, 0, this->nbase_x * this->nbase_x);
+    resmem_complex_op()(this->ctx, this->hcc, this->nbase_x * this->nbase_x);
+    setmem_complex_op()(this->ctx, this->hcc, 0, this->nbase_x * this->nbase_x);
 
     // ModuleBase::ComplexMatrix sc(this->nbase_x, this->nbase_x); // Overlap on the reduced basis
-    resize_memory_op()(this->ctx, this->scc, this->nbase_x * this->nbase_x);
-    set_memory_op()(this->ctx, this->scc, 0, this->nbase_x * this->nbase_x);
+    resmem_complex_op()(this->ctx, this->scc, this->nbase_x * this->nbase_x);
+    setmem_complex_op()(this->ctx, this->scc, 0, this->nbase_x * this->nbase_x);
 
     // ModuleBase::ComplexMatrix vc(this->nbase_x, this->nbase_x); // Eigenvectors of hc
-    resize_memory_op()(this->ctx, this->vcc, this->nbase_x * this->nbase_x);
-    set_memory_op()(this->ctx, this->vcc, 0, this->nbase_x * this->nbase_x);
+    resmem_complex_op()(this->ctx, this->vcc, this->nbase_x * this->nbase_x);
+    setmem_complex_op()(this->ctx, this->vcc, 0, this->nbase_x * this->nbase_x);
     //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-
-    // the lowest N eigenvalues
-    psi::memory::resize_memory_op<FPTYPE, psi::DEVICE_CPU>()(this->cpu_ctx, this->eigenvalue, this->nbase_x);
-    psi::memory::set_memory_op<FPTYPE, psi::DEVICE_CPU>()(this->cpu_ctx, this->eigenvalue, 0, this->nbase_x);
 
     // convflag[m] = true if the m th band is convergent
     std::vector<bool> convflag(this->n_band, false);
@@ -110,8 +112,8 @@ void DiagoDavid<FPTYPE, Device>::diag_mock(hamilt::Hamilt<FPTYPE, Device>* phm_i
     // orthogonalise the initial trial psi(0~nband-1)
 
     // ModuleBase::ComplexMatrix lagrange_matrix(this->n_band, this->n_band);
-    resize_memory_op()(this->ctx, this->lagrange_matrix, this->n_band * this->n_band);
-    set_memory_op()(this->ctx, this->lagrange_matrix, 0, this->n_band * this->n_band);
+    resmem_complex_op()(this->ctx, this->lagrange_matrix, this->n_band * this->n_band);
+    setmem_complex_op()(this->ctx, this->lagrange_matrix, 0, this->n_band * this->n_band);
 
     // plan for SchmitOrth
     std::vector<int> pre_matrix_mm_m(this->n_band, 0);
@@ -126,11 +128,7 @@ void DiagoDavid<FPTYPE, Device>::diag_mock(hamilt::Hamilt<FPTYPE, Device>* phm_i
     for (int m = 0; m < this->n_band; m++)
     {
         // haozhihan replace 2022-10-23
-        psi::memory::synchronize_memory_op<std::complex<FPTYPE>, Device, Device>()(this->ctx,
-                                                                                   this->ctx,
-                                                                                   &basis(m, 0),
-                                                                                   &psi(m, 0),
-                                                                                   this->dim);
+        syncmem_complex_op()(this->ctx, this->ctx, &basis(m, 0), &psi(m, 0), this->dim);
 
         this->SchmitOrth(this->dim,
                          this->n_band,
@@ -203,8 +201,9 @@ void DiagoDavid<FPTYPE, Device>::diag_mock(hamilt::Hamilt<FPTYPE, Device>* phm_i
             ModuleBase::timer::tick("DiagoDavid", "last");
 
             // updata eigenvectors of Hamiltonian
+
             // ModuleBase::GlobalFunc::ZEROS(psi.get_pointer(), psi.get_nbands() * psi.get_nbasis());
-            set_memory_op()(this->ctx, psi.get_pointer(), 0, psi.get_nbands() * psi.get_nbasis());
+            setmem_complex_op()(this->ctx, psi.get_pointer(), 0, psi.get_nbands() * psi.get_nbasis());
             //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
             // haozhihan repalce 2022-10-18
             gemm_op<FPTYPE, Device>()(this->ctx,
@@ -236,7 +235,6 @@ void DiagoDavid<FPTYPE, Device>::diag_mock(hamilt::Hamilt<FPTYPE, Device>* phm_i
                 // then replace the first N (=nband) basis vectors with the current
                 // estimate of the eigenvectors and set the basis dimension to N;
 
-                // std::cout << "test" << std::endl;
                 this->refresh(this->dim,
                               this->n_band,
                               nbase,
@@ -290,8 +288,8 @@ void DiagoDavid<FPTYPE, Device>::cal_grad(hamilt::Hamilt<FPTYPE, Device>* phm_in
 
     // ModuleBase::ComplexMatrix vc_ev_vector(notconv, nbase);
     std::complex<FPTYPE>* vc_ev_vector = nullptr;
-    resize_memory_op()(this->ctx, vc_ev_vector, notconv * nbase);
-    set_memory_op()(this->ctx, vc_ev_vector, 0, notconv * nbase);
+    resmem_complex_op()(this->ctx, vc_ev_vector, notconv * nbase);
+    setmem_complex_op()(this->ctx, vc_ev_vector, 0, notconv * nbase);
 
     //>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     // for (int m = 0; m < notconv; m++)
@@ -304,31 +302,35 @@ void DiagoDavid<FPTYPE, Device>::cal_grad(hamilt::Hamilt<FPTYPE, Device>* phm_in
     // }
     //>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     // replace by haozhihan
+    if (this->device == psi::GpuDevice)
+    {
 #if defined(__CUDA) || defined(__ROCM)
-    std::complex<FPTYPE>* vcc_transpose = nullptr;
-    resize_memory_op()(this->ctx, vcc_transpose, this->nbase_x * this->nbase_x);
-    matrixTranspose_op<FPTYPE, Device>()(this->ctx, this->nbase_x, this->nbase_x, vcc, vcc_transpose);
+        std::complex<FPTYPE>* vcc_transpose = nullptr;
+        resmem_complex_op()(this->ctx, vcc_transpose, this->nbase_x * this->nbase_x);
+        matrixTranspose_op<FPTYPE, Device>()(this->ctx, this->nbase_x, this->nbase_x, vcc, vcc_transpose);
 
-    for (int m = 0; m < notconv; m++)
-    {
-        psi::memory::synchronize_memory_op<std::complex<FPTYPE>, Device, Device>()(this->ctx,
-                                                                                   this->ctx,
-                                                                                   vc_ev_vector + m * nbase,
-                                                                                   vcc_transpose
-                                                                                       + unconv[m] * this->nbase_x,
-                                                                                   nbase);
-    }
-    delete_memory_op()(this->ctx, vcc_transpose);
-#else
-    for (int m = 0; m < notconv; m++)
-    {
-        for (int i = 0; i < nbase; i++)
+        for (int m = 0; m < notconv; m++)
         {
-            // vc_ev_vector(m, i) = vc(i, unconv[m]);
-            vc_ev_vector[m * nbase + i] = vcc[i * this->nbase_x + unconv[m]];
+            syncmem_complex_op()(this->ctx,
+                                 this->ctx,
+                                 vc_ev_vector + m * nbase,
+                                 vcc_transpose + unconv[m] * this->nbase_x,
+                                 nbase);
+        }
+        delmem_complex_op()(this->ctx, vcc_transpose);
+#endif
+    }
+    else
+    {
+        for (int m = 0; m < notconv; m++)
+        {
+            for (int i = 0; i < nbase; i++)
+            {
+                // vc_ev_vector(m, i) = vc(i, unconv[m]);
+                vc_ev_vector[m * nbase + i] = vcc[i * this->nbase_x + unconv[m]];
+            }
         }
     }
-#endif
     //>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
     ppsi = &basis(nbase, 0);
@@ -365,27 +367,28 @@ void DiagoDavid<FPTYPE, Device>::cal_grad(hamilt::Hamilt<FPTYPE, Device>* phm_in
     {
         std::vector<FPTYPE> e_temp_cpu(nbase, (-1.0 * this->eigenvalue[unconv[m]]));
 
+        if (this->device == psi::GpuDevice)
+        {
 #if defined(__CUDA) || defined(__ROCM)
-        FPTYPE* e_temp_gpu = nullptr;
-        psi::memory::resize_memory_op<FPTYPE, Device>()(this->ctx, e_temp_gpu, nbase);
-        psi::memory::synchronize_memory_op<FPTYPE, Device, psi::DEVICE_CPU>()(this->ctx,
-                                                                              this->cpu_ctx,
-                                                                              e_temp_gpu,
-                                                                              e_temp_cpu.data(),
-                                                                              nbase);
-        vector_mul_vector_op<FPTYPE, Device>()(this->ctx,
-                                               nbase,
-                                               vc_ev_vector + m * nbase,
-                                               vc_ev_vector + m * nbase,
-                                               e_temp_gpu);
-        psi::memory::delete_memory_op<FPTYPE, Device>()(this->ctx, e_temp_gpu);
-#else
-        vector_mul_vector_op<FPTYPE, Device>()(this->ctx,
-                                               nbase,
-                                               vc_ev_vector + m * nbase,
-                                               vc_ev_vector + m * nbase,
-                                               e_temp_cpu.data());
+            FPTYPE* e_temp_gpu = nullptr;
+            resmem_var_op()(this->ctx, e_temp_gpu, nbase);
+            syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, e_temp_gpu, e_temp_cpu.data(), nbase);
+            vector_mul_vector_op<FPTYPE, Device>()(this->ctx,
+                                                   nbase,
+                                                   vc_ev_vector + m * nbase,
+                                                   vc_ev_vector + m * nbase,
+                                                   e_temp_gpu);
+            delmem_var_op()(this->ctx, e_temp_gpu);
 #endif
+        }
+        else
+        {
+            vector_mul_vector_op<FPTYPE, Device>()(this->ctx,
+                                                   nbase,
+                                                   vc_ev_vector + m * nbase,
+                                                   vc_ev_vector + m * nbase,
+                                                   e_temp_cpu.data());
+        }
     }
     //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
@@ -410,23 +413,26 @@ void DiagoDavid<FPTYPE, Device>::cal_grad(hamilt::Hamilt<FPTYPE, Device>* phm_in
 
     for (int m = 0; m < notconv; m++)
     {
-        // ppsi = &basis(nbase + m, 0);
-        // vector_div_vector_op<FPTYPE, Device>()(this->ctx, npw, ppsi, ppsi, this->precondition);
         //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
         // haozhihan replace 2022-10-18
+        if (this->device == psi::GpuDevice)
+        {
 #if defined(__CUDA) || defined(__ROCM)
-        vector_div_vector_op<FPTYPE, Device>()(this->ctx,
-                                               npw,
-                                               &basis(nbase + m, 0),
-                                               &basis(nbase + m, 0),
-                                               this->d_precondition);
-#else
-        vector_div_vector_op<FPTYPE, Device>()(this->ctx,
-                                               npw,
-                                               &basis(nbase + m, 0),
-                                               &basis(nbase + m, 0),
-                                               this->precondition);
+            vector_div_vector_op<FPTYPE, Device>()(this->ctx,
+                                                   npw,
+                                                   &basis(nbase + m, 0),
+                                                   &basis(nbase + m, 0),
+                                                   this->d_precondition);
 #endif
+        }
+        else
+        {
+            vector_div_vector_op<FPTYPE, Device>()(this->ctx,
+                                                   npw,
+                                                   &basis(nbase + m, 0),
+                                                   &basis(nbase + m, 0),
+                                                   this->precondition);
+        }
         //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
         // for (int ig = 0; ig < npw; ig++)
         // {
@@ -437,10 +443,9 @@ void DiagoDavid<FPTYPE, Device>::cal_grad(hamilt::Hamilt<FPTYPE, Device>* phm_in
 
     // there is a nbase to nbase + notconv band orthogonalise
     // plan for SchmitOrth
-    // ModuleBase::ComplexMatrix lagrange_matrix(notconv, nbase + notconv);
     std::complex<FPTYPE>* lagrange = nullptr;
-    resize_memory_op()(this->ctx, lagrange, notconv * (nbase + notconv));
-    set_memory_op()(this->ctx, lagrange, 0, notconv * (nbase + notconv));
+    resmem_complex_op()(this->ctx, lagrange, notconv * (nbase + notconv));
+    setmem_complex_op()(this->ctx, lagrange, 0, notconv * (nbase + notconv));
 
     std::vector<int> pre_matrix_mm_m(notconv, 0);
     std::vector<int> pre_matrix_mv_m(notconv, 1);
@@ -491,9 +496,9 @@ void DiagoDavid<FPTYPE, Device>::cal_grad(hamilt::Hamilt<FPTYPE, Device>* phm_in
                           &hphi[nbase * this->dim]); // &hp(nbase, 0)
     phm_in->ops->hPsi(dav_hpsi_in);
 
-    delete_memory_op()(this->ctx, lagrange);
-    delete_memory_op()(this->ctx, vc_ev_vector);
-    
+    delmem_complex_op()(this->ctx, lagrange);
+    delmem_complex_op()(this->ctx, vc_ev_vector);
+
     ModuleBase::timer::tick("DiagoDavid", "cal_grad");
     return;
 }
@@ -521,12 +526,7 @@ void DiagoDavid<FPTYPE, Device>::cal_elem(const int& npw,
 
     const int nb_notc = (nbase + notconv);
 
-    //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-    // haozhihan replace 2022-10-18
     matrixTranspose_op<FPTYPE, Device>()(this->ctx, this->nbase_x, this->nbase_x, hcc, hcc);
-    // hc = transpose(hc, false);
-    //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-    // haozhihan repalce 2022-10-16
     gemm_op<FPTYPE, Device>()(this->ctx,
                               'C',
                               'N',
@@ -541,33 +541,9 @@ void DiagoDavid<FPTYPE, Device>::cal_elem(const int& npw,
                               &ModuleBase::ZERO,
                               hcc + nbase, // notconv * (nbase + notconv)
                               this->nbase_x);
-    //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-    // zgemm_(&trans1,
-    //        &trans2,
-    //        &notconv,
-    //        &nb_notc,
-    //        &npw,
-    //        &ModuleBase::ONE,
-    //        &basis(nbase, 0),
-    //        &basis.get_nbasis(),
-    //        hp.c,
-    //        &hp.nc,
-    //        &ModuleBase::ONE,
-    //        hc.c + nbase,
-    //        &hc.nr);
-    //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-    //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-    // replace transpose
     matrixTranspose_op<FPTYPE, Device>()(this->ctx, this->nbase_x, this->nbase_x, hcc, hcc);
-    // hc = transpose(hc, false);
-    //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
-    //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-    // replace transpose
     matrixTranspose_op<FPTYPE, Device>()(this->ctx, this->nbase_x, this->nbase_x, scc, scc);
-    // sc = transpose(sc, false);
-    //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-    // haozhihan repalce 2022-10-16
     gemm_op<FPTYPE, Device>()(this->ctx,
                               'C',
                               'N',
@@ -582,42 +558,16 @@ void DiagoDavid<FPTYPE, Device>::cal_elem(const int& npw,
                               &ModuleBase::ZERO,
                               scc + nbase,
                               this->nbase_x);
-    //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-    // zgemm_(&trans1,
-    //        &trans2,
-    //        &notconv,
-    //        &nb_notc,
-    //        &npw,
-    //        &ModuleBase::ONE,
-    //        &basis(nbase, 0),
-    //        &basis.get_nbasis(),
-    //        sp.c,
-    //        &sp.nc,
-    //        &ModuleBase::ONE,
-    //        sc.c + nbase,
-    //        &sc.nr);
-    //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-    // replace transpose
     matrixTranspose_op<FPTYPE, Device>()(this->ctx, this->nbase_x, this->nbase_x, scc, scc);
-    // sc = transpose(sc, false);
-    //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 #ifdef __MPI
     if (GlobalV::NPROC_IN_POOL > 1)
     {
         std::complex<double>* swap = new std::complex<double>[notconv * this->nbase_x];
-        psi::memory::synchronize_memory_op<std::complex<FPTYPE>, Device, Device>()(this->ctx,
-                                                                                   this->ctx,
-                                                                                   swap,
-                                                                                   hcc + offset_h,
-                                                                                   notconv * this->nbase_x);
+        syncmem_complex_op()(this->ctx, this->ctx, swap, hcc + offset_h, notconv * this->nbase_x);
         MPI_Reduce(swap, hcc + offset_h, notconv * this->nbase_x, MPI_DOUBLE_COMPLEX, MPI_SUM, 0, MPI_COMM_WORLD);
 
-        psi::memory::synchronize_memory_op<std::complex<FPTYPE>, Device, Device>()(this->ctx,
-                                                                                   this->ctx,
-                                                                                   swap,
-                                                                                   scc + offset_h,
-                                                                                   notconv * this->nbase_x);
+        syncmem_complex_op()(this->ctx, this->ctx, swap, scc + offset_h, notconv * this->nbase_x);
         MPI_Reduce(swap, scc + offset_h, notconv * this->nbase_x, MPI_DOUBLE_COMPLEX, MPI_SUM, 0, MPI_COMM_WORLD);
         delete[] swap;
     }
@@ -665,62 +615,24 @@ void DiagoDavid<FPTYPE, Device>::diag_zhegvx(const int& n, // nbase
     {
         assert(ldh >= max(1, n));
 
+        if (this->device == psi::GpuDevice)
+        {
 #if defined(__CUDA) || defined(__ROCM)
-        FPTYPE* eigenvalue_gpu = nullptr;
-        psi::memory::resize_memory_op<FPTYPE, Device>()(this->ctx, eigenvalue_gpu, this->nbase_x);
-        syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, eigenvalue_gpu, eigenvalue, this->nbase_x);
+            FPTYPE* eigenvalue_gpu = nullptr;
+            resmem_var_op()(this->ctx, eigenvalue_gpu, this->nbase_x);
+            syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, eigenvalue_gpu, eigenvalue, this->nbase_x);
 
-        dngvx_op<FPTYPE, Device>()(this->ctx, n, this->nbase_x, this->hcc, this->scc, m, eigenvalue_gpu, this->vcc);
+            dngvx_op<FPTYPE, Device>()(this->ctx, n, this->nbase_x, this->hcc, this->scc, m, eigenvalue_gpu, this->vcc);
 
-        syncmem_var_d2h_op()(this->cpu_ctx, this->ctx, eigenvalue, eigenvalue_gpu, this->nbase_x);
-        psi::memory::delete_memory_op<FPTYPE, Device>()(this->ctx, eigenvalue_gpu);
-        // hsolver::createBLAShandle();
-
-        // std::complex<FPTYPE>* hcc_cpu = nullptr;
-        // std::complex<FPTYPE>* scc_cpu = nullptr;
-        // std::complex<FPTYPE>* vcc_cpu = nullptr;
-        // psi::memory::resize_memory_op<std::complex<FPTYPE>, psi::DEVICE_CPU>()(this->cpu_ctx,
-        //                                                                        hcc_cpu,
-        //                                                                        this->nbase_x * this->nbase_x);
-        // psi::memory::resize_memory_op<std::complex<FPTYPE>, psi::DEVICE_CPU>()(this->cpu_ctx,
-        //                                                                        scc_cpu,
-        //                                                                        this->nbase_x * this->nbase_x);
-        // psi::memory::resize_memory_op<std::complex<FPTYPE>, psi::DEVICE_CPU>()(this->cpu_ctx,
-        //                                                                        vcc_cpu,
-        //                                                                        this->nbase_x * this->nbase_x);
-        // psi::memory::synchronize_memory_op<std::complex<FPTYPE>, psi::DEVICE_CPU, Device>()(this->cpu_ctx,
-        //                                                                                     this->ctx,
-        //                                                                                     hcc_cpu,
-        //                                                                                     this->hcc,
-        //                                                                                     this->nbase_x
-        //                                                                                         * this->nbase_x);
-        // psi::memory::synchronize_memory_op<std::complex<FPTYPE>, psi::DEVICE_CPU, Device>()(this->cpu_ctx,
-        //                                                                                     this->ctx,
-        //                                                                                     scc_cpu,
-        //                                                                                     this->scc,
-        //                                                                                     this->nbase_x
-        //                                                                                         * this->nbase_x);
-        // psi::memory::synchronize_memory_op<std::complex<FPTYPE>, psi::DEVICE_CPU, Device>()(this->cpu_ctx,
-        //                                                                                     this->ctx,
-        //                                                                                     vcc_cpu,
-        //                                                                                     this->vcc,
-        //                                                                                     this->nbase_x
-        //                                                                                         * this->nbase_x);
-        // dngvx_op<FPTYPE,
-        //          psi::DEVICE_CPU>()(this->cpu_ctx, this->nbase_x, n, hcc_cpu, scc_cpu, m, this->eigenvalue, vcc_cpu);
-        // psi::memory::synchronize_memory_op<std::complex<FPTYPE>, Device, psi::DEVICE_CPU>()(this->ctx,
-        //                                                                                     this->cpu_ctx,
-        //                                                                                     this->vcc,
-        //                                                                                     vcc_cpu,
-        //                                                                                     this->nbase_x
-        //                                                                                         * this->nbase_x);
-        // psi::memory::delete_memory_op<std::complex<FPTYPE>, Device>()(this->ctx, hcc_cpu);
-        // psi::memory::delete_memory_op<std::complex<FPTYPE>, Device>()(this->ctx, scc_cpu);
-        // psi::memory::delete_memory_op<std::complex<FPTYPE>, Device>()(this->ctx, vcc_cpu);
-
-#else
-        dngvx_op<FPTYPE, Device>()(this->ctx, n, this->nbase_x, this->hcc, this->scc, m, this->eigenvalue, this->vcc);
+            syncmem_var_d2h_op()(this->cpu_ctx, this->ctx, eigenvalue, eigenvalue_gpu, this->nbase_x);
+            delmem_var_op()(this->ctx, eigenvalue_gpu);
 #endif
+        }
+        else
+        {
+            dngvx_op<FPTYPE,
+                     Device>()(this->ctx, n, this->nbase_x, this->hcc, this->scc, m, this->eigenvalue, this->vcc);
+        }
     }
 
 #ifdef __MPI
@@ -794,18 +706,10 @@ void DiagoDavid<FPTYPE, Device>::refresh(const int& npw,
     );
 
     // ModuleBase::GlobalFunc::COPYARRAY(&basis(0, 0), hphi, npw * nband);
-    psi::memory::synchronize_memory_op<std::complex<FPTYPE>, Device, Device>()(this->ctx,
-                                                                               this->ctx,
-                                                                               hphi,
-                                                                               &basis(0, 0),
-                                                                               npw * nband);
+    syncmem_complex_op()(this->ctx, this->ctx, hphi, &basis(0, 0), npw * nband);
 
     // ModuleBase::GlobalFunc::COPYARRAY(&basis(nband, 0), sphi, npw * nband);
-    psi::memory::synchronize_memory_op<std::complex<FPTYPE>, Device, Device>()(this->ctx,
-                                                                               this->ctx,
-                                                                               sphi,
-                                                                               &basis(nband, 0),
-                                                                               npw * nband);
+    syncmem_complex_op()(this->ctx, this->ctx, sphi, &basis(nband, 0), npw * nband);
     /*for (int m = 0; m < nband; m++)
     {
         for (int ig = 0; ig < npw; ig++)
@@ -820,11 +724,7 @@ void DiagoDavid<FPTYPE, Device>::refresh(const int& npw,
     for (int m = 0; m < nband; m++)
     {
         // ModuleBase::GlobalFunc::COPYARRAY(&psi(m, 0), &basis(m, 0), npw);
-        psi::memory::synchronize_memory_op<std::complex<FPTYPE>, Device, Device>()(this->ctx,
-                                                                                   this->ctx,
-                                                                                   &basis(m, 0),
-                                                                                   &psi(m, 0),
-                                                                                   npw);
+        syncmem_complex_op()(this->ctx, this->ctx, &basis(m, 0), &psi(m, 0), npw);
         /*for (int ig = 0; ig < npw; ig++)
             basis(m, ig) = psi(m, ig);*/
     }
@@ -833,85 +733,60 @@ void DiagoDavid<FPTYPE, Device>::refresh(const int& npw,
     nbase = nband;
 
     // hc.zero_out();
-    set_memory_op()(this->ctx, hcc, 0, this->nbase_x * this->nbase_x);
+    setmem_complex_op()(this->ctx, hcc, 0, this->nbase_x * this->nbase_x);
 
     // sc.zero_out();
-    set_memory_op()(this->ctx, scc, 0, this->nbase_x * this->nbase_x);
+    setmem_complex_op()(this->ctx, scc, 0, this->nbase_x * this->nbase_x);
 
     // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
+    if (this->device == psi::GpuDevice)
+    {
 #if defined(__CUDA) || defined(__ROCM)
+        std::complex<FPTYPE>* hcc_cpu = nullptr;
+        std::complex<FPTYPE>* scc_cpu = nullptr;
+        std::complex<FPTYPE>* vcc_cpu = nullptr;
+        psi::memory::resize_memory_op<std::complex<FPTYPE>, psi::DEVICE_CPU>()(this->cpu_ctx,
+                                                                               hcc_cpu,
+                                                                               this->nbase_x * this->nbase_x);
+        psi::memory::resize_memory_op<std::complex<FPTYPE>, psi::DEVICE_CPU>()(this->cpu_ctx,
+                                                                               scc_cpu,
+                                                                               this->nbase_x * this->nbase_x);
+        psi::memory::resize_memory_op<std::complex<FPTYPE>, psi::DEVICE_CPU>()(this->cpu_ctx,
+                                                                               vcc_cpu,
+                                                                               this->nbase_x * this->nbase_x);
 
-    std::complex<FPTYPE>* hcc_cpu = nullptr;
-    std::complex<FPTYPE>* scc_cpu = nullptr;
-    std::complex<FPTYPE>* vcc_cpu = nullptr;
-    psi::memory::resize_memory_op<std::complex<FPTYPE>, psi::DEVICE_CPU>()(this->cpu_ctx,
-                                                                           hcc_cpu,
-                                                                           this->nbase_x * this->nbase_x);
-    psi::memory::resize_memory_op<std::complex<FPTYPE>, psi::DEVICE_CPU>()(this->cpu_ctx,
-                                                                           scc_cpu,
-                                                                           this->nbase_x * this->nbase_x);
-    psi::memory::resize_memory_op<std::complex<FPTYPE>, psi::DEVICE_CPU>()(this->cpu_ctx,
-                                                                           vcc_cpu,
-                                                                           this->nbase_x * this->nbase_x);
+        syncmem_complex_d2h_op()(this->cpu_ctx, this->ctx, hcc_cpu, hcc, this->nbase_x * this->nbase_x);
+        syncmem_complex_d2h_op()(this->cpu_ctx, this->ctx, scc_cpu, scc, this->nbase_x * this->nbase_x);
+        syncmem_complex_d2h_op()(this->cpu_ctx, this->ctx, vcc_cpu, vcc, this->nbase_x * this->nbase_x);
 
-    psi::memory::synchronize_memory_op<std::complex<FPTYPE>, psi::DEVICE_CPU, Device>()(this->cpu_ctx,
-                                                                                        this->ctx,
-                                                                                        hcc_cpu,
-                                                                                        hcc,
-                                                                                        this->nbase_x * this->nbase_x);
-    psi::memory::synchronize_memory_op<std::complex<FPTYPE>, psi::DEVICE_CPU, Device>()(this->cpu_ctx,
-                                                                                        this->ctx,
-                                                                                        scc_cpu,
-                                                                                        scc,
-                                                                                        this->nbase_x * this->nbase_x);
-    psi::memory::synchronize_memory_op<std::complex<FPTYPE>, psi::DEVICE_CPU, Device>()(this->cpu_ctx,
-                                                                                        this->ctx,
-                                                                                        vcc_cpu,
-                                                                                        vcc,
-                                                                                        this->nbase_x * this->nbase_x);
+        for (int i = 0; i < nbase; i++)
+        {
+            hcc_cpu[i * this->nbase_x + i] = eigenvalue_in[i];
+            scc_cpu[i * this->nbase_x + i] = ModuleBase::ONE;
+            vcc_cpu[i * this->nbase_x + i] = ModuleBase::ONE;
+        }
 
-    for (int i = 0; i < nbase; i++)
-    {
-        hcc_cpu[i * this->nbase_x + i] = eigenvalue_in[i];
-        scc_cpu[i * this->nbase_x + i] = ModuleBase::ONE;
-        vcc_cpu[i * this->nbase_x + i] = ModuleBase::ONE;
-    }
+        syncmem_complex_h2d_op()(this->ctx, this->cpu_ctx, hcc, hcc_cpu, this->nbase_x * this->nbase_x);
+        syncmem_complex_h2d_op()(this->ctx, this->cpu_ctx, scc, scc_cpu, this->nbase_x * this->nbase_x);
+        syncmem_complex_h2d_op()(this->ctx, this->cpu_ctx, vcc, vcc_cpu, this->nbase_x * this->nbase_x);
 
-    psi::memory::synchronize_memory_op<std::complex<FPTYPE>, Device, psi::DEVICE_CPU>()(this->ctx,
-                                                                                        this->cpu_ctx,
-                                                                                        hcc,
-                                                                                        hcc_cpu,
-                                                                                        this->nbase_x * this->nbase_x);
-
-    psi::memory::synchronize_memory_op<std::complex<FPTYPE>, Device, psi::DEVICE_CPU>()(this->ctx,
-                                                                                        this->cpu_ctx,
-                                                                                        scc,
-                                                                                        scc_cpu,
-                                                                                        this->nbase_x * this->nbase_x);
-
-    psi::memory::synchronize_memory_op<std::complex<FPTYPE>, Device, psi::DEVICE_CPU>()(this->ctx,
-                                                                                        this->cpu_ctx,
-                                                                                        vcc,
-                                                                                        vcc_cpu,
-                                                                                        this->nbase_x * this->nbase_x);
-
-    psi::memory::delete_memory_op<std::complex<FPTYPE>, Device>()(this->ctx, hcc_cpu);
-    psi::memory::delete_memory_op<std::complex<FPTYPE>, Device>()(this->ctx, scc_cpu);
-    psi::memory::delete_memory_op<std::complex<FPTYPE>, Device>()(this->ctx, vcc_cpu);
-
-#else
-
-    for (int i = 0; i < nbase; i++)
-    {
-        hcc[i * this->nbase_x + i] = eigenvalue_in[i];
-        // sc(i, i) = ModuleBase::ONE;
-        scc[i * this->nbase_x + i] = ModuleBase::ONE;
-        // vc(i, i) = ModuleBase::ONE;
-        vcc[i * this->nbase_x + i] = ModuleBase::ONE;
-    }
-
+        psi::memory::delete_memory_op<std::complex<FPTYPE>, psi::DEVICE_CPU>()(this->cpu_ctx, hcc_cpu);
+        psi::memory::delete_memory_op<std::complex<FPTYPE>, psi::DEVICE_CPU>()(this->cpu_ctx, scc_cpu);
+        psi::memory::delete_memory_op<std::complex<FPTYPE>, psi::DEVICE_CPU>()(this->cpu_ctx, vcc_cpu);
 #endif
+    }
+    else
+    {
+        for (int i = 0; i < nbase; i++)
+        {
+            hcc[i * this->nbase_x + i] = eigenvalue_in[i];
+            // sc(i, i) = ModuleBase::ONE;
+            scc[i * this->nbase_x + i] = ModuleBase::ONE;
+            // vc(i, i) = ModuleBase::ONE;
+            vcc[i * this->nbase_x + i] = ModuleBase::ONE;
+        }
+    }
     ModuleBase::timer::tick("DiagoDavid", "refresh");
     return;
 }
@@ -1114,11 +989,13 @@ void DiagoDavid<FPTYPE, Device>::diag(hamilt::Hamilt<FPTYPE, Device>* phm_in,
     /// record the times of trying iterative diagonalization
     int ntry = 0;
     this->notconv = 0;
+#if defined(__CUDA) || defined(__ROCM)
     if (this->device == psi::GpuDevice)
     {
-        psi::memory::resize_memory_op<FPTYPE, Device>()(this->ctx, this->d_precondition, psi.get_nbasis());
+        resmem_var_op()(this->ctx, this->d_precondition, psi.get_nbasis());
         syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, this->d_precondition, this->precondition, psi.get_nbasis());
     }
+#endif
     do
     {
         this->diag_mock(phm_in, psi, eigenvalue_in);
