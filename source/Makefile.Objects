@@ -83,7 +83,6 @@ ${OBJS_IO_LCAO}\
 ${OBJS_RI_LCAO}\
 ${OBJS_LCAO}\
 ${OBJS_PARALLEL_LCAO}\
-${OBJS_PDIAG}\
 ${OBJS_VDW}
 
 
@@ -390,7 +389,6 @@ OBJS_LCAO=DM_gamma.o\
       FORCE_gamma_tvnl.o\
       FORCE_gamma_vl.o\
       FORCE_k.o\
-      LCAO_diago.o\
       LCAO_evolve.o\
       LCAO_gen_fixedH.o\
       LCAO_hamilt.o\
@@ -451,9 +449,6 @@ OBJS_PARALLEL=parallel_common.o\
     parallel_grid.o\
     parallel_kpoints.o\
     parallel_reduce.o\
-
-OBJS_PDIAG=pdiag_double.o\
-      diag_scalapack_gvx.o\
       
 OBJS_SRCPW=H_Ewald_pw.o\
     VL_in_pw.o\

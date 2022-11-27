@@ -3,7 +3,6 @@
 
 #include "../module_neighbor/sltk_grid_driver.h"
 #include "../module_gint/grid_technique.h"
-#include "src_pdiag/pdiag_double.h"
 #include "local_orbital_wfc.h"
 #include "local_orbital_charge.h"
 #include "LCAO_matrix.h"
@@ -19,7 +18,6 @@
 namespace GlobalC
 {
 extern Grid_Driver GridD;
-extern Pdiag_Double ParaO;
 #ifdef __EXX
 extern Exx_Lcao exx_lcao; // Peize Lin add 2016-12-03
 extern Exx_LRI<double> exx_lri_double; // Peize Lin add 2022-08-06

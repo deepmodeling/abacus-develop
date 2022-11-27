@@ -1,5 +1,4 @@
 #include "module_esolver/esolver_ks_lcao.h"
-#include "src_lcao/LCAO_diago.h"
 #include "../src_pw/global.h"
 #include "../src_pw/symmetry_rho.h"
 #include "../src_io/chi0_hilbert.h"

@@ -3,21 +3,14 @@ if(ENABLE_LCAO)
       list(APPEND objects
           diag_cusolver.cu
       )
+
+    add_library(
+        pdiag
+        OBJECT
+        ${objects}
+    )
+    if(ENABLE_COVERAGE)
+      add_coverage(pdiag)
+    endif()
   endif()
-
-  add_library(
-      pdiag
-      OBJECT
-      pdiag_double.cpp
-      diag_scalapack_gvx.cpp
-      ${objects}
-  )
-
-  if(ENABLE_COVERAGE)
-    add_coverage(pdiag)
-  endif()
-
-#  if(BUILD_TESTING)
-#    add_subdirectory(test)
-#  endif()
 endif()
