@@ -25,7 +25,6 @@ class ORB_gen_tables
 
 	void gen_tables(
 		std::ofstream &ofs_in, // mohan add 2021-05-07
-		const int &job0,
 		LCAO_Orbitals &orb,
 		const int &Lmax_exx,
 		const bool& deepks_setorb,///<[in] whether to generate descriptors

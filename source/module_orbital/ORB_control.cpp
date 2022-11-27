@@ -125,12 +125,9 @@ void ORB_control::set_orb_tables(
     ///
     /// (2) RESULT : we have tabulated S table for use.
     ///////////////////////////////////////////////////////////////////
-    const int job0 = 3;
-    /// job0 :
-    /// 1. generate overlap table
-    /// 2. generate kinetic table
-    /// 3. generate overlap & kinetic table
-    OGT.gen_tables(ofs_in, job0, orb, Lmax_exx, deepks_setorb, nprojmax, nproj, beta_);
+    
+    /// generate overlap & kinetic table
+    OGT.gen_tables(ofs_in, orb, Lmax_exx, deepks_setorb, nprojmax, nproj, beta_);
     // init lat0, in order to interpolated value from this table.
 
     assert(lat0 > 0.0);

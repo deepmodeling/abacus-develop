@@ -16,7 +16,6 @@ ORB_gen_tables::~ORB_gen_tables() {}
 /// call in hamilt_linear::init_before_ions.
 void ORB_gen_tables::gen_tables(
 	std::ofstream &ofs_in,
-	const int &job0,
 	LCAO_Orbitals &orb,
 	const int &Lmax_exx,
 	const bool &deepks_setorb,
@@ -105,7 +104,7 @@ void ORB_gen_tables::gen_tables(
 	MOT.init_Table_Spherical_Bessel(orb_num, mode, Lmax_used, Lmax, Lmax_exx, orb, beta_);
 
 	//calculate S(R) for interpolation
-	MOT.init_Table(job0, orb);
+	MOT.init_Table(orb);
 
 	if(GlobalV::CALCULATION!="get_S")
 	{	

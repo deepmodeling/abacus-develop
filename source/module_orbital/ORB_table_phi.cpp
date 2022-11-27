@@ -379,9 +379,7 @@ void ORB_table_phi::cal_ST_Phi12_R
 
 
 
-void ORB_table_phi::init_Table(
-	const int &job0, 
-	LCAO_Orbitals &orb)
+void ORB_table_phi::init_Table(LCAO_Orbitals &orb)
 {
 	ModuleBase::TITLE("ORB_table_phi", "init_Table");
 	ModuleBase::timer::tick("ORB_table_phi", "init_Table");
@@ -390,34 +388,12 @@ void ORB_table_phi::init_Table(
 	assert( OV_nTpairs>0);
 
 	// init 1st dimension
-	switch( job0 )
+	this->Table_SR = new double****[2];
+	this->Table_TR = new double****[2];
+	for(int ir = 0; ir < 2; ir++)
 	{
-		case 1:
-		// the second dimension stands for S(R) and dS(R)/dR
-		this->Table_SR = new double****[2];
-		for(int ir = 0; ir < 2; ir++)
-		{
-			this->Table_SR[ir] = new double***[ this->OV_nTpairs ];
-		}
-		break;
-
-		case 2:
-		this->Table_TR = new double****[2];
-		for(int ir = 0; ir < 2; ir++)
-		{
-			this->Table_TR[ir] = new double***[ this->OV_nTpairs ];
-		}
-		break;
-
-		case 3:
-		this->Table_SR = new double****[2];
-		this->Table_TR = new double****[2];
-		for(int ir = 0; ir < 2; ir++)
-		{
-			this->Table_SR[ir] = new double***[ this->OV_nTpairs ];
-			this->Table_TR[ir] = new double***[ this->OV_nTpairs ];
-		}
-		break;
+		this->Table_SR[ir] = new double***[ this->OV_nTpairs ];
+		this->Table_TR[ir] = new double***[ this->OV_nTpairs ];
 	}
 
 	for (int T1 = 0;  T1 < ntype ; T1++)
@@ -451,25 +427,10 @@ void ORB_table_phi::init_Table(
 			const int pairs_chi = nchi1 * nchi2;
 
 			// init 2nd dimension
-			switch( job0 )
+			for(int ir = 0; ir < 2; ir++)
 			{
-				case 1:
-				this->Table_SR[0][ Tpair ] = new double**[pairs_chi];
-				this->Table_SR[1][ Tpair ] = new double**[pairs_chi];
-				break;
-
-				case 2:
-				this->Table_TR[0][ Tpair ] = new double**[pairs_chi];
-				this->Table_TR[1][ Tpair ] = new double**[pairs_chi];
-				break;
-
-				case 3:
-				for(int ir = 0; ir < 2; ir++)
-				{
-					this->Table_SR[ir][ Tpair ] = new double**[pairs_chi];
-					this->Table_TR[ir][ Tpair ] = new double**[pairs_chi];
-				}
-				break;
+				this->Table_SR[ir][ Tpair ] = new double**[pairs_chi];
+				this->Table_TR[ir][ Tpair ] = new double**[pairs_chi];
 			}
 
 			const double Rcut1 = orb.Phi[T1].getRcut();
@@ -502,25 +463,11 @@ void ORB_table_phi::init_Table(
 							const int Opair = this->OV_Opair(Tpair,L1,L2,N1,N2);
 							
 							// init 3rd dimension
-							switch( job0 )
+							for(int ir = 0; ir < 2; ir++)
 							{
-								case 1:
-								this->Table_SR[0][ Tpair ][ Opair ] = new double *[L2plus1];
-								this->Table_SR[1][ Tpair ][ Opair ] = new double *[L2plus1];
-								break;
-
-								case 2:
-								this->Table_TR[0][ Tpair ][ Opair ] = new double *[L2plus1];
-								this->Table_TR[1][ Tpair ][ Opair ] = new double *[L2plus1];
-
-								case 3:
-								for(int ir = 0; ir < 2; ir++)
-								{
-									this->Table_SR[ir][ Tpair ][ Opair ] = new double *[L2plus1];
-									this->Table_TR[ir][ Tpair ][ Opair ] = new double *[L2plus1];
-								}
+								this->Table_SR[ir][ Tpair ][ Opair ] = new double *[L2plus1];
+								this->Table_TR[ir][ Tpair ][ Opair ] = new double *[L2plus1];
 							}
-
 
 							//L=|L1-L2|,|L1-L2|+2,...,L1+L2
 							const int SL = abs(L1-L2);
@@ -529,103 +476,40 @@ void ORB_table_phi::init_Table(
 							for (int L=0; L < L2plus1 ; L++)
 							{
 								//Allocation
-								switch ( job0 )
-								{
-									case 1:
-									Table_SR[0][Tpair][Opair][L] = new double[rmesh];
-									Table_SR[1][Tpair][Opair][L] = new double[rmesh];
+								Table_SR[0][Tpair][Opair][L] = new double[rmesh];
+								Table_SR[1][Tpair][Opair][L] = new double[rmesh];
+								Table_TR[0][Tpair][Opair][L] = new double[rmesh];
+								Table_TR[1][Tpair][Opair][L] = new double[rmesh];
 
-									ModuleBase::Memory::record("ORB_table_phi","Table_SR",
-									2*OV_nTpairs*pairs_chi*rmesh,"double");
-									break;
-
-									case 2:
-									Table_TR[0][Tpair][Opair][L] = new double[rmesh];
-									Table_TR[1][Tpair][Opair][L] = new double[rmesh];
-
-									ModuleBase::Memory::record("ORB_table_phi","Table_TR",
-									2*OV_nTpairs*pairs_chi*rmesh,"double");
-									break;
-
-									case 3:
-									Table_SR[0][Tpair][Opair][L] = new double[rmesh];
-									Table_SR[1][Tpair][Opair][L] = new double[rmesh];
-									Table_TR[0][Tpair][Opair][L] = new double[rmesh];
-									Table_TR[1][Tpair][Opair][L] = new double[rmesh];
-
-									ModuleBase::Memory::record("ORB_table_phi","Table_SR&TR",
-									2*2*OV_nTpairs*pairs_chi*rmesh,"double");
-									break;
-								}
+								ModuleBase::Memory::record("ORB_table_phi","Table_SR&TR",
+								2*2*OV_nTpairs*pairs_chi*rmesh,"double");
 									
 								//for those L whose Gaunt Coefficients = 0, we
 								//assign every element in Table_SR or Table_TR as zero
 								if ((L > AL) || (L < SL) || ((L-SL) % 2 == 1)) 
 								{
-									switch ( job0 )
-									{
-										case 1:
-										ModuleBase::GlobalFunc::ZEROS (Table_SR[0][Tpair][Opair][L], rmesh);
-										ModuleBase::GlobalFunc::ZEROS (Table_SR[1][Tpair][Opair][L], rmesh);
-										break;
-
-										case 2:
-										ModuleBase::GlobalFunc::ZEROS (Table_TR[0][Tpair][Opair][L], rmesh);
-										ModuleBase::GlobalFunc::ZEROS (Table_TR[1][Tpair][Opair][L], rmesh);
-										break;
-
-										case 3:
-										ModuleBase::GlobalFunc::ZEROS (Table_SR[0][Tpair][Opair][L], rmesh);
-										ModuleBase::GlobalFunc::ZEROS (Table_SR[1][Tpair][Opair][L], rmesh);
-										ModuleBase::GlobalFunc::ZEROS (Table_TR[0][Tpair][Opair][L], rmesh);
-										ModuleBase::GlobalFunc::ZEROS (Table_TR[1][Tpair][Opair][L], rmesh);
-										break;
-									}
+									ModuleBase::GlobalFunc::ZEROS (Table_SR[0][Tpair][Opair][L], rmesh);
+									ModuleBase::GlobalFunc::ZEROS (Table_SR[1][Tpair][Opair][L], rmesh);
+									ModuleBase::GlobalFunc::ZEROS (Table_TR[0][Tpair][Opair][L], rmesh);
+									ModuleBase::GlobalFunc::ZEROS (Table_TR[1][Tpair][Opair][L], rmesh);
 
 									continue;
 								}
 								
-								switch( job0 )
-								{
-									case 1:
-									{
-										this->cal_ST_Phi12_R(1,L, 
-												orb.Phi[T1].PhiLN(L1,N1),
-												orb.Phi[T2].PhiLN(L2,N2),
-												rmesh,
-												Table_SR[0][Tpair][Opair][L],
-												Table_SR[1][Tpair][Opair][L]);
-										break;
-									}
-									case 2:
-									{
+								this->cal_ST_Phi12_R(1,L, 
+										orb.Phi[T1].PhiLN(L1,N1),
+										orb.Phi[T2].PhiLN(L2,N2),
+										rmesh,
+										Table_SR[0][Tpair][Opair][L],
+										Table_SR[1][Tpair][Opair][L]);
 
-										this->cal_ST_Phi12_R(2,L, 
-												orb.Phi[T1].PhiLN(L1,N1),
-												orb.Phi[T2].PhiLN(L2,N2),
-												rmesh,
-												Table_TR[0][Tpair][Opair][L],
-												Table_TR[1][Tpair][Opair][L]);
-										break;
-									}
-									case 3:
-									{	
-										this->cal_ST_Phi12_R(1,L, 
-												orb.Phi[T1].PhiLN(L1,N1),
-												orb.Phi[T2].PhiLN(L2,N2),
-												rmesh,
-												Table_SR[0][Tpair][Opair][L],
-												Table_SR[1][Tpair][Opair][L]);
+								this->cal_ST_Phi12_R(2,L, 
+										orb.Phi[T1].PhiLN(L1,N1),
+										orb.Phi[T2].PhiLN(L2,N2),
+										rmesh,
+										Table_TR[0][Tpair][Opair][L],
+										Table_TR[1][Tpair][Opair][L]);
 
-										this->cal_ST_Phi12_R(2,L, 
-												orb.Phi[T1].PhiLN(L1,N1),
-												orb.Phi[T2].PhiLN(L2,N2),
-												rmesh,
-												Table_TR[0][Tpair][Opair][L],
-												Table_TR[1][Tpair][Opair][L]);
-										break;
-									}
-								}
 #ifdef __ORBITAL
 								int plot_length = 20;						
 		
@@ -646,22 +530,9 @@ void ORB_table_phi::init_Table(
 		}// end jt
 	}// end it
 
-	switch( job0 )
-	{
-		case 1:
-		destroy_sr = true;
-		break;
+	destroy_sr = true;
+	destroy_tr = true;
 
-		case 2:
-		destroy_tr = true;
-		break;
-
-		case 3:
-		destroy_sr = true;
-		destroy_tr = true;
-		break;
-	}
-		
 	ModuleBase::timer::tick("ORB_table_phi", "init_Table");
 	return;
 }
@@ -918,30 +789,6 @@ void ORB_table_phi::init_Table_Spherical_Bessel (
 	pSB->set_dx( this->dr * this->dk );
 	pSB->cal_jlx( Lmax_used, this->Rmesh, this->kmesh );
 
-/*
-// some data:
-//L	x		Jl(x)old	Jl(x)web(correct)
-//0	4		-0.189201	-0.18920062383
-//1	11.7663	-0.0643896	-0.064389590588
-//3	1.5048	0.028574	0.028573980746
-//5	12.8544	-0.00829602	-0.0082960169277
-//6	12.8544	-0.0776037	-0.077603690549
-//7	12.8544	-0.0560009	-0.070186679825
-//7	12		-0.0198184	-0.024838740722
-    int lll;
-    int ir;
-    int ik;
-    std::cout << " INPUT L:  " ; cin >> lll;
-    std::cout << " INPUT ir: " ; cin >> ir;
-    std::cout << " INPUT ik: " ; cin >> ik;
-    double kr = r[ir] * kpoint[ik];
-    std::cout <<  " L=" << lll << " kr=" << kr << " J=" << jlx[lll][ir][ik] << std::endl;
-    goto once_again;
-*/
-
-//	OUT(GlobalV::ofs_running,"lmax used to generate Jlq",Lmax_used);
-//	OUT(GlobalV::ofs_running,"kmesh",kmesh);
-//	OUT(GlobalV::ofs_running,"Rmesh",Rmesh);
 	ModuleBase::Memory::record ("ORB_table_phi", "Jl(x)", (Lmax_used+1) * this->kmesh * this->Rmesh, "double");
 }
 
