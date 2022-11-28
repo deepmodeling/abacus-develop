@@ -38,6 +38,7 @@ add_library(
     tool_quit.cpp
     tool_title.cpp
     ylm.cpp
+    abfs-vector3_order.cpp
 )
 
 if(ENABLE_COVERAGE)

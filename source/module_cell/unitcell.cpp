@@ -909,17 +909,7 @@ void UnitCell::setup_cell(
 		}
 	}
 
-	// setup GlobalV::NBANDS
-	//this->cal_nelec();
-
 	this->cal_meshx();
-
-	// setup vdwd2 parameters
-	//vdwd2_para.initset(*this);		// Peize Lin add 2021.03.09
-
-//	std::stringstream ss;
-//	ss << GlobalV::global_out_dir << "unitcell_pp.log";
-//	print_unitcell_pseudo( ss.str() );
 	return;
 }
 
@@ -1298,6 +1288,19 @@ void UnitCell::setup_cell_after_vc(std::ofstream &log)
         ModuleBase::GlobalFunc::OUT(log, "Volume (Bohr^3)", this->omega);
         ModuleBase::GlobalFunc::OUT(log, "Volume (A^3))", this->omega * pow(ModuleBase::BOHR_TO_A, 3));
     }
+
+    // lattice vectors in another form.
+    a1.x = latvec.e11;
+    a1.y = latvec.e12;
+    a1.z = latvec.e13;
+
+    a2.x = latvec.e21;
+    a2.y = latvec.e22;
+    a2.z = latvec.e23;
+
+    a3.x = latvec.e31;
+    a3.y = latvec.e32;
+    a3.z = latvec.e33;
 
     //==========================================================
     // Calculate recip. lattice vectors and dot products

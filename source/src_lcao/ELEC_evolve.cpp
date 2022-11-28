@@ -4,7 +4,6 @@
 #include "../src_parallel/parallel_reduce.h"
 #include "../src_pw/global.h"
 #include "../src_pw/symmetry_rho.h"
-#include "LCAO_diago.h"
 #include "LCAO_evolve.h"
 #include "dftu.h"
 #include "module_hamilt/hamilt_lcao.h"
@@ -27,7 +26,7 @@ int ELEC_evolve::td_dipoleout;
 
 // this routine only serves for TDDFT using LCAO basis set
 void ELEC_evolve::evolve_psi(const int& istep,
-                             hamilt::Hamilt* phm,
+                             hamilt::Hamilt<double>* phm,
                              Local_Orbital_wfc& lowf,
                              psi::Psi<std::complex<double>>* psi,
                              psi::Psi<std::complex<double>>* psi_laststep,

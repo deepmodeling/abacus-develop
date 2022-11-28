@@ -42,7 +42,7 @@ Non-periodic systems such as liquid systems can be calculated by using supercell
 
 **6. How to perform spin-orbital coupling (SOC) calculations in ABACUS?**
 
-Apart from setting relavant keys (`lspinorb` to 1) in the `INPUT` file, SOC calculations can only be performed with fully-relativistic pseudopotentials.Users are suggested to download fully-relativistic versions of SG15_ONCV pseudopotential files from a [website](http://quantum-simulation.org/potentials/sg15_oncv/upf/). The numerical orbital files generated from the corresponding scalar-relativistic pseudoptential files by ABACUS ([here](http://abacus.ustc.edu.cn/pseudo/list.htm)) can be used in collaboration with the fully-relativistic pseudopotentials.
+Apart from setting relavant keys (`lspinorb` to 1) in the `INPUT` file, SOC calculations can only be performed with fully-relativistic pseudopotentials. Users are suggested to download fully-relativistic versions of SG15_ONCV pseudopotential files from a [website](http://quantum-simulation.org/potentials/sg15_oncv/upf/). The numerical orbital files generated from the corresponding scalar-relativistic pseudoptential files by ABACUS ([here](http://abacus.ustc.edu.cn/pseudo/list.htm)) can be used in collaboration with the fully-relativistic pseudopotentials.
 
 
 **7. How to restart jobs in abacus?**

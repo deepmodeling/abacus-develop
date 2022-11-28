@@ -9,7 +9,6 @@ if(ENABLE_LCAO)
       FORCE_gamma_tvnl.cpp
       FORCE_gamma_vl.cpp
       FORCE_k.cpp
-      LCAO_diago.cpp
       LCAO_evolve.cpp
       LCAO_gen_fixedH.cpp
       LCAO_hamilt.cpp
@@ -28,7 +27,6 @@ if(ENABLE_LCAO)
       record_adj.cpp
       dm_2d.cpp
       wavefunc_in_pw.cpp
-  	  H_TDDFT_pw.cpp
   )
 
   add_library(

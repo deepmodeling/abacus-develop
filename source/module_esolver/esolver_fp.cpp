@@ -15,6 +15,7 @@ namespace ModuleESolver
     ESolver_FP::~ESolver_FP()
     {
         delete pw_rho;
+        delete this->pelec;
     }
     void ESolver_FP::Init(Input& inp, UnitCell& cell)
     {

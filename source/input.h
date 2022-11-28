@@ -92,6 +92,7 @@ class Input
     std::string dft_functional; // input DFT functional.
     double xc_temperature; // only relevant if finite temperature functional is used
     int nspin; // LDA ; LSDA ; non-linear spin
+    double nupdown = 0.0;
     double nelec; // total number of electrons
     int lmaxmax;
     double tot_magnetization;
@@ -227,6 +228,7 @@ class Input
     int out_freq_ion;  // the frequency ( >= 0 ) of ionic step to output charge density and wavefunction. 0: output only when ion steps are finished
     int out_chg; // output charge density. 0: no; 1: yes
     int out_dm; // output density matrix.
+    int out_dm1;
     int out_pot; // yes or no
     int out_wfc_pw; // 0: no; 1: txt; 2: dat
     int out_wfc_r; // 0: no; 1: yes
@@ -341,7 +343,7 @@ class Input
     // exx
     // Peize Lin add 2018-06-20
     //==========================================================
-    double exx_hybrid_alpha;
+    std::string exx_hybrid_alpha;
     double exx_hse_omega;
 
     bool exx_separate_loop; // 0 or 1
@@ -355,8 +357,11 @@ class Input
     double exx_dm_threshold;
     double exx_schwarz_threshold;
     double exx_cauchy_threshold;
+    double exx_c_grad_threshold;
+    double exx_v_grad_threshold;
+    double exx_cauchy_grad_threshold;
     double exx_ccp_threshold;
-    double exx_ccp_rmesh_times;
+    std::string exx_ccp_rmesh_times;
 
     std::string exx_distribute_type;
 
@@ -462,6 +467,11 @@ class Input
     int of_full_pw_dim; // If of_full_pw = 1, the dimention of FFT will be testricted to be (0) either odd or even; (1) odd only; (2) even only.
     bool of_read_kernel; // If set to 1, the kernel of WT KEDF will be filled from file of_kernel_file, not from formula. Only usable for WT KEDF.
     string of_kernel_file; // The name of WT kernel file.
+
+    //==========================================================
+    //    device control denghui added on 2022-11-15
+    //==========================================================
+    std::string device;
 
     //==========================================================
     // variables for test only

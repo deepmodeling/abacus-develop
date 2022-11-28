@@ -143,7 +143,7 @@ void Input::Print(const std::string &fn) const
     ModuleBase::GlobalFunc::OUTP(ofs,
                                  "ks_solver",
                                  GlobalV::KS_SOLVER,
-                                 "cg; dav; lapack; genelpa; hpseps; scalapack_gvx; cusolver");
+                                 "cg; dav; lapack; genelpa; scalapack_gvx; cusolver");
     ModuleBase::GlobalFunc::OUTP(ofs, "scf_nmax", scf_nmax, "#number of electron iterations");
     ModuleBase::GlobalFunc::OUTP(ofs, "out_force", out_force, "output the out_force or not");
     ModuleBase::GlobalFunc::OUTP(ofs, "relax_nmax", relax_nmax, "number of ion iteration steps");
@@ -267,6 +267,12 @@ void Input::Print(const std::string &fn) const
 	ModuleBase::GlobalFunc::OUTP(ofs,"md_damp",mdp.md_damp,"damping parameter (time units) used to add force in Langevin method");
     ModuleBase::GlobalFunc::OUTP(ofs,"md_nraise",mdp.md_nraise,"parameters used when md_type=0");
     ModuleBase::GlobalFunc::OUTP(ofs,"md_tolerance",mdp.md_tolerance,"tolerance for velocity rescaling (K)");
+    ModuleBase::GlobalFunc::OUTP(ofs,"md_pmode",mdp.md_pmode,"NPT ensemble mode: none, iso, aniso, tri");
+    ModuleBase::GlobalFunc::OUTP(ofs,"md_pcouple",mdp.md_pcouple,"whether couple different components: xyz, xy, yz, xz, none");
+    ModuleBase::GlobalFunc::OUTP(ofs,"md_pchain",mdp.md_pchain,"num of thermostats coupled with barostat");
+    ModuleBase::GlobalFunc::OUTP(ofs,"md_pfirst",mdp.md_pfirst,"initial target pressure");
+    ModuleBase::GlobalFunc::OUTP(ofs,"md_plast",mdp.md_plast,"final target pressure");
+    ModuleBase::GlobalFunc::OUTP(ofs,"md_pfreq",mdp.md_pfreq,"oscillation frequency, used to determine qmass of thermostats coupled with barostat");
 
     ofs << "\n#Parameters (10.Electric field and dipole correction)" << std::endl;
     ModuleBase::GlobalFunc::OUTP(ofs,"efield_flag",efield_flag,"add electric field");
@@ -339,6 +345,9 @@ void Input::Print(const std::string &fn) const
     ModuleBase::GlobalFunc::OUTP(ofs, "exx_dm_threshold", exx_dm_threshold, "");
     ModuleBase::GlobalFunc::OUTP(ofs, "exx_schwarz_threshold", exx_schwarz_threshold, "");
     ModuleBase::GlobalFunc::OUTP(ofs, "exx_cauchy_threshold", exx_cauchy_threshold, "");
+    ModuleBase::GlobalFunc::OUTP(ofs, "exx_c_grad_threshold", exx_c_grad_threshold, "");
+    ModuleBase::GlobalFunc::OUTP(ofs, "exx_v_grad_threshold", exx_v_grad_threshold, "");
+    ModuleBase::GlobalFunc::OUTP(ofs, "exx_cauchy_grad_threshold", exx_cauchy_grad_threshold, "");
     ModuleBase::GlobalFunc::OUTP(ofs, "exx_ccp_threshold", exx_ccp_threshold, "");
     ModuleBase::GlobalFunc::OUTP(ofs, "exx_ccp_rmesh_times", exx_ccp_rmesh_times, "");
     ModuleBase::GlobalFunc::OUTP(ofs, "exx_distribute_type", exx_distribute_type, "htime or kmeans1 or kmeans2");

@@ -27,14 +27,6 @@ typename Operator<FPTYPE, Device>::hpsi_info Operator<FPTYPE, Device>::hPsi(hpsi
     return hpsi_info(nullptr, 0, nullptr);
 }
 
-#if ((defined __CUDA) || (defined __ROCM))
-template<typename FPTYPE, typename Device>
-typename Operator<FPTYPE, Device>::hpsi_info_gpu Operator<FPTYPE, Device>::hPsi_gpu(hpsi_info_gpu&) const {
-    ModuleBase::WARNING_QUIT("Operator::hPsi_gpu", "GPU's implementation is not supported!");
-    return hpsi_info_gpu(nullptr, 0, nullptr);
-}
-#endif // ((defined __CUDA) || (defined __ROCM))
-
 template<typename FPTYPE, typename Device>
 void Operator<FPTYPE, Device>::init(const int ik_in) 
 {
@@ -107,7 +99,9 @@ FPTYPE* Operator<FPTYPE, Device>::get_hpsi(const hpsi_info& info) const
     
     hpsi_pointer = this->hpsi->get_pointer();
     size_t total_hpsi_size = nbands_range * this->hpsi->get_nbasis();
-    ModuleBase::GlobalFunc::ZEROS(hpsi_pointer, total_hpsi_size);
+    // ModuleBase::GlobalFunc::ZEROS(hpsi_pointer, total_hpsi_size);
+    // denghui replaced at 20221104
+    set_memory_op()(this->ctx, hpsi_pointer, 0, total_hpsi_size);
     return hpsi_pointer;
 }
 

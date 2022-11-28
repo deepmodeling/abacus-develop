@@ -63,6 +63,8 @@ public:
 
 	// check if all the elements are real
 	bool checkreal(void);
+
+	using type=std::complex<double>;					// Peiae Lin add 2022.08.08 for template
 };
 
 ComplexMatrix operator+(const ComplexMatrix &m1,  const ComplexMatrix &m2);

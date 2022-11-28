@@ -4,8 +4,9 @@
 #include "global.h"
 
 //calculate the GGA stress correction in PW and LCAO
-void Stress_Func::stress_gga(ModuleBase::matrix& sigma) 
+void Stress_Func::stress_gga(ModuleBase::matrix& sigma, const Charge* const chr) 
 {
+    ModuleBase::TITLE("Stress_Func","stress_gga");
 	ModuleBase::timer::tick("Stress_Func","stress_gga");
      
 	int func_type = XC_Functional::get_func_type();
@@ -22,7 +23,7 @@ void Stress_Func::stress_gga(ModuleBase::matrix& sigma)
 	// call gradcorr to evaluate gradient correction to stress
 	// the first three terms are etxc, vtxc and v, which
 	// is not used here, so dummy variables are used.
-	XC_Functional::gradcorr(dum1, dum2, dum3, stress_gga, 1);
+	XC_Functional::gradcorr(dum1, dum2, dum3, chr, stress_gga, 1);
 
 	for(int l = 0;l< 3;l++)
 	{

@@ -7,6 +7,7 @@ INCLUDES = -I. -Icommands -I../
 LIBS = -lm -lpthread
 OPTS = -Ofast -march=native -std=c++14 -pedantic -m64 ${INCLUDES}
 HONG = -D__LCAO
+HONG += -D__ELPA
 OBJ_DIR = obj
 BIN_DIR = ../bin
 SOURCE_DIR = .
@@ -81,6 +82,8 @@ endif
 #==========================
 INCLUDES += -I${CEREAL_DIR}/include
 
+
+
 ##==========================
 ## CUDA needed 
 ##==========================
@@ -107,6 +110,14 @@ ifdef LIBXC_DIR
     LIBS 			    += -L${LIBXC_LIB_DIR} -Wl,-rpath=${LIBXC_LIB_DIR} -lxc
     PWTAG               += 'LIBXC_DIR=${LIBXC_DIR}'
 endif
+
+ifdef LIBRI_DIR
+    INCLUDES += -I${LIBRI_DIR}/include
+    INCLUDES += -I${LIBCOMM_DIR}/include
+    HONG                += -DUSE_LIBRI
+    HONG += -D__EXX
+endif
+
 ifdef LIBTORCH_DIR
  ifdef LIBNPY_DIR
       LIBTORCH_INCLUDE_DIR =  -I${LIBTORCH_DIR}/include -I${LIBTORCH_DIR}/include/torch/csrc/api/include
@@ -154,7 +165,7 @@ HONG += -D__SELINV -DMETIS
 #==========================
 
 ifeq ($(MPI), ON)
-    OBJS_ABACUS += $(OBJS_PDIAG_MPI) $(OBJS_PDIAG_MRRR) $(OBJS_EXX)
+    OBJS_ABACUS += $(OBJS_EXX)
 endif
 
 FP_OBJS=$(patsubst %.o, ${OBJ_DIR}/%.o, ${OBJS_ABACUS})
@@ -176,8 +187,8 @@ pw $(BIN_DIR)/${VERSION}-PW.x:
 	@ cd src_pw; $(MAKE) CC=${CC} GPU=${GPU} DEBUG=$(DEBUG) FFTW_DIR=$(FFTW_DIR) OPENBLAS_LIB_DIR=$(OPENBLAS_LIB_DIR) ${PWTAG}
 	@ cp src_pw/${VERSION}-PW.x $(BIN_DIR)/${VERSION}-PW.x
 
-$(BIN_DIR)/${VERSION}.$(suffix) : ${FP_OBJS} ${PDIAG_OBJS} ${PDIAG_MR} ${HEADERS}
-	${CC} ${OPTS} ${OPTS_MPI} $(FP_OBJS) ${PDIAG_OBJS} ${PDIAG_MR} ${LIBS} -o  $(BIN_DIR)/${VERSION}.$(suffix)
+$(BIN_DIR)/${VERSION}.$(suffix) : ${FP_OBJS} ${PDIAG_OBJS} ${HEADERS}
+	${CC} ${OPTS} ${OPTS_MPI} $(FP_OBJS) ${PDIAG_OBJS} ${LIBS} -o  $(BIN_DIR)/${VERSION}.$(suffix)
 
 # ${VERSION}.fp_mem.x : ${FP_OBJS} ../src_parallel/mcd.o ${HEADERS}
 # 	@ if [ ! -d $(BIN_DIR) ]; then mkdir $(BIN_DIR); fi

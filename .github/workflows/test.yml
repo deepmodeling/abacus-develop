@@ -2,13 +2,15 @@ name: Integration Test and Unit Test
 
 on:
   pull_request:
+    paths-ignore:
+      - 'docs/**'
 
 jobs:
   test:
     name: Test
     runs-on: self-hosted
     if: github.repository_owner == 'deepmodeling'
-    container: ghcr.io/deepmodeling/abacus-development-kit:gnu
+    container: ghcr.io/deepmodeling/abacus-gnu
     steps:
       - name: Checkout
         uses: actions/checkout@v3

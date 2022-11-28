@@ -23,7 +23,7 @@
 #include "../src_pw/global.h"
 #include<sys/time.h>				// Peize Lin test
 
-int Exx_Abfs::Lmax = 0;		// Peize Lin test
+//int Exx_Abfs::Lmax = 0;		// Peize Lin test
 
 void Exx_Abfs::test_all() const
 {
@@ -44,7 +44,7 @@ void Exx_Abfs::test_all() const
 			&&abfs = Construct_Orbs::abfs_same_atom( lcaos, 1 );
 
 		for( size_t T=0; T!=abfs.size(); ++T )
-			Lmax = std::max( Lmax, static_cast<int>(abfs[T].size())-1 );
+			GlobalC::exx_info.info_ri.abfs_Lmax = std::max( GlobalC::exx_info.info_ri.abfs_Lmax, static_cast<int>(abfs[T].size())-1 );
 
 		const ModuleBase::Element_Basis_Index::Range
 			&&range_abfs = Abfs_Index::construct_range( abfs );
@@ -72,7 +72,7 @@ void Exx_Abfs::test_all() const
 			&&abfs = Construct_Orbs::abfs_same_atom( lcaos, 1 );
 
 		for( size_t T=0; T!=abfs.size(); ++T )
-			Lmax = std::max( Lmax, static_cast<int>(abfs[T].size())-1 );
+			GlobalC::exx_info.info_ri.abfs_Lmax = std::max( GlobalC::exx_info.info_ri.abfs_Lmax, static_cast<int>(abfs[T].size())-1 );
 
 		const ModuleBase::Element_Basis_Index::Range
 			&&range_abfs = Abfs_Index::construct_range( abfs );
@@ -125,11 +125,11 @@ std::cout<<"A1"<<std::endl;
 //	const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>
 //		&&abfs_same_atom = Construct_Orbs::abfs_same_atom( GlobalC::ORB );
 
-	Exx_Abfs::Lmax = Jle::Lmax;
+	GlobalC::exx_info.info_ri.abfs_Lmax = Jle::Lmax;
 //	for( size_t T=0; T!=abfs_same_atom.size(); ++T )
-//		Exx_Abfs::Lmax = std::max( Exx_Abfs::Lmax, static_cast<int>(abfs_same_atom[T].size()) );
+//		GlobalC::exx_info.info_ri.abfs_Lmax = std::max( GlobalC::exx_info.info_ri.abfs_Lmax, static_cast<int>(abfs_same_atom[T].size()) );
 
-std::cout<<Exx_Abfs::Lmax<<std::endl;
+std::cout<<GlobalC::exx_info.info_ri.abfs_Lmax<<std::endl;
 
 /*
 	// Peize Lin test
@@ -333,9 +333,9 @@ throw exception();
 		&abfs = abfs_same_atom;
 
 	for( size_t T=0; T!=abfs.size(); ++T )
-		this->Lmax = std::max( this->Lmax, static_cast<int>(abfs[T].size())-1 );
+		GlobalC::exx_info.info_ri.abfs_Lmax = std::max( GlobalC::exx_info.info_ri.abfs_Lmax, static_cast<int>(abfs[T].size())-1 );
 
-std::cout<<Exx_Abfs::Lmax<<std::endl;
+std::cout<<GlobalC::exx_info.info_ri.abfs_Lmax<<std::endl;
 
 	// Peize Lin test
 	auto ofs_N_orbital = [&]()
@@ -514,7 +514,7 @@ std::cout<<"A4"<<std::endl;
 	Conv_Coulomb_Pot::cal_orbs_ccp( abfs, abfs_ccp, this->rmesh_times, 1 );
 
 	for( size_t T=0; T!=abfs.size(); ++T )
-		this->Lmax = std::max( this->Lmax, static_cast<int>(abfs[T].size())-1 );
+		GlobalC::exx_info.info_ri.abfs_Lmax = std::max( GlobalC::exx_info.info_ri.abfs_Lmax, static_cast<int>(abfs[T].size())-1 );
 
 std::cout<<"B"<<std::endl;
 

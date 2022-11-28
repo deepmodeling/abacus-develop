@@ -3,7 +3,6 @@
 #include "../input.h"
 #include "../module_base/scalapack_connector.h"
 #include "../src_io/write_HS.h"
-#include "../src_pdiag/pdiag_double.h"
 #include "../src_pw/global.h"
 #include "module_hamilt/hamilt_lcao.h"
 
@@ -23,7 +22,7 @@ inline int globalIndex(int localindex, int nblk, int nprocs, int myproc)
 }
 
 void Evolve_LCAO_Matrix::evolve_complex_matrix(const int& ik,
-                                               hamilt::Hamilt* p_hamilt,
+                                               hamilt::Hamilt<double>* p_hamilt,
                                                psi::Psi<std::complex<double>>* psi_k,
                                                psi::Psi<std::complex<double>>* psi_k_laststep,
                                                double* ekb) const
@@ -60,7 +59,7 @@ void Evolve_LCAO_Matrix::evolve_complex_matrix(const int& ik,
 }
 
 void Evolve_LCAO_Matrix::using_LAPACK_complex(const int& ik,
-                                              hamilt::Hamilt* p_hamilt,
+                                              hamilt::Hamilt<double>* p_hamilt,
                                               std::complex<double>* psi_k,
                                               std::complex<double>* psi_k_laststep,
                                               double* ekb) const
@@ -346,7 +345,7 @@ void Evolve_LCAO_Matrix::using_LAPACK_complex(const int& ik,
 
 #ifdef __MPI
 void Evolve_LCAO_Matrix::using_ScaLAPACK_complex(const int& ik,
-                                                 hamilt::Hamilt* p_hamilt,
+                                                 hamilt::Hamilt<double>* p_hamilt,
                                                  std::complex<double>* psi_k,
                                                  std::complex<double>* psi_k_laststep,
                                                  double* ekb) const

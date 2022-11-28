@@ -30,8 +30,6 @@ public:
 // NAME : rhog_core [ngm], the core charge in reciprocal space
 //==========================================================
 
-    std::string init_chg;
-    double nelec;  // Yu Liu add 2021-07-03
     double** rho;
     double** rho_save;
 
@@ -44,9 +42,6 @@ public:
 
     double *rho_core;
 	std::complex<double> *rhog_core;
-
-	//  output charge if out_chg > 0, and output every "out_chg" elec step.
-    int out_chg;
 
     double *start_mag_type;
     double *start_mag_atom;
@@ -75,7 +70,7 @@ public:
         const double *rhoc,
         double *rhocg,
         ModulePW::PW_Basis* rho_basis
-    );
+    ) const;
 
 	double check_ne(const double *rho_in) const;
 

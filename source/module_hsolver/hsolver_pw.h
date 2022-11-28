@@ -4,10 +4,10 @@
 #include "hsolver.h"
 #include "module_pw/pw_basis_k.h"
 
-namespace hsolver
-{
+namespace hsolver {
 
-class HSolverPW : public HSolver
+template<typename FPTYPE, typename Device = psi::DEVICE_CPU>
+class HSolverPW: public HSolver<FPTYPE, Device>
 {
   public:
     HSolverPW(ModulePW::PW_Basis_K* wfc_basis_in);
@@ -19,26 +19,28 @@ class HSolverPW : public HSolver
     void update(//Input &in
     ) override;*/
 
-    void solve(hamilt::Hamilt* pHamilt, psi::Psi<std::complex<double>>& psi, elecstate::ElecState* pes, const std::string method_in, const bool skip_charge) override;
+    void solve(hamilt::Hamilt<FPTYPE, Device>* pHamilt, psi::Psi<std::complex<FPTYPE>, Device>& psi, elecstate::ElecState* pes, const std::string method_in, const bool skip_charge) override;
 
-    virtual double cal_hsolerror() override;
-    virtual double set_diagethr(const int istep, const int iter, const double drho) override;
-    virtual double reset_diagethr(std::ofstream& ofs_running, const double hsover_error, const double drho) override;
+    virtual FPTYPE cal_hsolerror() override;
+    virtual FPTYPE set_diagethr(const int istep, const int iter, const FPTYPE drho) override;
+    virtual FPTYPE reset_diagethr(std::ofstream& ofs_running, const FPTYPE hsover_error, const FPTYPE drho) override;
   protected:
     void initDiagh();
     void endDiagh();
-    void hamiltSolvePsiK(hamilt::Hamilt* hm, psi::Psi<std::complex<double>>& psi, double* eigenvalue);
+    void hamiltSolvePsiK(hamilt::Hamilt<FPTYPE, Device>* hm, psi::Psi<std::complex<FPTYPE>, Device>& psi, FPTYPE* eigenvalue);
 
-    void updatePsiK(hamilt::Hamilt* pHamilt, psi::Psi<std::complex<double>>& psi, const int ik);
+    void updatePsiK(hamilt::Hamilt<FPTYPE, Device>* pHamilt, psi::Psi<std::complex<FPTYPE>, Device>& psi, const int ik);
 
     ModulePW::PW_Basis_K* wfc_basis = nullptr;
 
     // calculate the precondition array for diagonalization in PW base
-    void update_precondition(std::vector<double> &h_diag, const int ik, const int npw);
+    void update_precondition(std::vector<FPTYPE> &h_diag, const int ik, const int npw);
 
-    std::vector<double> precondition;
+    std::vector<FPTYPE> precondition;
 
     bool initialed_psi = false;
+
+    Device *ctx = {};
 };
 
 } // namespace hsolver

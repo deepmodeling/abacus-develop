@@ -32,7 +32,7 @@ protected:
 
 TEST_F(Verlet_test, setup)
 {   
-    EXPECT_NEAR(mdrun->t_current, 299.99999999999665, doublethreshold);
+    EXPECT_NEAR(mdrun->t_current * ModuleBase::Hartree_to_K, 299.99999999999665, doublethreshold);
     EXPECT_NEAR(mdrun->stress(0,0), 6.0100555286436806e-06, doublethreshold);
     EXPECT_NEAR(mdrun->stress(0,1), -1.4746713013791574e-06, doublethreshold);
     EXPECT_NEAR(mdrun->stress(0,2), 1.5039983732220751e-06, doublethreshold);
@@ -110,7 +110,7 @@ TEST_F(Verlet_test, NVE)
 TEST_F(Verlet_test, Anderson)
 {
     mdrun->first_half();
-    mdrun->mdp.md_thermostat = "Anderson";
+    mdrun->mdp.md_thermostat = "anderson";
     mdrun->second_half();
     
     EXPECT_NEAR(mdrun->pos[0].x, 9.9945454470992772, doublethreshold);
@@ -143,7 +143,7 @@ TEST_F(Verlet_test, Anderson)
 TEST_F(Verlet_test, Berendsen)
 {
     mdrun->first_half();
-    mdrun->mdp.md_thermostat = "Berendsen";
+    mdrun->mdp.md_thermostat = "berendsen";
     mdrun->second_half();
     
     EXPECT_NEAR(mdrun->pos[0].x, 9.9945454470992772, doublethreshold);
@@ -173,10 +173,10 @@ TEST_F(Verlet_test, Berendsen)
     EXPECT_NEAR(mdrun->vel[3].z, -2.8329987777389342e-05, doublethreshold);
 }
 
-TEST_F(Verlet_test, Rescaling)
+TEST_F(Verlet_test, rescaling)
 {
     mdrun->first_half();
-    mdrun->mdp.md_thermostat = "Rescaling";
+    mdrun->mdp.md_thermostat = "rescaling";
     mdrun->second_half();
     
     EXPECT_NEAR(mdrun->pos[0].x, 9.9945454470992772, doublethreshold);
@@ -206,10 +206,10 @@ TEST_F(Verlet_test, Rescaling)
     EXPECT_NEAR(mdrun->vel[3].z, -2.8328663233253657e-05, doublethreshold);
 }
 
-TEST_F(Verlet_test, Rescale_v)
+TEST_F(Verlet_test, rescale_v)
 {
     mdrun->first_half();
-    mdrun->mdp.md_thermostat = "Rescale_v";
+    mdrun->mdp.md_thermostat = "rescale_v";
     mdrun->second_half();
     
     EXPECT_NEAR(mdrun->pos[0].x, 9.9945454470992772, doublethreshold);

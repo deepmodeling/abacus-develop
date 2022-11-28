@@ -6,23 +6,27 @@ remove_definitions(-D__DEEPKS)
 if(ENABLE_LCAO)
   AddTest(
     TARGET EState_updaterhok_pw
-    LIBS ${math_libs} planewave_serial base_serial psi
+    LIBS ${math_libs} planewave_serial base_serial psi device
     SOURCES updaterhok_pw_test.cpp
             ../elecstate_pw.cpp ../elecstate.cpp
             ../../src_pw/charge.cpp ../../src_parallel/parallel_reduce.cpp
             ../../src_pw/structure_factor.cpp ../../src_pw/pw_complement.cpp
             ../../src_pw/klist.cpp ../../src_parallel/parallel_kpoints.cpp ../../src_pw/occupy.cpp
+            ../src/elecstate_multi_device.cpp
   )
   if(USE_CUDA)
     target_link_libraries(EState_updaterhok_pw cufft)
   endif()
 
   install(DIRECTORY support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-
-  AddTest(
+  list(APPEND test_math_libs ${math_libs})
+  if(USE_ELPA)
+    list(APPEND test_math_libs ELPA::ELPA)
+  endif()
+  #[[AddTest(
     TARGET EState_psiToRho_lcao
-    LIBS ${math_libs} ELPA::ELPA base orb cell neighbor planewave psi
-    SOURCES elecstate_lcao_test.cpp ../elecstate_lcao.cpp ../dm2d_to_grid.cpp
+    LIBS ${test_math_libs} base orb cell neighbor planewave psi
+    SOURCES elecstate_lcao_test.cpp ../elecstate_lcao.cpp
               ../../src_parallel/parallel_global.cpp ../../src_parallel/parallel_common.cpp ../../src_parallel/parallel_reduce.cpp
               ../../src_lcao/local_orbital_charge.cpp ../../src_lcao/DM_gamma.cpp ../../src_lcao/DM_k.cpp
               ../../src_lcao/local_orbital_wfc.cpp
@@ -48,7 +52,7 @@ if(ENABLE_LCAO)
   add_test(NAME EState_psiToRho_lcao_parallel
         COMMAND ${BASH} elecstate_lcao_parallel_test.sh
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-      )
+      )]]
 endif()
 add_library(
   base_serial
@@ -100,17 +104,20 @@ list(APPEND planewave_serial_srcs
   ../../module_pw/pw_init.cpp
   ../../module_pw/pw_transform.cpp
   ../../module_pw/pw_transform_k.cpp
-  ../../module_pw/src/pw_multi_device.cpp
 )
-
-if (USE_CUDA)
-  list(APPEND planewave_serial_srcs ../../module_pw/src/cuda/pw_multi_device.cu)
-endif()
 
 add_library(
   planewave_serial
   OBJECT
   ${planewave_serial_srcs}
+)
+
+AddTest(
+  TARGET Elecstate_UTs
+  LIBS ${math_libs} psi base device
+  SOURCES elecstate_multi_device_test.cpp
+          ../../src_parallel/parallel_reduce.cpp
+          ../../src_parallel/parallel_global.cpp 
 )
 
 if(ENABLE_COVERAGE)

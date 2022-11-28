@@ -9,7 +9,7 @@
 
 FROM ubuntu:22.04
 RUN apt update && apt install -y --no-install-recommends \
-    libopenblas-dev liblapack-dev libscalapack-mpi-dev libelpa-dev libfftw3-dev libcereal-dev libxc-dev \
+    libopenblas-openmp-dev liblapack-dev libscalapack-mpi-dev libelpa-dev libfftw3-dev libcereal-dev libxc-dev \
     g++ make cmake bc time sudo vim git
 # If you wish to use the LLVM compiler, replace 'g++' above with 'clang libomp-dev'.
 

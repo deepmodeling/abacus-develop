@@ -22,6 +22,8 @@ option(BUILD_TESTING "Build ABACUS unit tests" OFF)
 option(GENERATE_TEST_REPORTS "Enable test report generation" OFF)
 option(INFO "Enable gathering of math library information" OFF)
 option(ENABLE_COVERAGE "Enable coverage build." OFF)
+option(ENABLE_LIBRI "Enable EXX with LibRI." OFF)
+option(USE_ELPA "Enable ELPA" ON)
 
 if(ENABLE_LCAO)
   set(ABACUS_BIN_NAME abacus)
@@ -85,10 +87,13 @@ if(ENABLE_LCAO)
   find_package(Cereal REQUIRED)
   include_directories(${CEREAL_INCLUDE_DIR})
   add_compile_definitions(USE_CEREAL_SERIALIZATION)
-  find_package(ELPA REQUIRED)
-  include_directories(${ELPA_INCLUDE_DIR})
-  target_link_libraries(${ABACUS_BIN_NAME} ELPA::ELPA)
   add_compile_definitions(__LCAO)
+  if (USE_ELPA)
+    find_package(ELPA REQUIRED)
+    include_directories(${ELPA_INCLUDE_DIR})
+    target_link_libraries(${ABACUS_BIN_NAME} ELPA::ELPA)
+    add_compile_definitions(__ELPA)
+  endif()
 else()
   set(ENABLE_DEEPKS OFF)
 endif()
@@ -146,10 +151,7 @@ if(USE_CUDA OR USE_CUSOLVER_LCAO)
   set(CMAKE_CUDA_HOST_COMPILER ${CMAKE_CXX_COMPILER})
   enable_language(CUDA)
   target_link_libraries(${ABACUS_BIN_NAME}
-    -lcufft
-    -lcublas
     -lcudart
-    -lcusolver
     -lnvToolsExt
   )
   set_property(TARGET ${ABACUS_BIN_NAME}
@@ -273,6 +275,33 @@ if(ENABLE_DEEPKS)
   add_compile_definitions(__DEEPKS)
 endif()
 
+if (ENABLE_LIBRI)
+  set(CMAKE_CXX_STANDARD 14)
+  find_package(Git QUIET)
+  if(GIT_FOUND AND EXISTS "${PROJECT_SOURCE_DIR}/.git")
+    # Update submodules as needed
+    option(GIT_SUBMODULE "Check submodules during build" ON)
+    if(GIT_SUBMODULE)
+      message(STATUS "Submodule update")
+      execute_process(COMMAND ${GIT_EXECUTABLE} submodule update --init --recursive
+              WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+              RESULT_VARIABLE GIT_SUBMOD_RESULT)
+      if(NOT GIT_SUBMOD_RESULT EQUAL "0")
+        message(FATAL_ERROR "git submodule update --init --recursive failed with ${GIT_SUBMOD_RESULT}, please checkout submodules")
+      endif()
+    endif()
+  endif()
+  include_directories(${CMAKE_CURRENT_SOURCE_DIR}/deps/LibRI/include)
+  include_directories(${CMAKE_CURRENT_SOURCE_DIR}/deps/LibComm/include)
+  add_compile_definitions(
+          __EXX
+          EXX_DM=3
+          EXX_H_COMM=2
+          TEST_EXX_LCAO=0
+          TEST_EXX_RADIAL=1
+  )
+endif()
+
 list(APPEND math_libs m)
 target_link_libraries(${ABACUS_BIN_NAME} ${math_libs})
 
@@ -319,11 +348,6 @@ add_compile_definitions(
   __FFTW3
   __SELINV
   METIS
-  __EXX
-  EXX_DM=3
-  EXX_H_COMM=2
-  TEST_EXX_LCAO=0
-  TEST_EXX_RADIAL=1
 )
 
 if(INFO)
@@ -386,7 +410,6 @@ target_link_libraries(${ABACUS_BIN_NAME}
     neighbor
     io
     relax
-    ri
     parallel
     pw
     driver
@@ -397,6 +420,7 @@ target_link_libraries(${ABACUS_BIN_NAME}
     psi
     esolver
     vdw
+    device
 )
 
 if(ENABLE_LCAO)
@@ -404,11 +428,22 @@ if(ENABLE_LCAO)
       lcao
       orb
       gint
-      mrrr
-      pdiag
-      genelpa
-      rpa
   )
+  if (USE_ELPA)
+    target_link_libraries(${ABACUS_BIN_NAME}
+      genelpa
+    )
+  endif ()
+  if(USE_CUSOLVER_LCAO)
+    target_link_libraries(pdiag)
+  endif()
+endif()
+
+if (ENABLE_LIBRI)
+  target_link_libraries(${ABACUS_BIN_NAME}
+          ri
+          libri
+          rpa)
 endif()
 
 install(PROGRAMS ${ABACUS_BIN_PATH}

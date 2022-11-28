@@ -655,3 +655,83 @@ int pseudopot_cell_vnl::calculate_nqx(const double &ecutwfc,const double &dq)
 //----------------------------------------------------------
 	return points_of_table + 1; 
 }
+
+// ----------------------------------------------------------------------
+void pseudopot_cell_vnl::cal_effective_D(void)
+{
+    ModuleBase::TITLE("pseudopot_cell_vnl", "cal_effective_D");
+
+    /*
+	recalculate effective coefficient matrix for non-local pseudo-potential
+	1. assign to each atom from element;
+	2. extend to each spin when nspin larger than 1
+	3. rotate to effective matrix when spin-orbital coupling is used
+	*/
+
+    for (int iat = 0; iat < GlobalC::ucell.nat; iat++)
+    {
+        const int it = GlobalC::ucell.iat2it[iat];
+        const int nht = GlobalC::ucell.atoms[it].ncpp.nh;
+        // nht: number of beta functions per atom type
+        for (int is = 0; is < GlobalV::NSPIN; is++)
+        {
+            for (int ih = 0; ih < nht; ih++)
+            {
+                for (int jh = ih; jh < nht; jh++)
+                {
+                    if (GlobalV::LSPINORB)
+                    {
+                        this->deeq_nc(is, iat, ih, jh) = this->dvan_so(is, it, ih, jh);
+                        this->deeq_nc(is, iat, jh, ih) = this->dvan_so(is, it, jh, ih);
+                    }
+                    else if (GlobalV::NSPIN == 4)
+                    {
+                        if (is == 0)
+                        {
+                            this->deeq_nc(is, iat, ih, jh) = this->dvan(it, ih, jh);
+                            this->deeq_nc(is, iat, jh, ih) = this->dvan(it, ih, jh);
+                        }
+                        else if (is == 1)
+                        {
+                            this->deeq_nc(is, iat, ih, jh) = std::complex<double>(0.0, 0.0);
+                            this->deeq_nc(is, iat, jh, ih) = std::complex<double>(0.0, 0.0);
+                        }
+                        else if (is == 2)
+                        {
+                            this->deeq_nc(is, iat, ih, jh) = std::complex<double>(0.0, 0.0);
+                            this->deeq_nc(is, iat, jh, ih) = std::complex<double>(0.0, 0.0);
+                        }
+                        else if (is == 3)
+                        {
+                            this->deeq_nc(is, iat, ih, jh) = this->dvan(it, ih, jh);
+                            this->deeq_nc(is, iat, jh, ih) = this->dvan(it, ih, jh);
+                        }
+                    }
+                    else
+                    {
+                        this->deeq(is, iat, ih, jh) = this->dvan(it, ih, jh);
+                        this->deeq(is, iat, jh, ih) = this->dvan(it, ih, jh);
+                        // in most of pseudopotential files, number of projections of one orbital is only one, 
+                        // which lead to diagonal matrix of dion
+                        // when number larger than 1, non-diagonal dion should be calculated.
+                        if(ih != jh && std::fabs(this->deeq(is, iat, ih, jh))>0.0)
+                        {
+                            this->multi_proj = true;
+                        }
+                    }
+                }
+            }
+        }
+    }
+#ifdef __CUDA
+    cudaMemcpy(this->d_deeq,
+               this->deeq.ptr,
+               GlobalV::NSPIN * GlobalC::ucell.nat * this->nhm * this->nhm * sizeof(double),
+               cudaMemcpyHostToDevice);
+	cudaMemcpy(this->d_deeq_nc,
+           this->deeq_nc.ptr,
+           GlobalV::NSPIN * GlobalC::ucell.nat * this->nhm * this->nhm * sizeof(std::complex<double>),
+           cudaMemcpyHostToDevice);
+#endif
+    return;
+} 

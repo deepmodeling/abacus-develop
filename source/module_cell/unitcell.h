@@ -161,6 +161,7 @@ public:
 
 	int read_atom_species(LCAO_Orbitals &orb, std::ifstream &ifa, std::ofstream &ofs_running);
 	bool read_atom_positions(LCAO_Orbitals &orb, std::ifstream &ifpos, std::ofstream &ofs_running, std::ofstream &ofs_warning); // read in atomic positions
+    void read_orb_file(int it, std::string &orb_file, std::ofstream &ofs_running, Atom *atom);
 #else
 	int read_atom_species(std::ifstream &ifa, std::ofstream &ofs_running); // read in the atom information for each type of atom
 	bool read_atom_positions(std::ifstream &ifpos, std::ofstream &ofs_running, std::ofstream &ofs_warning); // read in atomic positions
@@ -181,11 +182,9 @@ public:
 	//================================================================
 	// cal_natomwfc : calculate total number of atomic wavefunctions
 	// cal_nwfc     : calculate total number of local basis and lmax
-	// cal_nelec    : calculate total number of electrons
 	// cal_meshx	: calculate max number of mesh points in pp file
 	//================================================================
 	void cal_nwfc(std::ofstream &log);
-	//void cal_nelec();
 	void cal_meshx();
 	void cal_natomwfc(std::ofstream &log); 
 	void print_unitcell_pseudo(const std::string &fn);

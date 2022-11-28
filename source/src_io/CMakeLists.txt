@@ -2,16 +2,10 @@ list(APPEND objects
     berryphase.cpp
     bessel_basis.cpp
     cal_test.cpp
-    chi0_hilbert.cpp
-    chi0_standard.cpp
     dos.cpp
     energy_dos_pw.cpp
-    epsilon0_pwscf.cpp
-    epsilon0_vasp.cpp
-    eximport.cpp
     numerical_basis.cpp
     numerical_descriptor.cpp
-    optical.cpp
     output.cpp
     print_info.cpp
     read_rho.cpp
@@ -21,8 +15,7 @@ list(APPEND objects
     unk_overlap_pw.cpp
     wf_io.cpp
     winput.cpp
-    write_input.cpp
-    write_pot.cpp
+    write_input.cpp    
     write_rho.cpp
     write_rho_cube.cpp
     write_wfc_realspace.cpp

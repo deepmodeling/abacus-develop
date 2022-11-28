@@ -1,4 +1,5 @@
 remove_definitions(-D__MPI)
+remove_definitions(-D__EXX)
 
 list(APPEND depend_files
  ../../module_base/math_integral.cpp

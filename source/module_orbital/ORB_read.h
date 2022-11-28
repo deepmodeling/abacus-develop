@@ -79,7 +79,7 @@ class LCAO_Orbitals
 	
 	double dr_uniform;
 
-	// initalized in unitcell_pseudo
+	// initalized in UnitCell
 	// assume ntype < 20.
 	bool read_in_flag;
 	std::vector<std::string> orbital_file;

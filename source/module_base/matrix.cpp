@@ -257,6 +257,10 @@ void matrix::operator*=(const double &s)
 /* Accumulate to a matrix in place */
 void matrix::operator+=(const matrix & m)
 {
+	if(nc*nr==0)
+	{
+		return;
+	}
 	assert( nr==m.nr );
 	assert( nc==m.nc );
 	const int size=nc*nr;
@@ -269,6 +273,10 @@ void matrix::operator+=(const matrix & m)
 /* decumulate to a matrix in place */
 void matrix::operator-=(const matrix & m)
 {
+	if(nc*nr==0)
+	{
+		return;
+	}
 	assert( nr==m.nr );
 	assert( nc==m.nc );
 	const int size=nc*nr;
@@ -281,6 +289,10 @@ void matrix::operator-=(const matrix & m)
 void matrix::zero_out(void)
 {
 	const int size = nr*nc;
+	if(size == 0)
+	{
+		return;
+	}
 	for(int i = 0; i < size; i++)
 		c[i] = 0.0;
 }
@@ -288,6 +300,10 @@ void matrix::zero_out(void)
 void matrix::fill_out(const double x)
 {
 	const int size = nr*nc;
+	if(size == 0)
+	{
+		return;
+	}
 	for(int i = 0; i < size; i++)
 		c[i] = x;
 }

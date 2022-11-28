@@ -127,14 +127,6 @@ private:
         std::ofstream& ofs_running,
         std::ofstream& ofs_warning);
 
-    void data_distribution(
-        MPI_Comm comm_2D,
-        const std::string& file,
-        const int& n,
-        const int& NB,
-        double* A,
-        const LocalMatrix& loc_A);
-
 #endif
 
 };

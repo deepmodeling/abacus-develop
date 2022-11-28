@@ -5,15 +5,16 @@
 #include "../module_base/global_variable.h"
 #include "../src_io/restart.h"
 #include "../module_relax/relax_driver.h"
-#include "../src_ri/exx_lip.h"
 #include "VNL_in_pw.h"
 #include "charge_mixing.h"
 #include "energy.h"
-#include "../module_xc/exx_global.h"
+#ifdef __EXX
+#include "../src_ri/exx_lip.h"
+#include "../module_xc/exx_info.h"
+#endif
 #include "hamilt.h"
 #include "klist.h"
 #include "magnetism.h"
-#include "potential.h"
 #include "structure_factor.h"
 #include "../module_pw/pw_basis_k.h"
 #include "wavefunc.h"
@@ -311,8 +312,10 @@ extern ModulePW::PW_Basis_K* wfcpw;
 extern energy en;
 extern wavefunc wf;
 extern Hamilt hm;
-extern Exx_Global exx_global;
+#ifdef __EXX
+extern Exx_Info exx_info;
 extern Exx_Lip exx_lip;
+#endif
 extern pseudopot_cell_vnl ppcell;
 } // namespace GlobalC
 
@@ -323,9 +326,7 @@ extern pseudopot_cell_vnl ppcell;
 namespace GlobalC
 {
 extern UnitCell ucell;
-extern Charge CHR;
 extern Charge_Mixing CHR_MIX;
-extern Potential pot;
 extern ModuleSymmetry::Symmetry symm;
 extern Parallel_Grid Pgrid;
 extern Parallel_Kpoints Pkpoints;

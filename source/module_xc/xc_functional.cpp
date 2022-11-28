@@ -56,7 +56,7 @@ void XC_Functional::set_xc_type(const std::string xc_func_in)
         func_type = 2;
         use_libxc = false;
 	} 
-	else if( xc_func == "revPBE" ) //PBX_r+PBC
+	else if( xc_func == "REVPBE" ) //PBX_r+PBC
 	{
 		func_id.push_back(XC_GGA_X_PBE_R);
         func_id.push_back(XC_GGA_C_PBE);
@@ -147,7 +147,7 @@ void XC_Functional::set_xc_type(const std::string xc_func_in)
         set_xc_type_libxc(xc_func);
         use_libxc = true;
 #else
-        std::cout << "functional name not recognized!" << std::endl;
+        ModuleBase::WARNING_QUIT("xc_functional.cpp","functional name not recognized!");
 #endif
     }
 
@@ -156,13 +156,13 @@ void XC_Functional::set_xc_type(const std::string xc_func_in)
 		std::cerr << "\n OPTX untested please test,";
 	}
 
-    if((func_type == 3 || func_type == 5) && GlobalV::BASIS_TYPE != "pw" && (GlobalV::CAL_STRESS || GlobalV::CAL_FORCE))
-    {
-        //ModuleBase::WARNING_QUIT("set_xc_type","mGGA stress & force not finished for LCAO yet");
-    }
     if((func_type == 4 || func_type == 5) && GlobalV::BASIS_TYPE == "pw")
     {
         ModuleBase::WARNING_QUIT("set_xc_type","hybrid functional not realized for planewave yet");
+    }
+    if((func_type == 3 || func_type == 5) && GlobalV::NSPIN==4)
+    {
+        ModuleBase::WARNING_QUIT("set_xc_type","meta-GGA has not been implemented for nspin = 4 yet");
     }
     if((func_type == 3 || func_type == 5) && GlobalV::CAL_STRESS == 1 && GlobalV::NSPIN!=1)
     {
@@ -240,17 +240,17 @@ std::vector<xc_func_type> XC_Functional::init_func(const int xc_polarized)
 		else if( id == XC_HYB_GGA_XC_PBEH ) // PBE0
 		{
 			add_func( XC_HYB_GGA_XC_PBEH );		
-			double parameter_hse[3] = { GlobalC::exx_global.info.hybrid_alpha, 
-				GlobalC::exx_global.info.hse_omega, 
-				GlobalC::exx_global.info.hse_omega };
+			double parameter_hse[3] = { GlobalC::exx_info.info_global.hybrid_alpha, 
+				GlobalC::exx_info.info_global.hse_omega, 
+				GlobalC::exx_info.info_global.hse_omega };
 			xc_func_set_ext_params(&funcs.back(), parameter_hse);	
 		}
 		else if( id == XC_HYB_GGA_XC_HSE06 ) // HSE06 hybrid functional
 		{
 			add_func( XC_HYB_GGA_XC_HSE06 );	
-			double parameter_hse[3] = { GlobalC::exx_global.info.hybrid_alpha, 
-				GlobalC::exx_global.info.hse_omega, 
-				GlobalC::exx_global.info.hse_omega };
+			double parameter_hse[3] = { GlobalC::exx_info.info_global.hybrid_alpha, 
+				GlobalC::exx_info.info_global.hse_omega, 
+				GlobalC::exx_info.info_global.hse_omega };
 			xc_func_set_ext_params(&funcs.back(), parameter_hse);
 		}
 #endif

@@ -11,11 +11,27 @@ get_target_property(ABACUS_LINK_LIBRARIES ${ABACUS_BIN_NAME} LINK_LIBRARIES)
 target_link_libraries(
     test_deepks
     base cell symmetry md surchem xc_
-    neighbor orb io relax gint lcao parallel mrrr pdiag pw ri driver esolver hsolver psi elecstate hamilt planewave
-    pthread genelpa vdw
-    deepks rpa
+    neighbor orb io relax gint lcao parallel pw driver esolver hsolver psi elecstate hamilt planewave
+    pthread vdw
+    deepks device
     ${ABACUS_LINK_LIBRARIES}
 )
+if(USE_ELPA)
+  target_link_libraries(
+      test_deepks
+      genelpa
+  )
+endif()
+if(USE_CUSOLVER_LCAO)
+  target_link_libraries(pdiag)
+endif()
+
+if (ENABLE_LIBRI)
+  target_link_libraries(test_deepks
+          ri
+          libri
+          rpa)
+endif()
 
 install(
     TARGETS test_deepks

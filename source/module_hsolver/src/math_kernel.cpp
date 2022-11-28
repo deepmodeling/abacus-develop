@@ -208,12 +208,61 @@ void gemm_op<double, psi::DEVICE_CPU>::operator()(const psi::DEVICE_CPU* d,
     zgemm_(&transa, &transb, &m, &n ,&k, alpha, a ,&lda, b, &ldb, beta, c, &ldc);
 }
 
+template <typename FPTYPE> struct matrixTranspose_op<FPTYPE, psi::DEVICE_CPU>
+{
+    void operator()(const psi::DEVICE_CPU* d,
+                    const int& row,
+                    const int& col,
+                    const std::complex<FPTYPE>* input_matrix,
+                    std::complex<FPTYPE>* output_matrix)
+    {
+        std::complex<FPTYPE>* temp = nullptr;
+        psi::memory::resize_memory_op<std::complex<FPTYPE>, psi::DEVICE_CPU>()(d, temp, row * col);
+        for (int i = 0; i < row; i++)
+        {
+            for (int j = 0; j < col; j++)
+            {
+                temp[j * row + i] = input_matrix[i * col + j];
+            }
+        }
+        for (int i = 0; i < row * col; i++)
+        {
+            output_matrix[i] = temp[i];
+        }
+        psi::memory::delete_memory_op<std::complex<FPTYPE>, psi::DEVICE_CPU>()(d, temp);
+    }
+};
+
+template <typename FPTYPE> struct matrixSetToAnother<FPTYPE, psi::DEVICE_CPU>
+{
+    void operator()(const psi::DEVICE_CPU* d,
+                    const int& n,
+                    const std::complex<FPTYPE>* A,
+                    const int& LDA,
+                    std::complex<FPTYPE>* B,
+                    const int& LDB)
+    {
+        for (int i = 0; i < n; i++)
+        {
+            for (int j = 0; j < LDA; j++)
+            {
+                B[i * LDB + j] = A[i * LDA + j];
+            }
+        }
+    }
+};
+
+
+
 // Explicitly instantiate functors for the types of functor registered.
 template struct zdot_real_op<double, psi::DEVICE_CPU>;
 template struct vector_div_constant_op<double, psi::DEVICE_CPU>;
 template struct vector_mul_vector_op<double, psi::DEVICE_CPU>;
 template struct vector_div_vector_op<double, psi::DEVICE_CPU>;
 template struct constantvector_addORsub_constantVector_op<double, psi::DEVICE_CPU>;
+
+template struct matrixTranspose_op<double, psi::DEVICE_CPU>;
+template struct matrixSetToAnother<double, psi::DEVICE_CPU>;
 
 
 } // namespace hsolver

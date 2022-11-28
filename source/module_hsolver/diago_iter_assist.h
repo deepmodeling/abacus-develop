@@ -21,33 +21,48 @@ class DiagoIterAssist
 
     // for CG diagonalization only
     static void diagH_subspace(
-        hamilt::Hamilt* pHamilt,
+        hamilt::Hamilt<FPTYPE, Device>* pHamilt,
         const psi::Psi<std::complex<FPTYPE>, Device> &psi,
         psi::Psi<std::complex<FPTYPE>, Device> &evc,
         FPTYPE *en,
         int n_band = 0);
-    // for initializing wave function , this is a template function
+
     static void diagH_subspace_init(
-        hamilt::Hamilt* pHamilt,
-        const ModuleBase::ComplexMatrix &psi,
+        hamilt::Hamilt<FPTYPE, Device>* pHamilt,
+        const std::complex<FPTYPE>* psi,
+        int psi_nr,
+        int psi_nc,
         psi::Psi<std::complex<FPTYPE>, Device> &evc,
         FPTYPE *en);
 
     static void diagH_LAPACK(
         const int nstart,
         const int nbands,
-        const ModuleBase::ComplexMatrix &hc,
-        const ModuleBase::ComplexMatrix &sc,
+        const std::complex<FPTYPE>* hcc,
+        const std::complex<FPTYPE>* sc,
         const int ldh, // nstart
         FPTYPE *e,
-        ModuleBase::ComplexMatrix &hvec);
+        std::complex<FPTYPE>* vcc);
 
     static bool test_exit_cond(const int &ntry, const int &notconv);
 
-    using hpsi_info = typename hamilt::Operator<std::complex<FPTYPE>, psi::DEVICE_CPU>::hpsi_info;
-#if ((defined __CUDA) || (defined __ROCM))
-    using hpsi_info_gpu = typename hamilt::Operator<std::complex<FPTYPE>, psi::DEVICE_GPU>::hpsi_info_gpu;
-#endif
+  private:
+    constexpr static const Device * ctx = {};
+    constexpr static const psi::DEVICE_CPU * cpu_ctx = {};
+    constexpr static const psi::DEVICE_GPU * gpu_ctx = {};
+
+    using hpsi_info = typename hamilt::Operator<std::complex<FPTYPE>, Device>::hpsi_info;
+    using resmem_var_op = psi::memory::resize_memory_op<FPTYPE, psi::DEVICE_GPU>;
+    using delmem_var_op = psi::memory::delete_memory_op<FPTYPE, psi::DEVICE_GPU>;
+    using syncmem_var_h2d_op = psi::memory::synchronize_memory_op<FPTYPE, psi::DEVICE_GPU, psi::DEVICE_CPU>;
+    using syncmem_var_d2h_op = psi::memory::synchronize_memory_op<FPTYPE, psi::DEVICE_CPU, psi::DEVICE_GPU>;
+
+    using setmem_complex_op = psi::memory::set_memory_op<std::complex<FPTYPE>, Device>;
+    using resmem_complex_op = psi::memory::resize_memory_op<std::complex<FPTYPE>, Device>;
+    using delmem_complex_op = psi::memory::delete_memory_op<std::complex<FPTYPE>, Device>;
+    using syncmem_complex_op = psi::memory::synchronize_memory_op<std::complex<FPTYPE>, Device, Device>;
+    using syncmem_complex_h2d_op = psi::memory::synchronize_memory_op<std::complex<FPTYPE>, Device, psi::DEVICE_CPU>;
+    using syncmem_complex_d2h_op = psi::memory::synchronize_memory_op<std::complex<FPTYPE>, psi::DEVICE_CPU, Device>;
 };
 
 } // namespace hsolver

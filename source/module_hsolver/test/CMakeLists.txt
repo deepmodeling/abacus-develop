@@ -2,52 +2,56 @@ remove_definitions(-D__CUDA)
 remove_definitions(-D__ROCM)
 AddTest(
   TARGET HSolver_cg
-  LIBS ${math_libs} base psi
+  LIBS ${math_libs} base psi device
   SOURCES diago_cg_test.cpp ../diago_cg.cpp  ../diago_iter_assist.cpp  
           ../../src_parallel/parallel_reduce.cpp
           ../../src_parallel/parallel_global.cpp ../../module_pw/test/test_tool.cpp
           ../../module_hamilt/operator.cpp
           ../../module_hamilt/ks_pw/operator_pw.cpp
-          ../src/math_kernel.cpp
 )
 AddTest(
   TARGET HSolver_dav
-  LIBS ${math_libs} base psi
+  LIBS ${math_libs} base psi device
   SOURCES diago_david_test.cpp ../diago_david.cpp  ../diago_iter_assist.cpp 
           ../../src_parallel/parallel_reduce.cpp ../../src_parallel/parallel_global.cpp  ../../src_parallel/parallel_common.cpp
           ../../module_pw/test/test_tool.cpp
           ../../module_hamilt/operator.cpp
           ../../module_hamilt/ks_pw/operator_pw.cpp
-          ../src/math_kernel.cpp
 )
 
 if(ENABLE_LCAO)
+  if(USE_ELPA)
   AddTest(
     TARGET HSolver_LCAO
-    LIBS ${math_libs} ELPA::ELPA base genelpa psi
+    LIBS ${math_libs} ELPA::ELPA base genelpa psi device
     SOURCES diago_lcao_test.cpp ../diago_elpa.cpp ../diago_blas.cpp ../../src_parallel/parallel_global.cpp 
             ../../src_parallel/parallel_common.cpp ../../src_parallel/parallel_reduce.cpp
   )
+  else()
+    AddTest(
+      TARGET HSolver_LCAO
+      LIBS ${math_libs} base psi device
+      SOURCES diago_lcao_test.cpp ../diago_blas.cpp ../../src_parallel/parallel_global.cpp
+      ../../src_parallel/parallel_common.cpp ../../src_parallel/parallel_reduce.cpp
+    )
+  endif()
 endif()
 
-if (USE_CUDA)
 AddTest(
   TARGET Hsolver_UTs
-  LIBS ${math_libs} base cublas
+  LIBS ${math_libs} base device
   SOURCES math_kernel_test.cpp ../../src_parallel/parallel_global.cpp 
           ../../src_parallel/parallel_common.cpp  ../../src_parallel/parallel_reduce.cpp
-          ../../module_hsolver/src/math_kernel.cpp
-          ../../module_psi/src/cuda/memory.cu
-          ../src/cuda/math_kernel.cu
 )
-else()
-AddTest(
-  TARGET Hsolver_UTs
-  LIBS ${math_libs} base
-  SOURCES math_kernel_test.cpp ../../src_parallel/parallel_global.cpp 
-          ../../src_parallel/parallel_common.cpp  ../../src_parallel/parallel_reduce.cpp
-          ../src/math_kernel.cpp
-)
+
+if(USE_CUDA)
+  AddTest(
+    TARGET Dngvd_UTs
+    LIBS ${math_libs} base device
+    SOURCES math_dngvd_test.cpp
+            ../../src_parallel/parallel_global.cpp
+            ../../src_parallel/parallel_common.cpp  ../../src_parallel/parallel_reduce.cpp
+  )
 endif()
 
 install(FILES H-KPoints-Si2.dat DESTINATION ${CMAKE_CURRENT_BINARY_DIR})

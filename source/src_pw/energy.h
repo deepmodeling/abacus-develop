@@ -4,8 +4,10 @@
 #include "../module_base/global_variable.h"
 #include "module_elecstate/elecstate.h"
 #include "src_lcao/local_orbital_wfc.h"
-#include "src_lcao/LCAO_hamilt.h"
 #include "module_psi/psi.h"
+#include "module_elecstate/elecstate.h"
+
+	class LCAO_Hamilt;
 
 class energy
 {
@@ -19,7 +21,6 @@ class energy
 	friend class Potential;
 	friend class Occupy;
 	friend class wavefunc;
-	friend class eximport;
 	friend class Ions;
 	friend class Update_input;
 	friend class Force_Lo;
@@ -101,11 +102,15 @@ class energy
 
 	void print_orbital_file();
 
-	void calculate_harris(const int &flag); //mohan add 2012-06-05
+	void calculate_harris(); //mohan add 2012-06-05
 
-    double delta_e(void);
+    double delta_e(const elecstate::ElecState* pelec);
 
-    void delta_escf(void);
+    void delta_escf(const elecstate::ElecState* pelec);
+
+	void cal_converged(elecstate::ElecState* pelec);
+	ModuleBase::matrix vnew;
+	bool vnew_exist = false;
 
     
     void set_exx();       // Peize Lin add 2016-12-03

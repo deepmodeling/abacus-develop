@@ -19,5 +19,7 @@ if(ENABLE_COVERAGE)
 endif()
 
 if(BUILD_TESTING)
+if(ENABLE_LIBXC)
   add_subdirectory(test)
+endif()
 endif()

@@ -12,11 +12,19 @@ find_path(ELPA_INCLUDE_DIR
     HINTS ${ELPA_DIR}
     PATH_SUFFIXES "include" "include/elpa"
     )
-find_library(ELPA_LIBRARY
-    NAMES elpa
-    HINTS ${ELPA_DIR}
-    PATH_SUFFIXES "lib"
-    )
+if(USE_OPENMP)
+    find_library(ELPA_LIBRARY
+        NAMES elpa_openmp elpa
+        HINTS ${ELPA_DIR}
+        PATH_SUFFIXES "lib"
+        )
+else()
+    find_library(ELPA_LIBRARY
+        NAMES elpa
+        HINTS ${ELPA_DIR}
+        PATH_SUFFIXES "lib"
+        )
+endif()
 
 # Handle the QUIET and REQUIRED arguments and
 # set ELPA_FOUND to TRUE if all variables are non-zero.

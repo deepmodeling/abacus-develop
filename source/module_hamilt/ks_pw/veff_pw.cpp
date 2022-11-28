@@ -10,24 +10,21 @@ using hamilt::OperatorPW;
 template<typename FPTYPE, typename Device>
 Veff<OperatorPW<FPTYPE, Device>>::Veff(
     const int* isk_in,
-    const ModuleBase::matrix* veff_in,
+    const FPTYPE* veff_in,
+    const int veff_row,
+    const int veff_col,
     ModulePW::PW_Basis_K* wfcpw_in)
 {
+    this->classname = "Veff";
     this->cal_type = pw_veff;
     this->isk = isk_in;
-    // this->veff = veff_in;
-    // TODO: add an GPU veff array
-    this->veff = veff_in[0].c;
+    this->veff = veff_in;
     //note: "veff = nullptr" means that this core does not treat potential but still treats wf. 
-    this->veff_col = veff_in[0].nc;
-    this->veff_row = veff_in[0].nr;
+    this->veff_row = veff_row;
+    this->veff_col = veff_col;
     this->wfcpw = wfcpw_in;
-    this->device = psi::device::get_device_type<Device>(this->ctx);
-    resize_memory_complex_op()(this->ctx, this->porter, this->wfcpw->nmaxgr);
-    resize_memory_complex_op()(this->ctx, this->porter1, this->wfcpw->nmaxgr);
-    if (this->device == psi::GpuDevice) {
-        resize_memory_double_op()(this->ctx, this->d_veff, this->veff_col * this->veff_row);
-    }
+    resmem_complex_op()(this->ctx, this->porter, this->wfcpw->nmaxgr);
+    resmem_complex_op()(this->ctx, this->porter1, this->wfcpw->nmaxgr);
     if (this->isk == nullptr || this->wfcpw == nullptr) {
         ModuleBase::WARNING_QUIT("VeffPW", "Constuctor of Operator::VeffPW is failed, please check your code!");
     }
@@ -36,11 +33,8 @@ Veff<OperatorPW<FPTYPE, Device>>::Veff(
 template<typename FPTYPE, typename Device>
 Veff<OperatorPW<FPTYPE, Device>>::~Veff()
 {
-    delete_memory_complex_op()(this->ctx, this->porter);
-    delete_memory_complex_op()(this->ctx, this->porter1);
-    if (psi::device::get_device_type<Device>(this->ctx) == psi::GpuDevice) {
-        delete_memory_double_op()(this->ctx, this->d_veff);
-    }
+    delmem_complex_op()(this->ctx, this->porter);
+    delmem_complex_op()(this->ctx, this->porter1);
 }
 
 template<typename FPTYPE, typename Device>
@@ -49,7 +43,7 @@ void Veff<OperatorPW<FPTYPE, Device>>::act(
     const int n_npwx, 
     const std::complex<FPTYPE>* tmpsi_in, 
     std::complex<FPTYPE>* tmhpsi
-)const  
+)const
 {
     ModuleBase::timer::tick("Operator", "VeffPW");
 
@@ -69,18 +63,12 @@ void Veff<OperatorPW<FPTYPE, Device>>::act(
             // but the 3DFFT can not be skipped, it will cause hanging
             if(this->veff_col != 0)
             {
+                veff_op()(this->ctx, this->veff_col, this->porter, this->veff + current_spin * this->veff_col);
                 // const FPTYPE* current_veff = &(this->veff[0](current_spin, 0));
                 // for (int ir = 0; ir < this->veff->nc; ++ir)
                 // {
                 //     porter[ir] *= current_veff[ir];
                 // }
-                if (this->device == psi::GpuDevice) {
-                    syncmem_double_h2d_op()(this->ctx, this->cpu_ctx, this->d_veff, this->veff, this->veff_col * this->veff_row);
-                    veff_op()(this->ctx, this->veff_col, this->porter, this->d_veff + current_spin * this->veff_col);
-                }
-                else {
-                    veff_op()(this->ctx, this->veff_col, this->porter, this->veff + current_spin * this->veff_col);
-                }
             }
             // wfcpw->real2recip(porter, tmhpsi, this->ik, true);
             wfcpw->real_to_recip(this->ctx, this->porter, tmhpsi, this->ik, true);
@@ -95,13 +83,8 @@ void Veff<OperatorPW<FPTYPE, Device>>::act(
             {
                 /// denghui added at 20221109
                 const FPTYPE* current_veff[4];
-                if (this->device == psi::GpuDevice) {
-                    syncmem_double_h2d_op()(this->ctx, this->cpu_ctx, this->d_veff, this->veff, this->veff_col * this->veff_row);
-                }
                 for(int is = 0; is < 4; is++) {
-                    current_veff[is] = this->device == psi::GpuDevice ?
-                    this->d_veff + is * this->veff_col : // for GPU device
-                    this->veff   + is * this->veff_col ; // for CPU device
+                    current_veff[is] = this->veff + is * this->veff_col ; // for CPU device
                 }
                 veff_op()(this->ctx, this->veff_col, this->porter, this->porter1, current_veff);
                 // std::complex<FPTYPE> sup, sdown;
@@ -128,9 +111,30 @@ void Veff<OperatorPW<FPTYPE, Device>>::act(
     ModuleBase::timer::tick("Operator", "VeffPW");
 }
 
+template<typename FPTYPE, typename Device>
+template<typename T_in, typename Device_in>
+hamilt::Veff<OperatorPW<FPTYPE, Device>>::Veff(const Veff<OperatorPW<T_in, Device_in>> *veff) {
+    this->classname = "Veff";
+    this->cal_type = pw_veff;
+    this->ik = veff->get_ik();
+    this->isk = veff->get_isk();
+    this->veff_col = veff->get_veff_col();
+    this->veff_row = veff->get_veff_row();
+    this->wfcpw = veff->get_wfcpw();
+    this->npol = veff->get_npol();
+    resmem_complex_op()(this->ctx, this->porter, this->wfcpw->nmaxgr);
+    resmem_complex_op()(this->ctx, this->porter1, this->wfcpw->nmaxgr);
+    this->veff = veff->get_veff();
+    if (this->isk == nullptr || this->veff == nullptr || this->wfcpw == nullptr) {
+        ModuleBase::WARNING_QUIT("VeffPW", "Constuctor of Operator::VeffPW is failed, please check your code!");
+    }
+}
+
 namespace hamilt{
 template class Veff<OperatorPW<double, psi::DEVICE_CPU>>;
+template Veff<OperatorPW<double, psi::DEVICE_CPU>>::Veff(const Veff<OperatorPW<double, psi::DEVICE_CPU>> *veff);
 #if ((defined __CUDA) || (defined __ROCM))
 template class Veff<OperatorPW<double, psi::DEVICE_GPU>>;
+template Veff<OperatorPW<double, psi::DEVICE_GPU>>::Veff(const Veff<OperatorPW<double, psi::DEVICE_GPU>> *veff);
 #endif
 } // namespace hamilt

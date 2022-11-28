@@ -23,8 +23,6 @@ void ModuleBase::Global_File::make_dir_out(
     const int rank,
     const bool &restart,
     const bool out_alllog)
-    //const bool linear_scaling, xiaohui modify 2013-09-01. Attention! Maybe there is some problem.
-    //const bool out_alllog)
 {
 //----------------------------------------------------------
 // USE STL FUNCTION
