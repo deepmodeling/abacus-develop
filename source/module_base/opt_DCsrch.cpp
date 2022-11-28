@@ -2,9 +2,9 @@
 #include <string.h>
 #include <math.h>
 
-// This file is translated from fortran codes MathDCsrch.f and MathDCstep.f of PROFESS3.0.
+// This file is translated from fortran codes dcstep.f of scipy.
 // The structure and all annotation of the original file have been retained.
-// See original source at https://github.com/EACcodes/PROFESS/blob/master/Source.
+// See original source at https://github.com/scipy/scipy/blob/main/scipy/optimize/minpack2/dcstep.f.
 // sunliang 2022-05-30
 
 namespace ModuleBase
