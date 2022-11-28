@@ -31,19 +31,13 @@ class Gint_Gamma : public Gint
     // there is an additional step in calculating vlocal for gamma point
     // namely the redistribution of Hamiltonian from grid to 2D block format
     // hence we have an additional layer outside the unified interface
-	void cal_vlocal(Gint_inout *inout);
+	void cal_vlocal(Gint_inout *inout, const bool new_e_iteration);
 
     //------------------------------------------------------
     // in gint_gamma_env.cpp 
     //------------------------------------------------------
 	// calcualte the envelope function
 	void cal_env(const double* wfc, double* rho);
-
-    //------------------------------------------------------
-    // in gint_gamma_mull.cpp 
-    //------------------------------------------------------
-	// calculate the Mulliken charge
-	void cal_mulliken(double** mulliken);
 
 private:
 
@@ -54,7 +48,7 @@ private:
     //------------------------------------------------------
     // method for redistributing the Hamiltonian
     // from grid to 2D format
-    void vl_grid_to_2D(const int lgd, LCAO_Matrix& lm);
+    void vl_grid_to_2D(const int lgd, LCAO_Matrix& lm, const bool new_e_iteration);
 
     ///===============================
     /// Use MPI_Alltoallv to convert a grid distributed matrix

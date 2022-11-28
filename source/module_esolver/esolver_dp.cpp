@@ -1,14 +1,10 @@
-#include <unistd.h>
 #include "esolver_dp.h"
-#ifdef __DPMD
-#include "deepmd/DeepPot.h"
-#endif
 
 
 namespace ModuleESolver
 {
 
-    void ESolver_DP::Init(Input& inp, UnitCell_pseudo& ucell)
+    void ESolver_DP::Init(Input& inp, UnitCell& ucell)
     {
         dp_potential = 0;
         dp_force.create(ucell.nat, 3);
@@ -17,7 +13,10 @@ namespace ModuleESolver
         cell.resize(9);
         atype.resize(ucell.nat);
         coord.resize(3 * ucell.nat);
+    }
 
+    void ESolver_DP::Run(const int istep, UnitCell& ucell)
+    {
         cell[0] = ucell.latvec.e11 * ucell.lat0_angstrom;
         cell[1] = ucell.latvec.e12 * ucell.lat0_angstrom;
         cell[2] = ucell.latvec.e13 * ucell.lat0_angstrom;
@@ -41,26 +40,19 @@ namespace ModuleESolver
             }
         }
         assert(ucell.nat == iat);
-    }
 
-    void ESolver_DP::Run(const int istep, UnitCell_pseudo& ucell)
-    {
 #ifdef __DPMD
-        if (access("graph.pb", 0) == -1)
-        {
-            ModuleBase::WARNING_QUIT("DP_pot", "Can not find graph.pb !");
-        }
-
-        deepmd::DeepPot dp("graph.pb");
-
         std::vector<double> f, v;
+        dp_potential = 0;
+        dp_force.zero_out();
+        dp_virial.zero_out();
 
         dp.compute(dp_potential, f, v, coord, atype, cell);
 
-        dp_potential /= ModuleBase::Hartree_to_eV;
+        dp_potential /= ModuleBase::Ry_to_eV;
 
-        double fact_f = ModuleBase::Hartree_to_eV * ModuleBase::ANGSTROM_AU;
-        double fact_v = ModuleBase::Hartree_to_eV * pow(ModuleBase::ANGSTROM_AU, 3);
+        const double fact_f = ModuleBase::Ry_to_eV * ModuleBase::ANGSTROM_AU;
+        const double fact_v = ucell.omega * ModuleBase::Ry_to_eV;
 
         for (int i = 0; i < ucell.nat; ++i)
         {
@@ -81,9 +73,9 @@ namespace ModuleESolver
 #endif
     }
 
-    void ESolver_DP::cal_Energy(energy& en)
+    void ESolver_DP::cal_Energy(double& etot)
     {
-
+        etot = dp_potential;
     }
 
     void ESolver_DP::cal_Force(ModuleBase::matrix& force)
@@ -96,4 +88,11 @@ namespace ModuleESolver
         stress = dp_virial;
     }
 
+    void ESolver_DP::postprocess()
+    {
+        GlobalV::ofs_running << "\n\n --------------------------------------------" << std::endl;
+        GlobalV::ofs_running << std::setprecision(16);
+        GlobalV::ofs_running << " !FINAL_ETOT_IS " << dp_potential * ModuleBase::Ry_to_eV << " eV" << std::endl;
+        GlobalV::ofs_running << " --------------------------------------------\n\n" << std::endl;
+    }
 }

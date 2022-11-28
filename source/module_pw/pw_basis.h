@@ -87,6 +87,11 @@ public:
         const bool xprime_in = true
     );
 
+    //Set parameters about full planewave, only used in OFDFT for now.
+    void setfullpw(
+        const bool inpt_full_pw = false,
+        const int inpt_full_pw_dim = 0
+    );
 //===============================================
 //                 distribution maps
 //===============================================
@@ -155,6 +160,7 @@ public:
 
 public:
     bool gamma_only=false;	// only half g are used.
+    bool full_pw=false;   // If set to 1, ecut will be ignored while collecting planewaves, so that all planewaves will be used. !! Note this parameter is not used in PW_BASIS_K !! sunliang added 2022-08-30.
     double ggecut=0;    //Energy cut off for g^2/2, unit in 1/lat0^2, ggecut=ecutwfc(Ry)*lat0^2/4pi^2
     double gridecut_lat=0; //Energy cut off for all fft grids, unit in 1/lat0^2, gridecut_lat=ecutrho(Ry)*lat0^2/4pi^2
     double lat0=1;     //unit length for lattice, unit in bohr
@@ -165,6 +171,7 @@ public:
     ModuleBase::Matrix3 GT; // traspose of G
     ModuleBase::Matrix3 GGT; // GGT = G*GT
     int distribution_type=1;
+    int full_pw_dim=0; // If full_pw = 1, the dimention of FFT will be testricted to be (0) either odd or even; (1) odd only; (2) even only. sunliang added 2022-08-30.
     int poolnproc=1;
     int poolrank=0;
     

@@ -1,0 +1,8 @@
+[submodule "deps/LibRI"]
+	path = deps/LibRI
+	url = https://github.com/abacusmodeling/LibRI.git
+	branch = master
+[submodule "deps/LibComm"]
+	path = deps/LibComm
+	url = https://github.com/abacusmodeling/LibComm.git
+	branch = master

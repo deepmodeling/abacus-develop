@@ -21,7 +21,7 @@
 
 //this subroutine adds dV to the Kohn-Sham Hamiltonian
 //for gamma_only calculations
-void LCAO_Deepks::add_v_delta(const UnitCell_pseudo &ucell,
+void LCAO_Deepks::add_v_delta(const UnitCell &ucell,
     const LCAO_Orbitals &orb,
     Grid_Driver &GridD,
     const int* trace_loc_row,
@@ -158,7 +158,7 @@ void LCAO_Deepks::check_v_delta(const int nrow, const int ncol)
 
 //this subroutine calculates H_V_deltaR
 //used in multi-k calculations
-void LCAO_Deepks::add_v_delta_k(const UnitCell_pseudo &ucell,
+void LCAO_Deepks::add_v_delta_k(const UnitCell &ucell,
     const LCAO_Orbitals &orb,
     Grid_Driver &GridD,
     const int* trace_loc_row,

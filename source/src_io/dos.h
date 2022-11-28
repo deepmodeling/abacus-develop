@@ -20,9 +20,9 @@ namespace Dos
 		const std::vector<double> &wk,//weight of k points
 		const ModuleBase::matrix &wg,//weight of (kpoint,bands)
 		const int &nbands,// number of bands
-		double **ekb);//store energy for each k point and each band
+		const ModuleBase::matrix &ekb);//store energy for each k point and each band
 
-	void calculate_Mulliken(const std::string &fn, Gint_Gamma &gg);
+	void calculate_Mulliken(const std::string &fn, Gint_Gamma &gg, double** rho);
 
 	void nscf_band(
 		const int &is,
@@ -30,12 +30,12 @@ namespace Dos
 		const int &nks, 
 		const int &nband, 
 		const double &fermie,
-		double **ekb);
+		const ModuleBase::matrix &ekb);
 
 	void nscf_fermi_surface(const std::string &out_band_dir,
 		const int &nks,
 		const int &nband,
-		double **ekb);
+		const ModuleBase::matrix &ekb);
 	
 }
 

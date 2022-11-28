@@ -4,6 +4,7 @@
 #include "global.h"
 #include "energy.h"
 #include "../module_base/mymath.h"
+#include "../src_lcao/LCAO_hamilt.h"
 #include <vector>
 #ifdef __MPI
 #include "mpi.h"
@@ -15,10 +16,10 @@
 #include "myfunc.h"
 //new
 #include "H_Ewald_pw.h"
-#include "H_Hartree_pw.h"
-#include "../module_surchem/efield.h"    // liuyu add 2022-05-06
-#include "../module_surchem/gatefield.h"    // liuyu add 2022-09-13
-#include "../module_surchem/surchem.h"
+#include "module_elecstate/potentials/H_Hartree_pw.h"
+#include "module_elecstate/potentials/efield.h"    // liuyu add 2022-05-06
+#include "module_elecstate/potentials/gatefield.h"    // liuyu add 2022-09-13
+#include "module_surchem/surchem.h"
 #ifdef __DEEPKS
 #include "../module_deepks/LCAO_deepks.h"
 #endif
@@ -46,39 +47,31 @@ energy::~energy()
 {
 }
 
-void energy::calculate_harris(const int &flag)
+void energy::calculate_harris()
 {
 //	ModuleBase::TITLE("energy","calculate_harris");
-	
-	if(flag==1)
-	{
-		this->deband_harris = this->delta_e();
-	}
-	else if(flag==2)
-	{
-		this->etot_harris = eband + deband_harris 
-		+ (etxc - etxcc) 
-		+ H_Ewald_pw::ewald_energy 
-		+ H_Hartree_pw::hartree_energy 
-		+ demet
-		+ exx
-		+ Efield::etotefield
-        + Gatefield::etotgatefield
-		+ evdw;  						// Peize Lin add evdw 2021.03.09
+	this->etot_harris = eband + deband_harris 
+	+ (etxc - etxcc) 
+	+ H_Ewald_pw::ewald_energy 
+	+ elecstate::H_Hartree_pw::hartree_energy 
+	+ demet
+	+ exx
+	+ elecstate::Efield::etotefield
+	+ elecstate::Gatefield::etotgatefield
+	+ evdw;  						// Peize Lin add evdw 2021.03.09
 
 #ifdef __LCAO
-        if(GlobalV::dft_plus_u) 
-		{
-			this->etot_harris += GlobalC::dftu.EU;  //Energy correction from DFT+U; Quxin adds on 20201029
-		}
+	if(GlobalV::dft_plus_u) 
+	{
+		this->etot_harris += GlobalC::dftu.EU;  //Energy correction from DFT+U; Quxin adds on 20201029
+	}
 #endif
 #ifdef __DEEPKS
-        if (GlobalV::deepks_scf)
-        {
-            this->etot_harris += GlobalC::ld.E_delta - GlobalC::ld.e_delta_band;
-        }
+	if (GlobalV::deepks_scf)
+	{
+		this->etot_harris += GlobalC::ld.E_delta - GlobalC::ld.e_delta_band;
+	}
 #endif
-    }
 	
 	return;
 }
@@ -90,18 +83,19 @@ void energy::calculate_etot(void)
 	this->etot = eband + deband 
 	+ (etxc - etxcc) 
 	+ H_Ewald_pw::ewald_energy 
-	+ H_Hartree_pw::hartree_energy 
+	+ elecstate::H_Hartree_pw::hartree_energy 
 	+ demet
 	+ descf
 	+ exx
-	+ Efield::etotefield
-    + Gatefield::etotgatefield
+	+ elecstate::Efield::etotefield
+    + elecstate::Gatefield::etotgatefield
 	+ evdw;							// Peize Lin add evdw 2021.03.09
 	if (GlobalV::imp_sol)
     {
 	this->etot += GlobalC::solvent_model.cal_Ael(GlobalC::ucell, GlobalC::rhopw)
 				 + GlobalC::solvent_model.cal_Acav(GlobalC::ucell, GlobalC::rhopw);
 	}
+
     //Quxin adds for DFT+U energy correction on 20201029
 
 	// std::cout << std::resetiosflags(ios::scientific) << std::endl;
@@ -161,16 +155,16 @@ void energy::print_etot(
 			this->print_format("E_Harris", etot_harris);
 			this->print_format("E_band", eband);
 			this->print_format("E_one_elec", eband + deband);
-			this->print_format("E_Hartree", H_Hartree_pw::hartree_energy);
+			this->print_format("E_Hartree", elecstate::H_Hartree_pw::hartree_energy);
 			this->print_format("E_xc", etxc - etxcc);
 			this->print_format("E_Ewald", H_Ewald_pw::ewald_energy);
 			this->print_format("E_demet", demet); //mohan add 2011-12-02
 			this->print_format("E_descf", descf);
-			if (GlobalC::vdwd2_para.flag_vdwd2)					//Peize Lin add 2014-04, update 2021-03-09
+			if (INPUT.vdw_method == "d2") 				//Peize Lin add 2014-04, update 2021-03-09
 			{
 				this->print_format("E_vdwD2", evdw);
 			}
-			if(GlobalC::vdwd3_para.flag_vdwd3)					//jiyy add 2019-05, update 2021-05-02
+            else if (INPUT.vdw_method == "d3_0" || INPUT.vdw_method == "d3_bj")					//jiyy add 2019-05, update 2021-05-02
 			{
 				this->print_format("E_vdwD3", evdw);
 			}
@@ -185,11 +179,11 @@ void energy::print_etot(
 			}
             if(GlobalV::EFIELD_FLAG)
             {
-                this->print_format("E_efield", Efield::etotefield);
+                this->print_format("E_efield", elecstate::Efield::etotefield);
             }
             if(GlobalV::GATE_FLAG)
             {
-                this->print_format("E_gatefield", Gatefield::etotgatefield);
+                this->print_format("E_gatefield", elecstate::Gatefield::etotgatefield);
             }
 
 #ifdef __DEEPKS
@@ -234,10 +228,6 @@ void energy::print_etot(
 	else if (GlobalV::KS_SOLVER=="lapack")
 	{
 		label = "LA";
-	}
-    else if(GlobalV::KS_SOLVER=="hpseps")
-	{
-		label = "HP";
 	}
     else if(GlobalV::KS_SOLVER=="genelpa")
 	{
@@ -318,17 +308,7 @@ void energy::print_etot(
 	//			std::cout << std::setw(11) << H_Hartree_pw::hartree_energy;
 	//			std::cout << std::setw(11) << GlobalC::en.etxc - GlobalC::en.etxcc;
 				std::cout << std::resetiosflags(ios::scientific);
-				//if(GlobalV::DIAGO_TYPE=="cg") xiaohui modify 2013-09-02
-				// if(GlobalV::KS_SOLVER=="cg") //xiaohui add 2013-09-02
-				// {
-				// 	std::cout << std::setw(11) << avg_iter;
-				// }
-				//xiaohui modified 2013-03-23
-				//else if(GlobalV::DIAGO_TYPE=="selinv")
-				//{
-					// because Selinv::iter starts from 0.
-				//	std::cout << std::setw(11) << Selinv::iter;
-				//}
+				
 				std::cout << std::setw(11) << duration;
 				std::cout << std::endl;
 			}
@@ -349,20 +329,6 @@ void energy::print_etot(
                         std::cout << std::setprecision(3);
                         std::cout << std::setw(11) << scf_thr;
 			std::cout << std::setprecision(3);
-	//		std::cout << std::setw(11) << GlobalC::en.eband;
-	//		std::cout << std::setw(11) << H_Hartree_pw::hartree_energy;
-	//		std::cout << std::setw(11) << GlobalC::en.etxc - GlobalC::en.etxcc;
-			//if(GlobalV::DIAGO_TYPE=="cg") xiaohui modify 2013-09-02
-			// if(GlobalV::KS_SOLVER=="cg") //xiaohui add 2013-09-02
-			// {
-			// 	std::cout << std::setw(11) << avg_iter;
-			// }
-			//xiaohui modified 2013-03-23
-			//else if(GlobalV::DIAGO_TYPE=="selinv")
-			//{
-				// because Selinv::iter starts from 0.
-			//	std::cout << std::setw(11) << Selinv::iter+1;
-			//}
 			std::cout << std::setw(11) << duration;
 			std::cout << std::endl;
 		}
@@ -389,7 +355,7 @@ void energy::print_format(const std::string &name, const double &value)
 
 
 // from ddelta_e.f90
-double energy::delta_e(void)
+double energy::delta_e(const elecstate::ElecState* pelec)
 {
     // out potentials from potential mixing
     // total energy and band energy corrections
@@ -397,35 +363,49 @@ double energy::delta_e(void)
 
     double deband_aux = 0.0;
 
-    for (int ir=0; ir<GlobalC::rhopw->nrxx; ir++)
-    {
-    	deband_aux -= GlobalC::CHR.rho[0][ir] * GlobalC::pot.vr(0, ir);
+	// only potential related with charge is used here for energy correction
+	// on the fly calculate it here by v_effective - v_fixed
+	const double* v_eff = pelec->pot->get_effective_v(0);
+	const double* v_fixed = pelec->pot->get_fixed_v();
+	const double* v_ofk = nullptr;
+	if(XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
+	{
+		v_ofk = pelec->pot->get_effective_vofk(0);
+	}
+
+	for (int ir=0; ir<GlobalC::rhopw->nrxx; ir++)
+	{
+		deband_aux -= pelec->charge->rho[0][ir] * (v_eff[ir] - v_fixed[ir]);
 		if(XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
 		{
-			deband_aux -= GlobalC::CHR.kin_r[0][ir] * GlobalC::pot.vofk(0,ir);
+			deband_aux -= pelec->charge->kin_r[0][ir] * v_ofk[ir];
 		}
 	}
 
-    if (GlobalV::NSPIN == 2)
-    {
-    	for (int ir=0; ir<GlobalC::rhopw->nrxx; ir++)
-    	{
-    		deband_aux -= GlobalC::CHR.rho[1][ir] * GlobalC::pot.vr(1, ir);
+	if (GlobalV::NSPIN == 2)
+	{
+		v_eff = pelec->pot->get_effective_v(1);
+		v_ofk = pelec->pot->get_effective_vofk(1);
+		for (int ir=0; ir<GlobalC::rhopw->nrxx; ir++)
+		{
+			deband_aux -= pelec->charge->rho[1][ir] * (v_eff[ir] - v_fixed[ir]);
 			if(XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
 			{
-				deband_aux -= GlobalC::CHR.kin_r[1][ir] * GlobalC::pot.vofk(1,ir);
+				deband_aux -= pelec->charge->kin_r[1][ir] * v_ofk[ir];
 			}
 		}
-    }
-    else if(GlobalV::NSPIN == 4)
-    {
-        for (int ir=0; ir<GlobalC::rhopw->nrxx; ir++)
-        {
-            deband_aux -= GlobalC::CHR.rho[1][ir] * GlobalC::pot.vr(1, ir);
-            deband_aux -= GlobalC::CHR.rho[2][ir] * GlobalC::pot.vr(2, ir);
-            deband_aux -= GlobalC::CHR.rho[3][ir] * GlobalC::pot.vr(3, ir);
-        }
-    }
+	}
+	else if(GlobalV::NSPIN == 4)
+	{
+		for(int is = 1;is<4;is++)
+		{
+			v_eff = pelec->pot->get_effective_v(is);
+			for(int ir=0; ir<GlobalC::rhopw->nrxx; ir++)
+			{
+				deband_aux -= pelec->charge->rho[is][ir] * v_eff[ir];
+			}
+		}
+	}
 
 #ifdef __MPI
     MPI_Allreduce(&deband_aux,&deband0,1,MPI_DOUBLE,MPI_SUM,POOL_WORLD);
@@ -443,7 +423,7 @@ double energy::delta_e(void)
 
 
 
-void energy::delta_escf(void)
+void energy::delta_escf(const elecstate::ElecState* pelec)
 {
 	ModuleBase::TITLE("energy","delta_escf");
     this->descf = 0.0;
@@ -452,36 +432,52 @@ void energy::delta_escf(void)
 	// and rho1_save is "output" charge density
 	// because in "deband" the energy is calculated from "output" charge density,
 	// so here is the correction.
+	// only potential related with charge is used here for energy correction
+	// on the fly calculate it here by v_effective - v_fixed
+	const double* v_eff = pelec->pot->get_effective_v(0);
+	const double* v_fixed = pelec->pot->get_fixed_v();
+	const double* v_ofk = nullptr;
+	if(XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
+	{
+		v_ofk = pelec->pot->get_effective_vofk(0);
+	}
 
-    for (int ir=0; ir<GlobalC::rhopw->nrxx; ir++)
-    {
-		this->descf -= ( GlobalC::CHR.rho[0][ir] - GlobalC::CHR.rho_save[0][ir] ) * GlobalC::pot.vr(0, ir);
-		if(XC_Functional::get_func_type() == 3)
+	for (int ir=0; ir<GlobalC::rhopw->nrxx; ir++)
+	{
+		this->descf -= ( pelec->charge->rho[0][ir] - pelec->charge->rho_save[0][ir] ) * (v_eff[ir] - v_fixed[ir]);
+		if(XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
 		{
-         	this->descf -= ( GlobalC::CHR.kin_r[0][ir] - GlobalC::CHR.kin_r_save[0][ir] ) * GlobalC::pot.vofk(0, ir);
+			this->descf -= ( pelec->charge->kin_r[0][ir] - pelec->charge->kin_r_save[0][ir] ) * v_ofk[ir];
 		}
-    }
+	}
 
-    if (GlobalV::NSPIN==2)
-    {
-       	for (int ir=0; ir<GlobalC::rhopw->nrxx; ir++)
-       	{
-           	this->descf -= ( GlobalC::CHR.rho[1][ir] - GlobalC::CHR.rho_save[1][ir] ) * GlobalC::pot.vr(1, ir);
-			if(XC_Functional::get_func_type() == 3)
+	if (GlobalV::NSPIN==2)
+	{
+		v_eff = pelec->pot->get_effective_v(1);
+		if(XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
+		{
+			v_ofk = pelec->pot->get_effective_vofk(1);
+		}
+		for (int ir=0; ir<GlobalC::rhopw->nrxx; ir++)
+		{
+			this->descf -= ( pelec->charge->rho[1][ir] - pelec->charge->rho_save[1][ir] ) * (v_eff[ir] - v_fixed[ir]);
+			if(XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
 			{
-           		this->descf -= ( GlobalC::CHR.kin_r[1][ir] - GlobalC::CHR.kin_r_save[1][ir] ) * GlobalC::pot.vofk(1, ir);
+				this->descf -= ( pelec->charge->kin_r[1][ir] - pelec->charge->kin_r_save[1][ir] ) * v_ofk[ir];
 			}
-       	}
-    }
-    if (GlobalV::NSPIN==4)
-    {
-        for(int ir=0; ir<GlobalC::rhopw->nrxx; ir++)
-        {
-            this->descf -= ( GlobalC::CHR.rho[1][ir] - GlobalC::CHR.rho_save[1][ir] ) * GlobalC::pot.vr(1, ir);
-            this->descf -= ( GlobalC::CHR.rho[2][ir] - GlobalC::CHR.rho_save[2][ir] ) * GlobalC::pot.vr(2, ir);
-            this->descf -= ( GlobalC::CHR.rho[3][ir] - GlobalC::CHR.rho_save[3][ir] ) * GlobalC::pot.vr(3, ir);
-        }
-    }
+		}
+	}
+	if (GlobalV::NSPIN==4)
+	{
+		for(int is = 1;is<4;is++)
+		{
+			v_eff = pelec->pot->get_effective_v(is);
+			for(int ir=0; ir<GlobalC::rhopw->nrxx; ir++)
+			{
+				this->descf -= ( pelec->charge->rho[is][ir] - pelec->charge->rho_save[is][ir] ) * v_eff[ir];
+			}
+		}
+	}
 
     Parallel_Reduce::reduce_double_pool( descf );
 
@@ -489,59 +485,21 @@ void energy::delta_escf(void)
     return;
 }
 
-
-void energy::print_band(const int &ik)
+void energy::cal_converged(elecstate::ElecState* pelec)
 {
-	//check the band energy.
-    bool wrong = false;
-	for(int ib=0; ib<GlobalV::NBANDS; ++ib)
-	{
-		if( abs( GlobalC::wf.ekb[ik][ib] ) > 1.0e10)
-		{
-			GlobalV::ofs_warning << " ik=" << ik+1 << " ib=" << ib+1 << " " << GlobalC::wf.ekb[ik][ib] << " Ry" << std::endl;
-			wrong = true;
-		}
-	}
-	if(wrong)
-    {
-        ModuleBase::WARNING_QUIT("Threshold_Elec::print_eigenvalue","Eigenvalues are too large!");
-    }
+	//update etxc and vtxc
+	//allocate vnew in get_vnew()
+	pelec->pot->get_vnew(pelec->charge, this->vnew);
+	this->vnew_exist = true;
+	//vnew will be used in force_scc()
 
-
-
-	if(GlobalV::MY_RANK==0)
-	{
-		//if( GlobalV::DIAGO_TYPE == "selinv" ) xiaohui modify 2013-09-02
-		if(GlobalV::KS_SOLVER=="selinv") //xiaohui add 2013-09-02
-		{
-			GlobalV::ofs_running << " No eigenvalues are available for selected inversion methods." << std::endl;	
-		}
-		else
-		{
-			if( printe>0 && ((this->iter+1) % this->printe == 0))
-			{
-				//	NEW_PART("ENERGY BANDS (Rydberg), (eV)");
-				GlobalV::ofs_running << std::setprecision(6);
-				GlobalV::ofs_running << " Energy (eV) & Occupations  for spin=" << GlobalV::CURRENT_SPIN+1 << " K-point=" << ik+1 << std::endl;
-				GlobalV::ofs_running << std::setiosflags(ios::showpoint);
-				for(int ib=0;ib<GlobalV::NBANDS;ib++)
-				{
-					GlobalV::ofs_running << " "<< std::setw(6) << ib+1  
-						<< std::setw(15) << GlobalC::wf.ekb[ik][ib] * ModuleBase::Ry_to_eV;
-					// for the first electron iteration, we don't have the energy
-					// spectrum, so we can't get the occupations. 
-					GlobalV::ofs_running << std::setw(15) << GlobalC::wf.wg(ik,ib);
-					GlobalV::ofs_running << std::endl;
-				}
-			}
-		}
-	}
-	return;
+	//set descf to 0
+	this->descf = 0.0;
 }
 
 // Peize Lin add 2016-12-03
+#ifdef __EXX
 #ifdef __LCAO
-#ifdef __MPI
 void energy::set_exx()
 {
 	ModuleBase::TITLE("energy", "set_exx");
@@ -554,25 +512,22 @@ void energy::set_exx()
 		}
 		else if("lcao"==GlobalV::BASIS_TYPE)
 		{
-			return GlobalC::exx_lcao.get_energy();
+			if(GlobalV::GAMMA_ONLY_LOCAL)
+				return GlobalC::exx_lri_double.Eexx;
+			else
+				return std::real(GlobalC::exx_lri_complex.Eexx);
 		}
 		else
 		{
 			throw std::invalid_argument(ModuleBase::GlobalFunc::TO_STRING(__FILE__)+ModuleBase::GlobalFunc::TO_STRING(__LINE__));
 		}
 	};
-	if( Exx_Global::Hybrid_Type::HF   == GlobalC::exx_lcao.info.hybrid_type )				// HF
+	if( GlobalC::exx_info.info_global.cal_exx )
 	{
-		this->exx = exx_energy();
-	}
-	else if( Exx_Global::Hybrid_Type::PBE0 == GlobalC::exx_lcao.info.hybrid_type ||
-			Exx_Global::Hybrid_Type::SCAN0 == GlobalC::exx_lcao.info.hybrid_type || 
-			 Exx_Global::Hybrid_Type::HSE  == GlobalC::exx_lcao.info.hybrid_type )			// PBE0 or HSE
-	{
-		this->exx = GlobalC::exx_global.info.hybrid_alpha * exx_energy();
+		this->exx = GlobalC::exx_info.info_global.hybrid_alpha * exx_energy();
 	}
 
 	return;
 }
-#endif //__MPI
-#endif //_LCAO
+#endif //__LCAO
+#endif //__EXX

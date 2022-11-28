@@ -23,7 +23,7 @@ void Threshold_Elec::set_pw_diag_thr(void) const
     {
         if (abs(GlobalV::PW_DIAG_THR - 1.0e-2) < 1.0e-10)
         {
-            GlobalV::PW_DIAG_THR = 0.1 * std::min(1.0e-2, GlobalV::SCF_THR / GlobalC::CHR.nelec);
+            GlobalV::PW_DIAG_THR = 0.1 * std::min(1.0e-2, GlobalV::SCF_THR / GlobalV::nelec);
         }
     }
     //=================
@@ -33,7 +33,7 @@ void Threshold_Elec::set_pw_diag_thr(void) const
     {
         if (abs(GlobalV::PW_DIAG_THR - 1.0e-2) < 1.0e-10)
         {
-            if (GlobalC::CHR.init_chg == "file")
+            if (GlobalV::init_chg == "file")
             {
                 //======================================================
                 // if you think that the starting potential is good
@@ -76,12 +76,12 @@ void Threshold_Elec::update_pw_diag_thr(const int &iter)
 		//----------------------------
 		if(GlobalV::BASIS_TYPE=="lcao")
 		{
-			GlobalV::PW_DIAG_THR = std::min( GlobalV::PW_DIAG_THR, 0.01*scf_thr/ std::max(1.0, GlobalC::CHR.nelec));
+			GlobalV::PW_DIAG_THR = std::min( GlobalV::PW_DIAG_THR, 0.01*scf_thr/ std::max(1.0, GlobalV::nelec));
 		}
 		// mohan update 2009-09-04
 		else
 		{
-			GlobalV::PW_DIAG_THR = std::min( GlobalV::PW_DIAG_THR, 0.1*scf_thr/ std::max(1.0, GlobalC::CHR.nelec));
+			GlobalV::PW_DIAG_THR = std::min( GlobalV::PW_DIAG_THR, 0.1*scf_thr/ std::max(1.0, GlobalV::nelec));
 			//std::cout << " new pw_diag_thr = " << GlobalV::PW_DIAG_THR << std::endl;
 		}
 
@@ -96,16 +96,16 @@ void Threshold_Elec::update_pw_diag_thr(const int &iter)
     return;
 }
 
-void Threshold_Elec::print_eigenvalue(std::ofstream &ofs)
+void Threshold_Elec::print_eigenvalue(std::ofstream &ofs, const elecstate::ElecState* pelec)
 {
 	bool wrong = false;
 	for(int ik=0; ik<GlobalC::kv.nks; ++ik)
 	{
 		for(int ib=0; ib<GlobalV::NBANDS; ++ib)
 		{
-			if( abs( GlobalC::wf.ekb[ik][ib] ) > 1.0e10)
+			if( abs( pelec->ekb(ik, ib) ) > 1.0e10)
 			{
-				GlobalV::ofs_warning << " ik=" << ik+1 << " ib=" << ib+1 << " " << GlobalC::wf.ekb[ik][ib] << " Ry" << std::endl;
+				GlobalV::ofs_warning << " ik=" << ik+1 << " ib=" << ib+1 << " " << pelec->ekb(ik, ib) << " Ry" << std::endl;
 				wrong = true;
 			}
 		}
@@ -174,27 +174,17 @@ void Threshold_Elec::print_eigenvalue(std::ofstream &ofs)
 		}
 
 		//----------------------
-		// no energy to output
-		//----------------------
-		if(GlobalV::KS_SOLVER=="selinv")
-		{
-			ofs << " USING SELINV, NO BAND ENERGY IS AVAILABLE." << std::endl;
-		}
-		//----------------------
 		// output energy
 		//----------------------
-		else
-		{
-			GlobalV::ofs_running << std::setprecision(6);
-			GlobalV::ofs_running << std::setiosflags(ios::showpoint);
-			for (int ib = 0; ib < GlobalV::NBANDS; ib++)
-			{
-				ofs << std::setw(8) << ib+1 
-				    << std::setw(15) << GlobalC::wf.ekb[ik][ib] * ModuleBase::Ry_to_eV 
-                    << std::setw(15) << GlobalC::wf.wg(ik, ib) << std::endl;
-			}
-			ofs << std::endl;
-		}
+        GlobalV::ofs_running << std::setprecision(6);
+        GlobalV::ofs_running << std::setiosflags(ios::showpoint);
+        for (int ib = 0; ib < GlobalV::NBANDS; ib++)
+        {
+            ofs << std::setw(8) << ib+1 
+                << std::setw(15) << pelec->ekb(ik, ib) * ModuleBase::Ry_to_eV 
+                << std::setw(15) << pelec->wg(ik, ib) << std::endl;
+        }
+        ofs << std::endl;
     }//end ik
     return;
 }

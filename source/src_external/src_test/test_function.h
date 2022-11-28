@@ -4,6 +4,8 @@
 #include<sstream>
 #include<fstream>
 #include <vector>
+#include <valarray>
+#include <array>
 #include <set>
 #include <string>
 #ifdef __MPI
@@ -42,6 +44,28 @@ static std::ostream & operator<<( std::ostream & os, const std::vector<T> &v )
 	os<<"[";
 	for( const T &i : v )
 		os<<i<<std::endl;
+	os<<"]";
+	return os;
+}
+
+// Peize Lin add 2016-06-06
+template<typename T>
+static std::ostream & operator<<( std::ostream & os, const std::valarray<T> &v )
+{
+	os<<"[";
+	for( const T &i : v )
+		os<<i<<std::endl;
+	os<<"]";
+	return os;
+}
+
+// Peize Lin add 2016-06-06
+template<typename T, size_t N>
+static std::ostream & operator<<( std::ostream & os, const std::array<T,N> &v )
+{
+	os<<"[";
+	for( const T &i : v )
+		os<<i<<"\t";
 	os<<"]";
 	return os;
 }

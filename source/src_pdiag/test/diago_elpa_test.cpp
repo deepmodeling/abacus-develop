@@ -51,11 +51,6 @@ template <class T> class ElpaPrepare
     int mypnum = 0;
     std::string sfname, hfname;
 
-    void random_HS()
-    {
-        LCAO_DIAGO_TEST::random_hs<T>(hmatrix, smatrix, n, sparsity);
-    }
-
     bool read_HS()
     {
         bool readhfile = false;
@@ -139,51 +134,6 @@ template <class T> class ElpaPrepare
         endtime = MPI_Wtime();
         lapack_time = endtime - starttime;
     }
-
-    void elpa_ev()
-    {
-        double starttime, endtime;
-        starttime = MPI_Wtime();
-        LCAO_DIAGO_TEST::elpa_diago<T>(hmatrix, smatrix, e_elpa, n, nblk, PRINT_NEW_MATRIX, DETAILINFO);
-        endtime = MPI_Wtime();
-        elpa_time = endtime - starttime;
-    }
-
-    void run_diago()
-    {
-        if (this->mypnum == 0)
-        {
-            this->lapack_ev();
-        }
-        this->elpa_ev();
-        if (this->mypnum == 0)
-        {
-            double maxerror = 0.0;
-            int iindex = 0;
-            for (int i = 0; i < this->n; i++)
-            {
-                EXPECT_NEAR(this->e_lapack[i], this->e_elpa[i], PASSTHRESHOLD);
-                if (abs(this->e_lapack[i] - this->e_elpa[i]) > maxerror)
-                {
-                    maxerror = abs(this->e_lapack[i] - this->e_elpa[i]);
-                    iindex = i;
-                }
-            }
-            if (DETAILINFO)
-            {
-                std::cout << "n=" << this->n << ", nblk=" << this->nblk;
-                if (sparsity != 100)
-                {
-                    std::cout << ", H sparsity=" << this->sparsity;
-                }
-                std::cout << std::endl;
-                std::cout << "ELPA time(+data distribution): " << this->elpa_time
-                          << "s, LAPACK time(1 core):" << this->lapack_time << "s," << std::endl;
-                std::cout << "Maximum difference between ELPA and LAPACK is " << maxerror << " (" << iindex
-                          << "-th eigenvalue)" << std::endl;
-            }
-        }
-    }
 };
 
 class ElpaDoubleTest : public ::testing::TestWithParam<ElpaPrepare<double>>
@@ -193,89 +143,6 @@ class ElpaComplexDoubleTest : public ::testing::TestWithParam<ElpaPrepare<std::c
 {
 };
 
-TEST(VerifyElpaDiaoDouble, ReadHS)
-{
-    ElpaPrepare<double> edp;
-    edp.hfname = "H-GammaOnly.dat";
-    edp.sfname = "S-GammaOnly.dat";
-    ASSERT_TRUE(edp.read_HS());
-    edp.print_hs();
-    edp.run_diago();
-}
-
-TEST(VerifyElpaDiaoDouble, ReadLargeHS)
-{
-    ElpaPrepare<double> edp;
-    edp.hfname = "H-GammaOnly-large.dat";
-    edp.sfname = "S-GammaOnly-large.dat";
-    ASSERT_TRUE(edp.read_HS());
-    edp.print_hs();
-    edp.run_diago();
-}
-
-TEST(VerifyElpaDiaoComplexDouble, ReadHS)
-{
-    ElpaPrepare<std::complex<double>> edp;
-    edp.hfname = "H-KPoints.dat";
-    edp.sfname = "S-KPoints.dat";
-    ASSERT_TRUE(edp.read_HS());
-    edp.print_hs();
-    edp.run_diago();
-}
-
-TEST(VerifyElpaDiaoComplexDouble, ReadLargeHS)
-{
-    ElpaPrepare<std::complex<double>> edp;
-    edp.hfname = "H-KPoints-large.dat";
-    edp.sfname = "S-KPoints-large.dat";
-    ASSERT_TRUE(edp.read_HS());
-    edp.print_hs();
-    edp.run_diago();
-}
-
-/**
-TEST_P(ElpaDoubleTest, RandomHS)
-{
-    ElpaPrepare<double> edp = GetParam();
-    edp.new_matrix();
-    edp.random_HS();
-    edp.print_hs();
-    edp.run_diago();
-}
-
-INSTANTIATE_TEST_SUITE_P(
-    VerifyElpaB2DDiag,
-    ElpaDoubleTest,
-    ::testing::Values(ElpaPrepare<double>(5, 1, 0),
-                      // ElpaPrepare<double>(100,1,7),
-                      // ElpaPrepare<double>(500,1,0),
-                      ElpaPrepare<double>(500, 1, 7),
-                      ElpaPrepare<double>(500, 32, 7)
-                      // ElpaPrepare<double>(1000,64,10)
-                      // ElpaDoublePrepare<double>(2000,128,7)
-                      ));
-
-TEST_P(ElpaComplexDoubleTest, RandomHS)
-{
-    ElpaPrepare<std::complex<double>> edp = GetParam();
-    edp.new_matrix();
-    edp.random_HS();
-    edp.print_hs();
-    edp.run_diago();
-}
-
-INSTANTIATE_TEST_SUITE_P(
-    VerifyElpaB2DDiag,
-    ElpaComplexDoubleTest,
-    ::testing::Values(ElpaPrepare<std::complex<double>>(5, 1, 0),
-                      // ElpaPrepare<std::complex<double>>(100,1,7),
-                      // ElpaPrepare<std::complex<double>>(500,1,0),
-                      ElpaPrepare<std::complex<double>>(500, 1, 7),
-                      ElpaPrepare<std::complex<double>>(500, 32, 7)
-                      // ElpaPrepare<std::complex<double>>(800,64,9)
-                      // ElpaDoublePrepare<double>(2000,128,7)
-                      ));
-*/
 int main(int argc, char **argv)
 {
     MPI_Init(&argc, &argv);

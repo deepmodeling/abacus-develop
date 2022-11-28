@@ -1,3 +1,6 @@
+#ifndef ESOLVER_SDFT_PW_H
+#define ESOLVER_SDFT_PW_H
+
 #include "./esolver_ks_pw.h"
 #include "../src_pw/sto_wf.h"
 #include "../src_pw/sto_iter.h"
@@ -6,13 +9,13 @@
 namespace ModuleESolver
 {
 
-class ESolver_SDFT_PW: public ESolver_KS_PW
+class ESolver_SDFT_PW: public ESolver_KS_PW<double>
 {
 public:
     ESolver_SDFT_PW();
     ~ESolver_SDFT_PW();
-    void Init(Input &inp, UnitCell_pseudo &cell) override;
-    void cal_Energy(energy& en) override;
+    void Init(Input &inp, UnitCell &cell) override;
+    void cal_Energy(double& etot) override;
     void cal_Force(ModuleBase::matrix& force) override;
     void cal_Stress(ModuleBase::matrix& stress) override;
 public:
@@ -42,5 +45,14 @@ private:
 
 };
 
+}//namespace ModuleESolver
+
+//temporary setting: removed GlobalC but not breaking design philosophy
+namespace GlobalTemp
+{
+
+extern const ModuleBase::matrix* veff;
+
 }
 
+#endif

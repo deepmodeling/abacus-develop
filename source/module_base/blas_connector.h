@@ -39,6 +39,10 @@ extern "C"
 	void dgemv_(const char*const transa, const int*const m, const int*const n,
 		const double*const alpha, const double*const a, const int*const lda, const double*const x, const int*const incx,
 		const double*const beta, double*const y, const int*const incy);
+
+	void cgemv_(const char *trans, const int *m, const int *n, const std::complex<float> *alpha,
+			const std::complex<float> *a, const int *lda, const std::complex<float> *x, const int *incx,
+			const std::complex<float> *beta, std::complex<float> *y, const int *incy);
 		
 	void zgemv_(const char *trans, const int *m, const int *n, const std::complex<double> *alpha,
 			const std::complex<double> *a, const int *lda, const std::complex<double> *x, const int *incx,
@@ -63,6 +67,9 @@ extern "C"
 	void dgemm_(const char *transa, const char *transb, const int *m, const int *n, const int *k,
 		const double *alpha, const double *a, const int *lda, const double *b, const int *ldb,
 		const double *beta, double *c, const int *ldc);
+	void cgemm_(const char *transa, const char *transb, const int *m, const int *n, const int *k,
+		const std::complex<float> *alpha, const std::complex<float> *a, const int *lda, const std::complex<float> *b, const int *ldb,
+		const std::complex<float> *beta, std::complex<float> *c, const int *ldc);
 	void zgemm_(const char *transa, const char *transb, const int *m, const int *n, const int *k,
 		const std::complex<double> *alpha, const std::complex<double> *a, const int *lda, const std::complex<double> *b, const int *ldb,
 		const std::complex<double> *beta, std::complex<double> *c, const int *ldc);
@@ -81,7 +88,7 @@ extern "C"
 	void ztrsm_(char *side, char* uplo, char *transa, char *diag, int *m, int *n,
 	std::complex<double>* alpha, std::complex<double>* a, int *lda, std::complex<double>*b, int *ldb);
 
-};
+}
 
 // Class BlasConnector provide the connector to fortran lapack routine.
 // The entire function in this class are static and inline function.

@@ -156,7 +156,7 @@ void XC_Functional::xc_spin_libxc(const double &rhoup, const double &rhodw,
         vxcdw += vxc_ud[1];
     }    
 
-
+    finish_func(funcs);
     delete[] rho_ud;
     delete[] vxc_ud;
 #else

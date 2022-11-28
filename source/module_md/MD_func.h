@@ -2,11 +2,8 @@
 #define MD_FUNC_H
 
 #include "MD_parameters.h"
-#include "../module_cell/unitcell_pseudo.h"
+#include "../module_cell/unitcell.h"
 #include "../module_base/matrix.h"
-#ifdef __LCAO
-#include "../module_orbital/parallel_orbitals.h"
-#endif
 
 #include "module_esolver/esolver.h"
 class MD_func
@@ -15,24 +12,20 @@ class MD_func
 
     MD_func(){};
     ~MD_func() {};
-    
-#ifdef __LCAO
-    static Parallel_Orbitals* ParaV;
-#endif
 
     static double gaussrand();
 	
-	static void InitPos( const UnitCell_pseudo &unit_in, ModuleBase::Vector3<double>* pos);
+	static void InitPos( const UnitCell &unit_in, ModuleBase::Vector3<double>* pos);
 
 	static void InitVel(
-		const UnitCell_pseudo &unit_in, 
+		const UnitCell &unit_in, 
 		const double& temperature, 
 		double* allmass,
 		int& frozen_freedom,
 		ModuleBase::Vector3<int>* ionmbl,
 		ModuleBase::Vector3<double>* vel);
 
-	static void ReadVel(const UnitCell_pseudo &unit_in, ModuleBase::Vector3<double>* vel);
+	static void ReadVel(const UnitCell &unit_in, ModuleBase::Vector3<double>* vel);
 
 	static void RandomVel(
 		const int& numIon, 
@@ -46,35 +39,47 @@ class MD_func
 	static void force_virial(
 		ModuleESolver::ESolver *p_esolver,
 		const int &istep,
-		const MD_parameters &mdp,
-		const UnitCell_pseudo &unit_in,
+		UnitCell &unit_in,
 		double &potential,
 		ModuleBase::Vector3<double> *force,
-		ModuleBase::matrix &stress);
+		ModuleBase::matrix &virial);
 
 	static double GetAtomKE(
 		const int &numIon,
 		const ModuleBase::Vector3<double> *vel, 
 		const double *allmass);
 
-	static void kinetic_stress(
-		const UnitCell_pseudo &unit_in,
+	static void compute_stress(
+		const UnitCell &unit_in,
 		const ModuleBase::Vector3<double> *vel, 
 		const double *allmass, 
-		double &kinetic,
+        const ModuleBase::matrix &virial,
 		ModuleBase::matrix &stress);
 
 	static void outStress(const ModuleBase::matrix &virial, const ModuleBase::matrix &stress);
 
 	static void MDdump(
 		const int &step, 
-		const UnitCell_pseudo &unit_in,
+		const UnitCell &unit_in,
 		const ModuleBase::matrix &virial, 
 		const ModuleBase::Vector3<double> *force);
 
-	static void getMassMbl(const UnitCell_pseudo &unit_in, 
+	static void getMassMbl(const UnitCell &unit_in, 
 		double* allmass, 
 		ModuleBase::Vector3<int> &frozen,
 		ModuleBase::Vector3<int>* ionmbl);
+
+    static double target_temp(const int &istep, const double &tfirst, const double &tlast);
+
+    static double current_temp(double &kinetic,
+            const int &natom, 
+            const int &frozen_freedom, 
+            const double *allmass,
+            const ModuleBase::Vector3<double> *vel);
+
+    static void temp_vector(const int &natom, 
+            const ModuleBase::Vector3<double> *vel, 
+            const double *allmass, 
+            ModuleBase::matrix &t_vector);
 };
 #endif

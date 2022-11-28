@@ -19,10 +19,9 @@ class Evolve_LCAO_Matrix
     ~Evolve_LCAO_Matrix();
 
     void evolve_complex_matrix(const int& ik,
-                               hamilt::Hamilt* p_hamilt,
-                               Local_Orbital_wfc& lowf,
-                               psi::Psi<std::complex<double>>* psi,
-                               psi::Psi<std::complex<double>>* psi_laststep,
+                               hamilt::Hamilt<double>* p_hamilt,
+                               psi::Psi<std::complex<double>>* psi_k,
+                               psi::Psi<std::complex<double>>* psi_k_laststep,
                                double* ekb) const;
 
   private:
@@ -30,19 +29,15 @@ class Evolve_LCAO_Matrix
     const Parallel_Orbitals* ParaV;
 
     void using_LAPACK_complex(const int& ik,
-                              hamilt::Hamilt* p_hamilt,
-                              std::complex<double>** wfc_k_grid,
-                              std::complex<double>* wfc_k,
-                              std::complex<double>* wfc_k_laststep,
-                              Local_Orbital_wfc& lowf,
+                              hamilt::Hamilt<double>* p_hamilt,
+                              std::complex<double>* psi_k,
+                              std::complex<double>* psi_k_laststep,
                               double* ekb) const;
 #ifdef __MPI
     void using_ScaLAPACK_complex(const int& ik,
-                                 hamilt::Hamilt* p_hamilt,
-                                 std::complex<double>** wfc_k_grid,
-                                 std::complex<double>* wfc_k,
-                                 std::complex<double>* wfc_k_laststep,
-                                 Local_Orbital_wfc& lowf,
+                                 hamilt::Hamilt<double>* p_hamilt,
+                                 std::complex<double>* psi_k,
+                                 std::complex<double>* psi_k_laststep,
                                  double* ekb) const;
 #endif
 };

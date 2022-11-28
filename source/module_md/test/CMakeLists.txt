@@ -3,11 +3,7 @@ add_definitions(-D__CMD -D__NORMAL)
 
 list(APPEND depend_files 
   ../MD_func.cpp
-  ../cmd_neighbor.cpp
-  ../LJ_potential.cpp
-  ../DP_potential.cpp
   ../../input.cpp
-  ../../module_cell/unitcell_pseudo.cpp
   ../../module_cell/unitcell.cpp
   ../../module_cell/atom_spec.cpp
   ../../module_cell/atom_pseudo.cpp
@@ -31,6 +27,8 @@ list(APPEND depend_files
   ../../module_base/intarray.cpp
   ../../module_base/realarray.cpp
   ../../module_base/complexarray.cpp
+  ../../module_base/complexmatrix.cpp
+  ../../module_base/global_variable.cpp
   ../../module_neighbor/sltk_adjacent_set.cpp
   ../../module_neighbor/sltk_atom_arrange.cpp
   ../../module_neighbor/sltk_atom.cpp
@@ -39,72 +37,66 @@ list(APPEND depend_files
   ../../module_neighbor/sltk_grid_driver.cpp
   ../../src_io/output.cpp
   ../../src_io/print_info.cpp
+  ../../module_esolver/esolver_lj.cpp
+  ../../src_parallel/parallel_reduce.cpp
+  ../../src_parallel/parallel_global.cpp
 )
 
 AddTest(
   TARGET md_LJ_pot
-  LIBS ${math_libs}
+  LIBS ${math_libs} psi device
   SOURCES LJ_pot_test.cpp  
   ${depend_files}
 )
 
 AddTest(
   TARGET md_func
-  LIBS ${math_libs}
+  LIBS ${math_libs} psi device
   SOURCES MD_func_test.cpp  
   ${depend_files}
 )
 
 AddTest(
   TARGET md_fire
-  LIBS ${math_libs}
+  LIBS ${math_libs} psi device
   SOURCES FIRE_test.cpp
-  ../verlet.cpp
+  ../mdrun.cpp
   ../FIRE.cpp
   ${depend_files}
 )
 
 AddTest(
-  TARGET md_nve
-  LIBS ${math_libs}
-  SOURCES NVE_test.cpp
+  TARGET md_verlet
+  LIBS ${math_libs} psi device
+  SOURCES verlet_test.cpp
+  ../mdrun.cpp
   ../verlet.cpp
-  ../NVE.cpp
-  ${depend_files}
-)
-
-AddTest(
-  TARGET md_nvt_ads
-  LIBS ${math_libs}
-  SOURCES NVT_ADS_test.cpp
-  ../verlet.cpp
-  ../NVT_ADS.cpp
   ${depend_files}
 )
 
 AddTest(
   TARGET md_nvt_nhc
-  LIBS ${math_libs}
+  LIBS ${math_libs} psi device
   SOURCES NVT_NHC_test.cpp
-  ../verlet.cpp
-  ../NVT_NHC.cpp
+  ../mdrun.cpp
+  ../Nose_Hoover.cpp
   ${depend_files}
 )
 
 AddTest(
   TARGET md_msst
-  LIBS ${math_libs}
+  LIBS ${math_libs} psi device
   SOURCES MSST_test.cpp
-  ../verlet.cpp
+  ../mdrun.cpp
   ../MSST.cpp
   ${depend_files}
 )
 
 AddTest(
   TARGET md_lgv
-  LIBS ${math_libs}
+  LIBS ${math_libs} psi device
   SOURCES Langevin_test.cpp
-  ../verlet.cpp
+  ../mdrun.cpp
   ../Langevin.cpp
   ${depend_files}
 )

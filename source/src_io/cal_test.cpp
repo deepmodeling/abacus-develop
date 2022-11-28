@@ -63,13 +63,13 @@ void Cal_Test::test_memory(void)
 	mrho_core = mrho;
 
 	// (2) memory for charge mixing
-	std::cout << " Mixing mode = " << GlobalC::CHR.mixing_mode << std::endl;
-	if(GlobalC::CHR.mixing_mode == "pulay")
+	std::cout << " Mixing mode = " << GlobalC::CHR_MIX.get_mixing_mode() << std::endl;
+	if(GlobalC::CHR_MIX.get_mixing_mode() == "pulay")
 	{
-		std::cout << " Mixing dimension = " << GlobalC::CHR.mixing_ndim << std::endl;
-		mRrho = GlobalC::CHR.mixing_ndim * mrho;
-		mdRrho = (GlobalC::CHR.mixing_ndim-1) * mrho;
-		mdrho = (GlobalC::CHR.mixing_ndim-1) * mrho;
+		std::cout << " Mixing dimension = " << GlobalC::CHR_MIX.get_mixing_ndim() << std::endl;
+		mRrho = GlobalC::CHR_MIX.get_mixing_ndim() * mrho;
+		mdRrho = (GlobalC::CHR_MIX.get_mixing_ndim()-1) * mrho;
+		mdrho = (GlobalC::CHR_MIX.get_mixing_ndim()-1) * mrho;
 		mrho_save2 = mrho;
 //		std::cout << " Memory for pulay mixing: " << mrho << " MB" << std::endl;	
 	}
@@ -170,16 +170,7 @@ void Cal_Test::print_mem(const int &nproc)
 	mvrs + mvrs1 + mvnew + mrhog + mrhog_save + mrhog_core +
 	mgvec + mgg + mig2fftw + mig2fftc + mig123 +
 	mstrucFac + meigts123; 
-
-	//if(GlobalV::DIAGO_TYPE=="selinv") xiaohui modify 2013-09-02
-	if(GlobalV::KS_SOLVER=="selinv") //xiaohui add 2013-09-02
-	{
-		mtot += mnonzero + mspar_hsrho;
-	}
-	else
-	{
-		mtot += mwf + mhs;
-	}
+	mtot += mwf + mhs;
 
 	std::cout << " If you use " << nproc << " processors: " << std::endl;
 	std::cout << " MEMORY FOR porter       : " << std::setw(15) << mporter/nproc << " MB" << std::endl;

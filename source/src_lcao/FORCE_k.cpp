@@ -27,6 +27,7 @@ void Force_LCAO_k::ftable_k(const bool isforce,
                             Record_adj& ra,
                             const psi::Psi<std::complex<double>>* psi,
                             Local_Orbital_Charge& loc,
+                            const elecstate::ElecState* pelec,
                             ModuleBase::matrix& foverlap,
                             ModuleBase::matrix& ftvnl_dphi,
                             ModuleBase::matrix& fvnl_dbeta,
@@ -52,7 +53,7 @@ void Force_LCAO_k::ftable_k(const bool isforce,
 
     // calculate the energy density matrix
     // and the force related to overlap matrix and energy density matrix.
-    this->cal_foverlap_k(isforce, isstress, ra, psi, loc, foverlap, soverlap);
+    this->cal_foverlap_k(isforce, isstress, ra, psi, loc, foverlap, soverlap, pelec);
 
     // calculate the density matrix
     double** dm2d = new double*[GlobalV::NSPIN];
@@ -70,9 +71,9 @@ void Force_LCAO_k::ftable_k(const bool isforce,
     // ---------------------------------------
     // doing on the real space grid.
     // ---------------------------------------
-    this->cal_fvl_dphi_k(isforce, isstress, fvl_dphi, svl_dphi, loc.DM_R);
+    this->cal_fvl_dphi_k(isforce, isstress, pelec->pot, fvl_dphi, svl_dphi, loc.DM_R);
 
-    this->calFvnlDbeta(dm2d, isforce, isstress, fvnl_dbeta, svnl_dbeta, GlobalV::vnl_method);
+    this->cal_fvnl_dbeta_k_new(dm2d, isforce, isstress, fvnl_dbeta, svnl_dbeta);
 
 #ifdef __DEEPKS
     if (GlobalV::deepks_scf)
@@ -238,7 +239,7 @@ void Force_LCAO_k::allocate_k(const Parallel_Orbitals& pv)
     // test(this->UHM->LM->DHloc_fixedR_x,"this->UHM->LM->DHloc_fixedR_x T part");
 
     // calculate dVnl=<phi|dVnl|dphi> in LCAO
-    this->NonlocalDphi(GlobalV::NSPIN, GlobalV::vnl_method, cal_deri, this->UHM->genH);
+    this->UHM->genH.build_Nonlocal_mu_new (this->UHM->genH.LM->Hloc_fixed.data(), cal_deri);
     // test(this->UHM->LM->DHloc_fixedR_x,"this->UHM->LM->DHloc_fixedR_x Vnl part");
 
     ModuleBase::timer::tick("Force_LCAO_k", "allocate_k");
@@ -273,7 +274,9 @@ void Force_LCAO_k::cal_foverlap_k(const bool isforce,
                                   const psi::Psi<std::complex<double>>* psi,
                                   Local_Orbital_Charge& loc,
                                   ModuleBase::matrix& foverlap,
-                                  ModuleBase::matrix& soverlap)
+                                  ModuleBase::matrix& soverlap,
+                                  const elecstate::ElecState* pelec
+                                  )
 {
     ModuleBase::TITLE("Force_LCAO_k", "cal_foverlap_k");
     ModuleBase::timer::tick("Force_LCAO_k", "cal_foverlap_k");
@@ -301,7 +304,7 @@ void Force_LCAO_k::cal_foverlap_k(const bool isforce,
     {
         for (int ib = 0; ib < GlobalV::NBANDS; ib++)
         {
-            wgEkb(ik, ib) = GlobalC::wf.wg(ik, ib) * GlobalC::wf.ekb[ik][ib];
+            wgEkb(ik, ib) = pelec->wg(ik, ib) * pelec->ekb(ik, ib);
         }
     }
     std::vector<ModuleBase::ComplexMatrix> edm_k(GlobalC::kv.nks);
@@ -578,235 +581,6 @@ void Force_LCAO_k::test(double* mmm, const std::string& name)
     return;
 }
 
-// must consider three-center H matrix.
-void Force_LCAO_k::cal_fvnl_dbeta_k(double** dm2d,
-                                    const bool isforce,
-                                    const bool isstress,
-                                    ModuleBase::matrix& fvnl_dbeta,
-                                    ModuleBase::matrix& svnl_dbeta)
-{
-    ModuleBase::TITLE("Force_LCAO_k", "cal_fvnl_dbeta_k");
-    ModuleBase::timer::tick("Force_LCAO_k", "cal_fvnl_dbeta_k");
-    const Parallel_Orbitals* pv = this->ParaV;
-    int iir = 0;
-    ModuleBase::Vector3<double> tau1;
-    ModuleBase::Vector3<double> tau2;
-    ModuleBase::Vector3<double> dtau;
-    ModuleBase::Vector3<double> tau0;
-    ModuleBase::Vector3<double> dtau1;
-    ModuleBase::Vector3<double> dtau2;
-
-    double rcut;
-    double distance;
-
-    double rcut1;
-    double rcut2;
-    double distance1;
-    double distance2;
-
-    for (int T1 = 0; T1 < GlobalC::ucell.ntype; ++T1)
-    {
-        const Atom* atom1 = &GlobalC::ucell.atoms[T1];
-
-        for (int I1 = 0; I1 < atom1->na; ++I1)
-        {
-            tau1 = atom1->tau[I1];
-            // GlobalC::GridD.Find_atom( tau1 );
-            GlobalC::GridD.Find_atom(GlobalC::ucell, tau1, T1, I1);
-            // const int iat = GlobalC::ucell.itia2iat(T1, I1);
-            const int start1 = GlobalC::ucell.itiaiw2iwt(T1, I1, 0);
-
-            for (int ad2 = 0; ad2 < GlobalC::GridD.getAdjacentNum() + 1; ++ad2)
-            {
-                const int T2 = GlobalC::GridD.getType(ad2);
-                const Atom* atom2 = &GlobalC::ucell.atoms[T2];
-                const int I2 = GlobalC::GridD.getNatom(ad2);
-                // const int iat2 = GlobalC::ucell.itia2iat(T2, I2);
-                const int start2 = GlobalC::ucell.itiaiw2iwt(T2, I2, 0);
-                tau2 = GlobalC::GridD.getAdjacentTau(ad2);
-
-                dtau = tau2 - tau1;
-                distance = dtau.norm() * GlobalC::ucell.lat0;
-                rcut = GlobalC::ORB.Phi[T1].getRcut() + GlobalC::ORB.Phi[T2].getRcut();
-
-                // check if this a adjacent atoms.
-                bool is_adj = false;
-                if (distance < rcut)
-                    is_adj = true;
-                else if (distance >= rcut)
-                {
-                    for (int ad0 = 0; ad0 < GlobalC::GridD.getAdjacentNum() + 1; ++ad0)
-                    {
-                        const int T0 = GlobalC::GridD.getType(ad0);
-                        if (GlobalC::ucell.infoNL.nproj[T0] == 0)
-                            continue;
-                        const int I0 = GlobalC::GridD.getNatom(ad0);
-                        // const int iat0 = GlobalC::ucell.itia2iat(T0, I0);
-                        // const int start0 = GlobalC::ucell.itiaiw2iwt(T0, I0, 0);
-
-                        tau0 = GlobalC::GridD.getAdjacentTau(ad0);
-                        dtau1 = tau0 - tau1;
-                        distance1 = dtau1.norm() * GlobalC::ucell.lat0;
-                        rcut1 = GlobalC::ORB.Phi[T1].getRcut() + GlobalC::ucell.infoNL.Beta[T0].get_rcut_max();
-
-                        dtau2 = tau0 - tau2;
-                        distance2 = dtau2.norm() * GlobalC::ucell.lat0;
-                        rcut2 = GlobalC::ORB.Phi[T2].getRcut() + GlobalC::ucell.infoNL.Beta[T0].get_rcut_max();
-
-                        if (distance1 < rcut1 && distance2 < rcut2)
-                        {
-                            is_adj = true;
-                            break;
-                        }
-                    }
-                }
-
-                if (is_adj)
-                {
-                    // < psi1 | all projectors | psi2 >
-                    // ----------------------------- enter the nnr increaing zone -------------------------
-                    for (int j = 0; j < atom1->nw; ++j)
-                    {
-                        const int iw1_all = start1 + j;
-                        const int mu = pv->trace_loc_row[iw1_all];
-                        if (mu < 0)
-                            continue;
-                        for (int k = 0; k < atom2->nw; ++k)
-                        {
-                            const int iw2_all = start2 + k;
-                            const int nu = pv->trace_loc_col[iw2_all];
-                            if (nu < 0)
-                                continue;
-
-                            for (int ad0 = 0; ad0 < GlobalC::GridD.getAdjacentNum() + 1; ++ad0)
-                            {
-                                const int T0 = GlobalC::GridD.getType(ad0);
-                                if (GlobalC::ucell.infoNL.nproj[T0] == 0)
-                                    continue;
-                                const int I0 = GlobalC::GridD.getNatom(ad0);
-                                const int iat0 = GlobalC::ucell.itia2iat(T0, I0);
-                                // const int start0 = GlobalC::ucell.itiaiw2iwt(T0, I0, 0);
-                                tau0 = GlobalC::GridD.getAdjacentTau(ad0);
-
-                                dtau1 = tau0 - tau1;
-                                distance1 = dtau1.norm() * GlobalC::ucell.lat0;
-                                rcut1 = GlobalC::ORB.Phi[T1].getRcut() + GlobalC::ucell.infoNL.Beta[T0].get_rcut_max();
-
-                                dtau2 = tau0 - tau2;
-                                distance2 = dtau2.norm() * GlobalC::ucell.lat0;
-                                rcut2 = GlobalC::ORB.Phi[T2].getRcut() + GlobalC::ucell.infoNL.Beta[T0].get_rcut_max();
-
-                                double r0[3];
-                                double r1[3];
-                                r1[0] = (tau1.x - tau0.x);
-                                r1[1] = (tau1.y - tau0.y);
-                                r1[2] = (tau1.z - tau0.z);
-                                r0[0] = (tau2.x - tau0.x);
-                                r0[1] = (tau2.y - tau0.y);
-                                r0[2] = (tau2.z - tau0.z);
-
-                                if (distance1 < rcut1 && distance2 < rcut2)
-                                {
-                                    // const Atom* atom0 = &GlobalC::ucell.atoms[T0];
-                                    double nlm[3] = {0, 0, 0};
-
-                                    GlobalC::UOT.snap_psibeta(
-                                        GlobalC::ORB,
-                                        GlobalC::ucell.infoNL,
-                                        nlm,
-                                        1,
-                                        tau2,
-                                        T2,
-                                        atom2->iw2l[k], // L2
-                                        atom2->iw2m[k], // m2
-                                        atom2->iw2n[k], // n2
-                                        tau1,
-                                        T1,
-                                        atom1->iw2l[j], // L1
-                                        atom1->iw2m[j], // m1
-                                        atom1->iw2n[j], // N1
-                                        tau0,
-                                        T0,
-                                        GlobalC::ucell.atoms[T0].dion,
-                                        GlobalV::NSPIN,
-                                        GlobalC::ucell.atoms[T0].d_so,
-                                        GlobalC::ucell.atoms[T0].non_zero_count_soc[0], // index stands for spin
-                                        GlobalC::ucell.atoms[T0].index1_soc[0],
-                                        GlobalC::ucell.atoms[T0].index2_soc[0],
-                                        GlobalC::ucell.atoms[T0].nproj_soc); // mohan  add 2021-05-07
-
-                                    double nlm1[3] = {0, 0, 0};
-                                    if (isstress)
-                                    {
-                                        GlobalC::UOT.snap_psibeta(
-                                            GlobalC::ORB,
-                                            GlobalC::ucell.infoNL,
-                                            nlm1,
-                                            1,
-                                            tau1,
-                                            T1,
-                                            atom1->iw2l[j], // L1
-                                            atom1->iw2m[j], // m1
-                                            atom1->iw2n[j], // n1
-                                            tau2,
-                                            T2,
-                                            atom2->iw2l[k], // L2
-                                            atom2->iw2m[k], // m2
-                                            atom2->iw2n[k], // N2
-                                            tau0,
-                                            T0,
-                                            GlobalC::ucell.atoms[T0].dion,
-                                            GlobalV::NSPIN,
-                                            GlobalC::ucell.atoms[T0].d_so,
-                                            GlobalC::ucell.atoms[T0].non_zero_count_soc[0], // index stands for spin
-                                            GlobalC::ucell.atoms[T0].index1_soc[0],
-                                            GlobalC::ucell.atoms[T0].index2_soc[0],
-                                            GlobalC::ucell.atoms[T0].nproj_soc); // mohan  add 2021-05-07
-                                    }
-                                    /// only one projector for each atom force, but another projector for stress
-                                    for (int is = 0; is < GlobalV::NSPIN; ++is)
-                                    {
-                                        double dm2d2 = 2.0 * dm2d[is][iir];
-                                        for (int jpol = 0; jpol < 3; jpol++)
-                                        {
-                                            if (isforce)
-                                            {
-                                                fvnl_dbeta(iat0, jpol) -= dm2d2 * nlm[jpol];
-                                            }
-                                            if (isstress)
-                                            {
-                                                for (int ipol = jpol; ipol < 3; ipol++)
-                                                {
-                                                    svnl_dbeta(jpol, ipol)
-                                                        += dm2d[is][iir]
-                                                           * (nlm[jpol] * r1[ipol] + nlm1[jpol] * r0[ipol]);
-                                                }
-                                            }
-                                        }
-                                    }
-
-                                } // distance
-                            } // ad0
-
-                            ++iir;
-                        } // k
-                    } // j
-                } // distance
-            } // ad2
-        } // I1
-    } // T1
-
-    assert(iir == pv->nnr);
-
-    if (isstress)
-    {
-        StressTools::stress_fill(GlobalC::ucell.lat0, GlobalC::ucell.omega, svnl_dbeta);
-    }
-
-    ModuleBase::timer::tick("Force_LCAO_k", "cal_fvnl_dbeta_k");
-    return;
-}
-
 typedef std::tuple<int, int, int, int> key_tuple;
 
 // must consider three-center H matrix.
@@ -1063,7 +837,7 @@ void Force_LCAO_k::cal_fvnl_dbeta_k_new(double** dm2d,
                                         for (int ir = 0; ir < 3; ir++)
                                         {
                                             nlm[ir]
-                                                += nlm_2[ir][ib] * nlm_1[ib] * GlobalC::ucell.atoms[T0].dion(nb, nb);
+                                                += nlm_2[ir][ib] * nlm_1[ib] * GlobalC::ucell.atoms[T0].ncpp.dion(nb, nb);
                                         }
                                         ib += 1;
                                     }
@@ -1093,7 +867,7 @@ void Force_LCAO_k::cal_fvnl_dbeta_k_new(double** dm2d,
                                             for (int ir = 0; ir < 3; ir++)
                                             {
                                                 nlm1[ir] += nlm_2[ir][ib] * nlm_1[ib]
-                                                            * GlobalC::ucell.atoms[T0].dion(nb, nb);
+                                                            * GlobalC::ucell.atoms[T0].ncpp.dion(nb, nb);
                                             }
                                             ib += 1;
                                         }
@@ -1168,6 +942,7 @@ void Force_LCAO_k::cal_fvnl_dbeta_k_new(double** dm2d,
 // calculate the force due to < phi | Vlocal | dphi >
 void Force_LCAO_k::cal_fvl_dphi_k(const bool isforce,
                                   const bool isstress,
+                                  const elecstate::Potential* pot_in,
                                   ModuleBase::matrix& fvl_dphi,
                                   ModuleBase::matrix& svl_dphi,
                                   double** DM_R)
@@ -1186,16 +961,15 @@ void Force_LCAO_k::cal_fvl_dphi_k(const bool isforce,
 
     int istep = 1;
 
-    // if Vna potential is not used.
-    GlobalC::pot.init_pot(istep, GlobalC::sf.strucFac);
-
     for (int is = 0; is < GlobalV::NSPIN; ++is)
     {
         GlobalV::CURRENT_SPIN = is;
 
-        for (int ir = 0; ir < GlobalC::rhopw->nrxx; ir++)
+        const double* vr_eff1 = pot_in->get_effective_v(GlobalV::CURRENT_SPIN);
+        const double* vofk_eff1 = nullptr;
+        if(XC_Functional::get_func_type()==3 || XC_Functional::get_func_type()==5)
         {
-            GlobalC::pot.vr_eff1[ir] = GlobalC::pot.vr_eff(GlobalV::CURRENT_SPIN, ir);
+            vofk_eff1 = pot_in->get_effective_vofk(GlobalV::CURRENT_SPIN);
         }
 
         //--------------------------------
@@ -1204,11 +978,11 @@ void Force_LCAO_k::cal_fvl_dphi_k(const bool isforce,
         // fvl_dphi can not be set to zero here if Vna is used
         if (isstress || isforce)
         {
-            if (XC_Functional::get_func_type() == 3)
+            if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
             {
                 Gint_inout inout(DM_R,
-                                 GlobalC::pot.vr_eff1,
-                                 GlobalC::pot.vofk_eff1,
+                                 vr_eff1,
+                                 vofk_eff1,
                                  isforce,
                                  isstress,
                                  &fvl_dphi,
@@ -1219,7 +993,7 @@ void Force_LCAO_k::cal_fvl_dphi_k(const bool isforce,
             else
             {
                 Gint_inout inout(DM_R,
-                                 GlobalC::pot.vr_eff1,
+                                 vr_eff1,
                                  isforce,
                                  isstress,
                                  &fvl_dphi,
@@ -1237,26 +1011,4 @@ void Force_LCAO_k::cal_fvl_dphi_k(const bool isforce,
 
     ModuleBase::timer::tick("Force_LCAO_k", "cal_fvl_dphi_k");
     return;
-}
-
-void Force_LCAO_k::calFvnlDbeta(double** dm2d,
-                                const bool& isforce,
-                                const bool& isstress,
-                                ModuleBase::matrix& fvnl_dbeta,
-                                ModuleBase::matrix& svnl_dbeta,
-                                const int& vnl_method)
-{
-    ModuleBase::TITLE("Force_LCAO_k", "calFvnlDbeta");
-    if (GlobalV::NSPIN == 4 || vnl_method == 0)
-    {
-        this->cal_fvnl_dbeta_k(dm2d, isforce, isstress, fvnl_dbeta, svnl_dbeta);
-    }
-    else if (vnl_method == 1)
-    {
-        this->cal_fvnl_dbeta_k_new(dm2d, isforce, isstress, fvnl_dbeta, svnl_dbeta);
-    }
-    else
-    {
-        ModuleBase::WARNING_QUIT("Force_LCAO_k", "This method has not been implemented");
-    }
 }

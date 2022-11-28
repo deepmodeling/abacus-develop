@@ -5,11 +5,11 @@
 #include "src_pw/magnetism.h"
 #include "src_pw/wf_atomic.h"
 #include "src_pw/wavefunc.h"
-#include "src_pw/charge_broyden.h"
-#include "src_pw/potential.h"
+#include "src_pw/charge_mixing.h"
+#include "module_elecstate/potentials/potential_new.h"
 #include "module_cell/atom_pseudo.h"
 #include "module_cell/atom_spec.h"
-#include "module_cell/unitcell_pseudo.h"
+#include "module_cell/unitcell.h"
 #include "module_cell/pseudo_nc.h"
 #include "module_symmetry/symmetry_basic.h"
 #include "module_symmetry/symmetry.h"
@@ -42,24 +42,12 @@ Atom::Atom(){}
 Atom::~Atom(){}
 Atom_pseudo::Atom_pseudo(){}
 Atom_pseudo::~Atom_pseudo(){}
-Charge_Mixing::Charge_Mixing(){}
-Charge_Mixing::~Charge_Mixing(){}
-Charge_Pulay::Charge_Pulay(){}
-Charge_Pulay::~Charge_Pulay(){}
-Charge_Broyden::Charge_Broyden(){}
-Charge_Broyden::~Charge_Broyden(){}
-Potential::Potential(){}
-Potential::~Potential(){}
 InfoNonlocal::InfoNonlocal(){}
 InfoNonlocal::~InfoNonlocal(){}
 UnitCell::UnitCell(){}
 UnitCell::~UnitCell(){}
-UnitCell_pseudo::UnitCell_pseudo(){}
-UnitCell_pseudo::~UnitCell_pseudo(){}
 Parallel_Grid::Parallel_Grid(){}
 Parallel_Grid::~Parallel_Grid(){}
-Use_FFT::Use_FFT(){}
-Use_FFT::~Use_FFT(){}
 WF_igk::WF_igk(){}
 WF_igk::~WF_igk(){}
 WF_atomic::WF_atomic(){}
@@ -74,8 +62,6 @@ pseudopot_cell_vl::pseudopot_cell_vl(){}
 pseudopot_cell_vl::~pseudopot_cell_vl(){}
 pseudopot_cell_vnl::pseudopot_cell_vnl(){}
 pseudopot_cell_vnl::~pseudopot_cell_vnl(){}
-Hamilt_PW::Hamilt_PW(){}
-Hamilt_PW::~Hamilt_PW(){}
 Hamilt::Hamilt(){}
 Hamilt::~Hamilt(){}
 energy::energy(){}
@@ -98,12 +84,10 @@ namespace GlobalC
 {
 K_Vectors kv;
 wavefunc wf;
-Charge_Broyden CHR;
-Potential pot;
-UnitCell_pseudo ucell;
+Charge CHR;
+UnitCell ucell;
 ModuleSymmetry::Symmetry symm;
 Parallel_Grid Pgrid;
-Use_FFT UFFT;
 Structure_Factor sf;
 ModulePW::PW_Basis* rhopw;
 ModulePW::PW_Basis_K* wfcpw;
@@ -115,29 +99,14 @@ Restart restart;
 } // namespace GlobalC
 Input INPUT;
 
-/*
-void Occupy::calculate_weights()
-{
-	GlobalC::wf.wg(0,0)=2.0;
-	GlobalC::wf.wg(0,1)=0.0;
-	GlobalC::wf.wg(0,2)=0.0;
-	GlobalC::wf.wg(0,3)=0.0;
-}
-*/
 
-void Restart::load_disk(const std::string mode, const int i) const {}
+void Restart::load_disk(const std::string mode, const int i, double** rho) const {}
 
 
 psi::Psi<complex<double>>* wavefunc::allocate(const int nks)
 {
 	this->npwx = GlobalC::wfcpw->npwk_max;
-	this->wg.create(nks,GlobalV::NBANDS);
-	this->ekb = new double*[nks];
 	psi::Psi<std::complex<double>>* psi = new psi::Psi<std::complex<double>>(nks, GlobalV::NBANDS,npwx, nullptr);
-	for (int ik=0;ik<nks;ik++)
-	{
-		this->ekb[ik] = new double[GlobalV::NBANDS];
-	}
 	return psi;
 }
 
@@ -218,16 +187,11 @@ bool Charge::read_rho(const int &is, const std::string &fn, double* rho) //add b
 	return true;
 }
 
-void Use_FFT::ToRealSpace(int const&is, const ModuleBase::ComplexMatrix &vg, double*vr, ModulePW::PW_Basis* rho_basis){}
-void Use_FFT::ToRealSpace(const std::complex<double> *vg, double*vr, ModulePW::PW_Basis* rho_basis){}
 //bool Occupy::use_gaussian_broadening=false;
-//bool Occupy::use_tetrahedron_method = false;
-double Magnetism::get_nelup(){return 0;}
-double Magnetism::get_neldw(){return 0;}
 
 bool ModuleSymmetry::Symmetry_Basic::equal(double const&m, double const&n) const{return false;}
 
-void UnitCell_pseudo::setup_cell(
+void UnitCell::setup_cell(
 #ifdef __LCAO
 		LCAO_Orbitals &orb,
 #endif
@@ -281,7 +245,7 @@ void UnitCell_pseudo::setup_cell(
 	return;
 }
 
-int UnitCell_pseudo::read_atom_species(LCAO_Orbitals &orb, std::ifstream &ifa, std::ofstream &ofs_running)
+int UnitCell::read_atom_species(LCAO_Orbitals &orb, std::ifstream &ifa, std::ofstream &ofs_running)
 {
 	delete[] atom_label;
 	delete[] atom_mass;
@@ -323,7 +287,7 @@ int UnitCell_pseudo::read_atom_species(LCAO_Orbitals &orb, std::ifstream &ifa, s
 	return 0;
 }
 
-bool UnitCell_pseudo::read_atom_positions(LCAO_Orbitals &orb, std::ifstream &ifpos, std::ofstream &ofs_running, std::ofstream &ofs_warning)
+bool UnitCell::read_atom_positions(LCAO_Orbitals &orb, std::ifstream &ifpos, std::ofstream &ofs_running, std::ofstream &ofs_warning)
 {
 	if( ModuleBase::GlobalFunc::SCAN_BEGIN(ifpos, "ATOMIC_POSITIONS"))
 	{
@@ -360,4 +324,9 @@ bool UnitCell_pseudo::read_atom_positions(LCAO_Orbitals &orb, std::ifstream &ifp
 		}
 	}
         return true;
+}
+
+void elecstate::Potential::init_pot(int istep, const Charge* chg)
+{
+	return;
 }

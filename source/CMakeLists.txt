@@ -15,13 +15,15 @@ add_subdirectory(module_xc)
 add_subdirectory(module_esolver)
 add_subdirectory(module_gint)
 add_subdirectory(src_io)
-add_subdirectory(module_relaxation)
+add_subdirectory(module_relax)
 add_subdirectory(src_lcao)
 add_subdirectory(src_parallel)
 add_subdirectory(src_pdiag)
 add_subdirectory(src_pw)
 add_subdirectory(src_ri)
 add_subdirectory(module_rpa)
+add_subdirectory(module_vdw)
+add_subdirectory(module_ri)
 
 add_library(
     driver
@@ -30,5 +32,39 @@ add_library(
     driver_run.cpp
     input.cpp
     input_conv.cpp
-    input_update.cpp
 )
+
+list(APPEND device_srcs
+    module_hamilt/src/nonlocal.cpp
+    module_hamilt/src/veff.cpp
+    module_hamilt/src/ekinetic.cpp
+    module_pw/src/pw_multi_device.cpp
+    module_hsolver/src/dngvd_op.cpp
+    module_hsolver/src/math_kernel.cpp
+    module_elecstate/src/elecstate_multi_device.cpp
+    module_psi/src/memory_psi.cpp
+    module_psi/src/device.cpp
+)
+
+if(USE_CUDA)
+  list(APPEND device_srcs
+      module_hamilt/src/cuda/nonlocal.cu
+      module_hamilt/src/cuda/veff.cu
+      module_hamilt/src/cuda/ekinetic.cu
+      module_pw/src/cuda/pw_multi_device.cu
+      module_hsolver/src/cuda/dngvd_op.cu
+      module_hsolver/src/cuda/math_kernel.cu
+      module_elecstate/src/cuda/elecstate_multi_device.cu
+      module_psi/src/cuda/memory.cu
+  )
+endif()
+
+add_library(device OBJECT ${device_srcs})
+
+if(USE_CUDA)
+  target_link_libraries(device cusolver cublas cufft)
+endif()
+
+if(ENABLE_COVERAGE)
+  add_coverage(driver)
+endif()

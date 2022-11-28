@@ -12,6 +12,7 @@
 namespace hsolver
 {
 
+template<typename FPTYPE, typename Device = psi::DEVICE_CPU>
 class HSolver
 {
   public:
@@ -32,8 +33,8 @@ class HSolver
     // solve Hamiltonian to electronic density in ElecState
     virtual void solve
     (
-        hamilt::Hamilt* phm, 
-        psi::Psi<std::complex<double>>& ppsi, 
+        hamilt::Hamilt<FPTYPE, Device>* phm,
+        psi::Psi<std::complex<FPTYPE>, Device>& ppsi, 
         elecstate::ElecState* pes, 
         const std::string method, 
         const bool skip_charge=false
@@ -43,8 +44,8 @@ class HSolver
     }
     virtual void solve
     (
-        hamilt::Hamilt* phm, 
-        psi::Psi<double>& ppsi, 
+        hamilt::Hamilt<FPTYPE, Device>* phm,
+        psi::Psi<FPTYPE, Device>& ppsi, 
         elecstate::ElecState* pes, 
         const std::string method, 
         const bool skip_charge=false
@@ -55,8 +56,8 @@ class HSolver
 
     virtual void solve
     (
-        hamilt::Hamilt* phm, 
-        psi::Psi<std::complex<double>>& ppsi, 
+        hamilt::Hamilt<FPTYPE, Device>* phm,
+        psi::Psi<std::complex<FPTYPE>, Device>& ppsi, 
         elecstate::ElecState* pes, 
         Stochastic_WF& stowf,
         const int istep,
@@ -70,31 +71,31 @@ class HSolver
 
     std::string classname = "none";
     // choose method of DiagH for solve Hamiltonian matrix
-    // cg, dav, elpa, scalapack, hpseps, cusolver
+    // cg, dav, elpa, scalapack-gvx, cusolver
     std::string method = "none";
   public:
-    double diag_ethr=0.0; //threshold for diagonalization
+    FPTYPE diag_ethr=0.0; //threshold for diagonalization
     //set diag_ethr according to drho
     //for lcao, we suppose the error is zero and we set diag_ethr to 0
-    virtual double set_diagethr(const int istep, const int iter, const double drho)
+    virtual FPTYPE set_diagethr(const int istep, const int iter, const FPTYPE drho)
     {
         return 0.0;
     }
     //reset diag_ethr according to drho and hsolver_error
-    virtual double reset_diagethr(std::ofstream& ofs_running, const double hsover_error, const double drho)
+    virtual FPTYPE reset_diagethr(std::ofstream& ofs_running, const FPTYPE hsover_error, const FPTYPE drho)
     {
         return 0.0;
     }
 
     // calculate hsolver_error
     // for sdft and lcao, we suppose the error is zero 
-    virtual double cal_hsolerror()
+    virtual FPTYPE cal_hsolerror()
     {
         return 0.0;
     };
 
   protected:
-    DiagH* pdiagh = nullptr; // for single Hamiltonian matrix diagonal solver
+    DiagH<FPTYPE, Device>* pdiagh = nullptr; // for single Hamiltonian matrix diagonal solver
 
 };
 

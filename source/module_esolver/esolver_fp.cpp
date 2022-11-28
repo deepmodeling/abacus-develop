@@ -15,12 +15,14 @@ namespace ModuleESolver
     ESolver_FP::~ESolver_FP()
     {
         delete pw_rho;
+        delete this->pelec;
     }
-    void ESolver_FP::Init(Input& inp, UnitCell_pseudo& cell)
+    void ESolver_FP::Init(Input& inp, UnitCell& cell)
     {
 #ifdef __MPI
             this->pw_rho->initmpi(GlobalV::NPROC_IN_POOL, GlobalV::RANK_IN_POOL, POOL_WORLD);
 #endif
+        if (this->classname == "ESolver_OF") this->pw_rho->setfullpw(inp.of_full_pw, inp.of_full_pw_dim);
         // Initalize the plane wave basis set
         if (inp.nx * inp.ny * inp.nz == 0)
             this->pw_rho->initgrids(cell.lat0, cell.latvec, inp.ecutrho);

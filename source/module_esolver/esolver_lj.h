@@ -2,9 +2,6 @@
 #define ESOLVER_LJ_H
 
 #include "./esolver.h"
-//--------------temporary----------------------------
-#include "../module_neighbor/sltk_grid_driver.h"
-//---------------------------------------------------
 
 namespace ModuleESolver
 {
@@ -12,16 +9,17 @@ namespace ModuleESolver
     class ESolver_LJ : public ESolver
     {
     public:
-        ESolver_LJ() : grid_neigh(GlobalV::test_deconstructor, GlobalV::test_grid_driver, GlobalV::test_grid)
+        ESolver_LJ()
         {
             classname = "ESolver_LJ";
         }
 
-        void Init(Input& inp, UnitCell_pseudo& cell) override;
-        void Run(const int istep, UnitCell_pseudo& cell) override;
-        void cal_Energy(energy& en) override;
+        void Init(Input& inp, UnitCell& cell) override;
+        void Run(const int istep, UnitCell& cell) override;
+        void cal_Energy(double& etot) override;
         void cal_Force(ModuleBase::matrix& force) override;
         void cal_Stress(ModuleBase::matrix& stress) override;
+        void postprocess() override;
 
 
         double LJ_energy(const double d);
@@ -31,7 +29,6 @@ namespace ModuleESolver
             const ModuleBase::Vector3<double>& dtau);
 
         //--------------temporary----------------------------
-        Grid_Driver grid_neigh;
         double lj_rcut;
         double lj_sigma;
         double lj_epsilon;

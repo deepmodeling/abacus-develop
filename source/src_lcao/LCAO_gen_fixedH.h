@@ -33,19 +33,13 @@ public:
 
 	private:
 
-	void build_ST_new(const char& dtype, const bool& cal_deri, const UnitCell_pseudo &ucell, double* SHlocR);
-	//void build_ST_new(const char& dtype, const bool& cal_deri, const UnitCell_pseudo &ucell, std::complex<double>* SHlocR);	
+	void build_ST_new(const char& dtype, const bool& cal_deri, const UnitCell &ucell, double* SHlocR);
+	//void build_ST_new(const char& dtype, const bool& cal_deri, const UnitCell &ucell, std::complex<double>* SHlocR);	
 	
 	// can used in gamma algorithm.
-	void build_Nonlocal_beta (double* Hloc, const bool& calc_deri);
 	void build_Nonlocal_beta_new (double* Hloc);
 
-	// used if k point is used,
-	// also can used in gamma algorithm.
-	void build_Nonlocal_mu (double* HlocR, const bool &calc_deri);
-	//void build_Nonlocal_mu (std::complex<double>* HlocR, const bool &calc_deri);
 	void build_Nonlocal_mu_new (double* HlocR, const bool &calc_deri); 
-	void test_Nonlocal(void);
 
 };
 

@@ -11,15 +11,15 @@
 namespace ModuleESolver
 {
 
-    class ESolver_KS_LCAO : public ESolver_KS
+    class ESolver_KS_LCAO : public ESolver_KS<double>
     {
     public:
         ESolver_KS_LCAO();
         ~ESolver_KS_LCAO();
 
-        void Init(Input& inp, UnitCell_pseudo& cell) override;
+        void Init(Input& inp, UnitCell& cell) override;
 
-        void cal_Energy(energy& en) override;
+        void cal_Energy(double& etot) override;
         void cal_Force(ModuleBase::matrix& force) override;
         void cal_Stress(ModuleBase::matrix& stress) override;
         void postprocess() override;
@@ -52,11 +52,12 @@ namespace ModuleESolver
         ModuleBase::matrix scs;
         bool have_force = false;
 
-        void Init_Basis_lcao(ORB_control& orb_con, Input& inp, UnitCell_pseudo& ucell);
+        void Init_Basis_lcao(ORB_control& orb_con, Input& inp, UnitCell& ucell);
 
         // output subfuncs: implemented in src_io/write_HS_R.cpp
         void output_HS_R(
             const int &istep,
+            const ModuleBase::matrix& v_eff,
             const std::string& SR_filename = "data-SR-sparse_SPIN0.csr",
             const std::string& HR_filename_up = "data-HR-sparse_SPIN0.csr",
             const std::string HR_filename_down = "data-HR-sparse_SPIN1.csr",

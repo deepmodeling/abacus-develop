@@ -5,7 +5,7 @@
 #endif
 #include "../module_base/timer.h"
 
-FIRE::FIRE(MD_parameters& MD_para_in, UnitCell_pseudo &unit_in) : Verlet(MD_para_in, unit_in)
+FIRE::FIRE(MD_parameters& MD_para_in, UnitCell &unit_in) : MDrun(MD_para_in, unit_in)
 {
     dt_max = -1.0;
     alpha_start = 0.10;
@@ -25,7 +25,7 @@ void FIRE::setup(ModuleESolver::ESolver *p_ensolve)
     ModuleBase::TITLE("FIRE", "setup");
     ModuleBase::timer::tick("FIRE", "setup");
     
-    Verlet::setup(p_ensolve);
+    MDrun::setup(p_ensolve);
 
     check_force();
 
@@ -79,7 +79,7 @@ void FIRE::second_half()
     ModuleBase::TITLE("FIRE", "second_half");
     ModuleBase::timer::tick("FIRE", "second_half");
 
-    Verlet::second_half();
+    MDrun::second_half();
 
     check_force();
 
@@ -88,7 +88,7 @@ void FIRE::second_half()
 
 void FIRE::outputMD(std::ofstream &ofs, bool cal_stress)
 {
-    Verlet::outputMD(ofs, cal_stress);
+    MDrun::outputMD(ofs, cal_stress);
 
     ofs << " LARGEST GRAD (eV/A)  : " 
         << max * ModuleBase::Hartree_to_eV * ModuleBase::ANGSTROM_AU << std::endl;
@@ -144,7 +144,7 @@ void FIRE::restart()
 
     if(!ok)
     {
-        ModuleBase::WARNING_QUIT("verlet", "no Restart_md.dat !");
+        ModuleBase::WARNING_QUIT("mdrun", "no Restart_md.dat !");
     }
 
 #ifdef __MPI

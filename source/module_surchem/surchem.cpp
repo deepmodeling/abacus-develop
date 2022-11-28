@@ -44,9 +44,17 @@ void surchem::allocate(const int &nrxx, const int &nspin)
     return;
 }
 
-surchem::~surchem()
+void surchem::clear()
 {
     delete[] TOTN_real;
     delete[] delta_phi;
     delete[] epspot;
+    this->TOTN_real = nullptr;
+    this->delta_phi = nullptr;
+    this->epspot = nullptr;
+}
+
+surchem::~surchem()
+{
+    this->clear();
 }

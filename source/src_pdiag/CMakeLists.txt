@@ -1,35 +1,16 @@
-add_subdirectory(MRRR)
+if(ENABLE_LCAO)
+  if(USE_CUSOLVER_LCAO)
+      list(APPEND objects
+          diag_cusolver.cu
+      )
 
-if(USE_CUSOLVER_LCAO)
-    list(APPEND objects
-        diag_cusolver.cu
+    add_library(
+        pdiag
+        OBJECT
+        ${objects}
     )
-endif()
-
-add_library(
-    pdiag
-    OBJECT
-    pdgseps.cpp
-    pdiag_common.cpp
-    pdiag_double.cpp
-    pdst2g.cpp
-    pdstebz.cpp
-    pdsteiz.cpp
-    pdsyg2st.cpp
-    pdsytrd.cpp
-    pdt2s.cpp
-    pdtrsm.cpp
-    pzgseps.cpp
-    pzheg2st.cpp
-    pzhetrd.cpp
-    pzhtrsm.cpp
-    pzst2g.cpp
-    pzsteiz.cpp
-    pzt2s.cpp
-    diag_scalapack_gvx.cpp
-    ${objects}
-)
-
-IF (BUILD_TESTING)
-  add_subdirectory(test)
+    if(ENABLE_COVERAGE)
+      add_coverage(pdiag)
+    endif()
+  endif()
 endif()

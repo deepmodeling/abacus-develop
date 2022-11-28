@@ -12,8 +12,7 @@
 #include "../module_base/timer.h"
 
 LCAO_Hamilt::LCAO_Hamilt()
-{ 
-    init_s = false;
+{
 }
 
 LCAO_Hamilt::~LCAO_Hamilt()
@@ -44,469 +43,6 @@ void LCAO_Hamilt::grid_prepare(void)
     }
 
     ModuleBase::timer::tick("LCAO_Hamilt","grid_prepare");
-    return;
-}
-
-void LCAO_Hamilt::calculate_Hgamma( const int &ik , vector<ModuleBase::matrix> dm_gamma)				// Peize Lin add ik 2016-12-03
-{
-    ModuleBase::TITLE("LCAO_Hamilt","calculate_Hgamma");
-    ModuleBase::timer::tick("LCAO_Hamilt","cal_Hgamma");
-
-    // Set the matrix 'H' to zero.
-    this->LM->zeros_HSgamma('H'); // 3 stands for Hloc.
-
-    bool local_pw = false;
-
-    if(local_pw)
-    {
-        std::cout << "\n Call build_H in plane wave basis!" << std::endl;
-         // Use plane wave basis to calculate 'Vl' matrix. 
-        Build_ST_pw bsp(this->LM);
-        // 0 stands for, 0 stands for k point.
-        bsp.set_local(0);
-    }
-    else
-    {
-        time_t time_vlocal_start = time(NULL);
-    
-        // calculate the 'Vl' matrix using gamma-algorithms.
-        if(GlobalV::VL_IN_H)
-        {
-            if(XC_Functional::get_func_type()==3 || XC_Functional::get_func_type()==5)
-            {
-                Gint_inout inout(GlobalC::pot.vr_eff1, GlobalC::pot.vofk_eff1, this->LM, Gint_Tools::job_type::vlocal_meta);
-                this->GG.cal_vlocal(&inout);
-            }
-            else
-            {
-                Gint_inout inout(GlobalC::pot.vr_eff1, this->LM, Gint_Tools::job_type::vlocal);
-                this->GG.cal_vlocal(&inout);
-            }
-
-        #ifdef __MPI //liyuanbo 2022/2/23
-            // Peize Lin add 2016-12-03
-            if(XC_Functional::get_func_type()==4 || XC_Functional::get_func_type()==5)
-            {
-                if( Exx_Global::Hybrid_Type::HF == GlobalC::exx_lcao.info.hybrid_type ) //HF
-                {
-                    GlobalC::exx_lcao.add_Hexx(ik,1, *this->LM);
-                }
-                else if( Exx_Global::Hybrid_Type::PBE0 == GlobalC::exx_lcao.info.hybrid_type )			// PBE0
-                {
-                    GlobalC::exx_lcao.add_Hexx(ik,GlobalC::exx_global.info.hybrid_alpha, *this->LM);
-                }
-                else if( Exx_Global::Hybrid_Type::SCAN0 == GlobalC::exx_lcao.info.hybrid_type )			// SCAN0
-                {
-                    GlobalC::exx_lcao.add_Hexx(ik,GlobalC::exx_global.info.hybrid_alpha, *this->LM);
-                }
-                else if( Exx_Global::Hybrid_Type::HSE  == GlobalC::exx_lcao.info.hybrid_type )			// HSE
-                {
-                    GlobalC::exx_lcao.add_Hexx(ik,GlobalC::exx_global.info.hybrid_alpha, *this->LM);
-                }
-            }
-        #endif
-        }
-
-        time_t time_vlocal_end = time(NULL);
-        ModuleBase::GlobalFunc::OUT_TIME("vlocal integration",time_vlocal_start,time_vlocal_end);
-    }
-    
-#ifdef __DEEPKS	//caoyu add 2021-07-26 for DeePKS
-
-	if (GlobalV::deepks_scf)
-    {
-        const Parallel_Orbitals* pv = this->LM->ParaV;
-        GlobalC::ld.cal_projected_DM(dm_gamma[0],
-            GlobalC::ucell,
-            GlobalC::ORB,
-            GlobalC::GridD,
-            pv->trace_loc_row,
-            pv->trace_loc_col);
-    	GlobalC::ld.cal_descriptor();        
-		GlobalC::ld.cal_gedm(GlobalC::ucell.nat);
-		GlobalC::ld.add_v_delta(GlobalC::ucell,
-            GlobalC::ORB,
-            GlobalC::GridD,
-            pv->trace_loc_row,
-            pv->trace_loc_col,
-            pv->nrow,
-            pv->ncol);
-        for(int iic=0;iic<pv->nloc;iic++)
-        {
-            this->LM->Hloc[iic] += GlobalC::ld.H_V_delta[iic];
-        }
-	}
-	
-#endif
-	
-	//add T+VNL+Vl matrix.
-	this->LM->update_Hloc();
-
-	//test
-	if(GlobalV::NURSE)
-	{
-		this->LM->print_HSgamma('S'); // S
-		this->LM->print_HSgamma('T');
-		this->LM->print_HSgamma('H');
-	//	ModuleBase::WARNING_QUIT("LCAO_Hamilt::calculate_Hgamma","print the H,S matrix");
-//		ModuleBase::QUIT();
-    }
-
-
-    ModuleBase::timer::tick("LCAO_Hamilt","cal_Hgamma");
-    return;
-}
-
-
-
-void LCAO_Hamilt::calculate_STNR_gamma(void)
-{
-    ModuleBase::TITLE("LCAO_Hamilt","calculate_fixed");
-
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"gamma_only_local",GlobalV::GAMMA_ONLY_LOCAL);
-
-    // must be done after "setup_this_ion_iter"
-    // because some basic parameters should be initialized
-    // in GlobalC::UHM.GG.init();
-
-    this->LM->zeros_HSgamma('S');    	
-
-    this->genH.calculate_S_no(this->LM->Sloc.data());	
-
-    //this->LM->print_HSgamma('S');
-
-    //-------------------------------------
-    // test using plane wave calculations.
-    // all the matrixs are stored in this->LM->
-    // this->LM->allocate_HS_k(this->LM->ParaV->nloc);
-    // Build_ST_pw bsp;
-    // bsp.set_ST(0, 'S');
-    // this->LM->print_HSk('S','R',1.0e-5);
-    //-------------------------------------
-
-    // set T and Vnl matrix to zero.
-    // 2 stands for this->LM->Hloc_fixed matrix.
-    this->LM->zeros_HSgamma('T'); 
-
-    //add nonlocal pseudopotential matrix element
-    time_t time_vnl_start = time(NULL);
-    if(GlobalV::VNL_IN_H)
-    {
-        genH.calculate_NL_no(this->LM->Hloc_fixed.data());
-    }
-    time_t time_vnl_end = time(NULL);
-
-//	ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Time to calculate <psi|Vnl|psi>", std::difftime(time_vnl_end, time_vnl_start));
-    
-    //add kinetic energy matrix element
-    time_t time_t_start = time(NULL);
-    if(GlobalV::T_IN_H)
-    {
-        genH.calculate_T_no(this->LM->Hloc_fixed.data());
-//		this->LM->print_HSgamma('T');
-    }
-    time_t time_t_end = time(NULL);
-
-    //	GlobalV::ofs_running << " T+Vnl matrix" << std::endl;
-    //this->LM->print_HSgamma('T');
-
-    ModuleBase::GlobalFunc::OUT_TIME("kinetical matrix",time_t_start, time_t_end);
-    ModuleBase::GlobalFunc::OUT_TIME("vnl matrix",time_vnl_start, time_vnl_end);
-
-    return;
-}
-
-
-// be called in LOOP_elec::cal_bands(). 
-void LCAO_Hamilt::calculate_Hk(const int &ik)
-{
-    ModuleBase::TITLE("LCAO_Hamilt","calculate_Hk");
-    ModuleBase::timer::tick("LCAO_Hamilt","calculate_Hk");
-
-    // whether you want to calculate the local potential
-    // or not, you need to set this matrix to 0.
-    this->LM->zeros_HSk('H');
-
-    if(GlobalV::VL_IN_H)
-    {
-        //--------------------------
-        // set the local potential
-        // in LCAO basis.
-        //--------------------------
-
-        this->GK.folding_vl_k(ik, this->LM);
-
-    #ifdef __MPI //liyuanbo 2022/2/23
-        // Peize Lin add 2016-12-03
-        if(XC_Functional::get_func_type()==4 || XC_Functional::get_func_type()==5)
-        {
-            if( Exx_Global::Hybrid_Type::HF  == GlobalC::exx_lcao.info.hybrid_type )				// HF
-            {
-                GlobalC::exx_lcao.add_Hexx(ik,1, *this->LM);
-            }
-            else if( Exx_Global::Hybrid_Type::PBE0  == GlobalC::exx_lcao.info.hybrid_type )			// PBE0
-            {
-                GlobalC::exx_lcao.add_Hexx(ik,GlobalC::exx_global.info.hybrid_alpha, *this->LM);
-            }
-            else if( Exx_Global::Hybrid_Type::SCAN0  == GlobalC::exx_lcao.info.hybrid_type )			// SCAN0
-            {
-                GlobalC::exx_lcao.add_Hexx(ik,GlobalC::exx_global.info.hybrid_alpha, *this->LM);
-            }
-            else if( Exx_Global::Hybrid_Type::HSE  == GlobalC::exx_lcao.info.hybrid_type )			// HSE
-            {
-                GlobalC::exx_lcao.add_Hexx(ik,GlobalC::exx_global.info.hybrid_alpha, *this->LM);
-            }
-        }
-    #endif
-    }
-
-    //-----------------------------------------
-    // folding matrix here: S(k) (SlocR->Sloc2)
-    // folding matrix here: T(k)+Vnl(k)
-    // (Hloc_fixed->Hloc_fixed2)
-    //-----------------------------------------
-    this->LM->zeros_HSk('S');
-    this->LM->zeros_HSk('T');
-    this->LM->folding_fixedH(ik);
-
-    //------------------------------------------
-    // Add T(k)+Vnl(k)+Vlocal(k)
-    // (Hloc2 += Hloc_fixed2), (std::complex matrix)
-    //------------------------------------------
-	this->LM->update_Hloc2(ik);
-    
-    ModuleBase::timer::tick("LCAO_Hamilt","calculate_Hk");
-    return;
-}
-
-// only need to do the first time.
-// available for all k points.
-void LCAO_Hamilt::calculate_STNR_k(void)
-{
-    ModuleBase::TITLE("LCAO_Hamilt","calculate_STNR_k");
-
-    //--------------------------------------------
-    // set S(R) to zero.
-    // the total value of S(R) in this processor
-    // is GlobalC::LNNR.nnr.
-    // and store in this->LM->SlocR.
-    //--------------------------------------------
-    this->LM->zeros_HSR('S');
-    this->genH.calculate_S_no(this->LM->SlocR.data());	
-
-    //------------------------------
-    // set T(R) and Vnl(R) to zero.
-    // and then calculate it
-    // and store in this->LM->Hloc_fixedR.
-    //------------------------------
-    this->LM->zeros_HSR('T');
-    
-
-
-    if(GlobalV::T_IN_H)
-    {
-        this->genH.calculate_T_no(this->LM->Hloc_fixedR.data());	
-    }
-
-
-    if(GlobalV::VNL_IN_H)
-    {
-        this->genH.calculate_NL_no(this->LM->Hloc_fixedR.data());
-    }
-
-
-    return;
-
-    //-----------------------------------
-    // this part is used for checking
-    // the consistent between LCAO
-    // and plane wave basis.
-    //-----------------------------------
-    
-    // check in plane wave basis.	
-    Build_ST_pw bsp(this->LM);
-    for(int ik=0; ik<GlobalC::kv.nks; ik++)
-    {
-        std::cout << " ik=" << ik << " ------------------------------------------" << std::endl;
-    
-        //----------------------------------------------
-        // Check the matrix in plane wave basis.
-        //----------------------------------------------
-        this->LM->zeros_HSk('S');
-        this->LM->zeros_HSk('T');
-
-        bsp.set_ST(ik, 'S');
-        bsp.set_ST(ik, 'T');
-
-        std::cout << " --> PW S" << std::endl;
-        this->LM->print_HSk('S','R',1.0e-5);
-        std::cout << " --> PW T" << std::endl;
-        this->LM->print_HSk('T','R',1.0e-5);
-
-        std::string fn = "Sloc2pw.dat";
-        this->LM->output_HSk('S', fn);
-        
-        //------------------------------------------
-        // folding the SlocR and Hloc_fixedR matrix
-        // into Sloc2 and Hloc_fixed2 matrix.
-        //------------------------------------------
-        this->LM->zeros_HSk('S');
-        this->LM->zeros_HSk('T');
-        this->LM->folding_fixedH(ik);
-        std::cout << " --> LCAO S" << std::endl;
-        this->LM->print_HSk('S','R',1.0e-5);	
-        std::cout << " --> LCAO T+Vnl" << std::endl;
-        this->LM->print_HSk('T','R',1.0e-5);	
-
-        std::string fn2 = "Sloc2lcao.dat";
-        this->LM->output_HSk('S',fn2);
-
-        //----------------
-        // test gamma Vnl	
-        //----------------
-//		GlobalV::GAMMA_ONLY_LOCAL = true;
-//		this->LM->allocate_HS_gamma(this->LM->ParaV->nloc);
-//		this->LM->zeros_HSgamma('H');
-//		GlobalC::UHM.genH.calculate_NL_no( nstart );
-//		GlobalV::GAMMA_ONLY_LOCAL = false;
-//		std::cout << " Correct LCAO Vnl " << std::endl;
-//		this->LM->print_HSgamma('H');		
-//		GlobalC::UHM.genH.calculate_NL_no( nstart );
-//		GlobalV::GAMMA_ONLY_LOCAL = false;
-//		std::cout << " Correct LCAO Vnl " << std::endl;
-//		this->LM->print_HSgamma('H');		
-        
-    }
-    
-    return;
-}
-
-
-void LCAO_Hamilt::calculate_STN_R(void)
-{
-    ModuleBase::TITLE("LCAO_Hamilt","calculate_STN_R");
-
-    //int iat = 0;
-    int index = 0;
-    ModuleBase::Vector3<double> dtau, tau1, tau2;
-    ModuleBase::Vector3<double> dtau1, dtau2, tau0;
-
-    this->LM->allocate_Hloc_fixedR_tr();
-    this->LM->allocate_HR_tr();
-    this->LM->allocate_SlocR_tr();
-
-    double R_minX = GlobalC::GridD.getD_minX();
-    double R_minY = GlobalC::GridD.getD_minY();
-    double R_minZ = GlobalC::GridD.getD_minZ();
-
-    int R_x;
-    int R_y;
-    int R_z;
-
-    for(int T1 = 0; T1 < GlobalC::ucell.ntype; ++T1)
-    {
-        Atom* atom1 = &GlobalC::ucell.atoms[T1];
-        for(int I1 = 0; I1 < atom1->na; ++I1)
-        {
-            tau1 = atom1->tau[I1];
-            //GlobalC::GridD.Find_atom(tau1);
-            GlobalC::GridD.Find_atom(GlobalC::ucell, tau1, T1, I1);
-            Atom* atom1 = &GlobalC::ucell.atoms[T1];
-            const int start = GlobalC::ucell.itiaiw2iwt(T1,I1,0);
-
-            for(int ad = 0; ad < GlobalC::GridD.getAdjacentNum()+1; ++ad)
-            {
-                const int T2 = GlobalC::GridD.getType(ad);
-                const int I2 = GlobalC::GridD.getNatom(ad);
-                Atom* atom2 = &GlobalC::ucell.atoms[T2];
-
-                tau2 = GlobalC::GridD.getAdjacentTau(ad);
-                dtau = tau2 - tau1;
-                double distance = dtau.norm() * GlobalC::ucell.lat0;
-                double rcut = GlobalC::ORB.Phi[T1].getRcut() + GlobalC::ORB.Phi[T2].getRcut();
-
-                bool adj = false;
-
-                if(distance < rcut) adj = true;
-                else if(distance >= rcut)
-                {
-                    for(int ad0 = 0; ad0 < GlobalC::GridD.getAdjacentNum()+1; ++ad0)
-                    {
-                        const int T0 = GlobalC::GridD.getType(ad0);
-                        //const int I0 = GlobalC::GridD.getNatom(ad0);
-                        //const int iat0 = GlobalC::ucell.itia2iat(T0, I0);
-                        //const int start0 = GlobalC::ucell.itiaiw2iwt(T0, I0, 0);
-
-                        tau0 = GlobalC::GridD.getAdjacentTau(ad0);
-                        dtau1 = tau0 - tau1;
-                        dtau2 = tau0 - tau2;
-
-                        double distance1 = dtau1.norm() * GlobalC::ucell.lat0;
-                        double distance2 = dtau2.norm() * GlobalC::ucell.lat0;
-
-                        double rcut1 = GlobalC::ORB.Phi[T1].getRcut() + GlobalC::ucell.infoNL.Beta[T0].get_rcut_max();
-                        double rcut2 = GlobalC::ORB.Phi[T2].getRcut() + GlobalC::ucell.infoNL.Beta[T0].get_rcut_max();
-
-                        if( distance1 < rcut1 && distance2 < rcut2 )
-                        {
-                            adj = true;
-                            break;
-                        }
-                    }
-                }
-
-                if(adj)
-                {
-                    const int start2 = GlobalC::ucell.itiaiw2iwt(T2,I2,0);
-
-                    ModuleBase::Vector3<double> dR(GlobalC::GridD.getBox(ad).x, GlobalC::GridD.getBox(ad).y, GlobalC::GridD.getBox(ad).z);
-                    R_x = (int) (dR.x - R_minX);
-                    R_y = (int) (dR.y - R_minY);
-                    R_z = (int) (dR.z - R_minZ);
-
-                    for(int ii=0; ii<atom1->nw*GlobalV::NPOL; ii++)
-                    {
-                        const int iw1_all = start + ii;
-                        const int mu = this->LM->ParaV->trace_loc_row[iw1_all];
-
-                        if(mu<0)continue;
-
-                        for(int jj=0; jj<atom2->nw*GlobalV::NPOL; jj++)
-                        {
-                            int iw2_all = start2 + jj;
-                            const int nu = this->LM->ParaV->trace_loc_col[iw2_all];
-
-                            if(nu<0)continue;
-
-                            int iic;
-                            if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER())
-                            {
-                                iic=mu+nu*this->LM->ParaV->nrow;
-                            }
-                            else
-                            {
-                                iic=mu*this->LM->ParaV->ncol+nu;
-                            }
-
-                            if(GlobalV::NSPIN!=4)
-                            {
-                                this->LM->SlocR_tr[R_x][R_y][R_z][iic] = this->LM->SlocR[index];
-                                this->LM->Hloc_fixedR_tr[R_x][R_y][R_z][iic] = this->LM->Hloc_fixedR[index];
-                            }
-                            else
-                            {
-                                this->LM->SlocR_tr_soc[R_x][R_y][R_z][iic] = this->LM->SlocR_soc[index];
-                                this->LM->Hloc_fixedR_tr_soc[R_x][R_y][R_z][iic] = this->LM->Hloc_fixedR_soc[index];
-                            }
-
-                            ++index;
-                        }
-                    }
-                }
-            }
-        }
-    }
-
     return;
 }
 
@@ -787,18 +323,20 @@ void LCAO_Hamilt::calculate_HSR_sparse(const int &current_spin, const double &sp
         }
     }
 
+#ifdef __EXX
 #ifdef __MPI
-    if (GlobalC::exx_global.info.hybrid_type==Exx_Global::Hybrid_Type::HF
-        || GlobalC::exx_global.info.hybrid_type==Exx_Global::Hybrid_Type::PBE0
-        || GlobalC::exx_global.info.hybrid_type==Exx_Global::Hybrid_Type::HSE
-        || GlobalC::exx_global.info.hybrid_type==Exx_Global::Hybrid_Type::SCAN0)
+    if( GlobalC::exx_info.info_global.cal_exx )
     {
-        calculate_HR_exx_sparse(current_spin, sparse_threshold);
+        //calculate_HR_exx_sparse(current_spin, sparse_threshold);
+        if(GlobalV::GAMMA_ONLY_LOCAL)
+            this->calculate_HR_exx_sparse(current_spin, sparse_threshold, GlobalC::exx_lri_double.Hexxs);
+        else
+            this->calculate_HR_exx_sparse(current_spin, sparse_threshold, GlobalC::exx_lri_complex.Hexxs);
     }
-#endif
+#endif // __MPI
+#endif // __EXX
 
     clear_zero_elements(current_spin, sparse_threshold);
-
 }
 
 void LCAO_Hamilt::calculate_SR_sparse(const double &sparse_threshold)
@@ -1033,9 +571,7 @@ void LCAO_Hamilt::calculat_HR_dftu_soc_sparse(const int &current_spin, const dou
 
 }
 
-#include "src_external/src_test/src_global/matrix-test.h"
-
-#ifdef __MPI
+#ifdef __EXX
 // Peize Lin add 2021.11.16
 void LCAO_Hamilt::calculate_HR_exx_sparse(const int &current_spin, const double &sparse_threshold)
 {
@@ -1059,11 +595,11 @@ void LCAO_Hamilt::calculate_HR_exx_sparse(const int &current_spin, const double 
 		{
 			ModuleBase::matrix HexxR_tmp;
 			if(GlobalV::GAMMA_ONLY_LOCAL)
-				HexxR_tmp = GlobalC::exx_global.info.hybrid_alpha
+				HexxR_tmp = GlobalC::exx_info.info_global.hybrid_alpha
 					* GlobalC::exx_lcao.Hexx_para.HK_Gamma_m2D[ik]
 					* (GlobalC::kv.wk[ik] * frac);
 			else
-				HexxR_tmp = GlobalC::exx_global.info.hybrid_alpha
+				HexxR_tmp = GlobalC::exx_info.info_global.hybrid_alpha
 					* (GlobalC::exx_lcao.Hexx_para.HK_K_m2D[ik]
 					* std::exp( ModuleBase::TWO_PI*ModuleBase::IMAG_UNIT * (GlobalC::kv.kvec_c[ik] * (R*GlobalC::ucell.latvec)) )).real()
 					* (GlobalC::kv.wk[ik] * frac);
@@ -1112,7 +648,7 @@ void LCAO_Hamilt::calculate_HR_exx_sparse(const int &current_spin, const double 
     
 	ModuleBase::timer::tick("LCAO_Hamilt","calculate_HR_exx_sparse");	
 }
-#endif
+#endif // __EXX
 
 // in case there are elements smaller than the threshold
 void LCAO_Hamilt::clear_zero_elements(const int &current_spin, const double &sparse_threshold)
@@ -1201,9 +737,7 @@ void LCAO_Hamilt::clear_zero_elements(const int &current_spin, const double &spa
                 }
             }
         }
-
     }
-
 }
 
 void LCAO_Hamilt::destroy_all_HSR_sparse(void)

@@ -4,6 +4,7 @@
 #include "module_psi/psi.h"
 #include "src_pw/charge.h"
 #include "src_pw/klist.h"
+#include "potentials/potential_new.h"
 
 namespace elecstate
 {
@@ -12,17 +13,18 @@ class ElecState
 {
   public:
     ElecState(){};
-    virtual ~ElecState(){};
-    virtual void init(Charge *chg_in, // pointer for class Charge
-                      const K_Vectors *klist_in,
-                      int nk_in, // number of k points
-                      int nb_in) // number of bands
+    ElecState(Charge* charge_in){this->charge = charge_in;};
+    virtual ~ElecState()
     {
-        this->charge = chg_in;
-        this->klist = klist_in;
-        this->ekb.create(nk_in, nb_in);
-        this->wg.create(nk_in, nb_in);
-    }
+        if(this->pot != nullptr) 
+        {
+            delete this->pot;
+            this->pot = nullptr;
+        }
+    };
+    void init_ks(Charge *chg_in, // pointer for class Charge
+                      const K_Vectors *klist_in,
+                      int nk_in); // number of k points
 
     // return current electronic density rho, as a input for constructing Hamiltonian
     virtual const double *getRho(int spin) const;
@@ -53,6 +55,18 @@ class ElecState
 
     // calculate wg from ekb
     virtual void calculate_weights();
+    // use occupied weights from INPUT and skip calculate_weights
+    void fixed_weights(const double * const ocp_kb);
+    // if nupdown is not 0(TWO_EFERMI case), 
+    // nelec_spin will be fixed and weights will be constrained 
+    void init_nelec_spin();
+    //used to record number of electrons per spin index
+    //for NSPIN=2, it will record number of spin up and number of spin down
+    //for NSPIN=4, it will record total number, magnetization for x, y, z direction  
+    std::vector<double> nelec_spin;
+
+    //calculate nbands and 
+    void cal_nbands();
 
     virtual void print_psi(const psi::Psi<double>& psi_in)
     {
@@ -63,6 +77,10 @@ class ElecState
         return;
     }
 
+    void init_scf(const int istep, const ModuleBase::ComplexMatrix& strucfac);
+
+    // pointer to potential
+    Potential* pot = nullptr;
     // pointer to charge density
     Charge *charge = nullptr;
     // pointer to k points lists
@@ -81,12 +99,15 @@ class ElecState
 
     std::string classname = "none";
 
+    // print and check for band energy and occupations
+    void print_band(const int &ik, const int &printe, const int &iter);
+
   protected:
     // calculate ebands for all k points and all occupied bands
     void calEBand();
 
-    // print and check for band energy and occupations
-    void print_band(const int &ik, const int &printe, const int &iter);
+  private:
+    bool skip_weights = false;
 };
 
 } // namespace elecstate

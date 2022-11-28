@@ -27,5 +27,7 @@ smearing_sigma			0.002
 mixing_type		plain
 mixing_beta		0.7
 
+nupdown         1.0
+
 cal_force           1
 cal_stress          1

@@ -12,9 +12,6 @@
 #else
 #include "hamilt_pw_hip.h"
 #endif
-
-#else
-#include "hamilt_pw.h"
 #endif
 
 class Hamilt
@@ -23,29 +20,6 @@ class Hamilt
 
     Hamilt();
     ~Hamilt();
-
-    void init_before_ions(void);
-
-    void init_before_electrons(void);
-
-    void clear_after_ions(void);
-
-	// diagH_subspace then full space in pw
-    void diagH_pw(
-		const int &istep,
-		const int &iter,
-		const int &ik,
-		const double *precondition,
-		double &avg_iter);
-
-	// generate H and S then call diagH_subspace
-    void diagH_subspace(
-		const int ik,
-		const int nstart,
-		const int nbnd,
-		const ModuleBase::ComplexMatrix &psi,
-		ModuleBase::ComplexMatrix &evc,
-		double *en);
 
 	// be called by diagH_subspace
     void diagH_LAPACK(
@@ -95,11 +69,7 @@ class Hamilt
 		hipblasDoubleComplex *d_ekb_c);
 #endif
 
-    Hamilt_PW hpw;
-
 private:
-
-    bool test_exit_cond( const int &ntry, const int &notconv);
 
 };
 #endif

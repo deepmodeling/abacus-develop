@@ -3,6 +3,7 @@
 #include "./esolver.h"
 #include "../module_pw/pw_basis.h"
 #include <fstream>
+#include "module_elecstate/elecstate.h"
 // #include "hamilt.h"
 namespace ModuleESolver
 {
@@ -12,8 +13,11 @@ namespace ModuleESolver
         ModulePW::PW_Basis* pw_rho;
         ESolver_FP();
         virtual ~ESolver_FP();
-        virtual void Init(Input& inp, UnitCell_pseudo& cell) override;
+        virtual void Init(Input& inp, UnitCell& cell) override;
         // Hamilt* phamilt;
+
+        elecstate::ElecState* pelec = nullptr;
+        Charge chr;
     private:
         void print_rhofft(Input& inp, ofstream &ofs);
     };

@@ -4,14 +4,28 @@
 /
 /*******************************************************************************/
 
-By setting `calculation` to be `md` or `sto-md`, ABACUS currently provides six different MD evolution methods, which is specified by keyword `md_type` in the `INPUT` file:
+By setting `calculation` to be `md`, ABACUS currently provides several different MD evolution methods, which is specified by keyword `md_type` in the `INPUT` file:
 
   - -1: FIRE method
-  - 0: NVE ensemble
-  - 1: NVT ensemble with Nose Hoover Chain
+  - 0: velocity Verlet algorithm (default: NVE ensemble)
+  - 1: Nose-Hoover style non-Hamiltonian equations of motion
   - 2: NVT ensemble with Langevin thermostat
-  - 3: NVT ensemble with Anderson thermostat
   - 4: MSST method
+
+When `md_type` is set to 0, `md_thermostat` is used to specify the thermostat based on the velocity Verlet algorithm.
+
+  - nve: NVE ensemble
+  - anderson: NVT ensemble with Anderson thermostat
+  - berendsen: NVT ensemble with Berendsen thermostat
+  - rescaling: NVT ensemble with velocity Rescaling method 1
+  - rescale_v: NVT ensemble with velocity Rescaling method 2
+
+When `md_type` is set to 1, `md_pmode` is used to specify the NVT or NPT ensemble based on the Nose-Hoover style non-Hamiltonian equations of motion.
+
+  - none: NVT ensemble
+  - iso: NPT ensemble with isotropic cetl fluctuations
+  - aniso: NPT ensemble with anisotropic cetl fluctuations
+  - tri: NPT ensemble with non-orthogonal (triclinic) simulation box
 
 Note:
 1) When doing md calculations, turn off `symmetry`.

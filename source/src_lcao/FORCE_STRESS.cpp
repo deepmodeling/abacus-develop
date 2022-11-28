@@ -2,12 +2,11 @@
 #include "../src_pw/global.h"
 #include "./dftu.h"  //Quxin add for DFT+U on 20201029
 // new
-#include "../src_pw/vdwd2.h"
-#include "../src_pw/vdwd3.h"
-#include "../module_base/timer.h"
-#include "../module_surchem/efield.h"        // liuyu add 2022-05-18
-#include "../module_surchem/surchem.h"		 //sunml add 2022-08-10
-#include "../module_surchem/gatefield.h"        // liuyu add 2022-09-13
+#include "module_base/timer.h"
+#include "module_elecstate/potentials/efield.h"        // liuyu add 2022-05-18
+#include "module_surchem/surchem.h"		 //sunml add 2022-08-10
+#include "module_elecstate/potentials/gatefield.h"        // liuyu add 2022-09-13
+#include "module_vdw/vdw.h"
 #ifdef __DEEPKS
 #include "../module_deepks/LCAO_deepks.h"	//caoyu add for deepks 2021-06-03
 #endif
@@ -25,6 +24,7 @@ void Force_Stress_LCAO::getForceStress(
 	const bool istestf,
     const bool istests,
     Local_Orbital_Charge& loc,
+	const elecstate::ElecState* pelec,
     const psi::Psi<double>* psid,
 	const psi::Psi<std::complex<double>>* psi,
     LCAO_Hamilt &uhm,
@@ -67,7 +67,7 @@ void Force_Stress_LCAO::getForceStress(
 		fcc.create (nat, 3);
 		fscc.create (nat, 3);
 		//calculate basic terms in Force, same method with PW base
-		this->calForcePwPart(fvl_dvl, fewalds, fcc, fscc);
+		this->calForcePwPart(fvl_dvl, fewalds, fcc, fscc, pelec->charge);
 	}
 
 	//total stress : ModuleBase::matrix scs
@@ -106,7 +106,8 @@ void Force_Stress_LCAO::getForceStress(
 				sigmahar,
 				sigmaewa,
 				sigmacc,
-				sigmaxc);
+				sigmaxc,
+				pelec->charge);
 	}
 	//--------------------------------------------------------
 	// implement four terms which needs integration
@@ -116,6 +117,7 @@ void Force_Stress_LCAO::getForceStress(
 				isforce,
 				isstress,
                 loc,
+				pelec,
                 psid,
 				psi,
                 foverlap,
@@ -134,64 +136,42 @@ void Force_Stress_LCAO::getForceStress(
                 uhm);
     //implement vdw force or stress here
 	// Peize Lin add 2014-04-04, update 2021-03-09
+    // jiyy add 2019-05-18, update 2021-05-02
 	ModuleBase::matrix force_vdw;
 	ModuleBase::matrix stress_vdw;
-	if(GlobalC::vdwd2_para.flag_vdwd2)
-	{
-		if(isforce)
-		{
-			force_vdw.create(nat,3);
-			Vdwd2 vdwd2(GlobalC::ucell,GlobalC::vdwd2_para);
-			vdwd2.cal_force();
-			for(int iat=0; iat<GlobalC::ucell.nat; ++iat)
-			{
-				force_vdw(iat,0) = vdwd2.get_force()[iat].x;
-				force_vdw(iat,1) = vdwd2.get_force()[iat].y;
-				force_vdw(iat,2) = vdwd2.get_force()[iat].z;
-			}
-		}
-		if(isstress)
-		{
-			Vdwd2 vdwd2(GlobalC::ucell,GlobalC::vdwd2_para);
-			vdwd2.cal_stress();
-			stress_vdw = vdwd2.get_stress().to_matrix();
-		}
-	}
-	// jiyy add 2019-05-18, update 2021-05-02
-	else if(GlobalC::vdwd3_para.flag_vdwd3)
-	{
-		if(isforce)
-		{
-			force_vdw.create(nat,3);
-			Vdwd3 vdwd3(GlobalC::ucell,GlobalC::vdwd3_para);
-			vdwd3.cal_force();
-			for(int iat=0; iat<GlobalC::ucell.nat; ++iat)
-			{
-				force_vdw(iat,0) = vdwd3.get_force()[iat].x;
-				force_vdw(iat,1) = vdwd3.get_force()[iat].y;
-				force_vdw(iat,2) = vdwd3.get_force()[iat].z;
-			}
-		}
-		if(isstress)
-		{
-			Vdwd3 vdwd3(GlobalC::ucell,GlobalC::vdwd3_para);
-			vdwd3.cal_stress();
-			stress_vdw = vdwd3.get_stress().to_matrix();
-		}
-	}
+    auto vdw_solver = vdw::make_vdw(GlobalC::ucell, INPUT);
+    if (vdw_solver != nullptr)
+    {
+        if(isforce)
+        {
+            force_vdw.create(nat,3);
+            const std::vector<ModuleBase::Vector3<double>> &force_vdw_temp = vdw_solver->get_force();
+            for(int iat=0; iat<GlobalC::ucell.nat; ++iat)
+            {
+                force_vdw(iat,0) = force_vdw_temp[iat].x;
+                force_vdw(iat,1) = force_vdw_temp[iat].y;
+                force_vdw(iat,2) = force_vdw_temp[iat].z;
+            }
+        }
+        if(isstress)
+        {
+            stress_vdw = vdw_solver->get_stress().to_matrix();
+        }
+    }
+
 	//implement force from E-field
     ModuleBase::matrix fefield;
     if(GlobalV::EFIELD_FLAG&&isforce)
     {
         fefield.create(nat, 3);
-        Efield::compute_force(GlobalC::ucell, fefield);
+        elecstate::Efield::compute_force(GlobalC::ucell, fefield);
     }
     //implement force from gate field
     ModuleBase::matrix fgate;
     if(GlobalV::GATE_FLAG&&isforce)
     {
         fgate.create(nat, 3);
-        Gatefield::compute_force(GlobalC::ucell, fgate);
+        elecstate::Gatefield::compute_force(GlobalC::ucell, fgate);
     }
 	//Force from implicit solvation model
     ModuleBase::matrix fsol;
@@ -233,6 +213,40 @@ void Force_Stress_LCAO::getForceStress(
 			}
 		}
 	}
+#ifdef __EXX
+	//Force and Stress contribution from exx
+	ModuleBase::matrix force_exx;
+	ModuleBase::matrix stress_exx;
+	if( GlobalC::exx_info.info_global.cal_exx )
+	{
+		if(isforce)
+		{
+			if(GlobalV::GAMMA_ONLY_LOCAL)
+			{
+				GlobalC::exx_lri_double.cal_exx_force();
+				force_exx = GlobalC::exx_info.info_global.hybrid_alpha * GlobalC::exx_lri_double.force_exx;
+			}
+			else
+			{
+				GlobalC::exx_lri_complex.cal_exx_force();
+				force_exx = GlobalC::exx_info.info_global.hybrid_alpha * GlobalC::exx_lri_complex.force_exx;
+			}
+		}
+		if(isstress)
+		{
+			if(GlobalV::GAMMA_ONLY_LOCAL)
+			{
+				GlobalC::exx_lri_double.cal_exx_stress();
+				stress_exx = GlobalC::exx_info.info_global.hybrid_alpha * GlobalC::exx_lri_double.stress_exx;
+			}
+			else
+			{
+				GlobalC::exx_lri_complex.cal_exx_stress();
+				stress_exx = GlobalC::exx_info.info_global.hybrid_alpha * GlobalC::exx_lri_complex.stress_exx;
+			}
+		}
+	}
+#endif
 	//--------------------------------
 	//begin calculate and output force
 	//--------------------------------
@@ -261,8 +275,15 @@ void Force_Stress_LCAO::getForceStress(
 				{
 					fcs(iat, i) += force_dftu(iat, i);
 				}
+#ifdef __EXX
+				// Force contribution from exx
+				if( GlobalC::exx_info.info_global.cal_exx )
+				{
+					fcs(iat,i) += force_exx(iat,i);
+				}
+#endif
 				//VDW force of vdwd2 or vdwd3
-				if(GlobalC::vdwd2_para.flag_vdwd2||GlobalC::vdwd3_para.flag_vdwd3)
+				if(vdw_solver != nullptr)
 				{
 					fcs(iat,i) += force_vdw(iat,i);
 				}
@@ -423,7 +444,7 @@ void Force_Stress_LCAO::getForceStress(
 				f_pw.print("IMP_SOL     FORCE", fsol,0);
 				//this->print_force("IMP_SOL     FORCE",fsol,1,ry);
 			}
-			if(GlobalC::vdwd2_para.flag_vdwd2||GlobalC::vdwd3_para.flag_vdwd3)
+			if(vdw_solver != nullptr)
 			{
 				f_pw.print("VDW        FORCE", force_vdw,0);
 				//this->print_force("VDW        FORCE",force_vdw,1,ry);
@@ -484,7 +505,7 @@ void Force_Stress_LCAO::getForceStress(
 					+ sigmahar(i,j);// hartree stress
 
 					//VDW stress from linpz and jiyy
-				if(GlobalC::vdwd2_para.flag_vdwd2||GlobalC::vdwd3_para.flag_vdwd3)
+				if(vdw_solver != nullptr)
 				{
 					scs(i,j) += stress_vdw(i , j);
 				}
@@ -493,6 +514,13 @@ void Force_Stress_LCAO::getForceStress(
 				{
 					scs(i, j) += stress_dftu(i, j);
 				}
+#ifdef __EXX
+				// Stress contribution from exx
+				if( GlobalC::exx_info.info_global.cal_exx )
+				{
+					scs(i,j) += stress_exx(i,j);
+				}
+#endif
 			}
 		}
 
@@ -565,7 +593,7 @@ void Force_Stress_LCAO::getForceStress(
 			sc_pw.print_stress("cc       STRESS",sigmacc,GlobalV::TEST_STRESS,ry);
 			//		sc_pw.print_stress("NLCC       STRESS",sigmacc,GlobalV::TEST_STRESS,ry);
 			sc_pw.print_stress("XC       STRESS",sigmaxc,GlobalV::TEST_STRESS,ry);
-			if(GlobalC::vdwd2_para.flag_vdwd2||GlobalC::vdwd3_para.flag_vdwd3)
+			if(vdw_solver != nullptr)
 			{
 				sc_pw.print_stress("VDW      STRESS",sigmaxc,GlobalV::TEST_STRESS,ry);
 			}
@@ -737,13 +765,15 @@ void Force_Stress_LCAO::calForcePwPart(
 	ModuleBase::matrix &fvl_dvl,
 	ModuleBase::matrix &fewalds,
 	ModuleBase::matrix &fcc,
-	ModuleBase::matrix &fscc)
+	ModuleBase::matrix &fscc,
+	const Charge* const chr)
 {
+	ModuleBase::TITLE("Force_Stress_LCAO","calForcePwPart");
 	//--------------------------------------------------------
 	// local pseudopotential force:
 	// use charge density; plane wave; local pseudopotential;
 	//--------------------------------------------------------
-	f_pw.cal_force_loc (fvl_dvl, GlobalC::rhopw);
+	f_pw.cal_force_loc (fvl_dvl, GlobalC::rhopw, chr);
 	//--------------------------------------------------------
 	// ewald force: use plane wave only.
 	//--------------------------------------------------------
@@ -751,7 +781,7 @@ void Force_Stress_LCAO::calForcePwPart(
 	//--------------------------------------------------------
 	// force due to core correlation.
 	//--------------------------------------------------------
-	f_pw.cal_force_cc(fcc, GlobalC::rhopw);
+	f_pw.cal_force_cc(fcc, GlobalC::rhopw, chr);
 	//--------------------------------------------------------
 	// force due to self-consistent charge.
 	//--------------------------------------------------------
@@ -765,6 +795,7 @@ void Force_Stress_LCAO::calForceStressIntegralPart(
 	const bool isforce,
     const bool isstress,
     Local_Orbital_Charge& loc,
+	const elecstate::ElecState* pelec,
     const psi::Psi<double>* psid,
 	const psi::Psi<std::complex<double>>* psi,
     ModuleBase::matrix& foverlap,
@@ -789,6 +820,7 @@ void Force_Stress_LCAO::calForceStressIntegralPart(
 				isstress,
                 psid,
                 loc,
+				pelec,
                 foverlap,
 				ftvnl_dphi,
 				fvnl_dbeta,
@@ -812,6 +844,7 @@ void Force_Stress_LCAO::calForceStressIntegralPart(
                 *this->RA,
                 psi,
                 loc,
+				pelec,
                 foverlap,
 				ftvnl_dphi,
 				fvnl_dbeta,
@@ -836,19 +869,20 @@ void Force_Stress_LCAO::calStressPwPart(
 	ModuleBase::matrix& sigmahar,
 	ModuleBase::matrix& sigmaewa,
 	ModuleBase::matrix& sigmacc,
-	ModuleBase::matrix& sigmaxc
-)
+	ModuleBase::matrix& sigmaxc,
+	const Charge* const chr)
 {
+    ModuleBase::TITLE("Force_Stress_LCAO","calStressPwPart");
 	//--------------------------------------------------------
 	// local pseudopotential stress:
 	// use charge density; plane wave; local pseudopotential;
 	//--------------------------------------------------------
-    sc_pw.stress_loc (sigmadvl, GlobalC::rhopw, 0);
+    sc_pw.stress_loc (sigmadvl, GlobalC::rhopw, 0, chr);
 
 	//--------------------------------------------------------
 	//hartree term
 	//--------------------------------------------------------
-	sc_pw.stress_har (sigmahar, GlobalC::rhopw, 0);
+	sc_pw.stress_har (sigmahar, GlobalC::rhopw, 0, chr);
 
 	//--------------------------------------------------------
 	// ewald stress: use plane wave only.
@@ -859,7 +893,7 @@ void Force_Stress_LCAO::calStressPwPart(
 	//--------------------------------------------------------
 	// stress due to core correlation.
 	//--------------------------------------------------------
-	sc_pw.stress_cc(sigmacc,  GlobalC::rhopw, 0);
+	sc_pw.stress_cc(sigmacc,  GlobalC::rhopw, 0, chr);
 
 	//--------------------------------------------------------
 	// stress due to self-consistent charge.
@@ -869,7 +903,7 @@ void Force_Stress_LCAO::calStressPwPart(
 		sigmaxc(i,i) =  -(GlobalC::en.etxc) / GlobalC::ucell.omega;
 	}
 	//Exchange-correlation for PBE
-	sc_pw.stress_gga(sigmaxc);
+	sc_pw.stress_gga(sigmaxc, chr);
 
 	return;
 }

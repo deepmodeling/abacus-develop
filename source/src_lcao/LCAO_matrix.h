@@ -8,7 +8,7 @@
 #include "../module_orbital/parallel_orbitals.h"
 
 // add by jingan for map<> in 2021-12-2, will be deleted in the future
-#include "../src_ri/abfs-vector3_order.h"
+#include "../module_base/abfs-vector3_order.h"
 
 class LCAO_Matrix
 {
@@ -105,6 +105,9 @@ private:
 
     // Record all R direct coordinate information, even if HR or SR is a zero matrix
     std::set<Abfs::Vector3_Order<int>> all_R_coor;
+
+    // Records the R direct coordinates of HR and SR output, This variable will be filled with data when HR and SR files are output.
+    std::set<Abfs::Vector3_Order<int>> output_R_coor;
 
 
     //========================================

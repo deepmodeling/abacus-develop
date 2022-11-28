@@ -3,3 +3,11 @@ add_library(
     OBJECT
     psi.cpp
 )
+
+if(ENABLE_COVERAGE)
+  add_coverage(psi)
+endif()
+
+if (BUILD_TESTING)
+  add_subdirectory(test)
+endif()

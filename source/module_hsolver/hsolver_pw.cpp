@@ -2,15 +2,18 @@
 
 #include "diago_cg.h"
 #include "diago_david.h"
+#include "diago_iter_assist.h"
 #include "module_base/tool_quit.h"
 #include "module_base/timer.h"
+#include "module_hamilt/hamilt_pw.h"
 #include "module_elecstate/elecstate_pw.h"
 #include "src_pw/global.h"
 #include <algorithm>
 
-namespace hsolver
-{
-HSolverPW::HSolverPW(ModulePW::PW_Basis_K* wfc_basis_in)
+namespace hsolver {
+
+template<typename FPTYPE, typename Device>
+HSolverPW<FPTYPE, Device>::HSolverPW(ModulePW::PW_Basis_K* wfc_basis_in)
 {
     this->wfc_basis = wfc_basis_in;
     this->classname = "HSolverPW";
@@ -27,41 +30,42 @@ void HSolverPW::update()
 {
     return;
 }*/
-void HSolverPW::initDiagh()
+template<typename FPTYPE, typename Device>
+void HSolverPW<FPTYPE, Device>::initDiagh()
 {
     if (this->method == "cg")
     {
-        if(pdiagh!=nullptr)
+        if(this->pdiagh!=nullptr)
         {
-            if(pdiagh->method != this->method)
+            if(this->pdiagh->method != this->method)
             {
-                delete[] pdiagh;
-                pdiagh = new DiagoCG(precondition.data());
-                pdiagh->method = this->method;
+                delete (DiagoCG<FPTYPE, Device>*)this->pdiagh;
+                this->pdiagh = new DiagoCG<FPTYPE, Device>(precondition.data());
+                this->pdiagh->method = this->method;
             }
         }
         else
         {
-            pdiagh = new DiagoCG(precondition.data());
-            pdiagh->method = this->method;
+            this->pdiagh = new DiagoCG<FPTYPE, Device>(precondition.data());
+            this->pdiagh->method = this->method;
         }
     }
     else if (this->method == "dav")
     {
-        DiagoDavid::PW_DIAG_NDIM = GlobalV::PW_DIAG_NDIM;
-        if (pdiagh != nullptr)
+        DiagoDavid<double>::PW_DIAG_NDIM = GlobalV::PW_DIAG_NDIM;
+        if (this->pdiagh != nullptr)
         {
-            if (pdiagh->method != this->method)
+            if (this->pdiagh->method != this->method)
             {
-                delete[] pdiagh;
-                pdiagh = new DiagoDavid( precondition.data());
-                pdiagh->method = this->method;
+                delete (DiagoDavid<FPTYPE, Device>*)this->pdiagh;
+                this->pdiagh = new DiagoDavid<FPTYPE, Device>(precondition.data());
+                this->pdiagh->method = this->method;
             }
         }
         else
         {
-            pdiagh = new DiagoDavid( precondition.data());
-            pdiagh->method = this->method;
+            this->pdiagh = new DiagoDavid<FPTYPE, Device>( precondition.data());
+            this->pdiagh->method = this->method;
         }
     }
     else
@@ -70,7 +74,8 @@ void HSolverPW::initDiagh()
     }
 }
 
-void HSolverPW::solve(hamilt::Hamilt* pHamilt, psi::Psi<std::complex<double>>& psi, elecstate::ElecState* pes, const std::string method_in, const bool skip_charge)
+template<typename FPTYPE, typename Device>
+void HSolverPW<FPTYPE, Device>::solve(hamilt::Hamilt<FPTYPE, Device>* pHamilt, psi::Psi<std::complex<FPTYPE>, Device>& psi, elecstate::ElecState* pes, const std::string method_in, const bool skip_charge)
 {
     ModuleBase::TITLE("HSolverPW", "solve");
     ModuleBase::timer::tick("HSolverPW", "solve");
@@ -95,6 +100,12 @@ void HSolverPW::solve(hamilt::Hamilt* pHamilt, psi::Psi<std::complex<double>>& p
         /// solve eigenvector and eigenvalue for H(k)
         double* p_eigenvalues = &(pes->ekb(ik, 0));
         this->hamiltSolvePsiK(pHamilt, psi, p_eigenvalues);
+        if(skip_charge)
+        {
+            GlobalV::ofs_running<< "Average iterative diagonalization steps for k-points "<<ik<<" is: "<<DiagoIterAssist<double>::avg_iter
+                <<" ; where current threshold is: "<<DiagoIterAssist<double>::PW_DIAG_THR<<" . "<<std::endl;
+            DiagoIterAssist<double>::avg_iter = 0.0;
+        }
         /// calculate the contribution of Psi for charge density rho
     }
 
@@ -105,25 +116,35 @@ void HSolverPW::solve(hamilt::Hamilt* pHamilt, psi::Psi<std::complex<double>>& p
         ModuleBase::timer::tick("HSolverPW", "solve");
         return;
     }
-    pes->psiToRho(psi);
+    reinterpret_cast<elecstate::ElecStatePW<FPTYPE, Device>*>(pes)->psiToRho(psi);
 
     ModuleBase::timer::tick("HSolverPW", "solve");
     return;
 }
 
-void HSolverPW::endDiagh()
+template<typename FPTYPE, typename Device>
+void HSolverPW<FPTYPE, Device>::endDiagh()
 {
     // DiagoCG would keep 9*nbasis memory in cache during loop-k
     // it should be deleted before calculating charge
     if(this->method == "cg")
     {
-        delete (DiagoCG*)pdiagh;
-        pdiagh = nullptr;
+        delete (DiagoCG<FPTYPE, Device>*)this->pdiagh;
+        this->pdiagh = nullptr;
     }
     if(this->method == "dav")
     {
-        delete (DiagoDavid*)pdiagh;
-        pdiagh = nullptr;
+        delete (DiagoDavid<FPTYPE, Device>*)this->pdiagh;
+        this->pdiagh = nullptr;
+    }
+
+    //in PW base, average iteration steps for each band and k-point should be printing
+    if(DiagoIterAssist<double>::avg_iter > 0.0)
+    {
+        GlobalV::ofs_running<< "Average iterative diagonalization steps: "<<DiagoIterAssist<double>::avg_iter / this->wfc_basis->nks
+            <<" ; where current threshold is: "<<DiagoIterAssist<double>::PW_DIAG_THR<<" . "<<std::endl;
+        //reset avg_iter
+        DiagoIterAssist<double>::avg_iter = 0.0;
     }
     //psi only should be initialed once for PW
     if(!this->initialed_psi)
@@ -132,7 +153,8 @@ void HSolverPW::endDiagh()
     }
 }
 
-void HSolverPW::updatePsiK(hamilt::Hamilt* pHamilt, psi::Psi<std::complex<double>>& psi, const int ik)
+template<typename FPTYPE, typename Device>
+void HSolverPW<FPTYPE, Device>::updatePsiK(hamilt::Hamilt<FPTYPE, Device>* pHamilt, psi::Psi<std::complex<FPTYPE>, Device>& psi, const int ik)
 {
     psi.fix_k(ik);
     if(!this->initialed_psi)
@@ -141,27 +163,28 @@ void HSolverPW::updatePsiK(hamilt::Hamilt* pHamilt, psi::Psi<std::complex<double
         {
             // generate PAOs first, then diagonalize to get
             // inital wavefunctions.
-            GlobalC::wf.diago_PAO_in_pw_k2(ik, psi, pHamilt);
+            GlobalC::wf.diago_PAO_in_pw_k2_device(this->ctx, ik, psi, pHamilt);
         }
         else
         {
             ModuleBase::WARNING_QUIT("HSolverPW::updatePsiK", "lcao_in_pw is not supported now.");
         }
-        return;
     }
 }
 
-void HSolverPW::hamiltSolvePsiK(hamilt::Hamilt* hm, psi::Psi<std::complex<double>>& psi, double* eigenvalue)
+template<typename FPTYPE, typename Device>
+void HSolverPW<FPTYPE, Device>::hamiltSolvePsiK(hamilt::Hamilt<FPTYPE, Device>* hm, psi::Psi<std::complex<FPTYPE>, Device>& psi, FPTYPE* eigenvalue)
 {
-    pdiagh->diag(hm, psi, eigenvalue);
+    this->pdiagh->diag(hm, psi, eigenvalue);
 }
 
-void HSolverPW::update_precondition(std::vector<double> &h_diag, const int ik, const int npw)
+template<typename FPTYPE, typename Device>
+void HSolverPW<FPTYPE, Device>::update_precondition(std::vector<FPTYPE> &h_diag, const int ik, const int npw)
 {
     h_diag.assign(h_diag.size(), 1.0);
     int precondition_type = 2;
-    const double tpiba2 = this->wfc_basis->tpiba2;
-    
+    const FPTYPE tpiba2 = this->wfc_basis->tpiba2;
+
     //===========================================
     // Conjugate-Gradient diagonalization
     // h_diag is the precondition matrix
@@ -171,7 +194,7 @@ void HSolverPW::update_precondition(std::vector<double> &h_diag, const int ik, c
     {
         for (int ig = 0; ig < npw; ig++)
         {
-            double g2kin = this->wfc_basis->getgk2(ik,ig) * tpiba2;    
+            FPTYPE g2kin = this->wfc_basis->getgk2(ik,ig) * tpiba2;    
             h_diag[ig] = std::max(1.0, g2kin);
         }
     }
@@ -179,7 +202,7 @@ void HSolverPW::update_precondition(std::vector<double> &h_diag, const int ik, c
     {
         for (int ig = 0; ig < npw; ig++)
         {
-            double g2kin = this->wfc_basis->getgk2(ik,ig) * tpiba2;
+            FPTYPE g2kin = this->wfc_basis->getgk2(ik,ig) * tpiba2;
             h_diag[ig] = 1 + g2kin + sqrt(1 + (g2kin - 1) * (g2kin - 1));
         }
     }
@@ -193,19 +216,21 @@ void HSolverPW::update_precondition(std::vector<double> &h_diag, const int ik, c
     }
 }
 
-double HSolverPW::cal_hsolerror()
+template<typename FPTYPE, typename Device>
+FPTYPE HSolverPW<FPTYPE, Device>::cal_hsolerror()
 {
-    return this->diag_ethr * std::max(1.0, GlobalC::CHR.nelec);
+    return this->diag_ethr * std::max(1.0, GlobalV::nelec);
 }
 
-double HSolverPW::set_diagethr(const int istep, const int iter, const double drho)
+template<typename FPTYPE, typename Device>
+FPTYPE HSolverPW<FPTYPE, Device>::set_diagethr(const int istep, const int iter, const FPTYPE drho)
 {
     //It is too complex now and should be modified.
     if (iter == 1)
     {
         if (abs(this->diag_ethr - 1.0e-2) < 1.0e-10)
         {
-            if (GlobalC::CHR.init_chg == "file")
+            if (GlobalV::init_chg == "file")
             {
                 //======================================================
                 // if you think that the starting potential is good
@@ -235,21 +260,26 @@ double HSolverPW::set_diagethr(const int istep, const int iter, const double drh
         {
             this->diag_ethr = 1.e-2;
         }
-        this->diag_ethr = std::min(this->diag_ethr, 0.1 * drho / std::max(1.0, GlobalC::CHR.nelec));
+        this->diag_ethr = std::min(this->diag_ethr, 0.1 * drho / std::max(1.0, GlobalV::nelec));
     }
     return this->diag_ethr;
 }
 
-double HSolverPW::reset_diagethr(std::ofstream& ofs_running, const double hsover_error, const double drho)
+template<typename FPTYPE, typename Device>
+FPTYPE HSolverPW<FPTYPE, Device>::reset_diagethr(std::ofstream& ofs_running, const FPTYPE hsover_error, const FPTYPE drho)
 {
     ofs_running << " Notice: Threshold on eigenvalues was too large.\n";
     ModuleBase::WARNING("scf", "Threshold on eigenvalues was too large.");
     ofs_running << " hsover_error=" << hsover_error << " > DRHO=" << drho << std::endl;
     ofs_running << " Origin diag_ethr = " << this->diag_ethr << std::endl;
-    this->diag_ethr = 0.1 * drho / GlobalC::CHR.nelec;
+    this->diag_ethr = 0.1 * drho / GlobalV::nelec;
     ofs_running << " New    diag_ethr = " << this->diag_ethr << std::endl;
     return this->diag_ethr;
 }
 
+template class HSolverPW<double, psi::DEVICE_CPU>;
+#if ((defined __CUDA) || (defined __ROCM))
+template class HSolverPW<double, psi::DEVICE_GPU>;
+#endif
 
 } // namespace hsolver

@@ -192,7 +192,7 @@ int Local_Orbital_Charge::setAlltoallvParameter(MPI_Comm comm_2D, int blacs_ctxt
 
 // allocate density kernel may change once the ion
 // positions change
-void Local_Orbital_Charge::allocate_gamma(const int& lgd, psi::Psi<double>* psid)
+void Local_Orbital_Charge::allocate_gamma(const int& lgd, psi::Psi<double>* psid, elecstate::ElecState* pelec)
 {
      ModuleBase::TITLE("Local_Orbital_Charge","allocate_gamma");
 
@@ -258,12 +258,12 @@ void Local_Orbital_Charge::allocate_gamma(const int& lgd, psi::Psi<double>* psid
 
     if(GlobalC::wf.init_wfc=="file")
     {
-        this->gamma_file(psid, this->LOWF[0]);
+        this->gamma_file(psid, this->LOWF[0], pelec);
     }
     return;
 }
 
-void Local_Orbital_Charge::gamma_file(psi::Psi<double>* psid, Local_Orbital_wfc &lowf)
+void Local_Orbital_Charge::gamma_file(psi::Psi<double>* psid, Local_Orbital_wfc &lowf, elecstate::ElecState* pelec)
 {
 	ModuleBase::TITLE("Local_Orbital_Charge","gamma_file");
 
@@ -274,7 +274,7 @@ void Local_Orbital_Charge::gamma_file(psi::Psi<double>* psid, Local_Orbital_wfc 
 
     //allocate psi
     int ncol = this->ParaV->ncol_bands;
-    if(GlobalV::KS_SOLVER=="genelpa" || GlobalV::KS_SOLVER=="lapack_gvx"
+    if(GlobalV::KS_SOLVER=="genelpa" || GlobalV::KS_SOLVER=="lapack_gvx" || GlobalV::KS_SOLVER == "scalapack_gvx"
 #ifdef __CUSOLVER_LCAO
     ||GlobalV::KS_SOLVER=="cusolver"
 #endif
@@ -296,7 +296,7 @@ void Local_Orbital_Charge::gamma_file(psi::Psi<double>* psid, Local_Orbital_wfc 
 	{
 
 		GlobalV::ofs_running << " Read in wave functions " << is << std::endl;
-		error = WF_Local::read_lowf( ctot , is, this->ParaV, psid);
+		error = WF_Local::read_lowf( ctot , is, this->ParaV, psid, pelec);
 #ifdef __MPI
 		Parallel_Common::bcast_int(error);
 #endif
@@ -440,192 +440,4 @@ void Local_Orbital_Charge::cal_dk_gamma_from_2D(void)
     }
     ModuleBase::timer::tick("LCAO_Charge","dm_2dTOgrid");
 	return;
-}
-
-//--------------------------------------------------------------
-void Local_Orbital_Charge::cal_dk_gamma(void)
-{
-    ModuleBase::TITLE("Local_Orbital_Charge","cal_density_kernal");
-    ModuleBase::timer::tick("LocalOrbital_Charge","cal_dk_gamma");
-
-    assert(GlobalV::NSPIN==GlobalC::kv.nks);
-
-#ifdef __MPI //2015-09-06, xiaohui
-	#if EXX_DM==2
-	if( Exx_Global::Hybrid_Type::HF==GlobalC::exx_lcao.info.hybrid_type 
-		|| Exx_Global::Hybrid_Type::PBE0==GlobalC::exx_lcao.info.hybrid_type 
-		|| Exx_Global::Hybrid_Type::HSE==GlobalC::exx_lcao.info.hybrid_type )
-		GlobalC::exx_lcao.DM_para.clear_DMr();
-	#endif
-
-	// Peize Lin update 2018-07-02
-	for(int is=0; is<GlobalV::NSPIN; ++is )
-	{
-		for (int i=0; i<lgd_now; i++)
-		{
-			ModuleBase::GlobalFunc::ZEROS(this->DM[is][i], lgd_now);
-		}
-	}
-
-	// initialize
-	int nprocs=0;
-	int myid=0;
-	//MPI_Status status;
-	MPI_Comm_size(DIAG_HPSEPS_WORLD,&nprocs);
-	MPI_Comm_rank(DIAG_HPSEPS_WORLD,&myid);
-
-
-	// GlobalV::DSIZE: number of processors in diag world
-	std::vector<int> bands_local(GlobalV::DSIZE);
-	for (int id=0; id<GlobalV::DSIZE; id++)
-	{
-		bands_local[id] = (id<GlobalV::NBANDS%GlobalV::DSIZE) ? GlobalV::NBANDS/GlobalV::DSIZE+1 : GlobalV::NBANDS/GlobalV::DSIZE;
-	}
-	const int band_local = bands_local[GlobalV::DRANK];
-
-	int lastband_in_proc = 0;
-	for (int id=0, count_bands=0; id<GlobalV::DSIZE; id++)
-	{
-		count_bands += bands_local[id];
-		if (count_bands >= GlobalV::NBANDS)
-		{
-			lastband_in_proc = id;
-			break;
-		}
-	}
-
-	ModuleBase::matrix wg_local(GlobalV::NSPIN,band_local);
-	for(int id=0, Total_Bands=0; id <= lastband_in_proc; ++id)
-	{
-		if(myid == id)
-		{
-			for(int is=0; is<GlobalV::NSPIN; is++)
-			{
-				for (int ib=0; ib<bands_local[myid]; ib++)
-				{
-					wg_local(is,ib) = GlobalC::wf.wg(is,Total_Bands+ib);
-				}
-			}
-		}
-		Total_Bands += bands_local[id];
-	}
-
-	for( int is=0; is<GlobalV::NSPIN; ++is )
-	{
-		ModuleBase::matrix Z_wg( GlobalV::NLOCAL, band_local );
-		if(myid <= lastband_in_proc)
-		{
-			for(int iw=0; iw<GlobalV::NLOCAL; iw++)
-			{
-				for(int ib=0; ib<bands_local[myid]; ib++)
-				{
-					Z_wg(iw,ib) = this->ParaV->Z_LOC[is][iw*bands_local[myid]+ib] * wg_local(is,ib);
-				}
-			}
-		}
-
-		const int row_col = (GlobalV::NLOCAL%300) ? GlobalV::NLOCAL/300+1 : GlobalV::NLOCAL/300;
-
-		ModuleBase::matrix Z_row;
-		ModuleBase::matrix Z_col;
-		ModuleBase::matrix rho_row_col;
-
-		for(int row_count=0; row_count<row_col; row_count++)
-		{
-			const int row_remain = ( (row_count+1)*300 <= GlobalV::NLOCAL )
-				? 300
-				: GlobalV::NLOCAL - row_count*300;
-
-			Z_row.create( row_remain, band_local, false );
-			for(int i_row=0; i_row<row_remain; i_row++)
-			{
-				const int row_index = row_count*300 + i_row;
-				for(int ib=0; ib<band_local; ib++)
-				{
-					Z_row(i_row,ib) = Z_wg(row_index,ib);
-				}
-			}
-
-			for(int col_count=0; col_count<row_col; col_count++)
-			{
-				const int col_remain = ( (col_count+1)*300 <= GlobalV::NLOCAL )
-					? 300
-					: GlobalV::NLOCAL - col_count*300;
-
-				Z_col.create( col_remain, band_local, false );
-				for(int i_col=0; i_col<col_remain; i_col++)
-				{
-					const int col_index = i_col +col_count*300;
-					for(int ib=0; ib<band_local; ib++)
-					{
-						Z_col(i_col,ib) = this->ParaV->Z_LOC[is][col_index*band_local+ib] ;
-					}
-				}
-
-				rho_row_col.create( row_remain, col_remain, false );
-
-				//for(int i_row=0; i_row<row_remain; i_row++)
-				//  for(int i_col=0; i_col<col_remain; i_col++)
-				//      for(int ib=0; ib<band_local; ib++)
-				//          rho_row_col(i_row,i_col) += Z_row(i_row,ib) * Z_col(i_col,ib);
-
-				BlasConnector::gemm(
-						'N', 'T', 
-						row_remain, col_remain, band_local,
-						1, Z_row.c, band_local, Z_col.c, band_local,
-						0, rho_row_col.c, col_remain);
-				MPI_Barrier(DIAG_HPSEPS_WORLD);
-				Parallel_Reduce::reduce_double_all( rho_row_col.c, row_remain*col_remain);
-
-				if(GlobalV::GAMMA_ONLY_LOCAL)
-				{
-					for(int i_row=0; i_row<row_remain; i_row++)
-					{
-						const int row_index = row_count*300 + i_row;
-						const int row_mu = GlobalC::GridT.trace_lo[row_index];
-						if(row_mu<0)    continue;
-						for(int i_col=0; i_col<col_remain; i_col++)
-						{
-							const int col_index = col_count*300 + i_col;
-							const int col_nu = GlobalC::GridT.trace_lo[col_index];
-							if(col_nu<0)    continue;
-							this->DM[is][row_mu][col_nu] = rho_row_col(i_row,i_col);
-						}
-					}
-				}
-						
-				#if EXX_DM==2
-				if( Exx_Global::Hybrid_Type::HF==GlobalC::exx_lcao.info.hybrid_type 
-					|| Exx_Global::Hybrid_Type::PBE0==GlobalC::exx_lcao.info.hybrid_type 
-					|| Exx_Global::Hybrid_Type::HSE==GlobalC::exx_lcao.info.hybrid_type )
-				{
-					GlobalC::exx_lcao.DM_para.set_DM_gamma( rho_row_col, is, {row_count*300,col_count*300} );
-				}
-				#endif				
-			}  // end for col_count
-		}  // end for row_count
-
-		/*GlobalV::ofs_running<<"DM[0][0:1][0:1] in cal_dk_gamma:"<<std::endl;
-
-		int idx0=GlobalC::GridT.trace_lo[0];
-		int idx1=GlobalC::GridT.trace_lo[1];
-
-		if(idx0>=0)
-		{
-			GlobalV::ofs_running<<"DM(0,0)"<<DM[is][idx0][idx0]<<"\t";
-		}
-		if(idx0>=0 && idx1>=0)
-		{
-			GlobalV::ofs_running<<"DM(0,1)"<<DM[is][idx0][idx1]<<std::endl;
-			GlobalV::ofs_running<<"DM(1,0)"<<DM[is][idx1][idx0]<<"\t";
-		}
-		if(idx1>=0)
-		{
-			GlobalV::ofs_running<<"DM(1,1)"<<DM[is][idx1][idx1]<<std::endl;
-		}*/
-	}  // end for is    
-#endif //2015-09-06, xiaohui
-
-    ModuleBase::timer::tick("LocalOrbital_Charge","cal_dk_gamma");
-    return;
 }

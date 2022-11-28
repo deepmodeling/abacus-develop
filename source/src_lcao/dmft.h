@@ -6,7 +6,7 @@
 #define DFT_DMFT_INTERFACE
 
 #include "../input.h"
-#include "../module_cell/unitcell_pseudo.h"
+#include "../module_cell/unitcell.h"
 #include "../module_base/complexmatrix.h"
 #include "src_lcao/LCAO_matrix.h"
 #include "src_lcao/local_orbital_charge.h"
@@ -23,7 +23,7 @@ namespace ModuleDMFT
     ~DFT_DMFT_interface(){;}
 
     public:
-    void init(Input& in, UnitCell_pseudo &cell);
+    void init(Input& in, UnitCell &cell);
     void out_to_dmft(Local_Orbital_wfc &lowf,
         LCAO_Matrix &lm);
     void out_kvector();

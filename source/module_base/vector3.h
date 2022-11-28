@@ -8,6 +8,7 @@
 #include <cmath>
 #include <iomanip>
 #include <iostream>
+#include <array>
 namespace ModuleBase
 {
 
@@ -32,6 +33,7 @@ template <class T> class Vector3
      */
     Vector3(const T &x1 = 0, const T &y1 = 0, const T &z1 = 0) : x(x1), y(y1), z(z1){};
     Vector3(const Vector3<T> &v) : x(v.x), y(v.y), z(v.z){}; // Peize Lin add 2018-07-16
+	explicit Vector3(const std::array<T,3> &v) :x(v[0]), y(v[1]), z(v[2]){}
 
     /**
      * @brief set a 3d vector
@@ -58,6 +60,14 @@ template <class T> class Vector3
         x = u.x;
         y = u.y;
         z = u.z;
+        return *this;
+    }
+
+    Vector3<T> &operator=(const T &u)
+    {
+        x = u;
+        y = u;
+        z = u;
         return *this;
     }
 
@@ -276,6 +286,19 @@ template <class T> inline Vector3<T> operator*(const Vector3<T> &u, const T &s)
 template <class T> inline Vector3<T> operator/(const Vector3<T> &u, const T &s)
 {
     return Vector3<T>(u.x / s, u.y / s, u.z / s);
+}
+
+/**
+ * @brief Overload "/" to calculate scalar/Vector3
+ *
+ * @tparam T
+ * @param s
+ * @param u
+ * @return Vector3<T>
+ */
+template <class T> inline Vector3<T> operator/(const T &s, const Vector3<T> &u)
+{
+    return Vector3<T>(s/u.x, s/u.y, s/u.z);
 }
 
 /**

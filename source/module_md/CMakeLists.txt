@@ -2,19 +2,19 @@ add_library(
     md
     OBJECT
     MD_func.cpp
-    run_md_classic.cpp
-    LJ_potential.cpp
-    DP_potential.cpp
-    cmd_neighbor.cpp
+    run_md.cpp
+	mdrun.cpp
 	verlet.cpp
-	NVE.cpp
     MSST.cpp
-    NVT_ADS.cpp
-    NVT_NHC.cpp
+    Nose_Hoover.cpp
     FIRE.cpp
     Langevin.cpp
 )
 
-IF (BUILD_TESTING)
+if(ENABLE_COVERAGE)
+  add_coverage(md)
+endif()
+
+if(BUILD_TESTING)
     add_subdirectory(test)
 endif()

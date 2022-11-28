@@ -1,4 +1,6 @@
 # To build this Dockerfile, run `docker build -t abacus - < Dockerfile`.
+# Build without cloning the repo by `docker build https://github.com/deepmodeling/abacus-develop.git#develop`,
+#   and optionally choose the Dockerfile in use by appending e.g. `-f Dockerfile.gnu`.
 # Alternatively, pull the image with `docker pull ghcr.io/deepmodeling/abacus:latest`.
 # Also available at `docker pull registry.dp.tech/deepmodeling/abacus:latest`.
 
@@ -7,12 +9,17 @@
 
 FROM ubuntu:22.04
 RUN apt update && apt install -y --no-install-recommends \
-    libopenblas-dev liblapack-dev libscalapack-mpi-dev libelpa-dev libfftw3-dev libcereal-dev libxc-dev \
+    libopenblas-openmp-dev liblapack-dev libscalapack-mpi-dev libelpa-dev libfftw3-dev libcereal-dev libxc-dev \
     g++ make cmake bc time sudo vim git
 # If you wish to use the LLVM compiler, replace 'g++' above with 'clang libomp-dev'.
 
 ENV GIT_SSL_NO_VERIFY=true TERM=xterm-256color \
     OMPI_ALLOW_RUN_AS_ROOT=1 OMPI_ALLOW_RUN_AS_ROOT_CONFIRM=1 OMPI_MCA_btl_vader_single_copy_mechanism=none
+
+# This will fetch the latest commit info, and store in docker building cache.
+# If there are newer commits, docker build will ignore the cache and build latest codes.
+ADD https://api.github.com/repos/deepmodeling/abacus-develop/git/refs/heads/develop /dev/null
+
 RUN git clone https://github.com/deepmodeling/abacus-develop.git --depth 1 && \
     cd abacus-develop && \
     cmake -B build && \

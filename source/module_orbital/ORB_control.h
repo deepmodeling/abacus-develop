@@ -2,7 +2,7 @@
 #define ORB_CONTROL_H 
 
 #include "input.h"
-#include "module_cell/unitcell_pseudo.h"
+#include "module_cell/unitcell.h"
 #include "parallel_orbitals.h"
 #include "ORB_gen_tables.h"
 #include "ORB_read.h"
@@ -32,7 +32,7 @@ public:
 
     ~ORB_control();
 
-    void Init(Input& inp, UnitCell_pseudo& ucell);
+    void Init(Input& inp, UnitCell& ucell);
 
     //first step: read orbital file
     void read_orb_first(
@@ -126,14 +126,6 @@ private:
         const int& NB, LocalMatrix& loc_A,
         std::ofstream& ofs_running,
         std::ofstream& ofs_warning);
-
-    void data_distribution(
-        MPI_Comm comm_2D,
-        const std::string& file,
-        const int& n,
-        const int& NB,
-        double* A,
-        const LocalMatrix& loc_A);
 
 #endif
 

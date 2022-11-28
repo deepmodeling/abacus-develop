@@ -17,10 +17,11 @@ namespace ModuleRPA
 {
 void DFT_RPA_interface::out_for_RPA(const Parallel_Orbitals &parav,
                                     const psi::Psi<std::complex<double>> &psi,
-                                    Local_Orbital_Charge &loc)
+                                    Local_Orbital_Charge &loc,
+                                    const elecstate::ElecState* pelec)
 {
     ModuleBase::TITLE("DFT_RPA_interface", "out_for_RPA");
-    this->out_bands();
+    this->out_bands(pelec);
     this->out_eigen_vector(parav, psi);
     this->out_struc();
 
@@ -35,9 +36,9 @@ void DFT_RPA_interface::out_for_RPA(const Parallel_Orbitals &parav,
     this->out_Cs();
     this->out_coulomb_k();
 
-    std::cout << "etxc(Ha):" << std::fixed << std::setprecision(15) << GlobalC::en.etxc / 2.0 << std::endl;
-    std::cout << "etot(Ha):" << std::fixed << std::setprecision(15) << GlobalC::en.etot / 2.0 << std::endl;
-    std::cout << "Etot_without_rpa(Ha):" << std::fixed << std::setprecision(15)
+    std::cout << "etxc(Ha): " << std::fixed << std::setprecision(15) << GlobalC::en.etxc / 2.0 << std::endl;
+    std::cout << "etot(Ha): " << std::fixed << std::setprecision(15) << GlobalC::en.etot / 2.0 << std::endl;
+    std::cout << "Etot_without_rpa(Ha): " << std::fixed << std::setprecision(15)
               << (GlobalC::en.etot - GlobalC::en.etxc + rpa_exx_lcao_.get_energy()) / 2.0 << std::endl;
 
     return;
@@ -62,9 +63,7 @@ void DFT_RPA_interface::out_eigen_vector(const Parallel_Orbitals &parav, const p
             ofs.open(ss.str().c_str(), std::ios::out);
         std::vector<ModuleBase::ComplexMatrix> is_wfc_ib_iw(npsin_tmp);
         for (int is = 0; is < npsin_tmp; is++)
-        {
-            ofs << ik + 1 << std::endl;
-            
+        {   
             is_wfc_ib_iw[is].create(GlobalV::NBANDS,GlobalV::NLOCAL);
             for (int ib_global = 0; ib_global < GlobalV::NBANDS; ++ib_global)
             {
@@ -84,6 +83,7 @@ void DFT_RPA_interface::out_eigen_vector(const Parallel_Orbitals &parav, const p
                     is_wfc_ib_iw[is](ib_global,iw)=wfc_iks[iw];
             } // ib
         } // is
+        ofs << ik + 1 << std::endl;
         for(int iw=0; iw<GlobalV::NLOCAL; iw++)
         {
             for(int ib=0; ib<GlobalV::NBANDS; ib++)
@@ -131,7 +131,7 @@ void DFT_RPA_interface::out_struc()
     return;
 }
 
-void DFT_RPA_interface::out_bands()
+void DFT_RPA_interface::out_bands(const elecstate::ElecState* pelec)
 {
     ModuleBase::TITLE("DFT_RPA_interface", "out_bands");
     if (GlobalV::MY_RANK != 0)
@@ -142,7 +142,7 @@ void DFT_RPA_interface::out_bands()
     ss << "band_out";
     std::ofstream ofs;
     ofs.open(ss.str().c_str(), std::ios::out);
-    ofs << GlobalC::kv.nks << std::endl;
+    ofs << nks_tot << std::endl;
     ofs << GlobalV::NSPIN << std::endl;
     ofs << GlobalV::NBANDS << std::endl;
     ofs << GlobalV::NLOCAL << std::endl;
@@ -154,10 +154,10 @@ void DFT_RPA_interface::out_bands()
         {
             ofs << std::setw(6) << ik + 1 << std::setw(6) << is + 1 << std::endl;
             for (int ib = 0; ib != GlobalV::NBANDS; ib++)
-                ofs << std::setw(5) << ib + 1 << "   " << std::setw(8) << GlobalC::wf.wg(ik, ib) * nks_tot
+                ofs << std::setw(5) << ib + 1 << "   " << std::setw(8) << pelec->wg(ik + is*nks_tot, ib) * nks_tot
                     << std::setw(18) << std::fixed << std::setprecision(8)
-                    << GlobalC::wf.ekb[ik + is * nks_tot][ib] / 2.0 << std::setw(18) << std::fixed
-                    << std::setprecision(8) << GlobalC::wf.ekb[ik + is * nks_tot][ib] * ModuleBase::Ry_to_eV
+                    << pelec->ekb(ik + is * nks_tot, ib) / 2.0 << std::setw(18) << std::fixed
+                    << std::setprecision(8) << pelec->ekb(ik + is * nks_tot, ib) * ModuleBase::Ry_to_eV
                     << std::endl;
         }
     }
@@ -219,14 +219,14 @@ void DFT_RPA_interface::out_coulomb_k()
         mu_shift[I] = all_mu;
         all_mu += rpa_exx_lcao_.get_index_abfs()[GlobalC::ucell.iat2it[I]].count_size;
     }
-
+    const int nks_tot = GlobalV::NSPIN == 2 ? (int)GlobalC::kv.nks / 2 : GlobalC::kv.nks;
     std::stringstream ss;
     ss << "coulomb_mat_"<<GlobalV::MY_RANK<<".txt";
 
     std::ofstream ofs;
     ofs.open(ss.str().c_str(), std::ios::out);
 
-    ofs << GlobalC::kv.nks << std::endl;
+    ofs << nks_tot << std::endl;
     for (auto &Ip: rpa_exx_lcao_.get_Vps())
     {
         auto I = Ip.first;
@@ -236,13 +236,13 @@ void DFT_RPA_interface::out_coulomb_k()
             auto J = Jp.first;
             size_t nu_num = rpa_exx_lcao_.get_index_abfs()[GlobalC::ucell.iat2it[J]].count_size;
 
-            for (int ik = 0; ik != GlobalC::kv.nks; ik++)
+            for (int ik = 0; ik != nks_tot; ik++)
             {
                 ModuleBase::ComplexMatrix tmp_Vk(mu_num, nu_num);
                 tmp_Vk.zero_out();
                 ofs << all_mu << "   " << mu_shift[I] + 1 << "   " << mu_shift[I] + mu_num << "  " << mu_shift[J] + 1
                     << "   " << mu_shift[J] + nu_num << std::endl;
-                ofs << ik + 1 << "  " << GlobalC::kv.wk[ik] / 2.0 << std::endl;
+                ofs << ik + 1 << "  " << GlobalC::kv.wk[ik] / 2.0 * GlobalV::NSPIN << std::endl;
                 for (auto &Rp: Jp.second)
                 {
                     auto R = Rp.first;
@@ -267,18 +267,18 @@ void RPAExxLcao::exx_init()
 {
     std::cout << "rpa_exx_init!!!" << std::endl;
 #ifdef __MPI
-    if (GlobalC::exx_global.info.separate_loop)
+    if (GlobalC::exx_info.info_global.separate_loop)
     {
         Hexx_para.mixing_mode = Exx_Abfs::Parallel::Communicate::Hexx::Mixing_Mode::No;
         Hexx_para.mixing_beta = 0;
     }
     else
     {
-        if ("plain" == GlobalC::CHR.mixing_mode)
+        if ("plain" == GlobalC::CHR_MIX.get_mixing_mode())
         {
             Hexx_para.mixing_mode = Exx_Abfs::Parallel::Communicate::Hexx::Mixing_Mode::Plain;
         }
-        else if ("pulay" == GlobalC::CHR.mixing_mode)
+        else if ("pulay" == GlobalC::CHR_MIX.get_mixing_mode())
         {
             Hexx_para.mixing_mode = Exx_Abfs::Parallel::Communicate::Hexx::Mixing_Mode::Pulay;
         }
@@ -286,7 +286,7 @@ void RPAExxLcao::exx_init()
         {
             throw std::invalid_argument("exx mixing error. exx_separate_loop==false, mixing_mode!=plain or pulay");
         }
-        Hexx_para.mixing_beta = GlobalC::CHR.mixing_beta;
+        Hexx_para.mixing_beta = GlobalC::CHR_MIX.get_mixing_beta();
     }
 #endif
 
@@ -306,31 +306,26 @@ void RPAExxLcao::exx_init()
         abfs = Exx_Abfs::IO::construct_abfs(abfs_same_atom, GlobalC::ORB, info.files_abfs, kmesh_times);
     }
 
-    switch (info.hybrid_type)
-    {
-    case Exx_Global::Hybrid_Type::HF:
-        abfs_ccp = Conv_Coulomb_Pot_K::cal_orbs_ccp(abfs, Conv_Coulomb_Pot_K::Ccp_Type::Hf, {}, info.ccp_rmesh_times);
-        break;
-    case Exx_Global::Hybrid_Type::No:
-        abfs_ccp = Conv_Coulomb_Pot_K::cal_orbs_ccp(abfs, Conv_Coulomb_Pot_K::Ccp_Type::Hf, {}, info.ccp_rmesh_times);
-        break;
-    case Exx_Global::Hybrid_Type::PBE0:
-        abfs_ccp = Conv_Coulomb_Pot_K::cal_orbs_ccp(abfs, Conv_Coulomb_Pot_K::Ccp_Type::Hf, {}, info.ccp_rmesh_times);
-        break;
-    case Exx_Global::Hybrid_Type::HSE:
-        abfs_ccp = Conv_Coulomb_Pot_K::cal_orbs_ccp(abfs,
-                                                    Conv_Coulomb_Pot_K::Ccp_Type::Hse,
-                                                    {{"hse_omega", info.hse_omega}},
-                                                    info.ccp_rmesh_times);
-        break;
-    default:
-        throw std::domain_error(ModuleBase::GlobalFunc::TO_STRING(__FILE__) + " line "
-                                + ModuleBase::GlobalFunc::TO_STRING(__LINE__));
-    }
+
+	auto get_ccp_parameter = [this]() -> std::map<std::string,double>
+	{
+		switch(this->info.ccp_type)
+		{
+			case Conv_Coulomb_Pot_K::Ccp_Type::Ccp:
+				return {};
+			case Conv_Coulomb_Pot_K::Ccp_Type::Hf:
+				return {};
+			case Conv_Coulomb_Pot_K::Ccp_Type::Hse:
+				return {{"hse_omega", this->info.hse_omega}};
+			default:
+				throw std::domain_error(std::string(__FILE__)+" line "+std::to_string(__LINE__));	break;
+		}
+	};
+	this->abfs_ccp = Conv_Coulomb_Pot_K::cal_orbs_ccp( this->abfs, info.ccp_type, get_ccp_parameter(), this->info.ccp_rmesh_times );
 
     for (size_t T = 0; T != abfs.size(); ++T)
     {
-        Exx_Abfs::Lmax = std::max(Exx_Abfs::Lmax, static_cast<int>(abfs[T].size()) - 1);
+        GlobalC::exx_info.info_ri.abfs_Lmax = std::max(GlobalC::exx_info.info_ri.abfs_Lmax, static_cast<int>(abfs[T].size()) - 1);
     }
 
     const ModuleBase::Element_Basis_Index::Range &&range_lcaos = Exx_Abfs::Abfs_Index::construct_range(lcaos);

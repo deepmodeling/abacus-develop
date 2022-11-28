@@ -41,7 +41,7 @@ LCAO_Orbitals::~LCAO_Orbitals()
 }
 
 #ifdef __MPI
-// be called in unitcell_pseudo.
+// be called in UnitCell.
 void LCAO_Orbitals::bcast_files(
 	const int &ntype_in, 
 	const int &my_rank)
@@ -179,10 +179,10 @@ void LCAO_Orbitals::Read_Orbitals(
 	}
 
 	// jingan add for calculate r(R) matrix
-	if(out_mat_r) 
-	{
-		kmesh = kmesh * 4;
-	}
+	// if(out_mat_r) 
+	// {
+	// 	kmesh = kmesh * 4;
+	// }
 
 	//	this->kmesh = static_cast<int> (PI / 0.01 / 4 / this->dk);
 	if(kmesh%2==0) kmesh++;

@@ -23,7 +23,7 @@ berryphase::~berryphase()
 
 void berryphase::get_occupation_bands()
 {
-	double occupied_bands = static_cast<double>(GlobalC::CHR.nelec/ModuleBase::DEGSPIN);	
+	double occupied_bands = static_cast<double>(GlobalV::nelec/ModuleBase::DEGSPIN);	
 	if( (occupied_bands - std::floor(occupied_bands)) > 0.0 )
 	{
 		occupied_bands = std::floor(occupied_bands) + 1.0;
@@ -489,7 +489,7 @@ void berryphase::Macroscopic_polarization(const psi::Psi<std::complex<double>>* 
 	{
 		for(int ia = 0; ia < GlobalC::ucell.atoms[it].na; ia++)
 		{
-			if(GlobalC::ucell.atoms[it].zv % 2 == 1)
+			if(GlobalC::ucell.atoms[it].ncpp.zv % 2 == 1)
 			{
 				mod_ion[atom_index] = 1;
 				lodd = true;
@@ -508,9 +508,9 @@ void berryphase::Macroscopic_polarization(const psi::Psi<std::complex<double>>* 
 	{
 		for(int ia = 0; ia < GlobalC::ucell.atoms[it].na; ia++)
 		{
-			pdl_ion_R1[atom_index] = GlobalC::ucell.atoms[it].zv * (GlobalC::ucell.atoms[it].tau[ia] * rcell_1);
-			pdl_ion_R2[atom_index] = GlobalC::ucell.atoms[it].zv * (GlobalC::ucell.atoms[it].tau[ia] * rcell_2);
-			pdl_ion_R3[atom_index] = GlobalC::ucell.atoms[it].zv * (GlobalC::ucell.atoms[it].tau[ia] * rcell_3);
+			pdl_ion_R1[atom_index] = GlobalC::ucell.atoms[it].ncpp.zv * (GlobalC::ucell.atoms[it].tau[ia] * rcell_1);
+			pdl_ion_R2[atom_index] = GlobalC::ucell.atoms[it].ncpp.zv * (GlobalC::ucell.atoms[it].tau[ia] * rcell_2);
+			pdl_ion_R3[atom_index] = GlobalC::ucell.atoms[it].ncpp.zv * (GlobalC::ucell.atoms[it].tau[ia] * rcell_3);
 			atom_index++;
 		}
 	}

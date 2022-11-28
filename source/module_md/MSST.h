@@ -1,12 +1,12 @@
 #ifndef MSST_H
 #define MSST_H
 
-#include "verlet.h"
+#include "mdrun.h"
 
-class MSST : public Verlet
+class MSST : public MDrun
 {
 public:
-    MSST(MD_parameters& MD_para_in, UnitCell_pseudo &unit_in);
+    MSST(MD_parameters& MD_para_in, UnitCell &unit_in);
     ~MSST();
 
     void setup(ModuleESolver::ESolver *p_ensolve);

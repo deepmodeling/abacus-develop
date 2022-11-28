@@ -4,13 +4,15 @@ include Makefile.vars
 # Compiler information 
 #==========================
 INCLUDES = -I. -Icommands -I../
-LIBS = -lifcore -lm -lpthread
+LIBS = -lm -lpthread
 OPTS = -Ofast -march=native -std=c++14 -pedantic -m64 ${INCLUDES}
 HONG = -D__LCAO
+HONG += -D__ELPA
 OBJ_DIR = obj
 BIN_DIR = ../bin
+SOURCE_DIR = .
 ifeq ($(findstring mpi, $(CC)), mpi)
-     # We do not support EXX in serial version temporarily.
+     # We do not support EXX in sequential version temporarily.
      HONG += -D__MPI -D__EXX -DEXX_H_COMM=2 -DUSE_CEREAL_SERIALIZATION -DEXX_DM=3 -DEXX_H_COMM=2 -DTEST_EXX_LCAO=0 -DTEST_EXX_RADIAL=1
      MPI = ON
      TESTNP = 4
@@ -28,17 +30,19 @@ endif
 
 ifeq ($(DEBUG), ON)
     INTEL = OFF
-    HONG += -D__DEBUG
+    HONG += -DDEBUG
     ifeq ($(MPI), ON)
         CC = mpicxx
     else
         CC = g++
     endif
     OPTS +=  -fsanitize=address -fno-omit-frame-pointer -Wall -g #It can check segmental defaults
+else
+    HONG += -DNDEBUG
 endif
 
 ifeq ($(INTEL), ON)
-    OPTS += -simd -qopenmp
+    OPTS += -lifcore -simd -qopenmp
     ##==========================
     ## MKL package
     ##==========================
@@ -78,6 +82,8 @@ endif
 #==========================
 INCLUDES += -I${CEREAL_DIR}/include
 
+
+
 ##==========================
 ## CUDA needed 
 ##==========================
@@ -102,7 +108,16 @@ ifdef LIBXC_DIR
     HONG                += -DUSE_LIBXC
     INCLUDES            += -I${LIBXC_INCLUDE_DIR}
     LIBS 			    += -L${LIBXC_LIB_DIR} -Wl,-rpath=${LIBXC_LIB_DIR} -lxc
+    PWTAG               += 'LIBXC_DIR=${LIBXC_DIR}'
 endif
+
+ifdef LIBRI_DIR
+    INCLUDES += -I${LIBRI_DIR}/include
+    INCLUDES += -I${LIBCOMM_DIR}/include
+    HONG                += -DUSE_LIBRI
+    HONG += -D__EXX
+endif
+
 ifdef LIBTORCH_DIR
  ifdef LIBNPY_DIR
       LIBTORCH_INCLUDE_DIR =  -I${LIBTORCH_DIR}/include -I${LIBTORCH_DIR}/include/torch/csrc/api/include
@@ -113,6 +128,26 @@ ifdef LIBTORCH_DIR
       INCLUDES += $(LIBTORCH_INCLUDE_DIR) $(CNPY_INCLUDE_DIR)
       LIBS += $(LIBTORCH_LIB)
   endif
+endif
+
+ifdef DeePMD_DIR
+    HONG  += -D__DPMD -DHIGH_PREC 
+    OPTS  += -Wl,--no-as-needed
+    ##==========================
+    ## DeePMD-kit package
+    ##==========================
+    DeeP_LIB_DIR = ${DeePMD_DIR}/lib
+    LIBS += -L${DeeP_LIB_DIR} -ldeepmd_cc -ldeepmd_op -ldeepmd_op_cuda -Wl,-rpath=${DeeP_LIB_DIR}
+    DeeP_INCLUDE_DIR = ${DeePMD_DIR}/include
+    INCLUDES += -I${DeeP_INCLUDE_DIR}
+
+    #==========================
+    # TensorFlow package
+    #==========================
+    TensorFlow_LIB_DIR = ${TensorFlow_DIR}/lib
+    LIBS += -L${TensorFlow_LIB_DIR} -ltensorflow_cc -Wl,-rpath=${TensorFlow_LIB_DIR}
+    TensorFlow_INCLUDE_DIR = ${TensorFlow_DIR}/include
+    INCLUDES += -I${TensorFlow_INCLUDE_DIR}
 endif
 
 include Makefile.Objects
@@ -128,14 +163,12 @@ HONG += -D__SELINV -DMETIS
 #==========================
 # OBJECTS NEEDED
 #==========================
-FP_OBJS_0=$(OBJS_FIRST_PRINCIPLES)\
-main.o\
 
 ifeq ($(MPI), ON)
-    FP_OBJS_0 += $(OBJS_PDIAG) $(PDIAG_MR_0) $(OBJS_EXX)
+    OBJS_ABACUS += $(OBJS_EXX)
 endif
 
-FP_OBJS=$(patsubst %.o, ${OBJ_DIR}/%.o, ${FP_OBJS_0})
+FP_OBJS=$(patsubst %.o, ${OBJ_DIR}/%.o, ${OBJS_ABACUS})
 
 #==========================
 # MAKING OPTIONS
@@ -151,11 +184,11 @@ test:
 
 pw $(BIN_DIR)/${VERSION}-PW.x:
 	@ if [ ! -d $(BIN_DIR) ]; then mkdir $(BIN_DIR); fi
-	@ cd src_pw; $(MAKE) CC=${CC} GPU=${GPU} DEBUG=$(DEBUG) FFTW_DIR=$(FFTW_DIR) OPENBLAS_LIB_DIR=$(OPENBLAS_LIB_DIR)
+	@ cd src_pw; $(MAKE) CC=${CC} GPU=${GPU} DEBUG=$(DEBUG) FFTW_DIR=$(FFTW_DIR) OPENBLAS_LIB_DIR=$(OPENBLAS_LIB_DIR) ${PWTAG}
 	@ cp src_pw/${VERSION}-PW.x $(BIN_DIR)/${VERSION}-PW.x
 
-$(BIN_DIR)/${VERSION}.$(suffix) : ${FP_OBJS} ${PDIAG_OBJS} ${PDIAG_MR} ${HEADERS}
-	${CC} ${OPTS} ${OPTS_MPI} $(FP_OBJS) ${PDIAG_OBJS} ${PDIAG_MR} ${LIBS} -o  $(BIN_DIR)/${VERSION}.$(suffix)
+$(BIN_DIR)/${VERSION}.$(suffix) : ${FP_OBJS} ${PDIAG_OBJS} ${HEADERS}
+	${CC} ${OPTS} ${OPTS_MPI} $(FP_OBJS) ${PDIAG_OBJS} ${LIBS} -o  $(BIN_DIR)/${VERSION}.$(suffix)
 
 # ${VERSION}.fp_mem.x : ${FP_OBJS} ../src_parallel/mcd.o ${HEADERS}
 # 	@ if [ ! -d $(BIN_DIR) ]; then mkdir $(BIN_DIR); fi
@@ -172,6 +205,4 @@ ${OBJ_DIR}/%.o:%.cpp
 clean:
 	@ if [ -d $(OBJ_DIR) ]; then rm -rf $(OBJ_DIR); fi
 	@ if [ -d $(BIN_DIR) ]; then rm -rf $(BIN_DIR); fi
-	@ if [ -e ${VERSION}.* ]; then rm -f ${VERSION}.*; fi
 	@ cd src_pw; make clean
-# @ if [ -e ${VERSION}.fp_mem.x ]; then rm -f ${VERSION}.fp_mem.x; fi

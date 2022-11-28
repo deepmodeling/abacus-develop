@@ -1,12 +1,12 @@
 #ifndef FIRE_H
 #define FIRE_H
 
-#include "verlet.h"
+#include "mdrun.h"
 
-class FIRE : public Verlet
+class FIRE : public MDrun
 {
 public:
-    FIRE(MD_parameters& MD_para_in, UnitCell_pseudo &unit_in);
+    FIRE(MD_parameters& MD_para_in, UnitCell &unit_in);
     ~FIRE();
 
     void setup(ModuleESolver::ESolver *p_ensolve);

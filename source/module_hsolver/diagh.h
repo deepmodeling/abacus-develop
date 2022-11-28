@@ -9,6 +9,7 @@
 namespace hsolver
 {
 
+template <typename FPTYPE, typename Device = psi::DEVICE_CPU>
 class DiagH
 {
   public:
@@ -16,10 +17,9 @@ class DiagH
     // virtual void init()=0;
     std::string method = "none";
 
-    virtual void diag(hamilt::Hamilt *phm_in, psi::Psi<std::complex<double>> &psi, double *eigenvalue_in) = 0;
+    virtual void diag(hamilt::Hamilt<FPTYPE, Device> *phm_in, psi::Psi<std::complex<FPTYPE>, Device> &psi, FPTYPE *eigenvalue_in) = 0;
 
-    virtual void diag(hamilt::Hamilt *phm_in, psi::Psi<double> &psi, double *eigenvalue_in)
-    {
+    virtual void diag(hamilt::Hamilt<FPTYPE, Device> *phm_in, psi::Psi<FPTYPE, Device> &psi, FPTYPE *eigenvalue_in) {
         return;
     }
 };

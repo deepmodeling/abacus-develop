@@ -18,6 +18,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <vector>
+#include <unistd.h>
 Input INPUT;
 
 void Input::Init(const std::string &fn)
@@ -129,10 +130,11 @@ void Input::Default(void)
     read_file_dir = "auto";
     // pseudo_type = "auto"; // mohan add 2013-05-20 (xiaohui add 2013-06-23)
     wannier_card = "";
-    latname = "test";
+    latname = "none";
     // xiaohui modify 2015-09-15, relax -> scf
     // calculation = "relax";
     calculation = "scf";
+    esolver_type = "ksdft";
     pseudo_rcut = 15.0; // qianrui add this parameter 2021-5
     pseudo_mesh = false; // qianrui add this pararmeter
     ntype = 0;
@@ -174,8 +176,6 @@ void Input::Default(void)
     //----------------------------------------------------------
     // new function
     //----------------------------------------------------------
-    // local_basis=0; xiaohui modify 2013-09-01
-    // linear_scaling=false; xiaohui modify 2013-09-01
     basis_type = "pw"; // xiaohui add 2013-09-01
     ks_solver = "default"; // xiaohui add 2013-09-01
     search_radius = -1.0; // unit: a.u. -1.0 has no meaning.
@@ -193,15 +193,19 @@ void Input::Default(void)
     press3 = 0.0;
     cal_stress = false;
     fixed_axes = "None"; // pengfei 2018-11-9
+    fixed_ibrav = false;
+    fixed_atoms = false;
     relax_method = "cg"; // pengfei  2014-10-13
     relax_cg_thr = 0.5; // pengfei add 2013-08-15
     out_level = "ie";
     out_md_control = false;
+    relax_new = true;
     relax_bfgs_w1 = 0.01; // mohan add 2011-03-13
     relax_bfgs_w2 = 0.5;
     relax_bfgs_rmax = 0.8; // bohr
     relax_bfgs_rmin = 1e-5;
     relax_bfgs_init = 0.5; // bohr
+    relax_scale_force = 0.5;
     nbspline = -1;
     //----------------------------------------------------------
     // ecutwfc
@@ -271,6 +275,7 @@ void Input::Default(void)
     out_freq_ion = 0;
     out_chg = 0;
     out_dm = 0;
+    out_dm1 = 0;
 
     deepks_out_labels = 0; // caoyu added 2020-11-24, mohan added 2021-01-03
     deepks_scf = 0;
@@ -348,7 +353,7 @@ void Input::Default(void)
     // exx										//Peize Lin add 2018-06-20
     //----------------------------------------------------------
 
-    exx_hybrid_alpha = 0.25;
+    exx_hybrid_alpha = "default";
     exx_hse_omega = 0.11;
 
     exx_separate_loop = true;
@@ -362,8 +367,11 @@ void Input::Default(void)
     exx_dm_threshold = 0;
     exx_schwarz_threshold = 0;
     exx_cauchy_threshold = 0;
+    exx_c_grad_threshold = 0;
+    exx_v_grad_threshold = 0;
+    exx_cauchy_grad_threshold = 0;
     exx_ccp_threshold = 1E-8;
-    exx_ccp_rmesh_times = 10;
+    exx_ccp_rmesh_times = "default";
 
     exx_distribute_type = "htime";
 
@@ -382,7 +390,6 @@ void Input::Default(void)
     //----------------------------------------------------------			//Fuxiang He add 2016-10-26
     // tddft
     //----------------------------------------------------------
-    tddft = 0;
     td_scf_thr = 1e-9;
     td_dt = 0.02;
     td_force_dt = 0.02;
@@ -453,6 +460,29 @@ void Input::Default(void)
     sigma_k = 0.6;
     nc_k = 0.00037;
 
+    //==========================================================
+    //    OFDFT sunliang added on 2022-05-05
+    //==========================================================
+    of_kinetic = "wt";
+    of_method = "tn";
+    of_conv = "energy";
+    of_tole = 1e-6;
+    of_tolp = 1e-5;
+    of_tf_weight = 1.;
+    of_vw_weight = 1.;
+    of_wt_alpha = 5./6.;
+    of_wt_beta = 5./6.;
+    of_wt_rho0 = 0.;
+    of_hold_rho0 = false;
+    of_full_pw = true;
+    of_full_pw_dim = 0;
+    of_read_kernel = false;
+    of_kernel_file = "WTkernel.txt";
+
+    //==========================================================
+    //    OFDFT sunliang added on 2022-11-15
+    //==========================================================
+    device = "cpu";
     return;
 }
 
@@ -552,6 +582,10 @@ bool Input::Read(const std::string &fn)
         else if (strcmp("calculation", word) == 0) // which type calculation
         {
             read_value(ifs, calculation);
+        }
+        else if (strcmp("esolver_type", word) == 0)
+        {
+            read_value(ifs, esolver_type);
         }
         else if (strcmp("ntype", word) == 0) // number of atom types
         {
@@ -687,6 +721,10 @@ bool Input::Read(const std::string &fn)
         {
             read_value(ifs, nelec);
         }
+        else if (strcmp("nupdown", word) == 0)
+        {
+            read_value(ifs, nupdown);
+        }
         else if (strcmp("lmaxmax", word) == 0)
         {
             read_value(ifs, lmaxmax);
@@ -699,18 +737,10 @@ bool Input::Read(const std::string &fn)
         //----------------------------------------------------------
         // new function
         //----------------------------------------------------------
-        // else if (strcmp("local_basis", word) == 0)
-        //{
-        //    read_value(ifs, local_basis);
-        //} xiaohui modify 2013-09-01
         else if (strcmp("basis_type", word) == 0)
         {
             read_value(ifs, basis_type);
         } // xiaohui add 2013-09-01
-        // else if (strcmp("linear_scaling", word) == 0)
-        //{
-        //     read_value(ifs, linear_scaling);
-        // } xiaohui modify 2013-09-01
         else if (strcmp("ks_solver", word) == 0)
         {
             read_value(ifs, ks_solver);
@@ -780,6 +810,14 @@ bool Input::Read(const std::string &fn)
         {
             read_value(ifs, fixed_axes);
         }
+        else if (strcmp("fixed_ibrav", word) == 0)
+        {
+            read_value(ifs, fixed_ibrav);
+        }
+        else if (strcmp("fixed_atoms", word) == 0)
+        {
+            read_value(ifs, fixed_atoms);
+        }
         else if (strcmp("relax_method", word) == 0)
         {
             read_value(ifs, relax_method);
@@ -813,12 +851,15 @@ bool Input::Read(const std::string &fn)
         {
             read_value(ifs, relax_bfgs_init);
         }
-        //		else if (strcmp("gauss_pao_flag", word) == 0)
-        //		else if (strcmp("gauss_pao_flag", word) == 0)
-        //		else if (strcmp("gauss_pao_flag", word) == 0)
-        //		{
-        //			read_value(ifs, gauss_PAO_flag);
-        //		}
+        else if (strcmp("relax_scale_force", word) == 0)
+        {
+            read_value(ifs, relax_scale_force);
+        }
+        else if (strcmp("relax_new", word) == 0)
+        {
+            read_value(ifs, relax_new);
+        }
+
         //----------------------------------------------------------
         // plane waves
         //----------------------------------------------------------
@@ -975,11 +1016,6 @@ bool Input::Read(const std::string &fn)
         else if (strcmp("mixing_type", word) == 0)
         {
             read_value(ifs, mixing_mode);
-            // 2015-06-15, xiaohui
-            if (mixing_mode == "pulay-kerker")
-            {
-                mixing_gg0 = 1.5;
-            }
         }
         else if (strcmp("mixing_beta", word) == 0)
         {
@@ -1035,6 +1071,10 @@ bool Input::Read(const std::string &fn)
         else if (strcmp("out_dm", word) == 0)
         {
             read_value(ifs, out_dm);
+        }
+        else if (strcmp("out_dm1", word) == 0)
+        {
+            read_value(ifs, out_dm1);
         }
         else if (strcmp("deepks_out_labels", word) == 0) // caoyu added 2020-11-24, mohan modified 2021-01-03
         {
@@ -1166,11 +1206,25 @@ bool Input::Read(const std::string &fn)
         {
             read_value(ifs, lcao_rmax);
         }
-        // about molecular dynamics
-        // added begin by zheng daye
+        //----------------------------------------------------------
+        // Molecule Dynamics
+        // Yu Liu add 2021-07-30
+        //----------------------------------------------------------
         else if (strcmp("md_type", word) == 0)
         {
             read_value(ifs, mdp.md_type);
+        }
+        else if (strcmp("md_thermostat", word) == 0)
+        {
+            read_value(ifs, mdp.md_thermostat);
+        }
+        else if (strcmp("md_nraise", word) == 0)
+        {
+            read_value(ifs, mdp.md_nraise);
+        }
+        else if (strcmp("md_tolerance", word) == 0)
+        {
+            read_value(ifs, mdp.md_tolerance);
         }
         else if (strcmp("md_nstep", word) == 0)
         {
@@ -1180,9 +1234,9 @@ bool Input::Read(const std::string &fn)
         {
             read_value(ifs, mdp.md_dt);
         }
-        else if (strcmp("md_mnhc", word) == 0)
+        else if (strcmp("md_tchain", word) == 0)
         {
-            read_value(ifs, mdp.md_mnhc);
+            read_value(ifs, mdp.md_tchain);
         }
         else if (strcmp("md_tfirst", word) == 0)
         {
@@ -1208,11 +1262,30 @@ bool Input::Read(const std::string &fn)
         {
             read_value(ifs, mdp.md_restart);
         }
-        // added by zheng daye
-        //----------------------------------------------------------
-        // Classic MD
-        // Yu Liu add 2021-07-30
-        //----------------------------------------------------------
+        else if (strcmp("md_pmode", word) == 0)
+        {
+            read_value(ifs, mdp.md_pmode);
+        }
+        else if (strcmp("md_pcouple", word) == 0)
+        {
+            read_value(ifs, mdp.md_pcouple);
+        }
+        else if (strcmp("md_pchain", word) == 0)
+        {
+            read_value(ifs, mdp.md_pchain);
+        }
+        else if (strcmp("md_pfirst", word) == 0)
+        {
+            read_value(ifs, mdp.md_pfirst);
+        }
+        else if (strcmp("md_plast", word) == 0)
+        {
+            read_value(ifs, mdp.md_plast);
+        }
+        else if (strcmp("md_pfreq", word) == 0)
+        {
+            read_value(ifs, mdp.md_pfreq);
+        }
         else if (strcmp("lj_rcut", word) == 0)
         {
             read_value(ifs, mdp.lj_rcut);
@@ -1224,10 +1297,6 @@ bool Input::Read(const std::string &fn)
         else if (strcmp("lj_sigma", word) == 0)
         {
             read_value(ifs, mdp.lj_sigma);
-        }
-        else if (strcmp("md_ensolver", word) == 0)
-        {
-            read_value(ifs, mdp.md_ensolver);
         }
         else if (strcmp("msst_direction", word) == 0)
         {
@@ -1256,6 +1325,10 @@ bool Input::Read(const std::string &fn)
         else if (strcmp("md_damp", word) == 0)
         {
             read_value(ifs, mdp.md_damp);
+        }
+        else if (strcmp("pot_file", word) == 0)
+        {
+            read_value(ifs, mdp.pot_file);
         }
         //----------------------------------------------------------
         // efield and dipole correction
@@ -1321,10 +1394,6 @@ bool Input::Read(const std::string &fn)
         // tddft
         // Fuxiang He add 2016-10-26
         //----------------------------------------------------------
-        else if (strcmp("tddft", word) == 0)
-        {
-            read_value(ifs, tddft);
-        }
         else if (strcmp("td_scf_thr", word) == 0)
         {
             read_value(ifs, td_scf_thr);
@@ -1518,6 +1587,18 @@ bool Input::Read(const std::string &fn)
         {
             read_value(ifs, exx_cauchy_threshold);
         }
+        else if (strcmp("exx_c_grad_threshold", word) == 0)
+        {
+            read_value(ifs, exx_c_grad_threshold);
+        }
+        else if (strcmp("exx_v_grad_threshold", word) == 0)
+        {
+            read_value(ifs, exx_v_grad_threshold);
+        }
+        else if (strcmp("exx_cauchy_grad_threshold", word) == 0)
+        {
+            read_value(ifs, exx_cauchy_grad_threshold);
+        }
         else if (strcmp("exx_ccp_threshold", word) == 0)
         {
             read_value(ifs, exx_ccp_threshold);
@@ -1623,6 +1704,75 @@ bool Input::Read(const std::string &fn)
         else if (strcmp("nc_k", word) == 0)
         {
             read_value(ifs, nc_k);
+        }
+        //----------------------------------------------------------------------------------
+        //    OFDFT sunliang added on 2022-05-05
+        //----------------------------------------------------------------------------------
+        else if (strcmp("of_kinetic", word) == 0)
+        {
+            read_value(ifs, of_kinetic);
+        }
+        else if (strcmp("of_method", word) == 0)
+        {
+            read_value(ifs, of_method);
+        }
+        else if (strcmp("of_conv", word) == 0)
+        {
+            read_value(ifs, of_conv);
+        }
+        else if (strcmp("of_tole", word) == 0)
+        {
+            read_value(ifs, of_tole);
+        }
+        else if (strcmp("of_tolp", word) == 0)
+        {
+            read_value(ifs, of_tolp);
+        }
+        else if (strcmp("of_tf_weight", word) == 0)
+        {
+            read_value(ifs, of_tf_weight);
+        }
+        else if (strcmp("of_vw_weight", word) == 0)
+        {
+            read_value(ifs, of_vw_weight);
+        }
+        else if (strcmp("of_wt_alpha", word) == 0)
+        {
+            read_value(ifs, of_wt_alpha);
+        }
+        else if (strcmp("of_wt_beta", word) == 0)
+        {
+            read_value(ifs, of_wt_beta);
+        }
+        else if (strcmp("of_wt_rho0", word) == 0)
+        {
+            read_value(ifs, of_wt_rho0);
+        }
+        else if (strcmp("of_hold_rho0", word) == 0)
+        {
+            read_value(ifs, of_hold_rho0);
+        }
+        else if (strcmp("of_full_pw", word) == 0)
+        {
+            read_value(ifs, of_full_pw);
+        }
+        else if (strcmp("of_full_pw_dim", word) == 0)
+        {
+            read_value(ifs, of_full_pw_dim);
+        }
+        else if (strcmp("of_read_kernel", word) == 0)
+        {
+            read_value(ifs, of_read_kernel);
+        }
+        else if (strcmp("of_kernel_file", word) == 0)
+        {
+            read_value(ifs, of_kernel_file);
+        }
+        //----------------------------------------------------------------------------------
+        //    device control denghui added on 2022-11-05
+        //----------------------------------------------------------------------------------     
+        else if (strcmp("device", word) == 0) {
+            read_value(ifs, device);
         }
         //----------------------------------------------------------------------------------
         else
@@ -1795,7 +1945,7 @@ bool Input::Read(const std::string &fn)
         if (strcmp("genelpa", ks_solver.c_str()) != 0 && strcmp(ks_solver.c_str(), "scalapack_gvx") != 0)
         {
             std::cout
-                << " WRONG ARGUMENTS OF ks_solver in DFT+U routine, only genelpa and scalapack_gvx are supportted "
+                << " WRONG ARGUMENTS OF ks_solver in DFT+U routine, only genelpa and scalapack_gvx are supported "
                 << std::endl;
             exit(0);
         }
@@ -1889,11 +2039,13 @@ bool Input::Read(const std::string &fn)
             exit(0);
         }
 
+        /*
         if (strcmp("genelpa", ks_solver.c_str()) != 0)
         {
             std::cout << " WRONG ARGUMENTS OF ks_solver in DFT+DMFT routine, only genelpa is support " << std::endl;
             exit(0);
         }
+         */
     }
 
     if (basis_type == "pw" && gamma_only !=0) // pengfei Li add 2015-1-31
@@ -1987,11 +2139,29 @@ void Input::Default_2(void) // jiyy add 2019-08-04
             vdw_cutoff_radius = "95";
         }
     }
-    if(calculation.substr(0,3) != "sto")    bndpar = 1;
+    if(esolver_type != "sdft")    bndpar = 1;
     if(bndpar > GlobalV::NPROC) bndpar = GlobalV::NPROC;
     if(method_sto != 1 && method_sto != 2) 
     {
         method_sto = 2;
+    }
+    if(of_wt_rho0 != 0) of_hold_rho0 = true; // sunliang add 2022-06-17
+    if(!of_full_pw) of_full_pw_dim = 0; // sunliang add 2022-08-31
+    if(of_kinetic != "wt") of_read_kernel = false; // sunliang add 2022-09-12
+
+    if (exx_hybrid_alpha == "default")
+    {
+        if (dft_functional == "hf")
+            exx_hybrid_alpha = "1";
+        else if (dft_functional == "pbe0" || dft_functional == "hse" || dft_functional == "scan0")
+            exx_hybrid_alpha = "0.25";
+    }
+    if (exx_ccp_rmesh_times == "default")
+    {
+        if (dft_functional == "hf" || dft_functional == "pbe0" || dft_functional == "scan0")
+            exx_ccp_rmesh_times = "10";
+        else if (dft_functional == "hse")
+            exx_ccp_rmesh_times = "1.5";
     }
 }
 #ifdef __MPI
@@ -2012,6 +2182,7 @@ void Input::Bcast()
     Parallel_Common::bcast_string(wannier_card);
     Parallel_Common::bcast_string(latname);
     Parallel_Common::bcast_string(calculation);
+    Parallel_Common::bcast_string(esolver_type);
     Parallel_Common::bcast_double(pseudo_rcut);
     Parallel_Common::bcast_bool(pseudo_mesh);
     Parallel_Common::bcast_int(ntype);
@@ -2047,6 +2218,7 @@ void Input::Bcast()
     Parallel_Common::bcast_double(xc_temperature);
     Parallel_Common::bcast_int(nspin);
     Parallel_Common::bcast_double(nelec);
+    Parallel_Common::bcast_double(nupdown);
     Parallel_Common::bcast_int(lmaxmax);
 
     Parallel_Common::bcast_double(tot_magnetization);
@@ -2069,6 +2241,8 @@ void Input::Bcast()
     Parallel_Common::bcast_double(press3);
     Parallel_Common::bcast_bool(cal_stress);
     Parallel_Common::bcast_string(fixed_axes);
+    Parallel_Common::bcast_bool(fixed_ibrav);
+    Parallel_Common::bcast_bool(fixed_atoms);
     Parallel_Common::bcast_string(relax_method);
     Parallel_Common::bcast_double(relax_cg_thr); // pengfei add 2013-08-15
     Parallel_Common::bcast_string(out_level);
@@ -2078,6 +2252,8 @@ void Input::Bcast()
     Parallel_Common::bcast_double(relax_bfgs_rmax);
     Parallel_Common::bcast_double(relax_bfgs_rmin);
     Parallel_Common::bcast_double(relax_bfgs_init);
+    Parallel_Common::bcast_double(relax_scale_force);
+    Parallel_Common::bcast_bool(relax_new);
 
     Parallel_Common::bcast_bool(gamma_only);
     Parallel_Common::bcast_bool(gamma_only_local);
@@ -2135,6 +2311,7 @@ void Input::Bcast()
     Parallel_Common::bcast_int(out_freq_ion);
     Parallel_Common::bcast_int(out_chg);
     Parallel_Common::bcast_int(out_dm);
+    Parallel_Common::bcast_int(out_dm1);
 
     Parallel_Common::bcast_bool(deepks_out_labels); // caoyu added 2020-11-24, mohan modified 2021-01-03
     Parallel_Common::bcast_bool(deepks_scf);
@@ -2184,9 +2361,10 @@ void Input::Bcast()
     */
     // zheng daye add 2014/5/5
     Parallel_Common::bcast_int(mdp.md_type);
+    Parallel_Common::bcast_string(mdp.md_thermostat);
     Parallel_Common::bcast_int(mdp.md_nstep);
     Parallel_Common::bcast_double(mdp.md_dt);
-    Parallel_Common::bcast_int(mdp.md_mnhc);
+    Parallel_Common::bcast_int(mdp.md_tchain);
     Parallel_Common::bcast_double(mdp.msst_qmass);
     Parallel_Common::bcast_double(mdp.md_tfirst);
     Parallel_Common::bcast_double(mdp.md_tlast);
@@ -2197,13 +2375,21 @@ void Input::Bcast()
     Parallel_Common::bcast_double(mdp.lj_rcut);
     Parallel_Common::bcast_double(mdp.lj_epsilon);
     Parallel_Common::bcast_double(mdp.lj_sigma);
-    Parallel_Common::bcast_string(mdp.md_ensolver);
     Parallel_Common::bcast_int(mdp.msst_direction);
     Parallel_Common::bcast_double(mdp.msst_vel);
     Parallel_Common::bcast_double(mdp.msst_vis);
     Parallel_Common::bcast_double(mdp.msst_tscale);
     Parallel_Common::bcast_double(mdp.md_tfreq);
     Parallel_Common::bcast_double(mdp.md_damp);
+    Parallel_Common::bcast_string(mdp.pot_file);
+    Parallel_Common::bcast_int(mdp.md_nraise);
+    Parallel_Common::bcast_double(mdp.md_tolerance);
+    Parallel_Common::bcast_string(mdp.md_pmode);
+    Parallel_Common::bcast_string(mdp.md_pcouple);
+    Parallel_Common::bcast_int(mdp.md_pchain);
+    Parallel_Common::bcast_double(mdp.md_pfirst);
+    Parallel_Common::bcast_double(mdp.md_plast);
+    Parallel_Common::bcast_double(mdp.md_pfreq);
     // Yu Liu add 2022-05-18
     Parallel_Common::bcast_bool(efield_flag);
     Parallel_Common::bcast_bool(dip_cor_flag);
@@ -2254,7 +2440,6 @@ void Input::Bcast()
     Parallel_Common::bcast_int(vdw_cutoff_period.y);
     Parallel_Common::bcast_int(vdw_cutoff_period.z);
     // Fuxiang He add 2016-10-26
-    Parallel_Common::bcast_int(tddft);
     Parallel_Common::bcast_int(td_val_elec_01);
     Parallel_Common::bcast_int(td_val_elec_02);
     Parallel_Common::bcast_int(td_val_elec_03);
@@ -2273,7 +2458,7 @@ void Input::Bcast()
     Parallel_Common::bcast_int(out_mul); // qifeng add 2019/9/10
 
     // Peize Lin add 2018-06-20
-    Parallel_Common::bcast_double(exx_hybrid_alpha);
+    Parallel_Common::bcast_string(exx_hybrid_alpha);
     Parallel_Common::bcast_double(exx_hse_omega);
     Parallel_Common::bcast_bool(exx_separate_loop);
     Parallel_Common::bcast_int(exx_hybrid_step);
@@ -2284,8 +2469,11 @@ void Input::Bcast()
     Parallel_Common::bcast_double(exx_dm_threshold);
     Parallel_Common::bcast_double(exx_schwarz_threshold);
     Parallel_Common::bcast_double(exx_cauchy_threshold);
+    Parallel_Common::bcast_double(exx_c_grad_threshold);
+    Parallel_Common::bcast_double(exx_v_grad_threshold);
+    Parallel_Common::bcast_double(exx_cauchy_grad_threshold);
     Parallel_Common::bcast_double(exx_ccp_threshold);
-    Parallel_Common::bcast_double(exx_ccp_rmesh_times);
+    Parallel_Common::bcast_string(exx_ccp_rmesh_times);
     Parallel_Common::bcast_string(exx_distribute_type);
     Parallel_Common::bcast_int(exx_opt_orb_lmax);
     Parallel_Common::bcast_double(exx_opt_orb_ecut);
@@ -2342,6 +2530,29 @@ void Input::Bcast()
     Parallel_Common::bcast_double(tau);
     Parallel_Common::bcast_double(sigma_k);
     Parallel_Common::bcast_double(nc_k);
+
+    //----------------------------------------------------------------------------------
+    //    OFDFT sunliang added on 2022-05-05
+    //----------------------------------------------------------------------------------
+    Parallel_Common::bcast_string(of_kinetic);
+    Parallel_Common::bcast_string(of_method);
+    Parallel_Common::bcast_string(of_conv);
+    Parallel_Common::bcast_double(of_tole);
+    Parallel_Common::bcast_double(of_tolp);
+    Parallel_Common::bcast_double(of_tf_weight);
+    Parallel_Common::bcast_double(of_vw_weight);
+    Parallel_Common::bcast_double(of_wt_alpha);
+    Parallel_Common::bcast_double(of_wt_beta);
+    Parallel_Common::bcast_double(of_wt_rho0);
+    Parallel_Common::bcast_bool(of_hold_rho0);
+    Parallel_Common::bcast_bool(of_full_pw);
+    Parallel_Common::bcast_int(of_full_pw_dim);
+    Parallel_Common::bcast_bool(of_read_kernel);
+    Parallel_Common::bcast_string(of_kernel_file);
+    //----------------------------------------------------------------------------------
+    //    device control denghui added on 2022-11-05
+    //----------------------------------------------------------------------------------
+    Parallel_Common::bcast_string(device);
 
     return;
 }
@@ -2418,15 +2629,6 @@ void Input::Check(void)
         */
         this->relax_nmax = 1;
     }
-    else if (calculation == "sto-scf") // qianrui 2021-2-20
-    {
-        if (mem_saver == 1)
-        {
-            mem_saver = 0;
-            ModuleBase::GlobalFunc::AUTO_SET("mem_savre", "0");
-        }
-        this->relax_nmax = 1;
-    }
     else if (calculation == "relax") // pengfei 2014-10-13
     {
         if (mem_saver == 1)
@@ -2444,7 +2646,6 @@ void Input::Check(void)
         this->relax_nmax = 1;
         out_stru = 0;
 
-        // if (local_basis == 0 && linear_scaling == 0) xiaohui modify 2013-09-01
         if (basis_type == "pw" && calculation == "get_S") // xiaohui add 2013-09-01. Attention! maybe there is some problem
         {
             if (pw_diag_thr > 1.0e-3)
@@ -2477,9 +2678,9 @@ void Input::Check(void)
         chg_extrap = "atomic"; // xiaohui modify 2015-02-01
         out_chg = 1; // this leads to the calculation of state charge.
         out_dm = 0;
+        out_dm1 = 0;
         out_pot = 0;
 
-        // if(!local_basis || !linear_scaling) xiaohui modify 2013-09-01
         if (basis_type == "pw") // xiaohui add 2013-09-01
         {
             ModuleBase::WARNING_QUIT("Input::Check", "calculate = istate is only availble for LCAO.");
@@ -2499,16 +2700,16 @@ void Input::Check(void)
         chg_extrap = "atomic"; // xiaohui modify 2015-02-01
         out_chg = 1;
         out_dm = 0;
+        out_dm1 = 0;
         out_pot = 0;
-        // if(!local_basis || !linear_scaling) xiaohui modify 2013-09-01
         if (basis_type == "pw") // xiaohui add 2013-09-01
         {
             ModuleBase::WARNING_QUIT("Input::Check", "calculate = istate is only availble for LCAO.");
         }
     }
-    else if (calculation == "md" || calculation == "sto-md") // mohan add 2011-11-04
+    else if (calculation == "md") // mohan add 2011-11-04
     {
-        GlobalV::CALCULATION = calculation;
+        GlobalV::CALCULATION = "md";
         symmetry = 0;
         cal_force = 1;
         if (mdp.md_nstep == 0)
@@ -2520,23 +2721,30 @@ void Input::Check(void)
             out_level = "m"; // zhengdy add 2019-04-07
 
         // deal with input parameters , 2019-04-30
-        // if(basis_type == "pw" ) ModuleBase::WARNING_QUIT("Input::Check","calculate = MD is only availble for LCAO.");
         if (mdp.md_dt < 0)
             ModuleBase::WARNING_QUIT("Input::Check", "time interval of MD calculation should be set!");
-        if (mdp.md_tfirst < 0 && tddft==0)
+        if (mdp.md_tfirst < 0 && esolver_type != "tddft")
             ModuleBase::WARNING_QUIT("Input::Check", "temperature of MD calculation should be set!");
         if (mdp.md_tlast < 0.0)
             mdp.md_tlast = mdp.md_tfirst;
+        if(mdp.md_type == 1 && mdp.md_pmode != "none" && mdp.md_pfirst < 0)
+            ModuleBase::WARNING_QUIT("Input::Check", "pressure of MD calculation should be set!");
+        if (mdp.md_plast < 0.0)
+            mdp.md_plast = mdp.md_pfirst;
 
         if(mdp.md_tfreq == 0)
         {
-            mdp.md_tfreq = 1.0/40.0/mdp.md_dt;
+            mdp.md_tfreq = 1.0/40/mdp.md_dt;
+        }
+        if(mdp.md_pfreq == 0)
+        {
+            mdp.md_pfreq = 1.0/400/mdp.md_dt;
         }
         if(mdp.md_restart) 
         {
             init_vel = 1;
         }
-        if(mdp.md_ensolver == "LJ" || mdp.md_ensolver == "DP" || mdp.md_type == 4)
+        if(esolver_type == "lj" || esolver_type == "dp" || mdp.md_type == 4 || (mdp.md_type == 1 && mdp.md_pmode != "none"))
         {
             cal_stress = 1;
         }
@@ -2547,23 +2755,13 @@ void Input::Check(void)
                 ModuleBase::WARNING_QUIT("Input::Check", "msst_qmass must be greater than 0!");
             }
         }
-        // if(mdp.md_tfirst!=mdp.md_tlast)
-        // {
-        //     std::ifstream file1;
-        //     file1.open("ChangeTemp.dat");
-        //     if(!file1)                      // Peize Lin fix bug 2016-08-06
-        //    {
-        //         std::ofstream file;
-        //         file.open("ChangeTemp.dat");
-        //         for(int ii=0;ii<30;ii++)
-        //         {
-        //             file<<mdp.md_tfirst+(mdp.md_tlast-mdp.md_tfirst)/double(30)*double(ii+1)<<" ";
-        //         }
-        //         file.close();
-        //     }
-        //     else
-        //         file1.close();
-        // }
+        if(esolver_type == "dp")
+        {
+            if (access(mdp.pot_file.c_str(), 0) == -1)
+            {
+                ModuleBase::WARNING_QUIT("Input::Check", "Can not find DP model !");
+            }
+        }
     }
     else if (calculation == "cell-relax") // mohan add 2011-11-04
     {
@@ -2588,6 +2786,13 @@ void Input::Check(void)
             ModuleBase::WARNING_QUIT("Input","to generate descriptors, please use pw basis");
         }
     }
+    // else if (calculation == "ofdft") // sunliang added on 2022-05-05
+    // {
+    //     if (pseudo_type != "blps")
+    //     {
+    //         ModuleBase::WARNING_QUIT("Input::Check", "pseudo_type in ofdft should be set as blps");
+    //     }
+    // }
     else
     {
         ModuleBase::WARNING_QUIT("Input", "check 'calculation' !");
@@ -2608,6 +2813,13 @@ void Input::Check(void)
             ModuleBase::WARNING_QUIT("Input", "out_dm with k-point algorithm is not implemented yet.");
         }
     }
+    else
+    {
+        if(out_dm1 == 1)
+        {
+            ModuleBase::WARNING_QUIT("Input", "out_dm1 is only for multi-k");
+        }
+    }
 
     // if(chg_extrap==4 && local_basis==0) xiaohui modify 2013-09-01
     if (chg_extrap == "dm" && basis_type == "pw") // xiaohui add 2013-09-01, xiaohui modify 2015-02-01
@@ -2616,22 +2828,6 @@ void Input::Check(void)
             "Input",
             "wrong 'chg_extrap=dm' is only available for local orbitals."); // xiaohui modify 2015-02-01
     }
-
-    if (chg_extrap == "dm" || cal_force > 1)
-    {
-        // if(out_dm==0) out_dm = 10000;//at least must output the density matrix at the last electron iteration step.
-    }
-    // if(chg_extrap != "dm")//xiaohui add 2015-02-01
-    //{
-    //	if(calculation=="relax")//xiaohui add 2015-02-01
-    //	{
-    //		chg_extrap = "first-order";
-    //	}
-    //	if(calculation=="md")//xiaohui add 2015-02-01
-    //	{
-    //		chg_extrap = "second-order";
-    //	}
-    // }
 
     if (GlobalV::CALCULATION == "nscf" && init_chg != "file")
     {
@@ -2680,16 +2876,6 @@ void Input::Check(void)
         {
             ModuleBase::WARNING_QUIT("Input", "scalapack_gvx can not be used with plane wave basis.");
         }
-        else if (ks_solver == "hpseps")
-        {
-            ModuleBase::WARNING_QUIT("Input", "hpseps can not be used with plane wave basis."); // xiaohui add
-                                                                                                // 2013-09-04
-        }
-        else if (ks_solver == "selinv")
-        {
-            ModuleBase::WARNING_QUIT("Input", "selinv can not be used with plane wave basis."); // xiaohui add
-                                                                                                // 2013-09-04
-        }
         else if (ks_solver == "lapack")
         {
             ModuleBase::WARNING_QUIT("Input", "lapack can not be used with plane wave basis.");
@@ -2703,8 +2889,13 @@ void Input::Check(void)
     {
         if (ks_solver == "default")
         {
+#ifdef __ELPA
             ks_solver = "genelpa";
             ModuleBase::GlobalFunc::AUTO_SET("ks_solver", "genelpa");
+#else
+            ks_solver = "scalapack_gvx";
+            ModuleBase::GlobalFunc::AUTO_SET("ks_solver", "scalapack_gvx");
+#endif
         }
         else if (ks_solver == "cg")
         {
@@ -2712,10 +2903,12 @@ void Input::Check(void)
         }
         else if (ks_solver == "genelpa")
         {
-#ifdef __MPI
-//				GlobalV::ofs_warning << "genelpa is under testing" << std::endl;
-#else
+#ifndef __MPI
             ModuleBase::WARNING_QUIT("Input", "genelpa can not be used for series version.");
+#endif
+#ifndef __ELPA
+            ModuleBase::WARNING_QUIT("Input",
+                                     "Can not use genelpa if abacus is not compiled with ELPA. Please change ks_solver to scalapack_gvx.");
 #endif
         }
         else if (ks_solver == "scalapack_gvx")
@@ -2726,32 +2919,14 @@ void Input::Check(void)
             ModuleBase::WARNING_QUIT("Input", "scalapack_gvx can not be used for series version.");
 #endif
         }
-        else if (ks_solver == "hpseps")
-        {
-#ifdef __MPI
-            GlobalV::ofs_warning << "It's not a good choice to use hpseps!" << std::endl;
-            if (gamma_only)
-                ModuleBase::WARNING_QUIT("Input", "hpseps can not be used for gamma_only.");
-#else
-            ModuleBase::WARNING_QUIT("Input", "hpseps can not be used for series version.");
-#endif
-        }
         else if (ks_solver == "lapack")
         {
 #ifdef __MPI
             ModuleBase::WARNING_QUIT("Input",
-                                     "ks_solver=lapack is not an option for parallel version of ABACUS (try hpseps).");
+                                     "ks_solver=lapack is not an option for parallel version of ABACUS (try genelpa).");
 #else
             GlobalV::ofs_warning << " It's ok to use lapack." << std::endl;
 #endif
-        }
-        else if (ks_solver == "selinv")
-        {
-            ModuleBase::WARNING_QUIT("Input", "not ready for selinv method in lcao .");
-        }
-        else if (ks_solver == "linear_scaling")
-        {
-            ModuleBase::WARNING_QUIT("Input", "not ready for linear_scaling method in lcao .");
         }
         else if (ks_solver == "cusolver")
         {
@@ -2814,11 +2989,7 @@ void Input::Check(void)
 
     if (GlobalV::NPROC > 1 && ks_solver == "lapack") // xiaohui add 2013-09-01
     {
-        // if(local_basis ==4 && linear_scaling==0) xiaohui modify 2013-09-01
-        if (basis_type == "lcao_in_pw") // xiaohui add 2013-09-01
-        {
-        }
-        else
+        if (basis_type != "lcao_in_pw") // xiaohui add 2013-09-01
         {
             ModuleBase::WARNING_QUIT("Input", "lapack can not be used when nproc > 1");
         }
@@ -2897,15 +3068,17 @@ void Input::Check(void)
 
     if (dft_functional == "hf" || dft_functional == "pbe0" || dft_functional == "hse" || dft_functional == "scan0")
     {
-        if (exx_hybrid_alpha < 0 || exx_hybrid_alpha > 1)
+        const double exx_hybrid_alpha_value = std::stod(exx_hybrid_alpha);
+        if (exx_hybrid_alpha_value < 0 || exx_hybrid_alpha_value > 1)
         {
-            ModuleBase::WARNING_QUIT("INPUT", "must 0 < exx_hybrid_alpha < 1");
+            ModuleBase::WARNING_QUIT("INPUT", "must 0 <= exx_hybrid_alpha <= 1");
         }
         if (exx_hybrid_step <= 0)
         {
             ModuleBase::WARNING_QUIT("INPUT", "must exx_hybrid_step > 0");
         }
-        if (exx_ccp_rmesh_times < 1)
+        const double exx_ccp_rmesh_times_value = std::stod(exx_ccp_rmesh_times);
+        if (exx_ccp_rmesh_times_value < 1)
         {
             ModuleBase::WARNING_QUIT("INPUT", "must exx_ccp_rmesh_times >= 1");
         }
@@ -2929,12 +3102,6 @@ void Input::Check(void)
         {
             ModuleBase::WARNING_QUIT("INPUT", "exx_opt_orb_tolerence must >=0");
         }
-    }
-
-    // 2015-06-15, xiaohui
-    if (mixing_mode == "pulay" && mixing_gg0 > 0.0)
-    {
-        ModuleBase::WARNING("Input", "To use pulay-kerker mixing method, please set mixing_type=pulay-kerker");
     }
 
     if (berry_phase)

@@ -1,6 +1,7 @@
 INPUT_PARAMETERS
 #Parameters	(General)
-calculation     sto-scf
+calculation     scf
+esolver_type    sdft
 pseudo_dir              ../../../tests/PP_ORB
 ntype			1	
 nbands			4
