@@ -431,7 +431,69 @@ void DiagoIterAssist<FPTYPE, Device>::diagH_LAPACK(
         //===========================
         // calculate all eigenvalues
         //===========================
-        dngv_op<FPTYPE, Device>()(ctx, nstart, ldh, hcc, scc, res, vcc);
+        if (nstart == ldh)
+        {
+            dngv_op<FPTYPE, Device>()(ctx, nstart, ldh, hcc, scc, res, vcc);
+        }
+        else
+        {
+            int info = 0;
+            int lwork = 0;
+            int nb = LapackConnector::ilaenv(1, "ZHETRD", "U", nstart, -1, -1, -1);
+            if (nb < 1)
+            {
+                nb = std::max(1, nstart);
+            }
+            if (nb == 1 || nb >= nstart)
+            {
+                lwork = 2 * nstart; // mohan modify 2009-08-02
+            }
+            else
+            {
+                lwork = (nb + 1) * nstart;
+            }
+            std::complex<double> *work = new std::complex<double>[lwork];
+            ModuleBase::GlobalFunc::ZEROS(work, lwork);
+            int rwork_dim = 3 * nstart - 2;
+            double *rwork = new double[rwork_dim];
+            ModuleBase::GlobalFunc::ZEROS(rwork, rwork_dim);
+
+            psi::DEVICE_CPU * cpu_ctx = {};
+            ModuleBase::ComplexMatrix hvec(nstart, nstart);
+            psi::memory::synchronize_memory_op<std::complex<double>, psi::DEVICE_CPU, psi::DEVICE_CPU>()(
+                    cpu_ctx,
+                    cpu_ctx,
+                    hvec.c,
+                    hcc,
+                    nstart * nstart
+            );
+            ModuleBase::ComplexMatrix sdum(nstart, ldh);
+            ModuleBase::ComplexMatrix sc(nstart, nstart);
+            psi::memory::synchronize_memory_op<std::complex<double>, psi::DEVICE_CPU, psi::DEVICE_CPU>()(
+                    cpu_ctx,
+                    cpu_ctx,
+                    sc.c,
+                    scc,
+                    nstart * nstart
+            );
+            sdum = sc;
+
+            //===========================
+            // calculate all eigenvalues
+            //===========================
+            LapackConnector::zhegv(1, 'V', 'U', nstart, hvec, ldh, sdum, ldh, res, work, lwork, rwork, info);
+
+            psi::memory::synchronize_memory_op<std::complex<double>, psi::DEVICE_CPU, psi::DEVICE_CPU>()(
+                    cpu_ctx,
+                    cpu_ctx,
+                    vcc,
+                    hvec.c,
+                    nstart * nstart
+            );
+            delete[] rwork;
+            delete[] work;
+        }
+        
     }
     else {
         //=====================================
