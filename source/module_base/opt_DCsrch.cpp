@@ -275,7 +275,7 @@ int dcsrch(double &stp, double &f, double &g, double &ftol, double &gtol, double
 
 // c     Test for convergence.
 
-	if (f <= ftest && abs(g) <= gtol * (-ginit)) {
+	if (f <= ftest && std::abs(g) <= gtol * (-ginit)) {
 		strcpy(task, "CONVERGENCE");
 		// strcpy(task, "CONVERGENCE", 11);
 	}
@@ -320,9 +320,9 @@ int dcsrch(double &stp, double &f, double &g, double &ftol, double &gtol, double
 	}
 // c     Decide if a bisection step is needed.
 	if (brackt) {
-		if (abs(sty - stx) >= p66 * width1) stp = stx + p5 * (sty - stx);
+		if (std::abs(sty - stx) >= p66 * width1) stp = stx + p5 * (sty - stx);
 		width1 = width;
-		width = abs(sty-stx);
+		width = std::abs(sty-stx);
 	}
 // c     Set the minimum and maximum steps allowed for stp.
 
@@ -475,7 +475,7 @@ L10:
 
 	double gamma, p, q, r, s, sgnd, stpc, stpf, stpq, theta;
 
-	sgnd = dp*(dx/abs(dx));
+	sgnd = dp*(dx/std::abs(dx));
 
 // c     First case: A higher function value. The minimum is bracketed.
 // c     If the cubic step is closer to stx than the quadratic step, the
@@ -484,8 +484,8 @@ L10:
 
 	if (fp > fx) {
 		theta = three*(fx-fp)/(stp-stx) + dx + dp;
-		double temps = std::max(abs(theta),abs(dx)); // get max(abs(theta),abs(dx),abs(dp))
-		s = std::max(temps,abs(dp));
+		double temps = std::max(std::abs(theta),std::abs(dx)); // get max(std::abs(theta),std::abs(dx),std::abs(dp))
+		s = std::max(temps,std::abs(dp));
 		gamma = s*sqrt(pow(theta/s, 2)-(dx/s)*(dp/s));
 		if (stp < stx) gamma = -gamma;
 		p = (gamma-dx) + theta;
@@ -493,7 +493,7 @@ L10:
 		r = p/q;
 		stpc = stx + r*(stp-stx);
 		stpq = stx + ((dx/((fx-fp)/(stp-stx)+dx))/two)*(stp-stx);
-		if (abs(stpc-stx) < abs(stpq-stx)) {
+		if (std::abs(stpc-stx) < std::abs(stpq-stx)) {
 			stpf = stpc;
 		}
 		else {
@@ -509,8 +509,8 @@ L10:
 
 	else if (sgnd < zero) {
 		theta = three*(fx-fp)/(stp-stx) + dx + dp;
-		double temps = std::max(abs(theta),abs(dx)); // get max(abs(theta),abs(dx),abs(dp))
-		s = std::max(temps,abs(dp));
+		double temps = std::max(std::abs(theta),std::abs(dx)); // get max(std::abs(theta),std::abs(dx),std::abs(dp))
+		s = std::max(temps,std::abs(dp));
 		gamma = s*sqrt(pow(theta/s, 2)-(dx/s)*(dp/s));
 		if (stp > stx) gamma = -gamma;
 		p = (gamma-dp) + theta;
@@ -518,7 +518,7 @@ L10:
 		r = p/q;
 		stpc = stp + r*(stx-stp);
 		stpq = stp + (dp/(dp-dx))*(stx-stp);
-		if (abs(stpc-stp) > abs(stpq-stp)) {
+		if (std::abs(stpc-stp) > std::abs(stpq-stp)) {
 			stpf = stpc;
 		}
 		else {
@@ -530,14 +530,14 @@ L10:
 // c     Third case: A lower function value, derivatives of the same sign,
 // c     and the magnitude of the derivative decreases.
 
-	else if (abs(dp) < abs(dx)) {
+	else if (std::abs(dp) < std::abs(dx)) {
 // c        The cubic step is computed only if the cubic tends to infinity
 // c        in the direction of the step or if the minimum of the cubic
 // c        is beyond stp. Otherwise the cubic step is defined to be the
 // c        secant step.
 		theta = three*(fx-fp)/(stp-stx) + dx + dp;
-		double temps = std::max(abs(theta),abs(dx)); // get max(abs(theta),abs(dx),abs(dp))
-		s = std::max(temps,abs(dp));
+		double temps = std::max(std::abs(theta),std::abs(dx)); // get max(std::abs(theta),std::abs(dx),std::abs(dp))
+		s = std::max(temps,std::abs(dp));
 // c        The case gamma = 0 only arises if the cubic does not tend
 // c        to infinity in the direction of the step.
 		gamma = s*sqrt(std::max(zero,pow(theta/s, 2)-(dx/s)*(dp/s)));
@@ -560,7 +560,7 @@ L10:
 // c           A minimizer has been bracketed. If the cubic step is
 // c           closer to stp than the secant step, the cubic step is
 // c           taken, otherwise the secant step is taken.
-            if (abs(stpc-stp) < abs(stpq-stp)) {
+            if (std::abs(stpc-stp) < std::abs(stpq-stp)) {
                stpf = stpc;
 			}
             else {
@@ -577,7 +577,7 @@ L10:
 // c           A minimizer has not been bracketed. If the cubic step is
 // c           farther from stp than the secant step, the cubic step is
 // c           taken, otherwise the secant step is taken.
-            if (abs(stpc-stp) > abs(stpq-stp)) {
+            if (std::abs(stpc-stp) > std::abs(stpq-stp)) {
                stpf = stpc;
 			}
             else {
@@ -594,8 +594,8 @@ L10:
 	else {
 		if (brackt) {
 			theta = three*(fp-fy)/(sty-stp) + dy + dp;
-			double temps = std::max(abs(theta),abs(dy)); // get max(abs(theta),abs(dy),abs(dp))
-			s = std::max(temps,abs(dp));
+			double temps = std::max(std::abs(theta),std::abs(dy)); // get max(std::abs(theta),std::abs(dy),std::abs(dp))
+			s = std::max(temps,std::abs(dp));
 			gamma = s*sqrt(pow(theta/s,2)-(dy/s)*(dp/s));
 			if (stp > sty) gamma = -gamma;
 			p = (gamma-dp) + theta;
