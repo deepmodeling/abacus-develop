@@ -418,25 +418,36 @@ void DiagoIterAssist<FPTYPE, Device>::diagH_LAPACK(
     const bool all_eigenvalues = (nstart == nbands);
 
     FPTYPE * res = e, *e_gpu = nullptr; 
+
+    if (psi::device::get_device_type<Device>(ctx) == psi::GpuDevice) 
+    {
 #if ((defined __CUDA) || (defined __ROCM))
-    if (psi::device::get_device_type<Device>(ctx) == psi::GpuDevice) {
         psi::memory::resize_memory_op<FPTYPE, psi::DEVICE_GPU>()(gpu_ctx, e_gpu, nbands);
         // set e in CPU value to e_gpu
         syncmem_var_h2d_op()(gpu_ctx, cpu_ctx, e_gpu, e, nbands);
         res = e_gpu;
-    }
-#endif
 
-    if (all_eigenvalues) {
-        //===========================
-        // calculate all eigenvalues
-        //===========================
-        if (nstart == ldh)
+        if (all_eigenvalues) 
         {
             dngv_op<FPTYPE, Device>()(ctx, nstart, ldh, hcc, scc, res, vcc);
         }
         else
         {
+            dngvx_op<FPTYPE, Device>()(ctx, nstart, ldh, hcc, scc, nbands, res, vcc);
+        }
+
+        // set e_gpu value to e in CPU
+        syncmem_var_d2h_op()(cpu_ctx, gpu_ctx, e, res, nbands);
+        delmem_var_op()(gpu_ctx, e_gpu);
+#endif
+    }
+    else
+    {
+        if (all_eigenvalues) 
+        {
+            //===========================
+            // calculate all eigenvalues
+            //===========================
             int info = 0;
             int lwork = 0;
             int nb = LapackConnector::ilaenv(1, "ZHETRD", "U", nstart, -1, -1, -1);
@@ -493,123 +504,108 @@ void DiagoIterAssist<FPTYPE, Device>::diagH_LAPACK(
             delete[] rwork;
             delete[] work;
         }
-        
-    }
-    else {
-        //=====================================
-        // calculate only m lowest eigenvalues
-        //=====================================
-        if (nstart == ldh)
+        else 
         {
-            dngvx_op<FPTYPE, Device>()(ctx, nstart, ldh, hcc, scc, nbands, res, vcc);
-        }
-        else
-        {
-                int info = 0;
-                int lwork = 0;
-                int nb = LapackConnector::ilaenv(1, "ZHETRD", "U", nstart, -1, -1, -1);
-                if (nb < 1)
-                {
-                    nb = std::max(1, nstart);
-                }
+            //=====================================
+            // calculate only m lowest eigenvalues
+            //=====================================
+            int info = 0;
+            int lwork = 0;
+            int nb = LapackConnector::ilaenv(1, "ZHETRD", "U", nstart, -1, -1, -1);
+            if (nb < 1)
+            {
+                nb = std::max(1, nstart);
+            }
 
-                if (nb == 1 || nb >= nstart)
-                {
-                    lwork = 2 * nstart; // mohan modify 2009-08-02
-                }
-                else
-                {
-                    lwork = (nb + 1) * nstart;
-                }
+            if (nb == 1 || nb >= nstart)
+            {
+                lwork = 2 * nstart; // mohan modify 2009-08-02
+            }
+            else
+            {
+                lwork = (nb + 1) * nstart;
+            }
 
-                std::complex<double> *work = new std::complex<double>[lwork];
-                double *rwork = new double[7 * nstart];
-                int *iwork = new int[5 * nstart];
-                int *ifail = new int[nstart];
-                ModuleBase::GlobalFunc::ZEROS(work, lwork);
-                ModuleBase::GlobalFunc::ZEROS(rwork, 7 * nstart);
-                ModuleBase::GlobalFunc::ZEROS(iwork, 5 * nstart);
-                ModuleBase::GlobalFunc::ZEROS(ifail, nstart);
+            std::complex<double> *work = new std::complex<double>[lwork];
+            double *rwork = new double[7 * nstart];
+            int *iwork = new int[5 * nstart];
+            int *ifail = new int[nstart];
+            ModuleBase::GlobalFunc::ZEROS(work, lwork);
+            ModuleBase::GlobalFunc::ZEROS(rwork, 7 * nstart);
+            ModuleBase::GlobalFunc::ZEROS(iwork, 5 * nstart);
+            ModuleBase::GlobalFunc::ZEROS(ifail, nstart);
 
-                psi::DEVICE_CPU * cpu_ctx = {};
+            psi::DEVICE_CPU * cpu_ctx = {};
 
-                ModuleBase::ComplexMatrix sdum(nstart, ldh);
-                ModuleBase::ComplexMatrix hdum(nstart, ldh);
+            ModuleBase::ComplexMatrix sdum(nstart, ldh);
+            ModuleBase::ComplexMatrix hdum(nstart, ldh);
 
-                ModuleBase::ComplexMatrix hc(nstart, nstart);
-                psi::memory::synchronize_memory_op<std::complex<double>, psi::DEVICE_CPU, psi::DEVICE_CPU>()(
+            ModuleBase::ComplexMatrix hc(nstart, nstart);
+            psi::memory::synchronize_memory_op<std::complex<double>, psi::DEVICE_CPU, psi::DEVICE_CPU>()(
+                cpu_ctx,
+                cpu_ctx,
+                hc.c,
+                hcc,
+                nstart * nstart
+            );
+
+            ModuleBase::ComplexMatrix sc(nstart, nstart);
+            psi::memory::synchronize_memory_op<std::complex<double>, psi::DEVICE_CPU, psi::DEVICE_CPU>()(
                     cpu_ctx,
                     cpu_ctx,
-                    hc.c,
-                    hcc,
+                    sc.c,
+                    scc,
                     nstart * nstart
-                );
+            );
+            hdum = hc;
+            sdum = sc;
 
-                ModuleBase::ComplexMatrix sc(nstart, nstart);
-                psi::memory::synchronize_memory_op<std::complex<double>, psi::DEVICE_CPU, psi::DEVICE_CPU>()(
-                        cpu_ctx,
-                        cpu_ctx,
-                        sc.c,
-                        scc,
-                        nstart * nstart
-                );
-                hdum = hc;
-                sdum = sc;
+            ModuleBase::ComplexMatrix hvec(nstart, nbands);
 
-                ModuleBase::ComplexMatrix hvec(nstart, nbands);
+            //=============================
+            // Number of calculated bands
+            //=============================
+            int mm = nbands;
 
-                //=============================
-                // Number of calculated bands
-                //=============================
-                int mm = nbands;
+            LapackConnector::zhegvx(1, // INTEGER
+                                    'V', // CHARACTER*1
+                                    'I', // CHARACTER*1
+                                    'U', // CHARACTER*1
+                                    nstart, // INTEGER
+                                    hdum, // COMPLEX*16 array
+                                    ldh, // INTEGER
+                                    sdum, // COMPLEX*16 array
+                                    ldh, // INTEGER
+                                    0.0, // DOUBLE PRECISION
+                                    0.0, // DOUBLE PRECISION
+                                    1, // INTEGER
+                                    nbands, // INTEGER
+                                    0.0, // DOUBLE PRECISION
+                                    mm, // INTEGER
+                                    res, // DOUBLE PRECISION array
+                                    hvec, // COMPLEX*16 array
+                                    ldh, // INTEGER
+                                    work, // DOUBLE array, dimension (MAX(1,LWORK))
+                                    lwork, // INTEGER
+                                    rwork, // DOUBLE PRECISION array, dimension (7*N)
+                                    iwork, // INTEGER array, dimension (5*N)
+                                    ifail, // INTEGER array, dimension (N)
+                                    info // INTEGER
+            );
 
-                LapackConnector::zhegvx(1, // INTEGER
-                                        'V', // CHARACTER*1
-                                        'I', // CHARACTER*1
-                                        'U', // CHARACTER*1
-                                        nstart, // INTEGER
-                                        hdum, // COMPLEX*16 array
-                                        ldh, // INTEGER
-                                        sdum, // COMPLEX*16 array
-                                        ldh, // INTEGER
-                                        0.0, // DOUBLE PRECISION
-                                        0.0, // DOUBLE PRECISION
-                                        1, // INTEGER
-                                        nbands, // INTEGER
-                                        0.0, // DOUBLE PRECISION
-                                        mm, // INTEGER
-                                        res, // DOUBLE PRECISION array
-                                        hvec, // COMPLEX*16 array
-                                        ldh, // INTEGER
-                                        work, // DOUBLE array, dimension (MAX(1,LWORK))
-                                        lwork, // INTEGER
-                                        rwork, // DOUBLE PRECISION array, dimension (7*N)
-                                        iwork, // INTEGER array, dimension (5*N)
-                                        ifail, // INTEGER array, dimension (N)
-                                        info // INTEGER
-                );
-
-                psi::memory::synchronize_memory_op<std::complex<double>, psi::DEVICE_CPU, psi::DEVICE_CPU>()(
-                        cpu_ctx,
-                        cpu_ctx,
-                        vcc,
-                        hvec.c,
-                        nstart * nbands
-                );
-                delete[] iwork;
-                delete[] ifail;
-                delete[] rwork;
-                delete[] work;
-        }
+            psi::memory::synchronize_memory_op<std::complex<double>, psi::DEVICE_CPU, psi::DEVICE_CPU>()(
+                    cpu_ctx,
+                    cpu_ctx,
+                    vcc,
+                    hvec.c,
+                    nstart * nbands
+            );
+            delete[] iwork;
+            delete[] ifail;
+            delete[] rwork;
+            delete[] work;
+        }   
     }
-
-#if ((defined __CUDA) || (defined __ROCM))
-    if (psi::device::get_device_type<Device>(ctx) == psi::GpuDevice) {
-        // set e_gpu value to e in CPU
-        syncmem_var_d2h_op()(cpu_ctx, gpu_ctx, e, res, nbands);
-        delmem_var_op()(gpu_ctx, e_gpu);
-    }
-#endif
 
     ModuleBase::timer::tick("DiagoIterAssist", "LAPACK_subspace");
 }
