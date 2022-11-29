@@ -32,7 +32,8 @@ template <typename FPTYPE, typename Device> struct dngvx_op
                     const std::complex<FPTYPE>* B,
                     const int m,
                     double* W,
-                    std::complex<FPTYPE>* V);
+                    std::complex<FPTYPE>* V,
+                    const std::string keyword);
 };
 
 template <typename FPTYPE, typename Device> struct dngv_op

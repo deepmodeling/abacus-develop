@@ -622,7 +622,7 @@ void DiagoDavid<FPTYPE, Device>::diag_zhegvx(const int& n, // nbase
             resmem_var_op()(this->ctx, eigenvalue_gpu, this->nbase_x);
             syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, eigenvalue_gpu, eigenvalue, this->nbase_x);
 
-            dngvx_op<FPTYPE, Device>()(this->ctx, n, this->nbase_x, this->hcc, this->scc, m, eigenvalue_gpu, this->vcc);
+            dngvx_op<FPTYPE, Device>()(this->ctx, n, this->nbase_x, this->hcc, this->scc, m, eigenvalue_gpu, this->vcc, "davidson");
 
             syncmem_var_d2h_op()(this->cpu_ctx, this->ctx, eigenvalue, eigenvalue_gpu, this->nbase_x);
             delmem_var_op()(this->ctx, eigenvalue_gpu);
@@ -630,68 +630,8 @@ void DiagoDavid<FPTYPE, Device>::diag_zhegvx(const int& n, // nbase
         }
         else
         {
-            // dngvx_op<FPTYPE,
-            //          Device>()(this->ctx, n, this->nbase_x, this->hcc, this->scc, m, this->eigenvalue, this->vcc);
-            int lwork;
-            int info = 0;
-
-            int nb = LapackConnector::ilaenv(1, "ZHETRD", "L", n, -1, -1, -1);
-            if (nb < 1)
-            {
-                nb = max(1, n);
-            }
-            if (nb == 1 || nb >= n)
-            {
-                lwork = 2 * n; // qianrui fix a bug 2021-7-25 : lwork should be at least max(1,2*n)
-            }
-            else
-            {
-                lwork = (nb + 1) * n;
-            }
-            std::complex<double> *work = new std::complex<double>[2 * lwork];
-            assert(work != 0);
-            double *rwork = new double[7 * n];
-            assert(rwork != 0);
-            int *iwork = new int[5 * n];
-            assert(iwork != 0);
-            int *ifail = new int[n];
-            assert(ifail != 0);
-            ModuleBase::GlobalFunc::ZEROS(work, lwork); // qianrui change it, only first lwork numbers are used in zhegvx
-            ModuleBase::GlobalFunc::ZEROS(rwork, 7 * n);
-            ModuleBase::GlobalFunc::ZEROS(iwork, 5 * n);
-            ModuleBase::GlobalFunc::ZEROS(ifail, n);
-
-
-            LapackConnector::zhegvx(1,
-                                    'V',
-                                    'I',
-                                    'L',
-                                    n,
-                                    this->hcc,
-                                    n,
-                                    this->scc,
-                                    n,
-                                    0.0,
-                                    0.0,
-                                    1,
-                                    m,
-                                    0.0,
-                                    m,
-                                    this->eigenvalue,
-                                    this->vcc,
-                                    n,
-                                    work,
-                                    lwork,
-                                    rwork,
-                                    iwork,
-                                    ifail,
-                                    info,
-                                    this->nbase_x);
-
-            delete[] work;
-            delete[] rwork;
-            delete[] iwork;
-            delete[] ifail;
+            dngvx_op<FPTYPE,
+                     Device>()(this->ctx, n, this->nbase_x, this->hcc, this->scc, m, this->eigenvalue, this->vcc, "davidson");
         }
     }
 
