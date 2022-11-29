@@ -23,7 +23,8 @@ void Grid_Driver::Find_atom(
 	const UnitCell &ucell, 
 	const ModuleBase::Vector3<double> &cartesian_pos, 
 	const int &ntype, 
-	const int &nnumber)
+	const int &nnumber,
+	AdjacentAtomInfo *adjs)
 {
 	//if (test_grid_driver) ModuleBase::TITLE(GlobalV::ofs_running, "Grid_Driver", "Find_atom");
 	ModuleBase::timer::tick("Grid_Driver","Find_atom");
@@ -45,7 +46,9 @@ void Grid_Driver::Find_atom(
 
 //	std::cout << "lenght in Find atom = " << atomlink[offset].fatom.getAdjacentSet()->getLength() << std::endl;
 
-	this->Find_adjacent_atom(offset, this->atomlink[offset].fatom.getAdjacentSet());
+	// store result in member adj_info when parameter adjs is NULL
+	AdjacentAtomInfo* local_adjs = adjs == nullptr ? &this->adj_info : adjs;
+	this->Find_adjacent_atom(offset, this->atomlink[offset].fatom.getAdjacentSet(), *local_adjs);
 
 	ModuleBase::timer::tick("Grid_Driver","Find_atom");
 	return;
@@ -100,15 +103,22 @@ int Grid_Driver::Locate_offset(
 
 }
 
-void Grid_Driver::Find_adjacent_atom(const int offset, std::shared_ptr<AdjacentSet> as)
+void Grid_Driver::Find_adjacent_atom(const int offset, std::shared_ptr<AdjacentSet> as, AdjacentAtomInfo &adjs) const
 {
 //	if (test_grid_driver) ModuleBase::TITLE(GlobalV::ofs_running, "Grid_Driver", "Find_adjacent_atom");
+
+	// alias of variables
+	auto &adj_num = adjs.adj_num;
+	auto &ntype = adjs.ntype;
+	auto &natom = adjs.natom;
+	auto &adjacent_tau = adjs.adjacent_tau;
+	auto &box = adjs.box;
 
 //----------------------------------------------------------
 // CALL OTHER CLASS MEMBER FUNCTION :
 // NAME : getLength(get the adjacent number of this atom)
 //----------------------------------------------------------
-	this->adj_num = as->getLength();
+	adj_num = as->getLength();
 
 	if (test_grid_driver > 1) 
 	{
@@ -168,8 +178,8 @@ void Grid_Driver::Find_adjacent_atom(const int offset, std::shared_ptr<AdjacentS
 // ntype : get the adjacent atom type index
 // natom : get the adjacent atom index in this type
 //----------------------------------------------------------
-		this->ntype[i] = this->atomlink[offset_i].fatom.getType();
-		this->natom[i] = this->atomlink[offset_i].fatom.getNatom();
+		ntype[i] = this->atomlink[offset_i].fatom.getType();
+		natom[i] = this->atomlink[offset_i].fatom.getNatom();
 
 		if (test_grid_driver > 1)
 		{
@@ -315,30 +325,24 @@ ModuleBase::Vector3<double> Grid_Driver::Calculate_adjacent_site
 	return adjacent_site;
 }
 
-std::vector<std::tuple<int, int, ModuleBase::Vector3<int>, ModuleBase::Vector3<double>>> Grid_Driver::get_adjs(const UnitCell& ucell_in, const size_t &iat)
+AdjacentAtomInfo Grid_Driver::get_adjs(const UnitCell& ucell_in, const size_t &iat)
 {
     const int it = ucell_in.iat2it[iat];
     const int ia = ucell_in.iat2ia[iat];
     const ModuleBase::Vector3<double> &tau = ucell_in.atoms[it].tau[ia];
 
-    std::vector<std::tuple<int, int, ModuleBase::Vector3<int>, ModuleBase::Vector3<double>>> adjs;
-    this->Find_atom(ucell_in, tau, it, ia);
-    for(int ad=0; ad<this->getAdjacentNum()+1; ad++)
-    {
-        const size_t it_ad = this->getType(ad);
-        const size_t ia_ad = this->getNatom(ad);
-        const ModuleBase::Vector3<int> box_ad = this->getBox(ad);
-        const ModuleBase::Vector3<double> tau_ad = this->getAdjacentTau(ad);
-
-        adjs.push_back(std::make_tuple(it_ad, ia_ad, box_ad, tau_ad));
-    }
+    AdjacentAtomInfo adjs;
+    this->Find_atom(ucell_in, tau, it, ia, &adjs);
     return adjs;
 }
 
-std::vector<std::vector<std::tuple<int, int, ModuleBase::Vector3<int>, ModuleBase::Vector3<double>>>> Grid_Driver::get_adjs(const UnitCell& ucell_in)
+std::vector<AdjacentAtomInfo> Grid_Driver::get_adjs(const UnitCell& ucell_in)
 {
-    std::vector<std::vector<std::tuple<int, int, ModuleBase::Vector3<int>, ModuleBase::Vector3<double>>>> adjs(ucell_in.nat);
-    for(size_t iat=0; iat<ucell_in.nat; iat++)
+    std::vector<AdjacentAtomInfo> adjs(ucell_in.nat);
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
+    for(size_t iat = 0; iat < ucell_in.nat; iat++)
     {
         adjs[iat] = Grid_Driver::get_adjs(ucell_in, iat);
     }
