@@ -667,9 +667,9 @@ void DiagoDavid<FPTYPE, Device>::diag_zhegvx(const int& n, // nbase
                                     'I',
                                     'L',
                                     n,
-                                    hc,
+                                    this->hcc,
                                     n,
-                                    sc,
+                                    this->scc,
                                     n,
                                     0.0,
                                     0.0,
@@ -677,15 +677,16 @@ void DiagoDavid<FPTYPE, Device>::diag_zhegvx(const int& n, // nbase
                                     m,
                                     0.0,
                                     m,
-                                    eigenvalue,
-                                    vc,
+                                    this->eigenvalue,
+                                    this->vcc,
                                     n,
                                     work,
                                     lwork,
                                     rwork,
                                     iwork,
                                     ifail,
-                                    info);
+                                    info,
+                                    this->nbase_x);
 
             delete[] work;
             delete[] rwork;
