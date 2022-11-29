@@ -18,6 +18,9 @@
 #include "pot_local.h"
 #include "pot_surchem.hpp"
 #include "pot_xc.h"
+#ifdef __LCAO
+#include "H_TDDFT_pw.h"
+#endif
 
 namespace elecstate
 {
@@ -72,7 +75,15 @@ void Potential::pot_register(std::vector<std::string>& components_list)
     // mapping for register
     //---------------------------
     std::map<string, int> pot_register_map
-        = {{"local", 1}, {"hartree", 2}, {"xc", 3}, {"surchem", 4}, {"efield", 5}, {"gatefield", 6}};
+        = {
+            {"local", 1}, 
+            {"hartree", 2}, 
+            {"xc", 3}, 
+            {"surchem", 4}, 
+            {"efield", 5}, 
+            {"gatefield", 6},
+            {"tddft", 7}
+        };
     for (auto comp: components_list)
     {
         PotBase* tmp = nullptr;
@@ -97,6 +108,11 @@ void Potential::pot_register(std::vector<std::string>& components_list)
         case 6: //"gatefield"
             tmp = new PotGate(this->rho_basis_, this->ucell_);
             break;
+#ifdef __LCAO
+        case 7: //tddft
+            tmp = new H_TDDFT_pw(this->rho_basis_, this->ucell_);
+            break;
+#endif
         default:
             ModuleBase::WARNING_QUIT("Potential::Init", "Please input correct component of potential!");
             break;
@@ -215,13 +231,6 @@ void Potential::init_pot(int istep, const Charge* chg)
     this->fixed_done = false;
 
     this->update_from_charge(chg, this->ucell_);
-
-#ifdef __LCAO
-    if (ELEC_evolve::td_vext != 0 && istep < ELEC_evolve::td_timescale)
-    {
-        this->update_for_tddft(istep);
-    }
-#endif
 
     // plots
     // figure::picture(this->vr_eff1,GlobalC::rhopw->nx,GlobalC::rhopw->ny,GlobalC::rhopw->nz);

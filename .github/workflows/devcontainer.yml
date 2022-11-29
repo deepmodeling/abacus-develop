@@ -1,8 +1,6 @@
 name: Container
 
 on:
-  schedule:
-    - cron: '0 18 * * *'
   push:
     paths-ignore:
       - 'docs/**'
@@ -41,9 +39,9 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           tags: |
-            ghcr.io/deepmodeling/abacus-development-kit:${{ matrix.dockerfile }}
+            ghcr.io/deepmodeling/abacus-${{ matrix.dockerfile }}:latest
             registry.dp.tech/deepmodeling/abacus-${{ matrix.dockerfile }}:latest
           file: Dockerfile.${{ matrix.dockerfile }}
-          cache-from: type=registry,ref=ghcr.io/deepmodeling/abacus-development-kit:${{matrix.dockerfile}}
+          cache-from: type=registry,ref=ghcr.io/deepmodeling/abacus-${{ matrix.dockerfile }}:latest
           cache-to: type=inline
           push: true

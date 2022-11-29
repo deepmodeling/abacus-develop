@@ -124,103 +124,73 @@ void Local_Orbital_Charge::write_dm(
 
     //ofs << "\n " << GlobalV::GAMMA_ONLY_LOCAL << " (GAMMA ONLY LOCAL)" << std::endl;
 #ifndef __MPI
-    if(GlobalV::GAMMA_ONLY_LOCAL)
+
+    for(int i=0; i<GlobalV::NLOCAL; ++i)
     {
-        for(int i=0; i<GlobalV::NLOCAL; ++i)
+        for(int j=0; j<GlobalV::NLOCAL; ++j)
         {
-            for(int j=0; j<GlobalV::NLOCAL; ++j)
+            if(j%8==0) ofs << "\n";
+            ofs << " " << this->DM[is][i][j];
+        }
+    }
+
+#else
+    //xiaohui modify 2014-06-18
+    
+    double* tmp = new double[GlobalV::NLOCAL];
+    int* count = new int[GlobalV::NLOCAL];
+    for (int i=0; i<GlobalV::NLOCAL; ++i)
+    {
+        // when reduce, there may be 'redundance', we need to count them.
+        ModuleBase::GlobalFunc::ZEROS(count, GlobalV::NLOCAL);
+        const int mu = GlobalC::GridT.trace_lo[i];
+        if (mu >= 0)
+        {
+            for (int j=0; j<GlobalV::NLOCAL; ++j)
+            {
+                const int nu = GlobalC::GridT.trace_lo[j];
+                if (nu >= 0)
+                {
+                    count[j]=1; 
+                }
+            }
+        }
+        Parallel_Reduce::reduce_int_all( count, GlobalV::NLOCAL );
+
+        // reduce the density matrix for 'i' line.
+        ModuleBase::GlobalFunc::ZEROS(tmp, GlobalV::NLOCAL);
+        if (mu >= 0)
+        {
+            for (int j=0; j<GlobalV::NLOCAL; j++)
+            {
+                const int nu = GlobalC::GridT.trace_lo[j];
+                if (nu >=0)
+                {
+                    tmp[j] = DM[is][mu][nu];
+                    //GlobalV::ofs_running << " dmi=" << i << " j=" << j << " " << DM[is][mu][nu] << std::endl;
+                }
+            }
+        }
+        Parallel_Reduce::reduce_double_all( tmp, GlobalV::NLOCAL );
+
+        if(GlobalV::MY_RANK==0)
+        {
+            for (int j=0; j<GlobalV::NLOCAL; j++)
             {
                 if(j%8==0) ofs << "\n";
-                ofs << " " << this->DM[is][i][j];
-            }
-        }
-    }
-    else
-    {
-        ModuleBase::WARNING_QUIT("write_dm","not ready yet");
-        ofs << " " << GlobalC::GridT.nnrg << " (nnrg)" << std::endl;
-        for(int i=0; i<GlobalC::GridT.nnrg; ++i)
-        {
-            if(i%8==0) ofs << "\n";
-            ofs << " " << this->DM_R[is][i];
-        }
-    }
-#else
-    if(GlobalV::GAMMA_ONLY_LOCAL)
-    {
-        //xiaohui modify 2014-06-18
-        
-        double* tmp = new double[GlobalV::NLOCAL];
-        int* count = new int[GlobalV::NLOCAL];
-        for (int i=0; i<GlobalV::NLOCAL; ++i)
-        {
-            // when reduce, there may be 'redundance', we need to count them.
-            ModuleBase::GlobalFunc::ZEROS(count, GlobalV::NLOCAL);
-            const int mu = GlobalC::GridT.trace_lo[i];
-            if (mu >= 0)
-            {
-                for (int j=0; j<GlobalV::NLOCAL; ++j)
+                if(count[j]>0)
                 {
-                    const int nu = GlobalC::GridT.trace_lo[j];
-                    if (nu >= 0)
-                    {
-                        count[j]=1; 
-                    }
+                    ofs << " " << tmp[j]/(double)count[j];
                 }
-            }
-            Parallel_Reduce::reduce_int_all( count, GlobalV::NLOCAL );
-
-            // reduce the density matrix for 'i' line.
-            ModuleBase::GlobalFunc::ZEROS(tmp, GlobalV::NLOCAL);
-            if (mu >= 0)
-            {
-                for (int j=0; j<GlobalV::NLOCAL; j++)
+                else
                 {
-                    const int nu = GlobalC::GridT.trace_lo[j];
-                    if (nu >=0)
-                    {
-                        tmp[j] = DM[is][mu][nu];
-                        //GlobalV::ofs_running << " dmi=" << i << " j=" << j << " " << DM[is][mu][nu] << std::endl;
-                    }
-                }
-            }
-            Parallel_Reduce::reduce_double_all( tmp, GlobalV::NLOCAL );
-
-            if(GlobalV::MY_RANK==0)
-            {
-                for (int j=0; j<GlobalV::NLOCAL; j++)
-                {
-                    if(j%8==0) ofs << "\n";
-                    if(count[j]>0)
-                    {
-                        ofs << " " << tmp[j]/(double)count[j];
-                    }
-                    else
-                    {
-                        ofs << " 0"; 
-                    }
+                    ofs << " 0"; 
                 }
             }
         }
-        delete[] tmp;
-        delete[] count;
-        
-        //xiaohui add 2014-06-18
-        //for(int i=0; i<GlobalV::NLOCAL; ++i)
-        //{
-        //  for(int j=0; j<GlobalV::NLOCAL; ++j)
-        //  {
-        //      if(j%8==0) ofs << "\n";
-        //      ofs << " " << this->DM[is][i][j];
-        //  }
-        //}
-
     }
-    else
-    {
-        ofs << " " << GlobalC::GridT.nnrg << " (nnrg)" << std::endl;
-        ModuleBase::WARNING_QUIT("local_orbital_charge","not ready to output DM_R");
-    }
+    delete[] tmp;
+    delete[] count;
 #endif
 	if(GlobalV::MY_RANK==0)
 	{
@@ -233,12 +203,12 @@ void Local_Orbital_Charge::write_dm(
     return;
 }
 
-void Local_Orbital_Charge::write_dm1(const int &is, const int &istep)
+void Local_Orbital_Charge::write_dm1(const int &is, const int &istep, double** dm2d)
 {
     ModuleBase::timer::tick("Local_Orbital_Charge","write_dm");
     ModuleBase::TITLE("Local_Orbital_Charge","write_dm");
 
-    get_dm_sparse(is);
+    get_dm_sparse(is, dm2d);
     write_dm_sparse(is, istep);
     destroy_dm_sparse();
 
@@ -328,7 +298,7 @@ inline void output_single_R(std::ofstream &ofs, const std::map<size_t, std::map<
 
 }
 
-void Local_Orbital_Charge::get_dm_sparse(const int &is)
+void Local_Orbital_Charge::get_dm_sparse(const int &is, double** dm2d)
 {
     ModuleBase::timer::tick("Local_Orbital_Charge","get_dm_sparse");
     ModuleBase::TITLE("Local_Orbital_Charge","get_dm_sparse");
@@ -409,7 +379,7 @@ void Local_Orbital_Charge::get_dm_sparse(const int &is)
 
                             if(nu<0)continue;
 
-                            temp_value_double = this->DM_R[is][index];
+                            temp_value_double = dm2d[is][index];
                             if (std::abs(temp_value_double) > sparse_threshold)
                             {
                                 this->DMR_sparse[dR][iw1_all][iw2_all] = temp_value_double;
@@ -500,7 +470,7 @@ void Local_Orbital_Charge::write_dm_sparse(const int &is, const int &istep)
 
     if(GlobalV::DRANK==0)
     {
-        g1.open(ssdm.str().c_str(), ios::app);
+        g1.open(ssdm.str().c_str());
         g1 << "STEP: " << istep << std::endl;
         g1 << "Matrix Dimension of DM(R): " << GlobalV::NLOCAL <<std::endl;
         g1 << "Matrix number of DM(R): " << output_R_number << std::endl;

@@ -13,7 +13,7 @@ target_link_libraries(
     base cell symmetry md surchem xc_
     neighbor orb io relax gint lcao parallel pw driver esolver hsolver psi elecstate hamilt planewave
     pthread vdw
-    deepks
+    deepks device
     ${ABACUS_LINK_LIBRARIES}
 )
 if(USE_ELPA)

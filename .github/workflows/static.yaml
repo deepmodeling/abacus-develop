@@ -8,7 +8,7 @@ on:
 jobs:
   clang-tidy:
     runs-on: ubuntu-latest
-    container: ghcr.io/deepmodeling/abacus-development-kit:gnu
+    container: ghcr.io/deepmodeling/abacus-gnu
     steps:
       - name: Checkout Pull Request
         uses: actions/checkout@v3

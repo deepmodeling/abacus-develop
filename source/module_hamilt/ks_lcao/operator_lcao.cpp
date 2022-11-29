@@ -155,7 +155,11 @@ void OperatorLCAO<T>::init(const int ik_in)
         {   
             //only HK should be updated when cal_type=lcao_dftu
             //in cal_type=lcao_dftu, HK only need to update from one node
+            //dftu is a special operator, it should be the last node of chain
+            //Overlap matrix for ik is used by it, do folding first and then return
+            this->folding_fixed(ik_in);
             this->contributeHk(ik_in);
+            return;
 
             break;
         }

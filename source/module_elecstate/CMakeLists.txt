@@ -9,14 +9,7 @@ list(APPEND objects
     potentials/pot_local.cpp
     potentials/potential_new.cpp
     potentials/write_pot.cpp
-    src/elecstate_multi_device.cpp
 )
-
-if (USE_CUDA) 
-  list(APPEND objects src/cuda/elecstate_multi_device.cu)
-elseif(USE_ROCM)
-  list(APPEND objects src/rocm/elecstate_multi_device.cu)
-endif()
 
 if(ENABLE_LCAO)
   list(APPEND objects

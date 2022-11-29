@@ -282,11 +282,6 @@ void ESolver_KS_LCAO_TDDFT::updatepot(const int istep, const int iter)
     if (!this->conv_elec)
     {
         this->pelec->pot->update_from_charge(this->pelec->charge, &GlobalC::ucell);
-        //It is recommanded to add into register of Potential in the future
-        if (ELEC_evolve::td_vext != 0 && istep < ELEC_evolve::td_timescale)
-        {
-            this->pelec->pot->update_for_tddft(istep);
-        }
         GlobalC::en.delta_escf(this->pelec);
     }
     else

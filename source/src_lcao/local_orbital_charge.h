@@ -50,7 +50,7 @@ class Local_Orbital_Charge
     static int out_dm1;
 
 	void write_dm(const int &is, const int &iter, const std::string &fn, const int &precision);
-    void write_dm1(const int &is, const int &istep);
+    void write_dm1(const int &is, const int &istep, double** dm2d);
 
 	void read_dm(const int &is, const std::string &fn);
 
@@ -120,7 +120,7 @@ private:
 
     std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>> DMR_sparse;
 
-    void get_dm_sparse(const int &is);
+    void get_dm_sparse(const int &is, double** dm2d);
     void write_dm_sparse(const int &is, const int &istep);
     void destroy_dm_sparse();
 

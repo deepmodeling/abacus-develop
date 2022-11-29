@@ -151,10 +151,7 @@ if(USE_CUDA OR USE_CUSOLVER_LCAO)
   set(CMAKE_CUDA_HOST_COMPILER ${CMAKE_CXX_COMPILER})
   enable_language(CUDA)
   target_link_libraries(${ABACUS_BIN_NAME}
-    -lcufft
-    -lcublas
     -lcudart
-    -lcusolver
     -lnvToolsExt
   )
   set_property(TARGET ${ABACUS_BIN_NAME}
@@ -423,6 +420,7 @@ target_link_libraries(${ABACUS_BIN_NAME}
     psi
     esolver
     vdw
+    device
 )
 
 if(ENABLE_LCAO)
