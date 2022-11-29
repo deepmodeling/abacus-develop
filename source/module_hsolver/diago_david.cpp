@@ -630,8 +630,67 @@ void DiagoDavid<FPTYPE, Device>::diag_zhegvx(const int& n, // nbase
         }
         else
         {
-            dngvx_op<FPTYPE,
-                     Device>()(this->ctx, n, this->nbase_x, this->hcc, this->scc, m, this->eigenvalue, this->vcc);
+            // dngvx_op<FPTYPE,
+            //          Device>()(this->ctx, n, this->nbase_x, this->hcc, this->scc, m, this->eigenvalue, this->vcc);
+            int lwork;
+            int info = 0;
+
+            int nb = LapackConnector::ilaenv(1, "ZHETRD", "L", n, -1, -1, -1);
+            if (nb < 1)
+            {
+                nb = max(1, n);
+            }
+            if (nb == 1 || nb >= n)
+            {
+                lwork = 2 * n; // qianrui fix a bug 2021-7-25 : lwork should be at least max(1,2*n)
+            }
+            else
+            {
+                lwork = (nb + 1) * n;
+            }
+            std::complex<double> *work = new std::complex<double>[2 * lwork];
+            assert(work != 0);
+            double *rwork = new double[7 * n];
+            assert(rwork != 0);
+            int *iwork = new int[5 * n];
+            assert(iwork != 0);
+            int *ifail = new int[n];
+            assert(ifail != 0);
+            ModuleBase::GlobalFunc::ZEROS(work, lwork); // qianrui change it, only first lwork numbers are used in zhegvx
+            ModuleBase::GlobalFunc::ZEROS(rwork, 7 * n);
+            ModuleBase::GlobalFunc::ZEROS(iwork, 5 * n);
+            ModuleBase::GlobalFunc::ZEROS(ifail, n);
+
+
+            LapackConnector::zhegvx(1,
+                                    'V',
+                                    'I',
+                                    'L',
+                                    n,
+                                    hc,
+                                    n,
+                                    sc,
+                                    n,
+                                    0.0,
+                                    0.0,
+                                    1,
+                                    m,
+                                    0.0,
+                                    m,
+                                    eigenvalue,
+                                    vc,
+                                    n,
+                                    work,
+                                    lwork,
+                                    rwork,
+                                    iwork,
+                                    ifail,
+                                    info);
+
+            delete[] work;
+            delete[] rwork;
+            delete[] iwork;
+            delete[] ifail;
         }
     }
 
