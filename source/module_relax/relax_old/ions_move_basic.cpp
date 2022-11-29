@@ -279,49 +279,6 @@ double Ions_Move_Basic::dot_func(const double* a, const double* b, const int &di
 }
 
 
-//----------------------------------------------------------------------------
-// second order interpolation scheme, 
-//----------------------------------------------------------------------------
-void Ions_Move_Basic::second_order(
-	const double &e0, // energy of previous step
-	const double &e1, // energy at this step
-	const double *g0, // gradient at first step
-	const double *x, // movement 
-	const int &dim,
-	double &best_x,
-	double &best_e
-	)
-{
-	ModuleBase::TITLE("Ions_Move_Basic","second_order");
-
-	// (1) E = ax^2 + bx + c
-	// |x> is the movement,or the trust radius 
-	// so c=e0,
-	// and dE/dx = 2ax + b, so b=|g0>
-	// ax^2+<g0|x>+e0=e1
-	double bx = dot_func(g0, x, dim); 
-	double xx = dot_func(x, x, dim);
-
-	assert(xx!=0);
-	double b =  bx / sqrt(xx);
-
-	double a = ( (e1-e0) - bx ) / xx; 
-	assert(a!=0);
-
-	// (2) 2ax + b = 0; so best_x=-b/2a,
-	best_x = -0.5 * b / a; 
-	best_e = a*best_x*best_x+b*best_x+e0;
-	GlobalV::ofs_running << " The next E should be ( 2nd order interpolation)" 
-	<< best_e * ModuleBase::Ry_to_eV << " eV" << std::endl;
-
-	std::cout << " The next E should be ( 2nd order interpolation)" 
-	<< best_e * ModuleBase::Ry_to_eV << " eV" << std::endl;
-	
-	return;
-}
-
-
-
 
 
 

@@ -52,19 +52,6 @@ namespace Ions_Move_Basic
 
 	double dot_func(const double* a, const double* b, const int &dim);
 
-
-	//----------------------------------------------------------------------------
-	// second order interpolation scheme,
-	//----------------------------------------------------------------------------
-	void second_order(
-		const double &e0, // energy of previous step
-		const double &e1, // energy at this step
-		const double *f0, // force at first step
-		const double *x, // movement
-		const int &dim,
-		double &best_x,
-		double &best_e);
-
 	//----------------------------------------------------------------------------
 	// third order interpolation scheme,
 	//----------------------------------------------------------------------------
