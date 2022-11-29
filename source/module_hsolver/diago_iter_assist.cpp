@@ -433,7 +433,7 @@ void DiagoIterAssist<FPTYPE, Device>::diagH_LAPACK(
         }
         else
         {
-            dngvx_op<FPTYPE, Device>()(ctx, nstart, ldh, hcc, scc, nbands, res, vcc);
+            dngvx_op<FPTYPE, Device>()(ctx, nstart, ldh, hcc, scc, nbands, res, vcc, "diagH_LAPACK");
         }
 
         // set e_gpu value to e in CPU
