@@ -687,7 +687,7 @@ void ESolver_OF::getNextDirect()
 
         // (1) make direction orthogonal to phi
         // |d'> = |d0> - |phi><phi|d0>/nelec
-        double innerPhiDir = this->inner_product(this->pdirect[0], this->pphi[0], this->nrxx, dV=this->dV);
+        double innerPhiDir = this->inner_product(this->pdirect[0], this->pphi[0], this->nrxx, this->dV);
         Parallel_Reduce::reduce_double_all(innerPhiDir);
         for (int i = 0; i < this->nrxx; ++i)
         {
@@ -699,7 +699,7 @@ void ESolver_OF::getNextDirect()
 
         // (2) renormalize direction
         // |d> = |d'> * \sqrt(nelec) / <d'|d'>
-        double normDir = this->inner_product(this->pdirect[0], this->pdirect[0], this->nrxx, dV=this->dV);
+        double normDir = this->inner_product(this->pdirect[0], this->pdirect[0], this->nrxx, this->dV);
         Parallel_Reduce::reduce_double_all(normDir);
         normDir = sqrt(normDir);
         for (int i = 0; i < this->nrxx; ++i)
@@ -716,7 +716,7 @@ void ESolver_OF::getNextDirect()
         {
             // (1) make direction orthogonal to phi
             // |d'> = |d0> - |phi><phi|d0>/nelec
-            double innerPhiDir = this->inner_product(this->pdirect[is], this->pphi[is], this->nrxx, dV=this->dV);
+            double innerPhiDir = this->inner_product(this->pdirect[is], this->pphi[is], this->nrxx, this->dV);
             Parallel_Reduce::reduce_double_all(innerPhiDir);
             for (int i = 0; i < this->nrxx; ++i)
             {
@@ -725,7 +725,7 @@ void ESolver_OF::getNextDirect()
 
             // (2) renormalize direction
             // |d> = |d'> * \sqrt(nelec) / <d'|d'>
-            double normDir = this->inner_product(this->pdirect[is], this->pdirect[is], this->nrxx, dV=this->dV);
+            double normDir = this->inner_product(this->pdirect[is], this->pdirect[is], this->nrxx, this->dV);
             Parallel_Reduce::reduce_double_all(normDir);
             normDir = sqrt(normDir);
             for (int i = 0; i < this->nrxx; ++i)

@@ -1,10 +1,12 @@
+#ifndef KEDF_vW_H
+#define KEDF_vW_H
 #include <stdio.h>
 #include <math.h>
-#include "../module_base/timer.h"
-#include "../module_base/global_function.h"
-#include "../module_base/global_variable.h"
-#include "../module_base/matrix.h"
-#include "../module_pw/pw_basis.h"
+#include "../../module_base/timer.h"
+#include "../../module_base/global_function.h"
+#include "../../module_base/global_variable.h"
+#include "../../module_base/matrix.h"
+#include "../../module_pw/pw_basis.h"
 
 class KEDF_vW
 {
@@ -32,3 +34,4 @@ public:
     double vWenergy = 0.;
     ModuleBase::matrix stress;
 };
+#endif
