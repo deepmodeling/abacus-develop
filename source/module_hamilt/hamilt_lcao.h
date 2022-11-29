@@ -20,16 +20,16 @@ template <typename T> class HamiltLCAO : public Hamilt<double>
 {
   public:
     HamiltLCAO(
-      Gint_Gamma* GG_in, 
-      LCAO_gen_fixedH* genH_in, 
-      LCAO_Matrix* LM_in, 
+      Gint_Gamma* GG_in,
+      LCAO_gen_fixedH* genH_in,
+      LCAO_Matrix* LM_in,
       Local_Orbital_Charge* loc_in,
       elecstate::Potential* pot_in);
 
     HamiltLCAO(
-      Gint_k* GK_in, 
-      LCAO_gen_fixedH* genH_in, 
-      LCAO_Matrix* LM_in, 
+      Gint_k* GK_in,
+      LCAO_gen_fixedH* genH_in,
+      LCAO_Matrix* LM_in,
       Local_Orbital_Charge* loc_in,
       elecstate::Potential* pot_in);
 
@@ -45,7 +45,7 @@ template <typename T> class HamiltLCAO : public Hamilt<double>
     };
 
     // for target K point, update consequence of hPsi() and matrix()
-    virtual void updateHk(const int ik);
+    virtual void updateHk(const int ik) override;
 
     // core function: return H(k) and S(k) matrixs for direct solving eigenvalues.
     // not used in PW base

@@ -1,7 +1,6 @@
 #ifndef IONS_MOVE_BASIC_H
 #define IONS_MOVE_BASIC_H
 
-using namespace std;
 #include "module_base/matrix.h"
 
 namespace Ions_Move_Basic

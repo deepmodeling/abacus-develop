@@ -88,11 +88,11 @@ void XC_Functional::ggac(const double &rho,const double &grho, double &sc, doubl
     qy, s1;
     double h0, dh0, ddh0, ee, cn, dcn, cna, dcna, cnb, dcnb, h1,
     dh1, ddh1;
-	
+
 	rs = pi34 / pow(rho, third);
     rs2 = rs * rs;
     rs3 = rs * rs2;
-	
+
 	// call function: pw
 	XC_Functional::pw(rs, 0, ec, vc);
     kf = xkf / rs;
@@ -139,19 +139,19 @@ void XC_Functional::pbec(const double &rho, const double &grho, const int &iflag
 	// iflag=1: J.P.Perdew et al., PRL 100, 136406 (2008).
 	const double ga = 0.0310906908696548950;
 	const double be[2] = {0.06672455060314922, 0.046};
-	
+
 	const double third = 1.0 / 3.0;
 	const double pi34 = 0.62035049089940;
 	const double xkf = 1.9191582926775130;
 	const double xks = 1.1283791670955130;
-	
+
 	// pi34=(3/4pi)^(1/3), xkf=(9 pi/4)^(1/3), xks= sqrt(4/pi)
 	double ec, vc;
-		
+
 	const double rs = pi34 / pow(rho, third);
-	
+
 	XC_Functional::pw(rs, 0, ec, vc);
-	
+
 	const double kf = xkf / rs;
 	const double ks = xks * sqrt(kf);
 	const double t = sqrt(grho) / (2.0 * ks * rho);
@@ -160,7 +160,7 @@ void XC_Functional::pbec(const double &rho, const double &grho, const int &iflag
 	const double bf = expe * (vc - ec);
 	const double y = af * t * t;
 	const double xy = (1.0 + y) / (1.0 + y + y * y);
-		
+
 	const double x = 1.0 + y + y * y;
 	const double qy = y * y * (2.0 + y) / (x * x);
 	const double s1 = 1.0 + be[iflag] / ga * t * t * xy;
@@ -171,7 +171,7 @@ void XC_Functional::pbec(const double &rho, const double &grho, const int &iflag
 	sc = rho * h0;
 	v1c = h0 + dh0;
     v2c = ddh0;
-	
+
 	return;
 }
 
@@ -331,7 +331,7 @@ void XC_Functional::ggac_spin(double rho, double zeta, double grho, double &sc,
     //bfdw = expe * (vcdw - ec) / fz3;
     y = af * t * t;
     xy = (1.0 + y) / (1.0 + y + y * y);
-    qy = y * y * (2.0 + y) / (1.0 + y + y * y) ;	//**2;
+    qy = y * y * (2.0 + y) / (1.0 + y + y * y) ;	// **2;
     qy *= qy;
     s1 = 1.0 + 2.0 * al / be * t * t * xy;
     h0 = fz3 * be * be / (2.0 * al) * log(s1);
