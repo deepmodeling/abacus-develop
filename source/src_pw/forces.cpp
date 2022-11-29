@@ -5,6 +5,7 @@
 // new
 #include "module_base/math_integral.h"
 #include "module_base/timer.h"
+#include "module_base/tool_threading.h"
 #include "module_elecstate/potentials/efield.h"
 #include "module_surchem/surchem.h"
 #include "module_elecstate/potentials/gatefield.h"
@@ -587,7 +588,7 @@ void Forces::cal_force_ew(ModuleBase::matrix& forceion, ModulePW::PW_Basis* rho_
         2. each thread iterate atoms form `iat_beg` to `iat_end-1`
     */
     int iat_beg, iat_end;
-    ModuleBase::GlobalFunc::TASK_DIST_1D(num_threads, thread_id, GlobalC::ucell.nat, iat_beg, iat_end);
+    ModuleBase::TASK_DIST_1D(num_threads, thread_id, GlobalC::ucell.nat, iat_beg, iat_end);
     iat_end = iat_beg + iat_end;
 
     int it_beg = (iat_beg < iat_end) ? GlobalC::ucell.iat2it[iat_beg] : GlobalC::ucell.ntype;
@@ -824,7 +825,7 @@ void Forces::cal_force_cc(ModuleBase::matrix& forcecc, ModulePW::PW_Basis* rho_b
         2. each thread iterate atoms form `work_beg` to `work_end-1`
     */
     int work, work_end;
-    ModuleBase::GlobalFunc::TASK_DIST_1D(num_threads, thread_id, total_works, work, work_end);
+    ModuleBase::TASK_DIST_1D(num_threads, thread_id, total_works, work, work_end);
     work_end = work + work_end;
 
     int it = 0;
