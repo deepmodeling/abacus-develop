@@ -549,6 +549,11 @@ void Input_Conv::Convert(void)
     }
     if (GlobalV::deepks_scf || GlobalV::deepks_out_labels)
         GlobalV::deepks_setorb = 1;
+#else
+    if(INPUT.deepks_scf || INPUT.deepks_out_labels || INPUT.deepks_bandgap)
+    {
+        ModuleBase::WARNING_QUIT("Input_conv","please compile with DeePKS");
+    }
 #endif
     //-----------------------------------------------
     // sunml add for implicit solvation model
