@@ -561,6 +561,18 @@ void ESolver_KS_LCAO::afterscf(const int istep)
     // 0 means don't need to consider iter,
     //--------------------------------------
 
+    double** dm2d;
+    if(this->LOC.out_dm1 == 1)
+    {
+        dm2d = new double*[GlobalV::NSPIN];
+        for (int is = 0; is < GlobalV::NSPIN; is++)
+        {
+            dm2d[is] = new double[this->LOC.ParaV->nnr];
+            ModuleBase::GlobalFunc::ZEROS(dm2d[is], this->LOC.ParaV->nnr);
+        }
+        this->LOC.cal_dm_R(this->LOC.dm_k,this->RA,dm2d);
+    }
+
     for (int is = 0; is < GlobalV::NSPIN; is++)
     {
         const int precision = 3;
@@ -584,7 +596,7 @@ void ESolver_KS_LCAO::afterscf(const int istep)
         this->LOC.write_dm(is, 0, ssd.str(), precision);
         if(this->LOC.out_dm1 == 1)
         {
-            this->LOC.write_dm1(is, istep);
+            this->LOC.write_dm1(is, istep, dm2d);
         }
 /* Broken, please fix it
         if (GlobalV::out_pot == 1) // LiuXh add 20200701
@@ -594,6 +606,15 @@ void ESolver_KS_LCAO::afterscf(const int istep)
             this->pelec->pot->write_potential(is, 0, ssp.str(), this->pelec->pot->get_effective_v(), precision);
         }
 */
+    }
+
+    if(this->LOC.out_dm1 == 1)
+    {
+        for (int is = 0; is < GlobalV::NSPIN; is++)
+        {
+            delete[] dm2d[is];
+        }
+        delete[] dm2d;
     }
 
 #ifdef __EXX
