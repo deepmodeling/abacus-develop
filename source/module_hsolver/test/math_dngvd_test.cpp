@@ -328,7 +328,8 @@ TEST_F(TestModuleHsolverMathDngvd, dngvx_cpu)
                                                  matrix_B.data(),
                                                  2,
                                                  W_result.data(),
-                                                 V_result.data());
+                                                 V_result.data(),
+                                                 "davidson");
 
     // output
     // std::cout << W_result[0] << "\t" <<  W_result[1]  << std::endl;
@@ -506,7 +507,8 @@ TEST_F(TestModuleHsolverMathDngvd, dngvx_gpu)
                                                  device_matrix_B,
                                                  2,
                                                  device_W_DNGVX,
-                                                 device_matrix_V_DNGVX);
+                                                 device_matrix_V_DNGVX,
+                                                 "davidson");
     // copy W data from GPU to CPU
     std::vector<double> W_result = {0.0, 0.0};
     synchronize_memory_op_G2C_D()(cpu_ctx, gpu_ctx, W_result.data(), device_W_DNGVX, W_result.size());
@@ -537,7 +539,8 @@ TEST_F(TestModuleHsolverMathDngvd, dngvx_gpu)
                                                  matrix_B.data(),
                                                  2,
                                                  W_DNGVX.data(),
-                                                 matrix_V_DNGVX.data());
+                                                 matrix_V_DNGVX.data(),
+                                                 "davidson");
 
     // std::cout << "GPU::" << std::endl;
     // std::cout << W_result[0] << "\t" <<  W_result[1] << std::endl;
