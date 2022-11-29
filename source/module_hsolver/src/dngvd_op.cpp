@@ -9,11 +9,11 @@ template <>
 void dngvx_op<double, psi::DEVICE_CPU>::operator()(const psi::DEVICE_CPU* d,
                                                    const int nstart,
                                                    const int ldh,
-                                                   const std::complex<double>* A,
-                                                   const std::complex<double>* B,
-                                                   const int m,
-                                                   double* W,
-                                                   std::complex<double>* V,
+                                                   const std::complex<double>* A, // hcc
+                                                   const std::complex<double>* B, // scc
+                                                   const int m, // nbands
+                                                   double* W,   // res
+                                                   std::complex<double>* V,  // vcc
                                                    const std::string keyword)
 {
     
@@ -147,7 +147,7 @@ void dngvx_op<double, psi::DEVICE_CPU>::operator()(const psi::DEVICE_CPU* d,
         //=============================
         // Number of calculated bands
         //=============================
-        
+        int mm = m;
 
         LapackConnector::zhegvx(1, // INTEGER
                                 'V', // CHARACTER*1
@@ -163,7 +163,7 @@ void dngvx_op<double, psi::DEVICE_CPU>::operator()(const psi::DEVICE_CPU* d,
                                 1, // INTEGER
                                 m, // INTEGER
                                 0.0, // DOUBLE PRECISION
-                                m, // INTEGER
+                                mm, // INTEGER
                                 W, // DOUBLE PRECISION array
                                 hvec, // COMPLEX*16 array
                                 ldh, // INTEGER
