@@ -9,14 +9,7 @@ list(APPEND objects
     pw_init.cpp
     pw_transform.cpp
     pw_transform_k.cpp
-    src/pw_multi_device.cpp
 )
-
-if (USE_CUDA)
-  list(APPEND objects src/cuda/pw_multi_device.cu)
-elseif(USE_ROCM)
-  list(APPEND objects src/rocm/pw_multi_device.cu)
-endif()
 
 add_library(
     planewave

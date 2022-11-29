@@ -59,9 +59,6 @@ template<class T> class DiagoPrepare
         MPI_Comm_size(MPI_COMM_WORLD, &dsize);
         MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
 
-        if(strcmp("", hfname.c_str()) && strcmp("", sfname.c_str())) 
-            readhs = true;
-
         if (ks_solver == "scalapack_gvx")
             dh = new hsolver::DiagoBlas;
 #ifdef __ELPA
@@ -78,7 +75,6 @@ template<class T> class DiagoPrepare
 
     int dsize, myrank;
     int nlocal, nbands, nb2d, sparsity;
-    bool readhs = false;
     double hsolver_time = 0.0, lapack_time = 0.0;
     std::string ks_solver, sfname, hfname;
     HamiltTEST<T> hmtest;
@@ -92,14 +88,6 @@ template<class T> class DiagoPrepare
     std::vector<double> e_lapack;
     std::vector<double> abc;
     int icontxt;
-
-    bool random_HS()
-    {
-        this->h.resize(nlocal * nlocal);
-        this->s.resize(nlocal * nlocal);
-        LCAO_DIAGO_TEST::random_hs<T>(this->h.data(), this->s.data(), nlocal, sparsity);
-        return true;
-    }
 
     bool read_HS()
     {
@@ -130,13 +118,8 @@ template<class T> class DiagoPrepare
 
     bool produce_HS()
     {
-        bool ok;
-        if (readhs)
-            ok = this->read_HS();
-        else
-            ok = this->random_HS();
+        bool ok = this->read_HS();
 
-        
         e_solver.resize(nlocal,0.0);
         e_lapack.resize(nlocal,1.0);
         
@@ -183,14 +166,6 @@ template<class T> class DiagoPrepare
         LCAO_DIAGO_TEST::distribute_data<T>(this->h.data(),this->h_local.data(),nlocal,nb2d,hmtest.nrow,hmtest.ncol,icontxt);
         LCAO_DIAGO_TEST::distribute_data<T>(this->s.data(),this->s_local.data(),nlocal,nb2d,hmtest.nrow,hmtest.ncol,icontxt);
         psi.resize(1,hmtest.ncol,hmtest.nrow);
-        //for(int i=0;i<local_size;i++) 
-        //{
-        //    psi.get_pointer()[i] = 0.0;
-        //    if (std::is_same<T, std::complex<double>>::value)
-        //    {
-        //        reinterpret_cast<double *>(&(psi.get_pointer()[i]))[1] = 0.0;
-        //    }
-        //}
     }
 
     void set_env()
@@ -249,13 +224,8 @@ template<class T> class DiagoPrepare
                 pass = false;
         }
 
-        if (readhs)
-            std::cout << "H/S matrix are read from " << hfname << ", " << sfname << std::endl;
-        else
-            std::cout << "H/S matrix are produced by random." << std::endl;
+        std::cout << "H/S matrix are read from " << hfname << ", " << sfname << std::endl;
         std::cout << "solver=" << ks_solver << ", NLOCAL=" << nlocal << ", nbands=" << nbands << ", nb2d=" << nb2d;
-        if (!readhs)
-            out_info << ", Sparsity=" << sparsity;
         std::cout << std::endl;
         out_info << "solver time: " << hsolver_time
                  << "s, LAPACK time(1 core):" << lapack_time << "s" << std::endl;

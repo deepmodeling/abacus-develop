@@ -60,10 +60,6 @@ class Potential : public PotBase
     void pot_register(std::vector<std::string>& components_list);
     // update potential from current charge
     void update_from_charge(const Charge* chg, const UnitCell* ucell);
-#ifdef __LCAO
-    // update potential for purpose of TDDFT
-    void update_for_tddft(int istep);
-#endif
     // interface for SCF-converged, etxc vtxc for Energy, vnew for force_scc
     void get_vnew(const Charge* chg, ModuleBase::matrix& vnew);
 

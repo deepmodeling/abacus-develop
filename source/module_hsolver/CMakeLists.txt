@@ -4,8 +4,6 @@ list(APPEND objects
     hsolver_pw.cpp
     hsolver_pw_sdft.cpp
     diago_iter_assist.cpp
-    src/math_kernel.cpp
-    src/dngvd_op.cpp
 )
 
 if(ENABLE_LCAO)
@@ -18,15 +16,6 @@ if(ENABLE_LCAO)
         diago_elpa.cpp
     )
   endif ()
-endif()
-
-if (USE_CUDA)
-  list(APPEND objects 
-      src/cuda/math_kernel.cu
-      src/cuda/dngvd_op.cu
-  )
-elseif(USE_ROCM)
-  list(APPEND objects src/rocm/math_kernel.cu)
 endif()
 
 add_library(
