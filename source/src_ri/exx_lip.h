@@ -77,15 +77,6 @@ private:
 	void sum_all(int ik);
 	void exx_energy_cal();
 	void read_q_pack();
-
-// mohan comment out 2021-02-24
-	friend void Hamilt_PW::diagH_subspace(
-		const int ik,
-		const int nstart,
-		const int n_band,
-		const ModuleBase::ComplexMatrix &psi,
-		ModuleBase::ComplexMatrix &evc,
-		double *en);	
 	
 public:
 
