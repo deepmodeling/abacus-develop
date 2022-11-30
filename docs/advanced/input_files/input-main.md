@@ -474,8 +474,9 @@ calculations.
 - **Type**: Integer
 - **Description**: Number of Kohn-Sham orbitals to calculate. It is recommended you setup this value, especially when you use smearing techniques, more bands should be included.
 - **Default**:
-  - nspin=1: 1.2\*occupied_bands, occupied_bands+10)
-  - nspin=2: max(1.2\*nelec, nelec+20)
+  - nspin=1: 1.2\*occupied_bands, occupied_bands + 10)
+  - nspin=2: max(1.2\*nelec_spin, nelec_spin + 10) , nelec_spin = max(nelec_spin_up, nelec_spin_down)
+  - nspin=4: 1.2\*nelec, nelec + 20)
 
 ### nbands_istate
 
