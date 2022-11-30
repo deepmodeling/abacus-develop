@@ -32,9 +32,12 @@ void ElecState::fixed_weights(const double * const ocp_kb)
 void ElecState::init_nelec_spin()
 {
     this->nelec_spin.resize(GlobalV::NSPIN);
-    //in fact, when nupdown is not 0.0, nelec_spin will be fixed.
-    this->nelec_spin[0] = (GlobalV::nelec + GlobalV::nupdown) / 2.0 ;
-    this->nelec_spin[1] = (GlobalV::nelec - GlobalV::nupdown) / 2.0 ;
+    if(GlobalV::NSPIN==2)
+    {
+        //in fact, when TWO_EFERMI(nupdown in INPUT is not 0.0), nelec_spin will be fixed.
+        this->nelec_spin[0] = (GlobalV::nelec + GlobalV::nupdown) / 2.0 ;
+        this->nelec_spin[1] = (GlobalV::nelec - GlobalV::nupdown) / 2.0 ;
+    }
 }
 
 void ElecState::calculate_weights()
@@ -331,33 +334,44 @@ void ElecState::cal_nbands()
 		if(GlobalV::NSPIN == 1)
 		{
 			const int nbands1 = static_cast<int>(occupied_bands) + 10;
-			const int nbands2 = static_cast<int>(1.2 * occupied_bands);
+			const int nbands2 = static_cast<int>(1.2 * occupied_bands) + 1;
 			GlobalV::NBANDS = std::max(nbands1, nbands2);
 			if(GlobalV::BASIS_TYPE!="pw") GlobalV::NBANDS = std::min(GlobalV::NBANDS, GlobalV::NLOCAL);
 		}
-		else if (GlobalV::NSPIN ==2 || GlobalV::NSPIN == 4)
+		else if (GlobalV::NSPIN == 4)
 		{
 			const int nbands3 = GlobalV::nelec + 20;
-			const int nbands4 = 1.2 * GlobalV::nelec;
+			const int nbands4 = static_cast<int>(1.2 * GlobalV::nelec) + 1;
 			GlobalV::NBANDS = std::max(nbands3, nbands4);
 			if(GlobalV::BASIS_TYPE!="pw") GlobalV::NBANDS = std::min(GlobalV::NBANDS, GlobalV::NLOCAL);
 		}
+        else if (GlobalV::NSPIN == 2)
+        {
+            const double max_occ = std::max(this->nelec_spin[0], this->nelec_spin[1]);
+            const int nbands3 = static_cast<int>(max_occ) + 11;
+			const int nbands4 = static_cast<int>(1.2 * max_occ) + 1;
+            GlobalV::NBANDS = std::max(nbands3, nbands4);
+            if(GlobalV::BASIS_TYPE!="pw") GlobalV::NBANDS = std::min(GlobalV::NBANDS, GlobalV::NLOCAL);
+        }
 		ModuleBase::GlobalFunc::AUTO_SET("NBANDS",GlobalV::NBANDS);
 	}
 	//else if ( GlobalV::CALCULATION=="scf" || GlobalV::CALCULATION=="md" || GlobalV::CALCULATION=="relax") //pengfei 2014-10-13
 	else
 	{
 		if(GlobalV::NBANDS < occupied_bands) ModuleBase::WARNING_QUIT("unitcell","Too few bands!");
-		if(GlobalV::NBANDS < this->nelec_spin[0] ) 
-		{
-			ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"nelec_up", this->nelec_spin[0]);
-			ModuleBase::WARNING_QUIT("ElecState::cal_nbands","Too few spin up bands!");
-		}
-		if(GlobalV::NBANDS < this->nelec_spin[1] )
-		{
-            ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"nelec_down", this->nelec_spin[1]);
-			ModuleBase::WARNING_QUIT("ElecState::cal_nbands","Too few spin down bands!");
-		}
+        if(GlobalV::NSPIN==2)
+        {
+            if(GlobalV::NBANDS < this->nelec_spin[0] ) 
+            {
+                ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"nelec_up", this->nelec_spin[0]);
+                ModuleBase::WARNING_QUIT("ElecState::cal_nbands","Too few spin up bands!");
+            }
+            if(GlobalV::NBANDS < this->nelec_spin[1] )
+            {
+                ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"nelec_down", this->nelec_spin[1]);
+                ModuleBase::WARNING_QUIT("ElecState::cal_nbands","Too few spin down bands!");
+            }
+        }
 	}
 
 	// mohan update 2021-02-19

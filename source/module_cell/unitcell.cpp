@@ -721,6 +721,19 @@ void UnitCell::setup_cell(
 	orb.bcast_files(ntype, GlobalV::MY_RANK);
 	#endif
 #endif
+
+	//after read STRU, calculate initial total magnetization when NSPIN=2
+	if(GlobalV::NSPIN == 2 && !GlobalV::TWO_EFERMI)
+	{
+		for(int it = 0;it<this->ntype; it++)
+		{
+			for(int ia = 0; ia<this->atoms[it].na; ia++)
+			{
+				GlobalV::nupdown += this->atoms[it].mag[ia];
+			}
+		}
+		GlobalV::ofs_running<<" The readin total magnetization is "<<GlobalV::nupdown<<std::endl;
+	}
 	
 	//========================================================
 	// Calculate unit cell volume
