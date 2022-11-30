@@ -9,11 +9,11 @@ template <>
 void dngvx_op<double, psi::DEVICE_CPU>::operator()(const psi::DEVICE_CPU* d,
                                                    const int nstart,
                                                    const int ldh,
-                                                   const std::complex<double>* A, // hcc
-                                                   const std::complex<double>* B, // scc
-                                                   const int m, // nbands
-                                                   double* W,   // res
-                                                   std::complex<double>* V,  // vcc
+                                                   const std::complex<double>* hcc, // hcc
+                                                   const std::complex<double>* scc, // scc
+                                                   const int nbands, // nbands
+                                                   double* eigenvalue,  // eigenvalue
+                                                   std::complex<double>* vcc, // vcc
                                                    const std::string keyword)
 {
     
@@ -58,18 +58,18 @@ void dngvx_op<double, psi::DEVICE_CPU>::operator()(const psi::DEVICE_CPU* d,
             'I', // RANGE = 'I': the IL-th through IU-th eigenvalues will be found.
             'L', // UPLO = 'L':  Lower triangles of A and B are stored.
             nstart, // N = base
-            A, // A is COMPLEX*16 array  dimension (LDA, N)
+            hcc, // A is COMPLEX*16 array  dimension (LDA, N)
             nstart, // LDA = base
-            B, // B is COMPLEX*16 array, dimension (LDB, N)
+            scc, // B is COMPLEX*16 array, dimension (LDB, N)
             nstart, // LDB = base
             0.0, // Not referenced if RANGE = 'A' or 'I'.
             0.0, // Not referenced if RANGE = 'A' or 'I'.
             1, // IL: If RANGE='I', the index of the smallest eigenvalue to be returned. 1 <= IL <= IU <= N,
-            m, // IU: If RANGE='I', the index of the largest eigenvalue to be returned. 1 <= IL <= IU <= N,
+            nbands, // IU: If RANGE='I', the index of the largest eigenvalue to be returned. 1 <= IL <= IU <= N,
             0.0, // ABSTOL
-            m, // M: The total number of eigenvalues found.  0 <= M <= N. if RANGE = 'I', M = IU-IL+1.
-            W, // W store eigenvalues
-            V, // store eigenvector
+            nbands, // M: The total number of eigenvalues found.  0 <= M <= N. if RANGE = 'I', M = IU-IL+1.
+            eigenvalue, // W store eigenvalues
+            vcc, // store eigenvector
             nstart, // LDZ: The leading dimension of the array Z.
             work,
             lwork,
@@ -79,12 +79,12 @@ void dngvx_op<double, psi::DEVICE_CPU>::operator()(const psi::DEVICE_CPU* d,
             info,
             ldh);
 
-        assert(0 == info);
-
         delete[] work;
         delete[] rwork;
         delete[] iwork;
         delete[] ifail;
+
+        assert(0 == info);
     }
     else if (keyword == "diagH_LAPACK")
     {
@@ -119,15 +119,15 @@ void dngvx_op<double, psi::DEVICE_CPU>::operator()(const psi::DEVICE_CPU* d,
 
         psi::DEVICE_CPU * cpu_ctx = {};
 
-        ModuleBase::ComplexMatrix hdum(nstart, ldh);
         ModuleBase::ComplexMatrix sdum(nstart, ldh);
+        ModuleBase::ComplexMatrix hdum(nstart, ldh);
 
         ModuleBase::ComplexMatrix hc(nstart, nstart);
         psi::memory::synchronize_memory_op<std::complex<double>, psi::DEVICE_CPU, psi::DEVICE_CPU>()(
             cpu_ctx,
             cpu_ctx,
             hc.c,
-            A,
+            hcc,
             nstart * nstart
         );
 
@@ -136,18 +136,18 @@ void dngvx_op<double, psi::DEVICE_CPU>::operator()(const psi::DEVICE_CPU* d,
                 cpu_ctx,
                 cpu_ctx,
                 sc.c,
-                B,
+                scc,
                 nstart * nstart
         );
         hdum = hc;
         sdum = sc;
 
-        ModuleBase::ComplexMatrix hvec(nstart, m);
+        ModuleBase::ComplexMatrix hvec(nstart, nbands);
 
         //=============================
         // Number of calculated bands
         //=============================
-        int mm = m;
+        int mm = nbands;
 
         LapackConnector::zhegvx(1, // INTEGER
                                 'V', // CHARACTER*1
@@ -161,10 +161,10 @@ void dngvx_op<double, psi::DEVICE_CPU>::operator()(const psi::DEVICE_CPU* d,
                                 0.0, // DOUBLE PRECISION
                                 0.0, // DOUBLE PRECISION
                                 1, // INTEGER
-                                m, // INTEGER
+                                nbands, // INTEGER
                                 0.0, // DOUBLE PRECISION
                                 mm, // INTEGER
-                                W, // DOUBLE PRECISION array
+                                eigenvalue, // DOUBLE PRECISION array
                                 hvec, // COMPLEX*16 array
                                 ldh, // INTEGER
                                 work, // DOUBLE array, dimension (MAX(1,LWORK))
@@ -178,14 +178,16 @@ void dngvx_op<double, psi::DEVICE_CPU>::operator()(const psi::DEVICE_CPU* d,
         psi::memory::synchronize_memory_op<std::complex<double>, psi::DEVICE_CPU, psi::DEVICE_CPU>()(
                 cpu_ctx,
                 cpu_ctx,
-                V,
+                vcc,
                 hvec.c,
-                nstart * m
+                nstart * nbands
         );
         delete[] iwork;
         delete[] ifail;
         delete[] rwork;
         delete[] work;
+
+        assert(0 == info);
     }
 };
 
@@ -193,11 +195,14 @@ template <>
 void dngv_op<double, psi::DEVICE_CPU>::operator()(const psi::DEVICE_CPU* d,
                                                   const int nstart,
                                                   const int ldh,
-                                                  const std::complex<double>* A,
-                                                  const std::complex<double>* B,
-                                                  double* W,
-                                                  std::complex<double>* V)
+                                                  const std::complex<double>* hcc,
+                                                  const std::complex<double>* scc,
+                                                  double* eigenvalue,
+                                                  std::complex<double>* vcc)
 {
+    //===========================
+    // calculate all eigenvalues
+    //===========================
     int info = 0;
     int lwork = 0;
     int nb = LapackConnector::ilaenv(1, "ZHETRD", "U", nstart, -1, -1, -1);
@@ -213,10 +218,10 @@ void dngv_op<double, psi::DEVICE_CPU>::operator()(const psi::DEVICE_CPU* d,
     {
         lwork = (nb + 1) * nstart;
     }
-    std::complex<double>* work = new std::complex<double>[lwork];
-    int rwork_dim = 3 * nstart - 2;
-    double* rwork = new double[rwork_dim];
+    std::complex<double> *work = new std::complex<double>[lwork];
     ModuleBase::GlobalFunc::ZEROS(work, lwork);
+    int rwork_dim = 3 * nstart - 2;
+    double *rwork = new double[rwork_dim];
     ModuleBase::GlobalFunc::ZEROS(rwork, rwork_dim);
 
     psi::DEVICE_CPU * cpu_ctx = {};
@@ -225,7 +230,7 @@ void dngv_op<double, psi::DEVICE_CPU>::operator()(const psi::DEVICE_CPU* d,
             cpu_ctx,
             cpu_ctx,
             hvec.c,
-            A,
+            hcc,
             nstart * nstart
     );
     ModuleBase::ComplexMatrix sdum(nstart, ldh);
@@ -234,19 +239,25 @@ void dngv_op<double, psi::DEVICE_CPU>::operator()(const psi::DEVICE_CPU* d,
             cpu_ctx,
             cpu_ctx,
             sc.c,
-            B,
+            scc,
             nstart * nstart
     );
     sdum = sc;
-    LapackConnector::zhegv(1, 'V', 'U', nstart, hvec, ldh, sdum, ldh, W, work, lwork, rwork, info);
+
+    //===========================
+    // calculate all eigenvalues
+    //===========================
+    LapackConnector::zhegv(1, 'V', 'U', nstart, hvec, ldh, sdum, ldh, eigenvalue, work, lwork, rwork, info);
 
     psi::memory::synchronize_memory_op<std::complex<double>, psi::DEVICE_CPU, psi::DEVICE_CPU>()(
             cpu_ctx,
             cpu_ctx,
-            V,
+            vcc,
             hvec.c,
             nstart * nstart
     );
+    delete[] rwork;
+    delete[] work;
 
     // The A and B storage space is (nstart * ldh), and the data that really participates in the zhegvx
     // operation is (nstart * nstart). In this function, the data that A and B participate in the operation will
@@ -257,9 +268,6 @@ void dngv_op<double, psi::DEVICE_CPU>::operator()(const psi::DEVICE_CPU* d,
     // LapackConnector::zhegv(1, 'V', 'U', nstart, V, nstart, B, nstart, W, work, lwork, rwork, info, ldh);
 
     assert(0 == info);
-
-    delete[] work;
-    delete[] rwork;
 }
 
 } // namespace hsolver
