@@ -845,7 +845,7 @@ void LCAO_gen_fixedH::build_Nonlocal_beta_new(double* HSloc) //update by liuyu 2
                 for (int ad2_count=0; ad2_count < adjs_all[iat].adj_num + 1; ad2_count++)
                 {
                     const int T2 = adjs_all[iat].ntype[ad2_count];
-                    const int I2 = adjs_all[iat].ntype[ad2_count];
+                    const int I2 = adjs_all[iat].natom[ad2_count];
                     const int start2 = GlobalC::ucell.itiaiw2iwt(T2, I2, 0);
                     const ModuleBase::Vector3<double> tau2 = adjs_all[iat].adjacent_tau[ad2_count];
                     const Atom* atom2 = &GlobalC::ucell.atoms[T2];
