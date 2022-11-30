@@ -3,6 +3,10 @@
 #include "../module_base/global_variable.h"
 #include "../module_base/timer.h"
 
+#ifdef _OPENMP
+#include <omp.h>
+#endif
+
 Grid_Driver::Grid_Driver(
 	const int &test_d_in, 
 	const int &test_gd_in, 
@@ -27,7 +31,13 @@ void Grid_Driver::Find_atom(
 	AdjacentAtomInfo *adjs)
 {
 	//if (test_grid_driver) ModuleBase::TITLE(GlobalV::ofs_running, "Grid_Driver", "Find_atom");
-	ModuleBase::timer::tick("Grid_Driver","Find_atom");
+ #ifdef _OPENMP
+    int in_parallel = omp_in_parallel();
+ #else
+    int in_parallel = 0;
+#endif
+    // to avoid writing conflict, disable timing in omp parallel block
+	if (!in_parallel) ModuleBase::timer::tick("Grid_Driver","Find_atom");
 
 	if (test_grid_driver > 1)
 	{
@@ -50,7 +60,7 @@ void Grid_Driver::Find_atom(
 	AdjacentAtomInfo* local_adjs = adjs == nullptr ? &this->adj_info : adjs;
 	this->Find_adjacent_atom(offset, this->atomlink[offset].fatom.getAdjacentSet(), *local_adjs);
 
-	ModuleBase::timer::tick("Grid_Driver","Find_atom");
+	if (!in_parallel) ModuleBase::timer::tick("Grid_Driver","Find_atom");
 	return;
 }
 
