@@ -24,6 +24,7 @@ option(INFO "Enable gathering of math library information" OFF)
 option(ENABLE_COVERAGE "Enable coverage build." OFF)
 option(ENABLE_LIBRI "Enable EXX with LibRI." OFF)
 option(USE_ELPA "Enable ELPA" ON)
+option(GIT_SUBMODULE "Check submodules during build" ON)
 
 if(ENABLE_LCAO)
   set(ABACUS_BIN_NAME abacus)
@@ -96,6 +97,7 @@ if(ENABLE_LCAO)
   endif()
 else()
   set(ENABLE_DEEPKS OFF)
+  set(ENABLE_LIBRI OFF)
 endif()
 
 find_package(MPI REQUIRED)
@@ -277,11 +279,13 @@ endif()
 
 if (ENABLE_LIBRI)
   set(CMAKE_CXX_STANDARD 14)
-  find_package(Git QUIET)
-  if(GIT_FOUND AND EXISTS "${PROJECT_SOURCE_DIR}/.git")
+  if(NOT (CMAKE_CXX_COMPILER_ID STREQUAL "Intel"))
+    message(WARNING "RI related features are only stable if compiled with Intel compiler.")
+  endif()
+  if(GIT_SUBMODULE)
+    find_package(Git QUIET)
+    if(GIT_FOUND AND EXISTS "${PROJECT_SOURCE_DIR}/.git")
     # Update submodules as needed
-    option(GIT_SUBMODULE "Check submodules during build" ON)
-    if(GIT_SUBMODULE)
       message(STATUS "Submodule update")
       execute_process(COMMAND ${GIT_EXECUTABLE} submodule update --init --recursive
               WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
@@ -290,15 +294,21 @@ if (ENABLE_LIBRI)
         message(FATAL_ERROR "git submodule update --init --recursive failed with ${GIT_SUBMOD_RESULT}, please checkout submodules")
       endif()
     endif()
+    include_directories(${CMAKE_CURRENT_SOURCE_DIR}/deps/LibRI/include)
+    include_directories(${CMAKE_CURRENT_SOURCE_DIR}/deps/LibComm/include)
+  else()
+    if ((NOT LIBRI_DIR) OR (NOT LIBCOMM_DIR))
+      message(FATAL_ERROR "Must provide LIBRI_DIR and LIBCOMM_DIR for RI related features.")
+    endif()
+    include_directories(${LIBRI_DIR}/include)
+    include_directories(${LIBCOMM_DIR}/include)
   endif()
-  include_directories(${CMAKE_CURRENT_SOURCE_DIR}/deps/LibRI/include)
-  include_directories(${CMAKE_CURRENT_SOURCE_DIR}/deps/LibComm/include)
   add_compile_definitions(
-          __EXX
-          EXX_DM=3
-          EXX_H_COMM=2
-          TEST_EXX_LCAO=0
-          TEST_EXX_RADIAL=1
+    __EXX
+    EXX_DM=3
+    EXX_H_COMM=2
+    TEST_EXX_LCAO=0
+    TEST_EXX_RADIAL=1
   )
 endif()
 
