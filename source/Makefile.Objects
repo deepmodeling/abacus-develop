@@ -34,6 +34,7 @@ VPATH=./src_global:\
 ./module_hamilt:\
 ./module_hamilt/ks_pw:\
 ./module_hamilt/ks_lcao:\
+./module_hamilt/of_pw:\
 ./module_hamilt/src:\
 ./module_gint:\
 ./src_pw:\
@@ -68,7 +69,8 @@ ${OBJS_XC}\
 ${OBJS_IO}\
 ${OBJS_RI}\
 ${OBJS_PARALLEL}\
-${OBJS_SRCPW}
+${OBJS_SRCPW}\
+${OBJS_HAMILT_OF}
 
 OBJS_ABACUS=${OBJS_ABACUS_PW}\
 ${OBJS_DEEPKS}\
