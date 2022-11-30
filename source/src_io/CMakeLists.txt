@@ -29,16 +29,6 @@ if(ENABLE_LCAO)
       istate_envelope.cpp
       mulliken_charge.cpp
       read_dm.cpp
-      read_txt_tools.cpp
-      read_txt_input_value.cpp
-      read_txt_input_item.cpp
-      read_txt_input_list.cpp
-      read_txt_input_process.cpp
-      read_txt_input_process_global.cpp
-      read_txt_input-general.cpp
-      read_txt_input-pw.cpp
-      read_txt_input-spectrum.cpp
-      read_txt_stru.cpp
       unk_overlap_lcao.cpp
       wf_local.cpp
       write_HS.cpp
