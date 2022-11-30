@@ -35,29 +35,6 @@ namespace ModuleBase
 	}
 }
 
-namespace Read_Txt_Input
-{
-	template<class Archive> void Input_Value::serialize( Archive & ar )
-	{
-		ar( this->b );
-		ar( this->i );
-		ar( this->d );
-		ar( this->s );
-	}
-	template<class Archive> void Input_Item::serialize( Archive & ar )
-	{
-		ar( this->annotation );
-		ar( this->values );
-		ar( this->values_type );
-		ar( this->label );
-		ar( this->values_size_read );
-		ar( this->values_size_lower_limit );
-		ar( this->values_size_upper_limit );
-	}
-}
-
-
-
 #include <mpi.h>
 #include <sstream>
 
