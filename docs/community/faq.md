@@ -49,6 +49,10 @@ Apart from setting relavant keys (`lspinorb` to 1) in the `INPUT` file, SOC calc
 
 For restarting SCF calculations, users are referred to the documentation about [continuation of job](../advanced/scf/spin.md#for-the-continuation-job). For restarting MD calculations, please see [md_restart](../advanced/input_files/input-main.md#md_restart).
 
+**8. Can deepks model be used for structural optimization calculation? What parameters need to be modified or called?
+
+If you train the DeePKS model with force labels, then the DeePKS model can provide force calculation with the same accuracy as your target method, and can thus be used for structural optimization. To do that, you just need to train the model with force label enabled.
+
 
 [back to top](#frequently-asked-questions)
 
