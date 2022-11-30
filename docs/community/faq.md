@@ -68,4 +68,25 @@ This is usually caused by the difficulty in converging charge density. Reducing 
 
 ## Miscellaneous
 
+**1. How to visualise charge density file?
+
+The output file SPIN1_CHG.cube can be visualized by using VESTA.
+
+**2. How to change cif file directly to STRU file?
+One way to change from cif to STRU is to use the [ASE-ABACUS](https://gitlab.com/1041176461/ase-abacus) interface. An example of the converting script is provided below:
+```
+from ase.io import read, write
+from pathlib import Path
+
+cs_dir = './'
+cs_vasp = Path(cs_dir, 'SiO.cif')
+cs_atoms = read(cs_vasp, format='cif')
+cs_stru = Path(cs_dir, 'STRU')
+pp = {'Si':'Si.upf','O':'O.upf'}
+basis = {'Si':'Si.orb','O':'O.orb'}
+write(cs_stru, cs_atoms, format='abacus', pp=pp, basis=basis)
+```
+
+
+
 [back to top](#frequently-asked-questions)
