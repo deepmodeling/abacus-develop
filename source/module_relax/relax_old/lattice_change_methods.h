@@ -1,7 +1,6 @@
 #ifndef LATTICE_CHANGE_METHODS_H
 #define LATTICE_CHANGE_METHODS_H
 
-using namespace std;
 #include "lattice_change_basic.h"
 #include "lattice_change_cg.h"
 
@@ -25,6 +24,6 @@ class Lattice_Change_Methods
 
 	private:
 
-	Lattice_Change_CG lccg;	
+	Lattice_Change_CG lccg;
 };
 #endif

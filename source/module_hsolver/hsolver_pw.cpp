@@ -194,7 +194,7 @@ void HSolverPW<FPTYPE, Device>::update_precondition(std::vector<FPTYPE> &h_diag,
     {
         for (int ig = 0; ig < npw; ig++)
         {
-            FPTYPE g2kin = this->wfc_basis->getgk2(ik,ig) * tpiba2;    
+            FPTYPE g2kin = this->wfc_basis->getgk2(ik,ig) * tpiba2;
             h_diag[ig] = std::max(1.0, g2kin);
         }
     }

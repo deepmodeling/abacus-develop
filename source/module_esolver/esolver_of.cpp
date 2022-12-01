@@ -50,7 +50,7 @@ void ESolver_OF::Init(Input &inp, UnitCell &ucell)
 	}
 
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "SETUP UNITCELL");
-    
+
     // symmetry analysis should be performed every time the cell is changed
     if (ModuleSymmetry::Symmetry::symm_flag)
     {
@@ -65,7 +65,7 @@ void ESolver_OF::Init(Input &inp, UnitCell &ucell)
     // print information
     // mohan add 2021-01-30
     Print_Info::setup_parameters(ucell, GlobalC::kv);
-    
+
     // initialize the real-space uniform grid for FFT and parallel
     // distribution of plane waves
     GlobalC::Pgrid.init(GlobalC::rhopw->nx, GlobalC::rhopw->ny, GlobalC::rhopw->nz, GlobalC::rhopw->nplane,
@@ -121,7 +121,7 @@ void ESolver_OF::Init(Input &inp, UnitCell &ucell)
     }
 
     this->pelec->charge->allocate(GlobalV::NSPIN, GlobalC::rhopw->nrxx, GlobalC::rhopw->npw);
-        
+
     this->pelec->pot = new elecstate::Potential(
         GlobalC::rhopw,
         &GlobalC::ucell,
@@ -277,9 +277,9 @@ void ESolver_OF::Run(int istep, UnitCell& ucell)
     ModuleBase::timer::tick("ESolver_OF", "Run");
 }
 
-// 
+//
 // Calculate ewald energy, initialize the rho, phi, theta
-// 
+//
 void ESolver_OF::beforeOpt(const int istep)
 {
     // Temporary, md and relax will merge later   liuyu add 2022-11-07
@@ -312,7 +312,7 @@ void ESolver_OF::beforeOpt(const int istep)
         {
             for (int ibs = 0; ibs < this->nrxx; ++ibs)
             {
-                // Here we initialize rho to be uniform, 
+                // Here we initialize rho to be uniform,
                 // because the rho got by pot.init_pot -> Charge::atomic_rho may contain minus elements.
                 pelec->charge->rho[is][ibs] = this->nelec[is]/GlobalC::ucell.omega;
                 this->pphi[is][ibs] = sqrt(pelec->charge->rho[is][ibs]);
@@ -341,9 +341,9 @@ void ESolver_OF::beforeOpt(const int istep)
     }
 }
 
-// 
+//
 // Get dL/dphi = dL/drho * drho/dphi = (dE/drho - mu) * 2 * phi
-// 
+//
 void ESolver_OF::updateV()
 {
     // (1) get dL/dphi
@@ -353,7 +353,7 @@ void ESolver_OF::updateV()
     {
         const double* vr_eff = this->pelec->pot->get_effective_v(is);
         for (int ir = 0; ir < this->nrxx; ++ir)
-        { 
+        {
             this->pdEdphi[is][ir] = vr_eff[ir];
         }
         this->mu[is] = this->cal_mu(this->pphi[is], this->pdEdphi[is], this->nelec[is]);
@@ -426,7 +426,7 @@ void ESolver_OF::solveV()
             ptempRho->rho[is][ir] = ptempPhi[is][ir] * ptempPhi[is][ir];
         }
     }
-    
+
     // (2) rotate and renormalize the direction
     this->getNextDirect();
 
@@ -439,7 +439,7 @@ void ESolver_OF::solveV()
 
     double dEdthetaThre = 1e5; // threshould of dEdtheta, avoid the unstable optimization
     this->caldEdtheta(ptempPhi, ptempRho, tempTheta, dEdtheta);
-    
+
     // Assert dEdtheta(theta = 0) < 0, otherwise line search will not work.
     for (int is = 0; is < GlobalV::NSPIN; ++is)
     {
@@ -542,13 +542,13 @@ void ESolver_OF::solveV()
             }
             else if (strncmp(this->task, "WA", 2) == 0) // warning of line search
             {
-                GlobalV::ofs_warning << "ESolver_OF linesearch: WARNING " << this->task << std::endl; 
+                GlobalV::ofs_warning << "ESolver_OF linesearch: WARNING " << this->task << std::endl;
                 cout << this->task << endl;
                 break;
-            } 
+            }
             else if (strncmp(this->task, "ER", 2) == 0) // ERROR in line search
             {
-                GlobalV::ofs_warning << "ESolver_OF linesearch: ERROR " << this->task << std::endl; 
+                GlobalV::ofs_warning << "ESolver_OF linesearch: ERROR " << this->task << std::endl;
                 cout << this->task << endl;
                 break;
             }
@@ -557,9 +557,9 @@ void ESolver_OF::solveV()
     else if (GlobalV::NSPIN == 2)
     {
         ModuleBase::WARNING_QUIT("esolver_of", "Sorry, SPIN2 case is not supported by OFDFT for now.");
-    // ========================== Under testing ========================== 
+    // ========================== Under testing ==========================
     //     this->opt_cg_mag->refresh();
-        
+
     //     double *pthetaDir = new double[GlobalV::NSPIN];
     //     double *tempTheta = new double[GlobalV::NSPIN];
     //     ModuleBase::GlobalFunc::ZEROS(pthetaDir, GlobalV::NSPIN);
@@ -633,13 +633,13 @@ void ESolver_OF::solveV()
     //             }
     //             else if (strncmp(this->task, "WA", 2) == 0)
     //             {
-    //                 GlobalV::ofs_warning << "ESolver_OF linesearch: WARNING " << this->task << std::endl; 
+    //                 GlobalV::ofs_warning << "ESolver_OF linesearch: WARNING " << this->task << std::endl;
     //                 cout << this->task << endl;
     //                 break;
-    //             } 
+    //             }
     //             else if (strncmp(this->task, "ER", 2) == 0)
     //             {
-    //                 GlobalV::ofs_warning << "ESolver_OF linesearch: ERROR " << this->task << std::endl; 
+    //                 GlobalV::ofs_warning << "ESolver_OF linesearch: ERROR " << this->task << std::endl;
     //                 cout << this->task << endl;
     //                 break;
     //             }
@@ -652,7 +652,7 @@ void ESolver_OF::solveV()
     //     }
     //     delete[] tempTheta;
     //     delete[] pthetaDir;
-    // ========================== Under testing ========================== 
+    // ========================== Under testing ==========================
     }
 
     for (int is = 0; is < GlobalV::NSPIN; ++is)
@@ -666,9 +666,9 @@ void ESolver_OF::solveV()
     delete[] dEdtheta;
 }
 
-// 
+//
 // Rotate and renormalize the direction |d>, make it orthogonal to phi, and <d|d> = nelec
-// 
+//
 void ESolver_OF::getNextDirect()
 {
     // filter the high frequency term in direction if of_full_pw = false
@@ -687,7 +687,7 @@ void ESolver_OF::getNextDirect()
 
         // (1) make direction orthogonal to phi
         // |d'> = |d0> - |phi><phi|d0>/nelec
-        double innerPhiDir = this->inner_product(this->pdirect[0], this->pphi[0], this->nrxx, dV=this->dV);
+        double innerPhiDir = this->inner_product(this->pdirect[0], this->pphi[0], this->nrxx, this->dV);
         Parallel_Reduce::reduce_double_all(innerPhiDir);
         for (int i = 0; i < this->nrxx; ++i)
         {
@@ -699,7 +699,7 @@ void ESolver_OF::getNextDirect()
 
         // (2) renormalize direction
         // |d> = |d'> * \sqrt(nelec) / <d'|d'>
-        double normDir = this->inner_product(this->pdirect[0], this->pdirect[0], this->nrxx, dV=this->dV);
+        double normDir = this->inner_product(this->pdirect[0], this->pdirect[0], this->nrxx, this->dV);
         Parallel_Reduce::reduce_double_all(normDir);
         normDir = sqrt(normDir);
         for (int i = 0; i < this->nrxx; ++i)
@@ -716,7 +716,7 @@ void ESolver_OF::getNextDirect()
         {
             // (1) make direction orthogonal to phi
             // |d'> = |d0> - |phi><phi|d0>/nelec
-            double innerPhiDir = this->inner_product(this->pdirect[is], this->pphi[is], this->nrxx, dV=this->dV);
+            double innerPhiDir = this->inner_product(this->pdirect[is], this->pphi[is], this->nrxx, this->dV);
             Parallel_Reduce::reduce_double_all(innerPhiDir);
             for (int i = 0; i < this->nrxx; ++i)
             {
@@ -725,7 +725,7 @@ void ESolver_OF::getNextDirect()
 
             // (2) renormalize direction
             // |d> = |d'> * \sqrt(nelec) / <d'|d'>
-            double normDir = this->inner_product(this->pdirect[is], this->pdirect[is], this->nrxx, dV=this->dV);
+            double normDir = this->inner_product(this->pdirect[is], this->pdirect[is], this->nrxx, this->dV);
             Parallel_Reduce::reduce_double_all(normDir);
             normDir = sqrt(normDir);
             for (int i = 0; i < this->nrxx; ++i)
@@ -739,7 +739,7 @@ void ESolver_OF::getNextDirect()
 
 //
 // Update the density and "wavefunction" after one step of optimization
-// 
+//
 void ESolver_OF::updateRho()
 {
     for (int is = 0; is < GlobalV::NSPIN; ++is)
@@ -792,7 +792,7 @@ void ESolver_OF::updateRho()
 
 //
 // Check convergence, return ture if converge or iter >= maxIter.
-// 
+//
 bool ESolver_OF::checkExit()
 {
     this->conv = false;
@@ -825,7 +825,7 @@ bool ESolver_OF::checkExit()
     }
     else if (this->of_conv == "potential" && potHold)
     {
-        GlobalV::ofs_warning << "ESolver_OF WARNING: " << 
+        GlobalV::ofs_warning << "ESolver_OF WARNING: " <<
         "The convergence of potential has not been reached, but the norm of potential nearly remains unchanged, set of_full_pw = 1 may work." << endl;
         return true;
     }
@@ -845,9 +845,9 @@ bool ESolver_OF::checkExit()
     }
 }
 
-// 
+//
 // Print nessecary information
-// 
+//
 void ESolver_OF::printInfo()
 {
     if (this->iter == 0){
@@ -857,7 +857,7 @@ void ESolver_OF::printInfo()
         // cout << "Iter        Etot(Ha)          Theta       PotNorm        min/max(den)          min/max(dE/dPhi)" << endl;
         // cout << "============================================ OFDFT ========================================" <<  endl;
         // cout << "Iter        Etot(Ha)          Theta       PotNorm        deltaRhoG       deltaRhoR   deltaE" << endl;
-    } 
+    }
     // ============ used to compare with PROFESS3.0 ================
     // double minDen = pelec->charge->rho[0][0];
     // double maxDen = pelec->charge->rho[0][0];
@@ -870,8 +870,8 @@ void ESolver_OF::printInfo()
     //     if (this->pdEdphi[0][i] < minPot) minPot = this->pdEdphi[0][i];
     //     if (this->pdEdphi[0][i] > maxPot) maxPot = this->pdEdphi[0][i];
     // }
-    cout << setw(6) << this->iter 
-    << setw(22) << setiosflags(ios::scientific) << setprecision(12) << this->energy_current/2. 
+    cout << setw(6) << this->iter
+    << setw(22) << setiosflags(ios::scientific) << setprecision(12) << this->energy_current/2.
     << setw(12) << setprecision(3) << this->theta[0]
     << setw(12) << this->normdLdphi
     << setw(12) << (this->energy_current - this->energy_last)/2. << endl;
@@ -915,7 +915,7 @@ void ESolver_OF::afterOpt()
 }
 
 void ESolver_OF::postprocess()
-{    
+{
 
     GlobalV::ofs_running << "\n\n --------------------------------------------" << std::endl;
     GlobalV::ofs_running << std::setprecision(16);
@@ -944,14 +944,14 @@ void ESolver_OF::postprocess()
 
 //
 // Get dL/dphi = dL/drho * drho/dphi = (dE/drho - mu) * 2 * ptempPhi and store it in rdLdphi
-// 
+//
 void ESolver_OF::calV(double *ptempPhi, double *rdLdphi)
 {
     double **dEdtempPhi = new double*[GlobalV::NSPIN];
     double **tempPhi = new double*[GlobalV::NSPIN];
 
     //here is a temporary charge, should use a constructor of class Charge in the future!
-    //modified by zhengdy-2022-11-15 
+    //modified by zhengdy-2022-11-15
     Charge* tempRho = new Charge();
     tempRho->nspin = GlobalV::NSPIN;
     tempRho->nrxx = this->nrxx;
@@ -993,12 +993,12 @@ void ESolver_OF::calV(double *ptempPhi, double *rdLdphi)
     {
         delete[] dEdtempPhi[is];
         delete[] tempRho->rho[is];
-    } 
+    }
     delete[] dEdtempPhi;
     delete[] tempRho->rho;
     delete tempRho;
     delete[] tempPhi;
-} 
+}
 
 //
 // Calculate dE/dTheta
@@ -1026,10 +1026,10 @@ void ESolver_OF::caldEdtheta(double **ptempPhi, Charge* ptempRho, double *ptheta
     delete[] pdPhidTheta;
 }
 
-// 
+//
 // Calculate chemical potential mu.
 // mu = <dE/dphi|phi> / 2nelec.
-// 
+//
 double ESolver_OF::cal_mu(double *pphi, double *pdEdphi, double nelec)
 {
     double mu = this->inner_product(pphi, pdEdphi, this->nrxx, this->dV);
@@ -1080,7 +1080,7 @@ void ESolver_OF::cal_Stress(ModuleBase::matrix& stress)
     }
 
     if (this->of_kinetic == "tf")
-    {    
+    {
         this->tf.get_stress(GlobalC::ucell.omega);
         kinetic_stress += this->tf.stress;
     }

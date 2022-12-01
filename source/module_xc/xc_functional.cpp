@@ -169,6 +169,13 @@ void XC_Functional::set_xc_type(const std::string xc_func_in)
         ModuleBase::WARNING_QUIT("set_xc_type","mgga stress not implemented for polarized case yet");
     }
 
+#ifndef __EXX
+    if(func_type == 4 || func_type == 5)
+    {
+        ModuleBase::WARNING_QUIT("set_xc_type","compile with libri to use hybrid functional");
+    }
+#endif
+
 #ifndef USE_LIBXC
     if(xc_func == "SCAN" || xc_func == "HSE" || xc_func == "SCAN0")
     {
