@@ -79,7 +79,8 @@ The output file SPIN1_CHG.cube can be visualized by using VESTA.
 **2. How to change cif file directly to STRU file?**
 
 One way to change from cif to STRU is to use the [ASE-ABACUS](https://gitlab.com/1041176461/ase-abacus) interface. An example of the converting script is provided below:
-```
+
+```python
 from ase.io import read, write
 from pathlib import Path
 
