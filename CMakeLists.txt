@@ -239,6 +239,9 @@ else()
     LAPACK::LAPACK
     ScaLAPACK::ScaLAPACK
   )
+  if(USE_OPENMP)
+    list(APPEND math_libs FFTW3::FFTW3_OMP)
+  endif()
   if(CMAKE_CXX_COMPILER_ID MATCHES GNU)
     list(APPEND math_libs -lgfortran)
   elseif(CMAKE_CXX_COMPILER_ID MATCHES Intel)
