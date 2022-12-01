@@ -187,7 +187,7 @@ void dngvx_op<double, psi::DEVICE_CPU>::operator()(const psi::DEVICE_CPU* d,
         delete[] rwork;
         delete[] work;
 
-        assert(0 == info);
+        // assert(0 == info);
     }
 };
 
@@ -267,7 +267,7 @@ void dngv_op<double, psi::DEVICE_CPU>::operator()(const psi::DEVICE_CPU* d,
     // the function is output, the data of zux will be mapped to the corresponding position of V.
     // LapackConnector::zhegv(1, 'V', 'U', nstart, V, nstart, B, nstart, W, work, lwork, rwork, info, ldh);
 
-    assert(0 == info);
+    // assert(0 == info);
 }
 
 } // namespace hsolver
