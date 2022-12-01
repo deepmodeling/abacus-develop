@@ -32,6 +32,7 @@ namespace ModuleESolver
 
         // calculate electron density from a specific Hamiltonian
         virtual void hamilt2density(const int istep, const int iter, const double ethr);
+        virtual void hamilt2density(const int istep, const int iter, const double ethr, ModuleBase::Vector3<double>* vel);
 
         // calculate electron states from a specific Hamiltonian
         virtual void hamilt2estates(const double ethr){};

@@ -14,6 +14,7 @@ class Force_LCAO_gamma
 	public :
 
 	friend class Force_Stress_LCAO;
+	friend class Force_Stress_LCAO_TDDFT;
 
 	Force_LCAO_gamma ();
 	~Force_LCAO_gamma ();

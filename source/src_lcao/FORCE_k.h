@@ -14,11 +14,12 @@ class Force_LCAO_k : public Force_LCAO_gamma
 	public :
 	
 	friend class Force_Stress_LCAO;
+	friend class Force_Stress_LCAO_TDDFT;
 
 	Force_LCAO_k ();
 	~Force_LCAO_k ();
 
-private:
+protected:
     
     LCAO_Hamilt* UHM;
     const Parallel_Orbitals* ParaV;

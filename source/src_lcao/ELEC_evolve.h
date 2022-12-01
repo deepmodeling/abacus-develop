@@ -48,7 +48,10 @@ class ELEC_evolve
                            hamilt::Hamilt* phm,
                            Local_Orbital_wfc& lowf,
                            psi::Psi<std::complex<double>>* psi,
-                           psi::Psi<std::complex<double>>* psi_laststep);
+                           psi::Psi<std::complex<double>>* psi_laststep,
+                           Record_adj& ra, 
+                           LCAO_Hamilt &uhm,
+                           ModuleBase::Vector3<double>* vel);
 };
 
 #endif

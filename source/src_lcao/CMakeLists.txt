@@ -4,11 +4,13 @@ list(APPEND objects
     ELEC_evolve.cpp
     exx_lip.cpp
     FORCE_STRESS.cpp
+    FORCE_STRESS_tddft.cpp
     FORCE_gamma.cpp
     FORCE_gamma_edm.cpp
     FORCE_gamma_tvnl.cpp
     FORCE_gamma_vl.cpp
     FORCE_k.cpp
+    FORCE_k_tddft.cpp
     LCAO_diago.cpp
     LCAO_evolve.cpp
     LCAO_gen_fixedH.cpp

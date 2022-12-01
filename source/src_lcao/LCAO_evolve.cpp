@@ -23,11 +23,14 @@ inline int globalIndex(int localindex, int nblk, int nprocs, int myproc)
 }
 
 void Evolve_LCAO_Matrix::evolve_complex_matrix(const int& ik,
-                                               hamilt::Hamilt* p_hamilt,
+                                               hamilt::Hamilt* phami,
                                                Local_Orbital_wfc& lowf,
                                                psi::Psi<std::complex<double>>* psi,
                                                psi::Psi<std::complex<double>>* psi_laststep,
-                                               double* ekb) const
+                                               double* ekb,
+                                               Record_adj& ra,
+                                               LCAO_Hamilt& uhm,
+                                               ModuleBase::Vector3<double>* vel) const
 {
     ModuleBase::TITLE("Evolve_LCAO_Matrix", "evolve_complex_matrix");
     time_t time_start = time(NULL);
@@ -37,21 +40,27 @@ void Evolve_LCAO_Matrix::evolve_complex_matrix(const int& ik,
     {
 #ifdef __MPI
         this->using_ScaLAPACK_complex(ik,
-                                      p_hamilt,
+                                      phami,
                                       lowf.wfc_k_grid[ik],
                                       psi[0].get_pointer(),
                                       psi_laststep[0].get_pointer(),
                                       lowf,
-                                      ekb);
+                                      ekb,
+                                      ra,
+                                      uhm,
+                                      vel);
         // this->using_ScaLAPACK_complex(ik, lowf.wfc_k_grid[ik], lowf.wfc_k[ik], lowf.wfc_k_laststep[ik], lowf, ekb);
 #else
         this->using_LAPACK_complex(ik,
-                                   p_hamilt,
+                                   phami,
                                    lowf.wfc_k_grid[ik],
                                    psi[0].get_pointer(),
                                    psi_laststep[0].get_pointer(),
                                    lowf,
-                                   ekb);
+                                   ekb,
+                                   ra,
+                                   uhm,
+                                   vel);
 #endif
     }
     else
@@ -66,12 +75,15 @@ void Evolve_LCAO_Matrix::evolve_complex_matrix(const int& ik,
 }
 
 void Evolve_LCAO_Matrix::using_LAPACK_complex(const int& ik,
-                                              hamilt::Hamilt* p_hamilt,
+                                              hamilt::Hamilt* phami,
                                               std::complex<double>** wfc_k_grid,
                                               std::complex<double>* wfc_k,
                                               std::complex<double>* wfc_k_laststep,
                                               Local_Orbital_wfc& lowf,
-                                              double* ekb) const
+                                              double* ekb,
+                                              Record_adj& ra,
+                                              LCAO_Hamilt& uhm,
+                                              ModuleBase::Vector3<double>* vel) const
 {
     ModuleBase::TITLE("Evolve_LCAO_Matrix", "using_LAPACK_complex");
 
@@ -80,7 +92,7 @@ void Evolve_LCAO_Matrix::using_LAPACK_complex(const int& ik,
     ModuleBase::ComplexMatrix Htmp(GlobalV::NLOCAL, GlobalV::NLOCAL);
     ModuleBase::ComplexMatrix Stmp(GlobalV::NLOCAL, GlobalV::NLOCAL);
     hamilt::MatrixBlock<complex<double>> h_mat, s_mat;
-    p_hamilt->matrix(h_mat, s_mat);
+    phami->matrix(h_mat, s_mat);
     for (int i = 0; i < GlobalV::NLOCAL; i++)
     {
         for (int j = 0; j < GlobalV::NLOCAL; j++)
@@ -412,12 +424,15 @@ void Evolve_LCAO_Matrix::using_LAPACK_complex(const int& ik,
 
 #ifdef __MPI
 void Evolve_LCAO_Matrix::using_ScaLAPACK_complex(const int& ik,
-                                                 hamilt::Hamilt* p_hamilt,
+                                                 hamilt::Hamilt* phami,
                                                  std::complex<double>** wfc_k_grid,
                                                  std::complex<double>* wfc_k,
                                                  std::complex<double>* wfc_k_laststep,
                                                  Local_Orbital_wfc& lowf,
-                                                 double* ekb) const
+                                                 double* ekb,
+                                                 Record_adj& ra,
+                                                 LCAO_Hamilt& uhm,
+                                                 ModuleBase::Vector3<double>* vel) const
 {
     ModuleBase::TITLE("Evolve_LCAO_Matrix", "using_ScaLAPACK_complex");
 
@@ -447,7 +462,7 @@ void Evolve_LCAO_Matrix::using_ScaLAPACK_complex(const int& ik,
     const int inc = 1;
 
     const int one_int = 1;
-    int print_matrix = 0;
+    int print_matrix = 1;
     int nrow = this->ParaV->nrow;
     int ncol = this->ParaV->ncol;
     int ncol_bands = this->ParaV->ncol_bands;
@@ -488,7 +503,7 @@ void Evolve_LCAO_Matrix::using_ScaLAPACK_complex(const int& ik,
     // ModuleBase::GlobalFunc::ZEROS(Z, this->loc_size * NLOCAL);
 
     hamilt::MatrixBlock<complex<double>> h_mat, s_mat;
-    p_hamilt->matrix(h_mat, s_mat);
+    phami->matrix(h_mat, s_mat);
     // cout<<"h_mat : "<<h_mat.p[0]<<" "<<h_mat.p[1]<<endl;
 
     zcopy_(&this->ParaV->nloc, s_mat.p, &inc, Stmp, &inc);
@@ -530,6 +545,128 @@ void Evolve_LCAO_Matrix::using_ScaLAPACK_complex(const int& ik,
     int desca = 0;
     complex<double> beta = {0.0, -0.25 * INPUT.mdp.md_dt}; // this need modify
     int descc = 0;
+    char transN = 'N';
+    char transT = 'T';
+
+    // calculate D matrix
+    // ModuleBase::ComplexMatrix Dmatrix;
+
+    int add_Dmatrix = 1;
+    if (add_Dmatrix)
+    {
+        complex<double>* Dmatrix = new complex<double>[this->ParaV->nloc];
+        ModuleBase::GlobalFunc::ZEROS(Dmatrix, this->ParaV->nloc);
+        const Parallel_Orbitals* pv = this->ParaV;
+
+        const int nnr = pv->nnr;
+        LCAO_Hamilt* UHM;
+        UHM = &uhm;
+
+        UHM->LM->DSloc_Rx = new double[nnr];
+        UHM->LM->DSloc_Ry = new double[nnr];
+        UHM->LM->DSloc_Rz = new double[nnr];
+        ModuleBase::GlobalFunc::ZEROS(UHM->LM->DSloc_Rx, nnr);
+        ModuleBase::GlobalFunc::ZEROS(UHM->LM->DSloc_Ry, nnr);
+        ModuleBase::GlobalFunc::ZEROS(UHM->LM->DSloc_Rz, nnr);
+        bool cal_deri = true;
+        UHM->genH.build_ST_new('S', cal_deri, GlobalC::ucell, UHM->LM->SlocR.data());
+        int irr = 0;
+        int iat = 0;
+        for (int T1 = 0; T1 < GlobalC::ucell.ntype; ++T1)
+        {
+            Atom* atom1 = &GlobalC::ucell.atoms[T1];
+            for (int I1 = 0; I1 < atom1->na; ++I1)
+            {
+                const int start1 = GlobalC::ucell.itiaiw2iwt(T1, I1, 0);
+                const int irrstart = pv->nlocstart[iat];
+                int count = 0;
+                for (int cb = 0; cb < ra.na_each[iat]; ++cb)
+                {
+                    const int T2 = ra.info[iat][cb][3];
+                    const int I2 = ra.info[iat][cb][4];
+                    const int start2 = GlobalC::ucell.itiaiw2iwt(T2, I2, 0);
+
+                    Atom* atom2 = &GlobalC::ucell.atoms[T2];
+
+                    for (int jj = 0; jj < atom1->nw; jj++)
+                    {
+                        const int iw1_all = start1 + jj;
+
+                        // HPSEPS
+                        const int mu = pv->trace_loc_row[iw1_all];
+                        if (mu < 0)
+                            continue;
+
+                        for (int kk = 0; kk < atom2->nw; kk++)
+                        {
+                            const int iw2_all = start2 + kk;
+
+                            // HPSEPS
+                            const int nu = pv->trace_loc_col[iw2_all];
+                            if (nu < 0)
+                                continue;
+                            for (int is = 0; is < GlobalV::NSPIN; ++is)
+                            {
+                                // Dmatrix(nu, mu) = imag * 2.0 * vz * this->LM->DSloc_Rz[irr];
+                                // GlobalV::ofs_running<<"nu="<<nu<<" mu="<<mu<<endl;
+                                // Dmatrix[nu*nrow + mu] = imag * 2.0 * vz * this->LM->DSloc_Rz[irrstart + count];
+                                // Dmatrix[nu*nrow + mu]
+                                Dmatrix[mu+nu*ncol]
+                                //Dmatrix[nu + mu * ncol]
+                                    = -imag * 2.0
+                                      * (vel[iat].x * UHM->LM->DSloc_Rx[irr] + vel[iat].y * UHM->LM->DSloc_Ry[irr]
+                                         + vel[iat].z * UHM->LM->DSloc_Rz[irr]);
+                                GlobalV::ofs_running<<" Dmatrix element atom1="<<I1<<" cb="<<cb<<" mu="<<mu<<" nu="<<nu<<" "<<-imag * 2.0
+                                      * (vel[iat].x * UHM->LM->DSloc_Rx[irr] + vel[iat].y * UHM->LM->DSloc_Ry[irr]
+                                         + vel[iat].z * UHM->LM->DSloc_Rz[irr])<<endl;
+                                ++count;
+                            }
+                            ++irr;
+                        } // end kk
+                    } // end jj
+                } // end cb
+                ++iat;
+                GlobalV::ofs_running << "vel[" << iat - 1 << "]: " << vel[iat - 1].x << " " << vel[iat - 1].y << " "
+                                     << vel[iat - 1].z << endl;
+            }
+        }
+        delete[] UHM->LM->DSloc_Rx;
+        delete[] UHM->LM->DSloc_Ry;
+        delete[] UHM->LM->DSloc_Rz;
+
+        if (print_matrix)
+        {
+            GlobalV::ofs_running << endl;
+            GlobalV::ofs_running << " D matrix :" << endl;
+            for (int i = 0; i < nrow; i++)
+            {
+                for (int j = 0; j < ncol; j++)
+                {
+                    GlobalV::ofs_running << Dmatrix[i * ncol + j].real() << "+" << Stmp[i * ncol + j].imag() << "i ";
+                }
+                GlobalV::ofs_running << endl;
+            }
+            GlobalV::ofs_running << endl;
+        }
+
+        // add D martrix
+        pzgeadd_(&transN,
+                 &GlobalV::NLOCAL,
+                 &GlobalV::NLOCAL,
+                 &alpha,
+                 Dmatrix,
+                 &one_int,
+                 &one_int,
+                 this->ParaV->desc,
+                 &alpha,
+                 Htmp1,
+                 &one_int,
+                 &one_int,
+                 this->ParaV->desc);
+        zcopy_(&this->ParaV->nloc, Htmp1, &inc, Htmp2, &inc);
+        zcopy_(&this->ParaV->nloc, Htmp1, &inc, Htmp3, &inc);
+        delete[] Dmatrix;
+    }
 
     pzgeadd_(&transa,
              &GlobalV::NLOCAL,
@@ -694,7 +831,7 @@ void Evolve_LCAO_Matrix::using_ScaLAPACK_complex(const int& ik,
                     bb = 0.0;
                 GlobalV::ofs_running << aa << "+" << bb << "i ";
                 // Htmp3[i*ncol+j]={1,0};
-                //GlobalV::ofs_running << Htmp3[i * ncol + j].real() << "+" << Htmp3[i * ncol + j].imag() << "i ";
+                // GlobalV::ofs_running << Htmp3[i * ncol + j].real() << "+" << Htmp3[i * ncol + j].imag() << "i ";
                 // GlobalV::ofs_running<<i<<" "<<j<<" "<<Htmp3[i*GlobalV::NLOCAL+j]<<endl;
             }
             GlobalV::ofs_running << endl;
@@ -909,9 +1046,9 @@ void Evolve_LCAO_Matrix::using_ScaLAPACK_complex(const int& ik,
                 if (abs(bb) < 1e-8)
                     bb = 0.0;
                 GlobalV::ofs_running << aa << "+" << bb << "i ";
-                //GlobalV::ofs_running << wfc_k_laststep[i * ncol + j].real() << "+"
-                //                     << wfc_k_laststep[i * ncol + j].imag() << "i ";
-                // GlobalV::ofs_running<<i<<" "<<j<<" "<<Htmp3[i*GlobalV::NLOCAL+j]<<endl;
+                // GlobalV::ofs_running << wfc_k_laststep[i * ncol + j].real() << "+"
+                //                      << wfc_k_laststep[i * ncol + j].imag() << "i ";
+                //  GlobalV::ofs_running<<i<<" "<<j<<" "<<Htmp3[i*GlobalV::NLOCAL+j]<<endl;
             }
             GlobalV::ofs_running << endl;
         }
@@ -929,8 +1066,8 @@ void Evolve_LCAO_Matrix::using_ScaLAPACK_complex(const int& ik,
                 if (abs(bb) < 1e-8)
                     bb = 0.0;
                 GlobalV::ofs_running << aa << "+" << bb << "i ";
-                //GlobalV::ofs_running << wfc_k[i * ncol + j].real() << "+" << wfc_k[i * ncol + j].imag() << "i ";
-                // GlobalV::ofs_running<<i<<" "<<j<<" "<<Htmp3[i*GlobalV::NLOCAL+j]<<endl;
+                // GlobalV::ofs_running << wfc_k[i * ncol + j].real() << "+" << wfc_k[i * ncol + j].imag() << "i ";
+                //  GlobalV::ofs_running<<i<<" "<<j<<" "<<Htmp3[i*GlobalV::NLOCAL+j]<<endl;
             }
             GlobalV::ofs_running << endl;
         }
@@ -948,7 +1085,7 @@ void Evolve_LCAO_Matrix::using_ScaLAPACK_complex(const int& ik,
                 if (abs(bb) < 1e-8)
                     bb = 0.0;
                 GlobalV::ofs_running << aa << "+" << bb << "i ";
-                //GlobalV::ofs_running << Htmp2[i * ncol + j].real() << "+" << Htmp2[i * ncol + j].imag() << "i ";
+                // GlobalV::ofs_running << Htmp2[i * ncol + j].real() << "+" << Htmp2[i * ncol + j].imag() << "i ";
             }
             GlobalV::ofs_running << endl;
         }

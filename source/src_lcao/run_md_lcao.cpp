@@ -1,25 +1,27 @@
 #include "run_md_lcao.h"
-#include "FORCE_STRESS.h"
+
+#include "../module_md/FIRE.h"
+#include "../module_md/Langevin.h"
+#include "../module_md/MD_func.h"
+#include "../module_md/MSST.h"
+#include "../module_md/NVE.h"
+#include "../module_md/NVT_ADS.h"
+#include "../module_md/NVT_NHC.h"
+#include "../module_neighbor/sltk_atom_arrange.h"
+#include "../module_orbital/parallel_orbitals.h"
+#include "../module_relaxation/variable_cell.h" // mohan add 2021-02-01
+#include "../src_io/cal_r_overlap_R.h"
+#include "../src_io/print_info.h"
+#include "../src_io/write_HS.h"
+#include "../src_pdiag/pdiag_double.h"
 #include "../src_pw/global.h"
 #include "../src_pw/vdwd2.h"
 #include "../src_pw/vdwd2_parameters.h"
 #include "../src_pw/vdwd3_parameters.h"
-#include "../module_orbital/parallel_orbitals.h"
-#include "../src_pdiag/pdiag_double.h"
-#include "../src_io/write_HS.h"
-#include "../src_io/cal_r_overlap_R.h"
-#include "../src_io/print_info.h"
-#include "../module_relaxation/variable_cell.h" // mohan add 2021-02-01
 #include "../src_ri/exx_abfs.h"
 #include "../src_ri/exx_opt_orb.h"
-#include "../module_neighbor/sltk_atom_arrange.h"
-#include "../module_md/MD_func.h"
-#include "../module_md/FIRE.h"
-#include "../module_md/NVE.h"
-#include "../module_md/MSST.h"
-#include "../module_md/NVT_ADS.h"
-#include "../module_md/NVT_NHC.h"
-#include "../module_md/Langevin.h"
+#include "FORCE_STRESS.h"
+#include "ELEC_evolve.h"
 
 Run_MD_LCAO::Run_MD_LCAO()
 {
@@ -43,8 +45,8 @@ void Run_MD_LCAO::opt_ions(ModuleESolver::ESolver* p_esolver)
                   << std::setw(10) << "dE(meV)" << std::setw(10) << "F(eV/A)" << std::setw(10) << "T(MIN)" << std::endl;
     }
 
-    //Charge_Extrapolation
-    // CE.allocate_ions();
+    // Charge_Extrapolation
+    //  CE.allocate_ions();
 
     // determine the md_type
     Verlet* verlet;
@@ -86,6 +88,22 @@ void Run_MD_LCAO::opt_ions(ModuleESolver::ESolver* p_esolver)
             Print_Info::print_screen(0, 0, verlet->step_ + verlet->step_rst_);
             CE.update_all_pos(GlobalC::ucell);
 
+            ModuleBase::Vector3<double>* vel_tmp;
+            if (ELEC_evolve::tddft)
+            {
+                vel_tmp = new ModuleBase::Vector3<double>[verlet->ucell.nat];
+                for (int i = 0; i < verlet->ucell.nat; ++i)
+                {
+                    for (int k = 0; k < 3; ++k)
+                    {
+                        if (verlet->ionmbl[i][k])
+                        {
+                            vel_tmp[i][k] = verlet->vel[i][k];
+                        }
+                    }
+                }
+            }
+
             verlet->first_half();
 
             if (cellchange)
@@ -110,9 +128,34 @@ void Run_MD_LCAO::opt_ions(ModuleESolver::ESolver* p_esolver)
 
             // update force and virial due to the update of atom positions
 
-            MD_func::force_virial(p_esolver, verlet->step_, verlet->mdp, verlet->ucell, verlet->potential, verlet->force, verlet->virial);
+            if (ELEC_evolve::tddft)
+            {
+                MD_func::force_virial(p_esolver,
+                                      verlet->step_,
+                                      verlet->mdp,
+                                      verlet->ucell,
+                                      verlet->potential,
+                                      verlet->force,
+                                      verlet->virial,
+                                      vel_tmp);
+            }
+            else
+            {
+                MD_func::force_virial(p_esolver,
+                                      verlet->step_,
+                                      verlet->mdp,
+                                      verlet->ucell,
+                                      verlet->potential,
+                                      verlet->force,
+                                      verlet->virial);
+            }
 
             verlet->second_half();
+
+            GlobalV::ofs_running << endl;
+            GlobalV::ofs_running << "print vel : " << endl;
+            GlobalV::ofs_running << "1 vel : " << verlet->vel[0].z << endl;
+            GlobalV::ofs_running << "33 vel : " << verlet->vel[32].z << endl;
 
             MD_func::kinetic_stress(verlet->ucell, verlet->vel, verlet->allmass, verlet->kinetic, verlet->stress);
 
@@ -162,6 +205,6 @@ void Run_MD_LCAO::opt_ions(ModuleESolver::ESolver* p_esolver)
 #endif
 
     delete verlet;
-    ModuleBase::timer::tick("Run_MD_LCAO","opt_ions"); 
+    ModuleBase::timer::tick("Run_MD_LCAO", "opt_ions");
     return;
 }

@@ -31,7 +31,10 @@ void ELEC_evolve::evolve_psi(const int& istep,
                              hamilt::Hamilt* phm,
                              Local_Orbital_wfc& lowf,
                              psi::Psi<std::complex<double>>* psi,
-                             psi::Psi<std::complex<double>>* psi_laststep)
+                             psi::Psi<std::complex<double>>* psi_laststep,
+                             Record_adj& ra,
+                             LCAO_Hamilt& uhm,
+                             ModuleBase::Vector3<double>* vel)
 {
     ModuleBase::TITLE("ELEC_evolve", "eveolve_psi");
     ModuleBase::timer::tick("ELEC_evolve", "evolve_psi");
@@ -44,7 +47,7 @@ void ELEC_evolve::evolve_psi(const int& istep,
         ModuleBase::timer::tick("Efficience", "evolve_k");
         Evolve_LCAO_Matrix ELM(lowf.ParaV);
         psi->fix_k(ik);
-        ELM.evolve_complex_matrix(ik, phm, lowf, psi, psi_laststep, GlobalC::wf.ekb[ik]);
+        ELM.evolve_complex_matrix(ik, phm, lowf, psi, psi_laststep, GlobalC::wf.ekb[ik], ra, uhm, vel);
         ModuleBase::timer::tick("Efficience", "evolve_k");
     } // end k
 

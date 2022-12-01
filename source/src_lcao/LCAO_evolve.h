@@ -19,31 +19,40 @@ class Evolve_LCAO_Matrix
     ~Evolve_LCAO_Matrix();
 
     void evolve_complex_matrix(const int& ik,
-                               hamilt::Hamilt* p_hamilt,
+                               hamilt::Hamilt* phami,
                                Local_Orbital_wfc& lowf,
                                psi::Psi<std::complex<double>>* psi,
                                psi::Psi<std::complex<double>>* psi_laststep,
-                               double* ekb) const;
+                               double* ekb,
+                               Record_adj& ra,
+                               LCAO_Hamilt& uhm,
+                               ModuleBase::Vector3<double>* vel) const;
 
   private:
     // LCAO_Matrix* LM;
     const Parallel_Orbitals* ParaV;
 
     void using_LAPACK_complex(const int& ik,
-                              hamilt::Hamilt* p_hamilt,
+                              hamilt::Hamilt* phami,
                               std::complex<double>** wfc_k_grid,
                               std::complex<double>* wfc_k,
                               std::complex<double>* wfc_k_laststep,
                               Local_Orbital_wfc& lowf,
-                              double* ekb) const;
+                              double* ekb,
+                              Record_adj& ra,
+                              LCAO_Hamilt& uhm,
+                              ModuleBase::Vector3<double>* vel) const;
 #ifdef __MPI
     void using_ScaLAPACK_complex(const int& ik,
-                                 hamilt::Hamilt* p_hamilt,
-                                 std::complex<double>** wfc_k_grid,
-                                 std::complex<double>* wfc_k,
-                                 std::complex<double>* wfc_k_laststep,
-                                 Local_Orbital_wfc& lowf,
-                                 double* ekb) const;
+                              hamilt::Hamilt* phami,
+                              std::complex<double>** wfc_k_grid,
+                              std::complex<double>* wfc_k,
+                              std::complex<double>* wfc_k_laststep,
+                              Local_Orbital_wfc& lowf,
+                              double* ekb,
+                              Record_adj& ra,
+                              LCAO_Hamilt& uhm,
+                              ModuleBase::Vector3<double>* vel) const;
 #endif
 };
 #endif

@@ -2,14 +2,13 @@
 #define ESOLVER_KS_LCAO_TDDFT_H
 #include "./esolver_ks.h"
 #include "./esolver_ks_lcao.h"
+#include "module_elecstate/elecstate_lcao_tddft.h"
 #include "module_orbital/ORB_control.h"
 #include "module_psi/psi.h"
 #include "src_lcao/LCAO_hamilt.h"
 #include "src_lcao/local_orbital_charge.h"
 #include "src_lcao/local_orbital_wfc.h"
 #include "src_lcao/record_adj.h"
-#include "module_elecstate/elecstate_lcao_tddft.h"
-
 
 namespace ModuleESolver
 {
@@ -25,10 +24,20 @@ class ESolver_KS_LCAO_TDDFT : public ESolver_KS_LCAO
     elecstate::ElecStateLCAO_TDDFT* pelec_td = nullptr;
 
   protected:
-    virtual void hamilt2density(const int istep, const int iter, const double ethr) override;
+    virtual void Run(const int istep, UnitCell_pseudo& cell, ModuleBase::Vector3<double>* vel) override;
+    virtual void Run(const int istep, UnitCell_pseudo& cell) override;
+    virtual void hamilt2density(const int istep,
+                                const int iter,
+                                const double ethr,
+                                ModuleBase::Vector3<double>* vel) override;
+    virtual void hamilt2density(const int istep,
+                                const int iter,
+                                const double ethr) override;
     virtual void eachiterinit(const int istep, const int iter) override;
     virtual void updatepot(const int istep, const int iter) override;
     virtual void afterscf(const int istep) override;
+    virtual void cal_Force(ModuleBase::matrix& force, ModuleBase::Vector3<double>* vel) override;
+    virtual void cal_Force(ModuleBase::matrix& force) override;
     void cal_edm_tddft();
 };
 

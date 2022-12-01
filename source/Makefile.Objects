@@ -191,11 +191,13 @@ LCAO_deepks_torch.o\
 LCAO_deepks_vdelta.o\
 ylm.o\
 FORCE_STRESS.o\
+FORCE_STRESS_tddft.o\
 FORCE_gamma.o\
 FORCE_gamma_edm.o\
 FORCE_gamma_vl.o\
 FORCE_gamma_tvnl.o\
 FORCE_k.o\
+FORCE_k_tddft.o\
 parallel_orbitals.o \
 global_fp.o \
 pdiag_double.o \

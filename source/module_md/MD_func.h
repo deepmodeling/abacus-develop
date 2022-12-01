@@ -45,6 +45,16 @@ class MD_func
 		ModuleBase::Vector3<double> *force,
 		ModuleBase::matrix &stress);
 
+	static void force_virial(
+		ModuleESolver::ESolver *p_esolver,
+		const int &istep,
+		const MD_parameters &mdp,
+		UnitCell_pseudo &unit_in,
+		double &potential,
+		ModuleBase::Vector3<double> *force,
+		ModuleBase::matrix &stress,
+		ModuleBase::Vector3<double>* vel);
+
 	static double GetAtomKE(
 		const int &numIon,
 		const ModuleBase::Vector3<double> *vel, 

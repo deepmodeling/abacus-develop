@@ -23,6 +23,7 @@ class Force_Stress_LCAO
 
 	public :
 	
+	Force_Stress_LCAO (){};
 	Force_Stress_LCAO (Record_adj &ra);
     ~Force_Stress_LCAO();
 
@@ -38,7 +39,7 @@ class Force_Stress_LCAO
         ModuleBase::matrix& fcs,
 		ModuleBase::matrix &scs);
 
-private:
+protected:
     
     Record_adj* RA;
 	Force_LCAO_k flk;

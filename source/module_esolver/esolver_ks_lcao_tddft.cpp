@@ -1,4 +1,5 @@
 #include "esolver_ks_lcao_tddft.h"
+
 #include "src_io/cal_r_overlap_R.h"
 
 //--------------temporary----------------------------
@@ -23,6 +24,7 @@
 
 //-----force& stress-------------------
 #include "src_lcao/FORCE_STRESS.h"
+#include "src_lcao/FORCE_STRESS_tddft.h"
 
 //---------------------------------------------------
 
@@ -47,7 +49,7 @@ void ESolver_KS_LCAO_TDDFT::Init(Input& inp, UnitCell_pseudo& ucell)
 
     // Inititlize the charge density.
     GlobalC::CHR.allocate(GlobalV::NSPIN, GlobalC::rhopw->nrxx, GlobalC::rhopw->npw);
-    //GlobalC::CHR.allocate(GlobalV::NSPIN, GlobalC::rhopw->nrxx, GlobalC::rhopw->npw);
+    // GlobalC::CHR.allocate(GlobalV::NSPIN, GlobalC::rhopw->nrxx, GlobalC::rhopw->npw);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT CHARGE");
     // Initializee the potential.
     GlobalC::pot.allocate(GlobalC::rhopw->nrxx);
@@ -123,7 +125,6 @@ void ESolver_KS_LCAO_TDDFT::Init(Input& inp, UnitCell_pseudo& ucell)
                                                             &(this->UHM),
                                                             &(this->LOWF));
     }
-
 }
 
 void ESolver_KS_LCAO_TDDFT::eachiterinit(const int istep, const int iter)
@@ -233,9 +234,9 @@ void ESolver_KS_LCAO_TDDFT::eachiterinit(const int istep, const int iter)
         }
     }
 
-    if(!GlobalV::GAMMA_ONLY_LOCAL)
+    if (!GlobalV::GAMMA_ONLY_LOCAL)
     {
-        if(this->UHM.GK.get_spin() != -1)
+        if (this->UHM.GK.get_spin() != -1)
         {
             int start_spin = -1;
             this->UHM.GK.reset_spin(start_spin);
@@ -245,19 +246,113 @@ void ESolver_KS_LCAO_TDDFT::eachiterinit(const int istep, const int iter)
     }
 }
 
-void ESolver_KS_LCAO_TDDFT::hamilt2density(int istep, int iter, double ethr)
+void ESolver_KS_LCAO_TDDFT::hamilt2density(int istep, int iter, double ethr, ModuleBase::Vector3<double>* vel)
 {
 
     GlobalC::CHR.save_rho_before_sum_band();
 
     if (ELEC_evolve::tddft && istep >= 2 && !GlobalV::GAMMA_ONLY_LOCAL)
     {
-        ELEC_evolve::evolve_psi(istep, this->p_hamilt, this->LOWF, this->psi, this->psi_laststep);
+        ELEC_evolve::evolve_psi(istep,
+                                this->p_hamilt,
+                                this->LOWF,
+                                this->psi,
+                                this->psi_laststep,
+                                this->RA,
+                                this->UHM,
+                                vel);
         this->pelec_td->psiToRho_td(this->psi[0]);
         // this->pelec_td->psiToRho(this->psi[0]);
     }
     // using HSolverLCAO::solve()
     else if (this->phsol != nullptr)
+    {
+        // reset energy
+        this->pelec_td->eband = 0.0;
+        this->pelec_td->demet = 0.0;
+        this->pelec_td->ef = 0.0;
+        GlobalC::en.ef_up = 0.0;
+        GlobalC::en.ef_dw = 0.0;
+        if (this->psi != nullptr)
+        {
+            this->phsol->solve(this->p_hamilt, this->psi[0], this->pelec_td, GlobalV::KS_SOLVER);
+        }
+        else if (this->psid != nullptr)
+        {
+            this->phsol->solve(this->p_hamilt, this->psid[0], this->pelec_td, GlobalV::KS_SOLVER);
+        }
+    }
+    else
+    {
+        ModuleBase::WARNING_QUIT("ESolver_KS_LCAO", "HSolver has not been initialed!");
+    }
+
+    if (iter == 1)
+    {
+        GlobalV::ofs_running
+            << "------------------------------------------------------------------------------------------------"
+            << endl;
+        GlobalV::ofs_running << "occupation : ";
+        for (int ik = 0; ik < GlobalC::kv.nks; ik++)
+        {
+            for (int ib = 0; ib < GlobalV::NBANDS; ib++)
+            {
+                GlobalV::ofs_running << this->pelec_td->wg(ik, ib) << " ";
+            }
+        }
+        GlobalV::ofs_running << endl;
+        GlobalV::ofs_running
+            << "------------------------------------------------------------------------------------------------"
+            << endl;
+    }
+
+    // transform energy for print
+    GlobalC::en.eband = this->pelec_td->eband;
+    GlobalC::en.demet = this->pelec_td->demet;
+    GlobalC::en.ef = this->pelec_td->ef;
+
+    // (3) sum bands to calculate charge density
+    // if (istep <= 1 ) Occupy::calculate_weights();
+
+    for (int ik = 0; ik < GlobalC::kv.nks; ++ik)
+    {
+        GlobalC::en.print_band(ik);
+    }
+
+    // (4) mohan add 2010-06-24
+    // using new charge density.
+    GlobalC::en.calculate_harris(2);
+
+    // (5) symmetrize the charge density
+    if (istep <= 1)
+    {
+        Symmetry_rho srho;
+        for (int is = 0; is < GlobalV::NSPIN; is++)
+        {
+            srho.begin(is, GlobalC::CHR, GlobalC::rhopw, GlobalC::Pgrid, GlobalC::symm);
+        }
+    }
+
+    // (6) compute magnetization, only for spin==2
+    GlobalC::ucell.magnet.compute_magnetization();
+
+    // resume codes!
+    //-------------------------------------------------------------------------
+    // this->GlobalC::LOWF.init_Cij( 0 ); // check the orthogonality of local orbital.
+    // GlobalC::CHR.sum_band(); use local orbital in plane wave basis to calculate bands.
+    // but must has evc first!
+    //-------------------------------------------------------------------------
+
+    // (7) calculate delta energy
+    GlobalC::en.deband = GlobalC::en.delta_e();
+}
+
+void ESolver_KS_LCAO_TDDFT::hamilt2density(int istep, int iter, double ethr)
+{
+
+    GlobalC::CHR.save_rho_before_sum_band();
+
+    if (this->phsol != nullptr)
     {
         // reset energy
         this->pelec_td->eband = 0.0;
@@ -374,7 +469,7 @@ void ESolver_KS_LCAO_TDDFT::updatepot(const int istep, const int iter)
     }
 
     // store wfc
-    if (istep >= 1 && this->conv_elec )
+    if (istep >= 1 && this->conv_elec)
     {
         if (this->psi_laststep == nullptr)
 #ifdef __MPI
@@ -507,7 +602,7 @@ void ESolver_KS_LCAO_TDDFT::afterscf(const int istep)
     }
 
     // add by jingan for out r_R matrix 2019.8.14
-    if(INPUT.out_mat_r)
+    if (INPUT.out_mat_r)
     {
         cal_r_overlap_R r_matrix;
         r_matrix.init(*this->LOWF.ParaV);
@@ -521,6 +616,247 @@ void ESolver_KS_LCAO_TDDFT::afterscf(const int istep)
             r_matrix.out_rR();
         }
     }
+}
+
+void ESolver_KS_LCAO_TDDFT::Run(const int istep, UnitCell_pseudo& ucell, ModuleBase::Vector3<double>* vel)
+{
+    if (!(GlobalV::CALCULATION == "scf" || GlobalV::CALCULATION == "md" || GlobalV::CALCULATION == "relax"
+          || GlobalV::CALCULATION == "cell-relax" || GlobalV::CALCULATION.substr(0, 3) == "sto"))
+    {
+        this->othercalculation(istep);
+    }
+    else
+    {
+        ModuleBase::timer::tick(this->classname, "Run");
+
+        if (this->maxniter > 0)
+            this->printhead(); // print the headline on the screen.
+        this->beforescf(istep); // Something else to do before the iter loop
+
+        bool firstscf = true;
+        this->conv_elec = false;
+        this->niter = this->maxniter;
+        for (int iter = 1; iter <= this->maxniter; ++iter)
+        {
+            writehead(GlobalV::ofs_running, istep, iter);
+#ifdef __MPI
+            auto iterstart = MPI_Wtime();
+#else
+            auto iterstart = std::chrono::system_clock::now();
+#endif
+            double diag_ethr = this->phsol->set_diagethr(istep, iter, drho);
+            eachiterinit(istep, iter);
+            this->hamilt2density(istep, iter, diag_ethr, vel);
+
+            //<Temporary> It may be changed when more clever parallel algorithm is put forward.
+            // When parallel algorithm for bands are adopted. Density will only be treated in the first group.
+            //(Different ranks should have abtained the same, but small differences always exist in practice.)
+            // Maybe in the future, density and wavefunctions should use different parallel algorithms, in which
+            // they do not occupy all processors, for example wavefunctions uses 20 processors while density uses 10.
+            if (GlobalV::MY_STOGROUP == 0)
+            {
+                // double drho = this->estate.caldr2();
+                // EState should be used after it is constructed.
+                drho = GlobalC::CHR.get_drho();
+                double hsolver_error = 0.0;
+                if (firstscf)
+                {
+                    firstscf = false;
+                    hsolver_error = this->phsol->cal_hsolerror();
+                    // The error of HSolver is larger than drho, so a more precise HSolver should be excuconv_elected.
+                    if (hsolver_error > drho)
+                    {
+                        diag_ethr = this->phsol->reset_diagethr(GlobalV::ofs_running, hsolver_error, drho);
+                        this->hamilt2density(istep, iter, diag_ethr, vel);
+                        drho = GlobalC::CHR.get_drho();
+                        hsolver_error = this->phsol->cal_hsolerror();
+                    }
+                }
+
+                this->conv_elec = (drho < this->scf_thr);
+
+                // If drho < hsolver_error in the first iter or drho < scf_thr, we do not change rho.
+                if (drho < hsolver_error || this->conv_elec)
+                {
+                    if (drho < hsolver_error)
+                        GlobalV::ofs_warning << " drho < hsolver_error, keep charge density unchanged." << std::endl;
+                }
+                else
+                {
+                    // charge mixing
+                    // conv_elec = this->estate.mix_rho();
+                    GlobalC::CHR.mix_rho(iter);
+                }
+            }
+#ifdef __MPI
+            MPI_Bcast(&drho, 1, MPI_DOUBLE, 0, PARAPW_WORLD);
+            MPI_Bcast(&this->conv_elec, 1, MPI_DOUBLE, 0, PARAPW_WORLD);
+            MPI_Bcast(GlobalC::CHR.rho[0], GlobalC::rhopw->nrxx, MPI_DOUBLE, 0, PARAPW_WORLD);
+#endif
+
+            // Hamilt should be used after it is constructed.
+            // this->phamilt->update(conv_elec);
+            updatepot(istep, iter);
+            eachiterfinish(iter);
+#ifdef __MPI
+            double duration = (double)(MPI_Wtime() - iterstart);
+#else
+            double duration = (std::chrono::system_clock::now() - iterstart).count() / CLOCKS_PER_SEC;
+#endif
+            printiter(iter, drho, duration, diag_ethr);
+            if (this->conv_elec)
+            {
+                this->niter = iter;
+                bool stop = this->do_after_converge(iter);
+                if (stop)
+                    break;
+            }
+        }
+        afterscf(istep);
+
+        ModuleBase::timer::tick(this->classname, "Run");
+    }
+
+    return;
+};
+
+void ESolver_KS_LCAO_TDDFT::Run(const int istep, UnitCell_pseudo& ucell)
+{
+    if (!(GlobalV::CALCULATION == "scf" || GlobalV::CALCULATION == "md" || GlobalV::CALCULATION == "relax"
+          || GlobalV::CALCULATION == "cell-relax" || GlobalV::CALCULATION.substr(0, 3) == "sto"))
+    {
+        this->othercalculation(istep);
+    }
+    else
+    {
+        ModuleBase::timer::tick(this->classname, "Run");
+
+        if (this->maxniter > 0)
+            this->printhead(); // print the headline on the screen.
+        this->beforescf(istep); // Something else to do before the iter loop
+
+        bool firstscf = true;
+        this->conv_elec = false;
+        this->niter = this->maxniter;
+        for (int iter = 1; iter <= this->maxniter; ++iter)
+        {
+            writehead(GlobalV::ofs_running, istep, iter);
+#ifdef __MPI
+            auto iterstart = MPI_Wtime();
+#else
+            auto iterstart = std::chrono::system_clock::now();
+#endif
+            double diag_ethr = this->phsol->set_diagethr(istep, iter, drho);
+            eachiterinit(istep, iter);
+            this->hamilt2density(istep, iter, diag_ethr);
+
+            //<Temporary> It may be changed when more clever parallel algorithm is put forward.
+            // When parallel algorithm for bands are adopted. Density will only be treated in the first group.
+            //(Different ranks should have abtained the same, but small differences always exist in practice.)
+            // Maybe in the future, density and wavefunctions should use different parallel algorithms, in which
+            // they do not occupy all processors, for example wavefunctions uses 20 processors while density uses 10.
+            if (GlobalV::MY_STOGROUP == 0)
+            {
+                // double drho = this->estate.caldr2();
+                // EState should be used after it is constructed.
+                drho = GlobalC::CHR.get_drho();
+                double hsolver_error = 0.0;
+                if (firstscf)
+                {
+                    firstscf = false;
+                    hsolver_error = this->phsol->cal_hsolerror();
+                    // The error of HSolver is larger than drho, so a more precise HSolver should be excuconv_elected.
+                    if (hsolver_error > drho)
+                    {
+                        diag_ethr = this->phsol->reset_diagethr(GlobalV::ofs_running, hsolver_error, drho);
+                        this->hamilt2density(istep, iter, diag_ethr);
+                        drho = GlobalC::CHR.get_drho();
+                        hsolver_error = this->phsol->cal_hsolerror();
+                    }
+                }
+
+                this->conv_elec = (drho < this->scf_thr);
+
+                // If drho < hsolver_error in the first iter or drho < scf_thr, we do not change rho.
+                if (drho < hsolver_error || this->conv_elec)
+                {
+                    if (drho < hsolver_error)
+                        GlobalV::ofs_warning << " drho < hsolver_error, keep charge density unchanged." << std::endl;
+                }
+                else
+                {
+                    // charge mixing
+                    // conv_elec = this->estate.mix_rho();
+                    GlobalC::CHR.mix_rho(iter);
+                }
+            }
+#ifdef __MPI
+            MPI_Bcast(&drho, 1, MPI_DOUBLE, 0, PARAPW_WORLD);
+            MPI_Bcast(&this->conv_elec, 1, MPI_DOUBLE, 0, PARAPW_WORLD);
+            MPI_Bcast(GlobalC::CHR.rho[0], GlobalC::rhopw->nrxx, MPI_DOUBLE, 0, PARAPW_WORLD);
+#endif
+
+            // Hamilt should be used after it is constructed.
+            // this->phamilt->update(conv_elec);
+            updatepot(istep, iter);
+            eachiterfinish(iter);
+#ifdef __MPI
+            double duration = (double)(MPI_Wtime() - iterstart);
+#else
+            double duration = (std::chrono::system_clock::now() - iterstart).count() / CLOCKS_PER_SEC;
+#endif
+            printiter(iter, drho, duration, diag_ethr);
+            if (this->conv_elec)
+            {
+                this->niter = iter;
+                bool stop = this->do_after_converge(iter);
+                if (stop)
+                    break;
+            }
+        }
+        afterscf(istep);
+
+        ModuleBase::timer::tick(this->classname, "Run");
+    }
+
+    return;
+};
+
+void ESolver_KS_LCAO_TDDFT::cal_Force(ModuleBase::matrix& force, ModuleBase::Vector3<double>* vel)
+{
+    Force_Stress_LCAO_TDDFT FSL(this->RA);
+    FSL.getForceStress(GlobalV::CAL_FORCE,
+                       GlobalV::CAL_STRESS,
+                       GlobalV::TEST_FORCE,
+                       GlobalV::TEST_STRESS,
+                       this->LOC,
+                       this->psid,
+                       this->psi,
+                       this->UHM,
+                       force,
+                       this->scs,
+                       vel);
+    // delete RA after cal_Force
+    this->RA.delete_grid();
+    this->have_force = true;
+}
+
+void ESolver_KS_LCAO_TDDFT::cal_Force(ModuleBase::matrix& force)
+{
+    Force_Stress_LCAO FSL(this->RA);
+    FSL.getForceStress(GlobalV::CAL_FORCE,
+                       GlobalV::CAL_STRESS,
+                       GlobalV::TEST_FORCE,
+                       GlobalV::TEST_STRESS,
+                       this->LOC,
+                       this->psid,
+                       this->psi,
+                       this->UHM,
+                       force,
+                       this->scs);
+    // delete RA after cal_Force
+    this->RA.delete_grid();
+    this->have_force = true;
 }
 
 // use the original formula (Hamiltonian matrix) to calculate energy density matrix

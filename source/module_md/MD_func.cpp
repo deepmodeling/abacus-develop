@@ -238,7 +238,63 @@ void MD_func::force_virial(
     ModuleBase::matrix force_temp(unit_in.nat, 3); 
     p_esolver->cal_Force(force_temp);
 
-    p_esolver->cal_Stress(stress);
+    if(GlobalV::CAL_STRESS)
+    {
+        p_esolver->cal_Stress(stress);
+    }
+
+    if(mdp.md_ensolver == "FP")
+    {
+        potential *= 0.5;
+        force_temp *= 0.5;
+        stress *= 0.5;
+    }
+
+    for(int i=0; i<unit_in.nat; ++i)
+    {
+        for(int j=0; j<3; ++j)
+        {
+            force[i][j] = force_temp(i, j);
+        }
+    }
+
+    ModuleBase::timer::tick("MD_func", "force_stress");
+}
+
+//calculate potential, force and virial
+void MD_func::force_virial(
+		ModuleESolver::ESolver *p_esolver,
+		const int &istep,
+		const MD_parameters &mdp,
+		UnitCell_pseudo &unit_in,
+		double &potential,
+		ModuleBase::Vector3<double> *force,
+		ModuleBase::matrix &stress,
+        ModuleBase::Vector3<double>* vel)
+{
+	ModuleBase::TITLE("MD_func", "force_stress");
+    ModuleBase::timer::tick("MD_func", "force_stress");
+
+    //p_esolver->Run(istep,unit_in);
+    p_esolver->Run(istep, unit_in, vel);
+
+    p_esolver->cal_Energy(potential);
+
+    ModuleBase::matrix force_temp(unit_in.nat, 3); 
+
+    if (istep > 1)
+    {
+        p_esolver->cal_Force(force_temp, vel);
+    }
+    else
+    {
+        p_esolver->cal_Force(force_temp);
+    }
+
+    if(GlobalV::CAL_STRESS)
+    {
+        p_esolver->cal_Stress(stress);
+    }
 
     if(mdp.md_ensolver == "FP")
     {
