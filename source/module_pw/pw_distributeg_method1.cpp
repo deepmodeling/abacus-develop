@@ -139,6 +139,14 @@ void PW_Basis::collect_st(
     int ix_start = -ix_end; 
     int iy_end = int(this->ny / 2) + 1;
     int iy_start = -iy_end; 
+    if (this->full_pw)
+    {
+        ix_end = int(this->nx / 2);
+        ix_start = ix_end - this->nx + 1; 
+        iy_end = int(this->ny / 2);
+        iy_start = iy_end - this->ny + 1; 
+    }
+
     if (this->gamma_only)
     {
         if(this->xprime)
@@ -170,18 +178,26 @@ void PW_Basis::collect_st(
             if (st_length2D[index] > 0) // meaning there is a stick on (x, y) point.
             {
                 bool find_stick = false;
-                for (int iz = st_bottom2D[index]; iz < st_bottom2D[index] + st_length2D[index]; ++iz)
+                if (!this->full_pw)
                 {
-                    f.x = ix;
-                    f.y = iy;
-                    f.z = iz;
-                    double modulus = f * (GGT * f);
-                    if (modulus <= ggecut)
+                    for (int iz = st_bottom2D[index]; iz < st_bottom2D[index] + st_length2D[index]; ++iz)
                     {
-                        find_stick = true;
-                        break;
+                        f.x = ix;
+                        f.y = iy;
+                        f.z = iz;
+                        double modulus = f * (GGT * f);
+                        if (modulus <= ggecut)
+                        {
+                            find_stick = true;
+                            break;
+                        }
                     }
                 }
+                else
+                {
+                    find_stick = true;
+                }
+                
                 if (find_stick)
                 {
                     temp_st_i[is] = x;

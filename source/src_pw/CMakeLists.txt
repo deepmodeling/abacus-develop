@@ -1,6 +1,5 @@
 list(APPEND objects
     H_Ewald_pw.cpp
-    H_Hartree_pw.cpp
     VL_in_pw.cpp
     VNL_in_pw.cpp
     VNL_grad_pw.cpp
@@ -9,15 +8,12 @@ list(APPEND objects
     charge_extra.cpp
     charge_mixing.cpp
     charge_pulay.cpp
-    diago_cg_old.cpp
-    diago_david_old.cpp
     energy.cpp
     forces.cpp
     global.cpp
     klist.cpp
     magnetism.cpp
     occupy.cpp
-    potential.cpp
     structure_factor.cpp
     pw_complement.cpp
     soc.cpp
@@ -25,7 +21,7 @@ list(APPEND objects
     sto_hchi.cpp
     sto_wf.cpp
     sto_func.cpp
-    sto_forces.cpp 
+    sto_forces.cpp
     sto_stress_pw.cpp
     stress_func_cc.cpp
     stress_func_ewa.cpp
@@ -37,22 +33,17 @@ list(APPEND objects
     stress_func_nl.cpp
     stress_func_print.cpp
     stress_pw.cpp
+    of_stress_pw.cpp
     symmetry_rho.cpp
     threshold_elec.cpp
-    use_fft.cpp
-    vdwd2.cpp
-    vdwd2_parameters.cpp
-    vdwd3.cpp
-    vdwd3_parameters.cpp
     wavefunc.cpp
     wf_atomic.cpp
     wf_igk.cpp
     xc_3.cpp
-    run_md_pw.cpp)
+)
 if(USE_CUDA)
     list(APPEND objects
         diago_cg.cu
-        electrons.cu
         hamilt.cu
         hamilt_pw.cu
         use_fft_kernel.cu
@@ -60,7 +51,6 @@ if(USE_CUDA)
 elseif(USE_ROCM)
     list(APPEND objects
         diago_cg_hip.cpp
-        electrons_hip.cpp
         hamilt_hip.cpp
         hamilt_pw_hip.cpp
         use_fft_kernel_hip.cpp
@@ -68,8 +58,6 @@ elseif(USE_ROCM)
 else()
     list(APPEND objects
         hamilt.cpp
-        hamilt_pw_old.cpp
-        electrons.cpp
     )
 endif()
 
@@ -79,6 +67,11 @@ add_library(
     ${objects}
 )
 
-IF (BUILD_TESTING)
+if(ENABLE_COVERAGE)
+  add_coverage(pw)
+endif()
+
+if(BUILD_TESTING)
   add_subdirectory(test)
 endif()
+

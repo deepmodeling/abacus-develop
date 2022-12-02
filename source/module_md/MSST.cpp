@@ -6,7 +6,7 @@
 #include "../module_base/timer.h"
 #include "module_esolver/esolver.h"
 
-MSST::MSST(MD_parameters& MD_para_in, UnitCell_pseudo &unit_in) : Verlet(MD_para_in, unit_in)
+MSST::MSST(MD_parameters& MD_para_in, UnitCell &unit_in) : MDrun(MD_para_in, unit_in)
 {
     std::cout << "MSST" << std::endl;
 
@@ -38,7 +38,7 @@ void MSST::setup(ModuleESolver::ESolver *p_esolver)
     ModuleBase::TITLE("MSST", "setup");
     ModuleBase::timer::tick("MSST", "setup");
 
-    Verlet::setup(p_esolver);
+    MDrun::setup(p_esolver);
 
     int sd = mdp.msst_direction;
 
@@ -63,8 +63,8 @@ void MSST::setup(ModuleESolver::ESolver *p_esolver)
             }
         }
 
-        MD_func::kinetic_stress(ucell, vel, allmass, kinetic, stress);
-        stress += virial;
+        MD_func::compute_stress(ucell, vel, allmass, virial, stress);
+        t_current = MD_func::current_temp(kinetic, ucell.nat, frozen_freedom_, allmass, vel);
     }
 
     ModuleBase::timer::tick("MSST", "setup");
@@ -146,8 +146,8 @@ void MSST::second_half()
     propagate_vel();
 
     vsum = vel_sum();
-    MD_func::kinetic_stress(ucell, vel, allmass, kinetic, stress);
-    stress += virial;
+    MD_func::compute_stress(ucell, vel, allmass, virial, stress);
+    t_current = MD_func::current_temp(kinetic, ucell.nat, frozen_freedom_, allmass, vel);
 
     // propagate the time derivative of volume 1/2 step
     propagate_voldot();
@@ -160,7 +160,7 @@ void MSST::second_half()
 
 void MSST::outputMD(std::ofstream &ofs, bool cal_stress)
 {
-    Verlet::outputMD(ofs, cal_stress);
+    MDrun::outputMD(ofs, cal_stress);
 }
 
 void MSST::write_restart()
@@ -213,7 +213,7 @@ void MSST::restart()
 
     if(!ok)
     {
-        ModuleBase::WARNING_QUIT("verlet", "no Restart_md.dat !");
+        ModuleBase::WARNING_QUIT("mdrun", "no Restart_md.dat !");
     }
 
 #ifdef __MPI
@@ -251,9 +251,6 @@ void MSST::rescale(double volume)
     ucell.latvec.e11 *= dilation[0];
     ucell.latvec.e22 *= dilation[1];
     ucell.latvec.e33 *= dilation[2];
-    ucell.a1 *= dilation[0];
-    ucell.a2 *= dilation[1];
-    ucell.a3 *= dilation[2];
 
     ucell.setup_cell_after_vc(GlobalV::ofs_running);
     MD_func::InitPos(ucell, pos);

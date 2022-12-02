@@ -3,15 +3,32 @@ add_executable(
     main_deepks.cpp klist_1.cpp LCAO_deepks_test_prep.cpp LCAO_deepks_test.cpp nnr.cpp parallel_orbitals.cpp
 )
 
+if(ENABLE_COVERAGE)
+  add_coverage(test_deepks)
+endif()
+
 get_target_property(ABACUS_LINK_LIBRARIES ${ABACUS_BIN_NAME} LINK_LIBRARIES)
 target_link_libraries(
     test_deepks
     base cell symmetry md surchem xc_
-    neighbor orb io relax gint lcao parallel mrrr pdiag pw ri driver esolver hsolver psi elecstate hamilt planewave
-    pthread genelpa
-    deepks rpa
+    neighbor orb io relax gint lcao parallel pdiag pw driver esolver hsolver psi elecstate hamilt planewave
+    pthread vdw
+    deepks
     ${ABACUS_LINK_LIBRARIES}
 )
+if(USE_ELPA)
+  target_link_libraries(
+      test_deepks
+      genelpa
+  )
+endif()
+
+if (ENABLE_LIBRI)
+  target_link_libraries(test_deepks
+          ri
+          libri
+          rpa)
+endif()
 
 install(
     TARGETS test_deepks

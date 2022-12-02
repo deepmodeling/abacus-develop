@@ -14,16 +14,17 @@ namespace Gint_Tools
 	//Hamiltonian, electron density, force, kinetic energy density, Hamiltonian for mGGA
 }
 
-//the class used to pass input/output variables
+//the class is used to pass input/output variables
 //into the unified interface gint
+//not sure if this is the best practice though ..
 class Gint_inout
 {
     public:
     //input
         double** DM_R;
         double*** DM;
-        double* vl;
-		double* vofk;
+        const double* vl;
+		const double* vofk;
         bool isforce;
         bool isstress;
         int ispin;
@@ -45,7 +46,7 @@ class Gint_inout
         }
 
 	// force, multi-k
-        Gint_inout(double** DM_R_in, double* vl_in, bool isforce_in, bool isstress_in,
+        Gint_inout(double** DM_R_in, const double* vl_in, bool isforce_in, bool isstress_in,
             ModuleBase::matrix* fvl_dphi_in, ModuleBase::matrix* svl_dphi_in,
             Gint_Tools::job_type job_in)
         {
@@ -59,7 +60,7 @@ class Gint_inout
         }
 
 	// force (mGGA), multi-k
-        Gint_inout(double** DM_R_in, double* vl_in, double* vofk_in, const bool isforce_in, const bool isstress_in,
+        Gint_inout(double** DM_R_in, const double* vl_in, const double* vofk_in, const bool isforce_in, const bool isstress_in,
             ModuleBase::matrix* fvl_dphi_in, ModuleBase::matrix* svl_dphi_in,
             Gint_Tools::job_type job_in)
         {
@@ -74,7 +75,7 @@ class Gint_inout
         }
 
 	// vlocal, multi-k
-        Gint_inout(double* vl_in, int ispin_in, Gint_Tools::job_type job_in)
+        Gint_inout(const double* vl_in, int ispin_in, Gint_Tools::job_type job_in)
         {
             vl = vl_in;
             ispin = ispin_in;
@@ -82,7 +83,7 @@ class Gint_inout
         }
 
 	// mGGA vlocal, multi-k
-        Gint_inout(double* vl_in, double* vofk_in, int ispin_in, Gint_Tools::job_type job_in)
+        Gint_inout(const double* vl_in, const double* vofk_in, int ispin_in, Gint_Tools::job_type job_in)
         {
             vl = vl_in;
 			vofk = vofk_in;
@@ -99,7 +100,7 @@ class Gint_inout
         }
 
 	// force, gamma point
-        Gint_inout(double*** DM_in, double* vl_in, const bool isforce_in, const bool isstress_in,
+        Gint_inout(double*** DM_in, const double* vl_in, const bool isforce_in, const bool isstress_in,
             ModuleBase::matrix* fvl_dphi_in, ModuleBase::matrix* svl_dphi_in,
             Gint_Tools::job_type job_in)
         {
@@ -113,7 +114,7 @@ class Gint_inout
         }
 
 	// force (mGGA), gamma point
-        Gint_inout(double*** DM_in, double* vl_in, double* vofk_in, const bool isforce_in, const bool isstress_in,
+        Gint_inout(double*** DM_in, const double* vl_in, const double* vofk_in, const bool isforce_in, const bool isstress_in,
             ModuleBase::matrix* fvl_dphi_in, ModuleBase::matrix* svl_dphi_in,
             Gint_Tools::job_type job_in)
         {
@@ -128,7 +129,7 @@ class Gint_inout
         }
 
 	// vlocal, gamma point
-		Gint_inout(double* vl_in, LCAO_Matrix *lm_in, Gint_Tools::job_type job_in)
+		Gint_inout(const double* vl_in, LCAO_Matrix *lm_in, Gint_Tools::job_type job_in)
         {
             vl = vl_in;
             lm = lm_in;
@@ -136,7 +137,7 @@ class Gint_inout
         }
 
 	// mGGA vlocal, gamma point
-		Gint_inout(double* vl_in, double* vofk_in, LCAO_Matrix *lm_in, Gint_Tools::job_type job_in)
+		Gint_inout(const double* vl_in, const double* vofk_in, LCAO_Matrix *lm_in, Gint_Tools::job_type job_in)
         {
             vl = vl_in;
 			vofk = vofk_in;

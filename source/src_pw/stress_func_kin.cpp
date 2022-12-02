@@ -1,9 +1,13 @@
 #include"stress_func.h"
 #include "global.h"
+#include "module_base/timer.h"
 
 //calculate the kinetic stress in PW base
-void Stress_Func::stress_kin(ModuleBase::matrix& sigma, const psi::Psi<complex<double>>* psi_in)
+void Stress_Func::stress_kin(ModuleBase::matrix& sigma, const ModuleBase::matrix& wg, const psi::Psi<complex<double>>* psi_in)
 {
+    ModuleBase::TITLE("Stress_Func","stress_kin");
+	ModuleBase::timer::tick("Stress_Func","stress_kin");
+	
 	double **gk;
 	gk=new double* [3];
 	int npw;
@@ -57,7 +61,7 @@ void Stress_Func::stress_kin(ModuleBase::matrix& sigma, const psi::Psi<complex<d
 					for(int i=0;i<npw;i++)
 					{
 						s_kin[l][m] +=
-							GlobalC::wf.wg(ik, ibnd)*gk[l][i]*gk[m][i]
+							wg(ik, ibnd)*gk[l][i]*gk[m][i]
 							*(double((conj(ppsi[i]) * ppsi[i]).real()));
 					}
 				}
@@ -131,5 +135,6 @@ void Stress_Func::stress_kin(ModuleBase::matrix& sigma, const psi::Psi<complex<d
 	delete[] gk[2];
 	delete[] gk;
 		
+	ModuleBase::timer::tick("Stress_Func","stress_kin");
 	return;
 }

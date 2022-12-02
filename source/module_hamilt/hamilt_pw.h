@@ -2,14 +2,18 @@
 #define HAMILTPW_H
 
 #include "hamilt.h"
+#include "module_elecstate/potentials/potential_new.h"
 
 namespace hamilt
 {
 
-class HamiltPW : public Hamilt
+template<typename FPTYPE, typename Device = psi::DEVICE_CPU>
+class HamiltPW : public Hamilt<FPTYPE, Device>
 {
   public:
-    HamiltPW();
+    HamiltPW(elecstate::Potential* pot_in);
+    template<typename T_in, typename Device_in = Device>
+    explicit HamiltPW(const HamiltPW<T_in, Device_in>* hamilt);
     ~HamiltPW();
 
     // for target K point, update consequence of hPsi() and matrix()
@@ -19,6 +23,9 @@ class HamiltPW : public Hamilt
     virtual void sPsi(const std::complex<double> *psi_in, std::complex<double> *spsi, const size_t size) const override;
 
   private:
+
+    Device *ctx = {};
+    using syncmem_complex_op = psi::memory::synchronize_memory_op<std::complex<FPTYPE>, Device, Device>;
 };
 
 } // namespace hamilt

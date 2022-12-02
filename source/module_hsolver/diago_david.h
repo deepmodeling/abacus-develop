@@ -14,16 +14,16 @@
 #include "module_base/complexmatrix.h"
 #include "src_pw/structure_factor.h"
 
-namespace hsolver
-{
+namespace hsolver {
 
-class DiagoDavid : public DiagH
+template<typename FPTYPE = double, typename Device = psi::DEVICE_CPU>
+class DiagoDavid : public DiagH<FPTYPE, Device>
 {
   public:
-    DiagoDavid(const double* precondition_in);
+    DiagoDavid(const FPTYPE* precondition_in);
 
     // this is the override function diag() for CG method
-    void diag(hamilt::Hamilt* phm_in, psi::Psi<std::complex<double>>& phi, double* eigenvalue_in) override;
+    void diag(hamilt::Hamilt<FPTYPE, Device>* phm_in, psi::Psi<std::complex<FPTYPE>, Device>& phi, FPTYPE* eigenvalue_in);
 
     static int PW_DIAG_NDIM;
 
@@ -33,21 +33,25 @@ class DiagoDavid : public DiagH
     /// record for how many bands not have convergence eigenvalues
     int notconv = 0;
 
-    void cal_grad(hamilt::Hamilt* phm_in,
+    /// device type of psi
+    psi::AbacusDevice_t device = {};
+    psi::DEVICE_CPU * ctx = {};
+
+    void cal_grad(hamilt::Hamilt<FPTYPE, Device>* phm_in,
                   const int& npw,
                   const int& nbase,
                   const int& notconv,
-                  psi::Psi<std::complex<double>>& basis,
+                  psi::Psi<std::complex<FPTYPE>, Device>& basis,
                   ModuleBase::ComplexMatrix& hp,
                   ModuleBase::ComplexMatrix& sp,
                   const ModuleBase::ComplexMatrix& vc,
                   const int* unconv,
-                  const double* en);
+                  const FPTYPE* en);
 
     void cal_elem(const int& npw,
                   int& nbase,
                   const int& notconv,
-                  const psi::Psi<std::complex<double>>& basis,
+                  const psi::Psi<std::complex<FPTYPE>, Device>& basis,
                   const ModuleBase::ComplexMatrix& hp,
                   const ModuleBase::ComplexMatrix& sp,
                   ModuleBase::ComplexMatrix& hc,
@@ -56,9 +60,9 @@ class DiagoDavid : public DiagH
     void refresh(const int& npw,
                  const int& nband,
                  int& nbase,
-                 const double* en,
-                 const psi::Psi<std::complex<double>>& psi,
-                 psi::Psi<std::complex<double>>& basis,
+                 const FPTYPE* en,
+                 const psi::Psi<std::complex<FPTYPE>, Device>& psi,
+                 psi::Psi<std::complex<FPTYPE>, Device>& basis,
                  ModuleBase::ComplexMatrix& hp,
                  ModuleBase::ComplexMatrix& sp,
                  ModuleBase::ComplexMatrix& hc,
@@ -70,16 +74,16 @@ class DiagoDavid : public DiagH
                  const int& nbase,
                  const ModuleBase::ComplexMatrix& vc,
                  const ModuleBase::ComplexMatrix& hp,
-                 const psi::Psi<std::complex<double>>& basis,
-                 const double* en,
-                 std::complex<double>* respsi);
+                 const psi::Psi<std::complex<FPTYPE>, Device>& basis,
+                 const FPTYPE* en,
+                 std::complex<FPTYPE>* respsi);
 
     void SchmitOrth(const int& npw,
                     const int n_band,
                     const int m,
-                    psi::Psi<std::complex<double>>& psi,
+                    psi::Psi<std::complex<FPTYPE>, Device>& psi,
                     const ModuleBase::ComplexMatrix& spsi,
-                    std::complex<double>* lagrange_m,
+                    std::complex<FPTYPE>* lagrange_m,
                     const int mm_size,
                     const int mv_size);
     void planSchmitOrth(
@@ -92,12 +96,14 @@ class DiagoDavid : public DiagH
                      const ModuleBase::ComplexMatrix& hc,
                      const ModuleBase::ComplexMatrix& sc,
                      const int& ldh,
-                     double* e,
+                     FPTYPE* e,
                      ModuleBase::ComplexMatrix& vc);
 
-    void diag_mock(hamilt::Hamilt* phm_in, psi::Psi<std::complex<double>>& psi, double* eigenvalue_in);
+    void diag_mock(hamilt::Hamilt<FPTYPE, Device>* phm_in, psi::Psi<std::complex<FPTYPE>, Device>& psi, FPTYPE* eigenvalue_in);
 
-    const double* precondition = nullptr;
+    const FPTYPE* precondition = nullptr;
+
+    using hpsi_info = typename hamilt::Operator<std::complex<FPTYPE>, Device>::hpsi_info;
 };
 
 } // namespace hsolver

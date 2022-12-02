@@ -6,13 +6,14 @@ orbital_dir	../../PP_ORB
 ntype			2
 nbands			10
 calculation		md
+esolver_type    tddft
 
 #Parameter (Accuracy)
 ecutwfc			100
 scf_nmax		50
 
 #ks_solver		lapack
-ks_solver		genelpa
+ks_solver		scalapack_gvx
 basis_type		lcao
 gamma_only		0
 md_nstep		2
@@ -26,8 +27,6 @@ cal_stress          1
 stress_thr      1e-6
 cal_force           1
 force_thr_ev    1.0e-3
-
-tddft			1
 
 md_type		0
 md_dt			0.05

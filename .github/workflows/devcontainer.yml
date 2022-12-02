@@ -1,7 +1,11 @@
 name: Container
 
 on:
+  schedule:
+    - cron: '0 18 * * *'
   push:
+    paths-ignore:
+      - 'docs/**'
     branches:
       - develop
 

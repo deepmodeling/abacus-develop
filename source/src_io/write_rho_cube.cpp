@@ -9,7 +9,7 @@ void Charge::write_rho_cube(
 	const int &precision) 
 {
     ModuleBase::TITLE("Charge","write_rho_cube");
-	if (out_chg==0) 
+	if (GlobalV::out_chg==0) 
 	{
 		return;
 	}
@@ -57,9 +57,9 @@ void Charge::write_rho_cube(
 						break;
 					}
 				ofs << " " << z << " " << z
-					<< " " << fac*GlobalC::ucell.atoms[it].taud[ia].x
-					<< " " << fac*GlobalC::ucell.atoms[it].taud[ia].y
-					<< " " << fac*GlobalC::ucell.atoms[it].taud[ia].z << std::endl;
+					<< " " << fac*GlobalC::ucell.atoms[it].tau[ia].x
+					<< " " << fac*GlobalC::ucell.atoms[it].tau[ia].y
+					<< " " << fac*GlobalC::ucell.atoms[it].tau[ia].z << std::endl;
 			}
 		}
 

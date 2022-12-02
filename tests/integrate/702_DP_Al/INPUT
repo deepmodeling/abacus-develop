@@ -5,7 +5,7 @@ ntype		    1
 calculation         md
 pseudo_dir          ../../PP_ORB
 
-md_ensolver         DP
+esolver_type        dp
 pot_file            ../../PP_ORB/Al-SCAN.pb
 
 cal_force           1

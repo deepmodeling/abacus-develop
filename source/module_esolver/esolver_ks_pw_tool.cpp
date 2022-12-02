@@ -23,7 +23,9 @@ namespace ModuleESolver
 //------------------------------------------------------------------
 #define TWOSQRT2LN2 2.354820045030949 // FWHM = 2sqrt(2ln2) * \sigma
 #define FACTOR      1.839939223835727e7
-void ESolver_KS_PW::KG(const int nche_KG, const double fwhmin, const double wcut, const double dw_in, const int times)
+template<typename FPTYPE, typename Device>
+void ESolver_KS_PW<FPTYPE, Device>::KG(const int nche_KG, const FPTYPE fwhmin, const FPTYPE wcut, 
+        const FPTYPE dw_in, const int times, ModuleBase::matrix& wg)
 {
     //-----------------------------------------------------------
     //               KS conductivity
@@ -32,9 +34,9 @@ void ESolver_KS_PW::KG(const int nche_KG, const double fwhmin, const double wcut
     char transn = 'N';
     char transc = 'C';
     int nw = ceil(wcut / dw_in);
-    double dw = dw_in / ModuleBase::Ry_to_eV; // converge unit in eV to Ry
-    double sigma = fwhmin / TWOSQRT2LN2 / ModuleBase::Ry_to_eV;
-    double dt = ModuleBase::PI / (dw * nw) / times; // unit in a.u., 1 a.u. = 4.837771834548454e-17 s
+    FPTYPE dw = dw_in / ModuleBase::Ry_to_eV; // converge unit in eV to Ry
+    FPTYPE sigma = fwhmin / TWOSQRT2LN2 / ModuleBase::Ry_to_eV;
+    FPTYPE dt = ModuleBase::PI / (dw * nw) / times; // unit in a.u., 1 a.u. = 4.837771834548454e-17 s
     int nt = ceil(sqrt(20) / sigma / dt);
     cout << "nw: " << nw << " ; dw: " << dw * ModuleBase::Ry_to_eV << " eV" << endl;
     cout << "nt: " << nt << " ; dt: " << dt << " a.u.(ry^-1)" << endl;
@@ -43,13 +45,13 @@ void ESolver_KS_PW::KG(const int nche_KG, const double fwhmin, const double wcut
     const int nk = GlobalC::kv.nks;
     const int ndim = 3;
     const int npwx = GlobalC::wf.npwx;
-    const double tpiba = GlobalC::ucell.tpiba;
+    const FPTYPE tpiba = GlobalC::ucell.tpiba;
     const int nbands = GlobalV::NBANDS;
-    const double ef = GlobalC::en.ef;
+    const FPTYPE ef = GlobalC::en.ef;
 
-    double *ct11 = new double[nt];
-    double *ct12 = new double[nt];
-    double *ct22 = new double[nt];
+    FPTYPE *ct11 = new FPTYPE[nt];
+    FPTYPE *ct12 = new FPTYPE[nt];
+    FPTYPE *ct22 = new FPTYPE[nt];
     ModuleBase::GlobalFunc::ZEROS(ct11, nt);
     ModuleBase::GlobalFunc::ZEROS(ct12, nt);
     ModuleBase::GlobalFunc::ZEROS(ct22, nt);
@@ -59,14 +61,14 @@ void ESolver_KS_PW::KG(const int nche_KG, const double fwhmin, const double wcut
     {
         velop.init(ik);
         const int npw = GlobalC::kv.ngk[ik];
-        complex<double> *levc = &(this->psi[0](ik, 0, 0));
-        complex<double> *prevc = new complex<double>[3 * npwx * nbands];
+        complex<FPTYPE> *levc = &(this->psi[0](ik, 0, 0));
+        complex<FPTYPE> *prevc = new complex<FPTYPE>[3 * npwx * nbands];
         // px|right>
         velop.act(this->psi, nbands*GlobalV::NPOL, levc, prevc);
         for (int id = 0; id < ndim; ++id)
         {
             this->p_hamilt->updateHk(ik);
-            complex<double> *pij = new complex<double>[nbands * nbands];
+            complex<FPTYPE> *pij = new complex<FPTYPE>[nbands * nbands];
             zgemm_(&transc,
                    &transn,
                    &nbands,
@@ -98,19 +100,19 @@ void ESolver_KS_PW::KG(const int nche_KG, const double fwhmin, const double wcut
             for (int it = itstart; it < itstart + ntper; ++it)
             // for(int it = 0 ; it < nt; ++it)
             {
-                double tmct11 = 0;
-                double tmct12 = 0;
-                double tmct22 = 0;
-                double *enb = &(this->pelec->ekb(ik, 0));
+                FPTYPE tmct11 = 0;
+                FPTYPE tmct12 = 0;
+                FPTYPE tmct22 = 0;
+                FPTYPE *enb = &(this->pelec->ekb(ik, 0));
                 for (int ib = 0; ib < nbands; ++ib)
                 {
-                    double ei = enb[ib];
-                    double fi = GlobalC::wf.wg(ik, ib);
+                    FPTYPE ei = enb[ib];
+                    FPTYPE fi = wg(ik, ib);
                     for (int jb = ib + 1; jb < nbands; ++jb)
                     {
-                        double ej = enb[jb];
-                        double fj = GlobalC::wf.wg(ik, jb);
-                        double tmct = sin((ej - ei) * (it)*dt) * (fi - fj) * norm(pij[ib * nbands + jb]);
+                        FPTYPE ej = enb[jb];
+                        FPTYPE fj = wg(ik, jb);
+                        FPTYPE tmct = sin((ej - ei) * (it)*dt) * (fi - fj) * norm(pij[ib * nbands + jb]);
                         tmct11 += tmct;
                         tmct12 += -tmct * ((ei + ej) / 2 - ef);
                         tmct22 += tmct * pow((ei + ej) / 2 - ef, 2);
@@ -142,33 +144,34 @@ void ESolver_KS_PW::KG(const int nche_KG, const double fwhmin, const double wcut
     delete[] ct22;
 }
 
-void ESolver_KS_PW::calcondw(const int nt,
-                             const double dt,
-                             const double fwhmin,
-                             const double wcut,
-                             const double dw_in,
-                             double *ct11,
-                             double *ct12,
-                             double *ct22)
+template <typename FPTYPE, typename Device>
+void ESolver_KS_PW<FPTYPE, Device>::calcondw(const int nt,
+                             const FPTYPE dt,
+                             const FPTYPE fwhmin,
+                             const FPTYPE wcut,
+                             const FPTYPE dw_in,
+                             FPTYPE *ct11,
+                             FPTYPE *ct12,
+                             FPTYPE *ct22)
 {
-    double factor = FACTOR;
+    FPTYPE factor = FACTOR;
     const int ndim = 3;
     int nw = ceil(wcut / dw_in);
-    double dw = dw_in / ModuleBase::Ry_to_eV; // converge unit in eV to Ry
-    double sigma = fwhmin / TWOSQRT2LN2 / ModuleBase::Ry_to_eV;
+    FPTYPE dw = dw_in / ModuleBase::Ry_to_eV; // converge unit in eV to Ry
+    FPTYPE sigma = fwhmin / TWOSQRT2LN2 / ModuleBase::Ry_to_eV;
     ofstream ofscond("je-je.txt");
     ofscond << setw(8) << "#t(a.u.)" << setw(15) << "c11(t)" << setw(15) << "c12(t)" << setw(15) << "c22(t)" << setw(15)
             << "decay" << endl;
     for (int it = 0; it < nt; ++it)
     {
         ofscond << setw(8) << (it)*dt << setw(15) << -2 * ct11[it] << setw(15) << -2 * ct12[it] << setw(15)
-                << -2 * ct22[it] << setw(15) << exp(-double(1) / 2 * sigma * sigma * pow((it)*dt, 2)) << endl;
+                << -2 * ct22[it] << setw(15) << exp(-FPTYPE(1) / 2 * sigma * sigma * pow((it)*dt, 2)) << endl;
     }
     ofscond.close();
-    double *cw11 = new double[nw];
-    double *cw12 = new double[nw];
-    double *cw22 = new double[nw];
-    double *kappa = new double[nw];
+    FPTYPE *cw11 = new FPTYPE[nw];
+    FPTYPE *cw12 = new FPTYPE[nw];
+    FPTYPE *cw22 = new FPTYPE[nw];
+    FPTYPE *kappa = new FPTYPE[nw];
     ModuleBase::GlobalFunc::ZEROS(cw11, nw);
     ModuleBase::GlobalFunc::ZEROS(cw12, nw);
     ModuleBase::GlobalFunc::ZEROS(cw22, nw);
@@ -177,11 +180,11 @@ void ESolver_KS_PW::calcondw(const int nt,
         for (int it = 0; it < nt; ++it)
         {
             cw11[iw] += -2 * ct11[it] * sin(-(iw + 0.5) * dw * it * dt)
-                        * exp(-double(1) / 2 * sigma * sigma * pow((it)*dt, 2)) / (iw + 0.5) / dw * dt;
+                        * exp(-FPTYPE(1) / 2 * sigma * sigma * pow((it)*dt, 2)) / (iw + 0.5) / dw * dt;
             cw12[iw] += -2 * ct12[it] * sin(-(iw + 0.5) * dw * it * dt)
-                        * exp(-double(1) / 2 * sigma * sigma * pow((it)*dt, 2)) / (iw + 0.5) / dw * dt;
+                        * exp(-FPTYPE(1) / 2 * sigma * sigma * pow((it)*dt, 2)) / (iw + 0.5) / dw * dt;
             cw22[iw] += -2 * ct22[it] * sin(-(iw + 0.5) * dw * it * dt)
-                        * exp(-double(1) / 2 * sigma * sigma * pow((it)*dt, 2)) / (iw + 0.5) / dw * dt;
+                        * exp(-FPTYPE(1) / 2 * sigma * sigma * pow((it)*dt, 2)) / (iw + 0.5) / dw * dt;
         }
     }
     ofscond.open("Onsager.txt");
@@ -189,10 +192,10 @@ void ESolver_KS_PW::calcondw(const int nt,
             << "L12/e(Am^-1)" << setw(20) << "L22/e^2(Wm^-1)" << endl;
     for (int iw = 0; iw < nw; ++iw)
     {
-        cw11[iw] *= double(2) / ndim / GlobalC::ucell.omega * factor; // unit in Sm^-1
+        cw11[iw] *= FPTYPE(2) / ndim / GlobalC::ucell.omega * factor; // unit in Sm^-1
         cw12[iw]
-            *= double(2) / ndim / GlobalC::ucell.omega * factor * 2.17987092759e-18 / 1.6021766208e-19; // unit in Am^-1
-        cw22[iw] *= double(2) / ndim / GlobalC::ucell.omega * factor
+            *= FPTYPE(2) / ndim / GlobalC::ucell.omega * factor * 2.17987092759e-18 / 1.6021766208e-19; // unit in Am^-1
+        cw22[iw] *= FPTYPE(2) / ndim / GlobalC::ucell.omega * factor
                     * pow(2.17987092759e-18 / 1.6021766208e-19, 2); // unit in Wm^-1
         kappa[iw] = (cw22[iw] - pow(cw12[iw], 2) / cw11[iw]) / Occupy::gaussian_parameter / ModuleBase::Ry_to_eV
                     / 11604.518026;
@@ -210,4 +213,9 @@ void ESolver_KS_PW::calcondw(const int nt,
     delete[] cw22;
     delete[] kappa;
 }
+
+template class ESolver_KS_PW<double, psi::DEVICE_CPU>;
+#if ((defined __CUDA) || (defined __ROCM))
+template class ESolver_KS_PW<double, psi::DEVICE_GPU>;
+#endif
 } // namespace ModuleESolver

@@ -18,7 +18,7 @@ md_nstep           2
 cal_stress          1
 cal_force           1
 
-ks_solver       genelpa
+ks_solver       scalapack_gvx
 mixing_type     pulay
 mixing_beta     0.7
 

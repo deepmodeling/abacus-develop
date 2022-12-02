@@ -1,6 +1,6 @@
 INPUT_PARAMETERS
 #Parameters (1.General)
-suffix                  Sn_nhc
+suffix                  Sn_nhc_nvt
 calculation             md
 ntype                   1
 nbands                  160
@@ -33,4 +33,4 @@ md_nstep               10
 md_dt                  1
 md_tfirst              300
 md_tfreq               1
-md_mnhc                1
+md_tchain                1

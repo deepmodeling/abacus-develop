@@ -26,7 +26,7 @@ mixing_type    pulay
 mixing_beta    0.4
 
 
-ks_solver     genelpa
+ks_solver     scalapack_gvx
 basis_type    lcao
 gamma_only    1
 symmetry      0

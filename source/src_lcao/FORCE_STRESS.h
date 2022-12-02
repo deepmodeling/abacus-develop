@@ -15,7 +15,6 @@ class Force_Stress_LCAO
 {
 	// mohan add 2021-02-09
 	friend class md;
-	friend class Run_MD_LCAO;
 	friend void Input_Conv::Convert();
 	friend class Update_input;
 	friend class ions;
@@ -33,6 +32,7 @@ class Force_Stress_LCAO
 		const bool istestf, 
         const bool istests,
         Local_Orbital_Charge& loc,
+		const elecstate::ElecState* pelec,
         const psi::Psi<double>* psid,
 		const psi::Psi<std::complex<double>>* psi,
         LCAO_Hamilt &uhm,
@@ -57,13 +57,15 @@ protected:
 		ModuleBase::matrix &fvl_dvl, 
 		ModuleBase::matrix &fewalds, 
 		ModuleBase::matrix &fcc, 
-		ModuleBase::matrix &fscc);
+		ModuleBase::matrix &fscc,
+		const Charge* const chr);
 
 	void calForceStressIntegralPart(
 		const bool isGammaOnly,
 		const bool isforce,
         const bool isstress,
         Local_Orbital_Charge& loc,
+		const elecstate::ElecState* pelec,
         const psi::Psi<double>* psid,
 		const psi::Psi<std::complex<double>>* psi,
         ModuleBase::matrix& foverlap,
@@ -88,7 +90,8 @@ protected:
 		ModuleBase::matrix &sigmahar,
 		ModuleBase::matrix &sigmaewa,
 		ModuleBase::matrix &sigmacc,
-		ModuleBase::matrix &sigmaxc);
+		ModuleBase::matrix &sigmaxc,
+		const Charge* const chr);
 	
 	static double force_invalid_threshold_ev;
 	static double output_acc; // control the accuracy

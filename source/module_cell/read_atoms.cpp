@@ -1,4 +1,4 @@
-#include "unitcell_pseudo.h"
+#include "unitcell.h"
 #ifdef __LCAO
 #include "../module_orbital/ORB_read.h" // to use 'ORB' -- mohan 2021-01-30
 #endif
@@ -11,12 +11,12 @@
 #include <cstring>		// Peize Lin fix bug about strcmp 2016-08-02
 
 #ifdef __LCAO
-int UnitCell_pseudo::read_atom_species(LCAO_Orbitals &orb, std::ifstream &ifa, std::ofstream &ofs_running)
+int UnitCell::read_atom_species(LCAO_Orbitals &orb, std::ifstream &ifa, std::ofstream &ofs_running)
 #else
-int UnitCell_pseudo::read_atom_species(std::ifstream &ifa, std::ofstream &ofs_running)
+int UnitCell::read_atom_species(std::ifstream &ifa, std::ofstream &ofs_running)
 #endif
 {
-	ModuleBase::TITLE("UnitCell_pseudo","read_atom_species");
+	ModuleBase::TITLE("UnitCell","read_atom_species");
 
 	int error = 0;//0 for correct, >0 for warning and quit
 
@@ -24,10 +24,12 @@ int UnitCell_pseudo::read_atom_species(std::ifstream &ifa, std::ofstream &ofs_ru
     delete[] atom_mass;
     delete[] pseudo_fn;
 	delete[] pseudo_type;
+    delete[] orbital_fn;
 	this->atom_mass  = new double[ntype]; //atom masses
 	this->atom_label = new std::string[ntype]; //atom labels
 	this->pseudo_fn  = new std::string[ntype]; //file name of pseudopotential
 	this->pseudo_type = new std::string[ntype]; // type of pseudopotential
+    this->orbital_fn = new std::string[ntype]; // filename of orbitals
 
 	std::string word;
 	//==========================================
@@ -98,17 +100,14 @@ int UnitCell_pseudo::read_atom_species(std::ifstream &ifa, std::ofstream &ofs_ru
 			orb.read_in_flag = true;
 			for(int i=0; i<ntype; i++)
 			{
-				std::string ofile;
-
 				//-----------------------------------
 				// Turn off the read in NONLOCAL file
 				// function since 2013-08-02 by mohan
 				//-----------------------------------
-				//std::string nfile;
 
-				ifa >> ofile;
+                ifa >> orbital_fn[i];
 
-				ofile = GlobalV::global_orbital_dir + ofile;
+                std::string ofile = GlobalV::global_orbital_dir + orbital_fn[i];
 				//-----------------------------------
 				// Turn off the read in NONLOCAL file
 				// function since 2013-08-02 by mohan
@@ -144,10 +143,8 @@ int UnitCell_pseudo::read_atom_species(std::ifstream &ifa, std::ofstream &ofs_ru
 	// Peize Lin add 2016-09-23
 #ifndef __CELL
 #ifdef __MPI 
-	if( Exx_Global::Hybrid_Type::HF   == GlobalC::exx_lcao.info.hybrid_type || 
-	    Exx_Global::Hybrid_Type::PBE0 == GlobalC::exx_lcao.info.hybrid_type || 
-		Exx_Global::Hybrid_Type::HSE  == GlobalC::exx_lcao.info.hybrid_type ||
-		Exx_Global::Hybrid_Type::SCAN0  == GlobalC::exx_lcao.info.hybrid_type)
+#ifdef __EXX
+	if( GlobalC::exx_info.info_global.cal_exx )
 	{
 		if( ModuleBase::GlobalFunc::SCAN_BEGIN(ifa, "ABFS_ORBITAL") )
 		{
@@ -155,7 +152,7 @@ int UnitCell_pseudo::read_atom_species(std::ifstream &ifa, std::ofstream &ofs_ru
 			{
 				std::string ofile;
 				ifa >> ofile;
-				GlobalC::exx_lcao.info.files_abfs.push_back(ofile);
+				GlobalC::exx_info.info_ri.files_abfs.push_back(ofile);
 			}
 		}
 	}
@@ -172,6 +169,7 @@ int UnitCell_pseudo::read_atom_species(std::ifstream &ifa, std::ofstream &ofs_ru
             }
         }
     }
+#endif // __EXX
 #endif // __MPI
 #endif // __CELL
 #endif // __LCAO
@@ -195,7 +193,7 @@ int UnitCell_pseudo::read_atom_species(std::ifstream &ifa, std::ofstream &ofs_ru
 	//===========================
 	// Read in latticies vector
 	//===========================
-	if(latName=="test"){	
+	if(latName=="none"){	
 		if( ModuleBase::GlobalFunc::SCAN_BEGIN(ifa, "LATTICE_VECTORS") )
 		{
 			// Reading lattice vectors. notice
@@ -210,30 +208,30 @@ int UnitCell_pseudo::read_atom_species(std::ifstream &ifa, std::ofstream &ofs_ru
 		}
 		if( ModuleBase::GlobalFunc::SCAN_BEGIN(ifa, "LATTICE_PARAMETERS") )
 		{
-			ModuleBase::WARNING_QUIT("UnitCell_pseudo::read_atom_species","do not use LATTICE_PARAMETERS without explicit specification of lattice type");
+			ModuleBase::WARNING_QUIT("UnitCell::read_atom_species","do not use LATTICE_PARAMETERS without explicit specification of lattice type");
 		}
 	}//supply lattice vectors
 	else{
 		if( ModuleBase::GlobalFunc::SCAN_BEGIN(ifa, "LATTICE_VECTORS") )
 		{
-			ModuleBase::WARNING_QUIT("UnitCell_pseudo::read_atom_species","do not use LATTICE_VECTORS along with explicit specification of lattice type");
+			ModuleBase::WARNING_QUIT("UnitCell::read_atom_species","do not use LATTICE_VECTORS along with explicit specification of lattice type");
 		}
-		if(latName=="sc"){//simple-cubic
+		if(latName=="sc"){//simple-cubic, ibrav = 1
 			latvec.e11 = 1.0; latvec.e12 = 0.0; latvec.e13 = 0.0;
 			latvec.e21 = 0.0; latvec.e22 = 1.0;	latvec.e23 = 0.0;
 			latvec.e31 = 0.0; latvec.e32 = 0.0;	latvec.e33 = 1.0;
 		}
-		else if(latName=="fcc"){//face-centered cubic
+		else if(latName=="fcc"){//face-centered cubic, ibrav = 2
 			latvec.e11 =-0.5; latvec.e12 = 0.0; latvec.e13 = 0.5;
 			latvec.e21 = 0.0; latvec.e22 = 0.5;	latvec.e23 = 0.5;
 			latvec.e31 =-0.5; latvec.e32 = 0.5;	latvec.e33 = 0.0;
 		}
-		else if(latName=="bcc"){//body-centered cubic
+		else if(latName=="bcc"){//body-centered cubic, ibrav = 3
 			latvec.e11 = 0.5; latvec.e12 = 0.5; latvec.e13 = 0.5;
 			latvec.e21 =-0.5; latvec.e22 = 0.5;	latvec.e23 = 0.5;
 			latvec.e31 =-0.5; latvec.e32 =-0.5;	latvec.e33 = 0.5;
 		}
-		else if(latName=="hexagonal"){//hexagonal
+		else if(latName=="hexagonal"){//hexagonal, ibrav = 4
 			double e22 = sqrt(3.0) / 2.0;
 			latvec.e11 = 1.0; latvec.e12 = 0.0; latvec.e13 = 0.0;
 			latvec.e21 =-0.5; latvec.e22 = e22; latvec.e23 = 0.0;
@@ -243,7 +241,7 @@ int UnitCell_pseudo::read_atom_species(std::ifstream &ifa, std::ofstream &ofs_ru
 				ModuleBase::GlobalFunc::READ_VALUE(ifa, latvec.e33);
 			}
 		}
-		else if(latName=="trigonal"){//trigonal
+		else if(latName=="trigonal"){//trigonal, ibrav = 5
 			double t1 = 0.0;
 			double t2 = 0.0;
 			if( ModuleBase::GlobalFunc::SCAN_BEGIN(ifa, "LATTICE_PARAMETERS") )
@@ -262,7 +260,7 @@ int UnitCell_pseudo::read_atom_species(std::ifstream &ifa, std::ofstream &ofs_ru
 			latvec.e21 = 0.0; latvec.e22 = e22;	latvec.e23 = e13;
 			latvec.e31 =-e11; latvec.e32 = e12;	latvec.e33 = e13;
 		}
-		else if(latName=="st"){//simple tetragonal
+		else if(latName=="st"){//simple tetragonal, ibrav= 6
 			latvec.e11 = 1.0; latvec.e12 = 0.0; latvec.e13 = 0.0;
 			latvec.e21 = 0.0; latvec.e22 = 1.0; latvec.e23 = 0.0;
 			latvec.e31 = 0.0; latvec.e32 = 0.0;	latvec.e33 = 0.0;
@@ -271,7 +269,7 @@ int UnitCell_pseudo::read_atom_species(std::ifstream &ifa, std::ofstream &ofs_ru
 				ModuleBase::GlobalFunc::READ_VALUE(ifa, latvec.e33);
 			}
 		}
-		else if(latName=="bct"){//body-centered tetragonal
+		else if(latName=="bct"){//body-centered tetragonal, ibrav = 7
 			double cba = 0.0;
 			if( ModuleBase::GlobalFunc::SCAN_BEGIN(ifa, "LATTICE_PARAMETERS") )
 			{
@@ -282,7 +280,7 @@ int UnitCell_pseudo::read_atom_species(std::ifstream &ifa, std::ofstream &ofs_ru
 			latvec.e21 = 0.5; latvec.e22 = 0.5; latvec.e23 = cba;
 			latvec.e31 =-0.5; latvec.e32 =-0.5;	latvec.e33 = cba;
 		}
-		else if(latName=="so"){//simple orthorhombic
+		else if(latName=="so"){//simple orthorhombic, ibrav = 8
 			latvec.e11 = 1.0; latvec.e12 = 0.0; latvec.e13 = 0.0;
 			latvec.e21 = 0.0; latvec.e22 = 0.0;	latvec.e23 = 0.0;
 			latvec.e31 = 0.0; latvec.e32 = 0.0;	latvec.e33 = 0.0;
@@ -292,7 +290,7 @@ int UnitCell_pseudo::read_atom_species(std::ifstream &ifa, std::ofstream &ofs_ru
 				ModuleBase::GlobalFunc::READ_VALUE(ifa, latvec.e33);
 			}
 		}
-		else if(latName=="baco"){//base-centered orthorhombic
+		else if(latName=="baco"){//base-centered orthorhombic, ibrav = 9
 			latvec.e11 = 0.5; latvec.e12 = 0.0; latvec.e13 = 0.0;
 			latvec.e21 =-0.5; latvec.e22 = 0.0;	latvec.e23 = 0.0;
 			latvec.e31 = 0.0; latvec.e32 = 0.0;	latvec.e33 = 0.0;
@@ -304,7 +302,7 @@ int UnitCell_pseudo::read_atom_species(std::ifstream &ifa, std::ofstream &ofs_ru
 				ModuleBase::GlobalFunc::READ_VALUE(ifa, latvec.e33);
 			}
 		}
-		else if(latName=="fco"){//face-centered orthorhombic
+		else if(latName=="fco"){//face-centered orthorhombic, ibrav = 10
 			double bba = 0.0; double cba = 0.0;
 			if( ModuleBase::GlobalFunc::SCAN_BEGIN(ifa, "LATTICE_PARAMETERS") )
 			{
@@ -316,7 +314,7 @@ int UnitCell_pseudo::read_atom_species(std::ifstream &ifa, std::ofstream &ofs_ru
 			latvec.e21 = 0.5; latvec.e22 = bba;	latvec.e23 = 0.0;
 			latvec.e31 = 0.0; latvec.e32 = bba;	latvec.e33 = cba;
 		}
-		else if(latName=="bco"){//body-centered orthorhombic
+		else if(latName=="bco"){//body-centered orthorhombic, ibrav = 11
 			double bba = 0.0; double cba = 0.0;
 			if( ModuleBase::GlobalFunc::SCAN_BEGIN(ifa, "LATTICE_PARAMETERS") )
 			{
@@ -328,7 +326,7 @@ int UnitCell_pseudo::read_atom_species(std::ifstream &ifa, std::ofstream &ofs_ru
 			latvec.e21 =-0.5; latvec.e22 = bba;	latvec.e23 = cba;
 			latvec.e31 =-0.5; latvec.e32 =-bba;	latvec.e33 = cba;
 		}
-		else if(latName=="sm"){//simple monoclinic
+		else if(latName=="sm"){//simple monoclinic, ibrav = 12
 			double bba = 0.0; double cba = 0.0;
 			double cosab = 0.0;
 			double e21 = 0.0; double e22 = 0.0;
@@ -343,7 +341,7 @@ int UnitCell_pseudo::read_atom_species(std::ifstream &ifa, std::ofstream &ofs_ru
 			latvec.e21 = e21; latvec.e22 = e22;	latvec.e23 = 0.0;
 			latvec.e31 = 0.0; latvec.e32 = 0.0;	latvec.e33 = cba;
 		}
-		else if(latName=="bacm"){//base-centered monoclinic
+		else if(latName=="bacm"){//base-centered monoclinic, ibrav = 13
 			double bba = 0.0; double cba = 0.0;
 			double cosab = 0.0;
 			double e21 = 0.0; double e22 = 0.0;
@@ -359,7 +357,7 @@ int UnitCell_pseudo::read_atom_species(std::ifstream &ifa, std::ofstream &ofs_ru
 			latvec.e21 = e21; latvec.e22 = e22;	latvec.e23 = 0.0;
 			latvec.e31 = 0.5; latvec.e32 = 0.0;	latvec.e33 = cba;
 		}
-		else if(latName=="triclinic"){//triclinic
+		else if(latName=="triclinic"){//triclinic, ibrav = 14
 			double bba = 0.0; double cba = 0.0;
 			double cosab = 0.0; double cosac = 0.0;
 			double cosbc = 0.0; double sinab = 0.0;
@@ -382,7 +380,7 @@ int UnitCell_pseudo::read_atom_species(std::ifstream &ifa, std::ofstream &ofs_ru
 		}
 		else{ 
 			std::cout << "latname is : " << latName << std::endl;
-			ModuleBase::WARNING_QUIT("UnitCell_pseudo::read_atom_species","latname not supported!");
+			ModuleBase::WARNING_QUIT("UnitCell::read_atom_species","latname not supported!");
 		}
 	}
 
@@ -406,12 +404,12 @@ int UnitCell_pseudo::read_atom_species(std::ifstream &ifa, std::ofstream &ofs_ru
 // return 1: no problem.
 // return 0: some problems.
 #ifdef __LCAO
-bool UnitCell_pseudo::read_atom_positions(LCAO_Orbitals &orb, std::ifstream &ifpos, std::ofstream &ofs_running, std::ofstream &ofs_warning)
+bool UnitCell::read_atom_positions(LCAO_Orbitals &orb, std::ifstream &ifpos, std::ofstream &ofs_running, std::ofstream &ofs_warning)
 #else
-bool UnitCell_pseudo::read_atom_positions(std::ifstream &ifpos, std::ofstream &ofs_running, std::ofstream &ofs_warning)
+bool UnitCell::read_atom_positions(std::ifstream &ifpos, std::ofstream &ofs_running, std::ofstream &ofs_warning)
 #endif
 {
-	ModuleBase::TITLE("UnitCell_pseudo","read_atom_positions");
+	ModuleBase::TITLE("UnitCell","read_atom_positions");
 
 	if( ModuleBase::GlobalFunc::SCAN_BEGIN(ifpos, "ATOMIC_POSITIONS"))
 	{
@@ -486,85 +484,8 @@ bool UnitCell_pseudo::read_atom_positions(std::ifstream &ifpos, std::ofstream &o
 			//===========================================
 #ifdef __LCAO
 			if (GlobalV::BASIS_TYPE == "lcao" || GlobalV::BASIS_TYPE == "lcao_in_pw")
-			{    
-				std::ifstream ifs(orb.orbital_file[it].c_str(), ios::in);  // pengfei 2014-10-13
-
-				// mohan add return 2021-04-26
-				if (!ifs)
-				{
-					std::cout << " Element index " << it+1 << std::endl;
-					std::cout << " orbital file: " << orb.orbital_file[it] << std::endl;
-					ModuleBase::WARNING("read_atom_positions","ABACUS Cannot find the ORBITAL file (basis sets)");
-					return 0; // means something wrong
-				}
-
-				char word[80];
-				this->atoms[it].nw = 0;
-				int L =0;
-
-				while (ifs.good())
-				{
-					ifs >> word;
-					if (strcmp("Lmax", word) == 0)
-					{
-						ModuleBase::GlobalFunc::READ_VALUE(ifs, this->atoms[it].nwl);
-						delete[] this->atoms[it].l_nchi;
-						this->atoms[it].l_nchi = new int[ this->atoms[it].nwl+1];
-					}
-					assert(this->atoms[it].nwl<10);
-
-					if (strcmp("Cutoff(a.u.)", word) == 0)         // pengfei Li 16-2-29
-					{
-						ModuleBase::GlobalFunc::READ_VALUE(ifs, this->atoms[it].Rcut);
-					}
-
-					if (strcmp("Sorbital-->", word) == 0)
-					{
-						ModuleBase::GlobalFunc::READ_VALUE(ifs, this->atoms[it].l_nchi[L]);
-						this->atoms[it].nw += (2*L + 1) * this->atoms[it].l_nchi[L];
-						std::stringstream ss;
-						ss << "L=" << L << ", number of zeta";
-						ModuleBase::GlobalFunc::OUT(ofs_running,ss.str(),atoms[it].l_nchi[L]);
-						L++;
-					}
-					if (strcmp("Porbital-->", word) == 0)
-					{
-						ModuleBase::GlobalFunc::READ_VALUE(ifs, this->atoms[it].l_nchi[L]);
-						this->atoms[it].nw += (2*L + 1) * this->atoms[it].l_nchi[L];
-						std::stringstream ss;
-						ss << "L=" << L << ", number of zeta";
-						ModuleBase::GlobalFunc::OUT(ofs_running,ss.str(),atoms[it].l_nchi[L]);
-						L++;
-					}
-					if (strcmp("Dorbital-->", word) == 0)
-					{
-						ModuleBase::GlobalFunc::READ_VALUE(ifs, this->atoms[it].l_nchi[L]);
-						this->atoms[it].nw += (2*L + 1) * this->atoms[it].l_nchi[L];
-						std::stringstream ss;
-						ss << "L=" << L << ", number of zeta";
-						ModuleBase::GlobalFunc::OUT(ofs_running,ss.str(),atoms[it].l_nchi[L]);
-						L++;
-					}
-					if (strcmp("Forbital-->", word) == 0)
-					{
-						ModuleBase::GlobalFunc::READ_VALUE(ifs, this->atoms[it].l_nchi[L]);
-						this->atoms[it].nw += (2*L + 1) * this->atoms[it].l_nchi[L];
-						std::stringstream ss;
-						ss << "L=" << L << ", number of zeta";
-						ModuleBase::GlobalFunc::OUT(ofs_running,ss.str(),atoms[it].l_nchi[L]);
-						L++;
-					}
-					if (strcmp("Gorbital-->", word) == 0)
-					{
-						ModuleBase::GlobalFunc::READ_VALUE(ifs, this->atoms[it].l_nchi[L]);
-						this->atoms[it].nw += (2*L + 1) * this->atoms[it].l_nchi[L];
-						std::stringstream ss;
-						ss << "L=" << L << ", number of zeta";
-						ModuleBase::GlobalFunc::OUT(ofs_running,ss.str(),atoms[it].l_nchi[L]);
-						L++;
-					}
-				}
-				ifs.close();
+			{
+				this->read_orb_file(it,orb.orbital_file[it],ofs_running,&(atoms[it]));
 			}
 			else
 #else
@@ -855,7 +776,15 @@ bool UnitCell_pseudo::read_atom_positions(std::ifstream &ifpos, std::ofstream &o
 
 					}
 					
-					atoms[it].mbl[ia] = mv;
+					if(!GlobalV::fixed_atoms)
+					{
+						atoms[it].mbl[ia] = mv;
+					}
+					else
+					{
+						atoms[it].mbl[ia] = 0.0;
+						atoms[it].mbl[ia].print();
+					}
 					atoms[it].tau_original[ia] = atoms[it].tau[ia];
 				}//endj
 			}// end na
@@ -863,7 +792,7 @@ bool UnitCell_pseudo::read_atom_positions(std::ifstream &ifpos, std::ofstream &o
 	}// end scan_begin
 
 //check if any atom can move in MD
-	if(!this->if_atoms_can_move() && (GlobalV::CALCULATION=="md" || GlobalV::CALCULATION=="sto-md"))
+	if(!this->if_atoms_can_move() && GlobalV::CALCULATION=="md")
 	{
 		ModuleBase::WARNING("read_atoms", "no atom can move in MD!");
 		return 0;
@@ -893,10 +822,10 @@ bool UnitCell_pseudo::read_atom_positions(std::ifstream &ifpos, std::ofstream &o
 	return 1;
 }//end read_atom_positions
 
-bool UnitCell_pseudo::check_tau(void)const
+bool UnitCell::check_tau(void)const
 {
-	ModuleBase::TITLE("UnitCell_pseudo","check_tau");
-	ModuleBase::timer::tick("UnitCell_pseudo","check_tau");
+	ModuleBase::TITLE("UnitCell","check_tau");
+	ModuleBase::timer::tick("UnitCell","check_tau");
 	
 	ModuleBase::Vector3<double> diff = 0.0;
 	double norm = 0.0;
@@ -951,17 +880,13 @@ bool UnitCell_pseudo::check_tau(void)const
 		}
 	}
 
-	ModuleBase::timer::tick("UnitCell_pseudo","check_tau");
+	ModuleBase::timer::tick("UnitCell","check_tau");
 	return 1;
 }
 
-#ifdef __LCAO
-void UnitCell_pseudo::print_stru_file(const LCAO_Orbitals &orb, const std::string &fn, const int &type, const int &level)const
-#else
-void UnitCell_pseudo::print_stru_file(const std::string &fn, const int &type, const int &level)const
-#endif
+void UnitCell::print_stru_file(const std::string &fn, const int &type, const int &level)const
 {
-	ModuleBase::TITLE("UnitCell_pseudo","print_stru_file");
+	ModuleBase::TITLE("UnitCell","print_stru_file");
 	
 	if(GlobalV::MY_RANK!=0) return;
 
@@ -976,22 +901,14 @@ void UnitCell_pseudo::print_stru_file(const std::string &fn, const int &type, co
 		ofs << atom_label[it] << " " << atom_mass[it] << " " << pseudo_fn[it] << " " << pseudo_type[it] << std::endl;
 	}
 
-#ifdef __LCAO
 	if(GlobalV::BASIS_TYPE=="lcao" || GlobalV::BASIS_TYPE=="lcao_in_pw") //xiaohui add 2013-09-02. Attention...
 	{	
 		ofs << "\nNUMERICAL_ORBITAL" << std::endl;
 		for(int it=0; it<ntype; it++)
 		{
-			//-----------------------------------
-			// Turn off the read in NONLOCAL file
-			// function since 2013-08-02 by mohan
-			//-----------------------------------
-//			ofs << orb.orbital_file[it] << " " << orb.nonlocal_file[it] << " #local_orbital; non-local projector" << std::endl;
-			//modified by zhengdy 2015-07-24
-                        ofs << orb.orbital_file[it] << std::endl;
+            ofs << orbital_fn[it] << std::endl;
 		}
 	}
-#endif
 
 	ofs << "\nLATTICE_CONSTANT" << std::endl;
         //modified by zhengdy 2015-07-24
@@ -1090,9 +1007,9 @@ void UnitCell_pseudo::print_stru_file(const std::string &fn, const int &type, co
 }
 
 
-void UnitCell_pseudo::print_tau(void)const
+void UnitCell::print_tau(void)const
 {
-    ModuleBase::TITLE("UnitCell_pseudo","print_tau");
+    ModuleBase::TITLE("UnitCell","print_tau");
     if(Coordinate == "Cartesian" || Coordinate == "Cartesian_angstrom")
     {
         GlobalV::ofs_running << "\n CARTESIAN COORDINATES ( UNIT = " << lat0 << " Bohr )." << std::endl;
@@ -1195,9 +1112,9 @@ void UnitCell_pseudo::print_tau(void)const
 }	
 
 
-int UnitCell_pseudo::find_type(const std::string &label)
+int UnitCell::find_type(const std::string &label)
 {
-	if(GlobalV::test_pseudo_cell) ModuleBase::TITLE("UnitCell_pseudo","find_type");
+	if(GlobalV::test_pseudo_cell) ModuleBase::TITLE("UnitCell","find_type");
 	assert(ntype>0);
 	for(int it=0;it<ntype;it++)
 	{
@@ -1206,12 +1123,12 @@ int UnitCell_pseudo::find_type(const std::string &label)
 			return it;
 		}
 	}
-	ModuleBase::WARNING_QUIT("UnitCell_pseudo::find_type","Can not find the atom type!");
+	ModuleBase::WARNING_QUIT("UnitCell::find_type","Can not find the atom type!");
 	return -1;
 }
 
 
-void UnitCell_pseudo::check_dtau(void)
+void UnitCell::check_dtau(void)
 {
 	for(int it=0; it<ntype; it++)
 	{
@@ -1280,3 +1197,81 @@ void UnitCell_pseudo::check_dtau(void)
 	}
 	return;
 }
+
+#ifdef __LCAO
+void UnitCell::read_orb_file(int it, std::string &orb_file, std::ofstream &ofs_running, Atom* atom)
+{
+	std::ifstream ifs(orb_file.c_str(), ios::in);  // pengfei 2014-10-13
+	// mohan add return 2021-04-26
+	if (!ifs)
+	{
+		std::cout << " Element index " << it+1 << std::endl;
+		std::cout << " orbital file: " << orb_file << std::endl;
+		ModuleBase::WARNING_QUIT("read_orb_file","ABACUS Cannot find the ORBITAL file (basis sets)");
+	}
+	char word[80];
+	atom->nw = 0;
+	int L =0;
+	while (ifs.good())
+	{
+		ifs >> word;
+		if (strcmp("Lmax", word) == 0)
+		{
+			ModuleBase::GlobalFunc::READ_VALUE(ifs, atom->nwl);
+			delete[] atom->l_nchi;
+			atom->l_nchi = new int[ atom->nwl+1];
+		}
+		assert(atom->nwl<10);
+		if (strcmp("Cutoff(a.u.)", word) == 0)         // pengfei Li 16-2-29
+		{
+			ModuleBase::GlobalFunc::READ_VALUE(ifs, atom->Rcut);
+		}
+		if (strcmp("Sorbital-->", word) == 0)
+		{
+			ModuleBase::GlobalFunc::READ_VALUE(ifs, atom->l_nchi[L]);
+			atom->nw += (2*L + 1) * atom->l_nchi[L];
+			std::stringstream ss;
+			ss << "L=" << L << ", number of zeta";
+			ModuleBase::GlobalFunc::OUT(ofs_running,ss.str(),atom->l_nchi[L]);
+			L++;
+		}
+		if (strcmp("Porbital-->", word) == 0)
+		{
+			ModuleBase::GlobalFunc::READ_VALUE(ifs, atom->l_nchi[L]);
+			atom->nw += (2*L + 1) * atom->l_nchi[L];
+			std::stringstream ss;
+			ss << "L=" << L << ", number of zeta";
+			ModuleBase::GlobalFunc::OUT(ofs_running,ss.str(),atom->l_nchi[L]);
+			L++;
+		}
+		if (strcmp("Dorbital-->", word) == 0)
+		{
+			ModuleBase::GlobalFunc::READ_VALUE(ifs, atom->l_nchi[L]);
+			atom->nw += (2*L + 1) * atom->l_nchi[L];
+			std::stringstream ss;
+			ss << "L=" << L << ", number of zeta";
+			ModuleBase::GlobalFunc::OUT(ofs_running,ss.str(),atom->l_nchi[L]);
+			L++;
+		}
+		if (strcmp("Forbital-->", word) == 0)
+		{
+			ModuleBase::GlobalFunc::READ_VALUE(ifs, atom->l_nchi[L]);
+			atom->nw += (2*L + 1) * atom->l_nchi[L];
+			std::stringstream ss;
+			ss << "L=" << L << ", number of zeta";
+			ModuleBase::GlobalFunc::OUT(ofs_running,ss.str(),atom->l_nchi[L]);
+			L++;
+		}
+		if (strcmp("Gorbital-->", word) == 0)
+		{
+			ModuleBase::GlobalFunc::READ_VALUE(ifs, atom->l_nchi[L]);
+			atom->nw += (2*L + 1) * atom->l_nchi[L];
+			std::stringstream ss;
+			ss << "L=" << L << ", number of zeta";
+			ModuleBase::GlobalFunc::OUT(ofs_running,ss.str(),atom->l_nchi[L]);
+			L++;
+		}
+	}
+	ifs.close();
+}
+#endif

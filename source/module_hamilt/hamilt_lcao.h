@@ -9,26 +9,29 @@
 #include "module_gint/gint_k.h"
 #include "src_lcao/local_orbital_charge.h"
 #include "src_lcao/local_orbital_wfc.h"
+#include "module_elecstate/potentials/potential_new.h"
 
 namespace hamilt
 {
 
 // template first for type of k space H matrix elements
 // template second for type of temporary matrix, gamma_only fix-gamma-matrix + S-gamma, multi-k fix-Real + S-Real
-template <typename T> class HamiltLCAO : public Hamilt
+template <typename T> class HamiltLCAO : public Hamilt<double>
 {
   public:
     HamiltLCAO(
       Gint_Gamma* GG_in, 
       LCAO_gen_fixedH* genH_in, 
       LCAO_Matrix* LM_in, 
-      Local_Orbital_Charge* loc_in);
+      Local_Orbital_Charge* loc_in,
+      elecstate::Potential* pot_in);
 
     HamiltLCAO(
       Gint_k* GK_in, 
       LCAO_gen_fixedH* genH_in, 
       LCAO_Matrix* LM_in, 
-      Local_Orbital_Charge* loc_in);
+      Local_Orbital_Charge* loc_in,
+      elecstate::Potential* pot_in);
 
     ~HamiltLCAO(){
       if(this->ops!= nullptr)

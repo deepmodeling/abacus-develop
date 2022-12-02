@@ -6,14 +6,15 @@
 //calcualte the Ewald stress term in PW and LCAO
 void Stress_Func::stress_ewa(ModuleBase::matrix& sigma, ModulePW::PW_Basis* rho_basis, const bool is_pw)
 {
-    ModuleBase::timer::tick("Stress_Func","stress_ew");
+    ModuleBase::TITLE("Stress_Func","stress_ewa");
+    ModuleBase::timer::tick("Stress_Func","stress_ewa");
 
     double charge=0;
     for(int it=0; it < GlobalC::ucell.ntype; it++)
 	{
 		for(int i=0; i<GlobalC::ucell.atoms[it].na; i++)
 		{
-			charge = charge + GlobalC::ucell.atoms[it].zv;
+			charge = charge + GlobalC::ucell.atoms[it].ncpp.zv;
 		}
 	}
     //choose alpha in order to have convergence in the sum over G
@@ -63,7 +64,7 @@ void Stress_Func::stress_ewa(ModuleBase::matrix& sigma, ModulePW::PW_Basis* rho_
 			for(int i=0; i<GlobalC::ucell.atoms[it].na; i++)
 			{
 				arg = (rho_basis->gcar[ig] * GlobalC::ucell.atoms[it].tau[i]) * (ModuleBase::TWO_PI);
-				rhostar = rhostar + std::complex<double>(GlobalC::ucell.atoms[it].zv * cos(arg),GlobalC::ucell.atoms[it].zv * sin(arg));
+				rhostar = rhostar + std::complex<double>(GlobalC::ucell.atoms[it].ncpp.zv * cos(arg),GlobalC::ucell.atoms[it].ncpp.zv * sin(arg));
 			}
 		}
 		rhostar /= GlobalC::ucell.omega;
@@ -115,7 +116,7 @@ void Stress_Func::stress_ewa(ModuleBase::matrix& sigma, ModulePW::PW_Basis* rho_
 						for(int nr=0 ; nr<nrm ; nr++)
 						{
 							rr=sqrt(r2[nr]) * GlobalC::ucell.lat0;
-							fac = -ModuleBase::e2/2.0/GlobalC::ucell.omega*pow(GlobalC::ucell.lat0,2)*GlobalC::ucell.atoms[it].zv * GlobalC::ucell.atoms[jt].zv / pow(rr,3) * (erfc(sqrt(alpha)*rr)+rr * sqrt(8 * alpha / (ModuleBase::TWO_PI)) * exp(-alpha * pow(rr,2)));
+							fac = -ModuleBase::e2/2.0/GlobalC::ucell.omega*pow(GlobalC::ucell.lat0,2)*GlobalC::ucell.atoms[it].ncpp.zv * GlobalC::ucell.atoms[jt].ncpp.zv / pow(rr,3) * (erfc(sqrt(alpha)*rr)+rr * sqrt(8 * alpha / (ModuleBase::TWO_PI)) * exp(-alpha * pow(rr,2)));
 							for(int l=0; l<3; l++)
 							{
 								for(int m=0; m<l+1; m++)
@@ -152,7 +153,7 @@ void Stress_Func::stress_ewa(ModuleBase::matrix& sigma, ModulePW::PW_Basis* rho_
 	delete[] r2;
 	delete[] irr;
 	// this->print(GlobalV::ofs_running, "ewald stress", stression);
-	ModuleBase::timer::tick("Stress_Func","stress_ew");
+	ModuleBase::timer::tick("Stress_Func","stress_ewa");
 
 	return;
 }

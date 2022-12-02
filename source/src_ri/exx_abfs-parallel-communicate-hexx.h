@@ -6,7 +6,7 @@
 #include "../module_base/matrix.h"
 #include "../module_base/matrix_wrapper.h"
 #include "../module_base/complexmatrix.h"
-#include "abfs-vector3_order.h"
+#include "module_base/abfs-vector3_order.h"
 #include <vector>
 #include <valarray>
 #include <map>

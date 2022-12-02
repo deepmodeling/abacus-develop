@@ -2,7 +2,6 @@ list(APPEND objects
     gint.cpp
     gint_gamma.cpp
     gint_gamma_env.cpp
-    gint_gamma_mull.cpp
     gint_gamma_vl.cpp
     gint_fvl.cpp
     gint_rho.cpp
@@ -24,3 +23,7 @@ add_library(
     OBJECT
     ${objects}
 )
+
+if(ENABLE_COVERAGE)
+  add_coverage(gint)
+endif()

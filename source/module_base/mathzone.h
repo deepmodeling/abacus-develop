@@ -3,12 +3,14 @@
 
 #include "global_function.h"
 #include "matrix3.h"
+#include "vector3.h"
 #include "realarray.h"
 
 #include <cassert>
 #include <complex>
 #include <map>
 #include <vector>
+#include <array>
 namespace ModuleBase
 {
 
@@ -170,6 +172,15 @@ class Mathzone
     double &theta,
     double &phi);
 
+    template<typename T>
+    static ModuleBase::Vector3<T> latvec_projection(const std::array<ModuleBase::Vector3<T>,3> &latvec)
+    {
+        ModuleBase::Vector3<T> proj;
+        proj.x = std::abs( latvec[0] * (latvec[1] ^ latvec[2]).normalize() );
+        proj.y = std::abs( latvec[1] * (latvec[2] ^ latvec[0]).normalize() );
+        proj.z = std::abs( latvec[2] * (latvec[0] ^ latvec[1]).normalize() );
+        return proj;
+    } 
 };
 
 } // namespace ModuleBase

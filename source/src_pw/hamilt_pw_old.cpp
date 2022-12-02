@@ -1,3 +1,6 @@
+//obsolete code, not compiled
+//please remove the globalc::hm
+
 #include "../module_base/global_function.h"
 #include "../module_base/global_variable.h"
 #include "../src_parallel/parallel_reduce.h"
@@ -141,7 +144,7 @@ void Hamilt_PW::diagH_subspace(
 
 	// Peize Lin add 2019-03-09
 #ifdef __LCAO
-#ifdef __MPI
+#ifdef __EXX
 	if(GlobalV::BASIS_TYPE=="lcao_in_pw")
 	{
 		auto add_Hexx = [&](const double alpha)
@@ -156,20 +159,14 @@ void Hamilt_PW::diagH_subspace(
 		};
 		if(XC_Functional::get_func_type()==4 || XC_Functional::get_func_type()==5)
 		{
-			if ( Exx_Global::Hybrid_Type::HF   == GlobalC::exx_lcao.info.hybrid_type ) // HF
+			if ( GlobalC::exx_info.info_global.cal_exx )
 			{
-				add_Hexx(1);
-			}
-			else if (Exx_Global::Hybrid_Type::PBE0 == GlobalC::exx_lcao.info.hybrid_type ||
-			 		Exx_Global::Hybrid_Type::SCAN0 == GlobalC::exx_lcao.info.hybrid_type ||
-					Exx_Global::Hybrid_Type::HSE  == GlobalC::exx_lcao.info.hybrid_type) // PBE0 or HSE
-			{
-				add_Hexx(GlobalC::exx_global.info.hybrid_alpha);
+				add_Hexx(GlobalC::exx_info.info_global.hybrid_alpha);
 			}
 		}
 	}
-#endif
-#endif
+#endif // __EXX
+#endif // __LCAO
 
 	if(GlobalV::NPROC_IN_POOL>1)
 	{
@@ -178,26 +175,22 @@ void Hamilt_PW::diagH_subspace(
 	}
 
 	// after generation of H and S matrix, diag them
-    GlobalC::hm.diagH_LAPACK(nstart, n_band, hc, sc, nstart, en, hvec);
+	//obsolete: globalc::hm has been removed
+    //GlobalC::hm.diagH_LAPACK(nstart, n_band, hc, sc, nstart, en, hvec);
 
 
 	// Peize Lin add 2019-03-09
 #ifdef __LCAO
-#ifdef __MPI
+#ifdef __EXX
 	if("lcao_in_pw"==GlobalV::BASIS_TYPE)
 	{
-		switch(GlobalC::exx_global.info.hybrid_type)
+		if ( GlobalC::exx_info.info_global.cal_exx )
 		{
-			case Exx_Global::Hybrid_Type::HF:
-			case Exx_Global::Hybrid_Type::PBE0:
-			case Exx_Global::Hybrid_Type::SCAN0:
-			case Exx_Global::Hybrid_Type::HSE:
-				GlobalC::exx_lip.k_pack->hvec_array[ik] = hvec;
-				break;
+			GlobalC::exx_lip.k_pack->hvec_array[ik] = hvec;
 		}
 	}
-#endif
-#endif
+#endif // __EXX
+#endif // __LCAO
 
     //=======================
     //diagonize the H-matrix
@@ -569,7 +562,7 @@ void Hamilt_PW::add_nonlocal_pp(
 	{
 		for (int it=0; it<GlobalC::ucell.ntype; it++)
 		{
-			const int nproj = GlobalC::ucell.atoms[it].nh;
+			const int nproj = GlobalC::ucell.atoms[it].ncpp.nh;
 			for (int ia=0; ia<GlobalC::ucell.atoms[it].na; ia++)
 			{
 				// each atom has nproj, means this is with structure factor;
@@ -601,7 +594,7 @@ void Hamilt_PW::add_nonlocal_pp(
 			std::complex<double> becp1=std::complex<double>(0.0,0.0);
 			std::complex<double> becp2=std::complex<double>(0.0,0.0);
 
-			const int nproj = GlobalC::ucell.atoms[it].nh;
+			const int nproj = GlobalC::ucell.atoms[it].ncpp.nh;
 			for (int ia=0; ia<GlobalC::ucell.atoms[it].na; ia++)
 			{
 				// each atom has nproj, means this is with structure factor;

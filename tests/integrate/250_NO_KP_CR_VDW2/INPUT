@@ -4,7 +4,7 @@ ecutwfc                       20
 scf_thr                           1e-06
 scf_nmax                         400
 basis_type                    lcao
-ks_solver                     genelpa
+ks_solver                     scalapack_gvx
 smearing_method                      gaussian
 relax_nmax                         1
 smearing_sigma                         0.02

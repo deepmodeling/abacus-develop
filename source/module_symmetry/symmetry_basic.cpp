@@ -91,18 +91,6 @@ double Symmetry_Basic::check_diff(const double &x1, const double &x2)
 	return diff;
 }
 
-void Symmetry_Basic::change_value(double &x1, double &x2)
-{
-	double tmp;
-	tmp = x1; x1 = x2; x2 = tmp;
-}
-
-void Symmetry_Basic::change_value(int &x1, int &x2)
-{
-	int tmp;
-	tmp = x1; x1 = x2; x2 = tmp;
-}
-
 void Symmetry_Basic::order_atoms(double* pos, const int &nat, const int *index)
 {
 	double** tmp = new double*[nat];
@@ -288,170 +276,6 @@ void Symmetry_Basic::order_z(double* pos2, const int &oldpos2, const int &newpos
 	delete[] index2;
 	delete[] tmp2;
 }
-void Symmetry_Basic::maxmin(
-		const double a, 
-		const double b, 
-		const double c, 
-		double &max, 
-		double &mid, 
-		double &min
-		)
-{
-	//find the maximum and minimum among three values
-
-	//find the larger value between a and b
-	if(a >= b)
-	{
-		max = a;
-		min = b;
-	}
-	else
-	{
-		max = b;
-		min = a;
-	}
-
-	//judge whether c is larger than a and b, smaller than a and b or between a and b
-	if(c >= max)
-	{
-		mid = max;
-		max = c;
-	}
-	else if(c >= min)
-	{
-		mid = c;
-	}
-	else
-	{
-		mid = min;
-		min = c;
-	}
-}
-
-void Symmetry_Basic::maxmin(
-		const double a, 
-		const double b, 
-		double &max, 
-		double &min
-		)
-{
-	//find the larger value between a and b
-	if(a >= b)
-	{
-		max = a;
-		min = b;
-	}
-	else
-	{
-		max = b; 
-		min = a;
-	}
-}
-
-void Symmetry_Basic::shorter_vector(
-ModuleBase::Vector3<double> &t1,
-ModuleBase::Vector3<double> &t2,
-double &abs0,
-double &abs1,
-bool &flag1)
-{
-	bool flag2 = true;
-		
-	//*** t1 - t2 ***//
-	flag2 = false;
-	while(true)
-	{
-		//the loop won't stop unless abs0>abs1+epsilon, that is, the shortest std::vector is found
-		t1 = t1 - t2;
-		abs0 = t1.norm();//calculate the new value of |t1|
-		if(abs0 > abs1 + epsilon) break;	//the shortest std::vector has already been found, stop the loop
-		if(abs0 < abs1 - epsilon){
-		//shorter std::vector is found, go on searching for the shortest
-			flag1 = true;	//sign that the some std::vector has been changed
-			abs1 = abs0;	//update the value of |t1|
-		}
-		flag2 = true;	//sign that the "t1-t2" method is used
-	}
-	t1 = t1 + t2;
-
-	//*** t1 + t2***//
-	if(!flag2){
-		//if "t1-t2" method is used, it is not necessary to use "a1+a2" method
-		while(true){
-			//the loop won't stop unless abs0>abs1+epsilon, that is, the shortest std::vector is found
-			t1 = t1 + t2;//use "t1+t2" method
-			abs0 = t1.norm();//calculate the new value of |t1|
-			if(abs0 > abs1 + epsilon) break;	//the shortest std::vector has already been found, stop the loop
-			if(abs0 < abs1 - epsilon){
-				//shorter std::vector is found, go on searching for the shortest
-				flag1 = true;	//sign that the some std::vector has been changed
-				abs1 = abs0;	//update the value of |t1|
-			}
-		}
-		//the latest operation is catually not used,
-		//so we must set back the std::vector t1 by the opposite operation
-		t1 = t1 - t2;
-	}
-}
-
-void Symmetry_Basic::shortest_vector(
-		ModuleBase::Vector3<double> &t1,
-		ModuleBase::Vector3<double>	&t2,
-		ModuleBase::Vector3<double> &t3
-		)
-{
-	bool flag1 = true;
-	double abs0 = 0;
-	double abs1 = 0;
-	double abs2 = 0;
-	double abs3 = 0;
-	
-	while(flag1)
-	{   
-		flag1 = false;
-		abs1 = t1.norm();
-		abs2 = t2.norm();
-		abs3 = t3.norm();
-
-		shorter_vector(t1,t2,abs0,abs1,flag1);
-		shorter_vector(t1,t3,abs0,abs1,flag1);
-
-		shorter_vector(t2,t1,abs0,abs2,flag1);
-		shorter_vector(t2,t3,abs0,abs2,flag1);
-
-		shorter_vector(t3,t1,abs0,abs3,flag1);
-		shorter_vector(t3,t2,abs0,abs3,flag1);
-	}
-}
-
-
-//set up the reciprocal lattice vectors b1, b2, b3 for a given set of lattice vectors a1, a2, a3
-void Symmetry_Basic::recip(
-		const double a, 
-		const ModuleBase::Vector3<double> &a1, 
-		const ModuleBase::Vector3<double> &a2, 
-		const ModuleBase::Vector3<double> &a3, 
-		ModuleBase::Vector3<double> &b1, 
-		ModuleBase::Vector3<double> &b2, 
-		ModuleBase::Vector3<double> &b3
-		)
-{
-	double volume = Symm_Other::celvol(a1, a2, a3);
-	
-	volume = a / fabs(volume);
-	
-	b1.x = volume * (a2.y * a3.z - a2.z * a3.y);
-	b2.x = volume * (a3.y * a1.z - a3.z * a1.y);
-	b3.x = volume * (a1.y * a2.z - a1.z * a2.y);
-
-	b1.y = volume * (a2.z * a3.x - a2.x * a3.z);
-	b2.y = volume * (a3.z * a1.x - a3.x * a1.z);
-	b3.y = volume * (a1.z * a2.x - a1.x * a2.z);
-	
-	b1.z = volume * (a2.x * a3.y - a2.y * a3.x);
-	b2.z = volume * (a3.x * a1.y - a3.y * a1.x);
-	b3.z = volume * (a1.x * a2.y - a1.y * a2.x);
-}
 
 //convert a set of vectors (va) represented in the basis vectors old1, old2, old3 
 //to a set of vectors (vb) represented in the basis vectors new1, new2, new3
@@ -530,7 +354,6 @@ void Symmetry_Basic::veccon(
 }
 
 
-//SGRGEN (L2080 symlib.f VASP)
 //generate all point group symmetry operations from the generation group
 void Symmetry_Basic::matrigen(ModuleBase::Matrix3 *symgen, const int ngen, ModuleBase::Matrix3* symop, int &nop)
 {
@@ -700,7 +523,6 @@ void Symmetry_Basic::matrigen(ModuleBase::Matrix3 *symgen, const int ngen, Modul
 }
 
 //--------------------------------------------------------------
-// SETGRP (L138 symlib.f VASP)
 // set up all possible space group operators 
 // (integer rotation matrices and nontrivial translations
 // given in crystal coordinates) 
@@ -845,7 +667,6 @@ void Symmetry_Basic::setgroup(ModuleBase::Matrix3* symop, int &nop, const int &i
 void Symmetry_Basic::pointgroup(const int &nrot, int &pgnumber, std::string &pgname, const ModuleBase::Matrix3* gmatrix, std::ofstream &ofs_running)
 {
 	//-------------------------------------------------------------------------
-	//PGROUP (L1760 symlib.f VASP)
 	//return the name of the point group
 	//the "name" (Schoenflies mark) of the group defined by following key:
 	//       1 --> C_1       9 --> C_3      17 --> D_4      25 --> C_6v     *

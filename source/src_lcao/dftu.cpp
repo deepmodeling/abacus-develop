@@ -71,7 +71,7 @@ DFTU::DFTU(){}
 DFTU::~DFTU(){}
 
 void DFTU::init(
-	UnitCell_pseudo &cell, // unitcell class
+	UnitCell &cell, // unitcell class
     LCAO_Matrix &lm
     )
 {
@@ -243,16 +243,11 @@ void DFTU::init(
 				this->U_Yukawa.at(it).at(l).resize(N, 0.0);
 				this->J_Yukawa.at(it).at(l).resize(N, 0.0);
 
-				// if(l>=orbital_corr[it] && orbital_corr[it]!=-1)
-				// {
-					// this->cal_slater_Fk(l, it);
-					// this->cal_slater_UJ(it, l);
-				// }
 			}			 	
 		}
  	}
 
-	if(GlobalV::CALCULATION=="nscf" || GlobalC::CHR.init_chg == "file")
+	if(GlobalV::CALCULATION=="nscf" || GlobalV::init_chg == "file")
 	{
 		std::stringstream sst; 
 		sst << GlobalV::global_out_dir << "onsite.dm"; 
@@ -1008,7 +1003,7 @@ void DFTU::cal_energy_correction(const int istep)
 {
 	ModuleBase::TITLE("DFTU", "cal_energy_correction");
 	ModuleBase::timer::tick("DFTU", "cal_energy_correction");
-	if((GlobalV::CALCULATION=="scf" || GlobalV::CALCULATION=="relax" || GlobalV::CALCULATION=="cell-relax") && (!omc) && istep==0 && this->iter_dftu==1 && GlobalC::CHR.init_chg != "file")
+	if((GlobalV::CALCULATION=="scf" || GlobalV::CALCULATION=="relax" || GlobalV::CALCULATION=="cell-relax") && (!omc) && istep==0 && this->iter_dftu==1 && GlobalV::init_chg != "file")
 	{
 		ModuleBase::timer::tick("DFTU", "cal_energy_correction"); 
 		return;
@@ -1173,7 +1168,7 @@ void DFTU::cal_eff_pot_mat_complex(const int ik, std::complex<double>* eff_pot)
 {
 	ModuleBase::TITLE("DFTU", "cal_eff_pot_mat");
 	ModuleBase::timer::tick("DFTU", "cal_eff_pot_mat");
- 	if(!this->initialed_locale && GlobalC::CHR.init_chg != "file")
+ 	if(!this->initialed_locale && GlobalV::init_chg != "file")
 	{
 		ModuleBase::timer::tick("DFTU", "cal_eff_pot_mat");
 		return;
@@ -1265,7 +1260,7 @@ void DFTU::cal_eff_pot_mat_real(const int ik, double* eff_pot)
 {
 	ModuleBase::TITLE("DFTU", "cal_eff_pot_mat");
 	ModuleBase::timer::tick("DFTU", "cal_eff_pot_mat");
- 	if(!this->initialed_locale && GlobalC::CHR.init_chg != "file")
+ 	if(!this->initialed_locale && GlobalV::init_chg != "file")
 	{
 		ModuleBase::timer::tick("DFTU", "cal_eff_pot_mat");
 		return;
@@ -1357,7 +1352,7 @@ void DFTU::output()
 {
 	ModuleBase::TITLE("DFTU", "output");
 
-    if(GlobalC::CHR.out_chg)
+    if(GlobalV::out_chg)
 	{
 		std::stringstream sst;
 		sst << GlobalV::global_out_dir << "onsite.dm";

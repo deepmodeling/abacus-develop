@@ -112,7 +112,7 @@ void Build_ST_pw::set_ST(const int &ik, const char& dtype)
 	return;
 }
 
-void Build_ST_pw::set_local(const int &ik)
+/*void Build_ST_pw::set_local(const int &ik)
 {
 	ModuleBase::TITLE("Build_ST_pw","set_local");
 	ModuleBase::timer::tick("Build_ST_pw","set_local");
@@ -204,4 +204,4 @@ void Build_ST_pw::set_local(const int &ik)
 	delete[] psic;
 	ModuleBase::timer::tick("Build_ST_pw","set_local");
 	return;
-}
+}*/

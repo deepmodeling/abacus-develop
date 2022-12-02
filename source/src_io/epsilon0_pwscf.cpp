@@ -9,7 +9,6 @@
 #include "../src_pw/global.h"
 #include "../src_pw/hamilt.h"
 #include "../src_lcao/wavefunc_in_pw.h"
-#include "optical.h"
 #include "epsilon0_pwscf.h"
 #include <iostream>
 #include <math.h>
@@ -38,7 +37,7 @@ Epsilon0_pwscf::~Epsilon0_pwscf()
 {
 }
 
-void Epsilon0_pwscf:: Cal_epsilon0()
+void Epsilon0_pwscf:: Cal_epsilon0(const elecstate::ElecState* pelec)
 {
 	std::cout << "intersmear = " << intersmear << std::endl;
 	std::cout << "intrasmear = " << intrasmear << std::endl;
@@ -66,7 +65,7 @@ void Epsilon0_pwscf:: Cal_epsilon0()
 	{
 		for(int ik=0; ik<GlobalC::kv.nks; ik++)
 		{
-			Cal_dipole(ik);
+			Cal_dipole(ik, pelec);
 			for(int ib1=0; ib1<GlobalV::NBANDS; ib1++)
 				for(int ib2=0; ib2<GlobalV::NBANDS; ib2++)
 				{
@@ -84,24 +83,24 @@ void Epsilon0_pwscf:: Cal_epsilon0()
 			for(int ib2=0; ib2<GlobalV::NBANDS; ib2++)
 			{
 				//std::cout <<"ik= "<<ik<<" ib2= "<<ib2<<" focc= "<<focc(ib2,ik)<<std::endl;
-				if(focc(ib2,ik) < 2.0)
+				if(focc(ib2,ik, pelec) < 2.0)
 				{
 					for(int ib1=0; ib1<GlobalV::NBANDS; ib1++)
 					{
 						if(ib1 == ib2)
 							continue;
-						if(focc(ib1,ik) > 0.0001)
+						if(focc(ib1,ik, pelec) > 0.0001)
 						{
-							if( fabs(focc(ib2,ik)-focc(ib1,ik)) > 0.001)
+							if( fabs(focc(ib2,ik, pelec)-focc(ib1,ik, pelec)) > 0.001)
 							{
-								double etrans = ( GlobalC::wf.ekb[ik][ib2] - GlobalC::wf.ekb[ik][ib1] ) + shift;
+								double etrans = ( pelec->ekb(ik, ib2) - pelec->ekb(ik, ib1) ) + shift;
 								for(int iw=0; iw<nomega; iw++)
 								{
 									double w = wgrid(iw);
 									for(int j=0; j<9; j++)
 									{
-										epsi[j][iw] += dipole[j][ib1][ib2].real() * intersmear * w * focc(ib1,ik) /((pow(etrans * etrans - w * w,2) + intersmear * intersmear * w * w) * etrans);
-										epsr[j][iw] += dipole[j][ib1][ib2].real() * focc(ib1,ik) * (etrans * etrans - w * w)/((pow(etrans * etrans - w * w,2) + intersmear * intersmear * w * w) * etrans);
+										epsi[j][iw] += dipole[j][ib1][ib2].real() * intersmear * w * focc(ib1,ik, pelec) /((pow(etrans * etrans - w * w,2) + intersmear * intersmear * w * w) * etrans);
+										epsr[j][iw] += dipole[j][ib1][ib2].real() * focc(ib1,ik, pelec) * (etrans * etrans - w * w)/((pow(etrans * etrans - w * w,2) + intersmear * intersmear * w * w) * etrans);
 									}
 
 								}
@@ -115,17 +114,17 @@ void Epsilon0_pwscf:: Cal_epsilon0()
 			{
 				for(int ib1=0; ib1<GlobalV::NBANDS; ib1++)
 				{
-					if(focc(ib1,ik) < 2.0)
+					if(focc(ib1,ik, pelec) < 2.0)
 					{
-						if(focc(ib1,ik) > 0.0001)
+						if(focc(ib1,ik, pelec) > 0.0001)
 						{
 							for(int iw=0; iw<nomega; iw++)
 							{
 								double w = wgrid(iw);
 								for(int j=0; j<9; j++)
 								{
-									epsi[j][iw] += dipole[j][ib1][ib1].real() * intrasmear * w * exp((GlobalC::wf.ekb[ik][ib1]- GlobalC::en.ef)/smearing_sigma)/(1.0 + exp((GlobalC::wf.ekb[ik][ib1]- GlobalC::en.ef)/smearing_sigma))/(1.0 + exp((GlobalC::wf.ekb[ik][ib1]- GlobalC::en.ef)/smearing_sigma))/smearing_sigma/(w*w*w*w + intrasmear * intrasmear * w * w);
-									epsr[j][iw] -= dipole[j][ib1][ib1].real() * w * w  * exp((GlobalC::wf.ekb[ik][ib1]- GlobalC::en.ef)/smearing_sigma)/(1.0 + exp((GlobalC::wf.ekb[ik][ib1]- GlobalC::en.ef)/smearing_sigma))/(1.0 + exp((GlobalC::wf.ekb[ik][ib1]- GlobalC::en.ef)/smearing_sigma))/smearing_sigma/(w*w*w*w + intrasmear * intrasmear * w * w);
+									epsi[j][iw] += dipole[j][ib1][ib1].real() * intrasmear * w * exp((pelec->ekb(ik, ib1)- GlobalC::en.ef)/smearing_sigma)/(1.0 + exp((pelec->ekb(ik, ib1)- GlobalC::en.ef)/smearing_sigma))/(1.0 + exp((pelec->ekb(ik, ib1)- GlobalC::en.ef)/smearing_sigma))/smearing_sigma/(w*w*w*w + intrasmear * intrasmear * w * w);
+									epsr[j][iw] -= dipole[j][ib1][ib1].real() * w * w  * exp((pelec->ekb(ik, ib1)- GlobalC::en.ef)/smearing_sigma)/(1.0 + exp((pelec->ekb(ik, ib1)- GlobalC::en.ef)/smearing_sigma))/(1.0 + exp((pelec->ekb(ik, ib1)- GlobalC::en.ef)/smearing_sigma))/smearing_sigma/(w*w*w*w + intrasmear * intrasmear * w * w);
 								}
 							}
 						}
@@ -187,7 +186,7 @@ void Epsilon0_pwscf:: Cal_epsilon0()
 	{
 		for(int ik=0; ik<GlobalC::kv.nks; ik++)
 		{
-			Cal_dipole(ik);
+			Cal_dipole(ik, pelec);
 			for(int ib1=0; ib1<GlobalV::NBANDS; ib1++)
 				for(int ib2=0; ib2<GlobalV::NBANDS; ib2++)
 				{
@@ -205,24 +204,24 @@ void Epsilon0_pwscf:: Cal_epsilon0()
 			for(int ib2=0; ib2<GlobalV::NBANDS; ib2++)
 			{
 				//std::cout <<"ik= "<<ik<<" ib2= "<<ib2<<" focc= "<<focc(ib2,ik)<<std::endl;
-				if(focc(ib2,ik) < 1.0)
+				if(focc(ib2,ik, pelec) < 1.0)
 				{
 					for(int ib1=0; ib1<GlobalV::NBANDS; ib1++)
 					{
 						if(ib1 == ib2)
 							continue;
-						if(focc(ib1,ik) > 0.0001)
+						if(focc(ib1,ik, pelec) > 0.0001)
 						{
-							if( fabs(focc(ib2,ik)-focc(ib1,ik)) > 0.001)
+							if( fabs(focc(ib2,ik, pelec)-focc(ib1,ik, pelec)) > 0.001)
 							{
-								double etrans = ( GlobalC::wf.ekb[ik][ib2] - GlobalC::wf.ekb[ik][ib1] ) + shift;
+								double etrans = ( pelec->ekb(ik, ib2) - pelec->ekb(ik, ib1) ) + shift;
 								for(int iw=0; iw<nomega; iw++)
 								{
 									double w = wgrid(iw);
 									for(int j=0; j<9; j++)
 									{
-										epsi[j][iw] += dipole[j][ib1][ib2].real() * intersmear * w * focc(ib1,ik) /((pow(etrans * etrans - w * w,2) + intersmear * intersmear * w * w) * etrans);
-										epsr[j][iw] += dipole[j][ib1][ib2].real() * focc(ib1,ik) * (etrans * etrans - w * w)/((pow(etrans * etrans - w * w,2) + intersmear * intersmear * w * w) * etrans);
+										epsi[j][iw] += dipole[j][ib1][ib2].real() * intersmear * w * focc(ib1,ik, pelec) /((pow(etrans * etrans - w * w,2) + intersmear * intersmear * w * w) * etrans);
+										epsr[j][iw] += dipole[j][ib1][ib2].real() * focc(ib1,ik, pelec) * (etrans * etrans - w * w)/((pow(etrans * etrans - w * w,2) + intersmear * intersmear * w * w) * etrans);
 									}
 
 								}
@@ -236,17 +235,17 @@ void Epsilon0_pwscf:: Cal_epsilon0()
 			{
 				for(int ib1=0; ib1<GlobalV::NBANDS; ib1++)
 				{
-					if(focc(ib1,ik) < 1.0)
+					if(focc(ib1,ik, pelec) < 1.0)
 					{
-						if(focc(ib1,ik) > 0.0001)
+						if(focc(ib1,ik, pelec) > 0.0001)
 						{
 							for(int iw=0; iw<nomega; iw++)
 							{
 								double w = wgrid(iw);
 								for(int j=0; j<9; j++)
 								{
-									epsi[j][iw] += dipole[j][ib1][ib1].real() * intrasmear * w * exp((GlobalC::wf.ekb[ik][ib1]- GlobalC::en.ef)/smearing_sigma)/(1.0 + exp((GlobalC::wf.ekb[ik][ib1]- GlobalC::en.ef)/smearing_sigma))/(1.0 + exp((GlobalC::wf.ekb[ik][ib1]- GlobalC::en.ef)/smearing_sigma))/smearing_sigma/(w*w*w*w + intrasmear * intrasmear * w * w);
-									epsr[j][iw] -= dipole[j][ib1][ib1].real() * w * w  * exp((GlobalC::wf.ekb[ik][ib1]- GlobalC::en.ef)/smearing_sigma)/(1.0 + exp((GlobalC::wf.ekb[ik][ib1]- GlobalC::en.ef)/smearing_sigma))/(1.0 + exp((GlobalC::wf.ekb[ik][ib1]- GlobalC::en.ef)/smearing_sigma))/smearing_sigma/(w*w*w*w + intrasmear * intrasmear * w * w);
+									epsi[j][iw] += dipole[j][ib1][ib1].real() * intrasmear * w * exp((pelec->ekb(ik, ib1)- GlobalC::en.ef)/smearing_sigma)/(1.0 + exp((pelec->ekb(ik, ib1)- GlobalC::en.ef)/smearing_sigma))/(1.0 + exp((pelec->ekb(ik, ib1)- GlobalC::en.ef)/smearing_sigma))/smearing_sigma/(w*w*w*w + intrasmear * intrasmear * w * w);
+									epsr[j][iw] -= dipole[j][ib1][ib1].real() * w * w  * exp((pelec->ekb(ik, ib1)- GlobalC::en.ef)/smearing_sigma)/(1.0 + exp((pelec->ekb(ik, ib1)- GlobalC::en.ef)/smearing_sigma))/(1.0 + exp((pelec->ekb(ik, ib1)- GlobalC::en.ef)/smearing_sigma))/smearing_sigma/(w*w*w*w + intrasmear * intrasmear * w * w);
 								}
 							}
 						}
@@ -392,16 +391,16 @@ double Epsilon0_pwscf:: wgrid(int iw)
 	return (iw * domega);
 }
 
-double Epsilon0_pwscf:: focc(int ib, int ik)
+double Epsilon0_pwscf:: focc(int ib, int ik, const elecstate::ElecState* pelec)
 {
 	if(GlobalV::NSPIN == 1)
-		return (GlobalC::wf.wg(ik,ib) * 2.0/ GlobalC::kv.wk[ik] );
+		return (pelec->wg(ik,ib) * 2.0/ GlobalC::kv.wk[ik] );
 	else if(GlobalV::NSPIN == 2)
-		return (GlobalC::wf.wg(ik,ib) * 1.0/ GlobalC::kv.wk[ik] );
+		return (pelec->wg(ik,ib) * 1.0/ GlobalC::kv.wk[ik] );
 	else				// Peize Lin add 2019-05-01
 		throw std::domain_error(ModuleBase::GlobalFunc::TO_STRING(__FILE__)+" line "+ModuleBase::GlobalFunc::TO_STRING(__LINE__));
 } 
-void Epsilon0_pwscf:: Cal_dipole(int ik)
+void Epsilon0_pwscf:: Cal_dipole(int ik, const elecstate::ElecState* pelec)
 {
 
 	std::complex<double> dipole_aux_core[3][GlobalV::NBANDS][GlobalV::NBANDS];
@@ -416,13 +415,13 @@ void Epsilon0_pwscf:: Cal_dipole(int ik)
 
 	for(int ib2=0; ib2<GlobalV::NBANDS; ib2++)
 	{
-		if( focc(ib2,ik) < 2.0)
+		if( focc(ib2,ik, pelec) < 2.0)
 		{
 			for(int ib1=0; ib1<GlobalV::NBANDS; ib1++)
 			{
 				if(ib1 == ib2)
 					continue;
-				if( focc(ib1,ik) > 0.0001)
+				if( focc(ib1,ik, pelec) > 0.0001)
 				{
 					for(int ig=0; ig<GlobalC::kv.ngk[ik]; ig++)
 					{

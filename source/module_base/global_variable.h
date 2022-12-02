@@ -29,6 +29,7 @@ extern double PSEUDORCUT;
 extern bool PSEUDO_MESH;
 
 extern std::string CALCULATION; // 2 "scf";"nscf" ;"symmetry"
+extern std::string ESOLVER_TYPE;
 extern int EFIELD_FLAG; // 5 add electric field
 extern int DIP_COR_FLAG; // 7 add dipole correction
 extern bool GATE_FLAG;     // add gate field
@@ -37,7 +38,8 @@ extern double NELEC;
 extern std::string DFT_FUNCTIONAL; // 6.5 change the DFT functional from input file.
 extern double XC_TEMPERATURE;
 extern int NSPIN; // 7
-extern bool TWO_EFERMI; // 7.5 mohan add 2011-04-03, two fermi energy, exist if magnetization is fixed.
+extern bool TWO_EFERMI; // 7.5 two fermi energy, exist if nupdown isn't zero.
+extern double nupdown;
 extern int CURRENT_SPIN; // 8
 extern int CURRENT_K; // 8
 
@@ -52,6 +54,11 @@ extern std::string RELAX_METHOD;
 extern std::string OUT_LEVEL;
 extern int OUT_FREQ_ELEC;
 extern int OUT_FREQ_ION;
+
+extern double relax_scale_force;
+extern bool relax_new;
+
+extern bool fixed_atoms;
 
 extern int RELAX_NMAX; // 8.3
 extern int SCF_NMAX; // 8.4
@@ -158,11 +165,12 @@ extern std::string global_out_dir;
 extern std::string global_orbital_dir; // liuyu add 2021-08-14
 extern std::string global_readin_dir; // zhengdy modified
 extern std::string global_stru_dir;   // liuyu add 2022-05-24 for MD STRU
-extern std::string global_matrix_dir; // liuyu add 2022-09-19 for HS matrix output 
+extern std::string global_matrix_dir; // liuyu add 2022-09-19 for HS matrix output
 
 extern std::ofstream ofs_running;
 extern std::ofstream ofs_warning;
 extern std::ofstream ofs_info;
+extern std::ofstream ofs_device;
 
 //==========================================================
 // EXPLAIN : test level for each class
@@ -225,9 +233,6 @@ extern int bessel_lmax; // lmax used in descriptor, mohan added 2021-01-03
 extern double bessel_rcut;
 extern double bessel_tol;
 
-// method for dealing with non-local potential in Hamiltonian matrix, 0 for old, 1 for new
-extern int vnl_method;
-
 // whether or not output information for each element
 extern bool out_element_info;
 
@@ -243,6 +248,38 @@ extern bool dft_plus_u;
 // rpa related
 extern bool rpa_setorb;
 extern std::vector<std::string> rpa_orbitals;
+
+// ofdft sunliang add on 2022-05-11
+extern std::string of_kinetic; // Kinetic energy functional, such as TF, VW, WT
+extern std::string of_method;  // optimization method, include cg1, cg2, tn (default), bfgs
+extern std::string of_conv;    // select the convergence criterion, potential, energy (default), or both
+extern double of_tole;    // tolerance of the energy change (in Ry) for determining the convergence, default=2e-6 Ry
+extern double of_tolp;    // tolerance of potential for determining the convergence, default=1e-5 in a.u.
+extern double of_tf_weight;  // weight of TF KEDF
+extern double of_vw_weight;  // weight of vW KEDF
+extern double of_wt_alpha;   // parameter alpha of WT KEDF
+extern double of_wt_beta;    // parameter beta of WT KEDF
+extern double of_wt_rho0;    // set the average density of system, in Bohr^-3
+extern bool of_hold_rho0;   // If set to 1, the rho0 will be fixed even if the volume of system has changed, it will be set to 1 automaticly if of_wt_rho0 is not zero.
+extern bool of_full_pw;     // If set to 1, ecut will be ignored while collecting planewaves, so that all planewaves will be used.
+extern int of_full_pw_dim;  // If of_full_pw = 1, the dimention of FFT will be testricted to be (0) either odd or even; (1) odd only; (2) even only.
+extern bool of_read_kernel; // If set to 1, the kernel of WT KEDF will be filled from file of_kernel_file, not from formula. Only usable for WT KEDF.
+extern std::string of_kernel_file; // The name of WT kernel file.
+
+//==========================================================
+// device flags
+//==========================================================
+extern std::string device_flag;
+extern std::string chg_extrap;
+extern int out_pot;
+
+extern std::string init_chg; //  output charge if out_chg > 0, and output every "out_chg" elec step.
+extern int out_chg;
+
+//Note : this is different from the capitalized NELEC
+//NELEC gives the total charge of the system
+//while nelec is the total number of valence electrons 
+extern double nelec;
 
 } // namespace GlobalV
 #endif

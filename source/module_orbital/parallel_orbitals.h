@@ -61,14 +61,11 @@ struct Parallel_Orbitals
     MPI_Comm comm_2D;
 #endif
 
-    /// only used in hpseps-diago
     int nspin = 1;
     int* loc_sizes;
     int loc_size;
-    bool alloc_Z_LOC; //xiaohui add 2014-12-22
-    double** Z_LOC; //xiaohui add 2014-06-19
 
-    /// used in hpseps, dftu and exx
+    /// used in dftu and exx
     LocalMatrix MatrixInfo;
 
     // test parameter

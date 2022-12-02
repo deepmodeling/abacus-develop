@@ -29,6 +29,7 @@ double PSEUDORCUT;
 bool PSEUDO_MESH;
 
 std::string CALCULATION = "scf";
+std::string ESOLVER_TYPE = "ksdft";
 int EFIELD_FLAG = 0; // 5: add electric field
 int DIP_COR_FLAG = 0; // 7: add dipole field
 bool GATE_FLAG = false;    // add gate field
@@ -38,6 +39,7 @@ std::string DFT_FUNCTIONAL = "default";
 double XC_TEMPERATURE = 0.0;
 int NSPIN = 1; // LDA
 bool TWO_EFERMI = 0; // two fermi energy, exist only magnetization is fixed.
+double nupdown = 0.0;
 int CURRENT_SPIN = 0;
 int CURRENT_K = 0;
 int CAL_FORCE = 0; // if cal_force >1, means do the grid integration 'cal_force' times.
@@ -49,6 +51,9 @@ double PRESS3 = 0.0;
 double PRESSURE = 0.0;
 std::string RELAX_METHOD = "bfgs";
 std::string OUT_LEVEL = "ie";
+double relax_scale_force = 0.5;
+bool relax_new = true;
+bool fixed_atoms = false;
 int OUT_FREQ_ELEC = 0;
 int OUT_FREQ_ION = 0;
 int RELAX_NMAX = 20;
@@ -140,6 +145,7 @@ std::string global_matrix_dir;
 std::ofstream ofs_running;
 std::ofstream ofs_warning;
 std::ofstream ofs_info; // output math lib info
+std::ofstream ofs_device; // output device info
 
 //----------------------------------------------------------
 // EXPLAIN : test level for each class
@@ -202,8 +208,6 @@ bool deepks_out_unittest = false;
 
 bool deepks_setorb = false;
 
-int vnl_method = 1; // set defauld vnl method as old, added by zhengdy 2021-10-11
-
 bool out_element_info = false; // added by zhengdy 2021-11-26
 
 bool imp_sol = false; // implicit solvation.  sunml added 2022-04-04
@@ -218,4 +222,28 @@ bool dft_plus_u = false; //DFTU control
 bool rpa_setorb = false;
 std::vector<std::string> rpa_orbitals;
 
+std::string of_kinetic = "wt";
+std::string of_method = "tn";
+std::string of_conv = "energy";
+double of_tole = 2e-6;
+double of_tolp = 1e-5;
+double of_tf_weight = 1.;
+double of_vw_weight = 1.;
+double of_wt_alpha = 5./6.;  
+double of_wt_beta = 5./6.;
+double of_wt_rho0 = 0.;
+bool of_hold_rho0 = false;
+bool of_full_pw = true;
+int of_full_pw_dim = 0;
+bool of_read_kernel = false;
+std::string of_kernel_file = "WTkernel.txt";
+
+// denghui added for device flag
+std::string device_flag = "unknown";
+std::string chg_extrap = "";
+int out_pot = 0;
+
+std::string init_chg = "";
+int out_chg = 0;
+double nelec = 0;
 } // namespace GlobalV

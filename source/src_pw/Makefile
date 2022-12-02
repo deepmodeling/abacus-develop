@@ -6,9 +6,9 @@
 CC = mpiicpc
 # mpiicpc:   compile intel parallel version
 # mpicxx:    compile gnu parallel version
-# icpc:      compile gnu serial version
-# g++:       compile gnu serial version
-# We do not support serial version with g++ or icpc yet.
+# icpc:      compile gnu sequential version
+# g++:       compile gnu sequential version
+# We do not support sequential version with g++ or icpc yet.
 GPU = OFF    
 # OFF:  do not use GPU
 # CUDA: use CUDA 
@@ -26,10 +26,10 @@ OPENBLAS_LIB_DIR   = /home/qianrui/gnucompile/openblas/lib
 # Compiler information 
 #==========================
 INCLUDES = -I. -Icommands -I../
-LIBS = -lifcore -lm -lpthread
+LIBS = -lm -lpthread
 OPTS = -Ofast -march=native -std=c++11 -m64 ${INCLUDES}
 ifeq ($(findstring mpi, $(CC)), mpi)
-     HONG += -D__MPI
+     HONG += -D__MPI -D__EXX -DEXX_H_COMM=2 -DUSE_CEREAL_SERIALIZATION -DEXX_DM=3 -DEXX_H_COMM=2 -DTEST_EXX_LCAO=0 -DTEST_EXX_RADIAL=1
      MPI = ON
      ifeq ($(findstring mpii, $(CC)), mpii)
          INTEL=ON
@@ -51,7 +51,7 @@ ifeq ($(DEBUG), ON)
     OPTS +=  -fsanitize=address -fno-omit-frame-pointer -Wall -g #It can check segmental defaults
 endif
 ifeq ($(INTEL), ON)
-    OPTS += -simd -qopenmp
+    OPTS += -simd -qopenmp -lifcore
     ##==========================
     ## MKL package
     ##==========================
@@ -93,34 +93,34 @@ ifeq ($(GPU), CUDA)
 endif
 
 
-##==========================
-## LIBXC package needed 
-##==========================
-#LIBXC_DIR    		= /home/qianrui/intelcompile/intel_libxc4.3.4
-#LIBXC_INCLUDE_DIR	= ${LIBXC_DIR}/include 
-#LIBXC_LIB_DIR		= ${LIBXC_DIR}/lib
-#HONG              += -DUSE_LIBXC
-#INCLUDES          += -I${LIBXC_INCLUDE_DIR}
-#LIBS 			   += -L${LIBXC_LIB_DIR} -Wl,-rpath=${LIBXC_LIB_DIR} -lxc
+ifdef LIBXC_DIR
+    ##==========================
+    ## LIBXC package 
+    ##==========================
+    LIBXC_INCLUDE_DIR	= ${LIBXC_DIR}/include 
+    LIBXC_LIB_DIR		= ${LIBXC_DIR}/lib
+    HONG                += -DUSE_LIBXC
+    INCLUDES            += -I${LIBXC_INCLUDE_DIR}
+    LIBS 			    += -L${LIBXC_LIB_DIR} -Wl,-rpath=${LIBXC_LIB_DIR} -lxc
+endif
 
 
 
-include Makefile.Objects
-
+include ../Makefile.Objects
+VPATH:=$(addprefix ../, ${VPATH})
 OBJ_DIR = pw_obj
 
-
-FP_OBJS=$(patsubst %.o, ${OBJ_DIR}/%.o, ${FP_OBJS_0})
+FP_OBJS=$(patsubst %.o, ${OBJ_DIR}/%.o, ${OBJS_ABACUS_PW})
 
 #==========================
 # MAKING OPTIONS
 #==========================
 pw : 
 	@ if [ ! -d $(OBJ_DIR) ]; then mkdir $(OBJ_DIR); fi
-	$(MAKE) ${VERSION}.x
+	$(MAKE) ${VERSION}-PW.x
 
-${VERSION}.x : ${FP_OBJS} 
-	${CC} ${OPTS} $(FP_OBJS) ${LIBS} -o ${VERSION}.x 
+${VERSION}-PW.x : ${FP_OBJS} 
+	${CC} ${OPTS} $(FP_OBJS) ${LIBS} -o ${VERSION}-PW.x 
 #==========================
 # rules
 #==========================
@@ -139,4 +139,4 @@ ${OBJ_DIR}/%.o:%.cu
 .PHONY:clean
 clean:
 	@ if [ -d $(OBJ_DIR) ]; then rm -rf $(OBJ_DIR); fi
-	@ if [ -e ${VERSION}.x ]; then rm -f ${VERSION}.x; fi
+	@ if [ -e ${VERSION}-PW.x ]; then rm -f ${VERSION}-PW.x; fi

@@ -69,11 +69,14 @@ void unkOverlap_lcao::init(std::complex<double>*** wfc_k_grid)
 		GlobalC::ORB.get_dR(),// delta R, for making radial table
 		GlobalC::ORB.get_dk()); // delta k, for integration in k space
 
-#ifdef __MPI //liyuanbo 2022/2/23
-	MOT.init_Table_Spherical_Bessel (2, 3, Lmax_used, Lmax, Exx_Abfs::Lmax,GlobalC::ORB, GlobalC::ucell.infoNL.Beta);
+    int exx_lmax = 0;
+#ifdef __EXX
+    exx_lmax = GlobalC::exx_info.info_ri.abfs_Lmax;
 #endif
+	MOT.init_Table_Spherical_Bessel(2, 3, Lmax_used, Lmax, exx_lmax, GlobalC::ORB, GlobalC::ucell.infoNL.Beta);
 
-	ModuleBase::Ylm::set_coefficients ();
+
+	ModuleBase::Ylm::set_coefficients();
 
 	MGT.init_Gaunt_CH( Lmax );
 	MGT.init_Gaunt( Lmax );
@@ -118,7 +121,6 @@ void unkOverlap_lcao::init(std::complex<double>*** wfc_k_grid)
 			ModuleBase::GlobalFunc::ZEROS(cal_tag[iw],GlobalV::NLOCAL);
 		}
 	}
-	
 	
 	//获取每个cpu核的原子轨道系数
 	for(int ik = 0; ik < kpoints_number; ik++)
@@ -169,8 +171,6 @@ void unkOverlap_lcao::init(std::complex<double>*** wfc_k_grid)
 			}			
 		}
 	}
-	
-	
 	
 	for(int TA = 0; TA < GlobalC::ucell.ntype; TA++)
 	{
@@ -237,11 +237,8 @@ void unkOverlap_lcao::init(std::complex<double>*** wfc_k_grid)
 						for( auto &co6 : co5.second )
 							co6.second.init_radial_table();
 	
-
-	
 	//std::cout << "unkOverlap_lcao::init end" << std::endl; 
 	return;
-	
 }
 
 int unkOverlap_lcao::iw2it(int iw)
@@ -350,7 +347,6 @@ int unkOverlap_lcao::iw2iN(int iw)
 		}
     }
     return iN;
-	
 }
 
 int unkOverlap_lcao::iw2im(int iw)
@@ -379,7 +375,6 @@ int unkOverlap_lcao::iw2im(int iw)
     }
     return im;
 }
-
 
 //寻找近邻原子
 void unkOverlap_lcao::cal_R_number()
@@ -442,7 +437,6 @@ void unkOverlap_lcao::cal_R_number()
 	return;
 }
 
-
 void unkOverlap_lcao::cal_orb_overlap()
 {
 	//std::cout << "the cal_orb_overlap is start" << std::endl;
@@ -453,12 +447,9 @@ void unkOverlap_lcao::cal_orb_overlap()
 		psi_psi[iw].resize(GlobalV::NLOCAL);
 		psi_r_psi[iw].resize(GlobalV::NLOCAL);
 	}
-	
 
-	
 	ModuleBase::Vector3<double> origin_point(0.0,0.0,0.0); 
-	
-	
+
 	for(int iw1 = 0; iw1 < GlobalV::NLOCAL; iw1++)
 	{
 		for(int iw2 = 0; iw2 < GlobalV::NLOCAL; iw2++)
@@ -483,13 +474,10 @@ void unkOverlap_lcao::cal_orb_overlap()
 				
 				psi_r_psi[iw1][iw2].push_back(overlap);
 			}
-
-			
 		}
 	}
 	
 	//std::cout << "the cal_orb_overlap is end" << std::endl;
-	
 	return;
 }
 
@@ -515,8 +503,7 @@ std::complex<double> unkOverlap_lcao::unkdotp_LCAO(const int ik_L, const int ik_
 			
 			// iw1 和 iw2 永远没有overlap
 			if( orb1_orb2_R[iw1][iw2].empty() ) continue;
-		
-			
+
 			// e^i( ik_R*Rn - dk*tau1 )
 			ModuleBase::Vector3<double> tau1 = GlobalC::ucell.atoms[ iw2it(iw1) ].tau[ iw2ia(iw1) ];
 			ModuleBase::Vector3<double> tau2 = GlobalC::ucell.atoms[ iw2it(iw2) ].tau[ iw2ia(iw2) ];
@@ -542,10 +529,8 @@ std::complex<double> unkOverlap_lcao::unkdotp_LCAO(const int ik_L, const int ik_
 				// test by jingan
 				*/
 			}
-	
 		}
 	}
-	
 
 #ifdef __MPI
     // note: the mpi uses MPI_COMMON_WORLD,so you must make the GlobalV::KPAR = 1.
@@ -663,10 +648,7 @@ void unkOverlap_lcao::get_lcao_wfc_global_ik(std::complex<double> **ctot, std::c
 				tag = GlobalV::DRANK * 3 + 2;
 				MPI_Send(csend, GlobalV::NBANDS*GlobalC::GridT.lgd, mpicomplex, 0, tag, DIAG_WORLD);
 
-			
-
 				delete[] csend;
-
 			}
 		#endif
 		}// end i==GlobalV::DRANK
@@ -688,7 +670,6 @@ void unkOverlap_lcao::get_lcao_wfc_global_ik(std::complex<double> **ctot, std::c
 	}
 
 	delete[] ctot_send;
-
 	return;
 }
 
@@ -718,7 +699,6 @@ void unkOverlap_lcao::prepare_midmatrix_pblas(const int ik_L, const int ik_R, co
 			}
 		}
 	}
-	
 }
 
 std::complex<double> unkOverlap_lcao::det_berryphase(const int ik_L, const int ik_R,
@@ -776,15 +756,13 @@ std::complex<double> unkOverlap_lcao::det_berryphase(const int ik_L, const int i
 				det = det * out_matrix[index];
 			}
 		}
-		
 	}
 	delete[] ipiv;
 #endif
 	delete[] midmatrix;
 	delete[] C_matrix;
 	delete[] out_matrix;
-	
-	
+
 #ifdef __MPI
     // note: the mpi uses MPI_COMMON_WORLD,so you must make the GlobalV::KPAR = 1.
 	std::complex<double> result;
@@ -850,11 +828,3 @@ void unkOverlap_lcao::test(std::complex<double>*** wfc_k_grid)
 	}
 	*/
 }
-
-
-
-
-
-
-
-

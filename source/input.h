@@ -37,6 +37,7 @@ class Input
     std::string calculation; // "scf" : self consistent calculation.
                              // "nscf" : non-self consistent calculation.
                              // "relax" : cell relaxations
+    std::string esolver_type;    // the energy solver: ksdft, sdft, ofdft, tddft, lj, dp
     double pseudo_rcut; // cut-off radius for calculating msh
     bool pseudo_mesh; // 0: use msh to normalize radial wave functions;  1: use mesh, which is used in QE.
     int ntype; // number of atom types
@@ -91,6 +92,7 @@ class Input
     std::string dft_functional; // input DFT functional.
     double xc_temperature; // only relevant if finite temperature functional is used
     int nspin; // LDA ; LSDA ; non-linear spin
+    double nupdown = 0.0;
     double nelec; // total number of electrons
     int lmaxmax;
     double tot_magnetization;
@@ -119,7 +121,16 @@ class Input
     bool cal_stress; // calculate the stress
 
     std::string fixed_axes; // which axes are fixed
+    bool fixed_ibrav; //whether to keep type of lattice; must be used along with latname
+    bool fixed_atoms; //whether to fix atoms during vc-relax
     std::string relax_method; // methods to move_ion: sd, bfgs, cg...
+
+    //For now, this is only relevant if we choose to use
+    //CG relaxation method. If set to true, then the new
+    //implementation will be used; if set to false, then
+    //the original implementation will be used
+    //Default is true
+    bool relax_new;
 
     double relax_cg_thr; // threshold when cg to bfgs, pengfei add 2011-08-15
 
@@ -129,6 +140,8 @@ class Input
     double relax_bfgs_rmax; // trust radius max
     double relax_bfgs_rmin; // trust radius min
     double relax_bfgs_init; // initial move
+
+    double relax_scale_force;
 
     //==========================================================
     // Planewave
@@ -215,6 +228,7 @@ class Input
     int out_freq_ion;  // the frequency ( >= 0 ) of ionic step to output charge density and wavefunction. 0: output only when ion steps are finished
     int out_chg; // output charge density. 0: no; 1: yes
     int out_dm; // output density matrix.
+    int out_dm1;
     int out_pot; // yes or no
     int out_wfc_pw; // 0: no; 1: txt; 2: dat
     int out_wfc_r; // 0: no; 1: yes
@@ -329,7 +343,7 @@ class Input
     // exx
     // Peize Lin add 2018-06-20
     //==========================================================
-    double exx_hybrid_alpha;
+    std::string exx_hybrid_alpha;
     double exx_hse_omega;
 
     bool exx_separate_loop; // 0 or 1
@@ -343,8 +357,11 @@ class Input
     double exx_dm_threshold;
     double exx_schwarz_threshold;
     double exx_cauchy_threshold;
+    double exx_c_grad_threshold;
+    double exx_v_grad_threshold;
+    double exx_cauchy_grad_threshold;
     double exx_ccp_threshold;
-    double exx_ccp_rmesh_times;
+    std::string exx_ccp_rmesh_times;
 
     std::string exx_distribute_type;
 
@@ -356,7 +373,6 @@ class Input
     // tddft
     // Fuxiang He add 2016-10-26
     //==========================================================
-    int tddft; // calculate tddft or not
     double td_scf_thr; // threshold for electronic iteration of tddft
     double td_dt; //"fs"
     double td_force_dt; //"fs"
@@ -432,6 +448,30 @@ class Input
     double tau;
     double sigma_k;
     double nc_k;
+
+    //==========================================================
+    // OFDFT  sunliang added on 2022-05-05
+    //==========================================================
+    string of_kinetic; // Kinetic energy functional, such as TF, VW, WT, TF+
+    string of_method;  // optimization method, include cg1, cg2, tn (default), bfgs
+    string of_conv;    // select the convergence criterion, potential, energy (default), or both
+    double of_tole;    // tolerance of the energy change (in Ry) for determining the convergence, default=2e-6 Ry
+    double of_tolp;    // tolerance of potential for determining the convergence, default=1e-5 in a.u.
+    double of_tf_weight;  // weight of TF KEDF
+    double of_vw_weight;  // weight of vW KEDF
+    double of_wt_alpha;   // parameter alpha of WT KEDF
+    double of_wt_beta;    // parameter beta of WT KEDF
+    double of_wt_rho0;    // set the average density of system, in Bohr^-3
+    bool of_hold_rho0;  // If set to 1, the rho0 will be fixed even if the volume of system has changed, it will be set to 1 automaticly if of_wt_rho0 is not zero.
+    bool of_full_pw;    // If set to 1, ecut will be ignored while collecting planewaves, so that all planewaves will be used.
+    int of_full_pw_dim; // If of_full_pw = 1, the dimention of FFT will be testricted to be (0) either odd or even; (1) odd only; (2) even only.
+    bool of_read_kernel; // If set to 1, the kernel of WT KEDF will be filled from file of_kernel_file, not from formula. Only usable for WT KEDF.
+    string of_kernel_file; // The name of WT kernel file.
+
+    //==========================================================
+    //    device control denghui added on 2022-11-15
+    //==========================================================
+    std::string device;
 
     //==========================================================
     // variables for test only

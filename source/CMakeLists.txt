@@ -15,13 +15,15 @@ add_subdirectory(module_xc)
 add_subdirectory(module_esolver)
 add_subdirectory(module_gint)
 add_subdirectory(src_io)
-add_subdirectory(module_relaxation)
+add_subdirectory(module_relax)
 add_subdirectory(src_lcao)
 add_subdirectory(src_parallel)
 add_subdirectory(src_pdiag)
 add_subdirectory(src_pw)
 add_subdirectory(src_ri)
 add_subdirectory(module_rpa)
+add_subdirectory(module_vdw)
+add_subdirectory(module_ri)
 
 add_library(
     driver
@@ -30,5 +32,8 @@ add_library(
     driver_run.cpp
     input.cpp
     input_conv.cpp
-    input_update.cpp
 )
+
+if(ENABLE_COVERAGE)
+  add_coverage(driver)
+endif()

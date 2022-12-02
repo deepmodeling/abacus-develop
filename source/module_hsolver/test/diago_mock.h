@@ -232,7 +232,7 @@ class HPsi
 };
 
 //totally same as the original function
-void hamilt::HamiltPW::sPsi
+template<> void hamilt::HamiltPW<double>::sPsi
 (
     const std::complex<double> *psi, 
     std::complex<double> *spsi, 
@@ -248,7 +248,7 @@ void hamilt::HamiltPW::sPsi
 
 //Mock function h_psi
 #include "module_hamilt/ks_pw/operator_pw.h"
-class OperatorMock : public hamilt::OperatorPW
+class OperatorMock : public hamilt::OperatorPW<double>
 {
     virtual void act
     (
@@ -284,17 +284,17 @@ class OperatorMock : public hamilt::OperatorPW
     }
 };
 
-void hamilt::HamiltPW::updateHk(const int ik)
+template<> void hamilt::HamiltPW<double>::updateHk(const int ik)
 {
     return;
 }
 
-hamilt::HamiltPW::HamiltPW()
+template<> hamilt::HamiltPW<double>::HamiltPW(elecstate::Potential* pot_in)
 {
     this->ops = new OperatorMock;
 }
 
-hamilt::HamiltPW::~HamiltPW()
+template<> hamilt::HamiltPW<double>::~HamiltPW()
 {
     delete this->ops;
 }

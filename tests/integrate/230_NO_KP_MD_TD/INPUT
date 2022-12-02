@@ -6,6 +6,7 @@ orbital_dir	../../PP_ORB
 ntype			1	
 nbands			12
 calculation		md
+esolver_type    tddft
 
 #Parameter (Accuracy)
 ecutwfc			50
@@ -19,8 +20,6 @@ gamma_only		0
 md_nstep			1	
 
 scf_thr			1.0e-6
-
-tddft			1
 
 md_type		    0
 md_dt			0.01

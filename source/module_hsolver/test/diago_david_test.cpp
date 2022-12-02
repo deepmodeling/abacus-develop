@@ -80,12 +80,12 @@ public:
 
 		//do Diago_David::diag()
 		double* en = new double[npw];		
-		hamilt::Hamilt *phm;
-		phm = new hamilt::HamiltPW();
-		hsolver::DiagoDavid dav(precondition);
-		hsolver::DiagoDavid::PW_DIAG_NDIM = order;
-		hsolver::DiagoIterAssist::PW_DIAG_NMAX = maxiter;
-		hsolver::DiagoIterAssist::PW_DIAG_THR = eps;
+		hamilt::Hamilt<double> *phm;
+		phm = new hamilt::HamiltPW<double>(nullptr);
+		hsolver::DiagoDavid<double> dav(precondition);
+		hsolver::DiagoDavid<double>::PW_DIAG_NDIM = order;
+		hsolver::DiagoIterAssist<double>::PW_DIAG_NMAX = maxiter;
+		hsolver::DiagoIterAssist<double>::PW_DIAG_THR = eps;
 		GlobalV::NPROC_IN_POOL = nprocs;
 		phi.fix_k(0);
 

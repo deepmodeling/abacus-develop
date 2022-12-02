@@ -44,11 +44,12 @@ using::testing::Assign;
 namespace elecstate
 {
 
-class MockElecStatePW : public ElecStatePW
+class MockElecStatePW : public ElecStatePW<double>
 {
 public:
-  MockElecStatePW( ModulePW::PW_Basis_K* wfc_basis, Charge* chg_in, K_Vectors *pkv_in, int nbands_in):ElecStatePW(wfc_basis, chg_in, pkv_in, nbands_in){}
+  MockElecStatePW( ModulePW::PW_Basis_K* wfc_basis, Charge* chg_in, K_Vectors *pkv_in):ElecStatePW(wfc_basis, chg_in, pkv_in){}
   MOCK_METHOD0(calculate_weights,void());
+  MOCK_METHOD0(init_scf,void());
 };
 }
 
@@ -199,7 +200,7 @@ class ENVEnvironment : public ::testing::Environment
     // We need to modify here after reconstruction.
     void SetUp() override
     {
-        GlobalC::CHR.nelec = env->nelec_;
+        GlobalV::nelec = env->nelec_;
         GlobalV::CALCULATION = env->calculation_;
         GlobalV::global_pseudo_dir = env->pseudo_dir_;
         GlobalV::stru_file = env->stru_file_;
@@ -229,7 +230,7 @@ class ENVEnvironment : public ::testing::Environment
         GlobalV::test_pw = env->test_pw_;
         GlobalV::NBANDS = env->nbands_;
         INPUT.cell_factor = env->cell_factor_;
-        GlobalC::CHR.init_chg = env->init_chg_;
+        GlobalV::init_chg = env->init_chg_;
         GlobalC::wf.init_wfc = env->init_wfc_;
         GlobalC::wf.out_wfc_pw = env->out_wfc_pw_;
 	GlobalV::global_out_dir = env->out_dir_;
@@ -261,7 +262,7 @@ class EState : public testing::Test
 TEST_F(EState,RhoPW)
 {
     // Here GlobalC::ucell is used directly without asserting a new
-    // UnitCell_pseudo object.
+    // UnitCell object.
     // this function will read STRU and pseudopotential files
     // should add more EXPECTs after calling
     GlobalC::ucell.setup_cell(orb, GlobalV::global_pseudo_dir, GlobalV::stru_file, GlobalV::ofs_running);
@@ -332,7 +333,7 @@ TEST_F(EState,RhoPW)
     delete psi;
     // using class ElecStatePW to calculate rho
     elecstate::MockElecStatePW* kk;
-    kk = new elecstate::MockElecStatePW(GlobalC::wfcpw,&GlobalC::CHR,&GlobalC::kv,GlobalV::NBANDS);
+    kk = new elecstate::MockElecStatePW(GlobalC::wfcpw,&GlobalC::CHR,&GlobalC::kv);
     EXPECT_CALL(*kk,calculate_weights()).Times(AtLeast(1));
     ModuleBase::matrix wg_tmp;
     wg_tmp.create(GlobalC::kv.nks,GlobalV::NBANDS);
@@ -371,7 +372,7 @@ TEST_F(EState,RhoPW)
     }
     // check total number of electrons
     totale = totale * GlobalC::ucell.omega / GlobalC::rhopw->nrxx;
-    EXPECT_NEAR(totale, GlobalC::CHR.nelec, 1e-5);
+    EXPECT_NEAR(totale, GlobalV::nelec, 1e-5);
     delete kk;
 }
 

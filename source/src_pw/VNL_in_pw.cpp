@@ -19,6 +19,7 @@ pseudopot_cell_vnl::~pseudopot_cell_vnl()
 {
 #ifdef __CUDA
 	cudaFree(this->d_deeq);
+	cudaFree(this->d_deeq_nc);
 #endif
 }
 
@@ -42,10 +43,10 @@ void pseudopot_cell_vnl::init(const int ntype, const bool allocate_vkb)
 	for (it = 0;it < ntype; it++)
 	{
 		GlobalV::ofs_running << " " << GlobalC::ucell.atoms[it].label << " non-local projectors:" << std::endl;
-		for (int ibeta = 0; ibeta < GlobalC::ucell.atoms[it].nbeta; ibeta++) 
+		for (int ibeta = 0; ibeta < GlobalC::ucell.atoms[it].ncpp.nbeta; ibeta++) 
 		{
-			GlobalV::ofs_running << " projector " << ibeta+1 << " L=" << GlobalC::ucell.atoms[it].lll[ibeta] <<  std::endl;
-			this->lmaxkb = std::max( this->lmaxkb, GlobalC::ucell.atoms[it].lll[ibeta]);
+			GlobalV::ofs_running << " projector " << ibeta+1 << " L=" << GlobalC::ucell.atoms[it].ncpp.lll[ibeta] <<  std::endl;
+			this->lmaxkb = std::max( this->lmaxkb, GlobalC::ucell.atoms[it].ncpp.lll[ibeta]);
 		}
 	}
 
@@ -56,7 +57,7 @@ void pseudopot_cell_vnl::init(const int ntype, const bool allocate_vkb)
 	this->nhm = 0;
 	for (it=0;it<ntype;it++)
 	{	
-		this->nhm = std::max(nhm, GlobalC::ucell.atoms[it].nh);
+		this->nhm = std::max(nhm, GlobalC::ucell.atoms[it].ncpp.nh);
 	}
 
 //----------------------------------------------------------
@@ -66,7 +67,7 @@ void pseudopot_cell_vnl::init(const int ntype, const bool allocate_vkb)
 	this->nkb = 0;
 	for (it=0; it<ntype; it++)
 	{
-		this->nkb += GlobalC::ucell.atoms[it].nh * GlobalC::ucell.atoms[it].na;
+		this->nkb += GlobalC::ucell.atoms[it].ncpp.nh * GlobalC::ucell.atoms[it].na;
 	}
 
 	ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"TOTAL NUMBER OF NONLOCAL PROJECTORS",nkb);
@@ -80,6 +81,7 @@ void pseudopot_cell_vnl::init(const int ntype, const bool allocate_vkb)
 		this->deeq.create(GlobalV::NSPIN, GlobalC::ucell.nat, this->nhm, this->nhm);
 #ifdef __CUDA
 		cudaMalloc((void**)&d_deeq, GlobalV::NSPIN*GlobalC::ucell.nat*this->nhm*this->nhm*sizeof(double));
+		cudaMalloc((void**)&d_deeq_nc, GlobalV::NSPIN*GlobalC::ucell.nat*this->nhm*this->nhm*sizeof(std::complex<double>));
 #endif		
 		this->deeq_nc.create(GlobalV::NSPIN, GlobalC::ucell.nat, this->nhm, this->nhm);
 		this->dvan.create(ntype, this->nhm, this->nhm);
@@ -176,8 +178,8 @@ void pseudopot_cell_vnl::getvnl(const int &ik, ModuleBase::ComplexMatrix& vkb_in
 	for(int it = 0;it < GlobalC::ucell.ntype;it++)
 	{
 		// calculate beta in G-space using an interpolation table
-		const int nbeta = GlobalC::ucell.atoms[it].nbeta;
-		const int nh = GlobalC::ucell.atoms[it].nh;
+		const int nbeta = GlobalC::ucell.atoms[it].ncpp.nbeta;
+		const int nh = GlobalC::ucell.atoms[it].ncpp.nh;
 
 		if(GlobalV::test_pp>1) ModuleBase::GlobalFunc::OUT("nbeta",nbeta);
 
@@ -234,7 +236,7 @@ void pseudopot_cell_vnl::getvnl(const int &ik, ModuleBase::ComplexMatrix& vkb_in
 
 
 
-void pseudopot_cell_vnl::init_vnl(UnitCell_pseudo &cell)
+void pseudopot_cell_vnl::init_vnl(UnitCell &cell)
 {
 	ModuleBase::TITLE("pseudopot_cell_vnl","init_vnl");
 	ModuleBase::timer::tick("ppcell_vnl","init_vnl");
@@ -259,11 +261,11 @@ void pseudopot_cell_vnl::init_vnl(UnitCell_pseudo &cell)
 	for(int it=0;it<cell.ntype;it++)
 	{
 		int BetaIndex=0;
-		const int Nprojectors = cell.atoms[it].nh;
-		for (int ib=0; ib<cell.atoms[it].nbeta; ib++)
+		const int Nprojectors = cell.atoms[it].ncpp.nh;
+		for (int ib=0; ib<cell.atoms[it].ncpp.nbeta; ib++)
 		{
-			const int l = cell.atoms[it].lll [ib];
-			const double j = cell.atoms[it].jjj [ib];
+			const int l = cell.atoms[it].ncpp.lll [ib];
+			const double j = cell.atoms[it].ncpp.jjj [ib];
 			for(int m=0; m<2*l+1; m++)
 			{
 				this->nhtol(it,BetaIndex) = l;
@@ -277,7 +279,7 @@ void pseudopot_cell_vnl::init_vnl(UnitCell_pseudo &cell)
 		//    From now on the only difference between KB and US pseudopotentials
 		//    is in the presence of the q and Q functions.
 		//    Here we initialize the D of the solid
-		if(cell.atoms[it].has_so )
+		if(cell.atoms[it].ncpp.has_so )
 		{
 			Soc soc;
 			soc.rot_ylm(this->lmaxkb);
@@ -324,7 +326,7 @@ void pseudopot_cell_vnl::init_vnl(UnitCell_pseudo &cell)
 					{
 						for(int is2=0;is2<2;++is2)
 						{
-							this->dvan_so(ijs,it,ip,ip2) = cell.atoms[it].dion(ir, is) * soc.fcoef(it,is1,is2,ip,ip2);
+							this->dvan_so(ijs,it,ip,ip2) = cell.atoms[it].ncpp.dion(ir, is) * soc.fcoef(it,is1,is2,ip,ip2);
 							++ijs;
 							if(ir != is) soc.fcoef(it,is1,is2,ip,ip2) = std::complex<double>(0.0,0.0);
 						}
@@ -344,12 +346,12 @@ void pseudopot_cell_vnl::init_vnl(UnitCell_pseudo &cell)
 					const int is = static_cast<int>( indv(it, ip2) );
 					if(GlobalV::LSPINORB)
 					{
-						this->dvan_so(0,it,ip,ip2) = cell.atoms[it].dion(ir, is);
-						this->dvan_so(3,it,ip,ip2) = cell.atoms[it].dion(ir, is);
+						this->dvan_so(0,it,ip,ip2) = cell.atoms[it].ncpp.dion(ir, is);
+						this->dvan_so(3,it,ip,ip2) = cell.atoms[it].ncpp.dion(ir, is);
 					}
 					else
 					{
-						this->dvan(it, ip, ip2) = cell.atoms[it].dion(ir, is);
+						this->dvan(it, ip, ip2) = cell.atoms[it].ncpp.dion(ir, is);
 					}
 				}
 			} 
@@ -367,8 +369,8 @@ void pseudopot_cell_vnl::init_vnl(UnitCell_pseudo &cell)
 	GlobalV::ofs_running<<"\n Init Non-Local PseudoPotential table : ";
 	for (int it = 0;it < cell.ntype;it++)  
 	{
-		const int nbeta = cell.atoms[it].nbeta;
-		int kkbeta = cell.atoms[it].kkbeta;
+		const int nbeta = cell.atoms[it].ncpp.nbeta;
+		int kkbeta = cell.atoms[it].ncpp.kkbeta;
 
 		//mohan modify 2008-3-31
 		//mohan add kkbeta>0 2009-2-27
@@ -382,19 +384,19 @@ void pseudopot_cell_vnl::init_vnl(UnitCell_pseudo &cell)
 
 		for (int ib = 0;ib < nbeta;ib++)
 		{
-			const int l = cell.atoms[it].lll[ib];
+			const int l = cell.atoms[it].ncpp.lll[ib];
 			for (int iq=0; iq<GlobalV::NQX; iq++)  
 			{
 				const double q = iq * GlobalV::DQ;
-				ModuleBase::Sphbes::Spherical_Bessel(kkbeta, cell.atoms[it].r, q, l, jl);
+				ModuleBase::Sphbes::Spherical_Bessel(kkbeta, cell.atoms[it].ncpp.r, q, l, jl);
 
 				for (int ir = 0;ir < kkbeta;ir++)
 				{
-					aux[ir] = cell.atoms[it].betar(ib, ir) *
-					          jl[ir] * cell.atoms[it].r[ir];
+					aux[ir] = cell.atoms[it].ncpp.betar(ib, ir) *
+					          jl[ir] * cell.atoms[it].ncpp.r[ir];
 				} 
 				double vqint;
-				ModuleBase::Integral::Simpson_Integral(kkbeta, aux, cell.atoms[it].rab, vqint);
+				ModuleBase::Integral::Simpson_Integral(kkbeta, aux, cell.atoms[it].ncpp.rab, vqint);
 				this->tab(it, ib, iq) = vqint * pref;
 			} 
 		} 
@@ -494,8 +496,8 @@ void pseudopot_cell_vnl::getvnl_alpha(const int &ik)           // pengfei Li  20
 	{
 		if(GlobalV::test_pp>1) ModuleBase::GlobalFunc::OUT("it",it);
 		// calculate beta in G-space using an interpolation table
-		const int nbeta = GlobalC::ucell.atoms[it].nbeta;
-		const int nh = GlobalC::ucell.atoms[it].nh;
+		const int nbeta = GlobalC::ucell.atoms[it].ncpp.nbeta;
+		const int nh = GlobalC::ucell.atoms[it].ncpp.nh;
 
 		if(GlobalV::test_pp>1) ModuleBase::GlobalFunc::OUT("nbeta",nbeta);
 
@@ -570,9 +572,9 @@ void pseudopot_cell_vnl::init_vnl_alpha(void)          // pengfei Li 2018-3-23
 	{
 		int BetaIndex=0;
 		//const int Nprojectors = GlobalC::ucell.atoms[it].nh;
-		for (int ib=0; ib<GlobalC::ucell.atoms[it].nbeta; ib++)
+		for (int ib=0; ib<GlobalC::ucell.atoms[it].ncpp.nbeta; ib++)
 		{
-			const int l = GlobalC::ucell.atoms[it].lll [ib];
+			const int l = GlobalC::ucell.atoms[it].ncpp.lll [ib];
 			for(int m=0; m<2*l+1; m++)
 			{
 				this->nhtol(it,BetaIndex) = l;
@@ -593,8 +595,8 @@ void pseudopot_cell_vnl::init_vnl_alpha(void)          // pengfei Li 2018-3-23
 	GlobalV::ofs_running<<"\n Init Non-Local PseudoPotential table( including L index) : ";
 	for (int it = 0;it < GlobalC::ucell.ntype;it++)  
 	{
-		const int nbeta = GlobalC::ucell.atoms[it].nbeta;
-		int kkbeta = GlobalC::ucell.atoms[it].kkbeta;
+		const int nbeta = GlobalC::ucell.atoms[it].ncpp.nbeta;
+		int kkbeta = GlobalC::ucell.atoms[it].ncpp.kkbeta;
 
 		//mohan modify 2008-3-31
 		//mohan add kkbeta>0 2009-2-27
@@ -613,15 +615,15 @@ void pseudopot_cell_vnl::init_vnl_alpha(void)          // pengfei Li 2018-3-23
 				for (int iq = 0; iq < GlobalV::NQX; iq++)
 				{
 					const double q = iq * GlobalV::DQ;
-					ModuleBase::Sphbes::Spherical_Bessel(kkbeta, GlobalC::ucell.atoms[it].r, q, L, jl);
+					ModuleBase::Sphbes::Spherical_Bessel(kkbeta, GlobalC::ucell.atoms[it].ncpp.r, q, L, jl);
 					
 					for (int ir = 0;ir < kkbeta;ir++)
 					{
-						aux[ir] = GlobalC::ucell.atoms[it].betar(ib, ir) * jl[ir] * 
-								  GlobalC::ucell.atoms[it].r[ir] * GlobalC::ucell.atoms[it].r[ir];
+						aux[ir] = GlobalC::ucell.atoms[it].ncpp.betar(ib, ir) * jl[ir] * 
+								  GlobalC::ucell.atoms[it].ncpp.r[ir] * GlobalC::ucell.atoms[it].ncpp.r[ir];
 					}
 					double vqint;
-					ModuleBase::Integral::Simpson_Integral(kkbeta, aux, GlobalC::ucell.atoms[it].rab, vqint);
+					ModuleBase::Integral::Simpson_Integral(kkbeta, aux, GlobalC::ucell.atoms[it].ncpp.rab, vqint);
 					this->tab_alpha(it, ib, L, iq) = vqint * pref;
 				}
 			}
@@ -653,3 +655,83 @@ int pseudopot_cell_vnl::calculate_nqx(const double &ecutwfc,const double &dq)
 //----------------------------------------------------------
 	return points_of_table + 1; 
 }
+
+// ----------------------------------------------------------------------
+void pseudopot_cell_vnl::cal_effective_D(void)
+{
+    ModuleBase::TITLE("pseudopot_cell_vnl", "cal_effective_D");
+
+    /*
+	recalculate effective coefficient matrix for non-local pseudo-potential
+	1. assign to each atom from element;
+	2. extend to each spin when nspin larger than 1
+	3. rotate to effective matrix when spin-orbital coupling is used
+	*/
+
+    for (int iat = 0; iat < GlobalC::ucell.nat; iat++)
+    {
+        const int it = GlobalC::ucell.iat2it[iat];
+        const int nht = GlobalC::ucell.atoms[it].ncpp.nh;
+        // nht: number of beta functions per atom type
+        for (int is = 0; is < GlobalV::NSPIN; is++)
+        {
+            for (int ih = 0; ih < nht; ih++)
+            {
+                for (int jh = ih; jh < nht; jh++)
+                {
+                    if (GlobalV::LSPINORB)
+                    {
+                        this->deeq_nc(is, iat, ih, jh) = this->dvan_so(is, it, ih, jh);
+                        this->deeq_nc(is, iat, jh, ih) = this->dvan_so(is, it, jh, ih);
+                    }
+                    else if (GlobalV::NSPIN == 4)
+                    {
+                        if (is == 0)
+                        {
+                            this->deeq_nc(is, iat, ih, jh) = this->dvan(it, ih, jh);
+                            this->deeq_nc(is, iat, jh, ih) = this->dvan(it, ih, jh);
+                        }
+                        else if (is == 1)
+                        {
+                            this->deeq_nc(is, iat, ih, jh) = std::complex<double>(0.0, 0.0);
+                            this->deeq_nc(is, iat, jh, ih) = std::complex<double>(0.0, 0.0);
+                        }
+                        else if (is == 2)
+                        {
+                            this->deeq_nc(is, iat, ih, jh) = std::complex<double>(0.0, 0.0);
+                            this->deeq_nc(is, iat, jh, ih) = std::complex<double>(0.0, 0.0);
+                        }
+                        else if (is == 3)
+                        {
+                            this->deeq_nc(is, iat, ih, jh) = this->dvan(it, ih, jh);
+                            this->deeq_nc(is, iat, jh, ih) = this->dvan(it, ih, jh);
+                        }
+                    }
+                    else
+                    {
+                        this->deeq(is, iat, ih, jh) = this->dvan(it, ih, jh);
+                        this->deeq(is, iat, jh, ih) = this->dvan(it, ih, jh);
+                        // in most of pseudopotential files, number of projections of one orbital is only one, 
+                        // which lead to diagonal matrix of dion
+                        // when number larger than 1, non-diagonal dion should be calculated.
+                        if(ih != jh && std::fabs(this->deeq(is, iat, ih, jh))>0.0)
+                        {
+                            this->multi_proj = true;
+                        }
+                    }
+                }
+            }
+        }
+    }
+#ifdef __CUDA
+    cudaMemcpy(this->d_deeq,
+               this->deeq.ptr,
+               GlobalV::NSPIN * GlobalC::ucell.nat * this->nhm * this->nhm * sizeof(double),
+               cudaMemcpyHostToDevice);
+	cudaMemcpy(this->d_deeq_nc,
+           this->deeq_nc.ptr,
+           GlobalV::NSPIN * GlobalC::ucell.nat * this->nhm * this->nhm * sizeof(std::complex<double>),
+           cudaMemcpyHostToDevice);
+#endif
+    return;
+} 

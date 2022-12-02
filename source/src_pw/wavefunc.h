@@ -17,16 +17,9 @@ class wavefunc : public WF_atomic
 
     // allocate memory
     psi::Psi<std::complex<double>>* allocate(const int nks);
-    void allocate_ekb_wg(const int nks);
 
     int out_wfc_pw; //qianrui modify 2020-10-19
     int out_wfc_r=0; // Peize Lin add 2021.11.21
-
-    // et    : (nks,nbnd),eigenvalues of the hamiltonian
-    // wg	 : the weight of each k point and band
-	double **ekb;		   // band energy at each k point, each band.
-	bool   allocate_ekb;   // flag
-    ModuleBase::matrix wg;
 
     // init_wfc : "random",or "atomic" or "file"
     std::string init_wfc;
@@ -43,28 +36,31 @@ class wavefunc : public WF_atomic
 	void LCAO_in_pw_k(const int &ik, ModuleBase::ComplexMatrix &wvf);
 	void LCAO_in_pw_k_q(const int &ik, ModuleBase::ComplexMatrix &wvf, ModuleBase::Vector3<double> q);   // pengfei 2016-11-23
 
-	// evc: get the initial wave functions from diagnalized the PAO
-	// orbitals first.
-	void diago_PAO_in_pw_k(const int &ik, psi::Psi<std::complex<double>> &wvf);
-    void diago_PAO_in_pw_k(const int &ik, ModuleBase::ComplexMatrix &wvf);
-
 	// used if k dependent staff is ready.
 	void prepare_k(void);
 
-	void diago_PAO_in_pw_k2(const int &ik, psi::Psi<std::complex<double>> &wvf, hamilt::Hamilt* phm_in = nullptr);
+	void diago_PAO_in_pw_k2(const int &ik, psi::Psi<std::complex<double>> &wvf, hamilt::Hamilt<double>* phm_in = nullptr);
     void diago_PAO_in_pw_k2(const int &ik, ModuleBase::ComplexMatrix &wvf);
-
+	
+    void diago_PAO_in_pw_k2_device(const psi::DEVICE_CPU* ctx, const int &ik, psi::Psi<std::complex<double>, psi::DEVICE_CPU> &wvf, hamilt::Hamilt<double, psi::DEVICE_CPU>* phm_in = nullptr);
+#if ((defined __CUDA) || (defined __ROCM))
+    void diago_PAO_in_pw_k2_device(const psi::DEVICE_GPU* ctx, const int &ik, psi::Psi<std::complex<double>, psi::DEVICE_GPU> &wvf, hamilt::Hamilt<double, psi::DEVICE_GPU>* phm_in = nullptr);
+#endif
     int get_R(int ix, int iy, int iz);     // pengfei 2016-11-23
 
     int iw2it(int iw);
     int iw2ia(int iw);
 
-    void init_after_vc(const int nks, psi::Psi<std::complex<double>>* psi_in=nullptr); //LiuXh 20180515
+    void init_after_vc(const int nks); //LiuXh 20180515
 
     private: // pengfei 2016-11-23
 
     ModuleBase::Vector3<int> ***R;
     int ** Rmax;
+
+    using resmem_complex_op = psi::memory::resize_memory_op<std::complex<double>, psi::DEVICE_GPU>;
+    using delmem_complex_op = psi::memory::delete_memory_op<std::complex<double>, psi::DEVICE_GPU>;
+    using syncmem_complex_h2d_op = psi::memory::synchronize_memory_op<std::complex<double>, psi::DEVICE_GPU, psi::DEVICE_CPU>;
 };
 
 #endif //wavefunc

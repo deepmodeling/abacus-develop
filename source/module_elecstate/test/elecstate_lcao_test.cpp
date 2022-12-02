@@ -26,7 +26,6 @@
 #include "module_neighbor/sltk_atom_arrange.h"
 #include "module_pw/pw_basis_k.h"
 #include "module_xc/xc_functional.h"
-#include "module_xc/exx_global.h"
 #include "src_io/restart.h"
 
 Magnetism::Magnetism(){}
@@ -58,7 +57,7 @@ namespace GlobalC
     energy en;
     Structure_Factor sf;
     K_Vectors kv;
-    UnitCell_pseudo ucell;
+    UnitCell ucell;
     pseudopot_cell_vnl ppcell;
     ModulePW::PW_Basis* rhopw;
     ModulePW::PW_Basis_Big *bigpw = static_cast<ModulePW::PW_Basis_Big*>(rhopw);
@@ -75,43 +74,22 @@ XC_Functional::XC_Functional(){}
 XC_Functional::~XC_Functional(){}
 int XC_Functional::get_func_type(){return 0;}
 
-#ifdef __MPI
-#include "src_ri/exx_lcao.h"
-Exx_Lcao::Exx_Info::Exx_Info( const Exx_Global::Exx_Info &info_global )
-    :hybrid_type(info_global.hybrid_type),hse_omega(info_global.hse_omega){}
-Exx_Lcao::Exx_Lcao(const Exx_Global::Exx_Info &info_global ):info(info_global){}
-namespace GlobalC
-{
-    Exx_Global exx_global;
-    Exx_Lcao exx_lcao(GlobalC::exx_global.info); 
-}
-#endif
-
 namespace WF_Local
 {
-    int read_lowf(double** ctot, const int& is, const Parallel_Orbitals* ParaV, psi::Psi<double>*) {return 1;};
-    int read_lowf_complex(std::complex<double>** ctot, const int& ik, const Parallel_Orbitals* ParaV, psi::Psi<std::complex<double> >*) {return 1;}
+    int read_lowf(double** ctot, const int& is, const Parallel_Orbitals* ParaV, psi::Psi<double>*, elecstate::ElecState*) {return 1;};
+    int read_lowf_complex(std::complex<double>** ctot, const int& ik, const Parallel_Orbitals* ParaV, psi::Psi<std::complex<double> >*, elecstate::ElecState*) {return 1;}
     void write_lowf(const std::string &name, double **ctot, const ModuleBase::matrix& ekb, const ModuleBase::matrix& wg) {}
     void write_lowf_complex(const std::string &name, std::complex<double>** ctot, const int &ik, const ModuleBase::matrix& ekb, const ModuleBase::matrix& wg) {}
 }
 
 //mock the unrelated functions in charge.cpp
-#include "src_pw/use_fft.h"
 #include "src_pw/occupy.h"
-namespace GlobalC {Use_FFT UFFT;}
-Use_FFT::Use_FFT(){}
-Use_FFT::~Use_FFT(){}
-void Use_FFT::ToRealSpace(const int &is, const ModuleBase::ComplexMatrix &vg, double *vr, ModulePW::PW_Basis* rho_basis) {return;}
-void Use_FFT::ToRealSpace(const std::complex<double> *vg, double *vr, ModulePW::PW_Basis* rho_basis) {return;};
 bool Occupy::use_gaussian_broadening = false;
-bool Occupy::use_tetrahedron_method = false;
-double Magnetism::get_nelup(void) {return 0;}
-double Magnetism::get_neldw(void) {return 0;}
 #ifdef __MPI
 void Parallel_Grid::zpiece_to_all(double *zpiece, const int &iz, double *rho){}
 #endif
 
-void Restart::load_disk(const std::string mode, const int i) const {}
+void Restart::load_disk(const std::string mode, const int i, double** rho) const {}
 
 void set_pw()
 {
@@ -175,7 +153,7 @@ void init()
     tmp2->setbxyz(GlobalC::bigpw->bx,GlobalC::bigpw->by,GlobalC::bigpw->bz);
 
     //GlobalC::ucell.setup(INPUT.latname, INPUT.ntype, INPUT.lmaxmax, INPUT.init_vel, INPUT.fixed_axes);
-    GlobalC::ucell.setup("test", 1, 2, false, "None");
+    GlobalC::ucell.setup("none", 1, 2, false, "None");
     GlobalC::ucell.setup_cell(GlobalC::ORB, GlobalV::global_pseudo_dir, GlobalV::stru_file, GlobalV::ofs_running);
     GlobalC::CHR.cal_nelec();
     int out_mat_r = 0;
@@ -199,7 +177,7 @@ namespace elecstate
                       LCAO_Hamilt* uhm_in,
                       Local_Orbital_wfc* lowf_in,
                       ModuleBase::matrix &wg_in)
-                      :elecstate::ElecStateLCAO(chg_in,klist_in,nks_in,nbands_in,loc_in,uhm_in,lowf_in)
+                      :elecstate::ElecStateLCAO(chg_in,klist_in,nks_in,loc_in,uhm_in,lowf_in)
                       {
                           this->wg = wg_in;
                       }               
@@ -212,6 +190,16 @@ namespace elecstate
 
     void ElecState::calculate_weights(void) {}
     void ElecState::calEBand() {}
+    void ElecState::init_ks(
+        Charge *chg_in, // pointer for class Charge
+        const K_Vectors *klist_in,
+        int nk_in
+    ) {
+        this->charge = chg_in;
+        this->klist = klist_in;
+        this->ekb.create(nk_in, GlobalV::NBANDS);
+        this->wg.create(nk_in, GlobalV::NBANDS);
+    }
 }
 
 template<class T>
@@ -309,7 +297,6 @@ class ElecStateLCAOPrepare
     void set_env()
     {
         GlobalV::NBANDS = nbands;
-        GlobalC::wf.wg = this->wg;
 
         GlobalC::kv.nks = GlobalC::kv.nkstot = nk;
         GlobalC::kv.isk.resize(nk,0);
@@ -505,7 +492,7 @@ class ElecStateLCAOPrepare
         {
             psik = (psi::Psi<std::complex<double>>*)(&(this->psi));
         }
-        loc.allocate_dm_wfc(GlobalC::GridT.lgd, lowf, psigo, psik);
+        loc.allocate_dm_wfc(GlobalC::GridT.lgd, nullptr, lowf, psigo, psik);
 
         elecstate::MockElecStateLCAO mesl(&GlobalC::CHR,&GlobalC::kv,nk,nbands,&loc,&uhm,&lowf,this->wg);
 

@@ -1,3 +1,6 @@
+//Obsolete code, not compiled
+//Please fix it by removing globalc::hm
+
 #include "diago_lapack.h"
 
 #include "../src_pw/global.h"
@@ -12,7 +15,7 @@ typedef hamilt::MatrixBlock<std::complex<double>> matcd;
 namespace hsolver
 {
 
-void DiagoLapack::diag(hamilt::Hamilt *phm_in, psi::Psi<std::complex<double>> &psi, double *eigenvalue_in)
+void DiagoLapack::diag(hamilt::Hamilt<double> *phm_in, psi::Psi<std::complex<double>> &psi, double *eigenvalue_in)
 {
     ModuleBase::TITLE("DiagoLapack", "diag");
     assert(GlobalV::NPROC == 1);
@@ -48,8 +51,6 @@ void DiagoLapack::diag(hamilt::Hamilt *phm_in, psi::Psi<std::complex<double>> &p
         {
             for (int iw = 0; iw < GlobalV::NLOCAL; iw++)
             {
-                // wfc_k_grid[ib][iw] = hvec(iw, ib);
-                // wfc_k.c[ib * GlobalV::NLOCAL + iw] = wfc_k_grid[ib][iw];
                 psi.get_pointer()[ib * GlobalV::NLOCAL + iw] = hvec(iw, ib);
             }
         }
@@ -75,7 +76,7 @@ void DiagoLapack::diag(hamilt::Hamilt *phm_in, psi::Psi<std::complex<double>> &p
     }
 }
 
-void DiagoLapack::diag(hamilt::Hamilt *phm_in, psi::Psi<double> &psi, double *eigenvalue_in)
+void DiagoLapack::diag(hamilt::Hamilt<double> *phm_in, psi::Psi<double> &psi, double *eigenvalue_in)
 {
     ModuleBase::TITLE("DiagoLapack", "diag");
 }

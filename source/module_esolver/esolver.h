@@ -2,8 +2,7 @@
 #define ESOLVER_H
 
 #include "../input.h"
-#include "../module_base/matrix.h"
-#include "../module_cell/unitcell_pseudo.h"
+#include "../module_cell/unitcell.h"
 #include "../src_pw/energy.h"
 //--------------temporary----------------------------
 #include "module_psi/psi.h"
@@ -33,16 +32,16 @@ class ESolver
         }
     }
 
-    // virtual void Init(Input_EnSolver &inp, matrix &lattice_v)=0
-    virtual void Init(Input& inp, UnitCell_pseudo& cell) = 0;
+        //virtual void Init(Input_EnSolver &inp, matrix &lattice_v)=0
+        virtual void Init(Input& inp, UnitCell& cell) = 0;
 
     // They shoud be add after atom class is refactored
     // virtual void UpdateLatAtom(ModuleBase::matrix &lat_in, Atom &atom_in);
     // virtual void UpdateLat(ModuleBase::matrix &lat_in);
     // virtual void UpdateAtom(Atom &atom_in);
 
-    virtual void Run(int istep, UnitCell_pseudo& cell) = 0;
-    virtual void Run(int istep, UnitCell_pseudo& cell, ModuleBase::Vector3<double>* vel) = 0;
+    virtual void Run(int istep, UnitCell& cell) = 0;
+    virtual void Run(int istep, UnitCell& cell, ModuleBase::Vector3<double>* vel) = 0;
 
     // Deal with exx and other calculation than scf/md/relax:
     //  such as nscf, istate-charge or envelope

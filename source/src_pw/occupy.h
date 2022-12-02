@@ -19,18 +19,11 @@ public:
     Occupy();
     ~Occupy();
 
-    static void calculate_weights(void);
-
     static void decision(const std::string &name,const std::string &smearing_method,const double &smearing_sigma);
 
     static const bool& gauss(void) 
 	{
         return use_gaussian_broadening;
-    }
-
-    static const bool& tetra(void) 
-	{
-        return use_tetrahedron_method;
     }
 
     static const bool& fix(void) 
@@ -44,9 +37,6 @@ public:
     static bool use_gaussian_broadening;
     static int gaussian_type;
     static double gaussian_parameter;
-
-    // tetrahedron
-    static bool use_tetrahedron_method;
 
     // fixed occupations
     static bool fixed_occupations;

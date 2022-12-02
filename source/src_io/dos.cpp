@@ -1,143 +1,6 @@
 #include "dos.h"
 #include "../src_pw/global.h"
 #include "../src_parallel/parallel_reduce.h"
-#ifdef __LCAO
-void Dos::calculate_Mulliken(const std::string &fa, Gint_Gamma &gg)
-{
-	ModuleBase::TITLE("Dos","calculate_Mulliken");
-	std::ofstream ofs;
-	
-	if(GlobalV::MY_RANK==0)
-	{
-		ofs.open(fa.c_str());
-		ofs << std::setiosflags(ios::left);
-	}
-
-	GlobalV::ofs_running << "\n CALCULATE THE MULLIkEN ANALYSIS FOR EACH ATOM" << std::endl;
-
-	if(GlobalV::GAMMA_ONLY_LOCAL)
-	{
-		double** mulliken = new double* [GlobalV::NSPIN];
-		for(int is=0; is<GlobalV::NSPIN; ++is)
-		{
-			mulliken[is] = new double[GlobalV::NLOCAL];
-			ModuleBase::GlobalFunc::ZEROS(mulliken[is], GlobalV::NLOCAL);
-		}
-		
-		gg.cal_mulliken( mulliken );	
-
-		if(GlobalV::MY_RANK==0)
-		{
-			// normalize the mulliken charge.
-			for(int is=0; is<GlobalV::NSPIN; ++is)
-			{
-				for(int iw=0; iw<GlobalV::NLOCAL; ++iw)
-				{
-					mulliken[is][iw] *= GlobalC::ucell.omega/GlobalC::rhopw->nxyz;
-					if( abs(mulliken[is][iw]) < 1.0e-10 ) mulliken[is][iw] = 0.0; 
-				}
-			}
-
-			// calculate the total charge of the system.
-			double sch = 0.0;
-			ofs << std::setprecision(8);
-			for(int is=0; is<GlobalV::NSPIN; ++is)
-			{
-				double sss = 0.0;
-				for(int iw=0; iw<GlobalV::NLOCAL; ++iw)
-				{
-					sch += mulliken[is][iw];
-					sss += mulliken[is][iw];
-				}
-				ofs << sss << " (Total charge all spin " << is+1 << ")" << std::endl;
-			}
-			ofs << sch << " (Total charge of the system)" << std::endl;
-			 
-			 // output information for each atom.
-			int iw_all=0;
-			for(int it=0; it<GlobalC::ucell.ntype; ++it)
-			{
-				Atom* atom = &GlobalC::ucell.atoms[it];
-				ofs << std::setw(5) << "TYPE" << std::setw(8) << "ATOM" << std::setw(5) << "SPIN";
-				ofs << std::setprecision(3);
-				for(int l=0; l<= atom->nwl; ++l)
-				{
-					for(int m=0; m<2*l+1; ++m)
-					{
-						if(l==0) ofs << std::setw(12) << "s";
-						else if(l==1){ std::stringstream ss;ss << "p" << m+1;ofs << std::setw(12) << ss.str(); }
-						else if(l==2){ std::stringstream ss;ss << "d" << m+1;ofs << std::setw(12) << ss.str(); }
-						else if(l==3){ std::stringstream ss;ss << "f" << m+1;ofs << std::setw(12) << ss.str(); }
-						else if(l==4){ std::stringstream ss;ss << "g" << m+1;ofs << std::setw(12) << ss.str(); }
-					}
-				} 
-
-				ofs << std::setw(12) << "sum/zv";
-				ofs << std::endl;
-
-				double scht = 0.0;
-				for(int ia=0; ia<atom->na; ++ia)
-				{
-					for(int is=0; is<GlobalV::NSPIN; is++)
-					{
-						int iw_alllll = iw_all;
-						
-						double sum = 0.0;
-						ofs << std::setw(5) << atom->label 
-							<< std::setw(8) << ia+1 << std::setw(5) << is+1;
-						for(int l=0; l<=atom->nwl; ++l)
-						{
-							// sum up the multi-zeta charge.
-							double *mmm = new double[2*l+1];
-							ModuleBase::GlobalFunc::ZEROS(mmm, 2*l+1);
-							for(int n=0; n<atom->l_nchi[l]; ++n)
-							{
-								for(int m=0; m<2*l+1; ++m)
-								{
-									mmm[m] += mulliken[is][iw_alllll];
-									++iw_alllll;
-								}
-							}
-
-							for(int m=0; m<2*l+1; ++m)
-							{
-								ofs << std::setw(12) << mmm[m];
-								sum += mmm[m];
-							}
-							delete[] mmm;
-						}
-				
-						ofs << sum << "/" << atom->zv/GlobalV::NSPIN;
-						ofs << std::endl;
-
-						scht += sum;
-					}
-
-					iw_all += atom->nw;
-				}
-
-				ofs << std::setprecision(8);
-				ofs << scht << " (Total charge of atom species " << atom->label << ")" << std::endl;
-			}
-		}
-
-		for(int is=0; is<GlobalV::NSPIN; ++is)
-		{
-			delete[] mulliken[is];
-		}	
-		delete[] mulliken;
-	}
-	else
-	{
-		ModuleBase::WARNING_QUIT("Mulliken Charge","Not implement yet.");	
-	}	
-	
-
-	if(GlobalV::MY_RANK==0) ofs.close();
-
-	return;
-}
-#endif
 
 bool Dos::calculate_dos
 (
@@ -153,7 +16,7 @@ bool Dos::calculate_dos
 	const std::vector<double> &wk,//weight of k points
 	const ModuleBase::matrix &wg,//weight of (kpoint,bands)
 	const int &nbands,// number of bands
-	double** ekb//store energy for each k point and each band
+	const ModuleBase::matrix &ekb//store energy for each k point and each band
 )
 {
 	ModuleBase::TITLE("Dos","calculae_dos");
@@ -223,7 +86,7 @@ bool Dos::calculate_dos
 				for(int ib = 0; ib < nbands; ib++)
 				{
 					//  compare et and e_old(e_new) in ev unit.
-					if( ekb[ik][ib]*ModuleBase::Ry_to_eV >= e_old && ekb[ik][ib]*ModuleBase::Ry_to_eV < e_new)
+					if( ekb(ik, ib)*ModuleBase::Ry_to_eV >= e_old && ekb(ik, ib)*ModuleBase::Ry_to_eV < e_new)
 					{
 						// because count is 'double' type,so
 						// we can't write count++ or ++count
@@ -300,14 +163,12 @@ bool Dos::calculate_dos
 void Dos::nscf_fermi_surface(const std::string &out_band_dir,
 	const int &nks,
 	const int &nband,
-	double **ekb)
+	const ModuleBase::matrix &ekb)
 {
 #ifdef __MPI
 
 	int start = 1;
 	int end = GlobalV::NBANDS;
-
-	assert(GlobalC::wf.allocate_ekb);
 
 	std::ofstream ofs;
 	if(GlobalV::MY_RANK==0)
@@ -354,7 +215,7 @@ void Dos::nscf_fermi_surface(const std::string &out_band_dir,
 
 				for(int ib = 0; ib < nband; ib++)
 				{
-					ofs << " " << ekb[ik_now][ib] * ModuleBase::Ry_to_eV;
+					ofs << " " << ekb(ik_now, ib) * ModuleBase::Ry_to_eV;
 				}
 				ofs << std::endl;
 
@@ -385,7 +246,7 @@ void Dos::nscf_band(
 	const int &nks, 
 	const int &nband,
 	const double &fermie,
-	double** ekb)
+	const ModuleBase::matrix& ekb)
 {
 	ModuleBase::TITLE("Dos","nscf_band");
 
@@ -421,7 +282,7 @@ void Dos::nscf_band(
 					ofs << " " << klength[ik] << " ";
 					for(int ib = 0; ib < nband; ib++)
 					{
-						ofs << " " << (ekb[ik_now+is*nks][ib]-fermie) * ModuleBase::Ry_to_eV;
+						ofs << " " << (ekb(ik_now+is*nks, ib)-fermie) * ModuleBase::Ry_to_eV;
 					}
 					ofs << std::endl;
 					ofs.close();	
@@ -464,7 +325,7 @@ void Dos::nscf_band(
 			ofs<<std::setw(12)<<ik + 1;
 			for(int ibnd = 0; ibnd < nband; ibnd++)
 			{
-				ofs <<std::setw(15) << (ekb[ik][ibnd]-fermie) * ModuleBase::Ry_to_eV;
+				ofs <<std::setw(15) << (ekb(ik, ibnd)-fermie) * ModuleBase::Ry_to_eV;
 			}
 			ofs<<std::endl;
 		}

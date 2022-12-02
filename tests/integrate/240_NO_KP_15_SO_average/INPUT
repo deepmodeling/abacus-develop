@@ -34,7 +34,7 @@ lspinorb             1
 
 #Parameters (LCAO)
 basis_type lcao
-ks_solver           genelpa
+ks_solver           scalapack_gvx
 chg_extrap       second-order
 out_dm             0
 pw_diag_thr                0.00001

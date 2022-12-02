@@ -1,7 +1,6 @@
 #include "global.h"
 #include "hip/hip_runtime.h"
 #include "hipfft.h"
-#include "use_fft.h"
 using namespace HipCheck;
 
 template <class T2> __global__ void kernel_set(int size, T2 *dst, const T2 *src, const int *index_list)
@@ -60,11 +59,12 @@ void RoundTrip_kernel(const hipblasComplex *psi, const float *vr, const int *fft
 					   reinterpret_cast<float2 *>(psic),
 					   reinterpret_cast<const float2 *>(psi),
 					   fft_index);
-
+/*I comment out here because globalc::ufft is removed
 	CHECK_CUFFT(hipfftExecC2C(GlobalC::UFFT.fft_handle,
 							  reinterpret_cast<hipfftComplex *>(psic),
 							  reinterpret_cast<hipfftComplex *>(psic),
 							  HIPFFT_BACKWARD));
+*/
 	hipDeviceSynchronize();
 	// CHECK_CUFFT(hipfftDestroy(cufftplan_gpu));
 
@@ -83,10 +83,12 @@ void RoundTrip_kernel(const hipblasComplex *psi, const float *vr, const int *fft
 
 	// hipfftHandle cufftplan_gpu2;
 	// CHECK_CUFFT(hipfftPlan3d(&cufftplan_gpu, GlobalC::rhopw->nx, GlobalC::rhopw->ny, GlobalC::rhopw->nz, HIPFFT_Z2Z));
+/*I comment out here because globalc::ufft is removed
 	CHECK_CUFFT(hipfftExecC2C(GlobalC::UFFT.fft_handle,
 							  reinterpret_cast<hipfftComplex *>(psic),
 							  reinterpret_cast<hipfftComplex *>(psic),
 							  HIPFFT_FORWARD));
+*/							  
 	hipDeviceSynchronize();
 	// CHECK_CUFFT(hipfftDestroy(cufftplan_gpu));
 
@@ -125,10 +127,12 @@ void RoundTrip_kernel(const hipblasDoubleComplex *psi,
 					   reinterpret_cast<double2 *>(psic),
 					   reinterpret_cast<const double2 *>(psi),
 					   fft_index);
+/*I comment out here because globalc::ufft is removed
 	CHECK_CUFFT(hipfftExecZ2Z(GlobalC::UFFT.fft_handle,
 							  (hipfftDoubleComplex *)(psic),
 							  (hipfftDoubleComplex *)(psic),
 							  HIPFFT_BACKWARD));
+*/
 	hipDeviceSynchronize();
 
 	hipLaunchKernelGGL(HIP_KERNEL_NAME(kernel_roundtrip<double, double2>),
@@ -142,10 +146,12 @@ void RoundTrip_kernel(const hipblasDoubleComplex *psi,
 
 	// hipfftHandle cufftplan_gpu2;
 	// CHECK_CUFFT(hipfftPlan3d(&cufftplan_gpu, GlobalC::rhopw->nx, GlobalC::rhopw->ny, GlobalC::rhopw->nz, HIPFFT_Z2Z));
+/*I comment out here because globalc::ufft is removed
 	CHECK_CUFFT(hipfftExecZ2Z(GlobalC::UFFT.fft_handle,
 							  reinterpret_cast<hipfftDoubleComplex *>(psic),
 							  reinterpret_cast<hipfftDoubleComplex *>(psic),
 							  HIPFFT_FORWARD));
+*/							  
 	hipDeviceSynchronize();
 	// CHECK_CUFFT(hipfftDestroy(cufftplan_gpu));
 

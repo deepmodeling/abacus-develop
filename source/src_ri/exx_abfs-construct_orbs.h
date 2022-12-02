@@ -6,7 +6,7 @@
 #include <limits>
 #include "../module_orbital/ORB_atomic_lm.h"
 
-class LCAO_Orbitals;
+	class LCAO_Orbitals;
 
 class Exx_Abfs::Construct_Orbs
 {
@@ -26,6 +26,10 @@ public:
 	static std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> orth_orbs( 
 		const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> &orbs,
 		const double norm_threshold=std::numeric_limits<double>::min() );
+
+	static void print_orbs_size(
+		const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> &orbs,
+		std::ostream &os);		
 		
 private:
 	static std::vector<std::vector<std::vector<std::vector<double>>>> psi_mult_psi( 

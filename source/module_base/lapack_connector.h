@@ -60,8 +60,14 @@ extern "C"
     // Peize Lin add dsptrf and dsptri 2016-06-21, to compute inverse real symmetry indefinit matrix.
     // dpotrf computes the Cholesky factorization of a real symmetric positive definite matrix
     // while dpotri taks its output to perform matrix inversion
+    void spotrf_(const char*const uplo, const int*const n, float*const A, const int*const lda, int*const info);
     void dpotrf_(const char*const uplo, const int*const n, double*const A, const int*const lda, int*const info);
+    void cpotrf_(const char*const uplo, const int*const n, std::complex<float>*const A, const int*const lda, int*const info);
+    void zpotrf_(const char*const uplo, const int*const n, std::complex<double>*const A, const int*const lda, int*const info);
+    void spotri_(const char*const uplo, const int*const n, float*const A, const int*const lda, int*const info);
     void dpotri_(const char*const uplo, const int*const n, double*const A, const int*const lda, int*const info);
+    void cpotri_(const char*const uplo, const int*const n, std::complex<float>*const A, const int*const lda, int*const info);
+    void zpotri_(const char*const uplo, const int*const n, std::complex<double>*const A, const int*const lda, int*const info);
 
     // zgetrf computes the LU factorization of a general matrix
     // while zgetri takes its output to perform matrix inversion
@@ -159,6 +165,20 @@ private:
         return aux;
     }
 
+    static inline
+    std::complex<double>* transpose(const std::complex<double>* a, const int n, const int lda, const int nbase_x)
+    {
+        std::complex<double>* aux = new std::complex<double>[lda*n];
+        for (int i = 0; i < n; ++i)
+        {
+            for (int j = 0; j < lda; ++j)
+            {
+                aux[j * n + i] = a[i * nbase_x + j];
+            }
+        }
+        return aux;
+    }
+
     // Transpose the fortran-form real-std::complex array to the std::complex matrix.
     static inline
     void transpose(const std::complex<double>* aux, ModuleBase::ComplexMatrix& a, const int n, const int lda)
@@ -224,6 +244,31 @@ public:
         delete[] aux;
         delete[] bux;
     }
+    // wrap function of fortran lapack routine zhegv.
+    static inline
+    void zhegv(	const int itype, const char jobz, const char uplo, const int n, std::complex<double>* a,
+                const int lda, const std::complex<double>* b, const int ldb, double* w, std::complex<double>* work,
+                int lwork, double* rwork, int info, int ld_real)
+    {	// Transpose the std::complex matrix to the fortran-form real-std::complex array.
+        std::complex<double>* aux = LapackConnector::transpose(a, n, lda, ld_real);
+        std::complex<double>* bux = LapackConnector::transpose(b, n, ldb, ld_real);
+
+        // call the fortran routine
+        zhegv_(&itype, &jobz, &uplo, &n, aux, &lda, bux, &ldb, w, work, &lwork, rwork, &info);
+        // Transpose the fortran-form real-std::complex array to the std::complex matrix.
+        // LapackConnector::transpose(aux, a, n, lda);
+        // LapackConnector::transpose(bux, b, n, ldb);
+        for (int i = 0; i < n; ++i)
+        {
+            for (int j = 0; j < lda; ++j)
+            {
+                a[j * ld_real + i] = aux[i*lda+j];
+            }
+        }
+        // free the memory.
+        delete[] aux;
+        delete[] bux;
+    }
 
     // wrap function of fortran lapack routine zheev.
     static inline
@@ -252,6 +297,38 @@ public:
         delete[] bux;
         delete[] zux;
 
+    }
+    // wrap function of fortran lapack routine zheev.
+    static inline
+    void zhegvx( const int itype, const char jobz, const char range, const char uplo,
+                 const int n, const std::complex<double>* a, const int lda, const std::complex<double>* b,
+                 const int ldb, const double vl, const double vu, const int il, const int iu,
+                 const double abstol, const int m, double* w, std::complex<double>* z, const int ldz,
+                 std::complex<double>* work, const int lwork, double* rwork, int* iwork,
+                 int* ifail, int info, int nbase_x)
+    {
+        // Transpose the std::complex matrix to the fortran-form real-std::complex array.
+        std::complex<double>* aux = LapackConnector::transpose(a, n, lda, nbase_x);
+        std::complex<double>* bux = LapackConnector::transpose(b, n, ldb, nbase_x);
+        std::complex<double>* zux = new std::complex<double>[n*iu];// mohan modify 2009-08-02
+
+        // call the fortran routine
+        zhegvx_(&itype, &jobz, &range, &uplo, &n, aux, &lda, bux, &ldb, &vl,
+                &vu, &il,&iu, &abstol, &m, w, zux, &ldz, work, &lwork, rwork, iwork, ifail, &info);
+
+        // Transpose the fortran-form real-std::complex array to the std::complex matrix
+        for (int i = 0; i < iu; ++i)
+        {
+            for (int j = 0; j < n; ++j)
+            {
+                z[j * nbase_x + i] = zux[i*n+j];
+            }
+        }
+
+        // free the memory.
+        delete[] aux;
+        delete[] bux;
+        delete[] zux;
     }
 
 	// calculate the eigenvalues and eigenfunctions of a real symmetric matrix.
@@ -345,32 +422,79 @@ public:
 
 	// Peize Lin add 2016-07-09
 	static inline
-	void dpotrf( const char &uplo, const int &n, double*const A, const int &lda, int &info )
+	void potrf( const char &uplo, const int &n, float*const A, const int &lda, int &info )
+	{
+		const char uplo_changed = change_uplo(uplo);
+		spotrf_( &uplo_changed, &n, A, &lda, &info );
+	}	
+	static inline
+	void potrf( const char &uplo, const int &n, double*const A, const int &lda, int &info )
 	{
 		const char uplo_changed = change_uplo(uplo);
 		dpotrf_( &uplo_changed, &n, A, &lda, &info );
 	}	
+	static inline
+	void potrf( const char &uplo, const int &n, std::complex<float>*const A, const int &lda, int &info )
+	{
+		const char uplo_changed = change_uplo(uplo);
+		cpotrf_( &uplo_changed, &n, A, &lda, &info );
+	}	
+	static inline
+	void potrf( const char &uplo, const int &n, std::complex<double>*const A, const int &lda, int &info )
+	{
+		const char uplo_changed = change_uplo(uplo);
+		zpotrf_( &uplo_changed, &n, A, &lda, &info );
+	}	
+
 	
 	// Peize Lin add 2016-07-09
 	static inline
-	void dpotri( const char &uplo, const int &n, double*const A, const int &lda, int &info )
+	void potri( const char &uplo, const int &n, float*const A, const int &lda, int &info )
+	{
+		const char uplo_changed = change_uplo(uplo);
+		spotri_( &uplo_changed, &n, A, &lda, &info);		
+	}	
+	static inline
+	void potri( const char &uplo, const int &n, double*const A, const int &lda, int &info )
 	{
 		const char uplo_changed = change_uplo(uplo);
 		dpotri_( &uplo_changed, &n, A, &lda, &info);		
-	}	
+	}
+	static inline
+	void potri( const char &uplo, const int &n, std::complex<float>*const A, const int &lda, int &info )
+	{
+		const char uplo_changed = change_uplo(uplo);
+		cpotri_( &uplo_changed, &n, A, &lda, &info);		
+	}
+	static inline
+	void potri( const char &uplo, const int &n, std::complex<double>*const A, const int &lda, int &info )
+	{
+		const char uplo_changed = change_uplo(uplo);
+		zpotri_( &uplo_changed, &n, A, &lda, &info);		
+	}
 
 	// Peize Lin add 2016-07-09
 	static inline
-	void dpotrf( const char &uplo, const int &n, ModuleBase::matrix &A, const int &lda, int &info )
+	void potrf( const char &uplo, const int &n, ModuleBase::matrix &A, const int &lda, int &info )
 	{
-		dpotrf( uplo, n, A.c, lda, info );
+		potrf( uplo, n, A.c, lda, info );
+	}	
+	static inline
+	void potrf( const char &uplo, const int &n, ModuleBase::ComplexMatrix &A, const int &lda, int &info )
+	{
+		potrf( uplo, n, A.c, lda, info );
 	}	
 	
 	// Peize Lin add 2016-07-09
 	static inline
-	void dpotri( const char &uplo, const int &n, ModuleBase::matrix &A, const int &lda, int &info )
+	void potri( const char &uplo, const int &n, ModuleBase::matrix &A, const int &lda, int &info )
 	{
-		dpotri( uplo, n, A.c, lda, info);		
+		potri( uplo, n, A.c, lda, info);		
+	}	
+	static inline
+	void potri( const char &uplo, const int &n, ModuleBase::ComplexMatrix &A, const int &lda, int &info )
+	{
+		potri( uplo, n, A.c, lda, info);		
 	}	
 	
 	// Peize Lin add 2019-04-14

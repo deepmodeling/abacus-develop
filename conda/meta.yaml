@@ -1,3 +1,7 @@
+# Install ABACUS by conda:
+#   conda create -n abacus_env abacus -c deepmodeling -c conda-forge
+#   conda activate abacus_env
+
 {% set version = os.popen('git describe --tags --abbrev=0').read().strip('\n').lstrip('v').replace('-', '_') %}
 
 package:

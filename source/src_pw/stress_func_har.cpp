@@ -1,12 +1,13 @@
 #include "./stress_func.h"
 #include "./myfunc.h"
-#include "./H_Hartree_pw.h"
+#include "module_elecstate/potentials/H_Hartree_pw.h"
 #include "../module_base/timer.h"
 #include "global.h"
 
 //calculate the Hartree part in PW or LCAO base
-void Stress_Func::stress_har(ModuleBase::matrix& sigma, ModulePW::PW_Basis* rho_basis, const bool is_pw)
+void Stress_Func::stress_har(ModuleBase::matrix& sigma, ModulePW::PW_Basis* rho_basis, const bool is_pw, const Charge* const chr)
 {
+    ModuleBase::TITLE("Stress_Func","stress_har");
 	ModuleBase::timer::tick("Stress_Func","stress_har");
 	double shart;
 
@@ -18,7 +19,7 @@ void Stress_Func::stress_har(ModuleBase::matrix& sigma, ModulePW::PW_Basis* rho_
 	{
 		for (int ir=0; ir<rho_basis->nrxx; ir++)
 		{
-			aux[ir] += std::complex<double>( GlobalC::CHR.rho[is][ir], 0.0 );
+			aux[ir] += std::complex<double>( chr->rho[is][ir], 0.0 );
 		}
 	}
 	//=============================
@@ -80,8 +81,8 @@ void Stress_Func::stress_har(ModuleBase::matrix& sigma, ModulePW::PW_Basis* rho_
 	
 	for(int l=0;l<3;l++)
 	{
-		if(is_pw) sigma(l,l) -= H_Hartree_pw::hartree_energy /GlobalC::ucell.omega;
-		else sigma(l,l) += H_Hartree_pw::hartree_energy /GlobalC::ucell.omega;
+		if(is_pw) sigma(l,l) -= elecstate::H_Hartree_pw::hartree_energy /GlobalC::ucell.omega;
+		else sigma(l,l) += elecstate::H_Hartree_pw::hartree_energy /GlobalC::ucell.omega;
 		for(int m=0;m<l;m++)
 		{
 			sigma(m,l)=sigma(l,m);

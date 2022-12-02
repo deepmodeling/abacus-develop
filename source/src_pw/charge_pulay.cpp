@@ -1,88 +1,18 @@
-#include "charge_pulay.h"
+#include "charge_mixing.h"
 #include "global.h"
 #include "../module_base/inverse_matrix.h"
 #include "../src_parallel/parallel_reduce.h"
 #include "../module_base/memory.h"
 
-Charge_Pulay::Charge_Pulay()
+void Charge_Mixing::Pulay_mixing(Charge* chr)
 {
-    rstep = 0;
-	dstep = rstep - 1;//alway like this.
-    initp = false;
-}
-Charge_Pulay::~Charge_Pulay()
-{
-    if (initp)
-    {
-		// delete: Rrho[i] = rho_out[i] - rho_in[i];
-        for (int is=0; is<GlobalV::NSPIN; is++)
-        {
-            for (int i=0; i<rstep; i++)
-            {
-                delete[] Rrho[is][i];
-            }
-            delete[] Rrho[is];
-        }
-        delete[] Rrho;
-
-		// delete: dRrho[i] = Rrho[i+1] - Rrho[i]
-       	for (int is=0; is<GlobalV::NSPIN; is++)
-		{
-			for (int i=0; i<dstep; i++)
-            {
-                delete[] dRrho[is][i];
-				delete[] drho[is][i];
-            }
-            delete[] dRrho[is];
-			delete[] drho[is];
-		}
-        delete[] dRrho;
-		delete[] drho;
-
-		// dimension: dstep
-		delete[] dRR;
-		delete[] alpha;
-
-		// dimension of rho_save2(GlobalV::NSPIN, GlobalC::rhopw->nrxx)
-		for (int is=0; is<GlobalV::NSPIN; is++)
-		{
-			delete[] rho_save2[is];
-		}
-		delete[] rho_save2;	
-    }
-}
-
-
-void Charge_Pulay::Pulay_mixing(void)
-{
-//  ModuleBase::TITLE("Charge_Pulay","Pulay_mixing");
+    ModuleBase::TITLE("Charge_Mixing","Pulay_mixing");
 	rstep = this->mixing_ndim;
 	dstep = this->mixing_ndim - 1;
 	assert(dstep>0);
 
-	const int scheme = 1;
-	
-	// scheme 2 will only work correctly for the first
-	// time to calculate residual std::vector norm,
-	// which is one way to check if scheme 1 right.
-	// scheme 1 is correct to provide the final charge
-	// density.
-
-	// (1) allocate 
-    if(GlobalV::FINAL_SCF && totstep==0) initp = false;
-	this->allocate_pulay(scheme);
-
-	// irstep: iteration step for rstep (Rrho)
-	// idstep: iteration step for dstep (dRrho)
-	// totstep only used for the first few iterations.
-	// At the beginning of each ion iteration, reset the three variables.
-	// mohan add 2010-07-16
-	if(this->new_e_iteration)
-	{
-		irstep = 0;
-		idstep = 0;
-		totstep = 0;
-	}
+	// (1) allocate
+	this->allocate_Pulay();
 
     if (irstep==rstep) irstep=0;
 	if (idstep==dstep) idstep=0;
@@ -95,7 +25,7 @@ void Charge_Pulay::Pulay_mixing(void)
 	// calculate "dR^{i} = R^{i+1} - R^{i}"
 	// calculate "drho^{i} = rho^{i+1} - rho^{i}"
 	//----------------------------------------------
-	this->generate_datas(irstep, idstep, totstep);
+	this->generate_datas(irstep, idstep, totstep, chr->rho, chr->rho_save);
 
 	// not enough steps, not full matrix.
 	if(totstep < dstep) 
@@ -107,7 +37,7 @@ void Charge_Pulay::Pulay_mixing(void)
 
 		if(premix == 1)
 		{
-			this->generate_Abar(scheme,Abar);
+			this->generate_Abar(Abar);
 			
 			//-----------------------------
 			// inverse part of the matrix.
@@ -138,22 +68,18 @@ void Charge_Pulay::Pulay_mixing(void)
 
 			this->generate_dRR(irstep);
 
-			this->generate_alpha(scheme);
+			this->generate_alpha();
 
 			for(int is=0; is<GlobalV::NSPIN; is++)
 			{
-				this->generate_new_rho(is,irstep);
+				this->generate_new_rho(is,irstep,chr->rho,chr->rho_save);
 			}
 		}
 
 		if(premix == 2)
 		{
 			// if not enough step, take kerker mixing method.	
-			for(int is=0; is<GlobalV::NSPIN; is++)
-			{
-				//this->Kerker_mixing( this->rho[is], this->rhog[is], this->rho_save[is] );
-				this->plain_mixing( this->rho[is], this->rho_save[is]);
-			}
+			this->plain_mixing(chr);
 		}
 
 		if(totstep>0)
@@ -166,22 +92,19 @@ void Charge_Pulay::Pulay_mixing(void)
 	else
 	{
 		// generate matrix A = <dR|dR>
-		this->generate_Abar(scheme,Abar);
+		this->generate_Abar(Abar);
 		ModuleBase::matrix A(Abar);
 
 		// inverse A matrix to become Abar.
-		this->inverse_real_symmetry_matrix(scheme,Abar);
+		this->inverse_real_symmetry_matrix(Abar);
+		
+		this->generate_dRR(irstep);
 
-		if(scheme==1)
-		{
-			this->generate_dRR(irstep);
-		}
-
-		this->generate_alpha(scheme);
+		this->generate_alpha();
 
 		for(int is=0; is<GlobalV::NSPIN; is++)
 		{
-			this->generate_new_rho(is,irstep);
+			this->generate_new_rho(is,irstep,chr->rho,chr->rho_save);
 		}
 
 		++irstep;
@@ -189,50 +112,23 @@ void Charge_Pulay::Pulay_mixing(void)
 		++totstep;	
 	}
 
-    // output file name
-    /*
-    std::stringstream ofname;
-    ofname << GlobalV::global_out_dir << "PULAY_MIXING_" << counter << ".dat";
-    this->write_rho(ofname.str());
-
-    for(int i=0; i<counter; i++)
-    {
-    	std::stringstream ifname;
-    	ifname << GlobalV::global_out_dir << "PULAY_MIXING_" << counter << ".dat";
-    	this->read_rho(ifname.str());
-    }
-    */
-	#if TEST_EXX_LCAO==1
-		std::cout<<"Charge_Pulay::Pulay_mixing\t"<<__FILE__<<"\t"<<__LINE__<<std::endl;
-		std::cout<<"irstep:\t"<<irstep<<std::endl;
-		std::cout<<"idstep:\t"<<idstep<<std::endl;
-		std::cout<<"rstep:\t"<<rstep<<std::endl;
-		std::cout<<"dstep:\t"<<dstep<<std::endl;
-		std::cout<<"totstep:\t"<<totstep<<std::endl;
-	#elif TEST_EXX_LCAO==-1
-		#error
-	#endif
 	return;		
 }
 
-void Charge_Pulay::set_new_e_iteration( const bool new_e_iteration_in )		// Peize Lin add 2018-11-01
+void Charge_Mixing::reset()		// Peize Lin add 2018-11-01
 {
-	this->new_e_iteration = new_e_iteration_in;
+	this->new_e_iteration = true;
 	
-	if(this->new_e_iteration)
-	{
-		irstep = 0;
-		idstep = 0;
-		totstep = 0;
-	}	
+	irstep = 0;
+	idstep = 0;
+	totstep = 0;
 }
 
-void Charge_Pulay::allocate_pulay(const int &scheme)
+void Charge_Mixing::allocate_Pulay()
 {
-	//std::cout << "\n initp = " << initp << std::endl;
 	if(!this->initp)
 	{
-		ModuleBase::TITLE("Charge_Pulay","allocate_pulay");
+		ModuleBase::TITLE("Charge_Mixing","allocate_pulay");
 		ModuleBase::GlobalFunc::NOTE("rstep is used to record Rrho");
 		if(GlobalV::test_charge)ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"rstep",rstep);
 		ModuleBase::GlobalFunc::NOTE("dstep is used to record dRrho, drho");
@@ -251,7 +147,7 @@ void Charge_Pulay::allocate_pulay(const int &scheme)
 				ModuleBase::GlobalFunc::ZEROS( Rrho[is][i], GlobalC::rhopw->nrxx );
         	}
 		}
-    	ModuleBase::Memory::record("Charge_Pulay","Rrho", GlobalV::NSPIN*rstep*GlobalC::rhopw->nrxx,"double");
+    	ModuleBase::Memory::record("Charge_Mixing","Rrho", GlobalV::NSPIN*rstep*GlobalC::rhopw->nrxx,"double");
 
 		// (2) allocate "dRrho[i] = Rrho[i+1] - Rrho[i]" of the last few steps.
 		// allocate "drho[i] = rho[i+1] - rho[i]" of the last few steps.
@@ -275,21 +171,13 @@ void Charge_Pulay::allocate_pulay(const int &scheme)
 				ModuleBase::GlobalFunc::ZEROS( drho[is][i], GlobalC::rhopw->nrxx);
 			}
 		}
-    	ModuleBase::Memory::record("Charge_Pulay","dRrho", GlobalV::NSPIN*dstep*GlobalC::rhopw->nrxx,"double");
-    	ModuleBase::Memory::record("Charge_Pulay","drho", GlobalV::NSPIN*dstep*GlobalC::rhopw->nrxx,"double");
-    	ModuleBase::Memory::record("Charge_Pulay","rho_save2", GlobalV::NSPIN*GlobalC::rhopw->nrxx,"double");
+    	ModuleBase::Memory::record("Charge_Mixing","dRrho", GlobalV::NSPIN*dstep*GlobalC::rhopw->nrxx,"double");
+    	ModuleBase::Memory::record("Charge_Mixing","drho", GlobalV::NSPIN*dstep*GlobalC::rhopw->nrxx,"double");
+    	ModuleBase::Memory::record("Charge_Mixing","rho_save2", GlobalV::NSPIN*GlobalC::rhopw->nrxx,"double");
 
 		ModuleBase::GlobalFunc::NOTE("Allocate Abar = <dRrho_j | dRrho_i >, dimension = dstep.");
-		if(scheme==1)
-		{
-			this->Abar.create(dstep, dstep);
-    		ModuleBase::Memory::record("Charge_Pulay","Abar", dstep*dstep,"double");
-		}
-		else if(scheme==2)
-		{
-			this->Abar.create(rstep, rstep);
-			ModuleBase::Memory::record("Charge_Pulay","Abar", rstep*rstep,"double");
-		}
+		this->Abar.create(dstep, dstep);
+		ModuleBase::Memory::record("Charge_Mixing","Abar", dstep*dstep,"double");
 
 		// (4) allocate dRR = <delta R|R>
 		ModuleBase::GlobalFunc::NOTE("Allocate dRR = < dR | R >, dimension = dstep");
@@ -331,17 +219,53 @@ void Charge_Pulay::allocate_pulay(const int &scheme)
 	return;
 }
 
+void Charge_Mixing::deallocate_Pulay()
+{
+	// delete: Rrho[i] = rho_out[i] - rho_in[i];
+	for (int is=0; is<GlobalV::NSPIN; is++)
+	{
+		for (int i=0; i<rstep; i++)
+		{
+			delete[] Rrho[is][i];
+		}
+		delete[] Rrho[is];
+	}
+	delete[] Rrho;
+
+	// delete: dRrho[i] = Rrho[i+1] - Rrho[i]
+	for (int is=0; is<GlobalV::NSPIN; is++)
+	{
+		for (int i=0; i<dstep; i++)
+		{
+			delete[] dRrho[is][i];
+			delete[] drho[is][i];
+		}
+		delete[] dRrho[is];
+		delete[] drho[is];
+	}
+	delete[] dRrho;
+	delete[] drho;
+
+	// dimension: dstep
+	delete[] dRR;
+	delete[] alpha;
+
+	// dimension of rho_save2(GlobalV::NSPIN, GlobalC::rhopw->nrxx)
+	for (int is=0; is<GlobalV::NSPIN; is++)
+	{
+		delete[] rho_save2[is];
+	}
+	delete[] rho_save2;	
+}
 
 // calculate < dR | dR >
 // if spin is considered, double the size.
 // < dR1,dR2 | dR1,dR2 > = < dR1 | dR1 > + < dR2 | dR2 >
-void Charge_Pulay::generate_Abar(const int &scheme, ModuleBase::matrix &A)const
+void Charge_Mixing::generate_Abar(ModuleBase::matrix &A)const
 {
 	int step = 0;
 
-	// default is scheme = 1.
-	if(scheme==1) step=dstep;
-	if(scheme==2) step=rstep;
+	step=dstep;
 
 	A.zero_out();
 
@@ -351,14 +275,7 @@ void Charge_Pulay::generate_Abar(const int &scheme, ModuleBase::matrix &A)const
 		{
 			for(int j=0; j<=i; j++)
 			{
-				if(scheme==1)
-				{
-					A(i,j) += this->calculate_residual_norm( this->dRrho[is][j], this->dRrho[is][i] );
-				}
-				else if(scheme==2)
-				{
-					A(i,j) += this->calculate_residual_norm( this->Rrho[is][j], this->Rrho[is][i] );
-				}
+				A(i,j) += this->calculate_residual_norm( this->dRrho[is][j], this->dRrho[is][i] );
 				A(j,i) = A(i,j);
 			}
 		}
@@ -368,7 +285,7 @@ void Charge_Pulay::generate_Abar(const int &scheme, ModuleBase::matrix &A)const
 }
 
 #include "../module_base/complexmatrix.h"
-void Charge_Pulay::inverse_preA(const int &dim, ModuleBase::matrix &preA)const
+void Charge_Mixing::inverse_preA(const int &dim, ModuleBase::matrix &preA)const
 {
 	ModuleBase::ComplexMatrix B(dim, dim);
 	ModuleBase::ComplexMatrix C(dim, dim);
@@ -382,7 +299,7 @@ void Charge_Pulay::inverse_preA(const int &dim, ModuleBase::matrix &preA)const
 	ModuleBase::Inverse_Matrix_Complex IMC;
 	IMC.init(dim);
 	IMC.using_zheev(B,C);
-//	out.printcm("Inverse B", C);
+
 	for(int i=0; i<dim; i++)
 	{
 		for(int j=0; j<dim; j++)
@@ -393,17 +310,15 @@ void Charge_Pulay::inverse_preA(const int &dim, ModuleBase::matrix &preA)const
 	return;
 }
 
-void Charge_Pulay::inverse_real_symmetry_matrix(const int &scheme, ModuleBase::matrix &A)const // indicate the spin.
+void Charge_Mixing::inverse_real_symmetry_matrix(ModuleBase::matrix &A)const // indicate the spin.
 {
-//	ModuleBase::TITLE("Charge_Pulay","inverse_Abar");
+//	ModuleBase::TITLE("Charge_Mixing","inverse_Abar");
 
 	int step = 0;
 
-	if(scheme==1) step=dstep;
-	if(scheme==2) step=rstep;
+	step=dstep;
 
-	// Notice that it's a symmetry matrix!!!
-//	out.printrm("Abar",Abar);	
+	// Notice that it's a symmetry matrix!!!	
 	ModuleBase::ComplexMatrix B(step,step);
 	ModuleBase::ComplexMatrix C(step,step);
 	for(int i=0; i<step; i++)
@@ -418,8 +333,6 @@ void Charge_Pulay::inverse_real_symmetry_matrix(const int &scheme, ModuleBase::m
 	IMC.init(step);
 	IMC.using_zheev(B,C);
 
-//	out.printcm("Inverse B", C);
-
 	for(int i=0; i<step; i++)
 	{
 		for(int j=0; j<step; j++)
@@ -427,13 +340,11 @@ void Charge_Pulay::inverse_real_symmetry_matrix(const int &scheme, ModuleBase::m
 			A(i,j) = C(i,j).real();
 		}
 	}
-
-//	out.printrm("Inverse Abar",A);	
 	
 	return;
 }
 
-void Charge_Pulay::generate_dRR(const int &m)
+void Charge_Mixing::generate_dRR(const int &m)
 {
 	ModuleBase::GlobalFunc::ZEROS(dRR, dstep);
 	for(int is=0; is<GlobalV::NSPIN; is++)
@@ -447,64 +358,27 @@ void Charge_Pulay::generate_dRR(const int &m)
 	return;
 }
 
-// scheme1 : use dstep to genearte Abar(dstep, dstep)
-// scheme2 : use rstep to generate Abar(rstep, rstep)
-void Charge_Pulay::generate_alpha(const int &scheme)
+// use dstep to genearte Abar(dstep, dstep)
+void Charge_Mixing::generate_alpha()
 {
-//	ModuleBase::TITLE("Charge_Pulay","generate_alpha");
+//	ModuleBase::TITLE("Charge_Mixing","generate_alpha");
 
 	ModuleBase::GlobalFunc::ZEROS(alpha, dstep);
-	if(scheme==1)
+	for(int i=0; i<dstep; i++)
 	{
-		for(int i=0; i<dstep; i++)
+		for(int j=0; j<dstep; j++)
 		{
-			for(int j=0; j<dstep; j++)
-			{
-				// Abar is a symmetry matrix.
-				this->alpha[i] -= this->Abar(j,i) * this->dRR[j];
-			}	
-		}
-	}	
-	else if(scheme==2)
-	{
-		double sum = 0.0;
-		for(int i=0; i<rstep; i++)
-		{
-			for(int j=0; j<rstep; j++)
-			{
-				sum += this->Abar(i,j);	
-			} 
-		}
-		assert(sum!=0.0);
-		for(int i=0; i<rstep; i++)
-		{
-			for(int j=0; j<rstep; j++)
-			{
-				this->alpha[i] += this->Abar(j,i);
-			}
-			this->alpha[i] /= sum;
-			//std::cout << "\n alpha[" << i << "]=" << alpha[i];
-		}
-
-		// test if sum(alpha)=1;
-		double suma = 0.0;
-		for(int i=0; i<rstep; i++)
-		{
-			suma += alpha[i];
-		}
-//		std::cout << "\n suma = " << suma << std::endl;
+			// Abar is a symmetry matrix.
+			this->alpha[i] -= this->Abar(j,i) * this->dRR[j];
+		}	
 	}
 
 	return;
 }
 
-void Charge_Pulay::generate_new_rho(const int &is, const int &m)
+void Charge_Mixing::generate_new_rho(const int &is, const int &m, double** rho, double** rho_save)
 {
-//	ModuleBase::TITLE("Charge_Pulay","generate_new_rho");
-
-//	std::cout << " generate_new_rho " << std::endl;
-//	this->check_ne(rho[is]);
-//	this->check_ne(rho_save[is]);
+//	ModuleBase::TITLE("Charge_Mixing","generate_new_rho");
 	
 	double mixp = this->mixing_beta;
 	
@@ -514,7 +388,7 @@ void Charge_Pulay::generate_new_rho(const int &is, const int &m)
 	
 	for(int ir=0; ir<GlobalC::rhopw->nrxx; ir++)
 	{
-		rhonew[ir] = this->rho_save[is][ir] + mixp * this->Rrho[is][m][ir];
+		rhonew[ir] = rho_save[is][ir] + mixp * this->Rrho[is][m][ir];
 		for(int i=0; i<dstep; i++)
 		{
 			rhonew[ir] += this->alpha[i] * ( this->drho[is][i][ir] + mixp * this->dRrho[is][i][ir] );
@@ -522,27 +396,21 @@ void Charge_Pulay::generate_new_rho(const int &is, const int &m)
 	}
 
 	ModuleBase::GlobalFunc::DCOPY(rhonew, rho[is], GlobalC::rhopw->nrxx);
-	
-	// this is done in save_rho_before_sum_bands
-//	ModuleBase::GlobalFunc::DCOPY(rho[is], rho_save[is], GlobalC::rhopw->nrxx);
-
-
 	delete[] rhonew;
 
 	return;
 }
 
-void Charge_Pulay::generate_residual_vector(double *residual, const double* rho_out, const double* rho_in)const
+void Charge_Mixing::generate_residual_vector(double *residual, const double* rho_out, const double* rho_in)const
 {
 	for (int ir=0; ir<GlobalC::rhopw->nrxx; ir++)
 	{
 		residual[ir]= rho_out[ir] - rho_in[ir];
 	}
-	//std::cout << "\n Calculate residual norm = " << calculate_residual_norm(residual, residual) << std::endl;
 	return;
 }
 
-double Charge_Pulay::calculate_residual_norm(double *residual1, double* residual2)const
+double Charge_Mixing::calculate_residual_norm(double *residual1, double* residual2)const
 {
 	// calculate the norm of the residual std::vector:
 	// (the target to minimize in Pulay's algorithm)
@@ -552,14 +420,13 @@ double Charge_Pulay::calculate_residual_norm(double *residual1, double* residual
 		rnorm += residual1[ir]*residual2[ir];
 	}
 	Parallel_Reduce::reduce_double_pool(rnorm); // mohan fix bug 2010-07-22
-	//GlobalV::ofs_running << " rnorm = " << rnorm << std::endl;
 	return rnorm;
 }
 
 
 // calculate "dR^{i} = R^{i+1} - R^{i}"
 // calculate "drho^{i} = rho^{i+1} - rho^{i}"
-void Charge_Pulay::generate_datas(const int &irstep, const int &idstep, const int &totstep)
+void Charge_Mixing::generate_datas(const int &irstep, const int &idstep, const int &totstep, double** rho, double** rho_save)
 {
 	//===============================================
 	// calculate the important "Rrho".
@@ -570,17 +437,14 @@ void Charge_Pulay::generate_datas(const int &irstep, const int &idstep, const in
 	ModuleBase::GlobalFunc::NOTE("Generate Residual std::vector from rho and rho_save.");
     for (int is=0; is<GlobalV::NSPIN; is++)
     {
-//		std::cout << " generate datas , spin=" << is << std::endl;
-//		double c1=check_ne(rho[is]);
-//		double c2=check_ne(rho_save[is]);
-		this->generate_residual_vector( this->Rrho[is][irstep], this->rho[is], this->rho_save[is]);
+		this->generate_residual_vector( this->Rrho[is][irstep], rho[is], rho_save[is]);
 
 		if(this->mixing_gg0 > 0.0)
 		{
 			std::complex<double> *kerpulay = new std::complex<double>[GlobalC::rhopw->npw];
 			double* kerpulayR = new double[GlobalC::rhopw->nrxx];
 			
-			set_rhog(Rrho[is][irstep], kerpulay);
+			GlobalC::rhopw->real2recip(Rrho[is][irstep], kerpulay);
 
 			const double fac = this->mixing_gg0;
 			const double gg0 = std::pow(fac * 0.529177 /GlobalC::ucell.tpiba, 2);
@@ -592,7 +456,7 @@ void Charge_Pulay::generate_datas(const int &irstep, const int &idstep, const in
 				kerpulay[ig] = (1 - filter_g[ig]) * kerpulay[ig];
 			}
 
-			set_rhor(kerpulay, kerpulayR);
+			GlobalC::rhopw->recip2real(kerpulay, kerpulayR);
 			for(int ir=0; ir<GlobalC::rhopw->nrxx; ir++)
 			{
 				Rrho[is][irstep][ir] = Rrho[is][irstep][ir] - kerpulayR[ir];
@@ -619,19 +483,13 @@ void Charge_Pulay::generate_datas(const int &irstep, const int &idstep, const in
 		if(GlobalV::test_charge)ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "last irstep",lastR); 
 
 		if(lastR < 0) lastR += rstep;
-		//std::cout << "\n nowR(irstep) = " << nowR;
-		//std::cout << "\n lastR(irstep-1) = " << lastR;
 		for (int is=0; is<GlobalV::NSPIN; is++)
 		{
 			for (int ir=0; ir<GlobalC::rhopw->nrxx; ir++)
 			{
 				this->dRrho[is][idstep][ir] = this->Rrho[is][nowR][ir] - this->Rrho[is][lastR][ir];
-				this->drho[is][idstep][ir] = this->rho_save[is][ir] - this->rho_save2[is][ir];
+				this->drho[is][idstep][ir] = rho_save[is][ir] - this->rho_save2[is][ir];
 			}
-			//std::cout << "\n Calculate <dR|dR> norm = " 
-			//<< calculate_residual_norm(dRrho[is][idstep], dRrho[is][idstep]);
-			//std::cout << "\n Calculate <drho|drho> norm = " 
-			//<< calculate_residual_norm(drho[is][idstep],drho[is][idstep]) << std::endl;
 		}
 	}
 
@@ -641,7 +499,7 @@ void Charge_Pulay::generate_datas(const int &irstep, const int &idstep, const in
 	ModuleBase::GlobalFunc::NOTE("Calculate drho = rho_{in}^{i+1} - rho_{in}^{i}");
 	for(int is=0; is<GlobalV::NSPIN; is++)
 	{
-		ModuleBase::GlobalFunc::DCOPY(this->rho_save[is], this->rho_save2[is], GlobalC::rhopw->nrxx);
+		ModuleBase::GlobalFunc::DCOPY(rho_save[is], this->rho_save2[is], GlobalC::rhopw->nrxx);
 	}
 	return;
 }

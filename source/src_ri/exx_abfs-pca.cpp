@@ -22,8 +22,8 @@ std::vector<std::vector<std::pair<std::vector<double>,ModuleBase::matrix>>> Exx_
 	const double kmesh_times )
 {
 	ModuleBase::TITLE("Exx_Abfs::PCA::cal_PCA");
-std::ofstream ofs(GlobalC::exx_lcao.test_dir.process+"time_"+ModuleBase::GlobalFunc::TO_STRING(GlobalV::MY_RANK),std::ofstream::app);
-timeval t_start;
+//std::ofstream ofs(GlobalC::exx_lcao.test_dir.process+"time_"+ModuleBase::GlobalFunc::TO_STRING(GlobalV::MY_RANK),std::ofstream::app);
+//timeval t_start;
 	
 	const ModuleBase::Element_Basis_Index::Range
 		&& range_lcaos = Exx_Abfs::Abfs_Index::construct_range( lcaos );
@@ -35,13 +35,13 @@ timeval t_start;
 	const ModuleBase::Element_Basis_Index::IndexLNM
 		&& index_abfs = ModuleBase::Element_Basis_Index::construct_index( range_abfs );
 		
-ofs<<range_lcaos<<std::endl;
-ofs<<range_abfs<<std::endl;
+//ofs<<range_lcaos<<std::endl;
+//ofs<<range_abfs<<std::endl;
 
-	const int Lmax_bak = Exx_Abfs::Lmax;
-	Exx_Abfs::Lmax = std::numeric_limits<int>::min();
+	const int Lmax_bak = GlobalC::exx_info.info_ri.abfs_Lmax;
+	GlobalC::exx_info.info_ri.abfs_Lmax = std::numeric_limits<int>::min();
 	for( size_t T=0; T!=abfs.size(); ++T )
-		Exx_Abfs::Lmax = std::max( Exx_Abfs::Lmax, static_cast<int>(abfs[T].size())-1 );
+		GlobalC::exx_info.info_ri.abfs_Lmax = std::max( GlobalC::exx_info.info_ri.abfs_Lmax, static_cast<int>(abfs[T].size())-1 );
 
 	Exx_Abfs::Matrix_Orbs21 m_abfslcaos_lcaos;
 //gettimeofday( &t_start, NULL);
@@ -58,7 +58,7 @@ ofs<<range_abfs<<std::endl;
 	m_abfslcaos_lcaos.init_radial_table(delta_R);
 //ofs<<"TIME@m_abfslcaos_lcaos.init_radial_table\t"<<time_during(t_start)<<std::endl;
 
-	Exx_Abfs::Lmax = Lmax_bak;
+	GlobalC::exx_info.info_ri.abfs_Lmax = Lmax_bak;
 	
 	std::vector<std::vector<std::pair<std::vector<double>,ModuleBase::matrix>>> eig(abfs.size());
 	for( size_t T=0; T!=abfs.size(); ++T )
@@ -88,9 +88,9 @@ ofs<<range_abfs<<std::endl;
 			std::vector<double> eig_value(mm.nr);
 			
 			int info;
-gettimeofday( &t_start, NULL);
+//gettimeofday( &t_start, NULL);
 			LapackConnector::dsyev( 'V', 'U', mm, ModuleBase::GlobalFunc::VECTOR_TO_PTR(eig_value), info );
-ofs<<"TIME@LapackConnector::dsyev\t"<<time_during(t_start)<<std::endl;
+//ofs<<"TIME@LapackConnector::dsyev\t"<<time_during(t_start)<<std::endl;
 			if( info )
 			{
 				std::cout<<std::endl<<"info_dsyev = "<<info<<std::endl;
@@ -105,7 +105,7 @@ ofs<<"TIME@LapackConnector::dsyev\t"<<time_during(t_start)<<std::endl;
 //ofs<<"mm:"<<std::endl<<mm<<std::endl;
 		}
 	}
-ofs.close();
+//ofs.close();
 	
 	return eig;
 }

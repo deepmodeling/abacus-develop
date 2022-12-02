@@ -1,4 +1,3 @@
-#include "use_fft.h"
 #include "global.h"
 #include "cufft.h"
 using namespace CudaCheck;
@@ -54,13 +53,15 @@ void RoundTrip_kernel(const float2 *psi, const float *vr, const int *fft_index, 
     int block = (GlobalC::wf.npw + thread - 1) / thread;
     int block2 = (GlobalC::rhopw->nrxx + thread - 1) / thread;
     kernel_set<float2><<<block, thread>>>(GlobalC::wf.npw, psic, psi, fft_index);
-
+/*I comment out here because globalc::ufft is removed
     CHECK_CUFFT(cufftExecC2C(GlobalC::UFFT.fft_handle, psic, psic, CUFFT_INVERSE));
+*/    
     cudaDeviceSynchronize();
 
     kernel_roundtrip<float, float2><<<block2, thread>>>(GlobalC::rhopw->nrxx, psic, vr);
-
+/*I comment out here because globalc::ufft is removed
     CHECK_CUFFT(cufftExecC2C(GlobalC::UFFT.fft_handle, psic, psic, CUFFT_FORWARD));
+*/
     cudaDeviceSynchronize();
 
     int block3 = (GlobalC::rhopw->nrxx + thread - 1) / thread;
@@ -76,13 +77,15 @@ void RoundTrip_kernel(const double2 *psi, const double *vr, const int *fft_index
     int block = (GlobalC::wf.npw + thread - 1) / thread;
     int block2 = (GlobalC::rhopw->nrxx + thread - 1) / thread;
     kernel_set<double2><<<block, thread>>>(GlobalC::wf.npw, psic, psi, fft_index);
-
+/*I comment out here because globalc::ufft is removed
     CHECK_CUFFT(cufftExecZ2Z(GlobalC::UFFT.fft_handle, psic, psic, CUFFT_INVERSE));
+*/    
     cudaDeviceSynchronize();
 
     kernel_roundtrip<double, double2><<<block2, thread>>>(GlobalC::rhopw->nrxx, psic, vr);
-
+/*I comment out here because globalc::ufft is removed
     CHECK_CUFFT(cufftExecZ2Z(GlobalC::UFFT.fft_handle, psic, psic, CUFFT_FORWARD));
+*/
     cudaDeviceSynchronize();
 
     int block3 = (GlobalC::rhopw->nrxx + thread - 1) / thread;

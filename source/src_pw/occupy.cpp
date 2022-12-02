@@ -17,129 +17,13 @@ Occupy::~Occupy(){}
 bool Occupy::use_gaussian_broadening = false;
 int Occupy::gaussian_type;
 double Occupy::gaussian_parameter;
-bool Occupy::use_tetrahedron_method = false;
 bool Occupy::fixed_occupations = false;
-
-
-void Occupy::calculate_weights(void)
-{
-	ModuleBase::TITLE("Occupy","calculate_weights");
-
-	// for test
-//	std::cout << " gaussian_broadening = " << use_gaussian_broadening << std::endl;
-//	std::cout << " tetrahedron_method = " << use_tetrahedron_method << std::endl;
-//	std::cout << " fixed_occupations = " << fixed_occupations << std::endl;
-
-	if(GlobalV::KS_SOLVER=="selinv")
-	{
-		GlobalV::ofs_running << " Could not calculate occupation." << std::endl;
-		return;
-	}
-
-    if (	!use_gaussian_broadening &&
-            !use_tetrahedron_method &&
-            !fixed_occupations)
-    {
-        if (GlobalV::TWO_EFERMI)
-        {
-            iweights(GlobalC::kv.nks, GlobalC::kv.wk, GlobalV::NBANDS, GlobalC::ucell.magnet.get_nelup() , GlobalC::wf.ekb, GlobalC::en.ef_up, GlobalC::wf.wg, 0, GlobalC::kv.isk);
-            iweights(GlobalC::kv.nks, GlobalC::kv.wk, GlobalV::NBANDS, GlobalC::ucell.magnet.get_neldw() , GlobalC::wf.ekb, GlobalC::en.ef_dw, GlobalC::wf.wg, 1, GlobalC::kv.isk);
-			//ef = ( ef_up + ef_dw ) / 2.0_dp need??? mohan add 2012-04-16
-        }
-        else
-        {
-			// -1 means don't need to consider spin.
-            iweights(GlobalC::kv.nks, GlobalC::kv.wk, GlobalV::NBANDS, GlobalC::CHR.nelec, GlobalC::wf.ekb, GlobalC::en.ef, GlobalC::wf.wg, -1, GlobalC::kv.isk);
-        }
-    }
-    else if (use_tetrahedron_method)
-    {
-        ModuleBase::WARNING_QUIT("calculate_weights","not implemented yet,coming soon!");
-//		if(my_rank == 0)
-//		{
-//			tweights(GlobalC::kv.nkstot, nspin, GlobalV::NBANDS, GlobalC::CHR.nelec, ntetra,tetra, GlobalC::wf.et, GlobalC::en.ef, GlobalC::wf.wg);
-//		}
-    }
-    else if (use_gaussian_broadening)
-    {
-		if (GlobalV::TWO_EFERMI)
-		{
-			double demet_up = 0.0;
-			double demet_dw = 0.0;
-			Occupy::gweights(GlobalC::kv.nks, GlobalC::kv.wk, GlobalV::NBANDS, GlobalC::ucell.magnet.get_nelup(), gaussian_parameter, gaussian_type,
-			                 GlobalC::wf.ekb, GlobalC::en.ef_up, demet_up, GlobalC::wf.wg, 0, GlobalC::kv.isk);
-			Occupy::gweights(GlobalC::kv.nks, GlobalC::kv.wk, GlobalV::NBANDS, GlobalC::ucell.magnet.get_neldw(), gaussian_parameter, gaussian_type,
-			                 GlobalC::wf.ekb, GlobalC::en.ef_dw, demet_dw, GlobalC::wf.wg, 1, GlobalC::kv.isk);
-			GlobalC::en.demet = demet_up + demet_dw;
-
-		}
-		else
-		{
-			// -1 means is no related to spin.
-        	Occupy::gweights(GlobalC::kv.nks, GlobalC::kv.wk, GlobalV::NBANDS, GlobalC::CHR.nelec, gaussian_parameter, gaussian_type,
-                 GlobalC::wf.ekb, GlobalC::en.ef, GlobalC::en.demet, GlobalC::wf.wg, -1, GlobalC::kv.isk);
-
-		}
-
-        //qianrui fix a bug on 2021-7-21
-        Parallel_Reduce::reduce_double_allpool(GlobalC::en.demet);
-    }
-    else if (fixed_occupations)
-    {
-		// fix occupations need nelup and neldw.
-		// mohan add 2011-04-03
-		GlobalC::en.ef = - 1.0e+20;
-		for (int ik = 0;ik < GlobalC::kv.nks ;ik++)
-		{
-			for (int ibnd = 0;ibnd < GlobalV::NBANDS;ibnd++)
-			{
-				if (GlobalC::wf.wg(ik, ibnd) > 0.0)
-				{
-					GlobalC::en.ef = std::max( GlobalC::en.ef, GlobalC::wf.ekb[ik][ibnd]);
-				}
-			}
-		}
-    }
-
-    if (GlobalV::TWO_EFERMI)
-    {
-		Parallel_Reduce::gather_max_double_all( GlobalC::en.ef_up );
-		Parallel_Reduce::gather_max_double_all( GlobalC::en.ef_dw );
-    }
-    else
-    {
-		double ebotom = GlobalC::wf.ekb[0][0];
-		double etop = GlobalC::wf.ekb[0][0];
-		for(int ik=0; ik<GlobalC::kv.nks; ik++)
-		{
-			for(int ib=0; ib<GlobalV::NBANDS; ib++)
-			{
-				ebotom = min ( ebotom, GlobalC::wf.ekb[ik][ib] );
-				etop = max ( etop, GlobalC::wf.ekb[ik][ib] );
-			}
-		}
-
-		// parallel
-		Parallel_Reduce::gather_max_double_all( GlobalC::en.ef );
-		Parallel_Reduce::gather_max_double_all( etop );
-		Parallel_Reduce::gather_min_double_all( ebotom );
-
-		//not parallel yet!
-//		OUT(GlobalV::ofs_running,"Top    Energy (eV)", etop * ModuleBase::Ry_to_eV);
-//      OUT(GlobalV::ofs_running,"Fermi  Energy (eV)", GlobalC::en.ef * ModuleBase::Ry_to_eV);
-//		OUT(GlobalV::ofs_running,"Bottom Energy (eV)", ebotom * ModuleBase::Ry_to_eV);
-//		OUT(GlobalV::ofs_running,"Range  Energy (eV)", etop-ebotom * ModuleBase::Ry_to_eV);
-    }
-
-	return;
-}
 
 
 void Occupy::decision(const std::string &name,const std::string &smearing_method,const double &smearing_sigma)
 {
 	ModuleBase::TITLE("Occupy","decision");
     use_gaussian_broadening = false;
-    use_tetrahedron_method = false;
     fixed_occupations = false;
 
     gaussian_type = 0;
@@ -201,7 +85,7 @@ void Occupy::decision(const std::string &name,const std::string &smearing_method
     }
     else if (name == "tetrahedra")
     {
-        use_tetrahedron_method = true;
+        ModuleBase::WARNING_QUIT("occupy","not implemented yet!");
     }
     else if (name == "from_input")
     {

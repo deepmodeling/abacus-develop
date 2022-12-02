@@ -4,23 +4,19 @@
 #include "../module_base/global_function.h"
 #include "../module_base/global_variable.h"
 #include "../src_io/restart.h"
-#include "../module_relaxation/ions.h"
-#include "../src_lcao/exx_lip.h"
+#include "../module_relax/relax_driver.h"
 #include "VNL_in_pw.h"
-#include "charge_broyden.h"
+#include "charge_mixing.h"
 #include "energy.h"
-#include "../module_xc/exx_global.h"
+#ifdef __EXX
+#include "../src_ri/exx_lip.h"
+#include "../module_xc/exx_info.h"
+#endif
 #include "hamilt.h"
 #include "klist.h"
 #include "magnetism.h"
-#include "potential.h"
 #include "structure_factor.h"
 #include "../module_pw/pw_basis_k.h"
-#include "use_fft.h"
-#include "vdwd2.h"
-#include "vdwd2_parameters.h"
-#include "vdwd3.h"
-#include "vdwd3_parameters.h"
 #include "wavefunc.h"
 #include "../module_xc/xc_functional.h"
 
@@ -309,7 +305,6 @@ static const char *_hipfftGetErrorString(hipfftResult_t error)
 namespace GlobalC
 {
 extern K_Vectors kv;
-extern Use_FFT UFFT;
 extern Structure_Factor sf;
 extern ModulePW::PW_Basis* rhopw;
 extern ModulePW::PW_Basis_Big* bigpw;
@@ -317,25 +312,24 @@ extern ModulePW::PW_Basis_K* wfcpw;
 extern energy en;
 extern wavefunc wf;
 extern Hamilt hm;
-extern Exx_Global exx_global;
+#ifdef __EXX
+extern Exx_Info exx_info;
 extern Exx_Lip exx_lip;
+#endif
 extern pseudopot_cell_vnl ppcell;
 } // namespace GlobalC
 
-#include "../module_cell/unitcell_pseudo.h"
+#include "../module_cell/unitcell.h"
 #include "../module_symmetry/symmetry.h"
 #include "../src_parallel/parallel_grid.h"
 #include "../src_parallel/parallel_kpoints.h"
 namespace GlobalC
 {
-extern UnitCell_pseudo ucell;
-extern Charge_Broyden CHR;
-extern Potential pot;
+extern UnitCell ucell;
+extern Charge_Mixing CHR_MIX;
 extern ModuleSymmetry::Symmetry symm;
 extern Parallel_Grid Pgrid;
 extern Parallel_Kpoints Pkpoints;
-extern Vdwd2_Parameters vdwd2_para; // Peize Lin add 2021.03.09
-extern Vdwd3_Parameters vdwd3_para; // jiyy add 2021-05-02
 extern Restart restart; // Peize Lin add 2020.04.04
 } // namespace GlobalC
 

@@ -15,8 +15,7 @@ std::tuple<double,double,ModuleBase::matrix> XC_Functional::v_xc(
 	const int &nrxx, // number of real-space grid
 	const int &ncxyz, // total number of charge grid
 	const double &omega, // volume of cell
-    const double*const*const rho_in,
-	const double*const rho_core) // core charge density
+    const Charge* const chr) // core charge density
 {
     ModuleBase::TITLE("XC_Functional","v_xc");
     ModuleBase::timer::tick("XC_Functional","v_xc");
@@ -24,7 +23,7 @@ std::tuple<double,double,ModuleBase::matrix> XC_Functional::v_xc(
     if( (GlobalV::NSPIN == 1 || GlobalV::NSPIN == 2) && use_libxc)
     {
 #ifdef USE_LIBXC
-        return v_xc_libxc(nrxx, ncxyz, omega, rho_in, rho_core);
+        return v_xc_libxc(nrxx, ncxyz, omega, chr);
 #else
         ModuleBase::WARNING_QUIT("v_xc","compile with LIBXC");
 #endif
@@ -55,7 +54,7 @@ std::tuple<double,double,ModuleBase::matrix> XC_Functional::v_xc(
         for (int ir = 0;ir < nrxx;ir++)
         {
 	    // total electron charge density
-            rhox = rho_in[0][ir] + rho_core[ir];
+            rhox = chr->rho[0][ir] + chr->rho_core[ir];
             arhox = abs(rhox);
             if (arhox > vanishing_charge)
             {
@@ -63,8 +62,8 @@ std::tuple<double,double,ModuleBase::matrix> XC_Functional::v_xc(
                 v(0,ir) = e2 * vxc[0];
 				// consider the total charge density
                 etxc += e2 * exc * rhox;
-				// only consider rho_in
-                vtxc += v(0, ir) * rho_in[0][ir];
+				// only consider chr->rho
+                vtxc += v(0, ir) * chr->rho[0][ir];
             } // endif
         } //enddo
     }
@@ -73,12 +72,12 @@ std::tuple<double,double,ModuleBase::matrix> XC_Functional::v_xc(
         // spin-polarized case
         for (ir = 0;ir < nrxx;ir++)
         {
-            rhox = rho_in[0][ir] + rho_in[1][ir] + rho_core[ir]; //HLX(05-29-06): bug fixed
+            rhox = chr->rho[0][ir] + chr->rho[1][ir] + chr->rho_core[ir]; //HLX(05-29-06): bug fixed
             arhox = abs(rhox);
 
             if (arhox > vanishing_charge)
             {
-                zeta = (rho_in[0][ir] - rho_in[1][ir]) / arhox; //HLX(05-29-06): bug fixed
+                zeta = (chr->rho[0][ir] - chr->rho[1][ir]) / arhox; //HLX(05-29-06): bug fixed
 
                 if (abs(zeta)  > 1.0)
                 {
@@ -95,7 +94,7 @@ std::tuple<double,double,ModuleBase::matrix> XC_Functional::v_xc(
                 }
 
                 etxc += e2 * exc * rhox;
-                vtxc += v(0, ir) * rho_in[0][ir] + v(1, ir) * rho_in[1][ir];
+                vtxc += v(0, ir) * chr->rho[0][ir] + v(1, ir) * chr->rho[1][ir];
             }
         }
     }
@@ -103,9 +102,9 @@ std::tuple<double,double,ModuleBase::matrix> XC_Functional::v_xc(
     {
         for( ir = 0;ir<nrxx; ir++)
         {
-            double amag = sqrt( pow(rho_in[1][ir],2) + pow(rho_in[2][ir],2) + pow(rho_in[3][ir],2) );
+            double amag = sqrt( pow(chr->rho[1][ir],2) + pow(chr->rho[2][ir],2) + pow(chr->rho[3][ir],2) );
 
-            rhox = rho_in[0][ir] + rho_core[ir];
+            rhox = chr->rho[0][ir] + chr->rho_core[ir];
 
             arhox = abs( rhox );
 
@@ -134,15 +133,15 @@ std::tuple<double,double,ModuleBase::matrix> XC_Functional::v_xc(
                 etxc += e2 * exc * rhox;
 
                 v(0, ir) = e2*( 0.5 * ( vxc[0] + vxc[1]) );
-                vtxc += v(0,ir) * rho_in[0][ir];
+                vtxc += v(0,ir) * chr->rho[0][ir];
 
                 double vs = 0.5 * ( vxc[0] - vxc[1] );
                 if ( amag > vanishing_charge )
                 {
                     for(int ipol = 1;ipol< 4;ipol++)
                     {
-                        v(ipol, ir) = e2 * vs * rho_in[ipol][ir] / amag;
-                        vtxc += v(ipol,ir) * rho_in[ipol][ir];
+                        v(ipol, ir) = e2 * vs * chr->rho[ipol][ir] / amag;
+                        vtxc += v(ipol,ir) * chr->rho[ipol][ir];
                     }//end do
                 }//end if
             }//end if
@@ -156,7 +155,7 @@ std::tuple<double,double,ModuleBase::matrix> XC_Functional::v_xc(
     // the dummy variable dum contains gradient correction to stress
     // which is not used here
     std::vector<double> dum;
-    gradcorr(etxc, vtxc, v, dum);
+    gradcorr(etxc, vtxc, v, chr, dum);
 
     // parallel code : collect vtxc,etxc
     // mohan add 2008-06-01
@@ -177,11 +176,10 @@ std::tuple<double,double,ModuleBase::matrix> XC_Functional::v_xc_libxc(
         const int &nrxx, // number of real-space grid
         const int &ncxyz, // total number of charge grid
         const double &omega, // volume of cell
-        const double * const * const rho_in,
-        const double * const rho_core_in)
+        const Charge* const chr)
 {
-    ModuleBase::TITLE("XC_Functional","v_xc");
-    ModuleBase::timer::tick("XC_Functional","v_xc");
+    ModuleBase::TITLE("XC_Functional","v_xc_libxc");
+    ModuleBase::timer::tick("XC_Functional","v_xc_libxc");
 
     const int nspin = GlobalV::NSPIN;
 
@@ -217,7 +215,7 @@ std::tuple<double,double,ModuleBase::matrix> XC_Functional::v_xc_libxc(
     {
         for( int ir=0; ir!=nrxx; ++ir )
         {
-            rho[ir*nspin+is] = rho_in[is][ir] + 1.0/nspin*rho_core_in[ir];
+            rho[ir*nspin+is] = chr->rho[is][ir] + 1.0/nspin*chr->rho_core[ir];
         }
     }
 
@@ -239,7 +237,7 @@ std::tuple<double,double,ModuleBase::matrix> XC_Functional::v_xc_libxc(
             // bring electron charge density from real space to reciprocal space
             //------------------------------------------
             std::vector<std::complex<double>> rhog(GlobalC::rhopw->npw);
-            GlobalC::CHR.set_rhog(rhor.data(), rhog.data());
+            GlobalC::rhopw->real2recip(rhor.data(), rhog.data());
 
             //-------------------------------------------
             // compute the gradient of charge density and
@@ -329,7 +327,7 @@ std::tuple<double,double,ModuleBase::matrix> XC_Functional::v_xc_libxc(
             {
                 const double v_tmp = ModuleBase::e2 * vrho[ir*nspin+is] * sgn[ir*nspin+is];
                 v(is,ir) += v_tmp;
-                vtxc += v_tmp * rho_in[is][ir];
+                vtxc += v_tmp * chr->rho[is][ir];
             }
         }
 
@@ -385,7 +383,7 @@ std::tuple<double,double,ModuleBase::matrix> XC_Functional::v_xc_libxc(
 
     finish_func(funcs);
 
-    ModuleBase::timer::tick("XC_Functional","v_xc");
+    ModuleBase::timer::tick("XC_Functional","v_xc_libxc");
     return std::make_tuple( etxc, vtxc, std::move(v) );
 }
 
@@ -405,17 +403,10 @@ tuple<double,double,ModuleBase::matrix,ModuleBase::matrix> XC_Functional::v_xc_m
 	const int &nrxx, // number of real-space grid
 	const int &ncxyz, // total number of charge grid
 	const double &omega, // volume of cell
-	const double * const * const rho_in,
-	const double * const rho_core_in,
-	const double * const * const kin_r_in)
+	const Charge* const chr)
 {
-    ModuleBase::TITLE("XC_Functional","v_xc");
-    ModuleBase::timer::tick("XC_Functional","v_xc");
-
-    if(GlobalV::NSPIN==4)
-    {
-        ModuleBase::WARNING_QUIT("v_xc_meta","meta-GGA has not been implemented for nspin = 4 yet");
-    }
+    ModuleBase::TITLE("XC_Functional","v_xc_meta");
+    ModuleBase::timer::tick("XC_Functional","v_xc_meta");
 
     double e2 = 2.0;
 
@@ -442,7 +433,7 @@ tuple<double,double,ModuleBase::matrix,ModuleBase::matrix> XC_Functional::v_xc_m
     {
         for( int ir=0; ir!=nrxx; ++ir )
         {
-            rho[ir*nspin+is] = rho_in[is][ir] + 1.0/nspin*rho_core_in[ir];
+            rho[ir*nspin+is] = chr->rho[is][ir] + 1.0/nspin*chr->rho_core[ir];
         }
     }
 
@@ -463,7 +454,7 @@ tuple<double,double,ModuleBase::matrix,ModuleBase::matrix> XC_Functional::v_xc_m
         // bring electron charge density from real space to reciprocal space
         //------------------------------------------
         std::vector<std::complex<double>> rhog(GlobalC::rhopw->npw);
-        GlobalC::CHR.set_rhog(rhor.data(), rhog.data());
+        GlobalC::rhopw->real2recip(rhor.data(), rhog.data());
 
         //-------------------------------------------
         // compute the gradient of charge density and
@@ -500,7 +491,7 @@ tuple<double,double,ModuleBase::matrix,ModuleBase::matrix> XC_Functional::v_xc_m
     {
         for( int ir=0; ir!=nrxx; ++ir )
         {
-            kin_r[ir*nspin+is] = kin_r_in[is][ir] / 2.0;
+            kin_r[ir*nspin+is] = chr->kin_r[is][ir] / 2.0;
         }
     }
 
@@ -520,7 +511,7 @@ tuple<double,double,ModuleBase::matrix,ModuleBase::matrix> XC_Functional::v_xc_m
     {
         for( size_t ir=0; ir!=nrxx; ++ir )
         {
-            if ( rho[ir]<rho_th || sqrt(abs(sigma[ir]))<grho_th || abs(kin_r[ir]<tau_th))
+            if ( rho[ir]<rho_th || sqrt(abs(sigma[ir]))<grho_th || abs(kin_r[ir])<tau_th)
             {
                 sgn[ir] = 0.0;
             }
@@ -530,9 +521,9 @@ tuple<double,double,ModuleBase::matrix,ModuleBase::matrix> XC_Functional::v_xc_m
     {
         for( size_t ir=0; ir!=nrxx; ++ir )
         {
-            if ( rho[ir*2]<rho_th || sqrt(abs(sigma[ir*3]))<grho_th || abs(kin_r[ir*2]<tau_th))
+            if ( rho[ir*2]<rho_th || sqrt(abs(sigma[ir*3]))<grho_th || abs(kin_r[ir*2])<tau_th)
                 sgn[ir*2] = 0.0;
-            if ( rho[ir*2+1]<rho_th || sqrt(abs(sigma[ir*3+2]))<grho_th || abs(kin_r[ir*2+1]<tau_th))
+            if ( rho[ir*2+1]<rho_th || sqrt(abs(sigma[ir*3+2]))<grho_th || abs(kin_r[ir*2+1])<tau_th)
                 sgn[ir*2+1] = 0.0;
         }
     }
@@ -551,7 +542,7 @@ tuple<double,double,ModuleBase::matrix,ModuleBase::matrix> XC_Functional::v_xc_m
 #ifdef __EXX
                 if (func.info->number == XC_MGGA_X_SCAN && get_func_type() == 5)
                 {
-                    exc[ir] *= (1.0 - GlobalC::exx_global.info.hybrid_alpha);
+                    exc[ir] *= (1.0 - GlobalC::exx_info.info_global.hybrid_alpha);
                 }
 #endif
                 etxc += ModuleBase::e2 * exc[ir] * rho[ir*nspin+is]  * sgn[ir*nspin+is];
@@ -566,12 +557,12 @@ tuple<double,double,ModuleBase::matrix,ModuleBase::matrix> XC_Functional::v_xc_m
 #ifdef __EXX
                 if (func.info->number == XC_MGGA_X_SCAN && get_func_type() == 5)
                 {
-                    vrho[ir*nspin+is] *= (1.0 - GlobalC::exx_global.info.hybrid_alpha);
+                    vrho[ir*nspin+is] *= (1.0 - GlobalC::exx_info.info_global.hybrid_alpha);
                 }
 #endif
                 const double v_tmp = ModuleBase::e2 * vrho[ir*nspin+is]  * sgn[ir*nspin+is];
                 v(is,ir) += v_tmp;
-                vtxc += v_tmp * rho_in[is][ir];
+                vtxc += v_tmp * chr->rho[is][ir];
             }
         }
 
@@ -584,7 +575,7 @@ tuple<double,double,ModuleBase::matrix,ModuleBase::matrix> XC_Functional::v_xc_m
 #ifdef __EXX
                 if (func.info->number == XC_MGGA_X_SCAN && get_func_type() == 5)
                 {
-                    vsigma[ir] *= (1.0 - GlobalC::exx_global.info.hybrid_alpha);
+                    vsigma[ir] *= (1.0 - GlobalC::exx_info.info_global.hybrid_alpha);
                 }
 #endif
                 h[0][ir] = 2.0 * gdr[0][ir] * vsigma[ir] * 2.0 * sgn[ir];
@@ -597,9 +588,9 @@ tuple<double,double,ModuleBase::matrix,ModuleBase::matrix> XC_Functional::v_xc_m
 #ifdef __EXX
                 if (func.info->number == XC_MGGA_X_SCAN && get_func_type() == 5)
                 {
-                    vsigma[ir*3] *= (1.0 - GlobalC::exx_global.info.hybrid_alpha);
-                    vsigma[ir*3+1] *= (1.0 - GlobalC::exx_global.info.hybrid_alpha);
-                    vsigma[ir*3+2] *= (1.0 - GlobalC::exx_global.info.hybrid_alpha);
+                    vsigma[ir*3]   *= (1.0 - GlobalC::exx_info.info_global.hybrid_alpha);
+                    vsigma[ir*3+1] *= (1.0 - GlobalC::exx_info.info_global.hybrid_alpha);
+                    vsigma[ir*3+2] *= (1.0 - GlobalC::exx_info.info_global.hybrid_alpha);
                 }
 #endif
                 h[0][ir] = 2.0 * (gdr[0][ir] * vsigma[ir*3  ] * sgn[ir*2  ] * 2.0 
@@ -633,7 +624,7 @@ tuple<double,double,ModuleBase::matrix,ModuleBase::matrix> XC_Functional::v_xc_m
 #ifdef __EXX
                 if (func.info->number == XC_MGGA_X_SCAN && get_func_type() == 5)
                 {
-                    vtau[ir*nspin+is] *= (1.0 - GlobalC::exx_global.info.hybrid_alpha);
+                    vtau[ir*nspin+is] *= (1.0 - GlobalC::exx_info.info_global.hybrid_alpha);
                 }
 #endif
                 vofk(is,ir) += vtau[ir*nspin+is]  * sgn[ir*nspin+is];

@@ -12,7 +12,7 @@ Symmetry_rho::~Symmetry_rho()
 
 }
 
-void Symmetry_rho::begin(const int &spin_now, const Charge_Broyden &CHR, const ModulePW::PW_Basis *rho_basis, Parallel_Grid &Pgrid, ModuleSymmetry::Symmetry &symm) const
+void Symmetry_rho::begin(const int &spin_now, const Charge &CHR, const ModulePW::PW_Basis *rho_basis, Parallel_Grid &Pgrid, ModuleSymmetry::Symmetry &symm) const
 {
 	assert(spin_now < 4);//added by zhengdy-soc
 

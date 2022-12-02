@@ -170,7 +170,7 @@ void XC_Functional::pbec(const double &rho, const double &grho, const int &iflag
 
 	sc = rho * h0;
 	v1c = h0 + dh0;
-	v2c = ddh0;
+    v2c = ddh0;
 	
 	return;
 }
@@ -270,7 +270,9 @@ void XC_Functional::perdew86_spin(double rho, double zeta, double grho, double &
     return;
 } //end subroutine perdew86_spin
 
-//-----------------------------------------------------------------------
+// There seems to be something wrong with it
+// lots of terms evaluates to inf / nan in unit test
+/*
 void XC_Functional::ggac_spin(double rho, double zeta, double grho, double &sc,
                double &v1cup, double &v1cdw, double &v2c)
 {
@@ -364,6 +366,7 @@ void XC_Functional::ggac_spin(double rho, double zeta, double grho, double &sc,
     v2c = ddh0 + ddh1;
     return;
 } // end subroutine ggac_spin
+*/
 
 //---------------------------------------------------------------
 void XC_Functional::pbec_spin(double rho, double zeta, double grho, const int &iflag, double &sc,

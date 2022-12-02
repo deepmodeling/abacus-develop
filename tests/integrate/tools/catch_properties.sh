@@ -40,7 +40,7 @@ deepks_bandgap=`grep deepks_bandgap INPUT | awk '{print $2}' | sed s/[[:space:]]
 has_lowf=`grep out_wfc_lcao INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
 has_wfc_r=`grep out_wfc_r INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
 has_wfc_pw=`grep out_wfc_pw INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
-out_dm=`grep out_dm INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
+out_dm=`grep "out_dm " INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
 out_mul=`grep out_mul INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
 gamma_only=`grep gamma_only INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
 imp_sol=`grep imp_sol INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
@@ -120,13 +120,13 @@ if ! test -z "$has_hs"  && [  $has_hs == 1 ]; then
 	if ! test -z "$gamma_only"  && [ $gamma_only == 1 ]; then
 		href=data-0-H.ref
 		hcal=OUT.autotest/data-0-H
-		sref=data-0-H.ref
-		scal=OUT.autotest/data-0-H
+		sref=data-0-S.ref
+		scal=OUT.autotest/data-0-S
 	else
 		href=data-1-H.ref
 		hcal=OUT.autotest/data-1-H
-		sref=data-1-H.ref
-		scal=OUT.autotest/data-1-H
+		sref=data-1-S.ref
+		scal=OUT.autotest/data-1-S
 	fi
 
 	python3 ../tools/CompareFile.py $href $hcal 8

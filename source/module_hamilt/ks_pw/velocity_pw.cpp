@@ -1,4 +1,5 @@
 #include "velocity_pw.h"
+#include "module_base/timer.h"
 #include "src_parallel/parallel_reduce.h"
 namespace hamilt
 {
@@ -8,7 +9,7 @@ Velocity::Velocity
     const ModulePW::PW_Basis_K* wfcpw_in,
     const int* isk_in,
     pseudopot_cell_vnl* ppcell_in,
-    const UnitCell_pseudo* ucell_in,
+    const UnitCell* ucell_in,
     const bool nonlocal_in
 )
 {
@@ -128,7 +129,7 @@ void Velocity::act
         const int current_spin = this->isk[ik];
         for (int it = 0; it < this->ucell->ntype; it++)
         {
-            const int nproj = this->ucell->atoms[it].nh;
+            const int nproj = this->ucell->atoms[it].ncpp.nh;
             for (int ia = 0; ia < this->ucell->atoms[it].na; ia++)
             {
                 for (int ip = 0; ip < nproj; ip++)
@@ -156,7 +157,7 @@ void Velocity::act
     {
         for (int it = 0; it < this->ucell->ntype; it++)
         {
-            const int nproj = this->ucell->atoms[it].nh;
+            const int nproj = this->ucell->atoms[it].ncpp.nh;
             for (int ia = 0; ia < this->ucell->atoms[it].na; ia++)
             {
                 for (int ip = 0; ip < nproj; ip++)

@@ -1,12 +1,12 @@
 #ifndef LANGEVIN_H
 #define LANGEVIN_H
 
-#include "verlet.h"
+#include "mdrun.h"
 
-class Langevin : public Verlet
+class Langevin : public MDrun
 {
 public:
-    Langevin(MD_parameters& MD_para_in, UnitCell_pseudo &unit_in);
+    Langevin(MD_parameters& MD_para_in, UnitCell &unit_in);
     ~Langevin();
 
     void setup(ModuleESolver::ESolver *p_ensolve);
@@ -16,9 +16,8 @@ public:
     void write_restart();
     void restart();
     void post_force();
-    void temp_target();
 
-    double t_target;       // target temperature
+    ModuleBase::Vector3<double> *fictitious_force;  // Langevin fictitious_force
 
 };
 

@@ -35,21 +35,21 @@ void Exx_Abfs::Inverse_Matrix_Double::cal_inverse( const Method &method )
 
 void Exx_Abfs::Inverse_Matrix_Double::using_dpotrf()
 {
-	LapackConnector::dpotrf('U',dim,A,dim,info);
+	LapackConnector::potrf('U',dim,A,dim,info);
 
 	if(info!=0)
 	{
-		std::cout << "\n info_dpotrf = " << info <<std::endl;
+		std::cout << "\n info_potrf = " << info <<std::endl;
 		A.print(GlobalV::ofs_warning);
 //		GlobalV::ofs_warning<<A<<std::endl;
 		ModuleBase::QUIT();
 	}
 
-	LapackConnector::dpotri('U',dim,A,dim,info);
+	LapackConnector::potri('U',dim,A,dim,info);
 	
 	if(info!=0)
 	{
-		std::cout << "\n info_dpotri = " << info <<std::endl;
+		std::cout << "\n info_potri = " << info <<std::endl;
 		A.print(GlobalV::ofs_warning);
 //		GlobalV::ofs_warning<<A<<std::endl;
 		ModuleBase::QUIT();

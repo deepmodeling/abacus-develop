@@ -69,9 +69,9 @@ class toWannier90
     // void kmesh_get_bvectors(int multi, int reference_kpt, double dist_shell,
     // std::vector<ModuleBase::Vector3<double>>& bvector); void get_nnkpt_last();
 
-    void init_wannier(const psi::Psi<std::complex<double>> *psi = nullptr);
+    void init_wannier(const ModuleBase::matrix& ekb, const psi::Psi<std::complex<double>> *psi = nullptr);
     void read_nnkp();
-    void outEIG();
+    void outEIG(const ModuleBase::matrix& ekb);
     void cal_Amn(const psi::Psi<std::complex<double>> &wfc_pw);
     void cal_Mmn(const psi::Psi<std::complex<double>> &wfc_pw);
     void produce_trial_in_pw(const int &ik, ModuleBase::ComplexMatrix &trial_orbitals_k);

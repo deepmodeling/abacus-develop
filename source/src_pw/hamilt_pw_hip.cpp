@@ -1,3 +1,6 @@
+//obsolete code
+//please remove the globalc::hm
+
 #include "global.h"
 #include "hip/hip_runtime.h"
 #include "../module_base/global_function.h"
@@ -180,7 +183,7 @@ void Hamilt_PW::init_k(const int ik)
 
 	for (int ir = 0; ir < GlobalC::wfcpw->nrxx; ir++)
 	{
-		GlobalC::pot.vr_eff1[ir] = GlobalC::pot.vr_eff(GlobalV::CURRENT_SPIN, ir); // mohan add 2007-11-12
+//		GlobalC::pot.vr_eff1[ir] = GlobalC::pot.vr_eff(GlobalV::CURRENT_SPIN, ir); // mohan add 2007-11-12
 	}
 
 	// (4) Calculate nonlocal pseudopotential vkb
@@ -313,13 +316,7 @@ void Hamilt_PW::diagH_subspace(const int ik,
 		};
 		if(XC_Functional::get_func_type()==4 || XC_Functional::get_func_type()==5)
 		{
-			if ( Exx_Global::Hybrid_Type::HF   == GlobalC::exx_lcao.info.hybrid_type ) // HF
-			{
-				add_Hexx(1);
-			}
-			else if (Exx_Global::Hybrid_Type::PBE0 == GlobalC::exx_lcao.info.hybrid_type || 
-					Exx_Global::Hybrid_Type::SCAN0  == GlobalC::exx_lcao.info.hybrid_type ||
-					Exx_Global::Hybrid_Type::HSE  == GlobalC::exx_lcao.info.hybrid_type) // SCAN0, PBE0 or HSE
+			if( GlobalC::exx_info.info_global.cal_exx )
 			{
 				add_Hexx(GlobalC::exx_global.info.hybrid_alpha);
 			}
@@ -334,20 +331,16 @@ void Hamilt_PW::diagH_subspace(const int ik,
 	}
 
 	// after generation of H and S matrix, diag them
-	GlobalC::hm.diagH_LAPACK(nstart, n_band, hc, sc, nstart, en, hvec);
+	//obsolete: globalc::hm has been removed
+	//GlobalC::hm.diagH_LAPACK(nstart, n_band, hc, sc, nstart, en, hvec);
 
 	// Peize Lin add 2019-03-09
 #ifdef __LCAO
 	if ("lcao_in_pw" == GlobalV::BASIS_TYPE)
 	{
-		switch (GlobalC::exx_global.info.hybrid_type)
+		if( GlobalC::exx_info.info_global.cal_exx )
 		{
-		case Exx_Global::Hybrid_Type::HF:
-		case Exx_Global::Hybrid_Type::PBE0:
-		case Exx_Global::Hybrid_Type::SCAN0:
-		case Exx_Global::Hybrid_Type::HSE:
 			GlobalC::exx_lip.k_pack->hvec_array[ik] = hvec;
-			break;
 		}
 	}
 #endif
@@ -633,7 +626,8 @@ void Hamilt_PW::diagH_subspace_cuda(const int ik,
 	CHECK_CUDA(hipMemcpy(h_hc.c, hc, nstart * nstart * sizeof(hipblasDoubleComplex), hipMemcpyDeviceToHost));
 	CHECK_CUDA(hipMemcpy(h_sc.c, sc, nstart * nstart * sizeof(hipblasDoubleComplex), hipMemcpyDeviceToHost));
 
-	GlobalC::hm.diagH_LAPACK(nstart, n_band, h_hc, h_sc, nstart, h_en, h_hvec);
+	//obsolete: globalc::hm has been removed
+	//GlobalC::hm.diagH_LAPACK(nstart, n_band, h_hc, h_sc, nstart, h_en, h_hvec);
 	CHECK_CUDA(hipMemcpy(hvec, h_hvec.c, nstart * n_band * sizeof(hipblasDoubleComplex), hipMemcpyHostToDevice));
 	CHECK_CUDA(hipMemcpy(en, h_en, n_band * sizeof(double), hipMemcpyHostToDevice));
 	delete[] h_en;
@@ -947,8 +941,8 @@ void Hamilt_PW::h_psi_cuda(const hipblasComplex *psi_in, hipblasComplex *hpsi, h
 		CHECK_CUDA(hipMalloc((void **)&f_vr_eff1, GlobalC::wfcpw->nrxx * sizeof(float)));
 		CHECK_CUDA(hipMalloc((void **)&f_porter, GlobalC::wfcpw->nrxx * sizeof(hipblasComplex)));
 
-		CHECK_CUDA(
-			hipMemcpy(d_vr_eff1, GlobalC::pot.vr_eff1, GlobalC::wfcpw->nrxx * sizeof(double), hipMemcpyHostToDevice));
+//		CHECK_CUDA(
+//			hipMemcpy(d_vr_eff1, GlobalC::pot.vr_eff1, GlobalC::wfcpw->nrxx * sizeof(double), hipMemcpyHostToDevice));
 
 		int thread2 = 512;
 		int block2 = (GlobalC::wfcpw->nrxx + thread2 - 1) / thread2;
@@ -967,7 +961,7 @@ void Hamilt_PW::h_psi_cuda(const hipblasComplex *psi_in, hipblasComplex *hpsi, h
 			GlobalC::wfcpw->recip2real(tmpsi_in, f_porter, ik);
 			for (int ir=0; ir< nrxx; ir++)
 			{
-				f_porter[ir] *=  GlobalC::pot.vr_eff1[ir];
+//				f_porter[ir] *=  GlobalC::pot.vr_eff1[ir];
 			}
 			GlobalC::wfcpw->real2recip(f_porter, tmhpsi, ik, true);
 
@@ -1206,8 +1200,8 @@ void Hamilt_PW::h_psi_cuda(const hipblasDoubleComplex *psi_in,
 		CHECK_CUDA(hipMalloc((void **)&d_vr_eff1, GlobalC::wfcpw->nrxx * sizeof(double)));
 		CHECK_CUDA(hipMalloc((void **)&d_porter, GlobalC::wfcpw->nrxx * sizeof(hipblasDoubleComplex)));
 
-		CHECK_CUDA(
-			hipMemcpy(d_vr_eff1, GlobalC::pot.vr_eff1, GlobalC::wfcpw->nrxx * sizeof(double), hipMemcpyHostToDevice));
+//		CHECK_CUDA(
+//			hipMemcpy(d_vr_eff1, GlobalC::pot.vr_eff1, GlobalC::wfcpw->nrxx * sizeof(double), hipMemcpyHostToDevice));
 		// cout<<"NSPIN = "<<GlobalV::NSPIN<<endl;
 		for (int ib = 0; ib < m; ++ib)
 		{
@@ -1227,7 +1221,7 @@ void Hamilt_PW::h_psi_cuda(const hipblasDoubleComplex *psi_in,
 			GlobalC::wfcpw->recip2real(tmpsi_in, f_porter, ik);
 			for (int ir=0; ir< nrxx; ir++)
 			{
-				f_porter[ir] *=  GlobalC::pot.vr_eff1[ir];
+//				f_porter[ir] *=  GlobalC::pot.vr_eff1[ir];
 			}
 			GlobalC::wfcpw->real2recip(f_porter, tmhpsi, ik, true);
 
@@ -1444,7 +1438,7 @@ void Hamilt_PW::h_psi(const std::complex<double> *psi_in, std::complex<double> *
 				GlobalC::wfcpw->recip2real(tmpsi_in, porter, ik);
 				for (int ir=0; ir< nrxx; ir++)
 				{
-					porter[ir] *=  GlobalC::pot.vr_eff1[ir];
+//					porter[ir] *=  GlobalC::pot.vr_eff1[ir];
 				}
 				GlobalC::wfcpw->real2recip(porter, tmhpsi, ik, true);
 			}
@@ -1457,12 +1451,12 @@ void Hamilt_PW::h_psi(const std::complex<double> *psi_in, std::complex<double> *
 				std::complex<double> sup,sdown;
 				for (int ir=0; ir< nrxx; ir++)
 				{
-					sup = porter[ir] * (GlobalC::pot.vr_eff(0,ir) + GlobalC::pot.vr_eff(3,ir)) +
+/*					sup = porter[ir] * (GlobalC::pot.vr_eff(0,ir) + GlobalC::pot.vr_eff(3,ir)) +
 						porter1[ir] * (GlobalC::pot.vr_eff(1,ir) - std::complex<double>(0.0,1.0) * GlobalC::pot.vr_eff(2,ir));
 					sdown = porter1[ir] * (GlobalC::pot.vr_eff(0,ir) - GlobalC::pot.vr_eff(3,ir)) +
 					porter[ir] * (GlobalC::pot.vr_eff(1,ir) + std::complex<double>(0.0,1.0) * GlobalC::pot.vr_eff(2,ir));
 					porter[ir] = sup;
-					porter1[ir] = sdown;
+					porter1[ir] = sdown;*/
 				}
 				// (3) fft back to G space.
 				GlobalC::wfcpw->real2recip(porter, tmhpsi, ik, true);
@@ -1588,7 +1582,7 @@ void Hamilt_PW::h_psi(const std::complex<double> *psi_in, std::complex<double> *
 
 				for (int ir = 0; ir < nrxx; ir++)
 				{
-					porter[ir] *= GlobalC::pot.vofk(GlobalV::CURRENT_SPIN,ir);
+//					porter[ir] *= GlobalC::pot.vofk(GlobalV::CURRENT_SPIN,ir);
 				}
 				GlobalC::wfcpw->real2recip(porter,porter,ik);
 

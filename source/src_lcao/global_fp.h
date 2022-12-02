@@ -11,18 +11,19 @@
 #include "LCAO_hamilt.h" 
 #include "../module_orbital/ORB_read.h"
 #include "../module_orbital/ORB_gen_tables.h"
-#include "../src_parallel/subgrid_oper.h"
 #ifdef __EXX
 #include "../src_ri/exx_lcao.h"
+#include "module_ri/Exx_LRI.h"
 #endif
 
 namespace GlobalC
 {
 extern Grid_Driver GridD;
 extern Pdiag_Double ParaO;
-extern SubGrid_oper SGO; //mohan add 2012-01-12
 #ifdef __EXX
 extern Exx_Lcao exx_lcao; // Peize Lin add 2016-12-03
+extern Exx_LRI<double> exx_lri_double; // Peize Lin add 2022-08-06
+extern Exx_LRI<std::complex<double>> exx_lri_complex; // Peize Lin add 2022-08-06
 #endif
 }
 #endif

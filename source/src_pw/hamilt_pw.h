@@ -5,13 +5,19 @@
 #include "../module_base/global_variable.h"
 #include "../module_base/complexmatrix.h"
 
+//this class is obsolete now
+//should be deleted
+//but kept in case
+//someone wants to take a look
+
 class Hamilt_PW
 {
 
 public:
 
-    Hamilt_PW();
-    ~Hamilt_PW();
+    //I'm adding {} only to make the code compile
+    Hamilt_PW(){};
+    ~Hamilt_PW(){};
 
     static int moved;
 

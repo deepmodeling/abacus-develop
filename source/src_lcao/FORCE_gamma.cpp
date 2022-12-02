@@ -19,7 +19,8 @@ void Force_LCAO_gamma::ftable_gamma (
 	const bool isforce,
     const bool isstress,
     const psi::Psi<double>* psid,
-    Local_Orbital_Charge &loc, 
+    Local_Orbital_Charge &loc,
+    const elecstate::ElecState* pelec, 
     ModuleBase::matrix& foverlap,
 	ModuleBase::matrix& ftvnl_dphi,
 	ModuleBase::matrix& fvnl_dbeta,	
@@ -46,12 +47,12 @@ void Force_LCAO_gamma::ftable_gamma (
     this->allocate_gamma(*loc.ParaV);
 
     // calculate the 'energy density matrix' here.
-    this->cal_foverlap(isforce, isstress, psid, loc, foverlap, soverlap);
+    this->cal_foverlap(isforce, isstress, psid, loc, pelec, foverlap, soverlap);
 
     this->cal_ftvnl_dphi(loc.dm_gamma, isforce, isstress, ftvnl_dphi, stvnl_dphi);
-    this->calFvnlDbeta(loc.dm_gamma, isforce, isstress, fvnl_dbeta, svnl_dbeta, GlobalV::vnl_method);
+    this->cal_fvnl_dbeta_new(loc.dm_gamma, isforce, isstress, fvnl_dbeta, svnl_dbeta);
 
-    this->cal_fvl_dphi(loc.DM, isforce, isstress, fvl_dphi, svl_dphi);
+    this->cal_fvl_dphi(loc.DM, isforce, isstress, pelec->pot, fvl_dphi, svl_dphi);
 
     //caoyu add for DeePKS
 #ifdef __DEEPKS
@@ -200,10 +201,9 @@ void Force_LCAO_gamma::allocate_gamma(const Parallel_Orbitals &pv)
     this->UHM->genH.build_ST_new ('T', cal_deri, GlobalC::ucell, this->UHM->LM->Hloc_fixed.data());
     //ModuleBase::timer::tick("Force_LCAO_gamma","build_T_new");
     //test_gamma(this->UHM->LM->DHloc_fixed_x, "dHloc_fixed_x T part");
-    
-    //genH.build_Nonlocal_beta (cal_deri);
+
     //ModuleBase::timer::tick("Force_LCAO_gamma","build_Nonlocal_mu");
-	this->NonlocalDphi(GlobalV::NSPIN, GlobalV::vnl_method, cal_deri, this->UHM->genH);
+    this->UHM->genH.build_Nonlocal_mu_new (this->UHM->genH.LM->Hloc_fixed.data(), cal_deri);
     //ModuleBase::timer::tick("Force_LCAO_gamma","build_Nonlocal_mu");
     //test_gamma(this->UHM->LM->DHloc_fixed_x, "dHloc_fixed_x Vnl part");
 
@@ -260,49 +260,6 @@ void Force_LCAO_gamma::test_gamma(double* mm, const std::string &name)
         std::cout << std::endl;
     }
     return;
-}
-
-void Force_LCAO_gamma::calFvnlDbeta
-(
-    const std::vector<ModuleBase::matrix> &dm2d, 
-	const bool &isforce, 
-	const bool &isstress, 
-	ModuleBase::matrix& fvnl_dbeta, 
-	ModuleBase::matrix& svnl_dbeta,
-    const int &vnl_method
-)
-{
-    ModuleBase::TITLE("Force_LCAO_gamma", "calFvnlDbeta");
-    if(GlobalV::NSPIN==4 || vnl_method == 0)
-    {
-        this->cal_fvnl_dbeta(dm2d, isforce, isstress, fvnl_dbeta, svnl_dbeta);
-    }
-    else if(vnl_method == 1)
-    {
-        this->cal_fvnl_dbeta_new(dm2d, isforce, isstress, fvnl_dbeta, svnl_dbeta);
-    }
-    else 
-    {
-        ModuleBase::WARNING_QUIT("Force_LCAO_gamma","This method has not been implemented");
-    }
-}
-
-void Force_LCAO_gamma::NonlocalDphi(const int& nspin, const int& vnl_method, const bool& cal_deri,
-    LCAO_gen_fixedH &genH)
-{
-	ModuleBase::TITLE("Force_LCAO_gamma", "NonlocalDphi");
-	if(nspin==4 || vnl_method == 0)
-	{
-		genH.build_Nonlocal_mu (genH.LM->Hloc_fixed.data(), cal_deri);
-	}
-	else if(vnl_method == 1)
-	{
-		genH.build_Nonlocal_mu_new (genH.LM->Hloc_fixed.data(), cal_deri);
-	}
-	else
-	{
-		ModuleBase::WARNING_QUIT("Force_LCAO_gamma","This method has not been implemented");
-	}
 }
 
 namespace StressTools

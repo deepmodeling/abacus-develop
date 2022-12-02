@@ -6,6 +6,7 @@
 #include "../module_base/global_variable.h"
 #include "../module_orbital/ORB_control.h" // mohan add 2021-05-24
 #include "module_psi/psi.h"
+#include "module_elecstate/elecstate.h"
 
 class Local_Orbital_wfc
 {
@@ -21,25 +22,15 @@ public:
 	/// which is got after the diagonalization of 
     /// std::complex Hamiltonian matrix.
     ///=========================================
-    //( Old Name: WFC_K)
     std::complex<double>*** wfc_k_grid; // [NK, GlobalV::NBANDS, GlobalV::NLOCAL]	
-    //( Old Name: WFC_K_POOL)
     std::complex<double>* wfc_k_grid2; // [NK*GlobalV::NBANDS*GlobalV::NLOCAL]
-
-    ///=========================================
-    /// 2d wfc
-    /// directly output from elpa interface
-    /// used to calculate density matrix LOC.dm_gamma and LOC.dm_k
-    ///=========================================
-    std::vector<ModuleBase::matrix> wfc_gamma;			// dm_gamma[is](iw1,iw2);
-    std::vector<ModuleBase::ComplexMatrix> wfc_k;		// dm_k[ik](iw1,iw2);
-    std::vector<ModuleBase::ComplexMatrix> wfc_k_laststep;      // store the last step's 2d wfc
 
     const Parallel_Orbitals *ParaV;
 
 
     void allocate_k(const int& lgd,
-        psi::Psi<std::complex<double>>* psi);
+        psi::Psi<std::complex<double>>* psi,
+        elecstate::ElecState* pelec);
 
     //=========================================
     // Init Cij, make it satisfy 2 conditions:

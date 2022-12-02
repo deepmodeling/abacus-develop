@@ -4,7 +4,7 @@
 namespace ModuleESolver
 {
 
-    void ESolver_DP::Init(Input& inp, UnitCell_pseudo& ucell)
+    void ESolver_DP::Init(Input& inp, UnitCell& ucell)
     {
         dp_potential = 0;
         dp_force.create(ucell.nat, 3);
@@ -15,7 +15,7 @@ namespace ModuleESolver
         coord.resize(3 * ucell.nat);
     }
 
-    void ESolver_DP::Run(const int istep, UnitCell_pseudo& ucell)
+    void ESolver_DP::Run(const int istep, UnitCell& ucell)
     {
         cell[0] = ucell.latvec.e11 * ucell.lat0_angstrom;
         cell[1] = ucell.latvec.e12 * ucell.lat0_angstrom;
@@ -49,10 +49,10 @@ namespace ModuleESolver
 
         dp.compute(dp_potential, f, v, coord, atype, cell);
 
-        dp_potential /= ModuleBase::Hartree_to_eV;
+        dp_potential /= ModuleBase::Ry_to_eV;
 
-        const double fact_f = ModuleBase::Hartree_to_eV * ModuleBase::ANGSTROM_AU;
-        const double fact_v = ucell.omega * ModuleBase::Hartree_to_eV;
+        const double fact_f = ModuleBase::Ry_to_eV * ModuleBase::ANGSTROM_AU;
+        const double fact_v = ucell.omega * ModuleBase::Ry_to_eV;
 
         for (int i = 0; i < ucell.nat; ++i)
         {
@@ -88,4 +88,11 @@ namespace ModuleESolver
         stress = dp_virial;
     }
 
+    void ESolver_DP::postprocess()
+    {
+        GlobalV::ofs_running << "\n\n --------------------------------------------" << std::endl;
+        GlobalV::ofs_running << std::setprecision(16);
+        GlobalV::ofs_running << " !FINAL_ETOT_IS " << dp_potential * ModuleBase::Ry_to_eV << " eV" << std::endl;
+        GlobalV::ofs_running << " --------------------------------------------\n\n" << std::endl;
+    }
 }

@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
-if(POLICY CMP0131) # From CMake 3.24
-    cmake_policy(SET CMP0135 NEW)
+if(POLICY CMP0135) # https://cmake.org/cmake/help/git-stage/policy/CMP0135.html
+    cmake_policy(SET CMP0135 NEW) # Otherwise this policy generates a warning on CMake 3.24
 endif()
 
 project(ABACUS
@@ -10,6 +10,7 @@ project(ABACUS
     LANGUAGES CXX
 )
 
+option(ENABLE_LCAO "Enable LCAO calculation." ON)
 option(ENABLE_DEEPKS "Enable DeePKS functionality" OFF)
 option(ENABLE_LIBXC "Enable LibXC functionality" OFF)
 option(USE_CUDA "Enable support to CUDA for PW." OFF)
@@ -20,14 +21,42 @@ option(ENABLE_ASAN "Enable AddressSanitizer" OFF)
 option(BUILD_TESTING "Build ABACUS unit tests" OFF)
 option(GENERATE_TEST_REPORTS "Enable test report generation" OFF)
 option(INFO "Enable gathering of math library information" OFF)
+option(ENABLE_COVERAGE "Enable coverage build." OFF)
+option(ENABLE_LIBRI "Enable EXX with LibRI." OFF)
+option(USE_ELPA "Enable ELPA" ON)
 
-set(ABACUS_BIN_NAME abacus)
-list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/modules)
+if(ENABLE_LCAO)
+  set(ABACUS_BIN_NAME abacus)
+else()
+  set(ABACUS_BIN_NAME abacus_pw)
+endif()
+
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
+
+if(ENABLE_COVERAGE)
+  find_package(codecov)
+  if(NOT codecov_FOUND)
+    include(FetchContent)
+    FetchContent_Declare(
+      cmakecodecov
+      URL https://github.com/baixiaokuang/CMake-codecov/archive/refs/heads/master.zip
+    )
+    FetchContent_Populate(cmakecodecov)
+    list(APPEND CMAKE_MODULE_PATH ${cmakecodecov_SOURCE_DIR}/cmake)
+    find_package(codecov REQUIRED)
+  endif()
+endif()
+
 set(ABACUS_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/source)
 set(ABACUS_TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR}/tests)
 set(ABACUS_BIN_PATH ${CMAKE_CURRENT_BINARY_DIR}/${ABACUS_BIN_NAME})
 include_directories(${ABACUS_SOURCE_DIR})
+
 add_executable(${ABACUS_BIN_NAME} source/main.cpp)
+if(ENABLE_COVERAGE)
+  add_coverage(${ABACUS_BIN_NAME})
+endif()
+
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 if (CMAKE_COMPILER_IS_GNUCXX AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 5)
@@ -47,16 +76,27 @@ endif()
 # Other default configurations are also available, see:
 # https://cmake.org/cmake/help/latest/manual/cmake-buildsystem.7.html#default-and-custom-configurations
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
-  add_compile_options(-O2 -g) # default flag
+  if(NOT ENABLE_COVERAGE)
+    add_compile_options(-O2 -g) # default flag
+  else()
+    add_compile_options(-g)
+  endif()
 endif()
 
-find_package(Cereal REQUIRED)
-include_directories(${CEREAL_INCLUDE_DIR})
-add_compile_definitions(USE_CEREAL_SERIALIZATION)
-
-find_package(ELPA REQUIRED)
-include_directories(${ELPA_INCLUDE_DIR})
-target_link_libraries(${ABACUS_BIN_NAME} ELPA::ELPA)
+if(ENABLE_LCAO)
+  find_package(Cereal REQUIRED)
+  include_directories(${CEREAL_INCLUDE_DIR})
+  add_compile_definitions(USE_CEREAL_SERIALIZATION)
+  add_compile_definitions(__LCAO)
+  if (USE_ELPA)
+    find_package(ELPA REQUIRED)
+    include_directories(${ELPA_INCLUDE_DIR})
+    target_link_libraries(${ABACUS_BIN_NAME} ELPA::ELPA)
+    add_compile_definitions(__ELPA)
+  endif()
+else()
+  set(ENABLE_DEEPKS OFF)
+endif()
 
 find_package(MPI REQUIRED)
 include_directories(${MPI_CXX_INCLUDE_PATH})
@@ -127,6 +167,10 @@ if(USE_CUDA OR USE_CUSOLVER_LCAO)
   include_directories(${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
   if (USE_CUDA)
     add_compile_definitions(__CUDA)
+    add_compile_definitions(__UT_USE_CUDA)
+    if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+      set(CMAKE_CUDA_FLAGS ${CMAKE_CUDA_FLAGS} "-g -G")
+    endif()
   endif()
   if (USE_CUSOLVER_LCAO)
     add_compile_definitions(__CUSOLVER_LCAO)
@@ -157,6 +201,7 @@ if(USE_ROCM)
     roc::hipblas
   )
   add_compile_definitions(__ROCM)
+  add_compile_definitions(__UT_USE_ROCM)
 endif()
 
 if(ENABLE_ASAN)
@@ -233,6 +278,33 @@ if(ENABLE_DEEPKS)
   add_compile_definitions(__DEEPKS)
 endif()
 
+if (ENABLE_LIBRI)
+  set(CMAKE_CXX_STANDARD 14)
+  find_package(Git QUIET)
+  if(GIT_FOUND AND EXISTS "${PROJECT_SOURCE_DIR}/.git")
+    # Update submodules as needed
+    option(GIT_SUBMODULE "Check submodules during build" ON)
+    if(GIT_SUBMODULE)
+      message(STATUS "Submodule update")
+      execute_process(COMMAND ${GIT_EXECUTABLE} submodule update --init --recursive
+              WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+              RESULT_VARIABLE GIT_SUBMOD_RESULT)
+      if(NOT GIT_SUBMOD_RESULT EQUAL "0")
+        message(FATAL_ERROR "git submodule update --init --recursive failed with ${GIT_SUBMOD_RESULT}, please checkout submodules")
+      endif()
+    endif()
+  endif()
+  include_directories(${CMAKE_CURRENT_SOURCE_DIR}/deps/LibRI/include)
+  include_directories(${CMAKE_CURRENT_SOURCE_DIR}/deps/LibComm/include)
+  add_compile_definitions(
+          __EXX
+          EXX_DM=3
+          EXX_H_COMM=2
+          TEST_EXX_LCAO=0
+          TEST_EXX_RADIAL=1
+  )
+endif()
+
 list(APPEND math_libs m)
 target_link_libraries(${ABACUS_BIN_NAME} ${math_libs})
 
@@ -251,13 +323,13 @@ endif()
 
 if(DEFINED DeePMD_DIR)
   add_compile_definitions(
-    __DPMD 
+    __DPMD
     HIGH_PREC
   )
   add_compile_options(-Wl,--no-as-needed)
   find_package(DeePMD REQUIRED)
   include_directories(${DeePMD_DIR}/include)
-  target_link_libraries(${ABACUS_BIN_NAME} 
+  target_link_libraries(${ABACUS_BIN_NAME}
     DeePMD::deepmd_cc
     DeePMD::deepmd_op
     DeePMD::deepmd_op_cuda
@@ -276,15 +348,9 @@ if(DEFINED TensorFlow_DIR)
 endif()
 
 add_compile_definitions(
-  __EXX
   __FFTW3
   __SELINV
-  __LCAO
   METIS
-  EXX_DM=3
-  EXX_H_COMM=2
-  TEST_EXX_LCAO=0
-  TEST_EXX_RADIAL=1
 )
 
 if(INFO)
@@ -316,6 +382,11 @@ IF (BUILD_TESTING)
   function(AddTest) # function for UT
     cmake_parse_arguments(UT "DYN" "TARGET" "LIBS;DYN_LIBS;STATIC_LIBS;SOURCES;DEPENDS" ${ARGN})
     add_executable(${UT_TARGET} ${UT_SOURCES})
+
+    if(ENABLE_COVERAGE)
+      add_coverage(${UT_TARGET})
+    endif()
+
     #dependencies & link library
     target_link_libraries(${UT_TARGET} ${UT_LIBS}
       Threads::Threads GTest::gtest_main GTest::gmock_main)
@@ -340,28 +411,46 @@ target_link_libraries(${ABACUS_BIN_NAME}
     planewave
     surchem
     neighbor
-    orb
     io
     relax
-    lcao
-    gint
     parallel
-    mrrr
-    pdiag
     pw
-    ri
     driver
     xc_
     hsolver
-    genelpa
     elecstate
     hamilt
     psi
     esolver
-    rpa
+    vdw
 )
+
+if(ENABLE_LCAO)
+  target_link_libraries(${ABACUS_BIN_NAME}
+      lcao
+      orb
+      gint
+      pdiag
+  )
+  if (USE_ELPA)
+    target_link_libraries(${ABACUS_BIN_NAME}
+      genelpa
+    )
+  endif ()
+endif()
+
+if (ENABLE_LIBRI)
+  target_link_libraries(${ABACUS_BIN_NAME}
+          ri
+          libri
+          rpa)
+endif()
 
 install(PROGRAMS ${ABACUS_BIN_PATH}
     TYPE BIN
     #DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
+
+if(ENABLE_COVERAGE)
+  coverage_evaluate()
+endif()

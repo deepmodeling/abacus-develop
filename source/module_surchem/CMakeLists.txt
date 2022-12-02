@@ -10,7 +10,9 @@ add_library(
     cal_vel.cpp
     corrected_energy.cpp
     minimize_cg.cpp
-    efield.cpp
     sol_force.cpp
-    gatefield.cpp
 )
+
+if(ENABLE_COVERAGE)
+  add_coverage(surchem)
+endif()

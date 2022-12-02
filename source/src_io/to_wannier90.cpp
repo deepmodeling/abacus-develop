@@ -38,7 +38,7 @@ toWannier90::~toWannier90()
         delete unk_inLcao;
 }
 
-void toWannier90::init_wannier(const psi::Psi<std::complex<double>> *psi)
+void toWannier90::init_wannier(const ModuleBase::matrix& ekb, const psi::Psi<std::complex<double>> *psi)
 {
     this->read_nnkp();
 
@@ -58,7 +58,7 @@ void toWannier90::init_wannier(const psi::Psi<std::complex<double>> *psi)
     if (GlobalV::BASIS_TYPE == "pw")
     {
         writeUNK(*psi);
-        outEIG();
+        outEIG(ekb);
         cal_Mmn(*psi);
         cal_Amn(*psi);
     }
@@ -69,7 +69,7 @@ void toWannier90::init_wannier(const psi::Psi<std::complex<double>> *psi)
         cal_Amn(this->unk_inLcao[0]);
         cal_Mmn(this->unk_inLcao[0]);
         writeUNK(this->unk_inLcao[0]);
-        outEIG();
+        outEIG(ekb);
     }
 #endif
 
@@ -342,7 +342,7 @@ void toWannier90::read_nnkp()
         num_bands = GlobalV::NBANDS - num_exclude_bands;
 }
 
-void toWannier90::outEIG()
+void toWannier90::outEIG(const ModuleBase::matrix& ekb)
 {
     if (GlobalV::MY_RANK == 0)
     {
@@ -358,7 +358,7 @@ void toWannier90::outEIG()
                 index_band++;
                 eig_file << std::setw(5) << index_band << std::setw(5) << ik + 1 - start_k_index << std::setw(18)
                          << showpoint << fixed << std::setprecision(12)
-                         << GlobalC::wf.ekb[ik][ib] * ModuleBase::Ry_to_eV << std::endl;
+                         << ekb(ik, ib) * ModuleBase::Ry_to_eV << std::endl;
             }
         }
 

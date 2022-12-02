@@ -1,3 +1,6 @@
+//obsolete code, not compiled
+//please remove the globalc::hm
+
 #include "diago_david.cuh"
 #include "diago_cg.cuh"
 #include "global.h"
@@ -126,7 +129,9 @@ void Diago_David_CUDA::diag
 
         this->SchmitOrth(npw, nband, m, basis, psi_m, spsi);
 
+        /*obsolete: globalc::hm has been removed
         GlobalC::hm.hpw.h_1psi_cuda(npw, psi_m, hpsi, spsi);
+        */
 
         // basis(m) = psi_m, hp(m) = H |psi_m>, sp(m) = S |psi_m>
         CHECK_CUDA(cudaMemcpy(basis[npw*m], psi_m, npw*sizeof(double2), cudaMemcpyDeviceToDevice));
@@ -292,7 +297,8 @@ void Diago_David_CUDA::cal_grad
 
         this->SchmitOrth(npw, nbase+notconv, nbase+m, basis, ppsi, spsi);
 
-        GlobalC::hm.hpw.h_1psi(npw, ppsi, hpsi, spsi);
+        //obsolete: globalc::hm has been removed
+        //GlobalC::hm.hpw.h_1psi(npw, ppsi, hpsi, spsi);
 
         // for ( int ig = 0; ig < npw; ig++ )
         // {
@@ -553,7 +559,8 @@ void Diago_David_CUDA::SchmitOrth
     assert(m >= 0);
     assert(m < n_band);
 
-    GlobalC::hm.hpw.s_1psi_cuda(npw, psi_m, spsi);
+    //obsolete: globalc::hm has been removed
+    //GlobalC::hm.hpw.s_1psi_cuda(npw, psi_m, spsi);
 
     // double2* lagrange = new double2[m+1];
     // ModuleBase::GlobalFunc::ZEROS( lagrange, m+1 );
@@ -602,7 +609,8 @@ void Diago_David_CUDA::SchmitOrth
         kernel_normalization_david<double, double2><<<block, thread>>>(psi_m, dim, psi_norm);
     }
 
-    GlobalC::hm.hpw.s_1psi_cuda(npw, psi_m, spsi);
+    //obsolete: globalc::hm has been removed
+    //GlobalC::hm.hpw.s_1psi_cuda(npw, psi_m, spsi);
 
     CHECK_CUDA(cudaFree(lagrange));
     ModuleBase::timer::tick("Diago_David_CUDA","SchmitOrth");

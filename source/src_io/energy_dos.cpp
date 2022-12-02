@@ -26,7 +26,8 @@
 void energy::perform_dos(
 	const psi::Psi<double> *psid, 
 	const psi::Psi<std::complex<double>> *psi, 
-	LCAO_Hamilt &uhm)
+	LCAO_Hamilt &uhm,
+	const elecstate::ElecState* pelec)
 {
 	ModuleBase::TITLE("energy","perform_dos");
 
@@ -46,69 +47,6 @@ void energy::perform_dos(
         GlobalV::ofs_running << " <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" << std::endl;
         GlobalV::ofs_running << "\n\n\n\n";
     }
-
-
-/*	if(GlobalV::MY_RANK==0)
-	{
-		if(GlobalV::CALCULATION=="scf" || GlobalV::CALCULATION=="md" || GlobalV::CALCULATION=="relax")
-		{
-			std::stringstream ss;
-			ss << GlobalV::global_out_dir << "istate.info" ;
-			std::ofstream ofsi( ss.str().c_str() );
-			*for(int ib=0; ib<GlobalV::NBANDS; ++ib)
-			{
-				ofsi << "0 " << ib+1;
-				for(int is=0; is<GlobalV::NSPIN; ++is)
-				{
-					ofsi << " " << GlobalC::wf.ekb[is][ib];
-					}
-					ofsi << std::endl;
-					}
-			// pengfei 2015-4-1
-			if(GlobalV::NSPIN == 1||GlobalV::NSPIN == 4)
-			{ 
-				for (int ik = 0;ik < GlobalC::kv.nks;ik++)
-				{                       
-					ofsi<<"BAND"
-					<<std::setw(25)<<"Energy(ev)"
-					<<std::setw(25)<<"Occupation"
-					<<std::setw(25)<<"Kpoint = "<<ik+1
-					<<std::setw(25)<<"("<<GlobalC::kv.kvec_d[ik].x<<" "<<GlobalC::kv.kvec_d[ik].y<<" "<<GlobalC::kv.kvec_d[ik].z<<")"<<std::endl;
-					for(int ib=0;ib<GlobalV::NBANDS;ib++)
-					{
-						ofsi<<ib+1<<std::setw(25)<<GlobalC::wf.ekb[ik][ib]* Ry_to_eV<<std::setw(25)<<GlobalC::wf.wg(ik,ib)<<std::endl;
-					}
-					ofsi <<std::endl; 
-					ofsi <<std::endl;                              
-				}
-			}
-			else
-			{
-				for (int ik = 0;ik < GlobalC::kv.nks/2;ik++)
-				{
-					ofsi<<"BAND"<<std::setw(25)<<"Spin up Energy(ev)"
-					<<std::setw(25)<<"Occupation"
-					<<std::setw(25)<<"Spin down Energy(ev)"
-					<<std::setw(25)<<"Occupation"
-					<<std::setw(25)<<"Kpoint = "<<ik+1
-					<<std::setw(25)<<"("<<GlobalC::kv.kvec_d[ik].x<<" "<<GlobalC::kv.kvec_d[ik].y<<" "<<GlobalC::kv.kvec_d[ik].z<<")"<<std::endl;
-					for(int ib=0;ib<GlobalV::NBANDS;ib++)
-					{
-						ofsi<<ib+1<<std::setw(25)<<GlobalC::wf.ekb[ik][ib]* Ry_to_eV
-						<<std::setw(25)<<GlobalC::wf.wg(ik,ib)
-						<<std::setw(25)<<GlobalC::wf.ekb[(ik+GlobalC::kv.nks/2)][ib]* Ry_to_eV
-						<<std::setw(25)<<GlobalC::wf.wg(ik+GlobalC::kv.nks/2,ib)<<std::endl;
-					}
-					ofsi <<std::endl;
-					ofsi <<std::endl;
-
-				}
-			}
-
-			ofsi.close();
-		}
-	}
-*/
 
 	//qianrui modify 2020-10-18
 	if(GlobalV::CALCULATION=="scf" || GlobalV::CALCULATION=="md" || GlobalV::CALCULATION=="relax")
@@ -140,7 +78,7 @@ void energy::perform_dos(
 						<<std::setw(25)<<"("<<GlobalC::kv.kvec_d[ik].x<<" "<<GlobalC::kv.kvec_d[ik].y<<" "<<GlobalC::kv.kvec_d[ik].z<<")"<<std::endl;
 						for(int ib=0;ib<GlobalV::NBANDS;ib++)
 						{
-							ofsi2<<std::setw(6)<<ib+1<<std::setw(25)<<GlobalC::wf.ekb[ik][ib]* ModuleBase::Ry_to_eV<<std::setw(25)<<GlobalC::wf.wg(ik,ib)<<std::endl;
+							ofsi2<<std::setw(6)<<ib+1<<std::setw(25)<<pelec->ekb(ik, ib)* ModuleBase::Ry_to_eV<<std::setw(25)<<pelec->wg(ik,ib)<<std::endl;
 						}
 						ofsi2 <<std::endl;
 						ofsi2 <<std::endl;
@@ -161,10 +99,10 @@ void energy::perform_dos(
 						for(int ib=0;ib<GlobalV::NBANDS;ib++)
 						{
 							ofsi2<<std::setw(6)<<ib+1
-							<<std::setw(25)<<GlobalC::wf.ekb[ik][ib]* ModuleBase::Ry_to_eV
-							<<std::setw(25)<<GlobalC::wf.wg(ik,ib)
-							<<std::setw(25)<<GlobalC::wf.ekb[(ik+GlobalC::kv.nks/2)][ib]* ModuleBase::Ry_to_eV
-							<<std::setw(25)<<GlobalC::wf.wg(ik+GlobalC::kv.nks/2,ib)<<std::endl;
+							<<std::setw(25)<<pelec->ekb(ik, ib)* ModuleBase::Ry_to_eV
+							<<std::setw(25)<<pelec->wg(ik, ib)
+							<<std::setw(25)<<pelec->ekb((ik+GlobalC::kv.nks/2), ib)* ModuleBase::Ry_to_eV
+							<<std::setw(25)<<pelec->wg(ik+GlobalC::kv.nks/2, ib)<<std::endl;
 						}
 						ofsi2 <<std::endl;
 						ofsi2 <<std::endl;
@@ -183,7 +121,7 @@ void energy::perform_dos(
 	if(GlobalV::out_mul == 1)
 	{
 		Mulliken_Charge   MC(psid, psi);
-		MC.stdout_mulliken(uhm);			
+		MC.stdout_mulliken(uhm, pelec->wg);			
 	}//qifeng add 2019/9/10
 #endif
 
@@ -193,14 +131,14 @@ void energy::perform_dos(
 	if(this->out_dos)
 	{
 		// find the maximal and minimal band energy.
-		double emax = GlobalC::wf.ekb[0][0];
-		double emin = GlobalC::wf.ekb[0][0];
+		double emax = pelec->ekb(0, 0);
+		double emin = pelec->ekb(0, 0);
 		for(int ik=0; ik<GlobalC::kv.nks; ++ik)
 		{
 			for(int ib=0; ib<GlobalV::NBANDS; ++ib)
 			{
-				emax = std::max( emax, GlobalC::wf.ekb[ik][ib] );
-				emin = std::min( emin, GlobalC::wf.ekb[ik][ib] );
+				emax = std::max( emax, pelec->ekb(ik, ib) );
+				emin = std::min( emin, pelec->ekb(ik, ib) );
 			}
 		}
 
@@ -279,11 +217,11 @@ void energy::perform_dos(
 					ModuleBase::GlobalFunc::ZEROS(Gauss,np);
 					for (int n=0; n<npoints; ++n)		  
 					{  
-						double en=emin+n * de_ev;
-						double en0=GlobalC::wf.ekb[0][i]*ModuleBase::Ry_to_eV;
-						double de = en-en0;
+						double en = emin + n * de_ev;
+						double en0 = pelec->ekb(0, i) * ModuleBase::Ry_to_eV;
+						double de = en - en0;
 						double de2 = 0.5*de * de;
-						Gauss[n] = GlobalC::kv.wk[0]*exp(-de2/a/a)/b;
+						Gauss[n] = GlobalC::kv.wk[0] * exp(-de2/a/a)/b;
 					}
 
 					const int NB= i+1;
@@ -371,11 +309,11 @@ void energy::perform_dos(
 							ModuleBase::GlobalFunc::ZEROS(Gauss,np);
 							for (int n=0; n<npoints; ++n)		  
 							{  
-								double en=emin+n * de_ev;
-								double en0=GlobalC::wf.ekb[ik][i]*ModuleBase::Ry_to_eV;
-								double de = en-en0;
-								double de2 = 0.5*de * de;
-								Gauss[n] = GlobalC::kv.wk[ik]*exp(-de2/a/a)/b;
+								double en = emin + n * de_ev;
+								double en0 = pelec->ekb(ik, i) * ModuleBase::Ry_to_eV;
+								double de = en - en0;
+								double de2 = 0.5 * de * de;
+								Gauss[n] = GlobalC::kv.wk[ik] * exp(-de2/a/a)/b;
 							}
 
 							const int NB= i+1;
@@ -569,18 +507,9 @@ void energy::perform_dos(
 				 this->dos_edelta_ev, 
 				 emax, 
 				 emin, 
-				 GlobalC::kv.nks, GlobalC::kv.nkstot, GlobalC::kv.wk, GlobalC::wf.wg, GlobalV::NBANDS, GlobalC::wf.ekb );
+				 GlobalC::kv.nks, GlobalC::kv.nkstot, GlobalC::kv.wk, pelec->wg, GlobalV::NBANDS, pelec->ekb );
 	 }
 
-
-		// GlobalV::mulliken charge analysis
-		if(out_dos == 2)
-		{
-			std::stringstream sp;
-			sp << GlobalV::global_out_dir << "Mulliken.dat";
-			Dos::calculate_Mulliken(sp.str(), uhm.GG);
-		}
-	
 		if(nspin0==1)
 		{
 			GlobalV::ofs_running << " Fermi energy is " << this->ef << " Rydberg" << std::endl;
@@ -594,16 +523,6 @@ void energy::perform_dos(
 		//int nks;
 		//if(nspin0==1) nks = GlobalC::kv.nkstot;
 		//else if(nspin0==2) nks = GlobalC::kv.nkstot/2;
-
-
-
-		/*for(int is=0; is<GlobalV::NSPIN; is++)
-		{
-			std::stringstream ss2;
-			ss2 << GlobalV::global_out_dir << "BANDS_" << is+1 << ".dat";
-			GlobalV::ofs_running << "\n Output bands in file: " << ss2.str() << std::endl;
-			Dos::nscf_band(is, ss2.str(), nks, GlobalV::NBANDS, this->ef, GlobalC::wf.ekb);
-		}*/
 		
 		if(out_dos==3)
 		{
@@ -611,7 +530,7 @@ void energy::perform_dos(
 			{
 				std::stringstream ss3;
 				ss3 << GlobalV::global_out_dir << "Fermi_Surface_" << i << ".bxsf";
-				Dos::nscf_fermi_surface(ss3.str(),GlobalC::kv.nks,GlobalV::NBANDS,GlobalC::wf.ekb);
+				Dos::nscf_fermi_surface(ss3.str(),GlobalC::kv.nks,GlobalV::NBANDS, pelec->ekb);
 			}
 		}
 	}
@@ -632,7 +551,7 @@ void energy::perform_dos(
 			std::stringstream ss2;
 			ss2 << GlobalV::global_out_dir << "BANDS_" << is+1 << ".dat";
 			GlobalV::ofs_running << "\n Output bands in file: " << ss2.str() << std::endl;
-			Dos::nscf_band(is, ss2.str(), nks, GlobalV::NBANDS, this->ef*0, GlobalC::wf.ekb);
+			Dos::nscf_band(is, ss2.str(), nks, GlobalV::NBANDS, this->ef*0, pelec->ekb);
 
 		}
 	}//out_band
@@ -822,7 +741,7 @@ void energy::perform_dos(
 			if(GlobalV::GAMMA_ONLY_LOCAL)
 			{
 				for(int ib = 0; ib < GlobalV::NBANDS; ib++)
-						out << " " << (GlobalC::wf.ekb[is*nks][ib]) * ModuleBase::Ry_to_eV;
+						out << " " << (pelec->ekb(is*nks, ib)) * ModuleBase::Ry_to_eV;
 				out << std::endl;
 			}
 			else
@@ -830,7 +749,7 @@ void energy::perform_dos(
 				for(int ik=0;ik<nks;ik++)
 				{
 					for(int ib = 0; ib < GlobalV::NBANDS; ib++)
-						out << " " << (GlobalC::wf.ekb[ik+is*nks][ib]) * ModuleBase::Ry_to_eV;
+						out << " " << (pelec->ekb(ik+is*nks, ib)) * ModuleBase::Ry_to_eV;
 					out << std::endl;
 				}
 			}
