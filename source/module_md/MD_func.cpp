@@ -247,7 +247,7 @@ void MD_func::force_virial(
 		ModuleESolver::ESolver *p_esolver,
 		const int &istep,
 		const MD_parameters &mdp,
-		UnitCell_pseudo &unit_in,
+		UnitCell &unit_in,
 		double &potential,
 		ModuleBase::Vector3<double> *force,
 		ModuleBase::matrix &stress,

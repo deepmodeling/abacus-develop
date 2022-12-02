@@ -544,7 +544,7 @@ void ESolver_KS_LCAO_TDDFT::afterscf(const int istep)
     }
 }
 
-void ESolver_KS_LCAO_TDDFT::Run(const int istep, UnitCell_pseudo& ucell, ModuleBase::Vector3<double>* vel)
+void ESolver_KS_LCAO_TDDFT::Run(const int istep, UnitCell& ucell, ModuleBase::Vector3<double>* vel)
 {
     if (!(GlobalV::CALCULATION == "scf" || GlobalV::CALCULATION == "md" || GlobalV::CALCULATION == "relax"
           || GlobalV::CALCULATION == "cell-relax" || GlobalV::CALCULATION.substr(0, 3) == "sto"))
@@ -646,7 +646,7 @@ void ESolver_KS_LCAO_TDDFT::Run(const int istep, UnitCell_pseudo& ucell, ModuleB
     return;
 };
 
-void ESolver_KS_LCAO_TDDFT::Run(const int istep, UnitCell_pseudo& ucell)
+void ESolver_KS_LCAO_TDDFT::Run(const int istep, UnitCell& ucell)
 {
     if (!(GlobalV::CALCULATION == "scf" || GlobalV::CALCULATION == "md" || GlobalV::CALCULATION == "relax"
           || GlobalV::CALCULATION == "cell-relax" || GlobalV::CALCULATION.substr(0, 3) == "sto"))
