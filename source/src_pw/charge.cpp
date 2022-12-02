@@ -28,6 +28,11 @@
 #include "../module_base/math_sphbes.h"
 #include <vector>
 #include "../module_base/timer.h"
+#include "../module_base/tool_threading.h"
+
+#ifdef _OPENMP
+#include <omp.h>
+#endif
 
 Charge::Charge()
 {
@@ -745,7 +750,12 @@ void Charge::non_linear_core_correction
 	ModulePW::PW_Basis* rho_basis) const
 {
     ModuleBase::TITLE("charge","drhoc");
-    double gx = 0.0;
+
+	// use labmda instead of repeating codes
+	const auto kernel = [&](const int num_threads, const int thread_id)
+	{
+
+	double gx = 0.0;
     double rhocg1 = 0.0;
     double *aux;
 
@@ -758,18 +768,28 @@ void Charge::non_linear_core_correction
         int igl0 = 0;
         if (rho_basis->gg_uniq [0] < 1.0e-8)
         {
-            for (int ir = 0;ir < mesh; ir++)
-            {
-                aux [ir] = r [ir] * r [ir] * rhoc [ir];
-            }
-            ModuleBase::Integral::Simpson_Integral(mesh, aux, rab, rhocg1);
-            //rhocg [1] = fpi * rhocg1 / omega;
-            rhocg [0] = ModuleBase::FOUR_PI * rhocg1 / GlobalC::ucell.omega;//mohan modify 2008-01-19
+			// single thread term
+			if (thread_id == 0)
+			{
+				for (int ir = 0;ir < mesh; ir++)
+				{
+					aux [ir] = r [ir] * r [ir] * rhoc [ir];
+				}
+				ModuleBase::Integral::Simpson_Integral(mesh, aux, rab, rhocg1);
+				//rhocg [1] = fpi * rhocg1 / omega;
+				rhocg [0] = ModuleBase::FOUR_PI * rhocg1 / GlobalC::ucell.omega;//mohan modify 2008-01-19
+			}
             igl0 = 1;
         }
 
+		int igl_beg, igl_end;
+		// exclude igl0
+		ModuleBase::TASK_DIST_1D(num_threads, thread_id, rho_basis->ngg - igl0, igl_beg, igl_end);
+		igl_beg += igl0;
+		igl_end += igl_beg;
+
         // G <> 0 term
-        for (int igl = igl0; igl < rho_basis->ngg;igl++) 
+        for (int igl = igl_beg; igl < igl_end;igl++) 
         {
             gx = sqrt(rho_basis->gg_uniq[igl] * GlobalC::ucell.tpiba2);
             ModuleBase::Sphbes::Spherical_Bessel(mesh, r, gx, 0, aux);
@@ -787,6 +807,27 @@ void Charge::non_linear_core_correction
         // here the case where the charge is in analytic form,
         // check old version before 2008-12-9
     }
+
+	}; // end kernel
+
+	// do not use omp parallel when this function is already in parallel block
+	// 
+	// it is called in parallel block in Forces::cal_force_cc,
+	// but not in other funtcion such as Stress_Func::stress_cc.
+#ifdef _OPENMP
+	if (!omp_in_parallel())
+	{
+		#pragma omp parallel
+		{
+			kernel(omp_get_num_threads(), omp_get_thread_num());
+		}
+	}
+	else
+#endif
+	{
+		kernel(1, 0);
+	}
+
     return;
 }
 
