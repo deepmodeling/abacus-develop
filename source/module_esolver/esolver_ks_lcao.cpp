@@ -184,7 +184,7 @@ void ESolver_KS_LCAO::cal_Energy(double& etot)
     etot = GlobalC::en.etot;
 }
 
-void ESolver_KS_LCAO::cal_Force(ModuleBase::matrix& force, ModuleBase::Vector3<double>* vel=nullptr)
+void ESolver_KS_LCAO::cal_Force(ModuleBase::matrix& force, ModuleBase::Vector3<double>* vel)
 {
     Force_Stress_LCAO FSL(this->RA);
     FSL.getForceStress(GlobalV::CAL_FORCE,
@@ -372,7 +372,7 @@ void ESolver_KS_LCAO::eachiterinit(const int istep, const int iter)
         }
     }
 }
-void ESolver_KS_LCAO::hamilt2density(int istep, int iter, double ethr, ModuleBase::Vector3<double>* vel=nullptr)
+void ESolver_KS_LCAO::hamilt2density(int istep, int iter, double ethr, ModuleBase::Vector3<double>* vel)
 {
     // save input rho
     pelec->charge->save_rho_before_sum_band();
