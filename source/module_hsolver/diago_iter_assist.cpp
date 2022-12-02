@@ -417,41 +417,37 @@ void DiagoIterAssist<FPTYPE, Device>::diagH_LAPACK(
 
     const bool all_eigenvalues = (nstart == nbands);
 
-    FPTYPE * res = e, *e_gpu = nullptr; 
-
-    if (psi::device::get_device_type<Device>(ctx) == psi::GpuDevice) 
-    {
+    FPTYPE * res = e, *e_gpu = nullptr;
+    
 #if ((defined __CUDA) || (defined __ROCM))
+    if (psi::device::get_device_type<Device>(ctx) == psi::GpuDevice) {
         psi::memory::resize_memory_op<FPTYPE, psi::DEVICE_GPU>()(gpu_ctx, e_gpu, nbands);
         // set e in CPU value to e_gpu
         syncmem_var_h2d_op()(gpu_ctx, cpu_ctx, e_gpu, e, nbands);
         res = e_gpu;
+    }
+#endif
 
-        if (all_eigenvalues) 
-        {
-            dngv_op<FPTYPE, Device>()(ctx, nstart, ldh, hcc, scc, res, vcc);
-        }
-        else
-        {
-            dngvx_op<FPTYPE, Device>()(ctx, nstart, ldh, hcc, scc, nbands, res, vcc, "diagH_LAPACK");
-        }
+    if (all_eigenvalues) {
+        //===========================
+        // calculate all eigenvalues
+        //===========================
+        dngv_op<FPTYPE, Device>()(ctx, nstart, ldh, hcc, scc, res, vcc);
+    }
+    else {
+        //=====================================
+        // calculate only m lowest eigenvalues
+        //=====================================
+        dngvx_op<FPTYPE, Device>()(ctx, nstart, ldh, hcc, scc, nbands, res, vcc);
+    }
 
+#if ((defined __CUDA) || (defined __ROCM))
+    if (psi::device::get_device_type<Device>(ctx) == psi::GpuDevice) {
         // set e_gpu value to e in CPU
         syncmem_var_d2h_op()(cpu_ctx, gpu_ctx, e, res, nbands);
         delmem_var_op()(gpu_ctx, e_gpu);
+    }
 #endif
-    }
-    else
-    {
-        if (all_eigenvalues)
-        {
-            dngv_op<FPTYPE, Device>()(ctx, nstart, ldh, hcc, scc, res, vcc);
-        }
-        else
-        {
-            dngvx_op<FPTYPE, Device>()(ctx, nstart, ldh, hcc, scc, nbands, res, vcc, "diagH_LAPACK");
-        }
-    }
 
     ModuleBase::timer::tick("DiagoIterAssist", "LAPACK_subspace");
 }

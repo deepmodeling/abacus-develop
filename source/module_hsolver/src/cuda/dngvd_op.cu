@@ -81,8 +81,7 @@ void dngvx_op<double, psi::DEVICE_GPU>::operator()(const psi::DEVICE_GPU* d,
                                                    const std::complex<double>* B,
                                                    const int m,
                                                    double* W,
-                                                   std::complex<double>* V,
-                                                   const std::string keyword)
+                                                   std::complex<double>* V)
 {
     // init A_eigenvectors, transpose_B and all_W
     double2 *A_eigenvectors, *transpose_B;
