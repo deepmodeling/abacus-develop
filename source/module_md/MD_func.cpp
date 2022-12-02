@@ -218,11 +218,6 @@ void MD_func::force_virial(
 
     if(GlobalV::CAL_STRESS)
     {
-        p_esolver->cal_Stress(stress);
-    }
-
-    if(mdp.md_ensolver == "FP")
-    {
         p_esolver->cal_Stress(virial);
     }
 
@@ -273,11 +268,6 @@ void MD_func::force_virial(
     }
 
     if(GlobalV::CAL_STRESS)
-    {
-        p_esolver->cal_Stress(stress);
-    }
-
-    if(mdp.md_ensolver == "FP")
     {
         p_esolver->cal_Stress(virial);
     }
