@@ -20,8 +20,8 @@ To compile ABACUS, please make sure that the following prerequisites are present
 These requirements support the calculation of plane-wave basis in ABACUS. For LCAO basis calculation, additional components are required:
 
 - [ScaLAPACK](http://www.netlib.org/scalapack/).
-- [ELPA](https://elpa.mpcdf.mpg.de/) >= 2017.
 - [CEREAL](https://uscilab.github.io/cereal/).
+- [ELPA](https://elpa.mpcdf.mpg.de/) >= 2017 (optional).
 
 ## Install requirements
 
@@ -76,18 +76,19 @@ Here, 'build' is the path for building ABACUS; and '-D' is used for setting up s
   - `Libxc_DIR`: (Optional) Path to Libxc.
   > Note: Building Libxc from source with Makefile does NOT support using it in CMake here. Please compile Libxc with CMake instead.
 
-- Components: The value for these variables should be 'ON', '1' or 'OFF', '0'. The default value is given below.
+- Components: The values of these variables should be 'ON', '1' or 'OFF', '0'. The default values are given below.
   - `ENABLE_LCAO=ON`: Enable LCAO calculation. If SCALAPACK, ELPA or CEREAL is absent and only require plane-wave calculations, the feature of calculating LCAO basis can be turned off.
   - `ENABLE_LIBXC=OFF`: [Enable Libxc](../advanced/install.md#add-libxc-support) to suppport variety of functionals. If `Libxc_DIR` is defined, `ENABLE_LIBXC` will set to 'ON'.
   - `USE_OPENMP=ON`: Enable OpenMP support. Building ABACUS without OpenMP is not fully tested yet.
   - `BUILD_TESTING=OFF`: [Build unit tests](../advanced/install.md#build-unit-tests).
   - `ENABLE_COVERAGE=OFF`: Build ABACUS executable supporting [coverage analysis](../CONTRIBUTING.md#generating-code-coverage-report). This feature has a drastic impact on performance.
   - `ENABLE_ASAN=OFF`: Build with Address Sanitizer. This feature would help detecting memory problems. Only supports GCC.
+  - `USE_ELPA=ON`: Use ELPA library in LCAO calculations. If this value is set to OFF, ABACUS can be compiled without ELPA library.
 
 Here is an example:
 
 ```bash
-CXX=mpiicpc cmake -B build -DCMAKE_INSTALL_PREFIX=~/abacus -DELPA_DIR=~/elpa-2016.05.004/build -DCEREAL_INCLUDEDIR=~/cereal/include
+CXX=mpiicpc cmake -B build -DCMAKE_INSTALL_PREFIX=~/abacus -DELPA_DIR=~/elpa-2016.05.004/build -DCEREAL_INCLUDE_DIR=~/cereal/include
 ```
 
 ## Build and Install

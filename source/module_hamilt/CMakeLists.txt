@@ -1,5 +1,6 @@
 add_subdirectory(ks_pw)
 add_subdirectory(ks_lcao)
+add_subdirectory(of_pw)
 
 list(APPEND objects
     operator.cpp
@@ -10,6 +11,9 @@ list(APPEND objects
     ks_pw/meta_pw.cpp
     ks_pw/velocity_pw.cpp
     ks_pw/operator_pw.cpp
+    of_pw/kedf_tf.cpp
+    of_pw/kedf_vw.cpp
+    of_pw/kedf_wt.cpp
 )
 
 if(ENABLE_LCAO)

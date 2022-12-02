@@ -1,14 +1,30 @@
 #include "fft.h"
+
+#ifdef _OPENMP
+#include <omp.h>
+#endif
+
 namespace ModulePW
 {
 
 FFT::FFT()
 {
+// need to call multi-threads init
+// ref: https://www.fftw.org/fftw3_doc/Usage-of-Multi_002dthreaded-FFTW.html
+#ifdef _OPENMP
+	fftw_init_threads();
+	fftw_plan_with_nthreads(omp_get_max_threads());
+#endif
 }
 
 FFT::~FFT()
 {
 	this->clear();
+// need to call multi-threads cleanup
+// ref: https://www.fftw.org/fftw3_doc/Usage-of-Multi_002dthreaded-FFTW.html
+#ifdef _OPENMP
+	fftw_cleanup_threads();
+#endif
 }
 void FFT::clear()
 {

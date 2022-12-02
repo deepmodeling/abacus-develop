@@ -1,8 +1,8 @@
 #include "./kedf_wt.h"
 #include <iostream>
-#include "../src_parallel/parallel_reduce.h"
-#include "../module_base/tool_quit.h"
-#include "../module_base/global_variable.h"
+#include "../../src_parallel/parallel_reduce.h"
+#include "../../module_base/tool_quit.h"
+#include "../../module_base/global_variable.h"
 
 void KEDF_WT::set_para(int nx, double dV, double alpha, double beta, double nelec, double tf_weight, double vw_weight, bool read_kernel, std::string kernel_file, ModulePW::PW_Basis *pw_rho)
 {

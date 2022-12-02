@@ -1,10 +1,12 @@
+#ifndef KEDF_WT_H
+#define KEDF_WT_H
 #include <stdio.h>
 #include <math.h>
-#include "../module_base/timer.h"
-#include "../module_base/global_function.h"
-#include "../module_base/global_variable.h"
-#include "../module_base/matrix.h"
-#include "../module_pw/pw_basis.h"
+#include "../../module_base/timer.h"
+#include "../../module_base/global_function.h"
+#include "../../module_base/global_variable.h"
+#include "../../module_base/matrix.h"
+#include "../../module_pw/pw_basis.h"
 
 class KEDF_WT
 {
@@ -46,3 +48,4 @@ public:
     double *kernel;
     ModuleBase::matrix stress;
 };
+#endif

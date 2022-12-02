@@ -5,10 +5,15 @@
 // new
 #include "module_base/math_integral.h"
 #include "module_base/timer.h"
+#include "module_base/tool_threading.h"
 #include "module_elecstate/potentials/efield.h"
 #include "module_surchem/surchem.h"
 #include "module_elecstate/potentials/gatefield.h"
 #include "module_vdw/vdw.h"
+
+#ifdef _OPENMP
+#include <omp.h>
+#endif
 
 double Forces::output_acc = 1.0e-8; // (Ryd/angstrom).
 
@@ -417,43 +422,66 @@ void Forces::cal_force_loc(ModuleBase::matrix& forcelc, ModulePW::PW_Basis* rho_
     ModuleBase::timer::tick("Forces", "cal_force_loc");
 
     std::complex<double>* aux = new std::complex<double>[rho_basis->nmaxgr];
-    ModuleBase::GlobalFunc::ZEROS(aux, rho_basis->nrxx);
-
     // now, in all pools , the charge are the same,
     // so, the force calculated by each pool is equal.
 
-    for (int is = 0; is < GlobalV::NSPIN; is++)
+
+    /*
+        blocking rho_basis->nrxx for data locality.
+
+        By blocking aux with block size 1024,
+        we can keep the blocked aux in L1 cache when iterating GlobalV::NSPIN loop
+        performance will be better when number of atom is quite huge
+    */
+    const int block_ir = 1024;
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
+    for (int irb = 0; irb < rho_basis->nrxx; irb += block_ir)
     {
-        for (int ir = 0; ir < rho_basis->nrxx; ir++)
+        // calculate the actual task length of this block
+        int ir_end = std::min(irb + block_ir, rho_basis->nrxx);
+
+        { // is = 0
+            for (int ir = irb; ir < ir_end; ++ir)
+            { // initialize aux
+                aux[ir] = std::complex<double>(chr->rho[0][ir], 0.0);
+            }
+        }
+        for (int is = 1; is < GlobalV::NSPIN; is++)
         {
-            aux[ir] += std::complex<double>(chr->rho[is][ir], 0.0);
+            for (int ir = irb; ir < ir_end; ++ir)
+            { // accumulate aux
+                aux[ir] += std::complex<double>(chr->rho[is][ir], 0.0);
+            }
         }
     }
 
-    // to G space.
+    // to G space. maybe need fftw with OpenMP
     rho_basis->real2recip(aux, aux);
 
-    int iat = 0;
-    for (int it = 0; it < GlobalC::ucell.ntype; it++)
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
+    for (int iat = 0; iat < GlobalC::ucell.nat; ++iat)
     {
-        for (int ia = 0; ia < GlobalC::ucell.atoms[it].na; ia++)
+        // read `it` `ia` from the table
+        int it = GlobalC::ucell.iat2it[iat];
+        int ia = GlobalC::ucell.iat2ia[iat];
+        for (int ig = 0; ig < rho_basis->npw; ig++)
         {
-            for (int ig = 0; ig < rho_basis->npw; ig++)
-            {
-                const double phase = ModuleBase::TWO_PI * (rho_basis->gcar[ig] * GlobalC::ucell.atoms[it].tau[ia]);
-                const double factor = GlobalC::ppcell.vloc(it, rho_basis->ig2igg[ig])
-                                      * (cos(phase) * aux[ig].imag() + sin(phase) * aux[ig].real());
-                forcelc(iat, 0) += rho_basis->gcar[ig][0] * factor;
-                forcelc(iat, 1) += rho_basis->gcar[ig][1] * factor;
-                forcelc(iat, 2) += rho_basis->gcar[ig][2] * factor;
-            }
-            for (int ipol = 0; ipol < 3; ipol++)
-            {
-                forcelc(iat, ipol) *= (GlobalC::ucell.tpiba * GlobalC::ucell.omega);
-            }
-            ++iat;
+            const double phase = ModuleBase::TWO_PI * (rho_basis->gcar[ig] * GlobalC::ucell.atoms[it].tau[ia]);
+            const double factor = GlobalC::ppcell.vloc(it, rho_basis->ig2igg[ig])
+                                  * (cos(phase) * aux[ig].imag() + sin(phase) * aux[ig].real());
+            forcelc(iat, 0) += rho_basis->gcar[ig][0] * factor;
+            forcelc(iat, 1) += rho_basis->gcar[ig][1] * factor;
+            forcelc(iat, 2) += rho_basis->gcar[ig][2] * factor;
         }
+        forcelc(iat, 0) *= (GlobalC::ucell.tpiba * GlobalC::ucell.omega);
+        forcelc(iat, 1) *= (GlobalC::ucell.tpiba * GlobalC::ucell.omega);
+        forcelc(iat, 2) *= (GlobalC::ucell.tpiba * GlobalC::ucell.omega);
     }
+
     // this->print(GlobalV::ofs_running, "local forces", forcelc);
     Parallel_Reduce::reduce_double_pool(forcelc.c, forcelc.nr * forcelc.nc);
     delete[] aux;
@@ -469,15 +497,37 @@ void Forces::cal_force_ew(ModuleBase::matrix& forceion, ModulePW::PW_Basis* rho_
 
     double fact = 2.0;
     std::complex<double>* aux = new std::complex<double>[rho_basis->npw];
-    ModuleBase::GlobalFunc::ZEROS(aux, rho_basis->npw);
 
-    for (int it = 0; it < GlobalC::ucell.ntype; it++)
+    /*
+        blocking rho_basis->nrxnpwx for data locality.
+
+        By blocking aux with block size 1024,
+        we can keep the blocked aux in L1 cache when iterating GlobalC::ucell.ntype loop
+        performance will be better when number of atom is quite huge
+    */
+    const int block_ig = 1024;
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
+    for (int igb = 0; igb < rho_basis->npw; igb += block_ig)
     {
-        for (int ig = 0; ig < rho_basis->npw; ig++)
+        // calculate the actual task length of this block
+        int ig_end = std::min(igb + block_ig, rho_basis->npw);
+
+        { // it = 0
+            const double dzv = static_cast<double>(GlobalC::ucell.atoms[0].ncpp.zv);
+            for (int ig = igb; ig < ig_end; ++ig)
+            { // initialize aux
+                aux[ig] = dzv * conj(GlobalC::sf.strucFac(0, ig));
+            }
+        }
+        for (int it = 1; it < GlobalC::ucell.ntype; it++)
         {
-            if (ig == rho_basis->ig_gge0)
-                continue;
-            aux[ig] += static_cast<double>(GlobalC::ucell.atoms[it].ncpp.zv) * conj(GlobalC::sf.strucFac(it, ig));
+            const double dzv = static_cast<double>(GlobalC::ucell.atoms[it].ncpp.zv);
+            for (int ig = igb; ig < ig_end; ++ig)
+            { // accumulate aux
+                aux[ig] += dzv * conj(GlobalC::sf.strucFac(it, ig));
+            }
         }
     }
 
@@ -506,23 +556,68 @@ void Forces::cal_force_ew(ModuleBase::matrix& forceion, ModulePW::PW_Basis* rho_
     //	std::cout << " GlobalC::en.alpha = " << alpha << std::endl;
     //	std::cout << " upperbound = " << upperbound << std::endl;
 
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 1024)
+#endif
     for (int ig = 0; ig < rho_basis->npw; ig++)
     {
-        if (ig == rho_basis->ig_gge0)
-            continue;
         aux[ig] *= exp(-1.0 * rho_basis->gg[ig] * GlobalC::ucell.tpiba2 / alpha / 4.0)
                    / (rho_basis->gg[ig] * GlobalC::ucell.tpiba2);
     }
 
-    int iat = 0;
-    for (int it = 0; it < GlobalC::ucell.ntype; it++)
+    // set pos rho_basis->ig_gge0 to zero
+    if (rho_basis->ig_gge0 >= 0 && rho_basis->ig_gge0 < rho_basis->npw) {
+        aux[rho_basis->ig_gge0] = std::complex<double>(0.0, 0.0);
+    }
+
+#ifdef _OPENMP
+#pragma omp parallel
+{
+    int num_threads = omp_get_num_threads();
+    int thread_id = omp_get_thread_num();
+#else
+    int num_threads = 1;
+    int thread_id = 0;
+#endif
+
+    /* Here is task distribution for multi-thread,
+        0. atom will be iterated both in main nat loop and the loop in `if (rho_basis->ig_gge0 >= 0)`.
+            To avoid syncing, we must calculate work range of each thread by our self
+        1. Calculate the iat range [iat_beg, iat_end) by each thread
+            a. when it is single thread stage, [iat_beg, iat_end) will be [0, nat)
+        2. each thread iterate atoms form `iat_beg` to `iat_end-1`
+    */
+    int iat_beg, iat_end;
+    ModuleBase::TASK_DIST_1D(num_threads, thread_id, GlobalC::ucell.nat, iat_beg, iat_end);
+    iat_end = iat_beg + iat_end;
+
+    int it_beg = (iat_beg < iat_end) ? GlobalC::ucell.iat2it[iat_beg] : GlobalC::ucell.ntype;
+    int ia_beg = (iat_beg < iat_end) ? GlobalC::ucell.iat2ia[iat_beg] : 0;
+
+    int iat = iat_beg;
+    int it = it_beg;
+    int ia = ia_beg;
+
+    // preprocess ig_gap for skipping the ig point
+    int ig_gap = (rho_basis->ig_gge0 >= 0 && rho_basis->ig_gge0 < rho_basis->npw) ? rho_basis->ig_gge0 : -1;
+
+    double it_fact = 0.;
+    int last_it = -1;
+
+    // iterating atoms
+    while (iat < iat_end)
     {
-        for (int ia = 0; ia < GlobalC::ucell.atoms[it].na; ia++)
+        if (it != last_it)
+        { // calculate it_tact when it is changed
+            it_fact = GlobalC::ucell.atoms[it].ncpp.zv * ModuleBase::e2 * GlobalC::ucell.tpiba
+                                       * ModuleBase::TWO_PI / GlobalC::ucell.omega * fact;
+            last_it = it;
+        }
+
+        const auto ig_loop = [&](int ig_beg, int ig_end)
         {
-            for (int ig = 0; ig < rho_basis->npw; ig++)
+            for (int ig = ig_beg; ig < ig_end; ig++)
             {
-                if (ig == rho_basis->ig_gge0)
-                    continue;
                 const ModuleBase::Vector3<double> gcar = rho_basis->gcar[ig];
                 const double arg = ModuleBase::TWO_PI * (gcar * GlobalC::ucell.atoms[it].tau[ia]);
                 double sumnb = -cos(arg) * aux[ig].imag() + sin(arg) * aux[ig].real();
@@ -530,19 +625,23 @@ void Forces::cal_force_ew(ModuleBase::matrix& forceion, ModulePW::PW_Basis* rho_
                 forceion(iat, 1) += gcar[1] * sumnb;
                 forceion(iat, 2) += gcar[2] * sumnb;
             }
-            for (int ipol = 0; ipol < 3; ipol++)
-            {
-                forceion(iat, ipol) *= GlobalC::ucell.atoms[it].ncpp.zv * ModuleBase::e2 * GlobalC::ucell.tpiba
-                                       * ModuleBase::TWO_PI / GlobalC::ucell.omega * fact;
-            }
+        };
 
-            //		std::cout << " atom" << iat << std::endl;
-            //		std::cout << std::setw(15) << forceion(iat, 0) << std::setw(15) << forceion(iat,1) << std::setw(15)
-            //<< forceion(iat,2) << std::endl;
-            iat++;
+        // skip ig_gge0 point by separating ig loop into two part
+        ig_loop(0, ig_gap);
+        ig_loop(ig_gap + 1, rho_basis->npw);
+
+        forceion(iat, 0) *= it_fact;
+        forceion(iat, 1) *= it_fact;
+        forceion(iat, 2) *= it_fact;
+
+        ++iat;
+        if (++ia == GlobalC::ucell.atoms[it].na)
+        {
+            ia = 0;
+            ++it;
         }
     }
-    delete[] aux;
 
     // means that the processor contains G=0 term.
     if (rho_basis->ig_gge0 >= 0)
@@ -560,68 +659,69 @@ void Forces::cal_force_ew(ModuleBase::matrix& forceion, ModulePW::PW_Basis* rho_
         ModuleBase::GlobalFunc::ZEROS(irr, mxr);
         // the square modulus of R_j-tau_s-tau_s'
 
-        int iat1 = 0;
-        for (int T1 = 0; T1 < GlobalC::ucell.ntype; T1++)
+        int iat1 = iat_beg;
+        int T1 = it_beg;
+        int I1 = ia_beg;
+        const double sqa = sqrt(alpha);
+        const double sq8a_2pi = sqrt(8.0 * alpha / ModuleBase::TWO_PI);
+
+        // iterating atoms.
+        // do not need to sync threads because task range of each thread is isolated
+        while (iat1 < iat_end)
         {
-            Atom* atom1 = &GlobalC::ucell.atoms[T1];
-            for (int I1 = 0; I1 < atom1->na; I1++)
+            int iat2 = 0; // mohan fix bug 2011-06-07
+            for (int T2 = 0; T2 < GlobalC::ucell.ntype; T2++)
             {
-                int iat2 = 0; // mohan fix bug 2011-06-07
-                for (int T2 = 0; T2 < GlobalC::ucell.ntype; T2++)
+                for (int I2 = 0; I2 < GlobalC::ucell.atoms[T2].na; I2++)
                 {
-                    for (int I2 = 0; I2 < GlobalC::ucell.atoms[T2].na; I2++)
+                    if (iat1 != iat2)
                     {
-                        if (iat1 != iat2)
+                        ModuleBase::Vector3<double> d_tau
+                            = GlobalC::ucell.atoms[T1].tau[I1] - GlobalC::ucell.atoms[T2].tau[I2];
+                        H_Ewald_pw::rgen(d_tau, rmax, irr, GlobalC::ucell.latvec, GlobalC::ucell.G, r, r2, nrm);
+
+                        for (int n = 0; n < nrm; n++)
                         {
-                            ModuleBase::Vector3<double> d_tau
-                                = GlobalC::ucell.atoms[T1].tau[I1] - GlobalC::ucell.atoms[T2].tau[I2];
-                            H_Ewald_pw::rgen(d_tau, rmax, irr, GlobalC::ucell.latvec, GlobalC::ucell.G, r, r2, nrm);
+                            const double rr = sqrt(r2[n]) * GlobalC::ucell.lat0;
 
-                            for (int n = 0; n < nrm; n++)
-                            {
-                                const double rr = sqrt(r2[n]) * GlobalC::ucell.lat0;
+                            double factor
+                                = GlobalC::ucell.atoms[T1].ncpp.zv * GlobalC::ucell.atoms[T2].ncpp.zv * ModuleBase::e2
+                                  / (rr * rr)
+                                  * (erfc(sqa * rr) / rr + sq8a_2pi * exp(-alpha * rr * rr))
+                                  * GlobalC::ucell.lat0;
 
-                                double factor
-                                    = GlobalC::ucell.atoms[T1].ncpp.zv * GlobalC::ucell.atoms[T2].ncpp.zv * ModuleBase::e2
-                                      / (rr * rr)
-                                      * (erfc(sqrt(alpha) * rr) / rr
-                                         + sqrt(8.0 * alpha / ModuleBase::TWO_PI) * exp(-1.0 * alpha * rr * rr))
-                                      * GlobalC::ucell.lat0;
-
-                                forceion(iat1, 0) -= factor * r[n].x;
-                                forceion(iat1, 1) -= factor * r[n].y;
-                                forceion(iat1, 2) -= factor * r[n].z;
-
-                                //								std::cout << " r.z=" << r[n].z << " r2=" << r2[n] <<
-                                // std::endl; 		std::cout << " " << iat1 << " " << iat2 << " n=" << n
-                                //		 << " rn.z=" << r[n].z
-                                //		 << " r2=" << r2[n] << " rr=" << rr << " fac=" << factor << " force=" <<
-                                // forceion(iat1,2)
-                                //		 << " new_part=" << factor*r[n].z <<  std::endl;
-                            }
+                            forceion(iat1, 0) -= factor * r[n].x;
+                            forceion(iat1, 1) -= factor * r[n].y;
+                            forceion(iat1, 2) -= factor * r[n].z;
                         }
-
-                        ++iat2;
                     }
-                } // atom b
 
-                //				std::cout << " atom" << iat1 << std::endl;
-                //				std::cout << std::setw(15) << forceion(iat1, 0) << std::setw(15) << forceion(iat1,1) <<
-                // std::setw(15) << forceion(iat1,2) << std::endl;
+                    ++iat2;
+                }
+            } // atom b
 
-                ++iat1;
+            ++iat1;
+            if (++I1 == GlobalC::ucell.atoms[T1].na) {
+                I1 = 0;
+                ++T1;
             }
-        } // atom a
+        }
+
         delete[] r;
         delete[] r2;
         delete[] irr;
     }
+#ifdef _OPENMP
+}
+#endif
 
     Parallel_Reduce::reduce_double_pool(forceion.c, forceion.nr * forceion.nc);
 
     // this->print(GlobalV::ofs_running, "ewald forces", forceion);
 
     ModuleBase::timer::tick("Forces", "cal_force_ew");
+
+    delete[] aux;
 
     return;
 }
@@ -631,6 +731,22 @@ void Forces::cal_force_cc(ModuleBase::matrix& forcecc, ModulePW::PW_Basis* rho_b
     ModuleBase::TITLE("Forces", "cal_force_cc");
     // recalculate the exchange-correlation potential.
     ModuleBase::TITLE("Forces", "cal_force_cc");
+    ModuleBase::timer::tick("Forces", "cal_force_cc");
+
+    int total_works = 0;
+    // cal total works for skipping preprocess
+    for (int it = 0; it < GlobalC::ucell.ntype; ++it)
+    {
+        if (GlobalC::ucell.atoms[it].ncpp.nlcc)
+        {
+            total_works += GlobalC::ucell.atoms[it].na;
+        }
+    }
+    if (total_works == 0)
+    {
+        ModuleBase::timer::tick("Forces", "cal_force_cc");
+        return;
+    }
 
     ModuleBase::matrix v(GlobalV::NSPIN, rho_basis->nrxx);
 
@@ -663,9 +779,11 @@ void Forces::cal_force_cc(ModuleBase::matrix& forcecc, ModulePW::PW_Basis* rho_b
 
     const ModuleBase::matrix vxc = v;
     std::complex<double>* psiv = new std::complex<double>[rho_basis->nmaxgr];
-    ModuleBase::GlobalFunc::ZEROS(psiv, rho_basis->nrxx);
     if (GlobalV::NSPIN == 1 || GlobalV::NSPIN == 4)
     {
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 1024)
+#endif
         for (int ir = 0; ir < rho_basis->nrxx; ir++)
         {
             psiv[ir] = std::complex<double>(vxc(0, ir), 0.0);
@@ -673,6 +791,9 @@ void Forces::cal_force_cc(ModuleBase::matrix& forcecc, ModulePW::PW_Basis* rho_b
     }
     else
     {
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 1024)
+#endif
         for (int ir = 0; ir < rho_basis->nrxx; ir++)
         {
             psiv[ir] = 0.5 * (vxc(0, ir) + vxc(1, ir));
@@ -682,57 +803,105 @@ void Forces::cal_force_cc(ModuleBase::matrix& forcecc, ModulePW::PW_Basis* rho_b
     // to G space
     rho_basis->real2recip(psiv, psiv);
 
+#ifdef _OPENMP
+#pragma omp parallel
+{
+    int num_threads = omp_get_num_threads();
+    int thread_id = omp_get_thread_num();
+#else
+    int num_threads = 1;
+    int thread_id = 0;
+#endif
+
     // psiv contains now Vxc(G)
     double* rhocg = new double[rho_basis->ngg];
     ModuleBase::GlobalFunc::ZEROS(rhocg, rho_basis->ngg);
-    int iat = 0;
-    for (int T1 = 0; T1 < GlobalC::ucell.ntype; T1++)
+
+    /* Here is task distribution for multi-thread,
+        0. Consider for load balancing, we distribute `total_works` instead of `nat`.
+            So simply use `#pragma omp parallel for` is not suitable
+        1. Calculate the work range [work_beg, work_end) by each thread
+            a. when it is single thread stage, [work_beg, work_end) will be [0, total_works)
+        2. each thread iterate atoms form `work_beg` to `work_end-1`
+    */
+    int work, work_end;
+    ModuleBase::TASK_DIST_1D(num_threads, thread_id, total_works, work, work_end);
+    work_end = work + work_end;
+
+    int it = 0;
+    int ia = 0;
+    // We have to map the work beginning position to `it` and `ia` beginning position of this thread
+    for (int work_off = 0; it < GlobalC::ucell.ntype; it++)
     {
-        if (GlobalC::ucell.atoms[T1].ncpp.nlcc)
+        if (GlobalC::ucell.atoms[it].ncpp.nlcc)
         {
-            // call drhoc
-            chr->non_linear_core_correction(GlobalC::ppcell.numeric,
-                                                    GlobalC::ucell.atoms[T1].ncpp.msh,
-                                                    GlobalC::ucell.atoms[T1].ncpp.r,
-                                                    GlobalC::ucell.atoms[T1].ncpp.rab,
-                                                    GlobalC::ucell.atoms[T1].ncpp.rho_atc,
-                                                    rhocg,
-                                                    rho_basis);
-
-            std::complex<double> ipol0, ipol1, ipol2;
-            for (int I1 = 0; I1 < GlobalC::ucell.atoms[T1].na; I1++)
+            if (work_off + GlobalC::ucell.atoms[it].na > work)
             {
-                for (int ig = 0; ig < rho_basis->npw; ig++)
-                {
-                    const ModuleBase::Vector3<double> gv = rho_basis->gcar[ig];
-                    const ModuleBase::Vector3<double> pos = GlobalC::ucell.atoms[T1].tau[I1];
-                    const double rhocgigg = rhocg[rho_basis->ig2igg[ig]];
-                    const std::complex<double> psiv_conj = conj(psiv[ig]);
-
-                    const double arg = ModuleBase::TWO_PI * (gv.x * pos.x + gv.y * pos.y + gv.z * pos.z);
-                    const std::complex<double> expiarg = std::complex<double>(sin(arg), cos(arg));
-
-                    ipol0 = GlobalC::ucell.tpiba * GlobalC::ucell.omega * rhocgigg * gv.x * psiv_conj * expiarg;
-                    forcecc(iat, 0) += ipol0.real();
-
-                    ipol1 = GlobalC::ucell.tpiba * GlobalC::ucell.omega * rhocgigg * gv.y * psiv_conj * expiarg;
-                    forcecc(iat, 1) += ipol1.real();
-
-                    ipol2 = GlobalC::ucell.tpiba * GlobalC::ucell.omega * rhocgigg * gv.z * psiv_conj * expiarg;
-                    forcecc(iat, 2) += ipol2.real();
-                }
-                ++iat;
+                ia = work - work_off;
+                break;
             }
-        }
-        else
-        {
-            iat += GlobalC::ucell.atoms[T1].na;
+            work_off += GlobalC::ucell.atoms[it].na;
         }
     }
-    assert(iat == GlobalC::ucell.nat);
+
+    int last_it = -1;
+    while (work < work_end)
+    {
+        if (it != last_it)
+        {
+            // call drhoc when `it` is changed
+            chr->non_linear_core_correction(GlobalC::ppcell.numeric,
+                                                    GlobalC::ucell.atoms[it].ncpp.msh,
+                                                    GlobalC::ucell.atoms[it].ncpp.r,
+                                                    GlobalC::ucell.atoms[it].ncpp.rab,
+                                                    GlobalC::ucell.atoms[it].ncpp.rho_atc,
+                                                    rhocg,
+                                                    rho_basis);
+            last_it = it;
+        }
+
+        // get iat form table
+        int iat = GlobalC::ucell.itia2iat(it, ia);
+        for (int ig = 0; ig < rho_basis->npw; ig++)
+        {
+            const ModuleBase::Vector3<double> gv = rho_basis->gcar[ig];
+            const ModuleBase::Vector3<double> pos = GlobalC::ucell.atoms[it].tau[ia];
+            const double rhocgigg = rhocg[rho_basis->ig2igg[ig]];
+            const std::complex<double> psiv_conj = conj(psiv[ig]);
+
+            const double arg = ModuleBase::TWO_PI * (gv.x * pos.x + gv.y * pos.y + gv.z * pos.z);
+            const std::complex<double> expiarg = std::complex<double>(sin(arg), cos(arg));
+
+            auto ipol0 = GlobalC::ucell.tpiba * GlobalC::ucell.omega * rhocgigg * gv.x * psiv_conj * expiarg;
+            forcecc(iat, 0) += ipol0.real();
+
+            auto ipol1 = GlobalC::ucell.tpiba * GlobalC::ucell.omega * rhocgigg * gv.y * psiv_conj * expiarg;
+            forcecc(iat, 1) += ipol1.real();
+
+            auto ipol2 = GlobalC::ucell.tpiba * GlobalC::ucell.omega * rhocgigg * gv.z * psiv_conj * expiarg;
+            forcecc(iat, 2) += ipol2.real();
+        }
+
+        ++work;
+        if (++ia == GlobalC::ucell.atoms[it].na)
+        {
+            ia = 0;
+            do
+            {   // search for next effective `it`
+                ++it;
+            }
+            while (it < GlobalC::ucell.ntype && !GlobalC::ucell.atoms[it].ncpp.nlcc);
+        }
+    }
+
     delete[] rhocg;
+#ifdef _OPENMP
+} // omp parallel
+#endif
+    
     delete[] psiv; // mohan fix bug 2012-03-22
     Parallel_Reduce::reduce_double_pool(forcecc.c, forcecc.nr * forcecc.nc); // qianrui fix a bug for kpar > 1
+    ModuleBase::timer::tick("Forces", "cal_force_cc");
     return;
 }
 
@@ -909,31 +1078,40 @@ void Forces::cal_force_nl(ModuleBase::matrix& forcenl, const ModuleBase::matrix&
 void Forces::cal_force_scc(ModuleBase::matrix& forcescc, ModulePW::PW_Basis* rho_basis)
 {
     ModuleBase::TITLE("Forces", "cal_force_scc");
-    std::complex<double>* psic = new std::complex<double>[rho_basis->nmaxgr];
+    ModuleBase::timer::tick("Forces", "cal_force_scc");
 
     //for orbital free case
     if(!GlobalC::en.vnew_exist)
     {
         return;
     }
+
+    std::complex<double>* psic = new std::complex<double>[rho_basis->nmaxgr];
+
     ModuleBase::matrix& v_current = GlobalC::en.vnew;
     const int nrxx = v_current.nc;
     const int nspin = v_current.nr;
 
     if (nspin == 1 || nspin == 4)
     {
-        for (int i = 0; i < nrxx; i++)
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 1024)
+#endif
+        for (int ir = 0; ir < nrxx; ir++)
         {
-            psic[i] = v_current(0, i);
+            psic[ir] = v_current(0, ir);
         }
     }
     else
     {
         int isup = 0;
         int isdw = 1;
-        for (int i = 0; i < nrxx; i++)
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 1024)
+#endif
+        for (int ir = 0; ir < nrxx; ir++)
         {
-            psic[i] = (v_current(isup, i) + v_current(isdw, i)) * 0.5;
+            psic[ir] = (v_current(isup, ir) + v_current(isdw, ir)) * 0.5;
         }
     }
     //delete vnew memory
@@ -950,78 +1128,100 @@ void Forces::cal_force_scc(ModuleBase::matrix& forcescc, ModulePW::PW_Basis* rho
         }
     }
 
-    // work space
-    double* aux = new double[ndm];
-    ModuleBase::GlobalFunc::ZEROS(aux, ndm);
-
-    double* rhocgnt = new double[rho_basis->ngg];
-    ModuleBase::GlobalFunc::ZEROS(rhocgnt, rho_basis->ngg);
-
     rho_basis->real2recip(psic, psic);
 
     int igg0 = 0;
     const int ig0 = rho_basis->ig_gge0;
+    const int ig_gap = (ig0 >= 0 && ig0 < rho_basis->npw) ? ig0 : -1;
     if (rho_basis->gg_uniq[0] < 1.0e-8)
         igg0 = 1;
 
+#ifdef _OPENMP
+#pragma omp parallel
+{
+#endif
+
+    // thread local work space
+    double *aux = new double[ndm];
+    ModuleBase::GlobalFunc::ZEROS(aux, ndm);
+    double* rhocgnt = new double[rho_basis->ngg];
+    ModuleBase::GlobalFunc::ZEROS(rhocgnt, rho_basis->ngg);
+
     double fact = 2.0;
-    for (int nt = 0; nt < GlobalC::ucell.ntype; nt++)
+    int last_it = -1;
+
+#ifdef _OPENMP
+// use no wait to avoid syncing
+#pragma omp for nowait
+#endif
+    for (int iat = 0; iat < GlobalC::ucell.nat; ++iat)
     {
-        //		Here we compute the G.ne.0 term
-        const int mesh = GlobalC::ucell.atoms[nt].ncpp.msh;
+        int it = GlobalC::ucell.iat2it[iat];
+        int ia = GlobalC::ucell.iat2ia[iat];
 
-        for (int ig = igg0; ig < rho_basis->ngg; ++ig)
+         // initialize rhocgnt when `it` is changed
+        if (it != last_it)
         {
-            const double gx = sqrt(rho_basis->gg_uniq[ig]) * GlobalC::ucell.tpiba;
-            for (int ir = 0; ir < mesh; ir++)
-            {
-                if (GlobalC::ucell.atoms[nt].ncpp.r[ir] < 1.0e-8)
-                {
-                    aux[ir] = GlobalC::ucell.atoms[nt].ncpp.rho_at[ir];
-                }
-                else
-                {
-                    const double gxx = gx * GlobalC::ucell.atoms[nt].ncpp.r[ir];
-                    aux[ir] = GlobalC::ucell.atoms[nt].ncpp.rho_at[ir] * sin(gxx) / gxx;
-                }
-            }
-            ModuleBase::Integral::Simpson_Integral(mesh, aux, GlobalC::ucell.atoms[nt].ncpp.rab, rhocgnt[ig]);
-        }
+            //		Here we compute the G.ne.0 term
+            const int mesh = GlobalC::ucell.atoms[it].ncpp.msh;
 
-        int iat = 0;
-        for (int it = 0; it < GlobalC::ucell.ntype; it++)
-        {
-            for (int ia = 0; ia < GlobalC::ucell.atoms[it].na; ia++)
+            for (int ig = igg0; ig < rho_basis->ngg; ++ig)
             {
-                if (nt == it)
+                const double gx = sqrt(rho_basis->gg_uniq[ig]) * GlobalC::ucell.tpiba;
+                for (int ir = 0; ir < mesh; ir++)
                 {
-                    for (int ig = 0; ig < rho_basis->npw; ++ig)
+                    if (GlobalC::ucell.atoms[it].ncpp.r[ir] < 1.0e-8)
                     {
-                        if (ig == ig0)
-                            continue;
-                        const ModuleBase::Vector3<double> gv = rho_basis->gcar[ig];
-                        const ModuleBase::Vector3<double> pos = GlobalC::ucell.atoms[it].tau[ia];
-                        const double rhocgntigg = rhocgnt[GlobalC::rhopw->ig2igg[ig]];
-                        const double arg = ModuleBase::TWO_PI * (gv * pos);
-                        const std::complex<double> cpm = std::complex<double>(sin(arg), cos(arg)) * conj(psic[ig]);
-
-                        forcescc(iat, 0) += fact * rhocgntigg * GlobalC::ucell.tpiba * gv.x * cpm.real();
-                        forcescc(iat, 1) += fact * rhocgntigg * GlobalC::ucell.tpiba * gv.y * cpm.real();
-                        forcescc(iat, 2) += fact * rhocgntigg * GlobalC::ucell.tpiba * gv.z * cpm.real();
+                        aux[ir] = GlobalC::ucell.atoms[it].ncpp.rho_at[ir];
                     }
-                    // std::cout << " forcescc = " << forcescc(iat,0) << " " << forcescc(iat,1) << " " <<
-                    // forcescc(iat,2) << std::endl;
+                    else
+                    {
+                        const double gxx = gx * GlobalC::ucell.atoms[it].ncpp.r[ir];
+                        aux[ir] = GlobalC::ucell.atoms[it].ncpp.rho_at[ir] * sin(gxx) / gxx;
+                    }
                 }
-                iat++;
+                ModuleBase::Integral::Simpson_Integral(mesh, aux, GlobalC::ucell.atoms[it].ncpp.rab, rhocgnt[ig]);
             }
+
+            // record it
+            last_it = it;
         }
+
+        const ModuleBase::Vector3<double> pos = GlobalC::ucell.atoms[it].tau[ia];
+
+        const auto ig_loop = [&](int ig_beg, int ig_end)
+        {
+            for (int ig = ig_beg; ig < ig_end; ++ig)
+            {
+                const ModuleBase::Vector3<double> gv = rho_basis->gcar[ig];
+                const double rhocgntigg = rhocgnt[GlobalC::rhopw->ig2igg[ig]];
+                const double arg = ModuleBase::TWO_PI * (gv * pos);
+                const std::complex<double> cpm = std::complex<double>(sin(arg), cos(arg)) * conj(psic[ig]);
+
+                forcescc(iat, 0) += fact * rhocgntigg * GlobalC::ucell.tpiba * gv.x * cpm.real();
+                forcescc(iat, 1) += fact * rhocgntigg * GlobalC::ucell.tpiba * gv.y * cpm.real();
+                forcescc(iat, 2) += fact * rhocgntigg * GlobalC::ucell.tpiba * gv.z * cpm.real();
+            }
+        };
+
+        ig_loop(0, ig_gap);
+        ig_loop(ig_gap + 1, rho_basis->npw);
+
+        // std::cout << " forcescc = " << forcescc(iat,0) << " " << forcescc(iat,1) << " " <<
+        // forcescc(iat,2) << std::endl;
     }
+
+    delete[] aux;
+    delete[] rhocgnt;
+
+#ifdef _OPENMP
+}
+#endif
 
     Parallel_Reduce::reduce_double_pool(forcescc.c, forcescc.nr * forcescc.nc);
 
     delete[] psic; // mohan fix bug 2012-03-22
-    delete[] aux; // mohan fix bug 2012-03-22
-    delete[] rhocgnt; // mohan fix bug 2012-03-22
 
+    ModuleBase::timer::tick("Forces", "cal_force_scc");
     return;
 }

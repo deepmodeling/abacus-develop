@@ -740,7 +740,7 @@ void LCAO_gen_fixedH::build_Nonlocal_beta_new(double* HSloc) //update by liuyu 2
     mkl_set_num_threads(1);
 #endif
 
-    const std::vector<std::vector<std::tuple<int, int, ModuleBase::Vector3<int>, ModuleBase::Vector3<double>>>> adjs_all = GlobalC::GridD.get_adjs(GlobalC::ucell);
+    const std::vector<AdjacentAtomInfo> adjs_all = GlobalC::GridD.get_adjs(GlobalC::ucell);
 
 #ifdef _OPENMP
     #pragma omp parallel
@@ -763,23 +763,23 @@ void LCAO_gen_fixedH::build_Nonlocal_beta_new(double* HSloc) //update by liuyu 2
             //=======================================================
             #ifdef _OPENMP
                 std::vector<std::unordered_map<int,std::vector<double>>> nlm_tot_thread;
-                nlm_tot_thread.resize(adjs_all[iat].size());
+                nlm_tot_thread.resize(adjs_all[iat].adj_num + 1);
             #else 
                 std::vector<std::unordered_map<int,std::vector<double>>> nlm_tot;
-                nlm_tot.resize(adjs_all[iat].size());
+                nlm_tot.resize(adjs_all[iat].adj_num + 1);
             #endif 
 
             const ModuleBase::Vector3<double> tau0 = atom0->tau[I0];
             const double Rcut_Beta = GlobalC::ucell.infoNL.Beta[T0].get_rcut_max();
 
             //outermost loop : all adjacent atoms
-            for(int ad_count=0; ad_count < adjs_all[iat].size(); ad_count++)
+            for(int ad_count=0; ad_count < adjs_all[iat].adj_num + 1; ad_count++)
             {
-                const int T1 = std::get<0>(adjs_all[iat][ad_count]);
-                const int I1 = std::get<1>(adjs_all[iat][ad_count]);
+                const int T1 = adjs_all[iat].ntype[ad_count];
+                const int I1 = adjs_all[iat].natom[ad_count];
                 const int start1 = GlobalC::ucell.itiaiw2iwt(T1, I1, 0);
                 const double Rcut_AO1 = GlobalC::ORB.Phi[T1].getRcut();
-                const ModuleBase::Vector3<double> tau1 = std::get<3>(adjs_all[iat][ad_count]);
+                const ModuleBase::Vector3<double> tau1 = adjs_all[iat].adjacent_tau[ad_count];
                 const Atom* atom1 = &GlobalC::ucell.atoms[T1];
                 const int nw1_tot = atom1->nw*GlobalV::NPOL;
 
@@ -832,22 +832,22 @@ void LCAO_gen_fixedH::build_Nonlocal_beta_new(double* HSloc) //update by liuyu 2
             //calculate sum_(L0,M0) beta<psi_i|beta><beta|psi_j>
             //and accumulate the value to Hloc_fixed(i,j)
             //=======================================================
-            for(int ad1_count=0; ad1_count < adjs_all[iat].size(); ad1_count++)
+            for(int ad1_count=0; ad1_count < adjs_all[iat].adj_num + 1; ad1_count++)
             {
-                const int T1 = std::get<0>(adjs_all[iat][ad1_count]);
-                const int I1 = std::get<1>(adjs_all[iat][ad1_count]);
+                const int T1 = adjs_all[iat].ntype[ad1_count];
+                const int I1 = adjs_all[iat].natom[ad1_count];
                 const int start1 = GlobalC::ucell.itiaiw2iwt(T1, I1, 0);
-                const ModuleBase::Vector3<double> tau1 = std::get<3>(adjs_all[iat][ad1_count]);
+                const ModuleBase::Vector3<double> tau1 = adjs_all[iat].adjacent_tau[ad1_count];
                 const Atom* atom1 = &GlobalC::ucell.atoms[T1];
                 const int nw1_tot = atom1->nw*GlobalV::NPOL;
                 const double Rcut_AO1 = GlobalC::ORB.Phi[T1].getRcut();
 
-                for (int ad2_count=0; ad2_count < adjs_all[iat].size(); ad2_count++)
+                for (int ad2_count=0; ad2_count < adjs_all[iat].adj_num + 1; ad2_count++)
                 {
-                    const int T2 = std::get<0>(adjs_all[iat][ad2_count]);
-                    const int I2 = std::get<1>(adjs_all[iat][ad2_count]);
+                    const int T2 = adjs_all[iat].ntype[ad2_count];
+                    const int I2 = adjs_all[iat].natom[ad2_count];
                     const int start2 = GlobalC::ucell.itiaiw2iwt(T2, I2, 0);
-                    const ModuleBase::Vector3<double> tau2 = std::get<3>(adjs_all[iat][ad2_count]);
+                    const ModuleBase::Vector3<double> tau2 = adjs_all[iat].adjacent_tau[ad2_count];
                     const Atom* atom2 = &GlobalC::ucell.atoms[T2];
                     const int nw2_tot = atom2->nw*GlobalV::NPOL;
                     const double Rcut_AO2 = GlobalC::ORB.Phi[T2].getRcut();

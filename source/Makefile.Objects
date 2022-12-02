@@ -34,6 +34,7 @@ VPATH=./src_global:\
 ./module_hamilt:\
 ./module_hamilt/ks_pw:\
 ./module_hamilt/ks_lcao:\
+./module_hamilt/of_pw:\
 ./module_hamilt/src:\
 ./module_gint:\
 ./src_pw:\
@@ -68,7 +69,8 @@ ${OBJS_XC}\
 ${OBJS_IO}\
 ${OBJS_RI}\
 ${OBJS_PARALLEL}\
-${OBJS_SRCPW}
+${OBJS_SRCPW}\
+${OBJS_HAMILT_OF}
 
 OBJS_ABACUS=${OBJS_ABACUS_PW}\
 ${OBJS_DEEPKS}\
@@ -83,7 +85,8 @@ ${OBJS_IO_LCAO}\
 ${OBJS_RI_LCAO}\
 ${OBJS_LCAO}\
 ${OBJS_PARALLEL_LCAO}\
-${OBJS_VDW}
+${OBJS_VDW}\
+${OBJS_HAMILT_OF}
 
 
 OBJS_MAIN=main.o\
@@ -179,9 +182,6 @@ OBJS_ESOLVER=esolver.o\
     esolver_lj.o\
     esolver_dp.o\
     esolver_of.o\
-    kedf_tf.o\
-    kedf_vw.o\
-    kedf_wt.o\
 
 OBJS_ESOLVER_LCAO=esolver_ks_lcao.o\
       esolver_ks_lcao_elec.o\
@@ -216,6 +216,10 @@ OBJS_HAMILT=hamilt_pw.o\
     nonlocal_pw.o\
     meta_pw.o\
     velocity_pw.o\
+
+OBJS_HAMILT_OF=kedf_tf.o\
+    kedf_vw.o\
+    kedf_wt.o\
 
 OBJS_HAMILT_LCAO=hamilt_lcao.o\
     operator_lcao.o\
