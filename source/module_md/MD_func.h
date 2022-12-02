@@ -51,7 +51,7 @@ class MD_func
 		UnitCell &unit_in,
 		double &potential,
 		ModuleBase::Vector3<double> *force,
-		ModuleBase::matrix &stress,
+		ModuleBase::matrix &virial,
 		ModuleBase::Vector3<double>* vel);
 
 	static double GetAtomKE(

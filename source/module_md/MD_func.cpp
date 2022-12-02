@@ -245,13 +245,12 @@ void MD_func::force_virial(
 		UnitCell &unit_in,
 		double &potential,
 		ModuleBase::Vector3<double> *force,
-		ModuleBase::matrix &stress,
+		ModuleBase::matrix &virial,
         ModuleBase::Vector3<double>* vel)
 {
 	ModuleBase::TITLE("MD_func", "force_stress");
     ModuleBase::timer::tick("MD_func", "force_stress");
 
-    //p_esolver->Run(istep,unit_in);
     p_esolver->Run(istep, unit_in, vel);
 
     p_esolver->cal_Energy(potential);
