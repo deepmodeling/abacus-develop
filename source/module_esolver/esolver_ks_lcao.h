@@ -20,7 +20,7 @@ namespace ModuleESolver
         void Init(Input& inp, UnitCell& cell) override;
 
         void cal_Energy(double& etot) override;
-        void cal_Force(ModuleBase::matrix& force) override;
+        void cal_Force(ModuleBase::matrix& force, ModuleBase::Vector3<double>* vel=nullptr) override;
         void cal_Stress(ModuleBase::matrix& stress) override;
         void postprocess() override;
         void nscf() override;
@@ -29,7 +29,7 @@ namespace ModuleESolver
     protected:
         virtual void beforescf(const int istep) override;
         virtual void eachiterinit(const int istep, const int iter) override;
-        virtual void hamilt2density(const int istep, const int iter, const double ethr) override;
+        virtual void hamilt2density(const int istep, const int iter, const double ethr, ModuleBase::Vector3<double>* vel=nullptr) override;
         virtual void updatepot(const int istep, const int iter) override;
         virtual void eachiterfinish(const int iter) override;
         virtual void afterscf(const int istep) override;

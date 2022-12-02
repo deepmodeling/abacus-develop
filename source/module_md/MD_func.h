@@ -42,16 +42,8 @@ class MD_func
 		UnitCell &unit_in,
 		double &potential,
 		ModuleBase::Vector3<double> *force,
-		ModuleBase::matrix &virial);
-
-	static void force_virial(
-		ModuleESolver::ESolver *p_esolver,
-		const int &istep,
-		UnitCell &unit_in,
-		double &potential,
-		ModuleBase::Vector3<double> *force,
 		ModuleBase::matrix &virial,
-		ModuleBase::Vector3<double>* vel);
+		ModuleBase::Vector3<double>* vel=nullptr);
 
 	static double GetAtomKE(
 		const int &numIon,

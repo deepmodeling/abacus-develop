@@ -77,25 +77,13 @@ void Run_MD::md_line(UnitCell &unit_in, ModuleESolver::ESolver *p_esolver)
             mdrun->first_half();
 
             // update force and virial due to the update of atom positions
-            if ( GlobalV::ESOLVER_TYPE == "tddft" )
-            {
-                MD_func::force_virial(p_esolver,
+            MD_func::force_virial(p_esolver,
                                       mdrun->step_,
                                       mdrun->ucell,
                                       mdrun->potential,
                                       mdrun->force,
                                       mdrun->virial,
                                       vel_tmp);
-            }
-            else
-            {
-                MD_func::force_virial(p_esolver,
-                                      mdrun->step_,
-                                      mdrun->ucell,
-                                      mdrun->potential,
-                                      mdrun->force,
-                                      mdrun->virial);
-            }
 
             mdrun->second_half();
 

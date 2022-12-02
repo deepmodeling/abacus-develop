@@ -121,7 +121,7 @@ namespace ModuleESolver
     }
 
     template<typename FPTYPE, typename Device>
-    void ESolver_KS<FPTYPE, Device>::hamilt2density(const int istep, const int iter, const FPTYPE ethr)
+    void ESolver_KS<FPTYPE, Device>::hamilt2density(const int istep, const int iter, const FPTYPE ethr, ModuleBase::Vector3<double>* vel)
     {
         ModuleBase::timer::tick(this->classname, "hamilt2density");
         //Temporarily, before HSolver is constructed, it should be overrided by
@@ -172,7 +172,7 @@ namespace ModuleESolver
     }
 
     template<typename FPTYPE, typename Device>
-    void ESolver_KS<FPTYPE, Device>::Run(const int istep, UnitCell& ucell)
+    void ESolver_KS<FPTYPE, Device>::Run(const int istep, UnitCell& ucell, ModuleBase::Vector3<double>* vel)
     {
         if (!(GlobalV::CALCULATION == "scf" || GlobalV::CALCULATION == "md"
             || GlobalV::CALCULATION == "relax" || GlobalV::CALCULATION == "cell-relax"))
@@ -200,7 +200,7 @@ namespace ModuleESolver
 #endif
                 FPTYPE diag_ethr = this->phsol->set_diagethr(istep, iter, drho);
                 eachiterinit(istep, iter);
-                this->hamilt2density(istep, iter, diag_ethr);
+                this->hamilt2density(istep, iter, diag_ethr, vel);
                 
                 //<Temporary> It may be changed when more clever parallel algorithm is put forward.
                 //When parallel algorithm for bands are adopted. Density will only be treated in the first group.
@@ -222,7 +222,7 @@ namespace ModuleESolver
                         if (hsolver_error > drho)
                         {
                             diag_ethr = this->phsol->reset_diagethr(GlobalV::ofs_running, hsolver_error, drho);
-                            this->hamilt2density(istep, iter, diag_ethr);
+                            this->hamilt2density(istep, iter, diag_ethr, vel);
                             drho = GlobalC::CHR_MIX.get_drho(pelec->charge, GlobalV::nelec);
                             hsolver_error = this->phsol->cal_hsolerror();
                         }

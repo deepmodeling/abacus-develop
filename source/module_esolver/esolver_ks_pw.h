@@ -18,9 +18,9 @@ namespace ModuleESolver
         ~ESolver_KS_PW();
         void Init(Input& inp, UnitCell& cell) override;
         void cal_Energy(FPTYPE& etot) override;
-        void cal_Force(ModuleBase::matrix& force) override;
+        void cal_Force(ModuleBase::matrix& force, ModuleBase::Vector3<double>* vel=nullptr) override;
         void cal_Stress(ModuleBase::matrix& stress) override;
-        virtual void hamilt2density(const int istep, const int iter, const FPTYPE ethr) override;
+        virtual void hamilt2density(const int istep, const int iter, const FPTYPE ethr, ModuleBase::Vector3<double>* vel=nullptr) override;
         virtual void hamilt2estates(const FPTYPE ethr) override;
         virtual void nscf() override;
         void postprocess() override;

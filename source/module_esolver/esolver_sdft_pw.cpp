@@ -118,7 +118,7 @@ void ESolver_SDFT_PW::afterscf(const int istep)
     }
 }
 
-void ESolver_SDFT_PW::hamilt2density(int istep, int iter, double ethr)
+void ESolver_SDFT_PW::hamilt2density(int istep, int iter, double ethr, ModuleBase::Vector3<double>* vel)
 {
 	// reset energy 
     this->pelec->eband  = 0.0;
@@ -150,7 +150,7 @@ void ESolver_SDFT_PW::cal_Energy(double& etot)
     etot = GlobalC::en.etot;
 }
 
-void ESolver_SDFT_PW::cal_Force(ModuleBase::matrix &force)
+void ESolver_SDFT_PW::cal_Force(ModuleBase::matrix &force, ModuleBase::Vector3<double>* vel)
 {
 	Sto_Forces ff;
     ff.init(force, this->pelec->wg, this->psi, this->stowf, pelec->charge);

@@ -40,16 +40,14 @@ class ESolver
     // virtual void UpdateLat(ModuleBase::matrix &lat_in);
     // virtual void UpdateAtom(Atom &atom_in);
 
-    virtual void Run(int istep, UnitCell& cell) = 0;
-    virtual void Run(int istep, UnitCell& cell, ModuleBase::Vector3<double>* vel) = 0;
+    virtual void Run(int istep, UnitCell& cell, ModuleBase::Vector3<double>* vel=nullptr) = 0;
 
     // Deal with exx and other calculation than scf/md/relax:
     //  such as nscf, istate-charge or envelope
     virtual void othercalculation(const int istep){};
 
     virtual void cal_Energy(double& etot) = 0;
-    virtual void cal_Force(ModuleBase::matrix& force) = 0;
-    virtual void cal_Force(ModuleBase::matrix& force, ModuleBase::Vector3<double>* vel) = 0;
+    virtual void cal_Force(ModuleBase::matrix& force, ModuleBase::Vector3<double>* vel=nullptr) = 0;
     virtual void cal_Stress(ModuleBase::matrix& stress) = 0;
     virtual void postprocess(){};
 

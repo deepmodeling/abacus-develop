@@ -73,11 +73,11 @@ public:
     }
 
     virtual void Init(Input &inp, UnitCell &ucell) override;
-    virtual void Run(int istep, UnitCell& ucell) override;
+    virtual void Run(int istep, UnitCell& ucell, ModuleBase::Vector3<double>* vel=nullptr) override;
     virtual void postprocess() override;
 
     virtual void cal_Energy(double& etot) override;
-    virtual void cal_Force(ModuleBase::matrix &force) override;
+    virtual void cal_Force(ModuleBase::matrix &force, ModuleBase::Vector3<double>* vel=nullptr) override;
     virtual void cal_Stress(ModuleBase::matrix &stress) override;
 
     virtual int getniter() override {

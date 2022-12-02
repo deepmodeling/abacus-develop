@@ -321,7 +321,7 @@ namespace ModuleESolver
 
     //Temporary, it should be replaced by hsolver later.
     template<typename FPTYPE, typename Device>
-    void ESolver_KS_PW<FPTYPE, Device>::hamilt2density(const int istep, const int iter, const FPTYPE ethr)
+    void ESolver_KS_PW<FPTYPE, Device>::hamilt2density(const int istep, const int iter, const FPTYPE ethr, ModuleBase::Vector3<double>* vel)
     {
         if(this->phsol != nullptr)
         {
@@ -617,7 +617,7 @@ namespace ModuleESolver
     }
 
     template<typename FPTYPE, typename Device>
-    void ESolver_KS_PW<FPTYPE, Device>::cal_Force(ModuleBase::matrix& force)
+    void ESolver_KS_PW<FPTYPE, Device>::cal_Force(ModuleBase::matrix& force, ModuleBase::Vector3<double>* vel)
     {
         Forces ff;
         ff.init(force, this->pelec->wg, this->pelec->charge, this->psi);

@@ -22,7 +22,7 @@ namespace ModuleESolver
         lj_sigma *= ModuleBase::ANGSTROM_AU;
     }
 
-    void ESolver_LJ::Run(const int istep, UnitCell& ucell)
+    void ESolver_LJ::Run(const int istep, UnitCell& ucell, ModuleBase::Vector3<double>* vel)
     {
         Grid_Driver grid_neigh(GlobalV::test_deconstructor, GlobalV::test_grid_driver, GlobalV::test_grid);
         atom_arrange::search(
@@ -94,7 +94,7 @@ namespace ModuleESolver
         etot = lj_potential;
     }
 
-    void ESolver_LJ::cal_Force(ModuleBase::matrix& force)
+    void ESolver_LJ::cal_Force(ModuleBase::matrix& force, ModuleBase::Vector3<double>* vel)
     {
         force = lj_force;
     }

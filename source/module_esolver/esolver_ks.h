@@ -28,11 +28,10 @@ namespace ModuleESolver
         int out_freq_elec;// frequency for output
         virtual void Init(Input& inp, UnitCell& cell) override;
 
-        virtual void Run(const int istep, UnitCell& cell) override;
+        virtual void Run(const int istep, UnitCell& cell, ModuleBase::Vector3<double>* vel=nullptr) override;
 
         // calculate electron density from a specific Hamiltonian
-        virtual void hamilt2density(const int istep, const int iter, const FPTYPE ethr);
-        virtual void hamilt2density(const int istep, const int iter, const FPTYPE ethr, ModuleBase::Vector3<double>* vel);
+        virtual void hamilt2density(const int istep, const int iter, const FPTYPE ethr, ModuleBase::Vector3<double>* vel=nullptr);
 
         // calculate electron states from a specific Hamiltonian
         virtual void hamilt2estates(const FPTYPE ethr){};

@@ -25,20 +25,14 @@ class ESolver_KS_LCAO_TDDFT : public ESolver_KS_LCAO
     elecstate::ElecStateLCAO_TDDFT* pelec_td = nullptr;
 
   protected:
-    virtual void Run(const int istep, UnitCell& cell, ModuleBase::Vector3<double>* vel) override;
-    virtual void Run(const int istep, UnitCell& cell) override;
     virtual void hamilt2density(const int istep,
                                 const int iter,
                                 const double ethr,
-                                ModuleBase::Vector3<double>* vel) override;
-    virtual void hamilt2density(const int istep,
-                                const int iter,
-                                const double ethr) override;
+                                ModuleBase::Vector3<double>* vel=nullptr) override;
     virtual void eachiterinit(const int istep, const int iter) override;
     virtual void updatepot(const int istep, const int iter) override;
     virtual void afterscf(const int istep) override;
-    virtual void cal_Force(ModuleBase::matrix& force, ModuleBase::Vector3<double>* vel) override;
-    virtual void cal_Force(ModuleBase::matrix& force) override;
+    virtual void cal_Force(ModuleBase::matrix& force, ModuleBase::Vector3<double>* vel=nullptr) override;
     void cal_edm_tddft();
 };
 

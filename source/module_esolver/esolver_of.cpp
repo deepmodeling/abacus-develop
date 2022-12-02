@@ -242,7 +242,7 @@ void ESolver_OF::Init(Input &inp, UnitCell &ucell)
     CE.Init_CE();
 }
 
-void ESolver_OF::Run(int istep, UnitCell& ucell)
+void ESolver_OF::Run(int istep, UnitCell& ucell, ModuleBase::Vector3<double>* vel)
 {
     ModuleBase::timer::tick("ESolver_OF", "Run");
     // get Ewald energy, initial rho and phi if necessary
@@ -1060,7 +1060,7 @@ void ESolver_OF::cal_Energy(double& etot)
 }
 
 
-void ESolver_OF::cal_Force(ModuleBase::matrix& force)
+void ESolver_OF::cal_Force(ModuleBase::matrix& force, ModuleBase::Vector3<double>* vel)
 {
     Forces ff;
     ModuleBase::matrix placeholder_wg;//using a placeholder for this template interface, would be refactor later
