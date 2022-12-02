@@ -169,9 +169,9 @@ We use [Codecov](https://codecov.io/) to host and visualize our [**code coverage
 
 ## Submitting a Pull Request
 
-1. [Fork](https://docs.github.com/en/github/getting-started-with-github/fork-a-repo) the ABACUS repo.
+1. [Fork](https://docs.github.com/en/github/getting-started-with-github/fork-a-repo) the [ABACUS repository](https://github.com/deepmodeling/abacus-develop). If you already had an existing fork, [sync](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks/syncing-a-fork) the fork to keep your modification up-to-date.
 
-2. Pull your forked repository, and create a new git branchmake to your changes in it:
+2. Pull your forked repository, create a new git branch, and make your changes in it:
 
      ```shell
      git checkout -b my-fix-branch
@@ -188,11 +188,11 @@ To run a subset of unit test, use `ctest -R <test-match-pattern>` to perform tes
     git push origin my-fix-branch
     ```
 
-6. In GitHub, send a pull request with `deepmodeling/abacus-develop:develop` as the base repository.
+6. In GitHub, send a pull request (PR) with `deepmodeling/abacus-develop:develop` as the base repository. It is required to document your PR following [our guidelines](#commit-message-guidelines).
 
 7. After your pull request is merged, you can safely delete your branch and sync the changes from the main (upstream) repository:
 
-- Delete the remote branch on GitHub either through the GitHub web UI or your local shell as follows:
+- Delete the remote branch on GitHub either [through the GitHub web UI](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-branches-in-your-repository/deleting-and-restoring-branches-in-a-pull-request#deleting-a-branch-used-for-a-pull-request) or your local shell as follows:
 
     ```shell
     git push origin --delete my-fix-branch
@@ -232,25 +232,25 @@ The commit message should be structured as follows:
 
 - Header
   - type: The general intention of this commit
-    - `feat`: A new feature
-    - `fix`: A bug fix
-    - `docs`: Only documentation changes
-    - `style`: Changes that do not affect the meaning of the code
-    - `refactor`: A code change that neither fixes a bug nor adds a feature
-    - `perf`: A code change that improves performance
-    - `test`: Adding missing tests or correcting existing tests
-    - `build`: Changes that affect the build system or external dependencies
-    - `ci`: Changes to our CI configuration files and scripts
-    - `revert`: Reverting commits
-  - scope: The scope could be the module which this commit changes; for example, `orbital`
+    - `Feature`: A new feature
+    - `Fix`: A bug fix
+    - `Docs`: Only documentation changes
+    - `Style`: Changes that do not affect the meaning of the code
+    - `Refactor`: A code change that neither fixes a bug nor adds a feature
+    - `Perf`: A code change that improves performance
+    - `Test`: Adding missing tests or correcting existing tests
+    - `Build`: Changes that affect the build system or external dependencies
+    - `CI`: Changes to our CI configuration files and scripts
+    - `Revert`: Reverting commits
+  - scope: optional, could be the module which this commit changes; for example, `orbital`
   - description: A short summary of the code changes: tell others what you did in one sentence.
 - Body: optional, providing additional contextual information about the code changes, e.g. the motivation of this commit, referenced materials, and so on.
-- Footer: optional, reference GitHub issues, PRs that this commit closes or is related to
+- Footer: optional, reference GitHub issues, PRs that this commit closes or is related to.
 
 Here is an example:
 
 ```text
-fix(lcao): use correct scalapack interface.
+Fix(lcao): use correct scalapack interface.
 
 `pzgemv_` and `pzgemm_` used `double*` for alpha and beta parameters but not `complex*` , this would cause error in GNU compiler.
 
