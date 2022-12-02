@@ -476,24 +476,6 @@ void ESolver_KS_LCAO_TDDFT::cal_Force(ModuleBase::matrix& force, ModuleBase::Vec
     this->have_force = true;
 }
 
-void ESolver_KS_LCAO_TDDFT::cal_Force(ModuleBase::matrix& force)
-{
-    Force_Stress_LCAO FSL(this->RA);
-    FSL.getForceStress(GlobalV::CAL_FORCE,
-                       GlobalV::CAL_STRESS,
-                       GlobalV::TEST_FORCE,
-                       GlobalV::TEST_STRESS,
-                       this->LOC,
-                       this->psid,
-                       this->psi,
-                       this->UHM,
-                       force,
-                       this->scs);
-    // delete RA after cal_Force
-    this->RA.delete_grid();
-    this->have_force = true;
-}
-
 // use the original formula (Hamiltonian matrix) to calculate energy density matrix
 void ESolver_KS_LCAO_TDDFT::cal_edm_tddft()
 {
