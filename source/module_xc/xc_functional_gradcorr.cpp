@@ -65,10 +65,20 @@ void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v, 
 	// calculate the gradient of (rho_core+rho) in reciprocal space.
 	rhotmp1 = new double[GlobalC::rhopw->nrxx];
 	rhogsum1 = new std::complex<double>[GlobalC::rhopw->npw];
-	ModuleBase::GlobalFunc::ZEROS(rhotmp1, GlobalC::rhopw->nrxx);
-	ModuleBase::GlobalFunc::ZEROS(rhogsum1, GlobalC::rhopw->npw);
-	for(int ir=0; ir<GlobalC::rhopw->nrxx; ir++) rhotmp1[ir] = chr->rho[0][ir] + fac * chr->rho_core[ir];
-	for(int ig=0; ig<GlobalC::rhopw->npw; ig++) rhogsum1[ig] = chr->rhog[0][ig] + fac * chr->rhog_core[ig];
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 1024)
+#endif
+	for(int ir=0; ir<GlobalC::rhopw->nrxx; ir++) 
+	{
+		rhotmp1[ir] = chr->rho[0][ir] + fac * chr->rho_core[ir];
+	}
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 1024)
+#endif
+	for(int ig=0; ig<GlobalC::rhopw->npw; ig++)
+	{
+		rhogsum1[ig] = chr->rhog[0][ig] + fac * chr->rhog_core[ig];
+	}
 
 	gdr1 = new ModuleBase::Vector3<double>[GlobalC::rhopw->nrxx];
 	if(!is_stress)	h1 = new ModuleBase::Vector3<double>[GlobalC::rhopw->nrxx];
@@ -81,10 +91,20 @@ void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v, 
 	{
 		rhotmp2 = new double[GlobalC::rhopw->nrxx];
 		rhogsum2 = new std::complex<double>[GlobalC::rhopw->npw];
-		ModuleBase::GlobalFunc::ZEROS(rhotmp2, GlobalC::rhopw->nrxx);
-		ModuleBase::GlobalFunc::ZEROS(rhogsum2, GlobalC::rhopw->npw);
-		for(int ir=0; ir<GlobalC::rhopw->nrxx; ir++) rhotmp2[ir] = chr->rho[1][ir] + fac * chr->rho_core[ir];
-		for(int ig=0; ig<GlobalC::rhopw->npw; ig++) rhogsum2[ig] = chr->rhog[1][ig] + fac * chr->rhog_core[ig];
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 1024)
+#endif
+		for(int ir=0; ir<GlobalC::rhopw->nrxx; ir++)
+		{
+			rhotmp2[ir] = chr->rho[1][ir] + fac * chr->rho_core[ir];
+		}
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 1024)
+#endif
+		for(int ig=0; ig<GlobalC::rhopw->npw; ig++)
+		{
+			rhogsum2[ig] = chr->rhog[1][ig] + fac * chr->rhog_core[ig];
+		}
 
 		gdr2 = new ModuleBase::Vector3<double>[GlobalC::rhopw->nrxx];
 		if(!is_stress) h2 = new ModuleBase::Vector3<double>[GlobalC::rhopw->nrxx];
@@ -94,17 +114,36 @@ void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v, 
 
 	if(GlobalV::NSPIN == 4&&(GlobalV::DOMAG||GlobalV::DOMAG_Z))
 	{
-		ModuleBase::GlobalFunc::ZEROS(rhotmp1, GlobalC::rhopw->nrxx);
-		ModuleBase::GlobalFunc::ZEROS(rhogsum1, GlobalC::rhopw->npw);
 		rhotmp2 = new double[GlobalC::rhopw->nrxx];
-		ModuleBase::GlobalFunc::ZEROS(rhotmp2, GlobalC::rhopw->nrxx);
+		rhogsum2 = new std::complex<double>[GlobalC::rhopw->npw];
  		neg = new double [GlobalC::rhopw->nrxx];
-		ModuleBase::GlobalFunc::ZEROS(neg, GlobalC::rhopw->nrxx);
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 1024)
+#endif
+		for(int ir=0; ir<GlobalC::rhopw->nrxx; ir++)
+		{
+			rhotmp1[ir] = 0.0;
+			rhotmp2[ir] = 0.0;
+			neg[ir] = 0.0;
+		}
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 1024)
+#endif
+		for(int ig=0; ig<GlobalC::rhopw->npw; ig++)
+		{
+			rhogsum1[ig] = 0.0;
+			rhogsum2[ig] = 0.0;
+		}
 		if(!is_stress)
 		{
 			vsave = new double* [GlobalV::NSPIN];
 			for(int is = 0;is<GlobalV::NSPIN;is++) {
 				vsave[is]= new double [GlobalC::rhopw->nrxx];
+			}
+#ifdef _OPENMP
+#pragma omp parallel for collapse(2) schedule(static, 1024)
+#endif
+			for(int is = 0;is<GlobalV::NSPIN;is++) {
 				for(int ir =0;ir<GlobalC::rhopw->nrxx;ir++){
 					vsave[is][ir] = v(is,ir);
 					v(is,ir) = 0;
@@ -114,16 +153,19 @@ void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v, 
 			for(int is = 0;is<nspin0;is++)vgg[is] = new double[GlobalC::rhopw->nrxx];
 		}
 		noncolin_rho(rhotmp1,rhotmp2,neg,chr->rho);
-
-		rhogsum2 = new std::complex<double>[GlobalC::rhopw->npw];
-		ModuleBase::GlobalFunc::ZEROS(rhogsum2, GlobalC::rhopw->npw);
 		GlobalC::rhopw->real2recip(rhotmp1, rhogsum1);
 		GlobalC::rhopw->real2recip(rhotmp2, rhogsum2);
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 1024)
+#endif
 		for(int ir=0; ir<GlobalC::rhopw->nrxx; ir++)
 		{
 			rhotmp2[ir] += fac * chr->rho_core[ir];
 			rhotmp1[ir] += fac * chr->rho_core[ir];
 		}
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 1024)
+#endif
 		for(int ig=0; ig<GlobalC::rhopw->npw; ig++)
 		{
 			rhogsum2[ig] += fac * chr->rhog_core[ig];
@@ -141,17 +183,42 @@ void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v, 
 	const double epsr = 1.0e-6;
 	const double epsg = 1.0e-10;
 
+	double vtxcgc = 0.0;
+	double etxcgc = 0.0;
+
+#ifdef _OPENMP
+#pragma omp parallel
+{
+	std::vector<double> local_stress_gga;
+	double local_vtxcgc = 0.0;
+	double local_etxcgc = 0.0;
+
+	if(is_stress)
+	{
+		local_stress_gga.resize(9);
+		for(int i=0;i<9;i++)
+		{
+			local_stress_gga[i] = 0.0;
+		}
+	}
+#else
+	std::vector<double> &local_stress_gga = stress_gga;
+	double &local_vtxcgc = vtxcgc;
+	double &local_etxcgc = etxcgc;
+#endif
+
 	double grho2a = 0.0;
 	double grho2b = 0.0;
 	double sxc = 0.0;
 	double v1xc = 0.0;
 	double v2xc = 0.0;
-	double vtxcgc = 0.0;
-	double etxcgc = 0.0;
 
 	if(nspin0==1)
 	{
 		double segno;
+#ifdef _OPENMP
+#pragma omp for
+#endif
 		for(int ir=0; ir<GlobalC::rhopw->nrxx; ir++)
 		{
 			const double arho = std::abs( rhotmp1[ir] );
@@ -193,7 +260,7 @@ void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v, 
 						for(int m = 0;m< l+1;m++)
 						{
 							int ind = l*3 + m;
-							stress_gga[ind] += tt[l] * tt[m] * ModuleBase::e2 * v2xc;
+							local_stress_gga[ind] += tt[l] * tt[m] * ModuleBase::e2 * v2xc;
 						}
 					}
 				}
@@ -208,14 +275,17 @@ void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v, 
 					// D(rho*Exc) / D(|grad rho|) * (grad rho) / |grad rho|
 					h1[ir] = ModuleBase::e2 * v2xc * gdr1[ir];
 					
-					vtxcgc += ModuleBase::e2* v1xc * ( rhotmp1[ir] - chr->rho_core[ir] );
-					etxcgc += ModuleBase::e2* sxc  * segno;
+					local_vtxcgc += ModuleBase::e2* v1xc * ( rhotmp1[ir] - chr->rho_core[ir] );
+					local_etxcgc += ModuleBase::e2* sxc  * segno;
 				}
 			} // end arho > epsr
 		}
 	}// end nspin0 == 1
 	else // spin polarized case
 	{
+#ifdef _OPENMP
+#pragma omp for
+#endif
 		for(int ir=0; ir<GlobalC::rhopw->nrxx; ir++)
 		{
 			if(use_libxc)
@@ -239,7 +309,7 @@ void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v, 
 						for(int m = 0;m< l+1;m++)
 						{
 							int ind = l*3 + m;
-							stress_gga [ind] += ( tt1[l] * tt1[m] * v2xcup + 
+							local_stress_gga [ind] += ( tt1[l] * tt1[m] * v2xcup + 
 									tt2[l] * tt2[m] * v2xcdw + 
 									(tt1[l] * tt2[m] +
 									tt2[l] * tt1[m] ) * v2xcud ) * ModuleBase::e2;
@@ -256,9 +326,9 @@ void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v, 
 					h1[ir] += ModuleBase::e2 * ( v2xcup * gdr1[ir] + v2xcud * gdr2[ir] );
 					h2[ir] += ModuleBase::e2 * ( v2xcdw * gdr2[ir] + v2xcud * gdr1[ir] );
 
-					vtxcgc = vtxcgc + ModuleBase::e2 * v1xcup * ( rhotmp1[ir] - chr->rho_core[ir] * fac );
-					vtxcgc = vtxcgc + ModuleBase::e2 * v1xcdw * ( rhotmp2[ir] - chr->rho_core[ir] * fac );
-					etxcgc = etxcgc + ModuleBase::e2 * sxc;
+					local_vtxcgc = local_vtxcgc + ModuleBase::e2 * v1xcup * ( rhotmp1[ir] - chr->rho_core[ir] * fac );
+					local_vtxcgc = local_vtxcgc + ModuleBase::e2 * v1xcdw * ( rhotmp2[ir] - chr->rho_core[ir] * fac );
+					local_etxcgc = local_etxcgc + ModuleBase::e2 * sxc;
 				}
 			}
 			else
@@ -326,10 +396,10 @@ void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v, 
 						{
 							int ind = l*3 + m;
 							//    exchange
-							stress_gga [ind] += tt1[l] * tt1[m] * ModuleBase::e2 * v2xup + 
+							local_stress_gga [ind] += tt1[l] * tt1[m] * ModuleBase::e2 * v2xup + 
 									tt2[l] * tt2[m] * ModuleBase::e2 * v2xdw;
 							//    correlation
-							stress_gga [ind] += ( tt1[l] * tt1[m] * v2cup + 
+							local_stress_gga [ind] += ( tt1[l] * tt1[m] * v2cup + 
 									tt2[l] * tt2[m] * v2cdw + 
 									(tt1[l] * tt2[m] +
 									tt2[l] * tt1[m] ) * v2cud ) * ModuleBase::e2;
@@ -346,22 +416,59 @@ void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v, 
 					h1[ir] = ModuleBase::e2 * ( ( v2xup + v2cup ) * gdr1[ir] + v2cud * gdr2[ir] );
 					h2[ir] = ModuleBase::e2 * ( ( v2xdw + v2cdw ) * gdr2[ir] + v2cud * gdr1[ir] );
 
-					vtxcgc = vtxcgc + ModuleBase::e2 * ( v1xup + v1cup ) * ( rhotmp1[ir] - chr->rho_core[ir] * fac );
-					vtxcgc = vtxcgc + ModuleBase::e2 * ( v1xdw + v1cdw ) * ( rhotmp2[ir] - chr->rho_core[ir] * fac );
-					etxcgc = etxcgc + ModuleBase::e2 * ( sx + sc );
+					local_vtxcgc = local_vtxcgc + ModuleBase::e2 * ( v1xup + v1cup ) * ( rhotmp1[ir] - chr->rho_core[ir] * fac );
+					local_vtxcgc = local_vtxcgc + ModuleBase::e2 * ( v1xdw + v1cdw ) * ( rhotmp2[ir] - chr->rho_core[ir] * fac );
+					local_etxcgc = local_etxcgc + ModuleBase::e2 * ( sx + sc );
 				}
 			}
 		}// end ir
 
 	}
+#ifdef _OPENMP
+	#pragma omp critical(xc_functional_gradcorr_reduce)
+	{
+		if(is_stress)
+		{
+			for(int l = 0;l< 3;l++)
+			{
+				for(int m = 0;m< l+1;m++)
+				{
+					int ind = l*3 + m;
+					stress_gga [ind] += local_stress_gga [ind];
+				}
+			}
+		}
+		else
+		{
+			vtxcgc += local_vtxcgc;
+			etxcgc += local_etxcgc;
+		}
+	}
+}
+#endif
 
 	//std::cout << "\n vtxcgc=" << vtxcgc;
 	//std::cout << "\n etxcgc=" << etxcgc << std::endl;
 
 	if(!is_stress)
 	{
-		for(int ir=0; ir<GlobalC::rhopw->nrxx; ir++) rhotmp1[ir] -= fac * chr->rho_core[ir];
-		if(nspin0==2) for(int ir=0; ir<GlobalC::rhopw->nrxx; ir++) rhotmp2[ir] -= fac * chr->rho_core[ir];
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 1024)
+#endif
+		for(int ir=0; ir<GlobalC::rhopw->nrxx; ir++)
+		{
+			rhotmp1[ir] -= fac * chr->rho_core[ir];
+		}
+		if(nspin0==2)
+		{
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 1024)
+#endif
+			for(int ir=0; ir<GlobalC::rhopw->nrxx; ir++)
+			{
+				rhotmp2[ir] -= fac * chr->rho_core[ir];
+			}
+		}
 		
 		// second term of the gradient correction :
 		// \sum_alpha (D / D r_alpha) ( D(rho*Exc)/D(grad_alpha rho) )
@@ -371,21 +478,31 @@ void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v, 
 
 		for(int is=0; is<nspin0; is++)
 		{
-			ModuleBase::GlobalFunc::ZEROS(dh, GlobalC::rhopw->nrxx);
 			if(is==0)XC_Functional::grad_dot(h1,dh,GlobalC::rhopw);
 			if(is==1)XC_Functional::grad_dot(h2,dh,GlobalC::rhopw);
-
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 1024)
+#endif
 			for(int ir=0; ir<GlobalC::rhopw->nrxx; ir++)
 				v(is, ir) -= dh[ir];
 		
 			double sum = 0.0;
 			if(is==0)
+			{
+#ifdef _OPENMP
+#pragma omp parallel for reduction(+:sum) schedule(static, 256)
+#endif
 				for(int ir=0; ir<GlobalC::rhopw->nrxx; ir++)
 					sum += dh[ir] * rhotmp1[ir];
+			}
 			else if(is==1)
+			{
+#ifdef _OPENMP
+#pragma omp parallel for reduction(+:sum) schedule(static, 256)
+#endif
 				for(int ir=0; ir<GlobalC::rhopw->nrxx; ir++)
 					sum += dh[ir] * rhotmp2[ir];
-			
+			}
 			vtxcgc -= sum;
 		}
 		
@@ -396,6 +513,9 @@ void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v, 
 
 		if(GlobalV::NSPIN == 4 && (GlobalV::DOMAG||GlobalV::DOMAG_Z))
 		{
+#ifdef _OPENMP
+#pragma omp parallel for collapse(2) schedule(static, 1024)
+#endif
 			for(int is=0;is<GlobalV::NSPIN;is++)
 			{
 				for(int ir=0;ir<GlobalC::rhopw->nrxx;ir++)
@@ -404,6 +524,9 @@ void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v, 
 					v(is,ir) = vsave[is][ir];
 				}
 			}
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 1024)
+#endif
 			for(int ir=0;ir<GlobalC::rhopw->nrxx;ir++)
 			{
 				v(0,ir) += 0.5 * (vgg[0][ir] + vgg[1][ir]);
@@ -450,30 +573,31 @@ void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v, 
 
 void XC_Functional::grad_wfc( const std::complex<double> *rhog, const int ik, std::complex<double> **grad, ModulePW::PW_Basis_K *wfc_basis)
 {
-	double *kplusg;
 	const int npw_k = wfc_basis->npwk[ik];
-	kplusg = new double[npw_k];
-	ModuleBase::GlobalFunc::ZEROS(kplusg, npw_k);
-
 	std::complex<double> *Porter = new std::complex<double> [wfc_basis->nmaxgr];
 
 	for(int ipol=0; ipol<3; ipol++)
 	{
-		// the formula is : rho(r)^prime = \int iG * rho(G)e^{iGr} dG
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 1024)
+#endif
 		for(int ig=0; ig<npw_k; ++ig)
-			kplusg[ig] = wfc_basis->getgpluskcar(ik,ig)[ipol] * GlobalC::ucell.tpiba;
-
-		// calculate the charge density gradient in reciprocal space.
-		for(int ig=0; ig<npw_k; ig++)
-			Porter[ig] = complex<double>(0.0,kplusg[ig]) * rhog[ig];
+		{
+			// the formula is : rho(r)^prime = \int iG * rho(G)e^{iGr} dG
+			double kplusg = wfc_basis->getgpluskcar(ik,ig)[ipol] * GlobalC::ucell.tpiba;
+			// calculate the charge density gradient in reciprocal space.
+			Porter[ig] = complex<double>(0.0,kplusg) * rhog[ig];
+		}
 
 		// bring the gdr from G --> R
 		wfc_basis->recip2real(Porter, Porter, ik);
 
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 1024)
+#endif
 		for(int ir=0; ir<wfc_basis->nrxx; ++ir)
 			grad[ir][ipol]= Porter[ir];
 	}//end loop ipol
-	delete[] kplusg;
 	delete[] Porter;
 	return;
 }
@@ -481,12 +605,14 @@ void XC_Functional::grad_wfc( const std::complex<double> *rhog, const int ik, st
 void XC_Functional::grad_rho( const std::complex<double> *rhog, ModuleBase::Vector3<double> *gdr, ModulePW::PW_Basis *rho_basis)
 {
 	std::complex<double> *gdrtmp = new std::complex<double>[rho_basis->nmaxgr];
-	ModuleBase::GlobalFunc::ZEROS(gdrtmp, rho_basis->nmaxgr);
 
 	// the formula is : rho(r)^prime = \int iG * rho(G)e^{iGr} dG
 	for(int i = 0 ; i < 3 ; ++i)
 	{
 		// calculate the charge density gradient in reciprocal space.
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 1024)
+#endif
 		for(int ig=0; ig<rho_basis->npw; ig++)
 			gdrtmp[ig] = ModuleBase::IMAG_UNIT * rhog[ig] * rho_basis->gcar[ig][i];
 
@@ -494,6 +620,9 @@ void XC_Functional::grad_rho( const std::complex<double> *rhog, ModuleBase::Vect
 		rho_basis->recip2real(gdrtmp, gdrtmp);
 
 		// remember to multily 2pi/a0, which belongs to G vectors.
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 1024)
+#endif
 		for(int ir=0; ir<rho_basis->nrxx; ir++)
 			gdr[ir][i] = gdrtmp[ir].real() * GlobalC::ucell.tpiba;
 	}
@@ -507,22 +636,41 @@ void XC_Functional::grad_dot(const ModuleBase::Vector3<double> *h, double *dh, M
 {
 	std::complex<double> *aux = new std::complex<double>[rho_basis->nmaxgr];
 	std::complex<double> *gaux = new std::complex<double>[rho_basis->npw];
-	ModuleBase::GlobalFunc::ZEROS(gaux, rho_basis->npw);
 
 	for(int i = 0 ; i < 3 ; ++i)
 	{
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 1024)
+#endif
 		for(int ir = 0; ir < rho_basis->nrxx; ++ir)
 			aux[ir] = std::complex<double>( h[ir][i], 0.0);
 
 		// bring to G space.
 		rho_basis->real2recip(aux,aux);
-		for(int ig = 0; ig < rho_basis->npw; ++ig)
-			gaux[ig] +=  ModuleBase::IMAG_UNIT * aux[ig] * rho_basis->gcar[ig][i];
+		if (i == 0)
+		{
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 1024)
+#endif
+			for(int ig = 0; ig < rho_basis->npw; ++ig)
+				gaux[ig] =  ModuleBase::IMAG_UNIT * aux[ig] * rho_basis->gcar[ig][i];
+		}
+		else
+		{
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 1024)
+#endif
+			for(int ig = 0; ig < rho_basis->npw; ++ig)
+				gaux[ig] +=  ModuleBase::IMAG_UNIT * aux[ig] * rho_basis->gcar[ig][i];
+		}
 	}
 
 	// bring back to R space
 	rho_basis->recip2real(gaux,aux);
 
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 1024)
+#endif
 	for(int ir=0; ir<rho_basis->nrxx; ir++)
 		dh[ir] = aux[ir].real() * GlobalC::ucell.tpiba;
 	
@@ -537,19 +685,30 @@ void XC_Functional::noncolin_rho(double *rhoout1, double *rhoout2, double *neg, 
 	//spin up and spin down components of the charge.
 	//If lsign is true up and dw are with respect to the fixed quantization axis 
 	//ux, otherwise rho + |m| is always rhoup and rho-|m| is always rhodw.
-	double amag=0;
-	for(int ir = 0;ir<GlobalC::rhopw->nrxx;ir++) neg[ir] = 1.0;
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 1024)
+#endif
+	for(int ir = 0;ir<GlobalC::rhopw->nrxx;ir++)
+	{
+		neg[ir] = 1.0;
+	}
 	if(GlobalC::ucell.magnet.lsign_)
 	{
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 1024)
+#endif
 		for(int ir = 0;ir<GlobalC::rhopw->nrxx;ir++)
 		{
 			if(rho[1][ir]*GlobalC::ucell.magnet.ux_[0] + rho[2][ir]*GlobalC::ucell.magnet.ux_[1] + rho[3][ir]*GlobalC::ucell.magnet.ux_[2]>0) neg[ir] = 1.0;
 			else neg[ir] = -1.0;
 		}
 	}
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
 	for(int ir = 0;ir<GlobalC::rhopw->nrxx;ir++)
 	{
-		amag = sqrt(pow(rho[1][ir],2)+pow(rho[2][ir],2)+pow(rho[3][ir],2));
+		double amag = sqrt(pow(rho[1][ir],2)+pow(rho[2][ir],2)+pow(rho[3][ir],2));
 		rhoout1[ir] = 0.5 * (rho[0][ir] + neg[ir] * amag);
 		rhoout2[ir] = 0.5 * (rho[0][ir] - neg[ir] * amag);
 	}
