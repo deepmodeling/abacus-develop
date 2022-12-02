@@ -47,7 +47,6 @@ class MD_func
 	static void force_virial(
 		ModuleESolver::ESolver *p_esolver,
 		const int &istep,
-		const MD_parameters &mdp,
 		UnitCell &unit_in,
 		double &potential,
 		ModuleBase::Vector3<double> *force,
