@@ -61,14 +61,14 @@ void Run_MD::md_line(UnitCell &unit_in, ModuleESolver::ESolver *p_esolver)
             ModuleBase::Vector3<double> *vel_tmp;
             if (GlobalV::ESOLVER_TYPE == "tddft" )
             {
-                vel_tmp = new ModuleBase::Vector3<double>[verlet->ucell.nat];
-                for (int i = 0; i < verlet->ucell.nat; ++i)
+                vel_tmp = new ModuleBase::Vector3<double>[mdrun->ucell.nat];
+                for (int i = 0; i < mdrun>ucell.nat; ++i)
                 {
                     for (int k = 0; k < 3; ++k)
                     {
-                        if (verlet->ionmbl[i][k])
+                        if (mdrun->ionmbl[i][k])
                         {
-                            vel_tmp[i][k] = verlet->vel[i][k];
+                            vel_tmp[i][k] = mdrun->vel[i][k];
                         }
                     }
                 }
