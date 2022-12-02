@@ -25,8 +25,8 @@ class ESolver_KS_LCAO_TDDFT : public ESolver_KS_LCAO
     elecstate::ElecStateLCAO_TDDFT* pelec_td = nullptr;
 
   protected:
-    virtual void Run(const int istep, UnitCell_pseudo& cell, ModuleBase::Vector3<double>* vel) override;
-    virtual void Run(const int istep, UnitCell_pseudo& cell) override;
+    virtual void Run(const int istep, UnitCell& cell, ModuleBase::Vector3<double>* vel) override;
+    virtual void Run(const int istep, UnitCell& cell) override;
     virtual void hamilt2density(const int istep,
                                 const int iter,
                                 const double ethr,
