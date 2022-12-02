@@ -557,7 +557,7 @@ void Forces::cal_force_ew(ModuleBase::matrix& forceion, ModulePW::PW_Basis* rho_
     //	std::cout << " upperbound = " << upperbound << std::endl;
 
 #ifdef _OPENMP
-#pragma omp parallel for schedule(static, 1024)
+#pragma omp parallel for
 #endif
     for (int ig = 0; ig < rho_basis->npw; ig++)
     {
