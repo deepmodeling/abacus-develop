@@ -1,17 +1,14 @@
 #include "FORCE_STRESS_tddft.h"
-
 #include "../src_pw/global.h"
 #include "./dftu.h" //Quxin add for DFT+U on 20201029
 // new
-#include "../module_base/timer.h"
-#include "../module_surchem/efield.h" // liuyu add 2022-05-18
-#include "../module_surchem/gatefield.h" // liuyu add 2022-09-13
-#include "../module_surchem/surchem.h" //sunml add 2022-08-10
-#include "../src_pw/forces.h"
-#include "../src_pw/vdwd2.h"
-#include "../src_pw/vdwd3.h"
+#include "module_base/timer.h"
+#include "module_elecstate/potentials/efield.h"        // liuyu add 2022-05-18
+#include "module_surchem/surchem.h"		 //sunml add 2022-08-10
+#include "module_elecstate/potentials/gatefield.h"        // liuyu add 2022-09-13
+#include "module_vdw/vdw.h"
 #ifdef __DEEPKS
-#include "../module_deepks/LCAO_deepks.h" //caoyu add for deepks 2021-06-03
+#include "../module_deepks/LCAO_deepks.h"	//caoyu add for deepks 2021-06-03
 #endif
 
 double Force_Stress_LCAO_TDDFT::force_invalid_threshold_ev = 0.00;

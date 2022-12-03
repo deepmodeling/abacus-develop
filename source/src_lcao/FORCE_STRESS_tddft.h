@@ -40,7 +40,6 @@ class Force_Stress_LCAO_TDDFT : public Force_Stress_LCAO
                         ModuleBase::Vector3<double>* vel);
 
   protected:
-    Record_adj* RA;
     Force_LCAO_k_tddft flk_tddft;
 
     void calForceStressIntegralPart(const bool isGammaOnly,
