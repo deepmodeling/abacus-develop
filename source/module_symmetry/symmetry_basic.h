@@ -46,6 +46,7 @@ class Symmetry_Basic
 	std::string get_brav_name(const int ibrav);
 	void pointgroup(const int &nrot,int &pgnumber,std::string &pgname, const ModuleBase::Matrix3* gmatrix, std::ofstream &ofs_running);
 	void atom_ordering(double *posi, const int natom, int *subindex);
+	void atom_ordering_new(double *posi, const int natom, int *subindex);
 
 	private:
 

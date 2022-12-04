@@ -1005,4 +1005,50 @@ void Symmetry_Basic::rotate( ModuleBase::Matrix3 &gmatrix, ModuleBase::Vector3<d
 	rk = rk%nr3;
 	return;
 }
+
+// atom ordering for each atom type 
+// by a "weighted function" f
+// (instead of ordering by x, y, z directly)
+void Symmetry_Basic::atom_ordering_new(double *posi, const int natom, int *subindex)
+{
+	//order the atomic positions inside a supercell by a unique ordering scheme	
+	subindex[0] = 0;
+
+	if(natom == 1)
+	{
+		//if there is only one atom, it is not necessary to order
+		return;
+	}
+
+	std::vector<double> tmpx(natom);
+	std::vector<double> tmpy(natom);
+	std::vector<double> tmpz(natom);
+	for(int i=0; i<natom; i++)
+	{
+		tmpx[i] = posi[i*3];
+		tmpy[i] = posi[i*3+1];
+		tmpz[i] = posi[i*3+2];
+	}
+	double x_max = *max_element(tmpx.begin(),tmpx.end());
+	double x_min = *min_element(tmpx.begin(),tmpx.end());
+	double y_max = *max_element(tmpy.begin(),tmpy.end());
+	double y_min = *min_element(tmpy.begin(),tmpy.end());
+	double z_max = *max_element(tmpz.begin(),tmpz.end());
+	double z_min = *min_element(tmpz.begin(),tmpz.end());
+
+	double*  weighted_func = new double[natom];
+	for(int i=0; i<natom; i++)
+	{
+		weighted_func[i]=
+		1/epsilon*(tmpx[i]-x_min)/(x_max-x_min+epsilon)
+		+1/sqrt(epsilon)*(tmpy[i]-y_min)/(y_max-y_min+epsilon)
+		+(tmpz[i]-z_min)/(z_max-z_min+epsilon);
+	}
+	ModuleBase::heapsort(natom, weighted_func, subindex);
+	this->order_atoms(posi, natom, subindex);
+	
+	delete[] weighted_func;
+	return;
+}
+
 }

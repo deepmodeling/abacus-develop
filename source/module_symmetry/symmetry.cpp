@@ -986,7 +986,7 @@ void Symmetry::checksym(ModuleBase::Matrix3 &s, ModuleBase::Vector3<double> &gtr
          //std::cout << " newpos_now1 = " << newpos[3*iat] << " " << newpos[3*iat+1] << " " << newpos[3*iat+2] << std::endl;
 
         //order original atomic positions for current species
-        this->atom_ordering(pos + istart[it] * 3, na[it], index + istart[it]);
+        this->atom_ordering_new(pos + istart[it] * 3, na[it], index + istart[it]);
          //for( int iat =0 ; iat < ucell.nat ; iat++)
          //std::cout << " newpos_now2 = " << newpos[3*iat] << " " << newpos[3*iat+1] << " " << newpos[3*iat+2] << std::endl;
 
@@ -1020,7 +1020,7 @@ void Symmetry::checksym(ModuleBase::Matrix3 &s, ModuleBase::Vector3<double> &gtr
             this->check_boundary(rotpos[zz]);
         }
         //order rotated atomic positions for current species
-        this->atom_ordering(rotpos + istart[it] * 3, na[it], index + istart[it]);
+        this->atom_ordering_new(rotpos + istart[it] * 3, na[it], index + istart[it]);
     }
 
 	/*
@@ -1076,7 +1076,7 @@ void Symmetry::checksym(ModuleBase::Matrix3 &s, ModuleBase::Vector3<double> &gtr
                 this->check_translation( rotpos[ia*3+2], gtrans.z );
             }
             //order translated atomic positions for current species
-            this->atom_ordering(rotpos + istart[it] * 3, na[it], index + istart[it]);
+            this->atom_ordering_new(rotpos + istart[it] * 3, na[it], index + istart[it]);
         }
 
         no_diff = true;
@@ -1089,7 +1089,6 @@ void Symmetry::checksym(ModuleBase::Matrix3 &s, ModuleBase::Vector3<double> &gtr
                 diff.x = this->check_diff( pos[ia*3+0], rotpos[ia*3+0]);
                 diff.y = this->check_diff( pos[ia*3+1], rotpos[ia*3+1]);
                 diff.z = this->check_diff( pos[ia*3+2], rotpos[ia*3+2]);
-
                 //only if all "diff" are zero vectors, flag will remain "1"
                 if (	no_diff == false||
                         !equal(diff.x,0.0)||
