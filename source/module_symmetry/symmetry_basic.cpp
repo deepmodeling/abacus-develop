@@ -528,7 +528,7 @@ void Symmetry_Basic::matrigen(ModuleBase::Matrix3 *symgen, const int ngen, Modul
 // given in crystal coordinates) 
 // of a lattice with some arbitrary basis (atomic arrangement).
 //--------------------------------------------------------------
-void Symmetry_Basic::setgroup(ModuleBase::Matrix3* symop, int &nop, const int &ibrav)
+void Symmetry_Basic::setgroup(ModuleBase::Matrix3* symop, int &nop, const int &ibrav, double* celconst)
 {
 	if(GlobalV::test_symmetry) ModuleBase::TITLE("Symmetry_Basic","setgroup");
 
@@ -553,18 +553,39 @@ void Symmetry_Basic::setgroup(ModuleBase::Matrix3* symop, int &nop, const int &i
 	//the pure translation lattice (bravais lattice) has some maximum symmetry
 	//set first up the point group operations for this symmetry.
 	symgen[0] = inv;
+
+	// for ibrav in {4, 12, 13}, rotate the col of symgen according to the euler angle. 
+	auto mat_rotate = [this, celconst](ModuleBase::Matrix3 s) -> ModuleBase::Matrix3
+	{
+		ModuleBase::Matrix3 s_new=s;
+		double alpha=celconst[5];
+		double beta=celconst[3];
+		double gamma=celconst[4];
+		if(equal(alpha, 0.0) && !equal(beta, 0.0) && equal(gamma, 0.0))
+		{
+			//beta -> gamma == ABC->BCA == right and down shift the matrix
+			s_new=ModuleBase::Matrix3(s.e33, s.e31, s.e32, s.e13, s.e11, s.e12, s.e23, s.e21, s.e22);
+		}
+		else if (!equal(alpha, 0.0) && equal(beta, 0.0) && equal(gamma, 0.0))
+		{
+			//alpha -> gamma == ABC->CAB == left and up shift the matrix
+			s_new=ModuleBase::Matrix3(s.e22, s.e23, s.e21, s.e32, s.e33, s.e31, s.e12, s.e13, s.e11);
+		}
+		return s_new;
+	};
+
 	if(ibrav == 14)
 	{
 		this->matrigen(symgen, 1, symop, nop);
 	}
 	else if(ibrav == 13)
 	{
-		symgen[1] = r2ybas;
+		symgen[1] = mat_rotate(r2ybas);
 		this->matrigen(symgen, 2, symop, nop);
 	}
 	else if(ibrav == 12)
 	{
-		symgen[1] = r2yp;
+		symgen[1] = mat_rotate(r2yp);
 		this->matrigen(symgen, 2, symop, nop);
 	}
 	else if(ibrav == 11)
@@ -611,8 +632,8 @@ void Symmetry_Basic::setgroup(ModuleBase::Matrix3* symop, int &nop, const int &i
 	}
 	else if(ibrav == 4)
 	{
-		symgen[1] = r6z;
-		symgen[2] = r2hex;
+		symgen[1] = mat_rotate(r6z);
+		symgen[2] = mat_rotate(r2hex);
 		this->matrigen(symgen, 3, symop, nop);
 	}
 	else if(ibrav == 3)

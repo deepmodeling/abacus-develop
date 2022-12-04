@@ -129,7 +129,7 @@ void Symmetry::analy_sys(const UnitCell &ucell, std::ofstream &ofs_running)
 //         std::cout << " newpos_now = " << newpos[3*iat] << " " << newpos[3*iat+1] << " " << newpos[3*iat+2] << std::endl;
 	test_brav = true; // output the real ibrav and point group
 	ModuleBase::GlobalFunc::OUT(ofs_running,"ibrav",real_brav);
-	this->setgroup(this->symop, this->nop, this->real_brav);
+	this->setgroup(this->symop, this->nop, this->real_brav, cel_const);
 	this->getgroup(this->nrot, this->nrotk, ofs_running);
 	this->pointgroup(this->nrot, this->pgnumber, this->pgname, this->gmatrix, ofs_running);
 	ModuleBase::GlobalFunc::OUT(ofs_running,"POINT GROUP", this->pgname);
@@ -172,7 +172,7 @@ void Symmetry::analy_sys(const UnitCell &ucell, std::ofstream &ofs_running)
 
 	test_brav = false;  // use the input ibrav to calculate
 	//ModuleBase::GlobalFunc::OUT(ofs_running,"ibrav",ibrav);
-	this->setgroup(this->symop, this->nop, this->ibrav);
+	this->setgroup(this->symop, this->nop, this->ibrav, cel_const);
 	//now select all symmetry operations which reproduce the lattice
 	//to find those symmetry operations which reproduce the entire crystal
 	this->getgroup(this->nrot, this->nrotk, ofs_running);
@@ -361,6 +361,9 @@ int Symmetry::standard_lat(
 					type=4;
 					cel_const[0]=norm_a;
 					cel_const[2]=norm_c/norm_a;
+                    cel_const[3]=beta;
+                    cel_const[4]=gamma;
+                    cel_const[5]=alpha;
 					// Other angles mean base-centered orthorhombic: (IBRAV=11)
 					// Adjustment: Cosine between A1 and A2 shall be lower than zero, the
 					//             'c-axis' shall be the special axis.
@@ -388,7 +391,9 @@ int Symmetry::standard_lat(
 				cel_const[0]=norm_b;
 				cel_const[1]=norm_c/norm_b;
 				cel_const[2]=norm_a/norm_b;
-				cel_const[4]=alpha;
+				cel_const[3]=beta;
+                cel_const[4]=gamma;
+                cel_const[5]=alpha;
 				/*
 				YB(1)=XB(1,3);
 				YB(2)=XB(2,3);
