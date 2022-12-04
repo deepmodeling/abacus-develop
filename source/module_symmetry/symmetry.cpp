@@ -999,15 +999,15 @@ void Symmetry::checksym(ModuleBase::Matrix3 &s, ModuleBase::Vector3<double> &gtr
 
 
             rotpos[xx] = pos[xx] * s.e11
-                         + pos[yy] * s.e21
-                         + pos[zz] * s.e31;
+                         + pos[yy] * s.e12
+                         + pos[zz] * s.e13;
 
-            rotpos[yy] = pos[xx] * s.e12
+            rotpos[yy] = pos[xx] * s.e21
                          + pos[yy] * s.e22
-                         + pos[zz] * s.e32;
+                         + pos[zz] * s.e23;
 
-            rotpos[zz] = pos[xx] * s.e13
-                         + pos[yy] * s.e23
+            rotpos[zz] = pos[xx] * s.e31
+                         + pos[yy] * s.e32
                          + pos[zz] * s.e33;
 
            // std::cout << "pos = " << pos[xx] <<" "<<pos[yy] << " "<<pos[zz]<<std::endl;
@@ -1274,9 +1274,9 @@ void Symmetry::force_symmetry(ModuleBase::matrix &force , double* pos, const Uni
 			// std::cout << "nrotk ="<<nrotk<<std::endl;
 			for(int k = 0 ; k < nrotk; ++k)
 			{
-				protpos[xx] = pos[xx] * gmatrix[k].e11 + pos[yy] * gmatrix[k].e21 + pos[zz] * gmatrix[k].e31 + gtrans[k].x;
-				protpos[yy] = pos[xx] * gmatrix[k].e12 + pos[yy] * gmatrix[k].e22 + pos[zz] * gmatrix[k].e32 + gtrans[k].y;
-				protpos[zz] = pos[xx] * gmatrix[k].e13 + pos[yy] * gmatrix[k].e23 + pos[zz] * gmatrix[k].e33 + gtrans[k].z;
+				protpos[xx] = pos[xx] * gmatrix[k].e11 + pos[yy] * gmatrix[k].e12 + pos[zz] * gmatrix[k].e13 + gtrans[k].x;
+				protpos[yy] = pos[xx] * gmatrix[k].e21 + pos[yy] * gmatrix[k].e22 + pos[zz] * gmatrix[k].e23 + gtrans[k].y;
+				protpos[zz] = pos[xx] * gmatrix[k].e31 + pos[yy] * gmatrix[k].e32 + pos[zz] * gmatrix[k].e33 + gtrans[k].z;
 							    			   			
 				check_translation( protpos[xx], -floor(protpos[xx]));
 				check_boundary( protpos[xx] );
