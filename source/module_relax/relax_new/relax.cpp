@@ -81,6 +81,7 @@ bool Relax::setup_gradient(const ModuleBase::matrix& force, const ModuleBase::ma
 
     //indicating whether force & stress are converged
     bool force_converged = true;
+    double max_grad = 0.0;
 
 //=========================================
 //set gradient for ions degrees of freedom
@@ -99,24 +100,28 @@ bool Relax::setup_gradient(const ModuleBase::matrix& force, const ModuleBase::ma
 			if(atom->mbl[ia].x == 1)
 			{
 				grad_ion(iat, 0) = force_eva(iat, 0);
-                force2 += pow(grad_ion(iat, 0), 2);
+                if( abs(force_eva(iat,0)) > max_grad) max_grad = abs(force_eva(iat,0));
 			}
 			if(atom->mbl[ia].y == 1)
 			{
 				grad_ion(iat, 1) = force_eva(iat, 1);
-                force2 += pow(grad_ion(iat, 1), 2);
+                if( abs(force_eva(iat,1)) > max_grad) max_grad = abs(force_eva(iat,1));
 			}
 			if(atom->mbl[ia].z == 1)
 			{
 				grad_ion(iat, 2) = force_eva(iat, 2);
-                force2 += pow(grad_ion(iat, 2), 2);
+                if( abs(force_eva(iat,2)) > max_grad) max_grad = abs(force_eva(iat,2));
 			}
-            if(force2>pow(force_thr_eva,2)) force_converged = false;
 			++iat;
 		}
 	}
     assert(iat==nat);
 
+    if(max_grad > force_thr_eva) force_converged = false;
+	if(GlobalV::OUT_LEVEL=="ie")
+	{
+		std::cout << " LARGEST GRAD (eV/A)  : " << max_grad << std::endl;
+	}
 //=========================================
 //set gradient for cell degrees of freedom
 //=========================================
@@ -176,10 +181,31 @@ bool Relax::setup_gradient(const ModuleBase::matrix& force, const ModuleBase::ma
             for(int j=0;j<3;j++)
             {
                 grad_cell(i,j) = stress_ev(i,j); // apply constraints
-
-                if(std::abs(stress_ev(i,j))/nat>std::abs(force_thr_eva)) force_converged = false;
             }
         }
+
+        double largest_grad = 0.0;
+        double stress_ii_max = 0.0;
+
+        for (int i = 0; i < 3; i++)
+        {
+            for (int j = 0; j < 3; j++)
+            {
+                double grad = grad_cell(i,j) / (GlobalC::ucell.omega * ModuleBase::Ry_to_eV);
+                if ( largest_grad < abs(grad) ) largest_grad = abs(grad);
+            }
+        }
+
+        double unit_transform = ModuleBase::RYDBERG_SI / pow(ModuleBase::BOHR_RADIUS_SI, 3) * 1.0e-9;
+        largest_grad = largest_grad * unit_transform;
+
+        if (largest_grad > GlobalV::STRESS_THR)
+        {
+            force_converged = false;
+        }
+
+        GlobalV::ofs_running << "\n Largest gradient in stress is " << largest_grad << std::endl;
+        GlobalV::ofs_running << "\n Threshold is = " << GlobalV::STRESS_THR << std::endl;
     }
 
     return force_converged;
@@ -585,59 +611,6 @@ void Relax::move_cell_ions(const bool is_new_dir)
     {
         GlobalC::sf.setup_structure_factor(&GlobalC::ucell,GlobalC::rhopw);
     }
-}
-
-bool Relax::check_convergence(const ModuleBase::matrix& force, const ModuleBase::matrix &stress)
-{
-	ModuleBase::TITLE("Relax","check_convergence");
-
-    //if not relax, then return converged
-    if( !( GlobalV::CALCULATION == "relax" || GlobalV::CALCULATION == "cell-relax" ) ) return true;
-
-    //check for convergence of force & stress
-    bool force_converged = true;
-
-    ModuleBase::matrix force_eva = force * (ModuleBase::Ry_to_eV / ModuleBase::BOHR_TO_A); // convert to eV/A
-
-	int iat=0;
-	for(int it = 0;it < GlobalC::ucell.ntype;it++)
-	{
-		Atom* atom = &GlobalC::ucell.atoms[it];
-		for(int ia =0;ia< GlobalC::ucell.atoms[it].na;ia++)
-		{
-            double force2 = 0.0;	
-			if(atom->mbl[ia].x == 1)
-			{
-                force2 += force_eva(iat, 0) * force_eva(iat, 0);
-			}
-			if(atom->mbl[ia].y == 1)
-			{
-                force2 += force_eva(iat, 1) * force_eva(iat, 1);
-			}
-			if(atom->mbl[ia].z == 1)
-			{
-                force2 += force_eva(iat, 2) * force_eva(iat, 2);
-			}
-			++iat;
-            if(force2>force_thr_eva*force_thr_eva) force_converged = false;
-		}
-	}
-    assert(iat==nat);
-
-    if(if_cell_moves)
-    {
-        ModuleBase::matrix stress_ev = stress * (GlobalC::ucell.omega * ModuleBase::Ry_to_eV);
-
-        for(int i=0;i<3;i++)
-        {
-            for(int j=0;j<3;j++)
-            {
-                if(std::abs(stress_ev(i,j))/nat>std::abs(force_thr_eva)) force_converged = false;
-            }
-        }
-    }
-
-    return force_converged;
 }
 
 void Relax::init_after_vc()
