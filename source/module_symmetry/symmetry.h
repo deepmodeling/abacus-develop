@@ -66,7 +66,8 @@ public:
 	int nrot;	//the number of pure point group rotations
 	int nrotk; 	//the number of all space group operations
 	int pgnumber;	//the serial number of point group
-	std::string pgname;	//the Schoenflies name of the point group
+	std::string pgname;	//the Schoenflies name of the point group R in {R|0}
+	std::string spgname;	//the Schoenflies name of the point group R in the space group {R|t}
 
 	int tab;
 

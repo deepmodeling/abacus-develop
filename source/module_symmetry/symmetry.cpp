@@ -133,6 +133,8 @@ void Symmetry::analy_sys(const UnitCell &ucell, std::ofstream &ofs_running)
 	this->getgroup(this->nrot, this->nrotk, ofs_running);
 	this->pointgroup(this->nrot, this->pgnumber, this->pgname, this->gmatrix, ofs_running);
 	ModuleBase::GlobalFunc::OUT(ofs_running,"POINT GROUP", this->pgname);
+    this->pointgroup(this->nrotk, this->pgnumber, this->spgname, this->gmatrix, ofs_running);
+	ModuleBase::GlobalFunc::OUT(ofs_running,"POINT GROUP IN SPACE GROUP", this->spgname);
     ofs_running<<"Warning : If the optimal symmetric configuration is not the input configuration, "<<'\n';
     ofs_running<<"you have to manually change configurations, ABACUS would only calculate the input structure."<<'\n';
 
@@ -179,6 +181,7 @@ void Symmetry::analy_sys(const UnitCell &ucell, std::ofstream &ofs_running)
 	// find the name of point group
 	this->pointgroup(this->nrot, this->pgnumber, this->pgname, this->gmatrix, ofs_running);
 	// ModuleBase::GlobalFunc::OUT(ofs_running,"POINT GROUP", this->pgname);
+    this->pointgroup(this->nrotk, this->pgnumber, this->spgname, this->gmatrix, ofs_running);
 	//write();
 
     delete[] dirpos;
@@ -1067,7 +1070,7 @@ void Symmetry::checksym(ModuleBase::Matrix3 &s, ModuleBase::Vector3<double> &gtr
             continue;
         }
 
-        //translate all the atomic coordinates by "gtran"
+        //translate all the atomic coordinates BACK by "gtrans"
         for (int it = 0; it < ntype; it++)
         {
             for (int ia = istart[it]; ia < na[it] + istart[it]; ia++)
