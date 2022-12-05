@@ -22,7 +22,6 @@ class energy
 	friend class Occupy;
 	friend class wavefunc;
 	friend class Ions;
-	friend class Update_input;
 	friend class Force_Lo;
 	friend class Exx_pw;
 	friend class ON_Tests;
