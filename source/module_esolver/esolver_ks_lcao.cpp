@@ -887,7 +887,10 @@ void ESolver_KS_LCAO::afterscf(const int istep)
 #endif
     if (hsolver::HSolverLCAO::out_mat_hsR)
     {
-        this->output_HS_R(istep, this->pelec->pot->get_effective_v()); // LiuXh add 2019-07-15
+        if( !(GlobalV::CALCULATION=="md" && (istep%hsolver::HSolverLCAO::out_hsR_interval!=0)) )
+        {
+            this->output_HS_R(istep, this->pelec->pot->get_effective_v()); // LiuXh add 2019-07-15
+        } // LiuXh add 2019-07-15
     }
 
     // add by jingan for out r_R matrix 2019.8.14
