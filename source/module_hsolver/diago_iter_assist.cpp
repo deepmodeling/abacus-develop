@@ -11,7 +11,7 @@
 #include "module_hsolver/include/dngvd_op.h"
 #include "module_psi/include/device.h"
 
-using namespace hsolver;
+namespace hsolver{
 
 template<typename FPTYPE, typename Device>
 FPTYPE DiagoIterAssist<FPTYPE, Device>::avg_iter = 0.0;
@@ -63,7 +63,7 @@ void DiagoIterAssist<FPTYPE, Device>::diagH_subspace(
     // qianrui improve this part 2021-3-14
     const std::complex<FPTYPE>* ppsi = psi.get_pointer();
 
-    // allocated hpsi 
+    // allocated hpsi
     // std::vector<std::complex<FPTYPE>> hpsi(psi.get_nbands() * psi.get_nbasis());
     std::complex<FPTYPE>* hphi = nullptr;
     resmem_complex_op()(ctx, hphi, psi.get_nbands() * psi.get_nbasis());
@@ -169,7 +169,7 @@ void DiagoIterAssist<FPTYPE, Device>::diagH_subspace(
         std::complex<FPTYPE>* evctemp = nullptr;
         resmem_complex_op()(ctx, evctemp, n_band * dmin);
         setmem_complex_op()(ctx, evctemp, 0, n_band * dmin);
-        
+
         gemm_op<FPTYPE, Device>()(
             ctx,
             'N',
@@ -221,7 +221,7 @@ void DiagoIterAssist<FPTYPE, Device>::diagH_subspace_init(
     // two case:
     // 1. pw base: nstart = n_band, psi(nbands * npwx)
     // 2. lcao_in_pw base: nstart >= n_band, psi(NLOCAL * npwx)
-    
+
     const int nstart = psi_nr;
     const int n_band = evc.get_nbands();
 
@@ -250,7 +250,7 @@ void DiagoIterAssist<FPTYPE, Device>::diagH_subspace_init(
 
     const std::complex<FPTYPE> *ppsi = psi_temp.get_pointer();
 
-    // allocated hpsi 
+    // allocated hpsi
     std::complex<FPTYPE>* hpsi = nullptr;
     resmem_complex_op()(ctx, hpsi, psi_temp.get_nbands() * psi_temp.get_nbasis());
     setmem_complex_op()(ctx, hpsi, 0, psi_temp.get_nbands() * psi_temp.get_nbasis());
@@ -372,7 +372,7 @@ void DiagoIterAssist<FPTYPE, Device>::diagH_subspace_init(
         std::complex<FPTYPE>* evctemp = nullptr;
         resmem_complex_op()(ctx, evctemp, n_band * dmin);
         setmem_complex_op()(ctx, evctemp, 0, n_band * dmin);
-        
+
         gemm_op<FPTYPE, Device>()(
             ctx,
             'N',
@@ -417,7 +417,8 @@ void DiagoIterAssist<FPTYPE, Device>::diagH_LAPACK(
 
     const bool all_eigenvalues = (nstart == nbands);
 
-    FPTYPE * res = e, *e_gpu = nullptr; 
+    FPTYPE * res = e, *e_gpu = nullptr;
+    
 #if ((defined __CUDA) || (defined __ROCM))
     if (psi::device::get_device_type<Device>(ctx) == psi::GpuDevice) {
         psi::memory::resize_memory_op<FPTYPE, psi::DEVICE_GPU>()(gpu_ctx, e_gpu, nbands);
@@ -474,10 +475,8 @@ bool DiagoIterAssist<FPTYPE, Device>::test_exit_cond(const int &ntry, const int 
     const bool f3 = ((scf && (notconv > 5)));
     return (f1 && (f2 || f3));
 }
-
-namespace hsolver {
 template class DiagoIterAssist<double, psi::DEVICE_CPU>;
 #if ((defined __CUDA) || (defined __ROCM))
 template class DiagoIterAssist<double, psi::DEVICE_GPU>;
-#endif 
+#endif
 } // namespace hsolver

@@ -54,25 +54,7 @@ namespace ModuleESolver
         /* it has been established that that
          xc_func is same for all elements, therefore
          only the first one if used*/
-        /* In the special "two-level" calculation case, 
-        first scf iteration only calculate the functional without exact exchange.
-        but in "nscf" calculation, there is no need of "two-level" method. */
-        if(GlobalV::CALCULATION == "nscf")
-        {
-            XC_Functional::set_xc_type(ucell.atoms[0].ncpp.xc_func);
-        }
-        else if (ucell.atoms[0].ncpp.xc_func == "HSE" || ucell.atoms[0].ncpp.xc_func == "PBE0")
-        {
-            XC_Functional::set_xc_type("pbe");
-        }
-        else if (ucell.atoms[0].ncpp.xc_func == "SCAN0")
-        {
-            XC_Functional::set_xc_type("scan");
-        }
-        else
-        {
-            XC_Functional::set_xc_type(ucell.atoms[0].ncpp.xc_func);
-        }
+        XC_Functional::set_xc_type(ucell.atoms[0].ncpp.xc_func);
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "SETUP UNITCELL");
 
         // symmetry analysis should be performed every time the cell is changed

@@ -3,6 +3,7 @@
 // 1. tau_xc
 
 #include "xc_functional.h"
+#include "../src_pw/global.h"
 
 //tau_xc and tau_xc_spin: interface for calling xc_mgga_exc_vxc from LIBXC
 //XC_POLARIZED, XC_UNPOLARIZED: internal flags used in LIBXC, denote the polarized(nspin=1) or unpolarized(nspin=2) calculations, definition can be found in xc.h from LIBXC
@@ -20,6 +21,15 @@ void XC_Functional::tau_xc(const double &rho, const double &grho, const double &
     for(xc_func_type &func : funcs)
     {
         xc_mgga_exc_vxc(&func,1,&rho,&grho,&lapl_rho,&atau,&s,&v1,&v2,&vlapl_rho,&v3);
+#ifdef __EXX
+        if (func.info->number == XC_MGGA_X_SCAN && get_func_type() == 5)
+        {
+            s *= (1.0 - GlobalC::exx_info.info_global.hybrid_alpha);
+            v1 *= (1.0 - GlobalC::exx_info.info_global.hybrid_alpha);
+            v2 *= (1.0 - GlobalC::exx_info.info_global.hybrid_alpha);
+            v3 *= (1.0 - GlobalC::exx_info.info_global.hybrid_alpha);
+        }
+#endif
         sxc += s * rho;
         v2xc += v2 * 2.0;
         v1xc += v1;

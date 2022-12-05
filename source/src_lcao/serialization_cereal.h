@@ -12,8 +12,6 @@
 #include "../module_base/vector3.h"
 #include "../module_base/abfs-vector3_order.h"
 #include "../module_base/matrix.h"
-#include "src_io/read_txt_input_value.h"
-#include "src_io/read_txt_input_item.h"
 
 
 
@@ -36,29 +34,6 @@ namespace ModuleBase
 		ar(cereal::binary_data(m.c, m.nr*m.nc*sizeof(double)));
 	}
 }
-
-namespace Read_Txt_Input
-{
-	template<class Archive> void Input_Value::serialize( Archive & ar )
-	{
-		ar( this->b );
-		ar( this->i );
-		ar( this->d );
-		ar( this->s );
-	}
-	template<class Archive> void Input_Item::serialize( Archive & ar )
-	{
-		ar( this->annotation );
-		ar( this->values );
-		ar( this->values_type );
-		ar( this->label );
-		ar( this->values_size_read );
-		ar( this->values_size_lower_limit );
-		ar( this->values_size_upper_limit );
-	}
-}
-
-
 
 #include <mpi.h>
 #include <sstream>

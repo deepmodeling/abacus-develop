@@ -414,6 +414,8 @@ void matrixTranspose_op<double, psi::DEVICE_GPU>::operator()(const psi::DEVICE_G
     }
     
     psi::memory::synchronize_memory_op<std::complex<double>, psi::DEVICE_GPU, psi::DEVICE_GPU>()(d, d, output_matrix, device_temp, row * col);
+
+    psi::memory::delete_memory_op<std::complex<double>, psi::DEVICE_GPU>()(d, device_temp);
     
 }
 
@@ -426,8 +428,8 @@ __global__ void matrix_setTo_another_kernel(
         const thrust::complex<FPTYPE>* matrix_A,
         thrust::complex<FPTYPE>* matrix_B)
 {
-    int j = blockIdx.x * blockDim.x + threadIdx.x;
-    if (j < LDA)
+    int j = blockIdx.x * blockDim.x + threadIdx.x;    
+    if (j < LDA && j < LDB)
     {
         for (int i = 0; i < n; i++)
         {

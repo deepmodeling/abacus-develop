@@ -21,6 +21,8 @@
 #include "module_vdw/vdw.h"
 #include "../module_relax/relax_old/variable_cell.h"    // liuyu 2022-11-07
 
+#include "module_hamilt/ks_lcao/op_exx_lcao.h"
+
 namespace ModuleESolver
 {
 
@@ -307,6 +309,15 @@ namespace ModuleESolver
 #ifdef __MPI
 		if ( GlobalC::exx_info.info_global.cal_exx )
 		{
+            if (GlobalC::ucell.atoms[0].ncpp.xc_func == "HSE" || GlobalC::ucell.atoms[0].ncpp.xc_func == "PBE0")
+            {
+                XC_Functional::set_xc_type("pbe");
+            }
+            else if (GlobalC::ucell.atoms[0].ncpp.xc_func == "SCAN0")
+            {
+                XC_Functional::set_xc_type("scan");
+            }
+
 			//GlobalC::exx_lcao.cal_exx_ions(*this->LOWF.ParaV);
 			if(GlobalV::GAMMA_ONLY_LOCAL)
 				GlobalC::exx_lri_double.cal_exx_ions();
@@ -461,6 +472,28 @@ namespace ModuleESolver
 				GlobalC::exx_lri_double.read_Hexxs(file_name_exx);
 			else
 				GlobalC::exx_lri_complex.read_Hexxs(file_name_exx);
+
+            // This is a temporary fix
+            if(GlobalV::GAMMA_ONLY_LOCAL)
+            {
+                hamilt::Operator<double>* exx
+                    = new hamilt::OperatorEXX<hamilt::OperatorLCAO<double>>(
+                        &LM,
+                        nullptr, //no explicit call yet
+                        &(LM.Hloc)
+                    );
+                p_hamilt->opsd->add(exx);
+            }
+            else
+            {
+                hamilt::Operator<std::complex<double>>* exx
+                    = new hamilt::OperatorEXX<hamilt::OperatorLCAO<std::complex<double>>>(
+                        &LM,
+                        nullptr, //no explicit call yet
+                        &(LM.Hloc2)
+                    );
+                p_hamilt->ops->add(exx);
+            }
         }
 #endif // __MPI
 #endif // __EXX

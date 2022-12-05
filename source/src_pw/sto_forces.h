@@ -5,7 +5,7 @@
 #include "./sto_wf.h"
 #include "module_psi/psi.h"
 
-class Sto_Forces : public Forces
+class Sto_Forces : public Forces<double>
 {
 public:
     /* This routine is a driver routine which compute the forces

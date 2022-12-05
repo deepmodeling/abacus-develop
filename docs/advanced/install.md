@@ -18,7 +18,7 @@ cmake -B build -DLibxc_DIR=~/libxc
 
 ## Build with DeePKS
 
-If DeePKS feature is requied for [DeePKS-kit](https://github.com/deepmodeling/deepks-kit), the following prerequisites and steps are needed:
+If DeePKS feature is required for [DeePKS-kit](https://github.com/deepmodeling/deepks-kit), the following prerequisites and steps are needed:
 
 - C++ compiler, supporting **C++14** (GCC >= 5 is sufficient)
 - CMake >= 3.18
@@ -43,6 +43,17 @@ If the Deep Potential model is employed in Molecule Dynamics calculations, the f
 ```bash
 cmake -B build -DDeePMD_DIR=~/deepmd-kit -DTensorFlow_DIR=~/tensorflow
 ```
+
+## Build with LibRI and LibComm
+
+The new EXX implementation depends on two external libraries:
+
+- [LibRI](https://github.com/abacusmodeling/LibRI)
+- [LibComm](https://github.com/abacusmodeling/LibComm)
+
+These two libraries are added as submodules in the [deps](https://github.com/deepmodeling/abacus-develop/tree/develop/deps) folder. Set `-DENABLE_LIBRI=ON` to build with these two libraries.
+
+If you prefer using manually downloaded libraries, set `-DENABLE_LIBRI=ON, -DGIT_SUBMODULE=OFF`, and provide `-DLIBRI_DIR=${path to your LibRI folder} -DLIBCOMM_DIR=${path to your LibComm folder}`. Remember to make sure the commit numbers match with those in the [deps](https://github.com/deepmodeling/abacus-develop/tree/develop/deps) folder.
 
 ## Build Unit Tests
 

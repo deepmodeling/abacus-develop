@@ -8,7 +8,7 @@
 #include "src_io/berryphase.h"
 
 K_Vectors::K_Vectors()
-{	
+{
 #ifdef _MCD_CHECK
     FILE* out;
     out=fopen("1_Memory", "w");
@@ -66,11 +66,11 @@ void K_Vectors::set(
 	// (1) set nspin, read kpoints.
 	this->nspin = nspin_in;
 	ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"nspin",nspin);
-	if(this->nspin==4) 
+	if(this->nspin==4)
 	{
 		this->nspin = 1;//zhengdy-soc
 	}
-		
+
 	bool read_succesfully = this->read_kpoints(k_file_name);
 #ifdef __MPI
 	Parallel_Common::bcast_bool(read_succesfully);
@@ -196,7 +196,7 @@ bool K_Vectors::read_kpoints(const std::string &fn)
     }
 
     std::ifstream ifk(fn.c_str());
-    if (!ifk) 
+    if (!ifk)
 	{
 		GlobalV::ofs_warning << " Can't find File name : " << fn << std::endl;
 		return 0;
@@ -217,7 +217,7 @@ bool K_Vectors::read_kpoints(const std::string &fn)
     while (ifk.good())
     {
         ifk >> word;
-        ifk.ignore(150, '\n'); //LiuXh add 20180416, fix bug in k-point file when the first line with comments 
+        ifk.ignore(150, '\n'); //LiuXh add 20180416, fix bug in k-point file when the first line with comments
         if (word == "K_POINTS" || word == "KPOINTS" || word == "K" )
         {
             ierr = 1;
@@ -308,29 +308,29 @@ bool K_Vectors::read_kpoints(const std::string &fn)
 				ModuleBase::WARNING("K_Vectors::read_kpoints","Line mode of k-points is open, please set symmetry to 0.");
 				return 0;
 			}
-		
-		
-			// how many special points.	
+
+
+			// how many special points.
 			int nks_special = this->nkstot;
 			//std::cout << " nks_special = " << nks_special << std::endl;
-			
+
 			//------------------------------------------
 			// number of points to the next k points
 			//------------------------------------------
 			std::vector<int> nkl(nks_special,0);
-				
+
 			//------------------------------------------
 			// cartesian coordinates of special points.
 			//------------------------------------------
 			std::vector<double> ksx(nks_special);
 			std::vector<double> ksy(nks_special);
 			std::vector<double> ksz(nks_special);
-			
+
 			//recalculate nkstot.
 			nkstot = 0;
 			for(int iks=0; iks<nks_special; iks++)
 			{
-				ifk >> ksx[iks]; 
+				ifk >> ksx[iks];
 				ifk >> ksy[iks];
 				ifk >> ksz[iks];
 				ModuleBase::GlobalFunc::READ_VALUE( ifk, nkl[iks] );
@@ -364,7 +364,7 @@ bool K_Vectors::read_kpoints(const std::string &fn)
 			kvec_c[count].y = ksy[nks_special-1];
 			kvec_c[count].z = ksz[nks_special-1];
 			++count;
-		
+
 			//std::cout << " count = " << count << std::endl;
 			assert (count == nkstot );
 
@@ -372,7 +372,7 @@ bool K_Vectors::read_kpoints(const std::string &fn)
 			{
 				wk[ik] = 1.0;
 			}
-			
+
             this->kc_done = true;
 
 		}
@@ -385,29 +385,29 @@ bool K_Vectors::read_kpoints(const std::string &fn)
 				ModuleBase::WARNING("K_Vectors::read_kpoints","Line mode of k-points is open, please set symmetry to 0.");
 				return 0;
 			}
-		
-		
-			// how many special points.	
+
+
+			// how many special points.
 			int nks_special = this->nkstot;
 			//std::cout << " nks_special = " << nks_special << std::endl;
-			
+
 			//------------------------------------------
 			// number of points to the next k points
 			//------------------------------------------
 			std::vector<int> nkl(nks_special,0);
-				
+
 			//------------------------------------------
 			// cartesian coordinates of special points.
 			//------------------------------------------
 			std::vector<double> ksx(nks_special);
 			std::vector<double> ksy(nks_special);
 			std::vector<double> ksz(nks_special);
-			
+
 			//recalculate nkstot.
 			nkstot = 0;
 			for(int iks=0; iks<nks_special; iks++)
 			{
-				ifk >> ksx[iks]; 
+				ifk >> ksx[iks];
 				ifk >> ksy[iks];
 				ifk >> ksz[iks];
 				ModuleBase::GlobalFunc::READ_VALUE( ifk, nkl[iks] );
@@ -441,7 +441,7 @@ bool K_Vectors::read_kpoints(const std::string &fn)
 			kvec_d[count].y = ksy[nks_special-1];
 			kvec_d[count].z = ksz[nks_special-1];
 			++count;
-		
+
 			//std::cout << " count = " << count << std::endl;
 			assert (count == nkstot );
 
@@ -449,7 +449,7 @@ bool K_Vectors::read_kpoints(const std::string &fn)
 			{
 				wk[ik] = 1.0;
 			}
-			
+
             this->kd_done = true;
 
 		}
@@ -604,15 +604,15 @@ void K_Vectors::ibz_kpoint(const ModuleSymmetry::Symmetry &symm, bool use_symm,s
     const double weight = 1.0 / static_cast<double>(nkstot);
 
     ModuleBase::Vector3<double> kvec_rot;
-    
-	
+
+
 //	for(int i=0; i<nrotkm; i++)
 //	{
 //		out.printM3("rot matrix",kgmatrix[i]);
 //	}
 
     // for output in kpoints file
-    int ibz_index[nkstot]={0};
+    int ibz_index[nkstot];
 	// search in all k-poins.
     for (int i = 0; i < nkstot; ++i)
     {
@@ -620,7 +620,7 @@ void K_Vectors::ibz_kpoint(const ModuleSymmetry::Symmetry &symm, bool use_symm,s
 		//std::cout << "\n kvec_d = " << kvec_d[i].x << " " << kvec_d[i].y << " " << kvec_d[i].z;
         bool already_exist = false;
 		int exist_number = -1;
-		
+
         for (int j = 0; j < nrotkm; ++j)
         {
             if (!already_exist)
@@ -680,10 +680,10 @@ void K_Vectors::ibz_kpoint(const ModuleSymmetry::Symmetry &symm, bool use_symm,s
 //			std::cout << "\n\n already exist ! ";
 
 //			std::cout << "\n kvec_rot = " << kvec_rot.x << " " << kvec_rot.y << " " << kvec_rot.z;
-//			std::cout << "\n kvec_d_ibz = " << kvec_d_ibz[exist_number].x 
-//			<< " " << kvec_d_ibz[exist_number].y 
+//			std::cout << "\n kvec_d_ibz = " << kvec_d_ibz[exist_number].x
+//			<< " " << kvec_d_ibz[exist_number].y
 //			<< " " << kvec_d_ibz[exist_number].z;
-			
+
 			double kmol_new = kvec_d[i].norm2();
 			double kmol_old = kvec_d_ibz[exist_number].norm2();
 
@@ -691,7 +691,7 @@ void K_Vectors::ibz_kpoint(const ModuleSymmetry::Symmetry &symm, bool use_symm,s
 
 //			std::cout << "\n kmol_new = " << kmol_new;
 //			std::cout << "\n kmol_old = " << kmol_old;
-			
+
 
 			// why we need this step?
 			// because in pw_basis.cpp, while calculate ggwfc2,
@@ -738,7 +738,7 @@ void K_Vectors::ibz_kpoint(const ModuleSymmetry::Symmetry &symm, bool use_symm,s
 	ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"nkstot_ibz",nkstot_ibz);
 
 	GlobalV::ofs_running << " " << std::setw(8) << "IBZ" << std::setw(20) << "DirectX"
-	<< std::setw(20) << "DirectY" << std::setw(20) << "DirectZ" 
+	<< std::setw(20) << "DirectY" << std::setw(20) << "DirectZ"
 	<< std::setw(20) << "Weight" << std::setw(10) << "ibz2bz" << std::endl;
     for (int ik=0; ik<nkstot_ibz; ik++)
     {
@@ -822,7 +822,7 @@ void K_Vectors::set_both_kvec(const ModuleBase::Matrix3 &G, const ModuleBase::Ma
         kd_done = true;
     }
 
-	GlobalV::ofs_running << "\n " << std::setw(8) << "KPOINTS" 
+	GlobalV::ofs_running << "\n " << std::setw(8) << "KPOINTS"
 	<< std::setw(20) << "DIRECT_X"
 	<< std::setw(20) << "DIRECT_Y"
 	<< std::setw(20) << "DIRECT_Z"
@@ -1033,7 +1033,7 @@ void K_Vectors::print_klists(std::ofstream &ofs)
         ModuleBase::WARNING_QUIT("print_klists","nkstot < nks");
     }
 
-	GlobalV::ofs_running << "\n " << std::setw(8) << "KPOINTS" 
+	GlobalV::ofs_running << "\n " << std::setw(8) << "KPOINTS"
 	<< std::setw(20) << "CARTESIAN_X"
 	<< std::setw(20) << "CARTESIAN_Y"
 	<< std::setw(20) << "CARTESIAN_Z"
@@ -1048,7 +1048,7 @@ void K_Vectors::print_klists(std::ofstream &ofs)
              << std::setw(20) << this->wk[i] << std::endl;
 	}
 
-	GlobalV::ofs_running << "\n " << std::setw(8) << "KPOINTS" 
+	GlobalV::ofs_running << "\n " << std::setw(8) << "KPOINTS"
 	<< std::setw(20) << "DIRECT_X"
 	<< std::setw(20) << "DIRECT_Y"
 	<< std::setw(20) << "DIRECT_Z"
@@ -1206,7 +1206,7 @@ void K_Vectors::set_both_kvec_after_vc(const ModuleBase::Matrix3 &G, const Modul
         kd_done = true;
     }
 
-	GlobalV::ofs_running << "\n " << std::setw(8) << "KPOINTS" 
+	GlobalV::ofs_running << "\n " << std::setw(8) << "KPOINTS"
 	<< std::setw(20) << "DIRECT_X"
 	<< std::setw(20) << "DIRECT_Y"
 	<< std::setw(20) << "DIRECT_Z"

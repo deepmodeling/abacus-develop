@@ -1,9 +1,11 @@
+#ifndef KEDF_TF_H
+#define KEDF_TF_H
 #include <stdio.h>
 #include <math.h>
-#include "../module_base/timer.h"
-#include "../module_base/global_function.h"
-#include "../module_base/global_variable.h"
-#include "../module_base/matrix.h"
+#include "../../module_base/timer.h"
+#include "../../module_base/global_function.h"
+#include "../../module_base/global_variable.h"
+#include "../../module_base/matrix.h"
 
 // 
 // a class which calculates kinetic energy, potential, and stress with Thomas-Fermi KEDF
@@ -31,3 +33,4 @@ public:
     double TFenergy = 0.; // TF energy
     ModuleBase::matrix stress;
 };
+#endif

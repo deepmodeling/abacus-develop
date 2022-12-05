@@ -6,6 +6,7 @@
 #include "../module_base/timer.h"
 #include "module_hsolver/diago_iter_assist.h"
 #include "module_hamilt/hamilt_pw.h"
+#include "module_hsolver/include/math_kernel.h"
 
 wavefunc::wavefunc()
 {
@@ -326,31 +327,26 @@ void wavefunc::diago_PAO_in_pw_k2_device(const psi::DEVICE_GPU* ctx, const int &
 		this->random(wfcatom,0,nbands,ik, GlobalC::wfcpw);
 	}
 
-	// (7) Diago with cg method.
-	std::vector<double> etatom(starting_nw, 0.0);
-	//if(GlobalV::DIAGO_TYPE == "cg") xiaohui modify 2013-09-02
+	// store wfcatom on the GPU
+	psi::DEVICE_CPU * cpu_ctx = {};
+	psi::DEVICE_GPU * gpu_ctx = {};
+	std::complex<double> *d_wfcatom = nullptr;
+	resmem_complex_op()(gpu_ctx, d_wfcatom, wfcatom.nr * wfcatom.nc);
+	syncmem_complex_h2d_op()(gpu_ctx, cpu_ctx, d_wfcatom, wfcatom.c, wfcatom.nr * wfcatom.nc);
+
 	if(GlobalV::KS_SOLVER=="cg") //xiaohui add 2013-09-02
 	{
+		// (7) Diago with cg method.
 		if(phm_in!= nullptr)
 		{
-			// hsolver::DiagoIterAssist<double>::diagH_subspace_init(phm_in,
-      //                          wfcatom,
-      //                          wvf,
-      //                          etatom.data());
-			std::complex<double> *d_wfcatom = nullptr;
-			psi::DEVICE_CPU * cpu_ctx = {};
-			psi::DEVICE_GPU * gpu_ctx = {};
-			resmem_complex_op()(gpu_ctx, d_wfcatom, wfcatom.nr * wfcatom.nc);
-			syncmem_complex_h2d_op()(gpu_ctx, cpu_ctx, d_wfcatom, wfcatom.c, wfcatom.nr * wfcatom.nc);
+			std::vector<double> etatom(starting_nw, 0.0);
 			hsolver::DiagoIterAssist<double, psi::DEVICE_GPU>::diagH_subspace_init(
-												 phm_in,
+					     phm_in,
                          d_wfcatom,
-				   							 wfcatom.nr,
-				   							 wfcatom.nc,
+						 wfcatom.nr,
+						 wfcatom.nc,
                          wvf,
                          etatom.data());
-			delmem_complex_op()(gpu_ctx, d_wfcatom);
-			return;
 		}
 		else
 		{
@@ -358,16 +354,21 @@ void wavefunc::diago_PAO_in_pw_k2_device(const psi::DEVICE_GPU* ctx, const int &
 			//GlobalC::hm.diagH_subspace(ik ,starting_nw, nbands, wfcatom, wfcatom, etatom.data());
 		}
 	}
-
-	assert(nbands <= wfcatom.nr);
-	for (int ib=0; ib<nbands; ib++)
+	else if(GlobalV::KS_SOLVER=="dav")
 	{
-		for (int ig=0; ig<nbasis; ig++)
-		{
-			wvf(ib, ig) = wfcatom(ib, ig);
-		}
+		assert(nbands <= wfcatom.nr);
+		// replace by haozhihan 2022-11-23
+		hsolver::matrixSetToAnother<double, psi::DEVICE_GPU>()(
+			gpu_ctx,
+			nbands,
+			d_wfcatom,
+			wfcatom.nc,
+			&wvf(0,0),
+			nbasis
+		);
 	}
-
+	delmem_complex_op()(gpu_ctx, d_wfcatom);
+	return;
 }
 #endif
 

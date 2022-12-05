@@ -24,11 +24,6 @@
 
 namespace hamilt
 {
-// case for nspin<4, gamma-only k-point
-template class HamiltLCAO<double>;
-// case for nspin<4, multi-k-points
-// case for nspin == 4, non-collinear spin case
-template class HamiltLCAO<std::complex<double>>;
 
 template<typename T>
 HamiltLCAO<T>::HamiltLCAO(
@@ -54,9 +49,9 @@ HamiltLCAO<T>::HamiltLCAO(
         &(LM_in->Sloc)
     );
 
-    // kinetic term (<psi|T|psi>), 
+    // kinetic term (<psi|T|psi>),
     // in Gamma_only case, target HR is LCAO_Matrix::Hloc_fixed, while target HK is LCAO_Matrix::Hloc
-    // LCAO_Matrix::Hloc_fixed2 is used for storing 
+    // LCAO_Matrix::Hloc_fixed2 is used for storing
     if(GlobalV::T_IN_H)
     {
         Operator<double>* ekinetic = new Ekinetic<OperatorLCAO<double>>(
@@ -134,14 +129,6 @@ HamiltLCAO<T>::HamiltLCAO(
             );
             this->opsd->add(meta);
         }
-
-        //exact exchange term
-        Operator<double>* exx = new OperatorEXX<OperatorLCAO<double>>(
-            LM_in,
-            nullptr, //no explicit call yet
-            &(LM_in->Hloc)
-        );
-        this->opsd->add(exx);
     }
 
 #ifdef __DEEPKS
@@ -179,7 +166,7 @@ HamiltLCAO<T>::HamiltLCAO(
     elecstate::Potential* pot_in)
 {
     this->classname = "HamiltLCAO";
-    
+
     //reset fixed Hamiltonian matrix in real space
     LM_in->zeros_HSR('T');
     //reset Overlap matrix in real space
@@ -243,14 +230,6 @@ HamiltLCAO<T>::HamiltLCAO(
             );
             this->ops->add(meta);
         }
-
-        //exact exchange term
-        Operator<std::complex<double>>* exx = new OperatorEXX<OperatorLCAO<std::complex<double>>>(
-            LM_in,
-            nullptr, //no explicit call yet
-            &(LM_in->Hloc2)
-        );
-        this->ops->add(exx);
     }
 
     // initial operator for multi-k case
@@ -263,7 +242,7 @@ HamiltLCAO<T>::HamiltLCAO(
     );
     this->ops->add(overlap);
 
-    // kinetic term (<psi|T|psi>), 
+    // kinetic term (<psi|T|psi>),
     // in general case, target HR is LCAO_Matrix::Hloc_fixedR, while target HK is LCAO_Matrix::Hloc2
     if(GlobalV::T_IN_H)
     {
@@ -358,4 +337,9 @@ template <> void HamiltLCAO<std::complex<double>>::updateHk(const int ik)
     ModuleBase::timer::tick("HamiltLCAO", "updateHk");
 }
 
+// case for nspin<4, gamma-only k-point
+template class HamiltLCAO<double>;
+// case for nspin<4, multi-k-points
+// case for nspin == 4, non-collinear spin case
+template class HamiltLCAO<std::complex<double>>;
 } // namespace hamilt

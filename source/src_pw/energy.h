@@ -16,7 +16,7 @@ class energy
 	friend class LOOP_elec;
 	friend class Local_Orbital_Charge;
 	friend class Threshold_Elec;
-	friend class Forces; 
+	friend class Forces<double>;
 	friend class Charge;
 	friend class Potential;
 	friend class Occupy;

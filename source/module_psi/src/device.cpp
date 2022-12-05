@@ -343,7 +343,7 @@ std::string str = "gpu";
 #else
     str = "cpu";
 #endif
-    if (ks_solver != "cg") {
+    if (ks_solver != "cg" && ks_solver != "dav") {
         str = "cpu";
     }
     if (basis_type != "pw") {

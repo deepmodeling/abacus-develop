@@ -585,8 +585,8 @@ namespace ModuleESolver
     template<typename FPTYPE, typename Device>
     void ESolver_KS_PW<FPTYPE, Device>::cal_Force(ModuleBase::matrix& force)
     {
-        Forces ff;
-        ff.init(force, this->pelec->wg, this->pelec->charge, this->psi);
+        Forces<FPTYPE, Device> ff;
+        ff.init(force, this->pelec->wg, this->pelec->charge, this->kspw_psi);
     }
 
     template<typename FPTYPE, typename Device>

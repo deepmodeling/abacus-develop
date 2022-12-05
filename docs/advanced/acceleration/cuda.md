@@ -3,7 +3,7 @@
 In ABACUS, we provide the option to use the GPU devices to accelerate the performance.
 And it has the following general features:
 
-- **Full gpu implementations**: During the SCF progress, `Psi`, `Hamilt`, `Hsolver`, and `DiagCG` classes are stored or calculated by the GPU devices.
+- **Full gpu implementations**: During the SCF progress, `Psi`, `Hamilt`, `Hsolver`, `DiagCG`, and `DiagoDavid` classes are stored or calculated by the GPU devices.
 
 - **Electronic state data**: (e.g. electronic density) are moved from the GPU to the CPU(s) every scf step.
 
@@ -11,7 +11,7 @@ And it has the following general features:
 
 - **Multi GPU supprted**: Using multiple MPI tasks will often give the best performance. Note each MPI task will be bind to a GPU device with automatically computing load balancing.
 
-- **Parallel strategy**: K point parallel. 
+- **Parallel strategy**: K point parallel. (Only CG)
 
 ## Required hardware/software
 
@@ -37,7 +37,8 @@ We provides [examples](https://github.com/deepmodeling/abacus-develop/tree/devel
 
 ## Known limitations
 
-- Only CG method is supported, so the input keyword `ks_solver` can only take the value `cg`,
+- CG and Davidson methods are supported, so the input keyword `ks_solver` can take the values `cg` or `dav`,
+- The current GPU version of the Davidson method does not support k-point parallelization, and you can only use the GPU version of the CG method for k-point parallelization,
 - Only PW basis is supported, so the input keyword `basis_type` can only take the value `pw`,
 - Only k point parallelization is supported, so the input keyword `kpar` will be set to match the number of MPI tasks automatically.
 - Supported CUDA architectures:
