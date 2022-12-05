@@ -563,12 +563,12 @@ void Symmetry_Basic::setgroup(ModuleBase::Matrix3* symop, int &nop, const int &i
 		double gamma=celconst[5];
 		if(!equal(alpha, 0.0) && equal(beta, 0.0) && equal(gamma, 0.0))
 		{
-			//beta -> gamma == ABC->BCA == right and down shift the matrix
-			s_new=ModuleBase::Matrix3(s.e33, s.e31, s.e32, s.e13, s.e11, s.e12, s.e23, s.e21, s.e22);
+			//right and down shift the matrix
+				s_new=ModuleBase::Matrix3(s.e33, s.e31, s.e32, s.e13, s.e11, s.e12, s.e23, s.e21, s.e22);
 		}
 		else if (equal(alpha, 0.0) && !equal(beta, 0.0) && equal(gamma, 0.0))
 		{
-			//alpha -> gamma == ABC->CAB == left and up shift the matrix
+			//left and up shift the matrix
 			s_new=ModuleBase::Matrix3(s.e22, s.e23, s.e21, s.e32, s.e33, s.e31, s.e12, s.e13, s.e11);
 		}
 		return s_new;

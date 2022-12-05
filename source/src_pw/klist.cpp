@@ -579,6 +579,33 @@ void K_Vectors::ibz_kpoint(const ModuleSymmetry::Symmetry &symm, bool use_symm,s
             }
             nrotkm = 2 * symm.nrotk;
         }
+
+        // for ibrav in {4, 12, 13},  we need to rotate the matrix back
+        auto mat_rotate_k = [symm](ModuleBase::Matrix3 s) -> ModuleBase::Matrix3
+        {
+            ModuleBase::Matrix3 s_new=s;
+            double alpha=symm.cel_const[3];
+            double beta=symm.cel_const[4];
+            double gamma=symm.cel_const[5];
+            if(symm.equal(alpha, 0.0) && !symm.equal(beta, 0.0) && symm.equal(gamma, 0.0))
+            {
+                //right and down shift the matrix
+                    s_new=ModuleBase::Matrix3(s.e33, s.e31, s.e32, s.e13, s.e11, s.e12, s.e23, s.e21, s.e22);
+            }
+            else if (!symm.equal(alpha, 0.0) && symm.equal(beta, 0.0) && symm.equal(gamma, 0.0))
+            {
+                //left and up shift the matrix
+                s_new=ModuleBase::Matrix3(s.e22, s.e23, s.e21, s.e32, s.e33, s.e31, s.e12, s.e13, s.e11);
+            }
+            return s_new;
+        };
+        if(symm.ibrav==4 || symm.ibrav==12 || symm.ibrav==13)
+        { 
+            for (int i = 0; i<nrotkm; ++i)
+            {
+                kgmatrix[i]=mat_rotate_k(kgmatrix[i]);
+            }
+        }
     }
     else if(is_mp) // only include for mp grid
     {
