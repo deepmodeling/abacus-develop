@@ -4,8 +4,10 @@
 //#include "Basis.h"
 //#include "Cell.h"
 
-#include "module_psi/include/types.h"
 #include "module_psi/include/memory.h"
+#include "module_psi/include/types.h"
+
+#include <tuple>
 
 namespace psi
 {
@@ -53,7 +55,7 @@ public:
     template<typename T_in, typename Device_in = Device> Psi(const Psi<T_in, Device_in>& psi_in);
     //Destructor for deleting the psi array manually
     ~Psi();
-    // allocate psi for three dimensions 
+    // allocate psi for three dimensions
     void resize(const int nks_in, const int nbands_in, const int nbasis_in);
 
     // get the pointer for current k point or current band
@@ -85,7 +87,7 @@ public:
     //use operator "(ibasis)" to reach target element for current k and current band
     T& operator()(const int ibasis);
 	  const T& operator()(const int ibasis) const;
- 
+
     /* //would be updated later
     int get_basis_type();
     int get_data_type();
@@ -117,8 +119,8 @@ public:
     // solve Range: return(pointer of begin, number of bands or k-points)
     std::tuple<const T*, int> to_range(const Range& range) const;
     int npol = 1;
- 
- private:   
+
+ private:
     T * psi = nullptr; // avoid using C++ STL
 
     AbacusDevice_t device = {}; // track the device type (CPU, GPU and SYCL are supported currented)
@@ -156,7 +158,7 @@ public:
     // method for parallelization
     int parallel_type;
 //would be updated later */
-    
+
     using set_memory_op = psi::memory::set_memory_op<T, Device>;
     using delete_memory_op = psi::memory::delete_memory_op<T, Device>;
     using resize_memory_op = psi::memory::resize_memory_op<T, Device>;
