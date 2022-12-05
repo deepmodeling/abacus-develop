@@ -18,7 +18,7 @@ int Local_Orbital_Charge::out_dm1 = 0;
 Local_Orbital_Charge::Local_Orbital_Charge()
 {
     // for gamma algorithms.
-    this->init_DM = false;  
+    this->init_DM = false;
     this->lgd_now = 0;
     this->lgd_last = 0;
 
@@ -52,15 +52,14 @@ Local_Orbital_Charge::~Local_Orbital_Charge()
 		 }
 		 delete[] DM;
 		 delete[] DM_pool;
-		 delete[] sender_2D_index;
-		 delete[] sender_size_process;
-		 delete[] sender_displacement_process;
-
-		 delete[] receiver_local_index;
-		 delete[] receiver_size_process;
-		 delete[] receiver_displacement_process;
 	 }
+    delete[] sender_2D_index;
+    delete[] sender_size_process;
+    delete[] sender_displacement_process;
 
+    delete[] receiver_local_index;
+    delete[] receiver_size_process;
+    delete[] receiver_displacement_process;
     // with k points
     if (this->init_DM_R)
     {
@@ -74,7 +73,7 @@ Local_Orbital_Charge::~Local_Orbital_Charge()
 
 void Local_Orbital_Charge::allocate_dm_wfc(const int& lgd,
     elecstate::ElecState* pelec,
-    Local_Orbital_wfc &lowf, 
+    Local_Orbital_wfc &lowf,
     psi::Psi<double>* psid,
     psi::Psi<std::complex<double>>* psi)
 {
@@ -91,6 +90,6 @@ void Local_Orbital_Charge::allocate_dm_wfc(const int& lgd,
 		lowf.allocate_k(lgd, psi, pelec);
 		this->allocate_DM_k();
 	}
-    
+
     return;
 }
