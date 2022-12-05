@@ -1052,9 +1052,9 @@ void Symmetry::checksym(ModuleBase::Matrix3 &s, ModuleBase::Vector3<double> &gtr
     {
         //set up the current test std::vector "gtrans"
         //and "gtrans" could possibly contain trivial translations:
-        gtrans.x = this->get_translation_vector( pos[i*3+0], sptmin.x);
-        gtrans.y = this->get_translation_vector( pos[i*3+1], sptmin.y);
-        gtrans.z = this->get_translation_vector( pos[i*3+2], sptmin.z);
+        gtrans.x = this->get_translation_vector( rotpos[i*3+0], sptmin.x);
+        gtrans.y = this->get_translation_vector( rotpos[i*3+1], sptmin.y);
+        gtrans.z = this->get_translation_vector( rotpos[i*3+2], sptmin.z);
 
         //If we had already detected some translation,
         //we must only look at the vectors with coordinates smaller than those

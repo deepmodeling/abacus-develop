@@ -73,7 +73,7 @@ double Symmetry_Basic::get_translation_vector(const double &x1, const double &x2
 
 void Symmetry_Basic::check_translation(double &x, const double &t)
 {
-	x += t;
+	x -= t;
 	//impose the periodic boundary condition
 	x = fmod(x + 100.5,1) - 0.5;
 	return;
