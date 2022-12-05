@@ -675,7 +675,7 @@ These variables are used to control the geometry relaxation.
 
 ### cal_force
 
-- **Description**: If set to 1, calculate the force at the end of the electronic iteration. 0 means the force calculation is turned off.
+- **Description**: If set to 1, calculate the force at the end of the electronic iteration. 0 means the force calculation is turned off. It is automatically set to 1 if `calculation` is `cell-relax`, `relax`, or `md`.
 - **Default**: 0
 
 ### force_thr
@@ -729,7 +729,7 @@ These variables are used to control the geometry relaxation.
 ### cal_stress
 
 - **Type**: Integer
-- **Description**: If set to 1, calculate the stress at the end of the electronic iteration. 0 means the stress calculation is turned off.
+- **Description**: If set to 1, calculate the stress at the end of the electronic iteration. 0 means the stress calculation is turned off. It is automatically set to 1 if `calculation` is `cell-relax`.
 - **Default**: 0
 
 ### stress_thr
