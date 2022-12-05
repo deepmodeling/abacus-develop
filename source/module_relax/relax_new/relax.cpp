@@ -196,7 +196,7 @@ bool Relax::setup_gradient(const ModuleBase::matrix& force, const ModuleBase::ma
             }
         }
 
-        double unit_transform = ModuleBase::RYDBERG_SI / pow(ModuleBase::BOHR_RADIUS_SI, 3) * 1.0e-9;
+        double unit_transform = ModuleBase::RYDBERG_SI / pow(ModuleBase::BOHR_RADIUS_SI, 3) * 1.0e-8;
         largest_grad = largest_grad * unit_transform;
 
         if (largest_grad > GlobalV::STRESS_THR)
