@@ -123,17 +123,10 @@ void Stress_Func::stress_ewa(ModuleBase::matrix& sigma, ModulePW::PW_Basis* rho_
 
 		// collapse it, ia, jt, ja loop into a single loop
 		long long ijat, ijat_end;
+		int it, i, jt, j;
 		ModuleBase::TASK_DIST_1D(num_threads, thread_id, (long long)GlobalC::ucell.nat * GlobalC::ucell.nat, ijat, ijat_end);
 		ijat_end = ijat + ijat_end;
-
-		long long iat = ijat / GlobalC::ucell.nat;
-		long long jat = ijat % GlobalC::ucell.nat;
-
-		int it = (ijat < ijat_end) ? GlobalC::ucell.iat2it[iat] : GlobalC::ucell.ntype;
-		int i = (ijat < ijat_end) ? GlobalC::ucell.iat2ia[iat] : 0;
-
-		int jt = (ijat < ijat_end) ? GlobalC::ucell.iat2it[jat] : GlobalC::ucell.ntype;
-		int j = (ijat < ijat_end) ? GlobalC::ucell.iat2ia[jat] : 0;
+		GlobalC::ucell.ijat2iaitjajt(ijat, &i, &it, &j, &jt);
 
 		while (ijat < ijat_end)
 		{
@@ -158,19 +151,7 @@ void Stress_Func::stress_ewa(ModuleBase::matrix& sigma, ModulePW::PW_Basis* rho_
 			}//end nr
 
 			++ijat;
-			if (++j == GlobalC::ucell.atoms[jt].na)
-			{
-				j = 0;
-				if (++jt == GlobalC::ucell.ntype)
-				{
-					jt = 0;
-					if (++i == GlobalC::ucell.atoms[it].na)
-					{
-						i = 0;
-						++it;
-					}
-				}
-			}
+			GlobalC::ucell.step_jajtiait(&j, &jt, &i, &it);
 		}
 
 		delete[] r;
