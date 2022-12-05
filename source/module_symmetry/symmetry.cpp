@@ -138,52 +138,6 @@ void Symmetry::analy_sys(const UnitCell &ucell, std::ofstream &ofs_running)
     ofs_running<<"Warning : If the optimal symmetric configuration is not the input configuration, "<<'\n';
     ofs_running<<"you have to manually change configurations, ABACUS would only calculate the input structure."<<'\n';
 
-	// the atom position coordinates are changed to 
-	// crystal coordinates of a1,a2,a3
-	ModuleBase::Matrix3 new_lat;
-	new_lat.e11=a1.x; new_lat.e12=a1.y; new_lat.e13=a1.z;
-	new_lat.e21=a2.x; new_lat.e22=a2.y; new_lat.e23=a2.z;
-	new_lat.e31=a3.x; new_lat.e32=a3.y; new_lat.e33=a3.z;
-	//output::printM3(ofs_running,"STANDARD LATTICE VECTORS: (CARTESIAN COORDINATE: IN UNIT OF A0)",new_lat);
-
-	int iat=0;
-	for(int it=0; it<ucell.ntype; ++it)
-	{
-		for(int ia=0; ia<ucell.atoms[it].na; ++ia)
-		{
-			ModuleBase::Mathzone::Cartesian_to_Direct(ucell.atoms[it].tau[ia].x, 
-					ucell.atoms[it].tau[ia].y, 
-					ucell.atoms[it].tau[ia].z,
-					new_lat.e11, new_lat.e12, new_lat.e13,
-					new_lat.e21, new_lat.e22, new_lat.e23,
-					new_lat.e31, new_lat.e32, new_lat.e33,
-					newpos[3*iat],newpos[3*iat+1],newpos[3*iat+2]);
-
-    	//  std::cout << " newpos_before = " << newpos[3*iat] << " " << newpos[3*iat+1] << " " << newpos[3*iat+2] << std::endl;
-		//	GlobalV::ofs_running << " newpos_before = " << newpos[3*iat] << " " << newpos[3*iat+1] << " " << newpos[3*iat+2] << std::endl; 
-			for(int k=0; k<3; ++k)
-			{
-				this->check_translation( newpos[iat*3+k], -floor(newpos[iat*3+k]));
-                this->check_boundary( this->newpos[iat*3+k] );
-			}
-      	// std::cout << " newpos = " << newpos[3*iat] << " " << newpos[3*iat+1] << " " << newpos[3*iat+2] << std::endl;
-		// GlobalV::ofs_running << " newpos = " << newpos[3*iat] << " " << newpos[3*iat+1] << " " << newpos[3*iat+2] << std::endl; 
-			++iat;
-		}
-	}
-
-	test_brav = false;  // use the input ibrav to calculate
-	//ModuleBase::GlobalFunc::OUT(ofs_running,"ibrav",ibrav);
-	this->setgroup(this->symop, this->nop, this->ibrav, cel_const);
-	//now select all symmetry operations which reproduce the lattice
-	//to find those symmetry operations which reproduce the entire crystal
-	this->getgroup(this->nrot, this->nrotk, ofs_running);
-	// find the name of point group
-	this->pointgroup(this->nrot, this->pgnumber, this->pgname, this->gmatrix, ofs_running);
-	// ModuleBase::GlobalFunc::OUT(ofs_running,"POINT GROUP", this->pgname);
-    this->pointgroup(this->nrotk, this->pgnumber, this->spgname, this->gmatrix, ofs_running);
-	//write();
-
     delete[] dirpos;
 	delete[] newpos;
     delete[] na;
