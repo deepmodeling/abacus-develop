@@ -13,7 +13,7 @@ BIN_DIR = ../bin
 SOURCE_DIR = .
 ifeq ($(findstring mpi, $(CC)), mpi)
      # We do not support EXX in sequential version temporarily.
-     HONG += -D__MPI -D__EXX -DEXX_H_COMM=2 -DUSE_CEREAL_SERIALIZATION -DEXX_DM=3 -DEXX_H_COMM=2 -DTEST_EXX_LCAO=0 -DTEST_EXX_RADIAL=1
+     HONG += -D__MPI  -DUSE_CEREAL_SERIALIZATION
      MPI = ON
      TESTNP = 4
      suffix = mpi
@@ -115,7 +115,7 @@ ifdef LIBRI_DIR
     INCLUDES += -I${LIBRI_DIR}/include
     INCLUDES += -I${LIBCOMM_DIR}/include
     HONG                += -DUSE_LIBRI
-    HONG += -D__EXX
+    HONG += -D__EXX -DEXX_H_COMM=2 -DEXX_DM=3 -DTEST_EXX_LCAO=0 -DTEST_EXX_RADIAL=1
 endif
 
 ifdef LIBTORCH_DIR
@@ -165,7 +165,9 @@ HONG += -D__SELINV -DMETIS
 #==========================
 
 ifeq ($(MPI), ON)
-    OBJS_ABACUS += $(OBJS_EXX)
+    ifdef LIBRI_DIR
+        OBJS_ABACUS += $(OBJS_MODULE_RI) ${OBJS_SRC_RI} ${OBJS_RPA}
+    endif
 endif
 
 FP_OBJS=$(patsubst %.o, ${OBJ_DIR}/%.o, ${OBJS_ABACUS})
