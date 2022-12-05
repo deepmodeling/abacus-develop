@@ -1238,10 +1238,10 @@ void Symmetry::force_symmetry(ModuleBase::matrix &force , double* pos, const Uni
 			// std::cout << "nrotk ="<<nrotk<<std::endl;
 			for(int k = 0 ; k < nrotk; ++k)
 			{
-				protpos[xx] = pos[xx] * gmatrix[k].e11 + pos[yy] * gmatrix[k].e12 + pos[zz] * gmatrix[k].e13 + gtrans[k].x;
-				protpos[yy] = pos[xx] * gmatrix[k].e21 + pos[yy] * gmatrix[k].e22 + pos[zz] * gmatrix[k].e23 + gtrans[k].y;
-				protpos[zz] = pos[xx] * gmatrix[k].e31 + pos[yy] * gmatrix[k].e32 + pos[zz] * gmatrix[k].e33 + gtrans[k].z;
-							    			   			
+                protpos[xx] = pos[xx] * gmatrix[k].e11 + pos[yy] * gmatrix[k].e21 + pos[zz] * gmatrix[k].e31 + gtrans[k].x;
+				protpos[yy] = pos[xx] * gmatrix[k].e12 + pos[yy] * gmatrix[k].e22 + pos[zz] * gmatrix[k].e32 + gtrans[k].y;
+				protpos[zz] = pos[xx] * gmatrix[k].e13 + pos[yy] * gmatrix[k].e23 + pos[zz] * gmatrix[k].e33 + gtrans[k].z;    	
+
 				check_translation( protpos[xx], -floor(protpos[xx]));
 				check_boundary( protpos[xx] );
 				check_translation( protpos[yy], -floor(protpos[yy]));
