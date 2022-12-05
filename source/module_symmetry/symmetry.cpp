@@ -227,9 +227,9 @@ int Symmetry::standard_lat(
     double norm_a = a.norm();
     double norm_b = b.norm();
     double norm_c = c.norm();
-    double alpha = ab /( norm_a * norm_b ); // cos(alpha)
-    double beta  = bc /( norm_b * norm_c ); // cos(beta)
-    double gamma = ca /( norm_a * norm_c ); // cos(gamma)
+    double gamma = ab /( norm_a * norm_b ); // cos(gamma)
+    double alpha  = bc /( norm_b * norm_c ); // cos(alpha)
+    double beta = ca /( norm_a * norm_c ); // cos(beta)
     double amb = sqrt( aa + bb - 2 * ab );	//amb = |a - b|
     double bmc = sqrt( bb + cc - 2 * bc );
     double cma = sqrt( cc + aa - 2 * ca );
@@ -364,9 +364,9 @@ int Symmetry::standard_lat(
 					type=4;
 					cel_const[0]=norm_a;
 					cel_const[2]=norm_c/norm_a;
-                    cel_const[3]=beta;
-                    cel_const[4]=gamma;
-                    cel_const[5]=alpha;
+                    cel_const[3]=alpha;
+                    cel_const[4]=beta;
+                    cel_const[5]=gamma;
 					// Other angles mean base-centered orthorhombic: (IBRAV=11)
 					// Adjustment: Cosine between A1 and A2 shall be lower than zero, the
 					//             'c-axis' shall be the special axis.
@@ -394,9 +394,9 @@ int Symmetry::standard_lat(
 				cel_const[0]=norm_b;
 				cel_const[1]=norm_c/norm_b;
 				cel_const[2]=norm_a/norm_b;
-				cel_const[3]=beta;
-                cel_const[4]=gamma;
-                cel_const[5]=alpha;
+				cel_const[3]=alpha;
+                cel_const[4]=beta;
+                cel_const[5]=gamma;
 				/*
 				YB(1)=XB(1,3);
 				YB(2)=XB(2,3);
@@ -474,7 +474,9 @@ int Symmetry::standard_lat(
                         cel_const[0]=apb;
                         cel_const[1]=amb/apb;
                         cel_const[2]=norm_c/apb;
+                        cel_const[3]=alpha;
                         cel_const[4]=beta;
+                        cel_const[5]=gamma;
                 }
 
 		else if((abs(amb-norm_c)<small) &&
@@ -497,9 +499,9 @@ int Symmetry::standard_lat(
 			cel_const[0]=norm_a;
 			cel_const[1]=norm_b/norm_a;
 			cel_const[2]=norm_c/norm_a;
-			cel_const[3]=beta;
-			cel_const[4]=gamma;
-			cel_const[5]=alpha;
+			cel_const[3]=alpha;
+			cel_const[4]=beta;
+			cel_const[5]=gamma;
 		}
 	}
 	

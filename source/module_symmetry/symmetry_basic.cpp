@@ -558,15 +558,15 @@ void Symmetry_Basic::setgroup(ModuleBase::Matrix3* symop, int &nop, const int &i
 	auto mat_rotate = [this, celconst](ModuleBase::Matrix3 s) -> ModuleBase::Matrix3
 	{
 		ModuleBase::Matrix3 s_new=s;
-		double alpha=celconst[5];
-		double beta=celconst[3];
-		double gamma=celconst[4];
-		if(equal(alpha, 0.0) && !equal(beta, 0.0) && equal(gamma, 0.0))
+		double alpha=celconst[3];
+		double beta=celconst[4];
+		double gamma=celconst[5];
+		if(!equal(alpha, 0.0) && equal(beta, 0.0) && equal(gamma, 0.0))
 		{
 			//beta -> gamma == ABC->BCA == right and down shift the matrix
 			s_new=ModuleBase::Matrix3(s.e33, s.e31, s.e32, s.e13, s.e11, s.e12, s.e23, s.e21, s.e22);
 		}
-		else if (!equal(alpha, 0.0) && equal(beta, 0.0) && equal(gamma, 0.0))
+		else if (equal(alpha, 0.0) && !equal(beta, 0.0) && equal(gamma, 0.0))
 		{
 			//alpha -> gamma == ABC->CAB == left and up shift the matrix
 			s_new=ModuleBase::Matrix3(s.e22, s.e23, s.e21, s.e32, s.e33, s.e31, s.e12, s.e13, s.e11);
