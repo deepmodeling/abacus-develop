@@ -1116,46 +1116,6 @@ void Symmetry::rho_symmetry( double *rho,
 //  if (GlobalV::test_symmetry)ModuleBase::TITLE("Symmetry","rho_symmetry");
     ModuleBase::timer::tick("Symmetry","rho_symmetry");
 
-    //for fft commensuration
-	//nrotk : the number of space operations.
-    int count_fft = 0;
-    for (int i=0; i<nrotk; ++i)
-    {
-        //if ( (gtrans[i].x * nr1 - int(gtrans[i].x * nr1) < epsilon)
-        //   &&(gtrans[i].y * nr2 - int(gtrans[i].y * nr2) < epsilon)
-        //   &&(gtrans[i].z * nr3 - int(gtrans[i].z * nr3) < epsilon)
-        //   )
-        if (equal(gtrans[i].x,0.0) && equal(gtrans[i].y,0.0) && equal(gtrans[i].z,0.0))
-        {
-            ++count_fft;
-            this->symflag_fft[i] = true;
-        }
-        else
-        {
-            this->symflag_fft[i] = false;
-        }
-    }
-    nrotk = count_fft;
-	//std::cout << "\n nrotk = " << nrotk;
-
-
-	// get the remaining rotation matrix.
-	std::array<ModuleBase::Matrix3, 48> gmatrix_fft;
-
-    int counter = 0;
-    for (int i=0; i<48; ++i)
-    {
-        if (this->symflag_fft[i])
-        {
-            gmatrix_fft[counter] = this->gmatrix[i];
-            ++counter;
-        }
-    }
-    for (int i=0; i<48; ++i)
-    {
-        gmatrix[i] = gmatrix_fft[i];
-    }
-
 	// allocate flag for each FFT grid.
     bool* symflag = new bool[nr1 * nr2 * nr3];
     for (int i=0; i<nr1*nr2*nr3; i++)
