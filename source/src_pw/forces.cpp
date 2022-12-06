@@ -589,11 +589,10 @@ void Forces<FPTYPE, Device>::cal_force_ew(ModuleBase::matrix& forceion, ModulePW
         2. each thread iterate atoms form `iat_beg` to `iat_end-1`
     */
     int iat_beg, iat_end;
+    int it_beg, ia_beg;
     ModuleBase::TASK_DIST_1D(num_threads, thread_id, GlobalC::ucell.nat, iat_beg, iat_end);
     iat_end = iat_beg + iat_end;
-
-    int it_beg = (iat_beg < iat_end) ? GlobalC::ucell.iat2it[iat_beg] : GlobalC::ucell.ntype;
-    int ia_beg = (iat_beg < iat_end) ? GlobalC::ucell.iat2ia[iat_beg] : 0;
+    GlobalC::ucell.iat2iait(iat_beg, &ia_beg, &it_beg);
 
     int iat = iat_beg;
     int it = it_beg;
@@ -637,11 +636,7 @@ void Forces<FPTYPE, Device>::cal_force_ew(ModuleBase::matrix& forceion, ModulePW
         forceion(iat, 2) *= it_fact;
 
         ++iat;
-        if (++ia == GlobalC::ucell.atoms[it].na)
-        {
-            ia = 0;
-            ++it;
-        }
+        GlobalC::ucell.step_iait(&ia, &it);
     }
 
     // means that the processor contains G=0 term.
@@ -671,42 +666,37 @@ void Forces<FPTYPE, Device>::cal_force_ew(ModuleBase::matrix& forceion, ModulePW
         while (iat1 < iat_end)
         {
             int iat2 = 0; // mohan fix bug 2011-06-07
-            for (int T2 = 0; T2 < GlobalC::ucell.ntype; T2++)
+            int I2 = 0;
+            int T2 = 0;
+            while (iat2 < GlobalC::ucell.nat)
             {
-                for (int I2 = 0; I2 < GlobalC::ucell.atoms[T2].na; I2++)
+                if (iat1 != iat2)
                 {
-                    if (iat1 != iat2)
+                    ModuleBase::Vector3<double> d_tau
+                        = GlobalC::ucell.atoms[T1].tau[I1] - GlobalC::ucell.atoms[T2].tau[I2];
+                    H_Ewald_pw::rgen(d_tau, rmax, irr, GlobalC::ucell.latvec, GlobalC::ucell.G, r, r2, nrm);
+
+                    for (int n = 0; n < nrm; n++)
                     {
-                        ModuleBase::Vector3<double> d_tau
-                            = GlobalC::ucell.atoms[T1].tau[I1] - GlobalC::ucell.atoms[T2].tau[I2];
-                        H_Ewald_pw::rgen(d_tau, rmax, irr, GlobalC::ucell.latvec, GlobalC::ucell.G, r, r2, nrm);
+                        const double rr = sqrt(r2[n]) * GlobalC::ucell.lat0;
 
-                        for (int n = 0; n < nrm; n++)
-                        {
-                            const double rr = sqrt(r2[n]) * GlobalC::ucell.lat0;
+                        double factor
+                            = GlobalC::ucell.atoms[T1].ncpp.zv * GlobalC::ucell.atoms[T2].ncpp.zv * ModuleBase::e2
+                              / (rr * rr)
+                              * (erfc(sqa * rr) / rr + sq8a_2pi * exp(-alpha * rr * rr))
+                              * GlobalC::ucell.lat0;
 
-                            double factor
-                                = GlobalC::ucell.atoms[T1].ncpp.zv * GlobalC::ucell.atoms[T2].ncpp.zv * ModuleBase::e2
-                                  / (rr * rr)
-                                  * (erfc(sqa * rr) / rr + sq8a_2pi * exp(-alpha * rr * rr))
-                                  * GlobalC::ucell.lat0;
-
-                            forceion(iat1, 0) -= factor * r[n].x;
-                            forceion(iat1, 1) -= factor * r[n].y;
-                            forceion(iat1, 2) -= factor * r[n].z;
-                        }
+                        forceion(iat1, 0) -= factor * r[n].x;
+                        forceion(iat1, 1) -= factor * r[n].y;
+                        forceion(iat1, 2) -= factor * r[n].z;
                     }
-
-                    ++iat2;
                 }
+                ++iat2;
+                GlobalC::ucell.step_iait(&I2, &T2);
             } // atom b
-
             ++iat1;
-            if (++I1 == GlobalC::ucell.atoms[T1].na) {
-                I1 = 0;
-                ++T1;
-            }
-        }
+            GlobalC::ucell.step_iait(&I1, &T1);
+        } // atom a
 
         delete[] r;
         delete[] r2;
@@ -885,14 +875,10 @@ void Forces<FPTYPE, Device>::cal_force_cc(ModuleBase::matrix& forcecc, ModulePW:
         }
 
         ++work;
-        if (++ia == GlobalC::ucell.atoms[it].na)
+        if (GlobalC::ucell.step_ia(it, &ia))
         {
-            ia = 0;
-            do
-            {   // search for next effective `it`
-                ++it;
-            }
-            while (it < GlobalC::ucell.ntype && !GlobalC::ucell.atoms[it].ncpp.nlcc);
+            // search for next effective `it`
+            while (!GlobalC::ucell.step_it(&it) && !GlobalC::ucell.atoms[it].ncpp.nlcc);
         }
     }
 

@@ -1143,6 +1143,10 @@ bool Input::Read(const std::string &fn)
         {
             read_value(ifs, out_mat_hs2);
         }
+        else if (strcmp("out_hs2_interval", word) == 0)
+        {
+            read_value(ifs, out_hs2_interval);
+        }
         else if (strcmp("out_mat_r", word) == 0)
         {
             read_value(ifs, out_mat_r);
