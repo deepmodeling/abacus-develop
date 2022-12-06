@@ -67,7 +67,7 @@ TEST_F(TestModulePWPWMultiDevice, set_3d_fft_box_op_cpu)
     std::vector<std::complex<double>> res(out_1.size(), std::complex<double>{0, 0});
     set_3d_fft_box_cpu_op()(cpu_ctx, this->npwk, box_index.data(), in_1.data(), res.data());
     for (int ii = 0; ii < this->nxyz; ii++) {
-        EXPECT_LT(fabs(res[ii] - out_1[ii]), 1e-12);
+        EXPECT_LT(std::abs(res[ii] - out_1[ii]), 1e-12);
     }
 }
 
@@ -76,7 +76,7 @@ TEST_F(TestModulePWPWMultiDevice, set_recip_to_real_output_op_cpu)
     std::vector<std::complex<double>> res(out_2.size(), std::complex<double>{0, 0});
     set_recip_to_real_output_cpu_op()(cpu_ctx, this->nxyz, this->add, this->factor, in_2.data(), res.data());
     for (int ii = 0; ii < this->nxyz; ii++) {
-        EXPECT_LT(fabs(res[ii] - out_2[ii]), 1e-12);
+        EXPECT_LT(std::abs(res[ii] - out_2[ii]), 1e-12);
     }
 }
 
@@ -85,7 +85,7 @@ TEST_F(TestModulePWPWMultiDevice, set_real_to_recip_output_op_cpu)
     std::vector<std::complex<double>> res = out_3_init;
     set_real_to_recip_output_cpu_op()(cpu_ctx, this->npwk, this->nxyz, true, this->factor, box_index.data(), in_3.data(), res.data());
     for (int ii = 0; ii < out_3.size(); ii++) {
-        EXPECT_LT(fabs(res[ii] - out_3[ii]), 5e-6);
+        EXPECT_LT(std::abs(res[ii] - out_3[ii]), 5e-6);
     }
 }
 
