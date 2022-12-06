@@ -83,7 +83,7 @@ These variables are used to control general system parameters.
 
 - **Type**: Integer
 - **Description**: Number of different atom species in this calculation. If this value is not equal to the atom species in the STRU file, ABACUS will stop and quit. If not set or set to 0, ABACUS will automatically set it to the atom species in the STRU file.
-- **Default**: **0**
+- **Default**: 0
 
 ### calculation
 
@@ -984,6 +984,7 @@ These variables are used to control the output of properties.
 - **Default**: 0
 
 ### out_hs2_interval
+
 - **Type**: Integer
 - **Description**: Only relevant for printing H(R) and S(R) matrices during MD. It controls the interval at which to print. Check input parameter [out_mat_hs2](#out_mat_hs2) for more information.
 - **Default**: 1

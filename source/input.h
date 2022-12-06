@@ -502,6 +502,8 @@ class Input
     void Bcast(void);
 #endif
 
+    int count_ntype(const std::string &fn); // sunliang add 2022-12-06
+
   public:
     template <class T> static void read_value(std::ifstream &ifs, T &var)
     {
