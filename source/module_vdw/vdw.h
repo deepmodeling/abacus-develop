@@ -21,7 +21,7 @@ class Vdw
   public:
     Vdw(const UnitCell &unit_in) : ucell_(unit_in) {};
 
-    virtual ~Vdw(){};
+    virtual ~Vdw() = default;
 
     inline double get_energy(bool cal=true) {
         if (cal) { cal_energy(); }
@@ -43,9 +43,9 @@ class Vdw
     std::vector<ModuleBase::Vector3<double>> force_;
     ModuleBase::Matrix3 stress_;
 
-    virtual void cal_energy() { throw std::runtime_error("No cal_energy method in base Vdw class"); }
-    virtual void cal_force() { throw std::runtime_error("No cal_energy method in base Vdw class"); }
-    virtual void cal_stress() { throw std::runtime_error("No cal_energy method in base Vdw class"); }
+    virtual void cal_energy() = 0;
+    virtual void cal_force() = 0;
+    virtual void cal_stress() = 0;
 };
 
 std::unique_ptr<Vdw> make_vdw(const UnitCell &ucell, const Input &input);
