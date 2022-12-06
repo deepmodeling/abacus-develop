@@ -85,8 +85,8 @@ from ase.io import read, write
 from pathlib import Path
 
 cs_dir = './'
-cs_vasp = Path(cs_dir, 'SiO.cif')
-cs_atoms = read(cs_vasp, format='cif')
+cs_cif = Path(cs_dir, 'SiO.cif')
+cs_atoms = read(cs_cif, format='cif')
 cs_stru = Path(cs_dir, 'STRU')
 pp = {'Si':'Si.upf','O':'O.upf'}
 basis = {'Si':'Si.orb','O':'O.orb'}

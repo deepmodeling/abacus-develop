@@ -1,6 +1,7 @@
 #ifndef VDW_H
 #define VDW_H
 
+#include <memory>
 #include <vector>
 #include "module_cell/unitcell.h"
 #include "module_vdw/vdw_parameters.h"
