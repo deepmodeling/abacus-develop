@@ -1,0 +1,22 @@
+INPUT_PARAMETERS
+ntype                         2
+ecutwfc                       20
+scf_thr                           1e-06
+scf_nmax                         400
+basis_type                    lcao
+ks_solver                     scalapack_gvx
+smearing_method                      gaussian
+relax_nmax                         1
+smearing_sigma                         0.02
+mixing_type                   pulay
+mixing_beta                   0.4
+vdw_method                    d3_bj
+fixed_axes                    c
+force_thr_ev                  0.005
+stress_thr                    0.1
+suffix                        autotest
+calculation                   cell-relax
+cal_force                         1
+cal_stress                        1
+pseudo_dir	../../PP_ORB
+orbital_dir	../../PP_ORB
