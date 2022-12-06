@@ -1,4 +1,4 @@
-# peFull List of INPUT Keywords
+# Full List of INPUT Keywords
 
 - [System variables](#system-variables)
 
