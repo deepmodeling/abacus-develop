@@ -138,6 +138,47 @@ void Symmetry::analy_sys(const UnitCell &ucell, std::ofstream &ofs_running)
     ofs_running<<"Warning : If the optimal symmetric configuration is not the input configuration, "<<'\n';
     ofs_running<<"you have to manually change configurations, ABACUS would only calculate the input structure."<<'\n';
 
+	int iat=0;
+	for(int it=0; it<ucell.ntype; ++it)
+	{
+		for(int ia=0; ia<ucell.atoms[it].na; ++ia)
+		{
+			ModuleBase::Mathzone::Cartesian_to_Direct(ucell.atoms[it].tau[ia].x, 
+					ucell.atoms[it].tau[ia].y, 
+					ucell.atoms[it].tau[ia].z,
+					a1.x, a1.y, a1.z,
+					a2.x, a2.y, a2.z,
+					a3.x, a3.y, a3.z,
+					newpos[3*iat],newpos[3*iat+1],newpos[3*iat+2]);
+
+    	//  std::cout << " newpos_before = " << newpos[3*iat] << " " << newpos[3*iat+1] << " " << newpos[3*iat+2] << std::endl;
+		//	GlobalV::ofs_running << " newpos_before = " << newpos[3*iat] << " " << newpos[3*iat+1] << " " << newpos[3*iat+2] << std::endl; 
+			for(int k=0; k<3; ++k)
+			{
+				this->check_translation( newpos[iat*3+k], floor(newpos[iat*3+k]));
+                this->check_boundary( this->newpos[iat*3+k] );
+			}
+      	// std::cout << " newpos = " << newpos[3*iat] << " " << newpos[3*iat+1] << " " << newpos[3*iat+2] << std::endl;
+		// GlobalV::ofs_running << " newpos = " << newpos[3*iat] << " " << newpos[3*iat+1] << " " << newpos[3*iat+2] << std::endl; 
+			++iat;
+		}
+	}
+
+	test_brav = false;  // use the input ibrav to calculate
+	//ModuleBase::GlobalFunc::OUT(ofs_running,"ibrav",ibrav);
+	// this->setgroup(this->symop, this->nop, this->ibrav, cel_const);
+	//now select all symmetry operations which reproduce the lattice
+	//to find those symmetry operations which reproduce the entire crystal
+    std::cout<<"nrotk before second call:"<<nrotk<<std::endl;
+	this->getgroup(this->nrot, this->nrotk, ofs_running);
+    std::cout<<"nrotk after second call:"<<nrotk<<std::endl;
+	// // find the name of point group
+	this->pointgroup(this->nrot, this->pgnumber, this->pgname, this->gmatrix, ofs_running);
+	ModuleBase::GlobalFunc::OUT(ofs_running,"POINT GROUP (input configuration)  ", this->pgname);
+    this->pointgroup(this->nrotk, this->pgnumber, this->spgname, this->gmatrix, ofs_running);
+    ModuleBase::GlobalFunc::OUT(ofs_running,"POINT GROUP IN SPACE GROUP (input configuration)", this->spgname);
+	//write();
+
     delete[] dirpos;
 	delete[] newpos;
     delete[] na;
