@@ -38,7 +38,7 @@ void Symmetry::analy_sys(const UnitCell &ucell, std::ofstream &ofs_running)
 	ofs_running << " | We calculate the norm of 3 vectors and the angles between them,    |" << std::endl;
 	ofs_running << " | the type of Bravais lattice is given. We can judge if the unticell |" << std::endl;
 	ofs_running << " | is a primitive cell. Finally we give the point group operation for |" << std::endl;
-	ofs_running << " | this unitcell. We we use the point group operations to do symmetry |" << std::endl;
+	ofs_running << " | this unitcell. We use the point group operations to do symmetry |" << std::endl;
 	ofs_running << " | analysis on given k-point mesh and the charge density.             |" << std::endl;
 	ofs_running << " |                                                                    |" << std::endl;
 	ofs_running << " <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" << std::endl;
