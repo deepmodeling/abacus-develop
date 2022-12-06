@@ -963,15 +963,15 @@ void Symmetry::checksym(ModuleBase::Matrix3 &s, ModuleBase::Vector3<double> &gtr
 
 
             rotpos[xx] = pos[xx] * s.e11
-                         + pos[yy] * s.e12
-                         + pos[zz] * s.e13;
+                         + pos[yy] * s.e21
+                         + pos[zz] * s.e31;
 
-            rotpos[yy] = pos[xx] * s.e21
+            rotpos[yy] = pos[xx] * s.e12
                          + pos[yy] * s.e22
-                         + pos[zz] * s.e23;
+                         + pos[zz] * s.e32;
 
-            rotpos[zz] = pos[xx] * s.e31
-                         + pos[yy] * s.e32
+            rotpos[zz] = pos[xx] * s.e13
+                         + pos[yy] * s.e23
                          + pos[zz] * s.e33;
 
            // std::cout << "pos = " << pos[xx] <<" "<<pos[yy] << " "<<pos[zz]<<std::endl;

@@ -571,6 +571,10 @@ void Symmetry_Basic::setgroup(ModuleBase::Matrix3* symop, int &nop, const int &i
 			//left and up shift the matrix
 			s_new=ModuleBase::Matrix3(s.e22, s.e23, s.e21, s.e32, s.e33, s.e31, s.e12, s.e13, s.e11);
 		}
+		//2. if hexagonal with a 60-degree euler angle
+		// generators also needs to be transeposed
+		if(equal(alpha+beta+gamma, 0.5))
+			s_new=s_new.Transpose();
 		return s_new;
 	};
 
