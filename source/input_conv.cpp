@@ -45,7 +45,7 @@ void Input_Conv::Convert(void)
     if (INPUT.orbital_dir != "")
         GlobalV::global_orbital_dir = INPUT.orbital_dir + "/";
     // GlobalV::global_pseudo_type = INPUT.pseudo_type;
-    GlobalC::ucell.setup(INPUT.latname, INPUT.ntype, INPUT.lmaxmax, INPUT.init_vel, INPUT.fixed_axes);
+    GlobalC::ucell.setup(INPUT.latname, INPUT.lmaxmax, INPUT.init_vel, INPUT.fixed_axes);
 
     if(INPUT.calculation=="relax" || INPUT.calculation=="cell-relax")
     {

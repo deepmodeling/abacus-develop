@@ -1,4 +1,4 @@
-# Full List of INPUT Keywords
+# peFull List of INPUT Keywords
 
 - [System variables](#system-variables)
 
@@ -30,11 +30,9 @@
 - [Exact exchange](#exact-exchange) (Under tests)
 
   [exx_hybrid_alpha](#exx_hybrid_alpha) | [exx_hse_omega](#exx_hse_omega) | [exx_separate_loop](#exx_separate_loop) | [exx_hybrid_step](#exx_hybrid_step) | [exx_lambda](#exx_lambda) | [exx_pca_threshold](#exx_pca_threshold) | [exx_c_threshold](#exx_c_threshold) | [exx_v_threshold](#exx_v_threshold) | [exx_dm_threshold](#exx_dm_threshold) | [exx_schwarz_threshold](#exx_schwarz_threshold) | [exx_cauchy_threshold](#exx_cauchy_threshold) | [exx_ccp_threshold](#exx_ccp_threshold) | [exx_ccp_rmesh_times](#exx_ccp_rmesh_times) | [exx_distribute_type](#exx_distribute_type) | [exx_opt_orb_lmax](#exx_opt_orb_lmax) | [exx_opt_orb_ecut](#exx_opt_orb_ecut) | [exx_opt_orb_tolerence](#exx_opt_orb_tolerence)
-
 - [Molecular dynamics](#molecular-dynamics)
 
   [md_type](#md_type) | [md_thermostat](#md_thermostat) | [md_nstep](#md_nstep) | [md_restart](#md_restart) | [md_dt](#md_dt) | [md_tfirst, md_tlast](#md_tfirst-md_tlast) | [md_dumpfreq](#md_dumpfreq) | [md_restartfreq](#md_restartfreq) | [md_seed](#md_seed) | [md_tfreq](#md_tfreq) | [md_tchain](#md_tchain) | [md_pmode](#md_pmode) | [md_pcouple](#md_pcouple) | [md_pfirst, md_plast](#md_pfirst-md_plast) | [md_pfreq](#md_pfreq) | [md_pchain](#md_pchain) | [lj_rcut](#lj_rcut) | [lj_epsilon](#lj_epsilon) | [lj_sigma](#lj_sigma) | [pot_file](#pot_file) | [msst_direction](#msst_direction) | [msst_vel](#msst_vel) | [msst_vis](#msst_vis) | [msst_tscale](#msst_tscale) | [msst_qmass](#msst_qmass) | [md_damp](#md_damp) | [md_tolerance](#md_tolerance) | [md_nraise](#md_nraise)
-
 - [vdW correction](#vdw-correction)
 
   [vdw_method](#vdw_method) | [vdw_s6](#vdw_s6) | [vdw_s8](#vdw_s8) | [vdw_a1](#vdw_a1) | [vdw_a2](#vdw_a2) | [vdw_d](#vdw_d) | [vdw_abc](#vdw_abc) | [vdw_C6_file](#vdw_c6_file) | [vdw_C6_unit](#vdw_c6_unit) | [vdw_R0_file](#vdw_r0_file) | [vdw_R0_unit](#vdw_r0_unit) | [vdw_cutoff_type](#vdw_cutoff_type) | [vdw_cutoff_radius](#vdw_cutoff_radius) | [vdw_radius_unit](#vdw_radius_unit) | [vdw_cutoff_period](#vdw_cutoff_period) | [vdw_cn_thr](#vdw_cn_thr) | [vdw_cn_thr_unit](#vdw_cn_thr_unit)
@@ -84,8 +82,8 @@ These variables are used to control general system parameters.
 ### ntype
 
 - **Type**: Integer
-- **Description**: Number of different atom species in this calculation. This value must be set. If the number you set is smaller than the atom species in the STRU file, ABACUS only read the `wrong number` of atom information. If the number is larger than the atom species in the STRU file, ABACUS may stop and quit.
-- **Default**: ***No default value***
+- **Description**: Number of different atom species in this calculation. If this value is not equal to the atom species in the STRU file, ABACUS will stop and quit. If not set or set to 0, ABACUS will automatically set it to the atom species in the STRU file.
+- **Default**: **0**
 
 ### calculation
 
@@ -273,10 +271,12 @@ These variables are used to control general system parameters.
 - **Description**: Specifies the computing device for ABACUS.
 
   Available options are:
+
   - `cpu`: for CPUs via Intel, AMD, or Other supported CPU devices
   - `gpu`: for GPUs via CUDA.
 
   Known limitations:
+
   - `pw basis`: required by the `gpu` acceleration options
   - `cg ks_solver`: required by the `gpu` acceleration options
 - **Default**: `cpu`
@@ -798,7 +798,6 @@ These variables are used to control the geometry relaxation.
 
 - **Type**: Boolean
 - **Description**: At around the end of 2022 we made a new implementation of the CG method for relax and cell-relax calculations. But the old implementation was also kept. To use the new method, set relax_new to true. To use the old one, set it to false.
-
 - **Default**: True
 
 ### cell_factor
@@ -1462,7 +1461,6 @@ These variables are used to control the molecular dynamics calculations.
   - berendsen: NVT ensemble with Berendsen thermostat, see the parameter `md_nraise`.
   - rescaling: NVT ensemble with velocity Rescaling method 1, see the parameter `md_tolerance`.
   - rescale_v: NVT ensemble with velocity Rescaling method 2, see the parameter `md_nraise`.
-
 - **Default**: NVE
 
 ### md_nstep

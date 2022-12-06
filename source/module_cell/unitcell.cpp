@@ -1370,13 +1370,16 @@ bool UnitCell::if_cell_can_change()const
 }
 
 void UnitCell::setup(const std::string &latname_in,
-	const int &ntype_in, 
 	const int &lmaxmax_in,
 	const bool &init_vel_in,
 	const std::string &fixed_axes_in)
 {
 	this->latName = latname_in;
-	this->ntype = ntype_in;
+#ifdef __MPI
+	// this->ntype of RANK0 core is initialized by UnitCell::count_ntype in Input::Read.
+	Parallel_Common::bcast_int(this->ntype);
+#endif
+	// this->ntype = ntype_in;
 	this->lmaxmax = lmaxmax_in;
 	this->init_vel = init_vel_in;
 	// pengfei Li add 2018-11-11
@@ -1770,5 +1773,37 @@ void UnitCell::remake_cell()
 	else{ 
 		std::cout << "latname is : " << latName << std::endl;
 		ModuleBase::WARNING_QUIT("UnitCell::read_atom_species","latname not supported!");
+	}
+}
+
+// Conut how many types of atoms are listed in STRU
+void UnitCell::count_ntype(const std::string &fn)
+{
+	// Only RANK0 core can reach here, because this function is called during Input::Read.
+	assert(GlobalV::MY_RANK == 0); 
+
+	std::ifstream ifa(fn.c_str(), ios::in);
+	if (!ifa)
+	{
+		GlobalV::ofs_warning << fn;
+		ModuleBase::WARNING_QUIT("UnitCell::count_ntype","Can not find the file containing atom positions.!");
+	}
+
+	this->ntype = 0;
+	std::string temp;
+	if( ModuleBase::GlobalFunc::SCAN_BEGIN(ifa, "ATOMIC_SPECIES") )
+	{
+		while(true)
+		{
+			ModuleBase::GlobalFunc::READ_VALUE(ifa, temp);
+			if (temp == "LATTICE_CONSTANT" || temp == "NUMERICAL_ORBITAL" || temp == "NUMERICAL_DESCRIPTOR")
+			{
+				break;
+			}
+			else if (isalpha(temp[0]))
+			{
+				this->ntype += 1;
+			}
+		}
 	}
 }

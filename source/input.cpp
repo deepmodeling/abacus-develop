@@ -10,6 +10,7 @@
 #include "module_base/global_variable.h"
 #include "module_base/timer.h"
 #include "src_parallel/parallel_common.h"
+#include "src_pw/global.h"
 
 #include <fstream>
 #include <iomanip>
@@ -1818,6 +1819,19 @@ bool Input::Read(const std::string &fn)
         {
             break;
         }
+    }
+
+    // sunliang added on 2022-12-06
+    // To check if ntype in INPUT is equal to the species of atoms in STRU, if ntype is not set in INPUT, we will set it to ucell.ntype.
+    GlobalC::ucell.count_ntype(GlobalV::stru_file);
+    if (this->ntype == 0)
+    {
+        this->ntype = GlobalC::ucell.ntype;
+        GlobalV::ofs_running << "ntype in INPUT is 0, and it is automatically set to " << this->ntype << " according to STRU" << std::endl;
+    }
+    else if (this->ntype != GlobalC::ucell.ntype)
+    {
+        ModuleBase::WARNING_QUIT("Input", "The ntype in INPUT is not equal to the ntype counted in STRU, check it.");
     }
 
     //----------------------------------------------------------

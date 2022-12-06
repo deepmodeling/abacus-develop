@@ -192,7 +192,6 @@ public:
 	bool if_atoms_can_move()const;
 	bool if_cell_can_change()const;
 	void setup(const std::string &latname_in,
-			const int &ntype_in, 
 			const int &lmaxmax_in,
 			const bool &init_vel_in,
 			const std::string &fixed_axes_in);
@@ -203,7 +202,7 @@ public:
 #endif
 
 	void check_structure(double factor);
-
+    void count_ntype(const std::string &fn);
 };
 
 #endif //unitcell class
