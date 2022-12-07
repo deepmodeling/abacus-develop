@@ -121,14 +121,11 @@ void Symmetry::analy_sys(const UnitCell &ucell, std::ofstream &ofs_running)
   //      std::cout << "a1 = " << a2.x << " " << a2.y << " " << a2.z <<std::endl;
   //      std::cout << "a1 = " << a3.x << " " << a3.y << " " << a3.z <<std::endl;
 
-	//Symm_Other::print1(ibrav, cel_const, ofs_running);
-        Symm_Other::print1(real_brav, cel_const, ofs_running);
 	this->change_lattice();
     //this->pricell();         // pengfei Li 2018-05-14 
          //for( iat =0 ; iat < ucell.nat ; iat++)   
 //         std::cout << " newpos_now = " << newpos[3*iat] << " " << newpos[3*iat+1] << " " << newpos[3*iat+2] << std::endl;
 	test_brav = true; // output the real ibrav and point group
-	ModuleBase::GlobalFunc::OUT(ofs_running,"ibrav",real_brav);
 	this->setgroup(this->symop, this->nop, this->real_brav, cel_const);
 	this->getgroup(this->nrot, this->nrotk, ofs_running);
 	this->pointgroup(this->nrot, this->pgnumber, this->pgname, this->gmatrix, ofs_running);
@@ -166,17 +163,17 @@ void Symmetry::analy_sys(const UnitCell &ucell, std::ofstream &ofs_running)
 
 	test_brav = false;  // use the input ibrav to calculate
 	//ModuleBase::GlobalFunc::OUT(ofs_running,"ibrav",ibrav);
-	// this->setgroup(this->symop, this->nop, this->ibrav, cel_const);
+	this->setgroup(this->symop, this->nop, this->ibrav, cel_const);
 	//now select all symmetry operations which reproduce the lattice
 	//to find those symmetry operations which reproduce the entire crystal
-    std::cout<<"nrotk before second call:"<<nrotk<<std::endl;
 	this->getgroup(this->nrot, this->nrotk, ofs_running);
-    std::cout<<"nrotk after second call:"<<nrotk<<std::endl;
 	// // find the name of point group
+    
+    ofs_running<<"(for input configuration:)"<<std::endl;
 	this->pointgroup(this->nrot, this->pgnumber, this->pgname, this->gmatrix, ofs_running);
-	ModuleBase::GlobalFunc::OUT(ofs_running,"POINT GROUP (input configuration)  ", this->pgname);
+	ModuleBase::GlobalFunc::OUT(ofs_running,"POINT GROUP", this->pgname);
     this->pointgroup(this->nrotk, this->pgnumber, this->spgname, this->gmatrix, ofs_running);
-    ModuleBase::GlobalFunc::OUT(ofs_running,"POINT GROUP IN SPACE GROUP (input configuration)", this->spgname);
+    ModuleBase::GlobalFunc::OUT(ofs_running,"POINT GROUP IN SPACE GROUP", this->spgname);
 	//write();
 
     delete[] dirpos;
@@ -547,7 +544,7 @@ void Symmetry::lattice_type(
 //        std::cout << "v2 = " << v2.x << " " << v2.y << " " << v2.z <<std::endl;
 //        std::cout << "v3 = " << v3.x << " " << v3.y << " " << v3.z <<std::endl;
 
-    int pre_brav = standard_lat(v1, v2, v3, cel_const);
+    this->pbrav = standard_lat(v1, v2, v3, cel_const);
 //    for ( int i = 0; i < 6; ++i)
 //    {
 //        std::cout << "cel = "<<cel_const[i]<<" ";
@@ -720,7 +717,7 @@ void Symmetry::lattice_type(
 //	GlobalV::ofs_running << " temp_brav=" << temp_brav << std::endl;
 
 
-    if ( temp_brav < pre_brav)
+    if ( temp_brav < pbrav)
     {
         //if the symmetry of the new vectors is higher, store the new ones
         for (int i = 0; i < 6; ++i)
@@ -821,14 +818,22 @@ void Symmetry::lattice_type(
 			GlobalV::ofs_running<<" The lattice vectors have been set back!"<<std::endl;
         }
     }*/
-    brav = pre_brav;
+    std::string input_bravname = get_brav_name(pbrav);
+    GlobalV::ofs_running<<"(for input configuration:)"<<std::endl;
+    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"BRAVAIS TYPE ",pbrav);
+    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"BRAVAIS LATTICE NAME",input_bravname);
+    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"ibrav",pbrav);
+    Symm_Other::print1(pbrav, pre_const, GlobalV::ofs_running);
+
     //brav = temp_brav;
     //bravname = get_brav_name(brav);
     real_brav = temp_brav;     // pengfei Li 15-3-2022
     bravname = get_brav_name(real_brav);
-
+    GlobalV::ofs_running<<"(for optimal symmetric configuration:)"<<std::endl;
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"BRAVAIS TYPE",real_brav);
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"BRAVAIS LATTICE NAME",bravname);
+    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"ibrav",real_brav);
+    Symm_Other::print1(real_brav, cel_const, GlobalV::ofs_running);
     return;
 }
 
