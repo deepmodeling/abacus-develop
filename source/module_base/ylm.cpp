@@ -63,7 +63,7 @@ void Ylm::get_ylm_real( const int &Lmax, const ModuleBase::Vector3<double> &vec,
 	//===============================
 	// NAME : p(Legendre Polynomials)
 	//===============================
-	static double p[20][20];
+	double p[20][20];
 	assert(Lmax <= 20);
 
 	int m=0;
@@ -182,8 +182,8 @@ void Ylm::get_ylm_real( const int &Lmax, const ModuleBase::Vector3<double> &vec,
 	//===============================
 	// NAME : p(Legendre Polynomials)
 	//===============================
-	static double p[20][20];
-	static double dp[20][20];
+	double p[20][20];
+	double dp[20][20];
 	assert(Lmax <= 20);
 
 	int m = 0;

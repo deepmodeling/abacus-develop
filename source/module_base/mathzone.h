@@ -80,8 +80,8 @@ class Mathzone
                                            double &cy,
                                            double &cz)
     {
-        static ModuleBase::Matrix3 lattice_vector;
-        static ModuleBase::Vector3<double> direct_vec, cartesian_vec;
+        ModuleBase::Matrix3 lattice_vector;
+        ModuleBase::Vector3<double> direct_vec, cartesian_vec;
         lattice_vector.e11 = R11;
         lattice_vector.e12 = R12;
         lattice_vector.e13 = R13;
@@ -139,7 +139,7 @@ class Mathzone
                                            double &dy,
                                            double &dz)
     {
-        static ModuleBase::Matrix3 lattice_vector, inv_lat;
+        ModuleBase::Matrix3 lattice_vector, inv_lat;
         lattice_vector.e11 = R11;
         lattice_vector.e12 = R12;
         lattice_vector.e13 = R13;
@@ -152,7 +152,7 @@ class Mathzone
 
         inv_lat = lattice_vector.Inverse();
 
-        static ModuleBase::Vector3<double> direct_vec, cartesian_vec;
+        ModuleBase::Vector3<double> direct_vec, cartesian_vec;
         cartesian_vec.x = cx;
         cartesian_vec.y = cy;
         cartesian_vec.z = cz;
