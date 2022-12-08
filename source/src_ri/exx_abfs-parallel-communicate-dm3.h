@@ -29,8 +29,8 @@ public:
 private:
 	template<typename Tmatrix> std::vector<std::map<size_t,std::map<size_t,std::map<Abfs::Vector3_Order<int>,ModuleBase::matrix>>>>
 		K_to_R(const std::vector<Tmatrix> &DK_2D, const double threshold_D, const Parallel_Orbitals &pv) const;
-	const ModuleBase::matrix &D_phase( const ModuleBase::matrix &DK, const int ik, const Abfs::Vector3_Order<int> &box2) const;	
-	ModuleBase::matrix D_phase( const ModuleBase::ComplexMatrix &DK, const int ik, const Abfs::Vector3_Order<int> &box2) const;	
+	const ModuleBase::matrix &D_phase( const ModuleBase::matrix &DK, const int ik, const Abfs::Vector3_Order<int> &box2) const;
+	ModuleBase::matrix D_phase( const ModuleBase::ComplexMatrix &DK, const int ik, const Abfs::Vector3_Order<int> &box2) const;
 //	std::vector<std::map<size_t,std::map<size_t,std::map<Abfs::Vector3_Order<int>,matrix>>>>
 //		allreduce(const std::vector<std::map<size_t,std::map<size_t,std::map<Abfs::Vector3_Order<int>,matrix>>>> &DR_a2D);
 
@@ -79,7 +79,7 @@ private:
 				std::vector<std::atomic<Flag_Send>> &flags_send) const;
 			std::vector<std::map<size_t,std::map<size_t,std::map<Abfs::Vector3_Order<int>,ModuleBase::matrix*>>>> get_intersection(
 				const int rank_send_now,
-				std::vector<std::map<size_t,std::map<size_t,std::map<Abfs::Vector3_Order<int>,ModuleBase::matrix>>>> &data_local) const;				
+				std::vector<std::map<size_t,std::map<size_t,std::map<Abfs::Vector3_Order<int>,ModuleBase::matrix>>>> &data_local) const;
 			void recv_data_process(
 				const int rank_recv,
 				std::vector<std::map<size_t,std::map<size_t,std::map<Abfs::Vector3_Order<int>,ModuleBase::matrix>>>> &data_all,
