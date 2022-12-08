@@ -20,7 +20,7 @@ build:
   script: |
     export CMAKE_PREFIX_PATH=`python -c "import torch;print(torch.__path__[0])"`/share/cmake:$CMAKE_PREFIX_PATH
     cmake -B conda_build ${CMAKE_ARGS} -DCMAKE_BUILD_TYPE=Release -DENABLE_DEEPKS=1 -DENABLE_LIBXC=1
-    cmake --build conda_build -j`nproc`
+    cmake --build conda_build -j${${nproc}:-4}
     cmake --install conda_build
   # ${CMAKE_ARGS} applys restrictions for CMake to search libs under conda building env.
   # See https://conda-forge.org/docs/maintainer/knowledge_base.html#using-cmake .
