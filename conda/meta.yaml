@@ -38,6 +38,7 @@ requirements:
     - openblas=*=openmp*
     - elpa=*=mpi*
     - fftw=*=mpi*
+    - cereal
     - pytorch
     - libxc
 
