@@ -69,9 +69,9 @@ void Stress_Func::printstress_total(const ModuleBase::matrix& scs, bool ry)
 	//GlobalV::ofs_running << std::setiosflags(ios::right);
  	GlobalV::ofs_running << std::setprecision(6) << std::setiosflags(ios::showpos) << std::setiosflags(ios::fixed) << std::endl;
 	ModuleBase::GlobalFunc::NEW_PART("TOTAL-STRESS (KBAR)");//Ryd/(a.u.)^3
-    std::cout << " ><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><" << std::endl;
+    std::cout << " ><><><><><><><><><><><><><><><><><><><><><><" << std::endl;
     std::cout << " TOTAL-STRESS (KBAR):" << std::endl;
-    std::cout << " ><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><" << std::endl;
+    std::cout << " ><><><><><><><><><><><><><><><><><><><><><><" << std::endl;
 
 //        if(INPUT.stress_set == 1)
 //        int GlobalV::TEST_STRESS = 1;
@@ -81,8 +81,8 @@ void Stress_Func::printstress_total(const ModuleBase::matrix& scs, bool ry)
 	{
 
 		//if(GlobalV::TEST_STRESS)
-		std::cout << " " << std::setw(23) << scs(i,0)*unit_transform << std::setw(23)
-			<< scs(i,1)*unit_transform << std::setw(23) << scs(i,2)*unit_transform << std::endl;
+		std::cout << " " << std::setw(15) << scs(i,0)*unit_transform << std::setw(15)
+			<< scs(i,1)*unit_transform << std::setw(15) << scs(i,2)*unit_transform << std::endl;
 
 		GlobalV::ofs_running << " " << std::setw(23) << scs(i,0)*unit_transform << std::setw(23)
 			<< scs(i,1)*unit_transform << std::setw(23) << scs(i,2)*unit_transform << std::endl;
