@@ -172,7 +172,6 @@ void Input::Default(void)
     nspin = 1;
     nelec = 0.0;
     lmaxmax = 2;
-    tot_magnetization = 0.0;
     //----------------------------------------------------------
     // new function
     //----------------------------------------------------------
@@ -728,11 +727,6 @@ bool Input::Read(const std::string &fn)
         else if (strcmp("lmaxmax", word) == 0)
         {
             read_value(ifs, lmaxmax);
-        }
-
-        else if (strcmp("tot_magnetization", word) == 0)
-        {
-            read_value(ifs, tot_magnetization);
         }
         //----------------------------------------------------------
         // new function
@@ -2237,8 +2231,6 @@ void Input::Bcast()
     Parallel_Common::bcast_double(nelec);
     Parallel_Common::bcast_double(nupdown);
     Parallel_Common::bcast_int(lmaxmax);
-
-    Parallel_Common::bcast_double(tot_magnetization);
 
     Parallel_Common::bcast_string(basis_type); // xiaohui add 2013-09-01
     Parallel_Common::bcast_string(ks_solver); // xiaohui add 2013-09-01

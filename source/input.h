@@ -95,7 +95,6 @@ class Input
     double nupdown = 0.0;
     double nelec; // total number of electrons
     int lmaxmax;
-    double tot_magnetization;
 
     //==========================================================
     // LCAO parameters
