@@ -40,8 +40,9 @@ list(APPEND depend_files
   )
 AddTest(
   TARGET orbital_equal_test
-  LIBS ${math_libs}
+  LIBS ${math_libs} device
   SOURCES 1_snap_equal_test.cpp ORB_unittest.cpp
+  ../../src_parallel/parallel_reduce.cpp ../../src_parallel/parallel_kpoints.cpp ../../src_parallel/parallel_global.cpp ../../src_parallel/parallel_common.cpp
   ${depend_files}
 )
 install(DIRECTORY GaAs DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/../../../tests)
