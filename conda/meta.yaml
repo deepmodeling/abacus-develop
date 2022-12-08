@@ -1,6 +1,15 @@
 # Install ABACUS by conda:
 #   conda create -n abacus_env abacus -c deepmodeling -c conda-forge
 #   conda activate abacus_env
+# Docs: https://abacus.deepmodeling.com/en/latest/quick_start/easy_install.html#install-by-conda
+
+# This conda package can also be built locally with
+#   conda build . -c conda-forge
+# And install with
+#   conda create -n my_abacus_env abacus -c local -c conda-forge
+
+# Feedstock: https://github.com/deepmd-kit-recipes/abacus-feedstock
+# Package:   https://anaconda.org/deepmodeling/abacus
 
 {% set version = os.popen('git describe --tags --abbrev=0').read().strip('\n').lstrip('v').replace('-', '_') %}
 
@@ -8,8 +17,6 @@ package:
   name: abacus
   version: {{ version }}
 
-# This conda package may be built locally with
-# conda build . -c conda-forge
 source:
   path: ..
   # git_url: https://github.com/deepmodeling/abacus-develop.git
@@ -64,11 +71,6 @@ test:
   #   - tests/integrate
   #   - tests/PP_ORB
 
-# Locally built package can be installed by
-# conda create -n my_abacus_env abacus -c local -c conda-forge
-
-# Feedstock: https://github.com/deepmd-kit-recipes/abacus-feedstock
-# Package:   https://anaconda.org/deepmodeling/abacus
 about:
   home: http://abacus.ustc.edu.cn/
   doc_url: https://abacus.deepmodeling.com/
