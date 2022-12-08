@@ -68,7 +68,6 @@ ${OBJS_SURCHEM}\
 ${OBJS_SYMMETRY}\
 ${OBJS_XC}\
 ${OBJS_IO}\
-${OBJS_RI}\
 ${OBJS_PARALLEL}\
 ${OBJS_SRCPW}\
 ${OBJS_HAMILT_OF}
@@ -80,14 +79,11 @@ ${OBJS_ESOLVER_LCAO}\
 ${OBJS_GINT}\
 ${OBJS_HAMILT_LCAO}\
 ${OBJS_HSOLVER_LCAO}\
-${OBJS_RPA}\
 ${OBJS_ORBITAL}\
 ${OBJS_IO_LCAO}\
-${OBJS_RI_LCAO}\
 ${OBJS_LCAO}\
 ${OBJS_PARALLEL_LCAO}\
 ${OBJS_VDW}\
-${OBJS_HAMILT_OF}
 
 
 OBJS_MAIN=main.o\
@@ -96,7 +92,8 @@ OBJS_MAIN=main.o\
     input_conv.o\
     driver_run.o\
 
-OBJS_BASE=complexarray.o\
+OBJS_BASE=abfs-vector3_order.o\
+    complexarray.o\
     complexmatrix.o\
     element_basis_index.o\
     export.o\
@@ -364,16 +361,6 @@ OBJS_IO_LCAO=cal_r_overlap_R.o\
       istate_envelope.o\
       mulliken_charge.o\
       read_dm.o\
-      read_txt_tools.o\
-      read_txt_input_value.o\
-      read_txt_input_item.o\
-      read_txt_input_list.o\
-      read_txt_input_process.o\
-      read_txt_input_process_global.o\
-      read_txt_input-general.o\
-      read_txt_input-pw.o\
-      read_txt_input-spectrum.o\
-      read_txt_stru.o\
       unk_overlap_lcao.o\
       wf_local.o\
       write_HS.o\
@@ -408,8 +395,7 @@ OBJS_LCAO=DM_gamma.o\
       dm_2d.o\
       wavefunc_in_pw.o\
 
-OBJS_RI_LCAO=abfs-vector3_order.o\
-      abfs.o\
+OBJS_SRC_RI=abfs.o\
       conv_coulomb_pot.o\
       conv_coulomb_pot_k.o\
       exx_abfs.o \
@@ -440,7 +426,7 @@ OBJS_RI_LCAO=abfs-vector3_order.o\
       exx_opt_orb-print.o \
       exx_lip.o\
 
-OBJS_RI=Matrix_Orbs11.o\
+OBJS_MODULE_RI=Matrix_Orbs11.o\
       Matrix_Orbs21.o\
       RI_2D_Comm.o
 
@@ -462,6 +448,7 @@ OBJS_SRCPW=H_Ewald_pw.o\
     energy.o\
     forces.o\
     force_multi_device.o\
+    stress_multi_device.o\
     global.o\
     klist.o\
     magnetism.o\

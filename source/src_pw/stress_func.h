@@ -11,6 +11,9 @@
 #include "../module_pw/pw_basis.h"
 #include "module_psi/psi.h"
 #include "charge.h"
+#include "module_hsolver/include/math_kernel.h"
+#include "src_pw/include/stress_multi_device.h"
+
 
 //-------------------------------------------------------------------
 // mohan reconstruction note: 2021-02-07
@@ -47,6 +50,7 @@
 // 8) the stress from ionic contributions (for molecular dynamics)
 //----------------------------------------------------------------
 
+template <typename FPTYPE, typename Device = psi::DEVICE_CPU>
 class Stress_Func
 {
 	public: 
@@ -56,7 +60,7 @@ class Stress_Func
 
 //stress functions
 // 1) the stress from the electron kinetic energy
-	void stress_kin(ModuleBase::matrix& sigma, const ModuleBase::matrix& wg, const psi::Psi<complex<double>>* psi_in=nullptr);  //electron kinetic part in PW basis
+	void stress_kin(ModuleBase::matrix& sigma, const ModuleBase::matrix& wg, const psi::Psi<complex<FPTYPE>>* psi_in=nullptr);  //electron kinetic part in PW basis
 
 // 2) the stress from the Hartree term
 	void stress_har(ModuleBase::matrix& sigma, ModulePW::PW_Basis* rho_basis, const bool is_pw, const Charge* const chr);  //hartree part in PW or LCAO basis
@@ -69,14 +73,14 @@ class Stress_Func
 	void stress_loc(ModuleBase::matrix& sigma, ModulePW::PW_Basis* rho_basis, const bool is_pw, const Charge* const chr);  //local pseudopotential part in PW or LCAO
 	
 	void dvloc_of_g (const int& msh,
-			const double* rab,
-			const double* r,
-			const double* vloc_at,
-			const double& zp,
-			double*  dvloc,
+			const FPTYPE* rab,
+			const FPTYPE* r,
+			const FPTYPE* vloc_at,
+			const FPTYPE& zp,
+			FPTYPE*  dvloc,
 			ModulePW::PW_Basis* rho_basis);	//used in local pseudopotential stress
 
-	void dvloc_coul (const double& zp, double* dvloc, ModulePW::PW_Basis* rho_basis); //used in local pseudopotential stress
+	void dvloc_coul (const FPTYPE& zp, FPTYPE* dvloc, ModulePW::PW_Basis* rho_basis); //used in local pseudopotential stress
 
 // 5) the stress from the non-linear core correction (if any)
 	void stress_cc(ModuleBase::matrix& sigma, ModulePW::PW_Basis* rho_basis, const bool is_pw, const Charge* const chr); 			//nonlinear core correction stress in PW or LCAO basis
@@ -84,18 +88,18 @@ class Stress_Func
 	void deriv_drhoc (
 			const bool &numeric,
 			const int mesh,
-			const double *r,
-			const double *rab,
-			const double *rhoc,
-			double *drhocg,
+			const FPTYPE *r,
+			const FPTYPE *rab,
+			const FPTYPE *rhoc,
+			FPTYPE *drhocg,
 			ModulePW::PW_Basis* rho_basis);	//used in nonlinear core correction stress
 
 // 6) the stress from the exchange-correlation functional term
 	void stress_gga(ModuleBase::matrix& sigma, const Charge* const chr);			//gga part in both PW and LCAO basis
-	void stress_mgga(ModuleBase::matrix& sigma, const ModuleBase::matrix& wg, const ModuleBase::matrix& v_ofk, const Charge* const chr, const psi::Psi<complex<double>>* psi_in=nullptr);			//gga part in PW basis
+	void stress_mgga(ModuleBase::matrix& sigma, const ModuleBase::matrix& wg, const ModuleBase::matrix& v_ofk, const Charge* const chr, const psi::Psi<complex<FPTYPE>>* psi_in=nullptr);			//gga part in PW basis
 
 // 7) the stress from the non-local pseudopotentials
-	void stress_nl(ModuleBase::matrix& sigma, const ModuleBase::matrix& wg, const psi::Psi<complex<double>>* psi_in=nullptr);			//nonlocal part in PW basis
+	void stress_nl(ModuleBase::matrix& sigma, const ModuleBase::matrix& wg, const psi::Psi<complex<FPTYPE>, Device>* psi_in=nullptr);			//nonlocal part in PW basis
 
 
 	void get_dvnl1(
@@ -105,25 +109,54 @@ class Stress_Func
 	void dylmr2 (
 			const int nylm,
 			const int ngy,
-			ModuleBase::Vector3<double> *gk,
+			ModuleBase::Vector3<FPTYPE> *gk,
 			ModuleBase::matrix &dylm,
 			const int ipol);	//used in get_dvnl1()
 	void get_dvnl2(
 			ModuleBase::ComplexMatrix &vkb,
 			const int ik);		//used in nonlocal part in PW basis
-	double Polynomial_Interpolation_nl(
+	FPTYPE Polynomial_Interpolation_nl(
 			const ModuleBase::realArray &table,
 			const int &dim1,
 			const int &dim2,
-			const double &table_interval,
-			const double &x);	//used in get_dvnl2()
+			const FPTYPE &table_interval,
+			const FPTYPE &x);	//used in get_dvnl2()
 
 	//functions for stress print
 	void print_stress(const std::string &name, const ModuleBase::matrix& f, const bool screen, bool ry)const;
 
 	void printstress_total (const ModuleBase::matrix& scs, bool ry);
 	
-	static double stress_invalid_threshold_ev;
+	static FPTYPE stress_invalid_threshold_ev;
+    static FPTYPE output_acc;
+
+private:
+    Device * ctx = {};
+    psi::DEVICE_CPU * cpu_ctx = {};
+    psi::AbacusDevice_t device = {};
+    using gemm_op = hsolver::gemm_op<FPTYPE, Device>;
+    using cal_stress_nl_op = src_pw::cal_stress_nl_op<FPTYPE, Device>;
+    using cal_dbecp_noevc_nl_op = src_pw::cal_dbecp_noevc_nl_op<FPTYPE, Device>;
+
+    using resmem_complex_op = psi::memory::resize_memory_op<std::complex<FPTYPE>, Device>;
+    using resmem_complex_h_op = psi::memory::resize_memory_op<std::complex<FPTYPE>, psi::DEVICE_CPU>;
+    using setmem_complex_op = psi::memory::set_memory_op<std::complex<FPTYPE>, Device>;
+    using delmem_complex_op = psi::memory::delete_memory_op<std::complex<FPTYPE>, Device>;
+    using delmem_complex_h_op = psi::memory::delete_memory_op<std::complex<FPTYPE>, psi::DEVICE_CPU>;
+    using syncmem_complex_h2d_op = psi::memory::synchronize_memory_op<std::complex<FPTYPE>, Device, psi::DEVICE_CPU>;
+    using syncmem_complex_d2h_op = psi::memory::synchronize_memory_op<std::complex<FPTYPE>, psi::DEVICE_CPU, Device>;
+
+    using resmem_var_op = psi::memory::resize_memory_op<FPTYPE, Device>;
+    using resmem_var_h_op = psi::memory::resize_memory_op<FPTYPE, psi::DEVICE_CPU>;
+    using setmem_var_op = psi::memory::set_memory_op<FPTYPE, Device>;
+    using delmem_var_op = psi::memory::delete_memory_op<FPTYPE, Device>;
+    using delmem_var_h_op = psi::memory::delete_memory_op<FPTYPE, psi::DEVICE_CPU>;
+    using syncmem_var_h2d_op = psi::memory::synchronize_memory_op<FPTYPE, Device, psi::DEVICE_CPU>;
+    using syncmem_var_d2h_op = psi::memory::synchronize_memory_op<FPTYPE, psi::DEVICE_CPU, Device>;
+
+    using resmem_int_op = psi::memory::resize_memory_op<int, Device>;
+    using delmem_int_op = psi::memory::delete_memory_op<int, Device>;
+    using syncmem_int_h2d_op = psi::memory::synchronize_memory_op<int, Device, psi::DEVICE_CPU>;
 
 };
 

@@ -1370,7 +1370,7 @@ bool UnitCell::if_cell_can_change()const
 }
 
 void UnitCell::setup(const std::string &latname_in,
-	const int &ntype_in, 
+	const int &ntype_in,
 	const int &lmaxmax_in,
 	const bool &init_vel_in,
 	const std::string &fixed_axes_in)

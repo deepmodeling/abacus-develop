@@ -30,10 +30,6 @@
 #include "../module_base/timer.h"
 #include "../module_base/tool_threading.h"
 
-#ifdef _OPENMP
-#include <omp.h>
-#endif
-
 Charge::Charge()
 {
 	allocate_rho = false;
@@ -752,7 +748,7 @@ void Charge::non_linear_core_correction
     ModuleBase::TITLE("charge","drhoc");
 
 	// use labmda instead of repeating codes
-	const auto kernel = [&](const int num_threads, const int thread_id)
+	const auto kernel = [&](int num_threads, int thread_id)
 	{
 
 	double gx = 0.0;
@@ -814,19 +810,7 @@ void Charge::non_linear_core_correction
 	// 
 	// it is called in parallel block in Forces::cal_force_cc,
 	// but not in other funtcion such as Stress_Func::stress_cc.
-#ifdef _OPENMP
-	if (!omp_in_parallel())
-	{
-		#pragma omp parallel
-		{
-			kernel(omp_get_num_threads(), omp_get_thread_num());
-		}
-	}
-	else
-#endif
-	{
-		kernel(1, 0);
-	}
+	ModuleBase::TRY_OMP_PARALLEL(kernel);
 
     return;
 }

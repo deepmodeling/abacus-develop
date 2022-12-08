@@ -53,7 +53,7 @@ TEST_F(TestModuleHamiltVeff, veff_pw_op_cpu)
     std::vector<std::complex<double>> res = out;
     veff_cpu_op()(cpu_ctx, this->size, res.data(), in.data());
     for (int ii = 0; ii < res.size(); ii++) {
-        EXPECT_LT(fabs(res[ii] - expected_out[ii]), 6e-5);
+        EXPECT_LT(std::abs(res[ii] - expected_out[ii]), 6e-5);
     }
 }
 
@@ -71,8 +71,8 @@ TEST_F(TestModuleHamiltVeff, veff_pw_spin_op_cpu)
 
     veff_cpu_op()(cpu_ctx, this->size, res.data(), res1.data(), in_);
     for (int ii = 0; ii < res.size(); ii++) {
-        EXPECT_LT(fabs(res[ii] - expected_out_spin[ii]), 7.5e-5);
-        EXPECT_LT(fabs(res1[ii] - expected_out1_spin[ii]), 6e-5);
+        EXPECT_LT(std::abs(res[ii] - expected_out_spin[ii]), 7.5e-5);
+        EXPECT_LT(std::abs(res1[ii] - expected_out1_spin[ii]), 6e-5);
     }
 }
 

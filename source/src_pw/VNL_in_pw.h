@@ -13,6 +13,7 @@
 #include "../src_lcao/wavefunc_in_pw.h"
 #include "../module_cell/unitcell.h"
 #include "src_pw/forces.h"
+#include "src_pw/stress_func.h"
 
 //==========================================================
 // Calculate the non-local pseudopotential in reciprocal
@@ -26,7 +27,7 @@ public:
 	pseudopot_cell_vnl();
 	~pseudopot_cell_vnl();
 
-	friend class Stress_Func;
+	friend class Stress_Func<double>;
 	friend class Forces<double>;
 	friend class Epsilon0_vasp;
 	friend class Potential;

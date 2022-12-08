@@ -4,7 +4,8 @@
 #include "global.h"
 
 //calculate the Pulay term of mGGA stress correction in PW
-void Stress_Func::stress_mgga(ModuleBase::matrix& sigma, const ModuleBase::matrix& wg, const ModuleBase::matrix& v_ofk, const Charge* const chr, const psi::Psi<complex<double>>* psi_in) 
+template<typename FPTYPE, typename Device>
+void Stress_Func<FPTYPE, Device>::stress_mgga(ModuleBase::matrix& sigma, const ModuleBase::matrix& wg, const ModuleBase::matrix& v_ofk, const Charge* const chr, const psi::Psi<complex<FPTYPE>>* psi_in)
 {
 	ModuleBase::timer::tick("Stress_Func","stress_mgga");
 
@@ -12,25 +13,25 @@ void Stress_Func::stress_mgga(ModuleBase::matrix& sigma, const ModuleBase::matri
 
 	int current_spin = 0;
 	
-	std::complex<double>** gradwfc;
-	std::complex<double>* psi;
+	std::complex<FPTYPE>** gradwfc;
+	std::complex<FPTYPE>* psi;
 
-	double*** crosstaus;
+	FPTYPE*** crosstaus;
 
 	int ipol2xy[3][3];
-	double sigma_mgga[3][3];
+	FPTYPE sigma_mgga[3][3];
 
-	gradwfc = new std::complex<double>*[GlobalC::wfcpw->nrxx];
-	crosstaus = new double**[GlobalC::wfcpw->nrxx];
+	gradwfc = new std::complex<FPTYPE>*[GlobalC::wfcpw->nrxx];
+	crosstaus = new FPTYPE**[GlobalC::wfcpw->nrxx];
 	
 	for(int ir = 0;ir<GlobalC::wfcpw->nrxx;ir++)
 	{
-		crosstaus[ir] = new double*[6];
-		gradwfc[ir] = new std::complex<double>[3];
+		crosstaus[ir] = new FPTYPE*[6];
+		gradwfc[ir] = new std::complex<FPTYPE>[3];
 		ModuleBase::GlobalFunc::ZEROS(gradwfc[ir],3);
 		for(int j = 0;j<6;j++)
 		{
-			crosstaus[ir][j] = new double [GlobalV::NSPIN];
+			crosstaus[ir][j] = new FPTYPE [GlobalV::NSPIN];
 			ModuleBase::GlobalFunc::ZEROS(crosstaus[ir][j],GlobalV::NSPIN);
 		}
 	}
@@ -39,12 +40,12 @@ void Stress_Func::stress_mgga(ModuleBase::matrix& sigma, const ModuleBase::matri
 	{
 		if(GlobalV::NSPIN==2) current_spin = GlobalC::kv.isk[ik];
 		const int npw = GlobalC::kv.ngk[ik]; 	
-		psi = new complex<double>[npw];
+		psi = new complex<FPTYPE>[npw];
 
 		for (int ibnd = 0; ibnd < GlobalV::NBANDS; ibnd++)
 		{
-			const double w1 = wg(ik, ibnd) / GlobalC::ucell.omega;
-			const std::complex<double>* ppsi=nullptr;
+			const FPTYPE w1 = wg(ik, ibnd) / GlobalC::ucell.omega;
+			const std::complex<FPTYPE>* ppsi=nullptr;
 			if(psi_in!=nullptr)
 			{
 				ppsi = &(psi_in[0](ik, ibnd, 0));
@@ -93,12 +94,12 @@ void Stress_Func::stress_mgga(ModuleBase::matrix& sigma, const ModuleBase::matri
 		{
 			for (int iy = 0; iy < 3; iy++)
 			{
-				double delta= 0.0;
+				FPTYPE delta= 0.0;
 				if(ix==iy) delta=1.0;
 				sigma_mgga[ix][iy] = 0.0;
 				for(int ir = 0;ir<GlobalC::wfcpw->nrxx;ir++)
 				{
-					double x = v_ofk(is, ir) * (chr->kin_r[is][ir] * delta + crosstaus[ir][ipol2xy[ix][iy]][is]);
+					FPTYPE x = v_ofk(is, ir) * (chr->kin_r[is][ir] * delta + crosstaus[ir][ipol2xy[ix][iy]][is]);
 					sigma_mgga[ix][iy] += x;
 				}
 			}
@@ -134,3 +135,8 @@ void Stress_Func::stress_mgga(ModuleBase::matrix& sigma, const ModuleBase::matri
 	ModuleBase::timer::tick("Stress_Func","stress_mgga");
 	return;
 }
+
+template class Stress_Func<double, psi::DEVICE_CPU>;
+#if ((defined __CUDA) || (defined __ROCM))
+template class Stress_Func<double, psi::DEVICE_GPU>;
+#endif

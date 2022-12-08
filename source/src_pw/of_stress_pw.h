@@ -4,7 +4,7 @@
 #include "stress_func.h"
 #include "module_elecstate/elecstate.h"
 
-class OF_Stress_PW: public Stress_Func
+class OF_Stress_PW: public Stress_Func<double>
 {
 	public :
 	
