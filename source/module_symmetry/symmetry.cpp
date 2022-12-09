@@ -116,7 +116,7 @@ void Symmetry::analy_sys(const UnitCell &ucell, std::ofstream &ofs_running)
     s3 = a3;
 
     // find the lattice type accordiing to lattice vectors.
-    this->lattice_type(a1,a2,a3,ibrav,cel_const,ilattname, ucell);
+    this->lattice_type(a1,a2,a3,cel_const,ilattname, ucell);
   //      std::cout << "a1 = " << a1.x << " " << a1.y << " " << a1.z <<std::endl;
   //      std::cout << "a1 = " << a2.x << " " << a2.y << " " << a2.z <<std::endl;
   //      std::cout << "a1 = " << a3.x << " " << a3.y << " " << a3.z <<std::endl;
@@ -130,7 +130,7 @@ void Symmetry::analy_sys(const UnitCell &ucell, std::ofstream &ofs_running)
 	this->getgroup(this->nrot, this->nrotk, ofs_running);
 	this->pointgroup(this->nrot, this->pgnumber, this->pgname, this->gmatrix, ofs_running);
 	ModuleBase::GlobalFunc::OUT(ofs_running,"POINT GROUP", this->pgname);
-    this->pointgroup(this->nrotk, this->pgnumber, this->spgname, this->gmatrix, ofs_running);
+    this->pointgroup(this->nrotk, this->spgnumber, this->spgname, this->gmatrix, ofs_running);
 	ModuleBase::GlobalFunc::OUT(ofs_running,"POINT GROUP IN SPACE GROUP", this->spgname);
     ofs_running<<"Warning : If the optimal symmetric configuration is not the input configuration, "<<'\n';
     ofs_running<<"you have to manually change configurations, ABACUS would only calculate the input structure."<<'\n';
@@ -163,7 +163,7 @@ void Symmetry::analy_sys(const UnitCell &ucell, std::ofstream &ofs_running)
 
 	test_brav = false;  // use the input ibrav to calculate
 	//ModuleBase::GlobalFunc::OUT(ofs_running,"ibrav",ibrav);
-	this->setgroup(this->symop, this->nop, this->ibrav, cel_const);
+	this->setgroup(this->symop, this->nop, this->ibrav, pcel_const);
 	//now select all symmetry operations which reproduce the lattice
 	//to find those symmetry operations which reproduce the entire crystal
 	this->getgroup(this->nrot, this->nrotk, ofs_running);
@@ -172,7 +172,7 @@ void Symmetry::analy_sys(const UnitCell &ucell, std::ofstream &ofs_running)
     ofs_running<<"(for input configuration:)"<<std::endl;
 	this->pointgroup(this->nrot, this->pgnumber, this->pgname, this->gmatrix, ofs_running);
 	ModuleBase::GlobalFunc::OUT(ofs_running,"POINT GROUP", this->pgname);
-    this->pointgroup(this->nrotk, this->pgnumber, this->spgname, this->gmatrix, ofs_running);
+    this->pointgroup(this->nrotk, this->spgnumber, this->spgname, this->gmatrix, ofs_running);
     ModuleBase::GlobalFunc::OUT(ofs_running,"POINT GROUP IN SPACE GROUP", this->spgname);
 	//write();
 
@@ -504,7 +504,6 @@ void Symmetry::lattice_type(
     ModuleBase::Vector3<double> &v1,
     ModuleBase::Vector3<double> &v2,
     ModuleBase::Vector3<double> &v3,
-    int &brav,
     double *cel_const,
     std::string &bravname,
     const UnitCell &ucell
@@ -537,14 +536,13 @@ void Symmetry::lattice_type(
 	//--------------------------------------------
 	// (3) calculate the 'pre_const'
 	//--------------------------------------------
-    double pre_const[6];
-	ModuleBase::GlobalFunc::ZEROS(pre_const, 6);
+	ModuleBase::GlobalFunc::ZEROS(pcel_const, 6);
 //    std::cout << "ATTION !!!!!!" <<std::endl;
 //        std::cout << "v1 = " << v1.x << " " << v1.y << " " << v1.z <<std::endl;
 //        std::cout << "v2 = " << v2.x << " " << v2.y << " " << v2.z <<std::endl;
 //        std::cout << "v3 = " << v3.x << " " << v3.y << " " << v3.z <<std::endl;
 
-    this->pbrav = standard_lat(v1, v2, v3, cel_const);
+    int pre_brav = standard_lat(v1, v2, v3, cel_const);
 //    for ( int i = 0; i < 6; ++i)
 //    {
 //        std::cout << "cel = "<<cel_const[i]<<" ";
@@ -555,7 +553,7 @@ void Symmetry::lattice_type(
 
     for ( int i = 0; i < 6; ++i)
     {
-        pre_const[i] = cel_const[i];
+        this->pcel_const[i] = cel_const[i];
     }
 //        std::cout << "v1 = " << v1.x << " " << v1.y << " " << v1.z <<std::endl;
 //        std::cout << "v2 = " << v2.x << " " << v2.y << " " << v2.z <<std::endl;
@@ -573,7 +571,7 @@ void Symmetry::lattice_type(
 //        std::cout << "a1 = " << v2.x << " " << v2.y << " " << v2.z <<std::endl;
 //        std::cout << "a1 = " << v3.x << " " << v3.y << " " << v3.z <<std::endl;
 
-    int temp_brav = 15;
+    this->real_brav = 15;
     double temp_const[6];
 
     double cos1 = 1;
@@ -623,7 +621,7 @@ void Symmetry::lattice_type(
                                             r3.z = n31 * v1.z + n32 * v2.z + n33 * v3.z;
                                             //std::cout << "mat = " << n11 <<" " <<n12<<" "<<n13<<" "<<n21<<" "<<n22<<" "<<n23<<" "<<n31<<" "<<n32<<" "<<n33<<std::endl;
 											
-                                            brav = standard_lat(r1, r2, r3, cel_const);
+                                            ibrav = standard_lat(r1, r2, r3, cel_const);
 //                                            if(brav == 8)
 //                                            {
 //                                               std::cout << "mat = " << n11 <<" " <<n12<<" "<<n13<<" "<<n21<<" "<<n22<<" "<<n23<<" "<<n31<<" "<<n32<<" "<<n33<<std::endl;
@@ -654,7 +652,7 @@ void Symmetry::lattice_type(
 //												GlobalV::ofs_running << " ABS(CELLDM(6))=" << fabs(cel_const[5]) << std::endl;
 //											}
 
-                                            if ( brav < temp_brav || ( brav == temp_brav
+                                            if ( ibrav < real_brav || ( ibrav == real_brav
                                                     && ( fabs(cel_const[3]) < (cos1-1.0e-9) )
                                                     && ( fabs(cel_const[4]) < (cos2-1.0e-9) )
                                                     && ( fabs(cel_const[5]) < (cos3-1.0e-9) )) //mohan fix bug 2012-01-15, not <=
@@ -678,7 +676,7 @@ void Symmetry::lattice_type(
 												<< " " << n31 << " " << n32 << " " << n33 << std::endl; 
 												*/
 												//out.printM3("mat",mat);
-                                                temp_brav = brav;
+                                                real_brav = ibrav;
 												
                                                 cos1 = fabs(cel_const[3]);
                                                 cos2 = fabs(cel_const[4]);
@@ -717,7 +715,7 @@ void Symmetry::lattice_type(
 //	GlobalV::ofs_running << " temp_brav=" << temp_brav << std::endl;
 
 
-    if ( temp_brav < pbrav)
+    if ( real_brav < pre_brav)
     {
         //if the symmetry of the new vectors is higher, store the new ones
         for (int i = 0; i < 6; ++i)
@@ -789,7 +787,7 @@ void Symmetry::lattice_type(
         //else, store the original ones
         for (int i = 0; i < 6; ++i)
         {
-            cel_const[i] = pre_const[i];
+            cel_const[i] = pcel_const[i];
         }
     }
 
@@ -818,16 +816,14 @@ void Symmetry::lattice_type(
 			GlobalV::ofs_running<<" The lattice vectors have been set back!"<<std::endl;
         }
     }*/
-    std::string input_bravname = get_brav_name(pbrav);
+    ibrav=pre_brav;
+    std::string input_bravname = get_brav_name(ibrav);
     GlobalV::ofs_running<<"(for input configuration:)"<<std::endl;
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"BRAVAIS TYPE ",pbrav);
+    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"BRAVAIS TYPE ",ibrav);
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"BRAVAIS LATTICE NAME",input_bravname);
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"ibrav",pbrav);
-    Symm_Other::print1(pbrav, pre_const, GlobalV::ofs_running);
+    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"ibrav",ibrav);
+    Symm_Other::print1(ibrav, pcel_const, GlobalV::ofs_running);
 
-    //brav = temp_brav;
-    //bravname = get_brav_name(brav);
-    real_brav = temp_brav;     // pengfei Li 15-3-2022
     bravname = get_brav_name(real_brav);
     GlobalV::ofs_running<<"(for optimal symmetric configuration:)"<<std::endl;
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"BRAVAIS TYPE",real_brav);

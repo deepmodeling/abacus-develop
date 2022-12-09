@@ -51,7 +51,6 @@ public:
 
 	bool symflag_fft[48];
 	int sym_test;
-	int pbrav;
 	int ibrav;
 	int real_brav;    // the real ibrav for the cell     pengfei Li 3-15-2022
 	std::string ilattname;	//the bravais lattice type of the supercell
@@ -66,6 +65,7 @@ public:
 	int nrot;	//the number of pure point group rotations
 	int nrotk; 	//the number of all space group operations
 	int pgnumber;	//the serial number of point group
+	int spgnumber;	//the serial number of point group in space group
 	std::string pgname;	//the Schoenflies name of the point group R in {R|0}
 	std::string spgname;	//the Schoenflies name of the point group R in the space group {R|t}
 
@@ -74,7 +74,7 @@ public:
 	int standard_lat(ModuleBase::Vector3<double> &a,ModuleBase::Vector3<double> &b,ModuleBase::Vector3<double> &c,double *celconst );
 
 	void lattice_type(ModuleBase::Vector3<double> &v1,ModuleBase::Vector3<double> &v2,ModuleBase::Vector3<double> &v3, 
-			int &ibrav,double *cel_const,std::string &bravname, const UnitCell &ucell);
+			double *cel_const,std::string &bravname, const UnitCell &ucell);
 
 	void recip(
 			const double a,
