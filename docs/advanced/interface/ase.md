@@ -54,7 +54,7 @@ The input parameters can be set like::
 
 The command to run jobs can be set by specifying `AbacusProfile`::
 
-```
+```python
   from ase.calculators.abacus import AbacusProfile
   abacus = '/usr/local/bin/abacus'
   profile = AbacusProfile(argv=['mpirun','-n','2',abacus])
