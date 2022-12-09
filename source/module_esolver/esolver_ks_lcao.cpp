@@ -283,8 +283,6 @@ void ESolver_KS_LCAO::Init_Basis_lcao(ORB_control& orb_con, Input& inp, UnitCell
 
 void ESolver_KS_LCAO::eachiterinit(const int istep, const int iter)
 {
-    if (GlobalV::dft_plus_u)
-        GlobalC::dftu.iter_dftu = iter;
 
     // mohan add 2010-07-16
     // used for pulay mixing.
@@ -446,11 +444,13 @@ void ESolver_KS_LCAO::hamilt2density(int istep, int iter, double ethr)
     // the local occupation number matrix and energy correction
     if (GlobalV::dft_plus_u)
     {
-        if (GlobalV::GAMMA_ONLY_LOCAL)
-            GlobalC::dftu.cal_occup_m_gamma(iter, this->LOC.dm_gamma);
-        else
-            GlobalC::dftu.cal_occup_m_k(iter, this->LOC.dm_k);
-
+        if(GlobalC::dftu.omc!=2)
+        {
+            if (GlobalV::GAMMA_ONLY_LOCAL)
+                GlobalC::dftu.cal_occup_m_gamma(iter, this->LOC.dm_gamma);
+            else
+                GlobalC::dftu.cal_occup_m_k(iter, this->LOC.dm_k);
+        }
         GlobalC::dftu.cal_energy_correction(istep);
         GlobalC::dftu.output();
     }

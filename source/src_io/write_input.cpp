@@ -411,7 +411,7 @@ void Input::Print(const std::string &fn) const
     ModuleBase::GlobalFunc::OUTP(ofs, "double_counting", double_counting, "1:FLL(fully localized limit)(default); 2:AMF(around mean field)");
     ModuleBase::GlobalFunc::OUTP(ofs, "yukawa_lambda", yukawa_lambda, "default:0.0");
     ModuleBase::GlobalFunc::OUTP(ofs, "yukawa_potential", yukawa_potential, "default: false");
-    ModuleBase::GlobalFunc::OUTP(ofs, "omc", omc, "whether turn on occupation matrix control method or not");
+    ModuleBase::GlobalFunc::OUTP(ofs, "omc", omc, "the mode of occupation matrix control");
     ofs << std::setw(20) << "hund_j ";
     for (int i = 0; i < ntype; i++)
     {

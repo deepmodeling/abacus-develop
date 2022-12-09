@@ -403,7 +403,7 @@ class Input
     int *orbital_corr; // which correlated orbitals need corrected ; d:2 ,f:3, do not need correction:-1
     double *hubbard_u; // Hubbard Coulomb interaction parameter U(ev)
     double *hund_j; // Hund exchange parameter J(ev)
-    bool omc; // whether turn on occupation matrix control method or not
+    int omc; // whether turn on occupation matrix control method or not
     bool yukawa_potential; // default:false
     double yukawa_lambda; // default:-1.0, which means we calculate lambda
 

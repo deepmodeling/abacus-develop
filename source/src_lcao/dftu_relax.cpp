@@ -254,42 +254,33 @@ void DFTU_RELAX::cal_force_k(const int ik, const std::complex<double>* rho_VU)
 
 		  		for(int l=0; l<NL; l++)
 		  		{				
-		  		// if(Yukawa)
-		  		// {
-		  			// if(l<orbital_corr[it]) continue;
-		  		// }
-		  		// else
-		  		// {
-		  			// if(l!=orbital_corr[it]) continue;
-		  		// }
-		  		if(l!=orbital_corr[it]) continue;
+		  			if(l!=orbital_corr[it]) continue;
 
-		  		const int N = GlobalC::ucell.atoms[it].l_nchi[l];
+		  			const int N = GlobalC::ucell.atoms[it].l_nchi[l];
   
-		  		for(int n=0; n<N; n++)
-		  		{
-		  		 	// if(!Yukawa && n!=0) continue;
-		  			if(n!=0) continue;
-
-		  			//Calculate the local occupation number matrix			
-		  			for(int m=0; m<2*l+1; m++)
+		  			for(int n=0; n<N; n++)
 		  			{
-		  				for(int ipol=0; ipol<GlobalV::NPOL; ipol++)
-		  				{
-		  					const int iwt = this->iatlnmipol2iwt[iat][l][n][m][ipol];
-		  					const int mu = this->LM->ParaV->trace_loc_row[iwt];
-		  					const int nu = this->LM->ParaV->trace_loc_col[iwt];
+						// if(!Yukawa && n!=0) continue;
+						if(n!=0) continue;
 
-                			if(mu<0 || nu<0) continue;
+						//Calculate the local occupation number matrix			
+						for(int m=0; m<2*l+1; m++)
+						{
+							for(int ipol=0; ipol<GlobalV::NPOL; ipol++)
+							{
+								const int iwt = this->iatlnmipol2iwt[iat][l][n][m][ipol];
+								const int mu = this->LM->ParaV->trace_loc_row[iwt];
+								const int nu = this->LM->ParaV->trace_loc_col[iwt];
 
-                			this->force_dftu[iat][dim] += dm_VU_dSm[nu*this->LM->ParaV->nrow+mu].real();
-              			}
-            		}//
-          		}//n
-        	}//l
-      	}//ia
-    }//it
+								if(mu<0 || nu<0) continue;
 
+								this->force_dftu[iat][dim] += dm_VU_dSm[nu*this->LM->ParaV->nrow+mu].real();
+							}
+						}//
+          			}//n
+        		}//l
+      		}//ia
+    	}//it
 	}//end dim
 	ModuleBase::timer::tick("DFTU_RELAX",  "cal_force_k");
 
@@ -406,21 +397,12 @@ void DFTU_RELAX::cal_force_gamma(const double* rho_VU)
 
 		  		for(int l=0; l<NL; l++)
 		  		{				
-		  		// if(Yukawa)
-		  		// {
-		  			// if(l<orbital_corr[it]) continue;
-		  		// }
-		  		// else
-		  		// {
-		  			// if(l!=orbital_corr[it]) continue;
-		  		// }
 		  			if(l!=orbital_corr[it]) continue;
 
 		  			const int N = GlobalC::ucell.atoms[it].l_nchi[l];
   
 		  			for(int n=0; n<N; n++)
 		  			{
-		  		 	// if(!Yukawa && n!=0) continue;
 		  				if(n!=0) continue;
 
 		  			//Calculate the local occupation number matrix			
@@ -496,75 +478,28 @@ void DFTU_RELAX::cal_stress_gamma(const double* rho_VU)
 
 double DFTU_RELAX::get_onebody_eff_pot
 (
-	const int T, const int iat,
-	const int L, const int N, const int spin, 
-	const int m0, const int m1,
-  const int type, const bool newlocale 
+	const int T,
+	const int iat,
+	const int L,
+	const int N,
+	const int spin, 
+	const int m0,
+	const int m1,
+	const bool newlocale
 )
 {
 	ModuleBase::TITLE("DFTU_RELAX","get_onebody_eff_pot");
 
 	double VU = 0.0;
 
-	//if(!Yukawa && N!=0) return 0.0;
-
-	switch(type)
+	switch(cal_type)
 	{
 	case 1:  //rotationally invarient formalism and FLL double counting
-		/*
-		const int spin_oppsite = 1 - spin;
-		int nelec_tot = 0;
-		int nelec_spin = 0;
-
-		for(int is=0; is<2; is++)
-		{
-			for(int i=0; i<2*L+1; i++)
-			{
-				if(newlocale)
-				{
-					nelec_tot +=  locale.at(iat).at(L).at(N).at(is)(i,i);
-					if(is==spin) nelec_spin +=  locale.at(iat).at(L).at(N).at(is)(i,i);
-				}
-				else
-				{
-					nelec_tot +=  locale_save.at(iat).at(L).at(N).at(is)(i,i);
-					if(is==spin) nelec_spin +=  locale_save.at(iat).at(L).at(N).at(is)(i,i);
-				}
-				
-			}
-		}
-
-		for(int m2=0; m2<2*L+1; m2++)
-		{
-			for(int m3=0; m3<2*L+1; m3++)
-			{
-				int M0_prime = m2*(2*L+1) + m3;
-
-				int M1 = m0*(2*L+1) + m3;
-				int M1_prime = m2*(2*L+1) + m1;
-				
-				if(newlocale)
-				{
-					VU += Vsc.at(T).at(N)(M0,M0_prime)*locale.at(iat).at(L).at(N).at(spin_oppsite)(m2,m3) 
-						+ (Vsc.at(T).at(N)(M0,M0_prime)- Vsc.at(T).at(N)(M1,M1_prime))*locale.at(iat).at(L).at(N).at(spin)(m2,m3);
-				}
-				else
-				{
-					VU += Vsc.at(T).at(N)(M0, M0_prime)*locale_save.at(iat).at(L).at(N).at(spin_oppsite)(m2,m3) 
-						+ (Vsc.at(T).at(N)(M0, M0_prime)- Vsc.at(T).at(N)(M1,M1_prime))*locale_save.at(iat).at(L).at(N).at(spin)(m2,m3);
-				}									
-			}
-		}
-
-		//if(Yukawa) VU += -U_Yukawa.at(T).at(N)*(nelec_tot-0.5) + J_Yukawa.at(T).at(N)*(nelec_spin-0.5);
-		//else VU += -U[T]*(nelec_tot-0.5) + J[T]*(nelec_spin-0.5);
-		VU += -U[T]*(nelec_tot-0.5) + J[T]*(nelec_spin-0.5);
-		*/
 
 		break;
 
 	case 2:  //rotationally invarient formalism and AMF double counting
-		
+	
 		break;
 
 	case 3:	//simplified formalism and FLL double counting
@@ -594,7 +529,7 @@ double DFTU_RELAX::get_onebody_eff_pot
 				else VU = -(this->U[T]-this->J[T])*this->locale_save.at(iat).at(L).at(N).at(spin)(m0,m1);
 			}
 		}
-		
+
 		break;
 
 	case 4: //simplified formalism and AMF double counting
@@ -622,14 +557,8 @@ void DFTU_RELAX::cal_VU_pot_mat_complex(const int spin, const bool newlocale, st
 
 				for(int n=0; n<GlobalC::ucell.atoms[it].l_nchi[L]; n++)
 				{
-					// if(Yukawa)
-			    // {
-			    	// if(L1<INPUT.orbital_corr[T1] || L2<INPUT.orbital_corr[T2]) continue;
-			    // }
-			    // else
-			    // {
 			    	if(n!=0) continue;
-			    // }
+
           			for(int m1=0; m1<2*L+1; m1++)
           			{
             			for(int ipol1=0; ipol1<GlobalV::NPOL; ipol1++)
@@ -647,7 +576,7 @@ void DFTU_RELAX::cal_VU_pot_mat_complex(const int spin, const bool newlocale, st
                   					int m1_all = m1 + (2*L+1)*ipol1;
 			            			int m2_all = m2 + (2*L+1)*ipol2;
                   
-                  					double val = get_onebody_eff_pot(it, iat, L, n, spin, m1_all, m2_all, cal_type, newlocale);
+                  					double val = get_onebody_eff_pot(it, iat, L, n, spin, m1_all, m2_all, newlocale);
 			            			VU[nu*this->LM->ParaV->nrow + mu] = std::complex<double>(val, 0.0);
                 				}//ipol2
               				}//m2
@@ -664,7 +593,6 @@ void DFTU_RELAX::cal_VU_pot_mat_complex(const int spin, const bool newlocale, st
 void DFTU_RELAX::cal_VU_pot_mat_real(const int spin, const bool newlocale, double* VU)
 {
 	ModuleBase::TITLE("DFTU_RELAX","cal_VU_pot_mat_real"); 
-		// ModuleBase::timer::tick("DFTU","folding_overlap_matrix");
 	ModuleBase::GlobalFunc::ZEROS(VU, this->LM->ParaV->nloc);
 
   	for(int it=0; it<GlobalC::ucell.ntype; ++it)
@@ -679,14 +607,8 @@ void DFTU_RELAX::cal_VU_pot_mat_real(const int spin, const bool newlocale, doubl
 
 				for(int n=0; n<GlobalC::ucell.atoms[it].l_nchi[L]; n++)
 				{
-					// if(Yukawa)
-			    // {
-			    	// if(L1<INPUT.orbital_corr[T1] || L2<INPUT.orbital_corr[T2]) continue;
-			    // }
-			    // else
-			    // {
 			    	if(n!=0) continue;
-			    // }
+
           			for(int m1=0; m1<2*L+1; m1++)
           			{
             			for(int ipol1=0; ipol1<GlobalV::NPOL; ipol1++)
@@ -703,7 +625,7 @@ void DFTU_RELAX::cal_VU_pot_mat_real(const int spin, const bool newlocale, doubl
                   					int m1_all = m1 + (2*L+1)*ipol1;
 			            			int m2_all = m2 + (2*L+1)*ipol2;
                   
-                  					VU[nu*this->LM->ParaV->nrow + mu] = this->get_onebody_eff_pot(it, iat, L, n, spin, m1_all, m2_all, cal_type, newlocale);
+                  					VU[nu*this->LM->ParaV->nrow + mu] = this->get_onebody_eff_pot(it, iat, L, n, spin, m1_all, m2_all, newlocale);
 
                 				}//ipol2
               				}//m2
