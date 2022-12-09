@@ -16,7 +16,7 @@ python3 setup install
 
 [ABACUS](http://abacus.ustc.edu.cn) supports two types of basis sets: PW, LCAO. The path of pseudopotential and numerical orbital files can be set throught the environment variables `ABACUS_PP_PATH` and `ABACUS_ORBITAL_PATH`, respectively, e.g.:
 
-```
+```bash
   PP=${HOME}/pseudopotentials
   ORB=${HOME}/orbitals
   export ABACUS_PP_PATH=${PP}
