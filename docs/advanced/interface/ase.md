@@ -2,7 +2,7 @@
 
 ## Introduction
 
-[ASE](https://wiki.fysik.dtu.dk/ase/) (Atomic Simulation Environment) provides a set of Python tools for setting, running, and analysing atomic simulations. We have developed the ABACUS calculator to be used together with the ASE tools, which can be accessed from the website of [ASE](https://wiki.fysik.dtu.dk/ase/). The ABACUS calculator ([ase-abacus](https://gitlab.com/1041176461/ase-abacus )) exists as an external project with respect to ASE and is maintained by ABACUS developers.
+[ASE](https://wiki.fysik.dtu.dk/ase/) (Atomic Simulation Environment) provides a set of Python tools for setting, running, and analysing atomic simulations. We have developed an ABACUS calculator ([ase-abacus](https://gitlab.com/1041176461/ase-abacus )) to be used together with the ASE tools, which exists as an external project with respect to ASE and is maintained by ABACUS developers.
 
 ## Installation
 
