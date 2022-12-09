@@ -48,7 +48,7 @@ For more information on pseudopotentials and numerical orbitals, please visit [A
 
 
 The input parameters can be set like::
-```
+```python
   calc = Abacus(profile=profile, ntype=1, ecutwfc=50, scf_nmax=50, smearing_method='gaussian', smearing_sigma=0.01, basis_type='pw', ks_solver='cg', calculation='scf' pp=pp, basis=basis, kpts=kpts)
 ```
 
