@@ -60,32 +60,8 @@ double atom_arrange::set_sr_NL(
 		//sr = 2 * longest_orb_rcut + 0.01;
 	}
 
-	// if use build_Nonlocal_mu (not GlobalV::GAMMA_ONLY_LOCAL) use 2*longest_orb_rcut
-	// if use build_Nonlocal_beta ( K-point used ) use 2 * (longest_orb_rcut + longest_nl_proj_rcut) 
 	return sr;			
-//	std::cout << " SEARCH RADIUS (BOHR) : " << GlobalV::SEARCH_RADIUS << std::endl;
-//	OUT(ofs_in,"search radius (Bohr)", GlobalV::SEARCH_RADIUS);
 }
-/*
-// mohan update 2011-03-10
-void atom_arrange::set_sr_OV(void)
-{
-	ModuleBase::TITLE("atom_arrange","set_sr_OV");
-	double longest_orb_rcut = 0.0;
-	for(int it=0; it<ucell.ntype; it++)
-	{
-		longest_orb_rcut = std::max(longest_orb_rcut, ORB.Phi[it].getRcut() );	
-	}
-//	std::cout << " LONGEST ORB RCUT     : " << longest_orb_rcut << std::endl;
-	OUT(ofs_in,"longest orb rcut (Bohr)",longest_orb_rcut);
-	double sr = 2 * longest_orb_rcut + 0.01;
-	// if use build_Nonlocal_mu (not GlobalV::GAMMA_ONLY_LOCAL) use 2*longest_orb_rcut
-	// if use build_Nonlocal_beta ( K-point used ) use 2 * (longest_orb_rcut + longest_nl_proj_rcut) 
-	GlobalV::SEARCH_RADIUS = sr;			
-//	std::cout << " SEARCH RADIUS (BOHR) : " << GlobalV::SEARCH_RADIUS << std::endl;
-	return;
-}
-*/
 
 void atom_arrange::search(
 	const bool pbc_flag,

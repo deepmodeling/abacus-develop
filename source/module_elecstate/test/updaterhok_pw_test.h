@@ -6,7 +6,7 @@
 #include "src_pw/wf_atomic.h"
 #include "src_pw/wavefunc.h"
 #include "src_pw/charge_mixing.h"
-#include "src_pw/potential.h"
+#include "module_elecstate/potentials/potential_new.h"
 #include "module_cell/atom_pseudo.h"
 #include "module_cell/atom_spec.h"
 #include "module_cell/unitcell.h"
@@ -15,11 +15,9 @@
 #include "module_symmetry/symmetry.h"
 #include "src_parallel/parallel_grid.h"
 #include "src_parallel/parallel_kpoints.h"
-#include "src_pw/use_fft.h"
 #include "src_pw/pw_complement.h"
 #include "src_pw/structure_factor.h"
 #include "src_pw/VNL_in_pw.h"
-#include "src_pw/hamilt.h"
 #include "input.h"
 #include "src_pw/energy.h"
 #include "module_xc/xc_functional.h"
@@ -42,10 +40,6 @@ Atom::Atom(){}
 Atom::~Atom(){}
 Atom_pseudo::Atom_pseudo(){}
 Atom_pseudo::~Atom_pseudo(){}
-Charge_Mixing::Charge_Mixing(){}
-Charge_Mixing::~Charge_Mixing(){}
-Potential::Potential(){}
-Potential::~Potential(){}
 InfoNonlocal::InfoNonlocal(){}
 InfoNonlocal::~InfoNonlocal(){}
 UnitCell::UnitCell(){}
@@ -66,8 +60,6 @@ pseudopot_cell_vl::pseudopot_cell_vl(){}
 pseudopot_cell_vl::~pseudopot_cell_vl(){}
 pseudopot_cell_vnl::pseudopot_cell_vnl(){}
 pseudopot_cell_vnl::~pseudopot_cell_vnl(){}
-Hamilt::Hamilt(){}
-Hamilt::~Hamilt(){}
 energy::energy(){}
 energy::~energy(){}
 
@@ -89,7 +81,6 @@ namespace GlobalC
 K_Vectors kv;
 wavefunc wf;
 Charge CHR;
-Potential pot;
 UnitCell ucell;
 ModuleSymmetry::Symmetry symm;
 Parallel_Grid Pgrid;
@@ -97,7 +88,6 @@ Structure_Factor sf;
 ModulePW::PW_Basis* rhopw;
 ModulePW::PW_Basis_K* wfcpw;
 pseudopot_cell_vnl ppcell;
-Hamilt hm;
 energy en;
 Parallel_Kpoints Pkpoints;
 Restart restart;
@@ -105,7 +95,7 @@ Restart restart;
 Input INPUT;
 
 
-void Restart::load_disk(const std::string mode, const int i) const {}
+void Restart::load_disk(const std::string mode, const int i, double** rho) const {}
 
 
 psi::Psi<complex<double>>* wavefunc::allocate(const int nks)
@@ -193,9 +183,6 @@ bool Charge::read_rho(const int &is, const std::string &fn, double* rho) //add b
 }
 
 //bool Occupy::use_gaussian_broadening=false;
-//bool Occupy::use_tetrahedron_method = false;
-double Magnetism::get_nelup(){return 0;}
-double Magnetism::get_neldw(){return 0;}
 
 bool ModuleSymmetry::Symmetry_Basic::equal(double const&m, double const&n) const{return false;}
 
@@ -332,4 +319,9 @@ bool UnitCell::read_atom_positions(LCAO_Orbitals &orb, std::ifstream &ifpos, std
 		}
 	}
         return true;
+}
+
+void elecstate::Potential::init_pot(int istep, const Charge* chg)
+{
+	return;
 }

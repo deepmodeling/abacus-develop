@@ -5,14 +5,18 @@
 #include "../module_base/global_variable.h"
 #include "../module_cell/unitcell.h"
 #include "../module_pw/pw_basis.h"
+#include "src_pw/forces.h"
+#include "src_pw/stress_func.h"
 
 class H_Ewald_pw 
 {
 	public:
 
 	// need to be updated in near future 2021-02-25
-	friend class Stress_Func; // Ewald stress
-	friend class Forces; // Ewald forces
+    friend class Stress_Func<double, psi::DEVICE_CPU>; // Ewald stress
+    friend class Stress_Func<double, psi::DEVICE_GPU>; // Ewald stress
+    friend class Forces<double, psi::DEVICE_CPU>; // Ewald forces
+    friend class Forces<double, psi::DEVICE_GPU>; // Ewald forces
 	friend class Force_LCAO; // Ewald forces
 
     H_Ewald_pw();

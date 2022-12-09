@@ -1,11 +1,15 @@
+#ifndef ESOLVER_OF_H
+#define ESOLVER_OF_H
+
 #include "esolver_fp.h"
 #include "../module_base/opt_TN.hpp"
 #include "../module_base/opt_DCsrch.h"
 #include "../module_psi/psi.h"
 #include "../src_pw/charge_extra.h"    // liuyu add 2022-11-07
-#include "./kedf_tf.h"
-#include "./kedf_vw.h"
-#include "./kedf_wt.h"
+#include "../module_hamilt/of_pw/kedf_tf.h"
+#include "../module_hamilt/of_pw/kedf_vw.h"
+#include "../module_hamilt/of_pw/kedf_wt.h"
+#include "src_pw/charge.h"
 
 namespace ModuleESolver
 {
@@ -151,7 +155,7 @@ private:
 
     // tools
     void calV(double *ptempPhi, double *rdLdphi);
-    void caldEdtheta(double **ptempPhi, double **ptempRho, double *ptheta, double *rdEdtheta);
+    void caldEdtheta(double **ptempPhi, Charge* ptempRho, double *ptheta, double *rdEdtheta);
     double cal_mu(double *pphi, double *pdEdphi, double nelec);
     double inner_product(double *pa, double *pb, int length, double dV=1)
     {
@@ -166,3 +170,5 @@ private:
     double kineticEnergy();
 };
 }
+
+#endif

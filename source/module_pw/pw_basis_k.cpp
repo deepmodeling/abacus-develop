@@ -1,6 +1,7 @@
 #include "pw_basis_k.h"
 #include "../module_base/constants.h"
 #include "../module_base/timer.h"
+
 namespace ModulePW
 {
 
@@ -18,7 +19,9 @@ PW_Basis_K::~PW_Basis_K()
     delete[] gk2;
     delete[] ig2ixyz_k_;
 #if defined(__CUDA) || defined(__UT_USE_CUDA)
-    cudaFree(this->ig2ixyz_k);
+    if (GlobalV::device_flag == "gpu") {
+        cudaFree(this->ig2ixyz_k);
+    }
 #endif
 }
 

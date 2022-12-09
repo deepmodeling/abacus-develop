@@ -15,8 +15,9 @@
 #include "../module_base/global_variable.h"
 #include "../module_base/vector3.h"
 #include "../module_base/matrix.h"
-#include "exx_global.h"
+#include "exx_info.h"
 #include "../module_pw/pw_basis_k.h"
+#include "src_pw/charge.h"
 class XC_Functional
 {
 	public:
@@ -45,25 +46,21 @@ class XC_Functional
 		const int &nrxx, // number of real-space grid
 		const int &ncxyz, // total number of charge grid
 		const double &omega, // volume of cell
-		const double*const*const rho_in, 
-		const double*const rho_core); // core charge density
+		const Charge* const chr); // charge density
 
 	// using libxc
     static std::tuple<double,double,ModuleBase::matrix> v_xc_libxc(
 		const int &nrxx, // number of real-space grid
 		const int &ncxyz, // total number of charge grid
 		const double &omega, // volume of cell
-		const double*const*const rho_in,  
-		const double*const rho_core); // core charge density
+		const Charge* const chr); // charge density
 
 	// for mGGA functional
 	static std::tuple<double,double,ModuleBase::matrix,ModuleBase::matrix> v_xc_meta(
 		const int &nrxx, // number of real-space grid
 		const int &ncxyz, // total number of charge grid
 		const double &omega, // volume of cell
-		const double * const * const rho_in,
-		const double * const rho_core_in,
-		const double * const * const kin_r_in);
+		const Charge* const chr);
 
 //-------------------
 //  xc_functional.cpp
@@ -143,7 +140,8 @@ class XC_Functional
 // 1. gcxc, which is the wrapper for gradient correction part
 // 2. gcx_spin, spin polarized, exchange only
 // 3. gcc_spin, spin polarized, correlation only
-// 4. gcxc_spin_libxc, the entire GGA functional, LIBXC
+// 4. gcxc_libxc, the entire GGA functional, LIBXC, for nspin=1 case
+// 5. gcxc_spin_libxc, the entire GGA functional, LIBXC, for nspin=2 case
 
 // The difference between our realization (gcxc/gcx_spin/gcc_spin) and
 // LIBXC, and the reason for not having gcxc_libxc is explained
@@ -151,6 +149,8 @@ class XC_Functional
 
 	// GGA
 	static void gcxc(const double &rho, const double &grho,
+			double &sxc, double &v1xc, double &v2xc);
+	static void gcxc_libxc(const double &rho, const double &grho,
 			double &sxc, double &v1xc, double &v2xc);
 
 	// spin polarized GGA
@@ -194,11 +194,11 @@ class XC_Functional
 // 5. noncolin_rho, which diagonalizes the spin density matrix
 //  and gives the spin up and spin down components of the charge.
 
-	static void gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v, std::vector<double> &stress_gga, const bool is_stress = 0);
+	static void gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v, const Charge* const chr, std::vector<double> &stress_gga, const bool is_stress = 0);
 	static void grad_wfc( const std::complex<double> *rhog, const int ik, std::complex<double> **grad, ModulePW::PW_Basis_K *wfc_basis);
 	static void grad_rho( const std::complex<double> *rhog, ModuleBase::Vector3<double> *gdr, ModulePW::PW_Basis *rho_basis);
 	static void grad_dot( const ModuleBase::Vector3<double> *h, double *dh, ModulePW::PW_Basis *rho_basis);
-	static void noncolin_rho(double *rhoout1,double *rhoout2,double *seg);
+	static void noncolin_rho(double *rhoout1,double *rhoout2,double *seg,const double*const*const rho);
 
 //-------------------
 //  xc_funct_exch_lda.cpp
@@ -307,8 +307,8 @@ class XC_Functional
 
 	static void perdew86_spin(double rho, double zeta, double grho, double &sc,
 		double &v1cup, double &v1cdw, double &v2c);
-	static void ggac_spin(double rho, double zeta, double grho, double &sc,
-		double &v1cup, double &v1cdw, double &v2c);
+	//static void ggac_spin(double rho, double zeta, double grho, double &sc,
+	//	double &v1cup, double &v1cdw, double &v2c);
 	static void pbec_spin(double rho, double zeta, double grho, const int &flag, double &sc,
 		double &v1cup, double &v1cdw, double &v2c);
 

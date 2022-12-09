@@ -12,7 +12,7 @@ class Build_ST_pw
 	~Build_ST_pw();
 
 	void set_ST(const int &ik, const char& dtype);
-	void set_local(const int &ik);
+	//void set_local(const int &ik);
 
 private:
     LCAO_Matrix* LM;

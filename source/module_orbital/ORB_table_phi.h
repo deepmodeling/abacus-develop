@@ -23,9 +23,7 @@ class ORB_table_phi
 		const double& dk_in///< delta k, for integration in k space
 	);
 
-	void init_Table(
-		const int &job,
-		LCAO_Orbitals &orb);
+	void init_Table(LCAO_Orbitals &orb);
 
 	void Destroy_Table(LCAO_Orbitals &orb);
 

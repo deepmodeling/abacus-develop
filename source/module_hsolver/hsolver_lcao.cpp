@@ -1,9 +1,12 @@
 #include "hsolver_lcao.h"
 
 #include "diago_blas.h"
-#include "diago_elpa.h"
 #include "module_base/timer.h"
 #include "src_io/write_HS.h"
+
+#ifdef __ELPA
+#include "diago_elpa.h"
+#endif
 
 namespace hsolver
 {
@@ -19,23 +22,7 @@ void HSolverLCAO::solveTemplate(hamilt::Hamilt<double>* pHamilt,
     ModuleBase::timer::tick("HSolverLCAO", "solve");
     // select the method of diagonalization
     this->method = method_in;
-    if (this->method == "genelpa")
-    {
-        if (pdiagh != nullptr)
-        {
-            if (pdiagh->method != this->method)
-            {
-                delete[] pdiagh;
-                pdiagh = nullptr;
-            }
-        }
-        if (pdiagh == nullptr)
-        {
-            pdiagh = new DiagoElpa();
-            pdiagh->method = this->method;
-        }
-    }
-    else if (this->method == "scalapack_gvx")
+    if (this->method == "scalapack_gvx")
     {
         if (pdiagh != nullptr)
         {
@@ -51,8 +38,27 @@ void HSolverLCAO::solveTemplate(hamilt::Hamilt<double>* pHamilt,
             pdiagh->method = this->method;
         }
     }
+#ifdef __ELPA
+    else if (this->method == "genelpa")
+    {
+        if (pdiagh != nullptr)
+        {
+            if (pdiagh->method != this->method)
+            {
+                delete[] pdiagh;
+                pdiagh = nullptr;
+            }
+        }
+        if (pdiagh == nullptr)
+        {
+            pdiagh = new DiagoElpa();
+            pdiagh->method = this->method;
+        }
+    }
+#endif
     else if (this->method == "lapack")
     {
+        ModuleBase::WARNING_QUIT("hsolver_lcao","please fix lapack solver!!!");
         //We are not supporting diagonalization with lapack
         //until the obsolete globalc::hm is removed from
         //diago_lapack.cpp
@@ -71,6 +77,7 @@ void HSolverLCAO::solveTemplate(hamilt::Hamilt<double>* pHamilt,
             pdiagh->method = this->method;
         }
         */
+        ModuleBase::WARNING_QUIT("HSolverLCAO::solve", "This method of DiagH is not supported!");
     }
     else
     {
@@ -127,6 +134,7 @@ void HSolverLCAO::solveTemplate(hamilt::Hamilt<double>* pHamilt,
 
 int HSolverLCAO::out_mat_hs = 0;
 int HSolverLCAO::out_mat_hsR = 0;
+int HSolverLCAO::out_hsR_interval = 1;
 
 void HSolverLCAO::solve(hamilt::Hamilt<double>* pHamilt,
                         psi::Psi<std::complex<double>>& psi,

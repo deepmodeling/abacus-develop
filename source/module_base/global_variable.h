@@ -38,7 +38,8 @@ extern double NELEC;
 extern std::string DFT_FUNCTIONAL; // 6.5 change the DFT functional from input file.
 extern double XC_TEMPERATURE;
 extern int NSPIN; // 7
-extern bool TWO_EFERMI; // 7.5 mohan add 2011-04-03, two fermi energy, exist if magnetization is fixed.
+extern bool TWO_EFERMI; // 7.5 two fermi energy, exist if nupdown isn't zero.
+extern double nupdown;
 extern int CURRENT_SPIN; // 8
 extern int CURRENT_K; // 8
 
@@ -232,9 +233,6 @@ extern int bessel_lmax; // lmax used in descriptor, mohan added 2021-01-03
 extern double bessel_rcut;
 extern double bessel_tol;
 
-// method for dealing with non-local potential in Hamiltonian matrix, 0 for old, 1 for new
-extern int vnl_method;
-
 // whether or not output information for each element
 extern bool out_element_info;
 
@@ -267,6 +265,21 @@ extern bool of_full_pw;     // If set to 1, ecut will be ignored while collectin
 extern int of_full_pw_dim;  // If of_full_pw = 1, the dimention of FFT will be testricted to be (0) either odd or even; (1) odd only; (2) even only.
 extern bool of_read_kernel; // If set to 1, the kernel of WT KEDF will be filled from file of_kernel_file, not from formula. Only usable for WT KEDF.
 extern std::string of_kernel_file; // The name of WT kernel file.
+
+//==========================================================
+// device flags
+//==========================================================
+extern std::string device_flag;
+extern std::string chg_extrap;
+extern int out_pot;
+
+extern std::string init_chg; //  output charge if out_chg > 0, and output every "out_chg" elec step.
+extern int out_chg;
+
+//Note : this is different from the capitalized NELEC
+//NELEC gives the total charge of the system
+//while nelec is the total number of valence electrons 
+extern double nelec;
 
 } // namespace GlobalV
 #endif

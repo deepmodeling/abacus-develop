@@ -12,7 +12,11 @@ template<typename FPTYPE, typename Device = psi::DEVICE_CPU>
 class ElecStatePW : public ElecState
 {
   public:
-    ElecStatePW(ModulePW::PW_Basis_K *wfc_basis_in, Charge* chg_in, K_Vectors *pkv_in, int nbands_in);
+    ElecStatePW(
+      ModulePW::PW_Basis_K *wfc_basis_in, 
+      Charge* chg_in, 
+      K_Vectors *pkv_in
+    );
     // void init(Charge* chg_in):charge(chg_in){} override;
 
     ~ElecStatePW();
@@ -38,17 +42,21 @@ class ElecStatePW : public ElecState
     void init_rho_data();
 
     Device * ctx = {};
+    psi::DEVICE_CPU * cpu_ctx = {};
     bool init_rho = false;
     FPTYPE ** rho = nullptr, ** kin_r = nullptr;
     FPTYPE * rho_data = nullptr, * kin_r_data = nullptr;
     std::complex<FPTYPE> *wfcr = nullptr, *wfcr_another_spin = nullptr;
 
     using elecstate_pw_op = elecstate::elecstate_pw_op<FPTYPE, Device>;
-    using set_memory_var_op = psi::memory::set_memory_op<FPTYPE, Device>;
-    using resize_memory_var_op = psi::memory::resize_memory_op<FPTYPE, Device>;
-    using delete_memory_var_op = psi::memory::delete_memory_op<FPTYPE, Device>;
-    using resize_memory_complex_op = psi::memory::resize_memory_op<std::complex<FPTYPE>, Device>;
-    using delete_memory_complex_op = psi::memory::delete_memory_op<std::complex<FPTYPE>, Device>;
+
+    using setmem_var_op = psi::memory::set_memory_op<FPTYPE, Device>;
+    using resmem_var_op = psi::memory::resize_memory_op<FPTYPE, Device>;
+    using delmem_var_op = psi::memory::delete_memory_op<FPTYPE, Device>;
+    using syncmem_var_d2h_op = psi::memory::synchronize_memory_op<FPTYPE, psi::DEVICE_CPU, Device>;
+
+    using resmem_complex_op = psi::memory::resize_memory_op<std::complex<FPTYPE>, Device>;
+    using delmem_complex_op = psi::memory::delete_memory_op<std::complex<FPTYPE>, Device>;
 };
 
 } // namespace elecstate

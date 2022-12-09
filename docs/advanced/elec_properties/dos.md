@@ -2,7 +2,7 @@
 
 ## DOS
 
-ABACUS can calculate the density of states (DOS) of the system, and the exampples can be found in [examples/dos](https://github.com/deepmodeling/abacus-develop/tree/develop/examples/dos).\
+ABACUS can calculate the density of states (DOS) of the system, and the examples can be found in [examples/dos](https://github.com/deepmodeling/abacus-develop/tree/develop/examples/dos).\
 We first, do a ground-state energy calculation ***with one additional keyword "[out_chg](https://abacus-rtd.readthedocs.io/en/latest/advanced/input_files/input-main.html#out-chg)" in the INPUT file***:
 
 ```

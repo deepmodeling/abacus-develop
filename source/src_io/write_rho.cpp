@@ -11,11 +11,11 @@ void Charge::write_rho(
 {
     ModuleBase::TITLE("Charge","write_rho");
 
-    if (out_chg==0) 
+    if (GlobalV::out_chg==0) 
 	{
 		return;
 	}
-	else if(iter % out_chg != 0) 
+	else if(iter % GlobalV::out_chg != 0) 
 	{
 		return; // mohan add 2010-05-22
 	}

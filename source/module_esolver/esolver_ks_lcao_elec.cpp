@@ -1,9 +1,6 @@
 #include "module_esolver/esolver_ks_lcao.h"
-#include "src_lcao/LCAO_diago.h"
 #include "../src_pw/global.h"
 #include "../src_pw/symmetry_rho.h"
-#include "input_update.h"
-#include "../src_io/chi0_hilbert.h"
 #include "src_lcao/LCAO_evolve.h"
 #include "src_lcao/dftu.h"
 //
@@ -12,7 +9,7 @@
 #include "../src_io/istate_envelope.h"
 #include "src_lcao/ELEC_evolve.h"
 //
-#include "../src_ri/exx_abfs.h"
+#include "../src_ri/exx_abfs-jle.h"
 #include "../src_ri/exx_opt_orb.h"
 #include "../src_io/berryphase.h"
 #include "../src_io/to_wannier90.h"
@@ -23,6 +20,8 @@
 #include "../src_pw/H_Ewald_pw.h"
 #include "module_vdw/vdw.h"
 #include "../module_relax/relax_old/variable_cell.h"    // liuyu 2022-11-07
+
+#include "module_hamilt/ks_lcao/op_exx_lcao.h"
 
 namespace ModuleESolver
 {
@@ -145,7 +144,8 @@ namespace ModuleESolver
                 this->p_hamilt = new hamilt::HamiltLCAO<double>(&(this->UHM.GG),
                                                             &(this->UHM.genH),
                                                             &(this->LM),
-                                                            &(this->LOC));
+                                                            &(this->LOC),
+                                                            this->pelec->pot);
             }
             // multi_k case
             else
@@ -153,7 +153,8 @@ namespace ModuleESolver
                 this->p_hamilt = new hamilt::HamiltLCAO<std::complex<double>>(&(this->UHM.GK),
                                                                         &(this->UHM.genH),
                                                                         &(this->LM),
-                                                                        &(this->LOC));
+                                                                        &(this->LOC),
+                                                                        this->pelec->pot);
             }
         }
 
@@ -174,11 +175,11 @@ namespace ModuleESolver
         // REALLOCATE DENSITY MATRIX FIRST, THEN READ IN DENSITY MATRIX,
         // AND USE DENSITY MATRIX TO DO RHO GlobalV::CALCULATION.-- mohan 2013-03-31
         //======================================
-        if (GlobalC::pot.chg_extrap == "dm" && istep > 1)//xiaohui modify 2015-02-01
+        if (GlobalV::chg_extrap == "dm" && istep > 1)//xiaohui modify 2015-02-01
         {
             for (int is = 0; is < GlobalV::NSPIN; is++)
             {
-                ModuleBase::GlobalFunc::ZEROS(GlobalC::CHR.rho[is], GlobalC::rhopw->nrxx);
+                ModuleBase::GlobalFunc::ZEROS(pelec->charge->rho[is], GlobalC::rhopw->nrxx);
                 std::stringstream ssd;
                 ssd << GlobalV::global_out_dir << "SPIN" << is + 1 << "_DM";
                 // reading density matrix,
@@ -188,38 +189,35 @@ namespace ModuleESolver
             // calculate the charge density
             if (GlobalV::GAMMA_ONLY_LOCAL)
             {
-                Gint_inout inout(this->LOC.DM, &GlobalC::CHR, Gint_Tools::job_type::rho);
+                Gint_inout inout(this->LOC.DM, pelec->charge, Gint_Tools::job_type::rho);
                 this->UHM.GG.cal_gint(&inout);
                 if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type()==5)
                 {
                     for(int is=0; is<GlobalV::NSPIN; is++)
                     {
-                        ModuleBase::GlobalFunc::ZEROS(GlobalC::CHR.kin_r[0], GlobalC::rhopw->nrxx);
+                        ModuleBase::GlobalFunc::ZEROS(pelec->charge->kin_r[0], GlobalC::rhopw->nrxx);
                     }
-                    Gint_inout inout1(this->LOC.DM, &GlobalC::CHR, Gint_Tools::job_type::tau);
+                    Gint_inout inout1(this->LOC.DM, pelec->charge, Gint_Tools::job_type::tau);
                     this->UHM.GG.cal_gint(&inout1);
                 }
             }
             else
             {
-                Gint_inout inout(this->LOC.DM_R, &GlobalC::CHR, Gint_Tools::job_type::rho);
+                Gint_inout inout(this->LOC.DM_R, pelec->charge, Gint_Tools::job_type::rho);
                 this->UHM.GK.cal_gint(&inout);
                 if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type()==5)
                 {
                     for(int is=0; is<GlobalV::NSPIN; is++)
                     {
-                        ModuleBase::GlobalFunc::ZEROS(GlobalC::CHR.kin_r[0], GlobalC::rhopw->nrxx);
+                        ModuleBase::GlobalFunc::ZEROS(pelec->charge->kin_r[0], GlobalC::rhopw->nrxx);
                     }
-                    Gint_inout inout1(this->LOC.DM_R, &GlobalC::CHR, Gint_Tools::job_type::tau);
+                    Gint_inout inout1(this->LOC.DM_R, pelec->charge, Gint_Tools::job_type::tau);
                     this->UHM.GK.cal_gint(&inout1);
                 }
             }
 
             // renormalize the charge density
-            GlobalC::CHR.renormalize_rho();
-
-            // initialize the potential
-            GlobalC::pot.init_pot(istep - 1, GlobalC::sf.strucFac);
+            pelec->charge->renormalize_rho();
         }
 
 #ifdef __DEEPKS
@@ -263,14 +261,12 @@ namespace ModuleESolver
         {
             CE.update_istep();
             CE.save_pos_next(GlobalC::ucell);
-            CE.extrapolate_charge();
+            CE.extrapolate_charge(pelec->charge);
 
             if(GlobalC::ucell.cell_parameter_updated)
             {
                 Variable_Cell::init_after_vc();
             }
-
-            GlobalC::pot.init_pot(istep, GlobalC::sf.strucFac);
         }
 
         if(GlobalV::CALCULATION=="relax" || GlobalV::CALCULATION=="cell-relax")
@@ -281,13 +277,12 @@ namespace ModuleESolver
                 // charge extrapolation if istep>0.
                 CE.update_istep();
                 CE.update_all_pos(GlobalC::ucell);
-                CE.extrapolate_charge();
+                CE.extrapolate_charge(pelec->charge);
                 CE.save_pos_next(GlobalC::ucell);
 
                 GlobalV::ofs_running << " Setup the Vl+Vh+Vxc according to new structure factor and new charge." << std::endl;
                 // calculate the new potential accordint to
                 // the new charge density.
-                GlobalC::pot.init_pot( istep-1, GlobalC::sf.strucFac );
             }
         }
 
@@ -301,41 +296,50 @@ namespace ModuleESolver
         }
         
         this->beforesolver(istep);
-//Peize Lin add 2016-12-03
-#ifdef __MPI
-        if(Exx_Global::Hybrid_Type::No != GlobalC::exx_global.info.hybrid_type)
+        this->pelec->init_scf( istep, GlobalC::sf.strucFac );
+        // the electron charge density should be symmetrized,
+        // here is the initialization
+        Symmetry_rho srho;
+        for (int is = 0; is < GlobalV::NSPIN; is++)
         {
-            if (Exx_Global::Hybrid_Type::HF == GlobalC::exx_lcao.info.hybrid_type
-                || Exx_Global::Hybrid_Type::PBE0 == GlobalC::exx_lcao.info.hybrid_type
-                || Exx_Global::Hybrid_Type::HSE == GlobalC::exx_lcao.info.hybrid_type
-                || Exx_Global::Hybrid_Type::SCAN0 == GlobalC::exx_lcao.info.hybrid_type)
+            srho.begin(is, *(pelec->charge), GlobalC::rhopw, GlobalC::Pgrid, GlobalC::symm);
+        }
+//Peize Lin add 2016-12-03
+#ifdef __EXX
+#ifdef __MPI
+		if ( GlobalC::exx_info.info_global.cal_exx )
+		{
+            if (GlobalC::ucell.atoms[0].ncpp.xc_func == "HSE" || GlobalC::ucell.atoms[0].ncpp.xc_func == "PBE0")
             {
-                GlobalC::exx_lcao.cal_exx_ions(*this->LOWF.ParaV);
+                XC_Functional::set_xc_type("pbe");
+            }
+            else if (GlobalC::ucell.atoms[0].ncpp.xc_func == "SCAN0")
+            {
+                XC_Functional::set_xc_type("scan");
             }
 
-            if (Exx_Global::Hybrid_Type::Generate_Matrix == GlobalC::exx_global.info.hybrid_type)
-            {
-                //program should be stopped after this judgement
-                Exx_Opt_Orb exx_opt_orb;
-                exx_opt_orb.generate_matrix();
-                ModuleBase::timer::tick("ESolver_KS_LCAO", "beforescf");
-                return;
-            }
-        }
-#endif
+			//GlobalC::exx_lcao.cal_exx_ions(*this->LOWF.ParaV);
+			if(GlobalV::GAMMA_ONLY_LOCAL)
+				GlobalC::exx_lri_double.cal_exx_ions();
+			else
+				GlobalC::exx_lri_complex.cal_exx_ions();
+		}
+
+		if (Exx_Abfs::Jle::generate_matrix)
+		{
+			//program should be stopped after this judgement
+			Exx_Opt_Orb exx_opt_orb;
+			exx_opt_orb.generate_matrix();
+			ModuleBase::timer::tick("ESolver_KS_LCAO", "beforescf");
+			return;
+		}
+#endif // __MPI
+#endif // __EXX
         // 1. calculate ewald energy.
         // mohan update 2021-02-25
         if(!GlobalV::test_skip_ewald)
         {
             H_Ewald_pw::compute_ewald(GlobalC::ucell, GlobalC::rhopw);
-        }
-
-        //2. the electron charge density should be symmetrized,
-        // here is the initialization
-        Symmetry_rho srho;
-        for (int is = 0; is < GlobalV::NSPIN; is++)
-        {
-            srho.begin(is, GlobalC::CHR, GlobalC::rhopw, GlobalC::Pgrid, GlobalC::symm);
         }
 
         p_hamilt->non_first_scf = istep;
@@ -385,6 +389,8 @@ namespace ModuleESolver
         }
 
         this->beforesolver(istep);
+        //pelec should be initialized before these calculations
+        this->pelec->init_scf( istep, GlobalC::sf.strucFac );
         // self consistent calculations for electronic ground state
         if (GlobalV::CALCULATION == "nscf")
         {
@@ -393,7 +399,7 @@ namespace ModuleESolver
         else if (GlobalV::CALCULATION == "istate")
         {
             IState_Charge ISC(this->psid, this->LOC);
-            ISC.begin(this->UHM.GG, this->pelec->wg);
+            ISC.begin(this->UHM.GG, this->pelec);
         }
         else if (GlobalV::CALCULATION == "ienvelope")
         {
@@ -455,18 +461,42 @@ namespace ModuleESolver
 
         time_t time_start = std::time(NULL);
 
-    #ifdef __MPI
+#ifdef __EXX
+#ifdef __MPI
         // Peize Lin add 2018-08-14
-        switch (GlobalC::exx_lcao.info.hybrid_type)
+        if ( GlobalC::exx_info.info_global.cal_exx )
         {
-        case Exx_Global::Hybrid_Type::HF:
-        case Exx_Global::Hybrid_Type::PBE0:
-        case Exx_Global::Hybrid_Type::SCAN0:
-        case Exx_Global::Hybrid_Type::HSE:
-            GlobalC::exx_lcao.cal_exx_elec_nscf(this->LOWF.ParaV[0]);
-            break;
+            //GlobalC::exx_lcao.cal_exx_elec_nscf(this->LOWF.ParaV[0]);
+			const std::string file_name_exx = GlobalV::global_out_dir + "HexxR_" + std::to_string(GlobalV::MY_RANK);
+			if(GlobalV::GAMMA_ONLY_LOCAL)
+				GlobalC::exx_lri_double.read_Hexxs(file_name_exx);
+			else
+				GlobalC::exx_lri_complex.read_Hexxs(file_name_exx);
+
+            // This is a temporary fix
+            if(GlobalV::GAMMA_ONLY_LOCAL)
+            {
+                hamilt::Operator<double>* exx
+                    = new hamilt::OperatorEXX<hamilt::OperatorLCAO<double>>(
+                        &LM,
+                        nullptr, //no explicit call yet
+                        &(LM.Hloc)
+                    );
+                p_hamilt->opsd->add(exx);
+            }
+            else
+            {
+                hamilt::Operator<std::complex<double>>* exx
+                    = new hamilt::OperatorEXX<hamilt::OperatorLCAO<std::complex<double>>>(
+                        &LM,
+                        nullptr, //no explicit call yet
+                        &(LM.Hloc2)
+                    );
+                p_hamilt->ops->add(exx);
+            }
         }
-    #endif
+#endif // __MPI
+#endif // __EXX
 
         // mohan add 2021-02-09
         // in ions, istep starts from 1,

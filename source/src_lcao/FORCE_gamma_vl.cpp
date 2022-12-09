@@ -6,35 +6,33 @@ void Force_LCAO_gamma::cal_fvl_dphi(
 	double*** DM_in,
 	const bool isforce, 
     const bool isstress,
+    const elecstate::Potential* pot_in,
     ModuleBase::matrix& fvl_dphi,
 	ModuleBase::matrix& svl_dphi)
 {   
     ModuleBase::TITLE("Force_LCAO_gamma","cal_fvl_dphi");
     ModuleBase::timer::tick("Force_LCAO_gamma","cal_fvl_dphi");
     int istep = 1;
-    GlobalC::pot.init_pot(istep, GlobalC::sf.strucFac);
     fvl_dphi.zero_out();
     svl_dphi.zero_out();
     for(int is=0; is<GlobalV::NSPIN; ++is)
     {
         GlobalV::CURRENT_SPIN = is;
-        for(int ir=0; ir<GlobalC::rhopw->nrxx; ++ir)
+        const double* vr_eff1 = pot_in->get_effective_v(GlobalV::CURRENT_SPIN);
+        const double* vofk_eff1 = nullptr;
+        if(XC_Functional::get_func_type()==3 || XC_Functional::get_func_type()==5)
         {
-            GlobalC::pot.vr_eff1[ir] = GlobalC::pot.vr_eff(GlobalV::CURRENT_SPIN, ir);
-            if(XC_Functional::get_func_type()==3)
-            {
-                GlobalC::pot.vofk_eff1[ir] = GlobalC::pot.vofk(is, ir);
-            }
+            vofk_eff1 = pot_in->get_effective_vofk(GlobalV::CURRENT_SPIN);
         }
 
-        if(XC_Functional::get_func_type()==3)
+        if(XC_Functional::get_func_type()==3 || XC_Functional::get_func_type()==5)
         {
-            Gint_inout inout(DM_in, GlobalC::pot.vr_eff1, GlobalC::pot.vofk_eff1, isforce, isstress, &fvl_dphi, &svl_dphi, Gint_Tools::job_type::force_meta);
+            Gint_inout inout(DM_in, vr_eff1, vofk_eff1, isforce, isstress, &fvl_dphi, &svl_dphi, Gint_Tools::job_type::force_meta);
             this->UHM->GG.cal_gint(&inout);
         }
         else
         {
-            Gint_inout inout(DM_in, GlobalC::pot.vr_eff1, isforce, isstress, &fvl_dphi, &svl_dphi, Gint_Tools::job_type::force);
+            Gint_inout inout(DM_in, vr_eff1, isforce, isstress, &fvl_dphi, &svl_dphi, Gint_Tools::job_type::force);
             this->UHM->GG.cal_gint(&inout);
         }
         

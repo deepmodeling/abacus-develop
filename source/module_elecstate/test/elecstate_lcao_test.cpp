@@ -26,7 +26,6 @@
 #include "module_neighbor/sltk_atom_arrange.h"
 #include "module_pw/pw_basis_k.h"
 #include "module_xc/xc_functional.h"
-#include "module_xc/exx_global.h"
 #include "src_io/restart.h"
 
 Magnetism::Magnetism(){}
@@ -75,18 +74,6 @@ XC_Functional::XC_Functional(){}
 XC_Functional::~XC_Functional(){}
 int XC_Functional::get_func_type(){return 0;}
 
-#ifdef __MPI
-#include "src_ri/exx_lcao.h"
-Exx_Lcao::Exx_Info::Exx_Info( const Exx_Global::Exx_Info &info_global )
-    :hybrid_type(info_global.hybrid_type),hse_omega(info_global.hse_omega){}
-Exx_Lcao::Exx_Lcao(const Exx_Global::Exx_Info &info_global ):info(info_global){}
-namespace GlobalC
-{
-    Exx_Global exx_global;
-    Exx_Lcao exx_lcao(GlobalC::exx_global.info); 
-}
-#endif
-
 namespace WF_Local
 {
     int read_lowf(double** ctot, const int& is, const Parallel_Orbitals* ParaV, psi::Psi<double>*, elecstate::ElecState*) {return 1;};
@@ -98,14 +85,11 @@ namespace WF_Local
 //mock the unrelated functions in charge.cpp
 #include "src_pw/occupy.h"
 bool Occupy::use_gaussian_broadening = false;
-bool Occupy::use_tetrahedron_method = false;
-double Magnetism::get_nelup(void) {return 0;}
-double Magnetism::get_neldw(void) {return 0;}
 #ifdef __MPI
 void Parallel_Grid::zpiece_to_all(double *zpiece, const int &iz, double *rho){}
 #endif
 
-void Restart::load_disk(const std::string mode, const int i) const {}
+void Restart::load_disk(const std::string mode, const int i, double** rho) const {}
 
 void set_pw()
 {
@@ -193,7 +177,7 @@ namespace elecstate
                       LCAO_Hamilt* uhm_in,
                       Local_Orbital_wfc* lowf_in,
                       ModuleBase::matrix &wg_in)
-                      :elecstate::ElecStateLCAO(chg_in,klist_in,nks_in,nbands_in,loc_in,uhm_in,lowf_in)
+                      :elecstate::ElecStateLCAO(chg_in,klist_in,nks_in,loc_in,uhm_in,lowf_in)
                       {
                           this->wg = wg_in;
                       }               
@@ -206,6 +190,16 @@ namespace elecstate
 
     void ElecState::calculate_weights(void) {}
     void ElecState::calEBand() {}
+    void ElecState::init_ks(
+        Charge *chg_in, // pointer for class Charge
+        const K_Vectors *klist_in,
+        int nk_in
+    ) {
+        this->charge = chg_in;
+        this->klist = klist_in;
+        this->ekb.create(nk_in, GlobalV::NBANDS);
+        this->wg.create(nk_in, GlobalV::NBANDS);
+    }
 }
 
 template<class T>

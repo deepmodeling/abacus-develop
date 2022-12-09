@@ -37,23 +37,23 @@ void Restart::read_file2(const std::string &file_name, void*const ptr, const siz
 	close(file);
 }
 
-void Restart::save_disk(const std::string mode, const int i) const
+void Restart::save_disk(const std::string mode, const int i, double** rho) const
 {
 	if("charge"==mode)
-		write_file2(folder+"charge_"+ModuleBase::GlobalFunc::TO_STRING(GlobalV::MY_RANK)+"_"+ModuleBase::GlobalFunc::TO_STRING(i), GlobalC::CHR.rho[i], GlobalC::rhopw->nrxx*sizeof(double));
+		write_file2(folder+"charge_"+ModuleBase::GlobalFunc::TO_STRING(GlobalV::MY_RANK)+"_"+ModuleBase::GlobalFunc::TO_STRING(i), rho[i], GlobalC::rhopw->nrxx*sizeof(double));
 }
 
-void Restart::load_disk(const std::string mode, const int i) const
+void Restart::load_disk(const std::string mode, const int i, double** rho) const
 {
 	if("charge"==mode)
-		read_file2(folder+"charge_"+ModuleBase::GlobalFunc::TO_STRING(GlobalV::MY_RANK)+"_"+ModuleBase::GlobalFunc::TO_STRING(i), GlobalC::CHR.rho[i], GlobalC::rhopw->nrxx*sizeof(double));
+		read_file2(folder+"charge_"+ModuleBase::GlobalFunc::TO_STRING(GlobalV::MY_RANK)+"_"+ModuleBase::GlobalFunc::TO_STRING(i), rho[i], GlobalC::rhopw->nrxx*sizeof(double));
 }
 
 #ifdef __LCAO
-void Restart::save_disk(LCAO_Matrix &lm, const std::string mode, const int i) const
+void Restart::save_disk(LCAO_Matrix &lm, const std::string mode, const int i, double** rho) const
 {
 	if("charge"==mode)
-		write_file2(folder+"charge_"+ModuleBase::GlobalFunc::TO_STRING(GlobalV::MY_RANK)+"_"+ModuleBase::GlobalFunc::TO_STRING(i), GlobalC::CHR.rho[i], GlobalC::rhopw->nrxx*sizeof(double));
+		write_file2(folder+"charge_"+ModuleBase::GlobalFunc::TO_STRING(GlobalV::MY_RANK)+"_"+ModuleBase::GlobalFunc::TO_STRING(i), rho[i], GlobalC::rhopw->nrxx*sizeof(double));
 	if("H"==mode)
 	{
 		if(GlobalV::GAMMA_ONLY_LOCAL)
@@ -63,10 +63,10 @@ void Restart::save_disk(LCAO_Matrix &lm, const std::string mode, const int i) co
 	}
 }
 
-void Restart::load_disk(LCAO_Matrix &lm, const std::string mode, const int i) const
+void Restart::load_disk(LCAO_Matrix &lm, const std::string mode, const int i, double** rho) const
 {
 	if("charge"==mode)
-		read_file2(folder+"charge_"+ModuleBase::GlobalFunc::TO_STRING(GlobalV::MY_RANK)+"_"+ModuleBase::GlobalFunc::TO_STRING(i), GlobalC::CHR.rho[i], GlobalC::rhopw->nrxx*sizeof(double));
+		read_file2(folder+"charge_"+ModuleBase::GlobalFunc::TO_STRING(GlobalV::MY_RANK)+"_"+ModuleBase::GlobalFunc::TO_STRING(i), rho[i], GlobalC::rhopw->nrxx*sizeof(double));
 	if("H"==mode)
 	{
 		if(GlobalV::GAMMA_ONLY_LOCAL)

@@ -3,7 +3,8 @@
 // 1. gcxc, which is the wrapper for gradient correction part
 // 2. gcx_spin, spin polarized, exchange only
 // 3. gcc_spin, spin polarized, correlation only
-// 4. gcxc_spin_libxc, the entire GGA functional, LIBXC
+// 4. gcxc_libxc, the entire GGA functional, LIBXC, for nspin=1 case
+// 5. gcxc_spin_libxc, the entire GGA functional, LIBXC, for nspin=2 case
 
 #include "xc_functional.h"
 #include <stdexcept>
@@ -281,7 +282,8 @@ void XC_Functional::gcc_spin(double rho, double &zeta, double grho, double &sc,
             case XC_GGA_C_P86: //P86
                 XC_Functional::perdew86_spin(rho, zeta, grho, sc, v1cup, v1cdw, v2c);break;
             case XC_GGA_C_PW91: //PW91_C
-                XC_Functional::ggac_spin(rho, zeta, grho, sc, v1cup, v1cdw, v2c);break;
+                ModuleBase::WARNING_QUIT("xc_wrapper_gcxc","there seems to be something wrong with ggac_spin, better use libxc version instead");break;
+                //XC_Functional::ggac_spin(rho, zeta, grho, sc, v1cup, v1cdw, v2c);
             case XC_GGA_C_PBE: //PBC
                 XC_Functional::pbec_spin(rho, zeta, grho, 1, sc, v1cup, v1cdw, v2c);break;
             case XC_GGA_C_PBE_SOL: //PBCsol
@@ -291,6 +293,40 @@ void XC_Functional::gcc_spin(double rho, double &zeta, double grho, double &sc,
     //}
     return;
 } //end subroutine gcc_spin
+
+void XC_Functional::gcxc_libxc(const double &rho, const double &grho, double &sxc,
+          double &v1xc, double &v2xc)
+{
+#ifdef USE_LIBXC
+
+    const double small = 1.e-6;
+    const double smallg = 1.e-10;
+    double s,v1,v2;
+    sxc = v1xc = v2xc = 0.0;
+
+    if (rho <= small || grho < smallg)
+    {
+        return;
+    }
+
+    std::vector<xc_func_type> funcs = init_func(XC_UNPOLARIZED);
+    
+
+    for(xc_func_type &func : funcs)
+    {
+        xc_gga_exc_vxc(&func, 1, &rho, &grho, &s, &v1, &v2);
+        
+        sxc += s * rho;
+        v2xc += v2 * 2.0;
+        v1xc += v1;
+    }
+    finish_func(funcs);
+
+    return;
+#else
+    ModuleBase::WARNING_QUIT("gcxc_libxc","compile with LIBXC to use this subroutine");
+#endif
+} // end subroutine gcxc_libxc
 
 void XC_Functional::gcxc_spin_libxc(double rhoup, double rhodw, 
         ModuleBase::Vector3<double> gdr1, ModuleBase::Vector3<double> gdr2,

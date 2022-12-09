@@ -9,11 +9,12 @@ For more non-technical aspects, please refer to the [ABACUS Contribution Guide](
 - [Got a question?](#got-a-question)
 - [Structure of the package](#structure-of-the-package)
 - [Submitting an Issue](#submitting-an-issue)
-- [Comment Style for documentation](#comment-style-for-documentation)
+- [Comment style for documentation](#comment-style-for-documentation)
 - [Code formatting style](#code-formatting-style)
+- [Generating code coverage report](#generating-code-coverage-report)
 - [Adding a unit test](#adding-a-unit-test)
 - [Submitting a Pull Request](#submitting-a-pull-request)
-- [Commit Message Guidelines](#commit-message-guidelines)
+- [Commit message guidelines](#commit-message-guidelines)
 
 ## Got a question?
 
@@ -38,7 +39,7 @@ The source code of ABACUS is based on several modules. Under the ABACUS root dir
 Before you submit an issue, please search the issue tracker, and maybe your problem has been discussed and fixed. You can [submit new issues](https://github.com/deepmodeling/abacus-develop/issues/new/choose) by filling our issue forms.
 To help us reproduce and confirm a bug, please provide a test case and building environment in your issue.
 
-## Comment Style for documentation
+## Comment style for documentation
 
 ABACUS uses Doxygen to generate docs directly from `.h` and `.cpp` code files.
 
@@ -116,11 +117,11 @@ We use GoogleTest as our test framework. Write your test under the corresponding
 - Add a folder named `test` under the module.
 - Append the content below to `CMakeLists.txt` of the module:
 
-```cmake
-IF (BUILD_TESTING)
-  add_subdirectory(test)
-endif()
-```
+    ```cmake
+    IF (BUILD_TESTING)
+      add_subdirectory(test)
+    endif()
+    ```
 
 - Add a blank `CMakeLists.txt` under `module*/test`.
 
@@ -130,49 +131,51 @@ To add a unit test:
 - Add your testing source code with suffix `*_test.cpp` in `test` directory.
 - Append the content below to `CMakeLists.txt` of the module:
 
-```cmake
-AddTest(
-  TARGET <module_name>_<test_name> # this is the executable file name of the test
-  SOURCES <test_name>.cpp
+    ```cmake
+    AddTest(
+      TARGET <module_name>_<test_name> # this is the executable file name of the test
+      SOURCES <test_name>.cpp
 
-  # OPTIONAL: if this test requires external libraries, add them with "LIBS" statement.
-  LIBS math_libs # `math_libs` includes all math libraries in ABACUS.
-)
-```
+      # OPTIONAL: if this test requires external libraries, add them with "LIBS" statement.
+      LIBS math_libs # `math_libs` includes all math libraries in ABACUS.
+    )
+    ```
 
 - Build with `-D BUILD_TESTING=1` flag. You can find built testing programs under `build/source/<module_name>/test`.
 - Follow the installing procedure of CMake. The tests will move to `build/test`.
 
 ## Generating code coverage report
 
-We use gcov and lcov to generate code coverage report, and only support gcc.
+This feature requires using GCC compiler. We use `gcov` and `lcov` to generate code coverage report.
 
-1. Add -DENABLE_COVERAGE=ON for cmake:
-```
-cmake -B build -DENABLE_COVERAGE=ON
-```
+1. Add `-DENABLE_COVERAGE=ON` for CMake configure command.
 
-2. Build ABACUS.
-```
-cmake --build build -j`nproc`
-cmake --install build
-```
+    ```bash
+    cmake -B build -DBUILD_TESTING=ON -DENABLE_COVERAGE=ON
+    ```
 
-3. Use ``build/abacus`` to run test cases.
+2. Build, install ABACUS, and run test cases. Please note that since all optimizations are disabled to gather running status line by line, the performance is drastically decreased. Set a longer time out to ensure all tests are executed.
 
-4. Generate html report.
-```
-cd build/
-make lcov
-```
+    ```bash
+    cmake --build build --target test ARGS="-V --timeout 21600"
+    ```
 
-Now you can copy build/lcov to your local device, and view build/lcov/html/all_targets/index.html
+3. Generate HTML report.
+
+    ```bash
+    cd build/
+    make lcov
+    ```
+
+Now you can copy `build/lcov` to your local device, and view `build/lcov/html/all_targets/index.html`.
+
+We use [Codecov](https://codecov.io/) to host and visualize our [**code coverage report**](https://app.codecov.io/gh/deepmodeling/abacus-develop). Analysis is scheduled after a new version releases; this [action](https://github.com/deepmodeling/abacus-develop/actions/workflows/coverage.yml) can also be manually triggered.
 
 ## Submitting a Pull Request
 
-1. [Fork](https://docs.github.com/en/github/getting-started-with-github/fork-a-repo) the ABACUS repo.
+1. [Fork](https://docs.github.com/en/github/getting-started-with-github/fork-a-repo) the [ABACUS repository](https://github.com/deepmodeling/abacus-develop). If you already had an existing fork, [sync](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks/syncing-a-fork) the fork to keep your modification up-to-date.
 
-2. Pull your forked repository, and create a new git branchmake to your changes in it:
+2. Pull your forked repository, create a new git branch, and make your changes in it:
 
      ```shell
      git checkout -b my-fix-branch
@@ -189,11 +192,11 @@ To run a subset of unit test, use `ctest -R <test-match-pattern>` to perform tes
     git push origin my-fix-branch
     ```
 
-6. In GitHub, send a pull request with `deepmodeling/abacus-develop:develop` as the base repository.
+6. In GitHub, send a pull request (PR) with `deepmodeling/abacus-develop:develop` as the base repository. It is required to document your PR following [our guidelines](#commit-message-guidelines).
 
 7. After your pull request is merged, you can safely delete your branch and sync the changes from the main (upstream) repository:
 
-- Delete the remote branch on GitHub either through the GitHub web UI or your local shell as follows:
+- Delete the remote branch on GitHub either [through the GitHub web UI](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-branches-in-your-repository/deleting-and-restoring-branches-in-a-pull-request#deleting-a-branch-used-for-a-pull-request) or your local shell as follows:
 
     ```shell
     git push origin --delete my-fix-branch
@@ -217,7 +220,7 @@ To run a subset of unit test, use `ctest -R <test-match-pattern>` to perform tes
     git pull --ff upstream develop
     ```
 
-## Commit Message Guidelines
+## Commit message guidelines
 
 A well-formatted commit message leads a more readable history when we look through some changes, and helps us generate change log.
 We follow up [The Conventional Commits specification](https://www.conventionalcommits.org) for commit message format.
@@ -233,25 +236,25 @@ The commit message should be structured as follows:
 
 - Header
   - type: The general intention of this commit
-    - `feat`: A new feature
-    - `fix`: A bug fix
-    - `docs`: Only documentation changes
-    - `style`: Changes that do not affect the meaning of the code
-    - `refactor`: A code change that neither fixes a bug nor adds a feature
-    - `perf`: A code change that improves performance
-    - `test`: Adding missing tests or correcting existing tests
-    - `build`: Changes that affect the build system or external dependencies
-    - `ci`: Changes to our CI configuration files and scripts
-    - `revert`: Reverting commits
-  - scope: The scope could be the module which this commit changes; for example, `orbital`
+    - `Feature`: A new feature
+    - `Fix`: A bug fix
+    - `Docs`: Only documentation changes
+    - `Style`: Changes that do not affect the meaning of the code
+    - `Refactor`: A code change that neither fixes a bug nor adds a feature
+    - `Perf`: A code change that improves performance
+    - `Test`: Adding missing tests or correcting existing tests
+    - `Build`: Changes that affect the build system or external dependencies
+    - `CI`: Changes to our CI configuration files and scripts
+    - `Revert`: Reverting commits
+  - scope: optional, could be the module which this commit changes; for example, `orbital`
   - description: A short summary of the code changes: tell others what you did in one sentence.
 - Body: optional, providing additional contextual information about the code changes, e.g. the motivation of this commit, referenced materials, and so on.
-- Footer: optional, reference GitHub issues, PRs that this commit closes or is related to
+- Footer: optional, reference GitHub issues, PRs that this commit closes or is related to.
 
 Here is an example:
 
 ```text
-fix(lcao): use correct scalapack interface.
+Fix(lcao): use correct scalapack interface.
 
 `pzgemv_` and `pzgemm_` used `double*` for alpha and beta parameters but not `complex*` , this would cause error in GNU compiler.
 

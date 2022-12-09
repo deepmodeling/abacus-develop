@@ -14,6 +14,10 @@
 #include <sstream>
 #include <vector>
 
+#ifdef _OPENMP
+#include <omp.h>
+#endif
+
 using namespace std;
 
 map<int, elpa_t> NEW_ELPA_HANDLE_POOL;
@@ -51,6 +55,12 @@ ELPA_Solver::ELPA_Solver(const bool isReal,
 
     static int total_handle = 0;
 
+#ifdef _OPENMP
+    int num_threads = omp_get_max_threads();
+#else  
+    int num_threads = 1;
+#endif
+
     elpa_init(20210430);
 
     handle_id = ++total_handle;
@@ -59,6 +69,9 @@ ELPA_Solver::ELPA_Solver(const bool isReal,
     handle = elpa_allocate(&error);
     NEW_ELPA_HANDLE_POOL[handle_id] = handle;
 
+#ifdef _OPENMP
+    elpa_set_integer(NEW_ELPA_HANDLE_POOL[handle_id], "omp_threads", num_threads, &error);
+#endif
     elpa_set_integer(NEW_ELPA_HANDLE_POOL[handle_id], "na", nFull, &error);
     elpa_set_integer(NEW_ELPA_HANDLE_POOL[handle_id], "nev", nev, &error);
     elpa_set_integer(NEW_ELPA_HANDLE_POOL[handle_id], "local_nrows", narows, &error);
@@ -110,6 +123,12 @@ ELPA_Solver::ELPA_Solver(const bool isReal,
     static map<int, elpa_t> NEW_ELPA_HANDLE_POOL;
     static int total_handle;
 
+#ifdef _OPENMP
+    int num_threads = omp_get_max_threads();
+#else  
+    int num_threads = 1;
+#endif
+
     elpa_init(20210430);
 
     handle_id = ++total_handle;
@@ -117,6 +136,9 @@ ELPA_Solver::ELPA_Solver(const bool isReal,
     handle = elpa_allocate(&error);
     NEW_ELPA_HANDLE_POOL[handle_id] = handle;
 
+#ifdef _OPENMP
+    elpa_set_integer(NEW_ELPA_HANDLE_POOL[handle_id], "omp_threads", num_threads, &error);
+#endif
     elpa_set_integer(NEW_ELPA_HANDLE_POOL[handle_id], "na", nFull, &error);
     elpa_set_integer(NEW_ELPA_HANDLE_POOL[handle_id], "nev", nev, &error);
     elpa_set_integer(NEW_ELPA_HANDLE_POOL[handle_id], "local_nrows", narows, &error);

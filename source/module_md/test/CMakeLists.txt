@@ -27,6 +27,8 @@ list(APPEND depend_files
   ../../module_base/intarray.cpp
   ../../module_base/realarray.cpp
   ../../module_base/complexarray.cpp
+  ../../module_base/complexmatrix.cpp
+  ../../module_base/global_variable.cpp
   ../../module_neighbor/sltk_adjacent_set.cpp
   ../../module_neighbor/sltk_atom_arrange.cpp
   ../../module_neighbor/sltk_atom.cpp
@@ -36,25 +38,27 @@ list(APPEND depend_files
   ../../src_io/output.cpp
   ../../src_io/print_info.cpp
   ../../module_esolver/esolver_lj.cpp
+  ../../src_parallel/parallel_reduce.cpp
+  ../../src_parallel/parallel_global.cpp
 )
 
 AddTest(
   TARGET md_LJ_pot
-  LIBS ${math_libs} psi
+  LIBS ${math_libs} psi device
   SOURCES LJ_pot_test.cpp  
   ${depend_files}
 )
 
 AddTest(
   TARGET md_func
-  LIBS ${math_libs} psi
+  LIBS ${math_libs} psi device
   SOURCES MD_func_test.cpp  
   ${depend_files}
 )
 
 AddTest(
   TARGET md_fire
-  LIBS ${math_libs} psi
+  LIBS ${math_libs} psi device
   SOURCES FIRE_test.cpp
   ../mdrun.cpp
   ../FIRE.cpp
@@ -63,7 +67,7 @@ AddTest(
 
 AddTest(
   TARGET md_verlet
-  LIBS ${math_libs} psi
+  LIBS ${math_libs} psi device
   SOURCES verlet_test.cpp
   ../mdrun.cpp
   ../verlet.cpp
@@ -72,7 +76,7 @@ AddTest(
 
 AddTest(
   TARGET md_nvt_nhc
-  LIBS ${math_libs} psi
+  LIBS ${math_libs} psi device
   SOURCES NVT_NHC_test.cpp
   ../mdrun.cpp
   ../Nose_Hoover.cpp
@@ -81,7 +85,7 @@ AddTest(
 
 AddTest(
   TARGET md_msst
-  LIBS ${math_libs} psi
+  LIBS ${math_libs} psi device
   SOURCES MSST_test.cpp
   ../mdrun.cpp
   ../MSST.cpp
@@ -90,7 +94,7 @@ AddTest(
 
 AddTest(
   TARGET md_lgv
-  LIBS ${math_libs} psi
+  LIBS ${math_libs} psi device
   SOURCES Langevin_test.cpp
   ../mdrun.cpp
   ../Langevin.cpp

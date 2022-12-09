@@ -18,7 +18,8 @@
 namespace ModuleESolver
 {
 
-    ESolver_KS::ESolver_KS()
+    template<typename FPTYPE, typename Device>
+    ESolver_KS<FPTYPE, Device>::ESolver_KS()
     {
         classname = "ESolver_KS";
         basisname = "PLEASE ADD BASISNAME FOR CURRENT ESOLVER.";
@@ -36,42 +37,24 @@ namespace ModuleESolver
         tmp->setbxyz(INPUT.bx,INPUT.by,INPUT.bz);
     }
 
-    ESolver_KS::~ESolver_KS()
+    template<typename FPTYPE, typename Device>
+    ESolver_KS<FPTYPE, Device>::~ESolver_KS()
     {
         delete this->pw_wfc;
-        delete this->pelec;
         delete this->p_hamilt;
         delete this->phsol;
     }
 
-    void ESolver_KS::Init(Input& inp, UnitCell& ucell)
+    template<typename FPTYPE, typename Device>
+    void ESolver_KS<FPTYPE, Device>::Init(Input& inp, UnitCell& ucell)
     {
         ESolver_FP::Init(inp,ucell);
-        // Yu Liu add 2021-07-03
-        GlobalC::CHR.cal_nelec();
+        chr.cal_nelec();
 
         /* it has been established that that
          xc_func is same for all elements, therefore
          only the first one if used*/
-        /* In the special "two-level" calculation case, 
-        first scf iteration only calculate the functional without exact exchange.
-        but in "nscf" calculation, there is no need of "two-level" method. */
-        if(GlobalV::CALCULATION == "nscf")
-        {
-            XC_Functional::set_xc_type(ucell.atoms[0].ncpp.xc_func);
-        }
-        else if (ucell.atoms[0].ncpp.xc_func == "HSE" || ucell.atoms[0].ncpp.xc_func == "PBE0")
-        {
-            XC_Functional::set_xc_type("pbe");
-        }
-        else if (ucell.atoms[0].ncpp.xc_func == "SCAN0")
-        {
-            XC_Functional::set_xc_type("scan");
-        }
-        else
-        {
-            XC_Functional::set_xc_type(ucell.atoms[0].ncpp.xc_func);
-        }
+        XC_Functional::set_xc_type(ucell.atoms[0].ncpp.xc_func);
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "SETUP UNITCELL");
 
         // symmetry analysis should be performed every time the cell is changed
@@ -119,7 +102,8 @@ namespace ModuleESolver
         CE.Init_CE();
     }
 
-    void ESolver_KS::hamilt2density(const int istep, const int iter, const double ethr)
+    template<typename FPTYPE, typename Device>
+    void ESolver_KS<FPTYPE, Device>::hamilt2density(const int istep, const int iter, const FPTYPE ethr)
     {
         ModuleBase::timer::tick(this->classname, "hamilt2density");
         //Temporarily, before HSolver is constructed, it should be overrided by
@@ -130,7 +114,8 @@ namespace ModuleESolver
         ModuleBase::timer::tick(this->classname, "hamilt2density");
     }
 
-    void ESolver_KS::print_wfcfft(Input& inp, ofstream &ofs)
+    template<typename FPTYPE, typename Device>
+    void ESolver_KS<FPTYPE, Device>::print_wfcfft(Input& inp, ofstream &ofs)
     {
         ofs << "\n\n\n\n";
 	    ofs << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
@@ -145,7 +130,7 @@ namespace ModuleESolver
 	    ofs << " <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" << std::endl;
 	    ofs << "\n\n\n\n";
         ofs << "\n SETUP PLANE WAVES FOR WAVE FUNCTIONS" << std::endl;
-        double ecut = INPUT.ecutwfc;
+        FPTYPE ecut = INPUT.ecutwfc;
         if(abs(ecut-this->pw_wfc->gk_ecut * this->pw_wfc->tpiba2) > 1e-6)
         {
             ecut = this->pw_wfc->gk_ecut * this->pw_wfc->tpiba2;
@@ -168,7 +153,8 @@ namespace ModuleESolver
         ModuleBase::GlobalFunc::DONE(ofs, "INIT PLANEWAVE");
     }
 
-    void ESolver_KS::Run(const int istep, UnitCell& ucell)
+    template<typename FPTYPE, typename Device>
+    void ESolver_KS<FPTYPE, Device>::Run(const int istep, UnitCell& ucell)
     {
         if (!(GlobalV::CALCULATION == "scf" || GlobalV::CALCULATION == "md"
             || GlobalV::CALCULATION == "relax" || GlobalV::CALCULATION == "cell-relax"))
@@ -179,8 +165,9 @@ namespace ModuleESolver
         {
             ModuleBase::timer::tick(this->classname, "Run");
 
-            if(this->maxniter > 0)  this->printhead(); //print the headline on the screen.
             this->beforescf(istep); //Something else to do before the iter loop
+            ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT SCF");
+            if(this->maxniter > 0)  this->printhead(); //print the headline on the screen.
 
             bool firstscf = true;
             this->conv_elec = false;
@@ -193,7 +180,7 @@ namespace ModuleESolver
 #else
                 auto iterstart = std::chrono::system_clock::now();
 #endif
-                double diag_ethr = this->phsol->set_diagethr(istep, iter, drho);
+                FPTYPE diag_ethr = this->phsol->set_diagethr(istep, iter, drho);
                 eachiterinit(istep, iter);
                 this->hamilt2density(istep, iter, diag_ethr);
                 
@@ -204,11 +191,11 @@ namespace ModuleESolver
                 //they do not occupy all processors, for example wavefunctions uses 20 processors while density uses 10.
                 if(GlobalV::MY_STOGROUP == 0)
                 {
-                    // double drho = this->estate.caldr2(); 
+                    // FPTYPE drho = this->estate.caldr2(); 
                     // EState should be used after it is constructed.
-                    drho = GlobalC::CHR_MIX.get_drho(GlobalC::CHR.rho, GlobalC::CHR.rho_save,
-                        GlobalC::CHR.rhog, GlobalC::CHR.rhog_save, GlobalC::CHR.nelec);
-                    double hsolver_error = 0.0;
+
+                    drho = GlobalC::CHR_MIX.get_drho(pelec->charge, GlobalV::nelec);
+                    FPTYPE hsolver_error = 0.0;
                     if (firstscf)
                     {
                         firstscf = false;
@@ -218,8 +205,7 @@ namespace ModuleESolver
                         {
                             diag_ethr = this->phsol->reset_diagethr(GlobalV::ofs_running, hsolver_error, drho);
                             this->hamilt2density(istep, iter, diag_ethr);
-                            drho = GlobalC::CHR_MIX.get_drho(GlobalC::CHR.rho, GlobalC::CHR.rho_save,
-                                GlobalC::CHR.rhog, GlobalC::CHR.rhog_save, GlobalC::CHR.nelec);
+                            drho = GlobalC::CHR_MIX.get_drho(pelec->charge, GlobalV::nelec);
                             hsolver_error = this->phsol->cal_hsolerror();
                         }
                     }
@@ -235,13 +221,13 @@ namespace ModuleESolver
                     {
                         //charge mixing
                         //conv_elec = this->estate.mix_rho();
-                        GlobalC::CHR_MIX.mix_rho(iter, GlobalC::CHR.rho, GlobalC::CHR.rho_save, GlobalC::CHR.rhog, GlobalC::CHR.rhog_save);
+                        GlobalC::CHR_MIX.mix_rho(iter, pelec->charge);
                     }
                 }
 #ifdef __MPI
 		        MPI_Bcast(&drho, 1, MPI_DOUBLE , 0, PARAPW_WORLD);
 		        MPI_Bcast(&this->conv_elec, 1, MPI_DOUBLE , 0, PARAPW_WORLD);
-		        MPI_Bcast(GlobalC::CHR.rho[0], GlobalC::rhopw->nrxx, MPI_DOUBLE, 0, PARAPW_WORLD);
+		        MPI_Bcast(pelec->charge->rho[0], GlobalC::rhopw->nrxx, MPI_DOUBLE, 0, PARAPW_WORLD);
 #endif
 
                 // Hamilt should be used after it is constructed.
@@ -249,9 +235,9 @@ namespace ModuleESolver
                 updatepot(istep, iter);
                 eachiterfinish(iter);
 #ifdef __MPI
-                double duration = (double)(MPI_Wtime() - iterstart);
+                FPTYPE duration = (FPTYPE)(MPI_Wtime() - iterstart);
 #else
-                double duration = (std::chrono::system_clock::now() - iterstart).count() / CLOCKS_PER_SEC;
+                FPTYPE duration = (std::chrono::system_clock::now() - iterstart).count() / CLOCKS_PER_SEC;
 #endif
                 printiter(iter, drho, duration, diag_ethr);
                 if (this->conv_elec)
@@ -269,7 +255,8 @@ namespace ModuleESolver
         return;
     };
 
-    void ESolver_KS::printhead()
+    template<typename FPTYPE, typename Device>
+    void ESolver_KS<FPTYPE, Device>::printhead()
     {
         std::cout << " " << std::setw(7) << "ITER";
         if (GlobalV::NSPIN == 2)
@@ -283,12 +270,14 @@ namespace ModuleESolver
         std::cout << std::setw(11) << "TIME(s)" << std::endl;
     }
 
-    void ESolver_KS::printiter(const int iter, const double drho, const double duration, const double ethr)
+    template<typename FPTYPE, typename Device>
+    void ESolver_KS<FPTYPE, Device>::printiter(const int iter, const FPTYPE drho, const FPTYPE duration, const FPTYPE ethr)
     {
         GlobalC::en.print_etot(this->conv_elec, iter, drho, duration, ethr);
     }
 
-    void ESolver_KS::writehead(std::ofstream& ofs_running, const int istep, const int iter)
+    template<typename FPTYPE, typename Device>
+    void ESolver_KS<FPTYPE, Device>::writehead(std::ofstream& ofs_running, const int istep, const int iter)
     {
         ofs_running
             << "\n "
@@ -298,10 +287,14 @@ namespace ModuleESolver
             << "--------------------------------\n";
     }
 
-    int ESolver_KS::getniter()
+    template<typename FPTYPE, typename Device>
+    int ESolver_KS<FPTYPE, Device>::getniter()
     {
         return this->niter;
     }
 
-
+template class ESolver_KS<double, psi::DEVICE_CPU>;
+#if ((defined __CUDA) || (defined __ROCM))
+template class ESolver_KS<double, psi::DEVICE_GPU>;
+#endif
 }

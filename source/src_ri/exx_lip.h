@@ -7,8 +7,7 @@
 
 #include "../module_base/complexmatrix.h"
 #include "../module_base/vector3.h"
-#include "../src_pw/hamilt.h"
-#include "../module_xc/exx_global.h"
+#include "../module_xc/exx_info.h"
 #include "../module_pw/pw_basis_k.h"
 #include "module_elecstate/elecstate.h"
 
@@ -19,20 +18,10 @@ class UnitCell;
 class Exx_Lip
 {
 public:
-	Exx_Lip( const Exx_Global::Exx_Info &info_global );
+	Exx_Lip( const Exx_Info::Exx_Info_Lip &info_in );
 	~Exx_Lip();
 
-	struct Exx_Info
-	{
-		const Exx_Global::Hybrid_Type &hybrid_type;
-
-		const double &hse_omega;
-
-		double lambda;
-
-		Exx_Info( const Exx_Global::Exx_Info &info_global );
-	};
-	Exx_Info info;
+	const Exx_Info::Exx_Info_Lip &info;
 
 	void init(
 		K_Vectors *kv_ptr_in, 
@@ -87,15 +76,6 @@ private:
 	void sum_all(int ik);
 	void exx_energy_cal();
 	void read_q_pack();
-
-// mohan comment out 2021-02-24
-	friend void Hamilt_PW::diagH_subspace(
-		const int ik,
-		const int nstart,
-		const int n_band,
-		const ModuleBase::ComplexMatrix &psi,
-		ModuleBase::ComplexMatrix &evc,
-		double *en);	
 	
 public:
 

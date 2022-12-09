@@ -11,9 +11,6 @@ using namespace std;
 class Occupy
 {
 
-	// pengfei 2016-11-23
-    friend class Chi0_hilbert;
-
 public:
 
     Occupy();
@@ -24,11 +21,6 @@ public:
     static const bool& gauss(void) 
 	{
         return use_gaussian_broadening;
-    }
-
-    static const bool& tetra(void) 
-	{
-        return use_tetrahedron_method;
     }
 
     static const bool& fix(void) 
@@ -42,9 +34,6 @@ public:
     static bool use_gaussian_broadening;
     static int gaussian_type;
     static double gaussian_parameter;
-
-    // tetrahedron
-    static bool use_tetrahedron_method;
 
     // fixed occupations
     static bool fixed_occupations;

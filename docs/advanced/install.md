@@ -1,10 +1,14 @@
 # Advanced Installation Options
+
 This guide helps you install ABACUS with advanced features. Please make sure to read the [easy-installation guide](../quick_start/easy_install.md) before.
+
 ## Build with Libxc
 
 ABACUS use exchange-correlation functionals by default. However, for some functionals (such as HSE hybrid functional), Libxc is required.
 
-Dependency: [Libxc](https://tddft.org/programs/libxc/)>=5.1.7 .
+Dependency: [Libxc](https://tddft.org/programs/libxc/) >= 5.1.7 .
+
+> Note: Building Libxc from source with Makefile does NOT support using it in CMake here. Please compile Libxc with CMake instead.
 
 If Libxc is not installed in standard path (i.e. installed with a custom prefix path), you can set `Libxc_DIR` to the corresponding directory.
 
@@ -13,12 +17,11 @@ cmake -B build -DLibxc_DIR=~/libxc
 ```
 
 ## Build with DeePKS
-If DeePKS feature is requied for [DeePKS-kit](https://github.com/deepmodeling/deepks-kit), the following prerequisites and steps are needed:
 
-### Extra prerequisites
+If DeePKS feature is required for [DeePKS-kit](https://github.com/deepmodeling/deepks-kit), the following prerequisites and steps are needed:
 
-- C++ compiler, supporting **C++14**
-- CMake `3.18` and above
+- C++ compiler, supporting **C++14** (GCC >= 5 is sufficient)
+- CMake >= 3.18
 - [LibTorch](https://pytorch.org/) with cxx11 ABI supporting CPU
 - [Libnpy](https://github.com/llohse/libnpy/)
 
@@ -26,10 +29,13 @@ If DeePKS feature is requied for [DeePKS-kit](https://github.com/deepmodeling/de
 cmake -B build -DENABLE_DEEPKS=1 -DTorch_DIR=~/libtorch/share/cmake/Torch/ -Dlibnpy_INCLUDE_DIR=~/libnpy/include
 ```
 
-## Build with DeePMD-kit
-If the Deep Potential model is employed in Molecule Dynamics calculations, the following prerequisites and steps are needed:
+> CMake will try to download Libnpy if it cannot be found locally.
 
-### Extra prerequisites
+## Build with DeePMD-kit
+
+> Note: This part is only required if you want to load a trained DeeP Potential and run molecular dynamics with that. To train the DeeP Potential with DP-GEN, no extra prerequisite is needed and please refer to [this page](http://abacus.deepmodeling.com/en/latest/advanced/interface/dpgen.html) for ABACUS interface with DP-GEN.
+
+If the Deep Potential model is employed in Molecule Dynamics calculations, the following prerequisites and steps are needed:
 
 - [DeePMD-kit](https://github.com/deepmodeling/deepmd-kit)
 - [TensorFlow](https://www.tensorflow.org/)
@@ -38,24 +44,46 @@ If the Deep Potential model is employed in Molecule Dynamics calculations, the f
 cmake -B build -DDeePMD_DIR=~/deepmd-kit -DTensorFlow_DIR=~/tensorflow
 ```
 
+## Build with LibRI and LibComm
+
+The new EXX implementation depends on two external libraries:
+
+- [LibRI](https://github.com/abacusmodeling/LibRI)
+- [LibComm](https://github.com/abacusmodeling/LibComm)
+
+These two libraries are added as submodules in the [deps](https://github.com/deepmodeling/abacus-develop/tree/develop/deps) folder. Set `-DENABLE_LIBRI=ON` to build with these two libraries.
+
+If you prefer using manually downloaded libraries, set `-DENABLE_LIBRI=ON, -DGIT_SUBMODULE=OFF`, and provide `-DLIBRI_DIR=${path to your LibRI folder} -DLIBCOMM_DIR=${path to your LibComm folder}`. Remember to make sure the commit numbers match with those in the [deps](https://github.com/deepmodeling/abacus-develop/tree/develop/deps) folder.
+
 ## Build Unit Tests
+
 To build tests for ABACUS, define `BUILD_TESTING` flag. You can also specify path to local installation of [Googletest](https://github.com/google/googletest) by setting `GTEST_DIR` flags. If not found in local, the configuration process will try to download it automatically.
 
 ```bash
 cmake -B build -DBUILD_TESTING=1
 ```
+
+After building and installing, unit tests can be performed with `ctest`.
+
+To run a subset of unit test, use `ctest -R <test-match-pattern>` to perform tests with name matched by given pattern.
+
+## Build with CUDA support
+
+### Extra prerequisites
+
+- [CUDA-Toolkit](https://developer.nvidia.com/cuda-toolkit)
+
+To build NVIDIA GPU support for ABACUS, define `USE_CUDA` flag. You can also specify path to local installation of CUDA Toolkit by setting `CUDA_TOOLKIT_ROOT_DIR` flags.
+
+```bash
+cmake -B build -DUSE_CUDA=1
+```
+
 ## Build ABACUS with make
 
 > Note: We suggest using CMake to configure and compile.
 
-To compile the ABACUS program using legacy `make`, users only need to edit the file `Makefile.vars` under `source` directory:
-
-```bash
-cd source/
-vi Makefile.vars
-```
-
-Specify the location of the compiler and libraries present in your own machine:
+To compile the ABACUS program using legacy `make`, users need to specify the location of the compilers, headers and libraries in `source/Makefile.vars`:
 
 ```makefile
 # This is the Makefile of ABACUS API
@@ -78,47 +106,58 @@ CC = mpiicpc
 # CUDA: use CUDA
 #======================================================================
 
-#-------  FOR INTEL COMPILER  ------------
-ELPA_DIR      = /public/soft/elpa_21.05.002
-ELPA_INCLUDE_DIR = ${ELPA_DIR}/include/elpa-2021.05.002
-# directory of elpa, which contains include and lib/libelpa.a
 
-CEREAL_DIR    = /public/soft/cereal
-# directory of cereal, which contains a include directory in it.
 
-#-------  FOR GNU COMPILER  ---------------
+#--------------------  FOR INTEL COMPILER  ----------------------------
+## ELPA_DIR          should contain an include folder and lib/libelpa.a
+## CEREAL_DIR        should contain an include folder.
+#----------------------------------------------------------------------
+
+ELPA_DIR      = /usr/local/include/elpa-2021.05.002
+ELPA_INCLUDE_DIR = ${ELPA_DIR}/elpa
+
+CEREAL_DIR    = /usr/local/include/cereal
+
+
+##-------------------  FOR GNU COMPILER  ------------------------------
+## FFTW_DIR          should contain lib/libfftw3.a.
+## OPENBLAS_LIB_DIR  should contain libopenblas.a. 
+## SCALAPACK_LIB_DIR should contain libscalapack.a
+## All three above will only be used when CC=mpicxx or g++
+## ELPA_DIR          should contain an include folder and lib/libelpa.a
+## CEREAL_DIR        should contain an include folder.
+##---------------------------------------------------------------------
+
 # FFTW_DIR = /public/soft/fftw_3.3.8
-# # directory of fftw package, which contains lib/libfftw3.a. Only used when CC = mpicxx/g++
-
 # OPENBLAS_LIB_DIR   = /public/soft/openblas/lib
-# # directory of libopenblas.a, only used when CC = mpicxx/g++
-
 # SCALAPACK_LIB_DIR  = /public/soft/openblas/lib
-# # directory of libscalapack.a, only used when CC = mpicxx/g++
 
 # ELPA_DIR      = /public/soft/elpa_21.05.002
 # ELPA_INCLUDE_DIR = ${ELPA_DIR}/include/elpa-2021.05.002
-# # directory of elpa, which contains include and lib/libelpa.a
 
 # CEREAL_DIR    = /public/soft/cereal
-# # directory of cereal, which contains a include directory in it.
 
-#------  OPTIONAL LIBS  -----------
+
+##-------------------  OPTIONAL LIBS  ---------------------------------
+## To use DEEPKS: set LIBTORCH_DIR and LIBNPY_DIR
+## To use LIBXC:  set LIBXC_DIR which contains include and lib/libxc.a (>5.1.7)
+## To use DeePMD: set DeePMD_DIR and TensorFlow_DIR
+## To use LibRI:  set LIBRI_DIR and LIBCOMM_DIR
+##---------------------------------------------------------------------
 
 # LIBTORCH_DIR  = /usr/local
 # LIBNPY_DIR    = /usr/local
-# add them to use DEEPKS
 
 # LIBXC_DIR    		= /public/soft/libxc
-# directory of libxc(>5.1.7), which contains include and lib/libxc.a
-# add LIBXC_DIR to use libxc to compile ABACUS
 
 # DeePMD_DIR = ${deepmd_root}
 # TensorFlow_DIR = ${tensorflow_root}
-# add them to use DEEPMD
 
+# LIBRI_DIR     = /public/software/LibRI
+# LIBCOMM_DIR   = /public/software/LibComm
+
+##---------------------------------------------------------------------
 # NP = 14 # It is not supported. use make -j14 or make -j to parallelly compile
-
 # DEBUG = OFF
 # Only for developers
 # ON:   use gnu compiler and check segmental defaults
@@ -135,8 +174,8 @@ ELPA_DIR      = /public/soft/elpa_21.05.002
 ELPA_INCLUDE_DIR = ${ELPA_DIR}/include/elpa-2021.05.002
 CEREAL_DIR    = /public/soft/cereal
 ```
-When `CC=mpiicpc`, a parallel version will be compiled. When `CC=icpc`, a sequential version will be compiled.
 
+When `CC=mpiicpc`, a parallel version will be compiled. When `CC=icpc`, a sequential version will be compiled.
 
 Another example is where the Gnu C++ compiler, MPICH, OPENBLAS, ScaLAPACK, ELPA and CEREAL are used:
 
@@ -149,28 +188,34 @@ ELPA_DIR      = /public/soft/elpa_21.05.002
 ELPA_INCLUDE_DIR = ${ELPA_DIR}/include/elpa-2021.05.002
 CEREAL_DIR    = /public/soft/cereal
 ```
+
 When `CC=mpicxx`, a parallel version will be compiled. When `CC=g++`, a sequential version will be compiled.
 
 Except modifying `Makefile.vars`, you can also directly use
+
 ```makefile
 make CC=mpiicpc ELPA_DIR=/public/soft/elpa_21.05.002 \
 ELPA_INCLUDE_DIR=${ELPA_DIR}/include/elpa-2021.05.002 \
 CEREAL_DIR=/public/soft/cereal
 ```
+
 ABACUS now support full version and pw version. Use `make` or `make abacus` to compile full version which supports LCAO calculations. Use `make pw` to compile pw version which only supports pw calculations. For pw version, `make pw CC=mpiicpc`, you do not need to provide any libs. For `make pw CC=mpicxx`, you need provide `FFTW_DIR` and `OPENBLAS_LIB_DIR`.
 
 Besides, libxc and deepks are optional libs to compile abacus.
 They will be used when `LIBXC_DIR` is defined like
+
+```makefile
+LIBXC_DIR = /public/soft/libxc
 ```
-LIBXC_DIR    		= /public/soft/libxc
-```
+
 or `LIBTORCH_DIR` and `LIBNPY_DIR` like
+
 ```makefile
 LIBTORCH_DIR  = /usr/local
 LIBNPY_DIR    = /usr/local
 ```
 
-After modifying the `Makefile.vars` file, execute `make` or `make -j12` or `make -j`to build the program.
+After modifying the `Makefile.vars` file, execute `make` or `make -j12` to build the program.
 
 After the compilation finishes without error messages (except perhaps for some warnings), an executable program `ABACUS.mpi` will be created in directory `bin/`.
 
@@ -179,23 +224,38 @@ After the compilation finishes without error messages (except perhaps for some w
 The program compiled using the above instructions do not link with LIBXC and use exchange-correlation functionals as written in the ABACUS program. However, for some functionals (such as HSE hybrid functional), LIBXC is required.
 
 To compile ABACUS with LIBXC, you need to define `LIBXC_DIR` in the file `Makefile.vars` or use
+
 ```makefile
 make LIBXC_DIR=/pulic/soft/libxc
 ```
+
 directly.
 
 ### Add DeePKS Support
 
 To compile ABACUS with DEEPKS, you need to define `LIBTORCH_DIR` and `LIBNPY_DIR` in the file `Makefile.vars` or use
+
 ```makefile
 make LIBTORCH_DIR=/opt/libtorch/ LIBNPY_DIR=/opt/libnpy/
 ```
+
 directly.
 
 ### Add DeePMD-kit Support
 
-To compile ABACUS with DeePMD-kit, you need to define `DeePMD_DIR` and `TensorFlow_DIR` in the file `Makefile.vars` or use 
+> Note: This part is only required if you want to load a trained DeeP Potential and run molecular dynamics with that. To train the DeeP Potential with DP-GEN, no extra prerequisite is needed and please refer to [this page](http://abacus.deepmodeling.com/en/latest/advanced/interface/dpgen.html) for ABACUS interface with DP-GEN.
+
+To compile ABACUS with DeePMD-kit, you need to define `DeePMD_DIR` and `TensorFlow_DIR` in the file `Makefile.vars` or use
+
 ```makefile
 make DeePMD_DIR=~/deepmd-kit TensorFlow_DIR=~/tensorflow
-``` 
+```
+
+directly.
+
+### Add LibRI and LibComm Support
+To use new EXX, you need two libraries: LibRI and LibComm and need to define `LIBRI_DIR` and `LIBCOMM_DIR` in the file `Makefile.vars` or use 
+```makefile
+make LIBRI_DIR=/public/software/LibRI LIBCOMM_DIR=/public/software/LibComm
+```
 directly.

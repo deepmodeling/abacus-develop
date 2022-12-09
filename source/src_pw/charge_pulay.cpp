@@ -4,15 +4,14 @@
 #include "../src_parallel/parallel_reduce.h"
 #include "../module_base/memory.h"
 
-void Charge_Mixing::Pulay_mixing(double** rho, double** rho_save)
+void Charge_Mixing::Pulay_mixing(Charge* chr)
 {
     ModuleBase::TITLE("Charge_Mixing","Pulay_mixing");
 	rstep = this->mixing_ndim;
 	dstep = this->mixing_ndim - 1;
 	assert(dstep>0);
 
-	// (1) allocate 
-    if(GlobalV::FINAL_SCF && totstep==0) initp = false;
+	// (1) allocate
 	this->allocate_Pulay();
 
     if (irstep==rstep) irstep=0;
@@ -26,7 +25,7 @@ void Charge_Mixing::Pulay_mixing(double** rho, double** rho_save)
 	// calculate "dR^{i} = R^{i+1} - R^{i}"
 	// calculate "drho^{i} = rho^{i+1} - rho^{i}"
 	//----------------------------------------------
-	this->generate_datas(irstep, idstep, totstep, rho, rho_save);
+	this->generate_datas(irstep, idstep, totstep, chr->rho, chr->rho_save);
 
 	// not enough steps, not full matrix.
 	if(totstep < dstep) 
@@ -73,17 +72,14 @@ void Charge_Mixing::Pulay_mixing(double** rho, double** rho_save)
 
 			for(int is=0; is<GlobalV::NSPIN; is++)
 			{
-				this->generate_new_rho(is,irstep,rho,rho_save);
+				this->generate_new_rho(is,irstep,chr->rho,chr->rho_save);
 			}
 		}
 
 		if(premix == 2)
 		{
 			// if not enough step, take kerker mixing method.	
-			for(int is=0; is<GlobalV::NSPIN; is++)
-			{
-				this->plain_mixing( rho[is], rho_save[is]);
-			}
+			this->plain_mixing(chr);
 		}
 
 		if(totstep>0)
@@ -108,7 +104,7 @@ void Charge_Mixing::Pulay_mixing(double** rho, double** rho_save)
 
 		for(int is=0; is<GlobalV::NSPIN; is++)
 		{
-			this->generate_new_rho(is,irstep,rho,rho_save);
+			this->generate_new_rho(is,irstep,chr->rho,chr->rho_save);
 		}
 
 		++irstep;
@@ -119,9 +115,9 @@ void Charge_Mixing::Pulay_mixing(double** rho, double** rho_save)
 	return;		
 }
 
-void Charge_Mixing::reset(const bool final_scf)		// Peize Lin add 2018-11-01
+void Charge_Mixing::reset()		// Peize Lin add 2018-11-01
 {
-	if(!final_scf) this->new_e_iteration = true;
+	this->new_e_iteration = true;
 	
 	irstep = 0;
 	idstep = 0;

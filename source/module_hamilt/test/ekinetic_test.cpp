@@ -64,7 +64,7 @@ TEST_F(TestModuleHamiltEkinetic, ekinetic_pw_op_cpu)
   std::vector<std::complex<double> > hpsi(expected_hpsi.size(), std::complex<double>(0.0, 0.0));
   ekinetic_cpu_op()(cpu_ctx, band, dim, dim, tpiba2, gk2.data(), hpsi.data(), psi.data());
   for (int ii = 0; ii < hpsi.size(); ii++) {
-    EXPECT_LT(fabs(hpsi[ii] - expected_hpsi[ii]), 1e-6);
+    EXPECT_LT(std::abs(hpsi[ii] - expected_hpsi[ii]), 1e-6);
   }
 }
 

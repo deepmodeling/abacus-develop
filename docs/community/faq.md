@@ -42,12 +42,16 @@ Non-periodic systems such as liquid systems can be calculated by using supercell
 
 **6. How to perform spin-orbital coupling (SOC) calculations in ABACUS?**
 
-Apart from setting relavant keys (`lspinorb` to 1) in the `INPUT` file, SOC calculations can only be performed with fully-relativistic pseudopotentials.Users are suggested to download fully-relativistic versions of SG15_ONCV pseudopotential files from a [website](http://quantum-simulation.org/potentials/sg15_oncv/upf/). The numerical orbital files generated from the corresponding scalar-relativistic pseudoptential files by ABACUS ([here](http://abacus.ustc.edu.cn/pseudo/list.htm)) can be used in collaboration with the fully-relativistic pseudopotentials.
+Apart from setting relavant keys (`lspinorb` to 1) in the `INPUT` file, SOC calculations can only be performed with fully-relativistic pseudopotentials. Users are suggested to download fully-relativistic versions of SG15_ONCV pseudopotential files from a [website](http://quantum-simulation.org/potentials/sg15_oncv/upf/). The numerical orbital files generated from the corresponding scalar-relativistic pseudoptential files by ABACUS ([here](http://abacus.ustc.edu.cn/pseudo/list.htm)) can be used in collaboration with the fully-relativistic pseudopotentials.
 
 
 **7. How to restart jobs in abacus?**
 
 For restarting SCF calculations, users are referred to the documentation about [continuation of job](../advanced/scf/spin.md#for-the-continuation-job). For restarting MD calculations, please see [md_restart](../advanced/input_files/input-main.md#md_restart).
+
+**8. Can DeePKS model be used for structural optimization calculation? What parameters need to be modified or called?**
+
+If you train the DeePKS model with force labels, then the DeePKS model can provide force calculation with the same accuracy as your target method, and can thus be used for structural optimization. To do that, you just need to train the model with force label enabled.
 
 
 [back to top](#frequently-asked-questions)
@@ -67,5 +71,28 @@ This is usually caused by the difficulty in converging charge density. Reducing 
 
 
 ## Miscellaneous
+
+**1. How to visualize charge density file?**
+
+The output file SPIN1_CHG.cube can be visualized by using VESTA.
+
+**2. How to change cif file directly to STRU file?**
+
+One way to change from cif to STRU is to use the [ASE-ABACUS](https://gitlab.com/1041176461/ase-abacus) interface. An example of the converting script is provided below:
+
+```python
+from ase.io import read, write
+from pathlib import Path
+
+cs_dir = './'
+cs_cif = Path(cs_dir, 'SiO.cif')
+cs_atoms = read(cs_cif, format='cif')
+cs_stru = Path(cs_dir, 'STRU')
+pp = {'Si':'Si.upf','O':'O.upf'}
+basis = {'Si':'Si.orb','O':'O.orb'}
+write(cs_stru, cs_atoms, format='abacus', pp=pp, basis=basis)
+```
+
+
 
 [back to top](#frequently-asked-questions)
