@@ -29,7 +29,7 @@ For PW calculations, only `ABACUS_PP_PATH` is needed. For LCAO calculations, bot
 
 The default initialization command for the ABACUS calculator is
 
-```
+```python
 from ase.calculators.abacus import Abacus
 ```
 
