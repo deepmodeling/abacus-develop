@@ -64,7 +64,6 @@ void Input::Print(const std::string &fn) const
                                  symmetry_prec,
                                  "accuracy for symmetry"); // LiuXh add 2021-08-12, accuracy for symmetry
     ModuleBase::GlobalFunc::OUTP(ofs, "nelec", nelec, "input number of electrons");
-    ModuleBase::GlobalFunc::OUTP(ofs, "tot_magnetization", tot_magnetization, "total magnetization of the system");
     ModuleBase::GlobalFunc::OUTP(ofs, "out_mul", GlobalV::out_mul, " mulliken  charge or not"); // qifeng add 2019/9/10
     ModuleBase::GlobalFunc::OUTP(ofs, "noncolin", noncolin, "using non-collinear-spin");
     ModuleBase::GlobalFunc::OUTP(ofs, "lspinorb", lspinorb, "consider the spin-orbit interaction");
