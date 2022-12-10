@@ -97,9 +97,7 @@ OBJS_BASE=abfs-vector3_order.o\
     complexmatrix.o\
     element_basis_index.o\
     export.o\
-    integral.o\
     inverse_matrix.o\
-    gather_math_lib_info.o\
     global_file.o\
     global_function.o\
     global_function_ddotreal.o\
@@ -111,16 +109,12 @@ OBJS_BASE=abfs-vector3_order.o\
     math_ylmreal.o\
     math_bspline.o\
     math_chebyshev.o\
-    mathzone.o\
     mathzone_add1.o\
     matrix.o\
     matrix3.o\
     memory.o\
-    mymath1.o\
-    mymath3.o\
-    polint.o\
+    mymath.o\
     realarray.o\
-    sph_bessel.o\
     sph_bessel_recursive-d1.o\
     sph_bessel_recursive-d2.o\
     timer.o\

@@ -13,7 +13,6 @@ list(APPEND depend_files
   ../../module_base/matrix.cpp
   ../../module_base/realarray.cpp
   ../../module_base/intarray.cpp
-  ../../module_base/sph_bessel.cpp
   ../../module_base/sph_bessel_recursive-d1.cpp
   ../../module_base/sph_bessel_recursive-d2.cpp
   ../../module_base/tool_title.cpp
