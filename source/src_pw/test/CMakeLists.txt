@@ -5,7 +5,7 @@ remove_definitions(-D__ROCM)
 
 AddTest(
   TARGET klist_test
-  LIBS ${math_libs} base symmetry
+  LIBS ${math_libs} base symmetry device
   SOURCES klist_test.cpp ../klist.cpp ../../src_parallel/parallel_reduce.cpp ../../src_parallel/parallel_kpoints.cpp ../../src_parallel/parallel_global.cpp ../../src_parallel/parallel_common.cpp ../../src_io/output.cpp
 )
 

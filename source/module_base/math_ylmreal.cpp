@@ -5,6 +5,7 @@
 #include "realarray.h"
 #include <cassert>
 #include "ylm.h"
+#include "module_base/include/math_multi_device.h"
 
 namespace ModuleBase
 {
@@ -286,6 +287,61 @@ void YlmReal::Ylm_Real2
 
 	return;
 }
+
+//==========================================================
+// MEMBER FUNCTION :
+// NAME : YLM_REAL(Real spherical harmonics ylm(G) up to l=lmax
+// Use Numerical recursive algorithm as given in Numerical Recipes
+//==========================================================
+// from ylmr2.f90
+
+template <typename FPTYPE, typename Device>
+void YlmReal::Ylm_Real(Device * ctx, const int lmax2, const int ng, const FPTYPE *g, FPTYPE * ylm)
+{
+    using resmem_var_op = psi::memory::resize_memory_op<FPTYPE, Device>;
+    using delmem_var_op = psi::memory::delete_memory_op<FPTYPE, Device>;
+    using cal_ylm_real_op = ModuleBase::cal_ylm_real_op<FPTYPE, Device>;
+
+    if (ng < 1 || lmax2 < 1) {
+        ModuleBase::WARNING("YLM_REAL","ng<1 or lmax2<1");
+        return;
+    }
+
+//----------------------------------------------------------
+// EXPLAIN : find out lmax
+//----------------------------------------------------------
+    bool out_of_range = true;
+    int lmax = 0;
+    for (int l = 0; l < 30; l++) {
+        if ((l + 1) * (l + 1) == lmax2) {
+            lmax = l;
+            out_of_range = false;
+            break;
+        }
+    }
+    if (out_of_range) {
+        ModuleBase::WARNING_QUIT("YLM_REAL","l>30 or l<0");
+    }
+    FPTYPE * p = nullptr, * phi = nullptr, * cost = nullptr;
+    resmem_var_op()(ctx, p, (lmax + 1) * (lmax + 1) * ng);
+
+    cal_ylm_real_op()(
+        ctx,
+        ng,
+        lmax,
+        ModuleBase::SQRT2,
+        ModuleBase::PI,
+        ModuleBase::PI_HALF,
+        ModuleBase::FOUR_PI,
+        ModuleBase::SQRT_INVERSE_FOUR_PI,
+        g,
+        p,
+        ylm);
+
+    delmem_var_op()(ctx, p);
+    delmem_var_op()(ctx, phi);
+    delmem_var_op()(ctx, cost);
+} // end subroutine ylmr2
 
 //==========================================================
 // MEMBER FUNCTION :
@@ -620,4 +676,8 @@ int YlmReal::Semi_Fact(const int n)
     return semif;
 }
 
-}
+template void YlmReal::Ylm_Real<double, psi::DEVICE_CPU>(psi::DEVICE_CPU*, int, int, const double *, double*);
+#if ((defined __CUDA) || (defined __ROCM))
+template void YlmReal::Ylm_Real<double, psi::DEVICE_GPU>(psi::DEVICE_GPU*, int, int, const double *, double*);
+#endif
+}  // namespace ModuleBase

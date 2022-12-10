@@ -4,6 +4,7 @@
 #include"../matrix.h"
 #include"gtest/gtest.h"
 #include<math.h>
+#include "module_psi/psi.h"
 
 #define doublethreshold 1e-12
 
@@ -289,6 +290,19 @@ TEST_F(YlmRealTest,YlmReal)
             EXPECT_NEAR(ylm(i,j),ref[i*ng+j],doublethreshold)  << "Ylm[" << i << "], example " << j << " not pass";
         }
     } 
+}
+
+TEST_F(YlmRealTest,YlmRealTemplate)
+{
+    psi::DEVICE_CPU * cpu_ctx = {};
+    ModuleBase::YlmReal::Ylm_Real(cpu_ctx, nylm, ng, reinterpret_cast<double*>(g), ylm.c);
+    for(int i=0;i<nylm;++i)
+    {
+        for(int j=0;j<ng;++j)
+        {
+            EXPECT_NEAR(ylm(i,j),ref[i*ng+j],doublethreshold)  << "Ylm[" << i << "], example " << j << " not pass";
+        }
+    }
 }
 
 

@@ -177,7 +177,7 @@ void pseudopot_cell_vnl::getvnl(const int &ik, ModuleBase::ComplexMatrix& vkb_in
 		gk[ig] = GlobalC::wf.get_1qvec_cartesian(ik, ig);
 	}
 
-	ModuleBase::YlmReal::Ylm_Real(x1, npw, gk, ylm);
+	ModuleBase::YlmReal::Ylm_Real(this->cpu_ctx, x1, npw, reinterpret_cast<double *>(gk), ylm.c);
 
 	int jkb = 0;
 	for(int it = 0;it < GlobalC::ucell.ntype;it++)

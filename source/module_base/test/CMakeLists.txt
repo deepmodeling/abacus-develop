@@ -65,8 +65,15 @@ AddTest(
 )
 AddTest(
   TARGET base_ylmreal
-  LIBS ${math_libs}
-  SOURCES math_ylmreal_test.cpp ../math_ylmreal.cpp ../ylm.cpp ../realarray.cpp ../timer.cpp ../matrix.cpp ../vector3.h
+  LIBS ${math_libs} device
+  SOURCES math_ylmreal_test.cpp ../math_ylmreal.cpp ../complexmatrix.cpp ../global_variable.cpp ../ylm.cpp ../realarray.cpp ../timer.cpp ../matrix.cpp ../vector3.h
+          ../../src_parallel/parallel_reduce.cpp ../../src_parallel/parallel_kpoints.cpp ../../src_parallel/parallel_global.cpp ../../src_parallel/parallel_common.cpp
+)
+AddTest(
+  TARGET base_uts
+  LIBS ${math_libs} base device
+  SOURCES math_multi_device_test.cpp
+  ../../src_parallel/parallel_reduce.cpp ../../src_parallel/parallel_kpoints.cpp ../../src_parallel/parallel_global.cpp ../../src_parallel/parallel_common.cpp
 )
 AddTest(
   TARGET base_math_sphbes
