@@ -98,6 +98,7 @@ OBJS_BASE=abfs-vector3_order.o\
     element_basis_index.o\
     export.o\
     inverse_matrix.o\
+    gather_math_lib_info.o\
     global_file.o\
     global_function.o\
     global_function_ddotreal.o\
