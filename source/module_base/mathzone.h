@@ -163,6 +163,15 @@ class Mathzone
         return;
     }
 
+    template<typename T>
+    static ModuleBase::Vector3<T> latvec_projection(const std::array<ModuleBase::Vector3<T>,3> &latvec)
+    {
+        ModuleBase::Vector3<T> proj;
+        proj.x = std::abs( latvec[0] * (latvec[1] ^ latvec[2]).normalize() );
+        proj.y = std::abs( latvec[1] * (latvec[2] ^ latvec[0]).normalize() );
+        proj.z = std::abs( latvec[2] * (latvec[0] ^ latvec[1]).normalize() );
+        return proj;
+    } 
 };
 
 } // namespace ModuleBase
