@@ -11,7 +11,7 @@
 #endif
 #include <sys/time.h>
 #ifdef __LCAO
-#include "../src_lcao/dftu.h"  //Quxin adds for DFT+U on 20201029
+#include "../module_dftu/dftu.h"  //Quxin adds for DFT+U on 20201029
 #endif
 #include "myfunc.h"
 //new

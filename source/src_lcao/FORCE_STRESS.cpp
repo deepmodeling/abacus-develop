@@ -1,6 +1,6 @@
 #include "FORCE_STRESS.h"
 #include "../src_pw/global.h"
-#include "./dftu.h"  //Quxin add for DFT+U on 20201029
+#include "module_dftu/dftu.h"  //Quxin add for DFT+U on 20201029
 // new
 #include "module_base/timer.h"
 #include "module_elecstate/potentials/efield.h"        // liuyu add 2022-05-18

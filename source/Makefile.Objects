@@ -37,6 +37,7 @@ VPATH=./src_global:\
 ./module_hamilt/of_pw:\
 ./module_hamilt/src:\
 ./module_gint:\
+./module_dftu:\
 ./src_pw:\
 ./src_pw/src:\
 ./src_lcao:\

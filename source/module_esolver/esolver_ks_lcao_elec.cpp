@@ -2,7 +2,7 @@
 #include "../src_pw/global.h"
 #include "../src_pw/symmetry_rho.h"
 #include "src_lcao/LCAO_evolve.h"
-#include "src_lcao/dftu.h"
+#include "module_dftu/dftu.h"
 //
 #include "../module_neighbor/sltk_atom_arrange.h"
 #include "../src_io/istate_charge.h"

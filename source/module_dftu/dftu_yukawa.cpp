@@ -15,9 +15,9 @@
 #include "dftu_yukawa.h"
 #include "../module_base/constants.h"
 #include "../src_pw/global.h"
-#include "global_fp.h"
+#include "./src_lcao/global_fp.h"
 #include "../module_base/global_function.h"
-#include "LCAO_matrix.h"
+#include "./src_lcao/LCAO_matrix.h"
 
 namespace ModuleDFTU{
 DFTU_Yukawa::DFTU_Yukawa(){}

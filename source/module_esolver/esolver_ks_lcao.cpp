@@ -6,7 +6,7 @@
 #include "../src_io/print_info.h"
 #include "../src_pw/global.h"
 #include "src_lcao/ELEC_evolve.h"
-#include "src_lcao/dftu.h"
+#include "module_dftu/dftu.h"
 #include "src_lcao/dmft.h"
 #include "src_pw/occupy.h"
 #include "src_pw/symmetry_rho.h"
