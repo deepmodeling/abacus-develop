@@ -1112,6 +1112,7 @@ void UnitCell::print_tau(void)const
 }	
 
 
+/*
 int UnitCell::find_type(const std::string &label)
 {
 	if(GlobalV::test_pseudo_cell) ModuleBase::TITLE("UnitCell","find_type");
@@ -1126,6 +1127,7 @@ int UnitCell::find_type(const std::string &label)
 	ModuleBase::WARNING_QUIT("UnitCell::find_type","Can not find the atom type!");
 	return -1;
 }
+*/
 
 
 void UnitCell::check_dtau(void)
