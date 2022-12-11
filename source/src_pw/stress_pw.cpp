@@ -98,7 +98,7 @@ void Stress_PW<FPTYPE, Device>::cal_stress(ModuleBase::matrix& sigmatot, const p
         }
     }
     
-	if(ModuleSymmetry::Symmetry::symm_flag)                          
+	if(ModuleSymmetry::Symmetry::symm_flag == 1)                          
 	{
 		GlobalC::symm.stress_symmetry(sigmatot, GlobalC::ucell);
 	}

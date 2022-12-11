@@ -49,7 +49,8 @@ namespace GlobalC
  *     - basic parameters (nks,nkstot,nkstot_ibz) are set
  *   - read_kpoints()
  *     - read from file
- *     - generate KPT from kspacing parameter
+ *     - generate KPT from kspacing parameter 
+ *     - renew and memory allocation  
  */
 
 #define private public
@@ -126,6 +127,7 @@ TEST_F(KlistTest, ReadMP)
 	kv.nspin = 1;
 	kv.read_kpoints(k_file);
 	EXPECT_EQ(kv.nkstot,512);
+	remove("KPT1");
 }
 
 TEST_F(KlistTest, ReadList)
@@ -154,6 +156,25 @@ TEST_F(KlistTest, Kspacing)
 	kv.read_kpoints(k_file);
 	EXPECT_EQ(kv.nkstot,343);
 	remove("KPT3");
+	GlobalV::KSPACING=0.0;
+
+}
+
+TEST_F(KlistTest, Renew)
+{
+	K_Vectors kv;
+	std::string k_file = "KPT4";
+        //Cartesian: non-spin case nspin=0
+	kv.nspin = 1;
+	kv.read_kpoints(k_file);
+	EXPECT_EQ(kv.kvec_c.size(),5);
+	//spin case nspin=1
+	kv.nspin = 2;
+	kv.read_kpoints(k_file);
+	EXPECT_EQ(kv.kvec_c.size(),10);
+	remove("KPT4");
+	// check the memory allocation from Renew.
+    
 }
 
 #undef private

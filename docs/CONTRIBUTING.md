@@ -154,7 +154,11 @@ This feature requires using GCC compiler. We use `gcov` and `lcov` to generate c
     cmake -B build -DBUILD_TESTING=ON -DENABLE_COVERAGE=ON
     ```
 
-2. Build, install ABACUS, and run test cases.
+2. Build, install ABACUS, and run test cases. Please note that since all optimizations are disabled to gather running status line by line, the performance is drastically decreased. Set a longer time out to ensure all tests are executed.
+
+    ```bash
+    cmake --build build --target test ARGS="-V --timeout 21600"
+    ```
 
 3. Generate HTML report.
 

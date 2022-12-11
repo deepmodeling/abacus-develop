@@ -56,7 +56,7 @@ void Sto_Stress_PW::cal_stress(ModuleBase::matrix& sigmatot, const ModuleBase::m
         }
     }
     
-	if(ModuleSymmetry::Symmetry::symm_flag)                          
+	if(ModuleSymmetry::Symmetry::symm_flag == 1)                          
 	{
 		GlobalC::symm.stress_symmetry(sigmatot,GlobalC::ucell);
 	}
@@ -174,7 +174,7 @@ void Sto_Stress_PW::sto_stress_kin(ModuleBase::matrix& sigma, const ModuleBase::
 		}
 	}
 	//do symmetry
-	if(ModuleSymmetry::Symmetry::symm_flag)                          
+	if(ModuleSymmetry::Symmetry::symm_flag == 1)                          
 	{
 		GlobalC::symm.stress_symmetry(sigma,GlobalC::ucell);
 	}
@@ -392,7 +392,7 @@ void Sto_Stress_PW::sto_stress_nl(ModuleBase::matrix& sigma, const ModuleBase::m
 		}
 	}
 	//do symmetry
-	if(ModuleSymmetry::Symmetry::symm_flag)                          
+	if(ModuleSymmetry::Symmetry::symm_flag == 1)                          
 	{
 		GlobalC::symm.stress_symmetry(sigma,GlobalC::ucell);
 	}

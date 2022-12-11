@@ -43,7 +43,7 @@
 #include "../src_external/src_test/src_global/element_basis_index-test.h"
 #include "../src_external/src_test/src_global/matrix-test.h"
 #include "../src_external/src_test/print_tmp.h"
-#include "../src_external/src_test/src_global/sph_bessel-unittest.h"
+//#include "../src_external/src_test/src_global/sph_bessel-unittest.h"
 #include "../src_external/src_test/src_ri/exx_lcao-test.h"
 #include "../src_external/src_test/src_ri/abfs-test.h"
 

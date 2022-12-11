@@ -38,9 +38,9 @@ void NOTE(const std::string &words)
 
 void NEW_PART(const std::string &words)
 {
-    GlobalV::ofs_running << "\n ><><><><><><><><><><><><><><><><><><><><><><" << std::endl;
+    GlobalV::ofs_running << "\n ><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><" << std::endl;
     GlobalV::ofs_running << "\n " << words << std::endl;
-    GlobalV::ofs_running << "\n ><><><><><><><><><><><><><><><><><><><><><><\n" << std::endl;
+    GlobalV::ofs_running << "\n ><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><\n" << std::endl;
     return;
 }
 

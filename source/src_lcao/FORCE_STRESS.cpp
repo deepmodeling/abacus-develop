@@ -335,7 +335,7 @@ void Force_Stress_LCAO::getForceStress(
         }
 
 		// pengfei 2016-12-20
-		if(ModuleSymmetry::Symmetry::symm_flag)
+		if(ModuleSymmetry::Symmetry::symm_flag == 1)
 		{
 			this->forceSymmetry(fcs);
 		}
@@ -550,7 +550,7 @@ void Force_Stress_LCAO::getForceStress(
 #endif
 
 
-		if(ModuleSymmetry::Symmetry::symm_flag)
+		if(ModuleSymmetry::Symmetry::symm_flag == 1)
 		{
 			GlobalC::symm.stress_symmetry(scs, GlobalC::ucell);
 		}//end symmetry
