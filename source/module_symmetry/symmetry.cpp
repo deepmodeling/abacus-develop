@@ -110,16 +110,21 @@ void Symmetry::analy_sys(const UnitCell &ucell, std::ofstream &ofs_running)
             ++count;
         }
     }
-
+    //s: input config
     s1 = a1;
     s2 = a2;
     s3 = a3;
 
+    //a: optimized config
     // find the lattice type accordiing to lattice vectors.
     this->lattice_type(a1,a2,a3,cel_const,ilattname, ucell);
   //      std::cout << "a1 = " << a1.x << " " << a1.y << " " << a1.z <<std::endl;
   //      std::cout << "a1 = " << a2.x << " " << a2.y << " " << a2.z <<std::endl;
   //      std::cout << "a1 = " << a3.x << " " << a3.y << " " << a3.z <<std::endl;
+  	ModuleBase::Matrix3 optlat;
+	optlat.e11 = a1.x; optlat.e12 = a1.y; optlat.e13 = a1.z;
+	optlat.e21 = a2.x; optlat.e22 = a2.y; optlat.e23 = a2.z;
+	optlat.e31 = a3.x; optlat.e32 = a3.y; optlat.e33 = a3.z;
 
 	this->change_lattice();
     //this->pricell();         // pengfei Li 2018-05-14 
@@ -134,7 +139,7 @@ void Symmetry::analy_sys(const UnitCell &ucell, std::ofstream &ofs_running)
 	ModuleBase::GlobalFunc::OUT(ofs_running,"POINT GROUP IN SPACE GROUP", this->spgname);
     ofs_running<<"Warning : If the optimal symmetric configuration is not the input configuration, "<<'\n';
     ofs_running<<"you have to manually change configurations, ABACUS would only calculate the input structure."<<'\n';
-
+/*
 	int iat=0;
 	for(int it=0; it<ucell.ntype; ++it)
 	{
@@ -175,6 +180,11 @@ void Symmetry::analy_sys(const UnitCell &ucell, std::ofstream &ofs_running)
     this->pointgroup(this->nrotk, this->spgnumber, this->spgname, this->gmatrix, ofs_running);
     ModuleBase::GlobalFunc::OUT(ofs_running,"POINT GROUP IN SPACE GROUP", this->spgname);
 	//write();
+*/
+// convert the symmetry operations from the basis of optimal symmetric configuration 
+// to the basis of input configuration
+    this->gmatrix_convert(gmatrix, gmatrix, nrotk, optlat, latvec1);
+    this->gtrans_convert(gtrans, gtrans, nrotk, optlat, latvec1);
 
     delete[] dirpos;
 	delete[] newpos;
@@ -780,7 +790,10 @@ void Symmetry::lattice_type(
             }
         }
         ofs.close();
-        
+        // return the optimized lattice in v1, v2, v3
+        v1=q1;
+        v2=q2;
+        v3=q3;
     }
     else
     {
@@ -1418,4 +1431,24 @@ void Symmetry::stress_symmetry(ModuleBase::matrix& sigma, const UnitCell &ucell)
 	return;
 }
 
+void Symmetry::gmatrix_convert(const ModuleBase::Matrix3* sa, ModuleBase::Matrix3* sb, 
+        const int n, ModuleBase::Matrix3 &a, ModuleBase::Matrix3 &b)
+{
+    ModuleBase::Matrix3 ai = a.Inverse();
+    ModuleBase::Matrix3 bi = b.Inverse();
+    for (int i=0;i<n;++i)
+    {
+          sb[i]=b*ai*sa[i]*a*bi;
+    }
+}
+
+void Symmetry::gtrans_convert(const ModuleBase::Vector3<double>* va, ModuleBase::Vector3<double>* vb, 
+        const int n, ModuleBase::Matrix3 &a, ModuleBase::Matrix3 &b)
+{
+    ModuleBase::Matrix3 bi = b.Inverse();
+    for (int i=0;i<n;++i)
+    {
+          vb[i]=va[i]*a*bi;
+    }
+}
 }
