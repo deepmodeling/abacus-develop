@@ -11,7 +11,7 @@
 #include <sstream>
 #include <complex>
 
-#include "dftu_relax.h"
+#include "dftu.h"
 #include "../module_base/constants.h"
 #include "../src_pw/global.h"
 #include "./src_lcao/global_fp.h"
@@ -44,16 +44,13 @@ extern "C"
 		double *C, const int *IC, const int *JC, const int *DESCC);
 }
 namespace ModuleDFTU{
-DFTU_RELAX::DFTU_RELAX(){}
 
-DFTU_RELAX::~DFTU_RELAX(){}
-
-void DFTU_RELAX::force_stress(std::vector<ModuleBase::matrix>& dm_gamma,
+void DFTU::force_stress(std::vector<ModuleBase::matrix>& dm_gamma,
     std::vector<ModuleBase::ComplexMatrix>& dm_k,
     LCAO_Matrix &lm)
 {
-	ModuleBase::TITLE("DFTU_RELAX", "force_stress");
-	ModuleBase::timer::tick("DFTU_RELAX", "force_stress");
+	ModuleBase::TITLE("DFTU", "force_stress");
+	ModuleBase::timer::tick("DFTU", "force_stress");
 
     this->LM = &lm;
     
@@ -93,7 +90,7 @@ void DFTU_RELAX::force_stress(std::vector<ModuleBase::matrix>& dm_gamma,
 
 			double* VU = new double [this->LM->ParaV->nloc];
 			this->cal_VU_pot_mat_real(spin, false, VU);
-			ModuleBase::timer::tick("DFTU_RELAX", "cal_rho_VU");
+			ModuleBase::timer::tick("DFTU", "cal_rho_VU");
 		
 		#ifdef __MPI
 			pdgemm_(&transT, &transN,
@@ -106,7 +103,7 @@ void DFTU_RELAX::force_stress(std::vector<ModuleBase::matrix>& dm_gamma,
 		#endif
 
       		delete [] VU;
-			ModuleBase::timer::tick("DFTU_RELAX", "cal_rho_VU");
+			ModuleBase::timer::tick("DFTU", "cal_rho_VU");
       		if(GlobalV::CAL_FORCE) this->cal_force_gamma(&rho_VU[0]);
       		if(GlobalV::CAL_STRESS) this->cal_stress_gamma(&rho_VU[0]);
     	}//ik
@@ -125,7 +122,7 @@ void DFTU_RELAX::force_stress(std::vector<ModuleBase::matrix>& dm_gamma,
 
 			std::complex<double>* VU = new std::complex<double> [this->LM->ParaV->nloc];
 			this->cal_VU_pot_mat_complex(spin, false, VU);
-			ModuleBase::timer::tick("DFTU_RELAX", "cal_rho_VU");
+			ModuleBase::timer::tick("DFTU", "cal_rho_VU");
 		
 		#ifdef __MPI
 			pzgemm_(&transT, &transN,
@@ -138,7 +135,7 @@ void DFTU_RELAX::force_stress(std::vector<ModuleBase::matrix>& dm_gamma,
 		#endif
 
       		delete [] VU;
-	  		ModuleBase::timer::tick("DFTU_RELAX", "cal_rho_VU");
+	  		ModuleBase::timer::tick("DFTU", "cal_rho_VU");
 
       		if(GlobalV::CAL_FORCE) this->cal_force_k(ik, &rho_VU[0]);
       		if(GlobalV::CAL_STRESS) cal_stress_k(ik, &rho_VU[0]);
@@ -186,15 +183,15 @@ void DFTU_RELAX::force_stress(std::vector<ModuleBase::matrix>& dm_gamma,
 			}
 		}
   	}
-	ModuleBase::timer::tick("DFTU_RELAX", "force_stress");
+	ModuleBase::timer::tick("DFTU", "force_stress");
 
 	return;
 }
 
-void DFTU_RELAX::cal_force_k(const int ik, const std::complex<double>* rho_VU)
+void DFTU::cal_force_k(const int ik, const std::complex<double>* rho_VU)
 {
-	ModuleBase::TITLE("DFTU_RELAX", "cal_force_k");
-	ModuleBase::timer::tick("DFTU_RELAX",  "cal_force_k");
+	ModuleBase::TITLE("DFTU", "cal_force_k");
+	ModuleBase::timer::tick("DFTU",  "cal_force_k");
 
 	const char transN = 'N', transC='C';
 	const int  one_int = 1;
@@ -282,15 +279,15 @@ void DFTU_RELAX::cal_force_k(const int ik, const std::complex<double>* rho_VU)
       		}//ia
     	}//it
 	}//end dim
-	ModuleBase::timer::tick("DFTU_RELAX",  "cal_force_k");
+	ModuleBase::timer::tick("DFTU",  "cal_force_k");
 
 	return;
 }
 
-void DFTU_RELAX::cal_stress_k(const int ik, const std::complex<double>* rho_VU)
+void DFTU::cal_stress_k(const int ik, const std::complex<double>* rho_VU)
 {
-	ModuleBase::TITLE("DFTU_RELAX", "cal_stress_k");
-	ModuleBase::timer::tick("DFTU_RELAX",  "cal_stress_k");
+	ModuleBase::TITLE("DFTU", "cal_stress_k");
+	ModuleBase::timer::tick("DFTU",  "cal_stress_k");
 	const char transN = 'N';
 	const int  one_int = 1;
 	const std::complex<double> minus_half(-0.5,0.0), zero(0.0,0.0), one(1.0,0.0);
@@ -328,15 +325,15 @@ void DFTU_RELAX::cal_stress_k(const int ik, const std::complex<double>* rho_VU)
 
 		}//end dim2	
 	}//end dim1
-	ModuleBase::timer::tick("DFTU_RELAX",  "cal_stress_k");
+	ModuleBase::timer::tick("DFTU",  "cal_stress_k");
 	
 	return;
 }
 
-void DFTU_RELAX::cal_force_gamma(const double* rho_VU)
+void DFTU::cal_force_gamma(const double* rho_VU)
 {
-	ModuleBase::TITLE("DFTU_RELAX", "cal_force_gamma");
-	ModuleBase::timer::tick("DFTU_RELAX", "cal_force_gamma");
+	ModuleBase::TITLE("DFTU", "cal_force_gamma");
+	ModuleBase::timer::tick("DFTU", "cal_force_gamma");
 	const char transN = 'N', transT='T';
 	const int  one_int = 1;
 	const double one = 1.0, zero = 0.0, minus_one=-1.0;
@@ -425,15 +422,15 @@ void DFTU_RELAX::cal_force_gamma(const double* rho_VU)
     	}//it
 
 	}// end dim
-	ModuleBase::timer::tick("DFTU_RELAX", "cal_force_gamma");
+	ModuleBase::timer::tick("DFTU", "cal_force_gamma");
 
 	return;
 }
 
-void DFTU_RELAX::cal_stress_gamma(const double* rho_VU)
+void DFTU::cal_stress_gamma(const double* rho_VU)
 {
-	ModuleBase::TITLE("DFTU_RELAX", "cal_stress_gamma");
-	ModuleBase::timer::tick("DFTU_RELAX", "cal_stress_gamma");
+	ModuleBase::TITLE("DFTU", "cal_stress_gamma");
+	ModuleBase::timer::tick("DFTU", "cal_stress_gamma");
 	const char transN = 'N';
 	const int  one_int = 1;
 	const double zero = 0.0, minus_half=-0.5, one=1.0;
@@ -472,11 +469,11 @@ void DFTU_RELAX::cal_stress_gamma(const double* rho_VU)
 
 		}//end dim2
 	}//end dim1
-	ModuleBase::timer::tick("DFTU_RELAX", "cal_stress_gamma");
+	ModuleBase::timer::tick("DFTU", "cal_stress_gamma");
 	return;
 }
 
-double DFTU_RELAX::get_onebody_eff_pot
+double DFTU::get_onebody_eff_pot
 (
 	const int T,
 	const int iat,
@@ -488,7 +485,7 @@ double DFTU_RELAX::get_onebody_eff_pot
 	const bool newlocale
 )
 {
-	ModuleBase::TITLE("DFTU_RELAX","get_onebody_eff_pot");
+	ModuleBase::TITLE("DFTU","get_onebody_eff_pot");
 
 	double VU = 0.0;
 
@@ -540,9 +537,9 @@ double DFTU_RELAX::get_onebody_eff_pot
 	return VU;
 }
 
-void DFTU_RELAX::cal_VU_pot_mat_complex(const int spin, const bool newlocale, std::complex<double>* VU)
+void DFTU::cal_VU_pot_mat_complex(const int spin, const bool newlocale, std::complex<double>* VU)
 {
-	ModuleBase::TITLE("DFTU_RELAX","cal_VU_pot_mat_complex"); 
+	ModuleBase::TITLE("DFTU","cal_VU_pot_mat_complex"); 
 	ModuleBase::GlobalFunc::ZEROS(VU, this->LM->ParaV->nloc);
 
 	for(int it=0; it<GlobalC::ucell.ntype; ++it)
@@ -590,9 +587,9 @@ void DFTU_RELAX::cal_VU_pot_mat_complex(const int spin, const bool newlocale, st
   return;
 }
 
-void DFTU_RELAX::cal_VU_pot_mat_real(const int spin, const bool newlocale, double* VU)
+void DFTU::cal_VU_pot_mat_real(const int spin, const bool newlocale, double* VU)
 {
-	ModuleBase::TITLE("DFTU_RELAX","cal_VU_pot_mat_real"); 
+	ModuleBase::TITLE("DFTU","cal_VU_pot_mat_real"); 
 	ModuleBase::GlobalFunc::ZEROS(VU, this->LM->ParaV->nloc);
 
   	for(int it=0; it<GlobalC::ucell.ntype; ++it)
@@ -639,9 +636,9 @@ void DFTU_RELAX::cal_VU_pot_mat_real(const int spin, const bool newlocale, doubl
   return;
 }
 
-void DFTU_RELAX::fold_dSR_gamma(const int dim1, const int dim2, double* dSR_gamma)
+void DFTU::fold_dSR_gamma(const int dim1, const int dim2, double* dSR_gamma)
 {
-	ModuleBase::TITLE("DFTU_RELAX","fold_dSR_gamma");
+	ModuleBase::TITLE("DFTU","fold_dSR_gamma");
 
 	ModuleBase::GlobalFunc::ZEROS(dSR_gamma, this->LM->ParaV->nloc);
 
@@ -725,10 +722,10 @@ void DFTU_RELAX::fold_dSR_gamma(const int dim1, const int dim2, double* dSR_gamm
 	return;
 }
 
-void DFTU_RELAX::fold_dSm_k(const int ik, const int dim, std::complex<double>* dSm_k)
+void DFTU::fold_dSm_k(const int ik, const int dim, std::complex<double>* dSm_k)
 {
-	ModuleBase::TITLE("DFTU_RELAX","fold_dSm_k");
-	ModuleBase::timer::tick("DFTU_RELAX","fold_dSm_k");
+	ModuleBase::TITLE("DFTU","fold_dSm_k");
+	ModuleBase::timer::tick("DFTU","fold_dSm_k");
 	ModuleBase::GlobalFunc::ZEROS(dSm_k, this->LM->ParaV->nloc);
 
 	double* dSm_ptr;
@@ -821,14 +818,14 @@ void DFTU_RELAX::fold_dSm_k(const int ik, const int dim, std::complex<double>* d
 		  	}// ad
 	  	}// I1
 	}// T1
-	ModuleBase::timer::tick("DFTU_RELAX","fold_dSm_k");
+	ModuleBase::timer::tick("DFTU","fold_dSm_k");
 
 	return;
 }
 
-void DFTU_RELAX::fold_dSR_k(const int ik, const int dim1, const int dim2, std::complex<double>* dSR_k)
+void DFTU::fold_dSR_k(const int ik, const int dim1, const int dim2, std::complex<double>* dSR_k)
 {
-	ModuleBase::TITLE("DFTU_RELAX","fold_dSR_k");
+	ModuleBase::TITLE("DFTU","fold_dSR_k");
 
 	ModuleBase::GlobalFunc::ZEROS(dSR_k, this->LM->ParaV->nloc);
 

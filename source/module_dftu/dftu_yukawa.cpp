@@ -12,7 +12,7 @@
 #include <sstream>
 #include <complex>
 
-#include "dftu_yukawa.h"
+#include "dftu.h"
 #include "../module_base/constants.h"
 #include "../src_pw/global.h"
 #include "./src_lcao/global_fp.h"
@@ -20,14 +20,10 @@
 #include "./src_lcao/LCAO_matrix.h"
 
 namespace ModuleDFTU{
-DFTU_Yukawa::DFTU_Yukawa(){}
 
-DFTU_Yukawa::~DFTU_Yukawa(){}
-
-
-void DFTU_Yukawa::cal_yukawa_lambda(double** rho)
+void DFTU::cal_yukawa_lambda(double** rho)
 {
-	ModuleBase::TITLE("DFTU_Yukawa", "cal_yukawa_lambda");
+	ModuleBase::TITLE("DFTU", "cal_yukawa_lambda");
 	
 	if(INPUT.yukawa_lambda>0)
 	{
@@ -66,9 +62,9 @@ void DFTU_Yukawa::cal_yukawa_lambda(double** rho)
 }
 
 
-void DFTU_Yukawa::cal_slater_Fk(const int L, const int T)
+void DFTU::cal_slater_Fk(const int L, const int T)
 {
-	ModuleBase::TITLE("DFTU_Yukawa","cal_slater_Fk");
+	ModuleBase::TITLE("DFTU","cal_slater_Fk");
 	
 	if(Yukawa)
 	{	 
@@ -115,9 +111,9 @@ void DFTU_Yukawa::cal_slater_Fk(const int L, const int T)
 }
 
 
-void DFTU_Yukawa::cal_slater_UJ(double** rho)
+void DFTU::cal_slater_UJ(double** rho)
 {
-	ModuleBase::TITLE("DFTU_Yukawa", "cal_slater_UJ");
+	ModuleBase::TITLE("DFTU", "cal_slater_UJ");
 	if(!Yukawa) return;
 
 	this->cal_yukawa_lambda(rho);
@@ -220,9 +216,9 @@ void DFTU_Yukawa::cal_slater_UJ(double** rho)
 }
 
 
-double DFTU_Yukawa::spherical_Bessel(const int k, const double r, const double lambda)
+double DFTU::spherical_Bessel(const int k, const double r, const double lambda)
 {
-  ModuleBase::TITLE("DFTU_Yukawa", "spherical_Bessel");
+  ModuleBase::TITLE("DFTU", "spherical_Bessel");
 
   double val;
   double x=r*lambda;
@@ -251,9 +247,9 @@ double DFTU_Yukawa::spherical_Bessel(const int k, const double r, const double l
 }
 
 
-double DFTU_Yukawa::spherical_Hankel(const int k, const double r, const double lambda)
+double DFTU::spherical_Hankel(const int k, const double r, const double lambda)
 {
-  ModuleBase::TITLE("DFTU_Yukawa", "spherical_Bessel");
+  ModuleBase::TITLE("DFTU", "spherical_Bessel");
 
   double val;
   double x=r*lambda;
@@ -281,102 +277,5 @@ double DFTU_Yukawa::spherical_Hankel(const int k, const double r, const double l
   }
   return val;
 }
-
-/*
-void DFTU::cal_unscreened_slater_Fk(const int L, const int T)
-{
-	ModuleBase::TITLE("DFTU","cal_slater_Fk");
-
-	for(int chi=0; chi<GlobalC::ucell.atoms[T].l_nchi[L]; chi++)
-	{
-		const int mesh = GlobalC::ORB.Phi[T].PhiLN(L,chi).getNr();
-
-		for(int k=0; k<=L; k++)
-		{			
-			for(int ir0=1; ir0<mesh; ir0++)
-			{
-				double r0 = GlobalC::ORB.Phi[T].PhiLN(L,chi).getRadial(ir0);
-				const double rab0 = GlobalC::ORB.Phi[T].PhiLN(L,chi).getRab(ir0);
-				const double R_L0 = GlobalC::ORB.Phi[T].PhiLN(L,chi).getPsi(ir0);
-
-				for(int ir1=1; ir1<mesh; ir1++) 
-				{
-					double numerator, denominator;
-					double r1 = GlobalC::ORB.Phi[T].PhiLN(L,chi).getRadial(ir1);
-					const double rab1 = GlobalC::ORB.Phi[T].PhiLN(L,chi).getRab(ir1);
-					const double R_L1 = GlobalC::ORB.Phi[T].PhiLN(L,chi).getPsi(ir1);		
-					
-					int l = 2*k;
-					if(ir0<ir1)  //less than
-					{
-					 	numerator  = pow(r0, l);
-						denominator = pow(r1, l+1);
-					}
-					else //greater than
-					{
-					 	numerator  = pow(r1, l);
-						denominator = pow(r0, l+1);
-					}					
-					this->Fk.at(T).at(chi).at(k) += (numerator/denominator)*pow(R_L0,2)*pow(R_L1,2)*pow(r0,2)*pow(r1,2)*rab0*rab1;					
-				}
-			}
-		}
-		
-		
-	}
-
-	this->cal_slater_UJ(T, L);
-
-	return;
-}
-
-void DFTU::cal_slater_Vsc(const int T, const int L)
-{
-	ModuleBase::TITLE("DFTU", "cal_slater_Vsc");
-
-	for(int N=0; N<GlobalC::ucell.atoms[T].l_nchi[L]; N++)
-	{
-		if(!Yukawa && N!=0) continue;
-
-		for(int m0=0; m0<2*L+1; m0++)
-		{
-			const int gindex0 = L*L + m0;
-
-			for(int m1=0; m1<2*L+1; m1++)
-			{				
-				const int gindex1 = L*L + m1;
-
-				for(int m2=0; m2<2*L+1; m2++)
-				{
-					const int gindex2 = L*L + m2;
-					const int M0 = m0*(2*L+1) + m2;
-
-					for(int m3=0; m3<2*L+1; m3++)
-					{
-						const int M1 = m1*(2*L+1) + m3;
-						const int gindex3 = L*L + m3;
-
-						for(int k=0; k<=2*L; k+=2)
-						{
-							const int l = (int)(k/2);
-							for(int q=0; q<2*k+1; q++)
-							{
-								int gindex = k*k + q;
-
-								double gaunt1 = GlobalC::UOT.get_Gaunt_coefficients(gindex0, gindex2, gindex);
-								double gaunt2 = GlobalC::UOT.get_Gaunt_coefficients(gindex1, gindex3, gindex);
-
-								this->Vsc.at(T).at(N)(M0, M1) += ModuleBase::FOUR_PI*gaunt1*gaunt2*Fk.at(T).at(N).at(l)/(2.0*k+1.0);
-							}
-						}
-					}
-				}
-			}
-		}
-	}
-
-	return;
-}
-*/
 
 }
