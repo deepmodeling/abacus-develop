@@ -100,22 +100,6 @@ void DFTU::init(
 	this->locale_save.resize(cell.nat);
 
 	this->iatlnmipol2iwt.resize(cell.nat);
-	this->iat2it.resize(cell.nat);
-	this->iwt2it.resize(nlocal);
-	this->iwt2l.resize(nlocal);
-	this->iwt2n.resize(nlocal);
-	this->iwt2m.resize(nlocal);
-	this->iwt2ipol.resize(nlocal);	
-
-	//initialize 
-	for(int i=0; i<nlocal; i++)
-	{
-		this->iwt2it.at(i) = -1;
-		this->iwt2l.at(i) = -1;
-		this->iwt2n.at(i) = -1;
-		this->iwt2m.at(i) = -1;
-		this->iwt2ipol.at(i) = -1;
-	}
 
 	int num_locale=0;
 	//it:index of type of atom
@@ -126,57 +110,56 @@ void DFTU::init(
 			//ia:index of atoms of this type
 			//determine the size of locale
 			const int iat = cell.itia2iat(it, ia);
-			this->iat2it.at(iat) = it;
 
-			locale.at(iat).resize(cell.atoms[it].nwl+1);
-			locale_save.at(iat).resize(cell.atoms[it].nwl+1);
+			locale[iat].resize(cell.atoms[it].nwl+1);
+			locale_save[iat].resize(cell.atoms[it].nwl+1);
 
 			for(int l=0; l<=cell.atoms[it].nwl; l++)
 			{			
 				const int N = cell.atoms[it].l_nchi[l];
 
-				locale.at(iat).at(l).resize(N);
-				locale_save.at(iat).at(l).resize(N);
+				locale[iat][l].resize(N);
+				locale_save[iat][l].resize(N);
 
 				for(int n=0; n<N; n++)
 				{
 					if(nspin==1 || nspin==2)
 					{
-						locale.at(iat).at(l).at(n).resize(2);
-						locale_save.at(iat).at(l).at(n).resize(2);
+						locale[iat][l][n].resize(2);
+						locale_save[iat][l][n].resize(2);
 
-						locale.at(iat).at(l).at(n).at(0).create(2*l+1, 2*l+1);
-						locale.at(iat).at(l).at(n).at(1).create(2*l+1, 2*l+1);
+						locale[iat][l][n][0].create(2*l+1, 2*l+1);
+						locale[iat][l][n][1].create(2*l+1, 2*l+1);
 
-						locale_save.at(iat).at(l).at(n).at(0).create(2*l+1, 2*l+1);
-						locale_save.at(iat).at(l).at(n).at(1).create(2*l+1, 2*l+1);
+						locale_save[iat][l][n][0].create(2*l+1, 2*l+1);
+						locale_save[iat][l][n][1].create(2*l+1, 2*l+1);
 						num_locale+=(2*l+1)*(2*l+1)*2;
 					}
 					else if(nspin==4) //SOC
 					{
-						locale.at(iat).at(l).at(n).resize(1);
-						locale_save.at(iat).at(l).at(n).resize(1);
+						locale[iat][l][n].resize(1);
+						locale_save[iat][l][n].resize(1);
 
-						locale.at(iat).at(l).at(n).at(0).create((2*l+1)*npol, (2*l+1)*npol);
-						locale_save.at(iat).at(l).at(n).at(0).create((2*l+1)*npol, (2*l+1)*npol);
+						locale[iat][l][n][0].create((2*l+1)*npol, (2*l+1)*npol);
+						locale_save[iat][l][n][0].create((2*l+1)*npol, (2*l+1)*npol);
 						num_locale+=(2*l+1)*(2*l+1)*npol*npol;
 					}												
 				}
 			}
 
 			//initialize the arrry iatlnm2iwt[iat][l][n][m]
-			this->iatlnmipol2iwt.at(iat).resize(cell.atoms[it].nwl+1);
+			this->iatlnmipol2iwt[iat].resize(cell.atoms[it].nwl+1);
 			for(int L=0; L<=cell.atoms[it].nwl; L++)
 			{
-				this->iatlnmipol2iwt.at(iat).at(L).resize(cell.atoms[it].l_nchi[L]);
+				this->iatlnmipol2iwt[iat][L].resize(cell.atoms[it].l_nchi[L]);
 
 				for(int n=0; n<cell.atoms[it].l_nchi[L]; n++)
 				{
-					this->iatlnmipol2iwt.at(iat).at(L).at(n).resize(2*L+1);
+					this->iatlnmipol2iwt[iat][L][n].resize(2*L+1);
 					
 					for(int m=0; m<2*L+1; m++)
 					{
-						this->iatlnmipol2iwt.at(iat).at(L).at(n).at(m).resize(npol);
+						this->iatlnmipol2iwt[iat][L][n][m].resize(npol);
 					}
 				}
 			}
@@ -190,12 +173,7 @@ void DFTU::init(
 				int n = cell.atoms[it].iw2n[iw0];
 				int m = cell.atoms[it].iw2m[iw0];
 								
-				this->iatlnmipol2iwt.at(iat).at(l).at(n).at(m).at(ipol) = iwt;
-				this->iwt2it.at(iwt) = it;
-				this->iwt2l.at(iwt) = l;
-				this->iwt2n.at(iwt) = n;
-				this->iwt2m.at(iwt) = m;
-				this->iwt2ipol.at(iwt) = ipol;
+				this->iatlnmipol2iwt[iat][l][n][m][ipol] = iwt;
 			}
 		}	
 	}
@@ -212,22 +190,22 @@ void DFTU::init(
 		{
 			const int NL = cell.atoms[it].nwl + 1;
 
-			this->Fk.at(it).resize(NL);		
-			this->U_Yukawa.at(it).resize(NL);
-			this->J_Yukawa.at(it).resize(NL);	
+			this->Fk[it].resize(NL);		
+			this->U_Yukawa[it].resize(NL);
+			this->J_Yukawa[it].resize(NL);	
 
 			for(int l=0; l<NL; l++)
 			{
 				int N = cell.atoms[it].l_nchi[l];
 
-				this->Fk.at(it).at(l).resize(N);
+				this->Fk[it][l].resize(N);
 				for(int n=0; n<N; n++)
 				{
-					this->Fk.at(it).at(l).at(n).resize(l+1, 0.0);
+					this->Fk[it][l][n].resize(l+1, 0.0);
 				}	
 
-				this->U_Yukawa.at(it).at(l).resize(N, 0.0);
-				this->J_Yukawa.at(it).at(l).resize(N, 0.0);
+				this->U_Yukawa[it][l].resize(N, 0.0);
+				this->J_Yukawa[it][l].resize(N, 0.0);
 
 			}			 	
 		}
@@ -352,7 +330,7 @@ void DFTU::cal_occup_m_k(const int iter,  std::vector<ModuleBase::ComplexMatrix>
 				&GlobalV::NLOCAL, &GlobalV::NLOCAL, &GlobalV::NLOCAL,
 				&alpha, 
 				&Sk[0], &one_int, &one_int, this->LM->ParaV->desc, 
-				dm_k.at(ik).c, &one_int, &one_int, this->LM->ParaV->desc,
+				dm_k[ik].c, &one_int, &one_int, this->LM->ParaV->desc,
 				&beta, 
 				&srho[0], &one_int, &one_int, this->LM->ParaV->desc);
 	#endif
@@ -538,7 +516,7 @@ void DFTU::cal_occup_m_gamma(const int iter,  std::vector<ModuleBase::matrix> &d
 				&GlobalV::NLOCAL, &GlobalV::NLOCAL, &GlobalV::NLOCAL,
 				&alpha, 
 				this->LM->Sloc.data(), &one_int, &one_int, this->LM->ParaV->desc, 
-				dm_gamma.at(is).c, &one_int, &one_int, this->LM->ParaV->desc,
+				dm_gamma[is].c, &one_int, &one_int, this->LM->ParaV->desc,
 				&beta,
 				&srho[0], &one_int, &one_int, this->LM->ParaV->desc);
 	#endif
@@ -566,7 +544,7 @@ void DFTU::cal_occup_m_gamma(const int iter,  std::vector<ModuleBase::matrix> &d
 	  				{	
 	  					for(int ipol0=0; ipol0<GlobalV::NPOL; ipol0++)
 	  					{
-	  						const int iwt0 = this->iatlnmipol2iwt.at(iat).at(l).at(n).at(m0).at(ipol0);
+	  						const int iwt0 = this->iatlnmipol2iwt[iat][l][n][m0][ipol0];
 	  						const int mu = this->LM->ParaV->trace_loc_row[iwt0];
 	  						const int mu_prime = this->LM->ParaV->trace_loc_col[iwt0];
 
@@ -574,7 +552,7 @@ void DFTU::cal_occup_m_gamma(const int iter,  std::vector<ModuleBase::matrix> &d
 	  						{	
 	  							for(int ipol1=0; ipol1<GlobalV::NPOL; ipol1++)
 	  							{											
-	  								const int iwt1 = this->iatlnmipol2iwt.at(iat).at(l).at(n).at(m1).at(ipol1);
+	  								const int iwt1 = this->iatlnmipol2iwt[iat][l][n][m1][ipol1];
 	  								const int nu = this->LM->ParaV->trace_loc_col[iwt1];
 	  								const int nu_prime = this->LM->ParaV->trace_loc_row[iwt1];
 
@@ -688,7 +666,7 @@ void DFTU::write_occup_m(const std::string &fn)
 							{
 								for(int m1=0; m1<2*l+1; m1++)
 								{
-									ofdftu << fixed << std::setw(12) << std::setprecision(8) << locale.at(iat).at(l).at(n).at(is)(m0, m1);
+									ofdftu << fixed << std::setw(12) << std::setprecision(8) << locale[iat][l][n][is](m0, m1);
 								}
 								ofdftu << std::endl;
 							}
@@ -707,7 +685,7 @@ void DFTU::write_occup_m(const std::string &fn)
 									for(int ipol1=0; ipol1<GlobalV::NPOL; ipol1++)
 									{
 										int m1_all = m1 + (2*l+1)*ipol1;
-										ofdftu << fixed << std::setw(12) << std::setprecision(8) << locale.at(iat).at(l).at(n).at(0)(m0_all, m1_all);
+										ofdftu << fixed << std::setw(12) << std::setprecision(8) << locale[iat][l][n][0](m0_all, m1_all);
 									}
 								}
 								ofdftu << std::endl;
@@ -765,7 +743,7 @@ void DFTU::read_occup_m(const std::string &fn)
             ifdftu >> iat;
 			ifdftu.ignore(150, '\n');
 
-			T= this->iat2it.at(iat);
+			T= GlobalC::ucell.iat2it[iat];
 			const int NL = GlobalC::ucell.atoms[T].nwl + 1;
 			const int LC = orbital_corr[T];
 	
@@ -808,7 +786,7 @@ void DFTU::read_occup_m(const std::string &fn)
 											for(int m1=0; m1<2*L+1; m1++)
 											{							
 												ifdftu >> value;
-												locale.at(iat).at(L).at(zeta).at(spin)(m0, m1) = value;						 	
+												locale[iat][L][zeta][spin](m0, m1) = value;						 	
 											}
 											ifdftu.ignore(150, '\n');											
 										}
@@ -835,7 +813,7 @@ void DFTU::read_occup_m(const std::string &fn)
 											{		
 												int m1_all = m1 + (2*L+1)*ipol1;	
 												ifdftu >> value;
-												locale.at(iat).at(L).at(zeta).at(0)(m0_all, m1_all) = value;		
+												locale[iat][L][zeta][0](m0_all, m1_all) = value;		
 											}				 	
 										}
 										ifdftu.ignore(150, '\n');
@@ -904,7 +882,7 @@ void DFTU::local_occup_bcast()
 						   {
 							   for(int m1=0; m1<2*l+1; m1++)
 							   {
-									MPI_Bcast(&locale.at(iat).at(l).at(n).at(spin)(m0, m1), 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+									MPI_Bcast(&locale[iat][l][n][spin](m0, m1), 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 							   }
 						   }
 						}
@@ -923,7 +901,7 @@ void DFTU::local_occup_bcast()
 									{		
 										int m1_all = m1 + (2*L+1)*ipol1;	
 										
-										MPI_Bcast(&locale.at(iat).at(l).at(n).at(0)(m0_all, m1_all), 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);		
+										MPI_Bcast(&locale[iat][l][n][0](m0_all, m1_all), 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);		
 									}				 	
 								}
 							}											
@@ -981,13 +959,13 @@ void DFTU::cal_energy_correction(const int istep)
 
 							for(int m0=0; m0<2*l+1; m0++)
 							{
-								nm_trace += this->locale.at(iat).at(l).at(n).at(spin)(m0, m0);
+								nm_trace += this->locale[iat][l][n][spin](m0, m0);
 								for(int m1=0; m1<2*l+1; m1++)
 								{
-									nm2_trace += this->locale.at(iat).at(l).at(n).at(spin)(m0,m1)*this->locale.at(iat).at(l).at(n).at(spin)(m1,m0);
+									nm2_trace += this->locale[iat][l][n][spin](m0,m1)*this->locale[iat][l][n][spin](m1,m0);
 								}
 							}
-							if(Yukawa) this->EU += 0.5*(this->U_Yukawa.at(T).at(l).at(n) - this->J_Yukawa.at(T).at(l).at(n))*(nm_trace - nm2_trace);
+							if(Yukawa) this->EU += 0.5*(this->U_Yukawa[T][l][n] - this->J_Yukawa[T][l][n])*(nm_trace - nm2_trace);
 							else this->EU += 0.5*(this->U[T] - this->J[T])*(nm_trace - nm2_trace);	
 						}
 					}
@@ -1001,7 +979,7 @@ void DFTU::cal_energy_correction(const int istep)
 							for(int ipol0=0; ipol0<GlobalV::NPOL; ipol0++)
 							{
 								const int m0_all = m0 + (2*l+1)*ipol0;
-								nm_trace += this->locale.at(iat).at(l).at(n).at(0)(m0_all, m0_all);
+								nm_trace += this->locale[iat][l][n][0](m0_all, m0_all);
 
 								for(int m1=0; m1<2*l+1; m1++)
 								{
@@ -1009,12 +987,12 @@ void DFTU::cal_energy_correction(const int istep)
 									{
 										int m1_all = m1 + (2*l+1)*ipol1;
 
-										nm2_trace += this->locale.at(iat).at(l).at(n).at(0)(m0_all,m1_all)*this->locale.at(iat).at(l).at(n).at(0)(m1_all, m0_all);
+										nm2_trace += this->locale[iat][l][n][0](m0_all,m1_all)*this->locale[iat][l][n][0](m1_all, m0_all);
 									}
 								}
 							}
 						}
-						if(Yukawa) this->EU += 0.5*(this->U_Yukawa.at(T).at(l).at(n) - this->J_Yukawa.at(T).at(l).at(n))*(nm_trace - nm2_trace);
+						if(Yukawa) this->EU += 0.5*(this->U_Yukawa[T][l][n] - this->J_Yukawa[T][l][n])*(nm_trace - nm2_trace);
 						else this->EU += 0.5*(this->U[T] - this->J[T])*(nm_trace - nm2_trace);
 					}
 
@@ -1036,14 +1014,14 @@ void DFTU::cal_energy_correction(const int istep)
 										{
 											double VU = 0.0;
 											VU = get_onebody_eff_pot(T, iat, l, n, is, m1_all, m2_all, 0);
-											EU_dc += VU*this->locale.at(iat).at(l).at(n).at(is)(m1_all,m2_all);
+											EU_dc += VU*this->locale[iat][l][n][is](m1_all,m2_all);
 										}
 									}	
 									else if(GlobalV::NSPIN==4) //SOC
 									{										
 										double VU = 0.0;
 										VU = get_onebody_eff_pot(T, iat, l, n, 0, m1_all, m2_all, 0);
-										EU_dc += VU*this->locale.at(iat).at(l).at(n).at(0)(m1_all,m2_all);										
+										EU_dc += VU*this->locale[iat][l][n][0](m1_all,m2_all);										
 									}
 								}					
 							}	
@@ -1194,8 +1172,8 @@ void DFTU::output()
 					for(int n=0; n<N; n++)
 					{
  						if(n!=0) continue;						
-						double Ueff = (this->U_Yukawa.at(T).at(L).at(n) - this->J_Yukawa.at(T).at(L).at(n))*ModuleBase::Ry_to_eV;
-						GlobalV::ofs_running << "atom_type=" << T << "  L=" << L << "  chi=" << n << "    U=" << this->U_Yukawa.at(T).at(L).at(n)*ModuleBase::Ry_to_eV << "ev    " << "J=" << this->J_Yukawa.at(T).at(L).at(n)*ModuleBase::Ry_to_eV
+						double Ueff = (this->U_Yukawa[T][L][n] - this->J_Yukawa[T][L][n])*ModuleBase::Ry_to_eV;
+						GlobalV::ofs_running << "atom_type=" << T << "  L=" << L << "  chi=" << n << "    U=" << this->U_Yukawa[T][L][n]*ModuleBase::Ry_to_eV << "ev    " << "J=" << this->J_Yukawa[T][L][n]*ModuleBase::Ry_to_eV
 						<< "ev" << std::endl;
 					}
 				}
@@ -1238,7 +1216,7 @@ void DFTU::output()
 							{
 								for(int m1=0; m1<2*l+1; m1++)
 								{
-									GlobalV::ofs_running << fixed << std::setw(12) << std::setprecision(8) << locale.at(iat).at(l).at(n).at(is)(m0, m1);
+									GlobalV::ofs_running << fixed << std::setw(12) << std::setprecision(8) << locale[iat][l][n][is](m0, m1);
 								}
 								GlobalV::ofs_running << std::endl;
 							}
@@ -1257,7 +1235,7 @@ void DFTU::output()
 									for(int ipol1=0; ipol1<GlobalV::NPOL; ipol1++)
 									{
 										int m1_all = m1 + (2*l+1)*ipol1;
-										GlobalV::ofs_running << fixed << std::setw(12) << std::setprecision(8) << locale.at(iat).at(l).at(n).at(0)(m0_all, m1_all);
+										GlobalV::ofs_running << fixed << std::setw(12) << std::setprecision(8) << locale[iat][l][n][0](m0_all, m1_all);
 									}
 								}
 								GlobalV::ofs_running << std::endl;

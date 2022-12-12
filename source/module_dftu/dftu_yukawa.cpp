@@ -99,10 +99,9 @@ void DFTU::cal_slater_Fk(const int L, const int T)
 						 	bslval=this->spherical_Bessel(l, r1, lambda);
 							hnkval=this->spherical_Hankel(l, r0, lambda);
 						}				
-						this->Fk.at(T).at(L).at(chi).at(k) -= (4*k+1)*lambda*pow(R_L0,2)*bslval*hnkval*pow(R_L1,2)*pow(r0,2)*pow(r1,2)*rab0*rab1;					
+						this->Fk[T][L][chi][k] -= (4*k+1)*lambda*pow(R_L0,2)*bslval*hnkval*pow(R_L1,2)*pow(r0,2)*pow(r1,2)*rab0*rab1;					
 					}
 				}
-			 //	this->Fk.at(T).at(chi).at(k) /= pow(norm,2);
 			}			
 		}		
 	}
@@ -127,7 +126,7 @@ void DFTU::cal_slater_UJ(double** rho)
 			int N = GlobalC::ucell.atoms[it].l_nchi[l];
 			for(int n=0; n<N; n++)
 			{
-				ModuleBase::GlobalFunc::ZEROS(ModuleBase::GlobalFunc::VECTOR_TO_PTR(this->Fk.at(it).at(l).at(n)), l+1);
+				ModuleBase::GlobalFunc::ZEROS(ModuleBase::GlobalFunc::VECTOR_TO_PTR(this->Fk[it][l][n]), l+1);
 			}			
 		}			 	
 	}
@@ -155,56 +154,56 @@ void DFTU::cal_slater_UJ(double** rho)
 					case 1: //p electrons
     				    if(Yukawa)
 						{
-							this->U_Yukawa.at(T).at(L).at(n) = this->Fk.at(T).at(L).at(n).at(0);
-    				    	this->J_Yukawa.at(T).at(L).at(n) = this->Fk.at(T).at(L).at(n).at(1)/5.0;
+							this->U_Yukawa[T][L][n] = this->Fk[T][L][n][0];
+    				    	this->J_Yukawa[T][L][n] = this->Fk[T][L][n][1]/5.0;
 						}
 						else
 						{
 						 //	if(n!=0) continue;
 
-							this->Fk.at(T).at(L).at(n).at(0) = this->U[T];
-    				    	this->Fk.at(T).at(L).at(n).at(1) = 5.0*this->J[T];
+							this->Fk[T][L][n][0] = this->U[T];
+    				    	this->Fk[T][L][n][1] = 5.0*this->J[T];
 						}			
 						break;
 
     				case 2: //d electrons
     				    if(Yukawa)
 						{
-							this->U_Yukawa.at(T).at(L).at(n) = this->Fk.at(T).at(L).at(n).at(0);
-    				    	this->J_Yukawa.at(T).at(L).at(n) = (this->Fk.at(T).at(L).at(n).at(1)+this->Fk.at(T).at(L).at(n).at(2))/14.0;
+							this->U_Yukawa[T][L][n] = this->Fk[T][L][n][0];
+    				    	this->J_Yukawa[T][L][n] = (this->Fk[T][L][n][1]+this->Fk[T][L][n][2])/14.0;
 						}
 						else
 						{
 						 //	if(n!=0) continue;
 
-							this->Fk.at(T).at(L).at(n).at(0) = this->U[T];
-							this->Fk.at(T).at(L).at(n).at(1) = 14.0*this->J[T]/(1.0+0.625);
-							this->Fk.at(T).at(L).at(n).at(2) = 0.625*this->Fk.at(T).at(L).at(n).at(1);
+							this->Fk[T][L][n][0] = this->U[T];
+							this->Fk[T][L][n][1] = 14.0*this->J[T]/(1.0+0.625);
+							this->Fk[T][L][n][2] = 0.625*this->Fk[T][L][n][1];
 						}
 						break;
 
     				case 3: //f electrons
     				    if(Yukawa)
 						{
-							this->U_Yukawa.at(T).at(L).at(n) = this->Fk.at(T).at(L).at(n).at(0);
-    				    	this->J_Yukawa.at(T).at(L).at(n) = (286.0*this->Fk.at(T).at(L).at(n).at(1) +
-									195.0*this->Fk.at(T).at(L).at(n).at(2)+250.0*this->Fk.at(T).at(L).at(n).at(3))/6435.0;
+							this->U_Yukawa[T][L][n] = this->Fk[T][L][n][0];
+    				    	this->J_Yukawa[T][L][n] = (286.0*this->Fk[T][L][n][1] +
+									195.0*this->Fk[T][L][n][2]+250.0*this->Fk[T][L][n][3])/6435.0;
 						}
 						else
 						{
 						 //	if(n!=0) continue;
 
-							this->Fk.at(T).at(L).at(n).at(0) = this->U[T];
-							this->Fk.at(T).at(L).at(n).at(1) = 6435.0*this->J[T]/(286.0+195.0*0.668+250.0*0.494);
-							this->Fk.at(T).at(L).at(n).at(2) = 0.668*this->Fk.at(T).at(L).at(n).at(1);
-							this->Fk.at(T).at(L).at(n).at(3) = 0.494*this->Fk.at(T).at(L).at(n).at(1);
+							this->Fk[T][L][n][0] = this->U[T];
+							this->Fk[T][L][n][1] = 6435.0*this->J[T]/(286.0+195.0*0.668+250.0*0.494);
+							this->Fk[T][L][n][2] = 0.668*this->Fk[T][L][n][1];
+							this->Fk[T][L][n][3] = 0.494*this->Fk[T][L][n][1];
 						}
 						break;
 					}
 
 					//Hartree to Rydeberg
-					this->U_Yukawa.at(T).at(L).at(n) *= 2.0;
-					this->J_Yukawa.at(T).at(L).at(n) *= 2.0;
+					this->U_Yukawa[T][L][n] *= 2.0;
+					this->J_Yukawa[T][L][n] *= 2.0;
 				}//end n
 
 			}//end if

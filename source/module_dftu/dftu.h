@@ -48,12 +48,6 @@ namespace ModuleDFTU
 
         //transform between iwt index and it, ia, L, N and m index
         std::vector<std::vector<std::vector<std::vector<std::vector<int>>>>> iatlnmipol2iwt;   //iatlnm2iwt[iat][l][n][m][ipol]
-        std::vector<int> iwt2it;                               //iwt2it[iwt]
-        std::vector<int> iwt2l;                                //iwt2l[iwt]
-        std::vector<int> iwt2n;                                //iwt2n[iwt]
-        std::vector<int> iwt2m;                                //iwt2m[iwt]
-        std::vector<int> iwt2ipol;                             //iwt2ipol[iwt]
-        std::vector<int> iat2it; 
 
         //local occupancy matrix of the correlated subspace
         //locale: the out put local occupation number matrix of correlated electrons in the current electronic step

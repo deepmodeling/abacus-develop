@@ -484,26 +484,26 @@ namespace ModuleDFTU
 			{
 				if(Yukawa)
 				{				
-					if(m0==m1) VU = (this->U_Yukawa.at(T).at(L).at(N)-this->J_Yukawa.at(T).at(L).at(N))*( 0.5 - this->locale.at(iat).at(L).at(N).at(spin)(m0,m1) );		
-					else VU = -(this->U_Yukawa.at(T).at(L).at(N)-this->J_Yukawa.at(T).at(L).at(N))*this->locale.at(iat).at(L).at(N).at(spin)(m0,m1);
+					if(m0==m1) VU = (this->U_Yukawa[T][L][N]-this->J_Yukawa[T][L][N])*( 0.5 - this->locale[iat][L][N][spin](m0,m1) );		
+					else VU = -(this->U_Yukawa[T][L][N]-this->J_Yukawa[T][L][N])*this->locale[iat][L][N][spin](m0,m1);
 				}
 				else
 				{
-					if(m0==m1) VU = (this->U[T]-this->J[T])*( 0.5 - this->locale.at(iat).at(L).at(N).at(spin)(m0,m1) );		
-					else VU = -(this->U[T]-this->J[T])*this->locale.at(iat).at(L).at(N).at(spin)(m0,m1);
+					if(m0==m1) VU = (this->U[T]-this->J[T])*( 0.5 - this->locale[iat][L][N][spin](m0,m1) );		
+					else VU = -(this->U[T]-this->J[T])*this->locale[iat][L][N][spin](m0,m1);
 				}	
 			}
 			else
 			{	
 				if(Yukawa)
 				{				
-					if(m0==m1) VU = (this->U_Yukawa.at(T).at(L).at(N)-this->J_Yukawa.at(T).at(L).at(N))*( 0.5 - this->locale_save.at(iat).at(L).at(N).at(spin)(m0,m1) );		
-					else VU = -(this->U_Yukawa.at(T).at(L).at(N)-this->J_Yukawa.at(T).at(L).at(N))*this->locale_save.at(iat).at(L).at(N).at(spin)(m0,m1);
+					if(m0==m1) VU = (this->U_Yukawa[T][L][N]-this->J_Yukawa[T][L][N])*( 0.5 - this->locale_save[iat][L][N][spin](m0,m1) );		
+					else VU = -(this->U_Yukawa[T][L][N]-this->J_Yukawa[T][L][N])*this->locale_save[iat][L][N][spin](m0,m1);
 				}
 				else
 				{
-					if(m0==m1) VU = (this->U[T]-this->J[T])*( 0.5 - this->locale_save.at(iat).at(L).at(N).at(spin)(m0,m1) );		
-					else VU = -(this->U[T]-this->J[T])*this->locale_save.at(iat).at(L).at(N).at(spin)(m0,m1);
+					if(m0==m1) VU = (this->U[T]-this->J[T])*( 0.5 - this->locale_save[iat][L][N][spin](m0,m1) );		
+					else VU = -(this->U[T]-this->J[T])*this->locale_save[iat][L][N][spin](m0,m1);
 				}
 			}
 
