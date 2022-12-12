@@ -1,6 +1,6 @@
 list(APPEND objects
       dftu.cpp
-      dftu_relax.cpp
+      dftu_force.cpp
       dftu_yukawa.cpp
 )
 

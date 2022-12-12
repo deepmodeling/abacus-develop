@@ -120,21 +120,23 @@ namespace ModuleDFTU
         //copy from locale to locale_save
         void copy_locale();
 
-// In dftu_relax.cpp
+// In dftu_force.cpp
 // For calculating force and stress fomr DFT+U
 
         public:
 
         void force_stress(std::vector<ModuleBase::matrix>& dm_gamma,
             std::vector<ModuleBase::ComplexMatrix>& dm_k,
-            LCAO_Matrix &lm);
+            LCAO_Matrix &lm,
+            ModuleBase::matrix &force_dftu,
+		    ModuleBase::matrix &stress_dftu);
 
         private:
 
-        void cal_force_k(const int ik, const std::complex<double>* rho_VU);
-        void cal_stress_k(const int ik, const std::complex<double>* rho_VU);
-        void cal_force_gamma(const double* rho_VU);
-        void cal_stress_gamma(const double* rho_VU);
+        void cal_force_k(const int ik, const std::complex<double>* rho_VU, ModuleBase::matrix &force_dftu);
+        void cal_stress_k(const int ik, const std::complex<double>* rho_VU, ModuleBase::matrix &stress_dftu);
+        void cal_force_gamma(const double* rho_VU, ModuleBase::matrix &force_dftu);
+        void cal_stress_gamma(const double* rho_VU, ModuleBase::matrix &stress_dftu);
 
         void fold_dSR_gamma(const int dim1, const int dim2, double* dSR_gamma);
         void fold_dSm_k(const int ik, const int dim, std::complex<double>* dSm_k);

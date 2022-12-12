@@ -96,20 +96,6 @@ void DFTU::init(
 		
 	this->EU = 0.0;
 
-	if(GlobalV::CAL_FORCE)
-	{
-		this->force_dftu.resize(cell.nat);
-		for(int ia=0; ia<cell.nat; ia++)
-			this->force_dftu.at(ia).resize(3, 0.0);
-	}
-
-	if(GlobalV::CAL_STRESS)
-	{
-		this->stress_dftu.resize(3);
-		for(int dim=0; dim<3; dim++)
-			this->stress_dftu.at(dim).resize(3, 0.0);
-	}
-
 	this->locale.resize(cell.nat);
 	this->locale_save.resize(cell.nat);
 

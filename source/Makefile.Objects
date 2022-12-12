@@ -382,7 +382,7 @@ OBJS_LCAO=DM_gamma.o\
       center2_orb-orb21.o\
       center2_orb-orb22.o\
       dftu.o\
-      dftu_relax.o\
+      dftu_force.o\
       dftu_yukawa.o\
       global_fp.o\
       local_orbital_charge.o\
