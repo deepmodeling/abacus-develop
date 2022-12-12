@@ -42,10 +42,6 @@ namespace ModuleDFTU
             const int m1,
             const bool newlocale);
 
-        //forces and stress
-        std::vector<std::vector<double>> force_dftu;      //force_dftu[iat][dim] 
-        std::vector<std::vector<double>> stress_dftu;
-
         //transform between iwt index and it, ia, L, N and m index
         std::vector<std::vector<std::vector<std::vector<std::vector<int>>>>> iatlnmipol2iwt;   //iatlnm2iwt[iat][l][n][m][ipol]
 
@@ -55,22 +51,16 @@ namespace ModuleDFTU
         std::vector<std::vector<std::vector<std::vector<ModuleBase::matrix>>>> locale;            // locale[iat][l][n][spin](m1,m2)
         std::vector<std::vector<std::vector<std::vector<ModuleBase::matrix>>>> locale_save;       // locale_save[iat][l][n][spin](m1,m2)
 
-        int cal_type;        //1:dftu_tpye=1, dc=1; 2:dftu_type=1, dc=2; 3:dftu_tpye=2, dc=1; 4:dftu_tpye=2, dc=2; 
-        int dc;              //dc (type of double_counting)
+        int cal_type = 3;        //1:dftu_tpye=1, dc=1; 2:dftu_type=1, dc=2; 3:dftu_tpye=2, dc=1; 4:dftu_tpye=2, dc=2; 
         double *U;           //U (Hubbard parameter U)
         double *J;           //J (Hund parameter J)
         int *orbital_corr;   //
         int omc;
-        int dftu_type;
-        int double_counting;
 
         //std::vector<std::vector<matrix>> Vsc; //Vsc[T][N](i,j)
         std::vector<std::vector<std::vector<std::vector<double>>>> Fk; //slater integral:Fk[T][L][N][k]
         std::vector<std::vector<std::vector<double>>> U_Yukawa;   //U_Yukawa[T][L][N]
         std::vector<std::vector<std::vector<double>>> J_Yukawa;   //J_Yukawa[T][L][N]
-
-        double Nval;         //Total nmuber of valence electrons of the system 
-        double Nc;           //Total nmuber of correlated electrons of the system 
 
         // initialize the input terms of  U, J, double_counting etc
         void init(UnitCell &cell, // unitcell class

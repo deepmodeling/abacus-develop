@@ -86,6 +86,8 @@ void DFTU::init(
 	const int nks = GlobalC::kv.nks; // number of k-points
 	const int nspin = GlobalV::NSPIN; // number of spins
 
+	/*
+	not implemented yet, no need to check for now
 	if(dftu_type==1 && double_counting==1) cal_type = 1;
 	else if(dftu_type==1 && double_counting==2) cal_type = 2;
 	else if(dftu_type==2 && double_counting==1) cal_type = 3;
@@ -93,6 +95,7 @@ void DFTU::init(
 	else ModuleBase::WARNING_QUIT("DFT+U", "Wrong parameter");
 
 	if(cal_type!=3)  ModuleBase::WARNING_QUIT("DFT+U", "Not available yet!");
+	*/
 		
 	this->EU = 0.0;
 

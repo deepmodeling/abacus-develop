@@ -407,11 +407,6 @@ class Input
     bool yukawa_potential; // default:false
     double yukawa_lambda; // default:-1.0, which means we calculate lambda
 
-    // The two parameters below are not usable currently
-
-    int dftu_type; // 1:rotationally invarient formalism; 2:simplified form(default)
-    int double_counting; // 1:FLL(fully localized limit)(default); 2:AMF(around mean field)
-
     //==========================================================
     //    DFT+DMFT       Xin Qu added on 2021-08
     //==========================================================

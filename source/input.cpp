@@ -435,9 +435,7 @@ void Input::Default(void)
     dft_plus_u = false; // 1:DFT+U correction; 0：standard DFT calcullation
     yukawa_potential = false;
     yukawa_lambda = -1.0;
-    double_counting = 1;
     omc = 0;
-    dftu_type = 2;
 
     //==========================================================
     //    DFT+DMFT     Xin Qu added on 2020-08
@@ -1649,15 +1647,11 @@ bool Input::Read(const std::string &fn)
         {
             ifs >> dft_plus_u;
         }
-        else if (strcmp("dftu_type", word) == 0)
-            ifs.ignore(150, '\n');
         else if (strcmp("yukawa_potential", word) == 0)
             ifs.ignore(150, '\n');
         else if (strcmp("hubbard_u", word) == 0)
             ifs.ignore(150, '\n');
         else if (strcmp("hund_j", word) == 0)
-            ifs.ignore(150, '\n');
-        else if (strcmp("double_counting", word) == 0)
             ifs.ignore(150, '\n');
         else if (strcmp("orbital_corr", word) == 0)
             ifs.ignore(150, '\n');
@@ -1863,21 +1857,13 @@ bool Input::Read(const std::string &fn)
             if(ifs.eof() != 0) break;
             strtolower(word1, word); // convert uppercase std::string to lower case; word1 --> word
 
-            if (strcmp("dftu_type", word) == 0)
-            {
-                ifs >> dftu_type;
-            }
-            else if (strcmp("yukawa_potential", word) == 0)
+            if (strcmp("yukawa_potential", word) == 0)
             {
                 ifs >> yukawa_potential;
             }
             else if (strcmp("yukawa_lambda", word) == 0)
             {
                 ifs >> yukawa_lambda;
-            }
-            else if (strcmp("double_counting", word) == 0)
-            {
-                ifs >> double_counting;
             }
             else if (strcmp("hubbard_u", word) == 0)
             {
@@ -2503,8 +2489,6 @@ void Input::Bcast()
     Parallel_Common::bcast_bool(dft_plus_u);
     Parallel_Common::bcast_bool(yukawa_potential);
     Parallel_Common::bcast_int(omc);
-    Parallel_Common::bcast_int(dftu_type);
-    Parallel_Common::bcast_int(double_counting);
     Parallel_Common::bcast_double(yukawa_lambda);
     if (GlobalV::MY_RANK != 0)
     {
