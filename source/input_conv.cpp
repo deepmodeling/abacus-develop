@@ -190,8 +190,10 @@ void Input_Conv::Convert(void)
         GlobalC::dftu.orbital_corr = INPUT.orbital_corr;
         if (!INPUT.yukawa_potential)
         {
-            GlobalC::dftu.U = INPUT.hubbard_u; // Hubbard Coulomb interaction parameter U(ev)
-            GlobalC::dftu.J = INPUT.hund_j; // Hund exchange parameter J(ev)
+            // Duradev's rotational invariant formulation is implemented
+            // where only an effective U given by U-J is used
+            // unit is in eV
+            GlobalC::dftu.U = INPUT.hubbard_u;
         }
     }
 #endif

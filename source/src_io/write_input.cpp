@@ -410,12 +410,6 @@ void Input::Print(const std::string &fn) const
     ModuleBase::GlobalFunc::OUTP(ofs, "yukawa_lambda", yukawa_lambda, "default:0.0");
     ModuleBase::GlobalFunc::OUTP(ofs, "yukawa_potential", yukawa_potential, "default: false");
     ModuleBase::GlobalFunc::OUTP(ofs, "omc", omc, "the mode of occupation matrix control");
-    ofs << std::setw(20) << "hund_j ";
-    for (int i = 0; i < ntype; i++)
-    {
-        ofs << hund_j[i]*ModuleBase::Ry_to_eV << " ";
-    }
-    ofs << "#Hund exchange parameter J(ev)" << std::endl;
     ofs << std::setw(20) << "hubbard_u ";
     for (int i = 0; i < ntype; i++)
     {

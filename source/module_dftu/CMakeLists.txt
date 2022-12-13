@@ -2,6 +2,11 @@ list(APPEND objects
       dftu.cpp
       dftu_force.cpp
       dftu_yukawa.cpp
+      dftu_folding.cpp
+      dftu_io.cpp
+      dftu_tools.cpp
+      dftu_occup.cpp
+      dftu_hamilt.cpp
 )
 
 add_library(

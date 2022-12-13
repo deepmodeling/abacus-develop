@@ -85,7 +85,7 @@ ${OBJS_IO_LCAO}\
 ${OBJS_LCAO}\
 ${OBJS_PARALLEL_LCAO}\
 ${OBJS_VDW}\
-
+${OBJS_DFTU}\
 
 OBJS_MAIN=main.o\
     driver.o\
@@ -381,9 +381,6 @@ OBJS_LCAO=DM_gamma.o\
       center2_orb-orb11.o\
       center2_orb-orb21.o\
       center2_orb-orb22.o\
-      dftu.o\
-      dftu_force.o\
-      dftu_yukawa.o\
       global_fp.o\
       local_orbital_charge.o\
       local_orbital_wfc.o\
@@ -483,3 +480,11 @@ OBJS_VDW=vdw.o\
     vdwd3.o\
     vdwd3_parameters_tab.o
 
+OBJS_DFTU=dftu.o\
+      dftu_force.o\
+      dftu_yukawa.o\
+      dftu_folding.o\
+      dftu_io.o\
+      dftu_tools.o\
+      dftu_occup.o\
+      dftu_hamilt.o

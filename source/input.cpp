@@ -1651,8 +1651,6 @@ bool Input::Read(const std::string &fn)
             ifs.ignore(150, '\n');
         else if (strcmp("hubbard_u", word) == 0)
             ifs.ignore(150, '\n');
-        else if (strcmp("hund_j", word) == 0)
-            ifs.ignore(150, '\n');
         else if (strcmp("orbital_corr", word) == 0)
             ifs.ignore(150, '\n');
         else if (strcmp("omc", word) == 0)
@@ -1834,12 +1832,6 @@ bool Input::Read(const std::string &fn)
         hubbard_u[i] = 0.0;
     }
 
-    hund_j = new double[ntype];
-    for (int i = 0; i < ntype; i++)
-    {
-        hund_j[i] = 0.0;
-    }
-
     orbital_corr = new int[ntype];
     for (int i = 0; i < ntype; i++)
     {
@@ -1873,14 +1865,6 @@ bool Input::Read(const std::string &fn)
                     hubbard_u[i] /= ModuleBase::Ry_to_eV;
                 }
             }
-            else if (strcmp("hund_j", word) == 0)
-            {
-                for (int i = 0; i < ntype; i++)
-                {
-                    ifs >> hund_j[i];
-                    hund_j[i] /= ModuleBase::Ry_to_eV;
-                }
-            }
             else if (strcmp("orbital_corr", word) == 0)
             {
                 for (int i = 0; i < ntype; i++)
@@ -1909,12 +1893,6 @@ bool Input::Read(const std::string &fn)
             if (hubbard_u[i] < -1.0e-3)
             {
                 std::cout << " WRONG ARGUMENTS OF hubbard_u " << std::endl;
-                exit(0);
-            }
-
-            if (hund_j[i] < -1.0e-3)
-            {
-                std::cout << " WRONG ARGUMENTS OF hund_j " << std::endl;
                 exit(0);
             }
 
@@ -1969,14 +1947,6 @@ bool Input::Read(const std::string &fn)
                     hubbard_u[i] /= ModuleBase::Ry_to_eV;
                 }
             }
-            else if (strcmp("hund_j", word) == 0)
-            {
-                for (int i = 0; i < ntype; i++)
-                {
-                    ifs >> hund_j[i];
-                    hund_j[i] /= ModuleBase::Ry_to_eV;
-                }
-            }
             else if (strcmp("orbital_corr", word) == 0)
             {
                 for (int i = 0; i < ntype; i++)
@@ -1997,12 +1967,6 @@ bool Input::Read(const std::string &fn)
             if (hubbard_u[i] < -1.0e-3)
             {
                 std::cout << " WRONG ARGUMENTS OF hubbard_u " << std::endl;
-                exit(0);
-            }
-
-            if (hund_j[i] < -1.0e-3)
-            {
-                std::cout << " WRONG ARGUMENTS OF hund_j " << std::endl;
                 exit(0);
             }
 
@@ -2493,14 +2457,12 @@ void Input::Bcast()
     if (GlobalV::MY_RANK != 0)
     {
         hubbard_u = new double[this->ntype];
-        hund_j = new double[this->ntype];
         orbital_corr = new int[this->ntype];
     }
 
     for (int i = 0; i < this->ntype; i++)
     {
         Parallel_Common::bcast_double(hubbard_u[i]);
-        Parallel_Common::bcast_double(hund_j[i]);
         Parallel_Common::bcast_int(orbital_corr[i]);
     }
 

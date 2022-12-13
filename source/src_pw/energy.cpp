@@ -63,7 +63,7 @@ void energy::calculate_harris()
 #ifdef __LCAO
 	if(GlobalV::dft_plus_u) 
 	{
-		this->etot_harris += GlobalC::dftu.EU;  //Energy correction from DFT+U; Quxin adds on 20201029
+		this->etot_harris += GlobalC::dftu.get_energy();  //Energy correction from DFT+U; Quxin adds on 20201029
 	}
 #endif
 #ifdef __DEEPKS
@@ -115,7 +115,7 @@ void energy::calculate_etot(void)
 #ifdef __LCAO
     if(GlobalV::dft_plus_u) 
 	{
-		this->etot += GlobalC::dftu.EU;																	  
+		this->etot += GlobalC::dftu.get_energy();																	  
 	}
 #endif
 #ifdef __DEEPKS
