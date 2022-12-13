@@ -565,11 +565,14 @@ void DiagoDavid<FPTYPE, Device>::cal_elem(const int& npw,
     {
         std::complex<double>* swap = new std::complex<double>[notconv * this->nbase_x];
         syncmem_complex_op()(this->ctx, this->ctx, swap, hcc + offset_h, notconv * this->nbase_x);
-        MPI_Reduce(swap, hcc + offset_h, notconv * this->nbase_x, MPI_DOUBLE_COMPLEX, MPI_SUM, 0, MPI_COMM_WORLD);
+        MPI_Reduce(swap, hcc + offset_h, notconv * this->nbase_x, MPI_DOUBLE_COMPLEX, MPI_SUM, 0, POOL_WORLD);
 
         syncmem_complex_op()(this->ctx, this->ctx, swap, scc + offset_h, notconv * this->nbase_x);
-        MPI_Reduce(swap, scc + offset_h, notconv * this->nbase_x, MPI_DOUBLE_COMPLEX, MPI_SUM, 0, MPI_COMM_WORLD);
+        MPI_Reduce(swap, scc + offset_h, notconv * this->nbase_x, MPI_DOUBLE_COMPLEX, MPI_SUM, 0, POOL_WORLD);
         delete[] swap;
+
+        // Parallel_Reduce::reduce_complex_double_pool( hcc + offset_h, notconv * this->nbase_x );
+        // Parallel_Reduce::reduce_complex_double_pool( scc + offset_h, notconv * this->nbase_x );
     }
 #endif
     /*
@@ -611,7 +614,7 @@ void DiagoDavid<FPTYPE, Device>::diag_zhegvx(const int& n, // nbase
 {
     //	ModuleBase::TITLE("DiagoDavid","diag_zhegvx");
     ModuleBase::timer::tick("DiagoDavid", "diag_zhegvx");
-    if (GlobalV::MY_RANK == 0)
+    if (GlobalV::RANK_IN_POOL == 0)
     {
         assert(ldh >= max(1, n));
 
@@ -640,9 +643,9 @@ void DiagoDavid<FPTYPE, Device>::diag_zhegvx(const int& n, // nbase
     {
         for (int i = 0; i < n; i++)
         {
-            Parallel_Common::bcast_complex_double(&vcc[i * this->nbase_x], m);
+            MPI_Bcast(&vcc[i * this->nbase_x], m, MPI_DOUBLE_COMPLEX, 0, POOL_WORLD);
         }
-        Parallel_Common::bcast_double(this->eigenvalue, m);
+        MPI_Bcast(this->eigenvalue, m, MPI_DOUBLE, 0, POOL_WORLD);
     }
 #endif
 

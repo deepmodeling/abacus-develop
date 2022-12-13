@@ -2,7 +2,7 @@
 
 - [System variables](#system-variables)
 
-  [suffix](#suffix) | [ntype](#ntype) | [calculation](#calculation) | [esolver_type](#esolver_type) | [symmetry](#symmetry) | [kpar](#kpar) | [bndpar](#bndpar) | [latname](#latname) | [init_wfc](#init_wfc) | [init_chg](#init_chg) | [init_vel](#init_vel) | [nelec](#nelec) | [nupdown](#nupdown) | [tot_magnetization](#tot_magnetization) | [dft_functional](#dft_functional) | [xc_temperature](#xc_temperature) | [pseudo_rcut](#pseudo_rcut) | [pseudo_mesh](#pseudo_mesh) | [mem_saver](#mem_saver) | [diago_proc](#diago_proc) | [nbspline](#nbspline) | [kspacing](#kspacing)  | [min_dist_coef](#min_dist_coef) | [symmetry_prec](#symmetry_prec) | [device](#device)
+  [suffix](#suffix) | [ntype](#ntype) | [calculation](#calculation) | [esolver_type](#esolver_type) | [symmetry](#symmetry) | [kpar](#kpar) | [bndpar](#bndpar) | [latname](#latname) | [init_wfc](#init_wfc) | [init_chg](#init_chg) | [init_vel](#init_vel) | [nelec](#nelec) | [nupdown](#nupdown) | [dft_functional](#dft_functional) | [xc_temperature](#xc_temperature) | [pseudo_rcut](#pseudo_rcut) | [pseudo_mesh](#pseudo_mesh) | [mem_saver](#mem_saver) | [diago_proc](#diago_proc) | [nbspline](#nbspline) | [kspacing](#kspacing)  | [min_dist_coef](#min_dist_coef) | [symmetry_prec](#symmetry_prec) | [device](#device)
 - [Variables related to input files](#variables-related-to-input-files)
 
   [stru_file](#stru_file) | [kpoint_file](#kpoint_file) | [pseudo_dir](#pseudo_dir) | [orbital_dir](#orbital_dir) | [read_file_dir](#read_file_dir) | [wannier_card](#wannier_card)
@@ -20,7 +20,7 @@
   [method_sto](#method_sto) | [nbands_sto](#nbands_sto) | [nche_sto](#nche_sto) | [emin_sto](#emin_sto) | [emax_sto](#emax_sto) | [seed_sto](#seed_sto) | [initsto_freq](#initsto_freq) | [npart_sto](#npart_sto)
 - [Geometry relaxation](#geometry-relaxation)
 
-  [relax_nmax](#relax_nmax) | [relax_method](#relax_method) | [relax_cg_thr](#relax_cg_thr) | [relax_bfgs_w1](#relax_bfgs_w1) | [relax_bfgs_w2](#relax_bfgs_w2) | [relax_bfgs_rmax](#relax_bfgs_rmax) | [relax_bfgs_rmin](#relax_bfgs_rmin) | [relax_bfgs_init](#relax_bfgs_init) | [cal_force](#cal_force) | [force_thr](#force_thr) | [force_thr_ev](#force_thr_ev) | [force_thr_ev2](#force_thr_ev2) | [cal_stress](#cal_stress) | [stress_thr](#stress_thr) | [press1, press2, press3](#press1-press2-press3) | [fixed_axes](#fixed_axes) | [cell_factor](#cell_factor) | [fixed_ibrav](#fixed_ibrav) | [relax_new](#relax_new)
+  [relax_nmax](#relax_nmax) | [relax_method](#relax_method) | [relax_cg_thr](#relax_cg_thr) | [relax_bfgs_w1](#relax_bfgs_w1) | [relax_bfgs_w2](#relax_bfgs_w2) | [relax_bfgs_rmax](#relax_bfgs_rmax) | [relax_bfgs_rmin](#relax_bfgs_rmin) | [relax_bfgs_init](#relax_bfgs_init) | [cal_force](#cal_force) | [force_thr](#force_thr) | [force_thr_ev](#force_thr_ev) | [force_thr_ev2](#force_thr_ev2) | [cal_stress](#cal_stress) | [stress_thr](#stress_thr) | [press1, press2, press3](#press1-press2-press3) | [fixed_axes](#fixed_axes) | [cell_factor](#cell_factor) | [fixed_ibrav](#fixed_ibrav) | [relax_new](#relax_new) | [relax_scale_force](#relax_scale_force)
 - [Variables related to output information](#variables-related-to-output-information)
 
   [out_force](#out_force) | [out_mul](#out_mul) | [out_freq_elec](#out_freq_elec) | [out_freq_ion](#out_freq_ion) | [out_chg](#out_chg) | [out_pot](#out_pot) | [out_dm](#out_dm) | [out_wfc_pw](#out_wfc_pw) | [out_wfc_r](#out_wfc_r) | [out_wfc_lcao](#out_wfc_lcao) | [out_dos](#out_dos) | [out_band](#out_band) | [out_proj_band](#out_proj_band) | [out_stru](#out_stru) | [out_level](#out_level) | [out_alllog](#out_alllog) | [out_mat_hs](#out_mat_hs) | [out_mat_r](#out_mat_r) | [out_mat_hs2](#out_mat_hs2) | [out_hs2_interval](#out_hs2_interval) [out_element_info](#out_element_info) | [restart_save](#restart_save) | [restart_load](#restart_load) | [dft_plus_dmft](#dft_plus_dmft) | [rpa](#rpa)
@@ -30,11 +30,9 @@
 - [Exact exchange](#exact-exchange) (Under tests)
 
   [exx_hybrid_alpha](#exx_hybrid_alpha) | [exx_hse_omega](#exx_hse_omega) | [exx_separate_loop](#exx_separate_loop) | [exx_hybrid_step](#exx_hybrid_step) | [exx_lambda](#exx_lambda) | [exx_pca_threshold](#exx_pca_threshold) | [exx_c_threshold](#exx_c_threshold) | [exx_v_threshold](#exx_v_threshold) | [exx_dm_threshold](#exx_dm_threshold) | [exx_schwarz_threshold](#exx_schwarz_threshold) | [exx_cauchy_threshold](#exx_cauchy_threshold) | [exx_ccp_threshold](#exx_ccp_threshold) | [exx_ccp_rmesh_times](#exx_ccp_rmesh_times) | [exx_distribute_type](#exx_distribute_type) | [exx_opt_orb_lmax](#exx_opt_orb_lmax) | [exx_opt_orb_ecut](#exx_opt_orb_ecut) | [exx_opt_orb_tolerence](#exx_opt_orb_tolerence)
-
 - [Molecular dynamics](#molecular-dynamics)
 
   [md_type](#md_type) | [md_thermostat](#md_thermostat) | [md_nstep](#md_nstep) | [md_restart](#md_restart) | [md_dt](#md_dt) | [md_tfirst, md_tlast](#md_tfirst-md_tlast) | [md_dumpfreq](#md_dumpfreq) | [md_restartfreq](#md_restartfreq) | [md_seed](#md_seed) | [md_tfreq](#md_tfreq) | [md_tchain](#md_tchain) | [md_pmode](#md_pmode) | [md_pcouple](#md_pcouple) | [md_pfirst, md_plast](#md_pfirst-md_plast) | [md_pfreq](#md_pfreq) | [md_pchain](#md_pchain) | [lj_rcut](#lj_rcut) | [lj_epsilon](#lj_epsilon) | [lj_sigma](#lj_sigma) | [pot_file](#pot_file) | [msst_direction](#msst_direction) | [msst_vel](#msst_vel) | [msst_vis](#msst_vis) | [msst_tscale](#msst_tscale) | [msst_qmass](#msst_qmass) | [md_damp](#md_damp) | [md_tolerance](#md_tolerance) | [md_nraise](#md_nraise)
-
 - [vdW correction](#vdw-correction)
 
   [vdw_method](#vdw_method) | [vdw_s6](#vdw_s6) | [vdw_s8](#vdw_s8) | [vdw_a1](#vdw_a1) | [vdw_a2](#vdw_a2) | [vdw_d](#vdw_d) | [vdw_abc](#vdw_abc) | [vdw_C6_file](#vdw_c6_file) | [vdw_C6_unit](#vdw_c6_unit) | [vdw_R0_file](#vdw_r0_file) | [vdw_R0_unit](#vdw_r0_unit) | [vdw_cutoff_type](#vdw_cutoff_type) | [vdw_cutoff_radius](#vdw_cutoff_radius) | [vdw_radius_unit](#vdw_radius_unit) | [vdw_cutoff_period](#vdw_cutoff_period) | [vdw_cn_thr](#vdw_cn_thr) | [vdw_cn_thr_unit](#vdw_cn_thr_unit)
@@ -84,8 +82,8 @@ These variables are used to control general system parameters.
 ### ntype
 
 - **Type**: Integer
-- **Description**: Number of different atom species in this calculation. This value must be set. If the number you set is smaller than the atom species in the STRU file, ABACUS only read the `wrong number` of atom information. If the number is larger than the atom species in the STRU file, ABACUS may stop and quit.
-- **Default**: ***No default value***
+- **Description**: Number of different atom species in this calculation. If this value is not equal to the atom species in the STRU file, ABACUS will stop and quit. If not set or set to 0, ABACUS will automatically set it to the atom species in the STRU file.
+- **Default**: 0
 
 ### calculation
 
@@ -95,7 +93,7 @@ These variables are used to control general system parameters.
   - *scf*: do self-consistent electronic structure calculation
   - *relax*: do structure relaxation calculation, one can use `relax_nmax` to decide how many ionic relaxations you want.
   - *cell-relax*: do variable-cell relaxation calculation.
-  - *nscf*: do the non self-consistent electronic structure calculations. For this option, you need a charge density file. For nscf calculations with planewave basis set, pw_diag_thr should be <= 1d-3.
+  - *nscf*: do the non self-consistent electronic structure calculations. For this option, you need a charge density file. For nscf calculations with planewave basis set, pw_diag_thr should be <= 1e-3.
   - *istate*: For LCAO basis. Please see the explanation for variable `nbands_istate`.
   - *ienvelope*: Envelope function for LCAO basis. Please see the explanation for variable `nbands_istate`.
   - *md*: molecular dynamics
@@ -195,12 +193,6 @@ These variables are used to control general system parameters.
 - **Description**: If >0.0, this denotes the difference number of electrons between spin-up and spin-down in the system. The range of value must in [-nelec ~ nelec]. It is one method of constraint DFT, the fermi energy level will separate to E_Fermi_up and E_Fermi_down. If set to 0.0, no constrain apply to system.
 - **Default**: 0.0
 
-### tot_magnetization
-
-- **Type**: Real
-- **Description**: Total magnetization of the system.
-- **Default**: 0.0
-
 ### dft_functional
 
 - **Type**: String
@@ -273,10 +265,12 @@ These variables are used to control general system parameters.
 - **Description**: Specifies the computing device for ABACUS.
 
   Available options are:
+
   - `cpu`: for CPUs via Intel, AMD, or Other supported CPU devices
   - `gpu`: for GPUs via CUDA.
 
   Known limitations:
+
   - `pw basis`: required by the `gpu` acceleration options
   - `cg ks_solver`: required by the `gpu` acceleration options
 - **Default**: `cpu`
@@ -350,7 +344,7 @@ These variables are used to control the plane wave related parameters.
 ### pw_diag_thr
 
 - **Type**: Real
-- **Description**: Only used when you use `diago_type = cg` or `diago_type = david`. It indicates the threshold for the first electronic iteration, from the second iteration the pw_diag_thr will be updated automatically. **For nscf calculations with planewave basis set, pw_diag_thr should be <= 1d-3.**
+- **Description**: Only used when you use `diago_type = cg` or `diago_type = david`. It indicates the threshold for the first electronic iteration, from the second iteration the pw_diag_thr will be updated automatically. **For nscf calculations with planewave basis set, pw_diag_thr should be <= 1e-3.**
 - **Default**: 0.01
 
 ### pw_diag_nmax
@@ -798,8 +792,13 @@ These variables are used to control the geometry relaxation.
 
 - **Type**: Boolean
 - **Description**: At around the end of 2022 we made a new implementation of the CG method for relax and cell-relax calculations. But the old implementation was also kept. To use the new method, set relax_new to true. To use the old one, set it to false.
-
 - **Default**: True
+
+### relax_scale_force
+
+- **Type**: Real
+- **Description**: This parameter is only relavant when `relax_new` is set to True. It controls the size of the first CG step. A smaller value means the first step along a new CG direction is smaller. This might be helpful for large systems, where it is safer to take a smaller initial step to prevent the collapse of the whole configuration.
+- **Default**: 0.5
 
 ### cell_factor
 
@@ -985,6 +984,7 @@ These variables are used to control the output of properties.
 - **Default**: 0
 
 ### out_hs2_interval
+
 - **Type**: Integer
 - **Description**: Only relevant for printing H(R) and S(R) matrices during MD. It controls the interval at which to print. Check input parameter [out_mat_hs2](#out_mat_hs2) for more information.
 - **Default**: 1
@@ -1370,13 +1370,13 @@ These variables are relevant when using hybrid functionals
 ### exx_pca_threshold
 
 - **Type**: Real
-- **Description**: To accelerate the evaluation of four-center integrals ($ik|jl$), the product of atomic orbitals are expanded in the basis of auxiliary basis functions (ABF): $\Phi_{i}\Phi_{j}\sim C^{k}_{ij}P_{k}$. The size of the ABF (i.e. number of $P_{k}$) is reduced using principal component analysis. When a large PCA threshold is used, the number of ABF will be reduced, hence the calculation becomes faster. However, this comes at the cost of computational accuracy. A relatively safe choice of the value is 1d-4.
+- **Description**: To accelerate the evaluation of four-center integrals ($ik|jl$), the product of atomic orbitals are expanded in the basis of auxiliary basis functions (ABF): $\Phi_{i}\Phi_{j}\sim C^{k}_{ij}P_{k}$. The size of the ABF (i.e. number of $P_{k}$) is reduced using principal component analysis. When a large PCA threshold is used, the number of ABF will be reduced, hence the calculation becomes faster. However, this comes at the cost of computational accuracy. A relatively safe choice of the value is 1e-4.
 - **Default**: 0
 
 ### exx_c_threshold
 
 - **Type**: Real
-- **Description**: See also the entry [exx_pca_threshold](#exx_pca_threshold). Smaller components (less than exx_c_threshold) of the $C^{k}_{ij}$ matrix are neglected to accelerate calculation. The larger the threshold is, the faster the calculation and the lower the accuracy. A relatively safe choice of the value is 1d-4.
+- **Description**: See also the entry [exx_pca_threshold](#exx_pca_threshold). Smaller components (less than exx_c_threshold) of the $C^{k}_{ij}$ matrix are neglected to accelerate calculation. The larger the threshold is, the faster the calculation and the lower the accuracy. A relatively safe choice of the value is 1e-4.
 - **Default**: 0
 
 ### exx_v_threshold
@@ -1388,19 +1388,19 @@ These variables are relevant when using hybrid functionals
 ### exx_dm_threshold
 
 - **Type**: Real
-- **Description**: The Fock exchange can be expressed as $\Sigma_{k,l}(ik|jl)D_{kl}$ where D is the density matrix. Smaller values of the density matrix can be truncated to accelerate calculation. The larger the threshold is, the faster the calculation and the lower the accuracy. A relatively safe choice of the value is 1d-4.
+- **Description**: The Fock exchange can be expressed as $\Sigma_{k,l}(ik|jl)D_{kl}$ where D is the density matrix. Smaller values of the density matrix can be truncated to accelerate calculation. The larger the threshold is, the faster the calculation and the lower the accuracy. A relatively safe choice of the value is 1e-4.
 - **Default**: 0
 
 ### exx_schwarz_threshold
 
 - **Type**: Real
-- **Description**: In practice the four-center integrals are sparse, and using Cauchy-Schwartz inequality, we can find an upper bound of each integral before carrying out explicit evaluations. Those that are smaller than exx_schwarz_threshold will be truncated. The larger the threshold is, the faster the calculation and the lower the accuracy. A relatively safe choice of the value is 1d-5.
+- **Description**: In practice the four-center integrals are sparse, and using Cauchy-Schwartz inequality, we can find an upper bound of each integral before carrying out explicit evaluations. Those that are smaller than exx_schwarz_threshold will be truncated. The larger the threshold is, the faster the calculation and the lower the accuracy. A relatively safe choice of the value is 1e-5.
 - **Default**: 0
 
 ### exx_cauchy_threshold
 
 - **Type**: Real
-- **Description**: In practice the Fock exchange matrix is sparse, and using Cauchy-Schwartz inequality, we can find an upper bound of each matrix element before carrying out explicit evaluations. Those that are smaller than exx_cauchy_threshold will be truncated. The larger the threshold is, the faster the calculation and the lower the accuracy. A relatively safe choice of the value is 1d-7.
+- **Description**: In practice the Fock exchange matrix is sparse, and using Cauchy-Schwartz inequality, we can find an upper bound of each matrix element before carrying out explicit evaluations. Those that are smaller than exx_cauchy_threshold will be truncated. The larger the threshold is, the faster the calculation and the lower the accuracy. A relatively safe choice of the value is 1e-7.
 - **Default**: 0
 
 ### exx_ccp_threshold
@@ -1439,6 +1439,12 @@ These variables are relevant when using hybrid functionals
 - **Description**: See also the entry [dft_functional](#dft_functional). This parameter is only relevant when dft_functional=`opt_orb`. exx_opt_orb_tolerence determines the threshold when solving for the zeros of spherical Bessel functions. A reasonable choice is 1e-12.
 - **Default**: 0
 
+### exx_real_number
+
+- **Type**: Boolen
+- **Description**: If set to 1, it will enforce LIBRI to use `double` data type, otherwise, it will enforce LIBRI to use `complex` data type. The default value depends on the [gamma_only](#gamma_only) option.
+- **Default**: 1 if gamma_only else 0
+
 [back to top](#full-list-of-input-keywords)
 
 ## Molecular dynamics
@@ -1469,7 +1475,6 @@ These variables are used to control the molecular dynamics calculations.
   - berendsen: NVT ensemble with Berendsen thermostat, see the parameter `md_nraise`.
   - rescaling: NVT ensemble with velocity Rescaling method 1, see the parameter `md_tolerance`.
   - rescale_v: NVT ensemble with velocity Rescaling method 2, see the parameter `md_nraise`.
-
 - **Default**: NVE
 
 ### md_nstep
@@ -1688,8 +1693,9 @@ These variables are used to control DFT+U correlated parameters
 
 ### omc
 
-- **Type**: Boolean
-- **Description**: whether turn on occupation matrix control method or not
+- **Type**: Integer
+- **Description**: The parameter controls what form of occupation matrix control we are using. If set to 0, then no occupation matrix control is performed, and the onsite density matrix will be calculated from wavefunctions in each SCF step. If set to 1, then the first SCF step will use an initial density matrix read from a file named `initial_onsite.dm`, but for later steps, the onsite density matrix will be updated. If set to 2, the same onsite density matrix from `initial_onsite.dm` will be used throughout the entire calculation.
+> Note : The easiest way to create `initial_onsite.dm` is to run a DFT+U calculation, look for a file named `onsite.dm` in the OUT.prefix directory, and make replacements there. The format of the file is rather straight-forward.
 - **Default**: 0
 
 [back to top](#full-list-of-input-keywords)

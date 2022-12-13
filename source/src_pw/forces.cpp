@@ -148,7 +148,7 @@ void Forces<FPTYPE, Device>::init(ModuleBase::matrix& force, const ModuleBase::m
         GlobalV::ofs_running << "Atomic forces are not shifted if gate_flag or efield_flag == true!" << std::endl;
     }
 
-    if (ModuleSymmetry::Symmetry::symm_flag)
+    if (ModuleSymmetry::Symmetry::symm_flag == 1)
     {
         double* pos;
         double d1, d2, d3;

@@ -5,7 +5,6 @@ add_library(
     complexmatrix.cpp
     element_basis_index.cpp
     export.cpp
-    integral.cpp
     inverse_matrix.cpp
     gather_math_lib_info.cpp
     global_file.cpp
@@ -19,18 +18,14 @@ add_library(
     math_ylmreal.cpp
     math_bspline.cpp
     math_chebyshev.cpp
-    mathzone.cpp
     mathzone_add1.cpp
     matrix.cpp
     matrix3.cpp
     memory.cpp
-    mymath1.cpp
-    mymath3.cpp
+    mymath.cpp
     opt_CG.cpp
     opt_DCsrch.cpp
-    polint.cpp
     realarray.cpp
-    sph_bessel.cpp
     sph_bessel_recursive-d1.cpp
     sph_bessel_recursive-d2.cpp
     timer.cpp

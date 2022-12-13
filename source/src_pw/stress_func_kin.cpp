@@ -3,15 +3,16 @@
 #include "module_base/timer.h"
 
 //calculate the kinetic stress in PW base
-void Stress_Func::stress_kin(ModuleBase::matrix& sigma, const ModuleBase::matrix& wg, const psi::Psi<complex<double>>* psi_in)
+template<typename FPTYPE, typename Device>
+void Stress_Func<FPTYPE, Device>::stress_kin(ModuleBase::matrix& sigma, const ModuleBase::matrix& wg, const psi::Psi<complex<FPTYPE>>* psi_in)
 {
     ModuleBase::TITLE("Stress_Func","stress_kin");
 	ModuleBase::timer::tick("Stress_Func","stress_kin");
 	
-	double **gk;
-	gk=new double* [3];
+	FPTYPE **gk;
+	gk=new FPTYPE* [3];
 	int npw;
-	double s_kin[3][3];
+	FPTYPE s_kin[3][3];
 	for(int l=0;l<3;l++)
 	{
 		for(int m=0;m<3;m++)
@@ -26,10 +27,10 @@ void Stress_Func::stress_kin(ModuleBase::matrix& sigma, const ModuleBase::matrix
 		if(npwx<GlobalC::kv.ngk[ik])npwx=GlobalC::kv.ngk[ik];
 	}
 		
-	gk[0]= new double[npwx]; 
-	gk[1]= new double[npwx];
-	gk[2]= new double[npwx];
-	double factor=ModuleBase::TWO_PI/GlobalC::ucell.lat0;
+	gk[0]= new FPTYPE[npwx];
+	gk[1]= new FPTYPE[npwx];
+	gk[2]= new FPTYPE[npwx];
+	FPTYPE factor=ModuleBase::TWO_PI/GlobalC::ucell.lat0;
 
 	for(int ik=0;ik<GlobalC::kv.nks;ik++)
 	{
@@ -49,7 +50,7 @@ void Stress_Func::stress_kin(ModuleBase::matrix& sigma, const ModuleBase::matrix
 			{
 				for(int ibnd=0;ibnd<GlobalV::NBANDS;ibnd++)
 				{
-					const std::complex<double>* ppsi=nullptr;
+					const std::complex<FPTYPE>* ppsi=nullptr;
 					if(psi_in!=nullptr)
 					{
 						ppsi = &(psi_in[0](ik, ibnd, 0));
@@ -62,7 +63,7 @@ void Stress_Func::stress_kin(ModuleBase::matrix& sigma, const ModuleBase::matrix
 					{
 						s_kin[l][m] +=
 							wg(ik, ibnd)*gk[l][i]*gk[m][i]
-							*(double((conj(ppsi[i]) * ppsi[i]).real()));
+							*(FPTYPE((conj(ppsi[i]) * ppsi[i]).real()));
 					}
 				}
 			}
@@ -125,7 +126,7 @@ void Stress_Func::stress_kin(ModuleBase::matrix& sigma, const ModuleBase::matrix
 		}
 	}
 	//do symmetry
-	if(ModuleSymmetry::Symmetry::symm_flag)
+	if(ModuleSymmetry::Symmetry::symm_flag == 1)
 	{
 		GlobalC::symm.stress_symmetry(sigma, GlobalC::ucell);
 	}//end symmetry
@@ -138,3 +139,8 @@ void Stress_Func::stress_kin(ModuleBase::matrix& sigma, const ModuleBase::matrix
 	ModuleBase::timer::tick("Stress_Func","stress_kin");
 	return;
 }
+
+template class Stress_Func<double, psi::DEVICE_CPU>;
+#if ((defined __CUDA) || (defined __ROCM))
+template class Stress_Func<double, psi::DEVICE_GPU>;
+#endif

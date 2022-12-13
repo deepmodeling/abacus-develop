@@ -3,9 +3,11 @@
 #include "../module_base/math_ylmreal.h"
 #include "../module_base/timer.h"
 #include "global.h"
+#include "module_psi/include/device.h"
 
 //calculate the nonlocal pseudopotential stress in PW
-void Stress_Func::stress_nl(ModuleBase::matrix& sigma, const ModuleBase::matrix& wg, const psi::Psi<complex<double>>* psi_in)
+template <typename FPTYPE, typename Device>
+void Stress_Func<FPTYPE, Device>::stress_nl(ModuleBase::matrix& sigma, const ModuleBase::matrix& wg, const psi::Psi<complex<FPTYPE>, Device>* psi_in)
 {
 	ModuleBase::TITLE("Stress_Func","stres_nl");
 	ModuleBase::timer::tick("Stress_Func","stres_nl");
@@ -16,42 +18,99 @@ void Stress_Func::stress_nl(ModuleBase::matrix& sigma, const ModuleBase::matrix&
 		ModuleBase::timer::tick("Stress_Func","stres_nl");
 		return;
 	}
-	double sigmanlc[3][3];
-	for(int l=0;l<3;l++)
-	{
-		for(int m=0;m<3;m++)
-		{
-			sigmanlc[l][m]=0.0;
-		}
-	}
-	
+
+    this->device = psi::device::get_device_type<Device>(this->ctx);
+
+    // FPTYPE sigmanlc[3][3];
+	// for(int l=0;l<3;l++)
+	// {
+	// 	for(int m=0;m<3;m++)
+	// 	{
+	// 		sigmanlc[l][m]=0.0;
+	// 	}
+	// }
+
 	// dbecp: conj( -iG * <Beta(nkb,npw)|psi(nbnd,npw)> )
-	ModuleBase::ComplexMatrix dbecp( GlobalV::NBANDS, nkb );
-	ModuleBase::ComplexMatrix becp( GlobalV::NBANDS, nkb );
+	// ModuleBase::ComplexMatrix dbecp( GlobalV::NBANDS, nkb );
+	// ModuleBase::ComplexMatrix becp( GlobalV::NBANDS, nkb );
 
 	// vkb1: |Beta(nkb,npw)><Beta(nkb,npw)|psi(nbnd,npw)>
-	ModuleBase::ComplexMatrix vkb1( nkb, GlobalC::wf.npwx );
+	// ModuleBase::ComplexMatrix vkb1( nkb, GlobalC::wf.npwx );
 	ModuleBase::ComplexMatrix vkb0[3];
 	for(int i=0;i<3;i++){
 		vkb0[i].create(nkb, GlobalC::wf.npwx);
 	}
 	ModuleBase::ComplexMatrix vkb2( nkb, GlobalC::wf.npwx );
+    std::complex<FPTYPE> * dbecp = nullptr, * becp = nullptr, * dbecp_noevc = nullptr, * vkb = nullptr, * pvkb0 = nullptr, * vkb1 = nullptr, * pvkb2 = nullptr;
+    std::complex<FPTYPE> * _vkb0[3] = {nullptr, nullptr, nullptr};
+    resmem_complex_op()(this->ctx, becp, GlobalV::NBANDS * nkb);
+    resmem_complex_op()(this->ctx, dbecp, GlobalV::NBANDS * nkb);
+    resmem_complex_op()(this->ctx, dbecp_noevc, nkb * GlobalC::wf.npwx);
+    resmem_complex_op()(this->ctx, vkb1, nkb * GlobalC::wf.npwx);
+
+    int wg_nc = wg.nc;
+    int * atom_nh = nullptr, * atom_na = nullptr, * h_atom_nh = new int[GlobalC::ucell.ntype], * h_atom_na = new int[GlobalC::ucell.ntype];
+    for (int ii = 0; ii < GlobalC::ucell.ntype; ii++) {
+        h_atom_nh[ii] = GlobalC::ucell.atoms[ii].ncpp.nh;
+        h_atom_na[ii] = GlobalC::ucell.atoms[ii].na;
+    }
+    FPTYPE * stress = nullptr, * sigmanlc = nullptr, * d_wg = nullptr, * deeq = nullptr, * gcar = nullptr, * kvec_c = nullptr, * qvec = nullptr;
+    resmem_var_op()(this->ctx, qvec, 3);
+    resmem_var_op()(this->ctx, stress, 9);
+    setmem_var_op()(this->ctx, stress, 0, 9);
+    resmem_var_h_op()(this->cpu_ctx, sigmanlc, 9);
+    if (this->device == psi::GpuDevice) {
+        deeq = GlobalC::ppcell.d_deeq;
+        resmem_var_op()(this->ctx, d_wg, wg.nr * wg.nc);
+        resmem_var_op()(this->ctx, gcar, 3 * GlobalC::kv.nks * GlobalC::wfcpw->npwk_max);
+        resmem_var_op()(this->ctx, kvec_c, 3 * GlobalC::kv.nks);
+        syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, d_wg, wg.c, wg.nr * wg.nc);
+        syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, gcar, &GlobalC::wfcpw->gcar[0][0], 3 * GlobalC::kv.nks * GlobalC::wfcpw->npwk_max);
+        syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, kvec_c, &GlobalC::wfcpw->kvec_c[0][0], 3 * GlobalC::kv.nks);
+        resmem_complex_op()(this->ctx, vkb, GlobalC::ppcell.vkb.nr * GlobalC::ppcell.vkb.nc);
+        resmem_complex_op()(this->ctx, pvkb2, nkb * GlobalC::wf.npwx);
+        resmem_complex_op()(this->ctx, pvkb0, 3 * nkb * GlobalC::wf.npwx);
+        for (int ii = 0; ii < 3; ii++) {
+            _vkb0[ii] = pvkb0 + ii * nkb * GlobalC::wf.npwx;
+        }
+        resmem_int_op()(this->ctx, atom_nh, GlobalC::ucell.ntype);
+        resmem_int_op()(this->ctx, atom_na, GlobalC::ucell.ntype);
+        syncmem_int_h2d_op()(this->ctx, this->cpu_ctx, atom_nh, h_atom_nh, GlobalC::ucell.ntype);
+        syncmem_int_h2d_op()(this->ctx, this->cpu_ctx, atom_na, h_atom_na, GlobalC::ucell.ntype);
+    }
+    else {
+        deeq = GlobalC::ppcell.deeq.ptr;
+        d_wg = wg.c;
+        gcar = &GlobalC::wfcpw->gcar[0][0];
+        kvec_c = &GlobalC::wfcpw->kvec_c[0][0];
+        atom_nh = h_atom_nh;
+        atom_na = h_atom_na;
+        for (int ii = 0; ii < 3; ii++) {
+            _vkb0[ii] = vkb0[ii].c;
+        }
+    }
+
     for (int ik = 0;ik < GlobalC::kv.nks;ik++)
     {   	  
 		if (GlobalV::NSPIN==2) GlobalV::CURRENT_SPIN = GlobalC::kv.isk[ik];
 		const int npw = GlobalC::kv.ngk[ik];
 		// generate vkb
-		if (GlobalC::ppcell.nkb > 0)
-		{
+		if (GlobalC::ppcell.nkb > 0) {
 			GlobalC::ppcell.getvnl(ik, GlobalC::ppcell.vkb);
+            if (this->device == psi::GpuDevice) {
+                syncmem_complex_h2d_op()(this->ctx, this->cpu_ctx, vkb, GlobalC::ppcell.vkb.c, GlobalC::ppcell.vkb.nr * GlobalC::ppcell.vkb.nc);
+            }
+            else {
+                vkb = GlobalC::ppcell.vkb.c;
+            }
 		}
 
 		// get becp according to wave functions and vkb
 		// important here ! becp must set zero!!
 		// vkb: Beta(nkb,npw)
 		// becp(nkb,nbnd): <Beta(nkb,npw)|psi(nbnd,npw)>
-        becp.zero_out();
-		const std::complex<double>* ppsi=nullptr;
+        // becp.zero_out();
+		const std::complex<FPTYPE>* ppsi = nullptr;
 		if(psi_in!=nullptr)
 		{
 			ppsi = &(psi_in[0](ik, 0, 0));
@@ -66,108 +125,90 @@ void Stress_Func::stress_nl(ModuleBase::matrix& sigma, const ModuleBase::matrix&
         ///only occupied band should be calculated.
         ///
         int nbands_occ = GlobalV::NBANDS;
-        while(wg(ik, nbands_occ-1) < ModuleBase::threshold_wg)
-        {
+        while(wg(ik, nbands_occ - 1) < ModuleBase::threshold_wg) {
             nbands_occ--;
         }
         int npm = GlobalV::NPOL * nbands_occ;
-        zgemm_(&transa,
-            &transb,
-            &nkb,
-            &npm,
-            &npw,
+        gemm_op()(
+            this->ctx,
+            transa,
+            transb,
+            nkb,
+            npm,
+            npw,
             &ModuleBase::ONE,
-            GlobalC::ppcell.vkb.c,
-            &GlobalC::wf.npwx,
+            vkb,
+            GlobalC::wf.npwx,
             ppsi,
-            &GlobalC::wf.npwx,
+            GlobalC::wf.npwx,
             &ModuleBase::ZERO,
-            becp.c,
-            &nkb);
+            becp,
+            nkb);
 		//becp calculate is over , now we should broadcast this data.
-		Parallel_Reduce::reduce_complex_double_pool( becp.c, becp.size);
-
+        if (this->device == psi::GpuDevice) {
+            std::complex<FPTYPE> * h_becp = nullptr;
+            resmem_complex_h_op()(this->cpu_ctx, h_becp, GlobalV::NBANDS * nkb);
+            syncmem_complex_d2h_op()(this->cpu_ctx, this->ctx, h_becp, becp, GlobalV::NBANDS * nkb);
+            Parallel_Reduce::reduce_complex_double_pool(becp, GlobalV::NBANDS * nkb);
+            syncmem_complex_h2d_op()(this->ctx, this->cpu_ctx, becp, h_becp, GlobalV::NBANDS * nkb);
+            delmem_complex_h_op()(this->cpu_ctx, h_becp);
+        }
+        else {
+            Parallel_Reduce::reduce_complex_double_pool(becp, GlobalV::NBANDS * nkb);
+        }
 		for (int i = 0; i < 3; i++) 
 		{
 			get_dvnl1(vkb0[i], ik, i);
-		}
+            if (this->device == psi::GpuDevice) {
+                syncmem_complex_h2d_op()(this->ctx, this->cpu_ctx, _vkb0[i], vkb0[i].c, nkb * GlobalC::wf.npwx);
+            }
+        }
         get_dvnl2(vkb2, ik);
-
-        ModuleBase::Vector3<double> qvec;
-        double* qvec0[3];
-		qvec0[0] = &(qvec.x);
-		qvec0[1] = &(qvec.y);
-		qvec0[2] = &(qvec.z);
+        if (this->device == psi::GpuDevice) {
+            syncmem_complex_h2d_op()(this->ctx, this->cpu_ctx, pvkb2, vkb2.c, nkb * GlobalC::wf.npwx);
+        }
+        else {
+            pvkb2 = vkb2.c;
+        }
 
         for (int ipol = 0; ipol < 3; ipol++) 
 		{
             for (int jpol = 0; jpol < ipol + 1; jpol++) 
 			{
-				dbecp.zero_out();
-				vkb1.zero_out();
-				for (int i = 0; i < nkb; i++) 
-				{
-					std::complex<double>* pvkb0i = &vkb0[ipol](i, 0);
-					std::complex<double>* pvkb0j = &vkb0[jpol](i, 0);
-					std::complex<double>* pvkb1 = &vkb1(i, 0);
-					// third term of dbecp_noevc
-					//std::complex<double>* pvkb = &vkb2(i,0);
-					//std::complex<double>* pdbecp_noevc = &dbecp_noevc(i, 0);
-					for (int ig = 0; ig < npw; ig++) 
-					{
-						qvec = GlobalC::wfcpw->getgpluskcar(ik, ig);
-
-						pvkb1[ig] += 0.5 * qvec0[ipol][0] * pvkb0j[ig] +
-									0.5 * qvec0[jpol][0] * pvkb0i[ig];
-						
-					} // end ig
-					  
-				}//end nkb
-				ModuleBase::ComplexMatrix dbecp_noevc(nkb, GlobalC::wf.npwx, true);
-				for (int i = 0; i < nkb; i++) 
-				{
-					std::complex<double>* pdbecp_noevc = &dbecp_noevc(i, 0);
-					std::complex<double>* pvkb = &vkb1(i, 0);
-					// first term
-					for (int ig = 0; ig < npw;ig++) 
-					{
-						pdbecp_noevc[ig] -= 2.0 * pvkb[ig];
-					}
-					// second termi
-					if (ipol == jpol)
-					{
-						pvkb = &GlobalC::ppcell.vkb(i, 0);
-						for (int ig = 0; ig < npw;ig++) 
-						{
-							pdbecp_noevc[ig] -= pvkb[ig];
-						}
-					}
-					// third term
-					pvkb = &vkb2(i,0);
-					for (int ig = 0; ig < npw;ig++) 
-					{
-						qvec =	GlobalC::wfcpw->getgpluskcar(ik, ig);
-						double qm1;
-						if(qvec.norm2() > 1e-16) qm1 = 1.0 / qvec.norm(); 
-						else qm1 = 0; 
-						pdbecp_noevc[ig] -= 2.0 * pvkb[ig] * qvec0[ipol][0] * 
-							qvec0[jpol][0] * qm1 *	GlobalC::ucell.tpiba;
-					} // end ig
-				}     // end i
-				zgemm_(&transa,
-					&transb,
-					&nkb,
-					&npm,
-					&npw,
-					&ModuleBase::ONE,
-					dbecp_noevc.c,
-					&GlobalC::wf.npwx,
-					ppsi,
-					&GlobalC::wf.npwx,
-					&ModuleBase::ZERO,
-					dbecp.c,
-					&nkb);
-
+                setmem_complex_op()(this->ctx, vkb1, 0, nkb * GlobalC::wf.npwx);
+                setmem_complex_op()(this->ctx, dbecp_noevc, 0, nkb * GlobalC::wf.npwx);
+                cal_dbecp_noevc_nl_op()(
+                    this->ctx,
+                    ipol,
+                    jpol,
+                    nkb,
+                    npw,
+                    GlobalC::wf.npwx,
+                    ik,
+                    GlobalC::ucell.tpiba,
+                    gcar,
+                    kvec_c,
+                    _vkb0[ipol],
+                    _vkb0[jpol],
+                    vkb,
+                    vkb1,
+                    pvkb2,
+                    dbecp_noevc);
+                gemm_op()(
+                    this->ctx,
+                    transa,
+                    transb,
+                    nkb,
+                    npm,
+                    npw,
+                    &ModuleBase::ONE,
+                    dbecp_noevc,
+                    GlobalC::wf.npwx,
+                    ppsi,
+                    GlobalC::wf.npwx,
+                    &ModuleBase::ZERO,
+                    dbecp,
+                    nkb);
 				//              don't need to reduce here, keep
 				//              dbecp different in each
 				//              processor, and at last sum up
@@ -175,48 +216,37 @@ void Stress_Func::stress_nl(ModuleBase::matrix& sigma, const ModuleBase::matrix&
 				//              Parallel_Reduce::reduce_complex_double_pool(
 				//              dbecp.ptr, dbecp.ndata);
 
-				//              double *cf = new
-				//              double[GlobalC::ucell.nat*3];
-				//              ModuleBase::GlobalFunc::ZEROS(cf,
-				//              GlobalC::ucell.nat);
-				for (int ib=0; ib<nbands_occ; ib++)
-				{
-					double fac = wg(ik, ib) * 1.0;
-					int iat = 0;
-					int sum = 0;
-					for (int it=0; it<GlobalC::ucell.ntype; it++)
-					{
-						const int Nprojs = GlobalC::ucell.atoms[it].ncpp.nh;
-						for (int ia=0; ia<GlobalC::ucell.atoms[it].na; ia++)
-						{
-							for (int ip1=0; ip1<Nprojs; ip1++)
-							{
-								for(int ip2=0; ip2<Nprojs; ip2++)
-								{
-									if(!GlobalC::ppcell.multi_proj && ip1 != ip2) 
-									{
-										continue;
-									}
-									double ps = GlobalC::ppcell.deeq(GlobalV::CURRENT_SPIN, iat, ip1, ip2) ;
-									const int inkb1 = sum + ip1;
-									const int inkb2 = sum + ip2;
-									//out<<"\n ps = "<<ps;
+                //              FPTYPE *cf = new
+                //              FPTYPE[GlobalC::ucell.nat*3];
+                //              ModuleBase::GlobalFunc::ZEROS(cf,
+                //              GlobalC::ucell.nat);
+                cal_stress_nl_op()(
+                    this->ctx,
+                    GlobalC::ppcell.multi_proj,
+                    ipol,
+                    jpol,
+                    nkb,
+                    nbands_occ,
+                    GlobalC::ucell.ntype,
+                    GlobalV::CURRENT_SPIN,
+                    wg_nc,
+                    ik,
+                    GlobalC::ppcell.deeq.getBound2(),
+                    GlobalC::ppcell.deeq.getBound3(),
+                    GlobalC::ppcell.deeq.getBound4(),
+                    atom_nh,
+                    atom_na,
+                    d_wg,
+                    deeq,
+                    becp,
+                    dbecp,
+                    stress);
 
-								
-									const double dbb = ( conj( dbecp( ib, inkb1) ) * becp( ib, inkb2) ).real();
-									sigmanlc[ipol][ jpol] -= ps * fac * dbb;
-								}
-							 
-							}//end ip
-							++iat;        
-							sum+=Nprojs;
-						}//ia
-					} //end it
-				} //end band
             }//end jpol
 		}//end ipol
 	}// end ik
 
+    syncmem_var_d2h_op()(this->cpu_ctx, this->ctx, sigmanlc, stress, 9);
 	// sum up forcenl from all processors
 	for(int l=0;l<3;l++)
 	{
@@ -224,9 +254,9 @@ void Stress_Func::stress_nl(ModuleBase::matrix& sigma, const ModuleBase::matrix&
 		{
 			if(m>l) 
 			{
-				sigmanlc[l][m] = sigmanlc[m][l];
+				sigmanlc[l * 3 + m] = sigmanlc[m * 3 + l];
 			}
-			Parallel_Reduce::reduce_double_all( sigmanlc[l][m] ); //qianrui fix a bug for kpar > 1
+			Parallel_Reduce::reduce_double_all( sigmanlc[l * 3 + m] ); //qianrui fix a bug for kpar > 1
 		}
 	}
 
@@ -236,7 +266,7 @@ void Stress_Func::stress_nl(ModuleBase::matrix& sigma, const ModuleBase::matrix&
 	{
 		for(int jpol = 0; jpol < 3; jpol++)
 		{
-			sigmanlc[ipol][jpol] *= 1.0 / GlobalC::ucell.omega;
+			sigmanlc[ipol * 3 + jpol] *= 1.0 / GlobalC::ucell.omega;
 		}
 	}
 	
@@ -244,21 +274,40 @@ void Stress_Func::stress_nl(ModuleBase::matrix& sigma, const ModuleBase::matrix&
 	{
 		for(int jpol = 0; jpol < 3; jpol++)
 		{
-			sigma(ipol,jpol) = sigmanlc[ipol][jpol] ;
+			sigma(ipol,jpol) = sigmanlc[ipol * 3 + jpol] ;
 		}
 	}
 	//do symmetry
-	if(ModuleSymmetry::Symmetry::symm_flag)
+	if(ModuleSymmetry::Symmetry::symm_flag == 1)
 	{
 		GlobalC::symm.stress_symmetry(sigma, GlobalC::ucell);
 	}//end symmetry
-	
+
+    delete [] h_atom_nh;
+    delete [] h_atom_na;
+    delmem_var_op()(this->ctx, qvec);
+    delmem_var_op()(this->ctx, stress);
+    delmem_complex_op()(this->ctx, becp);
+    delmem_complex_op()(this->ctx, vkb1);
+    delmem_complex_op()(this->ctx, pvkb0);
+    delmem_complex_op()(this->ctx, dbecp);
+    delmem_complex_op()(this->ctx, dbecp_noevc);
+    if (this->device == psi::GpuDevice) {
+        delmem_var_op()(this->ctx, d_wg);
+        delmem_var_op()(this->ctx, gcar);
+        delmem_var_op()(this->ctx, kvec_c);
+        delmem_var_h_op()(this->cpu_ctx, sigmanlc);
+        delmem_int_op()(this->ctx, atom_nh);
+        delmem_int_op()(this->ctx, atom_na);
+        delmem_complex_op()(this->ctx, vkb);
+        delmem_complex_op()(this->ctx, pvkb2);
+    }
 	//  this->print(GlobalV::ofs_running, "nonlocal stress", stresnl);
 	ModuleBase::timer::tick("Stress_Func","stres_nl");
-	return;
 }
- 
-void Stress_Func::get_dvnl1
+
+template <typename FPTYPE, typename Device>
+void Stress_Func<FPTYPE, Device>::get_dvnl1
 (
 	ModuleBase::ComplexMatrix &vkb,
 	const int ik,
@@ -278,11 +327,11 @@ void Stress_Func::get_dvnl1
 	int ig, ia, nb, ih;
 	ModuleBase::matrix vkb1(nhm, npw);
 	vkb1.zero_out();
-	double *vq = new double[npw];
+	FPTYPE *vq = new FPTYPE[npw];
 	const int x1= (lmaxkb + 1)*(lmaxkb + 1);
 
 	ModuleBase::matrix dylm(x1, npw);
-	ModuleBase::Vector3<double> *gk = new ModuleBase::Vector3<double>[npw];
+	ModuleBase::Vector3<FPTYPE> *gk = new ModuleBase::Vector3<FPTYPE>[npw];
 	for (ig = 0;ig < npw;ig++)
 	{
 		gk[ig] = GlobalC::wf.get_1qvec_cartesian(ik, ig);
@@ -305,7 +354,7 @@ void Stress_Func::get_dvnl1
 			if(GlobalV::test_pp>1) ModuleBase::GlobalFunc::OUT("ib",nb);
 			for (ig = 0;ig < npw;ig++)
 			{
-				const double gnorm = gk[ig].norm() * GlobalC::ucell.tpiba;
+				const FPTYPE gnorm = gk[ig].norm() * GlobalC::ucell.tpiba;
 
 				//cout << "\n gk[ig] = " << gk[ig].x << " " << gk[ig].y << " " << gk[ig].z;
 				//cout << "\n gk.norm = " << gnorm;
@@ -336,10 +385,10 @@ void Stress_Func::get_dvnl1
 		// now add the structure factor and factor (-i)^l
 		for (ia=0; ia<GlobalC::ucell.atoms[it].na; ia++)
 		{
-			std::complex<double> *sk = GlobalC::wf.get_sk(ik, it, ia,GlobalC::wfcpw);
+			std::complex<FPTYPE> *sk = GlobalC::wf.get_sk(ik, it, ia,GlobalC::wfcpw);
 			for (ih = 0;ih < nh;ih++)
 			{
-				std::complex<double> pref = pow( ModuleBase::NEG_IMAG_UNIT, GlobalC::ppcell.nhtol(it, ih));      //?
+				std::complex<FPTYPE> pref = pow( ModuleBase::NEG_IMAG_UNIT, GlobalC::ppcell.nhtol(it, ih));      //?
 				for (ig = 0;ig < npw;ig++)
 				{
 					vkb(jkb, ig) = vkb1(ih, ig) * sk [ig] * pref;
@@ -354,7 +403,8 @@ void Stress_Func::get_dvnl1
 	return;
 }//end get_dvnl1
 
-void Stress_Func::get_dvnl2(ModuleBase::ComplexMatrix &vkb,
+template <typename FPTYPE, typename Device>
+void Stress_Func<FPTYPE, Device>::get_dvnl2(ModuleBase::ComplexMatrix &vkb,
 		const int ik)
 {
 	if(GlobalV::test_pp) ModuleBase::TITLE("Stress","get_dvnl2");
@@ -370,11 +420,11 @@ void Stress_Func::get_dvnl2(ModuleBase::ComplexMatrix &vkb,
 	const int nhm = GlobalC::ppcell.nhm;
 	int ig, ia, nb, ih;
 	ModuleBase::matrix vkb1(nhm, npw);
-	double *vq = new double[npw];
+	FPTYPE *vq = new FPTYPE[npw];
 	const int x1= (lmaxkb + 1)*(lmaxkb + 1);
 
 	ModuleBase::matrix ylm(x1, npw);
-	ModuleBase::Vector3<double> *gk = new ModuleBase::Vector3<double>[npw];
+	ModuleBase::Vector3<FPTYPE> *gk = new ModuleBase::Vector3<FPTYPE>[npw];
 	for (ig = 0;ig < npw;ig++)
 	{
 		gk[ig] = GlobalC::wf.get_1qvec_cartesian(ik, ig);
@@ -396,7 +446,7 @@ void Stress_Func::get_dvnl2(ModuleBase::ComplexMatrix &vkb,
 			if(GlobalV::test_pp>1) ModuleBase::GlobalFunc::OUT("ib",nb);
 			for (ig = 0;ig < npw;ig++)
 			{
-				const double gnorm = gk[ig].norm() * GlobalC::ucell.tpiba;
+				const FPTYPE gnorm = gk[ig].norm() * GlobalC::ucell.tpiba;
 	//cout << "\n gk[ig] = " << gk[ig].x << " " << gk[ig].y << " " << gk[ig].z;
 	//cout << "\n gk.norm = " << gnorm;
 				vq [ig] = Polynomial_Interpolation_nl(
@@ -422,10 +472,10 @@ void Stress_Func::get_dvnl2(ModuleBase::ComplexMatrix &vkb,
 		// now add the structure factor and factor (-i)^l
 		for (ia=0; ia<GlobalC::ucell.atoms[it].na; ia++)
 		{
-			std::complex<double> *sk = GlobalC::wf.get_sk(ik, it, ia,GlobalC::wfcpw);
+			std::complex<FPTYPE> *sk = GlobalC::wf.get_sk(ik, it, ia,GlobalC::wfcpw);
 			for (ih = 0;ih < nh;ih++)
 			{
-				std::complex<double> pref = pow( ModuleBase::NEG_IMAG_UNIT, GlobalC::ppcell.nhtol(it, ih));      //?
+				std::complex<FPTYPE> pref = pow( ModuleBase::NEG_IMAG_UNIT, GlobalC::ppcell.nhtol(it, ih));      //?
 				for (ig = 0;ig < npw;ig++)
 				{
 					vkb(jkb, ig) = vkb1(ih, ig) * sk [ig] * pref;
@@ -444,27 +494,26 @@ void Stress_Func::get_dvnl2(ModuleBase::ComplexMatrix &vkb,
 }
 
 
-
-
-double Stress_Func::Polynomial_Interpolation_nl
+template <typename FPTYPE, typename Device>
+FPTYPE Stress_Func<FPTYPE, Device>::Polynomial_Interpolation_nl
 (
     const ModuleBase::realArray &table,
     const int &dim1,
     const int &dim2,
-    const double &table_interval,
-    const double &x                             // input value
+    const FPTYPE &table_interval,
+    const FPTYPE &x                             // input value
 )
 {
 
 	assert(table_interval>0.0);
-	const double position = x  / table_interval;
+	const FPTYPE position = x  / table_interval;
 	const int iq = static_cast<int>(position);
 
-	const double x0 = position - static_cast<double>(iq);
-	const double x1 = 1.0 - x0;
-	const double x2 = 2.0 - x0;
-	const double x3 = 3.0 - x0;
-	const double y=
+	const FPTYPE x0 = position - static_cast<FPTYPE>(iq);
+	const FPTYPE x1 = 1.0 - x0;
+	const FPTYPE x2 = 2.0 - x0;
+	const FPTYPE x3 = 3.0 - x0;
+	const FPTYPE y=
 			( table(dim1, dim2, iq)   * (-x2*x3-x1*x3-x1*x2) / 6.0 +
 			table(dim1, dim2, iq+1) * (+x2*x3-x0*x3-x0*x2) / 2.0 -
 			table(dim1, dim2, iq+2) * (+x1*x3-x0*x3-x0*x1) / 2.0 +
@@ -474,10 +523,11 @@ double Stress_Func::Polynomial_Interpolation_nl
 	return y;
 }
 
-void Stress_Func::dylmr2 (
+template <typename FPTYPE, typename Device>
+void Stress_Func<FPTYPE, Device>::dylmr2 (
 	const int nylm,
 	const int ngy,
-	ModuleBase::Vector3<double> *gk,
+	ModuleBase::Vector3<FPTYPE> *gk,
 	ModuleBase::matrix &dylm,
 	const int ipol)
 {
@@ -491,7 +541,7 @@ void Stress_Func::dylmr2 (
   // number of spherical harmonics
   // the number of g vectors to compute
   // desired polarization
-  //double g (3, ngy), gg (ngy), dylm (ngy, nylm)
+  //FPTYPE g (3, ngy), gg (ngy), dylm (ngy, nylm)
   // the coordinates of g vectors
   // the moduli of g vectors
   // the spherical harmonics derivatives
@@ -500,8 +550,8 @@ void Stress_Func::dylmr2 (
 	// counter on g vectors
 	// counter on l,m component
 
-	const double delta = 1e-6;
-	double *dg, *dgi;
+	const FPTYPE delta = 1e-6;
+	FPTYPE *dg, *dgi;
 
 	ModuleBase::matrix ylmaux;
 	// dg is the finite increment for numerical derivation:
@@ -510,11 +560,11 @@ void Stress_Func::dylmr2 (
 	// gx = g +/- dg
 
 
-	ModuleBase::Vector3<double> *gx = new ModuleBase::Vector3<double> [ngy];
+	ModuleBase::Vector3<FPTYPE> *gx = new ModuleBase::Vector3<FPTYPE> [ngy];
 	 
 
-	dg = new double [ngy];
-	dgi = new double [ngy];
+	dg = new FPTYPE [ngy];
+	dgi = new FPTYPE [ngy];
 
 	ylmaux.create (nylm, ngy);
 
@@ -589,3 +639,8 @@ void Stress_Func::dylmr2 (
 
 	return;
 }
+
+template class Stress_Func<double, psi::DEVICE_CPU>;
+#if ((defined __CUDA) || (defined __ROCM))
+template class Stress_Func<double, psi::DEVICE_GPU>;
+#endif

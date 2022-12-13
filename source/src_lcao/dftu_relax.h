@@ -40,11 +40,14 @@ public:
     void cal_VU_pot_mat_real(const int spin, const bool newlocale, double* VU);
 
     double get_onebody_eff_pot(
-      const int T, const int iat,
-	    const int L, const int N, const int spin, 
+        const int T,
+        const int iat,
+	    const int L,
+        const int N,
+        const int spin, 
 	    const int m0,
-      const int m1,
-      const int type, const bool newlocale);
+        const int m1,
+        const bool newlocale);
 
     //forces and stress
     std::vector<std::vector<double>> force_dftu;      //force_dftu[iat][dim] 

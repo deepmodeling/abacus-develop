@@ -148,6 +148,12 @@ void PW_Basis::get_ig2isz_is2fftixy(
     {
         delete[] this->ig2isz; this->ig2isz = nullptr; // map ig to the z coordinate of this planewave.
         delete[] this->is2fftixy; this->is2fftixy = nullptr; // map is (index of sticks) to ixy (iy + ix * fftny).
+#if defined(__CUDA) || defined(__UT_USE_CUDA)
+        if (GlobalV::device_flag == "gpu") {
+            cudaFree(this->d_is2fftixy);
+            d_is2fftixy = nullptr;
+        }
+#endif
         return;
     }
 
@@ -179,6 +185,13 @@ void PW_Basis::get_ig2isz_is2fftixy(
         }
         if (st_move == this->nst && pw_filled == this->npw) break;
     }
+#if defined(__CUDA) || defined(__UT_USE_CUDA)
+    if (GlobalV::device_flag == "gpu") {
+        cudaFree(this->d_is2fftixy);
+        cudaMalloc(reinterpret_cast<void **>(&this->d_is2fftixy), sizeof(int) * this->nst);
+        cudaMemcpy(this->d_is2fftixy, this->is2fftixy, this->nst, cudaMemcpyHostToDevice);
+    }
+#endif
     return;
 }
 }

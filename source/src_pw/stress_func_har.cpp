@@ -5,13 +5,13 @@
 #include "global.h"
 
 //calculate the Hartree part in PW or LCAO base
-void Stress_Func::stress_har(ModuleBase::matrix& sigma, ModulePW::PW_Basis* rho_basis, const bool is_pw, const Charge* const chr)
+template<typename FPTYPE, typename Device>
+void Stress_Func<FPTYPE, Device>::stress_har(ModuleBase::matrix& sigma, ModulePW::PW_Basis* rho_basis, const bool is_pw, const Charge* const chr)
 {
     ModuleBase::TITLE("Stress_Func","stress_har");
 	ModuleBase::timer::tick("Stress_Func","stress_har");
-	double shart;
 
-	std::complex<double> *aux = new std::complex<double>[rho_basis->nmaxgr];
+	std::complex<FPTYPE> *aux = new std::complex<FPTYPE>[rho_basis->nmaxgr];
 
 	//  Hartree potential VH(r) from n(r)
     /*
@@ -33,14 +33,14 @@ void Stress_Func::stress_har(ModuleBase::matrix& sigma, ModulePW::PW_Basis* rho_
 		{ // is = 0
 			for (int ir = irb; ir < ir_end; ++ir)
 			{ // initialize aux
-				aux[ir] = std::complex<double>( chr->rho[0][ir], 0.0 );
+				aux[ir] = std::complex<FPTYPE>( chr->rho[0][ir], 0.0 );
 			}
 		}
 		for (int is = 1; is < GlobalV::NSPIN; is++)
 		{
 			for (int ir = irb; ir < ir_end; ++ir)
 			{ // accumulate aux
-				aux[ir] += std::complex<double>( chr->rho[is][ir], 0.0 );
+				aux[ir] += std::complex<FPTYPE>( chr->rho[is][ir], 0.0 );
 			}
 		}
 	}
@@ -49,8 +49,7 @@ void Stress_Func::stress_har(ModuleBase::matrix& sigma, ModulePW::PW_Basis* rho_
 	//=============================
 	rho_basis->real2recip(aux, aux);
 
-
-//	double ehart=0;
+//	FPTYPE ehart=0;
 #ifndef _OPENMP
 	ModuleBase::matrix& local_sigma = sigma;
 #else
@@ -61,12 +60,12 @@ void Stress_Func::stress_har(ModuleBase::matrix& sigma, ModulePW::PW_Basis* rho_
 #endif
 	for (int ig = 0 ; ig < rho_basis->npw ; ++ig)
 	{
-		const double g2 = rho_basis->gg[ig];
+		const FPTYPE g2 = rho_basis->gg[ig];
 		if(g2 < 1e-8) continue;
-		//const double fac = ModuleBase::e2 * ModuleBase::FOUR_PI / (GlobalC::ucell.tpiba2 * GlobalC::sf.gg [ig]);
+		//const FPTYPE fac = ModuleBase::e2 * ModuleBase::FOUR_PI / (GlobalC::ucell.tpiba2 * GlobalC::sf.gg [ig]);
 		//ehart += ( conj( Porter[j] ) * Porter[j] ).real() * fac;
 		//vh_g[ig] = fac * Porter[j];
-		shart= ( conj( aux[ig] ) * aux[ig] ).real()/(GlobalC::ucell.tpiba2 * g2);
+		FPTYPE shart= ( conj( aux[ig] ) * aux[ig] ).real()/(GlobalC::ucell.tpiba2 * g2);
 		for(int l=0;l<3;l++)
 		{
 			for(int m=0;m<l+1;m++)
@@ -144,3 +143,8 @@ void Stress_Func::stress_har(ModuleBase::matrix& sigma, ModulePW::PW_Basis* rho_
 	ModuleBase::timer::tick("Stress_Func","stress_har");
 	return;
 }
+
+template class Stress_Func<double, psi::DEVICE_CPU>;
+#if ((defined __CUDA) || (defined __ROCM))
+template class Stress_Func<double, psi::DEVICE_GPU>;
+#endif

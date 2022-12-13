@@ -244,6 +244,7 @@ void UnitCell::print_cell_cif(const std::string& fn) const
     ofs.close();
 }
 
+/*
 void UnitCell::print_cell_xyz(const std::string& fn) const
 {
     if (GlobalV::test_unitcell)
@@ -271,6 +272,7 @@ void UnitCell::print_cell_xyz(const std::string& fn) const
     ofs.close();
     return;
 }
+*/
 
 void UnitCell::set_iat2itia(void)
 {
@@ -520,6 +522,7 @@ void UnitCell::save_cartesian_position_original(ModuleBase::Vector3<double>* pos
     return;
 }
 
+/*
 bool UnitCell::judge_big_cell(void) const
 {
     double diameter = 2 * GlobalV::SEARCH_RADIUS;
@@ -537,6 +540,7 @@ bool UnitCell::judge_big_cell(void) const
         return 0;
     }
 }
+*/
 
 #ifndef __CMD
 void UnitCell::cal_ux()
@@ -1370,7 +1374,7 @@ bool UnitCell::if_cell_can_change()const
 }
 
 void UnitCell::setup(const std::string &latname_in,
-	const int &ntype_in, 
+	const int &ntype_in,
 	const int &lmaxmax_in,
 	const bool &init_vel_in,
 	const std::string &fixed_axes_in)

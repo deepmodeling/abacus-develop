@@ -432,6 +432,7 @@ void Input_Conv::Convert(void)
         GlobalC::exx_info.info_global.hybrid_step = INPUT.exx_hybrid_step;
         GlobalC::exx_info.info_lip.lambda = INPUT.exx_lambda;
 
+        GlobalC::exx_info.info_ri.real_number = std::stoi(INPUT.exx_real_number);
         GlobalC::exx_info.info_ri.pca_threshold = INPUT.exx_pca_threshold;
         GlobalC::exx_info.info_ri.C_threshold = INPUT.exx_c_threshold;
         GlobalC::exx_info.info_ri.V_threshold = INPUT.exx_v_threshold;

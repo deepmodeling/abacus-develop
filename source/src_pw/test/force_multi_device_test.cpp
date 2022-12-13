@@ -70,7 +70,7 @@ TEST_F(TestSrcPWForceMultiDevice, cal_vkb1_nl_op_cpu)
         res.data());
 
     for (int ii = 0; ii < res.size(); ii++) {
-        EXPECT_LT(fabs(res[ii] - expected_vkb1[ii]), 6e-5);
+        EXPECT_LT(std::abs(res[ii] - expected_vkb1[ii]), 6e-5);
     }
 }
 

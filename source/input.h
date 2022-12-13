@@ -95,7 +95,6 @@ class Input
     double nupdown = 0.0;
     double nelec; // total number of electrons
     int lmaxmax;
-    double tot_magnetization;
 
     //==========================================================
     // LCAO parameters
@@ -352,6 +351,7 @@ class Input
 
     double exx_lambda;
 
+	std::string exx_real_number;
     double exx_pca_threshold;
     double exx_c_threshold;
     double exx_v_threshold;
@@ -404,7 +404,7 @@ class Input
     int *orbital_corr; // which correlated orbitals need corrected ; d:2 ,f:3, do not need correction:-1
     double *hubbard_u; // Hubbard Coulomb interaction parameter U(ev)
     double *hund_j; // Hund exchange parameter J(ev)
-    bool omc; // whether turn on occupation matrix control method or not
+    int omc; // whether turn on occupation matrix control method or not
     bool yukawa_potential; // default:false
     double yukawa_lambda; // default:-1.0, which means we calculate lambda
 
@@ -501,6 +501,8 @@ class Input
 #ifdef __MPI
     void Bcast(void);
 #endif
+
+    int count_ntype(const std::string &fn); // sunliang add 2022-12-06
 
   public:
     template <class T> static void read_value(std::ifstream &ifs, T &var)

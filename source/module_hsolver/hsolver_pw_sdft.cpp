@@ -119,7 +119,7 @@ namespace hsolver
 		else
 		{
 #ifdef __MPI
-			if(ModuleSymmetry::Symmetry::symm_flag)	MPI_Barrier(MPI_COMM_WORLD);
+			if(ModuleSymmetry::Symmetry::symm_flag == 1)	MPI_Barrier(MPI_COMM_WORLD);
 #endif
 		}
 

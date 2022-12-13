@@ -48,8 +48,10 @@ namespace GlobalC
  *   - K_Vectors()
  *     - basic parameters (nks,nkstot,nkstot_ibz) are set
  *   - read_kpoints()
- *     - read from file
- *     - generate KPT from kspacing parameter
+ *     - read from file 
+ *     - generate KPT from kspacing parameter 
+ *     - renew and memory allocation  
+ *     - read from file (Line_Cartesian kpoint file) 
  */
 
 #define private public
@@ -126,6 +128,7 @@ TEST_F(KlistTest, ReadMP)
 	kv.nspin = 1;
 	kv.read_kpoints(k_file);
 	EXPECT_EQ(kv.nkstot,512);
+	remove("KPT1");
 }
 
 TEST_F(KlistTest, ReadList)
@@ -154,6 +157,45 @@ TEST_F(KlistTest, Kspacing)
 	kv.read_kpoints(k_file);
 	EXPECT_EQ(kv.nkstot,343);
 	remove("KPT3");
+	GlobalV::KSPACING=0.0;
+
 }
 
+TEST_F(KlistTest, Renew)
+{
+	K_Vectors kv;
+	std::string k_file = "KPT4";
+        //Cartesian: non-spin case nspin=1
+	kv.nspin = 1;
+	kv.read_kpoints(k_file);
+	EXPECT_EQ(kv.kvec_c.size(),5);
+	//spin case nspin=2
+	kv.nspin = 2;
+	kv.read_kpoints(k_file);
+	EXPECT_EQ(kv.kvec_c.size(),10);
+	remove("KPT4");
+	// check the memory allocation from Renew.
+    
+}
+
+TEST_F(KlistTest, LineCartesian)
+{
+	K_Vectors kv;
+	std::string k_file = "KPT5";
+    //Line Cartesian: non-spin case nspin=1
+	kv.nspin = 1;
+	// Read from k point file under the case of Line_Cartesian.
+	kv.read_kpoints(k_file);
+	EXPECT_EQ(kv.nkstot,51);
+	EXPECT_EQ(kv.kvec_c.size(),51);
+	//Line Cartesian: spin case nspin=2
+	kv.nspin = 2;
+	// Read from k point file under the case of Line_Cartesian.
+	kv.read_kpoints(k_file);
+	EXPECT_EQ(kv.nkstot,51);
+	EXPECT_EQ(kv.kvec_c.size(),102);
+	remove("KPT5");
+	
+    
+}
 #undef private

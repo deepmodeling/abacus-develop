@@ -3,7 +3,8 @@
 #include "global.h"
 #include "module_vdw/vdw.h"
 
-void Stress_PW::cal_stress(ModuleBase::matrix& sigmatot, const psi::Psi<complex<double>>* psi_in)
+template <typename FPTYPE, typename Device>
+void Stress_PW<FPTYPE, Device>::cal_stress(ModuleBase::matrix& sigmatot, const psi::Psi<complex<FPTYPE>>* psi_in, const psi::Psi<complex<FPTYPE>, Device>* d_psi_in)
 {
 	ModuleBase::TITLE("Stress_PW","cal_stress");
 	ModuleBase::timer::tick("Stress_PW","cal_stress");    
@@ -52,30 +53,32 @@ void Stress_PW::cal_stress(ModuleBase::matrix& sigmatot, const psi::Psi<complex<
 	}
 
 	//kinetic contribution
-	stress_kin(sigmakin, this->pelec->wg, psi_in);
+	this->stress_kin(sigmakin, this->pelec->wg, psi_in);
 	
 	//hartree contribution
-	stress_har(sigmahar, GlobalC::rhopw, 1, pelec->charge);
+    this->stress_har(sigmahar, GlobalC::rhopw, 1, pelec->charge);
 
     //ewald contribution
-    stress_ewa(sigmaewa, GlobalC::rhopw, 1);
+    this->stress_ewa(sigmaewa, GlobalC::rhopw, 1);
 
     //xc contribution: add gradient corrections(non diagonal)
     for(int i=0;i<3;i++)
 	{
        sigmaxc(i,i) = - (GlobalC::en.etxc - GlobalC::en.vtxc) / GlobalC::ucell.omega;
     }
-    stress_gga(sigmaxc, pelec->charge);
-    if(XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5) stress_mgga(sigmaxc, this->pelec->wg, this->pelec->pot->get_effective_vofk(), pelec->charge, psi_in);
+    this->stress_gga(sigmaxc, pelec->charge);
+    if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5) {
+        this->stress_mgga(sigmaxc, this->pelec->wg, this->pelec->pot->get_effective_vofk(), pelec->charge, psi_in);
+    }
 
     //local contribution
-    stress_loc(sigmaloc, GlobalC::rhopw, 1, pelec->charge);
+    this->stress_loc(sigmaloc, GlobalC::rhopw, 1, pelec->charge);
     
     //nlcc
-    stress_cc(sigmaxcc, GlobalC::rhopw, 1, pelec->charge);
+    this->stress_cc(sigmaxcc, GlobalC::rhopw, 1, pelec->charge);
    
     //nonlocal
-	stress_nl(sigmanl, this->pelec->wg, psi_in);
+	this->stress_nl(sigmanl, this->pelec->wg, d_psi_in);
 
 	//vdw term
 	stress_vdw(sigmavdw);
@@ -95,7 +98,7 @@ void Stress_PW::cal_stress(ModuleBase::matrix& sigmatot, const psi::Psi<complex<
         }
     }
     
-	if(ModuleSymmetry::Symmetry::symm_flag)                          
+	if(ModuleSymmetry::Symmetry::symm_flag == 1)                          
 	{
 		GlobalC::symm.stress_symmetry(sigmatot, GlobalC::ucell);
 	}
@@ -122,7 +125,8 @@ void Stress_PW::cal_stress(ModuleBase::matrix& sigmatot, const psi::Psi<complex<
     
 }
 
-void Stress_PW::stress_vdw(ModuleBase::matrix& sigma)
+template <typename FPTYPE, typename Device>
+void Stress_PW<FPTYPE, Device>::stress_vdw(ModuleBase::matrix& sigma)
 {
     auto vdw_solver = vdw::make_vdw(GlobalC::ucell, INPUT);
     if (vdw_solver != nullptr)
@@ -131,3 +135,8 @@ void Stress_PW::stress_vdw(ModuleBase::matrix& sigma)
     }
 	return;
 }
+
+template class Stress_PW<double, psi::DEVICE_CPU>;
+#if ((defined __CUDA) || (defined __ROCM))
+template class Stress_PW<double, psi::DEVICE_GPU>;
+#endif
