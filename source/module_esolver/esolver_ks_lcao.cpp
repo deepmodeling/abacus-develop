@@ -555,6 +555,21 @@ void ESolver_KS_LCAO::eachiterfinish(int iter)
         this->LOC.write_dm(is, iter, ssd.str(), precision);
     }
 
+    if(XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
+    {
+        const int precision = 3;
+        for (int is = 0; is < GlobalV::NSPIN; is++)
+        {
+            std::stringstream ssc;
+            std::stringstream ss1;
+            ssc << GlobalV::global_out_dir << "tmp"
+                << "_SPIN" << is + 1 << "_TAU";
+            pelec->charge->write_rho(pelec->charge->kin_r_save[is], is, iter, ssc.str(), precision); // mohan add 2007-10-17
+            ss1 << GlobalV::global_out_dir << "tmp" << "_SPIN" << is + 1 << "_TAU.cube";
+            pelec->charge->write_rho_cube(pelec->charge->kin_r_save[is], is, ss1.str(), 3);
+        }
+    }
+
     // (11) calculate the total energy.
     GlobalC::en.calculate_etot();
 }
@@ -616,6 +631,19 @@ void ESolver_KS_LCAO::afterscf(const int istep)
             this->pelec->pot->write_potential(is, 0, ssp.str(), this->pelec->pot->get_effective_v(), precision);
         }
 */
+    }
+
+    if(XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
+    {
+        for (int is = 0; is < GlobalV::NSPIN; is++)
+        {
+            std::stringstream ssc;
+            std::stringstream ss1;
+            ssc << GlobalV::global_out_dir << "SPIN" << is + 1 << "_TAU";
+            ss1 << GlobalV::global_out_dir << "SPIN" << is + 1 << "_TAU.cube";
+            pelec->charge->write_rho(pelec->charge->kin_r_save[is], is, 0, ssc.str()); // mohan add 2007-10-17
+            pelec->charge->write_rho_cube(pelec->charge->kin_r_save[is], is, ss1.str(), 3);
+        }
     }
 
     if(this->LOC.out_dm1 == 1)

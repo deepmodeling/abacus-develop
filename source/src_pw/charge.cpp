@@ -200,6 +200,21 @@ void Charge::init_rho()
                 }
             }
         }
+        
+		if(XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
+        {
+			for (int is = 0; is < GlobalV::NSPIN; is++)
+			{
+				std::stringstream ssc;
+				ssc << GlobalV::global_readin_dir << "SPIN" << is + 1 << "_TAU";
+				GlobalV::ofs_running << " try to read kinetic energy density from file : " << ssc.str() << std::endl;
+				// mohan update 2012-02-10
+				if (this->read_rho(is, ssc.str(), this->kin_r[is]))
+				{
+					GlobalV::ofs_running << " Read in the kinetic energy density: " << ssc.str() << std::endl;
+				}
+			}
+		}
     }
     else
     {

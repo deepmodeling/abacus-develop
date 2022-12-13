@@ -421,6 +421,18 @@ namespace ModuleESolver
                     ss1 << GlobalV::global_out_dir << "tmp" << "_SPIN" << is + 1 << "_CHG.cube";
                     this->pelec->charge->write_rho_cube(this->pelec->charge->rho_save[is], is, ss1.str(), 3);
                 }
+                if(XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
+                {
+                    for (int is = 0; is < GlobalV::NSPIN; is++)
+                    {
+                        std::stringstream ssc;
+                        std::stringstream ss1;
+                        ssc << GlobalV::global_out_dir << "tmp" << "_SPIN" << is + 1 << "_TAU";
+                        this->pelec->charge->write_rho(this->pelec->charge->kin_r_save[is], is, iter, ssc.str(), 3);//mohan add 2007-10-17
+                        ss1 << GlobalV::global_out_dir << "tmp" << "_SPIN" << is + 1 << "_TAU.cube";
+                        this->pelec->charge->write_rho_cube(this->pelec->charge->kin_r_save[is], is, ss1.str(), 3);
+                    }
+                }
             }
             //output wavefunctions
             if (GlobalC::wf.out_wfc_pw == 1 || GlobalC::wf.out_wfc_pw == 2)
@@ -449,6 +461,18 @@ namespace ModuleESolver
             ss1 << GlobalV::global_out_dir << "SPIN" << is + 1 << "_CHG.cube";
             this->pelec->charge->write_rho(this->pelec->charge->rho_save[is], is, 0, ssc.str());//mohan add 2007-10-17
             this->pelec->charge->write_rho_cube(this->pelec->charge->rho_save[is], is, ss1.str(), 3);
+        }
+        if(XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
+        {
+            for (int is = 0; is < GlobalV::NSPIN; is++)
+            {
+                std::stringstream ssc;
+                std::stringstream ss1;
+                ssc << GlobalV::global_out_dir << "SPIN" << is + 1 << "_TAU";
+                ss1 << GlobalV::global_out_dir << "SPIN" << is + 1 << "_TAU.cube";
+                this->pelec->charge->write_rho(this->pelec->charge->kin_r_save[is], is, 0, ssc.str());//mohan add 2007-10-17
+                this->pelec->charge->write_rho_cube(this->pelec->charge->kin_r_save[is], is, ss1.str(), 3);
+            }
         }
         if (this->conv_elec)
         {
