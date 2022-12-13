@@ -441,6 +441,7 @@ if(ENABLE_LCAO)
       lcao
       orb
       gint
+      dftu
   )
   if (USE_ELPA)
     target_link_libraries(${ABACUS_BIN_NAME}
