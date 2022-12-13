@@ -351,6 +351,7 @@ class Input
 
     double exx_lambda;
 
+	std::string exx_real_number;
     double exx_pca_threshold;
     double exx_c_threshold;
     double exx_v_threshold;

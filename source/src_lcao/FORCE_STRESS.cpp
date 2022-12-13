@@ -221,7 +221,7 @@ void Force_Stress_LCAO::getForceStress(
 	{
 		if(isforce)
 		{
-			if(GlobalV::GAMMA_ONLY_LOCAL)
+			if(GlobalC::exx_info.info_ri.real_number)
 			{
 				GlobalC::exx_lri_double.cal_exx_force();
 				force_exx = GlobalC::exx_info.info_global.hybrid_alpha * GlobalC::exx_lri_double.force_exx;
@@ -234,7 +234,7 @@ void Force_Stress_LCAO::getForceStress(
 		}
 		if(isstress)
 		{
-			if(GlobalV::GAMMA_ONLY_LOCAL)
+			if(GlobalC::exx_info.info_ri.real_number)
 			{
 				GlobalC::exx_lri_double.cal_exx_stress();
 				stress_exx = GlobalC::exx_info.info_global.hybrid_alpha * GlobalC::exx_lri_double.stress_exx;

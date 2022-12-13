@@ -1439,6 +1439,12 @@ These variables are relevant when using hybrid functionals
 - **Description**: See also the entry [dft_functional](#dft_functional). This parameter is only relevant when dft_functional=`opt_orb`. exx_opt_orb_tolerence determines the threshold when solving for the zeros of spherical Bessel functions. A reasonable choice is 1e-12.
 - **Default**: 0
 
+### exx_real_number
+
+- **Type**: Boolen
+- **Description**: If set to 1, it will enforce LIBRI to use `double` data type, otherwise, it will enforce LIBRI to use `complex` data type. The default value depends on the [gamma_only](#gamma_only) option.
+- **Default**: 1 if gamma_only else 0
+
 [back to top](#full-list-of-input-keywords)
 
 ## Molecular dynamics

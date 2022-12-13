@@ -125,7 +125,7 @@ void ESolver_KS_LCAO::Init(Input& inp, UnitCell& ucell)
             }
 
 			// GlobalC::exx_lcao.init();
-            if(GlobalV::GAMMA_ONLY_LOCAL)
+            if(GlobalC::exx_info.info_ri.real_number)
                 GlobalC::exx_lri_double.init(MPI_COMM_WORLD);
             else
                 GlobalC::exx_lri_complex.init(MPI_COMM_WORLD);
@@ -346,7 +346,7 @@ void ESolver_KS_LCAO::eachiterinit(const int istep, const int iter)
         if (!GlobalC::exx_info.info_global.separate_loop && this->two_level_step)
         {
             //GlobalC::exx_lcao.cal_exx_elec(this->LOC, this->LOWF.wfc_k_grid);
-            if(GlobalV::GAMMA_ONLY_LOCAL)
+            if(GlobalC::exx_info.info_ri.real_number)
                 GlobalC::exx_lri_double.cal_exx_elec(this->LOC, *this->LOWF.ParaV);
             else
                 GlobalC::exx_lri_complex.cal_exx_elec(this->LOC, *this->LOWF.ParaV);
@@ -427,7 +427,7 @@ void ESolver_KS_LCAO::hamilt2density(int istep, int iter, double ethr)
         {
             XC_Functional::set_xc_type(GlobalC::ucell.atoms[0].ncpp.xc_func);
             //GlobalC::exx_lcao.cal_exx_elec(this->LOC, this->LOWF.wfc_k_grid);
-            if(GlobalV::GAMMA_ONLY_LOCAL)
+            if(GlobalC::exx_info.info_ri.real_number)
                 GlobalC::exx_lri_double.cal_exx_elec(this->LOC, *this->LOWF.ParaV);
             else
                 GlobalC::exx_lri_complex.cal_exx_elec(this->LOC, *this->LOWF.ParaV);
@@ -631,7 +631,7 @@ void ESolver_KS_LCAO::afterscf(const int istep)
     if (GlobalC::exx_info.info_global.cal_exx)                         // Peize Lin add if 2022.11.14
     {
         const std::string file_name_exx = GlobalV::global_out_dir + "HexxR_" + std::to_string(GlobalV::MY_RANK);
-        if(GlobalV::GAMMA_ONLY_LOCAL)
+        if(GlobalC::exx_info.info_ri.real_number)
             GlobalC::exx_lri_double.write_Hexxs(file_name_exx);
         else
             GlobalC::exx_lri_complex.write_Hexxs(file_name_exx);
@@ -988,7 +988,7 @@ bool ESolver_KS_LCAO::do_after_converge(int& iter)
             }
 
             //GlobalC::exx_lcao.cal_exx_elec(this->LOC, this->LOWF.wfc_k_grid);
-			if(GlobalV::GAMMA_ONLY_LOCAL)
+			if(GlobalC::exx_info.info_ri.real_number)
 				GlobalC::exx_lri_double.cal_exx_elec(this->LOC, *this->LOWF.ParaV);
 			else
 				GlobalC::exx_lri_complex.cal_exx_elec(this->LOC, *this->LOWF.ParaV);
