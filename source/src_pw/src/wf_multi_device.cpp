@@ -30,16 +30,16 @@ struct cal_sk_op<FPTYPE, psi::DEVICE_CPU> {
         std::complex<FPTYPE> *eigts3,
         std::complex<FPTYPE> *sk)
     {
-        int iat = 0;
-        for (int it = 0; it < ntype; it++) {
-            for (int ia = 0; ia < atom_na[it]; ia++) {
-                FPTYPE arg = 0.0;
-                for (int ii = 0; ii < 3; ii++) {
-                    arg += kvec_c[ik * 3 + ii] * atom_tau[iat * 3 + ii];
-                }
-                arg *= TWO_PI;
-                const std::complex<FPTYPE> kphase = std::complex<FPTYPE>(cos(arg), -sin(arg));
-                for (int igl = 0; igl < npw; ++igl) {
+        for (int igl = 0; igl < npw; ++igl) {
+            int iat = 0;
+            for (int it = 0; it < ntype; it++) {
+                for (int ia = 0; ia < atom_na[it]; ia++) {
+                    FPTYPE arg = 0.0;
+                    for (int ii = 0; ii < 3; ii++) {
+                        arg += kvec_c[ik * 3 + ii] * atom_tau[iat * 3 + ii];
+                    }
+                    arg *= TWO_PI;
+                    const std::complex<FPTYPE> kphase = std::complex<FPTYPE>(cos(arg), -sin(arg));
                     const int isz = igl2isz[ik * npwx + igl];
                     int iz = isz % nz;
                     const int is = isz / nz;
@@ -50,9 +50,9 @@ struct cal_sk_op<FPTYPE, psi::DEVICE_CPU> {
                     if (iy < int(ny / 2) + 1) iy += ny;
                     if (iz < int(nz / 2) + 1) iz += nz;
                     sk[iat * npw + igl] = kphase * eigts1[iat * eigts1_nc + ix] * eigts2[iat * eigts2_nc + iy]
-                                           * eigts3[iat * eigts3_nc + iz];
+                                          * eigts3[iat * eigts3_nc + iz];
+                    iat++;
                 }
-                iat++;
             }
         }
     }

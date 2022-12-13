@@ -47,6 +47,7 @@ list(APPEND device_srcs
     src_pw/src/force_multi_device.cpp
     src_pw/src/stress_multi_device.cpp
     src_pw/src/wf_multi_device.cpp
+    src_pw/src/vnl_multi_device.cpp
     module_base/src/math_multi_device.cpp
 )
 
@@ -63,6 +64,7 @@ if(USE_CUDA)
       src_pw/src/cuda/force_multi_device.cu
       src_pw/src/cuda/stress_multi_device.cu
       src_pw/src/cuda/wf_multi_device.cu
+      src_pw/src/cuda/vnl_multi_device.cu
       module_base/src/cuda/math_multi_device.cu
   )
 endif()

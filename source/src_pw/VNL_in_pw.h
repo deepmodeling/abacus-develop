@@ -48,9 +48,10 @@ public:
 
 	void init_vnl(UnitCell &cell);
 
+    template <typename FPTYPE, typename Device>
+    void getvnl(Device * ctx, const int &ik, std::complex<FPTYPE>* vkb_in)const;
 
-
-	void getvnl(const int &ik, ModuleBase::ComplexMatrix& vkb_in)const;
+    void getvnl(const int &ik, ModuleBase::ComplexMatrix& vkb_in)const;
 
 	void getvnl_alpha(const int &ik);
 
@@ -112,7 +113,10 @@ public:
 	void cal_effective_D();
 	#ifdef __LCAO
 	ORB_gaunt_table MGT;
-	#endif
+    #endif
+
+    double * d_nhtol = nullptr, * d_nhtolm = nullptr, * d_indv = nullptr, * d_tab = nullptr;
+    std::complex<double> * d_vkb = nullptr;
 private:
 	bool getvkb = false;
     psi::DEVICE_CPU * cpu_ctx = {};

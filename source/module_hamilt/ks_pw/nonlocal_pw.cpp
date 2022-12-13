@@ -24,7 +24,7 @@ Nonlocal<OperatorPW<FPTYPE, Device>>::Nonlocal(
     if (psi::device::get_device_type<Device>(this->ctx) == psi::GpuDevice) {
         this->deeq = this->ppcell->d_deeq;
         this->deeq_nc = this->ppcell->d_deeq_nc;
-        resmem_complex_op()(this->ctx, this->vkb, this->ppcell->vkb.size);
+        this->vkb = this->ppcell->d_vkb;
     }
     else {
         this->deeq = this->ppcell->deeq.ptr;
@@ -41,9 +41,6 @@ template<typename FPTYPE, typename Device>
 Nonlocal<OperatorPW<FPTYPE, Device>>::~Nonlocal() {
     delmem_complex_op()(this->ctx, this->ps);
     delmem_complex_op()(this->ctx, this->becp);
-    if (psi::device::get_device_type<Device>(this->ctx) == psi::GpuDevice) {
-        delmem_complex_op()(this->ctx, this->vkb);
-    }
 }
 
 template<typename FPTYPE, typename Device>
@@ -54,7 +51,7 @@ void Nonlocal<OperatorPW<FPTYPE, Device>>::init(const int ik_in)
     // Calculate nonlocal pseudopotential vkb
 	if(this->ppcell->nkb > 0) //xiaohui add 2013-09-02. Attention...
 	{
-		this->ppcell->getvnl(this->ik, this->ppcell->vkb);
+		this->ppcell->getvnl(this->ctx, this->ik, this->vkb);
 	}
 
     if(this->next_op != nullptr)
@@ -62,9 +59,6 @@ void Nonlocal<OperatorPW<FPTYPE, Device>>::init(const int ik_in)
         this->next_op->init(ik_in);
     }
 
-    if (psi::device::get_device_type<Device>(this->ctx) == psi::GpuDevice) {
-        syncmem_complex_h2d_op()(this->ctx, this->cpu_ctx, this->vkb, this->ppcell->vkb.c, this->ppcell->vkb.size);
-    }
     ModuleBase::timer::tick("Nonlocal", "getvnl");
 }
 
@@ -81,7 +75,10 @@ void Nonlocal<OperatorPW<FPTYPE, Device>>::add_nonlocal_pp(std::complex<FPTYPE> 
 
     // std::complex<FPTYPE> *ps = new std::complex<FPTYPE>[nkb * m];
     // ModuleBase::GlobalFunc::ZEROS(ps, m * nkb);
-    resmem_complex_op()(this->ctx, this->ps, nkb * m);
+    if (this->nkb_m < m * nkb) {
+        resmem_complex_op()(this->ctx, this->ps, nkb * m);
+        this->nkb_m = m * nkb;
+    }
     setmem_complex_op()(this->ctx, this->ps, 0, nkb * m);
 
     int sum = 0;
@@ -233,7 +230,9 @@ void Nonlocal<OperatorPW<FPTYPE, Device>>::act
         //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
         // qianrui optimize 2021-3-31
         int nkb = this->ppcell->nkb;
-        resmem_complex_op()(this->ctx, this->becp, n_npwx * nkb);
+        if (this->nkb_m < n_npwx * nkb) {
+            resmem_complex_op()(this->ctx, this->becp, n_npwx * nkb);
+        }
         // ModuleBase::ComplexMatrix becp(n_npwx, nkb, false);
         char transa = 'C';
         char transb = 'N';
@@ -298,7 +297,7 @@ hamilt::Nonlocal<OperatorPW<FPTYPE, Device>>::Nonlocal(const Nonlocal<OperatorPW
     this->ucell = nonlocal->get_ucell();
     if (psi::device::get_device_type<Device>(this->ctx) == psi::GpuDevice) {
         this->deeq = this->ppcell->d_deeq;
-        resmem_complex_op()(this->ctx, this->vkb, this->ppcell->vkb.size);
+        this->vkb = this->ppcell->d_vkb;
     }
     else {
         this->deeq = this->ppcell->deeq.ptr;

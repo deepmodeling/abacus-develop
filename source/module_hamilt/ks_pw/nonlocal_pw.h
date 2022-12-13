@@ -54,6 +54,8 @@ class Nonlocal<OperatorPW<FPTYPE, Device>> : public OperatorPW<FPTYPE, Device>
 
     mutable int npol = 0;
 
+    mutable size_t nkb_m = 0;
+
     const int* isk = nullptr;
 
     const pseudopot_cell_vnl* ppcell = nullptr;

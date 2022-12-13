@@ -98,7 +98,7 @@ void WF_igk::get_sk(Device * ctx, const int ik, ModulePW::PW_Basis_K* wfc_basis,
 
     int iat = 0, _npw = GlobalC::kv.ngk[ik], eigts1_nc = GlobalC::sf.eigts1.nc, eigts2_nc = GlobalC::sf.eigts2.nc, eigts3_nc = GlobalC::sf.eigts3.nc;
     int * igl2isz = nullptr, * is2fftixy = nullptr, * atom_na = nullptr, * h_atom_na = new int[GlobalC::ucell.ntype];
-    FPTYPE * atom_tau = nullptr, * h_atom_tau = new FPTYPE[GlobalC::ucell.nat * 3];
+    FPTYPE * atom_tau = nullptr, * h_atom_tau = new FPTYPE[GlobalC::ucell.nat * 3], * kvec = nullptr;
     std::complex<double> * eigts1 = nullptr, * eigts2 = nullptr, * eigts3 = nullptr;
     for (int it = 0; it < GlobalC::ucell.ntype; it++) {
         h_atom_na[it] = GlobalC::ucell.atoms[it].na;
@@ -115,7 +115,9 @@ void WF_igk::get_sk(Device * ctx, const int ik, ModulePW::PW_Basis_K* wfc_basis,
         syncmem_int_op()(ctx, cpu_ctx, atom_na, h_atom_na, GlobalC::ucell.ntype);
 
         resmem_var_op()(ctx, atom_tau, GlobalC::ucell.nat * 3);
+        resmem_var_op()(ctx, kvec, GlobalC::kv.kvec_c.size() * 3);
         syncmem_var_op()(ctx, cpu_ctx, atom_tau, h_atom_tau, GlobalC::ucell.nat * 3);
+        syncmem_var_op()(ctx, cpu_ctx, kvec, reinterpret_cast<FPTYPE *>(GlobalC::kv.kvec_c.data()), GlobalC::kv.kvec_c.size() * 3);
 
         eigts1 = GlobalC::sf.d_eigts1;
         eigts2 = GlobalC::sf.d_eigts2;
@@ -131,6 +133,7 @@ void WF_igk::get_sk(Device * ctx, const int ik, ModulePW::PW_Basis_K* wfc_basis,
         eigts3 = GlobalC::sf.eigts3.c;
         igl2isz = wfc_basis->igl2isz_k;
         is2fftixy = wfc_basis->is2fftixy;
+        kvec = reinterpret_cast<FPTYPE *>(GlobalC::kv.kvec_c.data());
     }
 
     cal_sk_op()(
@@ -142,12 +145,13 @@ void WF_igk::get_sk(Device * ctx, const int ik, ModulePW::PW_Basis_K* wfc_basis,
         eigts1_nc, eigts2_nc, eigts3_nc,
         atom_na, igl2isz, is2fftixy,
         ModuleBase::TWO_PI,
-        reinterpret_cast<FPTYPE *>(GlobalC::kv.kvec_c.data()),
+        kvec,
         atom_tau,
         eigts1, eigts2, eigts3,
         sk);
     if (device == psi::GpuDevice) {
         delmem_int_op()(ctx, atom_na);
+        delmem_var_op()(ctx, kvec);
         delmem_var_op()(ctx, atom_tau);
     }
     delete [] h_atom_na;
