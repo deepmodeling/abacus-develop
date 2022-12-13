@@ -406,9 +406,9 @@ void Input::Default(void)
     //----------------------------------------------------------			//Fuxiang He add 2016-10-26
     // constrained DFT
     //----------------------------------------------------------
-    GlobalV::ocp = 0;
+    // GlobalV::ocp = 0;
     // ocp_n = 0;
-    GlobalV::ocp_set = "none";
+    // GlobalV::ocp_set = "none";
     // for(int i=0; i<10000; i++)
     // {
     // GlobalV::ocp_kb[i] = 0.0;

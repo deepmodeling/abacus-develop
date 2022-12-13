@@ -453,7 +453,8 @@ void Force_Stress_LCAO::getForceStress(
 			//caoyu add 2021-06-03
 			if (GlobalV::deepks_scf)
 			{
-				this->print_force("DeePKS 	FORCE", GlobalC::ld.F_delta, 1, ry);
+				f_pw.print("DeePKS 	FORCE", GlobalC::ld.F_delta, 1);
+				//this->print_force("DeePKS 	FORCE", GlobalC::ld.F_delta, 1, ry);
 			}
 #endif
 		}
@@ -621,143 +622,6 @@ void Force_Stress_LCAO::getForceStress(
 	
 	ModuleBase::timer::tick("Force_Stress_LCAO","getForceStress");
 	return;
-}
-
-//print force term for test
-void Force_Stress_LCAO::print_force(const std::string &name, ModuleBase::matrix& f, const bool screen, bool ry)const
-{
-	GlobalV::ofs_running << " --------------------------- " << name << " ----------------------------" << std::endl;
-	GlobalV::ofs_running << " " << std::setw(8) << "atom" << std::setw(15) << "x" << std::setw(15) << "y" << std::setw(15) << "z" << std::endl;
-
-	double fac = 1.0;
-
-	if(!ry)
-	{
-	 	fac = ModuleBase::Ry_to_eV / 0.529177;
-	}
-
-	std::cout << std::setprecision(5);
-	std::cout << std::setiosflags(ios::showpos);
-
-	if(screen)
-	{
-		std::cout << " ------------------- " << name << " --------------------" << std::endl;
-		std::cout << " " << std::setw(8) << "atom" << std::setw(15) << "x" << std::setw(15) << "y" << std::setw(15) << "z" << std::endl;
-	}
-
-    int iat = 0;
-    for (int it = 0;it < GlobalC::ucell.ntype;it++)
-    {
-        for (int ia = 0;ia < GlobalC::ucell.atoms[it].na;ia++)
-        {
-			std::stringstream ss;
-			ss << GlobalC::ucell.atoms[it].label << ia+1;
-
-			GlobalV::ofs_running << " " << std::setw(8) << ss.str();
-			if( abs(f(iat,0)) >output_acc) GlobalV::ofs_running << std::setw(15) << f(iat,0)*fac;
-			else GlobalV::ofs_running << std::setw(15) << "0";
-			if( abs(f(iat,1)) >output_acc) GlobalV::ofs_running << std::setw(15) << f(iat,1)*fac;
-			else GlobalV::ofs_running << std::setw(15) << "0";
-			if( abs(f(iat,2)) >output_acc) GlobalV::ofs_running << std::setw(15) << f(iat,2)*fac;
-			else GlobalV::ofs_running << std::setw(15) << "0";
-			GlobalV::ofs_running << std::endl;
-
-			if(screen)
-			{
-				std::cout << " " << std::setw(8) << ss.str();
-				if( abs(f(iat,0)) >output_acc) std::cout << std::setw(15) << f(iat,0)*fac;
-				else std::cout << std::setw(15) << "0";
-				if( abs(f(iat,1)) >output_acc) std::cout << std::setw(15) << f(iat,1)*fac;
-				else std::cout << std::setw(15) << "0";
-				if( abs(f(iat,2)) >output_acc) std::cout << std::setw(15) << f(iat,2)*fac;
-				else std::cout << std::setw(15) << "0";
-				std::cout << std::endl;
-			}
-
-            iat++;
-        }
-    }
-
-
-	std::cout << std::resetiosflags(ios::showpos);
-
-    return;
-}
-
-
-void Force_Stress_LCAO::printforce_total (const bool ry, const bool istestf, ModuleBase::matrix& fcs)
-{
-	ModuleBase::TITLE("Force_Stress_LCAO","printforce_total");
-	double unit_transform = 1;
-
-	if(!ry)
-	{
-		unit_transform = ModuleBase::Ry_to_eV / 0.529177;
-	}
-//	std::cout.setf(ios::fixed);
-
-    int iat=0;
-
-	//GlobalV::ofs_running << std::setiosflags(ios::right);
- 	GlobalV::ofs_running << std::setprecision(6) << std::setiosflags(ios::showpos) << std::setiosflags(ios::fixed) << std::endl;
-	ModuleBase::GlobalFunc::NEW_PART("TOTAL-FORCE (eV/Angstrom)");
-
-	// print out forces
-	if(INPUT.out_force == 1)
-	{
-		std::ofstream ofs("FORCE.dat");
-		if(!ofs)
-		{
-			std::cout << "open FORCE.dat error !" <<std::endl;
-		}
-
-		for(int iat=0; iat<GlobalC::ucell.nat; iat++)
-		{
-			ofs << "   " << fcs(iat,0)*ModuleBase::Ry_to_eV / 0.529177
-				<< "   " << fcs(iat,1)*ModuleBase::Ry_to_eV / 0.529177
-				<< "   " << fcs(iat,2)*ModuleBase::Ry_to_eV / 0.529177 << std::endl;
-		}
-		ofs.close();
-	}
-
- 	if(istestf)
-	{
-		cout << setprecision(6);
-		//cout << setiosflags(ios::showpos);
-		//cout << setiosflags(ios::fixed) << endl;
-		cout << " ------------------- TOTAL      FORCE --------------------" << endl;
-    	cout << " " << setw(8) << "Atom" << setw(15) << "x" << setw(15) << "y" << setw(15) << "z" << endl;
-    	GlobalV::ofs_running << " " << setw(12) << "Atom" << setw(15) << "x" << setw(15) << "y" << setw(15) << "z" << endl;
-	}
-
-    iat=0;
-    for (int it=0; it<GlobalC::ucell.ntype; it++)
-    {
-        for (int ia = 0; ia < GlobalC::ucell.atoms[it].na; ia++)
-        {
-            std::stringstream ss;
-            ss << GlobalC::ucell.atoms[it].label << ia+1;
-
-			if(istestf)
-			{
-            	std::cout << " " << std::setw(8) << ss.str()
-					<< std::setw(15) << fcs(iat,0)*unit_transform
-					<< std::setw(15) << fcs(iat,1)*unit_transform
-					<< std::setw(15) << fcs(iat,2)*unit_transform << std::endl;
-			}
-
-            GlobalV::ofs_running << " " << std::setw(12) << ss.str()
-				<< std::setw(15) << fcs(iat,0)*unit_transform
-				<< std::setw(15) << fcs(iat,1)*unit_transform
-				<< std::setw(15) << fcs(iat,2)*unit_transform << std::endl;
-
-            ++iat;
-        }
-    }
-	GlobalV::ofs_running << std::setiosflags(ios::left);
-	std::cout << std::resetiosflags(ios::showpos);
-
-    return;
 }
 
 //local pseudopotential, ewald, core correction, scc terms in force
