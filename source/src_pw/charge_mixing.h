@@ -28,7 +28,8 @@ class Charge_Mixing
         const std::string &mixing_mode_in,
         const double &mixing_beta_in,
         const int &mixing_ndim_in,
-		const double &mixing_gg0_in
+		const double &mixing_gg0_in,
+		const bool &mixing_tau_in
     );//mohan add mixing_gg0_in 2014-09-27
 
 	double get_drho(Charge* chr, const double nelec);
@@ -63,6 +64,7 @@ class Charge_Mixing
     double mixing_beta;
     int mixing_ndim;
 	double mixing_gg0; //mohan add 2014-09-27
+	bool mixing_tau;
 
     bool new_e_iteration;
 

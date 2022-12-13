@@ -29,13 +29,15 @@ void Charge_Mixing::set_mixing
     const std::string &mixing_mode_in,
     const double &mixing_beta_in,
     const int &mixing_ndim_in,
-	const double &mixing_gg0_in
+	const double &mixing_gg0_in,
+	const bool &mixing_tau_in
 )
 {
     this->mixing_mode = mixing_mode_in;
     this->mixing_beta = mixing_beta_in;
     this->mixing_ndim = mixing_ndim_in;
 	this->mixing_gg0 = mixing_gg0_in; //mohan add 2014-09-27
+	this->mixing_tau = mixing_tau_in;
 
     return;
 }
@@ -112,7 +114,22 @@ void Charge_Mixing::mix_rho(const int &iter, Charge* chr)
 			rho123[is][ir] = chr->rho[is][ir];
 		}
 	}
-	
+
+	double **kin_r123;
+	if ((XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5) && mixing_tau)
+    {
+		kin_r123 = new double*[GlobalV::NSPIN];
+		for(int is=0; is<GlobalV::NSPIN; ++is)
+		{
+			kin_r123[is] = new double[GlobalC::rhopw->nrxx];
+			ModuleBase::GlobalFunc::ZEROS(kin_r123[is], GlobalC::rhopw->nrxx);
+			for(int ir=0; ir<GlobalC::rhopw->nrxx; ++ir)
+			{
+				kin_r123[is][ir] = chr->kin_r[is][ir];
+			}
+		}
+	}
+
 	if ( this->mixing_mode == "plain")
     {
 		this->plain_mixing(chr);
@@ -207,6 +224,16 @@ void Charge_Mixing::plain_mixing(Charge* chr) const
 		}
 
 		ModuleBase::GlobalFunc::DCOPY( chr->rho[is], chr->rho_save[is], GlobalC::rhopw->nrxx);
+
+		if ((XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5) && mixing_tau)
+		{
+			for (int ir=0; ir<GlobalC::rhopw->nrxx; ir++)
+			{
+				chr->kin_r[is][ir] = chr->kin_r[is][ir]*mixing_beta + mix_old*chr->kin_r_save[is][ir];
+			}
+			ModuleBase::GlobalFunc::DCOPY( chr->kin_r[is], chr->kin_r_save[is], GlobalC::rhopw->nrxx);
+		}
+
 	}
 
     return;
