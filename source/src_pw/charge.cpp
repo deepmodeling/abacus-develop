@@ -143,7 +143,6 @@ void Charge::init_rho()
     std::cout << " START CHARGE      : " << GlobalV::init_chg << std::endl;
     if (GlobalV::init_chg == "atomic") // mohan add 2007-10-17
     {
-    start_from_atomic:
         this->atomic_rho(GlobalV::NSPIN, rho, GlobalC::rhopw);
     }
     else if (GlobalV::init_chg == "file")
@@ -162,7 +161,7 @@ void Charge::init_rho()
             else if (is > 0 && GlobalV::NSPIN == 4)
             {
                 // read only spin (up+down)
-                if (GlobalV::PRENSPIN == 1)
+                if (prenspin == 1)
                 {
                     GlobalV::ofs_running << " Didn't read in the charge density but autoset it for spin " << is + 1
                                          << std::endl;
@@ -172,7 +171,7 @@ void Charge::init_rho()
                     }
                 }
                 //
-                else if (GlobalV::PRENSPIN == 2)
+                else if (prenspin == 2)
                 { // read up and down , then rearrange them.
                     if (is == 1)
                     {
@@ -199,11 +198,6 @@ void Charge::init_rho()
                 {
                     ModuleBase::WARNING_QUIT("Charge::init_rho", "Incomplete charge density file!");
                 }
-            }
-            else
-            {
-                GlobalV::ofs_running << " Start charge density from atomic charge density." << std::endl;
-                goto start_from_atomic;
             }
         }
     }
