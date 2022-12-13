@@ -39,6 +39,11 @@ void Charge_Mixing::set_mixing
 	this->mixing_gg0 = mixing_gg0_in; //mohan add 2014-09-27
 	this->mixing_tau = mixing_tau_in;
 
+	if(mixing_tau && mixing_mode == "broyden")
+	{
+		GlobalV::ofs_running << "Note : mixing_tau has only been implemented for plain and pulay mixing" << std::endl;
+	}
+
     return;
 }
 
@@ -58,7 +63,6 @@ double Charge_Mixing::get_drho(Charge* chr, const double nelec)
         {
            chr->rhog[is][ig] -= chr->rhog_save[is][ig];
         }
-
     }
 
 	ModuleBase::GlobalFunc::NOTE("Calculate the norm of the Residual std::vector: < R[rho] | R[rho_save] >");
@@ -162,6 +166,24 @@ void Charge_Mixing::mix_rho(const int &iter, Charge* chr)
 		delete[] rho123[is];
 	}
 	delete[] rho123;
+
+	if ((XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5) && mixing_tau)
+    {
+		for(int is=0; is<GlobalV::NSPIN; is++)
+		{
+			for(int ir=0; ir<GlobalC::rhopw->nrxx; ++ir)
+			{
+				chr->kin_r_save[is][ir] = kin_r123[is][ir];
+			}
+		}	
+
+		for(int is=0; is<GlobalV::NSPIN; ++is)
+		{
+			delete[] kin_r123[is];
+		}
+		delete[] kin_r123;
+	}
+
 
 	if(new_e_iteration) new_e_iteration = false;
 
