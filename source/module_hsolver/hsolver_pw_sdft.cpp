@@ -51,7 +51,7 @@ namespace hsolver
 #ifdef __MPI
 			if(nbands > 0)
 			{
-				MPI_Bcast(psi.get_pointer(), npwx*nbands*2, MPI_DOUBLE , 0, PARAPW_WORLD);
+				MPI_Bcast(&psi(ik,0,0), npwx*nbands*2, MPI_DOUBLE , 0, PARAPW_WORLD);
 				MPI_Bcast(&(pes->ekb(ik, 0)), nbands, MPI_DOUBLE, 0, PARAPW_WORLD);
 			}
 #endif
