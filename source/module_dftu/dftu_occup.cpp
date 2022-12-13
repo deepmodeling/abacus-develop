@@ -1,7 +1,29 @@
 #include "dftu.h"
-#include "module_base/scalapack_connector.h"
 #include "module_base/timer.h"
 #include "src_pw/global.h"
+
+extern "C"
+{
+  //I'm not sure what's happenig here, but the interface in scalapack_connecter.h
+  //does not seem to work, so I'll use this one here
+  void pzgemm_(
+		const char *transa, const char *transb,
+		const int *M, const int *N, const int *K,
+		const std::complex<double> *alpha,
+		const std::complex<double> *A, const int *IA, const int *JA, const int *DESCA,
+		const std::complex<double> *B, const int *IB, const int *JB, const int *DESCB,
+		const std::complex<double> *beta,
+		std::complex<double> *C, const int *IC, const int *JC, const int *DESCC);
+  
+  void pdgemm_(
+		const char *transa, const char *transb,
+		const int *M, const int *N, const int *K,
+		const double *alpha,
+		const double *A, const int *IA, const int *JA, const int *DESCA,
+		const double *B, const int *IB, const int *JB, const int *DESCB,
+		const double *beta,
+		double *C, const int *IC, const int *JC, const int *DESCC);
+}
 
 namespace ModuleDFTU
 {
@@ -12,8 +34,7 @@ void DFTU::cal_occup_m_k(const int iter, std::vector<ModuleBase::ComplexMatrix> 
 
     for (int T = 0; T < GlobalC::ucell.ntype; T++)
     {
-        if (orbital_corr[T] == -1)
-            continue;
+        if (orbital_corr[T] == -1) continue;
 
         for (int I = 0; I < GlobalC::ucell.atoms[T].na; I++)
         {
@@ -46,7 +67,7 @@ void DFTU::cal_occup_m_k(const int iter, std::vector<ModuleBase::ComplexMatrix> 
     // call SCALAPACK routine to calculate the product of the S and density matrix
     const char transN = 'N', transT = 'T';
     const int one_int = 1;
-    const double alpha = 1.0, beta = 0.0;
+    const std::complex<double> beta(0.0,0.0), alpha(1.0,0.0);
 
     std::vector<std::complex<double>> srho(this->LM->ParaV->nloc);
     std::vector<std::complex<double>> Sk(this->LM->ParaV->nloc);
@@ -239,8 +260,7 @@ void DFTU::cal_occup_m_gamma(const int iter, std::vector<ModuleBase::matrix> &dm
     ModuleBase::timer::tick("DFTU", "cal_occup_m_gamma");
     for (int T = 0; T < GlobalC::ucell.ntype; T++)
     {
-        if (orbital_corr[T] == -1)
-            continue;
+        if (orbital_corr[T] == -1) continue;
         const int L = orbital_corr[T];
 
         for (int I = 0; I < GlobalC::ucell.atoms[T].na; I++)
