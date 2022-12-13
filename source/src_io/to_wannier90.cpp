@@ -99,12 +99,12 @@ void toWannier90::read_nnkp()
 {
     // read *.nnkp file
 
-    wannier_file_name = INPUT.NNKP;
+    wannier_file_name = INPUT.nnkpfile;
     wannier_file_name = wannier_file_name.substr(0, wannier_file_name.length() - 5);
 
     GlobalV::ofs_running << "reading the " << wannier_file_name << ".nnkp file." << std::endl;
 
-    std::ifstream nnkp_read(INPUT.NNKP.c_str(), ios::in);
+    std::ifstream nnkp_read(INPUT.nnkpfile.c_str(), ios::in);
 
     if (!nnkp_read)
         ModuleBase::WARNING_QUIT("toWannier90::read_nnkp", "Error during readin parameters.");

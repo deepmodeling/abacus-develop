@@ -129,7 +129,7 @@ void Input::Default(void)
     orbital_dir = ""; // liuyu add 2021-08-14
     read_file_dir = "auto";
     // pseudo_type = "auto"; // mohan add 2013-05-20 (xiaohui add 2013-06-23)
-    wannier_card = "";
+    wannier_card = "none";
     latname = "none";
     // xiaohui modify 2015-09-15, relax -> scf
     // calculation = "relax";
@@ -142,6 +142,8 @@ void Input::Default(void)
     nbands_sto = 256;
     nbands_istate = 5;
     pw_seed = 1;
+    emin_sto = 0.0;
+    emax_sto = 0.0;
     nche_sto = 100;
     seed_sto = 0;
     bndpar = 1;
@@ -160,7 +162,7 @@ void Input::Default(void)
     berry_phase = false;
     gdir = 3;
     towannier90 = false;
-    NNKP = "seedname.nnkp";
+    nnkpfile = "seedname.nnkp";
     wannier_spin = "up";
     kspacing = 0.0;
     min_dist_coef = 0.2;
@@ -292,6 +294,7 @@ void Input::Default(void)
     out_proj_band = 0;
     out_mat_hs = 0;
     out_mat_hs2 = 0; // LiuXh add 2019-07-15
+    out_hs2_interval = 1;
     out_mat_r = 0; // jingan add 2019-8-14
     out_wfc_lcao = false;
     out_alllog = false;
@@ -299,7 +302,7 @@ void Input::Default(void)
     dos_emax_ev = 15; //(ev)
     dos_edelta_ev = 0.01; //(ev)
     dos_scale = 0.01;
-    b_coef = 0.07;
+    dos_sigma = 0.07;
     out_element_info = false;
     //----------------------------------------------------------
     // LCAO
@@ -695,7 +698,7 @@ bool Input::Read(const std::string &fn)
         }
         else if (strcmp("nnkpfile", word) == 0) // add by jingan for wannier90
         {
-            read_value(ifs, NNKP);
+            read_value(ifs, nnkpfile);
         }
         else if (strcmp("wannier_spin", word) == 0) // add by jingan for wannier90
         {
@@ -1177,7 +1180,7 @@ bool Input::Read(const std::string &fn)
         }
         else if (strcmp("dos_sigma", word) == 0)
         {
-            read_value(ifs, b_coef);
+            read_value(ifs, dos_sigma);
         }
         else if (strcmp("dos_nche", word) == 0)
         {
@@ -2222,7 +2225,7 @@ void Input::Bcast()
     Parallel_Common::bcast_bool(berry_phase);
     Parallel_Common::bcast_int(gdir);
     Parallel_Common::bcast_bool(towannier90);
-    Parallel_Common::bcast_string(NNKP);
+    Parallel_Common::bcast_string(nnkpfile);
     Parallel_Common::bcast_string(wannier_spin);
 
     Parallel_Common::bcast_string(dft_functional);
@@ -2351,7 +2354,7 @@ void Input::Bcast()
     Parallel_Common::bcast_bool(dos_setemin);
     Parallel_Common::bcast_bool(dos_setemax);
     Parallel_Common::bcast_int(dos_nche);
-    Parallel_Common::bcast_double(b_coef);
+    Parallel_Common::bcast_double(dos_sigma);
 
     // mohan add 2009-11-11
     Parallel_Common::bcast_double(lcao_ecut);

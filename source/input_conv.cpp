@@ -515,7 +515,7 @@ void Input_Conv::Convert(void)
     GlobalC::en.dos_emax_ev = INPUT.dos_emax_ev;
     GlobalC::en.dos_edelta_ev = INPUT.dos_edelta_ev;
     GlobalC::en.dos_scale = INPUT.dos_scale;
-    GlobalC::en.bcoeff = INPUT.b_coef;
+    GlobalC::en.bcoeff = INPUT.dos_sigma;
 
     //----------------------------------------------------------
     // About LCAO

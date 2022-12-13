@@ -205,7 +205,7 @@ void ESolver_SDFT_PW::postprocess()
 			emax=emax+delta/2.0;
 			emin=emin-delta/2.0;
 		}
-        this->caldos(INPUT.dos_nche, INPUT.b_coef, emin, emax, INPUT.dos_edelta_ev, INPUT.npart_sto );
+        this->caldos(INPUT.dos_nche, INPUT.dos_sigma, emin, emax, INPUT.dos_edelta_ev, INPUT.npart_sto );
     }
 }
 

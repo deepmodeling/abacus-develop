@@ -63,7 +63,7 @@ class Input
     // Wannier functions
     //==========================================================
     bool towannier90; // add by jingan for wannier90
-    std::string NNKP; // add by jingan for wannier90
+    std::string nnkpfile; // add by jingan for wannier90
     std::string wannier_spin; // add by jingan for wannier90
 
     //==========================================================
@@ -250,7 +250,7 @@ class Input
     bool dos_setemin = false; //true: emin is set
     bool dos_setemax = false; //true: emax is set
 
-    double b_coef; //  pengfei 2014-10-13
+    double dos_sigma; //  pengfei 2014-10-13
 
     //==========================================================
     // two center integrals in LCAO
