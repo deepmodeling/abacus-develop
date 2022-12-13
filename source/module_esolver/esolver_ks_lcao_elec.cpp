@@ -319,7 +319,7 @@ namespace ModuleESolver
             }
 
 			//GlobalC::exx_lcao.cal_exx_ions(*this->LOWF.ParaV);
-			if(GlobalV::GAMMA_ONLY_LOCAL)
+			if(GlobalC::exx_info.info_ri.real_number)
 				GlobalC::exx_lri_double.cal_exx_ions();
 			else
 				GlobalC::exx_lri_complex.cal_exx_ions();
@@ -468,7 +468,7 @@ namespace ModuleESolver
         {
             //GlobalC::exx_lcao.cal_exx_elec_nscf(this->LOWF.ParaV[0]);
 			const std::string file_name_exx = GlobalV::global_out_dir + "HexxR_" + std::to_string(GlobalV::MY_RANK);
-			if(GlobalV::GAMMA_ONLY_LOCAL)
+			if(GlobalC::exx_info.info_ri.real_number)
 				GlobalC::exx_lri_double.read_Hexxs(file_name_exx);
 			else
 				GlobalC::exx_lri_complex.read_Hexxs(file_name_exx);

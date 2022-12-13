@@ -241,6 +241,7 @@ void Print_Info::print_time(time_t &time_start, time_t &time_finish)
 	    << unsigned(secs) << " secs "<< std::endl;
 }
 
+/*
 void Print_Info::print_scf(const int &istep, const int &iter)
 {
     if(GlobalV::BASIS_TYPE=="pw")
@@ -269,6 +270,7 @@ void Print_Info::print_scf(const int &istep, const int &iter)
 
     GlobalV::ofs_running << " --------------------------------\n";
 }
+*/
 
 void Print_Info::print_screen(const int &stress_step, const int &force_step, const int &istep)
 {

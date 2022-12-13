@@ -339,6 +339,7 @@ void Input::Print(const std::string &fn) const
     ModuleBase::GlobalFunc::OUTP(ofs, "exx_separate_loop", exx_separate_loop, "0 or 1");
     ModuleBase::GlobalFunc::OUTP(ofs, "exx_hybrid_step", exx_hybrid_step, "");
     ModuleBase::GlobalFunc::OUTP(ofs, "exx_lambda", exx_lambda, "");
+    ModuleBase::GlobalFunc::OUTP(ofs, "exx_real_number", exx_real_number, "");
     ModuleBase::GlobalFunc::OUTP(ofs, "exx_pca_threshold", exx_pca_threshold, "");
     ModuleBase::GlobalFunc::OUTP(ofs, "exx_c_threshold", exx_c_threshold, "");
     ModuleBase::GlobalFunc::OUTP(ofs, "exx_v_threshold", exx_v_threshold, "");

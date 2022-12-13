@@ -102,7 +102,7 @@ public:
     
     int *ig2isz=nullptr; // map ig to (is, iz).
     int *istot2ixy=nullptr; // istot2ixy[is]: iy + ix * ny of is^th stick among all sticks.
-    int *is2fftixy=nullptr; // is2fftixy[is]: iy + ix * ny of is^th stick among sticks on current proc.
+    int *is2fftixy=nullptr, * d_is2fftixy = nullptr; // is2fftixy[is]: iy + ix * ny of is^th stick among sticks on current proc.
     int *fftixy2ip=nullptr; // fftixy2ip[iy + ix * fftny]: ip of proc which contains stick on (ix, iy). if no stick: -1
     int nst=0; //num. of sticks in current proc.
     int *nst_per=nullptr;// nst on each core

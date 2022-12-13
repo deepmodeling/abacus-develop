@@ -75,6 +75,7 @@ void output::printcm_norm(std::ofstream &ofs, const std::string &s, const Module
     return;
 }
 
+/*
 void output::printcm_norm(const std::string &s, const ModuleBase::ComplexMatrix &m, const double &limit)
 {
     const int b1 = m.nr;
@@ -94,8 +95,10 @@ void output::printcm_norm(const std::string &s, const ModuleBase::ComplexMatrix 
     }
     return;
 }
+*/
 
 
+/*
 void output::printcm(std::ofstream &ofs, const std::string &s, const ModuleBase::ComplexMatrix &m)
 {
     const int b1 = m.nr;
@@ -116,7 +119,9 @@ void output::printcm(std::ofstream &ofs, const std::string &s, const ModuleBase:
     ofs.unsetf(std::ios::scientific);
     return;
 }//end print cm
+*/
 
+/*
 void output::printcm(const std::string &s, const ModuleBase::ComplexMatrix &m)
 {
     const int b1 = m.nr;
@@ -135,7 +140,9 @@ void output::printcm(const std::string &s, const ModuleBase::ComplexMatrix &m)
     }
     return;
 }
+*/
 
+/*
 void output::printcm_real_limit_hermit(const std::string &s, const ModuleBase::ComplexMatrix &m,const double &limit)
 {
     const int b1 = m.nr;
@@ -156,7 +163,9 @@ void output::printcm_real_limit_hermit(const std::string &s, const ModuleBase::C
     }
     return;
 }
+*/
 
+/*
 void output::printcm_real(const std::string &s, const ModuleBase::ComplexMatrix &m,const double &limit)
 {
     const int b1 = m.nr;
@@ -177,9 +186,10 @@ void output::printcm_real(const std::string &s, const ModuleBase::ComplexMatrix 
     }
     return;
 }
+*/
 
 
-
+/*
 void output::printcm_imag(const std::string &s, const ModuleBase::ComplexMatrix &m,const double &limit)
 {
     const int b1 = m.nr;
@@ -200,6 +210,7 @@ void output::printcm_imag(const std::string &s, const ModuleBase::ComplexMatrix 
     }
     return;
 }
+*/
 
 
 
@@ -228,6 +239,7 @@ void output::printr3_d(std::ofstream &ofs, const std::string &s,const ModuleBase
     return;
 }//end printr3_d
 
+/*
 void output::printr4_d(std::ofstream &ofs, const std::string &s,const ModuleBase::realArray &u)
 {
     const int b1 = u.getBound1();
@@ -251,6 +263,7 @@ void output::printr4_d(std::ofstream &ofs, const std::string &s,const ModuleBase
                     ofs << std::setw(15) << u(i, j, k, m);
                 }
 }//end print4_d
+*/
 
 void output::printM3(std::ofstream &ofs,const std::string &description, const ModuleBase::Matrix3 &m)
 {

@@ -328,7 +328,7 @@ void LCAO_Hamilt::calculate_HSR_sparse(const int &current_spin, const double &sp
     if( GlobalC::exx_info.info_global.cal_exx )
     {
         //calculate_HR_exx_sparse(current_spin, sparse_threshold);
-        if(GlobalV::GAMMA_ONLY_LOCAL)
+        if(GlobalC::exx_info.info_ri.real_number)
             this->calculate_HR_exx_sparse(current_spin, sparse_threshold, GlobalC::exx_lri_double.Hexxs);
         else
             this->calculate_HR_exx_sparse(current_spin, sparse_threshold, GlobalC::exx_lri_complex.Hexxs);

@@ -21,6 +21,7 @@ PW_Basis_K::~PW_Basis_K()
 #if defined(__CUDA) || defined(__UT_USE_CUDA)
     if (GlobalV::device_flag == "gpu") {
         cudaFree(this->ig2ixyz_k);
+        cudaFree(this->d_igl2isz_k);
     }
 #endif
 }
@@ -114,7 +115,13 @@ void PW_Basis_K::setupIndGk()
             }
         }
     }
-
+#if defined(__CUDA) || defined(__UT_USE_CUDA)
+    if (GlobalV::device_flag == "gpu") {
+        cudaFree(this->d_igl2isz_k);
+        cudaMalloc(reinterpret_cast<void **>(&this->d_igl2isz_k), sizeof(int) * this->npwk_max * this->nks);
+        cudaMemcpy(this->d_igl2isz_k, this->igl2isz_k, this->npwk_max * this->nks, cudaMemcpyHostToDevice);
+    }
+#endif
     return;
 }
 

@@ -18,25 +18,28 @@ void OperatorEXX<OperatorLCAO<T>>::contributeHR()
 
 }
 
+// double and complex<double> are the same temperarily
 template<>
 void OperatorEXX<OperatorLCAO<double>>::contributeHk(int ik)
 {
 #ifdef __EXX
     // Peize Lin add 2016-12-03
-    auto &exx_lri = GlobalC::exx_lri_double;
-    auto &exx_info = GlobalC::exx_info;
     if(XC_Functional::get_func_type()==4 || XC_Functional::get_func_type()==5)
     {
-        //if(Exx_Info::Hybrid_Type::HF  == GlobalC::exx_info.info_global.hybrid_type)	// Peize Lin delete 2022.11.13
-        //{
-        //    exx_info.info_global.hybrid_alpha = 1.0;
-        //}
-        RI_2D_Comm::add_Hexx(
-            ik,
-            exx_info.info_global.hybrid_alpha,
-            exx_lri.Hexxs,
-            *this->LM->ParaV,
-            *this->LM);
+		if(GlobalC::exx_info.info_ri.real_number)
+			RI_2D_Comm::add_Hexx(
+				ik,
+				GlobalC::exx_info.info_global.hybrid_alpha,
+				GlobalC::exx_lri_double.Hexxs,
+				*this->LM->ParaV,
+				*this->LM);
+		else
+			RI_2D_Comm::add_Hexx(
+				ik,
+				GlobalC::exx_info.info_global.hybrid_alpha,
+				GlobalC::exx_lri_complex.Hexxs,
+				*this->LM->ParaV,
+				*this->LM);
     }
 #endif
 }
@@ -46,20 +49,22 @@ void OperatorEXX<OperatorLCAO<std::complex<double>>>::contributeHk(int ik)
 {
 #ifdef __EXX
     // Peize Lin add 2016-12-03
-    auto &exx_lri = GlobalC::exx_lri_complex;
-    auto &exx_info = GlobalC::exx_info;
     if(XC_Functional::get_func_type()==4 || XC_Functional::get_func_type()==5)
     {
-        //if(Exx_Info::Hybrid_Type::HF  == GlobalC::exx_info.info_global.hybrid_type)	// Peize Lin delete 2022.11.13
-        //{
-        //    exx_info.info_global.hybrid_alpha = 1.0;
-        //}
-        RI_2D_Comm::add_Hexx(
-            ik,
-            exx_info.info_global.hybrid_alpha,
-            exx_lri.Hexxs,
-            *this->LM->ParaV,
-            *this->LM);
+		if(GlobalC::exx_info.info_ri.real_number)
+			RI_2D_Comm::add_Hexx(
+				ik,
+				GlobalC::exx_info.info_global.hybrid_alpha,
+				GlobalC::exx_lri_double.Hexxs,
+				*this->LM->ParaV,
+				*this->LM);
+		else
+			RI_2D_Comm::add_Hexx(
+				ik,
+				GlobalC::exx_info.info_global.hybrid_alpha,
+				GlobalC::exx_lri_complex.Hexxs,
+				*this->LM->ParaV,
+				*this->LM);
     }
 #endif
 }

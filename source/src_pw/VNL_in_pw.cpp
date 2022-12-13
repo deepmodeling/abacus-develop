@@ -179,7 +179,15 @@ void pseudopot_cell_vnl::getvnl(const int &ik, ModuleBase::ComplexMatrix& vkb_in
 
 	ModuleBase::YlmReal::Ylm_Real(this->cpu_ctx, x1, npw, reinterpret_cast<double *>(gk), ylm.c);
 
-	int jkb = 0;
+    using Device = psi::DEVICE_CPU;
+    Device * ctx = {};
+    using resmem_complex_op = psi::memory::resize_memory_op<std::complex<double>, Device>;
+    using delmem_complex_op = psi::memory::delete_memory_op<std::complex<double>, Device>;
+    std::complex<double> * sk = nullptr;
+    resmem_complex_op()(ctx, sk, GlobalC::ucell.nat * npw);
+    GlobalC::wf.get_sk<double, Device>(ctx, ik, GlobalC::wfcpw, sk);
+
+    int jkb = 0, iat = 0;
 	for(int it = 0;it < GlobalC::ucell.ntype;it++)
 	{
 		// calculate beta in G-space using an interpolation table
@@ -217,23 +225,23 @@ void pseudopot_cell_vnl::getvnl(const int &ik, ModuleBase::ComplexMatrix& vkb_in
 		// now add the structure factor and factor (-i)^l
 		for (int ia=0; ia<GlobalC::ucell.atoms[it].na; ia++) 
 		{
-			std::complex<double> *sk = GlobalC::wf.get_sk(ik, it, ia,GlobalC::wfcpw);
 			for (int ih = 0;ih < nh;ih++)
 			{
 				std::complex<double> pref = pow( ModuleBase::NEG_IMAG_UNIT, nhtol(it, ih));	//?
 				std::complex<double>* pvkb = &vkb_in(jkb, 0);
 				for (int ig = 0;ig < npw;ig++)
 				{
-					pvkb[ig] = vkb1(ih, ig) * sk [ig] * pref;
+					pvkb[ig] = vkb1(ih, ig) * sk [iat * npw + ig] * pref;
 				}
 				++jkb;
 			} // end ih
-			delete [] sk;
+            iat ++;
 		} // end ia
 	} // enddo
 
 	delete [] gk;
 	delete [] vq;
+    delmem_complex_op()(ctx, sk);
 	ModuleBase::timer::tick("pp_cell_vnl","getvnl");
 
 	return;
