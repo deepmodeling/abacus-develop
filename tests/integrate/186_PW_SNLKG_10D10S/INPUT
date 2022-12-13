@@ -16,7 +16,6 @@ symmetry	    1
 kpar            2
 bndpar          2
 out_chg         0
-init_chg        file
 read_file_dir 		./
 
 #Parameters (2.Iteration)

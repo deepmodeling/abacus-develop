@@ -1,12 +1,12 @@
 INPUT_PARAMETERS
 suffix    autotest
-ntype    3
+ntype    2
 nbands    40
 
 calculation    scf
-ecutwfc    20
+ecutwfc    50
 scf_thr    1.0e-4
-scf_nmax    2
+scf_nmax    3
 out_chg    0
 
 #init_chg    file
@@ -18,6 +18,7 @@ smearing_method    gaussian
 smearing_sigma    0.07
 
 #cal_force     1
+#cal_stress    1
 #force_thr_ev    0.01
 #relax_method    cg
 #relax_bfgs_init    0.5
@@ -26,9 +27,9 @@ mixing_type    pulay
 mixing_beta    0.4
 #mixing_gg0    1.5
 
-ks_solver    genelpa
+ks_solver    scalapack_gvx
 basis_type    lcao
-gamma_only    1
+gamma_only    0
 symmetry    0
 nspin    2
 

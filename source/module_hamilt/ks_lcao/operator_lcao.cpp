@@ -1,16 +1,16 @@
 #include "operator_lcao.h"
 #include "module_base/timer.h"
 #include "module_base/tool_title.h"
-#include "module_hsolver/diago_elpa.h"
 #include "module_hsolver/hsolver_lcao.h"
+
+#ifdef __ELPA
+#include "module_hsolver/diago_elpa.h"
+#endif
 
 namespace hamilt
 {
 
-template class OperatorLCAO<double>;
-template class OperatorLCAO<std::complex<double>>;
-
-template<> 
+template<>
 void OperatorLCAO<double>::get_hs_pointers()
 {
     ModuleBase::timer::tick("OperatorLCAO", "get_hs_pointers");
@@ -24,12 +24,14 @@ void OperatorLCAO<double>::get_hs_pointers()
         }
         const int inc = 1;
         BlasConnector::copy(this->LM->Sloc.size(), this->LM->Sloc.data(), inc, this->smatrix_k, inc);
+#ifdef __ELPA
         hsolver::DiagoElpa::DecomposedState = 0;
+#endif
         this->new_e_iteration = false;
     }
 }
 
-template<> 
+template<>
 void OperatorLCAO<std::complex<double>>::get_hs_pointers()
 {
     ModuleBase::timer::tick("OperatorLCAO", "get_hs_pointers");
@@ -41,7 +43,7 @@ template<>
 void OperatorLCAO<double>::refresh_h()
 {
     // Set the matrix 'H' to zero.
-    this->LM->zeros_HSgamma('H'); 
+    this->LM->zeros_HSgamma('H');
 }
 
 template<>
@@ -97,7 +99,7 @@ void OperatorLCAO<T>::init(const int ik_in)
         case lcao_fixed:
         {
             //cal_type=lcao_fixed refer to fixed matrix operators, which are only rely on stucture, and not changed during SCF
-            
+
             //update HR first
             //in cal_type=lcao_fixed, HR should be updated by each sub-chain nodes
             OperatorLCAO<T>* last = this;
@@ -106,7 +108,7 @@ void OperatorLCAO<T>::init(const int ik_in)
                 last->contributeHR();
                 last = dynamic_cast<OperatorLCAO<T>*>(last->next_sub_op);
             }
-            
+
             //update HK next
             //in cal_type=lcao_fixed, HK only need to update together in folding_fixed()
 
@@ -123,7 +125,7 @@ void OperatorLCAO<T>::init(const int ik_in)
                 //update HR first
                 //in cal_type=lcao_gint, HR should be updated by every sub-node.
                 last->contributeHR();
-                
+
                 //update HK next
                 //in cal_type=lcao_gint, HK should be updated by every sub-node.
                 last->contributeHk(ik_in);
@@ -138,7 +140,7 @@ void OperatorLCAO<T>::init(const int ik_in)
             //update HR first
             //in cal_type=lcao_deepks, HR should be updated
             this->contributeHR();
-            
+
             //update HK next
             //in cal_type=lcao_deepks, HK should be updated
             this->contributeHk(ik_in);
@@ -147,10 +149,14 @@ void OperatorLCAO<T>::init(const int ik_in)
 
         }
         case lcao_dftu:
-        {   
+        {
             //only HK should be updated when cal_type=lcao_dftu
             //in cal_type=lcao_dftu, HK only need to update from one node
+            //dftu is a special operator, it should be the last node of chain
+            //Overlap matrix for ik is used by it, do folding first and then return
+            this->folding_fixed(ik_in);
             this->contributeHk(ik_in);
+            return;
 
             break;
         }
@@ -159,7 +165,7 @@ void OperatorLCAO<T>::init(const int ik_in)
             //update HR first
             //in cal_type=lcao_exx, HR should be updated by most priority sub-chain nodes
             this->contributeHR();
-            
+
             //update HK next
             //in cal_type=lcao_exx, HK only need to update from one node
             this->contributeHk(ik_in);
@@ -178,5 +184,6 @@ void OperatorLCAO<T>::init(const int ik_in)
 
     ModuleBase::timer::tick("OperatorLCAO", "init");
 }
-
-}
+template class OperatorLCAO<double>;
+template class OperatorLCAO<std::complex<double>>;
+}  // namespace hamilt

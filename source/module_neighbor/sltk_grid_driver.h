@@ -13,6 +13,19 @@
 #include "module_cell/unitcell.h"
 #include <tuple>
 
+//==========================================================
+// Struct of array for packing the Adjacent atom information
+//==========================================================
+class AdjacentAtomInfo
+{
+public:
+	int adj_num;
+	std::vector<int> ntype;
+	std::vector<int> natom;
+	std::vector<ModuleBase::Vector3<double>> adjacent_tau;
+	std::vector<ModuleBase::Vector3<int>> box;
+};
+
 class Grid_Driver : public Grid
 {
 public:
@@ -31,11 +44,21 @@ public:
 
 	~Grid_Driver();
 
+	//==========================================================
+	// EXPLAIN FOR default parameter `adjs = nullptr`
+	//
+	// This design make Grid_Driver compatible with multi-thread usage
+	// 1. Find_atom store results in Grid_Driver::adj_info
+	//     by default.
+	// 2. And store results into parameter adjs when adjs is
+	//     NOT NULL
+	//==========================================================
 	void Find_atom(
 		const UnitCell &ucell, 
 		const ModuleBase::Vector3<double> &cartesian_posi, 
 		const int &ntype, 
-		const int &nnumber);
+		const int &nnumber,
+		AdjacentAtomInfo *adjs = nullptr);
 
 	//==========================================================
 	// EXPLAIN : The adjacent information for the input 
@@ -46,22 +69,22 @@ public:
 	// NAME : getNatom
 	// NAME : getAdjaentTau
 	//==========================================================
-	const int& getAdjacentNum(void)const { return adj_num; }
-	const int& getType(const int i) const { return ntype[i]; }
-	const int& getNatom(const int i) const { return natom[i]; }
-	const ModuleBase::Vector3<double>& getAdjacentTau(const int i) const { return adjacent_tau[i]; } 
-	const ModuleBase::Vector3<int>& getBox(const int i) const {return box[i];}
+	const int& getAdjacentNum(void)const { return adj_info.adj_num; }
+	const int& getType(const int i) const { return adj_info.ntype[i]; }
+	const int& getNatom(const int i) const { return adj_info.natom[i]; }
+	const ModuleBase::Vector3<double>& getAdjacentTau(const int i) const { return adj_info.adjacent_tau[i]; } 
+	const ModuleBase::Vector3<int>& getBox(const int i) const {return adj_info.box[i];}
 
-    std::vector<std::tuple<int, int, ModuleBase::Vector3<int>, ModuleBase::Vector3<double>>> get_adjs(const UnitCell& ucell_in, const size_t &iat);
-    std::vector<std::vector<std::tuple<int, int, ModuleBase::Vector3<int>, ModuleBase::Vector3<double>>>> get_adjs(const UnitCell& ucell_in);
+	//==========================================================
+	// get_adjs will not store results in Grid_Driver::adj_info,
+	// but return the AdjacentAtomInfo object instead
+	//==========================================================
+    AdjacentAtomInfo get_adjs(const UnitCell& ucell_in, const size_t &iat);
+    std::vector<AdjacentAtomInfo> get_adjs(const UnitCell& ucell_in);
 
 private:
 
-	mutable int adj_num;
-	std::vector<int> ntype;
-	std::vector<int> natom;
-	std::vector<ModuleBase::Vector3<double>> adjacent_tau;
-	std::vector<ModuleBase::Vector3<int>> box;
+	mutable AdjacentAtomInfo adj_info;
 
 	const int test_deconstructor;//caoyu reconst 2021-05-24
 	const int test_grid_driver;	//caoyu reconst 2021-05-24
@@ -80,7 +103,8 @@ private:
 
 	void Find_adjacent_atom(
 		const int offset, 
-		std::shared_ptr<AdjacentSet> as);
+		std::shared_ptr<AdjacentSet> as,
+		AdjacentAtomInfo &adjs)const;
 
 	double Distance(const AtomLink& a1, const ModuleBase::Vector3<double> &adjacent_site)const;
 	double Distance(const AtomLink& a1, const AtomLink& a2)const;

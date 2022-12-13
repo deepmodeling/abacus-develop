@@ -88,7 +88,7 @@ extern "C"
 	void ztrsm_(char *side, char* uplo, char *transa, char *diag, int *m, int *n,
 	std::complex<double>* alpha, std::complex<double>* a, int *lda, std::complex<double>*b, int *ldb);
 
-};
+}
 
 // Class BlasConnector provide the connector to fortran lapack routine.
 // The entire function in this class are static and inline function.

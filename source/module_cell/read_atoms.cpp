@@ -143,10 +143,8 @@ int UnitCell::read_atom_species(std::ifstream &ifa, std::ofstream &ofs_running)
 	// Peize Lin add 2016-09-23
 #ifndef __CELL
 #ifdef __MPI 
-	if( Exx_Global::Hybrid_Type::HF   == GlobalC::exx_lcao.info.hybrid_type || 
-	    Exx_Global::Hybrid_Type::PBE0 == GlobalC::exx_lcao.info.hybrid_type || 
-		Exx_Global::Hybrid_Type::HSE  == GlobalC::exx_lcao.info.hybrid_type ||
-		Exx_Global::Hybrid_Type::SCAN0  == GlobalC::exx_lcao.info.hybrid_type)
+#ifdef __EXX
+	if( GlobalC::exx_info.info_global.cal_exx )
 	{
 		if( ModuleBase::GlobalFunc::SCAN_BEGIN(ifa, "ABFS_ORBITAL") )
 		{
@@ -154,7 +152,7 @@ int UnitCell::read_atom_species(std::ifstream &ifa, std::ofstream &ofs_running)
 			{
 				std::string ofile;
 				ifa >> ofile;
-				GlobalC::exx_lcao.info.files_abfs.push_back(ofile);
+				GlobalC::exx_info.info_ri.files_abfs.push_back(ofile);
 			}
 		}
 	}
@@ -171,6 +169,7 @@ int UnitCell::read_atom_species(std::ifstream &ifa, std::ofstream &ofs_running)
             }
         }
     }
+#endif // __EXX
 #endif // __MPI
 #endif // __CELL
 #endif // __LCAO
@@ -486,84 +485,7 @@ bool UnitCell::read_atom_positions(std::ifstream &ifpos, std::ofstream &ofs_runn
 #ifdef __LCAO
 			if (GlobalV::BASIS_TYPE == "lcao" || GlobalV::BASIS_TYPE == "lcao_in_pw")
 			{
-				std::ifstream ifs(orb.orbital_file[it].c_str(), ios::in);  // pengfei 2014-10-13
-
-				// mohan add return 2021-04-26
-				if (!ifs)
-				{
-					std::cout << " Element index " << it+1 << std::endl;
-					std::cout << " orbital file: " << orb.orbital_file[it] << std::endl;
-					ModuleBase::WARNING_QUIT("read_atom_positions","ABACUS Cannot find the ORBITAL file (basis sets)");
-					return 0; // means something wrong
-				}
-
-				char word[80];
-				this->atoms[it].nw = 0;
-				int L =0;
-
-				while (ifs.good())
-				{
-					ifs >> word;
-					if (strcmp("Lmax", word) == 0)
-					{
-						ModuleBase::GlobalFunc::READ_VALUE(ifs, this->atoms[it].nwl);
-						delete[] this->atoms[it].l_nchi;
-						this->atoms[it].l_nchi = new int[ this->atoms[it].nwl+1];
-					}
-					assert(this->atoms[it].nwl<10);
-
-					if (strcmp("Cutoff(a.u.)", word) == 0)         // pengfei Li 16-2-29
-					{
-						ModuleBase::GlobalFunc::READ_VALUE(ifs, this->atoms[it].Rcut);
-					}
-
-					if (strcmp("Sorbital-->", word) == 0)
-					{
-						ModuleBase::GlobalFunc::READ_VALUE(ifs, this->atoms[it].l_nchi[L]);
-						this->atoms[it].nw += (2*L + 1) * this->atoms[it].l_nchi[L];
-						std::stringstream ss;
-						ss << "L=" << L << ", number of zeta";
-						ModuleBase::GlobalFunc::OUT(ofs_running,ss.str(),atoms[it].l_nchi[L]);
-						L++;
-					}
-					if (strcmp("Porbital-->", word) == 0)
-					{
-						ModuleBase::GlobalFunc::READ_VALUE(ifs, this->atoms[it].l_nchi[L]);
-						this->atoms[it].nw += (2*L + 1) * this->atoms[it].l_nchi[L];
-						std::stringstream ss;
-						ss << "L=" << L << ", number of zeta";
-						ModuleBase::GlobalFunc::OUT(ofs_running,ss.str(),atoms[it].l_nchi[L]);
-						L++;
-					}
-					if (strcmp("Dorbital-->", word) == 0)
-					{
-						ModuleBase::GlobalFunc::READ_VALUE(ifs, this->atoms[it].l_nchi[L]);
-						this->atoms[it].nw += (2*L + 1) * this->atoms[it].l_nchi[L];
-						std::stringstream ss;
-						ss << "L=" << L << ", number of zeta";
-						ModuleBase::GlobalFunc::OUT(ofs_running,ss.str(),atoms[it].l_nchi[L]);
-						L++;
-					}
-					if (strcmp("Forbital-->", word) == 0)
-					{
-						ModuleBase::GlobalFunc::READ_VALUE(ifs, this->atoms[it].l_nchi[L]);
-						this->atoms[it].nw += (2*L + 1) * this->atoms[it].l_nchi[L];
-						std::stringstream ss;
-						ss << "L=" << L << ", number of zeta";
-						ModuleBase::GlobalFunc::OUT(ofs_running,ss.str(),atoms[it].l_nchi[L]);
-						L++;
-					}
-					if (strcmp("Gorbital-->", word) == 0)
-					{
-						ModuleBase::GlobalFunc::READ_VALUE(ifs, this->atoms[it].l_nchi[L]);
-						this->atoms[it].nw += (2*L + 1) * this->atoms[it].l_nchi[L];
-						std::stringstream ss;
-						ss << "L=" << L << ", number of zeta";
-						ModuleBase::GlobalFunc::OUT(ofs_running,ss.str(),atoms[it].l_nchi[L]);
-						L++;
-					}
-				}
-				ifs.close();
+				this->read_orb_file(it,orb.orbital_file[it],ofs_running,&(atoms[it]));
 			}
 			else
 #else
@@ -1190,6 +1112,7 @@ void UnitCell::print_tau(void)const
 }	
 
 
+/*
 int UnitCell::find_type(const std::string &label)
 {
 	if(GlobalV::test_pseudo_cell) ModuleBase::TITLE("UnitCell","find_type");
@@ -1204,6 +1127,7 @@ int UnitCell::find_type(const std::string &label)
 	ModuleBase::WARNING_QUIT("UnitCell::find_type","Can not find the atom type!");
 	return -1;
 }
+*/
 
 
 void UnitCell::check_dtau(void)
@@ -1275,3 +1199,81 @@ void UnitCell::check_dtau(void)
 	}
 	return;
 }
+
+#ifdef __LCAO
+void UnitCell::read_orb_file(int it, std::string &orb_file, std::ofstream &ofs_running, Atom* atom)
+{
+	std::ifstream ifs(orb_file.c_str(), ios::in);  // pengfei 2014-10-13
+	// mohan add return 2021-04-26
+	if (!ifs)
+	{
+		std::cout << " Element index " << it+1 << std::endl;
+		std::cout << " orbital file: " << orb_file << std::endl;
+		ModuleBase::WARNING_QUIT("read_orb_file","ABACUS Cannot find the ORBITAL file (basis sets)");
+	}
+	char word[80];
+	atom->nw = 0;
+	int L =0;
+	while (ifs.good())
+	{
+		ifs >> word;
+		if (strcmp("Lmax", word) == 0)
+		{
+			ModuleBase::GlobalFunc::READ_VALUE(ifs, atom->nwl);
+			delete[] atom->l_nchi;
+			atom->l_nchi = new int[ atom->nwl+1];
+		}
+		assert(atom->nwl<10);
+		if (strcmp("Cutoff(a.u.)", word) == 0)         // pengfei Li 16-2-29
+		{
+			ModuleBase::GlobalFunc::READ_VALUE(ifs, atom->Rcut);
+		}
+		if (strcmp("Sorbital-->", word) == 0)
+		{
+			ModuleBase::GlobalFunc::READ_VALUE(ifs, atom->l_nchi[L]);
+			atom->nw += (2*L + 1) * atom->l_nchi[L];
+			std::stringstream ss;
+			ss << "L=" << L << ", number of zeta";
+			ModuleBase::GlobalFunc::OUT(ofs_running,ss.str(),atom->l_nchi[L]);
+			L++;
+		}
+		if (strcmp("Porbital-->", word) == 0)
+		{
+			ModuleBase::GlobalFunc::READ_VALUE(ifs, atom->l_nchi[L]);
+			atom->nw += (2*L + 1) * atom->l_nchi[L];
+			std::stringstream ss;
+			ss << "L=" << L << ", number of zeta";
+			ModuleBase::GlobalFunc::OUT(ofs_running,ss.str(),atom->l_nchi[L]);
+			L++;
+		}
+		if (strcmp("Dorbital-->", word) == 0)
+		{
+			ModuleBase::GlobalFunc::READ_VALUE(ifs, atom->l_nchi[L]);
+			atom->nw += (2*L + 1) * atom->l_nchi[L];
+			std::stringstream ss;
+			ss << "L=" << L << ", number of zeta";
+			ModuleBase::GlobalFunc::OUT(ofs_running,ss.str(),atom->l_nchi[L]);
+			L++;
+		}
+		if (strcmp("Forbital-->", word) == 0)
+		{
+			ModuleBase::GlobalFunc::READ_VALUE(ifs, atom->l_nchi[L]);
+			atom->nw += (2*L + 1) * atom->l_nchi[L];
+			std::stringstream ss;
+			ss << "L=" << L << ", number of zeta";
+			ModuleBase::GlobalFunc::OUT(ofs_running,ss.str(),atom->l_nchi[L]);
+			L++;
+		}
+		if (strcmp("Gorbital-->", word) == 0)
+		{
+			ModuleBase::GlobalFunc::READ_VALUE(ifs, atom->l_nchi[L]);
+			atom->nw += (2*L + 1) * atom->l_nchi[L];
+			std::stringstream ss;
+			ss << "L=" << L << ", number of zeta";
+			ModuleBase::GlobalFunc::OUT(ofs_running,ss.str(),atom->l_nchi[L]);
+			L++;
+		}
+	}
+	ifs.close();
+}
+#endif

@@ -15,6 +15,7 @@
 #include "../module_orbital/ORB_read.h"
 #include "../module_orbital/parallel_orbitals.h"
 #include "../module_base/vector3.h"
+#include "../module_base/abfs-vector3_order.h"
 #include "../module_base/ylm.h"
 #include "write_HS.h"
 

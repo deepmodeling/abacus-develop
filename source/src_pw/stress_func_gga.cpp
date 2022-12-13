@@ -4,8 +4,10 @@
 #include "global.h"
 
 //calculate the GGA stress correction in PW and LCAO
-void Stress_Func::stress_gga(ModuleBase::matrix& sigma) 
+template<typename FPTYPE, typename Device>
+void Stress_Func<FPTYPE, Device>::stress_gga(ModuleBase::matrix& sigma, const Charge* const chr)
 {
+    ModuleBase::TITLE("Stress_Func","stress_gga");
 	ModuleBase::timer::tick("Stress_Func","stress_gga");
      
 	int func_type = XC_Functional::get_func_type();
@@ -15,14 +17,14 @@ void Stress_Func::stress_gga(ModuleBase::matrix& sigma)
 		return;
 	}
 
-	double sigma_gradcorr[3][3];
-	std::vector<double> stress_gga;
-	double dum1, dum2;
+	FPTYPE sigma_gradcorr[3][3];
+	std::vector<FPTYPE> stress_gga;
+	FPTYPE dum1, dum2;
 	ModuleBase::matrix dum3;
 	// call gradcorr to evaluate gradient correction to stress
 	// the first three terms are etxc, vtxc and v, which
 	// is not used here, so dummy variables are used.
-	XC_Functional::gradcorr(dum1, dum2, dum3, stress_gga, 1);
+	XC_Functional::gradcorr(dum1, dum2, dum3, chr, stress_gga, 1);
 
 	for(int l = 0;l< 3;l++)
 	{
@@ -53,3 +55,8 @@ void Stress_Func::stress_gga(ModuleBase::matrix& sigma)
 	ModuleBase::timer::tick("Stress_Func","stress_gga");
 	return;
 }
+
+template class Stress_Func<double, psi::DEVICE_CPU>;
+#if ((defined __CUDA) || (defined __ROCM))
+template class Stress_Func<double, psi::DEVICE_GPU>;
+#endif

@@ -76,6 +76,52 @@ for directory in `ls | grep $module`; do
 	fi
 
 	#--------------------------------------------
+	# delete redundant files in RPA test (if it exists)
+	#--------------------------------------------
+	if [ ${directory} == "282_NO_RPA" ]; then
+		redundantfile1="$directory/Cs_data.txt"
+		redundantfile2="$directory/Hmpi_0"
+		redundantfile3="$directory/Hmpi_1"
+		redundantfile4="$directory/Hmpi_2"
+		redundantfile5="$directory/Hmpi_3"
+		redundantfile6="$directory/dm3_0"
+		redundantfile7="$directory/dm3_1"
+		redundantfile8="$directory/dm3_2"
+		redundantfile9="$directory/dm3_3"
+		redundantfile10="$directory/time_0"
+		redundantfile11="$directory/time_1"
+		redundantfile12="$directory/time_2"
+		redundantfile13="$directory/time_3"
+		redundantfile14="$directory/KS_eigenvector_0.dat"
+		redundantfile15="$directory/band_out"
+		redundantfile16="$directory/stru_out"
+		redundantfile17="$directory/coulomb_mat_0.txt"
+		redundantfile18="$directory/coulomb_mat_1.txt"
+		redundantfile19="$directory/coulomb_mat_2.txt"
+		redundantfile20="$directory/coulomb_mat_3.txt"
+		test -e $redundantfile1  && rm -rf $redundantfile1
+		test -e $redundantfile2  && rm -rf $redundantfile2
+		test -e $redundantfile3  && rm -rf $redundantfile3
+		test -e $redundantfile4  && rm -rf $redundantfile4
+		test -e $redundantfile5  && rm -rf $redundantfile5
+		test -e $redundantfile6  && rm -rf $redundantfile6
+		test -e $redundantfile7  && rm -rf $redundantfile7
+		test -e $redundantfile8  && rm -rf $redundantfile8
+		test -e $redundantfile9  && rm -rf $redundantfile9
+		test -e $redundantfile10 && rm -rf $redundantfile10
+		test -e $redundantfile11 && rm -rf $redundantfile11
+		test -e $redundantfile12 && rm -rf $redundantfile12
+		test -e $redundantfile13 && rm -rf $redundantfile13
+		test -e $redundantfile14 && rm -rf $redundantfile14
+		test -e $redundantfile15 && rm -rf $redundantfile15
+		test -e $redundantfile16 && rm -rf $redundantfile16
+		test -e $redundantfile17 && rm -rf $redundantfile17
+		test -e $redundantfile18 && rm -rf $redundantfile18
+		test -e $redundantfile19 && rm -rf $redundantfile19
+		test -e $redundantfile20 && rm -rf $redundantfile20
+	fi
+
+	#--------------------------------------------
 	# delete *.npy (if it exists) 
 	#--------------------------------------------
 	num=$(find -name '*.npy' | wc -l)

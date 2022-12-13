@@ -3,7 +3,6 @@
 #include "../input.h"
 #include "../module_base/scalapack_connector.h"
 #include "../src_io/write_HS.h"
-#include "../src_pdiag/pdiag_double.h"
 #include "../src_pw/global.h"
 #include "module_hamilt/hamilt_lcao.h"
 

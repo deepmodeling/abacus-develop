@@ -5,7 +5,6 @@
 #include "../module_base/tool_title.h"
 #include "../src_parallel/parallel_reduce.h"
 #include "../module_base/blas_connector.h"
-#include "diago_cg.h"
 #include "global.h"
 #include "occupy.h"
 
@@ -41,7 +40,7 @@ void Stochastic_Iter::init(const int dim, int* nchip_in, const int method_in, St
 {
     p_che = new ModuleBase::Chebyshev<double>(INPUT.nche_sto);
     nchip = nchip_in;
-    targetne = GlobalC::CHR.nelec;
+    targetne = GlobalV::nelec;
     stohchi.init();
     delete[] spolyv;
     const int norder = p_che->norder;
@@ -225,13 +224,13 @@ void Stochastic_Iter::itermu(const int iter, elecstate::ElecState* pes)
     if (iter == 1)
     {
         dmu = 2;
-        th_ne = 0.1 * GlobalV::SCF_THR * GlobalC::CHR.nelec;
+        th_ne = 0.1 * GlobalV::SCF_THR * GlobalV::nelec;
         // std::cout<<"th_ne "<<th_ne<<std::endl;
     }
     else
     {
         dmu = 0.1;
-        th_ne = 1e-2 * GlobalV::SCF_THR * GlobalC::CHR.nelec;
+        th_ne = 1e-2 * GlobalV::SCF_THR * GlobalV::nelec;
         th_ne = std::min(th_ne, 1e-5);
     }
     this->stofunc.mu = mu0 - dmu;
@@ -404,11 +403,6 @@ void Stochastic_Iter::calHsqrtchi(Stochastic_WF& stowf)
             if(GlobalV::NSPIN==2)
             {
                 GlobalV::CURRENT_SPIN = GlobalC::kv.isk[ik];
-            }
-
-            for (int ir=0; ir<GlobalC::rhopw->nrxx; ir++)
-            {
-                GlobalC::pot.vr_eff1[ir] = GlobalC::pot.vr_eff(GlobalV::CURRENT_SPIN, ir);//mohan add 2007-11-12
             }
 
             if(GlobalC::ppcell.nkb > 0 && (GlobalV::BASIS_TYPE=="pw" || GlobalV::BASIS_TYPE=="lcao_in_pw")) //xiaohui add 2013-09-02. Attention...

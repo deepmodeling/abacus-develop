@@ -9,6 +9,7 @@
 #include "module_gint/gint_k.h"
 #include "src_lcao/local_orbital_charge.h"
 #include "src_lcao/local_orbital_wfc.h"
+#include "module_elecstate/potentials/potential_new.h"
 
 namespace hamilt
 {
@@ -19,16 +20,18 @@ template <typename T> class HamiltLCAO : public Hamilt<double>
 {
   public:
     HamiltLCAO(
-      Gint_Gamma* GG_in, 
-      LCAO_gen_fixedH* genH_in, 
-      LCAO_Matrix* LM_in, 
-      Local_Orbital_Charge* loc_in);
+      Gint_Gamma* GG_in,
+      LCAO_gen_fixedH* genH_in,
+      LCAO_Matrix* LM_in,
+      Local_Orbital_Charge* loc_in,
+      elecstate::Potential* pot_in);
 
     HamiltLCAO(
-      Gint_k* GK_in, 
-      LCAO_gen_fixedH* genH_in, 
-      LCAO_Matrix* LM_in, 
-      Local_Orbital_Charge* loc_in);
+      Gint_k* GK_in,
+      LCAO_gen_fixedH* genH_in,
+      LCAO_Matrix* LM_in,
+      Local_Orbital_Charge* loc_in,
+      elecstate::Potential* pot_in);
 
     ~HamiltLCAO(){
       if(this->ops!= nullptr)
@@ -42,7 +45,7 @@ template <typename T> class HamiltLCAO : public Hamilt<double>
     };
 
     // for target K point, update consequence of hPsi() and matrix()
-    virtual void updateHk(const int ik);
+    virtual void updateHk(const int ik) override;
 
     // core function: return H(k) and S(k) matrixs for direct solving eigenvalues.
     // not used in PW base

@@ -35,7 +35,7 @@ jobs:
     strategy:
       matrix:
         tag: ["gnu", "intel"]
-    container: ghcr.io/deepmodeling/abacus-development-kit:${{ matrix.tag }}
+    container: ghcr.io/deepmodeling/abacus-${{ matrix.tag }}
     timeout-minutes: 2880
     steps:
       - name: Checkout

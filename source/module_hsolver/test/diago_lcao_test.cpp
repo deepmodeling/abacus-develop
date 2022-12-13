@@ -1,10 +1,12 @@
 #include "src_pdiag/test/diago_elpa_utils.h"
-#include "module_hsolver/diago_elpa.h"
 #include "module_hsolver/diago_blas.h"
 #include "mpi.h"
 #include "string.h"
 #include "gtest/gtest.h"
 #include <vector>
+#ifdef __ELPA
+#include "module_hsolver/diago_elpa.h"
+#endif
 
 #define PASSTHRESHOLD 1e-10
 #define DETAILINFO    false
@@ -57,13 +59,12 @@ template<class T> class DiagoPrepare
         MPI_Comm_size(MPI_COMM_WORLD, &dsize);
         MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
 
-        if(strcmp("", hfname.c_str()) && strcmp("", sfname.c_str())) 
-            readhs = true;
-
-        if(ks_solver == "genelpa") 
-            dh = new hsolver::DiagoElpa; 
-        else if (ks_solver == "scalapack_gvx") 
+        if (ks_solver == "scalapack_gvx")
             dh = new hsolver::DiagoBlas;
+#ifdef __ELPA
+        else if(ks_solver == "genelpa")
+            dh = new hsolver::DiagoElpa;
+#endif
         else
         {
             if(myrank == 0) std::cout << "ERROR: undefined ks_solver: " << ks_solver << std::endl;
@@ -74,7 +75,6 @@ template<class T> class DiagoPrepare
 
     int dsize, myrank;
     int nlocal, nbands, nb2d, sparsity;
-    bool readhs = false;
     double hsolver_time = 0.0, lapack_time = 0.0;
     std::string ks_solver, sfname, hfname;
     HamiltTEST<T> hmtest;
@@ -88,14 +88,6 @@ template<class T> class DiagoPrepare
     std::vector<double> e_lapack;
     std::vector<double> abc;
     int icontxt;
-
-    bool random_HS()
-    {
-        this->h.resize(nlocal * nlocal);
-        this->s.resize(nlocal * nlocal);
-        LCAO_DIAGO_TEST::random_hs<T>(this->h.data(), this->s.data(), nlocal, sparsity);
-        return true;
-    }
 
     bool read_HS()
     {
@@ -126,13 +118,8 @@ template<class T> class DiagoPrepare
 
     bool produce_HS()
     {
-        bool ok;
-        if (readhs)
-            ok = this->read_HS();
-        else
-            ok = this->random_HS();
+        bool ok = this->read_HS();
 
-        
         e_solver.resize(nlocal,0.0);
         e_lapack.resize(nlocal,1.0);
         
@@ -179,14 +166,6 @@ template<class T> class DiagoPrepare
         LCAO_DIAGO_TEST::distribute_data<T>(this->h.data(),this->h_local.data(),nlocal,nb2d,hmtest.nrow,hmtest.ncol,icontxt);
         LCAO_DIAGO_TEST::distribute_data<T>(this->s.data(),this->s_local.data(),nlocal,nb2d,hmtest.nrow,hmtest.ncol,icontxt);
         psi.resize(1,hmtest.ncol,hmtest.nrow);
-        //for(int i=0;i<local_size;i++) 
-        //{
-        //    psi.get_pointer()[i] = 0.0;
-        //    if (std::is_same<T, std::complex<double>>::value)
-        //    {
-        //        reinterpret_cast<double *>(&(psi.get_pointer()[i]))[1] = 0.0;
-        //    }
-        //}
     }
 
     void set_env()
@@ -245,13 +224,8 @@ template<class T> class DiagoPrepare
                 pass = false;
         }
 
-        if (readhs)
-            std::cout << "H/S matrix are read from " << hfname << ", " << sfname << std::endl;
-        else
-            std::cout << "H/S matrix are produced by random." << std::endl;
+        std::cout << "H/S matrix are read from " << hfname << ", " << sfname << std::endl;
         std::cout << "solver=" << ks_solver << ", NLOCAL=" << nlocal << ", nbands=" << nbands << ", nb2d=" << nb2d;
-        if (!readhs)
-            out_info << ", Sparsity=" << sparsity;
         std::cout << std::endl;
         out_info << "solver time: " << hsolver_time
                  << "s, LAPACK time(1 core):" << lapack_time << "s" << std::endl;
@@ -292,7 +266,9 @@ INSTANTIATE_TEST_SUITE_P(
     DiagoGammaOnlyTest,
     ::testing::Values( //int nlocal, int nbands, int nb2d, int sparsity, std::string ks_solver_in, std::string hfname, std::string sfname
         //DiagoPrepare<double>(0, 0, 1, 0, "genelpa", "H-GammaOnly-Si2.dat", "S-GammaOnly-Si2.dat")
+#ifdef __ELPA
         DiagoPrepare<double>(0, 0, 32, 0, "genelpa", "H-GammaOnly-Si64.dat", "S-GammaOnly-Si64.dat"),
+#endif
         DiagoPrepare<double>(0, 0, 1, 0, "scalapack_gvx", "H-GammaOnly-Si2.dat", "S-GammaOnly-Si2.dat"),
         DiagoPrepare<double>(0, 0, 32, 0, "scalapack_gvx", "H-GammaOnly-Si64.dat", "S-GammaOnly-Si64.dat")
     ));
@@ -319,7 +295,9 @@ INSTANTIATE_TEST_SUITE_P(
     DiagoKPointsTest,
     ::testing::Values( //int nlocal, int nbands, int nb2d, int sparsity, std::string ks_solver_in, std::string hfname, std::string sfname 
         //DiagoPrepare<std::complex<double>>(800, 400, 32, 7, "genelpa", "", ""),
+#ifdef __ELPA
         DiagoPrepare<std::complex<double>>(0, 0, 1, 0, "genelpa", "H-KPoints-Si2.dat", "S-KPoints-Si2.dat"),
+#endif
         //DiagoPrepare<std::complex<double>>(0, 0, 32, 0, "genelpa", "H-KPoints-Si64.dat", "S-KPoints-Si64.dat"),
         DiagoPrepare<std::complex<double>>(0, 0, 1, 0, "scalapack_gvx", "H-KPoints-Si2.dat", "S-KPoints-Si2.dat"),
         DiagoPrepare<std::complex<double>>(0, 0, 32, 0, "scalapack_gvx", "H-KPoints-Si64.dat", "S-KPoints-Si64.dat")

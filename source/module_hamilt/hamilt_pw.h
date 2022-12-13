@@ -2,6 +2,7 @@
 #define HAMILTPW_H
 
 #include "hamilt.h"
+#include "module_elecstate/potentials/potential_new.h"
 
 namespace hamilt
 {
@@ -10,7 +11,7 @@ template<typename FPTYPE, typename Device = psi::DEVICE_CPU>
 class HamiltPW : public Hamilt<FPTYPE, Device>
 {
   public:
-    HamiltPW();
+    HamiltPW(elecstate::Potential* pot_in);
     template<typename T_in, typename Device_in = Device>
     explicit HamiltPW(const HamiltPW<T_in, Device_in>* hamilt);
     ~HamiltPW();

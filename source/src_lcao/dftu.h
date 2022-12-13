@@ -61,11 +61,13 @@ public:
     void out_orbitals();
 
     double EU;
-    int iter_dftu;
 
     private:
     //dftu can be calculated only after locale has been initialed
     bool initialed_locale = false;
+
+    //copy from locale to locale_save
+    void copy_locale();
 };
 }
 namespace GlobalC

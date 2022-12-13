@@ -16,7 +16,6 @@ Parallel_Orbitals::Parallel_Orbitals()
     trace_loc_col = nullptr;
 
     testpb = 0; // mohan add 2011-03-16
-    alloc_Z_LOC = false; // xiaohui add 2014-12-22
     // default value of nb is 1,
     // but can change to larger value from input.
     nb = 1;
@@ -31,17 +30,7 @@ Parallel_Orbitals::~Parallel_Orbitals()
 {
     delete[] trace_loc_row;
     delete[] trace_loc_col;
-    delete[] loc_sizes;
-    
-    if (alloc_Z_LOC)//xiaohui add 2014-12-22
-	{
-		for(int is=0; is<this->nspin; is++)
-		{
-			delete[] Z_LOC[is];
-		}
-		delete[] Z_LOC;
-	}
-    
+    delete[] loc_sizes;    
     delete[] nlocdim;
     delete[] nlocstart;
 }
@@ -92,8 +81,7 @@ void ORB_control::set_trace(std::ofstream& ofs_running)
         pv->ncol = nlocal;
     }
 #ifdef __MPI
-    else if (ks_solver == "scalpack" || ks_solver == "genelpa" || ks_solver == "hpseps" || ks_solver == "selinv"
-             || ks_solver == "scalapack_gvx" || ks_solver == "cusolver") // xiaohui add 2013-09-02
+    else if (ks_solver == "genelpa" || ks_solver == "scalapack_gvx" || ks_solver == "cusolver") // xiaohui add 2013-09-02
     {
         // ofs_running << " nrow=" << nrow << std::endl;
         for (int irow = 0; irow < pv->nrow; irow++)
@@ -192,10 +180,6 @@ void ORB_control::divide_HS_2d(
     assert(nlocal > 0);
     assert(dsize > 0);
     Parallel_Orbitals* pv = &this->ParaV;
-
-#ifdef __MPI
-    DIAG_HPSEPS_WORLD = DIAG_WORLD;
-#endif
 
     if (dcolor != 0)
         return; // mohan add 2012-01-13

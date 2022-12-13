@@ -12,6 +12,9 @@
 #endif
 #include "../src_lcao/wavefunc_in_pw.h"
 #include "../module_cell/unitcell.h"
+#include "src_pw/forces.h"
+#include "src_pw/stress_func.h"
+#include "module_psi/psi.h"
 
 //==========================================================
 // Calculate the non-local pseudopotential in reciprocal
@@ -25,8 +28,8 @@ public:
 	pseudopot_cell_vnl();
 	~pseudopot_cell_vnl();
 
-	friend class Stress_Func;
-	friend class Forces;
+	friend class Stress_Func<double>;
+	friend class Forces<double>;
 	friend class Epsilon0_vasp;
 	friend class Potential;
 	friend class Hamilt_PW;
@@ -104,11 +107,16 @@ public:
 	double CG(int l1, int m1, int l2, int m2, int L, int M);
 
 	void print_vnl(std::ofstream &ofs);
+
+	//calculate the effective coefficient matrix for non-local pseudopotential projectors
+	void cal_effective_D();
 	#ifdef __LCAO
 	ORB_gaunt_table MGT;
 	#endif
 private:
 	bool getvkb = false;
+    psi::DEVICE_CPU * cpu_ctx = {};
+    psi::DEVICE_GPU * gpu_ctx = {};
 };
 
 #endif // VNL_IN_PW

@@ -11,7 +11,7 @@
 // For calculations involving change of configuration (lattice parameter & ionic motion),
 // this driver calls Esolver::Run and the configuration-changing subroutine
 // in a alternating manner.
-// Information is passed between the two subroutines by class UnitCell_Pseudo
+// Information is passed between the two subroutines by class UnitCell
 // Esolver::Run takes in a configuration and provides force and stress, 
 // the configuration-changing subroutine takes force and stress and updates the configuration
 void Driver::driver_run()

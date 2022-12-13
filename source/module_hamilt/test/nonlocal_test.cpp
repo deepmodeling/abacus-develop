@@ -88,7 +88,7 @@ TEST_F(TestModuleHamiltNonlocal, nonlocal_pw_op_cpu)
       deeq.data(),
       ps.data(), becp.data());
   for (int ii = 0; ii < ps.size(); ii++) {
-    EXPECT_LT(fabs(ps[ii] - expected_ps[ii]), 5 * 1e-6);
+    EXPECT_LT(std::abs(ps[ii] - expected_ps[ii]), 5 * 1e-6);
   }
   EXPECT_EQ(sum, expected_sum);
   EXPECT_EQ(iat, expected_iat);
@@ -106,7 +106,7 @@ TEST_F(TestModuleHamiltNonlocal, nonlocal_pw_spin_op_cpu)
       deeq_spin.data(),
       ps.data(), becp_spin.data());
   for (int ii = 0; ii < ps.size(); ii++) {
-    EXPECT_LT(fabs(ps[ii] - expected_ps_spin[ii]), 5 * 1e-6);
+    EXPECT_LT(std::abs(ps[ii] - expected_ps_spin[ii]), 5 * 1e-6);
   }
   EXPECT_EQ(sum, expected_sum);
   EXPECT_EQ(iat, expected_iat);

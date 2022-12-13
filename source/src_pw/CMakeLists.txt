@@ -1,6 +1,5 @@
 list(APPEND objects
     H_Ewald_pw.cpp
-    H_Hartree_pw.cpp
     VL_in_pw.cpp
     VNL_in_pw.cpp
     VNL_grad_pw.cpp
@@ -15,7 +14,6 @@ list(APPEND objects
     klist.cpp
     magnetism.cpp
     occupy.cpp
-    potential.cpp
     structure_factor.cpp
     pw_complement.cpp
     soc.cpp
@@ -43,25 +41,6 @@ list(APPEND objects
     wf_igk.cpp
     xc_3.cpp
 )
-if(USE_CUDA)
-    list(APPEND objects
-        diago_cg.cu
-        hamilt.cu
-        hamilt_pw.cu
-        use_fft_kernel.cu
-    )
-elseif(USE_ROCM)
-    list(APPEND objects
-        diago_cg_hip.cpp
-        hamilt_hip.cpp
-        hamilt_pw_hip.cpp
-        use_fft_kernel_hip.cpp
-    )
-else()
-    list(APPEND objects
-        hamilt.cpp
-    )
-endif()
 
 add_library(
     pw

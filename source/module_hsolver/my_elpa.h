@@ -1,6 +1,8 @@
 #ifndef ELPA_H
 #define ELPA_H
 
+#ifdef __ELPA
+
 #include <complex>
 #include <elpa/elpa_version.h>
 #include <limits.h>
@@ -27,4 +29,5 @@ typedef struct elpa_autotune_struct *elpa_autotune_t;
 
 const char *elpa_strerr(int elpa_error);
 
+#endif
 #endif

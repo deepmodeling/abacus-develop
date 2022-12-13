@@ -1,14 +1,32 @@
 #include "fft.h"
+
+#include "module_base/global_variable.h"
+
+#ifdef _OPENMP
+#include <omp.h>
+#endif
+
 namespace ModulePW
 {
 
 FFT::FFT()
 {
+// need to call multi-threads init
+// ref: https://www.fftw.org/fftw3_doc/Usage-of-Multi_002dthreaded-FFTW.html
+#ifdef _OPENMP
+	fftw_init_threads();
+	fftw_plan_with_nthreads(omp_get_max_threads());
+#endif
 }
 
 FFT::~FFT()
 {
 	this->clear();
+// need to call multi-threads cleanup
+// ref: https://www.fftw.org/fftw3_doc/Usage-of-Multi_002dthreaded-FFTW.html
+#ifdef _OPENMP
+	fftw_cleanup_threads();
+#endif
 }
 void FFT::clear()
 {
@@ -17,8 +35,16 @@ void FFT::clear()
 	if(auxr!=nullptr) {fftw_free(auxr); auxr = nullptr;}
 	r_rspace = nullptr;
 #if defined(__CUDA) || defined(__UT_USE_CUDA)
-    if(auxg_3d!=nullptr) {cudaFree(auxg_3d); auxg_3d = nullptr;}
-    if(auxr_3d!=nullptr) {cudaFree(auxr_3d); auxr_3d = nullptr;}
+    if (GlobalV::device_flag == "gpu") {
+        if (auxg_3d != nullptr) {
+            cudaFree(auxg_3d);
+            auxg_3d = nullptr;
+        }
+        if (auxr_3d != nullptr) {
+            cudaFree(auxr_3d);
+            auxr_3d = nullptr;
+        }
+    }
 #endif
 #ifdef __MIX_PRECISION
 	this->cleanfFFT();
@@ -62,10 +88,12 @@ void FFT:: initfft(int nx_in, int ny_in, int nz_in, int lixy_in, int rixy_in, in
         // auxr_3d = static_cast<std::complex<double> *>(
         //     fftw_malloc(sizeof(fftw_complex) * (this->nx * this->ny * this->nz)));
         #if defined(__CUDA) || defined(__UT_USE_CUDA)
-        cudaMalloc(reinterpret_cast<void**>(&auxg_3d),
-                   this->nx * this->ny * this->nz * sizeof(std::complex<double>));
-        cudaMalloc(reinterpret_cast<void**>(&auxr_3d),
-                   this->nx * this->ny * this->nz * sizeof(std::complex<double>));
+        if (GlobalV::device_flag == "gpu") {
+            cudaMalloc(reinterpret_cast<void **>(&auxg_3d),
+                       this->nx * this->ny * this->nz * sizeof(std::complex<double>));
+            cudaMalloc(reinterpret_cast<void **>(&auxr_3d),
+                       this->nx * this->ny * this->nz * sizeof(std::complex<double>));
+        }
         #endif
 #ifdef __MIX_PRECISION
 		auxfg  = (std::complex<float> *) fftw_malloc(sizeof(fftwf_complex) * maxgrids);
@@ -191,7 +219,9 @@ void FFT :: initplan()
     //    FFTW_BACKWARD, FFTW_MEASURE);
 
     #if defined(__CUDA) || defined(__UT_USE_CUDA)
-    cufftPlan3d(&fft_handle, this->nx, this->ny, this->nz, CUFFT_Z2Z);
+    if (GlobalV::device_flag == "gpu") {
+        cufftPlan3d(&fft_handle, this->nx, this->ny, this->nz, CUFFT_Z2Z);
+    }
     #endif
 
 	destroyp = false;
@@ -324,7 +354,9 @@ void FFT:: cleanFFT()
     // fftw_destroy_plan(this->plan3dforward);
     // fftw_destroy_plan(this->plan3dbackward);
     #if defined(__CUDA) || defined(__UT_USE_CUDA)
-    cufftDestroy(fft_handle);
+    if (GlobalV::device_flag == "gpu") {
+        cufftDestroy(fft_handle);
+    }
     #endif
 	destroyp = true;
 	return;

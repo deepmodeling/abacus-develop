@@ -32,7 +32,7 @@ LATTICE_VECTORS
 ATOMIC_POSITIONS
 Direct //Cartesian or Direct coordinate.
 Si // Element type
-0.0 // magnetism(Start magnetization could also be defined in INPUT more conveniently.If so,there should not be any input of magnetism here)
+0.0 // magnetism(Be careful: value 1.0 refers to 1.0 bohr mag, but not fully spin up !!!)
 2 // number of atoms
 0.00 0.00 0.00 0 0 0
 0.25 0.25 0.25 1 1 1

@@ -21,8 +21,8 @@ public:
     ~DFTU_Yukawa();                     // deconstructor
 
     void cal_slater_Fk(const int L, const int T); //L:angular momnet, T:atom type   
-    void cal_yukawa_lambda();
-    void cal_slater_UJ();
+    void cal_yukawa_lambda(double** rho);
+    void cal_slater_UJ(double** rho);
 
     double spherical_Bessel(const int k, const double r, const double lambda);
     double spherical_Hankel(const int k, const double r, const double lambda);
@@ -37,7 +37,7 @@ public:
     double *U;           //U (Hubbard parameter U)
     double *J;           //J (Hund parameter J)
     int *orbital_corr;   //
-    bool omc;
+    int omc;
     int dftu_type;
     int double_counting;
 

@@ -1,5 +1,4 @@
 #include "../module_xc/xc_functional.h"
-#include "../src_pw/diago_cg.h"
 #include "surchem.h"
 
 void surchem::minimize_cg(const UnitCell &ucell,

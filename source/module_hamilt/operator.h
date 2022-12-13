@@ -45,12 +45,7 @@ class Operator
 
     virtual void add(Operator* next);
 
-    virtual const int get_ik() const {return this->ik;}
-
-#if ((defined __CUDA) || (defined __ROCM))
-    typedef std::tuple<const psi::Psi<FPTYPE, psi::DEVICE_GPU>*, const psi::Range, FPTYPE*> hpsi_info_gpu;
-    virtual hpsi_info_gpu hPsi_gpu(hpsi_info_gpu& input) const;
-    #endif // ((defined __CUDA) || (defined __ROCM))
+    virtual int get_ik() const {return this->ik;}
 
     Operator* next_op = nullptr;
 

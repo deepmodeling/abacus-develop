@@ -244,6 +244,7 @@ void UnitCell::print_cell_cif(const std::string& fn) const
     ofs.close();
 }
 
+/*
 void UnitCell::print_cell_xyz(const std::string& fn) const
 {
     if (GlobalV::test_unitcell)
@@ -271,6 +272,7 @@ void UnitCell::print_cell_xyz(const std::string& fn) const
     ofs.close();
     return;
 }
+*/
 
 void UnitCell::set_iat2itia(void)
 {
@@ -520,6 +522,7 @@ void UnitCell::save_cartesian_position_original(ModuleBase::Vector3<double>* pos
     return;
 }
 
+/*
 bool UnitCell::judge_big_cell(void) const
 {
     double diameter = 2 * GlobalV::SEARCH_RADIUS;
@@ -537,6 +540,7 @@ bool UnitCell::judge_big_cell(void) const
         return 0;
     }
 }
+*/
 
 #ifndef __CMD
 void UnitCell::cal_ux()
@@ -721,6 +725,19 @@ void UnitCell::setup_cell(
 	orb.bcast_files(ntype, GlobalV::MY_RANK);
 	#endif
 #endif
+
+	//after read STRU, calculate initial total magnetization when NSPIN=2
+	if(GlobalV::NSPIN == 2 && !GlobalV::TWO_EFERMI)
+	{
+		for(int it = 0;it<this->ntype; it++)
+		{
+			for(int ia = 0; ia<this->atoms[it].na; ia++)
+			{
+				GlobalV::nupdown += this->atoms[it].mag[ia];
+			}
+		}
+		GlobalV::ofs_running<<" The readin total magnetization is "<<GlobalV::nupdown<<std::endl;
+	}
 	
 	//========================================================
 	// Calculate unit cell volume
@@ -909,17 +926,7 @@ void UnitCell::setup_cell(
 		}
 	}
 
-	// setup GlobalV::NBANDS
-	//this->cal_nelec();
-
 	this->cal_meshx();
-
-	// setup vdwd2 parameters
-	//vdwd2_para.initset(*this);		// Peize Lin add 2021.03.09
-
-//	std::stringstream ss;
-//	ss << GlobalV::global_out_dir << "unitcell_pp.log";
-//	print_unitcell_pseudo( ss.str() );
 	return;
 }
 
@@ -1299,6 +1306,19 @@ void UnitCell::setup_cell_after_vc(std::ofstream &log)
         ModuleBase::GlobalFunc::OUT(log, "Volume (A^3))", this->omega * pow(ModuleBase::BOHR_TO_A, 3));
     }
 
+    // lattice vectors in another form.
+    a1.x = latvec.e11;
+    a1.y = latvec.e12;
+    a1.z = latvec.e13;
+
+    a2.x = latvec.e21;
+    a2.y = latvec.e22;
+    a2.z = latvec.e23;
+
+    a3.x = latvec.e31;
+    a3.y = latvec.e32;
+    a3.z = latvec.e33;
+
     //==========================================================
     // Calculate recip. lattice vectors and dot products
     // latvec has the unit of lat0, but G has the unit 2Pi/lat0
@@ -1354,7 +1374,7 @@ bool UnitCell::if_cell_can_change()const
 }
 
 void UnitCell::setup(const std::string &latname_in,
-	const int &ntype_in, 
+	const int &ntype_in,
 	const int &lmaxmax_in,
 	const bool &init_vel_in,
 	const std::string &fixed_axes_in)

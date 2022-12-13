@@ -11,7 +11,7 @@
 namespace ModuleESolver
 {
 
-    class ESolver_KS_LCAO : public ESolver_KS
+    class ESolver_KS_LCAO : public ESolver_KS<double>
     {
     public:
         ESolver_KS_LCAO();
@@ -57,6 +57,7 @@ namespace ModuleESolver
         // output subfuncs: implemented in src_io/write_HS_R.cpp
         void output_HS_R(
             const int &istep,
+            const ModuleBase::matrix& v_eff,
             const std::string& SR_filename = "data-SR-sparse_SPIN0.csr",
             const std::string& HR_filename_up = "data-HR-sparse_SPIN0.csr",
             const std::string HR_filename_down = "data-HR-sparse_SPIN1.csr",

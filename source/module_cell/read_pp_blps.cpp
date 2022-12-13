@@ -5,6 +5,7 @@ int Pseudopot_upf::read_pseudo_blps(std::ifstream &ifs)
     // double bohr2a = 0.529177249;
     this->nlcc = false;
     this->tvanp = false;
+    this->has_so = false;
 
     this->nbeta = 0;
     delete[] kkbeta;

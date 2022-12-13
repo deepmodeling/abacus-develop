@@ -274,7 +274,7 @@ std::vector<std::vector<std::vector<std::vector<double>>>> Exx_Abfs::Construct_O
 	const double kmesh_times_mot,
 	const double times_threshold )
 {
-std::ofstream ofs(GlobalC::exx_lcao.test_dir.process+"time_"+ModuleBase::GlobalFunc::TO_STRING(GlobalV::MY_RANK),std::ofstream::app);
+//std::ofstream ofs(GlobalC::exx_lcao.test_dir.process+"time_"+ModuleBase::GlobalFunc::TO_STRING(GlobalV::MY_RANK),std::ofstream::app);
 	if(times_threshold>1)
 		return std::vector<std::vector<std::vector<std::vector<double>>>>(abfs.size());
 
@@ -289,13 +289,13 @@ std::ofstream ofs(GlobalC::exx_lcao.test_dir.process+"time_"+ModuleBase::GlobalF
 		for( size_t L=0; L!=eig[T].size(); ++L )
 			for( size_t M=0; M!=eig[T][L].first.size(); ++M )
 			{
-ofs<<T<<"\t"<<L<<"\t"<<M<<"\t"<<eig[T][L].first[M]<<std::endl;
+//ofs<<T<<"\t"<<L<<"\t"<<M<<"\t"<<eig[T][L].first[M]<<std::endl;
 				eig_value_max = std::max( eig_value_max, eig[T][L].first[M] );
 			}
 		const double eig_value_threshold = eig_value_max * times_threshold;
 
-ofs<<"eig_value_max:\t"<<eig_value_max<<std::endl;
-ofs<<"eig_value_threshold:\t"<<eig_value_threshold<<std::endl;
+//ofs<<"eig_value_max:\t"<<eig_value_max<<std::endl;
+//ofs<<"eig_value_threshold:\t"<<eig_value_threshold<<std::endl;
 
 		if(eig_value_max)
 		{
@@ -330,7 +330,7 @@ ofs<<"eig_value_threshold:\t"<<eig_value_threshold<<std::endl;
 				}
 		}
 	}
-ofs.close();
+//ofs.close();
 	return psis_new;
 }
 
@@ -478,3 +478,24 @@ inline const Numerical_Orbital_Lm &Exx_Abfs::Construct_Orbs::get_orbital(
 	return orbs[T][L][N];
 }
 */
+
+void Exx_Abfs::Construct_Orbs::print_orbs_size(
+	const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> &orbs,
+	std::ostream &os)
+{
+	os<<" Auxiliary basis functions"<<std::endl;
+	const std::vector<char> L_labels = {'s', 'p', 'd'};
+	for(std::size_t T=0; T<orbs.size(); ++T)
+	{
+		os<<"\t\t"<<GlobalC::ucell.atoms[T].label<<"\t\t";
+		for(std::size_t L=0; L<orbs[T].size(); ++L)
+		{
+			const char L_label =
+				L < L_labels.size()
+				? L_labels[L]
+				: 'f' + (L-L_labels.size());
+			os<<orbs[T][L].size()<<" "<<L_label<<"\t\t";
+		}
+		os<<std::endl;
+	}
+}

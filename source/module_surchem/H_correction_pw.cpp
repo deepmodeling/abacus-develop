@@ -10,7 +10,8 @@
 ModuleBase::matrix surchem::v_correction(const UnitCell &cell,
                                          ModulePW::PW_Basis *rho_basis,
                                          const int &nspin,
-                                         const double *const *const rho)
+                                         const double *const *const rho,
+                                         const double * vlocal)
 {
     ModuleBase::TITLE("surchem", "v_correction");
     ModuleBase::timer::tick("surchem", "v_correction");
@@ -32,7 +33,7 @@ ModuleBase::matrix surchem::v_correction(const UnitCell &cell,
     complex<double> *TOTN = new complex<double>[rho_basis->npw];
     complex<double> *PS_TOTN = new complex<double>[rho_basis->npw];
 
-    cal_totn(cell, rho_basis, Porter_g, N, TOTN);
+    cal_totn(cell, rho_basis, Porter_g, N, TOTN, vlocal);
 
     cal_pseudo(cell, rho_basis, Porter_g, PS_TOTN);
 
