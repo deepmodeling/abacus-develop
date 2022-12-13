@@ -7,6 +7,8 @@
  * - Tested Functions:
  *   - Default()
  *     - set default value of input parameters
+ *   - Read()
+ *     - read input parameters from input files
  */
 
 #define private public
