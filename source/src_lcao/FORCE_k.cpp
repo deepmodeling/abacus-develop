@@ -5,6 +5,7 @@
 #include "../src_parallel/parallel_reduce.h"
 #include "../src_pw/global.h"
 #include "module_elecstate/cal_dm.h"
+#include "module_base/tool_threading.h"
 
 #include <map>
 #include <unordered_map>
@@ -64,7 +65,13 @@ void Force_LCAO_k::ftable_k(const bool isforce,
     for (int is = 0; is < GlobalV::NSPIN; is++)
     {
         dm2d[is] = new double[pv->nnr];
-        ModuleBase::GlobalFunc::ZEROS(dm2d[is], pv->nnr);
+        auto init_dm2d = [dm2d, is, pv](int num_threads, int thread_id)
+        {
+            int beg, len;
+            ModuleBase::TASK_DIST_1D(num_threads, thread_id, pv->nnr, beg, len);
+            ModuleBase::GlobalFunc::ZEROS(dm2d[is] + beg, len);
+        };
+        ModuleBase::OMP_PARALLEL(init_dm2d);
     }
     ModuleBase::Memory::record("Force_LCAO_k", "dm2d", GlobalV::NSPIN * pv->nnr, "double");
 
@@ -196,27 +203,38 @@ void Force_LCAO_k::allocate_k(const Parallel_Orbitals& pv)
     this->UHM->LM->DSloc_Rx = new double[nnr];
     this->UHM->LM->DSloc_Ry = new double[nnr];
     this->UHM->LM->DSloc_Rz = new double[nnr];
-    ModuleBase::GlobalFunc::ZEROS(this->UHM->LM->DSloc_Rx, nnr);
-    ModuleBase::GlobalFunc::ZEROS(this->UHM->LM->DSloc_Ry, nnr);
-    ModuleBase::GlobalFunc::ZEROS(this->UHM->LM->DSloc_Rz, nnr);
+    const auto init_DSloc_Rxyz = [this, nnr](int num_threads, int thread_id) {
+        int beg, len;
+        ModuleBase::TASK_DIST_1D(num_threads, thread_id, nnr, beg, len);
+        ModuleBase::GlobalFunc::ZEROS(this->UHM->LM->DSloc_Rx + beg, len);
+        ModuleBase::GlobalFunc::ZEROS(this->UHM->LM->DSloc_Ry + beg, len);
+        ModuleBase::GlobalFunc::ZEROS(this->UHM->LM->DSloc_Rz + beg, len);
+    };
+    ModuleBase::OMP_PARALLEL(init_DSloc_Rxyz);
     ModuleBase::Memory::record("force_lo", "dS", nnr * 3, "double");
 
     if (GlobalV::CAL_STRESS)
     {
         this->UHM->LM->DH_r = new double[3 * nnr];
-        ModuleBase::GlobalFunc::ZEROS(this->UHM->LM->DH_r, 3 * nnr);
         this->UHM->LM->stvnl11 = new double[nnr];
         this->UHM->LM->stvnl12 = new double[nnr];
         this->UHM->LM->stvnl13 = new double[nnr];
         this->UHM->LM->stvnl22 = new double[nnr];
         this->UHM->LM->stvnl23 = new double[nnr];
         this->UHM->LM->stvnl33 = new double[nnr];
-        ModuleBase::GlobalFunc::ZEROS(this->UHM->LM->stvnl11, nnr);
-        ModuleBase::GlobalFunc::ZEROS(this->UHM->LM->stvnl12, nnr);
-        ModuleBase::GlobalFunc::ZEROS(this->UHM->LM->stvnl13, nnr);
-        ModuleBase::GlobalFunc::ZEROS(this->UHM->LM->stvnl22, nnr);
-        ModuleBase::GlobalFunc::ZEROS(this->UHM->LM->stvnl23, nnr);
-        ModuleBase::GlobalFunc::ZEROS(this->UHM->LM->stvnl33, nnr);
+        const auto init_DH_r_stvnl = [this, nnr](int num_threads, int thread_id) {
+            int beg, len;
+            ModuleBase::TASK_DIST_1D(num_threads, thread_id, nnr, beg, len);
+            ModuleBase::GlobalFunc::ZEROS(this->UHM->LM->DH_r + 3 * beg, 3 * len);
+            ModuleBase::GlobalFunc::ZEROS(this->UHM->LM->stvnl11 + beg, len);
+            ModuleBase::GlobalFunc::ZEROS(this->UHM->LM->stvnl12 + beg, len);
+            ModuleBase::GlobalFunc::ZEROS(this->UHM->LM->stvnl13 + beg, len);
+            ModuleBase::GlobalFunc::ZEROS(this->UHM->LM->stvnl22 + beg, len);
+            ModuleBase::GlobalFunc::ZEROS(this->UHM->LM->stvnl23 + beg, len);
+            ModuleBase::GlobalFunc::ZEROS(this->UHM->LM->stvnl33 + beg, len);
+        };
+        ModuleBase::OMP_PARALLEL(init_DH_r_stvnl);
+        
         ModuleBase::Memory::record("stress_lo", "dSR", nnr * 6, "double");
     }
 
@@ -232,9 +250,14 @@ void Force_LCAO_k::allocate_k(const Parallel_Orbitals& pv)
     this->UHM->LM->DHloc_fixedR_x = new double[nnr];
     this->UHM->LM->DHloc_fixedR_y = new double[nnr];
     this->UHM->LM->DHloc_fixedR_z = new double[nnr];
-    ModuleBase::GlobalFunc::ZEROS(this->UHM->LM->DHloc_fixedR_x, nnr);
-    ModuleBase::GlobalFunc::ZEROS(this->UHM->LM->DHloc_fixedR_y, nnr);
-    ModuleBase::GlobalFunc::ZEROS(this->UHM->LM->DHloc_fixedR_z, nnr);
+    const auto init_DHloc_fixedR_xyz = [this, nnr](int num_threads, int thread_id) {
+        int beg, len;
+        ModuleBase::TASK_DIST_1D(num_threads, thread_id, nnr, beg, len);
+        ModuleBase::GlobalFunc::ZEROS(this->UHM->LM->DHloc_fixedR_x + beg, len);
+        ModuleBase::GlobalFunc::ZEROS(this->UHM->LM->DHloc_fixedR_y + beg, len);
+        ModuleBase::GlobalFunc::ZEROS(this->UHM->LM->DHloc_fixedR_z + beg, len);
+    };
+    ModuleBase::OMP_PARALLEL(init_DHloc_fixedR_xyz);
     ModuleBase::Memory::record("force_lo", "dTVNL", nnr * 3, "double");
 
     // calculate dT=<phi|kin|dphi> in LCAO
@@ -293,7 +316,13 @@ void Force_LCAO_k::cal_foverlap_k(const bool isforce,
     for (int is = 0; is < GlobalV::NSPIN; is++)
     {
         edm2d[is] = new double[pv->nnr];
-        ModuleBase::GlobalFunc::ZEROS(edm2d[is], pv->nnr);
+        auto init_edm2d = [edm2d, is, pv](int num_threads, int thread_id)
+        {
+            int beg, len;
+            ModuleBase::TASK_DIST_1D(num_threads, thread_id, pv->nnr, beg, len);
+            ModuleBase::GlobalFunc::ZEROS(edm2d[is] + beg, len);
+        };
+        ModuleBase::OMP_PARALLEL(init_edm2d);
     }
 
     //--------------------------------------------
@@ -303,7 +332,7 @@ void Force_LCAO_k::cal_foverlap_k(const bool isforce,
 
     ModuleBase::matrix wgEkb;
     wgEkb.create(GlobalC::kv.nks, GlobalV::NBANDS);
-
+#pragma omp parallel for collapse(2) schedule(static, 1024)
     for (int ik = 0; ik < GlobalC::kv.nks; ik++)
     {
         for (int ib = 0; ib < GlobalV::NBANDS; ib++)
@@ -316,6 +345,7 @@ void Force_LCAO_k::cal_foverlap_k(const bool isforce,
     // use the original formula (Hamiltonian matrix) to calculate energy density matrix
     if (loc.edm_k_tddft.size())
     {
+#pragma omp parallel for schedule(static, 1024)
         for (int ik = 0; ik < GlobalC::kv.nks; ++ik)
         {
             edm_k[ik] = loc.edm_k_tddft[ik];
@@ -333,15 +363,16 @@ void Force_LCAO_k::cal_foverlap_k(const bool isforce,
     // summation \sum_{i,j} E(i,j)*dS(i,j)
     // BEGIN CALCULATION OF FORCE OF EACH ATOM
     //--------------------------------------------
+    int total_irr = 0;
     ModuleBase::Vector3<double> tau1, dtau, tau2;
 
-    int irr = 0;
-    int iat = 0;
-    for (int T1 = 0; T1 < GlobalC::ucell.ntype; ++T1)
+    for (int iat = 0; iat < GlobalC::ucell.nat; iat++)
     {
+        const int T1 = GlobalC::ucell.iat2it[iat];
         Atom* atom1 = &GlobalC::ucell.atoms[T1];
-        for (int I1 = 0; I1 < atom1->na; ++I1)
+        const int I1 = GlobalC::ucell.iat2ia[iat];
         {
+            int irr = pv->nlocstart[iat];
             const int start1 = GlobalC::ucell.itiaiw2iwt(T1, I1, 0);
             for (int cb = 0; cb < ra.na_each[iat]; ++cb)
             {
@@ -400,11 +431,11 @@ void Force_LCAO_k::cal_foverlap_k(const bool isforce,
                                 }
                             }
                         }
+                        ++total_irr;
                         ++irr;
                     } // end kk
                 } // end jj
             } // end cb
-            ++iat;
         }
     }
 
@@ -413,9 +444,9 @@ void Force_LCAO_k::cal_foverlap_k(const bool isforce,
         StressTools::stress_fill(GlobalC::ucell.lat0, GlobalC::ucell.omega, soverlap);
     }
 
-    if (irr != pv->nnr)
+    if (total_irr != pv->nnr)
     {
-        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "wrong irr", irr);
+        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "wrong irr", total_irr);
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "wrong LNNR.nnr", pv->nnr);
         ModuleBase::WARNING_QUIT("Force_LCAO_k::cal_foverlap_k", "irr!=LNNR.nnr");
     }
@@ -440,18 +471,19 @@ void Force_LCAO_k::cal_ftvnl_dphi_k(double** dm2d,
     ModuleBase::TITLE("Force_LCAO_k", "cal_ftvnl_dphi");
     ModuleBase::timer::tick("Force_LCAO_k", "cal_ftvnl_dphi");
 
+    int total_irr = 0;
     const Parallel_Orbitals* pv = this->ParaV;
     // get the adjacent atom's information.
 
     //	GlobalV::ofs_running << " calculate the ftvnl_dphi_k force" << std::endl;
 
-    int irr = 0;
-    for (int T1 = 0; T1 < GlobalC::ucell.ntype; ++T1)
+    for (int iat = 0; iat < GlobalC::ucell.nat; iat++)
     {
+        const int T1 = GlobalC::ucell.iat2it[iat];
         Atom* atom1 = &GlobalC::ucell.atoms[T1];
-        for (int I1 = 0; I1 < atom1->na; ++I1)
+        const int I1 = GlobalC::ucell.iat2ia[iat];
         {
-            const int iat = GlobalC::ucell.itia2iat(T1, I1);
+            int irr = pv->nlocstart[iat];
             const int start1 = GlobalC::ucell.itiaiw2iwt(T1, I1, 0);
             for (int cb = 0; cb < ra.na_each[iat]; ++cb)
             {
@@ -497,13 +529,14 @@ void Force_LCAO_k::cal_ftvnl_dphi_k(double** dm2d,
                                 stvnl_dphi(2, 2) -= dm2d[is][irr] * this->UHM->LM->stvnl33[irr];
                             }
                         }
+                        ++total_irr;
                         ++irr;
                     } // end kk
                 } // end jj
             } // end cb
         }
     }
-    assert(irr == pv->nnr);
+    assert(total_irr == pv->nnr);
 
     //	test(this->UHM->LM->DSloc_Rx);
     //	test(dm2d[0],"dm2d");
@@ -682,8 +715,9 @@ void Force_LCAO_k::cal_fvnl_dbeta_k_new(double** dm2d,
     // calculate sum_(L0,M0) beta<psi_i|beta><beta|psi_j>
     // and accumulate the value to Hloc_fixedR(i,j)
     //=======================================================
+    int total_nnr = 0;
 #ifdef _OPENMP
-#pragma omp parallel
+#pragma omp parallel reduction(+:total_nnr)
 {
     ModuleBase::matrix local_svnl_dbeta(3, 3);
     const int num_threads = omp_get_num_threads();
@@ -960,7 +994,7 @@ void Force_LCAO_k::cal_fvnl_dbeta_k_new(double** dm2d,
                             const int nu = pv->trace_loc_col[iw2_all];
                             if (nu < 0)
                                 continue;
-
+                            total_nnr++;
                             nnr++;
                         }
                     }
@@ -1014,6 +1048,8 @@ void Force_LCAO_k::cal_fvnl_dbeta_k_new(double** dm2d,
     }
 }
 #endif
+
+    assert(total_nnr == pv->nnr);
 
     if (isstress)
     {
