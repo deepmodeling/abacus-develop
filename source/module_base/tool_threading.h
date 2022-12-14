@@ -63,6 +63,12 @@ inline void BLOCK_TASK_DIST_1D(int nworker, int iworker, T_task ntask, T_task bl
         }
         start *= block_size;
         len *= block_size;
+        if (start > ntask)
+        {
+            start = ntask;
+            len = 0;
+            return;
+        }
         if (start + len > ntask)
         {
             len = ntask - start;

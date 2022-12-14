@@ -70,7 +70,6 @@ void Force_LCAO_k::ftable_k(const bool isforce,
     {
         int beg, len;
         ModuleBase::BLOCK_TASK_DIST_1D(num_threads, thread_id, pv->nnr, 1024, beg, len);
-        if (!len) return;
         for (int is = 0; is < GlobalV::NSPIN; is++)
         {
             ModuleBase::GlobalFunc::ZEROS(dm2d[is] + beg, len);
@@ -210,7 +209,6 @@ void Force_LCAO_k::allocate_k(const Parallel_Orbitals& pv)
     const auto init_DSloc_Rxyz = [this, nnr](int num_threads, int thread_id) {
         int beg, len;
         ModuleBase::BLOCK_TASK_DIST_1D(num_threads, thread_id, nnr, 1024, beg, len);
-        if (!len) return;
         ModuleBase::GlobalFunc::ZEROS(this->UHM->LM->DSloc_Rx + beg, len);
         ModuleBase::GlobalFunc::ZEROS(this->UHM->LM->DSloc_Ry + beg, len);
         ModuleBase::GlobalFunc::ZEROS(this->UHM->LM->DSloc_Rz + beg, len);
@@ -230,7 +228,6 @@ void Force_LCAO_k::allocate_k(const Parallel_Orbitals& pv)
         const auto init_DH_r_stvnl = [this, nnr](int num_threads, int thread_id) {
             int beg, len;
             ModuleBase::BLOCK_TASK_DIST_1D(num_threads, thread_id, nnr, 1024, beg, len);
-            if (!len) return;
             ModuleBase::GlobalFunc::ZEROS(this->UHM->LM->DH_r + 3 * beg, 3 * len);
             ModuleBase::GlobalFunc::ZEROS(this->UHM->LM->stvnl11 + beg, len);
             ModuleBase::GlobalFunc::ZEROS(this->UHM->LM->stvnl12 + beg, len);
@@ -259,7 +256,6 @@ void Force_LCAO_k::allocate_k(const Parallel_Orbitals& pv)
     const auto init_DHloc_fixedR_xyz = [this, nnr](int num_threads, int thread_id) {
         int beg, len;
         ModuleBase::BLOCK_TASK_DIST_1D(num_threads, thread_id, nnr, 1024, beg, len);
-        if (!len) return;
         ModuleBase::GlobalFunc::ZEROS(this->UHM->LM->DHloc_fixedR_x + beg, len);
         ModuleBase::GlobalFunc::ZEROS(this->UHM->LM->DHloc_fixedR_y + beg, len);
         ModuleBase::GlobalFunc::ZEROS(this->UHM->LM->DHloc_fixedR_z + beg, len);
@@ -328,7 +324,6 @@ void Force_LCAO_k::cal_foverlap_k(const bool isforce,
     {
         int beg, len;
         ModuleBase::BLOCK_TASK_DIST_1D(num_threads, thread_id, pv->nnr, 1024, beg, len);
-        if (!len) return;
         for (int is = 0; is < GlobalV::NSPIN; is++)
         {
             ModuleBase::GlobalFunc::ZEROS(edm2d[is] + beg, len);
