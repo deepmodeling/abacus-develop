@@ -331,7 +331,9 @@ void LCAO_gen_fixedH::build_Nonlocal_mu_new(double* NLloc, const bool &calc_deri
 	{
 		nlm_tot1.resize(GlobalC::ucell.nat);
 	}
+#ifdef _OPENMP
 #pragma omp parallel for schedule(dynamic)
+#endif
 	for(int iat=0;iat<GlobalC::ucell.nat;iat++)
 	{
 		const int it = GlobalC::ucell.iat2it[iat];

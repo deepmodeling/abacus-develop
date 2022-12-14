@@ -65,14 +65,17 @@ void Force_LCAO_k::ftable_k(const bool isforce,
     for (int is = 0; is < GlobalV::NSPIN; is++)
     {
         dm2d[is] = new double[pv->nnr];
-        auto init_dm2d = [dm2d, is, pv](int num_threads, int thread_id)
-        {
-            int beg, len;
-            ModuleBase::TASK_DIST_1D(num_threads, thread_id, pv->nnr, beg, len);
-            ModuleBase::GlobalFunc::ZEROS(dm2d[is] + beg, len);
-        };
-        ModuleBase::OMP_PARALLEL(init_dm2d);
     }
+    auto init_dm2d = [dm2d, pv](int num_threads, int thread_id)
+    {
+        int beg, len;
+        ModuleBase::BLOCK_TASK_DIST_1D(num_threads, thread_id, pv->nnr, 1024, beg, len);
+        for (int is = 0; is < GlobalV::NSPIN; is++)
+        {
+            ModuleBase::GlobalFunc::ZEROS(dm2d[is] + beg, len);
+        }
+    };
+    ModuleBase::OMP_PARALLEL(init_dm2d);
     ModuleBase::Memory::record("Force_LCAO_k", "dm2d", GlobalV::NSPIN * pv->nnr, "double");
 
     loc.cal_dm_R(loc.dm_k, ra, dm2d);
@@ -205,7 +208,7 @@ void Force_LCAO_k::allocate_k(const Parallel_Orbitals& pv)
     this->UHM->LM->DSloc_Rz = new double[nnr];
     const auto init_DSloc_Rxyz = [this, nnr](int num_threads, int thread_id) {
         int beg, len;
-        ModuleBase::TASK_DIST_1D(num_threads, thread_id, nnr, beg, len);
+        ModuleBase::BLOCK_TASK_DIST_1D(num_threads, thread_id, nnr, 1024, beg, len);
         ModuleBase::GlobalFunc::ZEROS(this->UHM->LM->DSloc_Rx + beg, len);
         ModuleBase::GlobalFunc::ZEROS(this->UHM->LM->DSloc_Ry + beg, len);
         ModuleBase::GlobalFunc::ZEROS(this->UHM->LM->DSloc_Rz + beg, len);
@@ -224,7 +227,7 @@ void Force_LCAO_k::allocate_k(const Parallel_Orbitals& pv)
         this->UHM->LM->stvnl33 = new double[nnr];
         const auto init_DH_r_stvnl = [this, nnr](int num_threads, int thread_id) {
             int beg, len;
-            ModuleBase::TASK_DIST_1D(num_threads, thread_id, nnr, beg, len);
+            ModuleBase::BLOCK_TASK_DIST_1D(num_threads, thread_id, nnr, 1024, beg, len);
             ModuleBase::GlobalFunc::ZEROS(this->UHM->LM->DH_r + 3 * beg, 3 * len);
             ModuleBase::GlobalFunc::ZEROS(this->UHM->LM->stvnl11 + beg, len);
             ModuleBase::GlobalFunc::ZEROS(this->UHM->LM->stvnl12 + beg, len);
@@ -252,7 +255,7 @@ void Force_LCAO_k::allocate_k(const Parallel_Orbitals& pv)
     this->UHM->LM->DHloc_fixedR_z = new double[nnr];
     const auto init_DHloc_fixedR_xyz = [this, nnr](int num_threads, int thread_id) {
         int beg, len;
-        ModuleBase::TASK_DIST_1D(num_threads, thread_id, nnr, beg, len);
+        ModuleBase::BLOCK_TASK_DIST_1D(num_threads, thread_id, nnr, 1024, beg, len);
         ModuleBase::GlobalFunc::ZEROS(this->UHM->LM->DHloc_fixedR_x + beg, len);
         ModuleBase::GlobalFunc::ZEROS(this->UHM->LM->DHloc_fixedR_y + beg, len);
         ModuleBase::GlobalFunc::ZEROS(this->UHM->LM->DHloc_fixedR_z + beg, len);
@@ -316,14 +319,17 @@ void Force_LCAO_k::cal_foverlap_k(const bool isforce,
     for (int is = 0; is < GlobalV::NSPIN; is++)
     {
         edm2d[is] = new double[pv->nnr];
-        auto init_edm2d = [edm2d, is, pv](int num_threads, int thread_id)
-        {
-            int beg, len;
-            ModuleBase::TASK_DIST_1D(num_threads, thread_id, pv->nnr, beg, len);
-            ModuleBase::GlobalFunc::ZEROS(edm2d[is] + beg, len);
-        };
-        ModuleBase::OMP_PARALLEL(init_edm2d);
     }
+    auto init_edm2d = [edm2d, pv](int num_threads, int thread_id)
+    {
+        int beg, len;
+        ModuleBase::BLOCK_TASK_DIST_1D(num_threads, thread_id, pv->nnr, 1024, beg, len);
+        for (int is = 0; is < GlobalV::NSPIN; is++)
+        {
+            ModuleBase::GlobalFunc::ZEROS(edm2d[is] + beg, len);
+        }
+    };
+    ModuleBase::OMP_PARALLEL(init_edm2d);
 
     //--------------------------------------------
     // calculate the energy density matrix here.
@@ -332,7 +338,9 @@ void Force_LCAO_k::cal_foverlap_k(const bool isforce,
 
     ModuleBase::matrix wgEkb;
     wgEkb.create(GlobalC::kv.nks, GlobalV::NBANDS);
+#ifdef _OPENMP
 #pragma omp parallel for collapse(2) schedule(static, 1024)
+#endif
     for (int ik = 0; ik < GlobalC::kv.nks; ik++)
     {
         for (int ib = 0; ib < GlobalV::NBANDS; ib++)
@@ -345,7 +353,9 @@ void Force_LCAO_k::cal_foverlap_k(const bool isforce,
     // use the original formula (Hamiltonian matrix) to calculate energy density matrix
     if (loc.edm_k_tddft.size())
     {
+#ifdef _OPENMP
 #pragma omp parallel for schedule(static, 1024)
+#endif
         for (int ik = 0; ik < GlobalC::kv.nks; ++ik)
         {
             edm_k[ik] = loc.edm_k_tddft[ik];
@@ -364,8 +374,21 @@ void Force_LCAO_k::cal_foverlap_k(const bool isforce,
     // BEGIN CALCULATION OF FORCE OF EACH ATOM
     //--------------------------------------------
     int total_irr = 0;
+#ifdef _OPENMP
+#pragma omp parallel
+{
+    ModuleBase::matrix local_soverlap(3, 3);
+    int local_total_irr = 0;
+#else
+    ModuleBase::matrix& local_soverlap = soverlap;
+    int& local_total_irr = total_irr;
+#endif
+
     ModuleBase::Vector3<double> tau1, dtau, tau2;
 
+#ifdef _OPENMP
+#pragma omp for schedule(dynamic)
+#endif
     for (int iat = 0; iat < GlobalC::ucell.nat; iat++)
     {
         const int T1 = GlobalC::ucell.iat2it[iat];
@@ -418,26 +441,46 @@ void Force_LCAO_k::cal_foverlap_k(const bool isforce,
                             {
                                 for (int ipol = 0; ipol < 3; ipol++)
                                 {
-                                    soverlap(0, ipol) += edm2d[is][irr] * this->UHM->LM->DSloc_Rx[irr]
+                                    local_soverlap(0, ipol) += edm2d[is][irr] * this->UHM->LM->DSloc_Rx[irr]
                                                          * this->UHM->LM->DH_r[irr * 3 + ipol];
                                     if (ipol < 1)
                                         continue;
-                                    soverlap(1, ipol) += edm2d[is][irr] * this->UHM->LM->DSloc_Ry[irr]
+                                    local_soverlap(1, ipol) += edm2d[is][irr] * this->UHM->LM->DSloc_Ry[irr]
                                                          * this->UHM->LM->DH_r[irr * 3 + ipol];
                                     if (ipol < 2)
                                         continue;
-                                    soverlap(2, ipol) += edm2d[is][irr] * this->UHM->LM->DSloc_Rz[irr]
+                                    local_soverlap(2, ipol) += edm2d[is][irr] * this->UHM->LM->DSloc_Rz[irr]
                                                          * this->UHM->LM->DH_r[irr * 3 + ipol];
                                 }
                             }
                         }
-                        ++total_irr;
+                        ++local_total_irr;
                         ++irr;
                     } // end kk
                 } // end jj
             } // end cb
         }
     }
+#ifdef _OPENMP
+    #pragma omp critical(cal_foverlap_k_reduce)
+    {
+        total_irr += local_total_irr;
+        if (isstress)
+        {
+            for (int ipol = 0; ipol < 3; ipol++)
+            {
+                soverlap(0, ipol) += local_soverlap(0, ipol);
+                if (ipol < 1)
+                    continue;
+                soverlap(1, ipol) += local_soverlap(1, ipol);
+                if (ipol < 2)
+                    continue;
+                soverlap(2, ipol) += local_soverlap(2, ipol);
+            }
+        }
+    }
+}
+#endif
 
     if (isstress)
     {
@@ -476,7 +519,16 @@ void Force_LCAO_k::cal_ftvnl_dphi_k(double** dm2d,
     // get the adjacent atom's information.
 
     //	GlobalV::ofs_running << " calculate the ftvnl_dphi_k force" << std::endl;
-
+#ifdef _OPENMP
+#pragma omp parallel
+{
+    ModuleBase::matrix local_stvnl_dphi(3, 3);
+    int local_total_irr = 0;
+    #pragma omp for schedule(dynamic)
+#else
+    ModuleBase::matrix& local_stvnl_dphi = stvnl_dphi;
+    int& local_total_irr = total_irr;
+#endif
     for (int iat = 0; iat < GlobalC::ucell.nat; iat++)
     {
         const int T1 = GlobalC::ucell.iat2it[iat];
@@ -521,21 +573,37 @@ void Force_LCAO_k::cal_ftvnl_dphi_k(double** dm2d,
                             }
                             if (isstress)
                             {
-                                stvnl_dphi(0, 0) -= dm2d[is][irr] * this->UHM->LM->stvnl11[irr];
-                                stvnl_dphi(0, 1) -= dm2d[is][irr] * this->UHM->LM->stvnl12[irr];
-                                stvnl_dphi(0, 2) -= dm2d[is][irr] * this->UHM->LM->stvnl13[irr];
-                                stvnl_dphi(1, 1) -= dm2d[is][irr] * this->UHM->LM->stvnl22[irr];
-                                stvnl_dphi(1, 2) -= dm2d[is][irr] * this->UHM->LM->stvnl23[irr];
-                                stvnl_dphi(2, 2) -= dm2d[is][irr] * this->UHM->LM->stvnl33[irr];
+                                local_stvnl_dphi(0, 0) -= dm2d[is][irr] * this->UHM->LM->stvnl11[irr];
+                                local_stvnl_dphi(0, 1) -= dm2d[is][irr] * this->UHM->LM->stvnl12[irr];
+                                local_stvnl_dphi(0, 2) -= dm2d[is][irr] * this->UHM->LM->stvnl13[irr];
+                                local_stvnl_dphi(1, 1) -= dm2d[is][irr] * this->UHM->LM->stvnl22[irr];
+                                local_stvnl_dphi(1, 2) -= dm2d[is][irr] * this->UHM->LM->stvnl23[irr];
+                                local_stvnl_dphi(2, 2) -= dm2d[is][irr] * this->UHM->LM->stvnl33[irr];
                             }
                         }
-                        ++total_irr;
+                        ++local_total_irr;
                         ++irr;
                     } // end kk
                 } // end jj
             } // end cb
         }
     }
+#ifdef _OPENMP
+    #pragma omp critical(cal_ftvnl_dphi_k_reduce)
+    {
+        total_irr += local_total_irr;
+        if (isstress)
+        {
+            stvnl_dphi(0, 0) += local_stvnl_dphi(0, 0);
+            stvnl_dphi(0, 1) += local_stvnl_dphi(0, 1);
+            stvnl_dphi(0, 2) += local_stvnl_dphi(0, 2);
+            stvnl_dphi(1, 1) += local_stvnl_dphi(1, 1);
+            stvnl_dphi(1, 2) += local_stvnl_dphi(1, 2);
+            stvnl_dphi(2, 2) += local_stvnl_dphi(2, 2);
+        }
+    }
+}
+#endif
     assert(total_irr == pv->nnr);
 
     //	test(this->UHM->LM->DSloc_Rx);
