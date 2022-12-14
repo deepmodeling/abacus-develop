@@ -277,24 +277,7 @@ void Print_Info::print_screen(const int &stress_step, const int &force_step, con
     std::cout << " -------------------------------------------" << std::endl;
 	GlobalV::ofs_running << "\n -------------------------------------------" << std::endl;
 
-	if(GlobalV::relax_new)
-	{
-		std::cout << " STEP OF RELAXATION : " << unsigned(istep) << std::endl;
-		GlobalV::ofs_running << " STEP OF RELAXATION : " << unsigned(istep) << std::endl;
-	}
-	else if(GlobalV::CALCULATION=="relax") //pengfei 2014-10-13
-	{
-        std::cout << " STEP OF ION RELAXATION : " << unsigned(istep) << std::endl;
-		GlobalV::ofs_running << " STEP OF ION RELAXATION : " << unsigned(istep) << std::endl;
-	}
-    else if(GlobalV::CALCULATION=="cell-relax")
-    {
-        std::cout << " RELAX CELL : " << unsigned(stress_step) << std::endl;
-        std::cout << " RELAX IONS : " << unsigned(force_step) << " (in total: " << unsigned(istep) << ")" << std::endl;
-		GlobalV::ofs_running << " RELAX CELL : " << unsigned(stress_step) << std::endl;
-        GlobalV::ofs_running << " RELAX IONS : " << unsigned(force_step) << " (in total: " << unsigned(istep) << ")" << std::endl;
-    }
-	else if(GlobalV::CALCULATION=="scf") //add 4 lines 2015-09-06, xiaohui
+	if(GlobalV::CALCULATION=="scf") //add 4 lines 2015-09-06, xiaohui
 	{
         std::cout << " SELF-CONSISTENT : " << std::endl;
 		GlobalV::ofs_running << " SELF-CONSISTENT" << std::endl;
@@ -308,6 +291,26 @@ void Print_Info::print_screen(const int &stress_step, const int &force_step, con
 	{
         std::cout << " STEP OF MOLECULAR DYNAMICS : " << unsigned(istep) << std::endl;
 		GlobalV::ofs_running << " STEP OF MOLECULAR DYNAMICS : " << unsigned(istep) << std::endl;
+	}
+	else
+	{
+		if(GlobalV::relax_new)
+		{
+			std::cout << " STEP OF RELAXATION : " << unsigned(istep) << std::endl;
+			GlobalV::ofs_running << " STEP OF RELAXATION : " << unsigned(istep) << std::endl;
+		}
+		else if(GlobalV::CALCULATION=="relax") //pengfei 2014-10-13
+		{
+        	std::cout << " STEP OF ION RELAXATION : " << unsigned(istep) << std::endl;
+			GlobalV::ofs_running << " STEP OF ION RELAXATION : " << unsigned(istep) << std::endl;
+		}
+    	else if(GlobalV::CALCULATION=="cell-relax")
+    	{
+        	std::cout << " RELAX CELL : " << unsigned(stress_step) << std::endl;
+        	std::cout << " RELAX IONS : " << unsigned(force_step) << " (in total: " << unsigned(istep) << ")" << std::endl;
+			GlobalV::ofs_running << " RELAX CELL : " << unsigned(stress_step) << std::endl;
+        	GlobalV::ofs_running << " RELAX IONS : " << unsigned(force_step) << " (in total: " << unsigned(istep) << ")" << std::endl;
+    	}
 	}
 		
     std::cout << " -------------------------------------------" << std::endl;
