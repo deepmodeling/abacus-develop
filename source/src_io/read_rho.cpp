@@ -57,7 +57,7 @@ bool Charge::read_rho(const int &is, const std::string &fn, double* rho) //add b
 	if(GlobalV::NSPIN != 4) ModuleBase::CHECK_INT(ifs, GlobalV::NSPIN);
 	else
 	{
-		ModuleBase::GlobalFunc::READ_VALUE(ifs, GlobalV::PRENSPIN);
+		ModuleBase::GlobalFunc::READ_VALUE(ifs, prenspin);
 	}
 	if(GlobalV::NSPIN == 1||GlobalV::NSPIN == 4)
 	{

@@ -30,6 +30,11 @@ PW_Basis:: ~PW_Basis()
     delete[] startr;
     delete[] ig2igg;
     delete[] gg_uniq;
+#if defined(__CUDA) || defined(__UT_USE_CUDA)
+    if (GlobalV::device_flag == "gpu") {
+        cudaFree(this->d_is2fftixy);
+    }
+#endif
 }
 
 /// 

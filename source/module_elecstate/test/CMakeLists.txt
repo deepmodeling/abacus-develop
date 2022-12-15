@@ -61,7 +61,6 @@ add_library(
   ../../module_base/complexmatrix.cpp
   ../../module_base/element_basis_index.cpp
   ../../module_base/export.cpp
-  ../../module_base/integral.cpp
   ../../module_base/inverse_matrix.cpp
   ../../module_base/global_file.cpp
   ../../module_base/global_function.cpp
@@ -74,16 +73,12 @@ add_library(
   ../../module_base/math_ylmreal.cpp
   ../../module_base/math_bspline.cpp
   ../../module_base/math_chebyshev.cpp
-  ../../module_base/mathzone.cpp
   ../../module_base/mathzone_add1.cpp
   ../../module_base/matrix.cpp
   ../../module_base/matrix3.cpp
   ../../module_base/memory.cpp
-  ../../module_base/mymath1.cpp
-  ../../module_base/mymath3.cpp
-  ../../module_base/polint.cpp
+  ../../module_base/mymath.cpp
   ../../module_base/realarray.cpp
-  ../../module_base/sph_bessel.cpp
   ../../module_base/sph_bessel_recursive-d1.cpp
   ../../module_base/sph_bessel_recursive-d2.cpp
   ../../module_base/timer.cpp

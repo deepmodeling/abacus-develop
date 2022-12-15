@@ -580,7 +580,7 @@ double Occupy::w1gauss(const double &x,const int n)
     return w1;
 } // end function w1gauss
 
-
+/*
 void Occupy::tweights(const int nks,const int nspin,const int nband,const double &nelec,
                       const int ntetra,const ModuleBase::matrix &tetra, double **ekb, double &ef, ModuleBase::matrix &wg)
 {
@@ -737,8 +737,9 @@ void Occupy::tweights(const int nks,const int nspin,const int nband,const double
     }
     return;
 } // end subroutine tweights
+*/
 
-
+/*
 double Occupy::wsweight(const ModuleBase::Vector3<double> &r, ModuleBase::Vector3<double> *rws,const int nrws)
 {
     //============================================================
@@ -772,7 +773,9 @@ double Occupy::wsweight(const ModuleBase::Vector3<double> &r, ModuleBase::Vector
 
     return wswe;
 } // end function wsweight
+*/
 
+/*
 void Occupy::efermit(double** ekb,const int nband,const int nks,const double &nelec,const int nspin,
                      const int ntetra,const ModuleBase::matrix &tetra, double &ef)
 {
@@ -877,8 +880,9 @@ void Occupy::efermit(double** ekb,const int nband,const int nks,const double &ne
     }
     return;
 } // end subroutine efermit
+*/
 
-
+/*
 double Occupy::sumkt(double** ekb,const int nband,const int nks,const int nspin,const int ntetra,
                      const ModuleBase::matrix &tetra,const double &e)
 {
@@ -954,7 +958,9 @@ double Occupy::sumkt(double** ekb,const int nband,const int nks,const int nspin,
     sum *= 2.0 / nspin;
     return sum;
 } // end function sumkt
+*/
 
+/*
 void Occupy::piksort(const int n, double *a)
 {
     int i;
@@ -979,3 +985,4 @@ void Occupy::piksort(const int n, double *a)
     }
     return;
 } //end subroutine piksort
+*/

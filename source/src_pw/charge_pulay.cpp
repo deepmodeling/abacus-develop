@@ -25,7 +25,7 @@ void Charge_Mixing::Pulay_mixing(Charge* chr)
 	// calculate "dR^{i} = R^{i+1} - R^{i}"
 	// calculate "drho^{i} = rho^{i+1} - rho^{i}"
 	//----------------------------------------------
-	this->generate_datas(irstep, idstep, totstep, chr->rho, chr->rho_save);
+	this->generate_datas(irstep, idstep, totstep, chr);
 
 	// not enough steps, not full matrix.
 	if(totstep < dstep) 
@@ -72,7 +72,7 @@ void Charge_Mixing::Pulay_mixing(Charge* chr)
 
 			for(int is=0; is<GlobalV::NSPIN; is++)
 			{
-				this->generate_new_rho(is,irstep,chr->rho,chr->rho_save);
+				this->generate_new_rho(is,irstep,chr);
 			}
 		}
 
@@ -104,7 +104,7 @@ void Charge_Mixing::Pulay_mixing(Charge* chr)
 
 		for(int is=0; is<GlobalV::NSPIN; is++)
 		{
-			this->generate_new_rho(is,irstep,chr->rho,chr->rho_save);
+			this->generate_new_rho(is,irstep,chr);
 		}
 
 		++irstep;
@@ -175,6 +175,44 @@ void Charge_Mixing::allocate_Pulay()
     	ModuleBase::Memory::record("Charge_Mixing","drho", GlobalV::NSPIN*dstep*GlobalC::rhopw->nrxx,"double");
     	ModuleBase::Memory::record("Charge_Mixing","rho_save2", GlobalV::NSPIN*GlobalC::rhopw->nrxx,"double");
 
+		if ((XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5) && mixing_tau)
+		{
+			this->Rtau = new double**[GlobalV::NSPIN];
+			for (int is=0; is<GlobalV::NSPIN; is++)
+			{
+				Rtau[is] = new double*[rstep];
+				for (int i=0; i<rstep; i++)
+				{
+					Rtau[is][i] = new double[GlobalC::rhopw->nrxx];
+					ModuleBase::GlobalFunc::ZEROS( Rtau[is][i], GlobalC::rhopw->nrxx );
+				}
+			}
+			ModuleBase::Memory::record("Charge_Mixing","Rtau", GlobalV::NSPIN*rstep*GlobalC::rhopw->nrxx,"double");
+
+			this->dRtau = new double**[GlobalV::NSPIN];
+			this->dtau = new double**[GlobalV::NSPIN];
+			this->tau_save2 = new double*[GlobalV::NSPIN];
+
+			for (int is=0; is<GlobalV::NSPIN; is++)
+			{
+				dRtau[is] = new double*[dstep];
+				dtau[is] = new double*[dstep];
+				tau_save2[is] = new double[GlobalC::rhopw->nrxx];
+				ModuleBase::GlobalFunc::ZEROS( tau_save2[is], GlobalC::rhopw->nrxx);
+
+				for (int i=0; i<dstep; i++)
+				{
+					dRtau[is][i] = new double[GlobalC::rhopw->nrxx];	
+					dtau[is][i] = new double[GlobalC::rhopw->nrxx];
+					ModuleBase::GlobalFunc::ZEROS( dRtau[is][i], GlobalC::rhopw->nrxx );
+					ModuleBase::GlobalFunc::ZEROS( dtau[is][i], GlobalC::rhopw->nrxx);
+				}
+			}
+			ModuleBase::Memory::record("Charge_Mixing","dRtau", GlobalV::NSPIN*dstep*GlobalC::rhopw->nrxx,"double");
+			ModuleBase::Memory::record("Charge_Mixing","dtau", GlobalV::NSPIN*dstep*GlobalC::rhopw->nrxx,"double");
+			ModuleBase::Memory::record("Charge_Mixing","tau_save2", GlobalV::NSPIN*GlobalC::rhopw->nrxx,"double");			
+		}
+
 		ModuleBase::GlobalFunc::NOTE("Allocate Abar = <dRrho_j | dRrho_i >, dimension = dstep.");
 		this->Abar.create(dstep, dstep);
 		ModuleBase::Memory::record("Charge_Mixing","Abar", dstep*dstep,"double");
@@ -211,6 +249,27 @@ void Charge_Mixing::allocate_Pulay()
 				ModuleBase::GlobalFunc::ZEROS( dRrho[i][j], GlobalC::rhopw->nrxx );
 				ModuleBase::GlobalFunc::ZEROS( drho[i][j], GlobalC::rhopw->nrxx);
 			}
+		}
+
+		if ((XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5) && mixing_tau)
+		{
+			for(int i=0; i<GlobalV::NSPIN; i++)
+			{
+				for(int j=0; j<rstep; j++)
+				{
+					ModuleBase::GlobalFunc::ZEROS(Rtau[i][j], GlobalC::rhopw->nrxx);
+				}
+			}
+			
+			for(int i=0; i<GlobalV::NSPIN; i++)
+			{
+				ModuleBase::GlobalFunc::ZEROS(tau_save2[i], GlobalC::rhopw->nrxx);
+				for(int j=0; j<dstep; j++)
+				{
+					ModuleBase::GlobalFunc::ZEROS( dRtau[i][j], GlobalC::rhopw->nrxx );
+					ModuleBase::GlobalFunc::ZEROS( dtau[i][j], GlobalC::rhopw->nrxx);
+				}
+			}			
 		}
 
 		ModuleBase::GlobalFunc::ZEROS(dRR, dstep);
@@ -256,6 +315,38 @@ void Charge_Mixing::deallocate_Pulay()
 		delete[] rho_save2[is];
 	}
 	delete[] rho_save2;	
+
+	if ((XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5) && mixing_tau)
+	{
+		for (int is=0; is<GlobalV::NSPIN; is++)
+		{
+			for (int i=0; i<rstep; i++)
+			{
+				delete[] Rtau[is][i];
+			}
+			delete[] Rtau[is];
+		}
+		delete[] Rtau;
+
+		for (int is=0; is<GlobalV::NSPIN; is++)
+		{
+			for (int i=0; i<dstep; i++)
+			{
+				delete[] dRtau[is][i];
+				delete[] dtau[is][i];
+			}
+			delete[] dRtau[is];
+			delete[] dtau[is];
+		}
+		delete[] dRtau;
+		delete[] dtau;
+
+		for (int is=0; is<GlobalV::NSPIN; is++)
+		{
+			delete[] tau_save2[is];
+		}
+		delete[] tau_save2;	
+	}
 }
 
 // calculate < dR | dR >
@@ -276,6 +367,10 @@ void Charge_Mixing::generate_Abar(ModuleBase::matrix &A)const
 			for(int j=0; j<=i; j++)
 			{
 				A(i,j) += this->calculate_residual_norm( this->dRrho[is][j], this->dRrho[is][i] );
+				if ((XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5) && mixing_tau)
+				{
+					A(i,j) += this->calculate_residual_norm( this->dRtau[is][j], this->dRtau[is][i] );
+				}
 				A(j,i) = A(i,j);
 			}
 		}
@@ -351,7 +446,11 @@ void Charge_Mixing::generate_dRR(const int &m)
 	{
 		for(int i=0; i<dstep; i++)
 		{
-			this->dRR[i] += this->calculate_residual_norm(this->dRrho[is][i], this->Rrho[is][m]);	
+			this->dRR[i] += this->calculate_residual_norm(this->dRrho[is][i], this->Rrho[is][m]);
+			if ((XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5) && mixing_tau)
+			{
+				this->dRR[i] += this->calculate_residual_norm(this->dRtau[is][i], this->Rtau[is][m]);
+			}
 		}
 	}
 
@@ -361,8 +460,6 @@ void Charge_Mixing::generate_dRR(const int &m)
 // use dstep to genearte Abar(dstep, dstep)
 void Charge_Mixing::generate_alpha()
 {
-//	ModuleBase::TITLE("Charge_Mixing","generate_alpha");
-
 	ModuleBase::GlobalFunc::ZEROS(alpha, dstep);
 	for(int i=0; i<dstep; i++)
 	{
@@ -376,10 +473,8 @@ void Charge_Mixing::generate_alpha()
 	return;
 }
 
-void Charge_Mixing::generate_new_rho(const int &is, const int &m, double** rho, double** rho_save)
-{
-//	ModuleBase::TITLE("Charge_Mixing","generate_new_rho");
-	
+void Charge_Mixing::generate_new_rho(const int &is, const int &m, Charge* chr)
+{	
 	double mixp = this->mixing_beta;
 	
 	// rho tmp
@@ -388,14 +483,31 @@ void Charge_Mixing::generate_new_rho(const int &is, const int &m, double** rho, 
 	
 	for(int ir=0; ir<GlobalC::rhopw->nrxx; ir++)
 	{
-		rhonew[ir] = rho_save[is][ir] + mixp * this->Rrho[is][m][ir];
+		rhonew[ir] = chr->rho_save[is][ir] + mixp * this->Rrho[is][m][ir];
 		for(int i=0; i<dstep; i++)
 		{
 			rhonew[ir] += this->alpha[i] * ( this->drho[is][i][ir] + mixp * this->dRrho[is][i][ir] );
 		}
 	}
 
-	ModuleBase::GlobalFunc::DCOPY(rhonew, rho[is], GlobalC::rhopw->nrxx);
+	ModuleBase::GlobalFunc::DCOPY(rhonew, chr->rho[is], GlobalC::rhopw->nrxx);
+
+	if ((XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5) && mixing_tau)
+	{
+		ModuleBase::GlobalFunc::ZEROS(rhonew, GlobalC::rhopw->nrxx);
+		
+		for(int ir=0; ir<GlobalC::rhopw->nrxx; ir++)
+		{
+			rhonew[ir] = chr->kin_r_save[is][ir] + mixp * this->Rtau[is][m][ir];
+			for(int i=0; i<dstep; i++)
+			{
+				rhonew[ir] += this->alpha[i] * ( this->dtau[is][i][ir] + mixp * this->dRtau[is][i][ir] );
+			}
+		}
+
+		ModuleBase::GlobalFunc::DCOPY(rhonew, chr->kin_r[is], GlobalC::rhopw->nrxx);
+	}
+
 	delete[] rhonew;
 
 	return;
@@ -426,7 +538,7 @@ double Charge_Mixing::calculate_residual_norm(double *residual1, double* residua
 
 // calculate "dR^{i} = R^{i+1} - R^{i}"
 // calculate "drho^{i} = rho^{i+1} - rho^{i}"
-void Charge_Mixing::generate_datas(const int &irstep, const int &idstep, const int &totstep, double** rho, double** rho_save)
+void Charge_Mixing::generate_datas(const int &irstep, const int &idstep, const int &totstep, Charge* chr)
 {
 	//===============================================
 	// calculate the important "Rrho".
@@ -437,7 +549,14 @@ void Charge_Mixing::generate_datas(const int &irstep, const int &idstep, const i
 	ModuleBase::GlobalFunc::NOTE("Generate Residual std::vector from rho and rho_save.");
     for (int is=0; is<GlobalV::NSPIN; is++)
     {
-		this->generate_residual_vector( this->Rrho[is][irstep], rho[is], rho_save[is]);
+		this->generate_residual_vector( this->Rrho[is][irstep], chr->rho[is], chr->rho_save[is]);
+		if ((XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5) && mixing_tau)
+		{
+			this->generate_residual_vector( this->Rtau[is][irstep], chr->kin_r[is], chr->kin_r_save[is]);
+		}
+
+		// Note: there is no kerker modification for tau because I'm not sure
+		// if we should have it. If necessary we can try it in the future.
 
 		if(this->mixing_gg0 > 0.0)
 		{
@@ -488,8 +607,20 @@ void Charge_Mixing::generate_datas(const int &irstep, const int &idstep, const i
 			for (int ir=0; ir<GlobalC::rhopw->nrxx; ir++)
 			{
 				this->dRrho[is][idstep][ir] = this->Rrho[is][nowR][ir] - this->Rrho[is][lastR][ir];
-				this->drho[is][idstep][ir] = rho_save[is][ir] - this->rho_save2[is][ir];
+				this->drho[is][idstep][ir] = chr->rho_save[is][ir] - this->rho_save2[is][ir];
 			}
+		}
+
+		if ((XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5) && mixing_tau)
+		{
+			for (int is=0; is<GlobalV::NSPIN; is++)
+			{
+				for (int ir=0; ir<GlobalC::rhopw->nrxx; ir++)
+				{
+					this->dRtau[is][idstep][ir] = this->Rtau[is][nowR][ir] - this->Rtau[is][lastR][ir];
+					this->dtau[is][idstep][ir] = chr->kin_r_save[is][ir] - this->tau_save2[is][ir];
+				}
+			}			
 		}
 	}
 
@@ -499,7 +630,15 @@ void Charge_Mixing::generate_datas(const int &irstep, const int &idstep, const i
 	ModuleBase::GlobalFunc::NOTE("Calculate drho = rho_{in}^{i+1} - rho_{in}^{i}");
 	for(int is=0; is<GlobalV::NSPIN; is++)
 	{
-		ModuleBase::GlobalFunc::DCOPY(rho_save[is], this->rho_save2[is], GlobalC::rhopw->nrxx);
+		ModuleBase::GlobalFunc::DCOPY(chr->rho_save[is], this->rho_save2[is], GlobalC::rhopw->nrxx);
+	}
+
+	if ((XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5) && mixing_tau)
+	{
+		for(int is=0; is<GlobalV::NSPIN; is++)
+		{
+			ModuleBase::GlobalFunc::DCOPY(chr->kin_r_save[is], this->tau_save2[is], GlobalC::rhopw->nrxx);
+		}		
 	}
 	return;
 }

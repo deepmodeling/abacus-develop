@@ -278,7 +278,7 @@ void Stress_Func<FPTYPE, Device>::stress_nl(ModuleBase::matrix& sigma, const Mod
 		}
 	}
 	//do symmetry
-	if(ModuleSymmetry::Symmetry::symm_flag)
+	if(ModuleSymmetry::Symmetry::symm_flag == 1)
 	{
 		GlobalC::symm.stress_symmetry(sigma, GlobalC::ucell);
 	}//end symmetry

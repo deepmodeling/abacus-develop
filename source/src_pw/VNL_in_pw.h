@@ -14,6 +14,7 @@
 #include "../module_cell/unitcell.h"
 #include "src_pw/forces.h"
 #include "src_pw/stress_func.h"
+#include "module_psi/psi.h"
 
 //==========================================================
 // Calculate the non-local pseudopotential in reciprocal
@@ -114,6 +115,8 @@ public:
 	#endif
 private:
 	bool getvkb = false;
+    psi::DEVICE_CPU * cpu_ctx = {};
+    psi::DEVICE_GPU * gpu_ctx = {};
 };
 
 #endif // VNL_IN_PW

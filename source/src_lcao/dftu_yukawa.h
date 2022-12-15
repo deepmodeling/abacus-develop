@@ -37,7 +37,7 @@ public:
     double *U;           //U (Hubbard parameter U)
     double *J;           //J (Hund parameter J)
     int *orbital_corr;   //
-    bool omc;
+    int omc;
     int dftu_type;
     int double_counting;
 

@@ -85,14 +85,14 @@ void DFTU::init(
 	const int nlocal = GlobalV::NLOCAL; // number of total local orbitals
 	const int nks = GlobalC::kv.nks; // number of k-points
 	const int nspin = GlobalV::NSPIN; // number of spins
-	
-	
 
 	if(dftu_type==1 && double_counting==1) cal_type = 1;
 	else if(dftu_type==1 && double_counting==2) cal_type = 2;
 	else if(dftu_type==2 && double_counting==1) cal_type = 3;
 	else if(dftu_type==2 && double_counting==2) cal_type = 4;
 	else ModuleBase::WARNING_QUIT("DFT+U", "Wrong parameter");
+
+	if(cal_type!=3)  ModuleBase::WARNING_QUIT("DFT+U", "Not available yet!");
 		
 	this->EU = 0.0;
 
@@ -247,28 +247,68 @@ void DFTU::init(
 		}
  	}
 
-	if(GlobalV::CALCULATION=="nscf" || GlobalV::init_chg == "file")
+	if(omc!=0) 
 	{
 		std::stringstream sst; 
-		sst << GlobalV::global_out_dir << "onsite.dm"; 
+		sst << "initial_onsite.dm"; 
 		this->read_occup_m( sst.str() );
-		this->local_occup_bcast();		
+#ifdef __MPI
+		this->local_occup_bcast();
+#endif
+
+		initialed_locale = true;
+		this->copy_locale();
 	}
 	else
 	{
-		if(omc) 
+		if(GlobalV::init_chg == "file")
 		{
 			std::stringstream sst; 
-			sst << "initial_onsite.dm"; 
+			sst << GlobalV::global_out_dir << "onsite.dm"; 
 			this->read_occup_m( sst.str() );
+#ifdef __MPI
 			this->local_occup_bcast();
+#endif
+			initialed_locale = true;
 		}
 	}
 	
 	ModuleBase::Memory::record("DFTU","locale",num_locale,"double");
-
-  //GlobalV::ofs_running << "GlobalC::dftu.cpp "<< __LINE__ << std::endl;
     return;
+}
+
+void DFTU::copy_locale()
+{
+	ModuleBase::TITLE("DFTU", "copy_locale");
+	ModuleBase::timer::tick("DFTU", "copy_locale");
+	for(int T=0; T<GlobalC::ucell.ntype; T++)
+	{
+		if(orbital_corr[T]==-1) continue;
+
+		for(int I=0; I<GlobalC::ucell.atoms[T].na; I++)
+		{
+			const int iat = GlobalC::ucell.itia2iat(T, I);
+			
+			for(int l=0; l<GlobalC::ucell.atoms[T].nwl+1; l++)
+			{
+				const int N = GlobalC::ucell.atoms[T].l_nchi[l];
+
+				for(int n=0; n<N; n++)
+				{						
+					if(GlobalV::NSPIN==4)
+					{
+						locale_save[iat][l][n][0] = locale[iat][l][n][0];
+					}
+					else if(GlobalV::NSPIN==1 || GlobalV::NSPIN==2)
+					{
+						locale_save[iat][l][n][0] = locale[iat][l][n][0];
+						locale_save[iat][l][n][1] = locale[iat][l][n][1];
+					}
+				}
+			}			
+		}
+	}
+	ModuleBase::timer::tick("DFTU", "copy_locale");
 }
 
 void DFTU::cal_occup_m_k(const int iter,  std::vector<ModuleBase::ComplexMatrix> &dm_k)
@@ -279,8 +319,6 @@ void DFTU::cal_occup_m_k(const int iter,  std::vector<ModuleBase::ComplexMatrix>
 	for(int T=0; T<GlobalC::ucell.ntype; T++)
 	{
 		if(orbital_corr[T]==-1) continue;
-
-		//const int LC = orbital_corr[T];
 		
 		for(int I=0; I<GlobalC::ucell.atoms[T].na; I++)
 		{
@@ -347,14 +385,6 @@ void DFTU::cal_occup_m_k(const int iter,  std::vector<ModuleBase::ComplexMatrix>
 
 		  	for(int l=0; l<NL; l++)
 		  	{				
-		  		// if(Yukawa)
-		  		// {
-		  			// if(l<orbital_corr[it]) continue;
-		  		// }
-		  		// else
-		  		// {
-		  			// if(l!=orbital_corr[it]) continue;
-		  		// }
 		  		if(l!=orbital_corr[it]) continue;
 
 		  		const int N = GlobalC::ucell.atoms[it].l_nchi[l];
@@ -416,14 +446,6 @@ void DFTU::cal_occup_m_k(const int iter,  std::vector<ModuleBase::ComplexMatrix>
 
 			for(int l=0; l<NL; l++)
 			{				
-				// if(Yukawa)
-				// {
-					// if(l<orbital_corr[it]) continue;
-				// }
-				// else
-				// {
-					// if(l!=orbital_corr[it]) continue;
-				// }
 				if(l!=orbital_corr[it]) continue;
 
 	  			const int N = GlobalC::ucell.atoms[it].l_nchi[l];
@@ -476,17 +498,11 @@ void DFTU::cal_occup_m_k(const int iter,  std::vector<ModuleBase::ComplexMatrix>
 						exit(0);			
 					}
 				}//end n
-	  		// this->print(it, iat, l, N, iter);
 	  		}//end l
 	  	}//end ia
 	}//end it
 
-	if(!this->initialed_locale)
-	{
-		this->initialed_locale = true;
-	}
-
-	//GlobalV::ofs_running << "GlobalC::dftu.cpp "<< __LINE__  << std::endl;
+	this->initialed_locale = true;
 
 	ModuleBase::timer::tick("DFTU", "cal_occup_m_k");
 	return;
@@ -551,21 +567,12 @@ void DFTU::cal_occup_m_gamma(const int iter,  std::vector<ModuleBase::matrix> &d
 
 	  		for(int l=0; l<NL; l++)
 	  		{				
-	  			// if(Yukawa)
-	  			// {
-	  				// if(l<orbital_corr[it]) continue;
-	  			// }
-	  			// else
-	  			// {
-	  				// if(l!=orbital_corr[it]) continue;
-	  			// }
 	  			if(l!=orbital_corr[it]) continue;
 
 	  			const int N = GlobalC::ucell.atoms[it].l_nchi[l];
 
 	  			for(int n=0; n<N; n++)
 	  			{
-	  			 	// if(!Yukawa && n!=0) continue;
 	  				if(n!=0) continue;
 
 	  				//Calculate the local occupation number matrix			
@@ -610,18 +617,18 @@ void DFTU::cal_occup_m_gamma(const int iter,  std::vector<ModuleBase::matrix> &d
 
 	  				ModuleBase::matrix temp(locale[iat][l][n][is]);
 					
-				#ifdef __MPI
+#ifdef __MPI
 	  				MPI_Allreduce( &temp(0,0), &locale[iat][l][n][is](0,0), (2*l+1)*GlobalV::NPOL*(2*l+1)*GlobalV::NPOL,
 	  								      MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
-				#endif
+#endif
 
 	  				// for the case spin independent calculation
 	  				switch(GlobalV::NSPIN)
 	  				{
 	  				  case 1:	
 	  				  	locale[iat][l][n][0] += transpose(locale[iat][l][n][0]);
-                locale[iat][l][n][0] *= 0.5;
-                locale[iat][l][n][1] += locale[iat][l][n][0];
+						locale[iat][l][n][0] *= 0.5;
+						locale[iat][l][n][1] += locale[iat][l][n][0];
 	  				  	break;
 
 	  				  case 2:
@@ -641,38 +648,8 @@ void DFTU::cal_occup_m_gamma(const int iter,  std::vector<ModuleBase::matrix> &d
 
 	}//is
 
-	//test the sum rule of srho
-	/*
-	double elec_tot = 0.0;
-	double Nele = 0.0; 
-	for(int is=0; is<GlobalV::NSPIN; is++)
-	{
-		for(int ir=0; ir<this->LM->ParaV->nrow; ir++)
-		{
-			for(int ic=0; ic<this->LM->ParaV->ncol; ic++)
-			{
-				int row = this->LM->ParaV->MatrixInfo.row_set[ir];
-				int col = this->LM->ParaV->MatrixInfo.col_set[ic];
+	this->initialed_locale = true;
 
-				if(row==col) elec_tot += srho.at(is).at(ic*this->LM->ParaV->nrow + ir);
-			}
-		}
-	}	
-	MPI_Allreduce(&elec_tot, &Nele, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-
-	if(GlobalV::MY_RANK==0)
-	{
-		std::ofstream ofs_elec("nelec.dat", ios_base::app);
-		ofs_elec << "Total number of electrons of the system " << Nele << std::endl;
-	}
-	*/
-
-	if(!this->initialed_locale)
-	{
-		this->initialed_locale = true;
-	}
-
-	//ofs_running << "GlobalC::dftu.cpp "<< __LINE__  << std::endl;
 	ModuleBase::timer::tick("DFTU", "cal_occup_m_gamma");
 	return;
 }
@@ -704,14 +681,6 @@ void DFTU::write_occup_m(const std::string &fn)
 
 			for(int l=0; l<NL; l++)
 			{
-				// if(Yukawa)
-				// {
-					// if(l<orbital_corr[T]) continue;
-				// }
-				// else
-				// {
-					// if(l!=orbital_corr[T]) continue;
-				// }
 				if(l!=orbital_corr[T]) continue;
 				
 				const int N = GlobalC::ucell.atoms[T].l_nchi[l];
@@ -777,15 +746,15 @@ void DFTU::read_occup_m(const std::string &fn)
 
 	if (!ifdftu) 
 	{
-		if(GlobalV::CALCULATION=="nscf") 
+		if(omc>0) 
 		{
-			std::cout << "DFTU::read_occup_m. Can not find the file onsite.dm . Please do scf calculation first" << std::endl;
+			std::cout << "DFTU::read_occup_m. Can not find the file initial_onsite.dm . Please check your initial_onsite.dm" << std::endl;
 		}
 		else
 		{
-			if(omc) 
+			if(GlobalV::init_chg == "file") 
 			{
-				std::cout << "DFTU::read_occup_m. Can not find the file initial_onsite.dm . Please check your initial_onsite.dm" << std::endl;
+				std::cout << "DFTU::read_occup_m. Can not find the file onsite.dm . Please do scf calculation first" << std::endl;
 			}
 		}
 		exit(0);
@@ -816,14 +785,6 @@ void DFTU::read_occup_m(const std::string &fn)
 	
 			for(int l=0; l<NL; l++)			
 			{
-				// if(Yukawa)
-				// {
-					// if(l<orbital_corr[T]) continue;
-				// }
-				// else
-				// {
-					// if(l!=orbital_corr[T]) continue;
-				// }
 				if(l!=orbital_corr[T]) continue;
 
 				ifdftu >> word;
@@ -942,22 +903,13 @@ void DFTU::local_occup_bcast()
 
 			for(int l=0; l<=GlobalC::ucell.atoms[T].nwl; l++)
 			{
-				// if(Yukawa)
-				// {
-					// if(l<orbital_corr[T]) continue;
-				// }
-				// else
-				// {
-					// if(l!=orbital_corr[T]) continue;
-				// }
 				if(l!=orbital_corr[T]) continue;
 
 				for(int n=0; n<GlobalC::ucell.atoms[T].l_nchi[l]; n++)
 				{
 					// if(!Yukawa && n!=0) continue;
 					if(n!=0) continue;
-
-				#ifdef __MPI				
+				
 					if(GlobalV::NSPIN==1 || GlobalV::NSPIN==2)
 					{
 						for(int spin=0; spin<2; spin++)
@@ -990,8 +942,7 @@ void DFTU::local_occup_bcast()
 								}
 							}											
 						}
-					}		
-				#endif			
+					}				
 				}
 			}
 		}
@@ -1003,7 +954,7 @@ void DFTU::cal_energy_correction(const int istep)
 {
 	ModuleBase::TITLE("DFTU", "cal_energy_correction");
 	ModuleBase::timer::tick("DFTU", "cal_energy_correction");
-	if((GlobalV::CALCULATION=="scf" || GlobalV::CALCULATION=="relax" || GlobalV::CALCULATION=="cell-relax") && (!omc) && istep==0 && this->iter_dftu==1 && GlobalV::init_chg != "file")
+	if(!initialed_locale)
 	{
 		ModuleBase::timer::tick("DFTU", "cal_energy_correction"); 
 		return;
@@ -1024,11 +975,6 @@ void DFTU::cal_energy_correction(const int istep)
 
 			for(int l=0; l<NL; l++)
 			{
-				// if(Yukawa)
-				// {
-					// if(l<orbital_corr[T]) continue;
-				// }	
-				// else if(l!=orbital_corr[T]) continue;
 				if(l!=orbital_corr[T]) continue;
 
 				const int N = GlobalC::ucell.atoms[T].l_nchi[l];
@@ -1038,69 +984,52 @@ void DFTU::cal_energy_correction(const int istep)
 				//part 1: calculate the DFT+U energy correction
 				for(int n=0; n<N; n++)
 				{
-				 	// if(!Yukawa && n!=0) continue;
 					if(n!=0) continue;
 
-					if(cal_type==1) //rotationally invarient formalism and FLL double counting; Not available at present
+					if(GlobalV::NSPIN==1 || GlobalV::NSPIN==2)
 					{
-
-					}
-					else if(cal_type==2) //rotationally invarient formalism and AMF double counting; Not available at present
-					{
-
-					}
-					else if(cal_type==3) //simplified formalism and FLL double counting
-					{	
-						if(GlobalV::NSPIN==1 || GlobalV::NSPIN==2)
-						{
-							for(int spin=0; spin<2; spin++)
-							{
-								double nm_trace = 0.0;
-								double nm2_trace = 0.0;
-
-								for(int m0=0; m0<2*l+1; m0++)
-								{
-								 	nm_trace += this->locale.at(iat).at(l).at(n).at(spin)(m0, m0);
-									for(int m1=0; m1<2*l+1; m1++)
-									{
-										nm2_trace += this->locale.at(iat).at(l).at(n).at(spin)(m0,m1)*this->locale.at(iat).at(l).at(n).at(spin)(m1,m0);
-									}
-								}
-								if(Yukawa) this->EU += 0.5*(this->U_Yukawa.at(T).at(l).at(n) - this->J_Yukawa.at(T).at(l).at(n))*(nm_trace - nm2_trace);
-								else this->EU += 0.5*(this->U[T] - this->J[T])*(nm_trace - nm2_trace);	
-							}
-						}
-						else if(GlobalV::NSPIN==4) //SOC
+						for(int spin=0; spin<2; spin++)
 						{
 							double nm_trace = 0.0;
 							double nm2_trace = 0.0;
 
 							for(int m0=0; m0<2*l+1; m0++)
 							{
-								for(int ipol0=0; ipol0<GlobalV::NPOL; ipol0++)
+								nm_trace += this->locale.at(iat).at(l).at(n).at(spin)(m0, m0);
+								for(int m1=0; m1<2*l+1; m1++)
 								{
-							 		const int m0_all = m0 + (2*l+1)*ipol0;
-									nm_trace += this->locale.at(iat).at(l).at(n).at(0)(m0_all, m0_all);
-
-									for(int m1=0; m1<2*l+1; m1++)
-									{
-										for(int ipol1=0; ipol1<GlobalV::NPOL; ipol1++)
-										{
-											int m1_all = m1 + (2*l+1)*ipol1;
-
-											nm2_trace += this->locale.at(iat).at(l).at(n).at(0)(m0_all,m1_all)*this->locale.at(iat).at(l).at(n).at(0)(m1_all, m0_all);
-										}
-									}
+									nm2_trace += this->locale.at(iat).at(l).at(n).at(spin)(m0,m1)*this->locale.at(iat).at(l).at(n).at(spin)(m1,m0);
 								}
 							}
 							if(Yukawa) this->EU += 0.5*(this->U_Yukawa.at(T).at(l).at(n) - this->J_Yukawa.at(T).at(l).at(n))*(nm_trace - nm2_trace);
-							else this->EU += 0.5*(this->U[T] - this->J[T])*(nm_trace - nm2_trace);
+							else this->EU += 0.5*(this->U[T] - this->J[T])*(nm_trace - nm2_trace);	
 						}
-						
 					}
-					else if(cal_type==4) //simplified formalism and AMF double counting; ot available at present
+					else if(GlobalV::NSPIN==4) //SOC
 					{
+						double nm_trace = 0.0;
+						double nm2_trace = 0.0;
 
+						for(int m0=0; m0<2*l+1; m0++)
+						{
+							for(int ipol0=0; ipol0<GlobalV::NPOL; ipol0++)
+							{
+								const int m0_all = m0 + (2*l+1)*ipol0;
+								nm_trace += this->locale.at(iat).at(l).at(n).at(0)(m0_all, m0_all);
+
+								for(int m1=0; m1<2*l+1; m1++)
+								{
+									for(int ipol1=0; ipol1<GlobalV::NPOL; ipol1++)
+									{
+										int m1_all = m1 + (2*l+1)*ipol1;
+
+										nm2_trace += this->locale.at(iat).at(l).at(n).at(0)(m0_all,m1_all)*this->locale.at(iat).at(l).at(n).at(0)(m1_all, m0_all);
+									}
+								}
+							}
+						}
+						if(Yukawa) this->EU += 0.5*(this->U_Yukawa.at(T).at(l).at(n) - this->J_Yukawa.at(T).at(l).at(n))*(nm_trace - nm2_trace);
+						else this->EU += 0.5*(this->U[T] - this->J[T])*(nm_trace - nm2_trace);
 					}
 
 					//calculate the double counting term included in eband													
@@ -1120,14 +1049,14 @@ void DFTU::cal_energy_correction(const int istep)
 										for(int is=0; is<2; is++)
 										{
 											double VU = 0.0;
-											VU = get_onebody_eff_pot(T, iat, l, n, is, m1_all, m2_all, cal_type, 0);
+											VU = get_onebody_eff_pot(T, iat, l, n, is, m1_all, m2_all, 0);
 											EU_dc += VU*this->locale.at(iat).at(l).at(n).at(is)(m1_all,m2_all);
 										}
 									}	
 									else if(GlobalV::NSPIN==4) //SOC
 									{										
 										double VU = 0.0;
-										VU = get_onebody_eff_pot(T, iat, l, n, 0, m1_all, m2_all, cal_type, 0);
+										VU = get_onebody_eff_pot(T, iat, l, n, 0, m1_all, m2_all, 0);
 										EU_dc += VU*this->locale.at(iat).at(l).at(n).at(0)(m1_all,m2_all);										
 									}
 								}					
@@ -1139,27 +1068,9 @@ void DFTU::cal_energy_correction(const int istep)
 		}//end I
 	}//end T
 	
-	/*
-	if(GlobalV::MY_RANK==0)
-	{
-		std::ofstream of_eu("energy_correction", ios_base::app);
-		double e=EU*ModuleBase::Ry_to_eV;
-		of_eu << "ITERATION STEP " << std::setw(3) << this->iter_dftu <<"      " << std::setw(15) << e << "ev" << std::endl;
-	}
-	*/
-	
 	//substract the double counting EU_dc included in band energy eband
 	this->EU -= EU_dc;
 
-	/*
-	if(GlobalV::MY_RANK==0)
-	{
-		std::ofstream of_en("energy_correction.dat",ios_base::app);
-		double val = this->EU*ModuleBase::Ry_to_eV;
-
-		of_en << fixed << std::setprecision(8) << val << "eV" << std::endl;
-	}
-	*/
 	ModuleBase::timer::tick("DFTU", "cal_energy_correction");
 	return;
 }
@@ -1168,7 +1079,7 @@ void DFTU::cal_eff_pot_mat_complex(const int ik, std::complex<double>* eff_pot)
 {
 	ModuleBase::TITLE("DFTU", "cal_eff_pot_mat");
 	ModuleBase::timer::tick("DFTU", "cal_eff_pot_mat");
- 	if(!this->initialed_locale && GlobalV::init_chg != "file")
+ 	if(!this->initialed_locale)
 	{
 		ModuleBase::timer::tick("DFTU", "cal_eff_pot_mat");
 		return;
@@ -1178,7 +1089,6 @@ void DFTU::cal_eff_pot_mat_complex(const int ik, std::complex<double>* eff_pot)
 
 	ModuleBase::GlobalFunc::ZEROS(eff_pot, this->LM->ParaV->nloc);
 
-	//GlobalV::ofs_running << "GlobalC::dftu.cpp "<< __LINE__  << std::endl;
 	//=============================================================
 	//   PART2: call pblas to calculate effective potential matrix
 	//=============================================================
@@ -1201,8 +1111,6 @@ void DFTU::cal_eff_pot_mat_complex(const int ik, std::complex<double>* eff_pot)
 
   	for(int irc=0; irc<this->LM->ParaV->nloc; irc++)
     VU[irc] = eff_pot[irc];
-  
-  	//pztranc(m, n, alpha, a, ia, ja, desca, beta, c, ic, jc, descc)
 
 #ifdef __MPI
   	pztranc_(&GlobalV::NLOCAL, &GlobalV::NLOCAL, 
@@ -1212,46 +1120,6 @@ void DFTU::cal_eff_pot_mat_complex(const int ik, std::complex<double>* eff_pot)
 		eff_pot, &one_int, &one_int, this->LM->ParaV->desc);
 #endif
 
-	//code for testing whther the effective potential is Hermitian
-	/*
-	bool pot_Hermitian = true;
-	if(GAMMA_ONLY_LOCAL)
-	{
-		for(int i=0; i<NLOCAL; i++)
-		{
-			for(int j=0; j<NLOCAL; j++)
-			{
-				int iic = i*NLOCAL + j;
-				int jjc = j*NLOCAL + i;
-				double tmp = pot_eff_gamma.at(spin).at(iic) - pot_eff_gamma.at(spin).at(jjc);
-				if(tmp>1.0e-9) pot_Hermitian = false;
-			}
-		}
-	}
-	else
-	{
-		for(int i=0; i<NLOCAL; i++)
-		{
-			for(int j=i; j<NLOCAL; j++)
-			{
-				int iic = i*NLOCAL + j;
-				int jjc = j*NLOCAL + i;
-				std::complex<double> tmp = pot_eff_k.at(ik).at(iic) - conj(pot_eff_k.at(ik).at(jjc));
-				double tmp_norm = sqrt(std::norm(tmp));
-				if(tmp_norm>1.0e-9) pot_Hermitian = false;
-			}
-		}
-	}
-
-
-	if(MY_RANK==0)
-	{
-		std::ofstream of_potH("Hermitian_pot.dat",ios_base::app);
-		of_potH << "Hermitian  " << pot_Hermitian << std::endl;
-	}
-	*/
-
-	//ofs_running << "GlobalC::dftu.cpp "<< __LINE__  << std::endl;
 	ModuleBase::timer::tick("DFTU", "cal_eff_pot_mat");
 	return;	
 }
@@ -1260,7 +1128,7 @@ void DFTU::cal_eff_pot_mat_real(const int ik, double* eff_pot)
 {
 	ModuleBase::TITLE("DFTU", "cal_eff_pot_mat");
 	ModuleBase::timer::tick("DFTU", "cal_eff_pot_mat");
- 	if(!this->initialed_locale && GlobalV::init_chg != "file")
+ 	if(!this->initialed_locale)
 	{
 		ModuleBase::timer::tick("DFTU", "cal_eff_pot_mat");
 		return;
@@ -1270,7 +1138,6 @@ void DFTU::cal_eff_pot_mat_real(const int ik, double* eff_pot)
 
 	ModuleBase::GlobalFunc::ZEROS(eff_pot, this->LM->ParaV->nloc);
 
-	//ofs_running << "GlobalC::dftu.cpp "<< __LINE__  << std::endl;
 	//=============================================================
 	//   PART2: call pblas to calculate effective potential matrix
 	//=============================================================
@@ -1293,8 +1160,6 @@ void DFTU::cal_eff_pot_mat_real(const int ik, double* eff_pot)
 
   	for(int irc=0; irc<this->LM->ParaV->nloc; irc++)
     	VU[irc] = eff_pot[irc];
-  
-	// pdtran(m, n, alpha, a, ia, ja, desca, beta, c, ic, jc, descc)
 
 #ifdef __MPI
 	pdtran_(&GlobalV::NLOCAL, &GlobalV::NLOCAL, 
@@ -1304,46 +1169,6 @@ void DFTU::cal_eff_pot_mat_real(const int ik, double* eff_pot)
 		eff_pot, &one_int, &one_int, this->LM->ParaV->desc);
 #endif
 
-	//code for testing whther the effective potential is Hermitian
-	/*
-	bool pot_Hermitian = true;
-	if(GlobalV::GAMMA_ONLY_LOCAL)
-	{
-		for(int i=0; i<GlobalV::NLOCAL; i++)
-		{
-			for(int j=0; j<GlobalV::NLOCAL; j++)
-			{
-				int iic = i*GlobalV::NLOCAL + j;
-				int jjc = j*GlobalV::NLOCAL + i;
-				double tmp = pot_eff_gamma.at(spin).at(iic) - pot_eff_gamma.at(spin).at(jjc);
-				if(tmp>1.0e-9) pot_Hermitian = false;
-			}
-		}
-	}
-	else
-	{
-		for(int i=0; i<GlobalV::NLOCAL; i++)
-		{
-			for(int j=i; j<GlobalV::NLOCAL; j++)
-			{
-				int iic = i*GlobalV::NLOCAL + j;
-				int jjc = j*GlobalV::NLOCAL + i;
-				std::complex<double> tmp = pot_eff_k.at(ik).at(iic) - conj(pot_eff_k.at(ik).at(jjc));
-				double tmp_norm = sqrt(std::norm(tmp));
-				if(tmp_norm>1.0e-9) pot_Hermitian = false;
-			}
-		}
-	}
-
-
-	if(GlobalV::MY_RANK==0)
-	{
-		std::ofstream of_potH("Hermitian_pot.dat",ios_base::app);
-		of_potH << "Hermitian  " << pot_Hermitian << std::endl;
-	}
-	*/
-	
-	//ofs_running << "GlobalC::dftu.cpp "<< __LINE__  << std::endl;
 	ModuleBase::timer::tick("DFTU", "cal_eff_pot_mat");
 	return;	
 }
@@ -1406,14 +1231,6 @@ void DFTU::output()
 
 			for(int l=0; l<NL; l++)
 			{
-				// if(Yukawa)
-				// {
-					// if(l<orbital_corr[T]) continue;
-				// }
-				// else
-				// {
-					// if(l!=orbital_corr[T]) continue;
-				// }
 				if(l!=orbital_corr[T]) continue;
 				
 				const int N = GlobalC::ucell.atoms[T].l_nchi[l];

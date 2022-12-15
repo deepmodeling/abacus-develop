@@ -10,9 +10,9 @@
 /**
  * - Tested Functions:
  *   - Heapsort
- *     - heapsort function in mymath3.cpp
+ *     - heapsort function in mymath.cpp
  *   - Hpsort
- *     - hpsort function in mymath3.cpp
+ *     - hpsort function in mymath.cpp
  *
  */
 

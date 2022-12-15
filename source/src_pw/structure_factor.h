@@ -35,5 +35,7 @@ public:
     ModuleBase::ComplexMatrix eigts1; // dimension: [Ucell->nat, 2*this->ncx + 1] 
     ModuleBase::ComplexMatrix eigts2; // dimension: [Ucell->nat, 2*this->ncy + 1] 
     ModuleBase::ComplexMatrix eigts3; // dimension: [Ucell->nat, 2*this->ncz + 1]
+
+    std::complex<double> * d_eigts1 = nullptr, * d_eigts2 = nullptr, * d_eigts3 = nullptr;
 };
 #endif //PlaneWave class

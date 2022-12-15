@@ -87,8 +87,8 @@ void Stress_Func<FPTYPE, Device>::printstress_total(const ModuleBase::matrix& sc
 		std::cout << " " << std::setw(15) << scs(i,0)*unit_transform << std::setw(15)
 			<< scs(i,1)*unit_transform << std::setw(15) << scs(i,2)*unit_transform << std::endl;
 
-		GlobalV::ofs_running << " " << std::setw(15) << scs(i,0)*unit_transform << std::setw(15)
-			<< scs(i,1)*unit_transform << std::setw(15) << scs(i,2)*unit_transform << std::endl;
+		GlobalV::ofs_running << " " << std::setw(23) << scs(i,0)*unit_transform << std::setw(23)
+			<< scs(i,1)*unit_transform << std::setw(23) << scs(i,2)*unit_transform << std::endl;
 
 	}
 	FPTYPE pressure = (scs(0,0)+scs(1,1)+scs(2,2))/3.0*unit_transform;
