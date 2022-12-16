@@ -3229,7 +3229,8 @@ void Input::read_bool(std::ifstream &ifs, bool &var)
     {
         std::string warningstr = "Bad boolean parameter ";
         warningstr.append(str);
-        warningstr.append(", please check the input parameters in file INPUT");ModuleBase::WARNING_QUIT("Input", warningstr); 
+        warningstr.append(", please check the input parameters in file INPUT");
+        ModuleBase::WARNING_QUIT("Input", warningstr); 
     }
     ifs.ignore(150, '\n');
     return;
