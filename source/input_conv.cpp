@@ -417,15 +417,20 @@ void Input_Conv::Convert(void)
         GlobalC::exx_info.info_global.cal_exx = false;
         Exx_Abfs::Jle::generate_matrix = true;
     }
+    else if(INPUT.rpa)
+    {
+        GlobalC::exx_info.info_global.ccp_type = Conv_Coulomb_Pot_K::Ccp_Type::Hf;
+    }
     else
     {
         GlobalC::exx_info.info_global.cal_exx = false;
     }
 
-    if (GlobalC::exx_info.info_global.cal_exx || Exx_Abfs::Jle::generate_matrix)
+    if (GlobalC::exx_info.info_global.cal_exx || Exx_Abfs::Jle::generate_matrix || INPUT.rpa)
     {
         //EXX case, convert all EXX related variables 
-        GlobalC::exx_info.info_global.hybrid_alpha = std::stod(INPUT.exx_hybrid_alpha);
+        //GlobalC::exx_info.info_global.cal_exx = true;
+        
         XC_Functional::get_hybrid_alpha(std::stod(INPUT.exx_hybrid_alpha));
         GlobalC::exx_info.info_global.hse_omega = INPUT.exx_hse_omega;
         GlobalC::exx_info.info_global.separate_loop = INPUT.exx_separate_loop;

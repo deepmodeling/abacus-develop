@@ -12,7 +12,8 @@
 #include "src_pw/symmetry_rho.h"
 #include "src_pw/threshold_elec.h"
 #ifdef __EXX
-#include "module_rpa/rpa.h"
+// #include "module_rpa/rpa.h"
+#include "module_ri/RPA_LRI.h"
 #endif
 
 #ifdef __DEEPKS
@@ -908,9 +909,13 @@ void ESolver_KS_LCAO::afterscf(const int istep)
 #ifdef __EXX
     if(INPUT.rpa)
     {
-        ModuleRPA::DFT_RPA_interface rpa_interface(GlobalC::exx_info.info_global);
-        rpa_interface.rpa_exx_lcao().info.files_abfs = GlobalV::rpa_orbitals;
-        rpa_interface.out_for_RPA(*(this->LOWF.ParaV), *(this->psi), this->LOC, this->pelec);
+        // ModuleRPA::DFT_RPA_interface rpa_interface(GlobalC::exx_info.info_global);
+        // rpa_interface.rpa_exx_lcao().info.files_abfs = GlobalV::rpa_orbitals;
+        // rpa_interface.out_for_RPA(*(this->LOWF.ParaV), *(this->psi), this->LOC, this->pelec);
+        RPA_LRI<double> rpa_lri_double(GlobalC::exx_info.info_ri);
+        rpa_lri_double.cal_postSCF_exx(MPI_COMM_WORLD,this->LOC, *this->LOWF.ParaV);
+        rpa_lri_double.init(MPI_COMM_WORLD);
+        rpa_lri_double.out_for_RPA(*(this->LOWF.ParaV), *(this->psi), this->LOC, this->pelec);
     }
 #endif
     if (hsolver::HSolverLCAO::out_mat_hsR)

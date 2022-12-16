@@ -29,8 +29,7 @@ endif()
 if (ENABLE_LIBRI)
   target_link_libraries(test_deepks
           ri
-          libri
-          rpa)
+          libri)
 endif()
 
 install(

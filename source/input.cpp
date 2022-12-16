@@ -2174,7 +2174,7 @@ void Input::Default_2(void) // jiyy add 2019-08-04
 
     if (exx_hybrid_alpha == "default")
     {
-        if (dft_functional == "hf")
+        if (dft_functional == "hf" || INPUT.rpa)
             exx_hybrid_alpha = "1";
         else if (dft_functional == "pbe0" || dft_functional == "hse" || dft_functional == "scan0")
             exx_hybrid_alpha = "0.25";
