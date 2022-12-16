@@ -456,8 +456,7 @@ endif()
 if (ENABLE_LIBRI)
   target_link_libraries(${ABACUS_BIN_NAME}
           ri
-          libri
-          rpa)
+          libri)
 endif()
 
 install(PROGRAMS ${ABACUS_BIN_PATH}
