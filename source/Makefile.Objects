@@ -44,7 +44,6 @@ VPATH=./src_global:\
 ./module_relax:\
 ./module_relax/relax_old:\
 ./module_relax/relax_new:\
-./module_rpa:\
 ./module_vdw:\
 ./src_io:\
 ./src_parallel:\
@@ -301,8 +300,6 @@ OBJS_RELAXATION=bfgs_basic.o\
     relax_old.o\
     relax.o\
     line_search.o\
-
-OBJS_RPA=rpa.o\
 
 OBJS_SURCHEM=surchem.o\
     H_correction_pw.o\
