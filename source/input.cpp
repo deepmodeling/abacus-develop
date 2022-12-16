@@ -3249,7 +3249,7 @@ int Input::count_ntype(const std::string &fn)
 		while(true)
 		{
 			ModuleBase::GlobalFunc::READ_VALUE(ifa, temp);
-			if (temp == "LATTICE_CONSTANT" || temp == "NUMERICAL_ORBITAL" || temp == "NUMERICAL_DESCRIPTOR")
+			if (temp == "LATTICE_CONSTANT" || temp == "NUMERICAL_ORBITAL" || temp == "NUMERICAL_DESCRIPTOR" || ifa.eof())
 			{
 				break;
 			}

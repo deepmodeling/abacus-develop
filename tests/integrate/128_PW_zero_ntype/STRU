@@ -1,7 +1,3 @@
-ATOMIC_SPECIES
-Al 13 Al.pz-vbc.UPF auto # test for different pp
-Mg 12 Mg.pz-n-vbc.UPF auto
-
 LATTICE_CONSTANT
 8.150388188740896  // add lattice constant
 
@@ -23,3 +19,8 @@ Mg
     0.000000000000    0.500000000000    0.500000000000 1 1 1
     0.500000000000    0.500000000000    0.000000000000 1 1 1
     0.500000000000    0.000000000000    0.500000000000 1 1 1
+
+ATOMIC_SPECIES
+Al 13 Al.pz-vbc.UPF auto # test for different pp
+Mg 12 Mg.pz-n-vbc.UPF auto
+
