@@ -292,6 +292,8 @@ void Input_Conv::Convert(void)
     // For example, when we studying nitrogen-vacancy center,
     // it requires an additional excitation of an electron conduction band to simulate the excited state,
     // used for TDDFT only.
+    GlobalV::ocp = INPUT.ocp;
+    GlobalV::ocp_set = INPUT.ocp_set;
     if (GlobalV::ocp == 1)
     {
         int count = 0;

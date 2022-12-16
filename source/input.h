@@ -105,7 +105,7 @@ class Input
     //==========================================================
     // Forces
     //==========================================================
-    int cal_force;
+    bool cal_force;
     bool out_force;
     double force_thr; // threshold of force in unit (Ry/Bohr)
     double force_thr_ev2; // invalid force threshold, mohan add 2011-04-17
@@ -171,16 +171,16 @@ class Input
 
     bool colour; // used for fun.
 
-    int t_in_h; // calculate the T or not.
-    int vl_in_h; // calculate the vloc or not.
-    int vnl_in_h; // calculate the vnl or not.
+    bool t_in_h; // calculate the T or not.
+    bool vl_in_h; // calculate the vloc or not.
+    bool vnl_in_h; // calculate the vnl or not.
 
-    int vh_in_h; // calculate the hartree potential or not
-    int vion_in_h; // calculate the local ionic potential or not
+    bool vh_in_h; // calculate the hartree potential or not
+    bool vion_in_h; // calculate the local ionic potential or not
     // only relevant when vl_in_h = 1
 
-    int test_force; // test the force.
-    int test_stress; // test the stress.
+    bool test_force; // test the force.
+    bool test_stress; // test the stress.
 
     //==========================================================
     // iteration
@@ -188,7 +188,7 @@ class Input
     double scf_thr; // \sum |rhog_out - rhog_in |^2
     int scf_nmax; // number of max elec iter
     int relax_nmax; // number of max ionic iter
-    int out_stru; // outut stru file each ion step
+    bool out_stru; // outut stru file each ion step
     std::string out_level; // control the output information.
     bool out_md_control; // internal parameter , added by zhengdy 2019-04-07
 
@@ -226,19 +226,19 @@ class Input
     int printe; // mohan add 2011-03-16
     int out_freq_elec;  // the frequency ( >= 0) of electronic iter to output charge density and wavefunction. 0: output only when converged
     int out_freq_ion;  // the frequency ( >= 0 ) of ionic step to output charge density and wavefunction. 0: output only when ion steps are finished
-    int out_chg; // output charge density. 0: no; 1: yes
-    int out_dm; // output density matrix.
-    int out_dm1;
+    bool out_chg; // output charge density. 0: no; 1: yes
+    bool out_dm; // output density matrix.
+    bool out_dm1;
     int out_pot; // yes or no
     int out_wfc_pw; // 0: no; 1: txt; 2: dat
-    int out_wfc_r; // 0: no; 1: yes
+    bool out_wfc_r; // 0: no; 1: yes
     int out_dos; // dos calculation. mohan add 20090909
-    int out_band; // band calculation pengfei 2014-10-13
-    int out_proj_band; // projected band structure calculation jiyy add 2022-05-11
-    int out_mat_hs; // output H matrix and S matrix in local basis.
-    int out_mat_hs2; // LiuXh add 2019-07-16, output H(R) matrix and S(R) matrix in local basis.
+    bool out_band; // band calculation pengfei 2014-10-13
+    bool out_proj_band; // projected band structure calculation jiyy add 2022-05-11
+    bool out_mat_hs; // output H matrix and S matrix in local basis.
+    bool out_mat_hs2; // LiuXh add 2019-07-16, output H(R) matrix and S(R) matrix in local basis.
     int out_hs2_interval;
-    int out_mat_r; // jingan add 2019-8-14, output r(R) matrix.
+    bool out_mat_r; // jingan add 2019-8-14, output r(R) matrix.
     bool out_wfc_lcao; // output the wave functions in local basis.
     bool out_alllog; // output all logs.
     bool out_element_info; // output infomation of all element
@@ -332,7 +332,7 @@ class Input
     std::string vdw_cutoff_type; //"period" or "radius"
     ModuleBase::Vector3<int> vdw_cutoff_period;
 
-    int ocp;
+    bool ocp;
     std::string ocp_set;
     int out_mul; // qifeng add 2019-9-10
     // added by zhengdy-soc
@@ -405,7 +405,7 @@ class Input
     int *orbital_corr; // which correlated orbitals need corrected ; d:2 ,f:3, do not need correction:-1
     double *hubbard_u; // Hubbard Coulomb interaction parameter U(ev)
     double *hund_j; // Hund exchange parameter J(ev)
-    int omc; // whether turn on occupation matrix control method or not
+    bool omc; // whether turn on occupation matrix control method or not
     bool yukawa_potential; // default:false
     double yukawa_lambda; // default:-1.0, which means we calculate lambda
 

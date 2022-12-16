@@ -765,7 +765,7 @@ bool Input::Read(const std::string &fn)
         }
         else if (strcmp("cal_force", word) == 0)
         {
-            read_value(ifs, cal_force);
+            read_bool(ifs, cal_force);
         }
         else if (strcmp("out_force", word) == 0)
         {
@@ -934,7 +934,7 @@ bool Input::Read(const std::string &fn)
         }
         else if (strcmp("colour", word) == 0)
         {
-            read_value(ifs, colour);
+            read_bool(ifs, colour);
         }
         else if (strcmp("nbspline", word) == 0)
         {
@@ -942,31 +942,31 @@ bool Input::Read(const std::string &fn)
         }
         else if (strcmp("t_in_h", word) == 0)
         {
-            read_value(ifs, t_in_h);
+            read_bool(ifs, t_in_h);
         }
         else if (strcmp("vl_in_h", word) == 0)
         {
-            read_value(ifs, vl_in_h);
+            read_bool(ifs, vl_in_h);
         }
         else if (strcmp("vnl_in_h", word) == 0)
         {
-            read_value(ifs, vnl_in_h);
+            read_bool(ifs, vnl_in_h);
         }
         else if (strcmp("vh_in_h", word) == 0)
         {
-            read_value(ifs, vh_in_h);
+            read_bool(ifs, vh_in_h);
         }
         else if (strcmp("vion_in_h", word) == 0)
         {
-            read_value(ifs, vion_in_h);
+            read_bool(ifs, vion_in_h);
         }
         else if (strcmp("test_force", word) == 0)
         {
-            read_value(ifs, test_force);
+            read_bool(ifs, test_force);
         }
         else if (strcmp("test_stress", word) == 0)
         {
-            read_value(ifs, test_stress);
+            read_bool(ifs, test_stress);
         }
         //----------------------------------------------------------
         // iteration
@@ -985,7 +985,7 @@ bool Input::Read(const std::string &fn)
         }
         else if (strcmp("out_stru", word) == 0)
         {
-            read_value(ifs, out_stru);
+            read_bool(ifs, out_stru);
         }
         //----------------------------------------------------------
         // occupation
@@ -1029,7 +1029,7 @@ bool Input::Read(const std::string &fn)
         }
         else if (strcmp("mixing_tau", word) == 0)
         {
-            read_value(ifs, mixing_tau);
+            read_bool(ifs, mixing_tau);
         }
         //----------------------------------------------------------
         // charge / potential / wavefunction
@@ -1068,31 +1068,31 @@ bool Input::Read(const std::string &fn)
         }
         else if (strcmp("out_chg", word) == 0)
         {
-            read_value(ifs, out_chg);
+            read_bool(ifs, out_chg);
         }
         else if (strcmp("out_dm", word) == 0)
         {
-            read_value(ifs, out_dm);
+            read_bool(ifs, out_dm);
         }
         else if (strcmp("out_dm1", word) == 0)
         {
-            read_value(ifs, out_dm1);
+            read_bool(ifs, out_dm1);
         }
         else if (strcmp("deepks_out_labels", word) == 0) // caoyu added 2020-11-24, mohan modified 2021-01-03
         {
-            read_value(ifs, deepks_out_labels);
+            read_bool(ifs, deepks_out_labels);
         }
         else if (strcmp("deepks_scf", word) == 0) // caoyu added 2020-11-24, mohan modified 2021-01-03
         {
-            read_value(ifs, deepks_scf);
+            read_bool(ifs, deepks_scf);
         }
         else if (strcmp("deepks_bandgap", word) == 0) // caoyu added 2020-11-24, mohan modified 2021-01-03
         {
-            read_value(ifs, deepks_bandgap);
+            read_bool(ifs, deepks_bandgap);
         }
         else if (strcmp("deepks_out_unittest", word) == 0) // mohan added 2021-01-03
         {
-            read_value(ifs, deepks_out_unittest);
+            read_bool(ifs, deepks_out_unittest);
         }
         else if (strcmp("deepks_model", word) == 0) // caoyu added 2021-06-03
         {
@@ -1120,7 +1120,7 @@ bool Input::Read(const std::string &fn)
         }
         else if (strcmp("out_wfc_r", word) == 0)
         {
-            read_value(ifs, out_wfc_r);
+            read_bool(ifs, out_wfc_r);
         }
         // mohan add 20090909
         else if (strcmp("out_dos", word) == 0)
@@ -1129,21 +1129,21 @@ bool Input::Read(const std::string &fn)
         }
         else if (strcmp("out_band", word) == 0)
         {
-            read_value(ifs, out_band);
+            read_bool(ifs, out_band);
         }
         else if (strcmp("out_proj_band", word) == 0)
         {
-            read_value(ifs, out_proj_band);
+            read_bool(ifs, out_proj_band);
         }
 
         else if (strcmp("out_mat_hs", word) == 0)
         {
-            read_value(ifs, out_mat_hs);
+            read_bool(ifs, out_mat_hs);
         }
         // LiuXh add 2019-07-15
         else if (strcmp("out_mat_hs2", word) == 0)
         {
-            read_value(ifs, out_mat_hs2);
+            read_bool(ifs, out_mat_hs2);
         }
         else if (strcmp("out_hs2_interval", word) == 0)
         {
@@ -1151,7 +1151,7 @@ bool Input::Read(const std::string &fn)
         }
         else if (strcmp("out_mat_r", word) == 0)
         {
-            read_value(ifs, out_mat_r);
+            read_bool(ifs, out_mat_r);
         }
         else if (strcmp("out_wfc_lcao", word) == 0)
         {
@@ -1534,11 +1534,11 @@ bool Input::Read(const std::string &fn)
         }
         else if (strcmp("ocp", word) == 0)
         {
-            read_value(ifs, GlobalV::ocp);
+            read_bool(ifs, ocp);
         }
         else if (strcmp("ocp_set", word) == 0)
         {
-            getline(ifs, GlobalV::ocp_set);
+            getline(ifs, ocp_set);
             //			ifs.ignore(150, '\n');
         }
         else if (strcmp("out_mul", word) == 0)
@@ -1697,7 +1697,7 @@ bool Input::Read(const std::string &fn)
         //----------------------------------------------------------------------------------
         else if (strcmp("imp_sol", word) == 0)
         {
-            read_value(ifs, imp_sol);
+            read_bool(ifs, imp_sol);
         }
         else if (strcmp("eb_k", word) == 0)
         {
@@ -1916,7 +1916,7 @@ bool Input::Read(const std::string &fn)
             }
             else if (strcmp("omc", word) == 0)
             {
-                ifs >> omc;
+            	read_bool(ifs, omc);
             }
             else
             {
@@ -2259,7 +2259,7 @@ void Input::Bcast()
     Parallel_Common::bcast_int(symmetry);
     Parallel_Common::bcast_bool(init_vel); // liuyu 2021-07-14
     Parallel_Common::bcast_double(symmetry_prec); // LiuXh add 2021-08-12, accuracy for symmetry
-    Parallel_Common::bcast_int(cal_force);
+    Parallel_Common::bcast_bool(cal_force);
     Parallel_Common::bcast_bool(out_force);
     Parallel_Common::bcast_double(force_thr);
     Parallel_Common::bcast_double(force_thr_ev2);
@@ -2306,19 +2306,19 @@ void Input::Bcast()
     Parallel_Common::bcast_int(nurse);
     Parallel_Common::bcast_bool(colour);
     Parallel_Common::bcast_int(nbspline);
-    Parallel_Common::bcast_int(t_in_h);
-    Parallel_Common::bcast_int(vl_in_h);
-    Parallel_Common::bcast_int(vnl_in_h);
-    Parallel_Common::bcast_int(vh_in_h);
-    Parallel_Common::bcast_int(vion_in_h);
+    Parallel_Common::bcast_bool(t_in_h);
+    Parallel_Common::bcast_bool(vl_in_h);
+    Parallel_Common::bcast_bool(vnl_in_h);
+    Parallel_Common::bcast_bool(vh_in_h);
+    Parallel_Common::bcast_bool(vion_in_h);
 
-    Parallel_Common::bcast_int(test_force);
-    Parallel_Common::bcast_int(test_stress);
+    Parallel_Common::bcast_bool(test_force);
+    Parallel_Common::bcast_bool(test_stress);
 
     Parallel_Common::bcast_double(scf_thr);
     Parallel_Common::bcast_int(scf_nmax);
     Parallel_Common::bcast_int(this->relax_nmax);
-    Parallel_Common::bcast_int(out_stru); // mohan add 2012-03-23
+    Parallel_Common::bcast_bool(out_stru); // mohan add 2012-03-23
 
     // Parallel_Common::bcast_string( occupations );
     Parallel_Common::bcast_string(smearing_method);
@@ -2338,9 +2338,9 @@ void Input::Bcast()
     Parallel_Common::bcast_string(chg_extrap); // xiaohui modify 2015-02-01
     Parallel_Common::bcast_int(out_freq_elec);
     Parallel_Common::bcast_int(out_freq_ion);
-    Parallel_Common::bcast_int(out_chg);
-    Parallel_Common::bcast_int(out_dm);
-    Parallel_Common::bcast_int(out_dm1);
+    Parallel_Common::bcast_bool(out_chg);
+    Parallel_Common::bcast_bool(out_dm);
+    Parallel_Common::bcast_bool(out_dm1);
 
     Parallel_Common::bcast_bool(deepks_out_labels); // caoyu added 2020-11-24, mohan modified 2021-01-03
     Parallel_Common::bcast_bool(deepks_scf);
@@ -2353,13 +2353,13 @@ void Input::Bcast()
     
     Parallel_Common::bcast_int(out_pot);
     Parallel_Common::bcast_int(out_wfc_pw);
-    Parallel_Common::bcast_int(out_wfc_r);
+    Parallel_Common::bcast_bool(out_wfc_r);
     Parallel_Common::bcast_int(out_dos);
-    Parallel_Common::bcast_int(out_band);
-    Parallel_Common::bcast_int(out_proj_band);
-    Parallel_Common::bcast_int(out_mat_hs);
-    Parallel_Common::bcast_int(out_mat_hs2); // LiuXh add 2019-07-15
-    Parallel_Common::bcast_int(out_mat_r); // jingan add 2019-8-14
+    Parallel_Common::bcast_bool(out_band);
+    Parallel_Common::bcast_bool(out_proj_band);
+    Parallel_Common::bcast_bool(out_mat_hs);
+    Parallel_Common::bcast_bool(out_mat_hs2); // LiuXh add 2019-07-15
+    Parallel_Common::bcast_bool(out_mat_r); // jingan add 2019-8-14
     Parallel_Common::bcast_bool(out_wfc_lcao);
     Parallel_Common::bcast_bool(out_alllog);
     Parallel_Common::bcast_bool(out_element_info);
@@ -2482,8 +2482,8 @@ void Input::Bcast()
     Parallel_Common::bcast_int(td_vextout);
     Parallel_Common::bcast_int(td_dipoleout);
     Parallel_Common::bcast_bool(test_skip_ewald);
-    Parallel_Common::bcast_int(GlobalV::ocp);
-    Parallel_Common::bcast_string(GlobalV::ocp_set);
+    Parallel_Common::bcast_bool(ocp);
+    Parallel_Common::bcast_string(ocp_set);
     Parallel_Common::bcast_int(out_mul); // qifeng add 2019/9/10
 
     // Peize Lin add 2018-06-20
@@ -2523,7 +2523,7 @@ void Input::Bcast()
     //-----------------------------------------------------------------------------------
     Parallel_Common::bcast_bool(dft_plus_u);
     Parallel_Common::bcast_bool(yukawa_potential);
-    Parallel_Common::bcast_int(omc);
+    Parallel_Common::bcast_bool(omc);
     Parallel_Common::bcast_int(dftu_type);
     Parallel_Common::bcast_int(double_counting);
     Parallel_Common::bcast_double(yukawa_lambda);
