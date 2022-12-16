@@ -514,7 +514,7 @@ class Input
     }
 
     void strtolower(char *sa, char *sb);
-    void readbool(std::ifstream &ifs, bool &var);
+    void read_bool(std::ifstream &ifs, bool &var);
 };
 
 extern Input INPUT;
