@@ -2523,7 +2523,7 @@ void Input::Bcast()
     //-----------------------------------------------------------------------------------
     Parallel_Common::bcast_bool(dft_plus_u);
     Parallel_Common::bcast_bool(yukawa_potential);
-    Parallel_Common::bcast_bool(omc);
+    Parallel_Common::bcast_int(omc);
     Parallel_Common::bcast_int(dftu_type);
     Parallel_Common::bcast_int(double_counting);
     Parallel_Common::bcast_double(yukawa_lambda);
