@@ -1916,7 +1916,7 @@ bool Input::Read(const std::string &fn)
             }
             else if (strcmp("omc", word) == 0)
             {
-            	read_bool(ifs, omc);
+            	read_value(ifs, omc);
             }
             else
             {
