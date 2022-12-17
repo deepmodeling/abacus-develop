@@ -309,11 +309,8 @@ of_kernel_file                 WTkernel.txt #The name of WT kernel file.
 
 #Parameters (19.dft+u)
 dft_plus_u                     0 #true:DFT+U correction; false: standard DFT calcullation(default)
-dftu_type                      2 #1:rotationally invarient formalism; 2:simplified form(default)
-double_counting                1 #1:FLL(fully localized limit)(default); 2:AMF(around mean field)
 yukawa_lambda                  -1 #default:0.0
 yukawa_potential               0 #default: false
 omc                            0 #the mode of occupation matrix control
-hund_j              0 #Hund exchange parameter J(ev)
 hubbard_u           0 #Hubbard Coulomb interaction parameter U(ev)
 orbital_corr        -1 #which correlated orbitals need corrected ; d:2 ,f:3, do not need correction:-1
