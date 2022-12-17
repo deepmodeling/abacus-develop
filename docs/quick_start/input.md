@@ -49,7 +49,7 @@ In the above example, the meanings of the parameters are:
 For a complete list of input parameters, please consult this [instruction](../advanced/input_files/input-main.md).
 
 > **Note:** Users cannot change the filename “INPUT” to other names.
-> **Note:** Boolean paramerters such as `out_chg` can be set by using both `True` and `False` or `1` and `0`. It is case insensitive if one uses the words `True` or `False` to set boolean values.
+> **Note:** Boolean paramerters such as `out_chg` can be set by using `True` and `False`, `1` and `0`, or `T` and `F`. It is case insensitive if one prefer to use the words `true` and `false` or `t` and `f` to set boolean values.
 
 ## *STRU*
 
