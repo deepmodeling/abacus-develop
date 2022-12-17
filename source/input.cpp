@@ -3225,6 +3225,14 @@ void Input::read_bool(std::ifstream &ifs, bool &var)
     {
         var = false;
     }
+    else if (str == "t")
+    {
+        var = true;
+    }
+    else if (str == "f")
+    {
+        var = false;
+    }
     else
     {
         std::string warningstr = "Bad boolean parameter ";
