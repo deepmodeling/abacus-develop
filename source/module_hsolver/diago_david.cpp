@@ -633,8 +633,10 @@ void DiagoDavid<FPTYPE, Device>::diag_zhegvx(const int& n, // nbase
         }
         else
         {
-            dngvx_op<FPTYPE,
-                     Device>()(this->ctx, n, this->nbase_x, this->hcc, this->scc, m, this->eigenvalue, this->vcc);
+            // dngvx_op<FPTYPE,
+            //          Device>()(this->ctx, n, this->nbase_x, this->hcc, this->scc, m, this->eigenvalue, this->vcc);
+            dnevx_op<FPTYPE,
+                     Device>()(this->ctx, n, this->nbase_x, this->hcc, m, this->eigenvalue, this->vcc);
         }
     }
 

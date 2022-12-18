@@ -83,6 +83,31 @@ template <typename FPTYPE, typename Device> struct dngvd_op
                     std::complex<FPTYPE>* V);
 };
 
+
+template <typename FPTYPE, typename Device> struct dnevx_op
+{
+    /// @brief DNEVX computes the first m eigenvalues ​​and their corresponding eigenvectors of
+    /// a complex generalized Hermitian-definite eigenproblem
+    /// API doc: https://netlib.org/lapack/explore-html/df/d9a/group__complex16_h_eeigen_gaabef68a9c7b10df7aef8f4fec89fddbe.html
+    ///
+    /// Input Parameters
+    ///     @param d : the type of device
+    ///     @param nstart : the number of cols of the matrix
+    ///     @param ldh : the number of rows of the matrix
+    ///     @param A : the hermitian matrix A in A x=lambda B x (row major)
+    /// Output Parameter
+    ///     @param W : calculated eigenvalues
+    ///     @param V : calculated eigenvectors (row major)
+    void operator()(const Device* d,
+                    const int nstart,
+                    const int ldh,
+                    const std::complex<FPTYPE>* A,
+                    const int m,
+                    double* W,
+                    std::complex<FPTYPE>* V);
+};
+
+
 #if __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
 
 void createCUSOLVERhandle();

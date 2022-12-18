@@ -383,12 +383,10 @@ public:
     }
 
     static inline
-    void zheevx( const int itype, const char jobz, const char range, const char uplo,
-                 const int n, const std::complex<double>* a, const int lda, const std::complex<double>* b,
-                 const int ldb, const double vl, const double vu, const int il, const int iu,
+    void zheevx( const int itype, const char jobz, const char range, const char uplo, const int n, 
+                 const std::complex<double>* a, const int lda, const double vl, const double vu, const int il, const int iu,
                  const double abstol, const int m, double* w, std::complex<double>* z, const int ldz,
-                 std::complex<double>* work, const int lwork, double* rwork, int* iwork,
-                 int* ifail, int info, int nbase_x)
+                 std::complex<double>* work, const int lwork, double* rwork, int* iwork, int* ifail, int info, int nbase_x)
     {
         // Transpose the std::complex matrix to the fortran-form real-std::complex array.
         std::complex<double>* aux = LapackConnector::transpose(a, n, lda, nbase_x);
@@ -396,7 +394,8 @@ public:
 
         // call the fortran routine
         zheevx_(&jobz, &range, &uplo, &n, 
-                aux, &lda, &vl, &vu, &il, &iu, &abstol, &m, w, zux, &ldz, 
+                aux, &lda, &vl, &vu, &il, &iu, 
+                &abstol, &m, w, zux, &ldz, 
                 work, &lwork, rwork, iwork, ifail, &info);
 
         // Transpose the fortran-form real-std::complex array to the std::complex matrix
