@@ -1,4 +1,7 @@
 #include "gtest/gtest.h"
+#include "gmock/gmock.h"
+#include "module_base/global_variable.h"
+#include "module_base/tool_quit.h"
 /************************************************
  *  unit test of input.cpp
  ***********************************************/
@@ -17,6 +20,7 @@
 class InputTest : public testing::Test
 {
 protected:
+	std::string output;
 };
 
 TEST_F(InputTest, Default)
@@ -206,6 +210,7 @@ TEST_F(InputTest, Default)
         EXPECT_EQ(INPUT.vdw_cutoff_period[1],3);
         EXPECT_EQ(INPUT.vdw_cutoff_period[2],3);
         EXPECT_EQ(INPUT.exx_hybrid_alpha,"default");
+        EXPECT_EQ(INPUT.exx_real_number,"default");
         EXPECT_DOUBLE_EQ(INPUT.exx_hse_omega,0.11);
         EXPECT_TRUE(INPUT.exx_separate_loop);
         EXPECT_EQ(INPUT.exx_hybrid_step,100);
@@ -338,7 +343,7 @@ TEST_F(InputTest, Read)
         EXPECT_EQ(INPUT.bndpar,1);
         EXPECT_EQ(INPUT.kpar,1);
         EXPECT_EQ(INPUT.initsto_freq,0);
-        EXPECT_EQ(INPUT.method_sto,2);
+        EXPECT_EQ(INPUT.method_sto,3);
         EXPECT_EQ(INPUT.npart_sto,1);
         EXPECT_FALSE(INPUT.cal_cond);
         EXPECT_EQ(INPUT.dos_nche,100);
@@ -355,7 +360,7 @@ TEST_F(InputTest, Read)
         EXPECT_EQ(INPUT.wannier_spin,"up");
         EXPECT_DOUBLE_EQ(INPUT.kspacing,0.0);
         EXPECT_DOUBLE_EQ(INPUT.min_dist_coef,0.2);
-        EXPECT_EQ(INPUT.dft_functional,"default");
+        EXPECT_EQ(INPUT.dft_functional,"hse");
         EXPECT_DOUBLE_EQ(INPUT.xc_temperature,0.0);
         EXPECT_EQ(INPUT.nspin,1);
         EXPECT_DOUBLE_EQ(INPUT.nelec,0.0);
@@ -391,8 +396,8 @@ TEST_F(InputTest, Read)
         EXPECT_DOUBLE_EQ(INPUT.relax_bfgs_init,0.5);
         EXPECT_DOUBLE_EQ(INPUT.relax_scale_force,0.5);
         EXPECT_EQ(INPUT.nbspline,-1);
-        EXPECT_FALSE(INPUT.gamma_only);
-        EXPECT_FALSE(INPUT.gamma_only_local);
+        EXPECT_TRUE(INPUT.gamma_only);
+        EXPECT_TRUE(INPUT.gamma_only_local);
         EXPECT_DOUBLE_EQ(INPUT.ecutwfc,20.0);
         EXPECT_DOUBLE_EQ(INPUT.ecutrho,80.0);
         EXPECT_EQ(INPUT.ncx,0);
@@ -482,7 +487,7 @@ TEST_F(InputTest, Read)
         EXPECT_DOUBLE_EQ(INPUT.block_down,0.45);
         EXPECT_DOUBLE_EQ(INPUT.block_up,0.55);
         EXPECT_DOUBLE_EQ(INPUT.block_height,0.1);
-        EXPECT_EQ(INPUT.vdw_method,"none");
+        EXPECT_EQ(INPUT.vdw_method,"d2");
         EXPECT_EQ(INPUT.vdw_s6,"default");
         EXPECT_EQ(INPUT.vdw_s8,"default");
         EXPECT_EQ(INPUT.vdw_a1,"default");
@@ -502,6 +507,7 @@ TEST_F(InputTest, Read)
         EXPECT_EQ(INPUT.vdw_cutoff_period[1],3);
         EXPECT_EQ(INPUT.vdw_cutoff_period[2],3);
         EXPECT_EQ(INPUT.exx_hybrid_alpha,"default");
+        EXPECT_EQ(INPUT.exx_real_number,"default");
         EXPECT_DOUBLE_EQ(INPUT.exx_hse_omega,0.11);
         EXPECT_TRUE(INPUT.exx_separate_loop);
         EXPECT_EQ(INPUT.exx_hybrid_step,100);
@@ -554,7 +560,7 @@ TEST_F(InputTest, Read)
         EXPECT_DOUBLE_EQ(INPUT.tau,1.0798 * 1e-5);
         EXPECT_DOUBLE_EQ(INPUT.sigma_k,0.6);
         EXPECT_DOUBLE_EQ(INPUT.nc_k,0.00037);
-        EXPECT_EQ(INPUT.of_kinetic,"wt");
+        EXPECT_EQ(INPUT.of_kinetic,"vw");
         EXPECT_EQ(INPUT.of_method,"tn");
         EXPECT_EQ(INPUT.of_conv,"energy");
         EXPECT_DOUBLE_EQ(INPUT.of_tole,1e-6);
@@ -563,9 +569,9 @@ TEST_F(InputTest, Read)
         EXPECT_DOUBLE_EQ(INPUT.of_vw_weight,1.);
         EXPECT_DOUBLE_EQ(INPUT.of_wt_alpha,0.833333);
         EXPECT_DOUBLE_EQ(INPUT.of_wt_beta,0.833333);
-        EXPECT_DOUBLE_EQ(INPUT.of_wt_rho0,0.);
+        EXPECT_DOUBLE_EQ(INPUT.of_wt_rho0,1.);
         EXPECT_FALSE(INPUT.of_hold_rho0);
-        EXPECT_TRUE(INPUT.of_full_pw);
+        EXPECT_FALSE(INPUT.of_full_pw);
         EXPECT_EQ(INPUT.of_full_pw_dim,0);
         EXPECT_FALSE(INPUT.of_read_kernel);
         EXPECT_EQ(INPUT.of_kernel_file,"WTkernel.txt");
@@ -607,6 +613,139 @@ TEST_F(InputTest, Read)
 	EXPECT_DOUBLE_EQ(INPUT.mdp.msst_vel,0);
 	EXPECT_DOUBLE_EQ(INPUT.mdp.msst_vis,0);
 	EXPECT_EQ(INPUT.mdp.pot_file,"graph.pb");
+}
+
+TEST_F(InputTest, Default_2)
+{
+	// pre-conditions
+	EXPECT_EQ(INPUT.vdw_method,"d2");
+	EXPECT_EQ(INPUT.vdw_s6,"default");
+        EXPECT_EQ(INPUT.vdw_s8,"default");
+        EXPECT_EQ(INPUT.vdw_a1,"default");
+        EXPECT_EQ(INPUT.vdw_a2,"default");
+        EXPECT_EQ(INPUT.vdw_cutoff_radius,"default");
+	EXPECT_NE(INPUT.esolver_type,"sdft");
+	EXPECT_NE(INPUT.method_sto,1);
+	EXPECT_NE(INPUT.method_sto,2);
+	EXPECT_NE(INPUT.of_wt_rho0,0.0);
+	EXPECT_EQ(INPUT.exx_hybrid_alpha,"default");
+	EXPECT_EQ(INPUT.dft_functional,"hse");
+	EXPECT_EQ(INPUT.exx_real_number,"default");
+	EXPECT_TRUE(INPUT.gamma_only);
+        EXPECT_EQ(INPUT.exx_ccp_rmesh_times,"default");
+	// 1st calling
+	INPUT.Default_2();
+	EXPECT_EQ(INPUT.vdw_s6,"0.75");
+        EXPECT_EQ(INPUT.vdw_cutoff_radius,"56.6918");
+	EXPECT_EQ(INPUT.bndpar,1);
+	EXPECT_EQ(INPUT.method_sto,2);
+	EXPECT_TRUE(INPUT.of_hold_rho0);
+        EXPECT_EQ(INPUT.of_full_pw_dim,0);
+	EXPECT_EQ(INPUT.exx_hybrid_alpha,"0.25");
+	EXPECT_EQ(INPUT.exx_real_number,"1");
+        EXPECT_EQ(INPUT.exx_ccp_rmesh_times,"1.5");
+	// restore parameters for 2nd calling
+	INPUT.vdw_method = "d3_0";
+	INPUT.vdw_s6 = "default";
+	INPUT.vdw_s8 = "default";
+	INPUT.vdw_a1 = "default";
+	INPUT.vdw_a2 = "default";
+	INPUT.vdw_cutoff_radius = "default";
+	INPUT.exx_hybrid_alpha = "default";
+	INPUT.dft_functional = "hf";
+	INPUT.exx_real_number = "default";
+	INPUT.gamma_only = 0;
+        INPUT.exx_ccp_rmesh_times = "default";
+	// 2nd calling
+	INPUT.Default_2();
+	EXPECT_EQ(INPUT.vdw_s6,"1.0");
+	EXPECT_EQ(INPUT.vdw_s8,"0.722");
+	EXPECT_EQ(INPUT.vdw_a1,"1.217");
+	EXPECT_EQ(INPUT.vdw_a2,"1.0");
+	EXPECT_EQ(INPUT.vdw_cutoff_radius,"95");
+	EXPECT_EQ(INPUT.exx_hybrid_alpha,"1");
+	EXPECT_EQ(INPUT.exx_real_number,"0");
+        EXPECT_EQ(INPUT.exx_ccp_rmesh_times,"10");
+	// restore parameters for 3rd calling
+	INPUT.vdw_method = "d3_bj";
+	INPUT.vdw_s6 = "default";
+	INPUT.vdw_s8 = "default";
+	INPUT.vdw_a1 = "default";
+	INPUT.vdw_a2 = "default";
+	INPUT.vdw_cutoff_radius = "default";
+	// 3rd calling
+	INPUT.Default_2();
+	EXPECT_EQ(INPUT.vdw_s6,"1.0");
+	EXPECT_EQ(INPUT.vdw_s8,"0.7875");
+	EXPECT_EQ(INPUT.vdw_a1,"0.4289");
+	EXPECT_EQ(INPUT.vdw_a2,"4.4407");
+	EXPECT_EQ(INPUT.vdw_cutoff_radius,"95");
+}
+
+TEST_F(InputTest, Check)
+{
+	INPUT.Default();
+	INPUT.nbands = -1;
+	testing::internal::CaptureStdout();
+	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
+	output = testing::internal::GetCapturedStdout();
+	EXPECT_THAT(output,testing::HasSubstr("NBANDS must >= 0"));
+	//
+	INPUT.Default();
+	INPUT.nb2d = -1;
+	testing::internal::CaptureStdout();
+	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
+	output = testing::internal::GetCapturedStdout();
+	EXPECT_THAT(output,testing::HasSubstr("nb2d must > 0"));
+	//
+	INPUT.Default();
+	testing::internal::CaptureStdout();
+	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
+	output = testing::internal::GetCapturedStdout();
+	EXPECT_THAT(output,testing::HasSubstr("ntype must > 0"));
+	//
+	INPUT.Default(); INPUT.ntype = 1;
+	INPUT.Check();
+	EXPECT_EQ(INPUT.diago_proc,1);
+	//
+	INPUT.Default(); INPUT.ntype = 1;
+	INPUT.basis_type = "lcao";
+	INPUT.diago_proc = 2;
+	testing::internal::CaptureStdout();
+	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
+	output = testing::internal::GetCapturedStdout();
+	EXPECT_THAT(output,testing::HasSubstr("please don't set diago_proc with lcao base"));
+	//
+	INPUT.Default(); INPUT.ntype = 1;
+	INPUT.kspacing = -1;
+	testing::internal::CaptureStdout();
+	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
+	output = testing::internal::GetCapturedStdout();
+	EXPECT_THAT(output,testing::HasSubstr("kspacing must > 0"));
+	//
+	INPUT.Default(); INPUT.ntype = 1;
+	INPUT.nelec = -1;
+	testing::internal::CaptureStdout();
+	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
+	output = testing::internal::GetCapturedStdout();
+	EXPECT_THAT(output,testing::HasSubstr("nelec < 0 is not allowed !"));
+	//
+	INPUT.Default(); INPUT.ntype = 1;
+	INPUT.dip_cor_flag = 1;
+	INPUT.efield_flag = 0;
+	testing::internal::CaptureStdout();
+	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
+	output = testing::internal::GetCapturedStdout();
+	EXPECT_THAT(output,testing::HasSubstr("dipole correction is not active if efield_flag=false !"));
+	//
+	INPUT.Default(); INPUT.ntype = 1;
+	INPUT.gate_flag = 1;
+	INPUT.efield_flag = 1;
+	INPUT.dip_cor_flag = 0;
+	testing::internal::CaptureStdout();
+	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
+	output = testing::internal::GetCapturedStdout();
+	EXPECT_THAT(output,testing::HasSubstr("gate field cannot be used with efield if dip_cor_flag=false !"));
 }
 
 #undef private

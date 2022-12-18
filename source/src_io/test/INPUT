@@ -9,7 +9,7 @@ orbital_dir                    ../../PP_ORB/ #the directory containing orbital f
 pseudo_rcut                    15 #cut-off radius for radial integration
 pseudo_mesh                    0 #0: use our own mesh to do radial renormalization; 1: use mesh as in QE
 lmaxmax                        2 #maximum of l channels used
-dft_functional                 default #exchange correlation functional
+dft_functional                 hse #exchange correlation functional
 xc_temperature                 0 #temperature for finite temperature functionals
 calculation                    scf #test; scf; relax; nscf; ienvelope; istate
 esolver_type                   ksdft #the energy solver: ksdft, sdft, ofdft, tddft, lj, dp
@@ -66,7 +66,7 @@ cell_factor                    1.2 #used in the construction of the pseudopotent
 pw_seed                        1 #random seed for initializing wave functions
 
 #Parameters (3.Stochastic DFT)
-method_sto                     2 #1: slow and save memory, 2: fast and waste memory
+method_sto                     3 #1: slow and save memory, 2: fast and waste memory
 npart_sto                      1 #Reduce memory when calculating Stochastic DOS
 nbands_sto                     256 #number of stochstic orbitals
 nche_sto                       100 #Chebyshev expansion orders
@@ -122,7 +122,7 @@ bessel_rcut                    6 #tolerence level when generating bessel functio
 #Parameters (5.LCAO)
 basis_type                     lcao #PW; LCAO in pw; LCAO
 nb2d                           0 #2d distribution of atoms
-gamma_only                     0 #Only for localized orbitals set and gamma point. If set to 1, a fast algorithm is used
+gamma_only                     1 #Only for localized orbitals set and gamma point. If set to 1, a fast algorithm is used
 search_radius                  -1 #input search radius (Bohr)
 search_pbc                     1 #input periodic boundary condition
 lcao_ecut                      20 #energy cutoff for LCAO
@@ -220,7 +220,7 @@ test_stress                    0 #test the force
 test_skip_ewald                0 #skip ewald energy
 
 #Parameters (13.vdW Correction)
-vdw_method                     none #the method of calculating vdw (none ; d2 ; d3_0 ; d3_bj
+vdw_method                     d2 #the method of calculating vdw (none ; d2 ; d3_0 ; d3_bj
 vdw_s6                         default #scale parameter of d2/d3_0/d3_bj
 vdw_s8                         default #scale parameter of d3_0/d3_bj
 vdw_a1                         default #damping parameter of d3_0/d3_bj
@@ -244,6 +244,7 @@ exx_hse_omega                  0.11 #
 exx_separate_loop              1 #0 or 1
 exx_hybrid_step                100 #
 exx_lambda                     0.3 #
+exx_real_number                default #0 or 1
 exx_pca_threshold              0 #
 exx_c_threshold                0 #
 exx_v_threshold                0 #
@@ -291,7 +292,7 @@ sigma_k                        0.6 # the width of the diffuse cavity
 nc_k                           0.00037 # the cut-off charge density
 
 #Parameters (19.orbital free density functional theory)
-of_kinetic                     wt #kinetic energy functional, such as tf, vw, wt
+of_kinetic                     vw #kinetic energy functional, such as tf, vw, wt
 of_method                      tn #optimization method used in OFDFT, including cg1, cg2, tn (default)
 of_conv                        energy #the convergence criterion, potential, energy (default), or both
 of_tole                        1e-06 #tolerance of the energy change (in Ry) for determining the convergence, default=2e-6 Ry
@@ -300,9 +301,9 @@ of_tf_weight                   1 #weight of TF KEDF
 of_vw_weight                   1 #weight of vW KEDF
 of_wt_alpha                    0.833333 #parameter alpha of WT KEDF
 of_wt_beta                     0.833333 #parameter beta of WT KEDF
-of_wt_rho0                     0 #the average density of system, used in WT KEDF, in Bohr^-3
+of_wt_rho0                     1 #the average density of system, used in WT KEDF, in Bohr^-3
 of_hold_rho0                   0 #If set to 1, the rho0 will be fixed even if the volume of system has changed, it will be set to 1 automaticly if of_wt_rho0 is not zero
-of_full_pw                     1 #If set to 1, ecut will be ignored when collect planewaves, so that all planewaves will be used
+of_full_pw                     0 #If set to 1, ecut will be ignored when collect planewaves, so that all planewaves will be used
 of_full_pw_dim                 0 #If of_full_pw = true, dimention of FFT is testricted to be (0) either odd or even; (1) odd only; (2) even only
 of_read_kernel                 0 #If set to 1, the kernel of WT KEDF will be filled from file of_kernel_file, not from formula. Only usable for WT KEDF
 of_kernel_file                 WTkernel.txt #The name of WT kernel file.

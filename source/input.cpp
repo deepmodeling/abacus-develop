@@ -1547,7 +1547,7 @@ bool Input::Read(const std::string &fn)
         }
         else if (strcmp("out_mul", word) == 0)
         {
-            read_value(ifs, out_mul);
+            read_bool(ifs, out_mul);
         } // qifeng add 2019/9/10
         //----------------------------------------------------------
         // exx
@@ -2441,7 +2441,7 @@ void Input::Bcast()
     Parallel_Common::bcast_bool(test_skip_ewald);
     Parallel_Common::bcast_bool(ocp);
     Parallel_Common::bcast_string(ocp_set);
-    Parallel_Common::bcast_int(out_mul); // qifeng add 2019/9/10
+    Parallel_Common::bcast_bool(out_mul); // qifeng add 2019/9/10
 
     // Peize Lin add 2018-06-20
     Parallel_Common::bcast_string(exx_hybrid_alpha);
@@ -2556,6 +2556,7 @@ void Input::Check(void)
     // std::cout << "diago_proc=" << diago_proc << std::endl;
     // std::cout << " NPROC=" << GlobalV::NPROC << std::endl;
     if (diago_proc > 1 && basis_type == "lcao")
+    if (diago_proc > 1 && basis_type == "lcao" && diago_proc != GlobalV::NPROC)
     {
         ModuleBase::WARNING_QUIT("Input", "please don't set diago_proc with lcao base");
     }
