@@ -45,6 +45,11 @@ class energy
 	int printe;			   // print energy every 'printe' electron iteration.
 	int iter;
 
+	//below defines the bandgap:
+	double bandgap;        // bandgap = E_{lumo} - E_{homo}
+	double bandgap_up;      
+	double bandgap_dw;
+	
 	public:
 
     // The variables needed to compute the energies
@@ -106,6 +111,9 @@ class energy
     double delta_e(const elecstate::ElecState* pelec);
 
     void delta_escf(const elecstate::ElecState* pelec);
+
+	void cal_bandgap(const elecstate::ElecState* pelec);
+	void cal_bandgap_updw(const elecstate::ElecState* pelec);
 
 	void cal_converged(elecstate::ElecState* pelec);
 	ModuleBase::matrix vnew;

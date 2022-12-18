@@ -345,6 +345,17 @@ namespace ModuleESolver
             GlobalC::en.eband = this->pelec->eband;
             GlobalC::en.demet = this->pelec->demet;
             GlobalC::en.ef = this->pelec->ef;
+            if (GlobalV::out_bandgap)
+            {
+                if (!GlobalV::TWO_EFERMI)
+                {
+                    GlobalC::en.cal_bandgap(this->pelec);
+                }
+                else
+                {
+                    GlobalC::en.cal_bandgap_updw(this->pelec);
+                }
+            }
         }
         else
         {
@@ -757,6 +768,27 @@ namespace ModuleESolver
                 << " " << this->pelec->wg(ik, ib)*GlobalC::kv.nks << std::endl;
             }
             GlobalV::ofs_running << std::endl;
+        }
+
+        if (GlobalV::out_bandgap)
+        {
+            if (!GlobalV::TWO_EFERMI)
+            {
+                GlobalC::en.cal_bandgap(this->pelec);
+                GlobalV::ofs_running << " E_bandgap " 
+                << GlobalC::en.bandgap * ModuleBase::Ry_to_eV 
+                << " eV" << std::endl;
+            }
+            else
+            {
+                GlobalC::en.cal_bandgap_updw(this->pelec);
+                GlobalV::ofs_running << " E_bandgap_up " 
+                << GlobalC::en.bandgap_up * ModuleBase::Ry_to_eV 
+                << " eV" << std::endl;
+                GlobalV::ofs_running << " E_bandgap_dw " 
+                << GlobalC::en.bandgap_dw * ModuleBase::Ry_to_eV 
+                << " eV" << std::endl;
+            }
         }
 
         // add by jingan in 2018.11.7

@@ -18,6 +18,7 @@ ecutwfc                 100             # Rydberg
 scf_thr                 1e-4		# Rydberg
 basis_type              lcao            
 calculation             scf		# this is the key parameter telling abacus to do a scf calculation
+out_chg			True
 ```
 
 The parameter list always starts with key word `INPUT_PARAMETERS`. Any content before `INPUT_PARAMETERS` will be ignored.
@@ -43,10 +44,12 @@ In the above example, the meanings of the parameters are:
 - `scf_thr` : the threshold for the convergence of charge density (UNIT: Rydberg)    
 - `basis_type` : the type of basis set for expanding the electronic wave functions
 - `calculation` : the type of calculation to be performed by ABACUS
+- `out_chg` : if true, output thee charge density oon real space grid
 
 For a complete list of input parameters, please consult this [instruction](../advanced/input_files/input-main.md).
 
 > **Note:** Users cannot change the filename “INPUT” to other names.
+> **Note:** Boolean paramerters such as `out_chg` can be set by using `True` and `False`, `1` and `0`, or `T` and `F`. It is case insensitive so that other perferences such as `true` and `false`, `TRUE` and `FALSE`, and `t` and `f` for setting boolean values are also supported.
 
 ## *STRU*
 

@@ -249,9 +249,7 @@ TEST_F(InputTest, Default)
         EXPECT_FALSE(INPUT.dft_plus_u);
         EXPECT_FALSE(INPUT.yukawa_potential);
         EXPECT_DOUBLE_EQ(INPUT.yukawa_lambda,-1.0);
-        EXPECT_EQ(INPUT.double_counting,1);
         EXPECT_EQ(INPUT.omc,0);
-        EXPECT_EQ(INPUT.dftu_type,2);
         EXPECT_FALSE(INPUT.dft_plus_dmft);
         EXPECT_FALSE(INPUT.rpa);
         EXPECT_EQ(INPUT.coulomb_type,"full");
@@ -547,9 +545,7 @@ TEST_F(InputTest, Read)
         EXPECT_FALSE(INPUT.dft_plus_u);
         EXPECT_FALSE(INPUT.yukawa_potential);
         EXPECT_DOUBLE_EQ(INPUT.yukawa_lambda,-1.0);
-        EXPECT_EQ(INPUT.double_counting,1);
         EXPECT_EQ(INPUT.omc,0);
-        EXPECT_EQ(INPUT.dftu_type,2);
         EXPECT_FALSE(INPUT.dft_plus_dmft);
         EXPECT_FALSE(INPUT.rpa);
         EXPECT_EQ(INPUT.coulomb_type,"full");
@@ -580,7 +576,6 @@ TEST_F(InputTest, Read)
         EXPECT_EQ(INPUT.ncz,0);
         //EXPECT_NEAR(INPUT.force_thr_ev,0.0257112,1e-8);
         EXPECT_DOUBLE_EQ(INPUT.hubbard_u[0],0);
-        EXPECT_DOUBLE_EQ(INPUT.hund_j[0],0);
 	EXPECT_EQ(INPUT.orbital_corr[0],-1);
 	EXPECT_NEAR(INPUT.mdp.lj_epsilon,0.01032,1e-7);
 	EXPECT_NEAR(INPUT.mdp.lj_rcut,8.5,1e-7);

@@ -458,12 +458,13 @@ void ORB_gen_tables::snap_psipsi(
 		ModuleBase::WARNING_QUIT("ORB_gen_tables::snap_psipsi", "job must be equal to 0 or 1!");
 	}
 
-	Numerical_Orbital::set_position(R1, R2);
+	Numerical_Orbital_AtomRelation noar;
+	noar.set_position(R1, R2);
 	assert(this->lat0 > 0.0);
 
 	/// (1) get distance between R1 and R2 (a.u.)
 	/// judge if there exist overlap
-	double distance = Numerical_Orbital::get_distance() * this->lat0;
+	double distance = noar.get_distance() * this->lat0;
 
 	const double Rcut1 = orb.Phi[T1].getRcut();
 	const double Rcut2 = orb.Phi[T2].getRcut();	//caoyu modified 2021-05-08
@@ -520,9 +521,9 @@ void ORB_gen_tables::snap_psipsi(
 	//	double *ylm = new double[nlm];
 	//	dR = R1 - R2;
 	double arr_dR[3];
-	arr_dR[0] = Numerical_Orbital::getX() * this->lat0;
-	arr_dR[1] = Numerical_Orbital::getY() * this->lat0;
-	arr_dR[2] = Numerical_Orbital::getZ() * this->lat0;
+	arr_dR[0] = noar.getX() * this->lat0;
+	arr_dR[1] = noar.getY() * this->lat0;
+	arr_dR[2] = noar.getZ() * this->lat0;
 
 	//double xdr = arr_dR[0] / distance;
 	//double ydr = arr_dR[1] / distance;

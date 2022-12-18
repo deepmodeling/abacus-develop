@@ -36,10 +36,6 @@ void FFT::clear()
 	r_rspace = nullptr;
 #if defined(__CUDA) || defined(__UT_USE_CUDA)
     if (GlobalV::device_flag == "gpu") {
-        if (auxg_3d != nullptr) {
-            cudaFree(auxg_3d);
-            auxg_3d = nullptr;
-        }
         if (auxr_3d != nullptr) {
             cudaFree(auxr_3d);
             auxr_3d = nullptr;
@@ -83,14 +79,10 @@ void FFT:: initfft(int nx_in, int ny_in, int nz_in, int lixy_in, int rixy_in, in
 		auxg  = (std::complex<double> *) fftw_malloc(sizeof(fftw_complex) * maxgrids);
 		auxr  = (std::complex<double> *) fftw_malloc(sizeof(fftw_complex) * maxgrids);
 		r_rspace = (double *) auxg;
-        // auxg_3d = static_cast<std::complex<double> *>(
-        //     fftw_malloc(sizeof(fftw_complex) * (this->nx * this->ny * this->nz)));
         // auxr_3d = static_cast<std::complex<double> *>(
         //     fftw_malloc(sizeof(fftw_complex) * (this->nx * this->ny * this->nz)));
         #if defined(__CUDA) || defined(__UT_USE_CUDA)
         if (GlobalV::device_flag == "gpu") {
-            cudaMalloc(reinterpret_cast<void **>(&auxg_3d),
-                       this->nx * this->ny * this->nz * sizeof(std::complex<double>));
             cudaMalloc(reinterpret_cast<void **>(&auxr_3d),
                        this->nx * this->ny * this->nz * sizeof(std::complex<double>));
         }

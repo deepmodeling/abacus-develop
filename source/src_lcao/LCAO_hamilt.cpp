@@ -3,7 +3,7 @@
 #include "build_st_pw.h"
 #include "../module_neighbor/sltk_atom_arrange.h"
 #include "global_fp.h" // mohan add 2021-01-30
-#include "dftu.h"
+#include "module_dftu/dftu.h"
 #include "../src_parallel/parallel_reduce.h"
 #include "../module_xc/xc_functional.h"
 #ifdef __DEEPKS

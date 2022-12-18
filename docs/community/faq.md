@@ -93,6 +93,9 @@ basis = {'Si':'Si.orb','O':'O.orb'}
 write(cs_stru, cs_atoms, format='abacus', pp=pp, basis=basis)
 ```
 
+**3. What is the convergence criterion for the SCF process in ABACUS?**
+
+ABACUS applies the density difference between two SCF steps (labeled as `DRHO` in the screen output) as the convergence criterion, which is considered as a more robust choice compared with the energy difference. `DRHO` is calculated via `DRHO = |rho(G)-rho_previous(G)|^2`. Note that the energy difference between two SCF steps (labed as `EDIFF`) is also printed out in the screen output. 
 
 
 [back to top](#frequently-asked-questions)

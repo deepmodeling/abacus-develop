@@ -16,7 +16,7 @@
 #include "module_orbital/ORB_read.h"
 #include "src_lcao/ELEC_evolve.h"
 #include "src_lcao/FORCE_STRESS.h"
-#include "src_lcao/dftu.h"
+#include "module_dftu/dftu.h"
 #include "src_lcao/global_fp.h"
 #include "src_lcao/local_orbital_charge.h"
 #endif
@@ -185,15 +185,15 @@ void Input_Conv::Convert(void)
     if (INPUT.dft_plus_u)
     {
         GlobalV::dft_plus_u = INPUT.dft_plus_u;
-        GlobalC::dftu.dftu_type = INPUT.dftu_type;
-        GlobalC::dftu.double_counting = INPUT.double_counting;
         GlobalC::dftu.Yukawa = INPUT.yukawa_potential;
         GlobalC::dftu.omc = INPUT.omc;
         GlobalC::dftu.orbital_corr = INPUT.orbital_corr;
         if (!INPUT.yukawa_potential)
         {
-            GlobalC::dftu.U = INPUT.hubbard_u; // Hubbard Coulomb interaction parameter U(ev)
-            GlobalC::dftu.J = INPUT.hund_j; // Hund exchange parameter J(ev)
+            // Duradev's rotational invariant formulation is implemented
+            // where only an effective U given by U-J is used
+            // unit is in eV
+            GlobalC::dftu.U = INPUT.hubbard_u;
         }
     }
 #endif
@@ -292,6 +292,8 @@ void Input_Conv::Convert(void)
     // For example, when we studying nitrogen-vacancy center,
     // it requires an additional excitation of an electron conduction band to simulate the excited state,
     // used for TDDFT only.
+    GlobalV::ocp = INPUT.ocp;
+    GlobalV::ocp_set = INPUT.ocp_set;
     if (GlobalV::ocp == 1)
     {
         int count = 0;
@@ -496,6 +498,8 @@ void Input_Conv::Convert(void)
     GlobalC::en.out_dos = INPUT.out_dos;
     GlobalC::en.out_band = INPUT.out_band;
     GlobalC::en.out_proj_band = INPUT.out_proj_band;
+
+    GlobalV::out_bandgap = INPUT.out_bandgap; //QO added for bandgap printing
 #ifdef __LCAO
     Local_Orbital_Charge::out_dm = INPUT.out_dm;
     Local_Orbital_Charge::out_dm1 = INPUT.out_dm1;

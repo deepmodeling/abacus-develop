@@ -59,30 +59,41 @@ void LCAO_gen_fixedH::build_ST_new(const char& dtype, const bool& calc_deri, con
 {
     ModuleBase::TITLE("LCAO_gen_fixedH","build_ST_new");
 
+	int total_nnr = 0;
+	const Parallel_Orbitals* pv = this->LM->ParaV;
+#ifdef _OPENMP
+#pragma omp parallel reduction(+:total_nnr)
+{
+#endif
     //array to store data
     double olm[3]={0.0,0.0,0.0};
-    int nnr = 0; // used onlyh for k points.
-
-    const Parallel_Orbitals* pv = this->LM->ParaV;
 
     //\sum{T} e**{ikT} <\phi_{ia}|d\phi_{k\beta}(T)>
 	ModuleBase::Vector3<double> tau1, tau2, dtau;
 	ModuleBase::Vector3<double> dtau1, dtau2, tau0;
-    for (int T1=0; T1<ucell.ntype; ++T1)
+#ifdef _OPENMP
+// use schedule(dynamic) for load balancing because adj_num is various
+#pragma omp for schedule(dynamic)
+#endif
+    for (int iat1 = 0; iat1 < GlobalC::ucell.nat; iat1++)
     {
-		Atom* atom1 = &ucell.atoms[T1];
-        for (int I1=0; I1<atom1->na; ++I1)
+		const int T1 = GlobalC::ucell.iat2it[iat1];
+		const Atom* atom1 = &GlobalC::ucell.atoms[T1];
+		const int I1 = GlobalC::ucell.iat2ia[iat1];
         {
 			tau1 = atom1->tau[I1];
             //GlobalC::GridD.Find_atom(tau1);
-            GlobalC::GridD.Find_atom(ucell, tau1, T1, I1);
+			AdjacentAtomInfo adjs;
+            GlobalC::GridD.Find_atom(ucell, tau1, T1, I1, &adjs);
+			// Record_adj.for_2d() may not called in some case
+			int nnr = pv->nlocstart ? pv->nlocstart[iat1] : 0;
 
-            for (int ad = 0; ad < GlobalC::GridD.getAdjacentNum()+1; ++ad)
+            for (int ad = 0; ad < adjs.adj_num+1; ++ad)
             {
-                const int T2 = GlobalC::GridD.getType(ad);
-				const int I2 = GlobalC::GridD.getNatom(ad);
+                const int T2 = adjs.ntype[ad];
+				const int I2 = adjs.natom[ad];
 				Atom* atom2 = &ucell.atoms[T2];
-				tau2 = GlobalC::GridD.getAdjacentTau(ad);
+				tau2 = adjs.adjacent_tau[ad];
 				dtau = tau2 - tau1;
 				double distance = dtau.norm() * ucell.lat0;
 				double rcut = GlobalC::ORB.Phi[T1].getRcut() + GlobalC::ORB.Phi[T2].getRcut();
@@ -128,7 +139,7 @@ void LCAO_gen_fixedH::build_ST_new(const char& dtype, const bool& calc_deri, con
 								// PLEASE use UOT as an input parameter of this subroutine
 								// mohan add 2021-03-30
 								GlobalC::UOT.snap_psipsi( GlobalC::ORB, olm, 0, dtype, tau1, 
-										T1, L1, m1, N1, GlobalC::GridD.getAdjacentTau(ad), 
+										T1, L1, m1, N1, adjs.adjacent_tau[ad], 
 										T2, L2, m2, N2, GlobalV::NSPIN,
 										olm2//for soc
 										);
@@ -165,6 +176,7 @@ void LCAO_gen_fixedH::build_ST_new(const char& dtype, const bool& calc_deri, con
 											this->LM->Hloc_fixedR_soc[nnr] = olm1[is];
                                         }
                                     }
+									++total_nnr;
 									++nnr;
 								}
 							}
@@ -172,7 +184,7 @@ void LCAO_gen_fixedH::build_ST_new(const char& dtype, const bool& calc_deri, con
 							{
 								GlobalC::UOT.snap_psipsi( GlobalC::ORB, olm, 1, dtype, 
 									tau1, T1, L1, m1, N1,
-									GlobalC::GridD.getAdjacentTau(ad), T2, L2, m2, N2, GlobalV::NSPIN
+									adjs.adjacent_tau[ad], T2, L2, m2, N2, GlobalV::NSPIN
 									);
 
 								if(GlobalV::GAMMA_ONLY_LOCAL)
@@ -210,6 +222,7 @@ void LCAO_gen_fixedH::build_ST_new(const char& dtype, const bool& calc_deri, con
 											this->LM->stvnl33[nnr] = olm[2] * dtau.z;
 										}
 									}
+									++total_nnr;
 									++nnr;
 								}
 							}
@@ -224,13 +237,13 @@ void LCAO_gen_fixedH::build_ST_new(const char& dtype, const bool& calc_deri, con
 					int start2 = ucell.itiaiw2iwt( T2, I2, 0);
 
 					bool is_adj = false;
-					for (int ad0=0; ad0 < GlobalC::GridD.getAdjacentNum()+1; ++ad0)
+					for (int ad0=0; ad0 < adjs.adj_num+1; ++ad0)
 					{
-						const int T0 = GlobalC::GridD.getType(ad0);
+						const int T0 = adjs.ntype[ad0];
 						//const int I0 = GlobalC::GridD.getNatom(ad0);
 						//const int iat0 = ucell.itia2iat(T0, I0);
 						//const int start0 = ucell.itiaiw2iwt(T0, I0, 0);
-						tau0 = GlobalC::GridD.getAdjacentTau(ad0);
+						tau0 = adjs.adjacent_tau[ad0];
 						dtau1 = tau0 - tau1;
 						double distance1 = dtau1.norm() * ucell.lat0;
 						double rcut1 = GlobalC::ORB.Phi[T1].getRcut() + GlobalC::ucell.infoNL.Beta[T0].get_rcut_max();
@@ -255,6 +268,7 @@ void LCAO_gen_fixedH::build_ST_new(const char& dtype, const bool& calc_deri, con
 							{
 								const int nu = pv->trace_loc_col[start2+kk];
 								if(nu<0)continue;
+								++total_nnr;
 								++nnr;
 							}//kk
 						}//jj
@@ -263,13 +277,16 @@ void LCAO_gen_fixedH::build_ST_new(const char& dtype, const bool& calc_deri, con
 			}// ad
 		}// I1
 	}// T1
+#ifdef _OPENMP
+}
+#endif
 
 	if(!GlobalV::GAMMA_ONLY_LOCAL)
 	{
-		if(nnr != pv->nnr)
+		if(total_nnr != pv->nnr)
 		{
-			std::cout << " nnr=" << nnr << " LNNR.nnr=" << pv->nnr << std::endl;
-			GlobalV::ofs_running << " nnr=" << nnr << " LNNR.nnr=" << pv->nnr << std::endl;
+			std::cout << " nnr=" << total_nnr << " LNNR.nnr=" << pv->nnr << std::endl;
+			GlobalV::ofs_running << " nnr=" << total_nnr << " LNNR.nnr=" << pv->nnr << std::endl;
 			ModuleBase::WARNING_QUIT("LCAO_gen_fixedH::build_ST_new","nnr != LNNR.nnr");
 		}
 	}
@@ -314,6 +331,9 @@ void LCAO_gen_fixedH::build_Nonlocal_mu_new(double* NLloc, const bool &calc_deri
 	{
 		nlm_tot1.resize(GlobalC::ucell.nat);
 	}
+#ifdef _OPENMP
+#pragma omp parallel for schedule(dynamic)
+#endif
 	for(int iat=0;iat<GlobalC::ucell.nat;iat++)
 	{
 		const int it = GlobalC::ucell.iat2it[iat];
@@ -321,7 +341,8 @@ void LCAO_gen_fixedH::build_Nonlocal_mu_new(double* NLloc, const bool &calc_deri
 
 		const double Rcut_Beta = GlobalC::ucell.infoNL.Beta[it].get_rcut_max();
 		const ModuleBase::Vector3<double> tau = GlobalC::ucell.atoms[it].tau[ia];
-        GlobalC::GridD.Find_atom(GlobalC::ucell, tau ,it, ia);
+		AdjacentAtomInfo adjs;
+        GlobalC::GridD.Find_atom(GlobalC::ucell, tau ,it, ia, &adjs);
 
 		if(!calc_deri)
 		{
@@ -332,14 +353,14 @@ void LCAO_gen_fixedH::build_Nonlocal_mu_new(double* NLloc, const bool &calc_deri
 			nlm_tot1[iat].clear();
 		}
 
-		for (int ad=0; ad<GlobalC::GridD.getAdjacentNum()+1 ; ++ad)
+		for (int ad=0; ad<adjs.adj_num+1 ; ++ad)
 		{
-			const int T1 = GlobalC::GridD.getType(ad);
-			const int I1 = GlobalC::GridD.getNatom(ad);
+			const int T1 = adjs.ntype[ad];
+			const int I1 = adjs.natom[ad];
 			const int start1 = GlobalC::ucell.itiaiw2iwt(T1, I1, 0);
 			const double Rcut_AO1 = GlobalC::ORB.Phi[T1].getRcut();
 
-			const ModuleBase::Vector3<double> tau1 = GlobalC::GridD.getAdjacentTau(ad);
+			const ModuleBase::Vector3<double> &tau1 = adjs.adjacent_tau[ad];
 			const Atom* atom1 = &GlobalC::ucell.atoms[T1];
 			const int nw1_tot = atom1->nw*GlobalV::NPOL;
 
@@ -392,9 +413,9 @@ void LCAO_gen_fixedH::build_Nonlocal_mu_new(double* NLloc, const bool &calc_deri
 			}//end iw
 
 			const int iat1=GlobalC::ucell.itia2iat(T1, I1);
-			const int rx1=GlobalC::GridD.getBox(ad).x;
-			const int ry1=GlobalC::GridD.getBox(ad).y;
-			const int rz1=GlobalC::GridD.getBox(ad).z;
+			const int rx1=adjs.box[ad].x;
+			const int ry1=adjs.box[ad].y;
+			const int rz1=adjs.box[ad].z;
 			key_tuple key_1(iat1,rx1,ry1,rz1);
 
 			if(!calc_deri)
@@ -412,7 +433,11 @@ void LCAO_gen_fixedH::build_Nonlocal_mu_new(double* NLloc, const bool &calc_deri
 	//calculate sum_(L0,M0) beta<psi_i|beta><beta|psi_j>
 	//and accumulate the value to Hloc_fixedR(i,j)
 	//=======================================================
-	int nnr = 0;
+	int total_nnr = 0;
+#ifdef _OPENMP
+#pragma omp parallel reduction(+:total_nnr)
+{
+#endif
 	ModuleBase::Vector3<double> tau1, tau2, dtau;
 	ModuleBase::Vector3<double> dtau1, dtau2, tau0;
 	double distance = 0.0;
@@ -423,33 +448,40 @@ void LCAO_gen_fixedH::build_Nonlocal_mu_new(double* NLloc, const bool &calc_deri
 	//	RA.for_2d();
 
 	// psi1
-	for (int T1 = 0; T1 < GlobalC::ucell.ntype; ++T1)
-	{
+#ifdef _OPENMP
+// use schedule(dynamic) for load balancing because adj_num is various
+#pragma omp for schedule(dynamic)
+#endif
+    for (int iat1 = 0; iat1 < GlobalC::ucell.nat; iat1++)
+    {
+		const int T1 = GlobalC::ucell.iat2it[iat1];
 		const Atom* atom1 = &GlobalC::ucell.atoms[T1];
-		for (int I1 =0; I1< atom1->na; ++I1)
+		const int I1 = GlobalC::ucell.iat2ia[iat1];
 		{
 			//GlobalC::GridD.Find_atom( atom1->tau[I1] );
-			GlobalC::GridD.Find_atom(GlobalC::ucell, atom1->tau[I1] ,T1, I1);
-			const int iat1 = GlobalC::ucell.itia2iat(T1, I1);
+			AdjacentAtomInfo adjs;
+			GlobalC::GridD.Find_atom(GlobalC::ucell, atom1->tau[I1] ,T1, I1, &adjs);
 			const int start1 = GlobalC::ucell.itiaiw2iwt(T1, I1, 0);
+			// Record_adj.for_2d() may not called in some case
+			int nnr = pv->nlocstart ? pv->nlocstart[iat1] : 0;
 			tau1 = atom1->tau[I1];
 
 			// psi2
-			for (int ad2=0; ad2<GlobalC::GridD.getAdjacentNum()+1; ++ad2)
+			for (int ad2=0; ad2<adjs.adj_num+1; ++ad2)
 			{
-				const int T2 = GlobalC::GridD.getType(ad2);
+				const int T2 = adjs.ntype[ad2];
 				const Atom* atom2 = &GlobalC::ucell.atoms[T2];
 				
-				const int I2 = GlobalC::GridD.getNatom(ad2);
+				const int I2 = adjs.natom[ad2];
 				const int iat2 = GlobalC::ucell.itia2iat(T2, I2);
 				const int start2 = GlobalC::ucell.itiaiw2iwt(T2, I2, 0);
-				tau2 = GlobalC::GridD.getAdjacentTau(ad2);
+				tau2 = adjs.adjacent_tau[ad2];
 
 				bool is_adj = false;
 
-				const int rx2=GlobalC::GridD.getBox(ad2).x;
-				const int ry2=GlobalC::GridD.getBox(ad2).y;
-				const int rz2=GlobalC::GridD.getBox(ad2).z;
+				const int rx2=adjs.box[ad2].x;
+				const int ry2=adjs.box[ad2].y;
+				const int rz2=adjs.box[ad2].z;
 
 					
 				dtau = tau2 - tau1;
@@ -460,16 +492,16 @@ void LCAO_gen_fixedH::build_Nonlocal_mu_new(double* NLloc, const bool &calc_deri
 				if(distance < rcut) is_adj = true;
 				else if(distance >= rcut)
 				{
-					for (int ad0 = 0; ad0 < GlobalC::GridD.getAdjacentNum()+1; ++ad0)
+					for (int ad0 = 0; ad0 < adjs.adj_num+1; ++ad0)
 					{
-						const int T0 = GlobalC::GridD.getType(ad0);
+						const int T0 = adjs.ntype[ad0];
 						//const int I0 = GlobalC::GridD.getNatom(ad0);
 						//const int T0 = RA.info[iat1][ad0][3];
 						//const int I0 = RA.info[iat1][ad0][4];
 						//const int iat0 = GlobalC::ucell.itia2iat(T0, I0);
 						//const int start0 = GlobalC::ucell.itiaiw2iwt(T0, I0, 0);
 
-						tau0 = GlobalC::GridD.getAdjacentTau(ad0);
+						tau0 = adjs.adjacent_tau[ad0];
 						dtau1 = tau0 - tau1;
 						dtau2 = tau0 - tau2;
 
@@ -492,10 +524,10 @@ void LCAO_gen_fixedH::build_Nonlocal_mu_new(double* NLloc, const bool &calc_deri
 				{
 					// < psi1 | all projectors | psi2 >
 					// ----------------------------- enter the nnr increaing zone -------------------------
-					for (int ad0=0; ad0 < GlobalC::GridD.getAdjacentNum()+1 ; ++ad0)
+					for (int ad0=0; ad0 < adjs.adj_num+1 ; ++ad0)
 					{
-						const int T0 = GlobalC::GridD.getType(ad0);
-						const int I0 = GlobalC::GridD.getNatom(ad0);
+						const int T0 = adjs.ntype[ad0];
+						const int I0 = adjs.natom[ad0];
 						const int iat = GlobalC::ucell.itia2iat(T0,I0);
 
 						// mohan add 2010-12-19
@@ -503,7 +535,7 @@ void LCAO_gen_fixedH::build_Nonlocal_mu_new(double* NLloc, const bool &calc_deri
 
 						//const int I0 = GlobalC::GridD.getNatom(ad0);
 						//const int start0 = GlobalC::ucell.itiaiw2iwt(T0, I0, 0);
-						tau0 = GlobalC::GridD.getAdjacentTau(ad0);
+						tau0 = adjs.adjacent_tau[ad0];
 
 						dtau1 = tau0 - tau1;
 						dtau2 = tau0 - tau2;
@@ -519,9 +551,9 @@ void LCAO_gen_fixedH::build_Nonlocal_mu_new(double* NLloc, const bool &calc_deri
 							continue;
 						}
 						//const Atom* atom0 = &GlobalC::ucell.atoms[T0];
-						const int rx0=GlobalC::GridD.getBox(ad0).x;
-						const int ry0=GlobalC::GridD.getBox(ad0).y;
-						const int rz0=GlobalC::GridD.getBox(ad0).z;
+						const int rx0=adjs.box[ad0].x;
+						const int ry0=adjs.box[ad0].y;
+						const int rz0=adjs.box[ad0].z;
 						key_tuple key1(iat1,-rx0,-ry0,-rz0);
 						key_tuple key2(iat2,rx2-rx0,ry2-ry0,rz2-rz0);
 						
@@ -705,7 +737,7 @@ void LCAO_gen_fixedH::build_Nonlocal_mu_new(double* NLloc, const bool &calc_deri
 							const int iw2_all = start2 + k;
 							const int nu = pv->trace_loc_col[iw2_all];						
 							if(nu < 0)continue;
-
+							total_nnr++;
 							nnr++;
 						}
 					}
@@ -713,12 +745,14 @@ void LCAO_gen_fixedH::build_Nonlocal_mu_new(double* NLloc, const bool &calc_deri
 			} // ad2
 		} // I1
 	} // T1
-
+#ifdef _OPENMP
+}
+#endif
 	if(!GlobalV::GAMMA_ONLY_LOCAL)
 	{
-		if( nnr!=pv->nnr)
+		if( total_nnr!=pv->nnr)
 		{
-			GlobalV::ofs_running << " nr="  << nnr << std::endl;
+			GlobalV::ofs_running << " nr="  << total_nnr << std::endl;
 			GlobalV::ofs_running << " pv->nnr=" << pv->nnr << std::endl;
 			ModuleBase::WARNING_QUIT("LCAO_gen_fixedH::build_Nonlocal_mu_new","nnr!=LNNR.nnr");
 		}

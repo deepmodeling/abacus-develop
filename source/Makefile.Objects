@@ -17,6 +17,7 @@ VPATH=./src_global:\
 ./module_symmetry:\
 ./module_cell:\
 ./module_base:\
+./module_base/src:\
 ./module_md:\
 ./module_pw:\
 ./module_surchem:\
@@ -37,6 +38,7 @@ VPATH=./src_global:\
 ./module_hamilt/of_pw:\
 ./module_hamilt/src:\
 ./module_gint:\
+./module_dftu:\
 ./src_pw:\
 ./src_pw/src:\
 ./src_lcao:\
@@ -84,7 +86,7 @@ ${OBJS_IO_LCAO}\
 ${OBJS_LCAO}\
 ${OBJS_PARALLEL_LCAO}\
 ${OBJS_VDW}\
-
+${OBJS_DFTU}\
 
 OBJS_MAIN=main.o\
     driver.o\
@@ -110,6 +112,7 @@ OBJS_BASE=abfs-vector3_order.o\
     math_ylmreal.o\
     math_bspline.o\
     math_chebyshev.o\
+    math_multi_device.o\
     mathzone_add1.o\
     matrix.o\
     matrix3.o\
@@ -380,9 +383,6 @@ OBJS_LCAO=DM_gamma.o\
       center2_orb-orb11.o\
       center2_orb-orb21.o\
       center2_orb-orb22.o\
-      dftu.o\
-      dftu_relax.o\
-      dftu_yukawa.o\
       global_fp.o\
       local_orbital_charge.o\
       local_orbital_wfc.o\
@@ -445,6 +445,7 @@ OBJS_SRCPW=H_Ewald_pw.o\
     force_multi_device.o\
     stress_multi_device.o\
     wf_multi_device.o\
+    vnl_multi_device.o\
     global.o\
     klist.o\
     magnetism.o\
@@ -483,3 +484,11 @@ OBJS_VDW=vdw.o\
     vdwd3.o\
     vdwd3_parameters_tab.o
 
+OBJS_DFTU=dftu.o\
+      dftu_force.o\
+      dftu_yukawa.o\
+      dftu_folding.o\
+      dftu_io.o\
+      dftu_tools.o\
+      dftu_occup.o\
+      dftu_hamilt.o

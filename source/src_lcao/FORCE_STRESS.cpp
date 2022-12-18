@@ -1,6 +1,6 @@
 #include "FORCE_STRESS.h"
 #include "../src_pw/global.h"
-#include "./dftu.h"  //Quxin add for DFT+U on 20201029
+#include "module_dftu/dftu.h"  //Quxin add for DFT+U on 20201029
 // new
 #include "module_base/timer.h"
 #include "module_elecstate/potentials/efield.h"        // liuyu add 2022-05-18
@@ -183,35 +183,17 @@ void Force_Stress_LCAO::getForceStress(
 	//Force contribution from DFT+U
 	ModuleBase::matrix force_dftu;
 	ModuleBase::matrix stress_dftu;
-	if (GlobalV::dft_plus_u)
-	{
-		// Quxin add for DFT+U on 20201029
-		GlobalC::dftu.force_stress(loc.dm_gamma, loc.dm_k, *uhm.LM);
-		
-        if (isforce) {
+	if (GlobalV::dft_plus_u) // Quxin add for DFT+U on 20201029
+	{	
+        if (isforce)
+		{
             force_dftu.create(nat, 3);
 		}
 		if(isstress)
 		{
 			stress_dftu.create(3, 3);
 		}
-		for(int i=0; i<3; i++)
-		{
-			if(isstress)
-			{
-				for(int j=0; j<3; j++)
-				{
-					stress_dftu(j,i) = GlobalC::dftu.stress_dftu.at(j).at(i);
-				}
-			}
-			if(isforce)
-			{
-				for (int iat = 0; iat < nat; iat++)
-				{
-					force_dftu(iat, i) = GlobalC::dftu.force_dftu.at(iat).at(i);
-				}
-			}
-		}
+		GlobalC::dftu.force_stress(loc.dm_gamma, loc.dm_k, *uhm.LM, force_dftu, stress_dftu);
 	}
 #ifdef __EXX
 	//Force and Stress contribution from exx

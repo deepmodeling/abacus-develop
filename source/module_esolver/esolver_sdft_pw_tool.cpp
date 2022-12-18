@@ -122,7 +122,7 @@ void ESolver_SDFT_PW::sKG(const int nche_KG, const double fwhmin, const double w
     //------------------------------------------------------------------
     //                    Calculate
     //------------------------------------------------------------------
-    const double mu = GlobalC::en.ef;
+    const double mu = this->pelec->ef;
     stoiter.stofunc.mu = mu;
     double * ct11 = new double[nt];
     double * ct12 = new double[nt];
@@ -160,26 +160,41 @@ void ESolver_SDFT_PW::sKG(const int nche_KG, const double fwhmin, const double w
 
         int nchip = this->stowf.nchip[ik];
         int totbands_per = nchip + ksbandper;
+        int totbands_ks = GlobalV::NBANDS;
+        int totbands_sto = nchip;
         int totbands = totbands_per;
 #ifdef __MPI
         MPI_Allreduce(&totbands_per,&totbands,1,MPI_INT,MPI_SUM,PARAPW_WORLD);
+        totbands_sto = totbands - totbands_ks;
         const int nstogroup = GlobalV::NSTOGROUP;
-        int nrecv[nstogroup];
-        int displs[nstogroup];
-        MPI_Allgather(&totbands_per,1,MPI_INT,nrecv,1,MPI_INT,PARAPW_WORLD);
-        displs[0] = 0;
+        int nrecv_ks[nstogroup];
+        int nrecv_sto[nstogroup];
+        int displs_ks[nstogroup];
+        int displs_sto[nstogroup];
+        MPI_Allgather(&ksbandper,1,MPI_INT,nrecv_ks,1,MPI_INT,PARAPW_WORLD);
+        MPI_Allgather(&nchip,1,MPI_INT,nrecv_sto,1,MPI_INT,PARAPW_WORLD);
+        displs_ks[0] = 0;
+        displs_sto[0] = 0;
         for(int i = 1; i < nstogroup ; ++i)
         {
-            displs[i] = displs[i-1] + nrecv[i-1];
+            displs_ks[i] = displs_ks[i-1] + nrecv_ks[i-1];
+            displs_sto[i] = displs_sto[i-1] + nrecv_sto[i-1];
         }
         for(int i = 0 ; i < nstogroup ; ++i)
         {
-            nrecv[i] *= npwx;
-            displs[i] *= npwx;
+            nrecv_ks[i] *= npwx;
+            nrecv_sto[i] *= npwx;
+            displs_ks[i] *= npwx;
+            displs_sto[i] *= npwx;
         }
 #endif
         
-
+        //-----------------------------------------------------------
+        //               ks conductivity
+        //-----------------------------------------------------------
+        if(GlobalV::MY_STOGROUP == 0 && totbands_ks > 0)
+            jjcorr_ks(ik, nt, dt, this->pelec->wg, velop, ct11,ct12,ct22);
+        
         //-----------------------------------------------------------
         //               sto conductivity
         //-----------------------------------------------------------
@@ -215,7 +230,7 @@ void ESolver_SDFT_PW::sKG(const int nche_KG, const double fwhmin, const double w
             }
             else
             {
-                if(GlobalV::NBANDS > 0)
+                if(totbands_ks > 0)
                     tmp = &stowf.chiortho[ik](ib-ksbandper,0);
                 else
                     tmp = &stowf.chi0[ik](ib-ksbandper,0);
@@ -309,16 +324,19 @@ void ESolver_SDFT_PW::sKG(const int nche_KG, const double fwhmin, const double w
             {
                 const int idnb_per = id * totbands_per;
                 const int idnb = id * totbands;
-                MPI_Allgatherv(&j1psi(idnb_per,0), totbands_per * npwx, mpicomplex, 
-                            &j1psi_tot(idnb,0), nrecv, displs, mpicomplex, PARAPW_WORLD);
-                MPI_Allgatherv(&j2psi(idnb_per,0), totbands_per * npwx, mpicomplex, 
-                            &j2psi_tot(idnb,0), nrecv, displs, mpicomplex, PARAPW_WORLD);
+                MPI_Allgatherv(&j1psi(idnb_per,0), ksbandper * npwx, mpicomplex, 
+                            &j1psi_tot(idnb,0), nrecv_ks, displs_ks, mpicomplex, PARAPW_WORLD);
+                MPI_Allgatherv(&j2psi(idnb_per,0), ksbandper * npwx, mpicomplex, 
+                            &j2psi_tot(idnb,0), nrecv_ks, displs_ks, mpicomplex, PARAPW_WORLD);
+                MPI_Allgatherv(&j1psi(idnb_per + ksbandper,0), nchip * npwx, mpicomplex, 
+                            &j1psi_tot(idnb + totbands_ks, 0), nrecv_sto, displs_sto, mpicomplex, PARAPW_WORLD);
+                MPI_Allgatherv(&j2psi(idnb_per + ksbandper,0), nchip * npwx, mpicomplex, 
+                            &j2psi_tot(idnb + totbands_ks,0), nrecv_sto, displs_sto, mpicomplex, PARAPW_WORLD);
             }
             p_j1psi = &j1psi_tot;
             p_j2psi = &j2psi_tot;
         }
 #endif
-
 
         //loop of t
         psi::Psi<std::complex<double>> exppsi(1,totbands_per,npwx);
@@ -362,14 +380,18 @@ void ESolver_SDFT_PW::sKG(const int nche_KG, const double fwhmin, const double w
             {
                 ModuleBase::timer::tick(this->classname,"bands_gather");
                 exppsi_tot.resize(1,totbands,npwx);
-                MPI_Allgatherv(&exppsi(0,0), totbands_per * npwx, mpicomplex, 
-                                &exppsi_tot(0,0), nrecv, displs, mpicomplex, PARAPW_WORLD);
+                MPI_Allgatherv(&exppsi(0,0), ksbandper* npwx, mpicomplex, 
+                                &exppsi_tot(0,0), nrecv_ks, displs_ks, mpicomplex, PARAPW_WORLD);
+                MPI_Allgatherv(&exppsi(ksbandper,0), nchip * npwx, mpicomplex, 
+                                &exppsi_tot(totbands_ks,0), nrecv_sto, displs_sto, mpicomplex, PARAPW_WORLD);
                 p_exppsi = &exppsi_tot;
                 ModuleBase::timer::tick(this->classname,"bands_gather");
             }
 #endif
-            ModuleBase::ComplexMatrix j1l(ndim,totbands_per*totbands), j2l(ndim,totbands_per*totbands);
-            ModuleBase::ComplexMatrix j1r(ndim,totbands_per*totbands), j2r(ndim,totbands_per*totbands);
+            const int dim_jmatrix = totbands_per*totbands_sto + nchip*totbands_ks;
+            // const int dim_jmatrix = totbands_per*totbands;
+            ModuleBase::ComplexMatrix j1l(ndim,dim_jmatrix), j2l(ndim,dim_jmatrix);
+            ModuleBase::ComplexMatrix j1r(ndim,dim_jmatrix), j2r(ndim,dim_jmatrix);
             char transa = 'C';
             char transb = 'N';
             int totbands_per3 = ndim*totbands_per;
@@ -379,33 +401,57 @@ void ESolver_SDFT_PW::sKG(const int nche_KG, const double fwhmin, const double w
             {
                 const int idnb = id * totbands_per;
                 //<psi|sqrt(f)j_1(1-f) exp(iHt)|psi>
-                zgemm_(&transa, &transb,&totbands_per, &totbands, &npw, &ModuleBase::ONE, &j1sfpsi(idnb,0), &npwx, 
-                        p_exppsi->get_pointer(), &npwx, &ModuleBase::ZERO, &j1l(id,0), &totbands_per);
+                zgemm_(&transa, &transb, &totbands_per, &totbands_sto, &npw, &ModuleBase::ONE, &j1sfpsi(idnb,0), &npwx, 
+                        &(p_exppsi->operator()(totbands_ks,0)), &npwx, &ModuleBase::ZERO, &j1l(id,0), &totbands_per);
+                if(totbands_ks > 0)
+                    zgemm_(&transa, &transb, &nchip, &totbands_ks, &npw, &ModuleBase::ONE, &j1sfpsi(idnb+ksbandper, 0), &npwx, 
+                        p_exppsi->get_pointer(), &npwx, &ModuleBase::ZERO, &j1l(id,totbands_per*totbands_sto), &nchip);
+                // if(totbands_ks*ksbandper > 0)
+                //     zgemm_(&transa, &transb, &ksbandper, &totbands_ks, &npw, &ModuleBase::ONE, &j1sfpsi(idnb,0), &npwx, 
+                //         p_exppsi->get_pointer(), &npwx, &ModuleBase::ZERO, &j1l(id,totbands_per*totbands_sto + nchip*totbands_ks), &ksbandper);
                 //<psi|sqrt(f)j_2(1-f) exp(iHt)|psi>
-                zgemm_(&transa, &transb,&totbands_per, &totbands, &npw, &ModuleBase::ONE, &j2sfpsi(idnb,0), &npwx, 
-                        p_exppsi->get_pointer(), &npwx, &ModuleBase::ZERO, &j2l(id,0), &totbands_per);
+                zgemm_(&transa, &transb, &totbands_per, &totbands_sto, &npw, &ModuleBase::ONE, &j2sfpsi(idnb,0), &npwx, 
+                        &(p_exppsi->operator()(totbands_ks,0)), &npwx, &ModuleBase::ZERO, &j2l(id,0), &totbands_per);
+                if(totbands_ks > 0)
+                    zgemm_(&transa, &transb, &nchip, &totbands_ks, &npw, &ModuleBase::ONE, &j2sfpsi(idnb+ksbandper,0), &npwx, 
+                        p_exppsi->get_pointer(), &npwx, &ModuleBase::ZERO, &j2l(id,totbands_per*totbands_sto), &nchip);
+                // if(totbands_ks*ksbandper > 0)
+                //     zgemm_(&transa, &transb, &ksbandper, &totbands_ks, &npw, &ModuleBase::ONE, &j2sfpsi(idnb,0), &npwx, 
+                //         p_exppsi->get_pointer(), &npwx, &ModuleBase::ZERO, &j2l(id,totbands_per*totbands_sto + nchip*totbands_ks), &ksbandper);
             }
             for(int id = 0; id < ndim ; ++id) // it can also use zgemm once
             {
                 const int idnb = id * totbands;
                 //i<exp(-iHt)sqrt(f)psi| j_1|psi> = i<psi|sqrt(f)exp(iHt) j_1|psi> = i(<psi|j_1 exp(-iHt)sqrt(f)|psi>)^+
-                zgemm_(&transa, &transb,&totbands_per, &totbands, &npw, &ModuleBase::IMAG_UNIT, expsfpsi.get_pointer(), &npwx,
-                        &(p_j1psi->operator()(idnb,0)), &npwx, &ModuleBase::ZERO, &j1r(id,0), &totbands_per);
+                zgemm_(&transa, &transb, &totbands_per, &totbands_sto, &npw, &ModuleBase::IMAG_UNIT, expsfpsi.get_pointer(), &npwx,
+                        &(p_j1psi->operator()(idnb+totbands_ks,0)), &npwx, &ModuleBase::ZERO, &j1r(id,0), &totbands_per);
+                if(totbands_ks > 0)
+                    zgemm_(&transa, &transb, &nchip, &totbands_ks, &npw, &ModuleBase::IMAG_UNIT, &expsfpsi(ksbandper,0), &npwx,
+                        &(p_j1psi->operator()(idnb,0)), &npwx, &ModuleBase::ZERO, &j1r(id,totbands_per*totbands_sto), &nchip);
+                // if(totbands_ks*ksbandper > 0)
+                //     zgemm_(&transa, &transb, &ksbandper, &totbands_ks, &npw, &ModuleBase::IMAG_UNIT, expsfpsi.get_pointer(), &npwx,
+                //         &(p_j1psi->operator()(idnb,0)), &npwx, &ModuleBase::ZERO, &j1r(id,totbands_per*totbands_sto + nchip*totbands_ks), &ksbandper);
                 //i<psi|sqrt(f)exp(iHt) j_2|psi> 
-                zgemm_(&transa, &transb,&totbands_per, &totbands, &npw, &ModuleBase::IMAG_UNIT, expsfpsi.get_pointer(), &npwx,
-                        &(p_j2psi->operator()(idnb,0)), &npwx, &ModuleBase::ZERO, &j2r(id,0), &totbands_per);
+                zgemm_(&transa, &transb,&totbands_per, &totbands_sto, &npw, &ModuleBase::IMAG_UNIT, expsfpsi.get_pointer(), &npwx,
+                        &(p_j2psi->operator()(idnb+totbands_ks,0)), &npwx, &ModuleBase::ZERO, &j2r(id,0), &totbands_per);
+                if(totbands_ks > 0)   
+                    zgemm_(&transa, &transb,&nchip, &totbands_ks, &npw, &ModuleBase::IMAG_UNIT, &expsfpsi(ksbandper,0), &npwx,
+                        &(p_j2psi->operator()(idnb,0)), &npwx, &ModuleBase::ZERO, &j2r(id,totbands_per*totbands_sto), &nchip);
+                // if(totbands_ks*ksbandper > 0)
+                //     zgemm_(&transa, &transb,&ksbandper, &totbands_ks, &npw, &ModuleBase::IMAG_UNIT, expsfpsi.get_pointer(), &npwx,
+                //         &(p_j2psi->operator()(idnb,0)), &npwx, &ModuleBase::ZERO, &j2r(id,totbands_per*totbands_sto + nchip*totbands_ks), &ksbandper);
             }
             ModuleBase::timer::tick(this->classname,"matrix_multip");
 
 #ifdef __MPI
             ModuleBase::timer::tick(this->classname,"matrix_reduce");
-            MPI_Allreduce(MPI_IN_PLACE,j1l.c,ndim*totbands_per*totbands,MPI_DOUBLE_COMPLEX,MPI_SUM,POOL_WORLD);
-            MPI_Allreduce(MPI_IN_PLACE,j2l.c,ndim*totbands_per*totbands,MPI_DOUBLE_COMPLEX,MPI_SUM,POOL_WORLD);
-            MPI_Allreduce(MPI_IN_PLACE,j1r.c,ndim*totbands_per*totbands,MPI_DOUBLE_COMPLEX,MPI_SUM,POOL_WORLD);
-            MPI_Allreduce(MPI_IN_PLACE,j2r.c,ndim*totbands_per*totbands,MPI_DOUBLE_COMPLEX,MPI_SUM,POOL_WORLD);
+            MPI_Allreduce(MPI_IN_PLACE,j1l.c,ndim*dim_jmatrix,MPI_DOUBLE_COMPLEX,MPI_SUM,POOL_WORLD);
+            MPI_Allreduce(MPI_IN_PLACE,j2l.c,ndim*dim_jmatrix,MPI_DOUBLE_COMPLEX,MPI_SUM,POOL_WORLD);
+            MPI_Allreduce(MPI_IN_PLACE,j1r.c,ndim*dim_jmatrix,MPI_DOUBLE_COMPLEX,MPI_SUM,POOL_WORLD);
+            MPI_Allreduce(MPI_IN_PLACE,j2r.c,ndim*dim_jmatrix,MPI_DOUBLE_COMPLEX,MPI_SUM,POOL_WORLD);
             ModuleBase::timer::tick(this->classname,"matrix_reduce");
 #endif
-            int totnum = ndim*totbands_per*totbands;
+            int totnum = ndim*dim_jmatrix;
             int num_per = totnum / GlobalV::NPROC_IN_POOL;
             int st_per = num_per * GlobalV::RANK_IN_POOL;
             int re = totnum % GlobalV::NPROC_IN_POOL;

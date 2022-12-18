@@ -279,6 +279,8 @@ void Input::Default(void)
     out_dm = 0;
     out_dm1 = 0;
 
+    out_bandgap = 0; //QO added for bandgap printing
+
     deepks_out_labels = 0; // caoyu added 2020-11-24, mohan added 2021-01-03
     deepks_scf = 0;
     deepks_bandgap = 0;
@@ -439,9 +441,7 @@ void Input::Default(void)
     dft_plus_u = false; // 1:DFT+U correction; 0：standard DFT calcullation
     yukawa_potential = false;
     yukawa_lambda = -1.0;
-    double_counting = 1;
     omc = 0;
-    dftu_type = 2;
 
     //==========================================================
     //    DFT+DMFT     Xin Qu added on 2020-08
@@ -580,7 +580,7 @@ bool Input::Read(const std::string &fn)
         }
         else if (strcmp("pseudo_mesh", word) == 0) //
         {
-            read_value(ifs, pseudo_mesh);
+            read_bool(ifs, pseudo_mesh);
         }
         else if (strcmp("calculation", word) == 0) // which type calculation
         {
@@ -651,7 +651,7 @@ bool Input::Read(const std::string &fn)
         }
         else if (strcmp("cal_cond", word) == 0)
         {
-            read_value(ifs, cal_cond);
+            read_bool(ifs, cal_cond);
         }
         else if (strcmp("cond_nche", word) == 0)
         {
@@ -675,7 +675,7 @@ bool Input::Read(const std::string &fn)
         }
         else if (strcmp("cond_nonlocal", word) == 0)
         {
-            read_value(ifs, cond_nonlocal);
+            read_bool(ifs, cond_nonlocal);
         }
         else if (strcmp("bndpar", word) == 0)
         {
@@ -687,7 +687,7 @@ bool Input::Read(const std::string &fn)
         }
         else if (strcmp("berry_phase", word) == 0) // berry phase calculation
         {
-            read_value(ifs, berry_phase);
+            read_bool(ifs, berry_phase);
         }
         else if (strcmp("gdir", word) == 0) // berry phase calculation
         {
@@ -695,7 +695,7 @@ bool Input::Read(const std::string &fn)
         }
         else if (strcmp("towannier90", word) == 0) // add by jingan for wannier90
         {
-            read_value(ifs, towannier90);
+            read_bool(ifs, towannier90);
         }
         else if (strcmp("nnkpfile", word) == 0) // add by jingan for wannier90
         {
@@ -749,7 +749,7 @@ bool Input::Read(const std::string &fn)
         }
         else if (strcmp("search_pbc", word) == 0)
         {
-            read_value(ifs, search_pbc);
+            read_bool(ifs, search_pbc);
         }
         else if (strcmp("symmetry", word) == 0)
         {
@@ -757,7 +757,7 @@ bool Input::Read(const std::string &fn)
         }
         else if (strcmp("init_vel", word) == 0)
         {
-            read_value(ifs, init_vel);
+            read_bool(ifs, init_vel);
         }
         else if (strcmp("symmetry_prec", word) == 0) // LiuXh add 2021-08-12, accuracy for symmetry
         {
@@ -765,11 +765,11 @@ bool Input::Read(const std::string &fn)
         }
         else if (strcmp("cal_force", word) == 0)
         {
-            read_value(ifs, cal_force);
+            read_bool(ifs, cal_force);
         }
         else if (strcmp("out_force", word) == 0)
         {
-            read_value(ifs, out_force);
+            read_bool(ifs, out_force);
         }
         else if (strcmp("force_thr", word) == 0)
         {
@@ -802,7 +802,7 @@ bool Input::Read(const std::string &fn)
         }
         else if (strcmp("cal_stress", word) == 0)
         {
-            read_value(ifs, cal_stress);
+            read_bool(ifs, cal_stress);
         }
         else if (strcmp("fixed_axes", word) == 0)
         {
@@ -810,11 +810,11 @@ bool Input::Read(const std::string &fn)
         }
         else if (strcmp("fixed_ibrav", word) == 0)
         {
-            read_value(ifs, fixed_ibrav);
+            read_bool(ifs, fixed_ibrav);
         }
         else if (strcmp("fixed_atoms", word) == 0)
         {
-            read_value(ifs, fixed_atoms);
+            read_bool(ifs, fixed_atoms);
         }
         else if (strcmp("relax_method", word) == 0)
         {
@@ -855,7 +855,7 @@ bool Input::Read(const std::string &fn)
         }
         else if (strcmp("relax_new", word) == 0)
         {
-            read_value(ifs, relax_new);
+            read_bool(ifs, relax_new);
         }
 
         //----------------------------------------------------------
@@ -863,7 +863,7 @@ bool Input::Read(const std::string &fn)
         //----------------------------------------------------------
         else if (strcmp("gamma_only", word) == 0)
         {
-            read_value(ifs, gamma_only);
+            read_bool(ifs, gamma_only);
         }
         else if (strcmp("ecutwfc", word) == 0)
         {
@@ -934,7 +934,7 @@ bool Input::Read(const std::string &fn)
         }
         else if (strcmp("colour", word) == 0)
         {
-            read_value(ifs, colour);
+            read_bool(ifs, colour);
         }
         else if (strcmp("nbspline", word) == 0)
         {
@@ -942,31 +942,31 @@ bool Input::Read(const std::string &fn)
         }
         else if (strcmp("t_in_h", word) == 0)
         {
-            read_value(ifs, t_in_h);
+            read_bool(ifs, t_in_h);
         }
         else if (strcmp("vl_in_h", word) == 0)
         {
-            read_value(ifs, vl_in_h);
+            read_bool(ifs, vl_in_h);
         }
         else if (strcmp("vnl_in_h", word) == 0)
         {
-            read_value(ifs, vnl_in_h);
+            read_bool(ifs, vnl_in_h);
         }
         else if (strcmp("vh_in_h", word) == 0)
         {
-            read_value(ifs, vh_in_h);
+            read_bool(ifs, vh_in_h);
         }
         else if (strcmp("vion_in_h", word) == 0)
         {
-            read_value(ifs, vion_in_h);
+            read_bool(ifs, vion_in_h);
         }
         else if (strcmp("test_force", word) == 0)
         {
-            read_value(ifs, test_force);
+            read_bool(ifs, test_force);
         }
         else if (strcmp("test_stress", word) == 0)
         {
-            read_value(ifs, test_stress);
+            read_bool(ifs, test_stress);
         }
         //----------------------------------------------------------
         // iteration
@@ -985,7 +985,7 @@ bool Input::Read(const std::string &fn)
         }
         else if (strcmp("out_stru", word) == 0)
         {
-            read_value(ifs, out_stru);
+            read_bool(ifs, out_stru);
         }
         //----------------------------------------------------------
         // occupation
@@ -1029,7 +1029,7 @@ bool Input::Read(const std::string &fn)
         }
         else if (strcmp("mixing_tau", word) == 0)
         {
-            read_value(ifs, mixing_tau);
+            read_bool(ifs, mixing_tau);
         }
         //----------------------------------------------------------
         // charge / potential / wavefunction
@@ -1068,31 +1068,35 @@ bool Input::Read(const std::string &fn)
         }
         else if (strcmp("out_chg", word) == 0)
         {
-            read_value(ifs, out_chg);
+            read_bool(ifs, out_chg);
         }
         else if (strcmp("out_dm", word) == 0)
         {
-            read_value(ifs, out_dm);
+            read_bool(ifs, out_dm);
         }
         else if (strcmp("out_dm1", word) == 0)
         {
-            read_value(ifs, out_dm1);
+            read_bool(ifs, out_dm1);
+        }
+        else if (strcmp("out_bandgap", word) == 0) // for bandgap printing
+        {
+            read_bool(ifs, out_bandgap);
         }
         else if (strcmp("deepks_out_labels", word) == 0) // caoyu added 2020-11-24, mohan modified 2021-01-03
         {
-            read_value(ifs, deepks_out_labels);
+            read_bool(ifs, deepks_out_labels);
         }
         else if (strcmp("deepks_scf", word) == 0) // caoyu added 2020-11-24, mohan modified 2021-01-03
         {
-            read_value(ifs, deepks_scf);
+            read_bool(ifs, deepks_scf);
         }
         else if (strcmp("deepks_bandgap", word) == 0) // caoyu added 2020-11-24, mohan modified 2021-01-03
         {
-            read_value(ifs, deepks_bandgap);
+            read_bool(ifs, deepks_bandgap);
         }
         else if (strcmp("deepks_out_unittest", word) == 0) // mohan added 2021-01-03
         {
-            read_value(ifs, deepks_out_unittest);
+            read_bool(ifs, deepks_out_unittest);
         }
         else if (strcmp("deepks_model", word) == 0) // caoyu added 2021-06-03
         {
@@ -1120,7 +1124,7 @@ bool Input::Read(const std::string &fn)
         }
         else if (strcmp("out_wfc_r", word) == 0)
         {
-            read_value(ifs, out_wfc_r);
+            read_bool(ifs, out_wfc_r);
         }
         // mohan add 20090909
         else if (strcmp("out_dos", word) == 0)
@@ -1129,21 +1133,21 @@ bool Input::Read(const std::string &fn)
         }
         else if (strcmp("out_band", word) == 0)
         {
-            read_value(ifs, out_band);
+            read_bool(ifs, out_band);
         }
         else if (strcmp("out_proj_band", word) == 0)
         {
-            read_value(ifs, out_proj_band);
+            read_bool(ifs, out_proj_band);
         }
 
         else if (strcmp("out_mat_hs", word) == 0)
         {
-            read_value(ifs, out_mat_hs);
+            read_bool(ifs, out_mat_hs);
         }
         // LiuXh add 2019-07-15
         else if (strcmp("out_mat_hs2", word) == 0)
         {
-            read_value(ifs, out_mat_hs2);
+            read_bool(ifs, out_mat_hs2);
         }
         else if (strcmp("out_hs2_interval", word) == 0)
         {
@@ -1151,19 +1155,19 @@ bool Input::Read(const std::string &fn)
         }
         else if (strcmp("out_mat_r", word) == 0)
         {
-            read_value(ifs, out_mat_r);
+            read_bool(ifs, out_mat_r);
         }
         else if (strcmp("out_wfc_lcao", word) == 0)
         {
-            read_value(ifs, out_wfc_lcao);
+            read_bool(ifs, out_wfc_lcao);
         }
         else if (strcmp("out_alllog", word) == 0)
         {
-            read_value(ifs, out_alllog);
+            read_bool(ifs, out_alllog);
         }
         else if (strcmp("out_element_info", word) == 0)
         {
-            read_value(ifs, out_element_info);
+            read_bool(ifs, out_element_info);
         }
         else if (strcmp("dos_emin_ev", word) == 0)
         {
@@ -1342,11 +1346,11 @@ bool Input::Read(const std::string &fn)
         //----------------------------------------------------------
         else if (strcmp("efield_flag", word) == 0)
         {
-            read_value(ifs, efield_flag);
+            read_bool(ifs, efield_flag);
         }
         else if (strcmp("dip_cor_flag", word) == 0)
         {
-            read_value(ifs, dip_cor_flag);
+            read_bool(ifs, dip_cor_flag);
         }
         else if (strcmp("efield_dir", word) == 0)
         {
@@ -1370,7 +1374,7 @@ bool Input::Read(const std::string &fn)
         //----------------------------------------------------------
         else if (strcmp("gate_flag", word) == 0)
         {
-            read_value(ifs, gate_flag);
+            read_bool(ifs, gate_flag);
         }
         else if (strcmp("zgate", word) == 0)
         {
@@ -1378,11 +1382,11 @@ bool Input::Read(const std::string &fn)
         }
         else if (strcmp("relax", word) == 0)
         {
-            read_value(ifs, relax);
+            read_bool(ifs, relax);
         }
         else if (strcmp("block", word) == 0)
         {
-            read_value(ifs, block);
+            read_bool(ifs, block);
         }
         else if (strcmp("block_down", word) == 0)
         {
@@ -1478,7 +1482,7 @@ bool Input::Read(const std::string &fn)
         }
         else if (strcmp("vdw_abc", word) == 0)
         {
-            read_value(ifs, vdw_abc);
+            read_bool(ifs, vdw_abc);
         }
         else if (strcmp("vdw_cutoff_radius", word) == 0)
         {
@@ -1526,19 +1530,19 @@ bool Input::Read(const std::string &fn)
         //--------------------------------------------------------
         else if (strcmp("restart_save", word) == 0)
         {
-            read_value(ifs, restart_save);
+            read_bool(ifs, restart_save);
         }
         else if (strcmp("restart_load", word) == 0)
         {
-            read_value(ifs, restart_load);
+            read_bool(ifs, restart_load);
         }
         else if (strcmp("ocp", word) == 0)
         {
-            read_value(ifs, GlobalV::ocp);
+            read_bool(ifs, ocp);
         }
         else if (strcmp("ocp_set", word) == 0)
         {
-            getline(ifs, GlobalV::ocp_set);
+            getline(ifs, ocp_set);
             //			ifs.ignore(150, '\n');
         }
         else if (strcmp("out_mul", word) == 0)
@@ -1559,7 +1563,7 @@ bool Input::Read(const std::string &fn)
         }
         else if (strcmp("exx_separate_loop", word) == 0)
         {
-            read_value(ifs, exx_separate_loop);
+            read_bool(ifs, exx_separate_loop);
         }
         else if (strcmp("exx_hybrid_step", word) == 0)
         {
@@ -1635,11 +1639,11 @@ bool Input::Read(const std::string &fn)
         }
         else if (strcmp("noncolin", word) == 0)
         {
-            read_value(ifs, noncolin);
+            read_bool(ifs, noncolin);
         }
         else if (strcmp("lspinorb", word) == 0)
         {
-            read_value(ifs, lspinorb);
+            read_bool(ifs, lspinorb);
         }
         else if (strcmp("soc_lambda", word) == 0)
         {
@@ -1651,7 +1655,7 @@ bool Input::Read(const std::string &fn)
         }
         else if (strcmp("test_skip_ewald", word) == 0)
         {
-            read_value(ifs, test_skip_ewald);
+            read_bool(ifs, test_skip_ewald);
         }
         //--------------
         //----------------------------------------------------------------------------------
@@ -1659,17 +1663,11 @@ bool Input::Read(const std::string &fn)
         //----------------------------------------------------------------------------------
         else if (strcmp("dft_plus_u", word) == 0)
         {
-            ifs >> dft_plus_u;
+            read_bool(ifs, dft_plus_u);
         }
-        else if (strcmp("dftu_type", word) == 0)
-            ifs.ignore(150, '\n');
         else if (strcmp("yukawa_potential", word) == 0)
             ifs.ignore(150, '\n');
         else if (strcmp("hubbard_u", word) == 0)
-            ifs.ignore(150, '\n');
-        else if (strcmp("hund_j", word) == 0)
-            ifs.ignore(150, '\n');
-        else if (strcmp("double_counting", word) == 0)
             ifs.ignore(150, '\n');
         else if (strcmp("orbital_corr", word) == 0)
             ifs.ignore(150, '\n');
@@ -1682,14 +1680,14 @@ bool Input::Read(const std::string &fn)
         //----------------------------------------------------------------------------------
         else if (strcmp("dft_plus_dmft", word) == 0)
         {
-            ifs >> dft_plus_dmft;
+            read_bool(ifs, dft_plus_dmft);
         }
         //----------------------------------------------------------------------------------
         //         Rong Shi added for RPA
         //----------------------------------------------------------------------------------
         else if (strcmp("rpa", word) == 0)
         {
-            read_value(ifs, rpa);
+            read_bool(ifs, rpa);
             if (rpa) GlobalV::rpa_setorb = true;
         }
         //----------------------------------------------------------------------------------
@@ -1697,7 +1695,7 @@ bool Input::Read(const std::string &fn)
         //----------------------------------------------------------------------------------
         else if (strcmp("imp_sol", word) == 0)
         {
-            read_value(ifs, imp_sol);
+            read_bool(ifs, imp_sol);
         }
         else if (strcmp("eb_k", word) == 0)
         {
@@ -1760,11 +1758,11 @@ bool Input::Read(const std::string &fn)
         }
         else if (strcmp("of_hold_rho0", word) == 0)
         {
-            read_value(ifs, of_hold_rho0);
+            read_bool(ifs, of_hold_rho0);
         }
         else if (strcmp("of_full_pw", word) == 0)
         {
-            read_value(ifs, of_full_pw);
+            read_bool(ifs, of_full_pw);
         }
         else if (strcmp("of_full_pw_dim", word) == 0)
         {
@@ -1772,7 +1770,7 @@ bool Input::Read(const std::string &fn)
         }
         else if (strcmp("of_read_kernel", word) == 0)
         {
-            read_value(ifs, of_read_kernel);
+            read_bool(ifs, of_read_kernel);
         }
         else if (strcmp("of_kernel_file", word) == 0)
         {
@@ -1852,12 +1850,6 @@ bool Input::Read(const std::string &fn)
         hubbard_u[i] = 0.0;
     }
 
-    hund_j = new double[ntype];
-    for (int i = 0; i < ntype; i++)
-    {
-        hund_j[i] = 0.0;
-    }
-
     orbital_corr = new int[ntype];
     for (int i = 0; i < ntype; i++)
     {
@@ -1875,21 +1867,13 @@ bool Input::Read(const std::string &fn)
             if(ifs.eof() != 0) break;
             strtolower(word1, word); // convert uppercase std::string to lower case; word1 --> word
 
-            if (strcmp("dftu_type", word) == 0)
+            if (strcmp("yukawa_potential", word) == 0)
             {
-                ifs >> dftu_type;
-            }
-            else if (strcmp("yukawa_potential", word) == 0)
-            {
-                ifs >> yukawa_potential;
+            	read_bool(ifs, yukawa_potential);
             }
             else if (strcmp("yukawa_lambda", word) == 0)
             {
                 ifs >> yukawa_lambda;
-            }
-            else if (strcmp("double_counting", word) == 0)
-            {
-                ifs >> double_counting;
             }
             else if (strcmp("hubbard_u", word) == 0)
             {
@@ -1897,14 +1881,6 @@ bool Input::Read(const std::string &fn)
                 {
                     ifs >> hubbard_u[i];
                     hubbard_u[i] /= ModuleBase::Ry_to_eV;
-                }
-            }
-            else if (strcmp("hund_j", word) == 0)
-            {
-                for (int i = 0; i < ntype; i++)
-                {
-                    ifs >> hund_j[i];
-                    hund_j[i] /= ModuleBase::Ry_to_eV;
                 }
             }
             else if (strcmp("orbital_corr", word) == 0)
@@ -1916,7 +1892,7 @@ bool Input::Read(const std::string &fn)
             }
             else if (strcmp("omc", word) == 0)
             {
-                ifs >> omc;
+            	read_value(ifs, omc);
             }
             else
             {
@@ -1935,12 +1911,6 @@ bool Input::Read(const std::string &fn)
             if (hubbard_u[i] < -1.0e-3)
             {
                 std::cout << " WRONG ARGUMENTS OF hubbard_u " << std::endl;
-                exit(0);
-            }
-
-            if (hund_j[i] < -1.0e-3)
-            {
-                std::cout << " WRONG ARGUMENTS OF hund_j " << std::endl;
                 exit(0);
             }
 
@@ -1995,14 +1965,6 @@ bool Input::Read(const std::string &fn)
                     hubbard_u[i] /= ModuleBase::Ry_to_eV;
                 }
             }
-            else if (strcmp("hund_j", word) == 0)
-            {
-                for (int i = 0; i < ntype; i++)
-                {
-                    ifs >> hund_j[i];
-                    hund_j[i] /= ModuleBase::Ry_to_eV;
-                }
-            }
             else if (strcmp("orbital_corr", word) == 0)
             {
                 for (int i = 0; i < ntype; i++)
@@ -2023,12 +1985,6 @@ bool Input::Read(const std::string &fn)
             if (hubbard_u[i] < -1.0e-3)
             {
                 std::cout << " WRONG ARGUMENTS OF hubbard_u " << std::endl;
-                exit(0);
-            }
-
-            if (hund_j[i] < -1.0e-3)
-            {
-                std::cout << " WRONG ARGUMENTS OF hund_j " << std::endl;
                 exit(0);
             }
 
@@ -2259,7 +2215,7 @@ void Input::Bcast()
     Parallel_Common::bcast_int(symmetry);
     Parallel_Common::bcast_bool(init_vel); // liuyu 2021-07-14
     Parallel_Common::bcast_double(symmetry_prec); // LiuXh add 2021-08-12, accuracy for symmetry
-    Parallel_Common::bcast_int(cal_force);
+    Parallel_Common::bcast_bool(cal_force);
     Parallel_Common::bcast_bool(out_force);
     Parallel_Common::bcast_double(force_thr);
     Parallel_Common::bcast_double(force_thr_ev2);
@@ -2306,19 +2262,19 @@ void Input::Bcast()
     Parallel_Common::bcast_int(nurse);
     Parallel_Common::bcast_bool(colour);
     Parallel_Common::bcast_int(nbspline);
-    Parallel_Common::bcast_int(t_in_h);
-    Parallel_Common::bcast_int(vl_in_h);
-    Parallel_Common::bcast_int(vnl_in_h);
-    Parallel_Common::bcast_int(vh_in_h);
-    Parallel_Common::bcast_int(vion_in_h);
+    Parallel_Common::bcast_bool(t_in_h);
+    Parallel_Common::bcast_bool(vl_in_h);
+    Parallel_Common::bcast_bool(vnl_in_h);
+    Parallel_Common::bcast_bool(vh_in_h);
+    Parallel_Common::bcast_bool(vion_in_h);
 
-    Parallel_Common::bcast_int(test_force);
-    Parallel_Common::bcast_int(test_stress);
+    Parallel_Common::bcast_bool(test_force);
+    Parallel_Common::bcast_bool(test_stress);
 
     Parallel_Common::bcast_double(scf_thr);
     Parallel_Common::bcast_int(scf_nmax);
     Parallel_Common::bcast_int(this->relax_nmax);
-    Parallel_Common::bcast_int(out_stru); // mohan add 2012-03-23
+    Parallel_Common::bcast_bool(out_stru); // mohan add 2012-03-23
 
     // Parallel_Common::bcast_string( occupations );
     Parallel_Common::bcast_string(smearing_method);
@@ -2338,9 +2294,10 @@ void Input::Bcast()
     Parallel_Common::bcast_string(chg_extrap); // xiaohui modify 2015-02-01
     Parallel_Common::bcast_int(out_freq_elec);
     Parallel_Common::bcast_int(out_freq_ion);
-    Parallel_Common::bcast_int(out_chg);
-    Parallel_Common::bcast_int(out_dm);
-    Parallel_Common::bcast_int(out_dm1);
+    Parallel_Common::bcast_bool(out_chg);
+    Parallel_Common::bcast_bool(out_dm);
+    Parallel_Common::bcast_bool(out_dm1);
+    Parallel_Common::bcast_bool(out_bandgap); //for bandgap printing
 
     Parallel_Common::bcast_bool(deepks_out_labels); // caoyu added 2020-11-24, mohan modified 2021-01-03
     Parallel_Common::bcast_bool(deepks_scf);
@@ -2353,13 +2310,13 @@ void Input::Bcast()
     
     Parallel_Common::bcast_int(out_pot);
     Parallel_Common::bcast_int(out_wfc_pw);
-    Parallel_Common::bcast_int(out_wfc_r);
+    Parallel_Common::bcast_bool(out_wfc_r);
     Parallel_Common::bcast_int(out_dos);
-    Parallel_Common::bcast_int(out_band);
-    Parallel_Common::bcast_int(out_proj_band);
-    Parallel_Common::bcast_int(out_mat_hs);
-    Parallel_Common::bcast_int(out_mat_hs2); // LiuXh add 2019-07-15
-    Parallel_Common::bcast_int(out_mat_r); // jingan add 2019-8-14
+    Parallel_Common::bcast_bool(out_band);
+    Parallel_Common::bcast_bool(out_proj_band);
+    Parallel_Common::bcast_bool(out_mat_hs);
+    Parallel_Common::bcast_bool(out_mat_hs2); // LiuXh add 2019-07-15
+    Parallel_Common::bcast_bool(out_mat_r); // jingan add 2019-8-14
     Parallel_Common::bcast_bool(out_wfc_lcao);
     Parallel_Common::bcast_bool(out_alllog);
     Parallel_Common::bcast_bool(out_element_info);
@@ -2482,8 +2439,8 @@ void Input::Bcast()
     Parallel_Common::bcast_int(td_vextout);
     Parallel_Common::bcast_int(td_dipoleout);
     Parallel_Common::bcast_bool(test_skip_ewald);
-    Parallel_Common::bcast_int(GlobalV::ocp);
-    Parallel_Common::bcast_string(GlobalV::ocp_set);
+    Parallel_Common::bcast_bool(ocp);
+    Parallel_Common::bcast_string(ocp_set);
     Parallel_Common::bcast_int(out_mul); // qifeng add 2019/9/10
 
     // Peize Lin add 2018-06-20
@@ -2524,20 +2481,16 @@ void Input::Bcast()
     Parallel_Common::bcast_bool(dft_plus_u);
     Parallel_Common::bcast_bool(yukawa_potential);
     Parallel_Common::bcast_int(omc);
-    Parallel_Common::bcast_int(dftu_type);
-    Parallel_Common::bcast_int(double_counting);
     Parallel_Common::bcast_double(yukawa_lambda);
     if (GlobalV::MY_RANK != 0)
     {
         hubbard_u = new double[this->ntype];
-        hund_j = new double[this->ntype];
         orbital_corr = new int[this->ntype];
     }
 
     for (int i = 0; i < this->ntype; i++)
     {
         Parallel_Common::bcast_double(hubbard_u[i]);
-        Parallel_Common::bcast_double(hund_j[i]);
         Parallel_Common::bcast_int(orbital_corr[i]);
     }
 
@@ -3201,19 +3154,46 @@ void Input::close_log(void) const
     ModuleBase::Global_File::close_all_log(GlobalV::MY_RANK, this->out_alllog);
 }
 
-void Input::readbool(std::ifstream &ifs, bool &var)
+void Input::read_bool(std::ifstream &ifs, bool &var)
 {
     std::string str;
     ifs >> str;
+    for(auto &i : str)
+    {
+        i = tolower(i);
+    }
     if (str == "true")
     {
         var = true;
     }
-    else
+    else if (str == "false")
     {
         var = false;
     }
-    ifs.ignore(100, '\n');
+    else if (str == "1")
+    {
+        var = true;
+    }
+    else if (str == "0")
+    {
+        var = false;
+    }
+    else if (str == "t")
+    {
+        var = true;
+    }
+    else if (str == "f")
+    {
+        var = false;
+    }
+    else
+    {
+        std::string warningstr = "Bad boolean parameter ";
+        warningstr.append(str);
+        warningstr.append(", please check the input parameters in file INPUT");
+        ModuleBase::WARNING_QUIT("Input", warningstr); 
+    }
+    ifs.ignore(150, '\n');
     return;
 }
 
@@ -3249,7 +3229,7 @@ int Input::count_ntype(const std::string &fn)
 		while(true)
 		{
 			ModuleBase::GlobalFunc::READ_VALUE(ifa, temp);
-			if (temp == "LATTICE_CONSTANT" || temp == "NUMERICAL_ORBITAL" || temp == "NUMERICAL_DESCRIPTOR")
+			if (temp == "LATTICE_CONSTANT" || temp == "NUMERICAL_ORBITAL" || temp == "NUMERICAL_DESCRIPTOR" || ifa.eof())
 			{
 				break;
 			}

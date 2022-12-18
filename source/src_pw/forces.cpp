@@ -931,7 +931,6 @@ void Forces<FPTYPE, Device>::cal_force_nl(ModuleBase::matrix& forcenl, const Mod
         syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, d_wg, wg.c, wg.nr * wg.nc);
         syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, force, forcenl.c, forcenl.nr * forcenl.nc);
         syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, gcar, &GlobalC::wfcpw->gcar[0][0], 3 * GlobalC::kv.nks * GlobalC::wfcpw->npwk_max);
-        resmem_complex_op()(this->ctx, vkb, GlobalC::ppcell.vkb.nr * GlobalC::ppcell.vkb.nc);
 
         resmem_int_op()(this->ctx, atom_nh, GlobalC::ucell.ntype);
         resmem_int_op()(this->ctx, atom_na, GlobalC::ucell.ntype);
@@ -955,13 +954,13 @@ void Forces<FPTYPE, Device>::cal_force_nl(ModuleBase::matrix& forcenl, const Mod
         // generate vkb
         if (GlobalC::ppcell.nkb > 0)
         {
-            GlobalC::ppcell.getvnl(ik, GlobalC::ppcell.vkb);
             if (this->device == psi::GpuDevice) {
-                syncmem_complex_h2d_op()(this->ctx, this->cpu_ctx, vkb, GlobalC::ppcell.vkb.c, GlobalC::ppcell.vkb.nr * GlobalC::ppcell.vkb.nc);
+                vkb = GlobalC::ppcell.d_vkb;
             }
             else {
                 vkb = GlobalC::ppcell.vkb.c;
             }
+            GlobalC::ppcell.getvnl(ctx, ik, vkb);
         }
 
         // get becp according to wave functions and vkb
@@ -1088,7 +1087,6 @@ void Forces<FPTYPE, Device>::cal_force_nl(ModuleBase::matrix& forcenl, const Mod
         delmem_var_op()(this->ctx, force);
         delmem_int_op()(this->ctx, atom_nh);
         delmem_int_op()(this->ctx, atom_na);
-        delmem_complex_op()(this->ctx, vkb);
     }
     //  this->print(GlobalV::ofs_running, "nonlocal forces", forcenl);
     ModuleBase::timer::tick("Forces", "cal_force_nl");

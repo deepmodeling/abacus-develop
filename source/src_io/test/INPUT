@@ -21,7 +21,7 @@ nbands                         8 #number of bands
 nbands_sto                     256 #number of stochastic bands
 nbands_istate                  5 #number of bands around Fermi level for istate calulation
 symmetry                       1 #the control of symmetry
-init_vel                       0 #read velocity from STRU or not
+init_vel                       False #read velocity from STRU or not
 symmetry_prec                  1e-05 #accuracy for symmetry
 nelec                          0 #input number of electrons
 out_mul                        0 # mulliken  charge or not
@@ -309,11 +309,8 @@ of_kernel_file                 WTkernel.txt #The name of WT kernel file.
 
 #Parameters (19.dft+u)
 dft_plus_u                     0 #true:DFT+U correction; false: standard DFT calcullation(default)
-dftu_type                      2 #1:rotationally invarient formalism; 2:simplified form(default)
-double_counting                1 #1:FLL(fully localized limit)(default); 2:AMF(around mean field)
 yukawa_lambda                  -1 #default:0.0
 yukawa_potential               0 #default: false
 omc                            0 #the mode of occupation matrix control
-hund_j              0 #Hund exchange parameter J(ev)
 hubbard_u           0 #Hubbard Coulomb interaction parameter U(ev)
 orbital_corr        -1 #which correlated orbitals need corrected ; d:2 ,f:3, do not need correction:-1

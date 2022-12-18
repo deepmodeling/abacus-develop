@@ -3,7 +3,6 @@
 #include "module_base/global_variable.h"
 #include "src_pw/global.h"
 #include "src_pw/occupy.h"
-#include "module_hamilt/ks_pw/velocity_pw.h"
 
 namespace ModuleESolver
 {
@@ -31,8 +30,6 @@ void ESolver_KS_PW<FPTYPE, Device>::KG(const int nche_KG, const FPTYPE fwhmin, c
     //               KS conductivity
     //-----------------------------------------------------------
     cout << "Calculating conductivity..." << endl;
-    char transn = 'N';
-    char transc = 'C';
     int nw = ceil(wcut / dw_in);
     FPTYPE dw = dw_in / ModuleBase::Ry_to_eV; // converge unit in eV to Ry
     FPTYPE sigma = fwhmin / TWOSQRT2LN2 / ModuleBase::Ry_to_eV;
@@ -43,11 +40,6 @@ void ESolver_KS_PW<FPTYPE, Device>::KG(const int nche_KG, const FPTYPE fwhmin, c
     assert(nw >= 1);
     assert(nt >= 1);
     const int nk = GlobalC::kv.nks;
-    const int ndim = 3;
-    const int npwx = GlobalC::wf.npwx;
-    const FPTYPE tpiba = GlobalC::ucell.tpiba;
-    const int nbands = GlobalV::NBANDS;
-    const FPTYPE ef = GlobalC::en.ef;
 
     FPTYPE *ct11 = new FPTYPE[nt];
     FPTYPE *ct12 = new FPTYPE[nt];
@@ -60,78 +52,13 @@ void ESolver_KS_PW<FPTYPE, Device>::KG(const int nche_KG, const FPTYPE fwhmin, c
     for (int ik = 0; ik < nk; ++ik)
     {
         velop.init(ik);
-        const int npw = GlobalC::kv.ngk[ik];
-        complex<FPTYPE> *levc = &(this->psi[0](ik, 0, 0));
-        complex<FPTYPE> *prevc = new complex<FPTYPE>[3 * npwx * nbands];
-        // px|right>
-        velop.act(this->psi, nbands*GlobalV::NPOL, levc, prevc);
-        for (int id = 0; id < ndim; ++id)
-        {
-            this->p_hamilt->updateHk(ik);
-            complex<FPTYPE> *pij = new complex<FPTYPE>[nbands * nbands];
-            zgemm_(&transc,
-                   &transn,
-                   &nbands,
-                   &nbands,
-                   &npw,
-                   &ModuleBase::ONE,
-                   levc,
-                   &npwx,
-                   prevc + id * npwx * nbands,
-                   &npwx,
-                   &ModuleBase::ZERO,
-                   pij,
-                   &nbands);
-#ifdef __MPI
-            MPI_Allreduce(MPI_IN_PLACE, pij, 2 * nbands * nbands, MPI_DOUBLE, MPI_SUM, POOL_WORLD);
-#endif
-            int ntper = nt / GlobalV::NPROC_IN_POOL;
-            int itstart = ntper * GlobalV::RANK_IN_POOL;
-            if (nt % GlobalV::NPROC_IN_POOL > GlobalV::RANK_IN_POOL)
-            {
-                ntper++;
-                itstart += GlobalV::RANK_IN_POOL;
-            }
-            else
-            {
-                itstart += nt % GlobalV::NPROC_IN_POOL;
-            }
-
-            for (int it = itstart; it < itstart + ntper; ++it)
-            // for(int it = 0 ; it < nt; ++it)
-            {
-                FPTYPE tmct11 = 0;
-                FPTYPE tmct12 = 0;
-                FPTYPE tmct22 = 0;
-                FPTYPE *enb = &(this->pelec->ekb(ik, 0));
-                for (int ib = 0; ib < nbands; ++ib)
-                {
-                    FPTYPE ei = enb[ib];
-                    FPTYPE fi = wg(ik, ib);
-                    for (int jb = ib + 1; jb < nbands; ++jb)
-                    {
-                        FPTYPE ej = enb[jb];
-                        FPTYPE fj = wg(ik, jb);
-                        FPTYPE tmct = sin((ej - ei) * (it)*dt) * (fi - fj) * norm(pij[ib * nbands + jb]);
-                        tmct11 += tmct;
-                        tmct12 += -tmct * ((ei + ej) / 2 - ef);
-                        tmct22 += tmct * pow((ei + ej) / 2 - ef, 2);
-                    }
-                }
-                ct11[it] += tmct11 / 2.0;
-                ct12[it] += tmct12 / 2.0;
-                ct22[it] += tmct22 / 2.0;
-            }
-            delete[] pij;
-        }
-        delete[] prevc;
+        jjcorr_ks(ik, nt, dt, wg, velop, ct11,ct12,ct22);
     }
 #ifdef __MPI
     MPI_Allreduce(MPI_IN_PLACE, ct11, nt, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
     MPI_Allreduce(MPI_IN_PLACE, ct12, nt, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
     MPI_Allreduce(MPI_IN_PLACE, ct22, nt, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-#endif
-
+#endif    
     //------------------------------------------------------------------
     //                    Output
     //------------------------------------------------------------------
@@ -142,6 +69,83 @@ void ESolver_KS_PW<FPTYPE, Device>::KG(const int nche_KG, const FPTYPE fwhmin, c
     delete[] ct11;
     delete[] ct12;
     delete[] ct22;
+}
+
+template <typename FPTYPE, typename Device>
+void ESolver_KS_PW<FPTYPE, Device>:: jjcorr_ks(const int ik, const int nt, const double dt, ModuleBase::matrix& wg, hamilt::Velocity &velop, 
+                                            FPTYPE* ct11, FPTYPE* ct12, FPTYPE* ct22)
+{
+    char transn = 'N';
+    char transc = 'C';
+    const int ndim = 3;
+    const int npwx = GlobalC::wf.npwx;
+    const FPTYPE tpiba = GlobalC::ucell.tpiba;
+    const int nbands = GlobalV::NBANDS;
+    const FPTYPE ef = this->pelec->ef;
+    const int npw = GlobalC::kv.ngk[ik];
+    std::complex<FPTYPE> *levc = &(this->psi[0](ik, 0, 0));
+    complex<FPTYPE> *prevc = new complex<FPTYPE>[3 * npwx * nbands];
+    // px|right>
+    velop.act(this->psi, nbands*GlobalV::NPOL, levc, prevc);
+    for (int id = 0; id < ndim; ++id)
+    {
+        complex<FPTYPE> *pij = new complex<FPTYPE>[nbands * nbands];
+        zgemm_(&transc,
+               &transn,
+               &nbands,
+               &nbands,
+               &npw,
+               &ModuleBase::ONE,
+               levc,
+               &npwx,
+               prevc + id * npwx * nbands,
+               &npwx,
+               &ModuleBase::ZERO,
+               pij,
+               &nbands);
+#ifdef __MPI
+        MPI_Allreduce(MPI_IN_PLACE, pij, 2 * nbands * nbands, MPI_DOUBLE, MPI_SUM, POOL_WORLD);
+#endif
+        int ntper = nt / GlobalV::NPROC_IN_POOL;
+        int itstart = ntper * GlobalV::RANK_IN_POOL;
+        if (nt % GlobalV::NPROC_IN_POOL > GlobalV::RANK_IN_POOL)
+        {
+            ntper++;
+            itstart += GlobalV::RANK_IN_POOL;
+        }
+        else
+        {
+            itstart += nt % GlobalV::NPROC_IN_POOL;
+        }
+
+        for (int it = itstart; it < itstart + ntper; ++it)
+        {
+            FPTYPE tmct11 = 0;
+            FPTYPE tmct12 = 0;
+            FPTYPE tmct22 = 0;
+            FPTYPE *enb = &(this->pelec->ekb(ik, 0));
+            for (int ib = 0; ib < nbands; ++ib)
+            {
+                FPTYPE ei = enb[ib];
+                FPTYPE fi = wg(ik, ib);
+                for (int jb = ib + 1; jb < nbands; ++jb)
+                {
+                    FPTYPE ej = enb[jb];
+                    FPTYPE fj = wg(ik, jb);
+                    FPTYPE tmct = sin((ej - ei) * (it)*dt) * (fi - fj) * norm(pij[ib * nbands + jb]);
+                    tmct11 += tmct;
+                    tmct12 += -tmct * ((ei + ej) / 2 - ef);
+                    tmct22 += tmct * pow((ei + ej) / 2 - ef, 2);
+                }
+            }
+            ct11[it] += tmct11 / 2.0;
+            ct12[it] += tmct12 / 2.0;
+            ct22[it] += tmct22 / 2.0;
+        }
+        delete[] pij;
+    }
+    delete[] prevc;
+    return;
 }
 
 template <typename FPTYPE, typename Device>

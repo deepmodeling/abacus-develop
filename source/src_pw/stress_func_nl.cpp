@@ -67,7 +67,6 @@ void Stress_Func<FPTYPE, Device>::stress_nl(ModuleBase::matrix& sigma, const Mod
         syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, d_wg, wg.c, wg.nr * wg.nc);
         syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, gcar, &GlobalC::wfcpw->gcar[0][0], 3 * GlobalC::kv.nks * GlobalC::wfcpw->npwk_max);
         syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, kvec_c, &GlobalC::wfcpw->kvec_c[0][0], 3 * GlobalC::kv.nks);
-        resmem_complex_op()(this->ctx, vkb, GlobalC::ppcell.vkb.nr * GlobalC::ppcell.vkb.nc);
         resmem_complex_op()(this->ctx, pvkb2, nkb * GlobalC::wf.npwx);
         resmem_complex_op()(this->ctx, pvkb0, 3 * nkb * GlobalC::wf.npwx);
         for (int ii = 0; ii < 3; ii++) {
@@ -96,13 +95,13 @@ void Stress_Func<FPTYPE, Device>::stress_nl(ModuleBase::matrix& sigma, const Mod
 		const int npw = GlobalC::kv.ngk[ik];
 		// generate vkb
 		if (GlobalC::ppcell.nkb > 0) {
-			GlobalC::ppcell.getvnl(ik, GlobalC::ppcell.vkb);
             if (this->device == psi::GpuDevice) {
-                syncmem_complex_h2d_op()(this->ctx, this->cpu_ctx, vkb, GlobalC::ppcell.vkb.c, GlobalC::ppcell.vkb.nr * GlobalC::ppcell.vkb.nc);
+                vkb = GlobalC::ppcell.d_vkb;
             }
             else {
                 vkb = GlobalC::ppcell.vkb.c;
             }
+			GlobalC::ppcell.getvnl(ctx, ik, vkb);
 		}
 
 		// get becp according to wave functions and vkb
@@ -299,7 +298,6 @@ void Stress_Func<FPTYPE, Device>::stress_nl(ModuleBase::matrix& sigma, const Mod
         delmem_var_h_op()(this->cpu_ctx, sigmanlc);
         delmem_int_op()(this->ctx, atom_nh);
         delmem_int_op()(this->ctx, atom_na);
-        delmem_complex_op()(this->ctx, vkb);
         delmem_complex_op()(this->ctx, pvkb2);
     }
 	//  this->print(GlobalV::ofs_running, "nonlocal stress", stresnl);

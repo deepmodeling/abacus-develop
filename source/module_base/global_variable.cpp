@@ -245,4 +245,5 @@ int out_pot = 0;
 std::string init_chg = "";
 int out_chg = 0;
 double nelec = 0;
+bool out_bandgap = false; // QO added for bandgap printing
 } // namespace GlobalV

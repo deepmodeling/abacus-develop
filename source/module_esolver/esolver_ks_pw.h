@@ -1,6 +1,7 @@
 #ifndef ESOLVER_KS_PW_H
 #define ESOLVER_KS_PW_H
 #include "./esolver_ks.h"
+#include "module_hamilt/ks_pw/velocity_pw.h"
 // #include "Basis_PW.h"
 // #include "Estate_PW.h"
 // #include "Hamilton_PW.h"
@@ -27,6 +28,8 @@ namespace ModuleESolver
         //calculate conductivities with Kubo-Greenwood formula
         void KG(const int nche_KG, const FPTYPE fwhmin, const FPTYPE wcut, 
              const FPTYPE dw_in, const int times, ModuleBase::matrix& wg);
+        void jjcorr_ks(const int ik, const int nt, const double dt, ModuleBase::matrix& wg, hamilt::Velocity& velop, 
+                       FPTYPE* ct11, FPTYPE* ct12, FPTYPE* ct22);
 
     protected:
         virtual void beforescf(const int istep) override;

@@ -10,6 +10,37 @@
 #include "../module_base/math_ylmreal.h"
 #include "soc.h"
 #include "../module_base/timer.h"
+#include "../module_psi/include/device.h"
+#include "src_pw/include/vnl_multi_device.h"
+
+
+template <typename FPTYPE>
+FPTYPE __polynomial_interpolation(
+        const FPTYPE *table,
+        const int &dim1,
+        const int &dim2,
+        const int &tab_2,
+        const int &tab_3,
+        const int &table_length,
+        const FPTYPE &table_interval,
+        const FPTYPE &x)
+{
+    const FPTYPE position = x / table_interval;
+    const int iq = static_cast<int>(position);
+
+    const double x0 = position - static_cast<double>(iq);
+    const double x1 = 1.0 - x0;
+    const double x2 = 2.0 - x0;
+    const double x3 = 3.0 - x0;
+    const double y =
+            table[(dim1 * tab_2 + dim2) * tab_3 + iq + 0] * x1 * x2 * x3 / 6.0 +
+            table[(dim1 * tab_2 + dim2) * tab_3 + iq + 0 + 1] * x0 * x2 * x3 / 2.0 -
+            table[(dim1 * tab_2 + dim2) * tab_3 + iq + 0 + 2] * x1 * x0 * x3 / 2.0 +
+            table[(dim1 * tab_2 + dim2) * tab_3 + iq + 0 + 3] * x1 * x2 * x0 / 6.0 ;
+
+//	ModuleBase::timer::tick("PolyInt","Poly_Interpo_2");
+    return y;
+}
 
 pseudopot_cell_vnl::pseudopot_cell_vnl()
 {
@@ -86,6 +117,9 @@ void pseudopot_cell_vnl::init(const int ntype, const bool allocate_vkb)
             cudaMalloc((void **) &d_deeq, GlobalV::NSPIN * GlobalC::ucell.nat * this->nhm * this->nhm * sizeof(double));
             cudaMalloc((void **) &d_deeq_nc,
                        GlobalV::NSPIN * GlobalC::ucell.nat * this->nhm * this->nhm * sizeof(std::complex<double>));
+            cudaMalloc((void **) &d_nhtol, ntype * this->nhm * sizeof(double));
+            cudaMalloc((void **) &d_nhtolm, ntype * this->nhm * sizeof(double));
+            cudaMalloc((void **) &d_indv, ntype * this->nhm * sizeof(double));
         }
 #endif
 		this->deeq_nc.create(GlobalV::NSPIN, GlobalC::ucell.nat, this->nhm, this->nhm);
@@ -141,6 +175,12 @@ void pseudopot_cell_vnl::init(const int ntype, const bool allocate_vkb)
 	{
 		this->tab_at.create(ntype, nchix_nc, GlobalV::NQX);
 	}
+#ifdef __CUDA
+    if (GlobalV::device_flag == "gpu") {
+        cudaMalloc((void **) &d_vkb, nkb * GlobalC::wf.npwx * sizeof(std::complex<double>));
+        cudaMalloc((void **) &d_tab, this->tab.getSize() * sizeof(double));
+    }
+#endif
 
 	ModuleBase::timer::tick("ppcell_vnl","init");
 	return;
@@ -185,7 +225,7 @@ void pseudopot_cell_vnl::getvnl(const int &ik, ModuleBase::ComplexMatrix& vkb_in
     using delmem_complex_op = psi::memory::delete_memory_op<std::complex<double>, Device>;
     std::complex<double> * sk = nullptr;
     resmem_complex_op()(ctx, sk, GlobalC::ucell.nat * npw);
-    GlobalC::wf.get_sk<double, Device>(ctx, ik, GlobalC::wfcpw, sk);
+    GlobalC::wf.get_sk(ctx, ik, GlobalC::wfcpw, sk);
 
     int jkb = 0, iat = 0;
 	for(int it = 0;it < GlobalC::ucell.ntype;it++)
@@ -247,7 +287,121 @@ void pseudopot_cell_vnl::getvnl(const int &ik, ModuleBase::ComplexMatrix& vkb_in
 	return;
 } // end subroutine getvnl
 
+template <typename FPTYPE, typename Device>
+void pseudopot_cell_vnl::getvnl(Device * ctx, const int &ik, std::complex<FPTYPE>* vkb_in)const
+{
+    if(GlobalV::test_pp) ModuleBase::TITLE("pseudopot_cell_vnl","getvnl");
+    ModuleBase::timer::tick("pp_cell_vnl","getvnl");
 
+    using cal_vnl_op = src_pw::cal_vnl_op<FPTYPE, Device>;
+    using resmem_int_op = psi::memory::resize_memory_op<int, Device>;
+    using delmem_int_op = psi::memory::delete_memory_op<int, Device>;
+    using syncmem_int_op = psi::memory::synchronize_memory_op<int, Device, psi::DEVICE_CPU>;
+    using resmem_var_op = psi::memory::resize_memory_op<double, Device>;
+    using delmem_var_op = psi::memory::delete_memory_op<double, Device>;
+    using syncmem_var_op = psi::memory::synchronize_memory_op<double, Device, psi::DEVICE_CPU>;
+    using resmem_complex_op = psi::memory::resize_memory_op<std::complex<double>, Device>;
+    using delmem_complex_op = psi::memory::delete_memory_op<std::complex<double>, Device>;
+
+    if(lmaxkb < 0)
+    {
+        return;
+    }
+
+    const int x1 = (lmaxkb + 1) * (lmaxkb + 1);
+    const int npw = GlobalC::kv.ngk[ik];
+
+    int * atom_nh = nullptr, * atom_na = nullptr, * atom_nb = nullptr, * h_atom_nh = new int[GlobalC::ucell.ntype], * h_atom_na = new int[GlobalC::ucell.ntype], * h_atom_nb = new int[GlobalC::ucell.ntype];
+    for (int it = 0; it < GlobalC::ucell.ntype; it++) {
+        h_atom_nb[it] = GlobalC::ucell.atoms[it].ncpp.nbeta;
+        h_atom_nh[it] = GlobalC::ucell.atoms[it].ncpp.nh;
+        h_atom_na[it] = GlobalC::ucell.atoms[it].na;
+    }
+    // When the internal memory is large enough, it is better to make vkb1 be the number of pseudopot_cell_vnl.
+    // We only need to initialize it once as long as the cell is unchanged.
+    FPTYPE * vq = nullptr, * vkb1 = nullptr, * gk = nullptr, * ylm = nullptr, * _nhtol = nullptr, * _nhtolm = nullptr, * _indv = nullptr, * _tab = nullptr;
+    resmem_var_op()(ctx, vq, npw);
+    resmem_var_op()(ctx, ylm, x1 * npw);
+    resmem_var_op()(ctx, vkb1, nhm * npw);
+
+    ModuleBase::Vector3<double> *_gk = new ModuleBase::Vector3<double>[npw];
+    for (int ig = 0;ig < npw; ig++)
+    {
+        _gk[ig] = GlobalC::wf.get_1qvec_cartesian(ik, ig);
+    }
+    if (psi::device::get_device_type<Device>(ctx) == psi::GpuDevice) {
+        _tab = this->d_tab,
+        _indv = this->d_indv;
+        _nhtol = this->d_nhtol;
+        _nhtolm = this->d_nhtolm;
+        resmem_int_op()(ctx, atom_nh, GlobalC::ucell.ntype);
+        resmem_int_op()(ctx, atom_nb, GlobalC::ucell.ntype);
+        resmem_int_op()(ctx, atom_na, GlobalC::ucell.ntype);
+        syncmem_int_op()(ctx, cpu_ctx, atom_nh, h_atom_nh, GlobalC::ucell.ntype);
+        syncmem_int_op()(ctx, cpu_ctx, atom_nb, h_atom_nb, GlobalC::ucell.ntype);
+        syncmem_int_op()(ctx, cpu_ctx, atom_na, h_atom_na, GlobalC::ucell.ntype);
+
+        resmem_var_op()(ctx, gk, npw * 3);
+        syncmem_var_op()(ctx, cpu_ctx, gk, reinterpret_cast<double *>(_gk), npw * 3);
+    }
+    else {
+        _tab = this->tab.ptr;
+        atom_nh = h_atom_nh;
+        atom_nb = h_atom_nb;
+        atom_na = h_atom_na;
+        _indv = this->indv.c;
+        _nhtol = this->nhtol.c;
+        _nhtolm = this->nhtolm.c;
+        gk = reinterpret_cast<double *>(_gk);
+    }
+
+    // FPTYPE * d_ylm = nullptr;
+    // psi::memory::resize_memory_op<FPTYPE, psi::DEVICE_GPU>()(gpu_ctx, gk, npw * 3);
+    // psi::memory::synchronize_memory_op<FPTYPE, psi::DEVICE_GPU, psi::DEVICE_CPU>()
+    // (gpu_ctx, cpu_ctx, gk, reinterpret_cast<double *>(_gk), npw * 3);
+    // psi::memory::resize_memory_op<FPTYPE, psi::DEVICE_GPU>()(gpu_ctx, d_ylm, x1 * npw);
+    // ModuleBase::YlmReal::Ylm_Real(gpu_ctx, x1, npw, gk, d_ylm);
+    // psi::memory::synchronize_memory_op<FPTYPE, psi::DEVICE_CPU, psi::DEVICE_GPU>()
+    // (cpu_ctx, gpu_ctx, ylm, d_ylm, x1 * npw);
+    // psi::memory::delete_memory_op<FPTYPE, psi::DEVICE_GPU>()(gpu_ctx, d_ylm);
+    //
+    // std::complex<double> * sk = nullptr, * d_sk = nullptr;
+    // using resmem_complex_d_op = psi::memory::resize_memory_op<std::complex<double>, psi::DEVICE_GPU>;
+    // resmem_complex_op()(ctx, sk, GlobalC::ucell.nat * npw);
+    // resmem_complex_d_op()(gpu_ctx, d_sk, GlobalC::ucell.nat * npw);
+    // GlobalC::wf.get_sk(gpu_ctx, ik, GlobalC::wfcpw, d_sk);
+    // psi::memory::synchronize_memory_op<std::complex<FPTYPE>, psi::DEVICE_CPU, psi::DEVICE_GPU>()
+    //         (cpu_ctx, gpu_ctx, sk, d_sk, GlobalC::ucell.nat * npw);
+    // psi::memory::delete_memory_op<std::complex<FPTYPE>, psi::DEVICE_GPU>()(gpu_ctx, d_sk);
+
+    ModuleBase::YlmReal::Ylm_Real(ctx, x1, npw, gk, ylm);
+
+    std::complex<double> * sk = nullptr;
+    resmem_complex_op()(ctx, sk, GlobalC::ucell.nat * npw);
+    GlobalC::wf.get_sk(ctx, ik, GlobalC::wfcpw, sk);
+
+    cal_vnl_op()(
+        ctx,
+        GlobalC::ucell.ntype,  npw, GlobalC::wf.npwx, this->nhm, GlobalV::NQX,
+        this->tab.getBound2(), this->tab.getBound3(),
+        atom_na, atom_nb, atom_nh,
+        GlobalV::DQ, GlobalC::ucell.tpiba, ModuleBase::NEG_IMAG_UNIT,
+        gk, ylm, _indv, _nhtol, _nhtolm, _tab, vkb1, sk,
+        vkb_in);
+
+    delete [] _gk;
+    delmem_var_op()(ctx, vq);
+    delmem_var_op()(ctx, ylm);
+    delmem_var_op()(ctx, vkb1);
+    delmem_complex_op()(ctx, sk);
+    if (psi::device::get_device_type<Device>(ctx) == psi::GpuDevice) {
+        delmem_var_op()(ctx, gk);
+        delmem_int_op()(ctx, atom_nh);
+        delmem_int_op()(ctx, atom_nb);
+        delmem_int_op()(ctx, atom_na);
+    }
+    ModuleBase::timer::tick("pp_cell_vnl","getvnl");
+} // end subroutine getvnl
 
 void pseudopot_cell_vnl::init_vnl(UnitCell &cell)
 {
@@ -416,6 +570,14 @@ void pseudopot_cell_vnl::init_vnl(UnitCell &cell)
 		delete[] aux;
 		delete[] jl;
 	}
+#ifdef __CUDA
+    if (GlobalV::device_flag == "gpu") {
+        cudaMemcpy(d_indv, indv.c, sizeof(double) * indv.nr * indv.nc, cudaMemcpyHostToDevice);
+        cudaMemcpy(d_nhtol, nhtol.c, sizeof(double) * nhtol.nr * nhtol.nc, cudaMemcpyHostToDevice);
+        cudaMemcpy(d_nhtolm, nhtolm.c, sizeof(double) * nhtolm.nr * nhtolm.nc, cudaMemcpyHostToDevice);
+        cudaMemcpy(d_tab, this->tab.ptr, sizeof(double) *this->tab.getSize(), cudaMemcpyHostToDevice);
+    }
+#endif
 	ModuleBase::timer::tick("ppcell_vnl","init_vnl");
 	GlobalV::ofs_running << "\n Init Non-Local-Pseudopotential done." << std::endl;
 	return;
@@ -749,4 +911,9 @@ void pseudopot_cell_vnl::cal_effective_D(void)
     }
 #endif
     return;
-} 
+}
+
+template void pseudopot_cell_vnl::getvnl<double, psi::DEVICE_CPU>(psi::DEVICE_CPU*, int const&, std::complex<double>*) const;
+#if defined(__CUDA) || defined(__ROCM)
+template void pseudopot_cell_vnl::getvnl<double, psi::DEVICE_GPU>(psi::DEVICE_GPU*, int const&, std::complex<double>*) const;
+#endif

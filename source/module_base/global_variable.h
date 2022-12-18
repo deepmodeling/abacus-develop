@@ -279,6 +279,7 @@ extern int out_chg;
 //NELEC gives the total charge of the system
 //while nelec is the total number of valence electrons 
 extern double nelec;
+extern bool out_bandgap;
 
 } // namespace GlobalV
 #endif
