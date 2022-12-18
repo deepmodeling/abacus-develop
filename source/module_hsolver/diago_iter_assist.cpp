@@ -432,7 +432,8 @@ void DiagoIterAssist<FPTYPE, Device>::diagH_LAPACK(
         //===========================
         // calculate all eigenvalues
         //===========================
-        dngv_op<FPTYPE, Device>()(ctx, nstart, ldh, hcc, scc, res, vcc);
+        // dngv_op<FPTYPE, Device>()(ctx, nstart, ldh, hcc, scc, res, vcc);
+        dngvd_op<FPTYPE, Device>()(ctx, nstart, ldh, hcc, scc, res, vcc);
     }
     else {
         //=====================================
