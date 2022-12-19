@@ -705,10 +705,6 @@ TEST_F(InputTest, Check)
 	EXPECT_THAT(output,testing::HasSubstr("ntype must > 0"));
 	//
 	INPUT.Default(); INPUT.ntype = 1;
-	INPUT.Check();
-	EXPECT_EQ(INPUT.diago_proc,1);
-	//
-	INPUT.Default(); INPUT.ntype = 1;
 	INPUT.basis_type = "lcao";
 	INPUT.diago_proc = 2;
 	testing::internal::CaptureStdout();
