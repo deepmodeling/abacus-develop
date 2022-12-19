@@ -63,7 +63,7 @@ void Input_Conv::Convert(void)
         }
         if(INPUT.relax_new && INPUT.relax_method!="cg")
         {
-            ModuleBase::WARNING_QUIT("Input_Conv","only CG has been implemented for relax_new");
+            INPUT.relax_new = false;
         }
         if(!INPUT.relax_new && (INPUT.fixed_axes == "shape" || INPUT.fixed_axes == "volume"))
         {
