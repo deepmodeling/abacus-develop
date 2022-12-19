@@ -603,10 +603,9 @@ void Input_Conv::Convert(void)
     //-----------------------------------------------------------------------------------
     // RPA
     //-----------------------------------------------------------------------------------
-#ifdef __EXX
     GlobalV::rpa = INPUT.rpa;
     GlobalV::rpa_setorb = INPUT.rpa_setorb;
-#endif
+
     ModuleBase::timer::tick("Input_Conv", "Convert");
     return;
 }
