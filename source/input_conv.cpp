@@ -600,9 +600,6 @@ void Input_Conv::Convert(void)
     {
         GlobalV::global_readin_dir = INPUT.read_file_dir + '/';
     }
-    //-----------------------------------------------------------------------------------
-    // RPA
-    //-----------------------------------------------------------------------------------
 
     ModuleBase::timer::tick("Input_Conv", "Convert");
     return;
