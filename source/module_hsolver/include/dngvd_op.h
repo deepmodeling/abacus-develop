@@ -16,6 +16,12 @@ template <typename FPTYPE, typename Device> struct dngvx_op
     /// @brief DNGVX computes the first m eigenvalues ​​and their corresponding eigenvectors of
     /// a complex generalized Hermitian-definite eigenproblem
     ///
+    /// In this op, the CPU version is implemented through the `gvx` interface, and the CUDA version
+    /// is implemented through the `gvd` interface and acquires the first m eigenpairs.
+    /// API doc:
+    /// 1. zhegvx: https://netlib.org/lapack/explore-html/df/d9a/group__complex16_h_eeigen_ga8ea76cbbb14edb5a22069e203fc8e8b2.html
+    /// 2. cusolverDnZhegvd: https://docs.nvidia.com/cuda/cusolver/index.html#cusolverdn-t-sygvd
+    ///
     /// Input Parameters
     ///     @param d : the type of device
     ///     @param nstart : the number of cols of the matrix
@@ -41,6 +47,12 @@ template <typename FPTYPE, typename Device> struct dngv_op
     /// @brief DNGV computes all the eigenvalues and eigenvectors of a complex generalized
     /// Hermitian-definite eigenproblem
     ///
+    /// In this op, the CPU version is implemented through the `gv` interface, and the CUDA version
+    /// is implemented through the `gvd` interface.
+    /// API doc:
+    /// 1. zhegv: https://netlib.org/lapack/explore-html/df/d9a/group__complex16_h_eeigen_gaf7b790b3b89de432a423c9006c1cc1ac.html
+    /// 2. cusolverDnZhegvd: https://docs.nvidia.com/cuda/cusolver/index.html#cusolverdn-t-sygvd
+    ///
     /// Input Parameters
     ///     @param d : the type of device
     ///     @param nstart : the number of cols of the matrix
@@ -63,7 +75,12 @@ template <typename FPTYPE, typename Device> struct dngvd_op
 {
     /// @brief DNGVD computes all the eigenvalues and eigenvectors of a complex generalized
     /// Hermitian-definite eigenproblem. If eigenvectors are desired, it uses a divide and conquer algorithm.
-    /// API doc: https://netlib.org/lapack/explore-html/df/d9a/group__complex16_h_eeigen_ga74fdf9b5a16c90d8b7a589dec5ca058a.html
+    ///
+    /// In this op, the CPU version is implemented through the `gvd` interface, and the CUDA version
+    /// is implemented through the `gvd` interface.
+    /// API doc:
+    /// 1. zhegvd: https://netlib.org/lapack/explore-html/df/d9a/group__complex16_h_eeigen_ga74fdf9b5a16c90d8b7a589dec5ca058a.html
+    /// 2. cusolverDnZhegvd: https://docs.nvidia.com/cuda/cusolver/index.html#cusolverdn-t-sygvd
     ///
     /// Input Parameters
     ///     @param d : the type of device
@@ -88,7 +105,12 @@ template <typename FPTYPE, typename Device> struct dnevx_op
 {
     /// @brief DNEVX computes the first m eigenvalues ​​and their corresponding eigenvectors of
     /// a complex generalized Hermitian-definite eigenproblem
-    /// API doc: https://netlib.org/lapack/explore-html/df/d9a/group__complex16_h_eeigen_gaabef68a9c7b10df7aef8f4fec89fddbe.html
+    ///
+    /// In this op, the CPU version is implemented through the `evx` interface, and the CUDA version
+    /// is implemented through the `evd` interface and acquires the first m eigenpairs.
+    /// API doc:
+    /// 1. zheevx: https://netlib.org/lapack/explore-html/df/d9a/group__complex16_h_eeigen_gaabef68a9c7b10df7aef8f4fec89fddbe.html
+    /// 2. cusolverDnZheevd: https://docs.nvidia.com/cuda/cusolver/index.html#cusolverdn-t-syevd
     ///
     /// Input Parameters
     ///     @param d : the type of device
