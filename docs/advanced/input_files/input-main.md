@@ -820,13 +820,13 @@ These variables are used to control the output of properties.
 
 ### out_force
 
-- **Type**: Integer
+- **Type**: Boolean
 - **Description**: Determines whether to output the out_force into a file named `Force.dat` or not. If 1, then force will be written; if 0, then the force will not be written.
 - **Default**: 0
 
 ### out_mul
 
-- **Type**: Integer
+- **Type**: Boolean
 - **Description**: If set to 1, ABACUS will output the Mulliken population analysis result. The name of the output file is mulliken.txt
 - **Default**: 0
 
