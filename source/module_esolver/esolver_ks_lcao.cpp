@@ -11,6 +11,7 @@
 #include "src_pw/occupy.h"
 #include "src_pw/symmetry_rho.h"
 #include "src_pw/threshold_elec.h"
+#include "module_base/global_variable.h"
 #ifdef __EXX
 #include "module_rpa/rpa.h"
 #endif
