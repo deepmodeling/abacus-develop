@@ -917,7 +917,7 @@ void ESolver_KS_LCAO::afterscf(const int istep)
 #endif
     // 4. some outputs
 #ifdef __EXX
-    if(INPUT.rpa)
+    if(GlobalV::rpa)
     {
         ModuleRPA::DFT_RPA_interface rpa_interface(GlobalC::exx_info.info_global);
         rpa_interface.rpa_exx_lcao().info.files_abfs = GlobalV::rpa_orbitals;

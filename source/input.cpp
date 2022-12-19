@@ -452,6 +452,7 @@ void Input::Default(void)
     //    RPA    Rong Shi added on 2022-04
     //==========================================================
     rpa = false;
+    rpa_setorb = false;
     coulomb_type = "full";
 
     //==========================================================
@@ -1688,7 +1689,7 @@ bool Input::Read(const std::string &fn)
         else if (strcmp("rpa", word) == 0)
         {
             read_bool(ifs, rpa);
-            if (rpa) GlobalV::rpa_setorb = true;
+            if (rpa) rpa_setorb = true;
         }
         //----------------------------------------------------------------------------------
         //    implicit solvation model       sunml added on 2022-04-04
@@ -2059,6 +2060,8 @@ bool Input::Read(const std::string &fn)
 
 void Input::Default_2(void) // jiyy add 2019-08-04
 {
+    if (GlobalV::MY_RANK != 0)
+        return;
     //==========================================================
     // vdw
     // jiyy add 2019-08-04
@@ -2148,6 +2151,221 @@ void Input::Default_2(void) // jiyy add 2019-08-04
             exx_ccp_rmesh_times = "10";
         else if (dft_functional == "hse")
             exx_ccp_rmesh_times = "1.5";
+    }
+    if (diago_proc <= 0)
+    {
+        diago_proc = GlobalV::NPROC;
+    }
+    else if (diago_proc > GlobalV::NPROC)
+    {
+        diago_proc = GlobalV::NPROC;
+    }
+    if (calculation == "scf")
+    {
+        if (mem_saver == 1)
+        {
+            mem_saver = 0;
+            ModuleBase::GlobalFunc::AUTO_SET("mem_savre", "0");
+        }
+        // xiaohui modify 2015-09-15, 0 -> 1
+        // cal_force = 0;
+        /*
+                if(!noncolin)
+                    cal_force = 1;
+                else
+                {
+                    cal_force = 0;//modified by zhengdy-soc, can't calculate force now!
+                    std::cout<<"sorry, can't calculate force with soc now, would be implement in next
+           version!"<<std::endl;
+                }
+        */
+        this->relax_nmax = 1;
+    }
+    else if (calculation == "relax") // pengfei 2014-10-13
+    {
+        if (mem_saver == 1)
+        {
+            mem_saver = 0;
+            ModuleBase::GlobalFunc::AUTO_SET("mem_savre", "0");
+        }
+        cal_force = 1;
+        if (!this->relax_nmax)
+            this->relax_nmax = 50;
+    }
+    else if (calculation == "nscf" || calculation == "get_S")
+    {
+        GlobalV::CALCULATION = "nscf";
+        this->relax_nmax = 1;
+        out_stru = 0;
+
+        if (basis_type == "pw" && calculation == "get_S") // xiaohui add 2013-09-01. Attention! maybe there is some problem
+        {
+            if (pw_diag_thr > 1.0e-3)
+            {
+                pw_diag_thr = 1.0e-5;
+            }
+        }
+        if (cal_force) // mohan add 2010-09-07
+        {
+            cal_force = false;
+            ModuleBase::GlobalFunc::AUTO_SET("cal_force", "false");
+        }
+    }
+    else if (calculation == "istate")
+    {
+        GlobalV::CALCULATION = "istate";
+        this->relax_nmax = 1;
+        out_stru = 0;
+        out_dos = 0;
+        out_band = 0;
+        out_proj_band = 0;
+        cal_force = 0;
+        init_wfc = "file";
+        init_chg = "atomic"; // useless,
+        chg_extrap = "atomic"; // xiaohui modify 2015-02-01
+        out_chg = 1; // this leads to the calculation of state charge.
+        out_dm = 0;
+        out_dm1 = 0;
+        out_pot = 0;
+    }
+    else if (calculation == "ienvelope")
+    {
+        GlobalV::CALCULATION = "ienvelope"; // mohan fix 2011-11-04
+        this->relax_nmax = 1;
+        out_stru = 0;
+        out_dos = 0;
+        out_band = 0;
+        out_proj_band = 0;
+        cal_force = 0;
+        init_wfc = "file";
+        init_chg = "atomic";
+        chg_extrap = "atomic"; // xiaohui modify 2015-02-01
+        out_chg = 1;
+        out_dm = 0;
+        out_dm1 = 0;
+        out_pot = 0;
+    }
+    else if (calculation == "md") // mohan add 2011-11-04
+    {
+        GlobalV::CALCULATION = "md";
+        symmetry = 0;
+        cal_force = 1;
+        if (mdp.md_nstep == 0)
+        {
+            GlobalV::ofs_running << "md_nstep should be set. Autoset md_nstep to 50!" << endl;
+            mdp.md_nstep = 50;
+        }
+        if (!out_md_control)
+            out_level = "m"; // zhengdy add 2019-04-07
+        if (mdp.md_tlast < 0.0)
+            mdp.md_tlast = mdp.md_tfirst;
+        if (mdp.md_plast < 0.0)
+            mdp.md_plast = mdp.md_pfirst;
+
+        if(mdp.md_tfreq == 0)
+        {
+            mdp.md_tfreq = 1.0/40/mdp.md_dt;
+        }
+        if(mdp.md_pfreq == 0)
+        {
+            mdp.md_pfreq = 1.0/400/mdp.md_dt;
+        }
+        if(mdp.md_restart)
+        {
+            init_vel = 1;
+        }
+        if(esolver_type == "lj" || esolver_type == "dp" || mdp.md_type == 4 || (mdp.md_type == 1 && mdp.md_pmode != "none"))
+        {
+            cal_stress = 1;
+        }
+    }
+    else if (calculation == "cell-relax") // mohan add 2011-11-04
+    {
+        cal_force = 1;
+        cal_stress = 1;
+        if (!this->relax_nmax)
+            this->relax_nmax = 50;
+    }
+    else if (calculation == "test_memory")
+    {
+        this->relax_nmax = 1;
+    }
+    else if(calculation == "test_neighbour")
+    {
+        this->relax_nmax = 1;
+    }
+    else if(calculation == "gen_bessel")
+    {
+        this->relax_nmax = 1;
+    }
+
+    if (GlobalV::CALCULATION == "nscf" && init_chg != "file")
+    {
+        init_chg = "file";
+        ModuleBase::GlobalFunc::AUTO_SET("init_chg", init_chg);
+    }
+    if (basis_type == "pw") // xiaohui add 2013-09-01
+    {
+        if (ks_solver == "default") // xiaohui add 2013-09-01
+        {
+            ks_solver = "cg";
+            ModuleBase::GlobalFunc::AUTO_SET("ks_solver", "cg");
+        }
+        else if (ks_solver == "cg")
+        {
+            GlobalV::ofs_warning << " It's ok to use cg." << std::endl;
+        }
+        else if (ks_solver == "dav")
+        {
+            GlobalV::ofs_warning << " It's ok to use dav." << std::endl;
+        }
+    }
+    else if (basis_type == "lcao")
+    {
+        if (ks_solver == "default")
+        {
+#ifdef __ELPA
+            ks_solver = "genelpa";
+            ModuleBase::GlobalFunc::AUTO_SET("ks_solver", "genelpa");
+#else
+            ks_solver = "scalapack_gvx";
+            ModuleBase::GlobalFunc::AUTO_SET("ks_solver", "scalapack_gvx");
+#endif
+        }
+    }
+    if (basis_type == "pw" || basis_type == "lcao_in_pw")
+    {
+        if (gamma_only_local)
+        {
+            // means you can use > 1 number of k points.
+            gamma_only_local = 0;
+            ModuleBase::GlobalFunc::AUTO_SET("gamma_only_local", "0");
+        }
+    }
+    // new rule, mohan add 2012-02-11
+    // otherwise, there need wave functions transfers
+    // if(diago_type=="cg") xiaohui modify 2013-09-01
+    if (ks_solver == "cg") // xiaohui add 2013-09-01
+    {
+        if (diago_proc != GlobalV::NPROC)
+        {
+            ModuleBase::WARNING("Input", "when CG is used for diago, diago_proc==GlobalV::NPROC");
+            diago_proc = GlobalV::NPROC;
+        }
+    }
+    if (basis_type == "pw")
+    {
+        bx = 1;
+        by = 1;
+        bz = 1;
+    }
+    if (basis_type == "lcao")
+    {
+        if (lcao_ecut == 0)
+        {
+            lcao_ecut = ecutwfc;
+            ModuleBase::GlobalFunc::AUTO_SET("lcao_ecut", ecutwfc);
+        }
     }
 }
 #ifdef __MPI
@@ -2503,7 +2721,7 @@ void Input::Bcast()
     // RPA
     //-----------------------------------------------------------------------------------
     Parallel_Common::bcast_bool(rpa);
-    Parallel_Common::bcast_bool(GlobalV::rpa_setorb);
+    Parallel_Common::bcast_bool(rpa_setorb);
 
     //----------------------------------------------------------------------------------
     //    implicit solvation model        (sunml added on 2022-04-04)
@@ -2555,19 +2773,10 @@ void Input::Check(void)
 
     // std::cout << "diago_proc=" << diago_proc << std::endl;
     // std::cout << " NPROC=" << GlobalV::NPROC << std::endl;
-    if (diago_proc > 1 && basis_type == "lcao")
+    if (diago_proc > 1 && basis_type == "lcao" && diago_proc != GlobalV::NPROC)
     {
         ModuleBase::WARNING_QUIT("Input", "please don't set diago_proc with lcao base");
     }
-    if (diago_proc <= 0)
-    {
-        diago_proc = GlobalV::NPROC;
-    }
-    else if (diago_proc > GlobalV::NPROC)
-    {
-        diago_proc = GlobalV::NPROC;
-    }
-
     if (kspacing < 0.0)
     {
         ModuleBase::WARNING_QUIT("Input", "kspacing must > 0");
@@ -2591,56 +2800,8 @@ void Input::Check(void)
     //----------------------------------------------------------
     // main parameters / electrons / spin ( 1/16 )
     //----------------------------------------------------------
-    if (calculation == "scf")
+    if (calculation == "nscf" || calculation == "get_S")
     {
-        if (mem_saver == 1)
-        {
-            mem_saver = 0;
-            ModuleBase::GlobalFunc::AUTO_SET("mem_savre", "0");
-        }
-        // xiaohui modify 2015-09-15, 0 -> 1
-        // cal_force = 0;
-        /*
-                if(!noncolin)
-                    cal_force = 1;
-                else
-                {
-                    cal_force = 0;//modified by zhengdy-soc, can't calculate force now!
-                    std::cout<<"sorry, can't calculate force with soc now, would be implement in next
-           version!"<<std::endl;
-                }
-        */
-        this->relax_nmax = 1;
-    }
-    else if (calculation == "relax") // pengfei 2014-10-13
-    {
-        if (mem_saver == 1)
-        {
-            mem_saver = 0;
-            ModuleBase::GlobalFunc::AUTO_SET("mem_savre", "0");
-        }
-        cal_force = 1;
-        if (!this->relax_nmax)
-            this->relax_nmax = 50;
-    }
-    else if (calculation == "nscf" || calculation == "get_S")
-    {
-        GlobalV::CALCULATION = "nscf";
-        this->relax_nmax = 1;
-        out_stru = 0;
-
-        if (basis_type == "pw" && calculation == "get_S") // xiaohui add 2013-09-01. Attention! maybe there is some problem
-        {
-            if (pw_diag_thr > 1.0e-3)
-            {
-                pw_diag_thr = 1.0e-5;
-            }
-        }
-        if (cal_force) // mohan add 2010-09-07
-        {
-            cal_force = false;
-            ModuleBase::GlobalFunc::AUTO_SET("cal_force", "false");
-        }
         if (out_dos == 3 && symmetry)
         {
             ModuleBase::WARNING_QUIT("Input::Check",
@@ -2649,21 +2810,6 @@ void Input::Check(void)
     }
     else if (calculation == "istate")
     {
-        GlobalV::CALCULATION = "istate";
-        this->relax_nmax = 1;
-        out_stru = 0;
-        out_dos = 0;
-        out_band = 0;
-        out_proj_band = 0;
-        cal_force = 0;
-        init_wfc = "file";
-        init_chg = "atomic"; // useless,
-        chg_extrap = "atomic"; // xiaohui modify 2015-02-01
-        out_chg = 1; // this leads to the calculation of state charge.
-        out_dm = 0;
-        out_dm1 = 0;
-        out_pot = 0;
-
         if (basis_type == "pw") // xiaohui add 2013-09-01
         {
             ModuleBase::WARNING_QUIT("Input::Check", "calculate = istate is only availble for LCAO.");
@@ -2671,20 +2817,6 @@ void Input::Check(void)
     }
     else if (calculation == "ienvelope")
     {
-        GlobalV::CALCULATION = "ienvelope"; // mohan fix 2011-11-04
-        this->relax_nmax = 1;
-        out_stru = 0;
-        out_dos = 0;
-        out_band = 0;
-        out_proj_band = 0;
-        cal_force = 0;
-        init_wfc = "file";
-        init_chg = "atomic";
-        chg_extrap = "atomic"; // xiaohui modify 2015-02-01
-        out_chg = 1;
-        out_dm = 0;
-        out_dm1 = 0;
-        out_pot = 0;
         if (basis_type == "pw") // xiaohui add 2013-09-01
         {
             ModuleBase::WARNING_QUIT("Input::Check", "calculate = istate is only availble for LCAO.");
@@ -2692,45 +2824,13 @@ void Input::Check(void)
     }
     else if (calculation == "md") // mohan add 2011-11-04
     {
-        GlobalV::CALCULATION = "md";
-        symmetry = 0;
-        cal_force = 1;
-        if (mdp.md_nstep == 0)
-        {
-            GlobalV::ofs_running << "md_nstep should be set. Autoset md_nstep to 50!" << endl;
-            mdp.md_nstep = 50;
-        }
-        if (!out_md_control)
-            out_level = "m"; // zhengdy add 2019-04-07
-
         // deal with input parameters , 2019-04-30
         if (mdp.md_dt < 0)
             ModuleBase::WARNING_QUIT("Input::Check", "time interval of MD calculation should be set!");
         if (mdp.md_tfirst < 0 && esolver_type != "tddft")
             ModuleBase::WARNING_QUIT("Input::Check", "temperature of MD calculation should be set!");
-        if (mdp.md_tlast < 0.0)
-            mdp.md_tlast = mdp.md_tfirst;
         if(mdp.md_type == 1 && mdp.md_pmode != "none" && mdp.md_pfirst < 0)
             ModuleBase::WARNING_QUIT("Input::Check", "pressure of MD calculation should be set!");
-        if (mdp.md_plast < 0.0)
-            mdp.md_plast = mdp.md_pfirst;
-
-        if(mdp.md_tfreq == 0)
-        {
-            mdp.md_tfreq = 1.0/40/mdp.md_dt;
-        }
-        if(mdp.md_pfreq == 0)
-        {
-            mdp.md_pfreq = 1.0/400/mdp.md_dt;
-        }
-        if(mdp.md_restart) 
-        {
-            init_vel = 1;
-        }
-        if(esolver_type == "lj" || esolver_type == "dp" || mdp.md_type == 4 || (mdp.md_type == 1 && mdp.md_pmode != "none"))
-        {
-            cal_stress = 1;
-        }
         if(mdp.md_type == 4)
         {
             if(mdp.msst_qmass <= 0)
@@ -2746,24 +2846,8 @@ void Input::Check(void)
             }
         }
     }
-    else if (calculation == "cell-relax") // mohan add 2011-11-04
-    {
-        cal_force = 1;
-        cal_stress = 1;
-        if (!this->relax_nmax)
-            this->relax_nmax = 50;
-    }
-    else if (calculation == "test_memory")
-    {
-        this->relax_nmax = 1;
-    }
-    else if(calculation == "test_neighbour")
-    {
-        this->relax_nmax = 1;
-    }
     else if(calculation == "gen_bessel")
     {
-        this->relax_nmax = 1;
         if(basis_type != "pw")
         {
             ModuleBase::WARNING_QUIT("Input","to generate descriptors, please use pw basis");
@@ -2776,7 +2860,11 @@ void Input::Check(void)
     //         ModuleBase::WARNING_QUIT("Input::Check", "pseudo_type in ofdft should be set as blps");
     //     }
     // }
-    else
+    else if (calculation != "scf" &&
+		    calculation != "relax" &&
+		    calculation != "cell-relax" &&
+		    calculation != "test_memory" &&
+		    calculation != "test_neighbour")
     {
         ModuleBase::WARNING_QUIT("Input", "check 'calculation' !");
     }
@@ -2811,13 +2899,6 @@ void Input::Check(void)
             "Input",
             "wrong 'chg_extrap=dm' is only available for local orbitals."); // xiaohui modify 2015-02-01
     }
-
-    if (GlobalV::CALCULATION == "nscf" && init_chg != "file")
-    {
-        init_chg = "file";
-        ModuleBase::GlobalFunc::AUTO_SET("init_chg", init_chg);
-    }
-
     if (init_wfc != "atomic" && init_wfc != "atomic+random" && init_wfc != "random" && init_wfc != "file")
     {
         ModuleBase::WARNING_QUIT("Input", "wrong init_wfc, please use 'atomic' or 'random' or 'file' ");
@@ -2838,20 +2919,7 @@ void Input::Check(void)
 
     if (basis_type == "pw") // xiaohui add 2013-09-01
     {
-        if (ks_solver == "default") // xiaohui add 2013-09-01
-        {
-            ks_solver = "cg";
-            ModuleBase::GlobalFunc::AUTO_SET("ks_solver", "cg");
-        }
-        else if (ks_solver == "cg")
-        {
-            GlobalV::ofs_warning << " It's ok to use cg." << std::endl;
-        }
-        else if (ks_solver == "dav")
-        {
-            GlobalV::ofs_warning << " It's ok to use dav." << std::endl;
-        }
-        else if (ks_solver == "genelpa") // yshen add 2016-07-20
+        if (ks_solver == "genelpa") // yshen add 2016-07-20
         {
             ModuleBase::WARNING_QUIT("Input", "genelpa can not be used with plane wave basis.");
         }
@@ -2863,24 +2931,16 @@ void Input::Check(void)
         {
             ModuleBase::WARNING_QUIT("Input", "lapack can not be used with plane wave basis.");
         }
-        else
+        else if(ks_solver != "default" &&
+			ks_solver != "cg" &&
+			ks_solver != "dav")
         {
             ModuleBase::WARNING_QUIT("Input", "please check the ks_solver parameter!");
         }
     }
     else if (basis_type == "lcao")
     {
-        if (ks_solver == "default")
-        {
-#ifdef __ELPA
-            ks_solver = "genelpa";
-            ModuleBase::GlobalFunc::AUTO_SET("ks_solver", "genelpa");
-#else
-            ks_solver = "scalapack_gvx";
-            ModuleBase::GlobalFunc::AUTO_SET("ks_solver", "scalapack_gvx");
-#endif
-        }
-        else if (ks_solver == "cg")
+        if (ks_solver == "cg")
         {
             ModuleBase::WARNING_QUIT("Input", "not ready for cg method in lcao ."); // xiaohui add 2013-09-04
         }
@@ -2917,7 +2977,7 @@ void Input::Check(void)
             ModuleBase::WARNING_QUIT("Input","Cusolver can not be used for series version.");
 #endif
         }
-        else
+        else if (ks_solver != "default")
         {
             ModuleBase::WARNING_QUIT("Input", "please check the ks_solver parameter!");
         }
@@ -2939,16 +2999,6 @@ void Input::Check(void)
         ModuleBase::WARNING_QUIT("Input", "gamma_only not implemented for plane wave now.");
     }
 
-    if (basis_type == "pw" || basis_type == "lcao_in_pw")
-    {
-        if (gamma_only_local)
-        {
-            // means you can use > 1 number of k points.
-            gamma_only_local = 0;
-            ModuleBase::GlobalFunc::AUTO_SET("gamma_only_local", "0");
-        }
-    }
-
     if (basis_type == "lcao" && !gamma_only_local) // xiaohui add 2013-09-01. Attention! Maybe there is some problem.
     {
         ModuleBase::WARNING("Input", "gamma_only_local algorithm is not used.");
@@ -2958,18 +3008,6 @@ void Input::Check(void)
     {
         ModuleBase::WARNING_QUIT("Input", "kpar > 1 has not been supported for lcao calculation.");
     }
-    // new rule, mohan add 2012-02-11
-    // otherwise, there need wave functions transfers
-    // if(diago_type=="cg") xiaohui modify 2013-09-01
-    if (ks_solver == "cg") // xiaohui add 2013-09-01
-    {
-        if (diago_proc != GlobalV::NPROC)
-        {
-            ModuleBase::WARNING("Input", "when CG is used for diago, diago_proc==GlobalV::NPROC");
-            diago_proc = GlobalV::NPROC;
-        }
-    }
-
     if (GlobalV::NPROC > 1 && ks_solver == "lapack") // xiaohui add 2013-09-01
     {
         if (basis_type != "lcao_in_pw") // xiaohui add 2013-09-01
@@ -2977,41 +3015,16 @@ void Input::Check(void)
             ModuleBase::WARNING_QUIT("Input", "lapack can not be used when nproc > 1");
         }
     }
-
     // pengfei add 13-8-10 a new method cg to bfgs
     if (relax_method != "sd" && relax_method != "cg" && relax_method != "bfgs" && relax_method != "cg_bfgs")
     {
         ModuleBase::WARNING_QUIT("Input", "relax_method can only be sd, cg, bfgs or cg_bfgs.");
     }
 
-    if (basis_type == "pw")
+    if (bx > 10 || by > 10 || bz > 10)
     {
-        bx = 1;
-        by = 1;
-        bz = 1;
+        ModuleBase::WARNING_QUIT("Input", "bx, or by, or bz is larger than 10!");
     }
-    else if (bx > 10)
-    {
-        ModuleBase::WARNING_QUIT("Input", "bx is too large!");
-    }
-    else if (by > 10)
-    {
-        ModuleBase::WARNING_QUIT("Input", "by is too large!");
-    }
-    else if (bz > 10)
-    {
-        ModuleBase::WARNING_QUIT("Input", "bz is too large!");
-    }
-
-    if (basis_type == "lcao")
-    {
-        if (lcao_ecut == 0)
-        {
-            lcao_ecut = ecutwfc;
-            ModuleBase::GlobalFunc::AUTO_SET("lcao_ecut", ecutwfc);
-        }
-    }
-
     // jiyy add 2019-08-04
     if (vdw_method == "d2" || vdw_method == "d3_0" || vdw_method == "d3_bj")
     {
@@ -3131,18 +3144,14 @@ void Input::Check(void)
         }
     }
 
-    const std::string ss = "test -d " + read_file_dir;
-    if (read_file_dir == "auto")
+
+    if (read_file_dir != "auto")
     {
-        GlobalV::global_readin_dir = GlobalV::global_out_dir;
-    }
-    else if (system(ss.c_str()))
-    {
-        ModuleBase::WARNING_QUIT("Input", "please set right files directory for reading in.");
-    }
-    else
-    {
-        GlobalV::global_readin_dir = read_file_dir + '/';
+    	const std::string ss = "test -d " + read_file_dir;
+    	if (system(ss.c_str()))
+	{
+        	ModuleBase::WARNING_QUIT("Input", "please set right files directory for reading in.");
+	}
     }
 
     return;

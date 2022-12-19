@@ -281,5 +281,9 @@ extern int out_chg;
 extern double nelec;
 extern bool out_bandgap;
 
+
+extern bool rpa;
+extern bool rpa_setorb;
+
 } // namespace GlobalV
 #endif
