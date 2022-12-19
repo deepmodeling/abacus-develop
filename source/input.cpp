@@ -452,7 +452,6 @@ void Input::Default(void)
     //    RPA    Rong Shi added on 2022-04
     //==========================================================
     rpa = false;
-    rpa_setorb = false;
     coulomb_type = "full";
 
     //==========================================================
@@ -1689,7 +1688,7 @@ bool Input::Read(const std::string &fn)
         else if (strcmp("rpa", word) == 0)
         {
             read_bool(ifs, rpa);
-            if (rpa) rpa_setorb = true;
+            if (rpa) GlobalV::rpa_setorb = true;
         }
         //----------------------------------------------------------------------------------
         //    implicit solvation model       sunml added on 2022-04-04
@@ -2721,7 +2720,7 @@ void Input::Bcast()
     // RPA
     //-----------------------------------------------------------------------------------
     Parallel_Common::bcast_bool(rpa);
-    Parallel_Common::bcast_bool(rpa_setorb);
+    Parallel_Common::bcast_bool(GlobalV::rpa_setorb);
 
     //----------------------------------------------------------------------------------
     //    implicit solvation model        (sunml added on 2022-04-04)

@@ -603,8 +603,6 @@ void Input_Conv::Convert(void)
     //-----------------------------------------------------------------------------------
     // RPA
     //-----------------------------------------------------------------------------------
-    GlobalV::rpa = INPUT.rpa;
-    GlobalV::rpa_setorb = INPUT.rpa_setorb;
 
     ModuleBase::timer::tick("Input_Conv", "Convert");
     return;

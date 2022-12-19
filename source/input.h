@@ -419,7 +419,6 @@ class Input
     //    RPA           Rong Shi added on 2022-04
     //==========================================================
     bool rpa;
-    bool rpa_setorb;
     std::string coulomb_type;
 
     //==========================================================

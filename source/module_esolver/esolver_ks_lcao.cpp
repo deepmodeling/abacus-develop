@@ -11,7 +11,6 @@
 #include "src_pw/occupy.h"
 #include "src_pw/symmetry_rho.h"
 #include "src_pw/threshold_elec.h"
-#include "module_base/global_variable.h"
 #ifdef __EXX
 #include "module_rpa/rpa.h"
 #endif
@@ -918,7 +917,7 @@ void ESolver_KS_LCAO::afterscf(const int istep)
 #endif
     // 4. some outputs
 #ifdef __EXX
-    if(GlobalV::rpa)
+    if(INPUT.rpa)
     {
         ModuleRPA::DFT_RPA_interface rpa_interface(GlobalC::exx_info.info_global);
         rpa_interface.rpa_exx_lcao().info.files_abfs = GlobalV::rpa_orbitals;

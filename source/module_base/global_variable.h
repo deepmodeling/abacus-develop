@@ -245,7 +245,6 @@ extern double nc_k;
 // DFTU control
 extern bool dft_plus_u;
 // rpa related
-extern bool rpa;
 extern bool rpa_setorb;
 extern std::vector<std::string> rpa_orbitals;
 
