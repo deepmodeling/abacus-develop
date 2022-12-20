@@ -192,6 +192,7 @@ void PW_Basis_K::recip_to_real(const psi::DEVICE_CPU * /*dev*/, const std::compl
     this->recip2real(in, out, ik, add, factor);
 }
 
+#if (defined(__CUDA) || defined(__ROCM))
 template <>
 void PW_Basis_K::real_to_recip(const psi::DEVICE_GPU * ctx, const std::complex<double> * in, std::complex<double> * out, const int ik, const bool add, const double factor)
 {
@@ -235,6 +236,7 @@ void PW_Basis_K::recip_to_real(const psi::DEVICE_GPU * ctx, const std::complex<d
 
     ModuleBase::timer::tick(this->classname, "recip_to_real gpu");
 }
+#endif
 
 #ifdef __MIX_PRECISION
 ///
