@@ -93,6 +93,13 @@ public:
     std::complex<double> *auxg_3d=nullptr, *auxr_3d=nullptr; //fft space
 #endif
 
+#if defined(__CUDA) || defined(__ROCM)
+    psi::DEVICE_CPU * cpu_ctx = {};
+    psi::DEVICE_GPU * gpu_ctx = {};
+    using resmem_complex_op = psi::memory::resize_memory_op<std::complex<double>, psi::DEVICE_GPU>;
+    using delmem_complex_op = psi::memory::delete_memory_op<std::complex<double>, psi::DEVICE_GPU>;
+#endif
+
 #ifdef __MIX_PRECISION
 	std::complex<float> *auxfg=nullptr, *auxfr=nullptr; //fft space,
 	float *rf_rspace=nullptr; //real number space for r, [nplane * nx *ny]

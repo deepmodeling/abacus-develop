@@ -34,10 +34,10 @@ void FFT::clear()
 	if(auxg!=nullptr) {fftw_free(auxg); auxg = nullptr;}
 	if(auxr!=nullptr) {fftw_free(auxr); auxr = nullptr;}
 	r_rspace = nullptr;
-#if defined(__CUDA) || defined(__UT_USE_CUDA)
+#if defined(__CUDA) || defined(__ROCM)
     if (GlobalV::device_flag == "gpu") {
         if (auxr_3d != nullptr) {
-            cudaFree(auxr_3d);
+            delmem_complex_op()(this->gpu_ctx, auxr_3d);
             auxr_3d = nullptr;
         }
     }
@@ -81,10 +81,9 @@ void FFT:: initfft(int nx_in, int ny_in, int nz_in, int lixy_in, int rixy_in, in
 		r_rspace = (double *) auxg;
         // auxr_3d = static_cast<std::complex<double> *>(
         //     fftw_malloc(sizeof(fftw_complex) * (this->nx * this->ny * this->nz)));
-        #if defined(__CUDA) || defined(__UT_USE_CUDA)
+        #if defined(__CUDA) || defined(__ROCM)
         if (GlobalV::device_flag == "gpu") {
-            cudaMalloc(reinterpret_cast<void **>(&auxr_3d),
-                       this->nx * this->ny * this->nz * sizeof(std::complex<double>));
+            resmem_complex_op()(this->gpu_ctx, this->auxr_3d, this->nx * this->ny * this->nz);
         }
         #endif
 #ifdef __MIX_PRECISION
