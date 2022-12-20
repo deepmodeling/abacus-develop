@@ -9,6 +9,17 @@ namespace elecstate{
 
 template <typename FPTYPE, typename Device> 
 struct elecstate_pw_op {
+  /// @brief Calculate psiToRho output within the band-by-band loop, NSPIN != 4
+  ///
+  /// Input Parameters
+  /// @param ctx - which device this function runs on
+  /// @param spin - current spin
+  /// @param nrxx - number of planewaves
+  /// @param weight - input constant
+  /// @param wfcr - input array, psi in real space
+  ///
+  /// Output Parameters
+  /// @param rho - electronic densities
   void operator() (
       const Device* ctx,
       const int& spin,
@@ -16,7 +27,20 @@ struct elecstate_pw_op {
       const FPTYPE& weight,
       FPTYPE** rho,
       const std::complex<FPTYPE>* wfcr);
-  
+
+  /// @brief Calculate psiToRho output within the band-by-band loop, NSPIN == 4
+  ///
+  /// Input Parameters
+  /// @param ctx - which device this function runs on
+  /// @param DOMAG - GlobalV::DOMAG
+  /// @param DOMAG_Z - GlobalV::DOMAG_Z
+  /// @param nrxx - number of planewaves
+  /// @param weight - input constant
+  /// @param wfcr - input array, psi in real space
+  /// @param wfcr_another_spin - input array, psi in real space
+  ///
+  /// Output Parameters
+  /// @param rho - electronic densities
   void operator() (
       const Device* ctx,
       const bool& DOMAG,
