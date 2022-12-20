@@ -519,7 +519,7 @@ void energy::cal_bandgap(const elecstate::ElecState* pelec)
 	{
 		for (int ik=0; ik<nks; ik++)
         {
-            if (pelec->ekb(ik,ib) < ef && homo < pelec->ekb(ik,ib))
+            if (!(pelec->ekb(ik,ib) > ef) && homo < pelec->ekb(ik,ib))
             {
                 homo = pelec->ekb(ik,ib);
             }
@@ -544,7 +544,7 @@ void energy::cal_bandgap_updw(const elecstate::ElecState* pelec)
 	{
 		for (int ik=0; ik<nks; ik++)
         {
-            if (pelec->ekb(ik,ib) < this->ef_up && homo_up < pelec->ekb(ik,ib))
+            if (!(pelec->ekb(ik,ib) > this->ef_up) && homo_up < pelec->ekb(ik,ib))
             {
                 homo_up = pelec->ekb(ik,ib);
             }
@@ -552,7 +552,7 @@ void energy::cal_bandgap_updw(const elecstate::ElecState* pelec)
             {
                 lumo_up = pelec->ekb(ik,ib);
             }
-			if (pelec->ekb(ik,ib) < this->ef_dw && homo_dw < pelec->ekb(ik,ib))
+			if (!(pelec->ekb(ik,ib) > this->ef_dw) && homo_dw < pelec->ekb(ik,ib))
             {
                 homo_dw = pelec->ekb(ik,ib);
             }
