@@ -65,7 +65,9 @@ This is usually caused by overloading of CPUs' memory without specifying thread 
 
 **2. My relaxation failed. How to deal with it?**
 
-This is usually caused by the difficulty in converging charge density. Reducing charge mixing coefficient (`mixing_beta`) might help. For large systems over 1000 atoms, it is suggested to choose the `pulay-kerker` method as the `mixing_type`.
+This is usually caused by the difficulty in converging charge density. Reducing charge mixing coefficient (`mixing_beta`) might help. For large systems up to hundreds of atoms, it is suggested to choose the Kerker mixing method by setting parameter "mixing_gg0" as "1.5".
+
+Sometimes, loose convergence threshold of charge density (parameter "scf_thr") will cause atomic forces not correctly enough, please set it at most "1e-7" for relaxation calculation.  
 
 
 
