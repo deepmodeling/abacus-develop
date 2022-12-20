@@ -268,7 +268,7 @@ public:
     psi::DEVICE_GPU * gpu_ctx = {};
     using resmem_int_op = psi::memory::resize_memory_op<int, psi::DEVICE_GPU>;
     using delmem_int_op = psi::memory::delete_memory_op<int, psi::DEVICE_GPU>;
-    using syncmem_int_h2d_op = psi::memory::delete_memory_op<int, psi::DEVICE_GPU, psi::DEVICE_CPU>;
+    using syncmem_int_h2d_op = psi::memory::synchronize_memory_op<int, psi::DEVICE_GPU, psi::DEVICE_CPU>;
 #endif
 };
 

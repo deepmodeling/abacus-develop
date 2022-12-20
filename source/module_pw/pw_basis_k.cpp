@@ -117,8 +117,8 @@ void PW_Basis_K::setupIndGk()
     }
 #if defined(__CUDA) || defined(__ROCM)
     if (GlobalV::device_flag == "gpu") {
-        resmem_int_op()(this->gpu_ctx, d_igl2isz_k, this->npwk_max * this->nks);
-        syncmem_int_h2d_op()(this->gpu_ctx, this->cpu_ctx, d_igl2isz_k, this->igl2isz_k, this->npwk_max * this->nks);
+        resmem_int_op()(this->gpu_ctx, this->d_igl2isz_k, this->npwk_max * this->nks);
+        syncmem_int_h2d_op()(this->gpu_ctx, this->cpu_ctx, this->d_igl2isz_k, this->igl2isz_k, this->npwk_max * this->nks);
     }
 #endif
     return;
@@ -248,7 +248,7 @@ void PW_Basis_K::get_ig2ixyz_k()
     }
 #if defined(__CUDA) || defined (__ROCM)
     resmem_int_op()(this->gpu_ctx, ig2ixyz_k, this->npwk_max * this->nks);
-    syncmem_int_h2d_op()(this->gpu_ctx, this->cpu_ctx, ig2ixyz_k, this->ig2ixyz_k_, this->npwk_max * this->nks);
+    syncmem_int_h2d_op()(this->gpu_ctx, this->cpu_ctx, this->ig2ixyz_k, this->ig2ixyz_k_, this->npwk_max * this->nks);
 #endif
 }
 

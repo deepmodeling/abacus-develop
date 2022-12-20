@@ -586,10 +586,10 @@ void pseudopot_cell_vnl::init_vnl(UnitCell &cell)
 #if defined(__CUDA) || defined(__ROCM)
     if (GlobalV::device_flag == "gpu") {
         using syncmem_var_h2d_op = psi::memory::synchronize_memory_op<double, psi::DEVICE_GPU, psi::DEVICE_CPU>;
-        syncmem_var_h2d_op()(this->gpu_ctx, this->cpu_ctx, d_indv, indv.c, indv.nr * indv.nc);
-        syncmem_var_h2d_op()(this->gpu_ctx, this->cpu_ctx, d_nhtol, nhtol.c, nhtol.nr * nhtol.nc);
-        syncmem_var_h2d_op()(this->gpu_ctx, this->cpu_ctx, d_nhtolm, nhtol.c, nhtol.nr * nhtol.nc);
-        syncmem_var_h2d_op()(this->gpu_ctx, this->cpu_ctx, d_tab, this->tab.ptr, this->tab.getSize());
+        syncmem_var_h2d_op()(this->gpu_ctx, this->cpu_ctx, this->d_indv, this->indv.c, this->indv.nr * this->indv.nc);
+        syncmem_var_h2d_op()(this->gpu_ctx, this->cpu_ctx, this->d_nhtol, this->nhtol.c, this->nhtol.nr * this->nhtol.nc);
+        syncmem_var_h2d_op()(this->gpu_ctx, this->cpu_ctx, this->d_nhtolm, this->nhtolm.c, this->nhtolm.nr * this->nhtolm.nc);
+        syncmem_var_h2d_op()(this->gpu_ctx, this->cpu_ctx, this->d_tab, this->tab.ptr, this->tab.getSize());
     }
 #endif
 	ModuleBase::timer::tick("ppcell_vnl","init_vnl");

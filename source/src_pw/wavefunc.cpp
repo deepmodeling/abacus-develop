@@ -380,7 +380,7 @@ void wavefunc::wfcinit_k(psi::Psi<std::complex<double>>* psi_in)
 	{
 		this->irindex = new int [GlobalC::wfcpw->fftnxy];
 		GlobalC::wfcpw->getfftixy2is(this->irindex);
-    #if defined(__CUDA) || defined(__UT_USE_CUDA)
+    #if defined(__CUDA) || defined(__ROCM)
     if (GlobalV::device_flag == "gpu") {
         GlobalC::wfcpw->get_ig2ixyz_k();
     }
