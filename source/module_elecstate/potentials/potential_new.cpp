@@ -118,7 +118,7 @@ void Potential::pot_register(std::vector<std::string>& components_list)
             break;
         }
         this->components.push_back(tmp);
-        GlobalV::ofs_running << "Successful completion of Potential's registration : " << comp << std::endl;
+//        GlobalV::ofs_running << "Successful completion of Potential's registration : " << comp << std::endl;
     }
 
     // after register, reset fixed_done to false
