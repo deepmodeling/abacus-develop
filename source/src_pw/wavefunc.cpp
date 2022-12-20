@@ -288,13 +288,15 @@ void wavefunc::diago_PAO_in_pw_k2(const int &ik, psi::Psi<std::complex<double>> 
 	}
 }
 
-void wavefunc::diago_PAO_in_pw_k2_device(const psi::DEVICE_CPU* ctx, const int &ik, psi::Psi<std::complex<double>, psi::DEVICE_CPU> &wvf, hamilt::Hamilt<double, psi::DEVICE_CPU>* phm_in)
+template <>
+void wavefunc::diago_PAO_in_pw_k2(const psi::DEVICE_CPU* ctx, const int &ik, psi::Psi<std::complex<double>, psi::DEVICE_CPU> &wvf, hamilt::Hamilt<double, psi::DEVICE_CPU>* phm_in)
 {
 	this->diago_PAO_in_pw_k2(ik, wvf, phm_in);
 }
 
 #if ((defined __CUDA) || (defined __ROCM))
-void wavefunc::diago_PAO_in_pw_k2_device(const psi::DEVICE_GPU* ctx, const int &ik, psi::Psi<std::complex<double>, psi::DEVICE_GPU> &wvf, hamilt::Hamilt<double, psi::DEVICE_GPU>* phm_in)
+template<>
+void wavefunc::diago_PAO_in_pw_k2(const psi::DEVICE_GPU* ctx, const int &ik, psi::Psi<std::complex<double>, psi::DEVICE_GPU> &wvf, hamilt::Hamilt<double, psi::DEVICE_GPU>* phm_in)
 {
 	ModuleBase::TITLE("wavefunc","diago_PAO_in_pw_k2");
 	// (6) Prepare for atmoic orbitals or random orbitals

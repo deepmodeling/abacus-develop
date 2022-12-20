@@ -139,12 +139,12 @@ void HSolverPW<FPTYPE, Device>::endDiagh()
     }
 
     //in PW base, average iteration steps for each band and k-point should be printing
-    if(DiagoIterAssist<double>::avg_iter > 0.0)
+    if(DiagoIterAssist<FPTYPE>::avg_iter > 0.0)
     {
-        GlobalV::ofs_running<< "Average iterative diagonalization steps: "<<DiagoIterAssist<double>::avg_iter / this->wfc_basis->nks
-            <<" ; where current threshold is: "<<DiagoIterAssist<double>::PW_DIAG_THR<<" . "<<std::endl;
+        GlobalV::ofs_running<< "Average iterative diagonalization steps: "<<DiagoIterAssist<FPTYPE>::avg_iter / this->wfc_basis->nks
+            <<" ; where current threshold is: "<<DiagoIterAssist<FPTYPE>::PW_DIAG_THR<<" . "<<std::endl;
         //reset avg_iter
-        DiagoIterAssist<double>::avg_iter = 0.0;
+        DiagoIterAssist<FPTYPE>::avg_iter = 0.0;
     }
     //psi only should be initialed once for PW
     if(!this->initialed_psi)
@@ -163,7 +163,7 @@ void HSolverPW<FPTYPE, Device>::updatePsiK(hamilt::Hamilt<FPTYPE, Device>* pHami
         {
             // generate PAOs first, then diagonalize to get
             // inital wavefunctions.
-            GlobalC::wf.diago_PAO_in_pw_k2_device(this->ctx, ik, psi, pHamilt);
+            GlobalC::wf.diago_PAO_in_pw_k2(this->ctx, ik, psi, pHamilt);
         }
         else
         {

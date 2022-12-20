@@ -516,8 +516,8 @@ void FFT::fftxyc2r(std::complex<double>* & in, double* & out)
 	return;
 }
 
-#if defined(__CUDA) || defined(__UT_USE_CUDA)
-void FFT::fft3D_forward(std::complex<double>* & in, std::complex<double>* & out)
+template <>
+void FFT::fft3D_forward(const psi::DEVICE_GPU * /*ctx*/, std::complex<double>* & in, std::complex<double>* & out)
 {
 //    fftw_execute_dft(
 //        this->plan3dforward,
@@ -530,7 +530,8 @@ void FFT::fft3D_forward(std::complex<double>* & in, std::complex<double>* & out)
     cudaDeviceSynchronize();
 }
 
-void FFT::fft3D_backward(std::complex<double>* & in, std::complex<double>* & out)
+template <>
+void FFT::fft3D_backward(const psi::DEVICE_GPU * /*ctx*/, std::complex<double>* & in, std::complex<double>* & out)
 {
 //    fftw_execute_dft(
 //        this->plan3dbackward,
@@ -542,7 +543,6 @@ void FFT::fft3D_backward(std::complex<double>* & in, std::complex<double>* & out
              CUFFT_INVERSE);
     cudaDeviceSynchronize();
 }
-#endif
 
 
 #ifdef __MIX_PRECISION
