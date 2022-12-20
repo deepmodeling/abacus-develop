@@ -390,6 +390,9 @@ void pseudopot_cell_vnl::getvnl(Device * ctx, const int &ik, std::complex<FPTYPE
         vkb_in);
 
     delete [] _gk;
+    delete [] h_atom_nh;
+    delete [] h_atom_na;
+    delete [] h_atom_nb;
     delmem_var_op()(ctx, vq);
     delmem_var_op()(ctx, ylm);
     delmem_var_op()(ctx, vkb1);
