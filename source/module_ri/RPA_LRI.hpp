@@ -20,11 +20,12 @@ void RPA_LRI<Tdata>::init(const MPI_Comm &mpi_comm_in)
     
     this->mpi_comm = mpi_comm_in;
 
-    this->lcaos = GlobalC::exx_lri_double.lcaos;
-	this->abfs = GlobalC::exx_lri_double.abfs;
-	this->abfs_ccp = GlobalC::exx_lri_double.abfs_ccp;
+    this->lcaos = exx_lri_rpa.lcaos;
+	this->abfs = exx_lri_rpa.abfs;
+	this->abfs_ccp = exx_lri_rpa.abfs_ccp;
 
-	this->cv = std::move(GlobalC::exx_lri_double.cv);
+//	this->cv = std::move(exx_lri_rpa.cv);
+//    exx_lri_rpa.cv = exx_lri_rpa.cv;
 }
 
 template<typename Tdata>
@@ -40,7 +41,7 @@ void RPA_LRI<Tdata>::cal_rpa_cv()
 		list_As_Vs = RI::Distribute_Equally::distribute_atoms(this->mpi_comm, atoms, period_Vs, 2, false);
 
 	std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>
-		Vs = this->cv.cal_Vs(
+		Vs = exx_lri_rpa.cv.cal_Vs(
 			list_As_Vs.first, list_As_Vs.second[0],
 			{{"writable_Vws",true}});
     this->Vs_period = RI::RI_Tools::cal_period(Vs, period);
@@ -50,7 +51,7 @@ void RPA_LRI<Tdata>::cal_rpa_cv()
 		list_As_Cs = RI::Distribute_Equally::distribute_atoms_periods(this->mpi_comm, atoms, period_Cs, 2, false);
 
 	std::pair<std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>, std::array<std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>,3>>
-		Cs_dCs = this->cv.cal_Cs_dCs(
+		Cs_dCs = exx_lri_rpa.cv.cal_Cs_dCs(
 			list_As_Cs.first, list_As_Cs.second[0],
 			{{"cal_dC",false},
 			 {"writable_Cws",true}, {"writable_dCws",true}, {"writable_Vws",false}, {"writable_dVws",false}});
@@ -62,10 +63,10 @@ void RPA_LRI<Tdata>::cal_rpa_cv()
 template<typename Tdata>
 void RPA_LRI<Tdata>::cal_postSCF_exx(const MPI_Comm &mpi_comm_in, const Local_Orbital_Charge &loc, const Parallel_Orbitals &pv)
 {
-	GlobalC::exx_lri_double.init(mpi_comm_in);
-	GlobalC::exx_lri_double.cal_exx_ions();
-	GlobalC::exx_lri_double.cal_exx_elec(loc,pv);
-	//cout<<"postSCF_Eexx: "<<GlobalC::exx_lri_double.Eexx<<endl;
+	exx_lri_rpa.init(mpi_comm_in);
+	exx_lri_rpa.cal_exx_ions();
+	exx_lri_rpa.cal_exx_elec(loc,pv);
+	//cout<<"postSCF_Eexx: "<<exx_lri_rpa.Eexx<<endl;
 }
 
 template<typename Tdata>
@@ -82,7 +83,7 @@ void RPA_LRI<Tdata>::out_for_RPA(const Parallel_Orbitals &parav,
     this->cal_rpa_cv();
     std::cout << "rpa_pca_threshold: " << this->info.pca_threshold << std::endl;
     std::cout << "rpa_ccp_rmesh_times: " << this->info.ccp_rmesh_times << std::endl;
-    std::cout << "rpa_lcao_exx(Ha): " << std::fixed << std::setprecision(15) << GlobalC::exx_lri_double.Eexx / 2.0
+    std::cout << "rpa_lcao_exx(Ha): " << std::fixed << std::setprecision(15) << exx_lri_rpa.Eexx / 2.0
               << std::endl;
     this->out_Cs();
     this->out_coulomb_k();
@@ -90,7 +91,7 @@ void RPA_LRI<Tdata>::out_for_RPA(const Parallel_Orbitals &parav,
     std::cout << "etxc(Ha): " << std::fixed << std::setprecision(15) << GlobalC::en.etxc / 2.0 << std::endl;
     std::cout << "etot(Ha): " << std::fixed << std::setprecision(15) << GlobalC::en.etot / 2.0 << std::endl;
     std::cout << "Etot_without_rpa(Ha): " << std::fixed << std::setprecision(15)
-              << (GlobalC::en.etot - GlobalC::en.etxc + GlobalC::exx_lri_double.Eexx) / 2.0 << std::endl;
+              << (GlobalC::en.etot - GlobalC::en.etxc + exx_lri_rpa.Eexx) / 2.0 << std::endl;
 
     return;
 }
@@ -260,7 +261,7 @@ void RPA_LRI<Tdata>::out_coulomb_k()
     for (int I=0;I!=GlobalC::ucell.nat;I++)
     {
         mu_shift[I] = all_mu;
-        all_mu += this->cv.get_index_abfs_size(GlobalC::ucell.iat2it[I]);
+        all_mu += exx_lri_rpa.cv.get_index_abfs_size(GlobalC::ucell.iat2it[I]);
     }
     const int nks_tot = GlobalV::NSPIN == 2 ? (int)GlobalC::kv.nks / 2 : GlobalC::kv.nks;
     std::stringstream ss;
@@ -273,7 +274,7 @@ void RPA_LRI<Tdata>::out_coulomb_k()
     for (auto &Ip : this->Vs_period)
     {
         auto I = Ip.first;
-        size_t mu_num =  this->cv.get_index_abfs_size(GlobalC::ucell.iat2it[I]);
+        size_t mu_num =  exx_lri_rpa.cv.get_index_abfs_size(GlobalC::ucell.iat2it[I]);
         
         for (int ik = 0; ik != nks_tot; ik++)
         {
@@ -298,7 +299,7 @@ void RPA_LRI<Tdata>::out_coulomb_k()
             {
                 auto iJ=vq_Jp.first;
                 auto &vq_J=vq_Jp.second;
-                size_t nu_num =  this->cv.get_index_abfs_size(GlobalC::ucell.iat2it[iJ]);
+                size_t nu_num =  exx_lri_rpa.cv.get_index_abfs_size(GlobalC::ucell.iat2it[iJ]);
                 ofs << all_mu << "   " << mu_shift[I] + 1 << "   " << mu_shift[I] + mu_num << "  " << mu_shift[iJ] + 1
                     << "   " << mu_shift[iJ] + nu_num << std::endl;
                 ofs << ik + 1 << "  " << GlobalC::kv.wk[ik] / 2.0 * GlobalV::NSPIN << std::endl;
@@ -323,7 +324,7 @@ void RPA_LRI<Tdata>::out_coulomb_k()
 // 		this->abfs = this->exx.abfs;
 // 		this->abfs_ccp = this->exx.abfs_ccp;
 
-// 		this->cv = std::move(this->exx.cv);
+// 		exx_lri_rpa.cv = std::move(this->exx.cv);
 // 	}
 // 	else
 // 	{
@@ -331,7 +332,7 @@ void RPA_LRI<Tdata>::out_coulomb_k()
 // 		this->abfs = ...
 // 		this->abfs_ccp = ...
 
-// 		this->cv.set_orbitals(
+// 		exx_lri_rpa.cv.set_orbitals(
 // 			this->lcaos, this->abfs, this->abfs_ccp,
 // 			this->info.kmesh_times, this->info.ccp_rmesh_times );	
 // 	}
@@ -348,14 +349,14 @@ void RPA_LRI<Tdata>::out_coulomb_k()
 // 	// this->rpa_lri.set_parallel(this->mpi_comm, atoms_pos, latvec, period);
 
 // 	if(this->info == this->exx.info)
-// 		this->cv.Vws = std::move(this->exx.cv.Vws);
+// 		exx_lri_rpa.cv.Vws = std::move(this->exx.cv.Vws);
 
 // 	const std::array<Tcell,Ndim> period_Vs = LRI_CV_Tools::cal_latvec_range<Tcell>(1+this->info.ccp_rmesh_times);	
 // 	const std::pair<std::vector<TA>, std::vector<std::vector<std::pair<TA,std::array<Tcell,Ndim>>>>>
 // 		list_As_Vs = RI::Distribute_Equally::distribute_atoms(this->mpi_comm, atoms, period_Vs, 2, false);
 
 // 	std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>
-// 		Vs = this->cv.cal_Vs(
+// 		Vs = exx_lri_rpa.cv.cal_Vs(
 // 			list_As_Vs.first, list_As_Vs.second[0],
 // 			{{"writable_Vws",true}});
 
@@ -366,14 +367,14 @@ void RPA_LRI<Tdata>::out_coulomb_k()
 
 
 // 	if(this->info == this->exx.info)
-// 		this->cv.Cws = std::move(this->exx.cv.Cws);
+// 		exx_lri_rpa.cv.Cws = std::move(this->exx.cv.Cws);
 
 // 	const std::array<Tcell,Ndim> period_Cs = LRI_CV_Tools::cal_latvec_range<Tcell>(2);
 // 	const std::pair<std::vector<TA>, std::vector<std::vector<std::pair<TA,std::array<Tcell,Ndim>>>>>
 // 		list_As_Cs = RI::Distribute_Equally::distribute_atoms_periods(this->mpi_comm, atoms, period_Cs, 2, false);
 
 // 	std::pair<std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>, std::array<std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>,3>>
-// 		Cs_dCs = this->cv.cal_Cs_dCs(
+// 		Cs_dCs = exx_lri_rpa.cv.cal_Cs_dCs(
 // 			list_As_Cs.first, list_As_Cs.second[0],
 // 			{{"cal_dC",false},
 // 			 {"writable_Cws",true}, {"writable_dCws",true}, {"writable_Vws",false}, {"writable_dVws",false}});

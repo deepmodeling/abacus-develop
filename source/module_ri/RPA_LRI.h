@@ -71,7 +71,7 @@ private:
 
 	//Tdata post_process_Erpa( const Tdata &Erpa_in ) const;
 };
-
+Exx_LRI<double> exx_lri_rpa(GlobalC::exx_info.info_ri);
 #include "RPA_LRI.hpp"
 
 #endif
