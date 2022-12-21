@@ -274,6 +274,38 @@ public:
         delete[] aux;
         delete[] bux;
     }
+    
+    // wrap function of fortran lapack routine zhegvd.
+    static inline
+    void zhegvd(const int itype, const char jobz, const char uplo, const int n, 
+                std::complex<double>* a, const int lda, 
+                const std::complex<double>* b, const int ldb, double* w, 
+                std::complex<double>* work, int lwork, double* rwork, int lrwork,
+                int* iwork, int liwork, int info, int ld_real)
+    {	
+        // Transpose the std::complex matrix to the fortran-form real-std::complex array.
+        std::complex<double>* aux = LapackConnector::transpose(a, n, lda, ld_real);
+        std::complex<double>* bux = LapackConnector::transpose(b, n, ldb, ld_real);
+
+        // call the fortran routine
+        zhegvd_(&itype, &jobz, &uplo, &n, 
+                aux, &lda, bux, &ldb, w,
+                work, &lwork, rwork, &lrwork,
+                iwork, &liwork, &info);
+        
+        // Transpose the fortran-form real-std::complex array to the std::complex matrix.
+        for (int i = 0; i < n; ++i)
+        {
+            for (int j = 0; j < lda; ++j)
+            {
+                a[j * ld_real + i] = aux[i*lda+j];
+            }
+        }
+        
+        // free the memory.
+        delete[] aux;
+        delete[] bux;
+    }
 
     // wrap function of fortran lapack routine zhegv ( ModuleBase::ComplexMatrix version ).
     static inline
