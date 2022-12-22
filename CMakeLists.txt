@@ -92,9 +92,8 @@ if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE "Release")
   add_compile_options(-g) # Add debug info by default
 endif()
-
-if(${CMAKE_BUILD_TYPE} MATCHES Release)
-  add_compile_options(-Ofast)
+if(NOT USE_CUDA) # nvcc does not take -Ofast flag
+  set(CMAKE_CXX_FLAGS_RELEASE "-Ofast -DNDEBUG") # We use Ofast instead of O3 for a better performance
 endif()
 
 if(ENABLE_LCAO)
