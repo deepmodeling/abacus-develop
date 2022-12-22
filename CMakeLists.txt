@@ -76,12 +76,25 @@ endif()
 #   this will disable all assertions.
 # Other default configurations are also available, see:
 # https://cmake.org/cmake/help/latest/manual/cmake-buildsystem.7.html#default-and-custom-configurations
-if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
-  if(NOT ENABLE_COVERAGE)
-    add_compile_options(-O2 -g) # default flag
-  else()
-    add_compile_options(-g)
-  endif()
+# For default flags, see:
+# https://github.com/Kitware/CMake/blob/master/Modules/Compiler/GNU.cmake#L55
+
+if(ENABLE_COVERAGE)
+  set(CMAKE_BUILD_TYPE "Debug")
+endif()
+if(ENABLE_ASAN)
+  set(CMAKE_BUILD_TYPE "RelWithDebInfo")
+endif()
+
+if(NOT CMAKE_BUILD_TYPE)
+  message(STATUS "Build type not set - defaulting to Release")
+  # Choose the type of build from: Debug Release RelWithDebInfo MinSizeRel
+  set(CMAKE_BUILD_TYPE "Release")
+  add_compile_options(-g) # Add debug info by default
+endif()
+
+if(${CMAKE_BUILD_TYPE} MATCHES Release)
+  add_compile_options(-Ofast)
 endif()
 
 if(ENABLE_LCAO)
