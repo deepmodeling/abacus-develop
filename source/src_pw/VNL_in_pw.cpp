@@ -48,10 +48,17 @@ pseudopot_cell_vnl::pseudopot_cell_vnl()
 
 pseudopot_cell_vnl::~pseudopot_cell_vnl()
 {
-#ifdef __CUDA
+#if defined(__CUDA) || defined(__ROCM)
     if (GlobalV::device_flag == "gpu") {
-        cudaFree(this->d_deeq);
-        cudaFree(this->d_deeq_nc);
+        using delmem_var_op = psi::memory::delete_memory_op<double, psi::DEVICE_GPU>;
+        using delmem_complex_op = psi::memory::delete_memory_op<std::complex<double>, psi::DEVICE_GPU>;
+        delmem_var_op()(this->gpu_ctx, this->d_deeq);
+        delmem_var_op()(this->gpu_ctx, this->d_nhtol);
+        delmem_var_op()(this->gpu_ctx, this->d_nhtolm);
+        delmem_var_op()(this->gpu_ctx, this->d_indv);
+        delmem_var_op()(this->gpu_ctx, this->d_tab);
+        delmem_complex_op()(this->gpu_ctx, this->d_deeq_nc);
+        delmem_complex_op()(this->gpu_ctx, this->d_vkb);
     }
 #endif
 }
@@ -112,14 +119,15 @@ void pseudopot_cell_vnl::init(const int ntype, const bool allocate_vkb)
 		this->nhtolm.create(ntype, this->nhm);
 		this->nhtoj.create(ntype, this->nhm);
 		this->deeq.create(GlobalV::NSPIN, GlobalC::ucell.nat, this->nhm, this->nhm);
-#ifdef __CUDA
+#if defined(__CUDA) || defined(__ROCM)
         if (GlobalV::device_flag == "gpu") {
-            cudaMalloc((void **) &d_deeq, GlobalV::NSPIN * GlobalC::ucell.nat * this->nhm * this->nhm * sizeof(double));
-            cudaMalloc((void **) &d_deeq_nc,
-                       GlobalV::NSPIN * GlobalC::ucell.nat * this->nhm * this->nhm * sizeof(std::complex<double>));
-            cudaMalloc((void **) &d_nhtol, ntype * this->nhm * sizeof(double));
-            cudaMalloc((void **) &d_nhtolm, ntype * this->nhm * sizeof(double));
-            cudaMalloc((void **) &d_indv, ntype * this->nhm * sizeof(double));
+            using resmem_var_op = psi::memory::resize_memory_op<double, psi::DEVICE_GPU>;
+            using resmem_complex_op = psi::memory::resize_memory_op<std::complex<double>, psi::DEVICE_GPU>;
+            resmem_var_op()(gpu_ctx, d_deeq, GlobalV::NSPIN * GlobalC::ucell.nat * this->nhm * this->nhm);
+            resmem_var_op()(gpu_ctx, d_nhtol, ntype * this->nhm);
+            resmem_var_op()(gpu_ctx, d_nhtolm, ntype * this->nhm);
+            resmem_var_op()(gpu_ctx, d_indv, ntype * this->nhm);
+            resmem_complex_op()(gpu_ctx, d_deeq_nc, GlobalV::NSPIN * GlobalC::ucell.nat * this->nhm * this->nhm);
         }
 #endif
 		this->deeq_nc.create(GlobalV::NSPIN, GlobalC::ucell.nat, this->nhm, this->nhm);
@@ -175,10 +183,12 @@ void pseudopot_cell_vnl::init(const int ntype, const bool allocate_vkb)
 	{
 		this->tab_at.create(ntype, nchix_nc, GlobalV::NQX);
 	}
-#ifdef __CUDA
+#if defined(__CUDA) || defined(__ROCM)
     if (GlobalV::device_flag == "gpu") {
-        cudaMalloc((void **) &d_vkb, nkb * GlobalC::wf.npwx * sizeof(std::complex<double>));
-        cudaMalloc((void **) &d_tab, this->tab.getSize() * sizeof(double));
+        using resmem_var_op = psi::memory::resize_memory_op<double, psi::DEVICE_GPU>;
+        using resmem_complex_op = psi::memory::resize_memory_op<std::complex<double>, psi::DEVICE_GPU>;
+        resmem_var_op()(this->gpu_ctx, d_tab, this->tab.getSize());
+        resmem_complex_op()(this->gpu_ctx, d_vkb, nkb * GlobalC::wf.npwx);
     }
 #endif
 
@@ -297,11 +307,11 @@ void pseudopot_cell_vnl::getvnl(Device * ctx, const int &ik, std::complex<FPTYPE
     using resmem_int_op = psi::memory::resize_memory_op<int, Device>;
     using delmem_int_op = psi::memory::delete_memory_op<int, Device>;
     using syncmem_int_op = psi::memory::synchronize_memory_op<int, Device, psi::DEVICE_CPU>;
-    using resmem_var_op = psi::memory::resize_memory_op<double, Device>;
-    using delmem_var_op = psi::memory::delete_memory_op<double, Device>;
-    using syncmem_var_op = psi::memory::synchronize_memory_op<double, Device, psi::DEVICE_CPU>;
-    using resmem_complex_op = psi::memory::resize_memory_op<std::complex<double>, Device>;
-    using delmem_complex_op = psi::memory::delete_memory_op<std::complex<double>, Device>;
+    using resmem_var_op = psi::memory::resize_memory_op<FPTYPE, Device>;
+    using delmem_var_op = psi::memory::delete_memory_op<FPTYPE, Device>;
+    using syncmem_var_op = psi::memory::synchronize_memory_op<FPTYPE, Device, psi::DEVICE_CPU>;
+    using resmem_complex_op = psi::memory::resize_memory_op<std::complex<FPTYPE>, Device>;
+    using delmem_complex_op = psi::memory::delete_memory_op<std::complex<FPTYPE>, Device>;
 
     if(lmaxkb < 0)
     {
@@ -573,12 +583,13 @@ void pseudopot_cell_vnl::init_vnl(UnitCell &cell)
 		delete[] aux;
 		delete[] jl;
 	}
-#ifdef __CUDA
+#if defined(__CUDA) || defined(__ROCM)
     if (GlobalV::device_flag == "gpu") {
-        cudaMemcpy(d_indv, indv.c, sizeof(double) * indv.nr * indv.nc, cudaMemcpyHostToDevice);
-        cudaMemcpy(d_nhtol, nhtol.c, sizeof(double) * nhtol.nr * nhtol.nc, cudaMemcpyHostToDevice);
-        cudaMemcpy(d_nhtolm, nhtolm.c, sizeof(double) * nhtolm.nr * nhtolm.nc, cudaMemcpyHostToDevice);
-        cudaMemcpy(d_tab, this->tab.ptr, sizeof(double) *this->tab.getSize(), cudaMemcpyHostToDevice);
+        using syncmem_var_h2d_op = psi::memory::synchronize_memory_op<double, psi::DEVICE_GPU, psi::DEVICE_CPU>;
+        syncmem_var_h2d_op()(this->gpu_ctx, this->cpu_ctx, this->d_indv, this->indv.c, this->indv.nr * this->indv.nc);
+        syncmem_var_h2d_op()(this->gpu_ctx, this->cpu_ctx, this->d_nhtol, this->nhtol.c, this->nhtol.nr * this->nhtol.nc);
+        syncmem_var_h2d_op()(this->gpu_ctx, this->cpu_ctx, this->d_nhtolm, this->nhtolm.c, this->nhtolm.nr * this->nhtolm.nc);
+        syncmem_var_h2d_op()(this->gpu_ctx, this->cpu_ctx, this->d_tab, this->tab.ptr, this->tab.getSize());
     }
 #endif
 	ModuleBase::timer::tick("ppcell_vnl","init_vnl");
@@ -901,16 +912,12 @@ void pseudopot_cell_vnl::cal_effective_D(void)
             }
         }
     }
-#ifdef __CUDA
+#if defined(__CUDA) || defined(__ROCM)
     if (GlobalV::device_flag == "gpu") {
-        cudaMemcpy(this->d_deeq,
-                   this->deeq.ptr,
-                   GlobalV::NSPIN * GlobalC::ucell.nat * this->nhm * this->nhm * sizeof(double),
-                   cudaMemcpyHostToDevice);
-        cudaMemcpy(this->d_deeq_nc,
-                   this->deeq_nc.ptr,
-                   GlobalV::NSPIN * GlobalC::ucell.nat * this->nhm * this->nhm * sizeof(std::complex<double>),
-                   cudaMemcpyHostToDevice);
+        using syncmem_var_h2d_op = psi::memory::synchronize_memory_op<double, psi::DEVICE_GPU, psi::DEVICE_CPU>;
+        using syncmem_complex_h2d_op = psi::memory::synchronize_memory_op<std::complex<double>, psi::DEVICE_GPU, psi::DEVICE_CPU>;
+        syncmem_var_h2d_op()(this->gpu_ctx, this->cpu_ctx, this->d_deeq, this->deeq.ptr, GlobalV::NSPIN * GlobalC::ucell.nat * this->nhm * this->nhm);
+        syncmem_complex_h2d_op()(this->gpu_ctx, this->cpu_ctx, this->d_deeq_nc, this->deeq_nc.ptr, GlobalV::NSPIN * GlobalC::ucell.nat * this->nhm * this->nhm);
     }
 #endif
     return;
