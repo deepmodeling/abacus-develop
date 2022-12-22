@@ -231,20 +231,15 @@ void dngvd_op<double, psi::DEVICE_CPU>::operator()(const psi::DEVICE_CPU* d,
     //===========================
     // calculate all eigenvalues
     //===========================
-    LapackConnector::zhegvd(1, 'V', 'U', nstart, 
-                            vcc, ldh, 
-                            scc, ldh, eigenvalue, 
-                            work, lwork, rwork, lrwork, 
-                            iwork, liwork, info, ldh);
-    
+    LapackConnector::
+        zhegvd(1, 'V', 'U', nstart, vcc, ldh, scc, ldh, eigenvalue, work, lwork, rwork, lrwork, iwork, liwork, info);
+
     assert(0 == info);
 
     delete[] work;
     delete[] rwork;
     delete[] iwork;
 }
-
-
 
 template <>
 void dnevx_op<double, psi::DEVICE_CPU>::operator()(const psi::DEVICE_CPU* d,
@@ -320,8 +315,5 @@ void dnevx_op<double, psi::DEVICE_CPU>::operator()(const psi::DEVICE_CPU* d,
 
     assert(0 == info);
 };
-
-
-
 
 } // namespace hsolver
