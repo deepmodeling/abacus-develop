@@ -28,6 +28,7 @@
 #include "src_io/berryphase.h"
 #include "module_psi/include/device.h"
 #include "module_hsolver/include/math_kernel.h"
+#include "module_hsolver/include/dngvd_op.h"
 
 namespace ModuleESolver
 {
@@ -41,6 +42,7 @@ namespace ModuleESolver
     #if ((defined __CUDA) || (defined __ROCM))
         if (this->device == psi::GpuDevice) {
             hsolver::createBLAShandle();
+            hsolver::createCUSOLVERhandle();
         }
     #endif
     }
@@ -69,6 +71,7 @@ namespace ModuleESolver
         if (this->device == psi::GpuDevice) {
             delete reinterpret_cast<psi::Psi<std::complex<FPTYPE>, Device>*>(this->kspw_psi);
             hsolver::destoryBLAShandle();
+            hsolver::destoryCUSOLVERhandle();
         }
     #endif
     }

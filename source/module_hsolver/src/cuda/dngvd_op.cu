@@ -296,12 +296,11 @@ void dngvd_op<double, psi::DEVICE_GPU>::operator()(const psi::DEVICE_GPU* d,
     // prepare some values for cusolverDnZhegvd_bufferSize
     int* devInfo;
     checkCudaErrors(cudaMalloc((void**)&devInfo, sizeof(int)));
-    cusolverDnHandle_t cusolverH;
-    cusolverErrcheck(cusolverDnCreate(&cusolverH));
+
     // calculate the sizes needed for pre-allocated buffer.
     int lwork = 0;
     cusolverErrcheck(cusolverDnZhegvd_bufferSize(
-        cusolverH,
+        cusolver_H,
         CUSOLVER_EIG_TYPE_1, // itype = CUSOLVER_EIG_TYPE_1: A*x = (lambda)*B*x.
         CUSOLVER_EIG_MODE_VECTOR, // jobz = CUSOLVER_EIG_MODE_VECTOR : Compute eigenvalues and eigenvectors.
         CUBLAS_FILL_MODE_UPPER,
@@ -319,7 +318,7 @@ void dngvd_op<double, psi::DEVICE_GPU>::operator()(const psi::DEVICE_GPU* d,
 
     // compute eigenvalues and eigenvectors.
     cusolverErrcheck(cusolverDnZhegvd(
-        cusolverH,
+        cusolver_H,
         CUSOLVER_EIG_TYPE_1, // itype = CUSOLVER_EIG_TYPE_1: A*x = (lambda)*B*x.
         CUSOLVER_EIG_MODE_VECTOR, // jobz = CUSOLVER_EIG_MODE_VECTOR : Compute eigenvalues and eigenvectors.
         CUBLAS_FILL_MODE_UPPER,
@@ -342,7 +341,6 @@ void dngvd_op<double, psi::DEVICE_GPU>::operator()(const psi::DEVICE_GPU* d,
     // free the buffer and destroy
     checkCudaErrors(cudaFree(d_work));
     checkCudaErrors(cudaFree(devInfo));
-    cusolverErrcheck(cusolverDnDestroy(cusolverH));
 }
 
 template <>
@@ -384,15 +382,15 @@ void dnevx_op<double, psi::DEVICE_GPU>::operator()(const psi::DEVICE_GPU* d,
     checkCudaErrors(cudaMalloc((void**)&all_W, sizeof(double) * nstart));
 
     // prepare some values for cusolverDnZhegvd_bufferSize
-    cusolverDnHandle_t cusolverH;
-    cusolverErrcheck(cusolverDnCreate(&cusolverH));
+    // cusolverDnHandle_t cusolverH;
+    // cusolverErrcheck(cusolverDnCreate(&cusolverH));
     int* devInfo;
     checkCudaErrors(cudaMalloc((void**)&devInfo, sizeof(int)));
 
     // calculate the sizes needed for pre-allocated buffer.
     int lwork = 0;
     cusolverErrcheck(cusolverDnZheevd_bufferSize(
-        cusolverH,
+        cusolver_H,
         CUSOLVER_EIG_MODE_VECTOR, // jobz = CUSOLVER_EIG_MODE_VECTOR : Compute eigenvalues and eigenvectors.
         CUBLAS_FILL_MODE_LOWER,
         nstart,
@@ -407,7 +405,7 @@ void dnevx_op<double, psi::DEVICE_GPU>::operator()(const psi::DEVICE_GPU* d,
 
     // compute eigenvalues and eigenvectors.
     cusolverErrcheck(cusolverDnZheevd(
-        cusolverH,
+        cusolver_H,
         CUSOLVER_EIG_MODE_VECTOR, // jobz = CUSOLVER_EIG_MODE_VECTOR : Compute eigenvalues and eigenvectors.
         CUBLAS_FILL_MODE_LOWER,
         nstart,
@@ -447,7 +445,7 @@ void dnevx_op<double, psi::DEVICE_GPU>::operator()(const psi::DEVICE_GPU* d,
     checkCudaErrors(cudaFree(A_eigenvectors));
     checkCudaErrors(cudaFree(all_W));
     checkCudaErrors(cudaFree(devInfo));
-    cusolverErrcheck(cusolverDnDestroy(cusolverH));
+    // cusolverErrcheck(cusolverDnDestroy(cusolverH));
 }
 
 } // namespace hsolver
