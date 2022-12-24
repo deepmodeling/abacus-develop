@@ -44,7 +44,7 @@ AddTest(
           ../../src_parallel/parallel_common.cpp  ../../src_parallel/parallel_reduce.cpp
 )
 
-if(USE_CUDA)
+if(USE_CUDA OR USE_ROCM)
   AddTest(
     TARGET Dngvd_UTs
     LIBS ${math_libs} base device

@@ -180,18 +180,35 @@ endif()
 # Warning: CMake add support to HIP in version 3.21. This is rather a new version.
 # Use cmake with AMD-ROCm: https://rocmdocs.amd.com/en/latest/Installation_Guide/Using-CMake-with-AMD-ROCm.html
 if(USE_ROCM)
-  SET(CMAKE_HIP_STANDARD ${CMAKE_CXX_STANDARD})
-  list(APPEND CMAKE_PREFIX_PATH /opt/rocm/hip /opt/rocm)
-  list(APPEND CMAKE_SYSTEM_PREFIX_PATH "/opt/rocm/hip")
+  if (NOT DEFINED ROCM_PATH )
+    set (ROCM_PATH "/opt/rocm"  CACHE STRING "Default ROCM installation directory." )
+  endif ()
+  if(NOT DEFINED HIP_PATH)
+    if(NOT DEFINED ENV{HIP_PATH})
+        set(HIP_PATH "${ROCM_PATH}/hip" CACHE PATH "Path to which HIP has been installed")
+    else()
+        set(HIP_PATH $ENV{HIP_PATH} CACHE PATH "Path to which HIP has been installed")
+    endif()
+  endif()
+  set(CMAKE_MODULE_PATH "${HIP_PATH}/cmake" ${CMAKE_MODULE_PATH})
+  set (HIP_HIPCC_FLAGS -fno-gpu-rdc; --std=c++14) # --amdgpu-target=gfx906
 
   # find_package(ROCM REQUIRED)
-  find_package(hip REQUIRED)
+  find_package(HIP REQUIRED)
   find_package(hipfft REQUIRED)
   find_package(hipblas REQUIRED)
+
+  if(HIP_FOUND)
+    message(STATUS "Found HIP: " ${HIP_VERSION})
+  else()
+    message(FATAL_ERROR "Could not find HIP. Ensure that HIP is either installed in ${ROCM_PATH}/hip or the variable HIP_PATH is set to point to the right location.")
+  endif()
+
   include_directories(
-    /opt/rocm/hip/include
-    /opt/rocm/hipfft/include
-    /opt/rocm/hipblas/include
+    ${ROCM_PATH}/include
+    ${ROCM_PATH}/hip/include
+    ${ROCM_PATH}/hipfft/include
+    ${ROCM_PATH}/hipblas/include
   )
   target_link_libraries(${ABACUS_BIN_NAME}
     hip::device
@@ -201,6 +218,7 @@ if(USE_ROCM)
   )
   add_compile_definitions(__ROCM)
   add_compile_definitions(__UT_USE_ROCM)
+  add_compile_definitions(__HIP_PLATFORM_HCC__)
 endif()
 
 if(ENABLE_ASAN)
@@ -248,6 +266,8 @@ else()
     list(APPEND math_libs -lgfortran)
   elseif(CMAKE_CXX_COMPILER_ID MATCHES Intel)
     list(APPEND math_libs -lifcore)
+  elseif(CMAKE_CXX_COMPILER_ID MATCHES Clang)
+    list(APPEND math_libs -lgfortran)
   else()
     message(WARNING "Cannot find the correct library for Fortran.")
   endif()
@@ -322,7 +342,7 @@ if(DEFINED Libxc_DIR)
   set(ENABLE_LIBXC ON)
 endif()
 if(ENABLE_LIBXC)
-  find_package(Libxc 5.1.7 REQUIRED HINTS ${Libxc_DIR}/share/cmake/Libxc ${Libxc_DIR}/lib/cmake/Libxc)
+  find_package(Libxc 5.1.7 REQUIRED HINTS ${Libxc_DIR}/share/cmake/Libxc)
   if(${Libxc_FOUND})
     message(STATUS "Found Libxc: version " ${Libxc_VERSION})
     target_link_libraries(${ABACUS_BIN_NAME} Libxc::xc)
@@ -441,7 +461,6 @@ if(ENABLE_LCAO)
       lcao
       orb
       gint
-      dftu
   )
   if (USE_ELPA)
     target_link_libraries(${ABACUS_BIN_NAME}
@@ -456,7 +475,8 @@ endif()
 if (ENABLE_LIBRI)
   target_link_libraries(${ABACUS_BIN_NAME}
           ri
-          libri)
+          libri
+          rpa)
 endif()
 
 install(PROGRAMS ${ABACUS_BIN_PATH}

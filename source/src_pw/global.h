@@ -143,6 +143,9 @@ static const char *_cufftGetErrorString(cufftResult_t error)
 #endif
 
 #ifdef __ROCM
+#include <hipfft.h>
+#include <hipblas.h>
+#include <hip/hip_runtime.h>
 namespace HipCheck
 {
 static const char *_hipblasGetErrorString(hipblasStatus_t error)
