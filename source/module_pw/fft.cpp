@@ -346,7 +346,7 @@ void FFT:: cleanFFT()
 	}
     // fftw_destroy_plan(this->plan3dforward);
     // fftw_destroy_plan(this->plan3dbackward);
-    #if defined(__CUDA) || defined(__UT_USE_CUDA)
+    #if defined(__CUDA)
     if (GlobalV::device_flag == "gpu") {
         cufftDestroy(fft_handle);
     }
