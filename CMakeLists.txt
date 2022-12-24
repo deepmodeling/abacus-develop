@@ -342,7 +342,7 @@ if(DEFINED Libxc_DIR)
   set(ENABLE_LIBXC ON)
 endif()
 if(ENABLE_LIBXC)
-  find_package(Libxc 5.1.7 REQUIRED HINTS ${Libxc_DIR}/share/cmake/Libxc)
+  find_package(Libxc 5.1.7 REQUIRED HINTS ${Libxc_DIR}/share/cmake/Libxc ${Libxc_DIR}/lib/cmake/Libxc)
   if(${Libxc_FOUND})
     message(STATUS "Found Libxc: version " ${Libxc_VERSION})
     target_link_libraries(${ABACUS_BIN_NAME} Libxc::xc)
@@ -461,6 +461,7 @@ if(ENABLE_LCAO)
       lcao
       orb
       gint
+      dftu
   )
   if (USE_ELPA)
     target_link_libraries(${ABACUS_BIN_NAME}
@@ -475,8 +476,7 @@ endif()
 if (ENABLE_LIBRI)
   target_link_libraries(${ABACUS_BIN_NAME}
           ri
-          libri
-          rpa)
+          libri)
 endif()
 
 install(PROGRAMS ${ABACUS_BIN_PATH}
