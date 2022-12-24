@@ -19,6 +19,9 @@
 
 	class Local_Orbital_Charge;
 	class Parallel_Orbitals;
+	
+	template<typename Tdata>
+	class RPA_LRI;
 
 template<typename Tdata>
 class Exx_LRI
@@ -61,6 +64,8 @@ private:
 
 	void post_process_Hexx( std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> &Hexxs_io ) const;
 	Tdata post_process_Eexx( const Tdata &Eexx_in ) const;
+
+	friend class RPA_LRI<Tdata>;
 };
 
 #include "Exx_LRI.hpp"

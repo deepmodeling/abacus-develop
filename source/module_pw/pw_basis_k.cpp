@@ -18,10 +18,10 @@ PW_Basis_K::~PW_Basis_K()
     delete[] igl2ig_k;
     delete[] gk2;
     delete[] ig2ixyz_k_;
-#if defined(__CUDA) || defined(__UT_USE_CUDA)
+#if defined(__CUDA) || defined(__ROCM)
     if (GlobalV::device_flag == "gpu") {
-        cudaFree(this->ig2ixyz_k);
-        cudaFree(this->d_igl2isz_k);
+        delmem_int_op()(this->gpu_ctx, this->ig2ixyz_k);
+        delmem_int_op()(this->gpu_ctx, this->d_igl2isz_k);
     }
 #endif
 }
@@ -115,10 +115,10 @@ void PW_Basis_K::setupIndGk()
             }
         }
     }
-#if defined(__CUDA) || defined(__UT_USE_CUDA)
+#if defined(__CUDA) || defined(__ROCM)
     if (GlobalV::device_flag == "gpu") {
-        cudaMalloc(reinterpret_cast<void **>(&this->d_igl2isz_k), sizeof(int) * this->npwk_max * this->nks);
-        cudaMemcpy(this->d_igl2isz_k, this->igl2isz_k, sizeof(int) * this->npwk_max * this->nks, cudaMemcpyHostToDevice);
+        resmem_int_op()(this->gpu_ctx, this->d_igl2isz_k, this->npwk_max * this->nks);
+        syncmem_int_h2d_op()(this->gpu_ctx, this->cpu_ctx, this->d_igl2isz_k, this->igl2isz_k, this->npwk_max * this->nks);
     }
 #endif
     return;
@@ -227,12 +227,10 @@ int& PW_Basis_K::getigl2ig(const int ik, const int igl) const
     return this->igl2ig_k[ik*this->npwk_max + igl];
 }
 
-#if defined(__CUDA) || defined(__UT_USE_CUDA)
+
 void PW_Basis_K::get_ig2ixyz_k()
 {
-    cudaMalloc(
-        reinterpret_cast<void **>(&this->ig2ixyz_k),
-        sizeof(int) * this->npwk_max * this->nks);
+
     this->ig2ixyz_k_ = new int [this->npwk_max * this->nks];
     assert(gamma_only == false); //We only finish non-gamma_only fft on GPU temperarily.
     for(int ik = 0; ik < this->nks; ++ik)
@@ -248,9 +246,10 @@ void PW_Basis_K::get_ig2ixyz_k()
             ig2ixyz_k_[igl + ik * npwk_max] = iz + iy * nz + ix * ny * nz;
         }
     }
-    cudaMemcpy(this->ig2ixyz_k, ig2ixyz_k_, sizeof(int) * this->npwk_max * this->nks, cudaMemcpyHostToDevice);
-    // delete [] ig2ixyz_k_;
-}
+#if defined(__CUDA) || defined (__ROCM)
+    resmem_int_op()(this->gpu_ctx, ig2ixyz_k, this->npwk_max * this->nks);
+    syncmem_int_h2d_op()(this->gpu_ctx, this->cpu_ctx, this->ig2ixyz_k, this->ig2ixyz_k_, this->npwk_max * this->nks);
 #endif
+}
 
 }  // namespace ModulePW

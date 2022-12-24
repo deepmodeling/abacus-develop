@@ -305,7 +305,7 @@ LRI_CV<Tdata>::DPcal_C_dC(
 		if( (ModuleBase::Vector3<double>(0,0,0)==R) && (it0==it1) )
 		{
 			const RI::Tensor<Tdata>
-				A = this->m_abfslcaos_lcaos.cal_overlap_matrix<Tdata>(
+				A = this->m_abfslcaos_lcaos.template cal_overlap_matrix<Tdata>(
 						it0, it1, {0,0,0}, {0,0,0},
 						this->index_abfs, this->index_lcaos, this->index_lcaos,
 						Matrix_Orbs21::Matrix_Order::A1A2B);
@@ -343,11 +343,11 @@ LRI_CV<Tdata>::DPcal_C_dC(
 		else
 		{
 			const std::vector<RI::Tensor<Tdata>>
-				A = {this->m_abfslcaos_lcaos.cal_overlap_matrix<Tdata>(
+				A = {this->m_abfslcaos_lcaos.template cal_overlap_matrix<Tdata>(
 						it0, it1, {0,0,0}, R,
 						this->index_abfs, this->index_lcaos, this->index_lcaos,
 						Matrix_Orbs21::Matrix_Order::A1A2B),
-				     this->m_abfslcaos_lcaos.cal_overlap_matrix<Tdata>(
+				     this->m_abfslcaos_lcaos.template cal_overlap_matrix<Tdata>(
 						it1, it0, {0,0,0}, Rm,
 						this->index_abfs, this->index_lcaos, this->index_lcaos,
 						Matrix_Orbs21::Matrix_Order::A1BA2)};
@@ -377,12 +377,12 @@ LRI_CV<Tdata>::DPcal_C_dC(
 			else
 			{
 				const std::vector<std::array<RI::Tensor<Tdata>,3>>
-					dA = {this->m_abfslcaos_lcaos.cal_grad_overlap_matrix<Tdata>(
+					dA = {this->m_abfslcaos_lcaos.template cal_grad_overlap_matrix<Tdata>(
 								it0, it1, {0,0,0}, R,
 								this->index_abfs, this->index_lcaos, this->index_lcaos,
 								Matrix_Orbs21::Matrix_Order::A1A2B),
 					      LRI_CV_Tools::negative(
-					       this->m_abfslcaos_lcaos.cal_grad_overlap_matrix<Tdata>(
+					       this->m_abfslcaos_lcaos.template cal_grad_overlap_matrix<Tdata>(
 								it1, it0, {0,0,0}, Rm,
 								this->index_abfs, this->index_lcaos, this->index_lcaos,
 								Matrix_Orbs21::Matrix_Order::A1BA2))};

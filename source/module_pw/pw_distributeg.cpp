@@ -148,9 +148,9 @@ void PW_Basis::get_ig2isz_is2fftixy(
     {
         delete[] this->ig2isz; this->ig2isz = nullptr; // map ig to the z coordinate of this planewave.
         delete[] this->is2fftixy; this->is2fftixy = nullptr; // map is (index of sticks) to ixy (iy + ix * fftny).
-#if defined(__CUDA) || defined(__UT_USE_CUDA)
+#if defined(__CUDA) || defined(__ROCM)
         if (GlobalV::device_flag == "gpu") {
-            cudaFree(this->d_is2fftixy);
+            delmem_int_op()(this->gpu_ctx, this->d_is2fftixy);
             d_is2fftixy = nullptr;
         }
 #endif
@@ -185,10 +185,10 @@ void PW_Basis::get_ig2isz_is2fftixy(
         }
         if (st_move == this->nst && pw_filled == this->npw) break;
     }
-#if defined(__CUDA) || defined(__UT_USE_CUDA)
+#if defined(__CUDA) || defined(__ROCM)
     if (GlobalV::device_flag == "gpu") {
-        cudaMalloc(reinterpret_cast<void **>(&this->d_is2fftixy), sizeof(int) * this->nst);
-        cudaMemcpy(this->d_is2fftixy, this->is2fftixy, sizeof(int) * this->nst, cudaMemcpyHostToDevice);
+        resmem_int_op()(this->gpu_ctx, d_is2fftixy, this->nst);
+        syncmem_int_h2d_op()(this->gpu_ctx, this->cpu_ctx, this->d_is2fftixy, this->is2fftixy, this->nst);
     }
 #endif
     return;

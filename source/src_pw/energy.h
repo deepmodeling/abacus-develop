@@ -7,14 +7,13 @@
 #include "module_psi/psi.h"
 #include "module_elecstate/elecstate.h"
 
-	class LCAO_Hamilt;
+class LCAO_Hamilt;
 
 class energy
 {
 	public:
-	friend class Electrons_Stochastic;//mohan add 2021-01-31 
+	friend class Electrons_Stochastic;//mohan add 2021-01-31
 	friend class LOOP_elec;
-	friend class Local_Orbital_Charge;
 	friend class Threshold_Elec;
 	friend class Forces<double>;
 	friend class Charge;
@@ -31,8 +30,8 @@ class energy
 
 	//calculate density of states(DOS) and partial density of states(PDOS) and mulliken charge for LCAO base
 	void perform_dos(
-		const psi::Psi<double> *psid, 
-		const psi::Psi<std::complex<double>> *psi, 
+		const psi::Psi<double> *psid,
+		const psi::Psi<std::complex<double>> *psi,
 		LCAO_Hamilt &uhm,
 		const elecstate::ElecState* pelec);
 	//calculate density of states(DOS) for PW base
@@ -73,7 +72,7 @@ class energy
 	int out_dos;			// control dos calculation
 	int out_band;                    // control band calculation  pengfei 2014-10-13
 	int out_proj_band;                    // control projected band calculation  jiyy add 2022-05-11
-	const std::string Name_Angular[5][11] = 
+	const std::string Name_Angular[5][11] =
 	{
     	{"s"},
     	{"px", "py", "pz"},
@@ -97,7 +96,7 @@ class energy
     // rho
     //=========================================================
 	void calculate_etot(void);
-	void print_etot(const bool converged, const int &iter, 
+	void print_etot(const bool converged, const int &iter,
 	const double &scf_thr, const double &duration, const double &pw_diag_thr=0, const double &avg_iter=0, bool print = true);
 
 	void print_occ(const elecstate::ElecState* pelec);
@@ -119,10 +118,9 @@ class energy
 	ModuleBase::matrix vnew;
 	bool vnew_exist = false;
 
-    
+
     void set_exx();       // Peize Lin add 2016-12-03
-    
+
 };
 
 #endif //energy
-

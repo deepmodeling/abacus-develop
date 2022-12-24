@@ -163,7 +163,7 @@ void HSolverPW<FPTYPE, Device>::updatePsiK(hamilt::Hamilt<FPTYPE, Device>* pHami
         {
             // generate PAOs first, then diagonalize to get
             // inital wavefunctions.
-            GlobalC::wf.diago_PAO_in_pw_k2_device(this->ctx, ik, psi, pHamilt);
+            GlobalC::wf.diago_PAO_in_pw_k2(this->ctx, ik, psi, pHamilt);
         }
         else
         {
