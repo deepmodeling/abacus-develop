@@ -3098,7 +3098,7 @@ void Input::Check(void)
 
     if (berry_phase)
     {
-        if (basis_type != "pw" and basis_type != "lcao")
+        if (basis_type != "pw" && basis_type != "lcao")
         {
             ModuleBase::WARNING_QUIT("Input", "calculate berry phase, please set basis_type = pw or lcao");
         }
