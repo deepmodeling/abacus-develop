@@ -802,6 +802,27 @@ void Symmetry::lattice_type(
         {
             cel_const[i] = pcel_const[i];
         }
+        //newpos also need to be set
+        int at=0;
+        for(int it=0; it<ucell.ntype; ++it)
+        {
+            for(int ia=0; ia<ucell.atoms[it].na; ++ia)
+            {
+                ModuleBase::Mathzone::Cartesian_to_Direct(ucell.atoms[it].tau[ia].x,
+                                ucell.atoms[it].tau[ia].y,
+                                ucell.atoms[it].tau[ia].z,
+                                v1.x, v1.y, v1.z,
+                                v2.x, v2.y, v2.z,
+                                v3.x, v3.y, v3.z,
+                                newpos[3*at],newpos[3*at+1],newpos[3*at+2]);
+                for(int k=0; k<3; ++k)
+                {
+                        this->check_translation( newpos[at*3+k], -floor(newpos[at*3+k]));
+                        this->check_boundary( newpos[at*3+k] );
+                }
+                ++at;
+            }
+        }       
     }
 
     /*
