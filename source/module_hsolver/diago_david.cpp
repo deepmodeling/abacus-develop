@@ -208,18 +208,18 @@ void DiagoDavid<FPTYPE, Device>::diag_mock(hamilt::Hamilt<FPTYPE, Device>* phm_i
             // haozhihan repalce 2022-10-18
             gemm_op<FPTYPE, Device>()(this->ctx,
                                       'N',
-                                      'T',
-                                      this->dim, // m: row of A,C
-                                      this->n_band, // n: col of B,C
-                                      nbase, // k: col of A, row of B
-                                      &ModuleBase::ONE, // alpha
-                                      basis.get_pointer(), // A
-                                      this->dim, // LDA: if(N) max(1,m) if(T) max(1,k)
-                                      this->vcc, // B
-                                      this->nbase_x, // LDB: if(N) max(1,k) if(T) max(1,n)
-                                      &ModuleBase::ZERO, // belta
-                                      psi.get_pointer(), // C
-                                      this->dmx // LDC: if(N) max(1, m)
+                                      'N',
+                                      this->dim,           // m: row of A,C
+                                      this->n_band,        // n: col of B,C
+                                      nbase,               // k: col of A, row of B
+                                      &ModuleBase::ONE, 
+                                      basis.get_pointer(), // A dim * nbase 
+                                      this->dim,
+                                      this->vcc,           // B nbase * n_band
+                                      this->nbase_x,
+                                      &ModuleBase::ZERO,
+                                      psi.get_pointer(),   // C dim * n_band
+                                      this->dmx
             );
 
             if (!this->notconv || (dav_iter == DiagoIterAssist<FPTYPE, Device>::PW_DIAG_NMAX))
@@ -302,38 +302,18 @@ void DiagoDavid<FPTYPE, Device>::cal_grad(hamilt::Hamilt<FPTYPE, Device>* phm_in
     // }
     //>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     // replace by haozhihan
-    if (this->device == psi::GpuDevice)
+    for (int m = 0; m < notconv; m++)
     {
-#if defined(__CUDA) || defined(__ROCM)
-        std::complex<FPTYPE>* vcc_transpose = nullptr;
-        resmem_complex_op()(this->ctx, vcc_transpose, this->nbase_x * this->nbase_x);
-        matrixTranspose_op<FPTYPE, Device>()(this->ctx, this->nbase_x, this->nbase_x, vcc, vcc_transpose);
+        syncmem_complex_op()(this->ctx,
+                             this->ctx,
+                             vc_ev_vector + m * nbase,
+                             vcc + unconv[m] * this->nbase_x,
+                             nbase);
+    }
 
-        for (int m = 0; m < notconv; m++)
-        {
-            syncmem_complex_op()(this->ctx,
-                                 this->ctx,
-                                 vc_ev_vector + m * nbase,
-                                 vcc_transpose + unconv[m] * this->nbase_x,
-                                 nbase);
-        }
-        delmem_complex_op()(this->ctx, vcc_transpose);
-#endif
-    }
-    else
-    {
-        for (int m = 0; m < notconv; m++)
-        {
-            for (int i = 0; i < nbase; i++)
-            {
-                // vc_ev_vector(m, i) = vc(i, unconv[m]);
-                vc_ev_vector[m * nbase + i] = vcc[i * this->nbase_x + unconv[m]];
-            }
-        }
-    }
+
     //>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
-    ppsi = &basis(nbase, 0);
     //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     // haozhihan repalce 2022-10-18
     gemm_op<FPTYPE, Device>()(this->ctx,
@@ -348,7 +328,7 @@ void DiagoDavid<FPTYPE, Device>::cal_grad(hamilt::Hamilt<FPTYPE, Device>* phm_in
                               vc_ev_vector, // B nbase * notconv
                               nbase, // LDB: if(N) max(1,k) if(T) max(1,n)
                               &ModuleBase::ZERO, // belta
-                              ppsi, // C dim * notconv
+                              &basis(nbase, 0), // C dim * notconv
                               this->dim // LDC: if(N) max(1, m)
     );
     //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
@@ -406,7 +386,7 @@ void DiagoDavid<FPTYPE, Device>::cal_grad(hamilt::Hamilt<FPTYPE, Device>* phm_in
                               vc_ev_vector, // B
                               nbase, // LDB: if(N) max(1,k) if(T) max(1,n)
                               &ModuleBase::ONE, // belta
-                              ppsi, // C dim * notconv
+                              &basis(nbase, 0), // C dim * notconv
                               this->dim // LDC: if(N) max(1, m)
     );
     //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
@@ -477,9 +457,6 @@ void DiagoDavid<FPTYPE, Device>::cal_grad(hamilt::Hamilt<FPTYPE, Device>* phm_in
 
     for (int m = 0; m < notconv; m++)
     {
-        ppsi = &basis(nbase + m, 0);
-        spsi = &sphi[(nbase + m) * this->dim];
-
         this->SchmitOrth(this->dim,
                          nbase + notconv,
                          nbase + m,
@@ -488,7 +465,7 @@ void DiagoDavid<FPTYPE, Device>::cal_grad(hamilt::Hamilt<FPTYPE, Device>* phm_in
                          &lagrange[m * (nbase + notconv)],
                          pre_matrix_mm_m[m],
                          pre_matrix_mv_m[m]);
-        phm_in->sPsi(ppsi, spsi, (size_t)this->dim);
+        phm_in->sPsi(&basis(nbase + m, 0), &sphi[(nbase + m) * this->dim], (size_t)this->dim);
     }
     // calculate H|psi> for not convergence bands
     hpsi_info dav_hpsi_in(&basis,
@@ -520,8 +497,6 @@ void DiagoDavid<FPTYPE, Device>::cal_elem(const int& dim,
         return;
     ModuleBase::timer::tick("DiagoDavid", "cal_elem");
 
-
-    matrixTranspose_op<FPTYPE, Device>()(this->ctx, this->nbase_x, this->nbase_x, hcc, hcc);
     gemm_op<FPTYPE, Device>()(this->ctx,
                               'C',
                               'N',
@@ -571,6 +546,8 @@ void DiagoDavid<FPTYPE, Device>::cal_elem(const int& dim,
     }
 #endif
 
+    matrixTranspose_op<FPTYPE, Device>()(this->ctx, this->nbase_x, this->nbase_x, hcc, hcc);
+
     nbase += notconv;
     ModuleBase::timer::tick("DiagoDavid", "cal_elem");
     return;
@@ -578,12 +555,10 @@ void DiagoDavid<FPTYPE, Device>::cal_elem(const int& dim,
 
 //==============================================================================
 // optimize diag_zhegvx().
-
 // 09-05-09 wangjp
 // fixed a bug in diag_zhegvx().
 // modify the dimension of h and s as (n,n) and copy the leading N*N
 // part of hc & sc into h & s
-
 // 09-05-10 wangjp
 // As the complexmatrixs will be copied again in the subroutine ZHEGVX(...  ),
 // i.e ZHEGVX(...) will not destroy the input complexmatrixs,
@@ -626,9 +601,10 @@ void DiagoDavid<FPTYPE, Device>::diag_zhegvx(const int& nbase,
 #ifdef __MPI
     if (GlobalV::NPROC_IN_POOL > 1)
     {
-        for (int i = 0; i < nbase; i++)
+        // vcc: nbase * nband
+        for (int i = 0; i < nband; i++)
         {
-            MPI_Bcast(&vcc[i * this->nbase_x], nband, MPI_DOUBLE_COMPLEX, 0, POOL_WORLD);
+            MPI_Bcast(&vcc[i * this->nbase_x], nbase, MPI_DOUBLE_COMPLEX, 0, POOL_WORLD);
         }
         MPI_Bcast(this->eigenvalue, nband, MPI_DOUBLE, 0, POOL_WORLD);
     }
@@ -661,36 +637,36 @@ void DiagoDavid<FPTYPE, Device>::refresh(const int& dim,
     // haozhihan repalce 2022-10-18
     gemm_op<FPTYPE, Device>()(this->ctx,
                               'N',
-                              'T',
-                              this->dim, // m: row of A,C
-                              nband, // n: col of B,C
-                              nbase, // k: col of A, row of B
-                              &ModuleBase::ONE, // alpha
-                              this->hphi, // A dim * nbase
-                              this->dim, // LDA: if(N) max(1,m) if(T) max(1,k)
-                              this->vcc,  // B nbase * nband
-                              this->nbase_x, // LDB: if(N) max(1,k) if(T) max(1,n)
-                              &ModuleBase::ZERO, // belta
-                              basis.get_pointer(), // C dim * nband
-                              this->dim // LDC: if(N) max(1, m)
+                              'N',
+                              this->dim,            // m: row of A,C
+                              nband,                // n: col of B,C
+                              nbase,                // k: col of A, row of B
+                              &ModuleBase::ONE,
+                              this->hphi,           // A dim * nbase
+                              this->dim,          
+                              this->vcc,            // B nbase * nband
+                              this->nbase_x, 
+                              &ModuleBase::ZERO,
+                              basis.get_pointer(),  // C dim * nband
+                              this->dim
     );
 
     //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     // haozhihan repalce 2022-10-18
     gemm_op<FPTYPE, Device>()(this->ctx,
                               'N',
-                              'T',
-                              this->dim, // m: row of A,C
-                              nband, // n: col of B,C
-                              nbase, // k: col of A, row of B
-                              &ModuleBase::ONE, // alpha
-                              this->sphi, // A
-                              this->dim, // LDA: if(N) max(1,m) if(T) max(1,k)
-                              this->vcc, // B
-                              this->nbase_x, // LDB: if(N) max(1,k) if(T) max(1,n)
-                              &ModuleBase::ZERO, // belta
-                              &basis(nband, 0), // C
-                              this->dim // LDC: if(N) max(1, m)
+                              'N',
+                              this->dim,                // m: row of A,C
+                              nband,                    // n: col of B,C
+                              nbase,                    // k: col of A, row of B
+                              &ModuleBase::ONE,
+                              this->sphi,               // A dim * nbase
+                              this->dim,
+                              this->vcc,                // B nbase * nband
+                              this->nbase_x,
+                              &ModuleBase::ZERO,
+                              &basis(nband, 0),         // C dim * nband
+                              this->dim
     );
 
     syncmem_complex_op()(this->ctx, this->ctx, hphi, &basis(0, 0), this->dim * nband);
@@ -780,7 +756,7 @@ void DiagoDavid<FPTYPE, Device>::SchmitOrth(const int& dim,
                                             const int nband,
                                             const int m,
                                             psi::Psi<std::complex<FPTYPE>, Device>& basis,
-                                            const std::complex<FPTYPE>* spsi,
+                                            const std::complex<FPTYPE>* sphi,
                                             std::complex<FPTYPE>* lagrange_m,
                                             const int mm_size,
                                             const int mv_size)
@@ -973,6 +949,7 @@ void DiagoDavid<FPTYPE, Device>::diag(hamilt::Hamilt<FPTYPE, Device>* phm_in,
     /// record the times of trying iterative diagonalization
     int ntry = 0;
     this->notconv = 0;
+
 #if defined(__CUDA) || defined(__ROCM)
     if (this->device == psi::GpuDevice)
     {
@@ -980,6 +957,7 @@ void DiagoDavid<FPTYPE, Device>::diag(hamilt::Hamilt<FPTYPE, Device>* phm_in,
         syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, this->d_precondition, this->precondition, psi.get_nbasis());
     }
 #endif
+
     do
     {
         this->diag_mock(phm_in, psi, eigenvalue_in);

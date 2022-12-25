@@ -105,7 +105,7 @@ template <typename FPTYPE = double, typename Device = psi::DEVICE_CPU> class Dia
                     const int nband,
                     const int m,
                     psi::Psi<std::complex<FPTYPE>, Device>& basis,
-                    const std::complex<FPTYPE>* spsi,
+                    const std::complex<FPTYPE>* sphi,
                     std::complex<FPTYPE>* lagrange_m,
                     const int mm_size,
                     const int mv_size);

@@ -34,6 +34,12 @@ extern "C"
                  std::complex<double>* work, int* lwork, double* rwork, int* lrwork,
                  int* iwork, int* liwork, int* info);
 
+    void zheevx_(const char* jobz, const char* range, const char* uplo, const int* n, 
+                 std::complex<double> *a, const int* lda,
+                 const double* vl, const double* vu, const int* il, const int* iu, const double* abstol, 
+                 const int* m, double* w, std::complex<double> *z, const int *ldz, 
+                 std::complex<double> *work, const int* lwork, double* rwork, int* iwork, int* ifail, int* info);
+
     void zhegv_(const int* itype,const char* jobz,const char* uplo,const int* n,
                 std::complex<double>* a,const int* lda,std::complex<double>* b,const int* ldb,
                 double* w,std::complex<double>* work,int* lwork,double* rwork,int* info);
@@ -50,13 +56,6 @@ extern "C"
     void zheev_(const char* jobz,const char* uplo,const int* n,std::complex<double> *a,
                 const int* lda,double* w,std::complex<double >* work,const int* lwork,
                 double* rwork,int* info);
-
-    void zheevx_(const char* jobz,const char* range,const char* uplo,
-                 const int* n,std::complex<double> *a,const int* lda,
-                 const double* vl,const double* vu,const int* il,
-                 const int* iu,const double* abstol,const int* m,double* w,
-                 std::complex<double> *z,const int *ldz,std::complex<double> *work,const int* lwork,
-                 double* rwork,int* iwork,int* ifail,int* info);
 
 
 	// solve the generalized eigenproblem Ax=eBx, where A is Symmetric and real couble
@@ -248,7 +247,6 @@ public:
         const int nb = ilaenv_(&ispec, name, opts, &n1, &n2, &n3, &n4);
         return nb;
     }
-
     
     // wrap function of fortran lapack routine zhegvd.
     static inline
@@ -257,12 +255,25 @@ public:
                 const std::complex<double>* b, const int ldb, double* w, 
                 std::complex<double>* work, int lwork, double* rwork, int lrwork,
                 int* iwork, int liwork, int info)
-    {	
-        // call the fortran routine
+    {
         zhegvd_(&itype, &jobz, &uplo, &n, 
                 a, &lda, b, &ldb, w,
                 work, &lwork, rwork, &lrwork,
                 iwork, &liwork, &info);
+    }
+
+    // wrap function of fortran lapack routine zheevx.
+    static inline
+    void zheevx( const int itype, const char jobz, const char range, const char uplo, const int n, 
+                 std::complex<double>* a, const int lda, 
+                 const double vl, const double vu, const int il, const int iu, const double abstol, 
+                 const int m, double* w, std::complex<double>* z, const int ldz,
+                 std::complex<double>* work, const int lwork, double* rwork, int* iwork, int* ifail, int info)
+    {
+        zheevx_(&jobz, &range, &uplo, &n, 
+                a, &lda, &vl, &vu, &il, &iu, 
+                &abstol, &m, w, z, &ldz, 
+                work, &lwork, rwork, iwork, ifail, &info);
     }
 
     // wrap function of fortran lapack routine zhegv ( ModuleBase::ComplexMatrix version ).
@@ -279,32 +290,6 @@ public:
         // Transpose the fortran-form real-std::complex array to the std::complex matrix.
         LapackConnector::transpose(aux, a, n, lda);
         LapackConnector::transpose(bux, b, n, ldb);
-        // free the memory.
-        delete[] aux;
-        delete[] bux;
-    }
-
-    // wrap function of fortran lapack routine zhegv ( pointer version ) .
-    static inline
-    void zhegv(	const int itype, const char jobz, const char uplo, const int n, std::complex<double>* a,
-                const int lda, const std::complex<double>* b, const int ldb, double* w, std::complex<double>* work,
-                int lwork, double* rwork, int info, int ld_real)
-    {	
-        // Transpose the std::complex matrix to the fortran-form real-std::complex array.
-        std::complex<double>* aux = LapackConnector::transpose(a, n, lda, ld_real);
-        std::complex<double>* bux = LapackConnector::transpose(b, n, ldb, ld_real);
-
-        // call the fortran routine
-        zhegv_(&itype, &jobz, &uplo, &n, aux, &lda, bux, &ldb, w, work, &lwork, rwork, &info);
-        
-        // Transpose the fortran-form real-std::complex array to the std::complex matrix.
-        for (int i = 0; i < n; ++i)
-        {
-            for (int j = 0; j < lda; ++j)
-            {
-                a[j * ld_real + i] = aux[i*lda+j];
-            }
-        }
         // free the memory.
         delete[] aux;
         delete[] bux;
@@ -371,38 +356,6 @@ public:
         delete[] bux;
         delete[] zux;
     }
-
-    static inline
-    void zheevx( const int itype, const char jobz, const char range, const char uplo, const int n, 
-                 const std::complex<double>* a, const int lda, const double vl, const double vu, const int il, const int iu,
-                 const double abstol, const int m, double* w, std::complex<double>* z, const int ldz,
-                 std::complex<double>* work, const int lwork, double* rwork, int* iwork, int* ifail, int info, int nbase_x)
-    {
-        // Transpose the std::complex matrix to the fortran-form real-std::complex array.
-        std::complex<double>* aux = LapackConnector::transpose(a, n, lda, nbase_x);
-        std::complex<double>* zux = new std::complex<double>[n*iu];// mohan modify 2009-08-02
-
-        // call the fortran routine
-        zheevx_(&jobz, &range, &uplo, &n, 
-                aux, &lda, &vl, &vu, &il, &iu, 
-                &abstol, &m, w, zux, &ldz, 
-                work, &lwork, rwork, iwork, ifail, &info);
-
-        // Transpose the fortran-form real-std::complex array to the std::complex matrix
-        for (int i = 0; i < iu; ++i)
-        {
-            for (int j = 0; j < n; ++j)
-            {
-                z[j * nbase_x + i] = zux[i*n+j];
-            }
-        }
-
-        // free the memory.
-        delete[] aux;
-        delete[] zux;
-    }
-
-
 
 	// calculate the eigenvalues and eigenfunctions of a real symmetric matrix.
     static inline
