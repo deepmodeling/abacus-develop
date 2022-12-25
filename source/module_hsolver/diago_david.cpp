@@ -511,9 +511,7 @@ void DiagoDavid<FPTYPE, Device>::cal_elem(const int& dim,
                               &ModuleBase::ZERO,
                               hcc + nbase,        // notconv * (nbase + notconv)
                               this->nbase_x);
-    matrixTranspose_op<FPTYPE, Device>()(this->ctx, this->nbase_x, this->nbase_x, hcc, hcc);
 
-    matrixTranspose_op<FPTYPE, Device>()(this->ctx, this->nbase_x, this->nbase_x, scc, scc);
     gemm_op<FPTYPE, Device>()(this->ctx,
                               'C',
                               'N',
@@ -528,11 +526,14 @@ void DiagoDavid<FPTYPE, Device>::cal_elem(const int& dim,
                               &ModuleBase::ZERO,
                               scc + nbase,        // notconv * (nbase + notconv)
                               this->nbase_x);
-    matrixTranspose_op<FPTYPE, Device>()(this->ctx, this->nbase_x, this->nbase_x, scc, scc);
+
 
 #ifdef __MPI
     if (GlobalV::NPROC_IN_POOL > 1)
     {
+        matrixTranspose_op<FPTYPE, Device>()(this->ctx, this->nbase_x, this->nbase_x, hcc, hcc);
+        matrixTranspose_op<FPTYPE, Device>()(this->ctx, this->nbase_x, this->nbase_x, scc, scc);
+
         std::complex<double>* swap = new std::complex<double>[notconv * this->nbase_x];
         syncmem_complex_op()(this->ctx, this->ctx, swap, hcc + nbase * this->nbase_x, notconv * this->nbase_x);
         MPI_Reduce(swap, hcc + nbase * this->nbase_x, notconv * this->nbase_x, MPI_DOUBLE_COMPLEX, MPI_SUM, 0, POOL_WORLD);
@@ -543,10 +544,11 @@ void DiagoDavid<FPTYPE, Device>::cal_elem(const int& dim,
 
         // Parallel_Reduce::reduce_complex_double_pool( hcc + nbase * this->nbase_x, notconv * this->nbase_x );
         // Parallel_Reduce::reduce_complex_double_pool( scc + nbase * this->nbase_x, notconv * this->nbase_x );
+
+        matrixTranspose_op<FPTYPE, Device>()(this->ctx, this->nbase_x, this->nbase_x, hcc, hcc);
+        matrixTranspose_op<FPTYPE, Device>()(this->ctx, this->nbase_x, this->nbase_x, scc, scc);
     }
 #endif
-
-    matrixTranspose_op<FPTYPE, Device>()(this->ctx, this->nbase_x, this->nbase_x, hcc, hcc);
 
     nbase += notconv;
     ModuleBase::timer::tick("DiagoDavid", "cal_elem");

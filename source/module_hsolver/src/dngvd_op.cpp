@@ -209,7 +209,7 @@ void dngvd_op<double, psi::DEVICE_CPU>::operator()(const psi::DEVICE_CPU* d,
                                                    double* eigenvalue,
                                                    std::complex<double>* vcc)
 {
-    assert(nstart <= ldh);
+    assert(nstart == ldh);
 
     for (int i = 0; i < nstart * ldh; i++)
     {
