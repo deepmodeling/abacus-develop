@@ -45,6 +45,10 @@ out_mul=`grep out_mul INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
 gamma_only=`grep gamma_only INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
 imp_sol=`grep imp_sol INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
 run_rpa=`grep rpa INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
+out_pot2=`grep out_pot INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
+out_dm1=`grep out_dm1 INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
+get_s=`grep calculation INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
+out_pband=`grep out_proj_band INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
 #echo $running_path
 base=`grep -En '(^|[[:space:]])basis_type($|[[:space:]])' INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
 word="driver_line"
@@ -53,7 +57,7 @@ test -e $1 && rm $1
 # if NOT non-self-consistent calculations
 #--------------------------------------------
 if [ $calculation != "nscf" ] && [ $calculation != "ienvelope" ]\
-&& [ $calculation != "istate" ]	; then
+&& [ $calculation != "istate" ] && [ $calculation != "get_S" ]; then
 	etot=`grep ETOT_ $running_path | awk '{print $2}'`
 	etotperatom=`awk 'BEGIN {x='$etot';y='$natom';printf "%.10f\n",x/y}'`
 	echo "etotref $etot" >>$1
@@ -109,11 +113,53 @@ if ! test -z "$has_cond"  && [  $has_cond == 1 ]; then
 	rm -f je-je.txt Chebycoef
 fi
 
+#echo $out_dm1
+if ! test -z "$out_dm1"  && [  $out_dm1 == 1 ]; then
+	dm1ref=refdata-DMR-sparse_SPIN0.csr
+	dm1cal=OUT.autotest/data-DMR-sparse_SPIN0.csr
+	python3 ../tools/CompareFile.py $dm1ref $dm1cal 8
+	echo "CompareDM1_pass $?" >>$1
+fi
+
+#echo $out_pot2
+if ! test -z "$out_pot2"  && [  $out_pot2 == 2 ]; then
+	pot1ref=refElecStaticPot
+	pot1cal=OUT.autotest/ElecStaticPot
+	pot2ref=refElecStaticPot_AVE
+	pot2cal=OUT.autotest/ElecStaticPot_AVE
+	python3 ../tools/CompareFile.py $pot1ref $pot1cal 8
+	echo "ComparePot_pass $?" >>$1
+	python3 ../tools/CompareFile.py $pot2ref $pot2cal 8
+	echo "ComparePot_avg_pass $?" >>$1
+fi
+
+#echo $get_s
+if ! test -z "$get_s"  && [  $get_s == "get_S" ]; then
+	sref=refSR.csr
+	scal=SR.csr
+	python3 ../tools/CompareFile.py $sref $scal 8
+	echo "CompareS_pass $?" >>$1
+fi
+
+#echo $out_pband
+if ! test -z "$out_pband"  && [  $out_pband == 1 ]; then
+	#pbandref=refPBANDS_1
+	#pbandcal=OUT.autotest/PBANDS_1
+	#python3 ../tools/CompareFile.py $pbandref $pbandcal 8
+	#echo "CompareProjBand_pass $?" >>$1
+	orbref=refOrbital
+	orbcal=OUT.autotest/Orbital
+	python3 ../tools/CompareFile.py $orbref $orbcal 8
+	echo "CompareOrb_pass $?" >>$1
+fi
+
 #echo total_dos
 #echo $has_band
 if ! test -z "$has_band"  && [  $has_band == 1 ]; then
-	total_band=`sum_file OUT.autotest/BANDS_1.dat`
-	echo "totalbandref $total_band" >>$1
+	bandref=refBANDS_1.dat
+	bandcal=OUT.autotest/BANDS_1.dat
+	python3 ../tools/CompareFile.py $bandref $bandcal 8
+	echo "CompareBand_pass $?" >>$1
 fi
 #echo $has_hs
 if ! test -z "$has_hs"  && [  $has_hs == 1 ]; then
