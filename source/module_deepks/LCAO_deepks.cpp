@@ -324,7 +324,7 @@ void LCAO_Deepks::init_orbital_pdm_shell(const int nks)
 
     for (int iks=0; iks<nks; iks++)
     {
-        this->orbital_pdm_shell[iks] = new double** [2];
+        this->orbital_pdm_shell[iks] = new double** [1];
         for (int hl=0; hl < 1; hl++)
         {
             this->orbital_pdm_shell[iks][hl] = new double* [this->inlmax];
