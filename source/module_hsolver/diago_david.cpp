@@ -625,7 +625,7 @@ void DiagoDavid<FPTYPE, Device>::diag_zhegvx(const int& n, // nbase
             resmem_var_op()(this->ctx, eigenvalue_gpu, this->nbase_x);
             syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, eigenvalue_gpu, eigenvalue, this->nbase_x);
 
-            dngvx_op<FPTYPE, Device>()(this->ctx, n, this->nbase_x, this->hcc, this->scc, m, eigenvalue_gpu, this->vcc);
+            dnevx_op<FPTYPE, Device>()(this->ctx, n, this->nbase_x, this->hcc, m, eigenvalue_gpu, this->vcc);
 
             syncmem_var_d2h_op()(this->cpu_ctx, this->ctx, eigenvalue, eigenvalue_gpu, this->nbase_x);
             delmem_var_op()(this->ctx, eigenvalue_gpu);
@@ -633,8 +633,9 @@ void DiagoDavid<FPTYPE, Device>::diag_zhegvx(const int& n, // nbase
         }
         else
         {
-            dngvx_op<FPTYPE,
-                     Device>()(this->ctx, n, this->nbase_x, this->hcc, this->scc, m, this->eigenvalue, this->vcc);
+            // dngvx_op<FPTYPE,
+            //          Device>()(this->ctx, n, this->nbase_x, this->hcc, this->scc, m, this->eigenvalue, this->vcc);
+            dnevx_op<FPTYPE, Device>()(this->ctx, n, this->nbase_x, this->hcc, m, this->eigenvalue, this->vcc);
         }
     }
 

@@ -57,10 +57,13 @@ Local_Orbital_Charge::~Local_Orbital_Charge()
     delete[] sender_2D_index;
     delete[] sender_size_process;
     delete[] sender_displacement_process;
+    delete[] sender_buffer;
 
     delete[] receiver_local_index;
     delete[] receiver_size_process;
     delete[] receiver_displacement_process;
+    delete[] receiver_buffer;
+
     // with k points
     if (this->init_DM_R)
     {

@@ -781,11 +781,10 @@ These variables are used to control the geometry relaxation.
 ### relax_method
 
 - **Type**: String
-- **Description**: The method to do geometry optimizations, note that if relax_new is set to 1, then only cg is available:
+- **Description**: The method to do geometry optimizations, note that there are two implementations of the CG method, see [relax_new](#relax_new):
   - bfgs: using BFGS algorithm.
   - sd: using steepest-descent algorithm.
   - cg: using cg algorithm.
-  - cg-bfgs:
 - **Default**: cg
 
 ### relax_cg_thr
@@ -820,13 +819,13 @@ These variables are used to control the output of properties.
 
 ### out_force
 
-- **Type**: Integer
+- **Type**: Boolean
 - **Description**: Determines whether to output the out_force into a file named `Force.dat` or not. If 1, then force will be written; if 0, then the force will not be written.
 - **Default**: 0
 
 ### out_mul
 
-- **Type**: Integer
+- **Type**: Boolean
 - **Description**: If set to 1, ABACUS will output the Mulliken population analysis result. The name of the output file is mulliken.txt
 - **Default**: 0
 

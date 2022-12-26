@@ -7,6 +7,25 @@
 namespace hamilt {
 template <typename FPTYPE, typename Device> 
 struct nonlocal_pw_op {
+  /// @brief Compute the nonlocal potential of hPsi
+  ///
+  /// Input Parameters
+  /// \param dev : the type of computing device
+  /// \param l1 : ucell->atoms[it].na
+  /// \param l2 : nbands
+  /// \param l3 : ucell->atoms[it].ncpp.nh
+  /// \param sum : intermediate value
+  /// \param iat : intermediate value
+  /// \param spin : current spin
+  /// \param nkb : ppcell->nkb, number of kpoints
+  /// \param deeq_x : second dimension of deeq
+  /// \param deeq_y : third dimension of deeq
+  /// \param deeq_z : forth dimension of deeq
+  /// \param deeq : ppcell->deeq
+  /// \param becp : intermediate array
+  ///
+  /// Output Parameters
+  /// \param ps : output array
   void operator() (
       const Device* dev,
       const int& l1,
@@ -22,7 +41,25 @@ struct nonlocal_pw_op {
       const FPTYPE* deeq,
       std::complex<FPTYPE>* ps,
       const std::complex<FPTYPE>* becp);
-  
+
+  /// @brief Compute the nonlocal potential of hPsi, with NSPIN > 2
+  ///
+  /// Input Parameters
+  /// \param dev : the type of computing device
+  /// \param l1 : ucell->atoms[it].na
+  /// \param l2 : nbands
+  /// \param l3 : ucell->atoms[it].ncpp.nh
+  /// \param sum : intermediate value
+  /// \param iat : intermediate value
+  /// \param nkb : ppcell->nkb, number of kpoints
+  /// \param deeq_x : second dimension of deeq
+  /// \param deeq_y : third dimension of deeq
+  /// \param deeq_z : forth dimension of deeq
+  /// \param deeq_nc : ppcell->deeq_nc
+  /// \param becp : intermediate array
+  ///
+  /// Output Parameters
+  /// \param ps : output array
   void operator() (
       const Device* dev,
       const int& l1,

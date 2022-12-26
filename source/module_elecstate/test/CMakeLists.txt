@@ -14,9 +14,6 @@ if(ENABLE_LCAO)
             ../../src_pw/klist.cpp ../../src_parallel/parallel_kpoints.cpp ../../src_pw/occupy.cpp
             ../src/elecstate_multi_device.cpp
   )
-  if(USE_CUDA)
-    target_link_libraries(EState_updaterhok_pw cufft)
-  endif()
 
   install(DIRECTORY support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
   list(APPEND test_math_libs ${math_libs})

@@ -48,8 +48,4 @@ class LCAO_Hamilt
     LCAO_Matrix* LM;
 };
 
-#ifdef __EXX
-#include "LCAO_hamilt.hpp"
-#endif
-
 #endif

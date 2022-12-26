@@ -103,12 +103,10 @@ private:
     void recip2real(const std::complex<double>* in, double* out, const int ik, const bool add = false, const double factor = 1.0); //in:(nz, ns)  ; out(nplane,nx*ny)
     void recip2real(const std::complex<double>* in, std::complex<double> * out, const int ik, const bool add = false, const double factor = 1.0); //in:(nz, ns)  ; out(nplane,nx*ny)
 
-    void real_to_recip(const psi::DEVICE_CPU *dev, const std::complex<double> * in, std::complex<double> * out, const int ik, const bool add = false, const double factor = 1.0); //in:(nplane,nx*ny)  ; out(nz, ns)
-    void recip_to_real(const psi::DEVICE_CPU *dev, const std::complex<double> * in, std::complex<double> * out, const int ik, const bool add = false, const double factor = 1.0); //in:(nz, ns)  ; out(nplane,nx*ny)
-#if defined(__CUDA) || defined(__UT_USE_CUDA)
-    void real_to_recip(const psi::DEVICE_GPU *dev, const std::complex<double> * in, std::complex<double> * out, const int ik, const bool add = false, const double factor = 1.0); //in:(nplane,nx*ny)  ; out(nz, ns)
-    void recip_to_real(const psi::DEVICE_GPU *dev, const std::complex<double> * in, std::complex<double> * out, const int ik, const bool add = false, const double factor = 1.0); //in:(nz, ns)  ; out(nplane,nx*ny)
-#endif
+    template <typename FPTYPE, typename Device>
+    void real_to_recip(const Device *ctx, const std::complex<FPTYPE> * in, std::complex<FPTYPE> * out, const int ik, const bool add = false, const FPTYPE factor = 1.0); //in:(nplane,nx*ny)  ; out(nz, ns)
+    template <typename FPTYPE, typename Device>
+    void recip_to_real(const Device *ctx, const std::complex<FPTYPE> * in, std::complex<FPTYPE> * out, const int ik, const bool add = false, const FPTYPE factor = 1.0); //in:(nz, ns)  ; out(nplane,nx*ny)
 
 #ifdef __MIX_PRECISION
     void real2recip(const float* in, std::complex<float>* out, const int ik, const bool add = false, const float factor = 1.0); //in:(nplane,nx*ny)  ; out(nz, ns)

@@ -19,11 +19,11 @@ Structure_Factor::Structure_Factor()
 
 Structure_Factor::~Structure_Factor()
 {
-#if defined(__CUDA) || defined(__UT_USE_CUDA)
+#if defined(__CUDA) || defined(__ROCM)
     if (GlobalV::device_flag == "gpu") {
-        cudaFree(this->d_eigts1);
-        cudaFree(this->d_eigts2);
-        cudaFree(this->d_eigts3);
+        delmem_complex_op()(this->gpu_ctx, this->d_eigts1);
+        delmem_complex_op()(this->gpu_ctx, this->d_eigts2);
+        delmem_complex_op()(this->gpu_ctx, this->d_eigts3);
     }
 #endif
 }
@@ -127,14 +127,14 @@ void Structure_Factor::setup_structure_factor(UnitCell* Ucell, ModulePW::PW_Basi
             inat++;
         }
     }
-#if defined(__CUDA) || defined(__UT_USE_CUDA)
+#if defined(__CUDA) || defined(__ROCM)
     if (GlobalV::device_flag == "gpu") {
-        cudaMalloc(reinterpret_cast<void **>(&this->d_eigts1), sizeof(std::complex<double>) * Ucell->nat * (2 * rho_basis->nx + 1));
-        cudaMalloc(reinterpret_cast<void **>(&this->d_eigts2), sizeof(std::complex<double>) * Ucell->nat * (2 * rho_basis->ny + 1));
-        cudaMalloc(reinterpret_cast<void **>(&this->d_eigts3), sizeof(std::complex<double>) * Ucell->nat * (2 * rho_basis->nz + 1));
-        cudaMemcpy(this->d_eigts1, this->eigts1.c, sizeof(std::complex<double>) * Ucell->nat * (2 * rho_basis->nx + 1), cudaMemcpyHostToDevice);
-        cudaMemcpy(this->d_eigts2, this->eigts2.c, sizeof(std::complex<double>) * Ucell->nat * (2 * rho_basis->ny + 1), cudaMemcpyHostToDevice);
-        cudaMemcpy(this->d_eigts3, this->eigts3.c, sizeof(std::complex<double>) * Ucell->nat * (2 * rho_basis->nz + 1), cudaMemcpyHostToDevice);
+        resmem_complex_op()(this->gpu_ctx, this->d_eigts1, Ucell->nat * (2 * rho_basis->nx + 1));
+        resmem_complex_op()(this->gpu_ctx, this->d_eigts2, Ucell->nat * (2 * rho_basis->ny + 1));
+        resmem_complex_op()(this->gpu_ctx, this->d_eigts3, Ucell->nat * (2 * rho_basis->nz + 1));
+        syncmem_complex_h2d_op()(this->gpu_ctx, this->cpu_ctx, this->d_eigts1, this->eigts1.c, Ucell->nat * (2 * rho_basis->nx + 1));
+        syncmem_complex_h2d_op()(this->gpu_ctx, this->cpu_ctx, this->d_eigts2, this->eigts2.c, Ucell->nat * (2 * rho_basis->ny + 1));
+        syncmem_complex_h2d_op()(this->gpu_ctx, this->cpu_ctx, this->d_eigts3, this->eigts3.c, Ucell->nat * (2 * rho_basis->nz + 1));
     }
 #endif
     ModuleBase::timer::tick("PW_Basis","setup_struc_factor"); 
