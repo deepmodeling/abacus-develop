@@ -230,7 +230,7 @@ void winput::Read(const std::string &fn)
 		{
 			if (word[0] != '#' && word[0] != '/')
 			{
-				std::cout << " The parametr name '" << word << "' is not used." << std::endl;
+				std::cout << " The parameter name '" << word << "' is not used." << std::endl;
 			}
 			ifs.ignore(150, '\n');
 		}
