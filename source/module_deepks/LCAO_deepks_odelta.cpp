@@ -16,7 +16,7 @@ void LCAO_Deepks::cal_o_delta(const std::vector<std::vector<ModuleBase::matrix>>
 {
     ModuleBase::TITLE("LCAO_Deepks", "cal_o_delta");
     this->o_delta.zero_out();
-    for (int hl = 0; hl < 2; ++hl)
+    for (int hl = 0; hl < 1; ++hl)
     {
         for (int i = 0; i < GlobalV::NLOCAL; ++i)
         {
@@ -51,7 +51,7 @@ void LCAO_Deepks::cal_o_delta_k(const std::vector<std::vector<ModuleBase::Comple
     
     for(int ik=0; ik<nks; ik++)
     {
-        for (int hl=0; hl<2; hl++)
+        for (int hl=0; hl<1; hl++)
         {
             std::complex<double> o_delta_k=std::complex<double>(0.0,0.0);
             for (int i = 0; i < GlobalV::NLOCAL; ++i)

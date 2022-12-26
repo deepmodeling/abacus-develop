@@ -494,7 +494,7 @@ void LCAO_Deepks::cal_orbital_precalc(const std::vector<std::vector<ModuleBase::
                                         for (int m2=0; m2<nm; ++m2) // m1 = 1 for s, 3 for p, 5 for d
                                         {
                                             //int ispin = 0; //only works for closed shell;
-                                            for (int hl=0; hl<2; ++hl)
+                                            for (int hl=0; hl<1; ++hl)
                                             {
                                                 for (int is = 0; is < GlobalV::NSPIN; ++is)
                                                 {   
@@ -515,7 +515,7 @@ void LCAO_Deepks::cal_orbital_precalc(const std::vector<std::vector<ModuleBase::
         }
     }
 #ifdef __MPI
-    for(int hl = 0; hl < 2; hl++)
+    for(int hl = 0; hl < 1; hl++)
     {
         for(int inl = 0; inl < this->inlmax; inl++)
         {
@@ -536,7 +536,7 @@ void LCAO_Deepks::cal_orbital_precalc(const std::vector<std::vector<ModuleBase::
         for(int iks = 0; iks < 1; ++iks)
         {
             std::vector<torch::Tensor> iammv;
-            for(int hl=0; hl<2; ++hl)
+            for(int hl=0; hl<1; ++hl)
             {
                 std::vector<torch::Tensor> ammv;
                 for (int iat=0; iat<nat; ++iat)
@@ -654,7 +654,7 @@ void LCAO_Deepks::cal_orbital_precalc_k(const std::vector<std::vector<ModuleBase
 							if(iw2_local < 0)continue;
                             for(int ik=0;ik<nks;ik++)
                             {
-                                for (int hl=0; hl<2; hl++)
+                                for (int hl=0; hl<1; hl++)
                                 {
                                     double dm_current;
                                     std::complex<double> tmp = 0.0;
@@ -699,7 +699,7 @@ void LCAO_Deepks::cal_orbital_precalc_k(const std::vector<std::vector<ModuleBase
 #ifdef __MPI
     for (int iks = 0; iks < nks; iks++)
     {
-        for (int hl = 0; hl < 2; hl++)
+        for (int hl = 0; hl < 1; hl++)
         {
             for(int inl = 0; inl < this->inlmax; inl++)
             {
@@ -722,7 +722,7 @@ void LCAO_Deepks::cal_orbital_precalc_k(const std::vector<std::vector<ModuleBase
         for(int iks = 0; iks < nks; ++iks)
         {
             std::vector<torch::Tensor> iammv;
-            for(int hl=0; hl<2; ++hl)
+            for(int hl=0; hl<1; ++hl)
             {
                 std::vector<torch::Tensor> ammv;
                 for (int iat=0; iat<nat; ++iat)

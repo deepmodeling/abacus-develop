@@ -301,7 +301,7 @@ void LCAO_Deepks::allocate_V_delta(const int nat, const int nloc, const int nks)
     if (GlobalV::deepks_bandgap)
     {
         //init o_delta
-        o_delta.create(nks, 2);
+        o_delta.create(nks, 1);
         
     }
 
@@ -325,7 +325,7 @@ void LCAO_Deepks::init_orbital_pdm_shell(const int nks)
     for (int iks=0; iks<nks; iks++)
     {
         this->orbital_pdm_shell[iks] = new double** [2];
-        for (int hl=0; hl < 2; hl++)
+        for (int hl=0; hl < 1; hl++)
         {
             this->orbital_pdm_shell[iks][hl] = new double* [this->inlmax];
 
@@ -345,7 +345,7 @@ void LCAO_Deepks::del_orbital_pdm_shell(const int nks)
 {
     for (int iks=0; iks<nks; iks++)
     {
-        for (int hl=0; hl<2; hl++)
+        for (int hl=0; hl<1; hl++)
         {
             for (int inl = 0;inl < this->inlmax; inl++)
             {

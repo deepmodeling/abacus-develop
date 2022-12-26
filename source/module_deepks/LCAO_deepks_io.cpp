@@ -190,17 +190,17 @@ void LCAO_Deepks::save_npy_o(const ModuleBase::matrix &bandgap, const std::strin
     ModuleBase::TITLE("LCAO_Deepks", "save_npy_o");
     if(GlobalV::MY_RANK!=0) return;
     //save o_base
-    const long unsigned oshape[] = {(long unsigned) nks, 2 };
+    const long unsigned oshape[] = {(long unsigned) nks, 1 };
     vector<double> npy_o;
     for (int iks = 0; iks < nks; ++iks)
     {
-        for (int hl = 0;hl < 2;hl++)
+        for (int hl = 0;hl < 1;hl++)
         {
             npy_o.push_back(bandgap(iks,hl));
         }
     }
     
-    npy::SaveArrayAsNumpy(o_file, false, 2, oshape, npy_o);
+    npy::SaveArrayAsNumpy(o_file, false, 1, oshape, npy_o);
     return;
 }
 
@@ -210,11 +210,11 @@ void LCAO_Deepks::save_npy_orbital_precalc(const int nat, const int nks)
     if(GlobalV::MY_RANK!=0) return;
     //save orbital_precalc.npy (when bandgap label is in use)
     //unit: a.u.
-    const long unsigned gshape[] = {(long unsigned) nks, 2, nat, this->des_per_atom};
+    const long unsigned gshape[] = {(long unsigned) nks, 1, nat, this->des_per_atom};
     vector<double> npy_orbital_precalc;
     for (int iks = 0; iks < nks; ++iks)
     {
-        for (int hl = 0; hl < 2; ++hl)
+        for (int hl = 0; hl < 1; ++hl)
         {
             for (int iat = 0;iat < nat;++iat)
             {

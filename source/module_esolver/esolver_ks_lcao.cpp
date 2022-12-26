@@ -739,12 +739,12 @@ void ESolver_KS_LCAO::afterscf(const int istep)
             int nocc = GlobalV::nelec / 2;
             int nks = GlobalC::kv.nks;
             ModuleBase::matrix deepks_bands;
-            deepks_bands.create(nks,2);
+            deepks_bands.create(nks,1);
             for (int iks=0; iks<nks; iks++)
             {
-                for (int hl=0; hl < 2; hl++)
+                for (int hl=0; hl < 1; hl++)
                 {
-                    deepks_bands(iks,hl) = this->pelec->ekb(iks, nocc-1+hl);
+                    deepks_bands(iks,hl) = this->pelec->ekb(iks, nocc+hl) - this->pelec->ekb(iks, nocc-1+hl);
                 }   
             }
             GlobalC::ld.save_npy_o(deepks_bands, "o_tot.npy", nks);
@@ -756,13 +756,14 @@ void ESolver_KS_LCAO::afterscf(const int istep)
                 {
                     wg_hl.create(GlobalV::NSPIN, GlobalV::NBANDS);
                     std::vector<std::vector<ModuleBase::matrix>> dm_bandgap_gamma;
-                    dm_bandgap_gamma.resize(GlobalV::NSPIN * 2);
+                    dm_bandgap_gamma.resize(GlobalV::NSPIN);
                     for (int is = 0; is < GlobalV::NSPIN; is++)
                     {
-                        for (int ib = 0; ib < 2; ib++)
+                        for (int ib = 0; ib < 1; ib++)
                         {
                             wg_hl.zero_out();
-                            wg_hl(is, ib+nocc-1) = 1.0;
+                            wg_hl(is, ib+nocc-1) = -1.0;
+                            wg_hl(is, ib+nocc) = 1.0;
                             dm_bandgap_gamma[ib].resize(GlobalV::NSPIN);
                             elecstate::cal_dm(this->LOWF.ParaV, wg_hl, this->psid[0], dm_bandgap_gamma[ib]);
                         }
@@ -784,14 +785,15 @@ void ESolver_KS_LCAO::afterscf(const int istep)
                 {
                     wg_hl.create(GlobalC::kv.nks, GlobalV::NBANDS);
                     std::vector<std::vector<ModuleBase::ComplexMatrix>> dm_bandgap_k;
-                    dm_bandgap_k.resize(2);
+                    dm_bandgap_k.resize(1);
 
-                    for (int ib = 0; ib < 2; ib++)
+                    for (int ib = 0; ib < 1; ib++)
                     {
                         wg_hl.zero_out();
                         for (int ik = 0; ik < GlobalC::kv.nks; ik++)
                         {
-                            wg_hl(ik, ib+nocc-1) = 1.0;
+                            wg_hl(ik, ib+nocc-1) = -1.0;
+                            wg_hl(ik, ib+nocc) = 1.0;
                         }
                         dm_bandgap_k[ib].resize(GlobalC::kv.nks);
                         elecstate::cal_dm(this->LOWF.ParaV, wg_hl, this->psi[0], dm_bandgap_k[ib]);
