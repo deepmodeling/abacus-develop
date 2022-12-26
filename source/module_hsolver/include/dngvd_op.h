@@ -86,11 +86,11 @@ template <typename FPTYPE, typename Device> struct dngvd_op
     ///     @param d : the type of device
     ///     @param nstart : the number of cols of the matrix
     ///     @param ldh : the number of rows of the matrix
-    ///     @param A : the hermitian matrix A in A x=lambda B x (row major)
-    ///     @param B : the overlap matrix B in A x=lambda B x (row major)
+    ///     @param A : the hermitian matrix A in A x=lambda B x (col major)
+    ///     @param B : the overlap matrix B in A x=lambda B x (col major)
     /// Output Parameter
     ///     @param W : calculated eigenvalues
-    ///     @param V : calculated eigenvectors (row major)
+    ///     @param V : calculated eigenvectors (col major)
     void operator()(const Device* d,
                     const int nstart,
                     const int ldh,

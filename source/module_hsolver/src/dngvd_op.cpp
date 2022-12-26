@@ -209,27 +209,10 @@ void dngvd_op<double, psi::DEVICE_CPU>::operator()(const psi::DEVICE_CPU* d,
                                                    double* eigenvalue,
                                                    std::complex<double>* vcc)
 {
-    psi::DEVICE_CPU* cpu_ctx = {};
-
-    ModuleBase::ComplexMatrix sdum(nstart, ldh);
-    ModuleBase::ComplexMatrix hdum;
-
-    ModuleBase::ComplexMatrix hc(nstart, nstart);
-    ModuleBase::ComplexMatrix hvec(nstart, nstart);
-    psi::memory::synchronize_memory_op<std::complex<double>, psi::DEVICE_CPU, psi::DEVICE_CPU>()(cpu_ctx,
-                                                                                                 cpu_ctx,
-                                                                                                 hc.c,
-                                                                                                 hcc,
-                                                                                                 nstart * nstart);
-
-    ModuleBase::ComplexMatrix sc(nstart, nstart);
-    psi::memory::synchronize_memory_op<std::complex<double>, psi::DEVICE_CPU, psi::DEVICE_CPU>()(cpu_ctx,
-                                                                                                 cpu_ctx,
-                                                                                                 sc.c,
-                                                                                                 scc,
-                                                                                                 nstart * nstart);
-    sdum = sc;
-    hvec = hc;
+    for (int i = 0; i < nstart * ldh; i++)
+    {
+        vcc[i] = hcc[i];
+    }
 
     int info = 0;
 
@@ -248,19 +231,15 @@ void dngvd_op<double, psi::DEVICE_CPU>::operator()(const psi::DEVICE_CPU* d,
     //===========================
     // calculate all eigenvalues
     //===========================
-    LapackConnector::zhegvd(1, 'V', 'U', nstart, hvec, ldh, sdum, ldh, eigenvalue, work, lwork, rwork, lrwork, iwork, liwork, info);
+    LapackConnector::
+        zhegvd(1, 'V', 'U', nstart, vcc, ldh, scc, ldh, eigenvalue, work, lwork, rwork, lrwork, iwork, liwork, info);
 
-    psi::memory::synchronize_memory_op<std::complex<double>, psi::DEVICE_CPU, psi::DEVICE_CPU>()(cpu_ctx,
-                                                                                                 cpu_ctx,
-                                                                                                 vcc,
-                                                                                                 hvec.c,
-                                                                                                 nstart * nstart);
+    assert(0 == info);
+
     delete[] work;
     delete[] rwork;
     delete[] iwork;
 }
-
-
 
 template <>
 void dnevx_op<double, psi::DEVICE_CPU>::operator()(const psi::DEVICE_CPU* d,
@@ -336,8 +315,5 @@ void dnevx_op<double, psi::DEVICE_CPU>::operator()(const psi::DEVICE_CPU* d,
 
     assert(0 == info);
 };
-
-
-
 
 } // namespace hsolver
