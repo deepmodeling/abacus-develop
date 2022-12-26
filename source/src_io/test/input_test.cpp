@@ -829,6 +829,8 @@ TEST_F(InputTest, Default_2)
 	// ^^^^^^^^^^^^^^
 	EXPECT_EQ(INPUT.relax_nmax,1);
 	//==================================================
+	remove("INPUT");
+	remove("STRU");
 }
 
 TEST_F(InputTest, Check)
