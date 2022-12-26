@@ -1,8 +1,9 @@
 #include "module_pw/include/pw_multi_device.h"
-#include "thrust/complex.h"
+
+#include <thrust/complex.h>
 #include <cuda_runtime.h>
 
-namespace ModulePW{
+namespace ModulePW {
 
 #define THREADS_PER_BLOCK 256
 
@@ -68,7 +69,7 @@ void set_3d_fft_box_op<FPTYPE, psi::DEVICE_GPU>::operator()(
     std::complex<FPTYPE>* out)
 {
     const int block = (npwk + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
-    set_3d_fft_box<double><<<block, THREADS_PER_BLOCK>>>(
+    set_3d_fft_box<FPTYPE><<<block, THREADS_PER_BLOCK>>>(
         npwk,
         box_index,
         reinterpret_cast<const thrust::complex<FPTYPE>*>(in),
@@ -85,7 +86,7 @@ void set_recip_to_real_output_op<FPTYPE, psi::DEVICE_GPU>::operator()(
     std::complex<FPTYPE>* out)
 {
     const int block = (nrxx + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
-    set_recip_to_real_output<double><<<block, THREADS_PER_BLOCK>>>(
+    set_recip_to_real_output<FPTYPE><<<block, THREADS_PER_BLOCK>>>(
         nrxx,
         add,
         factor,
@@ -105,7 +106,7 @@ void set_real_to_recip_output_op<FPTYPE, psi::DEVICE_GPU>::operator()(
     std::complex<FPTYPE>* out)
 {
     const int block = (npwk + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
-    set_real_to_recip_output<double><<<block, THREADS_PER_BLOCK>>>(
+    set_real_to_recip_output<FPTYPE><<<block, THREADS_PER_BLOCK>>>(
         npwk,
         nxyz,
         add,
@@ -115,6 +116,9 @@ void set_real_to_recip_output_op<FPTYPE, psi::DEVICE_GPU>::operator()(
         reinterpret_cast<thrust::complex<FPTYPE>*>(out));
 }
 
+template struct set_3d_fft_box_op<float, psi::DEVICE_GPU>;
+template struct set_recip_to_real_output_op<float, psi::DEVICE_GPU>;
+template struct set_real_to_recip_output_op<float, psi::DEVICE_GPU>;
 template struct set_3d_fft_box_op<double, psi::DEVICE_GPU>;
 template struct set_recip_to_real_output_op<double, psi::DEVICE_GPU>;
 template struct set_real_to_recip_output_op<double, psi::DEVICE_GPU>;

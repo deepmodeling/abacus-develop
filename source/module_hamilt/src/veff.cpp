@@ -1,7 +1,6 @@
 #include "module_hamilt/include/veff.h"
-#include <iostream>
 
-namespace hamilt{
+namespace hamilt {
 
 template <typename FPTYPE>
 struct veff_pw_op<FPTYPE, psi::DEVICE_CPU> {
@@ -37,14 +36,10 @@ struct veff_pw_op<FPTYPE, psi::DEVICE_CPU> {
             out[ir] = sup;
             out1[ir] = sdown;
         }
-        // for (int ii = 0; ii < size; ii++) {
-        //     std::cout << "{" << out1[ii].real() << ", " << out1[ii].imag() << "}, ";
-        // }
-        // std::cout << std::endl;
-        // exit(0);
     }
 };
 
+template struct veff_pw_op<float, psi::DEVICE_CPU>;
 template struct veff_pw_op<double, psi::DEVICE_CPU>;
 
 }  // namespace hamilt

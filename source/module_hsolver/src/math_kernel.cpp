@@ -91,122 +91,75 @@ template <typename FPTYPE> struct constantvector_addORsub_constantVector_op<FPTY
     }
 };
 
-template <>
-void scal_op<double, psi::DEVICE_CPU>::operator()(const psi::DEVICE_CPU* d,
-                                                  const int& N,
-                                                  const std::complex<double>* alpha,
-                                                  std::complex<double>* X,
-                                                  const int& incx)
-{
-    zscal_(&N, alpha, X, &incx);
-}
+template <typename FPTYPE>
+struct scal_op<FPTYPE, psi::DEVICE_CPU> {
+    void operator()(
+            const psi::DEVICE_CPU * /*ctx*/,
+            const int &N,
+            const std::complex<FPTYPE> *alpha,
+            std::complex<FPTYPE> *X,
+            const int &incx)
+    {
+        BlasConnector::scal(N, *alpha, X, incx);
+    }
+};
 
-template <>
-void scal_op<float, psi::DEVICE_CPU>::operator()(const psi::DEVICE_CPU* d,
-                                                 const int& N,
-                                                 const std::complex<float>* alpha,
-                                                 std::complex<float>* X,
-                                                 const int& incx)
+template <typename FPTYPE>
+struct gemv_op<FPTYPE, psi::DEVICE_CPU> {
+    void operator()(
+            const psi::DEVICE_CPU *d,
+            const char &trans,
+            const int &m,
+            const int &n,
+            const std::complex<FPTYPE> *alpha,
+            const std::complex<FPTYPE> *A,
+            const int &lda,
+            const std::complex<FPTYPE> *X,
+            const int &incx,
+            const std::complex<FPTYPE> *beta,
+            std::complex<FPTYPE> *Y,
+            const int &incy)
+    {
+        BlasConnector::gemv(trans, m, n, *alpha, A, lda, X, incx, *beta, Y, incy);
+    }
+};
 
-{
-    cscal_(&N, alpha, X, &incx);
-}
+template <typename FPTYPE>
+struct axpy_op<FPTYPE, psi::DEVICE_CPU> {
+    void operator()(
+            const psi::DEVICE_CPU * /*ctx*/,
+            const int &dim,
+            const std::complex<FPTYPE> *alpha,
+            const std::complex<FPTYPE> *X,
+            const int &incX,
+            std::complex<FPTYPE> *Y,
+            const int &incY)
+    {
+        BlasConnector::axpy(dim, *alpha, X, incX, Y, incY);
+    }
+};
 
-template <>
-void gemv_op<float, psi::DEVICE_CPU>::operator()(const psi::DEVICE_CPU* d,
-                                                 const char& trans,
-                                                 const int& m,
-                                                 const int& n,
-                                                 const std::complex<float>* alpha,
-                                                 const std::complex<float>* A,
-                                                 const int& lda,
-                                                 const std::complex<float>* X,
-                                                 const int& incx,
-                                                 const std::complex<float>* beta,
-                                                 std::complex<float>* Y,
-                                                 const int& incy)
-{
-    cgemv_(&trans, &m, &n, alpha, A, &lda, X, &incx, beta, Y, &incy);
-}
-
-template <>
-void gemv_op<double, psi::DEVICE_CPU>::operator()(const psi::DEVICE_CPU* d,
-                                                  const char& trans,
-                                                  const int& m,
-                                                  const int& n,
-                                                  const std::complex<double>* alpha,
-                                                  const std::complex<double>* A,
-                                                  const int& lda,
-                                                  const std::complex<double>* X,
-                                                  const int& incx,
-                                                  const std::complex<double>* beta,
-                                                  std::complex<double>* Y,
-                                                  const int& incy)
-{
-    zgemv_(&trans, &m, &n, alpha, A, &lda, X, &incx, beta, Y, &incy);
-}
-
-template <>
-void axpy_op<double, psi::DEVICE_CPU>::operator()(const psi::DEVICE_CPU* d,
-                                                  const int& dim,
-                                                  const std::complex<double>* alpha,
-                                                  const std::complex<double>* X,
-                                                  const int& incX,
-                                                  std::complex<double>* Y,
-                                                  const int& incY)
-{
-    zaxpy_(&dim, alpha, X, &incX, Y, &incY);
-}
-
-template <>
-void axpy_op<float, psi::DEVICE_CPU>::operator()(const psi::DEVICE_CPU* d,
-                                                 const int& dim,
-                                                 const std::complex<float>* alpha,
-                                                 const std::complex<float>* X,
-                                                 const int& incX,
-                                                 std::complex<float>* Y,
-                                                 const int& incY)
-{
-    caxpy_(&dim, alpha, X, &incX, Y, &incY);
-}
-
-template <>
-void gemm_op<float, psi::DEVICE_CPU>::operator()(const psi::DEVICE_CPU* d,
-                                                 const char& transa, 
-                                                 const char& transb, 
-                                                 const int& m, 
-                                                 const int& n, 
-                                                 const int& k,
-                                                 const std::complex<float> *alpha, 
-                                                 const std::complex<float> *a, 
-                                                 const int& lda, 
-                                                 const std::complex<float> *b, 
-                                                 const int& ldb,
-                                                 const std::complex<float> *beta, 
-                                                 std::complex<float> *c, 
-                                                 const int& ldc)
-{
-    cgemm_(&transa, &transb, &m, &n ,&k, alpha, a ,&lda, b, &ldb, beta, c, &ldc);
-}
-
-template <>
-void gemm_op<double, psi::DEVICE_CPU>::operator()(const psi::DEVICE_CPU* d,
-                                                 const char& transa, 
-                                                 const char& transb, 
-                                                 const int& m, 
-                                                 const int& n, 
-                                                 const int& k,
-                                                 const std::complex<double> *alpha, 
-                                                 const std::complex<double> *a, 
-                                                 const int& lda, 
-                                                 const std::complex<double> *b, 
-                                                 const int& ldb,
-                                                 const std::complex<double> *beta, 
-                                                 std::complex<double> *c, 
-                                                 const int& ldc)
-{
-    zgemm_(&transa, &transb, &m, &n ,&k, alpha, a ,&lda, b, &ldb, beta, c, &ldc);
-}
+template <typename FPTYPE>
+struct gemm_op<FPTYPE, psi::DEVICE_CPU> {
+    void operator()(
+            const psi::DEVICE_CPU * /*ctx*/,
+            const char &transa,
+            const char &transb,
+            const int &m,
+            const int &n,
+            const int &k,
+            const std::complex<FPTYPE> *alpha,
+            const std::complex<FPTYPE> *a,
+            const int &lda,
+            const std::complex<FPTYPE> *b,
+            const int &ldb,
+            const std::complex<FPTYPE> *beta,
+            std::complex<FPTYPE> *c,
+            const int &ldc)
+    {
+        BlasConnector::gemm(transb, transa, n, m, k, *alpha, b, ldb, a, lda, *beta, c, ldc);
+    }
+};
 
 template <typename FPTYPE> struct matrixTranspose_op<FPTYPE, psi::DEVICE_CPU>
 {
@@ -255,14 +208,28 @@ template <typename FPTYPE> struct matrixSetToAnother<FPTYPE, psi::DEVICE_CPU>
 
 
 // Explicitly instantiate functors for the types of functor registered.
+template struct scal_op<float, psi::DEVICE_CPU>;
+template struct axpy_op<float, psi::DEVICE_CPU>;
+template struct gemv_op<float, psi::DEVICE_CPU>;
+template struct gemm_op<float, psi::DEVICE_CPU>;
+template struct zdot_real_op<float, psi::DEVICE_CPU>;
+template struct vector_div_constant_op<float, psi::DEVICE_CPU>;
+template struct vector_mul_vector_op<float, psi::DEVICE_CPU>;
+template struct vector_div_vector_op<float, psi::DEVICE_CPU>;
+template struct constantvector_addORsub_constantVector_op<float, psi::DEVICE_CPU>;
+template struct matrixTranspose_op<float, psi::DEVICE_CPU>;
+template struct matrixSetToAnother<float, psi::DEVICE_CPU>;
+
+template struct scal_op<double, psi::DEVICE_CPU>;
+template struct axpy_op<double, psi::DEVICE_CPU>;
+template struct gemv_op<double, psi::DEVICE_CPU>;
+template struct gemm_op<double, psi::DEVICE_CPU>;
 template struct zdot_real_op<double, psi::DEVICE_CPU>;
 template struct vector_div_constant_op<double, psi::DEVICE_CPU>;
 template struct vector_mul_vector_op<double, psi::DEVICE_CPU>;
 template struct vector_div_vector_op<double, psi::DEVICE_CPU>;
 template struct constantvector_addORsub_constantVector_op<double, psi::DEVICE_CPU>;
-
 template struct matrixTranspose_op<double, psi::DEVICE_CPU>;
 template struct matrixSetToAnother<double, psi::DEVICE_CPU>;
-
 
 } // namespace hsolver
