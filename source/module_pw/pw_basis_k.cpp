@@ -22,6 +22,8 @@ PW_Basis_K::~PW_Basis_K()
     if (GlobalV::device_flag == "gpu") {
         delmem_int_op()(this->gpu_ctx, this->ig2ixyz_k);
         delmem_int_op()(this->gpu_ctx, this->d_igl2isz_k);
+        delmem_var_op()(this->gpu_ctx, this->d_kvec_c);
+        delmem_var_op()(this->gpu_ctx, this->d_gcar);
     }
 #endif
 }
@@ -69,7 +71,12 @@ void PW_Basis_K:: initparameters(
     this->fftnxy = this->fftnx * this->fftny;
     this->fftnxyz = this->fftnxy * this->fftnz;
     this->distribution_type = distribution_type_in;
-    return;
+#if defined(__CUDA) || defined(__ROCM)
+    if (GlobalV::device_flag == "gpu") {
+        resmem_var_op()(this->gpu_ctx, this->d_kvec_c, this->nks * 3);
+        syncmem_var_h2d_op()(this->gpu_ctx, this->cpu_ctx, this->d_kvec_c, reinterpret_cast<double *>(&this->kvec_c[0][0]), this->nks * 3);
+    }
+#endif
 }
 
 void PW_Basis_K::setupIndGk()
@@ -174,6 +181,12 @@ void PW_Basis_K::collect_local_pw()
             this->gcar[ik * npwk_max + igl] = f * this->G;
         }
     }
+#if defined(__CUDA) || defined(__ROCM)
+    if (GlobalV::device_flag == "gpu") {
+        resmem_var_op()(this->gpu_ctx, this->d_gcar, this->npwk_max * this->nks * 3);
+        syncmem_var_h2d_op()(this->gpu_ctx, this->cpu_ctx, this->d_gcar, reinterpret_cast<double *>(&this->gcar[0][0]), this->npwk_max * this->nks * 3);
+    }
+#endif
 }
 
 ModuleBase::Vector3<double> PW_Basis_K:: cal_GplusK_cartesian(const int ik, const int ig) const {
@@ -250,6 +263,26 @@ void PW_Basis_K::get_ig2ixyz_k()
     resmem_int_op()(this->gpu_ctx, ig2ixyz_k, this->npwk_max * this->nks);
     syncmem_int_h2d_op()(this->gpu_ctx, this->cpu_ctx, this->ig2ixyz_k, this->ig2ixyz_k_, this->npwk_max * this->nks);
 #endif
+}
+
+template <>
+double * PW_Basis_K::get_kvec_c_data(const psi::DEVICE_CPU * /*ctx*/) const {
+    return reinterpret_cast<double *>(&this->kvec_c[0][0]);
+}
+
+template <>
+double * PW_Basis_K::get_kvec_c_data(const psi::DEVICE_GPU * /*ctx*/) const {
+    return this->d_kvec_c;
+}
+
+template <>
+double * PW_Basis_K::get_gcar_data(const psi::DEVICE_CPU * /*ctx*/) const {
+    return reinterpret_cast<double *>(&this->gcar[0][0]);
+}
+
+template <>
+double * PW_Basis_K::get_gcar_data(const psi::DEVICE_GPU * /*ctx*/) const {
+    return this->d_gcar;
 }
 
 }  // namespace ModulePW

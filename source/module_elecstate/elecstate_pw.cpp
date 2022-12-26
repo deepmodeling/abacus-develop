@@ -89,12 +89,10 @@ void ElecStatePW<FPTYPE, Device>::psiToRho(const psi::Psi<std::complex<FPTYPE>, 
     }
     if (psi::device::get_device_type<Device>(this->ctx) == psi::GpuDevice) {
         for (int ii = 0; ii < GlobalV::NSPIN; ii++) {
-            syncmem_var_d2h_op()(
-                this->cpu_ctx, 
-                this->ctx,
-                this->charge->rho[ii],
-                this->rho[ii],
-                this->charge->nrxx);
+            syncmem_var_d2h_op()(this->cpu_ctx, this->ctx, this->charge->rho[ii], this->rho[ii], this->charge->nrxx);
+            if (XC_Functional::get_func_type() == 3) {
+                syncmem_var_d2h_op()(this->cpu_ctx, this->ctx, this->charge->kin_r[ii], this->kin_r[ii], this->charge->nrxx);
+            }
         }
     }
     this->parallelK();
@@ -162,50 +160,10 @@ void ElecStatePW<FPTYPE, Device>::rhoBandK(const psi::Psi<std::complex<FPTYPE>, 
 
             this->basis->recip_to_real(this->ctx, &psi(ibnd,npwx), this->wfcr_another_spin, ik);
 
-            const double w1 = this->wg(ik, ibnd) / GlobalC::ucell.omega;
+            const FPTYPE w1 = this->wg(ik, ibnd) / GlobalC::ucell.omega;
 
             // replaced by denghui at 20221110
-            elecstate_pw_op()(
-                this->ctx, 
-                GlobalV::DOMAG, GlobalV::DOMAG_Z, 
-                this->charge->nrxx, w1, 
-                this->rho, 
-                this->wfcr, 
-                this->wfcr_another_spin);
-            // Increment the charge density in chr.rho for real space
-            // for (int ir = 0; ir < this->charge->nrxx; ir++)
-            // {
-            //     this->charge->rho[0][ir] += w1 * (norm(wfcr[ir]) + norm(wfcr_another_spin[ir]));
-            // }
-            // // In this case, calculate the three components of the magnetization
-            // if (GlobalV::DOMAG)
-            // {
-            //     for (int ir = 0; ir < this->charge->nrxx; ir++)
-            //     {
-            //         this->charge->rho[1][ir] += w1 * 2.0
-            //                                     * (wfcr[ir].real() * wfcr_another_spin[ir].real()
-            //                                        + wfcr[ir].imag() * wfcr_another_spin[ir].imag());
-            //         this->charge->rho[2][ir] += w1 * 2.0
-            //                                     * (wfcr[ir].real() * wfcr_another_spin[ir].imag()
-            //                                        - wfcr_another_spin[ir].real() * wfcr[ir].imag());
-            //         this->charge->rho[3][ir] += w1 * (norm(wfcr[ir]) - norm(wfcr_another_spin[ir]));
-            //     }
-            // }
-            // else if (GlobalV::DOMAG_Z)
-            // {
-            //     for (int ir = 0; ir < this->charge->nrxx; ir++)
-            //     {
-            //         this->charge->rho[1][ir] = 0;
-            //         this->charge->rho[2][ir] = 0;
-            //         this->charge->rho[3][ir] += w1 * (norm(wfcr[ir]) - norm(wfcr_another_spin[ir]));
-            //     }
-            // }
-            // else
-            //     for (int is = 1; is < 4; is++)
-            //     {
-            //         for (int ir = 0; ir < this->charge->nrxx; ir++)
-            //             this->charge->rho[is][ir] = 0;
-            //     }
+            elecstate_pw_op()(this->ctx, GlobalV::DOMAG, GlobalV::DOMAG_Z, this->charge->nrxx, w1, this->rho, this->wfcr, this->wfcr_another_spin);
         }
     }
     else
@@ -226,16 +184,7 @@ void ElecStatePW<FPTYPE, Device>::rhoBandK(const psi::Psi<std::complex<FPTYPE>, 
             if (w1 != 0.0)
             {
                 // replaced by denghui at 20221110
-                elecstate_pw_op()(
-                    this->ctx, 
-                    current_spin, this->charge->nrxx, 
-                    w1, 
-                    this->rho, 
-                    this->wfcr);
-                // for (int ir = 0; ir < this->charge->nrxx; ir++)
-                // {
-                //     this->rho[current_spin][ir] += w1 * norm(wfcr[ir]);
-                // }
+                elecstate_pw_op()(this->ctx,  current_spin, this->charge->nrxx, w1,  this->rho,  this->wfcr);
             }
 
             // kinetic energy density
@@ -243,20 +192,13 @@ void ElecStatePW<FPTYPE, Device>::rhoBandK(const psi::Psi<std::complex<FPTYPE>, 
             {
                 for (int j = 0; j < 3; j++)
                 {
-                    ModuleBase::GlobalFunc::ZEROS(this->wfcr, this->charge->nrxx);
-                    for (int ig = 0; ig < npw; ig++)
-                    {
-                        double fact
-                            = this->basis->getgpluskcar(ik, ig)[j] * GlobalC::ucell.tpiba;
-                        wfcr[ig] = psi(ibnd, ig) * complex<double>(0.0, fact);
-                    }
+                    setmem_complex_op()(this->ctx, this->wfcr, 0,  this->charge->nrxx);
 
-                    this->basis->recip2real(this->wfcr, this->wfcr, ik);
-                    
-                    for (int ir = 0; ir < this->charge->nrxx; ir++)
-                    {
-                        this->kin_r[current_spin][ir] += w1 * norm(wfcr[ir]);
-                    }
+                    meta_op()(this->ctx, ik, j, npw, this->basis->npwk_max, GlobalC::ucell.tpiba, this->basis->template get_gcar_data<FPTYPE>(this->ctx), this->basis->template get_kvec_c_data<FPTYPE>(this->ctx), &psi(ibnd, 0), this->wfcr);
+
+                    this->basis->recip_to_real(this->ctx, this->wfcr, this->wfcr, ik);
+
+                    elecstate_pw_op()(this->ctx, current_spin, this->charge->nrxx, w1, this->kin_r, this->wfcr);
                 }
             }
         }

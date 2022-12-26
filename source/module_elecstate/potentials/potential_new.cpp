@@ -53,6 +53,7 @@ Potential::~Potential()
     #if (defined(__CUDA) || defined(__ROCM))
     if (GlobalV::device_flag == "gpu") {
         delmem_var_op()(this->gpu_ctx, d_v_effective);
+        delmem_var_op()(this->gpu_ctx, d_vofk_effective);
     }
     #endif
 }
@@ -148,6 +149,7 @@ void Potential::allocate()
     #if (defined(__CUDA) || defined(__ROCM))
     if (GlobalV::device_flag == "gpu") {
         resmem_var_op()(this->gpu_ctx, d_v_effective, GlobalV::NSPIN * nrxx);
+        resmem_var_op()(this->gpu_ctx, d_vofk_effective, GlobalV::NSPIN * nrxx);
     }
     #endif
 }
@@ -167,6 +169,7 @@ void Potential::update_from_charge(const Charge* chg, const UnitCell* ucell)
     #if (defined(__CUDA) || defined(__ROCM))
     if (GlobalV::device_flag == "gpu") {
         syncmem_var_h2d_op()(this->gpu_ctx, this->cpu_ctx, d_v_effective, this->v_effective.c, this->v_effective.nr * this->v_effective.nc);
+        syncmem_var_h2d_op()(this->gpu_ctx, this->cpu_ctx, d_vofk_effective, this->vofk_effective.c, this->vofk_effective.nr * this->vofk_effective.nc);
     }
     #endif
 
@@ -252,6 +255,30 @@ void Potential::get_vnew(const Charge* chg, ModuleBase::matrix& vnew)
     }
 
     return;
+}
+
+template <>
+double * Potential::get_effective_v_data(const psi::DEVICE_CPU * /*ctx*/)
+{
+    return this->v_effective.nc > 0 ? &(this->v_effective(0, 0)) : nullptr;
+}
+
+template <>
+double * Potential::get_effective_v_data(const psi::DEVICE_GPU * /*ctx*/)
+{
+    return this->v_effective.nc > 0 ? this->d_v_effective : nullptr;
+}
+
+template <>
+double * Potential::get_effective_vofk_data(const psi::DEVICE_CPU * /*ctx*/)
+{
+    return this->vofk_effective.nc > 0 ? &(this->vofk_effective(0, 0)) : nullptr;
+}
+
+template <>
+double * Potential::get_effective_vofk_data(const psi::DEVICE_GPU * /*ctx*/)
+{
+    return this->vofk_effective.nc > 0 ? this->d_vofk_effective : nullptr;
 }
 
 } // namespace elecstate

@@ -38,6 +38,7 @@ list(APPEND device_srcs
     module_hamilt/src/nonlocal.cpp
     module_hamilt/src/veff.cpp
     module_hamilt/src/ekinetic.cpp
+    module_hamilt/src/meta.cpp
     module_pw/src/pw_multi_device.cpp
     module_hsolver/src/dngvd_op.cpp
     module_hsolver/src/math_kernel.cpp
@@ -56,6 +57,7 @@ if(USE_CUDA)
       module_hamilt/src/cuda/nonlocal.cu
       module_hamilt/src/cuda/veff.cu
       module_hamilt/src/cuda/ekinetic.cu
+      module_hamilt/src/cuda/meta.cu
       module_pw/src/cuda/pw_multi_device.cu
       module_hsolver/src/cuda/dngvd_op.cu
       module_hsolver/src/cuda/math_kernel.cu

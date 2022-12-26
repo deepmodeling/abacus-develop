@@ -1,5 +1,4 @@
 #include "module_elecstate/include/elecstate_multi_device.h"
-#include <iostream>
 
 namespace elecstate{
 

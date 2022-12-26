@@ -269,6 +269,9 @@ public:
     using resmem_int_op = psi::memory::resize_memory_op<int, psi::DEVICE_GPU>;
     using delmem_int_op = psi::memory::delete_memory_op<int, psi::DEVICE_GPU>;
     using syncmem_int_h2d_op = psi::memory::synchronize_memory_op<int, psi::DEVICE_GPU, psi::DEVICE_CPU>;
+    using resmem_var_op = psi::memory::resize_memory_op<double, psi::DEVICE_GPU>;
+    using delmem_var_op = psi::memory::delete_memory_op<double, psi::DEVICE_GPU>;
+    using syncmem_var_h2d_op = psi::memory::synchronize_memory_op<double, psi::DEVICE_GPU, psi::DEVICE_CPU>;
 #endif
 };
 
