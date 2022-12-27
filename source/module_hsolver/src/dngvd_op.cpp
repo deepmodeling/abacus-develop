@@ -280,7 +280,7 @@ struct dnevx_op<FPTYPE, psi::DEVICE_CPU> {
         // V is the output of the function, the storage space is also (nstart * ldh), and the data size of valid V
         // obtained by the zhegvx operation is (nstart * nstart) and stored in zux (internal to the function). When
         // the function is output, the data of zux will be mapped to the corresponding position of V.
-        LapackConnector::zheevx(
+        LapackConnector::xheevx(
             1, // ITYPE = 1:  A*x = (lambda)*B*x
             'V', // JOBZ = 'V':  Compute eigenvalues and eigenvectors.
             'I', // RANGE = 'I': the IL-th through IU-th eigenvalues will be found.

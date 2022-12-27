@@ -29,8 +29,9 @@ extern "C"
     // zhegv_ & zhegvd_ returns all eigenvalues while zhegvx_ returns selected ones
 
     void chegvd_(const int* itype, const char* jobz, const char* uplo, const int* n,
-             std::complex<float>* a, const int* lda, std::complex<float>* b, const int* ldb,
-             float* w, std::complex<float>* work, int* lwork, float* rwork, int* lrwork,
+             std::complex<float>* a, const int* lda,
+             const std::complex<float>* b, const int* ldb, float* w,
+             std::complex<float>* work, int* lwork, float* rwork, int* lrwork,
              int* iwork, int* liwork, int* info);
 
     void zhegvd_(const int* itype, const char* jobz, const char* uplo, const int* n,
@@ -326,7 +327,7 @@ public:
     // wrap function of fortran lapack routine zhegvd. (pointer version)
     static inline
     void xhegvd(const int itype, const char jobz, const char uplo, const int n,
-                const std::complex<float>* a, const int lda,
+                std::complex<float>* a, const int lda,
                 const std::complex<float>* b, const int ldb, float* w, 
                 std::complex<float>* work, int lwork, float* rwork, int lrwork,
                 int* iwork, int liwork, int info)
