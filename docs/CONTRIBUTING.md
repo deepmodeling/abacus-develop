@@ -161,7 +161,7 @@ For the unexpected results when developing ABACUS, [GDB](https://www.sourceware.
 
 4. For debugging ABACUS in multiprocessing situation, `mpirun -n 1 gdb abacus : -n 3 abacus` will attach GDB to the master process, and launch 3 other MPI processes.
 
-For segmentation faults, ABACUS can be built with [Address Sanitizer](https://github.com/google/sanitizers/wiki/AddressSanitizer) to locate the bugs.
+For segmentation faults, ABACUS can be built with [Address Sanitizer](https://github.com/google/sanitizers/wiki/AddressSanitizer) to locate the bugs. This feature requires a GCC or Clang compiler, and does not support Intel compiler.
 
 ```bash
 cmake -B build -DENABLE_ASAN=1
