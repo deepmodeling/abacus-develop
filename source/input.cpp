@@ -265,6 +265,7 @@ void Input::Default(void)
     mixing_ndim = 8;
     mixing_gg0 = 0.00; // used in kerker method. mohan add 2014-09-27
     mixing_tau = false;
+    mixing_dftu = false;
     //----------------------------------------------------------
     // potential / charge / wavefunction / energy
     //----------------------------------------------------------
@@ -1030,6 +1031,10 @@ bool Input::Read(const std::string &fn)
         else if (strcmp("mixing_tau", word) == 0)
         {
             read_bool(ifs, mixing_tau);
+        }
+        else if (strcmp("mixing_dftu", word) == 0)
+        {
+            read_bool(ifs, mixing_dftu);
         }
         //----------------------------------------------------------
         // charge / potential / wavefunction

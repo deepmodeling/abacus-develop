@@ -44,6 +44,7 @@ class DFTU
     double* U; // U (Hubbard parameter U)
     int* orbital_corr; //
     int omc; // occupation matrix control
+    int mixing_dftu; //whether to mix locale
 
   private:
     LCAO_Matrix* LM;
@@ -67,6 +68,7 @@ class DFTU
     //=============================================================
     // In dftu_occup.cpp
     // For calculating occupation matrix and saving to locale
+    // and other operations of locale: copy,zero out,mix
     //=============================================================
   public:
     // calculate the local occupation number matrix
@@ -77,12 +79,15 @@ class DFTU
     // dftu can be calculated only after locale has been initialed
     bool initialed_locale = false;
 
+    void copy_locale();
+    void zero_locale();
+    void mix_locale();
+
     // local occupancy matrix of the correlated subspace
     // locale: the out put local occupation number matrix of correlated electrons in the current electronic step
     // locale_save: the input local occupation number matrix of correlated electrons in the current electronic step
     std::vector<std::vector<std::vector<std::vector<ModuleBase::matrix>>>> locale; // locale[iat][l][n][spin](m1,m2)
-    std::vector<std::vector<std::vector<std::vector<ModuleBase::matrix>>>>
-        locale_save; // locale_save[iat][l][n][spin](m1,m2)
+    std::vector<std::vector<std::vector<std::vector<ModuleBase::matrix>>>> locale_save; // locale_save[iat][l][n][spin](m1,m2)
 
     //=============================================================
     // In dftu_tools.cpp
@@ -141,7 +146,6 @@ class DFTU
     void write_occup_m(std::ofstream& ofs);
     void read_occup_m(const std::string& fn);
     void local_occup_bcast();
-    void copy_locale();
 
     //=============================================================
     // In dftu_yukawa.cpp

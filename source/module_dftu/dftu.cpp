@@ -205,6 +205,10 @@ void DFTU::init(UnitCell& cell, // unitcell class
 #endif
             initialed_locale = true;
         }
+        else
+        {
+            this->zero_locale();
+        }
     }
 
     ModuleBase::Memory::record("DFTU", "locale", num_locale, "double");

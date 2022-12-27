@@ -188,6 +188,7 @@ void Input_Conv::Convert(void)
         GlobalC::dftu.Yukawa = INPUT.yukawa_potential;
         GlobalC::dftu.omc = INPUT.omc;
         GlobalC::dftu.orbital_corr = INPUT.orbital_corr;
+        GlobalC::dftu.mixing_dftu = INPUT.mixing_dftu;
         if (!INPUT.yukawa_potential)
         {
             // Duradev's rotational invariant formulation is implemented

@@ -211,6 +211,7 @@ class Input
     int mixing_ndim; // used in Broyden method
     double mixing_gg0; // used in kerker method. mohan add 2014-09-27
     bool mixing_tau; // whether to mix tau in mgga
+    bool mixing_dftu; //whether to mix locale in DFT+U
 
     //==========================================================
     // potential / charge / wavefunction / energy
