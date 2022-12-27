@@ -477,7 +477,10 @@ void Mulliken_Charge::stdout_mulliken(LCAO_Hamilt &uhm, const ModuleBase::matrix
 				}
 			}
 			fout <<"Total Charge on atom  "<< GlobalC::ucell.atoms[t].label <<  std::setw(20) << Tcharge <<std::endl;
-			fout <<"Total Magnetism on atom  "<< GlobalC::ucell.atoms[t].label <<  std::setw(20) << atom_mag <<std::endl;
+			if(GlobalV::NSPIN==2)
+			{
+				fout <<"Total Magnetism on atom  "<< GlobalC::ucell.atoms[t].label <<  std::setw(20) << atom_mag <<std::endl;
+			}
 			fout <<std::endl<<std::endl;
 		}
 		fout.close();
