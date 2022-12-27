@@ -375,27 +375,12 @@ struct dnevx_op<FPTYPE, psi::DEVICE_GPU> {
             FPTYPE *W, // eigenvalue
             std::complex<FPTYPE> *V)
     {
-        using transpose_op = matrixTranspose_op<FPTYPE, psi::DEVICE_GPU>;
-        using matrixset_op = matrixSetToAnother<FPTYPE, psi::DEVICE_GPU>;
-        // init A_eigenvectors, transpose_B and all_W
-        std::complex<FPTYPE> *A_eigenvectors = nullptr;
-        if (nstart == ldh) {
-            checkCudaErrors(cudaMalloc((void **) &A_eigenvectors, sizeof(std::complex<FPTYPE>) * nstart * nstart));
+        assert(nstart <= ldh);
 
-            transpose_op()(d, nstart, nstart, A, A_eigenvectors);
-        } else if (nstart < ldh) {
-            // nstart < ldh
-            checkCudaErrors(cudaMalloc((void **) &A_eigenvectors, sizeof(std::complex<FPTYPE>) * nstart * nstart));
-            matrixset_op()(d, nstart, A, ldh, A_eigenvectors, nstart);
-            transpose_op()(d, nstart, nstart, A_eigenvectors, A_eigenvectors);
-        } else if (nstart > ldh) {
-            assert(nstart < ldh);
-        }
+        // A to V
+        checkCudaErrors(cudaMemcpy(V, A, sizeof(double2) * nstart * ldh, cudaMemcpyDeviceToDevice));
 
-        FPTYPE * all_W = nullptr;
-        checkCudaErrors(cudaMalloc((void **) &all_W, sizeof(FPTYPE) * nstart));
-
-        xheevd_wrapper(CUBLAS_FILL_MODE_LOWER, nstart, A_eigenvectors, nstart, all_W);
+        xheevd_wrapper(CUBLAS_FILL_MODE_LOWER, nstart, V, nstart, W);
 
         // get eigenvalues and eigenvectors.  only m !
         checkCudaErrors(cudaMemcpy(W, all_W, sizeof(FPTYPE) * m, cudaMemcpyDeviceToDevice));

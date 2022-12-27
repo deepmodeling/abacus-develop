@@ -70,55 +70,55 @@ template <typename FPTYPE = double, typename Device = psi::DEVICE_CPU> class Dia
     psi::AbacusDevice_t device = {};
 
     void cal_grad(hamilt::Hamilt<FPTYPE, Device>* phm_in,
-                  const int& npw,
+                  const int& dim,
                   const int& nbase,
                   const int& notconv,
                   psi::Psi<std::complex<FPTYPE>, Device>& basis,
-                  std::complex<FPTYPE>* hp,
-                  std::complex<FPTYPE>* sp,
-                  const std::complex<FPTYPE>* vc,
+                  std::complex<FPTYPE>* hphi,
+                  std::complex<FPTYPE>* sphi,
+                  const std::complex<FPTYPE>* vcc,
                   const int* unconv,
-                  const FPTYPE* en);
+                  const FPTYPE* eigenvalue);
 
-    void cal_elem(const int& npw,
+    void cal_elem(const int& dim,
                   int& nbase,
                   const int& notconv,
                   const psi::Psi<std::complex<FPTYPE>, Device>& basis,
-                  const std::complex<FPTYPE>* hp,
-                  const std::complex<FPTYPE>* sp,
-                  std::complex<FPTYPE>* hc,
-                  std::complex<FPTYPE>* sc);
+                  const std::complex<FPTYPE>* hphi,
+                  const std::complex<FPTYPE>* sphi,
+                  std::complex<FPTYPE>* hcc,
+                  std::complex<FPTYPE>* scc);
 
-    void refresh(const int& npw,
+    void refresh(const int& dim,
                  const int& nband,
                  int& nbase,
-                 const FPTYPE* en,
+                 const FPTYPE* eigenvalue,
                  const psi::Psi<std::complex<FPTYPE>, Device>& psi,
                  psi::Psi<std::complex<FPTYPE>, Device>& basis,
-                 std::complex<FPTYPE>* hp,
-                 std::complex<FPTYPE>* sp,
-                 std::complex<FPTYPE>* hc,
-                 std::complex<FPTYPE>* sc,
-                 std::complex<FPTYPE>* vc);
+                 std::complex<FPTYPE>* hphi,
+                 std::complex<FPTYPE>* sphi,
+                 std::complex<FPTYPE>* hcc,
+                 std::complex<FPTYPE>* scc,
+                 std::complex<FPTYPE>* vcc);
 
-    void SchmitOrth(const int& npw,
-                    const int n_band,
+    void SchmitOrth(const int& dim,
+                    const int nband,
                     const int m,
-                    psi::Psi<std::complex<FPTYPE>, Device>& psi,
-                    const std::complex<FPTYPE>* spsi,
+                    psi::Psi<std::complex<FPTYPE>, Device>& basis,
+                    const std::complex<FPTYPE>* sphi,
                     std::complex<FPTYPE>* lagrange_m,
                     const int mm_size,
                     const int mv_size);
 
     void planSchmitOrth(const int nband, int* pre_matrix_mm_m, int* pre_matrix_mv_m);
 
-    void diag_zhegvx(const int& n,
-                     const int& m,
-                     const std::complex<FPTYPE>* hc,
-                     const std::complex<FPTYPE>* sc,
-                     const int& ldh,
-                     FPTYPE* e,
-                     std::complex<FPTYPE>* vc);
+    void diag_zhegvx(const int& nbase,
+                     const int& nband,
+                     const std::complex<FPTYPE>* hcc,
+                     const std::complex<FPTYPE>* scc,
+                     const int& nbase_x,
+                     FPTYPE* eigenvalue,
+                     std::complex<FPTYPE>* vcc);
 
     void diag_mock(hamilt::Hamilt<FPTYPE, Device>* phm_in,
                    psi::Psi<std::complex<FPTYPE>, Device>& psi,
