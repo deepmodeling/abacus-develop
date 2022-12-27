@@ -60,6 +60,7 @@ if (DEEPMD_FOUND)
             IMPORTED_LINK_INTERFACE_LANGUAGES "C"
             IMPORTED_LOCATION "${deepmd_c}"
             INTERFACE_INCLUDE_DIRECTORIES "${DeePMD_INCLUDE_DIR}")
+    endif()
 else()
 find_package_handle_standard_args(DeePMD DEFAULT_MSG deepmd_cc deepmd_op deepmd_op_cuda tensorflow_cc DeePMD_INCLUDE_DIR)
 
