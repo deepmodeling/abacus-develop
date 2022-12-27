@@ -95,7 +95,14 @@ void Parallel_Reduce::reduce_double_diag(double *object, const int n)
 }
 
 
-
+void Parallel_Reduce::reduce_double_pool(float &object)
+{
+#ifdef __MPI
+    float swap = object;
+	MPI_Allreduce(&swap , &object , 1, MPI_FLOAT , MPI_SUM , POOL_WORLD);
+#endif
+    return;
+}
 
 void Parallel_Reduce::reduce_double_pool(double &object)
 {

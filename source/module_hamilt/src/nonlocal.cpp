@@ -1,12 +1,11 @@
 #include "module_hamilt/include/nonlocal.h"
-#include <iostream>
 
-using namespace hamilt;
+namespace hamilt {
 
 template <typename FPTYPE> 
-struct hamilt::nonlocal_pw_op<FPTYPE, psi::DEVICE_CPU> {
+struct nonlocal_pw_op<FPTYPE, psi::DEVICE_CPU> {
   void operator() (
-      const psi::DEVICE_CPU* dev,
+      const psi::DEVICE_CPU* /*dev*/,
       const int& l1,
       const int& l2,
       const int& l3,
@@ -32,17 +31,6 @@ struct hamilt::nonlocal_pw_op<FPTYPE, psi::DEVICE_CPU> {
               += deeq[((spin * deeq_x + iat + ii) * deeq_y + xx) * deeq_z + kk] 
               *  becp[jj * nkb + sum + ii * l3 + xx];
     }
-    // for (int ww = 0; ww < l1 * l2; ww++) {
-    //   const int ii = ww / l2;
-    //   const int jj = ww % l2;
-    //   for (int tid = 0; tid < l3 * l3; tid++) {
-    //     const int kk = tid / l3;
-    //     const int xx = tid % l3;
-    //     ps[(sum + ii * l3 + kk) * l2 + jj]
-    //       += deeq[((spin * deeq_x + iat + ii) * deeq_y + xx) * deeq_z + kk] 
-    //       *  becp[jj * nkb + sum + ii * l3 + xx];
-    //   }
-    // }
     sum += l1 * l3;
     iat += l1;
   }
@@ -88,6 +76,7 @@ struct hamilt::nonlocal_pw_op<FPTYPE, psi::DEVICE_CPU> {
   }
 };
 
-namespace hamilt{
+template struct nonlocal_pw_op<float, psi::DEVICE_CPU>;
 template struct nonlocal_pw_op<double, psi::DEVICE_CPU>;
-}
+
+}  // namespace hamilt

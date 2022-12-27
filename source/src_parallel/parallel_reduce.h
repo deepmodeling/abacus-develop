@@ -23,7 +23,8 @@ namespace Parallel_Reduce
 	void reduce_double_grid(double *object, const int n);
 	void reduce_double_diag(double *object, const int n);
 
-	void reduce_double_pool(double &object);
+    void reduce_double_pool(float &object);
+    void reduce_double_pool(double &object);
 	void reduce_double_pool(double *object, const int n);
 	void reduce_double_allpool(double &object);
 	void reduce_double_allpool(double *object, const int n);

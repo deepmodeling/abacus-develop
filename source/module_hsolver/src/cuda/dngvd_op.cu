@@ -73,328 +73,165 @@ void destoryCUSOLVERhandle()
     }
 }
 
-template <>
-void dngvx_op<double, psi::DEVICE_GPU>::operator()(const psi::DEVICE_GPU* d,
-                                                   const int nstart,
-                                                   const int ldh,
-                                                   const std::complex<double>* A,
-                                                   const std::complex<double>* B,
-                                                   const int m,
-                                                   double* W,
-                                                   std::complex<double>* V)
+static inline
+void xhegvd_wrapper (
+        const cublasFillMode_t& uplo,
+        const int& n,
+        std::complex<float> * A, const int& lda,
+        std::complex<float> * B, const int& ldb,
+        float * W)
 {
-    // init A_eigenvectors, transpose_B and all_W
-    double2 *A_eigenvectors, *transpose_B;
-    if (nstart == ldh)
-    {
-        checkCudaErrors(cudaMalloc((void**)&A_eigenvectors, sizeof(double2) * nstart * nstart));
-        checkCudaErrors(cudaMalloc((void**)&transpose_B, sizeof(double2) * nstart * nstart));
-
-        matrixTranspose_op<double, psi::DEVICE_GPU>()(d, nstart, nstart, A, (std::complex<double>*)A_eigenvectors);
-        matrixTranspose_op<double, psi::DEVICE_GPU>()(d, nstart, nstart, B, (std::complex<double>*)transpose_B);
-    }
-    else if (nstart < ldh)
-    {
-        // nstart < ldh
-        checkCudaErrors(cudaMalloc((void**)&A_eigenvectors, sizeof(double2) * nstart * nstart));
-        checkCudaErrors(cudaMalloc((void**)&transpose_B, sizeof(double2) * nstart * nstart));
-
-        matrixSetToAnother<double, psi::DEVICE_GPU>()(d, nstart, A, ldh, (std::complex<double>*)A_eigenvectors, nstart);
-        matrixSetToAnother<double, psi::DEVICE_GPU>()(d, nstart, B, ldh, (std::complex<double>*)transpose_B, nstart);
-
-        matrixTranspose_op<double, psi::DEVICE_GPU>()(d,
-                                                      nstart,
-                                                      nstart,
-                                                      (std::complex<double>*)A_eigenvectors,
-                                                      (std::complex<double>*)A_eigenvectors);
-        matrixTranspose_op<double, psi::DEVICE_GPU>()(d,
-                                                      nstart,
-                                                      nstart,
-                                                      (std::complex<double>*)transpose_B,
-                                                      (std::complex<double>*)transpose_B);
-    }
-    else if (nstart > ldh)
-    {
-        assert(nstart < ldh);
-    }
-
-    double* all_W;
-    checkCudaErrors(cudaMalloc((void**)&all_W, sizeof(double) * nstart));
-
     // prepare some values for cusolverDnZhegvd_bufferSize
-    cusolverDnHandle_t cusolverH;
-    cusolverErrcheck(cusolverDnCreate(&cusolverH));
-    int* devInfo;
+    int * devInfo = nullptr;
+    int lwork = 0, info_gpu = 0;
+    float2 * work = nullptr;
     checkCudaErrors(cudaMalloc((void**)&devInfo, sizeof(int)));
 
     // calculate the sizes needed for pre-allocated buffer.
-    int lwork = 0;
-    cusolverErrcheck(cusolverDnZhegvd_bufferSize(
-        cusolverH,
-        CUSOLVER_EIG_TYPE_1, // itype = CUSOLVER_EIG_TYPE_1: A*x = (lambda)*B*x.
-        CUSOLVER_EIG_MODE_VECTOR, // jobz = CUSOLVER_EIG_MODE_VECTOR : Compute eigenvalues and eigenvectors.
-        CUBLAS_FILL_MODE_LOWER,
-        nstart,
-        A_eigenvectors,
-        nstart,
-        transpose_B,
-        nstart,
-        all_W,
-        &lwork));
-
+    cusolverErrcheck(cusolverDnChegvd_bufferSize(cusolver_H, CUSOLVER_EIG_TYPE_1, CUSOLVER_EIG_MODE_VECTOR, uplo, n,
+                                                 reinterpret_cast<const float2 *>(A), lda,
+                                                 reinterpret_cast<const float2 *>(B), ldb, W, &lwork));
     // allocate memery
-    cuDoubleComplex* d_work;
-    checkCudaErrors(cudaMalloc((void**)&d_work, sizeof(cuDoubleComplex) * lwork));
+    checkCudaErrors(cudaMalloc((void**)&work, sizeof(float2) * lwork));
 
     // compute eigenvalues and eigenvectors.
-    cusolverErrcheck(cusolverDnZhegvd(
-        cusolverH,
-        CUSOLVER_EIG_TYPE_1, // itype = CUSOLVER_EIG_TYPE_1: A*x = (lambda)*B*x.
-        CUSOLVER_EIG_MODE_VECTOR, // jobz = CUSOLVER_EIG_MODE_VECTOR : Compute eigenvalues and eigenvectors.
-        CUBLAS_FILL_MODE_LOWER,
-        nstart,
-        A_eigenvectors,
-        nstart,
-        transpose_B,
-        nstart,
-        all_W,
-        d_work,
-        lwork,
-        devInfo));
+    cusolverErrcheck(cusolverDnChegvd(cusolver_H, CUSOLVER_EIG_TYPE_1, CUSOLVER_EIG_MODE_VECTOR, uplo, n,
+                                      reinterpret_cast<float2 *>(A), lda, reinterpret_cast<float2 *>(B), ldb, W, work, lwork, devInfo));
 
-    checkCudaErrors(cudaDeviceSynchronize());
-
-    // get eigenvalues and eigenvectors.  only m !
-    checkCudaErrors(cudaMemcpy(W, all_W, sizeof(double) * m, cudaMemcpyDeviceToDevice));
-
-    if (ldh == nstart)
-    {
-        matrixTranspose_op<double, psi::DEVICE_GPU>()(d, nstart, nstart, V, V);
-        checkCudaErrors(
-            cudaMemcpy(V, A_eigenvectors, sizeof(std::complex<double>) * nstart * m, cudaMemcpyDeviceToDevice));
-        matrixTranspose_op<double, psi::DEVICE_GPU>()(d, nstart, nstart, V, V);
-    }
-    else
-    {
-        matrixTranspose_op<double, psi::DEVICE_GPU>()(d, ldh, ldh, V, V);
-        matrixSetToAnother<double, psi::DEVICE_GPU>()(d, m, (std::complex<double>*)A_eigenvectors, nstart, V, ldh);
-        matrixTranspose_op<double, psi::DEVICE_GPU>()(d, ldh, ldh, V, V);
-    }
-
-    int info_gpu;
     checkCudaErrors(cudaMemcpy(&info_gpu, devInfo, sizeof(int), cudaMemcpyDeviceToHost));
     assert(0 == info_gpu);
-
     // free the buffer
-    checkCudaErrors(cudaFree(d_work));
-    // free resources and destroy
-    checkCudaErrors(cudaFree(A_eigenvectors));
-    checkCudaErrors(cudaFree(transpose_B));
-    checkCudaErrors(cudaFree(all_W));
+    checkCudaErrors(cudaFree(work));
     checkCudaErrors(cudaFree(devInfo));
-    cusolverErrcheck(cusolverDnDestroy(cusolverH));
 }
 
-template <>
-void dngv_op<double, psi::DEVICE_GPU>::operator()(const psi::DEVICE_GPU* d,
-                                                  const int nstart,
-                                                  const int ldh,
-                                                  const std::complex<double>* A,
-                                                  const std::complex<double>* B,
-                                                  double* W,
-                                                  std::complex<double>* V)
+static inline
+void xhegvd_wrapper (
+        const cublasFillMode_t& uplo,
+        const int& n,
+        std::complex<double> * A, const int& lda,
+        std::complex<double> * B, const int& ldb,
+        double * W)
 {
-    assert(nstart == ldh);
-    // init A_eigenvectors & transpose_B
-    double2 *A_eigenvectors, *transpose_B;
-    checkCudaErrors(cudaMalloc((void**)&A_eigenvectors, sizeof(double2) * ldh * nstart));
-    checkCudaErrors(cudaMalloc((void**)&transpose_B, sizeof(double2) * ldh * nstart));
-
-    // transpose A, B  to A_eigenvectors, transpose_B
-    matrixTranspose_op<double, psi::DEVICE_GPU>()(d, ldh, nstart, A, (std::complex<double>*)A_eigenvectors);
-    matrixTranspose_op<double, psi::DEVICE_GPU>()(d, ldh, nstart, B, (std::complex<double>*)transpose_B);
-
-    // init all_W
-    double* all_W;
-    checkCudaErrors(cudaMalloc((void**)&all_W, sizeof(double) * ldh));
-
     // prepare some values for cusolverDnZhegvd_bufferSize
-    cusolverDnHandle_t cusolverH;
-    cusolverErrcheck(cusolverDnCreate(&cusolverH));
-    int* devInfo;
+    int * devInfo = nullptr;
+    int lwork = 0, info_gpu = 0;
+    double2 * work = nullptr;
     checkCudaErrors(cudaMalloc((void**)&devInfo, sizeof(int)));
 
     // calculate the sizes needed for pre-allocated buffer.
-    int lwork = 0;
-    cusolverErrcheck(cusolverDnZhegvd_bufferSize(
-        cusolverH,
-        CUSOLVER_EIG_TYPE_1, // itype = CUSOLVER_EIG_TYPE_1: A*x = (lambda)*B*x.
-        CUSOLVER_EIG_MODE_VECTOR, // jobz = CUSOLVER_EIG_MODE_VECTOR : Compute eigenvalues and eigenvectors.
-        CUBLAS_FILL_MODE_UPPER,
-        ldh,
-        A_eigenvectors,
-        nstart,
-        transpose_B,
-        nstart,
-        all_W,
-        &lwork));
-
+    cusolverErrcheck(cusolverDnZhegvd_bufferSize(cusolver_H, CUSOLVER_EIG_TYPE_1, CUSOLVER_EIG_MODE_VECTOR, uplo, n,
+                                                 reinterpret_cast<const double2 *>(A), lda,
+                                                 reinterpret_cast<const double2 *>(B), ldb, W, &lwork));
     // allocate memery
-    cuDoubleComplex* d_work;
-    checkCudaErrors(cudaMalloc((void**)&d_work, sizeof(cuDoubleComplex) * lwork));
+    checkCudaErrors(cudaMalloc((void**)&work, sizeof(double2) * lwork));
 
     // compute eigenvalues and eigenvectors.
-    cusolverErrcheck(cusolverDnZhegvd(
-        cusolverH,
-        CUSOLVER_EIG_TYPE_1, // itype = CUSOLVER_EIG_TYPE_1: A*x = (lambda)*B*x.
-        CUSOLVER_EIG_MODE_VECTOR, // jobz = CUSOLVER_EIG_MODE_VECTOR : Compute eigenvalues and eigenvectors.
-        CUBLAS_FILL_MODE_UPPER,
-        ldh,
-        A_eigenvectors,
-        nstart,
-        transpose_B,
-        nstart,
-        all_W,
-        d_work,
-        lwork,
-        devInfo));
+    cusolverErrcheck(cusolverDnZhegvd(cusolver_H, CUSOLVER_EIG_TYPE_1, CUSOLVER_EIG_MODE_VECTOR, uplo, n,
+                                      reinterpret_cast<double2 *>(A), lda, reinterpret_cast<double2 *>(B), ldb, W, work, lwork, devInfo));
 
-    checkCudaErrors(cudaDeviceSynchronize());
-
-    // get all eigenvalues and eigenvectors.
-    checkCudaErrors(cudaMemcpy(W, all_W, sizeof(double) * ldh, cudaMemcpyDeviceToDevice));
-    matrixTranspose_op<double, psi::DEVICE_GPU>()(d, ldh, nstart, (std::complex<double>*)A_eigenvectors, V);
-
-    int info_gpu;
     checkCudaErrors(cudaMemcpy(&info_gpu, devInfo, sizeof(int), cudaMemcpyDeviceToHost));
     assert(0 == info_gpu);
-
     // free the buffer
-    checkCudaErrors(cudaFree(d_work));
-    // free resources and destroy
-    checkCudaErrors(cudaFree(A_eigenvectors));
-    checkCudaErrors(cudaFree(transpose_B));
-    checkCudaErrors(cudaFree(all_W));
+    checkCudaErrors(cudaFree(work));
     checkCudaErrors(cudaFree(devInfo));
-    cusolverErrcheck(cusolverDnDestroy(cusolverH));
 }
 
-template <>
-void dngvd_op<double, psi::DEVICE_GPU>::operator()(const psi::DEVICE_GPU* d,
-                                                   const int nstart,
-                                                   const int ldh,
-                                                   const std::complex<double>* A,
-                                                   const std::complex<double>* B,
-                                                   double* W,
-                                                   std::complex<double>* V)
+static inline
+void xheevd_wrapper (
+        const cublasFillMode_t& uplo,
+        const int& n,
+        std::complex<float> * A, const int& lda,
+        float * W)
 {
-    assert(nstart == ldh);
-
-    // A to V
-    checkCudaErrors(cudaMemcpy(V, A, sizeof(double2) * ldh * nstart, cudaMemcpyDeviceToDevice));
-
-    int* devInfo;
+    // prepare some values for cusolverDnZhegvd_bufferSize
+    int * devInfo = nullptr;
+    int lwork = 0, info_gpu = 0;
+    float2 * work = nullptr;
     checkCudaErrors(cudaMalloc((void**)&devInfo, sizeof(int)));
 
     // calculate the sizes needed for pre-allocated buffer.
-    int lwork = 0;
-    cusolverErrcheck(cusolverDnZhegvd_bufferSize(
-        cusolver_H,
-        CUSOLVER_EIG_TYPE_1, // itype = CUSOLVER_EIG_TYPE_1: A*x = (lambda)*B*x.
-        CUSOLVER_EIG_MODE_VECTOR, // jobz = CUSOLVER_EIG_MODE_VECTOR : Compute eigenvalues and eigenvectors.
-        CUBLAS_FILL_MODE_UPPER,
-        nstart,
-        (cuDoubleComplex*)V,
-        ldh,
-        (cuDoubleComplex*)B,
-        ldh,
-        W,
-        &lwork));
+    cusolverErrcheck(cusolverDnCheevd_bufferSize(cusolver_H, CUSOLVER_EIG_MODE_VECTOR, uplo, n,
+                                                 reinterpret_cast<const float2 *>(A), lda, W, &lwork));
     // allocate memery
-    cuDoubleComplex* d_work;
-    checkCudaErrors(cudaMalloc((void**)&d_work, sizeof(cuDoubleComplex) * lwork));
-
+    checkCudaErrors(cudaMalloc((void**)&work, sizeof(float2) * lwork));
     // compute eigenvalues and eigenvectors.
-    cusolverErrcheck(cusolverDnZhegvd(
-        cusolver_H,
-        CUSOLVER_EIG_TYPE_1, // itype = CUSOLVER_EIG_TYPE_1: A*x = (lambda)*B*x.
-        CUSOLVER_EIG_MODE_VECTOR, // jobz = CUSOLVER_EIG_MODE_VECTOR : Compute eigenvalues and eigenvectors.
-        CUBLAS_FILL_MODE_UPPER,
-        nstart,
-        (cuDoubleComplex*)V,
-        ldh,
-        (cuDoubleComplex*)B,
-        ldh,
-        W,
-        d_work,
-        lwork,
-        devInfo));
+    cusolverErrcheck(cusolverDnCheevd(cusolver_H, CUSOLVER_EIG_MODE_VECTOR, uplo, n, reinterpret_cast<float2 *>(A), lda, W, work, lwork, devInfo));
 
-    checkCudaErrors(cudaDeviceSynchronize());
-
-    int info_gpu;
     checkCudaErrors(cudaMemcpy(&info_gpu, devInfo, sizeof(int), cudaMemcpyDeviceToHost));
     assert(0 == info_gpu);
-
-    // free the buffer and destroy
-    checkCudaErrors(cudaFree(d_work));
+    checkCudaErrors(cudaFree(work));
     checkCudaErrors(cudaFree(devInfo));
 }
 
-template <>
-void dnevx_op<double, psi::DEVICE_GPU>::operator()(const psi::DEVICE_GPU* d,
-                                                   const int nstart,
-                                                   const int ldh,
-                                                   const std::complex<double>* A,
-                                                   const int m,
-                                                   double* W,
-                                                   std::complex<double>* V)
+static inline
+void xheevd_wrapper (
+        const cublasFillMode_t& uplo,
+        const int& n,
+        std::complex<double> * A, const int& lda,
+        double * W)
 {
-    assert(nstart <= ldh);
-
-    // A to V
-    checkCudaErrors(cudaMemcpy(V, A, sizeof(double2) * nstart * ldh, cudaMemcpyDeviceToDevice));
-
-    int* devInfo;
+    // prepare some values for cusolverDnZhegvd_bufferSize
+    int * devInfo = nullptr;
+    int lwork = 0, info_gpu = 0;
+    double2 * work = nullptr;
     checkCudaErrors(cudaMalloc((void**)&devInfo, sizeof(int)));
 
     // calculate the sizes needed for pre-allocated buffer.
-    int lwork = 0;
-    cusolverErrcheck(cusolverDnZheevd_bufferSize(
-        cusolver_H,
-        CUSOLVER_EIG_MODE_VECTOR,
-        CUBLAS_FILL_MODE_LOWER,
-        nstart,
-        (cuDoubleComplex*)V,
-        ldh,
-        W,
-        &lwork));
+    cusolverErrcheck(cusolverDnZheevd_bufferSize(cusolver_H, CUSOLVER_EIG_MODE_VECTOR, uplo, n,
+                                                 reinterpret_cast<const double2 *>(A), lda, W, &lwork));
     // allocate memery
-    cuDoubleComplex* d_work;
-    checkCudaErrors(cudaMalloc((void**)&d_work, sizeof(cuDoubleComplex) * lwork));
-
+    checkCudaErrors(cudaMalloc((void**)&work, sizeof(double2) * lwork));
     // compute eigenvalues and eigenvectors.
-    cusolverErrcheck(cusolverDnZheevd(
-        cusolver_H,
-        CUSOLVER_EIG_MODE_VECTOR,
-        CUBLAS_FILL_MODE_LOWER,
-        nstart,
-        (cuDoubleComplex*)V,
-        ldh,
-        W,
-        d_work,
-        lwork,
-        devInfo));
+    cusolverErrcheck(cusolverDnZheevd(cusolver_H, CUSOLVER_EIG_MODE_VECTOR, uplo, n,
+                                      reinterpret_cast<double2 *>(A), lda, W, work, lwork, devInfo));
 
-    checkCudaErrors(cudaDeviceSynchronize());
-
-    int info_gpu;
     checkCudaErrors(cudaMemcpy(&info_gpu, devInfo, sizeof(int), cudaMemcpyDeviceToHost));
     assert(0 == info_gpu);
-
-    // free the buffer and destroy
-    checkCudaErrors(cudaFree(d_work));
+    checkCudaErrors(cudaFree(work));
     checkCudaErrors(cudaFree(devInfo));
 }
+
+template <typename FPTYPE>
+struct dngvd_op<FPTYPE, psi::DEVICE_GPU> {
+    void operator()(
+            const psi::DEVICE_GPU *d,
+            const int nstart,
+            const int ldh,
+            const std::complex<FPTYPE> *A, // hcc
+            const std::complex<FPTYPE> *B, // scc
+            FPTYPE *W, // eigenvalue
+            std::complex<FPTYPE> *V)
+    {
+        assert(nstart == ldh);
+        // A to V
+        checkCudaErrors(cudaMemcpy(V, A, sizeof(std::complex<FPTYPE>) * ldh * nstart, cudaMemcpyDeviceToDevice));
+        xhegvd_wrapper(CUBLAS_FILL_MODE_UPPER, nstart, V, ldh,
+                       (std::complex<FPTYPE> *)B, ldh, W);
+    }
+};
+
+template <typename FPTYPE>
+struct dnevx_op<FPTYPE, psi::DEVICE_GPU> {
+    void operator()(
+            const psi::DEVICE_GPU *d,
+            const int nstart,
+            const int ldh,
+            const std::complex<FPTYPE> *A, // hcc
+            const int m,
+            FPTYPE *W, // eigenvalue
+            std::complex<FPTYPE> *V)
+    {
+        assert(nstart <= ldh);
+        // A to V
+        checkCudaErrors(cudaMemcpy(V, A, sizeof(std::complex<FPTYPE>) * nstart * ldh, cudaMemcpyDeviceToDevice));
+        xheevd_wrapper(CUBLAS_FILL_MODE_LOWER, nstart, V, ldh, W);
+    }
+};
+
+template struct dngvd_op<float, psi::DEVICE_GPU>;
+template struct dnevx_op<float, psi::DEVICE_GPU>;
+template struct dngvd_op<double, psi::DEVICE_GPU>;
+template struct dnevx_op<double, psi::DEVICE_GPU>;
 
 } // namespace hsolver

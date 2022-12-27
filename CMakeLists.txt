@@ -159,16 +159,17 @@ if(USE_CUDA OR USE_CUSOLVER_LCAO)
   set(CMAKE_CUDA_STANDARD_REQUIRED ON)
   set(CMAKE_CUDA_HOST_COMPILER ${CMAKE_CXX_COMPILER})
   enable_language(CUDA)
+  set_property(
+    TARGET ${ABACUS_BIN_NAME}
+    PROPERTY CUDA_ARCHITECTURES
+    60 # P100
+    70 # V100
+    75 # T4
+    80 # A100
+  )
   target_link_libraries(${ABACUS_BIN_NAME}
     -lcudart
     -lnvToolsExt
-  )
-  set_property(TARGET ${ABACUS_BIN_NAME}
-  PROPERTY CUDA_ARCHITECTURES
-  60 # P100
-  70 # V100
-  75 # T4
-  80 # A100
   )
   include_directories(${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
   if (USE_CUDA)
