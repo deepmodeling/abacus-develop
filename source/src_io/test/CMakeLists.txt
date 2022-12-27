@@ -18,3 +18,8 @@ AddTest(
 )
 
 install(FILES WINPUT DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+
+AddTest(
+  TARGET rwstream_test
+  SOURCES rwstream_test.cpp ../rwstream.cpp
+)
