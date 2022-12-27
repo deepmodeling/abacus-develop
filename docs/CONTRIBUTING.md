@@ -13,6 +13,7 @@ For more non-technical aspects, please refer to the [ABACUS Contribution Guide](
 - [Code formatting style](#code-formatting-style)
 - [Generating code coverage report](#generating-code-coverage-report)
 - [Adding a unit test](#adding-a-unit-test)
+- [Debugging the codes](#debugging-the-codes)
 - [Submitting a Pull Request](#submitting-a-pull-request)
 - [Commit message guidelines](#commit-message-guidelines)
 
@@ -143,6 +144,32 @@ To add a unit test:
 
 - Build with `-D BUILD_TESTING=1` flag. You can find built testing programs under `build/source/<module_name>/test`.
 - Follow the installing procedure of CMake. The tests will move to `build/test`.
+
+## Debugging the codes
+
+For the unexpected results when developing ABACUS, [GDB](https://www.sourceware.org/gdb/) will come in handy.
+
+1. Compile ABACUS with debug mode.
+
+    ```bash
+    cmake -B build -DCMAKE_BUILD_TYPE=Debug
+    ```
+
+2. After building and installing the executable, enter the input directory, and launch the debug session with `gdb abacus`. For [debugging in Visual Studio Code](https://code.visualstudio.com/docs/cpp/cpp-debug), please set [cwd](https://code.visualstudio.com/docs/cpp/launch-json-reference#_cwd) to the input directory, and [program](https://code.visualstudio.com/docs/cpp/launch-json-reference#_program-required) to the path of ABACUS executable.
+
+3. Set breakpoints, and run ABACUS by typing "run" in GDB command line interface. If the program hits the breakpoints or exception is throwed, GDB will stop at the erroneous code line. Type "where" to show the stack backtrace, and "print i" to get the value of variable i.
+
+4. For debugging ABACUS in multiprocessing situation, `mpirun -n 1 gdb abacus : -n 3 abacus` will attach GDB to the master process, and launch 3 other MPI processes.
+
+For segmentation faults, ABACUS can be built with [Address Sanitizer](https://github.com/google/sanitizers/wiki/AddressSanitizer) to locate the bugs.
+
+```bash
+cmake -B build -DENABLE_ASAN=1
+```
+
+Run ABACUS as usual, and it will automatically detect the buffer overflow problems and memory leaks. It is also possible to [use GDB with binaries built by Address Sanitizer](https://github.com/google/sanitizers/wiki/AddressSanitizerAndDebugger).
+
+[Valgrind](https://valgrind.org/) is another option for performing dynamic analysis.
 
 ## Generating code coverage report
 
