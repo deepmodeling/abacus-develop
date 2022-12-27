@@ -49,6 +49,7 @@ out_pot2=`grep out_pot INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
 out_dm1=`grep out_dm1 INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
 get_s=`grep calculation INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
 out_pband=`grep out_proj_band INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
+toW90=`grep towannier90 INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
 #echo $running_path
 base=`grep -En '(^|[[:space:]])basis_type($|[[:space:]])' INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
 word="driver_line"
@@ -151,6 +152,19 @@ if ! test -z "$out_pband"  && [  $out_pband == 1 ]; then
 	orbcal=OUT.autotest/Orbital
 	python3 ../tools/CompareFile.py $orbref $orbcal 8
 	echo "CompareOrb_pass $?" >>$1
+fi
+
+#echo $toW90
+if ! test -z "$toW90"  && [  $toW90 == 1 ]; then
+	amnref=diamond.amn
+	amncal=OUT.autotest/diamond.amn
+	eigref=diamond.eig
+	eigcal=OUT.autotest/diamond.eig
+	sed -i '1d' $amncal
+	python3 ../tools/CompareFile.py $amnref $amncal 1
+	echo "CompareAMN_pass $?" >>$1
+	python3 ../tools/CompareFile.py $eigref $eigcal 8
+	echo "CompareEIG_pass $?" >>$1
 fi
 
 #echo total_dos
