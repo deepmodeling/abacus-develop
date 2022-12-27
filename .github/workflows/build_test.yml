@@ -36,8 +36,12 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
+      - name: Download DeePMD-kit
+        run: |
+          curl -o ${{ runner.temp }}/libdeepmd_c.tar.gz https://github.com/deepmodeling/deepmd-kit/releases/download/v2.2.0.b0/libdeepmd_c.tar.gz
+          tar vczf ${{ runner.temp }}/libdeepmd_c.tar.gz -C ${{ runner.temp }}
       - name: Build
         run: |
           git config --global --add safe.directory `pwd`
-          cmake -B build -DBUILD_TESTING=ON ${{ matrix.build_args }}
+          cmake -B build -DBUILD_TESTING=ON ${{ matrix.build_args }} -DDeePMD_DIR=${{ runner.temp }}/libdeepmd_c
           cmake --build build -j2
