@@ -114,7 +114,7 @@ void winput::Read(const std::string &fn)
 	ifs.clear();
 	ifs.seekg(0);
 
-	char word[80], word1[80];
+	char word[80];
 	int ierr = 0;
 	ifs.rdstate();
 
@@ -137,8 +137,11 @@ void winput::Read(const std::string &fn)
 
 	while (ifs.good())
 	{
-		ifs >> word1;
-		INPUT.strtolower(word1, word);
+		ifs >> word;
+		for(auto &i : word)
+		{
+			i = tolower(i);
+		}
 		//parameters for <ESP.wannier> users
 
 		if (strcmp("target",         word) == 0)       {read_value(ifs, target);}
@@ -149,12 +152,14 @@ void winput::Read(const std::string &fn)
 		else if (strcmp("range1",		 word) == 0)	{read_value(ifs,range1);}
 
 		else if (strcmp("wlmr_dir",      word) == 0)       {read_value(ifs,  wlmr_dir);}
+		else if (strcmp("no_center",      word) == 0)       {read_value(ifs,  no_center);}
 		else if (strcmp("sph_proj",      word) == 0)       {read_value(ifs,  sph_proj);}
 		else if (strcmp("sph_type",      word) == 0)       {read_value(ifs,  sph_type);}
-		else if (strcmp("recon",		word) == 0)       {read_value(ifs,  b_recon);}
+		else if (strcmp("b_recon",		word) == 0)       {read_value(ifs,  b_recon);}
 		else if (strcmp("speed_mode",	word) == 0)       {read_value(ifs,  speed_mode);}
 		else if (strcmp("recon_wanq",	word) == 0)       {read_value(ifs,  recon_wanq);}
 		else if (strcmp("b_mix_wf",		word) == 0)       {read_value(ifs,  b_mix_wf);}
+		else if (strcmp("b_near_atom",		word) == 0)       {read_value(ifs,  b_near_atom);}
 		else if (strcmp("mix_wf",		word) == 0)       {read_value(ifs,  mix_wf);}
 
 		else if (strcmp("wf_type",       word) == 0)       {read_value(ifs,  wf_type);}
@@ -163,6 +168,8 @@ void winput::Read(const std::string &fn)
 		else if (strcmp("b_out_wf",         word) == 0)       {read_value(ifs,  b_out_wf);}
 		else if (strcmp("b_plot_build",word) == 0)       {read_value(ifs,  b_plot_build);}
 		else if (strcmp("b_plot_atomic",word) == 0)       {read_value(ifs,  b_plot_atomic);}
+		else if (strcmp("plot_option",		word) == 0)       {read_value(ifs,  plot_option);}
+		else if (strcmp("n_unitcell",		word) == 0)       {read_value(ifs,  n_unitcell);}
 
 		else if (strcmp("l_start",   	word) == 0)       {read_value(ifs,  L_start);}
 		else if (strcmp("l_end", 		word) == 0)       {read_value(ifs,  L_end);}
@@ -179,8 +186,8 @@ void winput::Read(const std::string &fn)
 		else if (strcmp("plotflag",      word) == 0)       {read_value(ifs,  plot_option);}
 		else if (strcmp("unit",          word) == 0)       {read_value(ifs,  n_unitcell);}
 
-		else if (strcmp("b_s",           word) == 0)       {read_value(ifs,  bs);}
-		else if (strcmp("b_p",           word) == 0)       {read_value(ifs,  bp);}
+		else if (strcmp("bs",           word) == 0)       {read_value(ifs,  bs);}
+		else if (strcmp("bp",           word) == 0)       {read_value(ifs,  bp);}
 		else if (strcmp("px",            word) == 0)       {read_value(ifs,  px);}
 		else if (strcmp("g1",            word) == 0)       {read_value(ifs,  g1);}
 		else if (strcmp("g2",            word) == 0)       {read_value(ifs,  g2);}
@@ -193,15 +200,18 @@ void winput::Read(const std::string &fn)
 
 		else if (strcmp("out_all",		word) == 0)	{read_value(ifs,  out_all);}
 		else if (strcmp("out_chg",	word) == 0)	{read_value(ifs,  out_chg);}
+		else if (strcmp("charge_type",	word) == 0)	{read_value(ifs,  charge_type);}
 		else if (strcmp("compare_atomic",word) == 0)	{read_value(ifs,  compare_atomic);}
 		//add 2008-1-26
 		else if (strcmp("plot_wanq",	word) == 0)	{read_value(ifs,  plot_wanq);}
+		
 
 		//add 2008-3-10
 		else if (strcmp("cal_bands",	word) == 0)	{read_value(ifs,  cal_bands);}
 		else if (strcmp("cal_bands2",	word) == 0)	{read_value(ifs,  cal_bands2);}
 		else if (strcmp("chgtype",	word) == 0)  {read_value(ifs,  charge_type);}
 		else if (strcmp("cal_dos",	word) == 0)	{read_value(ifs,  cal_dos);}
+		else if (strcmp("sum_lm",	word) == 0)	{read_value(ifs,  sum_lm);}
 
 		//add 2008-3-17
 		else if (strcmp("bloch_begin",	word) == 0)	{read_value(ifs,  bloch_begin);}
@@ -218,7 +228,10 @@ void winput::Read(const std::string &fn)
 		else if (strcmp("spillage_outdir", word) == 0) {read_value(ifs,  spillage_outdir);}
 		else
 		{
-			std::cout << " The parametr name '" << word << "' is not used." << std::endl;
+			if (word[0] != '#' && word[0] != '/')
+			{
+				std::cout << " The parameter name '" << word << "' is not used." << std::endl;
+			}
 			ifs.ignore(150, '\n');
 		}
 
@@ -239,6 +252,7 @@ void winput::Default()
 	//	part1 : control
 	//========================
 	target		    = "test";
+	wlmr_dir	= "./";
 	rcut		    = 10;
 	before_iter	    = false;
 	after_iter	    = false;

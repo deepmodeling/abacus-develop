@@ -9,11 +9,15 @@ template <typename FPTYPE, typename Device>
 struct set_3d_fft_box_op {
     /// @brief Set the 3D fft box for fft transfrom between the recip and real space.
     /// To map the 1D psi(1D continuous array) to 3D box psi(fft box)
+    ///
+    /// Input Parameters
     /// @param dev - which device this function runs on
     /// @param npwk - number of planwaves
     /// @param box_index - the mapping function of 1D to 3D
     /// @param in - input psi within a 1D array(in recip space)
-    /// @return out - output psi within the 3D box(in recip space)
+    ///
+    /// Output Parameters
+    /// @param out - output psi within the 3D box(in recip space)
     void operator() (
         const Device* dev,
         const int npwk,
@@ -24,6 +28,16 @@ struct set_3d_fft_box_op {
 
 template <typename FPTYPE, typename Device>
 struct set_recip_to_real_output_op {
+    /// @brief Calculate the outputs after the FFT translation of recip_to_real
+    ///
+    /// Input Parameters
+    /// @param dev - which device this function runs on
+    /// @param nrxx - size of array
+    /// @param add - flag to control whether to add the input itself
+    /// @param in - input psi within a 1D array(in real space)
+    ///
+    /// Output Parameters
+    /// @param out - output psi within the 3D box(in real space)
     void operator() (
         const Device* dev,
         const int nrxx,
@@ -35,6 +49,18 @@ struct set_recip_to_real_output_op {
 
 template <typename FPTYPE, typename Device>
 struct set_real_to_recip_output_op {
+    /// @brief Calculate the outputs after the FFT translation of real_to_recip
+    ///
+    /// Input Parameters
+    /// @param dev - which device this function runs on
+    /// @param nxyz - size of array
+    /// @param add - flag to control whether to add the input itself
+    /// @param factor - input constant value
+    /// @param box_index - input box parameters
+    /// @param in - input psi within a 1D array(in recip space)
+    ///
+    /// Output Parameters
+    /// @param out - output psi within the 3D box(in recip space)
     void operator() (
         const Device* dev,
         const int npw_k,

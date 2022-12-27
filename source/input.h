@@ -336,7 +336,7 @@ class Input
 
     bool ocp;
     std::string ocp_set;
-    int out_mul; // qifeng add 2019-9-10
+    bool out_mul; // qifeng add 2019-9-10
     // added by zhengdy-soc
     bool noncolin;
     bool lspinorb;

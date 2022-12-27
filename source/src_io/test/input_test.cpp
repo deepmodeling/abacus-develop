@@ -1,4 +1,7 @@
 #include "gtest/gtest.h"
+#include "gmock/gmock.h"
+#include "module_base/global_variable.h"
+#include "module_base/tool_quit.h"
 /************************************************
  *  unit test of input.cpp
  ***********************************************/
@@ -17,6 +20,7 @@
 class InputTest : public testing::Test
 {
 protected:
+	std::string output;
 };
 
 TEST_F(InputTest, Default)
@@ -206,6 +210,7 @@ TEST_F(InputTest, Default)
         EXPECT_EQ(INPUT.vdw_cutoff_period[1],3);
         EXPECT_EQ(INPUT.vdw_cutoff_period[2],3);
         EXPECT_EQ(INPUT.exx_hybrid_alpha,"default");
+        EXPECT_EQ(INPUT.exx_real_number,"default");
         EXPECT_DOUBLE_EQ(INPUT.exx_hse_omega,0.11);
         EXPECT_TRUE(INPUT.exx_separate_loop);
         EXPECT_EQ(INPUT.exx_hybrid_step,100);
@@ -338,7 +343,7 @@ TEST_F(InputTest, Read)
         EXPECT_EQ(INPUT.bndpar,1);
         EXPECT_EQ(INPUT.kpar,1);
         EXPECT_EQ(INPUT.initsto_freq,0);
-        EXPECT_EQ(INPUT.method_sto,2);
+        EXPECT_EQ(INPUT.method_sto,3);
         EXPECT_EQ(INPUT.npart_sto,1);
         EXPECT_FALSE(INPUT.cal_cond);
         EXPECT_EQ(INPUT.dos_nche,100);
@@ -355,7 +360,7 @@ TEST_F(InputTest, Read)
         EXPECT_EQ(INPUT.wannier_spin,"up");
         EXPECT_DOUBLE_EQ(INPUT.kspacing,0.0);
         EXPECT_DOUBLE_EQ(INPUT.min_dist_coef,0.2);
-        EXPECT_EQ(INPUT.dft_functional,"default");
+        EXPECT_EQ(INPUT.dft_functional,"hse");
         EXPECT_DOUBLE_EQ(INPUT.xc_temperature,0.0);
         EXPECT_EQ(INPUT.nspin,1);
         EXPECT_DOUBLE_EQ(INPUT.nelec,0.0);
@@ -391,8 +396,8 @@ TEST_F(InputTest, Read)
         EXPECT_DOUBLE_EQ(INPUT.relax_bfgs_init,0.5);
         EXPECT_DOUBLE_EQ(INPUT.relax_scale_force,0.5);
         EXPECT_EQ(INPUT.nbspline,-1);
-        EXPECT_FALSE(INPUT.gamma_only);
-        EXPECT_FALSE(INPUT.gamma_only_local);
+        EXPECT_TRUE(INPUT.gamma_only);
+        EXPECT_TRUE(INPUT.gamma_only_local);
         EXPECT_DOUBLE_EQ(INPUT.ecutwfc,20.0);
         EXPECT_DOUBLE_EQ(INPUT.ecutrho,80.0);
         EXPECT_EQ(INPUT.ncx,0);
@@ -482,7 +487,7 @@ TEST_F(InputTest, Read)
         EXPECT_DOUBLE_EQ(INPUT.block_down,0.45);
         EXPECT_DOUBLE_EQ(INPUT.block_up,0.55);
         EXPECT_DOUBLE_EQ(INPUT.block_height,0.1);
-        EXPECT_EQ(INPUT.vdw_method,"none");
+        EXPECT_EQ(INPUT.vdw_method,"d2");
         EXPECT_EQ(INPUT.vdw_s6,"default");
         EXPECT_EQ(INPUT.vdw_s8,"default");
         EXPECT_EQ(INPUT.vdw_a1,"default");
@@ -502,6 +507,7 @@ TEST_F(InputTest, Read)
         EXPECT_EQ(INPUT.vdw_cutoff_period[1],3);
         EXPECT_EQ(INPUT.vdw_cutoff_period[2],3);
         EXPECT_EQ(INPUT.exx_hybrid_alpha,"default");
+        EXPECT_EQ(INPUT.exx_real_number,"default");
         EXPECT_DOUBLE_EQ(INPUT.exx_hse_omega,0.11);
         EXPECT_TRUE(INPUT.exx_separate_loop);
         EXPECT_EQ(INPUT.exx_hybrid_step,100);
@@ -554,7 +560,7 @@ TEST_F(InputTest, Read)
         EXPECT_DOUBLE_EQ(INPUT.tau,1.0798 * 1e-5);
         EXPECT_DOUBLE_EQ(INPUT.sigma_k,0.6);
         EXPECT_DOUBLE_EQ(INPUT.nc_k,0.00037);
-        EXPECT_EQ(INPUT.of_kinetic,"wt");
+        EXPECT_EQ(INPUT.of_kinetic,"vw");
         EXPECT_EQ(INPUT.of_method,"tn");
         EXPECT_EQ(INPUT.of_conv,"energy");
         EXPECT_DOUBLE_EQ(INPUT.of_tole,1e-6);
@@ -563,9 +569,9 @@ TEST_F(InputTest, Read)
         EXPECT_DOUBLE_EQ(INPUT.of_vw_weight,1.);
         EXPECT_DOUBLE_EQ(INPUT.of_wt_alpha,0.833333);
         EXPECT_DOUBLE_EQ(INPUT.of_wt_beta,0.833333);
-        EXPECT_DOUBLE_EQ(INPUT.of_wt_rho0,0.);
+        EXPECT_DOUBLE_EQ(INPUT.of_wt_rho0,1.);
         EXPECT_FALSE(INPUT.of_hold_rho0);
-        EXPECT_TRUE(INPUT.of_full_pw);
+        EXPECT_FALSE(INPUT.of_full_pw);
         EXPECT_EQ(INPUT.of_full_pw_dim,0);
         EXPECT_FALSE(INPUT.of_read_kernel);
         EXPECT_EQ(INPUT.of_kernel_file,"WTkernel.txt");
@@ -607,6 +613,720 @@ TEST_F(InputTest, Read)
 	EXPECT_DOUBLE_EQ(INPUT.mdp.msst_vel,0);
 	EXPECT_DOUBLE_EQ(INPUT.mdp.msst_vis,0);
 	EXPECT_EQ(INPUT.mdp.pot_file,"graph.pb");
+}
+
+TEST_F(InputTest, Default_2)
+{
+	//==================================================
+	// prepare default parameters for the 1st calling
+	EXPECT_EQ(INPUT.vdw_method,"d2");
+	EXPECT_EQ(INPUT.vdw_s6,"default");
+        EXPECT_EQ(INPUT.vdw_s8,"default");
+        EXPECT_EQ(INPUT.vdw_a1,"default");
+        EXPECT_EQ(INPUT.vdw_a2,"default");
+        EXPECT_EQ(INPUT.vdw_cutoff_radius,"default");
+	EXPECT_NE(INPUT.esolver_type,"sdft");
+	EXPECT_NE(INPUT.method_sto,1);
+	EXPECT_NE(INPUT.method_sto,2);
+	EXPECT_NE(INPUT.of_wt_rho0,0.0);
+	EXPECT_EQ(INPUT.exx_hybrid_alpha,"default");
+	EXPECT_EQ(INPUT.dft_functional,"hse");
+	EXPECT_EQ(INPUT.exx_real_number,"default");
+	EXPECT_TRUE(INPUT.gamma_only);
+        EXPECT_EQ(INPUT.exx_ccp_rmesh_times,"default");
+	EXPECT_EQ(INPUT.diago_proc,4);
+	EXPECT_EQ(GlobalV::NPROC,1);
+	EXPECT_EQ(INPUT.calculation,"scf");
+	EXPECT_EQ(INPUT.basis_type,"lcao");
+	INPUT.ks_solver = "default";
+	INPUT.lcao_ecut = 0;
+        EXPECT_DOUBLE_EQ(INPUT.ecutwfc,20.0);
+	// the 1st calling
+	INPUT.Default_2();
+	// ^^^^^^^^^^^^^^
+	EXPECT_EQ(INPUT.vdw_s6,"0.75");
+        EXPECT_EQ(INPUT.vdw_cutoff_radius,"56.6918");
+	EXPECT_EQ(INPUT.bndpar,1);
+	EXPECT_EQ(INPUT.method_sto,2);
+	EXPECT_TRUE(INPUT.of_hold_rho0);
+        EXPECT_EQ(INPUT.of_full_pw_dim,0);
+	EXPECT_EQ(INPUT.exx_hybrid_alpha,"0.25");
+	EXPECT_EQ(INPUT.exx_real_number,"1");
+        EXPECT_EQ(INPUT.exx_ccp_rmesh_times,"1.5");
+	EXPECT_EQ(INPUT.diago_proc,1);
+	EXPECT_EQ(INPUT.mem_saver,0);
+	EXPECT_EQ(INPUT.relax_nmax,1);
+#ifdef __ELPA
+	EXPECT_EQ(INPUT.ks_solver,"genelpa");
+#else
+	EXPECT_EQ(INPUT.ks_solver,"scalapack_gvx");
+#endif
+        EXPECT_DOUBLE_EQ(INPUT.lcao_ecut,20.0);
+	//==================================================
+	// prepare default parameters for the 2nd calling
+	INPUT.vdw_method = "d3_0";
+	INPUT.vdw_s6 = "default";
+	INPUT.vdw_s8 = "default";
+	INPUT.vdw_a1 = "default";
+	INPUT.vdw_a2 = "default";
+	INPUT.vdw_cutoff_radius = "default";
+	INPUT.exx_hybrid_alpha = "default";
+	INPUT.dft_functional = "hf";
+	INPUT.exx_real_number = "default";
+	INPUT.gamma_only = 0;
+        INPUT.exx_ccp_rmesh_times = "default";
+	INPUT.diago_proc = 0;
+	INPUT.calculation = "relax";
+	INPUT.relax_nmax = 0;
+	INPUT.basis_type = "pw";
+	INPUT.ks_solver = "default";
+	INPUT.gamma_only_local = 1;
+	// the 2nd calling
+	INPUT.Default_2();
+	// ^^^^^^^^^^^^^^
+	EXPECT_EQ(INPUT.vdw_s6,"1.0");
+	EXPECT_EQ(INPUT.vdw_s8,"0.722");
+	EXPECT_EQ(INPUT.vdw_a1,"1.217");
+	EXPECT_EQ(INPUT.vdw_a2,"1.0");
+	EXPECT_EQ(INPUT.vdw_cutoff_radius,"95");
+	EXPECT_EQ(INPUT.exx_hybrid_alpha,"1");
+	EXPECT_EQ(INPUT.exx_real_number,"0");
+        EXPECT_EQ(INPUT.exx_ccp_rmesh_times,"10");
+	EXPECT_EQ(INPUT.diago_proc,1);
+	EXPECT_EQ(INPUT.mem_saver,0);
+	EXPECT_EQ(INPUT.cal_force,1);
+	EXPECT_EQ(INPUT.relax_nmax,50);
+	EXPECT_EQ(INPUT.ks_solver,"cg");
+	EXPECT_EQ(INPUT.gamma_only_local,0);
+	EXPECT_EQ(INPUT.bx,1);
+	EXPECT_EQ(INPUT.by,1);
+	EXPECT_EQ(INPUT.bz,1);
+	//==================================================
+	// prepare default parameters for the 3rd calling
+	INPUT.vdw_method = "d3_bj";
+	INPUT.vdw_s6 = "default";
+	INPUT.vdw_s8 = "default";
+	INPUT.vdw_a1 = "default";
+	INPUT.vdw_a2 = "default";
+	INPUT.vdw_cutoff_radius = "default";
+	INPUT.calculation = "get_S";
+	INPUT.basis_type = "pw";
+	INPUT.pw_diag_thr = 1.0e-2;
+	INPUT.cal_force = 1;
+	INPUT.init_chg = "atomic";
+	INPUT.basis_type = "pw";
+	INPUT.ks_solver = "cg";
+	GlobalV::NPROC = 8;
+	INPUT.diago_proc = 1;
+	// the 3rd calling
+	INPUT.Default_2();
+	// ^^^^^^^^^^^^^^
+	EXPECT_EQ(INPUT.vdw_s6,"1.0");
+	EXPECT_EQ(INPUT.vdw_s8,"0.7875");
+	EXPECT_EQ(INPUT.vdw_a1,"0.4289");
+	EXPECT_EQ(INPUT.vdw_a2,"4.4407");
+	EXPECT_EQ(INPUT.vdw_cutoff_radius,"95");
+	EXPECT_EQ(GlobalV::CALCULATION,"nscf");
+	EXPECT_EQ(INPUT.relax_nmax,1);
+	EXPECT_EQ(INPUT.out_stru,0);
+	EXPECT_DOUBLE_EQ(INPUT.pw_diag_thr,1.0e-5);
+	EXPECT_FALSE(INPUT.cal_force);
+	EXPECT_EQ(INPUT.init_chg,"file");
+	EXPECT_EQ(INPUT.diago_proc,8);
+	//==================================================
+	// prepare default parameters for the 4th calling
+	INPUT.calculation = "istate";
+	// the 4th calling
+	INPUT.Default_2();
+	// ^^^^^^^^^^^^^^
+	EXPECT_EQ(GlobalV::CALCULATION,"istate");
+	EXPECT_EQ(INPUT.relax_nmax,1);
+	EXPECT_EQ(INPUT.out_stru,0);
+	EXPECT_EQ(INPUT.out_band,0);
+	EXPECT_EQ(INPUT.out_proj_band,0);
+	EXPECT_EQ(INPUT.cal_force,0);
+	EXPECT_EQ(INPUT.init_wfc,"file");
+	EXPECT_EQ(INPUT.init_chg,"atomic");
+	EXPECT_EQ(INPUT.chg_extrap,"atomic");
+	EXPECT_EQ(INPUT.out_chg,1);
+	EXPECT_EQ(INPUT.out_dm,0);
+	EXPECT_EQ(INPUT.out_dm1,0);
+	EXPECT_EQ(INPUT.out_pot,0);
+	//==================================================
+	// prepare default parameters for the 5th calling
+	INPUT.calculation = "ienvelope";
+	// the 5th calling
+	INPUT.Default_2();
+	// ^^^^^^^^^^^^^^
+	EXPECT_EQ(GlobalV::CALCULATION,"ienvelope");
+	EXPECT_EQ(INPUT.relax_nmax,1);
+	EXPECT_EQ(INPUT.out_stru,0);
+	EXPECT_EQ(INPUT.out_band,0);
+	EXPECT_EQ(INPUT.out_proj_band,0);
+	EXPECT_EQ(INPUT.cal_force,0);
+	EXPECT_EQ(INPUT.init_wfc,"file");
+	EXPECT_EQ(INPUT.init_chg,"atomic");
+	EXPECT_EQ(INPUT.chg_extrap,"atomic");
+	EXPECT_EQ(INPUT.out_chg,1);
+	EXPECT_EQ(INPUT.out_dm,0);
+	EXPECT_EQ(INPUT.out_dm1,0);
+	EXPECT_EQ(INPUT.out_pot,0);
+	//==================================================
+	// prepare default parameters for the 6th calling
+	INPUT.calculation = "md";
+	INPUT.mdp.md_nstep = 0;
+	INPUT.out_md_control = 0;
+	INPUT.mdp.md_tlast = -1.0;
+	INPUT.mdp.md_plast = -1.0;
+	INPUT.mdp.md_tfreq = 0;
+	INPUT.mdp.md_pfreq = 0;
+	INPUT.mdp.md_restart = 1;
+	INPUT.mdp.md_type = 1;
+	INPUT.mdp.md_pmode = "iso";
+	// the 6th calling
+	INPUT.Default_2();
+	// ^^^^^^^^^^^^^^
+	EXPECT_EQ(GlobalV::CALCULATION,"md");
+	EXPECT_EQ(INPUT.symmetry,0);
+	EXPECT_EQ(INPUT.cal_force,1);
+	EXPECT_EQ(INPUT.mdp.md_nstep,50);
+	EXPECT_EQ(INPUT.out_level,"m");
+	EXPECT_DOUBLE_EQ(INPUT.mdp.md_tlast,INPUT.mdp.md_tfirst);
+	EXPECT_DOUBLE_EQ(INPUT.mdp.md_plast,INPUT.mdp.md_pfirst);
+	EXPECT_DOUBLE_EQ(INPUT.mdp.md_tfreq,1.0/40/INPUT.mdp.md_dt);
+	EXPECT_DOUBLE_EQ(INPUT.mdp.md_pfreq,1.0/400/INPUT.mdp.md_dt);
+	EXPECT_EQ(INPUT.init_vel,1);
+	EXPECT_EQ(INPUT.cal_stress,1);
+	//==================================================
+	// prepare default parameters for the 7th calling
+	INPUT.calculation = "cell-relax";
+	INPUT.relax_nmax = 0;
+	// the 7th calling
+	INPUT.Default_2();
+	// ^^^^^^^^^^^^^^
+	EXPECT_EQ(INPUT.cal_force,1);
+	EXPECT_EQ(INPUT.cal_stress,1);
+	EXPECT_EQ(INPUT.relax_nmax,50);
+	//==================================================
+	// prepare default parameters for the 8th calling
+	INPUT.calculation = "test_memory";
+	// the 8th calling
+	INPUT.Default_2();
+	// ^^^^^^^^^^^^^^
+	EXPECT_EQ(INPUT.relax_nmax,1);
+	//==================================================
+	// prepare default parameters for the 9th calling
+	INPUT.calculation = "test_neighbour";
+	// the 9th calling
+	INPUT.Default_2();
+	// ^^^^^^^^^^^^^^
+	EXPECT_EQ(INPUT.relax_nmax,1);
+	//==================================================
+	// prepare default parameters for the 10th calling
+	INPUT.calculation = "gen_bessel";
+	// the 10th calling
+	INPUT.Default_2();
+	// ^^^^^^^^^^^^^^
+	EXPECT_EQ(INPUT.relax_nmax,1);
+	//==================================================
+	remove("INPUT");
+	remove("STRU");
+}
+
+TEST_F(InputTest, Check)
+{
+	INPUT.nbands = -1;
+	testing::internal::CaptureStdout();
+	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
+	output = testing::internal::GetCapturedStdout();
+	EXPECT_THAT(output,testing::HasSubstr("NBANDS must >= 0"));
+	INPUT.nbands = 2;
+	//
+	INPUT.nb2d = -1;
+	testing::internal::CaptureStdout();
+	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
+	output = testing::internal::GetCapturedStdout();
+	EXPECT_THAT(output,testing::HasSubstr("nb2d must > 0"));
+	INPUT.nb2d = 1;
+	//
+	INPUT.ntype = -1;
+	testing::internal::CaptureStdout();
+	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
+	output = testing::internal::GetCapturedStdout();
+	EXPECT_THAT(output,testing::HasSubstr("ntype must > 0"));
+	INPUT.ntype = 1;
+	//
+	INPUT.basis_type = "lcao";
+	INPUT.diago_proc = 2;
+	testing::internal::CaptureStdout();
+	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
+	output = testing::internal::GetCapturedStdout();
+	EXPECT_THAT(output,testing::HasSubstr("please don't set diago_proc with lcao base"));
+	INPUT.diago_proc = 1;
+	//
+	INPUT.kspacing = -1;
+	testing::internal::CaptureStdout();
+	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
+	output = testing::internal::GetCapturedStdout();
+	EXPECT_THAT(output,testing::HasSubstr("kspacing must > 0"));
+	INPUT.kspacing = 0.8;
+	//
+	INPUT.nelec = -1;
+	testing::internal::CaptureStdout();
+	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
+	output = testing::internal::GetCapturedStdout();
+	EXPECT_THAT(output,testing::HasSubstr("nelec < 0 is not allowed !"));
+	INPUT.nelec = 100;
+	//
+	INPUT.efield_flag = 0;
+	INPUT.dip_cor_flag = 1;
+	testing::internal::CaptureStdout();
+	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
+	output = testing::internal::GetCapturedStdout();
+	EXPECT_THAT(output,testing::HasSubstr("dipole correction is not active if efield_flag=false !"));
+	INPUT.dip_cor_flag = 0;
+	//
+	INPUT.efield_flag = 1;
+	INPUT.gate_flag = 1;
+	INPUT.dip_cor_flag = 0;
+	testing::internal::CaptureStdout();
+	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
+	output = testing::internal::GetCapturedStdout();
+	EXPECT_THAT(output,testing::HasSubstr("gate field cannot be used with efield if dip_cor_flag=false !"));
+	INPUT.gate_flag = 0;
+	//
+	INPUT.calculation = "nscf";
+	INPUT.out_dos = 3;
+	INPUT.symmetry = 1;
+	testing::internal::CaptureStdout();
+	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
+	output = testing::internal::GetCapturedStdout();
+	EXPECT_THAT(output,testing::HasSubstr("symmetry can't be used for out_dos==3(Fermi Surface Plotting) by now."));
+	INPUT.symmetry = 0;
+	//
+	INPUT.calculation = "istate";
+	INPUT.basis_type = "pw";
+	testing::internal::CaptureStdout();
+	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
+	output = testing::internal::GetCapturedStdout();
+	EXPECT_THAT(output,testing::HasSubstr("calculate = istate is only availble for LCAO"));
+	INPUT.basis_type = "lcao";
+	//
+	INPUT.calculation = "ienvelope";
+	INPUT.basis_type = "pw";
+	testing::internal::CaptureStdout();
+	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
+	output = testing::internal::GetCapturedStdout();
+	EXPECT_THAT(output,testing::HasSubstr("calculate = ienvelope is only availble for LCAO"));
+	INPUT.basis_type = "lcao";
+	//
+	INPUT.calculation = "md";
+	INPUT.mdp.md_dt = -1.0;
+	testing::internal::CaptureStdout();
+	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
+	output = testing::internal::GetCapturedStdout();
+	EXPECT_THAT(output,testing::HasSubstr("time interval of MD calculation should be set!"));
+	INPUT.mdp.md_dt = 1.0;
+	//
+	INPUT.mdp.md_tfirst = -1.0;
+	INPUT.esolver_type = "sdft";
+	testing::internal::CaptureStdout();
+	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
+	output = testing::internal::GetCapturedStdout();
+	EXPECT_THAT(output,testing::HasSubstr("temperature of MD calculation should be set!"));
+	INPUT.mdp.md_tfirst = 1.0;
+	//
+	INPUT.mdp.md_type = 1;
+	INPUT.mdp.md_pmode = "iso";
+	INPUT.mdp.md_pfirst = -1.0;
+	testing::internal::CaptureStdout();
+	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
+	output = testing::internal::GetCapturedStdout();
+	EXPECT_THAT(output,testing::HasSubstr("pressure of MD calculation should be set!"));
+	INPUT.mdp.md_pfirst = 1.0;
+	//
+	INPUT.mdp.md_type = 4;
+	INPUT.mdp.msst_qmass = -1.0;
+	testing::internal::CaptureStdout();
+	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
+	output = testing::internal::GetCapturedStdout();
+	EXPECT_THAT(output,testing::HasSubstr("msst_qmass must be greater than 0!"));
+	INPUT.mdp.msst_qmass = 1.0;
+	//
+	INPUT.esolver_type = "dp";
+	INPUT.mdp.pot_file = "graph.pb";
+	testing::internal::CaptureStdout();
+	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
+	output = testing::internal::GetCapturedStdout();
+	EXPECT_THAT(output,testing::HasSubstr("Can not find DP model !"));
+	INPUT.esolver_type = "ksdft";
+	//
+	INPUT.calculation = "gen_bessel";
+	INPUT.basis_type = "lcao";
+	testing::internal::CaptureStdout();
+	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
+	output = testing::internal::GetCapturedStdout();
+	EXPECT_THAT(output,testing::HasSubstr("to generate descriptors, please use pw basis"));
+	INPUT.basis_type = "pw";
+	//
+	INPUT.calculation = "arbitrary";
+	testing::internal::CaptureStdout();
+	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
+	output = testing::internal::GetCapturedStdout();
+	EXPECT_THAT(output,testing::HasSubstr("check 'calculation' !"));
+	INPUT.calculation = "scf";
+	//
+	INPUT.init_chg = "arbitrary";
+	testing::internal::CaptureStdout();
+	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
+	output = testing::internal::GetCapturedStdout();
+	EXPECT_THAT(output,testing::HasSubstr("wrong 'init_chg',not 'atomic', 'file',please check"));
+	INPUT.init_chg = "atomic";
+	//
+	INPUT.gamma_only_local = 0;
+	INPUT.out_dm = 1;
+	testing::internal::CaptureStdout();
+	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
+	output = testing::internal::GetCapturedStdout();
+	EXPECT_THAT(output,testing::HasSubstr("out_dm with k-point algorithm is not implemented yet."));
+	INPUT.out_dm = 0;
+	//
+	INPUT.gamma_only_local = 1;
+	INPUT.out_dm1 = 1;
+	testing::internal::CaptureStdout();
+	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
+	output = testing::internal::GetCapturedStdout();
+	EXPECT_THAT(output,testing::HasSubstr("out_dm1 is only for multi-k"));
+	INPUT.gamma_only_local = 0;
+	INPUT.out_dm1 = 0;
+	//
+	INPUT.basis_type = "pw";
+	INPUT.chg_extrap = "dm";
+	testing::internal::CaptureStdout();
+	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
+	output = testing::internal::GetCapturedStdout();
+	EXPECT_THAT(output,testing::HasSubstr("wrong 'chg_extrap=dm' is only available for local orbitals."));
+	INPUT.chg_extrap = "atomic";
+	//
+	INPUT.nbands = 100001;
+	testing::internal::CaptureStdout();
+	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
+	output = testing::internal::GetCapturedStdout();
+	EXPECT_THAT(output,testing::HasSubstr("nbnd >100000, out of range"));
+	INPUT.nbands = 100;
+	//
+	INPUT.nelec = 2*INPUT.nbands + 1;
+	testing::internal::CaptureStdout();
+	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
+	output = testing::internal::GetCapturedStdout();
+	EXPECT_THAT(output,testing::HasSubstr("nelec > 2*nbnd , bands not enough!"));
+	INPUT.nelec = INPUT.nbands;
+	//
+	INPUT.nspin = 3;
+	testing::internal::CaptureStdout();
+	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
+	output = testing::internal::GetCapturedStdout();
+	EXPECT_THAT(output,testing::HasSubstr("nspin does not equal to 1, 2, or 4!"));
+	INPUT.nspin = 1;
+	//
+	INPUT.basis_type = "pw";
+	INPUT.ks_solver = "genelpa";
+	testing::internal::CaptureStdout();
+	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
+	output = testing::internal::GetCapturedStdout();
+	EXPECT_THAT(output,testing::HasSubstr("genelpa can not be used with plane wave basis."));
+	//
+	INPUT.basis_type = "pw";
+	INPUT.ks_solver = "scalapack_gvx";
+	testing::internal::CaptureStdout();
+	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
+	output = testing::internal::GetCapturedStdout();
+	EXPECT_THAT(output,testing::HasSubstr("scalapack_gvx can not be used with plane wave basis."));
+	//
+	INPUT.basis_type = "pw";
+	INPUT.ks_solver = "lapack";
+	testing::internal::CaptureStdout();
+	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
+	output = testing::internal::GetCapturedStdout();
+	EXPECT_THAT(output,testing::HasSubstr("lapack can not be used with plane wave basis."));
+	//
+	INPUT.basis_type = "pw";
+	INPUT.ks_solver = "arbitrary";
+	testing::internal::CaptureStdout();
+	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
+	output = testing::internal::GetCapturedStdout();
+	EXPECT_THAT(output,testing::HasSubstr("please check the ks_solver parameter!"));
+	//
+	INPUT.basis_type = "lcao";
+	INPUT.ks_solver = "cg";
+	testing::internal::CaptureStdout();
+	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
+	output = testing::internal::GetCapturedStdout();
+	EXPECT_THAT(output,testing::HasSubstr("not ready for cg method in lcao ."));
+	//
+	INPUT.basis_type = "lcao";
+	INPUT.ks_solver = "genelpa";
+#ifndef __MPI
+	testing::internal::CaptureStdout();
+	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
+	output = testing::internal::GetCapturedStdout();
+	EXPECT_THAT(output,testing::HasSubstr("genelpa can not be used for series version."));
+#endif
+#ifndef __ELPA
+	testing::internal::CaptureStdout();
+	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
+	output = testing::internal::GetCapturedStdout();
+	EXPECT_THAT(output,testing::HasSubstr("Can not use genelpa if abacus is not compiled with ELPA. Please change ks_solver to scalapack_gvx."));
+#endif
+	//
+	INPUT.basis_type = "lcao";
+	INPUT.ks_solver = "scalapack_gvx";
+#ifndef __MPI
+	testing::internal::CaptureStdout();
+	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
+	output = testing::internal::GetCapturedStdout();
+	EXPECT_THAT(output,testing::HasSubstr("scalapack_gvx can not be used for series version."));
+#endif
+	//
+	INPUT.basis_type = "lcao";
+	INPUT.ks_solver = "lapack";
+#ifdef __MPI
+	testing::internal::CaptureStdout();
+	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
+	output = testing::internal::GetCapturedStdout();
+	EXPECT_THAT(output,testing::HasSubstr("ks_solver=lapack is not an option for parallel version of ABACUS (try genelpa)"));
+#endif
+	//
+	INPUT.basis_type = "lcao";
+	INPUT.ks_solver = "cusolver";
+#ifndef __MPI
+	testing::internal::CaptureStdout();
+	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
+	output = testing::internal::GetCapturedStdout();
+	EXPECT_THAT(output,testing::HasSubstr("Cusolver can not be used for series version."));
+#endif
+	//
+	INPUT.basis_type = "lcao";
+	INPUT.ks_solver = "arbitrary";
+	testing::internal::CaptureStdout();
+	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
+	output = testing::internal::GetCapturedStdout();
+	EXPECT_THAT(output,testing::HasSubstr("please check the ks_solver parameter!"));
+	//
+	INPUT.basis_type = "lcao_in_pw";
+	INPUT.ks_solver = "arbitrary";
+	testing::internal::CaptureStdout();
+	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
+	output = testing::internal::GetCapturedStdout();
+	EXPECT_THAT(output,testing::HasSubstr("LCAO in plane wave can only done with lapack."));
+	INPUT.ks_solver = "default";
+	//
+	INPUT.basis_type = "arbitrary";
+	testing::internal::CaptureStdout();
+	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
+	output = testing::internal::GetCapturedStdout();
+	EXPECT_THAT(output,testing::HasSubstr("please check the basis_type parameter!"));
+	//
+	INPUT.basis_type = "pw";
+	INPUT.gamma_only = 1;
+	testing::internal::CaptureStdout();
+	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
+	output = testing::internal::GetCapturedStdout();
+	EXPECT_THAT(output,testing::HasSubstr("gamma_only not implemented for plane wave now."));
+	INPUT.gamma_only = 0;
+	//
+	INPUT.basis_type = "lcao";
+	INPUT.kpar = 2;
+	testing::internal::CaptureStdout();
+	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
+	output = testing::internal::GetCapturedStdout();
+	EXPECT_THAT(output,testing::HasSubstr("kpar > 1 has not been supported for lcao calculation."));
+	INPUT.kpar = 1;
+	//
+	INPUT.relax_method = "arbitrary";
+	testing::internal::CaptureStdout();
+	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
+	output = testing::internal::GetCapturedStdout();
+	EXPECT_THAT(output,testing::HasSubstr("relax_method can only be sd, cg, bfgs or cg_bfgs."));
+	INPUT.relax_method = "cg";
+	//
+	INPUT.bx = 11; INPUT.by = 1; INPUT.bz = 1;
+	testing::internal::CaptureStdout();
+	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
+	output = testing::internal::GetCapturedStdout();
+	EXPECT_THAT(output,testing::HasSubstr("bx, or by, or bz is larger than 10!"));
+	INPUT.bx = 1;
+	//
+	INPUT.vdw_method = "d2";
+	INPUT.vdw_C6_unit = "arbitrary";
+	testing::internal::CaptureStdout();
+	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
+	output = testing::internal::GetCapturedStdout();
+	EXPECT_THAT(output,testing::HasSubstr("vdw_C6_unit must be Jnm6/mol or eVA6"));
+	INPUT.vdw_C6_unit = "eVA6";
+	//
+	INPUT.vdw_R0_unit = "arbitrary";
+	testing::internal::CaptureStdout();
+	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
+	output = testing::internal::GetCapturedStdout();
+	EXPECT_THAT(output,testing::HasSubstr("vdw_R0_unit must be A or Bohr"));
+	INPUT.vdw_R0_unit = "A";
+	//
+	INPUT.vdw_cutoff_type = "arbitrary";
+	testing::internal::CaptureStdout();
+	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
+	output = testing::internal::GetCapturedStdout();
+	EXPECT_THAT(output,testing::HasSubstr("vdw_cutoff_type must be radius or period"));
+	INPUT.vdw_cutoff_type = "radius";
+	//
+	INPUT.vdw_cutoff_period.x = 0;
+	testing::internal::CaptureStdout();
+	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
+	output = testing::internal::GetCapturedStdout();
+	EXPECT_THAT(output,testing::HasSubstr("vdw_cutoff_period <= 0 is not allowd"));
+	INPUT.vdw_cutoff_period.x = 3;
+	//
+	INPUT.vdw_cutoff_radius = "0";
+	testing::internal::CaptureStdout();
+	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
+	output = testing::internal::GetCapturedStdout();
+	EXPECT_THAT(output,testing::HasSubstr("vdw_cutoff_radius <= 0 is not allowd"));
+	INPUT.vdw_cutoff_radius = "1.0";
+	//
+	INPUT.vdw_radius_unit = "arbitrary";
+	testing::internal::CaptureStdout();
+	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
+	output = testing::internal::GetCapturedStdout();
+	EXPECT_THAT(output,testing::HasSubstr("vdw_radius_unit must be A or Bohr"));
+	INPUT.vdw_radius_unit = "A";
+	//
+	INPUT.vdw_cn_thr = 0;
+	testing::internal::CaptureStdout();
+	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
+	output = testing::internal::GetCapturedStdout();
+	EXPECT_THAT(output,testing::HasSubstr("vdw_cn_thr <= 0 is not allowd"));
+	INPUT.vdw_cn_thr = 1.0;
+	//
+	INPUT.vdw_cn_thr_unit = "arbitrary";
+	testing::internal::CaptureStdout();
+	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
+	output = testing::internal::GetCapturedStdout();
+	EXPECT_THAT(output,testing::HasSubstr("vdw_cn_thr_unit must be A or Bohr"));
+	INPUT.vdw_cn_thr_unit = "A";
+	//
+	INPUT.dft_functional = "scan0";
+	INPUT.exx_hybrid_alpha = "1.25";
+	testing::internal::CaptureStdout();
+	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
+	output = testing::internal::GetCapturedStdout();
+	EXPECT_THAT(output,testing::HasSubstr("must 0 <= exx_hybrid_alpha <= 1"));
+	INPUT.exx_hybrid_alpha = "0.25";
+	//
+	INPUT.exx_hybrid_step = 0;
+	testing::internal::CaptureStdout();
+	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
+	output = testing::internal::GetCapturedStdout();
+	EXPECT_THAT(output,testing::HasSubstr("must exx_hybrid_step > 0"));
+	INPUT.exx_hybrid_step = 1;
+	//
+	INPUT.exx_ccp_rmesh_times = "-1";
+	testing::internal::CaptureStdout();
+	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
+	output = testing::internal::GetCapturedStdout();
+	EXPECT_THAT(output,testing::HasSubstr("must exx_ccp_rmesh_times >= 1"));
+	INPUT.exx_ccp_rmesh_times = "1.5";
+	//
+	INPUT.exx_distribute_type = "arbitrary";
+	testing::internal::CaptureStdout();
+	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
+	output = testing::internal::GetCapturedStdout();
+	EXPECT_THAT(output,testing::HasSubstr("exx_distribute_type must be htime or kmeans2 or kmeans1"));
+	INPUT.exx_distribute_type = "htime";
+	//
+	INPUT.dft_functional = "opt_orb";
+	INPUT.exx_opt_orb_lmax = -1;
+	testing::internal::CaptureStdout();
+	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
+	output = testing::internal::GetCapturedStdout();
+	EXPECT_THAT(output,testing::HasSubstr("exx_opt_orb_lmax must >=0"));
+	INPUT.exx_opt_orb_lmax = 0;
+	//
+	INPUT.exx_opt_orb_ecut = -1;
+	testing::internal::CaptureStdout();
+	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
+	output = testing::internal::GetCapturedStdout();
+	EXPECT_THAT(output,testing::HasSubstr("exx_opt_orb_ecut must >=0"));
+	INPUT.exx_opt_orb_ecut = 0;
+	//
+	INPUT.exx_opt_orb_tolerence = -1;
+	testing::internal::CaptureStdout();
+	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
+	output = testing::internal::GetCapturedStdout();
+	EXPECT_THAT(output,testing::HasSubstr("exx_opt_orb_tolerence must >=0"));
+	INPUT.exx_opt_orb_tolerence = 0;
+	//
+	INPUT.berry_phase = 1;
+	INPUT.basis_type = "lcao_in_pw";
+	INPUT.ks_solver = "lapack";
+	testing::internal::CaptureStdout();
+	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
+	output = testing::internal::GetCapturedStdout();
+	EXPECT_THAT(output,testing::HasSubstr("calculate berry phase, please set basis_type = pw or lcao"));
+	INPUT.basis_type = "pw";
+	INPUT.ks_solver = "cg";
+	//
+	INPUT.calculation = "scf";
+	testing::internal::CaptureStdout();
+	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
+	output = testing::internal::GetCapturedStdout();
+	EXPECT_THAT(output,testing::HasSubstr("calculate berry phase, please set calculation = nscf"));
+	INPUT.calculation = "nscf";
+	//
+	INPUT.gdir = 4;
+	testing::internal::CaptureStdout();
+	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
+	output = testing::internal::GetCapturedStdout();
+	EXPECT_THAT(output,testing::HasSubstr("calculate berry phase, please set gdir = 1 or 2 or 3"));
+	INPUT.gdir = 3;
+	INPUT.berry_phase = 0;
+	//
+	INPUT.towannier90 = 1;
+	INPUT.basis_type = "lcao_in_pw";
+	INPUT.ks_solver = "lapack";
+	testing::internal::CaptureStdout();
+	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
+	output = testing::internal::GetCapturedStdout();
+	EXPECT_THAT(output,testing::HasSubstr("to use towannier90, please set basis_type = pw or lcao"));
+	INPUT.basis_type = "pw";
+	INPUT.ks_solver = "cg";
+	//
+	INPUT.calculation = "scf";
+	testing::internal::CaptureStdout();
+	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
+	output = testing::internal::GetCapturedStdout();
+	EXPECT_THAT(output,testing::HasSubstr("to use towannier90, please set calculation = nscf"));
+	INPUT.calculation = "nscf";
+	//
+	INPUT.nspin = 2;
+	INPUT.wannier_spin = "arbitrary";
+	testing::internal::CaptureStdout();
+	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
+	output = testing::internal::GetCapturedStdout();
+	EXPECT_THAT(output,testing::HasSubstr("to use towannier90, please set wannier_spin = up or down"));
+	INPUT.wannier_spin = "up";
+	INPUT.towannier90 = 0;
+	//
+	INPUT.read_file_dir = "arbitrary";
+	testing::internal::CaptureStdout();
+	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
+	output = testing::internal::GetCapturedStdout();
+	EXPECT_THAT(output,testing::HasSubstr("please set right files directory for reading in."));
+	/*
+	testing::internal::CaptureStdout();
+	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
+	output = testing::internal::GetCapturedStdout();
+	EXPECT_THAT(output,testing::HasSubstr(""));
+	*/
 }
 
 #undef private

@@ -11,6 +11,10 @@
 #endif
 #include "../module_base/timer.h"
 
+#ifdef __EXX
+#include "LCAO_hamilt.hpp"
+#endif
+
 LCAO_Hamilt::LCAO_Hamilt()
 {
 }
@@ -19,7 +23,7 @@ LCAO_Hamilt::~LCAO_Hamilt()
 {
     if(GlobalV::test_deconstructor)
     {
-        std::cout << " ~LCAO_Hamilt()" << std::endl;	
+        std::cout << " ~LCAO_Hamilt()" << std::endl;
     }
 }
 
@@ -32,8 +36,8 @@ void LCAO_Hamilt::grid_prepare(void)
     ModuleBase::timer::tick("LCAO_Hamilt","grid_prepare");
 
     if(GlobalV::GAMMA_ONLY_LOCAL)
-    {   
-        this->GG.prep_grid(GlobalC::bigpw->nbx, GlobalC::bigpw->nby, GlobalC::bigpw->nbzp, GlobalC::bigpw->nbzp_start, GlobalC::rhopw->nxyz);	
+    {
+        this->GG.prep_grid(GlobalC::bigpw->nbx, GlobalC::bigpw->nby, GlobalC::bigpw->nbzp, GlobalC::bigpw->nbzp_start, GlobalC::rhopw->nxyz);
 
     }
     else // multiple k-points
@@ -444,7 +448,7 @@ void LCAO_Hamilt::calculat_HR_dftu_sparse(const int &current_spin, const double 
             }
 
         }
-        
+
         count++;
     }
 
@@ -556,7 +560,7 @@ void LCAO_Hamilt::calculat_HR_dftu_soc_sparse(const int &current_spin, const dou
             }
 
         }
-        
+
         count++;
     }
 
@@ -576,7 +580,7 @@ void LCAO_Hamilt::calculat_HR_dftu_soc_sparse(const int &current_spin, const dou
 void LCAO_Hamilt::calculate_HR_exx_sparse(const int &current_spin, const double &sparse_threshold)
 {
 	ModuleBase::TITLE("LCAO_Hamilt","calculate_HR_exx_sparse");
-	ModuleBase::timer::tick("LCAO_Hamilt","calculate_HR_exx_sparse");	
+	ModuleBase::timer::tick("LCAO_Hamilt","calculate_HR_exx_sparse");
 
 	const Abfs::Vector3_Order<int> Rs_period(GlobalC::kv.nmp[0], GlobalC::kv.nmp[1], GlobalC::kv.nmp[2]);
 	if(Rs_period.x<=0 || Rs_period.y<=0 || Rs_period.z<=0)
@@ -645,8 +649,8 @@ void LCAO_Hamilt::calculate_HR_exx_sparse(const int &current_spin, const double 
 
     // In the future it should be changed to mpi communication, since some Hexx(R) of R in Rs may be zeros
     this->LM->all_R_coor.insert(Rs.begin(),Rs.end());
-    
-	ModuleBase::timer::tick("LCAO_Hamilt","calculate_HR_exx_sparse");	
+
+	ModuleBase::timer::tick("LCAO_Hamilt","calculate_HR_exx_sparse");
 }
 #endif // __EXX
 
@@ -659,7 +663,7 @@ void LCAO_Hamilt::clear_zero_elements(const int &current_spin, const double &spa
         {
             for (auto &row_loop : R_loop.second)
             {
-                auto &col_map = row_loop.second; 
+                auto &col_map = row_loop.second;
                 auto iter = col_map.begin();
                 while (iter != col_map.end())
                 {
@@ -679,7 +683,7 @@ void LCAO_Hamilt::clear_zero_elements(const int &current_spin, const double &spa
         {
             for (auto &row_loop : R_loop.second)
             {
-                auto &col_map = row_loop.second; 
+                auto &col_map = row_loop.second;
                 auto iter = col_map.begin();
                 while (iter != col_map.end())
                 {
@@ -702,7 +706,7 @@ void LCAO_Hamilt::clear_zero_elements(const int &current_spin, const double &spa
         {
             for (auto &row_loop : R_loop.second)
             {
-                auto &col_map = row_loop.second; 
+                auto &col_map = row_loop.second;
                 auto iter = col_map.begin();
                 while (iter != col_map.end())
                 {
@@ -722,7 +726,7 @@ void LCAO_Hamilt::clear_zero_elements(const int &current_spin, const double &spa
         {
             for (auto &row_loop : R_loop.second)
             {
-                auto &col_map = row_loop.second; 
+                auto &col_map = row_loop.second;
                 auto iter = col_map.begin();
                 while (iter != col_map.end())
                 {

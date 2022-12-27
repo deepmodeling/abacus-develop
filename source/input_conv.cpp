@@ -63,7 +63,7 @@ void Input_Conv::Convert(void)
         }
         if(INPUT.relax_new && INPUT.relax_method!="cg")
         {
-            ModuleBase::WARNING_QUIT("Input_Conv","only CG has been implemented for relax_new");
+            INPUT.relax_new = false;
         }
         if(!INPUT.relax_new && (INPUT.fixed_axes == "shape" || INPUT.fixed_axes == "volume"))
         {
@@ -419,14 +419,19 @@ void Input_Conv::Convert(void)
         GlobalC::exx_info.info_global.cal_exx = false;
         Exx_Abfs::Jle::generate_matrix = true;
     }
+    else if(INPUT.rpa)
+    {
+        GlobalC::exx_info.info_global.ccp_type = Conv_Coulomb_Pot_K::Ccp_Type::Hf;
+    }
     else
     {
         GlobalC::exx_info.info_global.cal_exx = false;
     }
 
-    if (GlobalC::exx_info.info_global.cal_exx || Exx_Abfs::Jle::generate_matrix)
+    if (GlobalC::exx_info.info_global.cal_exx || Exx_Abfs::Jle::generate_matrix || INPUT.rpa)
     {
         //EXX case, convert all EXX related variables 
+        //GlobalC::exx_info.info_global.cal_exx = true;
         GlobalC::exx_info.info_global.hybrid_alpha = std::stod(INPUT.exx_hybrid_alpha);
         XC_Functional::get_hybrid_alpha(std::stod(INPUT.exx_hybrid_alpha));
         GlobalC::exx_info.info_global.hse_omega = INPUT.exx_hse_omega;
@@ -589,7 +594,18 @@ void Input_Conv::Convert(void)
     GlobalV::of_full_pw_dim = INPUT.of_full_pw_dim;
     GlobalV::of_read_kernel = INPUT.of_read_kernel;
     GlobalV::of_kernel_file = INPUT.of_kernel_file;
-    
+    //-----------------------------------------------
+    // set read_file_dir
+    //-----------------------------------------------
+    if (INPUT.read_file_dir == "auto")
+    {
+        GlobalV::global_readin_dir = GlobalV::global_out_dir;
+    }
+    else
+    {
+        GlobalV::global_readin_dir = INPUT.read_file_dir + '/';
+    }
+
     ModuleBase::timer::tick("Input_Conv", "Convert");
     return;
 }

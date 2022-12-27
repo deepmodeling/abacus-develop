@@ -12,16 +12,43 @@ namespace memory {
 
 template <typename FPTYPE, typename Device> 
 struct resize_memory_op {
+  /// @brief Allocate memory for a given pointer. Note this op will free the pointer first.
+  ///
+  /// Input Parameters
+  /// \param dev : the type of computing device
+  /// \param size : array size
+  ///
+  /// Output Parameters
+  /// \param arr : allocated array
   void operator()(const Device* dev, FPTYPE*& arr, const size_t size);
 };
 
 template <typename FPTYPE, typename Device> 
 struct set_memory_op {
+  /// @brief memset for multi-device
+  ///
+  /// Input Parameters
+  /// \param dev : the type of computing device
+  /// \param var : the specified constant value
+  /// \param size : array size
+  ///
+  /// Output Parameters
+  /// \param arr : output array initialized by the input value
   void operator()(const Device* dev, FPTYPE* arr, const int var, const size_t size);
 };
 
 template <typename FPTYPE, typename Device_out, typename Device_in> 
 struct synchronize_memory_op {
+  /// @brief memcpy for multi-device
+  ///
+  /// Input Parameters
+  /// \param dev_out : the type of computing device of arr_out
+  /// \param dev_in : the type of computing device of arr_in
+  /// \param arr_in : input array
+  /// \param size : array size
+  ///
+  /// Output Parameters
+  /// \param arr_out : output array initialized by the input array
   void operator()(
       const Device_out* dev_out, 
       const Device_in* dev_in, 
@@ -30,8 +57,13 @@ struct synchronize_memory_op {
       const size_t size);
 };
 
-template <typename FPTYPE, typename Device> 
+template <typename FPTYPE, typename Device>
 struct delete_memory_op {
+  /// @brief free memory for multi-device
+  ///
+  /// Input Parameters
+  /// \param dev : the type of computing device
+  /// \param arr : the input array
   void operator()(const Device* dev, FPTYPE* arr);
 };
 

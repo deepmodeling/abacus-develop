@@ -208,6 +208,15 @@ bool Relax::setup_gradient(const ModuleBase::matrix& force, const ModuleBase::ma
         GlobalV::ofs_running << "\n Threshold is = " << GlobalV::STRESS_THR << std::endl;
     }
 
+	if(force_converged)
+	{
+		GlobalV::ofs_running << "\n Relaxation is converged!" << std::endl;
+	}
+	else
+	{
+		GlobalV::ofs_running << "\n Relaxation is not converged yet!" << std::endl;
+	}
+
     return force_converged;
 }
 

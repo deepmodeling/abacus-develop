@@ -25,6 +25,8 @@ option(ENABLE_COVERAGE "Enable coverage build." OFF)
 option(ENABLE_LIBRI "Enable EXX with LibRI." OFF)
 option(USE_ELPA "Enable ELPA" ON)
 option(GIT_SUBMODULE "Check submodules during build" ON)
+# Do not enable it if generated code will run on different CPUs
+option(ENABLE_NATIVE_OPTIMIZATION "Enable compilation optimization for the native machine's CPU type" OFF)
 
 if(ENABLE_LCAO)
   set(ABACUS_BIN_NAME abacus)
@@ -82,6 +84,11 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
   else()
     add_compile_options(-g)
   endif()
+endif()
+
+if (ENABLE_NATIVE_OPTIMIZATION)
+  set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -march=native -mtune=native")
+  set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native -mtune=native")
 endif()
 
 if(ENABLE_LCAO)
@@ -322,7 +329,7 @@ if(DEFINED Libxc_DIR)
   set(ENABLE_LIBXC ON)
 endif()
 if(ENABLE_LIBXC)
-  find_package(Libxc 5.1.7 REQUIRED HINTS ${Libxc_DIR}/share/cmake/Libxc)
+  find_package(Libxc 5.1.7 REQUIRED HINTS ${Libxc_DIR}/share/cmake/Libxc ${Libxc_DIR}/lib/cmake/Libxc)
   if(${Libxc_FOUND})
     message(STATUS "Found Libxc: version " ${Libxc_VERSION})
     target_link_libraries(${ABACUS_BIN_NAME} Libxc::xc)
@@ -456,8 +463,7 @@ endif()
 if (ENABLE_LIBRI)
   target_link_libraries(${ABACUS_BIN_NAME}
           ri
-          libri
-          rpa)
+          libri)
 endif()
 
 install(PROGRAMS ${ABACUS_BIN_PATH}

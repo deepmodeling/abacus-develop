@@ -279,4 +279,122 @@ void dngv_op<double, psi::DEVICE_GPU>::operator()(const psi::DEVICE_GPU* d,
     cusolverErrcheck(cusolverDnDestroy(cusolverH));
 }
 
+template <>
+void dngvd_op<double, psi::DEVICE_GPU>::operator()(const psi::DEVICE_GPU* d,
+                                                   const int nstart,
+                                                   const int ldh,
+                                                   const std::complex<double>* A,
+                                                   const std::complex<double>* B,
+                                                   double* W,
+                                                   std::complex<double>* V)
+{
+    assert(nstart == ldh);
+
+    // A to V
+    checkCudaErrors(cudaMemcpy(V, A, sizeof(double2) * ldh * nstart, cudaMemcpyDeviceToDevice));
+
+    int* devInfo;
+    checkCudaErrors(cudaMalloc((void**)&devInfo, sizeof(int)));
+
+    // calculate the sizes needed for pre-allocated buffer.
+    int lwork = 0;
+    cusolverErrcheck(cusolverDnZhegvd_bufferSize(
+        cusolver_H,
+        CUSOLVER_EIG_TYPE_1, // itype = CUSOLVER_EIG_TYPE_1: A*x = (lambda)*B*x.
+        CUSOLVER_EIG_MODE_VECTOR, // jobz = CUSOLVER_EIG_MODE_VECTOR : Compute eigenvalues and eigenvectors.
+        CUBLAS_FILL_MODE_UPPER,
+        nstart,
+        (cuDoubleComplex*)V,
+        ldh,
+        (cuDoubleComplex*)B,
+        ldh,
+        W,
+        &lwork));
+    // allocate memery
+    cuDoubleComplex* d_work;
+    checkCudaErrors(cudaMalloc((void**)&d_work, sizeof(cuDoubleComplex) * lwork));
+
+    // compute eigenvalues and eigenvectors.
+    cusolverErrcheck(cusolverDnZhegvd(
+        cusolver_H,
+        CUSOLVER_EIG_TYPE_1, // itype = CUSOLVER_EIG_TYPE_1: A*x = (lambda)*B*x.
+        CUSOLVER_EIG_MODE_VECTOR, // jobz = CUSOLVER_EIG_MODE_VECTOR : Compute eigenvalues and eigenvectors.
+        CUBLAS_FILL_MODE_UPPER,
+        nstart,
+        (cuDoubleComplex*)V,
+        ldh,
+        (cuDoubleComplex*)B,
+        ldh,
+        W,
+        d_work,
+        lwork,
+        devInfo));
+
+    checkCudaErrors(cudaDeviceSynchronize());
+
+    int info_gpu;
+    checkCudaErrors(cudaMemcpy(&info_gpu, devInfo, sizeof(int), cudaMemcpyDeviceToHost));
+    assert(0 == info_gpu);
+
+    // free the buffer and destroy
+    checkCudaErrors(cudaFree(d_work));
+    checkCudaErrors(cudaFree(devInfo));
+}
+
+template <>
+void dnevx_op<double, psi::DEVICE_GPU>::operator()(const psi::DEVICE_GPU* d,
+                                                   const int nstart,
+                                                   const int ldh,
+                                                   const std::complex<double>* A,
+                                                   const int m,
+                                                   double* W,
+                                                   std::complex<double>* V)
+{
+    assert(nstart <= ldh);
+
+    // A to V
+    checkCudaErrors(cudaMemcpy(V, A, sizeof(double2) * nstart * ldh, cudaMemcpyDeviceToDevice));
+
+    int* devInfo;
+    checkCudaErrors(cudaMalloc((void**)&devInfo, sizeof(int)));
+
+    // calculate the sizes needed for pre-allocated buffer.
+    int lwork = 0;
+    cusolverErrcheck(cusolverDnZheevd_bufferSize(
+        cusolver_H,
+        CUSOLVER_EIG_MODE_VECTOR,
+        CUBLAS_FILL_MODE_LOWER,
+        nstart,
+        (cuDoubleComplex*)V,
+        ldh,
+        W,
+        &lwork));
+    // allocate memery
+    cuDoubleComplex* d_work;
+    checkCudaErrors(cudaMalloc((void**)&d_work, sizeof(cuDoubleComplex) * lwork));
+
+    // compute eigenvalues and eigenvectors.
+    cusolverErrcheck(cusolverDnZheevd(
+        cusolver_H,
+        CUSOLVER_EIG_MODE_VECTOR,
+        CUBLAS_FILL_MODE_LOWER,
+        nstart,
+        (cuDoubleComplex*)V,
+        ldh,
+        W,
+        d_work,
+        lwork,
+        devInfo));
+
+    checkCudaErrors(cudaDeviceSynchronize());
+
+    int info_gpu;
+    checkCudaErrors(cudaMemcpy(&info_gpu, devInfo, sizeof(int), cudaMemcpyDeviceToHost));
+    assert(0 == info_gpu);
+
+    // free the buffer and destroy
+    checkCudaErrors(cudaFree(d_work));
+    checkCudaErrors(cudaFree(devInfo));
+}
+
 } // namespace hsolver

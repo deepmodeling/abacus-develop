@@ -7,6 +7,20 @@
 namespace hamilt {
 template <typename FPTYPE, typename Device> 
 struct ekinetic_pw_op {
+  /// @brief Compute the ekinetic potential of hPsi
+  ///
+  /// Input Parameters
+  /// \param dev : the type of computing device
+  /// \param nband : nbands
+  /// \param npw : number of planewaves of current k point
+  /// \param max_npw : max number of planewaves of all k points
+  /// \param tpiba2 : GlobalC::ucell.tpiba2
+  /// \param spin : current spin
+  /// \param gk2_ik : GlobalC::wfcpw->gk2
+  /// \param tmpsi_in : intermediate array
+  ///
+  /// Output Parameters
+  /// \param tmhpsi : output array
   void operator() (
       const Device* dev,
       const int& nband,
