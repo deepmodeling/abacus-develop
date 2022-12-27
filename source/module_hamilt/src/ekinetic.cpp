@@ -1,14 +1,11 @@
 #include "module_hamilt/include/ekinetic.h"
 
-#include <iomanip>
-#include <iostream>
-
-using namespace hamilt; 
+namespace hamilt {
 
 template <typename FPTYPE> 
-struct hamilt::ekinetic_pw_op<FPTYPE, psi::DEVICE_CPU> {
+struct ekinetic_pw_op<FPTYPE, psi::DEVICE_CPU> {
   void operator() (
-      const psi::DEVICE_CPU* dev,
+      const psi::DEVICE_CPU* /*dev*/,
       const int& nband,
       const int& npw,
       const int& max_npw,
@@ -27,7 +24,8 @@ struct hamilt::ekinetic_pw_op<FPTYPE, psi::DEVICE_CPU> {
   }
 };
 
-namespace hamilt{
+template struct ekinetic_pw_op<float, psi::DEVICE_CPU>;
 template struct ekinetic_pw_op<double, psi::DEVICE_CPU>;
-}
+
+}  // namespace hamilt
 

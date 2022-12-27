@@ -25,6 +25,8 @@ option(ENABLE_COVERAGE "Enable coverage build." OFF)
 option(ENABLE_LIBRI "Enable EXX with LibRI." OFF)
 option(USE_ELPA "Enable ELPA" ON)
 option(GIT_SUBMODULE "Check submodules during build" ON)
+# Do not enable it if generated code will run on different CPUs
+option(ENABLE_NATIVE_OPTIMIZATION "Enable compilation optimization for the native machine's CPU type" OFF)
 
 if(ENABLE_LCAO)
   set(ABACUS_BIN_NAME abacus)
@@ -82,6 +84,11 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
   else()
     add_compile_options(-g)
   endif()
+endif()
+
+if (ENABLE_NATIVE_OPTIMIZATION)
+  set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -march=native -mtune=native")
+  set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native -mtune=native")
 endif()
 
 if(ENABLE_LCAO)
@@ -152,16 +159,17 @@ if(USE_CUDA OR USE_CUSOLVER_LCAO)
   set(CMAKE_CUDA_STANDARD_REQUIRED ON)
   set(CMAKE_CUDA_HOST_COMPILER ${CMAKE_CXX_COMPILER})
   enable_language(CUDA)
+  set_property(
+    TARGET ${ABACUS_BIN_NAME}
+    PROPERTY CUDA_ARCHITECTURES
+    60 # P100
+    70 # V100
+    75 # T4
+    80 # A100
+  )
   target_link_libraries(${ABACUS_BIN_NAME}
     -lcudart
     -lnvToolsExt
-  )
-  set_property(TARGET ${ABACUS_BIN_NAME}
-  PROPERTY CUDA_ARCHITECTURES
-  60 # P100
-  70 # V100
-  75 # T4
-  80 # A100
   )
   include_directories(${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
   if (USE_CUDA)

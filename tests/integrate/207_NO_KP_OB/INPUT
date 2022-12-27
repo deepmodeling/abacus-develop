@@ -18,6 +18,7 @@ scf_nmax			100
 #out_chg      1
 init_chg        file
 out_band            1
+out_proj_band		1
 pw_diag_thr                0.00001
 
 #Parameters (3.Basis)

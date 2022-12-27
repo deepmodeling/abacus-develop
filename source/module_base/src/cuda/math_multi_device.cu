@@ -94,7 +94,7 @@ __global__ void cal_ylm_real(
             p[l1 * (lmax + 1) * ng + l * ng + ig] =
                     cost * l3 * p[l1 * (lmax + 1) * ng + l1 * ng + ig];
             FPTYPE x2 = (1.0 - cost * cost) > 0.0 ? (1.0 - cost * cost) : 0.0;
-            p[l * (lmax + 1) * ng + l * ng + ig] = __semi_fact(l3) * pow(x2, static_cast<double>(l) / 2.0);//mohan modify 2007-10-13
+            p[l * (lmax + 1) * ng + l * ng + ig] = __semi_fact(l3) * pow(x2, static_cast<FPTYPE>(l) / 2.0);//mohan modify 2007-10-13
             if (l % 2 == 1) {
                 p[l * (lmax + 1) * ng + l * ng + ig] *= -1;
             }
@@ -107,8 +107,8 @@ __global__ void cal_ylm_real(
         for (int m = 1; m <= l; m++) {
             // Y_lm, m > 0
             const FPTYPE same =
-                    c * sqrt(__fact<double>(l - m) /
-                             __fact<double>(l + m)) * SQRT2;
+                    c * sqrt(__fact<FPTYPE>(l - m) /
+                             __fact<FPTYPE>(l + m)) * SQRT2;
 
             ++lm;
             ylm[lm * ng + ig] = same * p[m * (lmax + 1) * ng + l * ng + ig] * cos(m * phi);
@@ -148,6 +148,7 @@ void cal_ylm_real_op<FPTYPE, psi::DEVICE_GPU>::operator() (
         ylm);
 }
 
+template struct cal_ylm_real_op<float, psi::DEVICE_GPU>;
 template struct cal_ylm_real_op<double, psi::DEVICE_GPU>;
 
 }  // namespace src_pw

@@ -52,8 +52,11 @@ class DiagoIterAssist
     constexpr static const psi::DEVICE_GPU * gpu_ctx = {};
 
     using hpsi_info = typename hamilt::Operator<std::complex<FPTYPE>, Device>::hpsi_info;
-    using resmem_var_op = psi::memory::resize_memory_op<FPTYPE, psi::DEVICE_GPU>;
-    using delmem_var_op = psi::memory::delete_memory_op<FPTYPE, psi::DEVICE_GPU>;
+
+    using setmem_var_op = psi::memory::set_memory_op<FPTYPE, Device>;
+    using resmem_var_op = psi::memory::resize_memory_op<FPTYPE, Device>;
+    using delmem_var_op = psi::memory::delete_memory_op<FPTYPE, Device>;
+    using syncmem_var_op = psi::memory::synchronize_memory_op<FPTYPE, Device, Device>;
     using syncmem_var_h2d_op = psi::memory::synchronize_memory_op<FPTYPE, psi::DEVICE_GPU, psi::DEVICE_CPU>;
     using syncmem_var_d2h_op = psi::memory::synchronize_memory_op<FPTYPE, psi::DEVICE_CPU, psi::DEVICE_GPU>;
 
