@@ -355,7 +355,7 @@ if(DEFINED DeePMD_DIR)
   )
   endif()
   if(NOT DEFINED TensorFlow_DIR)
-    message(FATAL_ERROR "Please define TensorFlow_DIR!")
+    set(TensorFlow_DIR ${DeePMD_DIR})
   endif()
 endif()
 
