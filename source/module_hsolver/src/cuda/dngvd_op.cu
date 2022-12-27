@@ -85,8 +85,6 @@ void xhegvd_wrapper (
     int * devInfo = nullptr;
     int lwork = 0, info_gpu = 0;
     float2 * work = nullptr;
-    cusolverDnHandle_t cusolverH = {};
-    cusolverErrcheck(cusolverDnCreate(&cusolverH));
     checkCudaErrors(cudaMalloc((void**)&devInfo, sizeof(int)));
 
     // calculate the sizes needed for pre-allocated buffer.
@@ -105,7 +103,6 @@ void xhegvd_wrapper (
     // free the buffer
     checkCudaErrors(cudaFree(work));
     checkCudaErrors(cudaFree(devInfo));
-    cusolverErrcheck(cusolverDnDestroy(cusolverH));
 }
 
 static inline
@@ -361,32 +358,12 @@ struct dngvd_op<FPTYPE, psi::DEVICE_GPU> {
             FPTYPE *W, // eigenvalue
             std::complex<FPTYPE> *V)
     {
-        using transpose_op = matrixTranspose_op<FPTYPE, psi::DEVICE_GPU>;
         assert(nstart == ldh);
-        // init A_eigenvectors & transpose_B
-        std::complex<FPTYPE> * A_eigenvectors = nullptr, * transpose_B = nullptr;
-        checkCudaErrors(cudaMalloc((void **) &A_eigenvectors, sizeof(std::complex<FPTYPE>) * ldh * nstart));
-        checkCudaErrors(cudaMalloc((void **) &transpose_B, sizeof(std::complex<FPTYPE>) * ldh * nstart));
+        // A to V
+        checkCudaErrors(cudaMemcpy(V, A, sizeof(std::complex<FPTYPE>) * ldh * nstart, cudaMemcpyDeviceToDevice));
 
-        // transpose A, B  to A_eigenvectors, transpose_B
-        transpose_op()(d, ldh, nstart, A, A_eigenvectors);
-        transpose_op()(d, ldh, nstart, B, transpose_B);
-
-        // init all_W
-        FPTYPE *all_W = nullptr;
-        checkCudaErrors(cudaMalloc((void **) &all_W, sizeof(FPTYPE) * ldh));
-
-        xhegvd_wrapper(CUBLAS_FILL_MODE_UPPER, ldh, A_eigenvectors, nstart,
-                       transpose_B, nstart, all_W);
-
-        // get all eigenvalues and eigenvectors.
-        checkCudaErrors(cudaMemcpy(W, all_W, sizeof(FPTYPE) * ldh, cudaMemcpyDeviceToDevice));
-        transpose_op()(d, ldh, nstart, A_eigenvectors, V);
-
-        // free resources and destroy
-        checkCudaErrors(cudaFree(A_eigenvectors));
-        checkCudaErrors(cudaFree(transpose_B));
-        checkCudaErrors(cudaFree(all_W));
+        xhegvd_wrapper(CUBLAS_FILL_MODE_UPPER, nstart, V, ldh,
+                       B, ldh, W);
     }
 };
 

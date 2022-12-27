@@ -34,8 +34,9 @@ extern "C"
              int* iwork, int* liwork, int* info);
 
     void zhegvd_(const int* itype, const char* jobz, const char* uplo, const int* n,
-                 std::complex<double>* a, const int* lda, std::complex<double>* b, const int* ldb, 
-                 double* w, std::complex<double>* work, int* lwork, double* rwork, int* lrwork,
+                 std::complex<double>* a, const int* lda, 
+                 const std::complex<double>* b, const int* ldb, double* w,
+                 std::complex<double>* work, int* lwork, double* rwork, int* lrwork,
                  int* iwork, int* liwork, int* info);
 
     void zhegv_(const int* itype,const char* jobz,const char* uplo,const int* n,
@@ -307,108 +308,49 @@ public:
         return nb;
     }
 
-    // wrap function of fortran lapack routine zhegvd. (pointer version)
-    static inline
-    void chegvd(const int itype, const char jobz, const char uplo, const int n,
-                const std::complex<float>* a, const int lda,
-                const std::complex<float>* b, const int ldb,
-                std::complex<float>* v, const int ldv,
-                float* w, std::complex<float>* work, int lwork, float* rwork, int lrwork,
-                int* iwork, int liwork, int info)
-    {
-        // Transpose the std::complex matrix to the fortran-form real-std::complex array.
-        std::complex<float>* aux = LapackConnector::transpose(a, n, lda, lda);
-        std::complex<float>* bux = LapackConnector::transpose(b, n, ldb, ldb);
-
-        // call the fortran routine
-        chegvd_(&itype, &jobz, &uplo, &n,
-                aux, &lda, bux, &ldb, w,
-                work, &lwork, rwork, &lrwork,
-                iwork, &liwork, &info);
-
-        // Transpose the fortran-form real-std::complex array to the std::complex matrix.
-        transpose(aux, v, n, lda, ldv);
-
-        // free the memory.
-        delete[] aux;
-        delete[] bux;
-    }
-
-    // wrap function of fortran lapack routine zhegvd. (pointer version)
-    static inline
-    void zhegvd(const int itype, const char jobz, const char uplo, const int n,
-                const std::complex<double>* a, const int lda,
-                const std::complex<double>* b, const int ldb,
-                std::complex<double>* v, const int ldv,
-                double* w, std::complex<double>* work, int lwork, double* rwork, int lrwork,
-                int* iwork, int liwork, int info)
-    {
-        // Transpose the std::complex matrix to the fortran-form real-std::complex array.
-        std::complex<double>* aux = LapackConnector::transpose(a, n, lda, lda);
-        std::complex<double>* bux = LapackConnector::transpose(b, n, ldb, ldb);
-
-        // call the fortran routine
-        zhegvd_(&itype, &jobz, &uplo, &n,
-                aux, &lda, bux, &ldb, w,
-                work, &lwork, rwork, &lrwork,
-                iwork, &liwork, &info);
-
-        // Transpose the fortran-form real-std::complex array to the std::complex matrix.
-        transpose(aux, v, n, lda, ldv);
-
-        // free the memory.
-        delete[] aux;
-        delete[] bux;
-    }
-
-    // wrap function of fortran lapack routine zhegvd. (pointer version)
-    static inline
-    void xhegvd(const int itype, const char jobz, const char uplo, const int n,
-                const std::complex<float>* a, const int lda,
-                const std::complex<float>* b, const int ldb,
-                std::complex<float>* v, const int ldv,
-                float* w, std::complex<float>* work, int lwork, float* rwork, int lrwork,
-                int* iwork, int liwork, int info)
-    {
-        chegvd(itype, jobz, uplo, n, a, lda, b, ldb, v, ldv, w, work, lwork, rwork, lrwork, iwork, liwork, info);
-    }
-
-    // wrap function of fortran lapack routine zhegvd. (pointer version)
-    static inline
-    void xhegvd(const int itype, const char jobz, const char uplo, const int n,
-                const std::complex<double>* a, const int lda,
-                const std::complex<double>* b, const int ldb,
-                std::complex<double>* v, const int ldv,
-                double* w, std::complex<double>* work, int lwork, double* rwork, int lrwork,
-                int* iwork, int liwork, int info)
-    {
-        zhegvd(itype, jobz, uplo, n, a, lda, b, ldb, v, ldv, w, work, lwork, rwork, lrwork, iwork, liwork, info);
-    }
     // wrap function of fortran lapack routine zhegvd.
     static inline
     void zhegvd(const int itype, const char jobz, const char uplo, const int n, 
-                ModuleBase::ComplexMatrix& a, const int lda, 
-                ModuleBase::ComplexMatrix& b, const int ldb, double* w, 
+                std::complex<double>* a, const int lda, 
+                const std::complex<double>* b, const int ldb, double* w, 
                 std::complex<double>* work, int lwork, double* rwork, int lrwork,
                 int* iwork, int liwork, int info)
     {	
-        // Transpose the std::complex matrix to the fortran-form real-std::complex array.
-        std::complex<double>* aux = LapackConnector::transpose(a, n, lda);
-        std::complex<double>* bux = LapackConnector::transpose(b, n, ldb);
-
         // call the fortran routine
         zhegvd_(&itype, &jobz, &uplo, &n, 
-                aux, &lda, bux, &ldb, w,
+                a, &lda, b, &ldb, w,
                 work, &lwork, rwork, &lrwork,
                 iwork, &liwork, &info);
-        
-        // Transpose the fortran-form real-std::complex array to the std::complex matrix.
-        LapackConnector::transpose(aux, a, n, lda);
-        LapackConnector::transpose(bux, b, n, ldb);
-        
-        // free the memory.
-        delete[] aux;
-        delete[] bux;
+    }
+
+    // wrap function of fortran lapack routine zhegvd. (pointer version)
+    static inline
+    void xhegvd(const int itype, const char jobz, const char uplo, const int n,
+                const std::complex<float>* a, const int lda,
+                const std::complex<float>* b, const int ldb, float* w, 
+                std::complex<float>* work, int lwork, float* rwork, int lrwork,
+                int* iwork, int liwork, int info)
+    {
+        // call the fortran routine
+        chegvd_(&itype, &jobz, &uplo, &n,
+                a, &lda, b, &ldb, w,
+                work, &lwork, rwork, &lrwork,
+                iwork, &liwork, &info);
+    }
+
+    // wrap function of fortran lapack routine zhegvd.
+    static inline
+    void xhegvd(const int itype, const char jobz, const char uplo, const int n, 
+                std::complex<double>* a, const int lda, 
+                const std::complex<double>* b, const int ldb, double* w, 
+                std::complex<double>* work, int lwork, double* rwork, int lrwork,
+                int* iwork, int liwork, int info)
+    {	
+        // call the fortran routine
+        zhegvd_(&itype, &jobz, &uplo, &n, 
+                a, &lda, b, &ldb, w,
+                work, &lwork, rwork, &lrwork,
+                iwork, &liwork, &info);
     }
 
     // wrap function of fortran lapack routine zhegv ( ModuleBase::ComplexMatrix version ).

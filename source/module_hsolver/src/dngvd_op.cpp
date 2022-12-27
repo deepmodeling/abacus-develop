@@ -210,6 +210,9 @@ struct dngvd_op<FPTYPE, psi::DEVICE_CPU> {
         FPTYPE *eigenvalue,
         std::complex<FPTYPE> *vcc)
     {
+        for (int i = 0; i < nstart * ldh; i++) {
+            vcc[i] = hcc[i];
+        }
         int info = 0;
         int lwork = 2 * nstart + nstart * nstart;
         std::complex<FPTYPE> *work = new std::complex<FPTYPE>[lwork];
@@ -226,15 +229,15 @@ struct dngvd_op<FPTYPE, psi::DEVICE_CPU> {
         //===========================
         // calculate all eigenvalues
         //===========================
-        LapackConnector::xhegvd(1, 'V', 'U', nstart, hcc, ldh, scc, ldh, vcc, ldh, eigenvalue, work, lwork, rwork,
-                                lrwork, iwork, liwork, info);
+        LapackConnector::xhegvd(1, 'V', 'U', nstart, vcc, ldh, scc, ldh, eigenvalue, work, lwork, rwork, lrwork, iwork, liwork, info);
+
+        assert(0 == info);
 
         delete[] work;
         delete[] rwork;
         delete[] iwork;
     }
 };
-
 
 
 template <typename FPTYPE>
@@ -277,30 +280,30 @@ struct dnevx_op<FPTYPE, psi::DEVICE_CPU> {
         // V is the output of the function, the storage space is also (nstart * ldh), and the data size of valid V
         // obtained by the zhegvx operation is (nstart * nstart) and stored in zux (internal to the function). When
         // the function is output, the data of zux will be mapped to the corresponding position of V.
-        LapackConnector::xheevx(
-                1, // ITYPE = 1:  A*x = (lambda)*B*x
-                'V', // JOBZ = 'V':  Compute eigenvalues and eigenvectors.
-                'I', // RANGE = 'I': the IL-th through IU-th eigenvalues will be found.
-                'L', // UPLO = 'L':  Lower triangles of A and B are stored.
-                nstart, // N = base
-                hcc, // A is COMPLEX*16 array  dimension (LDA, N)
-                nstart, // LDA = base
-                0.0, // Not referenced if RANGE = 'A' or 'I'.
-                0.0, // Not referenced if RANGE = 'A' or 'I'.
-                1, // IL: If RANGE='I', the index of the smallest eigenvalue to be returned. 1 <= IL <= IU <= N,
-                nbands, // IU: If RANGE='I', the index of the largest eigenvalue to be returned. 1 <= IL <= IU <= N,
-                0.0, // ABSTOL
-                nbands, // M: The total number of eigenvalues found.  0 <= M <= N. if RANGE = 'I', M = IU-IL+1.
-                eigenvalue, // W store eigenvalues
-                vcc, // store eigenvector
-                nstart, // LDZ: The leading dimension of the array Z.
-                work,
-                lwork,
-                rwork,
-                iwork,
-                ifail,
-                info,
-                ldh);
+        LapackConnector::zheevx(
+            1, // ITYPE = 1:  A*x = (lambda)*B*x
+            'V', // JOBZ = 'V':  Compute eigenvalues and eigenvectors.
+            'I', // RANGE = 'I': the IL-th through IU-th eigenvalues will be found.
+            'L', // UPLO = 'L':  Lower triangles of A and B are stored.
+            nstart, // N = base
+            hcc, // A is COMPLEX*16 array  dimension (LDA, N)
+            nstart, // LDA = base
+            0.0, // Not referenced if RANGE = 'A' or 'I'.
+            0.0, // Not referenced if RANGE = 'A' or 'I'.
+            1, // IL: If RANGE='I', the index of the smallest eigenvalue to be returned. 1 <= IL <= IU <= N,
+            nbands, // IU: If RANGE='I', the index of the largest eigenvalue to be returned. 1 <= IL <= IU <= N,
+            0.0, // ABSTOL
+            nbands, // M: The total number of eigenvalues found.  0 <= M <= N. if RANGE = 'I', M = IU-IL+1.
+            eigenvalue, // W store eigenvalues
+            vcc, // store eigenvector
+            nstart, // LDZ: The leading dimension of the array Z.
+            work,
+            lwork,
+            rwork,
+            iwork,
+            ifail,
+            info,
+            ldh);
 
         delete[] work;
         delete[] rwork;

@@ -28,6 +28,7 @@
 #include "src_io/berryphase.h"
 #include "module_psi/include/device.h"
 #include "module_hsolver/include/math_kernel.h"
+#include "module_hsolver/include/dngvd_op.h"
 
 namespace ModuleESolver
 {
@@ -41,6 +42,7 @@ namespace ModuleESolver
     #if ((defined __CUDA) || (defined __ROCM))
         if (this->device == psi::GpuDevice) {
             hsolver::createBLAShandle();
+            hsolver::createCUSOLVERhandle();
         }
     #endif
     }
@@ -69,6 +71,7 @@ namespace ModuleESolver
         if (this->device == psi::GpuDevice) {
             delete reinterpret_cast<psi::Psi<std::complex<FPTYPE>, Device>*>(this->kspw_psi);
             hsolver::destoryBLAShandle();
+            hsolver::destoryCUSOLVERhandle();
         }
     #endif
     }
@@ -331,15 +334,15 @@ namespace ModuleESolver
             // be careful that istep start from 0 and iter start from 1
             if((istep==0||istep==1)&&iter==1) 
             {
-                hsolver::DiagoIterAssist<FPTYPE>::need_subspace = false;
+                hsolver::DiagoIterAssist<FPTYPE, Device>::need_subspace = false;
             }
             else 
             {
-                hsolver::DiagoIterAssist<FPTYPE>::need_subspace = true;
+                hsolver::DiagoIterAssist<FPTYPE, Device>::need_subspace = true;
             }
 
-            hsolver::DiagoIterAssist<FPTYPE>::PW_DIAG_THR = ethr; 
-            hsolver::DiagoIterAssist<FPTYPE>::PW_DIAG_NMAX = GlobalV::PW_DIAG_NMAX;
+            hsolver::DiagoIterAssist<FPTYPE, Device>::PW_DIAG_THR = ethr;
+            hsolver::DiagoIterAssist<FPTYPE, Device>::PW_DIAG_NMAX = GlobalV::PW_DIAG_NMAX;
             this->phsol->solve(this->p_hamilt, this->kspw_psi[0], this->pelec, GlobalV::KS_SOLVER);
             // transform energy for print
             GlobalC::en.eband = this->pelec->eband;

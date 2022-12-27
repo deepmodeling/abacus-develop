@@ -124,7 +124,7 @@ void DiagoCG<FPTYPE, Device>::diag_mock(hamilt::Hamilt<FPTYPE, Device> *phm_in, 
         FPTYPE cg_norm = 0.0;
         FPTYPE theta = 0.0;
         bool converged = false;
-        for (iter = 0; iter < DiagoIterAssist<FPTYPE>::PW_DIAG_NMAX; iter++)
+        for (iter = 0; iter < DiagoIterAssist<FPTYPE, Device>::PW_DIAG_NMAX; iter++)
         {
             this->calculate_gradient();
             this->orthogonal_gradient(phm_in, phi, m);
@@ -157,13 +157,13 @@ void DiagoCG<FPTYPE, Device>::diag_mock(hamilt::Hamilt<FPTYPE, Device> *phm_in, 
         if (m > 0 && reorder)
         {
             ModuleBase::GlobalFunc::NOTE("reorder bands!");
-            if (eigenvalue[m] - eigenvalue[m - 1] < -2.0 * DiagoIterAssist<FPTYPE>::PW_DIAG_THR)
+            if (eigenvalue[m] - eigenvalue[m - 1] < -2.0 * DiagoIterAssist<FPTYPE, Device>::PW_DIAG_THR)
             {
                 // if the last calculated eigenvalue is not the largest...
                 int i = 0;
                 for (i = m - 2; i >= 0; i--)
                 {
-                    if (eigenvalue[m] - eigenvalue[i] > 2.0 * DiagoIterAssist<FPTYPE>::PW_DIAG_THR)
+                    if (eigenvalue[m] - eigenvalue[i] > 2.0 * DiagoIterAssist<FPTYPE, Device>::PW_DIAG_THR)
                         break;
                 }
                 i++;
@@ -192,7 +192,7 @@ void DiagoCG<FPTYPE, Device>::diag_mock(hamilt::Hamilt<FPTYPE, Device> *phm_in, 
     } // end m
 
     avg /= this->n_band;
-    DiagoIterAssist<FPTYPE>::avg_iter += avg;
+    DiagoIterAssist<FPTYPE, Device>::avg_iter += avg;
 
     delete this->phi_m;
     delete this->cg;
@@ -433,7 +433,7 @@ bool DiagoCG<FPTYPE, Device>::update_psi(FPTYPE &cg_norm, FPTYPE &theta, FPTYPE 
 
     //	std::cout << "\n overlap2 = "  << this->ddot(dim, phi_m, phi_m);
 
-    if (abs(eigenvalue - e0) < DiagoIterAssist<FPTYPE>::PW_DIAG_THR)
+    if (abs(eigenvalue - e0) < DiagoIterAssist<FPTYPE, Device>::PW_DIAG_THR)
     {
         // ModuleBase::timer::tick("DiagoCG","update");
         return 1;
@@ -565,18 +565,18 @@ void DiagoCG<FPTYPE, Device>::diag(hamilt::Hamilt<FPTYPE, Device> *phm_in, psi::
     }
     do
     {
-        if(DiagoIterAssist<FPTYPE>::need_subspace || ntry > 0)
+        if(DiagoIterAssist<FPTYPE, Device>::need_subspace || ntry > 0)
         {
             DiagoIterAssist<FPTYPE, Device>::diagH_subspace(phm_in, psi, psi, eigenvalue_in);
         }
 
-        DiagoIterAssist<FPTYPE>::avg_iter += 1.0;
+        DiagoIterAssist<FPTYPE, Device>::avg_iter += 1.0;
         this->reorder = true;
 
         this->diag_mock(phm_in, psi, eigenvalue_in);
 
         ++ntry;
-    } while (DiagoIterAssist<FPTYPE>::test_exit_cond(ntry, this->notconv));
+    } while (DiagoIterAssist<FPTYPE, Device>::test_exit_cond(ntry, this->notconv));
 
     if (notconv > max(5, psi.get_nbands() / 4)) {
         std::cout << "\n notconv = " << this->notconv;
