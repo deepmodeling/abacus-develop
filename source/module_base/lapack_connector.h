@@ -40,6 +40,12 @@ extern "C"
                  std::complex<double>* work, int* lwork, double* rwork, int* lrwork,
                  int* iwork, int* liwork, int* info);
 
+    void cheevx_(const char* jobz, const char* range, const char* uplo, const int* n,
+             std::complex<float> *a, const int* lda,
+             const float* vl, const float* vu, const int* il, const int* iu, const float* abstol,
+             const int* m, float* w, std::complex<float> *z, const int *ldz,
+             std::complex<float> *work, const int* lwork, float* rwork, int* iwork, int* ifail, int* info);
+
     void zheevx_(const char* jobz, const char* range, const char* uplo, const int* n, 
                  std::complex<double> *a, const int* lda,
                  const double* vl, const double* vu, const int* il, const int* iu, const double* abstol, 
@@ -359,6 +365,34 @@ public:
                 work, &lwork, rwork, iwork, ifail, &info);
     }
 
+    // wrap function of fortran lapack routine zheevx.
+    static inline
+    void xheevx( const int itype, const char jobz, const char range, const char uplo, const int n,
+                 std::complex<float>* a, const int lda,
+                 const float vl, const float vu, const int il, const int iu, const float abstol,
+                 const int m, float* w, std::complex<float>* z, const int ldz,
+                 std::complex<float>* work, const int lwork, float* rwork, int* iwork, int* ifail, int info)
+    {
+        cheevx_(&jobz, &range, &uplo, &n,
+                a, &lda, &vl, &vu, &il, &iu,
+                &abstol, &m, w, z, &ldz,
+                work, &lwork, rwork, iwork, ifail, &info);
+    }
+
+    // wrap function of fortran lapack routine zheevx.
+    static inline
+    void xheevx( const int itype, const char jobz, const char range, const char uplo, const int n,
+                 std::complex<double>* a, const int lda,
+                 const double vl, const double vu, const int il, const int iu, const double abstol,
+                 const int m, double* w, std::complex<double>* z, const int ldz,
+                 std::complex<double>* work, const int lwork, double* rwork, int* iwork, int* ifail, int info)
+    {
+        zheevx_(&jobz, &range, &uplo, &n,
+                a, &lda, &vl, &vu, &il, &iu,
+                &abstol, &m, w, z, &ldz,
+                work, &lwork, rwork, iwork, ifail, &info);
+    }
+
     // wrap function of fortran lapack routine zhegv ( ModuleBase::ComplexMatrix version ).
     static inline
     void zhegv(	const int itype,const char jobz,const char uplo,const int n,ModuleBase::ComplexMatrix& a,
@@ -440,18 +474,6 @@ public:
         delete[] zux;
     }
 
-    // wrap function of fortran lapack routine xhegvx ( pointer version ).
-    static inline
-    void xhegvx( const int itype, const char jobz, const char range, const char uplo,
-                 const int n, const std::complex<float>* a, const int lda, const std::complex<float>* b,
-                 const int ldb, const float vl, const float vu, const int il, const int iu,
-                 const float abstol, const int m, float* w, std::complex<float>* z, const int ldz,
-                 std::complex<float>* work, const int lwork, float* rwork, int* iwork,
-                 int* ifail, int info, int nbase_x)
-    {
-        chegvx(itype, jobz, range, uplo, n, a, lda, b, ldb, vl, vu, il, iu, abstol, m, w, z, ldz, work, lwork, rwork, iwork, ifail, info, nbase_x);
-    }
-
     // wrap function of fortran lapack routine zhegvx ( pointer version ).
     static inline
     void zhegvx( const int itype, const char jobz, const char range, const char uplo,
@@ -484,6 +506,19 @@ public:
         delete[] bux;
         delete[] zux;
     }
+
+    // wrap function of fortran lapack routine xhegvx ( pointer version ).
+    static inline
+    void xhegvx( const int itype, const char jobz, const char range, const char uplo,
+                 const int n, const std::complex<float>* a, const int lda, const std::complex<float>* b,
+                 const int ldb, const float vl, const float vu, const int il, const int iu,
+                 const float abstol, const int m, float* w, std::complex<float>* z, const int ldz,
+                 std::complex<float>* work, const int lwork, float* rwork, int* iwork,
+                 int* ifail, int info, int nbase_x)
+    {
+        chegvx(itype, jobz, range, uplo, n, a, lda, b, ldb, vl, vu, il, iu, abstol, m, w, z, ldz, work, lwork, rwork, iwork, ifail, info, nbase_x);
+    }
+
     // wrap function of fortran lapack routine xhegvx ( pointer version ).
     static inline
     void xhegvx( const int itype, const char jobz, const char range, const char uplo,
@@ -494,84 +529,6 @@ public:
                  int* ifail, int info, int nbase_x)
     {
         zhegvx(itype, jobz, range, uplo, n, a, lda, b, ldb, vl, vu, il, iu, abstol, m, w, z, ldz, work, lwork, rwork, iwork, ifail, info, nbase_x);
-    }
-
-    static inline
-    void cheevx( const int itype, const char jobz, const char range, const char uplo, const int n,
-                 const std::complex<float>* a, const int lda, const float vl, const float vu, const int il, const int iu,
-                 const float abstol, const int m, float* w, std::complex<float>* z, const int ldz,
-                 std::complex<float>* work, const int lwork, float* rwork, int* iwork, int* ifail, int info, int nbase_x)
-    {
-        // Transpose the std::complex matrix to the fortran-form real-std::complex array.
-        std::complex<float>* aux = LapackConnector::transpose(a, n, lda, nbase_x);
-        std::complex<float>* zux = new std::complex<float>[n*iu];// mohan modify 2009-08-02
-
-        // call the fortran routine
-        cheevx_(&jobz, &range, &uplo, &n,
-                aux, &lda, &vl, &vu, &il, &iu,
-                &abstol, &m, w, zux, &ldz,
-                work, &lwork, rwork, iwork, ifail, &info);
-
-        // Transpose the fortran-form real-std::complex array to the std::complex matrix
-        for (int i = 0; i < iu; ++i)
-        {
-            for (int j = 0; j < n; ++j)
-            {
-                z[j * nbase_x + i] = zux[i*n+j];
-            }
-        }
-
-        // free the memory.
-        delete[] aux;
-        delete[] zux;
-    }
-
-    static inline
-    void zheevx( const int itype, const char jobz, const char range, const char uplo, const int n, 
-                 const std::complex<double>* a, const int lda, const double vl, const double vu, const int il, const int iu,
-                 const double abstol, const int m, double* w, std::complex<double>* z, const int ldz,
-                 std::complex<double>* work, const int lwork, double* rwork, int* iwork, int* ifail, int info, int nbase_x)
-    {
-        // Transpose the std::complex matrix to the fortran-form real-std::complex array.
-        std::complex<double>* aux = LapackConnector::transpose(a, n, lda, nbase_x);
-        std::complex<double>* zux = new std::complex<double>[n*iu];// mohan modify 2009-08-02
-
-        // call the fortran routine
-        zheevx_(&jobz, &range, &uplo, &n, 
-                aux, &lda, &vl, &vu, &il, &iu, 
-                &abstol, &m, w, zux, &ldz, 
-                work, &lwork, rwork, iwork, ifail, &info);
-
-        // Transpose the fortran-form real-std::complex array to the std::complex matrix
-        for (int i = 0; i < iu; ++i)
-        {
-            for (int j = 0; j < n; ++j)
-            {
-                z[j * nbase_x + i] = zux[i*n+j];
-            }
-        }
-
-        // free the memory.
-        delete[] aux;
-        delete[] zux;
-    }
-
-    static inline
-    void xheevx( const int itype, const char jobz, const char range, const char uplo, const int n,
-                 const std::complex<float>* a, const int lda, const float vl, const float vu, const int il, const int iu,
-                 const float abstol, const int m, float* w, std::complex<float>* z, const int ldz,
-                 std::complex<float>* work, const int lwork, float* rwork, int* iwork, int* ifail, int info, int nbase_x)
-    {
-        cheevx(itype, jobz, range, uplo, n, a, lda, vl, vu, il, iu, abstol, m, w, z, ldz, work, lwork, rwork, iwork, ifail, info, nbase_x);
-    }
-
-    static inline
-    void xheevx( const int itype, const char jobz, const char range, const char uplo, const int n,
-                 const std::complex<double>* a, const int lda, const double vl, const double vu, const int il, const int iu,
-                 const double abstol, const int m, double* w, std::complex<double>* z, const int ldz,
-                 std::complex<double>* work, const int lwork, double* rwork, int* iwork, int* ifail, int info, int nbase_x)
-    {
-        zheevx(itype, jobz, range, uplo, n, a, lda, vl, vu, il, iu, abstol, m, w, z, ldz, work, lwork, rwork, iwork, ifail, info, nbase_x);
     }
 
 	// calculate the eigenvalues and eigenfunctions of a real symmetric matrix.

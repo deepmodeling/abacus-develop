@@ -251,6 +251,11 @@ struct dnevx_op<FPTYPE, psi::DEVICE_CPU> {
         FPTYPE* eigenvalue, // eigenvalue
         std::complex<FPTYPE>* vcc) // vcc
     {
+        std::complex<FPTYPE>* aux = new std::complex<FPTYPE>[nstart * ldh];
+        for (int ii = 0; ii < nstart * ldh; ii++) {
+            aux[ii] = hcc[ii];
+        }
+
         int info = 0;
         int lwork = 0;
         int nb = LapackConnector::ilaenv(1, "ZHETRD", "L", nstart, -1, -1, -1);
@@ -286,8 +291,8 @@ struct dnevx_op<FPTYPE, psi::DEVICE_CPU> {
             'I', // RANGE = 'I': the IL-th through IU-th eigenvalues will be found.
             'L', // UPLO = 'L':  Lower triangles of A and B are stored.
             nstart, // N = base
-            hcc, // A is COMPLEX*16 array  dimension (LDA, N)
-            nstart, // LDA = base
+            aux, // A is COMPLEX*16 array  dimension (LDA, N)
+            ldh, // LDA = base
             0.0, // Not referenced if RANGE = 'A' or 'I'.
             0.0, // Not referenced if RANGE = 'A' or 'I'.
             1, // IL: If RANGE='I', the index of the smallest eigenvalue to be returned. 1 <= IL <= IU <= N,
@@ -296,15 +301,15 @@ struct dnevx_op<FPTYPE, psi::DEVICE_CPU> {
             nbands, // M: The total number of eigenvalues found.  0 <= M <= N. if RANGE = 'I', M = IU-IL+1.
             eigenvalue, // W store eigenvalues
             vcc, // store eigenvector
-            nstart, // LDZ: The leading dimension of the array Z.
+            ldh, // LDZ: The leading dimension of the array Z.
             work,
             lwork,
             rwork,
             iwork,
             ifail,
-            info,
-            ldh);
+            info);
 
+        delete[] aux;
         delete[] work;
         delete[] rwork;
         delete[] iwork;
