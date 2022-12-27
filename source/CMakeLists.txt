@@ -72,6 +72,14 @@ endif()
 add_library(device OBJECT ${device_srcs})
 
 if(USE_CUDA)
+  set_property(
+    TARGET device
+    PROPERTY CUDA_ARCHITECTURES
+    60 # P100
+    70 # V100
+    75 # T4
+    80 # A100
+  )
   target_link_libraries(device cusolver cublas cufft)
 endif()
 

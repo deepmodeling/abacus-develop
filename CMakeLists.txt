@@ -163,13 +163,6 @@ if(USE_CUDA OR USE_CUSOLVER_LCAO)
     -lcudart
     -lnvToolsExt
   )
-  set_property(TARGET ${ABACUS_BIN_NAME}
-  PROPERTY CUDA_ARCHITECTURES
-  60 # P100
-  70 # V100
-  75 # T4
-  80 # A100
-  )
   include_directories(${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
   if (USE_CUDA)
     add_compile_definitions(__CUDA)
