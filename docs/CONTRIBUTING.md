@@ -251,6 +251,7 @@ To run a subset of unit test, use `ctest -R <test-match-pattern>` to perform tes
 
 A well-formatted commit message leads a more readable history when we look through some changes, and helps us generate change log.
 We follow up [The Conventional Commits specification](https://www.conventionalcommits.org) for commit message format.
+This format is also required for PR title and message.
 The commit message should be structured as follows:
 
 ```text
@@ -275,8 +276,8 @@ The commit message should be structured as follows:
     - `Revert`: Reverting commits
   - scope: optional, could be the module which this commit changes; for example, `orbital`
   - description: A short summary of the code changes: tell others what you did in one sentence.
-- Body: optional, providing additional contextual information about the code changes, e.g. the motivation of this commit, referenced materials, and so on.
-- Footer: optional, reference GitHub issues, PRs that this commit closes or is related to.
+- Body: optional, providing detailed, additional, or contextual information about the code changes, e.g. the motivation of this commit, referenced materials, the coding implementation, and so on.
+- Footer: optional, reference GitHub issues or PRs that this commit closes or is related to. [Use a keyword](https://docs.github.com/issues/tracking-your-work-with-issues/linking-a-pull-request-to-an-issue#linking-a-pull-request-to-an-issue-using-a-keyword) to close an issue, e.g. "Fix #753".
 
 Here is an example:
 
