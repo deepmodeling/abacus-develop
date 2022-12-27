@@ -38,6 +38,7 @@ jobs:
         uses: actions/checkout@v3
       - name: Download DeePMD-kit
         run: |
+          mkdir -p ${{ runner.temp }}
           wget https://github.com/deepmodeling/deepmd-kit/releases/download/v2.2.0.b0/libdeepmd_c.tar.gz -O ${{ runner.temp }}/libdeepmd_c.tar.gz
           tar vczf ${{ runner.temp }}/libdeepmd_c.tar.gz -C ${{ runner.temp }}
       - name: Build
