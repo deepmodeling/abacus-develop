@@ -3,6 +3,7 @@
 # Find the native DeePMD headers and libraries.
 #
 #  DeePMD_FOUND        - True if lib is found.
+#  DeePMDC_FOUND       - True if C API is found.
 #  DeePMD_LIBRARIES    - List of libraries
 #  DeePMD_INCLUDE_DIR  - Where to find DeePMD headers.
 #
@@ -49,11 +50,9 @@ find_library(tensorflow_cc
 # Handle the QUIET and REQUIRED arguments and
 # set DeePMD_FOUND to TRUE if all variables are non-zero.
 include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(DeePMDC DEFAULT_MSG deepmd_c DeePMD_INCLUDE_C_DIR)
-find_package_handle_standard_args(DeePMD DEFAULT_MSG deepmd_cc deepmd_op deepmd_op_cuda tensorflow_cc DeePMD_INCLUDE_DIR)
-
-if(DeePMDC_FOUND)
-    set(DeePMD_FOUND TRUE)
+find_package_handle_standard_args(DeePMD DEFAULT_MSG deepmd_c DeePMD_INCLUDE_C_DIR)
+if (DEEPMD_FOUND)
+    set(DeePMDC_FOUND TRUE)
     set(DeePMD_INCLUDE_DIR ${DeePMD_INCLUDE_C_DIR})
     if(NOT TARGET DeePMD::deepmd_c)
         add_library(DeePMD::deepmd_c UNKNOWN IMPORTED)
@@ -61,10 +60,11 @@ if(DeePMDC_FOUND)
             IMPORTED_LINK_INTERFACE_LANGUAGES "C"
             IMPORTED_LOCATION "${deepmd_c}"
             INTERFACE_INCLUDE_DIRECTORIES "${DeePMD_INCLUDE_DIR}")
-    endif()
+else()
+find_package_handle_standard_args(DeePMD DEFAULT_MSG deepmd_cc deepmd_op deepmd_op_cuda tensorflow_cc DeePMD_INCLUDE_DIR)
 
 # Copy the results to the output variables and target.
-elseif(DeePMD_FOUND)
+if(DeePMD_FOUND)
     #set(DeePMD_LIBRARIES ${DeePMD_LIBRARY})
     set(DeePMD_INCLUDE_DIR ${DeePMD_INCLUDE_DIR})
 
@@ -96,6 +96,7 @@ elseif(DeePMD_FOUND)
            IMPORTED_LOCATION "${tensorflow_cc}"
            INTERFACE_INCLUDE_DIRECTORIES "${DeePMD_INCLUDE_DIR}")
     endif()
+endif()
 endif()
 
 set(CMAKE_REQUIRED_INCLUDES ${CMAKE_REQUIRED_INCLUDES} ${DeePMD_INCLUDE_DIR})
