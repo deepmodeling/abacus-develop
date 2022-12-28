@@ -848,6 +848,7 @@ void ESolver_KS_LCAO::afterscf(const int istep)
                                            GlobalC::kv.nks,
                                            GlobalC::kv.kvec_d);
         }
+        GlobalC::ld.check_projected_dm(); //print out the projected dm for NSCF calculaiton
         GlobalC::ld.cal_descriptor(); // final descriptor
         GlobalC::ld.check_descriptor(GlobalC::ucell);
 
