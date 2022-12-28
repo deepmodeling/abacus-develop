@@ -781,11 +781,10 @@ These variables are used to control the geometry relaxation.
 ### relax_method
 
 - **Type**: String
-- **Description**: The method to do geometry optimizations, note that if relax_new is set to 1, then only cg is available:
+- **Description**: The method to do geometry optimizations, note that there are two implementations of the CG method, see [relax_new](#relax_new):
   - bfgs: using BFGS algorithm.
   - sd: using steepest-descent algorithm.
   - cg: using cg algorithm.
-  - cg-bfgs:
 - **Default**: cg
 
 ### relax_cg_thr

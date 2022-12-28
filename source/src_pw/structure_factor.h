@@ -4,6 +4,7 @@
 #include "../module_cell/unitcell.h"
 #include "../module_base/complexmatrix.h"
 #include "../module_pw/pw_basis.h"
+#include "module_psi/psi.h"
 
 using namespace std;
 
@@ -37,5 +38,13 @@ public:
     ModuleBase::ComplexMatrix eigts3; // dimension: [Ucell->nat, 2*this->ncz + 1]
 
     std::complex<double> * d_eigts1 = nullptr, * d_eigts2 = nullptr, * d_eigts3 = nullptr;
+
+#if defined(__CUDA) || defined(__ROCM)
+    psi::DEVICE_CPU * cpu_ctx = {};
+    psi::DEVICE_GPU * gpu_ctx = {};
+    using resmem_complex_op = psi::memory::resize_memory_op<std::complex<double>, psi::DEVICE_GPU>;
+    using delmem_complex_op = psi::memory::delete_memory_op<std::complex<double>, psi::DEVICE_GPU>;
+    using syncmem_complex_h2d_op = psi::memory::synchronize_memory_op<std::complex<double>, psi::DEVICE_GPU, psi::DEVICE_CPU>;
+#endif
 };
 #endif //PlaneWave class

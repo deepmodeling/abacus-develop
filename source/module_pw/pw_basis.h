@@ -262,6 +262,14 @@ protected:
 public:
     //get fftixy2is;
     void getfftixy2is(int * fftixy2is);
+
+#if defined(__CUDA) || defined(__ROCM)
+    psi::DEVICE_CPU * cpu_ctx = {};
+    psi::DEVICE_GPU * gpu_ctx = {};
+    using resmem_int_op = psi::memory::resize_memory_op<int, psi::DEVICE_GPU>;
+    using delmem_int_op = psi::memory::delete_memory_op<int, psi::DEVICE_GPU>;
+    using syncmem_int_h2d_op = psi::memory::synchronize_memory_op<int, psi::DEVICE_GPU, psi::DEVICE_CPU>;
+#endif
 };
 
 }

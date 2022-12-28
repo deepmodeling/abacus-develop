@@ -1,5 +1,4 @@
 #include "src_pw/include/force_multi_device.h"
-#include <iostream>
 
 namespace src_pw{
 
@@ -98,6 +97,9 @@ struct cal_force_nl_op<FPTYPE, psi::DEVICE_CPU> {
         }
     }
 };
+
+template struct cal_vkb1_nl_op<float, psi::DEVICE_CPU>;
+template struct cal_force_nl_op<float, psi::DEVICE_CPU>;
 
 template struct cal_vkb1_nl_op<double, psi::DEVICE_CPU>;
 template struct cal_force_nl_op<double, psi::DEVICE_CPU>;

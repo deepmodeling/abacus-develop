@@ -46,7 +46,7 @@ void Magnetism::compute_magnetization(const Charge* const chr, double* nelec_spi
 			nelec_spin[0] = (GlobalV::nelec + this->tot_magnetization) / 2;
 			nelec_spin[1] = (GlobalV::nelec - this->tot_magnetization) / 2;
 			ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"nelec for spin up", nelec_spin[0]);
-			ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"nelec for spin down", nelec_spin[0]);
+			ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"nelec for spin down", nelec_spin[1]);
 		}
     }
 

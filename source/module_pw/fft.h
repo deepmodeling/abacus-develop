@@ -51,10 +51,11 @@ public:
 	void fftxybac(std::complex<double>* & in, std::complex<double>* & out);
 	void fftxyr2c(double * &in, std::complex<double>* & out);
 	void fftxyc2r(std::complex<double>* & in, double* & out);
-#if defined(__CUDA) || defined(__UT_USE_CUDA)
-    void fft3D_forward(std::complex<double>* & in, std::complex<double>* & out);
-    void fft3D_backward(std::complex<double>* & in, std::complex<double>* & out);
-#endif
+
+    template <typename FPTYPE, typename Device>
+    void fft3D_forward(const Device * ctx, std::complex<FPTYPE>* & in, std::complex<FPTYPE>* & out);
+    template <typename FPTYPE, typename Device>
+    void fft3D_backward(const Device * ctx, std::complex<FPTYPE>* & in, std::complex<FPTYPE>* & out);
 #ifdef __MIX_PRECISION
 	void cleanfFFT();
 	void fftfzfor(std::complex<float>* & in, std::complex<float>* & out);
@@ -89,8 +90,13 @@ public:
     std::complex<double> *auxg=nullptr, *auxr=nullptr; //fft space
 	double *r_rspace=nullptr; //real number space for r, [nplane * nx *ny]
 
-#if defined(__CUDA) || defined(__UT_USE_CUDA)
-    std::complex<double> *auxg_3d=nullptr, *auxr_3d=nullptr; //fft space
+    std::complex<double> *auxr_3d=nullptr; //fft space
+
+#if defined(__CUDA) || defined(__ROCM)
+    psi::DEVICE_CPU * cpu_ctx = {};
+    psi::DEVICE_GPU * gpu_ctx = {};
+    using resmem_complex_op = psi::memory::resize_memory_op<std::complex<double>, psi::DEVICE_GPU>;
+    using delmem_complex_op = psi::memory::delete_memory_op<std::complex<double>, psi::DEVICE_GPU>;
 #endif
 
 #ifdef __MIX_PRECISION

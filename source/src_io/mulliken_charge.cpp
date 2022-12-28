@@ -293,7 +293,6 @@ void Mulliken_Charge::stdout_mulliken(LCAO_Hamilt &uhm, const ModuleBase::matrix
 		//  wordqf += ".txt";
 		//   fout.open(wordqf.c_str(),ios::app);     
 		int num,l,m,mul;
-		double Tcharge;
 		double*   sum_l = new double[2];
 		double*   sum_mul = new double[2];
 
@@ -360,9 +359,15 @@ void Mulliken_Charge::stdout_mulliken(LCAO_Hamilt &uhm, const ModuleBase::matrix
 		fout << Name_Angular[L1][m1] << "      " << N1 << "          " << ADecMulP[0][i][j] << "               " << ADecMulP[0][i][j] << std::endl;
 		}
 		}*/
+		double Tcharge = 0.0; //total charge for each atom
+		double atom_mag = 0.0; //charge difference of spin-up and spin-down for each atom
 		for (int i=0; i<GlobalC::ucell.nat; i++)
 		{
 			Tcharge = 0.0;
+			if(GlobalV::NSPIN == 2)
+			{
+				atom_mag = 0.0;
+			}
 			int t = GlobalC::ucell.iat2it[i];
 			if (GlobalV::NSPIN==1 || GlobalV::NSPIN==2)
 			{
@@ -466,11 +471,17 @@ void Mulliken_Charge::stdout_mulliken(LCAO_Hamilt &uhm, const ModuleBase::matrix
 							<<sum_l[0]<< std::setw(30) <<sum_l[1]
 							<< std::setw(33) <<sum_l[0]+sum_l[1]
 							<< std::setw(29) <<sum_l[0]-sum_l[1]<<std::endl;
-						Tcharge =  Tcharge+sum_l[0]+sum_l[1];
+						Tcharge += sum_l[0] + sum_l[1];
+						atom_mag += sum_l[0] - sum_l[1];
 					}
 				}
 			}
-			fout <<"Total Charge on atom  "<< GlobalC::ucell.atoms[t].label <<  std::setw(20) << Tcharge <<std::endl<<std::endl<<std::endl;
+			fout <<"Total Charge on atom  "<< GlobalC::ucell.atoms[t].label <<  std::setw(20) << Tcharge <<std::endl;
+			if(GlobalV::NSPIN==2)
+			{
+				fout <<"Total Magnetism on atom  "<< GlobalC::ucell.atoms[t].label <<  std::setw(20) << atom_mag <<std::endl;
+			}
+			fout <<std::endl<<std::endl;
 		}
 		fout.close();
 		delete[] sum_l;

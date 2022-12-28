@@ -54,7 +54,7 @@ public:
     
     ///(Unit: Ry)  \f$tr(\rho_{HL} H_\delta), 
     ///\rho_{HL} = c_{L, \mu}c_{L,\nu} - c_{H, \mu}c_{H,\nu} \f$ (for gamma_only)
-    double o_delta = 0.0;
+    ModuleBase::matrix	o_delta;
 
     ///Correction term to the Hamiltonian matrix: \f$\langle\psi|V_\delta|\psi\rangle\f$ (for gamma only)
     double* H_V_delta;
@@ -134,7 +134,7 @@ private:
     std::vector<torch::Tensor> gdmr_vector;
 
     //orbital_pdm_shell:[1,Inl,nm*nm]; \langle \phi_\mu|\alpha\rangle\langle\alpha|\phi_\nu\rnalge
-    double*** orbital_pdm_shell;
+    double**** orbital_pdm_shell;
     //orbital_precalc:[1,NAt,NDscrpt]; gvdm*orbital_pdm_shell
     torch::Tensor orbital_precalc_tensor;
 
@@ -213,8 +213,8 @@ private:
     void allocate_nlm(const int nat);
 
     //for bandgap label calculation; QO added on 2022-1-7
-    void init_orbital_pdm_shell(void);
-    void del_orbital_pdm_shell(void);
+    void init_orbital_pdm_shell(const int nks);
+    void del_orbital_pdm_shell(const int nks);
 
 //-------------------
 // LCAO_deepks_psialpha.cpp
@@ -407,9 +407,9 @@ public:
 
 public:
     
-    void cal_o_delta(const std::vector<ModuleBase::matrix>& dm_hl/**<[in] modified density matrix that contains HOMO and LUMO only*/,
+    void cal_o_delta(const std::vector<std::vector<ModuleBase::matrix>>& dm_hl/**<[in] modified density matrix that contains HOMO and LUMO only*/,
         const Parallel_Orbitals &ParaO);
-    void cal_o_delta_k(const std::vector<ModuleBase::ComplexMatrix>& dm_hl/**<[in] modified density matrix that contains HOMO and LUMO only*/,
+    void cal_o_delta_k(const std::vector<std::vector<ModuleBase::ComplexMatrix>>& dm_hl/**<[in] modified density matrix that contains HOMO and LUMO only*/,
         const Parallel_Orbitals &ParaO,
         const int nks);
 
@@ -442,10 +442,10 @@ public:
 //9. check_gedm : prints gedm for checking
 //10. cal_orbital_precalc : orbital_precalc is usted for training with orbital label, 
 //                         which equals gvdm * orbital_pdm_shell, 
-//                         orbital_pdm_shells[1,Inl,nm*nm] = dm_hl * overlap * overlap
+//                         orbital_pdm_shell[1,Inl,nm*nm] = dm_hl * overlap * overlap
 //11. cal_orbital_precalc_k : orbital_precalc is usted for training with orbital label, 
 //                         for multi-k case, which equals gvdm * orbital_pdm_shell, 
-//                         orbital_pdm_shells[1,Inl,nm*nm] = dm_hl_k * overlap * overlap
+//                         orbital_pdm_shell[1,Inl,nm*nm] = dm_hl_k * overlap * overlap
 
 public:
 
@@ -478,7 +478,7 @@ public:
     void check_gedm(void);
 
     //calculates orbital_precalc
-    void cal_orbital_precalc(const std::vector<ModuleBase::matrix>& dm_hl/**<[in] density matrix*/,
+    void cal_orbital_precalc(const std::vector<std::vector<ModuleBase::matrix>>& dm_hl/**<[in] density matrix*/,
         const int nat,
         const UnitCell &ucell,
         const LCAO_Orbitals &orb,
@@ -486,7 +486,7 @@ public:
         const Parallel_Orbitals &ParaO);
     
     //calculates orbital_precalc for multi-k case
-    void cal_orbital_precalc_k(const std::vector<ModuleBase::ComplexMatrix>& dm_hl/**<[in] density matrix*/,
+    void cal_orbital_precalc_k(const std::vector<std::vector<ModuleBase::ComplexMatrix>>& dm_hl/**<[in] density matrix*/,
         const int nat,
         const int nks,
         const std::vector<ModuleBase::Vector3<double>> &kvec_d,
@@ -549,8 +549,8 @@ public:
     void save_npy_gvepsl(const int nat);
 
     //QO added on 2021-12-15
-    void save_npy_o(const double &bandgap/**<[in] \f$E_{base}\f$ or \f$E_{tot}\f$, in Ry*/, const std::string &o_file);
-    void save_npy_orbital_precalc(const int nat);
+    void save_npy_o(const ModuleBase::matrix &bandgap/**<[in] \f$E_{base}\f$ or \f$E_{tot}\f$, in Ry*/, const std::string &o_file, const int nks);
+    void save_npy_orbital_precalc(const int nat, const int nks);
 
 //-------------------
 // LCAO_deepks_mpi.cpp

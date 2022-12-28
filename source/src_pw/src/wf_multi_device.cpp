@@ -1,6 +1,4 @@
 #include "src_pw/include/wf_multi_device.h"
-#include <iostream>
-#include <iomanip>
 
 namespace src_pw{
 
@@ -46,9 +44,9 @@ struct cal_sk_op<FPTYPE, psi::DEVICE_CPU> {
                     const int ixy = is2fftixy[is];
                     int ix = ixy / fftny;
                     int iy = ixy % fftny;
-                    if (ix < int(nx / 2) + 1) ix += nx;
-                    if (iy < int(ny / 2) + 1) iy += ny;
-                    if (iz < int(nz / 2) + 1) iz += nz;
+                    if (ix < (nx / 2) + 1) ix += nx;
+                    if (iy < (ny / 2) + 1) iy += ny;
+                    if (iz < (nz / 2) + 1) iz += nz;
                     sk[iat * npw + igl] = kphase * eigts1[iat * eigts1_nc + ix] * eigts2[iat * eigts2_nc + iy]
                                           * eigts3[iat * eigts3_nc + iz];
                     iat++;
@@ -58,6 +56,7 @@ struct cal_sk_op<FPTYPE, psi::DEVICE_CPU> {
     }
 };
 
+template struct cal_sk_op<float, psi::DEVICE_CPU>;
 template struct cal_sk_op<double, psi::DEVICE_CPU>;
 
 }  // namespace src_pw

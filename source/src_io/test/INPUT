@@ -49,15 +49,15 @@ scf_thr                        1e-08 #charge density error
 init_wfc                       atomic #start wave functions are from 'atomic', 'atomic+random', 'random' or 'file'
 init_chg                       atomic #start charge is from 'atomic' or file
 chg_extrap                     atomic #atomic; first-order; second-order; dm:coefficients of SIA
-out_chg                        0 #>0 output charge density for selected electron steps
+out_chg                        FALSE #>0 output charge density for selected electron steps
 out_pot                        2 #output realspace potential
 out_wfc_pw                     0 #output wave functions
 out_wfc_r                      0 #output wave functions in realspace
 out_dos                        0 #output energy and dos
-out_band                       0 #output energy and band structure
-out_proj_band                  0 #output projected band structure
-restart_save                   0 #print to disk every step for restart
-restart_load                   0 #restart from disk
+out_band                       false #output energy and band structure
+out_proj_band                  FaLse #output projected band structure
+restart_save                   f #print to disk every step for restart
+restart_load                   F #restart from disk
 read_file_dir                  auto #directory of files for reading
 nx                             0 #number of points along x axis for FFT grid
 ny                             0 #number of points along y axis for FFT grid
@@ -106,7 +106,7 @@ fixed_axes                     None #which axes are fixed
 fixed_ibrav                    0 #whether to preseve lattice type during relaxation
 fixed_atoms                    0 #whether to preseve direct coordinates of atoms during relaxation
 relax_method                   cg #bfgs; sd; cg; cg_bfgs;
-relax_new                      1 #whether to use the new relaxation method
+relax_new                      TRUE #whether to use the new relaxation method
 relax_scale_force              0.5 #controls the size of the first CG step if relax_new is true
 out_level                      ie #ie(for electrons); i(for ions);
 out_dm                         0 #>0 output density matrix
@@ -122,7 +122,7 @@ bessel_rcut                    6 #tolerence level when generating bessel functio
 #Parameters (5.LCAO)
 basis_type                     lcao #PW; LCAO in pw; LCAO
 nb2d                           0 #2d distribution of atoms
-gamma_only                     1 #Only for localized orbitals set and gamma point. If set to 1, a fast algorithm is used
+gamma_only                     T #Only for localized orbitals set and gamma point. If set to 1, a fast algorithm is used
 search_radius                  -1 #input search radius (Bohr)
 search_pbc                     1 #input periodic boundary condition
 lcao_ecut                      20 #energy cutoff for LCAO
@@ -207,7 +207,7 @@ block_up                       0.55 #high bound of the block
 block_height                   0.1 #height of the block
 
 #Parameters (12.Test)
-out_alllog                     0 #output information for each processor, when parallel
+out_alllog                     F #output information for each processor, when parallel
 nurse                          0 #for coders
 colour                         0 #for coders, make their live colourful
 t_in_h                         1 #calculate the kinetic energy or not

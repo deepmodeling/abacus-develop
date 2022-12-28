@@ -56,17 +56,20 @@ struct set_real_to_recip_output_op<FPTYPE, psi::DEVICE_CPU> {
     {
         if(add) {
             for(int ig = 0; ig < npw_k; ++ig) {
-                out[ig] += factor / static_cast<double>(nxyz) * in[box_index[ig]];
+                out[ig] += factor / static_cast<FPTYPE>(nxyz) * in[box_index[ig]];
             }
         }
         else {
             for(int ig = 0; ig < npw_k; ++ig) {
-                out[ig] = in[box_index[ig]] / static_cast<double>(nxyz);
+                out[ig] = in[box_index[ig]] / static_cast<FPTYPE>(nxyz);
             }
         }
     }
 };
 
+template struct set_3d_fft_box_op<float, psi::DEVICE_CPU>;
+template struct set_recip_to_real_output_op<float, psi::DEVICE_CPU>;
+template struct set_real_to_recip_output_op<float, psi::DEVICE_CPU>;
 template struct set_3d_fft_box_op<double, psi::DEVICE_CPU>;
 template struct set_recip_to_real_output_op<double, psi::DEVICE_CPU>;
 template struct set_real_to_recip_output_op<double, psi::DEVICE_CPU>;

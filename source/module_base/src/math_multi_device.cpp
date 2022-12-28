@@ -1,9 +1,9 @@
 #include "module_base/include/math_multi_device.h"
-#include <iostream>
 
-namespace ModuleBase{
+namespace ModuleBase {
 
 template <typename FPTYPE>
+__inline__
 FPTYPE __fact(const int n) {
     FPTYPE f = 1.0;
     for (int i = n; i > 1; i--) {
@@ -12,6 +12,7 @@ FPTYPE __fact(const int n) {
     return f;
 }
 
+__inline__
 int __semi_fact(const int n)
 {
     int semif = 1;
@@ -89,7 +90,7 @@ struct cal_ylm_real_op<FPTYPE, psi::DEVICE_CPU> {
                     p[l1 * (lmax + 1) * ng + l * ng + ig] =
                             cost * l3 * p[l1 * (lmax + 1) * ng + l1 * ng + ig];
                     FPTYPE x2 = std::max(0.0, 1.0 - cost * cost);
-                    p[l * (lmax + 1) * ng + l * ng + ig] = __semi_fact(l3) * pow(x2, static_cast<double>(l) / 2.0);//mohan modify 2007-10-13
+                    p[l * (lmax + 1) * ng + l * ng + ig] = __semi_fact(l3) * pow(x2, static_cast<FPTYPE>(l) / 2.0);//mohan modify 2007-10-13
                     if (l % 2 == 1) {
                         p[l * (lmax + 1) * ng + l * ng + ig] *= -1;
                     }
@@ -102,8 +103,8 @@ struct cal_ylm_real_op<FPTYPE, psi::DEVICE_CPU> {
                 for (int m = 1; m <= l; m++) {
                     // Y_lm, m > 0
                     const FPTYPE same =
-                            c * sqrt(__fact<double>(l - m) /
-                                     __fact<double>(l + m)) * SQRT2;
+                            c * sqrt(__fact<FPTYPE>(l - m) /
+                                     __fact<FPTYPE>(l + m)) * SQRT2;
 
                     ++lm;
                     ylm[lm * ng + ig] = same * p[m * (lmax + 1) * ng + l * ng + ig] * cos(m * phi);
@@ -117,6 +118,7 @@ struct cal_ylm_real_op<FPTYPE, psi::DEVICE_CPU> {
     }
 };
 
+template struct cal_ylm_real_op<float, psi::DEVICE_CPU>;
 template struct cal_ylm_real_op<double, psi::DEVICE_CPU>;
 
 }  // namespace src_pw

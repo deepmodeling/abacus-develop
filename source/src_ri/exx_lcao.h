@@ -3,8 +3,8 @@
 
 #include "abfs.h"
 #include "module_base/abfs-vector3_order.h"
-#include "exx_abfs-matrix_orbs11.h" 
-#include "exx_abfs-matrix_orbs21.h" 
+#include "exx_abfs-matrix_orbs11.h"
+#include "exx_abfs-matrix_orbs21.h"
 #include "exx_abfs-dm.h"
 #include "exx_abfs-parallel.h"
 #include "exx_abfs-parallel-communicate-hexx.h"
@@ -29,8 +29,7 @@
 #include<limits>
 #include<omp.h>
 
-	class Local_Orbital_Charge;
-	class LCAO_Matrix;
+class LCAO_Matrix;
 
 class Exx_Lcao
 {
@@ -51,12 +50,12 @@ private:
 
 public:
 	enum class Distribute_Type {Htime,Kmeans2,Kmeans1,Order};
-	
+
 public:
 	double get_energy() const { return energy; }
-	
+
 protected:
-	
+
 	int kmesh_times = 4;				// Peize Lin test
 
 #if EXX_DM==1
@@ -71,7 +70,7 @@ protected:
 	Exx_Abfs::Parallel::Communicate::Hexx Hexx_para;
 #endif
 	double energy = 0.0;
-	
+
 	std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> lcaos;
 	std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> abfs;
 	std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> abfs_ccp;
@@ -79,8 +78,8 @@ protected:
 	ModuleBase::Element_Basis_Index::IndexLNM index_abfs;
 
 	Exx_Abfs::Matrix_Orbs11 m_abfs_abfs;
-	Exx_Abfs::Matrix_Orbs21 m_abfslcaos_lcaos;	
-	
+	Exx_Abfs::Matrix_Orbs21 m_abfslcaos_lcaos;
+
 	std::map<size_t,std::map<size_t,std::map<Abfs::Vector3_Order<double>,std::weak_ptr<ModuleBase::matrix>>>> Cws;		// Cws[it1][it2][R]
 	std::map<size_t,std::map<size_t,std::map<Abfs::Vector3_Order<double>,std::weak_ptr<ModuleBase::matrix>>>> Vws;		// Vws[it1][it2][R]
 	std::map<size_t,std::map<size_t,std::map<Abfs::Vector3_Order<int>,std::shared_ptr<ModuleBase::matrix>>>> Cs;		// Cs[iat1][iat2][box2]
@@ -97,13 +96,13 @@ protected:
 	Exx_Abfs::Screen::Cauchy cauchy;
 
     void init_radial_table_ions( const std::set<size_t> &atom_centres_core, const std::vector<std::pair<size_t,size_t>> &atom_pairs_core );
-		
+
 public:
 	struct Exx_Info_Lcao
 	{
 		const Conv_Coulomb_Pot_K::Ccp_Type &ccp_type;
 		const double &hse_omega;
-		
+
 		double pca_threshold = 0;
 		std::vector<std::string> files_abfs;
 		double c_threshold  = 0;
@@ -113,13 +112,13 @@ public:
 		double cauchy_threshold = 0;
 		double ccp_threshold = 0;
 		double ccp_rmesh_times = 10;
-		
+
 		Exx_Lcao::Distribute_Type distribute_type;
 
 		Exx_Info_Lcao( const Exx_Info::Exx_Info_Global &info_global );
 	};
 	Exx_Info_Lcao info;
-	
+
 	friend class Local_Orbital_Charge;
 	friend class LCAO_Hamilt;
 };
