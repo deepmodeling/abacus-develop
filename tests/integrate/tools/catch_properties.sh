@@ -359,10 +359,6 @@ if ! test -z "$run_rpa" && [ $run_rpa == 1 ]; then
 	python3 ../tools/CompareFile.py $onref $oncal 8
 fi
 
-#echo $total_band
-ttot=`grep $word $running_path | awk '{print $3}'`
-echo "totaltimeref $ttot" >>$1
-
 if ! test -z "$deepks_out_labels" && [ $deepks_out_labels == 1 ]; then
 	sed '/n_des/d' descriptor.dat > des_tmp.txt
 	total_des=`sum_file des_tmp.txt 5`
@@ -376,3 +372,7 @@ if ! test -z "$deepks_bandgap" && [ $deepks_bandgap == 1 ]; then
 	oprec=`python3 get_oprec.py`
 	echo "oprec $oprec" >> $1
 fi
+#echo $total_band
+ttot=`grep $word $running_path | awk '{print $3}'`
+echo "totaltimeref $ttot" >>$1
+
