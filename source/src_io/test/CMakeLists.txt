@@ -24,3 +24,8 @@ AddTest(
   LIBS ${math_libs} base device
   SOURCES output_test.cpp ../output.cpp ../../src_parallel/parallel_reduce.cpp ../../src_parallel/parallel_global.cpp ../../src_parallel/parallel_common.cpp
 )
+
+AddTest(
+  TARGET rwstream_test
+  SOURCES rwstream_test.cpp ../rwstream.cpp
+)
