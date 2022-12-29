@@ -12,7 +12,7 @@ if(ENABLE_LCAO)
             ../../src_pw/charge.cpp ../../src_parallel/parallel_reduce.cpp
             ../../src_pw/structure_factor.cpp ../../src_pw/pw_complement.cpp
             ../../src_pw/klist.cpp ../../src_parallel/parallel_kpoints.cpp ../../src_pw/occupy.cpp
-            ../src/elecstate_multi_device.cpp
+            ../src/elecstate_multi_device.cpp ../../src_io/rwstream.cpp ../../src_io/wf_io.cpp
   )
 
   install(DIRECTORY support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
