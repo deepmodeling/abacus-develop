@@ -50,6 +50,7 @@ out_dm1=`grep out_dm1 INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
 get_s=`grep calculation INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
 out_pband=`grep out_proj_band INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
 toW90=`grep towannier90 INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
+has_mat_r=`grep out_mat_r INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
 #echo $running_path
 base=`grep -En '(^|[[:space:]])basis_type($|[[:space:]])' INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
 word="driver_line"
@@ -177,17 +178,10 @@ if ! test -z "$has_band"  && [  $has_band == 1 ]; then
 fi
 #echo $has_hs
 if ! test -z "$has_hs"  && [  $has_hs == 1 ]; then
-	if ! test -z "$gamma_only"  && [ $gamma_only == 1 ]; then
-		href=data-0-H.ref
-		hcal=OUT.autotest/data-0-H
-		sref=data-0-S.ref
-		scal=OUT.autotest/data-0-S
-	else
-		href=data-1-H.ref
-		hcal=OUT.autotest/data-1-H
-		sref=data-1-S.ref
-		scal=OUT.autotest/data-1-S
-	fi
+	href=data-0-H.ref
+	hcal=OUT.autotest/data-0-H
+	sref=data-0-S.ref
+	scal=OUT.autotest/data-0-S
 
 	python3 ../tools/CompareFile.py $href $hcal 8
     echo "CompareH_pass $?" >>$1
@@ -201,6 +195,12 @@ if ! test -z "$has_hs2"  && [  $has_hs2 == 1 ]; then
     echo "CompareHR_pass $?" >>$1
     python3 ../tools/CompareFile.py data-SR-sparse_SPIN0.csr.ref OUT.autotest/data-SR-sparse_SPIN0.csr 8
     echo "CompareSR_pass $?" >>$1
+fi
+
+#echo $has_mat_r
+if ! test -z "$has_mat_r"  && [  $has_mat_r == 1 ]; then
+    python3 ../tools/CompareFile.py data-rR-sparse.csr.ref OUT.autotest/data-rR-sparse.csr 8
+    echo "ComparerR_pass $?" >>$1
 fi
 
 # echo "$has_wfc_r" ## test out_wfc_r > 0
