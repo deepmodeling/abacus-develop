@@ -121,7 +121,6 @@ void Symmetry::analy_sys(const UnitCell &ucell, std::ofstream &ofs_running)
   //      std::cout << "a1 = " << a1.x << " " << a1.y << " " << a1.z <<std::endl;
   //      std::cout << "a1 = " << a2.x << " " << a2.y << " " << a2.z <<std::endl;
   //      std::cout << "a1 = " << a3.x << " " << a3.y << " " << a3.z <<std::endl;
-  	ModuleBase::Matrix3 optlat;
 	optlat.e11 = a1.x; optlat.e12 = a1.y; optlat.e13 = a1.z;
 	optlat.e21 = a2.x; optlat.e22 = a2.y; optlat.e23 = a2.z;
 	optlat.e31 = a3.x; optlat.e32 = a3.y; optlat.e33 = a3.z;
@@ -181,6 +180,10 @@ void Symmetry::analy_sys(const UnitCell &ucell, std::ofstream &ofs_running)
     ModuleBase::GlobalFunc::OUT(ofs_running,"POINT GROUP IN SPACE GROUP", this->spgname);
 	//write();
 */
+
+    //convert gmatrix to reciprocal space
+    this->gmatrix_convert(gmatrix, kgmatrix, nrotk, optlat, ucell.G);
+
 // convert the symmetry operations from the basis of optimal symmetric configuration 
 // to the basis of input configuration
     this->gmatrix_convert(gmatrix, gmatrix, nrotk, optlat, latvec1);
@@ -1242,6 +1245,90 @@ void Symmetry::rho_symmetry( double *rho,
     ModuleBase::timer::tick("Symmetry","rho_symmetry");
 }
 
+void Symmetry::rhog_symmetry(std::complex<double> *rhog,
+                             const int &nr1, const int &nr2, const int &nr3)
+{
+//  if (GlobalV::test_symmetry)ModuleBase::TITLE("Symmetry","rho_symmetry");
+    ModuleBase::timer::tick("Symmetry","rho_symmetry");
+
+	// allocate flag for each FFT grid.
+    bool* symflag = new bool[nr1 * nr2 * nr3];
+    for (int i=0; i<nr1*nr2*nr3; i++)
+    {
+        symflag[i] = false;
+    }
+
+    assert(nrotk >0 );
+    assert(nrotk <=48 );
+
+    //map the kgmatrix to inv
+    int* invmap = new int[nrotk];
+    this->gmatrix_invmap(kgmatrix, nrotk, invmap);
+
+
+    int *gi = new int[nrotk];
+    int *gj = new int[nrotk];
+    int *gk = new int[nrotk];
+
+    ModuleBase::Vector3<double> zero_vec(0, 0, 0);
+    ModuleBase::Vector3<int> tmp_gdirect0(0, 0, 0);
+    ModuleBase::Vector3<int> tmp_gdirect(0, 0, 0);
+    ModuleBase::Vector3<double> tmp_gdirect_double(0.0, 0.0, 0.0);
+
+    for (int i = 0; i< nr1; ++i)
+    {
+        for (int j = 0; j< nr2; ++j)
+        {
+            for (int k = 0; k< nr3; ++k)
+            {
+                if (!symflag[i * nr2 * nr3 + j * nr3 + k])
+                {
+                    std::complex<double> sum(0, 0);
+
+                    for (int isym = 0; isym < nrotk; ++isym)
+                    {
+                        // fft-grid index to gdirect0
+                        tmp_gdirect0.x=(i>int(nr1/2)+1)?(i-nr1):i;
+                        tmp_gdirect0.y=(j>int(nr2/2)+1)?(j-nr2):j;
+                        tmp_gdirect0.z=(k>int(nr3/2)+1)?(k-nr3):k;
+                        this->rotate(kgmatrix[invmap[isym]], zero_vec, 
+                            tmp_gdirect0.x, tmp_gdirect0.y, tmp_gdirect0.z, 
+                            nr1, nr2, nr3, tmp_gdirect.x, tmp_gdirect.y, tmp_gdirect.z);
+                        //gdirect to fft-grid index and g-index
+                        gi[isym]=(tmp_gdirect.x<0)?(tmp_gdirect.x+nr1):tmp_gdirect.x;
+                        gj[isym]=(tmp_gdirect.y<0)?(tmp_gdirect.y+nr2):tmp_gdirect.y;
+                        gk[isym]=(tmp_gdirect.z<0)?(tmp_gdirect.z+nr3):tmp_gdirect.z;
+                        const int ig = gi[isym] * nr2 * nr3 + gj[isym] * nr3 + gk[isym];
+                        //calculate phase factor
+                        tmp_gdirect_double.x=(double)tmp_gdirect.x;
+                        tmp_gdirect_double.y=(double)tmp_gdirect.y;
+                        tmp_gdirect_double.z=(double)tmp_gdirect.z;
+                        const double arg = - ( tmp_gdirect_double *gtrans[isym] ) * ModuleBase::TWO_PI;
+                        const std::complex<double> gphase( cos(arg),  sin(arg) );
+                        sum += rhog[ig]*gphase;
+                    }
+                    sum /= nrotk;
+
+                    for (int isym = 0; isym < nrotk; ++isym)
+                    {
+                        const int ig = gi[isym] * nr2 * nr3 + gj[isym] * nr3 + gk[isym];
+                        rhog[ig] = sum;
+                        symflag[ig] = true;
+                    }
+                }
+            }
+        }
+    }
+
+    delete[] symflag;
+    delete[] gi;
+    delete[] gj;
+    delete[] gk;
+    delete[] invmap;
+    ModuleBase::timer::tick("Symmetry","rho_symmetry");
+}
+
+
 void Symmetry::force_symmetry(ModuleBase::matrix &force , double* pos, const UnitCell &ucell)   // pengfei 2016-12-20
 {
 	ModuleBase::TITLE("Symmetry","force_symmetry");
@@ -1453,7 +1540,7 @@ void Symmetry::stress_symmetry(ModuleBase::matrix& sigma, const UnitCell &ucell)
 }
 
 void Symmetry::gmatrix_convert(const ModuleBase::Matrix3* sa, ModuleBase::Matrix3* sb, 
-        const int n, ModuleBase::Matrix3 &a, ModuleBase::Matrix3 &b)
+        const int n, const ModuleBase::Matrix3 &a, const ModuleBase::Matrix3 &b)
 {
     ModuleBase::Matrix3 ai = a.Inverse();
     ModuleBase::Matrix3 bi = b.Inverse();
@@ -1464,12 +1551,32 @@ void Symmetry::gmatrix_convert(const ModuleBase::Matrix3* sa, ModuleBase::Matrix
 }
 
 void Symmetry::gtrans_convert(const ModuleBase::Vector3<double>* va, ModuleBase::Vector3<double>* vb, 
-        const int n, ModuleBase::Matrix3 &a, ModuleBase::Matrix3 &b)
+        const int n, const ModuleBase::Matrix3 &a, const ModuleBase::Matrix3 &b)
 {
     ModuleBase::Matrix3 bi = b.Inverse();
     for (int i=0;i<n;++i)
     {
           vb[i]=va[i]*a*bi;
+    }
+}
+void Symmetry::gmatrix_invmap(const ModuleBase::Matrix3* s, const int n, int* invmap)
+{
+    ModuleBase::Matrix3 eig(1, 0, 0, 0, 1, 0, 0, 0, 1);
+    ModuleBase::Matrix3 tmp;
+    for (int i=0;i<n;++i)
+    {
+        for (int j=i;j<n;++j)
+        {
+            tmp=s[i]*s[j];
+            if(equal(tmp.e11, 1) && equal(tmp.e22, 1) && equal(tmp.e33, 1) &&
+                equal(tmp.e12, 0) && equal(tmp.e21, 0) && equal(tmp.e13, 0) &&
+                equal(tmp.e31, 0) && equal(tmp.e23, 0) && equal(tmp.e32, 0))
+            {
+                invmap[i]=j;
+                invmap[j]=i;
+                break;
+            }
+        }
     }
 }
 }

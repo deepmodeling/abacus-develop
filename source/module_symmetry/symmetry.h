@@ -57,6 +57,7 @@ public:
 	std::string plattname;	//the bravais lattice type of the primitive cell
 
 	ModuleBase::Matrix3 gmatrix[48];	//the rotation matrices for all space group operations
+	ModuleBase::Matrix3 kgmatrix[48];	//the rotation matrices in reciprocal space
 	ModuleBase::Vector3<double> gtrans[48];
 	
 	ModuleBase::Matrix3 symop[48];	//the rotation matrices for the pure bravais lattice
@@ -68,6 +69,8 @@ public:
 	int spgnumber;	//the serial number of point group in space group
 	std::string pgname;	//the Schoenflies name of the point group R in {R|0}
 	std::string spgname;	//the Schoenflies name of the point group R in the space group {R|t}
+
+	ModuleBase::Matrix3 optlat;		//the optimized-symmetry lattice
 
 	int tab;
 
@@ -93,6 +96,7 @@ public:
 	void getgroup(int &nrot, int &nrotk, std::ofstream &ofs_running);
 	void checksym(ModuleBase::Matrix3 &s, ModuleBase::Vector3<double> &gtrans, double *pos);
 	void rho_symmetry(double *rho, const int &nr1, const int &nr2, const int &nr3);
+	void rhog_symmetry(std::complex<double> *rhog, const int &nr1, const int &nr2, const int &nr3);
 	void force_symmetry(ModuleBase::matrix &force, double* pos, const UnitCell &ucell);
 	void stress_symmetry(ModuleBase::matrix &sigma, const UnitCell &ucell);
 	void write();
@@ -101,10 +105,11 @@ public:
 
 	//convert n rotation-matrices from sa on basis {a1, a2, a3} to sb on basis {b1, b2, b3}
 	void gmatrix_convert(const ModuleBase::Matrix3* sa, ModuleBase::Matrix3* sb, 
-			const int n, ModuleBase::Matrix3 &a, ModuleBase::Matrix3 &b);
+			const int n, const ModuleBase::Matrix3 &a, const ModuleBase::Matrix3 &b);
 	//convert n translation-vectors from va on basis {a1, a2, a3} to vb on basis {b1, b2, b3}
 	void gtrans_convert(const ModuleBase::Vector3<double>* va, ModuleBase::Vector3<double>* vb, 
-			const int n, ModuleBase::Matrix3 &a, ModuleBase::Matrix3 &b);
+			const int n, const ModuleBase::Matrix3 &a, const ModuleBase::Matrix3 &b);
+	void gmatrix_invmap(const ModuleBase::Matrix3* s, const int n, int* invmap);
 	private:
 
 	// (s)tart (p)osition of atom (t)ype which
