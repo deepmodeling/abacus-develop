@@ -178,12 +178,19 @@ if ! test -z "$has_band"  && [  $has_band == 1 ]; then
 fi
 #echo $has_hs
 if ! test -z "$has_hs"  && [  $has_hs == 1 ]; then
-	href=data-0-H.ref
-	hcal=OUT.autotest/data-0-H
-	sref=data-0-S.ref
-	scal=OUT.autotest/data-0-S
+	if ! test -z "$gamma_only"  && [ $gamma_only == 1 ]; then
+                href=data-0-H.ref
+                hcal=OUT.autotest/data-0-H
+                sref=data-0-S.ref
+                scal=OUT.autotest/data-0-S
+        else
+                href=data-1-H.ref
+                hcal=OUT.autotest/data-1-H
+                sref=data-1-S.ref
+                scal=OUT.autotest/data-1-S
+        fi
 
-	python3 ../tools/CompareFile.py $href $hcal 8
+        python3 ../tools/CompareFile.py $href $hcal 8
     echo "CompareH_pass $?" >>$1
     python3 ../tools/CompareFile.py $sref $scal 8
     echo "CompareS_pass $?" >>$1
