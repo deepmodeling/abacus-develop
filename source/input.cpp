@@ -2929,6 +2929,22 @@ void Input::Check(void)
         {
             ModuleBase::WARNING_QUIT("Input", "please check the ks_solver parameter!");
         }
+
+        if (gamma_only)
+        {
+            ModuleBase::WARNING_QUIT("Input", "gamma_only not implemented for plane wave now.");
+        }
+
+        if (out_proj_band == 1)
+        {
+            ModuleBase::WARNING_QUIT("Input", "out_proj_band not implemented for plane wave now.");
+        }
+
+        if (out_dos == 3)
+        {
+            ModuleBase::WARNING_QUIT("Input", "Fermi Surface Plotting not implemented for plane wave now.");
+        }
+
     }
     else if (basis_type == "lcao")
     {
@@ -2973,6 +2989,11 @@ void Input::Check(void)
         {
             ModuleBase::WARNING_QUIT("Input", "please check the ks_solver parameter!");
         }
+
+        if (kpar > 1)
+        {
+            ModuleBase::WARNING_QUIT("Input", "kpar > 1 has not been supported for lcao calculation.");
+        }
     }
     else if (basis_type == "lcao_in_pw")
     {
@@ -2985,12 +3006,6 @@ void Input::Check(void)
     {
         ModuleBase::WARNING_QUIT("Input", "please check the basis_type parameter!");
     }
-
-    if (basis_type == "pw" && gamma_only)
-    {
-        ModuleBase::WARNING_QUIT("Input", "gamma_only not implemented for plane wave now.");
-    }
-
     /*
     if (basis_type == "lcao" && !gamma_only_local) // xiaohui add 2013-09-01. Attention! Maybe there is some problem.
     {
@@ -2998,10 +3013,6 @@ void Input::Check(void)
     }
     */
 
-    if (basis_type == "lcao" && kpar > 1)
-    {
-        ModuleBase::WARNING_QUIT("Input", "kpar > 1 has not been supported for lcao calculation.");
-    }
     /* comment out because code cannot reach here anyway
     if (GlobalV::NPROC > 1 && ks_solver == "lapack") // xiaohui add 2013-09-01
     {
