@@ -55,6 +55,7 @@ void output::printrm(const std::string &s, const ModuleBase::matrix &m, const do
     return;
 }
 
+/*
 void output::printcm_norm(std::ofstream &ofs, const std::string &s, const ModuleBase::ComplexMatrix &m, const double &limit)
 {
     const int b1 = m.nr;
@@ -74,6 +75,7 @@ void output::printcm_norm(std::ofstream &ofs, const std::string &s, const Module
     }
     return;
 }
+*/
 
 /*
 void output::printcm_norm(const std::string &s, const ModuleBase::ComplexMatrix &m, const double &limit)

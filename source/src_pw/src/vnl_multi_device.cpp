@@ -1,8 +1,6 @@
 #include "src_pw/include/vnl_multi_device.h"
-#include <iostream>
-#include <iomanip>
 
-namespace src_pw{
+namespace src_pw {
 
 template <typename FPTYPE>
 FPTYPE _polynomial_interpolation(
@@ -18,11 +16,11 @@ FPTYPE _polynomial_interpolation(
     const FPTYPE position = x / table_interval;
     const int iq = static_cast<int>(position);
 
-    const double x0 = position - static_cast<double>(iq);
-    const double x1 = 1.0 - x0;
-    const double x2 = 2.0 - x0;
-    const double x3 = 3.0 - x0;
-    const double y =
+    const FPTYPE x0 = position - static_cast<FPTYPE>(iq);
+    const FPTYPE x1 = 1.0 - x0;
+    const FPTYPE x2 = 2.0 - x0;
+    const FPTYPE x3 = 3.0 - x0;
+    const FPTYPE y =
             table[(dim1 * tab_2 + dim2) * tab_3 + iq + 0] * x1 * x2 * x3 / 6.0 +
             table[(dim1 * tab_2 + dim2) * tab_3 + iq + 0 + 1] * x0 * x2 * x3 / 2.0 -
             table[(dim1 * tab_2 + dim2) * tab_3 + iq + 0 + 2] * x1 * x0 * x3 / 2.0 +
@@ -68,7 +66,7 @@ struct cal_vnl_op<FPTYPE, psi::DEVICE_CPU> {
                 const int nbeta = atom_nb[it];
 
                 for (int nb = 0; nb < nbeta; nb++) {
-                    const double gnorm = sqrt(gk[ig * 3 + 0] * gk[ig * 3 + 0] + gk[ig * 3 + 1] * gk[ig * 3 + 1] +
+                    const FPTYPE gnorm = sqrt(gk[ig * 3 + 0] * gk[ig * 3 + 0] + gk[ig * 3 + 1] * gk[ig * 3 + 1] +
                                               gk[ig * 3 + 2] * gk[ig * 3 + 2]) * tpiba;
 
                     vq = _polynomial_interpolation(
@@ -87,8 +85,8 @@ struct cal_vnl_op<FPTYPE, psi::DEVICE_CPU> {
                 // now add the structure factor and factor (-i)^l
                 for (int ia = 0; ia < atom_na[it]; ia++) {
                     for (int ih = 0; ih < nh; ih++) {
-                        std::complex<double> pref = pow(NEG_IMAG_UNIT, nhtol[it * nhm + ih]);    //?
-                        std::complex<double> *pvkb = vkb_in + jkb * npwx;
+                        std::complex<FPTYPE> pref = pow(NEG_IMAG_UNIT, nhtol[it * nhm + ih]);    //?
+                        std::complex<FPTYPE> *pvkb = vkb_in + jkb * npwx;
                         pvkb[ig] = vkb1[ih * npw + ig] * sk[iat * npw + ig] * pref;
                         ++jkb;
                     } // end ih
@@ -99,6 +97,7 @@ struct cal_vnl_op<FPTYPE, psi::DEVICE_CPU> {
     }
 };
 
+template struct cal_vnl_op<float, psi::DEVICE_CPU>;
 template struct cal_vnl_op<double, psi::DEVICE_CPU>;
 
 }  // namespace src_pw

@@ -38,16 +38,7 @@ Rwstream& operator<<(Rwstream& wstream,const T data)
     fwrite(&data,size,n,wstream.fileptr);
     return wstream;
 }
-/*//for dynamic memory
-//malloc_usable_size has problem!
-template<class T>
-Rwstream& operator<<(Rwstream& wstream,T* &data)
-{
-    int size=sizeof(T);
-	int n=malloc_usable_size(data)/sizeof(T);
-    fwrite(data,size,n,wstream.fileptr);
-    return wstream;
-}*/
+
 template<class T>
 Rwstream& operator>>(Rwstream& rstream,T& data)
 {
@@ -62,9 +53,19 @@ Rwstream& operator>>(Rwstream& rstream,T& data)
 	}
 	return rstream;
 }
-
-
 /*//for dynamic memory
+//malloc_usable_size has problem!
+template<class T>
+Rwstream& operator<<(Rwstream& wstream,T* &data)
+{
+    int size=sizeof(T);
+	int n=malloc_usable_size(data)/sizeof(T);
+    fwrite(data,size,n,wstream.fileptr);
+    return wstream;
+}
+
+
+//for dynamic memory
 template<class T>
 Rwstream& operator>>(Rwstream& rstream,T* &data)
 {
@@ -79,7 +80,8 @@ Rwstream& operator>>(Rwstream& rstream,T* &data)
 		exit(0);
     }
 	return rstream;
-}*/
+}
+
 template<class T>
 void rwread(Rwstream& rstream,T* &data,int n)
 {
@@ -93,6 +95,7 @@ void rwread(Rwstream& rstream,T* &data,int n)
     }
     return;
 }
+*/
 
 #endif
 

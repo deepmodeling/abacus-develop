@@ -1,8 +1,11 @@
 #include "module_hamilt/include/ekinetic.h"
+
 #include <complex>
+
+#include <cuda_runtime.h>
 #include <thrust/complex.h>
 
-using namespace hamilt; 
+namespace hamilt {
 #define THREADS_PER_BLOCK 256
 
 template <typename FPTYPE>
@@ -40,17 +43,9 @@ void hamilt::ekinetic_pw_op<FPTYPE, psi::DEVICE_GPU>::operator() (
     gk2_ik, // array of data
     reinterpret_cast<thrust::complex<FPTYPE>*>(tmhpsi), // array of data
     reinterpret_cast<const thrust::complex<FPTYPE>*>(tmpsi_in)); // array of data
-  // cpu part:
-  // for (int ib = 0; ib < nband; ++ib) {
-  //   for (int ig = 0; ig < npw; ++ig) {
-  //     tmhpsi[ig] += gk2_ik[ig] * tpiba2 * tmpsi_in[ig];
-  //   }
-  //   tmhpsi += max_npw;
-  //   tmpsi_in += max_npw;
-  // }
-  // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 }
 
-namespace hamilt{
+template struct ekinetic_pw_op<float, psi::DEVICE_GPU>;
 template struct ekinetic_pw_op<double, psi::DEVICE_GPU>;
-}
+
+}  // namespace hamilt

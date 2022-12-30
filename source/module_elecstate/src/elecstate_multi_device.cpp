@@ -1,12 +1,11 @@
 #include "module_elecstate/include/elecstate_multi_device.h"
-#include <iostream>
 
 namespace elecstate{
 
 template <typename FPTYPE> 
 struct elecstate_pw_op<FPTYPE, psi::DEVICE_CPU> {
   void operator()(
-    const psi::DEVICE_CPU * ctx,
+    const psi::DEVICE_CPU * /*ctx*/,
     const int& spin,
     const int& nrxx,
     const FPTYPE& w1,
@@ -68,6 +67,6 @@ struct elecstate_pw_op<FPTYPE, psi::DEVICE_CPU> {
     } 
 };
 
-
+template struct elecstate_pw_op<float, psi::DEVICE_CPU>;
 template struct elecstate_pw_op<double, psi::DEVICE_CPU>;
-}
+}  // namespace elecstate

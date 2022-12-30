@@ -102,9 +102,9 @@ void HSolverPW<FPTYPE, Device>::solve(hamilt::Hamilt<FPTYPE, Device>* pHamilt, p
         this->hamiltSolvePsiK(pHamilt, psi, p_eigenvalues);
         if(skip_charge)
         {
-            GlobalV::ofs_running<< "Average iterative diagonalization steps for k-points "<<ik<<" is: "<<DiagoIterAssist<double>::avg_iter
-                <<" ; where current threshold is: "<<DiagoIterAssist<double>::PW_DIAG_THR<<" . "<<std::endl;
-            DiagoIterAssist<double>::avg_iter = 0.0;
+            GlobalV::ofs_running<< "Average iterative diagonalization steps for k-points "<<ik<<" is: "<<DiagoIterAssist<FPTYPE, Device>::avg_iter
+                <<" ; where current threshold is: "<<DiagoIterAssist<FPTYPE, Device>::PW_DIAG_THR<<" . "<<std::endl;
+            DiagoIterAssist<FPTYPE, Device>::avg_iter = 0.0;
         }
         /// calculate the contribution of Psi for charge density rho
     }
@@ -139,12 +139,12 @@ void HSolverPW<FPTYPE, Device>::endDiagh()
     }
 
     //in PW base, average iteration steps for each band and k-point should be printing
-    if(DiagoIterAssist<FPTYPE>::avg_iter > 0.0)
+    if(DiagoIterAssist<FPTYPE, Device>::avg_iter > 0.0)
     {
-        GlobalV::ofs_running<< "Average iterative diagonalization steps: "<<DiagoIterAssist<FPTYPE>::avg_iter / this->wfc_basis->nks
-            <<" ; where current threshold is: "<<DiagoIterAssist<FPTYPE>::PW_DIAG_THR<<" . "<<std::endl;
+        GlobalV::ofs_running<< "Average iterative diagonalization steps: "<<DiagoIterAssist<FPTYPE, Device>::avg_iter / this->wfc_basis->nks
+            <<" ; where current threshold is: "<<DiagoIterAssist<FPTYPE, Device>::PW_DIAG_THR<<" . "<<std::endl;
         //reset avg_iter
-        DiagoIterAssist<FPTYPE>::avg_iter = 0.0;
+        DiagoIterAssist<FPTYPE, Device>::avg_iter = 0.0;
     }
     //psi only should be initialed once for PW
     if(!this->initialed_psi)

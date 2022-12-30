@@ -1,19 +1,14 @@
 #include <stdio.h>
 #include "rwstream.h"
 
-Rwstream::Rwstream(FILE* &ptr)
-{
-	fileptr=ptr;
-}
-
 Rwstream::Rwstream(const std::string filename,const char *op)
 {
 	fileptr=fopen(filename.c_str(),op);
 }
 
-void Rwstream:: setptr(FILE* &ptr)
+void Rwstream:: close()
 {
-	fileptr=ptr;
+	fclose(fileptr);
 	return;
 }
 
@@ -22,9 +17,15 @@ void Rwstream::open(const std::string filename,const char *op)
 	fileptr=fopen(filename.c_str(),op);
 }
 
-void Rwstream:: close()
+/*
+Rwstream::Rwstream(FILE* &ptr)
 {
-	fclose(fileptr);
+	fileptr=ptr;
+}
+
+void Rwstream:: setptr(FILE* &ptr)
+{
+	fileptr=ptr;
 	return;
 }
 
@@ -42,3 +43,4 @@ Rwstream::operator bool() const
 	else
 		return true;
 }
+*/

@@ -1,9 +1,11 @@
 #include "module_hamilt/include/veff.h"
-#include <complex>
-#include <thrust/complex.h>
-#include "cuda_runtime.h"
 
-namespace hamilt{
+#include <complex>
+
+#include <cuda_runtime.h>
+#include <thrust/complex.h>
+
+namespace hamilt {
 
 #define THREADS_PER_BLOCK 256
 
@@ -49,11 +51,6 @@ void veff_pw_op<FPTYPE, psi::DEVICE_GPU>::operator() (
         size, // control params
         reinterpret_cast<thrust::complex<FPTYPE>*>(out), // array of data
         in); // array of data
-    // cpu part:
-    // for (int ir = 0; ir < size; ++ir)
-    // {
-    //     out[ir] *= in[ir];
-    // }
 }
 
 template <typename FPTYPE>
@@ -70,22 +67,9 @@ void veff_pw_op<FPTYPE, psi::DEVICE_GPU>::operator() (
         reinterpret_cast<thrust::complex<FPTYPE>*>(out), // array of data
         reinterpret_cast<thrust::complex<FPTYPE>*>(out1), // array of data
         in[0]); // array of data
-    // cpu part:
-    // std::complex<FPTYPE> sup = {0, 0}, sdown = {0, 0};
-    // for (int ir = 0; ir < size; ir++) {
-    //     sup = out[ir] * (in[0][ir] + in[3][ir])
-    //         + out1[ir]
-    //                 * (in[1][ir]
-    //                 - std::complex<FPTYPE>(0.0, 1.0) * in[2][ir]);
-    //     sdown = out1[ir] * (in[0][ir] - in[3][ir])
-    //             + out[ir]
-    //                 * (in[1][ir]
-    //                     + std::complex<FPTYPE>(0.0, 1.0) * in[2][ir]);
-    //     out[ir] = sup;
-    //     out1[ir] = sdown;
-    // }
 }
 
+template struct veff_pw_op<float, psi::DEVICE_GPU>;
 template struct veff_pw_op<double, psi::DEVICE_GPU>;
 
 }  // namespace hamilt
