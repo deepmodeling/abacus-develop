@@ -1,9 +1,11 @@
+#include "module_psi/include/memory.h"
+
 #include <vector>
 #include <stdio.h>
 #include <complex>
 #include <assert.h>
-#include <cuda_runtime.h>
-#include "module_psi/include/memory.h"
+
+#include <hip/hip_runtime.h>
 
 namespace psi {
 namespace memory {
@@ -17,7 +19,7 @@ void resize_memory_op<FPTYPE, psi::DEVICE_GPU>::operator()(
   if (arr != nullptr) {
     delete_memory_op<FPTYPE, psi::DEVICE_GPU>()(dev, arr);
   }
-  cudaMalloc((void **)&arr, sizeof(FPTYPE) * size);
+  hipMalloc((void **)&arr, sizeof(FPTYPE) * size);
 }
 
 template <typename FPTYPE>
@@ -27,7 +29,7 @@ void set_memory_op<FPTYPE, psi::DEVICE_GPU>::operator()(
     const int var, 
     const size_t size) 
 {
-  cudaMemset(arr, var, sizeof(FPTYPE) * size);  
+  hipMemset(arr, var, sizeof(FPTYPE) * size);  
 }
 
 template <typename FPTYPE> 
@@ -38,7 +40,7 @@ void synchronize_memory_op<FPTYPE, psi::DEVICE_CPU, psi::DEVICE_GPU>::operator()
     const FPTYPE* arr_in,
     const size_t size) 
 {
-  cudaMemcpy(arr_out, arr_in, sizeof(FPTYPE) * size, cudaMemcpyDeviceToHost);  
+  hipMemcpy(arr_out, arr_in, sizeof(FPTYPE) * size, hipMemcpyDeviceToHost);  
 }
 
 template <typename FPTYPE> 
@@ -49,7 +51,7 @@ void synchronize_memory_op<FPTYPE, psi::DEVICE_GPU, psi::DEVICE_CPU>::operator()
     const FPTYPE* arr_in,
     const size_t size) 
 {
-  cudaMemcpy(arr_out, arr_in, sizeof(FPTYPE) * size, cudaMemcpyHostToDevice);  
+  hipMemcpy(arr_out, arr_in, sizeof(FPTYPE) * size, hipMemcpyHostToDevice);  
 }
 
 template <typename FPTYPE> 
@@ -60,7 +62,7 @@ void synchronize_memory_op<FPTYPE, psi::DEVICE_GPU, psi::DEVICE_GPU>::operator()
     const FPTYPE* arr_in,
     const size_t size) 
 {
-  cudaMemcpy(arr_out, arr_in, sizeof(FPTYPE) * size, cudaMemcpyDeviceToDevice);  
+  hipMemcpy(arr_out, arr_in, sizeof(FPTYPE) * size, hipMemcpyDeviceToDevice);  
 }
 
 template <typename FPTYPE>
@@ -68,41 +70,29 @@ void delete_memory_op<FPTYPE, psi::DEVICE_GPU>::operator() (
     const psi::DEVICE_GPU* dev, 
     FPTYPE* arr) 
 {
-  cudaFree(arr);
+  hipFree(arr);
 }
 
 template struct resize_memory_op<int, psi::DEVICE_GPU>;
-template struct resize_memory_op<float, psi::DEVICE_GPU>;
 template struct resize_memory_op<double, psi::DEVICE_GPU>;
-template struct resize_memory_op<std::complex<float>, psi::DEVICE_GPU>;
 template struct resize_memory_op<std::complex<double>, psi::DEVICE_GPU>;
 
 template struct set_memory_op<int, psi::DEVICE_GPU>;
-template struct set_memory_op<float, psi::DEVICE_GPU>;
 template struct set_memory_op<double, psi::DEVICE_GPU>;
-template struct set_memory_op<std::complex<float>, psi::DEVICE_GPU>;
 template struct set_memory_op<std::complex<double>, psi::DEVICE_GPU>;
 
 template struct synchronize_memory_op<int, psi::DEVICE_CPU, psi::DEVICE_GPU>;
 template struct synchronize_memory_op<int, psi::DEVICE_GPU, psi::DEVICE_CPU>;
 template struct synchronize_memory_op<int, psi::DEVICE_GPU, psi::DEVICE_GPU>;
-template struct synchronize_memory_op<float, psi::DEVICE_CPU, psi::DEVICE_GPU>;
-template struct synchronize_memory_op<float, psi::DEVICE_GPU, psi::DEVICE_CPU>;
-template struct synchronize_memory_op<float, psi::DEVICE_GPU, psi::DEVICE_GPU>;
 template struct synchronize_memory_op<double, psi::DEVICE_CPU, psi::DEVICE_GPU>;
 template struct synchronize_memory_op<double, psi::DEVICE_GPU, psi::DEVICE_CPU>;
 template struct synchronize_memory_op<double, psi::DEVICE_GPU, psi::DEVICE_GPU>;
-template struct synchronize_memory_op<std::complex<float>, psi::DEVICE_CPU, psi::DEVICE_GPU>;
-template struct synchronize_memory_op<std::complex<float>, psi::DEVICE_GPU, psi::DEVICE_CPU>;
-template struct synchronize_memory_op<std::complex<float>, psi::DEVICE_GPU, psi::DEVICE_GPU>;
 template struct synchronize_memory_op<std::complex<double>, psi::DEVICE_CPU, psi::DEVICE_GPU>;
 template struct synchronize_memory_op<std::complex<double>, psi::DEVICE_GPU, psi::DEVICE_CPU>;
 template struct synchronize_memory_op<std::complex<double>, psi::DEVICE_GPU, psi::DEVICE_GPU>;
 
 template struct delete_memory_op<int, psi::DEVICE_GPU>;
-template struct delete_memory_op<float, psi::DEVICE_GPU>;
 template struct delete_memory_op<double, psi::DEVICE_GPU>;
-template struct delete_memory_op<std::complex<float>, psi::DEVICE_GPU>;
 template struct delete_memory_op<std::complex<double>, psi::DEVICE_GPU>;
 
 } // end of namespace gpu_cuda

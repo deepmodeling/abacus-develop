@@ -69,9 +69,33 @@ if(USE_CUDA)
   )
 endif()
 
+if(USE_ROCM)
+  hip_add_library(device_rocm STATIC
+    module_hamilt/src/rocm/nonlocal.hip.cu
+    module_hamilt/src/rocm/veff.hip.cu
+    module_hamilt/src/rocm/ekinetic.hip.cu
+    module_pw/src/rocm/pw_multi_device.hip.cu
+    module_hsolver/src/rocm/dngvd_op.hip.cu
+    module_hsolver/src/rocm/math_kernel.hip.cu
+    module_elecstate/src/rocm/elecstate_multi_device.hip.cu
+    module_psi/src/rocm/memory.hip.cu
+    src_pw/src/rocm/force_multi_device.hip.cu
+    src_pw/src/rocm/stress_multi_device.hip.cu
+    src_pw/src/rocm/wf_multi_device.hip.cu
+    src_pw/src/rocm/vnl_multi_device.hip.cu
+    module_base/src/rocm/math_multi_device.hip.cu
+  )
+endif()
+
 add_library(device OBJECT ${device_srcs})
 
 if(USE_CUDA)
+  target_link_libraries(
+    device 
+    cusolver 
+    cublas 
+    cufft
+  )
   set_property(
     TARGET device
     PROPERTY CUDA_ARCHITECTURES
@@ -80,7 +104,15 @@ if(USE_CUDA)
     75 # T4
     80 # A100
   )
-  target_link_libraries(device cusolver cublas cufft)
+elseif(USE_ROCM)
+  target_link_libraries(
+    device 
+    device_rocm 
+    hip::device
+    hip::host
+    hip::hipfft
+    roc::hipblas
+  )
 endif()
 
 if(ENABLE_COVERAGE)

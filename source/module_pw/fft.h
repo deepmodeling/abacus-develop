@@ -15,6 +15,11 @@
 #include "cuda_runtime.h"
 #endif
 
+#if defined(__ROCM) || defined(__UT_USE_ROCM)
+#include <hipfft.h>
+#include <hip/hip_runtime.h>
+#endif
+
 #include "module_psi/psi.h"
 // #ifdef __MIX_PRECISION
 // #include "fftw3f.h"
@@ -125,8 +130,10 @@ private:
 //	fftw_plan plan3dforward;
 //	fftw_plan plan3dbackward;
 
-#if defined(__CUDA) || defined(__UT_USE_CUDA)
+#if defined(__CUDA)
     cufftHandle fft_handle;
+#elif defined(__ROCM)
+    hipfftHandle fft_handle;
 #endif
 
 #ifdef __MIX_PRECISION

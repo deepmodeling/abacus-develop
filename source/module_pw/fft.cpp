@@ -209,11 +209,13 @@ void FFT :: initplan()
     //    reinterpret_cast<fftw_complex *>(auxr_3d),
     //    FFTW_BACKWARD, FFTW_MEASURE);
 
-    #if defined(__CUDA) || defined(__UT_USE_CUDA)
     if (GlobalV::device_flag == "gpu") {
+    #if defined(__CUDA)
         cufftPlan3d(&fft_handle, this->nx, this->ny, this->nz, CUFFT_Z2Z);
+    #elif defined(__ROCM)
+        hipfftPlan3d(&fft_handle, this->nx, this->ny, this->nz, HIPFFT_Z2Z);
+		#endif
     }
-    #endif
 
 	destroyp = false;
 }
@@ -344,7 +346,7 @@ void FFT:: cleanFFT()
 	}
     // fftw_destroy_plan(this->plan3dforward);
     // fftw_destroy_plan(this->plan3dbackward);
-    #if defined(__CUDA) || defined(__UT_USE_CUDA)
+    #if defined(__CUDA)
     if (GlobalV::device_flag == "gpu") {
         cufftDestroy(fft_handle);
     }
@@ -518,32 +520,36 @@ void FFT::fftxyc2r(std::complex<double>* & in, double* & out)
 template <>
 void FFT::fft3D_forward(const psi::DEVICE_GPU * /*ctx*/, std::complex<double>* & in, std::complex<double>* & out)
 {
-//    fftw_execute_dft(
-//        this->plan3dforward,
-//        reinterpret_cast<fftw_complex *>(in),
-//        reinterpret_cast<fftw_complex *>(out));
 #if defined(__CUDA)
     cufftExecZ2Z(this->fft_handle,
           reinterpret_cast<cufftDoubleComplex*>(in),
           reinterpret_cast<cufftDoubleComplex*>(out),
           CUFFT_FORWARD);
     cudaDeviceSynchronize();
+#elif defined(__ROCM)
+    hipfftExecZ2Z(this->fft_handle,
+          reinterpret_cast<hipfftDoubleComplex*>(in),
+          reinterpret_cast<hipfftDoubleComplex*>(out),
+          HIPFFT_FORWARD);
+    hipDeviceSynchronize();
 #endif
 }
 
 template <>
 void FFT::fft3D_backward(const psi::DEVICE_GPU * /*ctx*/, std::complex<double>* & in, std::complex<double>* & out)
 {
-//    fftw_execute_dft(
-//        this->plan3dbackward,
-//        reinterpret_cast<fftw_complex *>(in),
-//        reinterpret_cast<fftw_complex *
 #if defined(__CUDA)
     cufftExecZ2Z(this->fft_handle,
              reinterpret_cast<cufftDoubleComplex*>(in),
              reinterpret_cast<cufftDoubleComplex*>(out),
              CUFFT_INVERSE);
     cudaDeviceSynchronize();
+#elif defined(__ROCM)
+    hipfftExecZ2Z(this->fft_handle,
+             reinterpret_cast<hipfftDoubleComplex*>(in),
+             reinterpret_cast<hipfftDoubleComplex*>(out),
+             HIPFFT_BACKWARD);
+    hipDeviceSynchronize();
 #endif
 }
 

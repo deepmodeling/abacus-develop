@@ -374,7 +374,9 @@ TEST_F(TestModuleHsolverMathKernel, zdot_real_op_gpu)
     resize_memory_op()(gpu_ctx, psi_R_dev, psi_R.size());
     synchronize_memory_op()(gpu_ctx, cpu_ctx, psi_L_dev, psi_L.data(), psi_L.size());
     synchronize_memory_op()(gpu_ctx, cpu_ctx, psi_R_dev, psi_R.data(), psi_R.size());
+    hsolver::createBLAShandle();
     double result = zdot_real_gpu_op()(gpu_ctx, dim, psi_L_dev, psi_R_dev, false);
+    hsolver::destoryBLAShandle();
     EXPECT_LT(fabs(result - expected_result), 1e-12);
     delete_memory_op()(gpu_ctx, psi_L_dev);
     delete_memory_op()(gpu_ctx, psi_R_dev);
