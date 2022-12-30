@@ -343,7 +343,9 @@ void DFTU::local_occup_bcast()
                             {
                                 for (int m1 = 0; m1 < 2 * l + 1; m1++)
                                 {
+#ifdef __MPI
                                     MPI_Bcast(&locale[iat][l][n][spin](m0, m1), 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+#endif
                                 }
                             }
                         }
@@ -361,12 +363,13 @@ void DFTU::local_occup_bcast()
                                     for (int ipol1 = 0; ipol1 < GlobalV::NPOL; ipol1++)
                                     {
                                         int m1_all = m1 + (2 * L + 1) * ipol1;
-
+#ifdef __MPI
                                         MPI_Bcast(&locale[iat][l][n][0](m0_all, m1_all),
                                                   1,
                                                   MPI_DOUBLE,
                                                   0,
                                                   MPI_COMM_WORLD);
+#endif
                                     }
                                 }
                             }
