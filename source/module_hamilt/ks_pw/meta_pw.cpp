@@ -1,7 +1,5 @@
 #include "meta_pw.h"
 
-#include "module_base/global_function.h"
-#include "module_base/global_variable.h"
 #include "module_base/timer.h"
 #include "src_pw/global.h"
 #include "module_xc/xc_functional.h"
@@ -14,20 +12,30 @@ template<typename FPTYPE, typename Device>
 Meta<OperatorPW<FPTYPE, Device>>::Meta(
     FPTYPE tpiba_in, 
     const int* isk_in,
-    const ModuleBase::matrix* vk_in,
-    ModulePW::PW_Basis_K* wfcpw_in
-)
+    const FPTYPE* vk_in,
+    const int vk_row,
+    const int vk_col,
+    ModulePW::PW_Basis_K* wfcpw_in)
 {
     this->classname = "Meta";
     this->cal_type = pw_meta;
     this->isk = isk_in;
     this->tpiba = tpiba_in;
     this->vk = vk_in;
+    this->vk_row = vk_row;
+    this->vk_col = vk_col;
     this->wfcpw = wfcpw_in;
-    if(this->isk == nullptr || this->tpiba < 1e-10 || this->vk == nullptr || this->wfcpw == nullptr)
+    resmem_complex_op()(this->ctx, this->porter, this->wfcpw->nmaxgr);
+    if(this->isk == nullptr || this->tpiba < 1e-10 || this->wfcpw == nullptr)
     {
         ModuleBase::WARNING_QUIT("MetaPW", "Constuctor of Operator::MetaPW is failed, please check your code!");
     }
+}
+
+template<typename FPTYPE, typename Device>
+Meta<OperatorPW<FPTYPE, Device>>::~Meta()
+{
+    delmem_complex_op()(this->ctx, this->porter);
 }
 
 template<typename FPTYPE, typename Device>
@@ -51,38 +59,24 @@ void Meta<OperatorPW<FPTYPE, Device>>::act(
     //npol == 2 case has not been considered
     this->npol = psi_in->npol;
 
-    std::complex<FPTYPE> *porter = new std::complex<FPTYPE>[wfcpw->nmaxgr];
     for (int ib = 0; ib < n_npwx; ++ib)
     {
         for (int j = 0; j < 3; j++)
         {
-            for (int ig = 0; ig < npw; ig++)
-            {
-                FPTYPE fact = wfcpw->getgpluskcar(this->ik, ig)[j] * this->tpiba;
-                porter[ig] = tmpsi_in[ig] * complex<FPTYPE>(0.0, fact);
+            meta_op()(this->ctx, this->ik, j, npw, this->wfcpw->npwk_max, this->tpiba, wfcpw->get_gcar_data<FPTYPE>(this->ctx), wfcpw->get_kvec_c_data<FPTYPE>(this->ctx), tmpsi_in, this->porter);
+            wfcpw->recip_to_real(this->ctx, this->porter, this->porter, this->ik);
+
+            if(this->vk_col != 0) {
+                vector_mul_vector_op()(this->ctx, this->vk_col, this->porter, this->porter, this->vk + current_spin * this->vk_col);
             }
 
-            wfcpw->recip2real(porter, porter, this->ik);
-            if(this->vk->nc != 0)
-            {
-                const FPTYPE* pvk = &(this->vk[0](current_spin, 0));
-                for (int ir = 0; ir < this->vk->nc; ir++)
-                {
-                    porter[ir] *= pvk[ir];
-                }
-            }
-            wfcpw->real2recip(porter, porter, this->ik);
+            wfcpw->real_to_recip(this->ctx, this->porter, this->porter, this->ik);
+            meta_op()(this->ctx, this->ik, j, npw, this->wfcpw->npwk_max, this->tpiba, wfcpw->get_gcar_data<FPTYPE>(this->ctx), wfcpw->get_kvec_c_data<FPTYPE>(this->ctx), this->porter, tmhpsi, true);
 
-            for (int ig = 0; ig < npw; ig++)
-            {
-                FPTYPE fact = wfcpw->getgpluskcar(this->ik, ig)[j] * this->tpiba;
-                tmhpsi[ig] -= complex<FPTYPE>(0.0, fact) * porter[ig];
-            }
         } // x,y,z directions
         tmhpsi += this->max_npw;
         tmpsi_in += this->max_npw;
     }
-    delete[] porter;
     ModuleBase::timer::tick("Operator", "MetaPW");
 }
 
@@ -95,6 +89,8 @@ hamilt::Meta<OperatorPW<FPTYPE, Device>>::Meta(const Meta<OperatorPW<T_in, Devic
     this->isk = meta->get_isk();
     this->tpiba = meta->get_tpiba();
     this->vk = meta->get_vk();
+    this->vk_row = meta->get_vk_row();
+    this->vk_col = meta->get_vk_col();
     this->wfcpw = meta->get_wfcpw();
     if(this->isk == nullptr || this->tpiba < 1e-10 || this->vk == nullptr || this->wfcpw == nullptr)
     {
