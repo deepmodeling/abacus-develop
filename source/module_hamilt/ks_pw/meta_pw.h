@@ -4,6 +4,8 @@
 #include "operator_pw.h"
 #include "module_base/matrix.h"
 #include "module_pw/pw_basis_k.h"
+#include "module_hamilt/include/meta.h"
+#include "module_hsolver/include/math_kernel.h"
 
 namespace hamilt {
 
@@ -21,12 +23,12 @@ template<typename FPTYPE, typename Device>
 class Meta<OperatorPW<FPTYPE, Device>> : public OperatorPW<FPTYPE, Device>
 {
     public:
-    Meta(FPTYPE tpiba2_in, const int* isk_in, const ModuleBase::matrix* vk, ModulePW::PW_Basis_K* wfcpw);
+    Meta(FPTYPE tpiba2_in, const int* isk_in, const FPTYPE* vk_in, const int vk_row, const int vk_col, ModulePW::PW_Basis_K* wfcpw);
 
     template<typename T_in, typename Device_in = Device>
     explicit Meta(const Meta<OperatorPW<T_in, Device_in>>* meta);
 
-    virtual ~Meta(){};
+    virtual ~Meta();
 
     virtual void act(
         const psi::Psi<std::complex<FPTYPE>, Device> *psi_in, 
@@ -38,7 +40,9 @@ class Meta<OperatorPW<FPTYPE, Device>> : public OperatorPW<FPTYPE, Device>
     // denghui added for copy constructor at 20221105
     FPTYPE get_tpiba() const {return this->tpiba;}
     const int * get_isk() const {return this->isk;}
-    const ModuleBase::matrix* get_vk() const {return this->vk;}
+    const FPTYPE* get_vk() const {return this->vk;}
+    const int get_vk_row() const {return this->vk_row;}
+    const int get_vk_col() const {return this->vk_col;}
     ModulePW::PW_Basis_K* get_wfcpw() const {return this->wfcpw;}
 
     private:
@@ -47,13 +51,24 @@ class Meta<OperatorPW<FPTYPE, Device>> : public OperatorPW<FPTYPE, Device>
 
     mutable int npol = 0;
 
+    mutable int vk_row = 0;
+    mutable int vk_col = 0;
+
     FPTYPE tpiba = 0.0;
 
     const int* isk = nullptr;
 
-    const ModuleBase::matrix* vk = nullptr;
+    const FPTYPE * vk = nullptr;
 
     ModulePW::PW_Basis_K* wfcpw = nullptr;
+
+    Device* ctx = {};
+    psi::DEVICE_CPU* cpu_ctx = {};
+    std::complex<FPTYPE> *porter = nullptr;
+    using meta_op = meta_pw_op<FPTYPE, Device>;
+    using vector_mul_vector_op = hsolver::vector_mul_vector_op<FPTYPE, Device>;
+    using resmem_complex_op = psi::memory::resize_memory_op<std::complex<FPTYPE>, Device>;
+    using delmem_complex_op = psi::memory::delete_memory_op<std::complex<FPTYPE>, Device>;
 };
 
 } // namespace hamilt

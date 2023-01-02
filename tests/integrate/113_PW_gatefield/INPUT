@@ -30,3 +30,4 @@ cal_stress          1
 
 gate_flag           1
 zgate               0.2
+nelec               7

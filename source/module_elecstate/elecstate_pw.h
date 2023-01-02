@@ -4,6 +4,7 @@
 #include "elecstate.h"
 #include "module_pw/pw_basis_k.h"
 #include "module_elecstate/include/elecstate_multi_device.h"
+#include "module_hamilt/include/meta.h"
 
 namespace elecstate
 {
@@ -48,6 +49,7 @@ class ElecStatePW : public ElecState
     FPTYPE * rho_data = nullptr, * kin_r_data = nullptr;
     std::complex<FPTYPE> *wfcr = nullptr, *wfcr_another_spin = nullptr;
 
+    using meta_op = hamilt::meta_pw_op<FPTYPE, Device>;
     using elecstate_pw_op = elecstate::elecstate_pw_op<FPTYPE, Device>;
 
     using setmem_var_op = psi::memory::set_memory_op<FPTYPE, Device>;
@@ -55,6 +57,7 @@ class ElecStatePW : public ElecState
     using delmem_var_op = psi::memory::delete_memory_op<FPTYPE, Device>;
     using syncmem_var_d2h_op = psi::memory::synchronize_memory_op<FPTYPE, psi::DEVICE_CPU, Device>;
 
+    using setmem_complex_op = psi::memory::set_memory_op<std::complex<FPTYPE>, Device>;
     using resmem_complex_op = psi::memory::resize_memory_op<std::complex<FPTYPE>, Device>;
     using delmem_complex_op = psi::memory::delete_memory_op<std::complex<FPTYPE>, Device>;
 };
