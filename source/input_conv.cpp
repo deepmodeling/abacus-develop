@@ -25,7 +25,7 @@
 #include "module_hsolver/hsolver_lcao.h"
 #include "module_elecstate/potentials/efield.h"
 #include "module_elecstate/potentials/gatefield.h"
-#include "module_psi/include/device.h"
+#include "module_psi/kernels/device.h"
 
 void Input_Conv::Convert(void)
 {

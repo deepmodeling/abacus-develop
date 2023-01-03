@@ -2,7 +2,7 @@
 
 #include "module_base/timer.h"
 #include "module_base/tool_quit.h"
-#include "module_psi/include/device.h"
+#include "module_psi/kernels/device.h"
 
 using hamilt::Veff;
 using hamilt::OperatorPW;

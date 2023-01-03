@@ -54,5 +54,6 @@ endif()
 
 if(BUILD_TESTING)
   add_subdirectory(test)
+  add_subdirectory(kernels/test)
 endif()
 

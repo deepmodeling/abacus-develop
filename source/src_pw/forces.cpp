@@ -12,7 +12,7 @@
 #include "module_surchem/surchem.h"
 #include "module_elecstate/potentials/gatefield.h"
 #include "module_vdw/vdw.h"
-#include "module_psi/include/device.h"
+#include "module_psi/kernels/device.h"
 
 #include "H_Ewald_pw.h"
 #ifdef _OPENMP

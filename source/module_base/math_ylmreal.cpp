@@ -5,7 +5,7 @@
 #include "realarray.h"
 #include <cassert>
 #include "ylm.h"
-#include "module_base/include/math_multi_device.h"
+#include "module_base/kernels/math_op.h"
 
 namespace ModuleBase
 {

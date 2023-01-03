@@ -5,11 +5,11 @@
 #include "module_base/complexmatrix.h"
 #include "src_pw/structure_factor.h"
 
-#include "module_psi/include/types.h"
-#include "module_psi/include/device.h"
-#include "module_psi/include/memory.h"
+#include "module_psi/kernels/types.h"
+#include "module_psi/kernels/device.h"
+#include "module_psi/kernels/memory_op.h"
 
-#include "module_hsolver/include/math_kernel.h"
+#include "module_hsolver/kernels/math_kernel_op.h"
 
 namespace hsolver {
 

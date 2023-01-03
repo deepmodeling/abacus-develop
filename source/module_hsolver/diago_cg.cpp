@@ -6,7 +6,7 @@
 #include "module_base/global_function.h"
 #include "module_base/timer.h"
 #include "src_parallel/parallel_reduce.h"
-#include "module_hsolver/include/math_kernel.h"
+#include "module_hsolver/kernels/math_kernel_op.h"
 #include "module_hamilt/hamilt_pw.h"
 
 using namespace hsolver;

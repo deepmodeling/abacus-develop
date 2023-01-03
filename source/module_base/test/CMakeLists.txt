@@ -70,12 +70,6 @@ AddTest(
           ../../src_parallel/parallel_reduce.cpp ../../src_parallel/parallel_kpoints.cpp ../../src_parallel/parallel_global.cpp ../../src_parallel/parallel_common.cpp
 )
 AddTest(
-  TARGET base_uts
-  LIBS ${math_libs} base device
-  SOURCES math_multi_device_test.cpp
-  ../../src_parallel/parallel_reduce.cpp ../../src_parallel/parallel_kpoints.cpp ../../src_parallel/parallel_global.cpp ../../src_parallel/parallel_common.cpp
-)
-AddTest(
   TARGET base_math_sphbes
   SOURCES math_sphbes_test.cpp ../math_sphbes.cpp ../timer.cpp
 )

@@ -33,7 +33,6 @@ extern std::string ESOLVER_TYPE;
 extern int EFIELD_FLAG; // 5 add electric field
 extern int DIP_COR_FLAG; // 7 add dipole correction
 extern bool GATE_FLAG;     // add gate field
-extern double NELEC;
 
 extern std::string DFT_FUNCTIONAL; // 6.5 change the DFT functional from input file.
 extern double XC_TEMPERATURE;
@@ -275,9 +274,6 @@ extern int out_pot;
 extern std::string init_chg; //  output charge if out_chg > 0, and output every "out_chg" elec step.
 extern int out_chg;
 
-//Note : this is different from the capitalized NELEC
-//NELEC gives the total charge of the system
-//while nelec is the total number of valence electrons 
 extern double nelec;
 extern bool out_bandgap;
 

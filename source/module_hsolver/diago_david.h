@@ -12,7 +12,7 @@
 
 #include "diagh.h"
 #include "module_base/complexmatrix.h"
-#include "module_psi/include/device.h"
+#include "module_psi/kernels/device.h"
 #include "src_pw/structure_factor.h"
 
 namespace hsolver

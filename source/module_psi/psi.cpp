@@ -2,7 +2,7 @@
 #include <cassert>
 #include "module_base/global_variable.h"
 #include "module_base/tool_quit.h"
-#include "module_psi/include/device.h"
+#include "module_psi/kernels/device.h"
 
 #include <complex>
 

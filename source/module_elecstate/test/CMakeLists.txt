@@ -12,7 +12,7 @@ if(ENABLE_LCAO)
             ../../src_pw/charge.cpp ../../src_parallel/parallel_reduce.cpp
             ../../src_pw/structure_factor.cpp ../../src_pw/pw_complement.cpp
             ../../src_pw/klist.cpp ../../src_parallel/parallel_kpoints.cpp ../../src_pw/occupy.cpp
-            ../src/elecstate_multi_device.cpp ../../src_io/rwstream.cpp ../../src_io/wf_io.cpp
+            ../kernels/elecstate_op.cpp ../../src_io/rwstream.cpp ../../src_io/wf_io.cpp
   )
 
   install(DIRECTORY support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
@@ -107,7 +107,7 @@ add_library(
 AddTest(
   TARGET Elecstate_UTs
   LIBS ${math_libs} psi base device
-  SOURCES elecstate_multi_device_test.cpp
+  SOURCES ../kernels/test/elecstate_op_test.cpp
           ../../src_parallel/parallel_reduce.cpp
           ../../src_parallel/parallel_global.cpp 
 )

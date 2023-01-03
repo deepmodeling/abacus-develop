@@ -5,8 +5,8 @@
 #include "module_base/constants.h"
 #include "module_base/lapack_connector.h"
 #include "module_base/timer.h"
-#include "module_hsolver/include/dngvd_op.h"
-#include "module_hsolver/include/math_kernel.h"
+#include "module_hsolver/kernels/dngvd_op.h"
+#include "module_hsolver/kernels/math_kernel_op.h"
 #include "src_parallel/parallel_common.h"
 #include "src_parallel/parallel_reduce.h"
 

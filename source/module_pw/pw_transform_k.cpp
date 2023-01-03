@@ -3,7 +3,7 @@
 #include <cassert>
 #include "../module_base/timer.h"
 #include "pw_gatherscatter.h"
-#include "module_pw/include/pw_multi_device.h"
+#include "module_pw/kernels/pw_op.h"
 
 namespace ModulePW
 {

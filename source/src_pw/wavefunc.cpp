@@ -6,7 +6,7 @@
 #include "../module_base/timer.h"
 #include "module_hsolver/diago_iter_assist.h"
 #include "module_hamilt/hamilt_pw.h"
-#include "module_hsolver/include/math_kernel.h"
+#include "module_hsolver/kernels/math_kernel_op.h"
 
 wavefunc::wavefunc()
 {

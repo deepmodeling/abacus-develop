@@ -3,7 +3,7 @@
 #include "../module_base/math_ylmreal.h"
 #include "../module_base/timer.h"
 #include "global.h"
-#include "module_psi/include/device.h"
+#include "module_psi/kernels/device.h"
 
 //calculate the nonlocal pseudopotential stress in PW
 template <typename FPTYPE, typename Device>

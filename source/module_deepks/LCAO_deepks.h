@@ -86,6 +86,8 @@ private:
 	int nmaxd = 0; //#. descriptors per l
 	int inlmax = 0; //tot. number {i,n,l} - atom, n, l
 
+    bool init_pdm = false; //for DeePKS NSCF calculation
+    
 	// deep neural network module that provides corrected Hamiltonian term and
 	// related derivatives.
 	torch::jit::script::Module module;

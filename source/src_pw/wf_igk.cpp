@@ -3,8 +3,8 @@
 #include "../src_pw/global.h"
 #include "../module_base/memory.h"
 #include "../module_base/timer.h"
-#include "module_psi/include/device.h"
-#include "src_pw/include/wf_multi_device.h"
+#include "module_psi/kernels/device.h"
+#include "src_pw/kernels/wf_op.h"
 
 WF_igk::WF_igk()
 {

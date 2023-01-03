@@ -26,9 +26,9 @@
 #include "src_io/numerical_basis.h"
 #include "src_io/to_wannier90.h"
 #include "src_io/berryphase.h"
-#include "module_psi/include/device.h"
-#include "module_hsolver/include/math_kernel.h"
-#include "module_hsolver/include/dngvd_op.h"
+#include "module_psi/kernels/device.h"
+#include "module_hsolver/kernels/math_kernel_op.h"
+#include "module_hsolver/kernels/dngvd_op.h"
 
 namespace ModuleESolver
 {

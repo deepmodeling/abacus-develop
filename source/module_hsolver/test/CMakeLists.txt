@@ -37,23 +37,6 @@ if(ENABLE_LCAO)
   endif()
 endif()
 
-AddTest(
-  TARGET Hsolver_UTs
-  LIBS ${math_libs} base device
-  SOURCES math_kernel_test.cpp ../../src_parallel/parallel_global.cpp 
-          ../../src_parallel/parallel_common.cpp  ../../src_parallel/parallel_reduce.cpp
-)
-
-if(USE_CUDA OR USE_ROCM)
-  AddTest(
-    TARGET Dngvd_UTs
-    LIBS ${math_libs} base device
-    SOURCES math_dngvd_test.cpp
-            ../../src_parallel/parallel_global.cpp
-            ../../src_parallel/parallel_common.cpp  ../../src_parallel/parallel_reduce.cpp
-  )
-endif()
-
 install(FILES H-KPoints-Si2.dat DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 install(FILES H-GammaOnly-Si2.dat DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 install(FILES S-KPoints-Si2.dat DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
