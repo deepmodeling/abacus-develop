@@ -66,11 +66,11 @@ void Symmetry_rho::psymmg(std::complex<double>* rhog_part, const ModulePW::PW_Ba
 
 	// (3)
 	std::complex<double>* piece = new std::complex<double>[max_npw];
+	int npw_start=0;
 	for(int proc=0; proc<rho_basis->poolnproc; ++proc)
 	{
 		//GlobalV::ofs_running << "\n iz=" << iz;
 		ModuleBase::GlobalFunc::ZEROS(piece, max_npw);
-        int npw_start=0;
 		if(GlobalV::MY_RANK==0)
 		{
 			for(int ig=0; ig<rho_basis->npw_per[proc]; ++ig)
@@ -84,6 +84,7 @@ void Symmetry_rho::psymmg(std::complex<double>* rhog_part, const ModulePW::PW_Ba
 
 	if(GlobalV::MY_RANK==0)		
 	{
+		assert(npw_start==rho_basis->npwtot);
 		delete[] rhogtot;
 		delete[] ig2isztot;
 	}
@@ -187,10 +188,10 @@ void Symmetry_rho::rhog_piece_to_all(const ModulePW::PW_Basis *rho_basis,
 				rhog_part[ig] = piece[ig];
 			}
 			//proc_in_pool -> global proc
-			int globalproc=GlobalC::Pkpoints.nproc_pool[0]+proc;
+			int globalproc=GlobalC::Pgrid.nproc_in_pool[0]+proc;
 			for(int ipool=1; ipool < GlobalV::KPAR; ipool++)
 			{
-				int nproc=GlobalC::Pkpoints.nproc_pool[ipool];
+				int nproc=GlobalC::Pgrid.nproc_in_pool[ipool];
 				MPI_Send(piece, rho_basis->npw_per[proc], MPI_DOUBLE_COMPLEX, globalproc, proc, commworld);
 				globalproc+=nproc;
 			}
@@ -211,10 +212,10 @@ void Symmetry_rho::rhog_piece_to_all(const ModulePW::PW_Basis *rho_basis,
 		// to all pools. The tag is proc.
 		else if(GlobalV::RANK_IN_POOL==0)
 		{
-			int globalproc=GlobalC::Pkpoints.nproc_pool[0]+proc;
+			int globalproc=proc;
 			for(int ipool=0; ipool < GlobalV::KPAR; ipool++)
 			{
-				int nproc=GlobalC::Pkpoints.nproc_pool[ipool];
+				int nproc=GlobalC::Pgrid.nproc_in_pool[ipool];
 				MPI_Send(piece, rho_basis->npw_per[proc], MPI_DOUBLE_COMPLEX, globalproc, proc, commworld);
 				globalproc+=nproc;
 			}
@@ -276,9 +277,9 @@ void Symmetry_rho::get_ixyz2ipw(const ModulePW::PW_Basis *rho_basis,
 
 	//save the start-index of (nst*nz) till each core
     int* nstnz_start = new int[rho_basis->poolnproc];
-    nstnz_start[0]=rho_basis->nst_per[0]*rho_basis->nz;
+    nstnz_start[0]=0;
     for (int ip=1; ip<rho_basis->poolnproc; ++ip)
-        nstnz_start[ip]=nstnz_start[ip-1]+rho_basis->nst_per[ip]*rho_basis->nz;
+        nstnz_start[ip]=nstnz_start[ip-1]+rho_basis->nst_per[ip-1]*rho_basis->nz;
 
     //tmp variables
     int ixy, ixyz, ip, is, ig=0;
@@ -290,11 +291,13 @@ void Symmetry_rho::get_ixyz2ipw(const ModulePW::PW_Basis *rho_basis,
 			for(int iz=0;iz<rho_basis->fftnz;++iz)
 			{
 				ixy = ix*rho_basis->fftny + iy;
+				ixyz = ixy*rho_basis->fftnz+iz;
 				ip = rho_basis->fftixy2ip[ixy];
+				if (ip==-1) continue; //not in any core
 				is = fftixy2is[ixy];     //stick-index on ip=proc core
+				if (is==-1) continue; //not on any stick
 				ipsz = nstnz_start[ip]+is*rho_basis->nz+iz;
 				ipw = ipsz2ipw[ipsz];
-				ixyz = ixy*rho_basis->fftnz+iz;
 				ixyz2ipw[ixyz] = ipw;
 			}
 		}

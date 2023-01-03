@@ -9,6 +9,7 @@ class Parallel_Grid
 	public:
 
 	friend class Efield;
+	friend class Symmetry_rho;
 
 	Parallel_Grid();
 	~Parallel_Grid();
