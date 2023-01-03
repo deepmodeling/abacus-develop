@@ -1244,16 +1244,16 @@ void Symmetry::rho_symmetry( double *rho,
     delete[] rk;
     ModuleBase::timer::tick("Symmetry","rho_symmetry");
 }
-
-void Symmetry::rhog_symmetry(std::complex<double> *rhog,
-                             const int &nr1, const int &nr2, const int &nr3)
+void Symmetry::rhog_symmetry(std::complex<double> *rhogtot, 
+    int* ixyz2ipw, const int &nx, const int &ny, const int &nz, 
+    const int &fftnx, const int &fftny, const int &fftnz)
 {
 //  if (GlobalV::test_symmetry)ModuleBase::TITLE("Symmetry","rho_symmetry");
     ModuleBase::timer::tick("Symmetry","rho_symmetry");
 
 	// allocate flag for each FFT grid.
-    bool* symflag = new bool[nr1 * nr2 * nr3];
-    for (int i=0; i<nr1*nr2*nr3; i++)
+    bool* symflag = new bool[fftnx*fftny*fftnz];
+    for (int i=0; i<fftnx*fftny*fftnz; i++)
     {
         symflag[i] = false;
     }
@@ -1265,55 +1265,68 @@ void Symmetry::rhog_symmetry(std::complex<double> *rhog,
     int* invmap = new int[nrotk];
     this->gmatrix_invmap(kgmatrix, nrotk, invmap);
 
-
-    int *gi = new int[nrotk];
-    int *gj = new int[nrotk];
-    int *gk = new int[nrotk];
+    int *ix = new int[nrotk];
+    int *iy = new int[nrotk];
+    int *iz = new int[nrotk];
 
     ModuleBase::Vector3<double> zero_vec(0, 0, 0);
     ModuleBase::Vector3<int> tmp_gdirect0(0, 0, 0);
     ModuleBase::Vector3<int> tmp_gdirect(0, 0, 0);
     ModuleBase::Vector3<double> tmp_gdirect_double(0.0, 0.0, 0.0);
-
-    for (int i = 0; i< nr1; ++i)
+    int ipw, ixyz=0;
+    for (int i = 0; i< fftnx; ++i)
     {
-        for (int j = 0; j< nr2; ++j)
+        for (int j = 0; j< fftny; ++j)
         {
-            for (int k = 0; k< nr3; ++k)
+            for (int k = 0; k< fftnz; ++k)
             {
-                if (!symflag[i * nr2 * nr3 + j * nr3 + k])
+                if (!symflag[i * fftny * fftnz + j * fftnz + k])
                 {
                     std::complex<double> sum(0, 0);
-
+                    int rot_count=0;
                     for (int isym = 0; isym < nrotk; ++isym)
                     {
-                        // fft-grid index to gdirect0
-                        tmp_gdirect0.x=(i>int(nr1/2)+1)?(i-nr1):i;
-                        tmp_gdirect0.y=(j>int(nr2/2)+1)?(j-nr2):j;
-                        tmp_gdirect0.z=(k>int(nr3/2)+1)?(k-nr3):k;
+                        // fft-grid index to old-gdirect
+                        tmp_gdirect0.x=(i>int(nx/2)+1)?(i-nx):i;
+                        tmp_gdirect0.y=(j>int(ny/2)+1)?(j-ny):j;
+                        tmp_gdirect0.z=(k>int(nz/2)+1)?(k-nz):k;
                         this->rotate(kgmatrix[invmap[isym]], zero_vec, 
                             tmp_gdirect0.x, tmp_gdirect0.y, tmp_gdirect0.z, 
-                            nr1, nr2, nr3, tmp_gdirect.x, tmp_gdirect.y, tmp_gdirect.z);
-                        //gdirect to fft-grid index and g-index
-                        gi[isym]=(tmp_gdirect.x<0)?(tmp_gdirect.x+nr1):tmp_gdirect.x;
-                        gj[isym]=(tmp_gdirect.y<0)?(tmp_gdirect.y+nr2):tmp_gdirect.y;
-                        gk[isym]=(tmp_gdirect.z<0)?(tmp_gdirect.z+nr3):tmp_gdirect.z;
-                        const int ig = gi[isym] * nr2 * nr3 + gj[isym] * nr3 + gk[isym];
+                            nx, ny, nz, tmp_gdirect.x, tmp_gdirect.y, tmp_gdirect.z);
+                        //new-gdirect to fft-grid index
+                        ix[isym]=(tmp_gdirect.x<0)?(tmp_gdirect.x+nx):tmp_gdirect.x;
+                        iy[isym]=(tmp_gdirect.y<0)?(tmp_gdirect.y+ny):tmp_gdirect.y;
+                        iz[isym]=(tmp_gdirect.z<0)?(tmp_gdirect.z+nz):tmp_gdirect.z;
+                        if(ix[isym]>=fftnx || iy[isym]>=fftny || iz[isym]>= fftnz)
+                        {
+                            if(!GlobalV::GAMMA_ONLY_PW)
+                            {
+                                std::cout << " ROTATE OUT OF FFT-GRID IN RHOG_SYMMETRY !" << std::endl;
+		                        ModuleBase::QUIT();
+                            }
+                            // for gamma_only_pw, just do not consider this rotation.
+                            continue;
+                        }
+                        ixyz=(ix[isym]*fftny+iy[isym])*fftnz+iz[isym];
+                        //fft-grid index to (ip, ig)
+                        ipw=ixyz2ipw[ixyz];
                         //calculate phase factor
                         tmp_gdirect_double.x=(double)tmp_gdirect.x;
                         tmp_gdirect_double.y=(double)tmp_gdirect.y;
                         tmp_gdirect_double.z=(double)tmp_gdirect.z;
                         const double arg = - ( tmp_gdirect_double *gtrans[isym] ) * ModuleBase::TWO_PI;
                         const std::complex<double> gphase( cos(arg),  sin(arg) );
-                        sum += rhog[ig]*gphase;
+                        sum += rhogtot[ipw]*gphase;
+                        ++rot_count;
                     }
-                    sum /= nrotk;
+                    GlobalV::GAMMA_ONLY_PW ? assert(rot_count<nrotk) : assert(rot_count=nrotk);
+                    sum /= rot_count;
 
                     for (int isym = 0; isym < nrotk; ++isym)
                     {
-                        const int ig = gi[isym] * nr2 * nr3 + gj[isym] * nr3 + gk[isym];
-                        rhog[ig] = sum;
-                        symflag[ig] = true;
+                        const int ig = ix[isym] * ny * nz + iy[isym] * nz + iz[isym];
+                        rhogtot[ipw] = sum;
+                        symflag[ipw] = true;
                     }
                 }
             }
@@ -1321,9 +1334,9 @@ void Symmetry::rhog_symmetry(std::complex<double> *rhog,
     }
 
     delete[] symflag;
-    delete[] gi;
-    delete[] gj;
-    delete[] gk;
+    delete[] ix;
+    delete[] iy;
+    delete[] iz;
     delete[] invmap;
     ModuleBase::timer::tick("Symmetry","rho_symmetry");
 }

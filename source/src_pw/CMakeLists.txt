@@ -35,6 +35,7 @@ list(APPEND objects
     stress_pw.cpp
     of_stress_pw.cpp
     symmetry_rho.cpp
+    symmetry_rhog.cpp
     threshold_elec.cpp
     wavefunc.cpp
     wf_atomic.cpp

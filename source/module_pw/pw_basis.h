@@ -261,7 +261,7 @@ protected:
     void gathers_scatterp(std::complex<T> *in, std::complex<T> *out); 
 public:
     //get fftixy2is;
-    void getfftixy2is(int * fftixy2is);
+    void getfftixy2is(int * fftixy2is) const;
 };
 
 }

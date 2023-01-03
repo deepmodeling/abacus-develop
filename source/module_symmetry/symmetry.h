@@ -96,7 +96,8 @@ public:
 	void getgroup(int &nrot, int &nrotk, std::ofstream &ofs_running);
 	void checksym(ModuleBase::Matrix3 &s, ModuleBase::Vector3<double> &gtrans, double *pos);
 	void rho_symmetry(double *rho, const int &nr1, const int &nr2, const int &nr3);
-	void rhog_symmetry(std::complex<double> *rhog, const int &nr1, const int &nr2, const int &nr3);
+	void rhog_symmetry(std::complex<double> *rhogtot, int* ixyz2ipw, const int &nx, 
+			const int &ny, const int &nz, const int & fftnx, const int &fftny, const int &fftnz);
 	void force_symmetry(ModuleBase::matrix &force, double* pos, const UnitCell &ucell);
 	void stress_symmetry(ModuleBase::matrix &sigma, const UnitCell &ucell);
 	void write();
