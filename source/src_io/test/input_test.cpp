@@ -128,7 +128,7 @@ TEST_F(InputTest, Default)
         EXPECT_EQ(INPUT.test_force,0);
         EXPECT_EQ(INPUT.test_stress,0);
         EXPECT_DOUBLE_EQ(INPUT.scf_thr,1.0e-9);
-        EXPECT_EQ(INPUT.scf_nmax,40);
+        EXPECT_EQ(INPUT.scf_nmax,100);
         EXPECT_EQ(INPUT.relax_nmax,0);
         EXPECT_EQ(INPUT.out_stru,0);
         EXPECT_EQ(INPUT.occupations,"smearing");
