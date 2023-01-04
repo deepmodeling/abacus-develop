@@ -212,6 +212,8 @@
 701_LJ_MD_rescale_v
 701_LJ_MD_rescaling
 #702_DP_Al
+703_LJ_RE
+704_LJ_CR
 
 801_PW_LT_sc
 802_PW_LT_fcc
