@@ -13,6 +13,7 @@ For more non-technical aspects, please refer to the [ABACUS Contribution Guide](
 - [Code formatting style](#code-formatting-style)
 - [Generating code coverage report](#generating-code-coverage-report)
 - [Adding a unit test](#adding-a-unit-test)
+- [Debugging the codes](#debugging-the-codes)
 - [Submitting a Pull Request](#submitting-a-pull-request)
 - [Commit message guidelines](#commit-message-guidelines)
 
@@ -144,6 +145,32 @@ To add a unit test:
 - Build with `-D BUILD_TESTING=1` flag. You can find built testing programs under `build/source/<module_name>/test`.
 - Follow the installing procedure of CMake. The tests will move to `build/test`.
 
+## Debugging the codes
+
+For the unexpected results when developing ABACUS, [GDB](https://www.sourceware.org/gdb/) will come in handy.
+
+1. Compile ABACUS with debug mode.
+
+    ```bash
+    cmake -B build -DCMAKE_BUILD_TYPE=Debug
+    ```
+
+2. After building and installing the executable, enter the input directory, and launch the debug session with `gdb abacus`. For [debugging in Visual Studio Code](https://code.visualstudio.com/docs/cpp/cpp-debug), please set [cwd](https://code.visualstudio.com/docs/cpp/launch-json-reference#_cwd) to the input directory, and [program](https://code.visualstudio.com/docs/cpp/launch-json-reference#_program-required) to the path of ABACUS executable.
+
+3. Set breakpoints, and run ABACUS by typing "run" in GDB command line interface. If the program hits the breakpoints or exception is throwed, GDB will stop at the erroneous code line. Type "where" to show the stack backtrace, and "print i" to get the value of variable i.
+
+4. For debugging ABACUS in multiprocessing situation, `mpirun -n 1 gdb abacus : -n 3 abacus` will attach GDB to the master process, and launch 3 other MPI processes.
+
+For segmentation faults, ABACUS can be built with [Address Sanitizer](https://github.com/google/sanitizers/wiki/AddressSanitizer) to locate the bugs. This feature requires a GCC or Clang compiler, and does not support Intel compiler.
+
+```bash
+cmake -B build -DENABLE_ASAN=1
+```
+
+Run ABACUS as usual, and it will automatically detect the buffer overflow problems and memory leaks. It is also possible to [use GDB with binaries built by Address Sanitizer](https://github.com/google/sanitizers/wiki/AddressSanitizerAndDebugger).
+
+[Valgrind](https://valgrind.org/) is another option for performing dynamic analysis.
+
 ## Generating code coverage report
 
 This feature requires using GCC compiler. We use `gcov` and `lcov` to generate code coverage report.
@@ -224,6 +251,7 @@ To run a subset of unit test, use `ctest -R <test-match-pattern>` to perform tes
 
 A well-formatted commit message leads a more readable history when we look through some changes, and helps us generate change log.
 We follow up [The Conventional Commits specification](https://www.conventionalcommits.org) for commit message format.
+This format is also required for PR title and message.
 The commit message should be structured as follows:
 
 ```text
@@ -248,8 +276,8 @@ The commit message should be structured as follows:
     - `Revert`: Reverting commits
   - scope: optional, could be the module which this commit changes; for example, `orbital`
   - description: A short summary of the code changes: tell others what you did in one sentence.
-- Body: optional, providing additional contextual information about the code changes, e.g. the motivation of this commit, referenced materials, and so on.
-- Footer: optional, reference GitHub issues, PRs that this commit closes or is related to.
+- Body: optional, providing detailed, additional, or contextual information about the code changes, e.g. the motivation of this commit, referenced materials, the coding implementation, and so on.
+- Footer: optional, reference GitHub issues or PRs that this commit closes or is related to. [Use a keyword](https://docs.github.com/issues/tracking-your-work-with-issues/linking-a-pull-request-to-an-issue#linking-a-pull-request-to-an-issue-using-a-keyword) to close an issue, e.g. "Fix #753".
 
 Here is an example:
 

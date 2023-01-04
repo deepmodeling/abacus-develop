@@ -185,39 +185,47 @@ void LCAO_Deepks::save_npy_s(const ModuleBase::matrix &s, const std::string &s_f
     return;
 }
 
-void LCAO_Deepks::save_npy_o(const double &bandgap, const std::string &o_file)
+void LCAO_Deepks::save_npy_o(const ModuleBase::matrix &bandgap, const std::string &o_file, const int nks)
 {
     ModuleBase::TITLE("LCAO_Deepks", "save_npy_o");
     if(GlobalV::MY_RANK!=0) return;
     //save o_base
-    const long unsigned oshape[] = { 1 };
+    const long unsigned oshape[] = {(long unsigned) nks, 1 };
     vector<double> npy_o;
-    npy_o.push_back(bandgap);
+    for (int iks = 0; iks < nks; ++iks)
+    {
+        for (int hl = 0;hl < 1;hl++)
+        {
+            npy_o.push_back(bandgap(iks,hl));
+        }
+    }
+    
     npy::SaveArrayAsNumpy(o_file, false, 1, oshape, npy_o);
     return;
 }
 
-void LCAO_Deepks::save_npy_orbital_precalc(const int nat)
+void LCAO_Deepks::save_npy_orbital_precalc(const int nat, const int nks)
 {
     ModuleBase::TITLE("LCAO_Deepks", "save_npy_orbital_precalc");
     if(GlobalV::MY_RANK!=0) return;
     //save orbital_precalc.npy (when bandgap label is in use)
     //unit: a.u.
-    const long unsigned gshape[] = {(long unsigned) 1, nat, this->des_per_atom};
+    const long unsigned gshape[] = {(long unsigned) nks, 1, nat, this->des_per_atom};
     vector<double> npy_orbital_precalc;
-    for (int hl = 0;hl < 1; ++hl)
+    for (int iks = 0; iks < nks; ++iks)
     {
-        
-        for (int iat = 0;iat < nat;++iat)
+        for (int hl = 0; hl < 1; ++hl)
         {
-            for(int p=0; p<this->des_per_atom; ++p)
+            for (int iat = 0;iat < nat;++iat)
             {
-                npy_orbital_precalc.push_back(this->orbital_precalc_tensor.index({ hl, iat, p }).item().toDouble());
-            }
+                for(int p=0; p<this->des_per_atom; ++p)
+                {
+                    npy_orbital_precalc.push_back(this->orbital_precalc_tensor.index({iks, hl, iat, p }).item().toDouble());
+                }
+            } 
         }
-        
     }
-    npy::SaveArrayAsNumpy("orbital_precalc.npy", false, 3, gshape, npy_orbital_precalc);
+    npy::SaveArrayAsNumpy("orbital_precalc.npy", false, 4, gshape, npy_orbital_precalc);
     return;
 }
 

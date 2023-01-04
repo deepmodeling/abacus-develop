@@ -33,7 +33,6 @@ std::string ESOLVER_TYPE = "ksdft";
 int EFIELD_FLAG = 0; // 5: add electric field
 int DIP_COR_FLAG = 0; // 7: add dipole field
 bool GATE_FLAG = false;    // add gate field
-double NELEC = 0;
 
 std::string DFT_FUNCTIONAL = "default";
 double XC_TEMPERATURE = 0.0;
@@ -237,8 +236,15 @@ int of_full_pw_dim = 0;
 bool of_read_kernel = false;
 std::string of_kernel_file = "WTkernel.txt";
 
-// denghui added for device flag
+//==========================================================
+// device flags added by denghui
+//==========================================================
 std::string device_flag = "unknown";
+//==========================================================
+// precision flags added by denghui
+//==========================================================
+std::string precision_flag = "unknown";
+
 std::string chg_extrap = "";
 int out_pot = 0;
 

@@ -85,7 +85,7 @@ void HSolverPW<FPTYPE, Device>::solve(hamilt::Hamilt<FPTYPE, Device>* pHamilt, p
     // select the method of diagonalization
     this->method = method_in;
     this->initDiagh();
-
+    std::vector<FPTYPE> eigenvalues(pes->ekb.nr * pes->ekb.nc, 0);
     /// Loop over k points for solve Hamiltonian to charge density
     for (int ik = 0; ik < this->wfc_basis->nks; ++ik)
     {
@@ -98,8 +98,7 @@ void HSolverPW<FPTYPE, Device>::solve(hamilt::Hamilt<FPTYPE, Device>* pHamilt, p
         update_precondition(precondition, ik, this->wfc_basis->npwk[ik]);
 
         /// solve eigenvector and eigenvalue for H(k)
-        double* p_eigenvalues = &(pes->ekb(ik, 0));
-        this->hamiltSolvePsiK(pHamilt, psi, p_eigenvalues);
+        this->hamiltSolvePsiK(pHamilt, psi, eigenvalues.data() + ik * pes->ekb.nc);
         if(skip_charge)
         {
             GlobalV::ofs_running<< "Average iterative diagonalization steps for k-points "<<ik<<" is: "<<DiagoIterAssist<FPTYPE, Device>::avg_iter
@@ -108,6 +107,7 @@ void HSolverPW<FPTYPE, Device>::solve(hamilt::Hamilt<FPTYPE, Device>* pHamilt, p
         }
         /// calculate the contribution of Psi for charge density rho
     }
+    castmem_2d_2h_op()(cpu_ctx, cpu_ctx, &pes->ekb(0, 0), eigenvalues.data(), pes->ekb.nr * pes->ekb.nc);
 
     this->endDiagh();
 
@@ -183,7 +183,7 @@ void HSolverPW<FPTYPE, Device>::update_precondition(std::vector<FPTYPE> &h_diag,
 {
     h_diag.assign(h_diag.size(), 1.0);
     int precondition_type = 2;
-    const FPTYPE tpiba2 = this->wfc_basis->tpiba2;
+    const auto tpiba2 = static_cast<FPTYPE>(this->wfc_basis->tpiba2);
 
     //===========================================
     // Conjugate-Gradient diagonalization
@@ -194,15 +194,15 @@ void HSolverPW<FPTYPE, Device>::update_precondition(std::vector<FPTYPE> &h_diag,
     {
         for (int ig = 0; ig < npw; ig++)
         {
-            FPTYPE g2kin = this->wfc_basis->getgk2(ik,ig) * tpiba2;
-            h_diag[ig] = std::max(1.0, g2kin);
+            FPTYPE g2kin = static_cast<FPTYPE>(this->wfc_basis->getgk2(ik,ig)) * tpiba2;
+            h_diag[ig] = std::max(static_cast<FPTYPE>(1.0), g2kin);
         }
     }
     else if (precondition_type == 2)
     {
         for (int ig = 0; ig < npw; ig++)
         {
-            FPTYPE g2kin = this->wfc_basis->getgk2(ik,ig) * tpiba2;
+            FPTYPE g2kin = static_cast<FPTYPE>(this->wfc_basis->getgk2(ik,ig)) * tpiba2;
             h_diag[ig] = 1 + g2kin + sqrt(1 + (g2kin - 1) * (g2kin - 1));
         }
     }
@@ -219,7 +219,7 @@ void HSolverPW<FPTYPE, Device>::update_precondition(std::vector<FPTYPE> &h_diag,
 template<typename FPTYPE, typename Device>
 FPTYPE HSolverPW<FPTYPE, Device>::cal_hsolerror()
 {
-    return this->diag_ethr * std::max(1.0, GlobalV::nelec);
+    return this->diag_ethr * static_cast<FPTYPE>(std::max(1.0, GlobalV::nelec));
 }
 
 template<typename FPTYPE, typename Device>
@@ -251,7 +251,7 @@ FPTYPE HSolverPW<FPTYPE, Device>::set_diagethr(const int istep, const int iter, 
         // if (GlobalV::FINAL_SCF) this->diag_ethr = 1.0e-2;
         if (GlobalV::CALCULATION == "md" || GlobalV::CALCULATION == "relax" || GlobalV::CALCULATION == "cell-relax")
         {
-            this->diag_ethr = std::max(this->diag_ethr, GlobalV::PW_DIAG_THR);
+            this->diag_ethr = std::max(this->diag_ethr, static_cast<FPTYPE>(GlobalV::PW_DIAG_THR));
         }
     }
     else
@@ -260,7 +260,7 @@ FPTYPE HSolverPW<FPTYPE, Device>::set_diagethr(const int istep, const int iter, 
         {
             this->diag_ethr = 1.e-2;
         }
-        this->diag_ethr = std::min(this->diag_ethr, 0.1 * drho / std::max(1.0, GlobalV::nelec));
+        this->diag_ethr = std::min(this->diag_ethr, static_cast<FPTYPE>(0.1) * drho / std::max(static_cast<FPTYPE>(1.0), static_cast<FPTYPE>(GlobalV::nelec)));
     }
     return this->diag_ethr;
 }
@@ -277,8 +277,10 @@ FPTYPE HSolverPW<FPTYPE, Device>::reset_diagethr(std::ofstream& ofs_running, con
     return this->diag_ethr;
 }
 
+template class HSolverPW<float, psi::DEVICE_CPU>;
 template class HSolverPW<double, psi::DEVICE_CPU>;
 #if ((defined __CUDA) || (defined __ROCM))
+template class HSolverPW<float, psi::DEVICE_GPU>;
 template class HSolverPW<double, psi::DEVICE_GPU>;
 #endif
 

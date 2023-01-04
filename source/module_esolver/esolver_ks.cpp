@@ -293,8 +293,10 @@ namespace ModuleESolver
         return this->niter;
     }
 
+template class ESolver_KS<float, psi::DEVICE_CPU>;
 template class ESolver_KS<double, psi::DEVICE_CPU>;
 #if ((defined __CUDA) || (defined __ROCM))
+template class ESolver_KS<float, psi::DEVICE_GPU>;
 template class ESolver_KS<double, psi::DEVICE_GPU>;
 #endif
 }

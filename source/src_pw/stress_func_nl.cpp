@@ -3,7 +3,7 @@
 #include "../module_base/math_ylmreal.h"
 #include "../module_base/timer.h"
 #include "global.h"
-#include "module_psi/include/device.h"
+#include "module_psi/kernels/device.h"
 
 //calculate the nonlocal pseudopotential stress in PW
 template <typename FPTYPE, typename Device>
@@ -95,12 +95,7 @@ void Stress_Func<FPTYPE, Device>::stress_nl(ModuleBase::matrix& sigma, const Mod
 		const int npw = GlobalC::kv.ngk[ik];
 		// generate vkb
 		if (GlobalC::ppcell.nkb > 0) {
-            if (this->device == psi::GpuDevice) {
-                vkb = GlobalC::ppcell.d_vkb;
-            }
-            else {
-                vkb = GlobalC::ppcell.vkb.c;
-            }
+            vkb = GlobalC::ppcell.get_vkb_data<FPTYPE>();
 			GlobalC::ppcell.getvnl(ctx, ik, vkb);
 		}
 

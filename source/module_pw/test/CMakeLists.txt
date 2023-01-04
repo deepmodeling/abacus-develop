@@ -17,16 +17,6 @@ AddTest(
           test_tool.cpp
 )
 
-AddTest(
-    TARGET PW_UTs
-    LIBS ${math_libs} psi device
-    SOURCES
-    ../../module_base/tool_quit.cpp ../../module_base/global_variable.cpp
-    ../../src_parallel/parallel_global.cpp ../../src_parallel/parallel_reduce.cpp
-    ../../module_base/complexmatrix.cpp ../../module_base/matrix.cpp
-    pw_multi_device_test.cpp
-)
-
 add_test(NAME pw_test_parallel
       COMMAND mpirun -np 2 ./pw_test; mpirun -np 3./pw_test
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}

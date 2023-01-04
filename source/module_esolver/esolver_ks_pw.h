@@ -18,7 +18,7 @@ namespace ModuleESolver
         ESolver_KS_PW();
         ~ESolver_KS_PW();
         void Init(Input& inp, UnitCell& cell) override;
-        void cal_Energy(FPTYPE& etot) override;
+        void cal_Energy(double& etot) override;
         void cal_Force(ModuleBase::matrix& force) override;
         void cal_Stress(ModuleBase::matrix& stress) override;
         virtual void hamilt2density(const int istep, const int iter, const FPTYPE ethr) override;
@@ -26,10 +26,10 @@ namespace ModuleESolver
         virtual void nscf() override;
         void postprocess() override;
         //calculate conductivities with Kubo-Greenwood formula
-        void KG(const int nche_KG, const FPTYPE fwhmin, const FPTYPE wcut, 
-             const FPTYPE dw_in, const int times, ModuleBase::matrix& wg);
+        void KG(const int nche_KG, const double fwhmin, const double wcut,
+             const double dw_in, const int times, ModuleBase::matrix& wg);
         void jjcorr_ks(const int ik, const int nt, const double dt, ModuleBase::matrix& wg, hamilt::Velocity& velop, 
-                       FPTYPE* ct11, FPTYPE* ct12, FPTYPE* ct22);
+                       double* ct11, double* ct12, double* ct22);
 
     protected:
         virtual void beforescf(const int istep) override;
@@ -43,7 +43,7 @@ namespace ModuleESolver
         //Init Global class
         void Init_GlobalC(Input& inp, UnitCell& cell);
         //calculate conductivities from j-j correlation function
-        void calcondw(const int nt,const FPTYPE dt, const FPTYPE fwhmin, const FPTYPE wcut, const FPTYPE dw_in, FPTYPE *ct11, FPTYPE *ct12, FPTYPE *ct22);
+        void calcondw(const int nt,const double dt, const double fwhmin, const double wcut, const double dw_in, double *ct11, double *ct12, double *ct22);
 
 
     private:
@@ -54,7 +54,8 @@ namespace ModuleESolver
         Device * ctx = {};
         psi::AbacusDevice_t device = {};
         psi::Psi<std::complex<FPTYPE>, Device>* kspw_psi = nullptr;
-        using syncmem_complex_d2h_op = psi::memory::synchronize_memory_op<std::complex<FPTYPE>, psi::DEVICE_CPU, Device>;
+        psi::Psi<std::complex<double>, Device>* __kspw_psi = nullptr;
+        using castmem_2d_d2h_op = psi::memory::cast_memory_op<std::complex<double>, std::complex<FPTYPE>, psi::DEVICE_CPU, Device>;
     };
 }  // namespace ModuleESolver
 #endif
