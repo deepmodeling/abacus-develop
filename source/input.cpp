@@ -2507,6 +2507,7 @@ void Input::Bcast()
     Parallel_Common::bcast_int(mixing_ndim);
     Parallel_Common::bcast_double(mixing_gg0); // mohan add 2014-09-27
     Parallel_Common::bcast_bool(mixing_tau);
+    Parallel_Common::bcast_bool(mixing_dftu);
 
     Parallel_Common::bcast_string(read_file_dir);
     Parallel_Common::bcast_string(init_wfc);
