@@ -9,6 +9,7 @@
 #include "../src_lcao/global_fp.h" // mohan add 2021-01-30
 #include "../module_base/memory.h"
 #include "../module_base/timer.h"
+#include "../module_base/tool_threading.h"
 
 void Gint_k::allocate_pvpR(void)
 {
@@ -91,36 +92,53 @@ void Gint_k::folding_vl_k(const int &ik, LCAO_Matrix *LM)
     //#################################################################
 
     std::complex<double>** pvp = new std::complex<double>*[GlobalC::GridT.lgd];
+    std::complex<double>* pvp_base = new std::complex<double>[GlobalC::GridT.lgd * GlobalC::GridT.lgd];
     for(int i=0; i<GlobalC::GridT.lgd; i++)
     {
-        pvp[i] = new std::complex<double>[GlobalC::GridT.lgd];
-        ModuleBase::GlobalFunc::ZEROS( pvp[i], GlobalC::GridT.lgd);
+        pvp[i] = pvp_base + i * GlobalC::GridT.lgd;
     }
 
     std::complex<double>*** pvp_nc;
+    std::complex<double>* pvp_nc_base;
     if(GlobalV::NSPIN==4)
     {
+        pvp_nc_base = new std::complex<double>[4 * GlobalC::GridT.lgd * GlobalC::GridT.lgd];
         pvp_nc=new std::complex<double>**[4];
         for(int spin=0;spin<4;spin++)
         {
             pvp_nc[spin] = new std::complex<double>*[GlobalC::GridT.lgd];
             for(int i=0; i<GlobalC::GridT.lgd; i++)
             {
-                pvp_nc[spin][i] = new std::complex<double>[GlobalC::GridT.lgd];
-                ModuleBase::GlobalFunc::ZEROS( pvp_nc[spin][i], GlobalC::GridT.lgd);
+                pvp_nc[spin][i] = pvp_nc_base + spin * GlobalC::GridT.lgd * GlobalC::GridT.lgd + i * GlobalC::GridT.lgd;
             }
         }
-
     }
 
-    int lgd = 0;
-    ModuleBase::Vector3<double> tau1, dtau, dR;
-    for(int T1=0; T1<GlobalC::ucell.ntype; ++T1)
+    auto init_pvp = [&](int num_threads, int thread_id)
     {
-        for(int I1=0; I1<GlobalC::ucell.atoms[T1].na; ++I1)
+        int beg, len;
+        ModuleBase::BLOCK_TASK_DIST_1D(num_threads, thread_id, GlobalC::GridT.lgd * GlobalC::GridT.lgd, 256, beg, len);
+        ModuleBase::GlobalFunc::ZEROS(pvp_base + beg, len);
+        if(GlobalV::NSPIN==4)
         {
-            // get iat
-            const int iat = GlobalC::ucell.itia2iat(T1,I1);
+            ModuleBase::GlobalFunc::ZEROS(pvp_nc_base + 4 * beg, 4 * len);
+        }
+    };
+    ModuleBase::OMP_PARALLEL(init_pvp);
+
+#ifdef _OPENMP
+#pragma omp parallel
+{
+#endif
+    ModuleBase::Vector3<double> tau1, dtau, dR;
+#ifdef _OPENMP
+#pragma omp for schedule(dynamic)
+#endif
+    for(int iat=0; iat<GlobalC::ucell.nat; ++iat)
+    {
+        const int T1 = GlobalC::ucell.iat2it[iat];
+        const int I1 = GlobalC::ucell.iat2ia[iat];
+        {
             // atom in this grid piece.
             if(GlobalC::GridT.in_this_processor[iat])
             {
@@ -133,15 +151,16 @@ void Gint_k::folding_vl_k(const int &ik, LCAO_Matrix *LM)
                 // get the coordinates of adjacent atoms.
                 tau1 = GlobalC::ucell.atoms[T1].tau[I1];
                 //GlobalC::GridD.Find_atom(tau1);	
-                GlobalC::GridD.Find_atom(GlobalC::ucell, tau1, T1, I1);	
+                AdjacentAtomInfo adjs;
+                GlobalC::GridD.Find_atom(GlobalC::ucell, tau1, T1, I1, &adjs);	
                 // search for the adjacent atoms.
                 int nad = 0;
 
-                for (int ad = 0; ad < GlobalC::GridD.getAdjacentNum()+1; ad++)
+                for (int ad = 0; ad < adjs.adj_num+1; ad++)
                 {
                     // get iat2
-                    const int T2 = GlobalC::GridD.getType(ad);
-                    const int I2 = GlobalC::GridD.getNatom(ad);
+                    const int T2 = adjs.ntype[ad];
+                    const int I2 = adjs.natom[ad];
                     const int iat2 = GlobalC::ucell.itia2iat(T2, I2);
 
 
@@ -149,7 +168,7 @@ void Gint_k::folding_vl_k(const int &ik, LCAO_Matrix *LM)
                     if(GlobalC::GridT.in_this_processor[iat2])
                     {
                         Atom* atom2 = &GlobalC::ucell.atoms[T2];
-                        dtau = GlobalC::GridD.getAdjacentTau(ad) - tau1;
+                        dtau = adjs.adjacent_tau[ad] - tau1;
                         double distance = dtau.norm() * GlobalC::ucell.lat0;
                         double rcut = GlobalC::ORB.Phi[T1].getRcut() + GlobalC::ORB.Phi[T2].getRcut();
 
@@ -161,9 +180,9 @@ void Gint_k::folding_vl_k(const int &ik, LCAO_Matrix *LM)
 
                             // calculate the distance between iat1 and iat2.
                             // ModuleBase::Vector3<double> dR = GlobalC::GridD.getAdjacentTau(ad) - tau1;
-                            dR.x = GlobalC::GridD.getBox(ad).x;
-                            dR.y = GlobalC::GridD.getBox(ad).y;
-                            dR.z = GlobalC::GridD.getBox(ad).z;
+                            dR.x = adjs.box[ad].x;
+                            dR.y = adjs.box[ad].y;
+                            dR.z = adjs.box[ad].z;
 
                             // calculate the phase factor exp(ikR).
                             const double arg = (GlobalC::kv.kvec_d[ ik ] * dR) * ModuleBase::TWO_PI;
@@ -209,9 +228,7 @@ void Gint_k::folding_vl_k(const int &ik, LCAO_Matrix *LM)
                                     }                                    
                                 }
                                 ixxx += atom2->nw;
-                                ++lgd;
                             }
-
                             ++nad;
                         }// end distane<rcut
                     }
@@ -219,19 +236,34 @@ void Gint_k::folding_vl_k(const int &ik, LCAO_Matrix *LM)
             }
         }// end ia
     }// end it
+#ifdef _OPENMP
+}
+#endif
 
     // Distribution of data.
     ModuleBase::timer::tick("Gint_k","Distri");
-    std::complex<double>* tmp;
+    std::complex<double>* tmp = new std::complex<double>[GlobalV::NLOCAL];
+#ifdef _OPENMP
+#pragma omp parallel
+{
+#endif
     for (int i=0; i<GlobalV::NLOCAL; i++)
     {
-        tmp = new std::complex<double>[GlobalV::NLOCAL];
-        ModuleBase::GlobalFunc::ZEROS(tmp, GlobalV::NLOCAL);
+#ifdef _OPENMP
+#pragma omp for schedule(static, 256)
+#endif
+        for (int j=0; j<GlobalV::NLOCAL; j++)
+        {
+            tmp[j] = 0;
+        }
         const int mug = GlobalC::GridT.trace_lo[i];
         const int mug0 = mug/GlobalV::NPOL;
         // if the row element is on this processor.
         if (mug >= 0)
         {
+#ifdef _OPENMP
+#pragma omp for schedule(static, 256)
+#endif
             for (int j=0; j<GlobalV::NLOCAL; j++)
             {
                 const int nug = GlobalC::GridT.trace_lo[j];
@@ -317,13 +349,23 @@ void Gint_k::folding_vl_k(const int &ik, LCAO_Matrix *LM)
                 }
             }
         }
+#ifdef _OPENMP
+#pragma omp single
+{
+#endif
         // collect the matrix after folding.
         Parallel_Reduce::reduce_complex_double_pool( tmp, GlobalV::NLOCAL );
+#ifdef _OPENMP
+}
+#endif
 
         //-----------------------------------------------------
         // NOW! Redistribute the Hamiltonian matrix elements
         // according to the HPSEPS's 2D distribution methods.
         //-----------------------------------------------------
+#ifdef _OPENMP
+#pragma omp for schedule(static, 256)
+#endif
         for (int j=0; j<GlobalV::NLOCAL; j++)
         {
             if (!LM->ParaV->in_this_processor(i,j))
@@ -333,26 +375,23 @@ void Gint_k::folding_vl_k(const int &ik, LCAO_Matrix *LM)
             // set the matrix value.
             LM->set_HSk(i,j,tmp[j],'L');
         }
-        delete[] tmp;
     }
+#ifdef _OPENMP
+}
+#endif
+    delete[] tmp;
 
     // delete the tmp matrix.
-    for(int i=0; i<GlobalC::GridT.lgd; i++)
-    {
-        delete[] pvp[i];
-    }
     delete[] pvp;
+    delete[] pvp_base;
     if(GlobalV::NSPIN==4)
     {
         for(int spin =0;spin<4;spin++)
         {
-            for(int i=0; i<GlobalC::GridT.lgd; i++)
-            {
-                delete[] pvp_nc[spin][i];
-            }
             delete[] pvp_nc[spin];
         }
         delete[] pvp_nc;
+        delete[] pvp_nc_base;
     }
     ModuleBase::timer::tick("Gint_k","Distri");
 
