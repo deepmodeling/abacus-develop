@@ -1,4 +1,4 @@
-#include "module_hamilt/include/veff.h"
+#include "module_hamilt/kernels/veff_op.h"
 
 #include <complex>
 #include <thrust/complex.h>
@@ -88,6 +88,7 @@ void veff_pw_op<FPTYPE, psi::DEVICE_GPU>::operator() (
     // }
 }
 
+template struct veff_pw_op<float, psi::DEVICE_GPU>;
 template struct veff_pw_op<double, psi::DEVICE_GPU>;
 
 }  // namespace hamilt
