@@ -31,6 +31,7 @@ class Record_adj
 
 	int na_proc;
 	int* na_each;
+	int* iat2ca;
 
 	//------------------------------------------------
 	// info will identify each atom in each unitcell.
