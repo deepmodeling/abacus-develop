@@ -206,8 +206,8 @@ void MD_func::force_virial(
 		ModuleBase::Vector3<double> *force,
 		ModuleBase::matrix &virial)
 {
-	ModuleBase::TITLE("MD_func", "force_stress");
-    ModuleBase::timer::tick("MD_func", "force_stress");
+	ModuleBase::TITLE("MD_func", "force_virial");
+    ModuleBase::timer::tick("MD_func", "force_virial");
 
     p_esolver->Run(istep, unit_in);
 
@@ -234,7 +234,7 @@ void MD_func::force_virial(
         }
     }
 
-    ModuleBase::timer::tick("MD_func", "force_stress");
+    ModuleBase::timer::tick("MD_func", "force_virial");
 }
 
 void MD_func::outStress(const ModuleBase::matrix &virial, const ModuleBase::matrix &stress)
