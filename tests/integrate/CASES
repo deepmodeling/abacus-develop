@@ -188,13 +188,16 @@
 #401_NP_KP_spd
 601_NO_TDDFT_H2
 601_NO_TDDFT_H2_kpoint
-601_NO_TDDFT_H2_vext1
-601_NO_TDDFT_H2_vext2
-601_NO_TDDFT_H2_vext3
 601_NO_TDDFT_CO
 601_NO_TDDFT_CO_occ
 601_NO_TDDFT_O3
 601_NO_TDDFT_graphene_kpoint
+601_NO_TDDFT_H2_len_gauss
+601_NO_TDDFT_H2_len_gauss_dire
+601_NO_TDDFT_H2_len_trape
+601_NO_TDDFT_H2_len_trigo
+601_NO_TDDFT_H2_len_heavi
+601_NO_TDDFT_H2_len_hhg
 
 701_LJ_MD_Anderson
 701_LJ_MD_Berendsen

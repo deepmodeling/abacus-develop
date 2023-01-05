@@ -1,0 +1,46 @@
+INPUT_PARAMETERS
+#Parameters	(General)
+suffix			autotest
+pseudo_dir	../../PP_ORB
+orbital_dir	../../PP_ORB
+ntype			1
+nbands			5
+calculation		md
+esolver_type    	tddft
+
+#Parameter (Accuracy)
+ecutwfc			100
+scf_nmax		50
+
+ks_solver		scalapack_gvx
+basis_type		lcao
+gamma_only		0
+md_nstep		2
+
+mixing_type		pulay
+mixing_beta		0.7
+scf_thr			1.0e-6
+
+cal_stress          	1
+stress_thr      	1e-6
+cal_force           	1
+force_thr_ev    	1.0e-3
+
+md_type			0
+md_dt			0.05
+init_vel                1
+
+td_vext 		1
+td_vext_dire 		1
+td_stype                0
+td_ttype                1
+td_tstart 		1
+td_tend			2
+td_lcut1		0.05
+td_lcut2		0.95
+td_trape_freq		1.60
+td_trape_phase		0.0
+td_trape_t1		1875
+td_trape_t2		5625
+td_trape_t3		7500
+td_trape_amp		2.74
