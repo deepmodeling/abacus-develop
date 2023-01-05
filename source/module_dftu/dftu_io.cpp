@@ -381,39 +381,4 @@ void DFTU::local_occup_bcast()
     }
     return;
 }
-
-void DFTU::copy_locale()
-{
-    ModuleBase::TITLE("DFTU", "copy_locale");
-    ModuleBase::timer::tick("DFTU", "copy_locale");
-    for (int T = 0; T < GlobalC::ucell.ntype; T++)
-    {
-        if (orbital_corr[T] == -1)
-            continue;
-
-        for (int I = 0; I < GlobalC::ucell.atoms[T].na; I++)
-        {
-            const int iat = GlobalC::ucell.itia2iat(T, I);
-
-            for (int l = 0; l < GlobalC::ucell.atoms[T].nwl + 1; l++)
-            {
-                const int N = GlobalC::ucell.atoms[T].l_nchi[l];
-
-                for (int n = 0; n < N; n++)
-                {
-                    if (GlobalV::NSPIN == 4)
-                    {
-                        locale_save[iat][l][n][0] = locale[iat][l][n][0];
-                    }
-                    else if (GlobalV::NSPIN == 1 || GlobalV::NSPIN == 2)
-                    {
-                        locale_save[iat][l][n][0] = locale[iat][l][n][0];
-                        locale_save[iat][l][n][1] = locale[iat][l][n][1];
-                    }
-                }
-            }
-        }
-    }
-    ModuleBase::timer::tick("DFTU", "copy_locale");
-}
 } // namespace ModuleDFTU

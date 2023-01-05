@@ -162,7 +162,7 @@ Psi<T, Device>::Psi(
     // this function will copy psi_in.psi to this->psi no matter the device types of each other.
     this->device = device::get_device_type<Device>(this->ctx);
     this->resize(psi_in.get_nk(), psi_in.get_nbands(), psi_in.get_nbasis());
-    memory::synchronize_memory_op<T, Device, Device_in>()(
+    memory::cast_memory_op<T, T_in, Device, Device_in>()(
             this->ctx,
             psi_in.get_device(),
             this->psi,
@@ -415,14 +415,27 @@ void initialize(Psi<double> &psi)
 }
 
 
+template class Psi<float, DEVICE_CPU>;
+template class Psi<std::complex<float>, DEVICE_CPU>;
 template class Psi<double, DEVICE_CPU>;
 template class Psi<std::complex<double>, DEVICE_CPU>;
+template Psi<std::complex<float>, DEVICE_CPU>::Psi(const Psi<std::complex<double>, DEVICE_CPU>&);
+template Psi<std::complex<double>, DEVICE_CPU>::Psi(const Psi<std::complex<float>, DEVICE_CPU>&);
 #if ((defined __CUDA) || (defined __ROCM))
+template class Psi<float, DEVICE_GPU>;
+template class Psi<std::complex<float>, DEVICE_GPU>;
+template Psi<float, DEVICE_CPU>::Psi(const Psi<float, DEVICE_GPU>&);
+template Psi<float, DEVICE_GPU>::Psi(const Psi<float, DEVICE_CPU>&);
+template Psi<std::complex<float>, DEVICE_CPU>::Psi(const Psi<std::complex<float>, DEVICE_GPU>&);
+template Psi<std::complex<float>, DEVICE_GPU>::Psi(const Psi<std::complex<float>, DEVICE_CPU>&);
+
 template class Psi<double, DEVICE_GPU>;
 template class Psi<std::complex<double>, DEVICE_GPU>;
 template Psi<double, DEVICE_CPU>::Psi(const Psi<double, DEVICE_GPU>&);
 template Psi<double, DEVICE_GPU>::Psi(const Psi<double, DEVICE_CPU>&);
 template Psi<std::complex<double>, DEVICE_CPU>::Psi(const Psi<std::complex<double>, DEVICE_GPU>&);
 template Psi<std::complex<double>, DEVICE_GPU>::Psi(const Psi<std::complex<double>, DEVICE_CPU>&);
+template Psi<std::complex<float>, DEVICE_GPU>::Psi(const Psi<std::complex<double>, DEVICE_CPU>&);
+template Psi<std::complex<double>, DEVICE_GPU>::Psi(const Psi<std::complex<float>, DEVICE_GPU>&);
 #endif
 } // namespace psi

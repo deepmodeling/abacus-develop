@@ -1,4 +1,4 @@
-#include "src_pw/include/vnl_multi_device.h"
+#include "src_pw/kernels/vnl_op.h"
 
 #include <complex>
 
@@ -7,7 +7,7 @@
 
 #define THREADS_PER_BLOCK 256
 
-namespace src_pw{
+namespace src_pw {
 
 template <typename FPTYPE>
 __device__ FPTYPE _polynomial_interpolation(
@@ -136,6 +136,7 @@ void cal_vnl_op<FPTYPE, psi::DEVICE_GPU>::operator() (
             reinterpret_cast<thrust::complex<FPTYPE>*>(vkb_in));
 }
 
+template struct cal_vnl_op<float, psi::DEVICE_GPU>;
 template struct cal_vnl_op<double, psi::DEVICE_GPU>;
 
 }  // namespace hamilt

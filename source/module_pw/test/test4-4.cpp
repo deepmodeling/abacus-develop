@@ -133,7 +133,7 @@ TEST_F(PWTEST,test4_4)
 #endif
 
         ModuleBase::GlobalFunc::ZEROS(rhor, nrxx);
-        pwtest.recip2real(rhog,rhor,ik, true, 1); //check out-of-place transform
+        pwtest.recip2real<double>(rhog,rhor,ik, true, 1); //check out-of-place transform
 
         pwtest.recip2real(rhogr,rhogr,ik); //check in-place transform
 
@@ -163,7 +163,7 @@ TEST_F(PWTEST,test4_4)
         }
 
         ModuleBase::GlobalFunc::ZEROS(rhogout, npwk);
-        pwtest.real2recip(rhor,rhogout,ik, true, 1);
+        pwtest.real2recip<double>(rhor,rhogout,ik, true, 1);
 
         pwtest.real2recip(rhogr,rhogr,ik);
 

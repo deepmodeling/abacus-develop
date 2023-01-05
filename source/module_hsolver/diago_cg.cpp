@@ -18,6 +18,9 @@ DiagoCG<FPTYPE, Device>::DiagoCG(const FPTYPE* precondition_in)
     this->precondition = precondition_in;
     test_cg = 0;
     reorder = false;
+    this->one = new std::complex<FPTYPE>(1.0, 0.0);
+    this->zero = new std::complex<FPTYPE>(0.0, 0.0);
+    this->neg_one = new std::complex<FPTYPE>(-1.0, 0.0);
 }
 
 template<typename FPTYPE, typename Device>
@@ -31,6 +34,9 @@ DiagoCG<FPTYPE, Device>::~DiagoCG() {
     delmem_complex_op()(this->ctx, this->gradient);
     delmem_complex_op()(this->ctx, this->g0);
     delmem_complex_op()(this->ctx, this->lagrange);
+    delete this->one;
+    delete this->zero;
+    delete this->neg_one;
 }
 
 template<typename FPTYPE, typename Device>
@@ -262,12 +268,12 @@ void DiagoCG<FPTYPE, Device>::orthogonal_gradient(hamilt::Hamilt<FPTYPE, Device>
         'C',
         this->dim,
         m,
-        &ModuleBase::ONE,
+        this->one,
         eigenfunction.get_pointer(),
         this->dmx,
         this->scg,
         1,
-        &ModuleBase::ZERO,
+        this->zero,
         this->lagrange,
         1);
 
@@ -281,12 +287,12 @@ void DiagoCG<FPTYPE, Device>::orthogonal_gradient(hamilt::Hamilt<FPTYPE, Device>
         'N',
         this->dim,
         m,
-        &ModuleBase::NEG_ONE,
+        this->neg_one,
         eigenfunction.get_pointer(),
         this->dmx,
         this->lagrange,
         1,
-        &ModuleBase::ONE,
+        this->one,
         this->gradient,
         1);
 
@@ -295,12 +301,12 @@ void DiagoCG<FPTYPE, Device>::orthogonal_gradient(hamilt::Hamilt<FPTYPE, Device>
         'N',
         this->dim,
         m,
-        &ModuleBase::NEG_ONE,
+        this->neg_one,
         eigenfunction.get_pointer(),
         this->dmx,
         this->lagrange,
         1,
-        &ModuleBase::ONE,
+        this->one,
         this->scg,
         1);
 }
@@ -479,19 +485,19 @@ void DiagoCG<FPTYPE, Device>::schmit_orth(
         'C',
         this->dim,
         (m + 1),
-        &ModuleBase::ONE,
+        this->one,
         psi.get_pointer(),
         this->dmx,
         this->sphi,
         inc,
-        &ModuleBase::ZERO,
+        this->zero,
         lagrange_so,
         inc);
 
     // be careful , here reduce m+1
     Parallel_Reduce::reduce_complex_double_pool(lagrange_so, m + 1);
 
-    std::complex<FPTYPE> var = {0, 0};
+    std::complex<FPTYPE> var(0, 0);
     syncmem_complex_d2h_op()(this->cpu_ctx, this->ctx, &var, lagrange_so + m, 1);
     FPTYPE psi_norm = var.real();
 
@@ -502,12 +508,12 @@ void DiagoCG<FPTYPE, Device>::schmit_orth(
         'N',
         this->dim,
         m,
-        &ModuleBase::NEG_ONE,
+        this->neg_one,
         psi.get_pointer(),
         this->dmx,
         lagrange_so,
         inc,
-        &ModuleBase::ONE,
+        this->one,
         this->phi_m->get_pointer(),
         inc);
 
@@ -584,9 +590,11 @@ void DiagoCG<FPTYPE, Device>::diag(hamilt::Hamilt<FPTYPE, Device> *phm_in, psi::
     }
 }
 
-namespace hsolver{
+namespace hsolver {
+template class DiagoCG<float, psi::DEVICE_CPU>;
 template class DiagoCG<double, psi::DEVICE_CPU>;
 #if ((defined __CUDA) || (defined __ROCM))
+template class DiagoCG<float, psi::DEVICE_GPU>;
 template class DiagoCG<double, psi::DEVICE_GPU>;
 #endif 
 } // namespace hsolver

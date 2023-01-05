@@ -128,7 +128,7 @@ TEST_F(InputTest, Default)
         EXPECT_EQ(INPUT.test_force,0);
         EXPECT_EQ(INPUT.test_stress,0);
         EXPECT_DOUBLE_EQ(INPUT.scf_thr,1.0e-9);
-        EXPECT_EQ(INPUT.scf_nmax,40);
+        EXPECT_EQ(INPUT.scf_nmax,100);
         EXPECT_EQ(INPUT.relax_nmax,0);
         EXPECT_EQ(INPUT.out_stru,0);
         EXPECT_EQ(INPUT.occupations,"smearing");
@@ -957,6 +957,7 @@ TEST_F(InputTest, Check)
 	output = testing::internal::GetCapturedStdout();
 	EXPECT_THAT(output,testing::HasSubstr("symmetry can't be used for out_dos==3(Fermi Surface Plotting) by now."));
 	INPUT.symmetry = 0;
+	INPUT.out_dos = 0;
 	//
 	INPUT.calculation = "istate";
 	INPUT.basis_type = "pw";
@@ -1110,6 +1111,31 @@ TEST_F(InputTest, Check)
 	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
 	output = testing::internal::GetCapturedStdout();
 	EXPECT_THAT(output,testing::HasSubstr("please check the ks_solver parameter!"));
+	INPUT.ks_solver = "cg";
+	//
+	INPUT.basis_type = "pw";
+	INPUT.gamma_only = 1;
+	testing::internal::CaptureStdout();
+	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
+	output = testing::internal::GetCapturedStdout();
+	EXPECT_THAT(output,testing::HasSubstr("gamma_only not implemented for plane wave now."));
+	INPUT.gamma_only = 0;
+	//
+	INPUT.basis_type = "pw";
+	INPUT.out_proj_band = 1;
+	testing::internal::CaptureStdout();
+	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
+	output = testing::internal::GetCapturedStdout();
+	EXPECT_THAT(output,testing::HasSubstr("out_proj_band not implemented for plane wave now."));
+	INPUT.out_proj_band = 0;
+	//
+	INPUT.basis_type = "pw";
+	INPUT.out_dos = 3;
+	testing::internal::CaptureStdout();
+	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
+	output = testing::internal::GetCapturedStdout();
+	EXPECT_THAT(output,testing::HasSubstr("Fermi Surface Plotting not implemented for plane wave now."));
+	INPUT.out_dos = 0;
 	//
 	INPUT.basis_type = "lcao";
 	INPUT.ks_solver = "cg";
@@ -1166,6 +1192,15 @@ TEST_F(InputTest, Check)
 	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
 	output = testing::internal::GetCapturedStdout();
 	EXPECT_THAT(output,testing::HasSubstr("please check the ks_solver parameter!"));
+	INPUT.ks_solver = "genelpa";
+	//
+	INPUT.basis_type = "lcao";
+	INPUT.kpar = 2;
+	testing::internal::CaptureStdout();
+	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
+	output = testing::internal::GetCapturedStdout();
+	EXPECT_THAT(output,testing::HasSubstr("kpar > 1 has not been supported for lcao calculation."));
+	INPUT.kpar = 1;
 	//
 	INPUT.basis_type = "lcao_in_pw";
 	INPUT.ks_solver = "arbitrary";
@@ -1180,22 +1215,7 @@ TEST_F(InputTest, Check)
 	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
 	output = testing::internal::GetCapturedStdout();
 	EXPECT_THAT(output,testing::HasSubstr("please check the basis_type parameter!"));
-	//
 	INPUT.basis_type = "pw";
-	INPUT.gamma_only = 1;
-	testing::internal::CaptureStdout();
-	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
-	output = testing::internal::GetCapturedStdout();
-	EXPECT_THAT(output,testing::HasSubstr("gamma_only not implemented for plane wave now."));
-	INPUT.gamma_only = 0;
-	//
-	INPUT.basis_type = "lcao";
-	INPUT.kpar = 2;
-	testing::internal::CaptureStdout();
-	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
-	output = testing::internal::GetCapturedStdout();
-	EXPECT_THAT(output,testing::HasSubstr("kpar > 1 has not been supported for lcao calculation."));
-	INPUT.kpar = 1;
 	//
 	INPUT.relax_method = "arbitrary";
 	testing::internal::CaptureStdout();

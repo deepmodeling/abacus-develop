@@ -20,7 +20,7 @@ class HamiltPW : public Hamilt<FPTYPE, Device>
     void updateHk(const int ik) override;
 
     // core function: for solving eigenvalues of Hamiltonian with iterative method
-    virtual void sPsi(const std::complex<double> *psi_in, std::complex<double> *spsi, const size_t size) const override;
+    virtual void sPsi(const std::complex<FPTYPE> *psi_in, std::complex<FPTYPE> *spsi, const size_t size) const override;
 
   private:
 

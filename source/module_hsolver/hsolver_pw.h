@@ -40,7 +40,10 @@ class HSolverPW: public HSolver<FPTYPE, Device>
 
     bool initialed_psi = false;
 
-    Device *ctx = {};
+    Device * ctx = {};
+    using resmem_var_op = psi::memory::resize_memory_op<FPTYPE, psi::DEVICE_CPU>;
+    using delmem_var_op = psi::memory::delete_memory_op<FPTYPE, psi::DEVICE_CPU>;
+    using castmem_2d_2h_op = psi::memory::cast_memory_op<double, FPTYPE, psi::DEVICE_CPU, psi::DEVICE_CPU>;
 };
 
 } // namespace hsolver

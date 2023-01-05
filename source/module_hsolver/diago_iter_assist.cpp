@@ -25,6 +25,11 @@ FPTYPE DiagoIterAssist<FPTYPE, Device>::PW_DIAG_THR = 1.0e-2;
 template<typename FPTYPE, typename Device>
 bool DiagoIterAssist<FPTYPE, Device>::need_subspace = false;
 
+template<typename FPTYPE, typename Device>
+std::complex<FPTYPE> DiagoIterAssist<FPTYPE, Device>::one = std::complex<FPTYPE>(1, 0);
+
+template<typename FPTYPE, typename Device>
+std::complex<FPTYPE> DiagoIterAssist<FPTYPE, Device>::zero = std::complex<FPTYPE>(0, 0);
 //----------------------------------------------------------------------
 // Hamiltonian diagonalization in the subspace spanned
 // by nstart states psi (atomic or random wavefunctions).
@@ -80,12 +85,12 @@ void DiagoIterAssist<FPTYPE, Device>::diagH_subspace(
         nstart,
         nstart,
         dmin,
-        &ModuleBase::ONE,
+        &one,
         ppsi,
         dmax,
         hphi,
         dmax,
-        &ModuleBase::ZERO,
+        &zero,
         hcc,
         nstart
     );
@@ -97,12 +102,12 @@ void DiagoIterAssist<FPTYPE, Device>::diagH_subspace(
         nstart,
         nstart,
         dmin,
-        &ModuleBase::ONE,
+        &one,
         ppsi,
         dmax,
         ppsi,
         dmax,
-        &ModuleBase::ZERO,
+        &zero,
         scc,
         nstart
     );
@@ -137,12 +142,12 @@ void DiagoIterAssist<FPTYPE, Device>::diagH_subspace(
             dmax,
             n_band,
             nstart,
-            &ModuleBase::ONE,
+            &one,
             ppsi, // dmax * nstart
             dmax,
             vcc,  // nstart * n_band
             nstart,
-            &ModuleBase::ZERO,
+            &zero,
             evc.get_pointer(),
             dmax
         );
@@ -163,12 +168,12 @@ void DiagoIterAssist<FPTYPE, Device>::diagH_subspace(
             dmin,
             n_band,
             nstart,
-            &ModuleBase::ONE,
+            &one,
             ppsi, // dmin * nstart
             dmax,
             vcc,  // nstart * n_band
             nstart,
-            &ModuleBase::ZERO,
+            &zero,
             evctemp,
             dmin
         );
@@ -256,12 +261,12 @@ void DiagoIterAssist<FPTYPE, Device>::diagH_subspace_init(
         nstart,
         nstart,
         dmin,
-        &ModuleBase::ONE,
+        &one,
         ppsi,
         dmax,
         hpsi,
         dmax,
-        &ModuleBase::ZERO,
+        &zero,
         hcc,
         nstart
     );
@@ -273,12 +278,12 @@ void DiagoIterAssist<FPTYPE, Device>::diagH_subspace_init(
         nstart,
         nstart,
         dmin,
-        &ModuleBase::ONE,
+        &one,
         ppsi,
         dmax,
         ppsi,
         dmax,
-        &ModuleBase::ZERO,
+        &zero,
         scc,
         nstart
     );
@@ -326,12 +331,12 @@ void DiagoIterAssist<FPTYPE, Device>::diagH_subspace_init(
             dmax,
             n_band,
             nstart,
-            &ModuleBase::ONE,
+            &one,
             ppsi, // dmax * nstart
             dmax,
             vcc,  // nstart * n_band
             nstart,
-            &ModuleBase::ZERO,
+            &zero,
             evc.get_pointer(),
             dmax
         );
@@ -352,12 +357,12 @@ void DiagoIterAssist<FPTYPE, Device>::diagH_subspace_init(
             dmin,
             n_band,
             nstart,
-            &ModuleBase::ONE,
+            &one,
             ppsi, // dmin * nstart
             dmax,
             vcc,  // nstart * n_band
             nstart,
-            &ModuleBase::ZERO,
+            &zero,
             evctemp,
             dmin
         );
@@ -398,7 +403,7 @@ void DiagoIterAssist<FPTYPE, Device>::diagH_LAPACK(
         // set eigenvalues in GPU to e in CPU
         syncmem_var_d2h_op()(cpu_ctx, gpu_ctx, e, eigenvalues, nbands);
 #endif
-    } 
+    }
     else if (psi::device::get_device_type<Device>(ctx) == psi::CpuDevice)
     {
         // set eigenvalues in CPU to e in CPU
@@ -451,9 +456,10 @@ bool DiagoIterAssist<FPTYPE, Device>::test_exit_cond(const int &ntry, const int 
 }
 
 
-
+template class DiagoIterAssist<float, psi::DEVICE_CPU>;
 template class DiagoIterAssist<double, psi::DEVICE_CPU>;
 #if ((defined __CUDA) || (defined __ROCM))
+template class DiagoIterAssist<float, psi::DEVICE_GPU>;
 template class DiagoIterAssist<double, psi::DEVICE_GPU>;
 #endif
 } // namespace hsolver

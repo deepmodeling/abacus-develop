@@ -265,9 +265,14 @@ extern bool of_read_kernel; // If set to 1, the kernel of WT KEDF will be filled
 extern std::string of_kernel_file; // The name of WT kernel file.
 
 //==========================================================
-// device flags
+// device flags added by denghui
 //==========================================================
 extern std::string device_flag;
+//==========================================================
+// precision flags added by denghui
+//==========================================================
+extern std::string precision_flag;
+
 extern std::string chg_extrap;
 extern int out_pot;
 

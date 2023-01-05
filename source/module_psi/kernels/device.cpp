@@ -28,6 +28,13 @@ template<> AbacusDevice_t get_device_type <DEVICE_CPU> (const DEVICE_CPU* dev) {
     return CpuDevice;
 }
 
+template<> std::string get_current_precision (const std::complex<float> * var) {
+    return "single";
+}
+template<> std::string get_current_precision (const std::complex<double> * var) {
+    return "double";
+}
+
 #if ((defined __CUDA) || (defined __ROCM))
 template<> AbacusDevice_t get_device_type <DEVICE_GPU> (const DEVICE_GPU* dev) {
     return GpuDevice;

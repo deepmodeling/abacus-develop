@@ -48,39 +48,27 @@ public:
 	void setupFFT(); 
 
 	//destroy fftw_plans
-	void cleanFFT(); 
-
-	void fftzfor(std::complex<double>* & in, std::complex<double>* & out);
-	void fftzbac(std::complex<double>* & in, std::complex<double>* & out);
-	void fftxyfor(std::complex<double>* & in, std::complex<double>* & out);
-	void fftxybac(std::complex<double>* & in, std::complex<double>* & out);
-	void fftxyr2c(double * &in, std::complex<double>* & out);
-	void fftxyc2r(std::complex<double>* & in, double* & out);
-
-    template <typename FPTYPE, typename Device>
-    void fft3D_forward(const Device * ctx, std::complex<FPTYPE>* & in, std::complex<FPTYPE>* & out);
-    template <typename FPTYPE, typename Device>
-    void fft3D_backward(const Device * ctx, std::complex<FPTYPE>* & in, std::complex<FPTYPE>* & out);
-#ifdef __MIX_PRECISION
+	void cleanFFT();
 	void cleanfFFT();
-	void fftfzfor(std::complex<float>* & in, std::complex<float>* & out);
-	void fftfzbac(std::complex<float>* & in, std::complex<float>* & out);
-	void fftfxyfor(std::complex<float>* & in, std::complex<float>* & out);
-	void fftfxybac(std::complex<float>* & in, std::complex<float>* & out);
-	void fftfxyr2c(float * &in, std::complex<float>* & out);
-	void fftfxyc2r(std::complex<float>* & in, float* & out);
-#endif
+
+    template <typename FPTYPE> void fftzfor(std::complex<FPTYPE>* in, std::complex<FPTYPE>* out);
+	template <typename FPTYPE> void fftzbac(std::complex<FPTYPE>* in, std::complex<FPTYPE>* out);
+	template <typename FPTYPE> void fftxyfor(std::complex<FPTYPE>* in, std::complex<FPTYPE>* out);
+	template <typename FPTYPE> void fftxybac(std::complex<FPTYPE>* in, std::complex<FPTYPE>* out);
+	template <typename FPTYPE> void fftxyr2c(FPTYPE * in, std::complex<FPTYPE>* out);
+	template <typename FPTYPE> void fftxyc2r(std::complex<FPTYPE>* in, FPTYPE* out);
+
+    template <typename FPTYPE, typename Device> void fft3D_forward(const Device * ctx, std::complex<FPTYPE>* in, std::complex<FPTYPE>* out);
+    template <typename FPTYPE, typename Device> void fft3D_backward(const Device * ctx, std::complex<FPTYPE>* in, std::complex<FPTYPE>* out);
 
 public:
 	//init fftw_plans
 	void initplan(); 
 	void initplan_mpi();
-#ifdef __MIX_PRECISION
 	//init fftwf_plans
 	void initplanf(); 
 	void initplanf_mpi();
-#endif
-	
+
 public:
 	int fftnx=0, fftny=0;
 	int fftnxy=0;
@@ -92,23 +80,11 @@ public:
 	int ns=0; //number of sticks
 	int nplane=0; //number of x-y planes
 	int nproc=1; // number of proc.
-    std::complex<double> *auxg=nullptr, *auxr=nullptr; //fft space
-	double *r_rspace=nullptr; //real number space for r, [nplane * nx *ny]
 
-    std::complex<double> *auxr_3d=nullptr; //fft space
-
-#if defined(__CUDA) || defined(__ROCM)
-    psi::DEVICE_CPU * cpu_ctx = {};
-    psi::DEVICE_GPU * gpu_ctx = {};
-    using resmem_complex_op = psi::memory::resize_memory_op<std::complex<double>, psi::DEVICE_GPU>;
-    using delmem_complex_op = psi::memory::delete_memory_op<std::complex<double>, psi::DEVICE_GPU>;
-#endif
-
-#ifdef __MIX_PRECISION
-	std::complex<float> *auxfg=nullptr, *auxfr=nullptr; //fft space,
-	float *rf_rspace=nullptr; //real number space for r, [nplane * nx *ny]
-#endif
-
+    template <typename FPTYPE> FPTYPE * get_rspace_data();
+    template <typename FPTYPE> std::complex<FPTYPE> * get_auxr_data();
+    template <typename FPTYPE> std::complex<FPTYPE> * get_auxg_data();
+    template <typename FPTYPE> std::complex<FPTYPE> * get_auxr_3d_data();
 
 private:
 	bool gamma_only=false;
@@ -131,12 +107,13 @@ private:
 //	fftw_plan plan3dbackward;
 
 #if defined(__CUDA)
-    cufftHandle fft_handle;
+    cufftHandle c_handle;
+    cufftHandle z_handle;
 #elif defined(__ROCM)
-    hipfftHandle fft_handle;
+    hipfftHandle c_handle;
+    hipfftHandle z_handle;
 #endif
 
-#ifdef __MIX_PRECISION
 	bool destroypf=true;
 	fftwf_plan planfzfor;
 	fftwf_plan planfzbac;
@@ -150,8 +127,16 @@ private:
 	fftwf_plan planfxc2r;
 	fftwf_plan planfyr2c;
 	fftwf_plan planfyc2r;
-#endif
 
+
+    std::complex<float> * c_auxr_3d=nullptr; //fft space
+    std::complex<double> * z_auxr_3d=nullptr; //fft space
+
+    std::complex<float> * c_auxg=nullptr, * c_auxr=nullptr; //fft space,
+    std::complex<double> * z_auxg=nullptr, * z_auxr=nullptr; //fft space
+
+    float * s_rspace=nullptr; //real number space for r, [nplane * nx *ny]
+    double * d_rspace=nullptr; //real number space for r, [nplane * nx *ny]
 };
 }
 

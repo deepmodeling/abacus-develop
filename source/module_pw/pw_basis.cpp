@@ -30,11 +30,9 @@ PW_Basis:: ~PW_Basis()
     delete[] startr;
     delete[] ig2igg;
     delete[] gg_uniq;
-#if defined(__CUDA) || defined(__ROCM)
     if (GlobalV::device_flag == "gpu") {
-        delmem_int_op()(this->gpu_ctx, this->d_is2fftixy);
+        delmem_int_op()(gpu_ctx, this->d_is2fftixy);
     }
-#endif
 }
 
 /// 

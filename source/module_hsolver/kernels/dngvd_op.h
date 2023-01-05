@@ -36,7 +36,7 @@ template <typename FPTYPE, typename Device> struct dngvd_op
                     const int ldh,
                     const std::complex<FPTYPE>* A,
                     const std::complex<FPTYPE>* B,
-                    double* W,
+                    FPTYPE* W,
                     std::complex<FPTYPE>* V);
 };
 
@@ -65,7 +65,7 @@ template <typename FPTYPE, typename Device> struct dnevx_op
                     const int ldh,
                     const std::complex<FPTYPE>* A,
                     const int m,
-                    double* W,
+                    FPTYPE* W,
                     std::complex<FPTYPE>* V);
 };
 

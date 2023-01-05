@@ -150,7 +150,7 @@ void Mulliken_Charge::cal_mulliken(LCAO_Hamilt &uhm, const ModuleBase::matrix& w
 
 						const double x = mug[j].real();
 
-						MecMulP[is][j] += x * wg(0,i);
+						MecMulP[is][j] += x * wg(is,i);
 					}
 				} 
 			}//ib

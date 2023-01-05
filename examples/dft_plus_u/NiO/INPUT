@@ -1,5 +1,6 @@
 INPUT_PARAMETERS
 suffix    NiO
+ntype    3
 nbands    40
 
 pseudo_dir ../../../tests/PP_ORB
@@ -34,3 +35,7 @@ nspin    2
 dft_plus_u    1
 orbital_corr    2 2 -1
 hubbard_u    5.0 5.0 0.0
+
+out_bandgap 1
+out_chg 1
+out_mul 1

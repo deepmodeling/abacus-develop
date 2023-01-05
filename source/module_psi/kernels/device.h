@@ -3,13 +3,17 @@
 #ifndef MODULE_PSI_DEVICE_H_
 #define MODULE_PSI_DEVICE_H_
 
-#include <iostream>
 #include "types.h"
 
-namespace psi{
+#include <complex>
+#include <iostream>
+
+namespace psi {
 namespace device {
 
 template<typename Device> AbacusDevice_t get_device_type (const Device* dev);
+
+template<typename FPTYPE> std::string get_current_precision (const std::complex<FPTYPE>* var);
 
 template<typename Device> void print_device_info (const Device* dev, std::ofstream& ofs_device) {return;}
 

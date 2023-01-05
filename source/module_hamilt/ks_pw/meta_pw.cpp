@@ -63,7 +63,7 @@ void Meta<OperatorPW<FPTYPE, Device>>::act(
     {
         for (int j = 0; j < 3; j++)
         {
-            meta_op()(this->ctx, this->ik, j, npw, this->wfcpw->npwk_max, this->tpiba, wfcpw->get_gcar_data<FPTYPE>(this->ctx), wfcpw->get_kvec_c_data<FPTYPE>(this->ctx), tmpsi_in, this->porter);
+            meta_op()(this->ctx, this->ik, j, npw, this->wfcpw->npwk_max, this->tpiba, wfcpw->get_gcar_data<FPTYPE>(), wfcpw->get_kvec_c_data<FPTYPE>(), tmpsi_in, this->porter);
             wfcpw->recip_to_real(this->ctx, this->porter, this->porter, this->ik);
 
             if(this->vk_col != 0) {
@@ -71,7 +71,7 @@ void Meta<OperatorPW<FPTYPE, Device>>::act(
             }
 
             wfcpw->real_to_recip(this->ctx, this->porter, this->porter, this->ik);
-            meta_op()(this->ctx, this->ik, j, npw, this->wfcpw->npwk_max, this->tpiba, wfcpw->get_gcar_data<FPTYPE>(this->ctx), wfcpw->get_kvec_c_data<FPTYPE>(this->ctx), this->porter, tmhpsi, true);
+            meta_op()(this->ctx, this->ik, j, npw, this->wfcpw->npwk_max, this->tpiba, wfcpw->get_gcar_data<FPTYPE>(), wfcpw->get_kvec_c_data<FPTYPE>(), this->porter, tmhpsi, true);
 
         } // x,y,z directions
         tmhpsi += this->max_npw;
@@ -98,13 +98,15 @@ hamilt::Meta<OperatorPW<FPTYPE, Device>>::Meta(const Meta<OperatorPW<T_in, Devic
     }
 }
 
-namespace hamilt{
+namespace hamilt {
+template class Meta<OperatorPW<float, psi::DEVICE_CPU>>;
 template class Meta<OperatorPW<double, psi::DEVICE_CPU>>;
-template Meta<OperatorPW<double, psi::DEVICE_CPU>>::Meta(const Meta<OperatorPW<double, psi::DEVICE_CPU>> *meta);
+// template Meta<OperatorPW<double, psi::DEVICE_CPU>>::Meta(const Meta<OperatorPW<double, psi::DEVICE_CPU>> *meta);
 #if ((defined __CUDA) || (defined __ROCM))
+template class Meta<OperatorPW<float, psi::DEVICE_GPU>>;
 template class Meta<OperatorPW<double, psi::DEVICE_GPU>>;
-template Meta<OperatorPW<double, psi::DEVICE_CPU>>::Meta(const Meta<OperatorPW<double, psi::DEVICE_GPU>> *meta);
-template Meta<OperatorPW<double, psi::DEVICE_GPU>>::Meta(const Meta<OperatorPW<double, psi::DEVICE_CPU>> *meta);
-template Meta<OperatorPW<double, psi::DEVICE_GPU>>::Meta(const Meta<OperatorPW<double, psi::DEVICE_GPU>> *meta);
+// template Meta<OperatorPW<double, psi::DEVICE_CPU>>::Meta(const Meta<OperatorPW<double, psi::DEVICE_GPU>> *meta);
+// template Meta<OperatorPW<double, psi::DEVICE_GPU>>::Meta(const Meta<OperatorPW<double, psi::DEVICE_CPU>> *meta);
+// template Meta<OperatorPW<double, psi::DEVICE_GPU>>::Meta(const Meta<OperatorPW<double, psi::DEVICE_GPU>> *meta);
 #endif
 } // namespace hamilt

@@ -264,6 +264,7 @@ else()
   include_directories(${FFTW3_INCLUDE_DIRS})
   list(APPEND math_libs
     FFTW3::FFTW3
+    FFTW3::FFTW3_FLOAT
     LAPACK::LAPACK
     ScaLAPACK::ScaLAPACK
   )

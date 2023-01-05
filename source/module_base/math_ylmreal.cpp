@@ -676,8 +676,10 @@ int YlmReal::Semi_Fact(const int n)
     return semif;
 }
 
+template void YlmReal::Ylm_Real<float, psi::DEVICE_CPU>(psi::DEVICE_CPU*, int, int, const float *, float*);
 template void YlmReal::Ylm_Real<double, psi::DEVICE_CPU>(psi::DEVICE_CPU*, int, int, const double *, double*);
 #if ((defined __CUDA) || (defined __ROCM))
+template void YlmReal::Ylm_Real<float, psi::DEVICE_GPU>(psi::DEVICE_GPU*, int, int, const float *, float*);
 template void YlmReal::Ylm_Real<double, psi::DEVICE_GPU>(psi::DEVICE_GPU*, int, int, const double *, double*);
 #endif
 }  // namespace ModuleBase

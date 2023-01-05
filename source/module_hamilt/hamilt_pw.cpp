@@ -17,16 +17,16 @@ template<typename FPTYPE, typename Device>
 HamiltPW<FPTYPE, Device>::HamiltPW(elecstate::Potential* pot_in)
 {
     this->classname = "HamiltPW";
-    const double tpiba2 = GlobalC::ucell.tpiba2;
-    const double tpiba = GlobalC::ucell.tpiba;
+    const auto tpiba2 = static_cast<FPTYPE>(GlobalC::ucell.tpiba2);
+    const auto tpiba = static_cast<FPTYPE>(GlobalC::ucell.tpiba);
     const int* isk = GlobalC::kv.isk.data();
-    const double* gk2 = GlobalC::wfcpw->gk2;
+    const FPTYPE* gk2 = GlobalC::wfcpw->get_gk2_data<FPTYPE>();
 
     if (GlobalV::T_IN_H)
     {
         // Operator<double>* ekinetic = new Ekinetic<OperatorLCAO<double>>
         Operator<std::complex<FPTYPE>, Device>* ekinetic = new Ekinetic<OperatorPW<FPTYPE, Device>>(
-            tpiba2, 
+            tpiba2,
             gk2,
             GlobalC::wfcpw->nks,
             GlobalC::wfcpw->npwk_max
@@ -72,7 +72,7 @@ HamiltPW<FPTYPE, Device>::HamiltPW(elecstate::Potential* pot_in)
             pot_in->pot_register(pot_register_in);
             Operator<std::complex<FPTYPE>, Device>* veff = new Veff<OperatorPW<FPTYPE, Device>>(
                 isk,
-                pot_in->get_effective_v_data<FPTYPE>(ctx),
+                pot_in->get_v_effective_data<FPTYPE>(),
                 pot_in->get_effective_v().nr,
                 pot_in->get_effective_v().nc,
                 GlobalC::wfcpw
@@ -88,7 +88,7 @@ HamiltPW<FPTYPE, Device>::HamiltPW(elecstate::Potential* pot_in)
             Operator<std::complex<FPTYPE>, Device>* meta = new Meta<OperatorPW<FPTYPE, Device>>(
                 tpiba,
                 isk,
-                pot_in->get_effective_vofk_data<FPTYPE>(ctx),
+                pot_in->get_vofk_effective_data<FPTYPE>(),
                 pot_in->get_effective_vofk().nr,
                 pot_in->get_effective_vofk().nc,
                 GlobalC::wfcpw
@@ -135,8 +135,8 @@ void HamiltPW<FPTYPE, Device>::updateHk(const int ik)
 template<typename FPTYPE, typename Device>
 void HamiltPW<FPTYPE, Device>::sPsi
 (
-    const std::complex<double> *psi,
-    std::complex<double> *spsi,
+    const std::complex<FPTYPE> *psi,
+    std::complex<FPTYPE> *spsi,
     size_t size
 ) const
 {
@@ -206,11 +206,13 @@ HamiltPW<FPTYPE, Device>::HamiltPW(const HamiltPW<T_in, Device_in> *hamilt)
     }
 }
 
+template class HamiltPW<float, psi::DEVICE_CPU>;
 template class HamiltPW<double, psi::DEVICE_CPU>;
-template HamiltPW<double, psi::DEVICE_CPU>::HamiltPW(const HamiltPW<double, psi::DEVICE_CPU> *hamilt);
+// template HamiltPW<double, psi::DEVICE_CPU>::HamiltPW(const HamiltPW<double, psi::DEVICE_CPU> *hamilt);
 #if ((defined __CUDA) || (defined __ROCM))
+template class HamiltPW<float, psi::DEVICE_GPU>;
 template class HamiltPW<double, psi::DEVICE_GPU>;
-template HamiltPW<double, psi::DEVICE_GPU>::HamiltPW(const HamiltPW<double, psi::DEVICE_GPU> *hamilt);
+// template HamiltPW<double, psi::DEVICE_GPU>::HamiltPW(const HamiltPW<double, psi::DEVICE_GPU> *hamilt);
 #endif
 
 } // namespace hamilt

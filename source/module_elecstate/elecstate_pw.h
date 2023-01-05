@@ -43,7 +43,6 @@ class ElecStatePW : public ElecState
     void init_rho_data();
 
     Device * ctx = {};
-    psi::DEVICE_CPU * cpu_ctx = {};
     bool init_rho = false;
     FPTYPE ** rho = nullptr, ** kin_r = nullptr;
     FPTYPE * rho_data = nullptr, * kin_r_data = nullptr;
@@ -55,7 +54,7 @@ class ElecStatePW : public ElecState
     using setmem_var_op = psi::memory::set_memory_op<FPTYPE, Device>;
     using resmem_var_op = psi::memory::resize_memory_op<FPTYPE, Device>;
     using delmem_var_op = psi::memory::delete_memory_op<FPTYPE, Device>;
-    using syncmem_var_d2h_op = psi::memory::synchronize_memory_op<FPTYPE, psi::DEVICE_CPU, Device>;
+    using castmem_var_d2h_op = psi::memory::cast_memory_op<double, FPTYPE, psi::DEVICE_CPU, Device>;
 
     using setmem_complex_op = psi::memory::set_memory_op<std::complex<FPTYPE>, Device>;
     using resmem_complex_op = psi::memory::resize_memory_op<std::complex<FPTYPE>, Device>;

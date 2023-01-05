@@ -211,6 +211,7 @@ class Input
     int mixing_ndim; // used in Broyden method
     double mixing_gg0; // used in kerker method. mohan add 2014-09-27
     bool mixing_tau; // whether to mix tau in mgga
+    bool mixing_dftu; //whether to mix locale in DFT+U
 
     //==========================================================
     // potential / charge / wavefunction / energy
@@ -521,6 +522,10 @@ class Input
     //    device control denghui added on 2022-11-15
     //==========================================================
     std::string device;
+    //==========================================================
+    //    precision control denghui added on 2023-01-01
+    //==========================================================
+    std::string precision;
 
     //==========================================================
     // variables for test only

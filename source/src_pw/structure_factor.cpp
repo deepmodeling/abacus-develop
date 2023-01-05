@@ -19,13 +19,26 @@ Structure_Factor::Structure_Factor()
 
 Structure_Factor::~Structure_Factor()
 {
-#if defined(__CUDA) || defined(__ROCM)
     if (GlobalV::device_flag == "gpu") {
-        delmem_complex_op()(this->gpu_ctx, this->d_eigts1);
-        delmem_complex_op()(this->gpu_ctx, this->d_eigts2);
-        delmem_complex_op()(this->gpu_ctx, this->d_eigts3);
+        if (GlobalV::precision_flag == "single") {
+            delmem_cd_op()(gpu_ctx, this->c_eigts1);
+            delmem_cd_op()(gpu_ctx, this->c_eigts2);
+            delmem_cd_op()(gpu_ctx, this->c_eigts3);
+        }
+        else {
+            delmem_zd_op()(gpu_ctx, this->z_eigts1);
+            delmem_zd_op()(gpu_ctx, this->z_eigts2);
+            delmem_zd_op()(gpu_ctx, this->z_eigts3);
+        }
     }
-#endif
+    else {
+        if (GlobalV::precision_flag == "single") {
+            delmem_ch_op()(cpu_ctx, this->c_eigts1);
+            delmem_ch_op()(cpu_ctx, this->c_eigts2);
+            delmem_ch_op()(cpu_ctx, this->c_eigts3);
+        }
+        // There's no need to delete double precision pointers while in a CPU environment.
+    }
 }
 
 // called in input.cpp
@@ -127,16 +140,40 @@ void Structure_Factor::setup_structure_factor(UnitCell* Ucell, ModulePW::PW_Basi
             inat++;
         }
     }
-#if defined(__CUDA) || defined(__ROCM)
     if (GlobalV::device_flag == "gpu") {
-        resmem_complex_op()(this->gpu_ctx, this->d_eigts1, Ucell->nat * (2 * rho_basis->nx + 1));
-        resmem_complex_op()(this->gpu_ctx, this->d_eigts2, Ucell->nat * (2 * rho_basis->ny + 1));
-        resmem_complex_op()(this->gpu_ctx, this->d_eigts3, Ucell->nat * (2 * rho_basis->nz + 1));
-        syncmem_complex_h2d_op()(this->gpu_ctx, this->cpu_ctx, this->d_eigts1, this->eigts1.c, Ucell->nat * (2 * rho_basis->nx + 1));
-        syncmem_complex_h2d_op()(this->gpu_ctx, this->cpu_ctx, this->d_eigts2, this->eigts2.c, Ucell->nat * (2 * rho_basis->ny + 1));
-        syncmem_complex_h2d_op()(this->gpu_ctx, this->cpu_ctx, this->d_eigts3, this->eigts3.c, Ucell->nat * (2 * rho_basis->nz + 1));
+        if (GlobalV::precision_flag == "single") {
+            resmem_cd_op()(gpu_ctx, this->c_eigts1, Ucell->nat * (2 * rho_basis->nx + 1));
+            resmem_cd_op()(gpu_ctx, this->c_eigts2, Ucell->nat * (2 * rho_basis->ny + 1));
+            resmem_cd_op()(gpu_ctx, this->c_eigts3, Ucell->nat * (2 * rho_basis->nz + 1));
+            castmem_z2c_h2d_op()(gpu_ctx, cpu_ctx, this->c_eigts1, this->eigts1.c, Ucell->nat * (2 * rho_basis->nx + 1));
+            castmem_z2c_h2d_op()(gpu_ctx, cpu_ctx, this->c_eigts2, this->eigts2.c, Ucell->nat * (2 * rho_basis->ny + 1));
+            castmem_z2c_h2d_op()(gpu_ctx, cpu_ctx, this->c_eigts3, this->eigts3.c, Ucell->nat * (2 * rho_basis->nz + 1));
+        }
+        else {
+            resmem_zd_op()(gpu_ctx, this->z_eigts1, Ucell->nat * (2 * rho_basis->nx + 1));
+            resmem_zd_op()(gpu_ctx, this->z_eigts2, Ucell->nat * (2 * rho_basis->ny + 1));
+            resmem_zd_op()(gpu_ctx, this->z_eigts3, Ucell->nat * (2 * rho_basis->nz + 1));
+            syncmem_z2z_h2d_op()(gpu_ctx, cpu_ctx, this->z_eigts1, this->eigts1.c, Ucell->nat * (2 * rho_basis->nx + 1));
+            syncmem_z2z_h2d_op()(gpu_ctx, cpu_ctx, this->z_eigts2, this->eigts2.c, Ucell->nat * (2 * rho_basis->ny + 1));
+            syncmem_z2z_h2d_op()(gpu_ctx, cpu_ctx, this->z_eigts3, this->eigts3.c, Ucell->nat * (2 * rho_basis->nz + 1));
+        }
     }
-#endif
+    else {
+        if (GlobalV::precision_flag == "single") {
+            resmem_ch_op()(cpu_ctx, this->c_eigts1, Ucell->nat * (2 * rho_basis->nx + 1));
+            resmem_ch_op()(cpu_ctx, this->c_eigts2, Ucell->nat * (2 * rho_basis->ny + 1));
+            resmem_ch_op()(cpu_ctx, this->c_eigts3, Ucell->nat * (2 * rho_basis->nz + 1));
+            castmem_z2c_h2h_op()(cpu_ctx, cpu_ctx, this->c_eigts1, this->eigts1.c, Ucell->nat * (2 * rho_basis->nx + 1));
+            castmem_z2c_h2h_op()(cpu_ctx, cpu_ctx, this->c_eigts2, this->eigts2.c, Ucell->nat * (2 * rho_basis->ny + 1));
+            castmem_z2c_h2h_op()(cpu_ctx, cpu_ctx, this->c_eigts3, this->eigts3.c, Ucell->nat * (2 * rho_basis->nz + 1));
+        }
+        else {
+            this->z_eigts1 = this->eigts1.c;
+            this->z_eigts2 = this->eigts2.c;
+            this->z_eigts3 = this->eigts3.c;
+        }
+        // There's no need to delete double precision pointers while in a CPU environment.
+    }
     ModuleBase::timer::tick("PW_Basis","setup_struc_factor"); 
     return;
 }
@@ -278,4 +315,37 @@ void Structure_Factor:: bsplinecoef(complex<double> *b1, complex<double> *b2, co
         }
         b3[iz] = exp(ci_tpi*double(norder*iz)/double(nz))/fracz;
     }
+}
+
+template <>
+std::complex<float> * Structure_Factor::get_eigts1_data() const
+{
+    return this->c_eigts1;
+}
+template <>
+std::complex<double> * Structure_Factor::get_eigts1_data() const
+{
+    return this->z_eigts1;
+}
+
+template <>
+std::complex<float> * Structure_Factor::get_eigts2_data() const
+{
+    return this->c_eigts2;
+}
+template <>
+std::complex<double> * Structure_Factor::get_eigts2_data() const
+{
+    return this->z_eigts2;
+}
+
+template <>
+std::complex<float> * Structure_Factor::get_eigts3_data() const
+{
+    return this->c_eigts3;
+}
+template <>
+std::complex<double> * Structure_Factor::get_eigts3_data() const
+{
+    return this->z_eigts3;
 }

@@ -44,7 +44,7 @@ class Ekinetic<OperatorPW<FPTYPE, Device>> : public OperatorPW<FPTYPE, Device>
     int get_gk2_row() const {return this->gk2_row;}
     int get_gk2_col() const {return this->gk2_col;}
     FPTYPE get_tpiba2() const {return this->tpiba2;}
-    const FPTYPE* get_gk2() const {return this->gk2_in;}
+    const FPTYPE* get_gk2() const {return this->gk2;}
     Device* get_ctx() const {return this->ctx;}
 
   private:
@@ -54,9 +54,7 @@ class Ekinetic<OperatorPW<FPTYPE, Device>> : public OperatorPW<FPTYPE, Device>
     mutable int npol = 0;
 
     FPTYPE tpiba2 = 0.0;
-    FPTYPE* _gk2 = nullptr;
     const FPTYPE* gk2 = nullptr;
-    const FPTYPE* gk2_in = nullptr;
     int gk2_row = 0;
     int gk2_col = 0;
 

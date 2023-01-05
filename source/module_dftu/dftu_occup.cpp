@@ -27,10 +27,46 @@ extern "C"
 
 namespace ModuleDFTU
 {
-void DFTU::cal_occup_m_k(const int iter, std::vector<ModuleBase::ComplexMatrix> &dm_k)
+void DFTU::copy_locale()
 {
-    ModuleBase::TITLE("DFTU", "cal_occup_m_k");
-    ModuleBase::timer::tick("DFTU", "cal_occup_m_k");
+    ModuleBase::TITLE("DFTU", "copy_locale");
+    ModuleBase::timer::tick("DFTU", "copy_locale");
+
+    for (int T = 0; T < GlobalC::ucell.ntype; T++)
+    {
+        if (orbital_corr[T] == -1)
+            continue;
+
+        for (int I = 0; I < GlobalC::ucell.atoms[T].na; I++)
+        {
+            const int iat = GlobalC::ucell.itia2iat(T, I);
+
+            for (int l = 0; l < GlobalC::ucell.atoms[T].nwl + 1; l++)
+            {
+                const int N = GlobalC::ucell.atoms[T].l_nchi[l];
+
+                for (int n = 0; n < N; n++)
+                {
+                    if (GlobalV::NSPIN == 4)
+                    {
+                        locale_save[iat][l][n][0] = locale[iat][l][n][0];
+                    }
+                    else if (GlobalV::NSPIN == 1 || GlobalV::NSPIN == 2)
+                    {
+                        locale_save[iat][l][n][0] = locale[iat][l][n][0];
+                        locale_save[iat][l][n][1] = locale[iat][l][n][1];
+                    }
+                }
+            }
+        }
+    }
+    ModuleBase::timer::tick("DFTU", "copy_locale");
+}
+
+void DFTU::zero_locale()
+{
+    ModuleBase::TITLE("DFTU", "zero_locale");
+    ModuleBase::timer::tick("DFTU", "zero_locale");
 
     for (int T = 0; T < GlobalC::ucell.ntype; T++)
     {
@@ -48,13 +84,10 @@ void DFTU::cal_occup_m_k(const int iter, std::vector<ModuleBase::ComplexMatrix> 
                 {
                     if (GlobalV::NSPIN == 4)
                     {
-                        locale_save[iat][l][n][0] = locale[iat][l][n][0];
                         locale[iat][l][n][0].zero_out();
                     }
                     else if (GlobalV::NSPIN == 1 || GlobalV::NSPIN == 2)
                     {
-                        locale_save[iat][l][n][0] = locale[iat][l][n][0];
-                        locale_save[iat][l][n][1] = locale[iat][l][n][1];
                         locale[iat][l][n][0].zero_out();
                         locale[iat][l][n][1].zero_out();
                     }
@@ -62,6 +95,54 @@ void DFTU::cal_occup_m_k(const int iter, std::vector<ModuleBase::ComplexMatrix> 
             }
         }
     }
+    ModuleBase::timer::tick("DFTU", "zero_locale");
+}
+
+void DFTU::mix_locale()
+{
+    ModuleBase::TITLE("DFTU", "mix_locale");
+    ModuleBase::timer::tick("DFTU", "mix_locale");
+
+    double beta = GlobalC::CHR_MIX.get_mixing_beta();
+
+    for (int T = 0; T < GlobalC::ucell.ntype; T++)
+    {
+        if (orbital_corr[T] == -1)
+            continue;
+
+        for (int I = 0; I < GlobalC::ucell.atoms[T].na; I++)
+        {
+            const int iat = GlobalC::ucell.itia2iat(T, I);
+
+            for (int l = 0; l < GlobalC::ucell.atoms[T].nwl + 1; l++)
+            {
+                const int N = GlobalC::ucell.atoms[T].l_nchi[l];
+
+                for (int n = 0; n < N; n++)
+                {
+                    if (GlobalV::NSPIN == 4)
+                    {
+                        locale[iat][l][n][0] = locale[iat][l][n][0]*beta + locale_save[iat][l][n][0]*(1.0-beta);
+                    }
+                    else if (GlobalV::NSPIN == 1 || GlobalV::NSPIN == 2)
+                    {
+                        locale[iat][l][n][0] = locale[iat][l][n][0] * beta + locale_save[iat][l][n][0] * (1.0-beta);
+                        locale[iat][l][n][1] = locale[iat][l][n][1] * beta + locale_save[iat][l][n][1] * (1.0-beta);
+                    }
+                }
+            }
+        }
+    }
+    ModuleBase::timer::tick("DFTU", "mix_locale");
+}
+
+void DFTU::cal_occup_m_k(const int iter, std::vector<ModuleBase::ComplexMatrix> &dm_k)
+{
+    ModuleBase::TITLE("DFTU", "cal_occup_m_k");
+    ModuleBase::timer::tick("DFTU", "cal_occup_m_k");
+
+    this->copy_locale();
+    this->zero_locale();
 
     //=================Part 1======================
     // call SCALAPACK routine to calculate the product of the S and density matrix
@@ -248,8 +329,12 @@ void DFTU::cal_occup_m_k(const int iter, std::vector<ModuleBase::ComplexMatrix> 
         } // end ia
     } // end it
 
-    this->initialed_locale = true;
+    if(mixing_dftu && initialed_locale)
+    {
+        this->mix_locale();
+    }
 
+    this->initialed_locale = true;
     ModuleBase::timer::tick("DFTU", "cal_occup_m_k");
     return;
 }
@@ -258,29 +343,8 @@ void DFTU::cal_occup_m_gamma(const int iter, std::vector<ModuleBase::matrix> &dm
 {
     ModuleBase::TITLE("DFTU", "cal_occup_m_gamma");
     ModuleBase::timer::tick("DFTU", "cal_occup_m_gamma");
-    for (int T = 0; T < GlobalC::ucell.ntype; T++)
-    {
-        if (orbital_corr[T] == -1) continue;
-        const int L = orbital_corr[T];
-
-        for (int I = 0; I < GlobalC::ucell.atoms[T].na; I++)
-        {
-            const int iat = GlobalC::ucell.itia2iat(T, I);
-
-            for (int l = L; l < GlobalC::ucell.atoms[T].nwl + 1; l++)
-            {
-                const int N = GlobalC::ucell.atoms[T].l_nchi[l];
-
-                for (int n = 0; n < N; n++)
-                {
-                    locale_save[iat][l][n][0] = locale[iat][l][n][0];
-                    locale_save[iat][l][n][1] = locale[iat][l][n][1];
-                    locale[iat][l][n][0].zero_out();
-                    locale[iat][l][n][1].zero_out();
-                }
-            }
-        }
-    }
+    this->copy_locale();
+    this->zero_locale();
 
     //=================Part 1======================
     // call PBLAS routine to calculate the product of the S and density matrix
@@ -409,11 +473,14 @@ void DFTU::cal_occup_m_gamma(const int iter, std::vector<ModuleBase::matrix> &dm
                 } // L
             } // ia
         } // it
-
     } // is
 
-    this->initialed_locale = true;
+    if(mixing_dftu && initialed_locale)
+    {
+        this->mix_locale();
+    }
 
+    this->initialed_locale = true;
     ModuleBase::timer::tick("DFTU", "cal_occup_m_gamma");
     return;
 }

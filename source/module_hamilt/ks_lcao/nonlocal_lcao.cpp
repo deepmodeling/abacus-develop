@@ -15,9 +15,9 @@ void Nonlocal<OperatorLCAO<T>>::contributeHR()
     ModuleBase::TITLE("Nonlocal<OperatorLCAO>", "contributeHR");
     if(!this->HR_fixed_done)
     {
-        ModuleBase::timer::tick("Nonlocal<OperatorLCAO>", "contributeHR");
+        ModuleBase::timer::tick("Nonlocal<LCAO>", "contributeHR");
         this->genH->calculate_NL_no(this->HR_pointer->data());
-        ModuleBase::timer::tick("Nonlocal<OperatorLCAO>", "contributeHR");
+        ModuleBase::timer::tick("Nonlocal<LCAO>", "contributeHR");
         this->HR_fixed_done = true;
     }
     return;

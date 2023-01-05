@@ -240,17 +240,11 @@ public:
     FFT ft;
     //The position of pointer in and out can be equal(in-place transform) or different(out-of-place transform).
     
-    void real2recip(const double * in, std::complex<double> * out, const bool add = false, const double factor = 1.0); //in:(nplane,nx*ny)  ; out(nz, ns)
-    void real2recip(const std::complex<double> * in, std::complex<double> * out, const bool add = false, const double factor = 1.0); //in:(nplane,nx*ny)  ; out(nz, ns)
-    void recip2real(const std::complex<double> * in, double *out, const bool add = false, const double factor = 1.0); //in:(nz, ns)  ; out(nplane,nx*ny)
-    void recip2real(const std::complex<double> * in, std::complex<double> * out, const bool add = false, const double factor = 1.0); //in:(nz, ns)  ; out(nplane,nx*ny)
+    template <typename FPTYPE> void real2recip(const FPTYPE * in, std::complex<FPTYPE> * out, const bool add = false, const FPTYPE factor = 1.0); //in:(nplane,nx*ny)  ; out(nz, ns)
+    template <typename FPTYPE> void real2recip(const std::complex<FPTYPE> * in, std::complex<FPTYPE> * out, const bool add = false, const FPTYPE factor = 1.0); //in:(nplane,nx*ny)  ; out(nz, ns)
+    template <typename FPTYPE> void recip2real(const std::complex<FPTYPE> * in, FPTYPE *out, const bool add = false, const FPTYPE factor = 1.0); //in:(nz, ns)  ; out(nplane,nx*ny)
+    template <typename FPTYPE> void recip2real(const std::complex<FPTYPE> * in, std::complex<FPTYPE> * out, const bool add = false, const FPTYPE factor = 1.0); //in:(nz, ns)  ; out(nplane,nx*ny)
 
-#ifdef __MIX_PRECISION
-    void real2recip(const float * in, std::complex<float> * out, const bool add = false, const float factor = 1.0); //in:(nplane,nx*ny)  ; out(nz, ns)
-    void real2recip(const std::complex<float> * in, std::complex<float> * out, const bool add = false, const float factor = 1.0); //in:(nplane,nx*ny)  ; out(nz, ns)
-    void recip2real(const std::complex<float> * in, float *out, const bool add = false, const float factor = 1.0); //in:(nz, ns)  ; out(nplane,nx*ny)
-    void recip2real(const std::complex<float> * in, std::complex<float> * out, const bool add = false, const float factor = 1.0); //in:(nz, ns)  ; out(nplane,nx*ny)
-#endif
 protected:
     //gather planes and scatter sticks of all processors
     template<typename T>
@@ -263,16 +257,9 @@ public:
     //get fftixy2is;
     void getfftixy2is(int * fftixy2is);
 
-#if defined(__CUDA) || defined(__ROCM)
-    psi::DEVICE_CPU * cpu_ctx = {};
-    psi::DEVICE_GPU * gpu_ctx = {};
     using resmem_int_op = psi::memory::resize_memory_op<int, psi::DEVICE_GPU>;
     using delmem_int_op = psi::memory::delete_memory_op<int, psi::DEVICE_GPU>;
     using syncmem_int_h2d_op = psi::memory::synchronize_memory_op<int, psi::DEVICE_GPU, psi::DEVICE_CPU>;
-    using resmem_var_op = psi::memory::resize_memory_op<double, psi::DEVICE_GPU>;
-    using delmem_var_op = psi::memory::delete_memory_op<double, psi::DEVICE_GPU>;
-    using syncmem_var_h2d_op = psi::memory::synchronize_memory_op<double, psi::DEVICE_GPU, psi::DEVICE_CPU>;
-#endif
 };
 
 }

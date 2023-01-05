@@ -88,33 +88,27 @@ public:
 
     double *gk2=nullptr; // modulus (G+K)^2 of G vectors [npwk_max*nks]
 
-    double * d_gcar = nullptr, * d_kvec_c = nullptr;
     //collect gdirect, gcar, gg
     void collect_local_pw();
 
 private:
+    float  * s_gk2 = nullptr;
+    double * d_gk2 = nullptr; // modulus (G+K)^2 of G vectors [npwk_max*nks]
     //create igl2isz_k map array for fft
     void setupIndGk();
     //calculate G+K, it is a private function
     ModuleBase::Vector3<double> cal_GplusK_cartesian(const int ik, const int ig) const;
 
   public:
-    void real2recip(const double* in, std::complex<double>* out, const int ik, const bool add = false, const double factor = 1.0); //in:(nplane,nx*ny)  ; out(nz, ns)
-    void real2recip(const std::complex<double>* in, std::complex<double>* out, const int ik, const bool add = false, const double factor = 1.0); //in:(nplane,nx*ny)  ; out(nz, ns)
-    void recip2real(const std::complex<double>* in, double* out, const int ik, const bool add = false, const double factor = 1.0); //in:(nz, ns)  ; out(nplane,nx*ny)
-    void recip2real(const std::complex<double>* in, std::complex<double> * out, const int ik, const bool add = false, const double factor = 1.0); //in:(nz, ns)  ; out(nplane,nx*ny)
+    template <typename FPTYPE> void real2recip(const FPTYPE* in, std::complex<FPTYPE>* out, const int ik, const bool add = false, const FPTYPE factor = 1.0); //in:(nplane,nx*ny)  ; out(nz, ns)
+    template <typename FPTYPE> void real2recip(const std::complex<FPTYPE>* in, std::complex<FPTYPE>* out, const int ik, const bool add = false, const FPTYPE factor = 1.0); //in:(nplane,nx*ny)  ; out(nz, ns)
+    template <typename FPTYPE> void recip2real(const std::complex<FPTYPE>* in, FPTYPE* out, const int ik, const bool add = false, const FPTYPE factor = 1.0); //in:(nz, ns)  ; out(nplane,nx*ny)
+    template <typename FPTYPE> void recip2real(const std::complex<FPTYPE>* in, std::complex<FPTYPE> * out, const int ik, const bool add = false, const FPTYPE factor = 1.0); //in:(nz, ns)  ; out(nplane,nx*ny)
 
     template <typename FPTYPE, typename Device>
     void real_to_recip(const Device *ctx, const std::complex<FPTYPE> * in, std::complex<FPTYPE> * out, const int ik, const bool add = false, const FPTYPE factor = 1.0); //in:(nplane,nx*ny)  ; out(nz, ns)
     template <typename FPTYPE, typename Device>
     void recip_to_real(const Device *ctx, const std::complex<FPTYPE> * in, std::complex<FPTYPE> * out, const int ik, const bool add = false, const FPTYPE factor = 1.0); //in:(nz, ns)  ; out(nplane,nx*ny)
-
-#ifdef __MIX_PRECISION
-    void real2recip(const float* in, std::complex<float>* out, const int ik, const bool add = false, const float factor = 1.0); //in:(nplane,nx*ny)  ; out(nz, ns)
-    void real2recip(const std::complex<float>* in, std::complex<float>* out, const int ik, const bool add = false, const float factor = 1.0); //in:(nplane,nx*ny)  ; out(nz, ns)
-    void recip2real(const std::complex<float>* in, float* out, const int ik, const bool add = false, const float factor = 1.0); //in:(nz, ns)  ; out(nplane,nx*ny)
-    void recip2real(const std::complex<float>* in, std::complex<float>* out, const int ik, const bool add = false, const float factor = 1.0); //in:(nz, ns)  ; out(nplane,nx*ny)
-#endif
 
 public:
     //operator:
@@ -131,11 +125,13 @@ public:
     //get igl2ig_k or igk(ik,ig) in older ABACUS
     int& getigl2ig(const int ik, const int igl) const;
 
-    template <typename FPTYPE, typename Device>
-    FPTYPE * get_gcar_data(const Device *ctx) const;
+    template <typename FPTYPE> FPTYPE * get_gk2_data() const;
+    template <typename FPTYPE> FPTYPE * get_gcar_data() const;
+    template <typename FPTYPE> FPTYPE * get_kvec_c_data() const;
 
-    template <typename FPTYPE, typename Device>
-    FPTYPE * get_kvec_c_data(const Device *ctx) const;
+private:
+    float * s_gcar = nullptr, * s_kvec_c = nullptr;
+    double * d_gcar = nullptr, * d_kvec_c = nullptr;
 };
 
 }

@@ -248,7 +248,7 @@ void Input::Default(void)
     // iteration
     //----------------------------------------------------------
     scf_thr = 1.0e-9;
-    scf_nmax = 40;
+    scf_nmax = 100;
     relax_nmax = 0;
     out_stru = 0;
     //----------------------------------------------------------
@@ -265,6 +265,7 @@ void Input::Default(void)
     mixing_ndim = 8;
     mixing_gg0 = 0.00; // used in kerker method. mohan add 2014-09-27
     mixing_tau = false;
+    mixing_dftu = false;
     //----------------------------------------------------------
     // potential / charge / wavefunction / energy
     //----------------------------------------------------------
@@ -534,9 +535,13 @@ void Input::Default(void)
     of_kernel_file = "WTkernel.txt";
 
     //==========================================================
-    //    OFDFT sunliang added on 2022-11-15
+    //    device control denghui added on 2022-11-15
     //==========================================================
     device = "cpu";
+    //==========================================================
+    //    precision control denghui added on 2023-01-01
+    //==========================================================
+    precision = "double";
     return;
 }
 
@@ -1081,6 +1086,10 @@ bool Input::Read(const std::string &fn)
         else if (strcmp("mixing_tau", word) == 0)
         {
             read_bool(ifs, mixing_tau);
+        }
+        else if (strcmp("mixing_dftu", word) == 0)
+        {
+            read_bool(ifs, mixing_dftu);
         }
         //----------------------------------------------------------
         // charge / potential / wavefunction
@@ -1944,6 +1953,12 @@ bool Input::Read(const std::string &fn)
             read_value(ifs, device);
         }
         //----------------------------------------------------------------------------------
+        //    precision control denghui added on 2023-01-01
+        //----------------------------------------------------------------------------------
+        else if (strcmp("precision", word) == 0) {
+            read_value(ifs, precision);
+        }
+        //----------------------------------------------------------------------------------
         else
         {
             // xiaohui add 2015-09-15
@@ -2665,6 +2680,7 @@ void Input::Bcast()
     Parallel_Common::bcast_int(mixing_ndim);
     Parallel_Common::bcast_double(mixing_gg0); // mohan add 2014-09-27
     Parallel_Common::bcast_bool(mixing_tau);
+    Parallel_Common::bcast_bool(mixing_dftu);
 
     Parallel_Common::bcast_string(read_file_dir);
     Parallel_Common::bcast_string(init_wfc);
@@ -3124,6 +3140,22 @@ void Input::Check(void)
         {
             ModuleBase::WARNING_QUIT("Input", "please check the ks_solver parameter!");
         }
+
+        if (gamma_only)
+        {
+            ModuleBase::WARNING_QUIT("Input", "gamma_only not implemented for plane wave now.");
+        }
+
+        if (out_proj_band == 1)
+        {
+            ModuleBase::WARNING_QUIT("Input", "out_proj_band not implemented for plane wave now.");
+        }
+
+        if (out_dos == 3)
+        {
+            ModuleBase::WARNING_QUIT("Input", "Fermi Surface Plotting not implemented for plane wave now.");
+        }
+
     }
     else if (basis_type == "lcao")
     {
@@ -3169,6 +3201,11 @@ void Input::Check(void)
         {
             ModuleBase::WARNING_QUIT("Input", "please check the ks_solver parameter!");
         }
+
+        if (kpar > 1)
+        {
+            ModuleBase::WARNING_QUIT("Input", "kpar > 1 has not been supported for lcao calculation.");
+        }
     }
     else if (basis_type == "lcao_in_pw")
     {
@@ -3181,12 +3218,6 @@ void Input::Check(void)
     {
         ModuleBase::WARNING_QUIT("Input", "please check the basis_type parameter!");
     }
-
-    if (basis_type == "pw" && gamma_only)
-    {
-        ModuleBase::WARNING_QUIT("Input", "gamma_only not implemented for plane wave now.");
-    }
-
     /*
     if (basis_type == "lcao" && !gamma_only_local) // xiaohui add 2013-09-01. Attention! Maybe there is some problem.
     {
@@ -3194,10 +3225,6 @@ void Input::Check(void)
     }
     */
 
-    if (basis_type == "lcao" && kpar > 1)
-    {
-        ModuleBase::WARNING_QUIT("Input", "kpar > 1 has not been supported for lcao calculation.");
-    }
     /* comment out because code cannot reach here anyway
     if (GlobalV::NPROC > 1 && ks_solver == "lapack") // xiaohui add 2013-09-01
     {

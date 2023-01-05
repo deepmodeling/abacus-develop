@@ -94,7 +94,7 @@ const double RYDBERG_SI =  HARTREE_SI/2.0; //J
 
 // zero up to a given accuracy
 //const double epsr  = 1.0e-6;
-const double threshold_wg  = 1.0e-14;
+const double threshold_wg  = 1.0e-10;
 }
 
 #endif 

@@ -73,8 +73,6 @@ class Potential : public PotBase
         return this->v_effective;
     }
 
-    template <typename FPTYPE, typename Device>
-    FPTYPE* get_effective_v_data(const Device * ctx);
 
     double* get_effective_v(int is)
     {
@@ -129,8 +127,11 @@ class Potential : public PotBase
         }
     }
 
-    template <typename FPTYPE, typename Device>
-    FPTYPE* get_effective_vofk_data(const Device * ctx);
+    template <typename FPTYPE>
+    FPTYPE* get_v_effective_data();
+
+    template <typename FPTYPE>
+    FPTYPE* get_vofk_effective_data();
 
     double* get_fixed_v()
     {
@@ -163,14 +164,8 @@ class Potential : public PotBase
     std::vector<double> v_effective_fixed;
     ModuleBase::matrix v_effective;
 
+    float * s_v_effective = nullptr, * s_vofk_effective = nullptr;
     double * d_v_effective = nullptr, * d_vofk_effective = nullptr;
-#if (defined(__CUDA) || defined(__ROCM))
-    psi::DEVICE_CPU * cpu_ctx = nullptr;
-    psi::DEVICE_GPU * gpu_ctx = nullptr;
-    using resmem_var_op = psi::memory::resize_memory_op<double, psi::DEVICE_GPU>;
-    using delmem_var_op = psi::memory::delete_memory_op<double, psi::DEVICE_GPU>;
-    using syncmem_var_h2d_op = psi::memory::synchronize_memory_op<double, psi::DEVICE_GPU, psi::DEVICE_CPU>;
-#endif
 
     ModuleBase::matrix vofk_effective;
 

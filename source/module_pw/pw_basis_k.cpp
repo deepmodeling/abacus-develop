@@ -18,14 +18,28 @@ PW_Basis_K::~PW_Basis_K()
     delete[] igl2ig_k;
     delete[] gk2;
     delete[] ig2ixyz_k_;
-#if defined(__CUDA) || defined(__ROCM)
     if (GlobalV::device_flag == "gpu") {
-        delmem_int_op()(this->gpu_ctx, this->ig2ixyz_k);
-        delmem_int_op()(this->gpu_ctx, this->d_igl2isz_k);
-        delmem_var_op()(this->gpu_ctx, this->d_kvec_c);
-        delmem_var_op()(this->gpu_ctx, this->d_gcar);
+        if (GlobalV::precision_flag == "single") {
+            delmem_sd_op()(gpu_ctx, this->s_kvec_c);
+            delmem_sd_op()(gpu_ctx, this->s_gcar);
+            delmem_sd_op()(gpu_ctx, this->s_gk2);
+        }
+        else {
+            delmem_dd_op()(gpu_ctx, this->d_kvec_c);
+            delmem_dd_op()(gpu_ctx, this->d_gcar);
+            delmem_dd_op()(gpu_ctx, this->d_gk2);
+        }
+        delmem_int_op()(gpu_ctx, this->ig2ixyz_k);
+        delmem_int_op()(gpu_ctx, this->d_igl2isz_k);
     }
-#endif
+    else {
+        if (GlobalV::precision_flag == "single") {
+            delmem_sh_op()(cpu_ctx, this->s_kvec_c);
+            delmem_sh_op()(cpu_ctx, this->s_gcar);
+            delmem_sh_op()(cpu_ctx, this->s_gk2);
+        }
+        // There's no need to delete double pointers while in a CPU environment.
+    }
 }
 
 void PW_Basis_K:: initparameters(
@@ -71,12 +85,26 @@ void PW_Basis_K:: initparameters(
     this->fftnxy = this->fftnx * this->fftny;
     this->fftnxyz = this->fftnxy * this->fftnz;
     this->distribution_type = distribution_type_in;
-#if defined(__CUDA) || defined(__ROCM)
     if (GlobalV::device_flag == "gpu") {
-        resmem_var_op()(this->gpu_ctx, this->d_kvec_c, this->nks * 3);
-        syncmem_var_h2d_op()(this->gpu_ctx, this->cpu_ctx, this->d_kvec_c, reinterpret_cast<double *>(&this->kvec_c[0][0]), this->nks * 3);
+        if (GlobalV::precision_flag == "single") {
+            resmem_sd_op()(gpu_ctx, this->s_kvec_c, this->nks * 3);
+            castmem_d2s_h2d_op()(gpu_ctx, cpu_ctx, this->s_kvec_c, reinterpret_cast<double *>(&this->kvec_c[0][0]), this->nks * 3);
+        }
+        else {
+            resmem_dd_op()(gpu_ctx, this->d_kvec_c, this->nks * 3);
+            syncmem_d2d_h2d_op()(gpu_ctx, cpu_ctx, this->d_kvec_c, reinterpret_cast<double *>(&this->kvec_c[0][0]), this->nks * 3);
+        }
     }
-#endif
+    else {
+        if (GlobalV::precision_flag == "single") {
+            resmem_sh_op()(cpu_ctx, this->s_kvec_c, this->nks * 3);
+            castmem_d2s_h2h_op()(cpu_ctx, cpu_ctx, this->s_kvec_c, reinterpret_cast<double *>(&this->kvec_c[0][0]), this->nks * 3);
+        }
+        else {
+            this->d_kvec_c = reinterpret_cast<double *>(&this->kvec_c[0][0]);
+        }
+        // There's no need to allocate double pointers while in a CPU environment.
+    }
 }
 
 void PW_Basis_K::setupIndGk()
@@ -122,12 +150,10 @@ void PW_Basis_K::setupIndGk()
             }
         }
     }
-#if defined(__CUDA) || defined(__ROCM)
     if (GlobalV::device_flag == "gpu") {
-        resmem_int_op()(this->gpu_ctx, this->d_igl2isz_k, this->npwk_max * this->nks);
-        syncmem_int_h2d_op()(this->gpu_ctx, this->cpu_ctx, this->d_igl2isz_k, this->igl2isz_k, this->npwk_max * this->nks);
+        resmem_int_op()(gpu_ctx, this->d_igl2isz_k, this->npwk_max * this->nks);
+        syncmem_int_h2d_op()(gpu_ctx, cpu_ctx, this->d_igl2isz_k, this->igl2isz_k, this->npwk_max * this->nks);
     }
-#endif
     return;
 }
 
@@ -181,12 +207,33 @@ void PW_Basis_K::collect_local_pw()
             this->gcar[ik * npwk_max + igl] = f * this->G;
         }
     }
-#if defined(__CUDA) || defined(__ROCM)
     if (GlobalV::device_flag == "gpu") {
-        resmem_var_op()(this->gpu_ctx, this->d_gcar, this->npwk_max * this->nks * 3);
-        syncmem_var_h2d_op()(this->gpu_ctx, this->cpu_ctx, this->d_gcar, reinterpret_cast<double *>(&this->gcar[0][0]), this->npwk_max * this->nks * 3);
+        if (GlobalV::precision_flag == "single") {
+            resmem_sd_op()(gpu_ctx, this->s_gk2, this->npwk_max * this->nks);
+            resmem_sd_op()(gpu_ctx, this->s_gcar, this->npwk_max * this->nks * 3);
+            castmem_d2s_h2d_op()(gpu_ctx, cpu_ctx, this->s_gk2, this->gk2, this->npwk_max * this->nks);
+            castmem_d2s_h2d_op()(gpu_ctx, cpu_ctx, this->s_gcar, reinterpret_cast<double *>(&this->gcar[0][0]), this->npwk_max * this->nks * 3);
+        }
+        else {
+            resmem_dd_op()(gpu_ctx, this->d_gk2, this->npwk_max * this->nks);
+            resmem_dd_op()(gpu_ctx, this->d_gcar, this->npwk_max * this->nks * 3);
+            syncmem_d2d_h2d_op()(gpu_ctx, cpu_ctx, this->d_gk2, this->gk2, this->npwk_max * this->nks);
+            syncmem_d2d_h2d_op()(gpu_ctx, cpu_ctx, this->d_gcar, reinterpret_cast<double *>(&this->gcar[0][0]), this->npwk_max * this->nks * 3);
+        }
     }
-#endif
+    else {
+        if (GlobalV::precision_flag == "single") {
+            resmem_sh_op()(cpu_ctx, this->s_gk2, this->npwk_max * this->nks);
+            resmem_sh_op()(cpu_ctx, this->s_gcar, this->npwk_max * this->nks * 3);
+            castmem_d2s_h2h_op()(cpu_ctx, cpu_ctx, this->s_gk2, this->gk2, this->npwk_max * this->nks);
+            castmem_d2s_h2h_op()(cpu_ctx, cpu_ctx, this->s_gcar, reinterpret_cast<double *>(&this->gcar[0][0]), this->npwk_max * this->nks * 3);
+        }
+        else {
+            this->d_gcar = reinterpret_cast<double *>(&this->gcar[0][0]);
+            this->d_gk2 = this->gk2;
+        }
+        // There's no need to allocate double pointers while in a CPU environment.
+    }
 }
 
 ModuleBase::Vector3<double> PW_Basis_K:: cal_GplusK_cartesian(const int ik, const int ig) const {
@@ -259,30 +306,37 @@ void PW_Basis_K::get_ig2ixyz_k()
             ig2ixyz_k_[igl + ik * npwk_max] = iz + iy * nz + ix * ny * nz;
         }
     }
-#if defined(__CUDA) || defined (__ROCM)
-    resmem_int_op()(this->gpu_ctx, ig2ixyz_k, this->npwk_max * this->nks);
-    syncmem_int_h2d_op()(this->gpu_ctx, this->cpu_ctx, this->ig2ixyz_k, this->ig2ixyz_k_, this->npwk_max * this->nks);
-#endif
+    if (GlobalV::device_flag == "gpu") {
+        resmem_int_op()(gpu_ctx, ig2ixyz_k, this->npwk_max * this->nks);
+        syncmem_int_h2d_op()(gpu_ctx, cpu_ctx, this->ig2ixyz_k, this->ig2ixyz_k_, this->npwk_max * this->nks);
+    }
 }
 
 template <>
-double * PW_Basis_K::get_kvec_c_data(const psi::DEVICE_CPU * /*ctx*/) const {
-    return reinterpret_cast<double *>(&this->kvec_c[0][0]);
+float * PW_Basis_K::get_kvec_c_data() const {
+    return this->s_kvec_c;
 }
-
 template <>
-double * PW_Basis_K::get_kvec_c_data(const psi::DEVICE_GPU * /*ctx*/) const {
+double * PW_Basis_K::get_kvec_c_data() const {
     return this->d_kvec_c;
 }
 
 template <>
-double * PW_Basis_K::get_gcar_data(const psi::DEVICE_CPU * /*ctx*/) const {
-    return reinterpret_cast<double *>(&this->gcar[0][0]);
+float * PW_Basis_K::get_gcar_data() const {
+    return this->s_gcar;
+}
+template <>
+double * PW_Basis_K::get_gcar_data() const {
+    return this->d_gcar;
 }
 
 template <>
-double * PW_Basis_K::get_gcar_data(const psi::DEVICE_GPU * /*ctx*/) const {
-    return this->d_gcar;
+float * PW_Basis_K::get_gk2_data() const {
+    return this->s_gk2;
+}
+template <>
+double * PW_Basis_K::get_gk2_data() const {
+    return this->d_gk2;
 }
 
 }  // namespace ModulePW

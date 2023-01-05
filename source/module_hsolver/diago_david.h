@@ -134,10 +134,13 @@ template <typename FPTYPE = double, typename Device = psi::DEVICE_CPU> class Dia
     using syncmem_var_h2d_op = psi::memory::synchronize_memory_op<FPTYPE, Device, psi::DEVICE_CPU>;
     using syncmem_var_d2h_op = psi::memory::synchronize_memory_op<FPTYPE, psi::DEVICE_CPU, Device>;
     using syncmem_complex_op = psi::memory::synchronize_memory_op<std::complex<FPTYPE>, Device, Device>;
+    using castmem_complex_op = psi::memory::cast_memory_op<std::complex<double>, std::complex<FPTYPE>, Device, Device>;
     using syncmem_complex_h2d_op = psi::memory::synchronize_memory_op<std::complex<FPTYPE>, Device, psi::DEVICE_CPU>;
     using syncmem_complex_d2h_op = psi::memory::synchronize_memory_op<std::complex<FPTYPE>, psi::DEVICE_CPU, Device>;
 
     using hpsi_info = typename hamilt::Operator<std::complex<FPTYPE>, Device>::hpsi_info;
+
+    const std::complex<FPTYPE> * one = nullptr, * zero = nullptr, * neg_one = nullptr;
 };
 
 } // namespace hsolver

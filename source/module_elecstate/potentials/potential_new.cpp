@@ -50,12 +50,22 @@ Potential::~Potential()
         }
         this->components.clear();
     }
-    #if (defined(__CUDA) || defined(__ROCM))
     if (GlobalV::device_flag == "gpu") {
-        delmem_var_op()(this->gpu_ctx, d_v_effective);
-        delmem_var_op()(this->gpu_ctx, d_vofk_effective);
+        if (GlobalV::precision_flag == "single") {
+            delmem_sd_op()(gpu_ctx, s_v_effective);
+            delmem_sd_op()(gpu_ctx, s_vofk_effective);
+        }
+        else {
+            delmem_dd_op()(gpu_ctx, d_v_effective);
+            delmem_dd_op()(gpu_ctx, d_vofk_effective);
+        }
     }
-    #endif
+    else {
+        if (GlobalV::precision_flag == "single") {
+            delmem_sh_op()(cpu_ctx, s_v_effective);
+            delmem_sh_op()(cpu_ctx, s_vofk_effective);
+        }
+    }
 }
 
 void Potential::pot_register(std::vector<std::string>& components_list)
@@ -146,12 +156,27 @@ void Potential::allocate()
         this->vofk_effective.create(GlobalV::NSPIN, nrxx);
         ModuleBase::Memory::record("Potential", "vofk", GlobalV::NSPIN * nrxx, "double");
     }
-    #if (defined(__CUDA) || defined(__ROCM))
     if (GlobalV::device_flag == "gpu") {
-        resmem_var_op()(this->gpu_ctx, d_v_effective, GlobalV::NSPIN * nrxx);
-        resmem_var_op()(this->gpu_ctx, d_vofk_effective, GlobalV::NSPIN * nrxx);
+        if (GlobalV::precision_flag == "single") {
+            resmem_sd_op()(gpu_ctx, s_v_effective, GlobalV::NSPIN * nrxx);
+            resmem_sd_op()(gpu_ctx, s_vofk_effective, GlobalV::NSPIN * nrxx);
+        }
+        else {
+            resmem_dd_op()(gpu_ctx, d_v_effective, GlobalV::NSPIN * nrxx);
+            resmem_dd_op()(gpu_ctx, d_vofk_effective, GlobalV::NSPIN * nrxx);
+        }
     }
-    #endif
+    else {
+        if (GlobalV::precision_flag == "single") {
+            resmem_sh_op()(cpu_ctx, s_v_effective, GlobalV::NSPIN * nrxx);
+            resmem_sh_op()(cpu_ctx, s_vofk_effective, GlobalV::NSPIN * nrxx);
+        }
+        else {
+            this->d_v_effective = this->v_effective.c;
+            this->d_vofk_effective = this->vofk_effective.c;
+        }
+        // There's no need to allocate memory for double precision pointers while in a CPU environment
+    }
 }
 
 void Potential::update_from_charge(const Charge* chg, const UnitCell* ucell)
@@ -166,12 +191,23 @@ void Potential::update_from_charge(const Charge* chg, const UnitCell* ucell)
 
     this->cal_v_eff(chg, ucell, this->v_effective);
 
-    #if (defined(__CUDA) || defined(__ROCM))
     if (GlobalV::device_flag == "gpu") {
-        syncmem_var_h2d_op()(this->gpu_ctx, this->cpu_ctx, d_v_effective, this->v_effective.c, this->v_effective.nr * this->v_effective.nc);
-        syncmem_var_h2d_op()(this->gpu_ctx, this->cpu_ctx, d_vofk_effective, this->vofk_effective.c, this->vofk_effective.nr * this->vofk_effective.nc);
+        if (GlobalV::precision_flag == "single") {
+            castmem_d2s_h2d_op()(gpu_ctx, cpu_ctx, s_v_effective, this->v_effective.c, this->v_effective.nr * this->v_effective.nc);
+            castmem_d2s_h2d_op()(gpu_ctx, cpu_ctx, s_vofk_effective, this->vofk_effective.c, this->vofk_effective.nr * this->vofk_effective.nc);
+        }
+        else {
+            syncmem_d2d_h2d_op()(gpu_ctx, cpu_ctx, d_v_effective, this->v_effective.c, this->v_effective.nr * this->v_effective.nc);
+            syncmem_d2d_h2d_op()(gpu_ctx, cpu_ctx, d_vofk_effective, this->vofk_effective.c, this->vofk_effective.nr * this->vofk_effective.nc);
+        }
     }
-    #endif
+    else {
+        if (GlobalV::precision_flag == "single") {
+            castmem_d2s_h2h_op()(cpu_ctx, cpu_ctx, s_v_effective, this->v_effective.c, this->v_effective.nr * this->v_effective.nc);
+            castmem_d2s_h2h_op()(cpu_ctx, cpu_ctx, s_vofk_effective, this->vofk_effective.c, this->vofk_effective.nr * this->vofk_effective.nc);
+        }
+        // There's no need to synchronize memory for double precision pointers while in a CPU environment
+    }
 
     ModuleBase::timer::tick("Potential", "update_from_charge");
 }
@@ -258,25 +294,25 @@ void Potential::get_vnew(const Charge* chg, ModuleBase::matrix& vnew)
 }
 
 template <>
-double * Potential::get_effective_v_data(const psi::DEVICE_CPU * /*ctx*/)
+float * Potential::get_v_effective_data()
 {
-    return this->v_effective.nc > 0 ? &(this->v_effective(0, 0)) : nullptr;
+    return this->v_effective.nc > 0 ? this->s_v_effective : nullptr;
 }
 
 template <>
-double * Potential::get_effective_v_data(const psi::DEVICE_GPU * /*ctx*/)
+double * Potential::get_v_effective_data()
 {
     return this->v_effective.nc > 0 ? this->d_v_effective : nullptr;
 }
 
 template <>
-double * Potential::get_effective_vofk_data(const psi::DEVICE_CPU * /*ctx*/)
+float * Potential::get_vofk_effective_data()
 {
-    return this->vofk_effective.nc > 0 ? &(this->vofk_effective(0, 0)) : nullptr;
+    return this->vofk_effective.nc > 0 ? this->s_vofk_effective : nullptr;
 }
 
 template <>
-double * Potential::get_effective_vofk_data(const psi::DEVICE_GPU * /*ctx*/)
+double * Potential::get_vofk_effective_data()
 {
     return this->vofk_effective.nc > 0 ? this->d_vofk_effective : nullptr;
 }

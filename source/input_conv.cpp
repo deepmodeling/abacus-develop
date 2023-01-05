@@ -90,6 +90,7 @@ void Input_Conv::Convert(void)
         GlobalV::KPAR = INPUT.kpar;
         GlobalV::NSTOGROUP = INPUT.bndpar;
     }
+    GlobalV::precision_flag = INPUT.precision;
     GlobalV::CALCULATION = INPUT.calculation;
     GlobalV::ESOLVER_TYPE = INPUT.esolver_type;
 
@@ -188,6 +189,7 @@ void Input_Conv::Convert(void)
         GlobalC::dftu.Yukawa = INPUT.yukawa_potential;
         GlobalC::dftu.omc = INPUT.omc;
         GlobalC::dftu.orbital_corr = INPUT.orbital_corr;
+        GlobalC::dftu.mixing_dftu = INPUT.mixing_dftu;
         if (!INPUT.yukawa_potential)
         {
             // Duradev's rotational invariant formulation is implemented
