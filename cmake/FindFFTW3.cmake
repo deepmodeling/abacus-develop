@@ -35,7 +35,7 @@ endif()
 # set FFTW3_FOUND to TRUE if all variables are non-zero.
 include(FindPackageHandleStandardArgs)
 if (USE_OPENMP)
-find_package_handle_standard_args(FFTW3 DEFAULT_MSG FFTW3_OMP_LIBRARY FFTW3_LIBRARY FFTW3_INCLUDE_DIR)
+find_package_handle_standard_args(FFTW3 DEFAULT_MSG FFTW3_OMP_LIBRARY FFTW3_LIBRARY FFTW3_LIBRARY_FLOAT FFTW3_INCLUDE_DIR)
 else()
 find_package_handle_standard_args(FFTW3 DEFAULT_MSG FFTW3_LIBRARY FFTW3_LIBRARY_FLOAT FFTW3_INCLUDE_DIR)
 endif()
