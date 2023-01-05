@@ -15,9 +15,9 @@ void Ekinetic<OperatorLCAO<T>>::contributeHR()
     ModuleBase::TITLE("Ekinetic<OperatorLCAO>", "contributeHR");
     if(!this->HR_fixed_done)
     {
-        ModuleBase::timer::tick("Ekinetic<OperatorLCAO>", "contributeHR");
+        ModuleBase::timer::tick("Ekin<LCAO>", "contributeHR");
         this->genH->calculate_T_no(this->HR_pointer->data());
-        ModuleBase::timer::tick("Ekinetic<OperatorLCAO>", "contributeHR");
+        ModuleBase::timer::tick("Ekin<LCAO>", "contributeHR");
         this->HR_fixed_done = true;
     }
     return;
