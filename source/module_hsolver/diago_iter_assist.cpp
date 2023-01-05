@@ -7,9 +7,9 @@
 #include "module_base/lapack_connector.h"
 #include "module_base/timer.h"
 #include "src_parallel/parallel_reduce.h"
-#include "module_hsolver/include/math_kernel.h"
-#include "module_hsolver/include/dngvd_op.h"
-#include "module_psi/include/device.h"
+#include "module_hsolver/kernels/math_kernel_op.h"
+#include "module_hsolver/kernels/dngvd_op.h"
+#include "module_psi/kernels/device.h"
 
 namespace hsolver{
 
@@ -25,6 +25,11 @@ FPTYPE DiagoIterAssist<FPTYPE, Device>::PW_DIAG_THR = 1.0e-2;
 template<typename FPTYPE, typename Device>
 bool DiagoIterAssist<FPTYPE, Device>::need_subspace = false;
 
+template<typename FPTYPE, typename Device>
+std::complex<FPTYPE> DiagoIterAssist<FPTYPE, Device>::one = std::complex<FPTYPE>(1, 0);
+
+template<typename FPTYPE, typename Device>
+std::complex<FPTYPE> DiagoIterAssist<FPTYPE, Device>::zero = std::complex<FPTYPE>(0, 0);
 //----------------------------------------------------------------------
 // Hamiltonian diagonalization in the subspace spanned
 // by nstart states psi (atomic or random wavefunctions).
@@ -80,21 +85,14 @@ void DiagoIterAssist<FPTYPE, Device>::diagH_subspace(
         nstart,
         nstart,
         dmin,
-        &ModuleBase::ONE,
+        &one,
         ppsi,
         dmax,
         hphi,
         dmax,
-        &ModuleBase::ZERO,
+        &zero,
         hcc,
         nstart
-    );
-    matrixTranspose_op<FPTYPE, Device>()(
-        ctx,
-        nstart,
-        nstart,
-        hcc,
-        hcc
     );
 
     gemm_op<FPTYPE, Device>()(
@@ -104,21 +102,14 @@ void DiagoIterAssist<FPTYPE, Device>::diagH_subspace(
         nstart,
         nstart,
         dmin,
-        &ModuleBase::ONE,
+        &one,
         ppsi,
         dmax,
         ppsi,
         dmax,
-        &ModuleBase::ZERO,
+        &zero,
         scc,
         nstart
-    );
-    matrixTranspose_op<FPTYPE, Device>()(
-        ctx,
-        nstart,
-        nstart,
-        scc,
-        scc
     );
 
     if (GlobalV::NPROC_IN_POOL > 1)
@@ -147,16 +138,16 @@ void DiagoIterAssist<FPTYPE, Device>::diagH_subspace(
         gemm_op<FPTYPE, Device>()(
             ctx,
             'N',
-            'T',
+            'N',
             dmax,
             n_band,
             nstart,
-            &ModuleBase::ONE,
-            ppsi,
+            &one,
+            ppsi, // dmax * nstart
             dmax,
-            vcc,
-            n_band,
-            &ModuleBase::ZERO,
+            vcc,  // nstart * n_band
+            nstart,
+            &zero,
             evc.get_pointer(),
             dmax
         );
@@ -173,16 +164,16 @@ void DiagoIterAssist<FPTYPE, Device>::diagH_subspace(
         gemm_op<FPTYPE, Device>()(
             ctx,
             'N',
-            'T',
+            'N',
             dmin,
             n_band,
             nstart,
-            &ModuleBase::ONE,
-            ppsi,
+            &one,
+            ppsi, // dmin * nstart
             dmax,
-            vcc,
-            n_band,
-            &ModuleBase::ZERO,
+            vcc,  // nstart * n_band
+            nstart,
+            &zero,
             evctemp,
             dmin
         );
@@ -270,21 +261,14 @@ void DiagoIterAssist<FPTYPE, Device>::diagH_subspace_init(
         nstart,
         nstart,
         dmin,
-        &ModuleBase::ONE,
+        &one,
         ppsi,
         dmax,
         hpsi,
         dmax,
-        &ModuleBase::ZERO,
+        &zero,
         hcc,
         nstart
-    );
-    matrixTranspose_op<FPTYPE, Device>()(
-        ctx,
-        nstart,
-        nstart,
-        hcc,
-        hcc
     );
 
     gemm_op<FPTYPE, Device>()(
@@ -294,21 +278,14 @@ void DiagoIterAssist<FPTYPE, Device>::diagH_subspace_init(
         nstart,
         nstart,
         dmin,
-        &ModuleBase::ONE,
+        &one,
         ppsi,
         dmax,
         ppsi,
         dmax,
-        &ModuleBase::ZERO,
+        &zero,
         scc,
         nstart
-    );
-    matrixTranspose_op<FPTYPE, Device>()(
-        ctx,
-        nstart,
-        nstart,
-        scc,
-        scc
     );
 
     if (GlobalV::NPROC_IN_POOL > 1)
@@ -350,16 +327,16 @@ void DiagoIterAssist<FPTYPE, Device>::diagH_subspace_init(
         gemm_op<FPTYPE, Device>()(
             ctx,
             'N',
-            'T',
+            'N',
             dmax,
             n_band,
             nstart,
-            &ModuleBase::ONE,
-            ppsi,
+            &one,
+            ppsi, // dmax * nstart
             dmax,
-            vcc,
-            n_band,
-            &ModuleBase::ZERO,
+            vcc,  // nstart * n_band
+            nstart,
+            &zero,
             evc.get_pointer(),
             dmax
         );
@@ -376,16 +353,16 @@ void DiagoIterAssist<FPTYPE, Device>::diagH_subspace_init(
         gemm_op<FPTYPE, Device>()(
             ctx,
             'N',
-            'T',
+            'N',
             dmin,
             n_band,
             nstart,
-            &ModuleBase::ONE,
-            ppsi,
+            &one,
+            ppsi, // dmin * nstart
             dmax,
-            vcc,
-            n_band,
-            &ModuleBase::ZERO,
+            vcc,  // nstart * n_band
+            nstart,
+            &zero,
             evctemp,
             dmin
         );
@@ -415,40 +392,41 @@ void DiagoIterAssist<FPTYPE, Device>::diagH_LAPACK(
     ModuleBase::TITLE("DiagoIterAssist", "LAPACK_subspace");
     ModuleBase::timer::tick("DiagoIterAssist", "LAPACK_subspace");
 
-    const bool all_eigenvalues = (nstart == nbands);
+    FPTYPE* eigenvalues = nullptr;
+    resmem_var_op()(ctx, eigenvalues, nstart);
+    setmem_var_op()(ctx, eigenvalues, 0, nstart);
 
-    FPTYPE * res = e, *e_gpu = nullptr;
+    dngvd_op<FPTYPE, Device>()(ctx, nstart, ldh, hcc, scc, eigenvalues, vcc);
+
+    if (psi::device::get_device_type<Device>(ctx) == psi::GpuDevice) {
+#if ((defined __CUDA) || (defined __ROCM))
+        // set eigenvalues in GPU to e in CPU
+        syncmem_var_d2h_op()(cpu_ctx, gpu_ctx, e, eigenvalues, nbands);
+#endif
+    }
+    else if (psi::device::get_device_type<Device>(ctx) == psi::CpuDevice)
+    {
+        // set eigenvalues in CPU to e in CPU
+        syncmem_var_op()(ctx, ctx, e, eigenvalues, nbands);
+    }
     
-#if ((defined __CUDA) || (defined __ROCM))
-    if (psi::device::get_device_type<Device>(ctx) == psi::GpuDevice) {
-        psi::memory::resize_memory_op<FPTYPE, psi::DEVICE_GPU>()(gpu_ctx, e_gpu, nbands);
-        // set e in CPU value to e_gpu
-        syncmem_var_h2d_op()(gpu_ctx, cpu_ctx, e_gpu, e, nbands);
-        res = e_gpu;
-    }
-#endif
+    delmem_var_op()(ctx, eigenvalues);
 
-    if (all_eigenvalues) {
-        //===========================
-        // calculate all eigenvalues
-        //===========================
-        // dngv_op<FPTYPE, Device>()(ctx, nstart, ldh, hcc, scc, res, vcc);
-        dngvd_op<FPTYPE, Device>()(ctx, nstart, ldh, hcc, scc, res, vcc);
-    }
-    else {
-        //=====================================
-        // calculate only m lowest eigenvalues
-        //=====================================
-        dngvx_op<FPTYPE, Device>()(ctx, nstart, ldh, hcc, scc, nbands, res, vcc);
-    }
 
-#if ((defined __CUDA) || (defined __ROCM))
-    if (psi::device::get_device_type<Device>(ctx) == psi::GpuDevice) {
-        // set e_gpu value to e in CPU
-        syncmem_var_d2h_op()(cpu_ctx, gpu_ctx, e, res, nbands);
-        delmem_var_op()(gpu_ctx, e_gpu);
-    }
-#endif
+    // const bool all_eigenvalues = (nstart == nbands);
+    // if (all_eigenvalues) {
+    //     //===========================
+    //     // calculate all eigenvalues
+    //     //===========================
+    //     // dngv_op<FPTYPE, Device>()(ctx, nstart, ldh, hcc, scc, res, vcc);
+    //     dngvd_op<FPTYPE, Device>()(ctx, nstart, ldh, hcc, scc, res, vcc);
+    // }
+    // else {
+    //     //=====================================
+    //     // calculate only m lowest eigenvalues
+    //     //=====================================
+    //     dngvx_op<FPTYPE, Device>()(ctx, nstart, ldh, hcc, scc, nbands, res, vcc);
+    // }
 
     ModuleBase::timer::tick("DiagoIterAssist", "LAPACK_subspace");
 }
@@ -476,8 +454,12 @@ bool DiagoIterAssist<FPTYPE, Device>::test_exit_cond(const int &ntry, const int 
     const bool f3 = ((scf && (notconv > 5)));
     return (f1 && (f2 || f3));
 }
+
+
+template class DiagoIterAssist<float, psi::DEVICE_CPU>;
 template class DiagoIterAssist<double, psi::DEVICE_CPU>;
 #if ((defined __CUDA) || (defined __ROCM))
+template class DiagoIterAssist<float, psi::DEVICE_GPU>;
 template class DiagoIterAssist<double, psi::DEVICE_GPU>;
 #endif
 } // namespace hsolver

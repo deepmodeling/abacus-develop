@@ -562,7 +562,7 @@ calculations.
 
 - **Type**: Integer
 - **Description**: This variable indicates the maximal iteration number for electronic iterations.
-- **Default**: 40
+- **Default**: 100
 
 ### scf_thr
 

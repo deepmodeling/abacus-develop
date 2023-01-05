@@ -91,9 +91,11 @@ public:
 
 	ModuleBase::realArray deeq;		//(:,:,:,:), the integral of V_eff and Q_{nm}
 	bool multi_proj = false;
-	double *d_deeq = nullptr;
+    float *s_deeq = nullptr;
+    double *d_deeq = nullptr;
 	ModuleBase::ComplexArray deeq_nc;	//(:,:,:,:), the spin-orbit case
-	std::complex<double> *d_deeq_nc = nullptr; // GPU array of deeq_nc
+    std::complex<float> *c_deeq_nc = nullptr; // GPU array of deeq_nc
+    std::complex<double> *z_deeq_nc = nullptr; // GPU array of deeq_nc
 	ModuleBase::realArray becsum;	//(:,:,:,:), \sum_i  f(i) <psi(i)/beta_1><beta_m/psi(i)> //used in charge
 
 
@@ -115,12 +117,20 @@ public:
 	ORB_gaunt_table MGT;
     #endif
 
-    double * d_nhtol = nullptr, * d_nhtolm = nullptr, * d_indv = nullptr, * d_tab = nullptr;
-    std::complex<double> * d_vkb = nullptr;
+    template <typename FPTYPE> FPTYPE * get_nhtol_data() const;
+    template <typename FPTYPE> FPTYPE * get_nhtolm_data() const;
+    template <typename FPTYPE> FPTYPE * get_indv_data() const;
+    template <typename FPTYPE> FPTYPE * get_tab_data() const;
+    template <typename FPTYPE> FPTYPE * get_deeq_data() const;
+    template <typename FPTYPE> std::complex<FPTYPE> * get_vkb_data() const;
+    template <typename FPTYPE> std::complex<FPTYPE> * get_deeq_nc_data() const;
+
 private:
-	bool getvkb = false;
-    psi::DEVICE_CPU * cpu_ctx = {};
-    psi::DEVICE_GPU * gpu_ctx = {};
+    float * s_nhtol = nullptr, * s_nhtolm = nullptr, * s_indv = nullptr, * s_tab = nullptr;
+    std::complex<float> * c_vkb = nullptr;
+
+    double * d_nhtol = nullptr, * d_nhtolm = nullptr, * d_indv = nullptr, * d_tab = nullptr;
+    std::complex<double> * z_vkb = nullptr;
 };
 
 #endif // VNL_IN_PW

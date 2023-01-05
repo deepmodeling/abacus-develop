@@ -26,8 +26,9 @@
 #include "src_io/numerical_basis.h"
 #include "src_io/to_wannier90.h"
 #include "src_io/berryphase.h"
-#include "module_psi/include/device.h"
-#include "module_hsolver/include/math_kernel.h"
+#include "module_psi/kernels/device.h"
+#include "module_hsolver/kernels/math_kernel_op.h"
+#include "module_hsolver/kernels/dngvd_op.h"
 
 namespace ModuleESolver
 {
@@ -41,6 +42,7 @@ namespace ModuleESolver
     #if ((defined __CUDA) || (defined __ROCM))
         if (this->device == psi::GpuDevice) {
             hsolver::createBLAShandle();
+            hsolver::createCUSOLVERhandle();
         }
     #endif
     }
@@ -65,12 +67,16 @@ namespace ModuleESolver
             delete reinterpret_cast<hamilt::HamiltPW<FPTYPE, Device>*>(this->p_hamilt);
             this->p_hamilt = nullptr;
         }
-    #if ((defined __CUDA) || (defined __ROCM))
         if (this->device == psi::GpuDevice) {
-            delete reinterpret_cast<psi::Psi<std::complex<FPTYPE>, Device>*>(this->kspw_psi);
+        #if defined(__CUDA) || defined(__ROCM)
             hsolver::destoryBLAShandle();
+            hsolver::destoryCUSOLVERhandle();
+        #endif
+            delete reinterpret_cast<psi::Psi<std::complex<FPTYPE>, Device>*>(this->kspw_psi);
         }
-    #endif
+        if (GlobalV::precision_flag == "single") {
+            delete reinterpret_cast<psi::Psi<std::complex<double>, Device>*>(this->__kspw_psi);
+        }
     }
 
     template<typename FPTYPE, typename Device>
@@ -125,7 +131,7 @@ namespace ModuleESolver
         }
 
         // denghui added 20221116
-        this->kspw_psi = this->device == psi::GpuDevice ?
+        this->kspw_psi = GlobalV::device_flag == "gpu" || GlobalV::precision_flag == "single" ?
                          new psi::Psi<std::complex<FPTYPE>, Device>(this->psi[0]) :
                          reinterpret_cast<psi::Psi<std::complex<FPTYPE>, Device>*> (this->psi);
 
@@ -331,15 +337,15 @@ namespace ModuleESolver
             // be careful that istep start from 0 and iter start from 1
             if((istep==0||istep==1)&&iter==1) 
             {
-                hsolver::DiagoIterAssist<FPTYPE>::need_subspace = false;
+                hsolver::DiagoIterAssist<FPTYPE, Device>::need_subspace = false;
             }
             else 
             {
-                hsolver::DiagoIterAssist<FPTYPE>::need_subspace = true;
+                hsolver::DiagoIterAssist<FPTYPE, Device>::need_subspace = true;
             }
 
-            hsolver::DiagoIterAssist<FPTYPE>::PW_DIAG_THR = ethr; 
-            hsolver::DiagoIterAssist<FPTYPE>::PW_DIAG_NMAX = GlobalV::PW_DIAG_NMAX;
+            hsolver::DiagoIterAssist<FPTYPE, Device>::PW_DIAG_THR = ethr;
+            hsolver::DiagoIterAssist<FPTYPE, Device>::PW_DIAG_NMAX = GlobalV::PW_DIAG_NMAX;
             this->phsol->solve(this->p_hamilt, this->kspw_psi[0], this->pelec, GlobalV::KS_SOLVER);
             // transform energy for print
             GlobalC::en.eband = this->pelec->eband;
@@ -509,7 +515,7 @@ namespace ModuleESolver
             this->print_eigenvalue(GlobalV::ofs_running);
         }
         if (this->device == psi::GpuDevice) {
-            syncmem_complex_d2h_op()(
+            castmem_2d_d2h_op()(
                 this->psi[0].get_device(),
                 this->kspw_psi[0].get_device(),
                 this->psi[0].get_pointer() - this->psi[0].get_psi_bias(),
@@ -612,7 +618,7 @@ namespace ModuleESolver
 
 
     template<typename FPTYPE, typename Device>
-    void ESolver_KS_PW<FPTYPE, Device>::cal_Energy(FPTYPE& etot)
+    void ESolver_KS_PW<FPTYPE, Device>::cal_Energy(double& etot)
     {
         etot = GlobalC::en.etot;
     }
@@ -620,20 +626,30 @@ namespace ModuleESolver
     template<typename FPTYPE, typename Device>
     void ESolver_KS_PW<FPTYPE, Device>::cal_Force(ModuleBase::matrix& force)
     {
-        Forces<FPTYPE, Device> ff;
-        ff.init(force, this->pelec->wg, this->pelec->charge, this->kspw_psi);
+        Forces<double, Device> ff;
+        if (this->__kspw_psi == nullptr) {
+            this->__kspw_psi = GlobalV::precision_flag == "single" ?
+                               new psi::Psi<std::complex<double>, Device>(this->kspw_psi[0]) :
+                               reinterpret_cast<psi::Psi<std::complex<double>, Device> *> (this->kspw_psi);
+        }
+        ff.init(force, this->pelec->wg, this->pelec->charge, this->__kspw_psi);
     }
 
     template<typename FPTYPE, typename Device>
     void ESolver_KS_PW<FPTYPE, Device>::cal_Stress(ModuleBase::matrix& stress)
     {
-        Stress_PW<FPTYPE, Device> ss(this->pelec);
-        ss.cal_stress(stress, this->psi, this->kspw_psi);
+        Stress_PW<double, Device> ss(this->pelec);
+        if (this->__kspw_psi == nullptr) {
+            this->__kspw_psi = GlobalV::precision_flag == "single" ?
+                             new psi::Psi<std::complex<double>, Device>(this->kspw_psi[0]) :
+                             reinterpret_cast<psi::Psi<std::complex<double>, Device> *> (this->kspw_psi);
+        }
+        ss.cal_stress(stress, this->psi, this->__kspw_psi);
 
         //external stress
-        FPTYPE unit_transform = 0.0;
+        double unit_transform = 0.0;
         unit_transform = ModuleBase::RYDBERG_SI / pow(ModuleBase::BOHR_RADIUS_SI,3) * 1.0e-8;
-        FPTYPE external_stress[3] = {GlobalV::PRESS1,GlobalV::PRESS2,GlobalV::PRESS3};
+        double external_stress[3] = {GlobalV::PRESS1,GlobalV::PRESS2,GlobalV::PRESS3};
         for(int i=0;i<3;i++)
         {
             stress(i,i) -= external_stress[i]/unit_transform;
@@ -812,8 +828,10 @@ namespace ModuleESolver
         return;
     }
 
+template class ESolver_KS_PW<float, psi::DEVICE_CPU>;
 template class ESolver_KS_PW<double, psi::DEVICE_CPU>;
 #if ((defined __CUDA) || (defined __ROCM))
+template class ESolver_KS_PW<float, psi::DEVICE_GPU>;
 template class ESolver_KS_PW<double, psi::DEVICE_GPU>;
 #endif
 }

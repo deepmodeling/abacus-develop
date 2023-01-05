@@ -4,8 +4,8 @@
 #include "operator_pw.h"
 
 #include "module_cell/unitcell.h"
-#include "module_hamilt/include/nonlocal.h"
-#include "module_hsolver/include/math_kernel.h"
+#include "module_hamilt/kernels/nonlocal_op.h"
+#include "module_hsolver/kernels/math_kernel_op.h"
 
 #include "src_pw/VNL_in_pw.h"
 
@@ -77,6 +77,9 @@ class Nonlocal<OperatorPW<FPTYPE, Device>> : public OperatorPW<FPTYPE, Device>
     using resmem_complex_op = psi::memory::resize_memory_op<std::complex<FPTYPE>, Device>;
     using delmem_complex_op = psi::memory::delete_memory_op<std::complex<FPTYPE>, Device>;
     using syncmem_complex_h2d_op = psi::memory::synchronize_memory_op<std::complex<FPTYPE>, Device, psi::DEVICE_CPU>;
+
+    std::complex<FPTYPE> one{1, 0};
+    std::complex<FPTYPE> zero{0, 0};
 };
 
 } // namespace hamilt

@@ -35,12 +35,32 @@ void LCAO_Deepks::cal_projected_DM(const ModuleBase::matrix &dm,
     ModuleBase::TITLE("LCAO_Deepks", "cal_projected_DM");
     ModuleBase::timer::tick("LCAO_Deepks","cal_projected_DM");
 
+    const int pdm_size = (this->lmaxd * 2 + 1) * (this->lmaxd * 2 + 1);
+    if (GlobalV::init_chg == "file" && !this->init_pdm) //for DeePKS NSCF calculation 
+    {
+        ifstream ifs("pdm.dat");
+        if (!ifs)
+        {
+            ModuleBase::WARNING_QUIT("LCAO_Deepks::cal_projected_DM", "Can not find the file pdm.dat . Please do DeePKS SCF calculation first.");
+        }
+        for(int inl=0;inl<this->inlmax;inl++)
+        {
+            for(int ind=0;ind<pdm_size;ind++)
+            {
+                double c;
+			    ifs >> c;
+                pdm[inl][ind] = c;
+            }
+        }
+        this->init_pdm = true;
+        return;
+    }
+
     if(dm.nr == 0 && dm.nc ==0)
     {
         return;
     }
 
-    const int pdm_size = (this->lmaxd * 2 + 1) * (this->lmaxd * 2 + 1);
     for(int inl=0;inl<inlmax;inl++)
     {
         ModuleBase::GlobalFunc::ZEROS(pdm[inl],pdm_size);
@@ -146,6 +166,28 @@ void LCAO_Deepks::cal_projected_DM_k(const std::vector<ModuleBase::ComplexMatrix
     const int nks,
     const std::vector<ModuleBase::Vector3<double>> &kvec_d)
 {
+    const int pdm_size = (this->lmaxd * 2 + 1) * (this->lmaxd * 2 + 1);
+
+    if (GlobalV::init_chg == "file" && !this->init_pdm) //for DeePKS NSCF calculation 
+    {
+        ifstream ifs("pdm.dat");
+        if (!ifs)
+        {
+            ModuleBase::WARNING_QUIT("LCAO_Deepks::cal_projected_DM_k","Can not find the file pdm.dat . Please do DeePKS SCF calculation first.");
+        }
+        for(int inl=0;inl<this->inlmax;inl++)
+        {
+            for(int ind=0;ind<pdm_size;ind++)
+            {
+                double c;
+			    ifs >> c;
+                pdm[inl][ind] = c;
+            }
+        }
+        this->init_pdm = true;
+        return;
+    }
+
     //check for skipping
     if(dm[0].nr == 0 && dm[0].nc ==0)
     {
@@ -154,7 +196,6 @@ void LCAO_Deepks::cal_projected_DM_k(const std::vector<ModuleBase::ComplexMatrix
     }
     ModuleBase::timer::tick("LCAO_Deepks","cal_projected_DM_k");
 
-    const int pdm_size = (this->lmaxd * 2 + 1) * (this->lmaxd * 2 + 1);
     for(int inl=0;inl<inlmax;inl++)
     {
         ModuleBase::GlobalFunc::ZEROS(pdm[inl],pdm_size);

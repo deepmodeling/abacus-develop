@@ -12,7 +12,7 @@
 #include "module_surchem/surchem.h"
 #include "module_elecstate/potentials/gatefield.h"
 #include "module_vdw/vdw.h"
-#include "module_psi/include/device.h"
+#include "module_psi/kernels/device.h"
 
 #include "H_Ewald_pw.h"
 #ifdef _OPENMP
@@ -954,12 +954,7 @@ void Forces<FPTYPE, Device>::cal_force_nl(ModuleBase::matrix& forcenl, const Mod
         // generate vkb
         if (GlobalC::ppcell.nkb > 0)
         {
-            if (this->device == psi::GpuDevice) {
-                vkb = GlobalC::ppcell.d_vkb;
-            }
-            else {
-                vkb = GlobalC::ppcell.vkb.c;
-            }
+            vkb = GlobalC::ppcell.get_vkb_data<FPTYPE>();
             GlobalC::ppcell.getvnl(ctx, ik, vkb);
         }
 
@@ -975,9 +970,14 @@ void Forces<FPTYPE, Device>::cal_force_nl(ModuleBase::matrix& forcenl, const Mod
         /// only occupied band should be calculated.
         ///
         int nbands_occ = GlobalV::NBANDS;
-        while (wg(ik, nbands_occ - 1) < ModuleBase::threshold_wg)
+        const double threshold = ModuleBase::threshold_wg * wg(ik, 0);
+        while (wg(ik, nbands_occ - 1) < threshold)
         {
             nbands_occ--;
+            if(nbands_occ == 0) 
+            {
+                break;
+            }
         }
         int npm = GlobalV::NPOL * nbands_occ;
         gemm_op()(

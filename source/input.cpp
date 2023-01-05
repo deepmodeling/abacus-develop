@@ -248,7 +248,7 @@ void Input::Default(void)
     // iteration
     //----------------------------------------------------------
     scf_thr = 1.0e-9;
-    scf_nmax = 40;
+    scf_nmax = 100;
     relax_nmax = 0;
     out_stru = 0;
     //----------------------------------------------------------
@@ -484,9 +484,13 @@ void Input::Default(void)
     of_kernel_file = "WTkernel.txt";
 
     //==========================================================
-    //    OFDFT sunliang added on 2022-11-15
+    //    device control denghui added on 2022-11-15
     //==========================================================
     device = "cpu";
+    //==========================================================
+    //    precision control denghui added on 2023-01-01
+    //==========================================================
+    precision = "double";
     return;
 }
 
@@ -1788,6 +1792,12 @@ bool Input::Read(const std::string &fn)
             read_value(ifs, device);
         }
         //----------------------------------------------------------------------------------
+        //    precision control denghui added on 2023-01-01
+        //----------------------------------------------------------------------------------
+        else if (strcmp("precision", word) == 0) {
+            read_value(ifs, precision);
+        }
+        //----------------------------------------------------------------------------------
         else
         {
             // xiaohui add 2015-09-15
@@ -2169,7 +2179,7 @@ void Input::Default_2(void) // jiyy add 2019-08-04
         if (mem_saver == 1)
         {
             mem_saver = 0;
-            ModuleBase::GlobalFunc::AUTO_SET("mem_savre", "0");
+            ModuleBase::GlobalFunc::AUTO_SET("mem_saver", "0");
         }
         // xiaohui modify 2015-09-15, 0 -> 1
         // cal_force = 0;
@@ -2190,7 +2200,7 @@ void Input::Default_2(void) // jiyy add 2019-08-04
         if (mem_saver == 1)
         {
             mem_saver = 0;
-            ModuleBase::GlobalFunc::AUTO_SET("mem_savre", "0");
+            ModuleBase::GlobalFunc::AUTO_SET("mem_saver", "0");
         }
         cal_force = 1;
         if (!this->relax_nmax)
@@ -2214,6 +2224,11 @@ void Input::Default_2(void) // jiyy add 2019-08-04
             cal_force = false;
             ModuleBase::GlobalFunc::AUTO_SET("cal_force", "false");
         }
+    	if (init_chg != "file")
+    	{
+       		init_chg = "file";
+        	ModuleBase::GlobalFunc::AUTO_SET("init_chg", init_chg);
+    	}
     }
     else if (calculation == "istate")
     {
@@ -2303,11 +2318,6 @@ void Input::Default_2(void) // jiyy add 2019-08-04
         this->relax_nmax = 1;
     }
 
-    if (GlobalV::CALCULATION == "nscf" && init_chg != "file")
-    {
-        init_chg = "file";
-        ModuleBase::GlobalFunc::AUTO_SET("init_chg", init_chg);
-    }
     if (basis_type == "pw") // xiaohui add 2013-09-01
     {
         if (ks_solver == "default") // xiaohui add 2013-09-01
@@ -2318,11 +2328,23 @@ void Input::Default_2(void) // jiyy add 2019-08-04
         else if (ks_solver == "cg")
         {
             GlobalV::ofs_warning << " It's ok to use cg." << std::endl;
+    	    // new rule, mohan add 2012-02-11
+    	    // otherwise, there need wave functions transfers
+    	    // if(diago_type=="cg") xiaohui modify 2013-09-01
+    	    if (diago_proc != GlobalV::NPROC)
+    	    {
+    	        ModuleBase::WARNING("Input", "when CG is used for diago, diago_proc==GlobalV::NPROC");
+    	        diago_proc = GlobalV::NPROC;
+    	    }
         }
         else if (ks_solver == "dav")
         {
             GlobalV::ofs_warning << " It's ok to use dav." << std::endl;
         }
+	//
+        bx = 1;
+        by = 1;
+        bz = 1;
     }
     else if (basis_type == "lcao")
     {
@@ -2336,7 +2358,13 @@ void Input::Default_2(void) // jiyy add 2019-08-04
             ModuleBase::GlobalFunc::AUTO_SET("ks_solver", "scalapack_gvx");
 #endif
         }
+        if (lcao_ecut == 0)
+        {
+            lcao_ecut = ecutwfc;
+            ModuleBase::GlobalFunc::AUTO_SET("lcao_ecut", ecutwfc);
+        }
     }
+
     if (basis_type == "pw" || basis_type == "lcao_in_pw")
     {
         if (gamma_only_local)
@@ -2344,31 +2372,6 @@ void Input::Default_2(void) // jiyy add 2019-08-04
             // means you can use > 1 number of k points.
             gamma_only_local = 0;
             ModuleBase::GlobalFunc::AUTO_SET("gamma_only_local", "0");
-        }
-    }
-    // new rule, mohan add 2012-02-11
-    // otherwise, there need wave functions transfers
-    // if(diago_type=="cg") xiaohui modify 2013-09-01
-    if (ks_solver == "cg") // xiaohui add 2013-09-01
-    {
-        if (diago_proc != GlobalV::NPROC)
-        {
-            ModuleBase::WARNING("Input", "when CG is used for diago, diago_proc==GlobalV::NPROC");
-            diago_proc = GlobalV::NPROC;
-        }
-    }
-    if (basis_type == "pw")
-    {
-        bx = 1;
-        by = 1;
-        bz = 1;
-    }
-    if (basis_type == "lcao")
-    {
-        if (lcao_ecut == 0)
-        {
-            lcao_ecut = ecutwfc;
-            ModuleBase::GlobalFunc::AUTO_SET("lcao_ecut", ecutwfc);
         }
     }
 }
@@ -2825,7 +2828,7 @@ void Input::Check(void)
     {
         if (basis_type == "pw") // xiaohui add 2013-09-01
         {
-            ModuleBase::WARNING_QUIT("Input::Check", "calculate = istate is only availble for LCAO.");
+            ModuleBase::WARNING_QUIT("Input::Check", "calculate = ienvelope is only availble for LCAO.");
         }
     }
     else if (calculation == "md") // mohan add 2011-11-04
@@ -2918,11 +2921,10 @@ void Input::Check(void)
     {
         ModuleBase::WARNING_QUIT("Input", "nelec > 2*nbnd , bands not enough!");
     }
-    if (nspin < 1 || nspin > 4)
+    if (nspin != 1 && nspin != 2 && nspin !=4 )
     {
-        ModuleBase::WARNING_QUIT("Input", "nspin out of range!");
+        ModuleBase::WARNING_QUIT("Input", "nspin does not equal to 1, 2, or 4!");
     }
-
     if (basis_type == "pw") // xiaohui add 2013-09-01
     {
         if (ks_solver == "genelpa") // yshen add 2016-07-20
@@ -2943,6 +2945,22 @@ void Input::Check(void)
         {
             ModuleBase::WARNING_QUIT("Input", "please check the ks_solver parameter!");
         }
+
+        if (gamma_only)
+        {
+            ModuleBase::WARNING_QUIT("Input", "gamma_only not implemented for plane wave now.");
+        }
+
+        if (out_proj_band == 1)
+        {
+            ModuleBase::WARNING_QUIT("Input", "out_proj_band not implemented for plane wave now.");
+        }
+
+        if (out_dos == 3)
+        {
+            ModuleBase::WARNING_QUIT("Input", "Fermi Surface Plotting not implemented for plane wave now.");
+        }
+
     }
     else if (basis_type == "lcao")
     {
@@ -2987,6 +3005,11 @@ void Input::Check(void)
         {
             ModuleBase::WARNING_QUIT("Input", "please check the ks_solver parameter!");
         }
+
+        if (kpar > 1)
+        {
+            ModuleBase::WARNING_QUIT("Input", "kpar > 1 has not been supported for lcao calculation.");
+        }
     }
     else if (basis_type == "lcao_in_pw")
     {
@@ -2999,21 +3022,14 @@ void Input::Check(void)
     {
         ModuleBase::WARNING_QUIT("Input", "please check the basis_type parameter!");
     }
-
-    if (basis_type == "pw" && gamma_only)
-    {
-        ModuleBase::WARNING_QUIT("Input", "gamma_only not implemented for plane wave now.");
-    }
-
+    /*
     if (basis_type == "lcao" && !gamma_only_local) // xiaohui add 2013-09-01. Attention! Maybe there is some problem.
     {
         ModuleBase::WARNING("Input", "gamma_only_local algorithm is not used.");
     }
+    */
 
-    if (basis_type == "lcao" && kpar > 1)
-    {
-        ModuleBase::WARNING_QUIT("Input", "kpar > 1 has not been supported for lcao calculation.");
-    }
+    /* comment out because code cannot reach here anyway
     if (GlobalV::NPROC > 1 && ks_solver == "lapack") // xiaohui add 2013-09-01
     {
         if (basis_type != "lcao_in_pw") // xiaohui add 2013-09-01
@@ -3021,6 +3037,7 @@ void Input::Check(void)
             ModuleBase::WARNING_QUIT("Input", "lapack can not be used when nproc > 1");
         }
     }
+    */
     // pengfei add 13-8-10 a new method cg to bfgs
     if (relax_method != "sd" && relax_method != "cg" && relax_method != "bfgs" && relax_method != "cg_bfgs")
     {
@@ -3108,21 +3125,14 @@ void Input::Check(void)
 
     if (berry_phase)
     {
-        if (basis_type == "pw")
-        {
-            if (!(calculation == "nscf"))
-                ModuleBase::WARNING_QUIT("Input", "calculate berry phase, please set calculation = nscf");
-        }
-        else if (basis_type == "lcao" && ks_solver == "genelpa" || ks_solver == "scalapack_gvx" || ks_solver == "cusolver")
-        {
-            if (!(calculation == "nscf"))
-                ModuleBase::WARNING_QUIT("Input", "calculate berry phase, please set calculation = nscf");
-        }
-        else
+        if (basis_type != "pw" && basis_type != "lcao")
         {
             ModuleBase::WARNING_QUIT("Input", "calculate berry phase, please set basis_type = pw or lcao");
         }
-
+        if (calculation != "nscf")
+        {
+            ModuleBase::WARNING_QUIT("Input", "calculate berry phase, please set calculation = nscf");
+        }
         if (!(gdir == 1 || gdir == 2 || gdir == 3))
         {
             ModuleBase::WARNING_QUIT("Input", "calculate berry phase, please set gdir = 1 or 2 or 3");
@@ -3131,16 +3141,14 @@ void Input::Check(void)
 
     if (towannier90)
     {
-        if (basis_type == "pw" || basis_type == "lcao")
-        {
-            if (!(calculation == "nscf"))
-                ModuleBase::WARNING_QUIT("Input", "to use towannier90, please set calculation = nscf");
-        }
-        else
+        if (basis_type != "pw" && basis_type != "lcao")
         {
             ModuleBase::WARNING_QUIT("Input", "to use towannier90, please set basis_type = pw or lcao");
         }
-
+        if (calculation != "nscf")
+        {
+            ModuleBase::WARNING_QUIT("Input", "to use towannier90, please set calculation = nscf");
+        }
         if (nspin == 2)
         {
             if (!(wannier_spin == "up" || wannier_spin == "down"))

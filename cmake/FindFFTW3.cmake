@@ -16,6 +16,11 @@ find_library(FFTW3_LIBRARY
     HINTS ${FFTW3_DIR}
     PATH_SUFFIXES "lib"
     )
+find_library(FFTW3_FLOAT_LIBRARY
+    NAMES fftw3f
+    HINTS ${FFTW3_DIR}
+    PATH_SUFFIXES "lib"
+    )
 
 # both libfftw3.so and libfftw3_omp.so should be link in multi-thread term
 if (USE_OPENMP)
@@ -30,9 +35,9 @@ endif()
 # set FFTW3_FOUND to TRUE if all variables are non-zero.
 include(FindPackageHandleStandardArgs)
 if (USE_OPENMP)
-find_package_handle_standard_args(FFTW3 DEFAULT_MSG FFTW3_OMP_LIBRARY FFTW3_LIBRARY FFTW3_INCLUDE_DIR)
+find_package_handle_standard_args(FFTW3 DEFAULT_MSG FFTW3_OMP_LIBRARY FFTW3_LIBRARY FFTW3_FLOAT_LIBRARY FFTW3_INCLUDE_DIR)
 else()
-find_package_handle_standard_args(FFTW3 DEFAULT_MSG FFTW3_LIBRARY FFTW3_INCLUDE_DIR)
+find_package_handle_standard_args(FFTW3 DEFAULT_MSG FFTW3_LIBRARY FFTW3_FLOAT_LIBRARY FFTW3_INCLUDE_DIR)
 endif()
 
 # Copy the results to the output variables and target.
@@ -50,6 +55,13 @@ if(FFTW3_FOUND)
             IMPORTED_LINK_INTERFACE_LANGUAGES "C"
             IMPORTED_LOCATION "${FFTW3_LIBRARY}"
             INTERFACE_INCLUDE_DIRECTORIES "${FFTW3_INCLUDE_DIRS}")
+    endif()
+    if(NOT TARGET FFTW3::FFTW3_FLOAT)
+        add_library(FFTW3::FFTW3_FLOAT UNKNOWN IMPORTED)
+        set_target_properties(FFTW3::FFTW3_FLOAT PROPERTIES
+                IMPORTED_LINK_INTERFACE_LANGUAGES "C"
+                IMPORTED_LOCATION "${FFTW3_FLOAT_LIBRARY}"
+                INTERFACE_INCLUDE_DIRECTORIES "${FFTW3_INCLUDE_DIRS}")
     endif()
     if (USE_OPENMP)
         if(NOT TARGET FFTW3::FFTW3_OMP)

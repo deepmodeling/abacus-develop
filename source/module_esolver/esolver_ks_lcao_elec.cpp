@@ -588,6 +588,54 @@ namespace ModuleESolver
             bp.Macroscopic_polarization(this->psi);
         }
 
+        //below is for DeePKS NSCF calculation
+#ifdef __DEEPKS
+        const Parallel_Orbitals* pv = this->LOWF.ParaV;
+        if (GlobalV::deepks_out_labels || GlobalV::deepks_scf)
+        {
+            if (GlobalV::GAMMA_ONLY_LOCAL)
+            {
+                GlobalC::ld.cal_projected_DM(this->LOC.dm_gamma[0],
+                                         GlobalC::ucell,
+                                         GlobalC::ORB,
+                                         GlobalC::GridD,
+                                         pv->trace_loc_row,
+                                         pv->trace_loc_col);
+            }
+            else
+            {
+                GlobalC::ld.cal_projected_DM_k(this->LOC.dm_k,
+                                           GlobalC::ucell,
+                                           GlobalC::ORB,
+                                           GlobalC::GridD,
+                                           pv->trace_loc_row,
+                                           pv->trace_loc_col,
+                                           GlobalC::kv.nks,
+                                           GlobalC::kv.kvec_d);
+            }
+            GlobalC::ld.cal_descriptor(); // final descriptor
+            GlobalC::ld.cal_gedm(GlobalC::ucell.nat);
+            if (GlobalV::GAMMA_ONLY_LOCAL)
+            {
+                GlobalC::ld.add_v_delta(GlobalC::ucell,
+                                        GlobalC::ORB,
+                                        GlobalC::GridD,
+                                        pv->trace_loc_row,
+                                        pv->trace_loc_col,
+                                        pv->nrow,
+                                        pv->ncol);
+            }
+            else
+            {
+                GlobalC::ld.add_v_delta_k(GlobalC::ucell, 
+                                          GlobalC::ORB, 
+                                          GlobalC::GridD, 
+                                          pv->trace_loc_row,
+                                          pv->trace_loc_col,
+                                          pv->nnr);
+            }
+        }
+#endif
         return;
     }
 
