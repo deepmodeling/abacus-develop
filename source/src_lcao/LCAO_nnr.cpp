@@ -300,7 +300,7 @@ void LCAO_Matrix::folding_fixedH(const int &ik)
 	if (GlobalV::deepks_scf)
     {
 		int beg, len;
-		ModuleBase::BLOCK_TASK_DIST_1D(num_threads, thread_id, pv->nloc, 1024, beg, len);
+		ModuleBase::BLOCK_TASK_DIST_1D(num_threads, thread_id, (int)pv->nloc, 1024, beg, len);
 		ModuleBase::GlobalFunc::ZEROS(GlobalC::ld.H_V_delta_k[ik] + beg, len);
 	}
 #endif
