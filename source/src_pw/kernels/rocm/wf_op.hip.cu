@@ -1,4 +1,4 @@
-#include "src_pw/include/wf_multi_device.h"
+#include "src_pw/kernels/wf_op.h"
 
 #include <complex>
 
@@ -7,7 +7,7 @@
 
 #define THREADS_PER_BLOCK 256
 
-namespace src_pw{
+namespace src_pw {
 
 template<typename FPTYPE>
 __global__ void cal_sk(
@@ -101,6 +101,7 @@ void cal_sk_op<FPTYPE, psi::DEVICE_GPU>::operator() (
          reinterpret_cast<thrust::complex<FPTYPE>*>(sk));
 }
 
+template struct cal_sk_op<float, psi::DEVICE_GPU>;
 template struct cal_sk_op<double, psi::DEVICE_GPU>;
 
 }  // namespace hamilt

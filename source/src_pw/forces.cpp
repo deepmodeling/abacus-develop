@@ -970,9 +970,14 @@ void Forces<FPTYPE, Device>::cal_force_nl(ModuleBase::matrix& forcenl, const Mod
         /// only occupied band should be calculated.
         ///
         int nbands_occ = GlobalV::NBANDS;
-        while (wg(ik, nbands_occ - 1) < ModuleBase::threshold_wg)
+        const double threshold = ModuleBase::threshold_wg * wg(ik, 0);
+        while (wg(ik, nbands_occ - 1) < threshold)
         {
             nbands_occ--;
+            if(nbands_occ == 0) 
+            {
+                break;
+            }
         }
         int npm = GlobalV::NPOL * nbands_occ;
         gemm_op()(

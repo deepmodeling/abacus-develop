@@ -371,14 +371,14 @@ void FFT:: cleanFFT()
         #if defined(__CUDA)
             cufftDestroy(c_handle);
         #elif defined(__ROCM)
-            cufftDestroy(c_handle);
+            hipfftDestroy(c_handle);
         #endif
         }
         else {
         #if defined(__CUDA)
             cufftDestroy(z_handle);
         #elif defined(__ROCM)
-            cufftDestroy(z_handle);
+            hipfftDestroy(z_handle);
         #endif
         }
     }

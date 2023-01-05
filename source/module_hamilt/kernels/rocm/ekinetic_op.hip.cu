@@ -1,4 +1,4 @@
-#include "module_hamilt/include/ekinetic.h"
+#include "module_hamilt/kernels/ekinetic_op.h"
 
 #include <complex>
 #include <thrust/complex.h>
@@ -55,5 +55,6 @@ void hamilt::ekinetic_pw_op<FPTYPE, psi::DEVICE_GPU>::operator() (
 }
 
 namespace hamilt{
+template struct ekinetic_pw_op<float, psi::DEVICE_GPU>;
 template struct ekinetic_pw_op<double, psi::DEVICE_GPU>;
 }

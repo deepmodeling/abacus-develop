@@ -142,6 +142,7 @@ void ElecStatePW<FPTYPE, Device>::rhoBandK(const psi::Psi<std::complex<FPTYPE>, 
         current_spin = this->klist->isk[ik];
     }
     int nbands = psi.get_nbands();
+    const double threshold = ModuleBase::threshold_wg * this->wg(ik, 0);
     //  here we compute the band energy: the sum of the eigenvalues
     if (GlobalV::NSPIN == 4)
     {
@@ -151,7 +152,7 @@ void ElecStatePW<FPTYPE, Device>::rhoBandK(const psi::Psi<std::complex<FPTYPE>, 
             ///
             /// only occupied band should be calculated.
             ///
-            if (this->wg(ik, ibnd) < ModuleBase::threshold_wg) {
+            if (this->wg(ik, ibnd) < threshold) {
                 continue;
             }
 
@@ -172,7 +173,7 @@ void ElecStatePW<FPTYPE, Device>::rhoBandK(const psi::Psi<std::complex<FPTYPE>, 
             ///
             /// only occupied band should be calculated.
             ///
-            if (this->wg(ik, ibnd) < ModuleBase::threshold_wg) {
+            if (this->wg(ik, ibnd) < threshold) {
                 continue;
             }
 

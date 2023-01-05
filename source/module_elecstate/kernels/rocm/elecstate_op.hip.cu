@@ -1,11 +1,11 @@
-#include "module_elecstate/include/elecstate_multi_device.h"
+#include "module_elecstate/kernels/elecstate_op.h"
 #include <thrust/complex.h>
 
 #include <hip/hip_runtime.h>
 
 #define THREADS_PER_BLOCK 256
 
-namespace elecstate{
+namespace elecstate {
 
 template<typename FPTYPE>
 __global__ void elecstate_pw(
@@ -91,5 +91,6 @@ void elecstate_pw_op<FPTYPE, psi::DEVICE_GPU>::operator()(
   );
 }
 
+template struct elecstate_pw_op<float, psi::DEVICE_GPU>;
 template struct elecstate_pw_op<double, psi::DEVICE_GPU>;
 }

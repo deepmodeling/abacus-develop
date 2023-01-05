@@ -1,4 +1,4 @@
-#include "module_base/include/math_multi_device.h"
+#include "module_base/kernels/math_op.h"
 
 #include <hip/hip_runtime.h>
 
@@ -149,6 +149,7 @@ void cal_ylm_real_op<FPTYPE, psi::DEVICE_GPU>::operator() (
         ylm);
 }
 
+template struct cal_ylm_real_op<float, psi::DEVICE_GPU>;
 template struct cal_ylm_real_op<double, psi::DEVICE_GPU>;
 
 }  // namespace src_pw

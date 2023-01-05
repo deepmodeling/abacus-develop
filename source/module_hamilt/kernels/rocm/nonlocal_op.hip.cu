@@ -1,4 +1,4 @@
-#include "module_hamilt/include/nonlocal.h"
+#include "module_hamilt/kernels/nonlocal_op.h"
 
 #include <complex>
 #include <thrust/complex.h>
@@ -147,5 +147,6 @@ void hamilt::nonlocal_pw_op<FPTYPE, psi::DEVICE_GPU>::operator() (
 }
 
 namespace hamilt{
+template struct nonlocal_pw_op<float, psi::DEVICE_GPU>;
 template struct nonlocal_pw_op<double, psi::DEVICE_GPU>;
 }
