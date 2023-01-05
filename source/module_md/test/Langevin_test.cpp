@@ -6,6 +6,31 @@
 
 #define doublethreshold 1e-12
 
+/************************************************
+ *  unit test of functions in Langevin.h
+ ***********************************************/
+
+/**
+ * - Tested Function
+ *   - Langevin::setup
+ *     - init before running md, calculate energy, force, and stress of the initial configuration.
+ *
+ *   - Langevin::first_half
+ *     - the first half of equation of motion, update velocities and positions
+ *
+ *   - Langevin::second_half
+ *     - the second half of equation of motion, update velocities
+ * 
+ *   - Langevin::write_restart
+ *     - write the information into files used for MD restarting
+ * 
+ *   - Langevin::restart
+ *     - restart MD when md_restart is true
+ * 
+ *   - Langevin::outputMD
+ *     - output MD information such as energy, temperature, and pressure
+ */
+
 class Langevin_test : public testing::Test
 {
 protected:

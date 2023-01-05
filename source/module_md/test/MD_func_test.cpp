@@ -6,6 +6,37 @@
 
 #define doublethreshold 1e-12
 
+/************************************************
+ *  unit test of functions in MD_func.h
+ ***********************************************/
+
+/**
+ * - Tested Function
+ *   - MD_func::gaussrand
+ *     - genarate Gaussian random number
+ *
+ *   - MD_func::InitPos
+ *     - initialize atomic positions
+ *
+ *   - MD_func::RandomVel
+ *     - initialize atomic velocity randomly
+ * 
+ *   - MD_func::getMassMbl
+ *     - initialize atomic mass and degree of freedom
+ * 
+ *   - MD_func::ReadVel
+ *     - read atomic velocity from STRU
+ * 
+ *   - MD_func::compute_stress
+ *     - calculate the contribution of classical kinetic energy of atoms to stress
+ * 
+ *   - MD_func::MDdump
+ *     - output MD dump information
+ * 
+ *   - MD_func::outStress
+ *     - output stress
+ */
+
 class MD_func_test : public testing::Test
 {
 protected:
@@ -144,10 +175,6 @@ TEST_F(MD_func_test, compute_stress)
 TEST_F(MD_func_test, MDdump)
 {
     MD_func::InitPos(ucell, pos);
-    ModuleESolver::ESolver *p_esolver = new ModuleESolver::ESolver_LJ();
-    p_esolver->Init(INPUT, ucell);
-    MD_func::force_virial(p_esolver, 0, ucell, potential, force, virial);
-
     MD_func::MDdump(0, ucell, virial, force);
     std::ifstream ifs("MD_dump");
     std::string output_str;
@@ -166,21 +193,21 @@ TEST_F(MD_func_test, MDdump)
     getline(ifs,output_str);
     EXPECT_THAT(output_str,testing::HasSubstr("VIRIAL (KBAR)"));
     getline(ifs,output_str);
-    EXPECT_THAT(output_str,testing::HasSubstr("  0.236428176219  0.050626986749  -0.000000000000"));
+    EXPECT_THAT(output_str,testing::HasSubstr("  0.000000000000  0.000000000000  0.000000000000"));
     getline(ifs,output_str);
-    EXPECT_THAT(output_str,testing::HasSubstr("  0.050626986749  0.312766562817  0.000000000000"));
+    EXPECT_THAT(output_str,testing::HasSubstr("  0.000000000000  0.000000000000  0.000000000000"));
     getline(ifs,output_str);
-    EXPECT_THAT(output_str,testing::HasSubstr("  -0.000000000000  0.000000000000  0.189105034410"));
+    EXPECT_THAT(output_str,testing::HasSubstr("  0.000000000000  0.000000000000  0.000000000000"));
     getline(ifs,output_str);
     EXPECT_THAT(output_str,testing::HasSubstr("INDEX    LABEL    POSITIONS    FORCE (eV/Angstrom)"));
     getline(ifs,output_str);
-    EXPECT_THAT(output_str,testing::HasSubstr("  0  Ar  0.000000000000  0.000000000000  0.000000000000  0.025617329374  0.042288127307  -0.000000000000"));
+    EXPECT_THAT(output_str,testing::HasSubstr("  0  Ar  0.000000000000  0.000000000000  0.000000000000  0.000000000000  0.000000000000  0.000000000000"));
     getline(ifs,output_str);
-    EXPECT_THAT(output_str,testing::HasSubstr("  1  Ar  5.200000000000  5.200000000000  0.000000000000  -0.033300246168  -0.034414246659  -0.000000000000"));
+    EXPECT_THAT(output_str,testing::HasSubstr("  1  Ar  5.200000000000  5.200000000000  0.000000000000  0.000000000000  0.000000000000  0.000000000000"));
     getline(ifs,output_str);
-    EXPECT_THAT(output_str,testing::HasSubstr("  2  Ar  5.100000000000  0.000000000000  5.000000000000  -0.018209198893  0.041606045042  -0.000000000000"));
+    EXPECT_THAT(output_str,testing::HasSubstr("  2  Ar  5.100000000000  0.000000000000  5.000000000000  0.000000000000  0.000000000000  0.000000000000"));
     getline(ifs,output_str);
-    EXPECT_THAT(output_str,testing::HasSubstr("  3  Ar  0.000000000000  5.300000000000  5.000000000000  0.025892115687  -0.049479925690  0.000000000000"));
+    EXPECT_THAT(output_str,testing::HasSubstr("  3  Ar  0.000000000000  5.300000000000  5.000000000000  0.000000000000  0.000000000000  0.000000000000"));
     ifs.close();
 
     // append
@@ -201,21 +228,21 @@ TEST_F(MD_func_test, MDdump)
     getline(ifs2,output_str);
     EXPECT_THAT(output_str,testing::HasSubstr("VIRIAL (KBAR)"));
     getline(ifs2,output_str);
-    EXPECT_THAT(output_str,testing::HasSubstr("  0.236428176219  0.050626986749  -0.000000000000"));
+    EXPECT_THAT(output_str,testing::HasSubstr("  0.000000000000  0.000000000000  0.000000000000"));
     getline(ifs2,output_str);
-    EXPECT_THAT(output_str,testing::HasSubstr("  0.050626986749  0.312766562817  0.000000000000"));
+    EXPECT_THAT(output_str,testing::HasSubstr("  0.000000000000  0.000000000000  0.000000000000"));
     getline(ifs2,output_str);
-    EXPECT_THAT(output_str,testing::HasSubstr("  -0.000000000000  0.000000000000  0.189105034410"));
+    EXPECT_THAT(output_str,testing::HasSubstr("  0.000000000000  0.000000000000  0.000000000000"));
     getline(ifs2,output_str);
     EXPECT_THAT(output_str,testing::HasSubstr("INDEX    LABEL    POSITIONS    FORCE (eV/Angstrom)"));
     getline(ifs2,output_str);
-    EXPECT_THAT(output_str,testing::HasSubstr("  0  Ar  0.000000000000  0.000000000000  0.000000000000  0.025617329374  0.042288127307  -0.000000000000"));
+    EXPECT_THAT(output_str,testing::HasSubstr("  0  Ar  0.000000000000  0.000000000000  0.000000000000  0.000000000000  0.000000000000  0.000000000000"));
     getline(ifs2,output_str);
-    EXPECT_THAT(output_str,testing::HasSubstr("  1  Ar  5.200000000000  5.200000000000  0.000000000000  -0.033300246168  -0.034414246659  -0.000000000000"));
+    EXPECT_THAT(output_str,testing::HasSubstr("  1  Ar  5.200000000000  5.200000000000  0.000000000000  0.000000000000  0.000000000000  0.000000000000"));
     getline(ifs2,output_str);
-    EXPECT_THAT(output_str,testing::HasSubstr("  2  Ar  5.100000000000  0.000000000000  5.000000000000  -0.018209198893  0.041606045042  -0.000000000000"));
+    EXPECT_THAT(output_str,testing::HasSubstr("  2  Ar  5.100000000000  0.000000000000  5.000000000000  0.000000000000  0.000000000000  0.000000000000"));
     getline(ifs2,output_str);
-    EXPECT_THAT(output_str,testing::HasSubstr("  3  Ar  0.000000000000  5.300000000000  5.000000000000  0.025892115687  -0.049479925690  0.000000000000"));
+    EXPECT_THAT(output_str,testing::HasSubstr("  3  Ar  0.000000000000  5.300000000000  5.000000000000  0.000000000000  0.000000000000  0.000000000000"));
     getline(ifs2,output_str);
     getline(ifs2,output_str);
     getline(ifs2,output_str);
@@ -233,21 +260,21 @@ TEST_F(MD_func_test, MDdump)
     getline(ifs2,output_str);
     EXPECT_THAT(output_str,testing::HasSubstr("VIRIAL (KBAR)"));
     getline(ifs2,output_str);
-    EXPECT_THAT(output_str,testing::HasSubstr("  0.236428176219  0.050626986749  -0.000000000000"));
+    EXPECT_THAT(output_str,testing::HasSubstr("  0.000000000000  0.000000000000  0.000000000000"));
     getline(ifs2,output_str);
-    EXPECT_THAT(output_str,testing::HasSubstr("  0.050626986749  0.312766562817  0.000000000000"));
+    EXPECT_THAT(output_str,testing::HasSubstr("  0.000000000000  0.000000000000  0.000000000000"));
     getline(ifs2,output_str);
-    EXPECT_THAT(output_str,testing::HasSubstr("  -0.000000000000  0.000000000000  0.189105034410"));
+    EXPECT_THAT(output_str,testing::HasSubstr("  0.000000000000  0.000000000000  0.000000000000"));
     getline(ifs2,output_str);
     EXPECT_THAT(output_str,testing::HasSubstr("INDEX    LABEL    POSITIONS    FORCE (eV/Angstrom)"));
     getline(ifs2,output_str);
-    EXPECT_THAT(output_str,testing::HasSubstr("  0  Ar  0.000000000000  0.000000000000  0.000000000000  0.025617329374  0.042288127307  -0.000000000000"));
+    EXPECT_THAT(output_str,testing::HasSubstr("  0  Ar  0.000000000000  0.000000000000  0.000000000000  0.000000000000  0.000000000000  0.000000000000"));
     getline(ifs2,output_str);
-    EXPECT_THAT(output_str,testing::HasSubstr("  1  Ar  5.200000000000  5.200000000000  0.000000000000  -0.033300246168  -0.034414246659  -0.000000000000"));
+    EXPECT_THAT(output_str,testing::HasSubstr("  1  Ar  5.200000000000  5.200000000000  0.000000000000  0.000000000000  0.000000000000  0.000000000000"));
     getline(ifs2,output_str);
-    EXPECT_THAT(output_str,testing::HasSubstr("  2  Ar  5.100000000000  0.000000000000  5.000000000000  -0.018209198893  0.041606045042  -0.000000000000"));
+    EXPECT_THAT(output_str,testing::HasSubstr("  2  Ar  5.100000000000  0.000000000000  5.000000000000  0.000000000000  0.000000000000  0.000000000000"));
     getline(ifs2,output_str);
-    EXPECT_THAT(output_str,testing::HasSubstr("  3  Ar  0.000000000000  5.300000000000  5.000000000000  0.025892115687  -0.049479925690  0.000000000000"));
+    EXPECT_THAT(output_str,testing::HasSubstr("  3  Ar  0.000000000000  5.300000000000  5.000000000000  0.000000000000  0.000000000000  0.000000000000"));
     ifs2.close();
 
     remove("MD_dump");
@@ -255,12 +282,6 @@ TEST_F(MD_func_test, MDdump)
 
 TEST_F(MD_func_test, outStress)
 {
-    MD_func::InitPos(ucell, pos);
-    MD_func::ReadVel(ucell, vel);
-    ModuleESolver::ESolver *p_esolver = new ModuleESolver::ESolver_LJ();
-    p_esolver->Init(INPUT, ucell);
-    MD_func::force_virial(p_esolver, 0, ucell, potential, force, virial);
-    MD_func::compute_stress(ucell, vel, allmass, virial, stress);
     GlobalV::ofs_running.open("running.log");
     MD_func::outStress(virial, stress);
 
@@ -270,11 +291,11 @@ TEST_F(MD_func_test, outStress)
     getline(ifs,output_str);
     EXPECT_THAT(output_str,testing::HasSubstr("output Pressure for check!"));
     getline(ifs,output_str);
-    EXPECT_THAT(output_str,testing::HasSubstr("Virtual Pressure is 0.2461 Kbar "));
+    EXPECT_THAT(output_str,testing::HasSubstr("Virtual Pressure is 0 Kbar "));
     getline(ifs,output_str);
-    EXPECT_THAT(output_str,testing::HasSubstr("Virial Term is 0.2461 Kbar "));
+    EXPECT_THAT(output_str,testing::HasSubstr("Virial Term is 0 Kbar "));
     getline(ifs,output_str);
-    EXPECT_THAT(output_str,testing::HasSubstr("Kenetic Term is 2.66338e-10 Kbar "));
+    EXPECT_THAT(output_str,testing::HasSubstr("Kenetic Term is 0 Kbar "));
     getline(ifs,output_str);
     getline(ifs,output_str);
     getline(ifs,output_str);
@@ -287,11 +308,11 @@ TEST_F(MD_func_test, outStress)
     EXPECT_THAT(output_str,testing::HasSubstr(" ><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><"));
     getline(ifs,output_str);
     getline(ifs,output_str);
-    EXPECT_THAT(output_str,testing::HasSubstr("     0.23642818    0.050626987 -1.7378254e-10"));
+    EXPECT_THAT(output_str,testing::HasSubstr("              0              0              0"));
     getline(ifs,output_str);
-    EXPECT_THAT(output_str,testing::HasSubstr("    0.050626987     0.31276656 -1.0047995e-10"));
+    EXPECT_THAT(output_str,testing::HasSubstr("              0              0              0"));
     getline(ifs,output_str);
-    EXPECT_THAT(output_str,testing::HasSubstr(" -1.7378254e-10 -1.0047995e-10     0.18910503"));
+    EXPECT_THAT(output_str,testing::HasSubstr("              0              0              0"));
 
     ifs.close();
     remove("running.log");

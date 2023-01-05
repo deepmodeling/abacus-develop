@@ -6,6 +6,31 @@
 
 #define doublethreshold 1e-12
 
+/************************************************
+ *  unit test of functions in Nose_Hoover.h
+ ***********************************************/
+
+/**
+ * - Tested Function
+ *   - Nose_Hoover::setup
+ *     - init before running md, calculate energy, force, and stress of the initial configuration.
+ *
+ *   - Nose_Hoover::first_half
+ *     - the first half of equation of motion, update velocities and positions
+ *
+ *   - Nose_Hoover::second_half
+ *     - the second half of equation of motion, update velocities
+ * 
+ *   - Nose_Hoover::write_restart
+ *     - write the information into files used for MD restarting
+ * 
+ *   - Nose_Hoover::restart
+ *     - restart MD when md_restart is true
+ * 
+ *   - Nose_Hoover::outputMD
+ *     - output MD information such as energy, temperature, and pressure
+ */
+
 class NHC_test : public testing::Test
 {
 protected:

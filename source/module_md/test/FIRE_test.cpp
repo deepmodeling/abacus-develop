@@ -6,6 +6,31 @@
 
 #define doublethreshold 1e-12
 
+/************************************************
+ *  unit test of functions in FIRE.h
+ ***********************************************/
+
+/**
+ * - Tested Function
+ *   - FIRE::setup
+ *     - init before running md, calculate energy, force, and stress of the initial configuration.
+ *
+ *   - FIRE::first_half
+ *     - the first half of equation of motion, update velocities and positions
+ *
+ *   - FIRE::second_half
+ *     - the second half of equation of motion, update velocities
+ * 
+ *   - FIRE::write_restart
+ *     - write the information into files used for MD restarting
+ * 
+ *   - FIRE::restart
+ *     - restart MD when md_restart is true
+ * 
+ *   - FIRE::outputMD
+ *     - output MD information such as energy, temperature, and pressure
+ */
+
 class FIRE_test : public testing::Test
 {
 protected:

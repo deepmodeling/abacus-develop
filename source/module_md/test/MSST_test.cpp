@@ -6,6 +6,31 @@
 
 #define doublethreshold 1e-12
 
+/************************************************
+ *  unit test of functions in MSST.h
+ ***********************************************/
+
+/**
+ * - Tested Function
+ *   - MSST::setup
+ *     - init before running md, calculate energy, force, and stress of the initial configuration.
+ *
+ *   - MSST::first_half
+ *     - the first half of equation of motion, update velocities and positions
+ *
+ *   - MSST::second_half
+ *     - the second half of equation of motion, update velocities
+ * 
+ *   - MSST::write_restart
+ *     - write the information into files used for MD restarting
+ * 
+ *   - MSST::restart
+ *     - restart MD when md_restart is true
+ * 
+ *   - MSST::outputMD
+ *     - output MD information such as energy, temperature, and pressure
+ */
+
 class MSST_test : public testing::Test
 {
 protected:

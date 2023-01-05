@@ -6,6 +6,31 @@
 
 #define doublethreshold 1e-12
 
+/************************************************
+ *  unit test of functions in verlet.h
+ ***********************************************/
+
+/**
+ * - Tested Function
+ *   - verlet::setup
+ *     - init before running md, calculate energy, force, and stress of the initial configuration.
+ *
+ *   - verlet::first_half
+ *     - the first half of equation of motion, update velocities and positions
+ *
+ *   - verlet::second_half
+ *     - the second half of equation of motion, update velocities
+ * 
+ *   - verlet::write_restart
+ *     - write the information into files used for MD restarting
+ * 
+ *   - verlet::restart
+ *     - restart MD when md_restart is true
+ * 
+ *   - verlet::outputMD
+ *     - output MD information such as energy, temperature, and pressure
+ */
+
 class Verlet_test : public testing::Test
 {
 protected:
