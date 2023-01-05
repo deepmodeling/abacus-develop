@@ -1,4 +1,5 @@
 #include "gtest/gtest.h"
+#include "gmock/gmock.h"
 #include "setcell.h"
 #include "module_md/FIRE.h"
 #include "module_esolver/esolver_lj.h"
@@ -104,4 +105,64 @@ TEST_F(FIRE_test, second_half)
     EXPECT_NEAR(mdrun->vel[3].x, 0.00011072762648726122, doublethreshold);
     EXPECT_NEAR(mdrun->vel[3].y, 5.2868256066506055e-05, doublethreshold);
     EXPECT_NEAR(mdrun->vel[3].z, -2.5498181033639999e-05, doublethreshold);
+}
+
+TEST_F(FIRE_test, write_restart)
+{
+    mdrun->step_ = 1;
+    mdrun->step_rst_ = 2;
+    mdrun->write_restart();
+
+    std::ifstream ifs("Restart_md.dat");
+    std::string output_str;
+    getline(ifs,output_str);
+    EXPECT_THAT(output_str,testing::HasSubstr("3"));
+    getline(ifs,output_str);
+    EXPECT_THAT(output_str,testing::HasSubstr("0.1"));
+    getline(ifs,output_str);
+    EXPECT_THAT(output_str,testing::HasSubstr("0"));
+    getline(ifs,output_str);
+    EXPECT_THAT(output_str,testing::HasSubstr("-1"));
+    getline(ifs,output_str);
+    EXPECT_THAT(output_str,testing::HasSubstr("41.3414"));
+    ifs.close();
+}
+
+TEST_F(FIRE_test, restart)
+{
+    mdrun->restart();
+    remove("Restart_md.dat");
+
+    FIRE* fire =dynamic_cast<FIRE*>(mdrun);
+    EXPECT_EQ(mdrun->step_rst_, 3);
+    EXPECT_EQ(fire->alpha, 0.1);
+    EXPECT_EQ(fire->negative_count, 0);
+    EXPECT_EQ(fire->dt_max, -1);
+    EXPECT_EQ(mdrun->mdp.md_dt, 41.3414);
+}
+
+TEST_F(FIRE_test, outputMD)
+{
+    std::ofstream ofs("running.log");
+    mdrun->outputMD(ofs, true);
+    ofs.close();
+
+    std::ifstream ifs("running.log");
+    std::string output_str;
+    getline(ifs,output_str);
+    getline(ifs,output_str);
+    getline(ifs,output_str);
+    EXPECT_THAT(output_str,testing::HasSubstr(" ------------------------------------------------------------------------------------------------"));
+    getline(ifs,output_str);
+    EXPECT_THAT(output_str,testing::HasSubstr(" Energy              Potential           Kinetic             Temperature         Pressure (KBAR)     "));
+    getline(ifs,output_str);
+    EXPECT_THAT(output_str,testing::HasSubstr(" -0.0076826178       -0.011957819        0.0042752008        300                 1.0846391           "));
+    getline(ifs,output_str);
+    EXPECT_THAT(output_str,testing::HasSubstr(" ------------------------------------------------------------------------------------------------"));
+    getline(ifs,output_str);
+    getline(ifs,output_str);
+    getline(ifs,output_str);
+    EXPECT_THAT(output_str,testing::HasSubstr(" LARGEST GRAD (eV/A)  : 0.049479926"));
+    ifs.close();
+    remove("running.log");
 }

@@ -75,9 +75,9 @@ AddTest(
 )
 
 AddTest(
-  TARGET md_nvt_nhc
+  TARGET md_nhc
   LIBS ${math_libs} psi device
-  SOURCES NVT_NHC_test.cpp
+  SOURCES NHC_test.cpp
   ../mdrun.cpp
   ../Nose_Hoover.cpp
   ${depend_files}

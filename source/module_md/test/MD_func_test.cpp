@@ -1,6 +1,8 @@
 #include "gtest/gtest.h"
+#include "gmock/gmock.h"
 #include "setcell.h"
 #include "module_md/MD_func.h"
+#include "module_esolver/esolver_lj.h"
 
 #define doublethreshold 1e-12
 
@@ -12,6 +14,7 @@ protected:
     ModuleBase::Vector3<double> *pos;    // atom position
     ModuleBase::Vector3<double> *vel;    // atom velocity
     ModuleBase::Vector3<int> *ionmbl;    // atom is frozen or not
+    ModuleBase::Vector3<double> *force;  // atom force
     ModuleBase::matrix virial;           // virial for this lattice
     ModuleBase::matrix stress;           // stress for this lattice
     double potential;                    // potential energy
@@ -28,6 +31,7 @@ protected:
         pos = new ModuleBase::Vector3<double> [natom];
         ionmbl = new ModuleBase::Vector3<int> [natom];
         vel = new ModuleBase::Vector3<double> [natom];
+        force = new ModuleBase::Vector3<double> [natom];
         stress.create(3,3);
         virial.create(3,3);
     }
@@ -38,6 +42,7 @@ protected:
         delete[] pos;
         delete[] vel;
         delete[] ionmbl;
+        delete[] force;
     }
 };
 
@@ -134,4 +139,160 @@ TEST_F(MD_func_test, compute_stress)
     EXPECT_DOUBLE_EQ(stress(2,0), 1.5039983732220751e-06);
     EXPECT_DOUBLE_EQ(stress(2,1), -1.251414906590483e-06);
     EXPECT_DOUBLE_EQ(stress(2,2), 9.6330189688582584e-07);
+}
+
+TEST_F(MD_func_test, MDdump)
+{
+    MD_func::InitPos(ucell, pos);
+    ModuleESolver::ESolver *p_esolver = new ModuleESolver::ESolver_LJ();
+    p_esolver->Init(INPUT, ucell);
+    MD_func::force_virial(p_esolver, 0, ucell, potential, force, virial);
+
+    MD_func::MDdump(0, ucell, virial, force);
+    std::ifstream ifs("MD_dump");
+    std::string output_str;
+    getline(ifs,output_str);
+    EXPECT_THAT(output_str,testing::HasSubstr("MDSTEP:  0"));
+    getline(ifs,output_str);
+    EXPECT_THAT(output_str,testing::HasSubstr("LATTICE_CONSTANT: 1.000000000000"));
+    getline(ifs,output_str);
+    EXPECT_THAT(output_str,testing::HasSubstr("LATTICE_VECTORS"));
+    getline(ifs,output_str);
+    EXPECT_THAT(output_str,testing::HasSubstr("  10.000000000000  0.000000000000  0.000000000000"));
+    getline(ifs,output_str);
+    EXPECT_THAT(output_str,testing::HasSubstr("  0.000000000000  10.000000000000  0.000000000000"));
+    getline(ifs,output_str);
+    EXPECT_THAT(output_str,testing::HasSubstr("  0.000000000000  0.000000000000  10.000000000000"));
+    getline(ifs,output_str);
+    EXPECT_THAT(output_str,testing::HasSubstr("VIRIAL (KBAR)"));
+    getline(ifs,output_str);
+    EXPECT_THAT(output_str,testing::HasSubstr("  0.236428176219  0.050626986749  -0.000000000000"));
+    getline(ifs,output_str);
+    EXPECT_THAT(output_str,testing::HasSubstr("  0.050626986749  0.312766562817  0.000000000000"));
+    getline(ifs,output_str);
+    EXPECT_THAT(output_str,testing::HasSubstr("  -0.000000000000  0.000000000000  0.189105034410"));
+    getline(ifs,output_str);
+    EXPECT_THAT(output_str,testing::HasSubstr("INDEX    LABEL    POSITIONS    FORCE (eV/Angstrom)"));
+    getline(ifs,output_str);
+    EXPECT_THAT(output_str,testing::HasSubstr("  0  Ar  0.000000000000  0.000000000000  0.000000000000  0.025617329374  0.042288127307  -0.000000000000"));
+    getline(ifs,output_str);
+    EXPECT_THAT(output_str,testing::HasSubstr("  1  Ar  5.200000000000  5.200000000000  0.000000000000  -0.033300246168  -0.034414246659  -0.000000000000"));
+    getline(ifs,output_str);
+    EXPECT_THAT(output_str,testing::HasSubstr("  2  Ar  5.100000000000  0.000000000000  5.000000000000  -0.018209198893  0.041606045042  -0.000000000000"));
+    getline(ifs,output_str);
+    EXPECT_THAT(output_str,testing::HasSubstr("  3  Ar  0.000000000000  5.300000000000  5.000000000000  0.025892115687  -0.049479925690  0.000000000000"));
+    ifs.close();
+
+    // append
+    MD_func::MDdump(1, ucell, virial, force);
+    std::ifstream ifs2("MD_dump");
+    getline(ifs2,output_str);
+    EXPECT_THAT(output_str,testing::HasSubstr("MDSTEP:  0"));
+    getline(ifs2,output_str);
+    EXPECT_THAT(output_str,testing::HasSubstr("LATTICE_CONSTANT: 1.000000000000"));
+    getline(ifs2,output_str);
+    EXPECT_THAT(output_str,testing::HasSubstr("LATTICE_VECTORS"));
+    getline(ifs2,output_str);
+    EXPECT_THAT(output_str,testing::HasSubstr("  10.000000000000  0.000000000000  0.000000000000"));
+    getline(ifs2,output_str);
+    EXPECT_THAT(output_str,testing::HasSubstr("  0.000000000000  10.000000000000  0.000000000000"));
+    getline(ifs2,output_str);
+    EXPECT_THAT(output_str,testing::HasSubstr("  0.000000000000  0.000000000000  10.000000000000"));
+    getline(ifs2,output_str);
+    EXPECT_THAT(output_str,testing::HasSubstr("VIRIAL (KBAR)"));
+    getline(ifs2,output_str);
+    EXPECT_THAT(output_str,testing::HasSubstr("  0.236428176219  0.050626986749  -0.000000000000"));
+    getline(ifs2,output_str);
+    EXPECT_THAT(output_str,testing::HasSubstr("  0.050626986749  0.312766562817  0.000000000000"));
+    getline(ifs2,output_str);
+    EXPECT_THAT(output_str,testing::HasSubstr("  -0.000000000000  0.000000000000  0.189105034410"));
+    getline(ifs2,output_str);
+    EXPECT_THAT(output_str,testing::HasSubstr("INDEX    LABEL    POSITIONS    FORCE (eV/Angstrom)"));
+    getline(ifs2,output_str);
+    EXPECT_THAT(output_str,testing::HasSubstr("  0  Ar  0.000000000000  0.000000000000  0.000000000000  0.025617329374  0.042288127307  -0.000000000000"));
+    getline(ifs2,output_str);
+    EXPECT_THAT(output_str,testing::HasSubstr("  1  Ar  5.200000000000  5.200000000000  0.000000000000  -0.033300246168  -0.034414246659  -0.000000000000"));
+    getline(ifs2,output_str);
+    EXPECT_THAT(output_str,testing::HasSubstr("  2  Ar  5.100000000000  0.000000000000  5.000000000000  -0.018209198893  0.041606045042  -0.000000000000"));
+    getline(ifs2,output_str);
+    EXPECT_THAT(output_str,testing::HasSubstr("  3  Ar  0.000000000000  5.300000000000  5.000000000000  0.025892115687  -0.049479925690  0.000000000000"));
+    getline(ifs2,output_str);
+    getline(ifs2,output_str);
+    getline(ifs2,output_str);
+    EXPECT_THAT(output_str,testing::HasSubstr("MDSTEP:  1"));
+    getline(ifs2,output_str);
+    EXPECT_THAT(output_str,testing::HasSubstr("LATTICE_CONSTANT: 1.000000000000"));
+    getline(ifs2,output_str);
+    EXPECT_THAT(output_str,testing::HasSubstr("LATTICE_VECTORS"));
+    getline(ifs2,output_str);
+    EXPECT_THAT(output_str,testing::HasSubstr("  10.000000000000  0.000000000000  0.000000000000"));
+    getline(ifs2,output_str);
+    EXPECT_THAT(output_str,testing::HasSubstr("  0.000000000000  10.000000000000  0.000000000000"));
+    getline(ifs2,output_str);
+    EXPECT_THAT(output_str,testing::HasSubstr("  0.000000000000  0.000000000000  10.000000000000"));
+    getline(ifs2,output_str);
+    EXPECT_THAT(output_str,testing::HasSubstr("VIRIAL (KBAR)"));
+    getline(ifs2,output_str);
+    EXPECT_THAT(output_str,testing::HasSubstr("  0.236428176219  0.050626986749  -0.000000000000"));
+    getline(ifs2,output_str);
+    EXPECT_THAT(output_str,testing::HasSubstr("  0.050626986749  0.312766562817  0.000000000000"));
+    getline(ifs2,output_str);
+    EXPECT_THAT(output_str,testing::HasSubstr("  -0.000000000000  0.000000000000  0.189105034410"));
+    getline(ifs2,output_str);
+    EXPECT_THAT(output_str,testing::HasSubstr("INDEX    LABEL    POSITIONS    FORCE (eV/Angstrom)"));
+    getline(ifs2,output_str);
+    EXPECT_THAT(output_str,testing::HasSubstr("  0  Ar  0.000000000000  0.000000000000  0.000000000000  0.025617329374  0.042288127307  -0.000000000000"));
+    getline(ifs2,output_str);
+    EXPECT_THAT(output_str,testing::HasSubstr("  1  Ar  5.200000000000  5.200000000000  0.000000000000  -0.033300246168  -0.034414246659  -0.000000000000"));
+    getline(ifs2,output_str);
+    EXPECT_THAT(output_str,testing::HasSubstr("  2  Ar  5.100000000000  0.000000000000  5.000000000000  -0.018209198893  0.041606045042  -0.000000000000"));
+    getline(ifs2,output_str);
+    EXPECT_THAT(output_str,testing::HasSubstr("  3  Ar  0.000000000000  5.300000000000  5.000000000000  0.025892115687  -0.049479925690  0.000000000000"));
+    ifs2.close();
+
+    remove("MD_dump");
+}
+
+TEST_F(MD_func_test, outStress)
+{
+    MD_func::InitPos(ucell, pos);
+    MD_func::ReadVel(ucell, vel);
+    ModuleESolver::ESolver *p_esolver = new ModuleESolver::ESolver_LJ();
+    p_esolver->Init(INPUT, ucell);
+    MD_func::force_virial(p_esolver, 0, ucell, potential, force, virial);
+    MD_func::compute_stress(ucell, vel, allmass, virial, stress);
+    GlobalV::ofs_running.open("running.log");
+    MD_func::outStress(virial, stress);
+
+    std::ifstream ifs("running.log");
+    std::string output_str;
+    getline(ifs,output_str);
+    getline(ifs,output_str);
+    EXPECT_THAT(output_str,testing::HasSubstr("output Pressure for check!"));
+    getline(ifs,output_str);
+    EXPECT_THAT(output_str,testing::HasSubstr("Virtual Pressure is 0.2461 Kbar "));
+    getline(ifs,output_str);
+    EXPECT_THAT(output_str,testing::HasSubstr("Virial Term is 0.2461 Kbar "));
+    getline(ifs,output_str);
+    EXPECT_THAT(output_str,testing::HasSubstr("Kenetic Term is 2.66338e-10 Kbar "));
+    getline(ifs,output_str);
+    getline(ifs,output_str);
+    getline(ifs,output_str);
+    EXPECT_THAT(output_str,testing::HasSubstr(" ><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><"));
+    getline(ifs,output_str);
+    getline(ifs,output_str);
+    EXPECT_THAT(output_str,testing::HasSubstr(" MD STRESS (KBAR)"));
+    getline(ifs,output_str);
+    getline(ifs,output_str);
+    EXPECT_THAT(output_str,testing::HasSubstr(" ><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><"));
+    getline(ifs,output_str);
+    getline(ifs,output_str);
+    EXPECT_THAT(output_str,testing::HasSubstr("     0.23642818    0.050626987 -1.7378254e-10"));
+    getline(ifs,output_str);
+    EXPECT_THAT(output_str,testing::HasSubstr("    0.050626987     0.31276656 -1.0047995e-10"));
+    getline(ifs,output_str);
+    EXPECT_THAT(output_str,testing::HasSubstr(" -1.7378254e-10 -1.0047995e-10     0.18910503"));
+
+    ifs.close();
+    remove("running.log");
 }
