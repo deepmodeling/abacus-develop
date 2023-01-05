@@ -362,18 +362,13 @@ ModuleBase::GlobalFunc::OUTP(ofs, "out_bandgap", out_bandgap, "if true, print ou
     ModuleBase::GlobalFunc::OUTP(ofs, "exx_opt_orb_tolerence", exx_opt_orb_tolerence, "");
 
     ofs << "\n#Parameters (16.tddft)" << std::endl;
-    ModuleBase::GlobalFunc::OUTP(ofs, "td_scf_thr", td_scf_thr, "threshold for electronic iteration of tddft");
-    ModuleBase::GlobalFunc::OUTP(ofs, "td_dt", td_dt, "time of ion step");
     ModuleBase::GlobalFunc::OUTP(ofs, "td_force_dt", td_force_dt, "time of force change");
     ModuleBase::GlobalFunc::OUTP(ofs, "td_val_elec_01", td_val_elec_01, "td_val_elec_01");
     ModuleBase::GlobalFunc::OUTP(ofs, "td_val_elec_02", td_val_elec_02, "td_val_elec_02");
     ModuleBase::GlobalFunc::OUTP(ofs, "td_val_elec_03", td_val_elec_03, "td_val_elec_03");
     ModuleBase::GlobalFunc::OUTP(ofs, "td_vext", td_vext, "add extern potential or not");
     ModuleBase::GlobalFunc::OUTP(ofs, "td_vext_dire", td_vext_dire, "extern potential direction");
-    ModuleBase::GlobalFunc::OUTP(ofs, "td_timescale", td_timescale, "extern potential td_timescale");
-    ModuleBase::GlobalFunc::OUTP(ofs, "td_vexttype", td_vexttype, "extern potential type");
-    ModuleBase::GlobalFunc::OUTP(ofs, "td_vextout", td_vextout, "output extern potential or not");
-    ModuleBase::GlobalFunc::OUTP(ofs, "td_dipoleout", td_dipoleout, "output dipole or not");
+    ModuleBase::GlobalFunc::OUTP(ofs, "out_dipole", out_dipole, "output dipole or not");
     ModuleBase::GlobalFunc::OUTP(ofs, "ocp", GlobalV::ocp, "change occupation or not");
     ModuleBase::GlobalFunc::OUTP(ofs, "ocp_set", GlobalV::ocp_set, "set occupation");
 

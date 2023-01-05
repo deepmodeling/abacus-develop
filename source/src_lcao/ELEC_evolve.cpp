@@ -11,18 +11,13 @@
 ELEC_evolve::ELEC_evolve(){};
 ELEC_evolve::~ELEC_evolve(){};
 
-double ELEC_evolve::td_scf_thr;
-double ELEC_evolve::td_dt;
 double ELEC_evolve::td_force_dt;
 int ELEC_evolve::td_val_elec_01;
 int ELEC_evolve::td_val_elec_02;
 int ELEC_evolve::td_val_elec_03;
 int ELEC_evolve::td_vext;
 int ELEC_evolve::td_vext_dire;
-double ELEC_evolve::td_timescale;
-int ELEC_evolve::td_vexttype;
-int ELEC_evolve::td_vextout;
-int ELEC_evolve::td_dipoleout;
+int ELEC_evolve::out_dipole;
 
 // this routine only serves for TDDFT using LCAO basis set
 void ELEC_evolve::evolve_psi(const int& istep,

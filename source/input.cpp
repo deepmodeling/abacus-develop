@@ -2,7 +2,7 @@
 // Author: Lixin He,mohan
 // DATE : 2008-11-6
 //==========================================================
-//#include "global.h"
+// #include "global.h"
 #include "input.h"
 
 #include "module_base/global_file.h"
@@ -17,8 +17,8 @@
 #include <sstream>
 #include <stdio.h>
 #include <string.h>
-#include <vector>
 #include <unistd.h>
+#include <vector>
 Input INPUT;
 
 void Input::Init(const std::string &fn)
@@ -279,7 +279,7 @@ void Input::Default(void)
     out_dm = 0;
     out_dm1 = 0;
 
-    out_bandgap = 0; //QO added for bandgap printing
+    out_bandgap = 0; // QO added for bandgap printing
 
     deepks_out_labels = 0; // caoyu added 2020-11-24, mohan added 2021-01-03
     deepks_scf = 0;
@@ -322,7 +322,7 @@ void Input::Default(void)
     efield_dir = 2;
     efield_pos_max = 0.5;
     efield_pos_dec = 0.1;
-    efield_amp  = 0.0;
+    efield_amp = 0.0;
     //----------------------------------------------------------
     // gatefield                        Yu Liu add 2022-09-13
     //----------------------------------------------------------
@@ -365,7 +365,7 @@ void Input::Default(void)
 
     exx_lambda = 0.3;
 
-	exx_real_number = "default";
+    exx_real_number = "default";
     exx_pca_threshold = 0;
     exx_c_threshold = 0;
     exx_v_threshold = 0;
@@ -395,8 +395,6 @@ void Input::Default(void)
     //----------------------------------------------------------			//Fuxiang He add 2016-10-26
     // tddft
     //----------------------------------------------------------
-    td_scf_thr = 1e-9;
-    td_dt = 0.02;
     td_force_dt = 0.02;
     td_val_elec_01 = 1;
     td_val_elec_02 = 1;
@@ -404,10 +402,63 @@ void Input::Default(void)
     td_vext = 0;
     td_vext_dire = 1;
 
-    td_timescale = 0.5;
-    td_vexttype = 1;
-    td_vextout = 0;
-    td_dipoleout = 0;
+    out_dipole = 0;
+
+    td_stype = 0; // 0 : length gauge  1: velocity gauge
+
+    td_ttype = 0;
+    //  0  Gauss type function.
+    //  1  trapezoid type function.
+    //  2  Trigonometric functions, sin^2.
+    //  3  heaviside function.
+    //  4  HHG function.
+
+    td_tstart = 1;
+    td_tend = 1000;
+
+    // space domain parameters
+
+    // length gauge
+    td_lcut1 = 0.05;
+    td_lcut2 = 0.95;
+
+    // time domain parameters
+
+    // Gauss
+    td_gauss_freq = 22.13; // fs^-1
+    td_gauss_phase = 0.0;
+    td_gauss_sigma = 30.0; // fs
+    td_gauss_t0 = 100.0; 
+    td_gauss_amp = 0.25; // V/A
+
+    // Trapezoid
+    td_trape_freq = 1.60; // fs^-1
+    td_trape_phase = 0.0;
+    td_trape_t1 = 1875;
+    td_trape_t2 = 5625;
+    td_trape_t3 = 7500;
+    td_trape_amp = 2.74; // V/A
+
+    // Trigonometric
+    td_trigo_freq1 = 1.164656; // time(fs)^-1
+    td_trigo_freq2 = 0.029116; // time(fs)^-1
+    td_trigo_phase1 = 0.0;
+    td_trigo_phase2 = 0.0;
+    td_trigo_amp = 2.74; // V/A
+
+    // Heaviside
+    td_heavi_t0 = 100;
+    td_heavi_amp = 1.0; // V/A
+
+    // HHG
+    td_hhg_amp1 = 2.74; // V/A
+    td_hhg_amp2 = 2.74; // V/A
+    td_hhg_freq1 = 1.164656; // time(fs)^-1
+    td_hhg_freq2 = 0.029116; // time(fs)^-1
+    td_hhg_phase1 = 0.0;
+    td_hhg_phase2 = 0.0;
+    td_hhg_t0 = 700;
+    td_hhg_sigma = 30; // fs
 
     //----------------------------------------------------------			//Fuxiang He add 2016-10-26
     // constrained DFT
@@ -473,8 +524,8 @@ void Input::Default(void)
     of_tolp = 1e-5;
     of_tf_weight = 1.;
     of_vw_weight = 1.;
-    of_wt_alpha = 5./6.;
-    of_wt_beta = 5./6.;
+    of_wt_alpha = 5. / 6.;
+    of_wt_beta = 5. / 6.;
     of_wt_rho0 = 0.;
     of_hold_rho0 = false;
     of_full_pw = true;
@@ -1366,7 +1417,7 @@ bool Input::Read(const std::string &fn)
         }
         else if (strcmp("efield_amp", word) == 0)
         {
-            read_value(ifs, efield_amp );
+            read_value(ifs, efield_amp);
         }
         //----------------------------------------------------------
         // gatefield (compensating charge)
@@ -1404,14 +1455,6 @@ bool Input::Read(const std::string &fn)
         // tddft
         // Fuxiang He add 2016-10-26
         //----------------------------------------------------------
-        else if (strcmp("td_scf_thr", word) == 0)
-        {
-            read_value(ifs, td_scf_thr);
-        }
-        else if (strcmp("td_dt", word) == 0)
-        {
-            read_value(ifs, td_dt);
-        }
         else if (strcmp("td_force_dt", word) == 0)
         {
             read_value(ifs, td_force_dt);
@@ -1436,21 +1479,137 @@ bool Input::Read(const std::string &fn)
         {
             read_value(ifs, td_vext_dire);
         }
-        else if (strcmp("td_timescale", word) == 0)
+        else if (strcmp("out_dipole", word) == 0)
         {
-            read_value(ifs, td_timescale);
+            read_value(ifs, out_dipole);
         }
-        else if (strcmp("td_vexttype", word) == 0)
+        else if (strcmp("td_stype", word) == 0)
         {
-            read_value(ifs, td_vexttype);
+            read_value(ifs, td_stype);
         }
-        else if (strcmp("td_vextout", word) == 0)
+        else if (strcmp("td_ttype", word) == 0)
         {
-            read_value(ifs, td_vextout);
+            read_value(ifs, td_ttype);
         }
-        else if (strcmp("td_dipoleout", word) == 0)
+        else if (strcmp("td_tstart", word) == 0)
         {
-            read_value(ifs, td_dipoleout);
+            read_value(ifs, td_tstart);
+        }
+        else if (strcmp("td_tend", word) == 0)
+        {
+            read_value(ifs, td_tend);
+        }
+        else if (strcmp("td_lcut1", word) == 0)
+        {
+            read_value(ifs, td_lcut1);
+        }
+        else if (strcmp("td_lcut2", word) == 0)
+        {
+            read_value(ifs, td_lcut2);
+        }
+        else if (strcmp("td_gauss_freq", word) == 0)
+        {
+            read_value(ifs, td_gauss_freq);
+        }
+        else if (strcmp("td_gauss_phase", word) == 0)
+        {
+            read_value(ifs, td_gauss_phase);
+        }
+        else if (strcmp("td_gauss_sigma", word) == 0)
+        {
+            read_value(ifs, td_gauss_sigma);
+        }
+        else if (strcmp("td_gauss_t0", word) == 0)
+        {
+            read_value(ifs, td_gauss_t0);
+        }
+        else if (strcmp("td_gauss_amp", word) == 0)
+        {
+            read_value(ifs, td_gauss_amp);
+        }
+        else if (strcmp("td_trape_freq", word) == 0)
+        {
+            read_value(ifs, td_trape_freq);
+        }
+        else if (strcmp("td_trape_phase", word) == 0)
+        {
+            read_value(ifs, td_trape_phase);
+        }
+        else if (strcmp("td_trape_t1", word) == 0)
+        {
+            read_value(ifs, td_trape_t1);
+        }
+        else if (strcmp("td_trape_t2", word) == 0)
+        {
+            read_value(ifs, td_trape_t2);
+        }
+        else if (strcmp("td_trape_t3", word) == 0)
+        {
+            read_value(ifs, td_trape_t3);
+        }
+        else if (strcmp("td_trape_amp", word) == 0)
+        {
+            read_value(ifs, td_trape_amp);
+        }
+        else if (strcmp("td_trigo_freq1", word) == 0)
+        {
+            read_value(ifs, td_trigo_freq1);
+        }
+        else if (strcmp("td_trigo_freq2", word) == 0)
+        {
+            read_value(ifs, td_trigo_freq2);
+        }
+        else if (strcmp("td_trigo_phase1", word) == 0)
+        {
+            read_value(ifs, td_trigo_phase1);
+        }
+        else if (strcmp("td_trigo_phase2", word) == 0)
+        {
+            read_value(ifs, td_trigo_phase2);
+        }
+        else if (strcmp("td_trigo_amp", word) == 0)
+        {
+            read_value(ifs, td_trigo_amp);
+        }
+        else if (strcmp("td_heavi_t0", word) == 0)
+        {
+            read_value(ifs, td_heavi_t0);
+        }
+        else if (strcmp("td_heavi_amp", word) == 0)
+        {
+            read_value(ifs, td_heavi_amp);
+        }
+        else if (strcmp("td_hhg_amp1", word) == 0)
+        {
+            read_value(ifs, td_hhg_amp1);
+        }
+        else if (strcmp("td_hhg_amp2", word) == 0)
+        {
+            read_value(ifs, td_hhg_amp2);
+        }
+        else if (strcmp("td_hhg_freq1", word) == 0)
+        {
+            read_value(ifs, td_hhg_freq1);
+        }
+        else if (strcmp("td_hhg_freq2", word) == 0)
+        {
+            read_value(ifs, td_hhg_freq2);
+        }
+        else if (strcmp("td_hhg_phase1", word) == 0)
+        {
+            read_value(ifs, td_hhg_phase1);
+        }
+        else if (strcmp("td_hhg_phase2", word) == 0)
+        {
+            read_value(ifs, td_hhg_phase2);
+        }
+        else if (strcmp("td_hhg_t0", word) == 0)
+        {
+            read_value(ifs, td_hhg_t0);
+        }
+        else if (strcmp("td_hhg_sigma", word) == 0)
+        {
+            read_value(ifs, td_hhg_sigma);
         }
         //----------------------------------------------------------
         // vdw
@@ -1688,7 +1847,8 @@ bool Input::Read(const std::string &fn)
         else if (strcmp("rpa", word) == 0)
         {
             read_bool(ifs, rpa);
-            if (rpa) GlobalV::rpa_setorb = true;
+            if (rpa)
+                GlobalV::rpa_setorb = true;
         }
         //----------------------------------------------------------------------------------
         //    implicit solvation model       sunml added on 2022-04-04
@@ -1778,8 +1938,9 @@ bool Input::Read(const std::string &fn)
         }
         //----------------------------------------------------------------------------------
         //    device control denghui added on 2022-11-05
-        //----------------------------------------------------------------------------------     
-        else if (strcmp("device", word) == 0) {
+        //----------------------------------------------------------------------------------
+        else if (strcmp("device", word) == 0)
+        {
             read_value(ifs, device);
         }
         //----------------------------------------------------------------------------------
@@ -1829,12 +1990,14 @@ bool Input::Read(const std::string &fn)
     }
 
     // sunliang added on 2022-12-06
-    // To check if ntype in INPUT is equal to the atom species in STRU, if ntype is not set in INPUT, we will set it according to STRU.
+    // To check if ntype in INPUT is equal to the atom species in STRU, if ntype is not set in INPUT, we will set it
+    // according to STRU.
     double ntype_stru = this->count_ntype(GlobalV::stru_file);
     if (this->ntype == 0)
     {
         this->ntype = ntype_stru;
-        GlobalV::ofs_running << "ntype in INPUT is 0, and it is automatically set to " << this->ntype << " according to STRU" << std::endl;
+        GlobalV::ofs_running << "ntype in INPUT is 0, and it is automatically set to " << this->ntype
+                             << " according to STRU" << std::endl;
     }
     else if (this->ntype != ntype_stru)
     {
@@ -1864,12 +2027,13 @@ bool Input::Read(const std::string &fn)
         while (ifs.good())
         {
             ifs >> word1;
-            if(ifs.eof() != 0) break;
+            if (ifs.eof() != 0)
+                break;
             strtolower(word1, word); // convert uppercase std::string to lower case; word1 --> word
 
             if (strcmp("yukawa_potential", word) == 0)
             {
-            	read_bool(ifs, yukawa_potential);
+                read_bool(ifs, yukawa_potential);
             }
             else if (strcmp("yukawa_lambda", word) == 0)
             {
@@ -1892,7 +2056,7 @@ bool Input::Read(const std::string &fn)
             }
             else if (strcmp("omc", word) == 0)
             {
-            	read_value(ifs, omc);
+                read_value(ifs, omc);
             }
             else
             {
@@ -1937,9 +2101,8 @@ bool Input::Read(const std::string &fn)
 
         if (strcmp("genelpa", ks_solver.c_str()) != 0 && strcmp(ks_solver.c_str(), "scalapack_gvx") != 0)
         {
-            std::cout
-                << " WRONG ARGUMENTS OF ks_solver in DFT+U routine, only genelpa and scalapack_gvx are supported "
-                << std::endl;
+            std::cout << " WRONG ARGUMENTS OF ks_solver in DFT+U routine, only genelpa and scalapack_gvx are supported "
+                      << std::endl;
             exit(0);
         }
     }
@@ -2027,20 +2190,20 @@ bool Input::Read(const std::string &fn)
          */
     }
 
-    if (basis_type == "pw" && gamma_only !=0) // pengfei Li add 2015-1-31
+    if (basis_type == "pw" && gamma_only != 0) // pengfei Li add 2015-1-31
     {
         gamma_only = 0;
         GlobalV::ofs_running << " WARNING : gamma_only has not been implemented for pw yet" << std::endl;
         GlobalV::ofs_running << " the INPUT parameter gamma_only has been reset to 0" << std::endl;
         GlobalV::ofs_running << " and a new KPT is generated with gamma point as the only k point" << std::endl;
 
-		GlobalV::ofs_warning << " Auto generating k-points file: " << GlobalV::global_kpoint_card << std::endl;
-		std::ofstream ofs(GlobalV::global_kpoint_card.c_str());
-		ofs << "K_POINTS" << std::endl;
-		ofs << "0" << std::endl;
-		ofs << "Gamma" << std::endl;
-		ofs << "1 1 1 0 0 0" << std::endl;
-		ofs.close();
+        GlobalV::ofs_warning << " Auto generating k-points file: " << GlobalV::global_kpoint_card << std::endl;
+        std::ofstream ofs(GlobalV::global_kpoint_card.c_str());
+        ofs << "K_POINTS" << std::endl;
+        ofs << "0" << std::endl;
+        ofs << "Gamma" << std::endl;
+        ofs << "1 1 1 0 0 0" << std::endl;
+        ofs.close();
 
         // std::cout << "gamma_only =" << gamma_only << std::endl;
     }
@@ -2049,7 +2212,7 @@ bool Input::Read(const std::string &fn)
         gamma_only_local = 1;
         // std::cout << "gamma_only_local =" << gamma_only_local << std::endl;
     }
-    if((out_mat_r || out_mat_hs2) && gamma_only_local)
+    if ((out_mat_r || out_mat_hs2) && gamma_only_local)
     {
         ModuleBase::WARNING_QUIT("Input", "printing of H(R)/S(R)/r(R) is not available for gamma only calculations");
     }
@@ -2120,15 +2283,20 @@ void Input::Default_2(void) // jiyy add 2019-08-04
             vdw_cutoff_radius = "95";
         }
     }
-    if(esolver_type != "sdft")    bndpar = 1;
-    if(bndpar > GlobalV::NPROC) bndpar = GlobalV::NPROC;
-    if(method_sto != 1 && method_sto != 2) 
+    if (esolver_type != "sdft")
+        bndpar = 1;
+    if (bndpar > GlobalV::NPROC)
+        bndpar = GlobalV::NPROC;
+    if (method_sto != 1 && method_sto != 2)
     {
         method_sto = 2;
     }
-    if(of_wt_rho0 != 0) of_hold_rho0 = true; // sunliang add 2022-06-17
-    if(!of_full_pw) of_full_pw_dim = 0; // sunliang add 2022-08-31
-    if(of_kinetic != "wt") of_read_kernel = false; // sunliang add 2022-09-12
+    if (of_wt_rho0 != 0)
+        of_hold_rho0 = true; // sunliang add 2022-06-17
+    if (!of_full_pw)
+        of_full_pw_dim = 0; // sunliang add 2022-08-31
+    if (of_kinetic != "wt")
+        of_read_kernel = false; // sunliang add 2022-09-12
 
     if (exx_hybrid_alpha == "default")
     {
@@ -2197,7 +2365,8 @@ void Input::Default_2(void) // jiyy add 2019-08-04
         this->relax_nmax = 1;
         out_stru = 0;
 
-        if (basis_type == "pw" && calculation == "get_S") // xiaohui add 2013-09-01. Attention! maybe there is some problem
+        if (basis_type == "pw"
+            && calculation == "get_S") // xiaohui add 2013-09-01. Attention! maybe there is some problem
         {
             if (pw_diag_thr > 1.0e-3)
             {
@@ -2209,11 +2378,11 @@ void Input::Default_2(void) // jiyy add 2019-08-04
             cal_force = false;
             ModuleBase::GlobalFunc::AUTO_SET("cal_force", "false");
         }
-    	if (init_chg != "file")
-    	{
-       		init_chg = "file";
-        	ModuleBase::GlobalFunc::AUTO_SET("init_chg", init_chg);
-    	}
+        if (init_chg != "file")
+        {
+            init_chg = "file";
+            ModuleBase::GlobalFunc::AUTO_SET("init_chg", init_chg);
+        }
     }
     else if (calculation == "istate")
     {
@@ -2266,19 +2435,20 @@ void Input::Default_2(void) // jiyy add 2019-08-04
         if (mdp.md_plast < 0.0)
             mdp.md_plast = mdp.md_pfirst;
 
-        if(mdp.md_tfreq == 0)
+        if (mdp.md_tfreq == 0)
         {
-            mdp.md_tfreq = 1.0/40/mdp.md_dt;
+            mdp.md_tfreq = 1.0 / 40 / mdp.md_dt;
         }
-        if(mdp.md_pfreq == 0)
+        if (mdp.md_pfreq == 0)
         {
-            mdp.md_pfreq = 1.0/400/mdp.md_dt;
+            mdp.md_pfreq = 1.0 / 400 / mdp.md_dt;
         }
-        if(mdp.md_restart)
+        if (mdp.md_restart)
         {
             init_vel = 1;
         }
-        if(esolver_type == "lj" || esolver_type == "dp" || mdp.md_type == 4 || (mdp.md_type == 1 && mdp.md_pmode != "none"))
+        if (esolver_type == "lj" || esolver_type == "dp" || mdp.md_type == 4
+            || (mdp.md_type == 1 && mdp.md_pmode != "none"))
         {
             cal_stress = 1;
         }
@@ -2294,11 +2464,11 @@ void Input::Default_2(void) // jiyy add 2019-08-04
     {
         this->relax_nmax = 1;
     }
-    else if(calculation == "test_neighbour")
+    else if (calculation == "test_neighbour")
     {
         this->relax_nmax = 1;
     }
-    else if(calculation == "gen_bessel")
+    else if (calculation == "gen_bessel")
     {
         this->relax_nmax = 1;
     }
@@ -2313,20 +2483,20 @@ void Input::Default_2(void) // jiyy add 2019-08-04
         else if (ks_solver == "cg")
         {
             GlobalV::ofs_warning << " It's ok to use cg." << std::endl;
-    	    // new rule, mohan add 2012-02-11
-    	    // otherwise, there need wave functions transfers
-    	    // if(diago_type=="cg") xiaohui modify 2013-09-01
-    	    if (diago_proc != GlobalV::NPROC)
-    	    {
-    	        ModuleBase::WARNING("Input", "when CG is used for diago, diago_proc==GlobalV::NPROC");
-    	        diago_proc = GlobalV::NPROC;
-    	    }
+            // new rule, mohan add 2012-02-11
+            // otherwise, there need wave functions transfers
+            // if(diago_type=="cg") xiaohui modify 2013-09-01
+            if (diago_proc != GlobalV::NPROC)
+            {
+                ModuleBase::WARNING("Input", "when CG is used for diago, diago_proc==GlobalV::NPROC");
+                diago_proc = GlobalV::NPROC;
+            }
         }
         else if (ks_solver == "dav")
         {
             GlobalV::ofs_warning << " It's ok to use dav." << std::endl;
         }
-	//
+        //
         bx = 1;
         by = 1;
         bz = 1;
@@ -2507,7 +2677,7 @@ void Input::Bcast()
     Parallel_Common::bcast_bool(out_chg);
     Parallel_Common::bcast_bool(out_dm);
     Parallel_Common::bcast_bool(out_dm1);
-    Parallel_Common::bcast_bool(out_bandgap); //for bandgap printing
+    Parallel_Common::bcast_bool(out_bandgap); // for bandgap printing
 
     Parallel_Common::bcast_bool(deepks_out_labels); // caoyu added 2020-11-24, mohan modified 2021-01-03
     Parallel_Common::bcast_bool(deepks_scf);
@@ -2517,7 +2687,7 @@ void Input::Bcast()
     Parallel_Common::bcast_int(bessel_lmax);
     Parallel_Common::bcast_double(bessel_rcut);
     Parallel_Common::bcast_double(bessel_tol);
-    
+
     Parallel_Common::bcast_int(out_pot);
     Parallel_Common::bcast_int(out_wfc_pw);
     Parallel_Common::bcast_bool(out_wfc_r);
@@ -2639,15 +2809,45 @@ void Input::Bcast()
     Parallel_Common::bcast_int(td_val_elec_01);
     Parallel_Common::bcast_int(td_val_elec_02);
     Parallel_Common::bcast_int(td_val_elec_03);
-    Parallel_Common::bcast_double(td_scf_thr);
-    Parallel_Common::bcast_double(td_dt);
     Parallel_Common::bcast_double(td_force_dt);
     Parallel_Common::bcast_int(td_vext);
     Parallel_Common::bcast_int(td_vext_dire);
-    Parallel_Common::bcast_double(td_timescale);
-    Parallel_Common::bcast_int(td_vexttype);
-    Parallel_Common::bcast_int(td_vextout);
-    Parallel_Common::bcast_int(td_dipoleout);
+    Parallel_Common::bcast_int(td_stype);
+    Parallel_Common::bcast_int(td_ttype);
+    Parallel_Common::bcast_int(td_tstart);
+    Parallel_Common::bcast_int(td_tend);
+    Parallel_Common::bcast_double(td_lcut1);
+    Parallel_Common::bcast_double(td_lcut2);
+    Parallel_Common::bcast_double(td_gauss_freq);
+    Parallel_Common::bcast_double(td_gauss_phase);
+    Parallel_Common::bcast_double(td_gauss_sigma);
+    Parallel_Common::bcast_double(td_gauss_t0);
+    Parallel_Common::bcast_double(td_gauss_amp);
+    Parallel_Common::bcast_double(td_trape_freq);
+    Parallel_Common::bcast_double(td_trape_phase);
+    Parallel_Common::bcast_double(td_trape_t1);
+    Parallel_Common::bcast_double(td_trape_t2);
+    Parallel_Common::bcast_double(td_trape_t3);
+    Parallel_Common::bcast_double(td_trape_amp);
+    Parallel_Common::bcast_double(td_trigo_freq1);
+    Parallel_Common::bcast_double(td_trigo_freq2);
+    Parallel_Common::bcast_double(td_trigo_phase1);
+    Parallel_Common::bcast_double(td_trigo_phase2);
+    Parallel_Common::bcast_double(td_trigo_amp);
+    Parallel_Common::bcast_double(td_heavi_t0);
+    Parallel_Common::bcast_double(td_heavi_amp);
+    Parallel_Common::bcast_double(td_hhg_freq1);
+    Parallel_Common::bcast_double(td_hhg_freq2);
+    Parallel_Common::bcast_double(td_hhg_amp1);
+    Parallel_Common::bcast_double(td_hhg_amp2);
+    Parallel_Common::bcast_double(td_hhg_phase1);
+    Parallel_Common::bcast_double(td_hhg_phase2);
+    Parallel_Common::bcast_double(td_hhg_freq1);
+    Parallel_Common::bcast_double(td_hhg_freq2);
+    Parallel_Common::bcast_double(td_hhg_t0);
+    Parallel_Common::bcast_double(td_hhg_sigma);
+
+    Parallel_Common::bcast_int(out_dipole);
     Parallel_Common::bcast_bool(test_skip_ewald);
     Parallel_Common::bcast_bool(ocp);
     Parallel_Common::bcast_string(ocp_set);
@@ -2780,12 +2980,12 @@ void Input::Check(void)
         ModuleBase::WARNING_QUIT("Input", "nelec < 0 is not allowed !");
     }
 
-    if(dip_cor_flag && !efield_flag)
+    if (dip_cor_flag && !efield_flag)
     {
         ModuleBase::WARNING_QUIT("Input", "dipole correction is not active if efield_flag=false !");
     }
 
-    if(gate_flag && efield_flag && !dip_cor_flag)
+    if (gate_flag && efield_flag && !dip_cor_flag)
     {
         ModuleBase::WARNING_QUIT("Input", "gate field cannot be used with efield if dip_cor_flag=false !");
     }
@@ -2822,16 +3022,16 @@ void Input::Check(void)
             ModuleBase::WARNING_QUIT("Input::Check", "time interval of MD calculation should be set!");
         if (mdp.md_tfirst < 0 && esolver_type != "tddft")
             ModuleBase::WARNING_QUIT("Input::Check", "temperature of MD calculation should be set!");
-        if(mdp.md_type == 1 && mdp.md_pmode != "none" && mdp.md_pfirst < 0)
+        if (mdp.md_type == 1 && mdp.md_pmode != "none" && mdp.md_pfirst < 0)
             ModuleBase::WARNING_QUIT("Input::Check", "pressure of MD calculation should be set!");
-        if(mdp.md_type == 4)
+        if (mdp.md_type == 4)
         {
-            if(mdp.msst_qmass <= 0)
+            if (mdp.msst_qmass <= 0)
             {
                 ModuleBase::WARNING_QUIT("Input::Check", "msst_qmass must be greater than 0!");
             }
         }
-        if(esolver_type == "dp")
+        if (esolver_type == "dp")
         {
             if (access(mdp.pot_file.c_str(), 0) == -1)
             {
@@ -2839,11 +3039,11 @@ void Input::Check(void)
             }
         }
     }
-    else if(calculation == "gen_bessel")
+    else if (calculation == "gen_bessel")
     {
-        if(basis_type != "pw")
+        if (basis_type != "pw")
         {
-            ModuleBase::WARNING_QUIT("Input","to generate descriptors, please use pw basis");
+            ModuleBase::WARNING_QUIT("Input", "to generate descriptors, please use pw basis");
         }
     }
     // else if (calculation == "ofdft") // sunliang added on 2022-05-05
@@ -2853,11 +3053,8 @@ void Input::Check(void)
     //         ModuleBase::WARNING_QUIT("Input::Check", "pseudo_type in ofdft should be set as blps");
     //     }
     // }
-    else if (calculation != "scf" &&
-		    calculation != "relax" &&
-		    calculation != "cell-relax" &&
-		    calculation != "test_memory" &&
-		    calculation != "test_neighbour")
+    else if (calculation != "scf" && calculation != "relax" && calculation != "cell-relax"
+             && calculation != "test_memory" && calculation != "test_neighbour")
     {
         ModuleBase::WARNING_QUIT("Input", "check 'calculation' !");
     }
@@ -2879,7 +3076,7 @@ void Input::Check(void)
     }
     else
     {
-        if(out_dm1 == 1)
+        if (out_dm1 == 1)
         {
             ModuleBase::WARNING_QUIT("Input", "out_dm1 is only for multi-k");
         }
@@ -2905,7 +3102,7 @@ void Input::Check(void)
     {
         ModuleBase::WARNING_QUIT("Input", "nelec > 2*nbnd , bands not enough!");
     }
-    if (nspin != 1 && nspin != 2 && nspin !=4 )
+    if (nspin != 1 && nspin != 2 && nspin != 4)
     {
         ModuleBase::WARNING_QUIT("Input", "nspin does not equal to 1, 2, or 4!");
     }
@@ -2923,9 +3120,7 @@ void Input::Check(void)
         {
             ModuleBase::WARNING_QUIT("Input", "lapack can not be used with plane wave basis.");
         }
-        else if(ks_solver != "default" &&
-			ks_solver != "cg" &&
-			ks_solver != "dav")
+        else if (ks_solver != "default" && ks_solver != "cg" && ks_solver != "dav")
         {
             ModuleBase::WARNING_QUIT("Input", "please check the ks_solver parameter!");
         }
@@ -2942,8 +3137,9 @@ void Input::Check(void)
             ModuleBase::WARNING_QUIT("Input", "genelpa can not be used for series version.");
 #endif
 #ifndef __ELPA
-            ModuleBase::WARNING_QUIT("Input",
-                                     "Can not use genelpa if abacus is not compiled with ELPA. Please change ks_solver to scalapack_gvx.");
+            ModuleBase::WARNING_QUIT(
+                "Input",
+                "Can not use genelpa if abacus is not compiled with ELPA. Please change ks_solver to scalapack_gvx.");
 #endif
         }
         else if (ks_solver == "scalapack_gvx")
@@ -2966,7 +3162,7 @@ void Input::Check(void)
         else if (ks_solver == "cusolver")
         {
 #ifndef __MPI
-            ModuleBase::WARNING_QUIT("Input","Cusolver can not be used for series version.");
+            ModuleBase::WARNING_QUIT("Input", "Cusolver can not be used for series version.");
 #endif
         }
         else if (ks_solver != "default")
@@ -3131,14 +3327,13 @@ void Input::Check(void)
         }
     }
 
-
     if (read_file_dir != "auto")
     {
-    	const std::string ss = "test -d " + read_file_dir;
-    	if (system(ss.c_str()))
-	{
-        	ModuleBase::WARNING_QUIT("Input", "please set right files directory for reading in.");
-	}
+        const std::string ss = "test -d " + read_file_dir;
+        if (system(ss.c_str()))
+        {
+            ModuleBase::WARNING_QUIT("Input", "please set right files directory for reading in.");
+        }
     }
 
     return;
@@ -3154,7 +3349,7 @@ void Input::read_bool(std::ifstream &ifs, bool &var)
 {
     std::string str;
     ifs >> str;
-    for(auto &i : str)
+    for (auto &i: str)
     {
         i = tolower(i);
     }
@@ -3187,7 +3382,7 @@ void Input::read_bool(std::ifstream &ifs, bool &var)
         std::string warningstr = "Bad boolean parameter ";
         warningstr.append(str);
         warningstr.append(", please check the input parameters in file INPUT");
-        ModuleBase::WARNING_QUIT("Input", warningstr); 
+        ModuleBase::WARNING_QUIT("Input", warningstr);
     }
     ifs.ignore(150, '\n');
     return;
@@ -3208,32 +3403,33 @@ void Input::strtolower(char *sa, char *sb)
 // Conut how many types of atoms are listed in STRU
 int Input::count_ntype(const std::string &fn)
 {
-	// Only RANK0 core can reach here, because this function is called during Input::Read.
-	assert(GlobalV::MY_RANK == 0); 
+    // Only RANK0 core can reach here, because this function is called during Input::Read.
+    assert(GlobalV::MY_RANK == 0);
 
-	std::ifstream ifa(fn.c_str(), ios::in);
-	if (!ifa)
-	{
-		GlobalV::ofs_warning << fn;
-		ModuleBase::WARNING_QUIT("Input::count_ntype","Can not find the file containing atom positions.!");
-	}
+    std::ifstream ifa(fn.c_str(), ios::in);
+    if (!ifa)
+    {
+        GlobalV::ofs_warning << fn;
+        ModuleBase::WARNING_QUIT("Input::count_ntype", "Can not find the file containing atom positions.!");
+    }
 
-	int ntype_stru = 0;
-	std::string temp;
-	if( ModuleBase::GlobalFunc::SCAN_BEGIN(ifa, "ATOMIC_SPECIES") )
-	{
-		while(true)
-		{
-			ModuleBase::GlobalFunc::READ_VALUE(ifa, temp);
-			if (temp == "LATTICE_CONSTANT" || temp == "NUMERICAL_ORBITAL" || temp == "NUMERICAL_DESCRIPTOR" || ifa.eof())
-			{
-				break;
-			}
-			else if (isalpha(temp[0]))
-			{
-				ntype_stru += 1;
-			}
-		}
-	}
+    int ntype_stru = 0;
+    std::string temp;
+    if (ModuleBase::GlobalFunc::SCAN_BEGIN(ifa, "ATOMIC_SPECIES"))
+    {
+        while (true)
+        {
+            ModuleBase::GlobalFunc::READ_VALUE(ifa, temp);
+            if (temp == "LATTICE_CONSTANT" || temp == "NUMERICAL_ORBITAL" || temp == "NUMERICAL_DESCRIPTOR"
+                || ifa.eof())
+            {
+                break;
+            }
+            else if (isalpha(temp[0]))
+            {
+                ntype_stru += 1;
+            }
+        }
+    }
     return ntype_stru;
 }

@@ -377,18 +377,69 @@ class Input
     // tddft
     // Fuxiang He add 2016-10-26
     //==========================================================
-    double td_scf_thr; // threshold for electronic iteration of tddft
-    double td_dt; //"fs"
     double td_force_dt; //"fs"
     int td_val_elec_01; // valence electron 01
     int td_val_elec_02; // valence electron 02
     int td_val_elec_03; // valence electron 03
     int td_vext; // add extern potential or not
     int td_vext_dire; // vext direction
-    double td_timescale; //"fs"
-    int td_vexttype;
-    int td_vextout; // output the electronic potential or not
-    int td_dipoleout; // output the dipole or not
+    int out_dipole; // output the dipole or not
+
+    int td_stype ; //type of space domain  0 : length gauge  1: velocity gauge
+
+    int td_ttype ; //type of time domain
+    //  0  Gauss type function.
+    //  1  trapezoid type function.
+    //  2  Trigonometric functions, sin^2.
+    //  3  heaviside function.
+    //  4  HHG function.
+
+    int td_tstart ;
+    int td_tend ;
+
+    // space domain parameters
+
+    //length gauge
+    double td_lcut1;
+    double td_lcut2;
+
+    // time domain parameters
+
+    // Gauss
+    double td_gauss_freq ; // time(fs)^-1 
+    double td_gauss_phase ;
+    double td_gauss_sigma ; // time(fs)
+    double td_gauss_t0 ;
+    double td_gauss_amp ;  // V/A
+
+    // trapezoid
+    double td_trape_freq ; // time(fs)^-1 
+    double td_trape_phase ;
+    double td_trape_t1 ;
+    double td_trape_t2 ;
+    double td_trape_t3 ;
+    double td_trape_amp ; // V/A
+
+    // Trigonometric
+    double td_trigo_freq1 ; // time(fs)^-1 
+    double td_trigo_freq2 ; // time(fs)^-1 
+    double td_trigo_phase1 ;
+    double td_trigo_phase2 ;
+    double td_trigo_amp ; // V/A
+
+    // Heaviside
+    double td_heavi_t0;
+    double td_heavi_amp ; // V/A
+
+    // HHG
+    double td_hhg_amp1; // V/A
+    double td_hhg_amp2; // V/A
+    double td_hhg_freq1; // time(fs)^-1 
+    double td_hhg_freq2; // time(fs)^-1 
+    double td_hhg_phase1;
+    double td_hhg_phase2;
+    double td_hhg_t0;
+    double td_hhg_sigma; // time(fs)
 
     //==========================================================
     // restart
