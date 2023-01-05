@@ -36,6 +36,7 @@ void destoryBLAShandle(){
 
 // Define the CUDA kernel:
 template <typename FPTYPE>
+__launch_bounds__(1024) 
 __global__ void vector_div_constant_kernel(
     const int size, 
     thrust::complex<FPTYPE>* result, 
@@ -50,6 +51,7 @@ __global__ void vector_div_constant_kernel(
 }
 
 template <typename FPTYPE>
+__launch_bounds__(1024) 
 __global__ void vector_mul_vector_kernel(
     const int size, 
     thrust::complex<FPTYPE>* result, 
@@ -64,6 +66,7 @@ __global__ void vector_mul_vector_kernel(
 }
 
 template <typename FPTYPE>
+__launch_bounds__(1024) 
 __global__ void vector_div_vector_kernel(
     const int size, 
     thrust::complex<FPTYPE>* result, 
@@ -78,6 +81,7 @@ __global__ void vector_div_vector_kernel(
 }
 
 template <typename FPTYPE>
+__launch_bounds__(1024) 
 __global__ void constantvector_addORsub_constantVector_kernel(
     const int size,
     thrust::complex<FPTYPE>* result,
@@ -94,6 +98,7 @@ __global__ void constantvector_addORsub_constantVector_kernel(
 }
 
 template <typename FPTYPE>
+__launch_bounds__(1024) 
 __global__ void matrix_transpose_kernel(
         const int row,
         const int col,
@@ -112,6 +117,7 @@ __global__ void matrix_transpose_kernel(
 
 
 template <typename FPTYPE>
+__launch_bounds__(1024) 
 __global__ void matrix_setTo_another_kernel(
         const int n,
         const int LDA,
