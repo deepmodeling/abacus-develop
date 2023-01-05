@@ -6,6 +6,10 @@
 #include "../src_pw/global.h"
 #include "local_orbital_charge.h"
 
+#ifdef __MKL
+#include <mkl_service.h>
+#endif
+
 void Local_Orbital_Charge::allocate_DM_k(void)
 {
     ModuleBase::TITLE("Local_Orbital_Charge", "allocate_k");
