@@ -1,9 +1,35 @@
 #include "gtest/gtest.h"
+#include "gmock/gmock.h"
 #include "setcell.h"
 #include "module_md/MSST.h"
 #include "module_esolver/esolver_lj.h"
 
 #define doublethreshold 1e-12
+
+/************************************************
+ *  unit test of functions in MSST.h
+ ***********************************************/
+
+/**
+ * - Tested Function
+ *   - MSST::setup
+ *     - init before running md, calculate energy, force, and stress of the initial configuration.
+ *
+ *   - MSST::first_half
+ *     - the first half of equation of motion, update velocities and positions
+ *
+ *   - MSST::second_half
+ *     - the second half of equation of motion, update velocities
+ * 
+ *   - MSST::write_restart
+ *     - write the information into files used for MD restarting
+ * 
+ *   - MSST::restart
+ *     - restart MD when md_restart is true
+ * 
+ *   - MSST::outputMD
+ *     - output MD information such as energy, temperature, and pressure
+ */
 
 class MSST_test : public testing::Test
 {
@@ -143,3 +169,63 @@ TEST_F(MSST_test, second_half)
     EXPECT_NEAR(mdrun->vel[3].y, 7.7296995498991997e-05, doublethreshold);
     EXPECT_NEAR(mdrun->vel[3].z, -2.8200698165338931e-05, doublethreshold);
 }
+
+TEST_F(MSST_test, write_restart)
+{
+    mdrun->step_ = 1;
+    mdrun->step_rst_ = 2;
+    mdrun->write_restart();
+
+    std::ifstream ifs("Restart_md.dat");
+    std::string output_str;
+    getline(ifs,output_str);
+    EXPECT_THAT(output_str,testing::HasSubstr("3"));
+    getline(ifs,output_str);
+    EXPECT_THAT(output_str,testing::HasSubstr("-0.00977662"));
+    getline(ifs,output_str);
+    EXPECT_THAT(output_str,testing::HasSubstr("-0.00768262"));
+    getline(ifs,output_str);
+    EXPECT_THAT(output_str,testing::HasSubstr("1000"));
+    getline(ifs,output_str);
+    EXPECT_THAT(output_str,testing::HasSubstr("1.60606e-06"));
+    getline(ifs,output_str);
+    EXPECT_THAT(output_str,testing::HasSubstr("0"));
+    ifs.close();
+}
+
+TEST_F(MSST_test, restart)
+{
+    mdrun->restart();
+    remove("Restart_md.dat");
+
+    MSST* msst =dynamic_cast<MSST*>(mdrun);
+    EXPECT_EQ(mdrun->step_rst_, 3);
+    EXPECT_EQ(msst->omega[mdrun->mdp.msst_direction], -0.00977662);
+    EXPECT_EQ(msst->e0, -0.00768262);
+    EXPECT_EQ(msst->v0, 1000);
+    EXPECT_EQ(msst->p0, 1.60606e-06);
+    EXPECT_EQ(msst->lag_pos, 0);
+}
+
+TEST_F(MSST_test, outputMD)
+{
+    std::ofstream ofs("running.log");
+    mdrun->outputMD(ofs, true);
+    ofs.close();
+
+    std::ifstream ifs("running.log");
+    std::string output_str;
+    getline(ifs,output_str);
+    getline(ifs,output_str);
+    getline(ifs,output_str);
+    EXPECT_THAT(output_str,testing::HasSubstr(" ------------------------------------------------------------------------------------------------"));
+    getline(ifs,output_str);
+    EXPECT_THAT(output_str,testing::HasSubstr(" Energy              Potential           Kinetic             Temperature         Pressure (KBAR)     "));
+    getline(ifs,output_str);
+    EXPECT_THAT(output_str,testing::HasSubstr(" -0.0077253698       -0.011957819        0.0042324488        297                 1.0762537           "));
+    getline(ifs,output_str);
+    EXPECT_THAT(output_str,testing::HasSubstr(" ------------------------------------------------------------------------------------------------"));
+    ifs.close();
+    remove("running.log");
+}
+

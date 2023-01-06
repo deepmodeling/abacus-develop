@@ -5,6 +5,16 @@
 
 #define doublethreshold 1e-12
 
+/************************************************
+ *  unit test of functions in esolver_lj.h
+ ***********************************************/
+
+/**
+ * - Tested Function
+ *   - ESolver_LJ::Run
+ *     - calculate energy, force, virial for lj pot
+ */
+
 class LJ_pot_test : public testing::Test
 {
 protected:
