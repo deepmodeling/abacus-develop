@@ -34,6 +34,10 @@ add_library(
     tool_title.cpp
     ylm.cpp
     abfs-vector3_order.cpp
+    libm/branred.cpp
+    libm/cexp.cpp
+    libm/exp.cpp
+    libm/sincos.cpp
 )
 
 if(ENABLE_COVERAGE)
@@ -43,4 +47,5 @@ endif()
 if(BUILD_TESTING)
   add_subdirectory(test)
   add_subdirectory(kernels/test)
+  add_subdirectory(libm/test)
 endif()

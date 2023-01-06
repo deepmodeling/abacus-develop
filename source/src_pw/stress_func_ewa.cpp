@@ -2,6 +2,7 @@
 #include "./H_Ewald_pw.h"
 #include "../module_base/timer.h"
 #include "../module_base/tool_threading.h"
+#include "../module_base/libm/libm.h"
 #include "global.h"
 
 #ifdef _OPENMP
@@ -86,11 +87,13 @@ void Stress_Func<FPTYPE, Device>::stress_ewa(ModuleBase::matrix& sigma, ModulePW
 			for(int i=0; i<GlobalC::ucell.atoms[it].na; i++)
 			{
 				arg = (rho_basis->gcar[ig] * GlobalC::ucell.atoms[it].tau[i]) * (ModuleBase::TWO_PI);
-				rhostar = rhostar + std::complex<FPTYPE>(GlobalC::ucell.atoms[it].ncpp.zv * cos(arg),GlobalC::ucell.atoms[it].ncpp.zv * sin(arg));
+				double sinp, cosp;
+                ModuleBase::libm::sincos(arg, &sinp, &cosp);
+				rhostar = rhostar + std::complex<FPTYPE>(GlobalC::ucell.atoms[it].ncpp.zv * cosp,GlobalC::ucell.atoms[it].ncpp.zv * sinp);
 			}
 		}
 		rhostar /= GlobalC::ucell.omega;
-		sewald = fact* (ModuleBase::TWO_PI) * ModuleBase::e2 * exp(-g2a) / g2 * pow(abs(rhostar),2);
+		sewald = fact* (ModuleBase::TWO_PI) * ModuleBase::e2 * ModuleBase::libm::exp(-g2a) / g2 * pow(abs(rhostar),2);
 		local_sdewald -= sewald;
 		for(int l=0;l<3;l++)
 		{
@@ -138,7 +141,7 @@ void Stress_Func<FPTYPE, Device>::stress_ewa(ModuleBase::matrix& sigma, ModulePW
 			for(int nr=0 ; nr<nrm ; nr++)
 			{
 				rr=sqrt(r2[nr]) * GlobalC::ucell.lat0;
-				fac = -ModuleBase::e2/2.0/GlobalC::ucell.omega*pow(GlobalC::ucell.lat0,2)*GlobalC::ucell.atoms[it].ncpp.zv * GlobalC::ucell.atoms[jt].ncpp.zv / pow(rr,3) * (erfc(sqa*rr)+rr * sq8a_2pi *  exp(-alpha * pow(rr,2)));
+				fac = -ModuleBase::e2/2.0/GlobalC::ucell.omega*pow(GlobalC::ucell.lat0,2)*GlobalC::ucell.atoms[it].ncpp.zv * GlobalC::ucell.atoms[jt].ncpp.zv / pow(rr,3) * (erfc(sqa*rr)+rr * sq8a_2pi *  ModuleBase::libm::exp(-alpha * pow(rr,2)));
 				for(int l=0; l<3; l++)
 				{
 					for(int m=0; m<l+1; m++)

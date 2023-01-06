@@ -24,6 +24,7 @@ option(INFO "Enable gathering of math library information" OFF)
 option(ENABLE_COVERAGE "Enable coverage build." OFF)
 option(ENABLE_LIBRI "Enable EXX with LibRI." OFF)
 option(USE_ELPA "Enable ELPA" ON)
+option(USE_ABACUS_LIBM " Enable abacus self libmath." ON)
 option(GIT_SUBMODULE "Check submodules during build" ON)
 # Do not enable it if generated code will run on different CPUs
 option(ENABLE_NATIVE_OPTIMIZATION "Enable compilation optimization for the native machine's CPU type" OFF)
@@ -84,6 +85,10 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
   else()
     add_compile_options(-g)
   endif()
+endif()
+
+if (USE_ABACUS_LIBM)
+  add_definitions(-DUSE_ABACUS_LIBM)
 endif()
 
 if (ENABLE_NATIVE_OPTIMIZATION)

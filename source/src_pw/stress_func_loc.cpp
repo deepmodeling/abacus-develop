@@ -2,6 +2,7 @@
 #include "../module_base/math_integral.h"
 #include "../module_base/tool_threading.h"
 #include "../module_base/timer.h"
+#include "../module_base/libm/libm.h"
 #include "global.h"
 
 //calculate local pseudopotential stress in PW or VL_dVL stress in LCAO
@@ -233,7 +234,9 @@ ModulePW::PW_Basis* rho_basis
 		// DV(g)/Dg = ModuleBase::Integral of r (Dj_0(gr)/Dg) V(r) dr
 		for(int i = 1;i< msh;i++)
 		{
-			aux [i] = aux1 [i] * (r [i] * cos (gx * r [i] ) / gx - sin (gx * r [i] ) / pow(gx,2));
+			double sinp, cosp;
+            ModuleBase::libm::sincos(gx * r [i], &sinp, &cosp);
+			aux [i] = aux1 [i] * (r [i] * cosp / gx - sinp / pow(gx,2));
 		}
 		double vlcp=0;
 		// simpson (msh, aux, rab, vlcp);
@@ -242,7 +245,7 @@ ModulePW::PW_Basis* rho_basis
 		vlcp *= ModuleBase::FOUR_PI / GlobalC::ucell.omega / 2.0 / gx;
 		// subtract the long-range term
 		FPTYPE g2a = gx2 / 4.0;
-		vlcp += ModuleBase::FOUR_PI / GlobalC::ucell.omega * zp * ModuleBase::e2 * exp ( - g2a) * (g2a + 1) / pow(gx2 , 2);
+		vlcp += ModuleBase::FOUR_PI / GlobalC::ucell.omega * zp * ModuleBase::e2 * ModuleBase::libm::exp ( - g2a) * (g2a + 1) / pow(gx2 , 2);
 		dvloc [igl] = vlcp;
 	}
 	delete[] aux;

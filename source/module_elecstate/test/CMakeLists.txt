@@ -13,6 +13,8 @@ if(ENABLE_LCAO)
             ../../src_pw/structure_factor.cpp ../../src_pw/pw_complement.cpp
             ../../src_pw/klist.cpp ../../src_parallel/parallel_kpoints.cpp ../../src_pw/occupy.cpp
             ../kernels/elecstate_op.cpp ../../src_io/rwstream.cpp ../../src_io/wf_io.cpp
+            ../../module_base/libm/cexp.cpp ../../module_base/libm/exp.cpp ../../module_base/libm/branred.cpp
+            ../../module_base/libm/sincos.cpp
   )
 
   install(DIRECTORY support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
