@@ -1265,9 +1265,10 @@ void Symmetry::rhog_symmetry(std::complex<double> *rhogtot,
     int* invmap = new int[nrotk];
     this->gmatrix_invmap(kgmatrix, nrotk, invmap);
 
-    // record the index but not the final gdirect for each symm-opt
+    // record the index and gphase but not the final gdirect for each symm-opt
     int *ipw_record = new int[nrotk];
     int *ixyz_record = new int[nrotk];
+    std::complex<double>* gphase_record = new std::complex<double> [nrotk];
 
     //tmp variables
     ModuleBase::Vector3<double> zero_vec(0, 0, 0);
@@ -1275,6 +1276,7 @@ void Symmetry::rhog_symmetry(std::complex<double> *rhogtot,
     ModuleBase::Vector3<int> tmp_gdirect(0, 0, 0);
     ModuleBase::Vector3<double> tmp_gdirect_double(0.0, 0.0, 0.0);
     int ipw, ixyz, ii, jj, kk=0;
+    double arg=0.0;
     for (int i = 0; i< fftnx; ++i)
     {
         for (int j = 0; j< fftny; ++j)
@@ -1320,15 +1322,17 @@ void Symmetry::rhog_symmetry(std::complex<double> *rhogtot,
                         ipw=ixyz2ipw[ixyz];
                         if(ipw==-1) //not in pw-sphere
                         {
-                            std::cout<<"warnning: ipw0 is in pw-sphere but ipw not !!!"<<std::endl;
-                            continue;
+                            if (std::abs(rhogtot[ipw0].real())>this->epsilon || std::abs(rhogtot[ipw0].imag()>this->epsilon))
+                                std::cout<<"warnning: ipw0 is in pw-sphere but ipw not !!!"<<std::endl;
+                            continue;   //else, just skip it
                         }
                         //calculate phase factor
                         tmp_gdirect_double.x=(double)tmp_gdirect.x;
                         tmp_gdirect_double.y=(double)tmp_gdirect.y;
                         tmp_gdirect_double.z=(double)tmp_gdirect.z;
-                        const double arg = - ( tmp_gdirect_double *gtrans[isym] ) * ModuleBase::TWO_PI;
+                        arg = ( tmp_gdirect_double *gtrans[isym] ) * ModuleBase::TWO_PI;  //degree?
                         const std::complex<double> gphase( cos(arg),  sin(arg) );
+                        gphase_record[isym]=gphase;                            
                         sum += rhogtot[ipw]*gphase;
                         //record
                         ipw_record[rot_count]=ipw;
@@ -1340,7 +1344,7 @@ void Symmetry::rhog_symmetry(std::complex<double> *rhogtot,
 
                     for (int isym = 0; isym < rot_count; ++isym)
                     {
-                        rhogtot[ipw_record[isym]] = sum;
+                        rhogtot[ipw_record[isym]] = sum/gphase_record[isym];
                         symflag[ixyz_record[isym]] = true;
                     }
                 }
@@ -1351,6 +1355,7 @@ void Symmetry::rhog_symmetry(std::complex<double> *rhogtot,
     delete[] symflag;
     delete[] ipw_record;
     delete[] ixyz_record;
+    delete[] gphase_record;
     delete[] invmap;
     ModuleBase::timer::tick("Symmetry","rho_symmetry");
 }
