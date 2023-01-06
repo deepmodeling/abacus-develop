@@ -41,7 +41,7 @@ void Stress_Func<FPTYPE, Device>::stress_loc(ModuleBase::matrix& sigma, ModulePW
 		{ // is = 0
 			for (int ir = irb; ir < ir_end; ++ir)
 			{ // initialize aux
-			aux[ir] = std::complex<double>(chr->rho[0][ir], 0.0 );
+				aux[ir] = std::complex<FPTYPE>(chr->rho[0][ir], 0.0 );
 			}
 		}
 		for (int is = 1; is < GlobalV::NSPIN; is++)
@@ -216,8 +216,8 @@ ModulePW::PW_Basis* rho_basis
 		aux1[i] = r [i] * vloc_at [i] + zp * ModuleBase::e2 * erf(r[i]);
 	}
 
-	double  *aux;
-	aux = new double[msh];
+	FPTYPE  *aux;
+	aux = new FPTYPE[msh];
 	aux[0] = 0.0;
 #ifdef _OPENMP
 	#pragma omp for
@@ -234,11 +234,11 @@ ModulePW::PW_Basis* rho_basis
 		// DV(g)/Dg = ModuleBase::Integral of r (Dj_0(gr)/Dg) V(r) dr
 		for(int i = 1;i< msh;i++)
 		{
-			double sinp, cosp;
+			FPTYPE sinp, cosp;
             ModuleBase::libm::sincos(gx * r [i], &sinp, &cosp);
 			aux [i] = aux1 [i] * (r [i] * cosp / gx - sinp / pow(gx,2));
 		}
-		double vlcp=0;
+		FPTYPE vlcp=0;
 		// simpson (msh, aux, rab, vlcp);
 		ModuleBase::Integral::Simpson_Integral(msh, aux, rab, vlcp );
 		// DV(g^2)/Dg^2 = (DV(g)/Dg)/2g
