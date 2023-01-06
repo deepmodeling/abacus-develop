@@ -5,9 +5,17 @@
 
 
 void Symmetry_rho::psymmg(std::complex<double>* rhog_part, const ModulePW::PW_Basis *rho_basis, Parallel_Grid &Pgrid, ModuleSymmetry::Symmetry &symm) const
-{
+{		
+	//(1) get fftixy2is and do Allreduce
+	int * fftixy2is = new int [rho_basis->fftnxy];
+	rho_basis->getfftixy2is(fftixy2is);		//current proc
 #ifdef __MPI
-	// (1) reduce all rho from the first pool.
+	MPI_Allreduce(MPI_IN_PLACE, fftixy2is, rho_basis->fftnxy, MPI_INT, MPI_SUM, POOL_WORLD);
+	if(rho_basis->poolnproc>1)
+		for (int i=0;i<rho_basis->fftnxy;++i)
+			fftixy2is[i]+=rho_basis->poolnproc-1;
+
+	// (2) reduce all rho from the first pool.
 	std::complex<double>* rhogtot;
 	int* ig2isztot;
 	if(GlobalV::MY_RANK == 0)
@@ -17,7 +25,7 @@ void Symmetry_rho::psymmg(std::complex<double>* rhog_part, const ModulePW::PW_Ba
 		ig2isztot = new int[rho_basis->npwtot];
 		ModuleBase::GlobalFunc::ZEROS(rhogtot, rho_basis->npwtot);
 	}
-	//find max_npw
+	// find max_npw
 	int max_npw=0;
 	for (int proc = 0; proc < rho_basis->poolnproc; ++proc)
 	{
@@ -28,18 +36,20 @@ void Symmetry_rho::psymmg(std::complex<double>* rhog_part, const ModulePW::PW_Ba
 	}
 	this->reduce_to_fullrhog(rho_basis, rhogtot, rhog_part, ig2isztot, rho_basis->ig2isz, max_npw);
 
-	// (2)
+	// (3) get ixy2ipw and do rhog_symmetry on proc 0
 	if(GlobalV::MY_RANK==0)
 	{
 #endif
+		//init ixyz2ipw
 		int* ixyz2ipw = new int[rho_basis->fftnxyz];
 		ModuleBase::GlobalFunc::ZEROS(ixyz2ipw, rho_basis->fftnxyz);
+		for(int i=0;i<rho_basis->fftnxyz;++i) ixyz2ipw[i]=-1;		//memory problem!
 #ifdef __MPI
-		this->get_ixyz2ipw(rho_basis, ig2isztot, ixyz2ipw);	
+		this->get_ixyz2ipw(rho_basis, ig2isztot, fftixy2is, ixyz2ipw);	
 		symm.rhog_symmetry(rhogtot, ixyz2ipw, rho_basis->nx, rho_basis->ny, rho_basis->nz, 
 			rho_basis->fftnx, rho_basis->fftny, rho_basis->fftnz);
 #else
-		this->get_ixyz2ipw(rho_basis, rho_basis->ig2isz, ixyz2ipw);	
+		this->get_ixyz2ipw(rho_basis, rho_basis->ig2isz, fftixy2is, ixyz2ipw);	
 		symm.rhog_symmetry(rhog_part, ixyz2ipw, rho_basis->nx, rho_basis->ny, rho_basis->nz, 
 			rho_basis->fftnx, rho_basis->fftny, rho_basis->fftnz);
 #endif
@@ -64,7 +74,7 @@ void Symmetry_rho::psymmg(std::complex<double>* rhog_part, const ModulePW::PW_Ba
 #ifdef __MPI
 	}
 
-	// (3)
+	// (4) send the result to other pools and procs
 	std::complex<double>* piece = new std::complex<double>[max_npw];
 	int npw_start=0;
 	for(int proc=0; proc<rho_basis->poolnproc; ++proc)
@@ -89,6 +99,7 @@ void Symmetry_rho::psymmg(std::complex<double>* rhog_part, const ModulePW::PW_Ba
 		delete[] ig2isztot;
 	}
 	delete[] piece;
+	delete[] fftixy2is;
 #endif
 	return;
 }
@@ -241,7 +252,7 @@ void Symmetry_rho::rhog_piece_to_all(const ModulePW::PW_Basis *rho_basis,
 
 // only for MYRANK==0
 void Symmetry_rho::get_ixyz2ipw(const ModulePW::PW_Basis *rho_basis, 
-	const int* ig2isztot, int* ixyz2ipw) const
+	const int* ig2isztot, const int* fftixy2is, int* ixyz2ipw) const
 {
 	//step 1: get ipsz2ipw
 	
@@ -270,10 +281,6 @@ void Symmetry_rho::get_ixyz2ipw(const ModulePW::PW_Basis *rho_basis,
 	assert(nstnz_count==rho_basis->nstot*rho_basis->nz);
 
 	//step2: ixyz to ipsz
-
-	//get fftixy2is
-	int * fftixy2is = new int [rho_basis->fftnxy];
-	rho_basis->getfftixy2is(fftixy2is);
 
 	//save the start-index of (nst*nz) till each core
     int* nstnz_start = new int[rho_basis->poolnproc];
@@ -305,7 +312,6 @@ void Symmetry_rho::get_ixyz2ipw(const ModulePW::PW_Basis *rho_basis,
 	assert (ixyz==rho_basis->fftnxyz-1);
 
 	delete[] nstnz_start;
-	delete[] fftixy2is;
 	delete[] ipsz2ipw;
 	return;
 }

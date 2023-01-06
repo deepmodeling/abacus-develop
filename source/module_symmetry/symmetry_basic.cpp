@@ -1031,6 +1031,26 @@ void Symmetry_Basic::rotate( ModuleBase::Matrix3 &gmatrix, ModuleBase::Vector3<d
 	return;
 }
 
+void Symmetry_Basic::rotate_simple( ModuleBase::Matrix3 &gmatrix, ModuleBase::Vector3<double> &gtrans, 
+		int i, int j, int k, // FFT grid index.
+		const int nr1, const int nr2, const int nr3, // dimension of FFT grid. 
+		int &ri, int &rj, int &rk)
+{
+	static ModuleBase::Matrix3 g;
+	g.e11 = gmatrix.e11;
+	g.e21 = gmatrix.e21 * (double)nr1 / (double)nr2;
+	g.e31 = gmatrix.e31 * (double)nr1 / (double)nr3;
+	g.e12 = gmatrix.e12 * (double)nr2 / (double)nr1;
+	g.e22 = gmatrix.e22;
+	g.e32 = gmatrix.e32 * (double)nr2 / (double)nr3;
+	g.e13 = gmatrix.e13 * (double)nr3 / (double)nr1;
+	g.e23 = gmatrix.e23 * (double)nr3 / (double)nr2;
+	g.e33 = gmatrix.e33;
+	ri = int(g.e11 * i + g.e21 * j + g.e31 * k) + (int)(gtrans.x *  nr1);
+	rj = int(g.e12 * i + g.e22 * j + g.e32 * k) + (int)(gtrans.y  * nr2);
+	rk = int(g.e13 * i + g.e23 * j + g.e33 * k) + (int)(gtrans.z  * nr3);
+	return;
+}
 // atom ordering for each atom type 
 // by a "weighted function" f
 // (instead of ordering by x, y, z directly)

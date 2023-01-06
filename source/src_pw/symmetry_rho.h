@@ -26,7 +26,8 @@ class Symmetry_rho
 	void rhog_piece_to_all(const ModulePW::PW_Basis *rho_basis, std::complex<double>* piece, 
 			const int &proc, std::complex<double>* rhog_part) const;
 #endif
-	void get_ixyz2ipw(const ModulePW::PW_Basis *rho_basis, const int* ig2isztot, int* ixyz2ipw) const;	//(ix, iy, iz) -> (ip, ig)
+	void get_ixyz2ipw(const ModulePW::PW_Basis *rho_basis, const int* ig2isztot, 
+			const int* fftixy2is, int* ixyz2ipw) const;	//(ix, iy, iz) -> (ip, ig)
 };
 
 #endif
