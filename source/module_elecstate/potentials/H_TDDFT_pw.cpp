@@ -45,7 +45,6 @@ void H_TDDFT_pw::cal_fixed_v(double* vl_pseudo)
     }
 
     delete[] vext_space;
-    
 
     ModuleBase::timer::tick("H_TDDFT_pw", "cal_fixed_v");
     return;
@@ -174,8 +173,7 @@ double H_TDDFT_pw::cal_v_space_length_potential(double i)
     double vext_space;
     if (i < this->rho_basis_->nx * lcut1)
     {
-        vext_space = ((i / this->rho_basis_->nx - lcut1) / (lcut1 + 1.0 - lcut2) - lcut1)
-                     * this->ucell_->lat0;
+        vext_space = ((i / this->rho_basis_->nx - lcut1) / (lcut1 + 1.0 - lcut2) - lcut1) * this->ucell_->lat0;
     }
     else if (i >= this->rho_basis_->nx * lcut1 && i < this->rho_basis_->nx * lcut2)
     {
@@ -183,8 +181,7 @@ double H_TDDFT_pw::cal_v_space_length_potential(double i)
     }
     else if (i >= this->rho_basis_->nx * lcut2)
     {
-        vext_space = ((i / this->rho_basis_->nx - lcut2) / (lcut1 + 1.0 - lcut2) - lcut2)
-                     * this->ucell_->lat0;
+        vext_space = ((i / this->rho_basis_->nx - lcut2) / (lcut1 + 1.0 - lcut2) - lcut2) * this->ucell_->lat0;
     }
     return vext_space;
 }
@@ -202,27 +199,27 @@ double H_TDDFT_pw::cal_v_time()
     {
     case 0:
         vext_time = cal_v_time_Gauss();
-        cout<<"gauss vtime="<<vext_time<<endl;
+        cout << "gauss vtime=" << vext_time << endl;
         break;
 
     case 1:
         vext_time = cal_v_time_trapezoid();
-        cout<<"trape vtime="<<vext_time<<endl;
+        cout << "trape vtime=" << vext_time << endl;
         break;
 
     case 2:
         vext_time = cal_v_time_trigonometric();
-        cout<<"trigo vtime="<<vext_time<<endl;
+        cout << "trigo vtime=" << vext_time << endl;
         break;
 
     case 3:
         vext_time = cal_v_time_heaviside();
-        cout<<"heavi vtime="<<vext_time<<endl;
+        cout << "heavi vtime=" << vext_time << endl;
         break;
 
     case 4:
         vext_time = cal_v_time_HHG();
-        cout<<"hhg vtime="<<vext_time<<endl;
+        cout << "hhg vtime=" << vext_time << endl;
         break;
 
     default:
@@ -270,7 +267,8 @@ double H_TDDFT_pw::cal_v_time_trigonometric()
 
     const double timenow = istep * INPUT.mdp.md_dt;
 
-    vext_time = trigo_amp * cos(trigo_omega1 * timenow) * sin(trigo_omega2 * timenow) * sin(trigo_omega2 * timenow);
+    vext_time = trigo_amp * cos(trigo_omega1 * timenow + trigo_phase1) * sin(trigo_omega2 * timenow + trigo_phase2)
+                * sin(trigo_omega2 * timenow + trigo_phase2);
 
     return vext_time;
 }
@@ -287,7 +285,7 @@ double H_TDDFT_pw::cal_v_time_HHG()
 {
     double vext_time = 0.0;
 
-    double hhg_t = (istep - hhg_t0) * INPUT.mdp.md_dt; 
+    double hhg_t = (istep - hhg_t0) * INPUT.mdp.md_dt;
     vext_time = (cos(hhg_omega1 * hhg_t + hhg_phase1) * hhg_amp1 + cos(hhg_omega2 * hhg_t + hhg_phase2) * hhg_amp2)
                 * exp(-hhg_t * hhg_t * 0.5 / (hhg_sigma2));
 

@@ -410,7 +410,7 @@ void Input::Default(void)
     td_ttype = 0;
     //  0  Gauss type function.
     //  1  trapezoid type function.
-    //  2  Trigonometric functions, sin^2.
+    //  2  Trigonometric function, sin^2.
     //  3  heaviside function.
     //  4  HHG function.
 
