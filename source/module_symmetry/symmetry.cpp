@@ -1569,11 +1569,22 @@ void Symmetry::stress_symmetry(ModuleBase::matrix& sigma, const UnitCell &ucell)
 void Symmetry::gmatrix_convert(const ModuleBase::Matrix3* sa, ModuleBase::Matrix3* sb, 
         const int n, const ModuleBase::Matrix3 &a, const ModuleBase::Matrix3 &b)
 {
+    auto round = [](double x){return (x>0.0)?floor(x+0.5):ceil(x-0.5);};
     ModuleBase::Matrix3 ai = a.Inverse();
     ModuleBase::Matrix3 bi = b.Inverse();
     for (int i=0;i<n;++i)
     {
           sb[i]=b*ai*sa[i]*a*bi;
+          //to int 
+          sb[i].e11=round(sb[i].e11);
+          sb[i].e12=round(sb[i].e12);
+          sb[i].e13=round(sb[i].e13);
+          sb[i].e21=round(sb[i].e21);
+          sb[i].e22=round(sb[i].e22);
+          sb[i].e23=round(sb[i].e23);
+          sb[i].e31=round(sb[i].e31);
+          sb[i].e32=round(sb[i].e32);
+          sb[i].e33=round(sb[i].e33);
     }
 }
 
