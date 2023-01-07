@@ -9,17 +9,12 @@
 #include <complex>
 #include <cmath>
 
-#if !defined(__INTEL_COMPILER) && defined(USE_ABACUS_LIBM)
-#define WITH_ABACUS_LIBM
-#pragma message("we are using self libm now!")
-#endif
-
 namespace ModuleBase
 {
 namespace libm
 {
 
-#if !defined(__INTEL_COMPILER) && defined(USE_ABACUS_LIBM)
+#ifdef USE_ABACUS_LIBM
 
 double __exp (double x);
 double __cos (double x);

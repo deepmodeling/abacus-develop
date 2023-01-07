@@ -9,8 +9,6 @@
 #include <float.h>
 #include <limits>
 
-#if !defined(__INTEL_COMPILER) && defined(USE_ABACUS_LIBM)
-
 namespace ModuleBase
 {
 namespace libm
@@ -154,5 +152,3 @@ __cexp (const std::complex<double> &x) { return __cexp_impl(x); }
 
 };
 };
-
-#endif

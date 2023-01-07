@@ -87,6 +87,11 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
   endif()
 endif()
 
+# Force turn off USE_ABACUS_LIBM on Intel Compiler
+if (("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel") OR
+    ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "IntelLLVM"))
+    set(USE_ABACUS_LIBM OFF)
+endif()
 if (USE_ABACUS_LIBM)
   add_definitions(-DUSE_ABACUS_LIBM)
 endif()

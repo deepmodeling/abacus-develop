@@ -7,8 +7,6 @@
 #include "gtest/gtest.h"
 #include "../libm.h"
 
-#ifdef WITH_ABACUS_LIBM
-
 TEST(base_libm, sincos)
 {
     int len = 50000;
@@ -81,5 +79,3 @@ TEST(base_libm, cexp)
         EXPECT_DOUBLE_EQ(ds1[i].imag(), ds2[i].imag());
     }
 }
-
-#endif

@@ -7,8 +7,6 @@
 #include <stdint.h>
 #include <float.h>
 
-#if !defined(__INTEL_COMPILER) && defined(USE_ABACUS_LIBM)
-
 namespace ModuleBase
 {
 namespace libm
@@ -372,5 +370,3 @@ __exp (double x)
 
 };
 };
-
-#endif

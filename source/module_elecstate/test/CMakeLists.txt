@@ -3,6 +3,7 @@ remove_definitions(-D__EXX)
 remove_definitions(-D__CUDA)
 remove_definitions(-D__ROCM)
 remove_definitions(-D__DEEPKS)
+
 if(ENABLE_LCAO)
   AddTest(
     TARGET EState_updaterhok_pw
@@ -13,8 +14,6 @@ if(ENABLE_LCAO)
             ../../src_pw/structure_factor.cpp ../../src_pw/pw_complement.cpp
             ../../src_pw/klist.cpp ../../src_parallel/parallel_kpoints.cpp ../../src_pw/occupy.cpp
             ../kernels/elecstate_op.cpp ../../src_io/rwstream.cpp ../../src_io/wf_io.cpp
-            ../../module_base/libm/cexp.cpp ../../module_base/libm/exp.cpp ../../module_base/libm/branred.cpp
-            ../../module_base/libm/sincos.cpp
   )
 
   install(DIRECTORY support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
@@ -53,6 +52,14 @@ if(ENABLE_LCAO)
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
       )]]
 endif()
+if (USE_ABACUS_LIBM)
+list (APPEND LIBM_SRC
+  ../../module_base/libm/branred.cpp
+  ../../module_base/libm/cexp.cpp
+  ../../module_base/libm/exp.cpp
+  ../../module_base/libm/sincos.cpp
+)
+endif()
 add_library(
   base_serial
   OBJECT
@@ -85,6 +92,7 @@ add_library(
   ../../module_base/tool_quit.cpp
   ../../module_base/tool_title.cpp
   ../../module_base/ylm.cpp
+  ${LIBM_SRC}
 )
 
 list(APPEND planewave_serial_srcs

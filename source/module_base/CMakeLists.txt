@@ -1,3 +1,12 @@
+if (USE_ABACUS_LIBM)
+list (APPEND LIBM_SRC
+  libm/branred.cpp
+  libm/cexp.cpp
+  libm/exp.cpp
+  libm/sincos.cpp
+)
+endif()
+
 add_library(
     base
     OBJECT
@@ -34,10 +43,7 @@ add_library(
     tool_title.cpp
     ylm.cpp
     abfs-vector3_order.cpp
-    libm/branred.cpp
-    libm/cexp.cpp
-    libm/exp.cpp
-    libm/sincos.cpp
+    ${LIBM_SRC}
 )
 
 if(ENABLE_COVERAGE)
@@ -47,5 +53,7 @@ endif()
 if(BUILD_TESTING)
   add_subdirectory(test)
   add_subdirectory(kernels/test)
-  add_subdirectory(libm/test)
+  if (USE_ABACUS_LIBM)
+    add_subdirectory(libm/test)
+  endif()
 endif()
