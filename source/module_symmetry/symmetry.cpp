@@ -182,11 +182,11 @@ void Symmetry::analy_sys(const UnitCell &ucell, std::ofstream &ofs_running)
 */
 
     //convert gmatrix to reciprocal space
-    this->gmatrix_convert(gmatrix, kgmatrix, nrotk, optlat, ucell.G);
+    this->gmatrix_convert_int(gmatrix, kgmatrix, nrotk, optlat, ucell.G);
 
 // convert the symmetry operations from the basis of optimal symmetric configuration 
 // to the basis of input configuration
-    this->gmatrix_convert(gmatrix, gmatrix, nrotk, optlat, latvec1);
+    this->gmatrix_convert_int(gmatrix, gmatrix, nrotk, optlat, latvec1);
     this->gtrans_convert(gtrans, gtrans, nrotk, optlat, latvec1);
 
     delete[] dirpos;
@@ -1571,7 +1571,7 @@ void Symmetry::stress_symmetry(ModuleBase::matrix& sigma, const UnitCell &ucell)
 	return;
 }
 
-void Symmetry::gmatrix_convert(const ModuleBase::Matrix3* sa, ModuleBase::Matrix3* sb, 
+void Symmetry::gmatrix_convert_int(const ModuleBase::Matrix3* sa, ModuleBase::Matrix3* sb, 
         const int n, const ModuleBase::Matrix3 &a, const ModuleBase::Matrix3 &b)
 {
     auto round = [](double x){return (x>0.0)?floor(x+0.5):ceil(x-0.5);};
@@ -1592,7 +1592,16 @@ void Symmetry::gmatrix_convert(const ModuleBase::Matrix3* sa, ModuleBase::Matrix
           sb[i].e33=round(sb[i].e33);
     }
 }
-
+void Symmetry::gmatrix_convert(const ModuleBase::Matrix3* sa, ModuleBase::Matrix3* sb, 
+        const int n, const ModuleBase::Matrix3 &a, const ModuleBase::Matrix3 &b)
+{
+    ModuleBase::Matrix3 ai = a.Inverse();
+    ModuleBase::Matrix3 bi = b.Inverse();
+    for (int i=0;i<n;++i)
+    {
+          sb[i]=b*ai*sa[i]*a*bi;
+    }
+}
 void Symmetry::gtrans_convert(const ModuleBase::Vector3<double>* va, ModuleBase::Vector3<double>* vb, 
         const int n, const ModuleBase::Matrix3 &a, const ModuleBase::Matrix3 &b)
 {

@@ -107,6 +107,8 @@ public:
 	//convert n rotation-matrices from sa on basis {a1, a2, a3} to sb on basis {b1, b2, b3}
 	void gmatrix_convert(const ModuleBase::Matrix3* sa, ModuleBase::Matrix3* sb, 
 			const int n, const ModuleBase::Matrix3 &a, const ModuleBase::Matrix3 &b);
+	void gmatrix_convert_int(const ModuleBase::Matrix3* sa, ModuleBase::Matrix3* sb, 
+			const int n, const ModuleBase::Matrix3 &a, const ModuleBase::Matrix3 &b);
 	//convert n translation-vectors from va on basis {a1, a2, a3} to vb on basis {b1, b2, b3}
 	void gtrans_convert(const ModuleBase::Vector3<double>* va, ModuleBase::Vector3<double>* vb, 
 			const int n, const ModuleBase::Matrix3 &a, const ModuleBase::Matrix3 &b);

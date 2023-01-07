@@ -234,6 +234,17 @@ class SymmetryTest : public testing::Test
         ucell.a1 = ModuleBase::Vector3<double>(stru.cell[0], stru.cell[1], stru.cell[2]);
         ucell.a2 = ModuleBase::Vector3<double>(stru.cell[3], stru.cell[4], stru.cell[5]);
         ucell.a3 = ModuleBase::Vector3<double>(stru.cell[6], stru.cell[7], stru.cell[8]);
+        ucell.latvec.e11=ucell.a1.x;
+        ucell.latvec.e12=ucell.a1.y;
+        ucell.latvec.e13=ucell.a1.z;
+        ucell.latvec.e21=ucell.a2.x;
+        ucell.latvec.e22=ucell.a2.y;
+        ucell.latvec.e23=ucell.a2.z;
+        ucell.latvec.e31=ucell.a3.x;
+        ucell.latvec.e32=ucell.a3.y;
+        ucell.latvec.e33=ucell.a3.z;
+        ucell.GT = ucell.latvec.Inverse();
+        ucell.G = ucell.GT.Transpose();
         ucell.ntype = stru.all_type.size();
         ucell.atoms = new Atom[ucell.ntype];
         ucell.nat = 0;
@@ -281,19 +292,19 @@ class SymmetryTest : public testing::Test
 
 TEST_F(SymmetryTest, AnalySys)
 {
-    for (int i = 0; i < stru_lib.size(); i++)
+    for (int stru = 0; stru < stru_lib.size(); stru++)
     {
         ModuleSymmetry::Symmetry symm;
-        construct_ucell(stru_lib[i]);
+        construct_ucell(stru_lib[stru]);
         symm.analy_sys(ucell, ofs_running);
 
         //1. ibrav
-        std::string ref_point_group = stru_lib[i].point_group;
+        std::string ref_point_group = stru_lib[stru].point_group;
         std::string cal_point_group = symm.pgname;
-        int ref_ibrav = stru_lib[i].ibrav;
+        int ref_ibrav = stru_lib[stru].ibrav;
         int cal_ibrav = symm.real_brav;
         EXPECT_EQ(cal_ibrav, ref_ibrav);
-        EXPECT_EQ(cal_point_group, ref_point_group) << "ibrav=" << stru_lib[i].ibrav;
+        EXPECT_EQ(cal_point_group, ref_point_group) << "ibrav=" << stru_lib[stru].ibrav;
         
         //2. input and optimized lattice, gtrans_convert and veccon 
         //input lattice
@@ -343,28 +354,42 @@ TEST_F(SymmetryTest, AnalySys)
         }
         delete[] ivmp;
 
-        //4. gmatrix_convert : input <-> opt <-> reciprocal
-        ModuleBase::Matrix3* gmatrix_inputconf=new ModuleBase::Matrix3[symm.nrotk];
-        ModuleBase::Matrix3* gmatrix_optconf=new ModuleBase::Matrix3[symm.nrotk];
-        ModuleBase::Matrix3* kgmatrix=new ModuleBase::Matrix3[symm.nrotk];
-        symm.gmatrix_convert(symm.gmatrix, gmatrix_optconf, symm.nrotk, ucell.latvec, symm.optlat);
-        symm.gmatrix_convert(gmatrix_optconf, gmatrix_inputconf, symm.nrotk, symm.optlat, ucell.latvec);
-        symm.gmatrix_convert(gmatrix_optconf, kgmatrix, symm.nrotk, symm.optlat, ucell.G);
+        //4. gmatrix_convert : input(gmatrix) -> opt(gmatrix_opt) ->input(gmatrix_input_back)
+        //-> opt(gmatrix_optback)   <-> reciprocal(int or non-int)
+        ModuleBase::Matrix3* gmatrix_input_back=new ModuleBase::Matrix3[symm.nrotk];//3
+        ModuleBase::Matrix3* gmatrix_opt=new ModuleBase::Matrix3[symm.nrotk];//2
+        ModuleBase::Matrix3* gmatrix_opt_back=new ModuleBase::Matrix3[symm.nrotk];//4
+        ModuleBase::Matrix3* kgmatrix_nonint=new ModuleBase::Matrix3[symm.nrotk];
+        symm.gmatrix_convert_int(symm.gmatrix, gmatrix_opt, symm.nrotk, ucell.latvec, symm.optlat); //1->2
+        symm.gmatrix_convert_int(gmatrix_opt, gmatrix_input_back, symm.nrotk, symm.optlat, ucell.latvec);   //2->3
+        symm.gmatrix_convert_int(gmatrix_input_back, gmatrix_opt_back, symm.nrotk, ucell.latvec, symm.optlat); //3->4
+        
+        symm.gmatrix_convert(symm.gmatrix, kgmatrix_nonint, symm.nrotk, symm.optlat, ucell.G);
         for (int i=0;i<symm.nrotk;++i)
         {
-
-            EXPECT_NEAR(symm.gmatrix[i].e11, gmatrix_inputconf[i].e11, DOUBLETHRESHOLD);
-            EXPECT_NEAR(symm.gmatrix[i].e22, gmatrix_inputconf[i].e22, DOUBLETHRESHOLD);
-            EXPECT_NEAR(symm.gmatrix[i].e33, gmatrix_inputconf[i].e33, DOUBLETHRESHOLD);
-            EXPECT_NEAR(symm.gmatrix[i].e12, gmatrix_inputconf[i].e12, DOUBLETHRESHOLD);
-            EXPECT_NEAR(symm.gmatrix[i].e21, gmatrix_inputconf[i].e21, DOUBLETHRESHOLD);
-            EXPECT_NEAR(symm.gmatrix[i].e13, gmatrix_inputconf[i].e13, DOUBLETHRESHOLD);
-            EXPECT_NEAR(symm.gmatrix[i].e31, gmatrix_inputconf[i].e31, DOUBLETHRESHOLD);
-            EXPECT_NEAR(symm.gmatrix[i].e23, gmatrix_inputconf[i].e23, DOUBLETHRESHOLD);
-            EXPECT_NEAR(symm.gmatrix[i].e32, gmatrix_inputconf[i].e32, DOUBLETHRESHOLD);
+            EXPECT_NEAR(symm.gmatrix[i].e11, gmatrix_input_back[i].e11, DOUBLETHRESHOLD);
+            EXPECT_NEAR(symm.gmatrix[i].e22, gmatrix_input_back[i].e22, DOUBLETHRESHOLD);
+            EXPECT_NEAR(symm.gmatrix[i].e33, gmatrix_input_back[i].e33, DOUBLETHRESHOLD);
+            EXPECT_NEAR(symm.gmatrix[i].e12, gmatrix_input_back[i].e12, DOUBLETHRESHOLD);
+            EXPECT_NEAR(symm.gmatrix[i].e21, gmatrix_input_back[i].e21, DOUBLETHRESHOLD);
+            EXPECT_NEAR(symm.gmatrix[i].e13, gmatrix_input_back[i].e13, DOUBLETHRESHOLD);
+            EXPECT_NEAR(symm.gmatrix[i].e31, gmatrix_input_back[i].e31, DOUBLETHRESHOLD);
+            EXPECT_NEAR(symm.gmatrix[i].e23, gmatrix_input_back[i].e23, DOUBLETHRESHOLD);
+            EXPECT_NEAR(symm.gmatrix[i].e32, gmatrix_input_back[i].e32, DOUBLETHRESHOLD);
+            EXPECT_NEAR(gmatrix_opt[i].e11, gmatrix_opt_back[i].e11, DOUBLETHRESHOLD);
+            EXPECT_NEAR(gmatrix_opt[i].e22, gmatrix_opt_back[i].e22, DOUBLETHRESHOLD);
+            EXPECT_NEAR(gmatrix_opt[i].e33, gmatrix_opt_back[i].e33, DOUBLETHRESHOLD);
+            EXPECT_NEAR(gmatrix_opt[i].e12, gmatrix_opt_back[i].e12, DOUBLETHRESHOLD);
+            EXPECT_NEAR(gmatrix_opt[i].e21, gmatrix_opt_back[i].e21, DOUBLETHRESHOLD);
+            EXPECT_NEAR(gmatrix_opt[i].e13, gmatrix_opt_back[i].e13, DOUBLETHRESHOLD);
+            EXPECT_NEAR(gmatrix_opt[i].e31, gmatrix_opt_back[i].e31, DOUBLETHRESHOLD);
+            EXPECT_NEAR(gmatrix_opt[i].e23, gmatrix_opt_back[i].e23, DOUBLETHRESHOLD);
+            EXPECT_NEAR(gmatrix_opt[i].e32, gmatrix_opt_back[i].e32, DOUBLETHRESHOLD);
             
-            ModuleBase::Matrix3 tmpA=ucell.latvec*ucell.latvec*kgmatrix[i];
-            ModuleBase::Matrix3 tmpB=symm.gmatrix[i]*ucell.latvec*ucell.latvec;
+            ModuleBase::Matrix3 tmpA=symm.optlat.Inverse()*gmatrix_opt[i]*symm.optlat; //A^-1*SA*A
+            ModuleBase::Matrix3 tmpB=ucell.latvec.Inverse()*symm.gmatrix[i]*ucell.latvec;//B^-1*SB*B
+            ModuleBase::Matrix3 tmpG_int=ucell.G.Inverse()*symm.kgmatrix[i]*ucell.G;//B^-1*SG*G
+            ModuleBase::Matrix3 tmpG=ucell.G.Inverse()*kgmatrix_nonint[i]*ucell.G;//B^-1*SG*G
             EXPECT_NEAR(tmpA.e11, tmpB.e11, DOUBLETHRESHOLD);
             EXPECT_NEAR(tmpA.e22, tmpB.e22, DOUBLETHRESHOLD);
             EXPECT_NEAR(tmpA.e33, tmpB.e33, DOUBLETHRESHOLD);
@@ -374,11 +399,35 @@ TEST_F(SymmetryTest, AnalySys)
             EXPECT_NEAR(tmpA.e31, tmpB.e31, DOUBLETHRESHOLD);
             EXPECT_NEAR(tmpA.e23, tmpB.e23, DOUBLETHRESHOLD);
             EXPECT_NEAR(tmpA.e32, tmpB.e32, DOUBLETHRESHOLD);
+
+            if(!symm.equal(tmpA.e13, tmpG_int.e13))
+            {
+                std::cout<<"stru_ibrav:"<<stru_lib[stru].ibrav<<std::endl;
+                std::cout<<"isymm: "<<i<<std::endl;
+                std::cout<<"kgmatrix[i], int:"<<std::endl;
+                std::cout<<symm.kgmatrix[i].e11<<" "<<symm.kgmatrix[i].e12<<" "<<symm.kgmatrix[i].e13<<std::endl;
+                std::cout<<symm.kgmatrix[i].e21<<" "<<symm.kgmatrix[i].e22<<" "<<symm.kgmatrix[i].e23<<std::endl;
+                std::cout<<symm.kgmatrix[i].e31<<" "<<symm.kgmatrix[i].e32<<" "<<symm.kgmatrix[i].e33<<std::endl;
+                std::cout<<"kgmatrix[i], nonint:"<<std::endl;
+                std::cout<<kgmatrix_nonint[i].e11<<" "<<kgmatrix_nonint[i].e12<<" "<<kgmatrix_nonint[i].e13<<std::endl;
+                std::cout<<kgmatrix_nonint[i].e21<<" "<<kgmatrix_nonint[i].e22<<" "<<kgmatrix_nonint[i].e23<<std::endl;
+                std::cout<<kgmatrix_nonint[i].e31<<" "<<kgmatrix_nonint[i].e32<<" "<<kgmatrix_nonint[i].e33<<std::endl;
+            }
+            EXPECT_NEAR(tmpA.e11, tmpG.e11, DOUBLETHRESHOLD);
+            EXPECT_NEAR(tmpA.e22, tmpG.e22, DOUBLETHRESHOLD);
+            EXPECT_NEAR(tmpA.e33, tmpG.e33, DOUBLETHRESHOLD);
+            EXPECT_NEAR(tmpA.e12, tmpG.e12, DOUBLETHRESHOLD);
+            EXPECT_NEAR(tmpA.e21, tmpG.e21, DOUBLETHRESHOLD);
+            EXPECT_NEAR(tmpA.e13, tmpG.e13, DOUBLETHRESHOLD);
+            EXPECT_NEAR(tmpA.e31, tmpG.e31, DOUBLETHRESHOLD);
+            EXPECT_NEAR(tmpA.e23, tmpG.e23, DOUBLETHRESHOLD);
+            EXPECT_NEAR(tmpA.e32, tmpG.e32, DOUBLETHRESHOLD);
         }
             
-        delete[] gmatrix_inputconf;
-        delete[] gmatrix_optconf;
-        delete[] kgmatrix;
+        delete[] gmatrix_input_back;
+        delete[] gmatrix_opt;
+        delete[] gmatrix_opt_back;
+        delete[] kgmatrix_nonint;
 
         ClearUcell();
     }
