@@ -72,6 +72,7 @@ if (CCACHE)
   set (CMAKE_C_COMPILER_LAUNCHER ${CCACHE} ${CMAKE_C_COMPILER_LAUNCHER})
 endif()
 
+# Choose build type from: Debug Release RelWithDebInfo MinSizeRel
 # Select 'Release' configuration for best performance;
 #   this will disable all assertions.
 # Other default configurations are also available, see:
@@ -87,10 +88,7 @@ if(ENABLE_ASAN)
 endif()
 
 if(NOT CMAKE_BUILD_TYPE)
-  message(STATUS "Build type not set - defaulting to Release")
-  # Choose the type of build from: Debug Release RelWithDebInfo MinSizeRel
-  set(CMAKE_BUILD_TYPE "Release")
-  add_compile_options(-g) # Add debug info by default
+  add_compile_options(-O3 -g)
 endif()
 
 if(ENABLE_LCAO)
