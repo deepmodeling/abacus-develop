@@ -1110,13 +1110,13 @@ void Symmetry::checksym(ModuleBase::Matrix3 &s, ModuleBase::Vector3<double> &gtr
         {
             for (int ia = istart[it]; ia < na[it] + istart[it]; ia++)
             {
-                this->check_boundary( rotpos[ia*3+0] );
-                this->check_boundary( rotpos[ia*3+1] );
-                this->check_boundary( rotpos[ia*3+2] );
-
                 this->check_translation( rotpos[ia*3+0], gtrans.x );
                 this->check_translation( rotpos[ia*3+1], gtrans.y );
                 this->check_translation( rotpos[ia*3+2], gtrans.z );
+
+                this->check_boundary( rotpos[ia*3+0] );
+                this->check_boundary( rotpos[ia*3+1] );
+                this->check_boundary( rotpos[ia*3+2] );
             }
             //order translated atomic positions for current species
             this->atom_ordering_new(rotpos + istart[it] * 3, na[it], index + istart[it]);
