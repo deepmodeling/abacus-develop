@@ -94,11 +94,21 @@ namespace ModuleESolver
         {
         #if ((defined __CUDA) || (defined __ROCM))
             if (GlobalV::device_flag == "gpu") {
-                p_esolver = new ESolver_KS_PW<double, psi::DEVICE_GPU>();
+                if (GlobalV::precision_flag == "single") {
+                    p_esolver = new ESolver_KS_PW<float, psi::DEVICE_GPU>();
+                }
+                else {
+                    p_esolver = new ESolver_KS_PW<double, psi::DEVICE_GPU>();
+                }
                 return;
             }
         #endif
-            p_esolver = new ESolver_KS_PW<double, psi::DEVICE_CPU>();
+            if (GlobalV::precision_flag == "single") {
+                p_esolver = new ESolver_KS_PW<float, psi::DEVICE_CPU>();
+            }
+            else {
+                p_esolver = new ESolver_KS_PW<double, psi::DEVICE_CPU>();
+            }
         }
 #ifdef __LCAO
         else if (esolver_type == "ksdft_lcao")

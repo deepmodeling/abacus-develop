@@ -115,7 +115,7 @@ bool Dos::calculate_dos
 	{
 		dos_smearing.resize(dos.size()-1);
 
-		//double b = INPUT.b_coef;
+		//double b = INPUT.dos_sigma;
 		double b = sqrt(2.0)*GlobalC::en.bcoeff;
 		for(int i=0;i<dos.size()-1;i++)
 		{

@@ -64,7 +64,6 @@ void Input::Print(const std::string &fn) const
                                  symmetry_prec,
                                  "accuracy for symmetry"); // LiuXh add 2021-08-12, accuracy for symmetry
     ModuleBase::GlobalFunc::OUTP(ofs, "nelec", nelec, "input number of electrons");
-    ModuleBase::GlobalFunc::OUTP(ofs, "tot_magnetization", tot_magnetization, "total magnetization of the system");
     ModuleBase::GlobalFunc::OUTP(ofs, "out_mul", GlobalV::out_mul, " mulliken  charge or not"); // qifeng add 2019/9/10
     ModuleBase::GlobalFunc::OUTP(ofs, "noncolin", noncolin, "using non-collinear-spin");
     ModuleBase::GlobalFunc::OUTP(ofs, "lspinorb", lspinorb, "consider the spin-orbit interaction");
@@ -72,6 +71,7 @@ void Input::Print(const std::string &fn) const
     ModuleBase::GlobalFunc::OUTP(ofs, "bndpar", bndpar, "devide all processors into bndpar groups and bands will be distributed among each group");
     ModuleBase::GlobalFunc::OUTP(ofs, "out_freq_elec", out_freq_elec, "the frequency ( >= 0) of electronic iter to output charge density and wavefunction. 0: output only when converged");
     ModuleBase::GlobalFunc::OUTP(ofs, "dft_plus_dmft", dft_plus_dmft, "true:DFT+DMFT; false: standard DFT calcullation(default)");
+    ModuleBase::GlobalFunc::OUTP(ofs, "rpa", rpa, "true:generate output files used in rpa calculation; false:(default)");
     ModuleBase::GlobalFunc::OUTP(ofs, "printe", printe, "Print out energy for each band for every printe steps");
     ModuleBase::GlobalFunc::OUTP(ofs, "mem_saver", mem_saver, "Only for nscf calculations. if set to 1, then a memory saving technique will be used for many k point calculations.");
     ModuleBase::GlobalFunc::OUTP(ofs, "diago_proc", diago_proc, "the number of procs used to do diagonalization");
@@ -80,6 +80,7 @@ void Input::Print(const std::string &fn) const
     ModuleBase::GlobalFunc::OUTP(ofs, "soc_lambda", soc_lambda, "The fraction of averaged SOC pseudopotential is given by (1-soc_lambda)");
     ModuleBase::GlobalFunc::OUTP(ofs, "cal_force", cal_force, "if calculate the force at the end of the electronic iteration");
     ModuleBase::GlobalFunc::OUTP(ofs, "out_freq_ion", out_freq_ion, "the frequency ( >= 0 ) of ionic step to output charge density and wavefunction. 0: output only when ion steps are finished");
+    ModuleBase::GlobalFunc::OUTP(ofs, "device", device, "the computing device for ABACUS");
 
     ofs << "\n#Parameters (2.PW)" << std::endl;
     ModuleBase::GlobalFunc::OUTP(ofs, "ecutwfc", ecutwfc, "#energy cutoff for wave functions");
@@ -169,12 +170,14 @@ void Input::Print(const std::string &fn) const
     ModuleBase::GlobalFunc::OUTP(ofs, "relax_bfgs_init", relax_bfgs_init, "initial trust radius, unit: Bohr");
     ModuleBase::GlobalFunc::OUTP(ofs, "cal_stress", cal_stress, "calculate the stress or not");
     ModuleBase::GlobalFunc::OUTP(ofs, "fixed_axes", fixed_axes, "which axes are fixed");
-    ModuleBase::GlobalFunc::OUTP(ofs, "fixed_ibrav", fixed_axes, "whether to preseve lattice type during relaxation");
+    ModuleBase::GlobalFunc::OUTP(ofs, "fixed_ibrav", fixed_ibrav, "whether to preseve lattice type during relaxation");
     ModuleBase::GlobalFunc::OUTP(ofs, "fixed_atoms", fixed_atoms, "whether to preseve direct coordinates of atoms during relaxation");
     ModuleBase::GlobalFunc::OUTP(ofs, "relax_method", relax_method, "bfgs; sd; cg; cg_bfgs;"); // pengfei add 2013-08-15
     ModuleBase::GlobalFunc::OUTP(ofs, "relax_new", relax_new, "whether to use the new relaxation method");
+    ModuleBase::GlobalFunc::OUTP(ofs, "relax_scale_force", relax_scale_force, "controls the size of the first CG step if relax_new is true");
     ModuleBase::GlobalFunc::OUTP(ofs, "out_level", out_level, "ie(for electrons); i(for ions);");
     ModuleBase::GlobalFunc::OUTP(ofs, "out_dm", out_dm, ">0 output density matrix");
+ModuleBase::GlobalFunc::OUTP(ofs, "out_bandgap", out_bandgap, "if true, print out bandgap");
 
     // for deepks
     ModuleBase::GlobalFunc::OUTP(ofs, "deepks_out_labels", deepks_out_labels, ">0 compute descriptor for deepks");
@@ -214,6 +217,7 @@ void Input::Print(const std::string &fn) const
     ModuleBase::GlobalFunc::OUTP(ofs, "lcao_rmax", lcao_rmax, "max R for 1D two-center integration table");
     ModuleBase::GlobalFunc::OUTP(ofs, "out_mat_hs", out_mat_hs, "output H and S matrix");
     ModuleBase::GlobalFunc::OUTP(ofs, "out_mat_hs2", out_mat_hs2, "output H(R) and S(R) matrix");
+    ModuleBase::GlobalFunc::OUTP(ofs, "out_hs2_interval", out_hs2_interval, "interval for printing H(R) and S(R) matrix during MD");
     ModuleBase::GlobalFunc::OUTP(ofs, "out_element_info", out_element_info, "output (projected) wavefunction of each element");
     ModuleBase::GlobalFunc::OUTP(ofs, "out_mat_r", out_mat_r, "output r(R) matrix");
     ModuleBase::GlobalFunc::OUTP(ofs, "out_wfc_lcao", out_wfc_lcao, "ouput LCAO wave functions");
@@ -233,13 +237,15 @@ void Input::Print(const std::string &fn) const
     ModuleBase::GlobalFunc::OUTP(ofs, "mixing_beta", mixing_beta, "mixing parameter: 0 means no new charge");
     ModuleBase::GlobalFunc::OUTP(ofs, "mixing_ndim", mixing_ndim, "mixing dimension in pulay");
     ModuleBase::GlobalFunc::OUTP(ofs, "mixing_gg0", mixing_gg0, "mixing parameter in kerker");
+    ModuleBase::GlobalFunc::OUTP(ofs, "mixing_tau", mixing_tau, "whether to mix tau in mGGA calculation");
+    ModuleBase::GlobalFunc::OUTP(ofs, "mixing_dftu", mixing_dftu, "whether to mix locale in DFT+U calculation");
 
     ofs << "\n#Parameters (8.DOS)" << std::endl;
     ModuleBase::GlobalFunc::OUTP(ofs, "dos_emin_ev", dos_emin_ev, "minimal range for dos");
     ModuleBase::GlobalFunc::OUTP(ofs, "dos_emax_ev", dos_emax_ev, "maximal range for dos");
     ModuleBase::GlobalFunc::OUTP(ofs, "dos_edelta_ev", dos_edelta_ev, "delta energy for dos");
     ModuleBase::GlobalFunc::OUTP(ofs, "dos_scale", dos_scale, "scale dos range by");
-    ModuleBase::GlobalFunc::OUTP(ofs, "dos_sigma", b_coef, "gauss b coefficeinet(default=0.07)");
+    ModuleBase::GlobalFunc::OUTP(ofs, "dos_sigma", dos_sigma, "gauss b coefficeinet(default=0.07)");
     ModuleBase::GlobalFunc::OUTP(ofs, "dos_nche", dos_nche, "orders of Chebyshev expansions for dos");
 
 	ofs << "\n#Parameters (9.Molecular dynamics)" << std::endl;
@@ -339,6 +345,7 @@ void Input::Print(const std::string &fn) const
     ModuleBase::GlobalFunc::OUTP(ofs, "exx_separate_loop", exx_separate_loop, "0 or 1");
     ModuleBase::GlobalFunc::OUTP(ofs, "exx_hybrid_step", exx_hybrid_step, "");
     ModuleBase::GlobalFunc::OUTP(ofs, "exx_lambda", exx_lambda, "");
+    ModuleBase::GlobalFunc::OUTP(ofs, "exx_real_number", exx_real_number, "");
     ModuleBase::GlobalFunc::OUTP(ofs, "exx_pca_threshold", exx_pca_threshold, "");
     ModuleBase::GlobalFunc::OUTP(ofs, "exx_c_threshold", exx_c_threshold, "");
     ModuleBase::GlobalFunc::OUTP(ofs, "exx_v_threshold", exx_v_threshold, "");
@@ -356,18 +363,13 @@ void Input::Print(const std::string &fn) const
     ModuleBase::GlobalFunc::OUTP(ofs, "exx_opt_orb_tolerence", exx_opt_orb_tolerence, "");
 
     ofs << "\n#Parameters (16.tddft)" << std::endl;
-    ModuleBase::GlobalFunc::OUTP(ofs, "td_scf_thr", td_scf_thr, "threshold for electronic iteration of tddft");
-    ModuleBase::GlobalFunc::OUTP(ofs, "td_dt", td_dt, "time of ion step");
     ModuleBase::GlobalFunc::OUTP(ofs, "td_force_dt", td_force_dt, "time of force change");
     ModuleBase::GlobalFunc::OUTP(ofs, "td_val_elec_01", td_val_elec_01, "td_val_elec_01");
     ModuleBase::GlobalFunc::OUTP(ofs, "td_val_elec_02", td_val_elec_02, "td_val_elec_02");
     ModuleBase::GlobalFunc::OUTP(ofs, "td_val_elec_03", td_val_elec_03, "td_val_elec_03");
     ModuleBase::GlobalFunc::OUTP(ofs, "td_vext", td_vext, "add extern potential or not");
     ModuleBase::GlobalFunc::OUTP(ofs, "td_vext_dire", td_vext_dire, "extern potential direction");
-    ModuleBase::GlobalFunc::OUTP(ofs, "td_timescale", td_timescale, "extern potential td_timescale");
-    ModuleBase::GlobalFunc::OUTP(ofs, "td_vexttype", td_vexttype, "extern potential type");
-    ModuleBase::GlobalFunc::OUTP(ofs, "td_vextout", td_vextout, "output extern potential or not");
-    ModuleBase::GlobalFunc::OUTP(ofs, "td_dipoleout", td_dipoleout, "output dipole or not");
+    ModuleBase::GlobalFunc::OUTP(ofs, "out_dipole", out_dipole, "output dipole or not");
     ModuleBase::GlobalFunc::OUTP(ofs, "ocp", GlobalV::ocp, "change occupation or not");
     ModuleBase::GlobalFunc::OUTP(ofs, "ocp_set", GlobalV::ocp_set, "set occupation");
 
@@ -378,7 +380,7 @@ void Input::Print(const std::string &fn) const
                                  gdir,
                                  "calculate the polarization in the direction of the lattice vector");
     ModuleBase::GlobalFunc::OUTP(ofs, "towannier90", towannier90, "use wannier90 code interface or not");
-    ModuleBase::GlobalFunc::OUTP(ofs, "nnkpfile", NNKP, "the wannier90 code nnkp file name");
+    ModuleBase::GlobalFunc::OUTP(ofs, "nnkpfile", nnkpfile, "the wannier90 code nnkp file name");
     ModuleBase::GlobalFunc::OUTP(ofs, "wannier_spin", wannier_spin, "calculate spin in wannier90 code interface");
 
     ofs << "\n#Parameters (18.implicit_solvation)" << std::endl;
@@ -407,17 +409,9 @@ void Input::Print(const std::string &fn) const
 
     ofs << "\n#Parameters (19.dft+u)" << std::endl;
     ModuleBase::GlobalFunc::OUTP(ofs, "dft_plus_u", dft_plus_u, "true:DFT+U correction; false: standard DFT calcullation(default)");
-    ModuleBase::GlobalFunc::OUTP(ofs, "dftu_type", dftu_type, "1:rotationally invarient formalism; 2:simplified form(default)");
-    ModuleBase::GlobalFunc::OUTP(ofs, "double_counting", double_counting, "1:FLL(fully localized limit)(default); 2:AMF(around mean field)");
     ModuleBase::GlobalFunc::OUTP(ofs, "yukawa_lambda", yukawa_lambda, "default:0.0");
     ModuleBase::GlobalFunc::OUTP(ofs, "yukawa_potential", yukawa_potential, "default: false");
-    ModuleBase::GlobalFunc::OUTP(ofs, "omc", omc, "whether turn on occupation matrix control method or not");
-    ofs << std::setw(20) << "hund_j ";
-    for (int i = 0; i < ntype; i++)
-    {
-        ofs << hund_j[i]*ModuleBase::Ry_to_eV << " ";
-    }
-    ofs << "#Hund exchange parameter J(ev)" << std::endl;
+    ModuleBase::GlobalFunc::OUTP(ofs, "omc", omc, "the mode of occupation matrix control");
     ofs << std::setw(20) << "hubbard_u ";
     for (int i = 0; i < ntype; i++)
     {

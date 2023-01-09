@@ -12,7 +12,7 @@ void Variable_Cell::init_after_vc()
     GlobalC::ucell.setup_cell_after_vc(GlobalV::ofs_running);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "SETUP UNITCELL");
 
-    if(ModuleSymmetry::Symmetry::symm_flag)
+    if(ModuleSymmetry::Symmetry::symm_flag == 1)
     {
         GlobalC::symm.analy_sys(GlobalC::ucell, GlobalV::ofs_running);
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "SYMMETRY");

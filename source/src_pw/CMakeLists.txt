@@ -42,23 +42,6 @@ list(APPEND objects
     wf_igk.cpp
     xc_3.cpp
 )
-if(USE_CUDA)
-    list(APPEND objects
-        hamilt.cu
-        hamilt_pw.cu
-        use_fft_kernel.cu
-    )
-elseif(USE_ROCM)
-    list(APPEND objects
-        hamilt_hip.cpp
-        hamilt_pw_hip.cpp
-        use_fft_kernel_hip.cpp
-    )
-else()
-    list(APPEND objects
-        hamilt.cpp
-    )
-endif()
 
 add_library(
     pw
@@ -72,5 +55,6 @@ endif()
 
 if(BUILD_TESTING)
   add_subdirectory(test)
+  add_subdirectory(kernels/test)
 endif()
 

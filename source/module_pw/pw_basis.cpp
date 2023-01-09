@@ -30,6 +30,9 @@ PW_Basis:: ~PW_Basis()
     delete[] startr;
     delete[] ig2igg;
     delete[] gg_uniq;
+    if (GlobalV::device_flag == "gpu") {
+        delmem_int_op()(gpu_ctx, this->d_is2fftixy);
+    }
 }
 
 /// 

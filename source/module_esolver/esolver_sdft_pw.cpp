@@ -178,6 +178,7 @@ void ESolver_SDFT_PW::postprocess()
         hsolver::DiagoIterAssist<double>::need_subspace = false;
         this->phsol->solve(this->p_hamilt, this->psi[0], this->pelec,this->stowf,istep, iter, GlobalV::KS_SOLVER, true);
         ((hsolver::HSolverPW_SDFT*)phsol)->stoiter.cleanchiallorder();//release lots of memories
+        GlobalC::en.ef = this->pelec->ef; //Temporary: Please use this->pelec->ef. GlobalC::en.ef is not recommended.
     }
     int nche_test = 0;
     if(INPUT.cal_cond)  nche_test = std::max(nche_test, INPUT.cond_nche);
@@ -205,7 +206,7 @@ void ESolver_SDFT_PW::postprocess()
 			emax=emax+delta/2.0;
 			emin=emin-delta/2.0;
 		}
-        this->caldos(INPUT.dos_nche, INPUT.b_coef, emin, emax, INPUT.dos_edelta_ev, INPUT.npart_sto );
+        this->caldos(INPUT.dos_nche, INPUT.dos_sigma, emin, emax, INPUT.dos_edelta_ev, INPUT.npart_sto );
     }
 }
 

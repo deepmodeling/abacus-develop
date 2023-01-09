@@ -1,15 +1,17 @@
 #include "stress_func.h"
 #include "module_base/constants.h"
 
-static double output_acc = 1.0e-8;
+template<typename FPTYPE, typename Device>
+FPTYPE Stress_Func<FPTYPE, Device>::output_acc = 1.0e-8;
 
 //print target stress term 
-void Stress_Func::print_stress(const std::string &name, const ModuleBase::matrix& f, const bool screen, bool ry)const
+template <typename FPTYPE, typename Device>
+void Stress_Func<FPTYPE, Device>::print_stress(const std::string &name, const ModuleBase::matrix& f, const bool screen, bool ry)const
 {
 	GlobalV::ofs_running << " --------------------------- " << name << " ----------------------------" << std::endl;
 	
 	
-	double fac = 1.0;
+	FPTYPE fac = 1.0;
 	
 	if(!ry)
 	{
@@ -55,10 +57,11 @@ void Stress_Func::print_stress(const std::string &name, const ModuleBase::matrix
 }
 
 //print total stress
-void Stress_Func::printstress_total(const ModuleBase::matrix& scs, bool ry)
+template <typename FPTYPE, typename Device>
+void Stress_Func<FPTYPE, Device>::printstress_total(const ModuleBase::matrix& scs, bool ry)
 {
 // zhengdy update 2016-10-08
-	double unit_transform = 1;
+	FPTYPE unit_transform = 1;
 
 	if(!ry)
 	{
@@ -84,11 +87,11 @@ void Stress_Func::printstress_total(const ModuleBase::matrix& scs, bool ry)
 		std::cout << " " << std::setw(15) << scs(i,0)*unit_transform << std::setw(15)
 			<< scs(i,1)*unit_transform << std::setw(15) << scs(i,2)*unit_transform << std::endl;
 
-		GlobalV::ofs_running << " " << std::setw(15) << scs(i,0)*unit_transform << std::setw(15)
-			<< scs(i,1)*unit_transform << std::setw(15) << scs(i,2)*unit_transform << std::endl;
+		GlobalV::ofs_running << " " << std::setw(23) << scs(i,0)*unit_transform << std::setw(23)
+			<< scs(i,1)*unit_transform << std::setw(23) << scs(i,2)*unit_transform << std::endl;
 
 	}
-	double pressure = (scs(0,0)+scs(1,1)+scs(2,2))/3.0*unit_transform;
+	FPTYPE pressure = (scs(0,0)+scs(1,1)+scs(2,2))/3.0*unit_transform;
     std::cout << " TOTAL-PRESSURE: " <<pressure<<" KBAR"<< std::endl;
 	GlobalV::ofs_running << " TOTAL-PRESSURE: " <<pressure<<" KBAR"<< std::endl;
 	GlobalV::ofs_running << std::setiosflags(ios::left);
@@ -96,3 +99,8 @@ void Stress_Func::printstress_total(const ModuleBase::matrix& scs, bool ry)
 
     return;
 }
+
+template class Stress_Func<double, psi::DEVICE_CPU>;
+#if ((defined __CUDA) || (defined __ROCM))
+template class Stress_Func<double, psi::DEVICE_GPU>;
+#endif

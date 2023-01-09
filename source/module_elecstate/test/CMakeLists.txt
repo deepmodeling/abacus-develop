@@ -12,11 +12,8 @@ if(ENABLE_LCAO)
             ../../src_pw/charge.cpp ../../src_parallel/parallel_reduce.cpp
             ../../src_pw/structure_factor.cpp ../../src_pw/pw_complement.cpp
             ../../src_pw/klist.cpp ../../src_parallel/parallel_kpoints.cpp ../../src_pw/occupy.cpp
-            ../src/elecstate_multi_device.cpp
+            ../kernels/elecstate_op.cpp ../../src_io/rwstream.cpp ../../src_io/wf_io.cpp
   )
-  if(USE_CUDA)
-    target_link_libraries(EState_updaterhok_pw cufft)
-  endif()
 
   install(DIRECTORY support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
   list(APPEND test_math_libs ${math_libs})
@@ -61,7 +58,6 @@ add_library(
   ../../module_base/complexmatrix.cpp
   ../../module_base/element_basis_index.cpp
   ../../module_base/export.cpp
-  ../../module_base/integral.cpp
   ../../module_base/inverse_matrix.cpp
   ../../module_base/global_file.cpp
   ../../module_base/global_function.cpp
@@ -74,16 +70,12 @@ add_library(
   ../../module_base/math_ylmreal.cpp
   ../../module_base/math_bspline.cpp
   ../../module_base/math_chebyshev.cpp
-  ../../module_base/mathzone.cpp
   ../../module_base/mathzone_add1.cpp
   ../../module_base/matrix.cpp
   ../../module_base/matrix3.cpp
   ../../module_base/memory.cpp
-  ../../module_base/mymath1.cpp
-  ../../module_base/mymath3.cpp
-  ../../module_base/polint.cpp
+  ../../module_base/mymath.cpp
   ../../module_base/realarray.cpp
-  ../../module_base/sph_bessel.cpp
   ../../module_base/sph_bessel_recursive-d1.cpp
   ../../module_base/sph_bessel_recursive-d2.cpp
   ../../module_base/timer.cpp
@@ -115,7 +107,7 @@ add_library(
 AddTest(
   TARGET Elecstate_UTs
   LIBS ${math_libs} psi base device
-  SOURCES elecstate_multi_device_test.cpp
+  SOURCES ../kernels/test/elecstate_op_test.cpp
           ../../src_parallel/parallel_reduce.cpp
           ../../src_parallel/parallel_global.cpp 
 )

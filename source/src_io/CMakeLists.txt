@@ -46,3 +46,7 @@ add_library(
 if(ENABLE_COVERAGE)
   add_coverage(io)
 endif()
+
+if(BUILD_TESTING)
+  add_subdirectory(test)
+endif()

@@ -18,9 +18,6 @@ if(ENABLE_LCAO)
       center2_orb-orb11.cpp
       center2_orb-orb21.cpp
       center2_orb-orb22.cpp
-      dftu.cpp
-      dftu_relax.cpp
-      dftu_yukawa.cpp
       global_fp.cpp
       local_orbital_charge.cpp
       local_orbital_wfc.cpp

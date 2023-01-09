@@ -17,6 +17,7 @@ VPATH=./src_global:\
 ./module_symmetry:\
 ./module_cell:\
 ./module_base:\
+./module_base/kernels:\
 ./module_md:\
 ./module_pw:\
 ./module_surchem:\
@@ -24,26 +25,26 @@ VPATH=./src_global:\
 ./module_xc:\
 ./module_esolver:\
 ./module_hsolver:\
-./module_hsolver/src:\
+./module_hsolver/kernels:\
 ./module_hsolver/genelpa:\
 ./module_elecstate:\
-./module_elecstate/src:\
+./module_elecstate/kernels:\
 ./module_elecstate/potentials:\
 ./module_psi:\
-./module_psi/src:\
+./module_psi/kernels:\
 ./module_hamilt:\
 ./module_hamilt/ks_pw:\
 ./module_hamilt/ks_lcao:\
 ./module_hamilt/of_pw:\
-./module_hamilt/src:\
+./module_hamilt/kernels:\
 ./module_gint:\
+./module_dftu:\
 ./src_pw:\
-./src_pw/src:\
+./src_pw/kernels:\
 ./src_lcao:\
 ./module_relax:\
 ./module_relax/relax_old:\
 ./module_relax/relax_new:\
-./module_rpa:\
 ./module_vdw:\
 ./src_io:\
 ./src_parallel:\
@@ -68,7 +69,6 @@ ${OBJS_SURCHEM}\
 ${OBJS_SYMMETRY}\
 ${OBJS_XC}\
 ${OBJS_IO}\
-${OBJS_RI}\
 ${OBJS_PARALLEL}\
 ${OBJS_SRCPW}\
 ${OBJS_HAMILT_OF}
@@ -80,15 +80,12 @@ ${OBJS_ESOLVER_LCAO}\
 ${OBJS_GINT}\
 ${OBJS_HAMILT_LCAO}\
 ${OBJS_HSOLVER_LCAO}\
-${OBJS_RPA}\
 ${OBJS_ORBITAL}\
 ${OBJS_IO_LCAO}\
-${OBJS_RI_LCAO}\
 ${OBJS_LCAO}\
 ${OBJS_PARALLEL_LCAO}\
 ${OBJS_VDW}\
-${OBJS_HAMILT_OF}
-
+${OBJS_DFTU}\
 
 OBJS_MAIN=main.o\
     driver.o\
@@ -96,11 +93,11 @@ OBJS_MAIN=main.o\
     input_conv.o\
     driver_run.o\
 
-OBJS_BASE=complexarray.o\
+OBJS_BASE=abfs-vector3_order.o\
+    complexarray.o\
     complexmatrix.o\
     element_basis_index.o\
     export.o\
-    integral.o\
     inverse_matrix.o\
     gather_math_lib_info.o\
     global_file.o\
@@ -114,16 +111,13 @@ OBJS_BASE=complexarray.o\
     math_ylmreal.o\
     math_bspline.o\
     math_chebyshev.o\
-    mathzone.o\
+    math_op.o\
     mathzone_add1.o\
     matrix.o\
     matrix3.o\
     memory.o\
-    mymath1.o\
-    mymath3.o\
-    polint.o\
+    mymath.o\
     realarray.o\
-    sph_bessel.o\
     sph_bessel_recursive-d1.o\
     sph_bessel_recursive-d2.o\
     timer.o\
@@ -160,7 +154,7 @@ OBJS_DEEPKS=LCAO_deepks.o\
 OBJS_ELECSTAT=elecstate.o\
     elecstate_pw.o\
     elecstate_pw_sdft.o\
-    elecstate_multi_device.o\
+    elecstate_op.o\
     efield.o\
     gatefield.o\
     potential_new.o\
@@ -209,13 +203,14 @@ OBJS_GINT=gint.o\
 OBJS_HAMILT=hamilt_pw.o\
     operator.o\
     operator_pw.o\
-    ekinetic.o\
-    nonlocal.o\
     ekinetic_pw.o\
+    ekinetic_op.o\
     veff_pw.o\
-    veff.o\
+    veff_op.o\
     nonlocal_pw.o\
+    nonlocal_op.o\
     meta_pw.o\
+    meta_op.o\
     velocity_pw.o\
 
 OBJS_HAMILT_OF=kedf_tf.o\
@@ -238,7 +233,7 @@ OBJS_HSOLVER=diago_cg.o\
     hsolver_pw.o\
     hsolver_pw_sdft.o\
     diago_iter_assist.o\
-    math_kernel.o\
+    math_kernel_op.o\
     dngvd_op.o\
 
 OBJS_HSOLVER_LCAO=hsolver_lcao.o\
@@ -279,7 +274,7 @@ OBJS_ORBITAL=ORB_atomic.o\
       parallel_orbitals.o\
 
 OBJS_PSI=psi.o\
-    memory_psi.o\
+    memory_op.o\
     device.o\
 
 OBJS_PW=fft.o\
@@ -307,8 +302,6 @@ OBJS_RELAXATION=bfgs_basic.o\
     relax_old.o\
     relax.o\
     line_search.o\
-
-OBJS_RPA=rpa.o\
 
 OBJS_SURCHEM=surchem.o\
     H_correction_pw.o\
@@ -364,16 +357,6 @@ OBJS_IO_LCAO=cal_r_overlap_R.o\
       istate_envelope.o\
       mulliken_charge.o\
       read_dm.o\
-      read_txt_tools.o\
-      read_txt_input_value.o\
-      read_txt_input_item.o\
-      read_txt_input_list.o\
-      read_txt_input_process.o\
-      read_txt_input_process_global.o\
-      read_txt_input-general.o\
-      read_txt_input-pw.o\
-      read_txt_input-spectrum.o\
-      read_txt_stru.o\
       unk_overlap_lcao.o\
       wf_local.o\
       write_HS.o\
@@ -398,9 +381,6 @@ OBJS_LCAO=DM_gamma.o\
       center2_orb-orb11.o\
       center2_orb-orb21.o\
       center2_orb-orb22.o\
-      dftu.o\
-      dftu_relax.o\
-      dftu_yukawa.o\
       global_fp.o\
       local_orbital_charge.o\
       local_orbital_wfc.o\
@@ -408,8 +388,7 @@ OBJS_LCAO=DM_gamma.o\
       dm_2d.o\
       wavefunc_in_pw.o\
 
-OBJS_RI_LCAO=abfs-vector3_order.o\
-      abfs.o\
+OBJS_SRC_RI=abfs.o\
       conv_coulomb_pot.o\
       conv_coulomb_pot_k.o\
       exx_abfs.o \
@@ -440,7 +419,7 @@ OBJS_RI_LCAO=abfs-vector3_order.o\
       exx_opt_orb-print.o \
       exx_lip.o\
 
-OBJS_RI=Matrix_Orbs11.o\
+OBJS_MODULE_RI=Matrix_Orbs11.o\
       Matrix_Orbs21.o\
       RI_2D_Comm.o
 
@@ -461,7 +440,10 @@ OBJS_SRCPW=H_Ewald_pw.o\
     charge_pulay.o\
     energy.o\
     forces.o\
-    force_multi_device.o\
+    force_op.o\
+    stress_op.o\
+    wf_op.o\
+    vnl_op.o\
     global.o\
     klist.o\
     magnetism.o\
@@ -500,3 +482,11 @@ OBJS_VDW=vdw.o\
     vdwd3.o\
     vdwd3_parameters_tab.o
 
+OBJS_DFTU=dftu.o\
+      dftu_force.o\
+      dftu_yukawa.o\
+      dftu_folding.o\
+      dftu_io.o\
+      dftu_tools.o\
+      dftu_occup.o\
+      dftu_hamilt.o

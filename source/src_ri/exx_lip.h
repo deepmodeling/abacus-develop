@@ -7,7 +7,6 @@
 
 #include "../module_base/complexmatrix.h"
 #include "../module_base/vector3.h"
-#include "../src_pw/hamilt.h"
 #include "../module_xc/exx_info.h"
 #include "../module_pw/pw_basis_k.h"
 #include "module_elecstate/elecstate.h"

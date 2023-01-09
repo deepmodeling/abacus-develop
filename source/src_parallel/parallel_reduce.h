@@ -23,7 +23,8 @@ namespace Parallel_Reduce
 	void reduce_double_grid(double *object, const int n);
 	void reduce_double_diag(double *object, const int n);
 
-	void reduce_double_pool(double &object);
+    void reduce_double_pool(float &object);
+    void reduce_double_pool(double &object);
 	void reduce_double_pool(double *object, const int n);
 	void reduce_double_allpool(double &object);
 	void reduce_double_allpool(double *object, const int n);
@@ -31,7 +32,8 @@ namespace Parallel_Reduce
 	void reduce_complex_double_all(std::complex<double> &object);
 	void reduce_complex_double_all(std::complex<double> *object,const int n); //LiuXh add 2019-07-16
 	void reduce_complex_double_pool(std::complex<double> &object);
-	void reduce_complex_double_pool(std::complex<double> *object,const int n);
+    void reduce_complex_double_pool(std::complex<float> *object,const int n);
+    void reduce_complex_double_pool(std::complex<double> *object,const int n);
 
 	void gather_min_int_all(int &v);
 	void gather_max_double_all(double &v);

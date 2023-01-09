@@ -5,3 +5,4 @@ The current development team consists the following research groups/affiliations
 - Peking University (Dr. Mohan Chen)
 - Institute of Physics, Chinese Academy of Sciences (Dr. Xinguo Ren)
 - Beijing AI for Science Institute
+- Institute of Artificial Intelligence, Hefei Comprehensive National Science Center. 

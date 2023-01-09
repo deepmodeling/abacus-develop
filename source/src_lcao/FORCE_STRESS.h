@@ -16,7 +16,6 @@ class Force_Stress_LCAO
 	// mohan add 2021-02-09
 	friend class md;
 	friend void Input_Conv::Convert();
-	friend class Update_input;
 	friend class ions;
 	friend class MD_func;
 
@@ -43,7 +42,7 @@ private:
     Record_adj* RA;
 	Force_LCAO_k flk;
 //	Force_LCAO_gamma flg;
-	Stress_Func sc_pw;
+	Stress_Func<double> sc_pw;
 	Forces<double> f_pw;
 	
 	void print_force(const std::string &name, ModuleBase::matrix& f, const bool screen, bool ry)const;

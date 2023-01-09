@@ -8,6 +8,39 @@ using namespace std;
 #include "../module_base/vector3.h"
 #include "ORB_atomic_lm.h"
 
+class Numerical_Orbital_AtomRelation
+{
+public:
+	//==========================================================
+	// It's about two atoms relations, thread-safe interface
+	//==========================================================
+	double distance; 
+	ModuleBase::Vector3<double> R1;
+	ModuleBase::Vector3<double> R2; //three-dimesion-coordinate of R
+	ModuleBase::Vector3<double> dR; // R1-R2
+
+	double& get_distance()
+	{ 
+		if(distance < 0.0) ModuleBase::WARNING_QUIT("NUMERICAL_ORBITAL","distance should be above zero!"); 
+		return distance; 
+	}
+	
+	double getX() { return R2.x - R1.x ; }
+	double getY() { return R2.y - R1.y ; }
+	double getZ() { return R2.z - R1.z ; }
+	ModuleBase::Vector3<double>& getR1() { return R1; }
+	ModuleBase::Vector3<double>& getR2() { return R2; }
+	ModuleBase::Vector3<double>& getdR() { return dR; }
+
+	void set_position(const ModuleBase::Vector3<double> &R1_in, const ModuleBase::Vector3<double> &R2_in) 
+	{
+		R1 = R1_in;
+		R2 = R2_in;
+		dR = R1-R2;
+		distance = dR.norm();
+	}
+};
+
 ///
 ///CLASS  Num_Orbital
 ///------------------------------------------
@@ -39,17 +72,16 @@ public:
 	
 	/// about the distance between two atoms.
 	static double& get_distance()
-	{ 
-		if(distance < 0.0) ModuleBase::WARNING_QUIT("NUMERICAL_ORBITAL","distance should be above zero!"); 
-		return distance; 
+	{
+		return NOAR.get_distance(); 
 	}
 	
-	static double getX() { return R2.x - R1.x ; }
-	static double getY() { return R2.y - R1.y ; }
-	static double getZ() { return R2.z - R1.z ; }
-	static ModuleBase::Vector3<double>& getR1() { return R1; }
-	static ModuleBase::Vector3<double>& getR2() { return R2; }
-	static ModuleBase::Vector3<double>& getdR() { return dR; }
+	static double getX() { return NOAR.getX() ; }
+	static double getY() { return NOAR.getY() ; }
+	static double getZ() { return NOAR.getZ() ; }
+	static ModuleBase::Vector3<double>& getR1() { return NOAR.getR1(); }
+	static ModuleBase::Vector3<double>& getR2() { return NOAR.getR2(); }
+	static ModuleBase::Vector3<double>& getdR() { return NOAR.getdR(); }
 
 	///
 	/// set information about Numerical Orbital
@@ -61,12 +93,9 @@ public:
 			const int* nchi_in,
 			const int& total_nchi);
 
-	static void set_position(const ModuleBase::Vector3<double>R1_in, const ModuleBase::Vector3<double> R2_in) 
+	static void set_position(const ModuleBase::Vector3<double> &R1_in, const ModuleBase::Vector3<double> &R2_in) 
 	{
-		R1 = R1_in;
-		R2 = R2_in;
-		dR = R1-R2;
-		distance = dR.norm();
+		NOAR.set_position(R1_in, R2_in);
 	}
 				
 private:
@@ -93,12 +122,9 @@ private:
 	Numerical_Orbital_Lm* phiLN;// length: total_nchi (only store radial function )
 
 	//==========================================================
-	// It's about two atoms, so here we set static variables 
+	// Keep the old interface
 	//==========================================================
-	static double distance; 
-	static ModuleBase::Vector3<double> R1;
-	static ModuleBase::Vector3<double> R2; //three-dimesion-coordinate of R
-	static ModuleBase::Vector3<double> dR; // R1-R2
+	static Numerical_Orbital_AtomRelation NOAR;
 };
 
 #endif

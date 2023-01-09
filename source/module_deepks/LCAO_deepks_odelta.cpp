@@ -12,72 +12,75 @@
 #include "LCAO_deepks.h"
 #include "../src_parallel/parallel_reduce.h"
 
-void LCAO_Deepks::cal_o_delta(const std::vector<ModuleBase::matrix> &dm_hl, const Parallel_Orbitals &ParaO)
+void LCAO_Deepks::cal_o_delta(const std::vector<std::vector<ModuleBase::matrix>> &dm_hl, const Parallel_Orbitals &ParaO)
 {
     ModuleBase::TITLE("LCAO_Deepks", "cal_o_delta");
-    this->o_delta = 0;
-    for (int i = 0; i < GlobalV::NLOCAL; ++i)
+    this->o_delta.zero_out();
+    for (int hl = 0; hl < 1; ++hl)
     {
-        for (int j = 0; j < GlobalV::NLOCAL; ++j)
+        for (int i = 0; i < GlobalV::NLOCAL; ++i)
         {
-            const int mu = ParaO.trace_loc_row[j];
-            const int nu = ParaO.trace_loc_col[i];
+            for (int j = 0; j < GlobalV::NLOCAL; ++j)
+            {
+                const int mu = ParaO.trace_loc_row[j];
+                const int nu = ParaO.trace_loc_col[i];
             
-            if (mu >= 0 && nu >= 0)
-            {                
-                const int index = nu*ParaO.nrow + mu;
-                for (int is = 0; is < GlobalV::NSPIN; ++is)
-                {
-                    this->o_delta += dm_hl[is](nu, mu) * this->H_V_delta[index];
+                if (mu >= 0 && nu >= 0)
+                {                
+                    const int index = nu*ParaO.nrow + mu;   
+                    for (int is = 0; is < GlobalV::NSPIN; ++is)
+                    {
+                        this->o_delta(0,hl) += dm_hl[hl][is](nu, mu) * this->H_V_delta[index];
+                    }
                 }
             }
         }
+        Parallel_Reduce::reduce_double_all(this->o_delta(0,hl));
     }
-    Parallel_Reduce::reduce_double_all(this->o_delta);
     return;
 }
 
 
 //calculating the correction of (LUMO-HOMO) energies, i.e., band gap corrections
 //for multi_k calculations
-void LCAO_Deepks::cal_o_delta_k(const std::vector<ModuleBase::ComplexMatrix> &dm_hl,
+void LCAO_Deepks::cal_o_delta_k(const std::vector<std::vector<ModuleBase::ComplexMatrix>> &dm_hl,
     const Parallel_Orbitals &ParaO,
     const int nks)
 {
     ModuleBase::TITLE("LCAO_Deepks", "cal_o_delta_k");
-    std::complex<double> o_delta_k=std::complex<double>(0.0,0.0);
-    for (int i = 0; i < GlobalV::NLOCAL; ++i)
+    
+    for(int ik=0; ik<nks; ik++)
     {
-        for (int j = 0; j < GlobalV::NLOCAL; ++j)
+        for (int hl=0; hl<1; hl++)
         {
-            const int mu = ParaO.trace_loc_row[j];
-            const int nu = ParaO.trace_loc_col[i];
+            std::complex<double> o_delta_k=std::complex<double>(0.0,0.0);
+            for (int i = 0; i < GlobalV::NLOCAL; ++i)
+            {
+                for (int j = 0; j < GlobalV::NLOCAL; ++j)
+                {
+                    const int mu = ParaO.trace_loc_row[j];
+                    const int nu = ParaO.trace_loc_col[i];
             
-            if (mu >= 0 && nu >= 0)
-            {                
-                int iic;
-                if(GlobalV::KS_SOLVER=="genelpa" || GlobalV::KS_SOLVER=="scalapack_gvx")  // save the matrix as column major format
-                {
-                    iic = mu + nu*ParaO.nrow;
-                }
-                else
-                {
-                    iic = mu*ParaO.ncol + nu;
-                }
-                for(int ik=0; ik<nks; ik++)
-                {
-                    o_delta_k += dm_hl[ik](nu, mu) * this->H_V_delta_k[ik][iic];
-                }
-            }
-        }
-    }
-    Parallel_Reduce::reduce_complex_double_all(o_delta_k);
-    if(o_delta_k.imag()>1e-12)
-    {
-        GlobalV::ofs_running << "o_delta_k : " << o_delta_k << std::endl;
-        //ModuleBase::WARNING_QUIT("o_delta_k","energy should be real!");
-    }
-    this->o_delta = o_delta_k.real();
+                    if (mu >= 0 && nu >= 0)
+                    {                
+                        int iic;
+                        if(GlobalV::KS_SOLVER=="genelpa" || GlobalV::KS_SOLVER=="scalapack_gvx")  // save the matrix as column major format
+                        {
+                            iic = mu + nu*ParaO.nrow;
+                        }
+                        else
+                        {
+                            iic = mu*ParaO.ncol + nu;
+                        }
+                        o_delta_k += dm_hl[hl][ik](nu, mu) * this->H_V_delta_k[ik][iic];
+                    }
+                } //end j
+            } //end i
+            Parallel_Reduce::reduce_complex_double_all(o_delta_k);
+            this->o_delta(ik,hl) = o_delta_k.real();
+        }// end hl
+    }// end nks
+    
     return;
 }
 

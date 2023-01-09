@@ -12,7 +12,6 @@
 #include "../src_ri/exx_lip.h"
 #include "../module_xc/exx_info.h"
 #endif
-#include "hamilt.h"
 #include "klist.h"
 #include "magnetism.h"
 #include "structure_factor.h"
@@ -43,30 +42,6 @@ static const char *_cublasGetErrorString(cublasStatus_t error)
 		return "CUBLAS_STATUS_EXECUTION_FAILED";
 	case CUBLAS_STATUS_INTERNAL_ERROR:
 		return "CUBLAS_STATUS_INTERNAL_ERROR";
-	}
-	return "<unknown>";
-}
-
-static const char *_cusolverGetErrorString(cusolverStatus_t error)
-{
-	switch (error)
-	{
-	case CUSOLVER_STATUS_SUCCESS:
-		return "CUSOLVER_STATUS_SUCCESS";
-	case CUSOLVER_STATUS_NOT_INITIALIZED:
-		return "CUSOLVER_STATUS_NOT_INITIALIZED";
-	case CUSOLVER_STATUS_ALLOC_FAILED:
-		return "CUSOLVER_STATUS_ALLOC_FAILED";
-	case CUSOLVER_STATUS_INVALID_VALUE:
-		return "CUSOLVER_STATUS_INVALID_VALUE";
-	case CUSOLVER_STATUS_ARCH_MISMATCH:
-		return "CUSOLVER_STATUS_ARCH_MISMATCH";
-	case CUSOLVER_STATUS_MATRIX_TYPE_NOT_SUPPORTED:
-		return "CUSOLVER_STATUS_MATRIX_TYPE_NOT_SUPPORTED";
-	case CUSOLVER_STATUS_EXECUTION_FAILED:
-		return "CUSOLVER_STATUS_EXECUTION_FAILED";
-	case CUSOLVER_STATUS_INTERNAL_ERROR:
-		return "CUSOLVER_STATUS_INTERNAL_ERROR";
 	}
 	return "<unknown>";
 }
@@ -168,6 +143,9 @@ static const char *_cufftGetErrorString(cufftResult_t error)
 #endif
 
 #ifdef __ROCM
+#include <hipfft.h>
+#include <hipblas.h>
+#include <hip/hip_runtime.h>
 namespace HipCheck
 {
 static const char *_hipblasGetErrorString(hipblasStatus_t error)
@@ -311,7 +289,6 @@ extern ModulePW::PW_Basis_Big* bigpw;
 extern ModulePW::PW_Basis_K* wfcpw;
 extern energy en;
 extern wavefunc wf;
-extern Hamilt hm;
 #ifdef __EXX
 extern Exx_Info exx_info;
 extern Exx_Lip exx_lip;

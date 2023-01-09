@@ -4,7 +4,7 @@
 #include "module_base/timer.h"
 #include "src_parallel/parallel_reduce.h"
 #include "module_base/tool_quit.h"
-#include "module_psi/include/device.h"
+#include "module_psi/kernels/device.h"
 
 using hamilt::Nonlocal;
 using hamilt::OperatorPW;
@@ -21,16 +21,9 @@ Nonlocal<OperatorPW<FPTYPE, Device>>::Nonlocal(
     this->isk = isk_in;
     this->ppcell = ppcell_in;
     this->ucell = ucell_in;
-    if (psi::device::get_device_type<Device>(this->ctx) == psi::GpuDevice) {
-        this->deeq = this->ppcell->d_deeq;
-        this->deeq_nc = this->ppcell->d_deeq_nc;
-        resmem_complex_op()(this->ctx, this->vkb, this->ppcell->vkb.size);
-    }
-    else {
-        this->deeq = this->ppcell->deeq.ptr;
-        this->deeq_nc = this->ppcell->deeq_nc.ptr;
-        this->vkb = this->ppcell->vkb.c;
-    }
+    this->deeq = this->ppcell->template get_deeq_data<FPTYPE>();
+    this->deeq_nc = this->ppcell->template get_deeq_nc_data<FPTYPE>();
+    this->vkb = this->ppcell->template get_vkb_data<FPTYPE>();
     if( this->isk == nullptr || this->ppcell == nullptr || this->ucell == nullptr)
     {
         ModuleBase::WARNING_QUIT("NonlocalPW", "Constuctor of Operator::NonlocalPW is failed, please check your code!");
@@ -41,9 +34,6 @@ template<typename FPTYPE, typename Device>
 Nonlocal<OperatorPW<FPTYPE, Device>>::~Nonlocal() {
     delmem_complex_op()(this->ctx, this->ps);
     delmem_complex_op()(this->ctx, this->becp);
-    if (psi::device::get_device_type<Device>(this->ctx) == psi::GpuDevice) {
-        delmem_complex_op()(this->ctx, this->vkb);
-    }
 }
 
 template<typename FPTYPE, typename Device>
@@ -54,7 +44,7 @@ void Nonlocal<OperatorPW<FPTYPE, Device>>::init(const int ik_in)
     // Calculate nonlocal pseudopotential vkb
 	if(this->ppcell->nkb > 0) //xiaohui add 2013-09-02. Attention...
 	{
-		this->ppcell->getvnl(this->ik, this->ppcell->vkb);
+		this->ppcell->getvnl(this->ctx, this->ik, this->vkb);
 	}
 
     if(this->next_op != nullptr)
@@ -62,9 +52,6 @@ void Nonlocal<OperatorPW<FPTYPE, Device>>::init(const int ik_in)
         this->next_op->init(ik_in);
     }
 
-    if (psi::device::get_device_type<Device>(this->ctx) == psi::GpuDevice) {
-        syncmem_complex_h2d_op()(this->ctx, this->cpu_ctx, this->vkb, this->ppcell->vkb.c, this->ppcell->vkb.size);
-    }
     ModuleBase::timer::tick("Nonlocal", "getvnl");
 }
 
@@ -81,7 +68,10 @@ void Nonlocal<OperatorPW<FPTYPE, Device>>::add_nonlocal_pp(std::complex<FPTYPE> 
 
     // std::complex<FPTYPE> *ps = new std::complex<FPTYPE>[nkb * m];
     // ModuleBase::GlobalFunc::ZEROS(ps, m * nkb);
-    resmem_complex_op()(this->ctx, this->ps, nkb * m);
+    if (this->nkb_m < m * nkb) {
+        resmem_complex_op()(this->ctx, this->ps, nkb * m);
+        this->nkb_m = m * nkb;
+    }
     setmem_complex_op()(this->ctx, this->ps, 0, nkb * m);
 
     int sum = 0;
@@ -181,12 +171,12 @@ void Nonlocal<OperatorPW<FPTYPE, Device>>::add_nonlocal_pp(std::complex<FPTYPE> 
             transa,
             this->npw,
             this->ppcell->nkb,
-            &ModuleBase::ONE,
+            &this->one,
             this->vkb,
             this->ppcell->vkb.nc,
             this->ps,
             inc,
-            &ModuleBase::ONE,
+            &this->one,
             hpsi_in,
             inc);
     }
@@ -202,12 +192,12 @@ void Nonlocal<OperatorPW<FPTYPE, Device>>::add_nonlocal_pp(std::complex<FPTYPE> 
             this->npw,
             npm,
             this->ppcell->nkb,
-            &ModuleBase::ONE,
+            &this->one,
             this->vkb,
             this->ppcell->vkb.nc,
             this->ps,
             npm,
-            &ModuleBase::ONE,
+            &this->one,
             hpsi_in,
             this->max_npw
         );
@@ -233,7 +223,9 @@ void Nonlocal<OperatorPW<FPTYPE, Device>>::act
         //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
         // qianrui optimize 2021-3-31
         int nkb = this->ppcell->nkb;
-        resmem_complex_op()(this->ctx, this->becp, n_npwx * nkb);
+        if (this->nkb_m < n_npwx * nkb) {
+            resmem_complex_op()(this->ctx, this->becp, n_npwx * nkb);
+        }
         // ModuleBase::ComplexMatrix becp(n_npwx, nkb, false);
         char transa = 'C';
         char transb = 'N';
@@ -247,12 +239,12 @@ void Nonlocal<OperatorPW<FPTYPE, Device>>::act
                 transa,
                 this->npw,
                 nkb,
-                &ModuleBase::ONE,
+                &this->one,
                 this->vkb,
                 this->ppcell->vkb.nc,
                 tmpsi_in,
                 inc,
-                &ModuleBase::ZERO,
+                &this->zero,
                 this->becp,
                 inc);
         }
@@ -268,12 +260,12 @@ void Nonlocal<OperatorPW<FPTYPE, Device>>::act
                 nkb,
                 npm,
                 this->npw,
-                &ModuleBase::ONE,
+                &this->one,
                 this->vkb,
                 this->ppcell->vkb.nc,
                 tmpsi_in,
                 this->max_npw,
-                &ModuleBase::ZERO,
+                &this->zero,
                 this->becp,
                 nkb
             );
@@ -296,27 +288,24 @@ hamilt::Nonlocal<OperatorPW<FPTYPE, Device>>::Nonlocal(const Nonlocal<OperatorPW
     this->isk = nonlocal->get_isk();
     this->ppcell = nonlocal->get_ppcell();
     this->ucell = nonlocal->get_ucell();
-    if (psi::device::get_device_type<Device>(this->ctx) == psi::GpuDevice) {
-        this->deeq = this->ppcell->d_deeq;
-        resmem_complex_op()(this->ctx, this->vkb, this->ppcell->vkb.size);
-    }
-    else {
-        this->deeq = this->ppcell->deeq.ptr;
-        this->vkb = this->ppcell->vkb.c;
-    }
+    this->deeq = this->ppcell->d_deeq;
+    this->deeq_nc = this->ppcell->template get_deeq_nc_data<FPTYPE>();
+    this->vkb = this->ppcell->template get_vkb_data<FPTYPE>();
     if( this->isk == nullptr || this->ppcell == nullptr || this->ucell == nullptr)
     {
         ModuleBase::WARNING_QUIT("NonlocalPW", "Constuctor of Operator::NonlocalPW is failed, please check your code!");
     }
 }
 
-namespace hamilt{
+namespace hamilt {
+template class Nonlocal<OperatorPW<float, psi::DEVICE_CPU>>;
 template class Nonlocal<OperatorPW<double, psi::DEVICE_CPU>>;
-template Nonlocal<OperatorPW<double, psi::DEVICE_CPU>>::Nonlocal(const Nonlocal<OperatorPW<double, psi::DEVICE_CPU>> *nonlocal);
+// template Nonlocal<OperatorPW<double, psi::DEVICE_CPU>>::Nonlocal(const Nonlocal<OperatorPW<double, psi::DEVICE_CPU>> *nonlocal);
 #if ((defined __CUDA) || (defined __ROCM))
+template class Nonlocal<OperatorPW<float, psi::DEVICE_GPU>>;
 template class Nonlocal<OperatorPW<double, psi::DEVICE_GPU>>;
-template Nonlocal<OperatorPW<double, psi::DEVICE_CPU>>::Nonlocal(const Nonlocal<OperatorPW<double, psi::DEVICE_GPU>> *nonlocal);
-template Nonlocal<OperatorPW<double, psi::DEVICE_GPU>>::Nonlocal(const Nonlocal<OperatorPW<double, psi::DEVICE_CPU>> *nonlocal);
-template Nonlocal<OperatorPW<double, psi::DEVICE_GPU>>::Nonlocal(const Nonlocal<OperatorPW<double, psi::DEVICE_GPU>> *nonlocal);
+// template Nonlocal<OperatorPW<double, psi::DEVICE_CPU>>::Nonlocal(const Nonlocal<OperatorPW<double, psi::DEVICE_GPU>> *nonlocal);
+// template Nonlocal<OperatorPW<double, psi::DEVICE_GPU>>::Nonlocal(const Nonlocal<OperatorPW<double, psi::DEVICE_CPU>> *nonlocal);
+// template Nonlocal<OperatorPW<double, psi::DEVICE_GPU>>::Nonlocal(const Nonlocal<OperatorPW<double, psi::DEVICE_GPU>> *nonlocal);
 #endif
 } // namespace hamilt

@@ -58,7 +58,7 @@ namespace ModuleESolver
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "SETUP UNITCELL");
 
         // symmetry analysis should be performed every time the cell is changed
-        if (ModuleSymmetry::Symmetry::symm_flag)
+        if (ModuleSymmetry::Symmetry::symm_flag == 1)
         {
             GlobalC::symm.analy_sys(ucell, GlobalV::ofs_running);
             ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "SYMMETRY");
@@ -293,8 +293,10 @@ namespace ModuleESolver
         return this->niter;
     }
 
+template class ESolver_KS<float, psi::DEVICE_CPU>;
 template class ESolver_KS<double, psi::DEVICE_CPU>;
 #if ((defined __CUDA) || (defined __ROCM))
+template class ESolver_KS<float, psi::DEVICE_GPU>;
 template class ESolver_KS<double, psi::DEVICE_GPU>;
 #endif
 }

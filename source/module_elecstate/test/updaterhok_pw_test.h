@@ -15,11 +15,9 @@
 #include "module_symmetry/symmetry.h"
 #include "src_parallel/parallel_grid.h"
 #include "src_parallel/parallel_kpoints.h"
-#include "src_pw/use_fft.h"
 #include "src_pw/pw_complement.h"
 #include "src_pw/structure_factor.h"
 #include "src_pw/VNL_in_pw.h"
-#include "src_pw/hamilt.h"
 #include "input.h"
 #include "src_pw/energy.h"
 #include "module_xc/xc_functional.h"
@@ -62,8 +60,6 @@ pseudopot_cell_vl::pseudopot_cell_vl(){}
 pseudopot_cell_vl::~pseudopot_cell_vl(){}
 pseudopot_cell_vnl::pseudopot_cell_vnl(){}
 pseudopot_cell_vnl::~pseudopot_cell_vnl(){}
-Hamilt::Hamilt(){}
-Hamilt::~Hamilt(){}
 energy::energy(){}
 energy::~energy(){}
 
@@ -92,7 +88,6 @@ Structure_Factor sf;
 ModulePW::PW_Basis* rhopw;
 ModulePW::PW_Basis_K* wfcpw;
 pseudopot_cell_vnl ppcell;
-Hamilt hm;
 energy en;
 Parallel_Kpoints Pkpoints;
 Restart restart;

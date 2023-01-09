@@ -44,9 +44,6 @@ class Relax
     //init after cell moves
     void init_after_vc();
 
-    //check whether relaxation is converged
-    bool check_convergence(const ModuleBase::matrix& force, const ModuleBase::matrix &stress);
-
     int nat; // number of atoms
     bool ltrial; // if last step is trial step
 

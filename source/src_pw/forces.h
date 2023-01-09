@@ -5,11 +5,11 @@
 #include "../module_base/global_variable.h"
 #include "../module_base/matrix.h"
 #include "../module_pw/pw_basis.h"
-#include "module_hsolver/include/math_kernel.h"
+#include "module_hsolver/kernels/math_kernel_op.h"
 #include "module_psi/psi.h"
-#include "module_psi/include/memory.h"
+#include "module_psi/kernels/memory_op.h"
 #include "charge.h"
-#include "src_pw/include/force_multi_device.h"
+#include "src_pw/kernels/force_op.h"
 
 template<typename FPTYPE, typename Device = psi::DEVICE_CPU>
 class Forces

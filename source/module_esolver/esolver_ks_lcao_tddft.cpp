@@ -302,9 +302,12 @@ void ESolver_KS_LCAO_TDDFT::updatepot(const int istep, const int iter)
             this->psi_laststep
                 = new psi::Psi<std::complex<double>>(GlobalC::kv.nks, GlobalV::NBANDS, GlobalV::NLOCAL, nullptr);
 #endif
-        std::complex<double>* tmp = psi[0].get_pointer();
-        for (int index = 0; index < psi[0].size(); ++index)
-            psi_laststep[0].get_pointer()[index] = tmp[index];
+        for (int ik = 0; ik < GlobalC::kv.nks; ++ik)
+        {
+            psi->fix_k(ik);
+            for (int index = 0; index < psi[0].size(); ++index)
+                psi_laststep[0].get_pointer()[index] = psi[0].get_pointer()[index];
+        }
         if (istep > 1)
             this->cal_edm_tddft();
     }
@@ -407,7 +410,10 @@ void ESolver_KS_LCAO_TDDFT::afterscf(const int istep)
 
     if (hsolver::HSolverLCAO::out_mat_hsR)
     {
-        this->output_HS_R(istep, this->pelec->pot->get_effective_v()); // LiuXh add 2019-07-15
+        if( !(GlobalV::CALCULATION=="md" && (istep%hsolver::HSolverLCAO::out_hsR_interval!=0)) )
+        {
+            this->output_HS_R(istep, this->pelec->pot->get_effective_v()); // LiuXh add 2019-07-15
+        }
     }
 
     // add by jingan for out r_R matrix 2019.8.14

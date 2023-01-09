@@ -74,6 +74,73 @@ public:
 	int *iwt2iw; // iwt ==> iw, Peize Lin add 2018-07-02
     ModuleBase::IntArray itia2iat;//(it, ia)==>iat, the index in nat, add 2009-3-2 by mohan
     ModuleBase::IntArray itiaiw2iwt;//(it, ia, iw)==>iwt, the index in nwfc, add 2009-3-2 by mohan
+
+    //========================================================
+    // indexing tools for ia and it
+    // return true if the last out is reset
+    //========================================================
+    template<typename Tiat, typename Tiait>
+    inline bool iat2iait(const Tiat iat, Tiait *ia, Tiait *it) const
+    {
+        if (iat >= nat)
+        {
+            *ia = 0;
+            *it = ntype;
+            return false;
+        }
+        *ia = (Tiait)iat2ia[iat];
+        *it = (Tiait)iat2it[iat];
+        return true;
+    }
+
+    template<typename Tiat, typename Tiait>
+    inline bool ijat2iaitjajt(const Tiat ijat, Tiait *ia, Tiait *it, Tiait *ja, Tiait *jt) const
+    {
+        Tiat iat = ijat / nat;
+        Tiat jat = ijat % nat;
+        iat2iait(iat, ia, it);
+        iat2iait(jat, ja, jt);
+        return true;
+    }
+
+    template<typename Tiait>
+    inline bool step_it(Tiait *it) const
+    {
+        if (++(*it) >= ntype) {
+            *it = 0;
+            return true;
+        }
+        return false;
+    }
+
+    template<typename Tiait>
+    inline bool step_ia(const Tiait it, Tiait *ia) const
+    {
+        if (++(*ia) >= atoms[it].na) {
+            *ia = 0;
+            return true;
+        }
+        return false;
+    }
+
+    template<typename Tiait>
+    inline bool step_iait(Tiait *ia, Tiait *it) const
+    {
+        if (step_ia(*it, ia)) {
+            return step_it(it);
+        }
+        return false;
+    }
+
+    template<typename Tiait>
+    inline bool step_jajtiait(Tiait *ja, Tiait *jt, Tiait *ia, Tiait *it) const
+    {
+        if (step_iait(ja, jt)) {
+            return step_iait(ia, it);
+        }
+        return false;
+    }
+
     //LiuXh add 20180515
     ModuleBase::Matrix3 G0;
     ModuleBase::Matrix3 GT0;
@@ -192,7 +259,7 @@ public:
 	bool if_atoms_can_move()const;
 	bool if_cell_can_change()const;
 	void setup(const std::string &latname_in,
-			const int &ntype_in, 
+            const int &ntype_in,
 			const int &lmaxmax_in,
 			const bool &init_vel_in,
 			const std::string &fixed_axes_in);
@@ -203,7 +270,6 @@ public:
 #endif
 
 	void check_structure(double factor);
-
 };
 
 #endif //unitcell class

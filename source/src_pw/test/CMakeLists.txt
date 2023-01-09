@@ -5,14 +5,8 @@ remove_definitions(-D__ROCM)
 
 AddTest(
   TARGET klist_test
-  LIBS ${math_libs} base symmetry
+  LIBS ${math_libs} base symmetry device
   SOURCES klist_test.cpp ../klist.cpp ../../src_parallel/parallel_reduce.cpp ../../src_parallel/parallel_kpoints.cpp ../../src_parallel/parallel_global.cpp ../../src_parallel/parallel_common.cpp ../../src_io/output.cpp
 )
 
-AddTest(
-   TARGET SRC_PW_UTs
-   LIBS ${math_libs} base device
-   SOURCES force_multi_device_test.cpp ../../src_parallel/parallel_reduce.cpp ../../src_parallel/parallel_kpoints.cpp ../../src_parallel/parallel_global.cpp ../../src_parallel/parallel_common.cpp
-)
-
-install(FILES KPT KPT1 KPT2 DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+install(FILES KPT KPT1 KPT2 KPT4 KPT5   DESTINATION ${CMAKE_CURRENT_BINARY_DIR})

@@ -28,6 +28,7 @@
 #include "../module_base/math_sphbes.h"
 #include <vector>
 #include "../module_base/timer.h"
+#include "../module_base/tool_threading.h"
 
 Charge::Charge()
 {
@@ -142,7 +143,6 @@ void Charge::init_rho()
     std::cout << " START CHARGE      : " << GlobalV::init_chg << std::endl;
     if (GlobalV::init_chg == "atomic") // mohan add 2007-10-17
     {
-    start_from_atomic:
         this->atomic_rho(GlobalV::NSPIN, rho, GlobalC::rhopw);
     }
     else if (GlobalV::init_chg == "file")
@@ -161,7 +161,7 @@ void Charge::init_rho()
             else if (is > 0 && GlobalV::NSPIN == 4)
             {
                 // read only spin (up+down)
-                if (GlobalV::PRENSPIN == 1)
+                if (prenspin == 1)
                 {
                     GlobalV::ofs_running << " Didn't read in the charge density but autoset it for spin " << is + 1
                                          << std::endl;
@@ -171,7 +171,7 @@ void Charge::init_rho()
                     }
                 }
                 //
-                else if (GlobalV::PRENSPIN == 2)
+                else if (prenspin == 2)
                 { // read up and down , then rearrange them.
                     if (is == 1)
                     {
@@ -199,12 +199,22 @@ void Charge::init_rho()
                     ModuleBase::WARNING_QUIT("Charge::init_rho", "Incomplete charge density file!");
                 }
             }
-            else
-            {
-                GlobalV::ofs_running << " Start charge density from atomic charge density." << std::endl;
-                goto start_from_atomic;
-            }
         }
+        
+		if(XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
+        {
+			for (int is = 0; is < GlobalV::NSPIN; is++)
+			{
+				std::stringstream ssc;
+				ssc << GlobalV::global_readin_dir << "SPIN" << is + 1 << "_TAU";
+				GlobalV::ofs_running << " try to read kinetic energy density from file : " << ssc.str() << std::endl;
+				// mohan update 2012-02-10
+				if (this->read_rho(is, ssc.str(), this->kin_r[is]))
+				{
+					GlobalV::ofs_running << " Read in the kinetic energy density: " << ssc.str() << std::endl;
+				}
+			}
+		}
     }
     else
     {
@@ -547,10 +557,10 @@ void Charge::atomic_rho(const int spin_number_need, double** rho_in, ModulePW::P
 		double sumrea = 0.0;
         for (int ir=0;ir < rho_basis->nrxx; ir++)
         {
-            rea = rho_basis->ft.auxr[ir].real();
+            rea = rho_basis->ft.get_auxr_data<double>()[ir].real();
 			sumrea += rea;
             neg += std::min(0.0, rea);
-            ima += abs(rho_basis->ft.auxr[ir].imag());
+            ima += abs(rho_basis->ft.get_auxr_data<double>()[ir].imag());
         }
 
 		Parallel_Reduce::reduce_double_pool( neg );	
@@ -701,8 +711,8 @@ void Charge::set_rho_core(
     double rhoneg = 0.0;
     for (int ir = 0; ir < GlobalC::rhopw->nrxx; ir++)
     {
-        rhoneg += min(0.0, GlobalC::rhopw->ft.auxr[ir].real());
-        rhoima += abs(GlobalC::rhopw->ft.auxr[ir].imag());
+        rhoneg += min(0.0, GlobalC::rhopw->ft.get_auxr_data<double>()[ir].real());
+        rhoima += abs(GlobalC::rhopw->ft.get_auxr_data<double>()[ir].imag());
         // NOTE: Core charge is computed in reciprocal space and brought to real
         // space by FFT. For non smooth core charges (or insufficient cut-off)
         // this may result in negative values in some grid points.
@@ -745,7 +755,12 @@ void Charge::non_linear_core_correction
 	ModulePW::PW_Basis* rho_basis) const
 {
     ModuleBase::TITLE("charge","drhoc");
-    double gx = 0.0;
+
+	// use labmda instead of repeating codes
+	const auto kernel = [&](int num_threads, int thread_id)
+	{
+
+	double gx = 0.0;
     double rhocg1 = 0.0;
     double *aux;
 
@@ -758,18 +773,28 @@ void Charge::non_linear_core_correction
         int igl0 = 0;
         if (rho_basis->gg_uniq [0] < 1.0e-8)
         {
-            for (int ir = 0;ir < mesh; ir++)
-            {
-                aux [ir] = r [ir] * r [ir] * rhoc [ir];
-            }
-            ModuleBase::Integral::Simpson_Integral(mesh, aux, rab, rhocg1);
-            //rhocg [1] = fpi * rhocg1 / omega;
-            rhocg [0] = ModuleBase::FOUR_PI * rhocg1 / GlobalC::ucell.omega;//mohan modify 2008-01-19
+			// single thread term
+			if (thread_id == 0)
+			{
+				for (int ir = 0;ir < mesh; ir++)
+				{
+					aux [ir] = r [ir] * r [ir] * rhoc [ir];
+				}
+				ModuleBase::Integral::Simpson_Integral(mesh, aux, rab, rhocg1);
+				//rhocg [1] = fpi * rhocg1 / omega;
+				rhocg [0] = ModuleBase::FOUR_PI * rhocg1 / GlobalC::ucell.omega;//mohan modify 2008-01-19
+			}
             igl0 = 1;
         }
 
+		int igl_beg, igl_end;
+		// exclude igl0
+		ModuleBase::TASK_DIST_1D(num_threads, thread_id, rho_basis->ngg - igl0, igl_beg, igl_end);
+		igl_beg += igl0;
+		igl_end += igl_beg;
+
         // G <> 0 term
-        for (int igl = igl0; igl < rho_basis->ngg;igl++) 
+        for (int igl = igl_beg; igl < igl_end;igl++) 
         {
             gx = sqrt(rho_basis->gg_uniq[igl] * GlobalC::ucell.tpiba2);
             ModuleBase::Sphbes::Spherical_Bessel(mesh, r, gx, 0, aux);
@@ -787,6 +812,15 @@ void Charge::non_linear_core_correction
         // here the case where the charge is in analytic form,
         // check old version before 2008-12-9
     }
+
+	}; // end kernel
+
+	// do not use omp parallel when this function is already in parallel block
+	// 
+	// it is called in parallel block in Forces::cal_force_cc,
+	// but not in other funtcion such as Stress_Func::stress_cc.
+	ModuleBase::TRY_OMP_PARALLEL(kernel);
+
     return;
 }
 

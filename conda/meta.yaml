@@ -1,6 +1,15 @@
 # Install ABACUS by conda:
 #   conda create -n abacus_env abacus -c deepmodeling -c conda-forge
 #   conda activate abacus_env
+# Docs: https://abacus.deepmodeling.com/en/latest/quick_start/easy_install.html#install-by-conda
+
+# This conda package can also be built locally with
+#   conda build . -c conda-forge
+# And install with
+#   conda create -n my_abacus_env abacus -c local -c conda-forge
+
+# Feedstock: https://github.com/deepmd-kit-recipes/abacus-feedstock
+# Package:   https://anaconda.org/deepmodeling/abacus
 
 {% set version = os.popen('git describe --tags --abbrev=0').read().strip('\n').lstrip('v').replace('-', '_') %}
 
@@ -8,8 +17,6 @@ package:
   name: abacus
   version: {{ version }}
 
-# This conda package may be built locally with
-# conda build . -c conda-forge
 source:
   path: ..
   # git_url: https://github.com/deepmodeling/abacus-develop.git
@@ -18,7 +25,8 @@ source:
 build:
   skip: true  # [not linux]
   script: |
-    cmake -B conda_build ${CMAKE_ARGS} -DCMAKE_BUILD_TYPE=Release
+    export CMAKE_PREFIX_PATH=`python -c "import torch;print(torch.__path__[0])"`/share/cmake:$CMAKE_PREFIX_PATH
+    cmake -B conda_build ${CMAKE_ARGS} -DCMAKE_BUILD_TYPE=Release -DENABLE_DEEPKS=1 -DENABLE_LIBXC=1
     cmake --build conda_build -j`nproc`
     cmake --install conda_build
   # ${CMAKE_ARGS} applys restrictions for CMake to search libs under conda building env.
@@ -37,6 +45,9 @@ requirements:
     - openblas=*=openmp*
     - elpa=*=mpi*
     - fftw=*=mpi*
+    - cereal
+    - pytorch
+    - libxc
 
   run:
     - libopenblas=*=openmp*
@@ -60,11 +71,6 @@ test:
   #   - tests/integrate
   #   - tests/PP_ORB
 
-# Locally built package can be installed by
-# conda create -n my_abacus_env abacus -c local -c conda-forge
-
-# Feedstock: https://github.com/deepmd-kit-recipes/abacus-feedstock
-# Package:   https://anaconda.org/deepmodeling/abacus
 about:
   home: http://abacus.ustc.edu.cn/
   doc_url: https://abacus.deepmodeling.com/

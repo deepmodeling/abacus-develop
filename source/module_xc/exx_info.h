@@ -40,6 +40,8 @@ struct Exx_Info
 		const Conv_Coulomb_Pot_K::Ccp_Type &ccp_type;
 		const double &hse_omega;
 		
+		bool real_number = false;
+		
 		double pca_threshold = 0;
 		std::vector<std::string> files_abfs;
 		double C_threshold  = 0;

@@ -6,7 +6,7 @@
 #include "charge.h"
 //qianrui create 2021-6-4
 
-class Sto_Stress_PW:public Stress_Func
+class Sto_Stress_PW:public Stress_Func<double>
 {
 	public :
 	

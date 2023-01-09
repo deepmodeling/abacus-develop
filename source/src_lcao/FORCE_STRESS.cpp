@@ -1,6 +1,6 @@
 #include "FORCE_STRESS.h"
 #include "../src_pw/global.h"
-#include "./dftu.h"  //Quxin add for DFT+U on 20201029
+#include "module_dftu/dftu.h"  //Quxin add for DFT+U on 20201029
 // new
 #include "module_base/timer.h"
 #include "module_elecstate/potentials/efield.h"        // liuyu add 2022-05-18
@@ -183,35 +183,17 @@ void Force_Stress_LCAO::getForceStress(
 	//Force contribution from DFT+U
 	ModuleBase::matrix force_dftu;
 	ModuleBase::matrix stress_dftu;
-	if (GlobalV::dft_plus_u)
-	{
-		// Quxin add for DFT+U on 20201029
-		GlobalC::dftu.force_stress(loc.dm_gamma, loc.dm_k, *uhm.LM);
-		
-        if (isforce) {
+	if (GlobalV::dft_plus_u) // Quxin add for DFT+U on 20201029
+	{	
+        if (isforce)
+		{
             force_dftu.create(nat, 3);
 		}
 		if(isstress)
 		{
 			stress_dftu.create(3, 3);
 		}
-		for(int i=0; i<3; i++)
-		{
-			if(isstress)
-			{
-				for(int j=0; j<3; j++)
-				{
-					stress_dftu(j,i) = GlobalC::dftu.stress_dftu.at(j).at(i);
-				}
-			}
-			if(isforce)
-			{
-				for (int iat = 0; iat < nat; iat++)
-				{
-					force_dftu(iat, i) = GlobalC::dftu.force_dftu.at(iat).at(i);
-				}
-			}
-		}
+		GlobalC::dftu.force_stress(loc.dm_gamma, loc.dm_k, *uhm.LM, force_dftu, stress_dftu);
 	}
 #ifdef __EXX
 	//Force and Stress contribution from exx
@@ -221,7 +203,7 @@ void Force_Stress_LCAO::getForceStress(
 	{
 		if(isforce)
 		{
-			if(GlobalV::GAMMA_ONLY_LOCAL)
+			if(GlobalC::exx_info.info_ri.real_number)
 			{
 				GlobalC::exx_lri_double.cal_exx_force();
 				force_exx = GlobalC::exx_info.info_global.hybrid_alpha * GlobalC::exx_lri_double.force_exx;
@@ -234,7 +216,7 @@ void Force_Stress_LCAO::getForceStress(
 		}
 		if(isstress)
 		{
-			if(GlobalV::GAMMA_ONLY_LOCAL)
+			if(GlobalC::exx_info.info_ri.real_number)
 			{
 				GlobalC::exx_lri_double.cal_exx_stress();
 				stress_exx = GlobalC::exx_info.info_global.hybrid_alpha * GlobalC::exx_lri_double.stress_exx;
@@ -335,7 +317,7 @@ void Force_Stress_LCAO::getForceStress(
         }
 
 		// pengfei 2016-12-20
-		if(ModuleSymmetry::Symmetry::symm_flag)
+		if(ModuleSymmetry::Symmetry::symm_flag == 1)
 		{
 			this->forceSymmetry(fcs);
 		}
@@ -453,7 +435,8 @@ void Force_Stress_LCAO::getForceStress(
 			//caoyu add 2021-06-03
 			if (GlobalV::deepks_scf)
 			{
-				this->print_force("DeePKS 	FORCE", GlobalC::ld.F_delta, 1, ry);
+				f_pw.print("DeePKS 	FORCE", GlobalC::ld.F_delta, 1);
+				//this->print_force("DeePKS 	FORCE", GlobalC::ld.F_delta, 1, ry);
 			}
 #endif
 		}
@@ -550,7 +533,7 @@ void Force_Stress_LCAO::getForceStress(
 #endif
 
 
-		if(ModuleSymmetry::Symmetry::symm_flag)
+		if(ModuleSymmetry::Symmetry::symm_flag == 1)
 		{
 			GlobalC::symm.stress_symmetry(scs, GlobalC::ucell);
 		}//end symmetry
@@ -621,143 +604,6 @@ void Force_Stress_LCAO::getForceStress(
 	
 	ModuleBase::timer::tick("Force_Stress_LCAO","getForceStress");
 	return;
-}
-
-//print force term for test
-void Force_Stress_LCAO::print_force(const std::string &name, ModuleBase::matrix& f, const bool screen, bool ry)const
-{
-	GlobalV::ofs_running << " --------------------------- " << name << " ----------------------------" << std::endl;
-	GlobalV::ofs_running << " " << std::setw(8) << "atom" << std::setw(15) << "x" << std::setw(15) << "y" << std::setw(15) << "z" << std::endl;
-
-	double fac = 1.0;
-
-	if(!ry)
-	{
-	 	fac = ModuleBase::Ry_to_eV / 0.529177;
-	}
-
-	std::cout << std::setprecision(5);
-	std::cout << std::setiosflags(ios::showpos);
-
-	if(screen)
-	{
-		std::cout << " ------------------- " << name << " --------------------" << std::endl;
-		std::cout << " " << std::setw(8) << "atom" << std::setw(15) << "x" << std::setw(15) << "y" << std::setw(15) << "z" << std::endl;
-	}
-
-    int iat = 0;
-    for (int it = 0;it < GlobalC::ucell.ntype;it++)
-    {
-        for (int ia = 0;ia < GlobalC::ucell.atoms[it].na;ia++)
-        {
-			std::stringstream ss;
-			ss << GlobalC::ucell.atoms[it].label << ia+1;
-
-			GlobalV::ofs_running << " " << std::setw(8) << ss.str();
-			if( abs(f(iat,0)) >output_acc) GlobalV::ofs_running << std::setw(15) << f(iat,0)*fac;
-			else GlobalV::ofs_running << std::setw(15) << "0";
-			if( abs(f(iat,1)) >output_acc) GlobalV::ofs_running << std::setw(15) << f(iat,1)*fac;
-			else GlobalV::ofs_running << std::setw(15) << "0";
-			if( abs(f(iat,2)) >output_acc) GlobalV::ofs_running << std::setw(15) << f(iat,2)*fac;
-			else GlobalV::ofs_running << std::setw(15) << "0";
-			GlobalV::ofs_running << std::endl;
-
-			if(screen)
-			{
-				std::cout << " " << std::setw(8) << ss.str();
-				if( abs(f(iat,0)) >output_acc) std::cout << std::setw(15) << f(iat,0)*fac;
-				else std::cout << std::setw(15) << "0";
-				if( abs(f(iat,1)) >output_acc) std::cout << std::setw(15) << f(iat,1)*fac;
-				else std::cout << std::setw(15) << "0";
-				if( abs(f(iat,2)) >output_acc) std::cout << std::setw(15) << f(iat,2)*fac;
-				else std::cout << std::setw(15) << "0";
-				std::cout << std::endl;
-			}
-
-            iat++;
-        }
-    }
-
-
-	std::cout << std::resetiosflags(ios::showpos);
-
-    return;
-}
-
-
-void Force_Stress_LCAO::printforce_total (const bool ry, const bool istestf, ModuleBase::matrix& fcs)
-{
-	ModuleBase::TITLE("Force_Stress_LCAO","printforce_total");
-	double unit_transform = 1;
-
-	if(!ry)
-	{
-		unit_transform = ModuleBase::Ry_to_eV / 0.529177;
-	}
-//	std::cout.setf(ios::fixed);
-
-    int iat=0;
-
-	//GlobalV::ofs_running << std::setiosflags(ios::right);
- 	GlobalV::ofs_running << std::setprecision(6) << std::setiosflags(ios::showpos) << std::setiosflags(ios::fixed) << std::endl;
-	ModuleBase::GlobalFunc::NEW_PART("TOTAL-FORCE (eV/Angstrom)");
-
-	// print out forces
-	if(INPUT.out_force == 1)
-	{
-		std::ofstream ofs("FORCE.dat");
-		if(!ofs)
-		{
-			std::cout << "open FORCE.dat error !" <<std::endl;
-		}
-
-		for(int iat=0; iat<GlobalC::ucell.nat; iat++)
-		{
-			ofs << "   " << fcs(iat,0)*ModuleBase::Ry_to_eV / 0.529177
-				<< "   " << fcs(iat,1)*ModuleBase::Ry_to_eV / 0.529177
-				<< "   " << fcs(iat,2)*ModuleBase::Ry_to_eV / 0.529177 << std::endl;
-		}
-		ofs.close();
-	}
-
- 	if(istestf)
-	{
-		cout << setprecision(6);
-		//cout << setiosflags(ios::showpos);
-		//cout << setiosflags(ios::fixed) << endl;
-		cout << " ------------------- TOTAL      FORCE --------------------" << endl;
-    	cout << " " << setw(8) << "Atom" << setw(15) << "x" << setw(15) << "y" << setw(15) << "z" << endl;
-    	GlobalV::ofs_running << " " << setw(12) << "Atom" << setw(15) << "x" << setw(15) << "y" << setw(15) << "z" << endl;
-	}
-
-    iat=0;
-    for (int it=0; it<GlobalC::ucell.ntype; it++)
-    {
-        for (int ia = 0; ia < GlobalC::ucell.atoms[it].na; ia++)
-        {
-            std::stringstream ss;
-            ss << GlobalC::ucell.atoms[it].label << ia+1;
-
-			if(istestf)
-			{
-            	std::cout << " " << std::setw(8) << ss.str()
-					<< std::setw(15) << fcs(iat,0)*unit_transform
-					<< std::setw(15) << fcs(iat,1)*unit_transform
-					<< std::setw(15) << fcs(iat,2)*unit_transform << std::endl;
-			}
-
-            GlobalV::ofs_running << " " << std::setw(12) << ss.str()
-				<< std::setw(15) << fcs(iat,0)*unit_transform
-				<< std::setw(15) << fcs(iat,1)*unit_transform
-				<< std::setw(15) << fcs(iat,2)*unit_transform << std::endl;
-
-            ++iat;
-        }
-    }
-	GlobalV::ofs_running << std::setiosflags(ios::left);
-	std::cout << std::resetiosflags(ios::showpos);
-
-    return;
 }
 
 //local pseudopotential, ewald, core correction, scc terms in force
