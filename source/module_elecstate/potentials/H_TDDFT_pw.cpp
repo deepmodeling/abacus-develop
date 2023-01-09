@@ -29,7 +29,6 @@ void H_TDDFT_pw::cal_fixed_v(double* vl_pseudo)
     {
         return;
     }
-    std::cout << "calculate electric potential" << endl;
 
     ModuleBase::timer::tick("H_TDDFT_pw", "cal_fixed_v");
 
@@ -175,7 +174,7 @@ double H_TDDFT_pw::cal_v_space_length_potential(double i)
     double vext_space=0.0;
     if (i < this->rho_basis_->nx * lcut1)
     {
-        vext_space = ((i / this->rho_basis_->nx - lcut1) / (lcut1 + 1.0 - lcut2) - lcut1) * this->ucell_->lat0;
+        vext_space = ((i / this->rho_basis_->nx - lcut1)*(lcut2-lcut1) / (lcut1 + 1.0 - lcut2) - lcut1) * this->ucell_->lat0;
     }
     else if (i >= this->rho_basis_->nx * lcut1 && i < this->rho_basis_->nx * lcut2)
     {
@@ -183,7 +182,7 @@ double H_TDDFT_pw::cal_v_space_length_potential(double i)
     }
     else if (i >= this->rho_basis_->nx * lcut2)
     {
-        vext_space = ((i / this->rho_basis_->nx - lcut2) / (lcut1 + 1.0 - lcut2) - lcut2) * this->ucell_->lat0;
+        vext_space = ((i / this->rho_basis_->nx - lcut2)*(lcut2-lcut1) / (lcut1 + 1.0 - lcut2) - lcut2) * this->ucell_->lat0;
     }
     return vext_space;
 }

@@ -40,7 +40,7 @@ class H_TDDFT_pw : public PotBase
 
     int tstart;
     int tend;
-    int dt;
+    double dt;
 
     // space domain parameters
 
