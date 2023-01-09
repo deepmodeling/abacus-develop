@@ -45,7 +45,7 @@ void LCAO_Deepks::print_dm_k(const int nks, const std::vector<ModuleBase::Comple
         ss<<"dm_"<<ik;
         ofstream ofs(ss.str().c_str());
         ofs << std::setprecision(15);
-        
+
         for (int mu=0;mu<GlobalV::NLOCAL;mu++)
         {
             for (int nu=0;nu<GlobalV::NLOCAL;nu++)
@@ -72,7 +72,7 @@ void LCAO_Deepks::save_npy_d(const int nat)
             npy_des.push_back(this->d_tensor[inl].index({im}).item().toDouble());
         }
     }
-    const long unsigned dshape[] = {(long unsigned) nat, (long unsigned) this->des_per_atom };
+    const long unsigned dshape[] = {static_cast<unsigned long>(nat), static_cast<unsigned long>(this->des_per_atom)};
     if (GlobalV::MY_RANK == 0)
     {
         npy::SaveArrayAsNumpy("dm_eig.npy", false, 2, dshape, npy_des);
@@ -87,7 +87,8 @@ void LCAO_Deepks::save_npy_gvx(const int nat)
     if(GlobalV::MY_RANK!=0) return;
     //save grad_vx.npy (when  force label is in use)
     //unit: /Bohr
-    const long unsigned gshape[] = {(long unsigned) nat, 3, nat, this->des_per_atom};
+    const long unsigned gshape[]
+        = {static_cast<unsigned long>(nat), 3UL, static_cast<unsigned long>(nat), static_cast<unsigned long>(this->des_per_atom)};
     vector<double> npy_gvx;
     for (int ibt = 0;ibt < nat;++ibt)
     {
@@ -113,7 +114,7 @@ void LCAO_Deepks::save_npy_gvepsl(const int nat)
     if(GlobalV::MY_RANK!=0) return;
     //save grad_vepsl.npy (when  stress label is in use)
     //unit: none
-    const long unsigned gshape[] = {(long unsigned) 6, nat, this->des_per_atom};
+    const long unsigned gshape[] = {6UL, static_cast<unsigned long>(nat), static_cast<unsigned long>(this->des_per_atom)};
     vector<double> npy_gvepsl;
     for (int i = 0;i < 6;i++)
     {
@@ -124,7 +125,7 @@ void LCAO_Deepks::save_npy_gvepsl(const int nat)
             {
                 npy_gvepsl.push_back(this->gvepsl_tensor.index({ i, ibt, p }).item().toDouble());
             }
-            
+
         }
     }
     npy::SaveArrayAsNumpy("grad_vepsl.npy", false, 3, gshape, npy_gvepsl);
@@ -151,7 +152,7 @@ void LCAO_Deepks::save_npy_f(const ModuleBase::matrix &f, const std::string &f_f
     if(GlobalV::MY_RANK!=0) return;
     //save f_base
     //caution: unit: Rydberg/Bohr
-    const long unsigned fshape[] = {(long unsigned) nat, 3 };
+    const long unsigned fshape[] = {static_cast<unsigned long>(nat), 3 };
     vector<double> npy_f;
     for (int iat = 0;iat < nat;++iat)
     {
@@ -173,7 +174,7 @@ void LCAO_Deepks::save_npy_s(const ModuleBase::matrix &s, const std::string &s_f
     //caution: unit: Rydberg/Bohr
     const long unsigned sshape[] = { 6 };
     vector<double> npy_s;
-    
+
     for (int ipol = 0;ipol < 3;++ipol)
     {
         for (int jpol = ipol;jpol < 3;jpol++)
@@ -190,7 +191,7 @@ void LCAO_Deepks::save_npy_o(const ModuleBase::matrix &bandgap, const std::strin
     ModuleBase::TITLE("LCAO_Deepks", "save_npy_o");
     if(GlobalV::MY_RANK!=0) return;
     //save o_base
-    const long unsigned oshape[] = {(long unsigned) nks, 1 };
+    const long unsigned oshape[] = {static_cast<unsigned long>(nks), 1 };
     vector<double> npy_o;
     for (int iks = 0; iks < nks; ++iks)
     {
@@ -199,7 +200,7 @@ void LCAO_Deepks::save_npy_o(const ModuleBase::matrix &bandgap, const std::strin
             npy_o.push_back(bandgap(iks,hl));
         }
     }
-    
+
     npy::SaveArrayAsNumpy(o_file, false, 1, oshape, npy_o);
     return;
 }
@@ -210,7 +211,10 @@ void LCAO_Deepks::save_npy_orbital_precalc(const int nat, const int nks)
     if(GlobalV::MY_RANK!=0) return;
     //save orbital_precalc.npy (when bandgap label is in use)
     //unit: a.u.
-    const long unsigned gshape[] = {(long unsigned) nks, 1, nat, this->des_per_atom};
+    const long unsigned gshape[] = {static_cast<unsigned long>(nks),
+                                    1,
+                                    static_cast<unsigned long>(nat),
+                                    static_cast<unsigned long>(this->des_per_atom)};
     vector<double> npy_orbital_precalc;
     for (int iks = 0; iks < nks; ++iks)
     {
@@ -222,7 +226,7 @@ void LCAO_Deepks::save_npy_orbital_precalc(const int nat, const int nks)
                 {
                     npy_orbital_precalc.push_back(this->orbital_precalc_tensor.index({iks, hl, iat, p }).item().toDouble());
                 }
-            } 
+            }
         }
     }
     npy::SaveArrayAsNumpy("orbital_precalc.npy", false, 4, gshape, npy_orbital_precalc);

@@ -1495,6 +1495,7 @@ bool Input::Read(const std::string &fn)
         {
             read_value(ifs, out_dipole);
         }
+<<<<<<< HEAD
         else if (strcmp("td_print_eij", word) == 0)
         {
             read_value(ifs, td_print_eij);
@@ -1503,6 +1504,8 @@ bool Input::Read(const std::string &fn)
         {
             read_value(ifs, td_edm);
         }
+=======
+>>>>>>> 96bc9fbae813c7c843bd30039b78cf3819b4374f
         else if (strcmp("td_stype", word) == 0)
         {
             read_value(ifs, td_stype);
@@ -1596,6 +1599,7 @@ bool Input::Read(const std::string &fn)
             read_value(ifs, td_heavi_t0);
         }
         else if (strcmp("td_heavi_amp", word) == 0)
+<<<<<<< HEAD
         {
             read_value(ifs, td_heavi_amp);
         }
@@ -1629,6 +1633,41 @@ bool Input::Read(const std::string &fn)
         }
         else if (strcmp("td_hhg_sigma", word) == 0)
         {
+=======
+        {
+            read_value(ifs, td_heavi_amp);
+        }
+        else if (strcmp("td_hhg_amp1", word) == 0)
+        {
+            read_value(ifs, td_hhg_amp1);
+        }
+        else if (strcmp("td_hhg_amp2", word) == 0)
+        {
+            read_value(ifs, td_hhg_amp2);
+        }
+        else if (strcmp("td_hhg_freq1", word) == 0)
+        {
+            read_value(ifs, td_hhg_freq1);
+        }
+        else if (strcmp("td_hhg_freq2", word) == 0)
+        {
+            read_value(ifs, td_hhg_freq2);
+        }
+        else if (strcmp("td_hhg_phase1", word) == 0)
+        {
+            read_value(ifs, td_hhg_phase1);
+        }
+        else if (strcmp("td_hhg_phase2", word) == 0)
+        {
+            read_value(ifs, td_hhg_phase2);
+        }
+        else if (strcmp("td_hhg_t0", word) == 0)
+        {
+            read_value(ifs, td_hhg_t0);
+        }
+        else if (strcmp("td_hhg_sigma", word) == 0)
+        {
+>>>>>>> 96bc9fbae813c7c843bd30039b78cf3819b4374f
             read_value(ifs, td_hhg_sigma);
         }
         //----------------------------------------------------------
@@ -2873,9 +2912,14 @@ void Input::Bcast()
     Parallel_Common::bcast_double(td_hhg_freq2);
     Parallel_Common::bcast_double(td_hhg_t0);
     Parallel_Common::bcast_double(td_hhg_sigma);
+<<<<<<< HEAD
     Parallel_Common::bcast_int(out_dipole);
     Parallel_Common::bcast_double(td_print_eij);
     Parallel_Common::bcast_int(td_edm);
+=======
+
+    Parallel_Common::bcast_int(out_dipole);
+>>>>>>> 96bc9fbae813c7c843bd30039b78cf3819b4374f
     Parallel_Common::bcast_bool(test_skip_ewald);
     Parallel_Common::bcast_bool(ocp);
     Parallel_Common::bcast_string(ocp_set);

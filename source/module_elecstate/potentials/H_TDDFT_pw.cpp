@@ -29,6 +29,7 @@ void H_TDDFT_pw::cal_fixed_v(double* vl_pseudo)
     {
         return;
     }
+    std::cout << "calculate electric potential" << endl;
 
     ModuleBase::timer::tick("H_TDDFT_pw", "cal_fixed_v");
 
@@ -200,10 +201,6 @@ double H_TDDFT_pw::cal_v_time()
     {
     case 0:
         vext_time = cal_v_time_Gauss();
-        break;
-
-    case 1:
-        vext_time = cal_v_time_trapezoid();
         break;
 
     case 2:

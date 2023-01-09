@@ -6,7 +6,7 @@ orbital_dir	../../PP_ORB
 ntype			1
 nbands			5
 calculation		md
-esolver_type    tddft
+esolver_type    	tddft
 
 #Parameter (Accuracy)
 ecutwfc			100
@@ -21,12 +21,12 @@ mixing_type		pulay
 mixing_beta		0.7
 scf_thr			1.0e-6
 
-cal_stress          1
-stress_thr      1e-6
-cal_force           1
-force_thr_ev    1.0e-3
+cal_stress          	1
+stress_thr      	1e-6
+cal_force           	1
+force_thr_ev    	1.0e-3
 
-md_type		0
+md_type			0
 md_dt			0.05
 init_vel                1
 ocp			1
