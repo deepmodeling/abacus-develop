@@ -31,7 +31,7 @@
  *     - access element by using "()" through pointer
  *     - without changing its elements
  *   - realArrayAlloc
- *     - output the warning message when allocation for realArray
+ *     - output the warning message when allocation error for realArray
  *     - occurrs error
  */
 
