@@ -305,6 +305,8 @@ td_hhg_phase1                  0.0
 td_hhg_phase2                  0.0
 td_hhg_t0                      700
 td_hhg_sigma                   30 # fs
+td_print_eij                 -1.0 # threshold to output Eij elements
+td_edm                         0 # 0: new edm method   1: old edm method
 out_dipole                   0 #output dipole or not
 ocp                            0 #change occupation or not
 ocp_set                        none #set occupation

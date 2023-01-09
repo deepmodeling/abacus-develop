@@ -405,6 +405,9 @@ void Input::Default(void)
 
     out_dipole = 0;
 
+    td_print_eij = -1.0;
+    td_edm = 0;
+
     td_stype = 0; // 0 : length gauge  1: velocity gauge
 
     td_ttype = 0;
@@ -1491,6 +1494,14 @@ bool Input::Read(const std::string &fn)
         else if (strcmp("out_dipole", word) == 0)
         {
             read_value(ifs, out_dipole);
+        }
+        else if (strcmp("td_print_eij", word) == 0)
+        {
+            read_value(ifs, td_print_eij);
+        }
+        else if (strcmp("td_edm", word) == 0)
+        {
+            read_value(ifs, td_edm);
         }
         else if (strcmp("td_stype", word) == 0)
         {
@@ -2862,8 +2873,9 @@ void Input::Bcast()
     Parallel_Common::bcast_double(td_hhg_freq2);
     Parallel_Common::bcast_double(td_hhg_t0);
     Parallel_Common::bcast_double(td_hhg_sigma);
-
     Parallel_Common::bcast_int(out_dipole);
+    Parallel_Common::bcast_double(td_print_eij);
+    Parallel_Common::bcast_int(td_edm);
     Parallel_Common::bcast_bool(test_skip_ewald);
     Parallel_Common::bcast_bool(ocp);
     Parallel_Common::bcast_string(ocp_set);
