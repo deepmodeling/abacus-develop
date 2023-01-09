@@ -1187,6 +1187,131 @@ void Symmetry::checksym(ModuleBase::Matrix3 &s, ModuleBase::Vector3<double> &gtr
     return;
 }
 
+void Symmetry::pricell(ModuleBase::Vector3<double> &ptrans, double* pos)
+{
+    bool no_diff = 0;
+    ModuleBase::Vector3<double> min_ptrans(2.0, 2.0, 2.0);
+    s_flag = 0;
+
+    for (int it = 0; it < ntype; it++)
+    {
+		//------------------------------------
+        // impose periodic boundary condition
+		// 0.5 -> -0.5
+		//------------------------------------
+        for (int j = istart[it]; j < istart[it] + na[it]; ++j)
+        {
+            this->check_boundary(pos[j*3+0]);
+            this->check_boundary(pos[j*3+1]);
+            this->check_boundary(pos[j*3+2]);
+        }
+
+        //order original atomic positions for current species
+        this->atom_ordering_new(pos + istart[it] * 3, na[it], index + istart[it]);
+        //copy pos to rotpos
+        for (int j = istart[it]; j < istart[it] + na[it]; ++j)
+        {
+            const int xx=j*3;
+            const int yy=j*3+1;
+            const int zz=j*3+2;
+            rotpos[xx] = pos[xx];
+            rotpos[yy] = pos[yy];
+            rotpos[zz] = pos[zz];
+        }
+    }
+
+    ModuleBase::Vector3<double> diff;
+    ModuleBase::Vector3<double> tmp_ptrans;
+
+	//---------------------------------------------------------
+    // itmin_start = the start atom positions of species itmin
+	//---------------------------------------------------------
+    sptmin.x = pos[itmin_start*3];
+    sptmin.y = pos[itmin_start*3+1];
+    sptmin.z = pos[itmin_start*3+2];
+    for (int i = itmin_start; i < itmin_start + na[itmin_type]; ++i)
+    {
+        //set up the current test std::vector "gtrans"
+        //and "gtrans" could possibly contain trivial translations:
+        tmp_ptrans.x = this->get_translation_vector( rotpos[i*3+0], sptmin.x);
+        tmp_ptrans.y = this->get_translation_vector( rotpos[i*3+1], sptmin.y);
+        tmp_ptrans.z = this->get_translation_vector( rotpos[i*3+2], sptmin.z);
+
+        //If we had already detected some translation,
+        //we must only look at the vectors with coordinates smaller than those
+        //of the previously detected std::vector (find the smallest)
+        if (tmp_ptrans.x > min_ptrans.x + epsilon ||
+            tmp_ptrans.y > min_ptrans.y + epsilon ||
+            tmp_ptrans.z > min_ptrans.z + epsilon)
+        {
+            continue;
+        }
+
+        //translate all the atomic coordinates by "gtrans"
+        for (int it = 0; it < ntype; it++)
+        {
+            for (int ia = istart[it]; ia < na[it] + istart[it]; ia++)
+            {
+                this->check_translation( rotpos[ia*3+0], tmp_ptrans.x );
+                this->check_translation( rotpos[ia*3+1], tmp_ptrans.y );
+                this->check_translation( rotpos[ia*3+2], tmp_ptrans.z );
+
+                this->check_boundary( rotpos[ia*3+0] );
+                this->check_boundary( rotpos[ia*3+1] );
+                this->check_boundary( rotpos[ia*3+2] );
+            }
+            //order translated atomic positions for current species
+            this->atom_ordering_new(rotpos + istart[it] * 3, na[it], index + istart[it]);
+        }
+
+        no_diff = true;
+        //compare the two lattices 'one-by-one' whether they are identical
+        for (int it = 0; it < ntype; it++)
+        {
+            for (int ia = istart[it]; ia < na[it] + istart[it]; ia++)
+            {
+                //take the difference of the rotated and the original coordinates
+                diff.x = this->check_diff( pos[ia*3+0], rotpos[ia*3+0]);
+                diff.y = this->check_diff( pos[ia*3+1], rotpos[ia*3+1]);
+                diff.z = this->check_diff( pos[ia*3+2], rotpos[ia*3+2]);
+                //only if all "diff" are zero vectors, flag will remain "1"
+                if (!equal(diff.x,0.0)||
+                    !equal(diff.y,0.0)||
+                    !equal(diff.z,0.0))
+                {
+                    no_diff = false;
+                    break;
+                }
+            }
+            if(!no_diff) break;
+        }
+
+        //the current test is successful
+        if (no_diff)    min_ptrans=tmp_ptrans;
+
+        //restore the original rotated coordinates by subtracting "gtrans"
+        for (int it = 0; it < ntype; it++)
+        {
+            for (int ia = istart[it]; ia < na[it] + istart[it]; ia++)
+            {
+                rotpos[ia*3+0] -= tmp_ptrans.x;
+                rotpos[ia*3+1] -= tmp_ptrans.y;
+                rotpos[ia*3+2] -= tmp_ptrans.z;
+            }
+        }
+    }
+
+    if (s_flag == 1)
+    {
+        ptrans.x = min_ptrans.x;
+        ptrans.y = min_ptrans.y;
+        ptrans.z = min_ptrans.z;
+    }
+//need to calculate lattice vectors
+
+    return;
+}
+
 
 //modified by shu on 2010.01.20
 void Symmetry::rho_symmetry( double *rho,
