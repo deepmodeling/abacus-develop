@@ -32,7 +32,7 @@
  *     - without changing its elements
  *   - realArrayAlloc
  *     - output the warning message when allocation error for realArray
- *     - occurrs error
+ *     - occurs
  */
 
 class realArrayTest : public testing::Test
