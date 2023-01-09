@@ -36,12 +36,9 @@ class ELEC_evolve
     static int td_vext;
     static int td_vext_dire;
     static int out_dipole;
-<<<<<<< HEAD
 
     static double td_print_eij; // the threshold to output Eij elements
     static int td_edm; // 0: new edm method   1: old edm method
-=======
->>>>>>> 96bc9fbae813c7c843bd30039b78cf3819b4374f
 
   private:
     static void evolve_psi(const int& istep,
