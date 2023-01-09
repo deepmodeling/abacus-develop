@@ -2873,14 +2873,9 @@ void Input::Bcast()
     Parallel_Common::bcast_double(td_hhg_freq2);
     Parallel_Common::bcast_double(td_hhg_t0);
     Parallel_Common::bcast_double(td_hhg_sigma);
-<<<<<<< HEAD
     Parallel_Common::bcast_int(out_dipole);
     Parallel_Common::bcast_double(td_print_eij);
     Parallel_Common::bcast_int(td_edm);
-=======
-
-    Parallel_Common::bcast_int(out_dipole);
->>>>>>> 96bc9fbae813c7c843bd30039b78cf3819b4374f
     Parallel_Common::bcast_bool(test_skip_ewald);
     Parallel_Common::bcast_bool(ocp);
     Parallel_Common::bcast_string(ocp_set);
