@@ -1,6 +1,6 @@
 #include"../complexarray.h"
 #include"gtest/gtest.h"
-#include "gmock/gmock.h"
+#include"gmock/gmock.h"
 
 /************************************************
 *  unit test of class ComplexArray and related functions
