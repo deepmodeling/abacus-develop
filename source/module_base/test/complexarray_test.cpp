@@ -69,6 +69,7 @@
 *   - function scale_accumulate()
 *   - function scaled_sum()
 *   - function point_mult()
+*   - function complexArrayxAlloc
 */
 
 //compare two complex by using EXPECT_DOUBLE_EQ()
