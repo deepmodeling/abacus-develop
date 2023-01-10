@@ -1889,6 +1889,20 @@ These variables are used to control berry phase and wannier90 interface paramete
 
 ## TDDFT: time dependent density functional theory
 
+### td_edm
+
+- **Type**: int
+- **Description**: the method to calculate the energy density matrix.
+  - 0: new method (use the original formula).
+  - 1: old method (use the formula for ground state).
+- **Default**: 0
+
+### td_print_eij
+
+- **Type**: double
+- **Description**: print the Eij(<\psi_i|H|\psi_j>) elements which are larger than td_print_eij. if td_print_eij <0, don't print Eij 
+- **Default**: -1
+
 ### td_force_dt
 
 - **Type**: Real
