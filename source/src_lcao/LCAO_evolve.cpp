@@ -984,10 +984,9 @@ void Evolve_LCAO_Matrix::using_ScaLAPACK_complex(const int& ik,
                     bb = 0.0;
                 if (aa > 0.0 || bb > 0.0)
                 {
-                    GlobalV::ofs_running << aa << "+" << bb << "i ";
+                    GlobalV::ofs_running << i << " " << j << " " << aa << "+" << bb << "i " << endl;
                 }
             }
-            GlobalV::ofs_running << endl;
         }
         GlobalV::ofs_running << endl;
         GlobalV::ofs_running
