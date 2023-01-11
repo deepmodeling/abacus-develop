@@ -124,7 +124,7 @@ void Symmetry::analy_sys(const UnitCell &ucell, std::ofstream &ofs_running)
 	optlat.e31 = a3.x; optlat.e32 = a3.y; optlat.e33 = a3.z;
 
 	this->change_lattice();
-    this->pricell(this->newpos);         // pengfei Li 2018-05-14 
+    //this->pricell(this->newpos);         // pengfei Li 2018-05-14 
          //for( iat =0 ; iat < ucell.nat ; iat++)   
 //         std::cout << " newpos_now = " << newpos[3*iat] << " " << newpos[3*iat+1] << " " << newpos[3*iat+2] << std::endl;
 	test_brav = true; // output the real ibrav and point group
@@ -1080,16 +1080,16 @@ void Symmetry::checksym(ModuleBase::Matrix3 &s, ModuleBase::Vector3<double> &gtr
 	//---------------------------------------------------------
     // itmin_start = the start atom positions of species itmin
 	//---------------------------------------------------------
-    sptmin.x = pos[itmin_start*3];
-    sptmin.y = pos[itmin_start*3+1];
-    sptmin.z = pos[itmin_start*3+2];
+    sptmin.x = rotpos[itmin_start*3];
+    sptmin.y = rotpos[itmin_start*3+1];
+    sptmin.z = rotpos[itmin_start*3+2];
     for (int i = itmin_start; i < itmin_start + na[itmin_type]; ++i)
     {
         //set up the current test std::vector "gtrans"
         //and "gtrans" could possibly contain trivial translations:
-        gtrans.x = this->get_translation_vector( rotpos[i*3+0], sptmin.x);
-        gtrans.y = this->get_translation_vector( rotpos[i*3+1], sptmin.y);
-        gtrans.z = this->get_translation_vector( rotpos[i*3+2], sptmin.z);
+        gtrans.x = this->get_translation_vector( sptmin.x, pos[i*3+0]);
+        gtrans.y = this->get_translation_vector( sptmin.y, pos[i*3+1]);
+        gtrans.z = this->get_translation_vector( sptmin.z, pos[i*3+2]);
 
         //If we had already detected some translation,
         //we must only look at the vectors with coordinates smaller than those
