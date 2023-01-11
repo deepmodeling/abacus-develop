@@ -1284,7 +1284,7 @@ void Symmetry::pricell(double* pos)
         }
     }
     int ntrans=ptrans.size();
-    if (ntrans == 0)
+    if (ntrans <= 1)
     {
         GlobalV::ofs_running<<"Original cell was already a primitive cell."<<std::endl;
         this->p1=this->a1;
@@ -1315,40 +1315,43 @@ void Symmetry::pricell(double* pos)
 
     //calculate lattice vectors of pricell: 
     // find the first non-zero ptrans on all 3 directions 
-    bool found=false;
-    for(int i=1;i<ntrans;++i)
-    {
-        if(std::abs(ptrans[i].x-ptrans[0].x)>this->epsilon)
-        for(int j=1;j<ntrans;++j)
-        {
-            if(std::abs(ptrans[j].y-ptrans[0].y)>this->epsilon)
-            for(int k=1;k<ntrans;++k)
-            {
-                if(std::abs(ptrans[k].z-ptrans[0].z)>this->epsilon)
-                {
-                    ModuleBase::Matrix3 coeff
-                            (ptrans[i].x, ptrans[i].y, ptrans[i].z, 
-                            ptrans[j].x, ptrans[j].y, ptrans[j].z, 
-                            ptrans[k].x, ptrans[k].y, ptrans[k].z);
-                    this->plat=coeff*this->optlat;
-                    this->p1.x=plat.e11;
-                    this->p1.y=plat.e12;
-                    this->p1.z=plat.e13;
-                    this->p2.x=plat.e21;
-                    this->p2.y=plat.e22;
-                    this->p2.z=plat.e23;       
-                    this->p3.x=plat.e31;
-                    this->p3.y=plat.e32;
-                    this->p3.z=plat.e33;
-                    this->pbrav=this->standard_lat(p1, p2, p3, pcel_const);
-                    found=true;
-                    break;
-                }
-            }
-            if(found) break;
-        }
-        if(found) break;
-    }
+    ModuleBase::Vector3<double> b1, b2, b3;
+    int iplane=0, jplane=0, kplane=0;
+    while(iplane<ntrans && std::abs(ptrans[iplane].x-ptrans[0].x)<this->epsilon) ++iplane;  //x!=0, y=z=0
+    b1=iplane>0 ? 
+        ModuleBase::Vector3<double>(ptrans[iplane].x, ptrans[iplane].y, ptrans[iplane].z) : 
+        ModuleBase::Vector3<double>(1, 0, 0);
+    while(jplane<iplane && std::abs(ptrans[jplane].y-ptrans[0].y)<this->epsilon) ++jplane;  //x=z=0, y!=0
+    b2=(jplane>0 && jplane<iplane) ? 
+        ModuleBase::Vector3<double>(ptrans[jplane].x, ptrans[jplane].y, ptrans[jplane].z) : 
+        ModuleBase::Vector3<double>(0, 1, 0);
+    while(kplane<jplane && std::abs(ptrans[kplane].z-ptrans[0].z)<this->epsilon) ++kplane;  //x=z=0, y!=0
+    b3=(kplane>0 && kplane<jplane)? 
+        ModuleBase::Vector3<double>(ptrans[kplane].x, ptrans[kplane].y, ptrans[kplane].z) : 
+        ModuleBase::Vector3<double>(0, 0, 1);
+    // std::cout<<"iplane="<<iplane<<std::endl;
+    // std::cout<<"jplane="<<jplane<<std::endl;
+    // std::cout<<"kplane="<<kplane<<std::endl;
+    // std::cout<<"b1="<<b1.x<<" "<<b1.y<<" "<<b1.z<<std::endl;
+    // std::cout<<"b2="<<b2.x<<" "<<b2.y<<" "<<b2.z<<std::endl;
+    // std::cout<<"b3="<<b3.x<<" "<<b3.y<<" "<<b3.z<<std::endl;
+    ModuleBase::Matrix3 coeff(b1.x, b1.y, b1.z, b2.x, b2.y, b2.z, b3.x, b3.y, b3.z);
+    this->plat=coeff*this->optlat;
+    this->p1.x=plat.e11;
+    this->p1.y=plat.e12;
+    this->p1.z=plat.e13;
+    this->p2.x=plat.e21;
+    this->p2.y=plat.e22;
+    this->p2.z=plat.e23;       
+    this->p3.x=plat.e31;
+    this->p3.y=plat.e32;
+    this->p3.z=plat.e33;
+    std::cout<<"plat:"<<std::endl;
+    std::cout<<p1.x<<" "<<p1.y<<" "<<p1.z<<std::endl;
+    std::cout<<p2.x<<" "<<p2.y<<" "<<p2.z<<std::endl;
+    std::cout<<p3.x<<" "<<p3.y<<" "<<p3.z<<std::endl;
+    this->pbrav=this->standard_lat(p1, p2, p3, pcel_const);
+    GlobalV::ofs_running<<"Original cell was built up by "<<this->ncell<<" primitive cells."<<std::endl;
     std::string pbravname = get_brav_name(this->pbrav);
     GlobalV::ofs_running<<"(for primitive cell:)"<<std::endl;
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"BRAVAIS TYPE", this->pbrav);
