@@ -2,7 +2,6 @@ INPUT_PARAMETERS
 #Parameters (1.General)
 suffix                  autotest
 calculation     	scf
-ntype                   1
 symmetry                1
 
 #Parameters (2.Iteration)

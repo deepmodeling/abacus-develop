@@ -4,6 +4,7 @@
 #include "../module_base/scalapack_connector.h"
 #include "../src_io/write_HS.h"
 #include "../src_pw/global.h"
+#include "ELEC_evolve.h"
 #include "module_hamilt/hamilt_lcao.h"
 
 #include <complex>
@@ -34,22 +35,15 @@ void Evolve_LCAO_Matrix::evolve_complex_matrix(const int& ik,
     if (GlobalV::ESOLVER_TYPE == "tddft")
     {
 #ifdef __MPI
-        this->using_ScaLAPACK_complex(ik,
-                                      p_hamilt,
-                                      psi_k[0].get_pointer(),
-                                      psi_k_laststep[0].get_pointer(),
-                                      ekb);
+        this->using_ScaLAPACK_complex(ik, p_hamilt, psi_k[0].get_pointer(), psi_k_laststep[0].get_pointer(), ekb);
 #else
-        this->using_LAPACK_complex(ik,
-                                   p_hamilt,
-                                   psi_k[0].get_pointer(),
-                                   psi_k_laststep[0].get_pointer(),
-                                   ekb);
+        this->using_LAPACK_complex(ik, p_hamilt, psi_k[0].get_pointer(), psi_k_laststep[0].get_pointer(), ekb);
 #endif
     }
     else
     {
-        ModuleBase::WARNING_QUIT("Evolve_LCAO_Matrix::evolve_complex_matrix", "only esolver_type == tddft cando evolve");
+        ModuleBase::WARNING_QUIT("Evolve_LCAO_Matrix::evolve_complex_matrix",
+                                 "only esolver_type == tddft cando evolve");
     }
 
     time_t time_end = time(NULL);
@@ -625,7 +619,7 @@ void Evolve_LCAO_Matrix::using_ScaLAPACK_complex(const int& ik,
                     bb = 0.0;
                 GlobalV::ofs_running << aa << "+" << bb << "i ";
                 // Htmp3[i*ncol+j]={1,0};
-                //GlobalV::ofs_running << Htmp3[i * ncol + j].real() << "+" << Htmp3[i * ncol + j].imag() << "i ";
+                // GlobalV::ofs_running << Htmp3[i * ncol + j].real() << "+" << Htmp3[i * ncol + j].imag() << "i ";
                 // GlobalV::ofs_running<<i<<" "<<j<<" "<<Htmp3[i*GlobalV::NLOCAL+j]<<endl;
             }
             GlobalV::ofs_running << endl;
@@ -840,9 +834,9 @@ void Evolve_LCAO_Matrix::using_ScaLAPACK_complex(const int& ik,
                 if (abs(bb) < 1e-8)
                     bb = 0.0;
                 GlobalV::ofs_running << aa << "+" << bb << "i ";
-                //GlobalV::ofs_running << psi_k_laststep[i * ncol + j].real() << "+"
-                //                     << psi_k_laststep[i * ncol + j].imag() << "i ";
-                // GlobalV::ofs_running<<i<<" "<<j<<" "<<Htmp3[i*GlobalV::NLOCAL+j]<<endl;
+                // GlobalV::ofs_running << psi_k_laststep[i * ncol + j].real() << "+"
+                //                      << psi_k_laststep[i * ncol + j].imag() << "i ";
+                //  GlobalV::ofs_running<<i<<" "<<j<<" "<<Htmp3[i*GlobalV::NLOCAL+j]<<endl;
             }
             GlobalV::ofs_running << endl;
         }
@@ -860,8 +854,8 @@ void Evolve_LCAO_Matrix::using_ScaLAPACK_complex(const int& ik,
                 if (abs(bb) < 1e-8)
                     bb = 0.0;
                 GlobalV::ofs_running << aa << "+" << bb << "i ";
-                //GlobalV::ofs_running << psi_k[i * ncol + j].real() << "+" << psi_k[i * ncol + j].imag() << "i ";
-                // GlobalV::ofs_running<<i<<" "<<j<<" "<<Htmp3[i*GlobalV::NLOCAL+j]<<endl;
+                // GlobalV::ofs_running << psi_k[i * ncol + j].real() << "+" << psi_k[i * ncol + j].imag() << "i ";
+                //  GlobalV::ofs_running<<i<<" "<<j<<" "<<Htmp3[i*GlobalV::NLOCAL+j]<<endl;
             }
             GlobalV::ofs_running << endl;
         }
@@ -879,7 +873,7 @@ void Evolve_LCAO_Matrix::using_ScaLAPACK_complex(const int& ik,
                 if (abs(bb) < 1e-8)
                     bb = 0.0;
                 GlobalV::ofs_running << aa << "+" << bb << "i ";
-                //GlobalV::ofs_running << Htmp2[i * ncol + j].real() << "+" << Htmp2[i * ncol + j].imag() << "i ";
+                // GlobalV::ofs_running << Htmp2[i * ncol + j].real() << "+" << Htmp2[i * ncol + j].imag() << "i ";
             }
             GlobalV::ofs_running << endl;
         }
@@ -970,6 +964,36 @@ void Evolve_LCAO_Matrix::using_ScaLAPACK_complex(const int& ik,
             &one_int,
             &one_int,
             this->ParaV->desc);
+
+    if (ELEC_evolve::td_print_eij > 0.0)
+    {
+        GlobalV::ofs_running
+            << "------------------------------------------------------------------------------------------------"
+            << endl;
+        GlobalV::ofs_running << " Eij:" << endl;
+        for (int i = 0; i < ncol; i++)
+        {
+            for (int j = 0; j < nrow; j++)
+            {
+                double aa, bb;
+                aa = Eij[i * ncol + j].real();
+                bb = Eij[i * ncol + j].imag();
+                if (abs(aa) < ELEC_evolve::td_print_eij)
+                    aa = 0.0;
+                if (abs(bb) < ELEC_evolve::td_print_eij)
+                    bb = 0.0;
+                if (aa > 0.0 || bb > 0.0)
+                {
+                    GlobalV::ofs_running << i << " " << j << " " << aa << "+" << bb << "i " << endl;
+                }
+            }
+        }
+        GlobalV::ofs_running << endl;
+        GlobalV::ofs_running
+            << "------------------------------------------------------------------------------------------------"
+            << endl;
+    }
+
     double* Eii = new double[GlobalV::NBANDS];
     for (int i = 0; i < GlobalV::NBANDS; i++)
         Eii[i] = 0.0;

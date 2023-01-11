@@ -41,7 +41,7 @@
   [berry_phase](#berry_phase) | [gdir](#gdir) | [towannier90](#towannier90) | [nnkpfile](#nnkpfile) | [wannier_spin](#wannier_spin)
 - [TDDFT: time dependent density functional theory](#tddft-time-dependent-density-functional-theory) (Under tests)
 
-  [td_force_dt](#td_force_dt) | [td_vext](#td_vext) | [td_vext_dire](#td_vext_dire) | [td_stype](#td_stype) | [td_ttype](#td_ttype | [td_tstart](#td_tstart) | [td_tend](#td_tend) | [td_lcut1](#td_lcut1) | [td_lcut2](#td_lcut2) | [td_gauss_freq](#td_gauss_freq) | [td_guass_phase](#td_gauss_phase) | [td_gauss_sigma](#td_gauss_sigma) | [td_gauss_t0](#td_gauss_t0)| [td_gauss_amp](#td_gauss_amp) | [td_trape_freq](#td_trape_freq) | [td_trape_phase](#td_trape_phase) | [td_trape_t1](#td_trape_t1) | [td_trape_t2](#td_trape_t2) | [td_trape_t3](#td_trape_t3) | [td_trape_amp](#td_trape_amp) | [td_trigo_freq1](#td_trigo_freq1) | [td_trigo_freq2](#td_trigo_freq2) | [td_trigo_phase1](#td_trigo_phase1) | [td_trigo_phase2](#td_trigo_phase2) | [td_trigo_amp](#td_trigo_amp) | [td_heavi_t0](#td_heavi_t0) | [td_heavi_amp](#td_heavi_amp) | [td_hhg_amp1](#td_hhg_amp1) | [td_hhg_amp2](#td_hhg_amp2) | [td_hhg_freq1](#td_hhg_freq1) | [td_hhg_freq2](#td_hhg_freq2) | [td_hhg_phase1](#td_hhg_phase1) | [td_hhg_phase2](#td_hhg_phase2) | [td_hhg_t0](#td_hhg_t0) | [td_hhg_sigma](#td_hhg_sigma) | [out_dipole](#out_dipole) | [ocp](#ocp) | [ocp_set](#ocp_set) | [td_val_elec_01](#td_val_elec_01) | [td_val_elec_02](#td_val_elec_02) |[td_val_elec_03](#td_val_elec_03)
+  [td_force_dt](#td_force_dt) | [td_vext](#td_vext) | [td_vext_dire](#td_vext_dire) | [td_stype](#td_stype) | [td_ttype](#td_ttype) | [td_tstart](#td_tstart) | [td_tend](#td_tend) | [td_lcut1](#td_lcut1) | [td_lcut2](#td_lcut2) | [td_gauss_freq](#td_gauss_freq) | [td_guass_phase](#td_gauss_phase) | [td_gauss_sigma](#td_gauss_sigma) | [td_gauss_t0](#td_gauss_t0)| [td_gauss_amp](#td_gauss_amp) | [td_trape_freq](#td_trape_freq) | [td_trape_phase](#td_trape_phase) | [td_trape_t1](#td_trape_t1) | [td_trape_t2](#td_trape_t2) | [td_trape_t3](#td_trape_t3) | [td_trape_amp](#td_trape_amp) | [td_trigo_freq1](#td_trigo_freq1) | [td_trigo_freq2](#td_trigo_freq2) | [td_trigo_phase1](#td_trigo_phase1) | [td_trigo_phase2](#td_trigo_phase2) | [td_trigo_amp](#td_trigo_amp) | [td_heavi_t0](#td_heavi_t0) | [td_heavi_amp](#td_heavi_amp) | [td_hhg_amp1](#td_hhg_amp1) | [td_hhg_amp2](#td_hhg_amp2) | [td_hhg_freq1](#td_hhg_freq1) | [td_hhg_freq2](#td_hhg_freq2) | [td_hhg_phase1](#td_hhg_phase1) | [td_hhg_phase2](#td_hhg_phase2) | [td_hhg_t0](#td_hhg_t0) | [td_hhg_sigma](#td_hhg_sigma) | [out_dipole](#out_dipole) | [ocp](#ocp) | [ocp_set](#ocp_set) | [td_val_elec_01](#td_val_elec_01) | [td_val_elec_02](#td_val_elec_02) |[td_val_elec_03](#td_val_elec_03)
 - [DFT+*U* correction](#dftu-correction) (Under development)
 
   [dft_plus_u](#dft_plus_u) | [orbital_corr](#orbital_corr) | [hubbard_u](#hubbard_u) | [yukawa_potential](#yukawa_potential) | [yukawa_lambda](#yukawa_lambda) | [omc](#omc)
@@ -1888,6 +1888,20 @@ These variables are used to control berry phase and wannier90 interface paramete
 [back to top](#full-list-of-input-keywords)
 
 ## TDDFT: time dependent density functional theory
+
+### td_edm
+
+- **Type**: int
+- **Description**: the method to calculate the energy density matrix.
+  - 0: new method (use the original formula).
+  - 1: old method (use the formula for ground state).
+- **Default**: 0
+
+### td_print_eij
+
+- **Type**: double
+- **Description**: print the Eij(<\psi_i|H|\psi_j>) elements which are larger than td_print_eij. if td_print_eij <0, don't print Eij 
+- **Default**: -1
 
 ### td_force_dt
 

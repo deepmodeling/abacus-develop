@@ -305,20 +305,17 @@ void Charge::atomic_rho(const int spin_number_need, double** rho_in, ModulePW::P
 	{
 		// use interpolation to get three dimension charge density.
 		ModuleBase::ComplexMatrix rho_g3d( spin_number_need, rho_basis->npw);
-		
-		// check the start magnetization
-		const int startmag_type = [&]()->int
-		{
-			for(int it=0; it<GlobalC::ucell.ntype; it++)
-			{
-				if( GlobalC::ucell.magnet.start_magnetization[it] != 0.0) return 1;
-			}
-			return 2;
-		}();
-		ModuleBase::GlobalFunc::OUT(GlobalV::ofs_warning,"startmag_type",startmag_type);
 
 		for (int it = 0;it < GlobalC::ucell.ntype;it++)
 		{
+			// check the start magnetization
+			const int startmag_type = [&]()->int
+			{
+				if( GlobalC::ucell.magnet.start_magnetization[it] != 0.0) return 1;
+				return 2;
+			}();
+			ModuleBase::GlobalFunc::OUT(GlobalV::ofs_warning,"startmag_type",startmag_type);
+
 			const Atom* const atom = &GlobalC::ucell.atoms[it];
 
 			if(!atom->flag_empty_element)		// Peize Lin add for bsse 2021.04.07
@@ -436,8 +433,6 @@ void Charge::atomic_rho(const int spin_number_need, double** rho_in, ModulePW::P
 						for (int ig = 0; ig < rho_basis->npw ; ig++)
 						{
 							const std::complex<double> swap = GlobalC::sf.strucFac(it, ig)* rho_lgl[rho_basis->ig2igg[ig]];
-							//rho_g3d(0, ig) += swap * GlobalC::ucell.magnet.nelup_percent(it);
-							//rho_g3d(1, ig) += swap * GlobalC::ucell.magnet.neldw_percent(it);
 							const double up = 0.5 * ( 1 + GlobalC::ucell.magnet.start_magnetization[it] / atom->ncpp.zv );
 							const double dw = 0.5 * ( 1 - GlobalC::ucell.magnet.start_magnetization[it] / atom->ncpp.zv );
 							rho_g3d(0, ig) += swap * up;
@@ -584,12 +579,6 @@ void Charge::atomic_rho(const int spin_number_need, double** rho_in, ModulePW::P
 //		std::cout << " sum rho for spin " << is << " = " << sumrea << std::endl;
 
     }//end is
-
-//	for(int it=0; it<GlobalC::ucell.ntype; it++)
-//	{
-		//std::cout << " nelup_percent = " << GlobalC::ucell.magnet.nelup_percent(it) << std::endl;
-		//std::cout << " neldw_percent = " << GlobalC::ucell.magnet.neldw_percent(it) << std::endl;
-//	}
 
 
 	double ne_tot = 0.0;

@@ -22,7 +22,7 @@ void H_TDDFT_pw::cal_fixed_v(double* vl_pseudo)
     // time evolve
     H_TDDFT_pw::istep++;
 
-    read_parameters();
+    read_parameters(&INPUT);
 
     // judgement to skip vext
     if (ELEC_evolve::td_vext == 0 || istep > tend || istep < tstart)
@@ -50,58 +50,60 @@ void H_TDDFT_pw::cal_fixed_v(double* vl_pseudo)
     return;
 }
 
-void H_TDDFT_pw::read_parameters()
+void H_TDDFT_pw::read_parameters(Input *in)
 {
-    stype = INPUT.td_stype;
+    stype = in->td_stype;
 
-    ttype = INPUT.td_ttype;
+    ttype = in->td_ttype;
 
-    tstart = INPUT.td_tstart;
-    tend = INPUT.td_tend;
+    tstart = in->td_tstart;
+    tend = in->td_tend;
+
+    dt = in->mdp.md_dt;
 
     // space domain parameters
 
     // length gauge
-    lcut1 = INPUT.td_lcut1;
-    lcut2 = INPUT.td_lcut2;
+    lcut1 = in->td_lcut1;
+    lcut2 = in->td_lcut2;
 
     // time domain parameters
 
     // Gauss
-    gauss_omega = 2 * ModuleBase::PI * ModuleBase::AU_to_FS * INPUT.td_gauss_freq; // time(a.u.)^-1
-    gauss_phase = INPUT.td_gauss_phase;
-    gauss_sigma2 = INPUT.td_gauss_sigma * INPUT.td_gauss_sigma / (ModuleBase::AU_to_FS * ModuleBase::AU_to_FS);
-    gauss_t0 = INPUT.td_gauss_t0;
-    gauss_amp = ModuleBase::BOHR_TO_A / ModuleBase::Ry_to_eV * INPUT.td_gauss_amp; // Ry/bohr
+    gauss_omega = 2 * ModuleBase::PI * ModuleBase::AU_to_FS * in->td_gauss_freq; // time(a.u.)^-1
+    gauss_phase = in->td_gauss_phase;
+    gauss_sigma2 = in->td_gauss_sigma * in->td_gauss_sigma / (ModuleBase::AU_to_FS * ModuleBase::AU_to_FS);
+    gauss_t0 = in->td_gauss_t0;
+    gauss_amp = ModuleBase::BOHR_TO_A / ModuleBase::Ry_to_eV * in->td_gauss_amp; // Ry/bohr
 
     // trapezoid
-    trape_omega = 2 * ModuleBase::PI * ModuleBase::AU_to_FS * INPUT.td_trape_freq; // time(a.u.)^-1
-    trape_phase = INPUT.td_trape_phase;
-    trape_t1 = INPUT.td_trape_t1;
-    trape_t2 = INPUT.td_trape_t2;
-    trape_t3 = INPUT.td_trape_t3;
-    trape_amp = ModuleBase::BOHR_TO_A / ModuleBase::Ry_to_eV * INPUT.td_trape_amp; // Ry/bohr
+    trape_omega = 2 * ModuleBase::PI * ModuleBase::AU_to_FS * in->td_trape_freq; // time(a.u.)^-1
+    trape_phase = in->td_trape_phase;
+    trape_t1 = in->td_trape_t1;
+    trape_t2 = in->td_trape_t2;
+    trape_t3 = in->td_trape_t3;
+    trape_amp = ModuleBase::BOHR_TO_A / ModuleBase::Ry_to_eV * in->td_trape_amp; // Ry/bohr
 
     // Trigonometric
-    trigo_omega1 = 2 * ModuleBase::PI * ModuleBase::AU_to_FS * INPUT.td_trigo_freq1; // time(a.u.)^-1
-    trigo_omega2 = 2 * ModuleBase::PI * ModuleBase::AU_to_FS * INPUT.td_trigo_freq1; // time(a.u.)^-1
-    trigo_phase1 = INPUT.td_trigo_phase1;
-    trigo_phase2 = INPUT.td_trigo_phase2;
-    trigo_amp = ModuleBase::BOHR_TO_A / ModuleBase::Ry_to_eV * INPUT.td_trigo_amp; // Ry/bohr
+    trigo_omega1 = 2 * ModuleBase::PI * ModuleBase::AU_to_FS * in->td_trigo_freq1; // time(a.u.)^-1
+    trigo_omega2 = 2 * ModuleBase::PI * ModuleBase::AU_to_FS * in->td_trigo_freq1; // time(a.u.)^-1
+    trigo_phase1 = in->td_trigo_phase1;
+    trigo_phase2 = in->td_trigo_phase2;
+    trigo_amp = ModuleBase::BOHR_TO_A / ModuleBase::Ry_to_eV * in->td_trigo_amp; // Ry/bohr
 
     // Heaviside
-    heavi_t0 = INPUT.td_heavi_t0;
-    heavi_amp = ModuleBase::BOHR_TO_A / ModuleBase::Ry_to_eV * INPUT.td_heavi_amp; // Ry/bohr
+    heavi_t0 = in->td_heavi_t0;
+    heavi_amp = ModuleBase::BOHR_TO_A / ModuleBase::Ry_to_eV * in->td_heavi_amp; // Ry/bohr
 
     // HHG
-    hhg_amp1 = ModuleBase::BOHR_TO_A / ModuleBase::Ry_to_eV * INPUT.td_hhg_amp1; // Ry/bohr
-    hhg_amp2 = ModuleBase::BOHR_TO_A / ModuleBase::Ry_to_eV * INPUT.td_hhg_amp2; // Ry/bohr
-    hhg_omega1 = 2 * ModuleBase::PI * ModuleBase::AU_to_FS * INPUT.td_hhg_freq1; // time(a.u.)^-1
-    hhg_omega2 = 2 * ModuleBase::PI * ModuleBase::AU_to_FS * INPUT.td_hhg_freq1; // time(a.u.)^-1
-    hhg_phase1 = INPUT.td_hhg_phase1;
-    hhg_phase2 = INPUT.td_hhg_phase2;
-    hhg_t0 = INPUT.td_hhg_t0;
-    hhg_sigma2 = INPUT.td_hhg_sigma * INPUT.td_hhg_sigma / (ModuleBase::AU_to_FS * ModuleBase::AU_to_FS);
+    hhg_amp1 = ModuleBase::BOHR_TO_A / ModuleBase::Ry_to_eV * in->td_hhg_amp1; // Ry/bohr
+    hhg_amp2 = ModuleBase::BOHR_TO_A / ModuleBase::Ry_to_eV * in->td_hhg_amp2; // Ry/bohr
+    hhg_omega1 = 2 * ModuleBase::PI * ModuleBase::AU_to_FS * in->td_hhg_freq1; // time(a.u.)^-1
+    hhg_omega2 = 2 * ModuleBase::PI * ModuleBase::AU_to_FS * in->td_hhg_freq1; // time(a.u.)^-1
+    hhg_phase1 = in->td_hhg_phase1;
+    hhg_phase2 = in->td_hhg_phase2;
+    hhg_t0 = in->td_hhg_t0;
+    hhg_sigma2 = in->td_hhg_sigma * in->td_hhg_sigma / (ModuleBase::AU_to_FS * ModuleBase::AU_to_FS);
 
     return;
 }
@@ -170,10 +172,10 @@ void H_TDDFT_pw::cal_v_space_length(double* vext_space)
 
 double H_TDDFT_pw::cal_v_space_length_potential(double i)
 {
-    double vext_space;
+    double vext_space=0.0;
     if (i < this->rho_basis_->nx * lcut1)
     {
-        vext_space = ((i / this->rho_basis_->nx - lcut1) / (lcut1 + 1.0 - lcut2) - lcut1) * this->ucell_->lat0;
+        vext_space = ((i / this->rho_basis_->nx - lcut1)*(lcut2-lcut1) / (lcut1 + 1.0 - lcut2) - lcut1) * this->ucell_->lat0;
     }
     else if (i >= this->rho_basis_->nx * lcut1 && i < this->rho_basis_->nx * lcut2)
     {
@@ -181,7 +183,7 @@ double H_TDDFT_pw::cal_v_space_length_potential(double i)
     }
     else if (i >= this->rho_basis_->nx * lcut2)
     {
-        vext_space = ((i / this->rho_basis_->nx - lcut2) / (lcut1 + 1.0 - lcut2) - lcut2) * this->ucell_->lat0;
+        vext_space = ((i / this->rho_basis_->nx - lcut2)*(lcut2-lcut1) / (lcut1 + 1.0 - lcut2) - lcut2) * this->ucell_->lat0;
     }
     return vext_space;
 }
@@ -199,27 +201,18 @@ double H_TDDFT_pw::cal_v_time()
     {
     case 0:
         vext_time = cal_v_time_Gauss();
-        cout << "gauss vtime=" << vext_time << endl;
-        break;
-
-    case 1:
-        vext_time = cal_v_time_trapezoid();
-        cout << "trape vtime=" << vext_time << endl;
         break;
 
     case 2:
         vext_time = cal_v_time_trigonometric();
-        cout << "trigo vtime=" << vext_time << endl;
         break;
 
     case 3:
         vext_time = cal_v_time_heaviside();
-        cout << "heavi vtime=" << vext_time << endl;
         break;
 
     case 4:
         vext_time = cal_v_time_HHG();
-        cout << "hhg vtime=" << vext_time << endl;
         break;
 
     default:
@@ -233,7 +226,7 @@ double H_TDDFT_pw::cal_v_time_Gauss()
 {
     double vext_time = 0.0;
 
-    double gauss_t = (istep - gauss_t0) * INPUT.mdp.md_dt;
+    double gauss_t = (istep - gauss_t0) * dt;
     vext_time = cos(gauss_omega * gauss_t + gauss_phase) * exp(-gauss_t * gauss_t * 0.5 / (gauss_sigma2)) * gauss_amp;
 
     return vext_time;
@@ -256,7 +249,7 @@ double H_TDDFT_pw::cal_v_time_trapezoid()
         vext_time = (trape_t3 - istep) / (trape_t3 - trape_t2);
     }
 
-    vext_time = vext_time * trape_amp * cos(trape_omega * istep * INPUT.mdp.md_dt + trape_phase);
+    vext_time = vext_time * trape_amp * cos(trape_omega * istep * dt + trape_phase);
 
     return vext_time;
 }
@@ -265,7 +258,7 @@ double H_TDDFT_pw::cal_v_time_trigonometric()
 {
     double vext_time = 0.0;
 
-    const double timenow = istep * INPUT.mdp.md_dt;
+    const double timenow = istep * dt;
 
     vext_time = trigo_amp * cos(trigo_omega1 * timenow + trigo_phase1) * sin(trigo_omega2 * timenow + trigo_phase2)
                 * sin(trigo_omega2 * timenow + trigo_phase2);
@@ -285,7 +278,7 @@ double H_TDDFT_pw::cal_v_time_HHG()
 {
     double vext_time = 0.0;
 
-    double hhg_t = (istep - hhg_t0) * INPUT.mdp.md_dt;
+    double hhg_t = (istep - hhg_t0) * dt;
     vext_time = (cos(hhg_omega1 * hhg_t + hhg_phase1) * hhg_amp1 + cos(hhg_omega2 * hhg_t + hhg_phase2) * hhg_amp2)
                 * exp(-hhg_t * hhg_t * 0.5 / (hhg_sigma2));
 

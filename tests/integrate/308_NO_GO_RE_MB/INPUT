@@ -2,7 +2,7 @@ INPUT_PARAMETERS
 #Parameters (1.General)
 suffix			autotest
 calculation     relax
-ntype			1
+
 nbands			8
 symmetry		1
 pseudo_dir	../../PP_ORB

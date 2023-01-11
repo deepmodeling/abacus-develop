@@ -273,6 +273,8 @@ TEST_F(InputTest, Default)
 		EXPECT_EQ(INPUT.td_hhg_t0,700);
 		EXPECT_EQ(INPUT.td_hhg_sigma,30);						
         EXPECT_EQ(INPUT.out_dipole,0);
+		EXPECT_EQ(INPUT.td_print_eij,-1.0);
+		EXPECT_EQ(INPUT.td_edm,0);
         EXPECT_DOUBLE_EQ(INPUT.cell_factor,1.2);
         EXPECT_EQ(INPUT.out_mul,0);
         EXPECT_FALSE(INPUT.restart_save);
@@ -597,6 +599,8 @@ TEST_F(InputTest, Read)
 		EXPECT_EQ(INPUT.td_hhg_t0,700);
 		EXPECT_EQ(INPUT.td_hhg_sigma,30);	
         EXPECT_EQ(INPUT.out_dipole,0);
+		EXPECT_EQ(INPUT.td_print_eij,-1.0);
+		EXPECT_EQ(INPUT.td_edm,0);
         EXPECT_DOUBLE_EQ(INPUT.cell_factor,1.2);
         EXPECT_EQ(INPUT.out_mul,0);
         EXPECT_FALSE(INPUT.restart_save);

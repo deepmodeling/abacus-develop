@@ -21,13 +21,6 @@ public:
     double tot_magnetization_nc[3];
     double abs_magnetization;
 
-    double nelup_percent(const int &it) {
-        return 0.5 * (1.0 + start_magnetization[it]) ;
-    }
-    double neldw_percent(const int &it) {
-        return 0.5 * (1.0 - start_magnetization[it]) ;
-    }
-
     void compute_magnetization(const Charge* const chr, double* nelec_spin = nullptr);
 
     ModuleBase::Vector3<double> *m_loc_;   //magnetization for each element along c-axis

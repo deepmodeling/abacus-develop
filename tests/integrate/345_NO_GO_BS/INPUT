@@ -1,6 +1,6 @@
 INPUT_PARAMETERS
 suffix          autotest
-ntype               2
+
 nbands              6
 ecutwfc             20
 scf_thr                 1e-8

@@ -2,6 +2,7 @@
 #define H_TDDFT_PW_H
 
 #include "pot_base.h"
+#include "../../input.h"
 
 namespace elecstate
 {
@@ -39,6 +40,7 @@ class H_TDDFT_pw : public PotBase
 
     int tstart;
     int tend;
+    double dt;
 
     // space domain parameters
 
@@ -86,7 +88,7 @@ class H_TDDFT_pw : public PotBase
 
     const UnitCell* ucell_ = nullptr;
 
-    void read_parameters();
+    void read_parameters(Input* in);
 
     // potential of electric field in space domain : length gauge and velocity gauge
     void cal_v_space(double* vext_space);

@@ -283,6 +283,8 @@ void Input_Conv::Convert(void)
     ELEC_evolve::td_vext = INPUT.td_vext;
     ELEC_evolve::td_vext_dire = INPUT.td_vext_dire;
     ELEC_evolve::out_dipole = INPUT.out_dipole;
+    ELEC_evolve::td_print_eij = INPUT.td_print_eij;
+    ELEC_evolve::td_edm = INPUT.td_edm;
 #endif
 
     // setting for constrained DFT, jiyy add 2020.10.11

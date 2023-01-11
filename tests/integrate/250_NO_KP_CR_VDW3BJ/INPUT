@@ -1,5 +1,5 @@
 INPUT_PARAMETERS
-ntype                         2
+
 ecutwfc                       20
 scf_thr                           1e-06
 scf_nmax                         400
