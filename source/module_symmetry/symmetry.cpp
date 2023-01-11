@@ -124,7 +124,7 @@ void Symmetry::analy_sys(const UnitCell &ucell, std::ofstream &ofs_running)
 	optlat.e31 = a3.x; optlat.e32 = a3.y; optlat.e33 = a3.z;
 
 	this->change_lattice();
-    this->pricell(this->dirpos);         // pengfei Li 2018-05-14 
+    this->pricell(this->newpos);         // pengfei Li 2018-05-14 
          //for( iat =0 ; iat < ucell.nat ; iat++)   
 //         std::cout << " newpos_now = " << newpos[3*iat] << " " << newpos[3*iat+1] << " " << newpos[3*iat+2] << std::endl;
 	test_brav = true; // output the real ibrav and point group
@@ -1227,10 +1227,9 @@ void Symmetry::pricell(double* pos)
     {
         //set up the current test std::vector "gtrans"
         //and "gtrans" could possibly contain trivial translations:
-        tmp_ptrans.x = this->get_translation_vector( rotpos[i*3+0], sptmin.x);
-        tmp_ptrans.y = this->get_translation_vector( rotpos[i*3+1], sptmin.y);
-        tmp_ptrans.z = this->get_translation_vector( rotpos[i*3+2], sptmin.z);
-
+        tmp_ptrans.x = this->get_translation_vector( pos[i*3+0], sptmin.x);
+        tmp_ptrans.y = this->get_translation_vector( pos[i*3+1], sptmin.y);
+        tmp_ptrans.z = this->get_translation_vector( pos[i*3+2], sptmin.z);
         //translate all the atomic coordinates by "gtrans"
         for (int it = 0; it < ntype; it++)
         {
@@ -1292,6 +1291,7 @@ void Symmetry::pricell(double* pos)
         this->p2=this->a2;
         this->p3=this->a3;
         this->pbrav=this->ibrav;
+        this->ncell=1;
         for (int i=0;i<6;++i)   this->pcel_const[i]=this->cel_const[i];
         return;
     }
@@ -1359,7 +1359,12 @@ void Symmetry::pricell(double* pos)
     //count the number of pricells
     double ncell_double = std::abs(this->optlat.Det()/this->plat.Det());
     this->ncell=floor(ncell_double+0.5);
-    if(std::abs(ncell_double-double(this->ncell)) > this->epsilon)
+    if(this->ncell != ntrans)
+    {
+        std::cout << " ERROR: PRICELL: NCELL != NTRANS !" << std::endl;
+		ModuleBase::QUIT();
+    }
+    if(std::abs(ncell_double-double(this->ncell)) > this->epsilon*100)
     {
         std::cout << " ERROR: THE NUMBER OF PRIMITIVE CELL IS NOT AN INTEGER !" << std::endl;
 		ModuleBase::QUIT();
