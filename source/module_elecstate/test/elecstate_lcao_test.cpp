@@ -26,7 +26,7 @@
 #include "module_neighbor/sltk_atom_arrange.h"
 #include "module_pw/pw_basis_k.h"
 #include "module_xc/xc_functional.h"
-#include "src_io/restart.h"
+#include "module_io/restart.h"
 
 Magnetism::Magnetism(){}
 Magnetism::~Magnetism(){}

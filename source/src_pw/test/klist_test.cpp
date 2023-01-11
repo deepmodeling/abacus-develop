@@ -8,7 +8,7 @@
 #include "module_cell/setup_nonlocal.h"
 #include "src_parallel/parallel_grid.h"
 #include "src_parallel/parallel_kpoints.h"
-#include "src_io/berryphase.h"
+#include "module_io/berryphase.h"
 #include "module_orbital/ORB_gaunt_table.h"
 #include<iostream>
 

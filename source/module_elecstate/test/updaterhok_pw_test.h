@@ -22,7 +22,7 @@
 #include "src_pw/energy.h"
 #include "module_xc/xc_functional.h"
 #include "module_pw/pw_basis_k.h"
-#include "src_io/restart.h"
+#include "module_io/restart.h"
 
 int ModuleSymmetry::Symmetry::symm_flag;
 

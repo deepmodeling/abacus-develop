@@ -11,7 +11,7 @@
 #include "../src_pw/pw_complement.h"
 #include "../src_pw/structure_factor.h"
 #include "../src_pw/symmetry_rho.h"
-#include "../src_io/print_info.h"
+#include "../module_io/print_info.h"
 #include "../src_pw/H_Ewald_pw.h"
 //-----force-------------------
 #include "../src_pw/forces.h"

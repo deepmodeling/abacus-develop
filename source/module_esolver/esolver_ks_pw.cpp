@@ -1,11 +1,11 @@
 #include "esolver_ks_pw.h"
 #include <iostream>
-#include "../src_io/wf_io.h"
+#include "../module_io/wf_io.h"
 
 //--------------temporary----------------------------
 #include "../src_pw/global.h"
 #include "../src_pw/symmetry_rho.h"
-#include "../src_io/print_info.h"
+#include "../module_io/print_info.h"
 #include "../src_pw/H_Ewald_pw.h"
 #include "../src_pw/occupy.h"
 #include "../module_relax/relax_old/variable_cell.h"    // liuyu 2022-11-07
@@ -20,12 +20,12 @@
 #include "module_hsolver/diago_iter_assist.h"
 #include "module_vdw/vdw.h"
 
-#include "src_io/write_wfc_realspace.h"
-#include "src_io/winput.h"
-#include "src_io/numerical_descriptor.h"
-#include "src_io/numerical_basis.h"
-#include "src_io/to_wannier90.h"
-#include "src_io/berryphase.h"
+#include "module_io/write_wfc_realspace.h"
+#include "module_io/winput.h"
+#include "module_io/numerical_descriptor.h"
+#include "module_io/numerical_basis.h"
+#include "module_io/to_wannier90.h"
+#include "module_io/berryphase.h"
 #include "module_psi/kernels/device.h"
 #include "module_hsolver/kernels/math_kernel_op.h"
 #include "module_hsolver/kernels/dngvd_op.h"
