@@ -41,17 +41,19 @@ public:
 	double *rotpos;
 	
 	
-	double *ptrans;
-    double ncell;	//the number of primitive cells within one supercell
+	std::vector<ModuleBase::Vector3<double>> ptrans;
+    int ncell;	//the number of primitive cells within one supercell
 	int *index;
 	
 	double cel_const[6];
-	double pcel_const[6];
+	double pcel_const[6];	//cel_const of primitive cell
+	double pre_const[6];	//cel_const of input configuration
 	int change; //whether the lattice vectors have been changed
 
 	bool symflag_fft[48];
 	int sym_test;
 	int ibrav;
+	int pbrav;		//ibrav of primitive cell
 	int real_brav;    // the real ibrav for the cell     pengfei Li 3-15-2022
 	std::string ilattname;	//the bravais lattice type of the supercell
 	std::string plattname;	//the bravais lattice type of the primitive cell
@@ -71,6 +73,7 @@ public:
 	std::string spgname;	//the Schoenflies name of the point group R in the space group {R|t}
 
 	ModuleBase::Matrix3 optlat;		//the optimized-symmetry lattice
+	ModuleBase::Matrix3 plat;		//the primitive lattice
 
 	int tab;
 
@@ -95,7 +98,7 @@ public:
 	//void pricell(const UnitCell &ucell);
 	void getgroup(int &nrot, int &nrotk, std::ofstream &ofs_running);
 	void checksym(ModuleBase::Matrix3 &s, ModuleBase::Vector3<double> &gtrans, double *pos);
-	void pricell(ModuleBase::Vector3<double> &ptrans, double* pos);
+	void pricell(double* pos);
 	void rho_symmetry(double *rho, const int &nr1, const int &nr2, const int &nr3);
 	void rhog_symmetry(std::complex<double> *rhogtot, int* ixyz2ipw, const int &nx, 
 			const int &ny, const int &nz, const int & fftnx, const int &fftny, const int &fftnz);

@@ -52,11 +52,9 @@ void Symmetry::analy_sys(const UnitCell &ucell, std::ofstream &ofs_running)
     this->ntype = ucell.ntype;
     this->na = new int[ntype];
     this->istart = new int[ntype];
-    this->ptrans = new double[(nat + 2) * 3];
     this->index = new int [nat + 2];
     ModuleBase::GlobalFunc::ZEROS(na, ntype);
     ModuleBase::GlobalFunc::ZEROS(istart, ntype);
-    ModuleBase::GlobalFunc::ZEROS(ptrans, (nat+2)*3);
     ModuleBase::GlobalFunc::ZEROS(index, nat+2);
 
     // atom positions
@@ -126,7 +124,7 @@ void Symmetry::analy_sys(const UnitCell &ucell, std::ofstream &ofs_running)
 	optlat.e31 = a3.x; optlat.e32 = a3.y; optlat.e33 = a3.z;
 
 	this->change_lattice();
-    //this->pricell();         // pengfei Li 2018-05-14 
+    this->pricell(this->dirpos);         // pengfei Li 2018-05-14 
          //for( iat =0 ; iat < ucell.nat ; iat++)   
 //         std::cout << " newpos_now = " << newpos[3*iat] << " " << newpos[3*iat+1] << " " << newpos[3*iat+2] << std::endl;
 	test_brav = true; // output the real ibrav and point group
@@ -167,7 +165,7 @@ void Symmetry::analy_sys(const UnitCell &ucell, std::ofstream &ofs_running)
 
 	test_brav = false;  // use the input ibrav to calculate
 	//ModuleBase::GlobalFunc::OUT(ofs_running,"ibrav",ibrav);
-	this->setgroup(this->symop, this->nop, this->ibrav, pcel_const);
+	this->setgroup(this->symop, this->nop, this->ibrav, pre_const);
 	//now select all symmetry operations which reproduce the lattice
 	//to find those symmetry operations which reproduce the entire crystal
 	this->getgroup(this->nrot, this->nrotk, ofs_running);
@@ -193,7 +191,6 @@ void Symmetry::analy_sys(const UnitCell &ucell, std::ofstream &ofs_running)
 	delete[] newpos;
     delete[] na;
     delete[] rotpos;
-    delete[] ptrans;
     delete[] index;
     delete[] istart;
     return;
@@ -549,7 +546,7 @@ void Symmetry::lattice_type(
 	//--------------------------------------------
 	// (3) calculate the 'pre_const'
 	//--------------------------------------------
-	ModuleBase::GlobalFunc::ZEROS(pcel_const, 6);
+	ModuleBase::GlobalFunc::ZEROS(pre_const, 6);
 //    std::cout << "ATTION !!!!!!" <<std::endl;
 //        std::cout << "v1 = " << v1.x << " " << v1.y << " " << v1.z <<std::endl;
 //        std::cout << "v2 = " << v2.x << " " << v2.y << " " << v2.z <<std::endl;
@@ -566,7 +563,7 @@ void Symmetry::lattice_type(
 
     for ( int i = 0; i < 6; ++i)
     {
-        this->pcel_const[i] = cel_const[i];
+        this->pre_const[i] = cel_const[i];
     }
 //        std::cout << "v1 = " << v1.x << " " << v1.y << " " << v1.z <<std::endl;
 //        std::cout << "v2 = " << v2.x << " " << v2.y << " " << v2.z <<std::endl;
@@ -803,7 +800,7 @@ void Symmetry::lattice_type(
         //else, store the original ones
         for (int i = 0; i < 6; ++i)
         {
-            cel_const[i] = pcel_const[i];
+            cel_const[i] = pre_const[i];
         }
         //newpos also need to be set
         int at=0;
@@ -859,7 +856,7 @@ void Symmetry::lattice_type(
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"BRAVAIS TYPE ",ibrav);
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"BRAVAIS LATTICE NAME",input_bravname);
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"ibrav",ibrav);
-    Symm_Other::print1(ibrav, pcel_const, GlobalV::ofs_running);
+    Symm_Other::print1(ibrav, pre_const, GlobalV::ofs_running);
 
     bravname = get_brav_name(real_brav);
     GlobalV::ofs_running<<"(for optimal symmetric configuration:)"<<std::endl;
@@ -1154,8 +1151,6 @@ void Symmetry::checksym(ModuleBase::Matrix3 &s, ModuleBase::Vector3<double> &gtr
 		*/
 		//BLOCK_HERE("check symm");
 
-				
-
         //the current test is successful
         if (no_diff == true)
         {
@@ -1187,10 +1182,9 @@ void Symmetry::checksym(ModuleBase::Matrix3 &s, ModuleBase::Vector3<double> &gtr
     return;
 }
 
-void Symmetry::pricell(ModuleBase::Vector3<double> &ptrans, double* pos)
+void Symmetry::pricell(double* pos)
 {
     bool no_diff = 0;
-    ModuleBase::Vector3<double> min_ptrans(2.0, 2.0, 2.0);
     s_flag = 0;
 
     for (int it = 0; it < ntype; it++)
@@ -1237,16 +1231,6 @@ void Symmetry::pricell(ModuleBase::Vector3<double> &ptrans, double* pos)
         tmp_ptrans.y = this->get_translation_vector( rotpos[i*3+1], sptmin.y);
         tmp_ptrans.z = this->get_translation_vector( rotpos[i*3+2], sptmin.z);
 
-        //If we had already detected some translation,
-        //we must only look at the vectors with coordinates smaller than those
-        //of the previously detected std::vector (find the smallest)
-        if (tmp_ptrans.x > min_ptrans.x + epsilon ||
-            tmp_ptrans.y > min_ptrans.y + epsilon ||
-            tmp_ptrans.z > min_ptrans.z + epsilon)
-        {
-            continue;
-        }
-
         //translate all the atomic coordinates by "gtrans"
         for (int it = 0; it < ntype; it++)
         {
@@ -1287,9 +1271,9 @@ void Symmetry::pricell(ModuleBase::Vector3<double> &ptrans, double* pos)
         }
 
         //the current test is successful
-        if (no_diff)    min_ptrans=tmp_ptrans;
+        if (no_diff)    ptrans.push_back(tmp_ptrans);
 
-        //restore the original rotated coordinates by subtracting "gtrans"
+        //restore the original rotated coordinates by subtracting "ptrans"
         for (int it = 0; it < ntype; it++)
         {
             for (int ia = istart[it]; ia < na[it] + istart[it]; ia++)
@@ -1300,15 +1284,132 @@ void Symmetry::pricell(ModuleBase::Vector3<double> &ptrans, double* pos)
             }
         }
     }
-
-    if (s_flag == 1)
+    int ntrans=ptrans.size();
+    if (ntrans == 0)
     {
-        ptrans.x = min_ptrans.x;
-        ptrans.y = min_ptrans.y;
-        ptrans.z = min_ptrans.z;
+        GlobalV::ofs_running<<"Original cell was already a primitive cell."<<std::endl;
+        this->p1=this->a1;
+        this->p2=this->a2;
+        this->p3=this->a3;
+        this->pbrav=this->ibrav;
+        for (int i=0;i<6;++i)   this->pcel_const[i]=this->cel_const[i];
+        return;
     }
-//need to calculate lattice vectors
 
+    //sort ptrans:
+    double* ptrans_array = new double[ntrans*3];
+    for(int i=0;i<ntrans;++i)
+    {
+        ptrans_array[i*3]=ptrans[i].x;
+        ptrans_array[i*3+1]=ptrans[i].y;
+        ptrans_array[i*3+2]=ptrans[i].z;
+    }
+    this->atom_ordering_new(ptrans_array, ntrans, index);
+    for(int i=0;i<ntrans;++i)
+    {
+        ptrans[i].x=ptrans_array[i*3];
+        ptrans[i].y=ptrans_array[i*3+1];
+        ptrans[i].z=ptrans_array[i*3+2];
+    }
+    delete[] ptrans_array;
+
+    //calculate lattice vectors of pricell: 
+    // find the first non-zero ptrans on all 3 directions 
+    bool found=false;
+    for(int i=1;i<ntrans;++i)
+    {
+        if(std::abs(ptrans[i].x-ptrans[0].x)>this->epsilon)
+        for(int j=1;j<ntrans;++j)
+        {
+            if(std::abs(ptrans[j].y-ptrans[0].y)>this->epsilon)
+            for(int k=1;k<ntrans;++k)
+            {
+                if(std::abs(ptrans[k].z-ptrans[0].z)>this->epsilon)
+                {
+                    ModuleBase::Matrix3 coeff
+                            (ptrans[i].x, ptrans[i].y, ptrans[i].z, 
+                            ptrans[j].x, ptrans[j].y, ptrans[j].z, 
+                            ptrans[k].x, ptrans[k].y, ptrans[k].z);
+                    this->plat=coeff*this->optlat;
+                    this->p1.x=plat.e11;
+                    this->p1.y=plat.e12;
+                    this->p1.z=plat.e13;
+                    this->p2.x=plat.e21;
+                    this->p2.y=plat.e22;
+                    this->p2.z=plat.e23;       
+                    this->p3.x=plat.e31;
+                    this->p3.y=plat.e32;
+                    this->p3.z=plat.e33;
+                    this->pbrav=this->standard_lat(p1, p2, p3, pcel_const);
+                    found=true;
+                    break;
+                }
+            }
+            if(found) break;
+        }
+        if(found) break;
+    }
+    std::string pbravname = get_brav_name(this->pbrav);
+    GlobalV::ofs_running<<"(for primitive cell:)"<<std::endl;
+    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"BRAVAIS TYPE", this->pbrav);
+    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"BRAVAIS LATTICE NAME",pbravname);
+    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"ibrav",this->pbrav);
+    Symm_Other::print1(this->pbrav, this->pcel_const, GlobalV::ofs_running);
+
+    //count the number of pricells
+    double ncell_double = std::abs(this->optlat.Det()/this->plat.Det());
+    this->ncell=floor(ncell_double+0.5);
+    if(std::abs(ncell_double-double(this->ncell)) > this->epsilon)
+    {
+        std::cout << " ERROR: THE NUMBER OF PRIMITIVE CELL IS NOT AN INTEGER !" << std::endl;
+		ModuleBase::QUIT();
+    }
+
+    //how many pcell in supercell
+    double n1, n2, n3;
+    ModuleBase::Matrix3 nummat=this->plat.Inverse()*this->optlat;
+    n1=nummat.e11;
+    n2=nummat.e22;
+    n3=nummat.e33;
+    std::cout<<"n1="<<n1<<"; n2="<<n2<<"; n3="<<n3<<std::endl;
+
+    //replace the (may be negative) ptrans with the real ptrans(in supercell)
+    ModuleBase::Matrix3 BT=this->optlat.Inverse();
+    ModuleBase::Matrix3 B=this->optlat.Transpose();
+    ModuleBase::Vector3<double> pcel_car;
+    ModuleBase::Vector3<double> pcel_direct;
+    int count=0;
+    for (int k=0;k<n3;++k)
+    {
+        for(int j=0;j<n2;++j)
+        {
+            for(int i=0;i<n1;++i)
+            {
+                pcel_car=p1*double(i)+p2*double(j)+p3*double(k);
+                pcel_direct=B*pcel_car;
+                pcel_direct.x=fmod(pcel_direct.x+2.0*n1+100.0+0.5*epsilon,1.0) - 0.5*epsilon;
+                pcel_direct.y=fmod(pcel_direct.y+2.0*n2+100.0+0.5*epsilon,1.0) - 0.5*epsilon;
+                pcel_direct.z=fmod(pcel_direct.z+2.0*n3+100.0+0.5*epsilon,1.0) - 0.5*epsilon;
+                bool exist=false;
+                for(int itrans=1;itrans<count;++itrans)
+                    exist=exist || (abs(pcel_direct.x-ptrans[count].x)<epsilon &&
+                            abs(pcel_direct.y-ptrans[count].y)<epsilon &&
+                            abs(pcel_direct.z-ptrans[count].z)<epsilon);
+                if(!exist)
+                {
+                    ptrans[count]=pcel_direct;
+                    ++count;
+                }
+            }
+        }
+    }
+    if(count != this->ncell) 
+    {
+        std::cout << " ERROR: Number of cells and number of vectors did not agree.";
+        std::cout<<"Try to change symmetry_prec in INPUT." << std::endl;
+		ModuleBase::QUIT();
+    }
+    assert(count==this->ncell);
     return;
 }
 
