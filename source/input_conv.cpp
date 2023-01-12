@@ -5,7 +5,7 @@
 #include "module_cell/unitcell.h"
 #include "module_surchem/surchem.h"
 #include "module_symmetry/symmetry.h"
-#include "src_io/berryphase.h"
+#include "module_io/berryphase.h"
 #include "module_relax/relax_old/ions_move_basic.h"
 #include "src_pw/global.h"
 #include "src_pw/occupy.h"

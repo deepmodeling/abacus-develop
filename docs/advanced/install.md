@@ -79,6 +79,19 @@ To build NVIDIA GPU support for ABACUS, define `USE_CUDA` flag. You can also spe
 cmake -B build -DUSE_CUDA=1
 ```
 
+## Build math library from source
+
+> Note: This flag is **enabled by default**. It will get better performance than the standard implementation on `gcc` and `clang`. But it **will be disabled** when using `Intel Compiler` since the math functions will get wrong results and the performance is also unexpectly poor.
+
+To build math functions from source code, instead of using c++ standard implementation, define `USE_ABACUS_LIBM` flag. 
+
+Currently supported math functions:
+ `sin`, `cos`, `sincos`, `exp`, `cexp`
+
+```bash
+cmake -B build -DUSE_ABACUS_LIBM=1
+```
+
 ## Build ABACUS with make
 
 > Note: We suggest using CMake to configure and compile.

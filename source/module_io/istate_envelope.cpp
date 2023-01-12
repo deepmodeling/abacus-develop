@@ -2,8 +2,8 @@
 #include "../src_pw/global.h"
 #include "../module_base/global_function.h"
 #include "../module_base/global_variable.h"
-#include "src_io/wf_io.h"
-#include "src_io/write_wfc_realspace.h"
+#include "module_io/wf_io.h"
+#include "module_io/write_wfc_realspace.h"
 
 IState_Envelope::IState_Envelope(const elecstate::ElecState* pes_in)
 {pes = pes_in;}

@@ -8,6 +8,7 @@
 #include "module_base/mathzone.h"
 #include "module_base/complexmatrix.h"
 #include "module_base/tool_threading.h"
+#include "module_base/libm/libm.h"
 #include "module_elecstate/potentials/efield.h"
 #include "module_surchem/surchem.h"
 #include "module_elecstate/potentials/gatefield.h"
@@ -472,8 +473,10 @@ void Forces<FPTYPE, Device>::cal_force_loc(ModuleBase::matrix& forcelc, ModulePW
         for (int ig = 0; ig < rho_basis->npw; ig++)
         {
             const double phase = ModuleBase::TWO_PI * (rho_basis->gcar[ig] * GlobalC::ucell.atoms[it].tau[ia]);
+            double sinp, cosp;
+            ModuleBase::libm::sincos(phase, &sinp, &cosp);
             const double factor = GlobalC::ppcell.vloc(it, rho_basis->ig2igg[ig])
-                                  * (cos(phase) * aux[ig].imag() + sin(phase) * aux[ig].real());
+                                  * (cosp * aux[ig].imag() + sinp * aux[ig].real());
             forcelc(iat, 0) += rho_basis->gcar[ig][0] * factor;
             forcelc(iat, 1) += rho_basis->gcar[ig][1] * factor;
             forcelc(iat, 2) += rho_basis->gcar[ig][2] * factor;
@@ -562,7 +565,7 @@ void Forces<FPTYPE, Device>::cal_force_ew(ModuleBase::matrix& forceion, ModulePW
 #endif
     for (int ig = 0; ig < rho_basis->npw; ig++)
     {
-        aux[ig] *= exp(-1.0 * rho_basis->gg[ig] * GlobalC::ucell.tpiba2 / alpha / 4.0)
+        aux[ig] *= ModuleBase::libm::exp(-1.0 * rho_basis->gg[ig] * GlobalC::ucell.tpiba2 / alpha / 4.0)
                    / (rho_basis->gg[ig] * GlobalC::ucell.tpiba2);
     }
 
@@ -620,7 +623,9 @@ void Forces<FPTYPE, Device>::cal_force_ew(ModuleBase::matrix& forceion, ModulePW
             {
                 const ModuleBase::Vector3<double> gcar = rho_basis->gcar[ig];
                 const double arg = ModuleBase::TWO_PI * (gcar * GlobalC::ucell.atoms[it].tau[ia]);
-                double sumnb = -cos(arg) * aux[ig].imag() + sin(arg) * aux[ig].real();
+                double sinp, cosp;
+                ModuleBase::libm::sincos(arg, &sinp, &cosp);
+                double sumnb = -cosp * aux[ig].imag() + sinp * aux[ig].real();
                 forceion(iat, 0) += gcar[0] * sumnb;
                 forceion(iat, 1) += gcar[1] * sumnb;
                 forceion(iat, 2) += gcar[2] * sumnb;
@@ -683,7 +688,7 @@ void Forces<FPTYPE, Device>::cal_force_ew(ModuleBase::matrix& forceion, ModulePW
                         double factor
                             = GlobalC::ucell.atoms[T1].ncpp.zv * GlobalC::ucell.atoms[T2].ncpp.zv * ModuleBase::e2
                               / (rr * rr)
-                              * (erfc(sqa * rr) / rr + sq8a_2pi * exp(-alpha * rr * rr))
+                              * (erfc(sqa * rr) / rr + sq8a_2pi * ModuleBase::libm::exp(-alpha * rr * rr))
                               * GlobalC::ucell.lat0;
 
                         forceion(iat1, 0) -= factor * r[n].x;
@@ -862,7 +867,9 @@ void Forces<FPTYPE, Device>::cal_force_cc(ModuleBase::matrix& forcecc, ModulePW:
             const std::complex<double> psiv_conj = conj(psiv[ig]);
 
             const double arg = ModuleBase::TWO_PI * (gv.x * pos.x + gv.y * pos.y + gv.z * pos.z);
-            const std::complex<double> expiarg = std::complex<double>(sin(arg), cos(arg));
+            double sinp, cosp;
+            ModuleBase::libm::sincos(arg, &sinp, &cosp);
+            const std::complex<double> expiarg = std::complex<double>(sinp, cosp);
 
             auto ipol0 = GlobalC::ucell.tpiba * GlobalC::ucell.omega * rhocgigg * gv.x * psiv_conj * expiarg;
             forcecc(iat, 0) += ipol0.real();
@@ -908,11 +915,11 @@ void Forces<FPTYPE, Device>::cal_force_nl(ModuleBase::matrix& forcenl, const Mod
     // ModuleBase::ComplexArray dbecp(3, GlobalV::NBANDS, nkb);
     // ModuleBase::ComplexMatrix becp(GlobalV::NBANDS, nkb);
     std::complex<FPTYPE> * dbecp = nullptr, * becp = nullptr, * vkb1 = nullptr, *vkb = nullptr;
-    resmem_complex_op()(this->ctx, becp, GlobalV::NBANDS * nkb);
-    resmem_complex_op()(this->ctx, dbecp, 3 * GlobalV::NBANDS * nkb);
+    resmem_complex_op()(this->ctx, becp, GlobalV::NBANDS * nkb, "Force::becp");
+    resmem_complex_op()(this->ctx, dbecp, 3 * GlobalV::NBANDS * nkb, "Force::dbecp");
     // vkb1: |Beta(nkb,npw)><Beta(nkb,npw)|psi(nbnd,npw)>
     // ModuleBase::ComplexMatrix vkb1(nkb, GlobalC::wf.npwx);
-    resmem_complex_op()(this->ctx, vkb1, GlobalC::wf.npwx * nkb);
+    resmem_complex_op()(this->ctx, vkb1, GlobalC::wf.npwx * nkb, "Force::vkb1");
     // init additional params
     FPTYPE * force = nullptr, * d_wg = nullptr, * deeq = nullptr, * gcar = nullptr;
     int wg_nc = wg.nc;
@@ -1195,7 +1202,7 @@ void Forces<FPTYPE, Device>::cal_force_scc(ModuleBase::matrix& forcescc, ModuleP
                     else
                     {
                         const double gxx = gx * GlobalC::ucell.atoms[it].ncpp.r[ir];
-                        aux[ir] = GlobalC::ucell.atoms[it].ncpp.rho_at[ir] * sin(gxx) / gxx;
+                        aux[ir] = GlobalC::ucell.atoms[it].ncpp.rho_at[ir] * ModuleBase::libm::sin(gxx) / gxx;
                     }
                 }
                 ModuleBase::Integral::Simpson_Integral(mesh, aux, GlobalC::ucell.atoms[it].ncpp.rab, rhocgnt[ig]);
@@ -1214,7 +1221,9 @@ void Forces<FPTYPE, Device>::cal_force_scc(ModuleBase::matrix& forcescc, ModuleP
                 const ModuleBase::Vector3<double> gv = rho_basis->gcar[ig];
                 const double rhocgntigg = rhocgnt[GlobalC::rhopw->ig2igg[ig]];
                 const double arg = ModuleBase::TWO_PI * (gv * pos);
-                const std::complex<double> cpm = std::complex<double>(sin(arg), cos(arg)) * conj(psic[ig]);
+                double sinp, cosp;
+                ModuleBase::libm::sincos(arg, &sinp, &cosp);
+                const std::complex<double> cpm = std::complex<double>(sinp, cosp) * conj(psic[ig]);
 
                 forcescc(iat, 0) += fact * rhocgntigg * GlobalC::ucell.tpiba * gv.x * cpm.real();
                 forcescc(iat, 1) += fact * rhocgntigg * GlobalC::ucell.tpiba * gv.y * cpm.real();

@@ -55,9 +55,9 @@ void DiagoIterAssist<FPTYPE, Device>::diagH_subspace(
     assert(n_band <= nstart);
 
     std::complex<FPTYPE>* hcc = nullptr, * scc = nullptr, * vcc = nullptr;
-    resmem_complex_op()(ctx, hcc, nstart * nstart);
-    resmem_complex_op()(ctx, scc, nstart * nstart);
-    resmem_complex_op()(ctx, vcc, nstart * nstart);
+    resmem_complex_op()(ctx, hcc, nstart * nstart, "DiagSub::hcc");
+    resmem_complex_op()(ctx, scc, nstart * nstart, "DiagSub::scc");
+    resmem_complex_op()(ctx, vcc, nstart * nstart, "DiagSub::vcc");
     setmem_complex_op()(ctx, hcc, 0, nstart * nstart);
     setmem_complex_op()(ctx, scc, 0, nstart * nstart);
     setmem_complex_op()(ctx, vcc, 0, nstart * nstart);
@@ -71,7 +71,7 @@ void DiagoIterAssist<FPTYPE, Device>::diagH_subspace(
     // allocated hpsi
     // std::vector<std::complex<FPTYPE>> hpsi(psi.get_nbands() * psi.get_nbasis());
     std::complex<FPTYPE>* hphi = nullptr;
-    resmem_complex_op()(ctx, hphi, psi.get_nbands() * psi.get_nbasis());
+    resmem_complex_op()(ctx, hphi, psi.get_nbands() * psi.get_nbasis(), "DiagSub::hpsi");
     setmem_complex_op()(ctx, hphi, 0, psi.get_nbands() * psi.get_nbasis());
     // do hPsi for all bands
     psi::Range all_bands_range(1, psi.get_current_k(), 0, psi.get_nbands()-1);
@@ -158,7 +158,7 @@ void DiagoIterAssist<FPTYPE, Device>::diagH_subspace(
         // create a temporary matrix to store the result. (by wangjp)
         // qianrui improve this part 2021-3-13
         std::complex<FPTYPE>* evctemp = nullptr;
-        resmem_complex_op()(ctx, evctemp, n_band * dmin);
+        resmem_complex_op()(ctx, evctemp, n_band * dmin, "DiagSub::evctemp");
         setmem_complex_op()(ctx, evctemp, 0, n_band * dmin);
 
         gemm_op<FPTYPE, Device>()(
@@ -222,9 +222,9 @@ void DiagoIterAssist<FPTYPE, Device>::diagH_subspace_init(
     // ModuleBase::ComplexMatrix sc(nstart, nstart);
     // ModuleBase::ComplexMatrix hvec(nstart, n_band);
     std::complex<FPTYPE>* hcc = nullptr, * scc = nullptr, * vcc = nullptr;
-    resmem_complex_op()(ctx, hcc, nstart * nstart);
-    resmem_complex_op()(ctx, scc, nstart * nstart);
-    resmem_complex_op()(ctx, vcc, nstart * nstart);
+    resmem_complex_op()(ctx, hcc, nstart * nstart, "DiagSub::hcc");
+    resmem_complex_op()(ctx, scc, nstart * nstart, "DiagSub::scc");
+    resmem_complex_op()(ctx, vcc, nstart * nstart, "DiagSub::vcc");
     setmem_complex_op()(ctx, hcc, 0, nstart * nstart);
     setmem_complex_op()(ctx, scc, 0, nstart * nstart);
     setmem_complex_op()(ctx, vcc, 0, nstart * nstart);
@@ -243,7 +243,7 @@ void DiagoIterAssist<FPTYPE, Device>::diagH_subspace_init(
 
     // allocated hpsi
     std::complex<FPTYPE>* hpsi = nullptr;
-    resmem_complex_op()(ctx, hpsi, psi_temp.get_nbands() * psi_temp.get_nbasis());
+    resmem_complex_op()(ctx, hpsi, psi_temp.get_nbands() * psi_temp.get_nbasis(), "DiagSub::hpsi");
     setmem_complex_op()(ctx, hpsi, 0, psi_temp.get_nbands() * psi_temp.get_nbasis());
     // ================================================
     // std::vector<std::complex<FPTYPE>> hpsi(psi_temp.get_nbands() * psi_temp.get_nbasis());
@@ -347,7 +347,7 @@ void DiagoIterAssist<FPTYPE, Device>::diagH_subspace_init(
         // create a temporary matrix to store the result. (by wangjp)
         // qianrui improve this part 2021-3-13
         std::complex<FPTYPE>* evctemp = nullptr;
-        resmem_complex_op()(ctx, evctemp, n_band * dmin);
+        resmem_complex_op()(ctx, evctemp, n_band * dmin, "DiagSub::evctemp");
         setmem_complex_op()(ctx, evctemp, 0, n_band * dmin);
 
         gemm_op<FPTYPE, Device>()(

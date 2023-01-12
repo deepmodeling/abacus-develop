@@ -35,8 +35,8 @@ list(APPEND depend_files
   ../../module_neighbor/sltk_atom_input.cpp
   ../../module_neighbor/sltk_grid.cpp
   ../../module_neighbor/sltk_grid_driver.cpp
-  ../../src_io/output.cpp
-  ../../src_io/print_info.cpp
+  ../../module_io/output.cpp
+  ../../module_io/print_info.cpp
   ../../module_esolver/esolver_lj.cpp
   ../../src_parallel/parallel_reduce.cpp
   ../../src_parallel/parallel_global.cpp

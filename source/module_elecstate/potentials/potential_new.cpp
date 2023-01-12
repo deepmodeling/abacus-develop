@@ -146,15 +146,15 @@ void Potential::allocate()
         return;
 
     this->v_effective_fixed.resize(nrxx);
-    ModuleBase::Memory::record("Potential", "v_effective_fixed", nrxx, "double");
+    ModuleBase::Memory::record("Pot::veff_fix", sizeof(double) * nrxx);
 
     this->v_effective.create(GlobalV::NSPIN, nrxx);
-    ModuleBase::Memory::record("Potential", "vr_eff", GlobalV::NSPIN * nrxx, "double");
+    ModuleBase::Memory::record("Pot::veff", sizeof(double) * GlobalV::NSPIN * nrxx);
 
     if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
     {
         this->vofk_effective.create(GlobalV::NSPIN, nrxx);
-        ModuleBase::Memory::record("Potential", "vofk", GlobalV::NSPIN * nrxx, "double");
+        ModuleBase::Memory::record("Pot::vofk", sizeof(double) * GlobalV::NSPIN * nrxx);
     }
     if (GlobalV::device_flag == "gpu") {
         if (GlobalV::precision_flag == "single") {
@@ -168,8 +168,8 @@ void Potential::allocate()
     }
     else {
         if (GlobalV::precision_flag == "single") {
-            resmem_sh_op()(cpu_ctx, s_v_effective, GlobalV::NSPIN * nrxx);
-            resmem_sh_op()(cpu_ctx, s_vofk_effective, GlobalV::NSPIN * nrxx);
+            resmem_sh_op()(cpu_ctx, s_v_effective, GlobalV::NSPIN * nrxx, "POT::sveff");
+            resmem_sh_op()(cpu_ctx, s_vofk_effective, GlobalV::NSPIN * nrxx, "POT::svofk");
         }
         else {
             this->d_v_effective = this->v_effective.c;

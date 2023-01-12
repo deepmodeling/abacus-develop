@@ -46,7 +46,7 @@ VPATH=./src_global:\
 ./module_relax/relax_old:\
 ./module_relax/relax_new:\
 ./module_vdw:\
-./src_io:\
+./module_io:\
 ./src_parallel:\
 ./src_pdiag:\
 ./src_ri:\

@@ -1,6 +1,6 @@
 #include "relax_old.h"
 #include "src_pw/global.h" // use chr.
-#include "src_io/print_info.h"
+#include "module_io/print_info.h"
 #include "variable_cell.h" // mohan add 2021-02-01
 
 void Relax_old::init_relax()

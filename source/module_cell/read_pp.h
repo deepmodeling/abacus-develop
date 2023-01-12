@@ -5,7 +5,7 @@
 #include "../module_base/matrix.h"
 #include "../module_base/global_function.h"
 #include "../module_base/global_variable.h"
-#include "../src_io/output.h"
+#include "../module_io/output.h"
 
 using namespace std;
 

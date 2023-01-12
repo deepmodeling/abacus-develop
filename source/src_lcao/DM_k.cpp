@@ -1,7 +1,7 @@
 #include "../module_base/blas_connector.h"
 #include "../module_base/memory.h"
 #include "../module_base/timer.h"
-#include "../src_io/wf_local.h"
+#include "../module_io/wf_local.h"
 #include "../src_parallel/parallel_common.h"
 #include "../src_pw/global.h"
 #include "local_orbital_charge.h"
@@ -42,7 +42,7 @@ void Local_Orbital_Charge::allocate_DM_k(void)
         }
         this->nnrg_last = nnrg_now;
         this->init_DM_R = true;
-        ModuleBase::Memory::record("LocalOrbital_Charge", "Density_Matrix", GlobalV::NSPIN * nnrg_now, "double");
+        ModuleBase::Memory::record("LOC::DM_R", sizeof(double) * GlobalV::NSPIN * nnrg_now);
     }
     else if (nnrg_now == 0)
     {

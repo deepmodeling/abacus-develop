@@ -69,7 +69,7 @@ void Nonlocal<OperatorPW<FPTYPE, Device>>::add_nonlocal_pp(std::complex<FPTYPE> 
     // std::complex<FPTYPE> *ps = new std::complex<FPTYPE>[nkb * m];
     // ModuleBase::GlobalFunc::ZEROS(ps, m * nkb);
     if (this->nkb_m < m * nkb) {
-        resmem_complex_op()(this->ctx, this->ps, nkb * m);
+        resmem_complex_op()(this->ctx, this->ps, nkb * m, "Nonlocal<PW>::ps");
         this->nkb_m = m * nkb;
     }
     setmem_complex_op()(this->ctx, this->ps, 0, nkb * m);
@@ -224,7 +224,7 @@ void Nonlocal<OperatorPW<FPTYPE, Device>>::act
         // qianrui optimize 2021-3-31
         int nkb = this->ppcell->nkb;
         if (this->nkb_m < n_npwx * nkb) {
-            resmem_complex_op()(this->ctx, this->becp, n_npwx * nkb);
+            resmem_complex_op()(this->ctx, this->becp, n_npwx * nkb, "Nonlocal<PW>::becp");
         }
         // ModuleBase::ComplexMatrix becp(n_npwx, nkb, false);
         char transa = 'C';
