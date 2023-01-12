@@ -124,7 +124,7 @@ void Symmetry::analy_sys(const UnitCell &ucell, std::ofstream &ofs_running)
 	optlat.e31 = a3.x; optlat.e32 = a3.y; optlat.e33 = a3.z;
 
 	this->change_lattice();
-    //this->pricell(this->newpos);         // pengfei Li 2018-05-14 
+    this->pricell(this->newpos);         // pengfei Li 2018-05-14 
          //for( iat =0 ; iat < ucell.nat ; iat++)   
 //         std::cout << " newpos_now = " << newpos[3*iat] << " " << newpos[3*iat+1] << " " << newpos[3*iat+2] << std::endl;
 	test_brav = true; // output the real ibrav and point group
@@ -1316,22 +1316,23 @@ void Symmetry::pricell(double* pos)
     //calculate lattice vectors of pricell: 
     // find the first non-zero ptrans on all 3 directions 
     ModuleBase::Vector3<double> b1, b2, b3;
-    int iplane=0, jplane=0, kplane=0;
-    while(iplane<ntrans && std::abs(ptrans[iplane].x-ptrans[0].x)<this->epsilon) ++iplane;  //x!=0, y=z=0
+    int iplane=0, jplane=0;
+    while(iplane<ntrans && std::abs(ptrans[iplane].x-ptrans[0].x)<this->epsilon) ++iplane;
+    if(iplane==ntrans) iplane=0;    //a1-direction have no smaller pricell
     b1=iplane>0 ? 
         ModuleBase::Vector3<double>(ptrans[iplane].x, ptrans[iplane].y, ptrans[iplane].z) : 
         ModuleBase::Vector3<double>(1, 0, 0);
-    while(jplane<iplane && std::abs(ptrans[jplane].y-ptrans[0].y)<this->epsilon) ++jplane;  //x=z=0, y!=0
-    b2=(jplane>0 && jplane<iplane) ? 
-        ModuleBase::Vector3<double>(ptrans[jplane].x, ptrans[jplane].y, ptrans[jplane].z) : 
+    jplane=iplane;
+    while(jplane<ntrans && std::abs(ptrans[jplane].y-ptrans[iplane].y)<this->epsilon) ++jplane;
+    if(jplane==ntrans) jplane=iplane;    //a2-direction have no smaller pricell
+    b2=jplane>iplane ? 
+        ModuleBase::Vector3<double>(ptrans[jplane].x-ptrans[iplane].x, ptrans[jplane].y-ptrans[iplane].y, ptrans[jplane].z-ptrans[iplane].z) : 
         ModuleBase::Vector3<double>(0, 1, 0);
-    while(kplane<jplane && std::abs(ptrans[kplane].z-ptrans[0].z)<this->epsilon) ++kplane;  //x=z=0, y!=0
-    b3=(kplane>0 && kplane<jplane)? 
-        ModuleBase::Vector3<double>(ptrans[kplane].x, ptrans[kplane].y, ptrans[kplane].z) : 
-        ModuleBase::Vector3<double>(0, 0, 1);
+    b3=(jplane<ntrans-1 && std::abs(ptrans[jplane+1].z-ptrans[jplane].z)>this->epsilon)? 
+        ModuleBase::Vector3<double>(ptrans[jplane+1].x-ptrans[jplane].x, ptrans[jplane+1].y-ptrans[jplane].y, ptrans[jplane+1].z-ptrans[jplane].z) : 
+        ModuleBase::Vector3<double>(0, 0, 1);    //a3-direction have no smaller pricell
     // std::cout<<"iplane="<<iplane<<std::endl;
     // std::cout<<"jplane="<<jplane<<std::endl;
-    // std::cout<<"kplane="<<kplane<<std::endl;
     // std::cout<<"b1="<<b1.x<<" "<<b1.y<<" "<<b1.z<<std::endl;
     // std::cout<<"b2="<<b2.x<<" "<<b2.y<<" "<<b2.z<<std::endl;
     // std::cout<<"b3="<<b3.x<<" "<<b3.y<<" "<<b3.z<<std::endl;
@@ -1346,12 +1347,12 @@ void Symmetry::pricell(double* pos)
     this->p3.x=plat.e31;
     this->p3.y=plat.e32;
     this->p3.z=plat.e33;
-    std::cout<<"plat:"<<std::endl;
-    std::cout<<p1.x<<" "<<p1.y<<" "<<p1.z<<std::endl;
-    std::cout<<p2.x<<" "<<p2.y<<" "<<p2.z<<std::endl;
-    std::cout<<p3.x<<" "<<p3.y<<" "<<p3.z<<std::endl;
+    GlobalV::ofs_running<<"lattice vectors of primitive cell:"<<std::endl;
+    GlobalV::ofs_running<<p1.x<<" "<<p1.y<<" "<<p1.z<<std::endl;
+    GlobalV::ofs_running<<p2.x<<" "<<p2.y<<" "<<p2.z<<std::endl;
+    GlobalV::ofs_running<<p3.x<<" "<<p3.y<<" "<<p3.z<<std::endl;
+    bool is_right=Symm_Other::right_hand_sense(p1, p2, p3);
     this->pbrav=this->standard_lat(p1, p2, p3, pcel_const);
-    GlobalV::ofs_running<<"Original cell was built up by "<<this->ncell<<" primitive cells."<<std::endl;
     std::string pbravname = get_brav_name(this->pbrav);
     GlobalV::ofs_running<<"(for primitive cell:)"<<std::endl;
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"BRAVAIS TYPE", this->pbrav);
@@ -1372,52 +1373,54 @@ void Symmetry::pricell(double* pos)
         std::cout << " ERROR: THE NUMBER OF PRIMITIVE CELL IS NOT AN INTEGER !" << std::endl;
 		ModuleBase::QUIT();
     }
+    GlobalV::ofs_running<<"Original cell was built up by "<<this->ncell<<" primitive cells."<<std::endl;
 
-    //how many pcell in supercell
-    double n1, n2, n3;
-    ModuleBase::Matrix3 nummat=this->plat.Inverse()*this->optlat;
-    n1=nummat.e11;
-    n2=nummat.e22;
-    n3=nummat.e33;
-    std::cout<<"n1="<<n1<<"; n2="<<n2<<"; n3="<<n3<<std::endl;
+    // //how many pcell in supercell
+    // double n1, n2, n3;
+    // ModuleBase::Matrix3 nummat=this->optlat*this->plat.Inverse();
+    // //nummat=HermiteNormalForm(nummat)
+    // n1=nummat.e11;
+    // n2=nummat.e22;
+    // n3=nummat.e33;
+    // std::cout<<"n1="<<n1<<"; n2="<<n2<<"; n3="<<n3<<std::endl;
 
-    //replace the (may be negative) ptrans with the real ptrans(in supercell)
-    ModuleBase::Matrix3 BT=this->optlat.Inverse();
-    ModuleBase::Matrix3 B=this->optlat.Transpose();
-    ModuleBase::Vector3<double> pcel_car;
-    ModuleBase::Vector3<double> pcel_direct;
-    int count=0;
-    for (int k=0;k<n3;++k)
-    {
-        for(int j=0;j<n2;++j)
-        {
-            for(int i=0;i<n1;++i)
-            {
-                pcel_car=p1*double(i)+p2*double(j)+p3*double(k);
-                pcel_direct=B*pcel_car;
-                pcel_direct.x=fmod(pcel_direct.x+2.0*n1+100.0+0.5*epsilon,1.0) - 0.5*epsilon;
-                pcel_direct.y=fmod(pcel_direct.y+2.0*n2+100.0+0.5*epsilon,1.0) - 0.5*epsilon;
-                pcel_direct.z=fmod(pcel_direct.z+2.0*n3+100.0+0.5*epsilon,1.0) - 0.5*epsilon;
-                bool exist=false;
-                for(int itrans=1;itrans<count;++itrans)
-                    exist=exist || (abs(pcel_direct.x-ptrans[count].x)<epsilon &&
-                            abs(pcel_direct.y-ptrans[count].y)<epsilon &&
-                            abs(pcel_direct.z-ptrans[count].z)<epsilon);
-                if(!exist)
-                {
-                    ptrans[count]=pcel_direct;
-                    ++count;
-                }
-            }
-        }
-    }
-    if(count != this->ncell) 
-    {
-        std::cout << " ERROR: Number of cells and number of vectors did not agree.";
-        std::cout<<"Try to change symmetry_prec in INPUT." << std::endl;
-		ModuleBase::QUIT();
-    }
-    assert(count==this->ncell);
+    // //replace the (may be negative) ptrans with the real ptrans(in supercell)
+    // ModuleBase::Matrix3 BT=this->optlat.Inverse();
+    // ModuleBase::Matrix3 B=this->optlat.Transpose();
+    // ModuleBase::Vector3<double> pcel_car;
+    // ModuleBase::Vector3<double> pcel_direct;
+    // int count=0;
+    // for (int k=0;k<n3;++k)
+    // {
+    //     for(int j=0;j<n2;++j)
+    //     {
+    //         for(int i=0;i<n1;++i)
+    //         {
+    //             pcel_car=p1*double(i)+p2*double(j)+p3*double(k);
+    //             pcel_direct=B*pcel_car;
+    //             pcel_direct.x=fmod(pcel_direct.x+2.0*n1+100.0+0.5*epsilon,1.0) - 0.5*epsilon;
+    //             pcel_direct.y=fmod(pcel_direct.y+2.0*n2+100.0+0.5*epsilon,1.0) - 0.5*epsilon;
+    //             pcel_direct.z=fmod(pcel_direct.z+2.0*n3+100.0+0.5*epsilon,1.0) - 0.5*epsilon;
+    //             bool exist=false;
+    //             for(int itrans=1;itrans<count;++itrans)
+    //                 exist=exist || (abs(pcel_direct.x-ptrans[count].x)<epsilon &&
+    //                         abs(pcel_direct.y-ptrans[count].y)<epsilon &&
+    //                         abs(pcel_direct.z-ptrans[count].z)<epsilon);
+    //             if(!exist)
+    //             {
+    //                 ptrans[count]=pcel_direct;
+    //                 ++count;
+    //             }
+    //         }
+    //     }
+    // }
+    // if(count != this->ncell) 
+    // {
+    //     std::cout << " ERROR: Number of cells and number of vectors did not agree.";
+    //     std::cout<<"Try to change symmetry_prec in INPUT." << std::endl;
+	// 	ModuleBase::QUIT();
+    // }
+    // assert(count==this->ncell);
     return;
 }
 
