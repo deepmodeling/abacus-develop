@@ -1,6 +1,5 @@
 INPUT_PARAMETERS
 pseudo_dir      ../../../tests/PP_ORB
-ntype           2
 symmetry      1
 
 calculation   scf

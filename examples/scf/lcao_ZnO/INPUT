@@ -1,7 +1,6 @@
 INPUT_PARAMETERS
 pseudo_dir              ../../../tests/PP_ORB
 orbital_dir                 ../../../tests/PP_ORB
-ntype		2
 nbands		24
 
 calculation	scf

@@ -1,5 +1,4 @@
 INPUT_PARAMETERS
-ntype                         2
 ecutwfc                       100
 nbands                        220
 scf_nmax                      400

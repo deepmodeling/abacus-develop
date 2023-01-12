@@ -1,6 +1,6 @@
 INPUT_PARAMETERS
 suffix    autotest
-ntype     2
+
 #nbands   40
 
 calculation   scf

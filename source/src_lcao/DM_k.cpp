@@ -6,6 +6,10 @@
 #include "../src_pw/global.h"
 #include "local_orbital_charge.h"
 
+#ifdef __MKL
+#include <mkl_service.h>
+#endif
+
 void Local_Orbital_Charge::allocate_DM_k(void)
 {
     ModuleBase::TITLE("Local_Orbital_Charge", "allocate_k");
@@ -237,13 +241,21 @@ void Local_Orbital_Charge::cal_dk_k(const Grid_Technique &gt, const ModuleBase::
     ModuleBase::TITLE("Local_Orbital_Charge", "cal_dk_k");
     ModuleBase::timer::tick("LCAO_Charge", "cal_dk_k");
     // int nnrg = 0;
-    ModuleBase::Vector3<double> tau1;
-    ModuleBase::Vector3<double> dtau;
 
     Record_adj RA;
     RA.for_grid(gt);
 
-    int ca = 0;
+#ifdef __MKL
+		const int mkl_threads = mkl_get_max_threads();
+		mkl_set_num_threads(1);
+#endif
+
+#ifdef _OPENMP
+#pragma omp parallel
+{
+#endif
+    ModuleBase::Vector3<double> tau1;
+    ModuleBase::Vector3<double> dtau;
     std::complex<double> fac = ModuleBase::TWO_PI * ModuleBase::IMAG_UNIT;
 
     std::complex<double> *WFC_PHASE = new std::complex<double>[GlobalV::NLOCAL * GlobalC::ucell.nwmax];
@@ -256,12 +268,16 @@ void Local_Orbital_Charge::cal_dk_k(const Grid_Technique &gt, const ModuleBase::
         DM_ATOM[is] = new std::complex<double>[DM_ATOM_SIZE];
         ModuleBase::GlobalFunc::ZEROS(DM_ATOM[is], DM_ATOM_SIZE);
     }
-    for (int T1 = 0; T1 < GlobalC::ucell.ntype; T1++)
-    {
-        Atom *atom1 = &GlobalC::ucell.atoms[T1];
-        for (int I1 = 0; I1 < atom1->na; I1++)
-        {
-            const int iat = GlobalC::ucell.itia2iat(T1, I1);
+#ifdef _OPENMP
+#pragma omp for schedule(dynamic)
+#endif
+    for(int iat=0; iat<GlobalC::ucell.nat; ++iat)
+	{
+		const int T1 = GlobalC::ucell.iat2it[iat];
+		Atom* atom1 = &GlobalC::ucell.atoms[T1];
+		const int I1 = GlobalC::ucell.iat2ia[iat];
+		{
+			const int ca = RA.iat2ca[iat];
             if (gt.in_this_processor[iat])
             {
                 const int start1 = GlobalC::ucell.itiaiw2iwt(T1, I1, 0);
@@ -315,7 +331,6 @@ void Local_Orbital_Charge::cal_dk_k(const Grid_Technique &gt, const ModuleBase::
                                    DM_ATOM,
                                    wg_in);
                 }
-                ++ca;
 
                 if (GlobalV::NSPIN != 4)
                 {
@@ -386,6 +401,13 @@ void Local_Orbital_Charge::cal_dk_k(const Grid_Technique &gt, const ModuleBase::
     }
     delete[] DM_ATOM;
     delete[] WFC_PHASE;
+#ifdef _OPENMP
+}
+#endif
+
+#ifdef __MKL
+    mkl_set_num_threads(mkl_threads);
+#endif
 
     RA.delete_grid(); // xiaohui add 2015-02-04
 

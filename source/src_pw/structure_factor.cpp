@@ -6,6 +6,7 @@
 #include "../module_base/math_bspline.h"
 #include "../module_base/memory.h"
 #include "../module_base/timer.h"
+#include "../module_base/libm/libm.h"
 
 
 #ifdef _OPENMP
@@ -93,7 +94,7 @@ void Structure_Factor::setup_structure_factor(UnitCell* Ucell, ModulePW::PW_Basi
                 for (int ia=0; ia<na; ia++)
                 {
                     // e^{-i G*tau}
-                    sum_phase += exp( ci_tpi * (gcar_ig * tau[ia]) );
+                    sum_phase += ModuleBase::libm::exp( ci_tpi * (gcar_ig * tau[ia]) );
                 }
                 this->strucFac(it,ig) = sum_phase;
             }
@@ -125,17 +126,17 @@ void Structure_Factor::setup_structure_factor(UnitCell* Ucell, ModulePW::PW_Basi
             for (int n1 = -rho_basis->nx; n1 <= rho_basis->nx;n1++)
             {
                 double arg = n1 * gtau.x;
-                this->eigts1(inat, n1 + rho_basis->nx) = exp( ci_tpi*arg  );
+                this->eigts1(inat, n1 + rho_basis->nx) = ModuleBase::libm::exp( ci_tpi*arg  );
             }
             for (int n2 = -rho_basis->ny; n2 <= rho_basis->ny;n2++)
             {
                 double arg = n2 * gtau.y;
-                this->eigts2(inat, n2 + rho_basis->ny) = exp( ci_tpi*arg );
+                this->eigts2(inat, n2 + rho_basis->ny) = ModuleBase::libm::exp( ci_tpi*arg );
             }
             for (int n3 = -rho_basis->nz; n3 <= rho_basis->nz;n3++)
             {
                 double arg = n3 * gtau.z;
-                this->eigts3(inat, n3 + rho_basis->nz) = exp( ci_tpi*arg );
+                this->eigts3(inat, n3 + rho_basis->nz) = ModuleBase::libm::exp( ci_tpi*arg );
             }
             inat++;
         }
@@ -293,27 +294,27 @@ void Structure_Factor:: bsplinecoef(complex<double> *b1, complex<double> *b2, co
         complex<double> fracx=0;
         for(int io = 0 ; io < norder - 1 ; ++io)
         {
-            fracx += bsp.bezier_ele(io)*exp(ci_tpi*double(ix)/double(nx)*double(io));
+            fracx += bsp.bezier_ele(io)*ModuleBase::libm::exp(ci_tpi*double(ix)/double(nx)*double(io));
         }
-        b1[ix] = exp(ci_tpi*double(norder*ix)/double(nx))/fracx;
+        b1[ix] = ModuleBase::libm::exp(ci_tpi*double(norder*ix)/double(nx))/fracx;
     }
     for(int iy = 0 ; iy < ny ; ++iy)
     {
         complex<double> fracy=0;
         for(int io = 0 ; io < norder - 1 ; ++io)
         {
-            fracy += bsp.bezier_ele(io)*exp(ci_tpi*double(iy)/double(ny)*double(io));
+            fracy += bsp.bezier_ele(io)*ModuleBase::libm::exp(ci_tpi*double(iy)/double(ny)*double(io));
         }
-        b2[iy] = exp(ci_tpi*double(norder*iy)/double(ny))/fracy;
+        b2[iy] = ModuleBase::libm::exp(ci_tpi*double(norder*iy)/double(ny))/fracy;
     }
     for(int iz = 0 ; iz < nz ; ++iz)
     {
         complex<double> fracz=0;
         for(int io = 0 ; io < norder - 1 ; ++io)
         {
-            fracz += bsp.bezier_ele(io)*exp(ci_tpi*double(iz)/double(nz)*double(io));
+            fracz += bsp.bezier_ele(io)*ModuleBase::libm::exp(ci_tpi*double(iz)/double(nz)*double(io));
         }
-        b3[iz] = exp(ci_tpi*double(norder*iz)/double(nz))/fracz;
+        b3[iz] = ModuleBase::libm::exp(ci_tpi*double(norder*iz)/double(nz))/fracz;
     }
 }
 
