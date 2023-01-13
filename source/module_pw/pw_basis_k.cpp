@@ -1,6 +1,7 @@
 #include "pw_basis_k.h"
 #include "../module_base/constants.h"
 #include "../module_base/timer.h"
+#include "module_base/memory.h"
 
 namespace ModulePW
 {
@@ -183,6 +184,8 @@ void PW_Basis_K::collect_local_pw()
     delete[] gcar;
     this->gk2 = new double[this->npwk_max * this->nks];
     this->gcar = new ModuleBase::Vector3<double>[this->npwk_max * this->nks];
+    ModuleBase::Memory::record("PW_B_K::gk2", sizeof(double) * this->npwk_max * this->nks);
+    ModuleBase::Memory::record("PW_B_K::gcar", sizeof(ModuleBase::Vector3<double>) * this->npwk_max * this->nks);
 
     ModuleBase::Vector3<double> f;
     for(int ik = 0 ; ik < this->nks ; ++ik)
@@ -223,8 +226,8 @@ void PW_Basis_K::collect_local_pw()
     }
     else {
         if (GlobalV::precision_flag == "single") {
-            resmem_sh_op()(cpu_ctx, this->s_gk2, this->npwk_max * this->nks);
-            resmem_sh_op()(cpu_ctx, this->s_gcar, this->npwk_max * this->nks * 3);
+            resmem_sh_op()(cpu_ctx, this->s_gk2, this->npwk_max * this->nks, "PW_B_K::s_gk2");
+            resmem_sh_op()(cpu_ctx, this->s_gcar, this->npwk_max * this->nks * 3, "PW_B_K::s_gcar");
             castmem_d2s_h2h_op()(cpu_ctx, cpu_ctx, this->s_gk2, this->gk2, this->npwk_max * this->nks);
             castmem_d2s_h2h_op()(cpu_ctx, cpu_ctx, this->s_gcar, reinterpret_cast<double *>(&this->gcar[0][0]), this->npwk_max * this->nks * 3);
         }
@@ -292,6 +295,7 @@ void PW_Basis_K::get_ig2ixyz_k()
 {
 
     this->ig2ixyz_k_ = new int [this->npwk_max * this->nks];
+    ModuleBase::Memory::record("PW_B_K::ig2ixyz", sizeof(int) * this->npwk_max * this->nks);
     assert(gamma_only == false); //We only finish non-gamma_only fft on GPU temperarily.
     for(int ik = 0; ik < this->nks; ++ik)
     {

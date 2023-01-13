@@ -8,6 +8,7 @@
 #include "src_parallel/parallel_reduce.h"
 #include "module_hsolver/kernels/math_kernel_op.h"
 #include "module_hamilt/hamilt_pw.h"
+#include "module_base/memory.h"
 
 using namespace hsolver;
 
@@ -95,6 +96,8 @@ void DiagoCG<FPTYPE, Device>::diag_mock(hamilt::Hamilt<FPTYPE, Device> *phm_in, 
     // this->lagrange.resize(this->n_band, ModuleBase::ZERO);
     resmem_complex_op()(this->ctx, this->lagrange, this->n_band);
     setmem_complex_op()(this->ctx, this->lagrange, 0, this->n_band);
+
+    ModuleBase::Memory::record("DiagoCG", this->dmx * 8);
 
     for (int m = 0; m < this->n_band; m++)
     {

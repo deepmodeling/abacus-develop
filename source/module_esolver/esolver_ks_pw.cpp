@@ -19,6 +19,7 @@
 #include "module_hamilt/hamilt_pw.h"
 #include "module_hsolver/diago_iter_assist.h"
 #include "module_vdw/vdw.h"
+#include "module_base/memory.h"
 
 #include "module_io/write_wfc_realspace.h"
 #include "module_io/winput.h"
@@ -134,6 +135,10 @@ namespace ModuleESolver
         this->kspw_psi = GlobalV::device_flag == "gpu" || GlobalV::precision_flag == "single" ?
                          new psi::Psi<std::complex<FPTYPE>, Device>(this->psi[0]) :
                          reinterpret_cast<psi::Psi<std::complex<FPTYPE>, Device>*> (this->psi);
+        if(GlobalV::precision_flag == "single")
+        {
+            ModuleBase::Memory::record ("Psi_single", sizeof(std::complex<FPTYPE>) * this->psi[0].size());
+        }
 
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT BASIS");
     }

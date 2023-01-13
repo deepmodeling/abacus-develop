@@ -170,7 +170,7 @@ template <typename FPTYPE> struct matrixTranspose_op<FPTYPE, psi::DEVICE_CPU>
                     std::complex<FPTYPE>* output_matrix)
     {
         std::complex<FPTYPE>* temp = nullptr;
-        psi::memory::resize_memory_op<std::complex<FPTYPE>, psi::DEVICE_CPU>()(d, temp, row * col);
+        psi::memory::resize_memory_op<std::complex<FPTYPE>, psi::DEVICE_CPU>()(d, temp, row * col, "MTransOp");
         for (int i = 0; i < row; i++)
         {
             for (int j = 0; j < col; j++)

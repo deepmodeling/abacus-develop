@@ -181,7 +181,7 @@ void Grid_BigCell::init_tau_in_bigcell(void)
 		delete[] index_atom;
 		this->index_atom = new int[GlobalC::ucell.nat];
 
-		ModuleBase::Memory::record("Grid_BigCell","tau_in_bigcell",GlobalC::ucell.nat*3,"double");
+		ModuleBase::Memory::record("tau_in_bigcell", sizeof(double) * GlobalC::ucell.nat*3);
 	}
 	
 	// get the fraction number of (i,j,k)

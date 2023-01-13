@@ -184,7 +184,8 @@ void Psi<T, Device>::resize(
     resize_memory_op()(
         this->ctx,
         this->psi, 
-        nks_in * nbands_in * nbasis_in);
+        nks_in * nbands_in * nbasis_in,
+        "no_record");
     this->nk = nks_in;
     this->nbands = nbands_in;
     this->nbasis = nbasis_in;

@@ -9,6 +9,7 @@
 #include "module_hsolver/kernels/math_kernel_op.h"
 #include "src_parallel/parallel_common.h"
 #include "src_parallel/parallel_reduce.h"
+#include "module_base/memory.h"
 
 using namespace hsolver;
 
@@ -68,33 +69,34 @@ void DiagoDavid<FPTYPE, Device>::diag_mock(hamilt::Hamilt<FPTYPE, Device>* phm_i
     this->nbase_x = DiagoDavid::PW_DIAG_NDIM * this->n_band; // maximum dimension of the reduced basis set
 
     // the lowest N eigenvalues
-    psi::memory::resize_memory_op<FPTYPE, psi::DEVICE_CPU>()(this->cpu_ctx, this->eigenvalue, this->nbase_x);
+    psi::memory::resize_memory_op<FPTYPE, psi::DEVICE_CPU>()(this->cpu_ctx, this->eigenvalue, this->nbase_x, "DAV::eig");
     psi::memory::set_memory_op<FPTYPE, psi::DEVICE_CPU>()(this->cpu_ctx, this->eigenvalue, 0, this->nbase_x);
 
     psi::Psi<std::complex<FPTYPE>, Device> basis(1,
                                                  this->nbase_x,
                                                  this->dim,
                                                  &(psi.get_ngk(0))); // the reduced basis set
+    ModuleBase::Memory::record("DAV::basis", this->nbase_x * this->dim * sizeof(std::complex<FPTYPE>));
 
     //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     // ModuleBase::ComplexMatrix hp(nbase_x, this->dim); // the product of H and psi in the reduced basis set
-    resmem_complex_op()(this->ctx, this->hphi, this->nbase_x * this->dim);
+    resmem_complex_op()(this->ctx, this->hphi, this->nbase_x * this->dim, "DAV::hphi");
     setmem_complex_op()(this->ctx, this->hphi, 0, this->nbase_x * this->dim);
 
     // ModuleBase::ComplexMatrix sp(nbase_x, this->dim); // the Product of S and psi in the reduced basis set
-    resmem_complex_op()(this->ctx, this->sphi, this->nbase_x * this->dim);
+    resmem_complex_op()(this->ctx, this->sphi, this->nbase_x * this->dim, "DAV::sphi");
     setmem_complex_op()(this->ctx, this->sphi, 0, this->nbase_x * this->dim);
 
     // ModuleBase::ComplexMatrix hc(this->nbase_x, this->nbase_x); // Hamiltonian on the reduced basis
-    resmem_complex_op()(this->ctx, this->hcc, this->nbase_x * this->nbase_x);
+    resmem_complex_op()(this->ctx, this->hcc, this->nbase_x * this->nbase_x, "DAV::hcc");
     setmem_complex_op()(this->ctx, this->hcc, 0, this->nbase_x * this->nbase_x);
 
     // ModuleBase::ComplexMatrix sc(this->nbase_x, this->nbase_x); // Overlap on the reduced basis
-    resmem_complex_op()(this->ctx, this->scc, this->nbase_x * this->nbase_x);
+    resmem_complex_op()(this->ctx, this->scc, this->nbase_x * this->nbase_x, "DAV::scc");
     setmem_complex_op()(this->ctx, this->scc, 0, this->nbase_x * this->nbase_x);
 
     // ModuleBase::ComplexMatrix vc(this->nbase_x, this->nbase_x); // Eigenvectors of hc
-    resmem_complex_op()(this->ctx, this->vcc, this->nbase_x * this->nbase_x);
+    resmem_complex_op()(this->ctx, this->vcc, this->nbase_x * this->nbase_x, "DAV::vcc");
     setmem_complex_op()(this->ctx, this->vcc, 0, this->nbase_x * this->nbase_x);
     //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
@@ -722,13 +724,16 @@ void DiagoDavid<FPTYPE, Device>::refresh(const int& dim,
         std::complex<FPTYPE>* vcc_cpu = nullptr;
         psi::memory::resize_memory_op<std::complex<FPTYPE>, psi::DEVICE_CPU>()(this->cpu_ctx,
                                                                                hcc_cpu,
-                                                                               this->nbase_x * this->nbase_x);
+                                                                               this->nbase_x * this->nbase_x,
+                                                                               "DAV::hcc");
         psi::memory::resize_memory_op<std::complex<FPTYPE>, psi::DEVICE_CPU>()(this->cpu_ctx,
                                                                                scc_cpu,
-                                                                               this->nbase_x * this->nbase_x);
+                                                                               this->nbase_x * this->nbase_x,
+                                                                               "DAV::scc");
         psi::memory::resize_memory_op<std::complex<FPTYPE>, psi::DEVICE_CPU>()(this->cpu_ctx,
                                                                                vcc_cpu,
-                                                                               this->nbase_x * this->nbase_x);
+                                                                               this->nbase_x * this->nbase_x,
+                                                                               "DAV::vcc");
 
         syncmem_complex_d2h_op()(this->cpu_ctx, this->ctx, hcc_cpu, hcc, this->nbase_x * this->nbase_x);
         syncmem_complex_d2h_op()(this->cpu_ctx, this->ctx, scc_cpu, scc, this->nbase_x * this->nbase_x);

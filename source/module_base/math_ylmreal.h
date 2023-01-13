@@ -3,7 +3,6 @@
 
 #include "vector3.h"
 #include "matrix.h"
-#include "module_psi/psi.h"
 
 namespace ModuleBase
 {

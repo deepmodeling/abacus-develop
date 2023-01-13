@@ -84,7 +84,7 @@ void Local_Orbital_wfc::allocate_k(const int& lgd,
 				//std::cout<<"ik="<<ik<<" ib="<<ib<<std::endl<<"wfc_k_grid address: "<<wfc_k_grid[ik][ib]<<" wfc_k_grid2 address: "<<&wfc_k_grid2[ik*page+ib*lgd]<<std::endl;
 			}
 			//std::cout<<"set wfc_k_grid pointer success, ik: "<<ik<<std::endl;
-			ModuleBase::Memory::record("LocalOrbital_Coef","wfc_k_grid",GlobalV::NBANDS*GlobalV::NLOCAL,"cdouble");
+			ModuleBase::Memory::record("LOWF::wfc_k_grid", sizeof(std::complex<double>) * GlobalV::NBANDS*GlobalV::NLOCAL);
 			//ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"MemoryForWaveFunctions (MB)",mem);
 			//std::cout<<"wfc_k_grid["<<ik<<"] use "<<mem<<" MB"<<std::endl;
 			this->complex_flag = true;
@@ -188,7 +188,7 @@ void Local_Orbital_wfc::wfc_2d_to_grid(
             ctot[i] = new double[GlobalV::NLOCAL];
             ModuleBase::GlobalFunc::ZEROS(ctot[i], GlobalV::NLOCAL);
         }
-        ModuleBase::Memory::record("Local_Orbital_wfc", "ctot", GlobalV::NBANDS * GlobalV::NLOCAL, "double");
+        ModuleBase::Memory::record("LOWF::ctot", sizeof(double) * GlobalV::NBANDS * GlobalV::NLOCAL);
     }
 
     int naroc[2]; // maximum number of row or column
@@ -267,7 +267,7 @@ void Local_Orbital_wfc::wfc_2d_to_grid(
             ctot[i] = new std::complex<double>[GlobalV::NLOCAL];
             ModuleBase::GlobalFunc::ZEROS(ctot[i], GlobalV::NLOCAL);
         }
-        ModuleBase::Memory::record("Local_Orbital_wfc", "ctot", GlobalV::NBANDS * GlobalV::NLOCAL, "cdouble");
+        ModuleBase::Memory::record("LOWF::ctot", sizeof(std::complex<double>) * GlobalV::NBANDS * GlobalV::NLOCAL);
     }
     
     int naroc[2]; // maximum number of row or column

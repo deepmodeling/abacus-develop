@@ -150,11 +150,11 @@ void K_Vectors::renew(const int &kpoint_number)
     isk.resize(kpoint_number);
     ngk.resize(kpoint_number);
 
-    ModuleBase::Memory::record("K_Vectors","kvec_c",kpoint_number*3,"double");
-    ModuleBase::Memory::record("K_Vectors","kvec_d",kpoint_number*3,"double");
-    ModuleBase::Memory::record("K_Vectors","wk",kpoint_number*3,"double");
-    ModuleBase::Memory::record("K_Vectors","isk",kpoint_number*3,"int");
-    ModuleBase::Memory::record("K_Vectors","ngk",kpoint_number*3,"int");
+    /*ModuleBase::Memory::record("KV::kvec_c",sizeof(double) * kpoint_number*3);
+    ModuleBase::Memory::record("KV::kvec_d",sizeof(double) * kpoint_number*3);
+    ModuleBase::Memory::record("KV::wk",sizeof(double) * kpoint_number*3);
+    ModuleBase::Memory::record("KV::isk",sizeof(int) * kpoint_number*3);
+    ModuleBase::Memory::record("KV::ngk",sizeof(int) * kpoint_number*3);*/
 
     return;
 }

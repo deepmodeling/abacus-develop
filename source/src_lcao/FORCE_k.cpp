@@ -66,6 +66,7 @@ void Force_LCAO_k::ftable_k(const bool isforce,
     {
         dm2d[is] = new double[pv->nnr];
     }
+    ModuleBase::Memory::record("Force::dm2d_K", sizeof(double) * GlobalV::NSPIN * pv->nnr);
     auto init_dm2d = [dm2d, pv](int num_threads, int thread_id)
     {
         int beg, len;
@@ -76,7 +77,6 @@ void Force_LCAO_k::ftable_k(const bool isforce,
         }
     };
     ModuleBase::OMP_PARALLEL(init_dm2d);
-    ModuleBase::Memory::record("Force_LCAO_k", "dm2d", GlobalV::NSPIN * pv->nnr, "double");
 
     loc.cal_dm_R(loc.dm_k, ra, dm2d);
 
@@ -214,7 +214,7 @@ void Force_LCAO_k::allocate_k(const Parallel_Orbitals& pv)
         ModuleBase::GlobalFunc::ZEROS(this->UHM->LM->DSloc_Rz + beg, len);
     };
     ModuleBase::OMP_PARALLEL(init_DSloc_Rxyz);
-    ModuleBase::Memory::record("force_lo", "dS", nnr * 3, "double");
+    ModuleBase::Memory::record("Force::dS_K", sizeof(double) * nnr * 3);
 
     if (GlobalV::CAL_STRESS)
     {
@@ -238,7 +238,8 @@ void Force_LCAO_k::allocate_k(const Parallel_Orbitals& pv)
         };
         ModuleBase::OMP_PARALLEL(init_DH_r_stvnl);
         
-        ModuleBase::Memory::record("stress_lo", "dSR", nnr * 6, "double");
+        ModuleBase::Memory::record("Stress::dHr", sizeof(double) * nnr * 3);
+        ModuleBase::Memory::record("Stress::dSR", sizeof(double) * nnr * 6);
     }
 
     //-----------------------------
@@ -261,7 +262,7 @@ void Force_LCAO_k::allocate_k(const Parallel_Orbitals& pv)
         ModuleBase::GlobalFunc::ZEROS(this->UHM->LM->DHloc_fixedR_z + beg, len);
     };
     ModuleBase::OMP_PARALLEL(init_DHloc_fixedR_xyz);
-    ModuleBase::Memory::record("force_lo", "dTVNL", nnr * 3, "double");
+    ModuleBase::Memory::record("Force::dTVNL", sizeof(double) * nnr * 3);
 
     // calculate dT=<phi|kin|dphi> in LCAO
     // calculate T + VNL(P1) in LCAO basis
@@ -320,6 +321,7 @@ void Force_LCAO_k::cal_foverlap_k(const bool isforce,
     {
         edm2d[is] = new double[pv->nnr];
     }
+    ModuleBase::Memory::record("Force::edm2d", sizeof(double) * pv->nnr * GlobalV::NSPIN);
     auto init_edm2d = [edm2d, pv](int num_threads, int thread_id)
     {
         int beg, len;
@@ -338,6 +340,7 @@ void Force_LCAO_k::cal_foverlap_k(const bool isforce,
 
     ModuleBase::matrix wgEkb;
     wgEkb.create(GlobalC::kv.nks, GlobalV::NBANDS);
+    ModuleBase::Memory::record("Force::wgEkb", sizeof(double) * GlobalC::kv.nks * GlobalV::NBANDS);
 #ifdef _OPENMP
 #pragma omp parallel for collapse(2) schedule(static, 1024)
 #endif

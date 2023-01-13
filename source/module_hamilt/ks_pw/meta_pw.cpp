@@ -25,7 +25,7 @@ Meta<OperatorPW<FPTYPE, Device>>::Meta(
     this->vk_row = vk_row;
     this->vk_col = vk_col;
     this->wfcpw = wfcpw_in;
-    resmem_complex_op()(this->ctx, this->porter, this->wfcpw->nmaxgr);
+    resmem_complex_op()(this->ctx, this->porter, this->wfcpw->nmaxgr, "Meta<PW>::porter");
     if(this->isk == nullptr || this->tpiba < 1e-10 || this->wfcpw == nullptr)
     {
         ModuleBase::WARNING_QUIT("MetaPW", "Constuctor of Operator::MetaPW is failed, please check your code!");

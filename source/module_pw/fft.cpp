@@ -1,6 +1,7 @@
 #include "fft.h"
 
 #include "module_base/global_variable.h"
+#include "module_base/memory.h"
 
 #ifdef _OPENMP
 #include <omp.h>
@@ -90,6 +91,7 @@ void FFT:: initfft(int nx_in, int ny_in, int nz_in, int lixy_in, int rixy_in, in
 	{
 		z_auxg  = (std::complex<double> *) fftw_malloc(sizeof(fftw_complex) * maxgrids);
 		z_auxr  = (std::complex<double> *) fftw_malloc(sizeof(fftw_complex) * maxgrids);
+		ModuleBase::Memory::record("FFT::grid", 2 * sizeof(fftw_complex) * maxgrids);
 		d_rspace = (double *) z_auxg;
         // auxr_3d = static_cast<std::complex<double> *>(
         //     fftw_malloc(sizeof(fftw_complex) * (this->nx * this->ny * this->nz)));
@@ -104,6 +106,7 @@ void FFT:: initfft(int nx_in, int ny_in, int nz_in, int lixy_in, int rixy_in, in
         if (GlobalV::precision_flag == "single") {
             c_auxg  = (std::complex<float> *) fftw_malloc(sizeof(fftwf_complex) * maxgrids);
             c_auxr  = (std::complex<float> *) fftw_malloc(sizeof(fftwf_complex) * maxgrids);
+			ModuleBase::Memory::record("FFT::grid_s", 2 * sizeof(fftwf_complex) * maxgrids);
             s_rspace = (float *) c_auxg;
         }
 	}

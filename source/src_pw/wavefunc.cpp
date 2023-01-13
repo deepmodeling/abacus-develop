@@ -52,34 +52,44 @@ psi::Psi<std::complex<double>>* wavefunc::allocate(const int nks)
 		if(GlobalV::BASIS_TYPE=="lcao_in_pw")
 		{
 			wanf2[0].create(GlobalV::NLOCAL, npwx * GlobalV::NPOL);
-			std::cout << " Memory for wanf2 (MB): " << 
-				ModuleBase::Memory::record("wavefunc","wanf2",GlobalV::NLOCAL*(prefactor*npwx),"complexmatrix") << std::endl;
+			const size_t memory_cost = GlobalV::NLOCAL*(GlobalV::NPOL*npwx) * sizeof(std::complex<double>);
+			std::cout << " Memory for wanf2 (MB): " << double(memory_cost)/1024.0/1024.0 << std::endl;
+			ModuleBase::Memory::record("WF::wanf2", memory_cost) ;
 		}
-		std::cout << " MEMORY FOR PSI (MB)  : " << 
-			ModuleBase::Memory::record("wavefunc","psi",GlobalV::NBANDS*(prefactor*npwx),"complexmatrix") << std::endl;
+		const size_t memory_cost = GlobalV::NBANDS*(GlobalV::NPOL*npwx) * sizeof(std::complex<double>);
+		std::cout << " MEMORY FOR PSI (MB)  : " << double(memory_cost)/1024.0/1024.0 << std::endl;
+		ModuleBase::Memory::record("Psi_PW", memory_cost);
 	}
 	else if(GlobalV::BASIS_TYPE!="pw")
 	{
 		this->evc = new ModuleBase::ComplexMatrix [nks2];
-		this->wanf2 = new ModuleBase::ComplexMatrix [nks2];
 		for (int ik = 0; ik < nks2; ik++)
 		{
-			this->evc[ik].create(GlobalV::NBANDS, npwx * GlobalV::NPOL);//added by zhengdy-soc
-			//Mohan add 2010-1-10
-			if((GlobalV::BASIS_TYPE=="lcao" || GlobalV::BASIS_TYPE=="lcao_in_pw") || winput::out_spillage==2)
-			{
-				this->wanf2[ik].create(GlobalV::NLOCAL, npwx * GlobalV::NPOL);//added by zhengdy-soc
-			}
+			this->evc[ik].create(GlobalV::NBANDS, npwx * GlobalV::NPOL);
 		};
-		std::cout << " MEMORY FOR PSI (MB)  : " << 
-		ModuleBase::Memory::record("wavefunc","evc",nks2*GlobalV::NBANDS*(prefactor*npwx),"complexmatrix") << std::endl;
+		const size_t memory_cost = nks2 * GlobalV::NBANDS*(GlobalV::NPOL*npwx) * sizeof(std::complex<double>);
+		std::cout << " MEMORY FOR PSI (MB)  : " << double(memory_cost)/1024.0/1024.0 << std::endl;
+		ModuleBase::Memory::record("Psi_PW", memory_cost);
+
+		if((GlobalV::BASIS_TYPE=="lcao" || GlobalV::BASIS_TYPE=="lcao_in_pw") || winput::out_spillage==2)
+		{//for lcao_in_pw
+			this->wanf2 = new ModuleBase::ComplexMatrix [nks2];
+			for (int ik = 0; ik < nks2; ik++)
+			{
+				this->wanf2[ik].create(GlobalV::NLOCAL, npwx * GlobalV::NPOL);
+			}
+			const size_t memory_cost = nks2 * GlobalV::NLOCAL*(npwx * GlobalV::NPOL) * sizeof(std::complex<double>);
+			std::cout << " Memory for wanf2 (MB): " << double(memory_cost)/1024.0/1024.0 << std::endl;
+			ModuleBase::Memory::record("WF::wanf2", memory_cost) ;
+		}
 	}
 	else
 	{
 		//initial psi rather than evc
 		psi_out = new psi::Psi<std::complex<double>>(nks2, GlobalV::NBANDS, npwx * GlobalV::NPOL, GlobalC::kv.ngk.data());
-		std::cout << " MEMORY FOR PSI (MB)  : " << 
-		ModuleBase::Memory::record("wavefunc","psi",nks2*GlobalV::NBANDS*(prefactor*npwx),"complexmatrix") << std::endl;
+		const size_t memory_cost = nks2 * GlobalV::NBANDS*(GlobalV::NPOL*npwx) * sizeof(std::complex<double>);
+		std::cout << " MEMORY FOR PSI (MB)  : " << double(memory_cost)/1024.0/1024.0 << std::endl;
+		ModuleBase::Memory::record("Psi_PW", memory_cost);
 	}
 	return psi_out;
 
@@ -705,9 +715,6 @@ void wavefunc::init_after_vc(const int nks)
 			this->wanf2[ik].create(GlobalV::NLOCAL, nbasis);
 		}
 	}
-
-	std::cout << " MEMORY FOR PSI (MB)  : " <<
-	ModuleBase::Memory::record("wavefunc","psi",nks*GlobalV::NBANDS*nbasis,"complexmatrix") << std::endl;
 
     if(GlobalV::test_wf)
     {
