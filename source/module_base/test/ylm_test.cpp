@@ -19,7 +19,7 @@ TEST_F(ylmTest,Zeros)
 {
     double aaaa[100];
     ModuleBase::Ylm::ZEROS(aaaa,100); 
-   for(int i = 0; i < 100; i++)
+    for(int i = 0; i < 100; i++)
 	{
         EXPECT_EQ(aaaa[i],0.0);
 	}
