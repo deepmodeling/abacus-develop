@@ -1567,8 +1567,17 @@ void Symmetry::rhog_symmetry(std::complex<double> *rhogtot,
                         tmp_gdirect_double.x=(double)tmp_gdirect.x;
                         tmp_gdirect_double.y=(double)tmp_gdirect.y;
                         tmp_gdirect_double.z=(double)tmp_gdirect.z;
-                        arg = ( tmp_gdirect_double *gtrans[isym] ) * ModuleBase::TWO_PI;  //degree?
-                        const std::complex<double> gphase( cos(arg),  sin(arg) );
+                        double cos_arg=0.0, sin_arg=0.0;
+                        // for each pricell in supercell:
+                        for(int ipt=0;ipt<this->ncell;++ipt)
+                        {
+                            arg = ( tmp_gdirect_double * (gtrans[isym]+ptrans[ipt]) ) * ModuleBase::TWO_PI;
+                            cos_arg += cos(arg);
+                            sin_arg += sin(arg);   
+                        }
+                        cos_arg/=double(ncell);
+                        sin_arg/=double(ncell);
+                        std::complex<double> gphase( cos_arg,  sin_arg );
                         gphase_record[isym]=gphase;                            
                         sum += rhogtot[ipw]*gphase;
                         //record
