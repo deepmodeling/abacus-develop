@@ -19,10 +19,11 @@ struct resize_memory_op {
   /// Input Parameters
   /// \param dev : the type of computing device
   /// \param size : array size
+  /// \param record_string : label for memory record
   ///
   /// Output Parameters
   /// \param arr : allocated array
-  void operator()(const Device* dev, FPTYPE*& arr, const size_t size);
+  void operator()(const Device* dev, FPTYPE*& arr, const size_t size, const char* record_in = nullptr);
 };
 
 template <typename FPTYPE, typename Device> 
@@ -93,7 +94,7 @@ struct delete_memory_op {
 // Partially specialize operator for psi::GpuDevice.
 template <typename FPTYPE> 
 struct resize_memory_op<FPTYPE, psi::DEVICE_GPU> {
-  void operator()(const psi::DEVICE_GPU* dev, FPTYPE*& arr, const size_t size);
+  void operator()(const psi::DEVICE_GPU* dev, FPTYPE*& arr, const size_t size, const char* record_in = nullptr);
 };
 
 template <typename FPTYPE> 

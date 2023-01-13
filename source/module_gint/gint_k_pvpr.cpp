@@ -30,19 +30,7 @@ void Gint_k::allocate_pvpR(void)
         ModuleBase::GlobalFunc::ZEROS( pvpR_reduced[is], GlobalC::GridT.nnrg);
     }
 
-    double mem = ModuleBase::Memory::record("allocate_pvpR", "pvpR_reduced", GlobalC::GridT.nnrg * GlobalV::NSPIN , "double");
-
-    if(GlobalV::OUT_LEVEL != "m") 
-    {
-        GlobalV::ofs_running << " Memory of pvpR : " << mem << " MB" << std::endl;
-    }
-
-    if( mem > 800 )
-    {
-        GlobalV::ofs_warning << " memory for pvpR = " << mem << std::endl;
-        GlobalV::ofs_warning << " which is larger than 800 MB ! " << std::endl;
-        ModuleBase::WARNING_QUIT("Gint_k","allocate_pvpR");
-    }
+    ModuleBase::Memory::record("pvpR_reduced", sizeof(double) * GlobalC::GridT.nnrg * GlobalV::NSPIN);
 
     this->pvpR_alloc_flag = true;
     return;

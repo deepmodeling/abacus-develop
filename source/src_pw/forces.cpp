@@ -915,11 +915,11 @@ void Forces<FPTYPE, Device>::cal_force_nl(ModuleBase::matrix& forcenl, const Mod
     // ModuleBase::ComplexArray dbecp(3, GlobalV::NBANDS, nkb);
     // ModuleBase::ComplexMatrix becp(GlobalV::NBANDS, nkb);
     std::complex<FPTYPE> * dbecp = nullptr, * becp = nullptr, * vkb1 = nullptr, *vkb = nullptr;
-    resmem_complex_op()(this->ctx, becp, GlobalV::NBANDS * nkb);
-    resmem_complex_op()(this->ctx, dbecp, 3 * GlobalV::NBANDS * nkb);
+    resmem_complex_op()(this->ctx, becp, GlobalV::NBANDS * nkb, "Force::becp");
+    resmem_complex_op()(this->ctx, dbecp, 3 * GlobalV::NBANDS * nkb, "Force::dbecp");
     // vkb1: |Beta(nkb,npw)><Beta(nkb,npw)|psi(nbnd,npw)>
     // ModuleBase::ComplexMatrix vkb1(nkb, GlobalC::wf.npwx);
-    resmem_complex_op()(this->ctx, vkb1, GlobalC::wf.npwx * nkb);
+    resmem_complex_op()(this->ctx, vkb1, GlobalC::wf.npwx * nkb, "Force::vkb1");
     // init additional params
     FPTYPE * force = nullptr, * d_wg = nullptr, * deeq = nullptr, * gcar = nullptr;
     int wg_nc = wg.nc;

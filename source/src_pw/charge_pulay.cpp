@@ -147,7 +147,7 @@ void Charge_Mixing::allocate_Pulay()
 				ModuleBase::GlobalFunc::ZEROS( Rrho[is][i], GlobalC::rhopw->nrxx );
         	}
 		}
-    	ModuleBase::Memory::record("Charge_Mixing","Rrho", GlobalV::NSPIN*rstep*GlobalC::rhopw->nrxx,"double");
+    	ModuleBase::Memory::record("ChgMix::Rrho", sizeof(double) * GlobalV::NSPIN*rstep*GlobalC::rhopw->nrxx);
 
 		// (2) allocate "dRrho[i] = Rrho[i+1] - Rrho[i]" of the last few steps.
 		// allocate "drho[i] = rho[i+1] - rho[i]" of the last few steps.
@@ -171,9 +171,9 @@ void Charge_Mixing::allocate_Pulay()
 				ModuleBase::GlobalFunc::ZEROS( drho[is][i], GlobalC::rhopw->nrxx);
 			}
 		}
-    	ModuleBase::Memory::record("Charge_Mixing","dRrho", GlobalV::NSPIN*dstep*GlobalC::rhopw->nrxx,"double");
-    	ModuleBase::Memory::record("Charge_Mixing","drho", GlobalV::NSPIN*dstep*GlobalC::rhopw->nrxx,"double");
-    	ModuleBase::Memory::record("Charge_Mixing","rho_save2", GlobalV::NSPIN*GlobalC::rhopw->nrxx,"double");
+    	ModuleBase::Memory::record("ChgMix::dRrho", sizeof(double) * GlobalV::NSPIN*dstep*GlobalC::rhopw->nrxx);
+    	ModuleBase::Memory::record("ChgMix::drho", sizeof(double) * GlobalV::NSPIN*dstep*GlobalC::rhopw->nrxx);
+    	ModuleBase::Memory::record("ChgMix::rho_save2", sizeof(double) * GlobalV::NSPIN*GlobalC::rhopw->nrxx);
 
 		if ((XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5) && mixing_tau)
 		{
@@ -187,7 +187,7 @@ void Charge_Mixing::allocate_Pulay()
 					ModuleBase::GlobalFunc::ZEROS( Rtau[is][i], GlobalC::rhopw->nrxx );
 				}
 			}
-			ModuleBase::Memory::record("Charge_Mixing","Rtau", GlobalV::NSPIN*rstep*GlobalC::rhopw->nrxx,"double");
+			ModuleBase::Memory::record("ChgMix::Rtau", sizeof(double) * GlobalV::NSPIN*rstep*GlobalC::rhopw->nrxx);
 
 			this->dRtau = new double**[GlobalV::NSPIN];
 			this->dtau = new double**[GlobalV::NSPIN];
@@ -208,14 +208,14 @@ void Charge_Mixing::allocate_Pulay()
 					ModuleBase::GlobalFunc::ZEROS( dtau[is][i], GlobalC::rhopw->nrxx);
 				}
 			}
-			ModuleBase::Memory::record("Charge_Mixing","dRtau", GlobalV::NSPIN*dstep*GlobalC::rhopw->nrxx,"double");
-			ModuleBase::Memory::record("Charge_Mixing","dtau", GlobalV::NSPIN*dstep*GlobalC::rhopw->nrxx,"double");
-			ModuleBase::Memory::record("Charge_Mixing","tau_save2", GlobalV::NSPIN*GlobalC::rhopw->nrxx,"double");			
+			ModuleBase::Memory::record("ChgMix::dRtau", sizeof(double) * GlobalV::NSPIN*dstep*GlobalC::rhopw->nrxx);
+			ModuleBase::Memory::record("ChgMix::dtau", sizeof(double) * GlobalV::NSPIN*dstep*GlobalC::rhopw->nrxx);
+			ModuleBase::Memory::record("ChgMix::tau_save2", sizeof(double) * GlobalV::NSPIN*GlobalC::rhopw->nrxx);			
 		}
 
 		ModuleBase::GlobalFunc::NOTE("Allocate Abar = <dRrho_j | dRrho_i >, dimension = dstep.");
 		this->Abar.create(dstep, dstep);
-		ModuleBase::Memory::record("Charge_Mixing","Abar", dstep*dstep,"double");
+		ModuleBase::Memory::record("ChgMix::Abar", sizeof(double) * dstep*dstep);
 
 		// (4) allocate dRR = <delta R|R>
 		ModuleBase::GlobalFunc::NOTE("Allocate dRR = < dR | R >, dimension = dstep");

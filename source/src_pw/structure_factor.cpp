@@ -64,7 +64,7 @@ void Structure_Factor::setup_structure_factor(UnitCell* Ucell, ModulePW::PW_Basi
     const std::complex<double> ci_tpi = ModuleBase::NEG_IMAG_UNIT * ModuleBase::TWO_PI;
 
     this->strucFac.create(Ucell->ntype, rho_basis->npw);
-    ModuleBase::Memory::record("PW_Basis","struc_fac", Ucell->ntype*rho_basis->npw,"complexmatrix");
+    ModuleBase::Memory::record("SF::strucFac", sizeof(std::complex<double>) * Ucell->ntype*rho_basis->npw);
 
 //	std::string outstr;
 //	outstr = GlobalV::global_out_dir + "strucFac.dat"; 
@@ -108,9 +108,7 @@ void Structure_Factor::setup_structure_factor(UnitCell* Ucell, ModulePW::PW_Basi
     this->eigts2.create(Ucell->nat, 2*rho_basis->ny + 1);
     this->eigts3.create(Ucell->nat, 2*rho_basis->nz + 1);
 
-    ModuleBase::Memory::record("PW_Basis","eigts1",Ucell->nat*2*rho_basis->nx + 1,"complexmatrix");
-    ModuleBase::Memory::record("PW_Basis","eigts2",Ucell->nat*2*rho_basis->ny + 1,"complexmatrix");
-    ModuleBase::Memory::record("PW_Basis","eigts3",Ucell->nat*2*rho_basis->nz + 1,"complexmatrix");
+    ModuleBase::Memory::record("SF::eigts123",sizeof(std::complex<double>) * (Ucell->nat*2 * (rho_basis->nx + rho_basis->ny + rho_basis->nz) + 3));
 
     ModuleBase::Vector3<double> gtau;
     int inat = 0;

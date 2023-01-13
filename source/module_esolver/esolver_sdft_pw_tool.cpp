@@ -7,6 +7,7 @@
 #include "module_base/complexmatrix.h"
 #include "module_base/global_variable.h"
 #include "module_base/global_function.h"
+#include "module_base/memory.h"
 #include "src_pw/global.h"
 #include "module_hamilt/ks_pw/velocity_pw.h"
 
@@ -201,16 +202,26 @@ void ESolver_SDFT_PW::sKG(const int nche_KG, const double fwhmin, const double w
         //before loop
 
         //|psi>
+        size_t memory_cost = totbands_per * npwx * sizeof(std::complex<double>);
         psi::Psi<std::complex<double>> psi0(1,totbands_per,npwx,GlobalC::kv.ngk.data()); //|psi>
+        ModuleBase::Memory::record("SDFT::psi0", memory_cost);
         psi::Psi<std::complex<double>> sfpsi0(1,totbands_per,npwx,GlobalC::kv.ngk.data()); //sqrt(f)|psi>
+        ModuleBase::Memory::record("SDFT::sfpsi0", memory_cost);
         psi::Psi<std::complex<double>> hpsi0(1,totbands_per,npwx,GlobalC::kv.ngk.data()); //h|psi>
+        ModuleBase::Memory::record("SDFT::hpsi0", memory_cost);
         psi::Psi<std::complex<double>> hsfpsi0(1,totbands_per,npwx,GlobalC::kv.ngk.data()); //h*sqrt(f)|psi>
+        ModuleBase::Memory::record("SDFT::hsfpsi0", memory_cost);
         //j|psi> j1=p  j2=(Hp+pH)/2 - mu*p
+        memory_cost = ndim * totbands_per * npwx * sizeof(std::complex<double>);
         psi::Psi<std::complex<double>> j1psi(1,ndim*totbands_per,npwx,GlobalC::kv.ngk.data());
+        ModuleBase::Memory::record("SDFT::j1psi", memory_cost);
         psi::Psi<std::complex<double>> j2psi(1,ndim*totbands_per,npwx,GlobalC::kv.ngk.data());
+        ModuleBase::Memory::record("SDFT::j2psi", memory_cost);
         //(1-f)*j*sqrt(f)|psi>
         psi::Psi<std::complex<double>> j1sfpsi(1,ndim*totbands_per,npwx,GlobalC::kv.ngk.data());
+        ModuleBase::Memory::record("SDFT::psi0", memory_cost);
         psi::Psi<std::complex<double>> j2sfpsi(1,ndim*totbands_per,npwx,GlobalC::kv.ngk.data());
+        ModuleBase::Memory::record("SDFT::psi0", memory_cost);
         double* en;
         if(ksbandper > 0)   en = new double [ksbandper];
         for(int ib = 0 ; ib < ksbandper ; ++ib)
@@ -340,7 +351,9 @@ void ESolver_SDFT_PW::sKG(const int nche_KG, const double fwhmin, const double w
 
         //loop of t
         psi::Psi<std::complex<double>> exppsi(1,totbands_per,npwx);
+        ModuleBase::Memory::record("SDFT::exppsi", sizeof(std::complex<double>) * totbands_per * npwx);
         psi::Psi<std::complex<double>> expsfpsi(1,totbands_per,npwx);
+        ModuleBase::Memory::record("SDFT::expsfpsi", sizeof(std::complex<double>) * totbands_per * npwx);
         for(int ib = 0; ib < totbands_per; ++ib)
         {
             for(int ig = 0 ; ig < npw ; ++ig)

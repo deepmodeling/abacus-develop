@@ -396,6 +396,7 @@ void ORB_table_phi::init_Table(LCAO_Orbitals &orb)
 		this->Table_TR[ir] = new double***[ this->OV_nTpairs ];
 	}
 
+	size_t memory_cost = 0;
 	for (int T1 = 0;  T1 < ntype ; T1++)
 	{
 		// Notice !! T2 start from T1
@@ -481,8 +482,7 @@ void ORB_table_phi::init_Table(LCAO_Orbitals &orb)
 								Table_TR[0][Tpair][Opair][L] = new double[rmesh];
 								Table_TR[1][Tpair][Opair][L] = new double[rmesh];
 
-								ModuleBase::Memory::record("ORB_table_phi","Table_SR&TR",
-								2*2*OV_nTpairs*pairs_chi*rmesh,"double");
+								memory_cost += rmesh * 4;
 									
 								//for those L whose Gaunt Coefficients = 0, we
 								//assign every element in Table_SR or Table_TR as zero
@@ -532,6 +532,7 @@ void ORB_table_phi::init_Table(LCAO_Orbitals &orb)
 
 	destroy_sr = true;
 	destroy_tr = true;
+	ModuleBase::Memory::record("ORB::Table_SR&TR", sizeof(double) * memory_cost);
 
 	ModuleBase::timer::tick("ORB_table_phi", "init_Table");
 	return;
@@ -789,7 +790,7 @@ void ORB_table_phi::init_Table_Spherical_Bessel (
 	pSB->set_dx( this->dr * this->dk );
 	pSB->cal_jlx( Lmax_used, this->Rmesh, this->kmesh );
 
-	ModuleBase::Memory::record ("ORB_table_phi", "Jl(x)", (Lmax_used+1) * this->kmesh * this->Rmesh, "double");
+	ModuleBase::Memory::record ("ORB::Jl(x)", sizeof(double) * (Lmax_used+1) * this->kmesh * this->Rmesh);
 }
 
 void ORB_table_phi::plot_table(

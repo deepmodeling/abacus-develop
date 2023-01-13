@@ -51,8 +51,8 @@ void ElecStatePW<FPTYPE, Device>::init_rho_data()
             this->kin_r = reinterpret_cast<FPTYPE **>(this->charge->kin_r);
         }
     }
-    resmem_complex_op()(this->ctx, this->wfcr, this->basis->nmaxgr);
-    resmem_complex_op()(this->ctx, this->wfcr_another_spin, this->charge->nrxx);
+    resmem_complex_op()(this->ctx, this->wfcr, this->basis->nmaxgr, "ElecSPW::wfcr");
+    resmem_complex_op()(this->ctx, this->wfcr_another_spin, this->charge->nrxx, "ElecSPW::wfcr_a");
     this->init_rho = true;
 }
 

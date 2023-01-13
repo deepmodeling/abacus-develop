@@ -19,7 +19,7 @@ extern "C"
 int Local_Orbital_Charge::setAlltoallvParameter(MPI_Comm comm_2D, int blacs_ctxt, int nblk)
 {
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"enter setAlltoallvParameter, nblk", nblk);
-    ModuleBase::timer::tick("LCAO_Charge","newDM_index");
+    ModuleBase::timer::tick("LOC","Alltoall");
     // setup blacs parameters
     int nprows=0;	
 	int npcols=0;
@@ -33,14 +33,17 @@ int Local_Orbital_Charge::setAlltoallvParameter(MPI_Comm comm_2D, int blacs_ctxt
     Cblacs_pinfo(&myproc, &nprocs);
     // ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"nprocs",nprocs);
 
-
+    size_t memory_sender = 0;
+    size_t memory_receiver = 0;
+    size_t memory_other = 0;
     // init data arrays
     delete[] sender_size_process;
     sender_size_process=new int[nprocs];
     delete[] sender_displacement_process;
     sender_displacement_process=new int[nprocs];
-    GlobalV::ofs_running << "checkpoint 2" << std::endl;
+    //GlobalV::ofs_running << "checkpoint 2" << std::endl;
     // ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"lgd_now",lgd_now);
+    memory_sender += nprocs * 2 * sizeof(int);
     
     receiver_size=lgd_now*lgd_now;
     delete[] receiver_size_process;
@@ -51,6 +54,8 @@ int Local_Orbital_Charge::setAlltoallvParameter(MPI_Comm comm_2D, int blacs_ctxt
     receiver_local_index=new int[receiver_size];
     delete[] receiver_buffer;
     receiver_buffer=new double[receiver_size];
+
+    memory_receiver += nprocs * 2 * sizeof(int) + receiver_size * (sizeof(int) + sizeof(double));
     
     int *trace_2D_row=new int[lgd_now];
     int *trace_2D_col=new int[lgd_now];
@@ -60,6 +65,8 @@ int Local_Orbital_Charge::setAlltoallvParameter(MPI_Comm comm_2D, int blacs_ctxt
 
     int *nRow_in_proc=new int[nprows];
     int *nCol_in_proc=new int[npcols];
+
+    memory_other += (lgd_now * 4 + nprows + npcols) * sizeof(int);
 
     // ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"nprows",nprows);
     // ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"npcols",npcols);
@@ -118,6 +125,9 @@ int Local_Orbital_Charge::setAlltoallvParameter(MPI_Comm comm_2D, int blacs_ctxt
     {
         pos[i]=receiver_displacement_process[i];
     }
+    memory_other += nprocs * sizeof(int);
+    memory_receiver += receiver_size * sizeof(int);
+
     for(int i=0; i<lgd_now; ++i)
     {
         int src_row=trace_2D_row[i];
@@ -164,6 +174,7 @@ int Local_Orbital_Charge::setAlltoallvParameter(MPI_Comm comm_2D, int blacs_ctxt
     sender_2D_index=new int[sender_size];
     delete[] sender_buffer;
     sender_buffer=new double[sender_size];
+    memory_sender += sender_size * (sizeof(int) * sizeof(double));
 
     // send the index of the elements to be received via MPI_Alltoall
     MPI_Alltoallv(receiver_2D_index, receiver_size_process, receiver_displacement_process, MPI_INT,
@@ -185,7 +196,10 @@ int Local_Orbital_Charge::setAlltoallvParameter(MPI_Comm comm_2D, int blacs_ctxt
         
         // ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"last sender_2D_index",sender_2D_index[lgd_now*lgd_now-1]);
     delete[] receiver_2D_index;
-    ModuleBase::timer::tick("LCAO_Charge","newDM_index");
+    ModuleBase::Memory::record("LOC::A2A_receiv", memory_receiver);
+    ModuleBase::Memory::record("LOC::A2A_sender", memory_sender);
+    ModuleBase::Memory::record("LOC::A2A_other", memory_other);
+    ModuleBase::timer::tick("LOC","Alltoall");
     return 0;
 }
 #endif
@@ -233,10 +247,10 @@ void Local_Orbital_Charge::allocate_gamma(const int& lgd, psi::Psi<double>* psid
 			{
 				DM[is][i] = &DM_pool[is][i*lgd_now];
 			}
-			ModuleBase::Memory::record("LocalOrbital_Charge","Density_Kernal",GlobalV::NSPIN*lgd_now*lgd_now,"double");
 		}
 		this->init_DM = true;
         this->lgd_last = lgd_now;
+        ModuleBase::Memory::record("LOC::DM", sizeof(double) * GlobalV::NSPIN*lgd_now*lgd_now);
         //xiaohui add 'GlobalV::OUT_LEVEL', 2015-09-16
         if(GlobalV::OUT_LEVEL != "m") GlobalV::ofs_running << " allocate DM , the dimension is " << lgd_now << std::endl;
     }
