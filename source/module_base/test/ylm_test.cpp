@@ -12,7 +12,6 @@
 
 class ylmTest : public testing::Test
 {
-	
 };
 
 TEST_F(ylmTest,Zeros)
@@ -23,5 +22,4 @@ TEST_F(ylmTest,Zeros)
 	{
         EXPECT_EQ(aaaa[i],0.0);
 	}
-
 }
