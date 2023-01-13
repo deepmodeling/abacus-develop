@@ -42,8 +42,7 @@ void Symmetry_rho::psymmg(std::complex<double>* rhog_part, const ModulePW::PW_Ba
 #endif
 		//init ixyz2ipw
 		int* ixyz2ipw = new int[rho_basis->fftnxyz];
-		ModuleBase::GlobalFunc::ZEROS(ixyz2ipw, rho_basis->fftnxyz);
-		for(int i=0;i<rho_basis->fftnxyz;++i) ixyz2ipw[i]=-1;		//memory problem!
+		for(int i=0;i<rho_basis->fftnxyz;++i) ixyz2ipw[i]=-1;
 #ifdef __MPI
 		this->get_ixyz2ipw(rho_basis, ig2isztot, fftixy2is, ixyz2ipw);	
 		symm.rhog_symmetry(rhogtot, ixyz2ipw, rho_basis->nx, rho_basis->ny, rho_basis->nz, 
@@ -258,7 +257,7 @@ void Symmetry_rho::get_ixyz2ipw(const ModulePW::PW_Basis *rho_basis,
 	
 	//get ipsz2ipw from ig2isztot
 	int* ipsz2ipw = new int [rho_basis->nstot*rho_basis->nz];
-	ModuleBase::GlobalFunc::ZEROS(ipsz2ipw, rho_basis->nstot*rho_basis->nz);
+	for(int i=0;i<rho_basis->nstot*rho_basis->nz;++i) ipsz2ipw[i]=-1;
 
 	int npw_count=0;
 	int nstnz_count=0;
