@@ -1,6 +1,6 @@
 #include "LCAO_evolve.h"
 
-#include "../input.h"
+#include "module_io/input.h"
 #include "../module_base/scalapack_connector.h"
 #include "../module_io/write_HS.h"
 #include "../src_pw/global.h"

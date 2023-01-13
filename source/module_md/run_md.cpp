@@ -5,7 +5,7 @@
 #include "FIRE.h"
 #include "Nose_Hoover.h"
 #include "Langevin.h"
-#include "../input.h"
+#include "module_io/input.h"
 #include "../module_io/print_info.h"
 #include "../module_base/timer.h"
 

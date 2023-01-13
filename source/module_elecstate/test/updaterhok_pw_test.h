@@ -18,7 +18,7 @@
 #include "src_pw/pw_complement.h"
 #include "src_pw/structure_factor.h"
 #include "src_pw/VNL_in_pw.h"
-#include "input.h"
+#include "module_io/input.h"
 #include "src_pw/energy.h"
 #include "module_xc/xc_functional.h"
 #include "module_pw/pw_basis_k.h"
