@@ -63,7 +63,7 @@ class Input
     // Wannier functions
     //==========================================================
     bool towannier90; // add by jingan for wannier90
-    std::string NNKP; // add by jingan for wannier90
+    std::string nnkpfile; // add by jingan for wannier90
     std::string wannier_spin; // add by jingan for wannier90
 
     //==========================================================
@@ -105,7 +105,7 @@ class Input
     //==========================================================
     // Forces
     //==========================================================
-    int cal_force;
+    bool cal_force;
     bool out_force;
     double force_thr; // threshold of force in unit (Ry/Bohr)
     double force_thr_ev2; // invalid force threshold, mohan add 2011-04-17
@@ -171,16 +171,16 @@ class Input
 
     bool colour; // used for fun.
 
-    int t_in_h; // calculate the T or not.
-    int vl_in_h; // calculate the vloc or not.
-    int vnl_in_h; // calculate the vnl or not.
+    bool t_in_h; // calculate the T or not.
+    bool vl_in_h; // calculate the vloc or not.
+    bool vnl_in_h; // calculate the vnl or not.
 
-    int vh_in_h; // calculate the hartree potential or not
-    int vion_in_h; // calculate the local ionic potential or not
+    bool vh_in_h; // calculate the hartree potential or not
+    bool vion_in_h; // calculate the local ionic potential or not
     // only relevant when vl_in_h = 1
 
-    int test_force; // test the force.
-    int test_stress; // test the stress.
+    bool test_force; // test the force.
+    bool test_stress; // test the stress.
 
     //==========================================================
     // iteration
@@ -188,7 +188,7 @@ class Input
     double scf_thr; // \sum |rhog_out - rhog_in |^2
     int scf_nmax; // number of max elec iter
     int relax_nmax; // number of max ionic iter
-    int out_stru; // outut stru file each ion step
+    bool out_stru; // outut stru file each ion step
     std::string out_level; // control the output information.
     bool out_md_control; // internal parameter , added by zhengdy 2019-04-07
 
@@ -210,6 +210,8 @@ class Input
     double mixing_beta; // 0 : no_mixing
     int mixing_ndim; // used in Broyden method
     double mixing_gg0; // used in kerker method. mohan add 2014-09-27
+    bool mixing_tau; // whether to mix tau in mgga
+    bool mixing_dftu; //whether to mix locale in DFT+U
 
     //==========================================================
     // potential / charge / wavefunction / energy
@@ -225,23 +227,25 @@ class Input
     int printe; // mohan add 2011-03-16
     int out_freq_elec;  // the frequency ( >= 0) of electronic iter to output charge density and wavefunction. 0: output only when converged
     int out_freq_ion;  // the frequency ( >= 0 ) of ionic step to output charge density and wavefunction. 0: output only when ion steps are finished
-    int out_chg; // output charge density. 0: no; 1: yes
-    int out_dm; // output density matrix.
-    int out_dm1;
+    bool out_chg; // output charge density. 0: no; 1: yes
+    bool out_dm; // output density matrix.
+    bool out_dm1;
     int out_pot; // yes or no
     int out_wfc_pw; // 0: no; 1: txt; 2: dat
-    int out_wfc_r; // 0: no; 1: yes
+    bool out_wfc_r; // 0: no; 1: yes
     int out_dos; // dos calculation. mohan add 20090909
-    int out_band; // band calculation pengfei 2014-10-13
-    int out_proj_band; // projected band structure calculation jiyy add 2022-05-11
-    int out_mat_hs; // output H matrix and S matrix in local basis.
-    int out_mat_hs2; // LiuXh add 2019-07-16, output H(R) matrix and S(R) matrix in local basis.
+    bool out_band; // band calculation pengfei 2014-10-13
+    bool out_proj_band; // projected band structure calculation jiyy add 2022-05-11
+    bool out_mat_hs; // output H matrix and S matrix in local basis.
+    bool out_mat_hs2; // LiuXh add 2019-07-16, output H(R) matrix and S(R) matrix in local basis.
     int out_hs2_interval;
-    int out_mat_r; // jingan add 2019-8-14, output r(R) matrix.
+    bool out_mat_r; // jingan add 2019-8-14, output r(R) matrix.
     bool out_wfc_lcao; // output the wave functions in local basis.
     bool out_alllog; // output all logs.
     bool out_element_info; // output infomation of all element
 
+    bool out_bandgap; // QO added for bandgap printing
+    
     double dos_emin_ev;
     double dos_emax_ev;
     double dos_edelta_ev;
@@ -250,7 +254,7 @@ class Input
     bool dos_setemin = false; //true: emin is set
     bool dos_setemax = false; //true: emax is set
 
-    double b_coef; //  pengfei 2014-10-13
+    double dos_sigma; //  pengfei 2014-10-13
 
     //==========================================================
     // two center integrals in LCAO
@@ -331,9 +335,9 @@ class Input
     std::string vdw_cutoff_type; //"period" or "radius"
     ModuleBase::Vector3<int> vdw_cutoff_period;
 
-    int ocp;
+    bool ocp;
     std::string ocp_set;
-    int out_mul; // qifeng add 2019-9-10
+    bool out_mul; // qifeng add 2019-9-10
     // added by zhengdy-soc
     bool noncolin;
     bool lspinorb;
@@ -374,18 +378,72 @@ class Input
     // tddft
     // Fuxiang He add 2016-10-26
     //==========================================================
-    double td_scf_thr; // threshold for electronic iteration of tddft
-    double td_dt; //"fs"
     double td_force_dt; //"fs"
     int td_val_elec_01; // valence electron 01
     int td_val_elec_02; // valence electron 02
     int td_val_elec_03; // valence electron 03
     int td_vext; // add extern potential or not
     int td_vext_dire; // vext direction
-    double td_timescale; //"fs"
-    int td_vexttype;
-    int td_vextout; // output the electronic potential or not
-    int td_dipoleout; // output the dipole or not
+    int out_dipole; // output the dipole or not
+
+    double td_print_eij; // threshold to output Eij elements
+    int td_edm; //0: new edm method   1: old edm method
+
+    int td_stype ; //type of space domain  0 : length gauge  1: velocity gauge
+
+    int td_ttype ; //type of time domain
+    //  0  Gauss type function.
+    //  1  trapezoid type function.
+    //  2  Trigonometric functions, sin^2.
+    //  3  heaviside function.
+    //  4  HHG function.
+
+    int td_tstart ;
+    int td_tend ;
+
+    // space domain parameters
+
+    //length gauge
+    double td_lcut1;
+    double td_lcut2;
+
+    // time domain parameters
+
+    // Gauss
+    double td_gauss_freq ; // time(fs)^-1 
+    double td_gauss_phase ;
+    double td_gauss_sigma ; // time(fs)
+    double td_gauss_t0 ;
+    double td_gauss_amp ;  // V/A
+
+    // trapezoid
+    double td_trape_freq ; // time(fs)^-1 
+    double td_trape_phase ;
+    double td_trape_t1 ;
+    double td_trape_t2 ;
+    double td_trape_t3 ;
+    double td_trape_amp ; // V/A
+
+    // Trigonometric
+    double td_trigo_freq1 ; // time(fs)^-1 
+    double td_trigo_freq2 ; // time(fs)^-1 
+    double td_trigo_phase1 ;
+    double td_trigo_phase2 ;
+    double td_trigo_amp ; // V/A
+
+    // Heaviside
+    double td_heavi_t0;
+    double td_heavi_amp ; // V/A
+
+    // HHG
+    double td_hhg_amp1; // V/A
+    double td_hhg_amp2; // V/A
+    double td_hhg_freq1; // time(fs)^-1 
+    double td_hhg_freq2; // time(fs)^-1 
+    double td_hhg_phase1;
+    double td_hhg_phase2;
+    double td_hhg_t0;
+    double td_hhg_sigma; // time(fs)
 
     //==========================================================
     // restart
@@ -403,15 +461,9 @@ class Input
     bool dft_plus_u; // true:DFT+U correction; false：standard DFT calculation(default)
     int *orbital_corr; // which correlated orbitals need corrected ; d:2 ,f:3, do not need correction:-1
     double *hubbard_u; // Hubbard Coulomb interaction parameter U(ev)
-    double *hund_j; // Hund exchange parameter J(ev)
     int omc; // whether turn on occupation matrix control method or not
     bool yukawa_potential; // default:false
     double yukawa_lambda; // default:-1.0, which means we calculate lambda
-
-    // The two parameters below are not usable currently
-
-    int dftu_type; // 1:rotationally invarient formalism; 2:simplified form(default)
-    int double_counting; // 1:FLL(fully localized limit)(default); 2:AMF(around mean field)
 
     //==========================================================
     //    DFT+DMFT       Xin Qu added on 2021-08
@@ -473,6 +525,10 @@ class Input
     //    device control denghui added on 2022-11-15
     //==========================================================
     std::string device;
+    //==========================================================
+    //    precision control denghui added on 2023-01-01
+    //==========================================================
+    std::string precision;
 
     //==========================================================
     // variables for test only
@@ -513,7 +569,7 @@ class Input
     }
 
     void strtolower(char *sa, char *sb);
-    void readbool(std::ifstream &ifs, bool &var);
+    void read_bool(std::ifstream &ifs, bool &var);
 };
 
 extern Input INPUT;

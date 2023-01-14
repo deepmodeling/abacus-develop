@@ -4,6 +4,11 @@
 #include <fstream>
 #include <cstdio>
 
+namespace GlobalV
+{
+	std::ofstream ofs_running;
+}
+
 /************************************************
  *  unit test of class Memory
  ***********************************************/

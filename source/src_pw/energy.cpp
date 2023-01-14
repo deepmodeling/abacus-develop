@@ -11,7 +11,7 @@
 #endif
 #include <sys/time.h>
 #ifdef __LCAO
-#include "../src_lcao/dftu.h"  //Quxin adds for DFT+U on 20201029
+#include "../module_dftu/dftu.h"  //Quxin adds for DFT+U on 20201029
 #endif
 #include "myfunc.h"
 //new
@@ -63,7 +63,7 @@ void energy::calculate_harris()
 #ifdef __LCAO
 	if(GlobalV::dft_plus_u) 
 	{
-		this->etot_harris += GlobalC::dftu.EU;  //Energy correction from DFT+U; Quxin adds on 20201029
+		this->etot_harris += GlobalC::dftu.get_energy();  //Energy correction from DFT+U; Quxin adds on 20201029
 	}
 #endif
 #ifdef __DEEPKS
@@ -115,7 +115,7 @@ void energy::calculate_etot(void)
 #ifdef __LCAO
     if(GlobalV::dft_plus_u) 
 	{
-		this->etot += GlobalC::dftu.EU;																	  
+		this->etot += GlobalC::dftu.get_energy();																	  
 	}
 #endif
 #ifdef __DEEPKS
@@ -208,6 +208,18 @@ void energy::print_etot(
 		else
 		{
 			this->print_format("E_Fermi",this->ef);
+		}
+		if (GlobalV::out_bandgap)
+		{
+			if (!GlobalV::TWO_EFERMI)
+            {
+				this->print_format("E_bandgap", this->bandgap);
+			}
+			else
+			{
+				this->print_format("E_bandgap_up", this->bandgap_up);
+				this->print_format("E_bandgap_dw", this->bandgap_dw);
+			}
 		}
 	}//xiaohui add "OUT_LEVEL", 2015-09-16
 
@@ -495,6 +507,63 @@ void energy::cal_converged(elecstate::ElecState* pelec)
 
 	//set descf to 0
 	this->descf = 0.0;
+}
+
+void energy::cal_bandgap(const elecstate::ElecState* pelec)
+{
+	int nbands = GlobalV::NBANDS;
+	int nks = GlobalC::kv.nks;
+	double homo = pelec->ekb(0,0);
+	double lumo = pelec->ekb(0,nbands-1);
+	for (int ib=0; ib<nbands; ib++)
+	{
+		for (int ik=0; ik<nks; ik++)
+        {
+            if (!(pelec->ekb(ik,ib) > ef) && homo < pelec->ekb(ik,ib))
+            {
+                homo = pelec->ekb(ik,ib);
+            }
+            if (pelec->ekb(ik,ib) > ef && lumo > pelec->ekb(ik,ib))
+            {
+                lumo = pelec->ekb(ik,ib);
+            }
+        }
+	}
+	this->bandgap = lumo - homo;
+}
+
+void energy::cal_bandgap_updw(const elecstate::ElecState* pelec)
+{
+	int nbands = GlobalV::NBANDS;
+	int nks = GlobalC::kv.nks;
+	double homo_up = pelec->ekb(0,0);
+	double lumo_up = pelec->ekb(0,nbands-1);
+	double homo_dw = pelec->ekb(0,0);
+	double lumo_dw = pelec->ekb(0,nbands-1);
+	for (int ib=0; ib<nbands; ib++)
+	{
+		for (int ik=0; ik<nks; ik++)
+        {
+            if (!(pelec->ekb(ik,ib) > this->ef_up) && homo_up < pelec->ekb(ik,ib))
+            {
+                homo_up = pelec->ekb(ik,ib);
+            }
+            if (pelec->ekb(ik,ib) > this->ef_up && lumo_up > pelec->ekb(ik,ib))
+            {
+                lumo_up = pelec->ekb(ik,ib);
+            }
+			if (!(pelec->ekb(ik,ib) > this->ef_dw) && homo_dw < pelec->ekb(ik,ib))
+            {
+                homo_dw = pelec->ekb(ik,ib);
+            }
+            if (pelec->ekb(ik,ib) > this->ef_dw && lumo_dw > pelec->ekb(ik,ib))
+            {
+                lumo_dw = pelec->ekb(ik,ib);
+            }
+        }
+	}
+	this->bandgap_up = lumo_up - homo_up;
+	this->bandgap_dw = lumo_dw - homo_dw;
 }
 
 // Peize Lin add 2016-12-03

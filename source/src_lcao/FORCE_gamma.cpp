@@ -150,6 +150,7 @@ void Force_LCAO_gamma::allocate_gamma(const Parallel_Orbitals &pv)
     ModuleBase::GlobalFunc::ZEROS(this->UHM->LM->DSloc_x, pv.nloc);
     ModuleBase::GlobalFunc::ZEROS(this->UHM->LM->DSloc_y, pv.nloc);
     ModuleBase::GlobalFunc::ZEROS(this->UHM->LM->DSloc_z, pv.nloc);
+    ModuleBase::Memory::record("Force::dS_GO", sizeof(double) * pv.nloc*3);
     //allocate stress part in gamma_only-line, added by zhengdy-stress
     if(GlobalV::CAL_STRESS)
     {
@@ -177,13 +178,12 @@ void Force_LCAO_gamma::allocate_gamma(const Parallel_Orbitals &pv)
         ModuleBase::GlobalFunc::ZEROS (this->UHM->LM->DHloc_fixed_22, pv.nloc);
         ModuleBase::GlobalFunc::ZEROS (this->UHM->LM->DHloc_fixed_23, pv.nloc);
         ModuleBase::GlobalFunc::ZEROS (this->UHM->LM->DHloc_fixed_33, pv.nloc);
+        ModuleBase::Memory::record("Stress::dSH_GO", sizeof(double) * pv.nloc * 12);
     }
     //calculate dS in LCAO basis
     //ModuleBase::timer::tick("Force_LCAO_gamma","build_S_new");
     this->UHM->genH.build_ST_new ('S', cal_deri, GlobalC::ucell, this->UHM->LM->Sloc.data());
     //ModuleBase::timer::tick("Force_LCAO_gamma","build_S_new");
-
-    ModuleBase::Memory::record("force_lo", "dS", pv.nloc*3, "double");
 
     //calculate dT in LCAP
     //allocation dt
@@ -191,6 +191,7 @@ void Force_LCAO_gamma::allocate_gamma(const Parallel_Orbitals &pv)
     this->UHM->LM->DHloc_fixed_x = new double [pv.nloc];
     this->UHM->LM->DHloc_fixed_y = new double [pv.nloc];
     this->UHM->LM->DHloc_fixed_z = new double [pv.nloc];
+    ModuleBase::Memory::record("Force::dTVNL", sizeof(double) * pv.nloc*3);
     ModuleBase::GlobalFunc::ZEROS (this->UHM->LM->DHloc_fixed_x, pv.nloc);
     ModuleBase::GlobalFunc::ZEROS (this->UHM->LM->DHloc_fixed_y, pv.nloc);
     ModuleBase::GlobalFunc::ZEROS (this->UHM->LM->DHloc_fixed_z, pv.nloc);
@@ -206,8 +207,6 @@ void Force_LCAO_gamma::allocate_gamma(const Parallel_Orbitals &pv)
     this->UHM->genH.build_Nonlocal_mu_new (this->UHM->genH.LM->Hloc_fixed.data(), cal_deri);
     //ModuleBase::timer::tick("Force_LCAO_gamma","build_Nonlocal_mu");
     //test_gamma(this->UHM->LM->DHloc_fixed_x, "dHloc_fixed_x Vnl part");
-
-    ModuleBase::Memory::record("force_lo", "dTVNL", pv.nloc*3, "double");
 
     ModuleBase::timer::tick("Force_LCAO_gamma","allocate_gamma");
     return;

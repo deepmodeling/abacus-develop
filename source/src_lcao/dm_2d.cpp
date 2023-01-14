@@ -42,11 +42,14 @@ void Local_Orbital_Charge::cal_dm_R(
         {
             ispin = GlobalC::kv.isk[ik];
         }
-        for (int T1 = 0;T1 < GlobalC::ucell.ntype;++T1)
+#ifdef _OPENMP
+        #pragma omp parallel for schedule(dynamic)
+#endif
+        for (int iat = 0; iat < GlobalC::ucell.nat; iat++)
         {
-            for (int I1 = 0;I1 < GlobalC::ucell.atoms[T1].na;++I1)
+            const int T1 = GlobalC::ucell.iat2it[iat];
+            const int I1 = GlobalC::ucell.iat2ia[iat];
             {
-                const int iat = GlobalC::ucell.itia2iat(T1, I1);
                 const int start1 = GlobalC::ucell.itiaiw2iwt(T1, I1, 0);
                 //irr: number of adjacent orbital pairs int this proc
                 const int irrstart = this->ParaV->nlocstart[iat];

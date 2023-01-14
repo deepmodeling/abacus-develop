@@ -1,7 +1,6 @@
 INPUT_PARAMETERS
 #Parameters	(General)
 pseudo_dir		../../../tests/PP_ORB	
-ntype			1
 symmetry                1	
 #Parameters (Accuracy)
 basis_type		pw

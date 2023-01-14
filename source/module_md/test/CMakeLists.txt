@@ -35,8 +35,8 @@ list(APPEND depend_files
   ../../module_neighbor/sltk_atom_input.cpp
   ../../module_neighbor/sltk_grid.cpp
   ../../module_neighbor/sltk_grid_driver.cpp
-  ../../src_io/output.cpp
-  ../../src_io/print_info.cpp
+  ../../module_io/output.cpp
+  ../../module_io/print_info.cpp
   ../../module_esolver/esolver_lj.cpp
   ../../src_parallel/parallel_reduce.cpp
   ../../src_parallel/parallel_global.cpp
@@ -75,9 +75,9 @@ AddTest(
 )
 
 AddTest(
-  TARGET md_nvt_nhc
+  TARGET md_nhc
   LIBS ${math_libs} psi device
-  SOURCES NVT_NHC_test.cpp
+  SOURCES NHC_test.cpp
   ../mdrun.cpp
   ../Nose_Hoover.cpp
   ${depend_files}

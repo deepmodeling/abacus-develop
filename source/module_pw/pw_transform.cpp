@@ -6,8 +6,7 @@
 #include "../module_base/timer.h"
 #include "pw_gatherscatter.h"
 
-namespace ModulePW
-{
+namespace ModulePW {
 
 /// 
 /// transform real space to reciprocal space
@@ -17,8 +16,9 @@ namespace ModulePW
 /// Here we calculate c(k,g)
 /// in: (nplane,ny,nx), complex<double> data
 /// out: (nz, ns),  complex<double> data
-/// 
-void PW_Basis:: real2recip(const std::complex<double> * in, std::complex<double> * out, const bool add, const double factor)
+///
+template <typename FPTYPE>
+void PW_Basis:: real2recip(const std::complex<FPTYPE> * in, std::complex<FPTYPE> * out, const bool add, const FPTYPE factor)
 {
     ModuleBase::timer::tick(this->classname, "real2recip");
 
@@ -28,13 +28,13 @@ void PW_Basis:: real2recip(const std::complex<double> * in, std::complex<double>
 #endif
     for(int ir = 0 ; ir < this->nrxx ; ++ir)
     {
-        this->ft.auxr[ir] = in[ir];
+        this->ft.get_auxr_data<FPTYPE>()[ir] = in[ir];
     }
-    this->ft.fftxyfor(ft.auxr,ft.auxr);
+    this->ft.fftxyfor(ft.get_auxr_data<FPTYPE>(),ft.get_auxr_data<FPTYPE>());
 
-    this->gatherp_scatters(this->ft.auxr, this->ft.auxg);
+    this->gatherp_scatters(this->ft.get_auxr_data<FPTYPE>(), this->ft.get_auxg_data<FPTYPE>());
     
-    this->ft.fftzfor(ft.auxg,ft.auxg);
+    this->ft.fftzfor(ft.get_auxg_data<FPTYPE>(),ft.get_auxg_data<FPTYPE>());
 
     if(add)
     {
@@ -43,7 +43,7 @@ void PW_Basis:: real2recip(const std::complex<double> * in, std::complex<double>
 #endif
         for(int ig = 0 ; ig < this->npw ; ++ig)
         {
-            out[ig] += factor / double(this->nxyz) * this->ft.auxg[this->ig2isz[ig]];
+            out[ig] += factor / FPTYPE(this->nxyz) * this->ft.get_auxg_data<FPTYPE>()[this->ig2isz[ig]];
         }
     }
     else
@@ -53,11 +53,10 @@ void PW_Basis:: real2recip(const std::complex<double> * in, std::complex<double>
 #endif
         for(int ig = 0 ; ig < this->npw ; ++ig)
         {
-            out[ig] = this->ft.auxg[this->ig2isz[ig]] / double(this->nxyz);
+            out[ig] = this->ft.get_auxg_data<FPTYPE>()[this->ig2isz[ig]] / FPTYPE(this->nxyz);
         }
     }
     ModuleBase::timer::tick(this->classname, "real2recip");
-    return;
 }
 
 ///
@@ -65,7 +64,8 @@ void PW_Basis:: real2recip(const std::complex<double> * in, std::complex<double>
 /// in: (nplane,ny,nx), double data
 /// out: (nz, ns), complex<double> data
 ///
-void PW_Basis:: real2recip(const double * in, std::complex<double> * out, const bool add, const double factor)
+template <typename FPTYPE>
+void PW_Basis:: real2recip(const FPTYPE * in, std::complex<FPTYPE> * out, const bool add, const FPTYPE factor)
 {
     ModuleBase::timer::tick(this->classname, "real2recip");
     if(this->gamma_only)
@@ -78,11 +78,11 @@ void PW_Basis:: real2recip(const double * in, std::complex<double> * out, const 
         {
             for(int ipy = 0 ; ipy < npy ; ++ipy)
             {
-                this->ft.r_rspace[ix*npy + ipy] = in[ix*npy + ipy];
+                this->ft.get_rspace_data<FPTYPE>()[ix*npy + ipy] = in[ix*npy + ipy];
             }
         }
 
-        this->ft.fftxyr2c(ft.r_rspace,ft.auxr);
+        this->ft.fftxyr2c(ft.get_rspace_data<FPTYPE>(),ft.get_auxr_data<FPTYPE>());
     }
     else
     {
@@ -91,13 +91,13 @@ void PW_Basis:: real2recip(const double * in, std::complex<double> * out, const 
 #endif
         for(int ir = 0 ; ir < this->nrxx ; ++ir)
         {
-            this->ft.auxr[ir] = std::complex<double>(in[ir],0);
+            this->ft.get_auxr_data<FPTYPE>()[ir] = std::complex<double>(in[ir],0);
         }
-        this->ft.fftxyfor(ft.auxr,ft.auxr);
+        this->ft.fftxyfor(ft.get_auxr_data<FPTYPE>(),ft.get_auxr_data<FPTYPE>());
     }
-    this->gatherp_scatters(this->ft.auxr, this->ft.auxg);
+    this->gatherp_scatters(this->ft.get_auxr_data<FPTYPE>(), this->ft.get_auxg_data<FPTYPE>());
     
-    this->ft.fftzfor(ft.auxg,ft.auxg);
+    this->ft.fftzfor(ft.get_auxg_data<FPTYPE>(),ft.get_auxg_data<FPTYPE>());
 
     if(add)
     {
@@ -106,7 +106,7 @@ void PW_Basis:: real2recip(const double * in, std::complex<double> * out, const 
 #endif
         for(int ig = 0 ; ig < this->npw ; ++ig)
         {
-            out[ig] += factor / double(this->nxyz) * this->ft.auxg[this->ig2isz[ig]];
+            out[ig] += factor / FPTYPE(this->nxyz) * this->ft.get_auxg_data<FPTYPE>()[this->ig2isz[ig]];
         }
     }
     else
@@ -116,11 +116,10 @@ void PW_Basis:: real2recip(const double * in, std::complex<double> * out, const 
 #endif
         for(int ig = 0 ; ig < this->npw ; ++ig)
         {
-            out[ig] = this->ft.auxg[this->ig2isz[ig]] / double(this->nxyz);
+            out[ig] = this->ft.get_auxg_data<FPTYPE>()[this->ig2isz[ig]] / FPTYPE(this->nxyz);
         }
     }
     ModuleBase::timer::tick(this->classname, "real2recip");
-    return;
 }
 
 /// 
@@ -132,7 +131,8 @@ void PW_Basis:: real2recip(const double * in, std::complex<double> * out, const 
 /// in: (nz,ns), complex<double>
 /// out: (nplane, ny, nx), complex<double>
 /// 
-void PW_Basis:: recip2real(const std::complex<double> * in, std::complex<double> * out, const bool add, const double factor)
+template <typename FPTYPE>
+void PW_Basis:: recip2real(const std::complex<FPTYPE> * in, std::complex<FPTYPE> * out, const bool add, const FPTYPE factor)
 {
     ModuleBase::timer::tick(this->classname, "recip2real");
     assert(this->gamma_only == false);
@@ -141,7 +141,7 @@ void PW_Basis:: recip2real(const std::complex<double> * in, std::complex<double>
 #endif
     for(int i = 0 ; i < this->nst * this->nz ; ++i)
     {
-        ft.auxg[i] = std::complex<double>(0, 0);
+        ft.get_auxg_data<FPTYPE>()[i] = std::complex<double>(0, 0);
     }
 
 #ifdef _OPENMP
@@ -149,13 +149,13 @@ void PW_Basis:: recip2real(const std::complex<double> * in, std::complex<double>
 #endif
     for(int ig = 0 ; ig < this->npw ; ++ig)
     {
-        this->ft.auxg[this->ig2isz[ig]] = in[ig];
+        this->ft.get_auxg_data<FPTYPE>()[this->ig2isz[ig]] = in[ig];
     }
-    this->ft.fftzbac(ft.auxg, ft.auxg);
+    this->ft.fftzbac(ft.get_auxg_data<FPTYPE>(), ft.get_auxg_data<FPTYPE>());
 
-    this->gathers_scatterp(this->ft.auxg,this->ft.auxr);
+    this->gathers_scatterp(this->ft.get_auxg_data<FPTYPE>(),this->ft.get_auxr_data<FPTYPE>());
 
-    this->ft.fftxybac(ft.auxr,ft.auxr);
+    this->ft.fftxybac(ft.get_auxr_data<FPTYPE>(),ft.get_auxr_data<FPTYPE>());
     
     if(add)
     {
@@ -164,7 +164,7 @@ void PW_Basis:: recip2real(const std::complex<double> * in, std::complex<double>
 #endif
         for(int ir = 0 ; ir < this->nrxx ; ++ir)
         {
-            out[ir] += factor * this->ft.auxr[ir];
+            out[ir] += factor * this->ft.get_auxr_data<FPTYPE>()[ir];
         }
     }
     else
@@ -174,12 +174,10 @@ void PW_Basis:: recip2real(const std::complex<double> * in, std::complex<double>
 #endif
         for(int ir = 0 ; ir < this->nrxx ; ++ir)
         {
-            out[ir] = this->ft.auxr[ir];
+            out[ir] = this->ft.get_auxr_data<FPTYPE>()[ir];
         }
     }
     ModuleBase::timer::tick(this->classname, "recip2real");
-
-    return;
 }
 
 ///
@@ -187,7 +185,8 @@ void PW_Basis:: recip2real(const std::complex<double> * in, std::complex<double>
 /// in: (nz,ns), complex<double>
 /// out: (nplane, ny, nx), double
 ///
-void PW_Basis:: recip2real(const std::complex<double> * in, double * out, const bool add, const double factor)
+template <typename FPTYPE>
+void PW_Basis:: recip2real(const std::complex<FPTYPE> * in, FPTYPE * out, const bool add, const FPTYPE factor)
 {
     ModuleBase::timer::tick(this->classname, "recip2real");
 #ifdef _OPENMP
@@ -195,7 +194,7 @@ void PW_Basis:: recip2real(const std::complex<double> * in, double * out, const 
 #endif
     for(int i = 0 ; i < this->nst * this->nz ; ++i)
     {
-        ft.auxg[i] = std::complex<double>(0, 0);
+        ft.get_auxg_data<FPTYPE>()[i] = std::complex<double>(0, 0);
     }
 
 #ifdef _OPENMP
@@ -203,15 +202,15 @@ void PW_Basis:: recip2real(const std::complex<double> * in, double * out, const 
 #endif
     for(int ig = 0 ; ig < this->npw ; ++ig)
     {
-        this->ft.auxg[this->ig2isz[ig]] = in[ig];
+        this->ft.get_auxg_data<FPTYPE>()[this->ig2isz[ig]] = in[ig];
     }
-    this->ft.fftzbac(ft.auxg, ft.auxg);
+    this->ft.fftzbac(ft.get_auxg_data<FPTYPE>(), ft.get_auxg_data<FPTYPE>());
 
-    this->gathers_scatterp(this->ft.auxg, this->ft.auxr);
+    this->gathers_scatterp(this->ft.get_auxg_data<FPTYPE>(), this->ft.get_auxr_data<FPTYPE>());
 
     if(this->gamma_only)
     {
-        this->ft.fftxyc2r(ft.auxr,ft.r_rspace);
+        this->ft.fftxyc2r(ft.get_auxr_data<FPTYPE>(),ft.get_rspace_data<FPTYPE>());
 
         // r2c in place
         const int npy = this->ny * this->nplane;
@@ -225,7 +224,7 @@ void PW_Basis:: recip2real(const std::complex<double> * in, double * out, const 
             {
                 for(int ipy = 0 ; ipy < npy ; ++ipy)
                 {
-                    out[ix*npy + ipy] += factor * this->ft.r_rspace[ix*npy + ipy];
+                    out[ix*npy + ipy] += factor * this->ft.get_rspace_data<FPTYPE>()[ix*npy + ipy];
                 }
             }
         }
@@ -238,14 +237,14 @@ void PW_Basis:: recip2real(const std::complex<double> * in, double * out, const 
             {
                 for(int ipy = 0 ; ipy < npy ; ++ipy)
                 {
-                    out[ix*npy + ipy] = this->ft.r_rspace[ix*npy + ipy];
+                    out[ix*npy + ipy] = this->ft.get_rspace_data<FPTYPE>()[ix*npy + ipy];
                 }
             }
         }
     }
     else
     {
-        this->ft.fftxybac(ft.auxr,ft.auxr);
+        this->ft.fftxybac(ft.get_auxr_data<FPTYPE>(),ft.get_auxr_data<FPTYPE>());
         if(add)
         {
 #ifdef _OPENMP
@@ -253,7 +252,7 @@ void PW_Basis:: recip2real(const std::complex<double> * in, double * out, const 
 #endif
             for(int ir = 0 ; ir < this->nrxx ; ++ir)
             {
-                out[ir] += factor * this->ft.auxr[ir].real();
+                out[ir] += factor * this->ft.get_auxr_data<FPTYPE>()[ir].real();
             }
         }
         else
@@ -263,266 +262,21 @@ void PW_Basis:: recip2real(const std::complex<double> * in, double * out, const 
 #endif
             for(int ir = 0 ; ir < this->nrxx ; ++ir)
             {
-                out[ir] = this->ft.auxr[ir].real();
+                out[ir] = this->ft.get_auxr_data<FPTYPE>()[ir].real();
             }
         }
     }
     ModuleBase::timer::tick(this->classname, "recip2real");
-    return;
 }
 
-#ifdef __MIX_PRECISION
-///
-/// transform real space to reciprocal space
-/// in: (nplane,ny,nx), complex<float> data
-/// out: (nz, ns),  complex<float> data
-///
-void PW_Basis:: real2recip(const std::complex<float> * in, std::complex<float> * out, const bool add, const float factor)
-{
-    ModuleBase::timer::tick(this->classname, "real2recip");
-    assert(this->gamma_only == false);
-#ifdef _OPENMP
-#pragma omp parallel for schedule(static, 1024)
-#endif
-    for(int ir = 0 ; ir < this->nrxx ; ++ir)
-    {
-        this->ft.auxfr[ir] = in[ir];
-    }
-    this->ft.fftfxyfor(ft.auxfr,ft.auxfr);
+template void PW_Basis::real2recip<float>(const float * in, std::complex<float> * out, const bool add = false, const float factor = 1.0); //in:(nplane,nx*ny)  ; out(nz, ns)
+template void PW_Basis::real2recip<float>(const std::complex<float> * in, std::complex<float> * out, const bool add = false, const float factor = 1.0); //in:(nplane,nx*ny)  ; out(nz, ns)
+template void PW_Basis::recip2real<float>(const std::complex<float> * in, float *out, const bool add = false, const float factor = 1.0); //in:(nz, ns)  ; out(nplane,nx*ny)
+template void PW_Basis::recip2real<float>(const std::complex<float> * in, std::complex<float> * out, const bool add = false, const float factor = 1.0);
 
-    this->gatherp_scatters(this->ft.auxfr, this->ft.auxfg);
-    
-    this->ft.fftfzfor(ft.auxfg,ft.auxfg);
+template void PW_Basis::real2recip<double>(const double * in, std::complex<double> * out, const bool add = false, const double factor = 1.0); //in:(nplane,nx*ny)  ; out(nz, ns)
+template void PW_Basis::real2recip<double>(const std::complex<double> * in, std::complex<double> * out, const bool add = false, const double factor = 1.0); //in:(nplane,nx*ny)  ; out(nz, ns)
+template void PW_Basis::recip2real<double>(const std::complex<double> * in, double *out, const bool add = false, const double factor = 1.0); //in:(nz, ns)  ; out(nplane,nx*ny)
+template void PW_Basis::recip2real<double>(const std::complex<double> * in, std::complex<double> * out, const bool add = false, const double factor = 1.0);
 
-    if(add)
-    {
-#ifdef _OPENMP
-#pragma omp parallel for schedule(static, 1024)
-#endif
-        for(int ig = 0 ; ig < this->npw ; ++ig)
-        {
-            out[ig] += factor / float(this->nxyz) * this->ft.auxfg[this->ig2isz[ig]];
-        }
-    }
-    else
-    {
-#ifdef _OPENMP
-#pragma omp parallel for schedule(static, 1024)
-#endif
-        for(int ig = 0 ; ig < this->npw ; ++ig)
-        {
-            out[ig] = this->ft.auxfg[this->ig2isz[ig]] / float(this->nxyz);
-        }
-    }
-    ModuleBase::timer::tick(this->classname, "real2recip");
-    return;
-}
-
-///
-/// transform real space to reciprocal space
-/// in: (nplane,ny,nx), float data
-/// out: (nz, ns), complex<float> data
-///
-void PW_Basis:: real2recip(const float * in, std::complex<float> * out, const bool add, const float factor)
-{
-    ModuleBase::timer::tick(this->classname, "real2recip");
-    if(this->gamma_only)
-    {
-        const int npy = this->ny * this->nplane;
-#ifdef _OPENMP
-#pragma omp parallel for collapse(2) schedule(static, 1024)
-#endif
-        for(int ix = 0 ; ix < this->nx ; ++ix)
-        {
-            for(int ipy = 0 ; ipy < npy ; ++ipy)
-            {
-                this->ft.rf_rspace[ix*npy + ipy] = in[ix*npy + ipy];
-            }
-        }
-
-        this->ft.fftfxyr2c(ft.rf_rspace,ft.auxfr);
-    }
-    else
-    {
-#ifdef _OPENMP
-#pragma omp parallel for schedule(static, 1024)
-#endif
-        for(int ir = 0 ; ir < this->nrxx ; ++ir)
-        {
-            this->ft.auxfr[ir] = std::complex<float>(in[ir], 0);
-        }
-        this->ft.fftfxyfor(ft.auxfr,ft.auxfr);
-    }
-
-    this->gatherp_scatters(this->ft.auxfr, this->ft.auxfg);
-    
-    this->ft.fftfzfor(ft.auxfg,ft.auxfg);
-
-    if(add)
-    {
-#ifdef _OPENMP
-#pragma omp parallel for schedule(static, 1024)
-#endif
-        for(int ig = 0 ; ig < this->npw ; ++ig)
-        {
-            out[ig] += factor / float(this->nxyz) * this->ft.auxfg[this->ig2isz[ig]];
-        }
-    }
-    else
-    {
-#ifdef _OPENMP
-#pragma omp parallel for schedule(static, 1024)
-#endif
-        for(int ig = 0 ; ig < this->npw ; ++ig)
-        {
-            out[ig] = this->ft.auxfg[this->ig2isz[ig]] / float(this->nxyz);
-        }
-    }
-    ModuleBase::timer::tick(this->classname, "real2recip");
-    return;
-}
-
-///
-/// transform reciprocal space to real space
-/// in: (nz,ns), complex<float>
-/// out: (nplane, ny,nx), complex<float>
-///
-void PW_Basis:: recip2real(const std::complex<float> * in, std::complex<float> * out, const bool add, const float factor)
-{
-    ModuleBase::timer::tick(this->classname, "recip2real");
-    assert(this->gamma_only == false);
-#ifdef _OPENMP
-#pragma omp parallel for schedule(static, 1024)
-#endif
-    for(int i = 0 ; i < this->nst * this->nz ; ++i)
-    {
-        ft.auxfg[i] = std::complex<float>(0, 0);
-    }
-
-#ifdef _OPENMP
-#pragma omp parallel for schedule(static, 1024)
-#endif
-    for(int ig = 0 ; ig < this->npw ; ++ig)
-    {
-        this->ft.auxfg[this->ig2isz[ig]] = in[ig];
-    }
-    this->ft.fftfzbac(ft.auxfg, ft.auxfg);
-
-    this->gathers_scatterp(this->ft.auxfg,this->ft.auxfr);
-
-    this->ft.fftfxybac(ft.auxfr,ft.auxfr);
-    
-    if(add)
-    {
-#ifdef _OPENMP
-#pragma omp parallel for schedule(static, 1024)
-#endif
-        for(int ir = 0 ; ir < this->nrxx ; ++ir)
-        {
-            out[ir] += factor * this->ft.auxfr[ir];
-        }
-    }
-    else
-    {
-#ifdef _OPENMP
-#pragma omp parallel for schedule(static, 1024)
-#endif
-        for(int ir = 0 ; ir < this->nrxx ; ++ir)
-        {
-            out[ir] = this->ft.auxfr[ir];
-        }
-    }
-    ModuleBase::timer::tick(this->classname, "recip2real");
-    return;
-}
-
-///
-/// transform reciprocal space to real space
-/// in: (nz,ns), complex<float>
-/// out: (nplane, ny,nx), float
-///
-void PW_Basis:: recip2real(const std::complex<float> * in, float * out, const bool add, const float factor)
-{
-    ModuleBase::timer::tick(this->classname, "recip2real");
-#ifdef _OPENMP
-#pragma omp parallel for schedule(static, 1024)
-#endif
-    for(int i = 0 ; i < this->nst * this->nz ; ++i)
-    {
-        ft.afuxg[i] = std::complex<float>(0, 0);
-    }
-
-#ifdef _OPENMP
-#pragma omp parallel for schedule(static, 1024)
-#endif
-    for(int ig = 0 ; ig < this->npw ; ++ig)
-    {
-        this->ft.auxfg[this->ig2isz[ig]] = in[ig];
-    }
-    this->ft.fftfzbac(ft.auxfg, ft.auxfg);
-    
-    this->gathers_scatterp(this->ft.auxfg, this->ft.auxfr);
-
-    if(this->gamma_only)
-    {
-        this->ft.fftfxyc2r(ft.auxfr,ft.rf_rspace);
-
-        const int npy = this->ny * this->nplane;
-        if(add)
-        {
-#ifdef _OPENMP
-#pragma omp parallel for collapse(2) schedule(static, 1024)
-#endif
-            for(int ix = 0 ; ix < this->nx ; ++ix)
-            {
-                for(int ipy = 0 ; ipy < npy ; ++ipy)
-                {
-                    out[ix*npy + ipy] += factor * this->ft.rf_rspace[ix*npy + ipy];
-                }
-            }
-        }
-        else
-        {
-#ifdef _OPENMP
-#pragma omp parallel for collapse(2) schedule(static, 1024)
-#endif
-            for(int ix = 0 ; ix < this->nx ; ++ix)
-            {
-                for(int ipy = 0 ; ipy < npy ; ++ipy)
-                {
-                    out[ix*npy + ipy] = this->ft.rf_rspace[ix*npy + ipy];
-                }
-            }
-        }
-    }
-    else
-    {
-        this->ft.fftfxybac(ft.auxfr,ft.auxfr);
-
-        if(add)
-        {
-#ifdef _OPENMP
-#pragma omp parallel for schedule(static, 1024)
-#endif
-            for(int ir = 0 ; ir < this->nrxx ; ++ir)
-            {
-                out[ir] += factor * this->ft.auxfr[ir].real();
-            }
-        }
-        else
-        {
-#ifdef _OPENMP
-#pragma omp parallel for schedule(static, 1024)
-#endif
-            for(int ir = 0 ; ir < this->nrxx ; ++ir)
-            {
-                out[ir] = this->ft.auxfr[ir].real();
-            }
-        }
-    }
-    ModuleBase::timer::tick(this->classname, "recip2real");
-    return;
-}
-
-#endif
 }

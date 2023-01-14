@@ -94,12 +94,12 @@ void Stochastic_Iter::orthog(const int& ik, psi::Psi<std::complex<double>>& psi,
     
 	    //sum(b<NBANDS, a<nchi) = < psi_b | chi_a >
 	    zgemm_(&transC, &transN, &GlobalV::NBANDS, &nchipk, &npw, &ModuleBase::ONE, 
-                psi.get_pointer(), &npwx, wfgout, &npwx, &ModuleBase::ZERO, sum, &GlobalV::NBANDS);
+                &psi(ik,0,0), &npwx, wfgout, &npwx, &ModuleBase::ZERO, sum, &GlobalV::NBANDS);
 	    Parallel_Reduce::reduce_complex_double_pool(sum, GlobalV::NBANDS * nchipk);
     
 	    //psi -= psi * sum
 	    zgemm_(&transN, &transN, &npw, &nchipk, &GlobalV::NBANDS, &ModuleBase::NEG_ONE, 
-                psi.get_pointer(), &npwx, sum, &GlobalV::NBANDS, &ModuleBase::ONE, wfgout, &npwx);
+                &psi(ik,0,0), &npwx, sum, &GlobalV::NBANDS, &ModuleBase::ONE, wfgout, &npwx);
 	    delete[] sum;
     }
 }

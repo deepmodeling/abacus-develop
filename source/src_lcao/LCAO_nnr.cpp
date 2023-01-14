@@ -1,6 +1,8 @@
 #include "../src_pw/global.h"
 #include "record_adj.h" //mohan add 2012-07-06
 #include "../module_base/timer.h"
+#include "../module_base/tool_threading.h"
+#include "../module_neighbor/sltk_grid_driver.h"
 #ifdef __DEEPKS
 #include "../module_deepks/LCAO_deepks.h"
 #endif
@@ -276,8 +278,16 @@ void LCAO_Matrix::folding_fixedH(const int &ik)
     ModuleBase::timer::tick("LCAO_nnr", "folding_fixedH");
     const Parallel_Orbitals* pv = this->ParaV;
 
-	int iat = 0;
-	int index = 0;
+	int tot_index = 0;
+#ifdef _OPENMP
+#pragma omp parallel reduction(+:tot_index)
+{
+	const int num_threads = omp_get_num_threads();
+	const int thread_id = omp_get_thread_num();
+#else
+	const int num_threads = 1;
+	const int thread_id = 0;
+#endif
 	ModuleBase::Vector3<double> dtau;
 	ModuleBase::Vector3<double> tau1;
 	ModuleBase::Vector3<double> tau2;
@@ -289,29 +299,37 @@ void LCAO_Matrix::folding_fixedH(const int &ik)
 #ifdef __DEEPKS
 	if (GlobalV::deepks_scf)
     {
-		ModuleBase::GlobalFunc::ZEROS(GlobalC::ld.H_V_delta_k[ik], pv->nloc);
+		int beg, len;
+		ModuleBase::BLOCK_TASK_DIST_1D(num_threads, thread_id, (int)pv->nloc, 1024, beg, len);
+		ModuleBase::GlobalFunc::ZEROS(GlobalC::ld.H_V_delta_k[ik] + beg, len);
 	}
 #endif
 
-	for (int T1 = 0; T1 < GlobalC::ucell.ntype; ++T1)
+#ifdef _OPENMP
+#pragma omp for schedule(dynamic)
+#endif
+	for (int iat=0; iat<GlobalC::ucell.nat; ++iat)
 	{
+		const int T1 = GlobalC::ucell.iat2it[iat];
 		Atom* atom1 = &GlobalC::ucell.atoms[T1];
-		for (int I1 = 0; I1 < atom1->na; ++I1)
+		const int I1 = GlobalC::ucell.iat2ia[iat];
 		{
 			tau1 = atom1->tau[I1];
 			//GlobalC::GridD.Find_atom(tau1);
-			GlobalC::GridD.Find_atom(GlobalC::ucell, tau1, T1, I1);
+			AdjacentAtomInfo adjs;
+			GlobalC::GridD.Find_atom(GlobalC::ucell, tau1, T1, I1, &adjs);
 			Atom* atom1 = &GlobalC::ucell.atoms[T1];
 			const int start = GlobalC::ucell.itiaiw2iwt(T1,I1,0);
+			int index = pv->nlocstart[iat];
 
 			// (2) search among all adjacent atoms.
-			for (int ad = 0; ad < GlobalC::GridD.getAdjacentNum()+1; ++ad)
+			for (int ad = 0; ad < adjs.adj_num+1; ++ad)
 			{
-				const int T2 = GlobalC::GridD.getType(ad);
-				const int I2 = GlobalC::GridD.getNatom(ad);
+				const int T2 = adjs.ntype[ad];
+				const int I2 = adjs.natom[ad];
 				Atom* atom2 = &GlobalC::ucell.atoms[T2];
 
-				tau2 = GlobalC::GridD.getAdjacentTau(ad);
+				tau2 = adjs.adjacent_tau[ad];
 				dtau = tau2 - tau1;
 				double distance = dtau.norm() * GlobalC::ucell.lat0;
 				double rcut = GlobalC::ORB.Phi[T1].getRcut() + GlobalC::ORB.Phi[T2].getRcut();
@@ -324,14 +342,14 @@ void LCAO_Matrix::folding_fixedH(const int &ik)
 				}
 				else if(distance >= rcut)
 				{
-					for (int ad0 = 0; ad0 < GlobalC::GridD.getAdjacentNum()+1; ++ad0)
+					for (int ad0 = 0; ad0 < adjs.adj_num+1; ++ad0)
 					{
-						const int T0 = GlobalC::GridD.getType(ad0); 
-						const int I0 = GlobalC::GridD.getNatom(ad0); 
+						const int T0 = adjs.ntype[ad0]; 
+						const int I0 = adjs.natom[ad0]; 
 						//const int iat0 = GlobalC::ucell.itia2iat(T0, I0);
 						//const int start0 = GlobalC::ucell.itiaiw2iwt(T0, I0, 0);
 
-						tau0 = GlobalC::GridD.getAdjacentTau(ad0);
+						tau0 = adjs.adjacent_tau[ad0];
 						dtau1 = tau0 - tau1;
 						dtau2 = tau0 - tau2;
 
@@ -357,7 +375,7 @@ void LCAO_Matrix::folding_fixedH(const int &ik)
 					// exp(k dot dR)
 					// dR is the index of box in Crystal coordinates
 					//------------------------------------------------
-					ModuleBase::Vector3<double> dR(GlobalC::GridD.getBox(ad).x, GlobalC::GridD.getBox(ad).y, GlobalC::GridD.getBox(ad).z); 
+					ModuleBase::Vector3<double> dR(adjs.box[ad].x, adjs.box[ad].y, adjs.box[ad].z); 
 					const double arg = ( GlobalC::kv.kvec_d[ik] * dR ) * ModuleBase::TWO_PI;
 					//const double arg = ( GlobalC::kv.kvec_d[ik] * GlobalC::GridD.getBox(ad) ) * ModuleBase::TWO_PI;
 					const std::complex<double> kphase = std::complex <double> ( cos(arg),  sin(arg) );
@@ -421,16 +439,18 @@ void LCAO_Matrix::folding_fixedH(const int &ik)
 								this->Hloc_fixed2[iic] += this->Hloc_fixedR_soc[index] * kphase;
 							}
 							++index;
+							++tot_index;
 
 						}//end jj
 					}//end ii
 				}
 			}// end ad
-			++iat;
 		}// end I1
 	} // end T1
-
-	assert(index==this->ParaV->nnr);
+#ifdef _OPENMP
+}
+#endif
+	assert(tot_index==this->ParaV->nnr);
 
 	ModuleBase::timer::tick("LCAO_nnr","folding_fixedH");
 	return;

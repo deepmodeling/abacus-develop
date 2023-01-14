@@ -29,18 +29,16 @@ class ELEC_evolve
 
     // fuxiang add 2021-05-25
 
-    static double td_scf_thr;
-    static double td_dt;
     static double td_force_dt;
     static int td_val_elec_01;
     static int td_val_elec_02;
     static int td_val_elec_03;
     static int td_vext;
     static int td_vext_dire;
-    static double td_timescale;
-    static int td_vexttype;
-    static int td_vextout;
-    static int td_dipoleout;
+    static int out_dipole;
+
+    static double td_print_eij; // the threshold to output Eij elements
+    static int td_edm; // 0: new edm method   1: old edm method
 
   private:
     static void evolve_psi(const int& istep,

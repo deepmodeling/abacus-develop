@@ -28,7 +28,8 @@ class Charge_Mixing
         const std::string &mixing_mode_in,
         const double &mixing_beta_in,
         const int &mixing_ndim_in,
-		const double &mixing_gg0_in
+		const double &mixing_gg0_in,
+		const bool &mixing_tau_in
     );//mohan add mixing_gg0_in 2014-09-27
 
 	double get_drho(Charge* chr, const double nelec);
@@ -63,6 +64,7 @@ class Charge_Mixing
     double mixing_beta;
     int mixing_ndim;
 	double mixing_gg0; //mohan add 2014-09-27
+	bool mixing_tau;
 
     bool new_e_iteration;
 
@@ -95,19 +97,22 @@ class Charge_Mixing
 	double*** dRrho;// dRrho(i) = Rrho(i+1) - Rrho(i), (GlobalV::NSPIN, dstep, pw.nrxx)
 	double*** drho;// drho(i)= rho_save(i+1) - rho_save2(i), (GlobalV::NSPIN, dstep, pw.nrxx)
 	double** rho_save2;//rho_save: rho_in, rho_save2: rho_in(last step)
-	std::complex<double>*** dF; // dF(i) = rhog(i) - rhog_save(i), (GlobalV::NSPIN, rstep, rhopw->npw)
-	std::complex<double>*** dn; // dn(i) = rhog(i+1) - rhog(i), (GlobalV::NSPIN, rstep, rhopw->npw)
 	
+	double*** Rtau;//same things, but for kinetic energy density
+	double*** dRtau;
+	double*** dtau;
+	double**  tau_save2;
+
 	ModuleBase::matrix Abar; // <dR_j|dR_i>^{-1}
 	double* dRR; // <dR_j|R_m>
 	
-	void generate_datas(const int &irstep, const int &idstep, const int &totstep, double** rho, double** rho_save);
+	void generate_datas(const int &irstep, const int &idstep, const int &totstep, Charge* chr);
 	void generate_Abar(ModuleBase::matrix &A)const;
 	void inverse_preA(const int &dim, ModuleBase::matrix &preA)const;
 	void inverse_real_symmetry_matrix(ModuleBase::matrix &A)const; // indicate the spin.
 	void generate_dRR(const int &m);
 	void generate_alpha();
-	void generate_new_rho(const int &is,const int &m, double**rho, double** rho_save);
+	void generate_new_rho(const int &is,const int &m, Charge* chr);
 
 	void generate_residual_vector(double *residual, const double* rho_out, const double* rho_in)const;
 	double calculate_residual_norm(double *residual1, double *residual2)const;
@@ -124,6 +129,9 @@ class Charge_Mixing
 	void deallocate_Broyden();
 
 	ModuleBase::matrix beta; // (dstep, dstep)
+
+	std::complex<double>*** dF; // dF(i) = rhog(i) - rhog_save(i), (GlobalV::NSPIN, rstep, rhopw->npw)
+	std::complex<double>*** dn; // dn(i) = rhog(i+1) - rhog(i), (GlobalV::NSPIN, rstep, rhopw->npw)
 };
 
 #endif

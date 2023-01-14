@@ -3,7 +3,7 @@
 
 #include "../module_base/global_function.h"
 #include "../module_base/global_variable.h"
-#include "../src_io/restart.h"
+#include "../module_io/restart.h"
 #include "../module_relax/relax_driver.h"
 #include "VNL_in_pw.h"
 #include "charge_mixing.h"
@@ -143,6 +143,9 @@ static const char *_cufftGetErrorString(cufftResult_t error)
 #endif
 
 #ifdef __ROCM
+#include <hipfft.h>
+#include <hipblas.h>
+#include <hip/hip_runtime.h>
 namespace HipCheck
 {
 static const char *_hipblasGetErrorString(hipblasStatus_t error)

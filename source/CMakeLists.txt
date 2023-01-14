@@ -14,14 +14,14 @@ add_subdirectory(module_deepks)
 add_subdirectory(module_xc)
 add_subdirectory(module_esolver)
 add_subdirectory(module_gint)
-add_subdirectory(src_io)
+add_subdirectory(module_dftu)
+add_subdirectory(module_io)
 add_subdirectory(module_relax)
 add_subdirectory(src_lcao)
 add_subdirectory(src_parallel)
 add_subdirectory(src_pdiag)
 add_subdirectory(src_pw)
 add_subdirectory(src_ri)
-add_subdirectory(module_rpa)
 add_subdirectory(module_vdw)
 add_subdirectory(module_ri)
 
@@ -35,42 +35,87 @@ add_library(
 )
 
 list(APPEND device_srcs
-    module_hamilt/src/nonlocal.cpp
-    module_hamilt/src/veff.cpp
-    module_hamilt/src/ekinetic.cpp
-    module_pw/src/pw_multi_device.cpp
-    module_hsolver/src/dngvd_op.cpp
-    module_hsolver/src/math_kernel.cpp
-    module_elecstate/src/elecstate_multi_device.cpp
-    module_psi/src/memory_psi.cpp
-    module_psi/src/device.cpp
-    src_pw/src/force_multi_device.cpp
-    src_pw/src/stress_multi_device.cpp
-    src_pw/src/wf_multi_device.cpp
-    module_base/src/math_multi_device.cpp
+  module_hamilt/kernels/nonlocal_op.cpp
+  module_hamilt/kernels/veff_op.cpp
+  module_hamilt/kernels/ekinetic_op.cpp
+  module_hamilt/kernels/meta_op.cpp
+  module_pw/kernels/pw_op.cpp
+  module_hsolver/kernels/dngvd_op.cpp
+  module_hsolver/kernels/math_kernel_op.cpp
+  module_elecstate/kernels/elecstate_op.cpp
+  module_psi/kernels/memory_op.cpp
+  module_psi/kernels/device.cpp
+  src_pw/kernels/force_op.cpp
+  src_pw/kernels/stress_op.cpp
+  src_pw/kernels/wf_op.cpp
+  src_pw/kernels/vnl_op.cpp
+  module_base/kernels/math_op.cpp
 )
 
 if(USE_CUDA)
   list(APPEND device_srcs
-      module_hamilt/src/cuda/nonlocal.cu
-      module_hamilt/src/cuda/veff.cu
-      module_hamilt/src/cuda/ekinetic.cu
-      module_pw/src/cuda/pw_multi_device.cu
-      module_hsolver/src/cuda/dngvd_op.cu
-      module_hsolver/src/cuda/math_kernel.cu
-      module_elecstate/src/cuda/elecstate_multi_device.cu
-      module_psi/src/cuda/memory.cu
-      src_pw/src/cuda/force_multi_device.cu
-      src_pw/src/cuda/stress_multi_device.cu
-      src_pw/src/cuda/wf_multi_device.cu
-      module_base/src/cuda/math_multi_device.cu
+    module_hamilt/kernels/cuda/nonlocal_op.cu
+    module_hamilt/kernels/cuda/veff_op.cu
+    module_hamilt/kernels/cuda/ekinetic_op.cu
+    module_hamilt/kernels/cuda/meta_op.cu
+    module_pw/kernels/cuda/pw_op.cu
+    module_hsolver/kernels/cuda/dngvd_op.cu
+    module_hsolver/kernels/cuda/math_kernel_op.cu
+    module_elecstate/kernels/cuda/elecstate_op.cu
+    module_psi/kernels/cuda/memory_op.cu
+    src_pw/kernels/cuda/force_op.cu
+    src_pw/kernels/cuda/stress_op.cu
+    src_pw/kernels/cuda/wf_op.cu
+    src_pw/kernels/cuda/vnl_op.cu
+    module_base/kernels/cuda/math_op.cu
+  )
+endif()
+
+if(USE_ROCM)
+  hip_add_library(device_rocm STATIC
+    module_hamilt/kernels/rocm/nonlocal_op.hip.cu
+    module_hamilt/kernels/rocm/veff_op.hip.cu
+    module_hamilt/kernels/rocm/ekinetic_op.hip.cu
+    module_hamilt/kernels/rocm/meta_op.hip.cu
+    module_pw/kernels/rocm/pw_op.hip.cu
+    module_hsolver/kernels/rocm/dngvd_op.hip.cu
+    module_hsolver/kernels/rocm/math_kernel_op.hip.cu
+    module_elecstate/kernels/rocm/elecstate_op.hip.cu
+    module_psi/kernels/rocm/memory_op.hip.cu
+    src_pw/kernels/rocm/force_op.hip.cu
+    src_pw/kernels/rocm/stress_op.hip.cu
+    src_pw/kernels/rocm/wf_op.hip.cu
+    src_pw/kernels/rocm/vnl_op.hip.cu
+    module_base/kernels/rocm/math_op.hip.cu
   )
 endif()
 
 add_library(device OBJECT ${device_srcs})
 
 if(USE_CUDA)
-  target_link_libraries(device cusolver cublas cufft)
+  target_link_libraries(
+    device 
+    cusolver 
+    cublas 
+    cufft
+  )
+  set_property(
+    TARGET device
+    PROPERTY CUDA_ARCHITECTURES
+    60 # P100
+    70 # V100
+    75 # T4
+    80 # A100
+  )
+elseif(USE_ROCM)
+  target_link_libraries(
+    device 
+    device_rocm 
+    hip::device
+    hip::host
+    hip::hipfft
+    roc::hipblas
+  )
 endif()
 
 if(ENABLE_COVERAGE)

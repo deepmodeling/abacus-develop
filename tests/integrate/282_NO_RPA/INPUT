@@ -5,7 +5,7 @@ pseudo_dir		../../PP_ORB
 orbital_dir		../../PP_ORB
 
 calculation		scf
-ntype			2
+
 nbands			18
 #Parameters (Accuracy)
 ecutwfc			100

@@ -210,8 +210,7 @@ void ORB_gaunt_table::init_Gaunt_CH(const int& Lmax)
 
 	int Eff_Np = this->EP_EL(L);
 
-	double mem = ModuleBase::Memory::record("ORB_gaunt_table","Gaunt_CH",Eff_Np * 30, "double");
-	//OUT(GlobalV::ofs_running,"Gaunt_CH (Memory, unit: MB)",mem);
+	ModuleBase::Memory::record("ORB::Gaunt_CH", sizeof(double) * Eff_Np * 30);
 	
 	int ic1 = 0;
 	for(int l1 = 0; l1 <= L; l1++)

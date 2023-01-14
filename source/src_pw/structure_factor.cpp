@@ -6,6 +6,7 @@
 #include "../module_base/math_bspline.h"
 #include "../module_base/memory.h"
 #include "../module_base/timer.h"
+#include "../module_base/libm/libm.h"
 
 
 #ifdef _OPENMP
@@ -19,13 +20,26 @@ Structure_Factor::Structure_Factor()
 
 Structure_Factor::~Structure_Factor()
 {
-#if defined(__CUDA) || defined(__UT_USE_CUDA)
     if (GlobalV::device_flag == "gpu") {
-        cudaFree(this->d_eigts1);
-        cudaFree(this->d_eigts2);
-        cudaFree(this->d_eigts3);
+        if (GlobalV::precision_flag == "single") {
+            delmem_cd_op()(gpu_ctx, this->c_eigts1);
+            delmem_cd_op()(gpu_ctx, this->c_eigts2);
+            delmem_cd_op()(gpu_ctx, this->c_eigts3);
+        }
+        else {
+            delmem_zd_op()(gpu_ctx, this->z_eigts1);
+            delmem_zd_op()(gpu_ctx, this->z_eigts2);
+            delmem_zd_op()(gpu_ctx, this->z_eigts3);
+        }
     }
-#endif
+    else {
+        if (GlobalV::precision_flag == "single") {
+            delmem_ch_op()(cpu_ctx, this->c_eigts1);
+            delmem_ch_op()(cpu_ctx, this->c_eigts2);
+            delmem_ch_op()(cpu_ctx, this->c_eigts3);
+        }
+        // There's no need to delete double precision pointers while in a CPU environment.
+    }
 }
 
 // called in input.cpp
@@ -50,7 +64,7 @@ void Structure_Factor::setup_structure_factor(UnitCell* Ucell, ModulePW::PW_Basi
     const std::complex<double> ci_tpi = ModuleBase::NEG_IMAG_UNIT * ModuleBase::TWO_PI;
 
     this->strucFac.create(Ucell->ntype, rho_basis->npw);
-    ModuleBase::Memory::record("PW_Basis","struc_fac", Ucell->ntype*rho_basis->npw,"complexmatrix");
+    ModuleBase::Memory::record("SF::strucFac", sizeof(std::complex<double>) * Ucell->ntype*rho_basis->npw);
 
 //	std::string outstr;
 //	outstr = GlobalV::global_out_dir + "strucFac.dat"; 
@@ -80,7 +94,7 @@ void Structure_Factor::setup_structure_factor(UnitCell* Ucell, ModulePW::PW_Basi
                 for (int ia=0; ia<na; ia++)
                 {
                     // e^{-i G*tau}
-                    sum_phase += exp( ci_tpi * (gcar_ig * tau[ia]) );
+                    sum_phase += ModuleBase::libm::exp( ci_tpi * (gcar_ig * tau[ia]) );
                 }
                 this->strucFac(it,ig) = sum_phase;
             }
@@ -94,9 +108,7 @@ void Structure_Factor::setup_structure_factor(UnitCell* Ucell, ModulePW::PW_Basi
     this->eigts2.create(Ucell->nat, 2*rho_basis->ny + 1);
     this->eigts3.create(Ucell->nat, 2*rho_basis->nz + 1);
 
-    ModuleBase::Memory::record("PW_Basis","eigts1",Ucell->nat*2*rho_basis->nx + 1,"complexmatrix");
-    ModuleBase::Memory::record("PW_Basis","eigts2",Ucell->nat*2*rho_basis->ny + 1,"complexmatrix");
-    ModuleBase::Memory::record("PW_Basis","eigts3",Ucell->nat*2*rho_basis->nz + 1,"complexmatrix");
+    ModuleBase::Memory::record("SF::eigts123",sizeof(std::complex<double>) * (Ucell->nat*2 * (rho_basis->nx + rho_basis->ny + rho_basis->nz) + 3));
 
     ModuleBase::Vector3<double> gtau;
     int inat = 0;
@@ -112,34 +124,55 @@ void Structure_Factor::setup_structure_factor(UnitCell* Ucell, ModulePW::PW_Basi
             for (int n1 = -rho_basis->nx; n1 <= rho_basis->nx;n1++)
             {
                 double arg = n1 * gtau.x;
-                this->eigts1(inat, n1 + rho_basis->nx) = exp( ci_tpi*arg  );
+                this->eigts1(inat, n1 + rho_basis->nx) = ModuleBase::libm::exp( ci_tpi*arg  );
             }
             for (int n2 = -rho_basis->ny; n2 <= rho_basis->ny;n2++)
             {
                 double arg = n2 * gtau.y;
-                this->eigts2(inat, n2 + rho_basis->ny) = exp( ci_tpi*arg );
+                this->eigts2(inat, n2 + rho_basis->ny) = ModuleBase::libm::exp( ci_tpi*arg );
             }
             for (int n3 = -rho_basis->nz; n3 <= rho_basis->nz;n3++)
             {
                 double arg = n3 * gtau.z;
-                this->eigts3(inat, n3 + rho_basis->nz) = exp( ci_tpi*arg );
+                this->eigts3(inat, n3 + rho_basis->nz) = ModuleBase::libm::exp( ci_tpi*arg );
             }
             inat++;
         }
     }
-#if defined(__CUDA) || defined(__UT_USE_CUDA)
     if (GlobalV::device_flag == "gpu") {
-        cudaFree(this->d_eigts1);
-        cudaFree(this->d_eigts2);
-        cudaFree(this->d_eigts3);
-        cudaMalloc(reinterpret_cast<void **>(&this->d_eigts1), sizeof(std::complex<double>) * Ucell->nat * (2 * rho_basis->nx + 1));
-        cudaMalloc(reinterpret_cast<void **>(&this->d_eigts2), sizeof(std::complex<double>) * Ucell->nat * (2 * rho_basis->ny + 1));
-        cudaMalloc(reinterpret_cast<void **>(&this->d_eigts3), sizeof(std::complex<double>) * Ucell->nat * (2 * rho_basis->nz + 1));
-        cudaMemcpy(this->d_eigts1, this->eigts1.c, Ucell->nat * (2 * rho_basis->nx + 1), cudaMemcpyHostToDevice);
-        cudaMemcpy(this->d_eigts2, this->eigts2.c, Ucell->nat * (2 * rho_basis->ny + 1), cudaMemcpyHostToDevice);
-        cudaMemcpy(this->d_eigts3, this->eigts3.c, Ucell->nat * (2 * rho_basis->nz + 1), cudaMemcpyHostToDevice);
+        if (GlobalV::precision_flag == "single") {
+            resmem_cd_op()(gpu_ctx, this->c_eigts1, Ucell->nat * (2 * rho_basis->nx + 1));
+            resmem_cd_op()(gpu_ctx, this->c_eigts2, Ucell->nat * (2 * rho_basis->ny + 1));
+            resmem_cd_op()(gpu_ctx, this->c_eigts3, Ucell->nat * (2 * rho_basis->nz + 1));
+            castmem_z2c_h2d_op()(gpu_ctx, cpu_ctx, this->c_eigts1, this->eigts1.c, Ucell->nat * (2 * rho_basis->nx + 1));
+            castmem_z2c_h2d_op()(gpu_ctx, cpu_ctx, this->c_eigts2, this->eigts2.c, Ucell->nat * (2 * rho_basis->ny + 1));
+            castmem_z2c_h2d_op()(gpu_ctx, cpu_ctx, this->c_eigts3, this->eigts3.c, Ucell->nat * (2 * rho_basis->nz + 1));
+        }
+        else {
+            resmem_zd_op()(gpu_ctx, this->z_eigts1, Ucell->nat * (2 * rho_basis->nx + 1));
+            resmem_zd_op()(gpu_ctx, this->z_eigts2, Ucell->nat * (2 * rho_basis->ny + 1));
+            resmem_zd_op()(gpu_ctx, this->z_eigts3, Ucell->nat * (2 * rho_basis->nz + 1));
+            syncmem_z2z_h2d_op()(gpu_ctx, cpu_ctx, this->z_eigts1, this->eigts1.c, Ucell->nat * (2 * rho_basis->nx + 1));
+            syncmem_z2z_h2d_op()(gpu_ctx, cpu_ctx, this->z_eigts2, this->eigts2.c, Ucell->nat * (2 * rho_basis->ny + 1));
+            syncmem_z2z_h2d_op()(gpu_ctx, cpu_ctx, this->z_eigts3, this->eigts3.c, Ucell->nat * (2 * rho_basis->nz + 1));
+        }
     }
-#endif
+    else {
+        if (GlobalV::precision_flag == "single") {
+            resmem_ch_op()(cpu_ctx, this->c_eigts1, Ucell->nat * (2 * rho_basis->nx + 1));
+            resmem_ch_op()(cpu_ctx, this->c_eigts2, Ucell->nat * (2 * rho_basis->ny + 1));
+            resmem_ch_op()(cpu_ctx, this->c_eigts3, Ucell->nat * (2 * rho_basis->nz + 1));
+            castmem_z2c_h2h_op()(cpu_ctx, cpu_ctx, this->c_eigts1, this->eigts1.c, Ucell->nat * (2 * rho_basis->nx + 1));
+            castmem_z2c_h2h_op()(cpu_ctx, cpu_ctx, this->c_eigts2, this->eigts2.c, Ucell->nat * (2 * rho_basis->ny + 1));
+            castmem_z2c_h2h_op()(cpu_ctx, cpu_ctx, this->c_eigts3, this->eigts3.c, Ucell->nat * (2 * rho_basis->nz + 1));
+        }
+        else {
+            this->z_eigts1 = this->eigts1.c;
+            this->z_eigts2 = this->eigts2.c;
+            this->z_eigts3 = this->eigts3.c;
+        }
+        // There's no need to delete double precision pointers while in a CPU environment.
+    }
     ModuleBase::timer::tick("PW_Basis","setup_struc_factor"); 
     return;
 }
@@ -259,26 +292,59 @@ void Structure_Factor:: bsplinecoef(complex<double> *b1, complex<double> *b2, co
         complex<double> fracx=0;
         for(int io = 0 ; io < norder - 1 ; ++io)
         {
-            fracx += bsp.bezier_ele(io)*exp(ci_tpi*double(ix)/double(nx)*double(io));
+            fracx += bsp.bezier_ele(io)*ModuleBase::libm::exp(ci_tpi*double(ix)/double(nx)*double(io));
         }
-        b1[ix] = exp(ci_tpi*double(norder*ix)/double(nx))/fracx;
+        b1[ix] = ModuleBase::libm::exp(ci_tpi*double(norder*ix)/double(nx))/fracx;
     }
     for(int iy = 0 ; iy < ny ; ++iy)
     {
         complex<double> fracy=0;
         for(int io = 0 ; io < norder - 1 ; ++io)
         {
-            fracy += bsp.bezier_ele(io)*exp(ci_tpi*double(iy)/double(ny)*double(io));
+            fracy += bsp.bezier_ele(io)*ModuleBase::libm::exp(ci_tpi*double(iy)/double(ny)*double(io));
         }
-        b2[iy] = exp(ci_tpi*double(norder*iy)/double(ny))/fracy;
+        b2[iy] = ModuleBase::libm::exp(ci_tpi*double(norder*iy)/double(ny))/fracy;
     }
     for(int iz = 0 ; iz < nz ; ++iz)
     {
         complex<double> fracz=0;
         for(int io = 0 ; io < norder - 1 ; ++io)
         {
-            fracz += bsp.bezier_ele(io)*exp(ci_tpi*double(iz)/double(nz)*double(io));
+            fracz += bsp.bezier_ele(io)*ModuleBase::libm::exp(ci_tpi*double(iz)/double(nz)*double(io));
         }
-        b3[iz] = exp(ci_tpi*double(norder*iz)/double(nz))/fracz;
+        b3[iz] = ModuleBase::libm::exp(ci_tpi*double(norder*iz)/double(nz))/fracz;
     }
+}
+
+template <>
+std::complex<float> * Structure_Factor::get_eigts1_data() const
+{
+    return this->c_eigts1;
+}
+template <>
+std::complex<double> * Structure_Factor::get_eigts1_data() const
+{
+    return this->z_eigts1;
+}
+
+template <>
+std::complex<float> * Structure_Factor::get_eigts2_data() const
+{
+    return this->c_eigts2;
+}
+template <>
+std::complex<double> * Structure_Factor::get_eigts2_data() const
+{
+    return this->z_eigts2;
+}
+
+template <>
+std::complex<float> * Structure_Factor::get_eigts3_data() const
+{
+    return this->c_eigts3;
+}
+template <>
+std::complex<double> * Structure_Factor::get_eigts3_data() const
+{
+    return this->z_eigts3;
 }

@@ -66,8 +66,7 @@ void ORB_control::set_trace(std::ofstream& ofs_running)
         pv->trace_loc_col[i] = -1;
     }
 
-    ModuleBase::Memory::record("ORB_control", "trace_loc_row", nlocal, "int");
-    ModuleBase::Memory::record("ORB_control", "trace_loc_col", nlocal, "int");
+    ModuleBase::Memory::record("ORB::trace_row_col", sizeof(int) * 2 * nlocal);
 
     if (ks_solver == "lapack" || ks_solver == "cg" || ks_solver == "dav") // xiaohui add 2013-09-02
     {

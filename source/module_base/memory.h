@@ -37,6 +37,19 @@ class Memory
                          const std::string &type,
                          const bool accumulate = false);
 
+    /**
+     * @brief Record memory consumed during computation
+     *
+     * @param name The name of a quantity
+     * @param n The number of the quantity
+     * @param accumulate Useless, always set false
+     */
+    static void record(
+      const std::string &name_in,
+      const size_t &n_in,
+      const bool accumulate = false
+    );
+
     static double &get_total(void)
     {
         return total;

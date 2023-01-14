@@ -54,7 +54,7 @@ namespace ModuleESolver
 
         void Init_Basis_lcao(ORB_control& orb_con, Input& inp, UnitCell& ucell);
 
-        // output subfuncs: implemented in src_io/write_HS_R.cpp
+        // output subfuncs: implemented in module_io/write_HS_R.cpp
         void output_HS_R(
             const int &istep,
             const ModuleBase::matrix& v_eff,

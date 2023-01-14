@@ -1,8 +1,7 @@
 INPUT_PARAMETERS
 #Parameters     (General)
 pseudo_dir                      ../../../tests/PP_ORB
-calculation                     scf
-ntype                           1       
+calculation                     scf    
 symmetry                        0
 #Parameters (Methos)
 basis_type                      pw

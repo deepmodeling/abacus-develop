@@ -99,6 +99,12 @@ extern "C"
                 		const std::complex<double> *beta,
 		const std::complex<double> *c, const int *ic, const int *jc, const int *descc);
 
+  void pztranc_(
+		const int *M, const int *N,
+		const std::complex<double> *alpha,
+		const std::complex<double> *A, const int *IA, const int *JA, const int *DESCA,
+		const std::complex<double> *beta,
+		std::complex<double> *C, const int *IC, const int *JC, const int *DESCC);
 }
 
 /*

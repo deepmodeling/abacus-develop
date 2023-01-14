@@ -2,7 +2,7 @@
 
 #include "module_base/timer.h"
 #include "module_base/tool_quit.h"
-#include "module_psi/include/device.h"
+#include "module_psi/kernels/device.h"
 
 using hamilt::Veff;
 using hamilt::OperatorPW;
@@ -23,8 +23,8 @@ Veff<OperatorPW<FPTYPE, Device>>::Veff(
     this->veff_row = veff_row;
     this->veff_col = veff_col;
     this->wfcpw = wfcpw_in;
-    resmem_complex_op()(this->ctx, this->porter, this->wfcpw->nmaxgr);
-    resmem_complex_op()(this->ctx, this->porter1, this->wfcpw->nmaxgr);
+    resmem_complex_op()(this->ctx, this->porter, this->wfcpw->nmaxgr, "Veff<PW>::porter");
+    resmem_complex_op()(this->ctx, this->porter1, this->wfcpw->nmaxgr, "Veff<PW>::porter1");
     if (this->isk == nullptr || this->wfcpw == nullptr) {
         ModuleBase::WARNING_QUIT("VeffPW", "Constuctor of Operator::VeffPW is failed, please check your code!");
     }
@@ -130,11 +130,13 @@ hamilt::Veff<OperatorPW<FPTYPE, Device>>::Veff(const Veff<OperatorPW<T_in, Devic
     }
 }
 
-namespace hamilt{
+namespace hamilt {
+template class Veff<OperatorPW<float, psi::DEVICE_CPU>>;
 template class Veff<OperatorPW<double, psi::DEVICE_CPU>>;
-template Veff<OperatorPW<double, psi::DEVICE_CPU>>::Veff(const Veff<OperatorPW<double, psi::DEVICE_CPU>> *veff);
+// template Veff<OperatorPW<double, psi::DEVICE_CPU>>::Veff(const Veff<OperatorPW<double, psi::DEVICE_CPU>> *veff);
 #if ((defined __CUDA) || (defined __ROCM))
+template class Veff<OperatorPW<float, psi::DEVICE_GPU>>;
 template class Veff<OperatorPW<double, psi::DEVICE_GPU>>;
-template Veff<OperatorPW<double, psi::DEVICE_GPU>>::Veff(const Veff<OperatorPW<double, psi::DEVICE_GPU>> *veff);
+// template Veff<OperatorPW<double, psi::DEVICE_GPU>>::Veff(const Veff<OperatorPW<double, psi::DEVICE_GPU>> *veff);
 #endif
 } // namespace hamilt

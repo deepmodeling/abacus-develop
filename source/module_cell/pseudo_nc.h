@@ -2,7 +2,7 @@
 #define PSEUDO_NC_H
 
 #include "read_pp.h"
-#include "../src_io/output.h"
+#include "../module_io/output.h"
 
 //-----------------------------------------
 // read in norm conserving pseudopotentials

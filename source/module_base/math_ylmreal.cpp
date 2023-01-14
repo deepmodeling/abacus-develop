@@ -5,7 +5,8 @@
 #include "realarray.h"
 #include <cassert>
 #include "ylm.h"
-#include "module_base/include/math_multi_device.h"
+#include "module_base/kernels/math_op.h"
+#include "module_psi/kernels/memory_op.h"
 
 namespace ModuleBase
 {
@@ -323,7 +324,7 @@ void YlmReal::Ylm_Real(Device * ctx, const int lmax2, const int ng, const FPTYPE
         ModuleBase::WARNING_QUIT("YLM_REAL","l>30 or l<0");
     }
     FPTYPE * p = nullptr, * phi = nullptr, * cost = nullptr;
-    resmem_var_op()(ctx, p, (lmax + 1) * (lmax + 1) * ng);
+    resmem_var_op()(ctx, p, (lmax + 1) * (lmax + 1) * ng, "YlmReal::Ylm_Real");
 
     cal_ylm_real_op()(
         ctx,
@@ -676,8 +677,10 @@ int YlmReal::Semi_Fact(const int n)
     return semif;
 }
 
+template void YlmReal::Ylm_Real<float, psi::DEVICE_CPU>(psi::DEVICE_CPU*, int, int, const float *, float*);
 template void YlmReal::Ylm_Real<double, psi::DEVICE_CPU>(psi::DEVICE_CPU*, int, int, const double *, double*);
 #if ((defined __CUDA) || (defined __ROCM))
+template void YlmReal::Ylm_Real<float, psi::DEVICE_GPU>(psi::DEVICE_GPU*, int, int, const float *, float*);
 template void YlmReal::Ylm_Real<double, psi::DEVICE_GPU>(psi::DEVICE_GPU*, int, int, const double *, double*);
 #endif
 }  // namespace ModuleBase

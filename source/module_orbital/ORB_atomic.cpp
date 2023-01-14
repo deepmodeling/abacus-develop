@@ -1,9 +1,6 @@
 #include "ORB_atomic.h"
 
-ModuleBase::Vector3<double> Numerical_Orbital::R1;
-ModuleBase::Vector3<double> Numerical_Orbital::R2;
-ModuleBase::Vector3<double> Numerical_Orbital::dR;
-double Numerical_Orbital::distance;
+Numerical_Orbital_AtomRelation Numerical_Orbital::NOAR;
 
 Numerical_Orbital::Numerical_Orbital()
 {

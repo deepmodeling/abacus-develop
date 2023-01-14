@@ -1,7 +1,6 @@
 INPUT_PARAMETERS
 #Parameters (1.General)
 suffix		    test 
-ntype               2
 nbands              18
 pseudo_type         upf
 pseudo_dir          ./

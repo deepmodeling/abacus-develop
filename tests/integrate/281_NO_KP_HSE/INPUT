@@ -3,7 +3,7 @@ INPUT_PARAMETERS
 suffix                  autotest
 calculation     	scf
 dft_functional		hse
-ntype			2
+
 nbands			12
 symmetry		0
 init_chg		atomic

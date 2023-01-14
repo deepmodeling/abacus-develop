@@ -4,6 +4,7 @@
 #include "../module_cell/unitcell.h"
 #include "../module_base/complexmatrix.h"
 #include "../module_pw/pw_basis.h"
+#include "module_psi/psi.h"
 
 using namespace std;
 
@@ -36,6 +37,14 @@ public:
     ModuleBase::ComplexMatrix eigts2; // dimension: [Ucell->nat, 2*this->ncy + 1] 
     ModuleBase::ComplexMatrix eigts3; // dimension: [Ucell->nat, 2*this->ncz + 1]
 
-    std::complex<double> * d_eigts1 = nullptr, * d_eigts2 = nullptr, * d_eigts3 = nullptr;
+    template <typename FPTYPE> std::complex<FPTYPE> * get_eigts1_data() const;
+    template <typename FPTYPE> std::complex<FPTYPE> * get_eigts2_data() const;
+    template <typename FPTYPE> std::complex<FPTYPE> * get_eigts3_data() const;
+
+private:
+
+    std::complex<float> * c_eigts1 = nullptr, * c_eigts2 = nullptr, * c_eigts3 = nullptr;
+    std::complex<double> * z_eigts1 = nullptr, * z_eigts2 = nullptr, * z_eigts3 = nullptr;
+
 };
 #endif //PlaneWave class

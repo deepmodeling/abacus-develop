@@ -1,12 +1,12 @@
 #include "wavefunc.h"
 #include "global.h"
 #include "../src_lcao/wavefunc_in_pw.h"
-#include "../src_io/winput.h"
+#include "../module_io/winput.h"
 #include "../module_base/memory.h"
 #include "../module_base/timer.h"
 #include "module_hsolver/diago_iter_assist.h"
 #include "module_hamilt/hamilt_pw.h"
-#include "module_hsolver/include/math_kernel.h"
+#include "module_hsolver/kernels/math_kernel_op.h"
 
 wavefunc::wavefunc()
 {
@@ -52,34 +52,44 @@ psi::Psi<std::complex<double>>* wavefunc::allocate(const int nks)
 		if(GlobalV::BASIS_TYPE=="lcao_in_pw")
 		{
 			wanf2[0].create(GlobalV::NLOCAL, npwx * GlobalV::NPOL);
-			std::cout << " Memory for wanf2 (MB): " << 
-				ModuleBase::Memory::record("wavefunc","wanf2",GlobalV::NLOCAL*(prefactor*npwx),"complexmatrix") << std::endl;
+			const size_t memory_cost = GlobalV::NLOCAL*(GlobalV::NPOL*npwx) * sizeof(std::complex<double>);
+			std::cout << " Memory for wanf2 (MB): " << double(memory_cost)/1024.0/1024.0 << std::endl;
+			ModuleBase::Memory::record("WF::wanf2", memory_cost) ;
 		}
-		std::cout << " MEMORY FOR PSI (MB)  : " << 
-			ModuleBase::Memory::record("wavefunc","psi",GlobalV::NBANDS*(prefactor*npwx),"complexmatrix") << std::endl;
+		const size_t memory_cost = GlobalV::NBANDS*(GlobalV::NPOL*npwx) * sizeof(std::complex<double>);
+		std::cout << " MEMORY FOR PSI (MB)  : " << double(memory_cost)/1024.0/1024.0 << std::endl;
+		ModuleBase::Memory::record("Psi_PW", memory_cost);
 	}
 	else if(GlobalV::BASIS_TYPE!="pw")
 	{
 		this->evc = new ModuleBase::ComplexMatrix [nks2];
-		this->wanf2 = new ModuleBase::ComplexMatrix [nks2];
 		for (int ik = 0; ik < nks2; ik++)
 		{
-			this->evc[ik].create(GlobalV::NBANDS, npwx * GlobalV::NPOL);//added by zhengdy-soc
-			//Mohan add 2010-1-10
-			if((GlobalV::BASIS_TYPE=="lcao" || GlobalV::BASIS_TYPE=="lcao_in_pw") || winput::out_spillage==2)
-			{
-				this->wanf2[ik].create(GlobalV::NLOCAL, npwx * GlobalV::NPOL);//added by zhengdy-soc
-			}
+			this->evc[ik].create(GlobalV::NBANDS, npwx * GlobalV::NPOL);
 		};
-		std::cout << " MEMORY FOR PSI (MB)  : " << 
-		ModuleBase::Memory::record("wavefunc","evc",nks2*GlobalV::NBANDS*(prefactor*npwx),"complexmatrix") << std::endl;
+		const size_t memory_cost = nks2 * GlobalV::NBANDS*(GlobalV::NPOL*npwx) * sizeof(std::complex<double>);
+		std::cout << " MEMORY FOR PSI (MB)  : " << double(memory_cost)/1024.0/1024.0 << std::endl;
+		ModuleBase::Memory::record("Psi_PW", memory_cost);
+
+		if((GlobalV::BASIS_TYPE=="lcao" || GlobalV::BASIS_TYPE=="lcao_in_pw") || winput::out_spillage==2)
+		{//for lcao_in_pw
+			this->wanf2 = new ModuleBase::ComplexMatrix [nks2];
+			for (int ik = 0; ik < nks2; ik++)
+			{
+				this->wanf2[ik].create(GlobalV::NLOCAL, npwx * GlobalV::NPOL);
+			}
+			const size_t memory_cost = nks2 * GlobalV::NLOCAL*(npwx * GlobalV::NPOL) * sizeof(std::complex<double>);
+			std::cout << " Memory for wanf2 (MB): " << double(memory_cost)/1024.0/1024.0 << std::endl;
+			ModuleBase::Memory::record("WF::wanf2", memory_cost) ;
+		}
 	}
 	else
 	{
 		//initial psi rather than evc
 		psi_out = new psi::Psi<std::complex<double>>(nks2, GlobalV::NBANDS, npwx * GlobalV::NPOL, GlobalC::kv.ngk.data());
-		std::cout << " MEMORY FOR PSI (MB)  : " << 
-		ModuleBase::Memory::record("wavefunc","psi",nks2*GlobalV::NBANDS*(prefactor*npwx),"complexmatrix") << std::endl;
+		const size_t memory_cost = nks2 * GlobalV::NBANDS*(GlobalV::NPOL*npwx) * sizeof(std::complex<double>);
+		std::cout << " MEMORY FOR PSI (MB)  : " << double(memory_cost)/1024.0/1024.0 << std::endl;
+		ModuleBase::Memory::record("Psi_PW", memory_cost);
 	}
 	return psi_out;
 
@@ -201,6 +211,96 @@ void wavefunc::LCAO_in_pw_k_q(const int &ik, ModuleBase::ComplexMatrix &wvf, Mod
 */
 #endif
 
+
+void wavefunc::diago_PAO_in_pw_k2(const int &ik, psi::Psi<std::complex<float>> &wvf, hamilt::Hamilt<float>* phm_in)
+{
+    ModuleBase::TITLE("wavefunc","diago_PAO_in_pw_k2");
+    // (6) Prepare for atmoic orbitals or random orbitals
+    const int starting_nw = this->get_starting_nw();
+    if(starting_nw == 0) return;
+    assert(starting_nw > 0);
+
+    const int nbasis = wvf.get_nbasis();
+    const int nbands = wvf.get_nbands();
+    const int current_nbasis = GlobalC::kv.ngk[ik];
+
+    //special case here! use Psi(k-1) for the initialization of Psi(k)
+    //this method should be tested.
+    /*if(GlobalV::CALCULATION == "nscf" && GlobalC::ucell.natomwfc == 0 && ik>0)
+    {
+        //this is memsaver case
+        if(wvf.get_nk() == 1)
+        {
+            return;
+        }
+        else
+        {
+            ModuleBase::GlobalFunc::COPYARRAY(&wvf(ik-1, 0, 0), &wvf(ik, 0, 0), wvf.get_nbasis()* wvf.get_nbands());
+            return;
+        }
+    }
+    */
+
+    ModuleBase::ComplexMatrix wfcatom(starting_nw, nbasis);//added by zhengdy-soc
+    if(GlobalV::test_wf)ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "starting_nw", starting_nw);
+    if(init_wfc.substr(0,6)=="atomic")
+    {
+        this->atomic_wfc(ik, current_nbasis, GlobalC::ucell.lmax_ppwf, wfcatom, GlobalC::ppcell.tab_at, GlobalV::NQX, GlobalV::DQ);
+        if( init_wfc == "atomic+random" && starting_nw == GlobalC::ucell.natomwfc )//added by qianrui 2021-5-16
+        {
+            this->atomicrandom(wfcatom,0,starting_nw,ik, GlobalC::wfcpw);
+        }
+
+        //====================================================
+        // If not enough atomic wfc are available, complete
+        // with random wfcs
+        //====================================================
+        this->random(wfcatom, GlobalC::ucell.natomwfc, nbands, ik, GlobalC::wfcpw);
+    }
+    else if(init_wfc=="random")
+    {
+        this->random(wfcatom,0,nbands,ik, GlobalC::wfcpw);
+    }
+
+    // (7) Diago with cg method.
+    std::vector<float> etatom(starting_nw, 0.0);
+    std::vector<std::complex<float>> s_wfcatom(starting_nw * nbasis);
+    castmem_z2c_h2h_op()(cpu_ctx, cpu_ctx, s_wfcatom.data(), wfcatom.c, starting_nw * nbasis);
+    //if(GlobalV::DIAGO_TYPE == "cg") xiaohui modify 2013-09-02
+    if(GlobalV::KS_SOLVER=="cg") //xiaohui add 2013-09-02
+    {
+        if(phm_in!= nullptr)
+        {
+            // hsolver::DiagoIterAssist<double>::diagH_subspace_init(phm_in,
+            //                          wfcatom,
+            //                          wvf,
+            //                          etatom.data());
+            hsolver::DiagoIterAssist<float>::diagH_subspace_init(phm_in,
+                                                                  s_wfcatom.data(),
+                                                                  wfcatom.nr,
+                                                                  wfcatom.nc,
+                                                                  wvf,
+                                                                  etatom.data());
+            return;
+        }
+        else
+        {
+            ModuleBase::WARNING_QUIT("wavefunc","Psi does not exist!");
+            //this diagonalization method is obsoleted now
+            //GlobalC::hm.diagH_subspace(ik ,starting_nw, nbands, wfcatom, wfcatom, etatom.data());
+        }
+    }
+
+    assert(nbands <= wfcatom.nr);
+    for (int ib=0; ib<nbands; ib++)
+    {
+        for (int ig=0; ig<nbasis; ig++)
+        {
+            wvf(ib, ig) = s_wfcatom[ib * nbasis + ig];
+        }
+    }
+}
+
 void wavefunc::diago_PAO_in_pw_k2(const int &ik, psi::Psi<std::complex<double>> &wvf, hamilt::Hamilt<double>* phm_in)
 {
 	ModuleBase::TITLE("wavefunc","diago_PAO_in_pw_k2");
@@ -288,13 +388,94 @@ void wavefunc::diago_PAO_in_pw_k2(const int &ik, psi::Psi<std::complex<double>> 
 	}
 }
 
-void wavefunc::diago_PAO_in_pw_k2_device(const psi::DEVICE_CPU* ctx, const int &ik, psi::Psi<std::complex<double>, psi::DEVICE_CPU> &wvf, hamilt::Hamilt<double, psi::DEVICE_CPU>* phm_in)
+template <>
+void wavefunc::diago_PAO_in_pw_k2(const psi::DEVICE_CPU* ctx, const int &ik, psi::Psi<std::complex<float>, psi::DEVICE_CPU> &wvf, hamilt::Hamilt<float, psi::DEVICE_CPU>* phm_in)
+{
+    this->diago_PAO_in_pw_k2(ik, wvf, phm_in);
+}
+template <>
+void wavefunc::diago_PAO_in_pw_k2(const psi::DEVICE_CPU* ctx, const int &ik, psi::Psi<std::complex<double>, psi::DEVICE_CPU> &wvf, hamilt::Hamilt<double, psi::DEVICE_CPU>* phm_in)
 {
 	this->diago_PAO_in_pw_k2(ik, wvf, phm_in);
 }
 
 #if ((defined __CUDA) || (defined __ROCM))
-void wavefunc::diago_PAO_in_pw_k2_device(const psi::DEVICE_GPU* ctx, const int &ik, psi::Psi<std::complex<double>, psi::DEVICE_GPU> &wvf, hamilt::Hamilt<double, psi::DEVICE_GPU>* phm_in)
+template<>
+void wavefunc::diago_PAO_in_pw_k2(const psi::DEVICE_GPU* ctx, const int &ik, psi::Psi<std::complex<float>, psi::DEVICE_GPU> &wvf, hamilt::Hamilt<float, psi::DEVICE_GPU>* phm_in)
+{
+    ModuleBase::TITLE("wavefunc","diago_PAO_in_pw_k2");
+    // (6) Prepare for atmoic orbitals or random orbitals
+    const int starting_nw = this->get_starting_nw();
+    if(starting_nw == 0) return;
+    assert(starting_nw > 0);
+
+    const int nbasis = wvf.get_nbasis();
+    const int nbands = wvf.get_nbands();
+    const int current_nbasis = GlobalC::kv.ngk[ik];
+
+    ModuleBase::ComplexMatrix wfcatom(starting_nw, nbasis);//added by zhengdy-soc
+    if(GlobalV::test_wf)ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "starting_nw", starting_nw);
+    if(init_wfc.substr(0,6)=="atomic")
+    {
+        this->atomic_wfc(ik, current_nbasis, GlobalC::ucell.lmax_ppwf, wfcatom, GlobalC::ppcell.tab_at, GlobalV::NQX, GlobalV::DQ);
+        if( init_wfc == "atomic+random" && starting_nw == GlobalC::ucell.natomwfc )//added by qianrui 2021-5-16
+        {
+            this->atomicrandom(wfcatom,0,starting_nw,ik, GlobalC::wfcpw);
+        }
+
+        //====================================================
+        // If not enough atomic wfc are available, complete
+        // with random wfcs
+        //====================================================
+        this->random(wfcatom, GlobalC::ucell.natomwfc, nbands, ik, GlobalC::wfcpw);
+    }
+    else if(init_wfc=="random")
+    {
+        this->random(wfcatom,0,nbands,ik, GlobalC::wfcpw);
+    }
+
+    // store wfcatom on the GPU
+    std::complex<float> * c_wfcatom = nullptr;
+    resmem_cd_op()(gpu_ctx, c_wfcatom, wfcatom.nr * wfcatom.nc);
+    castmem_z2c_h2d_op()(gpu_ctx, cpu_ctx, c_wfcatom, wfcatom.c, wfcatom.nr * wfcatom.nc);
+
+    if(GlobalV::KS_SOLVER=="cg") //xiaohui add 2013-09-02
+    {
+        // (7) Diago with cg method.
+        if(phm_in!= nullptr)
+        {
+            std::vector<float> etatom(starting_nw, 0.0);
+            hsolver::DiagoIterAssist<float, psi::DEVICE_GPU>::diagH_subspace_init(
+                    phm_in,
+                    c_wfcatom,
+                    wfcatom.nr,
+                    wfcatom.nc,
+                    wvf,
+                    etatom.data());
+        }
+        else
+        {
+            //this diagonalization method is obsoleted now
+            //GlobalC::hm.diagH_subspace(ik ,starting_nw, nbands, wfcatom, wfcatom, etatom.data());
+        }
+    }
+    else if(GlobalV::KS_SOLVER=="dav")
+    {
+        assert(nbands <= wfcatom.nr);
+        // replace by haozhihan 2022-11-23
+        hsolver::matrixSetToAnother<float, psi::DEVICE_GPU>()(
+                gpu_ctx,
+                nbands,
+                c_wfcatom,
+                wfcatom.nc,
+                &wvf(0,0),
+                nbasis
+        );
+    }
+    delmem_cd_op()(gpu_ctx, c_wfcatom);
+}
+template<>
+void wavefunc::diago_PAO_in_pw_k2(const psi::DEVICE_GPU* ctx, const int &ik, psi::Psi<std::complex<double>, psi::DEVICE_GPU> &wvf, hamilt::Hamilt<double, psi::DEVICE_GPU>* phm_in)
 {
 	ModuleBase::TITLE("wavefunc","diago_PAO_in_pw_k2");
 	// (6) Prepare for atmoic orbitals or random orbitals
@@ -328,11 +509,9 @@ void wavefunc::diago_PAO_in_pw_k2_device(const psi::DEVICE_GPU* ctx, const int &
 	}
 
 	// store wfcatom on the GPU
-	psi::DEVICE_CPU * cpu_ctx = {};
-	psi::DEVICE_GPU * gpu_ctx = {};
-	std::complex<double> *d_wfcatom = nullptr;
-	resmem_complex_op()(gpu_ctx, d_wfcatom, wfcatom.nr * wfcatom.nc);
-	syncmem_complex_h2d_op()(gpu_ctx, cpu_ctx, d_wfcatom, wfcatom.c, wfcatom.nr * wfcatom.nc);
+	std::complex<double> *z_wfcatom = nullptr;
+	resmem_zd_op()(gpu_ctx, z_wfcatom, wfcatom.nr * wfcatom.nc);
+	syncmem_z2z_h2d_op()(gpu_ctx, cpu_ctx, z_wfcatom, wfcatom.c, wfcatom.nr * wfcatom.nc);
 
 	if(GlobalV::KS_SOLVER=="cg") //xiaohui add 2013-09-02
 	{
@@ -342,7 +521,7 @@ void wavefunc::diago_PAO_in_pw_k2_device(const psi::DEVICE_GPU* ctx, const int &
 			std::vector<double> etatom(starting_nw, 0.0);
 			hsolver::DiagoIterAssist<double, psi::DEVICE_GPU>::diagH_subspace_init(
 					     phm_in,
-                         d_wfcatom,
+                         z_wfcatom,
 						 wfcatom.nr,
 						 wfcatom.nc,
                          wvf,
@@ -361,14 +540,13 @@ void wavefunc::diago_PAO_in_pw_k2_device(const psi::DEVICE_GPU* ctx, const int &
 		hsolver::matrixSetToAnother<double, psi::DEVICE_GPU>()(
 			gpu_ctx,
 			nbands,
-			d_wfcatom,
+			z_wfcatom,
 			wfcatom.nc,
 			&wvf(0,0),
 			nbasis
 		);
 	}
-	delmem_complex_op()(gpu_ctx, d_wfcatom);
-	return;
+	delmem_zd_op()(gpu_ctx, z_wfcatom);
 }
 #endif
 
@@ -380,7 +558,7 @@ void wavefunc::wfcinit_k(psi::Psi<std::complex<double>>* psi_in)
 	{
 		this->irindex = new int [GlobalC::wfcpw->fftnxy];
 		GlobalC::wfcpw->getfftixy2is(this->irindex);
-    #if defined(__CUDA) || defined(__UT_USE_CUDA)
+    #if defined(__CUDA) || defined(__ROCM)
     if (GlobalV::device_flag == "gpu") {
         GlobalC::wfcpw->get_ig2ixyz_k();
     }
@@ -537,9 +715,6 @@ void wavefunc::init_after_vc(const int nks)
 			this->wanf2[ik].create(GlobalV::NLOCAL, nbasis);
 		}
 	}
-
-	std::cout << " MEMORY FOR PSI (MB)  : " <<
-	ModuleBase::Memory::record("wavefunc","psi",nks*GlobalV::NBANDS*nbasis,"complexmatrix") << std::endl;
 
     if(GlobalV::test_wf)
     {

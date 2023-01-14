@@ -33,7 +33,6 @@ extern std::string ESOLVER_TYPE;
 extern int EFIELD_FLAG; // 5 add electric field
 extern int DIP_COR_FLAG; // 7 add dipole correction
 extern bool GATE_FLAG;     // add gate field
-extern double NELEC;
 
 extern std::string DFT_FUNCTIONAL; // 6.5 change the DFT functional from input file.
 extern double XC_TEMPERATURE;
@@ -76,7 +75,6 @@ extern bool LSPINORB; // 0 : no soc ; 1 : has soc
 extern bool DOMAG; // 1 : calculate the magnetism with x, y, z component
 extern bool DOMAG_Z; // 1 : constrain the magnetism to z axis
 extern int NPOL; // 1 : no soc; 2 : has soc
-extern int PRENSPIN; // NSPIN used before, for restart with soc
 extern double soc_lambda; // soc modulator factor, from 0 to 1
 
 extern int DIAGO_PROC; // 12.1 number of processors used to diag.
@@ -267,19 +265,22 @@ extern bool of_read_kernel; // If set to 1, the kernel of WT KEDF will be filled
 extern std::string of_kernel_file; // The name of WT kernel file.
 
 //==========================================================
-// device flags
+// device flags added by denghui
 //==========================================================
 extern std::string device_flag;
+//==========================================================
+// precision flags added by denghui
+//==========================================================
+extern std::string precision_flag;
+
 extern std::string chg_extrap;
 extern int out_pot;
 
 extern std::string init_chg; //  output charge if out_chg > 0, and output every "out_chg" elec step.
 extern int out_chg;
 
-//Note : this is different from the capitalized NELEC
-//NELEC gives the total charge of the system
-//while nelec is the total number of valence electrons 
 extern double nelec;
+extern bool out_bandgap;
 
 } // namespace GlobalV
 #endif

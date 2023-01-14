@@ -4,8 +4,8 @@
 //#include "Basis.h"
 //#include "Cell.h"
 
-#include "module_psi/include/memory.h"
-#include "module_psi/include/types.h"
+#include "module_psi/kernels/memory_op.h"
+#include "module_psi/kernels/types.h"
 
 #include <tuple>
 

@@ -11,8 +11,8 @@
 #include "../module_pw/pw_basis.h"
 #include "module_psi/psi.h"
 #include "charge.h"
-#include "module_hsolver/include/math_kernel.h"
-#include "src_pw/include/stress_multi_device.h"
+#include "module_hsolver/kernels/math_kernel_op.h"
+#include "src_pw/kernels/stress_op.h"
 
 
 //-------------------------------------------------------------------
