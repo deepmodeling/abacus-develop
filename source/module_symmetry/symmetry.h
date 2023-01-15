@@ -131,7 +131,7 @@ public:
 			ModuleBase::Vector3<double> &w2, ModuleBase::Vector3<double> &w3, 
 			int& real_brav, double* cel_const, double* tmp_const);
 	// to be called in pricell
-	void plat_type(ModuleBase::Vector3<double> &v1, ModuleBase::Vector3<double> &v2,
+	int plat_type(ModuleBase::Vector3<double> &v1, ModuleBase::Vector3<double> &v2,
     		ModuleBase::Vector3<double> &v3, double *cel_const, std::string &bravname);
 };
 }

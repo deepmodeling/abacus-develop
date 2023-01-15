@@ -569,9 +569,17 @@ void Symmetry::lattice_type(
 //        std::cout << "v2 = " << v2.x << " " << v2.y << " " << v2.z <<std::endl;
 //        std::cout << "v3 = " << v3.x << " " << v3.y << " " << v3.z <<std::endl;
 
+    this->ibrav=pre_brav;
+    std::string input_bravname = get_brav_name(pre_brav);
+    GlobalV::ofs_running<<"(for input configuration:)"<<std::endl;
+    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"BRAVAIS TYPE ",pre_brav);
+    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"BRAVAIS LATTICE NAME",input_bravname);
+    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"ibrav",pre_brav);
+    Symm_Other::print1(pre_brav, pre_const, GlobalV::ofs_running);
 
-    //find the shortest basis vectors of the lattice
-//    shortest_vector(v1, v2, v3);
+
+// find the shortest basis vectors of the lattice
+    this->get_shortest_latvec(v1, v2, v3);
 //        std::cout << "a1 = " << v1.x << " " << v1.y << " " << v1.z <<std::endl;
 //        std::cout << "a1 = " << v2.x << " " << v2.y << " " << v2.z <<std::endl;
 //        std::cout << "a1 = " << v3.x << " " << v3.y << " " << v3.z <<std::endl;
@@ -1231,9 +1239,10 @@ void Symmetry::pricell(double* pos)
     GlobalV::ofs_running<<p1.x<<" "<<p1.y<<" "<<p1.z<<std::endl;
     GlobalV::ofs_running<<p2.x<<" "<<p2.y<<" "<<p2.z<<std::endl;
     GlobalV::ofs_running<<p3.x<<" "<<p3.y<<" "<<p3.z<<std::endl;
-    bool is_right=Symm_Other::right_hand_sense(p1, p2, p3);
-    this->pbrav=this->standard_lat(p1, p2, p3, pcel_const);
-    std::string pbravname = get_brav_name(this->pbrav);
+    // get the optimized primitive cell
+    std::string pbravname;
+    this->pbrav=this->plat_type(p1, p2, p3, pcel_const, pbravname);
+
     GlobalV::ofs_running<<"(for primitive cell:)"<<std::endl;
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"BRAVAIS TYPE", this->pbrav);
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"BRAVAIS LATTICE NAME",pbravname);
@@ -1933,7 +1942,7 @@ void Symmetry::get_optlat(ModuleBase::Vector3<double> &v1, ModuleBase::Vector3<d
     return;
 }
 
-void Symmetry::plat_type(
+int Symmetry::plat_type(
     ModuleBase::Vector3<double> &v1,
     ModuleBase::Vector3<double> &v2,
     ModuleBase::Vector3<double> &v3,
@@ -1967,7 +1976,12 @@ void Symmetry::plat_type(
     {
         pcel_pre_const[i] = pcel_const[i];
     }
+
+    // find the shortest basis vectors of the lattice
+    this->get_shortest_latvec(v1, v2, v3);
+
     Symm_Other::right_hand_sense(v1, v2, v3);
+    
     int pcel_real_brav = 15;
     double temp_const[6];
 
@@ -2005,6 +2019,6 @@ void Symmetry::plat_type(
             pcel_const[i] = pcel_pre_const[i];
         }    
     }
-    return;
+    return pcel_real_brav;
 }
 }
