@@ -52,7 +52,7 @@ public:
 
 	bool symflag_fft[48];
 	int sym_test;
-	int ibrav;
+	int ibrav;		//ibrav of input configuration
 	int pbrav;		//ibrav of primitive cell
 	int real_brav;    // the real ibrav for the cell     pengfei Li 3-15-2022
 	std::string ilattname;	//the bravais lattice type of the supercell
@@ -129,7 +129,10 @@ public:
 	void get_optlat(ModuleBase::Vector3<double> &v1, ModuleBase::Vector3<double> &v2, 
 			ModuleBase::Vector3<double> &v3, ModuleBase::Vector3<double> &w1, 
 			ModuleBase::Vector3<double> &w2, ModuleBase::Vector3<double> &w3, 
-			int &ibrav, int& real_brav, double* cel_const, double* tmp_const);
+			int& real_brav, double* cel_const, double* tmp_const);
+	// to be called in pricell
+	void plat_type(ModuleBase::Vector3<double> &v1, ModuleBase::Vector3<double> &v2,
+    		ModuleBase::Vector3<double> &v3, double *cel_const, std::string &bravname);
 };
 }
 

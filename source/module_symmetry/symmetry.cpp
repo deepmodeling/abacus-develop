@@ -589,7 +589,7 @@ void Symmetry::lattice_type(
 
     ModuleBase::Vector3<double> w1, w2, w3;
     ModuleBase::Vector3<double> q1, q2, q3;
-    this->get_optlat(v1, v2, v3, w1, w2, w3, ibrav, real_brav, cel_const, temp_const);
+    this->get_optlat(v1, v2, v3, w1, w2, w3, real_brav, cel_const, temp_const);
 //        std::cout << "a1 = " << v1.x << " " << v1.y << " " << v1.z <<std::endl;
 //        std::cout << "a1 = " << v2.x << " " << v2.y << " " << v2.z <<std::endl;
 //        std::cout << "a1 = " << v3.x << " " << v3.y << " " << v3.z <<std::endl;
@@ -730,7 +730,7 @@ void Symmetry::lattice_type(
 			GlobalV::ofs_running<<" The lattice vectors have been set back!"<<std::endl;
         }
     }*/
-    ibrav=pre_brav;
+    this->ibrav=pre_brav;
     std::string input_bravname = get_brav_name(ibrav);
     GlobalV::ofs_running<<"(for input configuration:)"<<std::endl;
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"BRAVAIS TYPE ",ibrav);
@@ -1808,13 +1808,14 @@ void Symmetry::get_shortest_latvec(ModuleBase::Vector3<double> &a1,
 void Symmetry::get_optlat(ModuleBase::Vector3<double> &v1, ModuleBase::Vector3<double> &v2, 
         ModuleBase::Vector3<double> &v3, ModuleBase::Vector3<double> &w1, 
         ModuleBase::Vector3<double> &w2, ModuleBase::Vector3<double> &w3, 
-        int &ibrav, int& real_brav, double* cel_const, double* tmp_const)
+        int& real_brav, double* cel_const, double* tmp_const)
 {
     ModuleBase::Vector3<double> r1, r2, r3;
     double cos1 = 1;
     double cos2 = 1;
     double cos3 = 1;
     int nif = 0;
+    int ibrav;
     for (int n33 = -2; n33 < 3; ++n33)
     {
         for (int n32 = -2; n32 < 3; ++n32)
@@ -1928,6 +1929,81 @@ void Symmetry::get_optlat(ModuleBase::Vector3<double> &v1, ModuleBase::Vector3<d
                 }
             }
         }
+    }
+    return;
+}
+
+void Symmetry::plat_type(
+    ModuleBase::Vector3<double> &v1,
+    ModuleBase::Vector3<double> &v2,
+    ModuleBase::Vector3<double> &v3,
+    double *pcel_const,
+    std::string &bravname)
+{
+    ModuleBase::TITLE("Symmetry","plat_type");
+
+	//----------------------------------------------
+	// (1) adjustement of the basis to right hand 
+	// sense by inversion of all three lattice 
+	// vectors if necessary
+	//----------------------------------------------
+    const bool right = Symm_Other::right_hand_sense(v1, v2, v3);
+	ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"right hand lattice (primitive cell): ",right);
+
+	//-------------------------------------------------
+	// (2) save and copy the original lattice vectors.
+	//-------------------------------------------------
+    s1 = v1;
+    s2 = v2;
+    s3 = v3;
+	
+	//--------------------------------------------
+	// (3) calculate the 'pre_const'
+	//--------------------------------------------
+    double pcel_pre_const[6];
+	ModuleBase::GlobalFunc::ZEROS(pcel_pre_const, 6);
+    int pcel_pre_brav = standard_lat(v1, v2, v3, pcel_const);
+    for ( int i = 0; i < 6; ++i)
+    {
+        pcel_pre_const[i] = pcel_const[i];
+    }
+    Symm_Other::right_hand_sense(v1, v2, v3);
+    int pcel_real_brav = 15;
+    double temp_const[6];
+
+    //then we should find the best lattice vectors to make much easier the determination of the lattice symmetry
+    //the method is to contrast the combination of the shortest vectors and determine their symmmetry
+
+    ModuleBase::Vector3<double> w1, w2, w3;
+    ModuleBase::Vector3<double> q1, q2, q3;
+    this->get_optlat(v1, v2, v3, w1, w2, w3, pcel_real_brav, pcel_const, temp_const);
+    
+    //now, the highest symmetry of the combination of the shortest vectors has been found
+    //then we compare it with the original symmetry
+
+    if ( pcel_real_brav < pcel_pre_brav)
+    {
+        //if the symmetry of the new vectors is higher, store the new ones
+        for (int i = 0; i < 6; ++i)
+        {
+            pcel_const[i] = temp_const[i];
+        }
+        q1 = w1;
+        q2 = w2;
+        q3 = w3;
+        change = 1; 
+        // return the optimized lattice in v1, v2, v3
+        v1=q1;
+        v2=q2;
+        v3=q3;
+    }
+    else
+    {
+        //else, store the original ones
+        for (int i = 0; i < 6; ++i)
+        {
+            pcel_const[i] = pcel_pre_const[i];
+        }    
     }
     return;
 }
