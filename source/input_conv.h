@@ -20,6 +20,7 @@ using namespace std;
 namespace Input_Conv
 {
     void Convert(void);
+    void parse_expression(const std::string &fn, std::vector<double> &arr);
 }
 
 
