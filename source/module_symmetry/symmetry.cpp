@@ -738,13 +738,6 @@ void Symmetry::lattice_type(
 			GlobalV::ofs_running<<" The lattice vectors have been set back!"<<std::endl;
         }
     }*/
-    this->ibrav=pre_brav;
-    std::string input_bravname = get_brav_name(ibrav);
-    GlobalV::ofs_running<<"(for input configuration:)"<<std::endl;
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"BRAVAIS TYPE ",ibrav);
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"BRAVAIS LATTICE NAME",input_bravname);
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"ibrav",ibrav);
-    Symm_Other::print1(ibrav, pre_const, GlobalV::ofs_running);
 
     bravname = get_brav_name(real_brav);
     GlobalV::ofs_running<<"(for optimal symmetric configuration:)"<<std::endl;
@@ -1193,39 +1186,90 @@ void Symmetry::pricell(double* pos)
         ptrans_array[i*3+2]=ptrans[i].z;
     }
     this->atom_ordering_new(ptrans_array, ntrans, index);
+    // std::cout<<"final ptrans:"<<std::endl;
     for(int i=0;i<ntrans;++i)
     {
         ptrans[i].x=ptrans_array[i*3];
         ptrans[i].y=ptrans_array[i*3+1];
         ptrans[i].z=ptrans_array[i*3+2];
+        // std::cout<<ptrans[i].x<<" "<<ptrans[i].y<<" "<<ptrans[i].z<<std::endl;
     }
     delete[] ptrans_array;
 
     //calculate lattice vectors of pricell: 
     // find the first non-zero ptrans on all 3 directions 
     ModuleBase::Vector3<double> b1, b2, b3;
-    int iplane=0, jplane=0;
-    while(iplane<ntrans && std::abs(ptrans[iplane].x-ptrans[0].x)<this->epsilon) ++iplane;
-    if(iplane==ntrans) iplane=0;    //a1-direction have no smaller pricell
-    b1=iplane>0 ? 
-        ModuleBase::Vector3<double>(ptrans[iplane].x, ptrans[iplane].y, ptrans[iplane].z) : 
-        ModuleBase::Vector3<double>(1, 0, 0);
-    jplane=iplane;
-    while(jplane<ntrans && std::abs(ptrans[jplane].y-ptrans[iplane].y)<this->epsilon) ++jplane;
-    if(jplane==ntrans) jplane=iplane;    //a2-direction have no smaller pricell
-    b2=jplane>iplane ? 
-        ModuleBase::Vector3<double>(ptrans[jplane].x-ptrans[iplane].x, ptrans[jplane].y-ptrans[iplane].y, ptrans[jplane].z-ptrans[iplane].z) : 
+    int iplane=0, jplane=0, kplane=0;
+    //1. kplane for b3
+    while(kplane<ntrans && std::abs(ptrans[kplane].z-ptrans[0].z)<this->epsilon) ++kplane;
+    if(kplane==ntrans) kplane=0;    //a3-direction have no smaller pricell
+    b3=kplane>0 ? 
+        ModuleBase::Vector3<double>(ptrans[kplane].x, ptrans[kplane].y, ptrans[kplane].z) : 
+        ModuleBase::Vector3<double>(0, 0, 1);
+    //2. jplane for b2
+    jplane=kplane+1;
+    while(jplane<ntrans && std::abs(ptrans[jplane].y-ptrans[0].y)<this->epsilon) ++jplane;
+    std::cout<<"max jplane="<<jplane<<std::endl;
+    if(jplane==ntrans) jplane=kplane;    //a2-direction have no smaller pricell
+    b2=jplane>kplane ? 
+        ModuleBase::Vector3<double>(ptrans[jplane].x, ptrans[jplane].y, ptrans[jplane].z) : 
         ModuleBase::Vector3<double>(0, 1, 0);
-    b3=(jplane<ntrans-1 && std::abs(ptrans[jplane+1].z-ptrans[jplane].z)>this->epsilon)? 
-        ModuleBase::Vector3<double>(ptrans[jplane+1].x-ptrans[jplane].x, ptrans[jplane+1].y-ptrans[jplane].y, ptrans[jplane+1].z-ptrans[jplane].z) : 
-        ModuleBase::Vector3<double>(0, 0, 1);    //a3-direction have no smaller pricell
+    //3. iplane for b1
+    iplane=jplane+1;
+    while(iplane<ntrans && std::abs(ptrans[iplane].x-ptrans[0].x)<this->epsilon) ++iplane;
+    b1=(iplane>jplane && iplane<ntrans)? 
+        ModuleBase::Vector3<double>(ptrans[iplane].x, ptrans[iplane].y, ptrans[iplane].z) : 
+        ModuleBase::Vector3<double>(1, 0, 0);    //a1-direction have no smaller pricell
+
     // std::cout<<"iplane="<<iplane<<std::endl;
     // std::cout<<"jplane="<<jplane<<std::endl;
+    // std::cout<<"kplane="<<kplane<<std::endl;
     // std::cout<<"b1="<<b1.x<<" "<<b1.y<<" "<<b1.z<<std::endl;
     // std::cout<<"b2="<<b2.x<<" "<<b2.y<<" "<<b2.z<<std::endl;
     // std::cout<<"b3="<<b3.x<<" "<<b3.y<<" "<<b3.z<<std::endl;
+
     ModuleBase::Matrix3 coeff(b1.x, b1.y, b1.z, b2.x, b2.y, b2.z, b3.x, b3.y, b3.z);
     this->plat=coeff*this->optlat;
+
+    //deal with collineation
+    if(equal(plat.Det(), 0))
+    {
+        if(kplane==0)   //try a new b3
+        {
+            std::cout<<"try a new b3"<<std::endl;
+            if(jplane>kplane)   // use default b2
+            {
+                coeff.e31=0;
+                coeff.e32=1;
+                coeff.e33=0;
+            }
+            else    //use default b1
+            {
+                coeff.e31=1;
+                coeff.e32=0;
+                coeff.e33=0;
+            }
+        }
+        else if(jplane<=kplane)
+        {
+            std::cout<<"try a new b2"<<std::endl;
+            //use default b3
+            coeff.e21=0;
+            coeff.e22=0;
+            coeff.e23=1;
+        }
+        else
+        {
+            std::cout<<"try a new b1"<<std::endl;
+            //use default b3
+            coeff.e11=0;
+            coeff.e12=0;
+            coeff.e13=1;
+        }
+        this->plat=coeff*this->optlat;
+        assert(!equal(plat.Det(), 0));
+    }
+
     this->p1.x=plat.e11;
     this->p1.y=plat.e12;
     this->p1.z=plat.e13;
@@ -1235,21 +1279,37 @@ void Symmetry::pricell(double* pos)
     this->p3.x=plat.e31;
     this->p3.y=plat.e32;
     this->p3.z=plat.e33;
-    GlobalV::ofs_running<<"lattice vectors of primitive cell:"<<std::endl;
+
+    GlobalV::ofs_running<<"lattice vectors of primitive cell (initial):"<<std::endl;
     GlobalV::ofs_running<<p1.x<<" "<<p1.y<<" "<<p1.z<<std::endl;
     GlobalV::ofs_running<<p2.x<<" "<<p2.y<<" "<<p2.z<<std::endl;
     GlobalV::ofs_running<<p3.x<<" "<<p3.y<<" "<<p3.z<<std::endl;
+
     // get the optimized primitive cell
     std::string pbravname;
     this->pbrav=this->plat_type(p1, p2, p3, pcel_const, pbravname);
 
+    this->plat.e11=p1.x;
+    this->plat.e12=p1.y;
+    this->plat.e13=p1.z;
+    this->plat.e21=p2.x;
+    this->plat.e22=p2.y;
+    this->plat.e23=p2.z;
+    this->plat.e31=p3.x;
+    this->plat.e32=p3.y;
+    this->plat.e33=p3.z;
+
+    GlobalV::ofs_running<<"lattice vectors of primitive cell (optimized):"<<std::endl;
+    GlobalV::ofs_running<<p1.x<<" "<<p1.y<<" "<<p1.z<<std::endl;
+    GlobalV::ofs_running<<p2.x<<" "<<p2.y<<" "<<p2.z<<std::endl;
+    GlobalV::ofs_running<<p3.x<<" "<<p3.y<<" "<<p3.z<<std::endl;
+
     GlobalV::ofs_running<<"(for primitive cell:)"<<std::endl;
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"BRAVAIS TYPE", this->pbrav);
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"BRAVAIS LATTICE NAME",pbravname);
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"ibrav",this->pbrav);
     Symm_Other::print1(this->pbrav, this->pcel_const, GlobalV::ofs_running);
 
     //count the number of pricells
+    GlobalV::ofs_running<<"optimized lattice volume: "<<this->optlat.Det()<<std::endl;
+    GlobalV::ofs_running<<"optimized primitive cell volume:"<<this->plat.Det()<<std::endl;
     double ncell_double = std::abs(this->optlat.Det()/this->plat.Det());
     this->ncell=floor(ncell_double+0.5);
     if(this->ncell != ntrans)
@@ -1797,6 +1857,7 @@ void Symmetry::get_shortest_latvec(ModuleBase::Vector3<double> &a1,
             fb=true;
         }
         if(fa || fb) flag=true;
+        if(fa || fb) std::cout<<"one loop!"<<std::endl;
         return;
     };
     while(flag) //iter
@@ -1810,6 +1871,7 @@ void Symmetry::get_shortest_latvec(ModuleBase::Vector3<double> &a1,
         loop(a2, a3, len2);
         loop(a3, a1, len3);
         loop(a3, a2, len3);
+        std::cout<<"one iter"<<std::endl;
     }
     return;
 }
