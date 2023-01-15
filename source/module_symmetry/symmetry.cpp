@@ -584,132 +584,12 @@ void Symmetry::lattice_type(
     this->real_brav = 15;
     double temp_const[6];
 
-    double cos1 = 1;
-    double cos2 = 1;
-    double cos3 = 1;
-
     //then we should find the best lattice vectors to make much easier the determination of the lattice symmetry
     //the method is to contrast the combination of the shortest vectors and determine their symmmetry
 
-    ModuleBase::Vector3<double> r1, r2, r3;
     ModuleBase::Vector3<double> w1, w2, w3;
     ModuleBase::Vector3<double> q1, q2, q3;
-
-    int nif = 0;
-    for (int n33 = -2; n33 < 3; ++n33)
-    {
-        for (int n32 = -2; n32 < 3; ++n32)
-        {
-            for (int n31 = -2; n31 < 3; ++n31)
-            {
-                for (int n23 = -2; n23 < 3; ++n23)
-                {
-                    for (int n22 = -2; n22 < 3; ++n22)
-                    {
-                        for (int n21 = -2; n21 < 3; ++n21)
-                        {
-                            for (int n13 = -2; n13 < 3; ++n13)
-                            {
-                                for (int n12 = -2; n12 < 3; ++n12)
-                                {
-                                    for (int n11 = -2; n11 < 3; ++n11)
-                                    {
-                                        ModuleBase::Matrix3 mat(n11, n12, n13, n21, n22, n23, n31, n32, n33);
-
-                                        if (equal(mat.Det(),1.0))
-                                        {
-                                            r1.x = n11 * v1.x + n12 * v2.x + n13 * v3.x;
-                                            r1.y = n11 * v1.y + n12 * v2.y + n13 * v3.y;
-                                            r1.z = n11 * v1.z + n12 * v2.z + n13 * v3.z;
-                                     
-									        r2.x = n21 * v1.x + n22 * v2.x + n23 * v3.x;
-                                            r2.y = n21 * v1.y + n22 * v2.y + n23 * v3.y;
-                                            r2.z = n21 * v1.z + n22 * v2.z + n23 * v3.z;
-                                     
-									        r3.x = n31 * v1.x + n32 * v2.x + n33 * v3.x;
-                                            r3.y = n31 * v1.y + n32 * v2.y + n33 * v3.y;
-                                            r3.z = n31 * v1.z + n32 * v2.z + n33 * v3.z;
-                                            //std::cout << "mat = " << n11 <<" " <<n12<<" "<<n13<<" "<<n21<<" "<<n22<<" "<<n23<<" "<<n31<<" "<<n32<<" "<<n33<<std::endl;
-											
-                                            ibrav = standard_lat(r1, r2, r3, cel_const);
-//                                            if(brav == 8)
-//                                            {
-//                                               std::cout << "mat = " << n11 <<" " <<n12<<" "<<n13<<" "<<n21<<" "<<n22<<" "<<n23<<" "<<n31<<" "<<n32<<" "<<n33<<std::endl;
-//                                            }
-
-/*
-											if(n11== 1 && n12==0 && n13==-2 && n21==2 && n22==1 && n23==-1
-												&& n31==-2 && n32==-2 && n33==-1)
-											{
-												++nif;
-												GlobalV::ofs_running << " " << std::endl;
-												GlobalV::ofs_running << std::setw(8) << nif << std::setw(5) << n11 << std::setw(5) << n12
-													<< std::setw(5) << n13 << std::setw(5) << n21 << std::setw(5) << n22
-													<< std::setw(5) << n23 << std::setw(5) << n31 << std::setw(5) << n32
-													<< std::setw(5) << n33 << std::setw(5) << ibrav << std::endl;
-												GlobalV::ofs_running << " r1: " << r1.x << " " << r1.y << " " << r1.z << std::endl;
-												GlobalV::ofs_running << " r2: " << r2.x << " " << r2.y << " " << r2.z << std::endl;
-												GlobalV::ofs_running << " r3: " << r3.x << " " << r3.y << " " << r3.z << std::endl;
-												GlobalV::ofs_running << " cel_const[3]=" << cel_const[3] << std::endl;
-												GlobalV::ofs_running << " cel_const[4]=" << cel_const[4] << std::endl;
-												GlobalV::ofs_running << " cel_const[5]=" << cel_const[5] << std::endl;
-											}
-											*/
-//											if(brav == 14)
-//											{
-//												GlobalV::ofs_running << " ABS(CELLDM(4))=" << fabs(cel_const[3]) << std::endl;
-//												GlobalV::ofs_running << " ABS(CELLDM(5))=" << fabs(cel_const[4]) << std::endl;
-//												GlobalV::ofs_running << " ABS(CELLDM(6))=" << fabs(cel_const[5]) << std::endl;
-//											}
-
-                                            if ( ibrav < real_brav || ( ibrav == real_brav
-                                                    && ( fabs(cel_const[3]) < (cos1-1.0e-9) )
-                                                    && ( fabs(cel_const[4]) < (cos2-1.0e-9) )
-                                                    && ( fabs(cel_const[5]) < (cos3-1.0e-9) )) //mohan fix bug 2012-01-15, not <=
-                                               )
-                                            {
-												/*
-												GlobalV::ofs_running << "\n IBRAV=" << brav << " ITYP=" << temp_brav << std::endl;
-												GlobalV::ofs_running << " ABS(CELLDM(4))=" << fabs(cel_const[3]) << std::endl;
-												GlobalV::ofs_running << " ABS(CELLDM(5))=" << fabs(cel_const[4]) << std::endl;
-												GlobalV::ofs_running << " ABS(CELLDM(6))=" << fabs(cel_const[5]) << std::endl;
-												GlobalV::ofs_running << " COS1=" << cos1 << std::endl;
-												GlobalV::ofs_running << " COS2=" << cos2 << std::endl;
-												GlobalV::ofs_running << " COS3=" << cos3 << std::endl;
-												*/
-												/*
-												GlobalV::ofs_running << " r1: " << r1.x << " " << r1.y << " " << r1.z << std::endl;
-												GlobalV::ofs_running << " r2: " << r2.x << " " << r2.y << " " << r2.z << std::endl;
-												GlobalV::ofs_running << " r3: " << r3.x << " " << r3.y << " " << r3.z << std::endl;
-												GlobalV::ofs_running << " N=" << n11 << " " << n12 << " " << n13 
-												<< " " << n21 << " " << n22 << " " << n23 
-												<< " " << n31 << " " << n32 << " " << n33 << std::endl; 
-												*/
-												//out.printM3("mat",mat);
-                                                real_brav = ibrav;
-												
-                                                cos1 = fabs(cel_const[3]);
-                                                cos2 = fabs(cel_const[4]);
-                                                cos3 = fabs(cel_const[5]);
-
-                                                for (int i = 0; i < 6; ++i)
-                                                {
-                                                    temp_const[i] = cel_const[i];
-                                                }
-                                                w1 = r1;
-                                                w2 = r2;
-                                                w3 = r3;
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
+    this->get_optlat(v1, v2, v3, w1, w2, w3, ibrav, real_brav, cel_const, temp_const);
 //        std::cout << "a1 = " << v1.x << " " << v1.y << " " << v1.z <<std::endl;
 //        std::cout << "a1 = " << v2.x << " " << v2.y << " " << v2.z <<std::endl;
 //        std::cout << "a1 = " << v3.x << " " << v3.y << " " << v3.z <<std::endl;
@@ -1921,6 +1801,133 @@ void Symmetry::get_shortest_latvec(ModuleBase::Vector3<double> &a1,
         loop(a2, a3, len2);
         loop(a3, a1, len3);
         loop(a3, a2, len3);
+    }
+    return;
+}
+
+void Symmetry::get_optlat(ModuleBase::Vector3<double> &v1, ModuleBase::Vector3<double> &v2, 
+        ModuleBase::Vector3<double> &v3, ModuleBase::Vector3<double> &w1, 
+        ModuleBase::Vector3<double> &w2, ModuleBase::Vector3<double> &w3, 
+        int &ibrav, int& real_brav, double* cel_const, double* tmp_const)
+{
+    ModuleBase::Vector3<double> r1, r2, r3;
+    double cos1 = 1;
+    double cos2 = 1;
+    double cos3 = 1;
+    int nif = 0;
+    for (int n33 = -2; n33 < 3; ++n33)
+    {
+        for (int n32 = -2; n32 < 3; ++n32)
+        {
+            for (int n31 = -2; n31 < 3; ++n31)
+            {
+                for (int n23 = -2; n23 < 3; ++n23)
+                {
+                    for (int n22 = -2; n22 < 3; ++n22)
+                    {
+                        for (int n21 = -2; n21 < 3; ++n21)
+                        {
+                            for (int n13 = -2; n13 < 3; ++n13)
+                            {
+                                for (int n12 = -2; n12 < 3; ++n12)
+                                {
+                                    for (int n11 = -2; n11 < 3; ++n11)
+                                    {
+                                        ModuleBase::Matrix3 mat(n11, n12, n13, n21, n22, n23, n31, n32, n33);
+
+                                        if (equal(mat.Det(),1.0))
+                                        {
+                                            r1.x = n11 * v1.x + n12 * v2.x + n13 * v3.x;
+                                            r1.y = n11 * v1.y + n12 * v2.y + n13 * v3.y;
+                                            r1.z = n11 * v1.z + n12 * v2.z + n13 * v3.z;
+                                     
+									        r2.x = n21 * v1.x + n22 * v2.x + n23 * v3.x;
+                                            r2.y = n21 * v1.y + n22 * v2.y + n23 * v3.y;
+                                            r2.z = n21 * v1.z + n22 * v2.z + n23 * v3.z;
+                                     
+									        r3.x = n31 * v1.x + n32 * v2.x + n33 * v3.x;
+                                            r3.y = n31 * v1.y + n32 * v2.y + n33 * v3.y;
+                                            r3.z = n31 * v1.z + n32 * v2.z + n33 * v3.z;
+                                            //std::cout << "mat = " << n11 <<" " <<n12<<" "<<n13<<" "<<n21<<" "<<n22<<" "<<n23<<" "<<n31<<" "<<n32<<" "<<n33<<std::endl;
+											
+                                            ibrav = standard_lat(r1, r2, r3, cel_const);
+//                                            if(brav == 8)
+//                                            {
+//                                               std::cout << "mat = " << n11 <<" " <<n12<<" "<<n13<<" "<<n21<<" "<<n22<<" "<<n23<<" "<<n31<<" "<<n32<<" "<<n33<<std::endl;
+//                                            }
+
+/*
+											if(n11== 1 && n12==0 && n13==-2 && n21==2 && n22==1 && n23==-1
+												&& n31==-2 && n32==-2 && n33==-1)
+											{
+												++nif;
+												GlobalV::ofs_running << " " << std::endl;
+												GlobalV::ofs_running << std::setw(8) << nif << std::setw(5) << n11 << std::setw(5) << n12
+													<< std::setw(5) << n13 << std::setw(5) << n21 << std::setw(5) << n22
+													<< std::setw(5) << n23 << std::setw(5) << n31 << std::setw(5) << n32
+													<< std::setw(5) << n33 << std::setw(5) << ibrav << std::endl;
+												GlobalV::ofs_running << " r1: " << r1.x << " " << r1.y << " " << r1.z << std::endl;
+												GlobalV::ofs_running << " r2: " << r2.x << " " << r2.y << " " << r2.z << std::endl;
+												GlobalV::ofs_running << " r3: " << r3.x << " " << r3.y << " " << r3.z << std::endl;
+												GlobalV::ofs_running << " cel_const[3]=" << cel_const[3] << std::endl;
+												GlobalV::ofs_running << " cel_const[4]=" << cel_const[4] << std::endl;
+												GlobalV::ofs_running << " cel_const[5]=" << cel_const[5] << std::endl;
+											}
+											*/
+//											if(brav == 14)
+//											{
+//												GlobalV::ofs_running << " ABS(CELLDM(4))=" << fabs(cel_const[3]) << std::endl;
+//												GlobalV::ofs_running << " ABS(CELLDM(5))=" << fabs(cel_const[4]) << std::endl;
+//												GlobalV::ofs_running << " ABS(CELLDM(6))=" << fabs(cel_const[5]) << std::endl;
+//											}
+
+                                            if ( ibrav < real_brav || ( ibrav == real_brav
+                                                    && ( fabs(cel_const[3]) < (cos1-1.0e-9) )
+                                                    && ( fabs(cel_const[4]) < (cos2-1.0e-9) )
+                                                    && ( fabs(cel_const[5]) < (cos3-1.0e-9) )) //mohan fix bug 2012-01-15, not <=
+                                               )
+                                            {
+												/*
+												GlobalV::ofs_running << "\n IBRAV=" << brav << " ITYP=" << temp_brav << std::endl;
+												GlobalV::ofs_running << " ABS(CELLDM(4))=" << fabs(cel_const[3]) << std::endl;
+												GlobalV::ofs_running << " ABS(CELLDM(5))=" << fabs(cel_const[4]) << std::endl;
+												GlobalV::ofs_running << " ABS(CELLDM(6))=" << fabs(cel_const[5]) << std::endl;
+												GlobalV::ofs_running << " COS1=" << cos1 << std::endl;
+												GlobalV::ofs_running << " COS2=" << cos2 << std::endl;
+												GlobalV::ofs_running << " COS3=" << cos3 << std::endl;
+												*/
+												/*
+												GlobalV::ofs_running << " r1: " << r1.x << " " << r1.y << " " << r1.z << std::endl;
+												GlobalV::ofs_running << " r2: " << r2.x << " " << r2.y << " " << r2.z << std::endl;
+												GlobalV::ofs_running << " r3: " << r3.x << " " << r3.y << " " << r3.z << std::endl;
+												GlobalV::ofs_running << " N=" << n11 << " " << n12 << " " << n13 
+												<< " " << n21 << " " << n22 << " " << n23 
+												<< " " << n31 << " " << n32 << " " << n33 << std::endl; 
+												*/
+												//out.printM3("mat",mat);
+                                                real_brav = ibrav;
+												
+                                                cos1 = fabs(cel_const[3]);
+                                                cos2 = fabs(cel_const[4]);
+                                                cos3 = fabs(cel_const[5]);
+
+                                                for (int i = 0; i < 6; ++i)
+                                                {
+                                                    tmp_const[i] = cel_const[i];
+                                                }
+                                                w1 = r1;
+                                                w2 = r2;
+                                                w3 = r3;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
     return;
 }

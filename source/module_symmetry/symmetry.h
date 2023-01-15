@@ -123,9 +123,13 @@ public:
 	// has (min)inal number.
 	ModuleBase::Vector3<double> sptmin;
 
+	// to be called in lattice_type and plat_type
 	void get_shortest_latvec(ModuleBase::Vector3<double> &a1, 
 			ModuleBase::Vector3<double> &a2, ModuleBase::Vector3<double> &a3);
-
+	void get_optlat(ModuleBase::Vector3<double> &v1, ModuleBase::Vector3<double> &v2, 
+			ModuleBase::Vector3<double> &v3, ModuleBase::Vector3<double> &w1, 
+			ModuleBase::Vector3<double> &w2, ModuleBase::Vector3<double> &w3, 
+			int &ibrav, int& real_brav, double* cel_const, double* tmp_const);
 };
 }
 
