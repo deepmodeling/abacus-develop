@@ -123,6 +123,9 @@ public:
 	// has (min)inal number.
 	ModuleBase::Vector3<double> sptmin;
 
+	void get_shortest_latvec(ModuleBase::Vector3<double> &a1, 
+			ModuleBase::Vector3<double> &a2, ModuleBase::Vector3<double> &a3);
+
 };
 }
 

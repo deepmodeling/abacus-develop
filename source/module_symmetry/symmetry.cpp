@@ -1877,4 +1877,51 @@ void Symmetry::gmatrix_invmap(const ModuleBase::Matrix3* s, const int n, int* in
         }
     }
 }
+
+void Symmetry::get_shortest_latvec(ModuleBase::Vector3<double> &a1, 
+        ModuleBase::Vector3<double> &a2, ModuleBase::Vector3<double> &a3)
+{
+    double len1=a1.norm();
+    double len2=a2.norm();
+    double len3=a3.norm();
+    bool flag=true; //at least one iter
+    auto loop = [this, &flag](ModuleBase::Vector3<double> &v1, ModuleBase::Vector3<double>&v2, double &len)
+    {
+        bool fa=false, fb=false;
+        // loop a
+        double tmp_len=(v1-v2).norm();
+        while (tmp_len < len-epsilon)
+        {
+            v1=v1-v2;
+            len=v1.norm();
+            tmp_len=(v1-v2).norm();
+            fa=true;
+        }
+        // loop b
+        tmp_len=(v1+v2).norm();
+        while(tmp_len < len-epsilon)
+        {
+            assert(!fa);
+            v1=v1+v2;
+            len=v1.norm();
+            tmp_len=(v1+v2).norm();
+            fb=true;
+        }
+        if(fa || fb) flag=true;
+        return;
+    };
+    while(flag) //iter
+    {
+        flag=false;
+        // if any of a1, a2, a3 is updated, flag will become true.
+        // which means a further search is needed.
+        loop(a1, a2, len1);
+        loop(a1, a3, len1);
+        loop(a2, a1, len2);
+        loop(a2, a3, len2);
+        loop(a3, a1, len3);
+        loop(a3, a2, len3);
+    }
+    return;
+}
 }
