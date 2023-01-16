@@ -35,10 +35,9 @@
  *     - Warning of integer array allocation error
  */
 
-void IntArrayAlloc()
+namespace ModuleBase
 {
-	std::cout << "\n Allocation error for IntArray " << std::endl;
-	exit(0);
+void IntArrayAlloc();
 }
 
 class IntArrayTest : public testing::Test
