@@ -10,6 +10,7 @@
 #include "../module_base/math_ylmreal.h"
 #include "soc.h"
 #include "../module_base/timer.h"
+#include "module_base/memory.h"
 #include "module_psi/kernels/device.h"
 #include "src_pw/kernels/vnl_op.h"
 
@@ -129,11 +130,11 @@ void pseudopot_cell_vnl::init(const int ntype, const bool allocate_vkb)
         }
         else {
             if (GlobalV::precision_flag == "single") {
-                resmem_sh_op()(cpu_ctx, s_deeq, GlobalV::NSPIN * GlobalC::ucell.nat * this->nhm * this->nhm);
-                resmem_sh_op()(cpu_ctx, s_nhtol, ntype * this->nhm);
-                resmem_sh_op()(cpu_ctx, s_nhtolm, ntype * this->nhm);
-                resmem_sh_op()(cpu_ctx, s_indv, ntype * this->nhm);
-                resmem_ch_op()(cpu_ctx, c_deeq_nc, GlobalV::NSPIN * GlobalC::ucell.nat * this->nhm * this->nhm);
+                resmem_sh_op()(cpu_ctx, s_deeq, GlobalV::NSPIN * GlobalC::ucell.nat * this->nhm * this->nhm, "VNL::s_deeq");
+                resmem_sh_op()(cpu_ctx, s_nhtol, ntype * this->nhm, "VNL::s_nhtol");
+                resmem_sh_op()(cpu_ctx, s_nhtolm, ntype * this->nhm, "VNL::s_nhtolm");
+                resmem_sh_op()(cpu_ctx, s_indv, ntype * this->nhm, "VNL::s_indv");
+                resmem_ch_op()(cpu_ctx, c_deeq_nc, GlobalV::NSPIN * GlobalC::ucell.nat * this->nhm * this->nhm, "VNL::c_deeq_nc");
             }
             else {
                 this->d_deeq = this->deeq.ptr;
@@ -160,6 +161,7 @@ void pseudopot_cell_vnl::init(const int ntype, const bool allocate_vkb)
 	if (nkb > 0 && allocate_vkb )
 	{
 		vkb.create(nkb, GlobalC::wf.npwx);
+		ModuleBase::Memory::record("VNL::vkb", nkb * GlobalC::wf.npwx * sizeof(double));
 	}
 
 	//this->nqx = 10000;		// calculted in allocate_nlpot.f90
@@ -177,10 +179,12 @@ void pseudopot_cell_vnl::init(const int ntype, const bool allocate_vkb)
 	if(GlobalV::NSPIN!=4) 
 	{
 		this->tab.create(ntype, nbrx, GlobalV::NQX);
+		ModuleBase::Memory::record("VNL::tab", ntype * nbrx * GlobalV::NQX * sizeof(double));
 	}
 	else 
 	{
 		this->tab.create(ntype, nbrx_nc, GlobalV::NQX);
+		ModuleBase::Memory::record("VNL::tab", ntype * nbrx_nc * GlobalV::NQX * sizeof(double));
 	}
 
 	
@@ -191,10 +195,12 @@ void pseudopot_cell_vnl::init(const int ntype, const bool allocate_vkb)
 	if(GlobalV::NSPIN!=4) 
 	{
 		this->tab_at.create(ntype, nchix, GlobalV::NQX);
+		ModuleBase::Memory::record("VNL::tab_at", ntype * nchix * GlobalV::NQX * sizeof(double));
 	}
 	else 
 	{
 		this->tab_at.create(ntype, nchix_nc, GlobalV::NQX);
+		ModuleBase::Memory::record("VNL::tab_at", ntype * nchix_nc * GlobalV::NQX * sizeof(double));
 	}
     if (GlobalV::device_flag == "gpu") {
         if (GlobalV::precision_flag == "single") {
@@ -247,6 +253,7 @@ void pseudopot_cell_vnl::getvnl(const int &ik, ModuleBase::ComplexMatrix& vkb_in
 	const int x1= (lmaxkb + 1)*(lmaxkb + 1);
 
 	ModuleBase::matrix ylm(x1, npw);
+	ModuleBase::Memory::record("VNL::ylm", x1 * npw * sizeof(double));
 	ModuleBase::Vector3<double> *gk = new ModuleBase::Vector3<double>[npw];
 	for (int ig = 0;ig < npw;ig++) 
 	{
@@ -260,7 +267,7 @@ void pseudopot_cell_vnl::getvnl(const int &ik, ModuleBase::ComplexMatrix& vkb_in
     using resmem_complex_op = psi::memory::resize_memory_op<std::complex<double>, Device>;
     using delmem_complex_op = psi::memory::delete_memory_op<std::complex<double>, Device>;
     std::complex<double> * sk = nullptr;
-    resmem_complex_op()(ctx, sk, GlobalC::ucell.nat * npw);
+    resmem_complex_op()(ctx, sk, GlobalC::ucell.nat * npw, "VNL::sk");
     GlobalC::wf.get_sk(ctx, ik, GlobalC::wfcpw, sk);
 
     int jkb = 0, iat = 0;
@@ -361,9 +368,9 @@ void pseudopot_cell_vnl::getvnl(Device * ctx, const int &ik, std::complex<FPTYPE
            * _indv = this->get_indv_data<FPTYPE>(),
            * _nhtol = this->get_nhtol_data<FPTYPE>(),
            * _nhtolm = this->get_nhtolm_data<FPTYPE>();
-    resmem_var_op()(ctx, vq, npw);
-    resmem_var_op()(ctx, ylm, x1 * npw);
-    resmem_var_op()(ctx, vkb1, nhm * npw);
+    resmem_var_op()(ctx, vq, npw, "VNL::vq");
+    resmem_var_op()(ctx, ylm, x1 * npw, "VNL::ylm");
+    resmem_var_op()(ctx, vkb1, nhm * npw, "VNL::vkb1");
 
     ModuleBase::Vector3<double> *_gk = new ModuleBase::Vector3<double>[npw];
     for (int ig = 0;ig < npw; ig++)

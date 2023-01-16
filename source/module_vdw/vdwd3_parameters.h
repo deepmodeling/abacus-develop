@@ -7,7 +7,7 @@
 #ifndef VDWD3_PARAMETERS_H
 #define VDWD3_PARAMETERS_H
 
-#include "input.h"
+#include "module_io/input.h"
 #include "module_vdw/vdw_parameters.h"
 
 namespace vdw

@@ -1,6 +1,7 @@
 #include "LCAO_matrix.h"
 #include "global_fp.h"
 #include "../src_pw/global.h"
+#include "../module_base/tool_threading.h"
 #ifdef __DEEPKS
 #include "../module_deepks/LCAO_deepks.h"
 #endif
@@ -329,32 +330,87 @@ void LCAO_Matrix::set_stress
 
 void LCAO_Matrix::zeros_HSgamma(const char &mtype)
 {
-    if (mtype=='S') ModuleBase::GlobalFunc::ZEROS(this->Sloc.data(), this->Sloc.size());
-    else if (mtype=='T') ModuleBase::GlobalFunc::ZEROS(this->Hloc_fixed.data(), this->Hloc_fixed.size());
-    else if (mtype=='H') ModuleBase::GlobalFunc::ZEROS(this->Hloc.data(), this->Hloc.size());
+    auto zeros_HSgamma_ker = [&](int num_threads, int thread_id)
+    {
+        long long beg, len;
+        if (mtype=='S')
+        {
+            ModuleBase::BLOCK_TASK_DIST_1D(num_threads, thread_id, (long long)this->Sloc.size(), (long long)512, beg, len);
+            ModuleBase::GlobalFunc::ZEROS(this->Sloc.data() + beg, len);
+        }
+        else if (mtype=='T')
+        {
+            ModuleBase::BLOCK_TASK_DIST_1D(num_threads, thread_id, (long long)this->Hloc_fixed.size(), (long long)512, beg, len);
+            ModuleBase::GlobalFunc::ZEROS(this->Hloc_fixed.data() + beg, len);
+        }
+        else if (mtype=='H')
+        {
+            ModuleBase::BLOCK_TASK_DIST_1D(num_threads, thread_id, (long long)this->Hloc.size(), (long long)512, beg, len);
+            ModuleBase::GlobalFunc::ZEROS(this->Hloc.data() + beg, len);
+        }
+    };
+    ModuleBase::OMP_PARALLEL(zeros_HSgamma_ker);
     return;
 }
 
 void LCAO_Matrix::zeros_HSk(const char &mtype)
 {
-    if (mtype=='S') ModuleBase::GlobalFunc::ZEROS(this->Sloc2.data(), this->Sloc2.size());
-    else if (mtype=='T') ModuleBase::GlobalFunc::ZEROS(this->Hloc_fixed2.data(), this->Hloc_fixed2.size());
-    else if (mtype=='H') ModuleBase::GlobalFunc::ZEROS(this->Hloc2.data(), this->Hloc2.size());
+    auto zeros_HSk_ker = [&](int num_threads, int thread_id)
+    {
+        long long beg, len;
+        if (mtype=='S')
+        {
+            ModuleBase::BLOCK_TASK_DIST_1D(num_threads, thread_id, (long long)this->Sloc2.size(), (long long)256, beg, len);
+            ModuleBase::GlobalFunc::ZEROS(this->Sloc2.data() + beg, len);
+        }
+        else if (mtype=='T')
+        {
+            ModuleBase::BLOCK_TASK_DIST_1D(num_threads, thread_id, (long long)this->Hloc_fixed2.size(), (long long)256, beg, len);
+            ModuleBase::GlobalFunc::ZEROS(this->Hloc_fixed2.data() + beg, len);
+        }
+        else if (mtype=='H')
+        {
+            ModuleBase::BLOCK_TASK_DIST_1D(num_threads, thread_id, (long long)this->Hloc2.size(), (long long)256, beg, len);
+            ModuleBase::GlobalFunc::ZEROS(this->Hloc2.data() + beg, len);
+        }
+    };
+    ModuleBase::OMP_PARALLEL(zeros_HSk_ker);
     return;
 }
 
 void LCAO_Matrix::zeros_HSR(const char &mtype)
 {
-    if(GlobalV::NSPIN!=4)
+    auto zeros_HSR_ker = [&](int num_threads, int thread_id)
     {
-        if (mtype=='S') ModuleBase::GlobalFunc::ZEROS(this->SlocR.data(), this->SlocR.size());
-        else if (mtype=='T') ModuleBase::GlobalFunc::ZEROS(this->Hloc_fixedR.data(), this->Hloc_fixedR.size());
-    }
-    else
-    {
-        if (mtype=='S') ModuleBase::GlobalFunc::ZEROS(this->SlocR_soc.data(), this->SlocR_soc.size());
-        else if (mtype=='T') ModuleBase::GlobalFunc::ZEROS(this->Hloc_fixedR_soc.data(), this->Hloc_fixedR_soc.size());
-    }
+        long long beg, len;
+        if(GlobalV::NSPIN!=4)
+        {
+            if (mtype=='S')
+            {
+                ModuleBase::BLOCK_TASK_DIST_1D(num_threads, thread_id, (long long)this->SlocR.size(), (long long)512, beg, len);
+                ModuleBase::GlobalFunc::ZEROS(this->SlocR.data() + beg, len);
+            }
+            else if (mtype=='T')
+            {
+                ModuleBase::BLOCK_TASK_DIST_1D(num_threads, thread_id, (long long)this->Hloc_fixedR.size(), (long long)512, beg, len);
+                ModuleBase::GlobalFunc::ZEROS(this->Hloc_fixedR.data() + beg, len);
+            }
+        }
+        else
+        {
+            if (mtype=='S')
+            {
+                ModuleBase::BLOCK_TASK_DIST_1D(num_threads, thread_id, (long long)this->SlocR_soc.size(), (long long)256, beg, len);
+                ModuleBase::GlobalFunc::ZEROS(this->SlocR_soc.data() + beg, len);
+            }
+            else if (mtype=='T')
+            {
+                ModuleBase::BLOCK_TASK_DIST_1D(num_threads, thread_id, (long long)this->Hloc_fixedR_soc.size(), (long long)256, beg, len);
+                ModuleBase::GlobalFunc::ZEROS(this->Hloc_fixedR_soc.data() + beg, len);
+            }
+        }
+    };
+    ModuleBase::OMP_PARALLEL(zeros_HSR_ker);
     return;
 }
 
@@ -512,6 +568,9 @@ void LCAO_Matrix::print_HSgamma(const char &mtype, std::ostream &os)
 void LCAO_Matrix::update_Hloc(void)
 {
     ModuleBase::TITLE("LCAO_Matrix","update_Hloc");
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 1024)
+#endif
     for (long i=0; i<this->ParaV->nloc; i++)
     {
         Hloc[i] += Hloc_fixed[i];
@@ -522,6 +581,9 @@ void LCAO_Matrix::update_Hloc(void)
 void LCAO_Matrix::update_Hloc2(const int &ik)
 {
     ModuleBase::TITLE("LCAO_Matrix","update_Hloc2");
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 1024)
+#endif
 	for (long i = 0; i < this->ParaV->nloc; i++)
 	{
 		Hloc2[i] += Hloc_fixed2[i];

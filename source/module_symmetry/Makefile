@@ -27,7 +27,7 @@ include Makefile.Objects
 
 VPATH=../module_base\
 ../module_cell\
-:../src_io\
+:../module_io\
 :../src_pw\
 :../src_parallel\
 :./\

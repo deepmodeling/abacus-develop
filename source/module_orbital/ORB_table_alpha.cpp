@@ -239,6 +239,7 @@ void ORB_table_alpha::init_Table_Alpha(
 	this->Table_DSR[0] = new double ***[this->ntype];
 	this->Table_DSR[1] = new double ***[this->ntype];
 
+	size_t memory_cost = 0;
 	// <1Phi|2Alpha>
 	for (int T1 = 0; T1 < ntype; T1++) // type 1 is orbital
 	{
@@ -294,9 +295,7 @@ void ORB_table_alpha::init_Table_Alpha(
 							//Allocation
 							this->Table_DSR[0][T1][Opair][L] = new double[rmesh];
 							this->Table_DSR[1][T1][Opair][L] = new double[rmesh];
-
-							ModuleBase::Memory::record("ORB_table_alpha", "Table_DSR",
-										   2 * this->ntype * pairs_chi * rmesh, "double");
+							memory_cost += 2 * rmesh;
 
 							//for those L whose Gaunt Coefficients = 0, we
 							//assign every element in Table_DSR as zero
@@ -323,6 +322,8 @@ void ORB_table_alpha::init_Table_Alpha(
 		}				  // end L1
 	}					  // end T1
 	destroy_nr = true;
+
+	ModuleBase::Memory::record("ORB::Table_DSR", sizeof(double) * memory_cost);
 
 	//	OUT(GlobalV::ofs_running,"allocate non-local potential matrix","Done");
 	ModuleBase::timer::tick("ORB_table_alpha", "init_Table_Alpha");

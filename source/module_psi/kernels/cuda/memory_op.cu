@@ -38,7 +38,8 @@ template <typename FPTYPE>
 void resize_memory_op<FPTYPE, psi::DEVICE_GPU>::operator()(
     const psi::DEVICE_GPU* dev, 
     FPTYPE*& arr, 
-    const size_t size)
+    const size_t size,
+    const char* record_in)
 {
   if (arr != nullptr) {
     delete_memory_op<FPTYPE, psi::DEVICE_GPU>()(dev, arr);

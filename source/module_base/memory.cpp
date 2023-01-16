@@ -3,6 +3,8 @@
 // DATE : 2008-11-18
 //==========================================================
 #include "memory.h"
+#include "global_variable.h"
+#include "src_parallel/parallel_reduce.h"
 
 namespace ModuleBase
 {
@@ -18,7 +20,7 @@ int Memory::bool_memory = sizeof(bool); // 1.0 Byte
 int Memory::float_memory = sizeof(float); // 4.0 Byte
 int Memory::short_memory = sizeof(short); // 2.0 Byte
 
-int Memory::n_memory = 500;
+int Memory::n_memory = 1000;
 int Memory::n_now = 0;
 bool Memory::init_flag =  false;
 
@@ -140,10 +142,75 @@ double Memory::record
 	return consume[find];
 }
 
+void Memory::record
+(
+	const std::string &name_in,
+	const size_t &n_in,
+	const bool accumulate
+)
+{
+	if(!Memory::init_flag)
+	{
+		name = new std::string[n_memory];
+		class_name = new std::string[n_memory];
+		consume = new double[n_memory];
+		for(int i=0;i<n_memory;i++)
+		{
+			consume[i] = 0.0;
+		}
+		Memory::init_flag = true;
+	}
+
+	int find = 0;
+	for(find = 0; find < n_now; find++)
+	{
+		if( name_in == name[find] )
+		{
+			break;
+		}
+	}
+
+	// find == n_now : found a new record.	
+	if(find == n_now)
+	{
+		n_now++;
+		name[find] = name_in;
+		class_name[find] = "";
+	}
+	if(n_now >= n_memory)
+	{
+		std::cout<<" Error! Too many memories has been recorded.";
+		return;
+	}
+
+	const double factor = 1.0/1024.0/1024.0;
+	double size_mb = n_in * factor;
+
+	if(accumulate)
+	{
+		consume[find] += size_mb;
+		Memory::total += size_mb;
+	}
+	else
+	{
+		if(consume[find] < size_mb)
+		{
+			Memory::total += size_mb - consume[find];
+			consume[find] = size_mb;
+			if(consume[find] > 5)
+			{
+				print(find);
+			}
+		}
+	}
+
+	return;
+}
+
 void Memory::print(const int find)
 {
-//	std::cout <<"\n Warning_Memory_Consuming : "
-//	<<class_name[find]<<" "<<name[find]<<" "<<consume[find]<<" MB" << std::endl;
+	GlobalV::ofs_running <<"\n Warning_Memory_Consuming allocated: "
+	<<" "<<name[find]<<" "<<consume[find]<<" MB" << std::endl;
 	return;
 }
 
@@ -167,10 +234,12 @@ void Memory::print_all(std::ofstream &ofs)
 	if(!init_flag) return;
 
 	const double small = 1.0; 
-//    std::cout<<"\n CLASS_NAME---------|NAME---------------|MEMORY(MB)--------";
-    ofs <<"\n CLASS_NAME---------|NAME---------------|MEMORY(MB)--------" << std::endl;
+#ifdef __MPI
+		Parallel_Reduce::reduce_double_all(Memory::total);
+#endif
+    ofs <<"\n NAME---------------|MEMORY(MB)--------" << std::endl;
 //	std::cout<<"\n"<<std::setw(41)<< " " <<std::setprecision(4)<<total;
-	ofs <<std::setw(41)<< " " <<std::setprecision(4)<<total << std::endl;
+	ofs <<std::setw(20)<< "total" << std::setw(15) <<std::setprecision(4)<< Memory::total << std::endl;
     
 	bool *print_flag = new bool[n_memory];
 	for(int i=0; i<n_memory; i++) print_flag[i] = false;
@@ -192,16 +261,16 @@ void Memory::print_all(std::ofstream &ofs)
 			}
 		}
 		print_flag[k] = true;
-
+#ifdef __MPI
+		Parallel_Reduce::reduce_double_all(consume[k]);
+#endif
 	    if ( consume[k] < small ) 
         {
             continue;
         }
   		else
   		{
-        	ofs  << " "
-             << std::setw(20) << class_name[k]
-             << std::setw(20) << name[k]
+        	ofs << std::setw(20) << name[k]
              << std::setw(15) << consume[k] << std::endl;
 
 //        	std::cout  << "\n "
@@ -211,6 +280,7 @@ void Memory::print_all(std::ofstream &ofs)
 		}
     }
 //    std::cout<<"\n ----------------------------------------------------------"<<std::endl;
+	ofs<<" -------------   < 1.0 MB has been ignored ----------------"<<std::endl;
     ofs<<" ----------------------------------------------------------"<<std::endl;
 	delete[] print_flag; //mohan fix by valgrind at 2012-04-02
 	return;

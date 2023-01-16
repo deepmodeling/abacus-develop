@@ -612,13 +612,26 @@ void Relax::move_cell_ions(const bool is_new_dir)
     //but before we have a better organized Esolver
     //I do not want to change it
 
-    if(if_cell_moves)
+    // This part is needless for lj and dp potential, so I do a temporary modification here.
+    // liuyu modify 2023-01-04
+    if(GlobalV::ESOLVER_TYPE == "lj" || GlobalV::ESOLVER_TYPE == "dp")
     {
-        this->init_after_vc(); //variable cell
+        if(if_cell_moves)
+        {
+            GlobalC::ucell.setup_cell_after_vc(GlobalV::ofs_running);
+            ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "SETUP UNITCELL");
+        }
     }
     else
     {
-        GlobalC::sf.setup_structure_factor(&GlobalC::ucell,GlobalC::rhopw);
+        if(if_cell_moves)
+        {
+            this->init_after_vc(); //variable cell
+        }
+        else
+        {
+            GlobalC::sf.setup_structure_factor(&GlobalC::ucell,GlobalC::rhopw);
+        }
     }
 }
 

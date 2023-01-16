@@ -1,11 +1,11 @@
-#include "input_conv.h"
-#include "input.h"
+#include "module_io/input_conv.h"
+#include "module_io/input.h"
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
 #include "module_cell/unitcell.h"
 #include "module_surchem/surchem.h"
 #include "module_symmetry/symmetry.h"
-#include "src_io/berryphase.h"
+#include "module_io/berryphase.h"
 #include "module_relax/relax_old/ions_move_basic.h"
 #include "src_pw/global.h"
 #include "src_pw/occupy.h"
@@ -283,6 +283,8 @@ void Input_Conv::Convert(void)
     ELEC_evolve::td_vext = INPUT.td_vext;
     ELEC_evolve::td_vext_dire = INPUT.td_vext_dire;
     ELEC_evolve::out_dipole = INPUT.out_dipole;
+    ELEC_evolve::td_print_eij = INPUT.td_print_eij;
+    ELEC_evolve::td_edm = INPUT.td_edm;
 #endif
 
     // setting for constrained DFT, jiyy add 2020.10.11

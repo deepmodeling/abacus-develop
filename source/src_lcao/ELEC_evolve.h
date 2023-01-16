@@ -37,6 +37,9 @@ class ELEC_evolve
     static int td_vext_dire;
     static int out_dipole;
 
+    static double td_print_eij; // the threshold to output Eij elements
+    static int td_edm; // 0: new edm method   1: old edm method
+
   private:
     static void evolve_psi(const int& istep,
                            hamilt::Hamilt<double>* phm,

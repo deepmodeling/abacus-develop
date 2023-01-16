@@ -5,7 +5,7 @@
 #ifndef DFT_DMFT_INTERFACE
 #define DFT_DMFT_INTERFACE
 
-#include "../input.h"
+#include "module_io/input.h"
 #include "../module_cell/unitcell.h"
 #include "../module_base/complexmatrix.h"
 #include "src_lcao/LCAO_matrix.h"

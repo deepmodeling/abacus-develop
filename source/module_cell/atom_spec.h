@@ -2,7 +2,7 @@
 #define ATOM_H
 
 #include "atom_pseudo.h"
-#include "../src_io/output.h"
+#include "../module_io/output.h"
 class Atom
 {
 public:

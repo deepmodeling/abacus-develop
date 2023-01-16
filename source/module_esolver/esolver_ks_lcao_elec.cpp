@@ -5,14 +5,14 @@
 #include "module_dftu/dftu.h"
 //
 #include "../module_neighbor/sltk_atom_arrange.h"
-#include "../src_io/istate_charge.h"
-#include "../src_io/istate_envelope.h"
+#include "../module_io/istate_charge.h"
+#include "../module_io/istate_envelope.h"
 #include "src_lcao/ELEC_evolve.h"
 //
 #include "../src_ri/exx_abfs-jle.h"
 #include "../src_ri/exx_opt_orb.h"
-#include "../src_io/berryphase.h"
-#include "../src_io/to_wannier90.h"
+#include "../module_io/berryphase.h"
+#include "../module_io/to_wannier90.h"
 #include "../module_base/timer.h"
 #ifdef __DEEPKS
 #include "../module_deepks/LCAO_deepks.h"
@@ -22,6 +22,7 @@
 #include "../module_relax/relax_old/variable_cell.h"    // liuyu 2022-11-07
 
 #include "module_hamilt/ks_lcao/op_exx_lcao.h"
+#include "module_io/density_matrix.h"
 
 namespace ModuleESolver
 {
@@ -183,7 +184,7 @@ namespace ModuleESolver
                 std::stringstream ssd;
                 ssd << GlobalV::global_out_dir << "SPIN" << is + 1 << "_DM";
                 // reading density matrix,
-                this->LOC.read_dm(is, ssd.str());
+                ModuleIO::read_dm(is, ssd.str(), this->LOC.DM, this->LOC.DM_R);
             }
 
             // calculate the charge density

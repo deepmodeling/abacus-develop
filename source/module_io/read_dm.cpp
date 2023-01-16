@@ -1,14 +1,14 @@
-#include "../src_lcao/local_orbital_charge.h"
+#include "module_io/density_matrix.h"
 #include "../src_pw/global.h"
 #include "../module_base/blas_connector.h"
 #include "../src_parallel/parallel_common.h"
 #include "../module_base/timer.h"
 
 
-void Local_Orbital_Charge::read_dm(const int &is, const std::string &fn)
+void ModuleIO::read_dm(const int &is, const std::string &fn, double*** DM, double** DM_R)
 {
-    ModuleBase::TITLE("Local_Orbital_Charge","read_dm");
-    ModuleBase::timer::tick("Local_Orbital_Charge","read_dm");
+    ModuleBase::TITLE("ModuleIO","read_dm");
+    ModuleBase::timer::tick("ModuleIO","read_dm");
 
     GlobalV::ofs_running << "\n processor 0 is reading density matrix from file < " << fn << " > " << std::endl;
     //xiaohui modify 2015-03-25
@@ -106,7 +106,7 @@ void Local_Orbital_Charge::read_dm(const int &is, const std::string &fn)
     else
     {
     #ifdef __MPI
-        ModuleBase::WARNING_QUIT("Local_Orbital_Charge::read_dm","The nnrg should not be update");
+        ModuleBase::WARNING_QUIT("ModuleIO::read_dm","The nnrg should not be update");
         ModuleBase::CHECK_INT(ifs,GlobalC::GridT.nnrg);
 
         for(int i=0; i<GlobalC::GridT.nnrg; ++i)
@@ -125,7 +125,7 @@ void Local_Orbital_Charge::read_dm(const int &is, const std::string &fn)
     //if(quit_mesia)
     if(quit_abacus)
     {
-        ModuleBase::WARNING_QUIT("Local_Orbital_Charge::read_dm","Can not find the density matrix file.");
+        ModuleBase::WARNING_QUIT("ModuleIO::read_dm","Can not find the density matrix file.");
     }
 
 
@@ -177,13 +177,13 @@ void Local_Orbital_Charge::read_dm(const int &is, const std::string &fn)
     }
     else
     {
-        ModuleBase::WARNING_QUIT("Local_Orbital_Charge::read_dm","not ready to readin DM_R");
+        ModuleBase::WARNING_QUIT("ModuleIO::read_dm","not ready to readin DM_R");
     }
 #endif
     if(GlobalV::MY_RANK==0) ifs.close();
 
     GlobalV::ofs_running << " Finish reading density matrix." << std::endl;
 
-    ModuleBase::timer::tick("Local_Orbital_Charge","read_dm");
+    ModuleBase::timer::tick("ModuleIO","read_dm");
     return;
 }

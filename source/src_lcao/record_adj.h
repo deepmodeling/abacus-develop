@@ -32,6 +32,21 @@ class Record_adj
 	int na_proc;
 	int* na_each;
 
+	//--------------------------------------------
+	// record sparse atom index in for_grid(const Grid_Technique &gt);
+	// Map iat(dense atom index) to sparse atom index
+	// Mainly removing the index dependency for OpenMP parallel loop
+	// 
+	// Meaning:
+	// 1. if iat2ca[iat] > 0, it contains the sparse atom index
+	// 2. if iat2ca[iat] < 0, the sparse atom index of iat does not exist 
+	//
+	// Usage: 
+	// 1. iat2ca[iat] > 0 ? na_each[iat2ca[iat]] : 0
+	// 2. iat2ca[iat] > 0 ? info[iat2ca[iat]] : nullptr
+	//--------------------------------------------
+	int* iat2ca;
+
 	//------------------------------------------------
 	// info will identify each atom in each unitcell.
 	//------------------------------------------------

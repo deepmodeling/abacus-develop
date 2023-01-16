@@ -3,7 +3,7 @@ INPUT_PARAMETERS
 suffix                  autotest
 calculation             gen_bessel
 pseudo_dir              ../../PP_ORB
-ntype                   2
+
 nbands                  6
 symmetry                0
 

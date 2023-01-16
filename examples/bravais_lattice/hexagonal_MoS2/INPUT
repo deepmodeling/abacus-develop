@@ -1,7 +1,6 @@
 INPUT_PARAMETERS
 #Parameters	(General)
-pseudo_dir              ../../../tests/PP_ORB
-ntype			2	
+pseudo_dir              ../../../tests/PP_ORB	
 calculation             scf
 #Parameters (Accuracy)
 ecutwfc			50

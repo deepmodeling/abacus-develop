@@ -1,7 +1,7 @@
 INPUT_PARAMETERS
 #Parameters (General)
 suffix              autotest
-ntype               1
+
 calculation         md
 pseudo_dir          ../../PP_ORB
 

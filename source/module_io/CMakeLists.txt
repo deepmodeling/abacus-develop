@@ -1,4 +1,6 @@
 list(APPEND objects
+    input.cpp
+    input_conv.cpp
     berryphase.cpp
     bessel_basis.cpp
     cal_test.cpp

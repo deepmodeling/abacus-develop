@@ -7,7 +7,7 @@
 #include "FORCE_k.h"
 //#include "./force_lcao_gamma.h"
 #include "../src_pw/stress_func.h"
-#include "../input_conv.h"
+#include "module_io/input_conv.h"
 #include "../src_pw/forces.h"
 #include "module_psi/psi.h"
 

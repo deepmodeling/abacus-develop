@@ -3,7 +3,7 @@
 
 #include "../module_base/global_function.h"
 #include "../module_base/global_variable.h"
-#include "../src_io/restart.h"
+#include "../module_io/restart.h"
 #include "../module_relax/relax_driver.h"
 #include "VNL_in_pw.h"
 #include "charge_mixing.h"

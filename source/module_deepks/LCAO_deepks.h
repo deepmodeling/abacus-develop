@@ -17,7 +17,7 @@
 #include "../src_lcao/LCAO_matrix.h"
 #include "../module_base/intarray.h"
 #include "../module_base/complexmatrix.h"
-#include "../src_io/winput.h"
+#include "../module_io/winput.h"
 #include "../module_base/matrix.h"
 #include "../module_base/timer.h"
 

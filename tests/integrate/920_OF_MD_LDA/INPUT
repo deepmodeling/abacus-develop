@@ -3,7 +3,7 @@ INPUT_PARAMETERS
 suffix		autotest
 calculation     md
 esolver_type    ofdft
-ntype		1
+
 pseudo_dir      ../../PP_ORB
 pseudo_rcut     16
 cal_force	1

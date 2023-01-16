@@ -3,7 +3,7 @@
 // DATE : 2008-11-6
 //==========================================================
 // #include "global.h"
-#include "input.h"
+#include "module_io/input.h"
 
 #include "module_base/global_file.h"
 #include "module_base/global_function.h"
@@ -65,7 +65,7 @@ void Input::Init(const std::string &fn)
     time_t time_now = time(NULL);
     GlobalV::ofs_running << "                                                                                     "
                          << std::endl;
-    GlobalV::ofs_running << "                             WELCOME TO ABACUS v3.0                                  "
+    GlobalV::ofs_running << "                             WELCOME TO ABACUS v3.1                                  "
                          << std::endl;
     GlobalV::ofs_running << "                                                                                     "
                          << std::endl;
@@ -404,6 +404,9 @@ void Input::Default(void)
     td_vext_dire = 1;
 
     out_dipole = 0;
+
+    td_print_eij = -1.0;
+    td_edm = 0;
 
     td_stype = 0; // 0 : length gauge  1: velocity gauge
 
@@ -1491,6 +1494,14 @@ bool Input::Read(const std::string &fn)
         else if (strcmp("out_dipole", word) == 0)
         {
             read_value(ifs, out_dipole);
+        }
+        else if (strcmp("td_print_eij", word) == 0)
+        {
+            read_value(ifs, td_print_eij);
+        }
+        else if (strcmp("td_edm", word) == 0)
+        {
+            read_value(ifs, td_edm);
         }
         else if (strcmp("td_stype", word) == 0)
         {
@@ -2862,8 +2873,9 @@ void Input::Bcast()
     Parallel_Common::bcast_double(td_hhg_freq2);
     Parallel_Common::bcast_double(td_hhg_t0);
     Parallel_Common::bcast_double(td_hhg_sigma);
-
     Parallel_Common::bcast_int(out_dipole);
+    Parallel_Common::bcast_double(td_print_eij);
+    Parallel_Common::bcast_int(td_edm);
     Parallel_Common::bcast_bool(test_skip_ewald);
     Parallel_Common::bcast_bool(ocp);
     Parallel_Common::bcast_string(ocp_set);

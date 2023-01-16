@@ -386,6 +386,9 @@ class Input
     int td_vext_dire; // vext direction
     int out_dipole; // output the dipole or not
 
+    double td_print_eij; // threshold to output Eij elements
+    int td_edm; //0: new edm method   1: old edm method
+
     int td_stype ; //type of space domain  0 : length gauge  1: velocity gauge
 
     int td_ttype ; //type of time domain

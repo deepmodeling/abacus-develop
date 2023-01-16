@@ -5,7 +5,7 @@
 #include "../module_base/global_variable.h"
 #include "../module_base/matrix3.h"
 #include "../module_base/intarray.h"
-#include "../src_io/output.h"
+#include "../module_io/output.h"
 #ifndef __CMD
 #include "../src_pw/magnetism.h"
 #endif

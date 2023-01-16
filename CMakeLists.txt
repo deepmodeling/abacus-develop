@@ -14,16 +14,16 @@ option(ENABLE_LCAO "Enable LCAO calculation." ON)
 option(ENABLE_DEEPKS "Enable DeePKS functionality" OFF)
 option(ENABLE_LIBXC "Enable LibXC functionality" OFF)
 option(USE_CUDA "Enable support to CUDA for PW." OFF)
-option(USE_CUSOLVER_LCAO "Enable support to CUSOLVER for LCAO." OFF)
+# option(USE_CUSOLVER_LCAO "Enable support to CUSOLVER for LCAO." OFF) # broken
 option(USE_ROCM "Enable support to ROCm." OFF)
 option(USE_OPENMP " Enable OpenMP in abacus." ON)
 option(ENABLE_ASAN "Enable AddressSanitizer" OFF)
 option(BUILD_TESTING "Build ABACUS unit tests" OFF)
-option(GENERATE_TEST_REPORTS "Enable test report generation" OFF)
 option(INFO "Enable gathering of math library information" OFF)
 option(ENABLE_COVERAGE "Enable coverage build." OFF)
 option(ENABLE_LIBRI "Enable EXX with LibRI." OFF)
 option(USE_ELPA "Enable ELPA" ON)
+option(USE_ABACUS_LIBM "Build libmath from source to speed up." ON)
 option(GIT_SUBMODULE "Check submodules during build" ON)
 # Do not enable it if generated code will run on different CPUs
 option(ENABLE_NATIVE_OPTIMIZATION "Enable compilation optimization for the native machine's CPU type" OFF)
@@ -74,16 +74,32 @@ if (CCACHE)
   set (CMAKE_C_COMPILER_LAUNCHER ${CCACHE} ${CMAKE_C_COMPILER_LAUNCHER})
 endif()
 
+# Choose build type from: Debug Release RelWithDebInfo MinSizeRel
 # Select 'Release' configuration for best performance;
 #   this will disable all assertions.
 # Other default configurations are also available, see:
 # https://cmake.org/cmake/help/latest/manual/cmake-buildsystem.7.html#default-and-custom-configurations
-if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
-  if(NOT ENABLE_COVERAGE)
-    add_compile_options(-O2 -g) # default flag
-  else()
-    add_compile_options(-g)
-  endif()
+# For default flags, see:
+# https://github.com/Kitware/CMake/blob/master/Modules/Compiler/GNU.cmake#L55
+
+if(ENABLE_COVERAGE)
+  set(CMAKE_BUILD_TYPE "Debug")
+endif()
+if(ENABLE_ASAN)
+  set(CMAKE_BUILD_TYPE "RelWithDebInfo")
+endif()
+
+if(NOT CMAKE_BUILD_TYPE)
+  add_compile_options(-O3 -g)
+endif()
+
+# Force turn off USE_ABACUS_LIBM on Intel Compiler
+if (("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel") OR
+    ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "IntelLLVM"))
+    set(USE_ABACUS_LIBM OFF)
+endif()
+if (USE_ABACUS_LIBM)
+  add_definitions(-DUSE_ABACUS_LIBM)
 endif()
 
 if (ENABLE_NATIVE_OPTIMIZATION)
