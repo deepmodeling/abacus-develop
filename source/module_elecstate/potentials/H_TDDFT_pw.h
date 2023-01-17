@@ -2,7 +2,7 @@
 #define H_TDDFT_PW_H
 
 #include "pot_base.h"
-#include "../../input.h"
+#include "module_io/input.h"
 
 namespace elecstate
 {

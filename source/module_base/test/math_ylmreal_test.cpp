@@ -29,7 +29,9 @@
  *      - sph_harm
  *      - rl_sph_harm
  *      - grad_rl_sph_harm
- *      - 
+ *      - equality_value_test: test the eqaulity of Ylm function between rl_sph_harm (spherical input) and  get_ylm_real (Cartesian input) 
+ *      - equality_gradient_test:test the eqaulity of Ylm gradient function between grad_rl_sph_harm(spherical input) and  rlylm (Cartesian input)
+ * 
  */
 
 
@@ -305,7 +307,6 @@ TEST_F(YlmRealTest,YlmRealTemplate)
     }
 }
 
-
 TEST_F(YlmRealTest,gradYlmReal)
 {
     ModuleBase::YlmReal::grad_Ylm_Real(nylm,ng,g,ylm,dylm[0],dylm[1],dylm[2]);
@@ -407,7 +408,7 @@ TEST_F(YlmRealTest,YlmRlSphHarm)
         }
     }
 }
-
+//used to be test1 in ylm.h
 TEST_F(YlmRealTest,YlmGradRlSphHarm)
 {    
     ModuleBase::Ylm::set_coefficients ();
@@ -422,4 +423,63 @@ TEST_F(YlmRealTest,YlmGradRlSphHarm)
             
         }
     }
+}
+
+//used to be test1 in ylm.h
+TEST_F(YlmRealTest, equality_value_test)
+{
+
+    
+    ModuleBase::Vector3<double> R (20.0, 0.0, 0.0);
+	const double xdr = R.x/R.norm();
+	const double ydr = R.y/R.norm();
+	const double zdr = R.z/R.norm();
+	const int L = 9;
+	const double rl = std::pow( R.norm(), L);
+	//std::cout << " rl=" << rl << std::endl;
+	ModuleBase::Ylm::set_coefficients();
+	
+	int nu = 100;
+	
+	// Peize Lin change rlya 2016-08-26
+	std::vector<double> rlya;
+	double rlyb[400];
+	ModuleBase::Ylm::ZEROS( rlyb, 400);
+	
+	ModuleBase::Ylm::rl_sph_harm(L, xdr, ydr, zdr, rlya);
+	ModuleBase::Ylm::get_ylm_real(L+1, R, rlyb);
+	
+	for (int i=0; i < nu; i++)
+	{
+		double diff = fabs(rlya[i]-rlyb[i]);
+        EXPECT_LT(diff,1e-8);
+	}
+
+}
+
+//used to be test2 in ylm.h
+TEST_F(YlmRealTest, equality_gradient_test)
+{
+
+    
+    ModuleBase::Vector3<double> R (0.1,-0.2,0.5);
+	ModuleBase::Ylm::set_coefficients();
+	
+	//int nu = 100;
+
+	std::vector<double> rlya;
+	double rlyb[400];
+	
+	std::vector<std::vector<double>> grlya;
+	double grlyb[400][3];
+	
+	ModuleBase::Ylm::grad_rl_sph_harm (9, R.x, R.y, R.z, rlya, grlya);
+	ModuleBase::Ylm::rlylm (10, R.x, R.y, R.z, rlyb, grlyb);
+	
+	for (int i = 0; i < 100; i++)
+	{
+		double diffx = fabs(grlya[i][2]-grlyb[i][2]);
+        EXPECT_LT(diffx,1e-8);
+	}
+
 }

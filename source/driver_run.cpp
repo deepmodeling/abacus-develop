@@ -1,6 +1,6 @@
 #include "driver.h"
 #include "src_pw/global.h"
-#include "input.h"
+#include "module_io/input.h"
 #include "module_io/winput.h"
 #include "module_neighbor/sltk_atom_arrange.h"
 #include "module_io/print_info.h"

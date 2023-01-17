@@ -48,12 +48,6 @@ class Local_Orbital_Charge
 	// whether to printout density matrix
     static int out_dm; // output density matrix or not.
     static int out_dm1;
-
-	void write_dm(const int &is, const int &iter, const std::string &fn, const int &precision);
-    void write_dm1(const int &is, const int &istep, double** dm2d);
-
-	void read_dm(const int &is, const std::string &fn);
-
     
     //-----------------
 	// in dm_2d.cpp
@@ -84,6 +78,8 @@ class Local_Orbital_Charge
 
     //temporary set it to public for ElecStateLCAO class, would be refactor later
     void cal_dk_k(const Grid_Technique &gt, const ModuleBase::matrix& wg_in);
+
+    std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>> DMR_sparse;
 
 private:
 
@@ -117,12 +113,6 @@ private:
     int *receiver_size_process;
     int *receiver_displacement_process;
     double* receiver_buffer;
-
-    std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>> DMR_sparse;
-
-    void get_dm_sparse(const int &is, double** dm2d);
-    void write_dm_sparse(const int &is, const int &istep);
-    void destroy_dm_sparse();
 
 #ifdef __MPI
     int setAlltoallvParameter(MPI_Comm comm_2D, int blacs_ctxt, int nblk);

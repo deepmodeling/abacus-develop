@@ -22,6 +22,7 @@
 #include "../module_relax/relax_old/variable_cell.h"    // liuyu 2022-11-07
 
 #include "module_hamilt/ks_lcao/op_exx_lcao.h"
+#include "module_io/density_matrix.h"
 
 namespace ModuleESolver
 {
@@ -183,7 +184,7 @@ namespace ModuleESolver
                 std::stringstream ssd;
                 ssd << GlobalV::global_out_dir << "SPIN" << is + 1 << "_DM";
                 // reading density matrix,
-                this->LOC.read_dm(is, ssd.str());
+                ModuleIO::read_dm(is, ssd.str(), this->LOC.DM, this->LOC.DM_R);
             }
 
             // calculate the charge density

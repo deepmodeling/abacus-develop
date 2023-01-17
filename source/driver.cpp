@@ -1,7 +1,7 @@
 #include "driver.h"
 
-#include "input.h"
-#include "input_conv.h"
+#include "module_io/input.h"
+#include "module_io/input_conv.h"
 #include "src_pw/global.h"
 #ifdef __LCAO
 #include "src_lcao/global_fp.h"

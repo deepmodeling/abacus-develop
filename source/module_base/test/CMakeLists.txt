@@ -22,6 +22,7 @@ AddTest(
 )
 ADDTest(
   TARGET base_global_function
+  LIBS ${math_libs}
   SOURCES global_function_test.cpp ../global_function.cpp ../tool_quit.cpp ../global_variable.cpp ../global_file.cpp ../memory.cpp ../timer.cpp
 )
 AddTest(
@@ -127,3 +128,8 @@ AddTest(
   TARGET base_opt_TN
   SOURCES opt_TN_test.cpp opt_test_tools.cpp ../opt_CG.cpp ../opt_DCsrch.cpp ../global_variable.cpp ../../src_parallel/parallel_reduce.cpp
 )
+
+AddTest(
+  TARGET base_ylm
+  SOURCES ylm_test.cpp  ../ylm.cpp  ../timer.cpp  ../tool_quit.cpp ../global_variable.cpp ../global_file.cpp ../memory.cpp
+  )

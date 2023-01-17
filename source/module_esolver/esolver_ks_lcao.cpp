@@ -1,5 +1,6 @@
 #include "esolver_ks_lcao.h"
 #include "module_io/cal_r_overlap_R.h"
+#include "module_io/density_matrix.h"
 
 //--------------temporary----------------------------
 #include "../module_base/global_function.h"
@@ -564,7 +565,7 @@ void ESolver_KS_LCAO::eachiterfinish(int iter)
             ssd << GlobalV::global_out_dir << "tmp"
                 << "_SPIN" << is + 1 << "_DM_R";
         }
-        this->LOC.write_dm(is, iter, ssd.str(), precision);
+        ModuleIO::write_dm(is, iter, ssd.str(), precision, this->LOC.out_dm, this->LOC.DM);
     }
 
     if(XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
@@ -630,10 +631,10 @@ void ESolver_KS_LCAO::afterscf(const int istep)
         {
             ssd << GlobalV::global_out_dir << "SPIN" << is + 1 << "_DM_R";
         }
-        this->LOC.write_dm(is, 0, ssd.str(), precision);
+        ModuleIO::write_dm(is, 0, ssd.str(), precision, this->LOC.out_dm, this->LOC.DM);
         if(this->LOC.out_dm1 == 1)
         {
-            this->LOC.write_dm1(is, istep, dm2d);
+            ModuleIO::write_dm1(is, istep, dm2d, this->LOC.ParaV, this->LOC.DMR_sparse);
         }
 /* Broken, please fix it
         if (GlobalV::out_pot == 1) // LiuXh add 20200701
