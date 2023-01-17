@@ -1,6 +1,7 @@
 #include "esolver_ks_lcao_tddft.h"
 
 #include "module_io/cal_r_overlap_R.h"
+#include "module_io/density_matrix.h"
 
 //--------------temporary----------------------------
 #include "../module_base/blas_connector.h"
@@ -364,7 +365,7 @@ void ESolver_KS_LCAO_TDDFT::afterscf(const int istep)
         {
             ssd << GlobalV::global_out_dir << "SPIN" << is + 1 << "_DM_R";
         }
-        this->LOC.write_dm(is, 0, ssd.str(), precision);
+        ModuleIO::write_dm(is, 0, ssd.str(), precision, this->LOC.out_dm, this->LOC.DM);
 
         /* Broken, please fix it
                 if (GlobalV::out_pot == 1) // LiuXh add 20200701

@@ -1,7 +1,7 @@
 #ifndef ESOLVER_H
 #define ESOLVER_H
 
-#include "../input.h"
+#include "module_io/input.h"
 #include "../module_cell/unitcell.h"
 #include "../src_pw/energy.h"
 #include "../module_base/matrix.h"

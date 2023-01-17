@@ -107,6 +107,63 @@ extern "C"
 		std::complex<double> *C, const int *IC, const int *JC, const int *DESCC);
 }
 
+class ScalapackConnector
+{
+public:
+	static inline
+	void geadd(
+		const char transa,
+		const int m, const int n,
+		const std::complex<double> alpha,
+		const std::complex<double> *a, const int ia, const int ja, const int *desca,
+		const std::complex<double> beta,
+		const std::complex<double> *c, const int ic, const int jc, const int *descc)
+	{
+		pzgeadd_(&transa, &m, &n, &alpha, a, &ia, &ja, desca, &beta, c, &ic, &jc, descc);
+	}
+
+	static inline
+	void gemm(
+		const char transa, const char transb,
+		const int M, const int N, const int K,
+		const double alpha,
+		const std::complex<double> *A, const int IA, const int JA, const int *DESCA,
+		const std::complex<double> *B, const int IB, const int JB, const int *DESCB,
+		const double beta,
+		std::complex<double> *C, const int IC, const int JC, const int *DESCC)
+	{
+		pzgemm_(&transa, &transb, &M, &N, &K, &alpha, A, &IA, &JA, DESCA, 
+			B, &IB, &JB, DESCB, &beta, C, &IC, &JC, DESCC);
+	}
+
+	static inline
+	void getrf(
+		const int M, const int N, 
+		std::complex<double> *A, const int IA, const int JA, const int *DESCA,
+		int *ipiv,  int info)
+	{
+		pzgetrf_(&M, &N, A, &IA, &JA, DESCA, ipiv, &info);
+	}
+
+	static inline
+	void getri(
+		const int n, 
+		const std::complex<double> *A, const int ia, const int ja, const int *desca, int *ipiv, 
+		const std::complex<double> *work, const int *lwork, const int *iwork, const int *liwork, const int info)
+	{
+		pzgetri_(&n, A, &ia, &ja, desca, ipiv, work, lwork, iwork, liwork, &info);
+	}
+
+	static inline
+	void tranu(
+		const int m, const int n,
+		const double alpha , std::complex<double> *a , const int ia , const int ja , const int *desca,
+		const double beta ,  std::complex<double> *c , const int ic , const int jc , const int *descc)
+	{
+		pztranu_(&m, &n, &alpha, a, &ia, &ja, desca, &beta, c, &ic, &jc, descc);
+	}
+};
+
 /*
 class ScalapackConnector
 {
