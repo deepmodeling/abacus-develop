@@ -3,7 +3,7 @@ add_definitions(-D__CMD -D__NORMAL)
 
 list(APPEND depend_files 
   ../MD_func.cpp
-  ../../input.cpp
+  ../../module_io/input.cpp
   ../../module_cell/unitcell.cpp
   ../../module_cell/atom_spec.cpp
   ../../module_cell/atom_pseudo.cpp

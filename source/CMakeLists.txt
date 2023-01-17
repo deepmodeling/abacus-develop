@@ -30,8 +30,6 @@ add_library(
     OBJECT
     driver.cpp
     driver_run.cpp
-    input.cpp
-    input_conv.cpp
 )
 
 list(APPEND device_srcs

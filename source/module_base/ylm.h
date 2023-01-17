@@ -148,9 +148,10 @@ class Ylm
 	static void set_coefficients ();
 	static std::vector<double> ylmcoef;
 	
-	static void test();
-	static void test1();
-	static void test2();
+	//static void test();
+	//static void test1();
+	//static void test2();
+	
 	//set the first n elements of u to be 0.0
 	static void ZEROS(double u[], const int& n);
 

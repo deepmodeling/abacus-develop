@@ -1327,7 +1327,7 @@ void Ylm::set_coefficients(void)
 	return;
 }
 
-
+/*
 void Ylm::test1 (void)
 {
 	ModuleBase::Vector3<double> R (20.0, 0.0, 0.0);
@@ -1364,8 +1364,8 @@ void Ylm::test1 (void)
 	}
 	return;
 }
-
-
+*/
+/*
 void Ylm::test2 (void)
 {
 	ModuleBase::Vector3<double> R (0.1,-0.2,0.5);
@@ -1394,7 +1394,7 @@ void Ylm::test2 (void)
 	}
 	return;
 }
-	
+*/	
 	
 void Ylm::rlylm
 (
@@ -1746,7 +1746,7 @@ void Ylm::rlylm
 	return;
 }
 
-
+/*
 void Ylm::test(void)
 {
 	ModuleBase::Vector3<double> R(0.0, 0.0, 1.0);
@@ -1833,7 +1833,7 @@ void Ylm::test(void)
 
 	return;
 }
-
+*/
 
 void Ylm::ZEROS(double u[], const int& n)
 {

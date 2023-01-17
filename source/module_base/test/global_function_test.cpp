@@ -1,5 +1,7 @@
 #include "../global_function.h"
 #include "../global_variable.h"
+#include "../vector3.h"
+#include "../blas_connector.h"
 #include "../tool_quit.h"
 
 #include "gmock/gmock.h"
@@ -45,6 +47,8 @@
  *   - get the first pointer of (const) vector or valarray
  * - Note
  *   - print out warning info in running.log file
+ * - COPYARRAY
+ *   - copy complex or double arrays
  */
 
 inline void EXPECT_COMPLEX_EQ(const std::complex<double>& a, const std::complex<double>& b)
@@ -90,6 +94,18 @@ TEST_F(GlobalFunctionTest, NewPart)
     ifs.close();
 }
 
+TEST_F(GlobalFunctionTest, OutScreen)
+{
+	testing::internal::CaptureStdout();
+	int nbx = 100;
+	double rcut = 10.5;
+	ModuleBase::GlobalFunc::OUT("nbx", nbx);
+	ModuleBase::GlobalFunc::OUT("rcut", rcut);
+	output = testing::internal::GetCapturedStdout();
+	EXPECT_THAT(output,testing::HasSubstr("nbx = 100"));
+	EXPECT_THAT(output,testing::HasSubstr("rcut = 10.5"));
+}
+
 TEST_F(GlobalFunctionTest, OutV1)
 {
     ofs.open("tmp");
@@ -106,11 +122,31 @@ TEST_F(GlobalFunctionTest, OutV2)
 {
     ofs.open("tmp");
     double ecut = 400;
+    long nkpt = 1000;
+    unsigned long nbands = 1000;
+    char para[5] = "abcd";
+    char key[6] = "abcde";
+    char alph[29] = "abcdefghijklmnopqrstuvwxyzxy";
     ModuleBase::GlobalFunc::OUT(ofs, "ecut", ecut);
+    ModuleBase::GlobalFunc::OUT(ofs, "nkpt", nkpt);
+    ModuleBase::GlobalFunc::OUT(ofs, "nbands", nbands);
+    ModuleBase::GlobalFunc::OUT(ofs, "para", para);
+    ModuleBase::GlobalFunc::OUT(ofs, "key", key);
+    ModuleBase::GlobalFunc::OUT(ofs, "alph", alph);
     ofs.close();
     ifs.open("tmp");
     getline(ifs, output);
     EXPECT_THAT(output, testing::HasSubstr("ecut = 400"));
+    getline(ifs, output);
+    EXPECT_THAT(output, testing::HasSubstr("nkpt = 1000"));
+    getline(ifs, output);
+    EXPECT_THAT(output, testing::HasSubstr("nbands = 1000"));
+    getline(ifs, output);
+    EXPECT_THAT(output, testing::HasSubstr("para = abcd"));
+    getline(ifs, output);
+    EXPECT_THAT(output, testing::HasSubstr("key = abcde"));
+    getline(ifs, output);
+    EXPECT_THAT(output, testing::HasSubstr("alph = abcdefghijklmnopqrstuvwxyzxy"));
     ifs.close();
 }
 
@@ -120,14 +156,19 @@ TEST_F(GlobalFunctionTest, OutV3)
     int nx = 100;
     int ny = 125;
     int nz = 375;
+    double ax = 1.1;
+    double ay = 2.2;
+    double az = 3.3;
     ModuleBase::GlobalFunc::OUT(ofs, "grid", nx, ny, nz);
+    ModuleBase::GlobalFunc::OUT(ofs, "direct", ax, ay, az);
     ofs.close();
     ifs.open("tmp");
     getline(ifs, output);
     EXPECT_THAT(output, testing::HasSubstr("[grid] = 100, 125, 375"));
+    getline(ifs, output);
+    EXPECT_THAT(output, testing::HasSubstr("[direct] = 1.1, 2.2, 3.3"));
     ifs.close();
 }
-
 // P for parameters
 TEST_F(GlobalFunctionTest, OutP)
 {
@@ -202,16 +243,75 @@ TEST_F(GlobalFunctionTest, Done)
 
 TEST_F(GlobalFunctionTest, Zero)
 {
+    // int size
     std::complex<double>* porter = nullptr;
+    double* pt = nullptr;
+    bool* poc = nullptr;
+    ModuleBase::Vector3<double>* u = nullptr;
     int size = 1000;
     porter = new std::complex<double>[size];
+    pt = new double[size];
+    poc = new bool[size];
+    u = new ModuleBase::Vector3<double>[size];
+    for (int i = 0; i < size; ++i)
+    {
+	    u[i].set(1.1,2.2,3.3);
+    }
+    double vu = 4.8;
+    double zo = 0.0;
+    bool r = true;
     std::complex<double> value{1.1, 2.2};
     std::complex<double> zero{0.0, 0.0};
     std::fill(&porter[0], &porter[size], value);
+    std::fill(&pt[0],&pt[size],vu);
+    std::fill(&poc[0],&poc[size],r);
     ModuleBase::GlobalFunc::ZEROS(porter, size);
+    ModuleBase::GlobalFunc::ZEROS(pt, size);
+    ModuleBase::GlobalFunc::ZEROS(poc, size);
+    ModuleBase::GlobalFunc::ZEROS(u, size);
     for (int i = 0; i < size; ++i)
+    {
         EXPECT_COMPLEX_EQ(porter[i], zero);
+        EXPECT_DOUBLE_EQ(pt[i],zo);
+        EXPECT_FALSE(poc[i]);
+        EXPECT_DOUBLE_EQ(u[i].x,zo);
+        EXPECT_DOUBLE_EQ(u[i].y,zo);
+        EXPECT_DOUBLE_EQ(u[i].z,zo);
+    }
     delete[] porter;
+    delete[] pt;
+    delete[] poc;
+    delete[] u;
+    // long size
+    long size1= 100;
+    porter = new std::complex<double>[size1];
+    pt = new double[size1];
+    std::fill(&porter[0], &porter[size1], value);
+    std::fill(&pt[0],&pt[size1],vu);
+    ModuleBase::GlobalFunc::ZEROS(porter, size1);
+    ModuleBase::GlobalFunc::ZEROS(pt, size1);
+    for (int i = 0; i < size1; ++i)
+    {
+        EXPECT_COMPLEX_EQ(porter[i], zero);
+        EXPECT_DOUBLE_EQ(pt[i],zo);
+    }
+    delete[] porter;
+    delete[] pt;
+    // unsigned long size
+    unsigned long size2= 500;
+    porter = new std::complex<double>[size2];
+    pt = new double[size2];
+    std::fill(&porter[0], &porter[size2], value);
+    std::fill(&pt[0],&pt[size2],vu);
+    ModuleBase::GlobalFunc::ZEROS(porter, size2);
+    ModuleBase::GlobalFunc::ZEROS(pt, size2);
+    for (int i = 0; i < size2; ++i)
+    {
+        EXPECT_COMPLEX_EQ(porter[i], zero);
+        EXPECT_DOUBLE_EQ(pt[i],zo);
+    }
+    delete[] porter;
+    delete[] pt;
 }
 
 TEST_F(GlobalFunctionTest, Scan)
@@ -268,9 +368,15 @@ TEST_F(GlobalFunctionTest, Dcopy)
     int size = 100;
     std::vector<std::complex<double>> aa(size, std::complex<double>(1.0, 2.0));
     std::vector<std::complex<double>> bb(size);
+    std::vector<double> daa(size,1.1);
+    std::vector<double> dbb(size);
     ModuleBase::GlobalFunc::DCOPY(aa, bb, size);
+    ModuleBase::GlobalFunc::DCOPY(daa, dbb, size);
     for (int i = 0; i < size; ++i)
+    {
         EXPECT_COMPLEX_EQ(bb[i], aa[i]);
+        EXPECT_DOUBLE_EQ(dbb[i], daa[i]);
+    }
 }
 
 TEST_F(GlobalFunctionTest, VectorToPointer)
@@ -286,6 +392,35 @@ TEST_F(GlobalFunctionTest, VectorToPointer)
     EXPECT_EQ(ModuleBase::GlobalFunc::VECTOR_TO_PTR(dd), &dd[0]);
 }
 
+TEST_F(GlobalFunctionTest, COPYARRAY)
+{
+    long size = 100;
+    std::complex<double>* aa = nullptr;
+    std::complex<double>* bb = nullptr;
+    aa = new std::complex<double>[size];
+    bb = new std::complex<double>[size];
+    std::complex<double> value{1.1, 2.2};
+    std::fill(&aa[0], &aa[size], value);
+    ModuleBase::GlobalFunc::COPYARRAY(aa,bb,size);
+    for (int i = 0; i < size; ++i)
+    {
+        EXPECT_COMPLEX_EQ(bb[i], value);
+    }
+    double* daa = nullptr;
+    double* dbb = nullptr;
+    daa = new double[size];
+    dbb = new double[size];
+    std::fill(&daa[0],&daa[size],3.3);
+    ModuleBase::GlobalFunc::COPYARRAY(daa,dbb,size);
+    for (int i = 0; i < size; ++i)
+    {
+        EXPECT_DOUBLE_EQ(dbb[i], 3.3);
+    }
+    delete[] aa;
+    delete[] bb;
+    delete[] daa;
+    delete[] dbb;
+}
 /*
 TEST_F(GlobalFunctionTest, Note)
 {

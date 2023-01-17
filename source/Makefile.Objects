@@ -89,8 +89,6 @@ ${OBJS_DFTU}\
 
 OBJS_MAIN=main.o\
     driver.o\
-    input.o \
-    input_conv.o\
     driver_run.o\
 
 OBJS_BASE=abfs-vector3_order.o\
@@ -330,7 +328,9 @@ OBJS_XC=xc_functional.o\
     xc_funct_corr_gga.o\
     xc_funct_hcth.o\
 
-OBJS_IO=berryphase.o\
+OBJS_IO=input.o\
+    input_conv.o\
+    berryphase.o\
     bessel_basis.o\
     cal_test.o\
     energy_dos_pw.o\
