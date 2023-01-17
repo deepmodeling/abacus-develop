@@ -321,7 +321,6 @@ void LCAO_Matrix::folding_fixedH(const int &ik)
 			Atom* atom1 = &GlobalC::ucell.atoms[T1];
 			const int start = GlobalC::ucell.itiaiw2iwt(T1,I1,0);
 			int index = pv->nlocstart[iat];
-			int index1 = pv->nlocstart[iat];
 
 			// (2) search among all adjacent atoms.
 			for (int ad = 0; ad < adjs.adj_num+1; ++ad)
@@ -441,10 +440,9 @@ void LCAO_Matrix::folding_fixedH(const int &ik)
 #ifdef __DEEPKS
 								if(GlobalV::deepks_scf)
 								{
-									if (ii % 2 == jj % 2)
+									if (iw1_all % 2 == iw2_all % 2)
 									{
-										GlobalC::ld.H_V_delta_k[ik][iic] += GlobalC::ld.H_V_deltaR[index1] * kphase;
-										++index1;
+										GlobalC::ld.H_V_delta_k[ik][iic] += GlobalC::ld.H_V_deltaR[index] * kphase;
 									}
 								}
 #endif
