@@ -19,3 +19,7 @@ if(ENABLE_COVERAGE)
   add_coverage(cell)
 endif()
 
+if(BUILD_TESTING)
+  add_subdirectory(test)
+endif()
+
