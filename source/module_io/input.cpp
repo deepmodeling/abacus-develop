@@ -66,9 +66,9 @@ void Input::Init(const std::string &fn)
     GlobalV::ofs_running << "                                                                                     "
                          << std::endl;
     GlobalV::ofs_running << "                              ABACUS v3.1                                            "
-                         << std::endl;
+                         << std::endl << std::endl;
     GlobalV::ofs_running << "               Atomic-orbital Based Ab-initio Computation at UStc                    "
-                         << std::endl;
+                         << std::endl << std::endl;
     GlobalV::ofs_running << "                     Website: http://abacus.ustc.edu.cn/                             "
                          << std::endl;
     GlobalV::ofs_running << "               Documentation: https://abacus.deepmodeling.com/                       "
@@ -76,7 +76,7 @@ void Input::Init(const std::string &fn)
     GlobalV::ofs_running << "                  Repository: https://github.com/abacusmodeling/abacus-develop       "
                          << std::endl;
     GlobalV::ofs_running << "                              https://github.com/deepmodeling/abacus-develop         "
-                         << std::endl;
+                         << std::endl << std::endl;
     GlobalV::ofs_running << std::setiosflags(ios::right);
 
 #ifdef __MPI
