@@ -191,16 +191,17 @@ void Parallel_Global::read_mpi_parameters(int argc,char **argv)
 
     if (GlobalV::MY_RANK == 0)
     {
-        std::cout << " *********************************************************" << std::endl;
-        std::cout << " *                                                       *" << std::endl;
-        std::cout << " *                  WELCOME TO ABACUS v3.1               *" << std::endl;
-        std::cout << " *                                                       *" << std::endl;
-        std::cout << " *            'Atomic-orbital Based Ab-initio            *" << std::endl;
-        std::cout << " *                  Computation at UStc'                 *" << std::endl;
-        std::cout << " *                                                       *" << std::endl;
-        std::cout << " *          Website: http://abacus.ustc.edu.cn/          *" << std::endl;
-        std::cout << " *                                                       *" << std::endl;
-        std::cout << " *********************************************************" << std::endl;
+        std::cout
+            << "                                                                                     " << std::endl
+            << "                              ABACUS v3.1                                            " << std::endl
+            << std::endl
+            << "               Atomic-orbital Based Ab-initio Computation at UStc                    " << std::endl
+            << std::endl
+            << "                     Website: http://abacus.ustc.edu.cn/                             " << std::endl
+            << "               Documentation: https://abacus.deepmodeling.com/                       " << std::endl
+            << "                  Repository: https://github.com/abacusmodeling/abacus-develop       " << std::endl
+            << "                              https://github.com/deepmodeling/abacus-develop         " << std::endl
+            << std::endl;
         time_t time_now = time(NULL);
         std::cout << " " << ctime(&time_now);
     }
