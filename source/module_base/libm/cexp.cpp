@@ -23,7 +23,7 @@ double __exp (double x);
 
 template<> inline double __mexp (double x) { return __exp (x); }
 template<> inline void __msincos (double x, double *s, double *c) { __sincos (x, s, c); }
-template<> inline double __mhugeval () { return HUGE_VAL_F64; }
+template<> inline double __mhugeval () { return HUGE_VAL; }
 
 template<typename FLOAT>
 inline std::complex<FLOAT>
