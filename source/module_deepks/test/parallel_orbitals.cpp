@@ -35,8 +35,8 @@ namespace Test_Deepks
             trace_loc_col[i] = -1;
         }
 
-        ModuleBase::Memory::record("Parallel_Orbitals","trace_loc_row",GlobalV::NLOCAL,"int");
-        ModuleBase::Memory::record("Parallel_Orbitals","trace_loc_col",GlobalV::NLOCAL,"int");
+        ModuleBase::Memory::record("PO::trace_loc_row",sizeof(int) * GlobalV::NLOCAL);
+        ModuleBase::Memory::record("PO::trace_loc_col",sizeof(int) * GlobalV::NLOCAL);
 
         for (int i=0; i<GlobalV::NLOCAL; i++)
         {

@@ -176,6 +176,15 @@ public:
 			&alpha, b, &ldb, a, &lda,
 			&beta, c, &ldc);
 	}
+    static inline
+    void gemm(const char transa, const char transb, const int m, const int n, const int k,
+              const std::complex<float> alpha, const std::complex<float> *a, const int lda, const std::complex<float> *b, const int ldb,
+              const std::complex<float> beta, std::complex<float> *c, const int ldc)
+    {
+        cgemm_(&transb, &transa, &n, &m, &k,
+               &alpha, b, &ldb, a, &lda,
+               &beta, c, &ldc);
+    }
 	static inline
 	void gemm(const char transa, const char transb, const int m, const int n, const int k,
 		const std::complex<double> alpha, const std::complex<double> *a, const int lda, const std::complex<double> *b, const int ldb,
@@ -185,6 +194,20 @@ public:
 			&alpha, b, &ldb, a, &lda,
 			&beta, c, &ldc);
 	}
+    static inline
+    void gemv(const char trans, const int m, const int n,
+              const std::complex<float> alpha, const std::complex<float> *A, const int lda, const std::complex<float> *X, const int incx,
+              const std::complex<float> beta, std::complex<float> *Y, const int incy)
+    {
+        cgemv_(&trans, &m, &n, &alpha, A, &lda, X, &incx, &beta, Y, &incy);
+    }
+    static inline
+    void gemv(const char trans, const int m, const int n,
+              const std::complex<double> alpha, const std::complex<double> *A, const int lda, const std::complex<double> *X, const int incx,
+              const std::complex<double> beta, std::complex<double> *Y, const int incy)
+    {
+        zgemv_(&trans, &m, &n, &alpha, A, &lda, X, &incx, &beta, Y, &incy);
+    }
 
 	// Peize Lin add 2018-06-12
 	// out = ||x||_2

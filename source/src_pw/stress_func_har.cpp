@@ -10,7 +10,6 @@ void Stress_Func<FPTYPE, Device>::stress_har(ModuleBase::matrix& sigma, ModulePW
 {
     ModuleBase::TITLE("Stress_Func","stress_har");
 	ModuleBase::timer::tick("Stress_Func","stress_har");
-	FPTYPE shart;
 
 	std::complex<FPTYPE> *aux = new std::complex<FPTYPE>[rho_basis->nmaxgr];
 
@@ -34,7 +33,7 @@ void Stress_Func<FPTYPE, Device>::stress_har(ModuleBase::matrix& sigma, ModulePW
 		{ // is = 0
 			for (int ir = irb; ir < ir_end; ++ir)
 			{ // initialize aux
-				aux[ir] = std::complex<double>( chr->rho[0][ir], 0.0 );
+				aux[ir] = std::complex<FPTYPE>( chr->rho[0][ir], 0.0 );
 			}
 		}
 		for (int is = 1; is < GlobalV::NSPIN; is++)
@@ -66,7 +65,7 @@ void Stress_Func<FPTYPE, Device>::stress_har(ModuleBase::matrix& sigma, ModulePW
 		//const FPTYPE fac = ModuleBase::e2 * ModuleBase::FOUR_PI / (GlobalC::ucell.tpiba2 * GlobalC::sf.gg [ig]);
 		//ehart += ( conj( Porter[j] ) * Porter[j] ).real() * fac;
 		//vh_g[ig] = fac * Porter[j];
-		shart= ( conj( aux[ig] ) * aux[ig] ).real()/(GlobalC::ucell.tpiba2 * g2);
+		FPTYPE shart= ( conj( aux[ig] ) * aux[ig] ).real()/(GlobalC::ucell.tpiba2 * g2);
 		for(int l=0;l<3;l++)
 		{
 			for(int m=0;m<l+1;m++)

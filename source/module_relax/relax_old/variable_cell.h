@@ -7,7 +7,7 @@
 
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
-#include "input.h"
+#include "module_io/input.h"
 #include "module_esolver/esolver.h"
 
 class Variable_Cell

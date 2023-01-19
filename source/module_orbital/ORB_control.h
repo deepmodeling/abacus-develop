@@ -1,7 +1,7 @@
 #ifndef ORB_CONTROL_H 
 #define ORB_CONTROL_H 
 
-#include "input.h"
+#include "module_io/input.h"
 #include "module_cell/unitcell.h"
 #include "parallel_orbitals.h"
 #include "ORB_gen_tables.h"

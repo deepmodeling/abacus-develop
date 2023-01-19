@@ -4,7 +4,7 @@
 #ifndef SETCELL_H
 #define SETCELL_H
 
-#include "input.h"
+#include "module_io/input.h"
 #include "module_cell/unitcell.h"
 #include "module_neighbor/sltk_atom_arrange.h"
 #include "module_neighbor/sltk_grid_driver.h"
@@ -106,9 +106,10 @@ public:
 
     static void parameters()
     {
+        GlobalV::global_out_dir = "./";
+        GlobalV::global_readin_dir = "./";
         GlobalV::SEARCH_RADIUS = 8.5 * ModuleBase::ANGSTROM_AU;
         GlobalV::CAL_STRESS = 1;
-        //ModuleBase::Global_File::open_log(GlobalV::ofs_running, "run.log");
 
         INPUT.mdp.md_restart = 0;
         INPUT.mdp.md_dt = 1;
@@ -127,6 +128,8 @@ public:
 
         INPUT.mdp.md_tfreq = 1;
         INPUT.mdp.md_tchain = 4;
+        INPUT.mdp.md_pfreq = 1;
+        INPUT.mdp.md_pchain = 4;
 
         INPUT.mdp.md_damp = 1;
 

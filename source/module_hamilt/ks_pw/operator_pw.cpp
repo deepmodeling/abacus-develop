@@ -38,7 +38,8 @@ typename OperatorPW<FPTYPE, Device>::hpsi_info OperatorPW<FPTYPE, Device>::hPsi(
   std::complex<FPTYPE>* hpsi_pointer = std::get<2>(input);
   if(this->in_place)
   {
-      ModuleBase::GlobalFunc::COPYARRAY(this->hpsi->get_pointer(), hpsi_pointer, this->hpsi->size());
+      // ModuleBase::GlobalFunc::COPYARRAY(this->hpsi->get_pointer(), hpsi_pointer, this->hpsi->size());
+      syncmem_complex_op()(this->ctx, this->ctx, hpsi_pointer, this->hpsi->get_pointer(), this->hpsi->size());
       delete this->hpsi;
       this->hpsi = new psi::Psi<std::complex<FPTYPE>, Device>(hpsi_pointer, *psi_input, 1, n_npwx/psi_input->npol);
   }      
@@ -54,9 +55,11 @@ void OperatorPW<FPTYPE, Device>::act(
 {
 }
 
-namespace hamilt{
+namespace hamilt {
+template class OperatorPW<float, psi::DEVICE_CPU>;
 template class OperatorPW<double, psi::DEVICE_CPU>;
 #if ((defined __CUDA) || (defined __ROCM))
+template class OperatorPW<float, psi::DEVICE_GPU>;
 template class OperatorPW<double, psi::DEVICE_GPU>;
 #endif
 }

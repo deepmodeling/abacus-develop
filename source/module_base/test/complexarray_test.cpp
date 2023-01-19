@@ -1,5 +1,6 @@
 #include"../complexarray.h"
 #include"gtest/gtest.h"
+#include"gmock/gmock.h"
 
 /************************************************
 *  unit test of class ComplexArray and related functions
@@ -68,6 +69,7 @@
 *   - function scale_accumulate()
 *   - function scaled_sum()
 *   - function point_mult()
+*   - function complexArrayxAlloc
 */
 
 //compare two complex by using EXPECT_DOUBLE_EQ()
@@ -75,6 +77,11 @@ void EXPECT_COMPLEX_EQUAL(const std::complex<double>& a,const std::complex<doubl
 {
     EXPECT_DOUBLE_EQ(a.real(),b.real());
     EXPECT_DOUBLE_EQ(a.imag(),b.imag());
+}
+
+namespace ModuleBase
+{
+void complexArrayxAlloc();
 }
 
 class ComplexArray_test : public testing::Test
@@ -462,4 +469,14 @@ TEST_F(ComplexArray_test,point_mult)
     {
         EXPECT_COMPLEX_EQUAL(c2.ptr[i],com1*com2);
     }  
+}
+
+TEST_F(ComplexArray_test,xAlloc)
+{
+//EXPECT_EXIT(ModuleBase::complexArrayxAlloc(),::testing::ExitedWithCode(6),"");
+	std::string output;
+	testing::internal::CaptureStdout();
+	EXPECT_DEATH(ModuleBase::complexArrayxAlloc(),"");
+	output = testing::internal::GetCapturedStdout();
+	EXPECT_THAT(output,testing::HasSubstr("Allocation error for complexArray"));
 }

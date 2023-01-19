@@ -104,13 +104,19 @@ You can change the number after `-j` on your need: set to the number of CPU core
 
 ## Run
 
+If ABACUS is installed into a custom directory using `CMAKE_INSTALL_PREFIX`, please add it to your environment variable `PATH` to locate the correct executable.
+
+```bash
+export PATH=/my-install-dir/:$PATH
+```
+
 Please set OpenMP threads by setting environment variable:
 
 ```bash
 export OMP_NUM_THREADS=1
 ```
 
-Entering a directory containing input files, including parameters, structure file, and pseudo potential files:
+Enter a directory containing a `INPUT` file. Please make sure structure, pseudo potential, or orbital files indicated by `INPUT` is at the correct location.
 
 ```bash
 cd abacus-develop/examples/force/pw_Si2

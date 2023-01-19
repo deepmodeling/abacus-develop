@@ -5,7 +5,7 @@
 #endif
 #include "../module_base/timer.h"
 #include "module_esolver/esolver.h"
-#include "../src_io/print_info.h"
+#include "../module_io/print_info.h"
 
 MDrun::MDrun(MD_parameters& MD_para_in, UnitCell &unit_in):
     mdp(MD_para_in),

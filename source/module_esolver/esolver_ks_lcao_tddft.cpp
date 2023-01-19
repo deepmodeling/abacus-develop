@@ -1,11 +1,13 @@
 #include "esolver_ks_lcao_tddft.h"
-#include "src_io/cal_r_overlap_R.h"
+
+#include "module_io/cal_r_overlap_R.h"
+#include "module_io/density_matrix.h"
 
 //--------------temporary----------------------------
 #include "../module_base/blas_connector.h"
 #include "../module_base/global_function.h"
 #include "../module_base/scalapack_connector.h"
-#include "../src_io/print_info.h"
+#include "../module_io/print_info.h"
 #include "../src_pw/global.h"
 #include "src_lcao/ELEC_evolve.h"
 #include "src_pw/occupy.h"
@@ -50,16 +52,16 @@ void ESolver_KS_LCAO_TDDFT::Init(Input& inp, UnitCell& ucell)
     // this function belongs to cell LOOP
     GlobalC::ppcell.init_vloc(GlobalC::ppcell.vloc, GlobalC::rhopw);
 
-    if(this->pelec == nullptr)
+    if (this->pelec == nullptr)
     {
-        this->pelec = new elecstate::ElecStateLCAO_TDDFT(   &(chr),
-                                                            &(GlobalC::kv),
-                                                            GlobalC::kv.nks,
-                                                            &(this->LOC),
-                                                            &(this->UHM),
-                                                            &(this->LOWF));
+        this->pelec = new elecstate::ElecStateLCAO_TDDFT(&(chr),
+                                                         &(GlobalC::kv),
+                                                         GlobalC::kv.nks,
+                                                         &(this->LOC),
+                                                         &(this->UHM),
+                                                         &(this->LOWF));
     }
-    
+
     //------------------init Basis_lcao----------------------
     // Init Basis should be put outside of Ensolver.
     // * reading the localized orbitals/projectors
@@ -79,33 +81,31 @@ void ESolver_KS_LCAO_TDDFT::Init(Input& inp, UnitCell& ucell)
     this->LOC.ParaV = this->LOWF.ParaV = this->LM.ParaV;
 
     // init Psi, HSolver, ElecState, Hamilt
-    if(this->phsol == nullptr)
+    if (this->phsol == nullptr)
     {
         this->phsol = new hsolver::HSolverLCAO(this->LOWF.ParaV);
         this->phsol->method = GlobalV::KS_SOLVER;
     }
-    
+
     // Inititlize the charge density.
     this->pelec->charge->allocate(GlobalV::NSPIN, GlobalC::rhopw->nrxx, GlobalC::rhopw->npw);
 
     // Initializee the potential.
-    this->pelec->pot = new elecstate::Potential(
-        GlobalC::rhopw,
-        &GlobalC::ucell,
-        &(GlobalC::ppcell.vloc),
-        &(GlobalC::sf.strucFac),
-        &(GlobalC::en.etxc),
-        &(GlobalC::en.vtxc)
-    );
+    this->pelec->pot = new elecstate::Potential(GlobalC::rhopw,
+                                                &GlobalC::ucell,
+                                                &(GlobalC::ppcell.vloc),
+                                                &(GlobalC::sf.strucFac),
+                                                &(GlobalC::en.etxc),
+                                                &(GlobalC::en.vtxc));
     this->pelec_td = dynamic_cast<elecstate::ElecStateLCAO_TDDFT*>(this->pelec);
-
 }
 
 void ESolver_KS_LCAO_TDDFT::eachiterinit(const int istep, const int iter)
 {
     // mohan add 2010-07-16
     // used for pulay mixing.
-    if (iter == 1) GlobalC::CHR_MIX.reset();
+    if (iter == 1)
+        GlobalC::CHR_MIX.reset();
 
     // mohan update 2012-06-05
     GlobalC::en.deband_harris = GlobalC::en.delta_e(this->pelec);
@@ -302,10 +302,13 @@ void ESolver_KS_LCAO_TDDFT::updatepot(const int istep, const int iter)
             this->psi_laststep
                 = new psi::Psi<std::complex<double>>(GlobalC::kv.nks, GlobalV::NBANDS, GlobalV::NLOCAL, nullptr);
 #endif
-        std::complex<double>* tmp = psi[0].get_pointer();
-        for (int index = 0; index < psi[0].size(); ++index)
-            psi_laststep[0].get_pointer()[index] = tmp[index];
-        if (istep > 1)
+        for (int ik = 0; ik < GlobalC::kv.nks; ++ik)
+        {
+            psi->fix_k(ik);
+            for (int index = 0; index < psi[0].size(); ++index)
+                psi_laststep[0].get_pointer()[index] = psi[0].get_pointer()[index];
+        }
+        if (istep > 1 && ELEC_evolve::td_edm == 0)
             this->cal_edm_tddft();
     }
 
@@ -362,16 +365,16 @@ void ESolver_KS_LCAO_TDDFT::afterscf(const int istep)
         {
             ssd << GlobalV::global_out_dir << "SPIN" << is + 1 << "_DM_R";
         }
-        this->LOC.write_dm(is, 0, ssd.str(), precision);
+        ModuleIO::write_dm(is, 0, ssd.str(), precision, this->LOC.out_dm, this->LOC.DM);
 
-/* Broken, please fix it
-        if (GlobalV::out_pot == 1) // LiuXh add 20200701
-        {
-            std::stringstream ssp;
-            ssp << GlobalV::global_out_dir << "SPIN" << is + 1 << "_POT";
-            this->pelec->pot->write_potential(is, 0, ssp.str(), this->pelec->pot->get_effective_v(), precision);
-        }
-*/
+        /* Broken, please fix it
+                if (GlobalV::out_pot == 1) // LiuXh add 20200701
+                {
+                    std::stringstream ssp;
+                    ssp << GlobalV::global_out_dir << "SPIN" << is + 1 << "_POT";
+                    this->pelec->pot->write_potential(is, 0, ssp.str(), this->pelec->pot->get_effective_v(), precision);
+                }
+        */
     }
 
     if (this->conv_elec)
@@ -407,7 +410,7 @@ void ESolver_KS_LCAO_TDDFT::afterscf(const int istep)
 
     if (hsolver::HSolverLCAO::out_mat_hsR)
     {
-        if( !(GlobalV::CALCULATION=="md" && (istep%hsolver::HSolverLCAO::out_hsR_interval!=0)) )
+        if (!(GlobalV::CALCULATION == "md" && (istep % hsolver::HSolverLCAO::out_hsR_interval != 0)))
         {
             this->output_HS_R(istep, this->pelec->pot->get_effective_v()); // LiuXh add 2019-07-15
         }

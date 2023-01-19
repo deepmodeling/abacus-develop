@@ -1,9 +1,35 @@
 #include "gtest/gtest.h"
+#include "gmock/gmock.h"
 #include "setcell.h"
 #include "module_md/verlet.h"
 #include "module_esolver/esolver_lj.h"
 
 #define doublethreshold 1e-12
+
+/************************************************
+ *  unit test of functions in verlet.h
+ ***********************************************/
+
+/**
+ * - Tested Function
+ *   - verlet::setup
+ *     - init before running md, calculate energy, force, and stress of the initial configuration.
+ *
+ *   - verlet::first_half
+ *     - the first half of equation of motion, update velocities and positions
+ *
+ *   - verlet::second_half
+ *     - the second half of equation of motion, update velocities
+ * 
+ *   - verlet::write_restart
+ *     - write the information into files used for MD restarting
+ * 
+ *   - verlet::restart
+ *     - restart MD when md_restart is true
+ * 
+ *   - verlet::outputMD
+ *     - output MD information such as energy, temperature, and pressure
+ */
 
 class Verlet_test : public testing::Test
 {
@@ -237,4 +263,47 @@ TEST_F(Verlet_test, rescale_v)
     EXPECT_NEAR(mdrun->vel[3].x, 0.0001131056175518098, doublethreshold);
     EXPECT_NEAR(mdrun->vel[3].y, 7.7681891430058639e-05, doublethreshold);
     EXPECT_NEAR(mdrun->vel[3].z, -2.8328663233253657e-05, doublethreshold);
+}
+
+TEST_F(Verlet_test, write_restart)
+{
+    mdrun->step_ = 1;
+    mdrun->step_rst_ = 2;
+    mdrun->write_restart();
+
+    std::ifstream ifs("Restart_md.dat");
+    std::string output_str;
+    getline(ifs,output_str);
+    EXPECT_THAT(output_str,testing::HasSubstr("3"));
+    ifs.close();
+}
+
+TEST_F(Verlet_test, restart)
+{
+    mdrun->restart();
+    remove("Restart_md.dat");
+
+    EXPECT_EQ(mdrun->step_rst_, 3);
+}
+
+TEST_F(Verlet_test, outputMD)
+{
+    std::ofstream ofs("running.log");
+    mdrun->outputMD(ofs, true);
+    ofs.close();
+
+    std::ifstream ifs("running.log");
+    std::string output_str;
+    getline(ifs,output_str);
+    getline(ifs,output_str);
+    getline(ifs,output_str);
+    EXPECT_THAT(output_str,testing::HasSubstr(" ------------------------------------------------------------------------------------------------"));
+    getline(ifs,output_str);
+    EXPECT_THAT(output_str,testing::HasSubstr(" Energy              Potential           Kinetic             Temperature         Pressure (KBAR)     "));
+    getline(ifs,output_str);
+    EXPECT_THAT(output_str,testing::HasSubstr(" -0.0076826178       -0.011957819        0.0042752008        300                 1.0846391           "));
+    getline(ifs,output_str);
+    EXPECT_THAT(output_str,testing::HasSubstr(" ------------------------------------------------------------------------------------------------"));
+    ifs.close();
+    remove("running.log");
 }

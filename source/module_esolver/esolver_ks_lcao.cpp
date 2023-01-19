@@ -1,18 +1,20 @@
 #include "esolver_ks_lcao.h"
-#include "src_io/cal_r_overlap_R.h"
+#include "module_io/cal_r_overlap_R.h"
+#include "module_io/density_matrix.h"
 
 //--------------temporary----------------------------
 #include "../module_base/global_function.h"
-#include "../src_io/print_info.h"
+#include "../module_io/print_info.h"
 #include "../src_pw/global.h"
 #include "src_lcao/ELEC_evolve.h"
-#include "src_lcao/dftu.h"
+#include "module_dftu/dftu.h"
 #include "src_lcao/dmft.h"
 #include "src_pw/occupy.h"
 #include "src_pw/symmetry_rho.h"
 #include "src_pw/threshold_elec.h"
 #ifdef __EXX
-#include "module_rpa/rpa.h"
+// #include "module_rpa/rpa.h"
+#include "module_ri/RPA_LRI.h"
 #endif
 
 #ifdef __DEEPKS
@@ -51,7 +53,7 @@ void ESolver_KS_LCAO::Init(Input& inp, UnitCell& ucell)
 
     if (GlobalV::CALCULATION == "get_S")
     {
-        if (ModuleSymmetry::Symmetry::symm_flag)
+        if (ModuleSymmetry::Symmetry::symm_flag == 1)
         {
             GlobalC::symm.analy_sys(ucell, GlobalV::ofs_running);
             ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "SYMMETRY");
@@ -125,7 +127,7 @@ void ESolver_KS_LCAO::Init(Input& inp, UnitCell& ucell)
             }
 
 			// GlobalC::exx_lcao.init();
-            if(GlobalV::GAMMA_ONLY_LOCAL)
+            if(GlobalC::exx_info.info_ri.real_number)
                 GlobalC::exx_lri_double.init(MPI_COMM_WORLD);
             else
                 GlobalC::exx_lri_complex.init(MPI_COMM_WORLD);
@@ -283,8 +285,6 @@ void ESolver_KS_LCAO::Init_Basis_lcao(ORB_control& orb_con, Input& inp, UnitCell
 
 void ESolver_KS_LCAO::eachiterinit(const int istep, const int iter)
 {
-    if (GlobalV::dft_plus_u)
-        GlobalC::dftu.iter_dftu = iter;
 
     // mohan add 2010-07-16
     // used for pulay mixing.
@@ -348,7 +348,7 @@ void ESolver_KS_LCAO::eachiterinit(const int istep, const int iter)
         if (!GlobalC::exx_info.info_global.separate_loop && this->two_level_step)
         {
             //GlobalC::exx_lcao.cal_exx_elec(this->LOC, this->LOWF.wfc_k_grid);
-            if(GlobalV::GAMMA_ONLY_LOCAL)
+            if(GlobalC::exx_info.info_ri.real_number)
                 GlobalC::exx_lri_double.cal_exx_elec(this->LOC, *this->LOWF.ParaV);
             else
                 GlobalC::exx_lri_complex.cal_exx_elec(this->LOC, *this->LOWF.ParaV);
@@ -404,6 +404,17 @@ void ESolver_KS_LCAO::hamilt2density(int istep, int iter, double ethr)
         GlobalC::en.eband = this->pelec->eband;
         GlobalC::en.demet = this->pelec->demet;
         GlobalC::en.ef = this->pelec->ef;
+        if (GlobalV::out_bandgap)
+        {
+            if (!GlobalV::TWO_EFERMI)
+            {
+                GlobalC::en.cal_bandgap(this->pelec);
+            }
+            else
+            {
+                GlobalC::en.cal_bandgap_updw(this->pelec);
+            }
+        }
     }
     else
     {
@@ -429,7 +440,7 @@ void ESolver_KS_LCAO::hamilt2density(int istep, int iter, double ethr)
         {
             XC_Functional::set_xc_type(GlobalC::ucell.atoms[0].ncpp.xc_func);
             //GlobalC::exx_lcao.cal_exx_elec(this->LOC, this->LOWF.wfc_k_grid);
-            if(GlobalV::GAMMA_ONLY_LOCAL)
+            if(GlobalC::exx_info.info_ri.real_number)
                 GlobalC::exx_lri_double.cal_exx_elec(this->LOC, *this->LOWF.ParaV);
             else
                 GlobalC::exx_lri_complex.cal_exx_elec(this->LOC, *this->LOWF.ParaV);
@@ -446,11 +457,13 @@ void ESolver_KS_LCAO::hamilt2density(int istep, int iter, double ethr)
     // the local occupation number matrix and energy correction
     if (GlobalV::dft_plus_u)
     {
-        if (GlobalV::GAMMA_ONLY_LOCAL)
-            GlobalC::dftu.cal_occup_m_gamma(iter, this->LOC.dm_gamma);
-        else
-            GlobalC::dftu.cal_occup_m_k(iter, this->LOC.dm_k);
-
+        if(GlobalC::dftu.omc!=2)
+        {
+            if (GlobalV::GAMMA_ONLY_LOCAL)
+                GlobalC::dftu.cal_occup_m_gamma(iter, this->LOC.dm_gamma);
+            else
+                GlobalC::dftu.cal_occup_m_k(iter, this->LOC.dm_k);
+        }
         GlobalC::dftu.cal_energy_correction(istep);
         GlobalC::dftu.output();
     }
@@ -552,7 +565,22 @@ void ESolver_KS_LCAO::eachiterfinish(int iter)
             ssd << GlobalV::global_out_dir << "tmp"
                 << "_SPIN" << is + 1 << "_DM_R";
         }
-        this->LOC.write_dm(is, iter, ssd.str(), precision);
+        ModuleIO::write_dm(is, iter, ssd.str(), precision, this->LOC.out_dm, this->LOC.DM);
+    }
+
+    if(XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
+    {
+        const int precision = 3;
+        for (int is = 0; is < GlobalV::NSPIN; is++)
+        {
+            std::stringstream ssc;
+            std::stringstream ss1;
+            ssc << GlobalV::global_out_dir << "tmp"
+                << "_SPIN" << is + 1 << "_TAU";
+            pelec->charge->write_rho(pelec->charge->kin_r_save[is], is, iter, ssc.str(), precision); // mohan add 2007-10-17
+            ss1 << GlobalV::global_out_dir << "tmp" << "_SPIN" << is + 1 << "_TAU.cube";
+            pelec->charge->write_rho_cube(pelec->charge->kin_r_save[is], is, ss1.str(), 3);
+        }
     }
 
     // (11) calculate the total energy.
@@ -603,10 +631,10 @@ void ESolver_KS_LCAO::afterscf(const int istep)
         {
             ssd << GlobalV::global_out_dir << "SPIN" << is + 1 << "_DM_R";
         }
-        this->LOC.write_dm(is, 0, ssd.str(), precision);
+        ModuleIO::write_dm(is, 0, ssd.str(), precision, this->LOC.out_dm, this->LOC.DM);
         if(this->LOC.out_dm1 == 1)
         {
-            this->LOC.write_dm1(is, istep, dm2d);
+            ModuleIO::write_dm1(is, istep, dm2d, this->LOC.ParaV, this->LOC.DMR_sparse);
         }
 /* Broken, please fix it
         if (GlobalV::out_pot == 1) // LiuXh add 20200701
@@ -616,6 +644,19 @@ void ESolver_KS_LCAO::afterscf(const int istep)
             this->pelec->pot->write_potential(is, 0, ssp.str(), this->pelec->pot->get_effective_v(), precision);
         }
 */
+    }
+
+    if(XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
+    {
+        for (int is = 0; is < GlobalV::NSPIN; is++)
+        {
+            std::stringstream ssc;
+            std::stringstream ss1;
+            ssc << GlobalV::global_out_dir << "SPIN" << is + 1 << "_TAU";
+            ss1 << GlobalV::global_out_dir << "SPIN" << is + 1 << "_TAU.cube";
+            pelec->charge->write_rho(pelec->charge->kin_r_save[is], is, 0, ssc.str()); // mohan add 2007-10-17
+            pelec->charge->write_rho_cube(pelec->charge->kin_r_save[is], is, ss1.str(), 3);
+        }
     }
 
     if(this->LOC.out_dm1 == 1)
@@ -631,7 +672,7 @@ void ESolver_KS_LCAO::afterscf(const int istep)
     if (GlobalC::exx_info.info_global.cal_exx)                         // Peize Lin add if 2022.11.14
     {
         const std::string file_name_exx = GlobalV::global_out_dir + "HexxR_" + std::to_string(GlobalV::MY_RANK);
-        if(GlobalV::GAMMA_ONLY_LOCAL)
+        if(GlobalC::exx_info.info_ri.real_number)
             GlobalC::exx_lri_double.write_Hexxs(file_name_exx);
         else
             GlobalC::exx_lri_complex.write_Hexxs(file_name_exx);
@@ -683,67 +724,51 @@ void ESolver_KS_LCAO::afterscf(const int istep)
 
     if (GlobalV::deepks_out_labels) // caoyu add 2021-06-04
     {
-        int nocc = GlobalV::nelec / 2;
-        if (GlobalV::deepks_bandgap)
-        {
-            if (GlobalV::GAMMA_ONLY_LOCAL)
-            {
-                GlobalC::ld.save_npy_o(this->pelec->ekb(0, nocc) - this->pelec->ekb(0, nocc - 1), "o_tot.npy");
-            }
-            else
-            {
-                double homo = this->pelec->ekb(0, nocc - 1);
-                double lumo = this->pelec->ekb(0, nocc);
-                for (int ik = 1; ik < GlobalC::kv.nks; ik++)
-                {
-                    if (homo < this->pelec->ekb(ik, nocc - 1))
-                    {
-                        homo = this->pelec->ekb(ik, nocc - 1);
-                        GlobalC::ld.h_ind = ik;
-                    }
-                    if (lumo > this->pelec->ekb(ik, nocc))
-                    {
-                        lumo = this->pelec->ekb(ik, nocc);
-                        GlobalC::ld.l_ind = ik;
-                    }
-                }
-                GlobalC::ld.save_npy_o(lumo - homo - GlobalC::ld.o_delta, "o_tot.npy");
-                GlobalV::ofs_running << " HOMO index is " << GlobalC::ld.h_ind << std::endl;
-                GlobalV::ofs_running << " HOMO energy " << homo << std::endl;
-                GlobalV::ofs_running << " LUMO index is " << GlobalC::ld.l_ind << std::endl;
-                GlobalV::ofs_running << " LUMO energy " << lumo << std::endl;
-            }
-        }
-
         GlobalC::ld.save_npy_e(GlobalC::en.etot, "e_tot.npy");
         if (GlobalV::deepks_scf)
         {
             GlobalC::ld.save_npy_e(GlobalC::en.etot - GlobalC::ld.E_delta,
                                    "e_base.npy"); // ebase :no deepks E_delta including
-            if (GlobalV::deepks_bandgap)
+        }
+        else // deepks_scf = 0; base calculation
+        {
+            GlobalC::ld.save_npy_e(GlobalC::en.etot, "e_base.npy"); // no scf, e_tot=e_base
+        }
+
+        if (GlobalV::deepks_bandgap)
+        {
+            int nocc = GlobalV::nelec / 2;
+            int nks = GlobalC::kv.nks;
+            ModuleBase::matrix deepks_bands;
+            deepks_bands.create(nks,1);
+            for (int iks=0; iks<nks; iks++)
+            {
+                for (int hl=0; hl < 1; hl++)
+                {
+                    deepks_bands(iks,hl) = this->pelec->ekb(iks, nocc+hl) - this->pelec->ekb(iks, nocc-1+hl);
+                }   
+            }
+            GlobalC::ld.save_npy_o(deepks_bands, "o_tot.npy", nks);
+            if (GlobalV::deepks_scf)
             {
                 int nocc = GlobalV::nelec / 2;
-
                 ModuleBase::matrix wg_hl;
                 if (GlobalV::GAMMA_ONLY_LOCAL)
                 {
                     wg_hl.create(GlobalV::NSPIN, GlobalV::NBANDS);
-
+                    std::vector<std::vector<ModuleBase::matrix>> dm_bandgap_gamma;
+                    dm_bandgap_gamma.resize(GlobalV::NSPIN);
                     for (int is = 0; is < GlobalV::NSPIN; is++)
                     {
-                        for (int ib = 0; ib < GlobalV::NBANDS; ib++)
+                        for (int ib = 0; ib < 1; ib++)
                         {
-                            wg_hl(is, ib) = 0.0;
-                            if (ib == nocc - 1)
-                                wg_hl(is, ib) = -1.0;
-                            else if (ib == nocc)
-                                wg_hl(is, ib) = 1.0;
+                            wg_hl.zero_out();
+                            wg_hl(is, ib+nocc-1) = -1.0;
+                            wg_hl(is, ib+nocc) = 1.0;
+                            dm_bandgap_gamma[ib].resize(GlobalV::NSPIN);
+                            elecstate::cal_dm(this->LOWF.ParaV, wg_hl, this->psid[0], dm_bandgap_gamma[ib]);
                         }
                     }
-
-                    std::vector<ModuleBase::matrix> dm_bandgap_gamma;
-                    dm_bandgap_gamma.resize(GlobalV::NSPIN);
-                    elecstate::cal_dm(this->LOWF.ParaV, wg_hl, this->psid[0], dm_bandgap_gamma);
 
                     GlobalC::ld.cal_orbital_precalc(dm_bandgap_gamma,
                                                     GlobalC::ucell.nat,
@@ -751,35 +776,31 @@ void ESolver_KS_LCAO::afterscf(const int istep)
                                                     GlobalC::ORB,
                                                     GlobalC::GridD,
                                                     *this->LOWF.ParaV);
+                    
 
-                    GlobalC::ld.save_npy_orbital_precalc(GlobalC::ucell.nat);
-
-                    GlobalC::ld.cal_o_delta(dm_bandgap_gamma, *this->LOWF.ParaV);
-                    GlobalC::ld.save_npy_o(this->pelec->ekb(0, nocc) - this->pelec->ekb(0, nocc - 1)
-                                               - GlobalC::ld.o_delta,
-                                           "o_base.npy");
-                }
+                    GlobalC::ld.save_npy_orbital_precalc(GlobalC::ucell.nat, nks);
+                    GlobalC::ld.cal_o_delta(dm_bandgap_gamma, *this->LOWF.ParaV);                    
+                    GlobalC::ld.save_npy_o(deepks_bands - GlobalC::ld.o_delta,"o_base.npy", nks);
+                } // end deepks_scf gamma-only;
                 else // multi-k bandgap label
                 {
                     wg_hl.create(GlobalC::kv.nks, GlobalV::NBANDS);
+                    std::vector<std::vector<ModuleBase::ComplexMatrix>> dm_bandgap_k;
+                    dm_bandgap_k.resize(1);
 
-                    for (int ik = 0; ik < GlobalC::kv.nks; ik++)
+                    for (int ib = 0; ib < 1; ib++)
                     {
-                        for (int ib = 0; ib < GlobalV::NBANDS; ib++)
+                        wg_hl.zero_out();
+                        for (int ik = 0; ik < GlobalC::kv.nks; ik++)
                         {
-                            wg_hl(ik, ib) = 0.0;
-
-                            if (ik == GlobalC::ld.h_ind && ib == nocc - 1)
-                                wg_hl(ik, ib) = -1.0;
-                            else if (ik == GlobalC::ld.l_ind && ib == nocc)
-                                wg_hl(ik, ib) = 1.0;
+                            wg_hl(ik, ib+nocc-1) = -1.0;
+                            wg_hl(ik, ib+nocc) = 1.0;
                         }
+                        dm_bandgap_k[ib].resize(GlobalC::kv.nks);
+                        elecstate::cal_dm(this->LOWF.ParaV, wg_hl, this->psi[0], dm_bandgap_k[ib]);
                     }
-                    std::vector<ModuleBase::ComplexMatrix> dm_bandgap_k;
-                    dm_bandgap_k.resize(GlobalC::kv.nks);
-                    elecstate::cal_dm(this->LOWF.ParaV, wg_hl, this->psi[0], dm_bandgap_k);
-                    GlobalC::ld.cal_o_delta_k(dm_bandgap_k, *this->LOWF.ParaV, GlobalC::kv.nks);
-
+                    
+                    //GlobalC::ld.cal_o_delta_k(dm_bandgap_k, *this->LOWF.ParaV, GlobalC::kv.nks);
                     GlobalC::ld.cal_orbital_precalc_k(dm_bandgap_k,
                                                       GlobalC::ucell.nat,
                                                       GlobalC::kv.nks,
@@ -788,37 +809,18 @@ void ESolver_KS_LCAO::afterscf(const int istep)
                                                       GlobalC::ORB,
                                                       GlobalC::GridD,
                                                       *this->LOWF.ParaV);
-                    GlobalC::ld.save_npy_orbital_precalc(GlobalC::ucell.nat);
-
+                    GlobalC::ld.save_npy_orbital_precalc(GlobalC::ucell.nat,nks);
                     GlobalC::ld.cal_o_delta_k(dm_bandgap_k, *this->LOWF.ParaV, GlobalC::kv.nks);
-                    GlobalC::ld.save_npy_o(this->pelec->ekb(GlobalC::ld.l_ind, nocc)
-                                               - this->pelec->ekb(GlobalC::ld.h_ind, nocc - 1) - GlobalC::ld.o_delta,
-                                           "o_base.npy");
-                }
-            }
-        }
-        else // deepks_scf = 0; base calculation
-        {
-            GlobalC::ld.save_npy_e(GlobalC::en.etot, "e_base.npy"); // no scf, e_tot=e_base
-            if (GlobalV::deepks_bandgap)
-            {
-                if (GlobalV::GAMMA_ONLY_LOCAL)
-                {
-                    GlobalC::ld.save_npy_o(this->pelec->ekb(0, nocc) - this->pelec->ekb(0, nocc - 1),
-                                           "o_base.npy"); // no scf, o_tot=o_base
-                }
-                else
-                {
-                    GlobalC::ld.save_npy_o(this->pelec->ekb(GlobalC::ld.l_ind, nocc)
-                                               - this->pelec->ekb(GlobalC::ld.h_ind, nocc - 1),
-                                           "o_base.npy");
-                }
-            }
-        }
-    }
+                    GlobalC::ld.save_npy_o(deepks_bands - GlobalC::ld.o_delta,"o_base.npy",nks);
+                } //end deepks_scf multi-k
+            } //end deepks_scf == 1
+            else //deepks_scf == 0
+            { 
+                GlobalC::ld.save_npy_o(deepks_bands, "o_base.npy",nks); // no scf, o_tot=o_base
+            } //end deepks_scf == 0
+        }// end bandgap label
+    } // end deepks_out_labels
 #endif
-
-    // }
 
     // 3. DeePKS PDM and descriptor
 #ifdef __DEEPKS
@@ -847,6 +849,7 @@ void ESolver_KS_LCAO::afterscf(const int istep)
                                            GlobalC::kv.nks,
                                            GlobalC::kv.kvec_d);
         }
+        GlobalC::ld.check_projected_dm(); //print out the projected dm for NSCF calculaiton
         GlobalC::ld.cal_descriptor(); // final descriptor
         GlobalC::ld.check_descriptor(GlobalC::ucell);
 
@@ -880,9 +883,13 @@ void ESolver_KS_LCAO::afterscf(const int istep)
 #ifdef __EXX
     if(INPUT.rpa)
     {
-        ModuleRPA::DFT_RPA_interface rpa_interface(GlobalC::exx_info.info_global);
-        rpa_interface.rpa_exx_lcao().info.files_abfs = GlobalV::rpa_orbitals;
-        rpa_interface.out_for_RPA(*(this->LOWF.ParaV), *(this->psi), this->LOC, this->pelec);
+        // ModuleRPA::DFT_RPA_interface rpa_interface(GlobalC::exx_info.info_global);
+        // rpa_interface.rpa_exx_lcao().info.files_abfs = GlobalV::rpa_orbitals;
+        // rpa_interface.out_for_RPA(*(this->LOWF.ParaV), *(this->psi), this->LOC, this->pelec);
+        RPA_LRI<double> rpa_lri_double(GlobalC::exx_info.info_ri);
+        rpa_lri_double.cal_postSCF_exx(MPI_COMM_WORLD,this->LOC, *this->LOWF.ParaV);
+        rpa_lri_double.init(MPI_COMM_WORLD);
+        rpa_lri_double.out_for_RPA(*(this->LOWF.ParaV), *(this->psi), this->LOC, this->pelec);
     }
 #endif
     if (hsolver::HSolverLCAO::out_mat_hsR)
@@ -988,7 +995,7 @@ bool ESolver_KS_LCAO::do_after_converge(int& iter)
             }
 
             //GlobalC::exx_lcao.cal_exx_elec(this->LOC, this->LOWF.wfc_k_grid);
-			if(GlobalV::GAMMA_ONLY_LOCAL)
+			if(GlobalC::exx_info.info_ri.real_number)
 				GlobalC::exx_lri_double.cal_exx_elec(this->LOC, *this->LOWF.ParaV);
 			else
 				GlobalC::exx_lri_complex.cal_exx_elec(this->LOC, *this->LOWF.ParaV);

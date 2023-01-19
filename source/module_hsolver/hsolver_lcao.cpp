@@ -2,7 +2,7 @@
 
 #include "diago_blas.h"
 #include "module_base/timer.h"
-#include "src_io/write_HS.h"
+#include "module_io/write_HS.h"
 
 #ifdef __ELPA
 #include "diago_elpa.h"

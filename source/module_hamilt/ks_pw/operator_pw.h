@@ -23,6 +23,7 @@ class OperatorPW : public Operator<std::complex<FPTYPE>, Device>
         std::complex<FPTYPE>* tmhpsi)const;
 
     std::string classname = "";
+    using syncmem_complex_op = psi::memory::synchronize_memory_op<std::complex<FPTYPE>, Device, Device>;
 };
 
 }//end namespace hamilt

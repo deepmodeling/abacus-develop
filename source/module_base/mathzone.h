@@ -163,15 +163,6 @@ class Mathzone
         return;
     }
 
-    void To_Polar_Coordinate
-    (
-    const double &x_cartesian,
-    const double &y_cartesian,
-    const double &z_cartesian,
-    double &r,
-    double &theta,
-    double &phi);
-
     template<typename T>
     static ModuleBase::Vector3<T> latvec_projection(const std::array<ModuleBase::Vector3<T>,3> &latvec)
     {

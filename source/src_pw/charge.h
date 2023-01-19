@@ -45,6 +45,7 @@ public:
 
     double *start_mag_type;
     double *start_mag_atom;
+    int prenspin = 1;
 
     void init_rho();
 	// mohan update 2021-02-20

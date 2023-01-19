@@ -1,7 +1,7 @@
 INPUT_PARAMETERS
 #Parameters	(System)
 suffix                  autotest
-ntype			1
+
 nbands			4
 stru_file		STRU
 kpoint_file		KPT

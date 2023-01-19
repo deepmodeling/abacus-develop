@@ -1,6 +1,5 @@
 INPUT_PARAMETERS
 # Created by Atomic Simulation Enviroment
-ntype               1
 calculation         cell-relax
 relax_nmax	    100
 force_thr_ev        0.01

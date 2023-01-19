@@ -2,7 +2,7 @@
 
 #include "module_base/global_variable.h"
 #include "module_base/timer.h"
-#include "src_lcao/dftu.h"
+#include "module_dftu/dftu.h"
 #include "src_lcao/global_fp.h"
 #include "src_pw/global.h"
 #ifdef __DEEPKS

@@ -298,6 +298,13 @@ void LCAO_Deepks::allocate_V_delta(const int nat, const int nloc, const int nks)
         //gdmx is used only in calculating gvx
     }
 
+    if (GlobalV::deepks_bandgap)
+    {
+        //init o_delta
+        o_delta.create(nks, 1);
+        
+    }
+
     return;
 }
 
@@ -310,38 +317,45 @@ void LCAO_Deepks::allocate_V_deltaR(const int nnr)
     ModuleBase::GlobalFunc::ZEROS(H_V_deltaR, nnr);
 }
 
-void LCAO_Deepks::init_orbital_pdm_shell(void)
+void LCAO_Deepks::init_orbital_pdm_shell(const int nks)
 {
     
-    this->orbital_pdm_shell = new double** [1];
+    this->orbital_pdm_shell = new double*** [nks];
 
-    for (int hl=0; hl<1; hl++)
+    for (int iks=0; iks<nks; iks++)
     {
-        this->orbital_pdm_shell[hl] = new double* [this->inlmax];
-
-        for(int inl = 0; inl < this->inlmax; inl++)
+        this->orbital_pdm_shell[iks] = new double** [1];
+        for (int hl=0; hl < 1; hl++)
         {
-            this->orbital_pdm_shell[hl][inl] = new double [(2 * this->lmaxd + 1) * (2 * this->lmaxd + 1)];
-            ModuleBase::GlobalFunc::ZEROS(orbital_pdm_shell[hl][inl], (2 * this->lmaxd + 1) * (2 * this->lmaxd + 1));
-        }
+            this->orbital_pdm_shell[iks][hl] = new double* [this->inlmax];
 
+            for(int inl = 0; inl < this->inlmax; inl++)
+            {
+                this->orbital_pdm_shell[iks][hl][inl] = new double [(2 * this->lmaxd + 1) * (2 * this->lmaxd + 1)];
+                ModuleBase::GlobalFunc::ZEROS(orbital_pdm_shell[iks][hl][inl], (2 * this->lmaxd + 1) * (2 * this->lmaxd + 1));
+            }
+        }
     }
 
     return;
 }
 
 
-void LCAO_Deepks::del_orbital_pdm_shell(void)
+void LCAO_Deepks::del_orbital_pdm_shell(const int nks)
 {
-    for (int hl=0; hl<1; hl++)
+    for (int iks=0; iks<nks; iks++)
     {
-        for (int inl = 0;inl < this->inlmax; inl++)
+        for (int hl=0; hl<1; hl++)
         {
-            delete[] this->orbital_pdm_shell[hl][inl];
+            for (int inl = 0;inl < this->inlmax; inl++)
+            {
+                delete[] this->orbital_pdm_shell[iks][hl][inl];
+            }
+            delete[] this->orbital_pdm_shell[iks][hl];
         }
-        delete[] this->orbital_pdm_shell[hl];
+        delete[] this->orbital_pdm_shell[iks];
     }
-    delete[] this->orbital_pdm_shell;
+     delete[] this->orbital_pdm_shell;    
 
     return;
 }

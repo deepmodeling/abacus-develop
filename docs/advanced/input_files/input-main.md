@@ -14,16 +14,16 @@
   [nb2d](#nb2d) | [lmaxmax](#lmaxmax) | [lcao_ecut](#lcao_ecut) | [lcao_dk](#lcao_dk) | [lcao_dr](#lcao_dr) | [lcao_rmax](#lcao_rmax) | [search_radius](#search_radius) | [search_pbc](#search_pbc) | [bx,by,bz](#bx-by-bz)
 - [Electronic structure](#electronic-structure)
 
-  [basis_type](#basis_type) | [ks_solver](#ks_solver) | [nbands](#nbands) | [nbands_istate](#nbands_istate) | [nspin](#nspin) | [smearing_method](#smearing_method) | [smearing_sigma](#smearing_sigma) | [smearing_sigma_temp](#smearing_sigma_temp) | [mixing_type](#mixing_type) | [mixing_beta](#mixing_beta) | [mixing_ndim](#mixing_ndim) | [mixing_gg0](#mixing_gg0) | [gamma_only](#gamma_only) | [printe](#printe) | [scf_nmax](#scf_nmax) | [scf_thr](#scf_thr) | [chg_extrap](#chg_extrap) | [lspinorb](#lspinorb) | [noncolin](#noncolin) | [soc_lambda](#soc_lambda)
+  [basis_type](#basis_type) | [ks_solver](#ks_solver) | [nbands](#nbands) | [nbands_istate](#nbands_istate) | [nspin](#nspin) | [smearing_method](#smearing_method) | [smearing_sigma](#smearing_sigma) | [smearing_sigma_temp](#smearing_sigma_temp) | [mixing_type](#mixing_type) | [mixing_beta](#mixing_beta) | [mixing_ndim](#mixing_ndim) | [mixing_gg0](#mixing_gg0) | [mixing_tau](#mixing_tau) | [mixing_dftu](#mixing_dftu) | [gamma_only](#gamma_only) | [printe](#printe) | [scf_nmax](#scf_nmax) | [scf_thr](#scf_thr) | [chg_extrap](#chg_extrap) | [lspinorb](#lspinorb) | [noncolin](#noncolin) | [soc_lambda](#soc_lambda)
 - [Electronic structure (SDFT)](#electronic-structure-sdft)
 
   [method_sto](#method_sto) | [nbands_sto](#nbands_sto) | [nche_sto](#nche_sto) | [emin_sto](#emin_sto) | [emax_sto](#emax_sto) | [seed_sto](#seed_sto) | [initsto_freq](#initsto_freq) | [npart_sto](#npart_sto)
 - [Geometry relaxation](#geometry-relaxation)
 
-  [relax_nmax](#relax_nmax) | [relax_method](#relax_method) | [relax_cg_thr](#relax_cg_thr) | [relax_bfgs_w1](#relax_bfgs_w1) | [relax_bfgs_w2](#relax_bfgs_w2) | [relax_bfgs_rmax](#relax_bfgs_rmax) | [relax_bfgs_rmin](#relax_bfgs_rmin) | [relax_bfgs_init](#relax_bfgs_init) | [cal_force](#cal_force) | [force_thr](#force_thr) | [force_thr_ev](#force_thr_ev) | [force_thr_ev2](#force_thr_ev2) | [cal_stress](#cal_stress) | [stress_thr](#stress_thr) | [press1, press2, press3](#press1-press2-press3) | [fixed_axes](#fixed_axes) | [cell_factor](#cell_factor) | [fixed_ibrav](#fixed_ibrav) | [relax_new](#relax_new)
+  [relax_nmax](#relax_nmax) | [relax_method](#relax_method) | [relax_cg_thr](#relax_cg_thr) | [relax_bfgs_w1](#relax_bfgs_w1) | [relax_bfgs_w2](#relax_bfgs_w2) | [relax_bfgs_rmax](#relax_bfgs_rmax) | [relax_bfgs_rmin](#relax_bfgs_rmin) | [relax_bfgs_init](#relax_bfgs_init) | [cal_force](#cal_force) | [force_thr](#force_thr) | [force_thr_ev](#force_thr_ev) | [force_thr_ev2](#force_thr_ev2) | [cal_stress](#cal_stress) | [stress_thr](#stress_thr) | [press1, press2, press3](#press1-press2-press3) | [fixed_axes](#fixed_axes) | [cell_factor](#cell_factor) | [fixed_ibrav](#fixed_ibrav) | [relax_new](#relax_new) | [relax_scale_force](#relax_scale_force)
 - [Variables related to output information](#variables-related-to-output-information)
 
-  [out_force](#out_force) | [out_mul](#out_mul) | [out_freq_elec](#out_freq_elec) | [out_freq_ion](#out_freq_ion) | [out_chg](#out_chg) | [out_pot](#out_pot) | [out_dm](#out_dm) | [out_wfc_pw](#out_wfc_pw) | [out_wfc_r](#out_wfc_r) | [out_wfc_lcao](#out_wfc_lcao) | [out_dos](#out_dos) | [out_band](#out_band) | [out_proj_band](#out_proj_band) | [out_stru](#out_stru) | [out_level](#out_level) | [out_alllog](#out_alllog) | [out_mat_hs](#out_mat_hs) | [out_mat_r](#out_mat_r) | [out_mat_hs2](#out_mat_hs2) | [out_hs2_interval](#out_hs2_interval) [out_element_info](#out_element_info) | [restart_save](#restart_save) | [restart_load](#restart_load) | [dft_plus_dmft](#dft_plus_dmft) | [rpa](#rpa)
+  [out_force](#out_force) | [out_mul](#out_mul) | [out_freq_elec](#out_freq_elec) | [out_freq_ion](#out_freq_ion) | [out_chg](#out_chg) | [out_pot](#out_pot) | [out_dm](#out_dm) | [out_wfc_pw](#out_wfc_pw) | [out_wfc_r](#out_wfc_r) | [out_wfc_lcao](#out_wfc_lcao) | [out_dos](#out_dos) | [out_band](#out_band) | [out_proj_band](#out_proj_band) | [out_stru](#out_stru) | [out_bandgap](#out_bandgap) | [out_level](#out_level) | [out_alllog](#out_alllog) | [out_mat_hs](#out_mat_hs) | [out_mat_r](#out_mat_r) | [out_mat_hs2](#out_mat_hs2) | [out_hs2_interval](#out_hs2_interval) [out_element_info](#out_element_info) | [restart_save](#restart_save) | [restart_load](#restart_load) | [dft_plus_dmft](#dft_plus_dmft) | [rpa](#rpa)
 - [Density of states](#density-of-states)
 
   [dos_edelta_ev](#dos_edelta_ev) | [dos_sigma](#dos_sigma) | [dos_scale](#dos_scale) | [dos_emin_ev](#dos_emin_ev) | [dos_emax_ev](#dos_emax_ev) | [dos_nche](#dos_nche)
@@ -41,13 +41,13 @@
   [berry_phase](#berry_phase) | [gdir](#gdir) | [towannier90](#towannier90) | [nnkpfile](#nnkpfile) | [wannier_spin](#wannier_spin)
 - [TDDFT: time dependent density functional theory](#tddft-time-dependent-density-functional-theory) (Under tests)
 
-  [td_scf_thr](#td_scf_thr) | [td_dt](#td_dt) | [td_force_dt](#td_force_dt) | [td_vext](#td_vext) | [td_vext_dire](#td_vext_dire) | [td_timescale](#td_timescale) | [td_vexttype](#td_vexttype) | [td_vextout](#td_vextout) | [td_dipoleout](#td_dipoleout) | [ocp](#ocp) | [ocp_set](#ocp_set) | [td_val_elec_01](#td_val_elec_01) | [td_val_elec_02](#td_val_elec_02) |[td_val_elec_03](#td_val_elec_03)
+  [td_force_dt](#td_force_dt) | [td_vext](#td_vext) | [td_vext_dire](#td_vext_dire) | [td_stype](#td_stype) | [td_ttype](#td_ttype) | [td_tstart](#td_tstart) | [td_tend](#td_tend) | [td_lcut1](#td_lcut1) | [td_lcut2](#td_lcut2) | [td_gauss_freq](#td_gauss_freq) | [td_guass_phase](#td_gauss_phase) | [td_gauss_sigma](#td_gauss_sigma) | [td_gauss_t0](#td_gauss_t0)| [td_gauss_amp](#td_gauss_amp) | [td_trape_freq](#td_trape_freq) | [td_trape_phase](#td_trape_phase) | [td_trape_t1](#td_trape_t1) | [td_trape_t2](#td_trape_t2) | [td_trape_t3](#td_trape_t3) | [td_trape_amp](#td_trape_amp) | [td_trigo_freq1](#td_trigo_freq1) | [td_trigo_freq2](#td_trigo_freq2) | [td_trigo_phase1](#td_trigo_phase1) | [td_trigo_phase2](#td_trigo_phase2) | [td_trigo_amp](#td_trigo_amp) | [td_heavi_t0](#td_heavi_t0) | [td_heavi_amp](#td_heavi_amp) | [td_hhg_amp1](#td_hhg_amp1) | [td_hhg_amp2](#td_hhg_amp2) | [td_hhg_freq1](#td_hhg_freq1) | [td_hhg_freq2](#td_hhg_freq2) | [td_hhg_phase1](#td_hhg_phase1) | [td_hhg_phase2](#td_hhg_phase2) | [td_hhg_t0](#td_hhg_t0) | [td_hhg_sigma](#td_hhg_sigma) | [out_dipole](#out_dipole) | [ocp](#ocp) | [ocp_set](#ocp_set) | [td_val_elec_01](#td_val_elec_01) | [td_val_elec_02](#td_val_elec_02) |[td_val_elec_03](#td_val_elec_03)
 - [DFT+*U* correction](#dftu-correction) (Under development)
 
-  [dft_plus_u](#dft_plus_u) | [orbital_corr](#orbital_corr) | [hubbard_u](#hubbard_u) | [hund_j](#hund_j) | [yukawa_potential](#yukawa_potential) | [yukawa_lambda](#yukawa_lambda) | [omc](#omc)
+  [dft_plus_u](#dft_plus_u) | [orbital_corr](#orbital_corr) | [hubbard_u](#hubbard_u) | [yukawa_potential](#yukawa_potential) | [yukawa_lambda](#yukawa_lambda) | [omc](#omc)
 - [Variables useful for debugging](#variables-useful-for-debugging)
 
-  [nurse](#nurse) | [t_in_h](#t_in_h) | [vl_in_h](#vl_in_h) | [vnl_in_h](#vnl_in_h) | [test_force](#test_force) | [test_stress](#test_stress) | [colour](#colour) | [test_skip_ewald](#test_skip_ewald)
+  [nurse](#nurse) | [t_in_h](#t_in_h) | [vl_in_h](#vl_in_h) | [vnl_in_h](#vnl_in_h) | [vh_in_h](#vh_in_h) | [vion_in_h](#vion_in_h) | [test_force](#test_force) | [test_stress](#test_stress) | [colour](#colour) | [test_skip_ewald](#test_skip_ewald)
 - [DeePKS](#deepks)
 
   [deepks_out_labels](#deepks_out_labels) | [deepks_scf](#deepks_scf) | [deepks_model](#deepks_model) | [bessel_lmax](#bessel_lmax) | [bessel_rcut](#bessel_rcut) | [bessel_tol](#bessel_tol) | [deepks_bandgap](#deepks_bandgap) | [deepks_out_unittest](#deepks_out_unittest)
@@ -315,7 +315,7 @@ These variables are used to control parameters related to input files.
 
 - **Type**: String
 - **Description**: Relevant when using ABACUS with wannier90. Tells the name of the input file related to wannier90.
-- **Default**: ""
+- **Default**: "none"
 
 [back to top](#full-list-of-input-keywords)
 
@@ -357,7 +357,7 @@ These variables are used to control the plane wave related parameters.
 
 - **Type**: Integer
 - **Description**: Only useful when you use `ks_solver = dav`. It indicates the maximal dimension for the Davidson method.
-- **Default**: 10
+- **Default**: 4
 
 [back to top](#full-list-of-input-keywords)
 
@@ -532,6 +532,16 @@ calculations.
 - **Description**: When set to a positive number, the high frequency wave vectors will be suppressed by multiplying a scaling factor $\frac{k^2}{k^2+gg0^2}$; if set to 0, then no Kerker scaling is performed.
 - **Default**: 0.0
 
+### mixing_tau
+- **Type**: Boolean
+- **Description**: Only relevant for meta-GGA calculations. If set to true, then the kinetic energy density will also be mixed. It seems for general cases, SCF converges fine even without this mixing. However, if there is difficulty in converging SCF for meta-GGA, it might be helpful to turn this on.
+- **Default**: False
+
+### mixing_dftu
+- **Type**: Boolean
+- **Description**: Only relevant for DFT+U calculations. If set to true, then the occupation matrices will also be mixed by plain mixing. From experience this is not very helpful if the +U calculation does not converge.
+- **Default**: False
+
 ### gamma_only
 
 - **Type**: Integer
@@ -552,7 +562,7 @@ calculations.
 
 - **Type**: Integer
 - **Description**: This variable indicates the maximal iteration number for electronic iterations.
-- **Default**: 40
+- **Default**: 100
 
 ### scf_thr
 
@@ -670,6 +680,7 @@ These variables are used to control the geometry relaxation.
 
 ### cal_force
 
+- **Type**: Boolean
 - **Description**: If set to 1, calculate the force at the end of the electronic iteration. 0 means the force calculation is turned off. It is automatically set to 1 if `calculation` is `cell-relax`, `relax`, or `md`.
 - **Default**: 0
 
@@ -775,11 +786,10 @@ These variables are used to control the geometry relaxation.
 ### relax_method
 
 - **Type**: String
-- **Description**: The method to do geometry optimizations, note that if relax_new is set to 1, then only cg is available:
+- **Description**: The method to do geometry optimizations, note that there are two implementations of the CG method, see [relax_new](#relax_new):
   - bfgs: using BFGS algorithm.
   - sd: using steepest-descent algorithm.
   - cg: using cg algorithm.
-  - cg-bfgs:
 - **Default**: cg
 
 ### relax_cg_thr
@@ -793,6 +803,12 @@ These variables are used to control the geometry relaxation.
 - **Type**: Boolean
 - **Description**: At around the end of 2022 we made a new implementation of the CG method for relax and cell-relax calculations. But the old implementation was also kept. To use the new method, set relax_new to true. To use the old one, set it to false.
 - **Default**: True
+
+### relax_scale_force
+
+- **Type**: Real
+- **Description**: This parameter is only relavant when `relax_new` is set to True. It controls the size of the first CG step. A smaller value means the first step along a new CG direction is smaller. This might be helpful for large systems, where it is safer to take a smaller initial step to prevent the collapse of the whole configuration.
+- **Default**: 0.5
 
 ### cell_factor
 
@@ -808,13 +824,13 @@ These variables are used to control the output of properties.
 
 ### out_force
 
-- **Type**: Integer
+- **Type**: Boolean
 - **Description**: Determines whether to output the out_force into a file named `Force.dat` or not. If 1, then force will be written; if 0, then the force will not be written.
 - **Default**: 0
 
 ### out_mul
 
-- **Type**: Integer
+- **Type**: Boolean
 - **Description**: If set to 1, ABACUS will output the Mulliken population analysis result. The name of the output file is mulliken.txt
 - **Default**: 0
 
@@ -832,7 +848,7 @@ These variables are used to control the output of properties.
 
 ### out_chg
 
-- **Type**: Integer
+- **Type**: Boolean
 - **Description**: If set to 1, ABACUS will output the charge density on real space grid. The name of the density file is SPIN1_CHGCAR and SPIN2_CHGCAR (if nspin = 2). Suppose each density on grid has coordinate (x; y; z). The circle order of the density on real space grid is: z is the outer loop, then y and finally x (x is moving fastest).
 - **Default**: 0
 
@@ -847,7 +863,7 @@ These variables are used to control the output of properties.
 
 ### out_dm
 
-- **Type**: Integer
+- **Type**: Boolean
 - **Description**: If set to 1, ABACUS will output the density matrix of localized orbitals, only useful for localized orbitals set. The name of the output file is SPIN1_DM and SPIN2_DM in the output directory.
 - **Default**: 0
 
@@ -859,13 +875,13 @@ These variables are used to control the output of properties.
 
 ### out_wfc_r
 
-- **Type**: Integer
+- **Type**: Boolean
 - **Description**: Only used in **planewave basis** and **ienvelope calculation in localized orbitals** set. When set this variable to 1, it outputs real-space wave functions into  `OUT.suffix/wfc_realspace/`. The file names are wfc_realspace$K$B, where $K is the index of k point, $B is the index of band.
 - **Default**: 0
 
 ### out_wfc_lcao
 
-- **Type**: Integer
+- **Type**: Boolean
 - **Description**: **Only used in localized orbitals set**. If set to 1, ABACUS will output the wave functions coefficients.
 - **Default**: 0
 
@@ -877,13 +893,13 @@ These variables are used to control the output of properties.
 
 ### out_band
 
-- **Type**: Integer
+- **Type**: Boolean
 - **Description**: Controls whether to output the band structure. For more information, refer to the [worked example](../elec_properties/band.md)
 - **Default**: 0
 
 ### out_proj_band
 
-- **Type**: Integer
+- **Type**: Boolean
 - **Description**: Controls whether to output the projected band structure. For more information, refer to the [worked example](../elec_properties/band.md)
 - **Default**: 0
 
@@ -891,6 +907,12 @@ These variables are used to control the output of properties.
 
 - **Type**: Boolean
 - **Description**: If set to 1, then the structure files will be written after each ion step
+- **Default**: 0
+
+### out_bandgap
+
+- **Type**: Boolean
+- **Description**: If set to 1, the bandgap will be printed out at each SCF step. 
 - **Default**: 0
 
 ### out_level
@@ -901,7 +923,7 @@ These variables are used to control the output of properties.
 
 ### out_alllog
 
-- **Type**: Integer
+- **Type**: Boolean
 - **Description**: determines whether to write log from all ranks in an MPI run. If set to be 1, then each rank will write detained running information to a file named running_${calculation}\_(${rank}+1).log. If set to 0, log will only be written from rank 0 into a file named running_${calculation}.log.
 - **Default**: 0
 
@@ -1433,6 +1455,12 @@ These variables are relevant when using hybrid functionals
 - **Description**: See also the entry [dft_functional](#dft_functional). This parameter is only relevant when dft_functional=`opt_orb`. exx_opt_orb_tolerence determines the threshold when solving for the zeros of spherical Bessel functions. A reasonable choice is 1e-12.
 - **Default**: 0
 
+### exx_real_number
+
+- **Type**: Boolen
+- **Description**: If set to 1, it will enforce LIBRI to use `double` data type, otherwise, it will enforce LIBRI to use `complex` data type. The default value depends on the [gamma_only](#gamma_only) option.
+- **Default**: 1 if gamma_only else 0
+
 [back to top](#full-list-of-input-keywords)
 
 ## Molecular dynamics
@@ -1658,19 +1686,14 @@ These variables are used to control DFT+U correlated parameters
 ### hubbard_u
 
 - **Type**: Real
-- **Description**: Hubbard Coulomb interaction parameter U(ev) in plus U correction, which should be specified for each atom unless Yukawa potential is used. ABACUS uses a simplified scheme that only needs U and J for each atom.
-- **Default**: 0.0
-
-### hund_j
-
-- **Type**: Real
-- **Description**: Hund exchange parameter J(ev) in plus U correction, which should be specified for each atom unless Yukawa potential is used. ABACUS uses a simplified scheme that only needs U and J for each atom.
+- **Description**: Hubbard Coulomb interaction parameter U(ev) in plus U correction, which should be specified for each atom unless Yukawa potential is used.
+> Note : since we only implemented the simplified scheme by Duradev, the 'U' here is actually Ueff which is given by hubbard U minus hund J.
 - **Default**: 0.0
 
 ### yukawa_potential
 
 - **Type**: Boolean
-- **Description**: whether to use the local screen Coulomb potential method to calculate the value of U and J. If this is set to 1, hubbard_u and hund_j do not need to be specified.
+- **Description**: whether to use the local screen Coulomb potential method to calculate the values of U and J. If this is set to 1, hubbard_u does not need to be specified.
 - **Default**: 0
 
 ### yukawa_lambda
@@ -1681,8 +1704,9 @@ These variables are used to control DFT+U correlated parameters
 
 ### omc
 
-- **Type**: Boolean
-- **Description**: whether turn on occupation matrix control method or not
+- **Type**: Integer
+- **Description**: The parameter controls what form of occupation matrix control we are using. If set to 0, then no occupation matrix control is performed, and the onsite density matrix will be calculated from wavefunctions in each SCF step. If set to 1, then the first SCF step will use an initial density matrix read from a file named `initial_onsite.dm`, but for later steps, the onsite density matrix will be updated. If set to 2, the same onsite density matrix from `initial_onsite.dm` will be used throughout the entire calculation.
+> Note : The easiest way to create `initial_onsite.dm` is to run a DFT+U calculation, look for a file named `onsite.dm` in the OUT.prefix directory, and make replacements there. The format of the file is rather straight-forward.
 - **Default**: 0
 
 [back to top](#full-list-of-input-keywords)
@@ -1828,7 +1852,7 @@ These variables are used to control berry phase and wannier90 interface paramete
 
 ### berry_phase
 
-- **Type**: Integer
+- **Type**: Boolean
 - **Description**: 1, calculate berry phase; 0, not calculate berry phase.
 - **Default**: 0
 
@@ -1865,17 +1889,19 @@ These variables are used to control berry phase and wannier90 interface paramete
 
 ## TDDFT: time dependent density functional theory
 
-### td_scf_thr
+### td_edm
 
-- **Type**: Real
-- **Description**: Accuracy of electron convergence when doing time-dependent evolution.
-- **Default**: 1e-9
+- **Type**: int
+- **Description**: the method to calculate the energy density matrix.
+  - 0: new method (use the original formula).
+  - 1: old method (use the formula for ground state).
+- **Default**: 0
 
-### td_dt
+### td_print_eij
 
-- **Type**: Real
-- **Description**: Time-dependent evolution time step. (fs)
-- **Default**: 0.02
+- **Type**: double
+- **Description**: print the Eij(<\psi_i|H|\psi_j>) elements which are larger than td_print_eij. if td_print_eij <0, don't print Eij 
+- **Default**: -1
 
 ### td_force_dt
 
@@ -1900,30 +1926,283 @@ These variables are used to control berry phase and wannier90 interface paramete
   - 3: the direction of external light field is along z axis.
 - **Default**: 1
 
-### td_timescale
-
-- **Type**: Real
-- **Description**: Time range of external electric field application. (fs)
-- **Default**: 0.5
-
-### td_vexttype
+### td_stype
 
 - **Type**: Integer
 - **Description**:
-  - 1: Gaussian-type light field.
-  - 2: Delta function form light field.
-  - 3: Trigonometric function form light field.
-- **Default**: 1
-
-### td_vextout
-
-- **Type**: Integer
-- **Description**:
-  - 1: Output external electric field.
-  - 0: do not Output external electric field.
+  type of electric field in space domain
+  - 0: length gauge.
+  - 1: velocity gauge.
 - **Default**: 0
 
-### td_dipoleout
+### td_ttype
+
+- **Type**: Integer
+- **Description**:
+  type of electric field in time domain
+  - 0: Gaussian type function.
+  - 1: Trapezoid function.
+  - 2: Trigonometric function.
+  - 3: Heaviside function.
+  - 4: HHG function.
+- **Default**: 0
+
+### td_tstart
+
+- **Type**: Integer
+- **Description**:
+  nubmer of step where electric field start
+- **Default**: 1
+
+### td_tend
+
+- **Type**: Integer
+- **Description**:
+  nubmer of step where electric field end
+- **Default**: 100
+
+### td_lcut1
+
+- **Type**: Double
+- **Description**:
+  cut1 of interval in length gauge
+  E = E0 , cut1<x<cut2
+  E = -E0/(cut1+1-cut2) , x<cut1 or cut2<x<1
+- **Default**: 0.05
+
+### td_lcut2
+
+- **Type**: Double
+- **Description**:
+  cut2 of interval in length gauge
+- **Default**: 0.05
+
+### td_gauss_freq
+
+- **Type**: Double
+- **Description**:
+  frequency of Gauss type elctric field  (fs^-1)
+  amp*cos(2pi*f(t-t0)+phase)exp(-(t-t0)^2/2sigma^2)
+- **Default**: 22.13
+
+### td_gauss_phase
+
+- **Type**: Double
+- **Description**:
+  phase of Gauss type elctric field  
+  amp*cos(2pi*f(t-t0)+phase)exp(-(t-t0)^2/2sigma^2)
+- **Default**: 0.0
+
+### td_gauss_sigma
+
+- **Type**: Double
+- **Description**:
+  sigma of Gauss type elctric field  (fs)
+  amp*cos(2pi*f(t-t0)+phase)exp(-(t-t0)^2/2sigma^2)
+- **Default**: 30.0
+
+### td_gauss_t0
+
+- **Type**: Double
+- **Description**:
+  step number of time center of Gauss type elctric field  
+  amp*cos(2pi*f(t-t0)+phase)exp(-(t-t0)^2/2sigma^2)
+- **Default**: 100
+
+### td_gauss_amp
+
+- **Type**: Double
+- **Description**:
+  amplitude of Gauss type elctric field  (V/A)
+  amp*cos(2pi*f(t-t0)+phase)exp(-(t-t0)^2/2sigma^2)
+- **Default**: 0.25
+
+### td_trape_freq
+
+- **Type**: Double
+- **Description**:
+  frequency of Trapezoid type elctric field  (fs^-1)
+  E = amp*cos(2pi*f*t+phase) t/t1 , t<t1
+  E = amp*cos(2pi*f*t+phase) , t1<t<t2
+  E = amp*cos(2pi*f*t+phase) (1-(t-t2)/(t3-t2)) , t2<t<t3
+  E = 0 , t>t3
+- **Default**: 1.60
+
+### td_trape_phase
+
+- **Type**: Double
+- **Description**:
+  phase of Trapezoid type elctric field  
+  E = amp*cos(2pi*f*t+phase) t/t1 , t<t1
+  E = amp*cos(2pi*f*t+phase) , t1<t<t2
+  E = amp*cos(2pi*f*t+phase) (1-(t-t2)/(t3-t2)) , t2<t<t3
+  E = 0 , t>t3
+- **Default**: 0.0
+
+### td_trape_t1
+
+- **Type**: Double
+- **Description**:
+  step number of time interval 1 of Trapezoid type elctric field  
+  E = amp*cos(2pi*f*t+phase) t/t1 , t<t1
+  E = amp*cos(2pi*f*t+phase) , t1<t<t2
+  E = amp*cos(2pi*f*t+phase) (1-(t-t2)/(t3-t2)) , t2<t<t3
+  E = 0 , t>t3
+- **Default**: 1875
+
+### td_trape_t2
+
+- **Type**: Double
+- **Description**:
+  step number of time interval 2 of Trapezoid type elctric field  
+  E = amp*cos(2pi*f*t+phase) t/t1 , t<t1
+  E = amp*cos(2pi*f*t+phase) , t1<t<t2
+  E = amp*cos(2pi*f*t+phase) (1-(t-t2)/(t3-t2)) , t2<t<t3
+  E = 0 , t>t3
+- **Default**: 5625
+
+### td_trape_t3
+
+- **Type**: Double
+- **Description**:
+  step number of time interval 3 of Trapezoid type elctric field  
+  E = amp*cos(2pi*f*t+phase) t/t1 , t<t1
+  E = amp*cos(2pi*f*t+phase) , t1<t<t2
+  E = amp*cos(2pi*f*t+phase) (1-(t-t2)/(t3-t2)) , t2<t<t3
+  E = 0 , t>t3
+- **Default**: 7500
+
+### td_trape_amp
+
+- **Type**: Double
+- **Description**:
+  amplitude of Trapezoid type elctric field  (V/A)
+  E = amp*cos(2pi*f*t+phase) t/t1 , t<t1
+  E = amp*cos(2pi*f*t+phase) , t1<t<t2
+  E = amp*cos(2pi*f*t+phase) (1-(t-t2)/(t3-t2)) , t2<t<t3
+  E = 0 , t>t3
+- **Default**: 2.74
+
+### td_trigo_freq1
+
+- **Type**: Double
+- **Description**:
+  frequence 1 of Trigonometric type elctric field  (fs^-1)
+  amp*cos(2*pi*f1*t+phase1)*sin(2*pi*f2*t+phase2)^2
+- **Default**: 1.164656
+
+### td_trigo_freq2
+
+- **Type**: Double
+- **Description**:
+  frequence 2 of Trigonometric type elctric field  (fs^-1)
+  amp*cos(2*pi*f1*t+phase1)*sin(2*pi*f2*t+phase2)^2
+- **Default**: 0.029116
+
+### td_trigo_phase1
+
+- **Type**: Double
+- **Description**:
+  phase 1 of Trigonometric type elctric field  
+  amp*cos(2*pi*f1*t+phase1)*sin(2*pi*f2*t+phase2)^2
+- **Default**: 0.0
+
+### td_trigo_phase2
+
+- **Type**: Double
+- **Description**:
+  phase 2 of Trigonometric type elctric field  
+  amp*cos(2*pi*f1*t+phase1)*sin(2*pi*f2*t+phase2)^2
+- **Default**: 0.0
+
+### td_trigo_amp
+
+- **Type**: Double
+- **Description**:
+  amplitude of Trigonometric type elctric field  (V/A)
+  amp*cos(2*pi*f1*t+phase1)*sin(2*pi*f2*t+phase2)^2
+- **Default**: 2.74
+
+### td_heavi_t0
+
+- **Type**: Double
+- **Description**:
+  step number of switch time of Heaviside type elctric field 
+  E = amp , t<t0
+  E = 0.0 , t>t0
+- **Default**: 100
+### td_heavi_amp
+
+- **Type**: Double
+- **Description**:
+  amplitude of Heaviside type elctric field  (V/A)
+  E = amp , t<t0
+  E = 0.0 , t>t0
+- **Default**: 2.74
+
+### td_hhg_amp1
+
+- **Type**: Double
+- **Description**:
+  amplitude 1 of HHG type elctric field  (V/A)
+  E = (amp1*cos(2*pi*f1*(t-t0)+phase1)+amp2*cos(2*pi*f2*(t-t0)+phase2))exp(-(t-t0)^2/2sigma^2)
+- **Default**: 2.74
+
+### td_hhg_amp2
+
+- **Type**: Double
+- **Description**:
+  amplitude 2 of HHG type elctric field  (V/A)
+  E = (amp1*cos(2*pi*f1*(t-t0)+phase1)+amp2*cos(2*pi*f2*(t-t0)+phase2))exp(-(t-t0)^2/2sigma^2)
+- **Default**: 2.74
+
+### td_hhg_freq1
+
+- **Type**: Double
+- **Description**:
+  frequency 1 of HHG type elctric field  (fs^-1)
+  E = (amp1*cos(2*pi*f1*(t-t0)+phase1)+amp2*cos(2*pi*f2*(t-t0)+phase2))exp(-(t-t0)^2/2sigma^2)
+- **Default**: 1.164656
+
+### td_hhg_freq2
+
+- **Type**: Double
+- **Description**:
+  frequency 2 of HHG type elctric field  (fs^-1)
+  E = (amp1*cos(2*pi*f1*(t-t0)+phase1)+amp2*cos(2*pi*f2*(t-t0)+phase2))exp(-(t-t0)^2/2sigma^2)
+- **Default**: 0.029116
+
+### td_hhg_phase2
+
+- **Type**: Double
+- **Description**:
+  phase 2 of HHG type elctric field 
+  E = (amp1*cos(2*pi*f1*(t-t0)+phase1)+amp2*cos(2*pi*f2*(t-t0)+phase2))exp(-(t-t0)^2/2sigma^2)
+- **Default**: 0.0
+### td_hhg_phase2
+
+- **Type**: Double
+- **Description**:
+  phase 2 of HHG type elctric field 
+  E = (amp1*cos(2*pi*f1*(t-t0)+phase1)+amp2*cos(2*pi*f2*(t-t0)+phase2))exp(-(t-t0)^2/2sigma^2)
+- **Default**: 0.0
+
+### td_hhg_t0
+
+- **Type**: Double
+- **Description**:
+  step number of time center of HHG type elctric field 
+  E = (amp1*cos(2*pi*f1*(t-t0)+phase1)+amp2*cos(2*pi*f2*(t-t0)+phase2))exp(-(t-t0)^2/2sigma^2)
+- **Default**: 700
+
+### td_hhg_sigma
+
+- **Type**: Double
+- **Description**:
+  sigma of HHG type elctric field (fs)
+  E = (amp1*cos(2*pi*f1*(t-t0)+phase1)+amp2*cos(2*pi*f2*(t-t0)+phase2))exp(-(t-t0)^2/2sigma^2)
+- **Default**: 30
+### out_dipole
 
 - **Type**: Integer
 - **Description**:
@@ -1990,6 +2269,18 @@ These variables are used to control berry phase and wannier90 interface paramete
 
 - **Type**: Boolean
 - **Description**:  If set to 0, then non-local pseudopotential term will not be included in obtaining the Hamiltonian.
+- **Default**: 1
+
+### vh_in_h
+
+- **Type**: Boolean
+- **Description**:  If set to 0, then Hartree potential term will not be included in obtaining the Hamiltonian.
+- **Default**: 1
+
+### vion_in_h
+
+- **Type**: Boolean
+- **Description**:  If set to 0, then local ionic potential term will not be included in obtaining the Hamiltonian.
 - **Default**: 1
 
 ### test_force

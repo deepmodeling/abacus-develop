@@ -34,11 +34,46 @@ class Evolve_LCAO_Matrix
                               std::complex<double>* psi_k_laststep,
                               double* ekb) const;
 #ifdef __MPI
-    void using_ScaLAPACK_complex(const int& ik,
-                                 hamilt::Hamilt<double>* p_hamilt,
-                                 std::complex<double>* psi_k,
-                                 std::complex<double>* psi_k_laststep,
-                                 double* ekb) const;
+    void using_ScaLAPACK_complex(
+                  const int nband,
+                  const int nlocal,         
+                  const std::complex<double>* psi_k_laststep,
+                  hamilt::Hamilt<double>* p_hamilt,
+                  std::complex<double>* psi_k,
+                  double* ekb) const;
+
+    void compute_U_operator(
+                  const int nband,
+                  const int nlocal,     
+                  const std::complex<double>* Stmp,
+                  const std::complex<double>* Htmp,
+                  std::complex<double>* U_operator,
+                  const int print_matrix) const;
+
+    void U_to_wfc(
+                  const int nband,
+                  const int nlocal,     
+                  const std::complex<double>* U_operator,
+                  const std::complex<double>* psi_k_laststep,
+                  std::complex<double>* psi_k,
+                  std::complex<double>* psi_not_norm) const;
+
+    void norm_wfc(
+                  const int nband,
+                  const int nlocal,     
+                  const std::complex<double>* Stmp,
+                  const std::complex<double>* psi_not_norm,
+                  std::complex<double>* psi_k,
+                  const int print_matrix) const;
+          
+
+    void compute_ekb(
+                  const int nband,
+                  const int nlocal,     
+                  const std::complex<double>* Htmp,
+                  const std::complex<double>* psi_k,
+                  double* ekb) const;
+
 #endif
 };
 #endif

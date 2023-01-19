@@ -5,11 +5,11 @@
 #include "module_base/complexmatrix.h"
 #include "src_pw/structure_factor.h"
 
-#include "module_psi/include/types.h"
-#include "module_psi/include/device.h"
-#include "module_psi/include/memory.h"
+#include "module_psi/kernels/types.h"
+#include "module_psi/kernels/device.h"
+#include "module_psi/kernels/memory_op.h"
 
-#include "module_hsolver/include/math_kernel.h"
+#include "module_hsolver/kernels/math_kernel_op.h"
 
 namespace hsolver {
 
@@ -99,10 +99,13 @@ class DiagoCG : public DiagH<FPTYPE, Device>
     using resmem_complex_op = psi::memory::resize_memory_op<std::complex<FPTYPE>, Device>;
     using syncmem_complex_op = psi::memory::synchronize_memory_op<std::complex<FPTYPE>, Device, Device>;
     using syncmem_complex_d2h_op = psi::memory::synchronize_memory_op<std::complex<FPTYPE>, psi::DEVICE_CPU, Device>;
+    using castmem_complex_d2h_op = psi::memory::cast_memory_op<std::complex<FPTYPE>, std::complex<FPTYPE>, psi::DEVICE_CPU, Device>;
 
     using resmem_var_op = psi::memory::resize_memory_op<FPTYPE, Device>;
     using setmem_var_h_op = psi::memory::set_memory_op<FPTYPE, psi::DEVICE_CPU>;
     using syncmem_var_h2d_op = psi::memory::synchronize_memory_op<FPTYPE, Device, psi::DEVICE_CPU>;
+
+    const std::complex<FPTYPE> * one = nullptr, * zero = nullptr, * neg_one = nullptr;
 };
 
 } // namespace hsolver

@@ -35,7 +35,10 @@ class WF_igk
 
     std::complex<double>* get_sk(const int ik, const int it, const int ia, ModulePW::PW_Basis_K* wfc_basis)const;
 
-	// pengfei 2016-11-23
+    template<typename FPTYPE, typename Device>
+    void get_sk(Device * ctx, const int ik, ModulePW::PW_Basis_K* wfc_basis, std::complex<FPTYPE> * sk)const;
+
+    // pengfei 2016-11-23
     std::complex<double>* get_skq(int ik, int it, int ia, ModuleBase::Vector3<double> q);
 
 };

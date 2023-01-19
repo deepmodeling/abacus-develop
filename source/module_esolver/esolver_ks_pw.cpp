@@ -1,11 +1,11 @@
 #include "esolver_ks_pw.h"
 #include <iostream>
-#include "../src_io/wf_io.h"
+#include "../module_io/wf_io.h"
 
 //--------------temporary----------------------------
 #include "../src_pw/global.h"
 #include "../src_pw/symmetry_rho.h"
-#include "../src_io/print_info.h"
+#include "../module_io/print_info.h"
 #include "../src_pw/H_Ewald_pw.h"
 #include "../src_pw/occupy.h"
 #include "../module_relax/relax_old/variable_cell.h"    // liuyu 2022-11-07
@@ -19,15 +19,17 @@
 #include "module_hamilt/hamilt_pw.h"
 #include "module_hsolver/diago_iter_assist.h"
 #include "module_vdw/vdw.h"
+#include "module_base/memory.h"
 
-#include "src_io/write_wfc_realspace.h"
-#include "src_io/winput.h"
-#include "src_io/numerical_descriptor.h"
-#include "src_io/numerical_basis.h"
-#include "src_io/to_wannier90.h"
-#include "src_io/berryphase.h"
-#include "module_psi/include/device.h"
-#include "module_hsolver/include/math_kernel.h"
+#include "module_io/write_wfc_realspace.h"
+#include "module_io/winput.h"
+#include "module_io/numerical_descriptor.h"
+#include "module_io/numerical_basis.h"
+#include "module_io/to_wannier90.h"
+#include "module_io/berryphase.h"
+#include "module_psi/kernels/device.h"
+#include "module_hsolver/kernels/math_kernel_op.h"
+#include "module_hsolver/kernels/dngvd_op.h"
 
 namespace ModuleESolver
 {
@@ -41,6 +43,7 @@ namespace ModuleESolver
     #if ((defined __CUDA) || (defined __ROCM))
         if (this->device == psi::GpuDevice) {
             hsolver::createBLAShandle();
+            hsolver::createCUSOLVERhandle();
         }
     #endif
     }
@@ -65,12 +68,16 @@ namespace ModuleESolver
             delete reinterpret_cast<hamilt::HamiltPW<FPTYPE, Device>*>(this->p_hamilt);
             this->p_hamilt = nullptr;
         }
-    #if ((defined __CUDA) || (defined __ROCM))
         if (this->device == psi::GpuDevice) {
-            delete reinterpret_cast<psi::Psi<std::complex<FPTYPE>, Device>*>(this->kspw_psi);
+        #if defined(__CUDA) || defined(__ROCM)
             hsolver::destoryBLAShandle();
+            hsolver::destoryCUSOLVERhandle();
+        #endif
+            delete reinterpret_cast<psi::Psi<std::complex<FPTYPE>, Device>*>(this->kspw_psi);
         }
-    #endif
+        if (GlobalV::precision_flag == "single") {
+            delete reinterpret_cast<psi::Psi<std::complex<double>, Device>*>(this->__kspw_psi);
+        }
     }
 
     template<typename FPTYPE, typename Device>
@@ -125,9 +132,13 @@ namespace ModuleESolver
         }
 
         // denghui added 20221116
-        this->kspw_psi = this->device == psi::GpuDevice ?
+        this->kspw_psi = GlobalV::device_flag == "gpu" || GlobalV::precision_flag == "single" ?
                          new psi::Psi<std::complex<FPTYPE>, Device>(this->psi[0]) :
                          reinterpret_cast<psi::Psi<std::complex<FPTYPE>, Device>*> (this->psi);
+        if(GlobalV::precision_flag == "single")
+        {
+            ModuleBase::Memory::record ("Psi_single", sizeof(std::complex<FPTYPE>) * this->psi[0].size());
+        }
 
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT BASIS");
     }
@@ -331,20 +342,31 @@ namespace ModuleESolver
             // be careful that istep start from 0 and iter start from 1
             if((istep==0||istep==1)&&iter==1) 
             {
-                hsolver::DiagoIterAssist<FPTYPE>::need_subspace = false;
+                hsolver::DiagoIterAssist<FPTYPE, Device>::need_subspace = false;
             }
             else 
             {
-                hsolver::DiagoIterAssist<FPTYPE>::need_subspace = true;
+                hsolver::DiagoIterAssist<FPTYPE, Device>::need_subspace = true;
             }
 
-            hsolver::DiagoIterAssist<FPTYPE>::PW_DIAG_THR = ethr; 
-            hsolver::DiagoIterAssist<FPTYPE>::PW_DIAG_NMAX = GlobalV::PW_DIAG_NMAX;
+            hsolver::DiagoIterAssist<FPTYPE, Device>::PW_DIAG_THR = ethr;
+            hsolver::DiagoIterAssist<FPTYPE, Device>::PW_DIAG_NMAX = GlobalV::PW_DIAG_NMAX;
             this->phsol->solve(this->p_hamilt, this->kspw_psi[0], this->pelec, GlobalV::KS_SOLVER);
             // transform energy for print
             GlobalC::en.eband = this->pelec->eband;
             GlobalC::en.demet = this->pelec->demet;
             GlobalC::en.ef = this->pelec->ef;
+            if (GlobalV::out_bandgap)
+            {
+                if (!GlobalV::TWO_EFERMI)
+                {
+                    GlobalC::en.cal_bandgap(this->pelec);
+                }
+                else
+                {
+                    GlobalC::en.cal_bandgap_updw(this->pelec);
+                }
+            }
         }
         else
         {
@@ -421,6 +443,18 @@ namespace ModuleESolver
                     ss1 << GlobalV::global_out_dir << "tmp" << "_SPIN" << is + 1 << "_CHG.cube";
                     this->pelec->charge->write_rho_cube(this->pelec->charge->rho_save[is], is, ss1.str(), 3);
                 }
+                if(XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
+                {
+                    for (int is = 0; is < GlobalV::NSPIN; is++)
+                    {
+                        std::stringstream ssc;
+                        std::stringstream ss1;
+                        ssc << GlobalV::global_out_dir << "tmp" << "_SPIN" << is + 1 << "_TAU";
+                        this->pelec->charge->write_rho(this->pelec->charge->kin_r_save[is], is, iter, ssc.str(), 3);//mohan add 2007-10-17
+                        ss1 << GlobalV::global_out_dir << "tmp" << "_SPIN" << is + 1 << "_TAU.cube";
+                        this->pelec->charge->write_rho_cube(this->pelec->charge->kin_r_save[is], is, ss1.str(), 3);
+                    }
+                }
             }
             //output wavefunctions
             if (GlobalC::wf.out_wfc_pw == 1 || GlobalC::wf.out_wfc_pw == 2)
@@ -450,6 +484,18 @@ namespace ModuleESolver
             this->pelec->charge->write_rho(this->pelec->charge->rho_save[is], is, 0, ssc.str());//mohan add 2007-10-17
             this->pelec->charge->write_rho_cube(this->pelec->charge->rho_save[is], is, ss1.str(), 3);
         }
+        if(XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
+        {
+            for (int is = 0; is < GlobalV::NSPIN; is++)
+            {
+                std::stringstream ssc;
+                std::stringstream ss1;
+                ssc << GlobalV::global_out_dir << "SPIN" << is + 1 << "_TAU";
+                ss1 << GlobalV::global_out_dir << "SPIN" << is + 1 << "_TAU.cube";
+                this->pelec->charge->write_rho(this->pelec->charge->kin_r_save[is], is, 0, ssc.str());//mohan add 2007-10-17
+                this->pelec->charge->write_rho_cube(this->pelec->charge->kin_r_save[is], is, ss1.str(), 3);
+            }
+        }
         if (this->conv_elec)
         {
             GlobalV::ofs_running << "\n charge density convergence is achieved" << std::endl;
@@ -474,7 +520,7 @@ namespace ModuleESolver
             this->print_eigenvalue(GlobalV::ofs_running);
         }
         if (this->device == psi::GpuDevice) {
-            syncmem_complex_d2h_op()(
+            castmem_2d_d2h_op()(
                 this->psi[0].get_device(),
                 this->kspw_psi[0].get_device(),
                 this->psi[0].get_pointer() - this->psi[0].get_psi_bias(),
@@ -577,7 +623,7 @@ namespace ModuleESolver
 
 
     template<typename FPTYPE, typename Device>
-    void ESolver_KS_PW<FPTYPE, Device>::cal_Energy(FPTYPE& etot)
+    void ESolver_KS_PW<FPTYPE, Device>::cal_Energy(double& etot)
     {
         etot = GlobalC::en.etot;
     }
@@ -585,20 +631,30 @@ namespace ModuleESolver
     template<typename FPTYPE, typename Device>
     void ESolver_KS_PW<FPTYPE, Device>::cal_Force(ModuleBase::matrix& force)
     {
-        Forces<FPTYPE, Device> ff;
-        ff.init(force, this->pelec->wg, this->pelec->charge, this->kspw_psi);
+        Forces<double, Device> ff;
+        if (this->__kspw_psi == nullptr) {
+            this->__kspw_psi = GlobalV::precision_flag == "single" ?
+                               new psi::Psi<std::complex<double>, Device>(this->kspw_psi[0]) :
+                               reinterpret_cast<psi::Psi<std::complex<double>, Device> *> (this->kspw_psi);
+        }
+        ff.init(force, this->pelec->wg, this->pelec->charge, this->__kspw_psi);
     }
 
     template<typename FPTYPE, typename Device>
     void ESolver_KS_PW<FPTYPE, Device>::cal_Stress(ModuleBase::matrix& stress)
     {
-        Stress_PW<FPTYPE, Device> ss(this->pelec);
-        ss.cal_stress(stress, this->psi, this->kspw_psi);
+        Stress_PW<double, Device> ss(this->pelec);
+        if (this->__kspw_psi == nullptr) {
+            this->__kspw_psi = GlobalV::precision_flag == "single" ?
+                             new psi::Psi<std::complex<double>, Device>(this->kspw_psi[0]) :
+                             reinterpret_cast<psi::Psi<std::complex<double>, Device> *> (this->kspw_psi);
+        }
+        ss.cal_stress(stress, this->psi, this->__kspw_psi);
 
         //external stress
-        FPTYPE unit_transform = 0.0;
+        double unit_transform = 0.0;
         unit_transform = ModuleBase::RYDBERG_SI / pow(ModuleBase::BOHR_RADIUS_SI,3) * 1.0e-8;
-        FPTYPE external_stress[3] = {GlobalV::PRESS1,GlobalV::PRESS2,GlobalV::PRESS3};
+        double external_stress[3] = {GlobalV::PRESS1,GlobalV::PRESS2,GlobalV::PRESS3};
         for(int i=0;i<3;i++)
         {
             stress(i,i) -= external_stress[i]/unit_transform;
@@ -735,6 +791,27 @@ namespace ModuleESolver
             GlobalV::ofs_running << std::endl;
         }
 
+        if (GlobalV::out_bandgap)
+        {
+            if (!GlobalV::TWO_EFERMI)
+            {
+                GlobalC::en.cal_bandgap(this->pelec);
+                GlobalV::ofs_running << " E_bandgap " 
+                << GlobalC::en.bandgap * ModuleBase::Ry_to_eV 
+                << " eV" << std::endl;
+            }
+            else
+            {
+                GlobalC::en.cal_bandgap_updw(this->pelec);
+                GlobalV::ofs_running << " E_bandgap_up " 
+                << GlobalC::en.bandgap_up * ModuleBase::Ry_to_eV 
+                << " eV" << std::endl;
+                GlobalV::ofs_running << " E_bandgap_dw " 
+                << GlobalC::en.bandgap_dw * ModuleBase::Ry_to_eV 
+                << " eV" << std::endl;
+            }
+        }
+
         // add by jingan in 2018.11.7
         if(INPUT.towannier90)
         {
@@ -756,8 +833,10 @@ namespace ModuleESolver
         return;
     }
 
+template class ESolver_KS_PW<float, psi::DEVICE_CPU>;
 template class ESolver_KS_PW<double, psi::DEVICE_CPU>;
 #if ((defined __CUDA) || (defined __ROCM))
+template class ESolver_KS_PW<float, psi::DEVICE_GPU>;
 template class ESolver_KS_PW<double, psi::DEVICE_GPU>;
 #endif
 }

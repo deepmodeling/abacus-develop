@@ -4,7 +4,7 @@
 #include "../module_base/global_function.h"
 #include "../module_base/global_variable.h"
 #include "../module_base/vector3.h"
-#include "../src_io/output.h"
+#include "../module_io/output.h"
 #include "../module_base/complexarray.h"
 #include "../module_base/complexmatrix.h"
 #include "pseudo_nc.h"

@@ -1,0 +1,29 @@
+ATOMIC_SPECIES
+H 1.00794 H.SG15.PBE.UPF
+C 12.0096 C.SG15.PBE.UPF
+
+NUMERICAL_ORBITAL
+H_SG15_PBE.orb
+C_SG15_PBE.orb
+
+LATTICE_CONSTANT
+28.346
+
+LATTICE_VECTORS
+0.162808 0 0 #latvec1
+0.081404 0.14099 0 #latvec2
+0 0 1 #latvec3
+
+ATOMIC_POSITIONS
+Direct
+
+H #label
+0 #magnetism
+1 #number of atoms
+0.8333 0.3333 0.17  m  0  0  1 v 0 0 -0.06324
+
+C #label
+0 #magnetism
+2 #number of atoms
+0.0     0.0     0       m       0       0       0
+0.6667  0.6667  0       m       0       0       0

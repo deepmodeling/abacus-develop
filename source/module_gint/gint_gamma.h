@@ -10,7 +10,9 @@
 #include "../module_base/global_variable.h"
 #include "grid_technique.h"
 #include "../src_lcao/LCAO_matrix.h"
+#ifdef _OPENMP
 #include <omp.h>
+#endif
 
 //=========================================================
 // ModuleBase::Integral On 3D Grids, different from Grid_Integral
