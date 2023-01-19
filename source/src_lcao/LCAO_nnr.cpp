@@ -437,6 +437,15 @@ void LCAO_Matrix::folding_fixedH(const int &ik)
 							{
 								this->Sloc2[iic] += this->SlocR_soc[index] * kphase;
 								this->Hloc_fixed2[iic] += this->Hloc_fixedR_soc[index] * kphase;
+#ifdef __DEEPKS
+								if(GlobalV::deepks_scf)
+								{
+									if (iw1_all % 2 == iw2_all % 2)
+									{
+										GlobalC::ld.H_V_delta_k[ik][iic] += GlobalC::ld.H_V_deltaR[index] * kphase;
+									}
+								}
+#endif
 							}
 							++index;
 							++tot_index;

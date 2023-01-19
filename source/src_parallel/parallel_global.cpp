@@ -168,18 +168,33 @@ void Parallel_Global::read_mpi_parameters(int argc,char **argv)
     MPI_Comm_rank(MPI_COMM_WORLD, &GlobalV::MY_RANK);
 
     // determining appropriate thread number for OpenMP
-#ifdef _OPENMP
     const int max_thread_num = std::thread::hardware_concurrency(); // Consider Hyperthreading disabled.
+#ifdef _OPENMP
     int current_thread_num = omp_get_max_threads();
+#else
+    int current_thread_num = 1;
+#endif
     MPI_Comm shmcomm;
     MPI_Comm_split_type(MPI_COMM_WORLD, MPI_COMM_TYPE_SHARED, 0, MPI_INFO_NULL, &shmcomm);
     int process_num, local_rank;
     MPI_Comm_size(shmcomm, &process_num);
     MPI_Comm_rank(shmcomm, &local_rank);
     MPI_Comm_free(&shmcomm);
-    if (current_thread_num * process_num != max_thread_num && local_rank==0)
+    if (current_thread_num * process_num > max_thread_num && local_rank==0)
     {
-		// only output info in local rank 0
+        std::stringstream mess;
+        mess << "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" << std::endl;
+        mess << "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" << std::endl;
+        mess << "%% WARNING: Total thread number(" << current_thread_num * process_num <<  ") " 
+             << "is larger than hardware availability(" << max_thread_num << ")." << std::endl;
+        mess << "%% WARNING: The results may be INCORRECT. Please be sure what you are doing." << std::endl;
+        mess << "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" << std::endl;
+        mess << "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" << std::endl;
+		std::cerr << mess.str() << std::endl;
+    }
+    else if (current_thread_num * process_num < max_thread_num && local_rank==0)
+    {
+    	// only output info in local rank 0
         std::cerr << "WARNING: Total thread number on this node mismatches with hardware availability. "
             "This may cause poor performance."<< std::endl;
         std::cerr << "Info: Local MPI proc number: " << process_num << ","
@@ -187,7 +202,7 @@ void Parallel_Global::read_mpi_parameters(int argc,char **argv)
                   << "Total thread number: " << current_thread_num * process_num << ","
                   << "Local thread limit: " << max_thread_num << std::endl;
     }
-#endif
+
 
     if (GlobalV::MY_RANK == 0)
     {
