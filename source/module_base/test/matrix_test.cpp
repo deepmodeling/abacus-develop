@@ -34,7 +34,7 @@
 //a mock function of WARNING_QUIT, to avoid the uncorrected call by matrix.cpp at line 37.
 namespace ModuleBase
 {
-//    void WARNING_QUIT(const std::string &file,const std::string &description) {return ;}
+	void matrixAlloc();
 }
 
 class matrixTest : public testing::Test
@@ -60,10 +60,6 @@ class matrixTest : public testing::Test
 
 };
 
-namespace ModuleBase
-{
-	void matrixAlloc();
-}
 
 TEST(matrix,ConstructorNrNc)
 {
