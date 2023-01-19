@@ -21,6 +21,11 @@
  *   - ReadUPF201
  *     - read_pseudo_upf201
  *       - read 2.0.1 version of upf pseudopotential file
+ *     - getnameval
+ *     - read_pseudo_upf201_r
+ *     - read_pseudo_upf201_rab
+ *     - read_pseudo_upf201_dij
+ *     - read_pseudo_upf201_rhoatom
  *   - ReadUSppErr
  *     - read_pseudo_nl
  *     - read_pseudo_nlcc
@@ -141,6 +146,51 @@ TEST_F(ReadPPTest, ReadUPF201)
 	std::ifstream ifs;
 	ifs.open("./support/Cu_ONCV_PBE-1.0.upf");
 	upf->read_pseudo_upf201(ifs);
+	EXPECT_EQ(upf->psd,"Cu");
+	EXPECT_EQ(upf->pp_type,"NC");
+	EXPECT_FALSE(upf->has_so);
+	EXPECT_FALSE(upf->nlcc);
+	EXPECT_EQ(upf->xc_func,"PBE");
+	EXPECT_EQ(upf->zp,19);
+	EXPECT_DOUBLE_EQ(upf->etotps,-1.82394100797E+02);
+	EXPECT_EQ(upf->lmax,2);
+	EXPECT_EQ(upf->mesh,601); // mesh -= 1 at line 388 (why? Let's see)
+	EXPECT_EQ(upf->nwfc,0);
+	EXPECT_EQ(upf->nbeta,6);
+	EXPECT_DOUBLE_EQ(upf->r[0],0.0);
+	EXPECT_DOUBLE_EQ(upf->r[601],6.01);
+	EXPECT_DOUBLE_EQ(upf->rab[0],0.01);
+	EXPECT_DOUBLE_EQ(upf->rab[601],0.01);
+	EXPECT_DOUBLE_EQ(upf->vloc[0],-5.3426582174E+01);
+	EXPECT_DOUBLE_EQ(upf->vloc[601],-6.3227960060E+00);
+	EXPECT_EQ(upf->lll[0],0);
+	EXPECT_EQ(upf->kkbeta[0],196);
+	EXPECT_DOUBLE_EQ(upf->beta(0,0),0.0);
+	EXPECT_DOUBLE_EQ(upf->beta(0,601),0.0);
+	EXPECT_EQ(upf->lll[1],0);
+	EXPECT_EQ(upf->kkbeta[1],196);
+	EXPECT_DOUBLE_EQ(upf->beta(1,0),0.0);
+	EXPECT_DOUBLE_EQ(upf->beta(1,601),0.0);
+	EXPECT_EQ(upf->lll[2],1);
+	EXPECT_EQ(upf->kkbeta[2],196);
+	EXPECT_DOUBLE_EQ(upf->beta(2,0),0.0);
+	EXPECT_DOUBLE_EQ(upf->beta(2,601),0.0);
+	EXPECT_EQ(upf->lll[3],1);
+	EXPECT_EQ(upf->kkbeta[3],196);
+	EXPECT_DOUBLE_EQ(upf->beta(3,0),0.0);
+	EXPECT_DOUBLE_EQ(upf->beta(3,601),0.0);
+	EXPECT_EQ(upf->lll[4],2);
+	EXPECT_EQ(upf->kkbeta[4],196);
+	EXPECT_DOUBLE_EQ(upf->beta(4,0),0.0);
+	EXPECT_DOUBLE_EQ(upf->beta(4,601),0.0);
+	EXPECT_EQ(upf->lll[5],2);
+	EXPECT_EQ(upf->kkbeta[5],196);
+	EXPECT_DOUBLE_EQ(upf->beta(5,0),0.0);
+	EXPECT_DOUBLE_EQ(upf->beta(5,601),0.0);
+	EXPECT_DOUBLE_EQ(upf->dion(0,0),-6.6178420255E+00);
+	EXPECT_DOUBLE_EQ(upf->dion(5,5),-7.0938557228E+00);
+	EXPECT_DOUBLE_EQ(upf->rho_at[0],0.0);
+	EXPECT_DOUBLE_EQ(upf->rho_at[601],3.1742307110E-02);
 	ifs.close();
 	delete upf;
 }

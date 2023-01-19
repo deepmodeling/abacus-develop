@@ -90,7 +90,7 @@
   <!-- END OF HUMAN READABLE SECTION -->
   <!--                               -->
     <PP_HEADER
-       generated="Generated using ONCVPSP code by D. R. Hamann"
+       generated = "Generated using ONCVPSP code by D. R. Hamann"
        author="Martin Schlipf and Francois Gygi"
        date="150105"
        comment=""
