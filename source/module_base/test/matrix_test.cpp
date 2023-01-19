@@ -1,5 +1,6 @@
 #include"../matrix.h"
 #include"gtest/gtest.h"
+#include "gmock/gmock.h"
 
 /************************************************
 *  unit test of class matrix and related functions
@@ -27,13 +28,13 @@
  *      - function transpose
  *      - function trace_on
  *      - function mdot
- * 
+ *      - function matrixAlloc
  */
 
 //a mock function of WARNING_QUIT, to avoid the uncorrected call by matrix.cpp at line 37.
 namespace ModuleBase
 {
-    void WARNING_QUIT(const std::string &file,const std::string &description) {return ;}
+//    void WARNING_QUIT(const std::string &file,const std::string &description) {return ;}
 }
 
 class matrixTest : public testing::Test
@@ -58,6 +59,11 @@ class matrixTest : public testing::Test
     }
 
 };
+
+namespace ModuleBase
+{
+	void matrixAlloc();
+}
 
 TEST(matrix,ConstructorNrNc)
 {
@@ -164,6 +170,7 @@ TEST_F(matrixTest,OperatorPlusEqual)
             EXPECT_DOUBLE_EQ(m33a(i,j),m33b(i,j)+m33c(i,j));
         }
     }
+    std::cout<< "out" <<std::endl;
 }
 
 TEST_F(matrixTest,OperatorMinusEqual)
@@ -328,3 +335,13 @@ TEST_F(matrixTest,MDot)
     EXPECT_DOUBLE_EQ(mdot(m33a,m33b),3163.5);
 }
 
+
+TEST_F(matrixTest,Alloc)
+{
+	std::string output;
+	testing::internal::CaptureStdout();
+	//EXPECT_DEATH(ModuleBase::matrixAlloc(), "");
+	EXPECT_EXIT(ModuleBase::matrixAlloc(), ::testing::ExitedWithCode(0),"");
+	output =  testing::internal::GetCapturedStdout();
+	EXPECT_THAT(output,testing::HasSubstr("Allocation error for Matrix"));
+}
