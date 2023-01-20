@@ -46,7 +46,7 @@ public:
 
 class LineSearchTest : public ::testing::TestWithParam<LineSearchPrepare>{};
 
-TEST_P(LineSearchTest,FirstOrder)
+TEST_P(LineSearchTest,LineSearch)
 {
 	LineSearchPrepare lsp = GetParam();
 	Line_Search ls;
