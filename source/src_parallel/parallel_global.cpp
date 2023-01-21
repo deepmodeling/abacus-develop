@@ -8,10 +8,10 @@
 #include "parallel_reduce.h"
 #include "../module_base/global_function.h"
 #include <iostream>
+#include <thread>
 
 #ifdef _OPENMP
 #include <omp.h>
-#include <thread>
 #endif
 
 #if defined __MPI
