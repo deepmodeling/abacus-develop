@@ -65,25 +65,24 @@ void Input::Init(const std::string &fn)
     time_t time_now = time(NULL);
     GlobalV::ofs_running << "                                                                                     "
                          << std::endl;
-    GlobalV::ofs_running << "                             WELCOME TO ABACUS v3.1                                  "
-                         << std::endl;
-    GlobalV::ofs_running << "                                                                                     "
-                         << std::endl;
-    GlobalV::ofs_running << "               'Atomic-orbital Based Ab-initio Computation at UStc'                  "
-                         << std::endl;
-    GlobalV::ofs_running << "                                                                                     "
-                         << std::endl;
+    GlobalV::ofs_running << "                              ABACUS v3.1                                            "
+                         << std::endl << std::endl;
+    GlobalV::ofs_running << "               Atomic-orbital Based Ab-initio Computation at UStc                    "
+                         << std::endl << std::endl;
     GlobalV::ofs_running << "                     Website: http://abacus.ustc.edu.cn/                             "
                          << std::endl;
-    GlobalV::ofs_running << "                                                                                     "
+    GlobalV::ofs_running << "               Documentation: https://abacus.deepmodeling.com/                       "
                          << std::endl;
-
+    GlobalV::ofs_running << "                  Repository: https://github.com/abacusmodeling/abacus-develop       "
+                         << std::endl;
+    GlobalV::ofs_running << "                              https://github.com/deepmodeling/abacus-develop         "
+                         << std::endl << std::endl;
     GlobalV::ofs_running << std::setiosflags(ios::right);
 
 #ifdef __MPI
     // GlobalV::ofs_running << "    Version: Parallel, under ALPHA test" << std::endl;
-    GlobalV::ofs_running << "    Version: Parallel, in development" << std::endl;
-    GlobalV::ofs_running << "    Processor Number is " << GlobalV::NPROC << std::endl;
+    // GlobalV::ofs_running << "    Version: Parallel, in development" << std::endl;
+    // GlobalV::ofs_running << "    Processor Number is " << GlobalV::NPROC << std::endl;
     ModuleBase::TITLE("Input", "init");
     ModuleBase::TITLE("Input", "Bcast");
 #else
@@ -432,7 +431,7 @@ void Input::Default(void)
     td_gauss_freq = 22.13; // fs^-1
     td_gauss_phase = 0.0;
     td_gauss_sigma = 30.0; // fs
-    td_gauss_t0 = 100.0; 
+    td_gauss_t0 = 100.0;
     td_gauss_amp = 0.25; // V/A
 
     // Trapezoid
