@@ -1,5 +1,6 @@
 #include "../intarray.h"
 #include "gtest/gtest.h"
+#include "gmock/gmock.h"
 
 /************************************************
  *  unit test of class IntArray
@@ -30,7 +31,14 @@
  *   - ConstParentheses
  *     - access element by using "()" through pointer
  *     - without changing its elements
+ *   -IntArrayAlloc
+ *     - Warning of integer array allocation error
  */
+
+namespace ModuleBase
+{
+void IntArrayAlloc();
+}
 
 class IntArrayTest : public testing::Test
 {
@@ -306,3 +314,11 @@ TEST_F(IntArrayTest,ConstParentheses)
 	EXPECT_EQ((*x6)(5,4,8,2,1,0),10);
 }
 
+TEST_F(IntArrayTest,Alloc)
+{
+	std::string output;
+	testing::internal::CaptureStdout();
+	EXPECT_EXIT(ModuleBase::IntArrayAlloc(), ::testing::ExitedWithCode(0),"");
+	output = testing::internal::GetCapturedStdout();
+	EXPECT_THAT(output,testing::HasSubstr("Allocation error for IntArray"));
+}

@@ -15,7 +15,7 @@ add_subdirectory(module_xc)
 add_subdirectory(module_esolver)
 add_subdirectory(module_gint)
 add_subdirectory(module_dftu)
-add_subdirectory(src_io)
+add_subdirectory(module_io)
 add_subdirectory(module_relax)
 add_subdirectory(src_lcao)
 add_subdirectory(src_parallel)
@@ -30,8 +30,6 @@ add_library(
     OBJECT
     driver.cpp
     driver_run.cpp
-    input.cpp
-    input_conv.cpp
 )
 
 list(APPEND device_srcs

@@ -3,6 +3,7 @@
 //-----------temporary-------------------------
 #include "../src_pw/global.h"
 #include "../module_base/global_function.h"
+#include "module_base/memory.h"
 #include "../module_symmetry/symmetry.h"
 // #include "../src_pw/vdwd2.h"
 // #include "../src_pw/vdwd3.h"
@@ -11,7 +12,7 @@
 #include "../src_pw/pw_complement.h"
 #include "../src_pw/structure_factor.h"
 #include "../src_pw/symmetry_rho.h"
-#include "../src_io/print_info.h"
+#include "../module_io/print_info.h"
 #include "../src_pw/H_Ewald_pw.h"
 //-----force-------------------
 #include "../src_pw/forces.h"
@@ -89,6 +90,7 @@ void ESolver_OF::Init(Input &inp, UnitCell &ucell)
 
     // Initialize the "wavefunction", which is sqrt(rho)
     this->psi = new psi::Psi<double>(1, GlobalV::NSPIN, this->nrxx);
+    ModuleBase::Memory::record("OFDFT::Psi", sizeof(double) * GlobalV::NSPIN * this->nrxx);
     this->pphi = new double*[GlobalV::NSPIN];
     for (int is = 0; is < GlobalV::NSPIN; ++is)
     {

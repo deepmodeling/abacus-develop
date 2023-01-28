@@ -5,19 +5,15 @@ ABACUS_NPROCS=$(awk -F "=" '$1=="ABACUS_NPROCS"{print $2}' ../../SETENV)
 ABACUS_THREADS=$(awk -F "=" '$1=="ABACUS_THREADS"{print $2}' ../../SETENV)
 
 cp STRU_0 STRU
-sed -i "/ntype/ c\ntype		2" INPUT
 OMP_NUM_THREADS=${ABACUS_THREADS} mpirun -np ${ABACUS_NPROCS} ${ABACUS_PATH} | tee H2O_scf.output
 mv OUT.ABACUS/running_scf.log OUT.ABACUS/running_scf_H2O.log
 cp STRU_1 STRU
-sed -i "/ntype/ c\ntype		2" INPUT
 OMP_NUM_THREADS=${ABACUS_THREADS} mpirun -np ${ABACUS_NPROCS} ${ABACUS_PATH} | tee O_scf.output
 mv OUT.ABACUS/running_scf.log OUT.ABACUS/running_scf_O.log
 cp STRU_2 STRU
-sed -i "/ntype/ c\ntype		3" INPUT
 OMP_NUM_THREADS=${ABACUS_THREADS} mpirun -np ${ABACUS_NPROCS} ${ABACUS_PATH} | tee H1_scf.output
 mv OUT.ABACUS/running_scf.log OUT.ABACUS/running_scf_H1.log
 cp STRU_3 STRU
-sed -i "/ntype/ c\ntype		3" INPUT
 OMP_NUM_THREADS=${ABACUS_THREADS} mpirun -np ${ABACUS_NPROCS} ${ABACUS_PATH} | tee H2_scf.output
 mv OUT.ABACUS/running_scf.log OUT.ABACUS/running_scf_H2.log
 

@@ -2,6 +2,7 @@
 #include "./H_Ewald_pw.h"
 #include "../module_base/timer.h"
 #include "../module_base/tool_threading.h"
+#include "../module_base/libm/libm.h"
 #include "global.h"
 
 #ifdef _OPENMP
@@ -63,7 +64,7 @@ void Stress_Func<FPTYPE, Device>::stress_ewa(ModuleBase::matrix& sigma, ModulePW
     int num_threads = 1;
     int thread_id = 0;
 	ModuleBase::matrix& local_sigma = sigma;
-	double& local_sdewald = sdewald;
+	FPTYPE& local_sdewald = sdewald;
 #endif
 
 	// Calculate ig range of this thread, avoid thread sync
@@ -86,11 +87,13 @@ void Stress_Func<FPTYPE, Device>::stress_ewa(ModuleBase::matrix& sigma, ModulePW
 			for(int i=0; i<GlobalC::ucell.atoms[it].na; i++)
 			{
 				arg = (rho_basis->gcar[ig] * GlobalC::ucell.atoms[it].tau[i]) * (ModuleBase::TWO_PI);
-				rhostar = rhostar + std::complex<FPTYPE>(GlobalC::ucell.atoms[it].ncpp.zv * cos(arg),GlobalC::ucell.atoms[it].ncpp.zv * sin(arg));
+				FPTYPE sinp, cosp;
+                ModuleBase::libm::sincos(arg, &sinp, &cosp);
+				rhostar = rhostar + std::complex<FPTYPE>(GlobalC::ucell.atoms[it].ncpp.zv * cosp,GlobalC::ucell.atoms[it].ncpp.zv * sinp);
 			}
 		}
 		rhostar /= GlobalC::ucell.omega;
-		sewald = fact* (ModuleBase::TWO_PI) * ModuleBase::e2 * exp(-g2a) / g2 * pow(abs(rhostar),2);
+		sewald = fact* (ModuleBase::TWO_PI) * ModuleBase::e2 * ModuleBase::libm::exp(-g2a) / g2 * pow(abs(rhostar),2);
 		local_sdewald -= sewald;
 		for(int l=0;l<3;l++)
 		{
@@ -104,7 +107,7 @@ void Stress_Func<FPTYPE, Device>::stress_ewa(ModuleBase::matrix& sigma, ModulePW
     //R-space sum here (only for the processor that contains G=0) 
     int mxr = 50;
     int *irr;
-    ModuleBase::Vector3<double> *r;
+    ModuleBase::Vector3<FPTYPE> *r;
     FPTYPE *r2;
     FPTYPE rr;
     ModuleBase::Vector3<FPTYPE> d_tau;
@@ -114,12 +117,12 @@ void Stress_Func<FPTYPE, Device>::stress_ewa(ModuleBase::matrix& sigma, ModulePW
     FPTYPE fac;
 	if(ig0 >= 0)
 	{
-		r = new ModuleBase::Vector3<double>[mxr];
-		r2 = new double[mxr];
+		r = new ModuleBase::Vector3<FPTYPE>[mxr];
+		r2 = new FPTYPE[mxr];
 		irr = new int[mxr];
 
-		double sqa = sqrt(alpha);
-		double sq8a_2pi = sqrt(8 * alpha / (ModuleBase::TWO_PI));
+		FPTYPE sqa = sqrt(alpha);
+		FPTYPE sq8a_2pi = sqrt(8 * alpha / (ModuleBase::TWO_PI));
 		rmax = 4.0/sqa/GlobalC::ucell.lat0;
 
 		// collapse it, ia, jt, ja loop into a single loop
@@ -138,7 +141,7 @@ void Stress_Func<FPTYPE, Device>::stress_ewa(ModuleBase::matrix& sigma, ModulePW
 			for(int nr=0 ; nr<nrm ; nr++)
 			{
 				rr=sqrt(r2[nr]) * GlobalC::ucell.lat0;
-				fac = -ModuleBase::e2/2.0/GlobalC::ucell.omega*pow(GlobalC::ucell.lat0,2)*GlobalC::ucell.atoms[it].ncpp.zv * GlobalC::ucell.atoms[jt].ncpp.zv / pow(rr,3) * (erfc(sqa*rr)+rr * sq8a_2pi *  exp(-alpha * pow(rr,2)));
+				fac = -ModuleBase::e2/2.0/GlobalC::ucell.omega*pow(GlobalC::ucell.lat0,2)*GlobalC::ucell.atoms[it].ncpp.zv * GlobalC::ucell.atoms[jt].ncpp.zv / pow(rr,3) * (erfc(sqa*rr)+rr * sq8a_2pi *  ModuleBase::libm::exp(-alpha * pow(rr,2)));
 				for(int l=0; l<3; l++)
 				{
 					for(int m=0; m<l+1; m++)

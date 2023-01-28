@@ -270,26 +270,6 @@ void Grid::setBoundaryAdjacent(
 
 	if(test_grid)ModuleBase::GlobalFunc::OUT(ofs_in,"Adjacent_set call times",AdjacentSet::call_times);
 
-	if (!expand_flag)
-	{
-		//xiaohui add 'OUT_LEVEL' line, 2015-09-16
-		//if(OUT_LEVEL != "m") OUT(ofs_in,"average adjacent (per atom)",
-
-// mohan comment out 2021-06-22
-//		if(OUT_LEVEL != "m") OUT(ofs_in,"average adjacent (per atom)",
-//		static_cast<double>(AdjacentSet::call_times)
-//		/ static_cast<double>(this->natom));
-	}
-	else
-	{
-//		if(OUT_LEVEL != "m") OUT(ofs_in,"average adjacent (per atom)",
-//		static_cast<double>(AdjacentSet::call_times)
-//		/ static_cast<double>(Cell[0][0][0].length));
-	}
-
-	ModuleBase::Memory::record("AdjacentSet", "offset", AdjacentSet::call_times, "short");
-	ModuleBase::Memory::record("AdjacentSet", "box", AdjacentSet::call_times, "short");
-
 	//if (test_grid)ModuleBase::GlobalFunc::DONE(ofs_in, "Construct_Adjacent");
 
 	return;
@@ -330,7 +310,7 @@ AtomLink* Grid::Build_Cache(const UnitCell &ucell, const Atom_input &input)
 {
 //	if (test_grid)ModuleBase::TITLE(ofs_running, "Grid", "Build_Cache");
 	AtomLink* const start = new AtomLink[natom+1];
-	ModuleBase::Memory::record("grid", "AtomLink", natom, "AtomLink");
+	ModuleBase::Memory::record("Grid::AtomLink", sizeof(AtomLink) * (natom+1));
 
 	// the pointer stay at the end of atom.
 	//const AtomLink* const end = start + natom + 1;
@@ -365,6 +345,7 @@ void Grid::Build_Cell(void)
 
 	delete[] this->atomlink;
 	this->atomlink = new AtomLink[this->natom];
+	ModuleBase::Memory::record("Grid::AtomLink", sizeof(AtomLink) * (natom+1));
 
 	// cordon_p : the pointer to the end of atom
 	this->cordon_p = this->atomlink + this->natom;

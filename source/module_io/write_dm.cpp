@@ -1,11 +1,11 @@
-#include "../src_lcao/local_orbital_charge.h"
+#include "module_io/density_matrix.h"
 #include "../src_pw/global.h"
 #include "../src_parallel/parallel_reduce.h"
 #include "../module_base/blas_connector.h"
 #include "../module_base/timer.h"
 
 //-------------------------------------------------
-// NOTE for Local_Orbital_Charge::write_dm
+// NOTE for ModuleIO::write_dm
 // I will give an example here, suppose we have a 4*4 
 // density matrix (symmetry) which is
 // 1.1 2.3 3.6 4.2
@@ -37,13 +37,15 @@
 // on other processors, this is why there is
 // a 'count' integer array in the code.
 // UPDATED BY MOHAN 2014-05-18
-void Local_Orbital_Charge::write_dm(
+void ModuleIO::write_dm(
 	const int &is, 
 	const int &iter, 
 	const std::string &fn, 
-	const int &precision)
+	const int &precision,
+	const int &out_dm,
+	double*** DM)
 {
-    ModuleBase::TITLE("Local_Orbital_Charge","write_dm");
+    ModuleBase::TITLE("ModuleIO","write_dm");
 
 	if (out_dm==0)
 	{
@@ -53,7 +55,7 @@ void Local_Orbital_Charge::write_dm(
 	{
 		return; 
 	}
-	ModuleBase::timer::tick("Local_Orbital_Charge","write_dm");
+	ModuleBase::timer::tick("ModuleIO","write_dm");
 
 	time_t start, end;
 	std::ofstream ofs;
@@ -130,7 +132,7 @@ void Local_Orbital_Charge::write_dm(
         for(int j=0; j<GlobalV::NLOCAL; ++j)
         {
             if(j%8==0) ofs << "\n";
-            ofs << " " << this->DM[is][i][j];
+            ofs << " " << DM[is][i][j];
         }
     }
 
@@ -198,21 +200,22 @@ void Local_Orbital_Charge::write_dm(
 		ModuleBase::GlobalFunc::OUT_TIME("write_rho",start,end);
 		ofs.close();
 	}
-	ModuleBase::timer::tick("Local_Orbital_Charge","write_dm");
+	ModuleBase::timer::tick("ModuleIO","write_dm");
 
     return;
 }
 
-void Local_Orbital_Charge::write_dm1(const int &is, const int &istep, double** dm2d)
+void ModuleIO::write_dm1(const int &is, const int &istep, double** dm2d, const Parallel_Orbitals* ParaV,
+    std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>> &DMR_sparse)
 {
-    ModuleBase::timer::tick("Local_Orbital_Charge","write_dm");
-    ModuleBase::TITLE("Local_Orbital_Charge","write_dm");
+    ModuleBase::timer::tick("ModuleIO","write_dm");
+    ModuleBase::TITLE("ModuleIO","write_dm");
 
-    get_dm_sparse(is, dm2d);
-    write_dm_sparse(is, istep);
-    destroy_dm_sparse();
+    get_dm_sparse(is, dm2d, ParaV, DMR_sparse);
+    write_dm_sparse(is, istep, ParaV, DMR_sparse);
+    destroy_dm_sparse(DMR_sparse);
 
-    ModuleBase::timer::tick("Local_Orbital_Charge","write_dm");
+    ModuleBase::timer::tick("ModuleIO","write_dm");
 }
 
 inline void output_single_R(std::ofstream &ofs, const std::map<size_t, std::map<size_t, double>> &XR, const double &sparse_threshold, const Parallel_Orbitals &pv)
@@ -298,10 +301,11 @@ inline void output_single_R(std::ofstream &ofs, const std::map<size_t, std::map<
 
 }
 
-void Local_Orbital_Charge::get_dm_sparse(const int &is, double** dm2d)
+void ModuleIO::get_dm_sparse(const int &is, double** dm2d, const Parallel_Orbitals* ParaV,
+    std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>> &DMR_sparse)
 {
-    ModuleBase::timer::tick("Local_Orbital_Charge","get_dm_sparse");
-    ModuleBase::TITLE("Local_Orbital_Charge","get_dm_sparse");
+    ModuleBase::timer::tick("ModuleIO","get_dm_sparse");
+    ModuleBase::TITLE("ModuleIO","get_dm_sparse");
 
     double sparse_threshold = 1e-10;
 
@@ -382,7 +386,7 @@ void Local_Orbital_Charge::get_dm_sparse(const int &is, double** dm2d)
                             temp_value_double = dm2d[is][index];
                             if (std::abs(temp_value_double) > sparse_threshold)
                             {
-                                this->DMR_sparse[dR][iw1_all][iw2_all] = temp_value_double;
+                                DMR_sparse[dR][iw1_all][iw2_all] = temp_value_double;
                             }
 
                             ++index;
@@ -393,13 +397,14 @@ void Local_Orbital_Charge::get_dm_sparse(const int &is, double** dm2d)
         }
     }
 
-    ModuleBase::timer::tick("Local_Orbital_Charge","get_dm_sparse");
+    ModuleBase::timer::tick("ModuleIO","get_dm_sparse");
 }
 
-void Local_Orbital_Charge::write_dm_sparse(const int &is, const int &istep)
+void ModuleIO::write_dm_sparse(const int &is, const int &istep, const Parallel_Orbitals* ParaV,
+    std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>> &DMR_sparse)
 {
-    ModuleBase::timer::tick("Local_Orbital_Charge","write_dm_sparse");
-    ModuleBase::TITLE("Local_Orbital_Charge","write_dm_sparse");
+    ModuleBase::timer::tick("ModuleIO","write_dm_sparse");
+    ModuleBase::TITLE("ModuleIO","write_dm_sparse");
 
     double sparse_threshold = 1e-10;
 
@@ -511,10 +516,10 @@ void Local_Orbital_Charge::write_dm_sparse(const int &is, const int &istep)
     delete[] DMR_nonzero_num;
     DMR_nonzero_num = nullptr;
 
-    ModuleBase::timer::tick("Local_Orbital_Charge","write_dm_sparse");
+    ModuleBase::timer::tick("ModuleIO","write_dm_sparse");
 }
 
-void Local_Orbital_Charge::destroy_dm_sparse()
+void ModuleIO::destroy_dm_sparse(std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>> &DMR_sparse)
 {
     std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>> empty_DMR_sparse;
     DMR_sparse.swap(empty_DMR_sparse);

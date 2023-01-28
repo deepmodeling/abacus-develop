@@ -3,7 +3,7 @@ INPUT_PARAMETERS
 suffix			autotest
 calculation     	scf
 dft_functional	        pbe	
-ntype			3
+
 nbands			12
 symmetry		0
 pseudo_dir		../../PP_ORB

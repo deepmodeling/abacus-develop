@@ -1,5 +1,5 @@
 #include "print_info.h"
-#include "../input.h"
+#include "module_io/input.h"
 #include "../module_base/global_variable.h"
 
 Print_Info::Print_Info(){}

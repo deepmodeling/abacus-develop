@@ -3,7 +3,11 @@
 
 #include "./esolver.h"
 #ifdef __DPMD
+#ifdef __DPMDC
+#include "deepmd/deepmd.hpp"
+#else
 #include "deepmd/DeepPot.h"
+#endif
 #endif
 
 namespace ModuleESolver
@@ -33,7 +37,11 @@ namespace ModuleESolver
 
         //--------------temporary----------------------------
 #ifdef __DPMD
+#ifdef __DPMDC
+        deepmd::hpp::DeepPot dp;
+#else
         deepmd::DeepPot dp;
+#endif
 #endif
         std::vector<double> cell;
         std::vector<int> atype;

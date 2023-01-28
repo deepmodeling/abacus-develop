@@ -3,7 +3,7 @@
 // DATE : 2008-11-6
 //==========================================================
 // #include "global.h"
-#include "input.h"
+#include "module_io/input.h"
 
 #include "module_base/global_file.h"
 #include "module_base/global_function.h"
@@ -65,25 +65,24 @@ void Input::Init(const std::string &fn)
     time_t time_now = time(NULL);
     GlobalV::ofs_running << "                                                                                     "
                          << std::endl;
-    GlobalV::ofs_running << "                             WELCOME TO ABACUS v3.0                                  "
-                         << std::endl;
-    GlobalV::ofs_running << "                                                                                     "
-                         << std::endl;
-    GlobalV::ofs_running << "               'Atomic-orbital Based Ab-initio Computation at UStc'                  "
-                         << std::endl;
-    GlobalV::ofs_running << "                                                                                     "
-                         << std::endl;
+    GlobalV::ofs_running << "                              ABACUS v3.1                                            "
+                         << std::endl << std::endl;
+    GlobalV::ofs_running << "               Atomic-orbital Based Ab-initio Computation at UStc                    "
+                         << std::endl << std::endl;
     GlobalV::ofs_running << "                     Website: http://abacus.ustc.edu.cn/                             "
                          << std::endl;
-    GlobalV::ofs_running << "                                                                                     "
+    GlobalV::ofs_running << "               Documentation: https://abacus.deepmodeling.com/                       "
                          << std::endl;
-
+    GlobalV::ofs_running << "                  Repository: https://github.com/abacusmodeling/abacus-develop       "
+                         << std::endl;
+    GlobalV::ofs_running << "                              https://github.com/deepmodeling/abacus-develop         "
+                         << std::endl << std::endl;
     GlobalV::ofs_running << std::setiosflags(ios::right);
 
 #ifdef __MPI
     // GlobalV::ofs_running << "    Version: Parallel, under ALPHA test" << std::endl;
-    GlobalV::ofs_running << "    Version: Parallel, in development" << std::endl;
-    GlobalV::ofs_running << "    Processor Number is " << GlobalV::NPROC << std::endl;
+    // GlobalV::ofs_running << "    Version: Parallel, in development" << std::endl;
+    // GlobalV::ofs_running << "    Processor Number is " << GlobalV::NPROC << std::endl;
     ModuleBase::TITLE("Input", "init");
     ModuleBase::TITLE("Input", "Bcast");
 #else
@@ -405,6 +404,9 @@ void Input::Default(void)
 
     out_dipole = 0;
 
+    td_print_eij = -1.0;
+    td_edm = 0;
+
     td_stype = 0; // 0 : length gauge  1: velocity gauge
 
     td_ttype = 0;
@@ -429,7 +431,7 @@ void Input::Default(void)
     td_gauss_freq = 22.13; // fs^-1
     td_gauss_phase = 0.0;
     td_gauss_sigma = 30.0; // fs
-    td_gauss_t0 = 100.0; 
+    td_gauss_t0 = 100.0;
     td_gauss_amp = 0.25; // V/A
 
     // Trapezoid
@@ -1491,6 +1493,14 @@ bool Input::Read(const std::string &fn)
         else if (strcmp("out_dipole", word) == 0)
         {
             read_value(ifs, out_dipole);
+        }
+        else if (strcmp("td_print_eij", word) == 0)
+        {
+            read_value(ifs, td_print_eij);
+        }
+        else if (strcmp("td_edm", word) == 0)
+        {
+            read_value(ifs, td_edm);
         }
         else if (strcmp("td_stype", word) == 0)
         {
@@ -2862,8 +2872,9 @@ void Input::Bcast()
     Parallel_Common::bcast_double(td_hhg_freq2);
     Parallel_Common::bcast_double(td_hhg_t0);
     Parallel_Common::bcast_double(td_hhg_sigma);
-
     Parallel_Common::bcast_int(out_dipole);
+    Parallel_Common::bcast_double(td_print_eij);
+    Parallel_Common::bcast_int(td_edm);
     Parallel_Common::bcast_bool(test_skip_ewald);
     Parallel_Common::bcast_bool(ocp);
     Parallel_Common::bcast_string(ocp_set);

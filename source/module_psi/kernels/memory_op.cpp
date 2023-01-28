@@ -3,17 +3,32 @@
 #include <string.h>
 #include "module_psi/kernels/types.h"
 #include "module_psi/kernels/memory_op.h"
+#include "module_base/memory.h"
 
 namespace psi{
 namespace memory{
 
 template <typename FPTYPE> 
 struct resize_memory_op<FPTYPE, psi::DEVICE_CPU> {
-  void operator()(const psi::DEVICE_CPU* dev, FPTYPE*& arr, const size_t size) {
+  void operator()(const psi::DEVICE_CPU* dev, FPTYPE*& arr, const size_t size, const char* record_in) {
     if (arr != nullptr) {
       free(arr);
     }
     arr = (FPTYPE*) malloc(sizeof(FPTYPE) * size);
+    std::string record_string;
+    if(record_in != nullptr)
+    {
+      record_string = record_in;
+    }
+    else
+    {
+      record_string = "no_record";
+    }
+    
+    if(record_string != "no_record" )
+    {
+      ModuleBase::Memory::record(record_string , sizeof(FPTYPE) * size);
+    }
   }
 };
 
@@ -91,7 +106,7 @@ template struct delete_memory_op<std::complex<double>, psi::DEVICE_CPU>;
 #if !(defined(__CUDA) || defined(__ROCM))
 template <typename FPTYPE>
 struct resize_memory_op<FPTYPE, psi::DEVICE_GPU> {
-    void operator()(const psi::DEVICE_GPU* dev, FPTYPE*& arr, const size_t size) {}
+    void operator()(const psi::DEVICE_GPU* dev, FPTYPE*& arr, const size_t size, const char* record_in = nullptr) {}
 };
 
 template <typename FPTYPE>

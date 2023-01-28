@@ -370,8 +370,6 @@ void PW_complement::get_ig2fftc(const int &ngmc, const int &ncx, const int &ncy,
 
     ModuleBase::GlobalFunc::ZEROS(ig2fftc, ngmc);
 
-    ModuleBase::Memory::record("PW_complement","ig2fftc",ngmc,"int");
-
     for (int i = 0; i < ngmc;i++)
     {
         int n1 = int(ig[i].x);//ig --> f --> (i,j,k)

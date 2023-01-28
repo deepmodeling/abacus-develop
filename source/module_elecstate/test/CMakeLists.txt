@@ -3,6 +3,7 @@ remove_definitions(-D__EXX)
 remove_definitions(-D__CUDA)
 remove_definitions(-D__ROCM)
 remove_definitions(-D__DEEPKS)
+
 if(ENABLE_LCAO)
   AddTest(
     TARGET EState_updaterhok_pw
@@ -12,7 +13,7 @@ if(ENABLE_LCAO)
             ../../src_pw/charge.cpp ../../src_parallel/parallel_reduce.cpp
             ../../src_pw/structure_factor.cpp ../../src_pw/pw_complement.cpp
             ../../src_pw/klist.cpp ../../src_parallel/parallel_kpoints.cpp ../../src_pw/occupy.cpp
-            ../kernels/elecstate_op.cpp ../../src_io/rwstream.cpp ../../src_io/wf_io.cpp
+            ../kernels/elecstate_op.cpp ../../module_io/rwstream.cpp ../../module_io/wf_io.cpp
   )
 
   install(DIRECTORY support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
@@ -37,7 +38,7 @@ if(ENABLE_LCAO)
               ../../module_gint/gint_vl.cpp
               ../../src_pw/charge.cpp
               ../../src_pdiag/pdiag_common.cpp
-              ../../src_io/output.cpp ../../src_pw/soc.cpp ../../src_io/read_rho.cpp
+              ../../module_io/output.cpp ../../src_pw/soc.cpp ../../module_io/read_rho.cpp
   )
   if(USE_CUDA)
     target_link_libraries(EState_psiToRho_lcao cufft)
@@ -50,6 +51,14 @@ if(ENABLE_LCAO)
         COMMAND ${BASH} elecstate_lcao_parallel_test.sh
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
       )]]
+endif()
+if (USE_ABACUS_LIBM)
+list (APPEND LIBM_SRC
+  ../../module_base/libm/branred.cpp
+  ../../module_base/libm/cexp.cpp
+  ../../module_base/libm/exp.cpp
+  ../../module_base/libm/sincos.cpp
+)
 endif()
 add_library(
   base_serial
@@ -83,6 +92,7 @@ add_library(
   ../../module_base/tool_quit.cpp
   ../../module_base/tool_title.cpp
   ../../module_base/ylm.cpp
+  ${LIBM_SRC}
 )
 
 list(APPEND planewave_serial_srcs

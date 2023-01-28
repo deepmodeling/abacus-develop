@@ -1,6 +1,6 @@
 #include "../realarray.h"
 #include "gtest/gtest.h"
-
+#include "gmock/gmock.h"
 /************************************************
  *  unit test of class realArray
  ***********************************************/
@@ -30,6 +30,9 @@
  *   - ConstParentheses
  *     - access element by using "()" through pointer
  *     - without changing its elements
+ *   - realArrayAlloc
+ *     - output the warning message when allocation error for realArray
+ *     - occurs
  */
 
 class realArrayTest : public testing::Test
@@ -42,6 +45,11 @@ protected:
 	int count1;
 	const double zero = 0.0;
 };
+
+namespace ModuleBase
+{
+void realArrayAlloc();
+}
 
 TEST_F(realArrayTest,GetArrayCount)
 {
@@ -181,4 +189,13 @@ TEST_F(realArrayTest,ConstParenthesesExpert)
 	const ModuleBase::realArray b4 (a4);
 	EXPECT_EQ(b4(0,1,2,1),bb);
 	EXPECT_EQ(b4(0,0,0,0),bb);
+}
+
+TEST_F(realArrayTest,Alloc)
+{
+	std::string output;
+	testing::internal::CaptureStdout();
+	EXPECT_EXIT(ModuleBase::realArrayAlloc(), ::testing::ExitedWithCode(0),"");
+	output = testing::internal::GetCapturedStdout();
+	EXPECT_THAT(output,testing::HasSubstr("Allocation error for realArray"));
 }

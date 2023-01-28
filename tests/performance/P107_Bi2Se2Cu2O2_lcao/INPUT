@@ -2,7 +2,6 @@ INPUT_PARAMETERS
 #Parameters (1.General)
 suffix			autotest
 calculation     scf
-ntype			4
 #nbands			8
 symmetry		1
 

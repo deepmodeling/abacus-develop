@@ -135,8 +135,8 @@ void Charge_Mixing::allocate_Broyden()
 				dn[i][is] = new std::complex<double>[GlobalC::rhopw->npw];
 			}
 		}
-		ModuleBase::Memory::record("Charge_Mixing","dF", GlobalV::NSPIN*npdim*GlobalC::rhopw->npw,"cdouble");
-		ModuleBase::Memory::record("Charge_Mixing","dn", GlobalV::NSPIN*npdim*GlobalC::rhopw->npw,"cdouble");
+		ModuleBase::Memory::record("ChgMix::dF", sizeof(std::complex<double>) * GlobalV::NSPIN*npdim*GlobalC::rhopw->npw);
+		ModuleBase::Memory::record("ChgMix::dn", sizeof(std::complex<double>) * GlobalV::NSPIN*npdim*GlobalC::rhopw->npw);
 		this->initb = true;
 	}
 

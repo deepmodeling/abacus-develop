@@ -18,6 +18,8 @@ int ELEC_evolve::td_val_elec_03;
 int ELEC_evolve::td_vext;
 int ELEC_evolve::td_vext_dire;
 int ELEC_evolve::out_dipole;
+double ELEC_evolve::td_print_eij; // the threshold to output Eij elements
+int ELEC_evolve::td_edm; // 0: new edm method   1: old edm method
 
 // this routine only serves for TDDFT using LCAO basis set
 void ELEC_evolve::evolve_psi(const int& istep,

@@ -3,7 +3,7 @@ add_definitions(-D__CMD -D__NORMAL)
 
 list(APPEND depend_files 
   ../MD_func.cpp
-  ../../input.cpp
+  ../../module_io/input.cpp
   ../../module_cell/unitcell.cpp
   ../../module_cell/atom_spec.cpp
   ../../module_cell/atom_pseudo.cpp
@@ -35,8 +35,8 @@ list(APPEND depend_files
   ../../module_neighbor/sltk_atom_input.cpp
   ../../module_neighbor/sltk_grid.cpp
   ../../module_neighbor/sltk_grid_driver.cpp
-  ../../src_io/output.cpp
-  ../../src_io/print_info.cpp
+  ../../module_io/output.cpp
+  ../../module_io/print_info.cpp
   ../../module_esolver/esolver_lj.cpp
   ../../src_parallel/parallel_reduce.cpp
   ../../src_parallel/parallel_global.cpp

@@ -22,6 +22,7 @@ AddTest(
 )
 ADDTest(
   TARGET base_global_function
+  LIBS ${math_libs}
   SOURCES global_function_test.cpp ../global_function.cpp ../tool_quit.cpp ../global_variable.cpp ../global_file.cpp ../memory.cpp ../timer.cpp
 )
 AddTest(
@@ -44,7 +45,7 @@ AddTest(
 AddTest(
  TARGET base_matrix
   LIBS ${math_libs}
-  SOURCES matrix_test.cpp ../matrix.cpp
+  SOURCES matrix_test.cpp ../matrix.cpp ../tool_quit.cpp ../global_variable.cpp ../global_file.cpp ../memory.cpp ../timer.cpp
 )
 AddTest(
   TARGET base_complexarray
@@ -68,6 +69,7 @@ AddTest(
   LIBS ${math_libs} device
   SOURCES math_ylmreal_test.cpp ../math_ylmreal.cpp ../complexmatrix.cpp ../global_variable.cpp ../ylm.cpp ../realarray.cpp ../timer.cpp ../matrix.cpp ../vector3.h
           ../../src_parallel/parallel_reduce.cpp ../../src_parallel/parallel_kpoints.cpp ../../src_parallel/parallel_global.cpp ../../src_parallel/parallel_common.cpp
+          ../memory.cpp
 )
 AddTest(
   TARGET base_math_sphbes
@@ -126,3 +128,8 @@ AddTest(
   TARGET base_opt_TN
   SOURCES opt_TN_test.cpp opt_test_tools.cpp ../opt_CG.cpp ../opt_DCsrch.cpp ../global_variable.cpp ../../src_parallel/parallel_reduce.cpp
 )
+
+AddTest(
+  TARGET base_ylm
+  SOURCES ylm_test.cpp  ../ylm.cpp  ../timer.cpp  ../tool_quit.cpp ../global_variable.cpp ../global_file.cpp ../memory.cpp
+  )

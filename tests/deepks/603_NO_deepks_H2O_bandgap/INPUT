@@ -1,7 +1,7 @@
 INPUT_PARAMETERS
 suffix autotest
 calculation scf
-ntype 2
+
 ecutwfc 100.000000
 scf_thr 5.000000e-07
 scf_nmax 35

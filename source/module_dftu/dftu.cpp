@@ -211,7 +211,7 @@ void DFTU::init(UnitCell& cell, // unitcell class
         }
     }
 
-    ModuleBase::Memory::record("DFTU", "locale", num_locale, "double");
+    ModuleBase::Memory::record("DFTU::locale", sizeof(double) * num_locale);
     return;
 }
 

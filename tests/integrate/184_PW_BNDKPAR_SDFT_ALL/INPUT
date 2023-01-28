@@ -4,7 +4,7 @@ suffix			autotest
 calculation     scf
 esolver_type    sdft
 method_sto      1
-ntype			1
+
 symmetry		0
 pseudo_dir	../../PP_ORB
 
