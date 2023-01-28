@@ -1192,7 +1192,7 @@ void Symmetry::pricell(double* pos)
         ptrans[i].x=ptrans_array[i*3];
         ptrans[i].y=ptrans_array[i*3+1];
         ptrans[i].z=ptrans_array[i*3+2];
-        // std::cout<<ptrans[i].x<<" "<<ptrans[i].y<<" "<<ptrans[i].z<<std::endl;
+        std::cout<<ptrans[i].x<<" "<<ptrans[i].y<<" "<<ptrans[i].z<<std::endl;
     }
     delete[] ptrans_array;
 
@@ -1206,32 +1206,33 @@ void Symmetry::pricell(double* pos)
     b3=kplane>0 ? 
         ModuleBase::Vector3<double>(ptrans[kplane].x, ptrans[kplane].y, ptrans[kplane].z) : 
         ModuleBase::Vector3<double>(0, 0, 1);
-    //2. jplane for b2
+    //2. jplane for b2 (not collinear with b3)
     jplane=kplane+1;
-    while(jplane<ntrans && std::abs(ptrans[jplane].y-ptrans[0].y)<this->epsilon) ++jplane;
-    std::cout<<"max jplane="<<jplane<<std::endl;
+    while(jplane<ntrans && std::abs(ptrans[jplane].y-ptrans[0].y)<this->epsilon
+        || equal((ptrans[jplane]^ptrans[kplane]).norm(), 0)) ++jplane;
     if(jplane==ntrans) jplane=kplane;    //a2-direction have no smaller pricell
     b2=jplane>kplane ? 
         ModuleBase::Vector3<double>(ptrans[jplane].x, ptrans[jplane].y, ptrans[jplane].z) : 
         ModuleBase::Vector3<double>(0, 1, 0);
-    //3. iplane for b1
+    //3. iplane for b1 (not coplane with <b2, b3>)
     iplane=jplane+1;
-    while(iplane<ntrans && std::abs(ptrans[iplane].x-ptrans[0].x)<this->epsilon) ++iplane;
+    while(iplane<ntrans && std::abs(ptrans[iplane].x-ptrans[0].x)<this->epsilon
+        || equal(ptrans[iplane]*(ptrans[jplane]^ptrans[kplane]), 0)) ++iplane;
     b1=(iplane>jplane && iplane<ntrans)? 
         ModuleBase::Vector3<double>(ptrans[iplane].x, ptrans[iplane].y, ptrans[iplane].z) : 
         ModuleBase::Vector3<double>(1, 0, 0);    //a1-direction have no smaller pricell
 
-    // std::cout<<"iplane="<<iplane<<std::endl;
-    // std::cout<<"jplane="<<jplane<<std::endl;
-    // std::cout<<"kplane="<<kplane<<std::endl;
-    // std::cout<<"b1="<<b1.x<<" "<<b1.y<<" "<<b1.z<<std::endl;
-    // std::cout<<"b2="<<b2.x<<" "<<b2.y<<" "<<b2.z<<std::endl;
-    // std::cout<<"b3="<<b3.x<<" "<<b3.y<<" "<<b3.z<<std::endl;
+    std::cout<<"iplane="<<iplane<<std::endl;
+    std::cout<<"jplane="<<jplane<<std::endl;
+    std::cout<<"kplane="<<kplane<<std::endl;
+    std::cout<<"b1="<<b1.x<<" "<<b1.y<<" "<<b1.z<<std::endl;
+    std::cout<<"b2="<<b2.x<<" "<<b2.y<<" "<<b2.z<<std::endl;
+    std::cout<<"b3="<<b3.x<<" "<<b3.y<<" "<<b3.z<<std::endl;
 
     ModuleBase::Matrix3 coeff(b1.x, b1.y, b1.z, b2.x, b2.y, b2.z, b3.x, b3.y, b3.z);
     this->plat=coeff*this->optlat;
 
-    //deal with collineation
+    //deal with collineation caused by default b1, b2, b3
     if(equal(plat.Det(), 0))
     {
         if(kplane==0)   //try a new b3
