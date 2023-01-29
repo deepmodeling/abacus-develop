@@ -1192,7 +1192,7 @@ void Symmetry::pricell(double* pos)
         ptrans[i].x=ptrans_array[i*3];
         ptrans[i].y=ptrans_array[i*3+1];
         ptrans[i].z=ptrans_array[i*3+2];
-        std::cout<<ptrans[i].x<<" "<<ptrans[i].y<<" "<<ptrans[i].z<<std::endl;
+        // std::cout<<ptrans[i].x<<" "<<ptrans[i].y<<" "<<ptrans[i].z<<std::endl;
     }
     delete[] ptrans_array;
 
@@ -1222,12 +1222,12 @@ void Symmetry::pricell(double* pos)
         ModuleBase::Vector3<double>(ptrans[iplane].x, ptrans[iplane].y, ptrans[iplane].z) : 
         ModuleBase::Vector3<double>(1, 0, 0);    //a1-direction have no smaller pricell
 
-    std::cout<<"iplane="<<iplane<<std::endl;
-    std::cout<<"jplane="<<jplane<<std::endl;
-    std::cout<<"kplane="<<kplane<<std::endl;
-    std::cout<<"b1="<<b1.x<<" "<<b1.y<<" "<<b1.z<<std::endl;
-    std::cout<<"b2="<<b2.x<<" "<<b2.y<<" "<<b2.z<<std::endl;
-    std::cout<<"b3="<<b3.x<<" "<<b3.y<<" "<<b3.z<<std::endl;
+    // std::cout<<"iplane="<<iplane<<std::endl;
+    // std::cout<<"jplane="<<jplane<<std::endl;
+    // std::cout<<"kplane="<<kplane<<std::endl;
+    // std::cout<<"b1="<<b1.x<<" "<<b1.y<<" "<<b1.z<<std::endl;
+    // std::cout<<"b2="<<b2.x<<" "<<b2.y<<" "<<b2.z<<std::endl;
+    // std::cout<<"b3="<<b3.x<<" "<<b3.y<<" "<<b3.z<<std::endl;
 
     ModuleBase::Matrix3 coeff(b1.x, b1.y, b1.z, b2.x, b2.y, b2.z, b3.x, b3.y, b3.z);
     this->plat=coeff*this->optlat;
@@ -1860,7 +1860,6 @@ void Symmetry::get_shortest_latvec(ModuleBase::Vector3<double> &a1,
             fb=true;
         }
         if(fa || fb) flag=true;
-        if(fa || fb) std::cout<<"one loop!"<<std::endl;
         return;
     };
     while(flag) //iter
@@ -1874,7 +1873,6 @@ void Symmetry::get_shortest_latvec(ModuleBase::Vector3<double> &a1,
         loop(a2, a3, len2);
         loop(a3, a1, len3);
         loop(a3, a2, len3);
-        std::cout<<"one iter"<<std::endl;
     }
     return;
 }
