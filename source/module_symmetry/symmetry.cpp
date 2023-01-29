@@ -1525,10 +1525,10 @@ void Symmetry::rhog_symmetry(std::complex<double> *rhogtot,
                             cos_arg += cos(arg);
                             sin_arg += sin(arg);   
                         }
-                        cos_arg/=double(ncell);
-                        sin_arg/=double(ncell);
+                        // add nothing to sum, so don't consider this isym into rot_count
+                        if(equal(cos_arg, 0.0) && equal(sin_arg, 0.0)) continue;
                         std::complex<double> gphase( cos_arg,  sin_arg );
-                        gphase_record[isym]=gphase;                            
+                        gphase_record[rot_count]=gphase;
                         sum += rhogtot[ipw]*gphase;
                         //record
                         ipw_record[rot_count]=ipw;
