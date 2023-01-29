@@ -303,9 +303,9 @@ bool K_Vectors::read_kpoints(const std::string &fn)
 		else if (kword == "Line_Cartesian" )
 		{
 			//std::cout << " kword = " << kword << std::endl;
-			if(ModuleSymmetry::Symmetry::symm_flag)
+			if(ModuleSymmetry::Symmetry::symm_flag == 1)
 			{
-				ModuleBase::WARNING("K_Vectors::read_kpoints","Line mode of k-points is open, please set symmetry to 0.");
+				ModuleBase::WARNING("K_Vectors::read_kpoints","Line mode of k-points is open, please set symmetry to 0 or -1.");
 				return 0;
 			}
 
@@ -380,9 +380,9 @@ bool K_Vectors::read_kpoints(const std::string &fn)
 		else if (kword == "Line_Direct" || kword == "L" || kword == "Line" )
 		{
 			//std::cout << " kword = " << kword << std::endl;
-			if(ModuleSymmetry::Symmetry::symm_flag)
+			if(ModuleSymmetry::Symmetry::symm_flag == 1)
 			{
-				ModuleBase::WARNING("K_Vectors::read_kpoints","Line mode of k-points is open, please set symmetry to 0.");
+				ModuleBase::WARNING("K_Vectors::read_kpoints","Line mode of k-points is open, please set symmetry to 0 or -1.");
 				return 0;
 			}
 

@@ -463,7 +463,8 @@ void Input_Conv::Convert(void)
         Exx_Abfs::Jle::tolerence = INPUT.exx_opt_orb_tolerence;
 
         //EXX does not support any symmetry analyse, force symmetry setting to -1
-        ModuleSymmetry::Symmetry::symm_flag = -1;
+        if (INPUT.calculation == "nscf")
+            ModuleSymmetry::Symmetry::symm_flag = -1;
     }
 #endif // __LCAO
 #endif // __EXX
