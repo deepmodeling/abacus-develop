@@ -236,6 +236,17 @@ TEST_F(ReadPPTest, HeaderErr201)
 	output = testing::internal::GetCapturedStdout();
 	EXPECT_THAT(output,testing::HasSubstr("PAW PSEUDOPOTENTIAL IS NOT SUPPORTED"));
 	ifs.close();
+	// 4th
+	GlobalV::ofs_warning.open("warning.log");
+	ifs.open("./support/HeaderError4");
+	upf->read_pseudo_upf201(ifs);
+	GlobalV::ofs_warning.close();
+	ifs.close();
+	ifs.open("warning.log");
+	getline(ifs,output);
+	EXPECT_THAT(output,testing::HasSubstr("arbitrary is not read in. Please add this parameter in read_pp_upf201.cpp if needed."));
+	ifs.close();
+	remove("warning.log");
 	delete upf;
 }
 
