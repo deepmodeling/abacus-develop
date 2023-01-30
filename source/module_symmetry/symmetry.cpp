@@ -1209,7 +1209,7 @@ void Symmetry::pricell(double* pos)
     //2. jplane for b2 (not collinear with b3)
     jplane=kplane+1;
     while(jplane<ntrans && (std::abs(ptrans[jplane].y-ptrans[0].y)<this->epsilon
-        || equal((ptrans[jplane]^ptrans[kplane]).norm(), 0))) ++jplane;
+        || equal((ptrans[jplane]^b3).norm(), 0))) ++jplane;
     if(jplane==ntrans) jplane=kplane;    //a2-direction have no smaller pricell
     b2=jplane>kplane ? 
         ModuleBase::Vector3<double>(ptrans[jplane].x, ptrans[jplane].y, ptrans[jplane].z) : 
@@ -1217,7 +1217,7 @@ void Symmetry::pricell(double* pos)
     //3. iplane for b1 (not coplane with <b2, b3>)
     iplane=jplane+1;
     while(iplane<ntrans && (std::abs(ptrans[iplane].x-ptrans[0].x)<this->epsilon
-        || equal(ptrans[iplane]*(ptrans[jplane]^ptrans[kplane]), 0))) ++iplane;
+        || equal(ptrans[iplane]*(b2^b3), 0))) ++iplane;
     b1=(iplane>jplane && iplane<ntrans)? 
         ModuleBase::Vector3<double>(ptrans[iplane].x, ptrans[iplane].y, ptrans[iplane].z) : 
         ModuleBase::Vector3<double>(1, 0, 0);    //a1-direction have no smaller pricell
