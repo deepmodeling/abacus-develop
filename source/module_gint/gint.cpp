@@ -1,7 +1,7 @@
 #include "gint.h"
-#include "../module_base/memory.h"
-#include "../module_base/timer.h"
-#include "../src_pw/global.h"
+#include "module_base/memory.h"
+#include "module_base/timer.h"
+#include "module_hamilt_pw/hamilt_pwdft/global.h"
 
 #ifdef _OPENMP
 #include <omp.h>

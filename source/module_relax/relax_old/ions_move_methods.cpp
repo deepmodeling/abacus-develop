@@ -1,6 +1,6 @@
 #include "ions_move_methods.h"
 #include "ions_move_basic.h"
-#include "src_pw/global.h"
+#include "module_hamilt_pw/hamilt_pwdft/global.h"
 
 Ions_Move_Methods::Ions_Move_Methods(){}
 Ions_Move_Methods::~Ions_Move_Methods(){}

@@ -1,5 +1,5 @@
 #include "driver.h"
-#include "src_pw/global.h"
+#include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_io/input.h"
 #include "module_io/winput.h"
 #include "module_neighbor/sltk_atom_arrange.h"

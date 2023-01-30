@@ -20,9 +20,9 @@ VPATH=./src_global:\
 ./module_base/kernels:\
 ./module_md:\
 ./module_pw:\
-./module_surchem:\
+./module_hamilt_general/module_surchem:\
 ./module_deepks:\
-./module_xc:\
+./module_hamilt_general/module_xc:\
 ./module_esolver:\
 ./module_hsolver:\
 ./module_hsolver/kernels:\
@@ -30,22 +30,25 @@ VPATH=./src_global:\
 ./module_elecstate:\
 ./module_elecstate/kernels:\
 ./module_elecstate/potentials:\
+./module_elecstate/module_charge:\
 ./module_psi:\
 ./module_psi/kernels:\
-./module_hamilt:\
-./module_hamilt/ks_pw:\
-./module_hamilt/ks_lcao:\
-./module_hamilt/of_pw:\
-./module_hamilt/kernels:\
+./module_hamilt_general:\
+./module_hamilt_general/module_ewald:\
+./module_hamilt_pw/hamilt_pwdft:\
+./module_hamilt_lcao/hamilt_lcaodft:\
+./module_hamilt_lcao/module_tddft:\
+./module_hamilt_pw/hamilt_ofdft:\
+./module_hamilt_pw/hamilt_stodft:\
+./module_hamilt_pw/hamilt_pwdft/operator_pw:\
+./module_hamilt_lcao/hamilt_lcaodft/operator_lcao:\
+./module_hamilt_pw/hamilt_pwdft/kernels:\
 ./module_gint:\
 ./module_dftu:\
-./src_pw:\
-./src_pw/kernels:\
-./src_lcao:\
 ./module_relax:\
 ./module_relax/relax_old:\
 ./module_relax/relax_new:\
-./module_vdw:\
+./module_hamilt_general/module_vdw:\
 ./module_io:\
 ./src_parallel:\
 ./src_pdiag:\
@@ -138,6 +141,7 @@ OBJS_CELL=atom_pseudo.o\
     read_atoms.o\
     read_cell_pseudopots.o\
     setup_nonlocal.o\
+    klist.o\
 
 OBJS_DEEPKS=LCAO_deepks.o\
         LCAO_deepks_fdelta.o\
@@ -377,7 +381,6 @@ OBJS_LCAO=DM_gamma.o\
       LCAO_hamilt.o\
       LCAO_matrix.o\
       LCAO_nnr.o\
-      build_st_pw.o\
       center2_orb-orb11.o\
       center2_orb-orb21.o\
       center2_orb-orb22.o\
@@ -430,6 +433,7 @@ OBJS_PARALLEL=parallel_common.o\
     parallel_reduce.o\
       
 OBJS_SRCPW=H_Ewald_pw.o\
+    dnrm2.o\
     VL_in_pw.o\
     VNL_in_pw.o\
     VNL_grad_pw.o\
@@ -445,11 +449,9 @@ OBJS_SRCPW=H_Ewald_pw.o\
     wf_op.o\
     vnl_op.o\
     global.o\
-    klist.o\
     magnetism.o\
     occupy.o\
     structure_factor.o\
-    pw_complement.o\
     soc.o\
     sto_iter.o\
     sto_hchi.o\
@@ -469,11 +471,9 @@ OBJS_SRCPW=H_Ewald_pw.o\
     stress_pw.o\
     of_stress_pw.o\
     symmetry_rho.o\
-    threshold_elec.o\
     wavefunc.o\
     wf_atomic.o\
     wf_igk.o\
-    xc_3.o\
 
 OBJS_VDW=vdw.o\
     vdwd2_parameters.o\

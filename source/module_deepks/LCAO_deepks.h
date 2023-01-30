@@ -12,14 +12,14 @@
 #include "torch/csrc/autograd/autograd.h"
 #include "torch/csrc/api/include/torch/linalg.h"
 
-#include "../module_neighbor/sltk_grid_driver.h"
-#include "../module_orbital/parallel_orbitals.h"
-#include "../src_lcao/LCAO_matrix.h"
-#include "../module_base/intarray.h"
-#include "../module_base/complexmatrix.h"
-#include "../module_io/winput.h"
-#include "../module_base/matrix.h"
-#include "../module_base/timer.h"
+#include "module_neighbor/sltk_grid_driver.h"
+#include "module_orbital/parallel_orbitals.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/LCAO_matrix.h"
+#include "module_base/intarray.h"
+#include "module_base/complexmatrix.h"
+#include "module_io/winput.h"
+#include "module_base/matrix.h"
+#include "module_base/timer.h"
 
 ///
 /// The LCAO_Deepks contains subroutines for implementation of the DeePKS method in atomic basis.

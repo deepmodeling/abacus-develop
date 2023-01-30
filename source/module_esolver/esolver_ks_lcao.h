@@ -1,11 +1,11 @@
 #ifndef ESOLVER_KS_LCAO_H
 #define ESOLVER_KS_LCAO_H
-#include "./esolver_ks.h"
+#include "esolver_ks.h"
 
-#include "src_lcao/record_adj.h"
-#include "src_lcao/local_orbital_charge.h"
-#include "src_lcao/local_orbital_wfc.h"
-#include "src_lcao/LCAO_hamilt.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/record_adj.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/local_orbital_charge.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/local_orbital_wfc.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/LCAO_hamilt.h"
 #include "module_orbital/ORB_control.h"
 
 namespace ModuleESolver

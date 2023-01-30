@@ -1,5 +1,5 @@
 #include "exx_abfs-parallel-communicate-dm2.h"
-#include "../src_pw/global.h"
+#include "../module_hamilt_pw/hamilt_pwdft/global.h"
 
 
 void Exx_Abfs::Parallel::Communicate::DM2::init( 

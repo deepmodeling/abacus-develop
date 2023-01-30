@@ -121,5 +121,5 @@ struct cal_ylm_real_op<FPTYPE, psi::DEVICE_CPU> {
 template struct cal_ylm_real_op<float, psi::DEVICE_CPU>;
 template struct cal_ylm_real_op<double, psi::DEVICE_CPU>;
 
-}  // namespace src_pw
+}  // namespace ModuleBase
 

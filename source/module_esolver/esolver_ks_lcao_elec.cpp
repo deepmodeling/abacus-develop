@@ -1,27 +1,27 @@
 #include "module_esolver/esolver_ks_lcao.h"
-#include "../src_pw/global.h"
-#include "../src_pw/symmetry_rho.h"
-#include "src_lcao/LCAO_evolve.h"
+#include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/global_fp.h"
+#include "module_elecstate/module_charge/symmetry_rho.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/hamilt_lcao.h"
 #include "module_dftu/dftu.h"
 //
-#include "../module_neighbor/sltk_atom_arrange.h"
-#include "../module_io/istate_charge.h"
-#include "../module_io/istate_envelope.h"
-#include "src_lcao/ELEC_evolve.h"
+#include "module_neighbor/sltk_atom_arrange.h"
+#include "module_io/istate_charge.h"
+#include "module_io/istate_envelope.h"
 //
-#include "../src_ri/exx_abfs-jle.h"
-#include "../src_ri/exx_opt_orb.h"
-#include "../module_io/berryphase.h"
-#include "../module_io/to_wannier90.h"
-#include "../module_base/timer.h"
+#include "src_ri/exx_abfs-jle.h"
+#include "src_ri/exx_opt_orb.h"
+#include "module_io/berryphase.h"
+#include "module_io/to_wannier90.h"
+#include "module_base/timer.h"
 #ifdef __DEEPKS
-#include "../module_deepks/LCAO_deepks.h"
+#include "module_deepks/LCAO_deepks.h"
 #endif
-#include "../src_pw/H_Ewald_pw.h"
-#include "module_vdw/vdw.h"
-#include "../module_relax/relax_old/variable_cell.h"    // liuyu 2022-11-07
+#include "module_hamilt_general/module_ewald/H_Ewald_pw.h"
+#include "module_hamilt_general/module_vdw/vdw.h"
+#include "module_relax/relax_old/variable_cell.h"    // liuyu 2022-11-07
 
-#include "module_hamilt/ks_lcao/op_exx_lcao.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/op_exx_lcao.h"
 #include "module_io/density_matrix.h"
 
 namespace ModuleESolver

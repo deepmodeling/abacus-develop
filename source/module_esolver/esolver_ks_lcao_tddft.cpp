@@ -4,25 +4,24 @@
 #include "module_io/density_matrix.h"
 
 //--------------temporary----------------------------
-#include "../module_base/blas_connector.h"
-#include "../module_base/global_function.h"
-#include "../module_base/scalapack_connector.h"
-#include "../module_io/print_info.h"
-#include "../src_pw/global.h"
-#include "src_lcao/ELEC_evolve.h"
-#include "src_pw/occupy.h"
-#include "src_pw/symmetry_rho.h"
-#include "src_pw/threshold_elec.h"
+#include "module_base/blas_connector.h"
+#include "module_base/global_function.h"
+#include "module_base/scalapack_connector.h"
+#include "module_io/print_info.h"
+#include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "module_hamilt_lcao/module_tddft/ELEC_evolve.h"
+#include "module_elecstate/occupy.h"
+#include "module_elecstate/module_charge/symmetry_rho.h"
 
 //-----HSolver ElecState Hamilt--------
 #include "module_elecstate/elecstate_lcao.h"
 #include "module_elecstate/elecstate_lcao_tddft.h"
-#include "module_hamilt/hamilt_lcao.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/hamilt_lcao.h"
 #include "module_hsolver/hsolver_lcao.h"
 #include "module_psi/psi.h"
 
 //-----force& stress-------------------
-#include "src_lcao/FORCE_STRESS.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/FORCE_STRESS.h"
 
 //---------------------------------------------------
 
@@ -385,7 +384,7 @@ void ESolver_KS_LCAO_TDDFT::afterscf(const int istep)
 
     if (GlobalV::OUT_LEVEL != "m")
     {
-        // Threshold_Elec::print_eigenvalue(GlobalV::ofs_running);
+        // this->pelec->print_eigenvalue(GlobalV::ofs_running);
     }
 
     if (this->conv_elec)

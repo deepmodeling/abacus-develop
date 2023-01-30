@@ -3,9 +3,7 @@
 // DATE : 2007-9
 //==========================================================
 #include "symmetry.h"
-//#include "../src_pw/global.h"
-#include "../module_base/mymath.h"
-//#include "symm_other.h"
+#include "module_base/mymath.h"
 bool ModuleSymmetry::test_brav = 0;
 
 namespace ModuleSymmetry

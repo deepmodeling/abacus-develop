@@ -11,9 +11,9 @@
 #include <set>
 
 #include "exx_abfs.h"
-#include "../module_orbital/ORB_table_phi.h"
-#include "../module_orbital/ORB_gaunt_table.h"
-#include "../src_lcao/center2_orb-orb21.h"
+#include "module_orbital/ORB_table_phi.h"
+#include "module_orbital/ORB_gaunt_table.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/center2_orb-orb21.h"
 
 class LCAO_Orbitals;
 

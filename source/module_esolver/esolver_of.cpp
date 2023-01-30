@@ -1,26 +1,21 @@
-#include "./esolver_of.h"
+#include "esolver_of.h"
 
 //-----------temporary-------------------------
-#include "../src_pw/global.h"
-#include "../module_base/global_function.h"
+#include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "module_base/global_function.h"
 #include "module_base/memory.h"
-#include "../module_symmetry/symmetry.h"
-// #include "../src_pw/vdwd2.h"
-// #include "../src_pw/vdwd3.h"
-// #include "../src_pw/vdwd2_parameters.h"
-// #include "../src_pw/vdwd3_parameters.h"
-#include "../src_pw/pw_complement.h"
-#include "../src_pw/structure_factor.h"
-#include "../src_pw/symmetry_rho.h"
-#include "../module_io/print_info.h"
-#include "../src_pw/H_Ewald_pw.h"
+#include "module_symmetry/symmetry.h"
+#include "module_hamilt_pw/hamilt_pwdft/structure_factor.h"
+#include "module_elecstate/module_charge/symmetry_rho.h"
+#include "module_io/print_info.h"
+#include "module_hamilt_general/module_ewald/H_Ewald_pw.h"
 //-----force-------------------
-#include "../src_pw/forces.h"
+#include "module_hamilt_pw/hamilt_pwdft/forces.h"
 //-----stress------------------
-#include "../src_pw/of_stress_pw.h"
+#include "module_hamilt_pw/hamilt_ofdft/of_stress_pw.h"
 //---------------------------------------------------
 #include "module_elecstate/elecstate_pw.h"
-#include "module_hamilt/hamilt_pw.h"
+#include "module_hamilt_pw/hamilt_pwdft/hamilt_pw.h"
 #include "module_relax/relax_old/variable_cell.h"    // liuyu 2022-11-07
 
 namespace ModuleESolver

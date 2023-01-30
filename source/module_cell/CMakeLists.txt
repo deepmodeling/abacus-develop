@@ -13,6 +13,7 @@ add_library(
     read_atoms.cpp
     read_cell_pseudopots.cpp
     setup_nonlocal.cpp
+    klist.cpp
 )
 
 if(ENABLE_COVERAGE)

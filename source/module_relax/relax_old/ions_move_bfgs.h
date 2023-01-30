@@ -4,8 +4,6 @@
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
 #include "module_base/matrix.h"
-//xiaohui modified 2013-04-25
-//#include "../src_algorithms/myfunc.h"
 #include "bfgs_basic.h"
 class Ions_Move_BFGS : public BFGS_Basic
 {

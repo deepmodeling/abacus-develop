@@ -1,5 +1,5 @@
-#include "../src_pw/charge.h"
-#include "../src_pw/global.h"
+#include "module_elecstate/module_charge/charge.h"
+#include "module_hamilt_pw/hamilt_pwdft/global.h"
 
 void Charge::write_rho(
 	const double* rho_save, 

@@ -1,5 +1,5 @@
 #include "lattice_change_cg.h"
-#include "src_pw/global.h"
+#include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "lattice_change_basic.h"
 
 // the 'dim' variable is defined in Lattice_Change_Basic

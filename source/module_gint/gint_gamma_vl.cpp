@@ -4,13 +4,13 @@
 #include "gint_gamma.h"
 #include "gint_tools.h"
 #include "grid_technique.h"
-#include "../module_orbital/ORB_read.h"
-#include "../src_pw/global.h"
-#include "../module_base/blas_connector.h"
-#include "../module_base/memory.h"
-#include "../module_base/timer.h"
+#include "module_orbital/ORB_read.h"
+#include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "module_base/blas_connector.h"
+#include "module_base/memory.h"
+#include "module_base/timer.h"
 
-#include "../src_lcao/global_fp.h" // mohan add 2021-01-30
+#include "module_hamilt_lcao/hamilt_lcaodft/global_fp.h" // mohan add 2021-01-30
 
 #ifdef _OPENMP
 #include <omp.h>

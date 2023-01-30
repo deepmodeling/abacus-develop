@@ -76,7 +76,7 @@ exhale_args = {
     "exhaleExecutesDoxygen": True,
     "exhaleDoxygenStdin":    textwrap.dedent('''
 		PROJECT_NAME = module_deepks
-		INPUT = ../../../src_lcao
+		INPUT = ../../../module_hamilt_lcao/hamilt_lcaodft
 		PROJECT_BRIEF = "DeePKS: Generate descriptors, load a model and calculate energy and force."
 		FILE_PATTERNS = LCAO_descriptor*
 		EXTRACT_ALL = YES

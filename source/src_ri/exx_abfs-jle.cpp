@@ -1,6 +1,6 @@
 #include "exx_abfs-jle.h"
 
-#include "../src_pw/global.h"
+#include "../module_hamilt_pw/hamilt_pwdft/global.h"
 #include "../module_orbital/ORB_read.h"
 #include "../module_base/global_function.h"
 #include "../module_base/mathzone.h"

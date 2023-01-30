@@ -5,7 +5,7 @@
 #include "../module_base/global_variable.h"
 #include "module_base/matrix.h"
 #include "module_base/complexmatrix.h"
-#include "src_lcao/local_orbital_charge.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/local_orbital_charge.h"
 #include "module_elecstate/elecstate.h"
 
 // mohan add 2010-09-09
