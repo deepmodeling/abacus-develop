@@ -1,29 +1,8 @@
 <UPF version="2.0.1">
   <PP_HEADER generated='Generated using "atomic" code by A. Dal Corso  v.5.0.2 svn rev. 9415'
-             author="Lorenzo Paulatto"
-             date="11Sep2012"
-             comment=""
-             element=" C"
-             relativistic="scalar"
              is_paw="F"
              is_ultrasoft="F"
              pseudo_type="NC"
-             is_coulomb="F"
-             has_so="F"
-             has_wfc="T"
-             has_gipaw="F"
-             paw_as_gipaw="F"
-             core_correction="T"
-             functional=" SLA  PW   PBX  PBC"
-             z_valence="4.000000000000000E+000"
-             total_psenergy="-1.776582653165165E+001"
-             wfc_cutoff="3.665690458989469E+001"
-             rho_cutoff="1.466276183595787E+002"
-             l_max="1"
-             l_max_rho="2"
-             l_local="2"
-             mesh_size="1073"
-             number_of_wfc="2"
-             number_of_proj="4"
-             arbitrary="x" />
+             arbitrary="4"
+             />
 </UPF>

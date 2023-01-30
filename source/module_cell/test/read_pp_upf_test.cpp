@@ -205,7 +205,7 @@ TEST_F(ReadPPTest, ReadUPF201)
 	delete upf;
 }
 
-TEST_F(ReadPPTest, HeaderErr201)
+TEST_F(ReadPPTest, HeaderErr2011)
 {
 	Pseudopot_upf* upf = new Pseudopot_upf;
 	std::ifstream ifs;
@@ -218,6 +218,13 @@ TEST_F(ReadPPTest, HeaderErr201)
 	output = testing::internal::GetCapturedStdout();
 	EXPECT_THAT(output,testing::HasSubstr("unknown pseudo type"));
 	ifs.close();
+	delete upf;
+}
+
+TEST_F(ReadPPTest, HeaderErr2012)
+{
+	Pseudopot_upf* upf = new Pseudopot_upf;
+	std::ifstream ifs;
 	// 2nd
 	ifs.open("./support/HeaderError2");
 	//upf->read_pseudo_upf201(ifs);
@@ -227,6 +234,13 @@ TEST_F(ReadPPTest, HeaderErr201)
 	output = testing::internal::GetCapturedStdout();
 	EXPECT_THAT(output,testing::HasSubstr("ULTRASOFT PSEUDOPOTENTIAL IS NOT SUPPORTED"));
 	ifs.close();
+	delete upf;
+}
+
+TEST_F(ReadPPTest, HeaderErr2013)
+{
+	Pseudopot_upf* upf = new Pseudopot_upf;
+	std::ifstream ifs;
 	// 3rd
 	ifs.open("./support/HeaderError3");
 	//upf->read_pseudo_upf201(ifs);
@@ -236,6 +250,13 @@ TEST_F(ReadPPTest, HeaderErr201)
 	output = testing::internal::GetCapturedStdout();
 	EXPECT_THAT(output,testing::HasSubstr("PAW PSEUDOPOTENTIAL IS NOT SUPPORTED"));
 	ifs.close();
+	delete upf;
+}
+
+TEST_F(ReadPPTest, HeaderErr2014)
+{
+	Pseudopot_upf* upf = new Pseudopot_upf;
+	std::ifstream ifs;
 	// 4th
 	GlobalV::ofs_warning.open("warning.log");
 	ifs.open("./support/HeaderError4");
