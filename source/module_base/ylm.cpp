@@ -13,13 +13,13 @@ std::vector<double> Ylm::ylmcoef(100);
 
 // here Lmax == max angular momentum + 1
 void Ylm::get_ylm_real( const int &Lmax, const ModuleBase::Vector3<double> &vec, double ylmr[] )
-{	
+{
 	ModuleBase::timer::tick ("Ylm","get_ylm_real");
 	//1e-9 is too large
 	const double cut0 = 1e-12;
 	// allocate space.
 	Ylm::nlm = Lmax * Lmax;
-	if(Lmax==1) 
+	if(Lmax==1)
 	{
 		for(int i=0; i<Ylm::nlm; i++)
 		{
@@ -30,29 +30,29 @@ void Ylm::get_ylm_real( const int &Lmax, const ModuleBase::Vector3<double> &vec,
 	double cost = 0.0; // must initialized.
 	double sint = cut0;
 	double phi = 0.0;
-	
+
 	double vnorm = vec.norm();
 
-	if(vnorm < cut0) 
+	if(vnorm < cut0)
 	{
 		vnorm += cut0;
 	}
-	
-	cost = vec.z / vnorm; 
-		
+
+	cost = vec.z / vnorm;
+
 	if(fabs(cost) > 1.0 - cut0)
 	{
 		cost = sgn(cost) * (1.0 - cut0);
 		//		std::cout << "\n" << "cost = " << cost << std::endl;
 	}
-	sint = sqrt(1.0 - cost*cost);  
+	sint = sqrt(1.0 - cost*cost);
 
 	if(vec.x > cut0)
-	{ 
+	{
 		phi = std::atan( vec.y / vec.x );
 	}
 	else if( vec.x < -cut0 )
-	{ 
+	{
 		phi = std::atan( vec.y / vec.x ) + ModuleBase::PI;
 	}
 	else
@@ -74,8 +74,8 @@ void Ylm::get_ylm_real( const int &Lmax, const ModuleBase::Vector3<double> &vec,
 	{
 		const double c = sqrt((2*l+1) / ModuleBase::FOUR_PI);
 		if (l == 0)
-		{ 
-			p[0][0] = 1.0; 
+		{
+			p[0][0] = 1.0;
 		}
 		else if (l == 1)
 		{
@@ -110,10 +110,10 @@ void Ylm::get_ylm_real( const int &Lmax, const ModuleBase::Vector3<double> &vec,
 		{
 			// Y_lm, m > 0
 			const double same = c * sqrt
-					( 
-					static_cast<double>( Ylm::Fact(l - m)) / 
-					static_cast<double>( Ylm::Fact(l + m)) 
-					) 
+					(
+					static_cast<double>( Ylm::Fact(l - m)) /
+					static_cast<double>( Ylm::Fact(l + m))
+					)
 					*ModuleBase::SQRT2;
 
 			++lm;
@@ -130,12 +130,12 @@ void Ylm::get_ylm_real( const int &Lmax, const ModuleBase::Vector3<double> &vec,
 }
 
 void Ylm::get_ylm_real( const int &Lmax, const ModuleBase::Vector3<double> &vec, double ylmr[], double dylmdr[][3] )
-{	
+{
 	//1e-9 is too large
 	const double cut0 = 1e-12;
 	// allocate space.
 	Ylm::nlm = Lmax * Lmax;
-	if(Lmax==1) 
+	if(Lmax==1)
 	{
 		for(int i=0; i<Ylm::nlm; i++)
 		{
@@ -152,26 +152,26 @@ void Ylm::get_ylm_real( const int &Lmax, const ModuleBase::Vector3<double> &vec,
 	double phi = 0.0;
 
 	double vnorm = vec.norm();
-	
-	if(vnorm < cut0) 
+
+	if(vnorm < cut0)
 	{
 		vnorm += cut0;
 	}
-	
-	cost = vec.z / vnorm; 
-		
-	if(fabs(cost) > 1.0-cut0) 
+
+	cost = vec.z / vnorm;
+
+	if(fabs(cost) > 1.0-cut0)
 	{
 		cost = sgn(cost) * (1.0 - cut0);
 	}
 	sint = sqrt(1.0 - cost*cost);
 
 	if(vec.x > cut0)
-	{ 
+	{
 		phi = std::atan( vec.y / vec.x );
 	}
 	else if( vec.x < -cut0 )
-	{ 
+	{
 		phi = std::atan( vec.y / vec.x ) + ModuleBase::PI;
 	}
 	else
@@ -192,8 +192,8 @@ void Ylm::get_ylm_real( const int &Lmax, const ModuleBase::Vector3<double> &vec,
 	{
 		const double c = sqrt((2*l+1) / ModuleBase::FOUR_PI);
 		if (l == 0)
-		{ 
-			p[0][0] = 1.0; 
+		{
+			p[0][0] = 1.0;
 			dp[0][0] = 0.0;
 		}
 		else if (l == 1)
@@ -217,7 +217,7 @@ void Ylm::get_ylm_real( const int &Lmax, const ModuleBase::Vector3<double> &vec,
 			}
 
 			p[l1][l] = cost * l3 * p[l1][l1];
-			
+
 			p[l][l] = Ylm::Semi_Fact(l3) * pow(sint, static_cast<double>(l)) ;
 			if (l%2 == 1)
 			{
@@ -236,7 +236,7 @@ void Ylm::get_ylm_real( const int &Lmax, const ModuleBase::Vector3<double> &vec,
 				dp[m][l] = (l * cost * p[m][l] - (l+m) * p[m][l-1]) / sint;
 			}
 		}
-		
+
 		// Y_lm, m = 0
 		++lm;
 		ylmr[lm] = c*p[0][l];
@@ -249,10 +249,10 @@ void Ylm::get_ylm_real( const int &Lmax, const ModuleBase::Vector3<double> &vec,
 		{
 			// Y_lm, m > 0
 			const double same = c * sqrt
-					( 
-					static_cast<double>( Ylm::Fact(l - m)) / 
-					static_cast<double>( Ylm::Fact(l + m)) 
-					) 
+					(
+					static_cast<double>( Ylm::Fact(l - m)) /
+					static_cast<double>( Ylm::Fact(l + m))
+					)
 					*ModuleBase::SQRT2;
 
 			++lm;
@@ -263,7 +263,7 @@ void Ylm::get_ylm_real( const int &Lmax, const ModuleBase::Vector3<double> &vec,
 			dylmdr[lm][1] = same * dp[m][l] * cos(m * phi) * cost * sin(phi) / vnorm
 							- same * p[m][l] * m * sin(m * phi) * cos(phi) / sint / vnorm;
 			dylmdr[lm][2] = -same * dp[m][l] * cos(m * phi) * sint / vnorm;
-																	
+
 			// Y_lm, m < 0
 			++lm;
 			ylmr[lm] = same * p[m][l] * sin(m * phi);
@@ -295,21 +295,21 @@ void Ylm::rlylm
 //	ModuleBase::timer::tick("Ylm","rlylm");
 
 	int MaxL = Lmax - 1;
-	
+
 	assert(MaxL >= 0);
 
 	//get xy_dependence
 	assert(MaxL <= 19);
-	
+
 	double Am[20];
 	double Bm[20];
-	
+
 //	ZEROS(Am, 20);
 //	ZEROS(Bm, 20);
-	
+
 	double x2, x3, x4, x5;
 	double y2, y3, y4, y5;
-	
+
 	x2 = x * x;
 	x3 = x2 * x;
 	x4 = x3 * x;
@@ -319,7 +319,7 @@ void Ylm::rlylm
 	y3 = y2 * y;
 	y4 = y3 * y;
 	y5 = y4 * y;
-		
+
 	//x-y dependence
 	//Am
 	//Bm
@@ -327,17 +327,17 @@ void Ylm::rlylm
 	{
 		if(im == 0)
 		{
-			Am[0] = 1.0; 
+			Am[0] = 1.0;
 			Bm[0] = 0.0;
 		}
 		else if(im == 1)
 		{
-			Am[1] = x; 
+			Am[1] = x;
 			Bm[1] = y;
 		}
 		else if(im == 2)
 		{
-			Am[2] = x2- y2; 
+			Am[2] = x2- y2;
 			Bm[2] = 2.0 * x * y;
 		}
 		else if(im == 3)
@@ -365,10 +365,10 @@ void Ylm::rlylm
 			}
 		}
 	}
-			
+
 	//z dependence
 	double zdep[20][20];
-	
+
 //	for(int il = 0; il < 20; il++)
 //	{
 //		ZEROS(zdep[il], 20);
@@ -378,12 +378,12 @@ void Ylm::rlylm
 	double z3 = z2 * z;
 	double z4 = z3 * z;
 	//double z5 = z4 * z;
-	
+
 	double r = sqrt(x*x + y*y + z*z);
 	double r2 = r * r;
 	double r3 = r2 * r;
 	double r4 = r3 * r;
-	
+
 	for(int il = 0; il < MaxL+1; il++)
 	{
 		if(il == 0)
@@ -433,17 +433,17 @@ void Ylm::rlylm
 				for(int ik = 0; ik <= kmax; ik++)
 				{
 					int twok = 2 * ik;
-				
+
 					double gamma;
 					double aux0, aux1, aux2, aux3;
-				
+
 					aux0 = pow(-1.0, ik) * pow(2.0, -il);
 					aux1 = Fact(il) / Fact(ik) / Fact(il-ik);
 					aux2 = Fact(2*il - twok) / Fact(il) / Fact(il - twok);
 					aux3 = Fact(il - twok) / Fact(il - twok - im);
-				
+
 					gamma = aux0 * aux1 * aux2 * aux3;
-					
+
 					assert(il - twok - im >= 0);
 					zdep[il][im] += pow(r, twok) * pow(z, il-twok-im) * gamma;
 				}
@@ -453,7 +453,7 @@ void Ylm::rlylm
 					zdep[il][im] *= sqrt(2 * Fact(il - im) / Fact(il + im));
 				}
 			}
-		}			
+		}
 	}
 
 	//calc
@@ -461,20 +461,20 @@ void Ylm::rlylm
 	for(int il = 0; il <= MaxL; il++)
 	{
 		double fac = sqrt( (2.0 * il + 1.0) / ModuleBase::FOUR_PI );
-			
+
 		//m=0
 		rly[ic] = Am[0] * zdep[il][0] * fac;
-		
+
 		ic++;
-		
+
 		//m ! = 0
 		for(int im = 1; im <= il; im++)
 		{
 			//m>0
 			rly[ic] = Am[im] * zdep[il][im] * pow(-1.0, im) * fac;
-			
+
 			ic++;
-			
+
 			//m<0
 			rly[ic] = Bm[im] * zdep[il][im] * pow(-1.0, im) * fac;
 
@@ -496,7 +496,7 @@ void Ylm::sph_harm
 	std::vector<double> &rly
 )
 {
-	rly.resize( (Lmax+1)*(Lmax+1) );
+	rly.reserve( (Lmax+1)*(Lmax+1) );
 
 	//begin calculation
 	/***************************
@@ -517,22 +517,22 @@ void Ylm::sph_harm
 			 L = 2
 	***************************/
 	rly[4] = Ylm::ylmcoef[2]*zdr*rly[1]-Ylm::ylmcoef[3]*rly[0];//l=2, m=0
-	
+
 	double tmp0 = Ylm::ylmcoef[4]*zdr;
 	rly[5] = tmp0*rly[2];//l=2,m=1
 	rly[6] = tmp0*rly[3];//l=2,m=-1
-	
+
 	double tmp2 = Ylm::ylmcoef[4]*xdr;
 	rly[7]= Ylm::ylmcoef[5]*rly[4]-Ylm::ylmcoef[6]*rly[0] - tmp2*rly[2];//l=2,m=2
 	rly[8] = -tmp2*rly[3];
 //	rly[8] = tmp1+tmp2*rly[3];//l=2,m=-2
 	if (Lmax == 2) return;
-	
+
 	/***************************
 			 L = 3
 	***************************/
 	rly[9] = Ylm::ylmcoef[7]*zdr*rly[4]-Ylm::ylmcoef[8]*rly[1]; //l=3, m=0
-	
+
 	double tmp3 = Ylm::ylmcoef[9]*zdr;
 	rly[10] = tmp3*rly[5]-Ylm::ylmcoef[10]*rly[2];//l=3,m=1
 	rly[11] = tmp3*rly[6]-Ylm::ylmcoef[10]*rly[3];//l=3,m=-1
@@ -545,7 +545,7 @@ void Ylm::sph_harm
 	rly[14] = Ylm::ylmcoef[12]*rly[10]-Ylm::ylmcoef[13]*rly[2]-tmp5*rly[7];//l=3,m=3
 	rly[15] = Ylm::ylmcoef[12]*rly[11]-Ylm::ylmcoef[13]*rly[3]-tmp5*rly[8];//l=3,m=-3
 	if (Lmax == 3) return;
-	
+
 	/***************************
 			 L = 4
 	***************************/
@@ -562,7 +562,7 @@ void Ylm::sph_harm
 	double tmp8 = 3.0*zdr;
 	rly[21] = tmp8*rly[14];//l=4,m=3
 	rly[22] = tmp8*rly[15];//l=4,m=-3
-	
+
 	double tmp9 = Ylm::ylmcoef[23]*xdr;
 	rly[23] = Ylm::ylmcoef[21]*rly[19]-Ylm::ylmcoef[22]*rly[7]-tmp9*rly[14];//l=4,m=4
 	rly[24] = Ylm::ylmcoef[21]*rly[20]-Ylm::ylmcoef[22]*rly[8]-tmp9*rly[15];//l=4,m=-4
@@ -572,7 +572,7 @@ void Ylm::sph_harm
 			 L = 5
 	***************************/
 	rly[25] = Ylm::ylmcoef[24]*zdr*rly[16]-Ylm::ylmcoef[25]*rly[9];//l=5,m=0
-	
+
 	double tmp10 = Ylm::ylmcoef[26]*zdr;
 	rly[26] = tmp10*rly[17]-Ylm::ylmcoef[27]*rly[10];//l=5,m=1
 	rly[27] = tmp10*rly[18]-Ylm::ylmcoef[27]*rly[11];//l=5,m=-1
@@ -588,13 +588,13 @@ void Ylm::sph_harm
 	double tmp13 = Ylm::ylmcoef[32]*zdr;
 	rly[32] = tmp13*rly[23];//l=5,m=4
 	rly[33] = tmp13*rly[24];//l=5,m=-4
-	
+
 	double tmp14 = Ylm::ylmcoef[35]*xdr;
 	rly[34] = Ylm::ylmcoef[33]*rly[30]-Ylm::ylmcoef[34]*rly[14]-tmp14*rly[23];//l=5,m=5
 	rly[35] = Ylm::ylmcoef[33]*rly[31]-Ylm::ylmcoef[34]*rly[15]-tmp14*rly[24];//l=5,m=-5
 	if (Lmax == 5) return;
-	
-	//if Lmax > 5 
+
+	//if Lmax > 5
 	for (int il = 6; il <= Lmax; il++)
 	{
 		int istart = il*il;
@@ -603,16 +603,16 @@ void Ylm::sph_harm
 
 		double fac2 = sqrt(4.0*istart-1.0);
 		double fac4 = sqrt(4.0*istart1-1.0);
-		
+
 		for (int im = 0; im < 2*il-1; im++)
 		{
 			int imm = (im+1)/2;
 //			if (im % 2 == 0) imm *= -1;
-			
+
 			rly[istart+im] = fac2/sqrt((double)istart-imm*imm)*
 								(zdr*rly[istart1+im] - sqrt((double)istart1-imm*imm)/fac4*rly[istart2+im]);
 		}
-		
+
 		double bl1 = sqrt(2.0*il/(2.0*il+1.0));
 		double bl2 = sqrt((2.0*il-2.0)/(2.0*il-1.0));
 		double bl3 = sqrt(2.0)/fac2;
@@ -620,8 +620,8 @@ void Ylm::sph_harm
 		rly[istart+2*il-1] = (bl3*rly[istart+2*il-5]-bl2*rly[istart2+2*il-5]-2.0*xdr*rly[istart1+2*il-3]) / bl1;
 		rly[istart+2*il] = (bl3*rly[istart+2*il-4]-bl2*rly[istart2+2*il-4]-2.0*xdr*rly[istart1+2*il-2]) / bl1;
 	}
-		
-			
+
+
 	return;
 }
 
@@ -658,22 +658,22 @@ void Ylm::rl_sph_harm
 			 L = 2
 	***************************/
 	rly[4] = Ylm::ylmcoef[2]*z*rly[1]-Ylm::ylmcoef[3]*rly[0]*radius2;//l=2, m=0
-	
+
 	double tmp0 = Ylm::ylmcoef[4]*z;
 	rly[5] = tmp0*rly[2];//l=2,m=1
 	rly[6] = tmp0*rly[3];//l=2,m=-1
-	
+
 	double tmp2 = Ylm::ylmcoef[4]*x;
 	rly[7]= Ylm::ylmcoef[5]*rly[4]-Ylm::ylmcoef[6]*rly[0]*radius2 - tmp2*rly[2];//l=2,m=2
 	rly[8] = -tmp2*rly[3];
 //	rly[8] = tmp1+tmp2*rly[3];//l=2,m=-2
 	if (Lmax == 2) return;
-	
+
 	/***************************
 			 L = 3
 	***************************/
 	rly[9] = Ylm::ylmcoef[7]*z*rly[4]-Ylm::ylmcoef[8]*rly[1]*radius2; //l=3, m=0
-	
+
 	double tmp3 = Ylm::ylmcoef[9]*z;
 	rly[10] = tmp3*rly[5]-Ylm::ylmcoef[10]*rly[2]*radius2;//l=3,m=1
 	rly[11] = tmp3*rly[6]-Ylm::ylmcoef[10]*rly[3]*radius2;//l=3,m=-1
@@ -686,7 +686,7 @@ void Ylm::rl_sph_harm
 	rly[14] = Ylm::ylmcoef[12]*rly[10]-Ylm::ylmcoef[13]*rly[2]*radius2-tmp5*rly[7];//l=3,m=3
 	rly[15] = Ylm::ylmcoef[12]*rly[11]-Ylm::ylmcoef[13]*rly[3]*radius2-tmp5*rly[8];//l=3,m=-3
 	if (Lmax == 3) return;
-	
+
 	/***************************
 			 L = 4
 	***************************/
@@ -703,7 +703,7 @@ void Ylm::rl_sph_harm
 	double tmp8 = 3.0*z;
 	rly[21] = tmp8*rly[14];//l=4,m=3
 	rly[22] = tmp8*rly[15];//l=4,m=-3
-	
+
 	double tmp9 = Ylm::ylmcoef[23]*x;
 	rly[23] = Ylm::ylmcoef[21]*rly[19]-Ylm::ylmcoef[22]*rly[7]*radius2-tmp9*rly[14];//l=4,m=4
 	rly[24] = Ylm::ylmcoef[21]*rly[20]-Ylm::ylmcoef[22]*rly[8]*radius2-tmp9*rly[15];//l=4,m=-4
@@ -713,7 +713,7 @@ void Ylm::rl_sph_harm
 			 L = 5
 	***************************/
 	rly[25] = Ylm::ylmcoef[24]*z*rly[16]-Ylm::ylmcoef[25]*rly[9]*radius2;//l=5,m=0
-	
+
 	double tmp10 = Ylm::ylmcoef[26]*z;
 	rly[26] = tmp10*rly[17]-Ylm::ylmcoef[27]*rly[10]*radius2;//l=5,m=1
 	rly[27] = tmp10*rly[18]-Ylm::ylmcoef[27]*rly[11]*radius2;//l=5,m=-1
@@ -729,13 +729,13 @@ void Ylm::rl_sph_harm
 	double tmp13 = Ylm::ylmcoef[32]*z;
 	rly[32] = tmp13*rly[23];//l=5,m=4
 	rly[33] = tmp13*rly[24];//l=5,m=-4
-	
+
 	double tmp14 = Ylm::ylmcoef[35]*x;
 	rly[34] = Ylm::ylmcoef[33]*rly[30]-Ylm::ylmcoef[34]*rly[14]*radius2-tmp14*rly[23];//l=5,m=5
 	rly[35] = Ylm::ylmcoef[33]*rly[31]-Ylm::ylmcoef[34]*rly[15]*radius2-tmp14*rly[24];//l=5,m=-5
 	if (Lmax == 5) return;
-	
-	//if Lmax > 5 
+
+	//if Lmax > 5
 	for (int il = 6; il <= Lmax; il++)
 	{
 		int istart = il*il;
@@ -744,16 +744,16 @@ void Ylm::rl_sph_harm
 
 		double fac2 = sqrt(4.0*istart-1);
 		double fac4 = sqrt(4.0*istart1-1);
-		
+
 		for (int im = 0; im < 2*il-1; im++)
 		{
 			int imm = (im+1)/2;
 //			if (im % 2 == 0) imm *= -1;
-			
+
 			rly[istart+im] = fac2/sqrt((double)istart-imm*imm)*
 								(z*rly[istart1+im] - sqrt((double)istart1-imm*imm)/fac4*rly[istart2+im]*radius2);
 		}
-		
+
 		double bl1 = sqrt(2.0*il/(2.0*il+1.0));
 		double bl2 = sqrt((2.0*il-2.0)/(2.0*il-1.0));
 		double bl3 = sqrt(2.0)/fac2;
@@ -761,10 +761,10 @@ void Ylm::rl_sph_harm
 		rly[istart+2*il-1] = (bl3*rly[istart+2*il-5]-bl2*rly[istart2+2*il-5]*radius2-2.0*x*rly[istart1+2*il-3]) / bl1;
 		rly[istart+2*il] = (bl3*rly[istart+2*il-4]-bl2*rly[istart2+2*il-4]*radius2-2.0*x*rly[istart1+2*il-2]) / bl1;
 	}
-			
+
 	return;
 }
-	
+
 void Ylm::grad_rl_sph_harm
 (
  	const int& Lmax, //max momentum of L
@@ -782,7 +782,7 @@ void Ylm::grad_rl_sph_harm
 	double tx = 2.0*x;
 	double ty = 2.0*y;
 	double tz = 2.0*z;
-	
+
 	//begin calculation
 	/***************************
 			 L = 0
@@ -797,15 +797,15 @@ void Ylm::grad_rl_sph_harm
 	rly[1] = Ylm::ylmcoef[1]*z; //l=1, m=0
 	grly[1][0] = grly[1][1] = 0.0;
 	grly[1][2] = Ylm::ylmcoef[1];
-	
+
 	rly[2] = -Ylm::ylmcoef[1]*x; //l=1, m=1
 	grly[2][1] = grly[2][2] = 0.0;
 	grly[2][0] = -Ylm::ylmcoef[1];
-	
+
 	rly[3] = -Ylm::ylmcoef[1]*y; //l=1, m=-1
 	grly[3][0] = grly[3][2] = 0.0;
 	grly[3][1] = -Ylm::ylmcoef[1];
-	
+
 	if (Lmax == 1) return;
 
 	/***************************
@@ -815,36 +815,36 @@ void Ylm::grad_rl_sph_harm
 	grly[4][0] = Ylm::ylmcoef[2]*z*grly[1][0]-Ylm::ylmcoef[3]*(grly[0][0]*radius2+rly[0]*tx);//l=2, m=0
 	grly[4][1] = Ylm::ylmcoef[2]*z*grly[1][1]-Ylm::ylmcoef[3]*(grly[0][1]*radius2+rly[0]*ty);//l=2, m=0
 	grly[4][2] = Ylm::ylmcoef[2]*(z*grly[1][2]+rly[1])-Ylm::ylmcoef[3]*(grly[0][2]*radius2+rly[0]*tz);//l=2, m=0
-	
-	
+
+
 	double tmp0 = Ylm::ylmcoef[4]*z;
 	rly[5] = tmp0*rly[2];//l=2,m=1
 	grly[5][0] = tmp0*grly[2][0];
 	grly[5][1] = tmp0*grly[2][1];
 	grly[5][2] = Ylm::ylmcoef[4]*(rly[2]+z*grly[2][2]);
-	
+
 	rly[6] = tmp0*rly[3];//l=2,m=-1
 	grly[6][0] = tmp0*grly[3][0];
 	grly[6][1] = tmp0*grly[3][1];
 	grly[6][2] = Ylm::ylmcoef[4]*(rly[3]+z*grly[3][2]);
-	
+
 	double tmp2 = Ylm::ylmcoef[4]*x;
 	rly[7]= Ylm::ylmcoef[5]*rly[4]-Ylm::ylmcoef[6]*rly[0]*radius2 - tmp2*rly[2];//l=2,m=2
 	grly[7][0] = Ylm::ylmcoef[5]*grly[4][0]-Ylm::ylmcoef[6]*(rly[0]*tx+grly[0][0]*radius2)-Ylm::ylmcoef[4]*(x*grly[2][0]+rly[2]);
 
 //	std::cout << "\np1 = "<< Ylm::ylmcoef[5]*grly[4][0] << " p2 = " << -Ylm::ylmcoef[6]*rly[0]*tx
 //						<< " p3 = " << -Ylm::ylmcoef[4]*x*grly[2][0] << " p4 = " << -Ylm::ylmcoef[4]*rly[2] << std::endl;
-	
+
 	grly[7][1] = Ylm::ylmcoef[5]*grly[4][1]-Ylm::ylmcoef[6]*(rly[0]*ty+grly[0][1]*radius2)-tmp2*grly[2][1];
 	grly[7][2] = Ylm::ylmcoef[5]*grly[4][2]-Ylm::ylmcoef[6]*(rly[0]*tz+grly[0][2]*radius2)-tmp2*grly[2][2];
-	
+
 	rly[8] = -tmp2*rly[3];
 	grly[8][0] = -Ylm::ylmcoef[4]*(rly[3]+x*grly[3][0]);
 	grly[8][1] = -tmp2*grly[3][1];
 	grly[8][2] = -tmp2*grly[3][2];
 //	rly[8] = tmp1+tmp2*rly[3];//l=2,m=-2
 	if (Lmax == 2) return;
-	
+
 	/***************************
 			 L = 3
 	***************************/
@@ -852,13 +852,13 @@ void Ylm::grad_rl_sph_harm
 	grly[9][0] = Ylm::ylmcoef[7]*z*grly[4][0]-Ylm::ylmcoef[8]*(rly[1]*tx+grly[1][0]*radius2);
 	grly[9][1] = Ylm::ylmcoef[7]*z*grly[4][1]-Ylm::ylmcoef[8]*(rly[1]*ty+grly[1][1]*radius2);
 	grly[9][2] = Ylm::ylmcoef[7]*(rly[4]+z*grly[4][2])-Ylm::ylmcoef[8]*(rly[1]*tz+grly[1][2]*radius2);
-	
+
 	double tmp3 = Ylm::ylmcoef[9]*z;
 	rly[10] = tmp3*rly[5]-Ylm::ylmcoef[10]*rly[2]*radius2;//l=3,m=1
 	grly[10][0] = tmp3*grly[5][0]-Ylm::ylmcoef[10]*(grly[2][0]*radius2+rly[2]*tx);
 	grly[10][1] = tmp3*grly[5][1]-Ylm::ylmcoef[10]*(grly[2][1]*radius2+rly[2]*ty);
 	grly[10][2] = Ylm::ylmcoef[9]*(z*grly[5][2]+rly[5])-Ylm::ylmcoef[10]*(grly[2][2]*radius2+rly[2]*tz);
-	
+
 	rly[11] = tmp3*rly[6]-Ylm::ylmcoef[10]*rly[3]*radius2;//l=3,m=-1
 	grly[11][0] = tmp3*grly[6][0]-Ylm::ylmcoef[10]*(grly[3][0]*radius2+rly[3]*tx);
 	grly[11][1] = tmp3*grly[6][1]-Ylm::ylmcoef[10]*(grly[3][1]*radius2+rly[3]*ty);
@@ -869,7 +869,7 @@ void Ylm::grad_rl_sph_harm
 	grly[12][0] = tmp4*grly[7][0];
 	grly[12][1] = tmp4*grly[7][1];
 	grly[12][2] = Ylm::ylmcoef[11]*(z*grly[7][2]+rly[7]);
-	
+
 	rly[13] = tmp4*rly[8];//l=3,m=-2
 	grly[13][0] = tmp4*grly[8][0];
 	grly[13][1] = tmp4*grly[8][1];
@@ -880,13 +880,13 @@ void Ylm::grad_rl_sph_harm
 	grly[14][0] = Ylm::ylmcoef[12]*grly[10][0]-Ylm::ylmcoef[13]*(rly[2]*tx+grly[2][0]*radius2)-Ylm::ylmcoef[14]*(rly[7]+x*grly[7][0]);
 	grly[14][1] = Ylm::ylmcoef[12]*grly[10][1]-Ylm::ylmcoef[13]*(rly[2]*ty+grly[2][1]*radius2)-tmp5*grly[7][1];
 	grly[14][2] = Ylm::ylmcoef[12]*grly[10][2]-Ylm::ylmcoef[13]*(rly[2]*tz+grly[2][2]*radius2)-tmp5*grly[7][2];
-	
+
 	rly[15] = Ylm::ylmcoef[12]*rly[11]-Ylm::ylmcoef[13]*rly[3]*radius2-tmp5*rly[8];//l=3,m=-3
 	grly[15][0] = Ylm::ylmcoef[12]*grly[11][0]-Ylm::ylmcoef[13]*(rly[3]*tx+grly[3][0]*radius2)-Ylm::ylmcoef[14]*(rly[8]+x*grly[8][0]);
 	grly[15][1] = Ylm::ylmcoef[12]*grly[11][1]-Ylm::ylmcoef[13]*(rly[3]*ty+grly[3][1]*radius2)-tmp5*grly[8][1];
 	grly[15][2] = Ylm::ylmcoef[12]*grly[11][2]-Ylm::ylmcoef[13]*(rly[3]*tz+grly[3][2]*radius2)-tmp5*grly[8][2];
 	if (Lmax == 3) return;
-	
+
 	/***************************
 			 L = 4
 	***************************/
@@ -900,7 +900,7 @@ void Ylm::grad_rl_sph_harm
 	grly[17][0] = tmp6*grly[10][0]-Ylm::ylmcoef[18]*(rly[5]*tx+grly[5][0]*radius2);
 	grly[17][1] = tmp6*grly[10][1]-Ylm::ylmcoef[18]*(rly[5]*ty+grly[5][1]*radius2);
 	grly[17][2] = Ylm::ylmcoef[17]*(z*grly[10][2]+rly[10])-Ylm::ylmcoef[18]*(rly[5]*tz+grly[5][2]*radius2);
-	
+
 	rly[18] = tmp6*rly[11]-Ylm::ylmcoef[18]*rly[6]*radius2;//l=4,m=-1
 	grly[18][0] = tmp6*grly[11][0]-Ylm::ylmcoef[18]*(rly[6]*tx+grly[6][0]*radius2);
 	grly[18][1] = tmp6*grly[11][1]-Ylm::ylmcoef[18]*(rly[6]*ty+grly[6][1]*radius2);
@@ -911,7 +911,7 @@ void Ylm::grad_rl_sph_harm
 	grly[19][0] = tmp7*grly[12][0]-Ylm::ylmcoef[20]*(rly[7]*tx+grly[7][0]*radius2);
 	grly[19][1] = tmp7*grly[12][1]-Ylm::ylmcoef[20]*(rly[7]*ty+grly[7][1]*radius2);
 	grly[19][2] = Ylm::ylmcoef[19]*(z*grly[12][2]+rly[12])-Ylm::ylmcoef[20]*(rly[7]*tz+grly[7][2]*radius2);
-	
+
 	rly[20] = tmp7*rly[13]-Ylm::ylmcoef[20]*rly[8]*radius2;//l=4,m=-2
 	grly[20][0] = tmp7*grly[13][0]-Ylm::ylmcoef[20]*(rly[8]*tx+grly[8][0]*radius2);
 	grly[20][1] = tmp7*grly[13][1]-Ylm::ylmcoef[20]*(rly[8]*ty+grly[8][1]*radius2);
@@ -923,23 +923,23 @@ void Ylm::grad_rl_sph_harm
 	grly[21][1] = tmp8*grly[14][1];
 	grly[21][2] = 3.0*(z*grly[14][2]+rly[14]);
 
-	
+
 	rly[22] = tmp8*rly[15];//l=4,m=-3
 	grly[22][0] = tmp8*grly[15][0];
 	grly[22][1] = tmp8*grly[15][1];
 	grly[22][2] = 3.0*(z*grly[15][2]+rly[15]);
-	
+
 	double tmp9 = Ylm::ylmcoef[23]*x;
 	rly[23] = Ylm::ylmcoef[21]*rly[19]-Ylm::ylmcoef[22]*rly[7]*radius2-tmp9*rly[14];//l=4,m=4
 	grly[23][0] = Ylm::ylmcoef[21]*grly[19][0]-Ylm::ylmcoef[22]*(rly[7]*tx+grly[7][0]*radius2)-Ylm::ylmcoef[23]*(x*grly[14][0]+rly[14]);
 	grly[23][1] = Ylm::ylmcoef[21]*grly[19][1]-Ylm::ylmcoef[22]*(rly[7]*ty+grly[7][1]*radius2)-tmp9*grly[14][1];
 	grly[23][2] = Ylm::ylmcoef[21]*grly[19][2]-Ylm::ylmcoef[22]*(rly[7]*tz+grly[7][2]*radius2)-tmp9*grly[14][2];
-	
+
 	rly[24] = Ylm::ylmcoef[21]*rly[20]-Ylm::ylmcoef[22]*rly[8]*radius2-tmp9*rly[15];//l=4,m=-4
 	grly[24][0] = Ylm::ylmcoef[21]*grly[20][0]-Ylm::ylmcoef[22]*(rly[8]*tx+grly[8][0]*radius2)-Ylm::ylmcoef[23]*(x*grly[15][0]+rly[15]);
 	grly[24][1] = Ylm::ylmcoef[21]*grly[20][1]-Ylm::ylmcoef[22]*(rly[8]*ty+grly[8][1]*radius2)-tmp9*grly[15][1];
 	grly[24][2] = Ylm::ylmcoef[21]*grly[20][2]-Ylm::ylmcoef[22]*(rly[8]*tz+grly[8][2]*radius2)-tmp9*grly[15][2];
-	
+
 	if (Lmax == 4) return;
 
 	/***************************
@@ -949,13 +949,13 @@ void Ylm::grad_rl_sph_harm
 	grly[25][0] = Ylm::ylmcoef[24]*z*grly[16][0]-Ylm::ylmcoef[25]*(rly[9]*tx+grly[9][0]*radius2);
 	grly[25][1] = Ylm::ylmcoef[24]*z*grly[16][1]-Ylm::ylmcoef[25]*(rly[9]*ty+grly[9][1]*radius2);
 	grly[25][2] = Ylm::ylmcoef[24]*(z*grly[16][2]+rly[16])-Ylm::ylmcoef[25]*(rly[9]*tz+grly[9][2]*radius2);
-	
+
 	double tmp10 = Ylm::ylmcoef[26]*z;
 	rly[26] = tmp10*rly[17]-Ylm::ylmcoef[27]*rly[10]*radius2;//l=5,m=1
 	grly[26][0] = tmp10*grly[17][0]-Ylm::ylmcoef[27]*(rly[10]*tx+grly[10][0]*radius2);
 	grly[26][1] = tmp10*grly[17][1]-Ylm::ylmcoef[27]*(rly[10]*ty+grly[10][1]*radius2);
 	grly[26][2] = Ylm::ylmcoef[26]*(z*grly[17][2]+rly[17])-Ylm::ylmcoef[27]*(rly[10]*tz+grly[10][2]*radius2);
-	
+
 	rly[27] = tmp10*rly[18]-Ylm::ylmcoef[27]*rly[11]*radius2;//l=5,m=-1
 	grly[27][0] = tmp10*grly[18][0]-Ylm::ylmcoef[27]*(rly[11]*tx+grly[11][0]*radius2);
 	grly[27][1] = tmp10*grly[18][1]-Ylm::ylmcoef[27]*(rly[11]*ty+grly[11][1]*radius2);
@@ -977,7 +977,7 @@ void Ylm::grad_rl_sph_harm
 	grly[30][0] = tmp12*grly[21][0]-Ylm::ylmcoef[31]*(grly[14][0]*radius2+rly[14]*tx);
 	grly[30][1] = tmp12*grly[21][1]-Ylm::ylmcoef[31]*(grly[14][1]*radius2+rly[14]*ty);
 	grly[30][2] = Ylm::ylmcoef[30]*(z*grly[21][2]+rly[21])-Ylm::ylmcoef[31]*(grly[14][2]*radius2+rly[14]*tz);
-	
+
 	rly[31] = tmp12*rly[22]-Ylm::ylmcoef[31]*rly[15]*radius2;//l=5,m=-3
 	grly[31][0] = tmp12*grly[22][0]-Ylm::ylmcoef[31]*(grly[15][0]*radius2+rly[15]*tx);
 	grly[31][1] = tmp12*grly[22][1]-Ylm::ylmcoef[31]*(grly[15][1]*radius2+rly[15]*ty);
@@ -988,12 +988,12 @@ void Ylm::grad_rl_sph_harm
 	grly[32][0] = tmp13*grly[23][0];
 	grly[32][1] = tmp13*grly[23][1];
 	grly[32][2] = Ylm::ylmcoef[32]*(rly[23]+z*grly[23][2]);
-	
+
 	rly[33] = tmp13*rly[24];//l=5,m=-4
 	grly[33][0] = tmp13*grly[24][0];
 	grly[33][1] = tmp13*grly[24][1];
 	grly[33][2] = Ylm::ylmcoef[32]*(rly[24]+z*grly[24][2]);
-	
+
 	double tmp14 = Ylm::ylmcoef[35]*x;
 	rly[34] = Ylm::ylmcoef[33]*rly[30]-Ylm::ylmcoef[34]*rly[14]*radius2-tmp14*rly[23];//l=5,m=5
 	grly[34][0] = Ylm::ylmcoef[33]*grly[30][0]-Ylm::ylmcoef[34]*(rly[14]*tx+grly[14][0]*radius2)-Ylm::ylmcoef[35]*(x*grly[23][0]+rly[23]);
@@ -1004,10 +1004,10 @@ void Ylm::grad_rl_sph_harm
 	grly[35][0] = Ylm::ylmcoef[33]*grly[31][0]-Ylm::ylmcoef[34]*(rly[15]*tx+grly[15][0]*radius2)-Ylm::ylmcoef[35]*(x*grly[24][0]+rly[24]);
 	grly[35][1] = Ylm::ylmcoef[33]*grly[31][1]-Ylm::ylmcoef[34]*(rly[15]*ty+grly[15][1]*radius2)-tmp14*grly[24][1];
 	grly[35][2] = Ylm::ylmcoef[33]*grly[31][2]-Ylm::ylmcoef[34]*(rly[15]*tz+grly[15][2]*radius2)-tmp14*grly[24][2];
-	
+
 	if (Lmax == 5) return;
-	
-	//if Lmax > 5 
+
+	//if Lmax > 5
 	for (int il = 6; il <= Lmax; il++)
 	{
 		int istart = il*il;
@@ -1016,23 +1016,23 @@ void Ylm::grad_rl_sph_harm
 
 		double fac2 = sqrt(4.0*istart-1.0);
 		double fac4 = sqrt(4.0*istart1-1.0);
-		
+
 		for (int im = 0; im < 2*il-1; im++)
 		{
 			int imm = (im+1)/2;
 //			if (im % 2 == 0) imm *= -1;
-			
+
 			double var1 = fac2/sqrt((double)istart-imm*imm);
 			double var2 = sqrt((double)istart1-imm*imm)/fac4;
-			
+
 			rly[istart+im] = var1*(z*rly[istart1+im] - var2*rly[istart2+im]*radius2);
 
 			grly[istart+im][0]=var1*(z*grly[istart1+im][0]-var2*(rly[istart2+im]*tx+grly[istart2+im][0]*radius2));
 			grly[istart+im][1]=var1*(z*grly[istart1+im][1]-var2*(rly[istart2+im]*ty+grly[istart2+im][1]*radius2));
 			grly[istart+im][2]=var1*(z*grly[istart1+im][2]+rly[istart1+im]-var2*(rly[istart2+im]*tz+grly[istart2+im][2]*radius2));
-			
+
 		}
-		
+
 		double bl1 = sqrt(2.0*il/(2.0*il+1.0));
 		double bl2 = sqrt((2.0*il-2.0)/(2.0*il-1.0));
 		double bl3 = sqrt(2.0)/fac2;
@@ -1041,20 +1041,20 @@ void Ylm::grad_rl_sph_harm
 		int id2 = istart+2*il-5;
 		int id3 = istart2+2*il-5;
 		int id4 = istart1+2*il-3;
-		
+
 		rly[id1] = (bl3*rly[id2]-bl2*rly[id3]*radius2-2.0*x*rly[id4]) / bl1;
 		grly[id1][0] = (bl3*grly[id2][0]-bl2*(grly[id3][0]*radius2+rly[id3]*tx)-2.0*(rly[id4]+x*grly[id4][0]))/bl1;
 		grly[id1][1] = (bl3*grly[id2][1]-bl2*(grly[id3][1]*radius2+rly[id3]*ty)-2.0*x*grly[id4][1])/bl1;
 		grly[id1][2] = (bl3*grly[id2][2]-bl2*(grly[id3][2]*radius2+rly[id3]*tz)-2.0*x*grly[id4][2])/bl1;
 
-		
+
 		rly[id1+1] = (bl3*rly[id2+1]-bl2*rly[id3+1]*radius2-2.0*x*rly[id4+1]) / bl1;
 		grly[id1+1][0] = (bl3*grly[id2+1][0]-bl2*(grly[id3+1][0]*radius2+rly[id3+1]*tx)-2.0*(rly[id4+1]+x*grly[id4+1][0]))/bl1;
 		grly[id1+1][1] = (bl3*grly[id2+1][1]-bl2*(grly[id3+1][1]*radius2+rly[id3+1]*ty)-2.0*x*grly[id4+1][1])/bl1;
 		grly[id1+1][2] = (bl3*grly[id2+1][2]-bl2*(grly[id3+1][2]*radius2+rly[id3+1]*tz)-2.0*x*grly[id4+1][2])/bl1;
 	}
-		
-			
+
+
 	return;
 }
 
@@ -1071,7 +1071,7 @@ void Ylm::hes_rl_sph_harm
 
 	double radius2 = x*x+y*y+z*z;
 	double coeff;
-	
+
 	//begin calculation
 	/***************************
 			 L = 0
@@ -1085,13 +1085,13 @@ void Ylm::hes_rl_sph_harm
 	***************************/
 	hrly[1][0] = hrly[1][1] = hrly[1][2] = 0.0;
 	hrly[1][3] = hrly[1][4] = hrly[1][5] = 0.0;
-	
+
 	hrly[2][0] = hrly[2][1] = hrly[2][2] = 0.0;
 	hrly[2][3] = hrly[2][4] = hrly[2][5] = 0.0;
-	
+
 	hrly[3][0] = hrly[3][1] = hrly[3][2] = 0.0;
 	hrly[3][3] = hrly[3][4] = hrly[3][5] = 0.0;
-	
+
 	if (Lmax == 1) return;
 
 	/***************************
@@ -1102,13 +1102,13 @@ void Ylm::hes_rl_sph_harm
 	hrly[4][0] = hrly[4][3] = -2.0 * coeff;
 	hrly[4][5] = 4.0 * coeff;
 	hrly[4][1] = hrly[4][2] = hrly[4][4] = 0.0;
-	
+
 	//m=1 : xz
 	coeff = sqrt(15.0 / ModuleBase::PI) / 2.0;
 	hrly[5][2] = coeff;
 	hrly[5][0] = hrly[5][1] = 0.0;
 	hrly[5][3] = hrly[5][4] = hrly[5][5] = 0.0;
-	
+
 	//m=-1 : yz
 	hrly[6][4] = coeff;
 	hrly[6][0] = hrly[6][1] = 0.0;
@@ -1127,7 +1127,7 @@ void Ylm::hes_rl_sph_harm
 	hrly[7][4] = hrly[7][5] = 0.0;
 
 	if (Lmax == 2) return;
-	
+
 	/***************************
 			 L = 3
 	***************************/
@@ -1138,7 +1138,7 @@ void Ylm::hes_rl_sph_harm
 	hrly[9][2] = -6.0 * x * coeff;
 	hrly[9][4] = -6.0 * y * coeff;
 	hrly[9][5] = 12.0 * z * coeff;
-	
+
 	//m=1 : x(5z^2-r^2)
 	coeff = sqrt(21.0 / 2.0 / ModuleBase::PI) / 4.0;
 	hrly[10][0] = -6.0 * x * coeff;
@@ -1147,7 +1147,7 @@ void Ylm::hes_rl_sph_harm
 	hrly[10][3] = -2.0 * x * coeff;
 	hrly[10][4] =  0.0;
 	hrly[10][5] =  8.0 * x * coeff;
-	
+
 	//m=-1 : y(5z^2-r^2)
 	hrly[11][0] = -2.0 * y * coeff;
 	hrly[11][1] = -2.0 * x * coeff;
@@ -1164,7 +1164,7 @@ void Ylm::hes_rl_sph_harm
 	hrly[12][3] = -hrly[12][0];
 	hrly[12][4] = -2.0 * y * coeff;
 	hrly[12][5] =  0.0;
-	
+
 	//m=-2 : xyz
 	coeff = sqrt(105.0 / ModuleBase::PI) / 2.0;
 	hrly[13][0] = 0.0;
@@ -1192,7 +1192,7 @@ void Ylm::hes_rl_sph_harm
 	hrly[15][5] =  0.0;
 
 	if (Lmax == 3) return;
-	
+
 	/***************************
 			 L = 4
 	***************************/
@@ -1213,7 +1213,7 @@ void Ylm::hes_rl_sph_harm
 	hrly[17][3] =  -6.0 * x * z * coeff;
 	hrly[17][4] =  -6.0 * x * y * coeff;
 	hrly[17][5] =  24.0 * x * z * coeff;
-	
+
 	//m=-1 : y(7z^3 - 3zr^2)
 	hrly[18][0] =  -6.0 * y * z * coeff;
 	hrly[18][1] =  -6.0 * x * z * coeff;
@@ -1230,7 +1230,7 @@ void Ylm::hes_rl_sph_harm
 	hrly[19][3] =  12.0 * (y*y - z*z) * coeff;
 	hrly[19][4] = -24.0 * y * z * coeff;
 	hrly[19][5] =  12.0 * (x*x - y*y) * coeff;
-	
+
 	//m=-2 : xy(7z^2 - r^2)
 	coeff = 3.0 / 4.0 * sqrt(5.0 / ModuleBase::PI);
 	hrly[20][0] = -6.0 * x * y * coeff;
@@ -1256,7 +1256,7 @@ void Ylm::hes_rl_sph_harm
 	hrly[22][3] = -6.0 * y * z * coeff;
 	hrly[22][4] =  3.0 * (x*x - y*y) * coeff;
 	hrly[22][5] =  0.0;
-	
+
 	//m=4 : x^4 + y^4 - 6 x^2y^2
 	coeff = 3.0 / 16.0 * sqrt(35.0 / ModuleBase::PI);
 	hrly[23][0] =  12.0 * (x*x - y*y) * coeff;
@@ -1265,7 +1265,7 @@ void Ylm::hes_rl_sph_harm
 	hrly[23][3] =  -hrly[23][0];
 	hrly[23][4] =   0.0;
 	hrly[23][5] =   0.0;
-	
+
 	//m=-4 : xy(x^2 - y^2)
 	coeff = 3.0 / 4.0 * sqrt(35.0 / ModuleBase::PI);
 	hrly[24][0] =  6.0 * x * y * coeff;
@@ -1281,8 +1281,8 @@ void Ylm::hes_rl_sph_harm
 			 L > 4
 	***************************/
 	ModuleBase::WARNING_QUIT("hes_rl_sph_harm","l>4 not implemented!");
-	
-			
+
+
 	return;
 }
 
@@ -1296,7 +1296,7 @@ void Ylm::set_coefficients(void)
 	Ylm::ylmcoef[5] = 1.0 / sqrt(3.0);
 	Ylm::ylmcoef[6] = sqrt (5.0 / 3.0);
 	Ylm::ylmcoef[7] = sqrt (35.0 / 9.0);
-	Ylm::ylmcoef[8] = sqrt (7.0/3.0)/1.5; 
+	Ylm::ylmcoef[8] = sqrt (7.0/3.0)/1.5;
 	Ylm::ylmcoef[9] = sqrt (35.0 / 8.0);
 	Ylm::ylmcoef[10] = sqrt (7.0 / 8.0);
 	Ylm::ylmcoef[11] = sqrt (7.0);
@@ -1338,24 +1338,24 @@ void Ylm::test1 (void)
 	const double rl = std::pow( R.norm(), L);
 	std::cout << " rl=" << rl << std::endl;
 	Ylm::set_coefficients();
-	
+
 	int nu = 100;
-	
+
 	// Peize Lin change rlya 2016-08-26
 	std::vector<double> rlya;
 	double rlyb[400];
 	ZEROS( rlyb, 400);
-	
+
 //	Ylm::sph_harm (9, xdr, ydr, zdr, rlya);
 	Ylm::rl_sph_harm (L, xdr, ydr, zdr, rlya);
 //	Ylm::rlylm (10, R.x, R.y, R.z, rlyb);
 	Ylm::get_ylm_real (L+1, R, rlyb);
-	
+
 	for (int i=0; i < nu; i++)
 	{
 	//	std::cout << "\ni= " << i << " rlya = " << rlya[i] << " rlyb = " << rlyb[i] << std::endl;
 		double diff = fabs(rlya[i]-rlyb[i]);
-		if (diff > 1e-8) 
+		if (diff > 1e-8)
 		{
 			std::cout << "Ylm::test1, error is too large!" << std::endl;
 			//WARNING_QUIT ("Ylm::test1","error is too large!");
@@ -1370,18 +1370,18 @@ void Ylm::test2 (void)
 {
 	ModuleBase::Vector3<double> R (0.1,-0.2,0.5);
 	Ylm::set_coefficients();
-	
+
 	//int nu = 100;
 
 	std::vector<double> rlya;
 	double rlyb[400];
-	
+
 	std::vector<std::vector<double>> grlya;
 	double grlyb[400][3];
-	
+
 	Ylm::grad_rl_sph_harm (9, R.x, R.y, R.z, rlya, grlya);
 	Ylm::rlylm (10, R.x, R.y, R.z, rlyb, grlyb);
-	
+
 	for (int i = 0; i < 100; i++)
 	{
 		double diffx = fabs(grlya[i][2]-grlyb[i][2]);
@@ -1394,8 +1394,8 @@ void Ylm::test2 (void)
 	}
 	return;
 }
-*/	
-	
+*/
+
 void Ylm::rlylm
 (
  	const int& Lmax, //max momentum of l + 1
@@ -1407,27 +1407,27 @@ void Ylm::rlylm
 )
 {
 	int MaxL = Lmax - 1;
-	
+
 	assert(MaxL >= 0);
 
 	//get xy_dependence
 	assert(MaxL <= 19);
-	
+
 	double Am[20];
 	double Bm[20];
 	double Gx_Am[20];
 	double Gx_Bm[20];
 	double Gy_Am[20];
 	double Gy_Bm[20];
-	
+
 	ZEROS(Am, 20);
 	ZEROS(Bm, 20);
 	ZEROS(Gx_Am, 20);
 	ZEROS(Gy_Am, 20);
-	
+
 	double x2, x3, x4, x5;
 	double y2, y3, y4, y5;
-	
+
 	x2 = x * x;
 	x3 = x2 * x;
 	x4 = x3 * x;
@@ -1437,7 +1437,7 @@ void Ylm::rlylm
 	y3 = y2 * y;
 	y4 = y3 * y;
 	y5 = y4 * y;
-		
+
 	//x-y dependence
 	//Am
 	//Bm
@@ -1445,7 +1445,7 @@ void Ylm::rlylm
 	{
 		if(im == 0)
 		{
-			Am[0] = 1.0; 
+			Am[0] = 1.0;
 			Bm[0] = 0.0;
 
 			Gx_Am[0] = 0.0;
@@ -1456,7 +1456,7 @@ void Ylm::rlylm
 		}
 		else if(im == 1)
 		{
-			Am[1] = x; 
+			Am[1] = x;
 			Bm[1] = y;
 
 			Gx_Am[1] = 1.0;
@@ -1467,7 +1467,7 @@ void Ylm::rlylm
 		}
 		else if(im == 2)
 		{
-			Am[2] = x2- y2; 
+			Am[2] = x2- y2;
 			Bm[2] = 2.0 * x * y;
 
 			Gx_Am[2] = 2.0 * x;
@@ -1531,13 +1531,13 @@ void Ylm::rlylm
 			}
 		}
 	}
-			
+
 	//z dependence
 	double zdep[20][20];
 	double Gx_dep[20][20];
 	double Gy_dep[20][20];
 	double Gz_dep[20][20];
-	
+
 	for(int il = 0; il < 20; il++)
 	{
 		ZEROS(zdep[il], 20);
@@ -1550,12 +1550,12 @@ void Ylm::rlylm
 	double z3 = z2 * z;
 	double z4 = z3 * z;
 	//double z5 = z4 * z;
-	
+
 	double r = sqrt(x*x + y*y + z*z);
 	double r2 = r * r;
 	double r3 = r2 * r;
 	double r4 = r3 * r;
-	
+
 	for(int il = 0; il < MaxL+1; il++)
 	{
 		if(il == 0)
@@ -1575,10 +1575,10 @@ void Ylm::rlylm
 			Gx_dep[2][0] = -x;
 			Gy_dep[2][0] = -y;
 			Gz_dep[2][0] = 2.0 * z;
-			
+
 			zdep[2][1] = sqrt(3.0) * z;
 			Gz_dep[2][1] = sqrt(3.0);
-			
+
 			zdep[2][2] = sqrt(3.0) * 0.5;
 		}
 		else if(il == 3)
@@ -1587,12 +1587,12 @@ void Ylm::rlylm
 			Gx_dep[3][0] = -3.0 * x * z;
 			Gy_dep[3][0] = -3.0 * y * z;
 			Gz_dep[3][0] = 1.5 * (3.0 * z2 - r2);
-			
+
 			zdep[3][1] = 0.25 * sqrt(6.0) * (5.0 * z2 - r2);
 			Gx_dep[3][1] = -0.5 * sqrt(6.0) * x;
 			Gy_dep[3][1] = -0.5 * sqrt(6.0) * y;
 			Gz_dep[3][1] = sqrt(6.0) * 2.0 * z;
-			
+
 			zdep[3][2] = 0.5 * sqrt(15.0) * z;
 			Gz_dep[3][2] = 0.5 * sqrt(15.0);
 
@@ -1604,20 +1604,20 @@ void Ylm::rlylm
 			Gx_dep[4][0] = -7.5 * x * z2 + 1.5 * x * r2;
 			Gy_dep[4][0] = -7.5 * y * z2 + 1.5 * y * r2;
 			Gz_dep[4][0] = 10.0 * z3 - 6.0 * r2 * z;
-				
+
 			zdep[4][1] = sqrt(10.0) * 0.25 * z * (7.0 * z2 - 3.0 * r2);
 			Gx_dep[4][1] = -1.5 * sqrt(10.0) * x * z;
 			Gy_dep[4][1] = -1.5 * sqrt(10.0) * y * z;
 			Gz_dep[4][1] = 0.75 * sqrt(10.0) * (5.0 * z2 - r2);
-			
+
 			zdep[4][2] = sqrt(5.0) * 0.25 * (7.0 * z2 - r2);
 			Gx_dep[4][2] = -0.5 * sqrt(5.0) * x;
 			Gy_dep[4][2] = -0.5 * sqrt(5.0) * y;
 			Gz_dep[4][2] = 3.0 * sqrt(5.0) * z;
-			
+
 			zdep[4][3] = sqrt(70.0) * 0.25 * z;
 			Gz_dep[4][3] = 0.25 * sqrt(70.0);
-			
+
 			zdep[4][4] = sqrt(35.0) * 0.125;
 		}
 		else if(il == 5)
@@ -1626,25 +1626,25 @@ void Ylm::rlylm
 			Gx_dep[5][0] = -17.5 * x * z3 + 7.5 * x * z * r2;
 			Gy_dep[5][0] = -17.5 * y * z3 + 7.5 * y * z * r2;
 			Gz_dep[5][0] = 175.0 * 0.125 * z4 + 15.0 * 0.125 * r4 - 150.0 * 0.125 * r2 * z2;
-			
+
 			zdep[5][1] = 0.125 * sqrt(15.0) * (21.0 * z4 - 14.0 * z2 * r2 + r4);
 			Gx_dep[5][1] = -3.5 * sqrt(15.0) * x * z2 + 0.5 * sqrt(15.0) * x * r2;
 			Gy_dep[5][1] = -3.5 * sqrt(15.0) * y * z2 + 0.5 * sqrt(15.0) * y * r2;
 			Gz_dep[5][1] = 7.0 * sqrt(15.0) * z3 - 3.0 * sqrt(15.0) * r2 * z;
-			
+
 			zdep[5][2] = 0.25 * sqrt(105.0) * z * (3.0 * z2 - r2);
 			Gx_dep[5][2] = -0.5 * sqrt(105.0) * x * z;
 			Gy_dep[5][2] = -0.5 * sqrt(105.0) * y * z;
 			Gz_dep[5][2] = 0.25 * sqrt(105.0) * (7.0 * z2 - r2);
-			
+
 			zdep[5][3] = 0.0625 * sqrt(70.0) * (9.0 * z2 - r2);
 			Gx_dep[5][3] = -0.125 * sqrt(70.0) * x;
 			Gy_dep[5][3] = -0.125 * sqrt(70.0) * y;
 			Gz_dep[5][3] = sqrt(70.0) * z;
-			
+
 			zdep[5][4] = 0.375 * sqrt(35.0) * z;
 			Gz_dep[5][4] = 0.375 * sqrt(35.0);
-			
+
 			zdep[5][5] = 0.1875 * sqrt(14.0);
 		}
 		else
@@ -1655,20 +1655,20 @@ void Ylm::rlylm
 				for(int ik = 0; ik <= kmax; ik++)
 				{
 					int twok = 2 * ik;
-				
+
 					double gamma;
 					double aux0, aux1, aux2, aux3;
-				
+
 					aux0 = pow(-1.0, ik) * pow(2.0, -il);
 					aux1 = Fact(il) / Fact(ik) / Fact(il-ik);
 					aux2 = Fact(2*il - twok) / Fact(il) / Fact(il - twok);
 					aux3 = Fact(il - twok) / Fact(il - twok - im);
-				
+
 					gamma = aux0 * aux1 * aux2 * aux3;
-					
+
 					assert(il - twok - im >= 0);
 					zdep[il][im] += pow(r, twok) * pow(z, il-twok-im) * gamma;
-					
+
 					if(ik > 0)
 					{
 						Gx_dep[il][im] += (ik * pow(r2, ik-1) * 2.0 * x) * pow(z, il-twok-im) * gamma;
@@ -1690,7 +1690,7 @@ void Ylm::rlylm
 						}
 						else
 						{
-							Gz_dep[il][im] += gamma * (ik * pow(r2, ik-1) * 2.0 * z * pow(z, il-twok-im) 
+							Gz_dep[il][im] += gamma * (ik * pow(r2, ik-1) * 2.0 * z * pow(z, il-twok-im)
 													+ pow(r, twok) * (il-twok-im) * pow(z, il-twok-im-1));
 						}
 					}
@@ -1702,10 +1702,10 @@ void Ylm::rlylm
 					Gx_dep[il][im] *= sqrt(2 * Fact(il - im) / Fact(il + im));
 					Gy_dep[il][im] *= sqrt(2 * Fact(il - im) / Fact(il + im));
 					Gz_dep[il][im] *= sqrt(2 * Fact(il - im) / Fact(il + im));
-					
+
 				}
 			}
-		}			
+		}
 	}
 
 	//calc
@@ -1713,15 +1713,15 @@ void Ylm::rlylm
 	for(int il = 0; il <= MaxL; il++)
 	{
 		double fac = sqrt( (2.0 * il + 1.0) / ModuleBase::FOUR_PI );
-			
+
 		//m=0
 		rly[ic] = Am[0] * zdep[il][0] * fac;
 		grly[ic][0] = (Gx_dep[il][0] * Am[0] + zdep[il][0] * Gx_Am[0]) * fac;
 		grly[ic][1] = (Gy_dep[il][0] * Am[0] + zdep[il][0] * Gy_Am[0]) * fac;
 		grly[ic][2] = Gz_dep[il][0] * Am[0] * fac;
-		
+
 		ic++;
-		
+
 		//m ! = 0
 		for(int im = 1; im <= il; im++)
 		{
@@ -1730,9 +1730,9 @@ void Ylm::rlylm
 			grly[ic][0] = (Gx_dep[il][im] * Am[im] + zdep[il][im] * Gx_Am[im]) * pow(-1.0, im) * fac;
 			grly[ic][1] = (Gy_dep[il][im] * Am[im] + zdep[il][im] * Gy_Am[im]) * pow(-1.0, im) * fac;
 			grly[ic][2] = Gz_dep[il][im] * Am[im] * pow(-1.0, im) * fac;
-			
+
 			ic++;
-			
+
 			//m<0
 			rly[ic] = Bm[im] * zdep[il][im] * pow(-1.0, im) * fac;
 			grly[ic][0] = (Gx_dep[il][im] * Bm[im] + zdep[il][im] * Gx_Bm[im]) * pow(-1.0, im) * fac;
@@ -1750,7 +1750,7 @@ void Ylm::rlylm
 void Ylm::test(void)
 {
 	ModuleBase::Vector3<double> R(0.0, 0.0, 1.0);
-	
+
 	double r,r2,r3,r4,r5,r6,r7;
 	r = R.norm();
 	r2 = r * r;
@@ -1759,7 +1759,7 @@ void Ylm::test(void)
 	r5 = r4 * r;
 	r6 = r5 * r;
 	r7 = r6 * r;
-	
+
 	//Max L = 7;
 	double ylm[64];
 	double dylmdr[64][3];
@@ -1769,7 +1769,7 @@ void Ylm::test(void)
 //	std::cout << R.x << " " << R.y << " " << R.z << std::endl;
 	get_ylm_real(8, R, ylm, dylmdr);
 	rlylm(8, R.x, R.y, R.z, rly, grly);
-	
+
 //	std::cout << R.x << " " << R.y << " " << R.z << std::endl;
 	for(int i = 0; i < 64; i++)
 	{
@@ -1778,7 +1778,7 @@ void Ylm::test(void)
 			dylmdr[i][0] = dylmdr[i][0] * r + ylm[i] * R.x / r;
 			dylmdr[i][1] = dylmdr[i][1] * r + ylm[i] * R.y / r;
 			dylmdr[i][2] = dylmdr[i][2] * r + ylm[i] * R.z / r;
-				
+
 			ylm[i] *= r;
 		}
 		if(i >= 4 && i <= 8)
@@ -1786,7 +1786,7 @@ void Ylm::test(void)
 			dylmdr[i][0] = dylmdr[i][0] * r2 + ylm[i] * R.x * 2.0;
 			dylmdr[i][1] = dylmdr[i][1] * r2 + ylm[i] * R.y * 2.0;
 			dylmdr[i][2] = dylmdr[i][2] * r2 + ylm[i] * R.z * 2.0;
-			
+
 			ylm[i] *= r2;
 		}
 		if(i >= 9 && i <= 15)
@@ -1794,7 +1794,7 @@ void Ylm::test(void)
 			dylmdr[i][0] = dylmdr[i][0] * r3 + ylm[i] * R.x * 3.0 * r;
 			dylmdr[i][1] = dylmdr[i][1] * r3 + ylm[i] * R.y * 3.0 * r;
 			dylmdr[i][2] = dylmdr[i][2] * r3 + ylm[i] * R.z * 3.0 * r;
-			
+
 			ylm[i] *= pow(R.norm(),3);
 		}
 		if(i >= 16 && i <=24)
@@ -1802,7 +1802,7 @@ void Ylm::test(void)
 			dylmdr[i][0] = dylmdr[i][0] * r4 + ylm[i] * R.x * 4.0 * r2;
 			dylmdr[i][1] = dylmdr[i][1] * r4 + ylm[i] * R.y * 4.0 * r2;
 			dylmdr[i][2] = dylmdr[i][2] * r4 + ylm[i] * R.z * 4.0 * r2;
-			
+
 			ylm[i] *= pow(R.norm(), 4);
 		}
 		if(i >= 25 &&  i <= 35)
@@ -1810,7 +1810,7 @@ void Ylm::test(void)
 			dylmdr[i][0] = dylmdr[i][0] * r5 + ylm[i] * R.x * 5.0 * r3;
 			dylmdr[i][1] = dylmdr[i][1] * r5 + ylm[i] * R.y * 5.0 * r3;
 			dylmdr[i][2] = dylmdr[i][2] * r5 + ylm[i] * R.z * 5.0 * r3;
-			
+
 			ylm[i] *= pow(R.norm(), 5);
 		}
 		if(i >= 36 && i <= 48)
@@ -1827,7 +1827,7 @@ void Ylm::test(void)
 			dylmdr[i][2] = dylmdr[i][2] * r7 + ylm[i] * R.z * 7.0 * r5;
 			ylm[i] *= pow(R.norm(), 7);
 		}
-		
+
 		std::cout << grly[i][0] << std::setw(20) << grly[i][1] << std::setw(20) << grly[i][2] << std::endl;
 	}
 
@@ -1846,7 +1846,7 @@ void Ylm::ZEROS(double u[], const int& n)
 
 
 //==========================================================
-// MEMBER FUNCTION : 
+// MEMBER FUNCTION :
 // NAME : Fact ( n! )
 // NAME : Semi_Fact ( n!! )
 //==========================================================
