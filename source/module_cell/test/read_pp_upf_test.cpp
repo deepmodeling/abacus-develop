@@ -26,9 +26,19 @@
  *     - read_pseudo_upf201_rab
  *     - read_pseudo_upf201_dij
  *     - read_pseudo_upf201_rhoatom
- *   - ReadUSppErr
+ *   - ReadUSppErr100
  *     - read_pseudo_nl
  *     - read_pseudo_nlcc
+ *     - ultrasoft is not supported
+ *   - HeaderErr201
+ *     - ultrasoft and paw pp are not supported
+ *   - ReadUPF201MESH2
+ *     - a different "<PP_MESH" header in UPF file
+ *   - ReadUPF201FR
+ *     - read a full-relativistic pp
+ *   - XCWarning
+ *     - DFT functianal warning when mismatching between pp_file
+ *     - and GlobalV::dft_functional happens
  */
 
 #define private public
@@ -123,7 +133,7 @@ TEST_F(ReadPPTest, ReadUPF100)
 	delete upf;
 }
 
-TEST_F(ReadPPTest, ReadUSppErr)
+TEST_F(ReadPPTest, ReadUSppErr100)
 {
 	Pseudopot_upf* upf = new Pseudopot_upf;
 	std::ifstream ifs;
@@ -134,7 +144,7 @@ TEST_F(ReadPPTest, ReadUSppErr)
 			::testing::ExitedWithCode(0),"");
 	output = testing::internal::GetCapturedStdout();
 	// test output on screening
-	// EXPECT_THAT(output,testing::HasSubstr("this function is called"));
+	// EXPECT_THAT(output,testing::HasSubstr("this function is called")); // read_pseudo_nlcc
 	EXPECT_THAT(output,testing::HasSubstr("Ultra Soft Pseudopotential not available yet."));
 	ifs.close();
 	delete upf;
@@ -191,6 +201,157 @@ TEST_F(ReadPPTest, ReadUPF201)
 	EXPECT_DOUBLE_EQ(upf->dion(5,5),-7.0938557228E+00);
 	EXPECT_DOUBLE_EQ(upf->rho_at[0],0.0);
 	EXPECT_DOUBLE_EQ(upf->rho_at[601],3.1742307110E-02);
+	ifs.close();
+	delete upf;
+}
+
+TEST_F(ReadPPTest, HeaderErr2011)
+{
+	Pseudopot_upf* upf = new Pseudopot_upf;
+	std::ifstream ifs;
+	// 1st
+	ifs.open("./support/HeaderError1");
+	//upf->read_pseudo_upf201(ifs);
+	testing::internal::CaptureStdout();
+	EXPECT_EXIT(upf->read_pseudo_upf201(ifs),
+			::testing::ExitedWithCode(0),"");
+	output = testing::internal::GetCapturedStdout();
+	EXPECT_THAT(output,testing::HasSubstr("unknown pseudo type"));
+	ifs.close();
+	delete upf;
+}
+
+TEST_F(ReadPPTest, HeaderErr2012)
+{
+	Pseudopot_upf* upf = new Pseudopot_upf;
+	std::ifstream ifs;
+	// 2nd
+	ifs.open("./support/HeaderError2");
+	//upf->read_pseudo_upf201(ifs);
+	testing::internal::CaptureStdout();
+	EXPECT_EXIT(upf->read_pseudo_upf201(ifs),
+			::testing::ExitedWithCode(0),"");
+	output = testing::internal::GetCapturedStdout();
+	EXPECT_THAT(output,testing::HasSubstr("ULTRASOFT PSEUDOPOTENTIAL IS NOT SUPPORTED"));
+	ifs.close();
+	delete upf;
+}
+
+TEST_F(ReadPPTest, HeaderErr2013)
+{
+	Pseudopot_upf* upf = new Pseudopot_upf;
+	std::ifstream ifs;
+	// 3rd
+	ifs.open("./support/HeaderError3");
+	//upf->read_pseudo_upf201(ifs);
+	testing::internal::CaptureStdout();
+	EXPECT_EXIT(upf->read_pseudo_upf201(ifs),
+			::testing::ExitedWithCode(0),"");
+	output = testing::internal::GetCapturedStdout();
+	EXPECT_THAT(output,testing::HasSubstr("PAW PSEUDOPOTENTIAL IS NOT SUPPORTED"));
+	ifs.close();
+	delete upf;
+}
+
+TEST_F(ReadPPTest, HeaderErr2014)
+{
+	Pseudopot_upf* upf = new Pseudopot_upf;
+	std::ifstream ifs;
+	// 4th
+	GlobalV::ofs_warning.open("warning.log");
+	ifs.open("./support/HeaderError4");
+	upf->read_pseudo_upf201(ifs);
+	GlobalV::ofs_warning.close();
+	ifs.close();
+	ifs.open("warning.log");
+	getline(ifs,output);
+	EXPECT_THAT(output,testing::HasSubstr("arbitrary is not read in. Please add this parameter in read_pp_upf201.cpp if needed."));
+	ifs.close();
+	remove("warning.log");
+	delete upf;
+}
+
+TEST_F(ReadPPTest, ReadUPF201FR)
+{
+	Pseudopot_upf* upf = new Pseudopot_upf;
+	std::ifstream ifs;
+	// this is a dojo full-relativisitic pp
+	ifs.open("./support/C.upf");
+	upf->read_pseudo_upf201(ifs);
+	EXPECT_EQ(upf->psd,"C");
+	EXPECT_TRUE(upf->has_so);
+	EXPECT_TRUE(upf->nlcc);
+	EXPECT_EQ(upf->mesh,1247);
+	//RELBETA
+	EXPECT_EQ(upf->nbeta,6);
+	EXPECT_EQ(upf->lll[0],0);
+	EXPECT_EQ(upf->lll[1],0);
+	EXPECT_EQ(upf->lll[2],1);
+	EXPECT_EQ(upf->lll[3],1);
+	EXPECT_EQ(upf->lll[4],1);
+	EXPECT_EQ(upf->lll[5],1);
+	EXPECT_DOUBLE_EQ(upf->jjj[0],0.5);
+	EXPECT_DOUBLE_EQ(upf->jjj[1],0.5);
+	EXPECT_DOUBLE_EQ(upf->jjj[2],0.5);
+	EXPECT_DOUBLE_EQ(upf->jjj[3],1.5);
+	EXPECT_DOUBLE_EQ(upf->jjj[4],0.5);
+	EXPECT_DOUBLE_EQ(upf->jjj[5],1.5);
+	//RELWFC
+	EXPECT_EQ(upf->nwfc,3);
+	EXPECT_EQ(upf->nn[0],1);
+	EXPECT_EQ(upf->nn[1],2);
+	EXPECT_EQ(upf->nn[2],2);
+	EXPECT_EQ(upf->lchi[0],0);
+	EXPECT_EQ(upf->lchi[1],1);
+	EXPECT_EQ(upf->lchi[2],1);
+	EXPECT_DOUBLE_EQ(upf->jchi[0],0.5);
+	EXPECT_DOUBLE_EQ(upf->jchi[1],1.5);
+	EXPECT_DOUBLE_EQ(upf->jchi[2],0.5);
+	//PSWFC
+	EXPECT_EQ(upf->els[0],"2S");
+	EXPECT_EQ(upf->lchi[0],0);
+	EXPECT_DOUBLE_EQ(upf->oc[0],2.0);
+	EXPECT_EQ(upf->els[1],"2P");
+	EXPECT_EQ(upf->lchi[1],1);
+	EXPECT_DOUBLE_EQ(upf->oc[1],1.333);
+	EXPECT_EQ(upf->els[2],"2P");
+	EXPECT_EQ(upf->lchi[2],1);
+	EXPECT_DOUBLE_EQ(upf->oc[2],0.667);
+	EXPECT_DOUBLE_EQ(upf->chi(0,0),2.0715339166E-12);
+	EXPECT_DOUBLE_EQ(upf->chi(2,upf->mesh-1),1.1201306967E-03);
+	//NLCC
+	EXPECT_DOUBLE_EQ(upf->rho_atc[0],8.7234550809E-01);
+	EXPECT_DOUBLE_EQ(upf->rho_atc[upf->mesh-1],0.0);
+	ifs.close();
+	delete upf;
+}
+
+TEST_F(ReadPPTest, ReadUPF201MESH2)
+{
+	Pseudopot_upf* upf = new Pseudopot_upf;
+	std::ifstream ifs;
+	// this pp file has gipaw, thus a different header
+	ifs.open("./support/Fe.pbe-sp-mt_gipaw.UPF");
+	upf->read_pseudo_upf201(ifs);
+	EXPECT_EQ(upf->psd,"Fe");
+	ifs.close();
+	delete upf;
+}
+
+TEST_F(ReadPPTest, XCWarning)
+{
+	Pseudopot_upf* upf = new Pseudopot_upf;
+	std::ifstream ifs;
+	// this pp file has gipaw, thus a different header
+	// dft_functional warning
+	GlobalV::DFT_FUNCTIONAL="LDA";
+	ifs.open("./support/Fe.pbe-sp-mt_gipaw.UPF");
+	//upf->read_pseudo_upf201(ifs);
+	testing::internal::CaptureStdout();
+	EXPECT_NO_THROW(upf->read_pseudo_upf201(ifs));
+	output = testing::internal::GetCapturedStdout();
+	EXPECT_THAT(output,testing::HasSubstr("dft_functional readin is: LDA"));
+	EXPECT_THAT(output,testing::HasSubstr("dft_functional in pseudopot file is: PBE"));
 	ifs.close();
 	delete upf;
 }
