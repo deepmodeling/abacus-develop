@@ -1,6 +1,6 @@
 #include "sto_forces.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
-#include "module_symmetry/symmetry.h"
+#include "module_cell/module_symmetry/symmetry.h"
 #include "module_elecstate/potentials/efield.h"
 #include "module_elecstate/potentials/gatefield.h"
 #include "module_base/mathzone.h"

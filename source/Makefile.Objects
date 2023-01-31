@@ -13,8 +13,8 @@ HEADERS = *.h
 
 VPATH=./src_global:\
 ./module_orbital:\
-./module_neighbor:\
-./module_symmetry:\
+./module_cell/module_neighbor:\
+./module_cell/module_symmetry:\
 ./module_cell:\
 ./module_base:\
 ./module_base/kernels:\

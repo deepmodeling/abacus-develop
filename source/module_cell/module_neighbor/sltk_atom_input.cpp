@@ -1,6 +1,6 @@
 #include "sltk_atom_input.h"
 #include "sltk_grid.h"
-#include "../module_base/memory.h"
+#include "module_base/memory.h"
 
 //==========================================================
 // define constructor and deconstructor

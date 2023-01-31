@@ -7,7 +7,7 @@
 #include "sltk_atom.h"
 #include "sltk_atom_input.h"
 
-#include "../module_cell/unitcell.h"
+#include "module_cell/unitcell.h"
 //extern Structure_Factor sf;
 
 //==========================================================

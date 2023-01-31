@@ -1,7 +1,7 @@
 #ifndef SYMMETRY_H
 #define SYMMETRY_H
 
-#include "../module_cell/unitcell.h"
+#include "module_cell/unitcell.h"
 #include "symmetry_basic.h"
 
 namespace ModuleSymmetry

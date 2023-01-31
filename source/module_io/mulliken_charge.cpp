@@ -26,7 +26,7 @@
 #ifdef __MPI
 #include<mpi.h>
 #endif
-#include "module_neighbor/sltk_atom_arrange.h"
+#include "module_cell/module_neighbor/sltk_atom_arrange.h"
 
 
 

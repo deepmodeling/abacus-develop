@@ -1,6 +1,6 @@
 #include "forces.h"
 
-#include "module_symmetry/symmetry.h"
+#include "module_cell/module_symmetry/symmetry.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 // new
 #include "module_base/math_integral.h"

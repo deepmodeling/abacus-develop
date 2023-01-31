@@ -1,7 +1,7 @@
 #include "sltk_grid_driver.h"
-#include "../module_base/global_function.h"
-#include "../module_base/global_variable.h"
-#include "../module_base/timer.h"
+#include "module_base/global_function.h"
+#include "module_base/global_variable.h"
+#include "module_base/timer.h"
 
 #ifdef _OPENMP
 #include <omp.h>

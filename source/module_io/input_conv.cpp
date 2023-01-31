@@ -4,7 +4,7 @@
 #include "module_base/global_variable.h"
 #include "module_cell/unitcell.h"
 #include "module_hamilt_general/module_surchem/surchem.h"
-#include "module_symmetry/symmetry.h"
+#include "module_cell/module_symmetry/symmetry.h"
 #include "module_io/berryphase.h"
 #include "module_relax/relax_old/ions_move_basic.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"

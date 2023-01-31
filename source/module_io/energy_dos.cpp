@@ -5,7 +5,7 @@
 #include "module_hamilt_pw/hamilt_pwdft/wavefunc.h"
 #include "dos.h"
 #ifdef __LCAO
-#include "module_neighbor/sltk_atom_arrange.h" //qifeng-2019-01-21
+#include "module_cell/module_neighbor/sltk_atom_arrange.h" //qifeng-2019-01-21
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_gen_fixedH.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_matrix.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/global_fp.h"

@@ -4,7 +4,7 @@
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_base/global_function.h"
 #include "module_base/memory.h"
-#include "module_symmetry/symmetry.h"
+#include "module_cell/module_symmetry/symmetry.h"
 #include "module_hamilt_pw/hamilt_pwdft/structure_factor.h"
 #include "module_elecstate/module_charge/symmetry_rho.h"
 #include "module_io/print_info.h"

@@ -1,6 +1,6 @@
 #include "numerical_descriptor.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
-#include "module_symmetry/symmetry.h"
+#include "module_cell/module_symmetry/symmetry.h"
 #include "winput.h"
 #include "module_base/math_ylmreal.h"
 #include "src_parallel/parallel_reduce.h"

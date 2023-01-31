@@ -2,9 +2,9 @@
 #include <array>
 #include "symmetry.h"
 
-#include "../module_base/mathzone.h"
-#include "../module_base/constants.h"
-#include "../module_base/timer.h"
+#include "module_base/mathzone.h"
+#include "module_base/constants.h"
+#include "module_base/timer.h"
 
 namespace ModuleSymmetry
 {

@@ -3,8 +3,8 @@
 #include <iomanip>
 #include <iostream>
 #include "symmetry.h"
-#include "../module_base/global_variable.h"
-#include "../src_parallel/parallel_global.h"
+#include "module_base/global_variable.h"
+#include "src_parallel/parallel_global.h"
 using namespace std;
 
 void calculate();

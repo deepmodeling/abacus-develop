@@ -2,7 +2,7 @@
 #define ATOM_INPUT_H
 
 #include "sltk_atom.h"
-#include "../module_cell/unitcell.h"
+#include "module_cell/unitcell.h"
 
 class Atom_input
 {
