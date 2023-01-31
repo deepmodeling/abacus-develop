@@ -401,9 +401,10 @@ void Input::Default(void)
     td_val_elec_02 = 1;
     td_val_elec_03 = 1;
     td_vext = 0;
-    td_vext_dire = 1;
+    // td_vext_dire = 1;
 
-    out_dipole = 0;
+    out_dipole = false;
+    out_efield = false;
 
     td_print_eij = -1.0;
     td_edm = 0;
@@ -429,40 +430,40 @@ void Input::Default(void)
     // time domain parameters
 
     // Gauss
-    td_gauss_freq = 22.13; // fs^-1
-    td_gauss_phase = 0.0;
-    td_gauss_sigma = 30.0; // fs
-    td_gauss_t0 = 100.0;
-    td_gauss_amp = 0.25; // V/A
+    td_gauss_freq = "22.13"; // fs^-1
+    td_gauss_phase = "0.0";
+    td_gauss_sigma = "30.0"; // fs
+    td_gauss_t0 = "100.0"; 
+    td_gauss_amp = "0.25"; // V/A
 
     // Trapezoid
-    td_trape_freq = 1.60; // fs^-1
-    td_trape_phase = 0.0;
-    td_trape_t1 = 1875;
-    td_trape_t2 = 5625;
-    td_trape_t3 = 7500;
-    td_trape_amp = 2.74; // V/A
+    td_trape_freq = "1.60"; // fs^-1
+    td_trape_phase = "0.0";
+    td_trape_t1 = "1875";
+    td_trape_t2 = "5625";
+    td_trape_t3 = "7500";
+    td_trape_amp = "2.74"; // V/A
 
     // Trigonometric
-    td_trigo_freq1 = 1.164656; // time(fs)^-1
-    td_trigo_freq2 = 0.029116; // time(fs)^-1
-    td_trigo_phase1 = 0.0;
-    td_trigo_phase2 = 0.0;
-    td_trigo_amp = 2.74; // V/A
+    td_trigo_freq1 = "1.164656"; // time(fs)^-1
+    td_trigo_freq2 = "0.029116"; // time(fs)^-1
+    td_trigo_phase1 = "0.0";
+    td_trigo_phase2 = "0.0";
+    td_trigo_amp = "2.74"; // V/A
 
     // Heaviside
-    td_heavi_t0 = 100;
-    td_heavi_amp = 1.0; // V/A
+    td_heavi_t0 = "100";
+    td_heavi_amp = "1.0"; // V/A
 
     // HHG
-    td_hhg_amp1 = 2.74; // V/A
-    td_hhg_amp2 = 2.74; // V/A
-    td_hhg_freq1 = 1.164656; // time(fs)^-1
-    td_hhg_freq2 = 0.029116; // time(fs)^-1
-    td_hhg_phase1 = 0.0;
-    td_hhg_phase2 = 0.0;
-    td_hhg_t0 = 700;
-    td_hhg_sigma = 30; // fs
+    // td_hhg_amp1 = "2.74"; // V/A
+    // td_hhg_amp2 = "2.74"; // V/A
+    // td_hhg_freq1 = "1.164656"; // time(fs)^-1
+    // td_hhg_freq2 = "0.029116"; // time(fs)^-1
+    // td_hhg_phase1 = "0.0";
+    // td_hhg_phase2 = "0.0";
+    // td_hhg_t0 = "700";
+    // td_hhg_sigma = "30"; // fs
 
     //----------------------------------------------------------			//Fuxiang He add 2016-10-26
     // constrained DFT
@@ -1489,11 +1490,15 @@ bool Input::Read(const std::string &fn)
         }
         else if (strcmp("td_vext_dire", word) == 0)
         {
-            read_value(ifs, td_vext_dire);
+            getline(ifs, td_vext_dire);
         }
         else if (strcmp("out_dipole", word) == 0)
         {
             read_value(ifs, out_dipole);
+        }
+        else if (strcmp("out_efield", word) == 0)
+        {
+            read_value(ifs, out_efield);
         }
         else if (strcmp("td_print_eij", word) == 0)
         {
@@ -1509,7 +1514,7 @@ bool Input::Read(const std::string &fn)
         }
         else if (strcmp("td_ttype", word) == 0)
         {
-            read_value(ifs, td_ttype);
+            getline(ifs, td_ttype);
         }
         else if (strcmp("td_tstart", word) == 0)
         {
@@ -1529,108 +1534,108 @@ bool Input::Read(const std::string &fn)
         }
         else if (strcmp("td_gauss_freq", word) == 0)
         {
-            read_value(ifs, td_gauss_freq);
+            getline(ifs, td_gauss_freq);
         }
         else if (strcmp("td_gauss_phase", word) == 0)
         {
-            read_value(ifs, td_gauss_phase);
+            getline(ifs, td_gauss_phase);
         }
         else if (strcmp("td_gauss_sigma", word) == 0)
         {
-            read_value(ifs, td_gauss_sigma);
+            getline(ifs, td_gauss_sigma);
         }
         else if (strcmp("td_gauss_t0", word) == 0)
         {
-            read_value(ifs, td_gauss_t0);
+            getline(ifs, td_gauss_t0);
         }
         else if (strcmp("td_gauss_amp", word) == 0)
         {
-            read_value(ifs, td_gauss_amp);
+            getline(ifs, td_gauss_amp);
         }
         else if (strcmp("td_trape_freq", word) == 0)
         {
-            read_value(ifs, td_trape_freq);
+            getline(ifs, td_trape_freq);
         }
         else if (strcmp("td_trape_phase", word) == 0)
         {
-            read_value(ifs, td_trape_phase);
+            getline(ifs, td_trape_phase);
         }
         else if (strcmp("td_trape_t1", word) == 0)
         {
-            read_value(ifs, td_trape_t1);
+            getline(ifs, td_trape_t1);
         }
         else if (strcmp("td_trape_t2", word) == 0)
         {
-            read_value(ifs, td_trape_t2);
+            getline(ifs, td_trape_t2);
         }
         else if (strcmp("td_trape_t3", word) == 0)
         {
-            read_value(ifs, td_trape_t3);
+            getline(ifs, td_trape_t3);
         }
         else if (strcmp("td_trape_amp", word) == 0)
         {
-            read_value(ifs, td_trape_amp);
+            getline(ifs, td_trape_amp);
         }
         else if (strcmp("td_trigo_freq1", word) == 0)
         {
-            read_value(ifs, td_trigo_freq1);
+            getline(ifs, td_trigo_freq1);
         }
         else if (strcmp("td_trigo_freq2", word) == 0)
         {
-            read_value(ifs, td_trigo_freq2);
+            getline(ifs, td_trigo_freq2);
         }
         else if (strcmp("td_trigo_phase1", word) == 0)
         {
-            read_value(ifs, td_trigo_phase1);
+            getline(ifs, td_trigo_phase1);
         }
         else if (strcmp("td_trigo_phase2", word) == 0)
         {
-            read_value(ifs, td_trigo_phase2);
+            getline(ifs, td_trigo_phase2);
         }
         else if (strcmp("td_trigo_amp", word) == 0)
         {
-            read_value(ifs, td_trigo_amp);
+            getline(ifs, td_trigo_amp);
         }
         else if (strcmp("td_heavi_t0", word) == 0)
         {
-            read_value(ifs, td_heavi_t0);
+            getline(ifs, td_heavi_t0);
         }
         else if (strcmp("td_heavi_amp", word) == 0)
         {
-            read_value(ifs, td_heavi_amp);
+            getline(ifs, td_heavi_amp);
         }
-        else if (strcmp("td_hhg_amp1", word) == 0)
-        {
-            read_value(ifs, td_hhg_amp1);
-        }
-        else if (strcmp("td_hhg_amp2", word) == 0)
-        {
-            read_value(ifs, td_hhg_amp2);
-        }
-        else if (strcmp("td_hhg_freq1", word) == 0)
-        {
-            read_value(ifs, td_hhg_freq1);
-        }
-        else if (strcmp("td_hhg_freq2", word) == 0)
-        {
-            read_value(ifs, td_hhg_freq2);
-        }
-        else if (strcmp("td_hhg_phase1", word) == 0)
-        {
-            read_value(ifs, td_hhg_phase1);
-        }
-        else if (strcmp("td_hhg_phase2", word) == 0)
-        {
-            read_value(ifs, td_hhg_phase2);
-        }
-        else if (strcmp("td_hhg_t0", word) == 0)
-        {
-            read_value(ifs, td_hhg_t0);
-        }
-        else if (strcmp("td_hhg_sigma", word) == 0)
-        {
-            read_value(ifs, td_hhg_sigma);
-        }
+        // else if (strcmp("td_hhg_amp1", word) == 0)
+        // {
+        //     getline(ifs, td_hhg_amp1);
+        // }
+        // else if (strcmp("td_hhg_amp2", word) == 0)
+        // {
+        //     getline(ifs, td_hhg_amp2);
+        // }
+        // else if (strcmp("td_hhg_freq1", word) == 0)
+        // {
+        //     getline(ifs, td_hhg_freq1);
+        // }
+        // else if (strcmp("td_hhg_freq2", word) == 0)
+        // {
+        //     getline(ifs, td_hhg_freq2);
+        // }
+        // else if (strcmp("td_hhg_phase1", word) == 0)
+        // {
+        //     getline(ifs, td_hhg_phase1);
+        // }
+        // else if (strcmp("td_hhg_phase2", word) == 0)
+        // {
+        //     getline(ifs, td_hhg_phase2);
+        // }
+        // else if (strcmp("td_hhg_t0", word) == 0)
+        // {
+        //     getline(ifs, td_hhg_t0);
+        // }
+        // else if (strcmp("td_hhg_sigma", word) == 0)
+        // {
+        //     getline(ifs, td_hhg_sigma);
+        // }
         //----------------------------------------------------------
         // vdw
         // jiyy add 2019-08-04
@@ -2838,42 +2843,43 @@ void Input::Bcast()
     Parallel_Common::bcast_int(td_val_elec_03);
     Parallel_Common::bcast_double(td_force_dt);
     Parallel_Common::bcast_int(td_vext);
-    Parallel_Common::bcast_int(td_vext_dire);
+    Parallel_Common::bcast_string(td_vext_dire);
     Parallel_Common::bcast_int(td_stype);
-    Parallel_Common::bcast_int(td_ttype);
+    Parallel_Common::bcast_string(td_ttype);
     Parallel_Common::bcast_int(td_tstart);
     Parallel_Common::bcast_int(td_tend);
     Parallel_Common::bcast_double(td_lcut1);
     Parallel_Common::bcast_double(td_lcut2);
-    Parallel_Common::bcast_double(td_gauss_freq);
-    Parallel_Common::bcast_double(td_gauss_phase);
-    Parallel_Common::bcast_double(td_gauss_sigma);
-    Parallel_Common::bcast_double(td_gauss_t0);
-    Parallel_Common::bcast_double(td_gauss_amp);
-    Parallel_Common::bcast_double(td_trape_freq);
-    Parallel_Common::bcast_double(td_trape_phase);
-    Parallel_Common::bcast_double(td_trape_t1);
-    Parallel_Common::bcast_double(td_trape_t2);
-    Parallel_Common::bcast_double(td_trape_t3);
-    Parallel_Common::bcast_double(td_trape_amp);
-    Parallel_Common::bcast_double(td_trigo_freq1);
-    Parallel_Common::bcast_double(td_trigo_freq2);
-    Parallel_Common::bcast_double(td_trigo_phase1);
-    Parallel_Common::bcast_double(td_trigo_phase2);
-    Parallel_Common::bcast_double(td_trigo_amp);
-    Parallel_Common::bcast_double(td_heavi_t0);
-    Parallel_Common::bcast_double(td_heavi_amp);
-    Parallel_Common::bcast_double(td_hhg_freq1);
-    Parallel_Common::bcast_double(td_hhg_freq2);
-    Parallel_Common::bcast_double(td_hhg_amp1);
-    Parallel_Common::bcast_double(td_hhg_amp2);
-    Parallel_Common::bcast_double(td_hhg_phase1);
-    Parallel_Common::bcast_double(td_hhg_phase2);
-    Parallel_Common::bcast_double(td_hhg_freq1);
-    Parallel_Common::bcast_double(td_hhg_freq2);
-    Parallel_Common::bcast_double(td_hhg_t0);
-    Parallel_Common::bcast_double(td_hhg_sigma);
-    Parallel_Common::bcast_int(out_dipole);
+    Parallel_Common::bcast_string(td_gauss_freq);
+    Parallel_Common::bcast_string(td_gauss_phase);
+    Parallel_Common::bcast_string(td_gauss_sigma);
+    Parallel_Common::bcast_string(td_gauss_t0);
+    Parallel_Common::bcast_string(td_gauss_amp);
+    Parallel_Common::bcast_string(td_trape_freq);
+    Parallel_Common::bcast_string(td_trape_phase);
+    Parallel_Common::bcast_string(td_trape_t1);
+    Parallel_Common::bcast_string(td_trape_t2);
+    Parallel_Common::bcast_string(td_trape_t3);
+    Parallel_Common::bcast_string(td_trape_amp);
+    Parallel_Common::bcast_string(td_trigo_freq1);
+    Parallel_Common::bcast_string(td_trigo_freq2);
+    Parallel_Common::bcast_string(td_trigo_phase1);
+    Parallel_Common::bcast_string(td_trigo_phase2);
+    Parallel_Common::bcast_string(td_trigo_amp);
+    Parallel_Common::bcast_string(td_heavi_t0);
+    Parallel_Common::bcast_string(td_heavi_amp);
+    // Parallel_Common::bcast_string(td_hhg_freq1);
+    // Parallel_Common::bcast_string(td_hhg_freq2);
+    // Parallel_Common::bcast_string(td_hhg_amp1);
+    // Parallel_Common::bcast_string(td_hhg_amp2);
+    // Parallel_Common::bcast_string(td_hhg_phase1);
+    // Parallel_Common::bcast_string(td_hhg_phase2);
+    // Parallel_Common::bcast_string(td_hhg_freq1);
+    // Parallel_Common::bcast_string(td_hhg_freq2);
+    // Parallel_Common::bcast_string(td_hhg_t0);
+    // Parallel_Common::bcast_string(td_hhg_sigma);
+    Parallel_Common::bcast_bool(out_dipole);
+    Parallel_Common::bcast_bool(out_efield);
     Parallel_Common::bcast_double(td_print_eij);
     Parallel_Common::bcast_int(td_edm);
     Parallel_Common::bcast_bool(test_skip_ewald);
