@@ -167,7 +167,7 @@ int test_energy = 0;
 // for test purpose, skip ewald calculation
 bool test_skip_ewald = false;
 //----------------------------------------------------------
-// src_lcao
+// module_hamilt_lcao/hamilt_lcaodft
 //----------------------------------------------------------
 int test_atom_arrange = 0;
 int test_atom_input = 0;

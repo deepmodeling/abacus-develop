@@ -1,8 +1,6 @@
 #include <memory>
 #include <array>
 #include "symmetry.h"
-//#include "../src_pw/global.h"
-//#include "symm_other.h"
 
 #include "../module_base/mathzone.h"
 #include "../module_base/constants.h"

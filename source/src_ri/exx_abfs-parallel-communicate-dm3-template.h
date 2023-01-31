@@ -1,5 +1,5 @@
 #include "exx_abfs-parallel-communicate-dm3.h"
-#include "../src_pw/global.h"
+#include "../module_hamilt_pw/hamilt_pwdft/global.h"
 
 #ifdef __MPI
 const ModuleBase::matrix &Exx_Abfs::Parallel::Communicate::DM3::D_phase(

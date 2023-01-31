@@ -152,5 +152,5 @@ void cal_ylm_real_op<FPTYPE, psi::DEVICE_GPU>::operator() (
 template struct cal_ylm_real_op<float, psi::DEVICE_GPU>;
 template struct cal_ylm_real_op<double, psi::DEVICE_GPU>;
 
-}  // namespace src_pw
+}  // namespace ModuleBase
 

@@ -2,11 +2,11 @@
 // Author:Xin Qu
 // DATE : 2019-12-10
 //==========================================================
-#include "../module_base/constants.h"
-#include "../module_base/global_function.h"
-#include "../src_pw/global.h"
-#include "./src_lcao/LCAO_matrix.h"
-#include "./src_lcao/global_fp.h"
+#include "module_base/constants.h"
+#include "module_base/global_function.h"
+#include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/LCAO_matrix.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/global_fp.h"
 #include "dftu.h"
 
 #include <cmath>

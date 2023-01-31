@@ -4,17 +4,17 @@
 //==========================================================
 #include "dftu.h"
 
-#include "../module_base/constants.h"
-#include "../module_base/global_function.h"
-#include "../module_base/inverse_matrix.h"
-#include "../module_base/memory.h"
-#include "../module_base/timer.h"
-#include "../module_orbital/ORB_gen_tables.h"
-#include "../src_lcao/global_fp.h"
-#include "../src_pw/charge.h"
-#include "../src_pw/global.h"
-#include "../src_pw/magnetism.h"
-#include "./src_lcao/LCAO_matrix.h"
+#include "module_base/constants.h"
+#include "module_base/global_function.h"
+#include "module_base/inverse_matrix.h"
+#include "module_base/memory.h"
+#include "module_base/timer.h"
+#include "module_orbital/ORB_gen_tables.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/global_fp.h"
+#include "module_elecstate/module_charge/charge.h"
+#include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "module_elecstate/magnetism.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/LCAO_matrix.h"
 #include "module_base/scalapack_connector.h"
 
 #include <cmath>

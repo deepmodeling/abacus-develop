@@ -1,6 +1,6 @@
 #include"module_hsolver/diago_david.h"
 #include"module_hsolver/diago_iter_assist.h"
-#include"module_hamilt/hamilt_pw.h"
+#include"module_hamilt_pw/hamilt_pwdft/hamilt_pw.h"
 #include"diago_mock.h"
 #include "module_psi/psi.h"
 #include"gtest/gtest.h"

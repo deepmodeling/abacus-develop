@@ -3,7 +3,7 @@
 #include "cal_dm.h"
 #include "module_base/timer.h"
 #include "module_gint/grid_technique.h"
-#include "src_pw/global.h"
+#include "module_hamilt_pw/hamilt_pwdft/global.h"
 
 namespace elecstate
 {

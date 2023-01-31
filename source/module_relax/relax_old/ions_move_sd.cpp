@@ -1,5 +1,5 @@
 #include "ions_move_sd.h"
-#include "src_pw/global.h"
+#include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "ions_move_basic.h"
 
 using namespace Ions_Move_Basic;

@@ -1,13 +1,13 @@
 #include "to_wannier90.h"
 
-#include "../src_pw/global.h"
+#include "module_hamilt_pw/hamilt_pwdft/global.h"
 #ifdef __LCAO
-#include "../src_lcao/global_fp.h" // mohan add 2021-01-30, this module should be modified
+#include "module_hamilt_lcao/hamilt_lcaodft/global_fp.h" // mohan add 2021-01-30, this module should be modified
 #endif
-#include "../module_base/math_integral.h"
-#include "../module_base/math_polyint.h"
-#include "../module_base/math_sphbes.h"
-#include "../module_base/math_ylmreal.h"
+#include "module_base/math_integral.h"
+#include "module_base/math_polyint.h"
+#include "module_base/math_sphbes.h"
+#include "module_base/math_ylmreal.h"
 
 toWannier90::toWannier90(int num_kpts, ModuleBase::Matrix3 recip_lattice)
 {

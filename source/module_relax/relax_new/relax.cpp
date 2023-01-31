@@ -1,6 +1,6 @@
 #include "relax.h"
 #include <cmath>
-#include "src_pw/global.h"
+#include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_base/matrix3.h"
 #include "../relax_old/ions_move_basic.h"
 

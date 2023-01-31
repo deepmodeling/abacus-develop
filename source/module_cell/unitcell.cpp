@@ -3,7 +3,7 @@
 #include "mpi.h"
 #endif
 
-//#include "../src_pw/global.h"
+//#include "../module_hamilt_pw/hamilt_pwdft/global.h"
 #include "../module_base/constants.h"
 #include "../module_base/global_function.h"
 #include "../module_base/global_variable.h"

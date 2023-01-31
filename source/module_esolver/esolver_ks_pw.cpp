@@ -3,22 +3,22 @@
 #include "../module_io/wf_io.h"
 
 //--------------temporary----------------------------
-#include "../src_pw/global.h"
-#include "../src_pw/symmetry_rho.h"
-#include "../module_io/print_info.h"
-#include "../src_pw/H_Ewald_pw.h"
-#include "../src_pw/occupy.h"
-#include "../module_relax/relax_old/variable_cell.h"    // liuyu 2022-11-07
+#include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "module_elecstate/module_charge/symmetry_rho.h"
+#include "module_io/print_info.h"
+#include "module_hamilt_general/module_ewald/H_Ewald_pw.h"
+#include "module_elecstate/occupy.h"
+#include "module_relax/relax_old/variable_cell.h"    // liuyu 2022-11-07
 //-----force-------------------
-#include "../src_pw/forces.h"
+#include "module_hamilt_pw/hamilt_pwdft/forces.h"
 //-----stress------------------
-#include "../src_pw/stress_pw.h"
+#include "module_hamilt_pw/hamilt_pwdft/stress_pw.h"
 //---------------------------------------------------
 #include "module_hsolver/hsolver_pw.h"
 #include "module_elecstate/elecstate_pw.h"
-#include "module_hamilt/hamilt_pw.h"
+#include "module_hamilt_pw/hamilt_pwdft/hamilt_pw.h"
 #include "module_hsolver/diago_iter_assist.h"
-#include "module_vdw/vdw.h"
+#include "module_hamilt_general/module_vdw/vdw.h"
 #include "module_base/memory.h"
 
 #include "module_io/write_wfc_realspace.h"
@@ -517,7 +517,7 @@ namespace ModuleESolver
 
         if (GlobalV::OUT_LEVEL != "m")
         {
-            this->print_eigenvalue(GlobalV::ofs_running);
+            this->pelec->print_eigenvalue(GlobalV::ofs_running);
         }
         if (this->device == psi::GpuDevice) {
             castmem_2d_d2h_op()(
@@ -527,97 +527,6 @@ namespace ModuleESolver
                 this->kspw_psi[0].get_pointer() - this->kspw_psi[0].get_psi_bias(),
                 this->psi[0].size());
         }
-    }
-
-    template<typename FPTYPE, typename Device>
-    void ESolver_KS_PW<FPTYPE, Device>::print_eigenvalue(std::ofstream& ofs)
-    {
-        bool wrong = false;
-        for (int ik = 0; ik < GlobalC::kv.nks; ++ik)
-        {
-            for (int ib = 0; ib < GlobalV::NBANDS; ++ib)
-            {
-                if (abs(this->pelec->ekb(ik, ib)) > 1.0e10)
-                {
-                    GlobalV::ofs_warning << " ik=" << ik + 1 << " ib=" << ib + 1 << " " << this->pelec->ekb(ik, ib) << " Ry" << std::endl;
-                    wrong = true;
-                }
-            }
-        }
-        if (wrong)
-        {
-            ModuleBase::WARNING_QUIT("Threshold_Elec::print_eigenvalue", "Eigenvalues are too large!");
-        }
-
-
-        if (GlobalV::MY_RANK != 0)
-        {
-            return;
-        }
-
-        ModuleBase::TITLE("Threshold_Elec", "print_eigenvalue");
-
-        ofs << "\n STATE ENERGY(eV) AND OCCUPATIONS ";
-        ofs << std::setprecision(5);
-        for (int ik = 0;ik < GlobalC::kv.nks;ik++)
-        {
-            if (ik == 0)
-            {
-                ofs << "   NSPIN == " << GlobalV::NSPIN << std::endl;
-                if (GlobalV::NSPIN == 2)
-                {
-                    ofs << "SPIN UP : " << std::endl;
-                }
-            }
-            else if (ik == GlobalC::kv.nks / 2)
-            {
-                if (GlobalV::NSPIN == 2)
-                {
-                    ofs << "SPIN DOWN : " << std::endl;
-                }
-            }
-
-            if (GlobalV::NSPIN == 2)
-            {
-                if (GlobalC::kv.isk[ik] == 0)
-                {
-                    ofs << " " << ik + 1 << "/" << GlobalC::kv.nks / 2 << " kpoint (Cartesian) = "
-                        << GlobalC::kv.kvec_c[ik].x << " " << GlobalC::kv.kvec_c[ik].y << " " << GlobalC::kv.kvec_c[ik].z
-                        << " (" << GlobalC::kv.ngk[ik] << " pws)" << std::endl;
-
-                    ofs << std::setprecision(6);
-
-                }
-                if (GlobalC::kv.isk[ik] == 1)
-                {
-                    ofs << " " << ik + 1 - GlobalC::kv.nks / 2 << "/" << GlobalC::kv.nks / 2 << " kpoint (Cartesian) = "
-                        << GlobalC::kv.kvec_c[ik].x << " " << GlobalC::kv.kvec_c[ik].y << " " << GlobalC::kv.kvec_c[ik].z
-                        << " (" << GlobalC::kv.ngk[ik] << " pws)" << std::endl;
-
-                    ofs << std::setprecision(6);
-
-                }
-            }       // Pengfei Li  added  14-9-9
-            else
-            {
-                ofs << " " << ik + 1 << "/" << GlobalC::kv.nks << " kpoint (Cartesian) = "
-                    << GlobalC::kv.kvec_c[ik].x << " " << GlobalC::kv.kvec_c[ik].y << " " << GlobalC::kv.kvec_c[ik].z
-                    << " (" << GlobalC::kv.ngk[ik] << " pws)" << std::endl;
-
-                ofs << std::setprecision(6);
-            }
-
-            GlobalV::ofs_running << std::setprecision(6);
-            GlobalV::ofs_running << std::setiosflags(ios::showpoint);
-            for (int ib = 0; ib < GlobalV::NBANDS; ib++)
-            {
-                ofs << std::setw(8) << ib + 1
-                    << std::setw(15) << this->pelec->ekb(ik, ib) * ModuleBase::Ry_to_eV
-                    << std::setw(15) << this->pelec->wg(ik, ib) << std::endl;
-            }
-            ofs << std::endl;
-        }//end ik
-        return;
     }
 
 

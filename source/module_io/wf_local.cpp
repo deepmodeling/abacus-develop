@@ -1,7 +1,7 @@
 #include "wf_local.h"
-#include "../src_pw/global.h"
-#include "../src_parallel/parallel_common.h"
-#include "../module_base/timer.h"
+#include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "src_parallel/parallel_common.h"
+#include "module_base/timer.h"
 
 inline int CTOT2q(
 	int myid,
