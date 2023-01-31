@@ -55,7 +55,7 @@ void H_TDDFT_pw::cal_fixed_v(double* vl_pseudo)
                 break;
         }
 
-        if (GlobalV::MY_RANK == 0)
+        if (td_out_efield && GlobalV::MY_RANK == 0)
         {
             std::stringstream as;
             as << GlobalV::global_out_dir << "efield_"+direc_name+".dat";
