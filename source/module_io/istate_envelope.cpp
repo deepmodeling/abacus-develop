@@ -1,7 +1,7 @@
 #include "istate_envelope.h"
-#include "../src_pw/global.h"
-#include "../module_base/global_function.h"
-#include "../module_base/global_variable.h"
+#include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "module_base/global_function.h"
+#include "module_base/global_variable.h"
 #include "module_io/wf_io.h"
 #include "module_io/write_wfc_realspace.h"
 

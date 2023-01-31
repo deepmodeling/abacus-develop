@@ -19,13 +19,13 @@
  */
 
 #include "src_parallel/parallel_grid.h"
-#include "src_pw/wavefunc.h"
-#include "src_pw/VNL_in_pw.h"
-#include "src_pw/energy.h"
-#include "src_pw/structure_factor.h"
+#include "module_hamilt_pw/hamilt_pwdft/wavefunc.h"
+#include "module_hamilt_pw/hamilt_pwdft/VNL_in_pw.h"
+#include "module_elecstate/energy.h"
+#include "module_hamilt_pw/hamilt_pwdft/structure_factor.h"
 #include "module_neighbor/sltk_atom_arrange.h"
 #include "module_pw/pw_basis_k.h"
-#include "module_xc/xc_functional.h"
+#include "module_hamilt_general/module_xc/xc_functional.h"
 #include "module_io/restart.h"
 
 Magnetism::Magnetism(){}
@@ -83,7 +83,7 @@ namespace WF_Local
 }
 
 //mock the unrelated functions in charge.cpp
-#include "src_pw/occupy.h"
+#include "module_elecstate/occupy.h"
 bool Occupy::use_gaussian_broadening = false;
 #ifdef __MPI
 void Parallel_Grid::zpiece_to_all(double *zpiece, const int &iz, double *rho){}

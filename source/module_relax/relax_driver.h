@@ -1,10 +1,10 @@
 #ifndef RELAX_DRIVER_H
 #define RELAX_DRIVER_H
 
-#include "../module_base/global_function.h"
-#include "../module_base/global_variable.h"
-#include "../module_base/matrix.h"
-#include "../src_pw/charge_extra.h"
+#include "module_base/global_function.h"
+#include "module_base/global_variable.h"
+#include "module_base/matrix.h"
+#include "module_elecstate/module_charge/charge_extra.h"
 #include "relax_old/relax_old.h"
 #include "relax_new/relax.h"
 #include "module_esolver/esolver.h"

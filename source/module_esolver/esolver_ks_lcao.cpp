@@ -1,32 +1,31 @@
 #include "esolver_ks_lcao.h"
 #include "module_io/cal_r_overlap_R.h"
+#include "module_io/density_matrix.h"
 
 //--------------temporary----------------------------
-#include "../module_base/global_function.h"
-#include "../module_io/print_info.h"
-#include "../src_pw/global.h"
-#include "src_lcao/ELEC_evolve.h"
+#include "module_base/global_function.h"
+#include "module_io/print_info.h"
+#include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/global_fp.h"
 #include "module_dftu/dftu.h"
-#include "src_lcao/dmft.h"
-#include "src_pw/occupy.h"
-#include "src_pw/symmetry_rho.h"
-#include "src_pw/threshold_elec.h"
+#include "module_elecstate/occupy.h"
+#include "module_elecstate/module_charge/symmetry_rho.h"
 #ifdef __EXX
 // #include "module_rpa/rpa.h"
 #include "module_ri/RPA_LRI.h"
 #endif
 
 #ifdef __DEEPKS
-#include "../module_deepks/LCAO_deepks.h"
+#include "module_deepks/LCAO_deepks.h"
 #endif
 //-----force& stress-------------------
-#include "src_lcao/FORCE_STRESS.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/FORCE_STRESS.h"
 
 //-----HSolver ElecState Hamilt--------
 #include "module_elecstate/elecstate_lcao.h"
-#include "module_hamilt/hamilt_lcao.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/hamilt_lcao.h"
 #include "module_hsolver/hsolver_lcao.h"
-#include "module_hamilt/ks_lcao/op_exx_lcao.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/op_exx_lcao.h"
 // function used by deepks
 #include "module_elecstate/cal_dm.h"
 //---------------------------------------------------
@@ -564,7 +563,7 @@ void ESolver_KS_LCAO::eachiterfinish(int iter)
             ssd << GlobalV::global_out_dir << "tmp"
                 << "_SPIN" << is + 1 << "_DM_R";
         }
-        this->LOC.write_dm(is, iter, ssd.str(), precision);
+        ModuleIO::write_dm(is, iter, ssd.str(), precision, this->LOC.out_dm, this->LOC.DM);
     }
 
     if(XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
@@ -630,10 +629,10 @@ void ESolver_KS_LCAO::afterscf(const int istep)
         {
             ssd << GlobalV::global_out_dir << "SPIN" << is + 1 << "_DM_R";
         }
-        this->LOC.write_dm(is, 0, ssd.str(), precision);
+        ModuleIO::write_dm(is, 0, ssd.str(), precision, this->LOC.out_dm, this->LOC.DM);
         if(this->LOC.out_dm1 == 1)
         {
-            this->LOC.write_dm1(is, istep, dm2d);
+            ModuleIO::write_dm1(is, istep, dm2d, this->LOC.ParaV, this->LOC.DMR_sparse);
         }
 /* Broken, please fix it
         if (GlobalV::out_pot == 1) // LiuXh add 20200701
@@ -694,7 +693,7 @@ void ESolver_KS_LCAO::afterscf(const int istep)
 
     if (GlobalV::OUT_LEVEL != "m")
     {
-        Threshold_Elec::print_eigenvalue(GlobalV::ofs_running, this->pelec);
+        this->pelec->print_eigenvalue(GlobalV::ofs_running);
     }
 
     if (this->conv_elec)

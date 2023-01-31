@@ -5,7 +5,7 @@
 #include "module_base/matrix.h"
 #include "module_cell/unitcell.h"
 #include "module_pw/pw_basis.h"
-#include "src_pw/charge.h"
+#include "module_elecstate/module_charge/charge.h"
 
 namespace elecstate
 {

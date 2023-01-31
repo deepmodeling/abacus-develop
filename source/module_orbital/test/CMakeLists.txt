@@ -35,7 +35,7 @@ list(APPEND depend_files
   ../ORB_table_alpha.cpp
   ../ORB_gen_tables.cpp
   ../parallel_orbitals.cpp
-  ../../src_lcao/center2_orb-orb11.cpp
+  ../../module_hamilt_lcao/hamilt_lcaodft/center2_orb-orb11.cpp
   )
 AddTest(
   TARGET orbital_equal_test

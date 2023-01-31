@@ -57,7 +57,9 @@ int Pseudopot_upf::read_pseudo_upf201(std::ifstream &ifs)
 				has_so = false;
 		}
 		else if(name[ip]=="has_wfc"){}
-		else if(name[ip]=="has_gipaw"){}
+		else if(name[ip]=="has_gipaw"){
+			ONCVPSP = 0;
+		}
 		else if(name[ip]=="paw_as_gipaw"){
 			ONCVPSP = 0;
 		}

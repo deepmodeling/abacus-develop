@@ -92,7 +92,7 @@ double STRESS_THR = 1.0e-2; // LiuXh add 20180515
 
 int ocp = 0;
 std::string ocp_set = "none";
-std::vector<double> ocp_kb(10000);
+std::vector<double> ocp_kb;
 // int ocp_n=0;
 // double ocp_kb[10000];
 int out_mul = 0; // qifeng add 2019/9/10
@@ -167,7 +167,7 @@ int test_energy = 0;
 // for test purpose, skip ewald calculation
 bool test_skip_ewald = false;
 //----------------------------------------------------------
-// src_lcao
+// module_hamilt_lcao/hamilt_lcaodft
 //----------------------------------------------------------
 int test_atom_arrange = 0;
 int test_atom_input = 0;

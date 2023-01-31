@@ -1,5 +1,5 @@
 #include "exx_abfs-matrix_lcaoslcaos_lcaoslcaos.h"
-#include "../src_pw/global.h"
+#include "../module_hamilt_pw/hamilt_pwdft/global.h"
 #include "../module_orbital/ORB_read.h"
 #include "../module_base/ylm.h"
 #include "../src_external/src_test/test_function.h"			// Peize Lin test 2016-04-05

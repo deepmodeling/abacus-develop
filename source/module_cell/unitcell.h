@@ -1,19 +1,19 @@
 #ifndef UNITCELL_H
 #define UNITCELL_H
 
-#include "../module_base/global_function.h"
-#include "../module_base/global_variable.h"
-#include "../module_base/matrix3.h"
-#include "../module_base/intarray.h"
-#include "../module_io/output.h"
+#include "module_base/global_function.h"
+#include "module_base/global_variable.h"
+#include "module_base/matrix3.h"
+#include "module_base/intarray.h"
+#include "module_io/output.h"
 #ifndef __CMD
-#include "../src_pw/magnetism.h"
+#include "module_elecstate/magnetism.h"
 #endif
 
 #include "atom_spec.h"
 
 #ifdef __LCAO
-#include "../module_orbital/ORB_read.h"
+#include "module_orbital/ORB_read.h"
 #include "setup_nonlocal.h"
 #endif
 

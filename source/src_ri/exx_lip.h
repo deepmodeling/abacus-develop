@@ -5,10 +5,10 @@
 #ifndef EXX_LIP_H
 #define EXX_LIP_H
 
-#include "../module_base/complexmatrix.h"
-#include "../module_base/vector3.h"
-#include "../module_xc/exx_info.h"
-#include "../module_pw/pw_basis_k.h"
+#include "module_base/complexmatrix.h"
+#include "module_base/vector3.h"
+#include "module_hamilt_general/module_xc/exx_info.h"
+#include "module_pw/pw_basis_k.h"
 #include "module_elecstate/elecstate.h"
 
 class K_Vectors;

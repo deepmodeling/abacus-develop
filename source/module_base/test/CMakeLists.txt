@@ -22,6 +22,7 @@ AddTest(
 )
 ADDTest(
   TARGET base_global_function
+  LIBS ${math_libs}
   SOURCES global_function_test.cpp ../global_function.cpp ../tool_quit.cpp ../global_variable.cpp ../global_file.cpp ../memory.cpp ../timer.cpp
 )
 AddTest(
@@ -44,7 +45,7 @@ AddTest(
 AddTest(
  TARGET base_matrix
   LIBS ${math_libs}
-  SOURCES matrix_test.cpp ../matrix.cpp
+  SOURCES matrix_test.cpp ../matrix.cpp ../tool_quit.cpp ../global_variable.cpp ../global_file.cpp ../memory.cpp ../timer.cpp
 )
 AddTest(
   TARGET base_complexarray

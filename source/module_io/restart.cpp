@@ -1,8 +1,8 @@
 #include "restart.h"
-#include "../module_base/global_function.h"
-#include "../src_pw/global.h"
+#include "module_base/global_function.h"
+#include "module_hamilt_pw/hamilt_pwdft/global.h"
 #ifdef __LCAO
-#include "../src_lcao/global_fp.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/global_fp.h"
 #endif
 #include <fcntl.h> 
 #include <unistd.h>

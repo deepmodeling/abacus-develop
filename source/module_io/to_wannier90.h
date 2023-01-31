@@ -3,13 +3,13 @@
 
 #include <iostream>
 using namespace std;
-#include "../module_base/complexmatrix.h"
-#include "../module_base/global_function.h"
-#include "../module_base/global_variable.h"
-#include "../module_base/lapack_connector.h"
-#include "../module_base/matrix.h"
-#include "../module_base/matrix3.h"
-#include "../src_lcao/wavefunc_in_pw.h"
+#include "module_base/complexmatrix.h"
+#include "module_base/global_function.h"
+#include "module_base/global_variable.h"
+#include "module_base/lapack_connector.h"
+#include "module_base/matrix.h"
+#include "module_base/matrix3.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/wavefunc_in_pw.h"
 #include "module_psi/psi.h"
 
 #include <algorithm>
@@ -18,7 +18,7 @@ using namespace std;
 #include <vector>
 
 #ifdef __LCAO
-#include "../src_lcao/local_orbital_wfc.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/local_orbital_wfc.h"
 #endif
 
 class toWannier90

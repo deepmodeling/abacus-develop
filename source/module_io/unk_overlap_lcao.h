@@ -5,18 +5,18 @@
 #include <map>
 #include <set>
 
-#include "../src_lcao/center2_orb.h"
-#include "../src_lcao/center2_orb-orb11.h"
-#include "../src_lcao/center2_orb-orb21.h"
-#include "../src_lcao/local_orbital_wfc.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/center2_orb.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/center2_orb-orb11.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/center2_orb-orb21.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/local_orbital_wfc.h"
 
 #include "module_orbital/ORB_table_phi.h"
 #include "module_orbital/ORB_gaunt_table.h"
 #include "module_orbital/ORB_atomic_lm.h"
 #include "module_orbital/ORB_read.h"
 #include "module_orbital/parallel_orbitals.h"
-#include "../module_base/vector3.h"
-#include "../module_base/ylm.h"
+#include "module_base/vector3.h"
+#include "module_base/ylm.h"
 
 
 class unkOverlap_lcao

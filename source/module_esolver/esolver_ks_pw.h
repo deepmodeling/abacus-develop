@@ -1,7 +1,7 @@
 #ifndef ESOLVER_KS_PW_H
 #define ESOLVER_KS_PW_H
 #include "./esolver_ks.h"
-#include "module_hamilt/ks_pw/velocity_pw.h"
+#include "module_hamilt_pw/hamilt_pwdft/operator_pw/velocity_pw.h"
 // #include "Basis_PW.h"
 // #include "Estate_PW.h"
 // #include "Hamilton_PW.h"
@@ -47,9 +47,6 @@ namespace ModuleESolver
 
 
     private:
-        // It copies the function in Threshold_Elec class.
-        // After all ESolver, HSolver are constructed, Class Electrons and Threshold_Elec should be deleted.
-        void print_eigenvalue(std::ofstream& ofs);
         
         Device * ctx = {};
         psi::AbacusDevice_t device = {};

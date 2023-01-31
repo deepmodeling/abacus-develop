@@ -10,8 +10,8 @@
 #include "exx_abfs-parallel-communicate-hexx.h"
 #include "exx_abfs-screen-schwarz.h"
 #include "exx_abfs-screen-cauchy.h"
-#include "../module_base/element_basis_index.h"
-#include "../module_xc/exx_info.h"
+#include "module_base/element_basis_index.h"
+#include "module_hamilt_general/module_xc/exx_info.h"
 
 #if EXX_DM==1
 #include "exx_abfs-parallel-communicate-dm.h"

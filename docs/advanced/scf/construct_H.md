@@ -4,7 +4,7 @@
 
 In our package, the XC functional can be set explicitly using the `dft_functional` keyword in `INPUT` file. If `dft_functional` is not specified, ABACUS will use the xc functional indicated in the pseudopotential file. 
 
-Several common functionals are implemented in ABACUS, such as PZ and PBE. Users can check out this [file](../../../source/module_xc/xc_funcs.h) for a complete list of functionals implemented in ABACUS. Furthermore, if ABACUS is compiled with LIBXC, we also support all the LDA, GGA and meta-GGA functionals provided therein.
+Several common functionals are implemented in ABACUS, such as PZ and PBE. Users can check out this [file](../../../source/module_hamilt_general/module_xc/xc_funcs.h) for a complete list of functionals implemented in ABACUS. Furthermore, if ABACUS is compiled with LIBXC, we also support all the LDA, GGA and meta-GGA functionals provided therein.
 
 Here, we use a simple [example calculation](https://github.com/deepmodeling/abacus-develop/tree/develop/examples/scf/lcao_Si2) for illustration.
 
@@ -45,7 +45,7 @@ Here, we use a simple [example calculation](https://github.com/deepmodeling/abac
     dft_functional SCAN
     ```
     
-    Note that in the case of PBE and SCAN, we are using 'short-hand' names to represent the entire functional, which is made up of individual exchange and correlation components. A complete list of 'short-hand' expressions supported by ABACUS can be found in [source code](../../../source/module_xc/xc_functional.cpp).
+    Note that in the case of PBE and SCAN, we are using 'short-hand' names to represent the entire functional, which is made up of individual exchange and correlation components. A complete list of 'short-hand' expressions supported by ABACUS can be found in [source code](../../../source/module_hamilt_general/module_xc/xc_functional.cpp).
 
     Apart from the 'short-hand' names, ABACUS also allow supplying exchange-correlation functionals as combinations of LIBXC keywords for functional components, joined by plus sign, for example, setting:
 

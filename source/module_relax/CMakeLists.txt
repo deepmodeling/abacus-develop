@@ -23,3 +23,7 @@ add_library(
 if(ENABLE_COVERAGE)
   add_coverage(relax)
 endif()
+
+if(BUILD_TESTING)
+  add_subdirectory(relax_new/test)
+endif()

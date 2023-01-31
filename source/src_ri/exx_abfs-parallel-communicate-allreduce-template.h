@@ -9,7 +9,7 @@
 #include "mpi.h"
 #endif
 #include <boost/dynamic_bitset.hpp>
-#include "../src_lcao/serialization_boost.h"
+#include "src_ri/serialization_boost.h"
 
 #include <thread>
 #include <atomic>

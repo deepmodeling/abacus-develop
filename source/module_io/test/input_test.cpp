@@ -15,7 +15,7 @@
  */
 
 #define private public
-#include "../../input.h"
+#include "module_io/input.h"
 
 class InputTest : public testing::Test
 {

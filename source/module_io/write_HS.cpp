@@ -1,7 +1,8 @@
 #include "write_HS.h"
-#include "../src_pw/global.h"
-#include "../src_parallel/parallel_reduce.h"
-#include "../module_base/timer.h"
+#include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/global_fp.h"
+#include "src_parallel/parallel_reduce.h"
+#include "module_base/timer.h"
 
 void HS_Matrix::saving_HS(const double *Hloc, const double* Sloc, const bool bit, const int &out_mat_hs, const std::string &file_name, const Parallel_Orbitals &pv)
 {   

@@ -1,6 +1,7 @@
 #ifdef __MPI
 #include "exx_abfs-parallel-distribute-kmeans.h"
-#include "../src_pw/global.h"
+#include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/global_fp.h"
 #include <random>
 
 #include "../src_external/src_test/test_function.h"
