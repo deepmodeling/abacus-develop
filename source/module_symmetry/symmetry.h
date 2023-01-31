@@ -42,7 +42,7 @@ public:
 	
 	
 	std::vector<ModuleBase::Vector3<double>> ptrans;
-    int ncell;	//the number of primitive cells within one supercell
+    int ncell=1;	//the number of primitive cells within one supercell
 	int *index;
 	
 	double cel_const[6];

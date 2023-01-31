@@ -1487,13 +1487,13 @@ void Symmetry::rhog_symmetry(std::complex<double> *rhogtot,
                         tmp_gdirect0.z=(k>int(nz/2)+1)?(k-nz):k;
                         // note : do not use PBC after rotation. 
                         // we need a real gdirect to get the correspoding rhog.
-                        this->rotate_simple(kgmatrix[invmap[isym]], zero_vec, 
+                        this->rotate(kgmatrix[invmap[isym]], zero_vec, 
                             tmp_gdirect0.x, tmp_gdirect0.y, tmp_gdirect0.z, 
-                            nx, ny, nz, tmp_gdirect.x, tmp_gdirect.y, tmp_gdirect.z);
-                        //new-gdirect to fft-grid index
-                        ii=(tmp_gdirect.x<0)?(tmp_gdirect.x+nx):tmp_gdirect.x;
-                        jj=(tmp_gdirect.y<0)?(tmp_gdirect.y+ny):tmp_gdirect.y;
-                        kk=(tmp_gdirect.z<0)?(tmp_gdirect.z+nz):tmp_gdirect.z;
+                            nx, ny, nz, ii, jj, kk);
+                        //fft-grid index to new-gdirect
+                        tmp_gdirect.x=(ii>int(nx/2)+1)?(ii-nx):ii;
+                        tmp_gdirect.y=(jj>int(ny/2)+1)?(jj-ny):jj;
+                        tmp_gdirect.z=(kk>int(nz/2)+1)?(kk-nz):kk;
                         if(ii>=fftnx || jj>=fftny || kk>= fftnz)
                         {
                             if(!GlobalV::GAMMA_ONLY_PW)

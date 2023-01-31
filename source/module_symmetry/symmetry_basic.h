@@ -39,10 +39,7 @@ class Symmetry_Basic
 			);
 	void matrigen(ModuleBase::Matrix3 *symgen, const int ngen, ModuleBase::Matrix3* symop, int &nop);
 	void setgroup(ModuleBase::Matrix3 *symop, int &nop, const int &ibrav, double* celconst);
-	void rotate( //with PBC
-			ModuleBase::Matrix3 &gmatrix, ModuleBase::Vector3<double> &gtrans, 
-			int i, int j, int k, const int, const int, const int, int&, int&, int&);
-	void rotate_simple(	//without PBC
+	void rotate(
 			ModuleBase::Matrix3 &gmatrix, ModuleBase::Vector3<double> &gtrans, 
 			int i, int j, int k, const int, const int, const int, int&, int&, int&);
 	protected:
