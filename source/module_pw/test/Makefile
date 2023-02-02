@@ -27,7 +27,7 @@ FFTW_DIR = /home/qianrui/gnucompile/fftw_3.3.8
 # Compiler information 
 #==========================
 HONG = -D__NORMAL
-INCLUDES = -I.
+INCLUDES = -I. -I../../
 LIBS = 
 OPTS = -Ofast -march=native -std=c++11 -m64  ${INCLUDES}
 OBJ_DIR = obj
@@ -73,7 +73,7 @@ else
     FFTW_LIB_DIR     = ${FFTW_DIR}/lib
     LIBS += -L${FFTW_LIB_DIR} -lfftw3 -Wl,-rpath=${FFTW_LIB_DIR}
     INCLUDES += -I${FFTW_INCLUDE_DIR}
-    OPTS += -fopenmp
+    # OPTS += -fopenmp
 endif
 
 ifeq ($(FLOAT), ON)
@@ -110,12 +110,13 @@ GTESTOPTS = -I${GTEST_DIR}/include -L${GTEST_DIR}/lib -lgtest -lpthread
 #==========================
 VPATH=../../src_parallel\
 :../../module_base\
+:../../module_psi/kernels\
 :../
 
 MATH_OBJS0=matrix.o\
 matrix3.o\
 tool_quit.o\
-mymath3.o\
+mymath.o\
 timer.o\
 pw_basis.o\
 pw_distributer.o\
@@ -126,10 +127,14 @@ pw_distributeg_method1.o\
 pw_distributeg_method2.o\
 fft.o\
 pw_basis_k.o\
-pw_transform_k.o
+pw_transform_k.o\
+memory.o\
+memory_op.o
 
 OTHER_OBJS0=global_variable.o\
-parallel_global.o
+parallel_global.o\
+parallel_reduce.o
+
 
 TESTFILE0=test1-1-1.o\
 test1-1-2.o\
@@ -145,6 +150,7 @@ test2-3.o\
 test3-1.o\
 test3-2.o\
 test3-3.o\
+test3-3-2.o\
 test4-1.o\
 test4-2.o\
 test4-3.o\
@@ -171,7 +177,9 @@ test7-3-2.o\
 test8-1.o\
 test8-2-1.o\
 test8-3-1.o\
-test8-3-2.o
+test8-3-2.o\
+test-big.o\
+test-other.o
 
 MATH_OBJS=$(patsubst %.o, ${OBJ_DIR}/%.o, ${MATH_OBJS0})
 OTHER_OBJS=$(patsubst %.o, ${OBJ_DIR}/%.o, ${OTHER_OBJS0})

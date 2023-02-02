@@ -16,6 +16,7 @@ public:
     // combine [bx,by,bz] FFT grids into a big one
 	// typical values are bx=2, by=2, bz=2
 	// nbx=nx/bx, nby=ny/by, nbz=nz/bz, 
+    // Note: this class can only use initgrids(lat0_in, latvec_in, PW_Basis_Big::nx, PW_Basis_Big::ny, PW_Basis_Big::nz)!!!
     PW_Basis_K_Big(){
         bx = 1;
         by = 1;
