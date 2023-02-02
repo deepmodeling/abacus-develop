@@ -1560,13 +1560,18 @@ void UnitCell::check_structure(double factor)
 
 	if (!all_pass || !no_warning)
 	{
-		std::stringstream mess;
+		std::stringstream mess,mess0,mess1;
 		mess << "\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" << std::endl;
-		mess << "WARNING: Some atoms are too close!!!" << std::endl;
-		GlobalV::ofs_running << mess.str() << errorlog.str();
-		std::cout << mess.str() << "Please check the nearest-neighbor list in log file." << std::endl;
-		GlobalV::ofs_running << "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n" << std::endl;
-		std::cout << "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n" << std::endl;
+		mess <<   "%%%%%% WARNING  WARNING  WARNING  WARNING  WARNING  %%%%%%" << std::endl;
+		mess <<   "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" << std::endl;
+		mess << "!!! WARNING: Some atoms are too close!!!" << std::endl;
+		mess << "!!! Please check the nearest-neighbor list in log file." << std::endl;
+		mess <<   "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" << std::endl;
+		mess <<   "%%%%%% WARNING  WARNING  WARNING  WARNING  WARNING  %%%%%%" << std::endl;
+		mess <<   "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" << std::endl;
+
+		GlobalV::ofs_running << mess.str() << mess.str() << mess.str() << errorlog.str();
+		std::cout << mess.str() << mess.str() << mess.str() << std::endl;
 
 
 		if (!all_pass)
