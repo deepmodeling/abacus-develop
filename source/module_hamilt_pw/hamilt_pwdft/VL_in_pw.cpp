@@ -4,6 +4,7 @@
 #include "VL_in_pw.h"
 #include "module_base/math_integral.h"
 #include "module_base/timer.h"
+#include "module_base/libm/libm.h"
 
 pseudopot_cell_vl::pseudopot_cell_vl()
 {
@@ -128,17 +129,13 @@ void pseudopot_cell_vl::vloc_of_g(
 	//    numerical form, expressed in Ry units.
 	// ----------------------------------------------------------------
 	int igl0=0;// start from |G|=0 or not.
-	int ig=0;// counters on g-vectors;
-	int ir=0;// counter on mesh points
 
 	// Pseudopotentials in numerical form (Vloc_at) contain the local part
 	// in order to perform the Fourier transform, a term erf(r)/r is
 	// subtracted in real space and added again in G space
 
-	double *aux = new double[msh];
+	
 	double *aux1 = new double[msh];
-	ModuleBase::GlobalFunc::ZEROS(aux, msh);
-	ModuleBase::GlobalFunc::ZEROS(aux1, msh);
 
 	// for tests
 	/*
@@ -155,8 +152,9 @@ void pseudopot_cell_vl::vloc_of_g(
 	// (1)
 	if(rho_basis->gg_uniq[0] < 1.0e-8)
 	{
+		double *aux = new double[msh];
 		// first the g=0 term
-		for (ir=0; ir<msh; ir++) 
+		for (int ir=0; ir<msh; ir++) 
 		{
 			// This is the |G| = 0 component of the local
 			// potential giving rise to the so-called
@@ -166,6 +164,7 @@ void pseudopot_cell_vl::vloc_of_g(
 		}
 		ModuleBase::Integral::Simpson_Integral(msh, aux, rab, vloc_1d[0] );
 		igl0 = 1;	
+		delete [] aux;
 	}
 	else
 	{
@@ -175,33 +174,49 @@ void pseudopot_cell_vl::vloc_of_g(
 	// (2) here the |G|>0 terms, we first compute the part of the integrand func
 	// indipendent of |G| in real space
 	double fac = zp_in * ModuleBase::e2;
-	for (ir = 0;ir < msh;ir++)  
+	for (int ir = 0;ir < msh;ir++)  
 	{
 		aux1 [ir] = r[ir] * vloc_at [ir] + fac * erf(r[ir]);
 	} 
 
 	// here we perform the integral, after multiplying for the |G|
 	// dependent part
-	for (ig = igl0;ig < rho_basis->ngg;ig++) 
+#ifdef _OPENMP
+#pragma omp parallel
+{
+#endif
+	double *aux = new double[msh];
+
+#ifdef _OPENMP
+#pragma omp for
+#endif
+	for (int ig = igl0;ig < rho_basis->ngg;ig++) 
 	{
 		double gx2= rho_basis->gg_uniq[ig] * GlobalC::ucell.tpiba2;
 		double gx = std::sqrt(gx2);
-		for (ir = 0;ir < msh;ir++) 
+		for (int ir = 0;ir < msh;ir++) 
 		{
-			aux [ir] = aux1 [ir] * sin(gx * r [ir]) / gx;
+			aux [ir] = aux1 [ir] * ModuleBase::libm::sin(gx * r [ir]) / gx;
 		}
 		ModuleBase::Integral::Simpson_Integral(msh, aux, rab, vloc_1d[ig] );
 		//  here we add the analytic fourier transform of the erf function
-		vloc_1d[ig] -= fac * exp(- gx2 * 0.25)/ gx2;
+		vloc_1d[ig] -= fac * ModuleBase::libm::exp(- gx2 * 0.25)/ gx2;
 	} // enddo
 
 	const double d_fpi_omega = ModuleBase::FOUR_PI/GlobalC::ucell.omega;//mohan add 2008-06-04
-	for (ig = 0;ig < rho_basis->ngg; ig++)
+#ifdef _OPENMP
+#pragma omp for
+#endif
+	for (int ig = 0;ig < rho_basis->ngg; ig++)
 	{
 		vloc_1d[ig] *= d_fpi_omega;
 	}
 
 	delete [] aux;
+#ifdef _OPENMP
+}
+#endif
+
 	delete [] aux1;
 	return;
 } // end subroutine vloc_of_g
