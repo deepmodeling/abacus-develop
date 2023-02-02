@@ -4,7 +4,7 @@
 #include "module_hamilt_lcao/hamilt_lcaodft/global_fp.h"
 #include <random>
 
-#include "../src_external/src_test/test_function.h"
+#include "../src_ri/test_code/test_function.h"
 
 std::pair< std::vector<Exx_Abfs::Parallel::Distribute::Kmeans::Atom>, std::vector<Exx_Abfs::Parallel::Distribute::Kmeans::Cluster> >
 Exx_Abfs::Parallel::Distribute::Kmeans::cluster( const int Nc )

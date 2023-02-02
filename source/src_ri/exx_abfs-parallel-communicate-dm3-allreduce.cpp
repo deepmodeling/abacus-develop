@@ -14,7 +14,7 @@
 #include <algorithm>
 
 
-#include "src_external/src_test/test_function.h"
+#include "src_ri/test_code/test_function.h"
 
 #ifdef __MPI
 void Exx_Abfs::Parallel::Communicate::DM3::Allreduce::init(

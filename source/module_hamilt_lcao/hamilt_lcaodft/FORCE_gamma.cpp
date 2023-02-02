@@ -5,7 +5,7 @@
 #include "module_base/memory.h"
 #include "module_base/timer.h"
 #ifdef __DEEPKS
-#include "module_deepks/LCAO_deepks.h"//caoyu add for deepks on 20210813
+#include "module_hamilt_lcao/module_deepks/LCAO_deepks.h"//caoyu add for deepks on 20210813
 #endif
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_hamilt.h"
 

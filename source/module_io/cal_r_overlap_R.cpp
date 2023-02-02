@@ -226,7 +226,7 @@ void cal_r_overlap_R::init(const Parallel_Orbitals &pv)
 }
 
 
-void cal_r_overlap_R::out_rR()
+void cal_r_overlap_R::out_rR(const int &istep)
 {	
     ModuleBase::TITLE("cal_r_overlap_R", "out_rR");
     ModuleBase::timer::tick("cal_r_overlap_R", "out_rR");
@@ -406,7 +406,10 @@ void cal_r_overlap_R::out_rR()
     {
         std::ofstream out_r;
         std::stringstream ssr;
-        ssr << GlobalV::global_out_dir << "data-rR-sparse.csr";
+        if(GlobalV::CALCULATION == "md")
+            ssr << GlobalV::global_matrix_dir << istep << "_" << "data-rR-sparse.csr";
+        else
+            ssr << GlobalV::global_out_dir << "data-rR-sparse.csr";
 
         if (binary)
         {
@@ -443,7 +446,7 @@ void cal_r_overlap_R::out_rR()
 }
 
 
-void cal_r_overlap_R::out_rR_other(const std::set<Abfs::Vector3_Order<int>> &output_R_coor)
+void cal_r_overlap_R::out_rR_other(const int &istep, const std::set<Abfs::Vector3_Order<int>> &output_R_coor)
 {	
     ModuleBase::TITLE("cal_r_overlap_R", "out_rR_other");
     ModuleBase::timer::tick("cal_r_overlap_R", "out_rR_other");
@@ -456,7 +459,10 @@ void cal_r_overlap_R::out_rR_other(const std::set<Abfs::Vector3_Order<int>> &out
 
     std::ofstream out_r;
     std::stringstream ssr;
-    ssr << GlobalV::global_out_dir << "data-rR-sparse.csr";
+    if(GlobalV::CALCULATION == "md")
+        ssr << GlobalV::global_matrix_dir << istep << "_" << "data-rR-sparse.csr";
+    else
+        ssr << GlobalV::global_out_dir << "data-rR-sparse.csr";
 
     if (GlobalV::DRANK == 0)
     {

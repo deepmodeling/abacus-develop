@@ -12,7 +12,7 @@
 #include <unordered_map>
 
 #ifdef __DEEPKS
-#include "module_deepks/LCAO_deepks.h"
+#include "module_hamilt_lcao/module_deepks/LCAO_deepks.h"
 #endif
 
 #ifdef _OPENMP

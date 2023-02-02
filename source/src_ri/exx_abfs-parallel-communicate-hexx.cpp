@@ -10,8 +10,8 @@
 
 #include "exx_abfs-io-template.h"
 
-#include "../src_external/src_test/src_ri/exx_lcao-test.h"
-#include "../src_external/src_test/test_function.h"
+#include "../src_ri/test_code/exx_lcao-test.h"
+#include "../src_ri/test_code/test_function.h"
 //#include <gperftools/profiler.h>
 
 #ifdef __MPI

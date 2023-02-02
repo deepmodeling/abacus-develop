@@ -66,7 +66,6 @@ int WF_Local::read_lowf_complex(
 
     std::stringstream ss;
 	// read wave functions
-	// write is in ../src_pdiag/pdiag_basic.cpp
     ss << GlobalV::global_readin_dir << "LOWF_K_" << ik+1 <<".dat";
 //	std::cout << " name is = " << ss.str() << std::endl;
 
@@ -218,7 +217,6 @@ int WF_Local::read_lowf(
 	if(GlobalV::GAMMA_ONLY_LOCAL)
 	{
 		// read wave functions
-		// write is in ../src_pdiag/pdiag_basic.cpp
     	ss << GlobalV::global_readin_dir << "LOWF_GAMMA_S" << is+1 <<".dat";
 		std::cout << " name is = " << ss.str() << std::endl;
 	}

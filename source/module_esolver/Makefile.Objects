@@ -51,7 +51,6 @@ VPATH=./src_global:\
 ./module_hamilt_general/module_vdw:\
 ./module_io:\
 ./src_parallel:\
-./src_pdiag:\
 ./src_ri:\
 ./module_ri:\
 ./\

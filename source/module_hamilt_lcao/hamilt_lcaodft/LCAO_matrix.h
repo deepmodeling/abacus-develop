@@ -45,7 +45,7 @@ private:
     std::vector<double> Hloc;
     std::vector<double> Sloc;
     std::vector<double> Hloc_fixed;
-    std::vector<double> Sdiag; // used in pdiag_double.cpp
+    std::vector<double> Sdiag; // not used now
 
     //------------------------------
     // 1. Hamiltonian(vl),
@@ -58,7 +58,7 @@ private:
     std::vector<std::complex<double>> Hloc2;
     std::vector<std::complex<double>> Sloc2;
     std::vector<std::complex<double>> Hloc_fixed2;
-    std::vector<std::complex<double>> Sdiag2; // used in pdiag_double.cpp
+    std::vector<std::complex<double>> Sdiag2; // not used now
     //with soc, zhengdy-soc
 /*	ModuleBase::ComplexMatrix Hloc2_soc;
     ModuleBase::ComplexMatrix Sloc2_soc;

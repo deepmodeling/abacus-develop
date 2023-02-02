@@ -3,9 +3,9 @@
 #include "record_adj.h" //mohan add 2012-07-06
 #include "module_base/timer.h"
 #include "module_base/tool_threading.h"
-#include "module_neighbor/sltk_grid_driver.h"
+#include "module_cell/module_neighbor/sltk_grid_driver.h"
 #ifdef __DEEPKS
-#include "module_deepks/LCAO_deepks.h"
+#include "module_hamilt_lcao/module_deepks/LCAO_deepks.h"
 #endif
 
 // This is for cell R dependent part. 

@@ -8,8 +8,8 @@
 #include "../module_base/global_function.h"
 
 #include<sys/time.h>					// Peize Lin test
-#include "../src_external/src_test/test_function.h"			// Peize Lin test 2016-04-05
-#include "../src_external/src_test/src_ri/exx_lcao-test.h"
+#include "../src_ri/test_code/test_function.h"			// Peize Lin test 2016-04-05
+#include "../src_ri/test_code/exx_lcao-test.h"
 #include "../module_hamilt_lcao/hamilt_lcaodft/global_fp.h"
 
 void Exx_Abfs::Matrix_Orbs11::init(

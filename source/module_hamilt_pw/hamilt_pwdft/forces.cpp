@@ -1,6 +1,6 @@
 #include "forces.h"
 
-#include "module_symmetry/symmetry.h"
+#include "module_cell/module_symmetry/symmetry.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 // new
 #include "module_base/math_integral.h"
@@ -978,7 +978,7 @@ void Forces<FPTYPE, Device>::cal_force_nl(ModuleBase::matrix& forcenl, const Mod
         ///
         int nbands_occ = GlobalV::NBANDS;
         const double threshold = ModuleBase::threshold_wg * wg(ik, 0);
-        while (wg(ik, nbands_occ - 1) < threshold)
+        while (std::fabs(wg(ik, nbands_occ - 1)) < threshold)
         {
             nbands_occ--;
             if(nbands_occ == 0) 

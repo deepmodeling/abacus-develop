@@ -4,7 +4,7 @@
 #include "module_base/global_variable.h"
 #include "module_cell/unitcell.h"
 #include "module_hamilt_general/module_surchem/surchem.h"
-#include "module_symmetry/symmetry.h"
+#include "module_cell/module_symmetry/symmetry.h"
 #include "module_io/berryphase.h"
 #include "module_relax/relax_old/ions_move_basic.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
@@ -16,7 +16,7 @@
 #include "module_orbital/ORB_read.h"
 #include "module_hamilt_lcao/module_tddft/ELEC_evolve.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/FORCE_STRESS.h"
-#include "module_dftu/dftu.h"
+#include "module_hamilt_lcao/module_dftu/dftu.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/global_fp.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/local_orbital_charge.h"
 #endif
@@ -27,7 +27,8 @@
 #include "module_elecstate/potentials/gatefield.h"
 #include "module_psi/kernels/device.h"
 
-void Input_Conv::parse_expression(const std::string &fn, std::vector<double> &vec)
+template <typename T>
+void Input_Conv::parse_expression(const std::string &fn, std::vector<T> &vec)
 {
     ModuleBase::TITLE("Input_Conv", "parse_expression");
     ModuleBase::timer::tick("Input_Conv", "parse_expression");
@@ -73,7 +74,7 @@ void Input_Conv::parse_expression(const std::string &fn, std::vector<double> &ve
         {
             int pos = sub_str.find("*");
             int num = stoi(sub_str.substr(0, pos));
-            double occ = stof(sub_str.substr(pos + 1, sub_str.size()));
+            T occ = stof(sub_str.substr(pos + 1, sub_str.size()));
             // std::vector<double> ocp_temp(num, occ);
             // const std::vector<double>::iterator dest = vec.begin() + count;
             // copy(ocp_temp.begin(), ocp_temp.end(), dest);
@@ -85,7 +86,11 @@ void Input_Conv::parse_expression(const std::string &fn, std::vector<double> &ve
         {
             // vec[count] = stof(sub_str);
             // count += 1;
-            vec.emplace_back(stof(sub_str));
+            std::stringstream convert;
+            convert << sub_str;
+            T occ;
+            convert >> occ;
+            vec.emplace_back(occ);
         }
     }
 }

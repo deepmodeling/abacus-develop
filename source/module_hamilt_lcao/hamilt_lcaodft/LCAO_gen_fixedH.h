@@ -7,7 +7,7 @@
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
 #include "module_orbital/ORB_gen_tables.h"
-#include "module_neighbor/sltk_grid_driver.h"
+#include "module_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_matrix.h"
 
 class LCAO_gen_fixedH

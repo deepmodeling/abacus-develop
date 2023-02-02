@@ -297,7 +297,7 @@ extern pseudopot_cell_vnl ppcell;
 } // namespace GlobalC
 
 #include "module_cell/unitcell.h"
-#include "module_symmetry/symmetry.h"
+#include "module_cell/module_symmetry/symmetry.h"
 #include "src_parallel/parallel_grid.h"
 #include "src_parallel/parallel_kpoints.h"
 namespace GlobalC
