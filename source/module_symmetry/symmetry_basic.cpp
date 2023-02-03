@@ -589,7 +589,7 @@ void Symmetry_Basic::setgroup(ModuleBase::Matrix3* symop, int &nop, const int &i
 	}
 	else if(ibrav == 12)
 	{
-		symgen[1] = mat_rotate(r2yp);
+		symgen[1] = mat_rotate(r2zp);
 		this->matrigen(symgen, 2, symop, nop);
 	}
 	else if(ibrav == 11)
