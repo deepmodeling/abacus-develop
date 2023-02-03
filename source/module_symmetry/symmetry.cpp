@@ -1310,7 +1310,7 @@ void Symmetry::pricell(double* pos)
 
     //count the number of pricells
     GlobalV::ofs_running<<"optimized lattice volume: "<<this->optlat.Det()<<std::endl;
-    GlobalV::ofs_running<<"optimized primitive cell volume:"<<this->plat.Det()<<std::endl;
+    GlobalV::ofs_running<<"optimized primitive cell volume: "<<this->plat.Det()<<std::endl;
     double ncell_double = std::abs(this->optlat.Det()/this->plat.Det());
     this->ncell=floor(ncell_double+0.5);
     if(this->ncell != ntrans)
