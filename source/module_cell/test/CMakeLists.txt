@@ -9,16 +9,15 @@ AddTest(
   SOURCES read_pp_upf_test.cpp ../read_pp.cpp ../read_pp_upf201.cpp ../read_pp_upf100.cpp ../read_pp_vwr.cpp ../read_pp_blps.cpp ../../src_parallel/parallel_reduce.cpp ../../src_parallel/parallel_kpoints.cpp ../../src_parallel/parallel_global.cpp ../../src_parallel/parallel_common.cpp ../../module_io/output.cpp
 )
 
-install(DIRECTORY support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-
 AddTest(
   TARGET klist_test
   LIBS ${math_libs} base device
   SOURCES klist_test.cpp ../klist.cpp 
   ../../src_parallel/parallel_reduce.cpp ../../src_parallel/parallel_kpoints.cpp 
   ../../src_parallel/parallel_global.cpp ../../src_parallel/parallel_common.cpp 
-  ../../module_io/output.cpp ../../module_cell/module_symmetry/symm_other.cpp
-  ../../module_cell/module_symmetry/symmetry_basic.cpp ../../module_cell/module_symmetry/symmetry.cpp
+  ../../module_io/output.cpp ../module_symmetry/symm_other.cpp
+  ../module_symmetry/symmetry_basic.cpp ../module_symmetry/symmetry.cpp
 )
 
-install(FILES KPT KPT1 KPT2 KPT4 KPT5   DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+install(DIRECTORY support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+
