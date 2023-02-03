@@ -1560,7 +1560,7 @@ void UnitCell::check_structure(double factor)
 
 	if (!all_pass || !no_warning)
 	{
-		std::stringstream mess,mess0,mess1;
+		std::stringstream mess;
 		mess << "\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" << std::endl;
 		mess <<   "%%%%%% WARNING  WARNING  WARNING  WARNING  WARNING  %%%%%%" << std::endl;
 		mess <<   "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" << std::endl;
