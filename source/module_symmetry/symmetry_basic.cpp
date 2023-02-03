@@ -554,7 +554,7 @@ void Symmetry_Basic::setgroup(ModuleBase::Matrix3* symop, int &nop, const int &i
 	//set first up the point group operations for this symmetry.
 	symgen[0] = inv;
 
-	// for ibrav in {4, 12, 13}, rotate the col of symgen according to the euler angle. 
+	// for ibrav in {4, 11, 12, 13}, rotate the col of symgen according to the euler angle. 
 	auto mat_rotate = [this, celconst](ModuleBase::Matrix3 s) -> ModuleBase::Matrix3
 	{
 		ModuleBase::Matrix3 s_new=s;
@@ -594,8 +594,8 @@ void Symmetry_Basic::setgroup(ModuleBase::Matrix3* symop, int &nop, const int &i
 	}
 	else if(ibrav == 11)
 	{
-		symgen[1] = r2zp;
-		symgen[2] = r2ybas;
+		symgen[1] = mat_rotate(r2zp);
+		symgen[2] = mat_rotate(r2ybas);
 		this->matrigen(symgen, 3, symop, nop);
 	}
 	else if(ibrav == 10)

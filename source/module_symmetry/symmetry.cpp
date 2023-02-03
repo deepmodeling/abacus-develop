@@ -378,9 +378,27 @@ int Symmetry::standard_lat(
 				//else if(alpha<(-1.0*small)) 
 				{
 					type=11;
-					cel_const[0]=apb;
-					cel_const[1]=amb/apb;
-					cel_const[2]=norm_c/apb;
+                    if(!equal(gamma, 0))
+                    {
+                        cel_const[0]=apb;
+                        cel_const[1]=amb/apb;
+                        cel_const[2]=norm_c/apb;
+                    }
+                    else if(!equal(beta, 0))
+                    {
+                        cel_const[0]=cpa;
+                        cel_const[1]=cma/cpa;
+                        cel_const[2]=norm_b/cpa;
+                    }
+                    else if(!equal(alpha, 0))
+                    {
+                        cel_const[0]=bpc;
+                        cel_const[1]=bmc/bpc;
+                        cel_const[2]=norm_a/bpc;
+                    }
+                    cel_const[3]=alpha;
+                    cel_const[4]=beta;
+                    cel_const[5]=gamma;
 				}
 				// Different length of the two axes means simple monoclinic (IBRAV=12):
 				// Adjustment: Cosine(gamma) should be lower than zero, special axis
