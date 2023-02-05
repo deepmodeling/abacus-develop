@@ -411,10 +411,25 @@ int Symmetry::standard_lat(
 			//else if((alpha<(-1.0*small)) && (abs(norm_a-norm_b)>small)) 
 			{
 				type=12;
-				cel_const[0]=norm_b;
-				cel_const[1]=norm_c/norm_b;
-				cel_const[2]=norm_a/norm_b;
-				cel_const[3]=alpha;
+                if(!equal(gamma, 0))
+                {
+                    cel_const[0]=norm_a;
+                    cel_const[1]=norm_b/norm_a;
+                    cel_const[2]=norm_c/norm_a;
+                }
+                else if (!equal(beta, 0))
+                {
+                    cel_const[0]=norm_c;
+                    cel_const[1]=norm_a/norm_c;
+                    cel_const[2]=norm_b/norm_c;
+                }
+                else if (!equal(alpha, 0))
+                {
+                    cel_const[0]=norm_b;
+                    cel_const[1]=norm_c/norm_b;
+                    cel_const[2]=norm_a/norm_b;
+                }
+                cel_const[3]=alpha;
                 cel_const[4]=beta;
                 cel_const[5]=gamma;
 				/*
@@ -491,9 +506,24 @@ int Symmetry::standard_lat(
                 else if((abs(norm_a-norm_b)<small) || (abs(norm_b-norm_c)<small) || (abs(norm_c-norm_a)<small))
                 {
                         type=13;
-                        cel_const[0]=apb;
-                        cel_const[1]=amb/apb;
-                        cel_const[2]=norm_c/apb;
+                        if(!equal(gamma, 0))
+                        {
+                            cel_const[0]=apb;
+                            cel_const[1]=amb/apb;
+                            cel_const[2]=norm_c/apb;
+                        }
+                        else if(!equal(beta, 0))
+                        {
+                            cel_const[0]=cpa;
+                            cel_const[1]=cma/cpa;
+                            cel_const[2]=norm_b/cpa;
+                        }
+                        else if(!equal(alpha, 0))
+                        {
+                            cel_const[0]=bpc;
+                            cel_const[1]=bmc/bpc;
+                            cel_const[2]=norm_a/bpc;
+                        }
                         cel_const[3]=alpha;
                         cel_const[4]=beta;
                         cel_const[5]=gamma;
