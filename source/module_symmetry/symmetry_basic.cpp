@@ -584,18 +584,18 @@ void Symmetry_Basic::setgroup(ModuleBase::Matrix3* symop, int &nop, const int &i
 	}
 	else if(ibrav == 13)
 	{
-		symgen[1] = mat_rotate(r2ybas);
+		symgen[1] = r2ybas;
 		this->matrigen(symgen, 2, symop, nop);
 	}
 	else if(ibrav == 12)
 	{
-		symgen[1] = mat_rotate(r2zp);
+		symgen[1] = r2yp;
 		this->matrigen(symgen, 2, symop, nop);
 	}
 	else if(ibrav == 11)
 	{
-		symgen[1] = mat_rotate(r2zp);
-		symgen[2] = mat_rotate(r2ybas);
+		symgen[1] = r2zp;
+		symgen[2] = r2ybas;
 		this->matrigen(symgen, 3, symop, nop);
 	}
 	else if(ibrav == 10)
@@ -636,8 +636,8 @@ void Symmetry_Basic::setgroup(ModuleBase::Matrix3* symop, int &nop, const int &i
 	}
 	else if(ibrav == 4)
 	{
-		symgen[1] = mat_rotate(r6z);
-		symgen[2] = mat_rotate(r2hex);
+		symgen[1] = r6z;
+		symgen[2] = r2hex;
 		this->matrigen(symgen, 3, symop, nop);
 	}
 	else if(ibrav == 3)

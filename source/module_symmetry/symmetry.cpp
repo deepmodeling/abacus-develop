@@ -317,11 +317,11 @@ int Symmetry::standard_lat(
 		// Crystal classes with inequal length of lattice vectors but also with
 		// A1*A2=A1*A3=A2*A3:
 		// Orthogonal axes:
-		else if( equal(alpha,0.0) || equal(beta,0.0) || equal(gamma,0.0)) 
+		else if(equal(gamma,0.0)) 
 		{
 			// Two axes with equal lengths means simple tetragonal: (IBRAV=5)
 			// Adjustment: 'c-axis' shall be the special axis.
-			if ( equal(norm_a, norm_b) || equal(norm_b, norm_c) || equal(norm_c, norm_a)) 
+			if (equal(norm_a, norm_b)) 
 			{
 				type=5;
 				cel_const[0]=norm_a;
@@ -329,8 +329,7 @@ int Symmetry::standard_lat(
 				// No axes with equal lengths means simple orthorhombic (IBRAV=8):
 				// Adjustment: Sort the axis by increasing lengths:
 			}
-                        else
-			//else if((abs(norm_c-norm_b)>small) && (abs(norm_b-norm_a)>small) && (abs(norm_a-norm_c)>small)) 
+            else if(((norm_c-norm_b)>small) && ((norm_b-norm_a)>small) ) 
 			{
 				type=8;
 				cel_const[0]=norm_a;
@@ -342,110 +341,60 @@ int Symmetry::standard_lat(
 	}//end alpha=beta=gamma
 	//-----------------------
 	// TWO EQUAL ANGLES
-	// gamma == beta != alpha
+	// alpha == beta != gamma  (gamma is special)
 	//------------------------
-	else if (abs(gamma-beta)<small || abs(alpha-beta)<small || abs(gamma-alpha)<small ) 
+	else if (equal(alpha-beta, 0)) 
 	{
 		//---------------------------------------------------------
-		// gamma = beta = 90 degree
+		// alpha = beta = 90 degree
 		// One axis orthogonal with respect to the other two axes:
 		//---------------------------------------------------------
-		if ( (equal(gamma, 0.0) && equal(beta, 0.0)) || (equal(gamma, 0.0) && equal(alpha, 0.0)) || (equal(alpha, 0.0) && equal(beta, 0.0))) 
+		if (equal(alpha, 0.0)) 
 		{
 			//-----------------------------------------------
 			// a == b 
 			// Equal length of the two nonorthogonal axes:
 			//-----------------------------------------------
-			if ( equal(norm_a, norm_b) || equal(norm_b, norm_c) || equal(norm_c, norm_a)) 
+			if (equal(norm_a, norm_b)) 
 			{
 				// Cosine(alpha) equal to -1/2 means hexagonal: (IBRAV=4)
 				// Adjustment: 'c-axis' shall be the special axis.
-				// alpha = 60 degree or 120 degree?
-				if ( equal(alpha, -0.5) || equal(alpha, 0.5) || equal(beta, -0.5) || equal(beta, 0.5) || equal(gamma, -0.5)|| equal(gamma, 0.5)) 
+				if ( equal(gamma, -0.5))   //gamma = 120 degree
 				{
 					type=4;
 					cel_const[0]=norm_a;
 					cel_const[2]=norm_c/norm_a;
-                    cel_const[3]=alpha;
-                    cel_const[4]=beta;
-                    cel_const[5]=gamma;
 					// Other angles mean base-centered orthorhombic: (IBRAV=11)
 					// Adjustment: Cosine between A1 and A2 shall be lower than zero, the
 					//             'c-axis' shall be the special axis.
 				}
-				// other degree, bug alpha < 0
-                                else
-				//else if(alpha<(-1.0*small)) 
+				else if(gamma<(-1.0*small)) //gamma > 90 degree
 				{
 					type=11;
-                    if(!equal(gamma, 0))
-                    {
-                        cel_const[0]=apb;
-                        cel_const[1]=amb/apb;
-                        cel_const[2]=norm_c/apb;
-                    }
-                    else if(!equal(beta, 0))
-                    {
-                        cel_const[0]=cpa;
-                        cel_const[1]=cma/cpa;
-                        cel_const[2]=norm_b/cpa;
-                    }
-                    else if(!equal(alpha, 0))
-                    {
-                        cel_const[0]=bpc;
-                        cel_const[1]=bmc/bpc;
-                        cel_const[2]=norm_a/bpc;
-                    }
-                    cel_const[3]=alpha;
-                    cel_const[4]=beta;
+                    cel_const[0]=apb;
+                    cel_const[1]=amb/apb;
+                    cel_const[2]=norm_c/apb;
                     cel_const[5]=gamma;
 				}
 				// Different length of the two axes means simple monoclinic (IBRAV=12):
 				// Adjustment: Cosine(gamma) should be lower than zero, special axis
-				//             shall be the 'b-axis'(////) and |A1|<|A3|:
+				//             shall be the 'b-axis'(!!!) and |A1|<|A3|:
 			}
 			//----------
 			// a!=b!=c
 			//----------
-                        else
-			//else if((alpha<(-1.0*small)) && (abs(norm_a-norm_b)>small)) 
+            else if( gamma<(-1.0*small) && (norm_a-norm_b)>small) 
 			{
 				type=12;
-                if(!equal(gamma, 0))
-                {
-                    cel_const[0]=norm_a;
-                    cel_const[1]=norm_b/norm_a;
-                    cel_const[2]=norm_c/norm_a;
-                }
-                else if (!equal(beta, 0))
-                {
-                    cel_const[0]=norm_c;
-                    cel_const[1]=norm_a/norm_c;
-                    cel_const[2]=norm_b/norm_c;
-                }
-                else if (!equal(alpha, 0))
-                {
-                    cel_const[0]=norm_b;
-                    cel_const[1]=norm_c/norm_b;
-                    cel_const[2]=norm_a/norm_b;
-                }
-                cel_const[3]=alpha;
-                cel_const[4]=beta;
-                cel_const[5]=gamma;
-				/*
-				YB(1)=XB(1,3);
-				YB(2)=XB(2,3);
-				YB(3)=XB(3,3);
-				XB(1,3)=XB(1,1);
-				XB(2,3)=XB(2,1);
-				XB(3,3)=XB(3,1);
-				XB(1,1)=XB(1,2);
-				XB(2,1)=XB(2,2);
-				XB(3,1)=XB(3,2);
-				XB(1,2)=YB(1);
-				XB(2,2)=YB(2);
-				XB(3,2)=YB(3);
-				*/
+				cel_const[0]=norm_b;
+				cel_const[1]=norm_c/norm_b;
+				cel_const[2]=norm_a/norm_b;
+                cel_const[4]=gamma;
+                //adjust: a->c, b->a, c->b
+                ModuleBase::Vector3<double> tmp=c;
+				c=a;
+				a=b;
+				b=tmp;
 			}
 		}//end gamma<small
 		// Arbitrary angles between the axes:
@@ -456,9 +405,9 @@ int Symmetry::standard_lat(
 		{
 			if( equal(norm_a, norm_b) && 
 				equal(norm_b, norm_c) &&
-				(abs(cpa-bpc)<small) && 
-				(abs(apb-cpa)>small) &&
-				(abs(norm_c*norm_c+abc)<small)) 
+				equal(cpa, bpc) && 
+				!equal(apb, cpa) &&
+				equal(norm_c*norm_c+abc,0) )
 			{
 				type=6;
 				cel_const[0]=cpa;
@@ -467,19 +416,19 @@ int Symmetry::standard_lat(
 			// |A1|=|A2|=/|A3| means base-centered monoclinic (IBRAV=13):
 			// Adjustement: The cosine between A1 and A3 as well as the cosine
 			//              between A2 and A3 should be lower than zero.
-			/*else if((abs(norm_a-norm_b)<small) 
-					&& (gamma<(-1.0*small)) 
-					&& (beta<(-1.0*small))) 
+			else if( equal(norm_a,norm_b) 
+					&& alpha<(-1.0*small) 
+					&& beta<(-1.0*small)) 
 			{
 				type=13;
 				cel_const[0]=apb;
 				cel_const[1]=amb/apb;
 				cel_const[2]=norm_c/apb;
-				cel_const[4]=beta;
-			}*/
-
+                //cos(<a+b, c>)
+                cel_const[4]=(a+b)*c/apb/norm_c;
+			}
 		}
-	}
+	} //end alpha==beta
 	//-------------------------------
 	// three angles are not equal
 	//-------------------------------
@@ -489,11 +438,11 @@ int Symmetry::standard_lat(
 		// |A1|=|A2|=|A3| means body-centered orthorhombic (IBRAV=9):
 		// Further additional criterions are: (A1+A2), (A1+A3) and (A2+A3) are
 		// orthogonal to one another and (adjustment//): |A1+A2|>|A1+A3|>|A2+A3|
-		if ((abs(norm_a-norm_b)<small) &&
-				(abs(norm_b-norm_c)<small) &&
+		if (equal(norm_a, norm_b) &&
+				equal(norm_b, norm_c) &&
 				((cpa-bpc)>small) &&
 				((apb-cpa)>small) && 
-				(abs(norm_c*norm_c+abc)<small)) 
+				equal(norm_c*norm_c+abc, 0)) 
 		{
 			type=9;
 			cel_const[0]=bpc;
@@ -503,35 +452,9 @@ int Symmetry::standard_lat(
 		// |A1|=|A2-A3| and |A2|=|A1-A3| and |A3|=|A1-A2| means face-centered
 		// orthorhombic (IBRAV=10):
 		// Adjustment: |A1+A2-A3|>|A1+A3-A2|>|A2+A3-A1|
-                else if((abs(norm_a-norm_b)<small) || (abs(norm_b-norm_c)<small) || (abs(norm_c-norm_a)<small))
-                {
-                        type=13;
-                        if(!equal(gamma, 0))
-                        {
-                            cel_const[0]=apb;
-                            cel_const[1]=amb/apb;
-                            cel_const[2]=norm_c/apb;
-                        }
-                        else if(!equal(beta, 0))
-                        {
-                            cel_const[0]=cpa;
-                            cel_const[1]=cma/cpa;
-                            cel_const[2]=norm_b/cpa;
-                        }
-                        else if(!equal(alpha, 0))
-                        {
-                            cel_const[0]=bpc;
-                            cel_const[1]=bmc/bpc;
-                            cel_const[2]=norm_a/bpc;
-                        }
-                        cel_const[3]=alpha;
-                        cel_const[4]=beta;
-                        cel_const[5]=gamma;
-                }
-
-		else if((abs(amb-norm_c)<small) &&
-				(abs(cma-norm_b)<small) &&
-				(abs(bmc-norm_a)<small) && 
+		else if(equal(amb, norm_c) &&
+				equal(cma, norm_b) &&
+				equal(bmc, norm_a) && 
 				((apbmc-cpamb)>small) &&
 				((cpamb-bpcma)>small)) 
 		{
@@ -542,8 +465,7 @@ int Symmetry::standard_lat(
 		}
 		// Now there exists only one further possibility - triclinic (IBRAV=14):
 		// Adjustment: All three cosines shall be greater than zero and ordered:
-                else
-		//else if((alpha>gamma) && (gamma>beta) && (beta>small)) 
+		else if((gamma>beta) && (beta>alpha) && (alpha>small)) 
 		{
 			type=14;
 			cel_const[0]=norm_a;
