@@ -45,7 +45,6 @@ void Symmetry::analy_sys(const UnitCell &ucell, std::ofstream &ofs_running)
 	ofs_running << "\n\n\n\n";
 
 
-    this->ibrav = 0;
     // number of total atoms
     this->nat = ucell.nat;
     // number of atom species
@@ -134,50 +133,6 @@ void Symmetry::analy_sys(const UnitCell &ucell, std::ofstream &ofs_running)
 	ModuleBase::GlobalFunc::OUT(ofs_running,"POINT GROUP", this->pgname);
     this->pointgroup(this->nrotk, this->spgnumber, this->spgname, this->gmatrix, ofs_running);
 	ModuleBase::GlobalFunc::OUT(ofs_running,"POINT GROUP IN SPACE GROUP", this->spgname);
-    ofs_running<<"Warning : If the optimal symmetric configuration is not the input configuration, "<<'\n';
-    ofs_running<<"you have to manually change configurations, ABACUS would only calculate the input structure."<<'\n';
-/*
-	int iat=0;
-	for(int it=0; it<ucell.ntype; ++it)
-	{
-		for(int ia=0; ia<ucell.atoms[it].na; ++ia)
-		{
-			ModuleBase::Mathzone::Cartesian_to_Direct(ucell.atoms[it].tau[ia].x, 
-					ucell.atoms[it].tau[ia].y, 
-					ucell.atoms[it].tau[ia].z,
-					a1.x, a1.y, a1.z,
-					a2.x, a2.y, a2.z,
-					a3.x, a3.y, a3.z,
-					newpos[3*iat],newpos[3*iat+1],newpos[3*iat+2]);
-
-    	//  std::cout << " newpos_before = " << newpos[3*iat] << " " << newpos[3*iat+1] << " " << newpos[3*iat+2] << std::endl;
-		//	GlobalV::ofs_running << " newpos_before = " << newpos[3*iat] << " " << newpos[3*iat+1] << " " << newpos[3*iat+2] << std::endl; 
-			for(int k=0; k<3; ++k)
-			{
-				this->check_translation( newpos[iat*3+k], floor(newpos[iat*3+k]));
-                this->check_boundary( this->newpos[iat*3+k] );
-			}
-      	// std::cout << " newpos = " << newpos[3*iat] << " " << newpos[3*iat+1] << " " << newpos[3*iat+2] << std::endl;
-		// GlobalV::ofs_running << " newpos = " << newpos[3*iat] << " " << newpos[3*iat+1] << " " << newpos[3*iat+2] << std::endl; 
-			++iat;
-		}
-	}
-
-	test_brav = false;  // use the input ibrav to calculate
-	//ModuleBase::GlobalFunc::OUT(ofs_running,"ibrav",ibrav);
-	this->setgroup(this->symop, this->nop, this->ibrav, pre_const);
-	//now select all symmetry operations which reproduce the lattice
-	//to find those symmetry operations which reproduce the entire crystal
-	this->getgroup(this->nrot, this->nrotk, ofs_running);
-	// // find the name of point group
-    
-    ofs_running<<"(for input configuration:)"<<std::endl;
-	this->pointgroup(this->nrot, this->pgnumber, this->pgname, this->gmatrix, ofs_running);
-	ModuleBase::GlobalFunc::OUT(ofs_running,"POINT GROUP", this->pgname);
-    this->pointgroup(this->nrotk, this->spgnumber, this->spgname, this->gmatrix, ofs_running);
-    ModuleBase::GlobalFunc::OUT(ofs_running,"POINT GROUP IN SPACE GROUP", this->spgname);
-	//write();
-*/
 
     //convert gmatrix to reciprocal space
     this->gmatrix_convert_int(gmatrix, kgmatrix, nrotk, optlat, ucell.G);
@@ -211,7 +166,7 @@ int Symmetry::standard_lat(
 {
     static bool first = true;
     // there are only 14 types of Bravais lattice.
-    int type = 14;
+    int type = 15;
 	//----------------------------------------------------
     // used to calculte the volume to judge whether 
 	// the lattice vectors corrispond the right-hand-sense
@@ -538,14 +493,6 @@ void Symmetry::lattice_type(
 //        std::cout << "v1 = " << v1.x << " " << v1.y << " " << v1.z <<std::endl;
 //        std::cout << "v2 = " << v2.x << " " << v2.y << " " << v2.z <<std::endl;
 //        std::cout << "v3 = " << v3.x << " " << v3.y << " " << v3.z <<std::endl;
-
-    this->ibrav=pre_brav;
-    std::string input_bravname = get_brav_name(pre_brav);
-    GlobalV::ofs_running<<"(for input configuration:)"<<std::endl;
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"BRAVAIS TYPE ",pre_brav);
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"BRAVAIS LATTICE NAME",input_bravname);
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"ibrav",pre_brav);
-    Symm_Other::print1(pre_brav, pre_const, GlobalV::ofs_running);
 
 
 // find the shortest basis vectors of the lattice
@@ -1141,7 +1088,7 @@ void Symmetry::pricell(double* pos)
         this->p1=this->a1;
         this->p2=this->a2;
         this->p3=this->a3;
-        this->pbrav=this->ibrav;
+        this->pbrav=this->real_brav;
         this->ncell=1;
         for (int i=0;i<6;++i)   this->pcel_const[i]=this->cel_const[i];
         return;

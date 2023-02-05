@@ -52,7 +52,6 @@ public:
 
 	bool symflag_fft[48];
 	int sym_test;
-	int ibrav;		//ibrav of input configuration
 	int pbrav;		//ibrav of primitive cell
 	int real_brav;    // the real ibrav for the cell     pengfei Li 3-15-2022
 	std::string ilattname;	//the bravais lattice type of the supercell

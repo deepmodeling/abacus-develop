@@ -554,30 +554,6 @@ void Symmetry_Basic::setgroup(ModuleBase::Matrix3* symop, int &nop, const int &i
 	//set first up the point group operations for this symmetry.
 	symgen[0] = inv;
 
-	// for ibrav in {4, 11, 12, 13}, rotate the col of symgen according to the euler angle. 
-	auto mat_rotate = [this, celconst](ModuleBase::Matrix3 s) -> ModuleBase::Matrix3
-	{
-		ModuleBase::Matrix3 s_new=s;
-		double alpha=celconst[3];
-		double beta=celconst[4];
-		double gamma=celconst[5];
-		if(!equal(alpha, 0.0) && equal(beta, 0.0) && equal(gamma, 0.0))
-		{
-			//right and down shift the matrix
-				s_new=ModuleBase::Matrix3(s.e33, s.e31, s.e32, s.e13, s.e11, s.e12, s.e23, s.e21, s.e22);
-		}
-		else if (equal(alpha, 0.0) && !equal(beta, 0.0) && equal(gamma, 0.0))
-		{
-			//left and up shift the matrix
-			s_new=ModuleBase::Matrix3(s.e22, s.e23, s.e21, s.e32, s.e33, s.e31, s.e12, s.e13, s.e11);
-		}
-		//2. if hexagonal with a 60-degree euler angle
-		// generators also needs to be transposed
-		if(equal(alpha+beta+gamma, 0.5))
-			s_new=s_new.Transpose();
-		return s_new;
-	};
-
 	if(ibrav == 14)
 	{
 		this->matrigen(symgen, 1, symop, nop);
