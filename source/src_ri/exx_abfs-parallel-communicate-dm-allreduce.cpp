@@ -1,4 +1,4 @@
-#include "exx_abfs-parallel-communicate-density_matrix.h"
+#include "exx_abfs-parallel-communicate-dm.h"
 #include "src_ri/serialization_boost.h"
 
 #include <thread>

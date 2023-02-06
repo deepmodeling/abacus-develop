@@ -5,7 +5,7 @@
 #include "module_base/abfs-vector3_order.h"
 #include "exx_abfs-matrix_orbs11.h"
 #include "exx_abfs-matrix_orbs21.h"
-#include "exx_abfs-density_matrix.h"
+#include "exx_abfs-dm.h"
 #include "exx_abfs-parallel.h"
 #include "exx_abfs-parallel-communicate-hexx.h"
 #include "exx_abfs-screen-schwarz.h"
@@ -14,7 +14,7 @@
 #include "module_hamilt_general/module_xc/exx_info.h"
 
 #if EXX_DM==1
-#include "exx_abfs-parallel-communicate-density_matrix.h"
+#include "exx_abfs-parallel-communicate-dm.h"
 #elif EXX_DM==2
 #include "exx_abfs-parallel-communicate-dm2.h"
 #elif EXX_DM==3
