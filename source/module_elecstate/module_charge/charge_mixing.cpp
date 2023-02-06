@@ -305,6 +305,7 @@ double Charge_Mixing::rhog_dot_product(
 	
 	auto part_of_noncolin = [&]()			// Peize Lin change goto to function at 2020.01.31
 	{
+		double sum = 0.0;
 #ifdef _OPENMP
 #pragma omp parallel for reduction(+:sum)
 #endif
@@ -314,12 +315,13 @@ double Charge_Mixing::rhog_dot_product(
 			sum += ( conj( rhog1[0][ig] )* rhog2[0][ig] ).real() / GlobalC::rhopw->gg[ig];
 		}
 		sum *= fac;
+		return sum;
 	};
 
     switch ( GlobalV::NSPIN )
     {
 	case 1:
-		part_of_noncolin();
+		sum += part_of_noncolin();
 		break;
 
 	case 2:
@@ -370,7 +372,7 @@ double Charge_Mixing::rhog_dot_product(
 	case 4:
 		// non-collinear spin, added by zhengdy
 		if(!GlobalV::DOMAG&&!GlobalV::DOMAG_Z)
-			part_of_noncolin();
+			sum += part_of_noncolin();
 		else
 		{
 			//another part with magnetization
