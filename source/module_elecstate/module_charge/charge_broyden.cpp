@@ -10,6 +10,7 @@ void Charge_Mixing::Simplified_Broyden_mixing(const int &iter,
 	Charge* chr)
 {
 	ModuleBase::TITLE("Charge_Mixing","Simplified_Broyden_mixing");
+	ModuleBase::timer::tick("Charge", "Broyden_mixing");
 	//It is a simplified modified broyden_mixing method.
 	//Ref: D.D. Johnson PRB 38, 12807 (1988)
 	//Here the weight w0 of the error of the inverse Jacobian is set to 0 and the weight wn of
@@ -22,6 +23,9 @@ void Charge_Mixing::Simplified_Broyden_mixing(const int &iter,
 	int ipos = iter-2 - int((iter-2)/mixing_ndim) * mixing_ndim;
 	if(iter > 1)
 	{
+#ifdef _OPENMP
+#pragma omp parallel for collapse(2) schedule(static, 128)
+#endif
 		for(int is=0; is<GlobalV::NSPIN; is++)
 		{
 			for(int ig = 0 ; ig < GlobalC::rhopw->npw; ++ig)
@@ -31,6 +35,9 @@ void Charge_Mixing::Simplified_Broyden_mixing(const int &iter,
 			}
 		}
 	}
+#ifdef _OPENMP
+#pragma omp parallel for collapse(2) schedule(static, 128)
+#endif
 	for(int is=0; is<GlobalV::NSPIN; is++)
 	{
 		for(int ig = 0 ; ig < GlobalC::rhopw->npw; ++ig)
@@ -80,6 +87,9 @@ void Charge_Mixing::Simplified_Broyden_mixing(const int &iter,
 			{
 				gamma0 += beta(i,j) * work[j];
 			}
+#ifdef _OPENMP
+#pragma omp parallel for collapse(2) schedule(static, 512)
+#endif
 			for(int is=0; is<GlobalV::NSPIN; is++)
 			{
 				for(int ig = 0 ; ig < GlobalC::rhopw->npw; ++ig)
@@ -95,6 +105,9 @@ void Charge_Mixing::Simplified_Broyden_mixing(const int &iter,
 	}
 	int inext = iter-1 - int((iter-1)/mixing_ndim) * mixing_ndim;
 	
+#ifdef _OPENMP
+#pragma omp parallel for collapse(2) schedule(static, 128)
+#endif
 	for(int is=0; is<GlobalV::NSPIN; is++)
 	{
 		for(int ig = 0 ; ig < GlobalC::rhopw->npw; ++ig)
@@ -107,13 +120,16 @@ void Charge_Mixing::Simplified_Broyden_mixing(const int &iter,
 
 	for(int is=0; is<GlobalV::NSPIN; is++)
 	{
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 256)
+#endif
 		for(int ig = 0 ; ig < GlobalC::rhopw->npw; ++ig)
 		{
 			chr->rhog_save[is][ig] += mixing_beta * chr->rhog[is][ig];
 		}
 		GlobalC::rhopw->recip2real( chr->rhog_save[is], chr->rho[is]);
 	}
-
+	ModuleBase::timer::tick("Charge", "Broyden_mixing");
 	return;
 }
 
