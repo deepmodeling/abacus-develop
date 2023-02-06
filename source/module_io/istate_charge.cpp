@@ -5,6 +5,7 @@
 #include "src_parallel/parallel_common.h"
 #include "module_base/scalapack_connector.h"
 #include "module_base/blas_connector.h"
+#include "module_io/rho.h"
 
 IState_Charge::IState_Charge(
     psi::Psi<double>* psi_gamma_in,
@@ -142,8 +143,8 @@ void IState_Charge::begin(Gint_Gamma &gg, elecstate::ElecState* pelec)
 			{
 				ss1 << GlobalV::global_out_dir << "BAND" << ib + 1 << "_SPIN" << is << "_CHG.cube";
 				bool for_plot = true;
-				pelec->charge->write_rho(pelec->charge->rho_save[is], is, 0, ss.str(), 3, for_plot );
-				pelec->charge->write_rho_cube(pelec->charge->rho_save[is], is, ss1.str(), 3);
+				ModuleIO::write_rho(pelec->charge->rho_save[is], is, 0, ss.str(), 3, for_plot );
+				ModuleIO::write_rho_cube(pelec->charge->rho_save[is], is, ss1.str(), 3);
 			}
 		}
 	}

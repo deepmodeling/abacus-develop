@@ -1,5 +1,5 @@
-#ifndef WF_LOCAL_H
-#define WF_LOCAL_H
+#ifndef PSI_NAO_H
+#define PSI_NAO_H
 
 #include "../module_base/global_function.h"
 #include "../module_base/global_variable.h"
@@ -9,26 +9,26 @@
 #include "module_elecstate/elecstate.h"
 
 // mohan add 2010-09-09
-namespace WF_Local
+namespace ModuleIO
 {
-	void write_lowf(const std::string &name, double** ctot, const ModuleBase::matrix& ekb, const ModuleBase::matrix& wg);
-	void write_lowf_complex(const std::string &name, std::complex<double>** ctot, const int &ik, const ModuleBase::matrix& ekb, const ModuleBase::matrix& wg);
+	void write_psi_nao(const std::string &name, double** ctot, const ModuleBase::matrix& ekb, const ModuleBase::matrix& wg);
+	void write_psi_nao_complex(const std::string &name, std::complex<double>** ctot, const int &ik, const ModuleBase::matrix& ekb, const ModuleBase::matrix& wg);
 
-	void distri_lowf_complex(std::complex<double>** ctot, std::complex<double> **cc);
+	void distri_psi_nao_complex(std::complex<double>** ctot, std::complex<double> **cc);
 
-    void distri_lowf_new(double** ctot, const int& is,
+    void distri_psi_nao_new(double** ctot, const int& is,
         const Parallel_Orbitals* ParaV, psi::Psi<double>* psid);
-    void distri_lowf_complex_new(std::complex<double>** ctot, const int& ik,
+    void distri_psi_nao_complex_new(std::complex<double>** ctot, const int& ik,
         const Parallel_Orbitals* ParaV, psi::Psi<std::complex<double>>* psi);
 
-    int read_lowf(
+    int read_psi_nao(
         double** ctot, 
         const int& is,
         const Parallel_Orbitals* ParaV, 
         psi::Psi<double>* psid,
         elecstate::ElecState* pelec);
 
-    int read_lowf_complex(
+    int read_psi_nao_complex(
         std::complex<double>** ctot, 
         const int& ik,
         const Parallel_Orbitals* ParaV, 

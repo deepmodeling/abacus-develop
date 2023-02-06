@@ -6,6 +6,7 @@
 #include "module_hsolver/hsolver_pw_sdft.h"
 #include "module_elecstate/elecstate_pw_sdft.h"
 #include "module_hsolver/diago_iter_assist.h"
+#include "module_io/rho.h"
 
 //-------------------Temporary------------------
 #include "module_base/global_variable.h"
@@ -103,8 +104,8 @@ void ESolver_SDFT_PW::afterscf(const int istep)
             std::stringstream ss1;
             ssc << GlobalV::global_out_dir << "SPIN" << is + 1 << "_CHG";
 	    	ss1 << GlobalV::global_out_dir << "SPIN" << is + 1 << "_CHG.cube";
-            pelec->charge->write_rho(pelec->charge->rho_save[is], is, 0, ssc.str() );//mohan add 2007-10-17
-	        pelec->charge->write_rho_cube(pelec->charge->rho_save[is], is, ss1.str(), 3);
+            ModuleIO::write_rho(pelec->charge->rho_save[is], is, 0, ssc.str() );//mohan add 2007-10-17
+	        ModuleIO::write_rho_cube(pelec->charge->rho_save[is], is, ss1.str(), 3);
         }
     }
     if(this->conv_elec)

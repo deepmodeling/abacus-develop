@@ -1,14 +1,14 @@
-#include "module_elecstate/module_charge/charge.h"
+#include "module_io/rho.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_base/element_name.h"
 
-void Charge::write_rho_cube(
+void ModuleIO::write_rho_cube(
 	const double* rho_save, 
 	const int &is, 
 	const std::string &fn, 
 	const int &precision) 
 {
-    ModuleBase::TITLE("Charge","write_rho_cube");
+    ModuleBase::TITLE("ModuleIO","write_rho_cube");
 	if (GlobalV::out_chg==0) 
 	{
 		return;
@@ -23,7 +23,7 @@ void Charge::write_rho_cube(
 		ofs.open(fn.c_str());
     	if (!ofs)
     	{
-        	ModuleBase::WARNING("Charge::write_rho","Can't create Charge File!");
+        	ModuleBase::WARNING("ModuleIO::write_rho","Can't create Charge File!");
     	}	
 
 		ofs << "Cubefile created from ABACUS SCF calculation" << std::endl;

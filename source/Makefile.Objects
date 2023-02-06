@@ -347,7 +347,7 @@ OBJS_IO=input.o\
     rwstream.o\
     to_wannier90.o\
     unk_overlap_pw.o\
-    wf_io.o\
+    psi_pw.o\
     winput.o\
     write_input.o\
     write_rho.o\
@@ -361,7 +361,8 @@ OBJS_IO_LCAO=cal_r_overlap_R.o\
       mulliken_charge.o\
       read_dm.o\
       unk_overlap_lcao.o\
-      wf_local.o\
+      psi_nao.o\
+      psi_nao_para.o\
       write_HS.o\
       write_HS_R.o\
       write_dm.o\

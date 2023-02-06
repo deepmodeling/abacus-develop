@@ -1,4 +1,4 @@
-#include "wf_local.h"
+#include "psi_nao.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "src_parallel/parallel_common.h"
 #include "module_base/timer.h"
@@ -54,15 +54,15 @@ inline int CTOT2q_c(
 }
 
 // be called in local_orbital_wfc::allocate_k
-int WF_Local::read_lowf_complex(
+int ModuleIO::read_psi_nao_complex(
     std::complex<double>** ctot, 
     const int& ik, 
     const Parallel_Orbitals* ParaV, 
     psi::Psi<std::complex<double>>* psi, 
     elecstate::ElecState* pelec)
 {
-    ModuleBase::TITLE("WF_Local","read_lowf_complex");
-    ModuleBase::timer::tick("WF_Local","read_lowf_complex");
+    ModuleBase::TITLE("ModuleIO","read_psi_nao_complex");
+    ModuleBase::timer::tick("ModuleIO","read_psi_nao_complex");
 
     std::stringstream ss;
 	// read wave functions
@@ -167,7 +167,7 @@ int WF_Local::read_lowf_complex(
 	if(error==3) return 3;
 	if(error==4) return 4;
 	
-	WF_Local::distri_lowf_complex_new(ctot, ik, ParaV, psi);
+	ModuleIO::distri_psi_nao_complex_new(ctot, ik, ParaV, psi);
 	
 	// mohan add 2012-02-15,
 	// still have bugs, but can solve it later.
@@ -199,19 +199,19 @@ int WF_Local::read_lowf_complex(
 	*/
 
 
-    ModuleBase::timer::tick("WF_Local","read_lowf_complex");
+    ModuleBase::timer::tick("ModuleIO","read_psi_nao_complex");
 	return 0;
 }
 
-int WF_Local::read_lowf(
+int ModuleIO::read_psi_nao(
     double** ctot, 
     const int& is,
     const Parallel_Orbitals* ParaV, 
     psi::Psi<double>* psid, 
     elecstate::ElecState* pelec)
 {
-    ModuleBase::TITLE("WF_Local","read_lowf");
-    ModuleBase::timer::tick("WF_Local", "read_lowf");
+    ModuleBase::TITLE("ModuleIO","read_psi_nao");
+    ModuleBase::timer::tick("ModuleIO", "read_psi_nao");
     
     std::stringstream ss;
 	if(GlobalV::GAMMA_ONLY_LOCAL)
@@ -299,7 +299,7 @@ int WF_Local::read_lowf(
 	if(error==2) return 2;
 	if(error==3) return 3;
 
-	WF_Local::distri_lowf_new(ctot, is, ParaV, psid);
+	ModuleIO::distri_psi_nao_new(ctot, is, ParaV, psid);
 	
 	// mohan add 2012-02-15,
 	// still have bugs, but can solve it later.
@@ -316,92 +316,14 @@ int WF_Local::read_lowf(
         delete[] ctot;
     }
 
-    ModuleBase::timer::tick("WF_Local","read_lowf");
+    ModuleBase::timer::tick("ModuleIO","read_psi_nao");
     return 0;
 }
 
-void WF_Local::write_lowf(const std::string &name, double **ctot, const ModuleBase::matrix& ekb, const ModuleBase::matrix& wg)
-{
-    ModuleBase::TITLE("WF_Local","write_lowf");
-    ModuleBase::timer::tick("WF_Local","write_lowf");
-
-    std::ofstream ofs;
-    if (GlobalV::DRANK==0)
-    {
-        ofs.open(name.c_str());
-        if (!ofs)
-        {
-            ModuleBase::WARNING("Pdiag_Basic::write_lowf","Can't write local orbital wave functions.");
-        }
-        ofs << GlobalV::NBANDS << " (number of bands)" << std::endl;
-        ofs << GlobalV::NLOCAL << " (number of orbitals)";
-        ofs << std::setprecision(8);
-        ofs << scientific;
-
-        for (int i=0; i<GlobalV::NBANDS; i++)
-        {
-            // +1 to mean more clearly.
-            // band index start from 1.
-            ofs << "\n" << i+1 << " (band)";
-			ofs << "\n" << ekb(GlobalV::CURRENT_SPIN, i) << " (Ry)"; //mohan add 2012-03-26
-			ofs << "\n" << wg(GlobalV::CURRENT_SPIN, i) << " (Occupations)";
-            for (int j=0; j<GlobalV::NLOCAL; j++)
-            {
-                if (j % 5 == 0) ofs << "\n";
-                ofs << ctot[i][j] << " ";
-            }
-        }
-        ofs.close();
-    }
-
-    ModuleBase::timer::tick("WF_Local","write_lowf");
-    return;
-}
-
-void WF_Local::write_lowf_complex(const std::string &name, std::complex<double> **ctot, const int &ik, const ModuleBase::matrix& ekb, const ModuleBase::matrix& wg)
-{
-    ModuleBase::TITLE("WF_Local","write_lowf_complex");
-    ModuleBase::timer::tick("WF_Local","write_lowf_complex");
-
-    std::ofstream ofs;
-    if (GlobalV::DRANK==0)
-    {
-        ofs.open(name.c_str());
-        if (!ofs)
-        {
-            ModuleBase::WARNING("Pdiag_Basic::write_lowf","Can't write local orbital wave functions.");
-        }
-        ofs << std::setprecision(25);
-		ofs << ik+1 << " (index of k points)" << std::endl;
-		ofs << GlobalC::kv.kvec_c[ik].x << " " << GlobalC::kv.kvec_c[ik].y << " " << GlobalC::kv.kvec_c[ik].z << std::endl;
-        ofs << GlobalV::NBANDS << " (number of bands)" << std::endl;
-        ofs << GlobalV::NLOCAL << " (number of orbitals)";
-        ofs << scientific;
-
-        for (int i=0; i<GlobalV::NBANDS; i++)
-        {
-            // +1 to mean more clearly.
-            // band index start from 1.
-            ofs << "\n" << i+1 << " (band)";
-			ofs << "\n" << ekb(ik, i) << " (Ry)";
-			ofs << "\n" << wg(ik,i) << " (Occupations)";
-            for (int j=0; j<GlobalV::NLOCAL; j++)
-            {
-                if (j % 5 == 0) ofs << "\n";
-                ofs << ctot[i][j].real() << " " << ctot[i][j].imag() << " ";
-            }
-        }
-        ofs.close();
-    }
-
-    ModuleBase::timer::tick("WF_Local","write_lowf_complex");
-    return;
-}
-
-void WF_Local::distri_lowf_new(double** ctot, const int& is,
+void ModuleIO::distri_psi_nao_new(double** ctot, const int& is,
     const Parallel_Orbitals* ParaV, psi::Psi<double>* psid)
 {
-    ModuleBase::TITLE("WF_Local","distri_lowf_new");
+    ModuleBase::TITLE("ModuleIO","distri_psi_nao_new");
 #ifdef __MPI
 
 //1. alloc work array; set some parameters
@@ -477,10 +399,10 @@ void WF_Local::distri_lowf_new(double** ctot, const int& is,
     return;
 }
 
-void WF_Local::distri_lowf_complex_new(std::complex<double>** ctot, const int& ik,
+void ModuleIO::distri_psi_nao_complex_new(std::complex<double>** ctot, const int& ik,
     const Parallel_Orbitals* ParaV, psi::Psi<std::complex<double>>* psi)
 {
-    ModuleBase::TITLE("WF_Local","distri_lowf_complex_new");
+    ModuleBase::TITLE("ModuleIO","distri_psi_nao_complex_new");
 #ifdef __MPI
 
 //1. alloc work array; set some parameters
@@ -545,14 +467,14 @@ void WF_Local::distri_lowf_complex_new(std::complex<double>** ctot, const int& i
 
 	delete[] work;
 #else
-	ModuleBase::WARNING_QUIT("WF_Local::distri_lowf_new","check the code without MPI.");
+	ModuleBase::WARNING_QUIT("ModuleIO::distri_psi_nao_new","check the code without MPI.");
 #endif
     return;
 }
 
-void WF_Local::distri_lowf_complex(std::complex<double> **ctot, std::complex<double> **cc)
+void ModuleIO::distri_psi_nao_complex(std::complex<double> **ctot, std::complex<double> **cc)
 {
-    ModuleBase::TITLE("WF_Local","distri_lowf_complex");
+    ModuleBase::TITLE("ModuleIO","distri_psi_nao_complex");
 #ifdef __MPI
 
     MPI_Status status;
@@ -676,7 +598,7 @@ void WF_Local::distri_lowf_complex(std::complex<double> **ctot, std::complex<dou
     GlobalV::ofs_running << std::endl;
     */
 #else
-	ModuleBase::WARNING_QUIT("WF_Local::distri_lowf_complex","check the code without MPI.");
+	ModuleBase::WARNING_QUIT("ModuleIO::distri_psi_nao_complex","check the code without MPI.");
 #endif
     return;
 }

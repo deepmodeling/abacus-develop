@@ -68,7 +68,7 @@ void ModuleIO::write_dm(
 		ofs.open(fn.c_str());
 		if (!ofs)
 		{
-			ModuleBase::WARNING("Charge::write_rho","Can't create Charge File!");
+			ModuleBase::WARNING("ModuleIO::write_rho","Can't create Charge File!");
 		}
 
 		//GlobalV::ofs_running << "\n Output charge file." << std::endl;

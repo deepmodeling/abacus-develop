@@ -2,6 +2,7 @@
 
 #include "module_io/cal_r_overlap_R.h"
 #include "module_io/density_matrix.h"
+#include "module_io/rho.h"
 
 //--------------temporary----------------------------
 #include "module_base/blas_connector.h"
@@ -352,8 +353,8 @@ void ESolver_KS_LCAO_TDDFT::afterscf(const int istep)
         std::stringstream ss1;
         ssc << GlobalV::global_out_dir << "SPIN" << is + 1 << "_CHG";
         ss1 << GlobalV::global_out_dir << "SPIN" << is + 1 << "_CHG.cube";
-        pelec->charge->write_rho(pelec->charge->rho_save[is], is, 0, ssc.str()); // mohan add 2007-10-17
-        pelec->charge->write_rho_cube(pelec->charge->rho_save[is], is, ss1.str(), 3);
+        ModuleIO::write_rho(pelec->charge->rho_save[is], is, 0, ssc.str()); // mohan add 2007-10-17
+        ModuleIO::write_rho_cube(pelec->charge->rho_save[is], is, ss1.str(), 3);
 
         std::stringstream ssd;
         if (GlobalV::GAMMA_ONLY_LOCAL)

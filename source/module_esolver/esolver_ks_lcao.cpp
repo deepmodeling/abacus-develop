@@ -1,6 +1,7 @@
 #include "esolver_ks_lcao.h"
 #include "module_io/cal_r_overlap_R.h"
 #include "module_io/density_matrix.h"
+#include "module_io/rho.h"
 
 //--------------temporary----------------------------
 #include "module_base/global_function.h"
@@ -547,9 +548,9 @@ void ESolver_KS_LCAO::eachiterfinish(int iter)
         std::stringstream ss1;
         ssc << GlobalV::global_out_dir << "tmp"
             << "_SPIN" << is + 1 << "_CHG";
-        pelec->charge->write_rho(pelec->charge->rho_save[is], is, iter, ssc.str(), precision); // mohan add 2007-10-17
+        ModuleIO::write_rho(pelec->charge->rho_save[is], is, iter, ssc.str(), precision); // mohan add 2007-10-17
         ss1 << GlobalV::global_out_dir << "tmp" << "_SPIN" << is + 1 << "_CHG.cube";
-        pelec->charge->write_rho_cube(pelec->charge->rho_save[is], is, ss1.str(), 3);
+        ModuleIO::write_rho_cube(pelec->charge->rho_save[is], is, ss1.str(), 3);
 
         std::stringstream ssd;
 
@@ -575,9 +576,9 @@ void ESolver_KS_LCAO::eachiterfinish(int iter)
             std::stringstream ss1;
             ssc << GlobalV::global_out_dir << "tmp"
                 << "_SPIN" << is + 1 << "_TAU";
-            pelec->charge->write_rho(pelec->charge->kin_r_save[is], is, iter, ssc.str(), precision); // mohan add 2007-10-17
+            ModuleIO::write_rho(pelec->charge->kin_r_save[is], is, iter, ssc.str(), precision); // mohan add 2007-10-17
             ss1 << GlobalV::global_out_dir << "tmp" << "_SPIN" << is + 1 << "_TAU.cube";
-            pelec->charge->write_rho_cube(pelec->charge->kin_r_save[is], is, ss1.str(), 3);
+            ModuleIO::write_rho_cube(pelec->charge->kin_r_save[is], is, ss1.str(), 3);
         }
     }
 
@@ -617,8 +618,8 @@ void ESolver_KS_LCAO::afterscf(const int istep)
         std::stringstream ss1;
         ssc << GlobalV::global_out_dir << "SPIN" << is + 1 << "_CHG";
         ss1 << GlobalV::global_out_dir << "SPIN" << is + 1 << "_CHG.cube";
-        pelec->charge->write_rho(pelec->charge->rho_save[is], is, 0, ssc.str()); // mohan add 2007-10-17
-        pelec->charge->write_rho_cube(pelec->charge->rho_save[is], is, ss1.str(), 3);
+        ModuleIO::write_rho(pelec->charge->rho_save[is], is, 0, ssc.str()); // mohan add 2007-10-17
+        ModuleIO::write_rho_cube(pelec->charge->rho_save[is], is, ss1.str(), 3);
 
         std::stringstream ssd;
         if (GlobalV::GAMMA_ONLY_LOCAL)
@@ -652,8 +653,8 @@ void ESolver_KS_LCAO::afterscf(const int istep)
             std::stringstream ss1;
             ssc << GlobalV::global_out_dir << "SPIN" << is + 1 << "_TAU";
             ss1 << GlobalV::global_out_dir << "SPIN" << is + 1 << "_TAU.cube";
-            pelec->charge->write_rho(pelec->charge->kin_r_save[is], is, 0, ssc.str()); // mohan add 2007-10-17
-            pelec->charge->write_rho_cube(pelec->charge->kin_r_save[is], is, ss1.str(), 3);
+            ModuleIO::write_rho(pelec->charge->kin_r_save[is], is, 0, ssc.str()); // mohan add 2007-10-17
+            ModuleIO::write_rho_cube(pelec->charge->kin_r_save[is], is, ss1.str(), 3);
         }
     }
 

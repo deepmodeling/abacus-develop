@@ -1,6 +1,6 @@
 #include "esolver_ks_pw.h"
 #include <iostream>
-#include "../module_io/wf_io.h"
+#include "../module_io/psi_pw.h"
 
 //--------------temporary----------------------------
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
@@ -27,6 +27,7 @@
 #include "module_io/numerical_basis.h"
 #include "module_io/to_wannier90.h"
 #include "module_io/berryphase.h"
+#include "module_io/rho.h"
 #include "module_psi/kernels/device.h"
 #include "module_hsolver/kernels/math_kernel_op.h"
 #include "module_hsolver/kernels/dngvd_op.h"
@@ -439,9 +440,9 @@ namespace ModuleESolver
                     std::stringstream ssc;
                     std::stringstream ss1;
                     ssc << GlobalV::global_out_dir << "tmp" << "_SPIN" << is + 1 << "_CHG";
-                    this->pelec->charge->write_rho(this->pelec->charge->rho_save[is], is, iter, ssc.str(), 3);//mohan add 2007-10-17
+                    ModuleIO::write_rho(this->pelec->charge->rho_save[is], is, iter, ssc.str(), 3);//mohan add 2007-10-17
                     ss1 << GlobalV::global_out_dir << "tmp" << "_SPIN" << is + 1 << "_CHG.cube";
-                    this->pelec->charge->write_rho_cube(this->pelec->charge->rho_save[is], is, ss1.str(), 3);
+                    ModuleIO::write_rho_cube(this->pelec->charge->rho_save[is], is, ss1.str(), 3);
                 }
                 if(XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
                 {
@@ -450,9 +451,9 @@ namespace ModuleESolver
                         std::stringstream ssc;
                         std::stringstream ss1;
                         ssc << GlobalV::global_out_dir << "tmp" << "_SPIN" << is + 1 << "_TAU";
-                        this->pelec->charge->write_rho(this->pelec->charge->kin_r_save[is], is, iter, ssc.str(), 3);//mohan add 2007-10-17
+                        ModuleIO::write_rho(this->pelec->charge->kin_r_save[is], is, iter, ssc.str(), 3);//mohan add 2007-10-17
                         ss1 << GlobalV::global_out_dir << "tmp" << "_SPIN" << is + 1 << "_TAU.cube";
-                        this->pelec->charge->write_rho_cube(this->pelec->charge->kin_r_save[is], is, ss1.str(), 3);
+                        ModuleIO::write_rho_cube(this->pelec->charge->kin_r_save[is], is, ss1.str(), 3);
                     }
                 }
             }
@@ -463,7 +464,7 @@ namespace ModuleESolver
                 ssw << GlobalV::global_out_dir << "WAVEFUNC";
                 // mohan update 2011-02-21
                 //qianrui update 2020-10-17
-                WF_io::write_wfc(ssw.str(), this->psi[0], &GlobalC::kv, GlobalC::wfcpw);
+                ModuleIO::write_psi_pw(ssw.str(), this->psi[0], &GlobalC::kv, GlobalC::wfcpw);
                 //ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running,"write wave functions into file WAVEFUNC.dat");
             }
         }
@@ -481,8 +482,8 @@ namespace ModuleESolver
             std::stringstream ss1;
             ssc << GlobalV::global_out_dir << "SPIN" << is + 1 << "_CHG";
             ss1 << GlobalV::global_out_dir << "SPIN" << is + 1 << "_CHG.cube";
-            this->pelec->charge->write_rho(this->pelec->charge->rho_save[is], is, 0, ssc.str());//mohan add 2007-10-17
-            this->pelec->charge->write_rho_cube(this->pelec->charge->rho_save[is], is, ss1.str(), 3);
+            ModuleIO::write_rho(this->pelec->charge->rho_save[is], is, 0, ssc.str());//mohan add 2007-10-17
+            ModuleIO::write_rho_cube(this->pelec->charge->rho_save[is], is, ss1.str(), 3);
         }
         if(XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
         {
@@ -492,8 +493,8 @@ namespace ModuleESolver
                 std::stringstream ss1;
                 ssc << GlobalV::global_out_dir << "SPIN" << is + 1 << "_TAU";
                 ss1 << GlobalV::global_out_dir << "SPIN" << is + 1 << "_TAU.cube";
-                this->pelec->charge->write_rho(this->pelec->charge->kin_r_save[is], is, 0, ssc.str());//mohan add 2007-10-17
-                this->pelec->charge->write_rho_cube(this->pelec->charge->kin_r_save[is], is, ss1.str(), 3);
+                ModuleIO::write_rho(this->pelec->charge->kin_r_save[is], is, 0, ssc.str());//mohan add 2007-10-17
+                ModuleIO::write_rho_cube(this->pelec->charge->kin_r_save[is], is, ss1.str(), 3);
             }
         }
         if (this->conv_elec)

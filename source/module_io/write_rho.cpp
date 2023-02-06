@@ -1,7 +1,7 @@
-#include "module_elecstate/module_charge/charge.h"
+#include "module_io/rho.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 
-void Charge::write_rho(
+void ModuleIO::write_rho(
 	const double* rho_save, 
 	const int &is, 
 	const int &iter, 
@@ -9,7 +9,7 @@ void Charge::write_rho(
 	const int &precision, 
 	const bool for_plot)
 {
-    ModuleBase::TITLE("Charge","write_rho");
+    ModuleBase::TITLE("ModuleIO","write_rho");
 
     if (GlobalV::out_chg==0) 
 	{
@@ -30,7 +30,7 @@ void Charge::write_rho(
 		ofs.open(fn.c_str());
     	if (!ofs)
     	{
-        	ModuleBase::WARNING("Charge::write_rho","Can't create Charge File!");
+        	ModuleBase::WARNING("ModuleIO::write_rho","Can't create Charge File!");
     	}	
 
 		//GlobalV::ofs_running << "\n Output charge file." << std::endl;
