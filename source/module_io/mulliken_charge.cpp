@@ -10,23 +10,23 @@
 ***********************************************************************/
 
 #include "mulliken_charge.h"
-#include "../src_pw/global.h"
-#include "../src_pw/wavefunc.h"
+#include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "module_hamilt_pw/hamilt_pwdft/wavefunc.h"
 #ifdef __LCAO
-#include "../src_lcao/local_orbital_charge.h"
-#include "../src_lcao/LCAO_gen_fixedH.h"
-#include "../src_lcao/LCAO_matrix.h"
-#include "../src_lcao/global_fp.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/local_orbital_charge.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/LCAO_gen_fixedH.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/LCAO_matrix.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/global_fp.h"
 #endif
-#include "../module_base/lapack_connector.h"
-#include "../module_base/scalapack_connector.h"
-#include "../module_base/matrix.h"
-#include "../module_base/complexmatrix.h"
+#include "module_base/lapack_connector.h"
+#include "module_base/scalapack_connector.h"
+#include "module_base/matrix.h"
+#include "module_base/complexmatrix.h"
 #include <vector>
 #ifdef __MPI
 #include<mpi.h>
 #endif
-#include "../module_neighbor/sltk_atom_arrange.h"
+#include "module_cell/module_neighbor/sltk_atom_arrange.h"
 
 
 

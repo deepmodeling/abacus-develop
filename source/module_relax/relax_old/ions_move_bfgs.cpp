@@ -1,7 +1,5 @@
 #include "ions_move_bfgs.h"
-#include "src_pw/global.h"
-//xiaohui modified 2013-04-25
-//#include "../src_algorithms/myfunc.h"
+#include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "ions_move_basic.h"
 
 //============= MAP OF BFGS ===========================

@@ -10,7 +10,7 @@
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
 #include "module_base/scalapack_connector.h"
-#include "module_hamilt/matrixblock.h"
+#include "module_hamilt_general/matrixblock.h"
 
 #include <cassert>
 #include <cstring>

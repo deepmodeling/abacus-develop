@@ -8,9 +8,6 @@
 #include "module_base/tool_title.h"
 
 #include <map>
-#ifdef __LCAO
-#include "src_lcao/ELEC_evolve.h"
-#endif
 
 #include "H_Hartree_pw.h"
 #include "efield.h"

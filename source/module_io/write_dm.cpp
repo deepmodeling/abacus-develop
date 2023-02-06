@@ -1,8 +1,9 @@
 #include "module_io/density_matrix.h"
-#include "../src_pw/global.h"
-#include "../src_parallel/parallel_reduce.h"
-#include "../module_base/blas_connector.h"
-#include "../module_base/timer.h"
+#include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/global_fp.h"
+#include "src_parallel/parallel_reduce.h"
+#include "module_base/blas_connector.h"
+#include "module_base/timer.h"
 
 //-------------------------------------------------
 // NOTE for ModuleIO::write_dm

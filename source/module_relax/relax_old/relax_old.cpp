@@ -1,5 +1,5 @@
 #include "relax_old.h"
-#include "src_pw/global.h" // use chr.
+#include "module_hamilt_pw/hamilt_pwdft/global.h" // use chr.
 #include "module_io/print_info.h"
 #include "variable_cell.h" // mohan add 2021-02-01
 

@@ -1,9 +1,0 @@
-PROJECT_NAME = module_deepks
-INPUT = ../../src_lcao
-PROJECT_BRIEF = "DeePKS: Generate descriptors, load a model and calculate energy and force."
-OUTPUT_DIRECTORY = .
-FILE_PATTERNS = LCAO_descriptor*
-EXTRACT_ALL = YES
-USE_MATHJAX = YES
-GENERATE_XML = YES
-ENABLE_PREPROCESSING = NO

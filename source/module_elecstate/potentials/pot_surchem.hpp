@@ -1,7 +1,7 @@
 #ifndef POTSURCHEM_H
 #define POTSURCHEM_H
 
-#include "module_surchem/surchem.h"
+#include "module_hamilt_general/module_surchem/surchem.h"
 #include "pot_base.h"
 
 namespace elecstate

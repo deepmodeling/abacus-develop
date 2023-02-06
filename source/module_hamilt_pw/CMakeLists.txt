@@ -1,0 +1,3 @@
+add_subdirectory(hamilt_pwdft)
+add_subdirectory(hamilt_ofdft)
+add_subdirectory(hamilt_stodft)

@@ -4,7 +4,7 @@
 #include "../module_base/constants.h"
 #include "../module_base/global_function.h"
 
-#include "../src_external/src_test/test_function.h"
+#include "../src_ri/test_code/test_function.h"
 #include "../module_base/math_integral.h" // mohan add 2021-04-03
 
 Conv_Coulomb_Pot::Conv_Coulomb_Pot(const Numerical_Orbital_Lm &orb_in)

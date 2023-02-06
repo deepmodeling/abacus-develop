@@ -2,9 +2,9 @@
 #define ELECSTATELCAO_H
 
 #include "elecstate.h"
-#include "src_lcao/LCAO_hamilt.h"
-#include "src_lcao/local_orbital_charge.h"
-#include "src_lcao/local_orbital_wfc.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/LCAO_hamilt.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/local_orbital_charge.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/local_orbital_wfc.h"
 
 namespace elecstate
 {

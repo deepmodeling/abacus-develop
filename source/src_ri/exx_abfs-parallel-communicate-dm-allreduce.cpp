@@ -1,5 +1,5 @@
 #include "exx_abfs-parallel-communicate-dm.h"
-#include "../src_lcao/serialization_boost.h"
+#include "src_ri/serialization_boost.h"
 
 #include <thread>
 
@@ -7,7 +7,7 @@
 #include <mkl_service.h>
 #endif
 
-#include "../src_external/src_test/src_ri/exx_lcao-test.h"
+#include "src_ri/test_code/exx_lcao-test.h"
 
 Exx_Abfs::Parallel::Communicate::DM::Allreduce::Allreduce( 
 	const MPI_Comm & mpi_comm_in, 

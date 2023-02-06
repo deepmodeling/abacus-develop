@@ -38,7 +38,7 @@ include Makefile.Objects
 VPATH=../../../source/module_base\
 :../../../source/src_global\
 :../../../source/module_orbital\
-:../../../source/src_lcao\
+:../../../source/module_hamilt_lcao/hamilt_lcaodft\
 :./\
 
 #==========================

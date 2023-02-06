@@ -1,7 +1,7 @@
 #ifdef __MPI   
 #include "exx_lcao.h"
 
-#include "../src_pw/global.h"
+#include "../module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_base/timer.h"
 #include "module_base/global_function.h"
 #include "../src_parallel/parallel_reduce.h"
@@ -24,8 +24,8 @@
 #include "exx_abfs-parallel-distribute-kmeans.h"
 #include "exx_abfs-parallel-distribute-order.h"
 
-#include "src_lcao/local_orbital_charge.h"
-#include "src_lcao/LCAO_matrix.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/local_orbital_charge.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/LCAO_matrix.h"
 
 #include <thread>
 
@@ -40,12 +40,12 @@
 // Peize Lin test
 #include<stdexcept>	
 #include<sys/time.h>
-#include "../src_external/src_test/src_global/element_basis_index-test.h"
-#include "../src_external/src_test/src_global/matrix-test.h"
-#include "../src_external/src_test/print_tmp.h"
-//#include "../src_external/src_test/src_global/sph_bessel-unittest.h"
-#include "../src_external/src_test/src_ri/exx_lcao-test.h"
-#include "../src_external/src_test/src_ri/abfs-test.h"
+#include "../src_ri/test_code/element_basis_index-test.h"
+#include "../src_ri/test_code/matrix-test.h"
+#include "../src_ri/test_code/print_tmp.h"
+//#include "../src_ri/test_code/sph_bessel-unittest.h"
+#include "../src_ri/test_code/exx_lcao-test.h"
+#include "../src_ri/test_code/abfs-test.h"
 
 /*
 // m_new( i2*n1+i1, i3 ) = m( i1*n2+i2, i3 )

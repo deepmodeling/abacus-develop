@@ -4,7 +4,7 @@
 //======================
 
 #include "write_wfc_realspace.h"
-#include "src_pw/global.h"
+#include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_base/tool_title.h"
 #include "module_base/timer.h"
 #include <fstream>
