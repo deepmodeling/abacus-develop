@@ -443,8 +443,6 @@ namespace ModuleESolver
                     std::stringstream ss1;
                     ssc << GlobalV::global_out_dir << "tmp" << "_SPIN" << is + 1 << "_CHG";
                     ModuleIO::write_rho(this->pelec->charge->rho_save[is], is, iter, ssc.str(), 3);//mohan add 2007-10-17
-                    ss1 << GlobalV::global_out_dir << "tmp" << "_SPIN" << is + 1 << "_CHG.cube";
-                    ModuleIO::write_rho_cube(this->pelec->charge->rho_save[is], is, ss1.str(), 3);
                 }
                 if(XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
                 {
@@ -454,8 +452,6 @@ namespace ModuleESolver
                         std::stringstream ss1;
                         ssc << GlobalV::global_out_dir << "tmp" << "_SPIN" << is + 1 << "_TAU";
                         ModuleIO::write_rho(this->pelec->charge->kin_r_save[is], is, iter, ssc.str(), 3);//mohan add 2007-10-17
-                        ss1 << GlobalV::global_out_dir << "tmp" << "_SPIN" << is + 1 << "_TAU.cube";
-                        ModuleIO::write_rho_cube(this->pelec->charge->kin_r_save[is], is, ss1.str(), 3);
                     }
                 }
             }
@@ -483,9 +479,7 @@ namespace ModuleESolver
             std::stringstream ssc;
             std::stringstream ss1;
             ssc << GlobalV::global_out_dir << "SPIN" << is + 1 << "_CHG";
-            ss1 << GlobalV::global_out_dir << "SPIN" << is + 1 << "_CHG.cube";
             ModuleIO::write_rho(this->pelec->charge->rho_save[is], is, 0, ssc.str());//mohan add 2007-10-17
-            ModuleIO::write_rho_cube(this->pelec->charge->rho_save[is], is, ss1.str(), 3);
         }
         if(XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
         {
@@ -494,9 +488,7 @@ namespace ModuleESolver
                 std::stringstream ssc;
                 std::stringstream ss1;
                 ssc << GlobalV::global_out_dir << "SPIN" << is + 1 << "_TAU";
-                ss1 << GlobalV::global_out_dir << "SPIN" << is + 1 << "_TAU.cube";
                 ModuleIO::write_rho(this->pelec->charge->kin_r_save[is], is, 0, ssc.str());//mohan add 2007-10-17
-                ModuleIO::write_rho_cube(this->pelec->charge->kin_r_save[is], is, ss1.str(), 3);
             }
         }
         if (this->conv_elec)

@@ -104,9 +104,7 @@ void ESolver_SDFT_PW::afterscf(const int istep)
             std::stringstream ssc;
             std::stringstream ss1;
             ssc << GlobalV::global_out_dir << "SPIN" << is + 1 << "_CHG";
-	    	ss1 << GlobalV::global_out_dir << "SPIN" << is + 1 << "_CHG.cube";
             ModuleIO::write_rho(pelec->charge->rho_save[is], is, 0, ssc.str() );//mohan add 2007-10-17
-	        ModuleIO::write_rho_cube(pelec->charge->rho_save[is], is, ss1.str(), 3);
         }
     }
     if(this->conv_elec)

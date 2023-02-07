@@ -906,8 +906,6 @@ void ESolver_OF::afterOpt()
             std::stringstream ss1;
             ssc << GlobalV::global_out_dir << "tmp" << "_SPIN" << is + 1 << "_CHG";
             ModuleIO::write_rho(pelec->charge->rho[is], is, iter, ssc.str(), 3);//mohan add 2007-10-17
-            ss1 << GlobalV::global_out_dir << "tmp" << "_SPIN" << is + 1 << "_CHG.cube";
-            ModuleIO::write_rho_cube(pelec->charge->rho[is], is, ss1.str(), 3);
         }
     }
 }

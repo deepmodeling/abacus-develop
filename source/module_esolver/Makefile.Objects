@@ -351,7 +351,6 @@ OBJS_IO=input.o\
     winput.o\
     write_input.o\
     write_rho.o\
-    write_rho_cube.o\
 	write_wfc_realspace.o\
 
 OBJS_IO_LCAO=cal_r_overlap_R.o\
