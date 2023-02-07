@@ -55,7 +55,7 @@ void ESolver_KS_LCAO::output_HS_R(
         }
     }
 
-    HS_Matrix::save_HSR_sparse(istep, *this->UHM.LM, sparse_threshold, binary, SR_filename, HR_filename_up, HR_filename_down);
+    ModuleIO::save_HSR_sparse(istep, *this->UHM.LM, sparse_threshold, binary, SR_filename, HR_filename_up, HR_filename_down);
     this->UHM.destroy_all_HSR_sparse();
 
     if(!GlobalV::GAMMA_ONLY_LOCAL) //LiuXh 20181011
@@ -74,7 +74,7 @@ void ESolver_KS_LCAO::output_SR(const std::string &SR_filename, const bool &bina
     ModuleBase::timer::tick("ESolver_KS_LCAO","output_SR"); 
 
     this->UHM.calculate_SR_sparse(sparse_threshold);
-    HS_Matrix::save_SR_sparse(*this->UHM.LM, sparse_threshold, binary, SR_filename);
+    ModuleIO::save_SR_sparse(*this->UHM.LM, sparse_threshold, binary, SR_filename);
     this->UHM.destroy_all_HSR_sparse();
 
     ModuleBase::timer::tick("ESolver_KS_LCAO","output_SR");

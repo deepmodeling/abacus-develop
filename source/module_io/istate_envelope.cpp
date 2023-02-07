@@ -3,7 +3,7 @@
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
 #include "module_io/psi_pw.h"
-#include "module_io/write_wfc_realspace.h"
+#include "module_io/write_wfc_r.h"
 #include "module_io/rho.h"
 
 IState_Envelope::IState_Envelope(const elecstate::ElecState* pes_in)
@@ -124,7 +124,7 @@ void IState_Envelope::begin(const psi::Psi<double>* psid, Local_Orbital_wfc& low
         }
         if (out_wfc_r)
         {
-            Write_Wfc_Realspace::write_wfc_realspace_1(pw_wfc_g, "wfc_realspace", false);
+            ModuleIO::write_psi_r_1(pw_wfc_g, "wfc_realspace", false);
         }
     }
 
@@ -241,7 +241,7 @@ void IState_Envelope::begin(const psi::Psi<std::complex<double>>* psi, Local_Orb
         }
         if (out_wf_r)
         {
-            Write_Wfc_Realspace::write_wfc_realspace_1(pw_wfc_g, "wfc_realspace", false);
+            ModuleIO::write_psi_r_1(pw_wfc_g, "wfc_realspace", false);
         }
     }
 

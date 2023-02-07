@@ -20,7 +20,7 @@ list(APPEND objects
     write_input.cpp    
     write_rho.cpp
     write_rho_cube.cpp
-    write_wfc_realspace.cpp
+    write_wfc_r.cpp
 )
 
 if(ENABLE_LCAO)
@@ -35,6 +35,8 @@ if(ENABLE_LCAO)
       psi_nao.cpp
       psi_nao_para.cpp
       write_HS.cpp
+      write_HS_sparse.cpp
+      write_HS_single_R.cpp
       write_HS_R.cpp
       write_dm.cpp
   )

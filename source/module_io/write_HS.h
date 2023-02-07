@@ -8,7 +8,7 @@
 #include <string>
 
 // mohan add this file 2010-09-10
-namespace HS_Matrix
+namespace ModuleIO
 {
     void saving_HS(const double *Hloc, const double* Sloc, const bool bit, const int &out_hs, const std::string &file_name, const Parallel_Orbitals &pv);
 

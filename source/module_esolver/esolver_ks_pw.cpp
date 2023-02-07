@@ -21,7 +21,7 @@
 #include "module_hamilt_general/module_vdw/vdw.h"
 #include "module_base/memory.h"
 
-#include "module_io/write_wfc_realspace.h"
+#include "module_io/write_wfc_r.h"
 #include "module_io/winput.h"
 #include "module_io/numerical_descriptor.h"
 #include "module_io/numerical_basis.h"
@@ -631,7 +631,7 @@ namespace ModuleESolver
 
         if(GlobalC::wf.out_wfc_r == 1)				// Peize Lin add 2021.11.21
         {
-            Write_Wfc_Realspace::write_wfc_realspace_1(this->psi[0], "wfc_realspace", true);
+            ModuleIO::write_psi_r_1(this->psi[0], "wfc_realspace", true);
         }	
 
         if(INPUT.cal_cond)
