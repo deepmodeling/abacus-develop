@@ -365,7 +365,6 @@ OBJS_IO_LCAO=cal_r_overlap_R.o\
       wfc_nao_para.o\
       write_HS.o\
       write_HS_sparse.o\
-      write_HS_single_R.o\
       write_HS_R.o\
       write_dm.o\
 

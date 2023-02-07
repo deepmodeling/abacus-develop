@@ -36,7 +36,6 @@ if(ENABLE_LCAO)
       wfc_nao_para.cpp
       write_HS.cpp
       write_HS_sparse.cpp
-      write_HS_single_R.cpp
       write_HS_R.cpp
       write_dm.cpp
   )

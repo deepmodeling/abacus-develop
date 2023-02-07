@@ -1,6 +1,6 @@
 #include "write_HS_R.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
-#include "write_HS.h"
+#include "write_HS_sparse.h"
 #include "module_base/timer.h"
 
 // if 'binary=true', output binary file.
