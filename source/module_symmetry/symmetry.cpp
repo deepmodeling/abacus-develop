@@ -1967,13 +1967,6 @@ int Symmetry::plat_type(
     const bool right = Symm_Other::right_hand_sense(v1, v2, v3);
 	ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"right hand lattice (primitive cell): ",right);
 
-	//-------------------------------------------------
-	// (2) save and copy the original lattice vectors.
-	//-------------------------------------------------
-    s1 = v1;
-    s2 = v2;
-    s3 = v3;
-	
 	//--------------------------------------------
 	// (3) calculate the 'pre_const'
 	//--------------------------------------------
