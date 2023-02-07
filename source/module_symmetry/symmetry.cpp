@@ -1379,12 +1379,38 @@ void Symmetry::rhog_symmetry(std::complex<double> *rhogtot,
     std::complex<double>* gphase_record = new std::complex<double> [nrotk];
 
     //tmp variables
-    ModuleBase::Vector3<double> zero_vec(0, 0, 0);
     ModuleBase::Vector3<int> tmp_gdirect0(0, 0, 0);
     ModuleBase::Vector3<int> tmp_gdirect(0, 0, 0);
     ModuleBase::Vector3<double> tmp_gdirect_double(0.0, 0.0, 0.0);
     int ipw, ixyz, ii, jj, kk=0;
     double arg=0.0;
+
+    //rotate function (different from real space, without scaling gmatrix)
+    auto rotate_recip = [&] (int isym) 
+    {
+        ModuleBase::Matrix3 g=kgmatrix[invmap[isym]];
+        ModuleBase::Vector3<int> g0=tmp_gdirect0;
+        
+        ii = int(g.e11 * g0.x + g.e21 * g0.y + g.e31 * g0.z) ;
+        if (ii < 0)
+        {
+            ii += 10 * nx;
+        }
+        ii = ii%nx;
+        jj = int(g.e12 * g0.x + g.e22 * g0.y + g.e32 * g0.z) ;
+        if (jj < 0)
+        {
+            jj += 10 * ny;
+        }
+        jj = jj%ny;
+        kk = int(g.e13 * g0.x + g.e23 * g0.y + g.e33 * g0.z);
+        if (kk < 0)
+        {
+            kk += 10 * nz;
+        }
+        kk = kk%nz;
+        return;
+    };
     for (int i = 0; i< fftnx; ++i)
     {
         for (int j = 0; j< fftny; ++j)
@@ -1407,10 +1433,8 @@ void Symmetry::rhog_symmetry(std::complex<double> *rhogtot,
                         tmp_gdirect0.y=(j>int(ny/2)+1)?(j-ny):j;
                         tmp_gdirect0.z=(k>int(nz/2)+1)?(k-nz):k;
                         // note : do not use PBC after rotation. 
-                        // we need a real gdirect to get the correspoding rhog.
-                        this->rotate(kgmatrix[invmap[isym]], zero_vec, 
-                            tmp_gdirect0.x, tmp_gdirect0.y, tmp_gdirect0.z, 
-                            nx, ny, nz, ii, jj, kk);
+                        // we need a real gdirect to get the correspoding rhogtot.
+                        rotate_recip(isym);
                         //fft-grid index to new-gdirect
                         tmp_gdirect.x=(ii>int(nx/2)+1)?(ii-nx):ii;
                         tmp_gdirect.y=(jj>int(ny/2)+1)?(jj-ny):jj;
@@ -1430,8 +1454,8 @@ void Symmetry::rhog_symmetry(std::complex<double> *rhogtot,
                         ipw=ixyz2ipw[ixyz];
                         if(ipw==-1) //not in pw-sphere
                         {
-                            if (std::abs(rhogtot[ipw0].real())>this->epsilon || std::abs(rhogtot[ipw0].imag()>this->epsilon))
-                                std::cout<<"warnning: ipw0 is in pw-sphere but ipw not !!!"<<std::endl;
+                            //if (std::abs(rhogtot[ipw0].real())>this->epsilon || std::abs(rhogtot[ipw0].imag()>this->epsilon))
+                                //std::cout<<"warnning: ipw0 is in pw-sphere but ipw not !!!"<<std::endl;
                             continue;   //else, just skip it
                         }
                         //calculate phase factor
