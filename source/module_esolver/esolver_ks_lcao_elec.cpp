@@ -23,7 +23,7 @@
 #include "module_relax/relax_old/variable_cell.h"    // liuyu 2022-11-07
 
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/op_exx_lcao.h"
-#include "module_io/density_matrix.h"
+#include "module_io/dm_io.h"
 
 namespace ModuleESolver
 {

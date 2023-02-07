@@ -29,7 +29,7 @@
 #include <vector>
 #include "module_base/timer.h"
 #include "module_base/tool_threading.h"
-#include "module_io/rho.h"
+#include "module_io/rho_io.h"
 
 Charge::Charge()
 {

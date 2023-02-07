@@ -1,5 +1,5 @@
 #include "esolver_of.h"
-#include "module_io/rho.h"
+#include "module_io/rho_io.h"
 
 //-----------temporary-------------------------
 #include "module_hamilt_pw/hamilt_pwdft/global.h"

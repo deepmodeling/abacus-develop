@@ -6,7 +6,7 @@
 #include "module_hsolver/hsolver_pw_sdft.h"
 #include "module_elecstate/elecstate_pw_sdft.h"
 #include "module_hsolver/diago_iter_assist.h"
-#include "module_io/rho.h"
+#include "module_io/rho_io.h"
 
 //-------------------Temporary------------------
 #include "module_base/global_variable.h"

@@ -21,7 +21,7 @@
 #include "module_hamilt_general/module_xc/xc_functional.h"
 #include "module_pw/pw_basis_k.h"
 #include "module_io/restart.h"
-#include "module_io/rho.h"
+#include "module_io/rho_io.h"
 
 int ModuleSymmetry::Symmetry::symm_flag;
 

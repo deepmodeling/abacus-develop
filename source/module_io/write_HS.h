@@ -1,5 +1,5 @@
-#ifndef HS_MATRIX_H
-#define HS_MATRIX_H
+#ifndef WRITE_HS_H
+#define WRITE_HS_H
 
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"

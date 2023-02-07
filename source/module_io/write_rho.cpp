@@ -1,4 +1,4 @@
-#include "module_io/rho.h"
+#include "module_io/rho_io.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 
 void ModuleIO::write_rho(

@@ -5,7 +5,7 @@
 #include "src_parallel/parallel_common.h"
 #include "module_base/scalapack_connector.h"
 #include "module_base/blas_connector.h"
-#include "module_io/rho.h"
+#include "module_io/rho_io.h"
 
 IState_Charge::IState_Charge(
     psi::Psi<double>* psi_gamma_in,

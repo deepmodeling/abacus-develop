@@ -1,4 +1,4 @@
-#include "wfc_nao_io.h"
+#include "write_wfc_nao.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_base/timer.h"
 

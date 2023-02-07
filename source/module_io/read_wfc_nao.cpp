@@ -1,4 +1,4 @@
-#include "wfc_nao_io.h"
+#include "read_wfc_nao.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "src_parallel/parallel_common.h"
 #include "module_base/timer.h"
@@ -167,7 +167,7 @@ int ModuleIO::read_wfc_nao_complex(
 	if(error==3) return 3;
 	if(error==4) return 4;
 	
-	ModuleIO::distri_wfc_nao_complex_new(ctot, ik, ParaV, psi);
+	ModuleIO::distri_wfc_nao_complex(ctot, ik, ParaV, psi);
 	
 	// mohan add 2012-02-15,
 	// still have bugs, but can solve it later.
@@ -299,7 +299,7 @@ int ModuleIO::read_wfc_nao(
 	if(error==2) return 2;
 	if(error==3) return 3;
 
-	ModuleIO::distri_wfc_nao_new(ctot, is, ParaV, psid);
+	ModuleIO::distri_wfc_nao(ctot, is, ParaV, psid);
 	
 	// mohan add 2012-02-15,
 	// still have bugs, but can solve it later.
@@ -320,10 +320,10 @@ int ModuleIO::read_wfc_nao(
     return 0;
 }
 
-void ModuleIO::distri_wfc_nao_new(double** ctot, const int& is,
+void ModuleIO::distri_wfc_nao(double** ctot, const int& is,
     const Parallel_Orbitals* ParaV, psi::Psi<double>* psid)
 {
-    ModuleBase::TITLE("ModuleIO","distri_wfc_nao_new");
+    ModuleBase::TITLE("ModuleIO","distri_wfc_nao");
 #ifdef __MPI
 
 //1. alloc work array; set some parameters
@@ -399,10 +399,10 @@ void ModuleIO::distri_wfc_nao_new(double** ctot, const int& is,
     return;
 }
 
-void ModuleIO::distri_wfc_nao_complex_new(std::complex<double>** ctot, const int& ik,
+void ModuleIO::distri_wfc_nao_complex(std::complex<double>** ctot, const int& ik,
     const Parallel_Orbitals* ParaV, psi::Psi<std::complex<double>>* psi)
 {
-    ModuleBase::TITLE("ModuleIO","distri_wfc_nao_complex_new");
+    ModuleBase::TITLE("ModuleIO","distri_wfc_nao_complex");
 #ifdef __MPI
 
 //1. alloc work array; set some parameters
@@ -467,138 +467,7 @@ void ModuleIO::distri_wfc_nao_complex_new(std::complex<double>** ctot, const int
 
 	delete[] work;
 #else
-	ModuleBase::WARNING_QUIT("ModuleIO::distri_wfc_nao_new","check the code without MPI.");
-#endif
-    return;
-}
-
-void ModuleIO::distri_wfc_nao_complex(std::complex<double> **ctot, std::complex<double> **cc)
-{
-    ModuleBase::TITLE("ModuleIO","distri_wfc_nao_complex");
-#ifdef __MPI
-
-    MPI_Status status;
-
-    for (int i=0; i<GlobalV::DSIZE; i++)
-    {
-        if (GlobalV::DRANK==0)
-        {
-            if (i==0)
-            {
-                // get the wave functions from 'ctot',
-                // save them in the matrix 'c'.
-                for (int iw=0; iw<GlobalV::NLOCAL; iw++)
-                {
-                    const int mu_local = GlobalC::GridT.trace_lo[iw];
-                    if (mu_local >= 0)
-                    {
-                        for (int ib=0; ib<GlobalV::NBANDS; ib++)
-                        {
-                            cc[ib][mu_local] = ctot[ib][iw];
-                        }
-                    }
-                }
-            }
-            else
-            {
-				int tag;
-                // receive lgd2
-                int lgd2 = 0;
-                tag = i * 3;
-                MPI_Recv(&lgd2, 1, MPI_INT, i, tag, DIAG_WORLD, &status);
-				if(lgd2==0)
-				{
-
-				}
-				else
-				{
-					// receive trace_lo2
-					tag = i * 3 + 1;
-					int* trace_lo2 = new int[GlobalV::NLOCAL];
-					MPI_Recv(trace_lo2, GlobalV::NLOCAL, MPI_INT, i, tag, DIAG_WORLD, &status);
-
-//					GlobalV::ofs_running << " lgd2=" << lgd2 << " proc=" << i+1 << std::endl;
-					// send csend
-					std::complex<double>* csend = new std::complex<double>[GlobalV::NBANDS*lgd2];
-					ModuleBase::GlobalFunc::ZEROS(csend, GlobalV::NBANDS*lgd2);
-					for (int ib=0; ib<GlobalV::NBANDS; ib++)
-					{
-						for (int iw=0; iw<GlobalV::NLOCAL; iw++)
-						{
-							const int mu_local = trace_lo2[iw];
-							if (mu_local>=0)
-							{
-								csend[mu_local*GlobalV::NBANDS+ib] = ctot[ib][iw];
-							}
-						}
-					}
-					tag = i * 3 + 2;
-					MPI_Send(csend,GlobalV::NBANDS*lgd2,mpicomplex,i,tag,DIAG_WORLD);
-                	delete[] csend;
-                	delete[] trace_lo2;
-				}
-            }
-        }// end GlobalV::DRANK=0
-        else if ( i == GlobalV::DRANK)
-		{
-			int tag;
-
-			// send GlobalC::GridT.lgd
-			tag = GlobalV::DRANK * 3;
-			MPI_Send(&GlobalC::GridT.lgd, 1, MPI_INT, 0, tag, DIAG_WORLD);
-
-			if(GlobalC::GridT.lgd != 0)
-			{
-				// send trace_lo
-				tag = GlobalV::DRANK * 3 + 1;
-				MPI_Send(GlobalC::GridT.trace_lo, GlobalV::NLOCAL, MPI_INT, 0, tag, DIAG_WORLD);
-
-				// receive cc
-				std::complex<double>* crecv = new std::complex<double>[GlobalV::NBANDS*GlobalC::GridT.lgd];
-				ModuleBase::GlobalFunc::ZEROS(crecv, GlobalV::NBANDS*GlobalC::GridT.lgd);
-
-				tag = GlobalV::DRANK * 3 + 2;
-				MPI_Recv(crecv, GlobalV::NBANDS*GlobalC::GridT.lgd, mpicomplex, 0, tag, DIAG_WORLD, &status);
-
-				for (int ib=0; ib<GlobalV::NBANDS; ib++)
-				{
-					for (int mu=0; mu<GlobalC::GridT.lgd; mu++)
-					{
-						cc[ib][mu] = crecv[mu*GlobalV::NBANDS+ib];
-					}
-				}
-
-				delete[] crecv;
-
-			}
-        }// end i==GlobalV::DRANK
-        MPI_Barrier(DIAG_WORLD);
-    }// end i
-
-    //-----------
-    // for test,
-    //-----------
-    /*
-    GlobalV::ofs_running << " Wave Functions in local basis: " << std::endl;
-    for(int i=0; i<GlobalV::NBANDS; i++)
-    {
-        for(int j=0; j<GlobalC::GridT.lgd; j++)
-        {
-            if(j%8==0) GlobalV::ofs_running << std::endl;
-            if( abs(c[i][j]) > 1.0e-5  )
-            {
-                GlobalV::ofs_running << std::setw(15) << c[i][j];
-            }
-            else
-            {
-                GlobalV::ofs_running << std::setw(15) << "0";
-            }
-        }
-    }
-    GlobalV::ofs_running << std::endl;
-    */
-#else
-	ModuleBase::WARNING_QUIT("ModuleIO::distri_wfc_nao_complex","check the code without MPI.");
+	ModuleBase::WARNING_QUIT("ModuleIO::distri_wfc_nao","check the code without MPI.");
 #endif
     return;
 }

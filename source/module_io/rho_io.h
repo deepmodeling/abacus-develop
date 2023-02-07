@@ -1,5 +1,5 @@
-#ifndef RHO
-#define RHO
+#ifndef RHO_IO_H
+#define RHO_IO_H
 
 #include<string>
 

@@ -2,9 +2,9 @@
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
-#include "module_io/wfc_pw_io.h"
+#include "module_io/write_wfc_pw.h"
 #include "module_io/write_wfc_r.h"
-#include "module_io/rho.h"
+#include "module_io/rho_io.h"
 
 IState_Envelope::IState_Envelope(const elecstate::ElecState* pes_in)
 {pes = pes_in;}

@@ -13,7 +13,7 @@
 
 #include "updaterhok_pw_test.h"
 #include "module_io/berryphase.h"
-#include "module_io/wfc_pw_io.h"
+#include "module_io/write_wfc_pw.h"
 bool berryphase::berry_phase_flag;
 using::testing::AtLeast;
 using::testing::Assign;

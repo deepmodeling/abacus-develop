@@ -1,5 +1,5 @@
-#ifndef HS_MATRIX_SPARSE_H
-#define HS_MATRIX_SPARSE_H
+#ifndef WRITE_HS_SPARSE_H
+#define WRITE_HS__SPARSE_H
 
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"

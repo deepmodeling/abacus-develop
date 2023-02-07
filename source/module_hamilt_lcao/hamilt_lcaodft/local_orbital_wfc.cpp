@@ -1,6 +1,7 @@
 #include "local_orbital_wfc.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
-#include "module_io/wfc_nao_io.h"
+#include "module_io/write_wfc_nao.h"
+#include "module_io/read_wfc_nao.h"
 #include "src_parallel/parallel_common.h"
 #include "module_base/memory.h"
 #include "module_base/timer.h"

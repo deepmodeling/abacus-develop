@@ -1,7 +1,8 @@
 #include "esolver_ks_lcao.h"
 #include "module_io/cal_r_overlap_R.h"
-#include "module_io/density_matrix.h"
-#include "module_io/rho.h"
+#include "module_io/dm_io.h"
+#include "module_io/write_dm_sparse.h"
+#include "module_io/rho_io.h"
 #include "module_io/write_HS_R.h"
 
 //--------------temporary----------------------------
