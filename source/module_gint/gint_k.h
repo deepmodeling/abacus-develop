@@ -1,10 +1,10 @@
 #ifndef GINT_K_H
 #define GINT_K_H
 
-#include "../module_orbital/ORB_atomic_lm.h"
+#include "module_orbital/ORB_atomic_lm.h"
 #include "grid_technique.h"
-#include "../src_lcao/LCAO_matrix.h"
-#include "../src_pw/charge.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/LCAO_matrix.h"
+#include "module_elecstate/module_charge/charge.h"
 #include "gint.h"
 
 // add by jingan for map<> in 2021-12-2, will be deleted in the future

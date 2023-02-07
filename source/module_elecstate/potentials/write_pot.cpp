@@ -1,5 +1,5 @@
 #include "potential_new.h"
-#include "src_pw/global.h"
+#include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_elecstate/potentials/efield.h"
 #include "module_base/timer.h"
 namespace elecstate

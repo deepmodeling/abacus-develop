@@ -1,5 +1,5 @@
 #include "module_hsolver/kernels/dngvd_op.h"
-#include "src_pdiag/helper_cuda.h"
+#include "helper_cuda.h"
 
 #include <cusolverDn.h>
 

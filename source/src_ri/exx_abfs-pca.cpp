@@ -11,10 +11,10 @@
 #include <cassert>
 #include <limits>
 
-#include "../src_external/src_test/src_global/element_basis_index-test.h"		// Peize Lin test
-#include "../src_external/src_test/src_ri/exx_lcao-test.h"		// Peize Lin test
+#include "../src_ri/test_code/element_basis_index-test.h"		// Peize Lin test
+#include "../src_ri/test_code/exx_lcao-test.h"		// Peize Lin test
 #include <sys/time.h>			// Peize Lin test
-#include "../src_lcao/global_fp.h"		// Peize Lin test
+#include "../module_hamilt_lcao/hamilt_lcaodft/global_fp.h"		// Peize Lin test
 
 std::vector<std::vector<std::pair<std::vector<double>,ModuleBase::matrix>>> Exx_Abfs::PCA::cal_PCA( 
 	const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> &lcaos, 

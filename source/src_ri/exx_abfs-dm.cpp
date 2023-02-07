@@ -1,14 +1,15 @@
 #include "exx_abfs.h"
 
-#include "../src_pw/global.h"
-#include "../module_base/mathzone.h"
-#include "../src_pw/charge_mixing.h"
-#include "../module_base/container_operator.h"
+#include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/global_fp.h"
+#include "module_base/mathzone.h"
+#include "module_elecstate/module_charge/charge_mixing.h"
+#include "module_base/container_operator.h"
 
-#include "../src_external/src_test/src_global/matrix-test.h"
-#include "../src_external/src_test/src_global/complexmatrix-test.h"
-#include "../src_external/src_test/src_ri/exx_lcao-test.h"
-#include "../src_external/src_test/src_ri/exx_abfs-dm-test.h"
+#include "src_ri/test_code/matrix-test.h"
+#include "src_ri/test_code/complexmatrix-test.h"
+#include "src_ri/test_code/exx_lcao-test.h"
+#include "src_ri/test_code/exx_abfs-dm-test.h"
 
 void Exx_Abfs::DM::cal_DM(
 	const ModuleBase::matrix& wg,

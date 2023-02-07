@@ -4,15 +4,15 @@
 //==========================================================
 
 #include "exx_lip.h"
-#include "../module_base/global_function.h"
-#include "../module_base/vector3.h"
-#include "../src_pw/global.h"
-#include "../src_pw/klist.h"
-#include "../src_pw/wavefunc.h"
-#include "../src_lcao/wavefunc_in_pw.h"
-#include "../module_base/lapack_connector.h"
+#include "module_base/global_function.h"
+#include "module_base/vector3.h"
+#include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "module_cell/klist.h"
+#include "module_hamilt_pw/hamilt_pwdft/wavefunc.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/wavefunc_in_pw.h"
+#include "module_base/lapack_connector.h"
 #include <limits>
-#include "../src_parallel/parallel_global.h"
+#include "src_parallel/parallel_global.h"
 
 Exx_Lip::Exx_Lip( const Exx_Info::Exx_Info_Lip &info_in )
 	:init_finish(false),

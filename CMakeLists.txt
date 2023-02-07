@@ -384,14 +384,23 @@ if(DEFINED DeePMD_DIR)
   add_compile_options(-Wl,--no-as-needed)
   find_package(DeePMD REQUIRED)
   include_directories(${DeePMD_DIR}/include)
+  if (DeePMDC_FOUND)
+    target_link_libraries(${ABACUS_BIN_NAME}
+      DeePMD::deepmd_c
+    )
+    add_compile_definitions(
+      __DPMDC
+    )
+  else()
   target_link_libraries(${ABACUS_BIN_NAME}
     DeePMD::deepmd_cc
     DeePMD::deepmd_op
     DeePMD::deepmd_op_cuda
     DeePMD::tensorflow_cc
   )
+  endif()
   if(NOT DEFINED TensorFlow_DIR)
-    message(FATAL_ERROR "Please define TensorFlow_DIR!")
+    set(TensorFlow_DIR ${DeePMD_DIR})
   endif()
 endif()
 
@@ -469,12 +478,14 @@ target_link_libraries(${ABACUS_BIN_NAME}
     io
     relax
     parallel
-    pw
     driver
     xc_
     hsolver
     elecstate
-    hamilt
+    hamilt_general
+    hamilt_pwdft
+    hamilt_ofdft
+    hamilt_stodft
     psi
     esolver
     vdw
@@ -483,7 +494,8 @@ target_link_libraries(${ABACUS_BIN_NAME}
 
 if(ENABLE_LCAO)
   target_link_libraries(${ABACUS_BIN_NAME}
-      lcao
+      hamilt_lcao
+      tddft
       orb
       gint
       dftu
@@ -494,7 +506,7 @@ if(ENABLE_LCAO)
     )
   endif ()
   if(USE_CUSOLVER_LCAO)
-    target_link_libraries(pdiag)
+    target_link_libraries(diag_cusolver)
   endif()
 endif()
 

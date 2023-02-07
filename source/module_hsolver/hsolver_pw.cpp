@@ -5,9 +5,9 @@
 #include "diago_iter_assist.h"
 #include "module_base/tool_quit.h"
 #include "module_base/timer.h"
-#include "module_hamilt/hamilt_pw.h"
+#include "module_hamilt_pw/hamilt_pwdft/hamilt_pw.h"
 #include "module_elecstate/elecstate_pw.h"
-#include "src_pw/global.h"
+#include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include <algorithm>
 
 namespace hsolver {

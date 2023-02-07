@@ -2,9 +2,9 @@
 #define ESOLVER_H
 
 #include "module_io/input.h"
-#include "../module_cell/unitcell.h"
-#include "../src_pw/energy.h"
-#include "../module_base/matrix.h"
+#include "module_cell/unitcell.h"
+#include "module_elecstate/energy.h"
+#include "module_base/matrix.h"
 //--------------temporary----------------------------
 #include "module_psi/psi.h"
 

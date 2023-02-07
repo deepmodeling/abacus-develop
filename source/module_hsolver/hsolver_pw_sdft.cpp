@@ -1,13 +1,13 @@
 #include "hsolver_pw_sdft.h"
 #include "module_base/timer.h"
 #include "module_base/global_function.h"
-#include "src_pw/symmetry_rho.h"
+#include "module_elecstate/module_charge/symmetry_rho.h"
 #include "module_base/timer.h"
 #include "module_base/tool_title.h"
 #include <algorithm>
 
 //temporary
-#include "src_pw/global.h"
+#include "module_hamilt_pw/hamilt_pwdft/global.h"
 namespace hsolver
 {
     void HSolverPW_SDFT::solve(hamilt::Hamilt<double>* pHamilt,

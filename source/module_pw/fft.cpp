@@ -35,6 +35,7 @@ void FFT::clear()
 	if(z_auxg!=nullptr) {fftw_free(z_auxg); z_auxg = nullptr;}
 	if(z_auxr!=nullptr) {fftw_free(z_auxr); z_auxr = nullptr;}
 	d_rspace = nullptr;
+#if defined(__CUDA) || defined(__ROCM)
     if (GlobalV::device_flag == "gpu") {
         if (GlobalV::precision_flag == "single") {
             if (c_auxr_3d != nullptr) {
@@ -49,6 +50,7 @@ void FFT::clear()
             }
         }
     }
+#endif
     if (GlobalV::precision_flag == "single") {
         this->cleanfFFT();
         if (c_auxg != nullptr) {
@@ -95,6 +97,7 @@ void FFT:: initfft(int nx_in, int ny_in, int nz_in, int lixy_in, int rixy_in, in
 		d_rspace = (double *) z_auxg;
         // auxr_3d = static_cast<std::complex<double> *>(
         //     fftw_malloc(sizeof(fftw_complex) * (this->nx * this->ny * this->nz)));
+#if defined(__CUDA) || defined(__ROCM)
         if (GlobalV::device_flag == "gpu") {
             if (GlobalV::precision_flag == "single") {
                 resmem_cd_op()(gpu_ctx, this->c_auxr_3d, this->nx * this->ny * this->nz);
@@ -103,6 +106,7 @@ void FFT:: initfft(int nx_in, int ny_in, int nz_in, int lixy_in, int rixy_in, in
                 resmem_zd_op()(gpu_ctx, this->z_auxr_3d, this->nx * this->ny * this->nz);
             }
         }
+#endif
         if (GlobalV::precision_flag == "single") {
             c_auxg  = (std::complex<float> *) fftw_malloc(sizeof(fftwf_complex) * maxgrids);
             c_auxr  = (std::complex<float> *) fftw_malloc(sizeof(fftwf_complex) * maxgrids);
@@ -129,10 +133,10 @@ void FFT:: setupFFT()
 #if defined(__FFTW3_MPI) && defined(__MPI)
 	else
 	{
-		this->initplan_mpi();
-        if (GlobalV::precision_flag == "single") {
-		    this->initplanf_mpi();
-        }
+		// this->initplan_mpi();
+        // if (GlobalV::precision_flag == "single") {
+		//     this->initplanf_mpi();
+        // }
 	}
 #endif
 	return;
@@ -227,6 +231,7 @@ void FFT :: initplan()
     //    reinterpret_cast<fftw_complex *>(auxr_3d),
     //    FFTW_BACKWARD, FFTW_MEASURE);
 
+#if defined(__CUDA) || defined(__ROCM)
     if (GlobalV::device_flag == "gpu") {
         if (GlobalV::precision_flag == "single") {
         #if defined(__CUDA)
@@ -243,6 +248,7 @@ void FFT :: initplan()
         #endif
         }
     }
+#endif
 
 	destroyp = false;
 }
@@ -320,15 +326,15 @@ void FFT :: initplanf()
 	destroypf = false;
 }
 
-void FFT :: initplan_mpi()
-{
+// void FFT :: initplan_mpi()
+// {
 
-}
+// }
 
-void FFT :: initplanf_mpi()
-{
+// void FFT :: initplanf_mpi()
+// {
 	
-}
+// }
 
 void FFT:: cleanFFT()
 {
@@ -369,6 +375,7 @@ void FFT:: cleanFFT()
 	}
     // fftw_destroy_plan(this->plan3dforward);
     // fftw_destroy_plan(this->plan3dbackward);
+#if defined(__CUDA) || defined(__ROCM)
     if (GlobalV::device_flag == "gpu") {
         if (GlobalV::precision_flag == "single") {
         #if defined(__CUDA)
@@ -385,6 +392,7 @@ void FFT:: cleanFFT()
         #endif
         }
     }
+#endif
 	destroyp = true;
 }
 
@@ -659,6 +667,7 @@ void FFT::fftxyc2r(std::complex<double> * in, double * out)
 	}
 }
 
+#if defined(__CUDA) || defined(__ROCM)
 template <>
 void FFT::fft3D_forward(const psi::DEVICE_GPU * /*ctx*/, std::complex<float> * in, std::complex<float> * out)
 {
@@ -728,6 +737,7 @@ void FFT::fft3D_backward(const psi::DEVICE_GPU * /*ctx*/, std::complex<double>* 
     hipDeviceSynchronize();
 #endif
 }
+#endif
 
 
 template <>
@@ -757,6 +767,7 @@ std::complex<double> * FFT::get_auxg_data() {
     return this->z_auxg;
 }
 
+#if defined(__CUDA) || defined(__ROCM)
 template <>
 std::complex<float> * FFT::get_auxr_3d_data() {
     return this->c_auxr_3d;
@@ -765,5 +776,6 @@ template <>
 std::complex<double> * FFT::get_auxr_3d_data() {
     return this->z_auxr_3d;
 }
+#endif
 
 }

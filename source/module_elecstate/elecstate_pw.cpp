@@ -2,7 +2,7 @@
 
 #include "module_base/constants.h"
 #include "src_parallel/parallel_reduce.h"
-#include "src_pw/global.h"
+#include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_base/timer.h"
 #include "module_psi/kernels/device.h"
 
@@ -151,8 +151,9 @@ void ElecStatePW<FPTYPE, Device>::rhoBandK(const psi::Psi<std::complex<FPTYPE>, 
         {
             ///
             /// only occupied band should be calculated.
+            /// be care of when smearing_sigma is large, wg would less than 0
             ///
-            if (this->wg(ik, ibnd) < threshold) {
+            if (std::fabs(this->wg(ik, ibnd)) < threshold) {
                 continue;
             }
 

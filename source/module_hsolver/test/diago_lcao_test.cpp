@@ -1,4 +1,4 @@
-#include "src_pdiag/test/diago_elpa_utils.h"
+#include "module_hsolver/test/diago_elpa_utils.h"
 #include "module_hsolver/diago_blas.h"
 #include "mpi.h"
 #include "string.h"
@@ -23,7 +23,7 @@
  *  - hsolver::DiagoBlas::diag (for Scalapack)
  *
  * The 2d block cyclic distribution of H/S matrix is done by 
- * self-realized functions in src_pdiag/test/diago_elpa_utils.h
+ * self-realized functions in module_hsolver/test/diago_elpa_utils.h
  */
 
 template <typename T> class HamiltTEST : public hamilt::Hamilt<double>

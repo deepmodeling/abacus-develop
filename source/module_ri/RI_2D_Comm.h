@@ -7,7 +7,7 @@
 #define RI_2D_COMM_H
 
 #include "module_orbital/parallel_orbitals.h"
-#include "src_lcao/LCAO_matrix.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/LCAO_matrix.h"
 
 #include <RI/global/Tensor.h>
 

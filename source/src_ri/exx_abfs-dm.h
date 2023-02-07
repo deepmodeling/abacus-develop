@@ -3,7 +3,7 @@
 
 #include "exx_abfs.h"
 #include "module_base/abfs-vector3_order.h"
-#include "src_pw/charge_mixing.h"
+#include "module_elecstate/module_charge/charge_mixing.h"
 
 #include <vector>
 #include <map>

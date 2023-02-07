@@ -1,10 +1,10 @@
 #include "grid_technique.h"
-#include "../src_pw/global.h"
-#include "../src_parallel/parallel_reduce.h"
+#include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "src_parallel/parallel_reduce.h"
 
-#include "../src_lcao/global_fp.h" // mohan add 2021-01-30
-#include "../module_base/memory.h"
-#include "../module_base/timer.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/global_fp.h" // mohan add 2021-01-30
+#include "module_base/memory.h"
+#include "module_base/timer.h"
 
 namespace GlobalC
 {

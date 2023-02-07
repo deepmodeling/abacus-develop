@@ -91,7 +91,7 @@ void PW_Basis:: real2recip(const FPTYPE * in, std::complex<FPTYPE> * out, const 
 #endif
         for(int ir = 0 ; ir < this->nrxx ; ++ir)
         {
-            this->ft.get_auxr_data<FPTYPE>()[ir] = std::complex<double>(in[ir],0);
+            this->ft.get_auxr_data<FPTYPE>()[ir] = std::complex<FPTYPE>(in[ir],0);
         }
         this->ft.fftxyfor(ft.get_auxr_data<FPTYPE>(),ft.get_auxr_data<FPTYPE>());
     }
@@ -141,7 +141,7 @@ void PW_Basis:: recip2real(const std::complex<FPTYPE> * in, std::complex<FPTYPE>
 #endif
     for(int i = 0 ; i < this->nst * this->nz ; ++i)
     {
-        ft.get_auxg_data<FPTYPE>()[i] = std::complex<double>(0, 0);
+        ft.get_auxg_data<FPTYPE>()[i] = std::complex<FPTYPE>(0, 0);
     }
 
 #ifdef _OPENMP

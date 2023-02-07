@@ -1,20 +1,21 @@
 #include "exx_opt_orb.h"
-#include "../src_pw/global.h"
-#include "../module_orbital/ORB_atomic_lm.h"
+#include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/global_fp.h"
+#include "module_orbital/ORB_atomic_lm.h"
 #include "exx_abfs.h"
 #include "exx_abfs-abfs_index.h"
 #include "exx_abfs-construct_orbs.h"
 #include "exx_abfs-inverse_matrix_double.h"
 #include "exx_abfs-jle.h"
-#include "../module_orbital/ORB_read.h"
+#include "module_orbital/ORB_read.h"
 #include "exx_abfs-matrix_orbs11.h"
 #include "exx_abfs-matrix_orbs21.h"
 #include "exx_abfs-matrix_orbs22.h"
 
-#include "../src_external/src_test/src_ri/exx_abfs-unittest.h"
-#include "../src_external/src_test/src_ri/exx_lcao-test.h"
-#include "../src_external/src_test/src_global/element_basis_index-test.h"
-#include "../src_external/src_test/test_function.h"
+#include "../src_ri/test_code/exx_abfs-unittest.h"
+#include "../src_ri/test_code/exx_lcao-test.h"
+#include "../src_ri/test_code/element_basis_index-test.h"
+#include "../src_ri/test_code/test_function.h"
 
 void Exx_Opt_Orb::generate_matrix() const
 {
