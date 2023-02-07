@@ -1242,6 +1242,10 @@ void Symmetry::pricell(double* pos)
     }
     GlobalV::ofs_running<<"Original cell was built up by "<<this->ncell<<" primitive cells."<<std::endl;
 
+    //convert ptrans to input configuration
+    ModuleBase::Matrix3 inputlat(s1.x, s1.y, s1.z, s2.x, s2.y, s2.z, s3.x, s3.y, s3.z);
+    this->gtrans_convert(ptrans.data(), ptrans.data(), ntrans, this->optlat, inputlat );
+    
     // //how many pcell in supercell
     // double n1, n2, n3;
     // ModuleBase::Matrix3 nummat=this->optlat*this->plat.Inverse();
