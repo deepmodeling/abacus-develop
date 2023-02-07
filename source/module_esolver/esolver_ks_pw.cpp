@@ -1,6 +1,7 @@
 #include "esolver_ks_pw.h"
 #include <iostream>
-#include "../module_io/write_wfc_pw.h"
+#include "module_io/write_wfc_pw.h"
+#include "module_io/write_occ.h"
 
 //--------------temporary----------------------------
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
@@ -583,7 +584,7 @@ namespace ModuleESolver
         
         //print occupation in istate.info
 
-	    GlobalC::en.print_occ(this->pelec);
+	    ModuleIO::print_occ(this->pelec);
         // compute density of states
         GlobalC::en.perform_dos_pw(this->pelec);
 

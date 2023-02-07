@@ -7,6 +7,7 @@
 #include "module_elecstate/elecstate_pw_sdft.h"
 #include "module_hsolver/diago_iter_assist.h"
 #include "module_io/rho_io.h"
+#include "module_io/write_occ.h"
 
 //-------------------Temporary------------------
 #include "module_base/global_variable.h"
@@ -168,7 +169,7 @@ void ESolver_SDFT_PW::postprocess()
     GlobalV::ofs_running << std::setprecision(16);
     GlobalV::ofs_running << " !FINAL_ETOT_IS " << GlobalC::en.etot * ModuleBase::Ry_to_eV << " eV" << std::endl;
     GlobalV::ofs_running << " --------------------------------------------\n\n" << std::endl;
-    GlobalC::en.print_occ(this->pelec);
+    ModuleIO::print_occ(this->pelec);
 
     if(this->maxniter == 0)
     {

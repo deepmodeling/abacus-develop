@@ -2,7 +2,7 @@
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "src_parallel/parallel_reduce.h"
 
-bool Dos::calculate_dos
+bool ModuleIO::calculate_dos
 (
 	const int &is,
 	const std::vector<int> &isk,
@@ -37,7 +37,7 @@ bool Dos::calculate_dos
 
 	if(de_ev <= 0)
 	{
-		ModuleBase::WARNING("DOS::calculate_dos","de <= 0 ");
+		ModuleBase::WARNING("ModuleIO::calculate_dos","de <= 0 ");
 		return 0; 
 	}
 	else if(emax_ev < emin_ev)
@@ -160,7 +160,7 @@ bool Dos::calculate_dos
 }
 
 
-void Dos::nscf_fermi_surface(const std::string &out_band_dir,
+void ModuleIO::nscf_fermi_surface(const std::string &out_band_dir,
 	const int &nks,
 	const int &nband,
 	const ModuleBase::matrix &ekb)
@@ -240,7 +240,7 @@ void Dos::nscf_fermi_surface(const std::string &out_band_dir,
 }
 
 
-void Dos::nscf_band(
+void ModuleIO::nscf_band(
 	const int &is,
 	const std::string &out_band_dir, 
 	const int &nks, 

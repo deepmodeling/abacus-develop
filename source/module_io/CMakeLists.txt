@@ -5,7 +5,8 @@ list(APPEND objects
     bessel_basis.cpp
     cal_test.cpp
     dos.cpp
-    energy_dos_pw.cpp
+    write_dos_pw.cpp
+    write_occ.cpp
     numerical_basis.cpp
     numerical_descriptor.cpp
     output.cpp
@@ -26,7 +27,8 @@ list(APPEND objects
 if(ENABLE_LCAO)
   list(APPEND objects
       cal_r_overlap_R.cpp
-      energy_dos.cpp
+      write_dos_lcao.cpp
+      write_orb_info.cpp
       istate_charge.cpp
       istate_envelope.cpp
       mulliken_charge.cpp

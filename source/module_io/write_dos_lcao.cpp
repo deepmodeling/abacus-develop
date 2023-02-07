@@ -18,6 +18,8 @@
 #include "module_base/scalapack_connector.h"
 #include "src_parallel/parallel_reduce.h"
 
+#include "write_orb_info.h"
+
 #include <vector>
 #ifdef __MPI
 #include <mpi.h>
@@ -496,7 +498,7 @@ void energy::perform_dos(const psi::Psi<double>* psid,
                 out << "</pdos>" << std::endl;
                 out.close();
             }
-            this->print_orbital_file();
+            ModuleIO::write_orb_info();
         }
         delete[] pdos;
 
@@ -508,7 +510,7 @@ void energy::perform_dos(const psi::Psi<double>* psid,
             std::stringstream ss1;
             ss1 << GlobalV::global_out_dir << "DOS" << is + 1 << "_smearing.dat";
 
-            Dos::calculate_dos(is,
+            ModuleIO::calculate_dos(is,
                                GlobalC::kv.isk,
                                ss.str(),
                                ss1.str(),
@@ -543,7 +545,7 @@ void energy::perform_dos(const psi::Psi<double>* psid,
             {
                 std::stringstream ss3;
                 ss3 << GlobalV::global_out_dir << "Fermi_Surface_" << i << ".bxsf";
-                Dos::nscf_fermi_surface(ss3.str(), GlobalC::kv.nks, GlobalV::NBANDS, pelec->ekb);
+                ModuleIO::nscf_fermi_surface(ss3.str(), GlobalC::kv.nks, GlobalV::NBANDS, pelec->ekb);
             }
         }
     }
@@ -564,7 +566,7 @@ void energy::perform_dos(const psi::Psi<double>* psid,
             std::stringstream ss2;
             ss2 << GlobalV::global_out_dir << "BANDS_" << is + 1 << ".dat";
             GlobalV::ofs_running << "\n Output bands in file: " << ss2.str() << std::endl;
-            Dos::nscf_band(is, ss2.str(), nks, GlobalV::NBANDS, this->ef * 0, pelec->ekb);
+            ModuleIO::nscf_band(is, ss2.str(), nks, GlobalV::NBANDS, this->ef * 0, pelec->ekb);
         }
     } // out_band
 
@@ -851,41 +853,7 @@ void energy::perform_dos(const psi::Psi<double>* psid,
                 out.close();
             }
         } // is
-        this->print_orbital_file();
+        ModuleIO::write_orb_info();
     } // out_proj_band
-    return;
-}
-
-void energy::print_orbital_file(void)
-{
-    std::stringstream os;
-    os << GlobalV::global_out_dir << "Orbital";
-    std::ofstream out(os.str().c_str());
-    out << std::setw(5) << "io" << std::setw(8) << "spec" << std::setw(5) << "l" << std::setw(5) << "m" << std::setw(5)
-        << "z" << std::setw(5) << "sym" << std::endl;
-
-    for (int i = 0; i < GlobalC::ucell.nat; i++)
-    {
-        int t = GlobalC::ucell.iat2it[i];
-        Atom* atom1 = &GlobalC::ucell.atoms[t];
-        for (int j = 0; j < atom1->nw; ++j)
-        {
-            const int L1 = atom1->iw2l[j];
-            const int N1 = atom1->iw2n[j];
-            const int m1 = atom1->iw2m[j];
-            out << std::setw(5) << i << std::setw(8) << GlobalC::ucell.atoms[t].label << std::setw(5) << L1
-                << std::setw(5) << m1 << std::setw(5) << N1 + 1 << std::setw(15) << GlobalC::en.Name_Angular[L1][m1]
-                << std::endl;
-        }
-    }
-    out << std::endl << std::endl;
-    out << std::setw(5) << "io" << std::setw(2) << "=" << std::setw(2) << "Orbital index in supercell" << std::endl;
-    out << std::setw(5) << "spec" << std::setw(2) << "=" << std::setw(2) << "Atomic species label" << std::endl;
-    out << std::setw(5) << "l" << std::setw(2) << "=" << std::setw(2) << "Angular mumentum quantum number" << std::endl;
-    out << std::setw(5) << "m" << std::setw(2) << "=" << std::setw(2) << "Magnetic quantum number" << std::endl;
-    out << std::setw(5) << "z" << std::setw(2) << "=" << std::setw(2) << "Zeta index of orbital" << std::endl;
-    out << std::setw(5) << "sym" << std::setw(2) << "=" << std::setw(2) << "Symmetry name of real orbital" << std::endl;
-    out.close();
-
     return;
 }

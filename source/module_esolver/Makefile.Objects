@@ -336,7 +336,7 @@ OBJS_IO=input.o\
     berryphase.o\
     bessel_basis.o\
     cal_test.o\
-    energy_dos_pw.o\
+    write_dos_pw.o\
     dos.o\
     numerical_descriptor.o\
     numerical_basis.o\
@@ -355,7 +355,7 @@ OBJS_IO=input.o\
 	write_wfc_realspace.o\
 
 OBJS_IO_LCAO=cal_r_overlap_R.o\
-      energy_dos.o\
+      write_dos_lcao.o\
       istate_charge.o\
       istate_envelope.o\
       mulliken_charge.o\

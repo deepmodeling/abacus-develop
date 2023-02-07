@@ -98,11 +98,7 @@ class energy
 	void print_etot(const bool converged, const int &iter,
 	const double &scf_thr, const double &duration, const double &pw_diag_thr=0, const double &avg_iter=0, bool print = true);
 
-	void print_occ(const elecstate::ElecState* pelec);
-
 	void print_format(const std::string &name, const double &value);
-
-	void print_orbital_file();
 
 	void calculate_harris(); //mohan add 2012-06-05
 
