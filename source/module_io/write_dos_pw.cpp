@@ -1,12 +1,18 @@
 #include "dos.h"
+#include "write_dos_pw.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_elecstate/energy.h"
 #include "src_parallel/parallel_reduce.h"
 #include "module_elecstate/elecstate.h"
 
-void energy::perform_dos_pw(const elecstate::ElecState* pelec)
+void ModuleIO::write_dos_pw(const elecstate::ElecState* pelec, 
+		const int &out_dos, 
+		const int &out_band, 
+		const double &dos_edelta_ev,
+		const double &dos_scale,
+		const double &ef) 
 {
-	ModuleBase::TITLE("energy","perform_dos_pw");
+	ModuleBase::TITLE("energy","write_dos_pw");
 
 	if(out_dos !=0 || out_band !=0)
     {
@@ -26,7 +32,7 @@ void energy::perform_dos_pw(const elecstate::ElecState* pelec)
 	int nspin0=1;
 	if(GlobalV::NSPIN==2) nspin0=2;
 
-	if(this->out_dos)
+	if(out_dos)
 	{
 //find energy range
 		double emax = pelec->ekb(0, 0);
@@ -64,7 +70,7 @@ void energy::perform_dos_pw(const elecstate::ElecState* pelec)
 		//		atom_arrange::search( GlobalV::SEARCH_RADIUS );//qifeng-2019-01-21
 		
 //determine #. energy points	
-		const double de_ev = this->dos_edelta_ev;
+		const double de_ev = dos_edelta_ev;
 		//std::cout << de_ev;
 
 		const int npoints = static_cast<int>(std::floor ( ( emax - emin ) / de_ev ));
@@ -83,14 +89,14 @@ void energy::perform_dos_pw(const elecstate::ElecState* pelec)
 					 GlobalC::kv.isk,
 					 ss.str(),
 					 ss1.str(), 
-					 this->dos_edelta_ev, 
+					 dos_edelta_ev, 
 					 emax, 
 					 emin, 
 					 GlobalC::kv.nks, GlobalC::kv.nkstot, GlobalC::kv.wk, pelec->wg, GlobalV::NBANDS, pelec->ekb );
 	 	}
 
 	}//out_dos=1
-	if(this->out_band) //pengfei 2014-10-13
+	if(out_band) //pengfei 2014-10-13
 	{
 		int nks=0;
 		if(nspin0==1) 
@@ -107,7 +113,7 @@ void energy::perform_dos_pw(const elecstate::ElecState* pelec)
 			std::stringstream ss2;
 			ss2 << GlobalV::global_out_dir << "BANDS_" << is+1 << ".dat";
 			GlobalV::ofs_running << "\n Output bands in file: " << ss2.str() << std::endl;
-			ModuleIO::nscf_band(is, ss2.str(), nks, GlobalV::NBANDS, this->ef*0, pelec->ekb);
+			ModuleIO::nscf_band(is, ss2.str(), nks, GlobalV::NBANDS, ef*0, pelec->ekb);
 		}
 
 	}

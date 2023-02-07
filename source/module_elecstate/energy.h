@@ -34,7 +34,6 @@ class energy
 		LCAO_Hamilt &uhm,
 		const elecstate::ElecState* pelec);
 	//calculate density of states(DOS) for PW base
-    void perform_dos_pw(const elecstate::ElecState* pelec);
 
     double etot;    	   // the total energy of the solid
     double ef;             // the fermi energy

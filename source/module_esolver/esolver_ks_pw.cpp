@@ -2,6 +2,7 @@
 #include <iostream>
 #include "module_io/write_wfc_pw.h"
 #include "module_io/write_occ.h"
+#include "module_io/write_dos_pw.h"
 
 //--------------temporary----------------------------
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
@@ -586,7 +587,12 @@ namespace ModuleESolver
 
 	    ModuleIO::print_occ(this->pelec);
         // compute density of states
-        GlobalC::en.perform_dos_pw(this->pelec);
+        ModuleIO::write_dos_pw(this->pelec,
+            GlobalC::en.out_dos,
+            GlobalC::en.out_band,
+            GlobalC::en.dos_edelta_ev,
+            GlobalC::en.dos_scale,
+            GlobalC::en.ef);
 
         if(GlobalV::BASIS_TYPE=="pw" && winput::out_spillage) //xiaohui add 2013-09-01
         {
