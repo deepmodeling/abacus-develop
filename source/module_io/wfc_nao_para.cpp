@@ -1,4 +1,4 @@
-#include "psi_nao.h"
+#include "wfc_nao_io.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "src_parallel/parallel_common.h"
 #include "module_base/timer.h"
@@ -54,15 +54,15 @@ inline int CTOT2q_c(
 }
 
 // be called in local_orbital_wfc::allocate_k
-int ModuleIO::read_psi_nao_complex(
+int ModuleIO::read_wfc_nao_complex(
     std::complex<double>** ctot, 
     const int& ik, 
     const Parallel_Orbitals* ParaV, 
     psi::Psi<std::complex<double>>* psi, 
     elecstate::ElecState* pelec)
 {
-    ModuleBase::TITLE("ModuleIO","read_psi_nao_complex");
-    ModuleBase::timer::tick("ModuleIO","read_psi_nao_complex");
+    ModuleBase::TITLE("ModuleIO","read_wfc_nao_complex");
+    ModuleBase::timer::tick("ModuleIO","read_wfc_nao_complex");
 
     std::stringstream ss;
 	// read wave functions
@@ -167,7 +167,7 @@ int ModuleIO::read_psi_nao_complex(
 	if(error==3) return 3;
 	if(error==4) return 4;
 	
-	ModuleIO::distri_psi_nao_complex_new(ctot, ik, ParaV, psi);
+	ModuleIO::distri_wfc_nao_complex_new(ctot, ik, ParaV, psi);
 	
 	// mohan add 2012-02-15,
 	// still have bugs, but can solve it later.
@@ -199,19 +199,19 @@ int ModuleIO::read_psi_nao_complex(
 	*/
 
 
-    ModuleBase::timer::tick("ModuleIO","read_psi_nao_complex");
+    ModuleBase::timer::tick("ModuleIO","read_wfc_nao_complex");
 	return 0;
 }
 
-int ModuleIO::read_psi_nao(
+int ModuleIO::read_wfc_nao(
     double** ctot, 
     const int& is,
     const Parallel_Orbitals* ParaV, 
     psi::Psi<double>* psid, 
     elecstate::ElecState* pelec)
 {
-    ModuleBase::TITLE("ModuleIO","read_psi_nao");
-    ModuleBase::timer::tick("ModuleIO", "read_psi_nao");
+    ModuleBase::TITLE("ModuleIO","read_wfc_nao");
+    ModuleBase::timer::tick("ModuleIO", "read_wfc_nao");
     
     std::stringstream ss;
 	if(GlobalV::GAMMA_ONLY_LOCAL)
@@ -299,7 +299,7 @@ int ModuleIO::read_psi_nao(
 	if(error==2) return 2;
 	if(error==3) return 3;
 
-	ModuleIO::distri_psi_nao_new(ctot, is, ParaV, psid);
+	ModuleIO::distri_wfc_nao_new(ctot, is, ParaV, psid);
 	
 	// mohan add 2012-02-15,
 	// still have bugs, but can solve it later.
@@ -316,14 +316,14 @@ int ModuleIO::read_psi_nao(
         delete[] ctot;
     }
 
-    ModuleBase::timer::tick("ModuleIO","read_psi_nao");
+    ModuleBase::timer::tick("ModuleIO","read_wfc_nao");
     return 0;
 }
 
-void ModuleIO::distri_psi_nao_new(double** ctot, const int& is,
+void ModuleIO::distri_wfc_nao_new(double** ctot, const int& is,
     const Parallel_Orbitals* ParaV, psi::Psi<double>* psid)
 {
-    ModuleBase::TITLE("ModuleIO","distri_psi_nao_new");
+    ModuleBase::TITLE("ModuleIO","distri_wfc_nao_new");
 #ifdef __MPI
 
 //1. alloc work array; set some parameters
@@ -399,10 +399,10 @@ void ModuleIO::distri_psi_nao_new(double** ctot, const int& is,
     return;
 }
 
-void ModuleIO::distri_psi_nao_complex_new(std::complex<double>** ctot, const int& ik,
+void ModuleIO::distri_wfc_nao_complex_new(std::complex<double>** ctot, const int& ik,
     const Parallel_Orbitals* ParaV, psi::Psi<std::complex<double>>* psi)
 {
-    ModuleBase::TITLE("ModuleIO","distri_psi_nao_complex_new");
+    ModuleBase::TITLE("ModuleIO","distri_wfc_nao_complex_new");
 #ifdef __MPI
 
 //1. alloc work array; set some parameters
@@ -467,14 +467,14 @@ void ModuleIO::distri_psi_nao_complex_new(std::complex<double>** ctot, const int
 
 	delete[] work;
 #else
-	ModuleBase::WARNING_QUIT("ModuleIO::distri_psi_nao_new","check the code without MPI.");
+	ModuleBase::WARNING_QUIT("ModuleIO::distri_wfc_nao_new","check the code without MPI.");
 #endif
     return;
 }
 
-void ModuleIO::distri_psi_nao_complex(std::complex<double> **ctot, std::complex<double> **cc)
+void ModuleIO::distri_wfc_nao_complex(std::complex<double> **ctot, std::complex<double> **cc)
 {
-    ModuleBase::TITLE("ModuleIO","distri_psi_nao_complex");
+    ModuleBase::TITLE("ModuleIO","distri_wfc_nao_complex");
 #ifdef __MPI
 
     MPI_Status status;
@@ -598,7 +598,7 @@ void ModuleIO::distri_psi_nao_complex(std::complex<double> **ctot, std::complex<
     GlobalV::ofs_running << std::endl;
     */
 #else
-	ModuleBase::WARNING_QUIT("ModuleIO::distri_psi_nao_complex","check the code without MPI.");
+	ModuleBase::WARNING_QUIT("ModuleIO::distri_wfc_nao_complex","check the code without MPI.");
 #endif
     return;
 }

@@ -1,5 +1,5 @@
-#ifndef PSI_NAO_H
-#define PSI_NAO_H
+#ifndef WFC_NAO_IO_H
+#define WFC_NAO_IO_H
 
 #include "../module_base/global_function.h"
 #include "../module_base/global_variable.h"
@@ -11,24 +11,24 @@
 // mohan add 2010-09-09
 namespace ModuleIO
 {
-	void write_psi_nao(const std::string &name, double** ctot, const ModuleBase::matrix& ekb, const ModuleBase::matrix& wg);
-	void write_psi_nao_complex(const std::string &name, std::complex<double>** ctot, const int &ik, const ModuleBase::matrix& ekb, const ModuleBase::matrix& wg);
+	void write_wfc_nao(const std::string &name, double** ctot, const ModuleBase::matrix& ekb, const ModuleBase::matrix& wg);
+	void write_wfc_nao_complex(const std::string &name, std::complex<double>** ctot, const int &ik, const ModuleBase::matrix& ekb, const ModuleBase::matrix& wg);
 
-	void distri_psi_nao_complex(std::complex<double>** ctot, std::complex<double> **cc);
+	void distri_wfc_nao_complex(std::complex<double>** ctot, std::complex<double> **cc);
 
-    void distri_psi_nao_new(double** ctot, const int& is,
+    void distri_wfc_nao_new(double** ctot, const int& is,
         const Parallel_Orbitals* ParaV, psi::Psi<double>* psid);
-    void distri_psi_nao_complex_new(std::complex<double>** ctot, const int& ik,
+    void distri_wfc_nao_complex_new(std::complex<double>** ctot, const int& ik,
         const Parallel_Orbitals* ParaV, psi::Psi<std::complex<double>>* psi);
 
-    int read_psi_nao(
+    int read_wfc_nao(
         double** ctot, 
         const int& is,
         const Parallel_Orbitals* ParaV, 
         psi::Psi<double>* psid,
         elecstate::ElecState* pelec);
 
-    int read_psi_nao_complex(
+    int read_wfc_nao_complex(
         std::complex<double>** ctot, 
         const int& ik,
         const Parallel_Orbitals* ParaV, 

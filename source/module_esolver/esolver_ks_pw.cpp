@@ -1,6 +1,6 @@
 #include "esolver_ks_pw.h"
 #include <iostream>
-#include "../module_io/psi_pw.h"
+#include "../module_io/wfc_pw_io.h"
 
 //--------------temporary----------------------------
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
@@ -464,7 +464,7 @@ namespace ModuleESolver
                 ssw << GlobalV::global_out_dir << "WAVEFUNC";
                 // mohan update 2011-02-21
                 //qianrui update 2020-10-17
-                ModuleIO::write_psi_pw(ssw.str(), this->psi[0], &GlobalC::kv, GlobalC::wfcpw);
+                ModuleIO::write_wfc_pw(ssw.str(), this->psi[0], &GlobalC::kv, GlobalC::wfcpw);
                 //ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running,"write wave functions into file WAVEFUNC.dat");
             }
         }

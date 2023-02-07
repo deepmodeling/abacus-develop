@@ -2,7 +2,7 @@
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
-#include "module_io/psi_pw.h"
+#include "module_io/wfc_pw_io.h"
 #include "module_io/write_wfc_r.h"
 #include "module_io/rho.h"
 
@@ -120,7 +120,7 @@ void IState_Envelope::begin(const psi::Psi<double>* psid, Local_Orbital_wfc& low
             ssw << GlobalV::global_out_dir << "WAVEFUNC";
             std::cout << " write G-space wavefunction into \"" <<
                 GlobalV::global_out_dir << "/" << ssw.str() << "\" files." << std::endl;
-            ModuleIO::write_psi_pw(ssw.str(), pw_wfc_g, &GlobalC::kv, GlobalC::wfcpw);
+            ModuleIO::write_wfc_pw(ssw.str(), pw_wfc_g, &GlobalC::kv, GlobalC::wfcpw);
         }
         if (out_wfc_r)
         {
@@ -237,7 +237,7 @@ void IState_Envelope::begin(const psi::Psi<std::complex<double>>* psi, Local_Orb
             ssw << GlobalV::global_out_dir << "WAVEFUNC";
             std::cout << " write G-space wavefunction into \"" <<
                 GlobalV::global_out_dir << "/" << ssw.str() << "\" files." << std::endl;
-            ModuleIO::write_psi_pw(ssw.str(), pw_wfc_g, &GlobalC::kv, GlobalC::wfcpw);
+            ModuleIO::write_wfc_pw(ssw.str(), pw_wfc_g, &GlobalC::kv, GlobalC::wfcpw);
         }
         if (out_wf_r)
         {

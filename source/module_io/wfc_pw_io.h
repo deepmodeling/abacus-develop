@@ -6,9 +6,9 @@
 
 namespace ModuleIO
 {
-	void write_psi_pw( const std::string &fn, const psi::Psi<std::complex<double>> &psi, const K_Vectors* p_kv, 
+	void write_wfc_pw( const std::string &fn, const psi::Psi<std::complex<double>> &psi, const K_Vectors* p_kv, 
                     const ModulePW::PW_Basis_K *wfc_basis);
-	void read_psi_pw(  const std::string &fn, const psi::Psi<std::complex<double>> &psi, const K_Vectors* p_kv, 
+	void read_wfc_pw(  const std::string &fn, const psi::Psi<std::complex<double>> &psi, const K_Vectors* p_kv, 
                     const ModulePW::PW_Basis_K *wfc_basis);
 }
 

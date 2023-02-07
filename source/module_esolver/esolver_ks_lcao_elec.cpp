@@ -8,6 +8,7 @@
 #include "module_cell/module_neighbor/sltk_atom_arrange.h"
 #include "module_io/istate_charge.h"
 #include "module_io/istate_envelope.h"
+#include "module_io/write_HS_R.h"
 //
 #include "src_ri/exx_abfs-jle.h"
 #include "src_ri/exx_opt_orb.h"
@@ -449,7 +450,7 @@ namespace ModuleESolver
             this->LM.allocate_HS_R(this->orb_con.ParaV.nnr);
             this->LM.zeros_HSR('S');
             this->UHM.genH.calculate_S_no(this->LM.SlocR.data());
-            this->output_SR("SR.csr");
+            ModuleIO::output_SR("SR.csr",this->UHM);
 
         }
     }

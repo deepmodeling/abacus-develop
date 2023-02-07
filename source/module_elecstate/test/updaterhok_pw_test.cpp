@@ -13,7 +13,7 @@
 
 #include "updaterhok_pw_test.h"
 #include "module_io/berryphase.h"
-#include "module_io/psi_pw.h"
+#include "module_io/wfc_pw_io.h"
 bool berryphase::berry_phase_flag;
 using::testing::AtLeast;
 using::testing::Assign;
@@ -329,7 +329,7 @@ TEST_F(EState,RhoPW)
     {
         std::stringstream ssw;
         ssw << "WFC";
-        ModuleIO::write_psi_pw(ssw.str(), psi[0], &GlobalC::kv, GlobalC::wfcpw);
+        ModuleIO::write_wfc_pw(ssw.str(), psi[0], &GlobalC::kv, GlobalC::wfcpw);
 	    remove("WFC1.dat");
     }
 

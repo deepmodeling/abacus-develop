@@ -3,6 +3,7 @@
 #include "module_io/cal_r_overlap_R.h"
 #include "module_io/density_matrix.h"
 #include "module_io/rho.h"
+#include "module_io/write_HS_R.h"
 
 //--------------temporary----------------------------
 #include "module_base/blas_connector.h"
@@ -412,7 +413,7 @@ void ESolver_KS_LCAO_TDDFT::afterscf(const int istep)
     {
         if (!(GlobalV::CALCULATION == "md" && (istep % hsolver::HSolverLCAO::out_hsR_interval != 0)))
         {
-            this->output_HS_R(istep, this->pelec->pot->get_effective_v()); // LiuXh add 2019-07-15
+            ModuleIO::output_HS_R(istep, this->pelec->pot->get_effective_v(), this->UHM); // LiuXh add 2019-07-15
         }
     }
 

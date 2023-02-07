@@ -15,7 +15,7 @@ list(APPEND objects
     rwstream.cpp
     to_wannier90.cpp
     unk_overlap_pw.cpp
-    psi_pw.cpp
+    wfc_pw_io.cpp
     winput.cpp
     write_input.cpp    
     write_rho.cpp
@@ -32,8 +32,8 @@ if(ENABLE_LCAO)
       mulliken_charge.cpp
       read_dm.cpp
       unk_overlap_lcao.cpp
-      psi_nao.cpp
-      psi_nao_para.cpp
+      wfc_nao_io.cpp
+      wfc_nao_para.cpp
       write_HS.cpp
       write_HS_sparse.cpp
       write_HS_single_R.cpp

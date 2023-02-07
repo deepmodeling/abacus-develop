@@ -1,11 +1,11 @@
-#include "psi_nao.h"
+#include "wfc_nao_io.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_base/timer.h"
 
-void ModuleIO::write_psi_nao(const std::string &name, double **ctot, const ModuleBase::matrix& ekb, const ModuleBase::matrix& wg)
+void ModuleIO::write_wfc_nao(const std::string &name, double **ctot, const ModuleBase::matrix& ekb, const ModuleBase::matrix& wg)
 {
-    ModuleBase::TITLE("ModuleIO","write_psi_nao");
-    ModuleBase::timer::tick("ModuleIO","write_psi_nao");
+    ModuleBase::TITLE("ModuleIO","write_wfc_nao");
+    ModuleBase::timer::tick("ModuleIO","write_wfc_nao");
 
     std::ofstream ofs;
     if (GlobalV::DRANK==0)
@@ -13,7 +13,7 @@ void ModuleIO::write_psi_nao(const std::string &name, double **ctot, const Modul
         ofs.open(name.c_str());
         if (!ofs)
         {
-            ModuleBase::WARNING("Pdiag_Basic::write_psi_nao","Can't write local orbital wave functions.");
+            ModuleBase::WARNING("Pdiag_Basic::write_wfc_nao","Can't write local orbital wave functions.");
         }
         ofs << GlobalV::NBANDS << " (number of bands)" << std::endl;
         ofs << GlobalV::NLOCAL << " (number of orbitals)";
@@ -36,14 +36,14 @@ void ModuleIO::write_psi_nao(const std::string &name, double **ctot, const Modul
         ofs.close();
     }
 
-    ModuleBase::timer::tick("ModuleIO","write_psi_nao");
+    ModuleBase::timer::tick("ModuleIO","write_wfc_nao");
     return;
 }
 
-void ModuleIO::write_psi_nao_complex(const std::string &name, std::complex<double> **ctot, const int &ik, const ModuleBase::matrix& ekb, const ModuleBase::matrix& wg)
+void ModuleIO::write_wfc_nao_complex(const std::string &name, std::complex<double> **ctot, const int &ik, const ModuleBase::matrix& ekb, const ModuleBase::matrix& wg)
 {
-    ModuleBase::TITLE("ModuleIO","write_psi_nao_complex");
-    ModuleBase::timer::tick("ModuleIO","write_psi_nao_complex");
+    ModuleBase::TITLE("ModuleIO","write_wfc_nao_complex");
+    ModuleBase::timer::tick("ModuleIO","write_wfc_nao_complex");
 
     std::ofstream ofs;
     if (GlobalV::DRANK==0)
@@ -51,7 +51,7 @@ void ModuleIO::write_psi_nao_complex(const std::string &name, std::complex<doubl
         ofs.open(name.c_str());
         if (!ofs)
         {
-            ModuleBase::WARNING("Pdiag_Basic::write_psi_nao","Can't write local orbital wave functions.");
+            ModuleBase::WARNING("Pdiag_Basic::write_wfc_nao","Can't write local orbital wave functions.");
         }
         ofs << std::setprecision(25);
 		ofs << ik+1 << " (index of k points)" << std::endl;
@@ -76,6 +76,6 @@ void ModuleIO::write_psi_nao_complex(const std::string &name, std::complex<doubl
         ofs.close();
     }
 
-    ModuleBase::timer::tick("ModuleIO","write_psi_nao_complex");
+    ModuleBase::timer::tick("ModuleIO","write_wfc_nao_complex");
     return;
 }
