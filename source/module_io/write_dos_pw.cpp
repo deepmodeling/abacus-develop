@@ -12,7 +12,7 @@ void ModuleIO::write_dos_pw(const elecstate::ElecState* pelec,
 		const double &dos_scale,
 		const double &ef) 
 {
-	ModuleBase::TITLE("energy","write_dos_pw");
+	ModuleBase::TITLE("ModuleIO","write_dos_pw");
 
 	if(out_dos !=0 || out_band !=0)
     {

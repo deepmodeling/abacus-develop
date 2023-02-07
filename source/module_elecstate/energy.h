@@ -27,14 +27,6 @@ class energy
     energy();
     ~energy();
 
-	//calculate density of states(DOS) and partial density of states(PDOS) and mulliken charge for LCAO base
-	void perform_dos(
-		const psi::Psi<double> *psid,
-		const psi::Psi<std::complex<double>> *psi,
-		LCAO_Hamilt &uhm,
-		const elecstate::ElecState* pelec);
-	//calculate density of states(DOS) for PW base
-
     double etot;    	   // the total energy of the solid
     double ef;             // the fermi energy
     double ef_up;		   // spin up fermi energy

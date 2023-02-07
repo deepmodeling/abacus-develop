@@ -4,6 +4,8 @@
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_hamilt_pw/hamilt_pwdft/wavefunc.h"
 #include "dos.h"
+#include "write_dos_lcao.h"
+#include "write_orb_info.h"
 #ifdef __LCAO
 #include "module_cell/module_neighbor/sltk_atom_arrange.h" //qifeng-2019-01-21
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_gen_fixedH.h"
@@ -18,20 +20,27 @@
 #include "module_base/scalapack_connector.h"
 #include "src_parallel/parallel_reduce.h"
 
-#include "write_orb_info.h"
-
 #include <vector>
 #ifdef __MPI
 #include <mpi.h>
 #endif
 #include <sys/time.h>
 
-void energy::perform_dos(const psi::Psi<double>* psid,
-                         const psi::Psi<std::complex<double>>* psi,
-                         LCAO_Hamilt& uhm,
-                         const elecstate::ElecState* pelec)
+void ModuleIO::write_dos_lcao(const psi::Psi<double>* psid,
+        const psi::Psi<std::complex<double>>* psi,
+        LCAO_Hamilt& uhm,
+        const elecstate::ElecState* pelec,
+        const int &out_dos, 
+		const int &out_band,
+		const int &out_proj_band, 
+		const double &dos_edelta_ev,
+		const double &bcoeff,
+		const double &dos_scale,
+		const double &ef,
+		const double &ef_up,
+		const double &ef_dw)
 {
-    ModuleBase::TITLE("energy", "perform_dos");
+    ModuleBase::TITLE("ModuleIO", "write_dos_lcao");
 
     const Parallel_Orbitals* pv = uhm.LM->ParaV;
 
@@ -128,7 +137,7 @@ void energy::perform_dos(const psi::Psi<double>* psid,
     if (GlobalV::NSPIN == 2)
         nspin0 = 2;
 
-    if (this->out_dos)
+    if (out_dos)
     {
         // find the maximal and minimal band energy.
         double emax = pelec->ekb(0, 0);
@@ -166,7 +175,7 @@ void energy::perform_dos(const psi::Psi<double>* psid,
         //  output the PDOS file.////qifeng-2019-01-21
         // 		atom_arrange::set_sr_NL();
         //		atom_arrange::search( GlobalV::SEARCH_RADIUS );//qifeng-2019-01-21
-        const double de_ev = this->dos_edelta_ev;
+        const double de_ev = dos_edelta_ev;
 
         const int npoints = static_cast<int>(std::floor((emax - emin) / de_ev));
 
@@ -514,7 +523,7 @@ void energy::perform_dos(const psi::Psi<double>* psid,
                                GlobalC::kv.isk,
                                ss.str(),
                                ss1.str(),
-                               this->dos_edelta_ev,
+                               dos_edelta_ev,
                                emax,
                                emin,
                                GlobalC::kv.nks,
@@ -527,12 +536,12 @@ void energy::perform_dos(const psi::Psi<double>* psid,
 
         if (nspin0 == 1)
         {
-            GlobalV::ofs_running << " Fermi energy is " << this->ef << " Rydberg" << std::endl;
+            GlobalV::ofs_running << " Fermi energy is " << ef << " Rydberg" << std::endl;
         }
         else if (nspin0 == 2)
         {
-            GlobalV::ofs_running << " Fermi energy (spin = 1) is " << this->ef_up << " Rydberg" << std::endl;
-            GlobalV::ofs_running << " Fermi energy (spin = 2) is " << this->ef_dw << " Rydberg" << std::endl;
+            GlobalV::ofs_running << " Fermi energy (spin = 1) is " << ef_up << " Rydberg" << std::endl;
+            GlobalV::ofs_running << " Fermi energy (spin = 2) is " << ef_dw << " Rydberg" << std::endl;
         }
 
         // int nks;
@@ -549,7 +558,7 @@ void energy::perform_dos(const psi::Psi<double>* psid,
             }
         }
     }
-    if (this->out_band) // pengfei 2014-10-13
+    if (out_band) // pengfei 2014-10-13
     {
         int nks = 0;
         if (nspin0 == 1)
@@ -566,11 +575,11 @@ void energy::perform_dos(const psi::Psi<double>* psid,
             std::stringstream ss2;
             ss2 << GlobalV::global_out_dir << "BANDS_" << is + 1 << ".dat";
             GlobalV::ofs_running << "\n Output bands in file: " << ss2.str() << std::endl;
-            ModuleIO::nscf_band(is, ss2.str(), nks, GlobalV::NBANDS, this->ef * 0, pelec->ekb);
+            ModuleIO::nscf_band(is, ss2.str(), nks, GlobalV::NBANDS, ef * 0, pelec->ekb);
         }
     } // out_band
 
-    if (this->out_proj_band) // Projeced band structure added by jiyy-2022-4-20
+    if (out_proj_band) // Projeced band structure added by jiyy-2022-4-20
     {
         int nks = 0;
         if (nspin0 == 1)

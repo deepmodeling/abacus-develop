@@ -4,6 +4,7 @@
 #include "module_io/write_dm_sparse.h"
 #include "module_io/rho_io.h"
 #include "module_io/write_HS_R.h"
+#include "module_io/write_dos_lcao.h"
 
 //--------------temporary----------------------------
 #include "module_base/global_function.h"
@@ -230,7 +231,19 @@ void ESolver_KS_LCAO::postprocess()
     GlobalV::ofs_running << " !FINAL_ETOT_IS " << GlobalC::en.etot * ModuleBase::Ry_to_eV << " eV" << std::endl;
     GlobalV::ofs_running << " --------------------------------------------\n\n" << std::endl;
 
-    GlobalC::en.perform_dos(this->psid, this->psi, this->UHM, this->pelec);
+    ModuleIO::write_dos_lcao(this->psid, 
+        this->psi, 
+        this->UHM, 
+        this->pelec,
+        GlobalC::en.out_dos,
+        GlobalC::en.out_band,
+        GlobalC::en.out_proj_band,
+        GlobalC::en.dos_edelta_ev,
+        GlobalC::en.bcoeff,
+        GlobalC::en.dos_scale,
+        GlobalC::en.ef,
+        GlobalC::en.ef_up,
+        GlobalC::en.ef_dw);
 }
 
 void ESolver_KS_LCAO::Init_Basis_lcao(ORB_control& orb_con, Input& inp, UnitCell& ucell)

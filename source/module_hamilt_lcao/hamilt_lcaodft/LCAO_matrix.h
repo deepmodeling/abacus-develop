@@ -12,7 +12,6 @@
 
 class LCAO_Matrix
 {
-    friend class energy;
     friend class Mulliken_Charge;
 
     public:
@@ -28,11 +27,11 @@ class LCAO_Matrix
 
     Parallel_Orbitals *ParaV;
 
+    void allocate_HS_k(const long &nloc);
+
 private:
 
     void allocate_HS_gamma(const long &nloc);
-
-    void allocate_HS_k(const long &nloc);
 
 
     public:
