@@ -1,4 +1,5 @@
 #include "esolver_of.h"
+#include "module_io/rho_io.h"
 
 //-----------temporary-------------------------
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
@@ -904,9 +905,7 @@ void ESolver_OF::afterOpt()
             std::stringstream ssc;
             std::stringstream ss1;
             ssc << GlobalV::global_out_dir << "tmp" << "_SPIN" << is + 1 << "_CHG";
-            pelec->charge->write_rho(pelec->charge->rho[is], is, iter, ssc.str(), 3);//mohan add 2007-10-17
-            ss1 << GlobalV::global_out_dir << "tmp" << "_SPIN" << is + 1 << "_CHG.cube";
-            pelec->charge->write_rho_cube(pelec->charge->rho[is], is, ss1.str(), 3);
+            ModuleIO::write_rho(pelec->charge->rho[is], is, iter, ssc.str(), 3);//mohan add 2007-10-17
         }
     }
 }

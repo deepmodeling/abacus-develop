@@ -1,7 +1,7 @@
 #include "local_orbital_charge.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_base/blas_connector.h"
-#include "module_io/wf_local.h"
+#include "module_io/read_wfc_nao.h"
 #include "src_parallel/parallel_reduce.h"
 #include "src_parallel/parallel_common.h"
 #include "module_base/memory.h"
@@ -310,7 +310,7 @@ void Local_Orbital_Charge::gamma_file(psi::Psi<double>* psid, Local_Orbital_wfc 
 	{
 
 		GlobalV::ofs_running << " Read in wave functions " << is << std::endl;
-		error = WF_Local::read_lowf( ctot , is, this->ParaV, psid, pelec);
+		error = ModuleIO::read_wfc_nao( ctot , is, this->ParaV, psid, pelec);
 #ifdef __MPI
 		Parallel_Common::bcast_int(error);
 #endif

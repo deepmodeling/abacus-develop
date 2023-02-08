@@ -1,0 +1,41 @@
+ATOMIC_SPECIES
+Cs 1 Cs_ONCV_PBE_FR-1.0.upf upf201
+Pb 1 Pb_ONCV_PBE_FR-1.0.upf upf201
+I 1 I_ONCV_PBE_FR-1.1.upf upf201
+
+NUMERICAL_ORBITAL
+Cs_gga_10au_100Ry_4s2p1d.orb
+Pb_gga_7au_100Ry_2s2p2d1f.orb
+I_gga_7au_100Ry_2s2p2d1f.orb
+
+LATTICE_CONSTANT
+1.88972613
+
+LATTICE_VECTORS
+6.29158773173 -5.96139346257e-13 5.44227741356e-14 #latvec1
+-5.9613934637e-13 6.29158773173 3.04139407466e-15 #latvec2
+5.44227867363e-14 3.04121878165e-15 6.29158773173 #latvec3
+
+ATOMIC_POSITIONS
+Direct
+
+Cs #label
+0 #magnetism
+1 #number of atoms
+0.5  0.5  0.5  
+
+Pb #label
+0 #magnetism
+1 #number of atoms
+1  1  1  
+
+I #label
+0 #magnetism
+3 #number of atoms
+8.33458276035e-15  1.4825841766e-15  0.5  
+9.23733447273e-15  0.5  1.84769927088e-14 
+0.5  1  1  
+
+NUMERICAL_DESCRIPTOR
+jle.orb
+

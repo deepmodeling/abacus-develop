@@ -336,7 +336,8 @@ OBJS_IO=input.o\
     berryphase.o\
     bessel_basis.o\
     cal_test.o\
-    energy_dos_pw.o\
+    write_occ.o\
+    write_dos_pw.o\
     dos.o\
     numerical_descriptor.o\
     numerical_basis.o\
@@ -347,24 +348,27 @@ OBJS_IO=input.o\
     rwstream.o\
     to_wannier90.o\
     unk_overlap_pw.o\
-    wf_io.o\
+    write_wfc_pw.o\
     winput.o\
     write_input.o\
     write_rho.o\
-    write_rho_cube.o\
-	write_wfc_realspace.o\
+    write_wfc_r.o\
 
 OBJS_IO_LCAO=cal_r_overlap_R.o\
-      energy_dos.o\
+      write_orb_info.o\
+      write_dos_lcao.o\
       istate_charge.o\
       istate_envelope.o\
       mulliken_charge.o\
       read_dm.o\
       unk_overlap_lcao.o\
-      wf_local.o\
+      read_wfc_nao.o\
+      write_wfc_nao.o\
       write_HS.o\
+      write_HS_sparse.o\
       write_HS_R.o\
       write_dm.o\
+      write_dm_sparse.o\
 
 OBJS_LCAO=DM_gamma.o\
       DM_k.o\

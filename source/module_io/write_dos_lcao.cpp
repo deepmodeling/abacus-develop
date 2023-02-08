@@ -4,6 +4,8 @@
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_hamilt_pw/hamilt_pwdft/wavefunc.h"
 #include "dos.h"
+#include "write_dos_lcao.h"
+#include "write_orb_info.h"
 #ifdef __LCAO
 #include "module_cell/module_neighbor/sltk_atom_arrange.h" //qifeng-2019-01-21
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_gen_fixedH.h"
@@ -24,12 +26,21 @@
 #endif
 #include <sys/time.h>
 
-void energy::perform_dos(const psi::Psi<double>* psid,
-                         const psi::Psi<std::complex<double>>* psi,
-                         LCAO_Hamilt& uhm,
-                         const elecstate::ElecState* pelec)
+void ModuleIO::write_dos_lcao(const psi::Psi<double>* psid,
+        const psi::Psi<std::complex<double>>* psi,
+        LCAO_Hamilt& uhm,
+        const elecstate::ElecState* pelec,
+        const int &out_dos, 
+		const int &out_band,
+		const int &out_proj_band, 
+		const double &dos_edelta_ev,
+		const double &bcoeff,
+		const double &dos_scale,
+		const double &ef,
+		const double &ef_up,
+		const double &ef_dw)
 {
-    ModuleBase::TITLE("energy", "perform_dos");
+    ModuleBase::TITLE("ModuleIO", "write_dos_lcao");
 
     const Parallel_Orbitals* pv = uhm.LM->ParaV;
 
@@ -126,7 +137,7 @@ void energy::perform_dos(const psi::Psi<double>* psid,
     if (GlobalV::NSPIN == 2)
         nspin0 = 2;
 
-    if (this->out_dos)
+    if (out_dos)
     {
         // find the maximal and minimal band energy.
         double emax = pelec->ekb(0, 0);
@@ -164,7 +175,7 @@ void energy::perform_dos(const psi::Psi<double>* psid,
         //  output the PDOS file.////qifeng-2019-01-21
         // 		atom_arrange::set_sr_NL();
         //		atom_arrange::search( GlobalV::SEARCH_RADIUS );//qifeng-2019-01-21
-        const double de_ev = this->dos_edelta_ev;
+        const double de_ev = dos_edelta_ev;
 
         const int npoints = static_cast<int>(std::floor((emax - emin) / de_ev));
 
@@ -496,7 +507,7 @@ void energy::perform_dos(const psi::Psi<double>* psid,
                 out << "</pdos>" << std::endl;
                 out.close();
             }
-            this->print_orbital_file();
+            ModuleIO::write_orb_info();
         }
         delete[] pdos;
 
@@ -508,11 +519,11 @@ void energy::perform_dos(const psi::Psi<double>* psid,
             std::stringstream ss1;
             ss1 << GlobalV::global_out_dir << "DOS" << is + 1 << "_smearing.dat";
 
-            Dos::calculate_dos(is,
+            ModuleIO::calculate_dos(is,
                                GlobalC::kv.isk,
                                ss.str(),
                                ss1.str(),
-                               this->dos_edelta_ev,
+                               dos_edelta_ev,
                                emax,
                                emin,
                                GlobalC::kv.nks,
@@ -525,12 +536,12 @@ void energy::perform_dos(const psi::Psi<double>* psid,
 
         if (nspin0 == 1)
         {
-            GlobalV::ofs_running << " Fermi energy is " << this->ef << " Rydberg" << std::endl;
+            GlobalV::ofs_running << " Fermi energy is " << ef << " Rydberg" << std::endl;
         }
         else if (nspin0 == 2)
         {
-            GlobalV::ofs_running << " Fermi energy (spin = 1) is " << this->ef_up << " Rydberg" << std::endl;
-            GlobalV::ofs_running << " Fermi energy (spin = 2) is " << this->ef_dw << " Rydberg" << std::endl;
+            GlobalV::ofs_running << " Fermi energy (spin = 1) is " << ef_up << " Rydberg" << std::endl;
+            GlobalV::ofs_running << " Fermi energy (spin = 2) is " << ef_dw << " Rydberg" << std::endl;
         }
 
         // int nks;
@@ -543,11 +554,11 @@ void energy::perform_dos(const psi::Psi<double>* psid,
             {
                 std::stringstream ss3;
                 ss3 << GlobalV::global_out_dir << "Fermi_Surface_" << i << ".bxsf";
-                Dos::nscf_fermi_surface(ss3.str(), GlobalC::kv.nks, GlobalV::NBANDS, pelec->ekb);
+                ModuleIO::nscf_fermi_surface(ss3.str(), GlobalC::kv.nks, GlobalV::NBANDS, pelec->ekb);
             }
         }
     }
-    if (this->out_band) // pengfei 2014-10-13
+    if (out_band) // pengfei 2014-10-13
     {
         int nks = 0;
         if (nspin0 == 1)
@@ -564,11 +575,11 @@ void energy::perform_dos(const psi::Psi<double>* psid,
             std::stringstream ss2;
             ss2 << GlobalV::global_out_dir << "BANDS_" << is + 1 << ".dat";
             GlobalV::ofs_running << "\n Output bands in file: " << ss2.str() << std::endl;
-            Dos::nscf_band(is, ss2.str(), nks, GlobalV::NBANDS, this->ef * 0, pelec->ekb);
+            ModuleIO::nscf_band(is, ss2.str(), nks, GlobalV::NBANDS, ef * 0, pelec->ekb);
         }
     } // out_band
 
-    if (this->out_proj_band) // Projeced band structure added by jiyy-2022-4-20
+    if (out_proj_band) // Projeced band structure added by jiyy-2022-4-20
     {
         int nks = 0;
         if (nspin0 == 1)
@@ -851,41 +862,7 @@ void energy::perform_dos(const psi::Psi<double>* psid,
                 out.close();
             }
         } // is
-        this->print_orbital_file();
+        ModuleIO::write_orb_info();
     } // out_proj_band
-    return;
-}
-
-void energy::print_orbital_file(void)
-{
-    std::stringstream os;
-    os << GlobalV::global_out_dir << "Orbital";
-    std::ofstream out(os.str().c_str());
-    out << std::setw(5) << "io" << std::setw(8) << "spec" << std::setw(5) << "l" << std::setw(5) << "m" << std::setw(5)
-        << "z" << std::setw(5) << "sym" << std::endl;
-
-    for (int i = 0; i < GlobalC::ucell.nat; i++)
-    {
-        int t = GlobalC::ucell.iat2it[i];
-        Atom* atom1 = &GlobalC::ucell.atoms[t];
-        for (int j = 0; j < atom1->nw; ++j)
-        {
-            const int L1 = atom1->iw2l[j];
-            const int N1 = atom1->iw2n[j];
-            const int m1 = atom1->iw2m[j];
-            out << std::setw(5) << i << std::setw(8) << GlobalC::ucell.atoms[t].label << std::setw(5) << L1
-                << std::setw(5) << m1 << std::setw(5) << N1 + 1 << std::setw(15) << GlobalC::en.Name_Angular[L1][m1]
-                << std::endl;
-        }
-    }
-    out << std::endl << std::endl;
-    out << std::setw(5) << "io" << std::setw(2) << "=" << std::setw(2) << "Orbital index in supercell" << std::endl;
-    out << std::setw(5) << "spec" << std::setw(2) << "=" << std::setw(2) << "Atomic species label" << std::endl;
-    out << std::setw(5) << "l" << std::setw(2) << "=" << std::setw(2) << "Angular mumentum quantum number" << std::endl;
-    out << std::setw(5) << "m" << std::setw(2) << "=" << std::setw(2) << "Magnetic quantum number" << std::endl;
-    out << std::setw(5) << "z" << std::setw(2) << "=" << std::setw(2) << "Zeta index of orbital" << std::endl;
-    out << std::setw(5) << "sym" << std::setw(2) << "=" << std::setw(2) << "Symmetry name of real orbital" << std::endl;
-    out.close();
-
     return;
 }

@@ -29,6 +29,7 @@
 #include <vector>
 #include "module_base/timer.h"
 #include "module_base/tool_threading.h"
+#include "module_io/rho_io.h"
 
 Charge::Charge()
 {
@@ -157,7 +158,7 @@ void Charge::init_rho()
             ssc << GlobalV::global_readin_dir << "SPIN" << is + 1 << "_CHG";
             GlobalV::ofs_running << ssc.str() << std::endl;
             // mohan update 2012-02-10
-            if (this->read_rho(is, ssc.str(), this->rho[is]))
+            if (ModuleIO::read_rho(is, ssc.str(), this->rho[is], this->prenspin))
             {
                 GlobalV::ofs_running << " Read in the charge density: " << ssc.str() << std::endl;
             }
@@ -212,7 +213,7 @@ void Charge::init_rho()
 				ssc << GlobalV::global_readin_dir << "SPIN" << is + 1 << "_TAU";
 				GlobalV::ofs_running << " try to read kinetic energy density from file : " << ssc.str() << std::endl;
 				// mohan update 2012-02-10
-				if (this->read_rho(is, ssc.str(), this->kin_r[is]))
+				if (ModuleIO::read_rho(is, ssc.str(), this->kin_r[is], this->prenspin))
 				{
 					GlobalV::ofs_running << " Read in the kinetic energy density: " << ssc.str() << std::endl;
 				}

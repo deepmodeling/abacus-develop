@@ -389,7 +389,7 @@ void cal_r_overlap_R::out_rR(const int &istep)
 
                 if (rR_nonzero_num[direction])
                 {
-                    HS_Matrix::output_single_R(ofs_tem1, psi_r_psi_sparse[direction], sparse_threshold, binary, *(this->ParaV));
+                    ModuleIO::output_single_R(ofs_tem1, psi_r_psi_sparse[direction], sparse_threshold, binary, *(this->ParaV));
                 }
                 else
                 {
@@ -589,7 +589,7 @@ void cal_r_overlap_R::out_rR_other(const int &istep, const std::set<Abfs::Vector
 
             if (rR_nonzero_num[direction])
             {
-                HS_Matrix::output_single_R(out_r, psi_r_psi_sparse[direction], sparse_threshold, binary, *(this->ParaV));
+                ModuleIO::output_single_R(out_r, psi_r_psi_sparse[direction], sparse_threshold, binary, *(this->ParaV));
             }
             else
             {
