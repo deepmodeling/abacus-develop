@@ -137,10 +137,11 @@ void IState_Charge::begin(Gint_Gamma &gg, elecstate::ElecState* pelec)
 			pelec->charge->save_rho_before_sum_band(); //xiaohui add 2014-12-09
 			std::stringstream ss;
 			std::stringstream ss1;
-			ss << GlobalV::global_out_dir << "BAND" << ib + 1 << "_CHG";
+			ss << GlobalV::global_out_dir << "BAND" << ib + 1;
 			// 0 means definitely output charge density.
 			for(int is=0; is<GlobalV::NSPIN; is++)
 			{
+				ss<<"_SPIN"<<is <<"_CHG";
 				bool for_plot = true;
 				ModuleIO::write_rho(pelec->charge->rho_save[is], is, 0, ss.str(), 3, for_plot );
 			}
