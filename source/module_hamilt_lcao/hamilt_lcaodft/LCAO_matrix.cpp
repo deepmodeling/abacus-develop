@@ -3,7 +3,7 @@
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_base/tool_threading.h"
 #ifdef __DEEPKS
-#include "module_deepks/LCAO_deepks.h"
+#include "module_hamilt_lcao/module_deepks/LCAO_deepks.h"
 #endif
 
 LCAO_Matrix::LCAO_Matrix()

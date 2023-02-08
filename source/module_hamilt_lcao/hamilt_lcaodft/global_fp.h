@@ -1,7 +1,7 @@
 #ifndef GLOBAL_FP_H
 #define GLOBAL_FP_H
 
-#include "module_neighbor/sltk_grid_driver.h"
+#include "module_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_gint/grid_technique.h"
 #include "local_orbital_wfc.h"
 #include "local_orbital_charge.h"

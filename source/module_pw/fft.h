@@ -20,6 +20,7 @@
 #include <hip/hip_runtime.h>
 #endif
 
+//Temporary: we donot need psi. However some GPU ops are defined in psi, which should be moved into module_base or module_gpu
 #include "module_psi/psi.h"
 // #ifdef __MIX_PRECISION
 // #include "fftw3f.h"
@@ -63,11 +64,12 @@ public:
 
 public:
 	//init fftw_plans
-	void initplan(); 
-	void initplan_mpi();
+	void initplan();
+	// We have not support mpi fftw yet.
+	// void initplan_mpi();
 	//init fftwf_plans
-	void initplanf(); 
-	void initplanf_mpi();
+	void initplanf();
+	// void initplanf_mpi();
 
 public:
 	int fftnx=0, fftny=0;

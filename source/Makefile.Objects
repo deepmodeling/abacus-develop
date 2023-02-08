@@ -13,16 +13,13 @@ HEADERS = *.h
 
 VPATH=./src_global:\
 ./module_orbital:\
-./module_neighbor:\
-./module_symmetry:\
+./module_cell/module_neighbor:\
+./module_cell/module_symmetry:\
 ./module_cell:\
 ./module_base:\
 ./module_base/kernels:\
 ./module_md:\
 ./module_pw:\
-./module_hamilt_general/module_surchem:\
-./module_deepks:\
-./module_hamilt_general/module_xc:\
 ./module_esolver:\
 ./module_hsolver:\
 ./module_hsolver/kernels:\
@@ -35,23 +32,25 @@ VPATH=./src_global:\
 ./module_psi/kernels:\
 ./module_hamilt_general:\
 ./module_hamilt_general/module_ewald:\
+./module_hamilt_general/module_surchem:\
+./module_hamilt_general/module_xc:\
 ./module_hamilt_pw/hamilt_pwdft:\
-./module_hamilt_lcao/hamilt_lcaodft:\
-./module_hamilt_lcao/module_tddft:\
 ./module_hamilt_pw/hamilt_ofdft:\
 ./module_hamilt_pw/hamilt_stodft:\
 ./module_hamilt_pw/hamilt_pwdft/operator_pw:\
-./module_hamilt_lcao/hamilt_lcaodft/operator_lcao:\
 ./module_hamilt_pw/hamilt_pwdft/kernels:\
+./module_hamilt_lcao/hamilt_lcaodft:\
+./module_hamilt_lcao/module_tddft:\
+./module_hamilt_lcao/module_deepks:\
+./module_hamilt_lcao/module_dftu:\
+./module_hamilt_lcao/hamilt_lcaodft/operator_lcao:\
 ./module_gint:\
-./module_dftu:\
 ./module_relax:\
 ./module_relax/relax_old:\
 ./module_relax/relax_new:\
 ./module_hamilt_general/module_vdw:\
 ./module_io:\
 ./src_parallel:\
-./src_pdiag:\
 ./src_ri:\
 ./module_ri:\
 ./\
@@ -337,7 +336,8 @@ OBJS_IO=input.o\
     berryphase.o\
     bessel_basis.o\
     cal_test.o\
-    energy_dos_pw.o\
+    write_occ.o\
+    write_dos_pw.o\
     dos.o\
     numerical_descriptor.o\
     numerical_basis.o\
@@ -348,24 +348,27 @@ OBJS_IO=input.o\
     rwstream.o\
     to_wannier90.o\
     unk_overlap_pw.o\
-    wf_io.o\
+    write_wfc_pw.o\
     winput.o\
     write_input.o\
     write_rho.o\
-    write_rho_cube.o\
-	write_wfc_realspace.o\
+    write_wfc_r.o\
 
 OBJS_IO_LCAO=cal_r_overlap_R.o\
-      energy_dos.o\
+      write_orb_info.o\
+      write_dos_lcao.o\
       istate_charge.o\
       istate_envelope.o\
       mulliken_charge.o\
       read_dm.o\
       unk_overlap_lcao.o\
-      wf_local.o\
+      read_wfc_nao.o\
+      write_wfc_nao.o\
       write_HS.o\
+      write_HS_sparse.o\
       write_HS_R.o\
       write_dm.o\
+      write_dm_sparse.o\
 
 OBJS_LCAO=DM_gamma.o\
       DM_k.o\

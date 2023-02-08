@@ -3,7 +3,7 @@
 #include "../module_base/blas_connector.h"
 #include <cstring>
 
-#include "../src_external/src_test/src_global/matrix-test.h"		// Peize Lin test
+#include "../src_ri/test_code/matrix-test.h"		// Peize Lin test
 
 void Exx_Abfs::Inverse_Matrix_Double::init(const int &dim_in)
 {

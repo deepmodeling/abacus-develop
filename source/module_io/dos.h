@@ -5,7 +5,7 @@
 #include "../module_base/matrix.h"
 #include "module_gint/gint_gamma.h"
 
-namespace Dos
+namespace ModuleIO
 {
 	bool calculate_dos(
 		const int &is,
@@ -21,8 +21,6 @@ namespace Dos
 		const ModuleBase::matrix &wg,//weight of (kpoint,bands)
 		const int &nbands,// number of bands
 		const ModuleBase::matrix &ekb);//store energy for each k point and each band
-
-	void calculate_Mulliken(const std::string &fn, Gint_Gamma &gg, double** rho);
 
 	void nscf_band(
 		const int &is,

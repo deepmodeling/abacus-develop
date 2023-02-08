@@ -506,7 +506,7 @@ if(ENABLE_LCAO)
     )
   endif ()
   if(USE_CUSOLVER_LCAO)
-    target_link_libraries(pdiag)
+    target_link_libraries(diag_cusolver)
   endif()
 endif()
 

@@ -17,7 +17,7 @@
 #include "module_base/vector3.h"
 #include "module_base/abfs-vector3_order.h"
 #include "module_base/ylm.h"
-#include "write_HS.h"
+#include "write_HS_sparse.h"
 
 
 // output r_R matrix, added by Jingan
@@ -34,8 +34,8 @@ public:
     bool binary = false;
 
     void init(const Parallel_Orbitals &pv);
-    void out_rR();
-    void out_rR_other(const std::set<Abfs::Vector3_Order<int>> &output_R_coor);
+    void out_rR(const int &istep);
+    void out_rR_other(const int &istep, const std::set<Abfs::Vector3_Order<int>> &output_R_coor);
 
 private:
     void initialize_orb_table();

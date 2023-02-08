@@ -16,10 +16,10 @@
 
 #include "module_base/global_function.h"
 
-#include "src_external/src_test/test_function.h"				// Peize Lin test
-#include "src_external/src_test/src_ri/exx_abfs-unittest.h"
-#include "src_external/src_test/src_ri/make_gaunt_table-unittest.h"
-#include "src_external/src_test/src_global/element_basis_index-test.h"			// Peize Lin test 2016-04-05
+#include "src_ri/test_code/test_function.h"				// Peize Lin test
+#include "src_ri/test_code/exx_abfs-unittest.h"
+#include "src_ri/test_code/make_gaunt_table-unittest.h"
+#include "src_ri/test_code/element_basis_index-test.h"			// Peize Lin test 2016-04-05
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/global_fp.h"
 #include<sys/time.h>				// Peize Lin test

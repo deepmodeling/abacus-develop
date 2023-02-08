@@ -20,6 +20,7 @@ void ModuleBase::Global_File::make_dir_out(
     const std::string &suffix,
 	const std::string &calculation,
     const bool &out_hs,
+    const bool &out_r,
     const int rank,
     const bool &restart,
     const bool out_alllog)
@@ -43,7 +44,7 @@ void ModuleBase::Global_File::make_dir_out(
 
     GlobalV::global_out_dir = prefix + suffix + "/";
     GlobalV::global_stru_dir = GlobalV::global_out_dir + "STRU/";
-    GlobalV::global_matrix_dir = GlobalV::global_out_dir + "matrix_HS/";
+    GlobalV::global_matrix_dir = GlobalV::global_out_dir + "matrix/";
 
 #ifdef __MPI
     MPI_Barrier(MPI_COMM_WORLD);
@@ -123,7 +124,7 @@ void ModuleBase::Global_File::make_dir_out(
     }
 
     // make dir for HS matrix output in md calculation
-    if(out_hs && calculation == "md")
+    if((out_hs || out_r) && calculation == "md")
     {
         int make_dir_matrix = 0;
         std::string command1 =  "test -d " + GlobalV::global_matrix_dir + " || mkdir " + GlobalV::global_matrix_dir;

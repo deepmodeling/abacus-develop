@@ -4,7 +4,7 @@
 #include "module_pw/pw_basis.h"
 #include "src_parallel/parallel_grid.h"
 
-#include "module_symmetry/symmetry.h"
+#include "module_cell/module_symmetry/symmetry.h"
 
 class Symmetry_rho
 {

@@ -1,3 +1,6 @@
+add_subdirectory(module_symmetry)
+add_subdirectory(module_neighbor)
+
 add_library(
     cell
     OBJECT

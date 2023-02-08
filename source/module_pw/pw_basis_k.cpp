@@ -19,6 +19,7 @@ PW_Basis_K::~PW_Basis_K()
     delete[] igl2ig_k;
     delete[] gk2;
     delete[] ig2ixyz_k_;
+#if defined(__CUDA) || defined(__ROCM)
     if (GlobalV::device_flag == "gpu") {
         if (GlobalV::precision_flag == "single") {
             delmem_sd_op()(gpu_ctx, this->s_kvec_c);
@@ -34,13 +35,16 @@ PW_Basis_K::~PW_Basis_K()
         delmem_int_op()(gpu_ctx, this->d_igl2isz_k);
     }
     else {
+#endif
         if (GlobalV::precision_flag == "single") {
             delmem_sh_op()(cpu_ctx, this->s_kvec_c);
             delmem_sh_op()(cpu_ctx, this->s_gcar);
             delmem_sh_op()(cpu_ctx, this->s_gk2);
         }
         // There's no need to delete double pointers while in a CPU environment.
+#if defined(__CUDA) || defined(__ROCM)
     }
+#endif
 }
 
 void PW_Basis_K:: initparameters(
@@ -86,6 +90,7 @@ void PW_Basis_K:: initparameters(
     this->fftnxy = this->fftnx * this->fftny;
     this->fftnxyz = this->fftnxy * this->fftnz;
     this->distribution_type = distribution_type_in;
+#if defined(__CUDA) || defined(__ROCM)
     if (GlobalV::device_flag == "gpu") {
         if (GlobalV::precision_flag == "single") {
             resmem_sd_op()(gpu_ctx, this->s_kvec_c, this->nks * 3);
@@ -97,6 +102,7 @@ void PW_Basis_K:: initparameters(
         }
     }
     else {
+#endif
         if (GlobalV::precision_flag == "single") {
             resmem_sh_op()(cpu_ctx, this->s_kvec_c, this->nks * 3);
             castmem_d2s_h2h_op()(cpu_ctx, cpu_ctx, this->s_kvec_c, reinterpret_cast<double *>(&this->kvec_c[0][0]), this->nks * 3);
@@ -105,7 +111,9 @@ void PW_Basis_K:: initparameters(
             this->d_kvec_c = reinterpret_cast<double *>(&this->kvec_c[0][0]);
         }
         // There's no need to allocate double pointers while in a CPU environment.
+#if defined(__CUDA) || defined(__ROCM)
     }
+#endif
 }
 
 void PW_Basis_K::setupIndGk()
@@ -151,10 +159,12 @@ void PW_Basis_K::setupIndGk()
             }
         }
     }
+#if defined(__CUDA) || defined(__ROCM)
     if (GlobalV::device_flag == "gpu") {
         resmem_int_op()(gpu_ctx, this->d_igl2isz_k, this->npwk_max * this->nks);
         syncmem_int_h2d_op()(gpu_ctx, cpu_ctx, this->d_igl2isz_k, this->igl2isz_k, this->npwk_max * this->nks);
     }
+#endif
     return;
 }
 
@@ -210,6 +220,7 @@ void PW_Basis_K::collect_local_pw()
             this->gcar[ik * npwk_max + igl] = f * this->G;
         }
     }
+#if defined(__CUDA) || defined(__ROCM)
     if (GlobalV::device_flag == "gpu") {
         if (GlobalV::precision_flag == "single") {
             resmem_sd_op()(gpu_ctx, this->s_gk2, this->npwk_max * this->nks);
@@ -225,6 +236,7 @@ void PW_Basis_K::collect_local_pw()
         }
     }
     else {
+#endif
         if (GlobalV::precision_flag == "single") {
             resmem_sh_op()(cpu_ctx, this->s_gk2, this->npwk_max * this->nks, "PW_B_K::s_gk2");
             resmem_sh_op()(cpu_ctx, this->s_gcar, this->npwk_max * this->nks * 3, "PW_B_K::s_gcar");
@@ -236,7 +248,9 @@ void PW_Basis_K::collect_local_pw()
             this->d_gk2 = this->gk2;
         }
         // There's no need to allocate double pointers while in a CPU environment.
+#if defined(__CUDA) || defined(__ROCM)
     }
+#endif
 }
 
 ModuleBase::Vector3<double> PW_Basis_K:: cal_GplusK_cartesian(const int ik, const int ig) const {
@@ -293,7 +307,7 @@ int& PW_Basis_K::getigl2ig(const int ik, const int igl) const
 
 void PW_Basis_K::get_ig2ixyz_k()
 {
-
+    delete[] this->ig2ixyz_k_;
     this->ig2ixyz_k_ = new int [this->npwk_max * this->nks];
     ModuleBase::Memory::record("PW_B_K::ig2ixyz", sizeof(int) * this->npwk_max * this->nks);
     assert(gamma_only == false); //We only finish non-gamma_only fft on GPU temperarily.
@@ -310,10 +324,12 @@ void PW_Basis_K::get_ig2ixyz_k()
             ig2ixyz_k_[igl + ik * npwk_max] = iz + iy * nz + ix * ny * nz;
         }
     }
+#if defined(__CUDA) || defined(__ROCM)
     if (GlobalV::device_flag == "gpu") {
         resmem_int_op()(gpu_ctx, ig2ixyz_k, this->npwk_max * this->nks);
         syncmem_int_h2d_op()(gpu_ctx, cpu_ctx, this->ig2ixyz_k, this->ig2ixyz_k_, this->npwk_max * this->nks);
     }
+#endif
 }
 
 template <>

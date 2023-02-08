@@ -49,7 +49,7 @@ AddTest(
 )
 AddTest(
   TARGET base_complexarray
-  SOURCES complexarray_test.cpp ../complexarray.cpp
+  SOURCES complexarray_test.cpp ../complexarray.cpp ../tool_quit.cpp ../global_variable.cpp ../global_file.cpp ../memory.cpp ../timer.cpp
 )
 AddTest(
   TARGET base_complexmatrix

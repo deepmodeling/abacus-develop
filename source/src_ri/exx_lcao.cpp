@@ -40,12 +40,12 @@
 // Peize Lin test
 #include<stdexcept>	
 #include<sys/time.h>
-#include "../src_external/src_test/src_global/element_basis_index-test.h"
-#include "../src_external/src_test/src_global/matrix-test.h"
-#include "../src_external/src_test/print_tmp.h"
-//#include "../src_external/src_test/src_global/sph_bessel-unittest.h"
-#include "../src_external/src_test/src_ri/exx_lcao-test.h"
-#include "../src_external/src_test/src_ri/abfs-test.h"
+#include "../src_ri/test_code/element_basis_index-test.h"
+#include "../src_ri/test_code/matrix-test.h"
+#include "../src_ri/test_code/print_tmp.h"
+//#include "../src_ri/test_code/sph_bessel-unittest.h"
+#include "../src_ri/test_code/exx_lcao-test.h"
+#include "../src_ri/test_code/abfs-test.h"
 
 /*
 // m_new( i2*n1+i1, i3 ) = m( i1*n2+i2, i3 )

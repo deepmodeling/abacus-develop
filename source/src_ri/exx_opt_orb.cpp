@@ -12,10 +12,10 @@
 #include "exx_abfs-matrix_orbs21.h"
 #include "exx_abfs-matrix_orbs22.h"
 
-#include "../src_external/src_test/src_ri/exx_abfs-unittest.h"
-#include "../src_external/src_test/src_ri/exx_lcao-test.h"
-#include "../src_external/src_test/src_global/element_basis_index-test.h"
-#include "../src_external/src_test/test_function.h"
+#include "../src_ri/test_code/exx_abfs-unittest.h"
+#include "../src_ri/test_code/exx_lcao-test.h"
+#include "../src_ri/test_code/element_basis_index-test.h"
+#include "../src_ri/test_code/test_function.h"
 
 void Exx_Opt_Orb::generate_matrix() const
 {

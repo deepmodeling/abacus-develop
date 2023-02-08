@@ -115,21 +115,21 @@ TEST_F(KlistTest, MP)
 
 TEST_F(KlistTest, ReadMesh)
 {
-	std::string k_file = "KPT";
+	std::string k_file = "./support/KPT";
 	kv.nspin = 1;
 	kv.read_kpoints(k_file);
 	EXPECT_EQ(kv.nkstot,512);
-	remove("KPT");
+	//remove("KPT");
 }
 
 TEST_F(KlistTest, ReadMP)
 {
 	K_Vectors kv;
-	std::string k_file = "KPT1";
+	std::string k_file = "./support/KPT1";
 	kv.nspin = 1;
 	kv.read_kpoints(k_file);
 	EXPECT_EQ(kv.nkstot,512);
-	remove("KPT1");
+	//remove("KPT1");
 }
 
 TEST_F(KlistTest, ReadList)
@@ -137,11 +137,11 @@ TEST_F(KlistTest, ReadList)
 	ModuleSymmetry::Symmetry::symm_flag=0; 
 	// symm_flag is required in read_kpoints for a k list
 	K_Vectors kv;
-	std::string k_file = "KPT2";
+	std::string k_file = "./support/KPT2";
 	kv.nspin = 1;
 	kv.read_kpoints(k_file);
 	EXPECT_EQ(kv.nkstot,122);
-	remove("KPT2");
+	//remove("KPT2");
 }
 
 TEST_F(KlistTest, Kspacing)
@@ -154,10 +154,10 @@ TEST_F(KlistTest, Kspacing)
 	GlobalC::ucell.G = GlobalC::ucell.GT.Transpose();
 	GlobalC::ucell.lat0 = 1.8897261254578281;
 	GlobalV::KSPACING = 0.052918; // 0.52918/Bohr = 1/A
-	std::string k_file = "KPT3";
+	std::string k_file = "./support/KPT3";
 	kv.read_kpoints(k_file);
 	EXPECT_EQ(kv.nkstot,343);
-	remove("KPT3");
+	//remove("KPT3");
 	GlobalV::KSPACING=0.0;
 
 }
@@ -165,7 +165,7 @@ TEST_F(KlistTest, Kspacing)
 TEST_F(KlistTest, Renew)
 {
 	K_Vectors kv;
-	std::string k_file = "KPT4";
+	std::string k_file = "./support/KPT4";
         //Cartesian: non-spin case nspin=1
 	kv.nspin = 1;
 	kv.read_kpoints(k_file);
@@ -182,7 +182,7 @@ TEST_F(KlistTest, Renew)
 TEST_F(KlistTest, LineCartesian)
 {
 	K_Vectors kv;
-	std::string k_file = "KPT5";
+	std::string k_file = "./support/KPT5";
     //Line Cartesian: non-spin case nspin=1
 	kv.nspin = 1;
 	kv.set_kup_and_kdw_after_vc();
@@ -196,7 +196,7 @@ TEST_F(KlistTest, LineCartesian)
 	kv.read_kpoints(k_file);
 	EXPECT_EQ(kv.nkstot,51);
 	EXPECT_EQ(kv.kvec_c.size(),102);
-	remove("KPT5");
+	//remove("KPT5");
 	
     
 }
@@ -204,7 +204,7 @@ TEST_F(KlistTest, LineCartesian)
 TEST_F(KlistTest, SetKupKdownAfterXC)
 {
 	K_Vectors kv;
-	std::string k_file = "KPT4";
+	std::string k_file = "./support/KPT4";
     //Cartesian: non-spin case nspin=1
 	kv.nspin = 1;
 	kv.read_kpoints(k_file);
@@ -238,7 +238,7 @@ TEST_F(KlistTest, SetKupKdownAfterXC)
         EXPECT_EQ(kv.isk[ik+5],1);
 	}
 
-	remove("KPT4");
+	//remove("KPT4");
 	
     
 }

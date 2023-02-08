@@ -27,15 +27,6 @@ class energy
     energy();
     ~energy();
 
-	//calculate density of states(DOS) and partial density of states(PDOS) and mulliken charge for LCAO base
-	void perform_dos(
-		const psi::Psi<double> *psid,
-		const psi::Psi<std::complex<double>> *psi,
-		LCAO_Hamilt &uhm,
-		const elecstate::ElecState* pelec);
-	//calculate density of states(DOS) for PW base
-    void perform_dos_pw(const elecstate::ElecState* pelec);
-
     double etot;    	   // the total energy of the solid
     double ef;             // the fermi energy
     double ef_up;		   // spin up fermi energy
@@ -98,11 +89,7 @@ class energy
 	void print_etot(const bool converged, const int &iter,
 	const double &scf_thr, const double &duration, const double &pw_diag_thr=0, const double &avg_iter=0, bool print = true);
 
-	void print_occ(const elecstate::ElecState* pelec);
-
 	void print_format(const std::string &name, const double &value);
-
-	void print_orbital_file();
 
 	void calculate_harris(); //mohan add 2012-06-05
 

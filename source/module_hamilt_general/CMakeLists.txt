@@ -1,3 +1,7 @@
+add_subdirectory(module_vdw)
+add_subdirectory(module_surchem)
+add_subdirectory(module_xc)
+
 list(APPEND objects
     operator.cpp
     module_ewald/H_Ewald_pw.cpp

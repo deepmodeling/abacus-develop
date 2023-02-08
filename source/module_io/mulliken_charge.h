@@ -6,7 +6,7 @@
 #ifdef __LCAO
 #include "module_orbital/ORB_gen_tables.h"
 #include "module_orbital/ORB_control.h"
-#include "module_neighbor/sltk_grid_driver.h"
+#include "module_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_matrix.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/global_fp.h"
 #endif

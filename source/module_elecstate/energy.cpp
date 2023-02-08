@@ -12,7 +12,7 @@
 #endif
 #include <sys/time.h>
 #ifdef __LCAO
-#include "module_dftu/dftu.h"  //Quxin adds for DFT+U on 20201029
+#include "module_hamilt_lcao/module_dftu/dftu.h"  //Quxin adds for DFT+U on 20201029
 #endif
 //new
 #include "module_hamilt_general/module_ewald/H_Ewald_pw.h"
@@ -21,7 +21,7 @@
 #include "module_elecstate/potentials/gatefield.h"    // liuyu add 2022-09-13
 #include "module_hamilt_general/module_surchem/surchem.h"
 #ifdef __DEEPKS
-#include "module_deepks/LCAO_deepks.h"
+#include "module_hamilt_lcao/module_deepks/LCAO_deepks.h"
 #endif
 
 

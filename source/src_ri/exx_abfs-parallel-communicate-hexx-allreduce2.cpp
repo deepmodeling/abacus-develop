@@ -9,7 +9,7 @@
 #include <thread>
 
 
-#include "../src_external/src_test/test_function.h"
+#include "../src_ri/test_code/test_function.h"
 
 void Exx_Abfs::Parallel::Communicate::Hexx::Allreduce2::init(
 	const MPI_Comm &mpi_comm_in,

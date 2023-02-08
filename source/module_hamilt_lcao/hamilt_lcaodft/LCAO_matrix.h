@@ -12,7 +12,6 @@
 
 class LCAO_Matrix
 {
-    friend class energy;
     friend class Mulliken_Charge;
 
     public:
@@ -28,11 +27,11 @@ class LCAO_Matrix
 
     Parallel_Orbitals *ParaV;
 
+    void allocate_HS_k(const long &nloc);
+
 private:
 
     void allocate_HS_gamma(const long &nloc);
-
-    void allocate_HS_k(const long &nloc);
 
 
     public:
@@ -45,7 +44,7 @@ private:
     std::vector<double> Hloc;
     std::vector<double> Sloc;
     std::vector<double> Hloc_fixed;
-    std::vector<double> Sdiag; // used in pdiag_double.cpp
+    std::vector<double> Sdiag; // not used now
 
     //------------------------------
     // 1. Hamiltonian(vl),
@@ -58,7 +57,7 @@ private:
     std::vector<std::complex<double>> Hloc2;
     std::vector<std::complex<double>> Sloc2;
     std::vector<std::complex<double>> Hloc_fixed2;
-    std::vector<std::complex<double>> Sdiag2; // used in pdiag_double.cpp
+    std::vector<std::complex<double>> Sdiag2; // not used now
     //with soc, zhengdy-soc
 /*	ModuleBase::ComplexMatrix Hloc2_soc;
     ModuleBase::ComplexMatrix Sloc2_soc;
