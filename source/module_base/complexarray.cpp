@@ -69,7 +69,6 @@ ComplexArray::ComplexArray(ComplexArray &&cd){
 }
 ComplexArray& ComplexArray::operator=(ComplexArray &&cd){
 	delete [] this->ptr;
-	std::cout<<"here"<<std::endl;
 	this->ptr   =cd.ptr;	cd.ptr   =nullptr;
 	this->bound1=cd.bound1;	cd.bound1=0;
 	this->bound2=cd.bound2;	cd.bound2=0;
@@ -78,7 +77,6 @@ ComplexArray& ComplexArray::operator=(ComplexArray &&cd){
 	return *this;}
 ComplexArray &ComplexArray::operator=(const ComplexArray & cd){
 	const int size = this->getSize();
-	std::cout<<"here2"<<std::endl;
 	assert(size==cd.getSize());
 	for (int i = 0; i < size; i++)
 		ptr[i] = cd.ptr[i];
