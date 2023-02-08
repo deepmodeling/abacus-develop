@@ -542,7 +542,7 @@ void Symmetry::lattice_type(
         q3 = w3;
         change = 1;
         GlobalV::ofs_running <<std::endl;
-        GlobalV::ofs_running <<" !The lattice vectors have been changed (STRU_SIMPLE.cif)"<<std::endl;
+        GlobalV::ofs_running <<" The lattice vectors have been changed (STRU_SIMPLE.cif)"<<std::endl;
         GlobalV::ofs_running <<std::endl;
         int at=0;
         for(int it=0; it<ucell.ntype; ++it)
