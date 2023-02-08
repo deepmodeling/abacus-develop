@@ -1139,6 +1139,7 @@ void Forces<FPTYPE, Device>::cal_force_scc(ModuleBase::matrix& forcescc, ModuleP
         igg0 = 1;
 
     double* rhocgnt = new double[rho_basis->ngg];
+    rhocgnt[0] = 0;
 
 #ifdef _OPENMP
 #pragma omp parallel
