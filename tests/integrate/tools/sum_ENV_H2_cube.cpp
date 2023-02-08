@@ -44,7 +44,7 @@ int main(int argc, char **argv)
 	for (int i=0; i< nr; i++)
 	{
 		inp >> env;
-		sum += env;
+		sum += env*env;
 	}
 
 	double ne = 0.0;
