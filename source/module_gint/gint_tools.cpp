@@ -172,6 +172,42 @@ namespace Gint_Tools
 			const int iat=GlobalC::GridT.which_atom[mcell_index]; // index of atom
 			const int it=GlobalC::ucell.iat2it[iat]; // index of atom type
 			const Atom*const atom=&GlobalC::ucell.atoms[it];
+			auto &OrbPhi = GlobalC::ORB.Phi[it];
+			std::vector<const double*> it_psi_uniform(atom->nw);
+			std::vector<const double*> it_dpsi_uniform(atom->nw);
+			// preprocess index
+			for (int iw=0; iw< atom->nw; ++iw)
+			{
+				if ( atom->iw2_new[iw] )
+				{
+					auto philn = &OrbPhi.PhiLN(atom->iw2l[iw], atom->iw2n[iw]);
+					it_psi_uniform[iw] = &philn->psi_uniform[0];
+					it_dpsi_uniform[iw] = &philn->dpsi_uniform[0];
+				}
+			}
+
+
+			/*
+			std::cout << "GlobalC::ORB.Phi[it].total_nchi = " << (GlobalC::ORB.Phi[it].lmax + 1) * GlobalC::ORB.Phi[it].max_nchi << std::endl;
+			for (int iw=0; iw< atom->nw; ++iw)
+					{
+						if ( atom->iw2_new[iw] )
+						{
+							auto p = GlobalC::ORB.Phi[it].find_chi(
+									atom->iw2l[iw],
+									atom->iw2n[iw]);
+							std::cout << p << ",";
+						}
+					}
+			{
+				const Numerical_Orbital_Lm &philn = GlobalC::ORB.Phi[it].PhiLN(
+									atom->iw2l[0],
+									atom->iw2n[0]);
+				std::cout << std::endl << "philn.nr_uniform = " << philn.nr_uniform << std::endl;
+			}
+			std::cout << "GlobalC::bigpw->bxyz = " << GlobalC::bigpw->bxyz << std::endl;
+			std::cout << "na_grid = " << na_grid << std::endl;
+			*/
 
 			// meshball_positions should be the bigcell position in meshball
 			// to the center of meshball.
@@ -229,17 +265,16 @@ namespace Gint_Tools
 					const double c4 = (dx3-dx2)*delta_r;
 
 					double phi=0;
-					for (int iw=0; iw< atom->nw; ++iw, ++p)
+					for (int iw=0; iw< atom->nw; ++iw)
 					{
 						if ( atom->iw2_new[iw] )
 						{
-							const Numerical_Orbital_Lm &philn = GlobalC::ORB.Phi[it].PhiLN(
-									atom->iw2l[iw],
-									atom->iw2n[iw]);
-							phi = c1*philn.psi_uniform[ip] + c2*philn.dpsi_uniform[ip]			 // radial wave functions
-								+ c3*philn.psi_uniform[ip+1] + c4*philn.dpsi_uniform[ip+1];
+							auto psi_uniform = it_psi_uniform[iw];
+							auto dpsi_uniform = it_dpsi_uniform[iw];
+							phi = c1*psi_uniform[ip] + c2*dpsi_uniform[ip]			 // radial wave functions
+								+ c3*psi_uniform[ip+1] + c4*dpsi_uniform[ip+1];
 						}
-						*p=phi * ylma[atom->iw2_ylm[iw]];
+						p[iw]=phi * ylma[atom->iw2_ylm[iw]];
 					} // end iw
 				}// end distance<=(GlobalC::ORB.Phi[it].getRcut()-1.0e-15)
 			}// end ib
