@@ -5,6 +5,7 @@
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/global_fp.h"
 #include "module_base/ylm.h"
+#include "module_base/timer.h"
 #include <cmath>
 
 namespace Gint_Tools
@@ -159,6 +160,7 @@ namespace Gint_Tools
 		const bool*const*const cal_flag,
 		double*const*const psir_ylm) 	// cal_flag[GlobalC::bigpw->bxyz][na_grid],	whether the atom-grid distance is larger than cutoff
     {
+		ModuleBase::timer::tick("Gint_Tools", "cal_psir_ylm");
         std::vector<double> ylma;
         for (int id=0; id<na_grid; id++)
 		{
@@ -242,6 +244,7 @@ namespace Gint_Tools
 				}// end distance<=(GlobalC::ORB.Phi[it].getRcut()-1.0e-15)
 			}// end ib
 		}// end id
+		ModuleBase::timer::tick("Gint_Tools", "cal_psir_ylm");
 		return;
 	}
 
@@ -257,6 +260,7 @@ namespace Gint_Tools
 		double*const*const dpsir_ylm_y,
 		double*const*const dpsir_ylm_z)
 	{
+		ModuleBase::timer::tick("Gint_Tools", "cal_dpsir_ylm");
 		for (int id=0; id<na_grid; id++)
 		{
 			const int mcell_index = GlobalC::GridT.bcell_start[grid_index] + id;
@@ -362,7 +366,7 @@ namespace Gint_Tools
 				}//else
 			}
 		}
-
+		ModuleBase::timer::tick("Gint_Tools", "cal_dpsir_ylm");
 		return;
 	}
 
@@ -380,6 +384,7 @@ namespace Gint_Tools
 		double*const*const ddpsir_ylm_yz,
 		double*const*const ddpsir_ylm_zz)
 	{
+		ModuleBase::timer::tick("Gint_Tools", "cal_ddpsir_ylm");
 		for (int id=0; id<na_grid; id++)
 		{
 			const int mcell_index = GlobalC::GridT.bcell_start[grid_index] + id;
@@ -651,7 +656,7 @@ namespace Gint_Tools
 				}//else
 			}//end ib
 		}//end id(atom)
-
+		ModuleBase::timer::tick("Gint_Tools", "cal_ddpsir_ylm");
 		return;
 	}
 
@@ -671,6 +676,7 @@ namespace Gint_Tools
 		double*const*const dpsir_ylm_yz,
 		double*const*const dpsir_ylm_zz)
 	{
+		ModuleBase::timer::tick("Gint_Tools", "cal_dpsirr_ylm");
 		for (int id=0; id<na_grid; id++)
 		{
 			const int mcell_index = GlobalC::GridT.bcell_start[grid_index] + id;
@@ -725,7 +731,7 @@ namespace Gint_Tools
 				}//else
 			}
 		}
-
+		ModuleBase::timer::tick("Gint_Tools", "cal_dpsirr_ylm");
 		return;
 	}
 
