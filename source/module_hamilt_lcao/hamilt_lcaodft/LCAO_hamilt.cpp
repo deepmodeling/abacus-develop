@@ -347,7 +347,20 @@ void LCAO_Hamilt::calculate_dH_sparse(const int &current_spin, const double &spa
 
     set_R_range_sparse();
 
+    const int nnr = this->LM->ParaV->nnr;
+    this->LM->DHloc_fixedR_x = new double[nnr];
+    this->LM->DHloc_fixedR_y = new double[nnr];
+    this->LM->DHloc_fixedR_z = new double[nnr];
+
+    // calculate dT=<phi|kin|dphi> in LCAO
+    // calculate T + VNL(P1) in LCAO basis
+    this->genH.build_ST_new('T', true, GlobalC::ucell, this->LM->Hloc_fixedR.data());
+    this->genH.build_Nonlocal_mu_new (this->LM->Hloc_fixed.data(), true);
     calculate_dSTN_R_sparse(current_spin, sparse_threshold);
+
+    delete[] this->LM->DHloc_fixed_x;
+    delete[] this->LM->DHloc_fixed_y;
+    delete[] this->LM->DHloc_fixed_z;
 
     GK.cal_dvlocal_R_sparseMatrix(current_spin, sparse_threshold, this->LM);
 }
