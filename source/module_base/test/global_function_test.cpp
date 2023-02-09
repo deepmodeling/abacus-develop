@@ -390,6 +390,10 @@ TEST_F(GlobalFunctionTest, ToString)
 		char tmp_char[64];
 		strcpy(tmp_char,para.c_str());
     		EXPECT_EQ(ModuleBase::GlobalFunc::TO_STRING(tmp_char),para);}
+	else if (length == 74){
+		char tmp_char[74];
+		strcpy(tmp_char,para.c_str());
+    		EXPECT_EQ(ModuleBase::GlobalFunc::TO_STRING(tmp_char),para);}
 	else if (length == 81){
 		char tmp_char[81];
 		strcpy(tmp_char,para.c_str());
