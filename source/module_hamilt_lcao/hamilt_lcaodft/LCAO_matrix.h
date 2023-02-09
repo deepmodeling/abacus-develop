@@ -97,10 +97,12 @@ private:
     // For HR_sparse[2], when nspin=1, only 0 is valid, when nspin=2, 0 means spin up, 1 means spin down
     std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>> HR_sparse[2];
     std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>> SR_sparse;
+    std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>> TR_sparse;
 
     // For nspin = 4
     std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, std::complex<double>>>> HR_soc_sparse;
     std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, std::complex<double>>>> SR_soc_sparse;
+    std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, std::complex<double>>>> TR_soc_sparse;
 
     // Record all R direct coordinate information, even if HR or SR is a zero matrix
     std::set<Abfs::Vector3_Order<int>> all_R_coor;
@@ -206,6 +208,7 @@ private:
 
     // jingan add 2021-6-4, modify 2021-12-2
     void destroy_HS_R_sparse(void);
+    void destroy_T_R_sparse(void);
 
 };
 

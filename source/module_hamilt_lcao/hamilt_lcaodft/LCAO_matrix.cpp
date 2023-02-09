@@ -952,3 +952,20 @@ void LCAO_Matrix::destroy_HS_R_sparse(void)
 
     return;
 }
+
+void LCAO_Matrix::destroy_T_R_sparse(void)
+{
+    ModuleBase::TITLE("LCAO_Matrix","destroy_T_R_sparse");
+
+    if (GlobalV::NSPIN != 4)
+    {
+        std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>> empty_TR_sparse;
+        TR_sparse.swap(empty_TR_sparse);
+    }
+    else
+    {
+        std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, std::complex<double>>>> empty_TR_soc_sparse;
+        TR_soc_sparse.swap(empty_TR_soc_sparse);
+    }
+    return;
+}
