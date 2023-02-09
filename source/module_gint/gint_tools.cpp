@@ -186,29 +186,6 @@ namespace Gint_Tools
 				}
 			}
 
-
-			/*
-			std::cout << "GlobalC::ORB.Phi[it].total_nchi = " << (GlobalC::ORB.Phi[it].lmax + 1) * GlobalC::ORB.Phi[it].max_nchi << std::endl;
-			for (int iw=0; iw< atom->nw; ++iw)
-					{
-						if ( atom->iw2_new[iw] )
-						{
-							auto p = GlobalC::ORB.Phi[it].find_chi(
-									atom->iw2l[iw],
-									atom->iw2n[iw]);
-							std::cout << p << ",";
-						}
-					}
-			{
-				const Numerical_Orbital_Lm &philn = GlobalC::ORB.Phi[it].PhiLN(
-									atom->iw2l[0],
-									atom->iw2n[0]);
-				std::cout << std::endl << "philn.nr_uniform = " << philn.nr_uniform << std::endl;
-			}
-			std::cout << "GlobalC::bigpw->bxyz = " << GlobalC::bigpw->bxyz << std::endl;
-			std::cout << "na_grid = " << na_grid << std::endl;
-			*/
-
 			// meshball_positions should be the bigcell position in meshball
 			// to the center of meshball.
 			// calculated in cartesian coordinates
