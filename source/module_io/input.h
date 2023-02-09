@@ -382,7 +382,7 @@ class Input
     int td_val_elec_01; // valence electron 01
     int td_val_elec_02; // valence electron 02
     int td_val_elec_03; // valence electron 03
-    int td_vext; // add extern potential or not
+    bool td_vext; // add extern potential or not
     std::string td_vext_dire; // vext direction
     bool out_dipole; // output the dipole or not
     bool out_efield; // output the efield or not

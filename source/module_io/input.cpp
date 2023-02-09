@@ -400,7 +400,7 @@ void Input::Default(void)
     td_val_elec_01 = 1;
     td_val_elec_02 = 1;
     td_val_elec_03 = 1;
-    td_vext = 0;
+    td_vext = false;
     // td_vext_dire = 1;
 
     out_dipole = false;
@@ -2842,7 +2842,7 @@ void Input::Bcast()
     Parallel_Common::bcast_int(td_val_elec_02);
     Parallel_Common::bcast_int(td_val_elec_03);
     Parallel_Common::bcast_double(td_force_dt);
-    Parallel_Common::bcast_int(td_vext);
+    Parallel_Common::bcast_bool(td_vext);
     Parallel_Common::bcast_string(td_vext_dire);
     Parallel_Common::bcast_int(td_stype);
     Parallel_Common::bcast_string(td_ttype);

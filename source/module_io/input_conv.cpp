@@ -349,7 +349,7 @@ void Input_Conv::Convert(void)
     ELEC_evolve::td_val_elec_02 = INPUT.td_val_elec_02;
     ELEC_evolve::td_val_elec_03 = INPUT.td_val_elec_03;
     ELEC_evolve::td_vext = INPUT.td_vext;
-    if (ELEC_evolve::td_vext == 1)
+    if (ELEC_evolve::td_vext)
     {
         parse_expression(INPUT.td_vext_dire, ELEC_evolve::td_vext_dire_case);
     }

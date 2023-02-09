@@ -2177,7 +2177,7 @@ These variables are used to control berry phase and wannier90 interface paramete
 
 ### td_vext
 
--   **Type**: Integer
+-   **Type**: Boolean
 -   **Description**:
     -   1: add a laser material interaction (extern laser field).
     -   0: no extern laser field.

@@ -25,7 +25,7 @@ void H_TDDFT_pw::cal_fixed_v(double* vl_pseudo)
     read_parameters(&INPUT);
 
     // judgement to skip vext
-    if (ELEC_evolve::td_vext == 0 || istep > tend || istep < tstart)
+    if (!ELEC_evolve::td_vext || istep > tend || istep < tstart)
     {
         return;
     }
