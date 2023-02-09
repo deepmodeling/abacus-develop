@@ -143,7 +143,7 @@ TEST(ComplexArray, constructor_copy_test)
 
 TEST(ComplexArray, constructor_rvalue_test)
 {
-    ModuleBase::ComplexArray b(ModuleBase::ComplexArray(1,2,3,4));
+    ModuleBase::ComplexArray b(std::move(ModuleBase::ComplexArray(1,2,3,4)));
     ASSERT_EQ(b.getSize(),24);
     ASSERT_EQ(b.getBound1(),1);
     ASSERT_EQ(b.getBound2(),2);
