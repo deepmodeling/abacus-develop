@@ -33,12 +33,11 @@ void H_TDDFT_pw::cal_fixed_v(double* vl_pseudo)
 
     ModuleBase::timer::tick("H_TDDFT_pw", "cal_fixed_v");
 
-    std::vector<std::vector<double>> vext_space(3, std::vector<double>(this->rho_basis_->nrxx, 0.0));
     int count = 0;
 
     for (auto direc: ELEC_evolve::td_vext_dire_case)
     {
-        const int id = direc - 1;
+        std::vector<double> vext_space(this->rho_basis_->nrxx, 0.0);
         double vext_time = cal_v_time(ttype[count]); 
         std::string direc_name;
 
@@ -64,9 +63,9 @@ void H_TDDFT_pw::cal_fixed_v(double* vl_pseudo)
             ofs.close();
         }
 
-        cal_v_space(vext_space[id], direc); 
+        cal_v_space(vext_space, direc); 
         for (size_t ir = 0; ir < this->rho_basis_->nrxx; ++ir)
-            vl_pseudo[ir] += vext_space[id][ir] * vext_time;
+            vl_pseudo[ir] += vext_space[ir] * vext_time;
         count++;
     }
 
