@@ -2248,7 +2248,7 @@ bool Input::Read(const std::string &fn)
     {
         ModuleBase::WARNING_QUIT("Input", "printing of H(R)/S(R)/dH(R)/T(R) is not available for gamma only calculations");
     }
-    if(out_mat_dh && GlobalV::NSPIN==4)
+    if(out_mat_dh && nspin == 4)
     {
         ModuleBase::WARNING_QUIT("Input", "priting of dH not available for nspin = 4");
     }
