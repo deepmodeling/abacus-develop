@@ -193,7 +193,9 @@ OBJS_GINT=gint.o\
       gint_vl.o\
       gint_k_env.o\
       gint_k_sparse.o\
+      gint_k_sparse1.o\
       gint_k_pvpr.o\
+      gint_k_pvdpr.o\
       gint_tools.o\
       grid_bigcell.o\
       grid_meshball.o\
