@@ -2244,7 +2244,7 @@ bool Input::Read(const std::string &fn)
         gamma_only_local = 1;
         // std::cout << "gamma_only_local =" << gamma_only_local << std::endl;
     }
-    if ((out_mat_r || out_mat_hs2 || out_mat_t) && gamma_only_local)
+    if ((out_mat_r || out_mat_hs2 || out_mat_t || out_mat_dh) && gamma_only_local)
     {
         ModuleBase::WARNING_QUIT("Input", "printing of H(R)/S(R)/r(R)/T(R) is not available for gamma only calculations");
     }
