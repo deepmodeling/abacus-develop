@@ -54,10 +54,11 @@ void Input::Init(const std::string &fn)
     // OTHRE CLASS MEMBER FUNCTION :
     // NAME : Run::make_dir( dir name : OUT.suffix)
     //----------------------------------------------------------
+    bool out_dir = false;
+    if(out_mat_hs2 || out_mat_r || out_mat_t || out_mat_dh) out_dir = true;
     ModuleBase::Global_File::make_dir_out(this->suffix,
                                           this->calculation,
-                                          this->out_mat_hs2,
-                                          this->out_mat_r,
+                                          out_dir,
                                           GlobalV::MY_RANK,
                                           this->mdp.md_restart,
                                           this->out_alllog); // xiaohui add 2013-09-01
