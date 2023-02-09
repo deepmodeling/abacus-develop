@@ -1218,6 +1218,10 @@ bool Input::Read(const std::string &fn)
         {
             read_bool(ifs, out_mat_t);
         }
+        else if (strcmp("out_mat_dh", word) == 0)
+        {
+            read_bool(ifs, out_mat_dh);
+        }
         else if (strcmp("out_hs2_interval", word) == 0)
         {
             read_value(ifs, out_hs2_interval);
@@ -2734,6 +2738,7 @@ void Input::Bcast()
     Parallel_Common::bcast_bool(out_mat_hs);
     Parallel_Common::bcast_bool(out_mat_hs2); // LiuXh add 2019-07-15
     Parallel_Common::bcast_bool(out_mat_t);
+    Parallel_Common::bcast_bool(out_mat_dh);
     Parallel_Common::bcast_bool(out_mat_r); // jingan add 2019-8-14
     Parallel_Common::bcast_bool(out_wfc_lcao);
     Parallel_Common::bcast_bool(out_alllog);
