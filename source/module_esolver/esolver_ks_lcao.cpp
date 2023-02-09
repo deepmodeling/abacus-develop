@@ -918,7 +918,7 @@ void ESolver_KS_LCAO::afterscf(const int istep)
     {
         if( !(GlobalV::CALCULATION=="md" && (istep%hsolver::HSolverLCAO::out_hsR_interval!=0)) )
         {
-            //ModuleIO::output_DH_R(istep, this->pelec->pot->get_effective_v(), this->UHM); // LiuXh add 2019-07-15
+            ModuleIO::output_dH_R(istep, this->pelec->pot->get_effective_v(), this->UHM); // LiuXh add 2019-07-15
         } // LiuXh add 2019-07-15
     }
 
