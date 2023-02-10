@@ -3,10 +3,28 @@
 #include "module_base/inverse_matrix.h"
 #include "src_parallel/parallel_reduce.h"
 #include "module_base/memory.h"
+#include "module_base/tool_threading.h"
+#include "module_base/timer.h"
+
+static inline double calculate_residual_norm(int nrxx, double *residual1, double* residual2)
+{
+	// calculate the norm of the residual std::vector:
+	// (the target to minimize in Pulay's algorithm)
+	double rnorm = 0.0;
+#ifdef _OPENMP
+#pragma omp parallel for reduction(+:rnorm)
+#endif
+	for(int ir=0; ir<nrxx; ir++)
+	{
+		rnorm += residual1[ir]*residual2[ir];
+	}
+	return rnorm;
+}
 
 void Charge_Mixing::Pulay_mixing(Charge* chr)
 {
     ModuleBase::TITLE("Charge_Mixing","Pulay_mixing");
+	ModuleBase::timer::tick("Charge", "Pulay_mixing");
 	rstep = this->mixing_ndim;
 	dstep = this->mixing_ndim - 1;
 	assert(dstep>0);
@@ -93,7 +111,6 @@ void Charge_Mixing::Pulay_mixing(Charge* chr)
 	{
 		// generate matrix A = <dR|dR>
 		this->generate_Abar(Abar);
-		ModuleBase::matrix A(Abar);
 
 		// inverse A matrix to become Abar.
 		this->inverse_real_symmetry_matrix(Abar);
@@ -112,6 +129,7 @@ void Charge_Mixing::Pulay_mixing(Charge* chr)
 		++totstep;	
 	}
 
+	ModuleBase::timer::tick("Charge", "Pulay_mixing");
 	return;		
 }
 
@@ -126,6 +144,54 @@ void Charge_Mixing::reset()		// Peize Lin add 2018-11-01
 
 void Charge_Mixing::allocate_Pulay()
 {
+	auto zeros_kernel = [&](int num_threads, int thread_id)
+	{
+		int beg, len;
+		ModuleBase::TASK_DIST_1D(num_threads, thread_id, GlobalC::rhopw->nrxx, beg, len);
+		for(int i=0; i<GlobalV::NSPIN; i++)
+		{
+			for(int j=0; j<rstep; j++)
+			{
+				ModuleBase::GlobalFunc::ZEROS(Rrho[i][j] + beg, len);
+			}
+		}
+
+		for(int i=0; i<GlobalV::NSPIN; i++)
+		{
+			ModuleBase::GlobalFunc::ZEROS(rho_save2[i] + beg, len);
+			for(int j=0; j<dstep; j++)
+			{
+				ModuleBase::GlobalFunc::ZEROS( dRrho[i][j] + beg, len );
+				ModuleBase::GlobalFunc::ZEROS( drho[i][j] + beg, len);
+			}
+		}
+
+		if ((XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5) && mixing_tau)
+		{
+			for(int i=0; i<GlobalV::NSPIN; i++)
+			{
+				for(int j=0; j<rstep; j++)
+				{
+					ModuleBase::GlobalFunc::ZEROS(Rtau[i][j] + beg, len);
+				}
+			}
+			
+			for(int i=0; i<GlobalV::NSPIN; i++)
+			{
+				ModuleBase::GlobalFunc::ZEROS(tau_save2[i] + beg, len);
+				for(int j=0; j<dstep; j++)
+				{
+					ModuleBase::GlobalFunc::ZEROS( dRtau[i][j] + beg, len );
+					ModuleBase::GlobalFunc::ZEROS( dtau[i][j] + beg, len);
+				}
+			}			
+		}
+		
+		ModuleBase::BLOCK_TASK_DIST_1D(num_threads, thread_id, dstep, 512, beg, len);
+		ModuleBase::GlobalFunc::ZEROS(dRR + beg, len);
+		ModuleBase::GlobalFunc::ZEROS(alpha + beg, len);
+	};
+
 	if(!this->initp)
 	{
 		ModuleBase::TITLE("Charge_Mixing","allocate_pulay");
@@ -144,7 +210,6 @@ void Charge_Mixing::allocate_Pulay()
         	for (int i=0; i<rstep; i++)
         	{
             	Rrho[is][i] = new double[GlobalC::rhopw->nrxx];
-				ModuleBase::GlobalFunc::ZEROS( Rrho[is][i], GlobalC::rhopw->nrxx );
         	}
 		}
     	ModuleBase::Memory::record("ChgMix::Rrho", sizeof(double) * GlobalV::NSPIN*rstep*GlobalC::rhopw->nrxx);
@@ -161,14 +226,11 @@ void Charge_Mixing::allocate_Pulay()
 			dRrho[is] = new double*[dstep];
 			drho[is] = new double*[dstep];
 			rho_save2[is] = new double[GlobalC::rhopw->nrxx];
-			ModuleBase::GlobalFunc::ZEROS( rho_save2[is], GlobalC::rhopw->nrxx);
 
 			for (int i=0; i<dstep; i++)
 			{
 				dRrho[is][i] = new double[GlobalC::rhopw->nrxx];	
 				drho[is][i] = new double[GlobalC::rhopw->nrxx];
-				ModuleBase::GlobalFunc::ZEROS( dRrho[is][i], GlobalC::rhopw->nrxx );
-				ModuleBase::GlobalFunc::ZEROS( drho[is][i], GlobalC::rhopw->nrxx);
 			}
 		}
     	ModuleBase::Memory::record("ChgMix::dRrho", sizeof(double) * GlobalV::NSPIN*dstep*GlobalC::rhopw->nrxx);
@@ -184,7 +246,6 @@ void Charge_Mixing::allocate_Pulay()
 				for (int i=0; i<rstep; i++)
 				{
 					Rtau[is][i] = new double[GlobalC::rhopw->nrxx];
-					ModuleBase::GlobalFunc::ZEROS( Rtau[is][i], GlobalC::rhopw->nrxx );
 				}
 			}
 			ModuleBase::Memory::record("ChgMix::Rtau", sizeof(double) * GlobalV::NSPIN*rstep*GlobalC::rhopw->nrxx);
@@ -198,14 +259,11 @@ void Charge_Mixing::allocate_Pulay()
 				dRtau[is] = new double*[dstep];
 				dtau[is] = new double*[dstep];
 				tau_save2[is] = new double[GlobalC::rhopw->nrxx];
-				ModuleBase::GlobalFunc::ZEROS( tau_save2[is], GlobalC::rhopw->nrxx);
 
 				for (int i=0; i<dstep; i++)
 				{
 					dRtau[is][i] = new double[GlobalC::rhopw->nrxx];	
 					dtau[is][i] = new double[GlobalC::rhopw->nrxx];
-					ModuleBase::GlobalFunc::ZEROS( dRtau[is][i], GlobalC::rhopw->nrxx );
-					ModuleBase::GlobalFunc::ZEROS( dtau[is][i], GlobalC::rhopw->nrxx);
 				}
 			}
 			ModuleBase::Memory::record("ChgMix::dRtau", sizeof(double) * GlobalV::NSPIN*dstep*GlobalC::rhopw->nrxx);
@@ -220,12 +278,13 @@ void Charge_Mixing::allocate_Pulay()
 		// (4) allocate dRR = <delta R|R>
 		ModuleBase::GlobalFunc::NOTE("Allocate dRR = < dR | R >, dimension = dstep");
 		this->dRR = new double[dstep];
-		ModuleBase::GlobalFunc::ZEROS(dRR, dstep);
 
 		// (5) allocate alpha
 		ModuleBase::GlobalFunc::NOTE("Allocate alpha, dimension = dstep");
 		this->alpha = new double[dstep];
-		ModuleBase::GlobalFunc::ZEROS(alpha, dstep);
+
+		// (6) zeros all arrays
+		ModuleBase::OMP_PARALLEL(zeros_kernel);
 
 		this->initp = true;
     }
@@ -233,47 +292,7 @@ void Charge_Mixing::allocate_Pulay()
 	// mohan add 2010-07-16
 	if(this->new_e_iteration)
 	{
-		for(int i=0; i<GlobalV::NSPIN; i++)
-		{
-			for(int j=0; j<rstep; j++)
-			{
-				ModuleBase::GlobalFunc::ZEROS(Rrho[i][j], GlobalC::rhopw->nrxx);
-			}
-		}
-		
-		for(int i=0; i<GlobalV::NSPIN; i++)
-		{
-			ModuleBase::GlobalFunc::ZEROS(rho_save2[i], GlobalC::rhopw->nrxx);
-			for(int j=0; j<dstep; j++)
-			{
-				ModuleBase::GlobalFunc::ZEROS( dRrho[i][j], GlobalC::rhopw->nrxx );
-				ModuleBase::GlobalFunc::ZEROS( drho[i][j], GlobalC::rhopw->nrxx);
-			}
-		}
-
-		if ((XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5) && mixing_tau)
-		{
-			for(int i=0; i<GlobalV::NSPIN; i++)
-			{
-				for(int j=0; j<rstep; j++)
-				{
-					ModuleBase::GlobalFunc::ZEROS(Rtau[i][j], GlobalC::rhopw->nrxx);
-				}
-			}
-			
-			for(int i=0; i<GlobalV::NSPIN; i++)
-			{
-				ModuleBase::GlobalFunc::ZEROS(tau_save2[i], GlobalC::rhopw->nrxx);
-				for(int j=0; j<dstep; j++)
-				{
-					ModuleBase::GlobalFunc::ZEROS( dRtau[i][j], GlobalC::rhopw->nrxx );
-					ModuleBase::GlobalFunc::ZEROS( dtau[i][j], GlobalC::rhopw->nrxx);
-				}
-			}			
-		}
-
-		ModuleBase::GlobalFunc::ZEROS(dRR, dstep);
-		ModuleBase::GlobalFunc::ZEROS(alpha, dstep);
+		ModuleBase::OMP_PARALLEL(zeros_kernel);
 	}
 	return;
 }
@@ -366,16 +385,16 @@ void Charge_Mixing::generate_Abar(ModuleBase::matrix &A)const
 		{
 			for(int j=0; j<=i; j++)
 			{
-				A(i,j) += this->calculate_residual_norm( this->dRrho[is][j], this->dRrho[is][i] );
+				A(i,j) += calculate_residual_norm(GlobalC::rhopw->nrxx, this->dRrho[is][j], this->dRrho[is][i] );
 				if ((XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5) && mixing_tau)
 				{
-					A(i,j) += this->calculate_residual_norm( this->dRtau[is][j], this->dRtau[is][i] );
+					A(i,j) += calculate_residual_norm(GlobalC::rhopw->nrxx, this->dRtau[is][j], this->dRtau[is][i] );
 				}
 				A(j,i) = A(i,j);
 			}
 		}
 	}
-
+	Parallel_Reduce::reduce_double_pool(A.c, A.nr * A.nc);
 	return;
 }
 
@@ -435,7 +454,6 @@ void Charge_Mixing::inverse_real_symmetry_matrix(ModuleBase::matrix &A)const // 
 			A(i,j) = C(i,j).real();
 		}
 	}
-	
 	return;
 }
 
@@ -446,13 +464,14 @@ void Charge_Mixing::generate_dRR(const int &m)
 	{
 		for(int i=0; i<dstep; i++)
 		{
-			this->dRR[i] += this->calculate_residual_norm(this->dRrho[is][i], this->Rrho[is][m]);
+			this->dRR[i] += calculate_residual_norm(GlobalC::rhopw->nrxx, this->dRrho[is][i], this->Rrho[is][m]);
 			if ((XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5) && mixing_tau)
 			{
-				this->dRR[i] += this->calculate_residual_norm(this->dRtau[is][i], this->Rtau[is][m]);
+				this->dRR[i] += calculate_residual_norm(GlobalC::rhopw->nrxx, this->dRtau[is][i], this->Rtau[is][m]);
 			}
 		}
 	}
+	Parallel_Reduce::reduce_double_pool(dRR, dstep);
 
 	return;
 }
@@ -460,9 +479,9 @@ void Charge_Mixing::generate_dRR(const int &m)
 // use dstep to genearte Abar(dstep, dstep)
 void Charge_Mixing::generate_alpha()
 {
-	ModuleBase::GlobalFunc::ZEROS(alpha, dstep);
 	for(int i=0; i<dstep; i++)
 	{
+		this->alpha[i] = 0;
 		for(int j=0; j<dstep; j++)
 		{
 			// Abar is a symmetry matrix.
@@ -476,63 +495,47 @@ void Charge_Mixing::generate_alpha()
 void Charge_Mixing::generate_new_rho(const int &is, const int &m, Charge* chr)
 {	
 	double mixp = this->mixing_beta;
-	
-	// rho tmp
-	double* rhonew = new double[GlobalC::rhopw->nrxx];
-	ModuleBase::GlobalFunc::ZEROS(rhonew, GlobalC::rhopw->nrxx);
-	
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
 	for(int ir=0; ir<GlobalC::rhopw->nrxx; ir++)
 	{
-		rhonew[ir] = chr->rho_save[is][ir] + mixp * this->Rrho[is][m][ir];
+		double rhonew = chr->rho_save[is][ir] + mixp * this->Rrho[is][m][ir];
 		for(int i=0; i<dstep; i++)
 		{
-			rhonew[ir] += this->alpha[i] * ( this->drho[is][i][ir] + mixp * this->dRrho[is][i][ir] );
+			rhonew += this->alpha[i] * ( this->drho[is][i][ir] + mixp * this->dRrho[is][i][ir] );
 		}
+		chr->rho[is][ir] = rhonew;
 	}
-
-	ModuleBase::GlobalFunc::DCOPY(rhonew, chr->rho[is], GlobalC::rhopw->nrxx);
 
 	if ((XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5) && mixing_tau)
 	{
-		ModuleBase::GlobalFunc::ZEROS(rhonew, GlobalC::rhopw->nrxx);
-		
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
 		for(int ir=0; ir<GlobalC::rhopw->nrxx; ir++)
 		{
-			rhonew[ir] = chr->kin_r_save[is][ir] + mixp * this->Rtau[is][m][ir];
+			double rhonew = chr->kin_r_save[is][ir] + mixp * this->Rtau[is][m][ir];
 			for(int i=0; i<dstep; i++)
 			{
-				rhonew[ir] += this->alpha[i] * ( this->dtau[is][i][ir] + mixp * this->dRtau[is][i][ir] );
+				rhonew += this->alpha[i] * ( this->dtau[is][i][ir] + mixp * this->dRtau[is][i][ir] );
 			}
+			chr->kin_r[is][ir] = rhonew;
 		}
-
-		ModuleBase::GlobalFunc::DCOPY(rhonew, chr->kin_r[is], GlobalC::rhopw->nrxx);
 	}
-
-	delete[] rhonew;
-
 	return;
 }
 
 void Charge_Mixing::generate_residual_vector(double *residual, const double* rho_out, const double* rho_in)const
 {
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 512)
+#endif
 	for (int ir=0; ir<GlobalC::rhopw->nrxx; ir++)
 	{
 		residual[ir]= rho_out[ir] - rho_in[ir];
 	}
 	return;
-}
-
-double Charge_Mixing::calculate_residual_norm(double *residual1, double* residual2)const
-{
-	// calculate the norm of the residual std::vector:
-	// (the target to minimize in Pulay's algorithm)
-	double rnorm = 0.0;
-	for(int ir=0; ir<GlobalC::rhopw->nrxx; ir++)
-	{
-		rnorm += residual1[ir]*residual2[ir];
-	}
-	Parallel_Reduce::reduce_double_pool(rnorm); // mohan fix bug 2010-07-22
-	return rnorm;
 }
 
 
@@ -567,15 +570,20 @@ void Charge_Mixing::generate_datas(const int &irstep, const int &idstep, const i
 
 			const double fac = this->mixing_gg0;
 			const double gg0 = std::pow(fac * 0.529177 /GlobalC::ucell.tpiba, 2);
-			double* filter_g = new double[GlobalC::rhopw->npw];
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 128)
+#endif
 			for(int ig=0; ig<GlobalC::rhopw->npw; ig++)
 			{
 				double gg = GlobalC::rhopw->gg[ig];
-				filter_g[ig] = max(gg / (gg + gg0), 0.1);
-				kerpulay[ig] = (1 - filter_g[ig]) * kerpulay[ig];
+				double filter_g = max(gg / (gg + gg0), 0.1);
+				kerpulay[ig] = (1 - filter_g) * kerpulay[ig];
 			}
 
 			GlobalC::rhopw->recip2real(kerpulay, kerpulayR);
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 256)
+#endif
 			for(int ir=0; ir<GlobalC::rhopw->nrxx; ir++)
 			{
 				Rrho[is][irstep][ir] = Rrho[is][irstep][ir] - kerpulayR[ir];
@@ -583,63 +591,84 @@ void Charge_Mixing::generate_datas(const int &irstep, const int &idstep, const i
 
 			delete[] kerpulay;
 			delete[] kerpulayR;
-			delete[] filter_g;
 		}
     }
 
-	if(totstep==0)
+	ModuleBase::OMP_PARALLEL([&](int num_threads, int thread_id)
 	{
-		// don't need to calculate 'dRrho' and 'drho'.
-	}
-	else if(totstep>0)
-	{	
-		// which dRrho to be update now? answer: dstep=istep-1;
-		// irstep range: [0, rstep)
-		const int nowR = irstep;
-		int lastR = irstep - 1;
-
-		if(GlobalV::test_charge)ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "now irstep", nowR);
-		if(GlobalV::test_charge)ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "last irstep",lastR); 
-
-		if(lastR < 0) lastR += rstep;
-		for (int is=0; is<GlobalV::NSPIN; is++)
+		int irbeg, irend;
+		ModuleBase::TASK_DIST_1D(num_threads, thread_id, GlobalC::rhopw->nrxx, irbeg, irend);
+		irend = irbeg + irend;
+		if(totstep==0)
 		{
-			for (int ir=0; ir<GlobalC::rhopw->nrxx; ir++)
+			// don't need to calculate 'dRrho' and 'drho'.
+
+			// mohan fix the bug 2010/03/26.
+			// save 'rho_save2' in order to calculate drho in
+			// the next iteration.
+			for(int is=0; is<GlobalV::NSPIN; is++)
 			{
-				this->dRrho[is][idstep][ir] = this->Rrho[is][nowR][ir] - this->Rrho[is][lastR][ir];
-				this->drho[is][idstep][ir] = chr->rho_save[is][ir] - this->rho_save2[is][ir];
+				for (int ir=irbeg; ir<irend; ir++)
+				{
+					// save 'rho_save2' in order to calculate drho in
+					this->rho_save2[is][ir] = chr->rho_save[is][ir];
+				}
+			}
+
+			if ((XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5) && mixing_tau)
+			{
+				for(int is=0; is<GlobalV::NSPIN; is++)
+				{
+					for (int ir=irbeg; ir<irend; ir++)
+					{
+						// save 'tau_save2' in order to calculate drho in
+						this->tau_save2[is][ir] = chr->kin_r_save[is][ir];
+					}
+				}		
 			}
 		}
+		else if(totstep>0)
+		{	
+			// which dRrho to be update now? answer: dstep=istep-1;
+			// irstep range: [0, rstep)
+			const int nowR = irstep;
+			int lastR = irstep - 1;
 
-		if ((XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5) && mixing_tau)
-		{
+			if (thread_id == 0)
+			{
+				if(GlobalV::test_charge)ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "now irstep", nowR);
+				if(GlobalV::test_charge)ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "last irstep",lastR); 
+			}
+
+			if(lastR < 0) lastR += rstep;
 			for (int is=0; is<GlobalV::NSPIN; is++)
 			{
-				for (int ir=0; ir<GlobalC::rhopw->nrxx; ir++)
+				for (int ir=irbeg; ir<irend; ir++)
 				{
-					this->dRtau[is][idstep][ir] = this->Rtau[is][nowR][ir] - this->Rtau[is][lastR][ir];
-					this->dtau[is][idstep][ir] = chr->kin_r_save[is][ir] - this->tau_save2[is][ir];
+					this->dRrho[is][idstep][ir] = this->Rrho[is][nowR][ir] - this->Rrho[is][lastR][ir];
+					this->drho[is][idstep][ir] = chr->rho_save[is][ir] - this->rho_save2[is][ir];
+					// save 'rho_save2' in order to calculate drho in
+					this->rho_save2[is][ir] = chr->rho_save[is][ir];
 				}
-			}			
+			}
+
+			if ((XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5) && mixing_tau)
+			{
+				for (int is=0; is<GlobalV::NSPIN; is++)
+				{
+					for (int ir=irbeg; ir<irend; ir++)
+					{
+						this->dRtau[is][idstep][ir] = this->Rtau[is][nowR][ir] - this->Rtau[is][lastR][ir];
+						this->dtau[is][idstep][ir] = chr->kin_r_save[is][ir] - this->tau_save2[is][ir];
+						// save 'tau_save2' in order to calculate drho in
+						this->tau_save2[is][ir] = chr->kin_r_save[is][ir];
+					}
+				}			
+			}
 		}
-	}
+	});
 
-	// mohan fix the bug 2010/03/26.
-	// save 'rho_save2' in order to calculate drho in
-	// the next iteration.
 	ModuleBase::GlobalFunc::NOTE("Calculate drho = rho_{in}^{i+1} - rho_{in}^{i}");
-	for(int is=0; is<GlobalV::NSPIN; is++)
-	{
-		ModuleBase::GlobalFunc::DCOPY(chr->rho_save[is], this->rho_save2[is], GlobalC::rhopw->nrxx);
-	}
-
-	if ((XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5) && mixing_tau)
-	{
-		for(int is=0; is<GlobalV::NSPIN; is++)
-		{
-			ModuleBase::GlobalFunc::DCOPY(chr->kin_r_save[is], this->tau_save2[is], GlobalC::rhopw->nrxx);
-		}		
-	}
 	return;
 }
 

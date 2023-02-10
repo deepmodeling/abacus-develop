@@ -24,8 +24,13 @@ ModuleBase::matrix H_Hartree_pw::v_hartree(const UnitCell &cell,
     std::vector<std::complex<double>> Porter(rho_basis->nmaxgr);
     const int nspin0 = (nspin == 2) ? 2 : 1;
     for (int is = 0; is < nspin0; is++)
+    {
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 256)
+#endif
         for (int ir = 0; ir < rho_basis->nrxx; ir++)
             Porter[ir] += std::complex<double>(rho[is][ir], 0.0);
+    }
     //=============================
     //  bring rho (aux) to G space
     //=============================
@@ -43,6 +48,9 @@ ModuleBase::matrix H_Hartree_pw::v_hartree(const UnitCell &cell,
     double ehart = 0.0;
 
     std::vector<std::complex<double>> vh_g(rho_basis->npw);
+#ifdef _OPENMP
+#pragma omp parallel for reduction(+:ehart)
+#endif
     for (int ig = 0; ig < rho_basis->npw; ig++)
     {
         if (rho_basis->gg[ig] >= 1.0e-8) // LiuXh 20180410
@@ -70,11 +78,17 @@ ModuleBase::matrix H_Hartree_pw::v_hartree(const UnitCell &cell,
     ModuleBase::matrix v(nspin, rho_basis->nrxx);
     if (nspin == 4)
     {
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 512)
+#endif
         for (int ir = 0; ir < rho_basis->nrxx; ir++)
             v(0, ir) = Porter[ir].real();
     }
     else
     {
+#ifdef _OPENMP
+#pragma omp parallel for collapse(2) schedule(static, 512)
+#endif
         for (int is = 0; is < nspin; is++)
             for (int ir = 0; ir < rho_basis->nrxx; ir++)
                 v(is, ir) = Porter[ir].real();
