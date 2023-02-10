@@ -13,7 +13,7 @@ if(ENABLE_LCAO)
             ../module_charge/charge.cpp ../../src_parallel/parallel_reduce.cpp
             ../../module_hamilt_pw/hamilt_pwdft/structure_factor.cpp
             ../../module_cell/klist.cpp ../../src_parallel/parallel_kpoints.cpp ../occupy.cpp
-            ../kernels/elecstate_op.cpp ../../module_io/rwstream.cpp ../../module_io/wf_io.cpp
+            ../kernels/elecstate_op.cpp ../../module_io/rwstream.cpp ../../module_io/write_wfc_pw.cpp
   )
 
   install(DIRECTORY support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})

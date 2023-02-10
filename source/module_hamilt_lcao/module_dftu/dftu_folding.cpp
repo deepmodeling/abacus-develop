@@ -189,15 +189,13 @@ void DFTU::folding_matrix_k(const int ik, const int dim1, const int dim2, std::c
                         // the index of orbitals in this processor
                         const int iw1_all = start1 + ii;
                         const int mu = this->LM->ParaV->trace_loc_row[iw1_all];
-                        if (mu < 0)
-                            continue;
+                        if (mu < 0) continue;
 
                         for (int jj = 0; jj < atom2->nw * GlobalV::NPOL; jj++)
                         {
                             int iw2_all = start2 + jj;
                             const int nu = this->LM->ParaV->trace_loc_col[iw2_all];
-                            if (nu < 0)
-                                continue;
+                            if (nu < 0) continue;
 
                             int iic;
                             if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER())

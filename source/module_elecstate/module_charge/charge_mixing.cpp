@@ -59,6 +59,9 @@ double Charge_Mixing::get_drho(Charge* chr, const double nelec)
 
 
 		ModuleBase::GlobalFunc::NOTE("Calculate the charge difference between rho(G) and rho_save(G)");
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 512)
+#endif
         for (int ig=0; ig<GlobalC::rhopw->npw; ig++)
         {
            chr->rhog[is][ig] -= chr->rhog_save[is][ig];
@@ -79,6 +82,9 @@ double Charge_Mixing::get_drho(Charge* chr, const double nelec)
 	double scf_thr2 = 0.0;
 	for(int is=0; is<GlobalV::NSPIN; is++)
 	{
+#ifdef _OPENMP
+#pragma omp parallel for reduction(+:scf_thr2)
+#endif
 		for(int ir=0; ir<GlobalC::rhopw->nrxx; ir++)
 		{
 			scf_thr2 += abs( chr->rho[is][ir] - chr->rho_save[is][ir] );
@@ -112,7 +118,9 @@ void Charge_Mixing::mix_rho(const int &iter, Charge* chr)
 	for(int is=0; is<GlobalV::NSPIN; ++is)
 	{
 		rho123[is] = new double[GlobalC::rhopw->nrxx];
-		ModuleBase::GlobalFunc::ZEROS(rho123[is], GlobalC::rhopw->nrxx);
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 512)
+#endif
 		for(int ir=0; ir<GlobalC::rhopw->nrxx; ++ir)
 		{
 			rho123[is][ir] = chr->rho[is][ir];
@@ -126,7 +134,9 @@ void Charge_Mixing::mix_rho(const int &iter, Charge* chr)
 		for(int is=0; is<GlobalV::NSPIN; ++is)
 		{
 			kin_r123[is] = new double[GlobalC::rhopw->nrxx];
-			ModuleBase::GlobalFunc::ZEROS(kin_r123[is], GlobalC::rhopw->nrxx);
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 512)
+#endif
 			for(int ir=0; ir<GlobalC::rhopw->nrxx; ++ir)
 			{
 				kin_r123[is][ir] = chr->kin_r[is][ir];
@@ -153,6 +163,9 @@ void Charge_Mixing::mix_rho(const int &iter, Charge* chr)
 
 	// mohan add 2012-06-05
 	// rho_save is the charge before mixing
+#ifdef _OPENMP
+#pragma omp parallel for collapse(2) schedule(static, 512)
+#endif
 	for(int is=0; is<GlobalV::NSPIN; is++)
 	{
 		for(int ir=0; ir<GlobalC::rhopw->nrxx; ++ir)
@@ -169,6 +182,9 @@ void Charge_Mixing::mix_rho(const int &iter, Charge* chr)
 
 	if ((XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5) && mixing_tau)
     {
+#ifdef _OPENMP
+#pragma omp parallel for collapse(2) schedule(static, 512)
+#endif
 		for(int is=0; is<GlobalV::NSPIN; is++)
 		{
 			for(int ir=0; ir<GlobalC::rhopw->nrxx; ++ir)
@@ -193,6 +209,7 @@ void Charge_Mixing::mix_rho(const int &iter, Charge* chr)
 
 void Charge_Mixing::plain_mixing(Charge* chr) const
 {
+	ModuleBase::timer::tick("Charge", "plain_mixing");
     // if mixing_beta == 1, each electron iteration,
     // use all new charge density,
     // on the contrary, if mixing_beta == 0,
@@ -207,7 +224,9 @@ void Charge_Mixing::plain_mixing(Charge* chr) const
 			double* Rrho = new double[GlobalC::rhopw->nrxx];
 			std::complex<double> *kerpulay = new std::complex<double>[GlobalC::rhopw->npw];
 			double* kerpulayR = new double[GlobalC::rhopw->nrxx];
-
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 512)
+#endif
 			for(int ir=0; ir<GlobalC::rhopw->nrxx; ir++)
 			{
 				Rrho[ir] = chr->rho[is][ir] - chr->rho_save[is][ir];
@@ -217,6 +236,9 @@ void Charge_Mixing::plain_mixing(Charge* chr) const
 			const double fac = this->mixing_gg0;
 			const double gg0 = std::pow(fac * 0.529177 / GlobalC::ucell.tpiba, 2);
 			double* filter_g = new double[GlobalC::rhopw->npw];
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 256)
+#endif
 			for(int ig=0; ig<GlobalC::rhopw->npw; ig++)
 			{
 				double gg = GlobalC::rhopw->gg[ig];
@@ -225,11 +247,14 @@ void Charge_Mixing::plain_mixing(Charge* chr) const
 				kerpulay[ig] = (1 - filter_g[ig]) * kerpulay[ig];
 			}
 			GlobalC::rhopw->recip2real(kerpulay, kerpulayR);
-
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 128)
+#endif
 			for(int ir=0; ir<GlobalC::rhopw->nrxx; ir++)
 			{
 				Rrho[ir] = Rrho[ir] - kerpulayR[ir];
 				chr->rho[is][ir] = Rrho[ir] * mixing_beta + chr->rho_save[is][ir];
+				chr->rho_save[is][ir] = chr->rho[is][ir];
 			}
 
 			delete[] Rrho;
@@ -239,25 +264,30 @@ void Charge_Mixing::plain_mixing(Charge* chr) const
 		}
 		else
 		{
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 256)
+#endif
 			for (int ir=0; ir<GlobalC::rhopw->nrxx; ir++)
 			{
 				chr->rho[is][ir] = chr->rho[is][ir]*mixing_beta + mix_old*chr->rho_save[is][ir];
+				chr->rho_save[is][ir] = chr->rho[is][ir];
 			}
 		}
-
-		ModuleBase::GlobalFunc::DCOPY( chr->rho[is], chr->rho_save[is], GlobalC::rhopw->nrxx);
 
 		if ((XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5) && mixing_tau)
 		{
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 256)
+#endif
 			for (int ir=0; ir<GlobalC::rhopw->nrxx; ir++)
 			{
 				chr->kin_r[is][ir] = chr->kin_r[is][ir]*mixing_beta + mix_old*chr->kin_r_save[is][ir];
+				chr->kin_r_save[is][ir] = chr->kin_r[is][ir];
 			}
-			ModuleBase::GlobalFunc::DCOPY( chr->kin_r[is], chr->kin_r_save[is], GlobalC::rhopw->nrxx);
 		}
 
 	}
-
+	ModuleBase::timer::tick("Charge", "plain_mixing");
     return;
 }
 
@@ -275,23 +305,31 @@ double Charge_Mixing::rhog_dot_product(
 	
 	auto part_of_noncolin = [&]()			// Peize Lin change goto to function at 2020.01.31
 	{
+		double sum = 0.0;
+#ifdef _OPENMP
+#pragma omp parallel for reduction(+:sum)
+#endif
 		for (int ig=0; ig<GlobalC::rhopw->npw; ++ig)
 		{
 			if(GlobalC::rhopw->gg[ig]<1e-8) continue;
 			sum += ( conj( rhog1[0][ig] )* rhog2[0][ig] ).real() / GlobalC::rhopw->gg[ig];
 		}
 		sum *= fac;
+		return sum;
 	};
 
     switch ( GlobalV::NSPIN )
     {
 	case 1:
-		part_of_noncolin();
+		sum += part_of_noncolin();
 		break;
 
 	case 2:
 		{
 			// (1) First part of density error.
+#ifdef _OPENMP
+#pragma omp parallel for reduction(+:sum)
+#endif
 			for (int ig=0; ig<GlobalC::rhopw->npw; ++ig)
 			{
 				if(GlobalC::rhopw->gg[ig]<1e-8) continue;
@@ -311,6 +349,9 @@ double Charge_Mixing::rhog_dot_product(
 			sum2 += fac2 * ( conj( rhog1[0][0]-rhog1[1][0] ) * ( rhog2[0][0]-rhog2[1][0] ) ).real();
 
 			double mag = 0.0;
+#ifdef _OPENMP
+#pragma omp parallel for reduction(+:mag)
+#endif
 			for (int ig=0; ig<GlobalC::rhopw->npw; ig++)
 			{
 				mag += ( conj( rhog1[0][ig]-rhog1[1][ig] ) * ( rhog2[0][ig]-rhog2[1][ig] ) ).real();
@@ -331,10 +372,13 @@ double Charge_Mixing::rhog_dot_product(
 	case 4:
 		// non-collinear spin, added by zhengdy
 		if(!GlobalV::DOMAG&&!GlobalV::DOMAG_Z)
-			part_of_noncolin();
+			sum += part_of_noncolin();
 		else
 		{
 			//another part with magnetization
+#ifdef _OPENMP
+#pragma omp parallel for reduction(+:sum)
+#endif
 			for (int ig=0; ig<GlobalC::rhopw->npw; ig++)
 			{
 				if(ig==GlobalC::rhopw->ig_gge0) continue;
@@ -353,6 +397,9 @@ double Charge_Mixing::rhog_dot_product(
 			{
 				fac3 *= 2.0;
 			}
+#ifdef _OPENMP
+#pragma omp parallel for reduction(+:sum)
+#endif
 			for (int ig=0; ig<GlobalC::rhopw->npw; ig++)
 			{
 				if(ig == ig0) continue;

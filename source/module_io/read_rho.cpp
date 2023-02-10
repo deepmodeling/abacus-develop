@@ -1,9 +1,9 @@
-#include "module_elecstate/module_charge/charge.h"
+#include "module_io/rho_io.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 
-bool Charge::read_rho(const int &is, const std::string &fn, double* rho) //add by dwan
+bool ModuleIO::read_rho(const int &is, const std::string &fn, double* rho, int &prenspin) //add by dwan
 {
-    ModuleBase::TITLE("Charge","read_rho");
+    ModuleBase::TITLE("ModuleIO","read_rho");
     std::ifstream ifs(fn.c_str());
     if (!ifs) 
 	{

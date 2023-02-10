@@ -60,26 +60,25 @@ class Charge
 
     void save_rho_before_sum_band(void);
 
-    // for non-linear core correction
-    void non_linear_core_correction(const bool &numeric,
-                                    const int mesh,
-                                    const double *r,
-                                    const double *rab,
-                                    const double *rhoc,
-                                    double *rhocg,
-                                    ModulePW::PW_Basis *rho_basis) const;
+	// for non-linear core correction
+    void non_linear_core_correction
+    (
+        const bool &numeric,
+        const int mesh,
+        const double *r,
+        const double *rab,
+        const double *rhoc,
+        double *rhocg,
+        ModulePW::PW_Basis* rho_basis
+    ) const;
 
-    double check_ne(const double *rho_in) const;
+	double check_ne(const double *rho_in) const;
 
-    void init_final_scf(); // LiuXh add 20180619
+    void init_final_scf(); //LiuXh add 20180619
 
-  public:
-    void write_rho(const double *rho_save,
-                   const int &is,
-                   const int &iter,
-                   const std::string &fn,
-                   const int &precision = 11,
-                   const bool for_plot = false); // mohan add 2007-10-17
+	public:
+
+    void rho_mpi(void);
 
     void write_dipole(const double *rho_save,
                           const int &is,
@@ -87,11 +86,6 @@ class Charge
                           const std::string &fn,
                           const int &precision = 11,
                           const bool for_plot = false);
-
-    void write_rho_cube(const double *rho_save, const int &is, const std::string &fn, const int &precision = 11);
-
-    bool read_rho(const int &is, const std::string &fn, double *rho); // mohan add 2007-10-17
-    void rho_mpi(void);
 
     // mohan add 2021-02-20
     int nrxx; // number of r vectors in this processor

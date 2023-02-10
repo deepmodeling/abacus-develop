@@ -5,6 +5,7 @@
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/global_fp.h"
 #include "module_base/ylm.h"
+#include "module_base/timer.h"
 #include <cmath>
 
 namespace Gint_Tools
@@ -159,6 +160,7 @@ namespace Gint_Tools
 		const bool*const*const cal_flag,
 		double*const*const psir_ylm) 	// cal_flag[GlobalC::bigpw->bxyz][na_grid],	whether the atom-grid distance is larger than cutoff
     {
+		ModuleBase::timer::tick("Gint_Tools", "cal_psir_ylm");
         std::vector<double> ylma;
         for (int id=0; id<na_grid; id++)
 		{
@@ -170,6 +172,19 @@ namespace Gint_Tools
 			const int iat=GlobalC::GridT.which_atom[mcell_index]; // index of atom
 			const int it=GlobalC::ucell.iat2it[iat]; // index of atom type
 			const Atom*const atom=&GlobalC::ucell.atoms[it];
+			auto &OrbPhi = GlobalC::ORB.Phi[it];
+			std::vector<const double*> it_psi_uniform(atom->nw);
+			std::vector<const double*> it_dpsi_uniform(atom->nw);
+			// preprocess index
+			for (int iw=0; iw< atom->nw; ++iw)
+			{
+				if ( atom->iw2_new[iw] )
+				{
+					auto philn = &OrbPhi.PhiLN(atom->iw2l[iw], atom->iw2n[iw]);
+					it_psi_uniform[iw] = &philn->psi_uniform[0];
+					it_dpsi_uniform[iw] = &philn->dpsi_uniform[0];
+				}
+			}
 
 			// meshball_positions should be the bigcell position in meshball
 			// to the center of meshball.
@@ -227,21 +242,21 @@ namespace Gint_Tools
 					const double c4 = (dx3-dx2)*delta_r;
 
 					double phi=0;
-					for (int iw=0; iw< atom->nw; ++iw, ++p)
+					for (int iw=0; iw< atom->nw; ++iw)
 					{
 						if ( atom->iw2_new[iw] )
 						{
-							const Numerical_Orbital_Lm &philn = GlobalC::ORB.Phi[it].PhiLN(
-									atom->iw2l[iw],
-									atom->iw2n[iw]);
-							phi = c1*philn.psi_uniform[ip] + c2*philn.dpsi_uniform[ip]			 // radial wave functions
-								+ c3*philn.psi_uniform[ip+1] + c4*philn.dpsi_uniform[ip+1];
+							auto psi_uniform = it_psi_uniform[iw];
+							auto dpsi_uniform = it_dpsi_uniform[iw];
+							phi = c1*psi_uniform[ip] + c2*dpsi_uniform[ip]			 // radial wave functions
+								+ c3*psi_uniform[ip+1] + c4*dpsi_uniform[ip+1];
 						}
-						*p=phi * ylma[atom->iw2_ylm[iw]];
+						p[iw]=phi * ylma[atom->iw2_ylm[iw]];
 					} // end iw
 				}// end distance<=(GlobalC::ORB.Phi[it].getRcut()-1.0e-15)
 			}// end ib
 		}// end id
+		ModuleBase::timer::tick("Gint_Tools", "cal_psir_ylm");
 		return;
 	}
 
@@ -257,6 +272,7 @@ namespace Gint_Tools
 		double*const*const dpsir_ylm_y,
 		double*const*const dpsir_ylm_z)
 	{
+		ModuleBase::timer::tick("Gint_Tools", "cal_dpsir_ylm");
 		for (int id=0; id<na_grid; id++)
 		{
 			const int mcell_index = GlobalC::GridT.bcell_start[grid_index] + id;
@@ -362,7 +378,7 @@ namespace Gint_Tools
 				}//else
 			}
 		}
-
+		ModuleBase::timer::tick("Gint_Tools", "cal_dpsir_ylm");
 		return;
 	}
 
@@ -380,6 +396,7 @@ namespace Gint_Tools
 		double*const*const ddpsir_ylm_yz,
 		double*const*const ddpsir_ylm_zz)
 	{
+		ModuleBase::timer::tick("Gint_Tools", "cal_ddpsir_ylm");
 		for (int id=0; id<na_grid; id++)
 		{
 			const int mcell_index = GlobalC::GridT.bcell_start[grid_index] + id;
@@ -651,7 +668,7 @@ namespace Gint_Tools
 				}//else
 			}//end ib
 		}//end id(atom)
-
+		ModuleBase::timer::tick("Gint_Tools", "cal_ddpsir_ylm");
 		return;
 	}
 
@@ -671,6 +688,7 @@ namespace Gint_Tools
 		double*const*const dpsir_ylm_yz,
 		double*const*const dpsir_ylm_zz)
 	{
+		ModuleBase::timer::tick("Gint_Tools", "cal_dpsirr_ylm");
 		for (int id=0; id<na_grid; id++)
 		{
 			const int mcell_index = GlobalC::GridT.bcell_start[grid_index] + id;
@@ -725,7 +743,7 @@ namespace Gint_Tools
 				}//else
 			}
 		}
-
+		ModuleBase::timer::tick("Gint_Tools", "cal_dpsirr_ylm");
 		return;
 	}
 

@@ -57,7 +57,7 @@ public:
     
     // Notice: here I reload this function rather than use template
     // (in which the implementation should be put in header file )
-    // because sub-function `write_lowf_complex`contains GlobalC declared in `global.h`
+    // because sub-function `write_wfc_nao_complex`contains GlobalC declared in `global.h`
     // which will cause lots of "not defined" if included in a header file.
     void wfc_2d_to_grid(
         int out_wfc_lcao, 

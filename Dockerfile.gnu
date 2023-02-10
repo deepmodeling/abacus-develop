@@ -21,7 +21,7 @@ ADD https://api.github.com/repos/deepmodeling/abacus-develop/git/refs/heads/deve
 
 RUN git clone https://github.com/deepmodeling/abacus-develop.git --depth 1 && \
     cd abacus-develop && \
-    cmake -B build -DENABLE_DEEPKS=ON && \
+    cmake -B build -DENABLE_DEEPKS=ON -DENABLE_LIBXC=ON && \
     cmake --build build -j`nproc` && \
     cmake --install build && \
     cd .. && rm -rf abacus-develop

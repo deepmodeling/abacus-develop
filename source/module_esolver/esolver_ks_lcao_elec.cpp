@@ -8,6 +8,7 @@
 #include "module_cell/module_neighbor/sltk_atom_arrange.h"
 #include "module_io/istate_charge.h"
 #include "module_io/istate_envelope.h"
+#include "module_io/write_HS_R.h"
 //
 #include "src_ri/exx_abfs-jle.h"
 #include "src_ri/exx_opt_orb.h"
@@ -22,7 +23,7 @@
 #include "module_relax/relax_old/variable_cell.h"    // liuyu 2022-11-07
 
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/op_exx_lcao.h"
-#include "module_io/density_matrix.h"
+#include "module_io/dm_io.h"
 
 namespace ModuleESolver
 {
@@ -449,8 +450,7 @@ namespace ModuleESolver
             this->LM.allocate_HS_R(this->orb_con.ParaV.nnr);
             this->LM.zeros_HSR('S');
             this->UHM.genH.calculate_S_no(this->LM.SlocR.data());
-            this->output_SR("SR.csr");
-
+            ModuleIO::output_S_R(this->UHM,"SR.csr");
         }
     }
 

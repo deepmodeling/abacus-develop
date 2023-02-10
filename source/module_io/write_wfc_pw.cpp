@@ -1,4 +1,4 @@
-#include "wf_io.h"
+#include "write_wfc_pw.h"
 #include "rwstream.h"
 #include "module_base/tool_title.h"
 #include "module_base/global_variable.h"
@@ -24,10 +24,10 @@ inline int getink(const int &ik,const int &rankp,const int &nktot,const int &kpa
     
 }
 
-void WF_io::write_wfc(  const std::string &fn, const psi::Psi<std::complex<double>> &psi,
+void ModuleIO::write_wfc_pw(  const std::string &fn, const psi::Psi<std::complex<double>> &psi,
                         const K_Vectors* p_kv, const ModulePW::PW_Basis_K *wfc_basis)
 {
-    ModuleBase::TITLE("WF_io","write_wfc"); 
+    ModuleBase::TITLE("ModuleIO","write_wfc_pw"); 
     const int nkstot = p_kv->nkstot;
     const int nks = p_kv->nks;
 

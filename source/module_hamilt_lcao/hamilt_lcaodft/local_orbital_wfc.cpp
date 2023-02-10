@@ -1,6 +1,7 @@
 #include "local_orbital_wfc.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
-#include "module_io/wf_local.h"
+#include "module_io/write_wfc_nao.h"
+#include "module_io/read_wfc_nao.h"
 #include "src_parallel/parallel_common.h"
 #include "module_base/memory.h"
 #include "module_base/timer.h"
@@ -111,7 +112,7 @@ void Local_Orbital_wfc::allocate_k(const int& lgd,
 		{
             GlobalV::ofs_running << " Read in wave functions " << ik + 1 << std::endl;
             std::complex<double>** ctot;
-            error = WF_Local::read_lowf_complex(ctot, ik, this->ParaV, psi, pelec);
+            error = ModuleIO::read_wfc_nao_complex(ctot, ik, this->ParaV, psi, pelec);
 #ifdef __MPI
             Parallel_Common::bcast_int(error);
 #endif
@@ -223,7 +224,7 @@ void Local_Orbital_wfc::wfc_2d_to_grid(
     {
         std::stringstream ss;
         ss << GlobalV::global_out_dir << "LOWF_GAMMA_S" << GlobalV::CURRENT_SPIN+1 << ".dat";
-        WF_Local::write_lowf(ss.str(), ctot, ekb, wg);
+        ModuleIO::write_wfc_nao(ss.str(), ctot, ekb, wg);
         for (int i = 0; i < GlobalV::NBANDS; i++)
         {
             delete[] ctot[i];
@@ -303,7 +304,7 @@ void Local_Orbital_wfc::wfc_2d_to_grid(
     {
         std::stringstream ss;
         ss << GlobalV::global_out_dir << "LOWF_K_" << ik + 1 << ".dat";
-        WF_Local::write_lowf_complex(ss.str(), ctot, ik, ekb, wg);
+        ModuleIO::write_wfc_nao_complex(ss.str(), ctot, ik, ekb, wg);
         for (int i = 0; i < GlobalV::NBANDS; i++)
         {
             delete[] ctot[i];

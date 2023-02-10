@@ -3,7 +3,7 @@
 // DATE :   2021-11-21
 //======================
 
-#include "write_wfc_realspace.h"
+#include "write_wfc_r.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_base/tool_title.h"
 #include "module_base/timer.h"
@@ -11,15 +11,15 @@
 #include <stdexcept>
 #include <cstdlib>
 
-namespace Write_Wfc_Realspace
+namespace ModuleIO
 {
 	// write ||wfc_r|| for all k-points and all bands
 	// Input: wfc_g(ik, ib, ig)
 	// loop order is for(z){for(y){for(x)}}
-	void write_wfc_realspace_1(const psi::Psi<std::complex<double>> &wfc_g, const std::string &folder_name, const bool& square)
+	void write_psi_r_1(const psi::Psi<std::complex<double>> &wfc_g, const std::string &folder_name, const bool& square)
 	{
-		ModuleBase::TITLE("Write_Wfc_Realspace", "write_wfc_realspace_1");
-		ModuleBase::timer::tick("Write_Wfc_Realspace", "write_wfc_realspace_1");
+		ModuleBase::TITLE("ModuleIO", "write_psi_r_1");
+		ModuleBase::timer::tick("ModuleIO", "write_psi_r_1");
 
 		const string outdir = GlobalV::global_out_dir + folder_name + "/";
 		const std::string command0 =  "test -d " + outdir + " || mkdir " + outdir;
@@ -58,20 +58,20 @@ namespace Write_Wfc_Realspace
 					+ "_" + ModuleBase::GlobalFunc::TO_STRING(ib);
 #ifdef __MPI
 				mpi_requests.push_back({});
-                write_charge_realspace_1(wfc_r2, file_name, mpi_requests.back());
+                write_chg_r_1(wfc_r2, file_name, mpi_requests.back());
                 if (!square)
-                    write_charge_realspace_1(wfc_i2, file_name + "_imag", mpi_requests.back());
+                    write_chg_r_1(wfc_i2, file_name + "_imag", mpi_requests.back());
 #else
-                write_charge_realspace_1(wfc_r2, file_name);
+                write_chg_r_1(wfc_r2, file_name);
                 //if (!square)
-                    //write_charge_realspace_1(wfc_i2, file_name + "_imag", mpi_requests.back());
+                    //write_chg_r_1(wfc_i2, file_name + "_imag", mpi_requests.back());
 #endif
 			}
 		}
 #ifdef __MPI
 		MPI_Waitall( mpi_requests.size(), mpi_requests.data(), MPI_STATUSES_IGNORE );
 #endif
-		ModuleBase::timer::tick("Write_Wfc_Realspace", "write_wfc_realspace_1");
+		ModuleBase::timer::tick("ModuleIO", "write_psi_r_1");
 	}
 	// processes output pipeline:
 	//
@@ -89,12 +89,12 @@ namespace Write_Wfc_Realspace
 	// Output: wfc_r[ir]
 	std::vector<std::complex<double>> cal_wfc_r(const psi::Psi<std::complex<double>> &wfc_g, const int ik, const int ib)
 	{
-		ModuleBase::timer::tick("Write_Wfc_Realspace", "cal_wfc_r");
+		ModuleBase::timer::tick("ModuleIO", "cal_wfc_r");
 		
 		std::vector<std::complex<double>> wfc_r(GlobalC::wfcpw->nrxx);
 		GlobalC::wfcpw->recip2real(&wfc_g(ib,0), wfc_r.data(),ik);
 
-		ModuleBase::timer::tick("Write_Wfc_Realspace", "cal_wfc_r");
+		ModuleBase::timer::tick("ModuleIO", "cal_wfc_r");
 		return wfc_r;
 	}
 
@@ -102,12 +102,12 @@ namespace Write_Wfc_Realspace
 	
 	// Input: chg_r[ir]
 #ifdef  __MPI
-	void write_charge_realspace_1(const std::vector<double> &chg_r, const std::string &file_name, MPI_Request &mpi_request)
+	void write_chg_r_1(const std::vector<double> &chg_r, const std::string &file_name, MPI_Request &mpi_request)
 #else
-	void write_charge_realspace_1(const std::vector<double> &chg_r, const std::string &file_name)
+	void write_chg_r_1(const std::vector<double> &chg_r, const std::string &file_name)
 #endif
 	{
-		ModuleBase::timer::tick("Write_Wfc_Realspace", "write_charge_realspace_1");
+		ModuleBase::timer::tick("ModuleIO", "write_chg_r_1");
 		std::ofstream ofs;
 
 #ifdef  __MPI
@@ -174,6 +174,6 @@ namespace Write_Wfc_Realspace
 			mpi_request = MPI_REQUEST_NULL;
 		}
 #endif
-		ModuleBase::timer::tick("Write_Wfc_Realspace", "write_charge_realspace_1");
+		ModuleBase::timer::tick("ModuleIO", "write_chg_r_1");
 	}
 };

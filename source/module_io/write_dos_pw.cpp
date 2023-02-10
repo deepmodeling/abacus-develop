@@ -1,89 +1,18 @@
 #include "dos.h"
+#include "write_dos_pw.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_elecstate/energy.h"
 #include "src_parallel/parallel_reduce.h"
 #include "module_elecstate/elecstate.h"
 
-void energy::print_occ(const elecstate::ElecState* pelec)
+void ModuleIO::write_dos_pw(const elecstate::ElecState* pelec, 
+		const int &out_dos, 
+		const int &out_band, 
+		const double &dos_edelta_ev,
+		const double &dos_scale,
+		const double &ef) 
 {
-	
-		std::stringstream ss;
-		ss << GlobalV::global_out_dir << "istate.info" ;
-		if(GlobalV::MY_RANK==0)
-		{
-			std::ofstream ofsi( ss.str().c_str() ); // clear istate.info
-			ofsi.close();
-		}
-#ifdef __MPI
-		for(int ip=0; ip<GlobalV::KPAR; ip++)
-		{
-			MPI_Barrier(MPI_COMM_WORLD);
-			if( GlobalV::MY_POOL == ip )
-			{
-				if( GlobalV::RANK_IN_POOL != 0 || GlobalV::MY_STOGROUP != 0 ) continue;
-#endif
-				std::ofstream ofsi2( ss.str().c_str(), ios::app );
-				if(GlobalV::NSPIN == 1||GlobalV::NSPIN == 4)
-				{
-					for (int ik = 0;ik < GlobalC::kv.nks;ik++)
-					{
-						ofsi2<<"BAND"
-						<<std::setw(25)<<"Energy(ev)"
-						<<std::setw(25)<<"Occupation"
-#ifdef __MPI
-						<<std::setw(25)<<"Kpoint = "<<GlobalC::Pkpoints.startk_pool[ip]+ik+1
-#else
-						<<std::setw(25)<<"Kpoint = "<<ik+1
-#endif
-						<<std::setw(25)<<"("<<GlobalC::kv.kvec_d[ik].x<<" "<<GlobalC::kv.kvec_d[ik].y<<" "<<GlobalC::kv.kvec_d[ik].z<<")"<<std::endl;
-						for(int ib=0;ib<GlobalV::NBANDS;ib++)
-						{
-							ofsi2<<std::setw(6)<<ib+1<<std::setw(25)<<pelec->ekb(ik,ib)* ModuleBase::Ry_to_eV<<std::setw(25)<<pelec->wg(ik,ib)<<std::endl;
-						}
-						ofsi2 <<std::endl;
-						ofsi2 <<std::endl;
-					}
-				}
-				else
-				{
-					for (int ik = 0;ik < GlobalC::kv.nks/2;ik++)
-					{
-						ofsi2<<"BAND"
-						<<std::setw(25)<<"Spin up Energy(ev)"
-						<<std::setw(25)<<"Occupation"
-						<<std::setw(25)<<"Spin down Energy(ev)"
-						<<std::setw(25)<<"Occupation"
-#ifdef __MPI
-						<<std::setw(25)<<"Kpoint = "<<GlobalC::Pkpoints.startk_pool[ip]+ik+1
-#else
-						<<std::setw(25)<<"Kpoint = "<<ik+1
-#endif
-						<<std::setw(25)<<"("<<GlobalC::kv.kvec_d[ik].x<<" "<<GlobalC::kv.kvec_d[ik].y<<" "<<GlobalC::kv.kvec_d[ik].z<<")"<<std::endl;
-
-						for(int ib=0;ib<GlobalV::NBANDS;ib++)
-						{
-							ofsi2<<std::setw(6)<<ib+1
-							<<std::setw(25)<<pelec->ekb(ik, ib)* ModuleBase::Ry_to_eV
-							<<std::setw(25)<<pelec->wg(ik,ib)
-							<<std::setw(25)<<pelec->ekb((ik+GlobalC::kv.nks/2), ib)* ModuleBase::Ry_to_eV
-							<<std::setw(25)<<pelec->wg(ik+GlobalC::kv.nks/2,ib)<<std::endl;
-						}
-						ofsi2 <<std::endl;
-						ofsi2 <<std::endl;
-
-					}
-				}
-
-				ofsi2.close();
-#ifdef __MPI
-			}
-		}
-#endif
-}
-
-void energy::perform_dos_pw(const elecstate::ElecState* pelec)
-{
-	ModuleBase::TITLE("energy","perform_dos_pw");
+	ModuleBase::TITLE("ModuleIO","write_dos_pw");
 
 	if(out_dos !=0 || out_band !=0)
     {
@@ -103,7 +32,7 @@ void energy::perform_dos_pw(const elecstate::ElecState* pelec)
 	int nspin0=1;
 	if(GlobalV::NSPIN==2) nspin0=2;
 
-	if(this->out_dos)
+	if(out_dos)
 	{
 //find energy range
 		double emax = pelec->ekb(0, 0);
@@ -141,7 +70,7 @@ void energy::perform_dos_pw(const elecstate::ElecState* pelec)
 		//		atom_arrange::search( GlobalV::SEARCH_RADIUS );//qifeng-2019-01-21
 		
 //determine #. energy points	
-		const double de_ev = this->dos_edelta_ev;
+		const double de_ev = dos_edelta_ev;
 		//std::cout << de_ev;
 
 		const int npoints = static_cast<int>(std::floor ( ( emax - emin ) / de_ev ));
@@ -155,19 +84,19 @@ void energy::perform_dos_pw(const elecstate::ElecState* pelec)
 			 std::stringstream ss1;
 			 ss1 << GlobalV::global_out_dir << "DOS" << is+1 << "_smearing.dat";
 
-			 Dos::calculate_dos(
+			 ModuleIO::calculate_dos(
 					 is,
 					 GlobalC::kv.isk,
 					 ss.str(),
 					 ss1.str(), 
-					 this->dos_edelta_ev, 
+					 dos_edelta_ev, 
 					 emax, 
 					 emin, 
 					 GlobalC::kv.nks, GlobalC::kv.nkstot, GlobalC::kv.wk, pelec->wg, GlobalV::NBANDS, pelec->ekb );
 	 	}
 
 	}//out_dos=1
-	if(this->out_band) //pengfei 2014-10-13
+	if(out_band) //pengfei 2014-10-13
 	{
 		int nks=0;
 		if(nspin0==1) 
@@ -184,7 +113,7 @@ void energy::perform_dos_pw(const elecstate::ElecState* pelec)
 			std::stringstream ss2;
 			ss2 << GlobalV::global_out_dir << "BANDS_" << is+1 << ".dat";
 			GlobalV::ofs_running << "\n Output bands in file: " << ss2.str() << std::endl;
-			Dos::nscf_band(is, ss2.str(), nks, GlobalV::NBANDS, this->ef*0, pelec->ekb);
+			ModuleIO::nscf_band(is, ss2.str(), nks, GlobalV::NBANDS, ef*0, pelec->ekb);
 		}
 
 	}

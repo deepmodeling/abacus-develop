@@ -15,7 +15,6 @@ int main(int argc, char **argv)
 
 	if (!inp) 
 	{
-        	cout << "\e[1;31m [  FAILED  ]  \e[0m";
 		cout << "Can't find " << input_file << " !" << endl;
 		return 1;
 	}
