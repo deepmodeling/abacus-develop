@@ -74,12 +74,12 @@ XC_Functional::XC_Functional(){}
 XC_Functional::~XC_Functional(){}
 int XC_Functional::get_func_type(){return 0;}
 
-namespace WF_Local
+namespace ModuleIO
 {
-    int read_lowf(double** ctot, const int& is, const Parallel_Orbitals* ParaV, psi::Psi<double>*, elecstate::ElecState*) {return 1;};
-    int read_lowf_complex(std::complex<double>** ctot, const int& ik, const Parallel_Orbitals* ParaV, psi::Psi<std::complex<double> >*, elecstate::ElecState*) {return 1;}
-    void write_lowf(const std::string &name, double **ctot, const ModuleBase::matrix& ekb, const ModuleBase::matrix& wg) {}
-    void write_lowf_complex(const std::string &name, std::complex<double>** ctot, const int &ik, const ModuleBase::matrix& ekb, const ModuleBase::matrix& wg) {}
+    int read_wfc_nao(double** ctot, const int& is, const Parallel_Orbitals* ParaV, psi::Psi<double>*, elecstate::ElecState*) {return 1;};
+    int read_wfc_nao_complex(std::complex<double>** ctot, const int& ik, const Parallel_Orbitals* ParaV, psi::Psi<std::complex<double> >*, elecstate::ElecState*) {return 1;}
+    void write_wfc_nao(const std::string &name, double **ctot, const ModuleBase::matrix& ekb, const ModuleBase::matrix& wg) {}
+    void write_wfc_nao_complex(const std::string &name, std::complex<double>** ctot, const int &ik, const ModuleBase::matrix& ekb, const ModuleBase::matrix& wg) {}
 }
 
 //mock the unrelated functions in charge.cpp

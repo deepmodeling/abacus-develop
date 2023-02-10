@@ -19,8 +19,7 @@ namespace ModuleBase
 void ModuleBase::Global_File::make_dir_out(
     const std::string &suffix,
 	const std::string &calculation,
-    const bool &out_hs,
-    const bool &out_r,
+    const bool &out_dir,
     const int rank,
     const bool &restart,
     const bool out_alllog)
@@ -124,7 +123,7 @@ void ModuleBase::Global_File::make_dir_out(
     }
 
     // make dir for HS matrix output in md calculation
-    if((out_hs || out_r) && calculation == "md")
+    if((out_dir) && calculation == "md")
     {
         int make_dir_matrix = 0;
         std::string command1 =  "test -d " + GlobalV::global_matrix_dir + " || mkdir " + GlobalV::global_matrix_dir;

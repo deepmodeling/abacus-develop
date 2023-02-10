@@ -177,18 +177,6 @@ void Force_LCAO_k::ftable_k(const bool isforce,
         Parallel_Reduce::reduce_double_pool(svl_dphi.c, svl_dphi.nr * svl_dphi.nc);
     }
 
-    // test the force.
-    /*
-    std::cout << " overlap force" << std::endl;
-    for(int iat=0; iat<GlobalC::ucell.nat; ++iat)
-    {
-        const double fac = ModuleBase::Ry_to_eV / 0.529177;
-        std::cout << std::setw(5) << iat+1 << std::setw(15) << foverlap[iat][0] *fac<< std::setw(15) <<
-    foverlap[iat][1]*fac << std::setw(15) << foverlap[iat][2]*fac << std::endl;
-    }
-    */
-
-    this->finish_k();
 
     ModuleBase::timer::tick("Force_LCAO_k", "ftable_k");
     return;
@@ -399,90 +387,91 @@ void Force_LCAO_k::cal_foverlap_k(const bool isforce,
         const int T1 = GlobalC::ucell.iat2it[iat];
         Atom* atom1 = &GlobalC::ucell.atoms[T1];
         const int I1 = GlobalC::ucell.iat2ia[iat];
-        {
-            double *foverlap_iat = &foverlap(iat, 0);
+
+        double *foverlap_iat;
+        if(isforce) foverlap_iat = &foverlap(iat, 0);
+
 #ifdef _OPENMP
-            // using local stack to avoid false sharing in multi-threaded case
-            double foverlap_temp[3] = {0.0, 0.0, 0.0};
-            if (num_threads > 1)
-            {
-                foverlap_iat = foverlap_temp;
-            }
+        // using local stack to avoid false sharing in multi-threaded case
+        double foverlap_temp[3] = {0.0, 0.0, 0.0};
+        if (num_threads > 1)
+        {
+            foverlap_iat = foverlap_temp;
+        }
 #endif
-            int irr = pv->nlocstart[iat];
-            const int start1 = GlobalC::ucell.itiaiw2iwt(T1, I1, 0);
-            for (int cb = 0; cb < ra.na_each[iat]; ++cb)
+        int irr = pv->nlocstart[iat];
+        const int start1 = GlobalC::ucell.itiaiw2iwt(T1, I1, 0);
+        for (int cb = 0; cb < ra.na_each[iat]; ++cb)
+        {
+            const int T2 = ra.info[iat][cb][3];
+            const int I2 = ra.info[iat][cb][4];
+            const int start2 = GlobalC::ucell.itiaiw2iwt(T2, I2, 0);
+
+            Atom* atom2 = &GlobalC::ucell.atoms[T2];
+
+            for (int jj = 0; jj < atom1->nw; jj++)
             {
-                const int T2 = ra.info[iat][cb][3];
-                const int I2 = ra.info[iat][cb][4];
-                const int start2 = GlobalC::ucell.itiaiw2iwt(T2, I2, 0);
+                const int iw1_all = start1 + jj;
 
-                Atom* atom2 = &GlobalC::ucell.atoms[T2];
+                // HPSEPS
+                const int mu = pv->trace_loc_row[iw1_all];
+                if (mu < 0)
+                    continue;
 
-                for (int jj = 0; jj < atom1->nw; jj++)
+                for (int kk = 0; kk < atom2->nw; kk++)
                 {
-                    const int iw1_all = start1 + jj;
+                    const int iw2_all = start2 + kk;
 
                     // HPSEPS
-                    const int mu = pv->trace_loc_row[iw1_all];
-                    if (mu < 0)
+                    const int nu = pv->trace_loc_col[iw2_all];
+                    if (nu < 0)
                         continue;
-
-                    for (int kk = 0; kk < atom2->nw; kk++)
+                    //==============================================================
+                    // here we use 'minus', but in GlobalV::GAMMA_ONLY_LOCAL we use 'plus',
+                    // both are correct because the 'DSloc_Rx' is used in 'row' (-),
+                    // however, the 'DSloc_x' in GAMMA is used in 'col' (+),
+                    // mohan update 2011-06-16
+                    //==============================================================
+                    for (int is = 0; is < GlobalV::NSPIN; ++is)
                     {
-                        const int iw2_all = start2 + kk;
-
-                        // HPSEPS
-                        const int nu = pv->trace_loc_col[iw2_all];
-                        if (nu < 0)
-                            continue;
-                        //==============================================================
-                        // here we use 'minus', but in GlobalV::GAMMA_ONLY_LOCAL we use 'plus',
-                        // both are correct because the 'DSloc_Rx' is used in 'row' (-),
-                        // however, the 'DSloc_x' in GAMMA is used in 'col' (+),
-                        // mohan update 2011-06-16
-                        //==============================================================
-                        for (int is = 0; is < GlobalV::NSPIN; ++is)
+                        double edm2d2 = 2.0 * edm2d[is][irr];
+                        if (isforce)
                         {
-                            double edm2d2 = 2.0 * edm2d[is][irr];
-                            if (isforce)
+                            foverlap_iat[0] -= edm2d2 * this->UHM->LM->DSloc_Rx[irr];
+                            foverlap_iat[1] -= edm2d2 * this->UHM->LM->DSloc_Ry[irr];
+                            foverlap_iat[2] -= edm2d2 * this->UHM->LM->DSloc_Rz[irr];
+                        }
+                        if (isstress)
+                        {
+                            for (int ipol = 0; ipol < 3; ipol++)
                             {
-                                foverlap_iat[0] -= edm2d2 * this->UHM->LM->DSloc_Rx[irr];
-                                foverlap_iat[1] -= edm2d2 * this->UHM->LM->DSloc_Ry[irr];
-                                foverlap_iat[2] -= edm2d2 * this->UHM->LM->DSloc_Rz[irr];
-                            }
-                            if (isstress)
-                            {
-                                for (int ipol = 0; ipol < 3; ipol++)
-                                {
-                                    local_soverlap(0, ipol) += edm2d[is][irr] * this->UHM->LM->DSloc_Rx[irr]
-                                                         * this->UHM->LM->DH_r[irr * 3 + ipol];
-                                    if (ipol < 1)
-                                        continue;
-                                    local_soverlap(1, ipol) += edm2d[is][irr] * this->UHM->LM->DSloc_Ry[irr]
-                                                         * this->UHM->LM->DH_r[irr * 3 + ipol];
-                                    if (ipol < 2)
-                                        continue;
-                                    local_soverlap(2, ipol) += edm2d[is][irr] * this->UHM->LM->DSloc_Rz[irr]
-                                                         * this->UHM->LM->DH_r[irr * 3 + ipol];
-                                }
+                                local_soverlap(0, ipol) += edm2d[is][irr] * this->UHM->LM->DSloc_Rx[irr]
+                                                        * this->UHM->LM->DH_r[irr * 3 + ipol];
+                                if (ipol < 1)
+                                    continue;
+                                local_soverlap(1, ipol) += edm2d[is][irr] * this->UHM->LM->DSloc_Ry[irr]
+                                                        * this->UHM->LM->DH_r[irr * 3 + ipol];
+                                if (ipol < 2)
+                                    continue;
+                                local_soverlap(2, ipol) += edm2d[is][irr] * this->UHM->LM->DSloc_Rz[irr]
+                                                        * this->UHM->LM->DH_r[irr * 3 + ipol];
                             }
                         }
-                        ++local_total_irr;
-                        ++irr;
-                    } // end kk
-                } // end jj
-            } // end cb
+                    }
+                    ++local_total_irr;
+                    ++irr;
+                } // end kk
+            } // end jj
+        } // end cb
 #ifdef _OPENMP
-            if (isforce && num_threads > 1)
-            {
-                foverlap(iat, 0) += foverlap_iat[0];
-                foverlap(iat, 1) += foverlap_iat[1];
-                foverlap(iat, 2) += foverlap_iat[2];
-            }
-#endif
+        if (isforce && num_threads > 1)
+        {
+            foverlap(iat, 0) += foverlap_iat[0];
+            foverlap(iat, 1) += foverlap_iat[1];
+            foverlap(iat, 2) += foverlap_iat[2];
         }
-    }
+#endif
+    } // end iat
 #ifdef _OPENMP
     #pragma omp critical(cal_foverlap_k_reduce)
     {
@@ -557,77 +546,77 @@ void Force_LCAO_k::cal_ftvnl_dphi_k(double** dm2d,
         const int T1 = GlobalC::ucell.iat2it[iat];
         Atom* atom1 = &GlobalC::ucell.atoms[T1];
         const int I1 = GlobalC::ucell.iat2ia[iat];
-        {
-            int irr = pv->nlocstart[iat];
-            const int start1 = GlobalC::ucell.itiaiw2iwt(T1, I1, 0);
-            double *ftvnl_dphi_iat = &ftvnl_dphi(iat, 0);
-#ifdef _OPENMP
-            // using local stack to avoid false sharing in multi-threaded case
-            double ftvnl_dphi_temp[3] = {0.0, 0.0, 0.0};
-            if (num_threads > 1)
-            {
-                ftvnl_dphi_iat = ftvnl_dphi_temp;
-            }
-#endif
-            for (int cb = 0; cb < ra.na_each[iat]; ++cb)
-            {
-                const int T2 = ra.info[iat][cb][3];
-                const int I2 = ra.info[iat][cb][4];
-                const int start2 = GlobalC::ucell.itiaiw2iwt(T2, I2, 0);
-                Atom* atom2 = &GlobalC::ucell.atoms[T2];
 
-                for (int jj = 0; jj < atom1->nw; ++jj)
-                {
-                    const int iw1_all = start1 + jj;
-                    const int mu = pv->trace_loc_row[iw1_all];
-                    if (mu < 0)
-                        continue;
-                    for (int kk = 0; kk < atom2->nw; ++kk)
-                    {
-                        const int iw2_all = start2 + kk;
-                        const int nu = pv->trace_loc_col[iw2_all];
-                        if (nu < 0)
-                            continue;
-                        //==============================================================
-                        // here we use 'minus', but in GlobalV::GAMMA_ONLY_LOCAL we use 'plus',
-                        // both are correct because the 'DSloc_Rx' is used in 'row' (-),
-                        // however, the 'DSloc_x' is used in 'col' (+),
-                        // mohan update 2011-06-16
-                        //==============================================================
-                        for (int is = 0; is < GlobalV::NSPIN; ++is)
-                        {
-                            double dm2d2 = 2.0 * dm2d[is][irr];
-                            if (isforce)
-                            {
-                                ftvnl_dphi_iat[0] += dm2d2 * this->UHM->LM->DHloc_fixedR_x[irr];
-                                ftvnl_dphi_iat[1] += dm2d2 * this->UHM->LM->DHloc_fixedR_y[irr];
-                                ftvnl_dphi_iat[2] += dm2d2 * this->UHM->LM->DHloc_fixedR_z[irr];
-                            }
-                            if (isstress)
-                            {
-                                local_stvnl_dphi(0, 0) -= dm2d[is][irr] * this->UHM->LM->stvnl11[irr];
-                                local_stvnl_dphi(0, 1) -= dm2d[is][irr] * this->UHM->LM->stvnl12[irr];
-                                local_stvnl_dphi(0, 2) -= dm2d[is][irr] * this->UHM->LM->stvnl13[irr];
-                                local_stvnl_dphi(1, 1) -= dm2d[is][irr] * this->UHM->LM->stvnl22[irr];
-                                local_stvnl_dphi(1, 2) -= dm2d[is][irr] * this->UHM->LM->stvnl23[irr];
-                                local_stvnl_dphi(2, 2) -= dm2d[is][irr] * this->UHM->LM->stvnl33[irr];
-                            }
-                        }
-                        ++local_total_irr;
-                        ++irr;
-                    } // end kk
-                } // end jj
-            } // end cb
+        int irr = pv->nlocstart[iat];
+        const int start1 = GlobalC::ucell.itiaiw2iwt(T1, I1, 0);
+        double *ftvnl_dphi_iat;
+        if(isforce) ftvnl_dphi_iat = &ftvnl_dphi(iat, 0);
 #ifdef _OPENMP
-            if (isforce && num_threads > 1)
-            {
-                ftvnl_dphi(iat, 0) += ftvnl_dphi_iat[0];
-                ftvnl_dphi(iat, 1) += ftvnl_dphi_iat[1];
-                ftvnl_dphi(iat, 2) += ftvnl_dphi_iat[2];
-            }
-#endif
+        // using local stack to avoid false sharing in multi-threaded case
+        double ftvnl_dphi_temp[3] = {0.0, 0.0, 0.0};
+        if (num_threads > 1)
+        {
+            ftvnl_dphi_iat = ftvnl_dphi_temp;
         }
-    }
+#endif
+        for (int cb = 0; cb < ra.na_each[iat]; ++cb)
+        {
+            const int T2 = ra.info[iat][cb][3];
+            const int I2 = ra.info[iat][cb][4];
+            const int start2 = GlobalC::ucell.itiaiw2iwt(T2, I2, 0);
+            Atom* atom2 = &GlobalC::ucell.atoms[T2];
+
+            for (int jj = 0; jj < atom1->nw; ++jj)
+            {
+                const int iw1_all = start1 + jj;
+                const int mu = pv->trace_loc_row[iw1_all];
+                if (mu < 0)
+                    continue;
+                for (int kk = 0; kk < atom2->nw; ++kk)
+                {
+                    const int iw2_all = start2 + kk;
+                    const int nu = pv->trace_loc_col[iw2_all];
+                    if (nu < 0)
+                        continue;
+                    //==============================================================
+                    // here we use 'minus', but in GlobalV::GAMMA_ONLY_LOCAL we use 'plus',
+                    // both are correct because the 'DSloc_Rx' is used in 'row' (-),
+                    // however, the 'DSloc_x' is used in 'col' (+),
+                    // mohan update 2011-06-16
+                    //==============================================================
+                    for (int is = 0; is < GlobalV::NSPIN; ++is)
+                    {
+                        double dm2d2 = 2.0 * dm2d[is][irr];
+                        if (isforce)
+                        {
+                            ftvnl_dphi_iat[0] += dm2d2 * this->UHM->LM->DHloc_fixedR_x[irr];
+                            ftvnl_dphi_iat[1] += dm2d2 * this->UHM->LM->DHloc_fixedR_y[irr];
+                            ftvnl_dphi_iat[2] += dm2d2 * this->UHM->LM->DHloc_fixedR_z[irr];
+                        }
+                        if (isstress)
+                        {
+                            local_stvnl_dphi(0, 0) -= dm2d[is][irr] * this->UHM->LM->stvnl11[irr];
+                            local_stvnl_dphi(0, 1) -= dm2d[is][irr] * this->UHM->LM->stvnl12[irr];
+                            local_stvnl_dphi(0, 2) -= dm2d[is][irr] * this->UHM->LM->stvnl13[irr];
+                            local_stvnl_dphi(1, 1) -= dm2d[is][irr] * this->UHM->LM->stvnl22[irr];
+                            local_stvnl_dphi(1, 2) -= dm2d[is][irr] * this->UHM->LM->stvnl23[irr];
+                            local_stvnl_dphi(2, 2) -= dm2d[is][irr] * this->UHM->LM->stvnl33[irr];
+                        }
+                    }
+                    ++local_total_irr;
+                    ++irr;
+                } // end kk
+            } // end jj
+        } // end cb
+#ifdef _OPENMP
+        if (isforce && num_threads > 1)
+        {
+            ftvnl_dphi(iat, 0) += ftvnl_dphi_iat[0];
+            ftvnl_dphi(iat, 1) += ftvnl_dphi_iat[1];
+            ftvnl_dphi(iat, 2) += ftvnl_dphi_iat[2];
+        }
+#endif
+    } // end iat
 #ifdef _OPENMP
     #pragma omp critical(cal_ftvnl_dphi_k_reduce)
     {

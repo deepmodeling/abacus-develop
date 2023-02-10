@@ -85,7 +85,7 @@ void Structure_Factor::setup_structure_factor(UnitCell* Ucell, ModulePW::PW_Basi
 	    	const int na = Ucell->atoms[it].na;
 	    	const ModuleBase::Vector3<double> * const tau = Ucell->atoms[it].tau;
 #ifdef _OPENMP
-		    #pragma omp parallel for schedule(static)
+		    #pragma omp parallel for
 #endif
             for (int ig=0; ig<rho_basis->npw; ig++)
             {
@@ -121,21 +121,35 @@ void Structure_Factor::setup_structure_factor(UnitCell* Ucell, ModulePW::PW_Basi
         for (j = 0; j < Ucell->atoms[i].na;j++)
         {
             gtau = Ucell->G * Ucell->atoms[i].tau[j];  //HLX: fixed on 10/13/2006
+#ifdef _OPENMP
+#pragma omp parallel
+{
+		    #pragma omp for schedule(static, 16)
+#endif
             for (int n1 = -rho_basis->nx; n1 <= rho_basis->nx;n1++)
             {
                 double arg = n1 * gtau.x;
                 this->eigts1(inat, n1 + rho_basis->nx) = ModuleBase::libm::exp( ci_tpi*arg  );
             }
+#ifdef _OPENMP
+		    #pragma omp for schedule(static, 16)
+#endif
             for (int n2 = -rho_basis->ny; n2 <= rho_basis->ny;n2++)
             {
                 double arg = n2 * gtau.y;
                 this->eigts2(inat, n2 + rho_basis->ny) = ModuleBase::libm::exp( ci_tpi*arg );
             }
+#ifdef _OPENMP
+		    #pragma omp for schedule(static, 16)
+#endif
             for (int n3 = -rho_basis->nz; n3 <= rho_basis->nz;n3++)
             {
                 double arg = n3 * gtau.z;
                 this->eigts3(inat, n3 + rho_basis->nz) = ModuleBase::libm::exp( ci_tpi*arg );
             }
+#ifdef _OPENMP
+}
+#endif
             inat++;
         }
     }
@@ -204,6 +218,9 @@ void Structure_Factor::bspline_sf(const int norder,UnitCell* Ucell,ModulePW::PW_
         ModuleBase::GlobalFunc::ZEROS(r,rho_basis->nxyz);
 
         //A parallel algorithm can be added in the future.
+#ifdef _OPENMP
+		#pragma omp parallel for
+#endif
         for(int ia = 0 ; ia < na ; ++ia)
         {
             double gridx = taud[ia].x * rho_basis->nx;
@@ -231,6 +248,9 @@ void Structure_Factor::bspline_sf(const int norder,UnitCell* Ucell,ModulePW::PW_
                     for(int ix = 0 ; ix <= norder ; ++ix )
                     {
                         int icx = int(rho_basis->nx*10-ix+floor(gridx))%rho_basis->nx;
+#ifdef _OPENMP
+		                #pragma omp atomic
+#endif
                         r[icz*rho_basis->ny*rho_basis->nx + icx*rho_basis->ny + icy] += bsz.bezier_ele(iz) 
                                                  * bsy.bezier_ele(iy) 
                                                  * bsx.bezier_ele(ix); 
@@ -243,9 +263,11 @@ void Structure_Factor::bspline_sf(const int norder,UnitCell* Ucell,ModulePW::PW_
         //---------------------------------------------------
         for(int iz = 0; iz < rho_basis->nz; iz++)
 	    {
-	    	ModuleBase::GlobalFunc::ZEROS(zpiece, rho_basis->nxy);
 	    	if(GlobalV::MY_RANK==0)
 	    	{
+#ifdef _OPENMP
+		    #pragma omp parallel for schedule(static, 512)
+#endif
 	    		for(int ir = 0; ir < rho_basis->nxy; ir++)
 	    		{
 	    			zpiece[ir] = r[iz*rho_basis->nxy + ir];
@@ -262,6 +284,9 @@ void Structure_Factor::bspline_sf(const int norder,UnitCell* Ucell,ModulePW::PW_
         //It should be optimized with r2c
         rho_basis->real2recip(tmpr, &strucFac(it,0));
         this->bsplinecoef(b1,b2,b3,rho_basis->nx, rho_basis->ny, rho_basis->nz, norder);
+#ifdef _OPENMP
+		#pragma omp parallel for schedule(static, 128)
+#endif
         for(int ig = 0 ; ig < rho_basis->npw ; ++ig)
         {
            int idx = int(rho_basis->gdirect[ig].x+0.1+rho_basis->nx)%rho_basis->nx;
@@ -287,6 +312,11 @@ void Structure_Factor:: bsplinecoef(complex<double> *b1, complex<double> *b2, co
     ModuleBase::Bspline bsp;
     bsp.init(norder, 1, 0);
     bsp.getbspline(1.0);
+#ifdef _OPENMP
+#pragma omp parallel
+{
+	#pragma omp for schedule(static, 16)
+#endif
     for(int ix = 0 ; ix < nx ; ++ix)
     {
         complex<double> fracx=0;
@@ -296,6 +326,9 @@ void Structure_Factor:: bsplinecoef(complex<double> *b1, complex<double> *b2, co
         }
         b1[ix] = ModuleBase::libm::exp(ci_tpi*double(norder*ix)/double(nx))/fracx;
     }
+#ifdef _OPENMP
+	#pragma omp for schedule(static, 16)
+#endif
     for(int iy = 0 ; iy < ny ; ++iy)
     {
         complex<double> fracy=0;
@@ -305,6 +338,9 @@ void Structure_Factor:: bsplinecoef(complex<double> *b1, complex<double> *b2, co
         }
         b2[iy] = ModuleBase::libm::exp(ci_tpi*double(norder*iy)/double(ny))/fracy;
     }
+#ifdef _OPENMP
+	#pragma omp for schedule(static, 16)
+#endif
     for(int iz = 0 ; iz < nz ; ++iz)
     {
         complex<double> fracz=0;
@@ -314,6 +350,9 @@ void Structure_Factor:: bsplinecoef(complex<double> *b1, complex<double> *b2, co
         }
         b3[iz] = ModuleBase::libm::exp(ci_tpi*double(norder*iz)/double(nz))/fracz;
     }
+#ifdef _OPENMP
+}
+#endif
 }
 
 template <>

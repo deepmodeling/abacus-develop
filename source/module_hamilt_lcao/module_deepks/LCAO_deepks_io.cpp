@@ -201,7 +201,7 @@ void LCAO_Deepks::save_npy_o(const ModuleBase::matrix &bandgap, const std::strin
         }
     }
 
-    npy::SaveArrayAsNumpy(o_file, false, 1, oshape, npy_o);
+    npy::SaveArrayAsNumpy(o_file, false, 2, oshape, npy_o);
     return;
 }
 

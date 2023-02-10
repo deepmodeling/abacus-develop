@@ -5,7 +5,8 @@ list(APPEND objects
     bessel_basis.cpp
     cal_test.cpp
     dos.cpp
-    energy_dos_pw.cpp
+    write_dos_pw.cpp
+    write_occ.cpp
     numerical_basis.cpp
     numerical_descriptor.cpp
     output.cpp
@@ -15,27 +16,30 @@ list(APPEND objects
     rwstream.cpp
     to_wannier90.cpp
     unk_overlap_pw.cpp
-    wf_io.cpp
+    write_wfc_pw.cpp
     winput.cpp
     write_input.cpp    
     write_rho.cpp
-    write_rho_cube.cpp
-    write_wfc_realspace.cpp
+    write_wfc_r.cpp
 )
 
 if(ENABLE_LCAO)
   list(APPEND objects
       cal_r_overlap_R.cpp
-      energy_dos.cpp
+      write_dos_lcao.cpp
+      write_orb_info.cpp
       istate_charge.cpp
       istate_envelope.cpp
       mulliken_charge.cpp
       read_dm.cpp
       unk_overlap_lcao.cpp
-      wf_local.cpp
+      read_wfc_nao.cpp
+      write_wfc_nao.cpp
       write_HS.cpp
+      write_HS_sparse.cpp
       write_HS_R.cpp
       write_dm.cpp
+      write_dm_sparse.cpp
   )
 endif()
 

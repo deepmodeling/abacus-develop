@@ -16,3 +16,7 @@ scf_thr			1e-10
 
 calculation     	ienvelope 
 read_file_dir		./
+
+bx 2
+by 2
+bz 2

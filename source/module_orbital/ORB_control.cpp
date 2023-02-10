@@ -2,7 +2,6 @@
 #include "ORB_gen_tables.h"
 #include "../module_base/timer.h"
 #include "../src_parallel/parallel_common.h"
-#include "../module_io/wf_local.h"
 #include "../module_base/lapack_connector.h"
 #include "../module_base/memory.h"
 

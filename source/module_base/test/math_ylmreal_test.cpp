@@ -282,6 +282,11 @@ class YlmRealTest : public testing::Test
     }
 };
 
+TEST_F(YlmRealTest,Constructor)
+{
+    EXPECT_NO_THROW(ModuleBase::YlmReal YR);
+}
+
 TEST_F(YlmRealTest,YlmReal)
 {
     ModuleBase::YlmReal::Ylm_Real(nylm,ng,g,ylm);
