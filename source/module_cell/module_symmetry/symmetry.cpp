@@ -1168,7 +1168,7 @@ void Symmetry::pricell(double* pos)
         }
         else if(jplane<=kplane)
         {
-            std::cout<<"try a new b2"<<std::endl;
+            //std::cout<<"try a new b2"<<std::endl;
             //use default b3
             coeff.e21=0;
             coeff.e22=0;
@@ -1176,7 +1176,7 @@ void Symmetry::pricell(double* pos)
         }
         else
         {
-            std::cout<<"try a new b1"<<std::endl;
+            //std::cout<<"try a new b1"<<std::endl;
             //use default b3
             coeff.e11=0;
             coeff.e12=0;
@@ -1469,10 +1469,13 @@ void Symmetry::rhog_symmetry(std::complex<double> *rhogtot,
                             sin_arg += sin(arg);   
                         }
                         // add nothing to sum, so don't consider this isym into rot_count
-                        if(equal(cos_arg, 0.0) && equal(sin_arg, 0.0)) continue;
                         cos_arg/=double(ncell);
                         sin_arg/=double(ncell);
+                        //deal with double-zero
+                        if(equal(cos_arg, 0.0) && equal(sin_arg, 0.0)) continue;
                         std::complex<double> gphase( cos_arg,  sin_arg );
+                        //deal with small difference from 1
+                        if(equal(gphase.real(), 1.0) && equal(gphase.imag(), 0))  gphase=std::complex<double>(1.0, 0.0);
                         gphase_record[rot_count]=gphase;
                         sum += rhogtot[ipw]*gphase;
                         //record
