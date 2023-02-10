@@ -351,6 +351,7 @@ OBJS_IO=input.o\
     winput.o\
     write_input.o\
     write_rho.o\
+    write_dipole.o\
     write_rho_cube.o\
 	write_wfc_realspace.o\
 
