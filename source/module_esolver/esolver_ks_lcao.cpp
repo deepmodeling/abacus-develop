@@ -906,6 +906,22 @@ void ESolver_KS_LCAO::afterscf(const int istep)
         } // LiuXh add 2019-07-15
     }
 
+    if (hsolver::HSolverLCAO::out_mat_t)
+    {
+        if( !(GlobalV::CALCULATION=="md" && (istep%hsolver::HSolverLCAO::out_hsR_interval!=0)) )
+        {
+            ModuleIO::output_T_R(istep, this->UHM); // LiuXh add 2019-07-15
+        } // LiuXh add 2019-07-15
+    }
+
+    if (hsolver::HSolverLCAO::out_mat_dh)
+    {
+        if( !(GlobalV::CALCULATION=="md" && (istep%hsolver::HSolverLCAO::out_hsR_interval!=0)) )
+        {
+            //ModuleIO::output_DH_R(istep, this->pelec->pot->get_effective_v(), this->UHM); // LiuXh add 2019-07-15
+        } // LiuXh add 2019-07-15
+    }
+
     // add by jingan for out r_R matrix 2019.8.14
     if(INPUT.out_mat_r)
     {

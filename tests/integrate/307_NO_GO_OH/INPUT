@@ -30,3 +30,7 @@ mixing_beta		0.7
 mixing_gg0      1.5
 
 ks_solver       scalapack_gvx
+
+bx 2
+by 2
+bz 2

@@ -24,6 +24,7 @@ class LCAO_Hamilt
     void set_R_range_sparse();
     void calculate_STN_R_sparse(const int &current_spin, const double &sparse_threshold);
     void calculate_STN_R_sparse_for_S(const double &sparse_threshold);
+    void calculate_STN_R_sparse_for_T(const double &sparse_threshold);
     void calculat_HR_dftu_sparse(const int &current_spin, const double &sparse_threshold);
     void calculat_HR_dftu_soc_sparse(const int &current_spin, const double &sparse_threshold);
     void calculate_HR_exx_sparse(const int &current_spin, const double &sparse_threshold);
@@ -35,6 +36,8 @@ class LCAO_Hamilt
     void calculate_SR_sparse(const double &sparse_threshold);
     void clear_zero_elements(const int &current_spin, const double &sparse_threshold);
     void destroy_all_HSR_sparse(void);
+    void calculate_TR_sparse(const double &sparse_threshold);
+    void destroy_TR_sparse(void);
 
     // used for gamma only algorithms.
     Gint_Gamma GG;

@@ -81,7 +81,7 @@ void EXPECT_COMPLEX_EQUAL(const std::complex<double>& a,const std::complex<doubl
 
 namespace ModuleBase
 {
-void complexArrayxAlloc();
+	void complexArrayxAlloc();
 }
 
 class ComplexArray_test : public testing::Test
@@ -143,7 +143,7 @@ TEST(ComplexArray, constructor_copy_test)
 
 TEST(ComplexArray, constructor_rvalue_test)
 {
-    ModuleBase::ComplexArray b(ModuleBase::ComplexArray(1,2,3,4));
+    ModuleBase::ComplexArray b(std::move(ModuleBase::ComplexArray(1,2,3,4)));
     ASSERT_EQ(b.getSize(),24);
     ASSERT_EQ(b.getBound1(),1);
     ASSERT_EQ(b.getBound2(),2);
@@ -473,10 +473,9 @@ TEST_F(ComplexArray_test,point_mult)
 
 TEST_F(ComplexArray_test,xAlloc)
 {
-//EXPECT_EXIT(ModuleBase::complexArrayxAlloc(),::testing::ExitedWithCode(6),"");
 	std::string output;
 	testing::internal::CaptureStdout();
-	EXPECT_DEATH(ModuleBase::complexArrayxAlloc(),"");
+	EXPECT_EXIT(ModuleBase::complexArrayxAlloc(),::testing::ExitedWithCode(0),"");
 	output = testing::internal::GetCapturedStdout();
 	EXPECT_THAT(output,testing::HasSubstr("Allocation error for complexArray"));
 }

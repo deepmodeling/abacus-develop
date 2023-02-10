@@ -450,8 +450,7 @@ namespace ModuleESolver
             this->LM.allocate_HS_R(this->orb_con.ParaV.nnr);
             this->LM.zeros_HSR('S');
             this->UHM.genH.calculate_S_no(this->LM.SlocR.data());
-            ModuleIO::output_SR("SR.csr",this->UHM);
-
+            ModuleIO::output_S_R(this->UHM,"SR.csr");
         }
     }
 

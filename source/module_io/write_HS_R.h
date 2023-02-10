@@ -14,11 +14,27 @@ namespace ModuleIO
             const std::string& HR_filename_up = "data-HR-sparse_SPIN0.csr",
             const std::string HR_filename_down = "data-HR-sparse_SPIN1.csr",
             const bool& binary = false,
-            const double& sparse_threshold = 1e-10
-        ); //LiuXh add 2019-07-15, modify in 2021-12-3
+            const double& sparse_threshold = 1e-10); //LiuXh add 2019-07-15, modify in 2021-12-3
 
-        void output_SR(const std::string& SR_filename,
+/*
+        void output_dH_R(
+            const int &istep,
             LCAO_Hamilt &UHM,
+            const std::string& HR_filename_up,
+            const std::string HR_filename_down,
+            const bool& binary = false,
+            const double& sparse_threshold = 1e-10);
+*/
+        void output_T_R(
+            const int istep,
+            LCAO_Hamilt &UHM,
+            const std::string& TR_filename = "data-TR-sparse_SPIN0.csr",
+            const bool& binary = false,
+            const double& sparse_threshold = 1e-10);
+
+        void output_S_R(
+            LCAO_Hamilt &UHM,
+            const std::string& SR_filename = "data-SR-sparse_SPIN0.csr",
             const bool& binary = false,
             const double& sparse_threshold = 1e-10);
 }

@@ -177,18 +177,6 @@ void Force_LCAO_k::ftable_k(const bool isforce,
         Parallel_Reduce::reduce_double_pool(svl_dphi.c, svl_dphi.nr * svl_dphi.nc);
     }
 
-    // test the force.
-    /*
-    std::cout << " overlap force" << std::endl;
-    for(int iat=0; iat<GlobalC::ucell.nat; ++iat)
-    {
-        const double fac = ModuleBase::Ry_to_eV / 0.529177;
-        std::cout << std::setw(5) << iat+1 << std::setw(15) << foverlap[iat][0] *fac<< std::setw(15) <<
-    foverlap[iat][1]*fac << std::setw(15) << foverlap[iat][2]*fac << std::endl;
-    }
-    */
-
-    this->finish_k();
 
     ModuleBase::timer::tick("Force_LCAO_k", "ftable_k");
     return;

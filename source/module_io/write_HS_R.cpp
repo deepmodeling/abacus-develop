@@ -66,18 +66,48 @@ void ModuleIO::output_HS_R(
 }
 
 
-void ModuleIO::output_SR(const std::string &SR_filename,
+void ModuleIO::output_S_R(
     LCAO_Hamilt &UHM,
+    const std::string &SR_filename,
     const bool &binary,
     const double &sparse_threshold)
 {
-    ModuleBase::TITLE("ModuleIO","output_SR");
-    ModuleBase::timer::tick("ModuleIO","output_SR"); 
+    ModuleBase::TITLE("ModuleIO","output_S_R");
+    ModuleBase::timer::tick("ModuleIO","output_S_R"); 
 
     UHM.calculate_SR_sparse(sparse_threshold);
     ModuleIO::save_SR_sparse(*UHM.LM, sparse_threshold, binary, SR_filename);
     UHM.destroy_all_HSR_sparse();
 
-    ModuleBase::timer::tick("ModuleIO","output_SR");
+    ModuleBase::timer::tick("ModuleIO","output_S_R");
+    return;
+}
+
+void ModuleIO::output_T_R(
+    const int istep,
+    LCAO_Hamilt &UHM,
+    const std::string &TR_filename,
+    const bool &binary,
+    const double &sparse_threshold
+)
+{
+    ModuleBase::TITLE("ModuleIO","output_T_R");
+    ModuleBase::timer::tick("ModuleIO","output_T_R"); 
+
+    std::stringstream sst;
+    if(GlobalV::CALCULATION == "md")
+    {
+        sst << GlobalV::global_matrix_dir << istep << "_" << TR_filename;
+    }
+    else
+    {
+        sst << GlobalV::global_out_dir << TR_filename;
+    }
+
+    UHM.calculate_TR_sparse(sparse_threshold);
+    ModuleIO::save_TR_sparse(*UHM.LM, sparse_threshold, binary, sst.str().c_str());
+    UHM.destroy_TR_sparse();
+
+    ModuleBase::timer::tick("ModuleIO","output_S_R");
     return;
 }

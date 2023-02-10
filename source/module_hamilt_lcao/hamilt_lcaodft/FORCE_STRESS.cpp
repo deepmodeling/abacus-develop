@@ -196,6 +196,8 @@ void Force_Stress_LCAO::getForceStress(
 		}
 		GlobalC::dftu.force_stress(loc.dm_gamma, loc.dm_k, *uhm.LM, force_dftu, stress_dftu);
 	}
+
+	if(!GlobalV::GAMMA_ONLY_LOCAL) this->flk.finish_k();
 #ifdef __EXX
 	//Force and Stress contribution from exx
 	ModuleBase::matrix force_exx;
@@ -583,7 +585,7 @@ void Force_Stress_LCAO::getForceStress(
 			}
 			if(GlobalV::dft_plus_u)
 			{
-				sc_pw.print_stress("DFTU     STRESS",sigmaxc,GlobalV::TEST_STRESS,ry);
+				sc_pw.print_stress("DFTU     STRESS",stress_dftu,GlobalV::TEST_STRESS,ry);
 			}
 			sc_pw.print_stress("TOTAL    STRESS",scs,GlobalV::TEST_STRESS,ry);
 

@@ -54,10 +54,11 @@ void Input::Init(const std::string &fn)
     // OTHRE CLASS MEMBER FUNCTION :
     // NAME : Run::make_dir( dir name : OUT.suffix)
     //----------------------------------------------------------
+    bool out_dir = false;
+    if(out_mat_hs2 || out_mat_r || out_mat_t || out_mat_dh) out_dir = true;
     ModuleBase::Global_File::make_dir_out(this->suffix,
                                           this->calculation,
-                                          this->out_mat_hs2,
-                                          this->out_mat_r,
+                                          out_dir,
                                           GlobalV::MY_RANK,
                                           this->mdp.md_restart,
                                           this->out_alllog); // xiaohui add 2013-09-01
@@ -222,9 +223,9 @@ void Input::Default(void)
     nx = 0;
     ny = 0;
     nz = 0;
-    bx = 2;
-    by = 2;
-    bz = 2;
+    bx = 0;
+    by = 0;
+    bz = 0;
     //----------------------------------------------------------
     // diagonalization
     //----------------------------------------------------------
@@ -298,6 +299,7 @@ void Input::Default(void)
     out_proj_band = 0;
     out_mat_hs = 0;
     out_mat_hs2 = 0; // LiuXh add 2019-07-15
+    out_mat_t = 0;
     out_hs2_interval = 1;
     out_mat_r = 0; // jingan add 2019-8-14
     out_wfc_lcao = false;
@@ -1211,6 +1213,10 @@ bool Input::Read(const std::string &fn)
         else if (strcmp("out_mat_hs2", word) == 0)
         {
             read_bool(ifs, out_mat_hs2);
+        }
+        else if (strcmp("out_mat_t", word) == 0)
+        {
+            read_bool(ifs, out_mat_t);
         }
         else if (strcmp("out_hs2_interval", word) == 0)
         {
@@ -2238,9 +2244,9 @@ bool Input::Read(const std::string &fn)
         gamma_only_local = 1;
         // std::cout << "gamma_only_local =" << gamma_only_local << std::endl;
     }
-    if ((out_mat_r || out_mat_hs2) && gamma_only_local)
+    if ((out_mat_r || out_mat_hs2 || out_mat_t || out_mat_dh) && gamma_only_local)
     {
-        ModuleBase::WARNING_QUIT("Input", "printing of H(R)/S(R)/r(R) is not available for gamma only calculations");
+        ModuleBase::WARNING_QUIT("Input", "printing of H(R)/S(R)/r(R)/T(R) is not available for gamma only calculations");
     }
 
     return true;
@@ -2723,6 +2729,7 @@ void Input::Bcast()
     Parallel_Common::bcast_bool(out_proj_band);
     Parallel_Common::bcast_bool(out_mat_hs);
     Parallel_Common::bcast_bool(out_mat_hs2); // LiuXh add 2019-07-15
+    Parallel_Common::bcast_bool(out_mat_t);
     Parallel_Common::bcast_bool(out_mat_r); // jingan add 2019-8-14
     Parallel_Common::bcast_bool(out_wfc_lcao);
     Parallel_Common::bcast_bool(out_alllog);
