@@ -59,6 +59,11 @@ protected:
 	}
 };
 
+TEST_F(MathzoneAdd1Test, Constructor)
+{
+	EXPECT_NO_THROW(ModuleBase::Mathzone_Add1 MA1);
+}
+
 /// first kind boundary condition: f'(0) = f'(n) = 0.0
 TEST_F(MathzoneAdd1Test, CubicSplineBoundary1)
 {
