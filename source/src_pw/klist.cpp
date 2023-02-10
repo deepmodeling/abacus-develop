@@ -503,6 +503,10 @@ void K_Vectors::Monkhorst_Pack(const int *nmp_in, const double *koffset_in, cons
 				if( abs(v3) < 1.0e-10 ) v3 = 0.0;
                 // index of nks kpoint
                 const int i = mpnx * mpny * (z - 1) + mpnx * (y - 1) + (x - 1);
+                //restrict to [0, 1)
+                v1=fmod(v1+100.0, 1.0);
+                v2=fmod(v2+100.0, 1.0);
+                v3=fmod(v3+100.0, 1.0);
                 kvec_d[i].set(v1, v2, v3);
             }
         }
