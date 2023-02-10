@@ -2,7 +2,7 @@
 #include "module_base/global_variable.h"
 #include "module_base/timer.h"
 #include "module_base/global_function.h"
-#include "module_xc/xc_functional.h"
+#include "module_hamilt_general/module_xc/xc_functional.h"
 namespace elecstate
 {
     void ElecStatePW_SDFT::psiToRho(const psi::Psi<std::complex<double>>& psi)

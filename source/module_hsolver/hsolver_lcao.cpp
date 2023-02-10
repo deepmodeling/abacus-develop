@@ -94,7 +94,7 @@ void HSolverLCAO::solveTemplate(hamilt::Hamilt<double>* pHamilt,
         // if set bit = true, there would be error in soc-multi-core calculation, noted by zhengdy-soc
         hamilt::MatrixBlock<T> h_mat, s_mat;
         pHamilt->matrix(h_mat, s_mat);
-        HS_Matrix::saving_HS(h_mat.p,
+        ModuleIO::saving_HS(h_mat.p,
                              s_mat.p,
                              bit,
                              this->out_mat_hs,
@@ -135,6 +135,8 @@ void HSolverLCAO::solveTemplate(hamilt::Hamilt<double>* pHamilt,
 int HSolverLCAO::out_mat_hs = 0;
 int HSolverLCAO::out_mat_hsR = 0;
 int HSolverLCAO::out_hsR_interval = 1;
+int HSolverLCAO::out_mat_t = 0;
+int HSolverLCAO::out_mat_dh = 0;
 
 void HSolverLCAO::solve(hamilt::Hamilt<double>* pHamilt,
                         psi::Psi<std::complex<double>>& psi,

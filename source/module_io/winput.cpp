@@ -4,7 +4,7 @@
 #include <cstring>
 #include <iostream>
 #include "winput.h"
-#include "../src_pw/global.h"
+#include "module_hamilt_pw/hamilt_pwdft/global.h"
 
 
 std::string winput::target;//add 2008-06-04

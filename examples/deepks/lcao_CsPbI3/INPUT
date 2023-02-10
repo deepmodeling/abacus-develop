@@ -1,0 +1,32 @@
+INPUT_PARAMETERS
+#Parameters (1.General)
+suffix                  abacus
+pseudo_dir              ../../../tests/PP_ORB
+orbital_dir                 ../../../tests/PP_ORB
+calculation             scf
+symmetry                0
+
+#Parameters (2.Iteration)
+ecutwfc                 100
+scf_thr                     1e-7
+scf_nmax                   50
+
+#Parameters (3.Basis)
+basis_type             lcao 
+kspacing               0.1
+
+#Parameters (4.Smearing)
+smearing_method                gaussian
+smearing_sigma                   0.0015
+
+#Parameters (5.Mixing)
+mixing_type             pulay
+mixing_beta             0.4
+
+#Parameters (6.Deepks)
+deepks_scf	1
+deepks_model	model.ptg
+
+#Parameters (7.SOC)
+lspinorb 1
+

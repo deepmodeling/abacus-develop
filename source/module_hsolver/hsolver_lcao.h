@@ -29,6 +29,8 @@ class HSolverLCAO : public HSolver<double>
     static int out_mat_hs; // mohan add 2010-09-02
     static int out_mat_hsR; // LiuXh add 2019-07-16
     static int out_hsR_interval;
+    static int out_mat_t;
+    static int out_mat_dh;
 
   private:
     void hamiltSolvePsiK(hamilt::Hamilt<double>* hm, psi::Psi<std::complex<double>>& psi, double* eigenvalue);

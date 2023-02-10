@@ -4,7 +4,7 @@
 //=======================
 
 #include "RI_2D_Comm.h"
-#include "src_pw/global.h"
+#include "module_hamilt_pw/hamilt_pwdft/global.h"
 
 #include <string>
 #include <stdexcept>

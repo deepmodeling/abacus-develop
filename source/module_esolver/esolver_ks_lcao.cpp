@@ -1,33 +1,35 @@
 #include "esolver_ks_lcao.h"
 #include "module_io/cal_r_overlap_R.h"
-#include "module_io/density_matrix.h"
+#include "module_io/dm_io.h"
+#include "module_io/write_dm_sparse.h"
+#include "module_io/rho_io.h"
+#include "module_io/write_HS_R.h"
+#include "module_io/write_dos_lcao.h"
 
 //--------------temporary----------------------------
-#include "../module_base/global_function.h"
-#include "../module_io/print_info.h"
-#include "../src_pw/global.h"
-#include "src_lcao/ELEC_evolve.h"
-#include "module_dftu/dftu.h"
-#include "src_lcao/dmft.h"
-#include "src_pw/occupy.h"
-#include "src_pw/symmetry_rho.h"
-#include "src_pw/threshold_elec.h"
+#include "module_base/global_function.h"
+#include "module_io/print_info.h"
+#include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/global_fp.h"
+#include "module_hamilt_lcao/module_dftu/dftu.h"
+#include "module_elecstate/occupy.h"
+#include "module_elecstate/module_charge/symmetry_rho.h"
 #ifdef __EXX
 // #include "module_rpa/rpa.h"
 #include "module_ri/RPA_LRI.h"
 #endif
 
 #ifdef __DEEPKS
-#include "../module_deepks/LCAO_deepks.h"
+#include "module_hamilt_lcao/module_deepks/LCAO_deepks.h"
 #endif
 //-----force& stress-------------------
-#include "src_lcao/FORCE_STRESS.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/FORCE_STRESS.h"
 
 //-----HSolver ElecState Hamilt--------
 #include "module_elecstate/elecstate_lcao.h"
-#include "module_hamilt/hamilt_lcao.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/hamilt_lcao.h"
 #include "module_hsolver/hsolver_lcao.h"
-#include "module_hamilt/ks_lcao/op_exx_lcao.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/op_exx_lcao.h"
 // function used by deepks
 #include "module_elecstate/cal_dm.h"
 //---------------------------------------------------
@@ -229,7 +231,19 @@ void ESolver_KS_LCAO::postprocess()
     GlobalV::ofs_running << " !FINAL_ETOT_IS " << GlobalC::en.etot * ModuleBase::Ry_to_eV << " eV" << std::endl;
     GlobalV::ofs_running << " --------------------------------------------\n\n" << std::endl;
 
-    GlobalC::en.perform_dos(this->psid, this->psi, this->UHM, this->pelec);
+    ModuleIO::write_dos_lcao(this->psid, 
+        this->psi, 
+        this->UHM, 
+        this->pelec,
+        GlobalC::en.out_dos,
+        GlobalC::en.out_band,
+        GlobalC::en.out_proj_band,
+        GlobalC::en.dos_edelta_ev,
+        GlobalC::en.bcoeff,
+        GlobalC::en.dos_scale,
+        GlobalC::en.ef,
+        GlobalC::en.ef_up,
+        GlobalC::en.ef_dw);
 }
 
 void ESolver_KS_LCAO::Init_Basis_lcao(ORB_control& orb_con, Input& inp, UnitCell& ucell)
@@ -549,9 +563,7 @@ void ESolver_KS_LCAO::eachiterfinish(int iter)
         std::stringstream ss1;
         ssc << GlobalV::global_out_dir << "tmp"
             << "_SPIN" << is + 1 << "_CHG";
-        pelec->charge->write_rho(pelec->charge->rho_save[is], is, iter, ssc.str(), precision); // mohan add 2007-10-17
-        ss1 << GlobalV::global_out_dir << "tmp" << "_SPIN" << is + 1 << "_CHG.cube";
-        pelec->charge->write_rho_cube(pelec->charge->rho_save[is], is, ss1.str(), 3);
+        ModuleIO::write_rho(pelec->charge->rho_save[is], is, iter, ssc.str(), precision); // mohan add 2007-10-17
 
         std::stringstream ssd;
 
@@ -577,9 +589,7 @@ void ESolver_KS_LCAO::eachiterfinish(int iter)
             std::stringstream ss1;
             ssc << GlobalV::global_out_dir << "tmp"
                 << "_SPIN" << is + 1 << "_TAU";
-            pelec->charge->write_rho(pelec->charge->kin_r_save[is], is, iter, ssc.str(), precision); // mohan add 2007-10-17
-            ss1 << GlobalV::global_out_dir << "tmp" << "_SPIN" << is + 1 << "_TAU.cube";
-            pelec->charge->write_rho_cube(pelec->charge->kin_r_save[is], is, ss1.str(), 3);
+            ModuleIO::write_rho(pelec->charge->kin_r_save[is], is, iter, ssc.str(), precision); // mohan add 2007-10-17
         }
     }
 
@@ -618,9 +628,7 @@ void ESolver_KS_LCAO::afterscf(const int istep)
         std::stringstream ssc;
         std::stringstream ss1;
         ssc << GlobalV::global_out_dir << "SPIN" << is + 1 << "_CHG";
-        ss1 << GlobalV::global_out_dir << "SPIN" << is + 1 << "_CHG.cube";
-        pelec->charge->write_rho(pelec->charge->rho_save[is], is, 0, ssc.str()); // mohan add 2007-10-17
-        pelec->charge->write_rho_cube(pelec->charge->rho_save[is], is, ss1.str(), 3);
+        ModuleIO::write_rho(pelec->charge->rho_save[is], is, 0, ssc.str()); // mohan add 2007-10-17
 
         std::stringstream ssd;
         if (GlobalV::GAMMA_ONLY_LOCAL)
@@ -653,9 +661,7 @@ void ESolver_KS_LCAO::afterscf(const int istep)
             std::stringstream ssc;
             std::stringstream ss1;
             ssc << GlobalV::global_out_dir << "SPIN" << is + 1 << "_TAU";
-            ss1 << GlobalV::global_out_dir << "SPIN" << is + 1 << "_TAU.cube";
-            pelec->charge->write_rho(pelec->charge->kin_r_save[is], is, 0, ssc.str()); // mohan add 2007-10-17
-            pelec->charge->write_rho_cube(pelec->charge->kin_r_save[is], is, ss1.str(), 3);
+            ModuleIO::write_rho(pelec->charge->kin_r_save[is], is, 0, ssc.str()); // mohan add 2007-10-17
         }
     }
 
@@ -695,7 +701,7 @@ void ESolver_KS_LCAO::afterscf(const int istep)
 
     if (GlobalV::OUT_LEVEL != "m")
     {
-        Threshold_Elec::print_eigenvalue(GlobalV::ofs_running, this->pelec);
+        this->pelec->print_eigenvalue(GlobalV::ofs_running);
     }
 
     if (this->conv_elec)
@@ -896,7 +902,23 @@ void ESolver_KS_LCAO::afterscf(const int istep)
     {
         if( !(GlobalV::CALCULATION=="md" && (istep%hsolver::HSolverLCAO::out_hsR_interval!=0)) )
         {
-            this->output_HS_R(istep, this->pelec->pot->get_effective_v()); // LiuXh add 2019-07-15
+            ModuleIO::output_HS_R(istep, this->pelec->pot->get_effective_v(), this->UHM); // LiuXh add 2019-07-15
+        } // LiuXh add 2019-07-15
+    }
+
+    if (hsolver::HSolverLCAO::out_mat_t)
+    {
+        if( !(GlobalV::CALCULATION=="md" && (istep%hsolver::HSolverLCAO::out_hsR_interval!=0)) )
+        {
+            ModuleIO::output_T_R(istep, this->UHM); // LiuXh add 2019-07-15
+        } // LiuXh add 2019-07-15
+    }
+
+    if (hsolver::HSolverLCAO::out_mat_dh)
+    {
+        if( !(GlobalV::CALCULATION=="md" && (istep%hsolver::HSolverLCAO::out_hsR_interval!=0)) )
+        {
+            //ModuleIO::output_DH_R(istep, this->pelec->pot->get_effective_v(), this->UHM); // LiuXh add 2019-07-15
         } // LiuXh add 2019-07-15
     }
 
@@ -908,11 +930,11 @@ void ESolver_KS_LCAO::afterscf(const int istep)
 
         if (hsolver::HSolverLCAO::out_mat_hsR)
         {
-            r_matrix.out_rR_other(this->LM.output_R_coor);
+            r_matrix.out_rR_other(istep, this->LM.output_R_coor);
         }
         else
         {
-            r_matrix.out_rR();
+            r_matrix.out_rR(istep);
         }
     }
 

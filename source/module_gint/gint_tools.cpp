@@ -2,9 +2,10 @@
 //REFACTOR : Peize Lin, 2021.06.28
 //=========================================================
 #include "gint_tools.h"
-#include "../src_pw/global.h"
-#include "../src_lcao/global_fp.h"
-#include "../module_base/ylm.h"
+#include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/global_fp.h"
+#include "module_base/ylm.h"
+#include "module_base/timer.h"
 #include <cmath>
 
 namespace Gint_Tools
@@ -29,7 +30,7 @@ namespace Gint_Tools
 				}
 			}
 		}
-		return vindex;		
+		return vindex;
 	}
 
 	// here vindex refers to local potentials
@@ -70,7 +71,7 @@ namespace Gint_Tools
 		const double dv)
 	{
 		// set the index for obtaining local potentials
-		int* vindex = Gint_Tools::get_vindex(ncyz, ibx, jby, kbz);	
+		int* vindex = Gint_Tools::get_vindex(ncyz, ibx, jby, kbz);
 		double *vldr3 = new double[GlobalC::bigpw->bxyz];
 		for(int ib=0; ib<GlobalC::bigpw->bxyz; ib++)
 		{
@@ -87,7 +88,7 @@ namespace Gint_Tools
 		const double dv)
 	{
 		// set the index for obtaining local potentials
-		int* vindex = Gint_Tools::get_vindex(start_ind, ncyz);	
+		int* vindex = Gint_Tools::get_vindex(start_ind, ncyz);
 		double *vldr3 = new double[GlobalC::bigpw->bxyz];
 		for(int ib=0; ib<GlobalC::bigpw->bxyz; ib++)
 		{
@@ -125,7 +126,7 @@ namespace Gint_Tools
 			const int start=GlobalC::ucell.itiaiw2iwt(it, ia, 0); // the index of the first wave function for atom (it,ia)
 			block_iw[id]=GlobalC::GridT.trace_lo[start];
 			block_index[id+1] = block_index[id]+GlobalC::ucell.atoms[it].nw;
-			block_size[id]=GlobalC::ucell.atoms[it].nw;	
+			block_size[id]=GlobalC::ucell.atoms[it].nw;
 
 			const int imcell=GlobalC::GridT.which_bigcell[mcell_index];
 			const double mt[3] = {
@@ -151,15 +152,17 @@ namespace Gint_Tools
 	}
 
 	void cal_psir_ylm(
-		const int na_grid, 					// number of atoms on this grid 
-		const int grid_index, 				// 1d index of FFT index (i,j,k) 
+		const int na_grid, 					// number of atoms on this grid
+		const int grid_index, 				// 1d index of FFT index (i,j,k)
 		const double delta_r, 				// delta_r of the uniform FFT grid
 		const int*const block_index,  		// block_index[na_grid+1], count total number of atomis orbitals
 		const int*const block_size, 		// block_size[na_grid],	number of columns of a band
 		const bool*const*const cal_flag,
 		double*const*const psir_ylm) 	// cal_flag[GlobalC::bigpw->bxyz][na_grid],	whether the atom-grid distance is larger than cutoff
-	{
-		for (int id=0; id<na_grid; id++)
+    {
+		ModuleBase::timer::tick("Gint_Tools", "cal_psir_ylm");
+        std::vector<double> ylma;
+        for (int id=0; id<na_grid; id++)
 		{
 			// there are two parameters we want to know here:
 			// in which bigcell of the meshball the atom is in?
@@ -169,6 +172,19 @@ namespace Gint_Tools
 			const int iat=GlobalC::GridT.which_atom[mcell_index]; // index of atom
 			const int it=GlobalC::ucell.iat2it[iat]; // index of atom type
 			const Atom*const atom=&GlobalC::ucell.atoms[it];
+			auto &OrbPhi = GlobalC::ORB.Phi[it];
+			std::vector<const double*> it_psi_uniform(atom->nw);
+			std::vector<const double*> it_dpsi_uniform(atom->nw);
+			// preprocess index
+			for (int iw=0; iw< atom->nw; ++iw)
+			{
+				if ( atom->iw2_new[iw] )
+				{
+					auto philn = &OrbPhi.PhiLN(atom->iw2l[iw], atom->iw2n[iw]);
+					it_psi_uniform[iw] = &philn->psi_uniform[0];
+					it_dpsi_uniform[iw] = &philn->dpsi_uniform[0];
+				}
+			}
 
 			// meshball_positions should be the bigcell position in meshball
 			// to the center of meshball.
@@ -186,7 +202,7 @@ namespace Gint_Tools
 			for(int ib=0; ib<GlobalC::bigpw->bxyz; ib++)
 			{
 				double *p=&psir_ylm[ib][block_index[id]];
-				if(!cal_flag[ib][id]) 
+				if(!cal_flag[ib][id])
 				{
 					ModuleBase::GlobalFunc::ZEROS(p, block_size[id]);
 				}
@@ -196,15 +212,14 @@ namespace Gint_Tools
 					const double dr[3] = {
 						GlobalC::GridT.meshcell_pos[ib][0] + mt[0],
 						GlobalC::GridT.meshcell_pos[ib][1] + mt[1],
-						GlobalC::GridT.meshcell_pos[ib][2] + mt[2]};	
+						GlobalC::GridT.meshcell_pos[ib][2] + mt[2]};
 					double distance = std::sqrt( dr[0]*dr[0] + dr[1]*dr[1] + dr[2]*dr[2] );	// distance between atom and grid
 					//if(distance[id] > GlobalC::GridT.orbital_rmax) continue;
 					if (distance < 1.0E-9) distance += 1.0E-9;
-					
+
 					//------------------------------------------------------
 					// spherical harmonic functions Ylm
 					//------------------------------------------------------
-					std::vector<double> ylma;
 					//	Ylm::get_ylm_real(this->nnn[it], this->dr[id], ylma);
 					ModuleBase::Ylm::sph_harm ( GlobalC::ucell.atoms[it].nwl,
 							dr[0] / distance,
@@ -227,27 +242,27 @@ namespace Gint_Tools
 					const double c4 = (dx3-dx2)*delta_r;
 
 					double phi=0;
-					for (int iw=0; iw< atom->nw; ++iw, ++p)
+					for (int iw=0; iw< atom->nw; ++iw)
 					{
 						if ( atom->iw2_new[iw] )
 						{
-							const Numerical_Orbital_Lm &philn = GlobalC::ORB.Phi[it].PhiLN(
-									atom->iw2l[iw],
-									atom->iw2n[iw]);
-							phi = c1*philn.psi_uniform[ip] + c2*philn.dpsi_uniform[ip]			 // radial wave functions
-								+ c3*philn.psi_uniform[ip+1] + c4*philn.dpsi_uniform[ip+1];
+							auto psi_uniform = it_psi_uniform[iw];
+							auto dpsi_uniform = it_dpsi_uniform[iw];
+							phi = c1*psi_uniform[ip] + c2*dpsi_uniform[ip]			 // radial wave functions
+								+ c3*psi_uniform[ip+1] + c4*dpsi_uniform[ip+1];
 						}
-						*p=phi * ylma[atom->iw2_ylm[iw]];
+						p[iw]=phi * ylma[atom->iw2_ylm[iw]];
 					} // end iw
 				}// end distance<=(GlobalC::ORB.Phi[it].getRcut()-1.0e-15)
 			}// end ib
 		}// end id
+		ModuleBase::timer::tick("Gint_Tools", "cal_psir_ylm");
 		return;
 	}
 
 	void cal_dpsir_ylm(
-		const int na_grid, 					// number of atoms on this grid 
-		const int grid_index, 				// 1d index of FFT index (i,j,k) 
+		const int na_grid, 					// number of atoms on this grid
+		const int grid_index, 				// 1d index of FFT index (i,j,k)
 		const double delta_r, 				// delta_r of the uniform FFT grid
 		const int*const block_index,  		// block_index[na_grid+1], count total number of atomis orbitals
 		const int*const block_size, 		// block_size[na_grid],	number of columns of a band
@@ -257,6 +272,7 @@ namespace Gint_Tools
 		double*const*const dpsir_ylm_y,
 		double*const*const dpsir_ylm_z)
 	{
+		ModuleBase::timer::tick("Gint_Tools", "cal_dpsir_ylm");
 		for (int id=0; id<na_grid; id++)
 		{
 			const int mcell_index = GlobalC::GridT.bcell_start[grid_index] + id;
@@ -277,7 +293,7 @@ namespace Gint_Tools
 				double*const p_dpsi_x=&dpsir_ylm_x[ib][block_index[id]];
 				double*const p_dpsi_y=&dpsir_ylm_y[ib][block_index[id]];
 				double*const p_dpsi_z=&dpsir_ylm_z[ib][block_index[id]];
-				if(!cal_flag[ib][id]) 
+				if(!cal_flag[ib][id])
 				{
 					ModuleBase::GlobalFunc::ZEROS(p_psi, block_size[id]);
 					ModuleBase::GlobalFunc::ZEROS(p_dpsi_x, block_size[id]);
@@ -299,7 +315,7 @@ namespace Gint_Tools
 					if(distance < 1e-9)  distance = 1e-9;
 
 					const double position = distance / delta_r;
-							
+
 					const double iq = static_cast<int>(position);
 					const double x0 = position - iq;
 					const double x1 = 1.0 - x0;
@@ -307,7 +323,7 @@ namespace Gint_Tools
 					const double x3 = 3.0 - x0;
 					const double x12 = x1*x2 / 6;
 					const double x03 = x0*x3 / 2;
-					
+
 					double tmp, dtmp;
 
 					for (int iw=0; iw< atom->nw; ++iw)
@@ -327,7 +343,7 @@ namespace Gint_Tools
 							}
 							else
 							{
-								// use Polynomia Interpolation method to get the 
+								// use Polynomia Interpolation method to get the
 								// wave functions
 
 								tmp = x12*(philn.psi_uniform[iq]*x3
@@ -341,7 +357,7 @@ namespace Gint_Tools
 											-philn.dpsi_uniform[iq+2]*x1);
 							}
 						}//new l is used.
-						
+
 						// get the 'l' of this localized wave function
 						const int ll = atom->iw2l[iw];
 						const int idx_lm = atom->iw2_ylm[iw];
@@ -360,15 +376,15 @@ namespace Gint_Tools
 						p_dpsi_z[iw] = tmpdphi_rly * dr[2]  + tmprl * grly[idx_lm][2];
 					}//iw
 				}//else
-			}	
+			}
 		}
-
+		ModuleBase::timer::tick("Gint_Tools", "cal_dpsir_ylm");
 		return;
 	}
 
 	void cal_ddpsir_ylm(
-		const int na_grid, 					// number of atoms on this grid 
-		const int grid_index, 				// 1d index of FFT index (i,j,k) 
+		const int na_grid, 					// number of atoms on this grid
+		const int grid_index, 				// 1d index of FFT index (i,j,k)
 		const double delta_r, 				// delta_r of the uniform FFT grid
 		const int*const block_index,  		// block_index[na_grid+1], count total number of atomis orbitals
 		const int*const block_size, 		// block_size[na_grid],	number of columns of a band
@@ -380,6 +396,7 @@ namespace Gint_Tools
 		double*const*const ddpsir_ylm_yz,
 		double*const*const ddpsir_ylm_zz)
 	{
+		ModuleBase::timer::tick("Gint_Tools", "cal_ddpsir_ylm");
 		for (int id=0; id<na_grid; id++)
 		{
 			const int mcell_index = GlobalC::GridT.bcell_start[grid_index] + id;
@@ -402,7 +419,7 @@ namespace Gint_Tools
 				double*const p_ddpsi_yy=&ddpsir_ylm_yy[ib][block_index[id]];
 				double*const p_ddpsi_yz=&ddpsir_ylm_yz[ib][block_index[id]];
 				double*const p_ddpsi_zz=&ddpsir_ylm_zz[ib][block_index[id]];
-				if(!cal_flag[ib][id]) 
+				if(!cal_flag[ib][id])
 				{
 					ModuleBase::GlobalFunc::ZEROS(p_ddpsi_xx, block_size[id]);
 					ModuleBase::GlobalFunc::ZEROS(p_ddpsi_xy, block_size[id]);
@@ -466,7 +483,7 @@ namespace Gint_Tools
 							if(distance1 < 1e-9)  distance1 = 1e-9;
 
 							const double position = distance1 / delta_r;
-								
+
 							const double iq = static_cast<int>(position);
 							const double x0 = position - iq;
 							const double x1 = 1.0 - x0;
@@ -474,7 +491,7 @@ namespace Gint_Tools
 							const double x3 = 3.0 - x0;
 							const double x12 = x1*x2 / 6;
 							const double x03 = x0*x3 / 2;
-						
+
 							double tmp, dtmp;
 
 							for (int iw=0; iw< atom->nw; ++iw)
@@ -494,7 +511,7 @@ namespace Gint_Tools
 									}
 									else
 									{
-										// use Polynomia Interpolation method to get the 
+										// use Polynomia Interpolation method to get the
 										// wave functions
 
 										tmp = x12*(philn.psi_uniform[iq]*x3
@@ -508,7 +525,7 @@ namespace Gint_Tools
 													-philn.dpsi_uniform[iq+2]*x1);
 									}
 								}//new l is used.
-								
+
 								// get the 'l' of this localized wave function
 								const int ll = atom->iw2l[iw];
 								const int idx_lm = atom->iw2_ylm[iw];
@@ -563,7 +580,7 @@ namespace Gint_Tools
 						ModuleBase::Ylm::grad_rl_sph_harm(GlobalC::ucell.atoms[it].nwl, dr[0], dr[1], dr[2], rly, grly);
 						ModuleBase::Ylm::hes_rl_sph_harm(GlobalC::ucell.atoms[it].nwl, dr[0], dr[1], dr[2], hrly);
 						const double position = distance / delta_r;
-								
+
 						const double iq = static_cast<int>(position);
 						const double x0 = position - iq;
 						const double x1 = 1.0 - x0;
@@ -571,7 +588,7 @@ namespace Gint_Tools
 						const double x3 = 3.0 - x0;
 						const double x12 = x1*x2 / 6;
 						const double x03 = x0*x3 / 2;
-						
+
 						double tmp, dtmp, ddtmp;
 
 						for (int iw=0; iw< atom->nw; ++iw)
@@ -591,7 +608,7 @@ namespace Gint_Tools
 								}
 								else
 								{
-									// use Polynomia Interpolation method to get the 
+									// use Polynomia Interpolation method to get the
 									// wave functions
 
 									tmp = x12*(philn.psi_uniform[iq]*x3
@@ -610,7 +627,7 @@ namespace Gint_Tools
 												-philn.ddpsi_uniform[iq+2]*x1);
 								}
 							}//new l is used.
-							
+
 							// get the 'l' of this localized wave function
 							const int ll = atom->iw2l[iw];
 							const int idx_lm = atom->iw2_ylm[iw];
@@ -645,19 +662,19 @@ namespace Gint_Tools
 							p_ddpsi_yy[iw] = term_yy * rly[idx_lm] + 2.0*term_1y*grly[idx_lm][1] + tmp/rl*hrly[idx_lm][3];
 							p_ddpsi_yz[iw] = term_yz * rly[idx_lm] + term_1y*grly[idx_lm][2] + term_1z*grly[idx_lm][1] + tmp/rl*hrly[idx_lm][4];
 							p_ddpsi_zz[iw] = term_zz * rly[idx_lm] + 2.0*term_1z*grly[idx_lm][2] + tmp/rl*hrly[idx_lm][5];
-							
+
 						}//iw
 					} // end if
 				}//else
 			}//end ib
 		}//end id(atom)
-
+		ModuleBase::timer::tick("Gint_Tools", "cal_ddpsir_ylm");
 		return;
 	}
 
 	void cal_dpsirr_ylm(
-		const int na_grid, 					// number of atoms on this grid 
-		const int grid_index, 				// 1d index of FFT index (i,j,k) 
+		const int na_grid, 					// number of atoms on this grid
+		const int grid_index, 				// 1d index of FFT index (i,j,k)
 		const int*const block_index,  		// block_index[na_grid+1], count total number of atomis orbitals
 		const int*const block_size, 		// block_size[na_grid],	number of columns of a band
 		const bool*const*const cal_flag,    // cal_flag[GlobalC::bigpw->bxyz][na_grid],	whether the atom-grid distance is larger than cutoff
@@ -671,6 +688,7 @@ namespace Gint_Tools
 		double*const*const dpsir_ylm_yz,
 		double*const*const dpsir_ylm_zz)
 	{
+		ModuleBase::timer::tick("Gint_Tools", "cal_dpsirr_ylm");
 		for (int id=0; id<na_grid; id++)
 		{
 			const int mcell_index = GlobalC::GridT.bcell_start[grid_index] + id;
@@ -695,7 +713,7 @@ namespace Gint_Tools
 				double*const p_dpsi_yy=&dpsir_ylm_yy[ib][block_index[id]];
 				double*const p_dpsi_yz=&dpsir_ylm_yz[ib][block_index[id]];
 				double*const p_dpsi_zz=&dpsir_ylm_zz[ib][block_index[id]];
-				if(!cal_flag[ib][id]) 
+				if(!cal_flag[ib][id])
 				{
 					ModuleBase::GlobalFunc::ZEROS(p_dpsi_xx, block_size[id]);
 					ModuleBase::GlobalFunc::ZEROS(p_dpsi_xy, block_size[id]);
@@ -723,12 +741,12 @@ namespace Gint_Tools
 
 					}//iw
 				}//else
-			}	
+			}
 		}
-
+		ModuleBase::timer::tick("Gint_Tools", "cal_dpsirr_ylm");
 		return;
 	}
-	
+
 	// atomic basis sets
 	// psir_vlbr3[GlobalC::bigpw->bxyz][LD_pool]
 	Gint_Tools::Array_Pool<double> get_psir_vlbr3(
@@ -778,7 +796,7 @@ namespace Gint_Tools
 	{
 		constexpr char side='L', uplo='U';
 		constexpr char transa='N', transb='N';
-		constexpr double alpha_symm=1, beta=1;    
+		constexpr double alpha_symm=1, beta=1;
 		constexpr int inc=1;
 		double alpha_gemm;
 
@@ -787,7 +805,7 @@ namespace Gint_Tools
 			case 1:
 				alpha_gemm=2.0;
 				break;
-			case 2: 
+			case 2:
 				alpha_gemm=1.0;
 				break;
 			default:
@@ -819,7 +837,7 @@ namespace Gint_Tools
 					}
 				}
 				const int ib_length=last_ib-first_ib;
-				if(ib_length<=0) continue;	
+				if(ib_length<=0) continue;
 
 				int cal_num=0;
 				for(int ib=first_ib; ib<last_ib; ++ib)
@@ -829,9 +847,9 @@ namespace Gint_Tools
 				// if enough cal_flag is nonzero
 				if(cal_num>ib_length/4)
 				{
-					dsymm_(&side, &uplo, &block_size[ia1], &ib_length, 
-						&alpha_symm, &DM[iw1_lo][iw1_lo], &GlobalC::GridT.lgd, 
-						&psi[first_ib][block_index[ia1]], &LD_pool, 
+					dsymm_(&side, &uplo, &block_size[ia1], &ib_length,
+						&alpha_symm, &DM[iw1_lo][iw1_lo], &GlobalC::GridT.lgd,
+						&psi[first_ib][block_index[ia1]], &LD_pool,
 						&beta, &psi_DM[first_ib][block_index[ia1]], &LD_pool);
 				}
 				else
@@ -847,7 +865,7 @@ namespace Gint_Tools
 								&beta, &psi_DM[ib][block_index[ia1]], &inc);
 						}
 					}
-				}			
+				}
 			}
 
 			int start;
@@ -861,7 +879,7 @@ namespace Gint_Tools
 					break;
 				default:
 					ModuleBase::WARNING_QUIT("psi_dm","job can only be 1 or 2");
-			}			
+			}
 
 			for (int ia2=start; ia2<na_grid; ia2++)
 			{
@@ -893,9 +911,9 @@ namespace Gint_Tools
 				const int iw2_lo=block_iw[ia2];
 				if(cal_pair_num>ib_length/4)
 				{
-                    dgemm_(&transa, &transb, &block_size[ia2], &ib_length, &block_size[ia1], 
-                        &alpha_gemm, &DM[iw1_lo][iw2_lo], &GlobalC::GridT.lgd, 
-                        &psi[first_ib][block_index[ia1]], &LD_pool, 
+                    dgemm_(&transa, &transb, &block_size[ia2], &ib_length, &block_size[ia1],
+                        &alpha_gemm, &DM[iw1_lo][iw2_lo], &GlobalC::GridT.lgd,
+                        &psi[first_ib][block_index[ia1]], &LD_pool,
                         &beta, &psi_DM[first_ib][block_index[ia2]], &LD_pool);
 				}
                 else
@@ -904,15 +922,15 @@ namespace Gint_Tools
                     {
                         if(cal_flag[ib][ia1] && cal_flag[ib][ia2])
                         {
-                            dgemv_(&transa, &block_size[ia2], &block_size[ia1], 
+                            dgemv_(&transa, &block_size[ia2], &block_size[ia1],
                                 &alpha_gemm, &DM[iw1_lo][iw2_lo], &GlobalC::GridT.lgd,
                                 &psi[ib][block_index[ia1]], &inc,
                                 &beta, &psi_DM[ib][block_index[ia2]], &inc);
                         }
                     }
                 }
-			}// ia2       
-		} // ia1  
+			}// ia2
+		} // ia1
 	}
 
 //calculating (psi_DMR)_mu = sum_nu DMR_mu,nu psi_nu
@@ -928,10 +946,10 @@ namespace Gint_Tools
 		bool** cal_flag,
 		const Grid_Technique &gt,
 		double** psi,
-		double ** psi_DMR, 
+		double ** psi_DMR,
 		double* DMR,
 		const int job)
-	{                       
+	{
 		double *psi2, *psi2_dmr;
 		int iwi, iww;
 		const int LD_pool = GlobalC::GridT.max_atom*GlobalC::ucell.nwmax;
@@ -1003,7 +1021,7 @@ namespace Gint_Tools
 				int offset;
 				if(cal_num>0)
 				{
-					//find offset				
+					//find offset
 					const int index = GlobalC::GridT.cal_RindexAtom(0, 0, 0, iat);
 					offset = -1;
 					for(int* find=find_start; find < find_end; find++)
@@ -1011,7 +1029,7 @@ namespace Gint_Tools
 						//--------------------------------------------------------------
 						// start positions of adjacent atom of 'iat'
 						//--------------------------------------------------------------
-						if( find[0] == index ) 
+						if( find[0] == index )
 						{
 							offset = find - find_start; // start positions of adjacent atom of 'iat'
 							break;
@@ -1019,27 +1037,27 @@ namespace Gint_Tools
 					}
 
 					assert(offset!=-1);
-					assert(offset < GlobalC::GridT.nad[iat]);				
+					assert(offset < GlobalC::GridT.nad[iat]);
 				}
 
 				if(cal_num>GlobalC::bigpw->bxyz/4)
-				{				
-					const int DM_start = GlobalC::GridT.nlocstartg[iat]+ GlobalC::GridT.find_R2st[iat][offset];					
+				{
+					const int DM_start = GlobalC::GridT.nlocstartg[iat]+ GlobalC::GridT.find_R2st[iat][offset];
 					dgemm_(&trans, &trans, &block_size[ia1], &GlobalC::bigpw->bxyz, &block_size[ia1], &alpha,
-						&DMR[DM_start], &block_size[ia1], 
-						&psi[0][idx1], &LD_pool,  
+						&DMR[DM_start], &block_size[ia1],
+						&psi[0][idx1], &LD_pool,
 						&beta, &psi_DMR[0][idx1], &LD_pool);
 				}
 				else if(cal_num>0)
-				{	
+				{
 					const int DM_start = GlobalC::GridT.nlocstartg[iat]+ GlobalC::GridT.find_R2st[iat][offset];
 					for(int ib=0; ib<GlobalC::bigpw->bxyz; ++ib					)
 					{
 						if(cal_flag[ib][ia1])
 						{
 							dgemv_(&trans, &block_size[ia1], &block_size[ia1], &alpha,
-									&DMR[DM_start], &block_size[ia1], 
-									&psi[ib][idx1], &inc,  
+									&DMR[DM_start], &block_size[ia1],
+									&psi[ib][idx1], &inc,
 									&beta, &psi_DMR[ib][idx1], &inc);
 						}
 					}
@@ -1122,11 +1140,11 @@ namespace Gint_Tools
 				}
 				assert(offset < gt.nad[iat]);
 
-				//--------------------------------------------------------------- 
+				//---------------------------------------------------------------
 				// what I do above is to get 'offset' for atom std::pair (iat1, iat2)
 				// if I want to simplify this searching for offset,
 				// I should take advantage of gt.which_unitcell.
-				//--------------------------------------------------------------- 
+				//---------------------------------------------------------------
 
 				int cal_num=0;
    				for(int ib=0; ib<GlobalC::bigpw->bxyz; ++ib)
@@ -1141,7 +1159,7 @@ namespace Gint_Tools
 			        const int idx2=block_index[ia2];
     				const int DM_start = GlobalC::GridT.nlocstartg[iat]+ GlobalC::GridT.find_R2st[iat][offset];
     				dgemm_(&trans, &trans, &block_size[ia2], &GlobalC::bigpw->bxyz, &block_size[ia1], &alpha1,
-    					&DMR[DM_start], &block_size[ia2], 
+    					&DMR[DM_start], &block_size[ia2],
     					&psi[0][idx1], &LD_pool,
     					&beta, &psi_DMR[0][idx2], &LD_pool);
 				}
@@ -1150,13 +1168,13 @@ namespace Gint_Tools
 					const int idx1=block_index[ia1];
 					const int idx2=block_index[ia2];
     				const int DM_start = GlobalC::GridT.nlocstartg[iat]+ GlobalC::GridT.find_R2st[iat][offset];
-					
+
     				for(int ib=0; ib<GlobalC::bigpw->bxyz; ++ib)
     				{
         				if(cal_flag[ib][ia1] && cal_flag[ib][ia2])
         				{
             				dgemv_(&trans, &block_size[ia2], &block_size[ia1], &alpha1,
-            					&DMR[DM_start], &block_size[ia2], 
+            					&DMR[DM_start], &block_size[ia2],
             					&psi[ib][idx1], &inc,
             					&beta, &psi_DMR[ib][idx2], &inc);
         				}

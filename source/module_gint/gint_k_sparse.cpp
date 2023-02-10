@@ -1,14 +1,14 @@
-#include "../module_base/global_function.h"
-#include "../module_base/global_variable.h"
-#include "../src_parallel/parallel_reduce.h"
+#include "module_base/global_function.h"
+#include "module_base/global_variable.h"
+#include "src_parallel/parallel_reduce.h"
 #include "gint_k.h"
-#include "../module_orbital/ORB_read.h"
+#include "module_orbital/ORB_read.h"
 #include "grid_technique.h"
-#include "../module_base/ylm.h"
-#include "../src_pw/global.h"
-#include "../src_lcao/global_fp.h" // mohan add 2021-01-30
-#include "../module_base/memory.h"
-#include "../module_base/timer.h"
+#include "module_base/ylm.h"
+#include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/global_fp.h" // mohan add 2021-01-30
+#include "module_base/memory.h"
+#include "module_base/timer.h"
 
 void Gint_k::distribute_pvpR_sparseMatrix(
     const int current_spin, 

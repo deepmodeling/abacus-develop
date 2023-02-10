@@ -23,7 +23,7 @@
   [relax_nmax](#relax_nmax) | [relax_method](#relax_method) | [relax_cg_thr](#relax_cg_thr) | [relax_bfgs_w1](#relax_bfgs_w1) | [relax_bfgs_w2](#relax_bfgs_w2) | [relax_bfgs_rmax](#relax_bfgs_rmax) | [relax_bfgs_rmin](#relax_bfgs_rmin) | [relax_bfgs_init](#relax_bfgs_init) | [cal_force](#cal_force) | [force_thr](#force_thr) | [force_thr_ev](#force_thr_ev) | [force_thr_ev2](#force_thr_ev2) | [cal_stress](#cal_stress) | [stress_thr](#stress_thr) | [press1, press2, press3](#press1-press2-press3) | [fixed_axes](#fixed_axes) | [cell_factor](#cell_factor) | [fixed_ibrav](#fixed_ibrav) | [relax_new](#relax_new) | [relax_scale_force](#relax_scale_force)
 - [Variables related to output information](#variables-related-to-output-information)
 
-  [out_force](#out_force) | [out_mul](#out_mul) | [out_freq_elec](#out_freq_elec) | [out_freq_ion](#out_freq_ion) | [out_chg](#out_chg) | [out_pot](#out_pot) | [out_dm](#out_dm) | [out_wfc_pw](#out_wfc_pw) | [out_wfc_r](#out_wfc_r) | [out_wfc_lcao](#out_wfc_lcao) | [out_dos](#out_dos) | [out_band](#out_band) | [out_proj_band](#out_proj_band) | [out_stru](#out_stru) | [out_bandgap](#out_bandgap) | [out_level](#out_level) | [out_alllog](#out_alllog) | [out_mat_hs](#out_mat_hs) | [out_mat_r](#out_mat_r) | [out_mat_hs2](#out_mat_hs2) | [out_hs2_interval](#out_hs2_interval) [out_element_info](#out_element_info) | [restart_save](#restart_save) | [restart_load](#restart_load) | [dft_plus_dmft](#dft_plus_dmft) | [rpa](#rpa)
+  [out_force](#out_force) | [out_mul](#out_mul) | [out_freq_elec](#out_freq_elec) | [out_freq_ion](#out_freq_ion) | [out_chg](#out_chg) | [out_pot](#out_pot) | [out_dm](#out_dm) | [out_wfc_pw](#out_wfc_pw) | [out_wfc_r](#out_wfc_r) | [out_wfc_lcao](#out_wfc_lcao) | [out_dos](#out_dos) | [out_band](#out_band) | [out_proj_band](#out_proj_band) | [out_stru](#out_stru) | [out_bandgap](#out_bandgap) | [out_level](#out_level) | [out_alllog](#out_alllog) | [out_mat_hs](#out_mat_hs) | [out_mat_r](#out_mat_r) | [out_mat_hs2](#out_mat_hs2) | [out_mat_t](#out_mat_t) | [out_mat_dh](#out_mat_dh) | [out_hs2_interval](#out_hs2_interval) | [out_element_info](#out_element_info) | [restart_save](#restart_save) | [restart_load](#restart_load) | [dft_plus_dmft](#dft_plus_dmft) | [rpa](#rpa)
 - [Density of states](#density-of-states)
 
   [dos_edelta_ev](#dos_edelta_ev) | [dos_sigma](#dos_sigma) | [dos_scale](#dos_scale) | [dos_emin_ev](#dos_emin_ev) | [dos_emax_ev](#dos_emax_ev) | [dos_nche](#dos_nche)
@@ -197,7 +197,7 @@ These variables are used to control general system parameters.
 
 - **Type**: String
 - **Description**: In our package, the XC functional can either be set explicitly using the `dft_functional` keyword in `INPUT` file. If `dft_functional` is not specified, ABACUS will use the xc functional indicated in the pseudopotential file.
-  On the other hand, if dft_functional is specified, it will overwrite the functional from pseudopotentials and performs calculation with whichever functional the user prefers. We further offer two ways of supplying exchange-correlation functional. The first is using 'short-hand' names such as 'LDA', 'PBE', 'SCAN'. A complete list of 'short-hand' expressions can be found in [the source code](../../../source/module_xc/xc_functional.cpp). The other way is only available when ***compiling with LIBXC***, and it allows for supplying exchange-correlation functionals as combinations of LIBXC keywords for functional components, joined by a plus sign, for example, 'dft_functional='LDA_X_1D_EXPONENTIAL+LDA_C_1D_CSC'. The list of LIBXC keywords can be found on its [website](https://www.tddft.org/programs/libxc/functionals/). In this way, **we support all the LDA,GGA and mGGA functionals provided by LIBXC**.
+  On the other hand, if dft_functional is specified, it will overwrite the functional from pseudopotentials and performs calculation with whichever functional the user prefers. We further offer two ways of supplying exchange-correlation functional. The first is using 'short-hand' names such as 'LDA', 'PBE', 'SCAN'. A complete list of 'short-hand' expressions can be found in [the source code](../../../source/module_hamilt_general/module_xc/xc_functional.cpp). The other way is only available when ***compiling with LIBXC***, and it allows for supplying exchange-correlation functionals as combinations of LIBXC keywords for functional components, joined by a plus sign, for example, 'dft_functional='LDA_X_1D_EXPONENTIAL+LDA_C_1D_CSC'. The list of LIBXC keywords can be found on its [website](https://www.tddft.org/programs/libxc/functionals/). In this way, **we support all the LDA,GGA and mGGA functionals provided by LIBXC**.
 
   Furthermore, the old INPUT parameter exx_hybrid_type for hybrid functionals has been absorbed into dft_functional. Options are `hf` (pure Hartree-Fock), `pbe0`(PBE0), `hse` (Note: in order to use HSE functional, LIBXC is required). Note also that HSE has been tested while PBE0 has NOT been fully tested yet, and the maximum CPU cores for running exx in parallel is $N(N+1)/2$, with N being the number of atoms. And forces for hybrid functionals are not supported yet.
 
@@ -996,13 +996,23 @@ These variables are used to control the output of properties.
   - The array ROW_INDEX is of length m + 1 and encodes the index in V and COL_INDEX where the given row starts. This is equivalent to ROW_INDEX[j] encoding the total number of nonzeros above row j. The last element is NNZ , i.e., the fictitious index in V immediately after the last valid index NNZ - 1.
 
   > Note: This functionality is not available for gamma_only calculations. If you want to use it in gamma_only calculations, you should turn off gamma_only, and explicitly specifies that gamma point is the only k point in the KPT file.
-  >
+
+- **Default**: 0
+
+### out_mat_t
+- **Type**: Boolean
+- **Description**: For LCAO calculations, if out_mat_t is set to 1, ABACUS will generate files containing the kinetic energy matrix T(R). The format will be the same as the Hamiltonian matrix H(R) and overlap matrix S(R) as mentioned in [out_mat_hs2](#out_mat_hs2). The name of the files will be `data-TR-sparse_SPIN0.csr` and so on. Also controled by [out_hs2_interval](#out_hs2_interval).
+- **Default**: 0
+
+### out_mat_dh
+- **Type**: Boolean
+- **Description**: For LCAO calculations, if out_mat_dh is set to 1, ABACUS will generate files containing the derivatives of the Hamiltonian matrix. The format will be the same as the Hamiltonian matrix H(R) and overlap matrix S(R) as mentioned in [out_mat_hs2](#out_mat_hs2). The name of the files will be `data-dHRx-sparse_SPIN0.csr` and so on. Also controled by [out_hs2_interval](#out_hs2_interval).
 - **Default**: 0
 
 ### out_hs2_interval
 
 - **Type**: Integer
-- **Description**: Only relevant for printing H(R) and S(R) matrices during MD. It controls the interval at which to print. Check input parameter [out_mat_hs2](#out_mat_hs2) for more information.
+- **Description**: Only relevant for printing H(R), S(R), T(R), dH(R) matrices during MD. It controls the interval at which to print. Check input parameter [out_mat_hs2](#out_mat_hs2) for more information.
 - **Default**: 1
 
 ### out_element_info
@@ -1762,7 +1772,7 @@ These variables are used to control vdW-corrected related parameters.
 - **Type**: String
 - **Description**: This variable is relevant if the user wants to manually set the $C_6$ parameters in D2 method. It gives the name of the file which contains the list of $C_6$ parameters for each element.
 
-  If not set, ABACUS will use the default $C_6$ Parameters stored in the program. The default values of $C_6$ for elements 1_H up to 86_Rn can be found by searching for `C6_default` in the [source code](https://github.com/deepmodeling/abacus-develop/blob/develop/source/src_pw/vdwd2_parameters.cpp). The unit is Jnm6/mol.
+  If not set, ABACUS will use the default $C_6$ Parameters stored in the program. The default values of $C_6$ for elements 1_H up to 86_Rn can be found by searching for `C6_default` in the [source code](https://github.com/deepmodeling/abacus-develop/blob/develop/source/module_hamilt_general/module_vdw/vdwd2_parameters.cpp). The unit is Jnm6/mol.
 
   Otherwise, if user wants to manually set the $C_6$ Parameters, they should provide a file containing the $C_6$ parameters to be used. An example is given by:
 
@@ -1784,7 +1794,7 @@ These variables are used to control vdW-corrected related parameters.
 
 - **Type**: String
 - **Description**: This variable is relevant if the user wants to manually set the $R_0$ parameters in D2 method.
-  If not set, ABACUS will use the default $C_6$ Parameters stored in the program. The default values of $C_6$ for elements 1_H up to 86_Rn can be found by searching for `R0_default` in the [source code](https://github.com/deepmodeling/abacus-develop/blob/develop/source/src_pw/vdwd2_parameters.cpp). The unit is Angstrom.
+  If not set, ABACUS will use the default $C_6$ Parameters stored in the program. The default values of $C_6$ for elements 1_H up to 86_Rn can be found by searching for `R0_default` in the [source code](https://github.com/deepmodeling/abacus-develop/blob/develop/source/module_hamilt_general/module_vdw/vdwd2_parameters.cpp). The unit is Angstrom.
 
   Otherwise, if the user wants to manually set the $C_6$ Parameters, they should provide a file containing the $C_6$ parameters to be used. An example is given by:
 

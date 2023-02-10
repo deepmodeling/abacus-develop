@@ -478,12 +478,14 @@ target_link_libraries(${ABACUS_BIN_NAME}
     io
     relax
     parallel
-    pw
     driver
     xc_
     hsolver
     elecstate
-    hamilt
+    hamilt_general
+    hamilt_pwdft
+    hamilt_ofdft
+    hamilt_stodft
     psi
     esolver
     vdw
@@ -492,7 +494,8 @@ target_link_libraries(${ABACUS_BIN_NAME}
 
 if(ENABLE_LCAO)
   target_link_libraries(${ABACUS_BIN_NAME}
-      lcao
+      hamilt_lcao
+      tddft
       orb
       gint
       dftu
@@ -503,7 +506,7 @@ if(ENABLE_LCAO)
     )
   endif ()
   if(USE_CUSOLVER_LCAO)
-    target_link_libraries(pdiag)
+    target_link_libraries(diag_cusolver)
   endif()
 endif()
 

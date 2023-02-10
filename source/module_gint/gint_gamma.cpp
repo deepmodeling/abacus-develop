@@ -1,8 +1,8 @@
 #include "gint_gamma.h"
-#include "../src_pw/global.h"
-#include "../module_base/ylm.h"
-#include "../module_neighbor/sltk_atom_arrange.h"
-#include "../module_base/timer.h"
+#include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "module_base/ylm.h"
+#include "module_cell/module_neighbor/sltk_atom_arrange.h"
+#include "module_base/timer.h"
 #ifdef _OPENMP
 #include <omp.h>
 #endif

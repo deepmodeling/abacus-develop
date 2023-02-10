@@ -1,11 +1,12 @@
 #include "exx_abfs-parallel-communicate-dm3.h"
 #include "exx_abfs-parallel-communicate-function.h"
 
-#include "../src_pw/global.h"
-#include "../module_base/global_function.h"
+#include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/global_fp.h"
+#include "module_base/global_function.h"
 
 #ifdef USE_CEREAL_SERIALIZATION
-	#include "../src_lcao/serialization_cereal.h"
+	#include "src_ri/serialization_cereal.h"
 #endif
 
 #include "mpi.h"
@@ -13,7 +14,7 @@
 #include <algorithm>
 
 
-#include "../src_external/src_test/test_function.h"
+#include "src_ri/test_code/test_function.h"
 
 #ifdef __MPI
 void Exx_Abfs::Parallel::Communicate::DM3::Allreduce::init(

@@ -1,10 +1,11 @@
 #include "istate_charge.h"
-#include "../src_pw/global.h"
-#include "../module_base/global_function.h"
-#include "../module_base/global_variable.h"
-#include "../src_parallel/parallel_common.h"
-#include "../module_base/scalapack_connector.h"
-#include "../module_base/blas_connector.h"
+#include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "module_base/global_function.h"
+#include "module_base/global_variable.h"
+#include "src_parallel/parallel_common.h"
+#include "module_base/scalapack_connector.h"
+#include "module_base/blas_connector.h"
+#include "module_io/rho_io.h"
 
 IState_Charge::IState_Charge(
     psi::Psi<double>* psi_gamma_in,
@@ -136,14 +137,13 @@ void IState_Charge::begin(Gint_Gamma &gg, elecstate::ElecState* pelec)
 			pelec->charge->save_rho_before_sum_band(); //xiaohui add 2014-12-09
 			std::stringstream ss;
 			std::stringstream ss1;
-			ss << GlobalV::global_out_dir << "BAND" << ib + 1 << "_CHG";
+			ss << GlobalV::global_out_dir << "BAND" << ib + 1;
 			// 0 means definitely output charge density.
 			for(int is=0; is<GlobalV::NSPIN; is++)
 			{
-				ss1 << GlobalV::global_out_dir << "BAND" << ib + 1 << "_SPIN" << is << "_CHG.cube";
+				ss<<"_SPIN"<<is <<"_CHG";
 				bool for_plot = true;
-				pelec->charge->write_rho(pelec->charge->rho_save[is], is, 0, ss.str(), 3, for_plot );
-				pelec->charge->write_rho_cube(pelec->charge->rho_save[is], is, ss1.str(), 3);
+				ModuleIO::write_rho(pelec->charge->rho_save[is], is, 0, ss.str(), 3, for_plot );
 			}
 		}
 	}

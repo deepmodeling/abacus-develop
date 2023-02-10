@@ -3,7 +3,7 @@
 
 #include "diagh.h"
 #include "module_base/complexmatrix.h"
-#include "src_pw/structure_factor.h"
+#include "module_hamilt_pw/hamilt_pwdft/structure_factor.h"
 
 #include "module_psi/kernels/types.h"
 #include "module_psi/kernels/device.h"

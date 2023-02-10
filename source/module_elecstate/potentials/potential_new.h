@@ -3,7 +3,7 @@
 
 #include "module_base/complexmatrix.h"
 #include "pot_base.h"
-#include "src_pw/VNL_in_pw.h"
+#include "module_hamilt_pw/hamilt_pwdft/VNL_in_pw.h"
 
 #include <vector>
 

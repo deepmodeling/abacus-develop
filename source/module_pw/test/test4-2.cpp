@@ -125,7 +125,7 @@ TEST_F(PWTEST,test4_2)
     pwtest.recip2real(rhogr,rhogr);//check in-place transform
 
 #ifdef __MIX_PRECISION
-    pwtest.recip2real(rhofg,rhofr,true, 1);//check out-of-place transform
+    pwtest.recip2real(rhofg,rhofr,true, float(1));//check out-of-place transform
 
     pwtest.recip2real(rhofgr,rhofgr);//check in-place transform
 #endif
@@ -156,7 +156,7 @@ TEST_F(PWTEST,test4_2)
 
 #ifdef __MIX_PRECISION
     ModuleBase::GlobalFunc::ZEROS(rhofgout, npw);
-    pwtest.real2recip(rhofr,rhofgout, true, 1);//check out-of-place transform
+    pwtest.real2recip(rhofr,rhofgout, true, float(1));//check out-of-place transform
 
     pwtest.real2recip(rhofgr,rhofgr);//check in-place transform
 #endif

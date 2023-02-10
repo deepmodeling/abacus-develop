@@ -1,12 +1,12 @@
 #include "exx_abfs-parallel-communicate-dm3.h"
 #include "exx_abfs-parallel-communicate-dm3-template.h"
-#include "../src_pw/global.h"
-#include "../src_lcao/global_fp.h"
+#include "../module_hamilt_pw/hamilt_pwdft/global.h"
+#include "../module_hamilt_lcao/hamilt_lcaodft/global_fp.h"
 #include "abfs-template.h"
-#include "../src_lcao/local_orbital_charge.h"
+#include "../module_hamilt_lcao/hamilt_lcaodft/local_orbital_charge.h"
 
-#include "../src_external/src_test/test_function.h"
-#include "../src_external/src_test/src_global/complexmatrix-test.h"
+#include "../src_ri/test_code/test_function.h"
+#include "../src_ri/test_code/complexmatrix-test.h"
 
 /*
 template<> std::vector<std::map<size_t,std::map<size_t,std::map<Abfs::Vector3_Order<int>,ModuleBase::matrix>>>>

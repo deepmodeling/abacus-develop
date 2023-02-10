@@ -10,10 +10,10 @@
 #include <limits>
 
 #include "matrix.h"
+#include "global_function.h"
 
 #ifdef __NORMAL
 #else
-#include "global_function.h"
 #include "blas_connector.h"
 #endif
 
@@ -27,16 +27,7 @@
 namespace ModuleBase
 {
 
-void matrixAlloc()
-{
-// mohan add 2021-04-25
-#ifdef __NORMAL
-	std::cout << "Allocation error for Matrix" << std::endl;
-	exit(0);
-#else
-	ModuleBase::WARNING_QUIT("matrix","Allocation error for Matrix");
-#endif
-}
+void matrixAlloc(){ModuleBase::WARNING_QUIT("matrix","Allocation error for Matrix");}
 
 matrix::matrix( const int nrows, const int ncols, const bool flag_zero )
 	:nr(nrows),

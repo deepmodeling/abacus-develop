@@ -1,13 +1,13 @@
 #ifdef __MPI
 #include "exx_abfs-screen-schwarz.h"
-#include "../src_pw/global.h"
+#include "../module_hamilt_pw/hamilt_pwdft/global.h"
 #include "../module_base/lapack_connector.h"
 #include <cassert>
 #include <limits>
 #include <thread>
 
-#include "../src_external/src_test/src_ri/exx_abfs-screen-test.h"
-#include "../src_external/src_test/src_ri/exx_lcao-test.h"
+#include "../src_ri/test_code/exx_abfs-screen-test.h"
+#include "../src_ri/test_code/exx_lcao-test.h"
 //double Exx_Abfs::Screen::Schwarz::num_screen = 0;
 //double Exx_Abfs::Screen::Schwarz::num_cal = 0;
 	

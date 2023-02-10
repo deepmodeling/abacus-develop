@@ -1,8 +1,8 @@
 #include "relax_driver.h"
-#include "../src_pw/global.h" // use chr.
-#include "../module_io/print_info.h"
+#include "module_hamilt_pw/hamilt_pwdft/global.h" // use chr.
+#include "module_io/print_info.h"
 #include "relax_old/variable_cell.h" // mohan add 2021-02-01
-#include "module_io/write_wfc_realspace.h"
+#include "module_io/write_wfc_r.h"
 
 void Relax_Driver::relax_driver(ModuleESolver::ESolver *p_esolver)
 {

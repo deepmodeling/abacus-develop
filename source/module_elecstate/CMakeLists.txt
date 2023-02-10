@@ -9,6 +9,16 @@ list(APPEND objects
     potentials/pot_local.cpp
     potentials/potential_new.cpp
     potentials/write_pot.cpp
+    module_charge/charge.cpp
+    module_charge/charge_broyden.cpp
+    module_charge/charge_extra.cpp
+    module_charge/charge_mixing.cpp
+    module_charge/charge_pulay.cpp
+    module_charge/symmetry_rho.cpp
+    module_charge/symmetry_rhog.cpp
+    energy.cpp
+    magnetism.cpp
+    occupy.cpp
 )
 
 if(ENABLE_LCAO)

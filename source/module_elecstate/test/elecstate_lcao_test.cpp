@@ -1,6 +1,6 @@
 #include "module_elecstate/elecstate_lcao.h"
 #include "src_parallel/parallel_reduce.h"
-#include "src_pdiag/test/diago_elpa_utils.h"
+#include "module_hsolver/test/diago_elpa_utils.h"
 #include "gtest/gtest.h"
 #include "mpi.h"
 
@@ -19,13 +19,13 @@
  */
 
 #include "src_parallel/parallel_grid.h"
-#include "src_pw/wavefunc.h"
-#include "src_pw/VNL_in_pw.h"
-#include "src_pw/energy.h"
-#include "src_pw/structure_factor.h"
-#include "module_neighbor/sltk_atom_arrange.h"
+#include "module_hamilt_pw/hamilt_pwdft/wavefunc.h"
+#include "module_hamilt_pw/hamilt_pwdft/VNL_in_pw.h"
+#include "module_elecstate/energy.h"
+#include "module_hamilt_pw/hamilt_pwdft/structure_factor.h"
+#include "module_cell/module_neighbor/sltk_atom_arrange.h"
 #include "module_pw/pw_basis_k.h"
-#include "module_xc/xc_functional.h"
+#include "module_hamilt_general/module_xc/xc_functional.h"
 #include "module_io/restart.h"
 
 Magnetism::Magnetism(){}
@@ -74,16 +74,16 @@ XC_Functional::XC_Functional(){}
 XC_Functional::~XC_Functional(){}
 int XC_Functional::get_func_type(){return 0;}
 
-namespace WF_Local
+namespace ModuleIO
 {
-    int read_lowf(double** ctot, const int& is, const Parallel_Orbitals* ParaV, psi::Psi<double>*, elecstate::ElecState*) {return 1;};
-    int read_lowf_complex(std::complex<double>** ctot, const int& ik, const Parallel_Orbitals* ParaV, psi::Psi<std::complex<double> >*, elecstate::ElecState*) {return 1;}
-    void write_lowf(const std::string &name, double **ctot, const ModuleBase::matrix& ekb, const ModuleBase::matrix& wg) {}
-    void write_lowf_complex(const std::string &name, std::complex<double>** ctot, const int &ik, const ModuleBase::matrix& ekb, const ModuleBase::matrix& wg) {}
+    int read_wfc_nao(double** ctot, const int& is, const Parallel_Orbitals* ParaV, psi::Psi<double>*, elecstate::ElecState*) {return 1;};
+    int read_wfc_nao_complex(std::complex<double>** ctot, const int& ik, const Parallel_Orbitals* ParaV, psi::Psi<std::complex<double> >*, elecstate::ElecState*) {return 1;}
+    void write_wfc_nao(const std::string &name, double **ctot, const ModuleBase::matrix& ekb, const ModuleBase::matrix& wg) {}
+    void write_wfc_nao_complex(const std::string &name, std::complex<double>** ctot, const int &ik, const ModuleBase::matrix& ekb, const ModuleBase::matrix& wg) {}
 }
 
 //mock the unrelated functions in charge.cpp
-#include "src_pw/occupy.h"
+#include "module_elecstate/occupy.h"
 bool Occupy::use_gaussian_broadening = false;
 #ifdef __MPI
 void Parallel_Grid::zpiece_to_all(double *zpiece, const int &iz, double *rho){}

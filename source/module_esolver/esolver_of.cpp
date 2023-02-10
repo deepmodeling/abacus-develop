@@ -1,26 +1,22 @@
-#include "./esolver_of.h"
+#include "esolver_of.h"
+#include "module_io/rho_io.h"
 
 //-----------temporary-------------------------
-#include "../src_pw/global.h"
-#include "../module_base/global_function.h"
+#include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "module_base/global_function.h"
 #include "module_base/memory.h"
-#include "../module_symmetry/symmetry.h"
-// #include "../src_pw/vdwd2.h"
-// #include "../src_pw/vdwd3.h"
-// #include "../src_pw/vdwd2_parameters.h"
-// #include "../src_pw/vdwd3_parameters.h"
-#include "../src_pw/pw_complement.h"
-#include "../src_pw/structure_factor.h"
-#include "../src_pw/symmetry_rho.h"
-#include "../module_io/print_info.h"
-#include "../src_pw/H_Ewald_pw.h"
+#include "module_cell/module_symmetry/symmetry.h"
+#include "module_hamilt_pw/hamilt_pwdft/structure_factor.h"
+#include "module_elecstate/module_charge/symmetry_rho.h"
+#include "module_io/print_info.h"
+#include "module_hamilt_general/module_ewald/H_Ewald_pw.h"
 //-----force-------------------
-#include "../src_pw/forces.h"
+#include "module_hamilt_pw/hamilt_pwdft/forces.h"
 //-----stress------------------
-#include "../src_pw/of_stress_pw.h"
+#include "module_hamilt_pw/hamilt_ofdft/of_stress_pw.h"
 //---------------------------------------------------
 #include "module_elecstate/elecstate_pw.h"
-#include "module_hamilt/hamilt_pw.h"
+#include "module_hamilt_pw/hamilt_pwdft/hamilt_pw.h"
 #include "module_relax/relax_old/variable_cell.h"    // liuyu 2022-11-07
 
 namespace ModuleESolver
@@ -909,9 +905,7 @@ void ESolver_OF::afterOpt()
             std::stringstream ssc;
             std::stringstream ss1;
             ssc << GlobalV::global_out_dir << "tmp" << "_SPIN" << is + 1 << "_CHG";
-            pelec->charge->write_rho(pelec->charge->rho[is], is, iter, ssc.str(), 3);//mohan add 2007-10-17
-            ss1 << GlobalV::global_out_dir << "tmp" << "_SPIN" << is + 1 << "_CHG.cube";
-            pelec->charge->write_rho_cube(pelec->charge->rho[is], is, ss1.str(), 3);
+            ModuleIO::write_rho(pelec->charge->rho[is], is, iter, ssc.str(), 3);//mohan add 2007-10-17
         }
     }
 }

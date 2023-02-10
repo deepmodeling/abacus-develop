@@ -2,8 +2,8 @@
 #define ELECSTATE_H
 
 #include "module_psi/psi.h"
-#include "src_pw/charge.h"
-#include "src_pw/klist.h"
+#include "module_elecstate/module_charge/charge.h"
+#include "module_cell/klist.h"
 #include "potentials/potential_new.h"
 
 namespace elecstate
@@ -101,6 +101,9 @@ class ElecState
 
     // print and check for band energy and occupations
     void print_band(const int &ik, const int &printe, const int &iter);
+
+    // function for printing eigenvalues : ekb
+    void print_eigenvalue(std::ofstream& ofs);
 
   protected:
     // calculate ebands for all k points and all occupied bands

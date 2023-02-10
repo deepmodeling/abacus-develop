@@ -57,5 +57,5 @@ struct cal_ylm_real_op<FPTYPE, psi::DEVICE_GPU> {
 };
 
 #endif // __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
-}  // namespace src_pw
+}  // namespace ModuleBase
 #endif //MODULE_BASE_MATH_MULTI_DEVICE_H

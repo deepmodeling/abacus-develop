@@ -4,7 +4,7 @@
 #include "conv_coulomb_pot.h"
 #include "../module_base/global_function.h"
 
-#include "../src_external/src_test/test_function.h"			// Peize Lin test
+#include "../src_ri/test_code/test_function.h"			// Peize Lin test
 
 inline double Conv_Coulomb_Pot::get_r_radial_outofrange( size_t ir ) const
 {

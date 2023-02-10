@@ -4,7 +4,7 @@
 /
 /*******************************************************************************/
 
-Here are two examples:
+Here are three examples:
 
 1. Generate projectors (a series of bessel functions) for DeePKS. \
 A file named `jle.orb` will be generated which contains the projectors.
@@ -16,3 +16,7 @@ be generated which are for DeePKS training only. The total energy and \
 force will be output in a way as a normal SCF job does. 
 
    - see lcao_H2O
+
+3. A scf calculation with a trained DeePKS model loaded and with SOC effect taken into account. The total energy and bands will be output in a way as a normal SCF+SOC job does. 
+
+   - see lcao_CsPbI3

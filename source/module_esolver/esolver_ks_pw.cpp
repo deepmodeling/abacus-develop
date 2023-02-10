@@ -1,32 +1,35 @@
 #include "esolver_ks_pw.h"
 #include <iostream>
-#include "../module_io/wf_io.h"
+#include "module_io/write_wfc_pw.h"
+#include "module_io/write_occ.h"
+#include "module_io/write_dos_pw.h"
 
 //--------------temporary----------------------------
-#include "../src_pw/global.h"
-#include "../src_pw/symmetry_rho.h"
-#include "../module_io/print_info.h"
-#include "../src_pw/H_Ewald_pw.h"
-#include "../src_pw/occupy.h"
-#include "../module_relax/relax_old/variable_cell.h"    // liuyu 2022-11-07
+#include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "module_elecstate/module_charge/symmetry_rho.h"
+#include "module_io/print_info.h"
+#include "module_hamilt_general/module_ewald/H_Ewald_pw.h"
+#include "module_elecstate/occupy.h"
+#include "module_relax/relax_old/variable_cell.h"    // liuyu 2022-11-07
 //-----force-------------------
-#include "../src_pw/forces.h"
+#include "module_hamilt_pw/hamilt_pwdft/forces.h"
 //-----stress------------------
-#include "../src_pw/stress_pw.h"
+#include "module_hamilt_pw/hamilt_pwdft/stress_pw.h"
 //---------------------------------------------------
 #include "module_hsolver/hsolver_pw.h"
 #include "module_elecstate/elecstate_pw.h"
-#include "module_hamilt/hamilt_pw.h"
+#include "module_hamilt_pw/hamilt_pwdft/hamilt_pw.h"
 #include "module_hsolver/diago_iter_assist.h"
-#include "module_vdw/vdw.h"
+#include "module_hamilt_general/module_vdw/vdw.h"
 #include "module_base/memory.h"
 
-#include "module_io/write_wfc_realspace.h"
+#include "module_io/write_wfc_r.h"
 #include "module_io/winput.h"
 #include "module_io/numerical_descriptor.h"
 #include "module_io/numerical_basis.h"
 #include "module_io/to_wannier90.h"
 #include "module_io/berryphase.h"
+#include "module_io/rho_io.h"
 #include "module_psi/kernels/device.h"
 #include "module_hsolver/kernels/math_kernel_op.h"
 #include "module_hsolver/kernels/dngvd_op.h"
@@ -439,9 +442,7 @@ namespace ModuleESolver
                     std::stringstream ssc;
                     std::stringstream ss1;
                     ssc << GlobalV::global_out_dir << "tmp" << "_SPIN" << is + 1 << "_CHG";
-                    this->pelec->charge->write_rho(this->pelec->charge->rho_save[is], is, iter, ssc.str(), 3);//mohan add 2007-10-17
-                    ss1 << GlobalV::global_out_dir << "tmp" << "_SPIN" << is + 1 << "_CHG.cube";
-                    this->pelec->charge->write_rho_cube(this->pelec->charge->rho_save[is], is, ss1.str(), 3);
+                    ModuleIO::write_rho(this->pelec->charge->rho_save[is], is, iter, ssc.str(), 3);//mohan add 2007-10-17
                 }
                 if(XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
                 {
@@ -450,9 +451,7 @@ namespace ModuleESolver
                         std::stringstream ssc;
                         std::stringstream ss1;
                         ssc << GlobalV::global_out_dir << "tmp" << "_SPIN" << is + 1 << "_TAU";
-                        this->pelec->charge->write_rho(this->pelec->charge->kin_r_save[is], is, iter, ssc.str(), 3);//mohan add 2007-10-17
-                        ss1 << GlobalV::global_out_dir << "tmp" << "_SPIN" << is + 1 << "_TAU.cube";
-                        this->pelec->charge->write_rho_cube(this->pelec->charge->kin_r_save[is], is, ss1.str(), 3);
+                        ModuleIO::write_rho(this->pelec->charge->kin_r_save[is], is, iter, ssc.str(), 3);//mohan add 2007-10-17
                     }
                 }
             }
@@ -463,7 +462,7 @@ namespace ModuleESolver
                 ssw << GlobalV::global_out_dir << "WAVEFUNC";
                 // mohan update 2011-02-21
                 //qianrui update 2020-10-17
-                WF_io::write_wfc(ssw.str(), this->psi[0], &GlobalC::kv, GlobalC::wfcpw);
+                ModuleIO::write_wfc_pw(ssw.str(), this->psi[0], &GlobalC::kv, GlobalC::wfcpw);
                 //ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running,"write wave functions into file WAVEFUNC.dat");
             }
         }
@@ -480,9 +479,7 @@ namespace ModuleESolver
             std::stringstream ssc;
             std::stringstream ss1;
             ssc << GlobalV::global_out_dir << "SPIN" << is + 1 << "_CHG";
-            ss1 << GlobalV::global_out_dir << "SPIN" << is + 1 << "_CHG.cube";
-            this->pelec->charge->write_rho(this->pelec->charge->rho_save[is], is, 0, ssc.str());//mohan add 2007-10-17
-            this->pelec->charge->write_rho_cube(this->pelec->charge->rho_save[is], is, ss1.str(), 3);
+            ModuleIO::write_rho(this->pelec->charge->rho_save[is], is, 0, ssc.str());//mohan add 2007-10-17
         }
         if(XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
         {
@@ -491,9 +488,7 @@ namespace ModuleESolver
                 std::stringstream ssc;
                 std::stringstream ss1;
                 ssc << GlobalV::global_out_dir << "SPIN" << is + 1 << "_TAU";
-                ss1 << GlobalV::global_out_dir << "SPIN" << is + 1 << "_TAU.cube";
-                this->pelec->charge->write_rho(this->pelec->charge->kin_r_save[is], is, 0, ssc.str());//mohan add 2007-10-17
-                this->pelec->charge->write_rho_cube(this->pelec->charge->kin_r_save[is], is, ss1.str(), 3);
+                ModuleIO::write_rho(this->pelec->charge->kin_r_save[is], is, 0, ssc.str());//mohan add 2007-10-17
             }
         }
         if (this->conv_elec)
@@ -517,7 +512,7 @@ namespace ModuleESolver
 
         if (GlobalV::OUT_LEVEL != "m")
         {
-            this->print_eigenvalue(GlobalV::ofs_running);
+            this->pelec->print_eigenvalue(GlobalV::ofs_running);
         }
         if (this->device == psi::GpuDevice) {
             castmem_2d_d2h_op()(
@@ -527,97 +522,6 @@ namespace ModuleESolver
                 this->kspw_psi[0].get_pointer() - this->kspw_psi[0].get_psi_bias(),
                 this->psi[0].size());
         }
-    }
-
-    template<typename FPTYPE, typename Device>
-    void ESolver_KS_PW<FPTYPE, Device>::print_eigenvalue(std::ofstream& ofs)
-    {
-        bool wrong = false;
-        for (int ik = 0; ik < GlobalC::kv.nks; ++ik)
-        {
-            for (int ib = 0; ib < GlobalV::NBANDS; ++ib)
-            {
-                if (abs(this->pelec->ekb(ik, ib)) > 1.0e10)
-                {
-                    GlobalV::ofs_warning << " ik=" << ik + 1 << " ib=" << ib + 1 << " " << this->pelec->ekb(ik, ib) << " Ry" << std::endl;
-                    wrong = true;
-                }
-            }
-        }
-        if (wrong)
-        {
-            ModuleBase::WARNING_QUIT("Threshold_Elec::print_eigenvalue", "Eigenvalues are too large!");
-        }
-
-
-        if (GlobalV::MY_RANK != 0)
-        {
-            return;
-        }
-
-        ModuleBase::TITLE("Threshold_Elec", "print_eigenvalue");
-
-        ofs << "\n STATE ENERGY(eV) AND OCCUPATIONS ";
-        ofs << std::setprecision(5);
-        for (int ik = 0;ik < GlobalC::kv.nks;ik++)
-        {
-            if (ik == 0)
-            {
-                ofs << "   NSPIN == " << GlobalV::NSPIN << std::endl;
-                if (GlobalV::NSPIN == 2)
-                {
-                    ofs << "SPIN UP : " << std::endl;
-                }
-            }
-            else if (ik == GlobalC::kv.nks / 2)
-            {
-                if (GlobalV::NSPIN == 2)
-                {
-                    ofs << "SPIN DOWN : " << std::endl;
-                }
-            }
-
-            if (GlobalV::NSPIN == 2)
-            {
-                if (GlobalC::kv.isk[ik] == 0)
-                {
-                    ofs << " " << ik + 1 << "/" << GlobalC::kv.nks / 2 << " kpoint (Cartesian) = "
-                        << GlobalC::kv.kvec_c[ik].x << " " << GlobalC::kv.kvec_c[ik].y << " " << GlobalC::kv.kvec_c[ik].z
-                        << " (" << GlobalC::kv.ngk[ik] << " pws)" << std::endl;
-
-                    ofs << std::setprecision(6);
-
-                }
-                if (GlobalC::kv.isk[ik] == 1)
-                {
-                    ofs << " " << ik + 1 - GlobalC::kv.nks / 2 << "/" << GlobalC::kv.nks / 2 << " kpoint (Cartesian) = "
-                        << GlobalC::kv.kvec_c[ik].x << " " << GlobalC::kv.kvec_c[ik].y << " " << GlobalC::kv.kvec_c[ik].z
-                        << " (" << GlobalC::kv.ngk[ik] << " pws)" << std::endl;
-
-                    ofs << std::setprecision(6);
-
-                }
-            }       // Pengfei Li  added  14-9-9
-            else
-            {
-                ofs << " " << ik + 1 << "/" << GlobalC::kv.nks << " kpoint (Cartesian) = "
-                    << GlobalC::kv.kvec_c[ik].x << " " << GlobalC::kv.kvec_c[ik].y << " " << GlobalC::kv.kvec_c[ik].z
-                    << " (" << GlobalC::kv.ngk[ik] << " pws)" << std::endl;
-
-                ofs << std::setprecision(6);
-            }
-
-            GlobalV::ofs_running << std::setprecision(6);
-            GlobalV::ofs_running << std::setiosflags(ios::showpoint);
-            for (int ib = 0; ib < GlobalV::NBANDS; ib++)
-            {
-                ofs << std::setw(8) << ib + 1
-                    << std::setw(15) << this->pelec->ekb(ik, ib) * ModuleBase::Ry_to_eV
-                    << std::setw(15) << this->pelec->wg(ik, ib) << std::endl;
-            }
-            ofs << std::endl;
-        }//end ik
-        return;
     }
 
 
@@ -673,9 +577,14 @@ namespace ModuleESolver
         
         //print occupation in istate.info
 
-	    GlobalC::en.print_occ(this->pelec);
+	    ModuleIO::print_occ(this->pelec);
         // compute density of states
-        GlobalC::en.perform_dos_pw(this->pelec);
+        ModuleIO::write_dos_pw(this->pelec,
+            GlobalC::en.out_dos,
+            GlobalC::en.out_band,
+            GlobalC::en.dos_edelta_ev,
+            GlobalC::en.dos_scale,
+            GlobalC::en.ef);
 
         if(GlobalV::BASIS_TYPE=="pw" && winput::out_spillage) //xiaohui add 2013-09-01
         {
@@ -721,7 +630,7 @@ namespace ModuleESolver
 
         if(GlobalC::wf.out_wfc_r == 1)				// Peize Lin add 2021.11.21
         {
-            Write_Wfc_Realspace::write_wfc_realspace_1(this->psi[0], "wfc_realspace", true);
+            ModuleIO::write_psi_r_1(this->psi[0], "wfc_realspace", true);
         }	
 
         if(INPUT.cal_cond)

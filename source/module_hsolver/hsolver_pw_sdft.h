@@ -1,7 +1,7 @@
 #ifndef HSOLVERPW_SDFT_H
 #define HSOLVERPW_SDFT_H
 #include "hsolver_pw.h"
-#include "src_pw/sto_iter.h"
+#include "module_hamilt_pw/hamilt_stodft/sto_iter.h"
 namespace hsolver
 {
     class HSolverPW_SDFT : public HSolverPW<double>

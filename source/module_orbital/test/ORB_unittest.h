@@ -4,7 +4,7 @@
 #include "gtest/gtest.h"
 #include "module_orbital/ORB_control.h"
 #include "module_base/global_function.h"	
-#include "src_lcao/center2_orb-orb11.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/center2_orb-orb11.h"
 //#include "mock_center2.h"
 #include <fstream>
 #include <iomanip>

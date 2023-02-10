@@ -1,28 +1,27 @@
 #include "module_base/global_variable.h"
 #include "module_orbital/ORB_read.h"
-#include "src_pw/occupy.h"
-#include "src_pw/klist.h"
-#include "src_pw/magnetism.h"
-#include "src_pw/wf_atomic.h"
-#include "src_pw/wavefunc.h"
-#include "src_pw/charge_mixing.h"
+#include "module_elecstate/occupy.h"
+#include "module_cell/klist.h"
+#include "module_elecstate/magnetism.h"
+#include "module_hamilt_pw/hamilt_pwdft/wavefunc.h"
+#include "module_elecstate/module_charge/charge_mixing.h"
 #include "module_elecstate/potentials/potential_new.h"
 #include "module_cell/atom_pseudo.h"
 #include "module_cell/atom_spec.h"
 #include "module_cell/unitcell.h"
 #include "module_cell/pseudo_nc.h"
-#include "module_symmetry/symmetry_basic.h"
-#include "module_symmetry/symmetry.h"
+#include "module_cell/module_symmetry/symmetry_basic.h"
+#include "module_cell/module_symmetry/symmetry.h"
 #include "src_parallel/parallel_grid.h"
 #include "src_parallel/parallel_kpoints.h"
-#include "src_pw/pw_complement.h"
-#include "src_pw/structure_factor.h"
-#include "src_pw/VNL_in_pw.h"
+#include "module_hamilt_pw/hamilt_pwdft/structure_factor.h"
+#include "module_hamilt_pw/hamilt_pwdft/VNL_in_pw.h"
 #include "module_io/input.h"
-#include "src_pw/energy.h"
-#include "module_xc/xc_functional.h"
+#include "module_elecstate/energy.h"
+#include "module_hamilt_general/module_xc/xc_functional.h"
 #include "module_pw/pw_basis_k.h"
 #include "module_io/restart.h"
+#include "module_io/rho_io.h"
 
 int ModuleSymmetry::Symmetry::symm_flag;
 
@@ -105,7 +104,7 @@ psi::Psi<complex<double>>* wavefunc::allocate(const int nks)
 	return psi;
 }
 
-bool Charge::read_rho(const int &is, const std::string &fn, double* rho) //add by dwan
+bool ModuleIO::read_rho(const int &is, const std::string &fn, double* rho, int &prenspin) //add by dwan
 {
 	std::ifstream ifs(fn.c_str());
 

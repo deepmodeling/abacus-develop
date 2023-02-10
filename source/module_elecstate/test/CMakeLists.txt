@@ -10,10 +10,10 @@ if(ENABLE_LCAO)
     LIBS ${math_libs} planewave_serial base_serial psi device
     SOURCES updaterhok_pw_test.cpp
             ../elecstate_pw.cpp ../elecstate.cpp
-            ../../src_pw/charge.cpp ../../src_parallel/parallel_reduce.cpp
-            ../../src_pw/structure_factor.cpp ../../src_pw/pw_complement.cpp
-            ../../src_pw/klist.cpp ../../src_parallel/parallel_kpoints.cpp ../../src_pw/occupy.cpp
-            ../kernels/elecstate_op.cpp ../../module_io/rwstream.cpp ../../module_io/wf_io.cpp
+            ../module_charge/charge.cpp ../../src_parallel/parallel_reduce.cpp
+            ../../module_hamilt_pw/hamilt_pwdft/structure_factor.cpp
+            ../../module_cell/klist.cpp ../../src_parallel/parallel_kpoints.cpp ../occupy.cpp
+            ../kernels/elecstate_op.cpp ../../module_io/rwstream.cpp ../../module_io/write_wfc_pw.cpp
   )
 
   install(DIRECTORY support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
@@ -26,19 +26,18 @@ if(ENABLE_LCAO)
     LIBS ${test_math_libs} base orb cell neighbor planewave psi
     SOURCES elecstate_lcao_test.cpp ../elecstate_lcao.cpp
               ../../src_parallel/parallel_global.cpp ../../src_parallel/parallel_common.cpp ../../src_parallel/parallel_reduce.cpp
-              ../../src_lcao/local_orbital_charge.cpp ../../src_lcao/DM_gamma.cpp ../../src_lcao/DM_k.cpp
-              ../../src_lcao/local_orbital_wfc.cpp
+              ../../module_hamilt_lcao/hamilt_lcaodft/local_orbital_charge.cpp ../../module_hamilt_lcao/hamilt_lcaodft/DM_gamma.cpp ../../module_hamilt_lcao/hamilt_lcaodft/DM_k.cpp
+              ../../module_hamilt_lcao/hamilt_lcaodft/local_orbital_wfc.cpp
               ../../module_gint/grid_technique.cpp ../../module_gint/grid_meshball.cpp ../../module_gint/grid_bigcell.cpp
               ../../module_gint/grid_meshcell.cpp ../../module_gint/grid_meshk.cpp
               ../../module_gint/gint_tools.cpp ../../module_gint/gint_k_pvpr.cpp ../../module_gint/gint_tau.cpp
-              ../../src_lcao/dm_2d.cpp ../../src_lcao/LCAO_matrix.cpp
-              ../../src_lcao/record_adj.cpp  ../../src_lcao/LCAO_nnr.cpp
+              ../../module_hamilt_lcao/hamilt_lcaodft/dm_2d.cpp ../../module_hamilt_lcao/hamilt_lcaodft/LCAO_matrix.cpp
+              ../../module_hamilt_lcao/hamilt_lcaodft/record_adj.cpp  ../../module_hamilt_lcao/hamilt_lcaodft/LCAO_nnr.cpp
               ../../module_gint/gint.cpp ../../module_gint/gint_gamma.cpp
               ../../module_gint/gint_fvl.cpp ../../module_gint/gint_rho.cpp
               ../../module_gint/gint_vl.cpp
-              ../../src_pw/charge.cpp
-              ../../src_pdiag/pdiag_common.cpp
-              ../../module_io/output.cpp ../../src_pw/soc.cpp ../../module_io/read_rho.cpp
+              ../../module_hamilt_pw/hamilt_pwdft/charge.cpp
+              ../../module_io/output.cpp ../../module_hamilt_pw/hamilt_pwdft/soc.cpp ../../module_io/read_rho.cpp
   )
   if(USE_CUDA)
     target_link_libraries(EState_psiToRho_lcao cufft)

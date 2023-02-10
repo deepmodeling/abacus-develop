@@ -6,7 +6,7 @@
 #include "../module_base/constants.h"
 
 #ifndef __CELL
-#include "../src_pw/global.h"
+#include "../module_hamilt_pw/hamilt_pwdft/global.h"
 #endif
 #include <cstring>		// Peize Lin fix bug about strcmp 2016-08-02
 

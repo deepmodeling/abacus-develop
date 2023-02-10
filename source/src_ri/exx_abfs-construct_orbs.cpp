@@ -1,12 +1,12 @@
 #include "exx_abfs-construct_orbs.h"
 #include "exx_abfs-pca.h"
 
-#include "../module_orbital/ORB_read.h"
-#include "../module_base/gram_schmidt_orth.h"
-#include "../module_base/gram_schmidt_orth-inl.h"
+#include "module_orbital/ORB_read.h"
+#include "module_base/gram_schmidt_orth.h"
+#include "module_base/gram_schmidt_orth-inl.h"
 
-#include "../src_external/src_test/src_ri/exx_abfs-construct_orbs-test.h"		// Peize Lin test
-#include "../src_lcao/global_fp.h"
+#include "src_ri/test_code/exx_abfs-construct_orbs-test.h"		// Peize Lin test
+#include "module_hamilt_lcao/hamilt_lcaodft/global_fp.h"
 
 std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> Exx_Abfs::Construct_Orbs::change_orbs(
 	const LCAO_Orbitals &orbs_in,

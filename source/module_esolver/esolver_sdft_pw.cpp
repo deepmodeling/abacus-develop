@@ -1,21 +1,23 @@
 #include <fstream>
 #include <algorithm>
 
-#include "./esolver_sdft_pw.h"
-#include "../module_base/timer.h"
+#include "esolver_sdft_pw.h"
+#include "module_base/timer.h"
 #include "module_hsolver/hsolver_pw_sdft.h"
 #include "module_elecstate/elecstate_pw_sdft.h"
 #include "module_hsolver/diago_iter_assist.h"
+#include "module_io/rho_io.h"
+#include "module_io/write_occ.h"
 
 //-------------------Temporary------------------
-#include "../module_base/global_variable.h"
-#include "../src_pw/global.h"
-#include "../src_pw/symmetry_rho.h"
+#include "module_base/global_variable.h"
+#include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "module_elecstate/module_charge/symmetry_rho.h"
 //----------------------------------------------
 //-----force-------------------
-#include "../src_pw/sto_forces.h"
+#include "module_hamilt_pw/hamilt_stodft/sto_forces.h"
 //-----stress------------------
-#include "../src_pw/sto_stress_pw.h"
+#include "module_hamilt_pw/hamilt_stodft/sto_stress_pw.h"
 //---------------------------------------------------
 
 namespace ModuleESolver
@@ -90,7 +92,7 @@ void ESolver_SDFT_PW::beforescf(const int istep)
 
 void ESolver_SDFT_PW::eachiterfinish(int iter)
 {
-	//print_eigenvalue(GlobalV::ofs_running);
+	//this->pelec->print_eigenvalue(GlobalV::ofs_running);
     GlobalC::en.calculate_etot();
 }
 void ESolver_SDFT_PW::afterscf(const int istep)
@@ -102,9 +104,7 @@ void ESolver_SDFT_PW::afterscf(const int istep)
             std::stringstream ssc;
             std::stringstream ss1;
             ssc << GlobalV::global_out_dir << "SPIN" << is + 1 << "_CHG";
-	    	ss1 << GlobalV::global_out_dir << "SPIN" << is + 1 << "_CHG.cube";
-            pelec->charge->write_rho(pelec->charge->rho_save[is], is, 0, ssc.str() );//mohan add 2007-10-17
-	        pelec->charge->write_rho_cube(pelec->charge->rho_save[is], is, ss1.str(), 3);
+            ModuleIO::write_rho(pelec->charge->rho_save[is], is, 0, ssc.str() );//mohan add 2007-10-17
         }
     }
     if(this->conv_elec)
@@ -167,7 +167,7 @@ void ESolver_SDFT_PW::postprocess()
     GlobalV::ofs_running << std::setprecision(16);
     GlobalV::ofs_running << " !FINAL_ETOT_IS " << GlobalC::en.etot * ModuleBase::Ry_to_eV << " eV" << std::endl;
     GlobalV::ofs_running << " --------------------------------------------\n\n" << std::endl;
-    GlobalC::en.print_occ(this->pelec);
+    ModuleIO::print_occ(this->pelec);
 
     if(this->maxniter == 0)
     {

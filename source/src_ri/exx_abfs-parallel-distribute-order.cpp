@@ -1,6 +1,6 @@
 #include "exx_abfs-parallel-distribute-order.h"
 
-#include "../src_pw/global.h"
+#include "../module_hamilt_pw/hamilt_pwdft/global.h"
 #include "abfs.h"
 #include <cmath>
 

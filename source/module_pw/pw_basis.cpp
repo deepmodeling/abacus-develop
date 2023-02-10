@@ -30,9 +30,11 @@ PW_Basis:: ~PW_Basis()
     delete[] startr;
     delete[] ig2igg;
     delete[] gg_uniq;
+#if defined(__CUDA) || defined(__ROCM)
     if (GlobalV::device_flag == "gpu") {
         delmem_int_op()(gpu_ctx, this->d_is2fftixy);
     }
+#endif
 }
 
 /// 
@@ -169,7 +171,7 @@ void PW_Basis::collect_uniqgg()
     {
         if (std::abs(tmpgg[ig] - tmpgg2[igg]) > 1.0e-8)
         {
-            tmpgg2[igg] = avg_gg / double(avg_n) ;
+            tmpgg2[igg] = avg_gg / double(avg_n);
             ++igg;
             tmpgg2[igg] = tmpgg[ig];
             avg_gg = tmpgg2[igg];
@@ -181,11 +183,8 @@ void PW_Basis::collect_uniqgg()
             avg_gg += tmpgg[ig];
         }
         this->ig2igg[sortindex[ig]] = igg;
-        if(ig == this->npw)
-        {
-            tmpgg2[igg] = avg_gg / double(avg_n) ;
-        }
     }
+    tmpgg2[igg] = avg_gg / double(avg_n);
     this->ngg = igg + 1;
     delete[] this->gg_uniq; this->gg_uniq = new double [this->ngg];
     for(int igg = 0 ; igg < this->ngg ; ++igg)

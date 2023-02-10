@@ -3,7 +3,26 @@
 
 #include "../module_base/global_function.h"
 #include "../module_base/global_variable.h"
-#include "src_pdiag/pdiag_common.h"
+
+#ifdef __MPI
+#include <mpi.h>
+#endif
+
+//The structure LocalMatrix is only used for dftu and exx
+struct LocalMatrix
+{
+    std::vector<int> row_set;				// Peize Lin change int* to vector 2022.08.03
+    std::vector<int> col_set;
+    
+	int col_num;
+    int row_num;
+    
+	int col_pos;
+    int row_pos;
+    
+	int row_b;  //row block size
+    int col_b;  //column block size
+};
 
 /// These stucture packs the information of 2D-block-cyclic 
 /// parallel distribution of basis, wavefunction and matrix.

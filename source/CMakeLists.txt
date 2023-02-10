@@ -1,28 +1,20 @@
 add_subdirectory(module_base)
 add_subdirectory(module_cell)
-add_subdirectory(module_symmetry)
-add_subdirectory(module_neighbor)
 add_subdirectory(module_psi)
 add_subdirectory(module_elecstate)
-add_subdirectory(module_hamilt)
+add_subdirectory(module_hamilt_general)
+add_subdirectory(module_hamilt_pw)
+add_subdirectory(module_hamilt_lcao)
 add_subdirectory(module_hsolver)
 add_subdirectory(module_orbital)
 add_subdirectory(module_md)
 add_subdirectory(module_pw)
-add_subdirectory(module_surchem)
-add_subdirectory(module_deepks)
-add_subdirectory(module_xc)
 add_subdirectory(module_esolver)
 add_subdirectory(module_gint)
-add_subdirectory(module_dftu)
 add_subdirectory(module_io)
 add_subdirectory(module_relax)
-add_subdirectory(src_lcao)
 add_subdirectory(src_parallel)
-add_subdirectory(src_pdiag)
-add_subdirectory(src_pw)
 add_subdirectory(src_ri)
-add_subdirectory(module_vdw)
 add_subdirectory(module_ri)
 
 add_library(
@@ -33,57 +25,57 @@ add_library(
 )
 
 list(APPEND device_srcs
-  module_hamilt/kernels/nonlocal_op.cpp
-  module_hamilt/kernels/veff_op.cpp
-  module_hamilt/kernels/ekinetic_op.cpp
-  module_hamilt/kernels/meta_op.cpp
+  module_hamilt_pw/hamilt_pwdft/kernels/nonlocal_op.cpp
+  module_hamilt_pw/hamilt_pwdft/kernels/veff_op.cpp
+  module_hamilt_pw/hamilt_pwdft/kernels/ekinetic_op.cpp
+  module_hamilt_pw/hamilt_pwdft/kernels/meta_op.cpp
   module_pw/kernels/pw_op.cpp
   module_hsolver/kernels/dngvd_op.cpp
   module_hsolver/kernels/math_kernel_op.cpp
   module_elecstate/kernels/elecstate_op.cpp
   module_psi/kernels/memory_op.cpp
   module_psi/kernels/device.cpp
-  src_pw/kernels/force_op.cpp
-  src_pw/kernels/stress_op.cpp
-  src_pw/kernels/wf_op.cpp
-  src_pw/kernels/vnl_op.cpp
+  module_hamilt_pw/hamilt_pwdft/kernels/force_op.cpp
+  module_hamilt_pw/hamilt_pwdft/kernels/stress_op.cpp
+  module_hamilt_pw/hamilt_pwdft/kernels/wf_op.cpp
+  module_hamilt_pw/hamilt_pwdft/kernels/vnl_op.cpp
   module_base/kernels/math_op.cpp
 )
 
 if(USE_CUDA)
   list(APPEND device_srcs
-    module_hamilt/kernels/cuda/nonlocal_op.cu
-    module_hamilt/kernels/cuda/veff_op.cu
-    module_hamilt/kernels/cuda/ekinetic_op.cu
-    module_hamilt/kernels/cuda/meta_op.cu
+    module_hamilt_pw/hamilt_pwdft/kernels/cuda/nonlocal_op.cu
+    module_hamilt_pw/hamilt_pwdft/kernels/cuda/veff_op.cu
+    module_hamilt_pw/hamilt_pwdft/kernels/cuda/ekinetic_op.cu
+    module_hamilt_pw/hamilt_pwdft/kernels/cuda/meta_op.cu
     module_pw/kernels/cuda/pw_op.cu
     module_hsolver/kernels/cuda/dngvd_op.cu
     module_hsolver/kernels/cuda/math_kernel_op.cu
     module_elecstate/kernels/cuda/elecstate_op.cu
     module_psi/kernels/cuda/memory_op.cu
-    src_pw/kernels/cuda/force_op.cu
-    src_pw/kernels/cuda/stress_op.cu
-    src_pw/kernels/cuda/wf_op.cu
-    src_pw/kernels/cuda/vnl_op.cu
+    module_hamilt_pw/hamilt_pwdft/kernels/cuda/force_op.cu
+    module_hamilt_pw/hamilt_pwdft/kernels/cuda/stress_op.cu
+    module_hamilt_pw/hamilt_pwdft/kernels/cuda/wf_op.cu
+    module_hamilt_pw/hamilt_pwdft/kernels/cuda/vnl_op.cu
     module_base/kernels/cuda/math_op.cu
   )
 endif()
 
 if(USE_ROCM)
   hip_add_library(device_rocm STATIC
-    module_hamilt/kernels/rocm/nonlocal_op.hip.cu
-    module_hamilt/kernels/rocm/veff_op.hip.cu
-    module_hamilt/kernels/rocm/ekinetic_op.hip.cu
-    module_hamilt/kernels/rocm/meta_op.hip.cu
+    module_hamilt_pw/hamilt_pwdft/kernels/rocm/nonlocal_op.hip.cu
+    module_hamilt_pw/hamilt_pwdft/kernels/rocm/veff_op.hip.cu
+    module_hamilt_pw/hamilt_pwdft/kernels/rocm/ekinetic_op.hip.cu
+    module_hamilt_pw/hamilt_pwdft/kernels/rocm/meta_op.hip.cu
     module_pw/kernels/rocm/pw_op.hip.cu
     module_hsolver/kernels/rocm/dngvd_op.hip.cu
     module_hsolver/kernels/rocm/math_kernel_op.hip.cu
     module_elecstate/kernels/rocm/elecstate_op.hip.cu
     module_psi/kernels/rocm/memory_op.hip.cu
-    src_pw/kernels/rocm/force_op.hip.cu
-    src_pw/kernels/rocm/stress_op.hip.cu
-    src_pw/kernels/rocm/wf_op.hip.cu
-    src_pw/kernels/rocm/vnl_op.hip.cu
+    module_hamilt_pw/hamilt_pwdft/kernels/rocm/force_op.hip.cu
+    module_hamilt_pw/hamilt_pwdft/kernels/rocm/stress_op.hip.cu
+    module_hamilt_pw/hamilt_pwdft/kernels/rocm/wf_op.hip.cu
+    module_hamilt_pw/hamilt_pwdft/kernels/rocm/vnl_op.hip.cu
     module_base/kernels/rocm/math_op.hip.cu
   )
 endif()

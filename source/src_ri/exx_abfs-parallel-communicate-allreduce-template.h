@@ -9,7 +9,7 @@
 #include "mpi.h"
 #endif
 #include <boost/dynamic_bitset.hpp>
-#include "../src_lcao/serialization_boost.h"
+#include "src_ri/serialization_boost.h"
 
 #include <thread>
 #include <atomic>
@@ -18,7 +18,7 @@
 #include <mkl_service.h>
 #endif
 
-#include "../src_external/src_test/src_ri/exx_lcao-test.h"
+#include "../src_ri/test_code/exx_lcao-test.h"
 
 
 template< typename T >
