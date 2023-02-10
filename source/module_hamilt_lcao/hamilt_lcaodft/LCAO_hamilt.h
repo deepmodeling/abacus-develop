@@ -40,6 +40,7 @@ class LCAO_Hamilt
     void calculate_TR_sparse(const double &sparse_threshold);
     void destroy_TR_sparse(void);
     void calculate_dH_sparse(const int &current_spin, const double &sparse_threshold);
+    void destroy_dH_R_sparse(void);
 
     // used for gamma only algorithms.
     Gint_Gamma GG;

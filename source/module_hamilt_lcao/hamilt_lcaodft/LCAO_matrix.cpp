@@ -969,3 +969,37 @@ void LCAO_Matrix::destroy_T_R_sparse(void)
     }
     return;
 }
+
+void LCAO_Matrix::destroy_dH_R_sparse(void)
+{
+    ModuleBase::TITLE("LCAO_Matrix","destroy_dH_R_sparse");
+
+    if (GlobalV::NSPIN != 4)
+    {
+        std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>> empty_dHRx_sparse_up;
+        std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>> empty_dHRx_sparse_down;
+        std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>> empty_dHRy_sparse_up;
+        std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>> empty_dHRy_sparse_down;
+        std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>> empty_dHRz_sparse_up;
+        std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>> empty_dHRz_sparse_down;
+
+        dHRx_sparse[0].swap(empty_dHRx_sparse_up);
+        dHRx_sparse[1].swap(empty_dHRx_sparse_down);
+        dHRy_sparse[0].swap(empty_dHRy_sparse_up);
+        dHRy_sparse[1].swap(empty_dHRy_sparse_down);
+        dHRz_sparse[0].swap(empty_dHRz_sparse_up);
+        dHRz_sparse[1].swap(empty_dHRz_sparse_down);        
+    }
+    else
+    {
+        std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, std::complex<double>>>> empty_dHRx_soc_sparse;
+        std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, std::complex<double>>>> empty_dHRy_soc_sparse;
+        std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, std::complex<double>>>> empty_dHRz_soc_sparse;
+
+        dHRx_soc_sparse.swap(empty_dHRx_soc_sparse);
+        dHRy_soc_sparse.swap(empty_dHRy_soc_sparse);
+        dHRz_soc_sparse.swap(empty_dHRz_soc_sparse);
+    }
+
+    return;
+}

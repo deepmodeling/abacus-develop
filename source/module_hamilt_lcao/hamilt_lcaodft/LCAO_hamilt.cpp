@@ -357,7 +357,16 @@ void LCAO_Hamilt::calculate_dH_sparse(const int &current_spin, const double &spa
     ModuleBase::GlobalFunc::ZEROS(this->LM->DHloc_fixedR_z, this->LM->ParaV->nloc);
     // calculate dT=<phi|kin|dphi> in LCAO
     // calculate T + VNL(P1) in LCAO basis
-    this->genH.build_ST_new('T', true, GlobalC::ucell, this->LM->Hloc_fixedR.data());
+    if(GlobalV::CAL_STRESS)
+	{
+        GlobalV::CAL_STRESS = false;
+        this->genH.build_ST_new('T', true, GlobalC::ucell, this->LM->Hloc_fixedR.data());
+        GlobalV::CAL_STRESS = true;
+    }
+    else
+    {
+        this->genH.build_ST_new('T', true, GlobalC::ucell, this->LM->Hloc_fixedR.data());
+    }
     this->genH.build_Nonlocal_mu_new (this->LM->Hloc_fixed.data(), true);
     
     calculate_dSTN_R_sparse(current_spin, sparse_threshold);
@@ -1008,4 +1017,9 @@ void LCAO_Hamilt::destroy_all_HSR_sparse(void)
 void LCAO_Hamilt::destroy_TR_sparse(void)
 {
 	this->LM->destroy_T_R_sparse();
+}
+
+void LCAO_Hamilt::destroy_dH_R_sparse(void)
+{
+	this->LM->destroy_dH_R_sparse();
 }

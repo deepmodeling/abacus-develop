@@ -106,8 +106,8 @@ void ModuleIO::output_dH_R(
         }
     }
 
-    //ModuleIO::save_dH_sparse(istep, *UHM.LM, sparse_threshold, binary);
-    //UHM.destroy_dH_sparse();
+    ModuleIO::save_dH_sparse(istep, *UHM.LM, sparse_threshold, binary);
+    UHM.destroy_dH_R_sparse();
 
     UHM.GK.destroy_pvdpR();
 

@@ -217,6 +217,7 @@ private:
     // jingan add 2021-6-4, modify 2021-12-2
     void destroy_HS_R_sparse(void);
     void destroy_T_R_sparse(void);
+    void destroy_dH_R_sparse(void);
 
 };
 
