@@ -132,4 +132,9 @@ AddTest(
 AddTest(
   TARGET base_ylm
   SOURCES ylm_test.cpp  ../ylm.cpp  ../timer.cpp  ../tool_quit.cpp ../global_variable.cpp ../global_file.cpp ../memory.cpp
-  )
+)
+
+AddTest(
+  TARGET base_abfs-vector3_order
+  SOURCES abfs-vector3_order_test.cpp ../abfs-vector3_order.cpp
+)

@@ -1,4 +1,3 @@
-#include "../memory.h"
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
 #include <fstream>
@@ -25,6 +24,9 @@ namespace GlobalV
  *     - std::ofstream file
  */
 
+#define private public
+#include "../memory.h"
+
 class MemoryTest : public testing::Test
 {
 protected:
@@ -47,6 +49,11 @@ protected:
 		remove("tmp");
 	}
 };
+
+TEST_F(MemoryTest, Constructor)
+{
+	EXPECT_NO_THROW(ModuleBase::Memory mem);
+}
 
 TEST_F(MemoryTest, CalculateMem)
 {
@@ -129,3 +136,18 @@ TEST_F(MemoryTest, printall)
 	EXPECT_THAT(output,testing::HasSubstr("MEMORY(MB)"));
 	ifs.close();
 }
+
+TEST_F(MemoryTest, finish)
+{
+	*ModuleBase::Memory::name = "tmp_name";
+	*ModuleBase::Memory::class_name = "tmp_class_name";
+	*ModuleBase::Memory::consume = 100.0;
+	ModuleBase::Memory::init_flag = true;
+	ofs.open("tmp");
+	// total memory is an internal parameter and added inside the class Memory
+	ModuleBase::Memory::record("Charge_Mixing","Rrho",1024*1024,"ModuleBase::Vector3<double>");
+	EXPECT_NO_THROW(ModuleBase::Memory::finish(ofs));
+	ofs.close();
+	EXPECT_FALSE(ModuleBase::Memory::init_flag);
+}
+#undef private
