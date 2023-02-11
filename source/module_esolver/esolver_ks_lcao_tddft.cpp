@@ -3,6 +3,7 @@
 #include "module_io/cal_r_overlap_R.h"
 #include "module_io/dm_io.h"
 #include "module_io/rho_io.h"
+#include "module_io/dipole_io.h"
 #include "module_io/write_HS_R.h"
 
 //--------------temporary----------------------------
@@ -358,7 +359,7 @@ void ESolver_KS_LCAO_TDDFT::afterscf(const int istep)
         {
             std::stringstream ss_dipole;
             ss_dipole << GlobalV::global_out_dir << "SPIN" << is + 1 << "_DIPOLE";
-            pelec->charge->write_dipole(pelec->charge->rho_save[is], is, istep, ss_dipole.str());
+            ModuleIO::write_dipole(pelec->charge->rho_save[is], is, istep, ss_dipole.str());
         }
 
         std::stringstream ssd;

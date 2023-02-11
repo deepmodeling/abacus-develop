@@ -20,6 +20,7 @@ list(APPEND objects
     winput.cpp
     write_input.cpp    
     write_rho.cpp
+    write_dipole.cpp
     write_wfc_r.cpp
 )
 

@@ -2,16 +2,17 @@
 #include "module_elecstate/module_charge/charge.h"
 #include "module_hamilt_lcao/module_tddft/ELEC_evolve.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "module_io/dipole_io.h"
 
 // fuxiang add 2017-03-15
-void Charge::write_dipole(const double *rho_save,
+void ModuleIO::write_dipole(const double *rho_save,
                           const int &is,
                           const int &istep,
                           const std::string &fn,
                           const int &precision,
                           const bool for_plot)
 {
-    ModuleBase::TITLE("Charge", "write_dipole");
+    ModuleBase::TITLE("ModuleIO", "write_dipole");
 
     time_t start, end;
     std::ofstream ofs;
@@ -23,7 +24,7 @@ void Charge::write_dipole(const double *rho_save,
         ofs.open(fn.c_str(), ofstream::app);
         if (!ofs)
         {
-            ModuleBase::WARNING("Charge::write_rho", "Can't create Charge File!");
+            ModuleBase::WARNING("ModuleIO", "Can't create Charge File!");
         }
     }
 

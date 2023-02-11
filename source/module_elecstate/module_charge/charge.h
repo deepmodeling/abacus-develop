@@ -80,13 +80,6 @@ class Charge
 
     void rho_mpi(void);
 
-    void write_dipole(const double *rho_save,
-                          const int &is,
-                          const int &istep,
-                          const std::string &fn,
-                          const int &precision = 11,
-                          const bool for_plot = false);
-
     // mohan add 2021-02-20
     int nrxx; // number of r vectors in this processor
     int ngmc; // number of g vectors in this processor
