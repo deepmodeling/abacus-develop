@@ -22,16 +22,16 @@ void ElecState::fixed_weights(const double* const ocp_kb)
 
     int num = 0;
     num = GlobalC::kv.nks * GlobalV::NBANDS;
-    if (num != GlobalV::ocp_kb[0])
+    if (num != GlobalV::ocp_kb.size())
     {
         ModuleBase::WARNING_QUIT("ElecState::fixed_weights",
                                  "size of occupation array is wrong , please check ocp_set");
     }
 
     double num_elec = 0.0;
-    for (int i = 0; i < GlobalV::ocp_kb[0]; i++)
+    for (int i = 0; i < GlobalV::ocp_kb.size(); i++)
     {
-        num_elec += GlobalV::ocp_kb[i + 1];
+        num_elec += GlobalV::ocp_kb[i];
     }
     if (abs(num_elec - GlobalV::nelec) > 1.0e-5)
     {
@@ -43,7 +43,7 @@ void ElecState::fixed_weights(const double* const ocp_kb)
     {
         for (int ib = 0; ib < this->wg.nc; ib++)
         {
-            this->wg(ik, ib) = ocp_kb[ik * this->wg.nc + ib + 1];
+            this->wg(ik, ib) = ocp_kb[ik * this->wg.nc + ib];
         }
     }
     this->skip_weights = true;

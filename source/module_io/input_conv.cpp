@@ -33,7 +33,6 @@ template <typename T> void Input_Conv::parse_expression(const std::string &fn, s
     ModuleBase::TITLE("Input_Conv", "parse_expression");
     ModuleBase::timer::tick("Input_Conv", "parse_expression");
     int count = 0;
-    vec.emplace_back(count);
     std::string pattern("([0-9]+\\*[0-9.]+|[0-9,.]+)");
     std::vector<std::string> str;
     std::string::size_type pos1, pos2;
@@ -79,7 +78,7 @@ template <typename T> void Input_Conv::parse_expression(const std::string &fn, s
             // std::vector<double> ocp_temp(num, occ);
             // const std::vector<double>::iterator dest = vec.begin() + count;
             // copy(ocp_temp.begin(), ocp_temp.end(), dest);
-            count += num;
+            //count += num;
             for (size_t i = 0; i != num; i++)
                 vec.emplace_back(occ);
         }
@@ -94,7 +93,6 @@ template <typename T> void Input_Conv::parse_expression(const std::string &fn, s
             vec.emplace_back(occ);
         }
     }
-    vec[0]=count;
 }
 
 void Input_Conv::Convert(void)
