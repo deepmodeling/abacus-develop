@@ -6,11 +6,11 @@
 
 // fuxiang add 2017-03-15
 void ModuleIO::write_dipole(const double *rho_save,
-                          const int &is,
-                          const int &istep,
-                          const std::string &fn,
-                          const int &precision,
-                          const bool for_plot)
+                            const int &is,
+                            const int &istep,
+                            const std::string &fn,
+                            const int &precision,
+                            const bool for_plot)
 {
     ModuleBase::TITLE("ModuleIO", "write_dipole");
 
@@ -196,6 +196,7 @@ void ModuleIO::write_dipole(const double *rho_save,
 
         ofs << istep << " " << dipole_elec_x << " " << dipole_elec_y << " " << dipole_elec_z << std::endl;
 
+        /*
         double dipole_ion_x = 0.0, dipole_ion_y = 0.0, dipole_ion_z = 0.0, dipole_sum = 0.0;
         if (GlobalC::ucell.ntype == 1)
         {
@@ -264,9 +265,7 @@ void ModuleIO::write_dipole(const double *rho_save,
         {
             std::cout << "atom ntype is too large!" << std::endl;
         }
-
-        /*
-                for(int it=1; it<(GlobalC::ucell.ntype); it++)
+        for(int it=1; it<(GlobalC::ucell.ntype); it++)
                 {
                     for(int ia=0; ia<GlobalC::ucell.atoms[it].na; ia++)
                     {
@@ -290,7 +289,7 @@ void ModuleIO::write_dipole(const double *rho_save,
 
                     }
                 }
-        */
+        
 
         std::cout << std::setprecision(8) << "dipole_ion_x: " << dipole_ion_x << std::endl;
         std::cout << std::setprecision(8) << "dipole_ion_y: " << dipole_ion_y << std::endl;
@@ -304,7 +303,7 @@ void ModuleIO::write_dipole(const double *rho_save,
         std::cout << std::setprecision(8) << "dipole_y: " << dipole_y << std::endl;
         std::cout << std::setprecision(8) << "dipole_z: " << dipole_z << std::endl;
         dipole_sum = sqrt(dipole_x * dipole_x + dipole_y * dipole_y + dipole_z * dipole_z);
-        std::cout << std::setprecision(8) << "dipole_sum: " << dipole_sum << std::endl;
+        std::cout << std::setprecision(8) << "dipole_sum: " << dipole_sum << std::endl;*/
     }
     MPI_Barrier(MPI_COMM_WORLD);
 #endif
