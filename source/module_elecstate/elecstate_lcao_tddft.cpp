@@ -28,7 +28,6 @@ void ElecStateLCAO_TDDFT::psiToRho_td(const psi::Psi<std::complex<double>>& psi)
         cal_dm(this->loc->ParaV, this->wg, psi, this->loc->dm_k);
     }
 
-
     if (GlobalV::KS_SOLVER == "genelpa" || GlobalV::KS_SOLVER == "scalapack_gvx" || GlobalV::KS_SOLVER == "lapack")
     {
         for (int ik = 0; ik < psi.get_nk(); ik++)
@@ -64,11 +63,30 @@ void ElecStateLCAO_TDDFT::calculate_weights_td()
 
     if (GlobalV::ocp == 1)
     {
+        int num = 0;
+        num = GlobalC::kv.nks * GlobalV::NBANDS;
+        if (num != GlobalV::ocp_kb[0])
+        {
+            ModuleBase::WARNING_QUIT("ElecStateLCAO_TDDFT::calculate_weights_td",
+                                     "size of occupation array is wrong , please check ocp_set");
+        }
+
+        double num_elec = 0.0;
+        for (int i = 0; i < GlobalV::ocp_kb[0]; i++)
+        {
+            num_elec += GlobalV::ocp_kb[i + 1];
+        }
+        if (abs(num_elec - GlobalV::nelec) > 1.0e-5)
+        {
+            ModuleBase::WARNING_QUIT("ElecStateLCAO_TDDFT::calculate_weights_td",
+                                     "total number of occupations is wrong , please check ocp_set");
+        }
+
         for (int ik = 0; ik < GlobalC::kv.nks; ik++)
         {
             for (int ib = 0; ib < GlobalV::NBANDS; ib++)
             {
-                this->wg(ik, ib) = GlobalV::ocp_kb[ik * GlobalV::NBANDS + ib];
+                this->wg(ik, ib) = GlobalV::ocp_kb[ik * GlobalV::NBANDS + ib + 1];
             }
         }
     }
