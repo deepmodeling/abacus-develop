@@ -40,38 +40,38 @@ find_library(tensorflow_cc
 # Handle the QUIET and REQUIRED arguments and
 # set DeePMD_FOUND to TRUE if all variables are non-zero.
 include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(DeePMDC DEFAULT_MSG deepmd_c DeePMD_INCLUDE_C_DIR)
-if (DeePMDC_FOUND)
-    set(DeePMDC_FOUND TRUE)
-    set(DeePMD_INCLUDE_DIR ${DeePMD_INCLUDE_C_DIR})
-    if(NOT TARGET DeePMD::deepmd_c)
-        add_library(DeePMD::deepmd_c UNKNOWN IMPORTED)
-        set_target_properties(DeePMD::deepmd_c PROPERTIES
-            IMPORTED_LINK_INTERFACE_LANGUAGES "C"
-            IMPORTED_LOCATION "${deepmd_c}"
-            INTERFACE_INCLUDE_DIRECTORIES "${DeePMD_INCLUDE_DIR}")
+if (DeePMD_INCLUDE_C_DIR)
+    find_package_handle_standard_args(DeePMD DEFAULT_MSG deepmd_c DeePMD_INCLUDE_C_DIR)
+    if (DeePMD_FOUND)
+        set(DeePMDC_FOUND TRUE)
+        set(DeePMD_INCLUDE_DIR ${DeePMD_INCLUDE_C_DIR})
+        if(NOT TARGET DeePMD::deepmd_c)
+            add_library(DeePMD::deepmd_c UNKNOWN IMPORTED)
+            set_target_properties(DeePMD::deepmd_c PROPERTIES
+                IMPORTED_LINK_INTERFACE_LANGUAGES "C"
+                IMPORTED_LOCATION "${deepmd_c}"
+                INTERFACE_INCLUDE_DIRECTORIES "${DeePMD_INCLUDE_DIR}")
+        endif()
     endif()
 else()
-find_package_handle_standard_args(DeePMD DEFAULT_MSG deepmd_cc tensorflow_cc DeePMD_INCLUDE_DIR)
-
-if(DeePMD_FOUND)
-    set(DeePMD_INCLUDE_DIR ${DeePMD_INCLUDE_DIR})
-
-    if(NOT TARGET DeePMD::deepmd_cc)
-        add_library(DeePMD::deepmd_cc UNKNOWN IMPORTED)
-        set_target_properties(DeePMD::deepmd_cc PROPERTIES
-           IMPORTED_LINK_INTERFACE_LANGUAGES "C"
-           IMPORTED_LOCATION "${deepmd_cc}"
-           INTERFACE_INCLUDE_DIRECTORIES "${DeePMD_INCLUDE_DIR}")
+    find_package_handle_standard_args(DeePMD DEFAULT_MSG deepmd_cc tensorflow_cc DeePMD_INCLUDE_DIR)
+    if(DeePMD_FOUND)
+        set(DeePMD_INCLUDE_DIR ${DeePMD_INCLUDE_DIR})
+        if(NOT TARGET DeePMD::deepmd_cc)
+            add_library(DeePMD::deepmd_cc UNKNOWN IMPORTED)
+            set_target_properties(DeePMD::deepmd_cc PROPERTIES
+                IMPORTED_LINK_INTERFACE_LANGUAGES "C"
+                IMPORTED_LOCATION "${deepmd_cc}"
+                INTERFACE_INCLUDE_DIRECTORIES "${DeePMD_INCLUDE_DIR}")
+        endif()
+        if(NOT TARGET DeePMD::tensorflow_cc)
+            add_library(DeePMD::tensorflow_cc UNKNOWN IMPORTED)
+            set_target_properties(DeePMD::tensorflow_cc PROPERTIES
+                IMPORTED_LINK_INTERFACE_LANGUAGES "C"
+                IMPORTED_LOCATION "${tensorflow_cc}"
+                INTERFACE_INCLUDE_DIRECTORIES "${DeePMD_INCLUDE_DIR}")
+        endif()
     endif()
-    if(NOT TARGET DeePMD::tensorflow_cc)
-        add_library(DeePMD::tensorflow_cc UNKNOWN IMPORTED)
-        set_target_properties(DeePMD::tensorflow_cc PROPERTIES
-           IMPORTED_LINK_INTERFACE_LANGUAGES "C"
-           IMPORTED_LOCATION "${tensorflow_cc}"
-           INTERFACE_INCLUDE_DIRECTORIES "${DeePMD_INCLUDE_DIR}")
-    endif()
-endif()
 endif()
 
 set(CMAKE_REQUIRED_INCLUDES ${CMAKE_REQUIRED_INCLUDES} ${DeePMD_INCLUDE_DIR})
