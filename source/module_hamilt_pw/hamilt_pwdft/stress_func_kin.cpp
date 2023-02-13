@@ -50,6 +50,7 @@ void Stress_Func<FPTYPE, Device>::stress_kin(ModuleBase::matrix& sigma, const Mo
 			{
 				for(int ibnd=0;ibnd<GlobalV::NBANDS;ibnd++)
 				{
+					if( std::fabs(wg(ik, ibnd)) < ModuleBase::threshold_wg * wg(ik, 0) ) continue;
 					const std::complex<FPTYPE>* ppsi=nullptr;
 					if(psi_in!=nullptr)
 					{

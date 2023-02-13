@@ -3,7 +3,7 @@
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/record_adj.h"
 
-#include "src_external/src_test/src_ri/exx_lcao-test.h"
+#include "src_ri/test_code/exx_lcao-test.h"
 #include "lcao_nnr.h"
 //#include <gperftools/profiler.h>
 

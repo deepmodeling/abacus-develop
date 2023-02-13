@@ -1,7 +1,7 @@
 #include "op_dftu_lcao.h"
 #include "module_base/timer.h"
 #include "module_base/tool_title.h"
-#include "module_dftu/dftu.h"
+#include "module_hamilt_lcao/module_dftu/dftu.h"
 
 namespace hamilt
 {

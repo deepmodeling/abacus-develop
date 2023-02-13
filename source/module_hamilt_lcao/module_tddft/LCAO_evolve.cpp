@@ -2,6 +2,7 @@
 
 #include "module_io/input.h"
 #include "module_base/scalapack_connector.h"
+#include "module_base/lapack_connector.h"
 #include "module_io/write_HS.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "ELEC_evolve.h"

@@ -4,7 +4,7 @@
 #include "module_base/global_variable.h"
 #include "module_cell/unitcell.h"
 #include "module_hamilt_general/module_surchem/surchem.h"
-#include "module_symmetry/symmetry.h"
+#include "module_cell/module_symmetry/symmetry.h"
 #include "module_io/berryphase.h"
 #include "module_relax/relax_old/ions_move_basic.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
@@ -16,7 +16,7 @@
 #include "module_orbital/ORB_read.h"
 #include "module_hamilt_lcao/module_tddft/ELEC_evolve.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/FORCE_STRESS.h"
-#include "module_dftu/dftu.h"
+#include "module_hamilt_lcao/module_dftu/dftu.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/global_fp.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/local_orbital_charge.h"
 #endif
@@ -527,6 +527,8 @@ void Input_Conv::Convert(void)
     Local_Orbital_Charge::out_dm1 = INPUT.out_dm1;
     hsolver::HSolverLCAO::out_mat_hs = INPUT.out_mat_hs;
     hsolver::HSolverLCAO::out_mat_hsR = INPUT.out_mat_hs2; // LiuXh add 2019-07-16
+    hsolver::HSolverLCAO::out_mat_t = INPUT.out_mat_t;
+    hsolver::HSolverLCAO::out_mat_dh = INPUT.out_mat_dh;
     hsolver::HSolverLCAO::out_hsR_interval = INPUT.out_hs2_interval;
     elecstate::ElecStateLCAO::out_wfc_lcao = INPUT.out_wfc_lcao;
     if (INPUT.calculation == "nscf" && !INPUT.towannier90 && !INPUT.berry_phase)

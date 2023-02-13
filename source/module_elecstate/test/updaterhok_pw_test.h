@@ -10,8 +10,8 @@
 #include "module_cell/atom_spec.h"
 #include "module_cell/unitcell.h"
 #include "module_cell/pseudo_nc.h"
-#include "module_symmetry/symmetry_basic.h"
-#include "module_symmetry/symmetry.h"
+#include "module_cell/module_symmetry/symmetry_basic.h"
+#include "module_cell/module_symmetry/symmetry.h"
 #include "src_parallel/parallel_grid.h"
 #include "src_parallel/parallel_kpoints.h"
 #include "module_hamilt_pw/hamilt_pwdft/structure_factor.h"
@@ -21,6 +21,7 @@
 #include "module_hamilt_general/module_xc/xc_functional.h"
 #include "module_pw/pw_basis_k.h"
 #include "module_io/restart.h"
+#include "module_io/rho_io.h"
 
 int ModuleSymmetry::Symmetry::symm_flag;
 
@@ -103,7 +104,7 @@ psi::Psi<complex<double>>* wavefunc::allocate(const int nks)
 	return psi;
 }
 
-bool Charge::read_rho(const int &is, const std::string &fn, double* rho) //add by dwan
+bool ModuleIO::read_rho(const int &is, const std::string &fn, double* rho, int &prenspin) //add by dwan
 {
 	std::ifstream ifs(fn.c_str());
 

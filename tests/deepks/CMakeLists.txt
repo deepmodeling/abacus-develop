@@ -9,7 +9,7 @@ if(ENABLE_ASAN)
     )
     add_test(
         NAME deepks_test1_with_asan
-        COMMAND ${BASH} Autotest1.sh -a ${CMAKE_CURRENT_BINARY_DIR}/../../source/module_deepks/test/test_deepks
+        COMMAND ${BASH} Autotest1.sh -a ${CMAKE_CURRENT_BINARY_DIR}/../../source/module_hamilt_lcao/module_deepks/test/test_deepks
         WORKING_DIRECTORY ${ABACUS_TEST_DIR}/deepks
     )
 
@@ -21,7 +21,7 @@ else()
     )
     add_test(
         NAME deepks_test1
-        COMMAND ${BASH} Autotest1.sh -a ${CMAKE_CURRENT_BINARY_DIR}/../../source/module_deepks/test/test_deepks
+        COMMAND ${BASH} Autotest1.sh -a ${CMAKE_CURRENT_BINARY_DIR}/../../source/module_hamilt_lcao/module_deepks/test/test_deepks
         WORKING_DIRECTORY ${ABACUS_TEST_DIR}/deepks
     )
 endif()

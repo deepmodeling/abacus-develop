@@ -40,13 +40,13 @@ ENV CC=/opt/intel/oneapi/mpi/latest/bin/mpiicc \
 SHELL ["/bin/bash", "-c"]
 RUN source /opt/intel/oneapi/setvars.sh \
     && cd /tmp \
-    && wget https://elpa.mpcdf.mpg.de/software/tarball-archive/Releases/2021.05.002/elpa-2021.05.002.tar.gz \
+    && wget -q https://elpa.mpcdf.mpg.de/software/tarball-archive/Releases/2021.05.002/elpa-2021.05.002.tar.gz \
     && tar xzf elpa-2021.05.002.tar.gz  && rm elpa-2021.05.002.tar.gz \
     && cd elpa-2021.05.002 && mkdir build && cd build \
-    && ../configure FCFLAGS="-qmkl=cluster" \
+    && ../configure FCFLAGS="-qmkl=cluster" --enable-openmp \
     && make -j`nproc` \
     && make PREFIX=/usr/local install \
-    && ln -s /usr/local/include/elpa-2021.05.002/elpa /usr/local/include/ \
+    && ln -s /usr/local/include/elpa_openmp-2021.05.002/elpa /usr/local/include/ \
     && cd /tmp && rm -rf elpa-2021.05.002
 
 RUN wget https://download.pytorch.org/libtorch/cpu/libtorch-cxx11-abi-shared-with-deps-1.9.1%2Bcpu.zip \
@@ -59,7 +59,7 @@ ADD https://api.github.com/repos/deepmodeling/abacus-develop/git/refs/heads/deve
 
 RUN git clone https://github.com/deepmodeling/abacus-develop.git --depth 1 && \
     cd abacus-develop && \
-    cmake -B build -DENABLE_DEEPKS=ON && \
+    cmake -B build -DENABLE_DEEPKS=ON -DENABLE_LIBXC=ON && \
     cmake --build build -j`nproc` && \
     cmake --install build && \
     cd .. && rm -rf abacus-develop

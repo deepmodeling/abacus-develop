@@ -3,7 +3,7 @@
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_base/tool_threading.h"
 #ifdef __DEEPKS
-#include "module_deepks/LCAO_deepks.h"
+#include "module_hamilt_lcao/module_deepks/LCAO_deepks.h"
 #endif
 
 LCAO_Matrix::LCAO_Matrix()
@@ -950,5 +950,22 @@ void LCAO_Matrix::destroy_HS_R_sparse(void)
     // std::set<Abfs::Vector3_Order<int>> empty_all_R_coor;
     // all_R_coor.swap(empty_all_R_coor);
 
+    return;
+}
+
+void LCAO_Matrix::destroy_T_R_sparse(void)
+{
+    ModuleBase::TITLE("LCAO_Matrix","destroy_T_R_sparse");
+
+    if (GlobalV::NSPIN != 4)
+    {
+        std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>> empty_TR_sparse;
+        TR_sparse.swap(empty_TR_sparse);
+    }
+    else
+    {
+        std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, std::complex<double>>>> empty_TR_soc_sparse;
+        TR_soc_sparse.swap(empty_TR_soc_sparse);
+    }
     return;
 }

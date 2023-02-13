@@ -151,8 +151,9 @@ void ElecStatePW<FPTYPE, Device>::rhoBandK(const psi::Psi<std::complex<FPTYPE>, 
         {
             ///
             /// only occupied band should be calculated.
+            /// be care of when smearing_sigma is large, wg would less than 0
             ///
-            if (this->wg(ik, ibnd) < threshold) {
+            if (std::fabs(this->wg(ik, ibnd)) < threshold) {
                 continue;
             }
 

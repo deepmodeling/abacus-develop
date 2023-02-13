@@ -64,6 +64,10 @@ class Sphbes : public testing::Test
     }       
 };
 
+TEST_F(Sphbes,Constructor)
+{
+    EXPECT_NO_THROW(ModuleBase::Sphbes sb);
+}
 
 TEST_F(Sphbes,SphericalBessel)
 {

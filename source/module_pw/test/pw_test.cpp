@@ -2,6 +2,7 @@
 #include "test_tool.h"
 #include "mpi.h"
 #endif
+#include "../../module_base/global_variable.h"
 #include "fftw3.h"
 #include "pw_test.h"
 using namespace std;
@@ -35,6 +36,10 @@ int main(int argc, char **argv)
     
     int kpar;
     kpar = 1;
+#ifdef __MIX_PRECISION
+    //Temporary, pw_basis should not contains global variables
+    GlobalV::precision_flag = "single";
+#endif
 #ifdef __MPI
     int nproc, myrank,mypool;
     setupmpi(argc,argv,nproc, myrank);

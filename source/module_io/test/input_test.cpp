@@ -109,9 +109,9 @@ TEST_F(InputTest, Default)
         EXPECT_EQ(INPUT.nx,0);
         EXPECT_EQ(INPUT.ny,0);
         EXPECT_EQ(INPUT.nz,0);
-        EXPECT_EQ(INPUT.bx,2);
-        EXPECT_EQ(INPUT.by,2);
-        EXPECT_EQ(INPUT.bz,2);
+        EXPECT_EQ(INPUT.bx,0);
+        EXPECT_EQ(INPUT.by,0);
+        EXPECT_EQ(INPUT.bz,0);
         EXPECT_EQ(INPUT.diago_proc,0);
         EXPECT_EQ(INPUT.pw_diag_nmax,50);
         EXPECT_EQ(INPUT.diago_cg_prec,1);

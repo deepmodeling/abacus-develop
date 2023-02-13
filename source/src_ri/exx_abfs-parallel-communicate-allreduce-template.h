@@ -18,7 +18,7 @@
 #include <mkl_service.h>
 #endif
 
-#include "../src_external/src_test/src_ri/exx_lcao-test.h"
+#include "../src_ri/test_code/exx_lcao-test.h"
 
 
 template< typename T >

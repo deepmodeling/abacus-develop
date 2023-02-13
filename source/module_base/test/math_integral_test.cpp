@@ -58,7 +58,10 @@ class SimpsonIntegralSinx : public testing::Test
     }
 };
 
-
+TEST_F(SimpsonIntegralSinx,Constructor)
+{
+    EXPECT_NO_THROW(ModuleBase::Integral intgral);
+}
 
 TEST_F(SimpsonIntegralSinx,SimpsonIntegralRab)
 {

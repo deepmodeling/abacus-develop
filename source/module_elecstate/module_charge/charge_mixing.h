@@ -115,7 +115,6 @@ class Charge_Mixing
 	void generate_new_rho(const int &is,const int &m, Charge* chr);
 
 	void generate_residual_vector(double *residual, const double* rho_out, const double* rho_in)const;
-	double calculate_residual_norm(double *residual1, double *residual2)const;
 
 //======================================
 // Broyden mixing method, in charge_broyden.cpp

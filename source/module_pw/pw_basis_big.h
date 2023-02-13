@@ -38,6 +38,69 @@ public:
     int nbxx;
     int nbzp_start;
 
+    void autoset_big_cell_size(int& b_size, const int& nc_size, const int nproc = 0)
+    {
+        //original default setting is 4
+        b_size = 4;
+        //only for bz
+        if(nproc > 0)
+        {
+            int candidate_lists[4] = {4, 3, 5, 2};
+            int max_bz[4];
+            for(int i=0;i<4;i++)
+            {
+                int tmp = candidate_lists[i];
+                max_bz[i] = nc_size / tmp;
+                if(nc_size % tmp!=0)
+                {//ignore candidates which can't be factored by nc_size
+                    max_bz[i]=0;
+                    continue;
+                } 
+                if(max_bz[i] % nproc == 0)
+                {
+                    b_size = tmp;
+                    return;
+                }
+            }
+
+            //choose maximum residual
+            double res = 0.0;
+            double res_temp = 0.0;
+            for(int i=0;i<4;i++)
+            {
+                if(max_bz[i]==0) continue;
+                res_temp = double(max_bz[i] % nproc) / nproc;
+                if(res < res_temp)
+                {
+                    res = res_temp;
+                    b_size = candidate_lists[i];
+                }
+            }
+            return;
+        }
+        //for bx and by, choose maximum residual of (5,4,3)
+        else
+        {
+            int res = 0;
+            int res_temp = 0;
+            for(int i=5;i>2;i--)
+            {
+                res_temp = nc_size % i;
+                if(res_temp == 0)
+                {
+                    b_size = i;
+                    return;
+                }
+                else if(res < res_temp)
+                {
+                    res = res_temp;
+                    b_size = i;
+                } 
+            }
+            return;
+        }
+    }
+
 
     virtual void initgrids(const double lat0_in,const ModuleBase::Matrix3 latvec_in,
         const double gridecut){
@@ -93,14 +156,6 @@ public:
         {
 			b = ibox[i];   
 
-            // mohan add 2011-04-22            
-			if( ibox[i] % s != 0) 
-			{
-				b = -1; // meaning less
-			}   
-            else
-            {
-
 			//n2 = n3 = n5 = n7 = 0;
 			n2 = n3 = n5 = 0;
 			done_factoring = false;
@@ -128,13 +183,46 @@ public:
 				//if (b%7==0) { n7++; b /= 7; continue; }
 				done_factoring = true;
 			}
-            }
             ibox[i] += 1;
         }
         while (b != 1);
         ibox[i] -= 1;
         //  b==1 means fftbox[i] is (2,3,5,7) factorizable 
     }
+    //autoset bx/by/bz if not set in INPUT
+    if(!this->bz)
+    {
+        this->autoset_big_cell_size(this->bz, ibox[2], this->poolnproc);
+    }
+    if(!this->bx)
+    {
+        //if cz == cx, autoset bx==bz for keeping same symmetry 
+        if(ibox[0] == ibox[2])
+        {
+            this->bx = this->bz;
+        }
+        else
+        {
+            this->autoset_big_cell_size(this->bx, ibox[0]);
+        }
+    }
+    if(!this->by)
+    {
+        //if cz == cy, autoset by==bz for keeping same symmetry 
+        if(ibox[1] == ibox[2])
+        {
+            this->by = this->bz;
+        }
+        else
+        {
+            this->autoset_big_cell_size(this->by, ibox[1]);
+        }
+    }
+    this->bxyz = this->bx * this->by * this->bz;
+    if(ibox[0]%this->bx != 0) ibox[0] += (this->bx - ibox[0] % this->bx);
+    if(ibox[1]%this->by != 0) ibox[1] += (this->by - ibox[1] % this->by);
+    if(ibox[2]%this->bz != 0) ibox[2] += (this->bz - ibox[2] % this->bz);
+
     this->nx = ibox[0];
     this->ny = ibox[1];
     this->nz = ibox[2];

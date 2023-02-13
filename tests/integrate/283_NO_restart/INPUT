@@ -31,3 +31,6 @@ orbital_dir		../../PP_ORB
 restart_load		1
 read_file_dir   ./
 
+bx 2
+by 2
+bz 2
