@@ -1,5 +1,5 @@
 #ifndef WRITE_HS_SPARSE_H
-#define WRITE_HS__SPARSE_H
+#define WRITE_HS_SPARSE_H
 
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
