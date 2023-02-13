@@ -99,7 +99,7 @@ void H_TDDFT_pw::read_parameters(Input *in)
     hhg_amp1 = ModuleBase::BOHR_TO_A / ModuleBase::Ry_to_eV * in->td_hhg_amp1; // Ry/bohr
     hhg_amp2 = ModuleBase::BOHR_TO_A / ModuleBase::Ry_to_eV * in->td_hhg_amp2; // Ry/bohr
     hhg_omega1 = 2 * ModuleBase::PI * ModuleBase::AU_to_FS * in->td_hhg_freq1; // time(a.u.)^-1
-    hhg_omega2 = 2 * ModuleBase::PI * ModuleBase::AU_to_FS * in->td_hhg_freq1; // time(a.u.)^-1
+    hhg_omega2 = 2 * ModuleBase::PI * ModuleBase::AU_to_FS * in->td_hhg_freq2; // time(a.u.)^-1
     hhg_phase1 = in->td_hhg_phase1;
     hhg_phase2 = in->td_hhg_phase2;
     hhg_t0 = in->td_hhg_t0;
