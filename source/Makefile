@@ -137,7 +137,7 @@ ifdef DeePMD_DIR
     ## DeePMD-kit package
     ##==========================
     DeeP_LIB_DIR = ${DeePMD_DIR}/lib
-    LIBS += -L${DeeP_LIB_DIR} -ldeepmd_cc -ldeepmd_op -ldeepmd_op_cuda -Wl,-rpath=${DeeP_LIB_DIR}
+    LIBS += -L${DeeP_LIB_DIR} -ldeepmd_cc -Wl,-rpath=${DeeP_LIB_DIR}
     DeeP_INCLUDE_DIR = ${DeePMD_DIR}/include
     INCLUDES += -I${DeeP_INCLUDE_DIR}
 

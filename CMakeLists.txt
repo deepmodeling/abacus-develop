@@ -394,8 +394,6 @@ if(DEFINED DeePMD_DIR)
   else()
   target_link_libraries(${ABACUS_BIN_NAME}
     DeePMD::deepmd_cc
-    DeePMD::deepmd_op
-    DeePMD::deepmd_op_cuda
     DeePMD::tensorflow_cc
   )
   endif()

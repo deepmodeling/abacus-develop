@@ -352,6 +352,7 @@ OBJS_IO=input.o\
     winput.o\
     write_input.o\
     write_rho.o\
+    write_dipole.o\
     write_wfc_r.o\
 
 OBJS_IO_LCAO=cal_r_overlap_R.o\
