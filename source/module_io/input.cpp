@@ -403,7 +403,7 @@ void Input::Default(void)
     td_val_elec_02 = 1;
     td_val_elec_03 = 1;
     td_vext = false;
-    td_vext_dire = 1;
+    td_vext_dire = "1";
 
     out_dipole = false;
     out_efield = false;
