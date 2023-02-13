@@ -40,25 +40,11 @@ void H_TDDFT_pw::cal_fixed_v(double* vl_pseudo)
     {
         std::vector<double> vext_space(this->rho_basis_->nrxx, 0.0);
         double vext_time = cal_v_time(ttype[count]); 
-        std::string direc_name;
-
-        switch (direc)
-        {
-            case 1:
-                direc_name = "x";
-                break;
-            case 2:
-                direc_name = "y";
-                break;
-            case 3:
-                direc_name = "z";
-                break;
-        }
 
         if (td_out_efield && GlobalV::MY_RANK == 0)
         {
             std::stringstream as;
-            as << GlobalV::global_out_dir << "efield_"+direc_name+".dat";
+            as << GlobalV::global_out_dir << "efield_"<<count<<".dat";
             std::ofstream ofs(as.str().c_str(), std::ofstream::app);
             ofs << H_TDDFT_pw::istep*dt*ModuleBase::AU_to_FS << "\t" << vext_time <<endl;
             ofs.close();
