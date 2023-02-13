@@ -4,6 +4,7 @@
 #include "module_base/constants.h"
 #include "module_base/timer.h"
 #include "module_hamilt_lcao/module_tddft/ELEC_evolve.h"
+#include "module_io/input_conv.h"
 
 namespace elecstate
 {
