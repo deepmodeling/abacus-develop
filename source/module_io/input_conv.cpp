@@ -1,34 +1,34 @@
 #include "module_io/input_conv.h"
-#include "module_io/input.h"
+
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
-#include "module_cell/unitcell.h"
-#include "module_hamilt_general/module_surchem/surchem.h"
 #include "module_cell/module_symmetry/symmetry.h"
-#include "module_io/berryphase.h"
-#include "module_relax/relax_old/ions_move_basic.h"
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "module_cell/unitcell.h"
 #include "module_elecstate/occupy.h"
+#include "module_hamilt_general/module_surchem/surchem.h"
+#include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "module_io/berryphase.h"
+#include "module_io/input.h"
+#include "module_relax/relax_old/ions_move_basic.h"
 #ifdef __EXX
 #include "src_ri/exx_abfs-jle.h"
 #endif
 #ifdef __LCAO
-#include "module_orbital/ORB_read.h"
-#include "module_hamilt_lcao/module_tddft/ELEC_evolve.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/FORCE_STRESS.h"
-#include "module_hamilt_lcao/module_dftu/dftu.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/global_fp.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/local_orbital_charge.h"
+#include "module_hamilt_lcao/module_dftu/dftu.h"
+#include "module_hamilt_lcao/module_tddft/ELEC_evolve.h"
+#include "module_orbital/ORB_read.h"
 #endif
 #include "module_base/timer.h"
 #include "module_elecstate/elecstate_lcao.h"
-#include "module_hsolver/hsolver_lcao.h"
 #include "module_elecstate/potentials/efield.h"
 #include "module_elecstate/potentials/gatefield.h"
+#include "module_hsolver/hsolver_lcao.h"
 #include "module_psi/kernels/device.h"
 
-template <typename T>
-void Input_Conv::parse_expression(const std::string &fn, std::vector<T> &vec)
+template <typename T> void Input_Conv::parse_expression(const std::string &fn, std::vector<T> &vec)
 {
     ModuleBase::TITLE("Input_Conv", "parse_expression");
     ModuleBase::timer::tick("Input_Conv", "parse_expression");
@@ -78,7 +78,7 @@ void Input_Conv::parse_expression(const std::string &fn, std::vector<T> &vec)
             // std::vector<double> ocp_temp(num, occ);
             // const std::vector<double>::iterator dest = vec.begin() + count;
             // copy(ocp_temp.begin(), ocp_temp.end(), dest);
-            // count += num;
+            //count += num;
             for (size_t i = 0; i != num; i++)
                 vec.emplace_back(occ);
         }
@@ -115,27 +115,27 @@ void Input_Conv::Convert(void)
     // GlobalV::global_pseudo_type = INPUT.pseudo_type;
     GlobalC::ucell.setup(INPUT.latname, INPUT.ntype, INPUT.lmaxmax, INPUT.init_vel, INPUT.fixed_axes);
 
-    if(INPUT.calculation=="relax" || INPUT.calculation=="cell-relax")
+    if (INPUT.calculation == "relax" || INPUT.calculation == "cell-relax")
     {
-        if(INPUT.fixed_ibrav && !INPUT.relax_new)
+        if (INPUT.fixed_ibrav && !INPUT.relax_new)
         {
-            ModuleBase::WARNING_QUIT("Input_Conv","fixed_ibrav only available for relax_new = 1");
+            ModuleBase::WARNING_QUIT("Input_Conv", "fixed_ibrav only available for relax_new = 1");
         }
-        if(INPUT.latname=="none" && INPUT.fixed_ibrav)
+        if (INPUT.latname == "none" && INPUT.fixed_ibrav)
         {
-            ModuleBase::WARNING_QUIT("Input_Conv","to use fixed_ibrav, latname must be provided");
+            ModuleBase::WARNING_QUIT("Input_Conv", "to use fixed_ibrav, latname must be provided");
         }
-        if(INPUT.calculation == "relax" && INPUT.fixed_atoms)
+        if (INPUT.calculation == "relax" && INPUT.fixed_atoms)
         {
-            ModuleBase::WARNING_QUIT("Input_Conv","fixed_atoms is not meant to be used for calculation = relax");
+            ModuleBase::WARNING_QUIT("Input_Conv", "fixed_atoms is not meant to be used for calculation = relax");
         }
-        if(INPUT.relax_new && INPUT.relax_method!="cg")
+        if (INPUT.relax_new && INPUT.relax_method != "cg")
         {
             INPUT.relax_new = false;
         }
-        if(!INPUT.relax_new && (INPUT.fixed_axes == "shape" || INPUT.fixed_axes == "volume"))
+        if (!INPUT.relax_new && (INPUT.fixed_axes == "shape" || INPUT.fixed_axes == "volume"))
         {
-            ModuleBase::WARNING_QUIT("Input_Conv","fixed shape and fixed volume only supported for relax_new = 1");
+            ModuleBase::WARNING_QUIT("Input_Conv", "fixed shape and fixed volume only supported for relax_new = 1");
         }
         GlobalV::fixed_atoms = INPUT.fixed_atoms;
     }
@@ -145,16 +145,14 @@ void Input_Conv::Convert(void)
     GlobalV::NBANDS = INPUT.nbands;
     GlobalC::wf.pw_seed = INPUT.pw_seed;
     GlobalV::NBANDS_ISTATE = INPUT.nbands_istate;
-    GlobalV::device_flag = 
-        psi::device::get_device_flag(
-            INPUT.device,
-            INPUT.ks_solver, 
-            INPUT.basis_type);
+    GlobalV::device_flag = psi::device::get_device_flag(INPUT.device, INPUT.ks_solver, INPUT.basis_type);
 
-    if (GlobalV::device_flag == "gpu") {
+    if (GlobalV::device_flag == "gpu")
+    {
         GlobalV::KPAR = psi::device::get_device_kpar(INPUT.kpar);
     }
-    else {
+    else
+    {
         GlobalV::KPAR = INPUT.kpar;
         GlobalV::NSTOGROUP = INPUT.bndpar;
     }
@@ -182,10 +180,10 @@ void Input_Conv::Convert(void)
     Force_Stress_LCAO::force_invalid_threshold_ev = INPUT.force_thr_ev2;
 #endif
 
-    if((INPUT.calculation=="relax" || INPUT.calculation=="cell-relax") && INPUT.chg_extrap!="atomic")
+    if ((INPUT.calculation == "relax" || INPUT.calculation == "cell-relax") && INPUT.chg_extrap != "atomic")
     {
         std::cout << " For relaxation, charge extrapolation is set to atomic." << std::endl;
-        INPUT.chg_extrap="atomic";
+        INPUT.chg_extrap = "atomic";
     }
 
     BFGS_Basic::relax_bfgs_w1 = INPUT.relax_bfgs_w1;
@@ -299,9 +297,9 @@ void Input_Conv::Convert(void)
         GlobalV::LSPINORB = INPUT.lspinorb;
         GlobalV::soc_lambda = INPUT.soc_lambda;
 
-        if(INPUT.cal_force || INPUT.cal_stress)
+        if (INPUT.cal_force || INPUT.cal_stress)
         {
-            ModuleBase::WARNING_QUIT("input_conv","force & stress not ready for soc yet!");
+            ModuleBase::WARNING_QUIT("input_conv", "force & stress not ready for soc yet!");
         }
     }
     else
@@ -328,7 +326,7 @@ void Input_Conv::Convert(void)
     //----------------------------------------------------------
     GlobalV::GATE_FLAG = INPUT.gate_flag;
     GlobalV::nelec = INPUT.nelec;
-    if(std::abs(INPUT.nupdown) > 1e-6)
+    if (std::abs(INPUT.nupdown) > 1e-6)
     {
         GlobalV::TWO_EFERMI = true;
         GlobalV::nupdown = INPUT.nupdown;
@@ -403,9 +401,9 @@ void Input_Conv::Convert(void)
         }
     }
 
-    if(GlobalV::CALCULATION=="cell-relax" && INPUT.cell_factor < 2.0)
+    if (GlobalV::CALCULATION == "cell-relax" && INPUT.cell_factor < 2.0)
     {
-        INPUT.cell_factor = 2.0; //follows QE
+        INPUT.cell_factor = 2.0; // follows QE
     }
 
 //----------------------------------------------------------
@@ -414,9 +412,7 @@ void Input_Conv::Convert(void)
 #ifdef __EXX
 #ifdef __LCAO
 
-    if (INPUT.dft_functional == "hf" ||
-	    INPUT.dft_functional == "pbe0" ||
-		INPUT.dft_functional == "scan0" )
+    if (INPUT.dft_functional == "hf" || INPUT.dft_functional == "pbe0" || INPUT.dft_functional == "scan0")
     {
         GlobalC::exx_info.info_global.cal_exx = true;
         GlobalC::exx_info.info_global.ccp_type = Conv_Coulomb_Pot_K::Ccp_Type::Hf;
@@ -431,7 +427,7 @@ void Input_Conv::Convert(void)
         GlobalC::exx_info.info_global.cal_exx = false;
         Exx_Abfs::Jle::generate_matrix = true;
     }
-    else if(INPUT.rpa)
+    else if (INPUT.rpa)
     {
         GlobalC::exx_info.info_global.ccp_type = Conv_Coulomb_Pot_K::Ccp_Type::Hf;
     }
@@ -442,8 +438,8 @@ void Input_Conv::Convert(void)
 
     if (GlobalC::exx_info.info_global.cal_exx || Exx_Abfs::Jle::generate_matrix || INPUT.rpa)
     {
-        //EXX case, convert all EXX related variables 
-        //GlobalC::exx_info.info_global.cal_exx = true;
+        // EXX case, convert all EXX related variables
+        // GlobalC::exx_info.info_global.cal_exx = true;
         GlobalC::exx_info.info_global.hybrid_alpha = std::stod(INPUT.exx_hybrid_alpha);
         XC_Functional::get_hybrid_alpha(std::stod(INPUT.exx_hybrid_alpha));
         GlobalC::exx_info.info_global.hse_omega = INPUT.exx_hse_omega;
@@ -467,7 +463,7 @@ void Input_Conv::Convert(void)
         Exx_Abfs::Jle::Ecut_exx = INPUT.exx_opt_orb_ecut;
         Exx_Abfs::Jle::tolerence = INPUT.exx_opt_orb_tolerence;
 
-        //EXX does not support any symmetry analyse, force symmetry setting to -1
+        // EXX does not support any symmetry analyse, force symmetry setting to -1
         if (INPUT.calculation != "nscf")
             ModuleSymmetry::Symmetry::symm_flag = -1;
     }
@@ -489,10 +485,10 @@ void Input_Conv::Convert(void)
     // charge mixing(3/3)
     //----------------------------------------------------------
     GlobalC::CHR_MIX.set_mixing(INPUT.mixing_mode,
-                            INPUT.mixing_beta,
-                            INPUT.mixing_ndim,
-                            INPUT.mixing_gg0,
-                            INPUT.mixing_tau); // mohan modify 2014-09-27, add mixing_gg0
+                                INPUT.mixing_beta,
+                                INPUT.mixing_ndim,
+                                INPUT.mixing_gg0,
+                                INPUT.mixing_tau); // mohan modify 2014-09-27, add mixing_gg0
 
     //----------------------------------------------------------
     // iteration
@@ -517,7 +513,7 @@ void Input_Conv::Convert(void)
     GlobalC::en.out_band = INPUT.out_band;
     GlobalC::en.out_proj_band = INPUT.out_proj_band;
 
-    GlobalV::out_bandgap = INPUT.out_bandgap; //QO added for bandgap printing
+    GlobalV::out_bandgap = INPUT.out_bandgap; // QO added for bandgap printing
 #ifdef __LCAO
     Local_Orbital_Charge::out_dm = INPUT.out_dm;
     Local_Orbital_Charge::out_dm1 = INPUT.out_dm1;
@@ -531,7 +527,7 @@ void Input_Conv::Convert(void)
     {
         elecstate::ElecStateLCAO::need_psi_grid = false;
     }
-    if(INPUT.calculation == "test_neighbour" && GlobalV::NPROC>1)
+    if (INPUT.calculation == "test_neighbour" && GlobalV::NPROC > 1)
     {
         ModuleBase::WARNING_QUIT("Input_conv", "test_neighbour must be done with 1 processor");
     }
@@ -577,9 +573,9 @@ void Input_Conv::Convert(void)
     if (GlobalV::deepks_scf || GlobalV::deepks_out_labels)
         GlobalV::deepks_setorb = 1;
 #else
-    if(INPUT.deepks_scf || INPUT.deepks_out_labels || INPUT.deepks_bandgap)
+    if (INPUT.deepks_scf || INPUT.deepks_out_labels || INPUT.deepks_bandgap)
     {
-        ModuleBase::WARNING_QUIT("Input_conv","please compile with DeePKS");
+        ModuleBase::WARNING_QUIT("Input_conv", "please compile with DeePKS");
     }
 #endif
     //-----------------------------------------------

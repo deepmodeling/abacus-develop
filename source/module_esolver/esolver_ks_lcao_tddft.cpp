@@ -3,17 +3,18 @@
 #include "module_io/cal_r_overlap_R.h"
 #include "module_io/dm_io.h"
 #include "module_io/rho_io.h"
+#include "module_io/dipole_io.h"
 #include "module_io/write_HS_R.h"
 
 //--------------temporary----------------------------
 #include "module_base/blas_connector.h"
 #include "module_base/global_function.h"
 #include "module_base/scalapack_connector.h"
-#include "module_io/print_info.h"
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
-#include "module_hamilt_lcao/module_tddft/ELEC_evolve.h"
-#include "module_elecstate/occupy.h"
 #include "module_elecstate/module_charge/symmetry_rho.h"
+#include "module_elecstate/occupy.h"
+#include "module_hamilt_lcao/module_tddft/ELEC_evolve.h"
+#include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "module_io/print_info.h"
 
 //-----HSolver ElecState Hamilt--------
 #include "module_elecstate/elecstate_lcao.h"
@@ -353,6 +354,13 @@ void ESolver_KS_LCAO_TDDFT::afterscf(const int istep)
         std::stringstream ssc;
         ssc << GlobalV::global_out_dir << "SPIN" << is + 1 << "_CHG";
         ModuleIO::write_rho(pelec->charge->rho_save[is], is, 0, ssc.str()); // mohan add 2007-10-17
+
+        if (ELEC_evolve::out_dipole == 1)
+        {
+            std::stringstream ss_dipole;
+            ss_dipole << GlobalV::global_out_dir << "SPIN" << is + 1 << "_DIPOLE";
+            ModuleIO::write_dipole(pelec->charge->rho_save[is], is, istep, ss_dipole.str());
+        }
 
         std::stringstream ssd;
         if (GlobalV::GAMMA_ONLY_LOCAL)
