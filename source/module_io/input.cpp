@@ -411,7 +411,7 @@ void Input::Default(void)
 
     td_stype = 0; // 0 : length gauge  1: velocity gauge
 
-    td_ttype = 0;
+    td_ttype = '0';
     //  0  Gauss type function.
     //  1  trapezoid type function.
     //  2  Trigonometric function, sin^2.
