@@ -360,7 +360,7 @@ OBJS_IO_LCAO=cal_r_overlap_R.o\
       write_dos_lcao.o\
       write_proj_band_lcao.o\
       write_istate_info.o\
-      nscf_fermi_surf.o
+      nscf_fermi_surf.o\
       istate_charge.o\
       istate_envelope.o\
       mulliken_charge.o\
