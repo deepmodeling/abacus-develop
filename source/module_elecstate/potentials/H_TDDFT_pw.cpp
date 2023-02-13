@@ -41,7 +41,7 @@ void H_TDDFT_pw::cal_fixed_v(double* vl_pseudo)
         std::vector<double> vext_space(this->rho_basis_->nrxx, 0.0);
         double vext_time = cal_v_time(ttype[count]); 
 
-        if (td_out_efield && GlobalV::MY_RANK == 0)
+        if (ELEC_evolve::out_efield && GlobalV::MY_RANK == 0)
         {
             std::stringstream as;
             as << GlobalV::global_out_dir << "efield_"<<count<<".dat";

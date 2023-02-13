@@ -49,7 +49,6 @@ class H_TDDFT_pw : public PotBase
     double lcut2;
 
     // time domain parameters
-    bool td_out_efield = false;
 
     // Gauss
     int gauss_count;

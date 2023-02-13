@@ -354,6 +354,7 @@ void Input_Conv::Convert(void)
         parse_expression(INPUT.td_vext_dire, ELEC_evolve::td_vext_dire_case);
     }
     ELEC_evolve::out_dipole = INPUT.out_dipole;
+    ELEC_evolve::out_efield = INPUT.out_efield ;
     ELEC_evolve::td_print_eij = INPUT.td_print_eij;
     ELEC_evolve::td_edm = INPUT.td_edm;
 #endif
