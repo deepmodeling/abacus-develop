@@ -299,7 +299,6 @@ void ESolver_KS_LCAO::postprocess()
             this->psi,
             this->UHM,
             this->pelec,
-            GlobalC::en.out_dos,
             GlobalC::en.dos_edelta_ev,
             GlobalC::en.bcoeff,
             GlobalC::en.dos_scale,

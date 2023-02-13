@@ -11,7 +11,6 @@ namespace ModuleIO
 		const psi::Psi<std::complex<double>> *psi,
 		LCAO_Hamilt &uhm,
 		const elecstate::ElecState* pelec,
-		const int &out_dos,
 		const double &dos_edelta_ev,
 		const double &bcoeff,
 		const double &dos_scale,
