@@ -21,12 +21,6 @@ namespace ModuleIO
 		const ModuleBase::matrix &wg,//weight of (kpoint,bands)
 		const int &nbands,// number of bands
 		const ModuleBase::matrix &ekb);//store energy for each k point and each band
-
-
-	void nscf_fermi_surface(const std::string &out_band_dir,
-		const int &nks,
-		const int &nband,
-		const ModuleBase::matrix &ekb);
 }
 
 #endif 

@@ -28,8 +28,10 @@ if(ENABLE_LCAO)
   list(APPEND objects
       cal_r_overlap_R.cpp
       write_dos_lcao.cpp
-      write_istate_info.cpp
       write_orb_info.cpp
+      write_proj_band_lcao.cpp
+      nscf_fermi_surf.cpp
+      write_istate_info.cpp
       istate_charge.cpp
       istate_envelope.cpp
       mulliken_charge.cpp

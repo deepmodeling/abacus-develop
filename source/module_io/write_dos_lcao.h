@@ -12,7 +12,6 @@ namespace ModuleIO
 		LCAO_Hamilt &uhm,
 		const elecstate::ElecState* pelec,
 		const int &out_dos,
-		const int &out_proj_band, 
 		const double &dos_edelta_ev,
 		const double &bcoeff,
 		const double &dos_scale,

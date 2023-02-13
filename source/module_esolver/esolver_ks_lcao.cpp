@@ -8,6 +8,8 @@
 #include "module_io/write_istate_info.h"
 #include "module_io/mulliken_charge.h"
 #include "module_io/nscf_band.h"
+#include "module_io/write_proj_band_lcao.h"
+#include "module_io/nscf_fermi_surf.h"
 
 //--------------temporary----------------------------
 #include "module_base/global_function.h"
@@ -228,7 +230,6 @@ void ESolver_KS_LCAO::cal_Stress(ModuleBase::matrix& stress)
 
 void ESolver_KS_LCAO::postprocess()
 {
-
     GlobalV::ofs_running << "\n\n --------------------------------------------" << std::endl;
     GlobalV::ofs_running << std::setprecision(16);
     GlobalV::ofs_running << " !FINAL_ETOT_IS " << GlobalC::en.etot * ModuleBase::Ry_to_eV << " eV" << std::endl;
@@ -287,18 +288,42 @@ void ESolver_KS_LCAO::postprocess()
         }
     } // out_band
 
-    ModuleIO::write_dos_lcao(this->psid, 
-        this->psi, 
-        this->UHM, 
-        this->pelec,
-        GlobalC::en.out_dos,
-        GlobalC::en.out_proj_band,
-        GlobalC::en.dos_edelta_ev,
-        GlobalC::en.bcoeff,
-        GlobalC::en.dos_scale,
-        GlobalC::en.ef,
-        GlobalC::en.ef_up,
-        GlobalC::en.ef_dw);
+    if (GlobalC::en.out_proj_band) // Projeced band structure added by jiyy-2022-4-20
+    {
+        ModuleIO::write_proj_band_lcao(this->psid,this->psi,this->UHM,this->pelec,&(GlobalC::kv),GlobalC::ucell,GlobalC::ORB,GlobalC::GridD);
+    }
+
+    if (GlobalC::en.out_dos)
+    {
+        ModuleIO::write_dos_lcao(this->psid,
+            this->psi,
+            this->UHM,
+            this->pelec,
+            GlobalC::en.out_dos,
+            GlobalC::en.dos_edelta_ev,
+            GlobalC::en.bcoeff,
+            GlobalC::en.dos_scale,
+            GlobalC::en.ef,
+            GlobalC::en.ef_up,
+            GlobalC::en.ef_dw);
+
+        if (GlobalC::en.out_dos == 3)
+        {
+            for (int i = 0; i < nspin0; i++)
+            {
+                std::stringstream ss3;
+                ss3 << GlobalV::global_out_dir << "Fermi_Surface_" << i << ".bxsf";
+                ModuleIO::nscf_fermi_surface(ss3.str(),
+                    GlobalC::kv.nks,
+                    GlobalV::NBANDS,
+                    GlobalC::en.ef,
+                    &(GlobalC::kv),
+                    &(GlobalC::Pkpoints),
+                    &(GlobalC::ucell),
+                    this->pelec->ekb);
+            }
+        }
+    }
 }
 
 void ESolver_KS_LCAO::Init_Basis_lcao(ORB_control& orb_con, Input& inp, UnitCell& ucell)
