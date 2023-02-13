@@ -296,15 +296,6 @@ td_trigo_amp                   2.74 # V/A
 #parameters of Heaviside electric field
 td_heavi_t0                    100
 td_heavi_amp                   1.0 # V/A 
-#parameters of HHG electric field
-td_hhg_amp1                    2.74 # V/A
-td_hhg_amp2                    2.74 # V/A
-td_hhg_freq1                   1.164656 # fs^-1
-td_hhg_freq2                   0.029116 # fs^-1
-td_hhg_phase1                  0.0
-td_hhg_phase2                  0.0
-td_hhg_t0                      700
-td_hhg_sigma                   30 # fs
 td_print_eij                 -1.0 # threshold to output Eij elements
 td_edm                         0 # 0: new edm method   1: old edm method
 out_dipole                   0 #output dipole or not
