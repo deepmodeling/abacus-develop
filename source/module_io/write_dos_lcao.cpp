@@ -12,7 +12,6 @@
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_matrix.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/global_fp.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/local_orbital_charge.h"
-#include "mulliken_charge.h"
 #endif
 #include "module_base/blas_connector.h"
 #include "module_base/complexmatrix.h"
@@ -44,14 +43,7 @@ void ModuleIO::write_dos_lcao(const psi::Psi<double>* psid,
 
     const Parallel_Orbitals* pv = uhm.LM->ParaV;
 
-    // GlobalV::mulliken charge analysis
-#ifdef __LCAO
-    if (GlobalV::out_mul == 1)
-    {
-        Mulliken_Charge MC(psid, psi);
-        MC.stdout_mulliken(uhm, pelec->wg);
-    } // qifeng add 2019/9/10
-#endif
+
 
     int nspin0 = 1;
     if (GlobalV::NSPIN == 2)

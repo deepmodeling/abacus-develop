@@ -6,6 +6,7 @@
 #include "module_io/write_HS_R.h"
 #include "module_io/write_dos_lcao.h"
 #include "module_io/write_istate_info.h"
+#include "module_io/mulliken_charge.h"
 
 //--------------temporary----------------------------
 #include "module_base/global_function.h"
@@ -246,11 +247,20 @@ void ESolver_KS_LCAO::postprocess()
         GlobalV::ofs_running << " <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" << std::endl;
         GlobalV::ofs_running << "\n\n\n\n";
     }
-        // qianrui modify 2020-10-18
+    // qianrui modify 2020-10-18
     if (GlobalV::CALCULATION == "scf" || GlobalV::CALCULATION == "md" || GlobalV::CALCULATION == "relax")
     {
         ModuleIO::write_istate_info(this->pelec,&(GlobalC::kv),&(GlobalC::Pkpoints));
     }
+
+    // GlobalV::mulliken charge analysis
+#ifdef __LCAO
+    if (GlobalV::out_mul == 1)
+    {
+        Mulliken_Charge MC(psid, psi);
+        MC.stdout_mulliken(this->UHM, this->pelec->wg);
+    } // qifeng add 2019/9/10
+#endif
 
     ModuleIO::write_dos_lcao(this->psid, 
         this->psi, 
