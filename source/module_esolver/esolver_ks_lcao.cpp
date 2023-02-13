@@ -5,6 +5,7 @@
 #include "module_io/rho_io.h"
 #include "module_io/write_HS_R.h"
 #include "module_io/write_dos_lcao.h"
+#include "module_io/write_istate_info.h"
 
 //--------------temporary----------------------------
 #include "module_base/global_function.h"
@@ -230,6 +231,26 @@ void ESolver_KS_LCAO::postprocess()
     GlobalV::ofs_running << std::setprecision(16);
     GlobalV::ofs_running << " !FINAL_ETOT_IS " << GlobalC::en.etot * ModuleBase::Ry_to_eV << " eV" << std::endl;
     GlobalV::ofs_running << " --------------------------------------------\n\n" << std::endl;
+
+    if (GlobalC::en.out_dos != 0 || GlobalC::en.out_band != 0 || GlobalC::en.out_proj_band != 0)
+    {
+        GlobalV::ofs_running << "\n\n\n\n";
+        GlobalV::ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
+        GlobalV::ofs_running << " |                                                                    |" << std::endl;
+        GlobalV::ofs_running << " | Post-processing of data:                                           |" << std::endl;
+        GlobalV::ofs_running << " | DOS (density of states) and bands will be output here.             |" << std::endl;
+        GlobalV::ofs_running << " | If atomic orbitals are used, Mulliken charge analysis can be done. |" << std::endl;
+        GlobalV::ofs_running << " | Also the .bxsf file containing fermi surface information can be    |" << std::endl;
+        GlobalV::ofs_running << " | done here.                                                         |" << std::endl;
+        GlobalV::ofs_running << " |                                                                    |" << std::endl;
+        GlobalV::ofs_running << " <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" << std::endl;
+        GlobalV::ofs_running << "\n\n\n\n";
+    }
+        // qianrui modify 2020-10-18
+    if (GlobalV::CALCULATION == "scf" || GlobalV::CALCULATION == "md" || GlobalV::CALCULATION == "relax")
+    {
+        ModuleIO::write_istate_info(this->pelec,&(GlobalC::kv),&(GlobalC::Pkpoints));
+    }
 
     ModuleIO::write_dos_lcao(this->psid, 
         this->psi, 
