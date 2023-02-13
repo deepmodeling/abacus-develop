@@ -7,7 +7,6 @@ list(APPEND objects
     dos.cpp
     write_dos_pw.cpp
     nscf_band.cpp
-    write_occ.cpp
     numerical_basis.cpp
     numerical_descriptor.cpp
     output.cpp

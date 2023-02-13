@@ -1,8 +1,8 @@
 #include "esolver_ks_pw.h"
 #include <iostream>
 #include "module_io/write_wfc_pw.h"
-#include "module_io/write_occ.h"
 #include "module_io/write_dos_pw.h"
+#include "module_io/write_istate_info.h"
 
 //--------------temporary----------------------------
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
@@ -576,8 +576,7 @@ namespace ModuleESolver
         GlobalV::ofs_running << " --------------------------------------------\n\n" << std::endl;
         
         //print occupation in istate.info
-
-	    ModuleIO::print_occ(this->pelec);
+        ModuleIO::write_istate_info(this->pelec,&(GlobalC::kv),&(GlobalC::Pkpoints));
         // compute density of states
         ModuleIO::write_dos_pw(this->pelec,
             GlobalC::en.out_dos,
