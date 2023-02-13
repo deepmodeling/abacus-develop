@@ -1,8 +1,8 @@
 #ifndef DOS_H
 #define DOS_H
-#include "../module_base/global_function.h"
-#include "../module_base/global_variable.h"
-#include "../module_base/matrix.h"
+#include "module_base/global_function.h"
+#include "module_base/global_variable.h"
+#include "module_base/matrix.h"
 #include "module_gint/gint_gamma.h"
 
 namespace ModuleIO
@@ -22,19 +22,11 @@ namespace ModuleIO
 		const int &nbands,// number of bands
 		const ModuleBase::matrix &ekb);//store energy for each k point and each band
 
-	void nscf_band(
-		const int &is,
-		const std::string &out_band_dir, 
-		const int &nks, 
-		const int &nband, 
-		const double &fermie,
-		const ModuleBase::matrix &ekb);
 
 	void nscf_fermi_surface(const std::string &out_band_dir,
 		const int &nks,
 		const int &nband,
 		const ModuleBase::matrix &ekb);
-	
 }
 
 #endif 

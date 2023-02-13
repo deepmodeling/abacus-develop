@@ -1,4 +1,5 @@
 #include "dos.h"
+#include "nscf_band.h"
 #include "write_dos_pw.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_elecstate/energy.h"
@@ -113,7 +114,7 @@ void ModuleIO::write_dos_pw(const elecstate::ElecState* pelec,
 			std::stringstream ss2;
 			ss2 << GlobalV::global_out_dir << "BANDS_" << is+1 << ".dat";
 			GlobalV::ofs_running << "\n Output bands in file: " << ss2.str() << std::endl;
-			ModuleIO::nscf_band(is, ss2.str(), nks, GlobalV::NBANDS, ef*0, pelec->ekb);
+			ModuleIO::nscf_band(is, ss2.str(), nks, GlobalV::NBANDS, ef*0, pelec->ekb,&(GlobalC::kv),&(GlobalC::Pkpoints));
 		}
 
 	}

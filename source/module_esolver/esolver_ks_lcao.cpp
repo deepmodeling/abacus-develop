@@ -7,6 +7,7 @@
 #include "module_io/write_dos_lcao.h"
 #include "module_io/write_istate_info.h"
 #include "module_io/mulliken_charge.h"
+#include "module_io/nscf_band.h"
 
 //--------------temporary----------------------------
 #include "module_base/global_function.h"
@@ -262,12 +263,35 @@ void ESolver_KS_LCAO::postprocess()
     } // qifeng add 2019/9/10
 #endif
 
+    int nspin0 = 1;
+    if (GlobalV::NSPIN == 2) nspin0 = 2;
+
+    if (GlobalC::en.out_band) // pengfei 2014-10-13
+    {
+        int nks = 0;
+        if (nspin0 == 1)
+        {
+            nks = GlobalC::kv.nkstot;
+        }
+        else if (nspin0 == 2)
+        {
+            nks = GlobalC::kv.nkstot / 2;
+        }
+
+        for (int is = 0; is < nspin0; is++)
+        {
+            std::stringstream ss2;
+            ss2 << GlobalV::global_out_dir << "BANDS_" << is + 1 << ".dat";
+            GlobalV::ofs_running << "\n Output bands in file: " << ss2.str() << std::endl;
+            ModuleIO::nscf_band(is, ss2.str(), nks, GlobalV::NBANDS, GlobalC::en.ef*0, this->pelec->ekb,&(GlobalC::kv),&(GlobalC::Pkpoints));
+        }
+    } // out_band
+
     ModuleIO::write_dos_lcao(this->psid, 
         this->psi, 
         this->UHM, 
         this->pelec,
         GlobalC::en.out_dos,
-        GlobalC::en.out_band,
         GlobalC::en.out_proj_band,
         GlobalC::en.dos_edelta_ev,
         GlobalC::en.bcoeff,

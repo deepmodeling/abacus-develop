@@ -30,7 +30,6 @@ void ModuleIO::write_dos_lcao(const psi::Psi<double>* psid,
         LCAO_Hamilt& uhm,
         const elecstate::ElecState* pelec,
         const int &out_dos, 
-		const int &out_band,
 		const int &out_proj_band, 
 		const double &dos_edelta_ev,
 		const double &bcoeff,
@@ -42,8 +41,6 @@ void ModuleIO::write_dos_lcao(const psi::Psi<double>* psid,
     ModuleBase::TITLE("ModuleIO", "write_dos_lcao");
 
     const Parallel_Orbitals* pv = uhm.LM->ParaV;
-
-
 
     int nspin0 = 1;
     if (GlobalV::NSPIN == 2)
@@ -470,26 +467,7 @@ void ModuleIO::write_dos_lcao(const psi::Psi<double>* psid,
             }
         }
     }
-    if (out_band) // pengfei 2014-10-13
-    {
-        int nks = 0;
-        if (nspin0 == 1)
-        {
-            nks = GlobalC::kv.nkstot;
-        }
-        else if (nspin0 == 2)
-        {
-            nks = GlobalC::kv.nkstot / 2;
-        }
 
-        for (int is = 0; is < nspin0; is++)
-        {
-            std::stringstream ss2;
-            ss2 << GlobalV::global_out_dir << "BANDS_" << is + 1 << ".dat";
-            GlobalV::ofs_running << "\n Output bands in file: " << ss2.str() << std::endl;
-            ModuleIO::nscf_band(is, ss2.str(), nks, GlobalV::NBANDS, ef * 0, pelec->ekb);
-        }
-    } // out_band
 
     if (out_proj_band) // Projeced band structure added by jiyy-2022-4-20
     {
