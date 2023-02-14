@@ -1,4 +1,5 @@
 #include "nscf_band.h"
+#include "module_base/global_function.h"
 #include "module_base/global_variable.h"
 
 void ModuleIO::nscf_band(
@@ -12,6 +13,7 @@ void ModuleIO::nscf_band(
 	const Parallel_Kpoints* Pkpoints)
 {
 	ModuleBase::TITLE("ModuleIO","nscf_band");
+	ModuleBase::timer::tick("ModuleIO", "nscf_band");
 
 #ifdef __MPI
 	if(GlobalV::MY_RANK==0)
@@ -95,5 +97,6 @@ void ModuleIO::nscf_band(
 	}
 	ofs.close();
 #endif
+	ModuleBase::timer::tick("ModuleIO", "nscf_band");
 	return;
 }

@@ -1,4 +1,6 @@
 #include "nscf_fermi_surf.h"
+#include "module_base/global_function.h"
+#include "module_base/global_variable.h"
 
 void ModuleIO::nscf_fermi_surface(const std::string &out_band_dir,
 	const int &nks,
@@ -9,6 +11,8 @@ void ModuleIO::nscf_fermi_surface(const std::string &out_band_dir,
 	const UnitCell* ucell,
 	const ModuleBase::matrix &ekb)
 {
+	ModuleBase::TITLE("ModuleIO","nscf_fermi_surface");
+	ModuleBase::timer::tick("ModuleIO", "nscf_fermi_surface");
 #ifdef __MPI
 
 	int start = 1;
@@ -80,5 +84,6 @@ void ModuleIO::nscf_fermi_surface(const std::string &out_band_dir,
 
 
 #endif
-
+	ModuleBase::timer::tick("ModuleIO", "nscf_fermi_surface");
+	return;
 }

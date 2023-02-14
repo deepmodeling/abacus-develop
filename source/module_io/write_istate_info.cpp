@@ -1,8 +1,12 @@
 #include "write_istate_info.h"
+#include "module_base/global_function.h"
 #include "module_base/global_variable.h"
 
 void ModuleIO::write_istate_info(const elecstate::ElecState* pelec, const K_Vectors* kv,const Parallel_Kpoints* Pkpoints)
 {
+	ModuleBase::TITLE("ModuleIO","write_istate_info");
+	ModuleBase::timer::tick("ModuleIO", "write_istate_info");
+
 	std::stringstream ss;
         ss << GlobalV::global_out_dir << "istate.info";
         if (GlobalV::MY_RANK == 0)
@@ -63,4 +67,6 @@ void ModuleIO::write_istate_info(const elecstate::ElecState* pelec, const K_Vect
                 ofsi2.close();
             }
         }
+	ModuleBase::timer::tick("ModuleIO", "write_istate_info");
+	return;
 }
