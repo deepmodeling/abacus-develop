@@ -298,7 +298,8 @@ void ESolver_KS_LCAO::postprocess()
         ModuleIO::write_dos_lcao(this->psid,
             this->psi,
             this->UHM,
-            this->pelec,
+            this->pelec->ekb,
+            this->pelec->wg,
             GlobalC::en.dos_edelta_ev,
             GlobalC::en.bcoeff,
             GlobalC::en.dos_scale);

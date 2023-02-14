@@ -1,6 +1,5 @@
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
-#include "module_elecstate/energy.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_hamilt_pw/hamilt_pwdft/wavefunc.h"
 #include "dos.h"
@@ -28,7 +27,8 @@
 void ModuleIO::write_dos_lcao(const psi::Psi<double>* psid,
         const psi::Psi<std::complex<double>>* psi,
         LCAO_Hamilt& uhm,
-        const elecstate::ElecState* pelec,
+        const ModuleBase::matrix &ekb,
+		const ModuleBase::matrix &wg,
 		const double &dos_edelta_ev,
 		const double &bcoeff,
 		const double &dos_scale)
@@ -42,14 +42,14 @@ void ModuleIO::write_dos_lcao(const psi::Psi<double>* psid,
         nspin0 = 2;
 
     // find the maximal and minimal band energy.
-    double emax = pelec->ekb(0, 0);
-    double emin = pelec->ekb(0, 0);
+    double emax = ekb(0, 0);
+    double emin = ekb(0, 0);
     for (int ik = 0; ik < GlobalC::kv.nks; ++ik)
     {
         for (int ib = 0; ib < GlobalV::NBANDS; ++ib)
         {
-            emax = std::max(emax, pelec->ekb(ik, ib));
-            emin = std::min(emin, pelec->ekb(ik, ib));
+            emax = std::max(emax, ekb(ik, ib));
+            emin = std::min(emin, ekb(ik, ib));
         }
     }
 
@@ -123,7 +123,7 @@ void ModuleIO::write_dos_lcao(const psi::Psi<double>* psid,
                 for (int n = 0; n < npoints; ++n)
                 {
                     double en = emin + n * de_ev;
-                    double en0 = pelec->ekb(0, i) * ModuleBase::Ry_to_eV;
+                    double en0 = ekb(0, i) * ModuleBase::Ry_to_eV;
                     double de = en - en0;
                     double de2 = 0.5 * de * de;
                     Gauss[n] = GlobalC::kv.wk[0] * exp(-de2 / a / a) / b;
@@ -221,7 +221,7 @@ void ModuleIO::write_dos_lcao(const psi::Psi<double>* psid,
                         for (int n = 0; n < npoints; ++n)
                         {
                             double en = emin + n * de_ev;
-                            double en0 = pelec->ekb(ik, i) * ModuleBase::Ry_to_eV;
+                            double en0 = ekb(ik, i) * ModuleBase::Ry_to_eV;
                             double de = en - en0;
                             double de2 = 0.5 * de * de;
                             Gauss[n] = GlobalC::kv.wk[ik] * exp(-de2 / a / a) / b;
@@ -431,9 +431,9 @@ void ModuleIO::write_dos_lcao(const psi::Psi<double>* psid,
                            GlobalC::kv.nks,
                            GlobalC::kv.nkstot,
                            GlobalC::kv.wk,
-                           pelec->wg,
+                           wg,
                            GlobalV::NBANDS,
-                           pelec->ekb);
+                           ekb);
     }
 
     return;
