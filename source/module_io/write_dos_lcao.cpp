@@ -31,10 +31,7 @@ void ModuleIO::write_dos_lcao(const psi::Psi<double>* psid,
         const elecstate::ElecState* pelec,
 		const double &dos_edelta_ev,
 		const double &bcoeff,
-		const double &dos_scale,
-		const double &ef,
-		const double &ef_up,
-		const double &ef_dw)
+		const double &dos_scale)
 {
     ModuleBase::TITLE("ModuleIO", "write_dos_lcao");
 
@@ -437,16 +434,6 @@ void ModuleIO::write_dos_lcao(const psi::Psi<double>* psid,
                            pelec->wg,
                            GlobalV::NBANDS,
                            pelec->ekb);
-    }
-
-    if (nspin0 == 1)
-    {
-        GlobalV::ofs_running << " Fermi energy is " << ef << " Rydberg" << std::endl;
-    }
-    else if (nspin0 == 2)
-    {
-        GlobalV::ofs_running << " Fermi energy (spin = 1) is " << ef_up << " Rydberg" << std::endl;
-        GlobalV::ofs_running << " Fermi energy (spin = 2) is " << ef_dw << " Rydberg" << std::endl;
     }
 
     return;

@@ -13,9 +13,6 @@ namespace ModuleIO
 		const elecstate::ElecState* pelec,
 		const double &dos_edelta_ev,
 		const double &bcoeff,
-		const double &dos_scale,
-		const double &ef,
-		const double &ef_up,
-		const double &ef_dw);
+		const double &dos_scale);
 }
 #endif

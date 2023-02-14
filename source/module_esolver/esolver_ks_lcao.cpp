@@ -301,10 +301,7 @@ void ESolver_KS_LCAO::postprocess()
             this->pelec,
             GlobalC::en.dos_edelta_ev,
             GlobalC::en.bcoeff,
-            GlobalC::en.dos_scale,
-            GlobalC::en.ef,
-            GlobalC::en.ef_up,
-            GlobalC::en.ef_dw);
+            GlobalC::en.dos_scale);
 
         if (GlobalC::en.out_dos == 3)
         {
@@ -321,6 +318,16 @@ void ESolver_KS_LCAO::postprocess()
                     &(GlobalC::ucell),
                     this->pelec->ekb);
             }
+        }
+        
+        if (nspin0 == 1)
+        {
+            GlobalV::ofs_running << " Fermi energy is " << GlobalC::en.ef << " Rydberg" << std::endl;
+        }
+        else if (nspin0 == 2)
+        {
+            GlobalV::ofs_running << " Fermi energy (spin = 1) is " << GlobalC::en.ef_up << " Rydberg" << std::endl;
+            GlobalV::ofs_running << " Fermi energy (spin = 2) is " << GlobalC::en.ef_dw << " Rydberg" << std::endl;
         }
     }
 }
