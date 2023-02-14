@@ -1,8 +1,9 @@
 #include "esolver_ks_pw.h"
 #include <iostream>
 #include "module_io/write_wfc_pw.h"
-#include "module_io/write_occ.h"
 #include "module_io/write_dos_pw.h"
+#include "module_io/write_istate_info.h"
+#include "module_io/nscf_band.h"
 
 //--------------temporary----------------------------
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
@@ -575,16 +576,63 @@ namespace ModuleESolver
         GlobalV::ofs_running << " !FINAL_ETOT_IS " << GlobalC::en.etot * ModuleBase::Ry_to_eV << " eV" << std::endl;
         GlobalV::ofs_running << " --------------------------------------------\n\n" << std::endl;
         
+        if(GlobalC::en.out_dos !=0 || GlobalC::en.out_band !=0)
+        {
+            GlobalV::ofs_running << "\n\n\n\n";
+            GlobalV::ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
+            GlobalV::ofs_running << " |                                                                    |" << std::endl;
+            GlobalV::ofs_running << " | Post-processing of data:                                           |" << std::endl;
+            GlobalV::ofs_running << " | DOS (density of states) and bands will be output here.             |" << std::endl;
+            GlobalV::ofs_running << " | If atomic orbitals are used, Mulliken charge analysis can be done. |" << std::endl;
+            GlobalV::ofs_running << " | Also the .bxsf file containing fermi surface information can be    |" << std::endl;
+            GlobalV::ofs_running << " | done here.                                                         |" << std::endl;
+            GlobalV::ofs_running << " |                                                                    |" << std::endl;
+            GlobalV::ofs_running << " <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" << std::endl;
+            GlobalV::ofs_running << "\n\n\n\n";
+        }
+        int nspin0=1;
+        if(GlobalV::NSPIN==2) nspin0=2;
         //print occupation in istate.info
-
-	    ModuleIO::print_occ(this->pelec);
+        ModuleIO::write_istate_info(this->pelec,&(GlobalC::kv),&(GlobalC::Pkpoints));
         // compute density of states
-        ModuleIO::write_dos_pw(this->pelec,
-            GlobalC::en.out_dos,
-            GlobalC::en.out_band,
-            GlobalC::en.dos_edelta_ev,
-            GlobalC::en.dos_scale,
-            GlobalC::en.ef);
+        if (GlobalC::en.out_dos)
+        {
+            ModuleIO::write_dos_pw(this->pelec->ekb,
+                this->pelec->wg,
+                GlobalC::en.dos_edelta_ev,
+                GlobalC::en.dos_scale,
+                GlobalC::en.bcoeff);
+
+            if (nspin0 == 1)
+            {
+                GlobalV::ofs_running << " Fermi energy is " << GlobalC::en.ef << " Rydberg" << std::endl;
+            }
+            else if (nspin0 == 2)
+            {
+                GlobalV::ofs_running << " Fermi energy (spin = 1) is " << GlobalC::en.ef_up << " Rydberg" << std::endl;
+                GlobalV::ofs_running << " Fermi energy (spin = 2) is " << GlobalC::en.ef_dw << " Rydberg" << std::endl;
+            }
+        }
+
+        if(GlobalC::en.out_band) //pengfei 2014-10-13
+        {
+            int nks=0;
+            if(nspin0==1)
+            {
+                nks = GlobalC::kv.nkstot;
+            }
+            else if(nspin0==2)
+            {
+                nks = GlobalC::kv.nkstot/2;
+            }
+            for(int is=0; is<nspin0; is++)
+            {
+                std::stringstream ss2;
+                ss2 << GlobalV::global_out_dir << "BANDS_" << is+1 << ".dat";
+                GlobalV::ofs_running << "\n Output bands in file: " << ss2.str() << std::endl;
+                ModuleIO::nscf_band(is, ss2.str(), nks, GlobalV::NBANDS, GlobalC::en.ef*0, this->pelec->ekb,&(GlobalC::kv),&(GlobalC::Pkpoints));
+            }
+        }
 
         if(GlobalV::BASIS_TYPE=="pw" && winput::out_spillage) //xiaohui add 2013-09-01
         {

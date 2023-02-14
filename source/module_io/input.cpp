@@ -1218,6 +1218,10 @@ bool Input::Read(const std::string &fn)
         {
             read_bool(ifs, out_mat_t);
         }
+        else if (strcmp("out_mat_dh", word) == 0)
+        {
+            read_bool(ifs, out_mat_dh);
+        }
         else if (strcmp("out_hs2_interval", word) == 0)
         {
             read_value(ifs, out_hs2_interval);
@@ -2246,7 +2250,11 @@ bool Input::Read(const std::string &fn)
     }
     if ((out_mat_r || out_mat_hs2 || out_mat_t || out_mat_dh) && gamma_only_local)
     {
-        ModuleBase::WARNING_QUIT("Input", "printing of H(R)/S(R)/r(R)/T(R) is not available for gamma only calculations");
+        ModuleBase::WARNING_QUIT("Input", "printing of H(R)/S(R)/dH(R)/T(R) is not available for gamma only calculations");
+    }
+    if(out_mat_dh && nspin == 4)
+    {
+        ModuleBase::WARNING_QUIT("Input", "priting of dH not available for nspin = 4");
     }
 
     return true;
@@ -2730,6 +2738,7 @@ void Input::Bcast()
     Parallel_Common::bcast_bool(out_mat_hs);
     Parallel_Common::bcast_bool(out_mat_hs2); // LiuXh add 2019-07-15
     Parallel_Common::bcast_bool(out_mat_t);
+    Parallel_Common::bcast_bool(out_mat_dh);
     Parallel_Common::bcast_bool(out_mat_r); // jingan add 2019-8-14
     Parallel_Common::bcast_bool(out_wfc_lcao);
     Parallel_Common::bcast_bool(out_alllog);
