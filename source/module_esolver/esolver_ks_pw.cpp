@@ -595,7 +595,8 @@ namespace ModuleESolver
         // compute density of states
         if (GlobalC::en.out_dos)
         {
-            ModuleIO::write_dos_pw(this->pelec,
+            ModuleIO::write_dos_pw(this->pelec->ekb,
+                this->pelec->wg,
                 GlobalC::en.dos_edelta_ev,
                 GlobalC::en.dos_scale,
                 GlobalC::en.ef);

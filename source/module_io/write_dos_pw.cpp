@@ -1,11 +1,10 @@
 #include "dos.h"
 #include "write_dos_pw.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
-#include "module_elecstate/energy.h"
 #include "src_parallel/parallel_reduce.h"
-#include "module_elecstate/elecstate.h"
 
-void ModuleIO::write_dos_pw(const elecstate::ElecState* pelec, 
+void ModuleIO::write_dos_pw(const ModuleBase::matrix &ekb,
+	const ModuleBase::matrix &wg,
 	const double &dos_edelta_ev,
 	const double &dos_scale,
 	const double &ef)
@@ -17,14 +16,14 @@ void ModuleIO::write_dos_pw(const elecstate::ElecState* pelec,
 
 
 	//find energy range
-	double emax = pelec->ekb(0, 0);
-	double emin = pelec->ekb(0, 0);
+	double emax = ekb(0, 0);
+	double emin = ekb(0, 0);
 	for(int ik=0; ik<GlobalC::kv.nks; ++ik)
 	{
 		for(int ib=0; ib<GlobalV::NBANDS; ++ib)
 		{
-			emax = std::max( emax, pelec->ekb(ik, ib) );
-			emin = std::min( emin, pelec->ekb(ik, ib) );
+			emax = std::max( emax, ekb(ik, ib) );
+			emin = std::min( emin, ekb(ik, ib) );
 		}
 	}
 
@@ -72,7 +71,7 @@ void ModuleIO::write_dos_pw(const elecstate::ElecState* pelec,
 			dos_edelta_ev,
 			emax,
 			emin,
-			GlobalC::kv.nks, GlobalC::kv.nkstot, GlobalC::kv.wk, pelec->wg, GlobalV::NBANDS,pelec->ekb );
+			GlobalC::kv.nks, GlobalC::kv.nkstot, GlobalC::kv.wk, wg, GlobalV::NBANDS, ekb);
 	}
 
 
