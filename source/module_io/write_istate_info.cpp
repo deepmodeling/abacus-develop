@@ -15,14 +15,14 @@ void ModuleIO::write_istate_info(const elecstate::ElecState* pelec, const K_Vect
             std::ofstream ofsi(ss.str().c_str()); // clear istate.info
             ofsi.close();
         }
-#ifdef __MPI
+
         for (int ip = 0; ip < GlobalV::KPAR; ip++)
         {
+#ifdef __MPI
             MPI_Barrier(MPI_COMM_WORLD);
             if (GlobalV::MY_POOL == ip)
             {
                 if (GlobalV::RANK_IN_POOL != 0 || GlobalV::MY_STOGROUP != 0 ) continue;
-                    continue;
 #endif
                 std::ofstream ofsi2(ss.str().c_str(), ios::app);
                 if (GlobalV::NSPIN == 1 || GlobalV::NSPIN == 4)
