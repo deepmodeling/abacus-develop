@@ -575,6 +575,322 @@ void ModuleIO::save_TR_sparse(
     return;
 }
 
+void ModuleIO::save_dH_sparse(
+    const int &istep,
+    LCAO_Matrix &lm,
+    const double& sparse_threshold,
+    const bool &binary
+)
+{
+    ModuleBase::TITLE("ModuleIO","save_dH_sparse");
+    ModuleBase::timer::tick("ModuleIO","save_dH_sparse");
+
+    auto &all_R_coor_ptr = lm.all_R_coor;
+    auto &output_R_coor_ptr = lm.output_R_coor;
+    auto &dHRx_sparse_ptr = lm.dHRx_sparse;
+    auto &dHRx_soc_sparse_ptr = lm.dHRx_soc_sparse;
+    auto &dHRy_sparse_ptr = lm.dHRy_sparse;
+    auto &dHRy_soc_sparse_ptr = lm.dHRy_soc_sparse;
+    auto &dHRz_sparse_ptr = lm.dHRz_sparse;
+    auto &dHRz_soc_sparse_ptr = lm.dHRz_soc_sparse;
+
+    int total_R_num = all_R_coor_ptr.size();
+    int output_R_number = 0;
+    int *dHx_nonzero_num[2] = {nullptr, nullptr};
+    int *dHy_nonzero_num[2] = {nullptr, nullptr};
+    int *dHz_nonzero_num[2] = {nullptr, nullptr};
+    int step = istep;
+
+    int spin_loop = 1;
+    if (GlobalV::NSPIN == 2)
+    {
+        spin_loop = 2;
+    }
+
+    for (int ispin = 0; ispin < spin_loop; ++ispin)
+    {
+        dHx_nonzero_num[ispin] = new int[total_R_num];
+        ModuleBase::GlobalFunc::ZEROS(dHx_nonzero_num[ispin], total_R_num);
+        dHy_nonzero_num[ispin] = new int[total_R_num];
+        ModuleBase::GlobalFunc::ZEROS(dHy_nonzero_num[ispin], total_R_num);
+        dHz_nonzero_num[ispin] = new int[total_R_num];
+        ModuleBase::GlobalFunc::ZEROS(dHz_nonzero_num[ispin], total_R_num);                
+    }
+
+    int count = 0;
+    for (auto &R_coor : all_R_coor_ptr)
+    {
+        if (GlobalV::NSPIN != 4)
+        {
+            for (int ispin = 0; ispin < spin_loop; ++ispin)
+            {
+                auto iter1 = dHRx_sparse_ptr[ispin].find(R_coor);
+                if (iter1 != dHRx_sparse_ptr[ispin].end())
+                {
+                    for (auto &row_loop : iter1->second)
+                    {
+                        dHx_nonzero_num[ispin][count] += row_loop.second.size();
+                    }
+                }
+                
+                auto iter2 = dHRy_sparse_ptr[ispin].find(R_coor);
+                if (iter2 != dHRy_sparse_ptr[ispin].end())
+                {
+                    for (auto &row_loop : iter2->second)
+                    {
+                        dHy_nonzero_num[ispin][count] += row_loop.second.size();
+                    }
+                }
+                
+                auto iter3 = dHRz_sparse_ptr[ispin].find(R_coor);
+                if (iter3 != dHRz_sparse_ptr[ispin].end())
+                {
+                    for (auto &row_loop : iter3->second)
+                    {
+                        dHz_nonzero_num[ispin][count] += row_loop.second.size();
+                    }
+                }
+            }
+        }
+        else
+        {
+            auto iter = dHRx_soc_sparse_ptr.find(R_coor);
+            if (iter != dHRx_soc_sparse_ptr.end())
+            {
+                for (auto &row_loop : iter->second)
+                {
+                    dHx_nonzero_num[0][count] += row_loop.second.size();
+                }
+            }
+        }
+
+        count++;
+    }
+
+    for (int ispin = 0; ispin < spin_loop; ++ispin)
+    {
+        Parallel_Reduce::reduce_int_all(dHx_nonzero_num[ispin], total_R_num);
+        Parallel_Reduce::reduce_int_all(dHy_nonzero_num[ispin], total_R_num);
+        Parallel_Reduce::reduce_int_all(dHz_nonzero_num[ispin], total_R_num); 
+    }
+
+    if (GlobalV::NSPIN == 2)
+    {
+        for (int index = 0; index < total_R_num; ++index)
+        {
+            if (dHx_nonzero_num[0][index] != 0 || dHx_nonzero_num[1][index] != 0 ||
+                dHy_nonzero_num[0][index] != 0 || dHy_nonzero_num[1][index] != 0 ||
+                dHz_nonzero_num[0][index] != 0 || dHz_nonzero_num[1][index] != 0)
+            {
+                output_R_number++;
+            }
+        }
+    }
+    else
+    {
+        for (int index = 0; index < total_R_num; ++index)
+        {
+            if (dHx_nonzero_num[0][index] != 0 || dHy_nonzero_num[0][index] != 0 || dHz_nonzero_num[0][index] != 0)
+            {
+                output_R_number++;
+            }
+        }
+    }
+
+    std::stringstream sshx[2];
+    std::stringstream sshy[2];
+    std::stringstream sshz[2];
+    if(GlobalV::CALCULATION == "md")
+    {
+        sshx[0] << GlobalV::global_matrix_dir << istep << "_" << "data-dHRx-sparse_SPIN0.csr";
+        sshx[1] << GlobalV::global_matrix_dir << istep << "_" << "data-dHRx-sparse_SPIN1.csr";
+        sshy[0] << GlobalV::global_matrix_dir << istep << "_" << "data-dHRy-sparse_SPIN0.csr";
+        sshy[1] << GlobalV::global_matrix_dir << istep << "_" << "data-dHRy-sparse_SPIN1.csr";
+        sshz[0] << GlobalV::global_matrix_dir << istep << "_" << "data-dHRz-sparse_SPIN0.csr";
+        sshz[1] << GlobalV::global_matrix_dir << istep << "_" << "data-dHRz-sparse_SPIN1.csr";                
+    }
+    else
+    {
+        sshx[0] << GlobalV::global_out_dir << "data-dHRx-sparse_SPIN0.csr";
+        sshx[1] << GlobalV::global_out_dir << "data-dHRx-sparse_SPIN1.csr";
+        sshy[0] << GlobalV::global_out_dir << "data-dHRy-sparse_SPIN0.csr";
+        sshy[1] << GlobalV::global_out_dir << "data-dHRy-sparse_SPIN1.csr";
+        sshz[0] << GlobalV::global_out_dir << "data-dHRz-sparse_SPIN0.csr";
+        sshz[1] << GlobalV::global_out_dir << "data-dHRz-sparse_SPIN1.csr";                
+    }
+    std::ofstream g1x[2];
+    std::ofstream g1y[2];
+    std::ofstream g1z[2];
+
+    if(GlobalV::DRANK==0)
+    {
+        if (binary)
+        {
+            for (int ispin = 0; ispin < spin_loop; ++ispin)
+            {
+                g1x[ispin].open(sshx[ispin].str().c_str(), ios::binary | ios::app);
+                g1x[ispin].write(reinterpret_cast<char *>(&step), sizeof(int));
+                g1x[ispin].write(reinterpret_cast<char *>(&GlobalV::NLOCAL), sizeof(int));
+                g1x[ispin].write(reinterpret_cast<char *>(&output_R_number), sizeof(int));
+
+                g1y[ispin].open(sshy[ispin].str().c_str(), ios::binary | ios::app);
+                g1y[ispin].write(reinterpret_cast<char *>(&step), sizeof(int));
+                g1y[ispin].write(reinterpret_cast<char *>(&GlobalV::NLOCAL), sizeof(int));
+                g1y[ispin].write(reinterpret_cast<char *>(&output_R_number), sizeof(int));
+
+                g1z[ispin].open(sshz[ispin].str().c_str(), ios::binary | ios::app);
+                g1z[ispin].write(reinterpret_cast<char *>(&step), sizeof(int));
+                g1z[ispin].write(reinterpret_cast<char *>(&GlobalV::NLOCAL), sizeof(int));
+                g1z[ispin].write(reinterpret_cast<char *>(&output_R_number), sizeof(int));                                
+            }
+        }
+        else
+        {
+            for (int ispin = 0; ispin < spin_loop; ++ispin)
+            {
+                g1x[ispin].open(sshx[ispin].str().c_str(), ios::app);
+                g1x[ispin] << "STEP: " << istep << std::endl;
+                g1x[ispin] << "Matrix Dimension of dHx(R): " << GlobalV::NLOCAL <<std::endl;
+                g1x[ispin] << "Matrix number of dHx(R): " << output_R_number << std::endl;
+
+                g1y[ispin].open(sshy[ispin].str().c_str(), ios::app);
+                g1y[ispin] << "STEP: " << istep << std::endl;
+                g1y[ispin] << "Matrix Dimension of dHy(R): " << GlobalV::NLOCAL <<std::endl;
+                g1y[ispin] << "Matrix number of dHy(R): " << output_R_number << std::endl;
+
+                g1z[ispin].open(sshz[ispin].str().c_str(), ios::app);
+                g1z[ispin] << "STEP: " << istep << std::endl;
+                g1z[ispin] << "Matrix Dimension of dHz(R): " << GlobalV::NLOCAL <<std::endl;
+                g1z[ispin] << "Matrix number of dHz(R): " << output_R_number << std::endl;                                
+            }
+        }
+    }
+
+    output_R_coor_ptr.clear();
+
+    count = 0;
+    for (auto &R_coor : all_R_coor_ptr)
+    {
+        int dRx = R_coor.x;
+        int dRy = R_coor.y;
+        int dRz = R_coor.z;
+
+        if (GlobalV::NSPIN == 2)
+        {
+            if (dHx_nonzero_num[0][count] == 0 && dHx_nonzero_num[1][count] == 0 &&
+                dHy_nonzero_num[0][count] == 0 && dHy_nonzero_num[1][count] == 0 &&
+                dHz_nonzero_num[0][count] == 0 && dHz_nonzero_num[1][count] == 0)
+            {
+                count++;
+                continue;
+            }
+        }
+        else
+        {
+            if (dHx_nonzero_num[0][count] == 0 && dHy_nonzero_num[0][count] == 0 && dHz_nonzero_num[0][count] == 0)
+            {
+                count++;
+                continue;
+            }
+        }
+
+        output_R_coor_ptr.insert(R_coor);
+
+        if (GlobalV::DRANK == 0)
+        {
+            if (binary)
+            {
+                for (int ispin = 0; ispin < spin_loop; ++ispin)
+                {
+                    g1x[ispin].write(reinterpret_cast<char *>(&dRx), sizeof(int));
+                    g1x[ispin].write(reinterpret_cast<char *>(&dRy), sizeof(int));
+                    g1x[ispin].write(reinterpret_cast<char *>(&dRz), sizeof(int));
+                    g1x[ispin].write(reinterpret_cast<char *>(&dHx_nonzero_num[ispin][count]), sizeof(int));
+
+                    g1y[ispin].write(reinterpret_cast<char *>(&dRx), sizeof(int));
+                    g1y[ispin].write(reinterpret_cast<char *>(&dRy), sizeof(int));
+                    g1y[ispin].write(reinterpret_cast<char *>(&dRz), sizeof(int));
+                    g1y[ispin].write(reinterpret_cast<char *>(&dHy_nonzero_num[ispin][count]), sizeof(int));
+
+                    g1z[ispin].write(reinterpret_cast<char *>(&dRx), sizeof(int));
+                    g1z[ispin].write(reinterpret_cast<char *>(&dRy), sizeof(int));
+                    g1z[ispin].write(reinterpret_cast<char *>(&dRz), sizeof(int));
+                    g1z[ispin].write(reinterpret_cast<char *>(&dHz_nonzero_num[ispin][count]), sizeof(int));                                        
+                }
+            }
+            else
+            {
+                for (int ispin = 0; ispin < spin_loop; ++ispin)
+                {
+                    g1x[ispin] << dRx << " " << dRy << " " << dRz << " " << dHx_nonzero_num[ispin][count] << std::endl;
+                    g1y[ispin] << dRx << " " << dRy << " " << dRz << " " << dHy_nonzero_num[ispin][count] << std::endl;
+                    g1z[ispin] << dRx << " " << dRy << " " << dRz << " " << dHz_nonzero_num[ispin][count] << std::endl;
+                }
+            }
+        }
+
+        for (int ispin = 0; ispin < spin_loop; ++ispin)
+        {
+            if (dHx_nonzero_num[ispin][count] > 0)
+            {
+                if (GlobalV::NSPIN != 4)
+                {
+                    output_single_R(g1x[ispin], dHRx_sparse_ptr[ispin][R_coor], sparse_threshold, binary, *lm.ParaV);
+                }
+                else
+                {
+                    output_soc_single_R(g1x[ispin], dHRx_soc_sparse_ptr[R_coor], sparse_threshold, binary, *lm.ParaV);
+                }
+            }
+            if (dHy_nonzero_num[ispin][count] > 0)
+            {
+                if (GlobalV::NSPIN != 4)
+                {
+                    output_single_R(g1y[ispin], dHRy_sparse_ptr[ispin][R_coor], sparse_threshold, binary, *lm.ParaV);
+                }
+                else
+                {
+                    output_soc_single_R(g1y[ispin], dHRy_soc_sparse_ptr[R_coor], sparse_threshold, binary, *lm.ParaV);
+                }
+            }
+            if (dHz_nonzero_num[ispin][count] > 0)
+            {
+                if (GlobalV::NSPIN != 4)
+                {
+                    output_single_R(g1z[ispin], dHRz_sparse_ptr[ispin][R_coor], sparse_threshold, binary, *lm.ParaV);
+                }
+                else
+                {
+                    output_soc_single_R(g1z[ispin], dHRz_soc_sparse_ptr[R_coor], sparse_threshold, binary, *lm.ParaV);
+                }
+            }                        
+        }
+
+          count++;
+
+    }
+
+    if(GlobalV::DRANK==0) 
+    {
+        for (int ispin = 0; ispin < spin_loop; ++ispin) g1x[ispin].close();
+        for (int ispin = 0; ispin < spin_loop; ++ispin) g1y[ispin].close();
+        for (int ispin = 0; ispin < spin_loop; ++ispin) g1z[ispin].close();
+    }
+    
+    for (int ispin = 0; ispin < spin_loop; ++ispin) 
+    {
+        delete[] dHx_nonzero_num[ispin];
+        dHx_nonzero_num[ispin] = nullptr;
+        delete[] dHy_nonzero_num[ispin];
+        dHy_nonzero_num[ispin] = nullptr;
+        delete[] dHz_nonzero_num[ispin];
+        dHz_nonzero_num[ispin] = nullptr;                
+    }
+
+    ModuleBase::timer::tick("ModuleIO","save_dH_sparse");
+    return;
+}
+
 void ModuleIO::output_single_R(std::ofstream &ofs, const std::map<size_t, std::map<size_t, double>> &XR, const double &sparse_threshold, const bool &binary, const Parallel_Orbitals &pv)
 {
     double *line = nullptr;
