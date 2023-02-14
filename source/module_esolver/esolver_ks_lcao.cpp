@@ -301,8 +301,8 @@ void ESolver_KS_LCAO::postprocess()
             this->pelec->ekb,
             this->pelec->wg,
             GlobalC::en.dos_edelta_ev,
-            GlobalC::en.bcoeff,
-            GlobalC::en.dos_scale);
+            GlobalC::en.dos_scale,
+            GlobalC::en.bcoeff);
 
         if (GlobalC::en.out_dos == 3)
         {

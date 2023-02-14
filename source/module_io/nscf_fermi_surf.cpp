@@ -1,6 +1,7 @@
 #include "nscf_fermi_surf.h"
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
+#include "module_base/timer.h"
 
 void ModuleIO::nscf_fermi_surface(const std::string &out_band_dir,
 	const int &nks,

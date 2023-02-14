@@ -590,6 +590,8 @@ namespace ModuleESolver
             GlobalV::ofs_running << " <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" << std::endl;
             GlobalV::ofs_running << "\n\n\n\n";
         }
+        int nspin0=1;
+        if(GlobalV::NSPIN==2) nspin0=2;
         //print occupation in istate.info
         ModuleIO::write_istate_info(this->pelec,&(GlobalC::kv),&(GlobalC::Pkpoints));
         // compute density of states
@@ -599,13 +601,21 @@ namespace ModuleESolver
                 this->pelec->wg,
                 GlobalC::en.dos_edelta_ev,
                 GlobalC::en.dos_scale,
-                GlobalC::en.ef);
+                GlobalC::en.bcoeff);
+
+            if (nspin0 == 1)
+            {
+                GlobalV::ofs_running << " Fermi energy is " << GlobalC::en.ef << " Rydberg" << std::endl;
+            }
+            else if (nspin0 == 2)
+            {
+                GlobalV::ofs_running << " Fermi energy (spin = 1) is " << GlobalC::en.ef_up << " Rydberg" << std::endl;
+                GlobalV::ofs_running << " Fermi energy (spin = 2) is " << GlobalC::en.ef_dw << " Rydberg" << std::endl;
+            }
         }
 
         if(GlobalC::en.out_band) //pengfei 2014-10-13
         {
-            int nspin0=1;
-            if(GlobalV::NSPIN==2) nspin0=2;
             int nks=0;
             if(nspin0==1)
             {

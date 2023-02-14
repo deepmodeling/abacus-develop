@@ -7,7 +7,7 @@ void ModuleIO::write_dos_pw(const ModuleBase::matrix &ekb,
 	const ModuleBase::matrix &wg,
 	const double &dos_edelta_ev,
 	const double &dos_scale,
-	const double &ef)
+	const double &bcoeff)
 {
 	ModuleBase::TITLE("ModuleIO","write_dos_pw");
 	
@@ -71,7 +71,13 @@ void ModuleIO::write_dos_pw(const ModuleBase::matrix &ekb,
 			dos_edelta_ev,
 			emax,
 			emin,
-			GlobalC::kv.nks, GlobalC::kv.nkstot, GlobalC::kv.wk, wg, GlobalV::NBANDS, ekb);
+			bcoeff,
+			GlobalC::kv.nks,
+			GlobalC::kv.nkstot,
+			GlobalC::kv.wk,
+			wg,
+			GlobalV::NBANDS,
+			ekb);
 	}
 
 

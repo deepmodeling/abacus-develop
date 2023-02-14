@@ -1,6 +1,8 @@
 #include "nscf_band.h"
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
+#include "module_base/timer.h"
+#include "module_base/tool_title.h"
 
 void ModuleIO::nscf_band(
 	const int &is,
@@ -97,6 +99,7 @@ void ModuleIO::nscf_band(
 	}
 	ofs.close();
 #endif
+
 	ModuleBase::timer::tick("ModuleIO", "nscf_band");
 	return;
 }

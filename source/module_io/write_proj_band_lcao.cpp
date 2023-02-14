@@ -4,6 +4,7 @@
 #include "module_base/global_variable.h"
 #include "module_cell/module_neighbor/sltk_atom_arrange.h"
 #include "module_base/scalapack_connector.h"
+#include "module_base/timer.h"
 
 void ModuleIO::write_proj_band_lcao(const psi::Psi<double> *psid,
     const psi::Psi<std::complex<double>> *psi,

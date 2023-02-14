@@ -30,8 +30,8 @@ void ModuleIO::write_dos_lcao(const psi::Psi<double>* psid,
         const ModuleBase::matrix &ekb,
 		const ModuleBase::matrix &wg,
 		const double &dos_edelta_ev,
-		const double &bcoeff,
-		const double &dos_scale)
+		const double &dos_scale,
+        const double &bcoeff)
 {
     ModuleBase::TITLE("ModuleIO", "write_dos_lcao");
 
@@ -428,6 +428,7 @@ void ModuleIO::write_dos_lcao(const psi::Psi<double>* psid,
                            dos_edelta_ev,
                            emax,
                            emin,
+                           bcoeff,
                            GlobalC::kv.nks,
                            GlobalC::kv.nkstot,
                            GlobalC::kv.wk,

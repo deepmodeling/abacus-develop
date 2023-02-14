@@ -13,7 +13,7 @@ namespace ModuleIO
 		const ModuleBase::matrix &ekb,
 		const ModuleBase::matrix &wg,
 		const double &dos_edelta_ev,
-		const double &bcoeff,
-		const double &dos_scale);
+		const double &dos_scale,
+		const double &bcoeff);
 }
 #endif

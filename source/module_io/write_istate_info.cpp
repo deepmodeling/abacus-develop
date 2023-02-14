@@ -1,6 +1,7 @@
 #include "write_istate_info.h"
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
+#include "module_base/timer.h"
 
 void ModuleIO::write_istate_info(const elecstate::ElecState* pelec, const K_Vectors* kv,const Parallel_Kpoints* Pkpoints)
 {

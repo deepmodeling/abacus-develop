@@ -1,5 +1,7 @@
 #include "dos.h"
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "module_base/global_function.h"
+#include "module_base/global_variable.h"
+#include "module_base/constants.h"
 #include "src_parallel/parallel_reduce.h"
 
 bool ModuleIO::calculate_dos
@@ -11,6 +13,7 @@ bool ModuleIO::calculate_dos
 	const double &de_ev, // delta energy in ev
 	const double &emax_ev,
 	const double &emin_ev,// minimal energy in ev.
+	const double &bcoeff,
 	const int &nks,//number of k points
 	const int &nkstot,
 	const std::vector<double> &wk,//weight of k points
@@ -59,7 +62,7 @@ bool ModuleIO::calculate_dos
 	if(GlobalV::MY_RANK==0)
 	{
 		ofs << npoints << std::endl;
-		ofs << GlobalC::kv.nkstot << std::endl;
+		ofs << nkstot << std::endl;
 	}
 
 	GlobalV::ofs_running << "\n OUTPUT DOS FILE IN: " << fa << std::endl;
@@ -81,7 +84,7 @@ bool ModuleIO::calculate_dos
 		e_new += de_ev;
 		for(int ik=0;ik<nks;ik++)
 		{
-			if(is == GlobalC::kv.isk[ik])
+			if(is == isk[ik])
 			{
 				for(int ib = 0; ib < nbands; ib++)
 				{
@@ -116,7 +119,7 @@ bool ModuleIO::calculate_dos
 		dos_smearing.resize(dos.size()-1);
 
 		//double b = INPUT.dos_sigma;
-		double b = sqrt(2.0)*GlobalC::en.bcoeff;
+		double b = sqrt(2.0)*bcoeff;
 		for(int i=0;i<dos.size()-1;i++)
 		{
 			double Gauss=0.0;
