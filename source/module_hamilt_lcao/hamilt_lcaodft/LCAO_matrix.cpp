@@ -79,12 +79,10 @@ void LCAO_Matrix::allocate_HS_gamma(const long &nloc)
     this->Sloc.resize(nloc);
     this->Hloc_fixed.resize(nloc);
     this->Hloc.resize(nloc);
-    //this->Sdiag.resize(nloc);
 
     ModuleBase::GlobalFunc::ZEROS(Sloc.data(),nloc);
     ModuleBase::GlobalFunc::ZEROS(Hloc_fixed.data(),nloc);
     ModuleBase::GlobalFunc::ZEROS(Hloc.data(),nloc);
-    //ModuleBase::GlobalFunc::ZEROS(Sdiag.data(),nloc); // mohan add 2021-01-30
 
     return;
 }
@@ -103,7 +101,6 @@ void LCAO_Matrix::allocate_HS_k(const long &nloc)
     this->Sloc2.resize(nloc);
     this->Hloc_fixed2.resize(nloc);
     this->Hloc2.resize(nloc);
-    //this->Sdiag2.resize(nloc);
 
     ModuleBase::GlobalFunc::ZEROS(Sloc2.data(),nloc);
     ModuleBase::GlobalFunc::ZEROS(Hloc_fixed2.data(),nloc);
