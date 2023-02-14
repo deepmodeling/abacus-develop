@@ -68,7 +68,7 @@ void Veff<OperatorLCAO<double>>::contributeHk(int ik)
         this->GG->cal_vlocal(&inout, new_e_iteration);
     }
 
-    if(this->new_e_iteration) this->new_e_iteration = false;
+    this->new_e_iteration = false;
 
     ModuleBase::timer::tick("Veff", "contributeHk");
 }
