@@ -33,10 +33,10 @@ public:
 		const double &ecutwfc,
 		const int &ntype,
 		const int &lmax_in,
-		const bool &smooth = 1,
-		const double &sigma = 0.1,
-		const double &rcut_in = 6.0,
-		const double &tol_in = 1.0e-12,
+		const bool &smooth,
+		const double &sigma,
+		const double &rcut_in,
+		const double &tol_in,
 		const double &dk = 0.01,
 		const double &dr = 0.01);
 

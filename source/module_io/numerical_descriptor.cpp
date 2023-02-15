@@ -43,10 +43,17 @@ void Numerical_Descriptor::output_descriptor(const psi::Psi<std::complex<double>
     const int nks = GlobalC::kv.nks;
     int ne = 0; 
 	
-	bool smearing = true;
-	if(INPUT.smearing_method == "fixed") smearing = false;
+	// Peize Lin change 2022.12.15
     // 0 stands for : 'Faln' is not used.
-    this->bessel_basis.init( 0, INPUT.ecutwfc, GlobalC::ucell.ntype, this->lmax, smearing, INPUT.smearing_sigma, rcut_in, tol_in );
+    this->bessel_basis.init(
+		0,
+		std::stod(INPUT.bessel_descriptor_ecut),
+		GlobalC::ucell.ntype,
+		this->lmax,
+		INPUT.bessel_descriptor_smooth,
+		INPUT.bessel_descriptor_sigma,
+		rcut_in,
+		tol_in );
 	this->nmax = Numerical_Descriptor::bessel_basis.get_ecut_number();
     this->init_mu_index();
     this->init_label = true;

@@ -6,7 +6,8 @@ list(APPEND objects
     cal_test.cpp
     dos.cpp
     write_dos_pw.cpp
-    write_occ.cpp
+    nscf_band.cpp
+    write_istate_info.cpp
     numerical_basis.cpp
     numerical_descriptor.cpp
     output.cpp
@@ -29,6 +30,8 @@ if(ENABLE_LCAO)
       cal_r_overlap_R.cpp
       write_dos_lcao.cpp
       write_orb_info.cpp
+      write_proj_band_lcao.cpp
+      nscf_fermi_surf.cpp
       istate_charge.cpp
       istate_envelope.cpp
       mulliken_charge.cpp

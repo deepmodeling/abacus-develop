@@ -48,6 +48,17 @@ class Gint
         const int LD_pool,
         double* pvpR_reduced);
 
+    // calculate < phi_0 | vlocal | dphi_R >
+    void gint_kernel_dvlocal(
+        const int na_grid,
+        const int grid_index,
+        const double delta_r,
+        double* vldr3,
+        const int LD_pool,
+        double* pvdpRx_reduced,
+        double* pvdpRy_reduced,
+        double* pvdpRz_reduced);
+
     void gint_kernel_vlocal_meta(
         const int na_grid,
         const int grid_index,
@@ -176,7 +187,10 @@ class Gint
     // save the < phi_0i | V | phi_Rj > in sparse H matrix.
     bool pvpR_alloc_flag = false;
     double** pvpR_reduced = nullptr; //stores Hamiltonian in reduced format, for multi-l
-    
+    double** pvdpRx_reduced = nullptr;
+    double** pvdpRy_reduced = nullptr;
+    double** pvdpRz_reduced = nullptr;
+
 	double* pvpR_grid = nullptr; //stores Hamiltonian in grid format, for gamma-point
 };
 

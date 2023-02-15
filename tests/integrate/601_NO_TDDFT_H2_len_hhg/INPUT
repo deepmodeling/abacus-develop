@@ -30,18 +30,15 @@ md_dt			0.05
 init_vel                1
 
 td_vext 		1
-td_vext_dire 		1
+td_vext_dire 		2*1
 td_stype                0
-td_ttype                4
+td_ttype                2*0
 td_tstart 		1
 td_tend			2
 td_lcut1		0.05
 td_lcut2		0.95
-td_hhg_freq1		1.164656
-td_hhg_freq2		0.029116
-td_hhg_amp1		2.0
-td_hhg_amp2		5.0
-td_hhg_phase1		0.0
-td_hhg_phase2		0.0
-td_hhg_t0		0
-td_hhg_sigma		30
+td_gauss_freq		1.164656 0.029116	
+td_gauss_amp		2.0 5.0
+td_gauss_phase		2*0.0
+td_gauss_t0		2*0
+td_gauss_sigma		2*30

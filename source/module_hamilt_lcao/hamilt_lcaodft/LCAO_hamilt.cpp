@@ -196,7 +196,6 @@ void LCAO_Hamilt::calculate_STN_R_sparse(const int &current_spin, const double &
     return;
 }
 
-
 void LCAO_Hamilt::calculate_STN_R_sparse_for_S(const double &sparse_threshold)
 {
     ModuleBase::TITLE("LCAO_Hamilt","calculate_STN_R_sparse_for_S");
@@ -340,6 +339,43 @@ void LCAO_Hamilt::calculate_HSR_sparse(const int &current_spin, const double &sp
 #endif // __EXX
 
     clear_zero_elements(current_spin, sparse_threshold);
+}
+
+void LCAO_Hamilt::calculate_dH_sparse(const int &current_spin, const double &sparse_threshold)
+{
+    ModuleBase::TITLE("LCAO_Hamilt","calculate_dH_sparse");
+
+    set_R_range_sparse();
+
+    const int nnr = this->LM->ParaV->nnr;
+    this->LM->DHloc_fixedR_x = new double[nnr];
+    this->LM->DHloc_fixedR_y = new double[nnr];
+    this->LM->DHloc_fixedR_z = new double[nnr];
+
+    ModuleBase::GlobalFunc::ZEROS(this->LM->DHloc_fixedR_x, this->LM->ParaV->nloc);
+    ModuleBase::GlobalFunc::ZEROS(this->LM->DHloc_fixedR_y, this->LM->ParaV->nloc);
+    ModuleBase::GlobalFunc::ZEROS(this->LM->DHloc_fixedR_z, this->LM->ParaV->nloc);
+    // calculate dT=<phi|kin|dphi> in LCAO
+    // calculate T + VNL(P1) in LCAO basis
+    if(GlobalV::CAL_STRESS)
+	{
+        GlobalV::CAL_STRESS = false;
+        this->genH.build_ST_new('T', true, GlobalC::ucell, this->LM->Hloc_fixedR.data());
+        GlobalV::CAL_STRESS = true;
+    }
+    else
+    {
+        this->genH.build_ST_new('T', true, GlobalC::ucell, this->LM->Hloc_fixedR.data());
+    }
+    this->genH.build_Nonlocal_mu_new (this->LM->Hloc_fixed.data(), true);
+    
+    calculate_dSTN_R_sparse(current_spin, sparse_threshold);
+
+    delete[] this->LM->DHloc_fixedR_x;
+    delete[] this->LM->DHloc_fixedR_y;
+    delete[] this->LM->DHloc_fixedR_z;
+
+    GK.cal_dvlocal_R_sparseMatrix(current_spin, sparse_threshold, this->LM);
 }
 
 void LCAO_Hamilt::calculate_STN_R_sparse_for_T(const double &sparse_threshold)
@@ -861,6 +897,118 @@ void LCAO_Hamilt::clear_zero_elements(const int &current_spin, const double &spa
     }
 }
 
+void LCAO_Hamilt::calculate_dSTN_R_sparse(const int &current_spin, const double &sparse_threshold)
+{
+    ModuleBase::TITLE("LCAO_Hamilt","calculate_dSTN_R_sparse");
+
+    int index = 0;
+    ModuleBase::Vector3<double> dtau, tau1, tau2;
+    ModuleBase::Vector3<double> dtau1, dtau2, tau0;
+
+    double temp_value_double;
+    std::complex<double> temp_value_complex;
+
+    for(int T1 = 0; T1 < GlobalC::ucell.ntype; ++T1)
+    {
+        Atom* atom1 = &GlobalC::ucell.atoms[T1];
+        for(int I1 = 0; I1 < atom1->na; ++I1)
+        {
+            tau1 = atom1->tau[I1];
+            GlobalC::GridD.Find_atom(GlobalC::ucell, tau1, T1, I1);
+            Atom* atom1 = &GlobalC::ucell.atoms[T1];
+            const int start = GlobalC::ucell.itiaiw2iwt(T1,I1,0);
+
+            for(int ad = 0; ad < GlobalC::GridD.getAdjacentNum()+1; ++ad)
+            {
+                const int T2 = GlobalC::GridD.getType(ad);
+                const int I2 = GlobalC::GridD.getNatom(ad);
+                Atom* atom2 = &GlobalC::ucell.atoms[T2];
+
+                tau2 = GlobalC::GridD.getAdjacentTau(ad);
+                dtau = tau2 - tau1;
+                double distance = dtau.norm() * GlobalC::ucell.lat0;
+                double rcut = GlobalC::ORB.Phi[T1].getRcut() + GlobalC::ORB.Phi[T2].getRcut();
+
+                bool adj = false;
+
+                if(distance < rcut) adj = true;
+                else if(distance >= rcut)
+                {
+                    for(int ad0 = 0; ad0 < GlobalC::GridD.getAdjacentNum()+1; ++ad0)
+                    {
+                        const int T0 = GlobalC::GridD.getType(ad0);
+
+                        tau0 = GlobalC::GridD.getAdjacentTau(ad0);
+                        dtau1 = tau0 - tau1;
+                        dtau2 = tau0 - tau2;
+
+                        double distance1 = dtau1.norm() * GlobalC::ucell.lat0;
+                        double distance2 = dtau2.norm() * GlobalC::ucell.lat0;
+
+                        double rcut1 = GlobalC::ORB.Phi[T1].getRcut() + GlobalC::ucell.infoNL.Beta[T0].get_rcut_max();
+                        double rcut2 = GlobalC::ORB.Phi[T2].getRcut() + GlobalC::ucell.infoNL.Beta[T0].get_rcut_max();
+
+                        if( distance1 < rcut1 && distance2 < rcut2 )
+                        {
+                            adj = true;
+                            break;
+                        }
+                    }
+                }
+
+                if(adj)
+                {
+                    const int start2 = GlobalC::ucell.itiaiw2iwt(T2,I2,0);
+
+                    Abfs::Vector3_Order<int> dR(GlobalC::GridD.getBox(ad).x, GlobalC::GridD.getBox(ad).y, GlobalC::GridD.getBox(ad).z);
+
+                    for(int ii=0; ii<atom1->nw*GlobalV::NPOL; ii++)
+                    {
+                        const int iw1_all = start + ii;
+                        const int mu = this->LM->ParaV->trace_loc_row[iw1_all];
+
+                        if(mu<0)continue;
+
+                        for(int jj=0; jj<atom2->nw*GlobalV::NPOL; jj++)
+                        {
+                            int iw2_all = start2 + jj;
+                            const int nu = this->LM->ParaV->trace_loc_col[iw2_all];
+
+                            if(nu<0)continue;
+
+                            if(GlobalV::NSPIN!=4)
+                            {
+                                temp_value_double = this->LM->DHloc_fixedR_x[index];
+                                if (std::abs(temp_value_double) > sparse_threshold)
+                                {
+                                    this->LM->dHRx_sparse[current_spin][dR][iw1_all][iw2_all] = temp_value_double;
+                                }
+                                temp_value_double = this->LM->DHloc_fixedR_y[index];
+                                if (std::abs(temp_value_double) > sparse_threshold)
+                                {
+                                    this->LM->dHRy_sparse[current_spin][dR][iw1_all][iw2_all] = temp_value_double;
+                                }
+                                temp_value_double = this->LM->DHloc_fixedR_z[index];
+                                if (std::abs(temp_value_double) > sparse_threshold)
+                                {
+                                    this->LM->dHRz_sparse[current_spin][dR][iw1_all][iw2_all] = temp_value_double;
+                                }
+                            }
+                            else
+                            {
+                                ModuleBase::WARNING_QUIT("calculate_dSTN_R_sparse","soc not supported!");
+                            }
+                            ++index;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    return;
+}
+
 void LCAO_Hamilt::destroy_all_HSR_sparse(void)
 {
 	this->LM->destroy_HS_R_sparse();
@@ -869,4 +1017,9 @@ void LCAO_Hamilt::destroy_all_HSR_sparse(void)
 void LCAO_Hamilt::destroy_TR_sparse(void)
 {
 	this->LM->destroy_T_R_sparse();
+}
+
+void LCAO_Hamilt::destroy_dH_R_sparse(void)
+{
+	this->LM->destroy_dH_R_sparse();
 }
