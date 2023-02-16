@@ -15,9 +15,10 @@ double ELEC_evolve::td_force_dt;
 int ELEC_evolve::td_val_elec_01;
 int ELEC_evolve::td_val_elec_02;
 int ELEC_evolve::td_val_elec_03;
-int ELEC_evolve::td_vext;
-int ELEC_evolve::td_vext_dire;
-int ELEC_evolve::out_dipole;
+bool ELEC_evolve::td_vext;
+std::vector<int> ELEC_evolve::td_vext_dire_case;
+bool ELEC_evolve::out_dipole;
+bool ELEC_evolve::out_efield;
 double ELEC_evolve::td_print_eij; // the threshold to output Eij elements
 int ELEC_evolve::td_edm; // 0: new edm method   1: old edm method
 

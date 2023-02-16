@@ -19,26 +19,30 @@ void PW_Basis_K:: real2recip(const std::complex<FPTYPE> * in, std::complex<FPTYP
     ModuleBase::timer::tick(this->classname, "real2recip");
 
     assert(this->gamma_only == false);
-    for(int ir = 0 ; ir < this->nrxx ; ++ir)
+    auto* auxr = this->ft.get_auxr_data<FPTYPE>();
+    for (int ir = 0; ir < this->nrxx; ++ir)
     {
-        this->ft.get_auxr_data<FPTYPE>()[ir] = in[ir];
+        auxr[ir] = in[ir];
     }
     this->ft.fftxyfor(ft.get_auxr_data<FPTYPE>(),ft.get_auxr_data<FPTYPE>());
 
     this->gatherp_scatters(this->ft.get_auxr_data<FPTYPE>(), this->ft.get_auxg_data<FPTYPE>());
-    
+
     this->ft.fftzfor(ft.get_auxg_data<FPTYPE>(), ft.get_auxg_data<FPTYPE>());
 
     const int startig = ik*this->npwk_max;
     const int npwk = this->npwk[ik];
+    auto* auxg = this->ft.get_auxg_data<FPTYPE>();
     if(add) {
-        for (int igl = 0; igl < npwk; ++igl) {
-            out[igl] += factor / FPTYPE(this->nxyz) * this->ft.get_auxg_data<FPTYPE>()[this->igl2isz_k[igl + startig]];
+        for (int igl = 0; igl < npwk; ++igl)
+        {
+            out[igl] += factor / FPTYPE(this->nxyz) * auxg[this->igl2isz_k[igl + startig]];
         }
     }
     else {
-        for (int igl = 0; igl < npwk; ++igl) {
-            out[igl] = this->ft.get_auxg_data<FPTYPE>()[this->igl2isz_k[igl + startig]] / FPTYPE(this->nxyz);
+        for (int igl = 0; igl < npwk; ++igl)
+        {
+            out[igl] = auxg[this->igl2isz_k[igl + startig]] / FPTYPE(this->nxyz);
         }
     }
     ModuleBase::timer::tick(this->classname, "real2recip");
@@ -72,21 +76,22 @@ void PW_Basis_K:: real2recip(const FPTYPE * in, std::complex<FPTYPE> * out, cons
     this->ft.fftxyr2c(ft.get_rspace_data<FPTYPE>(),ft.get_auxr_data<FPTYPE>());
 
     this->gatherp_scatters(this->ft.get_auxr_data<FPTYPE>(), this->ft.get_auxg_data<FPTYPE>());
-    
+
     this->ft.fftzfor(ft.get_auxg_data<FPTYPE>(),ft.get_auxg_data<FPTYPE>());
 
     const int startig = ik*this->npwk_max;
     const int npwk = this->npwk[ik];
+    auto* auxg = this->ft.get_auxg_data<FPTYPE>();
     if(add)
-    for(int igl = 0 ; igl < npwk ; ++igl)
-    {
-        out[igl] += factor / FPTYPE(this->nxyz) * this->ft.get_auxg_data<FPTYPE>()[this->igl2isz_k[igl+startig]];
-    }
+        for (int igl = 0;igl < npwk; ++igl)
+        {
+            out[igl] += factor / FPTYPE(this->nxyz) * auxg[this->igl2isz_k[igl + startig]];
+        }
     else
-    for(int igl = 0 ; igl < npwk ; ++igl)
-    {
-        out[igl] = this->ft.get_auxg_data<FPTYPE>()[this->igl2isz_k[igl+startig]] / FPTYPE(this->nxyz);
-    }
+        for (int igl = 0; igl < npwk; ++igl)
+        {
+            out[igl] = auxg[this->igl2isz_k[igl + startig]] / FPTYPE(this->nxyz);
+        }
     ModuleBase::timer::tick(this->classname, "real2recip");
     return;
 }
@@ -105,24 +110,28 @@ void PW_Basis_K:: recip2real(const std::complex<FPTYPE> * in, std::complex<FPTYP
 
     const int startig = ik*this->npwk_max;
     const int npwk = this->npwk[ik];
-    for(int igl = 0 ; igl < npwk ; ++igl)
+    auto* auxg = this->ft.get_auxg_data<FPTYPE>();
+    for (int igl = 0; igl < npwk; ++igl)
     {
-        this->ft.get_auxg_data<FPTYPE>()[this->igl2isz_k[igl+startig]] = in[igl];
+        auxg[this->igl2isz_k[igl+startig]] = in[igl];
     }
     this->ft.fftzbac(ft.get_auxg_data<FPTYPE>(), ft.get_auxg_data<FPTYPE>());
 
     this->gathers_scatterp(this->ft.get_auxg_data<FPTYPE>(),this->ft.get_auxr_data<FPTYPE>());
 
     this->ft.fftxybac(ft.get_auxr_data<FPTYPE>(),ft.get_auxr_data<FPTYPE>());
-    
+
+    auto* auxr = this->ft.get_auxr_data<FPTYPE>();
     if(add) {
-        for (int ir = 0; ir < this->nrxx; ++ir) {
-            out[ir] += factor * this->ft.get_auxr_data<FPTYPE>()[ir];
+        for (int ir = 0; ir < this->nrxx; ++ir)
+        {
+            out[ir] += factor * auxr[ir];
         }
     }
     else {
-        for (int ir = 0; ir < this->nrxx; ++ir) {
-            out[ir] = this->ft.get_auxr_data<FPTYPE>()[ir];
+        for (int ir = 0; ir < this->nrxx; ++ir)
+        {
+            out[ir] = auxr[ir];
         }
     }
     ModuleBase::timer::tick(this->classname, "recip2real");
@@ -142,12 +151,13 @@ void PW_Basis_K:: recip2real(const std::complex<FPTYPE> * in, FPTYPE * out, cons
 
     const int startig = ik*this->npwk_max;
     const int npwk = this->npwk[ik];
-    for(int igl = 0 ; igl < npwk ; ++igl)
+    auto* auxg = this->ft.get_auxg_data<FPTYPE>();
+    for (int igl = 0; igl < npwk; ++igl)
     {
-        this->ft.get_auxg_data<FPTYPE>()[this->igl2isz_k[igl+startig]] = in[igl];
+        auxg[this->igl2isz_k[igl + startig]] = in[igl];
     }
     this->ft.fftzbac(ft.get_auxg_data<FPTYPE>(), ft.get_auxg_data<FPTYPE>());
-    
+
     this->gathers_scatterp(this->ft.get_auxg_data<FPTYPE>(), this->ft.get_auxr_data<FPTYPE>());
 
     this->ft.fftxyc2r(ft.get_auxr_data<FPTYPE>(),ft.get_rspace_data<FPTYPE>());
@@ -159,19 +169,23 @@ void PW_Basis_K:: recip2real(const std::complex<FPTYPE> * in, FPTYPE * out, cons
 
     // r2c in place
     const int npy = this->ny * this->nplane;
-    if(add) {
-        for (int ix = 0; ix < this->nx; ++ix) {
+    auto* rspace = this->ft.get_rspace_data<FPTYPE>();
+    if (add)
+    {
+        for (int ix = 0; ix < this->nx; ++ix)
+        {
             const int ixpy = ix * npy;
             for (int ipy = 0; ipy < npy; ++ipy) {
-                out[ixpy + ipy] += factor * this->ft.get_rspace_data<FPTYPE>()[ixpy + ipy];
+                out[ixpy + ipy] += factor * rspace[ixpy + ipy];
             }
         }
     }
     else {
-        for (int ix = 0; ix < this->nx; ++ix) {
+        for (int ix = 0; ix < this->nx; ++ix)
+        {
             const int ixpy = ix * npy;
             for (int ipy = 0; ipy < npy; ++ipy) {
-                out[ixpy + ipy] = this->ft.get_rspace_data<FPTYPE>()[ixpy + ipy];
+                out[ixpy + ipy] = rspace[ixpy + ipy];
             }
         }
     }

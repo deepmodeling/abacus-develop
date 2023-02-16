@@ -70,6 +70,59 @@ void Gint::gint_kernel_vlocal(
 	return;
 }
 
+void Gint::gint_kernel_dvlocal(
+	const int na_grid,
+	const int grid_index,
+	const double delta_r,
+	double* vldr3,
+	const int LD_pool,
+	double* pvdpRx,
+	double* pvdpRy,
+	double* pvdpRz)
+{
+	//prepare block information
+	int * block_iw, * block_index, * block_size;
+	bool** cal_flag;
+	Gint_Tools::get_block_info(na_grid, grid_index, block_iw, block_index, block_size, cal_flag);
+	
+	//evaluate psi and dpsi on grids
+	Gint_Tools::Array_Pool<double> psir_ylm(GlobalC::bigpw->bxyz, LD_pool);
+	Gint_Tools::Array_Pool<double> dpsir_ylm_x(GlobalC::bigpw->bxyz, LD_pool);
+	Gint_Tools::Array_Pool<double> dpsir_ylm_y(GlobalC::bigpw->bxyz, LD_pool);
+	Gint_Tools::Array_Pool<double> dpsir_ylm_z(GlobalC::bigpw->bxyz, LD_pool);
+
+	Gint_Tools::cal_dpsir_ylm(na_grid, grid_index, delta_r,	block_index, block_size, cal_flag,
+		psir_ylm.ptr_2D, dpsir_ylm_x.ptr_2D, dpsir_ylm_y.ptr_2D, dpsir_ylm_z.ptr_2D);
+
+	//calculating f_mu(r) = v(r)*psi_mu(r)*dv
+	const Gint_Tools::Array_Pool<double> psir_vlbr3 = Gint_Tools::get_psir_vlbr3(
+			na_grid, LD_pool, block_index, cal_flag, vldr3, psir_ylm.ptr_2D);
+
+	//integrate (psi_mu*v(r)*dv) * psi_nu on grid
+	//and accumulates to the corresponding element in Hamiltonian
+	this->cal_meshball_vlocal_k(
+		na_grid, LD_pool, grid_index, block_size, block_index, block_iw, cal_flag,
+		psir_vlbr3.ptr_2D, dpsir_ylm_x.ptr_2D, pvdpRx);
+	this->cal_meshball_vlocal_k(
+		na_grid, LD_pool, grid_index, block_size, block_index, block_iw, cal_flag,
+		psir_vlbr3.ptr_2D, dpsir_ylm_y.ptr_2D, pvdpRy);
+	this->cal_meshball_vlocal_k(
+		na_grid, LD_pool, grid_index, block_size, block_index, block_iw, cal_flag,
+		psir_vlbr3.ptr_2D, dpsir_ylm_z.ptr_2D, pvdpRz);
+
+    //release memories
+	delete[] block_iw;
+	delete[] block_index;
+	delete[] block_size;
+	for(int ib=0; ib<GlobalC::bigpw->bxyz; ++ib)
+	{
+		delete[] cal_flag[ib];
+	}
+	delete[] cal_flag;
+
+	return;
+}
+
 void Gint::gint_kernel_vlocal_meta(
 	const int na_grid,
 	const int grid_index,

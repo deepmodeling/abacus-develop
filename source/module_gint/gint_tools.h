@@ -10,7 +10,7 @@
 
 namespace Gint_Tools
 {
-    enum class job_type{vlocal, rho, force, tau, vlocal_meta, force_meta};
+    enum class job_type{vlocal, rho, force, tau, vlocal_meta, force_meta, dvlocal};
 	//Hamiltonian, electron density, force, kinetic energy density, Hamiltonian for mGGA
 }
 

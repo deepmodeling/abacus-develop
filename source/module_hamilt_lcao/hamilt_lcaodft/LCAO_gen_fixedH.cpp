@@ -299,8 +299,8 @@ typedef std::tuple<int,int,int,int> key_tuple;
 #include "record_adj.h" //mohan add 2012-07-06
 void LCAO_gen_fixedH::build_Nonlocal_mu_new(double* NLloc, const bool &calc_deri)
 {
-    ModuleBase::TITLE("LCAO_gen_fixedH","build_Nonlocal_mu_new");
-    ModuleBase::timer::tick("LCAO_gen_fixedH", "build_Nonlocal_mu_new");
+    ModuleBase::TITLE("LCAO_gen_fixedH","b_NL_mu_new");
+    ModuleBase::timer::tick("LCAO_gen_fixedH", "b_NL_mu_new");
     const Parallel_Orbitals* pv = this->LM->ParaV;
 
 	// < phi1 | beta > < beta | phi2 >
@@ -758,14 +758,14 @@ void LCAO_gen_fixedH::build_Nonlocal_mu_new(double* NLloc, const bool &calc_deri
 		}
 	}
 
-	ModuleBase::timer::tick ("LCAO_gen_fixedH","build_Nonlocal_mu_new");
+	ModuleBase::timer::tick ("LCAO_gen_fixedH","b_NL_mu_new");
 	return;
 }
 
 void LCAO_gen_fixedH::build_Nonlocal_beta_new(double* HSloc) //update by liuyu 2021-04-07
 {
-    ModuleBase::TITLE("LCAO_gen_fixedH","build_Nonlocal_beta_new");
-    ModuleBase::timer::tick ("LCAO_gen_fixedH","build_Nonlocal_beta_new");
+    ModuleBase::TITLE("LCAO_gen_fixedH","b_NL_beta_new");
+    ModuleBase::timer::tick ("LCAO_gen_fixedH","b_NL_beta_new");
 
 	const Parallel_Orbitals* pv = this->LM->ParaV;
 
@@ -977,6 +977,6 @@ void LCAO_gen_fixedH::build_Nonlocal_beta_new(double* HSloc) //update by liuyu 2
     mkl_set_num_threads(mkl_threads);
 #endif
 	
-    ModuleBase::timer::tick ("LCAO_gen_fixedH","build_Nonlocal_beta_new");
+    ModuleBase::timer::tick ("LCAO_gen_fixedH","b_NL_beta_new");
 	return;
 }

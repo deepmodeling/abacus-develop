@@ -16,8 +16,8 @@ std::vector<double> Conv_Coulomb_Pot_K::cal_psi_hf(const std::vector<double> &ps
                                                    const std::vector<double> &k_radial,
                                                    const double omega = 0)
 {	
-    double Rc = pow(0.75 * GlobalC::kv.nks * GlobalC::ucell.omega / (ModuleBase::PI), 0.3333334);
-   // cout << "hf_Rc:  " << Rc << endl;
+    const int nspin0 = (GlobalV::NSPIN==2) ? 2 : 1;
+    const double Rc = std::pow(0.75 * GlobalC::kv.nks/nspin0 * GlobalC::ucell.omega / (ModuleBase::PI), 1.0/3.0);
     std::vector<double> psik2_ccp(psif.size());
     for (size_t ik = 0; ik < psif.size(); ++ik)
         psik2_ccp[ik] = ModuleBase::FOUR_PI * psif[ik] * (1 - std::cos(k_radial[ik] * Rc));
