@@ -384,16 +384,17 @@ class Input
     int td_val_elec_01; // valence electron 01
     int td_val_elec_02; // valence electron 02
     int td_val_elec_03; // valence electron 03
-    int td_vext; // add extern potential or not
-    int td_vext_dire; // vext direction
-    int out_dipole; // output the dipole or not
+    bool td_vext; // add extern potential or not
+    std::string td_vext_dire; // vext direction
+    bool out_dipole; // output the dipole or not
+    bool out_efield; // output the efield or not
 
     double td_print_eij; // threshold to output Eij elements
     int td_edm; //0: new edm method   1: old edm method
 
     int td_stype ; //type of space domain  0 : length gauge  1: velocity gauge
 
-    int td_ttype ; //type of time domain
+    std::string td_ttype ; //type of time domain
     //  0  Gauss type function.
     //  1  trapezoid type function.
     //  2  Trigonometric functions, sin^2.
@@ -412,40 +413,40 @@ class Input
     // time domain parameters
 
     // Gauss
-    double td_gauss_freq ; // time(fs)^-1 
-    double td_gauss_phase ;
-    double td_gauss_sigma ; // time(fs)
-    double td_gauss_t0 ;
-    double td_gauss_amp ;  // V/A
+    std::string td_gauss_freq ; // time(fs)^-1 
+    std::string td_gauss_phase ;
+    std::string td_gauss_sigma ; // time(fs)
+    std::string td_gauss_t0 ;
+    std::string td_gauss_amp ;  // V/A
 
     // trapezoid
-    double td_trape_freq ; // time(fs)^-1 
-    double td_trape_phase ;
-    double td_trape_t1 ;
-    double td_trape_t2 ;
-    double td_trape_t3 ;
-    double td_trape_amp ; // V/A
+    std::string td_trape_freq ; // time(fs)^-1 
+    std::string td_trape_phase ;
+    std::string td_trape_t1 ;
+    std::string td_trape_t2 ;
+    std::string td_trape_t3 ;
+    std::string td_trape_amp ; // V/A
 
     // Trigonometric
-    double td_trigo_freq1 ; // time(fs)^-1 
-    double td_trigo_freq2 ; // time(fs)^-1 
-    double td_trigo_phase1 ;
-    double td_trigo_phase2 ;
-    double td_trigo_amp ; // V/A
+    std::string td_trigo_freq1 ; // time(fs)^-1 
+    std::string td_trigo_freq2 ; // time(fs)^-1 
+    std::string td_trigo_phase1 ;
+    std::string td_trigo_phase2 ;
+    std::string td_trigo_amp ; // V/A
 
     // Heaviside
-    double td_heavi_t0;
-    double td_heavi_amp ; // V/A
+    std::string td_heavi_t0;
+    std::string td_heavi_amp ; // V/A
 
     // HHG
-    double td_hhg_amp1; // V/A
-    double td_hhg_amp2; // V/A
-    double td_hhg_freq1; // time(fs)^-1 
-    double td_hhg_freq2; // time(fs)^-1 
-    double td_hhg_phase1;
-    double td_hhg_phase2;
-    double td_hhg_t0;
-    double td_hhg_sigma; // time(fs)
+    // std::string td_hhg_amp1; // V/A
+    // std::string td_hhg_amp2; // V/A
+    // std::string td_hhg_freq1; // time(fs)^-1 
+    // std::string td_hhg_freq2; // time(fs)^-1 
+    // std::string td_hhg_phase1;
+    // std::string td_hhg_phase2;
+    // std::string td_hhg_t0;
+    // std::string td_hhg_sigma; // time(fs)
 
     //==========================================================
     // restart
@@ -490,11 +491,6 @@ class Input
 
     string deepks_model; // needed when deepks_scf=1
 
-    // the following 3 are used when generating jle.orb
-    int bessel_lmax; // lmax used in descriptor, mohan added 2021-01-03
-    double bessel_rcut;
-    double bessel_tol;
-
     //==========================================================
     //    implicit solvation model       Menglin Sun added on 2022-04-04
     //==========================================================
@@ -522,6 +518,24 @@ class Input
     int of_full_pw_dim; // If of_full_pw = 1, the dimention of FFT will be testricted to be (0) either odd or even; (1) odd only; (2) even only.
     bool of_read_kernel; // If set to 1, the kernel of WT KEDF will be filled from file of_kernel_file, not from formula. Only usable for WT KEDF.
     string of_kernel_file; // The name of WT kernel file.
+
+    //==========================================================
+    // spherical bessel  Peize Lin added on 2022-12-15
+    //==========================================================
+    // the following are used when generating orb_matrix.dat
+		//int		bessel_nao_lmax;		// lmax used in descriptor
+	bool	bessel_nao_smooth;		// spherical bessel smooth or not
+	double	bessel_nao_sigma;		// spherical bessel smearing_sigma
+	string	bessel_nao_ecut;		// energy cutoff for spherical bessel functions(Ry)
+	double	bessel_nao_rcut;		// radial cutoff for spherical bessel functions(a.u.)
+	double	bessel_nao_tolerence;	// tolerence for spherical bessel root
+    // the following are used when generating jle.orb
+	int		bessel_descriptor_lmax;			// lmax used in descriptor
+	bool	bessel_descriptor_smooth;		// spherical bessel smooth or not
+	double	bessel_descriptor_sigma;		// spherical bessel smearing_sigma
+	string	bessel_descriptor_ecut;			// energy cutoff for spherical bessel functions(Ry)
+	double	bessel_descriptor_rcut;			// radial cutoff for spherical bessel functions(a.u.)
+	double	bessel_descriptor_tolerence;	// tolerence for spherical bessel root
 
     //==========================================================
     //    device control denghui added on 2022-11-15

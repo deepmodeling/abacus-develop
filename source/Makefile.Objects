@@ -193,7 +193,9 @@ OBJS_GINT=gint.o\
       gint_vl.o\
       gint_k_env.o\
       gint_k_sparse.o\
+      gint_k_sparse1.o\
       gint_k_pvpr.o\
+      gint_k_pvdpr.o\
       gint_tools.o\
       grid_bigcell.o\
       grid_meshball.o\
@@ -336,8 +338,8 @@ OBJS_IO=input.o\
     berryphase.o\
     bessel_basis.o\
     cal_test.o\
-    write_occ.o\
     write_dos_pw.o\
+    nscf_band.o\
     dos.o\
     numerical_descriptor.o\
     numerical_basis.o\
@@ -352,11 +354,15 @@ OBJS_IO=input.o\
     winput.o\
     write_input.o\
     write_rho.o\
+    write_dipole.o\
     write_wfc_r.o\
 
 OBJS_IO_LCAO=cal_r_overlap_R.o\
       write_orb_info.o\
       write_dos_lcao.o\
+      write_proj_band_lcao.o\
+      write_istate_info.o\
+      nscf_fermi_surf.o\
       istate_charge.o\
       istate_envelope.o\
       mulliken_charge.o\

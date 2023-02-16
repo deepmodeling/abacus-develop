@@ -4,6 +4,7 @@
 #include "module_base/constants.h"
 #include "module_base/timer.h"
 #include "module_hamilt_lcao/module_tddft/ELEC_evolve.h"
+#include "module_io/input_conv.h"
 
 namespace elecstate
 {
@@ -25,7 +26,7 @@ void H_TDDFT_pw::cal_fixed_v(double* vl_pseudo)
     read_parameters(&INPUT);
 
     // judgement to skip vext
-    if (ELEC_evolve::td_vext == 0 || istep > tend || istep < tstart)
+    if (!ELEC_evolve::td_vext || istep > tend || istep < tstart)
     {
         return;
     }
@@ -33,28 +34,48 @@ void H_TDDFT_pw::cal_fixed_v(double* vl_pseudo)
 
     ModuleBase::timer::tick("H_TDDFT_pw", "cal_fixed_v");
 
-    double* vext_space = new double[this->rho_basis_->nrxx];
-    double vext_time = 0.0;
+    int count = 0;
 
-    cal_v_space(vext_space);
-    vext_time = cal_v_time();
-
-    for (int ir = 0; ir < this->rho_basis_->nrxx; ++ir)
+    for (auto direc: ELEC_evolve::td_vext_dire_case)
     {
-        vl_pseudo[ir] += vext_space[ir] * vext_time;
-    }
+        std::vector<double> vext_space(this->rho_basis_->nrxx, 0.0);
+        double vext_time = cal_v_time(ttype[count]); 
 
-    delete[] vext_space;
+        if (ELEC_evolve::out_efield && GlobalV::MY_RANK == 0)
+        {
+            std::stringstream as;
+            as << GlobalV::global_out_dir << "efield_"<<count<<".dat";
+            std::ofstream ofs(as.str().c_str(), std::ofstream::app);
+            ofs << H_TDDFT_pw::istep*dt*ModuleBase::AU_to_FS << "\t" << vext_time <<endl;
+            ofs.close();
+        }
+
+        cal_v_space(vext_space, direc); 
+        for (size_t ir = 0; ir < this->rho_basis_->nrxx; ++ir)
+            vl_pseudo[ir] += vext_space[ir] * vext_time;
+        count++;
+    }
 
     ModuleBase::timer::tick("H_TDDFT_pw", "cal_fixed_v");
     return;
+}
+
+std::vector<double> H_TDDFT_pw::set_parameters(std::string params, double c)
+{
+    std::vector<double> params_ori;
+    std::vector<double> params_out;
+    Input_Conv::parse_expression(params, params_ori);
+    for (auto param: params_ori)
+        params_out.emplace_back(param * c);
+
+    return params_out;
 }
 
 void H_TDDFT_pw::read_parameters(Input *in)
 {
     stype = in->td_stype;
 
-    ttype = in->td_ttype;
+    Input_Conv::parse_expression(in->td_ttype, ttype);
 
     tstart = in->td_tstart;
     tend = in->td_tend;
@@ -70,45 +91,50 @@ void H_TDDFT_pw::read_parameters(Input *in)
     // time domain parameters
 
     // Gauss
-    gauss_omega = 2 * ModuleBase::PI * ModuleBase::AU_to_FS * in->td_gauss_freq; // time(a.u.)^-1
-    gauss_phase = in->td_gauss_phase;
-    gauss_sigma2 = in->td_gauss_sigma * in->td_gauss_sigma / (ModuleBase::AU_to_FS * ModuleBase::AU_to_FS);
-    gauss_t0 = in->td_gauss_t0;
-    gauss_amp = ModuleBase::BOHR_TO_A / ModuleBase::Ry_to_eV * in->td_gauss_amp; // Ry/bohr
+    gauss_count = 0;
+    gauss_omega = set_parameters(in->td_gauss_freq, 2 * ModuleBase::PI * ModuleBase::AU_to_FS); // time(a.u.)^-1
+    gauss_phase = set_parameters(in->td_gauss_phase, 1.0);
+    gauss_sigma = set_parameters(in->td_gauss_sigma, 1/ModuleBase::AU_to_FS);
+    gauss_t0 = set_parameters(in->td_gauss_t0, 1.0);
+    gauss_amp = set_parameters(in->td_gauss_amp, ModuleBase::BOHR_TO_A / ModuleBase::Ry_to_eV); // Ry/bohr
 
     // trapezoid
-    trape_omega = 2 * ModuleBase::PI * ModuleBase::AU_to_FS * in->td_trape_freq; // time(a.u.)^-1
-    trape_phase = in->td_trape_phase;
-    trape_t1 = in->td_trape_t1;
-    trape_t2 = in->td_trape_t2;
-    trape_t3 = in->td_trape_t3;
-    trape_amp = ModuleBase::BOHR_TO_A / ModuleBase::Ry_to_eV * in->td_trape_amp; // Ry/bohr
+    trape_count = 0;
+    trape_omega = set_parameters(in->td_trape_freq, 2 * ModuleBase::PI * ModuleBase::AU_to_FS); // time(a.u.)^-1
+    trape_phase = set_parameters(in->td_trape_phase, 1.0);
+    trape_t1 = set_parameters(in->td_trape_t1, 1.0);
+    trape_t2 = set_parameters(in->td_trape_t2, 1.0);
+    trape_t3 = set_parameters(in->td_trape_t3, 1.0);
+    trape_amp = set_parameters(in->td_trape_amp, ModuleBase::BOHR_TO_A / ModuleBase::Ry_to_eV); // Ry/bohr
 
     // Trigonometric
-    trigo_omega1 = 2 * ModuleBase::PI * ModuleBase::AU_to_FS * in->td_trigo_freq1; // time(a.u.)^-1
-    trigo_omega2 = 2 * ModuleBase::PI * ModuleBase::AU_to_FS * in->td_trigo_freq1; // time(a.u.)^-1
-    trigo_phase1 = in->td_trigo_phase1;
-    trigo_phase2 = in->td_trigo_phase2;
-    trigo_amp = ModuleBase::BOHR_TO_A / ModuleBase::Ry_to_eV * in->td_trigo_amp; // Ry/bohr
+    trigo_count = 0;
+    trigo_omega1 = set_parameters(in->td_trigo_freq1, 2 * ModuleBase::PI * ModuleBase::AU_to_FS); // time(a.u.)^-1
+    trigo_omega2 = set_parameters(in->td_trigo_freq2, 2 * ModuleBase::PI * ModuleBase::AU_to_FS); // time(a.u.)^-1
+    trigo_phase1 = set_parameters(in->td_trigo_phase1, 1.0);
+    trigo_phase2 = set_parameters(in->td_trigo_phase2, 1.0);
+    trigo_amp = set_parameters(in->td_trigo_amp, ModuleBase::BOHR_TO_A / ModuleBase::Ry_to_eV); // Ry/bohr
 
     // Heaviside
-    heavi_t0 = in->td_heavi_t0;
-    heavi_amp = ModuleBase::BOHR_TO_A / ModuleBase::Ry_to_eV * in->td_heavi_amp; // Ry/bohr
+    heavi_count = 0;
+    heavi_t0 = set_parameters(in->td_heavi_t0, 1.0);
+    heavi_amp = set_parameters(in->td_heavi_amp, ModuleBase::BOHR_TO_A / ModuleBase::Ry_to_eV); // Ry/bohr
 
     // HHG
-    hhg_amp1 = ModuleBase::BOHR_TO_A / ModuleBase::Ry_to_eV * in->td_hhg_amp1; // Ry/bohr
-    hhg_amp2 = ModuleBase::BOHR_TO_A / ModuleBase::Ry_to_eV * in->td_hhg_amp2; // Ry/bohr
-    hhg_omega1 = 2 * ModuleBase::PI * ModuleBase::AU_to_FS * in->td_hhg_freq1; // time(a.u.)^-1
-    hhg_omega2 = 2 * ModuleBase::PI * ModuleBase::AU_to_FS * in->td_hhg_freq1; // time(a.u.)^-1
-    hhg_phase1 = in->td_hhg_phase1;
-    hhg_phase2 = in->td_hhg_phase2;
-    hhg_t0 = in->td_hhg_t0;
-    hhg_sigma2 = in->td_hhg_sigma * in->td_hhg_sigma / (ModuleBase::AU_to_FS * ModuleBase::AU_to_FS);
+    // hhg_count = 0;
+    // hhg_amp1 = set_parameters(in->td_hhg_amp1, ModuleBase::BOHR_TO_A / ModuleBase::Ry_to_eV); // Ry/bohr
+    // hhg_amp2 = set_parameters(in->td_hhg_amp2, ModuleBase::BOHR_TO_A / ModuleBase::Ry_to_eV); // Ry/bohr
+    // hhg_omega1 = set_parameters(in->td_hhg_freq1, 2 * ModuleBase::PI * ModuleBase::AU_to_FS); // time(a.u.)^-1
+    // hhg_omega2 = set_parameters(in->td_hhg_freq2, 2 * ModuleBase::PI * ModuleBase::AU_to_FS); // time(a.u.)^-1
+    // hhg_phase1 = set_parameters(in->td_hhg_phase1, 1.0);
+    // hhg_phase2 = set_parameters(in->td_hhg_phase2, 1.0);
+    // hhg_t0 = set_parameters(in->td_hhg_t0, 1.0);
+    // hhg_sigma = set_parameters(in->td_hhg_sigma, 1/ModuleBase::AU_to_FS);
 
     return;
 }
 
-void H_TDDFT_pw::cal_v_space(double* vext_space)
+void H_TDDFT_pw::cal_v_space(std::vector<double> &vext_space, int direc)
 {
     ModuleBase::TITLE("H_TDDFT_pw", "cal_v_space");
     ModuleBase::timer::tick("H_TDDFT_pw", "cal_v_space");
@@ -116,11 +142,11 @@ void H_TDDFT_pw::cal_v_space(double* vext_space)
     switch (stype)
     {
     case 0:
-        cal_v_space_length(vext_space);
+        cal_v_space_length(vext_space, direc);
         break;
 
     case 1:
-        cal_v_space_velocity(vext_space);
+        cal_v_space_velocity(vext_space, direc);
         break;
 
     default:
@@ -132,7 +158,7 @@ void H_TDDFT_pw::cal_v_space(double* vext_space)
     return;
 }
 
-void H_TDDFT_pw::cal_v_space_length(double* vext_space)
+void H_TDDFT_pw::cal_v_space_length(std::vector<double> &vext_space, int direc)
 {
     ModuleBase::TITLE("H_TDDFT_pw", "cal_v_space_length");
     ModuleBase::timer::tick("H_TDDFT_pw", "cal_v_space_length");
@@ -146,7 +172,7 @@ void H_TDDFT_pw::cal_v_space_length(double* vext_space)
         double y = (double)j / this->rho_basis_->ny;
         double z = (double)k / this->rho_basis_->nz;
 
-        switch (ELEC_evolve::td_vext_dire)
+        switch (direc)
         {
         case 1:
             vext_space[ir] = cal_v_space_length_potential(x);
@@ -188,16 +214,16 @@ double H_TDDFT_pw::cal_v_space_length_potential(double i)
     return vext_space;
 }
 
-void H_TDDFT_pw::cal_v_space_velocity(double* vext_space)
+void H_TDDFT_pw::cal_v_space_velocity(std::vector<double> &vext_space, int direc)
 {
     return;
 }
 
-double H_TDDFT_pw::cal_v_time()
+double H_TDDFT_pw::cal_v_time(int t_type)
 {
     double vext_time = 0.0;
 
-    switch (ttype)
+    switch (t_type)
     {
     case 0:
         vext_time = cal_v_time_Gauss();
@@ -211,9 +237,9 @@ double H_TDDFT_pw::cal_v_time()
         vext_time = cal_v_time_heaviside();
         break;
 
-    case 4:
-        vext_time = cal_v_time_HHG();
-        break;
+    // case 4:
+    //     vext_time = cal_v_time_HHG();
+    //     break;
 
     default:
         std::cout << "time_domain_type of electric field is wrong" << endl;
@@ -225,9 +251,15 @@ double H_TDDFT_pw::cal_v_time()
 double H_TDDFT_pw::cal_v_time_Gauss()
 {
     double vext_time = 0.0;
+    double t0 = *(gauss_t0.begin() + gauss_count);
+    double omega = *(gauss_omega.begin() + gauss_count);
+    double sigma = *(gauss_sigma.begin() + gauss_count);
+    double phase = *(gauss_phase.begin() + gauss_count);
+    double amp = *(gauss_amp.begin() + gauss_count);
 
-    double gauss_t = (istep - gauss_t0) * dt;
-    vext_time = cos(gauss_omega * gauss_t + gauss_phase) * exp(-gauss_t * gauss_t * 0.5 / (gauss_sigma2)) * gauss_amp;
+    double gauss_t = (istep - t0) * dt;
+    vext_time = cos(omega * gauss_t + phase) * exp(-gauss_t * gauss_t * 0.5 / (sigma * sigma)) * amp;
+    gauss_count++;
 
     return vext_time;
 }
@@ -235,21 +267,28 @@ double H_TDDFT_pw::cal_v_time_Gauss()
 double H_TDDFT_pw::cal_v_time_trapezoid()
 {
     double vext_time = 0.0;
+    double t1 = *(trape_t1.begin() + trape_count);
+    double t2 = *(trape_t2.begin() + trape_count);
+    double t3 = *(trape_t3.begin() + trape_count);
+    double omega = *(trape_omega.begin() + trape_count);
+    double phase = *(trape_phase.begin() + trape_count);
+    double amp = *(trape_amp.begin() + trape_count);
 
-    if (istep < trape_t1)
+    if (istep < t1)
     {
-        vext_time = istep / trape_t1;
+        vext_time = istep / t1;
     }
-    else if (istep < trape_t2)
+    else if (istep < t2)
     {
         vext_time = 1.0;
     }
-    else if (istep < trape_t3)
+    else if (istep < t3)
     {
-        vext_time = (trape_t3 - istep) / (trape_t3 - trape_t2);
+        vext_time = (t3 - istep) / (t3 - t2);
     }
 
-    vext_time = vext_time * trape_amp * cos(trape_omega * istep * dt + trape_phase);
+    vext_time = vext_time * amp * cos(omega * istep * dt + phase);
+    trape_count++;
 
     return vext_time;
 }
@@ -257,32 +296,53 @@ double H_TDDFT_pw::cal_v_time_trapezoid()
 double H_TDDFT_pw::cal_v_time_trigonometric()
 {
     double vext_time = 0.0;
+    double omega1 = *(trigo_omega1.begin() + trigo_count);
+    double phase1 = *(trigo_phase1.begin() + trigo_count);
+    double omega2 = *(trigo_omega2.begin() + trigo_count);
+    double phase2 = *(trigo_phase2.begin() + trigo_count);
+    double amp = *(trigo_amp.begin() + trigo_count);
 
     const double timenow = istep * dt;
 
-    vext_time = trigo_amp * cos(trigo_omega1 * timenow + trigo_phase1) * sin(trigo_omega2 * timenow + trigo_phase2)
-                * sin(trigo_omega2 * timenow + trigo_phase2);
+    vext_time = amp * cos(omega1 * timenow + phase1) * sin(omega2 * timenow + phase2)
+                * sin(omega2 * timenow + phase2);
+    trigo_count++;
 
     return vext_time;
 }
 
 double H_TDDFT_pw::cal_v_time_heaviside()
 {
-    if (istep < heavi_t0)
-        return heavi_amp;
-    else if (istep >= heavi_t0)
-        return 0.0;
-}
-
-double H_TDDFT_pw::cal_v_time_HHG()
-{
+    double t0 = *(heavi_t0.begin() + heavi_count);
+    double amp = *(heavi_amp.begin() + heavi_count);
     double vext_time = 0.0;
-
-    double hhg_t = (istep - hhg_t0) * dt;
-    vext_time = (cos(hhg_omega1 * hhg_t + hhg_phase1) * hhg_amp1 + cos(hhg_omega2 * hhg_t + hhg_phase2) * hhg_amp2)
-                * exp(-hhg_t * hhg_t * 0.5 / (hhg_sigma2));
+    if (istep < t0)
+        vext_time = amp;
+    else if (istep >= t0)
+        vext_time = 0.0;
+    heavi_count++;
 
     return vext_time;
 }
+
+// double H_TDDFT_pw::cal_v_time_HHG()
+// {
+//     double vext_time = 0.0;
+//     double t0 = *(hhg_t0.begin() + hhg_count);
+//     double omega1 = *(hhg_omega1.begin() + hhg_count);
+//     double phase1 = *(hhg_phase1.begin() + hhg_count);
+//     double omega2 = *(hhg_omega2.begin() + hhg_count);
+//     double phase2 = *(hhg_phase2.begin() + hhg_count);
+//     double amp1 = *(hhg_amp1.begin() + hhg_count);
+//     double amp2 = *(hhg_amp2.begin() + hhg_count);
+//     double sigma = *(trigo_amp2.begin() + trigo_count);
+
+//     double hhg_t = (istep - t0) * dt;
+//     vext_time = (cos(omega1 * hhg_t + phase1) * amp1 + cos(omega2 * hhg_t + phase2) * amp2)
+//                 * exp(-hhg_t * hhg_t * 0.5 / (sigma * sigma));
+//     hhg_count++;
+
+//     return vext_time;
+// }
 
 } // namespace elecstate
