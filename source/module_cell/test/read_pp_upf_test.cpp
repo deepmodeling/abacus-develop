@@ -355,4 +355,68 @@ TEST_F(ReadPPTest, XCWarning)
 	ifs.close();
 	delete upf;
 }
+
+TEST_F(ReadPPTest, VWR)
+{
+	Pseudopot_upf* upf = new Pseudopot_upf;
+	std::ifstream ifs;
+	// this pp file is a vwr type of pp
+	ifs.open("./support/vwr.Si");
+	upf->read_pseudo_vwr(ifs);
+	EXPECT_EQ(upf->xc_func,"PZ");
+	EXPECT_EQ(upf->pp_type,"NC");
+	EXPECT_FALSE(upf->tvanp);
+	EXPECT_EQ(upf->mesh,1073);
+	EXPECT_FALSE(upf->nlcc);
+	EXPECT_EQ(upf->psd,"14");
+	EXPECT_EQ(upf->zp,4);
+	EXPECT_EQ(upf->spd_loc,2);
+	EXPECT_FALSE(upf->has_so);
+	EXPECT_EQ(upf->iTB_s,1);
+	EXPECT_EQ(upf->iTB_p,1);
+	EXPECT_EQ(upf->iTB_d,0);
+	EXPECT_EQ(upf->nwfc,2);
+	EXPECT_DOUBLE_EQ(upf->oc[0],2);
+	EXPECT_DOUBLE_EQ(upf->oc[1],2);
+	EXPECT_EQ(upf->lchi[0],0);
+	EXPECT_EQ(upf->lchi[1],1);
+	EXPECT_EQ(upf->els[0],"S");
+	EXPECT_EQ(upf->els[1],"P");
+	EXPECT_DOUBLE_EQ(upf->r[0],.22270617E-05);
+	EXPECT_DOUBLE_EQ(upf->r[upf->mesh-1],.11832572E+03);
+	EXPECT_NEAR(upf->rho_at[0],6.18479e-13,1.0e-17);
+	EXPECT_NEAR(upf->rho_at[upf->mesh-1],3.46232e-56,1.0e-60);
+	EXPECT_EQ(upf->nbeta,1);
+	EXPECT_NEAR(upf->beta(0,2),2.67501e-05,1.0e-9);
+	EXPECT_EQ(upf->lll[0],0);
+	ifs.close();
+	delete upf;
+}
+
+TEST_F(ReadPPTest, BLPS)
+{
+	Pseudopot_upf* upf = new Pseudopot_upf;
+	std::ifstream ifs;
+	// this pp file is a vwr type of pp
+	ifs.open("./support/si.lda.lps");
+	GlobalV::DFT_FUNCTIONAL="default";
+	upf->read_pseudo_blps(ifs);
+	EXPECT_FALSE(upf->nlcc);
+	EXPECT_FALSE(upf->tvanp);
+	EXPECT_FALSE(upf->has_so);
+	EXPECT_EQ(upf->nbeta,0);
+	EXPECT_EQ(upf->psd,"Silicon");
+	EXPECT_EQ(upf->zp,4);
+	EXPECT_EQ(upf->lmax,0);
+	EXPECT_EQ(upf->mesh,1601);
+	EXPECT_EQ(upf->xc_func,"PZ");
+	EXPECT_DOUBLE_EQ(upf->r[0],0.0);
+	EXPECT_DOUBLE_EQ(upf->r[upf->mesh-1],16.0);
+	EXPECT_DOUBLE_EQ(upf->vloc[0],2.4189229665506291*2.0);
+	EXPECT_DOUBLE_EQ(upf->vloc[upf->mesh-1],-0.25*2.0);
+	EXPECT_DOUBLE_EQ(upf->rho_at[0],0.25);
+	EXPECT_DOUBLE_EQ(upf->rho_at[upf->mesh-1],0.25);
+	ifs.close();
+	delete upf;
+}
 #undef private
