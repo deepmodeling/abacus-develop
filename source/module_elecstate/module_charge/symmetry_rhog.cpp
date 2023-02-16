@@ -184,7 +184,7 @@ void Symmetry_rho::rhog_piece_to_all(const ModulePW::PW_Basis *rho_basis,
 	std::complex<double>* piece, const int &proc, std::complex<double>* rhog_part) const
 {	//the input proc is local index of proc in pool
 	MPI_Status ierror;
-	MPI_Comm myrank = (GlobalV::ESOLVER_TYPE == "sdft") ? GlobalV::RANK_IN_STOGROUP : GlobalV::MY_RANK;
+	int myrank = (GlobalV::ESOLVER_TYPE == "sdft") ? GlobalV::RANK_IN_STOGROUP : GlobalV::MY_RANK;
 	MPI_Comm commworld = (GlobalV::ESOLVER_TYPE == "sdft") ? STO_WORLD : MPI_COMM_WORLD;
 	
 	if(GlobalV::MY_POOL==0)
