@@ -364,7 +364,7 @@ TEST_F(SymmetryTest, AnalySys)
         symm.gmatrix_convert_int(gmatrix_opt, gmatrix_input_back, symm.nrotk, symm.optlat, ucell.latvec);   //2->3
         symm.gmatrix_convert_int(gmatrix_input_back, gmatrix_opt_back, symm.nrotk, ucell.latvec, symm.optlat); //3->4
         
-        symm.gmatrix_convert(symm.gmatrix, kgmatrix_nonint, symm.nrotk, symm.optlat, ucell.G);
+        symm.gmatrix_convert(symm.gmatrix, kgmatrix_nonint, symm.nrotk, ucell.latvec, ucell.G);
         for (int i=0;i<symm.nrotk;++i)
         {
             EXPECT_NEAR(symm.gmatrix[i].e11, gmatrix_input_back[i].e11, DOUBLETHRESHOLD);
@@ -388,8 +388,8 @@ TEST_F(SymmetryTest, AnalySys)
             
             ModuleBase::Matrix3 tmpA=symm.optlat.Inverse()*gmatrix_opt[i]*symm.optlat; //A^-1*SA*A
             ModuleBase::Matrix3 tmpB=ucell.latvec.Inverse()*symm.gmatrix[i]*ucell.latvec;//B^-1*SB*B
-            ModuleBase::Matrix3 tmpG_int=ucell.G.Inverse()*symm.kgmatrix[i]*ucell.G;//B^-1*SG*G
-            ModuleBase::Matrix3 tmpG=ucell.G.Inverse()*kgmatrix_nonint[i]*ucell.G;//B^-1*SG*G
+            ModuleBase::Matrix3 tmpG_int=ucell.G.Inverse()*symm.kgmatrix[i]*ucell.G;//G^-1*SG*G
+            ModuleBase::Matrix3 tmpG=ucell.G.Inverse()*kgmatrix_nonint[i]*ucell.G;//G^-1*SG*G
             EXPECT_NEAR(tmpA.e11, tmpB.e11, DOUBLETHRESHOLD);
             EXPECT_NEAR(tmpA.e22, tmpB.e22, DOUBLETHRESHOLD);
             EXPECT_NEAR(tmpA.e33, tmpB.e33, DOUBLETHRESHOLD);
@@ -400,7 +400,7 @@ TEST_F(SymmetryTest, AnalySys)
             EXPECT_NEAR(tmpA.e23, tmpB.e23, DOUBLETHRESHOLD);
             EXPECT_NEAR(tmpA.e32, tmpB.e32, DOUBLETHRESHOLD);
 
-            if(!symm.equal(tmpA.e13, tmpG_int.e13))
+            if(!symm.equal(tmpG.e13, tmpG_int.e13) || !symm.equal(tmpG.e23, tmpG_int.e23) || !symm.equal(tmpG.e12, tmpG_int.e12))
             {
                 std::cout<<"stru_ibrav:"<<stru_lib[stru].ibrav<<std::endl;
                 std::cout<<"isymm: "<<i<<std::endl;
