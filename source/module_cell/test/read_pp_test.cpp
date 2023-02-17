@@ -55,6 +55,8 @@
  *     - init_pseudo_reader: actual pseudo reader
  *   - SetEmptyElement
  *     - set_empty_element: used in BSSE calculation
+ *   - SetPseudoType
+ *     - set_pseudo_type: tell it is upf or upf201 from the pp file's header line
  *   - Average
  *     - average_p: modulate the soc effect in pseudopotential
  */
