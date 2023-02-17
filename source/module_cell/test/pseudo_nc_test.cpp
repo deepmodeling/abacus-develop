@@ -8,8 +8,16 @@
 
 /**
  * - Tested Functions:
- *   - ReadUPF100
- *     - read_pseudo_upf
+ *   - pseudo_nc
+ *   - ~pseudo_nc
+ *   - set_pseudo_h
+ *   - set_pseudo_atom
+ *   - set_pseudo_vl
+ *   - set_pseudo_nc
+ *   - print_pseudo_h
+ *   - print_pseudo_atom
+ *   - print_pseudo_vl
+ *   - print_pseudo_nc
  */
 
 #define private public
