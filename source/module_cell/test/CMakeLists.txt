@@ -10,6 +10,13 @@ AddTest(
 )
 
 AddTest(
+  TARGET cell_pseudo_nc
+  LIBS ${math_libs} base device
+  SOURCES pseudo_nc_test.cpp ../pseudo_nc.cpp ../read_pp.cpp ../read_pp_upf201.cpp ../read_pp_upf100.cpp ../read_pp_vwr.cpp ../read_pp_blps.cpp ../../src_parallel/parallel_reduce.cpp ../../src_parallel/parallel_kpoints.cpp ../../src_parallel/parallel_global.cpp ../../src_parallel/parallel_common.cpp ../../module_io/output.cpp
+
+)
+
+AddTest(
   TARGET klist_test
   LIBS ${math_libs} base device
   SOURCES klist_test.cpp ../klist.cpp 
