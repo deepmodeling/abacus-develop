@@ -51,6 +51,10 @@
  *   - Trim
  *     - trim: an iterative function to delete all tab and space in a string
  *     - trimend: trim tab and space and space at two ends of a string
+ *   - InitReader
+ *     - init_pseudo_reader: actual pseudo reader
+ *   - SetEmptyElement
+ *     - set_empty_element: used in BSSE calculation
  *   - Average
  *     - average_p: modulate the soc effect in pseudopotential
  */
