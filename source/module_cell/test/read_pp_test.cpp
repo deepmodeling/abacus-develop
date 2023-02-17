@@ -52,7 +52,7 @@
  *     - trim: an iterative function to delete all tab and space in a string
  *     - trimend: trim tab and space and space at two ends of a string
  *   - Average
- *     - average_p:
+ *     - average_p: modulate the soc effect in pseudopotential
  */
 
 #define private public
