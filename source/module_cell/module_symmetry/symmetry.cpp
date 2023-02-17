@@ -125,7 +125,7 @@ void Symmetry::analy_sys(const UnitCell &ucell, std::ofstream &ofs_running)
          //for( iat =0 ; iat < ucell.nat ; iat++)   
 //         std::cout << " newpos_now = " << newpos[3*iat] << " " << newpos[3*iat+1] << " " << newpos[3*iat+2] << std::endl;
 	test_brav = true; // output the real ibrav and point group
-	this->setgroup(this->symop, this->nop, this->real_brav, cel_const);
+	this->setgroup(this->symop, this->nop, this->real_brav);
 	this->getgroup(this->nrot, this->nrotk, ofs_running);
 	this->pointgroup(this->nrot, this->pgnumber, this->pgname, this->gmatrix, ofs_running);
 	ModuleBase::GlobalFunc::OUT(ofs_running,"POINT GROUP", this->pgname);
