@@ -568,18 +568,18 @@ void K_Vectors::ibz_kpoint(const ModuleSymmetry::Symmetry &symm, bool use_symm,s
         nrotkm = symm.nrotk;// change if inv not included
         for (int i = 0; i < nrotkm; ++i)
         {
-            if (symm.gmatrix[i] == inv)
+            if (symm.kgmatrix[i] == inv)
             {
                 include_inv = true;
             }
-            kgmatrix[i] = symm.gmatrix[i];
+            kgmatrix[i] = symm.kgmatrix[i];
         }
 
         if (!include_inv)
         {
             for (int i = 0; i<symm.nrotk; ++i)
             {
-                kgmatrix[i + symm.nrotk] = inv * symm.gmatrix[i];
+                kgmatrix[i + symm.nrotk] = inv * symm.kgmatrix[i];
             }
             nrotkm = 2 * symm.nrotk;
         }
@@ -635,8 +635,8 @@ void K_Vectors::ibz_kpoint(const ModuleSymmetry::Symmetry &symm, bool use_symm,s
 				// mohan modify 2010-01-30.
 				// mohan modify again 2010-01-31
 				// fix the bug like kvec_d * G; is wrong
-				//kvec_rot = kvec_d[i] * kgmatrix[j]; //wrong for total energy, but correct for nonlocal force.
-				kvec_rot = kgmatrix[j] * kvec_d[i]; //correct for total energy, but wrong for nonlocal force.
+				kvec_rot = kvec_d[i] * kgmatrix[j]; //wrong for total energy, but correct for nonlocal force.
+				//kvec_rot = kgmatrix[j] * kvec_d[i]; //correct for total energy, but wrong for nonlocal force.
 
                 kvec_rot.x = fmod(kvec_rot.x + 100, 1);
                 kvec_rot.y = fmod(kvec_rot.y + 100, 1);
