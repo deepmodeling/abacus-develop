@@ -113,6 +113,11 @@ void Symmetry::analy_sys(const UnitCell &ucell, std::ofstream &ofs_running)
     //a: optimized config
     // find the lattice type accordiing to lattice vectors.
     this->lattice_type(a1,a2,a3,cel_const,ilattname, ucell);
+    GlobalV::ofs_running<<"(for optimal symmetric configuration:)"<<std::endl;
+    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"BRAVAIS TYPE", real_brav);
+    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"BRAVAIS LATTICE NAME", ilattname);
+    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"ibrav", real_brav);
+    Symm_Other::print1(real_brav, cel_const, GlobalV::ofs_running);
   //      std::cout << "a1 = " << a1.x << " " << a1.y << " " << a1.z <<std::endl;
   //      std::cout << "a1 = " << a2.x << " " << a2.y << " " << a2.z <<std::endl;
   //      std::cout << "a1 = " << a3.x << " " << a3.y << " " << a3.z <<std::endl;
@@ -655,11 +660,6 @@ void Symmetry::lattice_type(
     }*/
 
     bravname = get_brav_name(real_brav);
-    GlobalV::ofs_running<<"(for optimal symmetric configuration:)"<<std::endl;
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"BRAVAIS TYPE",real_brav);
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"BRAVAIS LATTICE NAME",bravname);
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"ibrav",real_brav);
-    Symm_Other::print1(real_brav, cel_const, GlobalV::ofs_running);
     return;
 }
 
