@@ -70,6 +70,7 @@
 *   - function scaled_sum()
 *   - function point_mult()
 *   - function complexArrayxAlloc
+*   - overloading of the function scaled_sum(). Does cd3 = c1*cd1 + c2*cd2. c1 and c2 are complex numbers.
 */
 
 //compare two complex by using EXPECT_DOUBLE_EQ()
@@ -478,4 +479,25 @@ TEST_F(ComplexArray_test,xAlloc)
 	EXPECT_EXIT(ModuleBase::complexArrayxAlloc(),::testing::ExitedWithCode(0),"");
 	output = testing::internal::GetCapturedStdout();
 	EXPECT_THAT(output,testing::HasSubstr("Allocation error for complexArray"));
+}
+
+TEST_F(ComplexArray_test,scaled_sum_2)
+{
+    a2 = com1;
+    b2 = com2;
+    scaled_sum(com1,a2,com2,b2,c2);
+    for (int i = 0;i<c2.getSize();++i)
+    {
+        EXPECT_COMPLEX_EQUAL(c2.ptr[i],com1*com1 + com2*com2);
+    }  
+    scaled_sum(comzero,a2,comzero,b2,c2);
+    for (int i = 0;i<c2.getSize();++i)
+    {
+        EXPECT_COMPLEX_EQUAL(c2.ptr[i],0);
+    } 
+    scaled_sum(com3,a2,com3,b2,c2);
+    for (int i = 0;i<c2.getSize();++i)
+    {
+        EXPECT_COMPLEX_EQUAL(c2.ptr[i],com3*com1 + com3*com2);
+    } 
 }
