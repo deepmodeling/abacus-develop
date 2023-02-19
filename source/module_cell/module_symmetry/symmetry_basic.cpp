@@ -19,7 +19,7 @@ Symmetry_Basic::~Symmetry_Basic()
 
 
 // Find the type of bravais lattice.
-std::string Symmetry_Basic::get_brav_name(const int ibrav)
+std::string Symmetry_Basic::get_brav_name(const int ibrav) const
 {
 	switch(ibrav)
 	{
@@ -69,7 +69,7 @@ double Symmetry_Basic::get_translation_vector(const double &x1, const double &x2
 	return t;
 }
 
-void Symmetry_Basic::check_translation(double &x, const double &t)
+void Symmetry_Basic::check_translation(double &x, const double &t) const
 {
 	x += t;
 	//impose the periodic boundary condition
@@ -353,7 +353,7 @@ void Symmetry_Basic::veccon(
 
 
 //generate all point group symmetry operations from the generation group
-void Symmetry_Basic::matrigen(ModuleBase::Matrix3 *symgen, const int ngen, ModuleBase::Matrix3* symop, int &nop)
+void Symmetry_Basic::matrigen(ModuleBase::Matrix3 *symgen, const int ngen, ModuleBase::Matrix3* symop, int &nop) const
 {
 	int m1, m2;
 	int n;
@@ -526,7 +526,7 @@ void Symmetry_Basic::matrigen(ModuleBase::Matrix3 *symgen, const int ngen, Modul
 // given in crystal coordinates) 
 // of a lattice with some arbitrary basis (atomic arrangement).
 //--------------------------------------------------------------
-void Symmetry_Basic::setgroup(ModuleBase::Matrix3* symop, int &nop, const int &ibrav)
+void Symmetry_Basic::setgroup(ModuleBase::Matrix3* symop, int &nop, const int &ibrav) const
 {
 	if(GlobalV::test_symmetry) ModuleBase::TITLE("Symmetry_Basic","setgroup");
 

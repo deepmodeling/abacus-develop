@@ -56,10 +56,8 @@ void Symmetry::analy_sys(const UnitCell &ucell, std::ofstream &ofs_running)
 
     // atom positions
     // used in checksym.
-    dirpos = new double[3*nat];
 	newpos = new double[3*nat];
     rotpos = new double[3*nat];
-    ModuleBase::GlobalFunc::ZEROS(dirpos, 3*nat);
 	ModuleBase::GlobalFunc::ZEROS(newpos, 3*nat);
     ModuleBase::GlobalFunc::ZEROS(rotpos, 3*nat);
 
@@ -77,7 +75,6 @@ void Symmetry::analy_sys(const UnitCell &ucell, std::ofstream &ofs_running)
 
 	output::printM3(ofs_running,"LATTICE VECTORS: (CARTESIAN COORDINATE: IN UNIT OF A0)",latvec1);
 
-    int count = 0;
     istart[0] = 0;
     this->itmin_type = 0;
     this->itmin_start = 0;
@@ -94,16 +91,6 @@ void Symmetry::analy_sys(const UnitCell &ucell, std::ofstream &ofs_running)
             this->itmin_type = it;
             this->itmin_start = istart[it];
         }
-
-        ModuleBase::Vector3<double> vec;
-        for (int ia = 0; ia < ucell.atoms[it].na; ++ia)
-        {
-            dirpos[3*count + 0] = atom->taud[ia].x;
-            dirpos[3*count + 1] = atom->taud[ia].y;
-            dirpos[3*count + 2] = atom->taud[ia].z;
-//            std::cout << " atom.taud = " << atom->taud[ia].x << " "<<atom->taud[ia].y<<" "<<atom->taud[ia].z<<std::endl;
-            ++count;
-        }
     }
     //s: input config
     s1 = a1;
@@ -112,7 +99,9 @@ void Symmetry::analy_sys(const UnitCell &ucell, std::ofstream &ofs_running)
 
     //a: optimized config
     // find the lattice type accordiing to lattice vectors.
-    this->lattice_type(a1,a2,a3,cel_const,ilattname, ucell);
+    this->lattice_type(this->a1, this->a2, this->a3, this->s1, this->s2, this->s3, 
+             this->cel_const, this->pre_const, this->real_brav, ilattname, ucell, true, this->newpos);
+             
     GlobalV::ofs_running<<"(for optimal symmetric configuration:)"<<std::endl;
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"BRAVAIS TYPE", real_brav);
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"BRAVAIS LATTICE NAME", ilattname);
@@ -125,7 +114,6 @@ void Symmetry::analy_sys(const UnitCell &ucell, std::ofstream &ofs_running)
 	optlat.e21 = a2.x; optlat.e22 = a2.y; optlat.e23 = a2.z;
 	optlat.e31 = a3.x; optlat.e32 = a3.y; optlat.e33 = a3.z;
 
-	this->change_lattice();
     this->pricell(this->newpos);         // pengfei Li 2018-05-14 
          //for( iat =0 ; iat < ucell.nat ; iat++)   
 //         std::cout << " newpos_now = " << newpos[3*iat] << " " << newpos[3*iat+1] << " " << newpos[3*iat+2] << std::endl;
@@ -139,13 +127,12 @@ void Symmetry::analy_sys(const UnitCell &ucell, std::ofstream &ofs_running)
 
     //convert gmatrix to reciprocal space
     this->gmatrix_convert_int(gmatrix, kgmatrix, nrotk, optlat, ucell.G);
-
+    
 // convert the symmetry operations from the basis of optimal symmetric configuration 
 // to the basis of input configuration
     this->gmatrix_convert_int(gmatrix, gmatrix, nrotk, optlat, latvec1);
     this->gtrans_convert(gtrans, gtrans, nrotk, optlat, latvec1);
 
-    delete[] dirpos;
 	delete[] newpos;
     delete[] na;
     delete[] rotpos;
@@ -164,8 +151,7 @@ int Symmetry::standard_lat(
     ModuleBase::Vector3<double> &a,
     ModuleBase::Vector3<double> &b,
     ModuleBase::Vector3<double> &c,
-    double *cel_const
-)
+    double *cel_const) const
 {
     static bool first = true;
     // there are only 14 types of Bravais lattice.
@@ -176,7 +162,6 @@ int Symmetry::standard_lat(
 	//----------------------------------------------------
     double volume = 0;
     //the lattice vectors have not been changed
-    change = 0;
 
     const double aa = a * a;
     const double bb = b * b;
@@ -442,10 +427,16 @@ void Symmetry::lattice_type(
     ModuleBase::Vector3<double> &v1,
     ModuleBase::Vector3<double> &v2,
     ModuleBase::Vector3<double> &v3,
+    ModuleBase::Vector3<double> &v01,
+    ModuleBase::Vector3<double> &v02,
+    ModuleBase::Vector3<double> &v03,
     double *cel_const,
+    double *pre_const,
+    int& real_brav,
     std::string &bravname,
-    const UnitCell &ucell
-)
+    const UnitCell &ucell, 
+    bool convert_atoms, 
+    double* newpos)const
 {
     ModuleBase::TITLE("Symmetry","lattice_type");
 //      std::cout << "v1 = " << v1.x << " " << v1.y << " " << v1.z <<std::endl;
@@ -467,9 +458,9 @@ void Symmetry::lattice_type(
 	//-------------------------------------------------
 	// (2) save and copy the original lattice vectors.
 	//-------------------------------------------------
-    s1 = v1;
-    s2 = v2;
-    s3 = v3;
+    v01 = v1;
+    v02 = v2;
+    v03 = v3;
 	
 	//--------------------------------------------
 	// (3) calculate the 'pre_const'
@@ -491,7 +482,7 @@ void Symmetry::lattice_type(
 
     for ( int i = 0; i < 6; ++i)
     {
-        this->pre_const[i] = cel_const[i];
+        pre_const[i] = cel_const[i];
     }
 //        std::cout << "v1 = " << v1.x << " " << v1.y << " " << v1.z <<std::endl;
 //        std::cout << "v2 = " << v2.x << " " << v2.y << " " << v2.z <<std::endl;
@@ -509,7 +500,7 @@ void Symmetry::lattice_type(
 //        std::cout << "a1 = " << v2.x << " " << v2.y << " " << v2.z <<std::endl;
 //        std::cout << "a1 = " << v3.x << " " << v3.y << " " << v3.z <<std::endl;
 
-    this->real_brav = 15;
+    real_brav = 15;
     double temp_const[6];
 
     //then we should find the best lattice vectors to make much easier the determination of the lattice symmetry
@@ -532,7 +523,6 @@ void Symmetry::lattice_type(
 //	GlobalV::ofs_running << " pre_brav=" << pre_brav << std::endl;
 //	GlobalV::ofs_running << " temp_brav=" << temp_brav << std::endl;
 
-
     if ( real_brav < pre_brav)
     {
         //if the symmetry of the new vectors is higher, store the new ones
@@ -543,61 +533,63 @@ void Symmetry::lattice_type(
         q1 = w1;
         q2 = w2;
         q3 = w3;
-        change = 1;
-        GlobalV::ofs_running <<std::endl;
-        GlobalV::ofs_running <<" The lattice vectors have been changed (STRU_SIMPLE.cif)"<<std::endl;
-        GlobalV::ofs_running <<std::endl;
-        int at=0;
-        for(int it=0; it<ucell.ntype; ++it)
+        if(convert_atoms)
         {
-                for(int ia=0; ia<ucell.atoms[it].na; ++ia)
-                {
-                        ModuleBase::Mathzone::Cartesian_to_Direct(ucell.atoms[it].tau[ia].x,
-                                        ucell.atoms[it].tau[ia].y,
-                                        ucell.atoms[it].tau[ia].z,
-                                        q1.x, q1.y, q1.z,
-                                        q2.x, q2.y, q2.z,
-                                        q3.x, q3.y, q3.z,
-                                        newpos[3*at],newpos[3*at+1],newpos[3*at+2]);
-
-//                        std::cout << " newpos_before = " << newpos[3*iat] << " " << newpos[3*iat+1] << " " << newpos[3*iat+2] << std::endl;
-//                      GlobalV::ofs_running << " newpos_before = " << newpos[3*iat] << " " << newpos[3*iat+1] << " " << newpos[3*iat+2] << std::endl;
-                        for(int k=0; k<3; ++k)
-                        {
-                                this->check_translation( newpos[at*3+k], -floor(newpos[at*3+k]));
-                                this->check_boundary( newpos[at*3+k] );
-                        }
-//                        std::cout << " newpos = " << newpos[3*iat] << " " << newpos[3*iat+1] << " " << newpos[3*iat+2] << std::endl;
-
-//                      GlobalV::ofs_running << " newpos = " << newpos[3*iat] << " " << newpos[3*iat+1] << " " << newpos[3*iat+2] << std::endl;
-                        ++at;
-                }
-        }       
-        std::stringstream ss;
-        ss << GlobalV::global_out_dir << "STRU_SIMPLE.cif";
-
-        std::ofstream ofs( ss.str().c_str() );
-        ofs << "Lattice vector  : " << std::endl;
-        ofs << q1.x <<"   "<<q1.y<<"  "<<q1.z<< std::endl;
-        ofs << q2.x <<"   "<<q2.y<<"  "<<q2.z<< std::endl;
-        ofs << q3.x <<"   "<<q3.y<<"  "<<q3.z<< std::endl;
-        ofs << std::endl;
-        ofs << "Direct positions : " << " " << std::endl;
-        ofs << std::endl;
-        at =0;
-        
-        for (int it=0; it<ucell.ntype; it++)
-        {
-            for (int ia=0; ia<ucell.atoms[it].na; ia++)
+            GlobalV::ofs_running <<std::endl;
+            GlobalV::ofs_running <<" The lattice vectors have been changed (STRU_SIMPLE.cif)"<<std::endl;
+            GlobalV::ofs_running <<std::endl;
+            int at=0;
+            for(int it=0; it<ucell.ntype; ++it)
             {
-                 ofs << ucell.atoms[it].label
-                 << " " << newpos[3*at]
-                 << " " << newpos[3*at+1]
-                 << " " << newpos[3*at+2] << std::endl;
-                 at++;
+                    for(int ia=0; ia<ucell.atoms[it].na; ++ia)
+                    {
+                            ModuleBase::Mathzone::Cartesian_to_Direct(ucell.atoms[it].tau[ia].x,
+                                            ucell.atoms[it].tau[ia].y,
+                                            ucell.atoms[it].tau[ia].z,
+                                            q1.x, q1.y, q1.z,
+                                            q2.x, q2.y, q2.z,
+                                            q3.x, q3.y, q3.z,
+                                            newpos[3*at],newpos[3*at+1],newpos[3*at+2]);
+
+    //                        std::cout << " newpos_before = " << newpos[3*iat] << " " << newpos[3*iat+1] << " " << newpos[3*iat+2] << std::endl;
+    //                      GlobalV::ofs_running << " newpos_before = " << newpos[3*iat] << " " << newpos[3*iat+1] << " " << newpos[3*iat+2] << std::endl;
+                            for(int k=0; k<3; ++k)
+                            {
+                                    this->check_translation( newpos[at*3+k], -floor(newpos[at*3+k]));
+                                    this->check_boundary( newpos[at*3+k] );
+                            }
+    //                        std::cout << " newpos = " << newpos[3*iat] << " " << newpos[3*iat+1] << " " << newpos[3*iat+2] << std::endl;
+
+    //                      GlobalV::ofs_running << " newpos = " << newpos[3*iat] << " " << newpos[3*iat+1] << " " << newpos[3*iat+2] << std::endl;
+                            ++at;
+                    }
+            }       
+            std::stringstream ss;
+            ss << GlobalV::global_out_dir << "STRU_SIMPLE.cif";
+
+            std::ofstream ofs( ss.str().c_str() );
+            ofs << "Lattice vector  : " << std::endl;
+            ofs << q1.x <<"   "<<q1.y<<"  "<<q1.z<< std::endl;
+            ofs << q2.x <<"   "<<q2.y<<"  "<<q2.z<< std::endl;
+            ofs << q3.x <<"   "<<q3.y<<"  "<<q3.z<< std::endl;
+            ofs << std::endl;
+            ofs << "Direct positions : " << " " << std::endl;
+            ofs << std::endl;
+            at =0;
+            
+            for (int it=0; it<ucell.ntype; it++)
+            {
+                for (int ia=0; ia<ucell.atoms[it].na; ia++)
+                {
+                    ofs << ucell.atoms[it].label
+                    << " " << newpos[3*at]
+                    << " " << newpos[3*at+1]
+                    << " " << newpos[3*at+2] << std::endl;
+                    at++;
+                }
             }
+            ofs.close();
         }
-        ofs.close();
         // return the optimized lattice in v1, v2, v3
         v1=q1;
         v2=q2;
@@ -611,26 +603,29 @@ void Symmetry::lattice_type(
             cel_const[i] = pre_const[i];
         }
         //newpos also need to be set
-        int at=0;
-        for(int it=0; it<ucell.ntype; ++it)
+        if(convert_atoms)
         {
-            for(int ia=0; ia<ucell.atoms[it].na; ++ia)
+            int at=0;
+            for(int it=0; it<ucell.ntype; ++it)
             {
-                ModuleBase::Mathzone::Cartesian_to_Direct(ucell.atoms[it].tau[ia].x,
-                                ucell.atoms[it].tau[ia].y,
-                                ucell.atoms[it].tau[ia].z,
-                                v1.x, v1.y, v1.z,
-                                v2.x, v2.y, v2.z,
-                                v3.x, v3.y, v3.z,
-                                newpos[3*at],newpos[3*at+1],newpos[3*at+2]);
-                for(int k=0; k<3; ++k)
+                for(int ia=0; ia<ucell.atoms[it].na; ++ia)
                 {
-                        this->check_translation( newpos[at*3+k], -floor(newpos[at*3+k]));
-                        this->check_boundary( newpos[at*3+k] );
+                    ModuleBase::Mathzone::Cartesian_to_Direct(ucell.atoms[it].tau[ia].x,
+                                    ucell.atoms[it].tau[ia].y,
+                                    ucell.atoms[it].tau[ia].z,
+                                    v1.x, v1.y, v1.z,
+                                    v2.x, v2.y, v2.z,
+                                    v3.x, v3.y, v3.z,
+                                    newpos[3*at],newpos[3*at+1],newpos[3*at+2]);
+                    for(int k=0; k<3; ++k)
+                    {
+                            this->check_translation( newpos[at*3+k], -floor(newpos[at*3+k]));
+                            this->check_boundary( newpos[at*3+k] );
+                    }
+                    ++at;
                 }
-                ++at;
-            }
-        }       
+            }       
+        }
     }
 
     /*
@@ -658,35 +653,7 @@ void Symmetry::lattice_type(
 			GlobalV::ofs_running<<" The lattice vectors have been set back!"<<std::endl;
         }
     }*/
-
     bravname = get_brav_name(real_brav);
-    return;
-}
-
-
-void Symmetry::change_lattice(void)
-{
-    //if lattice vectors are changed, do the coordinates conversion
-    if (GlobalV::test_symmetry) ModuleBase::TITLE("Symmetry","change_lattice");
-
-	change = 0;
-
-	//GlobalV::ofs_running << "\n change = " << change;
-    if (change == 1)
-    {
-        this->veccon(dirpos, rotpos, nat, s1, s2, s3, a1, a2, a3);
-        for (int i = 0; i < nat * 3; ++i)
-        {
-            dirpos[i] = rotpos[i];
-        }
-    }
-    else
-    {
-        for (int i = 0; i < nat * 3; ++i)
-        {
-            rotpos[i] = dirpos[i];
-        }
-    }
     return;
 }
 
@@ -1453,7 +1420,7 @@ void Symmetry::rhog_symmetry(std::complex<double> *rhogtot,
                         if(ipw==-1) //not in pw-sphere
                         {
                             //if (std::abs(rhogtot[ipw0].real())>this->epsilon || std::abs(rhogtot[ipw0].imag()>this->epsilon))
-                                //std::cout<<"warnning: ipw0 is in pw-sphere but ipw not !!!"<<std::endl;
+                                //std::cout<<"warning: ipw0 is in pw-sphere but ipw not !!!"<<std::endl;
                             continue;   //else, just skip it
                         }
                         //calculate phase factor
@@ -1716,7 +1683,7 @@ void Symmetry::stress_symmetry(ModuleBase::matrix& sigma, const UnitCell &ucell)
 }
 
 void Symmetry::gmatrix_convert_int(const ModuleBase::Matrix3* sa, ModuleBase::Matrix3* sb, 
-        const int n, const ModuleBase::Matrix3 &a, const ModuleBase::Matrix3 &b)
+        const int n, const ModuleBase::Matrix3 &a, const ModuleBase::Matrix3 &b) const
 {
     auto round = [](double x){return (x>0.0)?floor(x+0.5):ceil(x-0.5);};
     ModuleBase::Matrix3 ai = a.Inverse();
@@ -1737,7 +1704,7 @@ void Symmetry::gmatrix_convert_int(const ModuleBase::Matrix3* sa, ModuleBase::Ma
     }
 }
 void Symmetry::gmatrix_convert(const ModuleBase::Matrix3* sa, ModuleBase::Matrix3* sb, 
-        const int n, const ModuleBase::Matrix3 &a, const ModuleBase::Matrix3 &b)
+        const int n, const ModuleBase::Matrix3 &a, const ModuleBase::Matrix3 &b)const
 {
     ModuleBase::Matrix3 ai = a.Inverse();
     ModuleBase::Matrix3 bi = b.Inverse();
@@ -1747,7 +1714,7 @@ void Symmetry::gmatrix_convert(const ModuleBase::Matrix3* sa, ModuleBase::Matrix
     }
 }
 void Symmetry::gtrans_convert(const ModuleBase::Vector3<double>* va, ModuleBase::Vector3<double>* vb, 
-        const int n, const ModuleBase::Matrix3 &a, const ModuleBase::Matrix3 &b)
+        const int n, const ModuleBase::Matrix3 &a, const ModuleBase::Matrix3 &b)const
 {
     ModuleBase::Matrix3 bi = b.Inverse();
     for (int i=0;i<n;++i)
@@ -1777,7 +1744,7 @@ void Symmetry::gmatrix_invmap(const ModuleBase::Matrix3* s, const int n, int* in
 }
 
 void Symmetry::get_shortest_latvec(ModuleBase::Vector3<double> &a1, 
-        ModuleBase::Vector3<double> &a2, ModuleBase::Vector3<double> &a3)
+        ModuleBase::Vector3<double> &a2, ModuleBase::Vector3<double> &a3) const
 {
     double len1=a1.norm();
     double len2=a2.norm();
@@ -1826,7 +1793,7 @@ void Symmetry::get_shortest_latvec(ModuleBase::Vector3<double> &a1,
 void Symmetry::get_optlat(ModuleBase::Vector3<double> &v1, ModuleBase::Vector3<double> &v2, 
         ModuleBase::Vector3<double> &v3, ModuleBase::Vector3<double> &w1, 
         ModuleBase::Vector3<double> &w2, ModuleBase::Vector3<double> &w3, 
-        int& real_brav, double* cel_const, double* tmp_const)
+        int& real_brav, double* cel_const, double* tmp_const) const
 {
     ModuleBase::Vector3<double> r1, r2, r3;
     double cos1 = 1;
@@ -2007,7 +1974,6 @@ int Symmetry::plat_type(
         q1 = w1;
         q2 = w2;
         q3 = w3;
-        change = 1; 
         // return the optimized lattice in v1, v2, v3
         v1=q1;
         v2=q2;

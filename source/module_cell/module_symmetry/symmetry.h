@@ -34,8 +34,6 @@ public:
 	int itmin_start;
 
 	// direct coordinates of atoms.
-	double *dirpos;
-	// cartesian coordinates of atoms.
 	double *newpos;
 	// positions of atoms after rotation.
 	double *rotpos;
@@ -48,7 +46,6 @@ public:
 	double cel_const[6];
 	double pcel_const[6];	//cel_const of primitive cell
 	double pre_const[6];	//cel_const of input configuration
-	int change; //whether the lattice vectors have been changed
 
 	bool symflag_fft[48];
 	int sym_test;
@@ -76,10 +73,12 @@ public:
 
 	int tab;
 
-	int standard_lat(ModuleBase::Vector3<double> &a,ModuleBase::Vector3<double> &b,ModuleBase::Vector3<double> &c,double *celconst );
+	int standard_lat(ModuleBase::Vector3<double> &a,ModuleBase::Vector3<double> &b,ModuleBase::Vector3<double> &c,double *celconst )const;
 
 	void lattice_type(ModuleBase::Vector3<double> &v1,ModuleBase::Vector3<double> &v2,ModuleBase::Vector3<double> &v3, 
-			double *cel_const,std::string &bravname, const UnitCell &ucell);
+	    	ModuleBase::Vector3<double> &v01, ModuleBase::Vector3<double> &v02, ModuleBase::Vector3<double> &v03,
+			double *cel_const, double* pre_const, int& real_brav, std::string &bravname, const UnitCell &ucell, 
+			bool convert_atoms, double* newpos=nullptr)const;
 
 	void recip(
 			const double a,
@@ -109,12 +108,12 @@ public:
 
 	//convert n rotation-matrices from sa on basis {a1, a2, a3} to sb on basis {b1, b2, b3}
 	void gmatrix_convert(const ModuleBase::Matrix3* sa, ModuleBase::Matrix3* sb, 
-			const int n, const ModuleBase::Matrix3 &a, const ModuleBase::Matrix3 &b);
+			const int n, const ModuleBase::Matrix3 &a, const ModuleBase::Matrix3 &b)const;
 	void gmatrix_convert_int(const ModuleBase::Matrix3* sa, ModuleBase::Matrix3* sb, 
-			const int n, const ModuleBase::Matrix3 &a, const ModuleBase::Matrix3 &b);
+			const int n, const ModuleBase::Matrix3 &a, const ModuleBase::Matrix3 &b)const;
 	//convert n translation-vectors from va on basis {a1, a2, a3} to vb on basis {b1, b2, b3}
 	void gtrans_convert(const ModuleBase::Vector3<double>* va, ModuleBase::Vector3<double>* vb, 
-			const int n, const ModuleBase::Matrix3 &a, const ModuleBase::Matrix3 &b);
+			const int n, const ModuleBase::Matrix3 &a, const ModuleBase::Matrix3 &b)const;
 	void gmatrix_invmap(const ModuleBase::Matrix3* s, const int n, int* invmap);
 	private:
 
@@ -124,11 +123,11 @@ public:
 
 	// to be called in lattice_type and plat_type
 	void get_shortest_latvec(ModuleBase::Vector3<double> &a1, 
-			ModuleBase::Vector3<double> &a2, ModuleBase::Vector3<double> &a3);
+			ModuleBase::Vector3<double> &a2, ModuleBase::Vector3<double> &a3)const;
 	void get_optlat(ModuleBase::Vector3<double> &v1, ModuleBase::Vector3<double> &v2, 
 			ModuleBase::Vector3<double> &v3, ModuleBase::Vector3<double> &w1, 
 			ModuleBase::Vector3<double> &w2, ModuleBase::Vector3<double> &w3, 
-			int& real_brav, double* cel_const, double* tmp_const);
+			int& real_brav, double* cel_const, double* tmp_const)const;
 	// to be called in pricell
 	int plat_type(ModuleBase::Vector3<double> &v1, ModuleBase::Vector3<double> &v2,
     		ModuleBase::Vector3<double> &v3, double *cel_const, std::string &bravname);
