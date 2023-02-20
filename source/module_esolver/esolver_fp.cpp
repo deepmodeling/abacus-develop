@@ -1,6 +1,5 @@
 #include "esolver_fp.h"
 #include "../module_base/global_variable.h"
-#include "../module_base/element_elec_config.h"
 #include "../module_hamilt_pw/hamilt_pwdft/global.h"
 namespace ModuleESolver
 {   ESolver_FP::ESolver_FP()
@@ -20,7 +19,7 @@ namespace ModuleESolver
     }
     void ESolver_FP::Init(Input& inp, UnitCell& cell)
     {
-        this->read_pseudo(cell, GlobalV::ofs_running);
+        cell.read_pseudo(GlobalV::ofs_running);
 
 #ifdef __MPI
             this->pw_rho->initmpi(GlobalV::NPROC_IN_POOL, GlobalV::RANK_IN_POOL, POOL_WORLD);
@@ -38,154 +37,6 @@ namespace ModuleESolver
         this->pw_rho->collect_uniqgg();
         this->print_rhofft(inp, GlobalV::ofs_running);
         
-    }
-
-    void ESolver_FP::read_pseudo(UnitCell &cell, ofstream &ofs)
-    {
-        // read in non-local pseudopotential and ouput the projectors.
-        ofs << "\n\n\n\n";
-        ofs << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
-        ofs << " |                                                                    |" << std::endl;
-        ofs << " | Reading pseudopotentials files:                                    |" << std::endl;
-        ofs << " | The pseudopotential file is in UPF format. The 'NC' indicates that |" << std::endl;
-        ofs << " | the type of pseudopotential is 'norm conserving'. Functional of    |" << std::endl;
-        ofs << " | exchange and correlation is decided by 4 given parameters in UPF   |" << std::endl;
-        ofs << " | file.  We also read in the 'core correction' if there exists.      |" << std::endl;
-        ofs << " | Also we can read the valence electrons number and the maximal      |" << std::endl;
-        ofs << " | angular momentum used in this pseudopotential. We also read in the |" << std::endl;
-        ofs << " | trail wave function, trail atomic density and local-pseudopotential|" << std::endl;
-        ofs << " | on logrithmic grid. The non-local pseudopotential projector is also|" << std::endl;
-        ofs << " | read in if there is any.                                           |" << std::endl;
-        ofs << " |                                                                    |" << std::endl;
-        ofs << " <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" << std::endl;
-        ofs << "\n\n\n\n";
-
-        cell.read_cell_pseudopots(GlobalV::global_pseudo_dir, ofs);
-
-        if(GlobalV::MY_RANK == 0 && GlobalV::out_element_info)
-        {
-            for(int it=0; it<cell.ntype; it++)
-            {
-                Atom* atom = &cell.atoms[it];
-                std::stringstream ss;
-                ss << GlobalV::global_out_dir << atom->label 
-                << "/" << atom->label
-                << ".NONLOCAL";
-                std::ofstream ofs(ss.str().c_str());
-                
-                ofs << "<HEADER>" << std::endl;
-                ofs << std::setw(10) << atom->label << "\t" << "label" << std::endl;
-                ofs << std::setw(10) << atom->ncpp.pp_type << "\t" << "pseudopotential type" << std::endl;
-                ofs << std::setw(10) << atom->ncpp.lmax << "\t" << "lmax" << std::endl;
-                ofs << "</HEADER>" << std::endl;
-                
-                ofs << "\n<DIJ>" << std::endl;
-                ofs << std::setw(10) << atom->ncpp.nbeta << "\t" << "nummber of projectors." << std::endl;
-                for(int ib=0; ib<atom->ncpp.nbeta; ib++)
-                {
-                    for(int ib2=0; ib2<atom->ncpp.nbeta; ib2++)
-                    {
-                        ofs<<std::setw(10) << atom->ncpp.lll[ib] 
-                        << " " << atom->ncpp.lll[ib2]
-                        << " " << atom->ncpp.dion(ib,ib2)<<std::endl;
-                    }
-                }
-                ofs << "</DIJ>" << std::endl;
-
-                for(int i=0; i<atom->ncpp.nbeta; i++)
-                {
-                    ofs << "<PP_BETA>" << std::endl;
-                    ofs << std::setw(10) << i << "\t" << "the index of projectors." <<std::endl;
-                    ofs << std::setw(10) << atom->ncpp.lll[i] << "\t" << "the angular momentum." <<std::endl;
-
-                    // mohan add
-                    // only keep the nonzero part.
-                    int cut_mesh = atom->ncpp.mesh; 
-                    for(int j=atom->ncpp.mesh-1; j>=0; --j)
-                    {
-                        if( abs( atom->ncpp.betar(i,j) ) > 1.0e-10 )
-                        {
-                            cut_mesh = j; 
-                            break;
-                        }
-                    }
-                    if(cut_mesh %2 == 0) ++cut_mesh;
-
-                    ofs << std::setw(10) << cut_mesh << "\t" << "the number of mesh points." << std::endl;
-
-                    for(int j=0; j<cut_mesh; ++j)
-                    {
-                        ofs << std::setw(15) << atom->ncpp.r[j]
-                            << std::setw(15) << atom->ncpp.betar(i, j)
-                            << std::setw(15) << atom->ncpp.rab[j] << std::endl;
-                    }
-                    ofs << "</PP_BETA>" << std::endl;
-                }
-
-                ofs.close();
-            }
-        }
-
-#ifdef __MPI
-        cell.bcast_unitcell_pseudo2();
-#endif
-
-        for(int it=0; it<cell.ntype; it++)
-        {
-            if(cell.atoms[0].ncpp.xc_func !=cell.atoms[it].ncpp.xc_func)
-            {
-                GlobalV::ofs_warning << "\n type " << cell.atoms[0].label << " functional is " 
-                    << cell.atoms[0].ncpp.xc_func;
-
-                GlobalV::ofs_warning << "\n type " << cell.atoms[it].label << " functional is " 
-                    << cell.atoms[it].ncpp.xc_func << std::endl;
-
-                ModuleBase::WARNING_QUIT("setup_cell","All DFT functional must consistent.");
-            }
-        }
-
-        cell.check_structure(GlobalV::MIN_DIST_COEF);
-
-        // setup the total number of PAOs
-        cell.cal_natomwfc(ofs);
-
-        // setup GlobalV::NLOCAL
-        cell.cal_nwfc(ofs);
-
-        // Check whether the number of valence is minimum 
-        if(GlobalV::MY_RANK==0)
-        {
-            int abtype = 0;
-            for(int it=0; it<cell.ntype; it++)
-            {
-                if(ModuleBase::MinZval.find(cell.atoms[it].ncpp.psd) != ModuleBase::MinZval.end())
-                {
-                    if(cell.atoms[it].ncpp.zv > ModuleBase::MinZval.at(cell.atoms[it].ncpp.psd))
-                    {
-                        abtype += 1;
-                        if(abtype == 1)
-                        {
-                            std::cout << "\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%"<<std::endl;
-                            ofs << "\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%"<<std::endl;
-                        }
-                        std::cout<<" Warning: number valence electrons > " << ModuleBase::MinZval.at(cell.atoms[it].ncpp.psd);
-                        std::cout<<" for " << cell.atoms[it].ncpp.psd << ": " << ModuleBase::EleConfig.at(cell.atoms[it].ncpp.psd) << std::endl;
-                        ofs << " Warning: number valence electrons > " << ModuleBase::MinZval.at(cell.atoms[it].ncpp.psd);
-                        ofs << " for " << cell.atoms[it].ncpp.psd << ": " << ModuleBase::EleConfig.at(cell.atoms[it].ncpp.psd) << std::endl;
-                    }
-                }
-            }
-            if(abtype>0)
-            {
-                std::cout<< " Please make sure the pseudopotential file is what you need"<<std::endl;
-                std::cout << "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"<<std::endl;
-                ofs << " Please make sure the pseudopential file is what you need"<<std::endl;
-                ofs << "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%";
-                ModuleBase::GlobalFunc::OUT(ofs,"");
-            }
-        }
-
-        cell.cal_meshx();
     }
 
     void ESolver_FP::print_rhofft(Input&inp, ofstream &ofs)
