@@ -19,6 +19,7 @@ namespace ModuleESolver
         elecstate::ElecState* pelec = nullptr;
         Charge chr;
     private:
+        void read_pseudo(UnitCell &cell, ofstream &ofs);
         void print_rhofft(Input& inp, ofstream &ofs);
     };
 }
