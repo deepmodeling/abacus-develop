@@ -1,4 +1,7 @@
+#include<iostream>
 #include "gtest/gtest.h"
+#define private public
+#include "../klist.h"
 #include "module_elecstate/magnetism.h"
 #include "module_hamilt_pw/hamilt_pwdft/VNL_in_pw.h"
 #include "module_cell/atom_pseudo.h"
@@ -10,7 +13,6 @@
 #include "src_parallel/parallel_kpoints.h"
 #include "module_io/berryphase.h"
 #include "module_orbital/ORB_gaunt_table.h"
-#include<iostream>
 
 bool berryphase::berry_phase_flag=0;
 
@@ -55,8 +57,6 @@ namespace GlobalC
  *     - setup kup and kdw after vc (different spin cases)
  */
 
-#define private public
-#include "module_cell/klist.h"
 
 class KlistTest : public testing::Test
 {
