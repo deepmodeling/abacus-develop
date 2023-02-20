@@ -94,8 +94,8 @@ ComplexArray operator*(const std::complex <double> c, const ComplexArray &cd);
 /// Sum of absolute squares of all elements in cd
 double abs2(const ComplexArray &cd);
 
-void add_scale_abs2(const std::complex <double> &c, const ComplexArray & in,
-               ComplexArray &out);
+// void add_scale_abs2(const std::complex <double> &c, const ComplexArray & in,
+//                ComplexArray &out);
 
 /// Take "dot-product" of two ComplexArray:  sum of cd1(conjugate)[i] * cd2[i]
 std::complex <double> dot(const ComplexArray &cd1, const ComplexArray &cd2);

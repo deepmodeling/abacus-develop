@@ -50,9 +50,11 @@ Grid_Technique::~Grid_Technique()
 		{
 			delete[] find_R2[iat];
 			delete[] find_R2st[iat];
+			delete[] find_R2_sorted_index[iat];
 		}
 		delete[] find_R2;
 		delete[] find_R2st;
+		delete[] find_R2_sorted_index;
 	}
 }
 

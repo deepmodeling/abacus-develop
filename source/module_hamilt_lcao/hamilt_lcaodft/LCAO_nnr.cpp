@@ -7,6 +7,7 @@
 #ifdef __DEEPKS
 #include "module_hamilt_lcao/module_deepks/LCAO_deepks.h"
 #endif
+#include "module_base/libm/libm.h"
 
 // This is for cell R dependent part. 
 void Grid_Technique::cal_nnrg(Parallel_Orbitals* pv)
@@ -116,6 +117,12 @@ void Grid_Technique::cal_nnrg(Parallel_Orbitals* pv)
 	{
 		for(int iat=0; iat<GlobalC::ucell.nat; iat++)
 		{
+			delete[] find_R2_sorted_index[iat];
+		}
+		delete[] find_R2_sorted_index;
+
+		for(int iat=0; iat<GlobalC::ucell.nat; iat++)
+		{
 			delete[] find_R2[iat];
 		}
 		delete[] find_R2;
@@ -126,6 +133,14 @@ void Grid_Technique::cal_nnrg(Parallel_Orbitals* pv)
 		}
 		delete[] find_R2st;
 		allocate_find_R2 = false;
+	}
+
+	this->find_R2_sorted_index = new int*[GlobalC::ucell.nat];
+	for(int iat=0; iat<GlobalC::ucell.nat; iat++)
+	{
+		// at least nad contains itself, so nad[iat] can not be 0.
+		this->find_R2_sorted_index[iat] = new int[nad[iat]];
+		ModuleBase::GlobalFunc::ZEROS(find_R2_sorted_index[iat], nad[iat]);
 	}
 
 	this->find_R2 = new int*[GlobalC::ucell.nat];
@@ -193,6 +208,7 @@ void Grid_Technique::cal_nnrg(Parallel_Orbitals* pv)
 							// note: the first is not zero.
 							//--------------------------------------------------------------
 							find_R2[iat][count] = this->cal_RindexAtom(b1, b2, b3, iat2);
+							find_R2_sorted_index[iat][count] = count;
 
 
 							// find_R2st
@@ -208,6 +224,8 @@ void Grid_Technique::cal_nnrg(Parallel_Orbitals* pv)
 					}
 				}
 			}
+			std::stable_sort(find_R2_sorted_index[iat], find_R2_sorted_index[iat] + nad[iat],
+				[&](int pos1, int pos2){ return find_R2[iat][pos1] < find_R2[iat][pos2]; });
 		}
 	}
 
@@ -271,6 +289,31 @@ int Grid_Technique::cal_RindexAtom(const int &u1, const int &u2, const int &u3, 
 	return (iat2 + (x3 + x2 * this->nB3 + x1 * this->nB2 * this->nB3) * GlobalC::ucell.nat);
 }
 
+int Grid_Technique::binary_search_find_R2_offset(int val, int iat) {
+	auto findR2 = this->find_R2[iat];
+	auto findR2_index = this->find_R2_sorted_index[iat];
+
+	int left = 0;
+    int right = nad[iat] - 1;
+    while(left <= right)
+    {
+        int mid = left + ((right - left) >> 1);
+		int idx = findR2_index[mid];
+        if(val == findR2[idx])
+        {
+            return idx;
+        }
+        if(val < findR2[idx])
+        {
+            right = mid - 1;
+        }
+        else
+        {
+            left = mid + 1;
+        }
+    }
+    return -1;
+}
 
 // be called in LCAO_Hamilt::calculate_Hk.
 void LCAO_Matrix::folding_fixedH(const int &ik)
@@ -379,80 +422,97 @@ void LCAO_Matrix::folding_fixedH(const int &ik)
 					ModuleBase::Vector3<double> dR(adjs.box[ad].x, adjs.box[ad].y, adjs.box[ad].z); 
 					const double arg = ( GlobalC::kv.kvec_d[ik] * dR ) * ModuleBase::TWO_PI;
 					//const double arg = ( GlobalC::kv.kvec_d[ik] * GlobalC::GridD.getBox(ad) ) * ModuleBase::TWO_PI;
-					const std::complex<double> kphase = std::complex <double> ( cos(arg),  sin(arg) );
+					double sinp, cosp;
+					ModuleBase::libm::sincos(arg, &sinp, &cosp);
+					const std::complex<double> kphase = std::complex <double> ( cosp,  sinp );
 
 					//--------------------------------------------------
 					// calculate how many matrix elements are in 
 					// this processor.
 					//--------------------------------------------------
-					for(int ii=0; ii<atom1->nw*GlobalV::NPOL; ii++)
+					//########################### EXPLAIN ###############################
+					// 1. overlap matrix with k point
+					// this->SlocR = < phi_0i | phi_Rj >, where 0, R are the cell index
+					// while i,j are the orbital index.
+
+					// 2. H_fixed=T+Vnl matrix element with k point (if Vna is not used).
+					// H_fixed=T+Vnl+Vna matrix element with k point (if Vna is used).
+					// this->Hloc_fixed = < phi_0i | H_fixed | phi_Rj>
+
+					// 3. H(k) |psi(k)> = S(k) | psi(k)> 
+					// Sloc2 is used to diagonalize for a give k point.
+					// Hloc_fixed2 is used to diagonalize (eliminate index R).
+					//###################################################################
+#define NW_IJ_LOOP_BEGIN() \
+					for(int ii=0; ii<atom1->nw*GlobalV::NPOL; ii++)				\
+					{															\
+						/* the index of orbitals in this processor */			\
+						const int iw1_all = start + ii;							\
+						const int mu = pv->trace_loc_row[iw1_all];				\
+						if(mu<0) {continue;}									\
+						for(int jj=0; jj<atom2->nw*GlobalV::NPOL; jj++)			\
+						{														\
+							int iw2_all = start2 + jj;							\
+							const int nu = pv->trace_loc_col[iw2_all];			\
+							if(nu<0) {continue;}
+
+								// DO STH.
+
+#define NW_IJ_LOOP_END() \
+							++index;											\
+							++tot_index;										\
+						}/*end jj*/												\
+					}/*end ii*/
+
+					if(GlobalV::NSPIN!=4)
 					{
-						// the index of orbitals in this processor
-						const int iw1_all = start + ii;
-						const int mu = pv->trace_loc_row[iw1_all];
-						if(mu<0)continue;
-
-						for(int jj=0; jj<atom2->nw*GlobalV::NPOL; jj++)
-						{
-							int iw2_all = start2 + jj;
-							const int nu = pv->trace_loc_col[iw2_all];
-
-							if(nu<0)continue;
-							//const int iic = mu*pv->ncol+nu;
-                            int iic;
-                            if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER())
-                            {
-                                iic=mu+nu*pv->nrow;
-                            }
-                            else
-                            {
-                                iic=mu*pv->ncol+nu;
-                            }
-
-							//########################### EXPLAIN ###############################
-							// 1. overlap matrix with k point
-							// this->SlocR = < phi_0i | phi_Rj >, where 0, R are the cell index
-							// while i,j are the orbital index.
-
-							// 2. H_fixed=T+Vnl matrix element with k point (if Vna is not used).
-							// H_fixed=T+Vnl+Vna matrix element with k point (if Vna is used).
-							// this->Hloc_fixed = < phi_0i | H_fixed | phi_Rj>
-
-							// 3. H(k) |psi(k)> = S(k) | psi(k)> 
-							// Sloc2 is used to diagonalize for a give k point.
-							// Hloc_fixed2 is used to diagonalize (eliminate index R).
-							//###################################################################
-							
-							if(GlobalV::NSPIN!=4)
-							{
-								this->Sloc2[iic] += this->SlocR[index] * kphase;
-								this->Hloc_fixed2[iic] += this->Hloc_fixedR[index] * kphase;
+						auto compute_kernel = [&](int iic, int index) {
+							this->Sloc2[iic] += this->SlocR[index] * kphase;
+							this->Hloc_fixed2[iic] += this->Hloc_fixedR[index] * kphase;
 #ifdef __DEEPKS
-								if(GlobalV::deepks_scf)
+							if(GlobalV::deepks_scf)
+							{
+								GlobalC::ld.H_V_delta_k[ik][iic] += GlobalC::ld.H_V_deltaR[index] * kphase;
+							}
+#endif
+						};
+						if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER())
+						{
+							NW_IJ_LOOP_BEGIN()
+							compute_kernel(mu+nu*pv->nrow, index);
+							NW_IJ_LOOP_END()
+						} else {
+							NW_IJ_LOOP_BEGIN()
+							compute_kernel(mu*pv->ncol+nu, index);
+							NW_IJ_LOOP_END()
+						}
+					}
+					else
+					{
+						auto compute_kernel = [&](int iic, int index, int iw1_all, int iw2_all) {
+							this->Sloc2[iic] += this->SlocR_soc[index] * kphase;
+							this->Hloc_fixed2[iic] += this->Hloc_fixedR_soc[index] * kphase;
+#ifdef __DEEPKS
+							if(GlobalV::deepks_scf)
+							{
+								if (iw1_all % 2 == iw2_all % 2)
 								{
 									GlobalC::ld.H_V_delta_k[ik][iic] += GlobalC::ld.H_V_deltaR[index] * kphase;
 								}
-#endif
 							}
-							else
-							{
-								this->Sloc2[iic] += this->SlocR_soc[index] * kphase;
-								this->Hloc_fixed2[iic] += this->Hloc_fixedR_soc[index] * kphase;
-#ifdef __DEEPKS
-								if(GlobalV::deepks_scf)
-								{
-									if (iw1_all % 2 == iw2_all % 2)
-									{
-										GlobalC::ld.H_V_delta_k[ik][iic] += GlobalC::ld.H_V_deltaR[index] * kphase;
-									}
-								}
 #endif
-							}
-							++index;
-							++tot_index;
-
-						}//end jj
-					}//end ii
+						};
+						if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER())
+						{
+							NW_IJ_LOOP_BEGIN()
+							compute_kernel(mu+nu*pv->nrow, index, iw1_all, iw2_all);
+							NW_IJ_LOOP_END()
+						} else {
+							NW_IJ_LOOP_BEGIN()
+							compute_kernel(mu*pv->ncol+nu, index, iw1_all, iw2_all);
+							NW_IJ_LOOP_END()
+						}
+					}
 				}
 			}// end ad
 		}// end I1
