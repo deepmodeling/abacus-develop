@@ -3,7 +3,7 @@
 #include "module_base/global_variable.h"
 #include "module_base/inverse_matrix.h"
 #include "module_base/lapack_connector.h"
-#include "src_parallel/parallel_reduce.h"
+#include "module_base/parallel_reduce.h"
 #include "module_base/memory.h"
 #include "module_base/timer.h"
 

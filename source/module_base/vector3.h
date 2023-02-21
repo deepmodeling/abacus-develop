@@ -2,7 +2,7 @@
 #define VECTOR3_H
 
 #ifdef _MCD_CHECK
-#include "../src_parallel/mcd.h"
+#include "mcd.h"
 #endif
 
 #include <cmath>

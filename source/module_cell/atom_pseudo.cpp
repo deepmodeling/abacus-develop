@@ -134,7 +134,7 @@ void Atom_pseudo::set_d_so(
 	return;
 }
 
-#include "../src_parallel/parallel_common.h"
+#include "module_base/parallel_common.h"
 #ifdef __MPI
 
 void Atom_pseudo::bcast_atom_pseudo(void)

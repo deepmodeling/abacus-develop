@@ -1,7 +1,7 @@
 #include "charge_mixing.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_base/inverse_matrix.h"
-#include "src_parallel/parallel_reduce.h"
+#include "module_base/parallel_reduce.h"
 #include "module_base/timer.h"
 
 Charge_Mixing::Charge_Mixing()

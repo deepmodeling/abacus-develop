@@ -1,3 +1,38 @@
+AddTest(
+  TARGET ParaCommon
+  LIBS MPI::MPI_CXX 
+  SOURCES parallel_common_test.cpp ../global_variable.cpp ../parallel_common.cpp
+)
+
+AddTest(
+  TARGET ParaGlobal
+  LIBS MPI::MPI_CXX 
+  SOURCES parallel_global_test.cpp ../global_variable.cpp ../parallel_global.cpp
+)
+
+AddTest(
+  TARGET ParaReduce
+  LIBS MPI::MPI_CXX
+  SOURCES parallel_reduce_test.cpp ../global_variable.cpp ../parallel_global.cpp ../parallel_common.cpp ../parallel_reduce.cpp
+)
+
+install(FILES parallel_common_test.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+install(FILES parallel_global_test.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+install(FILES parallel_reduce_test.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+
+add_test(NAME parallel_common_test
+      COMMAND ${BASH} parallel_common_test.sh
+      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+)
+add_test(NAME parallel_global_test
+      COMMAND ${BASH} parallel_global_test.sh
+      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+)
+add_test(NAME parallel_reduce_test
+      COMMAND ${BASH} parallel_reduce_test.sh
+      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+)
+
 remove_definitions(-D__MPI)
 AddTest(
   TARGET base_blas_connector
@@ -68,7 +103,7 @@ AddTest(
   TARGET base_ylmreal
   LIBS ${math_libs} device
   SOURCES math_ylmreal_test.cpp ../math_ylmreal.cpp ../complexmatrix.cpp ../global_variable.cpp ../ylm.cpp ../realarray.cpp ../timer.cpp ../matrix.cpp ../vector3.h
-          ../../src_parallel/parallel_reduce.cpp ../../src_parallel/parallel_kpoints.cpp ../../src_parallel/parallel_global.cpp ../../src_parallel/parallel_common.cpp
+          ../../module_base/parallel_reduce.cpp ../../module_base/parallel_global.cpp ../../module_base/parallel_common.cpp
           ../memory.cpp
 )
 AddTest(
@@ -121,12 +156,12 @@ AddTest(
 
 AddTest(
   TARGET base_opt_CG
-  SOURCES opt_CG_test.cpp opt_test_tools.cpp ../opt_CG.cpp ../opt_DCsrch.cpp ../global_variable.cpp ../../src_parallel/parallel_reduce.cpp
+  SOURCES opt_CG_test.cpp opt_test_tools.cpp ../opt_CG.cpp ../opt_DCsrch.cpp ../global_variable.cpp ../../module_base/parallel_reduce.cpp
 )
 
 AddTest(
   TARGET base_opt_TN
-  SOURCES opt_TN_test.cpp opt_test_tools.cpp ../opt_CG.cpp ../opt_DCsrch.cpp ../global_variable.cpp ../../src_parallel/parallel_reduce.cpp
+  SOURCES opt_TN_test.cpp opt_test_tools.cpp ../opt_CG.cpp ../opt_DCsrch.cpp ../global_variable.cpp ../../module_base/parallel_reduce.cpp
 )
 
 AddTest(

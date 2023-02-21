@@ -2,7 +2,7 @@
 #define WRITE_ISTATE_INFO_H
 #include "module_elecstate/elecstate.h"
 #include "module_cell/klist.h"
-#include "src_parallel/parallel_kpoints.h"
+#include "module_cell/parallel_kpoints.h"
 
 namespace ModuleIO
 {

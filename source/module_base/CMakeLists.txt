@@ -43,6 +43,9 @@ add_library(
     tool_title.cpp
     ylm.cpp
     abfs-vector3_order.cpp
+    parallel_common.cpp
+    parallel_global.cpp
+    parallel_reduce.cpp
     ${LIBM_SRC}
 )
 

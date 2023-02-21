@@ -5,7 +5,7 @@
 
 #include "module_base/blas_connector.h"
 #include "module_psi/psi.h"
-#include "src_parallel/parallel_reduce.h"
+#include "module_base/parallel_reduce.h"
 #include "module_psi/kernels/memory_op.h"
 
 

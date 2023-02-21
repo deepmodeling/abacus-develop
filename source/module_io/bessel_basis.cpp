@@ -1,6 +1,6 @@
 #include "bessel_basis.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
-#include "src_parallel/parallel_common.h"
+#include "module_base/parallel_common.h"
 #include "module_base/math_integral.h"
 #include "module_base/math_sphbes.h"
 #include "module_base/timer.h"

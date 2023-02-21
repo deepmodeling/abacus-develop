@@ -1,6 +1,6 @@
 #include "./kedf_tf.h"
 #include <iostream>
-#include "src_parallel/parallel_reduce.h"
+#include "module_base/parallel_reduce.h"
 
 void KEDF_TF::set_para(int nx, double dV, double tf_weight)
 {

@@ -5,7 +5,7 @@
 #include "../relax_old/ions_move_basic.h"
 
 #include "module_base/tool_title.h"
-#include "src_parallel/parallel_common.h"
+#include "module_base/parallel_common.h"
 
 void Relax::init_relax(const int nat_in)
 {

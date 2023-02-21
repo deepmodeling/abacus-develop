@@ -201,10 +201,6 @@ pw $(BIN_DIR)/${VERSION}-PW.x:
 $(BIN_DIR)/${VERSION}.$(suffix) : ${FP_OBJS} ${PDIAG_OBJS} ${HEADERS}
 	${CC} ${OPTS} ${OPTS_MPI} $(FP_OBJS) ${PDIAG_OBJS} ${LIBS} -o  $(BIN_DIR)/${VERSION}.$(suffix)
 
-# ${VERSION}.fp_mem.x : ${FP_OBJS} ../src_parallel/mcd.o ${HEADERS}
-# 	@ if [ ! -d $(BIN_DIR) ]; then mkdir $(BIN_DIR); fi
-# 	${CC} $(FP_OBJS) ../src_parallel/mcd.o ${LIBS} -o ${VERSION}.fp_mem.x
-# 	@ cp ${VERSION}.fp_mem.x $(BIN_DIR)/${VERSION}.fp_mem.x
 
 #==========================
 # rules

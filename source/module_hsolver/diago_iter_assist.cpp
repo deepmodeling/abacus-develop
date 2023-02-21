@@ -6,7 +6,7 @@
 #include "module_base/global_variable.h"
 #include "module_base/lapack_connector.h"
 #include "module_base/timer.h"
-#include "src_parallel/parallel_reduce.h"
+#include "module_base/parallel_reduce.h"
 #include "module_hsolver/kernels/math_kernel_op.h"
 #include "module_hsolver/kernels/dngvd_op.h"
 #include "module_psi/kernels/device.h"

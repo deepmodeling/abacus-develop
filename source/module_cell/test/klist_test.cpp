@@ -9,8 +9,8 @@
 #include "module_cell/unitcell.h"
 #include "module_cell/pseudo_nc.h"
 #include "module_cell/setup_nonlocal.h"
-#include "src_parallel/parallel_grid.h"
-#include "src_parallel/parallel_kpoints.h"
+#include "module_hamilt_pw/hamilt_pwdft/parallel_grid.h"
+#include "module_cell/parallel_kpoints.h"
 #include "module_io/berryphase.h"
 #include "module_orbital/ORB_gaunt_table.h"
 
