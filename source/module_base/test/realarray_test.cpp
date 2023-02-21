@@ -210,4 +210,11 @@ TEST_F(realArrayTest,Zeros)
         {
                 EXPECT_EQ(a[i],0);
         }
+         //add another example of double array
+        double b[100];
+        ModuleBase::zeros<double>(b,100);
+        for(int i = 0 ; i < 100; i ++)
+        {
+                EXPECT_EQ(b[i],0.0);
+        }
 }
