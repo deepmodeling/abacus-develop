@@ -392,22 +392,19 @@ if(DEFINED DeePMD_DIR)
       __DPMDC
     )
   else()
-  target_link_libraries(${ABACUS_BIN_NAME}
-    DeePMD::deepmd_cc
-    DeePMD::deepmd_op
-    DeePMD::deepmd_op_cuda
-    DeePMD::tensorflow_cc
-  )
+    target_link_libraries(${ABACUS_BIN_NAME}
+      DeePMD::deepmd_cc
+    )
   endif()
+
   if(NOT DEFINED TensorFlow_DIR)
     set(TensorFlow_DIR ${DeePMD_DIR})
   endif()
-endif()
-
-if(DEFINED TensorFlow_DIR)
-  include_directories(${TensorFlow_DIR}/include)
-  if(NOT DEFINED DeePMD_DIR)
-    message(FATAL_ERROR "Please define DeePMD_DIR!")
+  find_package(TensorFlow REQUIRED)
+  if (TensorFlow_FOUND)
+    target_link_libraries(${ABACUS_BIN_NAME}
+      TensorFlow::tensorflow_cc
+    )
   endif()
 endif()
 
@@ -477,7 +474,6 @@ target_link_libraries(${ABACUS_BIN_NAME}
     neighbor
     io
     relax
-    parallel
     driver
     xc_
     hsolver

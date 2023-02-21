@@ -44,6 +44,8 @@ If the Deep Potential model is employed in Molecule Dynamics calculations, the f
 cmake -B build -DDeePMD_DIR=~/deepmd-kit -DTensorFlow_DIR=~/tensorflow
 ```
 
+> `deepmd_c`/`deepmd_cc` and `tensorflow_cc` libraries would be called according to `DeePMD_DIR` and `TensorFlow_DIR`, which is showed in detail in [this page](https://github.com/deepmodeling/deepmd-kit/blob/master/doc/inference/cxx.md).
+
 ## Build with LibRI and LibComm
 
 The new EXX implementation depends on two external libraries:
@@ -265,6 +267,8 @@ make DeePMD_DIR=~/deepmd-kit TensorFlow_DIR=~/tensorflow
 ```
 
 directly.
+
+> `deepmd_c`/`deepmd_cc` and `tensorflow_cc` libraries would be called according to `DeePMD_DIR` and `TensorFlow_DIR`, which is showed in detail in [this page](https://github.com/deepmodeling/deepmd-kit/blob/master/doc/inference/cxx.md).
 
 ### Add LibRI and LibComm Support
 To use new EXX, you need two libraries: LibRI and LibComm and need to define `LIBRI_DIR` and `LIBCOMM_DIR` in the file `Makefile.vars` or use 

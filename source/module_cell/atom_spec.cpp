@@ -116,7 +116,7 @@ void Atom::print_Atom(std::ofstream &ofs)
     return;
 }
 
-#include "../src_parallel/parallel_common.h"
+#include "module_base/parallel_common.h"
 #ifdef __MPI
 void Atom::bcast_atom(void)
 {

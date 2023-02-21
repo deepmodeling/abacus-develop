@@ -6,7 +6,7 @@
 #include "matrix.h"
 
 #ifdef _MCD_CHECK
-#include "../src_parallel/mcd.h"
+#include "mcd.h"
 #endif
 namespace ModuleBase
 {

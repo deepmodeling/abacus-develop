@@ -1,5 +1,6 @@
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
+#include<memory>
 
 /************************************************
  *  unit test of read_pp
@@ -39,6 +40,25 @@
  *   - XCWarning
  *     - DFT functianal warning when mismatching between pp_file
  *     - and GlobalV::dft_functional happens
+ *   - VWR
+ *     - read vwr type of pp
+ *   - VWR
+ *     - read vwr type of pp
+ *   - BLPS
+ *     - read blps type of pp
+ *   - SetPseudoType
+ *     - find the type of pp, upf201 or upf
+ *   - Trim
+ *     - trim: an iterative function to delete all tab and space in a string
+ *     - trimend: trim tab and space and space at two ends of a string
+ *   - InitReader
+ *     - init_pseudo_reader: actual pseudo reader
+ *   - SetEmptyElement
+ *     - set_empty_element: used in BSSE calculation
+ *   - SetPseudoType
+ *     - set_pseudo_type: tell it is upf or upf201 from the pp file's header line
+ *   - Average
+ *     - average_p: modulate the soc effect in pseudopotential
  */
 
 #define private public
@@ -48,11 +68,11 @@ class ReadPPTest : public testing::Test
 {
 protected:
 	std::string output;
+	std::unique_ptr<Pseudopot_upf> upf{new Pseudopot_upf};
 };
 
 TEST_F(ReadPPTest, ReadUPF100)
 {
-	Pseudopot_upf* upf = new Pseudopot_upf;
 	std::ifstream ifs;
 	ifs.open("./support/Te.pbe-rrkj.UPF");
 	upf->read_pseudo_upf(ifs);
@@ -130,12 +150,10 @@ TEST_F(ReadPPTest, ReadUPF100)
 	getline(ifs, output);
 	EXPECT_THAT(output, testing::HasSubstr("==== read_pseudo_upf ==="));
 	ifs.close();
-	delete upf;
 }
 
 TEST_F(ReadPPTest, ReadUSppErr100)
 {
-	Pseudopot_upf* upf = new Pseudopot_upf;
 	std::ifstream ifs;
 	ifs.open("./support/Zn.pw91-n-van.UPF");
 	//upf->read_pseudo_upf(ifs);
@@ -147,12 +165,10 @@ TEST_F(ReadPPTest, ReadUSppErr100)
 	// EXPECT_THAT(output,testing::HasSubstr("this function is called")); // read_pseudo_nlcc
 	EXPECT_THAT(output,testing::HasSubstr("Ultra Soft Pseudopotential not available yet."));
 	ifs.close();
-	delete upf;
 }
 
 TEST_F(ReadPPTest, ReadUPF201)
 {
-	Pseudopot_upf* upf = new Pseudopot_upf;
 	std::ifstream ifs;
 	ifs.open("./support/Cu_ONCV_PBE-1.0.upf");
 	upf->read_pseudo_upf201(ifs);
@@ -202,12 +218,10 @@ TEST_F(ReadPPTest, ReadUPF201)
 	EXPECT_DOUBLE_EQ(upf->rho_at[0],0.0);
 	EXPECT_DOUBLE_EQ(upf->rho_at[601],3.1742307110E-02);
 	ifs.close();
-	delete upf;
 }
 
 TEST_F(ReadPPTest, HeaderErr2011)
 {
-	Pseudopot_upf* upf = new Pseudopot_upf;
 	std::ifstream ifs;
 	// 1st
 	ifs.open("./support/HeaderError1");
@@ -218,12 +232,10 @@ TEST_F(ReadPPTest, HeaderErr2011)
 	output = testing::internal::GetCapturedStdout();
 	EXPECT_THAT(output,testing::HasSubstr("unknown pseudo type"));
 	ifs.close();
-	delete upf;
 }
 
 TEST_F(ReadPPTest, HeaderErr2012)
 {
-	Pseudopot_upf* upf = new Pseudopot_upf;
 	std::ifstream ifs;
 	// 2nd
 	ifs.open("./support/HeaderError2");
@@ -234,12 +246,10 @@ TEST_F(ReadPPTest, HeaderErr2012)
 	output = testing::internal::GetCapturedStdout();
 	EXPECT_THAT(output,testing::HasSubstr("ULTRASOFT PSEUDOPOTENTIAL IS NOT SUPPORTED"));
 	ifs.close();
-	delete upf;
 }
 
 TEST_F(ReadPPTest, HeaderErr2013)
 {
-	Pseudopot_upf* upf = new Pseudopot_upf;
 	std::ifstream ifs;
 	// 3rd
 	ifs.open("./support/HeaderError3");
@@ -250,12 +260,10 @@ TEST_F(ReadPPTest, HeaderErr2013)
 	output = testing::internal::GetCapturedStdout();
 	EXPECT_THAT(output,testing::HasSubstr("PAW PSEUDOPOTENTIAL IS NOT SUPPORTED"));
 	ifs.close();
-	delete upf;
 }
 
 TEST_F(ReadPPTest, HeaderErr2014)
 {
-	Pseudopot_upf* upf = new Pseudopot_upf;
 	std::ifstream ifs;
 	// 4th
 	GlobalV::ofs_warning.open("warning.log");
@@ -268,12 +276,10 @@ TEST_F(ReadPPTest, HeaderErr2014)
 	EXPECT_THAT(output,testing::HasSubstr("arbitrary is not read in. Please add this parameter in read_pp_upf201.cpp if needed."));
 	ifs.close();
 	remove("warning.log");
-	delete upf;
 }
 
 TEST_F(ReadPPTest, ReadUPF201FR)
 {
-	Pseudopot_upf* upf = new Pseudopot_upf;
 	std::ifstream ifs;
 	// this is a dojo full-relativisitic pp
 	ifs.open("./support/C.upf");
@@ -323,24 +329,20 @@ TEST_F(ReadPPTest, ReadUPF201FR)
 	EXPECT_DOUBLE_EQ(upf->rho_atc[0],8.7234550809E-01);
 	EXPECT_DOUBLE_EQ(upf->rho_atc[upf->mesh-1],0.0);
 	ifs.close();
-	delete upf;
 }
 
 TEST_F(ReadPPTest, ReadUPF201MESH2)
 {
-	Pseudopot_upf* upf = new Pseudopot_upf;
 	std::ifstream ifs;
 	// this pp file has gipaw, thus a different header
 	ifs.open("./support/Fe.pbe-sp-mt_gipaw.UPF");
 	upf->read_pseudo_upf201(ifs);
 	EXPECT_EQ(upf->psd,"Fe");
 	ifs.close();
-	delete upf;
 }
 
 TEST_F(ReadPPTest, XCWarning)
 {
-	Pseudopot_upf* upf = new Pseudopot_upf;
 	std::ifstream ifs;
 	// this pp file has gipaw, thus a different header
 	// dft_functional warning
@@ -353,6 +355,212 @@ TEST_F(ReadPPTest, XCWarning)
 	EXPECT_THAT(output,testing::HasSubstr("dft_functional readin is: LDA"));
 	EXPECT_THAT(output,testing::HasSubstr("dft_functional in pseudopot file is: PBE"));
 	ifs.close();
-	delete upf;
+}
+
+TEST_F(ReadPPTest, VWR)
+{
+	std::ifstream ifs;
+	// this pp file is a vwr type of pp
+	ifs.open("./support/vwr.Si");
+	upf->read_pseudo_vwr(ifs);
+	EXPECT_EQ(upf->xc_func,"PZ");
+	EXPECT_EQ(upf->pp_type,"NC");
+	EXPECT_FALSE(upf->tvanp);
+	EXPECT_EQ(upf->mesh,1073);
+	EXPECT_FALSE(upf->nlcc);
+	EXPECT_EQ(upf->psd,"14");
+	EXPECT_EQ(upf->zp,4);
+	EXPECT_EQ(upf->spd_loc,2);
+	EXPECT_FALSE(upf->has_so);
+	EXPECT_EQ(upf->iTB_s,1);
+	EXPECT_EQ(upf->iTB_p,1);
+	EXPECT_EQ(upf->iTB_d,0);
+	EXPECT_EQ(upf->nwfc,2);
+	EXPECT_DOUBLE_EQ(upf->oc[0],2);
+	EXPECT_DOUBLE_EQ(upf->oc[1],2);
+	EXPECT_EQ(upf->lchi[0],0);
+	EXPECT_EQ(upf->lchi[1],1);
+	EXPECT_EQ(upf->els[0],"S");
+	EXPECT_EQ(upf->els[1],"P");
+	EXPECT_DOUBLE_EQ(upf->r[0],.22270617E-05);
+	EXPECT_DOUBLE_EQ(upf->r[upf->mesh-1],.11832572E+03);
+	EXPECT_NEAR(upf->rho_at[0],6.18479e-13,1.0e-17);
+	EXPECT_NEAR(upf->rho_at[upf->mesh-1],3.46232e-56,1.0e-60);
+	EXPECT_EQ(upf->nbeta,1);
+	EXPECT_NEAR(upf->beta(0,2),2.67501e-05,1.0e-9);
+	EXPECT_EQ(upf->lll[0],0);
+	ifs.close();
+}
+
+TEST_F(ReadPPTest, BLPS)
+{
+	std::ifstream ifs;
+	// this pp file is a vwr type of pp
+	ifs.open("./support/si.lda.lps");
+	GlobalV::DFT_FUNCTIONAL="default";
+	upf->read_pseudo_blps(ifs);
+	EXPECT_FALSE(upf->nlcc);
+	EXPECT_FALSE(upf->tvanp);
+	EXPECT_FALSE(upf->has_so);
+	EXPECT_EQ(upf->nbeta,0);
+	EXPECT_EQ(upf->psd,"Silicon");
+	EXPECT_EQ(upf->zp,4);
+	EXPECT_EQ(upf->lmax,0);
+	EXPECT_EQ(upf->mesh,1601);
+	EXPECT_EQ(upf->xc_func,"PZ");
+	EXPECT_DOUBLE_EQ(upf->r[0],0.0);
+	EXPECT_DOUBLE_EQ(upf->r[upf->mesh-1],16.0);
+	EXPECT_DOUBLE_EQ(upf->vloc[0],2.4189229665506291*2.0);
+	EXPECT_DOUBLE_EQ(upf->vloc[upf->mesh-1],-0.25*2.0);
+	EXPECT_DOUBLE_EQ(upf->rho_at[0],0.25);
+	EXPECT_DOUBLE_EQ(upf->rho_at[upf->mesh-1],0.25);
+	ifs.close();
+}
+
+TEST_F(ReadPPTest, SetPseudoType)
+{
+	std::string pp_address = "./support/Cu_ONCV_PBE-1.0.upf";
+	std::string type = "auto";
+	upf->set_pseudo_type(pp_address,type);
+	EXPECT_EQ(type,"upf201");
+	pp_address = "./support/Te.pbe-rrkj.UPF";
+	upf->set_pseudo_type(pp_address,type);
+	EXPECT_EQ(type,"upf");
+}
+
+TEST_F(ReadPPTest, Trim)
+{
+	std::string tmp_string = "   aaa   \t  bbb\t  ";
+	output = upf->trim(tmp_string);
+	EXPECT_EQ(output,"aaabbb");
+	tmp_string = "   \taaa\tbbb\t   ";
+	output = upf->trimend(tmp_string);
+	EXPECT_EQ(output,"aaa\tbbb");
+}
+
+TEST_F(ReadPPTest, SetEmptyElement)
+{
+	upf->mesh = 10;
+	upf->nbeta = 10;
+	upf->vloc = new double[upf->mesh];
+	upf->rho_at = new double[upf->mesh];
+	upf->dion.create(upf->nbeta,upf->nbeta);
+	upf->set_empty_element();
+	for(int ir=0;ir<upf->mesh;++ir)
+	{
+		EXPECT_DOUBLE_EQ(upf->vloc[ir],0.0);
+		EXPECT_DOUBLE_EQ(upf->rho_at[ir],0.0);
+	}
+	for(int i=0;i<upf->nbeta;++i)
+	{
+		for(int j=0;j<upf->nbeta;++j)
+		{
+			EXPECT_DOUBLE_EQ(upf->dion(i,j),0.0);
+		}
+	}
+}
+
+TEST_F(ReadPPTest, InitReader)
+{
+	std::string pp_file = "arbitrary";
+	std::string type = "auto";
+	int info = upf->init_pseudo_reader(pp_file,type);
+	EXPECT_EQ(info,1);
+	pp_file = "./support/Te.pbe-rrkj.UPF";
+	info = upf->init_pseudo_reader(pp_file,type);
+	EXPECT_EQ(type,"upf");
+	EXPECT_EQ(info,0);
+	pp_file = "./support/Cu_ONCV_PBE-1.0.upf";
+	info = upf->init_pseudo_reader(pp_file,type);
+	EXPECT_EQ(info,2);
+	pp_file = "./support/Cu_ONCV_PBE-1.0.upf";
+	type = "auto";
+	info = upf->init_pseudo_reader(pp_file,type);
+	EXPECT_EQ(type,"upf201");
+	EXPECT_EQ(info,0);
+	pp_file = "./support/vwr.Si";
+	type = "vwr";
+	info = upf->init_pseudo_reader(pp_file,type);
+	EXPECT_EQ(info,0);
+	pp_file = "./support/si.lda.lps";
+	type = "blps";
+	info = upf->init_pseudo_reader(pp_file,type);
+	EXPECT_EQ(info,0);
+}
+
+TEST_F(ReadPPTest, InitReaderArbitraryType)
+{
+	std::string pp_file = "./support/Te.pbe-rrkj.UPF";
+	std::string type = "arbitrary";
+	int info = upf->init_pseudo_reader(pp_file,type);
+	EXPECT_EQ(info,0);
+}
+
+TEST_F(ReadPPTest, AverageSimpleReturns)
+{
+	int ierr;
+	double lambda = 1.0;
+	// first return
+	GlobalV::LSPINORB = 1;
+	upf->has_so = 0;
+	ierr = upf->average_p(lambda);
+	EXPECT_EQ(ierr,1);
+	// second return
+	upf->has_so = 1;
+	ierr = upf->average_p(lambda);
+	EXPECT_EQ(ierr,0);
+}
+
+TEST_F(ReadPPTest, AverageErrReturns)
+{
+	int ierr;
+	double lambda = 1.0;
+	// LSPINORB = 0
+	std::ifstream ifs;
+	ifs.open("./support/Te.pbe-rrkj.UPF");
+	upf->read_pseudo_upf(ifs);
+	EXPECT_TRUE(upf->has_so); // has soc info
+	GlobalV::LSPINORB = 0;
+	ierr = upf->average_p(lambda);
+	EXPECT_EQ(upf->nbeta,3);
+	EXPECT_EQ(ierr,1);
+	// LSPINORB = 1
+	ierr = upf->average_p(lambda);
+	EXPECT_EQ(ierr,1);
+	ifs.close();
+}
+
+TEST_F(ReadPPTest, AverageLSPINORB0)
+{
+	std::ifstream ifs;
+	// this is a dojo full-relativisitic pp
+	ifs.open("./support/C.upf");
+	upf->read_pseudo_upf201(ifs);
+	EXPECT_TRUE(upf->has_so); // has soc info
+	int ierr;
+	double lambda = 1.0;
+	// LSPINORB = 0
+	GlobalV::LSPINORB = 0;
+	ierr = upf->average_p(lambda);
+	EXPECT_EQ(ierr,0);
+	EXPECT_EQ(upf->nbeta,4);
+	EXPECT_FALSE(upf->has_so); // has not soc info,why?
+}
+
+TEST_F(ReadPPTest, AverageLSPINORB1)
+{
+	std::ifstream ifs;
+	// this is a dojo full-relativisitic pp
+	ifs.open("./support/C.upf");
+	upf->read_pseudo_upf201(ifs);
+	EXPECT_TRUE(upf->has_so); // has soc info
+	int ierr;
+	double lambda = 1.1;
+	// LSPINORB = 0
+	GlobalV::LSPINORB = 1;
+	ierr = upf->average_p(lambda);
+	EXPECT_EQ(ierr,0);
+	EXPECT_EQ(upf->nbeta,6);
+	EXPECT_TRUE(upf->has_so); // has soc info
 }
 #undef private

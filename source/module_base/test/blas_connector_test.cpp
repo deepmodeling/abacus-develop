@@ -73,6 +73,27 @@ TEST(blas_connector, zscal_) {
     }
 }
 
+TEST(blas_connector, Scal) {
+    const int size = 8;
+    const std::complex<double> scale = {2, 3};
+    const int incx = 1;
+    std::complex<double> result[8], answer[8];
+    for (int i=0; i< size; i++) {
+        result[i] = std::complex<double>{static_cast<double>(std::rand() / double(RAND_MAX)),
+                 static_cast<double>(std::rand() / double(RAND_MAX))};
+    };
+    for (int i = 0; i < size; i++)
+        answer[i] = result[i] * scale;
+    BlasConnector bs;
+    bs.scal(size,scale,result,incx);
+    // incx is the spacing between elements if result
+    for (int i = 0; i < size; i++) {
+        EXPECT_DOUBLE_EQ(answer[i].real(), result[i].real());
+        EXPECT_DOUBLE_EQ(answer[i].imag(), result[i].imag());
+    }
+}
+
+
 TEST(blas_connector, daxpy_) {
     typedef double T;
     const int size = 8;
@@ -143,6 +164,24 @@ TEST(blas_connector, zcopy_) {
     for (int i = 0; i < size; i++)
         answer[i] = x_const[i];
     zcopy_(&size, x_const.data(), &incx, result.data(), &incy);
+    for (int i = 0; i < size; i++) {
+        EXPECT_DOUBLE_EQ(answer[i].real(), result[i].real());
+        EXPECT_DOUBLE_EQ(answer[i].imag(), result[i].imag());
+    }
+}
+
+TEST(blas_connector, copy) {
+    long const size = 8;
+    int const incx = 1;
+    int const incy = 1;
+    std::complex<double> result[8], answer[8];
+    for (int i = 0; i < size; i++)
+    {
+	    answer[i] = std::complex<double>{static_cast<double>(std::rand() / double(RAND_MAX)),
+		    static_cast<double>(std::rand() / double(RAND_MAX))};
+    }
+    BlasConnector bs;
+    bs.copy(size, answer, incx, result, incy);
     for (int i = 0; i < size; i++) {
         EXPECT_DOUBLE_EQ(answer[i].real(), result[i].real());
         EXPECT_DOUBLE_EQ(answer[i].imag(), result[i].imag());

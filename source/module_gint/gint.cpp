@@ -64,6 +64,17 @@ void Gint::cal_gint(Gint_inout *inout)
                 }
             }
 
+			if(inout->job==Gint_Tools::job_type::dvlocal)
+			{
+				if(GlobalV::GAMMA_ONLY_LOCAL)
+				{
+					ModuleBase::WARNING_QUIT("Gint_interface::cal_gint","dvlocal only for k point!");
+				}
+				ModuleBase::GlobalFunc::ZEROS(this->pvdpRx_reduced[inout->ispin], GlobalC::GridT.nnrg);
+				ModuleBase::GlobalFunc::ZEROS(this->pvdpRy_reduced[inout->ispin], GlobalC::GridT.nnrg);
+				ModuleBase::GlobalFunc::ZEROS(this->pvdpRz_reduced[inout->ispin], GlobalC::GridT.nnrg);
+			}
+
             //perpare auxiliary arrays to store thread-specific values
 #ifdef _OPENMP
 			double* pvpR_thread;
@@ -79,6 +90,17 @@ void Gint::cal_gint(Gint_inout *inout)
                     pvpR_thread = new double[lgd*lgd];
                     ModuleBase::GlobalFunc::ZEROS(pvpR_thread, lgd*lgd);
                 }
+			}
+
+			double *pvdpRx_thread, *pvdpRy_thread, *pvdpRz_thread;
+			if(inout->job==Gint_Tools::job_type::dvlocal)
+			{
+				pvdpRx_thread = new double[GlobalC::GridT.nnrg];
+				ModuleBase::GlobalFunc::ZEROS(pvdpRx_thread, GlobalC::GridT.nnrg);
+				pvdpRy_thread = new double[GlobalC::GridT.nnrg];
+				ModuleBase::GlobalFunc::ZEROS(pvdpRy_thread, GlobalC::GridT.nnrg);
+				pvdpRz_thread = new double[GlobalC::GridT.nnrg];
+				ModuleBase::GlobalFunc::ZEROS(pvdpRz_thread, GlobalC::GridT.nnrg);								
 			}
 
 			ModuleBase::matrix fvl_dphi_thread;
@@ -156,6 +178,18 @@ void Gint::cal_gint(Gint_inout *inout)
 							this->gint_kernel_vlocal(na_grid, grid_index, delta_r, vldr3, LD_pool,
 								this->pvpR_reduced[inout->ispin]);
 						}
+					#endif
+					delete[] vldr3;
+				}
+				else if(inout->job==Gint_Tools::job_type::dvlocal)
+				{
+					double* vldr3 = Gint_Tools::get_vldr3(inout->vl, GlobalC::GridT.start_ind[grid_index], ncyz, dv);
+					#ifdef _OPENMP
+						this->gint_kernel_dvlocal(na_grid, grid_index, delta_r, vldr3, LD_pool,
+							pvdpRx_thread, pvdpRy_thread, pvdpRz_thread);
+					#else
+						this->gint_kernel_dvlocal(na_grid, grid_index, delta_r, vldr3, LD_pool,
+							this->pvdpRx_reduced[inout->ispin], this->pvdpRy_reduced[inout->ispin], this->pvdpRz_reduced[inout->ispin]);
 					#endif
 					delete[] vldr3;
 				}

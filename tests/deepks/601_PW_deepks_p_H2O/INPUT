@@ -26,5 +26,5 @@ mixing_beta             0.4
 
 #Parameters (6.File)
 deepks_out_labels          1 
-bessel_lmax			1
-bessel_rcut 2.0
+bessel_descriptor_lmax     1
+bessel_descriptor_rcut     2.0

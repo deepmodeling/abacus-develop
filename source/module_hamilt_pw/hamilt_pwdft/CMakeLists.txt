@@ -28,6 +28,7 @@ list(APPEND objects
     structure_factor.cpp
     soc.cpp
     global.cpp
+    parallel_grid.cpp
 )
 
 add_library(

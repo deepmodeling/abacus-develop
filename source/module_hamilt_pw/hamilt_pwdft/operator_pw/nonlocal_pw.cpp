@@ -2,7 +2,7 @@
 
 #include "module_base/blas_connector.h"
 #include "module_base/timer.h"
-#include "src_parallel/parallel_reduce.h"
+#include "module_base/parallel_reduce.h"
 #include "module_base/tool_quit.h"
 #include "module_psi/kernels/device.h"
 
