@@ -89,7 +89,7 @@ void K_Vectors::set(
     //if symm_flag is not set, only time-reversal symmetry would be considered.
     if(!berryphase::berry_phase_flag && ModuleSymmetry::Symmetry::symm_flag != -1)
     {
-        this->ibz_kpoint(symm, ModuleSymmetry::Symmetry::symm_flag,skpt1);
+        this->ibz_kpoint(symm, ModuleSymmetry::Symmetry::symm_flag, skpt1, GlobalC::ucell);
         if(ModuleSymmetry::Symmetry::symm_flag || is_mp)
         {
             this->update_use_ibz();
@@ -503,10 +503,6 @@ void K_Vectors::Monkhorst_Pack(const int *nmp_in, const double *koffset_in, cons
 				if( abs(v3) < 1.0e-10 ) v3 = 0.0;
                 // index of nks kpoint
                 const int i = mpnx * mpny * (z - 1) + mpnx * (y - 1) + (x - 1);
-                //restrict to [0, 1)
-                v1=fmod(v1+100.0, 1.0);
-                v2=fmod(v2+100.0, 1.0);
-                v3=fmod(v3+100.0, 1.0);
                 kvec_d[i].set(v1, v2, v3);
             }
         }
@@ -548,10 +544,21 @@ void K_Vectors::update_use_ibz( void )
     return;
 }
 
-void K_Vectors::ibz_kpoint(const ModuleSymmetry::Symmetry &symm, bool use_symm,std::string& skpt)
+void K_Vectors::ibz_kpoint(const ModuleSymmetry::Symmetry &symm, bool use_symm,std::string& skpt, const UnitCell &ucell)
 {
     if (GlobalV::MY_RANK!=0) return;
     ModuleBase::TITLE("K_Vectors", "ibz_kpoint");
+
+    // k-lattice: "pricell" of reciprocal space
+    // CAUTION: should fit into all k-input method, not only MP  !!!
+    ModuleBase::Vector3<double> gb1(ucell.G.e11, ucell.G.e12, ucell.G.e13);
+    ModuleBase::Vector3<double> gb2(ucell.G.e21, ucell.G.e22, ucell.G.e23);
+    ModuleBase::Vector3<double> gb3(ucell.G.e31, ucell.G.e32, ucell.G.e33);
+    ModuleBase::Vector3<double> gk1(gb1.x / nmp[0], gb1.y / nmp[0], gb1.z / nmp[0]);
+    ModuleBase::Vector3<double> gk2(gb2.x / nmp[1], gb2.y / nmp[1], gb2.z / nmp[1]);
+    ModuleBase::Vector3<double> gk3(gb3.x / nmp[2], gb3.y / nmp[2], gb3.z / nmp[2]);
+    ModuleBase::Matrix3 gk(gk1.x, gk1.y, gk1.z, gk2.x, gk2.y, gk2.z, gk3.x, gk3.y, gk3.z);
+
     //===============================================
     // search in all space group operations
     // if the operations does not already included
@@ -565,6 +572,67 @@ void K_Vectors::ibz_kpoint(const ModuleSymmetry::Symmetry &symm, bool use_symm,s
     int nrotkm;
     if(use_symm)
     {
+        // bravais type of reciprocal lattice and k-lattice
+        double b_const[6];
+        double b0_const[6];
+        double bk_const[6];
+        double bk0_const[6];
+        int bbrav=15;
+        int bkbrav=15;
+        std::string bbrav_name;
+        std::string bkbrav_name;
+        ModuleBase::Vector3<double> gb01=gb1, gb02=gb2, gb03=gb3, gk01=gk1, gk02=gk2, gk03=gk3;
+        symm.lattice_type(gb1, gb2, gb3, gb01, gb02, gb03, b_const, b0_const, bbrav, bbrav_name, ucell, false, nullptr);
+        GlobalV::ofs_running<<"(for reciprocal lattice: )"<<std::endl;
+        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"BRAVAIS TYPE", bbrav);
+        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"BRAVAIS LATTICE NAME", bbrav_name);
+        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"ibrav", bbrav);
+
+        symm.lattice_type(gk1, gk2, gk3, gk01, gk02, gk03, bk_const, bk0_const, bkbrav, bkbrav_name, ucell, false, nullptr);
+        GlobalV::ofs_running<<"(for k-lattice: )"<<std::endl;
+        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"BRAVAIS TYPE", bkbrav);
+        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"BRAVAIS LATTICE NAME", bkbrav_name);
+        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"ibrav", bkbrav);
+
+        // point-group analysis of reciprocal lattice
+        ModuleBase::Matrix3 bsymop[48];
+        int bnop=0;
+        symm.setgroup(bsymop, bnop, bbrav);
+        ModuleBase::Matrix3 b_optlat(gb1.x, gb1.y, gb1.z, gb2.x, gb2.y, gb2.z, gb3.x, gb3.y, gb3.z);
+        //symm.gmatrix_convert_int(bsymop, bsymop, bnop, b_optlat, ucell.G);
+        symm.gmatrix_convert(bsymop, bsymop, bnop, b_optlat, ucell.G);
+        //check if all the kgmatrix are in bsymop
+        auto matequal = [&symm] (ModuleBase::Matrix3 a, ModuleBase::Matrix3 b)
+        {
+            return (symm.equal(a.e11, b.e11) && symm.equal(a.e12, b.e12) && symm.equal(a.e13, b.e13) &&
+            symm.equal(a.e21, b.e21) && symm.equal(a.e22, b.e22) && symm.equal(a.e23, b.e23) &&
+            symm.equal(a.e31, b.e31) && symm.equal(a.e23, b.e23) && symm.equal(a.e33, b.e33));
+        };
+        for(int i=0;i<symm.nrotk;++i)
+        {
+            // std::cout<<"checking kgmatrix "<<i<<std::endl;
+            // std::cout<<symm.kgmatrix[i].e11<<" "<< symm.kgmatrix[i].e12<<" "<<symm.kgmatrix[i].e13<<std::endl;
+            // std::cout<<symm.kgmatrix[i].e21<<" "<< symm.kgmatrix[i].e22<<" "<<symm.kgmatrix[i].e23<<std::endl;
+            // std::cout<<symm.kgmatrix[i].e31<<" "<< symm.kgmatrix[i].e32<<" "<<symm.kgmatrix[i].e33<<std::endl;
+            bool match = false;
+            for(int j=0;j<bnop;++j) 
+            {
+                if (matequal(symm.kgmatrix[i], bsymop[j])) {match=true; break;}
+            }
+            if(!match) 
+            {
+                std::cout<<"match failed:"<<std::endl;
+                // for (int i=0;i<bnop;++i)
+                // {
+                //     std::cout<<"bsymop "<<i<<":"<<std::endl;
+                //     std::cout<<bsymop[i].e11<<" "<< bsymop[i].e12<<" "<<bsymop[i].e13<<std::endl;
+                //     std::cout<<bsymop[i].e21<<" "<< bsymop[i].e22<<" "<<bsymop[i].e23<<std::endl;
+                //     std::cout<<bsymop[i].e31<<" "<< bsymop[i].e32<<" "<<bsymop[i].e33<<std::endl;
+                // }
+                ModuleBase::WARNING_QUIT("K_Vectors:ibz_kpoint", 
+                "symmetry operation of reciprocal lattice is wrong! ");
+            }
+        }
         nrotkm = symm.nrotk;// change if inv not included
         for (int i = 0; i < nrotkm; ++i)
         {
@@ -595,6 +663,13 @@ void K_Vectors::ibz_kpoint(const ModuleSymmetry::Symmetry &symm, bool use_symm,s
         return;
     }
 
+    // convert kgmatrix to k-lattice
+    ModuleBase::Matrix3* kkmatrix = new ModuleBase::Matrix3 [nrotkm];
+    symm.gmatrix_convert(kgmatrix.data(), kkmatrix, nrotkm, ucell.G, gk);
+    // direct coordinates of k-points in k-lattice
+    std::vector<ModuleBase::Vector3<double>> kvec_d_k(nkstot);
+    for (int i=0;i<nkstot;++i) kvec_d_k[i]=kvec_d[i]*ucell.G*gk.Inverse();
+
     // use operation : kgmatrix to find
     // the new set kvec_d : ir_kpt
     this->nkstot_ibz = 0;
@@ -608,18 +683,35 @@ void K_Vectors::ibz_kpoint(const ModuleSymmetry::Symmetry &symm, bool use_symm,s
     const double weight = 1.0 / static_cast<double>(nkstot);
 
     ModuleBase::Vector3<double> kvec_rot;
+    ModuleBase::Vector3<double> kvec_rot_k;
 
 
 //	for(int i=0; i<nrotkm; i++)
 //	{
 //		out.printM3("rot matrix",kgmatrix[i]);
 //	}
-
+    auto restrict_kpt = [&symm](ModuleBase::Vector3<double> &kvec){
+        // in (-0.5, 0.5]
+        kvec.x = fmod(kvec.x + 100.5-0.5*symm.epsilon, 1)-0.5+0.5*symm.epsilon;
+        kvec.y = fmod(kvec.y + 100.5-0.5*symm.epsilon, 1)-0.5+0.5*symm.epsilon;
+        kvec.z = fmod(kvec.z + 100.5-0.5*symm.epsilon, 1)-0.5+0.5*symm.epsilon;
+        // in [0, 1)
+        // kvec.x = fmod(kvec.x + 100 + symm.epsilon, 1) - symm.epsilon;
+        // kvec.y = fmod(kvec.y + 100 + symm.epsilon, 1) - symm.epsilon;
+        // kvec.z = fmod(kvec.z + 100 + symm.epsilon, 1) - symm.epsilon;
+        if(abs(kvec.x) < symm.epsilon) kvec.x = 0.0;
+        if(abs(kvec.y) < symm.epsilon) kvec.y = 0.0;
+        if(abs(kvec.z) < symm.epsilon) kvec.z = 0.0;
+        return;
+    };
     // for output in kpoints file
     int ibz_index[nkstot];
 	// search in all k-poins.
     for (int i = 0; i < nkstot; ++i)
     {
+        //restrict to [0, 1)
+        restrict_kpt(kvec_d[i]);
+
 		//std::cout << "\n kpoint = " << i << std::endl;
 		//std::cout << "\n kvec_d = " << kvec_d[i].x << " " << kvec_d[i].y << " " << kvec_d[i].z;
         bool already_exist = false;
@@ -637,11 +729,18 @@ void K_Vectors::ibz_kpoint(const ModuleSymmetry::Symmetry &symm, bool use_symm,s
 				// fix the bug like kvec_d * G; is wrong
 				kvec_rot = kvec_d[i] * kgmatrix[j]; //wrong for total energy, but correct for nonlocal force.
 				//kvec_rot = kgmatrix[j] * kvec_d[i]; //correct for total energy, but wrong for nonlocal force.
+                restrict_kpt(kvec_rot);
 
-                kvec_rot.x = fmod(kvec_rot.x + 100, 1);
-                kvec_rot.y = fmod(kvec_rot.y + 100, 1);
-                kvec_rot.z = fmod(kvec_rot.z + 100, 1);
+                kvec_rot_k = kvec_d_k[i] * kkmatrix[j];   //k-lattice rotation
+                kvec_rot_k = kvec_rot_k * gk * ucell.G.Inverse(); //convert to recip lattice
+                restrict_kpt(kvec_rot_k);
 
+                assert(symm.equal(kvec_rot.x, kvec_rot_k.x));
+                assert(symm.equal(kvec_rot.y, kvec_rot_k.y));
+                assert(symm.equal(kvec_rot.z, kvec_rot_k.z));
+                // std::cout << "\n kvec_rot (in recip) = " << kvec_rot.x << " " << kvec_rot.y << " " << kvec_rot.z;
+                // std::cout << "\n kvec_rot(k to recip)= " << kvec_rot_k.x << " " << kvec_rot_k.y << " " << kvec_rot_k.z;
+                kvec_rot_k = kvec_rot_k * ucell.G * gk.Inverse(); //convert back to k-latice
 
 //				std::cout << "\n kvec_rot = " << kvec_rot.x << " " << kvec_rot.y << " " << kvec_rot.z;
 
@@ -712,6 +811,7 @@ void K_Vectors::ibz_kpoint(const ModuleSymmetry::Symmetry &symm, bool use_symm,s
 //		BLOCK_HERE("check k point");
     }
 
+    delete[] kkmatrix;
     // output in kpoints file
     std::stringstream ss;
     ss << " " << std::setw(40) <<"nkstot" << " = " << nkstot
