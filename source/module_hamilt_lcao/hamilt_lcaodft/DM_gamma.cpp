@@ -2,8 +2,8 @@
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_base/blas_connector.h"
 #include "module_io/read_wfc_nao.h"
-#include "src_parallel/parallel_reduce.h"
-#include "src_parallel/parallel_common.h"
+#include "module_base/parallel_reduce.h"
+#include "module_base/parallel_common.h"
 #include "module_base/memory.h"
 #include "module_base/timer.h"
 

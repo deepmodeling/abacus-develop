@@ -2,7 +2,7 @@
 #include "mpi.h"
 #include "gtest/gtest.h"
 #include "module_base/global_variable.h"
-#include "src_parallel/parallel_common.h"
+#include "module_base/parallel_common.h"
 #include <complex>
 #include <string>
 #include <cstring>
@@ -13,7 +13,7 @@
 
 /**
  * The tested functions are wrappers of MPI_Bcast
- * in ABACUS, as defined in src_parallel/parallel_common.h.
+ * in ABACUS, as defined in module_base/parallel_common.h.
  * The source is process 0 in all MPI_Bcast 
  * wrappers.
  */

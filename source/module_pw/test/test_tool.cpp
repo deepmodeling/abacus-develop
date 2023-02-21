@@ -1,5 +1,5 @@
 #ifdef __MPI
-#include "../../src_parallel/parallel_global.h"
+#include "../../module_base/parallel_global.h"
 #include "mpi.h"
 #include <iostream>
 void setupmpi(int argc,char **argv,int &nproc, int &myrank)

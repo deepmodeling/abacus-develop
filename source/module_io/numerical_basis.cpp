@@ -3,7 +3,7 @@
 #include "module_cell/module_symmetry/symmetry.h"
 #include "winput.h"
 #include "module_base/math_ylmreal.h"
-#include "src_parallel/parallel_reduce.h"
+#include "module_base/parallel_reduce.h"
 #include <cstring>
 #include <functional>
 #include <algorithm>

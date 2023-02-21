@@ -9,7 +9,7 @@
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
 #include "module_base/timer.h"
-#include "src_parallel/parallel_common.h"
+#include "module_base/parallel_common.h"
 
 #include <fstream>
 #include <iomanip>
@@ -2078,7 +2078,11 @@ bool Input::Read(const std::string &fn)
     // sunliang added on 2022-12-06
     // To check if ntype in INPUT is equal to the atom species in STRU, if ntype is not set in INPUT, we will set it
     // according to STRU.
-    double ntype_stru = this->count_ntype(GlobalV::stru_file);
+    if(this->stru_file == "")
+    {
+        this->stru_file="STRU";
+    }
+    double ntype_stru = this->count_ntype(this->stru_file);
     if (this->ntype == 0)
     {
         this->ntype = ntype_stru;

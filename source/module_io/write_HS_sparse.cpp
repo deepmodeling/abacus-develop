@@ -1,7 +1,7 @@
 #include "write_HS_sparse.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/global_fp.h"
-#include "src_parallel/parallel_reduce.h"
+#include "module_base/parallel_reduce.h"
 #include "module_base/timer.h"
 
 void ModuleIO::save_HSR_sparse(

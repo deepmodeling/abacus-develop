@@ -10,9 +10,9 @@ if(ENABLE_LCAO)
     LIBS ${math_libs} planewave_serial base_serial psi device
     SOURCES updaterhok_pw_test.cpp
             ../elecstate_pw.cpp ../elecstate.cpp
-            ../module_charge/charge.cpp ../../src_parallel/parallel_reduce.cpp
+            ../module_charge/charge.cpp ../../module_base/parallel_reduce.cpp
             ../../module_hamilt_pw/hamilt_pwdft/structure_factor.cpp
-            ../../module_cell/klist.cpp ../../src_parallel/parallel_kpoints.cpp ../occupy.cpp
+            ../../module_cell/klist.cpp ../../module_cell/parallel_kpoints.cpp ../occupy.cpp
             ../kernels/elecstate_op.cpp ../../module_io/rwstream.cpp ../../module_io/write_wfc_pw.cpp
   )
 
@@ -25,7 +25,6 @@ if(ENABLE_LCAO)
     TARGET EState_psiToRho_lcao
     LIBS ${test_math_libs} base orb cell neighbor planewave psi
     SOURCES elecstate_lcao_test.cpp ../elecstate_lcao.cpp
-              ../../src_parallel/parallel_global.cpp ../../src_parallel/parallel_common.cpp ../../src_parallel/parallel_reduce.cpp
               ../../module_hamilt_lcao/hamilt_lcaodft/local_orbital_charge.cpp ../../module_hamilt_lcao/hamilt_lcaodft/DM_gamma.cpp ../../module_hamilt_lcao/hamilt_lcaodft/DM_k.cpp
               ../../module_hamilt_lcao/hamilt_lcaodft/local_orbital_wfc.cpp
               ../../module_gint/grid_technique.cpp ../../module_gint/grid_meshball.cpp ../../module_gint/grid_bigcell.cpp
@@ -117,8 +116,6 @@ AddTest(
   TARGET Elecstate_UTs
   LIBS ${math_libs} psi base device
   SOURCES ../kernels/test/elecstate_op_test.cpp
-          ../../src_parallel/parallel_reduce.cpp
-          ../../src_parallel/parallel_global.cpp 
 )
 
 if(ENABLE_COVERAGE)

@@ -1,9 +1,9 @@
 #include "ORB_control.h"
 #include "ORB_gen_tables.h"
-#include "../module_base/timer.h"
-#include "../src_parallel/parallel_common.h"
-#include "../module_base/lapack_connector.h"
-#include "../module_base/memory.h"
+#include "module_base/timer.h"
+#include "module_base/parallel_common.h"
+#include "module_base/lapack_connector.h"
+#include "module_base/memory.h"
 
 //#include "build_st_pw.h"
 

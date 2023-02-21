@@ -2,7 +2,7 @@
 
 #include "module_base/constants.h"
 #include "module_base/timer.h"
-#include "src_parallel/parallel_reduce.h"
+#include "module_base/parallel_reduce.h"
 
 namespace elecstate
 {

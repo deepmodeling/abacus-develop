@@ -4,7 +4,7 @@
 #include "winput.h"
 #include "module_base/math_ylmreal.h"
 #include "module_base/lapack_connector.h"
-#include "src_parallel/parallel_reduce.h"
+#include "module_base/parallel_reduce.h"
 #include "module_base/timer.h"
 
 Numerical_Descriptor::Numerical_Descriptor() 

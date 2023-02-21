@@ -5,7 +5,7 @@
 #ifdef __DEEPKS
 
 #include "LCAO_deepks.h"
-#include "src_parallel/parallel_reduce.h"
+#include "module_base/parallel_reduce.h"
 
 #ifdef __MPI
 void LCAO_Deepks::allsum_deepks(

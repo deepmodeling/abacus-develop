@@ -3,7 +3,8 @@
 #include "gmock/gmock.h"
 #include "mpi.h"
 #include "module_base/global_variable.h"
-#include "src_parallel/parallel_kpoints.h"
+#include "module_cell/parallel_kpoints.h"
+#include "module_base/parallel_global.h"
 
 #include <vector>
 
@@ -13,8 +14,8 @@
 
 /**
  * The tested functions:
- *   i. Parallel_Kpoints::init_pools() is the public interface
- *      to call the private function Parallel_Kpoints::divide_pools(),
+ *   i. Parallel_Global::init_pools() is the public interface
+ *      to call the private function Parallel_Global::divide_pools(),
  *      which divide all processes into KPAR groups.
  *   ii.Parallel_Kpoints::kinf() is the public interface
  *      to call another three functions: get_nks_pool(),
@@ -127,13 +128,13 @@ TEST_P(ParaKpoints,DividePools)
 	{
 		std::string output;
 		testing::internal::CaptureStdout();
-		EXPECT_EXIT(Pkpoints->init_pools(),testing::ExitedWithCode(0),"");
+		EXPECT_EXIT(Parallel_Global::init_pools(),testing::ExitedWithCode(0),"");
 		output = testing::internal::GetCapturedStdout();
 		EXPECT_THAT(output,testing::HasSubstr("Too many pools"));
 	}
 	else
 	{
-		Pkpoints->init_pools();
+		Parallel_Global::init_pools();
 		pp.test_init_pools();
 		Pkpoints->kinfo(pp.nkstot_);
 		pp.test_kinfo(Pkpoints);

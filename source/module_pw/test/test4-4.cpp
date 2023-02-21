@@ -4,7 +4,7 @@
 #include "../pw_basis_k.h"
 #ifdef __MPI
 #include "test_tool.h"
-#include "../../src_parallel/parallel_global.h"
+#include "../../module_base/parallel_global.h"
 #include "mpi.h"
 #endif
 #include "../../module_base/constants.h"
