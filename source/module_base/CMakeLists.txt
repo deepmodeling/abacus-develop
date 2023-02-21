@@ -55,6 +55,7 @@ endif()
 
 if(BUILD_TESTING)
   add_subdirectory(test)
+  add_subdirectory(test_parallel)
   add_subdirectory(kernels/test)
   if (USE_ABACUS_LIBM)
     add_subdirectory(libm/test)
