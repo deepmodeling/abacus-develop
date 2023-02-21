@@ -201,24 +201,24 @@ std::vector<stru_> stru_lib{
                                            std::vector<std::vector<double>>{
                                                {0., 0., 0.},
                                            }}}},
-//    stru_{13,
-//          "C_2h",
-//          "2/m",
-//          "C2/m",
-//          std::vector<double>{0.5, -1., 0., 0.5, 1., 0., -0.40192379, 0., 1.5},
-//          std::vector<atomtype_>{atomtype_{"C",
-//                                           std::vector<std::vector<double>>{
-//                                               {0., 0., 0.},
-//                                           }}}},
-//    stru_{14,
-//          "C_i",
-//          "-1",
-//          "P-1",
-//          std::vector<double>{1., 0., 0., -0.28989928, 1.53691386, 0., -0.31595971, -0.66789914, 1.75670135},
-//          std::vector<atomtype_>{atomtype_{"C",
-//                                           std::vector<std::vector<double>>{
-//                                               {0., 0., 0.},
-//                                           }}}},
+   stru_{13,
+         "C_2h",
+         "2/m",
+         "C2/m",
+         std::vector<double>{0.5, -1., 0., 0.5, 1., 0., -0.40192379, 0., 1.5},
+         std::vector<atomtype_>{atomtype_{"C",
+                                          std::vector<std::vector<double>>{
+                                              {0., 0., 0.},
+                                          }}}},
+   stru_{14,
+         "S_2",
+         "-1",
+         "P-1",
+         std::vector<double>{1., 0., 0., -0.28989928, 1.53691386, 0., -0.31595971, -0.66789914, 1.75670135},
+         std::vector<atomtype_>{atomtype_{"C",
+                                          std::vector<std::vector<double>>{
+                                              {0., 0., 0.},
+                                          }}}},
 
 };
 

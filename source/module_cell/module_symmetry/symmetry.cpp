@@ -523,7 +523,12 @@ void Symmetry::lattice_type(
 //	GlobalV::ofs_running << " pre_brav=" << pre_brav << std::endl;
 //	GlobalV::ofs_running << " temp_brav=" << temp_brav << std::endl;
 
-    if ( real_brav < pre_brav)
+    bool change_flag=false;
+    for (int i=0;i<6;++i)  
+        if(!equal(cel_const[i], pre_const[i])) 
+            change_flag=true;
+
+    if ( real_brav < pre_brav || change_flag )
     {
         //if the symmetry of the new vectors is higher, store the new ones
         for (int i = 0; i < 6; ++i)
