@@ -137,7 +137,7 @@ __cexp_impl (const std::complex<FLOAT> &x)
 	 imaginary part is zero.  */
       retval.real(std::numeric_limits<FLOAT>::quiet_NaN());
       if (icls == FP_ZERO)
-	retval = x.imag();
+	retval.imag(x.imag());
       else
 	{
 	  retval.imag(std::numeric_limits<FLOAT>::quiet_NaN());
