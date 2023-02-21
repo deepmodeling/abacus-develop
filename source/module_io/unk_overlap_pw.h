@@ -5,11 +5,11 @@
 #include <cmath>
 #include <fstream>
 #include <string>
-#include "../module_base/complexmatrix.h"
-#include "../module_base/lapack_connector.h"
-#include "../module_base/global_variable.h"
-#include "../src_parallel/parallel_reduce.h"
-#include "../module_base/vector3.h"
+#include "module_base/complexmatrix.h"
+#include "module_base/lapack_connector.h"
+#include "module_base/global_variable.h"
+#include "module_base/parallel_reduce.h"
+#include "module_base/vector3.h"
 #include "module_psi/psi.h"
 
 using namespace std;

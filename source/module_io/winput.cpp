@@ -637,7 +637,7 @@ void winput::Print(const std::string &fn)
 	return;
 }
 
-#include "../src_parallel/parallel_common.h"
+#include "module_base/parallel_common.h"
 #ifdef __MPI
 void winput::Bcast(void)
 {

@@ -16,7 +16,7 @@
 
 #include "LCAO_deepks.h"
 #include "module_base/vector3.h"
-#include "src_parallel/parallel_reduce.h"
+#include "module_base/parallel_reduce.h"
 #include "module_base/timer.h"
 
 //this subroutine adds dV to the Kohn-Sham Hamiltonian

@@ -2,7 +2,7 @@
 #include "mpi.h"
 #include "gtest/gtest.h"
 #include "module_base/global_variable.h"
-#include "src_parallel/parallel_global.h"
+#include "module_base/parallel_global.h"
 #include <complex>
 #include <string>
 #include <cstring>

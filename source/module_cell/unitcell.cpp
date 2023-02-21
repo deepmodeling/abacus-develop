@@ -3,10 +3,9 @@
 #include "mpi.h"
 #endif
 
-//#include "../module_hamilt_pw/hamilt_pwdft/global.h"
-#include "../module_base/constants.h"
-#include "../module_base/global_function.h"
-#include "../module_base/global_variable.h"
+#include "module_base/constants.h"
+#include "module_base/global_function.h"
+#include "module_base/global_variable.h"
 #include "unitcell.h"
 using namespace std;
 
@@ -14,9 +13,9 @@ using namespace std;
 #include "../module_orbital/ORB_read.h" // to use 'ORB' -- mohan 2021-01-30
 #endif
 #include <cstring>		// Peize Lin fix bug about strcmp 2016-08-02
-#include "../module_base/global_file.h"
-#include "../src_parallel/parallel_common.h"
-#include "../module_base/element_elec_config.h"
+#include "module_base/global_file.h"
+#include "module_base/parallel_common.h"
+#include "module_base/element_elec_config.h"
 #include "module_base/element_covalent_radius.h"
 
 UnitCell::UnitCell()
@@ -80,7 +79,7 @@ UnitCell::~UnitCell()
 	}
 }
 
-#include "../src_parallel/parallel_common.h"
+#include "module_base/parallel_common.h"
 #ifdef __MPI
 void UnitCell::bcast_unitcell(void)
 {

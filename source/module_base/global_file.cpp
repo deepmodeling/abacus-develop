@@ -8,8 +8,8 @@
 #ifdef __MPI
 #include "mpi.h"
 #endif
-#include "../src_parallel/parallel_common.h"
-#include "../src_parallel/parallel_reduce.h"
+#include "module_base/parallel_common.h"
+#include "module_base/parallel_reduce.h"
 
 //----------------------------------------------------------
 // EXPLAIN : Be Called in input.cpp

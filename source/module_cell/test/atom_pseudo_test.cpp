@@ -12,7 +12,13 @@
 /**
  * - Tested Functions:
  *   - Atom_pseudo
+ *     - constructor of class Atom_pseudo
  *   - ~Atom_pseudo
+ *     - deconstructor of class Atom_pseudo
+ *   - set_d_so
+ *     - set spin-orbital info from pseudopotential
+ *   - bcast_atom_pseudo
+ *     - bcast upf201 pp info to other processes
  */
 
 #define private public
@@ -24,7 +30,6 @@ class AtomPseudoTest : public testing::Test
 {
 protected:
 	std::unique_ptr<Pseudopot_upf> upf{new Pseudopot_upf};
-	std::unique_ptr<pseudo_nc> ncpp{new pseudo_nc};
 	std::unique_ptr<Atom_pseudo> atom_pseudo{new Atom_pseudo};
 };
 
