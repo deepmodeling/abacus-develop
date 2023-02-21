@@ -29,7 +29,7 @@ TEST(base_libm, sincos_random)
     std::uniform_real_distribution<double> rnd(-50000, 50000);
     std::default_random_engine eng;
 
-    for (int i = 1; i < len; ++i) {
+    for (int i = 0; i < len; ++i) {
         da[i] = rnd(eng);
     }
 
