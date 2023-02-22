@@ -59,7 +59,6 @@ namespace GlobalC
  *     - setup kup and kdw after vc (different spin cases)
  */
 
-
 class KlistTest : public testing::Test
 {
 protected:
@@ -78,6 +77,13 @@ TEST_F(KlistTest, Construct)
 	EXPECT_EQ(kv->k_nkstot,0);
 	EXPECT_FALSE(kv->kc_done);
 	EXPECT_FALSE(kv->kd_done);
+	//just to set ucell info here, however it is used in the following tests
+	GlobalC::ucell.latvec.e11 = 10.0; GlobalC::ucell.latvec.e12 = 0.0; GlobalC::ucell.latvec.e13 = 0.0;
+	GlobalC::ucell.latvec.e21 = 0.0; GlobalC::ucell.latvec.e22 = 10.0; GlobalC::ucell.latvec.e23 = 0.0;
+	GlobalC::ucell.latvec.e31 = 0.0; GlobalC::ucell.latvec.e32 = 0.0; GlobalC::ucell.latvec.e33 = 10.0;
+	GlobalC::ucell.GT = GlobalC::ucell.latvec.Inverse();
+	GlobalC::ucell.G = GlobalC::ucell.GT.Transpose();
+	GlobalC::ucell.lat0 = 1.8897261254578281;
 }
 
 TEST_F(KlistTest, MP)
@@ -135,12 +141,6 @@ TEST_F(KlistTest, ReadKpointsGammaOnlyLocal)
 TEST_F(KlistTest, ReadKpointsKspacing)
 {
 	kv->nspin = 1;
-	GlobalC::ucell.latvec.e11 = 10.0; GlobalC::ucell.latvec.e12 = 0.0; GlobalC::ucell.latvec.e13 = 0.0;
-	GlobalC::ucell.latvec.e21 = 0.0; GlobalC::ucell.latvec.e22 = 10.0; GlobalC::ucell.latvec.e23 = 0.0;
-	GlobalC::ucell.latvec.e31 = 0.0; GlobalC::ucell.latvec.e32 = 0.0; GlobalC::ucell.latvec.e33 = 10.0;
-	GlobalC::ucell.GT = GlobalC::ucell.latvec.Inverse();
-	GlobalC::ucell.G = GlobalC::ucell.GT.Transpose();
-	GlobalC::ucell.lat0 = 1.8897261254578281;
 	GlobalV::KSPACING = 0.052918; // 0.52918/Bohr = 1/A
 	std::string k_file = "./support/KPT3";
 	kv->read_kpoints(k_file);
@@ -353,16 +353,16 @@ TEST_F(KlistTest, ReadKpointsWarning7)
 	ofs.close();
 	kv->nspin = 1;
 	ModuleSymmetry::Symmetry::symm_flag = 1;
-	GlobalV::ofs_warning.open("klist_tmp_warning_6");
+	GlobalV::ofs_warning.open("klist_tmp_warning_7");
 	EXPECT_NO_THROW(kv->read_kpoints(k_file));
 	GlobalV::ofs_warning.close();
 	std::ifstream ifs;
-	ifs.open("klist_tmp_warning_6");
+	ifs.open("klist_tmp_warning_7");
 	std::string str((std::istreambuf_iterator<char>(ifs)),std::istreambuf_iterator<char>());
 	EXPECT_THAT(str, testing::HasSubstr("Line mode of k-points is open, please set symmetry to 0 or -1"));
 	ifs.close();
-	remove("klist_tmp_warning_6");
-	remove("arbitrary_6");
+	remove("klist_tmp_warning_7");
+	remove("arbitrary_7");
 	ModuleSymmetry::Symmetry::symm_flag = 0;
 }
 
@@ -431,11 +431,6 @@ TEST_F(KlistTest, SetKupKdownAfterVC)
 TEST_F(KlistTest, SetBothKvecAfterVC)
 {
 	kv->nspin = 1;
-	GlobalC::ucell.latvec.e11 = 10.0; GlobalC::ucell.latvec.e12 = 0.0; GlobalC::ucell.latvec.e13 = 0.0;
-	GlobalC::ucell.latvec.e21 = 0.0; GlobalC::ucell.latvec.e22 = 10.0; GlobalC::ucell.latvec.e23 = 0.0;
-	GlobalC::ucell.latvec.e31 = 0.0; GlobalC::ucell.latvec.e32 = 0.0; GlobalC::ucell.latvec.e33 = 10.0;
-	GlobalC::ucell.GT = GlobalC::ucell.latvec.Inverse();
-	GlobalC::ucell.G = GlobalC::ucell.GT.Transpose();
 	kv->nkstot = 1;
 	GlobalV::ofs_running.open("tmp_klist_1");
 	kv->renew(kv->nkstot);
@@ -455,11 +450,6 @@ TEST_F(KlistTest, SetBothKvecAfterVC)
 TEST_F(KlistTest, PrintKlists)
 {
 	kv->nspin = 1;
-	GlobalC::ucell.latvec.e11 = 10.0; GlobalC::ucell.latvec.e12 = 0.0; GlobalC::ucell.latvec.e13 = 0.0;
-	GlobalC::ucell.latvec.e21 = 0.0; GlobalC::ucell.latvec.e22 = 10.0; GlobalC::ucell.latvec.e23 = 0.0;
-	GlobalC::ucell.latvec.e31 = 0.0; GlobalC::ucell.latvec.e32 = 0.0; GlobalC::ucell.latvec.e33 = 10.0;
-	GlobalC::ucell.GT = GlobalC::ucell.latvec.Inverse();
-	GlobalC::ucell.G = GlobalC::ucell.GT.Transpose();
 	kv->nkstot = 1;
 	kv->nks = 1;
 	GlobalV::ofs_running.open("tmp_klist_2");
@@ -477,18 +467,12 @@ TEST_F(KlistTest, PrintKlists)
 TEST_F(KlistTest, PrintKlistsWarnigQuit)
 {
 	kv->nspin = 1;
-	GlobalC::ucell.latvec.e11 = 10.0; GlobalC::ucell.latvec.e12 = 0.0; GlobalC::ucell.latvec.e13 = 0.0;
-	GlobalC::ucell.latvec.e21 = 0.0; GlobalC::ucell.latvec.e22 = 10.0; GlobalC::ucell.latvec.e23 = 0.0;
-	GlobalC::ucell.latvec.e31 = 0.0; GlobalC::ucell.latvec.e32 = 0.0; GlobalC::ucell.latvec.e33 = 10.0;
-	GlobalC::ucell.GT = GlobalC::ucell.latvec.Inverse();
-	GlobalC::ucell.G = GlobalC::ucell.GT.Transpose();
 	kv->nkstot = 1;
 	kv->nks = 2;
 	kv->renew(kv->nkstot);
 	kv->kvec_c[0].x = 0;
 	kv->kvec_c[0].y = 0;
 	kv->kvec_c[0].z = 0;
-	GlobalV::FINAL_SCF = 0;
 	kv->set_both_kvec_after_vc(GlobalC::ucell.G,GlobalC::ucell.latvec);
 	EXPECT_TRUE(kv->kd_done);
 	testing::internal::CaptureStdout();
@@ -498,14 +482,45 @@ TEST_F(KlistTest, PrintKlistsWarnigQuit)
 	EXPECT_THAT(output,testing::HasSubstr("nkstot < nks"));
 }
 
+TEST_F(KlistTest, SetBothKvecFinalSCF)
+{
+	kv->nspin = 1;
+	kv->nkstot = 1;
+	kv->nks = 1;
+	kv->renew(kv->nkstot);
+	kv->kvec_d[0].x = 0.0;
+	kv->kvec_d[0].y = 0.0;
+	kv->kvec_d[0].z = 0.0;
+	kv->kvec_c[0].x = 0.0;
+	kv->kvec_c[0].y = 0.0;
+	kv->kvec_c[0].z = 0.0;
+	std::string skpt;
+	GlobalV::FINAL_SCF = 1;
+	// case 1
+	kv->k_nkstot = 0;
+	kv->set_both_kvec(GlobalC::ucell.G,GlobalC::ucell.latvec,skpt);
+	EXPECT_TRUE(kv->kd_done);
+	EXPECT_FALSE(kv->kc_done);
+	// case 2
+	kv->k_nkstot = 1;
+	kv->k_kword = "D";
+	kv->set_both_kvec(GlobalC::ucell.G,GlobalC::ucell.latvec,skpt);
+	EXPECT_TRUE(kv->kd_done);
+	EXPECT_FALSE(kv->kc_done);
+	// case 3
+	kv->k_kword = "C";
+	kv->set_both_kvec(GlobalC::ucell.G,GlobalC::ucell.latvec,skpt);
+	EXPECT_TRUE(kv->kc_done);
+	EXPECT_FALSE(kv->kd_done);
+	// case 4
+	GlobalV::ofs_warning.open("klist_tmp_warning_8");
+	kv->k_kword = "arbitrary";
+	kv->set_both_kvec(GlobalC::ucell.G,GlobalC::ucell.latvec,skpt);
+}
+
 TEST_F(KlistTest, SetBothKvec)
 {
 	kv->nspin = 1;
-	GlobalC::ucell.latvec.e11 = 10.0; GlobalC::ucell.latvec.e12 = 0.0; GlobalC::ucell.latvec.e13 = 0.0;
-	GlobalC::ucell.latvec.e21 = 0.0; GlobalC::ucell.latvec.e22 = 10.0; GlobalC::ucell.latvec.e23 = 0.0;
-	GlobalC::ucell.latvec.e31 = 0.0; GlobalC::ucell.latvec.e32 = 0.0; GlobalC::ucell.latvec.e33 = 10.0;
-	GlobalC::ucell.GT = GlobalC::ucell.latvec.Inverse();
-	GlobalC::ucell.G = GlobalC::ucell.GT.Transpose();
 	kv->nkstot = 1;
 	kv->nks = 1;
 	kv->renew(kv->nkstot);
@@ -515,6 +530,7 @@ TEST_F(KlistTest, SetBothKvec)
 	kv->kc_done = 0;
 	kv->kd_done = 1;
 	std::string skpt;
+	GlobalV::FINAL_SCF = 0;
 	kv->set_both_kvec(GlobalC::ucell.G,GlobalC::ucell.latvec,skpt);
 	EXPECT_TRUE(kv->kc_done);
 	kv->kc_done = 1;
