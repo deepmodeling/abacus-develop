@@ -108,8 +108,7 @@ GTESTOPTS = -I${GTEST_DIR}/include -L${GTEST_DIR}/lib -lgtest -lpthread
 #==========================
 # Objects
 #==========================
-VPATH=../../src_parallel\
-:../../module_base\
+VPATH=../../module_base\
 :../../module_psi/kernels\
 :../
 

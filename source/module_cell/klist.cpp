@@ -1,9 +1,9 @@
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "klist.h"
-#include "src_parallel/parallel_global.h"
+#include "module_base/parallel_global.h"
 #include "module_cell/module_symmetry/symmetry.h"
-#include "src_parallel/parallel_reduce.h"
-#include "src_parallel/parallel_common.h"
+#include "module_base/parallel_reduce.h"
+#include "module_base/parallel_common.h"
 #include "module_base/memory.h"
 #include "module_io/berryphase.h"
 

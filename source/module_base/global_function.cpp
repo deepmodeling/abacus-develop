@@ -3,7 +3,7 @@
 //==========================================================
 #include "global_function.h"
 
-#include "../src_parallel/parallel_common.h"
+#include "module_base/parallel_common.h"
 #include "global_file.h"
 
 //==========================================================

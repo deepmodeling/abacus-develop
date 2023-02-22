@@ -3,7 +3,7 @@
 
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
-#include "src_parallel/parallel_reduce.h"
+#include "module_base/parallel_reduce.h"
 #include "module_base/matrix.h"
 #include "module_base/complexmatrix.h"
 #include "module_base/realarray.h"

@@ -2,7 +2,7 @@
 #ifndef __CELL
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #endif
-#include "src_parallel/parallel_reduce.h"
+#include "module_base/parallel_reduce.h"
 
 Magnetism::Magnetism()
 {

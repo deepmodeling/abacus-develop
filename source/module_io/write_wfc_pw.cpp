@@ -3,7 +3,7 @@
 #include "module_base/tool_title.h"
 #include "module_base/global_variable.h"
 #include "module_io/input.h"
-#include "../src_parallel/parallel_global.h"
+#include "module_base/parallel_global.h"
 #ifdef __MPI
 #include "mpi.h"
 #endif

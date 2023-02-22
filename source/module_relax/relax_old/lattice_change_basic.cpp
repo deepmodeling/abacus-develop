@@ -1,6 +1,6 @@
 #include "lattice_change_basic.h"
 
-#include "src_parallel/parallel_common.h"
+#include "module_base/parallel_common.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 
 int Lattice_Change_Basic::dim = 0;

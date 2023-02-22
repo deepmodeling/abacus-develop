@@ -1,7 +1,7 @@
 #include "dos.h"
 #include "write_dos_pw.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
-#include "src_parallel/parallel_reduce.h"
+#include "module_base/parallel_reduce.h"
 
 void ModuleIO::write_dos_pw(const ModuleBase::matrix &ekb,
 	const ModuleBase::matrix &wg,

@@ -8,6 +8,4 @@ AddTest(
     TARGET Elecstate_Kernels_UTs
     LIBS ${math_libs} psi base device
     SOURCES elecstate_op_test.cpp
-    ../../src_parallel/parallel_reduce.cpp
-    ../../src_parallel/parallel_global.cpp
 )

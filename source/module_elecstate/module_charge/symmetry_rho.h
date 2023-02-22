@@ -2,7 +2,7 @@
 #define SYMMETRY_RHO_H
 #include "module_elecstate/module_charge/charge.h"
 #include "module_pw/pw_basis.h"
-#include "src_parallel/parallel_grid.h"
+#include "module_hamilt_pw/hamilt_pwdft/parallel_grid.h"
 
 #include "module_cell/module_symmetry/symmetry.h"
 
