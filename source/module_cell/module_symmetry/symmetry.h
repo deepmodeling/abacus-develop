@@ -115,22 +115,20 @@ public:
 	void gtrans_convert(const ModuleBase::Vector3<double>* va, ModuleBase::Vector3<double>* vb, 
 			const int n, const ModuleBase::Matrix3 &a, const ModuleBase::Matrix3 &b)const;
 	void gmatrix_invmap(const ModuleBase::Matrix3* s, const int n, int* invmap);
+	void hermite_normal_form(const ModuleBase::Matrix3 &s, ModuleBase::Matrix3 &H, ModuleBase::Matrix3 &b) const;
 	private:
 
 	// (s)tart (p)osition of atom (t)ype which
 	// has (min)inal number.
 	ModuleBase::Vector3<double> sptmin;
 
-	// to be called in lattice_type and plat_type
+	// to be called in lattice_type
 	void get_shortest_latvec(ModuleBase::Vector3<double> &a1, 
 			ModuleBase::Vector3<double> &a2, ModuleBase::Vector3<double> &a3)const;
 	void get_optlat(ModuleBase::Vector3<double> &v1, ModuleBase::Vector3<double> &v2, 
 			ModuleBase::Vector3<double> &v3, ModuleBase::Vector3<double> &w1, 
 			ModuleBase::Vector3<double> &w2, ModuleBase::Vector3<double> &w3, 
 			int& real_brav, double* cel_const, double* tmp_const)const;
-	// to be called in pricell
-	int plat_type(ModuleBase::Vector3<double> &v1, ModuleBase::Vector3<double> &v2,
-    		ModuleBase::Vector3<double> &v3, double *cel_const, std::string &bravname);
 };
 }
 

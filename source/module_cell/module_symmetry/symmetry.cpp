@@ -526,7 +526,7 @@ void Symmetry::lattice_type(
     bool change_flag=false;
     for (int i=0;i<6;++i)  
         if(!equal(cel_const[i], pre_const[i])) 
-            change_flag=true;
+            {change_flag=true; break;}
 
     if ( real_brav < pre_brav || change_flag )
     {
@@ -1174,8 +1174,12 @@ void Symmetry::pricell(double* pos)
     GlobalV::ofs_running<<p3.x<<" "<<p3.y<<" "<<p3.z<<std::endl;
 
     // get the optimized primitive cell
+    UnitCell tmp_ucell;
     std::string pbravname;
-    this->pbrav=this->plat_type(p1, p2, p3, pcel_const, pbravname);
+    ModuleBase::Vector3<double> p01=p1, p02=p2, p03=p3;
+    double pcel_pre_const[6];
+    for(int i=0;i<6;++i) pcel_pre_const[i]=pcel_const[i];
+    this->lattice_type(p1, p2, p3, p01, p02, p03, pcel_const, pcel_pre_const, pbrav, pbravname,tmp_ucell, false, nullptr);
 
     this->plat.e11=p1.x;
     this->plat.e12=p1.y;
@@ -1216,52 +1220,20 @@ void Symmetry::pricell(double* pos)
     ModuleBase::Matrix3 inputlat(s1.x, s1.y, s1.z, s2.x, s2.y, s2.z, s3.x, s3.y, s3.z);
     this->gtrans_convert(ptrans.data(), ptrans.data(), ntrans, this->optlat, inputlat );
     
-    // //how many pcell in supercell
-    // double n1, n2, n3;
-    // ModuleBase::Matrix3 nummat=this->optlat*this->plat.Inverse();
-    // //nummat=HermiteNormalForm(nummat)
-    // n1=nummat.e11;
-    // n2=nummat.e22;
-    // n3=nummat.e33;
-    // std::cout<<"n1="<<n1<<"; n2="<<n2<<"; n3="<<n3<<std::endl;
-
-    // //replace the (may be negative) ptrans with the real ptrans(in supercell)
-    // ModuleBase::Matrix3 BT=this->optlat.Inverse();
-    // ModuleBase::Matrix3 B=this->optlat.Transpose();
-    // ModuleBase::Vector3<double> pcel_car;
-    // ModuleBase::Vector3<double> pcel_direct;
-    // int count=0;
-    // for (int k=0;k<n3;++k)
-    // {
-    //     for(int j=0;j<n2;++j)
-    //     {
-    //         for(int i=0;i<n1;++i)
-    //         {
-    //             pcel_car=p1*double(i)+p2*double(j)+p3*double(k);
-    //             pcel_direct=B*pcel_car;
-    //             pcel_direct.x=fmod(pcel_direct.x+2.0*n1+100.0+0.5*epsilon,1.0) - 0.5*epsilon;
-    //             pcel_direct.y=fmod(pcel_direct.y+2.0*n2+100.0+0.5*epsilon,1.0) - 0.5*epsilon;
-    //             pcel_direct.z=fmod(pcel_direct.z+2.0*n3+100.0+0.5*epsilon,1.0) - 0.5*epsilon;
-    //             bool exist=false;
-    //             for(int itrans=1;itrans<count;++itrans)
-    //                 exist=exist || (abs(pcel_direct.x-ptrans[count].x)<epsilon &&
-    //                         abs(pcel_direct.y-ptrans[count].y)<epsilon &&
-    //                         abs(pcel_direct.z-ptrans[count].z)<epsilon);
-    //             if(!exist)
-    //             {
-    //                 ptrans[count]=pcel_direct;
-    //                 ++count;
-    //             }
-    //         }
-    //     }
-    // }
-    // if(count != this->ncell) 
-    // {
-    //     std::cout << " ERROR: Number of cells and number of vectors did not agree.";
-    //     std::cout<<"Try to change symmetry_prec in INPUT." << std::endl;
-	// 	ModuleBase::QUIT();
-    // }
-    // assert(count==this->ncell);
+    //how many pcell in supercell
+    int n1, n2, n3;
+    ModuleBase::Matrix3 nummat0=this->optlat*this->plat.Inverse();
+    ModuleBase::Matrix3 nummat, transmat;
+    hermite_normal_form(nummat0, nummat, transmat);
+    n1=floor (nummat.e11 + epsilon);
+    n2=floor (nummat.e22 + epsilon);
+    n3=floor (nummat.e33 + epsilon);
+    if(n1*n2*n3 != this->ncell) 
+    {
+        std::cout << " ERROR: Number of cells and number of vectors did not agree.";
+        std::cout<<"Try to change symmetry_prec in INPUT." << std::endl;
+		ModuleBase::QUIT();
+    }
     return;
 }
 
@@ -1923,75 +1895,108 @@ void Symmetry::get_optlat(ModuleBase::Vector3<double> &v1, ModuleBase::Vector3<d
     return;
 }
 
-int Symmetry::plat_type(
-    ModuleBase::Vector3<double> &v1,
-    ModuleBase::Vector3<double> &v2,
-    ModuleBase::Vector3<double> &v3,
-    double *pcel_const,
-    std::string &bravname)
+void Symmetry::hermite_normal_form(const ModuleBase::Matrix3 &s3, ModuleBase::Matrix3 &h3, ModuleBase::Matrix3 &b3) const
 {
-    ModuleBase::TITLE("Symmetry","plat_type");
+    ModuleBase::TITLE("Symmetry","hermite_normal_form");
+    // check the non-singularity and integer elements of s
+    assert(!equal(s3.Det(), 0.0));
+    auto round = [](double x){return (x>0.0)?floor(x+0.5):ceil(x-0.5);};
+    ModuleBase::matrix s=s3.to_matrix();
+    for (int i=0;i<3;++i)
+        for(int j=0;j<3;++j)
+            assert(equal(s(i, j), round(s(i, j))));
 
-	//----------------------------------------------
-	// (1) adjustement of the basis to right hand 
-	// sense by inversion of all three lattice 
-	// vectors if necessary
-	//----------------------------------------------
-    const bool right = Symm_Other::right_hand_sense(v1, v2, v3);
-	ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"right hand lattice (primitive cell): ",right);
+    // convert Matrix3 to matrix
+    ModuleBase::matrix h=s, b(3, 3, true);
+    b(0, 0)=1; b(1, 1)=1; b(2, 2)=1;
 
-	//--------------------------------------------
-	// (3) calculate the 'pre_const'
-	//--------------------------------------------
-    double pcel_pre_const[6];
-	ModuleBase::GlobalFunc::ZEROS(pcel_pre_const, 6);
-    int pcel_pre_brav = standard_lat(v1, v2, v3, pcel_const);
-    for ( int i = 0; i < 6; ++i)
+    // transform H into lower triangular form
+    auto max_min_index = [&h, this](int row, int &i1_to_max, int &i2_to_min)
     {
-        pcel_pre_const[i] = pcel_const[i];
-    }
-
-    // find the shortest basis vectors of the lattice
-    this->get_shortest_latvec(v1, v2, v3);
-
-    Symm_Other::right_hand_sense(v1, v2, v3);
-    
-    int pcel_real_brav = 15;
-    double temp_const[6];
-
-    //then we should find the best lattice vectors to make much easier the determination of the lattice symmetry
-    //the method is to contrast the combination of the shortest vectors and determine their symmmetry
-
-    ModuleBase::Vector3<double> w1, w2, w3;
-    ModuleBase::Vector3<double> q1, q2, q3;
-    this->get_optlat(v1, v2, v3, w1, w2, w3, pcel_real_brav, pcel_const, temp_const);
-    
-    //now, the highest symmetry of the combination of the shortest vectors has been found
-    //then we compare it with the original symmetry
-
-    if ( pcel_real_brav < pcel_pre_brav)
-    {
-        //if the symmetry of the new vectors is higher, store the new ones
-        for (int i = 0; i < 6; ++i)
+        if(fabs(h(row, i1_to_max)) < fabs(h(row, i2_to_min)) - epsilon)
         {
-            pcel_const[i] = temp_const[i];
+            int tmp = i2_to_min;
+            i2_to_min = i1_to_max;
+            i1_to_max = tmp;
         }
-        q1 = w1;
-        q2 = w2;
-        q3 = w3;
-        // return the optimized lattice in v1, v2, v3
-        v1=q1;
-        v2=q2;
-        v3=q3;
-    }
-    else
+        return;
+    };
+    auto max_min_index_row1 = [&max_min_index, &h, this](int &imax, int &imin)
     {
-        //else, store the original ones
-        for (int i = 0; i < 6; ++i)
+        int imid=1;
+        imax=0; imin=2;
+        max_min_index(0, imid, imin);
+        max_min_index(0, imax, imid);
+        max_min_index(0, imid, imin);
+        if(equal(h(0, imin), 0)) imin=imid;
+        else if (equal(h(0, imax), 0)) imax=imid;
+        return;
+    };
+    auto swap_col = [&h, &b](int c1, int c2)
+    {
+        double tmp;
+        for(int r=0;r<3;++r)
         {
-            pcel_const[i] = pcel_pre_const[i];
-        }    
+            tmp = h(r, c2);
+            h(r, c2)=h(r, c1);
+            h(r, c1)=tmp;
+            tmp = b(r, c2);
+            b(r, c2)=b(r, c1);
+            b(r, c1)=tmp;
+        }
+        return;
+    };
+    // row 1 
+    int imax, imin;
+    while(int(equal(h(0, 0), 0)) + int(equal(h(0, 1), 0)) + int(equal(h(0, 2), 0)) < 2)
+    {
+        max_min_index_row1(imax, imin);
+        double f = floor((fabs(h(0, imax) )+ epsilon)/fabs(h(0, imin)));
+        if(h(0, imax)*h(0, imin) < -epsilon) f*=-1;
+        for(int r=0;r<3;++r) {h(r, imax) -= f*h(r, imin); b(r, imax) -= f*b(r, imin); }
     }
-    return pcel_real_brav;
+    if(equal(h(0, 0), 0))  equal(h(0, 1), 0) ? swap_col(0, 2) : swap_col(0, 1);
+    if(h(0, 0) < -epsilon) for(int r=0;r<3;++r) {h(r, 0)*=-1; b(r, 0)*=-1;}
+    //row 2
+    if(equal(h(1, 1), 0))  swap_col(1, 2);
+    while(!equal(h(1, 2), 0))
+    {
+        imax=1, imin=2;
+        max_min_index(1, imax, imin);
+        double f = floor((fabs(h(1, imax) )+ epsilon)/fabs(h(1, imin)));
+        if(h(1, imax)*h(1, imin) < -epsilon) f*=-1;
+        for(int r=0;r<3;++r) {h(r, imax) -= f*h(r, imin); b(r, imax) -= f*b(r, imin); }
+        if(equal(h(1, 1), 0)) swap_col(1, 2); 
+    }
+    if(h(1, 1) < -epsilon) for(int r=0;r<3;++r) {h(r, 1)*=-1; b(r, 1)*=-1;}
+    //row3
+    if(h(2, 2) < -epsilon) for(int r=0;r<3;++r) {h(r, 2)*=-1; b(r, 2)*=-1;}
+    // deal with off-diagonal elements 
+    while(h(1, 0) > h(1, 1) - epsilon) 
+        for(int r=0;r<3;++r) {h(r, 0) -= h(r, 1); b(r, 0) -= b(r, 1); }
+    while(h(1, 0) < -epsilon) 
+        for(int r=0;r<3;++r) {h(r, 0) += h(r, 1); b(r, 0) += b(r, 1); }
+    for(int j=0;j<2;++j)
+    {
+        while(h(2, j) > h(2, 2) - epsilon)
+            for(int r=0;r<3;++r) {h(r, j) -= h(r, 2); b(r, j) -= b(r, 2); }
+        while(h(2, j) < -epsilon) 
+            for(int r=0;r<3;++r) {h(r, j) += h(r, 2); b(r, j) += b(r, 2); }
+    }
+
+    //convert matrix to Matrix3
+    h3.e11=h(0, 0); h3.e12=h(0, 1); h3.e13=h(0, 2);
+    h3.e21=h(1, 0); h3.e22=h(1, 1); h3.e23=h(1, 2);
+    h3.e31=h(2, 0); h3.e32=h(2, 1); h3.e33=h(2, 2);
+    b3.e11=b(0, 0); b3.e12=b(0, 1); b3.e13=b(0, 2);
+    b3.e21=b(1, 0); b3.e22=b(1, 1); b3.e23=b(1, 2);
+    b3.e31=b(2, 0); b3.e32=b(2, 1); b3.e33=b(2, 2);
+
+    //check s*b=h
+    ModuleBase::matrix check_zeros =s3.to_matrix() * b -h;
+    for (int i=0;i<3;++i)
+        for(int j=0;j<3;++j)
+            assert(equal(check_zeros(i, j), 0));
+    return;
 }
 }
