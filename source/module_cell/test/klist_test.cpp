@@ -223,7 +223,6 @@ TEST_F(KlistTest, ReadKpointsWarning1)
 	GlobalV::ofs_warning.open("klist_tmp_warning_1");
 	EXPECT_NO_THROW(kv->read_kpoints(k_file));
 	GlobalV::ofs_warning.close();
-	std::ifstream ifs;
 	ifs.open("klist_tmp_warning_1");
 	std::string str((std::istreambuf_iterator<char>(ifs)),std::istreambuf_iterator<char>());
 	EXPECT_THAT(str, testing::HasSubstr("Can't find File name : arbitrary_1"));
@@ -234,7 +233,6 @@ TEST_F(KlistTest, ReadKpointsWarning1)
 TEST_F(KlistTest, ReadKpointsWarning2)
 {
 	std::string k_file = "arbitrary_2";
-	std::ofstream ofs;
 	ofs.open(k_file.c_str());
 	ofs<<"ARBITRARY";
 	ofs.close();
@@ -242,7 +240,6 @@ TEST_F(KlistTest, ReadKpointsWarning2)
 	GlobalV::ofs_warning.open("klist_tmp_warning_2");
 	EXPECT_NO_THROW(kv->read_kpoints(k_file));
 	GlobalV::ofs_warning.close();
-	std::ifstream ifs;
 	ifs.open("klist_tmp_warning_2");
 	std::string str((std::istreambuf_iterator<char>(ifs)),std::istreambuf_iterator<char>());
 	EXPECT_THAT(str, testing::HasSubstr("symbol K_POINTS not found."));
@@ -254,7 +251,6 @@ TEST_F(KlistTest, ReadKpointsWarning2)
 TEST_F(KlistTest, ReadKpointsWarning3)
 {
 	std::string k_file = "arbitrary_3";
-	std::ofstream ofs;
 	ofs.open(k_file.c_str());
 	ofs<<"KPOINTS"<<std::endl;
 	ofs<<"100001"<<std::endl;
@@ -263,7 +259,6 @@ TEST_F(KlistTest, ReadKpointsWarning3)
 	GlobalV::ofs_warning.open("klist_tmp_warning_3");
 	EXPECT_NO_THROW(kv->read_kpoints(k_file));
 	GlobalV::ofs_warning.close();
-	std::ifstream ifs;
 	ifs.open("klist_tmp_warning_3");
 	std::string str((std::istreambuf_iterator<char>(ifs)),std::istreambuf_iterator<char>());
 	EXPECT_THAT(str, testing::HasSubstr("nkstot > MAX_KPOINTS"));
@@ -275,7 +270,6 @@ TEST_F(KlistTest, ReadKpointsWarning3)
 TEST_F(KlistTest, ReadKpointsWarning4)
 {
 	std::string k_file = "arbitrary_4";
-	std::ofstream ofs;
 	ofs.open(k_file.c_str());
 	ofs<<"KPOINTS"<<std::endl;
 	ofs<<"0"<<std::endl;
@@ -285,7 +279,6 @@ TEST_F(KlistTest, ReadKpointsWarning4)
 	GlobalV::ofs_warning.open("klist_tmp_warning_4");
 	EXPECT_NO_THROW(kv->read_kpoints(k_file));
 	GlobalV::ofs_warning.close();
-	std::ifstream ifs;
 	ifs.open("klist_tmp_warning_4");
 	std::string str((std::istreambuf_iterator<char>(ifs)),std::istreambuf_iterator<char>());
 	EXPECT_THAT(str, testing::HasSubstr("Error: neither Gamma nor Monkhorst-Pack."));
@@ -297,7 +290,6 @@ TEST_F(KlistTest, ReadKpointsWarning4)
 TEST_F(KlistTest, ReadKpointsWarning5)
 {
 	std::string k_file = "arbitrary_5";
-	std::ofstream ofs;
 	ofs.open(k_file.c_str());
 	ofs<<"KPOINTS"<<std::endl;
 	ofs<<"100000"<<std::endl;
@@ -308,7 +300,6 @@ TEST_F(KlistTest, ReadKpointsWarning5)
 	GlobalV::ofs_warning.open("klist_tmp_warning_5");
 	EXPECT_NO_THROW(kv->read_kpoints(k_file));
 	GlobalV::ofs_warning.close();
-	std::ifstream ifs;
 	ifs.open("klist_tmp_warning_5");
 	std::string str((std::istreambuf_iterator<char>(ifs)),std::istreambuf_iterator<char>());
 	EXPECT_THAT(str, testing::HasSubstr("Error : neither Cartesian nor Direct kpoint"));
@@ -320,7 +311,6 @@ TEST_F(KlistTest, ReadKpointsWarning5)
 TEST_F(KlistTest, ReadKpointsWarning6)
 {
 	std::string k_file = "arbitrary_6";
-	std::ofstream ofs;
 	ofs.open(k_file.c_str());
 	ofs<<"KPOINTS"<<std::endl;
 	ofs<<"100000"<<std::endl;
@@ -332,7 +322,6 @@ TEST_F(KlistTest, ReadKpointsWarning6)
 	GlobalV::ofs_warning.open("klist_tmp_warning_6");
 	EXPECT_NO_THROW(kv->read_kpoints(k_file));
 	GlobalV::ofs_warning.close();
-	std::ifstream ifs;
 	ifs.open("klist_tmp_warning_6");
 	std::string str((std::istreambuf_iterator<char>(ifs)),std::istreambuf_iterator<char>());
 	EXPECT_THAT(str, testing::HasSubstr("Line mode of k-points is open, please set symmetry to 0 or -1"));
@@ -345,7 +334,6 @@ TEST_F(KlistTest, ReadKpointsWarning6)
 TEST_F(KlistTest, ReadKpointsWarning7)
 {
 	std::string k_file = "arbitrary_7";
-	std::ofstream ofs;
 	ofs.open(k_file.c_str());
 	ofs<<"KPOINTS"<<std::endl;
 	ofs<<"100000"<<std::endl;
@@ -356,7 +344,6 @@ TEST_F(KlistTest, ReadKpointsWarning7)
 	GlobalV::ofs_warning.open("klist_tmp_warning_7");
 	EXPECT_NO_THROW(kv->read_kpoints(k_file));
 	GlobalV::ofs_warning.close();
-	std::ifstream ifs;
 	ifs.open("klist_tmp_warning_7");
 	std::string str((std::istreambuf_iterator<char>(ifs)),std::istreambuf_iterator<char>());
 	EXPECT_THAT(str, testing::HasSubstr("Line mode of k-points is open, please set symmetry to 0 or -1"));
@@ -496,26 +483,34 @@ TEST_F(KlistTest, SetBothKvecFinalSCF)
 	kv->kvec_c[0].z = 0.0;
 	std::string skpt;
 	GlobalV::FINAL_SCF = 1;
+	kv->kd_done = 0;
+	kv->kc_done = 0;
 	// case 1
 	kv->k_nkstot = 0;
 	kv->set_both_kvec(GlobalC::ucell.G,GlobalC::ucell.latvec,skpt);
 	EXPECT_TRUE(kv->kd_done);
-	EXPECT_FALSE(kv->kc_done);
+	EXPECT_TRUE(kv->kc_done);
 	// case 2
 	kv->k_nkstot = 1;
 	kv->k_kword = "D";
 	kv->set_both_kvec(GlobalC::ucell.G,GlobalC::ucell.latvec,skpt);
 	EXPECT_TRUE(kv->kd_done);
-	EXPECT_FALSE(kv->kc_done);
+	EXPECT_TRUE(kv->kc_done);
 	// case 3
 	kv->k_kword = "C";
 	kv->set_both_kvec(GlobalC::ucell.G,GlobalC::ucell.latvec,skpt);
 	EXPECT_TRUE(kv->kc_done);
-	EXPECT_FALSE(kv->kd_done);
+	EXPECT_TRUE(kv->kd_done);
 	// case 4
 	GlobalV::ofs_warning.open("klist_tmp_warning_8");
 	kv->k_kword = "arbitrary";
 	kv->set_both_kvec(GlobalC::ucell.G,GlobalC::ucell.latvec,skpt);
+	GlobalV::ofs_warning.close();
+	ifs.open("klist_tmp_warning_8");
+	std::string str((std::istreambuf_iterator<char>(ifs)),std::istreambuf_iterator<char>());
+	EXPECT_THAT(str, testing::HasSubstr("Error : neither Cartesian nor Direct kpoint."));
+	ifs.close();
+	remove("klist_tmp_warning_8");
 }
 
 TEST_F(KlistTest, SetBothKvec)
