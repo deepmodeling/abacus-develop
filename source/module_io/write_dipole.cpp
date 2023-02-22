@@ -344,11 +344,11 @@ void ModuleIO::write_dipole(const double *rho_save,
         for (int ia = 0; ia < GlobalC::ucell.atoms[0].na; ia++)
         {
             dipole_ion_x
-                += GlobalC::ucell.atoms[0].taud[ia].x * GlobalC::ucell.lat0 * 0.529177 * ELEC_evolve::td_val_elec_01;
+                += GlobalC::ucell.atoms[0].taud[ia].x * GlobalC::ucell.lat0 * 0.529177 * INPUT.td_val_elec_01;
             dipole_ion_y
-                += GlobalC::ucell.atoms[0].taud[ia].y * GlobalC::ucell.lat0 * 0.529177 * ELEC_evolve::td_val_elec_01;
+                += GlobalC::ucell.atoms[0].taud[ia].y * GlobalC::ucell.lat0 * 0.529177 * INPUT.td_val_elec_01;
             dipole_ion_z
-                += GlobalC::ucell.atoms[0].taud[ia].z * GlobalC::ucell.lat0 * 0.529177 * ELEC_evolve::td_val_elec_01;
+                += GlobalC::ucell.atoms[0].taud[ia].z * GlobalC::ucell.lat0 * 0.529177 * INPUT.td_val_elec_01;
         }
     }
     else if (GlobalC::ucell.ntype == 2)
@@ -356,20 +356,20 @@ void ModuleIO::write_dipole(const double *rho_save,
         for (int ia = 0; ia < GlobalC::ucell.atoms[0].na; ia++)
         {
             dipole_ion_x
-                += GlobalC::ucell.atoms[0].taud[ia].x * GlobalC::ucell.lat0 * 0.529177 * ELEC_evolve::td_val_elec_01;
+                += GlobalC::ucell.atoms[0].taud[ia].x * GlobalC::ucell.lat0 * 0.529177 *INPUT.td_val_elec_01;
             dipole_ion_y
-                += GlobalC::ucell.atoms[0].taud[ia].y * GlobalC::ucell.lat0 * 0.529177 * ELEC_evolve::td_val_elec_01;
+                += GlobalC::ucell.atoms[0].taud[ia].y * GlobalC::ucell.lat0 * 0.529177 * INPUT.td_val_elec_01;
             dipole_ion_z
-                += GlobalC::ucell.atoms[0].taud[ia].z * GlobalC::ucell.lat0 * 0.529177 * ELEC_evolve::td_val_elec_01;
+                += GlobalC::ucell.atoms[0].taud[ia].z * GlobalC::ucell.lat0 * 0.529177 * INPUT.td_val_elec_01;
         }
         for (int ia = 0; ia < GlobalC::ucell.atoms[1].na; ia++)
         {
             dipole_ion_x
-                += GlobalC::ucell.atoms[1].taud[ia].x * GlobalC::ucell.lat0 * 0.529177 * ELEC_evolve::td_val_elec_02;
+                += GlobalC::ucell.atoms[1].taud[ia].x * GlobalC::ucell.lat0 * 0.529177 * INPUT.td_val_elec_02;
             dipole_ion_y
-                += GlobalC::ucell.atoms[1].taud[ia].y * GlobalC::ucell.lat0 * 0.529177 * ELEC_evolve::td_val_elec_02;
+                += GlobalC::ucell.atoms[1].taud[ia].y * GlobalC::ucell.lat0 * 0.529177 * INPUT.td_val_elec_02;
             dipole_ion_z
-                += GlobalC::ucell.atoms[1].taud[ia].z * GlobalC::ucell.lat0 * 0.529177 * ELEC_evolve::td_val_elec_02;
+                += GlobalC::ucell.atoms[1].taud[ia].z * GlobalC::ucell.lat0 * 0.529177 * INPUT.td_val_elec_02;
         }
     }
     else if (GlobalC::ucell.ntype == 3)
@@ -377,29 +377,29 @@ void ModuleIO::write_dipole(const double *rho_save,
         for (int ia = 0; ia < GlobalC::ucell.atoms[0].na; ia++)
         {
             dipole_ion_x
-                += GlobalC::ucell.atoms[0].taud[ia].x * GlobalC::ucell.lat0 * 0.529177 * ELEC_evolve::td_val_elec_01;
+                += GlobalC::ucell.atoms[0].taud[ia].x * GlobalC::ucell.lat0 * 0.529177 * INPUT.td_val_elec_01;
             dipole_ion_y
-                += GlobalC::ucell.atoms[0].taud[ia].y * GlobalC::ucell.lat0 * 0.529177 * ELEC_evolve::td_val_elec_01;
+                += GlobalC::ucell.atoms[0].taud[ia].y * GlobalC::ucell.lat0 * 0.529177 * INPUT.td_val_elec_01;
             dipole_ion_z
-                += GlobalC::ucell.atoms[0].taud[ia].z * GlobalC::ucell.lat0 * 0.529177 * ELEC_evolve::td_val_elec_01;
+                += GlobalC::ucell.atoms[0].taud[ia].z * GlobalC::ucell.lat0 * 0.529177 * INPUT.td_val_elec_01;
         }
         for (int ia = 0; ia < GlobalC::ucell.atoms[1].na; ia++)
         {
             dipole_ion_x
-                += GlobalC::ucell.atoms[1].taud[ia].x * GlobalC::ucell.lat0 * 0.529177 * ELEC_evolve::td_val_elec_02;
+                += GlobalC::ucell.atoms[1].taud[ia].x * GlobalC::ucell.lat0 * 0.529177 * INPUT.td_val_elec_02;
             dipole_ion_y
-                += GlobalC::ucell.atoms[1].taud[ia].y * GlobalC::ucell.lat0 * 0.529177 * ELEC_evolve::td_val_elec_02;
+                += GlobalC::ucell.atoms[1].taud[ia].y * GlobalC::ucell.lat0 * 0.529177 * INPUT.td_val_elec_02;
             dipole_ion_z
-                += GlobalC::ucell.atoms[1].taud[ia].z * GlobalC::ucell.lat0 * 0.529177 * ELEC_evolve::td_val_elec_02;
+                += GlobalC::ucell.atoms[1].taud[ia].z * GlobalC::ucell.lat0 * 0.529177 * INPUT.td_val_elec_02;
         }
         for (int ia = 0; ia < GlobalC::ucell.atoms[2].na; ia++)
         {
             dipole_ion_x
-                += GlobalC::ucell.atoms[2].taud[ia].x * GlobalC::ucell.lat0 * 0.529177 * ELEC_evolve::td_val_elec_03;
+                += GlobalC::ucell.atoms[2].taud[ia].x * GlobalC::ucell.lat0 * 0.529177 * INPUT.td_val_elec_03;
             dipole_ion_y
-                += GlobalC::ucell.atoms[2].taud[ia].y * GlobalC::ucell.lat0 * 0.529177 * ELEC_evolve::td_val_elec_03;
+                += GlobalC::ucell.atoms[2].taud[ia].y * GlobalC::ucell.lat0 * 0.529177 * INPUT.td_val_elec_03;
             dipole_ion_z
-                += GlobalC::ucell.atoms[2].taud[ia].z * GlobalC::ucell.lat0 * 0.529177 * ELEC_evolve::td_val_elec_03;
+                += GlobalC::ucell.atoms[2].taud[ia].z * GlobalC::ucell.lat0 * 0.529177 * INPUT.td_val_elec_03;
         }
     }
     else
