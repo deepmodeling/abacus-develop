@@ -42,6 +42,10 @@ protected:
 
 TEST_F(AtomSpecTest, PrintAtom)
 {
+#ifdef __MPI
+	if(GlobalV::MY_RANK==0)
+	{
+#endif
 	ofs.open("tmp_atom_info");
 	atom.label = "C";
 	atom.type = 1;
@@ -74,11 +78,17 @@ TEST_F(AtomSpecTest, PrintAtom)
     	EXPECT_THAT(str, testing::HasSubstr("atom_position(cartesian) Dimension = 2"));
 	ifs.close();
 	remove("tmp_atom_info");
-
+#ifdef __MPI
+	}
+#endif
 }
 
 TEST_F(AtomSpecTest, SetIndex)
 {
+#ifdef __MPI
+	if(GlobalV::MY_RANK==0)
+	{
+#endif
 	ifs.open("./support/C.upf");
 	GlobalV::PSEUDORCUT = 15.0;
 	upf.read_pseudo_upf201(ifs);
@@ -99,6 +109,9 @@ TEST_F(AtomSpecTest, SetIndex)
 	EXPECT_EQ(atom.iw2m[13],2);
 	EXPECT_EQ(atom.iw2_ylm[13],3);
 	EXPECT_TRUE(atom.iw2_new[11]);
+#ifdef __MPI
+	}
+#endif
 }
 
 #ifdef __MPI
