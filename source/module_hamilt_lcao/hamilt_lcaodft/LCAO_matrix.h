@@ -44,7 +44,6 @@ private:
     std::vector<double> Hloc;
     std::vector<double> Sloc;
     std::vector<double> Hloc_fixed;
-    std::vector<double> Sdiag; // not used now
 
     //------------------------------
     // 1. Hamiltonian(vl),
@@ -57,12 +56,10 @@ private:
     std::vector<std::complex<double>> Hloc2;
     std::vector<std::complex<double>> Sloc2;
     std::vector<std::complex<double>> Hloc_fixed2;
-    std::vector<std::complex<double>> Sdiag2; // not used now
     //with soc, zhengdy-soc
 /*	ModuleBase::ComplexMatrix Hloc2_soc;
     ModuleBase::ComplexMatrix Sloc2_soc;
-    ModuleBase::ComplexMatrix Hloc_fixed2_soc;
-    ModuleBase::ComplexMatrix Sdiag2_soc;*/
+    ModuleBase::ComplexMatrix Hloc_fixed2_soc;*/
 
 
     //------------------------------
@@ -99,10 +96,18 @@ private:
     std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>> SR_sparse;
     std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>> TR_sparse;
 
+    std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>> dHRx_sparse[2];
+    std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>> dHRy_sparse[2];
+    std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>> dHRz_sparse[2];
+
     // For nspin = 4
     std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, std::complex<double>>>> HR_soc_sparse;
     std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, std::complex<double>>>> SR_soc_sparse;
     std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, std::complex<double>>>> TR_soc_sparse;
+
+    std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, std::complex<double>>>> dHRx_soc_sparse;
+    std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, std::complex<double>>>> dHRy_soc_sparse;
+    std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, std::complex<double>>>> dHRz_soc_sparse;
 
     // Record all R direct coordinate information, even if HR or SR is a zero matrix
     std::set<Abfs::Vector3_Order<int>> all_R_coor;
@@ -209,6 +214,7 @@ private:
     // jingan add 2021-6-4, modify 2021-12-2
     void destroy_HS_R_sparse(void);
     void destroy_T_R_sparse(void);
+    void destroy_dH_R_sparse(void);
 
 };
 

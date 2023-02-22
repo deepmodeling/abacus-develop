@@ -3,7 +3,7 @@
 #include "module_cell/module_symmetry/symmetry.h"
 #include "winput.h"
 #include "module_base/math_ylmreal.h"
-#include "src_parallel/parallel_reduce.h"
+#include "module_base/parallel_reduce.h"
 #include <cstring>
 #include <functional>
 #include <algorithm>
@@ -34,8 +34,16 @@ void Numerical_Basis::start_from_file_k( const int &ik, ModuleBase::ComplexMatri
 
     if (!this->init_label)
     {
-        // 1 stands for : start_from_file
-        this->bessel_basis.init( 1, INPUT.ecutwfc, GlobalC::ucell.ntype, GlobalC::ucell.lmax );
+        // true stands for : start_from_file
+        this->bessel_basis.init(
+			true,
+			std::stod(INPUT.bessel_nao_ecut),
+			GlobalC::ucell.ntype,
+			GlobalC::ucell.lmax,
+			INPUT.bessel_nao_smooth,
+			INPUT.bessel_nao_sigma,
+			INPUT.bessel_nao_rcut,
+			INPUT.bessel_nao_tolerence );
         this->mu_index = this->init_mu_index();
         this->init_label = true;
     }
@@ -54,8 +62,16 @@ void Numerical_Basis::output_overlap( const psi::Psi<std::complex<double>> &psi)
 	//---------------------------------------------------------
     if (!this->init_label)
     {
-        // 0 stands for : 'Faln' is not used.
-        this->bessel_basis.init( 0, INPUT.ecutwfc, GlobalC::ucell.ntype, GlobalC::ucell.lmax );
+        // false stands for : 'Faln' is not used.
+        this->bessel_basis.init(
+			false,
+			std::stod(INPUT.bessel_nao_ecut),
+			GlobalC::ucell.ntype,
+			GlobalC::ucell.lmax,
+			INPUT.bessel_nao_smooth,
+			INPUT.bessel_nao_sigma,
+			INPUT.bessel_nao_rcut,
+			INPUT.bessel_nao_tolerence );
         this->mu_index = this->init_mu_index();
         this->init_label = true;
     }

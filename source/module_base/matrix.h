@@ -4,7 +4,7 @@
 // Peize Lin update 2018-07-29
 
 #ifdef _MCD_CHECK
-#include "../src_parallel/mcd.h"
+#include "mcd.h"
 #endif
 
 #include <ostream>

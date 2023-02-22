@@ -189,19 +189,6 @@ ModuleBase::GlobalFunc::OUTP(ofs, "out_bandgap", out_bandgap, "if true, print ou
                                  "if set 1, prints intermediate quantities that shall be used for making unit test");
     ModuleBase::GlobalFunc::OUTP(ofs, "deepks_model", deepks_model, "file dir of traced pytorch model: 'model.ptg");
 
-    ModuleBase::GlobalFunc::OUTP(ofs,
-                                 "bessel_lmax",
-                                 bessel_lmax,
-                                 "lmax used in generating bessel functions");
-    ModuleBase::GlobalFunc::OUTP(ofs,
-                                 "bessel_rcut",
-                                 bessel_rcut,
-                                 "rcut used in generating bessel functions");
-    ModuleBase::GlobalFunc::OUTP(ofs,
-                                 "bessel_rcut",
-                                 bessel_rcut,
-                                 "tolerence level when generating bessel functions");
-
     ofs << "\n#Parameters (5.LCAO)" << std::endl;
     ModuleBase::GlobalFunc::OUTP(ofs, "basis_type", basis_type, "PW; LCAO in pw; LCAO");
     if (ks_solver == "HPSEPS" || ks_solver == "genelpa" || ks_solver == "scalapack_gvx" || ks_solver == "cusolver")
@@ -342,27 +329,27 @@ ModuleBase::GlobalFunc::OUTP(ofs, "out_bandgap", out_bandgap, "if true, print ou
         << " #periods of periodic structure" << std::endl;
 
     ofs << "\n#Parameters (14.exx)" << std::endl;
-    ModuleBase::GlobalFunc::OUTP(ofs, "exx_hybrid_alpha", exx_hybrid_alpha, "");
-    ModuleBase::GlobalFunc::OUTP(ofs, "exx_hse_omega", exx_hse_omega, "");
-    ModuleBase::GlobalFunc::OUTP(ofs, "exx_separate_loop", exx_separate_loop, "0 or 1");
-    ModuleBase::GlobalFunc::OUTP(ofs, "exx_hybrid_step", exx_hybrid_step, "");
-    ModuleBase::GlobalFunc::OUTP(ofs, "exx_lambda", exx_lambda, "");
-    ModuleBase::GlobalFunc::OUTP(ofs, "exx_real_number", exx_real_number, "");
-    ModuleBase::GlobalFunc::OUTP(ofs, "exx_pca_threshold", exx_pca_threshold, "");
-    ModuleBase::GlobalFunc::OUTP(ofs, "exx_c_threshold", exx_c_threshold, "");
-    ModuleBase::GlobalFunc::OUTP(ofs, "exx_v_threshold", exx_v_threshold, "");
-    ModuleBase::GlobalFunc::OUTP(ofs, "exx_dm_threshold", exx_dm_threshold, "");
-    ModuleBase::GlobalFunc::OUTP(ofs, "exx_schwarz_threshold", exx_schwarz_threshold, "");
-    ModuleBase::GlobalFunc::OUTP(ofs, "exx_cauchy_threshold", exx_cauchy_threshold, "");
-    ModuleBase::GlobalFunc::OUTP(ofs, "exx_c_grad_threshold", exx_c_grad_threshold, "");
-    ModuleBase::GlobalFunc::OUTP(ofs, "exx_v_grad_threshold", exx_v_grad_threshold, "");
-    ModuleBase::GlobalFunc::OUTP(ofs, "exx_cauchy_grad_threshold", exx_cauchy_grad_threshold, "");
-    ModuleBase::GlobalFunc::OUTP(ofs, "exx_ccp_threshold", exx_ccp_threshold, "");
-    ModuleBase::GlobalFunc::OUTP(ofs, "exx_ccp_rmesh_times", exx_ccp_rmesh_times, "");
-    ModuleBase::GlobalFunc::OUTP(ofs, "exx_distribute_type", exx_distribute_type, "htime or kmeans1 or kmeans2");
-    ModuleBase::GlobalFunc::OUTP(ofs, "exx_opt_orb_lmax", exx_opt_orb_lmax, "");
-    ModuleBase::GlobalFunc::OUTP(ofs, "exx_opt_orb_ecut", exx_opt_orb_ecut, "");
-    ModuleBase::GlobalFunc::OUTP(ofs, "exx_opt_orb_tolerence", exx_opt_orb_tolerence, "");
+    ModuleBase::GlobalFunc::OUTP(ofs, "exx_hybrid_alpha", exx_hybrid_alpha, "fraction of Fock exchange in hybrid functionals");
+    ModuleBase::GlobalFunc::OUTP(ofs, "exx_hse_omega", exx_hse_omega, "range-separation parameter in HSE functional");
+    //ModuleBase::GlobalFunc::OUTP(ofs, "exx_separate_loop", exx_separate_loop, "0 or 1");
+    ModuleBase::GlobalFunc::OUTP(ofs, "exx_hybrid_step", exx_hybrid_step, "the maximal electronic iteration number in the evaluation of Fock exchange");
+    ModuleBase::GlobalFunc::OUTP(ofs, "exx_lambda", exx_lambda, "used to compensate for divergence points at G=0 in the evaluation of Fock exchange using lcao_in_pw method");
+    ModuleBase::GlobalFunc::OUTP(ofs, "exx_real_number", exx_real_number, "exx calculated in real or complex");
+    ModuleBase::GlobalFunc::OUTP(ofs, "exx_pca_threshold", exx_pca_threshold, "threshold to screen on-site ABFs in exx");
+    ModuleBase::GlobalFunc::OUTP(ofs, "exx_c_threshold", exx_c_threshold, "threshold to screen C matrix in exx");
+    ModuleBase::GlobalFunc::OUTP(ofs, "exx_v_threshold", exx_v_threshold, "threshold to screen C matrix in exx");
+    ModuleBase::GlobalFunc::OUTP(ofs, "exx_dm_threshold", exx_dm_threshold, "threshold to screen density matrix in exx");
+    //ModuleBase::GlobalFunc::OUTP(ofs, "exx_schwarz_threshold", exx_schwarz_threshold, "");
+    ModuleBase::GlobalFunc::OUTP(ofs, "exx_cauchy_threshold", exx_cauchy_threshold, "threshold to screen exx using Cauchy-Schwartz inequality");
+    ModuleBase::GlobalFunc::OUTP(ofs, "exx_c_grad_threshold", exx_c_grad_threshold, "threshold to screen nabla C matrix in exx");
+    ModuleBase::GlobalFunc::OUTP(ofs, "exx_v_grad_threshold", exx_v_grad_threshold, "threshold to screen nabla V matrix in exx");
+    ModuleBase::GlobalFunc::OUTP(ofs, "exx_cauchy_grad_threshold", exx_cauchy_grad_threshold, "threshold to screen nabla exx using Cauchy-Schwartz inequality");
+    //ModuleBase::GlobalFunc::OUTP(ofs, "exx_ccp_threshold", exx_ccp_threshold, "");
+    ModuleBase::GlobalFunc::OUTP(ofs, "exx_ccp_rmesh_times", exx_ccp_rmesh_times, "how many times larger the radial mesh required for calculating Columb potential is to that of atomic orbitals");
+    //ModuleBase::GlobalFunc::OUTP(ofs, "exx_distribute_type", exx_distribute_type, "htime or kmeans1 or kmeans2");
+    ModuleBase::GlobalFunc::OUTP(ofs, "exx_opt_orb_lmax", exx_opt_orb_lmax, "the maximum l of the spherical Bessel functions for opt ABFs");
+    ModuleBase::GlobalFunc::OUTP(ofs, "exx_opt_orb_ecut", exx_opt_orb_ecut, "the cut-off of plane wave expansion for opt ABFs");
+    ModuleBase::GlobalFunc::OUTP(ofs, "exx_opt_orb_tolerence", exx_opt_orb_tolerence, "the threshold when solving for the zeros of spherical Bessel functions for opt ABFs");
 
     ofs << "\n#Parameters (16.tddft)" << std::endl;
     ModuleBase::GlobalFunc::OUTP(ofs, "td_force_dt", td_force_dt, "time of force change");
@@ -372,6 +359,7 @@ ModuleBase::GlobalFunc::OUTP(ofs, "out_bandgap", out_bandgap, "if true, print ou
     ModuleBase::GlobalFunc::OUTP(ofs, "td_vext", td_vext, "add extern potential or not");
     ModuleBase::GlobalFunc::OUTP(ofs, "td_vext_dire", td_vext_dire, "extern potential direction");
     ModuleBase::GlobalFunc::OUTP(ofs, "out_dipole", out_dipole, "output dipole or not");
+    ModuleBase::GlobalFunc::OUTP(ofs, "out_efield", out_dipole, "output dipole or not");
     ModuleBase::GlobalFunc::OUTP(ofs, "ocp", GlobalV::ocp, "change occupation or not");
     ModuleBase::GlobalFunc::OUTP(ofs, "ocp_set", GlobalV::ocp_set, "set occupation");
 
@@ -427,6 +415,19 @@ ModuleBase::GlobalFunc::OUTP(ofs, "out_bandgap", out_bandgap, "if true, print ou
     }
     ofs << "#which correlated orbitals need corrected ; d:2 ,f:3, do not need correction:-1" << std::endl;
 
+
+    ofs << "\n#Parameters (21.spherical bessel)" << std::endl;
+   ModuleBase::GlobalFunc::OUTP(ofs, "bessel_nao_smooth",	bessel_nao_smooth, "spherical bessel smooth or not");
+   ModuleBase::GlobalFunc::OUTP(ofs, "bessel_nao_sigma",	bessel_nao_sigma, "spherical bessel smearing_sigma");
+   ModuleBase::GlobalFunc::OUTP(ofs, "bessel_nao_ecut",		bessel_nao_ecut, "energy cutoff for spherical bessel functions(Ry)");
+   ModuleBase::GlobalFunc::OUTP(ofs, "bessel_nao_rcut",		bessel_nao_rcut, "radial cutoff for spherical bessel functions(a.u.)");
+   ModuleBase::GlobalFunc::OUTP(ofs, "bessel_nao_tolerence",bessel_nao_tolerence, "tolerence for spherical bessel root");
+   ModuleBase::GlobalFunc::OUTP(ofs, "bessel_descriptor_lmax",		bessel_descriptor_lmax, "lmax used in generating spherical bessel functions");
+   ModuleBase::GlobalFunc::OUTP(ofs, "bessel_descriptor_smooth",	bessel_descriptor_smooth, "spherical bessel smooth or not");
+   ModuleBase::GlobalFunc::OUTP(ofs, "bessel_descriptor_sigma",		bessel_descriptor_sigma, "spherical bessel smearing_sigma");
+   ModuleBase::GlobalFunc::OUTP(ofs, "bessel_descriptor_ecut",		bessel_descriptor_ecut, "energy cutoff for spherical bessel functions(Ry)");
+   ModuleBase::GlobalFunc::OUTP(ofs, "bessel_descriptor_rcut",		bessel_descriptor_rcut, "radial cutoff for spherical bessel functions(a.u.)");
+   ModuleBase::GlobalFunc::OUTP(ofs, "bessel_descriptor_tolerence",	bessel_descriptor_tolerence, "tolerence for spherical bessel root");
 
     ofs.close();
     return;

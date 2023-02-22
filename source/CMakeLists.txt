@@ -13,7 +13,6 @@ add_subdirectory(module_esolver)
 add_subdirectory(module_gint)
 add_subdirectory(module_io)
 add_subdirectory(module_relax)
-add_subdirectory(src_parallel)
 add_subdirectory(src_ri)
 add_subdirectory(module_ri)
 

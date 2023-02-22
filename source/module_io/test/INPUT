@@ -115,9 +115,6 @@ deepks_scf                     0 #>0 add V_delta to Hamiltonian
 deepks_bandgap                 0 #>0 for bandgap label
 deepks_out_unittest            0 #if set 1, prints intermediate quantities that shall be used for making unit test
 deepks_model                    #file dir of traced pytorch model: 'model.ptg
-bessel_lmax                    2 #lmax used in generating bessel functions
-bessel_rcut                    6 #rcut used in generating bessel functions
-bessel_rcut                    6 #tolerence level when generating bessel functions
 
 #Parameters (5.LCAO)
 basis_type                     lcao #PW; LCAO in pw; LCAO
@@ -138,6 +135,19 @@ out_wfc_lcao                   0 #ouput LCAO wave functions
 bx                             2 #division of an element grid in FFT grid along x
 by                             2 #division of an element grid in FFT grid along y
 bz                             2 #division of an element grid in FFT grid along z
+
+bessel_nao_smooth              1
+bessel_nao_sigma               0.1
+bessel_nao_ecut                default
+bessel_nao_rcut                6.0  #-1.0 for forcing manual setting
+bessel_nao_tolerence           1E-12
+
+bessel_descriptor_lmax         2 # -1 for forcing manual setting
+bessel_descriptor_smooth       1
+bessel_descriptor_sigma        0.1
+bessel_descriptor_ecut         default
+bessel_descriptor_rcut         6.0 #-1.0 for forcing manual setting
+bessel_descriptor_tolerence    1E-12
 
 #Parameters (6.Smearing)
 smearing_method                gauss #type of smearing_method: gauss; fd; fixed; mp; mp2; mv
@@ -296,18 +306,10 @@ td_trigo_amp                   2.74 # V/A
 #parameters of Heaviside electric field
 td_heavi_t0                    100
 td_heavi_amp                   1.0 # V/A 
-#parameters of HHG electric field
-td_hhg_amp1                    2.74 # V/A
-td_hhg_amp2                    2.74 # V/A
-td_hhg_freq1                   1.164656 # fs^-1
-td_hhg_freq2                   0.029116 # fs^-1
-td_hhg_phase1                  0.0
-td_hhg_phase2                  0.0
-td_hhg_t0                      700
-td_hhg_sigma                   30 # fs
 td_print_eij                 -1.0 # threshold to output Eij elements
 td_edm                         0 # 0: new edm method   1: old edm method
 out_dipole                   0 #output dipole or not
+out_efield                     0 #output efield or not
 ocp                            0 #change occupation or not
 ocp_set                        none #set occupation
 

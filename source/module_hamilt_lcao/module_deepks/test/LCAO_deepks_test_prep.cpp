@@ -123,6 +123,8 @@ void test_deepks::setup_cell()
         "STRU", 
         GlobalV::ofs_running);
 
+    ucell.read_pseudo(GlobalV::ofs_running);
+
 	return;
 }
 

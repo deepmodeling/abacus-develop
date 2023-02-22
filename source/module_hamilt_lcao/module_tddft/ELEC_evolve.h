@@ -33,9 +33,10 @@ class ELEC_evolve
     static int td_val_elec_01;
     static int td_val_elec_02;
     static int td_val_elec_03;
-    static int td_vext;
-    static int td_vext_dire;
-    static int out_dipole;
+    static bool td_vext;
+    static std::vector<int> td_vext_dire_case;
+    static bool out_dipole;
+    static bool out_efield;
 
     static double td_print_eij; // the threshold to output Eij elements
     static int td_edm; // 0: new edm method   1: old edm method

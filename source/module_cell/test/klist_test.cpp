@@ -1,4 +1,7 @@
+#include<iostream>
 #include "gtest/gtest.h"
+#define private public
+#include "../klist.h"
 #include "module_elecstate/magnetism.h"
 #include "module_hamilt_pw/hamilt_pwdft/VNL_in_pw.h"
 #include "module_cell/atom_pseudo.h"
@@ -6,11 +9,10 @@
 #include "module_cell/unitcell.h"
 #include "module_cell/pseudo_nc.h"
 #include "module_cell/setup_nonlocal.h"
-#include "src_parallel/parallel_grid.h"
-#include "src_parallel/parallel_kpoints.h"
+#include "module_hamilt_pw/hamilt_pwdft/parallel_grid.h"
+#include "module_cell/parallel_kpoints.h"
 #include "module_io/berryphase.h"
 #include "module_orbital/ORB_gaunt_table.h"
-#include<iostream>
 
 bool berryphase::berry_phase_flag=0;
 
@@ -55,8 +57,6 @@ namespace GlobalC
  *     - setup kup and kdw after vc (different spin cases)
  */
 
-#define private public
-#include "module_cell/klist.h"
 
 class KlistTest : public testing::Test
 {
@@ -183,7 +183,7 @@ TEST_F(KlistTest, LineCartesian)
 {
 	K_Vectors kv;
 	std::string k_file = "./support/KPT5";
-    //Line Cartesian: non-spin case nspin=1
+	//Line Cartesian: non-spin case nspin=1
 	kv.nspin = 1;
 	kv.set_kup_and_kdw_after_vc();
 	// Read from k point file under the case of Line_Cartesian.
@@ -201,14 +201,14 @@ TEST_F(KlistTest, LineCartesian)
     
 }
 
-TEST_F(KlistTest, SetKupKdownAfterXC)
+TEST_F(KlistTest, SetKupKdown)
 {
 	K_Vectors kv;
 	std::string k_file = "./support/KPT4";
-    //Cartesian: non-spin case nspin=1
+	//Cartesian: non-spin case nspin=1
 	kv.nspin = 1;
 	kv.read_kpoints(k_file);
-    kv.set_kup_and_kdw_after_vc();
+	kv.set_kup_and_kdw();
 
 	for (int ik=0;ik<5;ik++)
 	{
@@ -218,28 +218,64 @@ TEST_F(KlistTest, SetKupKdownAfterXC)
 
 	kv.nspin = 4;
 	kv.read_kpoints(k_file);
-    kv.set_kup_and_kdw_after_vc();
+	kv.set_kup_and_kdw();
 
 	for (int ik=0;ik<5;ik++)
 	{
 		EXPECT_EQ(kv.isk[ik],0);
-        EXPECT_EQ(kv.isk[ik+5],0);
+		EXPECT_EQ(kv.isk[ik+5],0);
 		EXPECT_EQ(kv.isk[ik+10],0);
 		EXPECT_EQ(kv.isk[ik+15],0);
 	}
 	
 	kv.nspin = 2;
 	kv.read_kpoints(k_file);
-    kv.set_kup_and_kdw_after_vc();
+	kv.set_kup_and_kdw();
 
 	for (int ik=0;ik<5;ik++)
 	{
 		EXPECT_EQ(kv.isk[ik],0);
-        EXPECT_EQ(kv.isk[ik+5],1);
+		EXPECT_EQ(kv.isk[ik+5],1);
+	}
+}
+
+TEST_F(KlistTest, SetKupKdownAfterVC)
+{
+	K_Vectors kv;
+	std::string k_file = "./support/KPT4";
+	//Cartesian: non-spin case nspin=1
+	kv.nspin = 1;
+	kv.read_kpoints(k_file);
+	kv.set_kup_and_kdw_after_vc();
+
+	for (int ik=0;ik<5;ik++)
+	{
+		EXPECT_EQ(kv.isk[ik],0);
+
+	}
+
+	kv.nspin = 4;
+	kv.read_kpoints(k_file);
+	kv.set_kup_and_kdw_after_vc();
+
+	for (int ik=0;ik<5;ik++)
+	{
+		EXPECT_EQ(kv.isk[ik],0);
+		EXPECT_EQ(kv.isk[ik+5],0);
+		EXPECT_EQ(kv.isk[ik+10],0);
+		EXPECT_EQ(kv.isk[ik+15],0);
+	}
+	
+	kv.nspin = 2;
+	kv.read_kpoints(k_file);
+	kv.set_kup_and_kdw_after_vc();
+
+	for (int ik=0;ik<5;ik++)
+	{
+		EXPECT_EQ(kv.isk[ik],0);
+		EXPECT_EQ(kv.isk[ik+5],1);
 	}
 
 	//remove("KPT4");
-	
-    
 }
 #undef private

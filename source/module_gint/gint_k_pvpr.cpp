@@ -1,6 +1,6 @@
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
-#include "src_parallel/parallel_reduce.h"
+#include "module_base/parallel_reduce.h"
 #include "gint_k.h"
 #include "module_orbital/ORB_read.h"
 #include "grid_technique.h"
@@ -10,6 +10,7 @@
 #include "module_base/memory.h"
 #include "module_base/timer.h"
 #include "module_base/tool_threading.h"
+#include "module_base/libm/libm.h"
 
 void Gint_k::allocate_pvpR(void)
 {
@@ -174,48 +175,43 @@ void Gint_k::folding_vl_k(const int &ik, LCAO_Matrix *LM)
 
                             // calculate the phase factor exp(ikR).
                             const double arg = (GlobalC::kv.kvec_d[ ik ] * dR) * ModuleBase::TWO_PI;
-                            std::complex<double> phase = std::complex<double>(cos(arg), sin(arg));
+                            double sinp, cosp;
+                            ModuleBase::libm::sincos(arg, &sinp, &cosp);
+                            std::complex<double> phase = std::complex<double>(cosp, sinp);
                             int ixxx = DM_start + GlobalC::GridT.find_R2st[iat][nad];
-                            for(int iw=0; iw<atom1->nw; iw++)
+                            
+                            if(GlobalV::NSPIN!=4)
                             {
-                                // iw1_lo
-                                if(GlobalV::NSPIN!=4)
+                                for(int iw=0; iw<atom1->nw; iw++)
                                 {
                                     std::complex<double> *vij = pvp[GlobalC::GridT.trace_lo[start1+iw]];
-
                                     int* iw2_lo = &GlobalC::GridT.trace_lo[start2];
-                                    int* iw2_end = iw2_lo + atom2->nw;
-
                                     // get the <phi | V | phi>(R) Hamiltonian.
                                     double *vijR = &pvpR_reduced[0][ixxx];
-                                    for(; iw2_lo<iw2_end; ++iw2_lo, ++vijR)
+                                    for(int iw2 = 0; iw2<atom2->nw; ++iw2)
                                     {
-                                        vij[iw2_lo[0]] += vijR[0] * phase; 
+                                        vij[iw2_lo[iw2]] += vijR[iw2] * phase; 
                                     }
+                                    ixxx += atom2->nw;
                                 }
-                                else
+                            }
+                            else
+                            {
+                                for(int iw=0; iw<atom1->nw; iw++)
                                 {
-                                    std::complex<double> *vij[4];
-                                    for(int spin=0;spin<4;spin++)
-                                        vij[spin] = pvp_nc[spin][GlobalC::GridT.trace_lo[start1]/GlobalV::NPOL + iw];
-
                                     int iw2_lo = GlobalC::GridT.trace_lo[start2]/GlobalV::NPOL;
-                                    int iw2_end = iw2_lo + atom2->nw;
-
-                                    double *vijR[4];
                                     for(int spin = 0;spin<4;spin++) 
                                     {
-                                        vijR[spin] = &pvpR_reduced[spin][ixxx];
-                                    }
-                                    for(; iw2_lo<iw2_end; ++iw2_lo, ++vijR[0], ++vijR[1],++vijR[2],++vijR[3])
-                                    {
-                                        for(int spin =0;spin<4;spin++)
+                                        auto vij = pvp_nc[spin][GlobalC::GridT.trace_lo[start1]/GlobalV::NPOL + iw];
+                                        auto vijR = &pvpR_reduced[spin][ixxx];
+                                        auto vijs = &vij[iw2_lo];
+                                        for(int iw2 = 0; iw2<atom2->nw; ++iw2)
                                         {
-                                            vij[spin][iw2_lo] += vijR[spin][0] * phase; 
+                                            vijs[iw2] += vijR[iw2] * phase; 
                                         }
-                                    }                                    
+                                    }
+                                    ixxx += atom2->nw;
                                 }
-                                ixxx += atom2->nw;
                             }
                             ++nad;
                         }// end distane<rcut
@@ -231,110 +227,142 @@ void Gint_k::folding_vl_k(const int &ik, LCAO_Matrix *LM)
     // Distribution of data.
     ModuleBase::timer::tick("Gint_k","Distri");
     std::complex<double>* tmp = new std::complex<double>[GlobalV::NLOCAL];
+    const double sign_table[2] = {1.0, -1.0};
 #ifdef _OPENMP
 #pragma omp parallel
 {
 #endif
     for (int i=0; i<GlobalV::NLOCAL; i++)
     {
-#ifdef _OPENMP
-#pragma omp for schedule(static, 256)
-#endif
-        for (int j=0; j<GlobalV::NLOCAL; j++)
-        {
-            tmp[j] = 0;
-        }
+        int i_flag = i & 1; // i % 2 == 0
         const int mug = GlobalC::GridT.trace_lo[i];
         const int mug0 = mug/GlobalV::NPOL;
         // if the row element is on this processor.
         if (mug >= 0)
         {
-#ifdef _OPENMP
-#pragma omp for schedule(static, 256)
-#endif
-            for (int j=0; j<GlobalV::NLOCAL; j++)
+            if(GlobalV::NSPIN!=4)
             {
-                const int nug = GlobalC::GridT.trace_lo[j];
-                const int nug0 = nug/GlobalV::NPOL;
-                // if the col element is on this processor.
-                if (nug >=0)
+#ifdef _OPENMP
+#pragma omp for
+#endif
+                for (int j=0; j<GlobalV::NLOCAL; j++)
                 {
-                    if (mug <= nug)
+                    tmp[j] = 0;
+                    const int nug = GlobalC::GridT.trace_lo[j];
+                    const int nug0 = nug/GlobalV::NPOL;
+                    // if the col element is on this processor.
+                    if (nug >=0)
                     {
-                        if(GlobalV::NSPIN!=4)
+                        if (mug <= nug)
                         {
                             // pvp is symmetric, only half is calculated.
                             tmp[j] = pvp[mug][nug];
                         }
                         else
                         {
-                            if(i%2==0&&j%2==0)
-                            {
-                                //spin = 0;
-                                tmp[j] = pvp_nc[0][mug0][nug0]+pvp_nc[3][mug0][nug0];
-                            }	
-                            else if(i%2==1&&j%2==1)
-                            {
-                                //spin = 3;
-                                tmp[j] = pvp_nc[0][mug0][nug0]-pvp_nc[3][mug0][nug0];
-                            }
-                            else if(i%2==0&&j%2==1)
-                            {
-                                // spin = 1;
-                                if(!GlobalV::DOMAG) tmp[j] = 0;
-                                else tmp[j] = pvp_nc[1][mug0][nug0] - std::complex<double>(0.0,1.0) * pvp_nc[2][mug0][nug0];
-                            }
-                            else if(i%2==1&&j%2==0) 
-                            {
-                                //spin = 2;
-                                if(!GlobalV::DOMAG) tmp[j] = 0;
-                                else tmp[j] = pvp_nc[1][mug0][nug0] + std::complex<double>(0.0,1.0) * pvp_nc[2][mug0][nug0];
-                            }
-                            else
-                            {
-                                ModuleBase::WARNING_QUIT("Gint_k::folding_vl_k_nc","index is wrong!");
-                            }                            
-                        }
-                    }
-                    else
-                    {
-                        // need to get elements from the other half.
-                        // I have question on this! 2011-02-22
-                        if(GlobalV::NSPIN!=4)
-                        {
+                            // need to get elements from the other half.
+                            // I have question on this! 2011-02-22
                             tmp[j] = conj(pvp[nug][mug]);
-                        }
-                        else
-                        {
-                            if(i%2==0&&j%2==0)
-                            {
-                                //spin = 0;
-                                tmp[j] = conj(pvp_nc[0][nug0][mug0]+pvp_nc[3][nug0][mug0]);
-                            }	
-                            else if(i%2==1&&j%2==1)
-                            {
-                                //spin = 3;
-                                tmp[j] = conj(pvp_nc[0][nug0][mug0]-pvp_nc[3][nug0][mug0]);
-                            }
-                            else if(i%2==1&&j%2==0)
-                            {
-                                // spin = 1;
-                                if(!GlobalV::DOMAG) tmp[j] = 0;
-                                else tmp[j] = conj(pvp_nc[1][nug0][mug0] - std::complex<double>(0.0,1.0) * pvp_nc[2][nug0][mug0]);
-                            }
-                            else if(i%2==0&&j%2==1) 
-                            {
-                                //spin = 2;
-                                if(!GlobalV::DOMAG) tmp[j] = 0;
-                                else tmp[j] = conj(pvp_nc[1][nug0][mug0] + std::complex<double>(0.0,1.0) * pvp_nc[2][nug0][mug0]);
-                            }
-                            else
-                            {
-                                ModuleBase::WARNING_QUIT("Gint_k::folding_vl_k_nc","index is wrong!");
-                            }                           
                         }
                     }
                 }
+            }
+            else
+            {
+                if (GlobalV::DOMAG)
+                {
+#ifdef _OPENMP
+#pragma omp for
+#endif
+                    for (int j=0; j<GlobalV::NLOCAL; j++)
+                    {
+                        tmp[j] = 0;
+                        int j_flag = j & 1; // j % 2 == 0
+                        int ij_same = i_flag ^ j_flag ? 0 : 1;
+                        const int nug = GlobalC::GridT.trace_lo[j];
+                        const int nug0 = nug/GlobalV::NPOL;
+                        double sign = sign_table[j_flag];
+                        // if the col element is on this processor.
+                        if (nug >=0)
+                        {
+                            if (mug <= nug)
+                            {
+                                if (ij_same)
+                                {
+                                    //spin = 0;
+                                    //spin = 3;
+                                    tmp[j] = pvp_nc[0][mug0][nug0]+sign*pvp_nc[3][mug0][nug0];
+                                }
+                                else
+                                {
+                                    // spin = 1;
+                                    // spin = 2;
+                                    tmp[j] = pvp_nc[1][mug0][nug0] + sign*std::complex<double>(0.0,1.0) * pvp_nc[2][mug0][nug0];
+                                }
+                            }
+                            else
+                            {
+                                if (ij_same)
+                                {
+                                    //spin = 0;
+                                    //spin = 3;
+                                    tmp[j] = conj(pvp_nc[0][nug0][mug0]+sign*pvp_nc[3][nug0][mug0]);
+                                }
+                                else
+                                {
+                                    // spin = 1;
+                                    //spin = 2;
+                                    tmp[j] = conj(pvp_nc[1][nug0][mug0] + sign*std::complex<double>(0.0,1.0) * pvp_nc[2][nug0][mug0]);
+                                }
+                            }
+                        }
+                    }
+                }
+                else
+                {
+#ifdef _OPENMP
+#pragma omp for
+#endif
+                    for (int j=0; j<GlobalV::NLOCAL; j++)
+                    {
+                        tmp[j] = 0;
+                        int j_flag = j & 1; // j % 2 == 0
+                        int ij_same = i_flag ^ j_flag ? 0 : 1;
+
+                        if (!ij_same)
+                            continue;
+
+                        const int nug = GlobalC::GridT.trace_lo[j];
+                        const int nug0 = nug/GlobalV::NPOL;
+                        double sign = sign_table[j_flag];
+                        // if the col element is on this processor.
+                        if (nug >=0)
+                        {
+                            if (mug <= nug)
+                            {
+                                //spin = 0;
+                                //spin = 3;
+                                tmp[j] = pvp_nc[0][mug0][nug0]+sign*pvp_nc[3][mug0][nug0];
+                            }
+                            else
+                            {
+                                //spin = 0;
+                                //spin = 3;
+                                tmp[j] = conj(pvp_nc[0][nug0][mug0]+sign*pvp_nc[3][nug0][mug0]);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        else
+        {
+#ifdef _OPENMP
+#pragma omp for
+#endif
+            for (int j=0; j<GlobalV::NLOCAL; j++)
+            {
+                tmp[j] = 0;
             }
         }
 #ifdef _OPENMP
@@ -352,7 +380,7 @@ void Gint_k::folding_vl_k(const int &ik, LCAO_Matrix *LM)
         // according to the HPSEPS's 2D distribution methods.
         //-----------------------------------------------------
 #ifdef _OPENMP
-#pragma omp for schedule(static, 256)
+#pragma omp for
 #endif
         for (int j=0; j<GlobalV::NLOCAL; j++)
         {

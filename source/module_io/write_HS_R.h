@@ -16,15 +16,13 @@ namespace ModuleIO
             const bool& binary = false,
             const double& sparse_threshold = 1e-10); //LiuXh add 2019-07-15, modify in 2021-12-3
 
-/*
         void output_dH_R(
             const int &istep,
+            const ModuleBase::matrix& v_eff,
             LCAO_Hamilt &UHM,
-            const std::string& HR_filename_up,
-            const std::string HR_filename_down,
             const bool& binary = false,
             const double& sparse_threshold = 1e-10);
-*/
+
         void output_T_R(
             const int istep,
             LCAO_Hamilt &UHM,

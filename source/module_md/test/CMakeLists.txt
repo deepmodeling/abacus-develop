@@ -38,8 +38,8 @@ list(APPEND depend_files
   ../../module_io/output.cpp
   ../../module_io/print_info.cpp
   ../../module_esolver/esolver_lj.cpp
-  ../../src_parallel/parallel_reduce.cpp
-  ../../src_parallel/parallel_global.cpp
+  ../../module_base/parallel_reduce.cpp
+  ../../module_base/parallel_global.cpp
 )
 
 AddTest(

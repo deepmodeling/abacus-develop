@@ -24,7 +24,6 @@ void ModuleIO::output_HS_R(
         // jingan add 2021-6-4, modify 2021-12-2
         UHM.calculate_HSR_sparse(0, sparse_threshold);
     }
-    ///*
     else if(GlobalV::NSPIN==2)
     {
         // jingan add 2021-6-4
@@ -65,6 +64,56 @@ void ModuleIO::output_HS_R(
     return;
 }
 
+void ModuleIO::output_dH_R(
+    const int &istep,
+    const ModuleBase::matrix& v_eff,
+    LCAO_Hamilt &UHM,
+    const bool &binary, 
+    const double &sparse_threshold)
+{
+    ModuleBase::TITLE("ModuleIO","output_dH_R"); 
+    ModuleBase::timer::tick("ModuleIO","output_dH_R"); 
+
+    UHM.GK.allocate_pvdpR();
+    if(GlobalV::NSPIN==1||GlobalV::NSPIN==4)
+    {
+        UHM.calculate_dH_sparse(0, sparse_threshold);
+    }
+    else if(GlobalV::NSPIN==2)
+    {
+        for(int ik = 0; ik < GlobalC::kv.nks; ik++)
+        {
+            if(ik == 0 || ik == GlobalC::kv.nks/2)
+            {
+                if(GlobalV::NSPIN == 2)
+                {
+                    GlobalV::CURRENT_SPIN = GlobalC::kv.isk[ik];
+                }
+
+                const double* vr_eff1 = &(v_eff(GlobalV::CURRENT_SPIN, 0));
+                    
+                if(!GlobalV::GAMMA_ONLY_LOCAL)
+                {
+                    if(GlobalV::VL_IN_H)
+                    {
+                        Gint_inout inout(vr_eff1, GlobalV::CURRENT_SPIN, Gint_Tools::job_type::dvlocal);
+                        UHM.GK.cal_gint(&inout);
+                    }
+                }
+
+                UHM.calculate_dH_sparse(GlobalV::CURRENT_SPIN, sparse_threshold);
+            }
+        }
+    }
+
+    ModuleIO::save_dH_sparse(istep, *UHM.LM, sparse_threshold, binary);
+    UHM.destroy_dH_R_sparse();
+
+    UHM.GK.destroy_pvdpR();
+
+    ModuleBase::timer::tick("ModuleIO","output_HS_R"); 
+    return;
+}
 
 void ModuleIO::output_S_R(
     LCAO_Hamilt &UHM,

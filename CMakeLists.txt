@@ -367,9 +367,12 @@ if(DEFINED Libxc_DIR)
   set(ENABLE_LIBXC ON)
 endif()
 if(ENABLE_LIBXC)
-  find_package(Libxc 5.1.7 REQUIRED HINTS ${Libxc_DIR}/share/cmake/Libxc ${Libxc_DIR}/lib/cmake/Libxc)
+  find_package(Libxc HINTS ${Libxc_DIR}/share/cmake/Libxc ${Libxc_DIR}/lib/cmake/Libxc)
   if(${Libxc_FOUND})
     message(STATUS "Found Libxc: version " ${Libxc_VERSION})
+    if(${Libxc_VERSION} VERSION_LESS 5.1.7)
+      message(FATAL_ERROR "LibXC >= 5.1.7 is required; found ${Libxc_VERSION}")
+    endif()
     target_link_libraries(${ABACUS_BIN_NAME} Libxc::xc)
     include_directories(${Libxc_INCLUDE_DIRS})
     add_compile_definitions(USE_LIBXC)
@@ -392,22 +395,19 @@ if(DEFINED DeePMD_DIR)
       __DPMDC
     )
   else()
-  target_link_libraries(${ABACUS_BIN_NAME}
-    DeePMD::deepmd_cc
-    DeePMD::deepmd_op
-    DeePMD::deepmd_op_cuda
-    DeePMD::tensorflow_cc
-  )
+    target_link_libraries(${ABACUS_BIN_NAME}
+      DeePMD::deepmd_cc
+    )
   endif()
+
   if(NOT DEFINED TensorFlow_DIR)
     set(TensorFlow_DIR ${DeePMD_DIR})
   endif()
-endif()
-
-if(DEFINED TensorFlow_DIR)
-  include_directories(${TensorFlow_DIR}/include)
-  if(NOT DEFINED DeePMD_DIR)
-    message(FATAL_ERROR "Please define DeePMD_DIR!")
+  find_package(TensorFlow REQUIRED)
+  if (TensorFlow_FOUND)
+    target_link_libraries(${ABACUS_BIN_NAME}
+      TensorFlow::tensorflow_cc
+    )
   endif()
 endif()
 
@@ -477,7 +477,6 @@ target_link_libraries(${ABACUS_BIN_NAME}
     neighbor
     io
     relax
-    parallel
     driver
     xc_
     hsolver

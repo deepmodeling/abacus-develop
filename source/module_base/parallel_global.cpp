@@ -275,3 +275,108 @@ void Parallel_Global::finalize_mpi()
 	MPI_Finalize();
 }
 #endif
+
+void Parallel_Global::init_pools(void)
+{
+#ifdef __MPI
+//----------------------------------------------------------
+// CALL Function : divide_pools
+//----------------------------------------------------------
+    Parallel_Global::divide_pools();
+
+// for test
+// turn on when you want to check the index of pools.
+/*
+    if (GlobalV::MY_RANK==0)
+    {
+        std::cout << "\n     " << std::setw(8) << "MY_RANK"
+             << std::setw(8) << "MY_POOL"
+             << std::setw(13) << "RANK_IN_POOL"
+             << std::setw(6) << "NPROC"
+             << std::setw(6) << "KPAR"
+             << std::setw(14) << "NPROC_IN_POOL" << std::endl;
+    }
+    for (int i=0; i<GlobalV::NPROC; i++)
+    {
+        if (GlobalV::MY_RANK == i)
+        {
+            std::cout << " I'm " << std::setw(8) << GlobalV::MY_RANK
+                 << std::setw(8) << GlobalV::MY_POOL
+                 << std::setw(13) << GlobalV::RANK_IN_POOL
+                 << std::setw(6) << GlobalV::NPROC
+                 << std::setw(6) << GlobalV::KPAR
+                 << std::setw(14) << GlobalV::NPROC_IN_POOL << std::endl;
+        }
+        MPI_Barrier(MPI_COMM_WORLD);
+    }
+
+    if (GlobalV::MY_RANK != 0 )
+    {
+        std::cout.rdbuf(NULL);
+    }
+*/
+
+    return;
+#endif
+}
+
+#ifdef __MPI
+void Parallel_Global::divide_pools(void)
+{
+    if (GlobalV::NPROC < GlobalV::KPAR)
+    {
+        std::cout<<"\n NPROC=" << GlobalV::NPROC << " KPAR=" << GlobalV::KPAR;
+        std::cout<<"Error : Too many pools !"<<std::endl;
+        exit(0);
+    }
+
+    // (1) per process in each stogroup
+    if(GlobalV::NPROC%GlobalV::NSTOGROUP!=0)
+    {
+        std::cout<<"\n Error! NPROC="<<GlobalV::NPROC
+        <<" must be divided evenly by BNDPAR="<<GlobalV::NSTOGROUP<<endl;
+        exit(0);
+    }
+    GlobalV::NPROC_IN_STOGROUP = GlobalV::NPROC/GlobalV::NSTOGROUP;
+    GlobalV::MY_STOGROUP = int(GlobalV::MY_RANK / GlobalV::NPROC_IN_STOGROUP);
+    GlobalV::RANK_IN_STOGROUP = GlobalV::MY_RANK%GlobalV::NPROC_IN_STOGROUP;
+    if (GlobalV::NPROC_IN_STOGROUP < GlobalV::KPAR)
+    {
+        std::cout<<"\n Error! NPROC_IN_BNDGROUP=" << GlobalV::NPROC_IN_STOGROUP 
+            <<" is smaller than"<< " KPAR=" << GlobalV::KPAR<<std::endl;
+        std::cout<<" Please reduce KPAR or reduce BNDPAR"<<std::endl;
+        exit(0);
+    }
+
+    // (2) per process in each pool
+    GlobalV::NPROC_IN_POOL = GlobalV::NPROC_IN_STOGROUP/GlobalV::KPAR;
+    if (GlobalV::RANK_IN_STOGROUP < (GlobalV::NPROC_IN_STOGROUP%GlobalV::KPAR)*(GlobalV::NPROC_IN_POOL+1))
+    {
+        GlobalV::NPROC_IN_POOL++;
+        GlobalV::MY_POOL = int(GlobalV::RANK_IN_STOGROUP / GlobalV::NPROC_IN_POOL);
+        GlobalV::RANK_IN_POOL = GlobalV::RANK_IN_STOGROUP%GlobalV::NPROC_IN_POOL;
+    }
+    else
+    {
+        GlobalV::MY_POOL = int( (GlobalV::RANK_IN_STOGROUP-GlobalV::NPROC_IN_STOGROUP%GlobalV::KPAR) / GlobalV::NPROC_IN_POOL);
+        GlobalV::RANK_IN_POOL = (GlobalV::RANK_IN_STOGROUP-GlobalV::NPROC_IN_STOGROUP%GlobalV::KPAR)%GlobalV::NPROC_IN_POOL;
+    }
+    
+
+
+
+    int key = 1;
+    MPI_Comm_split(MPI_COMM_WORLD,GlobalV::MY_STOGROUP,key,&STO_WORLD);
+
+    //========================================================
+    // MPI_Comm_Split: Creates new communicators based on
+    // colors(2nd parameter) and keys(3rd parameter)
+    // Note: The color must be non-negative or MPI_UNDEFINED.
+    //========================================================
+    MPI_Comm_split(STO_WORLD,GlobalV::MY_POOL,key,&POOL_WORLD);
+	int color = GlobalV::MY_RANK % GlobalV::NPROC_IN_STOGROUP;
+	MPI_Comm_split(MPI_COMM_WORLD, color, key, &PARAPW_WORLD);
+
+    return;
+}
+#endif

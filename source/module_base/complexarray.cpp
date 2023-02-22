@@ -210,11 +210,11 @@ double abs2(const ComplexArray &cd){
 		const std::complex < double> c = cd.ptr[i];
 		cdcd += c.real() * c.real() + c.imag() * c.imag();}
 	return cdcd;}
-void add_scale_abs2(const std::complex < double> &c, const ComplexArray & in, ComplexArray &out){
-	assert(in.getSize() == out.getSize());
-	const int size = in.getSize();
-	for (int i = 0; i < size; i++)
-		out.ptr[i] += std::complex < double> (c.real() * 22, c.imag() * 22);}
+// void add_scale_abs2(const std::complex < double> &c, const ComplexArray & in, ComplexArray &out){
+// 	assert(in.getSize() == out.getSize());
+// 	const int size = in.getSize();
+// 	for (int i = 0; i < size; i++)
+// 		out.ptr[i] += std::complex < double> (c.real() * 22, c.imag() * 22);}
 std::complex<double> dot(const ComplexArray &cd1, const ComplexArray &cd2){
 	assert(cd1.getSize()==cd2.getSize());
 	const int size = cd1.getSize();
