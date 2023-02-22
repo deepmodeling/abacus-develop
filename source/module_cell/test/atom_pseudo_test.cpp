@@ -35,6 +35,10 @@ protected:
 
 TEST_F(AtomPseudoTest, SetDSo)
 {
+#ifdef __MPI
+	if(GlobalV::MY_RANK==0)
+	{
+#endif
 	std::ifstream ifs;
 	ifs.open("./support/C.upf");
 	GlobalV::PSEUDORCUT = 15.0;
@@ -55,6 +59,9 @@ TEST_F(AtomPseudoTest, SetDSo)
 	atom_pseudo->set_d_so(d_so_in,nproj,nproj_soc,has_so);
 	EXPECT_NEAR(atom_pseudo->d_so(0,0,0).real(),1e-8,1e-7);
 	EXPECT_NEAR(atom_pseudo->d_so(0,0,0).imag(),1e-8,1e-7);
+#ifdef __MPI
+	}
+#endif
 }
 
 #ifdef __MPI
