@@ -434,9 +434,9 @@ void ModuleIO::write_dipole(const double *rho_save,
     std::cout << std::setprecision(8) << "dipole_ion_z: " << dipole_ion_z << std::endl;
 
     double dipole_x = 0.0, dipole_y = 0.0, dipole_z = 0.0;
-    dipole_x = dipole_ion_x - dipole_elec_x;
-    dipole_y = dipole_ion_y - dipole_elec_y;
-    dipole_z = dipole_ion_z - dipole_elec_z;
+    dipole_x = dipole_ion_x - dipole_elec[0];
+    dipole_y = dipole_ion_y - dipole_elec[1];
+    dipole_z = dipole_ion_z - dipole_elec[2];
     std::cout << std::setprecision(8) << "dipole_x: " << dipole_x << std::endl;
     std::cout << std::setprecision(8) << "dipole_y: " << dipole_y << std::endl;
     std::cout << std::setprecision(8) << "dipole_z: " << dipole_z << std::endl;
