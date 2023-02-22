@@ -8,6 +8,6 @@ for i in 4;do
         continue
     fi
     echo "TEST in parallel, nprocs=$i"
-    mpirun -np $i ./Cell_ParaKpoints
+    mpirun -np $i ./base_ParaGlobal
     break    
 done

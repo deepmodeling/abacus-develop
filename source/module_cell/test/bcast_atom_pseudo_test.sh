@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -e
 
 np=`cat /proc/cpuinfo | grep "cpu cores" | uniq| awk '{print $NF}'`
 echo "nprocs in this machine is $np"

@@ -60,6 +60,8 @@ void ESolver_KS_LCAO::Init(Input& inp, UnitCell& ucell)
 
     if (GlobalV::CALCULATION == "get_S")
     {
+        ucell.read_pseudo(GlobalV::ofs_running);
+
         if (ModuleSymmetry::Symmetry::symm_flag == 1)
         {
             GlobalC::symm.analy_sys(ucell, GlobalV::ofs_running);
