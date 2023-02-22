@@ -38,9 +38,11 @@ void H_TDDFT_pw::cal_fixed_v(double* vl_pseudo)
 
     cal_v_space(vext_space);
     vext_time = cal_v_time();
+    cout<<"vext_time="<<vext_time<<endl;
 
     for (int ir = 0; ir < this->rho_basis_->nrxx; ++ir)
     {
+        //cout<<"vl="<<vl_pseudo[ir]<<" vext_space="<<vext_space[ir]<<" vext_time="<<vext_time<<endl;
         vl_pseudo[ir] += vext_space[ir] * vext_time;
     }
 
@@ -86,7 +88,7 @@ void H_TDDFT_pw::read_parameters(Input *in)
 
     // Trigonometric
     trigo_omega1 = 2 * ModuleBase::PI * ModuleBase::AU_to_FS * in->td_trigo_freq1; // time(a.u.)^-1
-    trigo_omega2 = 2 * ModuleBase::PI * ModuleBase::AU_to_FS * in->td_trigo_freq1; // time(a.u.)^-1
+    trigo_omega2 = 2 * ModuleBase::PI * ModuleBase::AU_to_FS * in->td_trigo_freq2; // time(a.u.)^-1
     trigo_phase1 = in->td_trigo_phase1;
     trigo_phase2 = in->td_trigo_phase2;
     trigo_amp = ModuleBase::BOHR_TO_A / ModuleBase::Ry_to_eV * in->td_trigo_amp; // Ry/bohr
@@ -173,17 +175,17 @@ void H_TDDFT_pw::cal_v_space_length(double* vext_space)
 double H_TDDFT_pw::cal_v_space_length_potential(double i)
 {
     double vext_space=0.0;
-    if (i < this->rho_basis_->nx * lcut1)
+    if (i < lcut1)
     {
-        vext_space = ((i / this->rho_basis_->nx - lcut1)*(lcut2-lcut1) / (lcut1 + 1.0 - lcut2) - lcut1) * this->ucell_->lat0;
+        vext_space = ((i - lcut1)*(lcut2-lcut1) / (lcut1 + 1.0 - lcut2) - lcut1) * this->ucell_->lat0;
     }
-    else if (i >= this->rho_basis_->nx * lcut1 && i < this->rho_basis_->nx * lcut2)
+    else if (i >= lcut1 && i < lcut2)
     {
-        vext_space = -i / this->rho_basis_->nx * this->ucell_->lat0;
+        vext_space = -i * this->ucell_->lat0;
     }
-    else if (i >= this->rho_basis_->nx * lcut2)
+    else if (i >= lcut2)
     {
-        vext_space = ((i / this->rho_basis_->nx - lcut2)*(lcut2-lcut1) / (lcut1 + 1.0 - lcut2) - lcut2) * this->ucell_->lat0;
+        vext_space = ((i - lcut2)*(lcut2-lcut1) / (lcut1 + 1.0 - lcut2) - lcut2) * this->ucell_->lat0;
     }
     return vext_space;
 }

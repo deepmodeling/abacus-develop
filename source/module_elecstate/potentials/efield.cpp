@@ -170,6 +170,7 @@ double Efield::cal_elec_dipole(const UnitCell &cell,
         ModuleBase::Vector3<double> pos(x, y, z);
 
         double saw = saw_function(efield_pos_max, efield_pos_dec, pos[efield_dir]);
+        saw=pos[efield_dir];//temp test
 
         for (int is = 0; is < nspin0; is++)
         {
