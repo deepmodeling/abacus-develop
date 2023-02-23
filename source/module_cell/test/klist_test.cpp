@@ -55,11 +55,44 @@ namespace GlobalC
  *   - K_Vectors()
  *     - basic parameters (nks,nkstot,nkstot_ibz) are set
  *   - read_kpoints()
- *     - read from file 
- *     - generate KPT from kspacing parameter 
- *     - renew and memory allocation  
- *     - read from file (Line_Cartesian kpoint file) 
- *     - setup kup and kdw after vc (different spin cases)
+ *     - ReadKpointsGammaOnlyLocal: GlobalV::GAMMA_ONLY_LOCAL = 1
+ *     - ReadKpointsKspacing: generate KPT from kspacing parameter 
+ *     - ReadKpointsGamma: "Gamma" mode of `KPT` file
+ *     - ReadKpointsMP: "MP" mode of `KPT` file
+ *     - ReadKpointsLine: "Line" mode of `KPT` file
+ *     - ReadKpointsCartesian: "Cartesian" mode of `KPT` file
+ *     - ReadKpointsLineCartesian: "Line_Cartesian" mode of `KPT` file
+ *     - ReadKpointsDirect: "Direct" mode of `KPT` file
+ *     - ReadKpointsWarning1: Can't find KPT file through string k_file
+ *     - ReadKpointsWarning2: symbol K_POINTS not found at the 1st line
+ *     - ReadKpointsWarning3: nkstot > MAX_KPOINTS (100000)
+ *     - ReadKpointsWarning4: Error: neither Gamma nor Monkhorst-Pack mode when nkstot=0
+ *     - ReadKpointsWarning5: Error : neither Cartesian nor Direct kpoint in line mode(nkstot>0)
+ *     - ReadKpointsWarning6: Line mode (Line_Cartesian) of k-points is open, please set symmetry to 0 or -1
+ *     - ReadKpointsWarning7: Line mode (Line_Direct) of k-points is open, please set symmetry to 0 or -1
+ *   - set_kup_and_kdw()
+ *     - SetKupKdown: set basic kpoints info: kvec_c, kvec_d, wk, isk, nks, nkstot
+ *       according to different spin case
+ *   - set_kup_and_kdw_after_vc()
+ *     - SetKupKdownAfterVC: set basic kpoints info: kvec_c, kvec_d, wk, isk, nks, nkstot
+ *       according to different spin case after variable-cell optimization
+ *   - set_both_kvec()
+ *     - SetBothKvec: set kvec_c (cartesian coor.) and kvec_d (direct coor.)
+ *     - SetBothKvecFinalSCF: same as above, with GlobalV::FINAL_SCF=1
+ *   - set_both_kvec_after_vc()
+ *     - SetBothKvecAfterVC: set kvec_c (cartesian coor.) and kvec_d (direct coor.)
+ *       after variable-cell relaxation
+ *   - print_klists()
+ *     - PrintKlists: print kpoints coordinates
+ *     - PrintKlistsWarningQuit: for nkstot < nks error
+ *   - normalize_wk()
+ *     - NormalizeWk: normalize weight of kpoints
+ *   - update_use_ibz()
+ *     - UpdateUseIbz: update kpoints info by ibz kpoints info
+ *   - ibz_kpoint()
+ *     - IbzKpoint: generate IBZ kpoints
+ *     - IbzKpointIsMP: generate IBZ kpoints for non-symmetry 
+ *       and Monkhorst-Pack case
  */
 
 //abbriviated from module_symmetry/test/symmetry_test.cpp

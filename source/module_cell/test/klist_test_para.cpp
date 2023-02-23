@@ -53,14 +53,16 @@ namespace GlobalC
 
 /**
  * - Tested Functions:
- *   - K_Vectors()
- *     - basic parameters (nks,nkstot,nkstot_ibz) are set
- *   - read_kpoints()
- *     - read from file 
- *     - generate KPT from kspacing parameter 
- *     - renew and memory allocation  
- *     - read from file (Line_Cartesian kpoint file) 
- *     - setup kup and kdw after vc (different spin cases)
+ *   - Set
+ *     - this is a "kind of" integerated test
+ *       for set() and mpi_k()
+ *   - SetAfterVC
+ *     - this is a "kind of" integerated test
+ *       for set_after_vc() and mpi_k_after_vc()
+ *     - a bug is found from here, that is,
+ *       KPAR > 1 is not support yet in vc-relax calculation
+ *       due to the size of kvec_d, kvec_c being nks, rather
+ *       than nkstot in set_both_kvec_after_vc
  */
 
 //abbriviated from module_symmetry/test/symmetry_test.cpp
