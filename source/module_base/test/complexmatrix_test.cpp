@@ -21,7 +21,7 @@
  *  - real()
  *  - zero_out();
  *  - set_as_identity_matrix()
- *  - print()  //debug function, do not test
+ *  - print():Output the elements of this complex matrix greater than threshold.
  *  - checkreal()
  * 
  * Tested relative functions 
