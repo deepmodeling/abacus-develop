@@ -63,3 +63,12 @@ add_test(NAME cell_parallel_kpoints_test
       COMMAND ${BASH} parallel_kpoints_test.sh
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )
+
+AddTest(
+  TARGET cell_unitcell_test
+  LIBS ${math_libs} base device
+  SOURCES unitcell_test.cpp
+  #  ../../module_io/output.cpp ../module_symmetry/symm_other.cpp
+  #../module_symmetry/symmetry_basic.cpp ../module_symmetry/symmetry.cpp
+)
+
