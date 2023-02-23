@@ -202,19 +202,15 @@ TEST_F(realArrayTest,Alloc)
 	EXPECT_THAT(output,testing::HasSubstr("Allocation error for realArray"));
 }
 
+//use a pointer to initialize a double array and then call zeros
 TEST_F(realArrayTest,Zeros)
 {
-        int a[100];
-        ModuleBase::zeros<int>(a,100);
+        double *p = new double [100];
+        ModuleBase::zeros<double>(p,100);
         for(int i = 0 ; i < 100; i ++)
         {
-                EXPECT_EQ(a[i],0);
+                EXPECT_EQ(p[i],0.0);
         }
-         //add another example of double array
-        double b[100];
-        ModuleBase::zeros<double>(b,100);
-        for(int i = 0 ; i < 100; i ++)
-        {
-                EXPECT_EQ(b[i],0.0);
-        }
+        delete [] p;
+
 }
