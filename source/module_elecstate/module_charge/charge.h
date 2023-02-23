@@ -5,7 +5,7 @@
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
 #include "module_pw/pw_basis.h"
-#include "src_parallel/parallel_global.h"
+#include "module_base/parallel_global.h"
 
 //==========================================================
 // Electron Charge Density

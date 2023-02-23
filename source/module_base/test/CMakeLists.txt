@@ -68,7 +68,7 @@ AddTest(
   TARGET base_ylmreal
   LIBS ${math_libs} device
   SOURCES math_ylmreal_test.cpp ../math_ylmreal.cpp ../complexmatrix.cpp ../global_variable.cpp ../ylm.cpp ../realarray.cpp ../timer.cpp ../matrix.cpp ../vector3.h
-          ../../src_parallel/parallel_reduce.cpp ../../src_parallel/parallel_kpoints.cpp ../../src_parallel/parallel_global.cpp ../../src_parallel/parallel_common.cpp
+          ../parallel_reduce.cpp ../parallel_global.cpp ../parallel_common.cpp
           ../memory.cpp
 )
 AddTest(
@@ -121,12 +121,12 @@ AddTest(
 
 AddTest(
   TARGET base_opt_CG
-  SOURCES opt_CG_test.cpp opt_test_tools.cpp ../opt_CG.cpp ../opt_DCsrch.cpp ../global_variable.cpp ../../src_parallel/parallel_reduce.cpp
+  SOURCES opt_CG_test.cpp opt_test_tools.cpp ../opt_CG.cpp ../opt_DCsrch.cpp ../global_variable.cpp ../parallel_reduce.cpp
 )
 
 AddTest(
   TARGET base_opt_TN
-  SOURCES opt_TN_test.cpp opt_test_tools.cpp ../opt_CG.cpp ../opt_DCsrch.cpp ../global_variable.cpp ../../src_parallel/parallel_reduce.cpp
+  SOURCES opt_TN_test.cpp opt_test_tools.cpp ../opt_CG.cpp ../opt_DCsrch.cpp ../global_variable.cpp ../parallel_reduce.cpp
 )
 
 AddTest(

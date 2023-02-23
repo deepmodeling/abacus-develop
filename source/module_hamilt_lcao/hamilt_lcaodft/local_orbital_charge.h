@@ -5,7 +5,7 @@
 #include "module_base/global_variable.h"
 #include "module_base/matrix.h"
 #include "module_base/complexmatrix.h"
-#include "src_parallel/parallel_common.h"
+#include "module_base/parallel_common.h"
 #include "module_gint/grid_technique.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/record_adj.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/local_orbital_wfc.h"

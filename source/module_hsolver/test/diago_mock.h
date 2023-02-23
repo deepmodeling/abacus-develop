@@ -2,7 +2,7 @@
 #include "../../module_base/lapack_connector.h"
 #include "../../module_base/blas_connector.h"
 #include "mpi.h"
-#include "src_parallel/parallel_reduce.h"
+#include "module_base/parallel_reduce.h"
 #include "module_hamilt_pw/hamilt_pwdft/hamilt_pw.h"
 
 namespace DIAGOTEST

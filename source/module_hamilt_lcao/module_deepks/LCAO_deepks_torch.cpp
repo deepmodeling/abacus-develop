@@ -24,7 +24,7 @@
 #ifdef __DEEPKS
 
 #include "LCAO_deepks.h"
-#include "src_parallel/parallel_reduce.h"
+#include "module_base/parallel_reduce.h"
 #include "module_base/constants.h"
 
 //calculates descriptors from projected density matrices

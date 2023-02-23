@@ -1,7 +1,7 @@
 #include "Langevin.h"
 #include "MD_func.h"
-#include "../src_parallel/parallel_common.h"
-#include "../module_base/timer.h"
+#include "module_base/parallel_common.h"
+#include "module_base/timer.h"
 
 Langevin::Langevin(MD_parameters& MD_para_in, UnitCell &unit_in) : MDrun(MD_para_in, unit_in)
 {

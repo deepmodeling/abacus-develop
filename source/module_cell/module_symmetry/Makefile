@@ -29,7 +29,6 @@ VPATH=../module_base\
 ../module_cell\
 :../module_io\
 :../module_hamilt_pw/hamilt_pwdft\
-:../src_parallel\
 :./\
 
 #==========================

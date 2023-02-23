@@ -4,7 +4,7 @@
 #include <iostream>
 #include <math.h>
 #include "global_function.h"
-#include "../src_parallel/parallel_reduce.h"
+#include "module_base/parallel_reduce.h"
 
 namespace ModuleBase
 {
