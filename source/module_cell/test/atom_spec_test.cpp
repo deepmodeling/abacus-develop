@@ -42,6 +42,10 @@ protected:
 
 TEST_F(AtomSpecTest, PrintAtom)
 {
+#ifdef __MPI
+	if(GlobalV::MY_RANK==0)
+	{
+#endif
 	ofs.open("tmp_atom_info");
 	atom.label = "C";
 	atom.type = 1;
@@ -74,11 +78,17 @@ TEST_F(AtomSpecTest, PrintAtom)
     	EXPECT_THAT(str, testing::HasSubstr("atom_position(cartesian) Dimension = 2"));
 	ifs.close();
 	remove("tmp_atom_info");
-
+#ifdef __MPI
+	}
+#endif
 }
 
 TEST_F(AtomSpecTest, SetIndex)
 {
+#ifdef __MPI
+	if(GlobalV::MY_RANK==0)
+	{
+#endif
 	ifs.open("./support/C.upf");
 	GlobalV::PSEUDORCUT = 15.0;
 	upf.read_pseudo_upf201(ifs);
@@ -86,9 +96,9 @@ TEST_F(AtomSpecTest, SetIndex)
 	ifs.close();
 	EXPECT_TRUE(atom.ncpp.has_so);
 	atom.nw = 0;
-	atom.nwl = 2;
+	atom.nwl = 1;
 	delete[] atom.l_nchi;
-	atom.l_nchi = new int[atom.nwl];
+	atom.l_nchi = new int[atom.nwl+1];
 	atom.l_nchi[0] = 2;
 	atom.nw += atom.l_nchi[0];
 	atom.l_nchi[1] = 4;
@@ -99,6 +109,9 @@ TEST_F(AtomSpecTest, SetIndex)
 	EXPECT_EQ(atom.iw2m[13],2);
 	EXPECT_EQ(atom.iw2_ylm[13],3);
 	EXPECT_TRUE(atom.iw2_new[11]);
+#ifdef __MPI
+	}
+#endif
 }
 
 #ifdef __MPI
@@ -110,13 +123,33 @@ TEST_F(AtomSpecTest, BcastAtom)
 		atom.label = "C";
 		atom.type = 1;
 		atom.na = 2;
-		atom.nwl = 2;
+		atom.nw = 0;
+		atom.nwl = 1;
 		atom.Rcut = 1.1;
-		atom.nw = 14;
+		delete[] atom.l_nchi;
+		atom.l_nchi = new int[atom.nwl+1];
+		atom.l_nchi[0] = 2;
+		atom.nw += atom.l_nchi[0];
+		atom.l_nchi[1] = 4;
+		atom.nw += 3*atom.l_nchi[1];
 		atom.stapos_wf = 0;
 		atom.mass = 12.0;
 		delete[] atom.tau;
+		delete[] atom.taud;
+		delete[] atom.vel;
+		delete[] atom.mag;
+		delete[] atom.angle1;
+		delete[] atom.angle2;
+		delete[] atom.m_loc_;
+		delete[] atom.mbl;
 		atom.tau = new ModuleBase::Vector3<double>[atom.na];
+		atom.taud = new ModuleBase::Vector3<double>[atom.na];
+		atom.vel = new ModuleBase::Vector3<double>[atom.na];
+		atom.mag = new double[atom.na];
+		atom.angle1 = new double[atom.na];
+		atom.angle2 = new double[atom.na];
+		atom.m_loc_ = new ModuleBase::Vector3<double>[atom.na];
+		atom.mbl = new ModuleBase::Vector3<int>[atom.na];
 		atom.tau[0].x = 0.2;
 		atom.tau[0].y = 0.2;
 		atom.tau[0].z = 0.2;
@@ -130,7 +163,7 @@ TEST_F(AtomSpecTest, BcastAtom)
 		EXPECT_EQ(atom.label,"C");
 		EXPECT_EQ(atom.type,1);
 		EXPECT_EQ(atom.na,2);
-		EXPECT_EQ(atom.nwl,2);
+		EXPECT_EQ(atom.nwl,1);
 		EXPECT_DOUBLE_EQ(atom.Rcut,1.1);
 		EXPECT_EQ(atom.nw,14);
 		EXPECT_EQ(atom.stapos_wf,0);

@@ -302,13 +302,13 @@ void PW_Basis_K::recip_to_real(const psi::DEVICE_GPU * ctx, const std::complex<d
 }
 #endif
 
-template void PW_Basis_K::real2recip<float>(const float* in, std::complex<float>* out, const int ik, const bool add = false, const float factor = 1.0); //in:(nplane,nx*ny)  ; out(nz, ns)
-template void PW_Basis_K::real2recip<float>(const std::complex<float>* in, std::complex<float>* out, const int ik, const bool add = false, const float factor = 1.0); //in:(nplane,nx*ny)  ; out(nz, ns)
-template void PW_Basis_K::recip2real<float>(const std::complex<float>* in, float* out, const int ik, const bool add = false, const float factor = 1.0); //in:(nz, ns)  ; out(nplane,nx*ny)
-template void PW_Basis_K::recip2real<float>(const std::complex<float>* in, std::complex<float> * out, const int ik, const bool add = false, const float factor = 1.0); //in:(nz, ns)  ; out(nplane,nx*ny)
+template void PW_Basis_K::real2recip<float>(const float* in, std::complex<float>* out, const int ik, const bool add, const float factor); //in:(nplane,nx*ny)  ; out(nz, ns)
+template void PW_Basis_K::real2recip<float>(const std::complex<float>* in, std::complex<float>* out, const int ik, const bool add, const float factor); //in:(nplane,nx*ny)  ; out(nz, ns)
+template void PW_Basis_K::recip2real<float>(const std::complex<float>* in, float* out, const int ik, const bool add, const float factor); //in:(nz, ns)  ; out(nplane,nx*ny)
+template void PW_Basis_K::recip2real<float>(const std::complex<float>* in, std::complex<float> * out, const int ik, const bool add, const float factor); //in:(nz, ns)  ; out(nplane,nx*ny)
 
-template void PW_Basis_K::real2recip<double>(const double* in, std::complex<double>* out, const int ik, const bool add = false, const double factor = 1.0); //in:(nplane,nx*ny)  ; out(nz, ns)
-template void PW_Basis_K::real2recip<double>(const std::complex<double>* in, std::complex<double>* out, const int ik, const bool add = false, const double factor = 1.0); //in:(nplane,nx*ny)  ; out(nz, ns)
-template void PW_Basis_K::recip2real<double>(const std::complex<double>* in, double* out, const int ik, const bool add = false, const double factor = 1.0); //in:(nz, ns)  ; out(nplane,nx*ny)
-template void PW_Basis_K::recip2real<double>(const std::complex<double>* in, std::complex<double> * out, const int ik, const bool add = false, const double factor = 1.0); //in:(nz, ns)  ; out(nplane,nx*ny)
+template void PW_Basis_K::real2recip<double>(const double* in, std::complex<double>* out, const int ik, const bool add, const double factor); //in:(nplane,nx*ny)  ; out(nz, ns)
+template void PW_Basis_K::real2recip<double>(const std::complex<double>* in, std::complex<double>* out, const int ik, const bool add, const double factor); //in:(nplane,nx*ny)  ; out(nz, ns)
+template void PW_Basis_K::recip2real<double>(const std::complex<double>* in, double* out, const int ik, const bool add, const double factor); //in:(nz, ns)  ; out(nplane,nx*ny)
+template void PW_Basis_K::recip2real<double>(const std::complex<double>* in, std::complex<double> * out, const int ik, const bool add, const double factor); //in:(nz, ns)  ; out(nplane,nx*ny)
 }
