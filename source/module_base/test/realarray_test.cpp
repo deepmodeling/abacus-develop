@@ -209,7 +209,7 @@ TEST_F(realArrayTest,Zeros)
         ModuleBase::zeros<double>(p,100);
         for(int i = 0 ; i < 100; i ++)
         {
-                EXPECT_EQ(p[i],0.0);
+                EXPECT_DOUBLE_EQ(p[i],0.0);
         }
         delete [] p;
 
