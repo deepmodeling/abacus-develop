@@ -2,6 +2,9 @@
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
 #include <streambuf>
+#include "module_base/mathzone.h"
+#include "module_cell/parallel_kpoints.h"
+#include "module_base/parallel_global.h"
 #define private public
 #include "../klist.h"
 #include "module_elecstate/magnetism.h"
@@ -59,13 +62,102 @@ namespace GlobalC
  *     - setup kup and kdw after vc (different spin cases)
  */
 
+//abbriviated from module_symmetry/test/symmetry_test.cpp
+struct atomtype_
+{
+    std::string atomname;
+    std::vector<std::vector<double>> coordinate;
+};
+
+struct stru_
+{
+    int ibrav;
+    std::string point_group; // Schoenflies symbol
+    std::string point_group_hm; // Hermann-Mauguin notation.
+    std::string space_group;
+    std::vector<double> cell;
+    std::vector<atomtype_> all_type;
+};
+
+std::vector<stru_> stru_lib{
+    stru_{1,
+          "O_h",
+          "m-3m",
+          "Pm-3m",
+          std::vector<double>{1., 0., 0., 0., 1., 0., 0., 0., 1.},
+          std::vector<atomtype_>{atomtype_{"C",
+                                           std::vector<std::vector<double>>{
+                                               {0., 0., 0.},
+                                           }}}}
+};
+//used to construct cell and analyse its symmetry
+
+
 class KlistTest : public testing::Test
 {
 protected:
 	std::unique_ptr<K_Vectors> kv{new K_Vectors};
 	std::ifstream ifs;
 	std::ofstream ofs;
+	std::ofstream ofs_running;
 	std::string output;
+
+	//used to construct cell and analyse its symmetry
+	UnitCell ucell;
+	void construct_ucell(stru_ &stru)
+	{
+	    std::vector<atomtype_> coord = stru.all_type;
+	    ucell.a1 = ModuleBase::Vector3<double>(stru.cell[0], stru.cell[1], stru.cell[2]);
+	    ucell.a2 = ModuleBase::Vector3<double>(stru.cell[3], stru.cell[4], stru.cell[5]);
+	    ucell.a3 = ModuleBase::Vector3<double>(stru.cell[6], stru.cell[7], stru.cell[8]);
+	    ucell.ntype = stru.all_type.size();
+	    ucell.atoms = new Atom[ucell.ntype];
+	    ucell.nat = 0;
+	    ucell.latvec.e11 = ucell.a1.x; ucell.latvec.e12 = ucell.a1.y; ucell.latvec.e13 = ucell.a1.z;
+	    ucell.latvec.e21 = ucell.a2.x; ucell.latvec.e22 = ucell.a2.y; ucell.latvec.e23 = ucell.a2.z;
+	    ucell.latvec.e31 = ucell.a3.x; ucell.latvec.e32 = ucell.a3.y; ucell.latvec.e33 = ucell.a3.z;
+	    ucell.GT = ucell.latvec.Inverse();
+	    ucell.G = ucell.GT.Transpose();
+	    ucell.lat0 = 1.8897261254578281;
+	    for (int i = 0; i < coord.size(); i++)
+	    {
+	        ucell.atoms[i].label = coord[i].atomname;
+	        ucell.atoms[i].na = coord[i].coordinate.size();
+	        ucell.atoms[i].tau = new ModuleBase::Vector3<double>[ucell.atoms[i].na];
+	        ucell.atoms[i].taud = new ModuleBase::Vector3<double>[ucell.atoms[i].na];
+	        for (int j = 0; j < ucell.atoms[i].na; j++)
+	        {
+	            std::vector<double> this_atom = coord[i].coordinate[j];
+	            ucell.atoms[i].tau[j] = ModuleBase::Vector3<double>(this_atom[0], this_atom[1], this_atom[2]);
+	            ModuleBase::Mathzone::Cartesian_to_Direct(ucell.atoms[i].tau[j].x,
+	                                                      ucell.atoms[i].tau[j].y,
+	                                                      ucell.atoms[i].tau[j].z,
+	                                                      ucell.a1.x,
+	                                                      ucell.a1.y,
+	                                                      ucell.a1.z,
+	                                                      ucell.a2.x,
+	                                                      ucell.a2.y,
+	                                                      ucell.a2.z,
+	                                                      ucell.a3.x,
+	                                                      ucell.a3.y,
+	                                                      ucell.a3.z,
+	                                                      ucell.atoms[i].taud[j].x,
+	                                                      ucell.atoms[i].taud[j].y,
+	                                                      ucell.atoms[i].taud[j].z);
+	        }
+	        ucell.nat += ucell.atoms[i].na;
+	    }
+	}
+	//clear ucell
+	void ClearUcell()
+	{
+	    for (int i = 0; i < ucell.ntype; i++)
+	    {
+	        delete[] ucell.atoms[i].tau;
+	        delete[] ucell.atoms[i].taud;
+	    }
+	    delete[] ucell.atoms;
+	}
 };
 
 TEST_F(KlistTest, Construct)
@@ -532,6 +624,83 @@ TEST_F(KlistTest, SetBothKvec)
 	kv->kd_done = 0;
 	kv->set_both_kvec(GlobalC::ucell.G,GlobalC::ucell.latvec,skpt);
 	EXPECT_TRUE(kv->kd_done);
+}
+
+TEST_F(KlistTest, NormalizeWk)
+{
+	kv->nspin = 1;
+	kv->nkstot = 2;
+	kv->nks = 2;
+	kv->renew(kv->nkstot);
+	kv->wk[0] = 1.0;
+	kv->wk[1] = 1.0;
+	int deg = 2;
+	kv->normalize_wk(deg);
+	EXPECT_DOUBLE_EQ(kv->wk[0],1.0);
+	EXPECT_DOUBLE_EQ(kv->wk[1],1.0);
+}
+
+TEST_F(KlistTest, UpdateUseIBZ)
+{
+	kv->nspin = 1;
+	kv->nkstot = 3;
+	kv->nks = 3;
+	kv->renew(kv->nkstot);
+	kv->nkstot_ibz = 2;
+	kv->kvec_d_ibz.resize(kv->nkstot_ibz);
+	kv->wk_ibz.resize(kv->nkstot_ibz);
+	kv->update_use_ibz();
+	EXPECT_EQ(kv->nkstot,2);
+	EXPECT_EQ(kv->kvec_d.size(),2);
+	EXPECT_TRUE(kv->kd_done);
+	EXPECT_FALSE(kv->kc_done);
+}
+
+TEST_F(KlistTest, IbzKpoint)
+{
+	//construct cell and symmetry
+	ModuleSymmetry::Symmetry symm;
+	construct_ucell(stru_lib[0]);
+	GlobalV::ofs_running.open("tmp_klist_3");
+	symm.analy_sys(ucell,GlobalV::ofs_running);
+	//read KPT
+	std::string k_file = "./support/KPT1";
+	kv->nspin = 1;
+	kv->read_kpoints(k_file);
+	EXPECT_EQ(kv->nkstot,512);
+	//calculate ibz_kpoint
+	std::string skpt;
+	ModuleSymmetry::Symmetry::symm_flag=1;
+	kv->ibz_kpoint(symm,ModuleSymmetry::Symmetry::symm_flag,skpt);
+	EXPECT_EQ(kv->nkstot_ibz,35);
+	GlobalV::ofs_running<<skpt<<std::endl;
+	GlobalV::ofs_running.close();
+	ClearUcell();
+	remove("tmp_klist_3");
+}
+
+TEST_F(KlistTest, IbzKpointIsMP)
+{
+	//construct cell and symmetry
+	ModuleSymmetry::Symmetry symm;
+	construct_ucell(stru_lib[0]);
+	GlobalV::ofs_running.open("tmp_klist_4");
+	symm.analy_sys(ucell,GlobalV::ofs_running);
+	//read KPT
+	std::string k_file = "./support/KPT1";
+	kv->nspin = 1;
+	kv->read_kpoints(k_file);
+	EXPECT_EQ(kv->nkstot,512);
+	EXPECT_TRUE(kv->is_mp);
+	//calculate ibz_kpoint
+	std::string skpt;
+	ModuleSymmetry::Symmetry::symm_flag=0;
+	kv->ibz_kpoint(symm,ModuleSymmetry::Symmetry::symm_flag,skpt);
+	EXPECT_EQ(kv->nkstot_ibz,260);
+	GlobalV::ofs_running<<skpt<<std::endl;
+	GlobalV::ofs_running.close();
+	ClearUcell();
+	remove("tmp_klist_4");
 }
 
 #undef private
