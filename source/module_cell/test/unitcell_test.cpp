@@ -12,7 +12,8 @@ Magnetism::~Magnetism(){}
  ***********************************************/
 
 /**
- *
+ * - Tested Functions:
+ *   - Constructor: UnitCell() and ~UnitCell()
  *
  */
 
@@ -52,6 +53,73 @@ TEST_F(UnitCellTest,Constructor)
 	EXPECT_FALSE(ucell->set_atom_flag);
 }
 
+TEST_F(UnitCellTest,Setup)
+{
+	std::string latname_in = "bcc";
+	int ntype_in = 1;
+	int lmaxmax_in = 2;
+	bool init_vel_in = false;
+	std::vector<std::string> fixed_axes_in = {"None","volume","shape","a","b","c","ab","ac","bc","abc"};
+	GlobalV::relax_new = true;
+	for(int i=0;i<fixed_axes_in.size();++i)
+	{
+		ucell->setup(latname_in,ntype_in,lmaxmax_in,init_vel_in,fixed_axes_in[i]);
+		EXPECT_EQ(ucell->latName,latname_in);
+		EXPECT_EQ(ucell->ntype,ntype_in);
+		EXPECT_EQ(ucell->lmaxmax,lmaxmax_in);
+		EXPECT_EQ(ucell->init_vel,init_vel_in);
+		if(fixed_axes_in[i] == "None" || fixed_axes_in[i] == "volume"
+				|| fixed_axes_in[i] == "shape")
+		{
+			EXPECT_EQ(ucell->lc[0],1);
+			EXPECT_EQ(ucell->lc[1],1);
+			EXPECT_EQ(ucell->lc[2],1);
+		}
+		else if(fixed_axes_in[i] == "a")
+		{
+			EXPECT_EQ(ucell->lc[0],0);
+			EXPECT_EQ(ucell->lc[1],1);
+			EXPECT_EQ(ucell->lc[2],1);
+		}
+		else if(fixed_axes_in[i] == "b")
+		{
+			EXPECT_EQ(ucell->lc[0],1);
+			EXPECT_EQ(ucell->lc[1],0);
+			EXPECT_EQ(ucell->lc[2],1);
+		}
+		else if(fixed_axes_in[i] == "c")
+		{
+			EXPECT_EQ(ucell->lc[0],1);
+			EXPECT_EQ(ucell->lc[1],1);
+			EXPECT_EQ(ucell->lc[2],0);
+		}
+		else if(fixed_axes_in[i] == "ab")
+		{
+			EXPECT_EQ(ucell->lc[0],0);
+			EXPECT_EQ(ucell->lc[1],1);
+			EXPECT_EQ(ucell->lc[2],1);
+		}
+		else if(fixed_axes_in[i] == "ac")
+		{
+			EXPECT_EQ(ucell->lc[0],0);
+			EXPECT_EQ(ucell->lc[1],1);
+			EXPECT_EQ(ucell->lc[2],0);
+		}
+		else if(fixed_axes_in[i] == "bc")
+		{
+			EXPECT_EQ(ucell->lc[0],1);
+			EXPECT_EQ(ucell->lc[1],0);
+			EXPECT_EQ(ucell->lc[2],0);
+		}
+		else if(fixed_axes_in[i] == "abc")
+		{
+			EXPECT_EQ(ucell->lc[0],0);
+			EXPECT_EQ(ucell->lc[1],0);
+			EXPECT_EQ(ucell->lc[2],0);
+		}
+	}
+}
+
 TEST_F(UnitCellTest,SetAtom)
 {
 	ucell->ntype = 1;
@@ -80,4 +148,20 @@ TEST_F(UnitCellTest,SetAtom)
 	ucell->latvec.e31 = 0.0; ucell->latvec.e32 = 0.0; ucell->latvec.e33 = 10.0;
 	ucell->GT = ucell->latvec.Inverse();
 	ucell->G = ucell->GT.Transpose();
+	ucell->a1.x = ucell->latvec.e11; ucell->a1.y = ucell->latvec.e12; ucell->a1.z = ucell->latvec.e13;
+	ucell->a2.x = ucell->latvec.e21; ucell->a2.y = ucell->latvec.e22; ucell->a2.z = ucell->latvec.e23;
+	ucell->a3.x = ucell->latvec.e31; ucell->a3.y = ucell->latvec.e32; ucell->a3.z = ucell->latvec.e33;
+	ucell->Coordinate = "Direct";
+	ucell->atoms[0].label = "C";
+	//nw
+	ucell->atoms[0].nw = 0;
+	ucell->atoms[0].nwl = 2;
+	ucell->lmaxmax = 2;
+	delete[] ucell->atoms[0].l_nchi;
+	ucell->atoms[0].l_nchi = new int[ ucell->atoms[0].nwl+1];
+	for(int L=0; L<ucell->atoms[0].nwl+1; L++)
+	{
+		ucell->atoms[0].l_nchi[L] = 1;
+		ucell->atoms[0].nw += (2*L + 1) * ucell->atoms[0].l_nchi[L];
+	}
 }
