@@ -41,8 +41,8 @@ class Meta<OperatorPW<FPTYPE, Device>> : public OperatorPW<FPTYPE, Device>
     FPTYPE get_tpiba() const {return this->tpiba;}
     const int * get_isk() const {return this->isk;}
     const FPTYPE* get_vk() const {return this->vk;}
-    const int get_vk_row() const {return this->vk_row;}
-    const int get_vk_col() const {return this->vk_col;}
+    int get_vk_row() const {return this->vk_row;}
+    int get_vk_col() const {return this->vk_col;}
     ModulePW::PW_Basis_K* get_wfcpw() const {return this->wfcpw;}
 
     private:
