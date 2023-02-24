@@ -67,8 +67,6 @@ add_test(NAME cell_parallel_kpoints_test
 AddTest(
   TARGET cell_unitcell_test
   LIBS ${math_libs} base device
-  SOURCES unitcell_test.cpp
-  #  ../../module_io/output.cpp ../module_symmetry/symm_other.cpp
-  #../module_symmetry/symmetry_basic.cpp ../module_symmetry/symmetry.cpp
+  SOURCES unitcell_test.cpp ../unitcell.cpp ../read_atoms.cpp ../read_cell_pseudopots.cpp ../atom_spec.cpp ../atom_pseudo.cpp ../pseudo_nc.cpp ../read_pp.cpp ../read_pp_upf201.cpp ../read_pp_upf100.cpp ../read_pp_vwr.cpp ../read_pp_blps.cpp ../../module_io/output.cpp
 )
 
