@@ -8,6 +8,6 @@ for i in 4;do
         continue
     fi
     echo "TEST in parallel, nprocs=$i"
-    mpirun -np $i ./cell_klist_para_test
+    mpirun -np $i ./cell_klist_test_para1
     break    
 done
