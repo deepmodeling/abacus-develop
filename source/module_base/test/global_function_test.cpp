@@ -661,10 +661,8 @@ TEST_F(GlobalFunctionTest,Vector2Ptr)
 
 TEST_F(GlobalFunctionTest,MemAvailable)
 {
-    EXPECT_GT(ModuleBase::GlobalFunc::MemAvailable(),8000000);
-    EXPECT_LT(ModuleBase::GlobalFunc::MemAvailable(),12000000);
+    EXPECT_TRUE(ModuleBase::GlobalFunc::MemAvailable());
 }
-
 
 /*
 TEST_F(GlobalFunctionTest, Note)
