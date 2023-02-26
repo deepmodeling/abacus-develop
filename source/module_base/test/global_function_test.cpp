@@ -58,6 +58,8 @@
  *   - judge whether the KS_SOLVER is column major
  * - VECTOR_TO_PTR
  *   - get a copy of the ptr of a vector
+ * - MemAvailable
+ *   - Gets the currently available memory value
  */
 
 inline void EXPECT_COMPLEX_FLOAT_EQ(const std::complex<float>& a, const std::complex<float>& b)
@@ -656,6 +658,13 @@ TEST_F(GlobalFunctionTest,Vector2Ptr)
         EXPECT_COMPLEX_DOUBLE_EQ(ptr_d[i],std::complex<double>(1.0,2.0));
     }
 }
+
+TEST_F(GlobalFunctionTest,MemAvailable)
+{
+    EXPECT_GT(ModuleBase::GlobalFunc::MemAvailable(),8000000);
+    EXPECT_LT(ModuleBase::GlobalFunc::MemAvailable(),12000000);
+}
+
 
 /*
 TEST_F(GlobalFunctionTest, Note)
