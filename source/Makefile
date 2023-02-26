@@ -8,6 +8,12 @@ LIBS = -lm -lpthread
 OPTS = -Ofast -march=native -std=c++14 -pedantic -m64 ${INCLUDES}
 HONG = -D__LCAO
 HONG += -D__ELPA
+ifeq ($(OPENMP), ON)
+    HONG += -D_OPENMP
+    ELPA_NAME = elpa_openmp
+else
+    ELPA_NAME = elpa
+endif
 OBJ_DIR = obj
 BIN_DIR = ../bin
 SOURCE_DIR = .
@@ -55,7 +61,7 @@ ifeq ($(INTEL), ON)
     # ELPA package
     #==========================
     ELPA_LIB_DIR = ${ELPA_DIR}/lib
-    LIBS     += -L${ELPA_LIB_DIR} -lelpa  -Wl,-rpath=${ELPA_LIB_DIR}
+    LIBS     += -L${ELPA_LIB_DIR} -l${ELPA_NAME}  -Wl,-rpath=${ELPA_LIB_DIR}
     INCLUDES += -I${ELPA_INCLUDE_DIR}
 else
     OPTS += -fopenmp -fpermissive
@@ -71,7 +77,7 @@ else
     #==========================
     # OPENBLAS, SCALAPACK, ELPA
     #==========================
-    LIBS     += -L${OPENBLAS_LIB_DIR} -L${SCALAPACK_LIB_DIR} -L${ELPA_DIR}/lib -lelpa -lscalapack -lopenblas -lgfortran\
+    LIBS     += -L${OPENBLAS_LIB_DIR} -L${SCALAPACK_LIB_DIR} -L${ELPA_DIR}/lib -l${ELPA_NAME} -lscalapack -lopenblas -lgfortran\
                 -Wl,-rpath=${ELPA_DIR}/lib -Wl,-rpath=${SCALAPACK_LIB_DIR} -Wl,-rpath=${OPENBLAS_LIB_DIR}
     INCLUDES += -I${ELPA_INCLUDE_DIR}
 endif
