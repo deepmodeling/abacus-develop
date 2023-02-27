@@ -256,8 +256,8 @@ class XCTest_SLATER_RXC_SPN : public testing::Test
 
         void SetUp()
         {
-            std::vector<double> rho  = {0.17E+01, 0.17E+01, 0.15E+01, 0.88E-01, 0.18E+04};
-            std::vector<double> zeta = {0.0, 0.2, 0.5, 0.8, 1.0};
+            std::vector<double> rho  = {-1, 0.17E+01, 0.17E+01, 0.15E+01, 0.88E-01, 0.18E+04};
+            std::vector<double> zeta = {0.0, 0.0, 0.2, 0.5, 0.8, 1.0};
 
             for(int i=0;i<5;i++)
             {
@@ -272,9 +272,9 @@ class XCTest_SLATER_RXC_SPN : public testing::Test
 
 TEST_F(XCTest_SLATER_RXC_SPN, set_xc_type)
 {
-    std::vector<double> e_lda_ref  = {-0.880392474033,-0.888247554199,-0.892602327244,-0.378797005763,-9.99791043021};
-    std::vector<double> v1_lda_ref  = {-1.17442450837,-1.24798175209,-1.28947632654,-0.532758325459,-14.0193907595};
-    std::vector<double> v2_lda_ref  = {-1.17442450837,-1.09028491017,-0.894235359765,-0.2561411064,-0.688843519257};
+    std::vector<double> e_lda_ref  = {0.0, -0.880392474033,-0.888247554199,-0.892602327244,-0.378797005763,-9.99791043021};
+    std::vector<double> v1_lda_ref  = {0.0, -1.17442450837,-1.24798175209,-1.28947632654,-0.532758325459,-14.0193907595};
+    std::vector<double> v2_lda_ref  = {0.0, -1.17442450837,-1.09028491017,-0.894235359765,-0.2561411064,-0.688843519257};
 
     for (int i = 0;i<5;++i)
     {
