@@ -156,6 +156,10 @@ ModuleBase::matrix Mulliken_Charge::cal_mulliken_k(const std::vector<ModuleBase:
 
     for(size_t ik = 0; ik != GlobalC::kv.nks; ++ik)
     {
+        uhm.LM->allocate_HS_k(pv->nloc);
+        uhm.LM->zeros_HSk('S');
+		uhm.LM->folding_fixedH(ik);
+
         ModuleBase::ComplexMatrix mud;
         mud.create(uhm.LM->ParaV->nrow, uhm.LM->ParaV->ncol);
 
