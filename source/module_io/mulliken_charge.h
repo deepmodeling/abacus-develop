@@ -4,6 +4,7 @@
 #include "module_base/matrix.h"
 #include "module_base/complexmatrix.h"
 #ifdef __LCAO
+#include "module_hamilt_lcao/hamilt_lcaodft/local_orbital_charge.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_matrix.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_hamilt.h"
 #endif
@@ -17,11 +18,11 @@ class Mulliken_Charge
 
 	private:
 
-    std::vector<std::vector<double>> cal_mulliken(const std::vector<ModuleBase::matrix> &dm,
+    ModuleBase::matrix cal_mulliken(const std::vector<ModuleBase::matrix> &dm,
         LCAO_Hamilt &uhm
     );
 
-    std::vector<std::vector<double>> cal_mulliken_k(const std::vector<ModuleBase::matrix> &dm,
+    ModuleBase::matrix cal_mulliken_k(const std::vector<ModuleBase::ComplexMatrix> &dm,
         LCAO_Hamilt &uhm
     );
 };

@@ -25,7 +25,7 @@
 #endif
 #include "module_cell/module_neighbor/sltk_atom_arrange.h"
 
-std::vector<std::vector<double>> Mulliken_Charge::cal_mulliken(const std::vector<ModuleBase::matrix> &dm,
+ModuleBase::matrix Mulliken_Charge::cal_mulliken(const std::vector<ModuleBase::matrix> &dm,
     LCAO_Hamilt &uhm
 )
 {
@@ -33,8 +33,11 @@ std::vector<std::vector<double>> Mulliken_Charge::cal_mulliken(const std::vector
 
     const int nspin = (GlobalV::NSPIN == 2) ? 2 : 1;
     const int nlocal = (GlobalV::NSPIN == 4) ? GlobalV::NLOCAL/2 : GlobalV::NLOCAL;
-    std::vector<std::vector<double>> MecMulP(GlobalV::NSPIN, std::vector<double>(nlocal, 0));
-    std::vector<std::vector<double>> orbMulP(GlobalV::NSPIN, std::vector<double>(nlocal, 0));
+    // std::vector<std::vector<double>> MecMulP(GlobalV::NSPIN, std::vector<double>(nlocal, 0));
+    // std::vector<std::vector<double>> orbMulP(GlobalV::NSPIN, std::vector<double>(nlocal, 0));
+    ModuleBase::matrix MecMulP, orbMulP;
+    MecMulP.create(GlobalV::NSPIN, nlocal);
+    orbMulP.create(GlobalV::NSPIN, nlocal);
 
     for(size_t is=0; is!=nspin; ++is)
     {
@@ -70,7 +73,7 @@ std::vector<std::vector<double>> Mulliken_Charge::cal_mulliken(const std::vector
                 {
                     const int ir = uhm.LM->ParaV->trace_loc_row[i];
                     const int ic = uhm.LM->ParaV->trace_loc_col[i];
-                    MecMulP[is][i] = mud(ir, ic);
+                    MecMulP(is, i) += mud(ir, ic);
                 }
         }
         else if(GlobalV::NSPIN == 4)
@@ -87,25 +90,25 @@ std::vector<std::vector<double>> Mulliken_Charge::cal_mulliken(const std::vector
                     {
                         const int ir = uhm.LM->ParaV->trace_loc_row[k1];
                         const int ic = uhm.LM->ParaV->trace_loc_col[k1];
-                        MecMulP[0][i] = mud(ir, ic);
+                        MecMulP(0, i) += mud(ir, ic);
                     }
                     else if(uhm.LM->ParaV->in_this_processor(k1, k2))
                     {
                         const int ir = uhm.LM->ParaV->trace_loc_row[k1];
                         const int ic = uhm.LM->ParaV->trace_loc_col[k2];
-                        MecMulP[1][i] = mud(ir, ic);
+                        MecMulP(1, i) += mud(ir, ic);
                     }
                     else if(uhm.LM->ParaV->in_this_processor(k2, k1))
                     {
                         const int ir = uhm.LM->ParaV->trace_loc_row[k2];
                         const int ic = uhm.LM->ParaV->trace_loc_col[k1];
-                        MecMulP[2][i] = mud(ir, ic);
+                        MecMulP(2, i) += mud(ir, ic);
                     }
                     else if(uhm.LM->ParaV->in_this_processor(k2, k2))
                     {
                         const int ir = uhm.LM->ParaV->trace_loc_row[k2];
                         const int ic = uhm.LM->ParaV->trace_loc_col[k2];
-                        MecMulP[3][i] = mud(ir, ic);
+                        MecMulP(3, i) += mud(ir, ic);
                     }
                 }
             }
@@ -113,13 +116,13 @@ std::vector<std::vector<double>> Mulliken_Charge::cal_mulliken(const std::vector
 #endif
     }
 #ifdef __MPI 
-    MPI_Reduce(MecMulP, orbMulP, GlobalV::NSPIN*nlocal, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+    MPI_Reduce(MecMulP.c, orbMulP.c, GlobalV::NSPIN*nlocal, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 #endif 
 
     return orbMulP;
 }
 
-std::vector<std::vector<double>> Mulliken_Charge::cal_mulliken_k(const std::vector<ModuleBase::matrix> &dm,
+ModuleBase::matrix Mulliken_Charge::cal_mulliken_k(const std::vector<ModuleBase::ComplexMatrix> &dm,
     LCAO_Hamilt &uhm
 )
 {
@@ -127,15 +130,18 @@ std::vector<std::vector<double>> Mulliken_Charge::cal_mulliken_k(const std::vect
 
     const int nspin = (GlobalV::NSPIN == 2) ? 2 : 1;
     const int nlocal = (GlobalV::NSPIN == 4) ? GlobalV::NLOCAL/2 : GlobalV::NLOCAL;
-    std::vector<std::vector<double>> MecMulP(GlobalV::NSPIN, std::vector<double>(nlocal, 0));
-    std::vector<std::vector<double>> orbMulP(GlobalV::NSPIN, std::vector<double>(nlocal, 0));
+    // std::vector<std::vector<double>> MecMulP(GlobalV::NSPIN, std::vector<double>(nlocal, 0));
+    // std::vector<std::vector<double>> orbMulP(GlobalV::NSPIN, std::vector<double>(nlocal, 0));
+    ModuleBase::matrix MecMulP, orbMulP;
+    MecMulP.create(GlobalV::NSPIN, nlocal);
+    orbMulP.create(GlobalV::NSPIN, nlocal);
 
     GlobalV::SEARCH_RADIUS = atom_arrange::set_sr_NL(
 		GlobalV::ofs_running,
 		GlobalV::OUT_LEVEL,
 		GlobalC::ORB.get_rcutmax_Phi(), 
 		GlobalC::ucell.infoNL.get_rcutmax_Beta(), 
-		GlobalV::GAMMA_ONLY_LOCAL)
+		GlobalV::GAMMA_ONLY_LOCAL);
 	atom_arrange::search(
 		GlobalV::SEARCH_PBC,
 		GlobalV::ofs_running,
@@ -150,7 +156,7 @@ std::vector<std::vector<double>> Mulliken_Charge::cal_mulliken_k(const std::vect
 
     for(size_t ik = 0; ik != GlobalC::kv.nks; ++ik)
     {
-        ModuleBase::matrix mud;
+        ModuleBase::ComplexMatrix mud;
         mud.create(uhm.LM->ParaV->nrow, uhm.LM->ParaV->ncol);
 
 #ifdef __MPI
@@ -184,7 +190,7 @@ std::vector<std::vector<double>> Mulliken_Charge::cal_mulliken_k(const std::vect
                 {
                     const int ir = uhm.LM->ParaV->trace_loc_row[i];
                     const int ic = uhm.LM->ParaV->trace_loc_col[i];
-                    MecMulP[spin][i] += mud(ir, ic);
+                    MecMulP(spin, i) += mud(ir, ic).real();
                 }
         }
         else if(GlobalV::NSPIN == 4)
@@ -201,25 +207,25 @@ std::vector<std::vector<double>> Mulliken_Charge::cal_mulliken_k(const std::vect
                     {
                         const int ir = uhm.LM->ParaV->trace_loc_row[k1];
                         const int ic = uhm.LM->ParaV->trace_loc_col[k1];
-                        MecMulP[0][i] = mud(ir, ic);
+                        MecMulP(0, i) += mud(ir, ic).real();
                     }
                     else if(uhm.LM->ParaV->in_this_processor(k1, k2))
                     {
                         const int ir = uhm.LM->ParaV->trace_loc_row[k1];
                         const int ic = uhm.LM->ParaV->trace_loc_col[k2];
-                        MecMulP[1][i] = mud(ir, ic);
+                        MecMulP(1, i) += mud(ir, ic).real();
                     }
                     else if(uhm.LM->ParaV->in_this_processor(k2, k1))
                     {
                         const int ir = uhm.LM->ParaV->trace_loc_row[k2];
                         const int ic = uhm.LM->ParaV->trace_loc_col[k1];
-                        MecMulP[2][i] = mud(ir, ic);
+                        MecMulP(2, i) += mud(ir, ic).real();
                     }
                     else if(uhm.LM->ParaV->in_this_processor(k2, k2))
                     {
                         const int ir = uhm.LM->ParaV->trace_loc_row[k2];
                         const int ic = uhm.LM->ParaV->trace_loc_col[k2];
-                        MecMulP[3][i] = mud(ir, ic);
+                        MecMulP(3, i) += mud(ir, ic).real();
                     }
                 }
             }
@@ -234,19 +240,19 @@ std::vector<std::vector<double>> Mulliken_Charge::cal_mulliken_k(const std::vect
 #endif
     }
 #ifdef __MPI 
-    MPI_Reduce(MecMulP, orbMulP, GlobalV::NSPIN*nlocal, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+    MPI_Reduce(MecMulP.c, orbMulP.c, GlobalV::NSPIN*nlocal, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 #endif 
 
     return orbMulP;
 }
 
-void out_mulliken(LCAO_Hamilt &uhm, Local_Orbital_Charge &loc)
+void Mulliken_Charge::out_mulliken(LCAO_Hamilt &uhm, Local_Orbital_Charge &loc)
 {
-    std::vector<std::vector<double>> orbMulP;
+    ModuleBase::matrix orbMulP;
     if(GlobalV::GAMMA_ONLY_LOCAL)
-        orbMulP = Mulliken_Charge::cal_mulliken(loc.dm_gamma, uhm);
+        orbMulP = this->cal_mulliken(loc.dm_gamma, uhm);
     else
-        orbMulP = Mulliken_Charge::cal_mulliken(loc.dm_k, uhm);
+        orbMulP = this->cal_mulliken_k(loc.dm_k, uhm);
 
     if(GlobalV::MY_RANK == 0)
     {
@@ -257,13 +263,13 @@ void out_mulliken(LCAO_Hamilt &uhm, Local_Orbital_Charge &loc)
         for(size_t i = 0; i != GlobalV::NLOCAL; ++i)
         {
             if(GlobalV::NSPIN == 1)
-                os << std::setw(13) << orbMulP[0][i] << std::endl;
+                os << std::setw(13) << orbMulP(0, i) << std::endl;
             else if(GlobalV::NSPIN == 2)
-                os << std::setw(13) << orbMulP[0][i] << std::setw(13) << orbMulP[1][i] << std::endl;
+                os << std::setw(13) << orbMulP(0, i) << std::setw(13) << orbMulP(1, i) << std::endl;
             else if(GlobalV::NSPIN == 4)
-                os << std::setw(13) << orbMulP[0][i] << std::setw(13) << orbMulP[1][i] << std::setw(13) << orbMulP[2][i] << std::setw(13) << orbMulP[3][i] << std::endl;
+                os << std::setw(13) << orbMulP(0, i) << std::setw(13) << orbMulP(1, i) << std::setw(13) << orbMulP(2, i) << std::setw(13) << orbMulP(3, i) << std::endl;
         }
-        os.close()
+        os.close();
         ModuleIO::write_orb_info();
     }
 }
