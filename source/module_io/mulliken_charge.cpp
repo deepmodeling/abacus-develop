@@ -90,25 +90,25 @@ ModuleBase::matrix Mulliken_Charge::cal_mulliken(const std::vector<ModuleBase::m
                     {
                         const int ir = uhm.LM->ParaV->trace_loc_row[k1];
                         const int ic = uhm.LM->ParaV->trace_loc_col[k1];
-                        MecMulP(0, i) += mud(ir, ic);
+                        MecMulP(0, j) += mud(ir, ic);
                     }
-                    else if(uhm.LM->ParaV->in_this_processor(k1, k2))
+                    if(uhm.LM->ParaV->in_this_processor(k1, k2))
                     {
                         const int ir = uhm.LM->ParaV->trace_loc_row[k1];
                         const int ic = uhm.LM->ParaV->trace_loc_col[k2];
-                        MecMulP(1, i) += mud(ir, ic);
+                        MecMulP(1, j) += mud(ir, ic);
                     }
-                    else if(uhm.LM->ParaV->in_this_processor(k2, k1))
+                    if(uhm.LM->ParaV->in_this_processor(k2, k1))
                     {
                         const int ir = uhm.LM->ParaV->trace_loc_row[k2];
                         const int ic = uhm.LM->ParaV->trace_loc_col[k1];
-                        MecMulP(2, i) += mud(ir, ic);
+                        MecMulP(2, j) += mud(ir, ic);
                     }
-                    else if(uhm.LM->ParaV->in_this_processor(k2, k2))
+                    if(uhm.LM->ParaV->in_this_processor(k2, k2))
                     {
                         const int ir = uhm.LM->ParaV->trace_loc_row[k2];
                         const int ic = uhm.LM->ParaV->trace_loc_col[k2];
-                        MecMulP(3, i) += mud(ir, ic);
+                        MecMulP(3, j) += mud(ir, ic);
                     }
                 }
             }
@@ -207,39 +207,39 @@ ModuleBase::matrix Mulliken_Charge::cal_mulliken_k(const std::vector<ModuleBase:
                     {
                         const int ir = uhm.LM->ParaV->trace_loc_row[k1];
                         const int ic = uhm.LM->ParaV->trace_loc_col[k1];
-                        MecMulP(0, i) += mud(ir, ic).real();
+                        MecMulP(0, j) += mud(ir, ic).real();
                     }
-                    else if(uhm.LM->ParaV->in_this_processor(k1, k2))
+                    if(uhm.LM->ParaV->in_this_processor(k1, k2))
                     {
                         const int ir = uhm.LM->ParaV->trace_loc_row[k1];
                         const int ic = uhm.LM->ParaV->trace_loc_col[k2];
-                        MecMulP(1, i) += mud(ir, ic).real();
+                        MecMulP(1, j) += mud(ir, ic).real();
                     }
-                    else if(uhm.LM->ParaV->in_this_processor(k2, k1))
+                    if(uhm.LM->ParaV->in_this_processor(k2, k1))
                     {
                         const int ir = uhm.LM->ParaV->trace_loc_row[k2];
                         const int ic = uhm.LM->ParaV->trace_loc_col[k1];
-                        MecMulP(2, i) += mud(ir, ic).real();
+                        MecMulP(2, j) += mud(ir, ic).real();
                     }
-                    else if(uhm.LM->ParaV->in_this_processor(k2, k2))
+                    if(uhm.LM->ParaV->in_this_processor(k2, k2))
                     {
                         const int ir = uhm.LM->ParaV->trace_loc_row[k2];
                         const int ic = uhm.LM->ParaV->trace_loc_col[k2];
-                        MecMulP(3, i) += mud(ir, ic).real();
+                        MecMulP(3, j) += mud(ir, ic).real();
                     }
                 }
             }
         }
+#endif
+    }
+#ifdef __MPI
     atom_arrange::delete_vector(
 		GlobalV::ofs_running,
 		GlobalV::SEARCH_PBC,
 		GlobalC::GridD, 
 		GlobalC::ucell, 
 		GlobalV::SEARCH_RADIUS, 
-		GlobalV::test_atom_input);
-#endif
-    }
-#ifdef __MPI 
+		GlobalV::test_atom_input); 
     MPI_Reduce(MecMulP.c, orbMulP.c, GlobalV::NSPIN*nlocal, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 #endif 
 
@@ -260,7 +260,7 @@ void Mulliken_Charge::out_mulliken(LCAO_Hamilt &uhm, Local_Orbital_Charge &loc)
         std::stringstream as;
         as << GlobalV::global_out_dir << "Mulliken.dat";
         std::ofstream os(as.str().c_str());
-        for(size_t i = 0; i != GlobalV::NLOCAL; ++i)
+        for(size_t i = 0; i != nlocal; ++i)
         {
             if(GlobalV::NSPIN == 1)
                 os << std::setw(13) << orbMulP(0, i) << std::endl;
