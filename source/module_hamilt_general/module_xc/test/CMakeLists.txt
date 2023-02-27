@@ -213,3 +213,14 @@ AddTest(
   LIBS MPI::MPI_CXX Libxc::xc # required by global.h; for details, `remove_definitions(-D__MPI)`.
   SOURCES test_xc2.cpp ../xc_functional.cpp ../xc_functional_wrapper_xc.cpp ../xc_functional_wrapper_gcxc.cpp ../xc_funct_corr_gga.cpp ../xc_funct_corr_lda.cpp ../xc_funct_exch_gga.cpp ../xc_funct_exch_lda.cpp ../xc_funct_hcth.cpp
 )
+
+AddTest(
+  TARGET XCTest_GRADCORR
+  LIBS MPI::MPI_CXX Libxc::xc ${math_libs}
+  SOURCES test_xc3 ../xc_functional_gradcorr.cpp ../xc_functional.cpp
+    ../xc_functional_wrapper_xc.cpp ../xc_functional_wrapper_gcxc.cpp
+    ../xc_functional_wrapper_tauxc.cpp
+    ../xc_funct_corr_gga.cpp ../xc_funct_corr_lda.cpp ../xc_funct_exch_gga.cpp
+    ../xc_funct_exch_lda.cpp ../xc_funct_hcth.cpp
+    ../../../module_base/matrix.cpp
+)
