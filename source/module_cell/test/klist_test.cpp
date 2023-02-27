@@ -585,8 +585,6 @@ TEST_F(KlistTest, PrintKlistsWarnigQuit)
 	kv->kvec_c[0].x = 0;
 	kv->kvec_c[0].y = 0;
 	kv->kvec_c[0].z = 0;
-	kv->set_both_kvec_after_vc(GlobalC::ucell.G,GlobalC::ucell.latvec);
-	EXPECT_TRUE(kv->kd_done);
 	testing::internal::CaptureStdout();
 	EXPECT_EXIT(kv->print_klists(GlobalV::ofs_running),
 			::testing::ExitedWithCode(0),"");

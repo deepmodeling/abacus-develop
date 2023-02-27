@@ -17,6 +17,12 @@ AddTest(
           ../../module_hamilt_pw/hamilt_pwdft/operator_pw/operator_pw.cpp
 )
 
+AddTest(
+  TARGET HSolver_base
+  LIBS ${math_libs} psi device base
+  SOURCES test_hsolver.cpp 
+)
+
 if(ENABLE_LCAO)
   if(USE_ELPA)
   AddTest(
