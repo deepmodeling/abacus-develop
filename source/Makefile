@@ -9,7 +9,6 @@ OPTS = -Ofast -march=native -std=c++14 -pedantic -m64 ${INCLUDES}
 HONG = -D__LCAO
 HONG += -D__ELPA
 ifeq ($(OPENMP), ON)
-    HONG += -D_OPENMP
     ELPA_NAME = elpa_openmp
 else
     ELPA_NAME = elpa
