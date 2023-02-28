@@ -105,7 +105,7 @@ To compile the ABACUS program using legacy `make`, users need to specify the loc
 #======================================================================
 # Users set
 #======================================================================
-CC = mpiicpc
+CXX = mpiicpc
 # mpiicpc:   compile intel parallel version
 # icpc:      compile intel sequential version
 # make: ELPA_DIR, ELPA_INCLUDE_DIR, CEREAL_DIR must also be set.
@@ -138,7 +138,7 @@ CEREAL_DIR    = /usr/local/include/cereal
 ## FFTW_DIR          should contain lib/libfftw3.a.
 ## OPENBLAS_LIB_DIR  should contain libopenblas.a. 
 ## SCALAPACK_LIB_DIR should contain libscalapack.a
-## All three above will only be used when CC=mpicxx or g++
+## All three above will only be used when CXX=mpicxx or g++
 ## ELPA_DIR          should contain an include folder and lib/libelpa.a
 ## CEREAL_DIR        should contain an include folder.
 ##---------------------------------------------------------------------
@@ -184,18 +184,18 @@ For example, below is a case where the Intel C++ compiler, Intel MPI and CEREAL 
 follows:
 
 ```makefile
-CC = mpiicpc #(or CC = icpc)
+CXX = mpiicpc #(or CXX = icpc)
 ELPA_DIR      = /public/soft/elpa_21.05.002
 ELPA_INCLUDE_DIR = ${ELPA_DIR}/include/elpa-2021.05.002
 CEREAL_DIR    = /public/soft/cereal
 ```
 
-When `CC=mpiicpc`, a parallel version will be compiled. When `CC=icpc`, a sequential version will be compiled.
+When `CXX=mpiicpc`, a parallel version will be compiled. When `CXX=icpc`, a sequential version will be compiled.
 
 Another example is where the Gnu C++ compiler, MPICH, OPENBLAS, ScaLAPACK, ELPA and CEREAL are used:
 
 ```makefile
-CC = mpicxx/g++
+CXX = mpicxx/g++
 FFTW_DIR = /public/soft/fftw_3.3.8
 OPENBLAS_LIB_DIR   = /public/soft/openblas/lib
 SCALAPACK_LIB_DIR  = /public/soft/openblas/lib
@@ -204,17 +204,17 @@ ELPA_INCLUDE_DIR = ${ELPA_DIR}/include/elpa-2021.05.002
 CEREAL_DIR    = /public/soft/cereal
 ```
 
-When `CC=mpicxx`, a parallel version will be compiled. When `CC=g++`, a sequential version will be compiled.
+When `CXX=mpicxx`, a parallel version will be compiled. When `CXX=g++`, a sequential version will be compiled.
 
 Except modifying `Makefile.vars`, you can also directly use
 
 ```makefile
-make CC=mpiicpc ELPA_DIR=/public/soft/elpa_21.05.002 \
+make CXX=mpiicpc ELPA_DIR=/public/soft/elpa_21.05.002 \
 ELPA_INCLUDE_DIR=${ELPA_DIR}/include/elpa-2021.05.002 \
 CEREAL_DIR=/public/soft/cereal
 ```
 
-ABACUS now support full version and pw version. Use `make` or `make abacus` to compile full version which supports LCAO calculations. Use `make pw` to compile pw version which only supports pw calculations. For pw version, `make pw CC=mpiicpc`, you do not need to provide any libs. For `make pw CC=mpicxx`, you need provide `FFTW_DIR` and `OPENBLAS_LIB_DIR`.
+ABACUS now support full version and pw version. Use `make` or `make abacus` to compile full version which supports LCAO calculations. Use `make pw` to compile pw version which only supports pw calculations. For pw version, `make pw CXX=mpiicpc`, you do not need to provide any libs. For `make pw CXX=mpicxx`, you need provide `FFTW_DIR` and `OPENBLAS_LIB_DIR`.
 
 Besides, libxc and deepks are optional libs to compile abacus.
 They will be used when `LIBXC_DIR` is defined like

@@ -4,7 +4,7 @@
 # FUNCTION : spillage makefile
 #===========================================================
 ### Dirac
-#CPLUSPLUS =CC -O3 -w -ffast-math -funroll-loops
+#CPLUSPLUS =CXX -O3 -w -ffast-math -funroll-loops
 #CPLUSPLUS = /export/soft/intel2015/impi/5.0.2.044/intel64/bin/mpiicpc
 #CXXFLAGS = -std=c++11 -O3 -openmp
 #CPLUSPLUS_GPROF = g++ -gp

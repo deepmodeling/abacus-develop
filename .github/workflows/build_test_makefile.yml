@@ -14,7 +14,7 @@ jobs:
       matrix:
         include:
         - tag: intel
-          build_args: "CC=mpiicpc ELPA_LIB_DIR=/usr/local/lib ELPA_INCLUDE_DIR=/usr/local/include CEREAL_DIR=/usr/include/cereal OPENMP=ON"
+          build_args: "CXX=mpiicpc ELPA_LIB_DIR=/usr/local/lib ELPA_INCLUDE_DIR=/usr/local/include CEREAL_DIR=/usr/include/cereal OPENMP=ON"
           name: "Build with Makefile & Intel compilers"
     name: ${{ matrix.name }}
     container: ghcr.io/deepmodeling/abacus-${{ matrix.tag }}
