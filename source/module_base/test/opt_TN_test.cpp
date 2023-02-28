@@ -10,7 +10,7 @@ class TN_test : public testing::Test
 protected:
     ModuleBase::Opt_TN tn;
     ModuleBase::Opt_DCsrch ds;
-    ModuleESolver::ESolver_OF tools;
+    TestTools tools;
     int maxiter = 500;
     double step = 1.;
     double residual = 10.;
@@ -73,7 +73,7 @@ protected:
             }
             else if (func_label == 1)
             {
-                tn.next_direct(x, gradient, flag, p, &(tools.mf), &MinFunc::dfuncdx);
+                tn.next_direct(x, gradient, flag, p, &(tools.mf), &ModuleESolver::ESolver_OF::dfuncdx);
             }
             for (int i = 0; i < 3; ++i) temp_x[i] = x[i];
             task[0] = 'S'; task[1] = 'T'; task[2] = 'A'; task[3] = 'R'; task[4] = 'T';

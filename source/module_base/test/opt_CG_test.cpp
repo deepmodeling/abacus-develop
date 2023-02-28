@@ -12,7 +12,7 @@ protected:
     ModuleBase::Opt_DCsrch ds;
     // LinearEqu le;
     // MinFunc mf;
-    ModuleESolver::ESolver_OF tools;
+    TestTools tools;
     int maxiter = 500;
     double step = 1.;
     double residual = 10.;

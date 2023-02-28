@@ -12,23 +12,25 @@ public:
     int nx = 3;
 };
 
-class MinFunc
-{
-public:
-    MinFunc(){};
-    ~MinFunc(){};
-    double func(double *x);
-    void dfuncdx(double *x, double *gradient);
-    double dfuncdstp(double *x, double *p);
-    double *x;
-};
 namespace ModuleESolver
 {
 // A mock class of ModuleEsolver::ESolver_OF
 class ESolver_OF
 {
 public:
-    ESolver_OF()
+    ESolver_OF(){};
+    ~ESolver_OF(){};
+    double func(double *x);
+    void dfuncdx(double *x, double *gradient);
+    double dfuncdstp(double *x, double *p);
+    double *x;
+};
+}
+
+class TestTools
+{
+public:
+    TestTools()
     {
         this->nx = le.nx;
     }
@@ -54,6 +56,5 @@ public:
 
     int nx = 0;
     LinearEqu le;
-    MinFunc mf;
+    ModuleESolver::ESolver_OF mf;
 };
-}
