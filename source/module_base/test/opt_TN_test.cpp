@@ -10,7 +10,7 @@ class TN_test : public testing::Test
 protected:
     ModuleBase::Opt_TN tn;
     ModuleBase::Opt_DCsrch ds;
-    TestTools tools;
+    ModuleESolver::ESolver_OF tools;
     int maxiter = 500;
     double step = 1.;
     double residual = 10.;
@@ -23,6 +23,7 @@ protected:
 
     void SetUp()
     {
+        tn.setPara(1.);
         tn.allocate(tools.nx);
         task = new char[60];
         p = new double[tools.nx];

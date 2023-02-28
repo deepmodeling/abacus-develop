@@ -22,11 +22,13 @@ public:
     double dfuncdstp(double *x, double *p);
     double *x;
 };
-
-class TestTools
+namespace ModuleESolver
+{
+// A mock class of ModuleEsolver::ESolver_OF
+class ESolver_OF
 {
 public:
-    TestTools()
+    ESolver_OF()
     {
         this->nx = le.nx;
     }
@@ -54,3 +56,4 @@ public:
     LinearEqu le;
     MinFunc mf;
 };
+}

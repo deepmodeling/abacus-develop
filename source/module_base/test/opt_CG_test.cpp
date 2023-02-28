@@ -12,7 +12,7 @@ protected:
     ModuleBase::Opt_DCsrch ds;
     // LinearEqu le;
     // MinFunc mf;
-    TestTools tools;
+    ModuleESolver::ESolver_OF tools;
     int maxiter = 500;
     double step = 1.;
     double residual = 10.;
@@ -25,6 +25,7 @@ protected:
 
     void SetUp()
     {
+        cg.setPara(1.);
         cg.allocate(tools.nx);
         cg.init_b(tools.le.b);
         task = new char[60];
