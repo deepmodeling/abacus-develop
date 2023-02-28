@@ -23,8 +23,8 @@ class Symmetry_rho
 #ifdef __MPI
 	void reduce_to_fullrhog(const ModulePW::PW_Basis *rho_basis, std::complex<double>* rhogtot, 
 			std::complex<double>* rhogin, int* ig2isztot, const int* ig2iszin, int max_npw) const;
-	void rhog_piece_to_all(const ModulePW::PW_Basis *rho_basis, std::complex<double>* piece, 
-			const int &proc, std::complex<double>* rhog_part) const;
+	void rhog_piece_to_all(const ModulePW::PW_Basis *rho_basis, int* nproc_in_pool, 
+			std::complex<double>* rhogtot, std::complex<double>* rhog_part) const;
 #endif
 	void get_ixyz2ipw(const ModulePW::PW_Basis *rho_basis, const int* ig2isztot, 
 			const int* fftixy2is, int* ixyz2ipw) const;	//(ix, iy, iz) -> (ip, ig)
