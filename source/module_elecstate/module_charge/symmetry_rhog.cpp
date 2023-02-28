@@ -18,7 +18,7 @@ void Symmetry_rho::psymmg(std::complex<double>* rhog_part, const ModulePW::PW_Ba
 	// (2) reduce all rho from the first pool.
 	std::complex<double>* rhogtot;
 	int* ig2isztot;
-	if(GlobalV::MY_RANK == 0)
+	if(GlobalV::RANK_IN_POOL == 0)
 	{
 		rhogtot = new std::complex<double>[rho_basis->npwtot];
 		ModuleBase::GlobalFunc::ZEROS(rhogtot, rho_basis->npwtot);
@@ -36,8 +36,8 @@ void Symmetry_rho::psymmg(std::complex<double>* rhog_part, const ModulePW::PW_Ba
 	}
 	this->reduce_to_fullrhog(rho_basis, rhogtot, rhog_part, ig2isztot, rho_basis->ig2isz, max_npw);
 
-	// (3) get ixy2ipw and do rhog_symmetry on proc 0
-	if(GlobalV::MY_RANK==0)
+	// (3) get ixy2ipw and do rhog_symmetry on proc 0 of each pool
+	if(GlobalV::RANK_IN_POOL==0)
 	{
 #endif
 		//init ixyz2ipw
@@ -74,9 +74,9 @@ void Symmetry_rho::psymmg(std::complex<double>* rhog_part, const ModulePW::PW_Ba
 	}
 
 	// (4) send the result to other pools and procs
-	this->rhog_piece_to_all(rho_basis, Pgrid.nproc_in_pool, rhogtot, rhog_part);
+	this->rhog_piece_to_all(rho_basis, rhogtot, rhog_part);
 
-	if(GlobalV::MY_RANK==0)		
+	if(GlobalV::RANK_IN_POOL==0)		
 	{
 		delete[] rhogtot;
 		delete[] ig2isztot;
@@ -94,14 +94,6 @@ void Symmetry_rho::reduce_to_fullrhog(const ModulePW::PW_Basis *rho_basis,
 {
 	ModuleBase::TITLE("Symmetry_rho","reduce_to_fullrhog");
 
-	// if not the first pool, wait here until processpr 0
-	// send the Barrier command.
-	if(GlobalV::MY_POOL!=0) 
-	{
-		MPI_Barrier(MPI_COMM_WORLD);
-		return;
-	}
-
 	std::complex<double>* rhog_piece = new std::complex<double>[max_npw];
 	int* ig2isz_piece = new int[max_npw];
 	
@@ -113,7 +105,7 @@ void Symmetry_rho::reduce_to_fullrhog(const ModulePW::PW_Basis *rho_basis,
 		
 		MPI_Status ierror;
 
-		// case 1: the first part of rho in processor 0.
+		// case 1: the first part of rho in processor 0 in each pool.
 		if(proc == 0 && GlobalV::RANK_IN_POOL ==0)
 		{
 			for(int ig=0; ig<rho_basis->npw; ++ig)
@@ -124,7 +116,7 @@ void Symmetry_rho::reduce_to_fullrhog(const ModulePW::PW_Basis *rho_basis,
 		}
 
 		// case 2: > first part rho: send the rho to
-		// processor 0.
+		// processor 0 in each pool
 		else if(proc == GlobalV::RANK_IN_POOL )
 		{
 			for(int ig=0; ig<rho_basis->npw; ++ig)
@@ -144,7 +136,7 @@ void Symmetry_rho::reduce_to_fullrhog(const ModulePW::PW_Basis *rho_basis,
 			MPI_Recv(ig2isz_piece, rho_basis->npw_per[proc], MPI_INT, proc, proc+rho_basis->poolnproc, POOL_WORLD,  &ierror);
 		}
 
-		if(GlobalV::MY_RANK==0)
+		if(GlobalV::RANK_IN_POOL==0)
 		{
 			for(int ig=0; ig<rho_basis->npw_per[proc]; ++ig)
 			{
@@ -155,7 +147,7 @@ void Symmetry_rho::reduce_to_fullrhog(const ModulePW::PW_Basis *rho_basis,
 		}
 	}
 	std::cout<<"npwtot="<<rho_basis->npwtot<<std::endl;
-	if(GlobalV::MY_RANK==0)	assert(npw_start==rho_basis->npwtot);
+	if(GlobalV::RANK_IN_POOL==0)	assert(npw_start==rho_basis->npwtot);
 	delete[] rhog_piece;	
 	delete[] ig2isz_piece;
 
@@ -164,102 +156,33 @@ void Symmetry_rho::reduce_to_fullrhog(const ModulePW::PW_Basis *rho_basis,
 	return;
 }
 
-void Symmetry_rho::rhog_piece_to_all(const ModulePW::PW_Basis *rho_basis, int* nproc_in_pool, 
+void Symmetry_rho::rhog_piece_to_all(const ModulePW::PW_Basis *rho_basis, 
 	std::complex<double>* rhogtot, std::complex<double>* rhog_part) const
 {	
 	ModuleBase::TITLE(" Symmetry_rho","rhog_piece_to_all");
 
 	MPI_Status ierror;
-	int myrank = (GlobalV::ESOLVER_TYPE == "sdft") ? GlobalV::RANK_IN_STOGROUP : GlobalV::MY_RANK;
-	MPI_Comm commworld = (GlobalV::ESOLVER_TYPE == "sdft") ? STO_WORLD : MPI_COMM_WORLD;
 
-
-	int** globalproc = new int* [GlobalV::KPAR];
-	for(int ipool=0; ipool<GlobalV::KPAR;++ipool)
+	if(GlobalV::RANK_IN_POOL==0)
 	{
-		globalproc[ipool] = new int [nproc_in_pool[ipool]];
-		ModuleBase::GlobalFunc::ZEROS(globalproc[ipool], nproc_in_pool[ipool]);
-	}
-	//set globalproc
-	int count=0;
-	for(int ipool=0; ipool<GlobalV::KPAR;++ipool)
-	{
-		for(int proc=0;proc<nproc_in_pool[ipool];++proc)
+		// proc 0: send to other proc in pool
+		// itself: directly copy
+		for(int ig=0;ig<rho_basis->npw;++ig)
 		{
-			globalproc[ipool][proc]=count;
-			++count;
+			rhog_part[ig]=rhogtot[ig];
 		}
-	}
-
-	if(GlobalV::MY_RANK==0)
-	{
-		// pool 0 proc 0: gather all npw_per[rank_in_pool] of each pool, 
-		// to decide how much data to send
-		int** npw_to_send = new int* [GlobalV::KPAR];
-		for(int ipool=0; ipool<GlobalV::KPAR;++ipool)
+		int npw_start=rho_basis->npw;
+		for(int proc=1;proc<rho_basis->poolnproc;++proc)
 		{
-			npw_to_send[ipool] = new int [nproc_in_pool[ipool]];
-			ModuleBase::GlobalFunc::ZEROS(npw_to_send[ipool], nproc_in_pool[ipool]);
+			MPI_Send(&rhogtot[npw_start], rho_basis->npw_per[proc], MPI_DOUBLE_COMPLEX, proc, proc, POOL_WORLD);
+			npw_start+=rho_basis->npw_per[proc];
 		}
-		
-		//set npw_to_send
-		for(int ipool=0; ipool<GlobalV::KPAR;++ipool)
-		{
-			if(ipool==0)
-			{
-				for(int proc=0;proc<rho_basis->poolnproc;++proc)
-				{
-					npw_to_send[0][proc] = rho_basis->npw_per[proc];
-				}	
-			}
-			else
-			{
-				MPI_Recv(npw_to_send[ipool], nproc_in_pool[ipool], MPI_INT, globalproc[ipool][0], globalproc[ipool][0], commworld, &ierror);
-			}
-		}
-
-		//send rhogtot to all other porc
-		for(int ipool=0; ipool<GlobalV::KPAR;++ipool)
-		{
-			int npw_start=0;	//in each pool, different number of procs make up a copy of whole rhogtot
-			for(int proc=0;proc<nproc_in_pool[ipool];++proc)
-			{
-				if(ipool + proc > 0)	//skip proc 0
-				{
-					MPI_Send(&rhogtot[npw_start], npw_to_send[ipool][proc], MPI_DOUBLE_COMPLEX, globalproc[ipool][proc], globalproc[ipool][proc],commworld);
-				}
-				npw_start+=npw_to_send[ipool][proc];
-			}	
-			assert(npw_start==rho_basis->npwtot);
-		}
-
-		for(int ipool=0; ipool<GlobalV::KPAR;++ipool)
-		{
-			delete[] npw_to_send[ipool];
-		}
-		delete[] npw_to_send;
-	}// GlobalV::MY_POOL == 0
+		assert(npw_start==rho_basis->npwtot);
+	}// GlobalV::RANK_IN_POOL == 0
 	else
 	{
-		if(GlobalV::RANK_IN_POOL == 0)
-		{
-			//send npw_per
-			MPI_Send(rho_basis->npw_per, rho_basis->poolnproc, MPI_INT, 0, globalproc[GlobalV::MY_POOL][0], commworld);
-		}
-	
-		// receive part of rhogtot from proc 0
-		if(globalproc[GlobalV::MY_POOL][GlobalV::RANK_IN_POOL] == myrank)
-		{
-			MPI_Recv(rhog_part, rho_basis->npw_per[GlobalV::RANK_IN_POOL], MPI_DOUBLE_COMPLEX, 0, myrank, commworld, &ierror);
-		}
+		MPI_Recv(rhog_part, rho_basis->npw_per[GlobalV::RANK_IN_POOL], MPI_DOUBLE_COMPLEX, 0, GlobalV::RANK_IN_POOL, POOL_WORLD, &ierror);
 	}
-
-	for(int ipool=0; ipool<GlobalV::KPAR;++ipool)
-	{
-		delete[] globalproc[ipool];
-	}
-	delete[] globalproc;
-
 	return;	
 }
 
