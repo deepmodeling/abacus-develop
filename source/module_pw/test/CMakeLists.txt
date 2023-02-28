@@ -1,4 +1,4 @@
-add_definitions(-D__NORMAL __NOMPICOMPLEX)
+add_definitions(-D__NORMAL -D__NOMPICOMPLEX)
 AddTest(
   TARGET pw_test
   LIBS ${math_libs} planewave device
