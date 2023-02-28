@@ -365,7 +365,7 @@ void Mulliken_Charge::out_mulliken(LCAO_Hamilt &uhm, Local_Orbital_Charge &loc)
                     if (GlobalV::NSPIN==1)
                     {
                         double spin1 = sum_m[0];
-                        os << "  sum over m "<< std::setw(50) << spin1 << std::endl;
+                        os << "  sum over m "<< std::setw(45) << spin1 << std::endl;
                         sum_l[0] += spin1;
                     }
                     else if (GlobalV::NSPIN==2)
@@ -374,7 +374,7 @@ void Mulliken_Charge::out_mulliken(LCAO_Hamilt &uhm, Local_Orbital_Charge &loc)
                         double spin2 = sum_m[1];
                         double sum = spin1 + spin2;
                         double diff = spin1 - spin2;
-                        os << "  sum over m "<< std::setw(50) << spin1 << std::setw(30) << spin2 << std::setw(35) << sum << std::setw(25) << diff << std::endl;
+                        os << "  sum over m "<< std::setw(45) << spin1 << std::setw(30) << spin2 << std::setw(35) << sum << std::setw(25) << diff << std::endl;
                         sum_l[0] += spin1;
                         sum_l[1] += spin2;
                     }
@@ -384,7 +384,7 @@ void Mulliken_Charge::out_mulliken(LCAO_Hamilt &uhm, Local_Orbital_Charge &loc)
                         double spin2 = sum_m[1];
                         double spin3 = sum_m[2];
                         double spin4 = sum_m[3];
-                        os << "  sum over m "<< std::setw(50) << spin1 << std::setw(30) << spin2 << std::setw(30) << spin3 << std::setw(30) << spin4 << std::endl;
+                        os << "  sum over m "<< std::setw(45) << spin1 << std::setw(30) << spin2 << std::setw(30) << spin3 << std::setw(30) << spin4 << std::endl;
                         sum_l[0] += spin1;
                         sum_l[1] += spin2;
                         sum_l[2] += spin3;
@@ -397,7 +397,7 @@ void Mulliken_Charge::out_mulliken(LCAO_Hamilt &uhm, Local_Orbital_Charge &loc)
                     if (GlobalV::NSPIN==1)
                     {
                         double spin1 = sum_l[0];
-                        os << "  sum over m+zeta "<< std::setw(36) << spin1 << std::endl;
+                        os << "  sum over m+zeta "<< std::setw(40) << spin1 << std::endl;
                         total_charge += sum_l[0];
                     }
                     else if (GlobalV::NSPIN==2)
@@ -406,7 +406,7 @@ void Mulliken_Charge::out_mulliken(LCAO_Hamilt &uhm, Local_Orbital_Charge &loc)
                         double spin2 = sum_l[1];
                         double sum = spin1 + spin2;
                         double diff = spin1 - spin2;
-                        os << "  sum over m+zeta "<< std::setw(36) << spin1 << std::setw(30) << spin2 << std::setw(35) << sum << std::setw(25) << diff << std::endl;
+                        os << "  sum over m+zeta "<< std::setw(40) << spin1 << std::setw(30) << spin2 << std::setw(35) << sum << std::setw(25) << diff << std::endl;
                         total_charge += sum_l[0] + sum_l[1];
                         atom_mag += sum_l[0] - sum_l[1];
                     }
@@ -416,7 +416,7 @@ void Mulliken_Charge::out_mulliken(LCAO_Hamilt &uhm, Local_Orbital_Charge &loc)
                         double spin2 = sum_l[1];
                         double spin3 = sum_l[2];
                         double spin4 = sum_l[3];
-                        os << "  sum over m+zeta "<< std::setw(36) << spin1 << std::setw(30) << spin2 << std::setw(30) << spin3 << std::setw(30) << spin4 << std::endl;
+                        os << "  sum over m+zeta "<< std::setw(40) << spin1 << std::setw(30) << spin2 << std::setw(30) << spin3 << std::setw(30) << spin4 << std::endl;
                         total_charge_soc[0] += spin1;
                         total_charge_soc[1] += spin2;
                         total_charge_soc[2] += spin3;
