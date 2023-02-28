@@ -8,15 +8,15 @@ class XCTest_GRADCORR : public testing::Test
 {
     protected:
 
-        double et1, vt1;
+        double et1 = 0, vt1 = 0;
         ModuleBase::matrix v1;
         std::vector<double> stress1;
 
-        double et2, vt2;
+        double et2 = 0, vt2 = 0;
         ModuleBase::matrix v2;
         std::vector<double> stress2;
 
-        double et4, vt4;
+        double et4 = 0, vt4 = 0;
         ModuleBase::matrix v4;
         std::vector<double> stress4;
 
