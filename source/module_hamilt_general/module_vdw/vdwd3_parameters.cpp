@@ -49,7 +49,7 @@ void Vdwd3Parameters::initial_parameters(const Input &input)
     }
     else if (input.vdw_cutoff_type == "period")
     {
-        period_ = input.vdw_cutoff_period.x;
+        period_ = input.vdw_cutoff_period;
     }
     init_C6();
     init_r2r4();
