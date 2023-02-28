@@ -61,7 +61,9 @@ class XCTest_GRADCORR : public testing::Test
             }
 
             v1.create(1,5);
+            v1.zero_out();
             v2.create(2,5);
+            v2.zero_out();
             v4.create(4,5);
             v4.zero_out();
 
