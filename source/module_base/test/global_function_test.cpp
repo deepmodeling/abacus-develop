@@ -683,7 +683,6 @@ TEST_F(GlobalFunctionTest,Vector2Ptr_v3double)
     {
         EXPECT_EQ(ptr_v3d[i],ModuleBase::Vector3<double>(1.1,2.2,3.3));
     }
-
 }
 
 
