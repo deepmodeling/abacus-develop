@@ -129,5 +129,48 @@ TEST_F(XCTest_GRADCORR, set_xc_type)
         EXPECT_NEAR(v4(2,i),v4_ref3[i],1.0e-8);
         EXPECT_NEAR(v4(3,i),v4_ref4[i],1.0e-8);
     }
+}
 
+class XCTest_GRADWFC : public testing::Test
+{
+    protected:
+
+        std::complex<double> ** grad;
+
+        void SetUp()
+        {
+            ModulePW::PW_Basis_K rhopw;
+            rhopw.npwk = new int[1];
+            rhopw.npwk[0] = 5;
+            rhopw.nmaxgr = 5;
+            rhopw.nrxx = 5;
+
+            std::complex<double> rhog[5];
+            for (int i=0;i<5;i++)
+            {
+                rhog[i] = double(i);
+            }
+            double tpiba = 1;
+
+            grad = new std::complex<double>*[5];
+            for(int i=0;i<5;i++)
+            {
+                grad[i] = new std::complex<double>[3];
+            }
+
+            XC_Functional::grad_wfc(rhog, 0, grad, &rhopw, tpiba);
+        }
+};
+
+TEST_F(XCTest_GRADWFC, set_xc_type)
+{
+
+    for(int i=0;i<5;i++)
+    {
+        for (int j=0;j<3;j++)
+        {
+            EXPECT_NEAR(grad[i][j].real(),double(i*(j+1)),1e-8);
+            EXPECT_NEAR(grad[i][j].imag(),0,1e-8);
+        }
+    }
 }

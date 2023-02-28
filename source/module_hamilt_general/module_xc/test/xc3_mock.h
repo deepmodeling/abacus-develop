@@ -42,7 +42,7 @@ namespace ModulePW
         {
             for (int i=0;i<nrxx;i++)
             {
-                out[i] = in[i];
+                out[i] = - ModuleBase::IMAG_UNIT*in[i];
             }            
         }
     template void PW_Basis_K::recip2real(const std::complex<double> * in, std::complex<double> * out,
@@ -50,7 +50,7 @@ namespace ModulePW
 
     ModuleBase::Vector3<double> PW_Basis_K::getgpluskcar(int, int) const
     {
-        ModuleBase::Vector3<double> x = 1;
+        ModuleBase::Vector3<double> x = {1,2,3};
         return x;
     };
 
@@ -60,6 +60,9 @@ namespace ModulePW
     void PW_Basis::initgrids(double, ModuleBase::Matrix3, double){};
     void PW_Basis::distribute_r(){};
     void PW_Basis::initgrids(double, ModuleBase::Matrix3, int, int, int){};
+
+    PW_Basis_K::PW_Basis_K(){};
+    PW_Basis_K::~PW_Basis_K(){};
 }
 
 namespace ModuleBase
