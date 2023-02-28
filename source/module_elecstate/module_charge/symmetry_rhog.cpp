@@ -235,7 +235,7 @@ void Symmetry_rho::rhog_piece_to_all(const ModulePW::PW_Basis *rho_basis,
 	{
 		// the processors in other pools always receive rho from
 		// processor 0. the tag is 'proc'
-		if(proc == myrank )
+		if(proc == GlobalV::RANK_IN_POOL)
 		{
 			MPI_Recv(piece, rho_basis->npw_per[proc], MPI_DOUBLE_COMPLEX, 0, proc, commworld,&ierror);
 			for(int ig=0; ig<rho_basis->npw_per[proc]; ++ig)
