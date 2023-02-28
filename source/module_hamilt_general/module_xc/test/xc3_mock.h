@@ -31,7 +31,7 @@ namespace ModulePW
     {
         for (int i=0;i<nrxx;i++)
         {
-            out[i] = in[i];
+            out[i] = - ModuleBase::IMAG_UNIT*in[i];
         }
     }
     template void PW_Basis::recip2real(const std::complex<double> * in, std::complex<double> * out,const bool add, const double factor);
@@ -50,7 +50,7 @@ namespace ModulePW
 
     ModuleBase::Vector3<double> PW_Basis_K::getgpluskcar(int, int) const
     {
-        ModuleBase::Vector3<double> x = 0;
+        ModuleBase::Vector3<double> x = 1;
         return x;
     };
 
@@ -80,7 +80,7 @@ namespace GlobalV
     std::string BASIS_TYPE = "";
     bool CAL_STRESS = 0;
     int CAL_FORCE = 0;
-    int NSPIN = 2;
+    int NSPIN;
     double XC_TEMPERATURE;
     bool DOMAG;
     bool DOMAG_Z;
@@ -99,6 +99,17 @@ Charge::~Charge(){};
 
 Magnetism::Magnetism(){};
 Magnetism::~Magnetism(){};
+
+void UnitCell::cal_ux()
+{
+    magnet.lsign_ = false;
+
+    magnet.ux_[0] = 0;
+    magnet.ux_[1] = 1;
+    magnet.ux_[2] = 2;
+
+    magnet.lsign_ = true;
+}
 
 InfoNonlocal::InfoNonlocal(){};
 InfoNonlocal::~InfoNonlocal(){};
