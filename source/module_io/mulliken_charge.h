@@ -17,6 +17,15 @@ class Mulliken_Charge
 	void out_mulliken(LCAO_Hamilt &uhm, Local_Orbital_Charge &loc);
 
 	private:
+    /* 
+    1. cal_mulliken:    for gamma-only
+    2. cal_mulliken_k:  for multi-k
+
+        for `nspin=1` and `nspin=2`:
+            return  ModuleBase::matrix with shape (GlobalV::NSPIN, GlobalV::NLOCAL)
+        for `nspin=4`:
+            return  ModuleBase::matrix with shape (GlobalV::NSPIN, GlobalV::NLOCAL/2)
+    */
 
     ModuleBase::matrix cal_mulliken(const std::vector<ModuleBase::matrix> &dm,
         LCAO_Hamilt &uhm
@@ -25,5 +34,7 @@ class Mulliken_Charge
     ModuleBase::matrix cal_mulliken_k(const std::vector<ModuleBase::ComplexMatrix> &dm,
         LCAO_Hamilt &uhm
     );
+
+    std::vector<std::vector<std::vector<double>>> convert(const ModuleBase::matrix &orbMulP);
 };
 #endif

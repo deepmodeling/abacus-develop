@@ -250,28 +250,199 @@ ModuleBase::matrix Mulliken_Charge::cal_mulliken_k(const std::vector<ModuleBase:
     return orbMulP;
 }
 
+std::vector<std::vector<std::vector<double>>> Mulliken_Charge::convert(const ModuleBase::matrix &orbMulP)
+{
+    std::vector<std::vector<std::vector<double>>> AorbMulP;
+    AorbMulP.resize(GlobalV::NSPIN);
+    
+    for (size_t is=0; is!=GlobalV::NSPIN; ++is)
+    {
+        int num=0;
+        AorbMulP[is].resize(GlobalC::ucell.nat);
+        for (size_t i=0; i!=GlobalC::ucell.nat; ++i)
+        {   
+            const int a = GlobalC::ucell.iat2ia[i];
+            const int t = GlobalC::ucell.iat2it[i];
+            AorbMulP[is][i].resize(GlobalC::ucell.atoms[t].nw);
+            for (size_t j=0; j!=GlobalC::ucell.atoms[t].nw; ++j)
+            {
+                AorbMulP[is][i][j] = orbMulP(is, num);
+                num++;
+            }
+        }
+    }
+    
+    return AorbMulP;
+}
+
 void Mulliken_Charge::out_mulliken(LCAO_Hamilt &uhm, Local_Orbital_Charge &loc)
 {
+    ModuleBase::TITLE("Mulliken_Charge", "out_mulliken");
+
     ModuleBase::matrix orbMulP;
     if(GlobalV::GAMMA_ONLY_LOCAL)
         orbMulP = this->cal_mulliken(loc.dm_gamma, uhm);
     else
         orbMulP = this->cal_mulliken_k(loc.dm_k, uhm);
 
+    std::vector<std::vector<std::vector<double>>> AorbMulP = this->convert(orbMulP);
+
     if(GlobalV::MY_RANK == 0)
     {
         const int nlocal = (GlobalV::NSPIN == 4) ? GlobalV::NLOCAL/2 : GlobalV::NLOCAL;
         std::stringstream as;
-        as << GlobalV::global_out_dir << "Mulliken.dat";
+        as << GlobalV::global_out_dir << "mulliken.txt";
         std::ofstream os(as.str().c_str());
-        for(size_t i = 0; i != nlocal; ++i)
+        os << "\n CALCULATE THE MULLIkEN ANALYSIS FOR EACH ATOM" << std::endl;
+
+		double sch = 0.0;
+		os << std::setprecision(8);
+		for(size_t is=0; is!=GlobalV::NSPIN; ++is)
+		{
+			double sss = 0.0;
+			for(size_t iw=0; iw!=nlocal; ++iw)
+			{
+				sch += orbMulP(is, iw);
+				sss += orbMulP(is, iw);
+			}
+			os << " Total charge of spin " << is+1 << ":\t" << sss << std::endl;
+		}
+		os << " Total charge:\t" << sch << std::endl;
+		os << "Decomposed Mulliken populations" << std::endl;
+
+        for (size_t i = 0; i != GlobalC::ucell.nat; ++i)
         {
-            if(GlobalV::NSPIN == 1)
-                os << std::setw(13) << orbMulP(0, i) << std::endl;
-            else if(GlobalV::NSPIN == 2)
-                os << std::setw(13) << orbMulP(0, i) << std::setw(13) << orbMulP(1, i) << std::endl;
-            else if(GlobalV::NSPIN == 4)
-                os << std::setw(13) << orbMulP(0, i) << std::setw(13) << orbMulP(1, i) << std::setw(13) << orbMulP(2, i) << std::setw(13) << orbMulP(3, i) << std::endl;
+            double total_charge = 0.0, atom_mag = 0.0;
+            std::vector<double> total_charge_soc(GlobalV::NSPIN);
+            const int t = GlobalC::ucell.iat2it[i];
+            int num = 0;
+            if (GlobalV::NSPIN==1)
+                os << i << std::setw(25) << "Zeta of " << GlobalC::ucell.atoms[t].label << std::setw(30) << "Spin 1" << std::endl;
+            else if (GlobalV::NSPIN==2)
+                os << i << std::setw(25) << "Zeta of " << GlobalC::ucell.atoms[t].label << std::setw(30) << "Spin 1" << std::setw(30) << "Spin 2" << std::setw(30) << "Sum" << std::setw(30) << "Diff" << std::endl;
+            else if (GlobalV::NSPIN==4)
+                os << i << std::setw(25) << "Zeta of " << GlobalC::ucell.atoms[t].label << std::setw(30) << "Spin 1" << std::setw(30) << "Spin 2" << std::setw(30) << "Spin 3" << std::setw(30) << "Spin 4" << std::endl;
+        
+            for (size_t L=0; L!=GlobalC::ucell.atoms[t].nwl+1; ++L)
+            {
+                std::vector<double> sum_l(GlobalV::NSPIN, 0.0);
+                for (size_t Z=0; Z!=GlobalC::ucell.atoms[t].l_nchi[L]; ++Z)
+                {
+                    std::vector<double> sum_m(GlobalV::NSPIN, 0.0);
+                    for (size_t M=0; M!=(2*L+1); ++M)
+                    {
+                        if (GlobalV::NSPIN==1)
+                        {
+                            double spin1 = AorbMulP[0][i][num];
+                            os << GlobalC::en.Name_Angular[L][M] << std::setw(25) << Z << std::setw(32) << spin1 << std::endl;
+                            sum_m[0] += spin1;
+                        }
+                        else if (GlobalV::NSPIN==2)
+                        {
+                            double spin1 = AorbMulP[0][i][num]; 
+                            double spin2 = AorbMulP[1][i][num];
+                            double sum = spin1 + spin2;
+                            double diff = spin1 - spin2;
+                            os << GlobalC::en.Name_Angular[L][M] << std::setw(25) << Z << std::setw(32) << spin1 << std::setw(30) << spin2 << std::setw(30) << sum << std::setw(30) << diff << std::endl;
+                            sum_m[0] += AorbMulP[0][i][num];
+                            sum_m[1] += AorbMulP[1][i][num];
+                        }
+                        else if (GlobalV::NSPIN==4)
+                        {
+                            double spin1 = AorbMulP[0][i][num]; 
+                            double spin2 = AorbMulP[1][i][num]; 
+                            double spin3 = AorbMulP[2][i][num]; 
+                            double spin4 = AorbMulP[3][i][num]; 
+                            os << GlobalC::en.Name_Angular[L][M] << std::setw(25) << Z << std::setw(32) << spin1 << std::setw(30) << spin2 << std::setw(30) << spin3 << std::setw(30) << spin4 << std::endl;
+                            sum_m[0] += spin1;
+                            sum_m[1] += spin2;
+                            sum_m[2] += spin3;
+                            sum_m[3] += spin4;
+                        }
+                        num++;
+                    }
+
+                    if (GlobalV::NSPIN==1)
+                    {
+                        double spin1 = sum_m[0];
+                        os << "  sum over m "<< std::setw(50) << spin1 << std::endl;
+                        sum_l[0] += spin1;
+                    }
+                    else if (GlobalV::NSPIN==2)
+                    {
+                        double spin1 = sum_m[0];
+                        double spin2 = sum_m[1];
+                        double sum = spin1 + spin2;
+                        double diff = spin1 - spin2;
+                        os << "  sum over m "<< std::setw(50) << spin1 << std::setw(30) << spin2 << std::setw(35) << sum << std::setw(25) << diff << std::endl;
+                        sum_l[0] += spin1;
+                        sum_l[1] += spin2;
+                    }
+                    else if (GlobalV::NSPIN==4)
+                    {
+                        double spin1 = sum_m[0];
+                        double spin2 = sum_m[1];
+                        double spin3 = sum_m[2];
+                        double spin4 = sum_m[3];
+                        os << "  sum over m "<< std::setw(50) << spin1 << std::setw(30) << spin2 << std::setw(30) << spin3 << std::setw(30) << spin4 << std::endl;
+                        sum_l[0] += spin1;
+                        sum_l[1] += spin2;
+                        sum_l[2] += spin3;
+                        sum_l[3] += spin4;
+                    }
+                }
+            
+                if(GlobalC::ucell.atoms[t].l_nchi[L])
+                {
+                    if (GlobalV::NSPIN==1)
+                    {
+                        double spin1 = sum_l[0];
+                        os << "  sum over m+zeta "<< std::setw(36) << spin1 << std::endl;
+                        total_charge += sum_l[0];
+                    }
+                    else if (GlobalV::NSPIN==2)
+                    {
+                        double spin1 = sum_l[0];
+                        double spin2 = sum_l[1];
+                        double sum = spin1 + spin2;
+                        double diff = spin1 - spin2;
+                        os << "  sum over m+zeta "<< std::setw(36) << spin1 << std::setw(30) << spin2 << std::setw(35) << sum << std::setw(25) << diff << std::endl;
+                        total_charge += sum_l[0] + sum_l[1];
+                        atom_mag += sum_l[0] - sum_l[1];
+                    }
+                    else if (GlobalV::NSPIN==4)
+                    {
+                        double spin1 = sum_l[0];
+                        double spin2 = sum_l[1];
+                        double spin3 = sum_l[2];
+                        double spin4 = sum_l[3];
+                        os << "  sum over m+zeta "<< std::setw(36) << spin1 << std::setw(30) << spin2 << std::setw(30) << spin3 << std::setw(30) << spin4 << std::endl;
+                        total_charge_soc[0] += spin1;
+                        total_charge_soc[1] += spin2;
+                        total_charge_soc[2] += spin3;
+                        total_charge_soc[3] += spin4;
+                    }
+                }
+            }
+
+            if (GlobalV::NSPIN==1)
+                os << "Total Charge on atom:  " << GlobalC::ucell.atoms[t].label <<  std::setw(20) << total_charge <<std::endl;
+            else if (GlobalV::NSPIN==2)
+            {
+                os << "Total Charge on atom:  " << GlobalC::ucell.atoms[t].label <<  std::setw(20) << total_charge <<std::endl;
+                os << "Total Magnetism on atom:  " << GlobalC::ucell.atoms[t].label <<  std::setw(20) << atom_mag <<std::endl;
+            }
+            else if (GlobalV::NSPIN==4)
+            {
+                double spin1 = total_charge_soc[0];
+                double spin2 = total_charge_soc[1];
+                double spin3 = total_charge_soc[2];
+                double spin4 = total_charge_soc[3];
+                os << "Total Charge on atom in four components: " << GlobalC::ucell.atoms[t].label <<  std::setw(20) 
+                << "(" << spin1 << ", " << spin2 << ", " << spin3 << ", " << spin4 << ")" 
+                <<std::endl;
+            }
+            os << std::endl <<std::endl;
         }
         os.close();
         ModuleIO::write_orb_info();
