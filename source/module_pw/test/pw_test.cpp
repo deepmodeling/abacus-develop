@@ -36,8 +36,8 @@ int main(int argc, char **argv)
     
     int kpar;
     kpar = 1;
-#ifdef __MIX_PRECISION
-    //Temporary, pw_basis should not contains global variables
+#ifdef __ENABLE_FLOAT_FFTW
+    //Temporary, pw_basis should not contain global variables
     GlobalV::precision_flag = "single";
 #endif
 #ifdef __MPI

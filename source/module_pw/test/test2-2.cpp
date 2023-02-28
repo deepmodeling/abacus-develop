@@ -129,7 +129,7 @@ TEST_F(PWTEST,test2_2)
     delete [] rhor;
     delete []tmp; 
     fftw_cleanup();
-#ifdef __MIX_PRECISION
+#ifdef __ENABLE_FLOAT_FFTW
     fftwf_cleanup();
 #endif
 }
