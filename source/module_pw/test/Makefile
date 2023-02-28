@@ -77,7 +77,7 @@ else
 endif
 
 ifeq ($(FLOAT), ON)
-    HONG += -D__MIX_PRECISION
+    HONG += -D__ENABLE_FLOAT_FFTW
     ifneq ($(INTEL), ON)
         LIBS += -lfftw3f
     endif
