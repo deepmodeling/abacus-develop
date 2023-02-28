@@ -125,6 +125,12 @@ AddTest(
 )
 
 AddTest(
+  TARGET XCTest_PBE_LibXC
+  LIBS MPI::MPI_CXX Libxc::xc # required by global.h; for details, `remove_definitions(-D__MPI)`.
+  SOURCES test_xc.cpp ../xc_functional.cpp ../xc_functional_wrapper_xc.cpp ../xc_functional_wrapper_gcxc.cpp ../xc_funct_corr_gga.cpp ../xc_funct_corr_lda.cpp ../xc_funct_exch_gga.cpp ../xc_funct_exch_lda.cpp ../xc_funct_hcth.cpp
+)
+
+AddTest(
   TARGET XCTest_HSE
   LIBS MPI::MPI_CXX Libxc::xc # required by global.h; for details, `remove_definitions(-D__MPI)`.
   SOURCES test_xc1.cpp ../xc_functional.cpp
@@ -215,6 +221,12 @@ AddTest(
 )
 
 AddTest(
+  TARGET XCTest_PBE_SPN_LibXC
+  LIBS MPI::MPI_CXX Libxc::xc # required by global.h; for details, `remove_definitions(-D__MPI)`.
+  SOURCES test_xc2.cpp ../xc_functional.cpp ../xc_functional_wrapper_xc.cpp ../xc_functional_wrapper_gcxc.cpp ../xc_funct_corr_gga.cpp ../xc_funct_corr_lda.cpp ../xc_funct_exch_gga.cpp ../xc_funct_exch_lda.cpp ../xc_funct_hcth.cpp
+)
+
+AddTest(
   TARGET XCTest_GRADCORR
   LIBS MPI::MPI_CXX Libxc::xc ${math_libs}
   SOURCES test_xc3 ../xc_functional_gradcorr.cpp ../xc_functional.cpp
@@ -234,4 +246,13 @@ AddTest(
     ../xc_funct_corr_gga.cpp ../xc_funct_corr_lda.cpp ../xc_funct_exch_gga.cpp
     ../xc_funct_exch_lda.cpp ../xc_funct_hcth.cpp
     ../../../module_base/matrix.cpp
+)
+
+AddTest(
+  TARGET XCTest_SCAN
+  LIBS MPI::MPI_CXX Libxc::xc
+  SOURCES test_xc4 ../xc_functional.cpp ../xc_functional_wrapper_xc.cpp
+    ../xc_functional_wrapper_gcxc.cpp ../xc_functional_wrapper_tauxc.cpp
+    ../xc_funct_corr_gga.cpp ../xc_funct_corr_lda.cpp 
+    ../xc_funct_exch_gga.cpp ../xc_funct_exch_lda.cpp ../xc_funct_hcth.cpp 
 )

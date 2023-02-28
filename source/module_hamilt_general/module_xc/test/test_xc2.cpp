@@ -322,3 +322,48 @@ TEST_F(XCTest_P86_SPN, set_xc_type)
         EXPECT_NEAR(v3_gga[i],v3_gga_ref[i],1.0e-8);
     }
 }
+
+class XCTest_PBE_SPN_LibXC : public testing::Test
+{
+    protected:
+        std::vector<double> e_gga, v1_gga, v2_gga;
+
+        void SetUp()
+        {
+            XC_Functional::set_xc_type("GGA_X_PBE+GGA_C_PBE");
+            std::vector<double> rho  = {0.17E+01, 0.17E+01, 0.15E+01, 0.88E-01, 0.18E+04};
+            ModuleBase::Vector3<double> gdr[5];
+            gdr[0] = {0.81E-11,0,0};
+            gdr[1] = {0.17E+01,0,0};
+            gdr[2] = {0.36E+02,0,0};
+            gdr[3] = {0.87E-01,0,0};
+            gdr[4] = {0.55E+00,0,0};
+            std::vector<double> zeta = {0.0, 0.2, 0.5, 0.8, 1.0};
+
+            for(int i=0;i<5;i++)
+            {
+                double e,v1,v2,v3,v4,v5;
+                double r1 = rho[i] * (1+zeta[i]) / 2.0;
+                double r2 = rho[i] * (1-zeta[i]) / 2.0;
+                XC_Functional::gcxc_spin_libxc(r1,r2,gdr[i],gdr[i],e,v1,v2,v3,v4,v5);
+                e_gga.push_back(e);
+                v1_gga.push_back(v1+v3);
+                v2_gga.push_back(v2+v4);
+            }
+        }
+};
+
+TEST_F(XCTest_PBE_SPN_LibXC, set_xc_type)
+{
+    EXPECT_EQ(XC_Functional::get_func_type(),2);
+    std::vector<double> e_gga_ref  = {-1.498477706,-1.644023016,-2.248969698,-0.03699760314,-20505.34775};
+    std::vector<double> v1_gga_ref = {-1.183625674,-1.326937433,-1.810935955,-0.6859883169,-15.16995245};
+    std::vector<double> v2_gga_ref = {-1.183625674,-1.175091595,-1.587721737,-0.4749455756,-15.09238797};
+
+    for (int i = 0;i<4;++i)
+    {
+        EXPECT_NEAR(e_gga[i],e_gga_ref[i],1.0e-8);
+        EXPECT_NEAR(v1_gga[i],v1_gga_ref[i],1.0e-8);
+        EXPECT_NEAR(v2_gga[i],v2_gga_ref[i],1.0e-8);
+    }
+}
