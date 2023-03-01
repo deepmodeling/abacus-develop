@@ -291,8 +291,7 @@ void Gint::cal_meshball_vlocal_gamma(
 	}
 }
 
-inline int find_offset(const int id1, const int id2, const int iat1, const int iat2,
-				int* find_start, int* find_end)
+inline int find_offset(const int id1, const int id2, const int iat1, const int iat2)
 {
 	const int R1x=GlobalC::GridT.ucell_index2x[id1];
 	const int R2x=GlobalC::GridT.ucell_index2x[id2];
@@ -305,16 +304,8 @@ inline int find_offset(const int id1, const int id2, const int iat1, const int i
 	const int dRz=R1z-R2z;
 
 	const int index=GlobalC::GridT.cal_RindexAtom(dRx, dRy, dRz, iat2);
-	
-	int offset=-1;
-	for(int* find=find_start; find < find_end; ++find)
-	{
-		if( find[0] == index )
-		{
-			offset = find - find_start;
-			break;
-		}
-	}
+
+	const int offset = GlobalC::GridT.binary_search_find_R2_offset(index, iat1);
 
 	assert(offset < GlobalC::GridT.nad[iat1]);
 	return offset;
@@ -348,9 +339,6 @@ void Gint::cal_meshball_vlocal_k(
 		const int T1 = GlobalC::ucell.iat2it[iat1];
 		const int id1 = GlobalC::GridT.which_unitcell[mcell_index1];
 		const int DM_start = GlobalC::GridT.nlocstartg[iat1];
-		// nad : how many adjacent atoms for atom 'iat'
-		int* find_start = GlobalC::GridT.find_R2[iat1];
-		int* find_end = GlobalC::GridT.find_R2[iat1] + GlobalC::GridT.nad[iat1];
 		for(int ia2=0; ia2<na_grid; ++ia2)
 		{
 			const int mcell_index2 = GlobalC::GridT.bcell_start[grid_index] + ia2;
@@ -373,8 +361,7 @@ void Gint::cal_meshball_vlocal_k(
 				const int mcell_index2 = GlobalC::GridT.bcell_start[grid_index] + ia2;
 				const int id2 = GlobalC::GridT.which_unitcell[mcell_index2];
 				int offset;
-				offset=find_offset(id1, id2, iat1, iat2,
-						find_start, find_end);
+				offset=find_offset(id1, id2, iat1, iat2);
 
 				const int iatw = DM_start + GlobalC::GridT.find_R2st[iat1][offset];	
 

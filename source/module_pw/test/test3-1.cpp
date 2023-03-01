@@ -1,7 +1,7 @@
 #include "../pw_basis.h"
 #ifdef __MPI
 #include "test_tool.h"
-#include "../../src_parallel/parallel_global.h"
+#include "../../module_base/parallel_global.h"
 #include "mpi.h"
 #endif
 #include "../../module_base/global_function.h"
@@ -22,7 +22,7 @@ TEST_F(PWTEST,test3_1)
     bool xprime = true;
     //--------------------------------------------------
 
-    ModulePW::PW_Basis pwtest;
+    ModulePW::PW_Basis pwtest(device_flag, precision_flag);
 #ifdef __MPI
     pwtest.initmpi(nproc_in_pool, rank_in_pool, POOL_WORLD);
 #endif

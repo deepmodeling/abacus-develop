@@ -1,9 +1,10 @@
 #include "module_base/blas_connector.h"
 #include "module_base/memory.h"
 #include "module_base/timer.h"
-#include "src_parallel/parallel_common.h"
+#include "module_base/parallel_common.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "local_orbital_charge.h"
+#include "module_base/libm/libm.h"
 
 #ifdef __MKL
 #include <mkl_service.h>
@@ -92,7 +93,7 @@ inline void cal_DM_ATOM(const Grid_Technique &gt,
             const int start2 = GlobalC::ucell.itiaiw2iwt(T2, I2, 0);
             const int iw2_lo = gt.trace_lo[start2];
             const int nw2 = atom2->nw;
-            std::complex<double> exp_R = exp(fac
+            std::complex<double> exp_R = ModuleBase::libm::exp(fac
                                              * (GlobalC::kv.kvec_d[ik].x * RA.info[ia1][ia2][0]
                                                 + GlobalC::kv.kvec_d[ik].y * RA.info[ia1][ia2][1]
                                                 + GlobalC::kv.kvec_d[ik].z * RA.info[ia1][ia2][2]));
@@ -183,7 +184,7 @@ inline void cal_DM_ATOM_nc(const Grid_Technique &gt,
                     const int start2 = GlobalC::ucell.itiaiw2iwt(T2, I2, 0);
                     const int iw2_lo = gt.trace_lo[start2] / GlobalV::NPOL + gt.lgd / GlobalV::NPOL * is2;
                     const int nw2 = atom2->nw;
-                    std::complex<double> exp_R = exp(fac
+                    std::complex<double> exp_R = ModuleBase::libm::exp(fac
                                                      * (GlobalC::kv.kvec_d[ik].x * RA.info[ia1][ia2][0]
                                                         + GlobalC::kv.kvec_d[ik].y * RA.info[ia1][ia2][1]
                                                         + GlobalC::kv.kvec_d[ik].z * RA.info[ia1][ia2][2]));

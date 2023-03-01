@@ -10,6 +10,7 @@
 ***********************************************************************/
 
 #include "mulliken_charge.h"
+#include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
 #include "module_base/matrix.h"
@@ -44,10 +45,11 @@ ModuleBase::matrix Mulliken_Charge::cal_mulliken(const std::vector<ModuleBase::m
         ModuleBase::matrix mud;
         mud.create(uhm.LM->ParaV->nrow, uhm.LM->ParaV->ncol);
 #ifdef __MPI
+        const char T_char = 'T';
         const char N_char = 'N';
         const int one_int = 1;
         const double one_float[2] = {1.0, 0.0}, zero_float[2] = {0.0, 0.0};        
-        pdgemm_(&N_char,
+        pdgemm_(&T_char,
                 &N_char,
                 &GlobalV::NLOCAL,
                 &GlobalV::NLOCAL,
@@ -164,10 +166,11 @@ ModuleBase::matrix Mulliken_Charge::cal_mulliken_k(const std::vector<ModuleBase:
         mud.create(uhm.LM->ParaV->nrow, uhm.LM->ParaV->ncol);
 
 #ifdef __MPI
+        const char T_char = 'T';
         const char N_char = 'N';
         const int one_int = 1;
         const double one_float[2] = {1.0, 0.0}, zero_float[2] = {0.0, 0.0};        
-        pzgemm_(&N_char,
+        pzgemm_(&T_char,
                 &N_char,
                 &GlobalV::NLOCAL,
                 &GlobalV::NLOCAL,
@@ -293,7 +296,7 @@ void Mulliken_Charge::out_mulliken(LCAO_Hamilt &uhm, Local_Orbital_Charge &loc)
         std::stringstream as;
         as << GlobalV::global_out_dir << "mulliken.txt";
         std::ofstream os(as.str().c_str());
-        os << "\n CALCULATE THE MULLIkEN ANALYSIS FOR EACH ATOM" << std::endl;
+        os << "CALCULATE THE MULLIkEN ANALYSIS FOR EACH ATOM" << std::endl;
 
 		double sch = 0.0;
 		os << std::setprecision(8);

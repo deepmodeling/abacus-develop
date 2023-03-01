@@ -1,6 +1,6 @@
 #include "../pw_basis.h"
 #include "test_tool.h"
-#include "../../src_parallel/parallel_global.h"
+#include "../../module_base/parallel_global.h"
 #include "mpi.h"
 #include "../../module_base/global_function.h"
 #include "../../module_base/constants.h"
@@ -133,7 +133,6 @@ int main(int argc, char **argv)
         
     }
 
-    MPI_Type_free(&mpicomplex);
     MPI_Finalize(); 
 
 

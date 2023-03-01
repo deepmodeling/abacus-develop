@@ -10,7 +10,7 @@
 #ifdef __DEEPKS
 
 #include "LCAO_deepks.h"
-#include "src_parallel/parallel_reduce.h"
+#include "module_base/parallel_reduce.h"
 
 void LCAO_Deepks::cal_o_delta(const std::vector<std::vector<ModuleBase::matrix>> &dm_hl, const Parallel_Orbitals &ParaO)
 {

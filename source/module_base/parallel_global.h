@@ -49,6 +49,9 @@ namespace Parallel_Global
 #ifdef __MPI
 	void finalize_mpi();
 #endif
+
+	void init_pools();
+	void divide_pools(void);
 }
 
 

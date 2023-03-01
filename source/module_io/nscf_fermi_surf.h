@@ -3,7 +3,7 @@
 #include "module_base/matrix.h"
 #include "module_cell/klist.h"
 #include "module_cell/unitcell.h"
-#include "src_parallel/parallel_kpoints.h"
+#include "module_cell/parallel_kpoints.h"
 
 namespace ModuleIO
 {

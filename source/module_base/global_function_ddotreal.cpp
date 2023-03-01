@@ -1,6 +1,6 @@
 #include "global_function.h"
 #include "blas_connector.h"
-#include "src_parallel/parallel_reduce.h"
+#include "module_base/parallel_reduce.h"
 
 namespace ModuleBase
 {

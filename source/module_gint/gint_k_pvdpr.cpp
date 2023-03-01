@@ -1,6 +1,6 @@
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
-#include "src_parallel/parallel_reduce.h"
+#include "module_base/parallel_reduce.h"
 #include "gint_k.h"
 #include "module_orbital/ORB_read.h"
 #include "grid_technique.h"

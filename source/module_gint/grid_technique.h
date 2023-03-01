@@ -60,8 +60,10 @@ class Grid_Technique : public Grid_MeshBall
     
     int* nad; // number of adjacent atoms for each atom.
 	int **find_R2;
+	int **find_R2_sorted_index;
 	int **find_R2st;
     bool allocate_find_R2;
+	int binary_search_find_R2_offset(int val, int iat);
 
 	//indexes for nnrg -> orbital index + R index
 	std::vector<gridIntegral::gridIndex> nnrg_index;

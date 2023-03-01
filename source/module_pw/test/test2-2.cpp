@@ -4,7 +4,7 @@
 #include "../pw_basis.h"
 #ifdef __MPI
 #include "test_tool.h"
-#include "../../src_parallel/parallel_global.h"
+#include "../../module_base/parallel_global.h"
 #include "mpi.h"
 #endif
 #include "../../module_base/constants.h"
@@ -15,7 +15,7 @@ using namespace std;
 TEST_F(PWTEST,test2_2)
 {
     cout<<"dividemthd 2, gamma_only: off, xprime: false, check fft"<<endl;
-    ModulePW::PW_Basis pwtest;
+    ModulePW::PW_Basis pwtest(device_flag, precision_flag);
     ModuleBase::Matrix3 latvec;
     int nx,ny,nz;  //f*G
     double wfcecut;
@@ -129,7 +129,7 @@ TEST_F(PWTEST,test2_2)
     delete [] rhor;
     delete []tmp; 
     fftw_cleanup();
-#ifdef __MIX_PRECISION
+#ifdef __ENABLE_FLOAT_FFTW
     fftwf_cleanup();
 #endif
 }
