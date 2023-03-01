@@ -280,3 +280,39 @@ AddTest(
     ../xc_funct_corr_gga.cpp ../xc_funct_corr_lda.cpp 
     ../xc_funct_exch_gga.cpp ../xc_funct_exch_lda.cpp ../xc_funct_hcth.cpp 
 )
+
+AddTest(
+  TARGET XCTest_VXC
+  LIBS MPI::MPI_CXX Libxc::xc ${math_libs}
+  SOURCES test_xc5.cpp ../xc_functional_gradcorr.cpp ../xc_functional.cpp
+    ../xc_functional_wrapper_xc.cpp ../xc_functional_wrapper_gcxc.cpp
+    ../xc_functional_wrapper_tauxc.cpp
+    ../xc_funct_corr_gga.cpp ../xc_funct_corr_lda.cpp ../xc_funct_exch_gga.cpp
+    ../xc_funct_exch_lda.cpp ../xc_funct_hcth.cpp
+    ../../../module_base/matrix.cpp ../../../module_base/timer.cpp
+    ../xc_functional_vxc.cpp
+)
+
+AddTest(
+  TARGET XCTest_VXC_Libxc
+  LIBS MPI::MPI_CXX Libxc::xc ${math_libs}
+  SOURCES test_xc5.cpp ../xc_functional_gradcorr.cpp ../xc_functional.cpp
+    ../xc_functional_wrapper_xc.cpp ../xc_functional_wrapper_gcxc.cpp
+    ../xc_functional_wrapper_tauxc.cpp
+    ../xc_funct_corr_gga.cpp ../xc_funct_corr_lda.cpp ../xc_funct_exch_gga.cpp
+    ../xc_funct_exch_lda.cpp ../xc_funct_hcth.cpp
+    ../../../module_base/matrix.cpp ../../../module_base/timer.cpp
+    ../xc_functional_vxc.cpp
+)
+
+AddTest(
+  TARGET XCTest_VXC_meta
+  LIBS MPI::MPI_CXX Libxc::xc ${math_libs}
+  SOURCES test_xc5.cpp ../xc_functional_gradcorr.cpp ../xc_functional.cpp
+    ../xc_functional_wrapper_xc.cpp ../xc_functional_wrapper_gcxc.cpp
+    ../xc_functional_wrapper_tauxc.cpp
+    ../xc_funct_corr_gga.cpp ../xc_funct_corr_lda.cpp ../xc_funct_exch_gga.cpp
+    ../xc_funct_exch_lda.cpp ../xc_funct_hcth.cpp
+    ../../../module_base/matrix.cpp ../../../module_base/timer.cpp
+    ../xc_functional_vxc.cpp
+)
