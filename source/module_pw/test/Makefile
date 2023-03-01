@@ -128,7 +128,8 @@ fft.o\
 pw_basis_k.o\
 pw_transform_k.o\
 memory.o\
-memory_op.o
+memory_op.o\
+depend_mock.o
 
 OTHER_OBJS0=
 

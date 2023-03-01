@@ -2,7 +2,7 @@
 #ifndef __NOMPICOMPLEX
 #include "../../module_base/parallel_global.h"
 #endif
-#include "pw_test.h"
+#include "depend_mock.h"
 #include "mpi.h"
 #include <iostream>
 void setupmpi(int argc,char **argv,int &nproc, int &myrank)

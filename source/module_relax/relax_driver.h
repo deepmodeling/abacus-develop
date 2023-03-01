@@ -31,8 +31,6 @@ class Relax_Driver
 	//old relaxation method
 	Relax_old rl_old;
 
-    void update_pot(void);
-
 };
 
 #endif

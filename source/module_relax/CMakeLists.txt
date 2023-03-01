@@ -3,6 +3,7 @@ add_library(
     OBJECT
 
     relax_driver.cpp
+    variable_cell.cpp
 
     relax_new/relax.cpp
     relax_new/line_search.cpp
@@ -17,7 +18,6 @@ add_library(
     relax_old/lattice_change_basic.cpp
     relax_old/lattice_change_cg.cpp
     relax_old/lattice_change_methods.cpp
-    relax_old/variable_cell.cpp
 )
 
 if(ENABLE_COVERAGE)
