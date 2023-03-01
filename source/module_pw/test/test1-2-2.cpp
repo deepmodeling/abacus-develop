@@ -15,7 +15,7 @@ using namespace std;
 TEST_F(PWTEST,test1_2_2)
 {
     cout<<"dividemthd 1, gamma_only: off, check fft between double and complex"<<endl;
-    ModulePW::PW_Basis pwtest;
+    ModulePW::PW_Basis pwtest(device_flag, precision_flag);
     ModuleBase::Matrix3 latvec;
     int nx,ny,nz;  //f*G
     double wfcecut;

@@ -2,13 +2,25 @@
 #include "test_tool.h"
 #include "mpi.h"
 #endif
-#include "../../module_base/global_variable.h"
 #include "fftw3.h"
 #include "pw_test.h"
 using namespace std;
 
 int nproc_in_pool, rank_in_pool;
-
+string precision_flag, device_flag;
+namespace GlobalV
+{ 
+    std::ofstream ofs_running;
+}
+#ifdef __MPI
+MPI_Comm POOL_WORLD;
+namespace Parallel_Reduce
+{
+    void reduce_double_all(double &object){return;};
+    void reduce_double_pool(double &object){return;};
+    void reduce_double_pool(float &object){return;};
+}
+#endif
 class TestEnv : public testing::Environment 
 {
 public:
@@ -36,10 +48,12 @@ int main(int argc, char **argv)
     
     int kpar;
     kpar = 1;
-#ifdef __MIX_PRECISION
-    //Temporary, pw_basis should not contains global variables
-    GlobalV::precision_flag = "single";
+#ifdef __ENABLE_FLOAT_FFTW
+    precision_flag = "single";
+#else
+    precision_flag = "double";
 #endif
+    device_flag = "cpu";
 #ifdef __MPI
     int nproc, myrank,mypool;
     setupmpi(argc,argv,nproc, myrank);
