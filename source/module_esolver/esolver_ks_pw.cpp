@@ -409,6 +409,7 @@ namespace ModuleESolver
     {
         if (!this->conv_elec)
         {
+            if(GlobalV::NSPIN==4) GlobalC::ucell.cal_ux();
             this->pelec->pot->update_from_charge(this->pelec->charge, &GlobalC::ucell);
             GlobalC::en.delta_escf(this->pelec);
         }

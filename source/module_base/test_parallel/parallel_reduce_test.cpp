@@ -2,9 +2,8 @@
 #include "mpi.h"
 #include "gtest/gtest.h"
 #include "module_base/global_variable.h"
-#include "src_parallel/parallel_reduce.h"
-#include "src_parallel/parallel_global.h"
-#include "src_parallel/parallel_kpoints.h"
+#include "module_base/parallel_reduce.h"
+#include "module_base/parallel_global.h"
 #include <time.h>
 #include <random>
 #include <assert.h>
@@ -15,7 +14,7 @@
 
 /**
  * The tested functions are mainly wrappers of MPI_Allreduce
- * and MPI_Allgather in ABACUS, as defined in src_parallel/
+ * and MPI_Allgather in ABACUS, as defined in module_base/
  * parallel_reduce.h.
  *
  * The logic to test MPI_Allreduce wrapper functions is to 
@@ -399,9 +398,8 @@ TEST_F(ParaReduce,ReduceDoublePool)
 	// NPROC is set to 4 in parallel_global_test.sh
 	if(GlobalV::NPROC==4)
 	{
-		Parallel_Kpoints* Pkpoints = new Parallel_Kpoints;
 		GlobalV::KPAR = 2;
-		Pkpoints->init_pools();
+		Parallel_Global::init_pools();
 		///printf("word_rank/world_size = %d/%d, pool_rank/pool_size = %d/%d \n",
 		///		GlobalV::MY_RANK,GlobalV::NPROC,
 		///		GlobalV::RANK_IN_POOL,GlobalV::NPROC_IN_POOL);
@@ -449,7 +447,6 @@ TEST_F(ParaReduce,ReduceDoublePool)
 
 		delete [] rand_array;
 		MPI_Comm_free(&POOL_WORLD);
-		delete Pkpoints;
 	}
 }
 
@@ -459,9 +456,8 @@ TEST_F(ParaReduce,ReduceComplexPool)
 	// NPROC is set to 4 in parallel_global_test.sh
 	if(GlobalV::NPROC==4)
 	{
-		Parallel_Kpoints* Pkpoints = new Parallel_Kpoints;
 		GlobalV::KPAR = 2;
-		Pkpoints->init_pools();
+		Parallel_Global::init_pools();
 		///printf("word_rank/world_size = %d/%d, pool_rank/pool_size = %d/%d \n",
 		///		GlobalV::MY_RANK,GlobalV::NPROC,
 		///		GlobalV::RANK_IN_POOL,GlobalV::NPROC_IN_POOL);
@@ -504,7 +500,6 @@ TEST_F(ParaReduce,ReduceComplexPool)
 
 		delete [] rand_array;
 		MPI_Comm_free(&POOL_WORLD);
-		delete Pkpoints;
 	}
 }
 
@@ -514,9 +509,8 @@ TEST_F(ParaReduce,GatherDoublePool)
 	// NPROC is set to 4 in parallel_global_test.sh
 	if(GlobalV::NPROC==4)
 	{
-		Parallel_Kpoints* Pkpoints = new Parallel_Kpoints;
 		GlobalV::KPAR = 2;
-		Pkpoints->init_pools();
+		Parallel_Global::init_pools();
 
 
   		std::default_random_engine e(time(NULL)*(GlobalV::MY_RANK+1));
@@ -543,7 +537,6 @@ TEST_F(ParaReduce,GatherDoublePool)
 		}
 
 		MPI_Comm_free(&POOL_WORLD);
-		delete Pkpoints;
 	}
 }
 

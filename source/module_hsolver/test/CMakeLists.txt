@@ -4,8 +4,7 @@ AddTest(
   TARGET HSolver_cg
   LIBS ${math_libs} base psi device
   SOURCES diago_cg_test.cpp ../diago_cg.cpp  ../diago_iter_assist.cpp  
-          ../../src_parallel/parallel_reduce.cpp
-          ../../src_parallel/parallel_global.cpp ../../module_pw/test/test_tool.cpp
+          ../../module_pw/test/test_tool.cpp
           ../../module_hamilt_general/operator.cpp
           ../../module_hamilt_pw/hamilt_pwdft/operator_pw/operator_pw.cpp
 )
@@ -13,10 +12,15 @@ AddTest(
   TARGET HSolver_dav
   LIBS ${math_libs} base psi device
   SOURCES diago_david_test.cpp ../diago_david.cpp  ../diago_iter_assist.cpp 
-          ../../src_parallel/parallel_reduce.cpp ../../src_parallel/parallel_global.cpp  ../../src_parallel/parallel_common.cpp
           ../../module_pw/test/test_tool.cpp
           ../../module_hamilt_general/operator.cpp
           ../../module_hamilt_pw/hamilt_pwdft/operator_pw/operator_pw.cpp
+)
+
+AddTest(
+  TARGET HSolver_base
+  LIBS ${math_libs} psi device base
+  SOURCES test_hsolver.cpp 
 )
 
 if(ENABLE_LCAO)
@@ -24,15 +28,13 @@ if(ENABLE_LCAO)
   AddTest(
     TARGET HSolver_LCAO
     LIBS ${math_libs} ELPA::ELPA base genelpa psi device
-    SOURCES diago_lcao_test.cpp ../diago_elpa.cpp ../diago_blas.cpp ../../src_parallel/parallel_global.cpp 
-            ../../src_parallel/parallel_common.cpp ../../src_parallel/parallel_reduce.cpp
+    SOURCES diago_lcao_test.cpp ../diago_elpa.cpp ../diago_blas.cpp 
   )
   else()
     AddTest(
       TARGET HSolver_LCAO
       LIBS ${math_libs} base psi device
-      SOURCES diago_lcao_test.cpp ../diago_blas.cpp ../../src_parallel/parallel_global.cpp
-      ../../src_parallel/parallel_common.cpp ../../src_parallel/parallel_reduce.cpp
+      SOURCES diago_lcao_test.cpp ../diago_blas.cpp 
     )
   endif()
 endif()

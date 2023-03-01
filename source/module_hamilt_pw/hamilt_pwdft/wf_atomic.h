@@ -50,11 +50,17 @@ class WF_atomic : public WF_igk
     // as trial wave functions
     //==================================
     void atomicrandom(ModuleBase::ComplexMatrix &psi,const int iw_start,const int iw_end,const int ik, ModulePW::PW_Basis_K* wfc_basis)const;
-    void random(ModuleBase::ComplexMatrix &psi,const int iw_start,const int iw_end,const int ik, ModulePW::PW_Basis_K* wfc_basis);
+
+    void random(std::complex<double> *psi,const int iw_start,const int iw_end,const int ik, ModulePW::PW_Basis_K* wfc_basis);
+    void random(std::complex<float> *psi,const int iw_start,const int iw_end,const int ik, ModulePW::PW_Basis_K* wfc_basis);
+
+    template<typename FPTYPE>
+    void random_t(std::complex<FPTYPE> *psi,const int iw_start,const int iw_end,const int ik, ModulePW::PW_Basis_K* wfc_basis);
 
     void check_evc()const;
 #ifdef __MPI
 	void stick_to_pool(double *stick, const int &ir, double *out, ModulePW::PW_Basis_K* wfc_basis) const;
+    void stick_to_pool(float *stick, const int &ir, float *out, ModulePW::PW_Basis_K* wfc_basis) const;
 #endif
 
 };

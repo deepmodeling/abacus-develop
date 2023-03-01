@@ -10,10 +10,6 @@
 #include <iomanip>
 #include <iostream>
 
-#ifdef _MCD_CHECK
-//#include "./src_parallel/mcd.h"
-#endif
-
 namespace ModuleBase
 {
 /**

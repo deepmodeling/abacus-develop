@@ -1,6 +1,6 @@
 #include "./kedf_vw.h"
 #include <iostream>
-#include "src_parallel/parallel_reduce.h"
+#include "module_base/parallel_reduce.h"
 
 void KEDF_vW::set_para(int nx, double dV, double vw_weight)
 {

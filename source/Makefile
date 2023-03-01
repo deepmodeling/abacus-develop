@@ -133,17 +133,26 @@ endif
 ifdef DeePMD_DIR
     HONG  += -D__DPMD -DHIGH_PREC 
     OPTS  += -Wl,--no-as-needed
+
     ##==========================
     ## DeePMD-kit package
     ##==========================
     DeeP_LIB_DIR = ${DeePMD_DIR}/lib
-    LIBS += -L${DeeP_LIB_DIR} -ldeepmd_cc -Wl,-rpath=${DeeP_LIB_DIR}
     DeeP_INCLUDE_DIR = ${DeePMD_DIR}/include
     INCLUDES += -I${DeeP_INCLUDE_DIR}
+    ifneq ($(wildcard ${DeePMD_DIR}/include/deepmd/deepmd.hpp), )
+        HONG  += -D__DPMDC
+        LIBS += -L${DeeP_LIB_DIR} -ldeepmd_c -Wl,-rpath=${DeeP_LIB_DIR}
+    else
+        LIBS += -L${DeeP_LIB_DIR} -ldeepmd_cc -Wl,-rpath=${DeeP_LIB_DIR}
+    endif
 
     #==========================
     # TensorFlow package
     #==========================
+    ifndef TensorFlow_DIR
+        TensorFlow_DIR = ${DeePMD_DIR}
+    endif
     TensorFlow_LIB_DIR = ${TensorFlow_DIR}/lib
     LIBS += -L${TensorFlow_LIB_DIR} -ltensorflow_cc -Wl,-rpath=${TensorFlow_LIB_DIR}
     TensorFlow_INCLUDE_DIR = ${TensorFlow_DIR}/include
@@ -192,10 +201,6 @@ pw $(BIN_DIR)/${VERSION}-PW.x:
 $(BIN_DIR)/${VERSION}.$(suffix) : ${FP_OBJS} ${PDIAG_OBJS} ${HEADERS}
 	${CC} ${OPTS} ${OPTS_MPI} $(FP_OBJS) ${PDIAG_OBJS} ${LIBS} -o  $(BIN_DIR)/${VERSION}.$(suffix)
 
-# ${VERSION}.fp_mem.x : ${FP_OBJS} ../src_parallel/mcd.o ${HEADERS}
-# 	@ if [ ! -d $(BIN_DIR) ]; then mkdir $(BIN_DIR); fi
-# 	${CC} $(FP_OBJS) ../src_parallel/mcd.o ${LIBS} -o ${VERSION}.fp_mem.x
-# 	@ cp ${VERSION}.fp_mem.x $(BIN_DIR)/${VERSION}.fp_mem.x
 
 #==========================
 # rules

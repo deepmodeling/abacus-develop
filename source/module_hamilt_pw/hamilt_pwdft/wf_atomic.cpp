@@ -486,6 +486,35 @@ void WF_atomic::atomic_wfc
 } //end subroutine atomic_wfc
 
 #ifdef __MPI
+void WF_atomic::stick_to_pool(float *stick, const int &ir, float *out, ModulePW::PW_Basis_K* wfc_basis) const
+{	
+	MPI_Status ierror;
+    const int is = this->irindex[ir];
+	const int ip = wfc_basis->fftixy2ip[ir];
+    const int nz = wfc_basis->nz;
+
+	if(ip == 0 && GlobalV::RANK_IN_POOL ==0)
+	{
+		for(int iz=0; iz<nz; iz++)
+		{
+			out[is*nz+iz] = stick[iz];
+		}
+	}
+	else if(ip == GlobalV::RANK_IN_POOL )
+	{
+		MPI_Recv(stick, nz, MPI_FLOAT, 0, ir, POOL_WORLD,&ierror);
+		for(int iz=0; iz<nz; iz++)
+		{
+			out[is*nz+iz] = stick[iz];
+		}
+	}
+	else if(GlobalV::RANK_IN_POOL==0)
+	{
+		MPI_Send(stick, nz, MPI_FLOAT, ip, ir, POOL_WORLD);
+	}
+
+	return;	
+}
 void WF_atomic::stick_to_pool(double *stick, const int &ir, double *out, ModulePW::PW_Basis_K* wfc_basis) const
 {	
 	MPI_Status ierror;
@@ -517,10 +546,20 @@ void WF_atomic::stick_to_pool(double *stick, const int &ir, double *out, ModuleP
 }
 #endif
 
-void WF_atomic::random(ModuleBase::ComplexMatrix &psi,const int iw_start,const int iw_end,const int ik, ModulePW::PW_Basis_K* wfc_basis)
+void WF_atomic::random(std::complex<double> *psi, const int iw_start,const int iw_end,const int ik, ModulePW::PW_Basis_K* wfc_basis)
+{
+    this->random_t(psi, iw_start, iw_end, ik, wfc_basis);
+}
+
+void WF_atomic::random(std::complex<float> *psi, const int iw_start,const int iw_end,const int ik, ModulePW::PW_Basis_K* wfc_basis)
+{
+    this->random_t(psi, iw_start, iw_end, ik, wfc_basis);
+}
+
+template<typename FPTYPE>
+void WF_atomic::random_t(std::complex<FPTYPE> *psi, const int iw_start,const int iw_end,const int ik, ModulePW::PW_Basis_K* wfc_basis)
 {
     assert(iw_start >= 0);
-    assert(psi.nr >= iw_end);
     const int ng = GlobalC::kv.ngk[ik];
 #ifdef __MPI
 // #if ((defined __CUDA) || (defined __ROCM))
@@ -536,12 +575,13 @@ void WF_atomic::random(ModuleBase::ComplexMatrix &psi,const int iw_start,const i
         const int nz = wfc_basis->nz;
         const int nstnz = wfc_basis->nst*nz;
 
-        double *stickrr = new double[nz];
-        double *stickarg = new double[nz];
-        double *tmprr = new double[nstnz];
-        double *tmparg = new double[nstnz];
+        FPTYPE *stickrr = new FPTYPE[nz];
+        FPTYPE *stickarg = new FPTYPE[nz];
+        FPTYPE *tmprr = new FPTYPE[nstnz];
+        FPTYPE *tmparg = new FPTYPE[nstnz];
         for (int iw = iw_start ;iw < iw_end;iw++)
         {
+            std::complex<FPTYPE>* ppsi = &(psi[iw * this->npwx * GlobalV::NPOL]);
             int startig = 0;
             for(int ipol = 0 ; ipol < GlobalV::NPOL ; ++ipol)
             {
@@ -553,8 +593,8 @@ void WF_atomic::random(ModuleBase::ComplexMatrix &psi,const int iw_start,const i
 	            	{
 	            		for(int iz=0; iz<nz; iz++)
 	            		{
-	            			stickrr[ iz ] = std::rand()/double(RAND_MAX);
-                            stickarg[ iz ] = std::rand()/double(RAND_MAX);
+	            			stickrr[ iz ] = std::rand()/FPTYPE(RAND_MAX);
+                            stickarg[ iz ] = std::rand()/FPTYPE(RAND_MAX);
 	            		}
 	            	}
 	            	stick_to_pool(stickrr, ir, tmprr, wfc_basis);
@@ -563,10 +603,10 @@ void WF_atomic::random(ModuleBase::ComplexMatrix &psi,const int iw_start,const i
 
                 for (int ig = 0;ig < ng;ig++)
                 {
-                    const double rr = tmprr[wfc_basis->getigl2isz(ik,ig)];
-                    const double arg= ModuleBase::TWO_PI * tmparg[wfc_basis->getigl2isz(ik,ig)];
-                    const double gk2 = GlobalC::wfcpw->getgk2(ik,ig);
-                    psi(iw,ig+startig) = std::complex<double>(rr * cos(arg), rr * sin(arg)) / (gk2 + 1.0);
+                    const FPTYPE rr = tmprr[wfc_basis->getigl2isz(ik,ig)];
+                    const FPTYPE arg= ModuleBase::TWO_PI * tmparg[wfc_basis->getigl2isz(ik,ig)];
+                    const FPTYPE gk2 = GlobalC::wfcpw->getgk2(ik,ig);
+                    ppsi[ig+startig] = std::complex<FPTYPE>(rr * cos(arg), rr * sin(arg)) / FPTYPE(gk2 + 1.0);
                 }
                 startig += npwx;
             }
@@ -587,19 +627,20 @@ void WF_atomic::random(ModuleBase::ComplexMatrix &psi,const int iw_start,const i
 #endif // __MPI
         for (int iw = iw_start ;iw < iw_end;iw++)
         {
+            std::complex<FPTYPE>* ppsi = &(psi[iw * this->npwx * GlobalV::NPOL]);
             for (int ig = 0;ig < ng;ig++)
             {
-                const double rr = std::rand()/double(RAND_MAX); //qianrui add RAND_MAX
-                const double arg= ModuleBase::TWO_PI * std::rand()/double(RAND_MAX);
-                const double gk2 = GlobalC::wfcpw->getgk2(ik,ig);
-                psi(iw,ig) = std::complex<double>(rr * cos(arg), rr * sin(arg)) / (gk2 + 1.0);
+                const FPTYPE rr = std::rand()/FPTYPE(RAND_MAX); //qianrui add RAND_MAX
+                const FPTYPE arg= ModuleBase::TWO_PI * std::rand()/FPTYPE(RAND_MAX);
+                const FPTYPE gk2 = GlobalC::wfcpw->getgk2(ik,ig);
+                ppsi[ig] = std::complex<FPTYPE>(rr * cos(arg), rr * sin(arg)) / FPTYPE(gk2 + 1.0);
             }
             if(GlobalV::NPOL==2)for (int ig = this->npwx;ig < this->npwx + ng;ig++)
             {
-                const double rr = std::rand()/double(RAND_MAX);
-                const double arg= ModuleBase::TWO_PI * std::rand()/double(RAND_MAX);
-                const double gk2 = GlobalC::wfcpw->getgk2(ik,ig-this->npwx);
-                psi(iw,ig) = std::complex<double>(rr * cos(arg), rr * sin(arg)) / (gk2 + 1.0);
+                const FPTYPE rr = std::rand()/FPTYPE(RAND_MAX);
+                const FPTYPE arg= ModuleBase::TWO_PI * std::rand()/FPTYPE(RAND_MAX);
+                const FPTYPE gk2 = GlobalC::wfcpw->getgk2(ik,ig-this->npwx);
+                ppsi[ig] = std::complex<FPTYPE>(rr * cos(arg), rr * sin(arg)) / FPTYPE(gk2 + 1.0);
             }
         }
 #ifdef __MPI

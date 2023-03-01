@@ -3,7 +3,7 @@
 // DATE : 2008-11-10
 //==========================================================
 #include "driver.h"
-#include "src_parallel/parallel_global.h"
+#include "module_base/parallel_global.h"
 #include <ctime>
 
 int main(int argc, char **argv)

@@ -19,11 +19,11 @@
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
 #include "module_base/memory.h"
-#include "src_parallel/parallel_reduce.h"
+#include "module_base/parallel_reduce.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "charge.h"
 #include "module_elecstate/magnetism.h"
-#include "src_parallel/parallel_grid.h"
+#include "module_hamilt_pw/hamilt_pwdft/parallel_grid.h"
 #include "module_base/math_integral.h"
 #include "module_base/math_sphbes.h"
 #include <vector>

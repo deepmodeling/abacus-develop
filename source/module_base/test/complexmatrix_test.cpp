@@ -1,6 +1,7 @@
 #include"../complexmatrix.h"
 #include"../matrix.h"
 #include"gtest/gtest.h"
+#include "gmock/gmock.h"
 
 /************************************************
 *  unit test of class ComplexMatrix and related functions
@@ -20,7 +21,7 @@
  *  - real()
  *  - zero_out();
  *  - set_as_identity_matrix()
- *  - print()  //debug function, do not test
+ *  - print():Output the elements of this complex matrix greater than threshold.
  *  - checkreal()
  * 
  * Tested relative functions 
@@ -545,4 +546,43 @@ TEST_F(ComplexMatrixTest,ScaleSumArray)
     delete [] cmout;
     delete [] cmin1;
     delete [] cmin2;
+}
+
+TEST_F(ComplexMatrixTest,print)
+{
+   std::ifstream ifs;
+   std::ofstream ofs;
+   ofs.open("printtest1.log");
+   cm22.print(ofs,1e-10,1e-10);
+   ofs.close();
+   ifs.open("printtest1.log");
+   std::string output;
+   getline(ifs,output);
+   EXPECT_THAT(output,testing::HasSubstr("(1,2)\t(2,3)\t"));
+   getline(ifs,output);
+   EXPECT_THAT(output,testing::HasSubstr("(3,4)\t(4,5)\t"));
+   ifs.close();
+   remove("printtest1.log");
+// The condition of  std::abs(data)>threshold_abs && std::imag(data)) <= threshold_imag 
+   ofs.open("printtest2.log");
+   cm22.print(ofs,1e-10,2);
+   ofs.close();
+   ifs.open("printtest2.log");
+   getline(ifs,output);
+   EXPECT_THAT(output,testing::HasSubstr("1\t(2,3)\t"));
+   getline(ifs,output);
+   EXPECT_THAT(output,testing::HasSubstr("(3,4)\t(4,5)\t"));
+   ifs.close();
+   remove("printtest2.log");
+// The condition of  std::abs(data)<threshold_abs && std::imag(data)) > threshold_imag
+   ofs.open("printtest3.log");
+   cm22.print(ofs,3,1e-10);
+   ofs.close();
+   ifs.open("printtest3.log");
+   getline(ifs,output);
+   EXPECT_THAT(output,testing::HasSubstr("0\t(2,3)\t"));
+   getline(ifs,output);
+   EXPECT_THAT(output,testing::HasSubstr("(3,4)\t(4,5)\t"));
+   ifs.close();
+   remove("printtest3.log");
 }

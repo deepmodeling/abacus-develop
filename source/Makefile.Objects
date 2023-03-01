@@ -50,7 +50,6 @@ VPATH=./src_global:\
 ./module_relax/relax_new:\
 ./module_hamilt_general/module_vdw:\
 ./module_io:\
-./src_parallel:\
 ./src_ri:\
 ./module_ri:\
 ./\
