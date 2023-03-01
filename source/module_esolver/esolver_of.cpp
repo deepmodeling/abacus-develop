@@ -17,7 +17,7 @@
 //---------------------------------------------------
 #include "module_elecstate/elecstate_pw.h"
 #include "module_hamilt_pw/hamilt_pwdft/hamilt_pw.h"
-#include "module_relax/relax_old/variable_cell.h"    // liuyu 2022-11-07
+#include "module_relax/variable_cell.h"    // liuyu 2022-11-07
 
 namespace ModuleESolver
 {

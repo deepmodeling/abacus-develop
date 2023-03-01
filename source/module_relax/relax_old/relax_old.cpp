@@ -1,7 +1,7 @@
 #include "relax_old.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h" // use chr.
 #include "module_io/print_info.h"
-#include "variable_cell.h" // mohan add 2021-02-01
+#include "../variable_cell.h" // mohan add 2021-02-01
 
 void Relax_old::init_relax()
 {
