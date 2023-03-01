@@ -645,7 +645,7 @@ tuple<double,double,ModuleBase::matrix,ModuleBase::matrix> XC_Functional::v_xc_m
 #ifdef __EXX
                 if (func.info->number == XC_MGGA_X_SCAN && get_func_type() == 5)
                 {
-                    exc[ir] *= (1.0 - GlobalC::exx_info.info_global.hybrid_alpha);
+                    exc[ir] *= (1.0 - XC_Functional::hybrid_alpha);
                 }
 #endif
                 etxc += ModuleBase::e2 * exc[ir] * rho[ir*nspin+is]  * sgn[ir*nspin+is];
@@ -663,7 +663,7 @@ tuple<double,double,ModuleBase::matrix,ModuleBase::matrix> XC_Functional::v_xc_m
 #ifdef __EXX
                 if (func.info->number == XC_MGGA_X_SCAN && get_func_type() == 5)
                 {
-                    vrho[ir*nspin+is] *= (1.0 - GlobalC::exx_info.info_global.hybrid_alpha);
+                    vrho[ir*nspin+is] *= (1.0 - XC_Functional::hybrid_alpha);
                 }
 #endif
                 const double v_tmp = ModuleBase::e2 * vrho[ir*nspin+is]  * sgn[ir*nspin+is];
@@ -684,7 +684,7 @@ tuple<double,double,ModuleBase::matrix,ModuleBase::matrix> XC_Functional::v_xc_m
 #ifdef __EXX
                 if (func.info->number == XC_MGGA_X_SCAN && get_func_type() == 5)
                 {
-                    vsigma[ir] *= (1.0 - GlobalC::exx_info.info_global.hybrid_alpha);
+                    vsigma[ir] *= (1.0 - XC_Functional::hybrid_alpha);
                 }
 #endif
                 h[0][ir] = 2.0 * gdr[0][ir] * vsigma[ir] * 2.0 * sgn[ir];
@@ -700,9 +700,9 @@ tuple<double,double,ModuleBase::matrix,ModuleBase::matrix> XC_Functional::v_xc_m
 #ifdef __EXX
                 if (func.info->number == XC_MGGA_X_SCAN && get_func_type() == 5)
                 {
-                    vsigma[ir*3]   *= (1.0 - GlobalC::exx_info.info_global.hybrid_alpha);
-                    vsigma[ir*3+1] *= (1.0 - GlobalC::exx_info.info_global.hybrid_alpha);
-                    vsigma[ir*3+2] *= (1.0 - GlobalC::exx_info.info_global.hybrid_alpha);
+                    vsigma[ir*3]   *= (1.0 - XC_Functional::hybrid_alpha);
+                    vsigma[ir*3+1] *= (1.0 - XC_Functional::hybrid_alpha);
+                    vsigma[ir*3+2] *= (1.0 - XC_Functional::hybrid_alpha);
                 }
 #endif
                 h[0][ir] = 2.0 * (gdr[0][ir] * vsigma[ir*3  ] * sgn[ir*2  ] * 2.0 
@@ -746,7 +746,7 @@ tuple<double,double,ModuleBase::matrix,ModuleBase::matrix> XC_Functional::v_xc_m
 #ifdef __EXX
                 if (func.info->number == XC_MGGA_X_SCAN && get_func_type() == 5)
                 {
-                    vtau[ir*nspin+is] *= (1.0 - GlobalC::exx_info.info_global.hybrid_alpha);
+                    vtau[ir*nspin+is] *= (1.0 - XC_Functional::hybrid_alpha);
                 }
 #endif
                 vofk(is,ir) += vtau[ir*nspin+is]  * sgn[ir*nspin+is];
