@@ -295,7 +295,7 @@ void Mulliken_Charge::out_mulliken(LCAO_Hamilt &uhm, Local_Orbital_Charge &loc)
         std::stringstream as;
         as << GlobalV::global_out_dir << "mulliken.txt";
         std::ofstream os(as.str().c_str());
-        os << "\n CALCULATE THE MULLIkEN ANALYSIS FOR EACH ATOM" << std::endl;
+        os << "CALCULATE THE MULLIkEN ANALYSIS FOR EACH ATOM" << std::endl;
 
 		double sch = 0.0;
 		os << std::setprecision(8);
