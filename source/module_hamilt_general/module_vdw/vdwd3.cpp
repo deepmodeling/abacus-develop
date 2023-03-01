@@ -895,7 +895,8 @@ void Vdwd3::pbc_gdisp(std::vector<ModuleBase::Vector3<double>> &g, ModuleBase::m
         double sr9 = 0.75, alp9 = -16.0;
         double linik, linjk, rij2, rik2, rjk2, rr0ij, rr0ik, rr0jk, geomean2, geomean, geomean3, r0av, r;
         double c6ij, c6ik, c6jk, c9, damp9, ang, dfdmp, dang, tmp1, dc9;
-        for (int iat = 2; iat != ucell_.nat; iat++)
+        for (int iat = 2; iat < ucell_.nat; iat++)
+        {
             for (int jat = 1; jat != iat; jat++)
             {
                 linij = lin(iat, jat);
@@ -1008,7 +1009,7 @@ void Vdwd3::pbc_gdisp(std::vector<ModuleBase::Vector3<double>> &g, ModuleBase::m
                     } // end jtaux
                 } // end kat
             } // end jat
-
+        }
         for (int iat = 1; iat != ucell_.nat; iat++)
         {
             int jat = iat;
