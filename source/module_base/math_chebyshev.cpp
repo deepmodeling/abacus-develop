@@ -22,7 +22,7 @@ void FFTW<double>::execute_fftw()
     fftw_execute(this->coef_plan);
 }
 
-#ifdef __MIX_PRECISION
+#ifdef __ENABLE_FLOAT_FFTW
 FFTW<float>::FFTW(const int norder2_in)
 {
     ccoef = (fftwf_complex *) fftw_malloc(sizeof(fftwf_complex) * norder2_in);
@@ -82,7 +82,7 @@ void Chebyshev<REAL>::getpolyval(const REAL x, REAL* polyval, const int N)
     }
 }
 template<typename REAL>
-REAL Chebyshev<REAL>::recurs(const REAL x, const REAL Tn, REAL const Tn_1)
+inline REAL Chebyshev<REAL>::recurs(const REAL x, const REAL Tn, REAL const Tn_1)
 {
     return 2*x*Tn-Tn_1;
 }
@@ -120,7 +120,7 @@ REAL Chebyshev<REAL>:: ddot_real(
 
 //we only have two examples: double and float.
 template class Chebyshev<double>;
-#ifdef __MIX_PRECISION
+#ifdef __ENABLE_FLOAT_FFTW
 template class Chebyshev<float>;
 #endif
 
