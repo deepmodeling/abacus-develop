@@ -66,6 +66,51 @@ TEST_F(XCTest_PBE, set_xc_type)
     }
 }
 
+class XCTest_PBEsol : public testing::Test
+{
+    protected:
+        std::vector<double> e_lda, v_lda;
+        std::vector<double> e_gga, v1_gga, v2_gga;
+
+        void SetUp()
+        {
+            XC_Functional::set_xc_type("PBEsol");
+            std::vector<double> rho  = {0.17E+01, 0.17E+01, 0.15E+01, 0.88E-01, 0.18E+04};
+            std::vector<double> grho = {0.81E-11, 0.17E+01, 0.36E+02, 0.87E-01, 0.55E+00};
+
+            for(int i=0;i<5;i++)
+            {
+                double e,v,v1,v2;
+                XC_Functional::xc(rho[i],e,v);
+                e_lda.push_back(e);
+                v_lda.push_back(v);
+                XC_Functional::gcxc(rho[i],grho[i],e,v1,v2);
+                e_gga.push_back(e);
+                v1_gga.push_back(v1);
+                v2_gga.push_back(v2);
+            }                                           
+        }
+};
+
+TEST_F(XCTest_PBEsol, set_xc_type)
+{
+    EXPECT_EQ(XC_Functional::get_func_type(),2);
+    std::vector<double> e_lda_ref  = {-0.9570906378,-0.9570906378,-0.9200171474,-0.3808291731,-9.124862983};
+    std::vector<double> v_lda_ref  = {-1.259358955 , -1.259358955, -1.210234884,-0.4975768336,-12.12952188};
+    std::vector<double> e_gga_ref  = {0.0          , 0.0003989522401,-0.008905053386,-0.001312507296,1.350759637e-08};
+    std::vector<double> v1_gga_ref = {0.0          ,-0.0002447900722,0.02455798029,0.04115384844,-1.000780528e-11};
+    std::vector<double> v2_gga_ref = {0.0          ,0.0004104325762,-0.001101482966,-0.04988481872,4.912388025e-08};
+
+    for (int i = 0;i<5;++i)
+    {
+        EXPECT_NEAR(e_lda[i],e_lda_ref[i],1.0e-8);
+        EXPECT_NEAR(v_lda[i],v_lda_ref[i],1.0e-8);
+        EXPECT_NEAR(e_gga[i],e_gga_ref[i],1.0e-8);
+        EXPECT_NEAR(v1_gga[i],v1_gga_ref[i],1.0e-8);
+        EXPECT_NEAR(v2_gga[i],v2_gga_ref[i],1.0e-8);
+    }
+}
+
 class XCTest_BP : public testing::Test
 {
     protected:
@@ -858,3 +903,13 @@ TEST_F(XCTest_PBE_LibXC, set_xc_type)
         EXPECT_NEAR(v2_gga[i],v2_gga_ref[i],1.0e-8);
     }
 }
+
+/*
+//for printing results
+            std::cout << std::setprecision(10);
+            for(int i=0;i<5;i++)
+            {
+                std::cout << e_lda[i] << ",";
+            }
+            std::cout << std::endl;
+*/
