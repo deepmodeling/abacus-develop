@@ -44,10 +44,11 @@ ModuleBase::matrix Mulliken_Charge::cal_mulliken(const std::vector<ModuleBase::m
         ModuleBase::matrix mud;
         mud.create(uhm.LM->ParaV->nrow, uhm.LM->ParaV->ncol);
 #ifdef __MPI
+        const char T_char = 'T';
         const char N_char = 'N';
         const int one_int = 1;
         const double one_float[2] = {1.0, 0.0}, zero_float[2] = {0.0, 0.0};        
-        pdgemm_(&N_char,
+        pdgemm_(&T_char,
                 &N_char,
                 &GlobalV::NLOCAL,
                 &GlobalV::NLOCAL,
@@ -164,10 +165,11 @@ ModuleBase::matrix Mulliken_Charge::cal_mulliken_k(const std::vector<ModuleBase:
         mud.create(uhm.LM->ParaV->nrow, uhm.LM->ParaV->ncol);
 
 #ifdef __MPI
+        const char T_char = 'T';
         const char N_char = 'N';
         const int one_int = 1;
         const double one_float[2] = {1.0, 0.0}, zero_float[2] = {0.0, 0.0};        
-        pzgemm_(&N_char,
+        pzgemm_(&T_char,
                 &N_char,
                 &GlobalV::NLOCAL,
                 &GlobalV::NLOCAL,
