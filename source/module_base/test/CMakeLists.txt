@@ -112,7 +112,6 @@ AddTest(
   SOURCES container_operator_test.cpp ../container_operator.h
 )
 
-#add_definitions(-D__MIX_PRECISION)
 AddTest(
   TARGET base_math_chebyshev
   LIBS ${math_libs}

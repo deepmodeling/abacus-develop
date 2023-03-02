@@ -22,7 +22,7 @@
 
 //Temporary: we donot need psi. However some GPU ops are defined in psi, which should be moved into module_base or module_gpu
 #include "module_psi/psi.h"
-// #ifdef __MIX_PRECISION
+// #ifdef __ENABLE_FLOAT_FFTW
 // #include "fftw3f.h"
 // #if defined(__FFTW3_MPI) && defined(__MPI)
 // #include "fftw3f-mpi.h"
@@ -50,7 +50,10 @@ public:
 
 	//destroy fftw_plans
 	void cleanFFT();
+
+#if defined(__ENABLE_FLOAT_FFTW)
 	void cleanfFFT();
+#endif // defined(__ENABLE_FLOAT_FFTW)
 
     template <typename FPTYPE> void fftzfor(std::complex<FPTYPE>* in, std::complex<FPTYPE>* out);
 	template <typename FPTYPE> void fftzbac(std::complex<FPTYPE>* in, std::complex<FPTYPE>* out);
@@ -68,7 +71,9 @@ public:
 	// We have not support mpi fftw yet.
 	// void initplan_mpi();
 	//init fftwf_plans
+#if defined(__ENABLE_FLOAT_FFTW)
 	void initplanf();
+#endif // defined(__ENABLE_FLOAT_FFTW)
 	// void initplanf_mpi();
 
 public:
@@ -116,6 +121,7 @@ private:
     hipfftHandle z_handle;
 #endif
 
+#if defined(__ENABLE_FLOAT_FFTW)
 	bool destroypf=true;
 	fftwf_plan planfzfor;
 	fftwf_plan planfzbac;
@@ -129,7 +135,7 @@ private:
 	fftwf_plan planfxc2r;
 	fftwf_plan planfyr2c;
 	fftwf_plan planfyc2r;
-
+#endif // defined(__ENABLE_FLOAT_FFTW)
 
     std::complex<float> * c_auxr_3d=nullptr; //fft space
     std::complex<double> * z_auxr_3d=nullptr; //fft space
@@ -139,6 +145,14 @@ private:
 
     float * s_rspace=nullptr; //real number space for r, [nplane * nx *ny]
     double * d_rspace=nullptr; //real number space for r, [nplane * nx *ny]
+
+    std::string device = "cpu";
+    std::string precision = "double";
+
+public:
+    void set_device(std::string device_);
+    void set_precision(std::string precision_);
+
 };
 }
 
