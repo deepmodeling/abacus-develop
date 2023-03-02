@@ -20,7 +20,17 @@ template class hsolver::HSolverPW<double, psi::DEVICE_CPU>;
 
 /**
  * Tested function:
- * 
+ *  - test for template float and double respectively:
+ *  - 1. solve()
+ *  - 2. initDiagh()
+ *  - 3. endDiagh()
+ *  - 4. hamiltSolvePsiK()
+ *  - 5. updatePsiK()
+ *  - 6. update_precondition()
+ *  - 7. hsolver::HSolver::diagethr (for cases below)
+ * 		- set_diagethr, for setting diagethr;
+ *  	- reset_diagethr, for updating diagethr;
+ * 		- cal_hsolerror, for calculate actually diagethr;
  */
 class TestHSolverPW : public ::testing::Test
 {
