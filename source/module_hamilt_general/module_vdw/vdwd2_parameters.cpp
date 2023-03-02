@@ -21,7 +21,7 @@ void Vdwd2Parameters::initial_parameters(const Input &input)
         radius_ = std::stod(input.vdw_cutoff_radius);
         if (!(input.vdw_radius_unit == "Bohr"))
         {
-            radius_ *= ModuleBase::BOHR_TO_A;
+            radius_ /= ModuleBase::BOHR_TO_A;
         }
     }
     else if (input.vdw_cutoff_type == "period")

@@ -124,3 +124,17 @@ TEST_F(XCTest_BMK, set_xc_type)
 {
     EXPECT_EQ(XC_Functional::get_func_type(),5);
 }
+
+class XCTest_HF : public testing::Test
+{
+    protected:
+        void SetUp()
+        {
+            XC_Functional::set_xc_type("HF");
+        }
+};
+
+TEST_F(XCTest_HF, set_xc_type)
+{
+    EXPECT_EQ(XC_Functional::get_func_type(),4);
+}

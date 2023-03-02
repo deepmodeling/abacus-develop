@@ -15,7 +15,7 @@ using namespace std;
 TEST_F(PWTEST,test7_2_1)
 {
     cout<<"dividemthd 1, gamma_only: on, xprime: true, full_pw: true, full_pw_dim: 1, check fft"<<endl;
-    ModulePW::PW_Basis pwtest;
+    ModulePW::PW_Basis pwtest(device_flag, precision_flag);
     ModuleBase::Matrix3 latvec;
     int nx,ny,nz;  //f*G
     double wfcecut;
@@ -155,7 +155,7 @@ TEST_F(PWTEST,test7_2_1)
     delete [] rhogr;
 
     fftw_cleanup();
-#ifdef __MIX_PRECISION
+#ifdef __ENABLE_FLOAT_FFTW
     fftwf_cleanup();
 #endif
 }

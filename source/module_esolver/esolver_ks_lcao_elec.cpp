@@ -20,7 +20,7 @@
 #endif
 #include "module_hamilt_general/module_ewald/H_Ewald_pw.h"
 #include "module_hamilt_general/module_vdw/vdw.h"
-#include "module_relax/relax_old/variable_cell.h"    // liuyu 2022-11-07
+#include "module_relax/variable_cell.h"    // liuyu 2022-11-07
 
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/op_exx_lcao.h"
 #include "module_io/dm_io.h"

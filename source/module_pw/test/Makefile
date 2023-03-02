@@ -26,7 +26,7 @@ FFTW_DIR = /home/qianrui/gnucompile/fftw_3.3.8
 #==========================
 # Compiler information 
 #==========================
-HONG = -D__NORMAL
+HONG = -D__NORMAL -D__NOMPICOMPLEX
 INCLUDES = -I. -I../../
 LIBS = 
 OPTS = -Ofast -march=native -std=c++11 -m64  ${INCLUDES}
@@ -128,11 +128,10 @@ fft.o\
 pw_basis_k.o\
 pw_transform_k.o\
 memory.o\
-memory_op.o
+memory_op.o\
+depend_mock.o
 
-OTHER_OBJS0=global_variable.o\
-parallel_global.o\
-parallel_reduce.o
+OTHER_OBJS0=
 
 
 TESTFILE0=test1-1-1.o\

@@ -14,8 +14,9 @@
 std::tuple<double,double,ModuleBase::matrix> XC_Functional::v_xc(
 	const int &nrxx, // number of real-space grid
 	const int &ncxyz, // total number of charge grid
-	const double &omega, // volume of cell
-    const Charge* const chr) // core charge density
+    const Charge* const chr,
+    ModulePW::PW_Basis* rhopw,
+    const UnitCell *ucell) // core charge density
 {
     ModuleBase::TITLE("XC_Functional","v_xc");
     ModuleBase::timer::tick("XC_Functional","v_xc");
@@ -23,7 +24,7 @@ std::tuple<double,double,ModuleBase::matrix> XC_Functional::v_xc(
     if(use_libxc)
     {
 #ifdef USE_LIBXC
-        return v_xc_libxc(nrxx, ncxyz, omega, chr);
+        return v_xc_libxc(nrxx, ncxyz, ucell->omega, chr, ucell->tpiba);
 #else
         ModuleBase::WARNING_QUIT("v_xc","compile with LIBXC");
 #endif
@@ -162,7 +163,7 @@ std::tuple<double,double,ModuleBase::matrix> XC_Functional::v_xc(
     // the dummy variable dum contains gradient correction to stress
     // which is not used here
     std::vector<double> dum;
-    gradcorr(etxc, vtxc, v, chr, dum);
+    gradcorr(etxc, vtxc, v, chr, rhopw, ucell, dum);
 
     // parallel code : collect vtxc,etxc
     // mohan add 2008-06-01
@@ -170,8 +171,8 @@ std::tuple<double,double,ModuleBase::matrix> XC_Functional::v_xc(
     Parallel_Reduce::reduce_double_pool( etxc );
     Parallel_Reduce::reduce_double_pool( vtxc );
 #endif
-    etxc *= omega / ncxyz;
-    vtxc *= omega / ncxyz;
+    etxc *= ucell->omega / ncxyz;
+    vtxc *= ucell->omega / ncxyz;
 
     ModuleBase::timer::tick("XC_Functional","v_xc");
     return std::make_tuple(etxc, vtxc, std::move(v));
@@ -183,7 +184,8 @@ std::tuple<double,double,ModuleBase::matrix> XC_Functional::v_xc_libxc(		// Peiz
         const int &nrxx, // number of real-space grid
         const int &ncxyz, // total number of charge grid
         const double &omega, // volume of cell
-        const Charge* const chr)
+        const Charge* const chr,
+        const double tpiba)
 {
     ModuleBase::TITLE("XC_Functional","v_xc_libxc");
     ModuleBase::timer::tick("XC_Functional","v_xc_libxc");
@@ -273,7 +275,7 @@ std::tuple<double,double,ModuleBase::matrix> XC_Functional::v_xc_libxc(		// Peiz
             // store the gradient in gdr[is]
             //-------------------------------------------
             gdr[is].resize(nrxx);
-            XC_Functional::grad_rho(rhog.data(), gdr[is].data(), GlobalC::rhopw);
+            XC_Functional::grad_rho(rhog.data(), gdr[is].data(), GlobalC::rhopw, tpiba);
         } // end for(is)
 
         // converting grho
@@ -397,7 +399,7 @@ std::tuple<double,double,ModuleBase::matrix> XC_Functional::v_xc_libxc(		// Peiz
             // define two dimensional array dh [ nspin, nrxx ]
             std::vector<std::vector<double>> dh(nspin, std::vector<double>(nrxx));
             for( int is=0; is!=nspin; ++is )
-                XC_Functional::grad_dot( h[is].data(), dh[is].data(), GlobalC::rhopw );
+                XC_Functional::grad_dot( h[is].data(), dh[is].data(), GlobalC::rhopw, tpiba);
 
             double rvtxc = 0.0;
             #ifdef _OPENMP
@@ -474,7 +476,8 @@ tuple<double,double,ModuleBase::matrix,ModuleBase::matrix> XC_Functional::v_xc_m
     const int &nrxx, // number of real-space grid
     const int &ncxyz, // total number of charge grid
     const double &omega, // volume of cell
-    const Charge* const chr)
+    const Charge* const chr,
+    const double tpiba)
 {
     ModuleBase::TITLE("XC_Functional","v_xc_meta");
     ModuleBase::timer::tick("XC_Functional","v_xc_meta");
@@ -538,7 +541,7 @@ tuple<double,double,ModuleBase::matrix,ModuleBase::matrix> XC_Functional::v_xc_m
         // store the gradient in gdr[is]
         //-------------------------------------------
         gdr[is].resize(nrxx);
-        XC_Functional::grad_rho(rhog.data(), gdr[is].data(), GlobalC::rhopw);
+        XC_Functional::grad_rho(rhog.data(), gdr[is].data(), GlobalC::rhopw, tpiba);
     }
 
     // converting grho
@@ -715,7 +718,9 @@ tuple<double,double,ModuleBase::matrix,ModuleBase::matrix> XC_Functional::v_xc_m
         std::vector<std::vector<double>> dh(nspin, std::vector<double>( nrxx));
         for( int is=0; is!=nspin; ++is )
         {
-            XC_Functional::grad_dot( ModuleBase::GlobalFunc::VECTOR_TO_PTR(h[is]), ModuleBase::GlobalFunc::VECTOR_TO_PTR(dh[is]), GlobalC::rhopw );
+            XC_Functional::grad_dot( ModuleBase::GlobalFunc::VECTOR_TO_PTR(h[is]),
+                ModuleBase::GlobalFunc::VECTOR_TO_PTR(dh[is]), GlobalC::rhopw,
+                GlobalC::ucell.tpiba);
         }
 
         double rvtxc = 0.0;

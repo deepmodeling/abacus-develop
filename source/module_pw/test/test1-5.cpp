@@ -15,7 +15,7 @@ using namespace std;
 TEST_F(PWTEST,test1_5)
 {
     cout<<"dividemthd 1, gamma_only: on, xprime: false, gamma kpoint, check fft"<<endl;
-    ModulePW::PW_Basis_K pwtest;
+    ModulePW::PW_Basis_K pwtest(device_flag, precision_flag);
     ModuleBase::Matrix3 latvec;
     int nx,ny,nz;  //f*G
     double wfcecut;

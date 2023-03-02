@@ -18,6 +18,7 @@
 #include "exx_info.h"
 #include "module_pw/pw_basis_k.h"
 #include "module_elecstate/module_charge/charge.h"
+#include "module_cell/unitcell.h"
 class XC_Functional
 {
 	public:
@@ -45,22 +46,25 @@ class XC_Functional
     static std::tuple<double,double,ModuleBase::matrix> v_xc(
 		const int &nrxx, // number of real-space grid
 		const int &ncxyz, // total number of charge grid
-		const double &omega, // volume of cell
-		const Charge* const chr); // charge density
+		const Charge* const chr,
+		ModulePW::PW_Basis* rhopw,
+		const UnitCell *ucell); // charge density
 
 	// using libxc
     static std::tuple<double,double,ModuleBase::matrix> v_xc_libxc(
 		const int &nrxx, // number of real-space grid
 		const int &ncxyz, // total number of charge grid
 		const double &omega, // volume of cell
-		const Charge* const chr); // charge density
+		const Charge* const chr,
+		const double tpiba); // charge density
 
 	// for mGGA functional
 	static std::tuple<double,double,ModuleBase::matrix,ModuleBase::matrix> v_xc_meta(
 		const int &nrxx, // number of real-space grid
 		const int &ncxyz, // total number of charge grid
 		const double &omega, // volume of cell
-		const Charge* const chr);
+		const Charge* const chr,
+		const double tpiba);
 
 //-------------------
 //  xc_functional.cpp
@@ -194,11 +198,17 @@ class XC_Functional
 // 5. noncolin_rho, which diagonalizes the spin density matrix
 //  and gives the spin up and spin down components of the charge.
 
-	static void gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v, const Charge* const chr, std::vector<double> &stress_gga, const bool is_stress = 0);
-	static void grad_wfc( const std::complex<double> *rhog, const int ik, std::complex<double> **grad, ModulePW::PW_Basis_K *wfc_basis);
-	static void grad_rho( const std::complex<double> *rhog, ModuleBase::Vector3<double> *gdr, ModulePW::PW_Basis *rho_basis);
-	static void grad_dot( const ModuleBase::Vector3<double> *h, double *dh, ModulePW::PW_Basis *rho_basis);
-	static void noncolin_rho(double *rhoout1,double *rhoout2,double *seg,const double*const*const rho);
+	static void gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v,
+		const Charge* const chr, ModulePW::PW_Basis* rhopw, const UnitCell *ucell,
+		std::vector<double> &stress_gga, const bool is_stress = 0);
+	static void grad_wfc( const std::complex<double> *rhog, const int ik,
+		std::complex<double> **grad, ModulePW::PW_Basis_K *wfc_basis, const double tpiba);
+	static void grad_rho( const std::complex<double> *rhog, ModuleBase::Vector3<double> *gdr,
+		ModulePW::PW_Basis *rho_basis, const double tpiba);
+	static void grad_dot( const ModuleBase::Vector3<double> *h, double *dh,
+		ModulePW::PW_Basis *rho_basis, const double tpiba);
+	static void noncolin_rho(double *rhoout1,double *rhoout2,double *seg,
+		const double*const*const rho, const int nrxx, const double* ux_, const bool lsign_);
 
 //-------------------
 //  xc_funct_exch_lda.cpp
