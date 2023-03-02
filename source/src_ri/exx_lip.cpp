@@ -12,7 +12,7 @@
 #include "module_hamilt_lcao/hamilt_lcaodft/wavefunc_in_pw.h"
 #include "module_base/lapack_connector.h"
 #include <limits>
-#include "src_parallel/parallel_global.h"
+#include "module_base/parallel_global.h"
 
 Exx_Lip::Exx_Lip( const Exx_Info::Exx_Info_Lip &info_in )
 	:init_finish(false),

@@ -1,7 +1,7 @@
 #include "H_Ewald_pw.h"
 #include "module_base/mymath.h" // use heapsort
 #include "dnrm2.h"
-#include "src_parallel/parallel_reduce.h"
+#include "module_base/parallel_reduce.h"
 #include "module_base/constants.h"
 #include "module_base/timer.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"

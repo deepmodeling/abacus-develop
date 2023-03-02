@@ -4,8 +4,8 @@ AddTest(
   LIBS ${math_libs} planewave psi device
   SOURCES ../../module_base/matrix.cpp ../../module_base/complexmatrix.cpp ../../module_base/matrix3.cpp ../../module_base/tool_quit.cpp
           ../../module_base/mymath.cpp ../../module_base/timer.cpp ../../module_base/memory.cpp ../../module_base/global_variable.cpp 
-          ../../src_parallel/parallel_global.cpp
-          ../../src_parallel/parallel_global.cpp ../../src_parallel/parallel_reduce.cpp
+          ../../module_base/parallel_common.cpp
+          ../../module_base/parallel_global.cpp ../../module_base/parallel_reduce.cpp
           pw_test.cpp test1-1-1.cpp test1-1-2.cpp test1-2.cpp test1-3.cpp test1-4.cpp  test1-5.cpp
           test2-1-1.cpp test2-1-2.cpp test2-2.cpp test2-3.cpp 
           test3-1.cpp test3-2.cpp test3-3.cpp test3-3-2.cpp 

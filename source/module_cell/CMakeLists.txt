@@ -17,6 +17,7 @@ add_library(
     read_cell_pseudopots.cpp
     setup_nonlocal.cpp
     klist.cpp
+    parallel_kpoints.cpp
 )
 
 if(ENABLE_COVERAGE)

@@ -1,5 +1,5 @@
 #include "module_elecstate/elecstate_lcao.h"
-#include "src_parallel/parallel_reduce.h"
+#include "module_base/parallel_reduce.h"
 #include "module_hsolver/test/diago_elpa_utils.h"
 #include "gtest/gtest.h"
 #include "mpi.h"
@@ -18,7 +18,7 @@
  * 
  */
 
-#include "src_parallel/parallel_grid.h"
+#include "module_hamilt_pw/hamilt_pwdft/parallel_grid.h"
 #include "module_hamilt_pw/hamilt_pwdft/wavefunc.h"
 #include "module_hamilt_pw/hamilt_pwdft/VNL_in_pw.h"
 #include "module_elecstate/energy.h"

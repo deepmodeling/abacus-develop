@@ -1,7 +1,7 @@
 #include "write_HS.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/global_fp.h"
-#include "src_parallel/parallel_reduce.h"
+#include "module_base/parallel_reduce.h"
 #include "module_base/timer.h"
 
 void ModuleIO::saving_HS(const double *Hloc, const double* Sloc, const bool bit, const int &out_mat_hs, const std::string &file_name, const Parallel_Orbitals &pv)

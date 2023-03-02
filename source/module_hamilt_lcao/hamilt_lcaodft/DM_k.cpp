@@ -1,7 +1,7 @@
 #include "module_base/blas_connector.h"
 #include "module_base/memory.h"
 #include "module_base/timer.h"
-#include "src_parallel/parallel_common.h"
+#include "module_base/parallel_common.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "local_orbital_charge.h"
 #include "module_base/libm/libm.h"
