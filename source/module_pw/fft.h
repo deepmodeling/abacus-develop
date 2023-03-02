@@ -145,6 +145,14 @@ private:
 
     float * s_rspace=nullptr; //real number space for r, [nplane * nx *ny]
     double * d_rspace=nullptr; //real number space for r, [nplane * nx *ny]
+
+    std::string device = "cpu";
+    std::string precision = "double";
+
+public:
+    void set_device(std::string device_);
+    void set_precision(std::string precision_);
+
 };
 }
 

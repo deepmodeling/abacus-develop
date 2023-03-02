@@ -169,7 +169,7 @@ public:
 		std::complex<REAL>* arrayn_1,  //v_{n-1}
 		const int N, const int LDA = 1,  const int m = 1);
 	//return 2xTn-Tn_1
-	inline REAL recurs(const REAL x, const REAL Tn, const REAL Tn_1);
+	REAL recurs(const REAL x, const REAL Tn, const REAL Tn_1);
 	
 	// V.
 	// auxiliary function
@@ -221,7 +221,7 @@ public:
 	fftw_plan coef_plan;
 };
 
-#ifdef __MIX_PRECISION
+#ifdef __ENABLE_FLOAT_FFTW
 template<>
 class FFTW<float>
 {

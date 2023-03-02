@@ -17,7 +17,7 @@
 //---------------------------------------------------
 #include "module_elecstate/elecstate_pw.h"
 #include "module_hamilt_pw/hamilt_pwdft/hamilt_pw.h"
-#include "module_relax/relax_old/variable_cell.h"    // liuyu 2022-11-07
+#include "module_relax/variable_cell.h"    // liuyu 2022-11-07
 
 namespace ModuleESolver
 {
@@ -345,6 +345,7 @@ void ESolver_OF::beforeOpt(const int istep)
 void ESolver_OF::updateV()
 {
     // (1) get dL/dphi
+    if(GlobalV::NSPIN==4) GlobalC::ucell.cal_ux();
     this->pelec->pot->update_from_charge(pelec->charge, &GlobalC::ucell); // Hartree + XC + external
     this->kineticPotential(pelec->charge->rho, this->pphi, this->pelec->pot->get_effective_v()); // (kinetic + Hartree + XC + external) * 2 * phi
     for (int is = 0; is < GlobalV::NSPIN; ++is)
@@ -972,6 +973,7 @@ void ESolver_OF::calV(double *ptempPhi, double *rdLdphi)
     }
     tempRho->rho_core = pelec->charge->rho_core;
 
+    if(GlobalV::NSPIN==4) GlobalC::ucell.cal_ux();
     this->pelec->pot->update_from_charge(tempRho, &GlobalC::ucell);
     ModuleBase::matrix& vr_eff = this->pelec->pot->get_effective_v();
 
@@ -1005,6 +1007,7 @@ void ESolver_OF::caldEdtheta(double **ptempPhi, Charge* ptempRho, double *ptheta
 {
     double *pdPhidTheta = new double[this->nrxx];
 
+    if(GlobalV::NSPIN==4) GlobalC::ucell.cal_ux();
     this->pelec->pot->update_from_charge(ptempRho, &GlobalC::ucell);
     ModuleBase::matrix& vr_eff = this->pelec->pot->get_effective_v();
 

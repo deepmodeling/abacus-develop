@@ -64,7 +64,7 @@ void surchem::createcavity(const UnitCell &ucell, ModulePW::PW_Basis* rho_basis,
     ModuleBase::GlobalFunc::ZEROS(lapn, rho_basis->nrxx);
 
     // nabla n
-    XC_Functional::grad_rho(PS_TOTN, nablan, rho_basis);
+    XC_Functional::grad_rho(PS_TOTN, nablan, rho_basis, GlobalC::ucell.tpiba);
 
     //  |\nabla n |^2 = nablan_2
     for (int ir = 0; ir < rho_basis->nrxx; ir++)
@@ -123,7 +123,7 @@ void surchem::createcavity(const UnitCell &ucell, ModulePW::PW_Basis* rho_basis,
     
     // \nabla(1 / |\nabla n|), ggn in real space
     ModuleBase::Vector3<double> *ggn = new ModuleBase::Vector3<double>[rho_basis->nrxx];
-    XC_Functional::grad_rho(inv_gn, ggn, rho_basis);
+    XC_Functional::grad_rho(inv_gn, ggn, rho_basis, GlobalC::ucell.tpiba);
 
     //-------------------------------------------------------------
     // add -(\nabla n . \nabla(1/ |\nabla n|)) to Vcav in real space
