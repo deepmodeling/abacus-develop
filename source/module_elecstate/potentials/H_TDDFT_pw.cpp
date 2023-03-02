@@ -229,6 +229,10 @@ double H_TDDFT_pw::cal_v_time(int t_type)
         vext_time = cal_v_time_Gauss();
         break;
 
+    case 1:
+        vext_time = cal_v_time_trapezoid();
+        break;
+
     case 2:
         vext_time = cal_v_time_trigonometric();
         break;
