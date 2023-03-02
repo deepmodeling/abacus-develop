@@ -4,7 +4,7 @@ From version 2.1.0, ABACUS has the function of Mulliken population analysis. The
 To use this function, set ‘out_mul’ to ‘1’ in the INPUT file. After calculation, there will be an output file named 'mulliken.txt' in the output directory. In the file, there are contents like (`nspin 1`):
 
 ```
- CALCULATE THE MULLIkEN ANALYSIS FOR EACH ATOM
+CALCULATE THE MULLIkEN ANALYSIS FOR EACH ATOM
  Total charge of spin 1:	8
  Total charge:	8
 Decomposed Mulliken populations
