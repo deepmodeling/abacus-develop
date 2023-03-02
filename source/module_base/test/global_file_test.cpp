@@ -26,7 +26,8 @@ class GlobalFile : public testing::Test
 
 TEST_F(GlobalFile,mkdiratom)
 {
+        GlobalV::global_out_dir = "./";
         ModuleBase::Global_File::make_dir_atom("Si");
-        int a = access("Si/",0);
+        int a = access("./Si/",0);
         EXPECT_EQ(a , 0);
 }
