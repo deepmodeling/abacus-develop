@@ -59,7 +59,7 @@
  * - VECTOR_TO_PTR
  *   - get a copy of the ptr of a vector
  * - VECTOR_TO_PTR_v3double
- *    - get a copy of the ptr of a vector whose elements' type elongs to Vector3<double>
+ *    - get a copy of the ptr of a vector whose elements' type belongs to Vector3<double>
  */
 
 inline void EXPECT_COMPLEX_FLOAT_EQ(const std::complex<float>& a, const std::complex<float>& b)
