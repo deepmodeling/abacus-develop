@@ -109,6 +109,8 @@ class H_TDDFT_pw : public PotBase
     double cal_v_time_trigonometric();
     double cal_v_time_heaviside();
     // double cal_v_time_HHG();
+
+    double prepare(const UnitCell &cell, int &dir);
 };
 
 } // namespace elecstate

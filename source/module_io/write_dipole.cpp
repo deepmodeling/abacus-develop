@@ -82,7 +82,7 @@ void ModuleIO::write_dipole(const double *rho_save,
     Parallel_Reduce::reduce_double_pool(dipole_elec[2]);
     for (int i = 0; i < 3; ++i)
     {
-        dipole_elec[i] *= GlobalC::ucell.lat0 / bmod[i] * ModuleBase::FOUR_PI / GlobalC::rhopw->nxyz;
+        dipole_elec[i] *= GlobalC::ucell.lat0 / bmod[i] * GlobalC::ucell.omega / GlobalC::rhopw->nxyz;
     }
 
     std::cout << std::setprecision(8) << "dipole_elec_x: " << dipole_elec[0] << std::endl;
@@ -107,7 +107,7 @@ void ModuleIO::write_dipole(const double *rho_save,
             }
             dipole_ion[i] += sum * GlobalC::ucell.atoms[it].ncpp.zv;
         }
-        dipole_ion[i] *= GlobalC::ucell.lat0 / bmod[i] * ModuleBase::FOUR_PI / GlobalC::ucell.omega;
+        dipole_ion[i] *= GlobalC::ucell.lat0 / bmod[i]; //* ModuleBase::FOUR_PI / GlobalC::ucell.omega;
     }
 
     std::cout << std::setprecision(8) << "dipole_ion_x: " << dipole_ion[0] << std::endl;
