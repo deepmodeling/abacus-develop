@@ -743,7 +743,7 @@ void Exx_Lip::read_q_pack()
 	#ifdef __MPI
 	for( int iq=0; iq<q_pack->kv_ptr->nks; ++iq)
 	{
-		MPI_Bcast( q_pack->hvec_array[iq].c, GlobalV::NLOCAL*GlobalV::NBANDS, mpicomplex, 0, POOL_WORLD);
+		MPI_Bcast( q_pack->hvec_array[iq].c, GlobalV::NLOCAL*GlobalV::NBANDS, MPI_DOUBLE_COMPLEX, 0, POOL_WORLD);
 	}
 	#endif
 
@@ -885,7 +885,7 @@ void Exx_Lip::read_q_pack()
 	}
 	for( int iq=0; iq<q_pack->kv_ptr->nks; ++iq)
 	{
-		MPI_Bcast( q_pack.hvec_array[iq].c, GlobalV::NLOCAL*GlobalV::NBANDS, mpicomplex, 0, POOL_WORLD);
+		MPI_Bcast( q_pack.hvec_array[iq].c, GlobalV::NLOCAL*GlobalV::NBANDS, MPI_DOUBLE_COMPLEX, 0, POOL_WORLD);
 	}
 
 

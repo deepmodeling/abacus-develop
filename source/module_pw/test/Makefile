@@ -26,7 +26,7 @@ FFTW_DIR = /home/qianrui/gnucompile/fftw_3.3.8
 #==========================
 # Compiler information 
 #==========================
-HONG = -D__NORMAL -D__NOMPICOMPLEX
+HONG = -D__NORMAL
 INCLUDES = -I. -I../../
 LIBS = 
 OPTS = -Ofast -march=native -std=c++11 -m64  ${INCLUDES}
