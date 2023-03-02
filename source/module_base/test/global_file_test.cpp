@@ -17,6 +17,8 @@
  * - Tested Function
  * - mkdiratom
  *   - generate atom dir for each type of atom
+ * - openlog
+ *   - open the out file with the name *.log
  */
 
 class GlobalFile : public testing::Test
@@ -31,3 +33,14 @@ TEST_F(GlobalFile,mkdiratom)
         int a = access("./Si/",0);
         EXPECT_EQ(a , 0);
 }
+
+TEST_F(GlobalFile,openlog)
+{
+        std::ofstream ofs;
+        ModuleBase::Global_File::open_log(ofs,"Si","md",true);
+        EXPECT_TRUE(ofs.is_open());
+        ModuleBase::Global_File::open_log(ofs,"Si","md",false);
+        EXPECT_TRUE(ofs.is_open());
+}
+
+
