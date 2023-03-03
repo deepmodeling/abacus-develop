@@ -15,8 +15,8 @@ using namespace std;
 TEST_F(PWTEST,test_big)
 {
     cout<<"Temporary: test for pw_basis_big and pw_basis_k_big. (They should be removed in the future)"<<endl;
-    ModulePW::PW_Basis_Big pwtest;
-    ModulePW::PW_Basis_K_Big pwktest;
+    ModulePW::PW_Basis_Big pwtest(device_flag, precision_flag);
+    ModulePW::PW_Basis_K_Big pwktest(device_flag, precision_flag);
     ModuleBase::Matrix3 latvec;
     int nx,ny,nz;  //f*G
     double wfcecut;
@@ -63,12 +63,12 @@ TEST_F(PWTEST,test_big)
     EXPECT_EQ(pwktest.nz%2, 0);
 
     delete[] kvec_d;
-    ModulePW::PW_Basis_Big *p_pw = new ModulePW::PW_Basis_Big();
-    ModulePW::PW_Basis_K_Big *p_pwk = new ModulePW::PW_Basis_K_Big();
+    ModulePW::PW_Basis_Big *p_pw = new ModulePW::PW_Basis_Big(device_flag, precision_flag);
+    ModulePW::PW_Basis_K_Big *p_pwk = new ModulePW::PW_Basis_K_Big(device_flag, precision_flag);
     delete p_pw;
     delete p_pwk;
     fftw_cleanup();
-#ifdef __MIX_PRECISION
+#ifdef __ENABLE_FLOAT_FFTW
     fftwf_cleanup();
 #endif
 }

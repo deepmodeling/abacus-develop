@@ -14,6 +14,7 @@ option(ENABLE_LCAO "Enable LCAO calculation." ON)
 option(ENABLE_DEEPKS "Enable DeePKS functionality" OFF)
 option(ENABLE_LIBXC "Enable LibXC functionality" OFF)
 option(USE_CUDA "Enable support to CUDA for PW." OFF)
+option(ENABLE_FLOAT_FFTW "Enable support to single precision FFTW library." OFF)
 # option(USE_CUSOLVER_LCAO "Enable support to CUSOLVER for LCAO." OFF) # broken
 option(USE_ROCM "Enable support to ROCm." OFF)
 option(USE_OPENMP " Enable OpenMP in abacus." ON)
@@ -280,12 +281,14 @@ else()
   include_directories(${FFTW3_INCLUDE_DIRS})
   list(APPEND math_libs
     FFTW3::FFTW3
-    FFTW3::FFTW3_FLOAT
     LAPACK::LAPACK
     ScaLAPACK::ScaLAPACK
   )
   if(USE_OPENMP)
     list(APPEND math_libs FFTW3::FFTW3_OMP)
+  endif()
+  if (ENABLE_FLOAT_FFTW)
+    list(APPEND math_libs FFTW3::FFTW3_FLOAT)
   endif()
   if(CMAKE_CXX_COMPILER_ID MATCHES GNU)
     list(APPEND math_libs -lgfortran)
@@ -296,6 +299,10 @@ else()
   else()
     message(WARNING "Cannot find the correct library for Fortran.")
   endif()
+endif()
+
+if (ENABLE_FLOAT_FFTW)
+  add_definitions(-D__ENABLE_FLOAT_FFTW)
 endif()
 
 if(ENABLE_DEEPKS)

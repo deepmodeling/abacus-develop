@@ -1,6 +1,7 @@
 #include "pot_xc.h"
 
 #include "module_base/timer.h"
+#include "module_hamilt_pw/hamilt_pwdft/global.h"
 
 namespace elecstate
 {
@@ -19,7 +20,7 @@ void PotXC::cal_v_eff(const Charge* chg, const UnitCell* ucell, ModuleBase::matr
     {
 #ifdef USE_LIBXC
         const std::tuple<double, double, ModuleBase::matrix, ModuleBase::matrix> etxc_vtxc_v
-            = XC_Functional::v_xc_meta(nrxx_current, this->rho_basis_->nxyz, ucell->omega, chg);
+            = XC_Functional::v_xc_meta(nrxx_current, this->rho_basis_->nxyz, ucell->omega, chg, ucell->tpiba);
         *(this->etxc_) = std::get<0>(etxc_vtxc_v);
         *(this->vtxc_) = std::get<1>(etxc_vtxc_v);
         v_eff += std::get<2>(etxc_vtxc_v);
@@ -31,7 +32,7 @@ void PotXC::cal_v_eff(const Charge* chg, const UnitCell* ucell, ModuleBase::matr
     else
     {
         const std::tuple<double, double, ModuleBase::matrix> etxc_vtxc_v
-            = XC_Functional::v_xc(nrxx_current, this->rho_basis_->nxyz, ucell->omega, chg);
+            = XC_Functional::v_xc(nrxx_current, this->rho_basis_->nxyz, chg, GlobalC::rhopw, ucell);
         *(this->etxc_) = std::get<0>(etxc_vtxc_v);
         *(this->vtxc_) = std::get<1>(etxc_vtxc_v);
         v_eff += std::get<2>(etxc_vtxc_v);

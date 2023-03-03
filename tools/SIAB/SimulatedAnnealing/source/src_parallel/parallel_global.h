@@ -9,8 +9,6 @@
 
 #ifdef __MPI
 #include <mpi.h>
-extern MPI_Datatype mpicomplex;
-extern MPI_Op myOp;
 extern MPI_Comm POOL_WORLD;
 #endif
 

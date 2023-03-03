@@ -598,7 +598,7 @@ void unkOverlap_lcao::get_lcao_wfc_global_ik(std::complex<double> **ctot, std::c
 					std::complex<double>* crecv = new std::complex<double>[GlobalV::NBANDS*lgd2];
 					ModuleBase::GlobalFunc::ZEROS(crecv, GlobalV::NBANDS*lgd2);
 					tag = i * 3 + 2;
-					MPI_Recv(crecv,GlobalV::NBANDS*lgd2,mpicomplex,i,tag,DIAG_WORLD, &status);
+					MPI_Recv(crecv,GlobalV::NBANDS*lgd2,MPI_DOUBLE_COMPLEX,i,tag,DIAG_WORLD, &status);
 				
 					for (int ib=0; ib<GlobalV::NBANDS; ib++)
 					{
@@ -647,7 +647,7 @@ void unkOverlap_lcao::get_lcao_wfc_global_ik(std::complex<double> **ctot, std::c
 				}
 			
 				tag = GlobalV::DRANK * 3 + 2;
-				MPI_Send(csend, GlobalV::NBANDS*GlobalC::GridT.lgd, mpicomplex, 0, tag, DIAG_WORLD);
+				MPI_Send(csend, GlobalV::NBANDS*GlobalC::GridT.lgd, MPI_DOUBLE_COMPLEX, 0, tag, DIAG_WORLD);
 
 				delete[] csend;
 			}
@@ -659,7 +659,7 @@ void unkOverlap_lcao::get_lcao_wfc_global_ik(std::complex<double> **ctot, std::c
 	}
 
 	#ifdef __MPI
-	MPI_Bcast(ctot_send,GlobalV::NBANDS*GlobalV::NLOCAL,mpicomplex,0,DIAG_WORLD);
+	MPI_Bcast(ctot_send,GlobalV::NBANDS*GlobalV::NLOCAL,MPI_DOUBLE_COMPLEX,0,DIAG_WORLD);
 	#endif
 
 	for(int ib = 0; ib < GlobalV::NBANDS; ib++)

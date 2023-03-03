@@ -261,9 +261,9 @@ void ESolver_KS_LCAO::postprocess()
 #ifdef __LCAO
     if (GlobalV::out_mul == 1)
     {
-        Mulliken_Charge MC(psid, psi);
-        MC.stdout_mulliken(this->UHM, this->pelec->wg);
-    } // qifeng add 2019/9/10
+        Mulliken_Charge MC;
+        MC.out_mulliken(this->UHM, this->LOC);
+    } // qifeng add 2019/9/10, jiyy modify 2023/2/27
 #endif
 
     int nspin0 = 1;
@@ -439,6 +439,8 @@ void ESolver_KS_LCAO::eachiterinit(const int istep, const int iter)
             // so be careful here, make sure
             // rho1 and rho2 are the same rho.
             // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+            
+            if(GlobalV::NSPIN==4) GlobalC::ucell.cal_ux();
             this->pelec->pot->update_from_charge(this->pelec->charge, &GlobalC::ucell);
             GlobalC::en.delta_escf(this->pelec);
         }
@@ -620,6 +622,7 @@ void ESolver_KS_LCAO::updatepot(const int istep, const int iter)
     }
     if (!this->conv_elec)
     {
+        if(GlobalV::NSPIN==4) GlobalC::ucell.cal_ux();
         this->pelec->pot->update_from_charge(this->pelec->charge, &GlobalC::ucell);
         GlobalC::en.delta_escf(this->pelec);
     }

@@ -58,6 +58,8 @@
  *   - judge whether the KS_SOLVER is column major
  * - VECTOR_TO_PTR
  *   - get a copy of the ptr of a vector
+ * - VECTOR_TO_PTR_v3double
+ *    - get a copy of the ptr of a vector whose elements' type belongs to Vector3<double>
  */
 
 inline void EXPECT_COMPLEX_FLOAT_EQ(const std::complex<float>& a, const std::complex<float>& b)
@@ -670,4 +672,17 @@ TEST_F(GlobalFunctionTest, Note)
     ifs.close();
 }
 */
+
+TEST_F(GlobalFunctionTest,Vector2Ptr_v3double)
+{
+    int size = 100;
+    std::vector<ModuleBase::Vector3<double>> abcd(size, ModuleBase::Vector3<double>(1.1,2.2,3.3));
+    ModuleBase::Vector3<double>* ptr_v3d = nullptr;
+    ptr_v3d=ModuleBase::GlobalFunc::VECTOR_TO_PTR(abcd);
+    for (int i = 0; i < size; ++i)
+    {
+        EXPECT_EQ(ptr_v3d[i],ModuleBase::Vector3<double>(1.1,2.2,3.3));
+    }
+}
+
 

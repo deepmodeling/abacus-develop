@@ -1171,7 +1171,7 @@ void K_Vectors::set_both_kvec_after_vc(const ModuleBase::Matrix3 &G, const Modul
     kc_done = false;
     if (!kc_done && kd_done)
     {
-        for (int i = 0;i < nkstot;i++)
+        for (int i = 0;i < nks;i++)
         {
 //wrong!!   kvec_c[i] = G * kvec_d[i];
 // mohan fixed bug 2010-1-10
@@ -1193,7 +1193,7 @@ void K_Vectors::set_both_kvec_after_vc(const ModuleBase::Matrix3 &G, const Modul
     else if (kc_done && !kd_done)
     {
         ModuleBase::Matrix3 RT = R.Transpose();
-        for (int i = 0;i < nkstot;i++)
+        for (int i = 0;i < nks;i++)
         {
 //			std::cout << " ik=" << i
 //				<< " kvec.x=" << kvec_c[i].x
@@ -1212,7 +1212,7 @@ void K_Vectors::set_both_kvec_after_vc(const ModuleBase::Matrix3 &G, const Modul
 	<< std::setw(20) << "DIRECT_Z"
 	<< std::setw(20) << "WEIGHT" << std::endl;
 
-	for(int i=0; i<nkstot; i++)
+	for(int i=0; i<nks; i++)
 	{
         GlobalV::ofs_running << " "
 			<< std::setw(8) << i+1

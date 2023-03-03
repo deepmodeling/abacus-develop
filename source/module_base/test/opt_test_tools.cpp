@@ -86,9 +86,11 @@ double LinearEqu::dfuncdstp(double *x, double *p)
     return result;
 }
 
+namespace ModuleESolver
+{
 // f(x) = xAx/2 - bx
 // A must be symmetrical positive definite matrix
-double MinFunc::func(double *x)
+double ESolver_OF::func(double *x)
 {
     double result = 0.;
     result += pow(x[0] - x[1] - 2, 4.);
@@ -101,7 +103,7 @@ double MinFunc::func(double *x)
 }
 
 // df(x)/dx = Ax - b
-void MinFunc::dfuncdx(double *x, double *gradient)
+void ESolver_OF::dfuncdx(double *x, double *gradient)
 {
     gradient[0] = 4 * pow(x[0] - x[1] - 2, 3) + 2 * (x[0] * x[1] - x[2] + 1) * x[1] + 2 * (x[0] - 4);
     gradient[1] = -4 * pow(x[0] - x[1] - 2, 3) + 2 * (x[0] * x[1] - x[2] + 1) * x[0];
@@ -113,7 +115,7 @@ void MinFunc::dfuncdx(double *x, double *gradient)
 
 // x = x + ap
 // df(x)/da = df(x)/dx * dx/da = gradient*p
-double MinFunc::dfuncdstp(double *x, double *p)
+double ESolver_OF::dfuncdstp(double *x, double *p)
 {
     double *grad = new double[3];
     dfuncdx(x, grad);
@@ -121,4 +123,5 @@ double MinFunc::dfuncdstp(double *x, double *p)
     for (int i = 0; i < 3; ++i) result += grad[i] * p[i];
     delete[] grad;
     return result;
+}
 }
