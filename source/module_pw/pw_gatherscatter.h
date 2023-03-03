@@ -95,7 +95,7 @@ void PW_Basis:: gathers_scatterp(std::complex<T> *in, std::complex<T> *out)
     if(this->poolnproc == 1) //In this case nrxx=fftnx*fftny*nz, nst = nstot, 
     {
 #ifdef _OPENMP
-#pragma omp parallel for schedule(static, 1024)
+#pragma omp parallel for schedule(static, 4096/sizeof(T))
 #endif
         for(int i = 0; i < this->nrxx; ++i)
         {
@@ -148,7 +148,7 @@ void PW_Basis:: gathers_scatterp(std::complex<T> *in, std::complex<T> *out)
     else if(typeid(T) == typeid(float))
         MPI_Alltoallv(out, numg, startg, MPI_COMPLEX, in, numr, startr, MPI_COMPLEX, this->pool_world);
 #ifdef _OPENMP
-#pragma omp parallel for schedule(static, 1024)
+#pragma omp parallel for schedule(static, 4096/sizeof(T))
 #endif
     for(int i = 0; i < this->nrxx; ++i)
     {
