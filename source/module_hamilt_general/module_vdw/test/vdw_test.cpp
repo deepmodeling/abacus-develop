@@ -20,10 +20,13 @@
 
 /**
 * - Tested functions:
-*   - make_vdw:
+*   - vdw::make_vdw():
 *       Based on the value of INPUT.vdw_method, construct 
 *       Vdwd2 or Vdwd3 class, and do the initialization.
-*   - 
+*   - vdw::get_energy()/vdw::get_force()/vdw::get_stress():
+*       Calculate the VDW (d2, d3_0 and d3_bj types) enerygy, force, stress.    
+*   - Vdwd2Parameters::initial_parameters()
+*   - Vdwd3Parameters::initial_parameters()
 */
 
 pseudo_nc::pseudo_nc()
