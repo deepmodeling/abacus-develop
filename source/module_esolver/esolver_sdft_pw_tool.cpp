@@ -335,14 +335,14 @@ void ESolver_SDFT_PW::sKG(const int nche_KG, const double fwhmin, const double w
             {
                 const int idnb_per = id * totbands_per;
                 const int idnb = id * totbands;
-                MPI_Allgatherv(&j1psi(idnb_per,0), ksbandper * npwx, mpicomplex, 
-                            &j1psi_tot(idnb,0), nrecv_ks, displs_ks, mpicomplex, PARAPW_WORLD);
-                MPI_Allgatherv(&j2psi(idnb_per,0), ksbandper * npwx, mpicomplex, 
-                            &j2psi_tot(idnb,0), nrecv_ks, displs_ks, mpicomplex, PARAPW_WORLD);
-                MPI_Allgatherv(&j1psi(idnb_per + ksbandper,0), nchip * npwx, mpicomplex, 
-                            &j1psi_tot(idnb + totbands_ks, 0), nrecv_sto, displs_sto, mpicomplex, PARAPW_WORLD);
-                MPI_Allgatherv(&j2psi(idnb_per + ksbandper,0), nchip * npwx, mpicomplex, 
-                            &j2psi_tot(idnb + totbands_ks,0), nrecv_sto, displs_sto, mpicomplex, PARAPW_WORLD);
+                MPI_Allgatherv(&j1psi(idnb_per,0), ksbandper * npwx, MPI_DOUBLE_COMPLEX, 
+                            &j1psi_tot(idnb,0), nrecv_ks, displs_ks, MPI_DOUBLE_COMPLEX, PARAPW_WORLD);
+                MPI_Allgatherv(&j2psi(idnb_per,0), ksbandper * npwx, MPI_DOUBLE_COMPLEX, 
+                            &j2psi_tot(idnb,0), nrecv_ks, displs_ks, MPI_DOUBLE_COMPLEX, PARAPW_WORLD);
+                MPI_Allgatherv(&j1psi(idnb_per + ksbandper,0), nchip * npwx, MPI_DOUBLE_COMPLEX, 
+                            &j1psi_tot(idnb + totbands_ks, 0), nrecv_sto, displs_sto, MPI_DOUBLE_COMPLEX, PARAPW_WORLD);
+                MPI_Allgatherv(&j2psi(idnb_per + ksbandper,0), nchip * npwx, MPI_DOUBLE_COMPLEX, 
+                            &j2psi_tot(idnb + totbands_ks,0), nrecv_sto, displs_sto, MPI_DOUBLE_COMPLEX, PARAPW_WORLD);
             }
             p_j1psi = &j1psi_tot;
             p_j2psi = &j2psi_tot;
@@ -393,10 +393,10 @@ void ESolver_SDFT_PW::sKG(const int nche_KG, const double fwhmin, const double w
             {
                 ModuleBase::timer::tick(this->classname,"bands_gather");
                 exppsi_tot.resize(1,totbands,npwx);
-                MPI_Allgatherv(&exppsi(0,0), ksbandper* npwx, mpicomplex, 
-                                &exppsi_tot(0,0), nrecv_ks, displs_ks, mpicomplex, PARAPW_WORLD);
-                MPI_Allgatherv(&exppsi(ksbandper,0), nchip * npwx, mpicomplex, 
-                                &exppsi_tot(totbands_ks,0), nrecv_sto, displs_sto, mpicomplex, PARAPW_WORLD);
+                MPI_Allgatherv(&exppsi(0,0), ksbandper* npwx, MPI_DOUBLE_COMPLEX, 
+                                &exppsi_tot(0,0), nrecv_ks, displs_ks, MPI_DOUBLE_COMPLEX, PARAPW_WORLD);
+                MPI_Allgatherv(&exppsi(ksbandper,0), nchip * npwx, MPI_DOUBLE_COMPLEX, 
+                                &exppsi_tot(totbands_ks,0), nrecv_sto, displs_sto, MPI_DOUBLE_COMPLEX, PARAPW_WORLD);
                 p_exppsi = &exppsi_tot;
                 ModuleBase::timer::tick(this->classname,"bands_gather");
             }

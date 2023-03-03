@@ -53,7 +53,7 @@ template <typename T> void Input_Conv::parse_expression(const std::string &fn, s
     regcomp(&reg, pattern.c_str(), REG_EXTENDED);
     regmatch_t pmatch[1];
     const size_t nmatch = 1;
-    for (int i = 0; i < str.size(); ++i)
+    for (size_t i = 0; i < str.size(); ++i)
     {
         if (str[i] == "")
         {
@@ -61,7 +61,7 @@ template <typename T> void Input_Conv::parse_expression(const std::string &fn, s
         }
         int status = regexec(&reg, str[i].c_str(), nmatch, pmatch, 0);
         std::string sub_str = "";
-        for (int j = pmatch[0].rm_so; j != pmatch[0].rm_eo; ++j)
+        for (size_t j = pmatch[0].rm_so; j != pmatch[0].rm_eo; ++j)
         {
             sub_str += str[i][j];
         }
@@ -78,8 +78,8 @@ template <typename T> void Input_Conv::parse_expression(const std::string &fn, s
             // std::vector<double> ocp_temp(num, occ);
             // const std::vector<double>::iterator dest = vec.begin() + count;
             // copy(ocp_temp.begin(), ocp_temp.end(), dest);
-            //count += num;
-            for (size_t i = 0; i != num; i++)
+            // count += num;
+            for (size_t k = 0; k != num; k++)
                 vec.emplace_back(occ);
         }
         else

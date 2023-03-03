@@ -6,21 +6,21 @@ for ((i=0;i<4;++i))
 do
 
 if ((i==0)) ;then
-make -j12 CC=g++ DEBUG=ON > /dev/null 2>&1
+make -j12 --silent CXX=g++ DEBUG=ON 
 echo "Test for Serial Version:"
 ./pw_test.exe
 
 elif ((i==1)) ;then
-make -j12 CC=g++ FLOAT=ON DEBUG=ON > /dev/null 2>&1
+make -j12 --silent CXX=g++ FLOAT=ON DEBUG=ON
 echo "Test for Serial Version with single precision:"
 ./pw_test.exe
 
 elif ((i==2)) ;then
-make -j12 CC=mpicxx DEBUG=ON > /dev/null 2>&1
+make -j12 --silent CXX=mpicxx DEBUG=ON
 echo "Test for MPI Version:"
 
 elif ((i==3)) ;then
-make -j12 CC=mpicxx FLOAT=ON DEBUG=ON > /dev/null 2>&1
+make -j12 --silent CXX=mpicxx FLOAT=ON DEBUG=ON
 echo "Test for MPI Version with single precision:"
 fi
 if ((i>=2)) ; then
@@ -43,7 +43,7 @@ if ((i>=2)) ; then
     cat _tmp.txt|grep FAILED
 fi
 
-make clean > /dev/null 2>&1
+make --silent clean
 
 done
 
