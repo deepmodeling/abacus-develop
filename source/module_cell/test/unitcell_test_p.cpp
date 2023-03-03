@@ -62,8 +62,6 @@ Magnetism::~Magnetism()
  *     - update_pos_tau(const double* pos)
  *   - UpdatePosTau2
  *     - update_pos_tau(const ModuleBase::Vector3<double>* posd_in)
- *   - UpdatePosTaud
- *     - update_pos_taud(double* posd_in)
  *   - UpdateVel
  *     - update_vel(const ModuleBase::Vector3<double>* vel_in)
  */
