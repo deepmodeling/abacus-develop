@@ -28,6 +28,12 @@ void ModuleIO::write_dipole(const double *rho_save,
         }
     }
 
+    double bmod[3];
+    for (int i = 0; i < 3; i++)
+    {
+        bmod[i] = prepare(GlobalC::ucell, i);
+    }
+
 #ifndef __MPI
     double dipole_elec_x = 0.0, dipole_elec_y = 0.0, dipole_elec_z = 0.0;
     for (int k = 0; k < GlobalC::rhopw->nz; k++)
@@ -54,89 +60,6 @@ void ModuleIO::write_dipole(const double *rho_save,
 
     ofs << istep << " " << dipole_elec_x << " " << dipole_elec_y << dipole_elec_z;
 #else
-    double dipole_elec_x = 0.0, dipole_elec_y = 0.0, dipole_elec_z = 0.0;
-
-    // only do in the first pool.
-    if (GlobalV::MY_POOL == 0)
-    {
-        // num_z: how many planes on processor 'ip'
-        int *num_z = new int[GlobalV::NPROC_IN_POOL];
-        ModuleBase::GlobalFunc::ZEROS(num_z, GlobalV::NPROC_IN_POOL);
-        for (int iz = 0; iz < GlobalC::bigpw->nbz; iz++)
-        {
-            int ip = iz % GlobalV::NPROC_IN_POOL;
-            num_z[ip] += GlobalC::bigpw->bz;
-        }
-
-        // start_z: start position of z in
-        // processor ip.
-        int *start_z = new int[GlobalV::NPROC_IN_POOL];
-        ModuleBase::GlobalFunc::ZEROS(start_z, GlobalV::NPROC_IN_POOL);
-        for (int ip = 1; ip < GlobalV::NPROC_IN_POOL; ip++)
-        {
-            start_z[ip] = start_z[ip - 1] + num_z[ip - 1];
-        }
-
-        // which_ip: found iz belongs to which ip.
-        int *which_ip = new int[GlobalC::rhopw->nz];
-        ModuleBase::GlobalFunc::ZEROS(which_ip, GlobalC::rhopw->nz);
-        for (int iz = 0; iz < GlobalC::rhopw->nz; iz++)
-        {
-            for (int ip = 0; ip < GlobalV::NPROC_IN_POOL; ip++)
-            {
-                if (iz >= start_z[GlobalV::NPROC_IN_POOL - 1])
-                {
-                    which_ip[iz] = GlobalV::NPROC_IN_POOL - 1;
-                    break;
-                }
-                else if (iz >= start_z[ip] && iz < start_z[ip + 1])
-                {
-                    which_ip[iz] = ip;
-                    break;
-                }
-            }
-            //			GlobalV::ofs_running << "\n iz=" << iz << " ip=" << which_ip[iz];
-        }
-
-        // int count=0;
-        int nxy = GlobalC::rhopw->nx * GlobalC::rhopw->ny;
-        double *zpiece = new double[nxy];
-
-        // save the rho one z by one z.
-        for (int iz = 0; iz < GlobalC::rhopw->nz; iz++)
-        {
-            //	std::cout << "\n iz=" << iz << std::endl;
-            // tag must be different for different iz.
-            ModuleBase::GlobalFunc::ZEROS(zpiece, nxy);
-            int tag = iz;
-            MPI_Status ierror;
-
-            // case 1: the first part of rho in processor 0.
-            if (which_ip[iz] == 0 && GlobalV::RANK_IN_POOL == 0)
-            {
-                for (int ir = 0; ir < nxy; ir++)
-                {
-                    // mohan change to rho_save on 2012-02-10
-                    // because this can make our next restart calculation lead
-                    // to the same scf_thr as the one saved.
-                    zpiece[ir] = rho_save[ir * GlobalC::rhopw->nplane + iz - GlobalC::rhopw->startz_current];
-                    // GlobalV::ofs_running << "\n get zpiece[" << ir << "]=" << zpiece[ir] << "
-                    // ir*GlobalC::pw.nczp+iz=" << ir*GlobalC::pw.nczp+iz;
-                }
-            }
-            // case 2: > first part rho: send the rho to
-            // processor 0.
-            else if (which_ip[iz] == GlobalV::RANK_IN_POOL)
-            {
-                for (int ir = 0; ir < nxy; ir++)
-                {
-                    // zpiece[ir] = rho[is][ir*num_z[GlobalV::RANK_IN_POOL]+iz];
-                    zpiece[ir] = rho_save[ir * GlobalC::rhopw->nplane + iz - GlobalC::rhopw->startz_current];
-                    // GlobalV::ofs_running << "\n get zpiece[" << ir << "]=" << zpiece[ir] << "
-                    // ir*GlobalC::pw.nczp+iz=" << ir*GlobalC::pw.nczp+iz;
-                }
-                MPI_Send(zpiece, nxy, MPI_DOUBLE, 0, tag, POOL_WORLD);
-            }
 
             // case 2: > first part rho: processor 0 receive the rho
             // from other processors
@@ -185,10 +108,13 @@ void ModuleIO::write_dipole(const double *rho_save,
 
         delete[] zpiece;
 
-        double nxyz = GlobalC::rhopw->nx * GlobalC::rhopw->ny * GlobalC::rhopw->nz;
-        dipole_elec_x *= GlobalC::ucell.omega / static_cast<double>(nxyz);
-        dipole_elec_y *= GlobalC::ucell.omega / static_cast<double>(nxyz);
-        dipole_elec_z *= GlobalC::ucell.omega / static_cast<double>(nxyz);
+    Parallel_Reduce::reduce_double_pool(dipole_elec[0]);
+    Parallel_Reduce::reduce_double_pool(dipole_elec[1]);
+    Parallel_Reduce::reduce_double_pool(dipole_elec[2]);
+    for (int i = 0; i < 3; ++i)
+    {
+        dipole_elec[i] *= GlobalC::ucell.lat0 / bmod[i] * GlobalC::ucell.omega / GlobalC::rhopw->nxyz;
+    }
 
         std::cout << std::setprecision(8) << "dipole_elec_x: " << dipole_elec_x << std::endl;
         std::cout << std::setprecision(8) << "dipole_elec_y: " << dipole_elec_y << std::endl;
@@ -196,117 +122,39 @@ void ModuleIO::write_dipole(const double *rho_save,
 
         ofs << istep << " " << dipole_elec_x << " " << dipole_elec_y << " " << dipole_elec_z << std::endl;
 
-        
-        double dipole_ion_x = 0.0, dipole_ion_y = 0.0, dipole_ion_z = 0.0, dipole_sum = 0.0;
-        if (GlobalC::ucell.ntype == 1)
+    double dipole_ion[3] = {0.0};
+    double dipole_sum = 0.0;
+
+    for (int i = 0; i < 3; ++i)
+    {
+        for (int it = 0; it < GlobalC::ucell.ntype; ++it)
         {
-            for (int ia = 0; ia < GlobalC::ucell.atoms[0].na; ia++)
+            double sum = 0;
+            for (int ia = 0; ia < GlobalC::ucell.atoms[it].na; ++ia)
             {
-                dipole_ion_x += GlobalC::ucell.atoms[0].taud[ia].x * GlobalC::ucell.lat0 * 0.529177
-                                * INPUT.td_val_elec_01;
-                dipole_ion_y += GlobalC::ucell.atoms[0].taud[ia].y * GlobalC::ucell.lat0 * 0.529177
-                                * INPUT.td_val_elec_01;
-                dipole_ion_z += GlobalC::ucell.atoms[0].taud[ia].z * GlobalC::ucell.lat0 * 0.529177
-                                * INPUT.td_val_elec_01;
+
+                sum += GlobalC::ucell.atoms[it].taud[ia][i];
             }
+            dipole_ion[i] += sum * GlobalC::ucell.atoms[it].ncpp.zv;
         }
-        else if (GlobalC::ucell.ntype == 2)
-        {
-            for (int ia = 0; ia < GlobalC::ucell.atoms[0].na; ia++)
-            {
-                dipole_ion_x += GlobalC::ucell.atoms[0].taud[ia].x * GlobalC::ucell.lat0 * 0.529177
-                                * INPUT.td_val_elec_01;
-                dipole_ion_y += GlobalC::ucell.atoms[0].taud[ia].y * GlobalC::ucell.lat0 * 0.529177
-                                * INPUT.td_val_elec_01;
-                dipole_ion_z += GlobalC::ucell.atoms[0].taud[ia].z * GlobalC::ucell.lat0 * 0.529177
-                                * INPUT.td_val_elec_01;
-            }
-            for (int ia = 0; ia < GlobalC::ucell.atoms[1].na; ia++)
-            {
-                dipole_ion_x += GlobalC::ucell.atoms[1].taud[ia].x * GlobalC::ucell.lat0 * 0.529177
-                                * INPUT.td_val_elec_02;
-                dipole_ion_y += GlobalC::ucell.atoms[1].taud[ia].y * GlobalC::ucell.lat0 * 0.529177
-                                * INPUT.td_val_elec_02;
-                dipole_ion_z += GlobalC::ucell.atoms[1].taud[ia].z * GlobalC::ucell.lat0 * 0.529177
-                                * INPUT.td_val_elec_02;
-            }
-        }
-        else if (GlobalC::ucell.ntype == 3)
-        {
-            for (int ia = 0; ia < GlobalC::ucell.atoms[0].na; ia++)
-            {
-                dipole_ion_x += GlobalC::ucell.atoms[0].taud[ia].x * GlobalC::ucell.lat0 * 0.529177
-                                * INPUT.td_val_elec_01;
-                dipole_ion_y += GlobalC::ucell.atoms[0].taud[ia].y * GlobalC::ucell.lat0 * 0.529177
-                                * INPUT.td_val_elec_01;
-                dipole_ion_z += GlobalC::ucell.atoms[0].taud[ia].z * GlobalC::ucell.lat0 * 0.529177
-                                * INPUT.td_val_elec_01;
-            }
-            for (int ia = 0; ia < GlobalC::ucell.atoms[1].na; ia++)
-            {
-                dipole_ion_x += GlobalC::ucell.atoms[1].taud[ia].x * GlobalC::ucell.lat0 * 0.529177
-                                * INPUT.td_val_elec_02;
-                dipole_ion_y += GlobalC::ucell.atoms[1].taud[ia].y * GlobalC::ucell.lat0 * 0.529177
-                                * INPUT.td_val_elec_02;
-                dipole_ion_z += GlobalC::ucell.atoms[1].taud[ia].z * GlobalC::ucell.lat0 * 0.529177
-                                * INPUT.td_val_elec_02;
-            }
-            for (int ia = 0; ia < GlobalC::ucell.atoms[2].na; ia++)
-            {
-                dipole_ion_x += GlobalC::ucell.atoms[2].taud[ia].x * GlobalC::ucell.lat0 * 0.529177
-                                * INPUT.td_val_elec_03;
-                dipole_ion_y += GlobalC::ucell.atoms[2].taud[ia].y * GlobalC::ucell.lat0 * 0.529177
-                                * INPUT.td_val_elec_03;
-                dipole_ion_z += GlobalC::ucell.atoms[2].taud[ia].z * GlobalC::ucell.lat0 * 0.529177
-                                * INPUT.td_val_elec_03;
-            }
-        }
-        else
-        {
-            std::cout << "atom ntype is too large!" << std::endl;
-        }
-/*
-        for(int it=1; it<(GlobalC::ucell.ntype); it++)
-                {
-                    for(int ia=0; ia<GlobalC::ucell.atoms[it].na; ia++)
-                    {
-                        dipole_ion_x += GlobalC::ucell.atoms[it].taud[ia].x*GlobalC::ucell.lat0*0.529177*6;
-                        dipole_ion_y += GlobalC::ucell.atoms[it].taud[ia].y*GlobalC::ucell.lat0*0.529177*6;
-                        dipole_ion_z += GlobalC::ucell.atoms[it].taud[ia].z*GlobalC::ucell.lat0*0.529177*6;
-
-                    }
-                        dipole_ion_x += GlobalC::ucell.atoms[it-1].taud[0].x*GlobalC::ucell.lat0*0.529177*1;
-                        dipole_ion_y += GlobalC::ucell.atoms[it-1].taud[0].y*GlobalC::ucell.lat0*0.529177*1;
-                        dipole_ion_z += GlobalC::ucell.atoms[it-1].taud[0].z*GlobalC::ucell.lat0*0.529177*1;
-                }
-
-                for(int it=0; it<GlobalC::ucell.ntype; it++)
-                {
-                    for(int ia=0; ia<GlobalC::ucell.atoms[it].na; ia++)
-                    {
-                        dipole_ion_x += GlobalC::ucell.atoms[it].taud[ia].x*GlobalC::ucell.lat0*0.529177*5;
-                        dipole_ion_y += GlobalC::ucell.atoms[it].taud[ia].y*GlobalC::ucell.lat0*0.529177*5;
-                        dipole_ion_z += GlobalC::ucell.atoms[it].taud[ia].z*GlobalC::ucell.lat0*0.529177*5;
-
-                    }
-                }
-*/     
-
-        std::cout << std::setprecision(8) << "dipole_ion_x: " << dipole_ion_x << std::endl;
-        std::cout << std::setprecision(8) << "dipole_ion_y: " << dipole_ion_y << std::endl;
-        std::cout << std::setprecision(8) << "dipole_ion_z: " << dipole_ion_z << std::endl;
-
-        double dipole_x = 0.0, dipole_y = 0.0, dipole_z = 0.0;
-        dipole_x = dipole_ion_x - dipole_elec_x;
-        dipole_y = dipole_ion_y - dipole_elec_y;
-        dipole_z = dipole_ion_z - dipole_elec_z;
-        std::cout << std::setprecision(8) << "dipole_x: " << dipole_x << std::endl;
-        std::cout << std::setprecision(8) << "dipole_y: " << dipole_y << std::endl;
-        std::cout << std::setprecision(8) << "dipole_z: " << dipole_z << std::endl;
-        //dipole_sum = sqrt(dipole_x * dipole_x + dipole_y * dipole_y + dipole_z * dipole_z);
-        //std::cout << std::setprecision(8) << "dipole_sum: " << dipole_sum << std::endl;
+        dipole_ion[i] *= GlobalC::ucell.lat0 / bmod[i]; //* ModuleBase::FOUR_PI / GlobalC::ucell.omega;
     }
-    MPI_Barrier(MPI_COMM_WORLD);
+
+    std::cout << std::setprecision(8) << "dipole_ion_x: " << dipole_ion[0] << std::endl;
+    std::cout << std::setprecision(8) << "dipole_ion_y: " << dipole_ion[1] << std::endl;
+    std::cout << std::setprecision(8) << "dipole_ion_z: " << dipole_ion[2] << std::endl;
+
+    double dipole[3] = {0.0};
+    for (int i = 0; i < 3; ++i)
+    {
+        dipole[i] = dipole_ion[i] - dipole_elec[i];
+    }
+    std::cout << std::setprecision(8) << "dipole_x: " << dipole[0] << std::endl;
+    std::cout << std::setprecision(8) << "dipole_y: " << dipole[1] << std::endl;
+    std::cout << std::setprecision(8) << "dipole_z: " << dipole[2] << std::endl;
+    dipole_sum = sqrt(dipole[0] * dipole[0] + dipole[1] * dipole[1] + dipole[2] * dipole[2]);
+    std::cout << std::setprecision(8) << "dipole_sum: " << dipole_sum << std::endl;
+
 #endif
 
     // calculate ion dipole;
@@ -318,4 +166,34 @@ void ModuleIO::write_dipole(const double *rho_save,
     }
 
     return;
+}
+
+double ModuleIO::prepare(const UnitCell &cell, int &dir)
+{
+    double bvec[3] = {0.0};
+    double bmod = 0.0;
+    if (dir == 0)
+    {
+        bvec[0] = cell.G.e11;
+        bvec[1] = cell.G.e12;
+        bvec[2] = cell.G.e13;
+    }
+    else if (dir == 1)
+    {
+        bvec[0] = cell.G.e21;
+        bvec[1] = cell.G.e22;
+        bvec[2] = cell.G.e23;
+    }
+    else if (dir == 2)
+    {
+        bvec[0] = cell.G.e31;
+        bvec[1] = cell.G.e32;
+        bvec[2] = cell.G.e33;
+    }
+    else
+    {
+        ModuleBase::WARNING_QUIT("ModuleIO::prepare", "direction is wrong!");
+    }
+    bmod = sqrt(pow(bvec[0], 2) + pow(bvec[1], 2) + pow(bvec[2], 2));
+    return bmod;
 }
