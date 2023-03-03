@@ -3,8 +3,10 @@
 #include "module_base/mathzone.h"
 #include "module_cell/unitcell.h"
 
+#ifdef __LCAO
 InfoNonlocal::InfoNonlocal(){}
 InfoNonlocal::~InfoNonlocal(){}
+#endif
 Magnetism::Magnetism(){}
 Magnetism::~Magnetism(){}
 

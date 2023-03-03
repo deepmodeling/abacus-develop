@@ -7,8 +7,10 @@
 #include<vector>
 #include<valarray>
 
+#ifdef __LCAO
 InfoNonlocal::InfoNonlocal(){}
 InfoNonlocal::~InfoNonlocal(){}
+#endif
 Magnetism::Magnetism()
 {
 	this->tot_magnetization = 0.0;
