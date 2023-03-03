@@ -5,6 +5,16 @@
 #include "module_base/matrix.h"
 #include "../../../module_base/parallel_reduce.h"
 
+/************************************************
+*  unit test of functionals
+***********************************************/
+
+// For more information of the functions, check the comment of xc_functional.h
+// Three functions are tested:
+// v_xc, the unified interface of LDA and GGA functionals
+// v_xc_libxc, called by v_xc, when we use functionals from LIBXC
+// v_xc_meta, unified interface of mGGA functionals
+
 void Parallel_Reduce::reduce_double_pool(double &object)
 {
 #ifdef __MPI

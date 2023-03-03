@@ -2,6 +2,14 @@
 #include "gtest/gtest.h"
 #include "../exx_info.h"
 
+/************************************************
+*  unit test of set_xc_type
+***********************************************/
+
+// For more information of the functions, check the comment of xc_functional.h
+// the functionals are not tested because they all use libxc
+// so only set_xc_type is called
+
 namespace ModuleBase
 {
     void WARNING_QUIT(const std::string &file,const std::string &description) {return ;}
