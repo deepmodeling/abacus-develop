@@ -1,0 +1,28 @@
+name: Build Test
+on:
+  push:
+    paths-ignore:
+      - 'docs/**'
+  pull_request:
+    paths-ignore:
+      - 'docs/**'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+        - tag: intel
+          build_args: "CXX=mpiicpc ELPA_LIB_DIR=/usr/local/lib ELPA_INCLUDE_DIR=/usr/local/include CEREAL_DIR=/usr/include/cereal OPENMP=ON"
+          name: "Build with Makefile & Intel compilers"
+    name: ${{ matrix.name }}
+    container: ghcr.io/deepmodeling/abacus-${{ matrix.tag }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Build
+        run: |
+          cd source 
+          make -j2 ${{ matrix.build_args }}
+          

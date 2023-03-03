@@ -137,3 +137,8 @@ AddTest(
   TARGET base_abfs-vector3_order
   SOURCES abfs-vector3_order_test.cpp ../abfs-vector3_order.cpp
 )
+
+AddTest(
+  TARGET base_global_file
+  SOURCES global_file_test.cpp ../global_file.cpp  ../global_variable.cpp ../memory.cpp ../timer.cpp
+)

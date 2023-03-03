@@ -261,9 +261,9 @@ void ESolver_KS_LCAO::postprocess()
 #ifdef __LCAO
     if (GlobalV::out_mul == 1)
     {
-        Mulliken_Charge MC(psid, psi);
-        MC.stdout_mulliken(this->UHM, this->pelec->wg);
-    } // qifeng add 2019/9/10
+        Mulliken_Charge MC;
+        MC.out_mulliken(this->UHM, this->LOC);
+    } // qifeng add 2019/9/10, jiyy modify 2023/2/27
 #endif
 
     int nspin0 = 1;

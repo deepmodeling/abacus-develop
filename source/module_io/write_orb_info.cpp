@@ -6,7 +6,7 @@ void ModuleIO::write_orb_info(void)
     std::stringstream os;
     os << GlobalV::global_out_dir << "Orbital";
     std::ofstream out(os.str().c_str());
-    out << std::setw(5) << "io" << std::setw(8) << "spec" << std::setw(5) << "l" << std::setw(5) << "m" << std::setw(5)
+    out << std::setw(5) << "#io" << std::setw(8) << "spec" << std::setw(5) << "l" << std::setw(5) << "m" << std::setw(5)
         << "z" << std::setw(5) << "sym" << std::endl;
 
     for (int i = 0; i < GlobalC::ucell.nat; i++)
@@ -24,12 +24,12 @@ void ModuleIO::write_orb_info(void)
         }
     }
     out << std::endl << std::endl;
-    out << std::setw(5) << "io" << std::setw(2) << "=" << std::setw(2) << "Orbital index in supercell" << std::endl;
-    out << std::setw(5) << "spec" << std::setw(2) << "=" << std::setw(2) << "Atomic species label" << std::endl;
-    out << std::setw(5) << "l" << std::setw(2) << "=" << std::setw(2) << "Angular mumentum quantum number" << std::endl;
-    out << std::setw(5) << "m" << std::setw(2) << "=" << std::setw(2) << "Magnetic quantum number" << std::endl;
-    out << std::setw(5) << "z" << std::setw(2) << "=" << std::setw(2) << "Zeta index of orbital" << std::endl;
-    out << std::setw(5) << "sym" << std::setw(2) << "=" << std::setw(2) << "Symmetry name of real orbital" << std::endl;
+    out << std::setw(5) << "#io" << std::setw(2) << "=" << std::setw(2) << "Orbital index in supercell" << std::endl;
+    out << std::setw(5) << "#spec" << std::setw(2) << "=" << std::setw(2) << "Atomic species label" << std::endl;
+    out << std::setw(5) << "#l" << std::setw(2) << "=" << std::setw(2) << "Angular mumentum quantum number" << std::endl;
+    out << std::setw(5) << "#m" << std::setw(2) << "=" << std::setw(2) << "Magnetic quantum number" << std::endl;
+    out << std::setw(5) << "#z" << std::setw(2) << "=" << std::setw(2) << "Zeta index of orbital" << std::endl;
+    out << std::setw(5) << "#sym" << std::setw(2) << "=" << std::setw(2) << "Symmetry name of real orbital" << std::endl;
     out.close();
 
     return;
