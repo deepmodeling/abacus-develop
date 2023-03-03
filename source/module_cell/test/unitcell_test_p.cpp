@@ -69,12 +69,14 @@ Magnetism::~Magnetism()
  */
 
 //mock function
+#ifdef __LCAO
 void LCAO_Orbitals::bcast_files(
 	const int &ntype_in,
 	const int &my_rank)
 {
 	return;
 }
+#endif
 
 class UcellTestPrepare
 {
