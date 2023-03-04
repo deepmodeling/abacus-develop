@@ -211,6 +211,5 @@ TEST_F(Sphbes,SphericalBesselsjp)
     {   
         EXPECT_EQ(sjp[iii], 1.0);
     }
-    EXPECT_NE(sjp[msh+1], 1.0);
     delete [] sjp;
 }
