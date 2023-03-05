@@ -954,6 +954,7 @@ void Symmetry::pricell(double* pos)
 {
     bool no_diff = 0;
     s_flag = 0;
+    ptrans.clear();
 
     for (int it = 0; it < ntype; it++)
     {
