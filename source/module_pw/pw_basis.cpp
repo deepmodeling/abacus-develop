@@ -1,4 +1,6 @@
 #include "pw_basis.h"
+
+#include <utility>
 #include "../module_base/mymath.h"
 #include "../module_base/timer.h"
 #include "../module_base/global_function.h"
@@ -9,6 +11,12 @@ namespace ModulePW
 PW_Basis::PW_Basis()
 {
     classname="PW_Basis";
+}
+
+PW_Basis::PW_Basis(std::string device_, std::string precision_) : device(std::move(device_)), precision(std::move(precision_)) {
+    classname="PW_Basis";
+    this->ft.set_device(this->device);
+    this->ft.set_precision(this->precision);
 }
 
 PW_Basis:: ~PW_Basis()
@@ -31,7 +39,7 @@ PW_Basis:: ~PW_Basis()
     delete[] ig2igg;
     delete[] gg_uniq;
 #if defined(__CUDA) || defined(__ROCM)
-    if (GlobalV::device_flag == "gpu") {
+    if (this->device == "gpu") {
         delmem_int_op()(gpu_ctx, this->d_is2fftixy);
     }
 #endif
@@ -215,5 +223,12 @@ void PW_Basis::getfftixy2is(int * fftixy2is)
     }
 }
 
+void PW_Basis::set_device(std::string device_) {
+    this->device = std::move(device_);
+}
+
+void PW_Basis::set_precision(std::string precision_) {
+    this->precision = std::move(precision_);
+}
 
 }

@@ -112,7 +112,6 @@ AddTest(
   SOURCES container_operator_test.cpp ../container_operator.h
 )
 
-#add_definitions(-D__MIX_PRECISION)
 AddTest(
   TARGET base_math_chebyshev
   LIBS ${math_libs}
@@ -137,4 +136,9 @@ AddTest(
 AddTest(
   TARGET base_abfs-vector3_order
   SOURCES abfs-vector3_order_test.cpp ../abfs-vector3_order.cpp
+)
+
+AddTest(
+  TARGET base_global_file
+  SOURCES global_file_test.cpp ../global_file.cpp  ../global_variable.cpp ../memory.cpp ../timer.cpp
 )

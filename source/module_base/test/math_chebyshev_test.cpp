@@ -49,7 +49,7 @@ class toolfunc{
                 spin_out[LDA*i+1] =  factor * j*spin_in[LDA*i];
             }
         }
-#ifdef __MIX_PRECISION
+#ifdef __ENABLE_FLOAT_FFTW
         float x7(float x){
             return pow(x,7);
         }
@@ -328,7 +328,7 @@ TEST_F(MathChebyshevTest,recurs)
     delete p_chetest;
 }
 
-#ifdef __MIX_PRECISION
+#ifdef __ENABLE_FLOAT_FFTW
 TEST_F(MathChebyshevTest,calcoef_real_float)
 {
     p_fchetest = new ModuleBase::Chebyshev<float>(10);
@@ -441,11 +441,11 @@ TEST_F(MathChebyshevTest,calfinalvec_complex_float)
     delete p_fchetest;
 }
 
-TEST_F(MathChebyshevTest,calpolyvec_complex)
+TEST_F(MathChebyshevTest,calpolyvec_float)
 {
     const int norder = 100;
     const float E = 2.718281828459046;
-    p_chetest = new ModuleBase::Chebyshev<float>(norder);
+    p_fchetest = new ModuleBase::Chebyshev<float>(norder);
     //                        [ 0           1 ]
     //  exp(i pi/2*\sigma_y)= [               ], where \sigma_y = [0, -i; i, 0]
     //                        [ -1          0 ]
@@ -454,13 +454,13 @@ TEST_F(MathChebyshevTest,calpolyvec_complex)
     std::complex<float> *vout = new std::complex<float> [4];
     v[0] = 1.0; v[1] = 0.0; v[2] = 0.0; v[3] = 1.0; //[1 0; 0 1]
     vout[0] = 0; vout[1] = 0; vout[2] = 0; vout[3] = 0;
-    p_chetest->calcoef_complex(&fun,&toolfunc::expi2);
-    p_chetest->calpolyvec_complex(&fun, &toolfunc::sigma_y, v, polyv, 2,2,2);
+    p_fchetest->calcoef_complex(&fun,&toolfunc::expi2);
+    p_fchetest->calpolyvec_complex(&fun, &toolfunc::sigma_y, v, polyv, 2,2,2);
     for(int i = 0; i < norder; ++i)
     {
         for(int j = 0; j < 4; ++j)
         {
-            vout[j] += polyv[i*4 + j] * p_chetest->coef_complex[i];
+            vout[j] += polyv[i*4 + j] * p_fchetest->coef_complex[i];
         }
     }
     EXPECT_NEAR(vout[0].real(), 0 ,1.e-6);
@@ -475,7 +475,7 @@ TEST_F(MathChebyshevTest,calpolyvec_complex)
     delete[] v;
     delete[] vout;
     delete[] polyv;
-    delete p_chetest;
+    delete p_fchetest;
 }
 
 TEST_F(MathChebyshevTest,tracepolyA_float)
@@ -501,12 +501,12 @@ TEST_F(MathChebyshevTest,tracepolyA_float)
     v = new std::complex<float> [2*LDA];
     v[0] = 1.0; v[1] = 0.0; v[2] = 100.0; v[3] = 0.0; v[4] = 1.0; v[5] = 1.0; //[1 0; 0 1; 100 2]
 
-    p_chetest->tracepolyA(&fun, &toolfunc::sigma_y, v, 2,LDA,2);
+    p_fchetest->tracepolyA(&fun, &toolfunc::sigma_y, v, 2,LDA,2);
     //Trace:  even function: 2 ; odd function 0.
     for(int i = 0 ; i < norder ; ++i)
     {
-        if(i%2==0)  EXPECT_NEAR(p_chetest->polytrace[i], 2 ,1.e-6);
-        else        EXPECT_NEAR(p_chetest->polytrace[i], 0 ,1.e-6);
+        if(i%2==0)  EXPECT_NEAR(p_fchetest->polytrace[i], 2 ,1.e-6);
+        else        EXPECT_NEAR(p_fchetest->polytrace[i], 0 ,1.e-6);
     }
     fun.LDA = 2;
     delete[] v;

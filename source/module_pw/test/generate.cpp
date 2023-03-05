@@ -133,7 +133,6 @@ int main(int argc, char **argv)
         
     }
 
-    MPI_Type_free(&mpicomplex);
     MPI_Finalize(); 
 
 

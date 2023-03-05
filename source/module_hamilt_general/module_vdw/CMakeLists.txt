@@ -12,3 +12,7 @@ add_library(
 if(ENABLE_COVERAGE)
   add_coverage(vdw)
 endif()
+
+if(BUILD_TESTING)
+  add_subdirectory(test)
+endif()

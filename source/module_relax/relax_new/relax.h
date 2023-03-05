@@ -41,9 +41,6 @@ class Relax
     //move ions and lattice vectors
     void move_cell_ions(const bool is_new_dir);
 
-    //init after cell moves
-    void init_after_vc();
-
     int nat; // number of atoms
     bool ltrial; // if last step is trial step
 

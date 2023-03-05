@@ -7,8 +7,7 @@
 void Parallel_Reduce::reduce_int_all(int &object)
 {
 #ifdef __MPI
-    int swap = object;
-    MPI_Allreduce(&swap , &object , 1, MPI_INT , MPI_SUM , MPI_COMM_WORLD);
+    MPI_Allreduce(MPI_IN_PLACE , &object , 1, MPI_INT , MPI_SUM , MPI_COMM_WORLD);
 #endif
     return;
 }
@@ -16,8 +15,7 @@ void Parallel_Reduce::reduce_int_all(int &object)
 void Parallel_Reduce::reduce_int_diag(int &object)
 {
 #ifdef __MPI
-    int swap = object;
-    MPI_Allreduce(&swap , &object , 1, MPI_INT , MPI_SUM , DIAG_WORLD);
+    MPI_Allreduce(MPI_IN_PLACE , &object , 1, MPI_INT , MPI_SUM , DIAG_WORLD);
 #endif
     return;
 }
@@ -27,8 +25,7 @@ void Parallel_Reduce::reduce_int_diag(int &object)
 void Parallel_Reduce::reduce_double_all(double &object)
 {
 #ifdef __MPI
-	double swap = object;
-	MPI_Allreduce(&swap , &object , 1, MPI_DOUBLE , MPI_SUM , MPI_COMM_WORLD);
+	MPI_Allreduce(MPI_IN_PLACE , &object , 1, MPI_DOUBLE , MPI_SUM , MPI_COMM_WORLD);
 #endif
 	return;
 }
@@ -36,10 +33,7 @@ void Parallel_Reduce::reduce_double_all(double &object)
 void Parallel_Reduce::reduce_int_all(int *object, const int n)
 {
 #ifdef __MPI
-	int *swap = new int[n];
-	for(int i=0;i<n;i++) swap[i] = object[i];
-	MPI_Allreduce(swap, object, n, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
-	delete[] swap;
+	MPI_Allreduce(MPI_IN_PLACE, object, n, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
 #endif
 	return;
 }
@@ -48,10 +42,7 @@ void Parallel_Reduce::reduce_int_all(int *object, const int n)
 void Parallel_Reduce::reduce_int_grid(int *object, const int n)
 {
 #ifdef __MPI
-	int *swap = new int[n];
-	for(int i=0;i<n;i++) swap[i] = object[i];
-	MPI_Allreduce(swap, object, n, MPI_INT, MPI_SUM, GRID_WORLD);
-	delete[] swap;
+	MPI_Allreduce(MPI_IN_PLACE, object, n, MPI_INT, MPI_SUM, GRID_WORLD);
 #endif
 	return;
 }
@@ -61,10 +52,7 @@ void Parallel_Reduce::reduce_int_grid(int *object, const int n)
 void Parallel_Reduce::reduce_double_all(double *object, const int n)
 {
 #ifdef __MPI
-	double *swap = new double[n];
-	for(int i=0;i<n;i++) swap[i] = object[i];
-	MPI_Allreduce(swap, object, n, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-	delete[] swap;
+	MPI_Allreduce(MPI_IN_PLACE, object, n, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 #endif
 	return;
 }
@@ -74,10 +62,7 @@ void Parallel_Reduce::reduce_double_all(double *object, const int n)
 void Parallel_Reduce::reduce_double_grid(double *object, const int n)
 {
 #ifdef __MPI
-	double *swap = new double[n];
-	for(int i=0;i<n;i++) swap[i] = object[i];
-	MPI_Allreduce(swap, object, n, MPI_DOUBLE, MPI_SUM, GRID_WORLD);
-	delete[] swap;
+	MPI_Allreduce(MPI_IN_PLACE, object, n, MPI_DOUBLE, MPI_SUM, GRID_WORLD);
 #endif
 	return;
 }
@@ -86,10 +71,7 @@ void Parallel_Reduce::reduce_double_grid(double *object, const int n)
 void Parallel_Reduce::reduce_double_diag(double *object, const int n)
 {
 #ifdef __MPI
-	double *swap = new double[n];
-	for(int i=0;i<n;i++) swap[i] = object[i];
-	MPI_Allreduce(swap, object, n, MPI_DOUBLE, MPI_SUM, DIAG_WORLD);
-	delete[] swap;
+	MPI_Allreduce(MPI_IN_PLACE, object, n, MPI_DOUBLE, MPI_SUM, DIAG_WORLD);
 #endif
 	return;
 }
@@ -98,8 +80,7 @@ void Parallel_Reduce::reduce_double_diag(double *object, const int n)
 void Parallel_Reduce::reduce_double_pool(float &object)
 {
 #ifdef __MPI
-    float swap = object;
-	MPI_Allreduce(&swap , &object , 1, MPI_FLOAT , MPI_SUM , POOL_WORLD);
+	MPI_Allreduce(MPI_IN_PLACE , &object , 1, MPI_FLOAT , MPI_SUM , POOL_WORLD);
 #endif
     return;
 }
@@ -107,8 +88,7 @@ void Parallel_Reduce::reduce_double_pool(float &object)
 void Parallel_Reduce::reduce_double_pool(double &object)
 {
 #ifdef __MPI
-	double swap = object;
-	MPI_Allreduce(&swap , &object , 1, MPI_DOUBLE , MPI_SUM , POOL_WORLD);
+	MPI_Allreduce(MPI_IN_PLACE , &object , 1, MPI_DOUBLE , MPI_SUM , POOL_WORLD);
 #endif
 	return;
 }
@@ -116,10 +96,7 @@ void Parallel_Reduce::reduce_double_pool(double &object)
 void Parallel_Reduce::reduce_double_pool(double *object, const int n)
 {
 #ifdef __MPI
-	double *swap = new double[n];
-	for(int i=0;i<n;i++) swap[i] = object[i];
-	MPI_Allreduce(swap, object, n, MPI_DOUBLE, MPI_SUM, POOL_WORLD);
-	delete[] swap;
+	MPI_Allreduce(MPI_IN_PLACE, object, n, MPI_DOUBLE, MPI_SUM, POOL_WORLD);
 #endif
 	return;
 }
@@ -157,8 +134,7 @@ void Parallel_Reduce::reduce_double_allpool(double *object, const int n)
 void Parallel_Reduce::reduce_complex_double_all(std::complex<double> &object)
 {
 #ifdef __MPI
-	std::complex<double> swap = object;
-    MPI_Allreduce(&swap, &object, 1, mpicomplex, myOp, MPI_COMM_WORLD);
+    MPI_Allreduce(MPI_IN_PLACE, &object, 1, MPI_DOUBLE_COMPLEX, MPI_SUM, MPI_COMM_WORLD);
 #endif
     return;
 }
@@ -167,10 +143,7 @@ void Parallel_Reduce::reduce_complex_double_all(std::complex<double> &object)
 void Parallel_Reduce::reduce_complex_double_all(std::complex <double> *object, const int n)
 {
 #ifdef __MPI
-	std::complex<double> *swap = new std::complex<double>[n];
-	for(int i=0;i<n;i++) swap[i] = object[i];
-	MPI_Allreduce(swap, object, n, mpicomplex, myOp, MPI_COMM_WORLD);
-	delete[] swap;
+	MPI_Allreduce(MPI_IN_PLACE, object, n, MPI_DOUBLE_COMPLEX, MPI_SUM, MPI_COMM_WORLD);
 #endif
 	return;
 }
@@ -178,8 +151,7 @@ void Parallel_Reduce::reduce_complex_double_all(std::complex <double> *object, c
 void Parallel_Reduce::reduce_complex_double_pool(std::complex<double> &object)
 {
 #ifdef __MPI
-	std::complex<double> swap = object;
-	MPI_Allreduce(&swap, &object, 1, mpicomplex, myOp, POOL_WORLD);
+	MPI_Allreduce(MPI_IN_PLACE, &object, 1, MPI_DOUBLE_COMPLEX, MPI_SUM, POOL_WORLD);
 #endif
 	return;
 }
@@ -187,11 +159,7 @@ void Parallel_Reduce::reduce_complex_double_pool(std::complex<double> &object)
 void Parallel_Reduce::reduce_complex_double_pool(std::complex <float> *object, const int n)
 {
 #ifdef __MPI
-    if(GlobalV::NPROC_IN_POOL == 1) return;
-	std::complex<float> *swap = new std::complex<float>[n];
-	for(int i=0;i<n;i++) swap[i] = object[i];
-	MPI_Allreduce(swap, object, n, mpicomplex, myOp, POOL_WORLD);
-	delete[] swap;
+	MPI_Allreduce(MPI_IN_PLACE, object, n, MPI_DOUBLE_COMPLEX, MPI_SUM, POOL_WORLD);
 #endif
     return;
 }
@@ -199,11 +167,7 @@ void Parallel_Reduce::reduce_complex_double_pool(std::complex <float> *object, c
 void Parallel_Reduce::reduce_complex_double_pool(std::complex <double> *object, const int n)
 {
 #ifdef __MPI
-	if(GlobalV::NPROC_IN_POOL == 1) return;
-	std::complex<double> *swap = new std::complex<double>[n];
-	for(int i=0;i<n;i++) swap[i] = object[i];
-	MPI_Allreduce(swap, object, n, mpicomplex, myOp, POOL_WORLD);
-	delete[] swap;
+	MPI_Allreduce(MPI_IN_PLACE, object, n, MPI_DOUBLE_COMPLEX, MPI_SUM, POOL_WORLD);
 #endif
 	return;
 }

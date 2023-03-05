@@ -12,3 +12,12 @@ ENV GIT_SSL_NO_VERIFY=true TERM=xterm-256color \
 RUN git clone https://github.com/llohse/libnpy.git && \
     cp libnpy/include/npy.hpp /usr/local/include && \
     rm -r libnpy
+
+ADD https://api.github.com/repos/deepmodeling/abacus-develop/git/refs/heads/develop /dev/null
+
+RUN git clone https://github.com/deepmodeling/abacus-develop.git --depth 1 && \
+    cd abacus-develop && \
+    cmake -B build -DUSE_CUDA=ON && \
+    cmake --build build -j`nproc` && \
+    cmake --install build && \
+    cd .. && rm -rf abacus-develop

@@ -46,6 +46,7 @@ class Input
     int pw_seed; // random seed for initializing wave functions qianrui 2021-8-12
 
     bool init_vel; // read velocity from STRU or not  liuyu 2021-07-14
+    bool out_vel;    // output atomic velocities into the file MD_dump or not. liuyu 2023-03-01
 
     /* symmetry level: 
       -1, no symmetry at all; 
@@ -106,7 +107,7 @@ class Input
     // Forces
     //==========================================================
     bool cal_force;
-    bool out_force;
+    bool out_force;    // output atomic forces into the file MD_dump or not. liuyu 2023-03-01
     double force_thr; // threshold of force in unit (Ry/Bohr)
     double force_thr_ev2; // invalid force threshold, mohan add 2011-04-17
 
@@ -118,6 +119,7 @@ class Input
     double press2;
     double press3;
     bool cal_stress; // calculate the stress
+    bool out_virial;    // output lattice virial into the file MD_dump or not. liuyu 2023-03-01
 
     std::string fixed_axes; // which axes are fixed
     bool fixed_ibrav; //whether to keep type of lattice; must be used along with latname

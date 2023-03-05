@@ -146,7 +146,6 @@ void Input::Print(const std::string &fn) const
                                  GlobalV::KS_SOLVER,
                                  "cg; dav; lapack; genelpa; scalapack_gvx; cusolver");
     ModuleBase::GlobalFunc::OUTP(ofs, "scf_nmax", scf_nmax, "#number of electron iterations");
-    ModuleBase::GlobalFunc::OUTP(ofs, "out_force", out_force, "output the out_force or not");
     ModuleBase::GlobalFunc::OUTP(ofs, "relax_nmax", relax_nmax, "number of ion iteration steps");
     ModuleBase::GlobalFunc::OUTP(ofs, "out_stru", out_stru, "output the structure files after each ion step");
     ModuleBase::GlobalFunc::OUTP(ofs, "force_thr", force_thr, "force threshold, unit: Ry/Bohr");
@@ -268,6 +267,9 @@ ModuleBase::GlobalFunc::OUTP(ofs, "out_bandgap", out_bandgap, "if true, print ou
     ModuleBase::GlobalFunc::OUTP(ofs,"md_pfirst",mdp.md_pfirst,"initial target pressure");
     ModuleBase::GlobalFunc::OUTP(ofs,"md_plast",mdp.md_plast,"final target pressure");
     ModuleBase::GlobalFunc::OUTP(ofs,"md_pfreq",mdp.md_pfreq,"oscillation frequency, used to determine qmass of thermostats coupled with barostat");
+    ModuleBase::GlobalFunc::OUTP(ofs, "out_force", out_force, "output atomic forces into the file MD_dump or not");
+    ModuleBase::GlobalFunc::OUTP(ofs, "out_vel", out_vel, "output atomic velocities into the file MD_dump or not");
+    ModuleBase::GlobalFunc::OUTP(ofs, "out_virial", out_virial, "output atomic velocities into the file MD_dump or not");
 
     ofs << "\n#Parameters (10.Electric field and dipole correction)" << std::endl;
     ModuleBase::GlobalFunc::OUTP(ofs,"efield_flag",efield_flag,"add electric field");

@@ -56,6 +56,7 @@ class PW_Basis
 public:
     std::string classname;
     PW_Basis();
+    PW_Basis(std::string device_, std::string precision_);
     virtual ~PW_Basis();
     //Init mpi parameters
 #ifdef __MPI
@@ -260,9 +261,16 @@ public:
     using resmem_int_op = psi::memory::resize_memory_op<int, psi::DEVICE_GPU>;
     using delmem_int_op = psi::memory::delete_memory_op<int, psi::DEVICE_GPU>;
     using syncmem_int_h2d_op = psi::memory::synchronize_memory_op<int, psi::DEVICE_GPU, psi::DEVICE_CPU>;
+
+    void set_device(std::string device_);
+    void set_precision(std::string precision_);
+
+protected:
+    std::string device = "cpu";
+    std::string precision = "double";
 };
 
 }
-#endif //PlaneWave 
+#endif // PWBASIS_H
 
 #include "./pw_basis_big.h" //temporary it will be removed

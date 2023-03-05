@@ -30,6 +30,8 @@ Furthermore, ABACUS also provides a [list of keywords](./input_files/input-main.
 To employ CMD calculations, `esolver_type` should be set to be `lj` or `dp`.
 If DP model is selected, the filename of DP model is specified by keyword `pot_file`.
 
+The MD output information will be written into the file `MD_dump`， in which the atomic forces, atomic velocities, and lattice virial are controlled by keyword `out_force`, `out_vel`, and `out_virial`, respectively.
+
 [Examples](https://github.com/deepmodeling/abacus-develop/tree/develop/examples/md/lcao_gammaonly_Sn64) of MD simulations are also provided.
 There are eight INPUT files corresponding to eight different MD evolution methods in the directory.
 For examlpe, `INPUT_0` shows how to employ the NVE simulation.

@@ -68,7 +68,12 @@ void Run_MD::md_line(UnitCell &unit_in, ModuleESolver::ESolver *p_esolver)
             // Print_Info::print_screen(0, 0, mdrun->step_ + mdrun->step_rst_);
             mdrun->outputMD(GlobalV::ofs_running, GlobalV::CAL_STRESS);
 
-            MD_func::MDdump(mdrun->step_ + mdrun->step_rst_, mdrun->ucell, mdrun->virial, mdrun->force);
+            MD_func::MDdump(mdrun->step_ + mdrun->step_rst_, 
+                            mdrun->ucell, 
+                            INPUT, 
+                            mdrun->virial, 
+                            mdrun->force, 
+                            mdrun->vel);
         }
 
         if((mdrun->step_ + mdrun->step_rst_) % mdrun->mdp.md_restartfreq == 0)

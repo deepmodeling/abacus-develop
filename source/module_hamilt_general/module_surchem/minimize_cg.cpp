@@ -174,7 +174,7 @@ void surchem::Leps2(const UnitCell &ucell,
     // cout<<"leps2!"<<endl;
     ModuleBase::Vector3<double> *grad_phi = new ModuleBase::Vector3<double>[rho_basis->nrxx];
 
-    XC_Functional::grad_rho(phi, grad_phi, rho_basis);
+    XC_Functional::grad_rho(phi, grad_phi, rho_basis, ucell.tpiba);
     // for (int i = 0; i < 10; i++) {
     //     grad_phi[i].print();
     // }
@@ -202,7 +202,7 @@ void surchem::Leps2(const UnitCell &ucell,
         grad_grad_phi[ir] = grad_phi[ir].x;
     }
     rho_basis->real2recip(grad_grad_phi, grad_grad_phi_G);
-    XC_Functional::grad_rho(grad_grad_phi_G, tmp_vector3, rho_basis);
+    XC_Functional::grad_rho(grad_grad_phi_G, tmp_vector3, rho_basis, ucell.tpiba);
     for (int ir = 0; ir < rho_basis->nrxx; ir++)
     {
         lp_real[ir] += tmp_vector3[ir].x;
@@ -217,7 +217,7 @@ void surchem::Leps2(const UnitCell &ucell,
         grad_grad_phi[ir] = grad_phi[ir].y;
     }
     rho_basis->real2recip(grad_grad_phi, grad_grad_phi_G);
-    XC_Functional::grad_rho(grad_grad_phi_G, tmp_vector3, rho_basis);
+    XC_Functional::grad_rho(grad_grad_phi_G, tmp_vector3, rho_basis, ucell.tpiba);
     for (int ir = 0; ir < rho_basis->nrxx; ir++)
     {
         lp_real[ir] += tmp_vector3[ir].y;
@@ -232,7 +232,7 @@ void surchem::Leps2(const UnitCell &ucell,
         grad_grad_phi[ir] = grad_phi[ir].z;
     }
     rho_basis->real2recip(grad_grad_phi, grad_grad_phi_G);
-    XC_Functional::grad_rho(grad_grad_phi_G, tmp_vector3, rho_basis);
+    XC_Functional::grad_rho(grad_grad_phi_G, tmp_vector3, rho_basis, ucell.tpiba);
     for (int ir = 0; ir < rho_basis->nrxx; ir++)
     {
         lp_real[ir] += tmp_vector3[ir].z;

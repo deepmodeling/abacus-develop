@@ -4,6 +4,7 @@
 #include <iostream>
 using namespace std;
 extern int nproc_in_pool, rank_in_pool;
+extern string precision_flag, device_flag;
 
 class PWTEST: public testing::Test
 {
@@ -32,4 +33,5 @@ public:
     }
     void TearDown(){}
 };
+
 #endif

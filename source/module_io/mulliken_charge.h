@@ -1,44 +1,40 @@
 #ifndef MULLIKEN_CHARGE_H
 #define MULLIKEN_CHARGE_H
 
-#include "module_base/global_function.h"
-#include "module_base/global_variable.h"
-#ifdef __LCAO
-#include "module_orbital/ORB_gen_tables.h"
-#include "module_orbital/ORB_control.h"
-#include "module_cell/module_neighbor/sltk_grid_driver.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/LCAO_matrix.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/global_fp.h"
-#endif
-#include "module_base/lapack_connector.h"
-#include "module_base/scalapack_connector.h"
 #include "module_base/matrix.h"
 #include "module_base/complexmatrix.h"
-#include <vector>
-#include "module_psi/psi.h"
+#ifdef __LCAO
+#include "module_hamilt_lcao/hamilt_lcaodft/local_orbital_charge.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/LCAO_matrix.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/LCAO_hamilt.h"
+#endif
 
-// by qifeng
+// by qifeng, refactor by jiyy 2023-02-25
 class Mulliken_Charge
 {
 	public:
 
-	Mulliken_Charge(const psi::Psi<double> *psi_gamma_in, 
-        const psi::Psi<std::complex<double>> *psi_k_in);
-	~Mulliken_Charge();
-
-	double**  DecMulP ;
-	double**  MecMulP ;
-	double***  ADecMulP ;
-    const psi::Psi<double> *psi_gamma;
-    const psi::Psi<std::complex<double>> *psi_k;
-
-	std::complex<double> *mug;
-
-	void cal_mulliken(LCAO_Hamilt &uhm, const ModuleBase::matrix& wg);
-
-	void stdout_mulliken(LCAO_Hamilt &uhm, const ModuleBase::matrix &wg);
+	void out_mulliken(LCAO_Hamilt &uhm, Local_Orbital_Charge &loc);
 
 	private:
+    /* 
+    1. cal_mulliken:    for gamma-only
+    2. cal_mulliken_k:  for multi-k
 
+        for `nspin=1` and `nspin=2`:
+            return  ModuleBase::matrix with shape (GlobalV::NSPIN, GlobalV::NLOCAL)
+        for `nspin=4`:
+            return  ModuleBase::matrix with shape (GlobalV::NSPIN, GlobalV::NLOCAL/2)
+    */
+
+    ModuleBase::matrix cal_mulliken(const std::vector<ModuleBase::matrix> &dm,
+        LCAO_Hamilt &uhm
+    );
+
+    ModuleBase::matrix cal_mulliken_k(const std::vector<ModuleBase::ComplexMatrix> &dm,
+        LCAO_Hamilt &uhm
+    );
+
+    std::vector<std::vector<std::vector<double>>> convert(const ModuleBase::matrix &orbMulP);
 };
 #endif

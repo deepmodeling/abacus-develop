@@ -1640,7 +1640,7 @@ void UnitCell::remake_cell()
 		double celldm12 = (latvec.e11 * latvec.e21 + latvec.e12 * latvec.e22 + latvec.e13 * latvec.e23);
 		double cos12 = celldm12 / celldm1 / celldm2;
 
-		if(cos12 <= 0.5 || cos12 >= 1.0)
+		if(cos12 <= -0.5 || cos12 >= 1.0)
 		{
 			ModuleBase::WARNING_QUIT("unitcell","wrong cos12!");
 		}
@@ -1757,7 +1757,7 @@ void UnitCell::remake_cell()
 		double celldm13 = (latvec.e11 * latvec.e31 + latvec.e12 * latvec.e32 + latvec.e13 * latvec.e33);
 		double cos13 = celldm13 / celldm1 / celldm3;
 		double celldm23 = (latvec.e21 * latvec.e31 + latvec.e22 * latvec.e32 + latvec.e23 * latvec.e33);
-		double cos23 = celldm23 / celldm1 / celldm3;
+		double cos23 = celldm23 / celldm2 / celldm3;
 
 		double sin12 = std::sqrt(1.0 - cos12 * cos12);
 		if(cos12 >= 1.0)

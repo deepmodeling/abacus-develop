@@ -111,6 +111,10 @@ public:
         GlobalV::SEARCH_RADIUS = 8.5 * ModuleBase::ANGSTROM_AU;
         GlobalV::CAL_STRESS = 1;
 
+        INPUT.out_virial = true;
+        INPUT.out_force = true;
+        INPUT.out_vel = true;
+
         INPUT.mdp.md_restart = 0;
         INPUT.mdp.md_dt = 1;
         INPUT.mdp.md_tfirst = INPUT.mdp.md_tlast = 300;

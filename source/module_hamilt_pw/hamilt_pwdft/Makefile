@@ -3,7 +3,7 @@
 # Users set
 # e.g. make INTEL=ON or make INTEL=OFF GPU=OFF
 #======================================================================
-CC = mpiicpc
+CXX = mpiicpc
 # mpiicpc:   compile intel parallel version
 # mpicxx:    compile gnu parallel version
 # icpc:      compile gnu sequential version
@@ -28,14 +28,14 @@ OPENBLAS_LIB_DIR   = /home/qianrui/gnucompile/openblas/lib
 INCLUDES = -I. -Icommands -I../../
 LIBS = -lm -lpthread
 OPTS = -Ofast -march=native -std=c++11 -m64 ${INCLUDES}
-ifeq ($(findstring mpi, $(CC)), mpi)
+ifeq ($(findstring mpi, $(CXX)), mpi)
      HONG += -D__MPI -D__EXX -DEXX_H_COMM=2 -DUSE_CEREAL_SERIALIZATION -DEXX_DM=3 -DEXX_H_COMM=2 -DTEST_EXX_LCAO=0 -DTEST_EXX_RADIAL=1
      MPI = ON
-     ifeq ($(findstring mpii, $(CC)), mpii)
+     ifeq ($(findstring mpii, $(CXX)), mpii)
          INTEL=ON
      endif
 else
-     ifeq ($(findstring i, $(CC)), i)
+     ifeq ($(findstring i, $(CXX)), i)
          INTEL=ON
      endif
 endif
@@ -44,9 +44,9 @@ ifeq ($(DEBUG), ON)
     INTEL = OFF
     HONG += -D__DEBUG
     ifeq ($(MPI), ON)
-        CC = mpicxx
+        CXX = mpicxx
     else
-        CC = g++
+        CXX = g++
     endif
     OPTS +=  -fsanitize=address -fno-omit-frame-pointer -Wall -g #It can check segmental defaults
 endif
@@ -120,15 +120,15 @@ pw :
 	$(MAKE) ${VERSION}-PW.x
 
 ${VERSION}-PW.x : ${FP_OBJS} 
-	${CC} ${OPTS} $(FP_OBJS) ${LIBS} -o ${VERSION}-PW.x 
+	${CXX} ${OPTS} $(FP_OBJS) ${LIBS} -o ${VERSION}-PW.x 
 #==========================
 # rules
 #==========================
 ${OBJ_DIR}/main.o:../main.cpp
-	${CC} ${OPTS} -c ${HONG} ../main.cpp -o ${OBJ_DIR}/main.o
+	${CXX} ${OPTS} -c ${HONG} ../main.cpp -o ${OBJ_DIR}/main.o
 	
 ${OBJ_DIR}/%.o:%.cpp
-	${CC} ${OPTS} -c ${HONG} $< -o $@
+	${CXX} ${OPTS} -c ${HONG} $< -o $@
 
 # rules of .cu files
 ${OBJ_DIR}/%.o:%.cu
