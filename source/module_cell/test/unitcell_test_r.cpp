@@ -48,13 +48,10 @@ Magnetism::~Magnetism()
  *     - update_pos_taud(const double* pos)
  *     - bcast_atoms_tau() is also called in the above function, which calls Atom::bcast_atom with many
  *       atomic info in addition to tau
- *   - BcastUnitcellPseudo
- *     - bcast_unitcell_pseudo() and bcast_unitcell()
- *   - BcastUnitcellPseudo2
- *     - bcast_unitcell_pseudo2() and bcast_unitcell2()
- *     - the above two calls bcast_atoms2() to bcast atomic pseudo info
  *   - BcastUnitcell
  *     - bcast basic info of unitcell and basic info of atoms
+ *   - BcastUnitcell2
+ *     - calls bcast_atoms2() to bcast atomic pseudo info
  *   - CalMeshx
  *     - cal_meshx(): calculate max mesh info from atomic pseudo potential file
  *   - CalNatomwfc1
@@ -234,13 +231,13 @@ TEST_F(UcellTest,UpdatePosTaud)
 	delete[] pos_in;
 }
 
-TEST_F(UcellTest,BcastUnitcellPseudo2)
+TEST_F(UcellTest,BcastUnitcell2)
 {
 	if(GlobalV::MY_RANK==0)
 	{
 		ucell->read_cell_pseudopots(pp_dir,ofs);
 	}
-	ucell->bcast_unitcell_pseudo2();
+	ucell->bcast_unitcell2();
 	if(GlobalV::MY_RANK!=0)
 	{
 		EXPECT_EQ(ucell->atoms[0].ncpp.nbeta,6);

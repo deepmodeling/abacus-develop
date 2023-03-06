@@ -135,11 +135,3 @@ void UnitCell::print_unitcell_pseudo(const std::string &fn)
 	ofs.close();
 	return;
 }
-
-
-#ifdef __MPI
-void UnitCell::bcast_unitcell_pseudo2(void)
-{
-	bcast_unitcell2();
-}
-#endif

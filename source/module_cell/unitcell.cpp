@@ -872,7 +872,7 @@ void UnitCell::read_pseudo(ofstream &ofs)
     }
 
 #ifdef __MPI
-    bcast_unitcell_pseudo2();
+    bcast_unitcell2();
 #endif
 
     for(int it=0; it<ntype; it++)
