@@ -1,4 +1,3 @@
-remove_definitions(-D__MPI)
 remove_definitions(-D__EXX)
 
 list(APPEND depend_files
@@ -46,3 +45,37 @@ AddTest(
 )
 install(DIRECTORY GaAs DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/../../../tests)
 install(DIRECTORY GaAs DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+
+
+AddTest(
+    TARGET ORB_nonlocal_lm_test
+    SOURCES ORB_nonlocal_lm_test.cpp
+        ../ORB_nonlocal_lm.cpp
+    LIBS ${math_libs} device base
+)
+
+#AddTest(
+#    TARGET ORB_read_test
+#    SOURCES ORB_read_test.cpp
+#        ${depend_files}
+#        ../../module_base/parallel_reduce.cpp
+#        ../../module_base/parallel_global.cpp
+#        ../../module_base/parallel_common.cpp
+#        ../../module_cell/parallel_kpoints.cpp
+#    LIBS ${math_libs} device
+#)
+#
+#AddTest(
+#    TARGET ORB_atomic_lm_test
+#    SOURCES ORB_atomic_lm_test.cpp
+#        ${depend_files}
+#        ../../module_base/parallel_reduce.cpp
+#        ../../module_base/parallel_global.cpp
+#        ../../module_base/parallel_common.cpp
+#        ../../module_cell/parallel_kpoints.cpp
+#    LIBS ${math_libs} device
+#)
+
+install(DIRECTORY lcao_H2O DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+install(DIRECTORY lcao_H2O DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/../../../tests)
+
