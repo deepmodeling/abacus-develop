@@ -228,7 +228,9 @@ TEST_F(TestHSolverPW_SDFT, solve_noband_skipcharge)
     stowf.nbands_total = 0;
     stowf.nchi = 0;
     stowf.nchip_max = 0;
-    psi_test_no.resize(2, 0, 0);
+    psi_test_no.nk = 2;
+    psi_test_no.nbands = 0;
+    psi_test_no.nbasis = 0;
 	GlobalV::nelec = 1.0;
     GlobalV::MY_STOGROUP = 0.0;
     GlobalV::NSPIN = 1;
