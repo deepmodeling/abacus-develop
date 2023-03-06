@@ -433,6 +433,58 @@ TEST_F(SymmetryTest, AnalySys)
     }
 }
 
+TEST_F(SymmetryTest, AtomOrderingNew)
+{
+    // the old function `atom_ordering` has bugs 
+    // so here I do not compare with its results
+    ModuleSymmetry::Symmetry symm;
+    symm.epsilon=1e-5;
+    int nat=20; //number of atoms
+    double* old_pos=new double[nat*3];
+    double* new_pos=new double[nat*3];
+    int* subindex=new int[nat];
+    //generate random number and restrict to [-0.5,0.5)
+    srand(time(NULL));
+    for(int i=0;i<3*nat;++i)
+    {
+        old_pos[i]=double(rand())/double(RAND_MAX)-0.5;
+        new_pos[i]=old_pos[i];
+    }
+    //ordering
+    symm.test_atom_ordering(new_pos, nat, subindex);
+    //check 
+
+    for (int i=0;i<nat-1;++i)
+    {
+        //x[i]<=x[i+1]
+        EXPECT_TRUE(new_pos[3*i] < new_pos[3*(i+1)] - symm.epsilon || 
+                symm.equal(new_pos[3*i], new_pos[3*(i+1)]) );
+        if (symm.equal(new_pos[3*i], new_pos[3*(i+1)]))
+        {   //y[i]<=y[i+1]
+            EXPECT_TRUE(new_pos[3*i+1] < new_pos[3*(i+1)+1] - symm.epsilon || 
+                    symm.equal(new_pos[3*i+1], new_pos[3*(i+1)+1]) );
+            if(symm.equal(new_pos[3*i+1], new_pos[3*(i+1)+1]))
+            {   //z[i]<=z[i+1]
+            EXPECT_TRUE(new_pos[3*i+2] < new_pos[3*(i+1)+2] - symm.epsilon || 
+                    symm.equal(new_pos[3*i+2], new_pos[3*(i+1)+2]) );
+            }
+        }
+    }
+    //output old_pos and new_pos
+    std::cout<<"random direct coords: "<<std::endl;
+    std::cout<<"iatom     x      y     z"<<std::endl;
+    for (int i=0;i<nat;++i)
+        std::cout<<i<<" "<<old_pos[3*i]<<" "<<old_pos[3*i+1]<<" "<<old_pos[3*i+2]<<std::endl;
+    std::cout<<"sorted direct coords: "<<std::endl;
+    std::cout<<"iatom     x      y     z"<<std::endl;
+    for (int i=0;i<nat;++i)
+        std::cout<<i<<" "<<new_pos[3*i]<<" "<<new_pos[3*i+1]<<" "<<new_pos[3*i+2]<<std::endl;
+    delete[] old_pos;
+    delete[] new_pos;
+    delete[] subindex;
+
+}
+
 int main(int argc, char **argv)
 {
     MPI_Init(&argc, &argv);

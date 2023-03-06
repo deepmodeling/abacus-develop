@@ -89,7 +89,7 @@ double Symmetry_Basic::check_diff(const double &x1, const double &x2)
 	return diff;
 }
 
-void Symmetry_Basic::order_atoms(double* pos, const int &nat, const int *index)
+void Symmetry_Basic::order_atoms(double* pos, const int &nat, const int *index) const
 {
 	double** tmp = new double*[nat];
 	for(int ia=0; ia<nat; ia++)
@@ -1008,7 +1008,7 @@ void Symmetry_Basic::rotate( ModuleBase::Matrix3 &gmatrix, ModuleBase::Vector3<d
 // atom ordering for each atom type 
 // by a "weighted function" f
 // (instead of ordering by x, y, z directly)
-void Symmetry_Basic::atom_ordering_new(double *posi, const int natom, int *subindex)
+void Symmetry_Basic::atom_ordering_new(double *posi, const int natom, int *subindex) const
 {
 	//order the atomic positions inside a supercell by a unique ordering scheme	
 	subindex[0] = 0;
@@ -1050,4 +1050,9 @@ void Symmetry_Basic::atom_ordering_new(double *posi, const int natom, int *subin
 	return;
 }
 
+void Symmetry_Basic::test_atom_ordering(double *posi, const int natom, int *subindex) const
+{
+	//an interface to test a protected function
+	this->atom_ordering_new(posi, natom, subindex);
+}
 }
