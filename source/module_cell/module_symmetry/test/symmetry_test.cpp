@@ -453,7 +453,6 @@ TEST_F(SymmetryTest, AtomOrderingNew)
     //ordering
     symm.test_atom_ordering(new_pos, nat, subindex);
     //check 
-
     for (int i=0;i<nat-1;++i)
     {
         //x[i]<=x[i+1]

@@ -610,10 +610,6 @@ void K_Vectors::ibz_kpoint(const ModuleSymmetry::Symmetry &symm, bool use_symm,s
         };
         for(int i=0;i<symm.nrotk;++i)
         {
-            // std::cout<<"checking kgmatrix "<<i<<std::endl;
-            // std::cout<<symm.kgmatrix[i].e11<<" "<< symm.kgmatrix[i].e12<<" "<<symm.kgmatrix[i].e13<<std::endl;
-            // std::cout<<symm.kgmatrix[i].e21<<" "<< symm.kgmatrix[i].e22<<" "<<symm.kgmatrix[i].e23<<std::endl;
-            // std::cout<<symm.kgmatrix[i].e31<<" "<< symm.kgmatrix[i].e32<<" "<<symm.kgmatrix[i].e33<<std::endl;
             bool match = false;
             for(int j=0;j<bnop;++j) 
             {
@@ -622,13 +618,6 @@ void K_Vectors::ibz_kpoint(const ModuleSymmetry::Symmetry &symm, bool use_symm,s
             if(!match) 
             {
                 std::cout<<"match failed:"<<std::endl;
-                // for (int i=0;i<bnop;++i)
-                // {
-                //     std::cout<<"bsymop "<<i<<":"<<std::endl;
-                //     std::cout<<bsymop[i].e11<<" "<< bsymop[i].e12<<" "<<bsymop[i].e13<<std::endl;
-                //     std::cout<<bsymop[i].e21<<" "<< bsymop[i].e22<<" "<<bsymop[i].e23<<std::endl;
-                //     std::cout<<bsymop[i].e31<<" "<< bsymop[i].e32<<" "<<bsymop[i].e33<<std::endl;
-                // }
                 ModuleBase::WARNING_QUIT("K_Vectors:ibz_kpoint", 
                 "symmetry operation of reciprocal lattice is wrong! ");
             }

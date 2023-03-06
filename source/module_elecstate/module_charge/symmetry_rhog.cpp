@@ -52,28 +52,11 @@ void Symmetry_rho::psymmg(std::complex<double>* rhog_part, const ModulePW::PW_Ba
 		symm.rhog_symmetry(rhog_part, ixyz2ipw, rho_basis->nx, rho_basis->ny, rho_basis->nz, 
 			rho_basis->fftnx, rho_basis->fftny, rho_basis->fftnz);
 #endif
-		/*
-		int count = 0;
-		GlobalV::ofs_running << scientific;
-		for(int iz=0; iz<rho_basis->nz; iz++)
-		{
-			GlobalV::ofs_running << "\n iz=" << iz;
-			for(int iy=0; iy<rho_basis->ny; iy++)
-			{
-				for(int ix=0; ix<rho_basis->nx; ix++)
-				{
-					if(count%5==0) GlobalV::ofs_running << "\n";
-					++count;
-					GlobalV::ofs_running << " " << rhotot[ix*rho_basis->ny*rho_basis->nz+iy*rho_basis->nz+iz];
-				}
-			}
-		}
-		*/
 		delete[] ixyz2ipw;
 #ifdef __MPI
 	}
 
-	// (4) send the result to other pools and procs
+	// (4) send the result to other procs in the same pool
 	this->rhog_piece_to_all(rho_basis, rhogtot, rhog_part);
 
 	if(GlobalV::RANK_IN_POOL==0)		
