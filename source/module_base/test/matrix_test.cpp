@@ -341,7 +341,7 @@ TEST_F(matrixTest,Alloc)
 TEST_F(matrixTest,Fillout)
 {
     float k=2.4;
-    m33a.zero_out();
+    m33a.fill_out(k);
     for (int i=0;i<m33a.nr;++i)
     {
         for (int j=0;j<m33a.nc;++j)
