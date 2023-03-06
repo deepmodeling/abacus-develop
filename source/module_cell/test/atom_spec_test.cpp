@@ -89,26 +89,37 @@ TEST_F(AtomSpecTest, SetIndex)
 	if(GlobalV::MY_RANK==0)
 	{
 #endif
-	ifs.open("./support/C.upf");
-	GlobalV::PSEUDORCUT = 15.0;
-	upf.read_pseudo_upf201(ifs);
-	atom.ncpp.set_pseudo_nc(upf);
-	ifs.close();
-	EXPECT_TRUE(atom.ncpp.has_so);
 	atom.nw = 0;
 	atom.nwl = 1;
 	delete[] atom.l_nchi;
 	atom.l_nchi = new int[atom.nwl+1];
-	atom.l_nchi[0] = 2;
-	atom.nw += atom.l_nchi[0];
-	atom.l_nchi[1] = 4;
-	atom.nw += 3*atom.l_nchi[1];
+	atom.l_nchi[0] = 2; // l:0, N:2 (arbitrary)
+	atom.nw += 1*atom.l_nchi[0]; // m = 2*0+1 = 1
+	atom.l_nchi[1] = 4; // l:1, N:4 (arbitrary)
+	atom.nw += 3*atom.l_nchi[1]; // m = 2*1+1 = 3
 	atom.set_index();
 	EXPECT_EQ(atom.iw2l[13],1);
 	EXPECT_EQ(atom.iw2n[13],3);
 	EXPECT_EQ(atom.iw2m[13],2);
 	EXPECT_EQ(atom.iw2_ylm[13],3);
 	EXPECT_TRUE(atom.iw2_new[11]);
+	// here is the table:
+	// nw = 2 + 3*4 = 14
+	//    L N m  L*L+m
+	// 0  0 0 0    0
+	// 1  0 1 0    0
+	// 2  1 0 0    1
+	// 3  1 0 1    2
+	// 4  1 0 2    3
+	// 5  1 1 0    1
+	// 6  1 1 1    2
+	// 7  1 1 2    3
+	// 8  1 2 0    1
+	// 9  1 2 1    2
+	// 10 1 2 2    3
+	// 11 1 3 0    1
+	// 12 1 3 1    2
+	// 13 1 3 2    3
 #ifdef __MPI
 	}
 #endif

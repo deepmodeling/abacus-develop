@@ -717,8 +717,6 @@ void UnitCell::setup_cell(
 	}
 
 #ifdef __MPI
-	this->bcast_unitcell_pseudo();
-
 	// mohan add 2010-09-29
 	#ifdef __LCAO
 	orb.bcast_files(ntype, GlobalV::MY_RANK);
@@ -932,6 +930,10 @@ void UnitCell::read_pseudo(ofstream &ofs)
     }
 
     cal_meshx();
+
+#ifdef __MPI
+    bcast_unitcell_pseudo();
+#endif
 }
 
 void UnitCell::setup_cell_classic(
