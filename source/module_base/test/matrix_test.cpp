@@ -337,3 +337,16 @@ TEST_F(matrixTest,Alloc)
 	output = testing::internal::GetCapturedStdout();
 	EXPECT_THAT(output,testing::HasSubstr("Allocation error for Matrix"));
 }
+
+TEST_F(matrixTest,Fillout)
+{
+    float k=2.4;
+    m33a.zero_out();
+    for (int i=0;i<m33a.nr;++i)
+    {
+        for (int j=0;j<m33a.nc;++j)
+        {
+            EXPECT_DOUBLE_EQ(m33a(i,j),k);
+        }
+    }
+}
