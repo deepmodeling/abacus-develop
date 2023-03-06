@@ -457,16 +457,13 @@ TEST_F(SymmetryTest, AtomOrderingNew)
     for (int i=0;i<nat-1;++i)
     {
         //x[i]<=x[i+1]
-        EXPECT_TRUE(new_pos[3*i] < new_pos[3*(i+1)] - symm.epsilon || 
-                symm.equal(new_pos[3*i], new_pos[3*(i+1)]) );
+        EXPECT_LE(new_pos[3*i], new_pos[3*(i+1)] +symm.epsilon);
         if (symm.equal(new_pos[3*i], new_pos[3*(i+1)]))
         {   //y[i]<=y[i+1]
-            EXPECT_TRUE(new_pos[3*i+1] < new_pos[3*(i+1)+1] - symm.epsilon || 
-                    symm.equal(new_pos[3*i+1], new_pos[3*(i+1)+1]) );
+            EXPECT_LE(new_pos[3*i+1], new_pos[3*(i+1)+1] + symm.epsilon);
             if(symm.equal(new_pos[3*i+1], new_pos[3*(i+1)+1]))
             {   //z[i]<=z[i+1]
-            EXPECT_TRUE(new_pos[3*i+2] < new_pos[3*(i+1)+2] - symm.epsilon || 
-                    symm.equal(new_pos[3*i+2], new_pos[3*(i+1)+2]) );
+                EXPECT_LE(new_pos[3*i+2], new_pos[3*(i+1)+2] +symm.epsilon);
             }
         }
     }
