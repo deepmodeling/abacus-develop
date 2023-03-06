@@ -55,13 +55,6 @@ namespace hsolver
 			stoiter.orthog(ik,psi,stowf);
 			stoiter.checkemm(ik,istep, iter, stowf);	//check and reset emax & emin
 		}
-		// DiagoCG would keep 9*nbasis memory in cache during loop-k
-        // it should be deleted before calculating charge
-		if(this->method == "cg")
-        {
-            delete pdiagh;
-            pdiagh = nullptr;
-        }
 
 		this->endDiagh();
 
