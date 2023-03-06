@@ -385,29 +385,6 @@ TEST_F(UcellTest,CalUx2)
 	EXPECT_NEAR(ucell->magnet.ux_[2],0.57735,1e-5);
 }
 
-TEST_F(UcellTest,BcastUnitcellPseudo)
-{
-	if(GlobalV::MY_RANK==0)
-	{
-		ucell->read_cell_pseudopots(pp_dir,ofs);
-		ucell->cal_meshx();
-		ucell->cal_natomwfc(ofs);
-		ucell->cal_nwfc(ofs);
-	}
-	ucell->bcast_unitcell_pseudo();
-	if(GlobalV::MY_RANK!=0)
-	{
-		EXPECT_EQ(ucell->meshx,1247);
-		EXPECT_EQ(ucell->natomwfc,(1+3)*1+1*2);
-		EXPECT_EQ(ucell->lmax,2);
-		EXPECT_EQ(ucell->lmax_ppwf,1);
-		EXPECT_EQ(ucell->Coordinate,"Direct");
-		EXPECT_DOUBLE_EQ(ucell->a1.x,10.0);
-		EXPECT_EQ(ucell->atoms[0].na,2);
-		EXPECT_EQ(ucell->atoms[1].na,1);
-	}
-}
-
 TEST_F(UcellDeathTest,CheckStructure)
 {
 	ucell->read_cell_pseudopots(pp_dir,ofs);

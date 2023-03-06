@@ -138,16 +138,6 @@ void UnitCell::print_unitcell_pseudo(const std::string &fn)
 
 
 #ifdef __MPI
-void UnitCell::bcast_unitcell_pseudo(void)
-{
-	Parallel_Common::bcast_int( meshx );
-	Parallel_Common::bcast_int( natomwfc );
-	Parallel_Common::bcast_int( lmax );
-	Parallel_Common::bcast_int( lmax_ppwf );
-
-	bcast_unitcell();
-}
-
 void UnitCell::bcast_unitcell_pseudo2(void)
 {
 	bcast_unitcell2();
