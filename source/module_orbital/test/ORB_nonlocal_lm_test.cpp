@@ -21,12 +21,30 @@
 
 /**
  * Tested functions
+ *
  * - set_NL_proj
+ *   copies the input into class members
+ *
  * - get_kradial
+ *   applies a radial Fourier transform to beta_r to obtain beta_k
+ *
  * - freemem
+ *   deallocates the allocated memory of r_radial, rab, beta_r, 
+ *   beta_uniform, dbeta_uniform, k_radial & beta_k, and set them 
+ *   to nullptr
+ *
  * - renew
+ *   allocates memory for r_radial, rab, beta_r, beta_uniform,
+ *   dbeta_uniform, k_radial & beta_k, and set their content to all zero.
+ *
  * - plot
- * - all getters
+ *   saves beta_r, beta_k & beta_uniform to file
+ *
+ * - all "getters"
+ *   get access to class members
+ *
+ * - operator=
+ *   enables deep copy
  */
 
 class Numerical_Nonlocal_Lm_test : public ::testing::Test
