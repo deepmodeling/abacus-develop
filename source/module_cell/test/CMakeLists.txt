@@ -81,7 +81,7 @@ add_test(NAME cell_parallel_kpoints_test
 )
 
 AddTest(
-  TARGET cell_unitcell_test_f
+  TARGET cell_unitcell_test_f  # TEST_F
   LIBS ${math_libs} base device
   SOURCES unitcell_test_f.cpp ../unitcell.cpp ../read_atoms.cpp ../read_cell_pseudopots.cpp ../atom_spec.cpp
 	../atom_pseudo.cpp ../pseudo_nc.cpp ../read_pp.cpp ../read_pp_upf201.cpp ../read_pp_upf100.cpp
@@ -89,9 +89,17 @@ AddTest(
 )
 
 AddTest(
-  TARGET cell_unitcell_test_p
+  TARGET cell_unitcell_test_p # TEST_P
   LIBS ${math_libs} base device
   SOURCES unitcell_test_p.cpp ../unitcell.cpp ../read_atoms.cpp ../read_cell_pseudopots.cpp ../atom_spec.cpp
+	../atom_pseudo.cpp ../pseudo_nc.cpp ../read_pp.cpp ../read_pp_upf201.cpp ../read_pp_upf100.cpp
+	../read_pp_vwr.cpp ../read_pp_blps.cpp ../../module_io/output.cpp
+)
+
+AddTest(
+  TARGET cell_unitcell_test_r # r for reading pp
+  LIBS ${math_libs} base device
+  SOURCES unitcell_test_r.cpp ../unitcell.cpp ../read_atoms.cpp ../read_cell_pseudopots.cpp ../atom_spec.cpp
 	../atom_pseudo.cpp ../pseudo_nc.cpp ../read_pp.cpp ../read_pp_upf201.cpp ../read_pp_upf100.cpp
 	../read_pp_vwr.cpp ../read_pp_blps.cpp ../../module_io/output.cpp
 )
