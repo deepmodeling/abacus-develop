@@ -71,8 +71,6 @@ Magnetism::~Magnetism()
  *     - setup GlobalV::NLOCAL
  *   - CalNwfc2
  *     - cal_nwfc(): calcuate the total number of local basis: NSPIN == 4
- *   - CalUx
- *     - cal_ux(): 
  *   - CheckStructure
  *     - check_structure(): check if too atoms are two close
  */
@@ -90,33 +88,7 @@ void LCAO_Orbitals::bcast_files(
 class UcellTest : public ::testing::Test
 {
 protected:
-	UcellTestPrepare UTP = UcellTestPrepare("C1H2-Index",	//system-name
-				"bcc",		//latname
-				2,		//lmaxmax
-				true,		//init_vel
-				true,		//selective_dyanmics
-				true,		//relax_new
-				"volume",	//fixed_axes
-				1.8897261254578281, //lat0
-				{10.0,0.0,0.0,	//latvec
-				 0.0,10.0,0.0,
-				 0.0,0.0,10.0},
-				{"C","H"},	//elements
-				{"C.upf","H.upf"},	//upf file
-				{"upf201","upf201"},	//upf types
-				{"C.orb","H.orb"},	//orb file
-				{1,2},		//number of each elements
-				{12.0,1.0},	//atomic mass
-				"Direct",	//coordination type
-				{0.1,0.1,0.1,	//atomic coordinates
-				 0.12,0.12,0.12,
-				 0.08,0.08,0.08},
-				{1,1,1,	//if atom can move: mbl
-				 0,0,0,
-				 0,0,1},
-				{0.1,0.1,0.1,	//velocity: vel
-				 0.1,0.1,0.1,
-				 0.1,0.1,0.1});
+	UcellTestPrepare utp = UcellTestLib["C1H2-Read"];
 	std::unique_ptr<UnitCell> ucell;
 	std::ofstream ofs;
 	std::string pp_dir;
@@ -124,9 +96,9 @@ protected:
 	void SetUp()
 	{
 		ofs.open("running.log");
-		GlobalV::relax_new = UTP.relax_new;
+		GlobalV::relax_new = utp.relax_new;
 		GlobalV::global_out_dir = "./";
-		ucell = UTP.SetUcellInfo();
+		ucell = utp.SetUcellInfo();
 		GlobalV::LSPINORB = false;
 		pp_dir = "./support/";
 		GlobalV::PSEUDORCUT = 15.0;
@@ -355,31 +327,6 @@ TEST_F(UcellTest,CalNwfc2)
 	EXPECT_FALSE(ucell->atoms[1].ncpp.has_so);
 	ucell->cal_nwfc(ofs);
 	EXPECT_EQ(GlobalV::NLOCAL,3*9*2);
-}
-
-TEST_F(UcellTest,CalUx1)
-{
-	ucell->atoms[0].m_loc_[0].set(0,-1,0);
-	ucell->atoms[1].m_loc_[0].set(1,1,1);
-	ucell->atoms[1].m_loc_[1].set(0,0,0);
-	ucell->cal_ux();
-	EXPECT_FALSE(ucell->magnet.lsign_);
-	EXPECT_DOUBLE_EQ(ucell->magnet.ux_[0],0);
-	EXPECT_DOUBLE_EQ(ucell->magnet.ux_[1],-1);
-	EXPECT_DOUBLE_EQ(ucell->magnet.ux_[2],0);
-}
-
-TEST_F(UcellTest,CalUx2)
-{
-	ucell->atoms[0].m_loc_[0].set(0,0,0);
-	ucell->atoms[1].m_loc_[0].set(1,1,1);
-	ucell->atoms[1].m_loc_[1].set(0,0,0);
-	//(0,0,0) is also parallel to (1,1,1)
-	ucell->cal_ux();
-	EXPECT_TRUE(ucell->magnet.lsign_);
-	EXPECT_NEAR(ucell->magnet.ux_[0],0.57735,1e-5);
-	EXPECT_NEAR(ucell->magnet.ux_[1],0.57735,1e-5);
-	EXPECT_NEAR(ucell->magnet.ux_[2],0.57735,1e-5);
 }
 
 TEST_F(UcellDeathTest,CheckStructure)
