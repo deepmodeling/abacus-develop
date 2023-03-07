@@ -129,7 +129,6 @@ void Symmetry_rho::reduce_to_fullrhog(const ModulePW::PW_Basis *rho_basis,
 			npw_start+=rho_basis->npw_per[proc]; 
 		}
 	}
-	std::cout<<"npwtot="<<rho_basis->npwtot<<std::endl;
 	if(GlobalV::RANK_IN_POOL==0)	assert(npw_start==rho_basis->npwtot);
 	delete[] rhog_piece;	
 	delete[] ig2isz_piece;
