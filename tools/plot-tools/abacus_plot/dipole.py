@@ -79,13 +79,13 @@ class Dipole:
         S = np.abs(self.alpha_data[direc].imag)
         return S
 
-    def plot_abs(self, fig: Figure, ax: axes.Axes, directions: list = [0, 1, 2], energy_range: list = [], unit: str = 'eV'):
+    def plot_abs(self, fig: Figure, ax: axes.Axes, directions: list = [0, 1, 2], x_range: list = [], unit: str = 'eV'):
         """Plot Absportion Spectrum under Delta light field in x,y,z directions
 
         :params fig: (matplotlib.figure.Figure)
         :params ax: (matplotlib.axes.Axes)
         :params directions: (list) 0->X, 1->Y, 2->Z
-        :params energy_range: (list) range of energies (in unit eV) to plot
+        :params x_range: (list) range of energies (in unit eV) to plot
         :params unit: (str) 
         """
 
@@ -101,8 +101,8 @@ class Dipole:
         ax.set_xlabel(xlabel)
         ax.set_ylabel('Absportion')
         ax.legend()
-        if energy_range:
-            ax.set_xlim(energy_range)
+        if x_range:
+            ax.set_xlim(x_range)
 
         return fig, ax
 
@@ -117,7 +117,7 @@ if __name__ == "__main__":
     fig1.savefig('dipole.png')
 
     fig2, ax2 = plt.subplots()
-    energy_range = [0, 25]
+    x_range = [0, 400]
     fig2, ax2 = dipole.plot_abs(
-        fig2, ax2, energy_range=energy_range)
+        fig2, ax2, x_range=x_range, unit='nm')
     fig2.savefig('abs.png')

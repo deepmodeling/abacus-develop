@@ -148,3 +148,23 @@ abacus-plot -d -o
 ```
 
 ### Dipole and Absorption
+
+```python
+
+from abacus_plot.dipole import Dipole
+import matplotlib.pyplot as plt
+
+dipolefile = './SPIN1_DIPOLE'
+dipole = Dipole(dipolefile, dt=0.0034)
+
+fig1, ax1 = plt.subplots()
+fig1, ax1 = dipole.plot_dipole(fig1, ax1)
+fig1.savefig('dipole.png')
+
+fig2, ax2 = plt.subplots()
+unit = 'eV' # or 'nm'
+x_range = [0, 25]
+fig2, ax2 = dipole.plot_abs(
+        fig2, ax2, x_range=x_range, unit=unit)
+fig2.savefig('abs.png')
+```
