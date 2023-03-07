@@ -88,6 +88,8 @@ Magnetism::~Magnetism()
  *     - cal_ux(): calculate magnetic moments of cell
  *   - ReadOrbFile
  *     - read_orb_file(): read header part of orbital file
+ *   - ReadOrbFileWarning
+ *     - read_orb_file(): ABACUS Cannot find the ORBITAL file
  */
 
 //mock function
@@ -881,5 +883,22 @@ TEST_F(UcellTest,ReadOrbFile)
 	ucell->read_orb_file(0,orb_file,ofs_running,&(ucell->atoms[0]));
 	ofs_running.close();
 	EXPECT_EQ(ucell->atoms[0].nw,25);
+	remove("tmp_readorbfile");
+}
+
+TEST_F(UcellDeathTest,ReadOrbFileWarning)
+{
+	UcellTestPrepare utp = UcellTestLib["C1H2-Read"];
+	GlobalV::relax_new = utp.relax_new;
+	ucell = utp.SetUcellInfo();
+	std::string orb_file = "./support/CC.orb";
+	std::ofstream ofs_running;
+	ofs_running.open("tmp_readorbfile");
+	testing::internal::CaptureStdout();
+	EXPECT_EXIT(ucell->read_orb_file(0,orb_file,ofs_running,&(ucell->atoms[0])),
+			::testing::ExitedWithCode(0),"");
+	output = testing::internal::GetCapturedStdout();
+	EXPECT_THAT(output,testing::HasSubstr("ABACUS Cannot find the ORBITAL file"));
+	ofs_running.close();
 	remove("tmp_readorbfile");
 }
