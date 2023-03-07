@@ -18,6 +18,7 @@
  *      - operator "*=", "+=", "-="
  *      - function trace_on
  *      - function zero_out
+ *      - function fill_out
  *      - function max/min/absmax
  *      - function norm
  *      - function print (not called in abacus, no need to test)
@@ -340,7 +341,7 @@ TEST_F(matrixTest,Alloc)
 
 TEST_F(matrixTest,Fillout)
 {
-    float k=2.4;
+    double k=2.4;
     m33a.fill_out(k);
     for (int i=0;i<m33a.nr;++i)
     {
