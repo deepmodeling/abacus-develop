@@ -16,21 +16,20 @@
 class ToolTitleTest : public testing::Test
 {
   protected:
-	  std::ifstream ifs;
+	std::ifstream ifs;
     const std::string claname="ComplexMatrix";
     const std::string funname="scaled_sum()";
     const std::string cfname="ComplexMatrix::scaled_sum()";
   void SetUp()
-    {
+        {
         
-    }
-	void TearDown()
-	  {
+        }
+  void TearDown()
+	    {
 		  remove("TITLEtest1.log");
           remove("TITLEtest2.log");
           remove("TITLEtest3.log");
-	  }
-
+	    }
 };
 
 TEST_F(ToolTitleTest, TITLE1)
@@ -42,8 +41,7 @@ TEST_F(ToolTitleTest, TITLE1)
     ifs.open("TITLEtest1.log");
     getline(ifs,output1);
     EXPECT_THAT(output1,testing::HasSubstr(" ==> ComplexMatrix::scaled_sum()"));
-    ifs.close();
-    
+    ifs.close(); 
 }
 
 TEST_F(ToolTitleTest, TITLE2)
@@ -56,7 +54,6 @@ TEST_F(ToolTitleTest, TITLE2)
     getline(ifs,output2);
     EXPECT_THAT(output2,testing::HasSubstr(" ==> ComplexMatrix::scaled_sum()"));
     ifs.close();
-    
 }
 
 TEST_F(ToolTitleTest, TITLE3)
@@ -71,14 +68,4 @@ TEST_F(ToolTitleTest, TITLE3)
     getline(ifs,output3a);
     EXPECT_THAT(output3a,testing::HasSubstr(" ==> ComplexMatrix::scaled_sum()"));
     ifs.close();
-
-    // #define __NORMAL
-    // testing::internal::CaptureStdout();
-    // ModuleBase::TITLE(oofs,claname,funname,false);
-    // output3b = testing::internal::GetCapturedStdout();
-    // EXPECT_THAT(output3b,testing::HasSubstr(" ==> ComplexMatrix::scaled_sum()"));
-
-    
-    
 }
-
