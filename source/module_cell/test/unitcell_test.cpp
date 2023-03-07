@@ -867,19 +867,3 @@ TEST_F(UcellTest,CalUx2)
 	EXPECT_NEAR(ucell->magnet.ux_[1],0.57735,1e-5);
 	EXPECT_NEAR(ucell->magnet.ux_[2],0.57735,1e-5);
 }
-
-/*
-#ifdef __MPI
-#include "mpi.h"
-int main(int argc, char **argv)
-{
-	MPI_Init(&argc, &argv);
-	testing::InitGoogleTest(&argc, argv);
-	MPI_Comm_size(MPI_COMM_WORLD,&GlobalV::NPROC);
-	MPI_Comm_rank(MPI_COMM_WORLD,&GlobalV::MY_RANK);
-	int result = RUN_ALL_TESTS();
-	MPI_Finalize();
-	return result;
-}
-#endif
-*/
