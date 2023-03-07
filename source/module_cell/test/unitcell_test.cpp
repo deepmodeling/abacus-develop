@@ -872,6 +872,7 @@ TEST_F(UcellTest,CalUx2)
 	EXPECT_NEAR(ucell->magnet.ux_[2],0.57735,1e-5);
 }
 
+#ifdef __LCAO
 TEST_F(UcellTest,ReadOrbFile)
 {
 	UcellTestPrepare utp = UcellTestLib["C1H2-Read"];
@@ -902,3 +903,4 @@ TEST_F(UcellDeathTest,ReadOrbFileWarning)
 	ofs_running.close();
 	remove("tmp_readorbfile");
 }
+#endif
