@@ -129,5 +129,4 @@ AddTest(
 if(ENABLE_COVERAGE)
   add_coverage(base_serial)
   add_coverage(planewave_serial)
-  add_coverage(symmetry)
 endif()

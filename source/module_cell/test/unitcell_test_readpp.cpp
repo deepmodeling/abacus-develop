@@ -67,6 +67,8 @@ Magnetism::~Magnetism()
  *     - check_structure(): check if too atoms are two close
  *   - ReadPseudoWarning1
  *     - read_pseudo(): All DFT functional must consistent.
+ *   - ReadPseudoWarning2
+ *     - read_pseudo(): number valence electrons > corresponding minimum possible of an element
  */
 
 //mock function

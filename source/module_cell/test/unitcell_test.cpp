@@ -86,6 +86,8 @@ Magnetism::~Magnetism()
  *     - update_pos_tau(const ModuleBase::Vector3<double>* posd_in)
  *   - CalUx
  *     - cal_ux(): calculate magnetic moments of cell
+ *   - ReadOrbFile
+ *     - read_orb_file(): read header part of orbital file
  */
 
 //mock function
@@ -866,4 +868,18 @@ TEST_F(UcellTest,CalUx2)
 	EXPECT_NEAR(ucell->magnet.ux_[0],0.57735,1e-5);
 	EXPECT_NEAR(ucell->magnet.ux_[1],0.57735,1e-5);
 	EXPECT_NEAR(ucell->magnet.ux_[2],0.57735,1e-5);
+}
+
+TEST_F(UcellTest,ReadOrbFile)
+{
+	UcellTestPrepare utp = UcellTestLib["C1H2-Read"];
+	GlobalV::relax_new = utp.relax_new;
+	ucell = utp.SetUcellInfo();
+	std::string orb_file = "./support/C.orb";
+	std::ofstream ofs_running;
+	ofs_running.open("tmp_readorbfile");
+	ucell->read_orb_file(0,orb_file,ofs_running,&(ucell->atoms[0]));
+	ofs_running.close();
+	EXPECT_EQ(ucell->atoms[0].nw,25);
+	remove("tmp_readorbfile");
 }
