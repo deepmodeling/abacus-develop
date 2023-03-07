@@ -23,7 +23,7 @@ class Symmetry_Basic
 	bool equal(const double &m, const double &n)const;
 	void check_boundary(double &x)const;
 	double get_translation_vector(const double &x1, const double &x2);
-	void check_translation(double &x, const double &t);
+	void check_translation(double &x, const double &t) const;
 	double check_diff(const double &x1, const double &x2);
 	
 	void veccon(
@@ -37,19 +37,23 @@ class Symmetry_Basic
 			const ModuleBase::Vector3<double> &bb2,
 			const ModuleBase::Vector3<double> &bb3
 			);
-	void matrigen(ModuleBase::Matrix3 *symgen, const int ngen, ModuleBase::Matrix3* symop, int &nop);
-	void setgroup(ModuleBase::Matrix3 *symop, int &nop, const int &ibrav);
-	void rotate( ModuleBase::Matrix3 &gmatrix, ModuleBase::Vector3<double> &gtrans, int i, int j, int k, const int, const int, const int, int&, int&, int&);
+	void matrigen(ModuleBase::Matrix3 *symgen, const int ngen, ModuleBase::Matrix3* symop, int &nop) const;
+	void setgroup(ModuleBase::Matrix3 *symop, int &nop, const int &ibrav) const;
+	void rotate(
+			ModuleBase::Matrix3 &gmatrix, ModuleBase::Vector3<double> &gtrans, 
+			int i, int j, int k, const int, const int, const int, int&, int&, int&);
+	void test_atom_ordering(double *posi, const int natom, int *subindex) const;
 
 	protected:
 
-	std::string get_brav_name(const int ibrav);
+	std::string get_brav_name(const int ibrav) const;
 	void pointgroup(const int &nrot,int &pgnumber,std::string &pgname, const ModuleBase::Matrix3* gmatrix, std::ofstream &ofs_running);
 	void atom_ordering(double *posi, const int natom, int *subindex);
+	void atom_ordering_new(double *posi, const int natom, int *subindex) const;
 
 	private:
 
-	void order_atoms(double* pos, const int &nat, const int *index);
+	void order_atoms(double* pos, const int &nat, const int *index) const;
 	void order_y(double *pos, const int &oldpos, const int &newpos);
 	void order_z(double *pos, const int &oldpos, const int &newpos);
 };

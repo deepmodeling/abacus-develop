@@ -106,10 +106,18 @@ list(APPEND planewave_serial_srcs
   ../../module_pw/pw_transform_k.cpp
 )
 
+list(APPEND symmetry
+../../module_cell/module_symmetry/symmetry.cpp
+../../module_cell/module_symmetry/symmetry_basic.cpp
+../../module_cell/module_symmetry/symm_other.cpp
+../../module_io/output.cpp
+)
+
 add_library(
   planewave_serial
   OBJECT
   ${planewave_serial_srcs}
+  ${symmetry}
 )
 
 AddTest(
@@ -121,4 +129,5 @@ AddTest(
 if(ENABLE_COVERAGE)
   add_coverage(base_serial)
   add_coverage(planewave_serial)
+  add_coverage(symmetry)
 endif()
