@@ -10,6 +10,17 @@
 
 /************************************************
  *  unit test of class Symmetry
+ * 1. function: `analy_sys`:
+ * 1-1. test if the bravis lattice analysis is right;
+ * 1-2. check if matrix-type and vector3-type;
+ *     input and optimized lattice vectors are right;
+ * 1-3. double-check for  if `gtrans_convert` 
+ *     gives the same results as `veccon`;
+ * 1-4. check `invmap` function gives the right result;
+ * 1-5 test if `gmatrix_convert` and `gmatrix_convert_int`
+ *     gives the right result;
+ * 2. function: `atom_ordering_new:
+ * test the new atom-sort algorithm gives the right result;
  ***********************************************/
 
 // mock the useless functions
