@@ -306,8 +306,10 @@ void ESolver_KS_LCAO_TDDFT::updatepot(const int istep, const int iter)
 #endif
         for (int ik = 0; ik < GlobalC::kv.nks; ++ik)
         {
-            psi->fix_k(ik);
-            for (int index = 0; index < psi[0].size(); ++index)
+            this->psi->fix_k(ik);
+            this->psi_laststep->fix_k(ik);
+            int size0 = psi->get_nbands() * psi->get_nbasis();
+            for (int index = 0; index < size0; ++index)
                 psi_laststep[0].get_pointer()[index] = psi[0].get_pointer()[index];
         }
         if (istep > 1 && ELEC_evolve::td_edm == 0)
