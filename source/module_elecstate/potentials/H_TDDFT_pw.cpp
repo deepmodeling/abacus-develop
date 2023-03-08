@@ -3,10 +3,9 @@
 #include "module_base/constants.h"
 #include "module_base/timer.h"
 #include "module_hamilt_lcao/module_tddft/ELEC_evolve.h"
+#include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_io/input.h"
 #include "module_io/input_conv.h"
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
-
 
 namespace elecstate
 {
@@ -48,7 +47,8 @@ void H_TDDFT_pw::cal_fixed_v(double *vl_pseudo)
             std::stringstream as;
             as << GlobalV::global_out_dir << "efield_" << count << ".dat";
             std::ofstream ofs(as.str().c_str(), std::ofstream::app);
-            ofs << H_TDDFT_pw::istep * dt * ModuleBase::AU_to_FS << "\t" << vext_time << endl;
+            ofs << H_TDDFT_pw::istep * dt * ModuleBase::AU_to_FS << "\t"
+                << vext_time * ModuleBase::Ry_to_eV / ModuleBase::BOHR_TO_A << endl;
             ofs.close();
         }
 

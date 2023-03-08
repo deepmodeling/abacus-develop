@@ -12,9 +12,6 @@ ELEC_evolve::ELEC_evolve(){};
 ELEC_evolve::~ELEC_evolve(){};
 
 double ELEC_evolve::td_force_dt;
-int ELEC_evolve::td_val_elec_01;
-int ELEC_evolve::td_val_elec_02;
-int ELEC_evolve::td_val_elec_03;
 bool ELEC_evolve::td_vext;
 std::vector<int> ELEC_evolve::td_vext_dire_case;
 bool ELEC_evolve::out_dipole;

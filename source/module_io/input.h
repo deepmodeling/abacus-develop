@@ -372,9 +372,6 @@ class Input
     // Fuxiang He add 2016-10-26
     //==========================================================
     double td_force_dt; //"fs"
-    int td_val_elec_01; // valence electron 01
-    int td_val_elec_02; // valence electron 02
-    int td_val_elec_03; // valence electron 03
     bool td_vext; // add extern potential or not
     std::string td_vext_dire; // vext direction
     bool out_dipole; // output the dipole or not

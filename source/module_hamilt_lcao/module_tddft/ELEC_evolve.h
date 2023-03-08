@@ -30,9 +30,6 @@ class ELEC_evolve
     // fuxiang add 2021-05-25
 
     static double td_force_dt;
-    static int td_val_elec_01;
-    static int td_val_elec_02;
-    static int td_val_elec_03;
     static bool td_vext;
     static std::vector<int> td_vext_dire_case;
     static bool out_dipole;
