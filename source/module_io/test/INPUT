@@ -198,6 +198,8 @@ md_pfirst                      -1 #initial target pressure
 md_plast                       -1 #final target pressure
 md_pfreq                       0 #oscillation frequency, used to determine qmass of thermostats coupled with barostat
 dump_force                     0 #output atomic forces into the file MD_dump or not.
+dump_vel                       0 #output atomic velocities into the file MD_dump or not
+dump_virial                    0 #output lattice virial into the file MD_dump or not
 
 #Parameters (10.Electric field and dipole correction)
 efield_flag                    0 #add electric field
