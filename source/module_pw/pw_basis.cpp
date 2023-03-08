@@ -204,7 +204,7 @@ void PW_Basis::collect_uniqgg()
     delete[] tmpgg2;
 }
 
-void PW_Basis::getfftixy2is(int * fftixy2is)
+void PW_Basis::getfftixy2is(int * fftixy2is) const
 {
 //Note: please assert when is1 >= is2, fftixy2is[is1] >= fftixy2is[is2]!
     for(int ixy = 0 ; ixy < this->fftnxy ; ++ixy)   fftixy2is[ixy] = -1;

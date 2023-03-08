@@ -4,6 +4,15 @@
 #include "xc3_mock.h"
 #include "module_base/matrix.h"
 
+/************************************************
+*  unit test of functionals
+***********************************************/
+
+// For more information of the functions, check the comment of xc_functional.h
+// Two functions are tested:
+// gradcorr, which calculates the gradient part of GGA functional
+// gradwfc, which is used to obtain the derivative of wavefunction
+
 class XCTest_GRADCORR : public testing::Test
 {
     protected:

@@ -139,6 +139,21 @@ void ESolver_SDFT_PW::hamilt2density(int istep, int iter, double ethr)
     hsolver::DiagoIterAssist<double>::PW_DIAG_THR = ethr; 
     hsolver::DiagoIterAssist<double>::PW_DIAG_NMAX = GlobalV::PW_DIAG_NMAX;
     this->phsol->solve(this->p_hamilt, this->psi[0], this->pelec,this->stowf, istep, iter, GlobalV::KS_SOLVER);   
+    if(GlobalV::MY_STOGROUP==0)
+    {
+        Symmetry_rho srho;
+        for(int is=0; is < GlobalV::NSPIN; is++)
+        {
+            srho.begin(is, *(this->pelec->charge), GlobalC::rhopw, GlobalC::Pgrid, GlobalC::symm);
+        }
+        GlobalC::en.deband = GlobalC::en.delta_e(this->pelec);
+    }
+    else
+    {
+#ifdef __MPI
+			if(ModuleSymmetry::Symmetry::symm_flag == 1)	MPI_Barrier(MPI_COMM_WORLD);
+#endif
+    }
     // transform energy for print
     GlobalC::en.eband = this->pelec->eband;
     GlobalC::en.demet = this->pelec->demet;

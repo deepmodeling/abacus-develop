@@ -8,12 +8,10 @@
 #include "module_base/parallel_reduce.h"
 #include "module_base/timer.h"
 #include "xc_functional.h"
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
 
 // [etxc, vtxc, v] = XC_Functional::v_xc(...)
 std::tuple<double,double,ModuleBase::matrix> XC_Functional::v_xc(
 	const int &nrxx, // number of real-space grid
-	const int &ncxyz, // total number of charge grid
     const Charge* const chr,
     ModulePW::PW_Basis* rhopw,
     const UnitCell *ucell) // core charge density
@@ -24,7 +22,7 @@ std::tuple<double,double,ModuleBase::matrix> XC_Functional::v_xc(
     if(use_libxc)
     {
 #ifdef USE_LIBXC
-        return v_xc_libxc(nrxx, ncxyz, ucell->omega, chr, ucell->tpiba);
+        return v_xc_libxc(nrxx, ucell->omega, ucell->tpiba, chr, rhopw);
 #else
         ModuleBase::WARNING_QUIT("v_xc","compile with LIBXC");
 #endif
@@ -171,8 +169,8 @@ std::tuple<double,double,ModuleBase::matrix> XC_Functional::v_xc(
     Parallel_Reduce::reduce_double_pool( etxc );
     Parallel_Reduce::reduce_double_pool( vtxc );
 #endif
-    etxc *= ucell->omega / ncxyz;
-    vtxc *= ucell->omega / ncxyz;
+    etxc *= ucell->omega / rhopw->nxyz;
+    vtxc *= ucell->omega / rhopw->nxyz;
 
     ModuleBase::timer::tick("XC_Functional","v_xc");
     return std::make_tuple(etxc, vtxc, std::move(v));
@@ -182,10 +180,10 @@ std::tuple<double,double,ModuleBase::matrix> XC_Functional::v_xc(
 
 std::tuple<double,double,ModuleBase::matrix> XC_Functional::v_xc_libxc(		// Peize Lin update for nspin==4 at 2023.01.14
         const int &nrxx, // number of real-space grid
-        const int &ncxyz, // total number of charge grid
         const double &omega, // volume of cell
+        const double tpiba,
         const Charge* const chr,
-        const double tpiba)
+        ModulePW::PW_Basis* rhopw)
 {
     ModuleBase::TITLE("XC_Functional","v_xc_libxc");
     ModuleBase::timer::tick("XC_Functional","v_xc_libxc");
@@ -267,15 +265,15 @@ std::tuple<double,double,ModuleBase::matrix> XC_Functional::v_xc_libxc(		// Peiz
             // initialize the charge density array in reciprocal space
             // bring electron charge density from real space to reciprocal space
             //------------------------------------------
-            std::vector<std::complex<double>> rhog(GlobalC::rhopw->npw);
-            GlobalC::rhopw->real2recip(rhor.data(), rhog.data());
+            std::vector<std::complex<double>> rhog(rhopw->npw);
+            rhopw->real2recip(rhor.data(), rhog.data());
 
             //-------------------------------------------
             // compute the gradient of charge density and
             // store the gradient in gdr[is]
             //-------------------------------------------
             gdr[is].resize(nrxx);
-            XC_Functional::grad_rho(rhog.data(), gdr[is].data(), GlobalC::rhopw, tpiba);
+            XC_Functional::grad_rho(rhog.data(), gdr[is].data(), rhopw, tpiba);
         } // end for(is)
 
         // converting grho
@@ -399,7 +397,7 @@ std::tuple<double,double,ModuleBase::matrix> XC_Functional::v_xc_libxc(		// Peiz
             // define two dimensional array dh [ nspin, nrxx ]
             std::vector<std::vector<double>> dh(nspin, std::vector<double>(nrxx));
             for( int is=0; is!=nspin; ++is )
-                XC_Functional::grad_dot( h[is].data(), dh[is].data(), GlobalC::rhopw, tpiba);
+                XC_Functional::grad_dot( h[is].data(), dh[is].data(), rhopw, tpiba);
 
             double rvtxc = 0.0;
             #ifdef _OPENMP
@@ -426,8 +424,8 @@ std::tuple<double,double,ModuleBase::matrix> XC_Functional::v_xc_libxc(		// Peiz
     Parallel_Reduce::reduce_double_pool( vtxc );
     #endif
 
-    etxc *= omega / ncxyz;
-    vtxc *= omega / ncxyz;
+    etxc *= omega / rhopw->nxyz;
+    vtxc *= omega / rhopw->nxyz;
 
     finish_func(funcs);
 
@@ -474,10 +472,10 @@ std::tuple<double,double,ModuleBase::matrix> XC_Functional::v_xc_libxc(		// Peiz
 // [etxc, vtxc, v, vofk] = XC_Functional::v_xc(...)
 tuple<double,double,ModuleBase::matrix,ModuleBase::matrix> XC_Functional::v_xc_meta(
     const int &nrxx, // number of real-space grid
-    const int &ncxyz, // total number of charge grid
     const double &omega, // volume of cell
+    const double tpiba,
     const Charge* const chr,
-    const double tpiba)
+    ModulePW::PW_Basis* rhopw)
 {
     ModuleBase::TITLE("XC_Functional","v_xc_meta");
     ModuleBase::timer::tick("XC_Functional","v_xc_meta");
@@ -533,15 +531,15 @@ tuple<double,double,ModuleBase::matrix,ModuleBase::matrix> XC_Functional::v_xc_m
         // initialize the charge density array in reciprocal space
         // bring electron charge density from real space to reciprocal space
         //------------------------------------------
-        std::vector<std::complex<double>> rhog(GlobalC::rhopw->npw);
-        GlobalC::rhopw->real2recip(rhor.data(), rhog.data());
+        std::vector<std::complex<double>> rhog(rhopw->npw);
+        rhopw->real2recip(rhor.data(), rhog.data());
 
         //-------------------------------------------
         // compute the gradient of charge density and
         // store the gradient in gdr[is]
         //-------------------------------------------
         gdr[is].resize(nrxx);
-        XC_Functional::grad_rho(rhog.data(), gdr[is].data(), GlobalC::rhopw, tpiba);
+        XC_Functional::grad_rho(rhog.data(), gdr[is].data(), rhopw, tpiba);
     }
 
     // converting grho
@@ -647,7 +645,7 @@ tuple<double,double,ModuleBase::matrix,ModuleBase::matrix> XC_Functional::v_xc_m
 #ifdef __EXX
                 if (func.info->number == XC_MGGA_X_SCAN && get_func_type() == 5)
                 {
-                    exc[ir] *= (1.0 - GlobalC::exx_info.info_global.hybrid_alpha);
+                    exc[ir] *= (1.0 - XC_Functional::hybrid_alpha);
                 }
 #endif
                 etxc += ModuleBase::e2 * exc[ir] * rho[ir*nspin+is]  * sgn[ir*nspin+is];
@@ -665,7 +663,7 @@ tuple<double,double,ModuleBase::matrix,ModuleBase::matrix> XC_Functional::v_xc_m
 #ifdef __EXX
                 if (func.info->number == XC_MGGA_X_SCAN && get_func_type() == 5)
                 {
-                    vrho[ir*nspin+is] *= (1.0 - GlobalC::exx_info.info_global.hybrid_alpha);
+                    vrho[ir*nspin+is] *= (1.0 - XC_Functional::hybrid_alpha);
                 }
 #endif
                 const double v_tmp = ModuleBase::e2 * vrho[ir*nspin+is]  * sgn[ir*nspin+is];
@@ -686,7 +684,7 @@ tuple<double,double,ModuleBase::matrix,ModuleBase::matrix> XC_Functional::v_xc_m
 #ifdef __EXX
                 if (func.info->number == XC_MGGA_X_SCAN && get_func_type() == 5)
                 {
-                    vsigma[ir] *= (1.0 - GlobalC::exx_info.info_global.hybrid_alpha);
+                    vsigma[ir] *= (1.0 - XC_Functional::hybrid_alpha);
                 }
 #endif
                 h[0][ir] = 2.0 * gdr[0][ir] * vsigma[ir] * 2.0 * sgn[ir];
@@ -702,9 +700,9 @@ tuple<double,double,ModuleBase::matrix,ModuleBase::matrix> XC_Functional::v_xc_m
 #ifdef __EXX
                 if (func.info->number == XC_MGGA_X_SCAN && get_func_type() == 5)
                 {
-                    vsigma[ir*3]   *= (1.0 - GlobalC::exx_info.info_global.hybrid_alpha);
-                    vsigma[ir*3+1] *= (1.0 - GlobalC::exx_info.info_global.hybrid_alpha);
-                    vsigma[ir*3+2] *= (1.0 - GlobalC::exx_info.info_global.hybrid_alpha);
+                    vsigma[ir*3]   *= (1.0 - XC_Functional::hybrid_alpha);
+                    vsigma[ir*3+1] *= (1.0 - XC_Functional::hybrid_alpha);
+                    vsigma[ir*3+2] *= (1.0 - XC_Functional::hybrid_alpha);
                 }
 #endif
                 h[0][ir] = 2.0 * (gdr[0][ir] * vsigma[ir*3  ] * sgn[ir*2  ] * 2.0 
@@ -719,8 +717,8 @@ tuple<double,double,ModuleBase::matrix,ModuleBase::matrix> XC_Functional::v_xc_m
         for( int is=0; is!=nspin; ++is )
         {
             XC_Functional::grad_dot( ModuleBase::GlobalFunc::VECTOR_TO_PTR(h[is]),
-                ModuleBase::GlobalFunc::VECTOR_TO_PTR(dh[is]), GlobalC::rhopw,
-                GlobalC::ucell.tpiba);
+                ModuleBase::GlobalFunc::VECTOR_TO_PTR(dh[is]), rhopw,
+                tpiba);
         }
 
         double rvtxc = 0.0;
@@ -748,7 +746,7 @@ tuple<double,double,ModuleBase::matrix,ModuleBase::matrix> XC_Functional::v_xc_m
 #ifdef __EXX
                 if (func.info->number == XC_MGGA_X_SCAN && get_func_type() == 5)
                 {
-                    vtau[ir*nspin+is] *= (1.0 - GlobalC::exx_info.info_global.hybrid_alpha);
+                    vtau[ir*nspin+is] *= (1.0 - XC_Functional::hybrid_alpha);
                 }
 #endif
                 vofk(is,ir) += vtau[ir*nspin+is]  * sgn[ir*nspin+is];
@@ -764,8 +762,8 @@ tuple<double,double,ModuleBase::matrix,ModuleBase::matrix> XC_Functional::v_xc_m
     Parallel_Reduce::reduce_double_pool( vtxc );
 #endif
 
-    etxc *= omega / ncxyz;
-    vtxc *= omega / ncxyz;
+    etxc *= omega / rhopw->nxyz;
+    vtxc *= omega / rhopw->nxyz;
 
     finish_func(funcs);
 

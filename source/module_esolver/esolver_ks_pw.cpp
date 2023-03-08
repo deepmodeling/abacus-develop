@@ -480,6 +480,11 @@ namespace ModuleESolver
         {
             std::stringstream ssc;
             std::stringstream ss1;
+            ss1 << GlobalV::global_out_dir << "tmp_SPIN" << is + 1 << "_CHG";
+            std::remove(ss1.str().c_str());    // remove tmp_SPIN_CHG when scf is finished    liuyu 2023-03-01
+            ss1 << ".cube";
+            std::remove(ss1.str().c_str());    // remove tmp_SPIN_CHG.cube when scf is finished    liuyu 2023-03-01
+
             ssc << GlobalV::global_out_dir << "SPIN" << is + 1 << "_CHG";
             ModuleIO::write_rho(this->pelec->charge->rho_save[is], is, 0, ssc.str());//mohan add 2007-10-17
         }

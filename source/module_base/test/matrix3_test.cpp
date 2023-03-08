@@ -58,6 +58,8 @@
  *   - ToMatrix
  *     - change the form of a 3x3 matrix from that of class Matrix3
  *     - to that of class matrix
+ *	 -Template V Multiply M
+ *	   -tamplate classes for (Vector3)*(3x3 matrix)
  */
 
 class Matrix3Test : public testing::Test
@@ -339,4 +341,26 @@ TEST_F(Matrix3Test, ToMatrix)
 	EXPECT_EQ(ma.e11,mb(0,0)); EXPECT_EQ(ma.e12,mb(0,1)); EXPECT_EQ(ma.e13,mb(0,2));
 	EXPECT_EQ(ma.e21,mb(1,0)); EXPECT_EQ(ma.e22,mb(1,1)); EXPECT_EQ(ma.e23,mb(1,2));
 	EXPECT_EQ(ma.e31,mb(2,0)); EXPECT_EQ(ma.e32,mb(2,1)); EXPECT_EQ(ma.e33,mb(2,2));
+}
+
+TEST_F(Matrix3Test,TemplateVectorMultiplyMatrix)
+{
+	ModuleBase::Vector3<int> ui(1,2,3);
+	ModuleBase::Vector3<double> ud(1.0,2.0,3.0);
+	ModuleBase::Vector3<float> uf(1.0,2.0,3.0);
+	ModuleBase::Vector3<double> vi,vd,vf;
+	ModuleBase::Matrix3 ma;
+	ma = get_random_matrix3();
+	vi=ui*ma;
+	vd=ud*ma;
+	vf=uf*ma;
+	EXPECT_DOUBLE_EQ(vi.x,ui.x * ma.e11 + ui.y * ma.e21 + ui.z * ma.e31);
+	EXPECT_DOUBLE_EQ(vi.y,ui.x * ma.e12 + ui.y * ma.e22 + ui.z * ma.e32);
+	EXPECT_DOUBLE_EQ(vi.z,ui.x * ma.e13 + ui.y * ma.e23 + ui.z * ma.e33);
+	EXPECT_DOUBLE_EQ(vd.x,ud.x * ma.e11 + ud.y * ma.e21 + ud.z * ma.e31);
+	EXPECT_DOUBLE_EQ(vd.y,ud.x * ma.e12 + ud.y * ma.e22 + ud.z * ma.e32);
+	EXPECT_DOUBLE_EQ(vd.z,ud.x * ma.e13 + ud.y * ma.e23 + ud.z * ma.e33);
+	EXPECT_DOUBLE_EQ(vf.x,uf.x * ma.e11 + uf.y * ma.e21 + uf.z * ma.e31);
+	EXPECT_DOUBLE_EQ(vf.y,uf.x * ma.e12 + uf.y * ma.e22 + uf.z * ma.e32);
+	EXPECT_DOUBLE_EQ(vf.z,uf.x * ma.e13 + uf.y * ma.e23 + uf.z * ma.e33);
 }

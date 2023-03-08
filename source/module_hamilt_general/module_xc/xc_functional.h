@@ -45,7 +45,6 @@ class XC_Functional
 	// [etxc, vtxc, v] = v_xc(...)
     static std::tuple<double,double,ModuleBase::matrix> v_xc(
 		const int &nrxx, // number of real-space grid
-		const int &ncxyz, // total number of charge grid
 		const Charge* const chr,
 		ModulePW::PW_Basis* rhopw,
 		const UnitCell *ucell); // charge density
@@ -53,18 +52,18 @@ class XC_Functional
 	// using libxc
     static std::tuple<double,double,ModuleBase::matrix> v_xc_libxc(
 		const int &nrxx, // number of real-space grid
-		const int &ncxyz, // total number of charge grid
 		const double &omega, // volume of cell
+		const double tpiba,
 		const Charge* const chr,
-		const double tpiba); // charge density
+		ModulePW::PW_Basis* rhopw); // charge density
 
 	// for mGGA functional
 	static std::tuple<double,double,ModuleBase::matrix,ModuleBase::matrix> v_xc_meta(
 		const int &nrxx, // number of real-space grid
-		const int &ncxyz, // total number of charge grid
 		const double &omega, // volume of cell
+		const double tpiba,
 		const Charge* const chr,
-		const double tpiba);
+		ModulePW::PW_Basis* rhopw);
 
 //-------------------
 //  xc_functional.cpp

@@ -31,7 +31,7 @@ class WF_atomic : public WF_igk
 
     void print_PAOs(void)const;
 
-	protected:
+    public: //template change to public, will be refactor later. added by zhengdy 20230302
     int *irindex = nullptr;
 
     void atomic_wfc

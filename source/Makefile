@@ -8,22 +8,27 @@ LIBS = -lm -lpthread
 OPTS = -Ofast -march=native -std=c++14 -pedantic -m64 ${INCLUDES}
 HONG = -D__LCAO
 HONG += -D__ELPA
+ifeq ($(OPENMP), ON)
+    ELPA_NAME = elpa_openmp
+else
+    ELPA_NAME = elpa
+endif
 OBJ_DIR = obj
 BIN_DIR = ../bin
 SOURCE_DIR = .
-ifeq ($(findstring mpi, $(CC)), mpi)
+ifeq ($(findstring mpi, $(CXX)), mpi)
      # We do not support EXX in sequential version temporarily.
      HONG += -D__MPI  -DUSE_CEREAL_SERIALIZATION
      MPI = ON
      TESTNP = 4
      suffix = mpi
-     ifeq ($(findstring mpii, $(CC)), mpii)
+     ifeq ($(findstring mpii, $(CXX)), mpii)
          INTEL=ON
      endif
 else
      TESTNP = 1
      suffix = serial
-     ifeq ($(findstring i, $(CC)), i)
+     ifeq ($(findstring i, $(CXX)), i)
          INTEL=ON
      endif
 endif
@@ -32,9 +37,9 @@ ifeq ($(DEBUG), ON)
     INTEL = OFF
     HONG += -DDEBUG
     ifeq ($(MPI), ON)
-        CC = mpicxx
+        CXX = mpicxx
     else
-        CC = g++
+        CXX = g++
     endif
     OPTS +=  -fsanitize=address -fno-omit-frame-pointer -Wall -g #It can check segmental defaults
 else
@@ -55,7 +60,7 @@ ifeq ($(INTEL), ON)
     # ELPA package
     #==========================
     ELPA_LIB_DIR = ${ELPA_DIR}/lib
-    LIBS     += -L${ELPA_LIB_DIR} -lelpa  -Wl,-rpath=${ELPA_LIB_DIR}
+    LIBS     += -L${ELPA_LIB_DIR} -l${ELPA_NAME}  -Wl,-rpath=${ELPA_LIB_DIR}
     INCLUDES += -I${ELPA_INCLUDE_DIR}
 else
     OPTS += -fopenmp -fpermissive
@@ -71,7 +76,7 @@ else
     #==========================
     # OPENBLAS, SCALAPACK, ELPA
     #==========================
-    LIBS     += -L${OPENBLAS_LIB_DIR} -L${SCALAPACK_LIB_DIR} -L${ELPA_DIR}/lib -lelpa -lscalapack -lopenblas -lgfortran\
+    LIBS     += -L${OPENBLAS_LIB_DIR} -L${SCALAPACK_LIB_DIR} -L${ELPA_DIR}/lib -l${ELPA_NAME} -lscalapack -lopenblas -lgfortran\
                 -Wl,-rpath=${ELPA_DIR}/lib -Wl,-rpath=${SCALAPACK_LIB_DIR} -Wl,-rpath=${OPENBLAS_LIB_DIR}
     INCLUDES += -I${ELPA_INCLUDE_DIR}
 endif
@@ -195,18 +200,18 @@ test:
 
 pw $(BIN_DIR)/${VERSION}-PW.x:
 	@ if [ ! -d $(BIN_DIR) ]; then mkdir $(BIN_DIR); fi
-	@ cd module_hamilt_pw/hamilt_pwdft; $(MAKE) CC=${CC} GPU=${GPU} DEBUG=$(DEBUG) FFTW_DIR=$(FFTW_DIR) OPENBLAS_LIB_DIR=$(OPENBLAS_LIB_DIR) ${PWTAG}
+	@ cd module_hamilt_pw/hamilt_pwdft; $(MAKE) CXX=${CXX} GPU=${GPU} DEBUG=$(DEBUG) FFTW_DIR=$(FFTW_DIR) OPENBLAS_LIB_DIR=$(OPENBLAS_LIB_DIR) ${PWTAG}
 	@ cp module_hamilt_pw/hamilt_pwdft/${VERSION}-PW.x $(BIN_DIR)/${VERSION}-PW.x
 
 $(BIN_DIR)/${VERSION}.$(suffix) : ${FP_OBJS} ${PDIAG_OBJS} ${HEADERS}
-	${CC} ${OPTS} ${OPTS_MPI} $(FP_OBJS) ${PDIAG_OBJS} ${LIBS} -o  $(BIN_DIR)/${VERSION}.$(suffix)
+	${CXX} ${OPTS} ${OPTS_MPI} $(FP_OBJS) ${PDIAG_OBJS} ${LIBS} -o  $(BIN_DIR)/${VERSION}.$(suffix)
 
 
 #==========================
 # rules
 #==========================
 ${OBJ_DIR}/%.o:%.cpp
-	${CC} ${OPTS} ${OPTS_MPI} -c ${HONG} $< -o $@
+	${CXX} ${OPTS} ${OPTS_MPI} -c ${HONG} $< -o $@
 	
 .PHONY:clean test
 clean:

@@ -2,6 +2,13 @@
 #include "gtest/gtest.h"
 #include "../exx_info.h"
 
+/************************************************
+*  unit test of functionals
+***********************************************/
+
+// For more information of the functions, check the comment of xc_functional.h
+// mGGA Functional (SCAN) is tested under nspin = 1
+
 namespace ModuleBase
 {
     void WARNING_QUIT(const std::string &file,const std::string &description) {return ;}

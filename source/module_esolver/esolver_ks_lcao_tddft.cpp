@@ -417,7 +417,7 @@ void ESolver_KS_LCAO_TDDFT::afterscf(const int istep)
 
     if (hsolver::HSolverLCAO::out_mat_hsR)
     {
-        if (!(GlobalV::CALCULATION == "md" && (istep % hsolver::HSolverLCAO::out_hsR_interval != 0)))
+        if( GlobalV::CALCULATION != "md" || (istep % hsolver::HSolverLCAO::out_hsR_interval == 0))
         {
             ModuleIO::output_HS_R(istep, this->pelec->pot->get_effective_v(), this->UHM); // LiuXh add 2019-07-15
         }
@@ -425,7 +425,7 @@ void ESolver_KS_LCAO_TDDFT::afterscf(const int istep)
 
     if (hsolver::HSolverLCAO::out_mat_t)
     {
-        if (!(GlobalV::CALCULATION == "md" && (istep % hsolver::HSolverLCAO::out_hsR_interval != 0)))
+        if( GlobalV::CALCULATION != "md" || (istep % hsolver::HSolverLCAO::out_hsR_interval == 0))
         {
             ModuleIO::output_T_R(istep, this->UHM); // LiuXh add 2019-07-15
         }
@@ -433,7 +433,7 @@ void ESolver_KS_LCAO_TDDFT::afterscf(const int istep)
 
     if (hsolver::HSolverLCAO::out_mat_dh)
     {
-        if (!(GlobalV::CALCULATION == "md" && (istep % hsolver::HSolverLCAO::out_hsR_interval != 0)))
+        if( GlobalV::CALCULATION != "md" || (istep % hsolver::HSolverLCAO::out_hsR_interval == 0))
         {
             ModuleIO::output_dH_R(istep, this->pelec->pot->get_effective_v(), this->UHM); // LiuXh add 2019-07-15
         }

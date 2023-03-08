@@ -42,8 +42,8 @@ void Stress_Func<FPTYPE, Device>::stress_cc(ModuleBase::matrix& sigma, ModulePW:
 	{
 #ifdef USE_LIBXC
     	const auto etxc_vtxc_v = XC_Functional::v_xc_meta(
-            rho_basis->nrxx, rho_basis->nxyz, GlobalC::ucell.omega,
-            chr, GlobalC::ucell.tpiba);
+            rho_basis->nrxx, GlobalC::ucell.omega, GlobalC::ucell.tpiba,
+            chr, GlobalC::rhopw);
         
         GlobalC::en.etxc = std::get<0>(etxc_vtxc_v);
         GlobalC::en.vtxc = std::get<1>(etxc_vtxc_v);
@@ -55,7 +55,7 @@ void Stress_Func<FPTYPE, Device>::stress_cc(ModuleBase::matrix& sigma, ModulePW:
 	else
 	{
 		if(GlobalV::NSPIN==4) GlobalC::ucell.cal_ux();
-    	const auto etxc_vtxc_v = XC_Functional::v_xc(rho_basis->nrxx, rho_basis->nxyz,
+    	const auto etxc_vtxc_v = XC_Functional::v_xc(rho_basis->nrxx,
 			chr, GlobalC::rhopw, &GlobalC::ucell);
 		GlobalC::en.etxc    = std::get<0>(etxc_vtxc_v);			// may delete?
 		GlobalC::en.vtxc    = std::get<1>(etxc_vtxc_v);			// may delete?

@@ -4,7 +4,7 @@
 # FUNCTION : spillage makefile
 #===========================================================
 #Dirac
-#CPLUSPLUS =CC -O3 -w -ffast-math -funroll-loops
+#CPLUSPLUS =CXX -O3 -w -ffast-math -funroll-loops
 CPLUSPLUS = /usr/mpi/intel/openmpi-1.4.1/bin/mpicxx
 #CPLUSPLUS_GPROF = g++ -gp
 #CPLUSPLUS_MPI = /opt/openmpi/bin/mpicxx -O3 -w 

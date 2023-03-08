@@ -20,6 +20,9 @@ void PW_Basis_K:: real2recip(const std::complex<FPTYPE> * in, std::complex<FPTYP
 
     assert(this->gamma_only == false);
     auto* auxr = this->ft.get_auxr_data<FPTYPE>();
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 4096/sizeof(FPTYPE))
+#endif
     for (int ir = 0; ir < this->nrxx; ++ir)
     {
         auxr[ir] = in[ir];
@@ -34,12 +37,18 @@ void PW_Basis_K:: real2recip(const std::complex<FPTYPE> * in, std::complex<FPTYP
     const int npwk = this->npwk[ik];
     auto* auxg = this->ft.get_auxg_data<FPTYPE>();
     if(add) {
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 4096/sizeof(FPTYPE))
+#endif
         for (int igl = 0; igl < npwk; ++igl)
         {
             out[igl] += factor / FPTYPE(this->nxyz) * auxg[this->igl2isz_k[igl + startig]];
         }
     }
     else {
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 4096/sizeof(FPTYPE))
+#endif
         for (int igl = 0; igl < npwk; ++igl)
         {
             out[igl] = auxg[this->igl2isz_k[igl + startig]] / FPTYPE(this->nxyz);
@@ -64,12 +73,14 @@ void PW_Basis_K:: real2recip(const FPTYPE * in, std::complex<FPTYPE> * out, cons
     // }
     // r2c in place
     const int npy = this->ny * this->nplane;
+#ifdef _OPENMP
+#pragma omp parallel for collapse(2) schedule(static, 4096/sizeof(FPTYPE))
+#endif
     for(int ix = 0 ; ix < this->nx ; ++ix)
     {
-        const int ixpy = ix*npy;
         for(int ipy = 0 ; ipy < npy ; ++ipy)
         {
-            this->ft.get_rspace_data<FPTYPE>()[ixpy + ipy] = in[ixpy + ipy];
+            this->ft.get_rspace_data<FPTYPE>()[ix * npy + ipy] = in[ix * npy + ipy];
         }
     }
 
@@ -83,15 +94,25 @@ void PW_Basis_K:: real2recip(const FPTYPE * in, std::complex<FPTYPE> * out, cons
     const int npwk = this->npwk[ik];
     auto* auxg = this->ft.get_auxg_data<FPTYPE>();
     if(add)
+    {
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 4096/sizeof(FPTYPE))
+#endif
         for (int igl = 0;igl < npwk; ++igl)
         {
             out[igl] += factor / FPTYPE(this->nxyz) * auxg[this->igl2isz_k[igl + startig]];
         }
+    }
     else
+    {
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 4096/sizeof(FPTYPE))
+#endif
         for (int igl = 0; igl < npwk; ++igl)
         {
             out[igl] = auxg[this->igl2isz_k[igl + startig]] / FPTYPE(this->nxyz);
         }
+    }
     ModuleBase::timer::tick(this->classname, "real2recip");
     return;
 }
@@ -111,6 +132,9 @@ void PW_Basis_K:: recip2real(const std::complex<FPTYPE> * in, std::complex<FPTYP
     const int startig = ik*this->npwk_max;
     const int npwk = this->npwk[ik];
     auto* auxg = this->ft.get_auxg_data<FPTYPE>();
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 4096/sizeof(FPTYPE))
+#endif
     for (int igl = 0; igl < npwk; ++igl)
     {
         auxg[this->igl2isz_k[igl+startig]] = in[igl];
@@ -123,12 +147,18 @@ void PW_Basis_K:: recip2real(const std::complex<FPTYPE> * in, std::complex<FPTYP
 
     auto* auxr = this->ft.get_auxr_data<FPTYPE>();
     if(add) {
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 4096/sizeof(FPTYPE))
+#endif
         for (int ir = 0; ir < this->nrxx; ++ir)
         {
             out[ir] += factor * auxr[ir];
         }
     }
     else {
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 4096/sizeof(FPTYPE))
+#endif
         for (int ir = 0; ir < this->nrxx; ++ir)
         {
             out[ir] = auxr[ir];
@@ -152,6 +182,9 @@ void PW_Basis_K:: recip2real(const std::complex<FPTYPE> * in, FPTYPE * out, cons
     const int startig = ik*this->npwk_max;
     const int npwk = this->npwk[ik];
     auto* auxg = this->ft.get_auxg_data<FPTYPE>();
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 4096/sizeof(FPTYPE))
+#endif
     for (int igl = 0; igl < npwk; ++igl)
     {
         auxg[this->igl2isz_k[igl + startig]] = in[igl];
@@ -172,20 +205,24 @@ void PW_Basis_K:: recip2real(const std::complex<FPTYPE> * in, FPTYPE * out, cons
     auto* rspace = this->ft.get_rspace_data<FPTYPE>();
     if (add)
     {
+#ifdef _OPENMP
+#pragma omp parallel for collapse(2) schedule(static, 4096/sizeof(FPTYPE))
+#endif
         for (int ix = 0; ix < this->nx; ++ix)
         {
-            const int ixpy = ix * npy;
             for (int ipy = 0; ipy < npy; ++ipy) {
-                out[ixpy + ipy] += factor * rspace[ixpy + ipy];
+                out[ix * npy + ipy] += factor * rspace[ix * npy + ipy];
             }
         }
     }
     else {
+#ifdef _OPENMP
+#pragma omp parallel for collapse(2) schedule(static, 4096/sizeof(FPTYPE))
+#endif
         for (int ix = 0; ix < this->nx; ++ix)
         {
-            const int ixpy = ix * npy;
             for (int ipy = 0; ipy < npy; ++ipy) {
-                out[ixpy + ipy] = rspace[ixpy + ipy];
+                out[ix * npy + ipy] = rspace[ix * npy + ipy];
             }
         }
     }
