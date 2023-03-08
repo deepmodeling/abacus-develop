@@ -11,9 +11,9 @@ namespace ModuleBase
 // GLOBAL FUNCTION :
 // NAME : TITLE( title for each function )
 //==========================================================
-void TITLE(const std::string &class_function_name,bool disable)
+void TITLE(const std::string &class_function_name,bool enable)
 {
-    if (disable)
+    if (!enable)
     {
         return;//no output
     }
@@ -27,9 +27,9 @@ void TITLE(const std::string &class_function_name,bool disable)
 #endif
 }
 
-void TITLE(const std::string &class_name,const std::string &function_name,bool disable)
+void TITLE(const std::string &class_name,const std::string &function_name,bool enable)
 {
-    if (disable)
+    if (!enable)
     {
         return;//no output
     }
@@ -44,9 +44,9 @@ void TITLE(const std::string &class_name,const std::string &function_name,bool d
     return;
 }
 
-void TITLE(std::ofstream &ofs,const std::string &class_name,const std::string &function_name,bool disable)
+void TITLE(std::ofstream &ofs,const std::string &class_name,const std::string &function_name,bool enable)
 {
-    if (disable)
+    if (!enable)
     {
         return;//no output
     }
