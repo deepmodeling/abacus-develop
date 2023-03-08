@@ -143,7 +143,16 @@ void MD_func::RandomVel(
             }
         }
 
-        double factor = 0.5*(3*numIon-frozen_freedom)*temperature/GetAtomKE(numIon, vel, allmass);
+        double factor;
+        if(3*numIon == frozen_freedom)
+        {
+            factor = 0;
+        }
+        else
+        {
+            factor = 0.5*(3*numIon-frozen_freedom)*temperature/GetAtomKE(numIon, vel, allmass);
+        }
+        
         for(int i=0; i<numIon; i++)
         {
             vel[i] = vel[i]*sqrt(factor);
@@ -391,9 +400,15 @@ double MD_func::current_temp(double &kinetic,
             const double *allmass,
             const ModuleBase::Vector3<double> *vel)
 {
-    kinetic = GetAtomKE(natom, vel, allmass);
-
-    return 2 * kinetic / (3 * natom - frozen_freedom);
+    if(3 * natom == frozen_freedom)
+    {
+        return 0;
+    }
+    else
+    {
+        kinetic = GetAtomKE(natom, vel, allmass);
+        return 2 * kinetic / (3 * natom - frozen_freedom);
+    }
 }
 
 void MD_func::temp_vector(const int &natom, 
