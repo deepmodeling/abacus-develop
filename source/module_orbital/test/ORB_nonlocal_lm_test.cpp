@@ -47,7 +47,7 @@
  *   enables deep copy
  */
 
-class Numerical_Nonlocal_Lm_test : public ::testing::Test
+class NumericalNonlocalLmTest : public ::testing::Test
 {
 protected:
 
@@ -83,7 +83,7 @@ protected:
 };
 
 
-void Numerical_Nonlocal_Lm_test::SetUp() {
+void NumericalNonlocalLmTest::SetUp() {
 
     ///////////////////////////////////////////////////
     //                  Parameters
@@ -240,7 +240,7 @@ void Numerical_Nonlocal_Lm_test::SetUp() {
 }
 
 
-void Numerical_Nonlocal_Lm_test::TearDown() {
+void NumericalNonlocalLmTest::TearDown() {
     delete[] r_radial_;
     delete[] rab_;
     for (size_t ip = 0; ip != beta_r_.size(); ++ip) {
@@ -249,7 +249,7 @@ void Numerical_Nonlocal_Lm_test::TearDown() {
 }
 
 
-void Numerical_Nonlocal_Lm_test::init() {
+void NumericalNonlocalLmTest::init() {
     // initialized the tested objects by pouring the data
     // collected in SetUp() to nnl;
     for (size_t iproj = 0; iproj != nproj_; ++iproj) {
@@ -273,7 +273,7 @@ void Numerical_Nonlocal_Lm_test::init() {
 }
 
 
-std::string Numerical_Nonlocal_Lm_test::trim(std::string const& str) {
+std::string NumericalNonlocalLmTest::trim(std::string const& str) {
 
     // extract the substring between quotation marks (with whitespace trimmed)
     // str MUST contain a pair of quotation marks
@@ -292,7 +292,7 @@ std::string Numerical_Nonlocal_Lm_test::trim(std::string const& str) {
 }
 
 
-double Numerical_Nonlocal_Lm_test::err_r2k2r(Numerical_Nonlocal_Lm& nnl_tmp) {
+double NumericalNonlocalLmTest::err_r2k2r(Numerical_Nonlocal_Lm& nnl_tmp) {
 
     // err_r2k2r makes use of Numerical_Nonlocal_Lm::get_kradial()
     // to transform beta_k back to beta_r. 
@@ -331,7 +331,7 @@ double Numerical_Nonlocal_Lm_test::err_r2k2r(Numerical_Nonlocal_Lm& nnl_tmp) {
 }
 
 
-size_t Numerical_Nonlocal_Lm_test::calc_nk(double const& ecutwfc, double const& dk) {
+size_t NumericalNonlocalLmTest::calc_nk(double const& ecutwfc, double const& dk) {
 
     // current formula for nk
     // see module_orbital/ORB_read.cpp, function "Read_Orbitals"
@@ -352,7 +352,7 @@ size_t Numerical_Nonlocal_Lm_test::calc_nk(double const& ecutwfc, double const& 
 }
 
 
-void Numerical_Nonlocal_Lm_test::change_k(Numerical_Nonlocal_Lm& nnl_, double const& ecut, double const& dk) {
+void NumericalNonlocalLmTest::change_k(Numerical_Nonlocal_Lm& nnl_, double const& ecut, double const& dk) {
 
     // recalculates k mesh & beta_k with given ecut & dk
     // used in r2k2r_consistency
@@ -375,7 +375,7 @@ void Numerical_Nonlocal_Lm_test::change_k(Numerical_Nonlocal_Lm& nnl_, double co
 }
 
 
-TEST_F(Numerical_Nonlocal_Lm_test, initialize) {
+TEST_F(NumericalNonlocalLmTest, Init) {
     
     this->init();
 
@@ -407,7 +407,7 @@ TEST_F(Numerical_Nonlocal_Lm_test, initialize) {
 }
 
 
-TEST_F(Numerical_Nonlocal_Lm_test, getter) {
+TEST_F(NumericalNonlocalLmTest, Getters) {
 
     // this test checks all the getter functions
 
@@ -467,7 +467,7 @@ TEST_F(Numerical_Nonlocal_Lm_test, getter) {
 }
 
 
-TEST_F(Numerical_Nonlocal_Lm_test, deep_copy) {
+TEST_F(NumericalNonlocalLmTest, DeepCopy) {
 
     // this test checks whether the operator= overload properly
     // performs a deep copy
@@ -508,7 +508,7 @@ TEST_F(Numerical_Nonlocal_Lm_test, deep_copy) {
 }
 
 
-TEST_F(Numerical_Nonlocal_Lm_test, r2k2r_consistency) {
+TEST_F(NumericalNonlocalLmTest, R2K2RConsistency) {
 
     /*
      * This test checks whether get_kradial() works as expected 
@@ -542,7 +542,7 @@ TEST_F(Numerical_Nonlocal_Lm_test, r2k2r_consistency) {
 
 
 /*
-TEST_F(Numerical_Nonlocal_Lm_test, r2k2r_consistency_many) {
+TEST_F(NumericalNonlocalLmTest, R2K2RConsistencyMany) {
 
     this->init();
 
@@ -593,7 +593,7 @@ TEST_F(Numerical_Nonlocal_Lm_test, r2k2r_consistency_many) {
 */
 
 
-TEST_F(Numerical_Nonlocal_Lm_test, free_and_renew) {
+TEST_F(NumericalNonlocalLmTest, FreeAndRenew) {
 
     this->init();
 
@@ -643,7 +643,7 @@ TEST_F(Numerical_Nonlocal_Lm_test, free_and_renew) {
 }
 
 
-bool Numerical_Nonlocal_Lm_test::check_file_match(size_t const& nline, double const* col1, double const* col2, double const& tol, std::string const& fname) {
+bool NumericalNonlocalLmTest::check_file_match(size_t const& nline, double const* col1, double const* col2, double const& tol, std::string const& fname) {
 
     /* This function checks whether the content of file named "fname"
      * contains certain data with certain format.
@@ -685,7 +685,7 @@ bool Numerical_Nonlocal_Lm_test::check_file_match(size_t const& nline, double co
 }
 
 
-TEST_F(Numerical_Nonlocal_Lm_test, beta_save) {
+TEST_F(NumericalNonlocalLmTest, BetaSave) {
 
     this->init();
 

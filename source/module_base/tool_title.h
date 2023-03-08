@@ -15,9 +15,9 @@
 namespace ModuleBase
 {
 
-void TITLE(const std::string &class_function_name);
-void TITLE(const std::string &class_name,const std::string &function_name);
-void TITLE(std::ofstream &ofs,const std::string &class_name,const std::string &function_name);
+void TITLE(const std::string &class_function_name,bool enable=false);
+void TITLE(const std::string &class_name,const std::string &function_name,bool enable=false);
+void TITLE(std::ofstream &ofs,const std::string &class_name,const std::string &function_name,bool enable=false);
 }
 
 #endif
