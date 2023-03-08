@@ -85,7 +85,6 @@ cond_nonlocal                  1 #Nonlocal effects for conductivities
 #Parameters (4.Relaxation)
 ks_solver                      genelpa #cg; dav; lapack; genelpa; scalapack_gvx; cusolver
 scf_nmax                       50 ##number of electron iterations
-out_force                      0 #output the out_force or not
 relax_nmax                     1 #number of ion iteration steps
 out_stru                       0 #output the structure files after each ion step
 force_thr                      0.001 #force threshold, unit: Ry/Bohr
@@ -198,6 +197,9 @@ md_pchain                      1 #num of thermostats coupled with barostat
 md_pfirst                      -1 #initial target pressure
 md_plast                       -1 #final target pressure
 md_pfreq                       0 #oscillation frequency, used to determine qmass of thermostats coupled with barostat
+dump_force                     0 #output atomic forces into the file MD_dump or not.
+dump_vel                       0 #output atomic velocities into the file MD_dump or not
+dump_virial                    0 #output lattice virial into the file MD_dump or not
 
 #Parameters (10.Electric field and dipole correction)
 efield_flag                    0 #add electric field

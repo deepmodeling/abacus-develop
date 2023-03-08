@@ -1,8 +1,8 @@
 #======================================================================
 # Please set
-# e.g. make CC=mpiicpc or make CC=icpc
+# e.g. make CXX=mpiicpc or make CXX=icpc
 #======================================================================
-CC = mpiicpc
+CXX = mpiicpc
 # mpiicpc:   compile intel parallel version
 # icpc:      compile intel sequential version
 # mpicxx:    compile gnu parallel version
@@ -19,7 +19,7 @@ FLOAT = OFF
 GTEST_DIR = /home/qianrui/gnucompile/g_gtest
 # Must give gtest directory
 FFTW_DIR = /home/qianrui/gnucompile/fftw_3.3.8
-# directory of fftw package. only used when CC=mpicxx/g++
+# directory of fftw package. only used when CXX=mpicxx/g++
 #======================================================================
 
 
@@ -34,14 +34,14 @@ OBJ_DIR = obj
 LIBNAME = libpw.a
 GEN     = OFF
 TIME    = OFF
-ifeq ($(findstring mpi, $(CC)), mpi)
+ifeq ($(findstring mpi, $(CXX)), mpi)
      HONG += -D__MPI
      MPI = ON
-     ifeq ($(findstring mpii, $(CC)), mpii)
+     ifeq ($(findstring mpii, $(CXX)), mpii)
          INTEL=ON
      endif
 else
-     ifeq ($(findstring i, $(CC)), i)
+     ifeq ($(findstring i, $(CXX)), i)
          INTEL=ON
      endif
 endif
@@ -50,9 +50,9 @@ endif
 ifeq ($(DEBUG), ON)
     INTEL = OFF
     ifeq ($(MPI), ON)
-        CC = mpicxx
+        CXX = mpicxx
     else
-        CC = g++
+        CXX = g++
     endif
     HONG += -D__DEBUG
     OPTS += -fsanitize=address -fno-omit-frame-pointer -Wall -g #It can check segmental defaults
@@ -188,7 +188,7 @@ TESTFILE=$(patsubst %.o, ${OBJ_DIR}/%.o, ${TESTFILE0})
 # MAKING OPTIONS
 #==========================
 pw_test.exe: ${LIBNAME} ${OTHER_OBJS} ${TESTFILE} pw_test.cpp test_tool.cpp
-	${CC} ${OPTS} ${HONG} pw_test.cpp test_tool.cpp ${TESTFILE} ${LIBNAME} ${OTHER_OBJS} ${LIBS} -o pw_test.exe ${GTESTOPTS}
+	${CXX} ${OPTS} ${HONG} pw_test.cpp test_tool.cpp ${TESTFILE} ${LIBNAME} ${OTHER_OBJS} ${LIBS} -o pw_test.exe ${GTESTOPTS}
 	@ if [ $(GEN) == "ON" ]; then $(MAKE) gen.exe ; fi
 	@ if [ $(TIME) == "ON" ]; then $(MAKE) time.exe ; fi
 
@@ -196,13 +196,13 @@ lib $(LIBNAME): $(MATH_OBJS)
 	ar -rcv $(LIBNAME) $(MATH_OBJS)
 
 gen.exe: ${LIBNAME} ${OTHER_OBJS} generate.cpp test_tool.cpp
-	${CC} ${OPTS} ${HONG} generate.cpp test_tool.cpp $(LIBNAME) ${OTHER_OBJS} ${LIBS} -o gen.exe
+	${CXX} ${OPTS} ${HONG} generate.cpp test_tool.cpp $(LIBNAME) ${OTHER_OBJS} ${LIBS} -o gen.exe
 
 time.exe: ${LIBNAME} time.cpp
-	${CC} ${OPTS} ${HONG} time.cpp $(LIBNAME)  ${LIBS} -o time.exe
+	${CXX} ${OPTS} ${HONG} time.cpp $(LIBNAME)  ${LIBS} -o time.exe
 
 ${OBJ_DIR}/%.o:%.cpp $(OBJ_DIR)/readme.log
-	${CC} ${OPTS} -c ${HONG} $< -o $@ ${GTESTOPTS}
+	${CXX} ${OPTS} -c ${HONG} $< -o $@ ${GTESTOPTS}
 
 $(OBJ_DIR)/readme.log:
 	@if [ ! -d $(OBJ_DIR) ]; then mkdir $(OBJ_DIR); fi

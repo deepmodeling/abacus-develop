@@ -23,7 +23,7 @@
  * Tested function: 
  *      - Spherical_Bessel.
  *      - Spherical_Bessel_Roots
- * 
+ *      - overloading of Spherical_Bessel. This funnction sets sjp[i] to 1.0 when i < msh.
  */
 
 double mean(const double* vect, const int totN)
@@ -199,4 +199,17 @@ int main(int argc, char **argv)
 	MPI_Finalize();
 #endif
 	return result;
+}
+
+TEST_F(Sphbes,SphericalBesselsjp)
+{
+    int iii;
+    double  *sjp = new double[msh];
+    ModuleBase::Sphbes::Spherical_Bessel(msh,r,q,l0,jl,sjp);
+    EXPECT_NEAR(mean(jl,msh)/0.2084468748396,1.0,doublethreshold);
+    for(int iii = 0 ; iii <msh ; ++iii)
+    {   
+        EXPECT_EQ(sjp[iii], 1.0);
+    }
+    delete [] sjp;
 }

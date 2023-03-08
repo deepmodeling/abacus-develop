@@ -2,6 +2,13 @@
 #include "gtest/gtest.h"
 #include "../exx_info.h"
 
+/************************************************
+*  unit test of functionals
+***********************************************/
+
+// For more information of the functions, check the comment of xc_functional.h
+// LDA and GGA Functionals are tested under nspin = 1
+
 namespace ModuleBase
 {
     void WARNING_QUIT(const std::string &file,const std::string &description) {return ;}
@@ -55,6 +62,51 @@ TEST_F(XCTest_PBE, set_xc_type)
     std::vector<double> e_gga_ref  = {0.0          , -0.000103750,-0.0328708695,-0.0032277985,0.0         };
     std::vector<double> v1_gga_ref = {0.0          ,0.00021536874,0.04931694948,0.05374316118,0.0         };
     std::vector<double> v2_gga_ref = {0.0          ,-0.0002386176,-0.0025842562,-0.0825164089,0.0         };
+
+    for (int i = 0;i<5;++i)
+    {
+        EXPECT_NEAR(e_lda[i],e_lda_ref[i],1.0e-8);
+        EXPECT_NEAR(v_lda[i],v_lda_ref[i],1.0e-8);
+        EXPECT_NEAR(e_gga[i],e_gga_ref[i],1.0e-8);
+        EXPECT_NEAR(v1_gga[i],v1_gga_ref[i],1.0e-8);
+        EXPECT_NEAR(v2_gga[i],v2_gga_ref[i],1.0e-8);
+    }
+}
+
+class XCTest_PBEsol : public testing::Test
+{
+    protected:
+        std::vector<double> e_lda, v_lda;
+        std::vector<double> e_gga, v1_gga, v2_gga;
+
+        void SetUp()
+        {
+            XC_Functional::set_xc_type("PBEsol");
+            std::vector<double> rho  = {0.17E+01, 0.17E+01, 0.15E+01, 0.88E-01, 0.18E+04};
+            std::vector<double> grho = {0.81E-11, 0.17E+01, 0.36E+02, 0.87E-01, 0.55E+00};
+
+            for(int i=0;i<5;i++)
+            {
+                double e,v,v1,v2;
+                XC_Functional::xc(rho[i],e,v);
+                e_lda.push_back(e);
+                v_lda.push_back(v);
+                XC_Functional::gcxc(rho[i],grho[i],e,v1,v2);
+                e_gga.push_back(e);
+                v1_gga.push_back(v1);
+                v2_gga.push_back(v2);
+            }                                           
+        }
+};
+
+TEST_F(XCTest_PBEsol, set_xc_type)
+{
+    EXPECT_EQ(XC_Functional::get_func_type(),2);
+    std::vector<double> e_lda_ref  = {-0.9570906378,-0.9570906378,-0.9200171474,-0.3808291731,-9.124862983};
+    std::vector<double> v_lda_ref  = {-1.259358955 , -1.259358955, -1.210234884,-0.4975768336,-12.12952188};
+    std::vector<double> e_gga_ref  = {0.0          , 0.0003989522401,-0.008905053386,-0.001312507296,1.350759637e-08};
+    std::vector<double> v1_gga_ref = {0.0          ,-0.0002447900722,0.02455798029,0.04115384844,-1.000780528e-11};
+    std::vector<double> v2_gga_ref = {0.0          ,0.0004104325762,-0.001101482966,-0.04988481872,4.912388025e-08};
 
     for (int i = 0;i<5;++i)
     {
@@ -858,3 +910,13 @@ TEST_F(XCTest_PBE_LibXC, set_xc_type)
         EXPECT_NEAR(v2_gga[i],v2_gga_ref[i],1.0e-8);
     }
 }
+
+/*
+//for printing results
+            std::cout << std::setprecision(10);
+            for(int i=0;i<5;i++)
+            {
+                std::cout << e_lda[i] << ",";
+            }
+            std::cout << std::endl;
+*/

@@ -1,3 +1,6 @@
+// I'm mocking FFT here because it is not possible to write
+// unit tests with FFT
+
 namespace ModulePW
 {
     PW_Basis::PW_Basis(){};

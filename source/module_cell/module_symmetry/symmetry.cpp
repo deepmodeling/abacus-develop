@@ -36,33 +36,28 @@ void Symmetry::analy_sys(const UnitCell &ucell, std::ofstream &ofs_running)
 	ofs_running << " | We calculate the norm of 3 vectors and the angles between them,    |" << std::endl;
 	ofs_running << " | the type of Bravais lattice is given. We can judge if the unticell |" << std::endl;
 	ofs_running << " | is a primitive cell. Finally we give the point group operation for |" << std::endl;
-	ofs_running << " | this unitcell. We we use the point group operations to do symmetry |" << std::endl;
+	ofs_running << " | this unitcell. We use the point group operations to do symmetry |" << std::endl;
 	ofs_running << " | analysis on given k-point mesh and the charge density.             |" << std::endl;
 	ofs_running << " |                                                                    |" << std::endl;
 	ofs_running << " <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" << std::endl;
 	ofs_running << "\n\n\n\n";
 
 
-    this->ibrav = 0;
     // number of total atoms
     this->nat = ucell.nat;
     // number of atom species
     this->ntype = ucell.ntype;
     this->na = new int[ntype];
     this->istart = new int[ntype];
-    this->ptrans = new double[(nat + 2) * 3];
     this->index = new int [nat + 2];
     ModuleBase::GlobalFunc::ZEROS(na, ntype);
     ModuleBase::GlobalFunc::ZEROS(istart, ntype);
-    ModuleBase::GlobalFunc::ZEROS(ptrans, (nat+2)*3);
     ModuleBase::GlobalFunc::ZEROS(index, nat+2);
 
     // atom positions
     // used in checksym.
-    dirpos = new double[3*nat];
 	newpos = new double[3*nat];
     rotpos = new double[3*nat];
-    ModuleBase::GlobalFunc::ZEROS(dirpos, 3*nat);
 	ModuleBase::GlobalFunc::ZEROS(newpos, 3*nat);
     ModuleBase::GlobalFunc::ZEROS(rotpos, 3*nat);
 
@@ -80,7 +75,6 @@ void Symmetry::analy_sys(const UnitCell &ucell, std::ofstream &ofs_running)
 
 	output::printM3(ofs_running,"LATTICE VECTORS: (CARTESIAN COORDINATE: IN UNIT OF A0)",latvec1);
 
-    int count = 0;
     istart[0] = 0;
     this->itmin_type = 0;
     this->itmin_start = 0;
@@ -97,93 +91,51 @@ void Symmetry::analy_sys(const UnitCell &ucell, std::ofstream &ofs_running)
             this->itmin_type = it;
             this->itmin_start = istart[it];
         }
-
-        ModuleBase::Vector3<double> vec;
-        for (int ia = 0; ia < ucell.atoms[it].na; ++ia)
-        {
-            dirpos[3*count + 0] = atom->taud[ia].x;
-            dirpos[3*count + 1] = atom->taud[ia].y;
-            dirpos[3*count + 2] = atom->taud[ia].z;
-//            std::cout << " atom.taud = " << atom->taud[ia].x << " "<<atom->taud[ia].y<<" "<<atom->taud[ia].z<<std::endl;
-            ++count;
-        }
     }
-
+    //s: input config
     s1 = a1;
     s2 = a2;
     s3 = a3;
 
+    //a: optimized config
     // find the lattice type accordiing to lattice vectors.
-    this->lattice_type(a1,a2,a3,ibrav,cel_const,ilattname, ucell);
+    this->lattice_type(this->a1, this->a2, this->a3, this->s1, this->s2, this->s3, 
+             this->cel_const, this->pre_const, this->real_brav, ilattname, ucell, true, this->newpos);
+             
+    GlobalV::ofs_running<<"(for optimal symmetric configuration:)"<<std::endl;
+    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"BRAVAIS TYPE", real_brav);
+    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"BRAVAIS LATTICE NAME", ilattname);
+    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"ibrav", real_brav);
+    Symm_Other::print1(real_brav, cel_const, GlobalV::ofs_running);
   //      std::cout << "a1 = " << a1.x << " " << a1.y << " " << a1.z <<std::endl;
   //      std::cout << "a1 = " << a2.x << " " << a2.y << " " << a2.z <<std::endl;
   //      std::cout << "a1 = " << a3.x << " " << a3.y << " " << a3.z <<std::endl;
+	optlat.e11 = a1.x; optlat.e12 = a1.y; optlat.e13 = a1.z;
+	optlat.e21 = a2.x; optlat.e22 = a2.y; optlat.e23 = a2.z;
+	optlat.e31 = a3.x; optlat.e32 = a3.y; optlat.e33 = a3.z;
 
-	//Symm_Other::print1(ibrav, cel_const, ofs_running);
-        Symm_Other::print1(real_brav, cel_const, ofs_running);
-	this->change_lattice();
-    //this->pricell();         // pengfei Li 2018-05-14 
+    this->pricell(this->newpos);         // pengfei Li 2018-05-14 
          //for( iat =0 ; iat < ucell.nat ; iat++)   
 //         std::cout << " newpos_now = " << newpos[3*iat] << " " << newpos[3*iat+1] << " " << newpos[3*iat+2] << std::endl;
 	test_brav = true; // output the real ibrav and point group
-	ModuleBase::GlobalFunc::OUT(ofs_running,"ibrav",real_brav);
 	this->setgroup(this->symop, this->nop, this->real_brav);
 	this->getgroup(this->nrot, this->nrotk, ofs_running);
 	this->pointgroup(this->nrot, this->pgnumber, this->pgname, this->gmatrix, ofs_running);
 	ModuleBase::GlobalFunc::OUT(ofs_running,"POINT GROUP", this->pgname);
-    ofs_running<<"Warning : If the optimal symmetric configuration is not the input configuration, "<<'\n';
-    ofs_running<<"you have to manually change configurations, ABACUS would only calculate the input structure."<<'\n';
+    this->pointgroup(this->nrotk, this->spgnumber, this->spgname, this->gmatrix, ofs_running);
+	ModuleBase::GlobalFunc::OUT(ofs_running,"POINT GROUP IN SPACE GROUP", this->spgname);
 
-	// the atom position coordinates are changed to 
-	// crystal coordinates of a1,a2,a3
-	ModuleBase::Matrix3 new_lat;
-	new_lat.e11=a1.x; new_lat.e12=a1.y; new_lat.e13=a1.z;
-	new_lat.e21=a2.x; new_lat.e22=a2.y; new_lat.e23=a2.z;
-	new_lat.e31=a3.x; new_lat.e32=a3.y; new_lat.e33=a3.z;
-	//output::printM3(ofs_running,"STANDARD LATTICE VECTORS: (CARTESIAN COORDINATE: IN UNIT OF A0)",new_lat);
+    //convert gmatrix to reciprocal space
+    this->gmatrix_convert_int(gmatrix, kgmatrix, nrotk, optlat, ucell.G);
+    
+// convert the symmetry operations from the basis of optimal symmetric configuration 
+// to the basis of input configuration
+    this->gmatrix_convert_int(gmatrix, gmatrix, nrotk, optlat, latvec1);
+    this->gtrans_convert(gtrans, gtrans, nrotk, optlat, latvec1);
 
-	int iat=0;
-	for(int it=0; it<ucell.ntype; ++it)
-	{
-		for(int ia=0; ia<ucell.atoms[it].na; ++ia)
-		{
-			ModuleBase::Mathzone::Cartesian_to_Direct(ucell.atoms[it].tau[ia].x, 
-					ucell.atoms[it].tau[ia].y, 
-					ucell.atoms[it].tau[ia].z,
-					new_lat.e11, new_lat.e12, new_lat.e13,
-					new_lat.e21, new_lat.e22, new_lat.e23,
-					new_lat.e31, new_lat.e32, new_lat.e33,
-					newpos[3*iat],newpos[3*iat+1],newpos[3*iat+2]);
-
-    	//  std::cout << " newpos_before = " << newpos[3*iat] << " " << newpos[3*iat+1] << " " << newpos[3*iat+2] << std::endl;
-		//	GlobalV::ofs_running << " newpos_before = " << newpos[3*iat] << " " << newpos[3*iat+1] << " " << newpos[3*iat+2] << std::endl; 
-			for(int k=0; k<3; ++k)
-			{
-				this->check_translation( newpos[iat*3+k], -floor(newpos[iat*3+k]));
-                this->check_boundary( this->newpos[iat*3+k] );
-			}
-      	// std::cout << " newpos = " << newpos[3*iat] << " " << newpos[3*iat+1] << " " << newpos[3*iat+2] << std::endl;
-		// GlobalV::ofs_running << " newpos = " << newpos[3*iat] << " " << newpos[3*iat+1] << " " << newpos[3*iat+2] << std::endl; 
-			++iat;
-		}
-	}
-
-	test_brav = false;  // use the input ibrav to calculate
-	//ModuleBase::GlobalFunc::OUT(ofs_running,"ibrav",ibrav);
-	this->setgroup(this->symop, this->nop, this->ibrav);
-	//now select all symmetry operations which reproduce the lattice
-	//to find those symmetry operations which reproduce the entire crystal
-	this->getgroup(this->nrot, this->nrotk, ofs_running);
-	// find the name of point group
-	this->pointgroup(this->nrot, this->pgnumber, this->pgname, this->gmatrix, ofs_running);
-	// ModuleBase::GlobalFunc::OUT(ofs_running,"POINT GROUP", this->pgname);
-	//write();
-
-    delete[] dirpos;
 	delete[] newpos;
     delete[] na;
     delete[] rotpos;
-    delete[] ptrans;
     delete[] index;
     delete[] istart;
     return;
@@ -199,19 +151,17 @@ int Symmetry::standard_lat(
     ModuleBase::Vector3<double> &a,
     ModuleBase::Vector3<double> &b,
     ModuleBase::Vector3<double> &c,
-    double *cel_const
-)
+    double *cel_const) const
 {
     static bool first = true;
     // there are only 14 types of Bravais lattice.
-    int type = 14;
+    int type = 15;
 	//----------------------------------------------------
     // used to calculte the volume to judge whether 
 	// the lattice vectors corrispond the right-hand-sense
 	//----------------------------------------------------
     double volume = 0;
     //the lattice vectors have not been changed
-    change = 0;
 
     const double aa = a * a;
     const double bb = b * b;
@@ -222,9 +172,9 @@ int Symmetry::standard_lat(
     double norm_a = a.norm();
     double norm_b = b.norm();
     double norm_c = c.norm();
-    double alpha = ab /( norm_a * norm_b ); // cos(alpha)
-    double beta  = bc /( norm_b * norm_c ); // cos(beta)
-    double gamma = ca /( norm_a * norm_c ); // cos(gamma)
+    double gamma = ab /( norm_a * norm_b ); // cos(gamma)
+    double alpha  = bc /( norm_b * norm_c ); // cos(alpha)
+    double beta = ca /( norm_a * norm_c ); // cos(beta)
     double amb = sqrt( aa + bb - 2 * ab );	//amb = |a - b|
     double bmc = sqrt( bb + cc - 2 * bc );
     double cma = sqrt( cc + aa - 2 * ca );
@@ -310,11 +260,11 @@ int Symmetry::standard_lat(
 		// Crystal classes with inequal length of lattice vectors but also with
 		// A1*A2=A1*A3=A2*A3:
 		// Orthogonal axes:
-		else if( equal(alpha,0.0) || equal(beta,0.0) || equal(gamma,0.0)) 
+		else if(equal(gamma,0.0)) 
 		{
 			// Two axes with equal lengths means simple tetragonal: (IBRAV=5)
 			// Adjustment: 'c-axis' shall be the special axis.
-			if ( equal(norm_a, norm_b) || equal(norm_b, norm_c) || equal(norm_c, norm_a)) 
+			if (equal(norm_a, norm_b)) 
 			{
 				type=5;
 				cel_const[0]=norm_a;
@@ -322,8 +272,7 @@ int Symmetry::standard_lat(
 				// No axes with equal lengths means simple orthorhombic (IBRAV=8):
 				// Adjustment: Sort the axis by increasing lengths:
 			}
-                        else
-			//else if((abs(norm_c-norm_b)>small) && (abs(norm_b-norm_a)>small) && (abs(norm_a-norm_c)>small)) 
+            else if(((norm_c-norm_b)>small) && ((norm_b-norm_a)>small) ) 
 			{
 				type=8;
 				cel_const[0]=norm_a;
@@ -335,26 +284,25 @@ int Symmetry::standard_lat(
 	}//end alpha=beta=gamma
 	//-----------------------
 	// TWO EQUAL ANGLES
-	// gamma == beta != alpha
+	// alpha == beta != gamma  (gamma is special)
 	//------------------------
-	else if (abs(gamma-beta)<small || abs(alpha-beta)<small || abs(gamma-alpha)<small ) 
+	else if (equal(alpha-beta, 0)) 
 	{
 		//---------------------------------------------------------
-		// gamma = beta = 90 degree
+		// alpha = beta = 90 degree
 		// One axis orthogonal with respect to the other two axes:
 		//---------------------------------------------------------
-		if ( (equal(gamma, 0.0) && equal(beta, 0.0)) || (equal(gamma, 0.0) && equal(alpha, 0.0)) || (equal(alpha, 0.0) && equal(beta, 0.0))) 
+		if (equal(alpha, 0.0)) 
 		{
 			//-----------------------------------------------
 			// a == b 
 			// Equal length of the two nonorthogonal axes:
 			//-----------------------------------------------
-			if ( equal(norm_a, norm_b) || equal(norm_b, norm_c) || equal(norm_c, norm_a)) 
+			if (equal(norm_a, norm_b)) 
 			{
 				// Cosine(alpha) equal to -1/2 means hexagonal: (IBRAV=4)
 				// Adjustment: 'c-axis' shall be the special axis.
-				// alpha = 60 degree or 120 degree?
-				if ( equal(alpha, -0.5) || equal(alpha, 0.5) || equal(beta, -0.5) || equal(beta, 0.5) || equal(gamma, -0.5)|| equal(gamma, 0.5)) 
+				if ( equal(gamma, -0.5))   //gamma = 120 degree
 				{
 					type=4;
 					cel_const[0]=norm_a;
@@ -363,44 +311,33 @@ int Symmetry::standard_lat(
 					// Adjustment: Cosine between A1 and A2 shall be lower than zero, the
 					//             'c-axis' shall be the special axis.
 				}
-				// other degree, bug alpha < 0
-                                else
-				//else if(alpha<(-1.0*small)) 
+				else if(gamma<(-1.0*small)) //gamma > 90 degree
 				{
 					type=11;
-					cel_const[0]=apb;
-					cel_const[1]=amb/apb;
-					cel_const[2]=norm_c/apb;
+                    cel_const[0]=apb;
+                    cel_const[1]=amb/apb;
+                    cel_const[2]=norm_c/apb;
+                    cel_const[5]=gamma;
 				}
 				// Different length of the two axes means simple monoclinic (IBRAV=12):
 				// Adjustment: Cosine(gamma) should be lower than zero, special axis
-				//             shall be the 'b-axis'(////) and |A1|<|A3|:
+				//             shall be the 'b-axis'(!!!) and |A1|<|A3|:
 			}
 			//----------
 			// a!=b!=c
 			//----------
-                        else
-			//else if((alpha<(-1.0*small)) && (abs(norm_a-norm_b)>small)) 
+            else if( gamma<(-1.0*small) && (norm_a-norm_b)>small) 
 			{
 				type=12;
 				cel_const[0]=norm_b;
 				cel_const[1]=norm_c/norm_b;
 				cel_const[2]=norm_a/norm_b;
-				cel_const[4]=alpha;
-				/*
-				YB(1)=XB(1,3);
-				YB(2)=XB(2,3);
-				YB(3)=XB(3,3);
-				XB(1,3)=XB(1,1);
-				XB(2,3)=XB(2,1);
-				XB(3,3)=XB(3,1);
-				XB(1,1)=XB(1,2);
-				XB(2,1)=XB(2,2);
-				XB(3,1)=XB(3,2);
-				XB(1,2)=YB(1);
-				XB(2,2)=YB(2);
-				XB(3,2)=YB(3);
-				*/
+                cel_const[4]=gamma;
+                //adjust: a->c, b->a, c->b
+                ModuleBase::Vector3<double> tmp=c;
+				c=a;
+				a=b;
+				b=tmp;
 			}
 		}//end gamma<small
 		// Arbitrary angles between the axes:
@@ -411,9 +348,9 @@ int Symmetry::standard_lat(
 		{
 			if( equal(norm_a, norm_b) && 
 				equal(norm_b, norm_c) &&
-				(abs(cpa-bpc)<small) && 
-				(abs(apb-cpa)>small) &&
-				(abs(norm_c*norm_c+abc)<small)) 
+				equal(cpa, bpc) && 
+				!equal(apb, cpa) &&
+				equal(norm_c*norm_c+abc,0) )
 			{
 				type=6;
 				cel_const[0]=cpa;
@@ -422,19 +359,19 @@ int Symmetry::standard_lat(
 			// |A1|=|A2|=/|A3| means base-centered monoclinic (IBRAV=13):
 			// Adjustement: The cosine between A1 and A3 as well as the cosine
 			//              between A2 and A3 should be lower than zero.
-			/*else if((abs(norm_a-norm_b)<small) 
-					&& (gamma<(-1.0*small)) 
-					&& (beta<(-1.0*small))) 
+			else if( equal(norm_a,norm_b) 
+					&& alpha<(-1.0*small) 
+					&& beta<(-1.0*small)) 
 			{
 				type=13;
 				cel_const[0]=apb;
 				cel_const[1]=amb/apb;
 				cel_const[2]=norm_c/apb;
-				cel_const[4]=beta;
-			}*/
-
+                //cos(<a+b, c>)
+                cel_const[4]=(a+b)*c/apb/norm_c;
+			}
 		}
-	}
+	} //end alpha==beta
 	//-------------------------------
 	// three angles are not equal
 	//-------------------------------
@@ -444,11 +381,11 @@ int Symmetry::standard_lat(
 		// |A1|=|A2|=|A3| means body-centered orthorhombic (IBRAV=9):
 		// Further additional criterions are: (A1+A2), (A1+A3) and (A2+A3) are
 		// orthogonal to one another and (adjustment//): |A1+A2|>|A1+A3|>|A2+A3|
-		if ((abs(norm_a-norm_b)<small) &&
-				(abs(norm_b-norm_c)<small) &&
+		if (equal(norm_a, norm_b) &&
+				equal(norm_b, norm_c) &&
 				((cpa-bpc)>small) &&
 				((apb-cpa)>small) && 
-				(abs(norm_c*norm_c+abc)<small)) 
+				equal(norm_c*norm_c+abc, 0)) 
 		{
 			type=9;
 			cel_const[0]=bpc;
@@ -458,18 +395,9 @@ int Symmetry::standard_lat(
 		// |A1|=|A2-A3| and |A2|=|A1-A3| and |A3|=|A1-A2| means face-centered
 		// orthorhombic (IBRAV=10):
 		// Adjustment: |A1+A2-A3|>|A1+A3-A2|>|A2+A3-A1|
-                else if((abs(norm_a-norm_b)<small) || (abs(norm_b-norm_c)<small) || (abs(norm_c-norm_a)<small))
-                {
-                        type=13;
-                        cel_const[0]=apb;
-                        cel_const[1]=amb/apb;
-                        cel_const[2]=norm_c/apb;
-                        cel_const[4]=beta;
-                }
-
-		else if((abs(amb-norm_c)<small) &&
-				(abs(cma-norm_b)<small) &&
-				(abs(bmc-norm_a)<small) && 
+		else if(equal(amb, norm_c) &&
+				equal(cma, norm_b) &&
+				equal(bmc, norm_a) && 
 				((apbmc-cpamb)>small) &&
 				((cpamb-bpcma)>small)) 
 		{
@@ -480,16 +408,15 @@ int Symmetry::standard_lat(
 		}
 		// Now there exists only one further possibility - triclinic (IBRAV=14):
 		// Adjustment: All three cosines shall be greater than zero and ordered:
-                else
-		//else if((alpha>gamma) && (gamma>beta) && (beta>small)) 
+		else if((gamma>beta) && (beta>alpha) && (alpha>small)) 
 		{
 			type=14;
 			cel_const[0]=norm_a;
 			cel_const[1]=norm_b/norm_a;
 			cel_const[2]=norm_c/norm_a;
-			cel_const[3]=beta;
-			cel_const[4]=gamma;
-			cel_const[5]=alpha;
+			cel_const[3]=alpha;
+			cel_const[4]=beta;
+			cel_const[5]=gamma;
 		}
 	}
 	
@@ -500,11 +427,16 @@ void Symmetry::lattice_type(
     ModuleBase::Vector3<double> &v1,
     ModuleBase::Vector3<double> &v2,
     ModuleBase::Vector3<double> &v3,
-    int &brav,
+    ModuleBase::Vector3<double> &v01,
+    ModuleBase::Vector3<double> &v02,
+    ModuleBase::Vector3<double> &v03,
     double *cel_const,
+    double *pre_const,
+    int& real_brav,
     std::string &bravname,
-    const UnitCell &ucell
-)
+    const UnitCell &ucell, 
+    bool convert_atoms, 
+    double* newpos)const
 {
     ModuleBase::TITLE("Symmetry","lattice_type");
 //      std::cout << "v1 = " << v1.x << " " << v1.y << " " << v1.z <<std::endl;
@@ -526,14 +458,13 @@ void Symmetry::lattice_type(
 	//-------------------------------------------------
 	// (2) save and copy the original lattice vectors.
 	//-------------------------------------------------
-    s1 = v1;
-    s2 = v2;
-    s3 = v3;
+    v01 = v1;
+    v02 = v2;
+    v03 = v3;
 	
 	//--------------------------------------------
 	// (3) calculate the 'pre_const'
 	//--------------------------------------------
-    double pre_const[6];
 	ModuleBase::GlobalFunc::ZEROS(pre_const, 6);
 //    std::cout << "ATTION !!!!!!" <<std::endl;
 //        std::cout << "v1 = " << v1.x << " " << v1.y << " " << v1.z <<std::endl;
@@ -558,8 +489,8 @@ void Symmetry::lattice_type(
 //        std::cout << "v3 = " << v3.x << " " << v3.y << " " << v3.z <<std::endl;
 
 
-    //find the shortest basis vectors of the lattice
-//    shortest_vector(v1, v2, v3);
+// find the shortest basis vectors of the lattice
+    this->get_shortest_latvec(v1, v2, v3);
 //        std::cout << "a1 = " << v1.x << " " << v1.y << " " << v1.z <<std::endl;
 //        std::cout << "a1 = " << v2.x << " " << v2.y << " " << v2.z <<std::endl;
 //        std::cout << "a1 = " << v3.x << " " << v3.y << " " << v3.z <<std::endl;
@@ -569,135 +500,15 @@ void Symmetry::lattice_type(
 //        std::cout << "a1 = " << v2.x << " " << v2.y << " " << v2.z <<std::endl;
 //        std::cout << "a1 = " << v3.x << " " << v3.y << " " << v3.z <<std::endl;
 
-    int temp_brav = 15;
+    real_brav = 15;
     double temp_const[6];
-
-    double cos1 = 1;
-    double cos2 = 1;
-    double cos3 = 1;
 
     //then we should find the best lattice vectors to make much easier the determination of the lattice symmetry
     //the method is to contrast the combination of the shortest vectors and determine their symmmetry
 
-    ModuleBase::Vector3<double> r1, r2, r3;
     ModuleBase::Vector3<double> w1, w2, w3;
     ModuleBase::Vector3<double> q1, q2, q3;
-
-    int nif = 0;
-    for (int n33 = -2; n33 < 3; ++n33)
-    {
-        for (int n32 = -2; n32 < 3; ++n32)
-        {
-            for (int n31 = -2; n31 < 3; ++n31)
-            {
-                for (int n23 = -2; n23 < 3; ++n23)
-                {
-                    for (int n22 = -2; n22 < 3; ++n22)
-                    {
-                        for (int n21 = -2; n21 < 3; ++n21)
-                        {
-                            for (int n13 = -2; n13 < 3; ++n13)
-                            {
-                                for (int n12 = -2; n12 < 3; ++n12)
-                                {
-                                    for (int n11 = -2; n11 < 3; ++n11)
-                                    {
-                                        ModuleBase::Matrix3 mat(n11, n12, n13, n21, n22, n23, n31, n32, n33);
-
-                                        if (equal(mat.Det(),1.0))
-                                        {
-                                            r1.x = n11 * v1.x + n12 * v2.x + n13 * v3.x;
-                                            r1.y = n11 * v1.y + n12 * v2.y + n13 * v3.y;
-                                            r1.z = n11 * v1.z + n12 * v2.z + n13 * v3.z;
-                                     
-									        r2.x = n21 * v1.x + n22 * v2.x + n23 * v3.x;
-                                            r2.y = n21 * v1.y + n22 * v2.y + n23 * v3.y;
-                                            r2.z = n21 * v1.z + n22 * v2.z + n23 * v3.z;
-                                     
-									        r3.x = n31 * v1.x + n32 * v2.x + n33 * v3.x;
-                                            r3.y = n31 * v1.y + n32 * v2.y + n33 * v3.y;
-                                            r3.z = n31 * v1.z + n32 * v2.z + n33 * v3.z;
-                                            //std::cout << "mat = " << n11 <<" " <<n12<<" "<<n13<<" "<<n21<<" "<<n22<<" "<<n23<<" "<<n31<<" "<<n32<<" "<<n33<<std::endl;
-											
-                                            brav = standard_lat(r1, r2, r3, cel_const);
-//                                            if(brav == 8)
-//                                            {
-//                                               std::cout << "mat = " << n11 <<" " <<n12<<" "<<n13<<" "<<n21<<" "<<n22<<" "<<n23<<" "<<n31<<" "<<n32<<" "<<n33<<std::endl;
-//                                            }
-
-/*
-											if(n11== 1 && n12==0 && n13==-2 && n21==2 && n22==1 && n23==-1
-												&& n31==-2 && n32==-2 && n33==-1)
-											{
-												++nif;
-												GlobalV::ofs_running << " " << std::endl;
-												GlobalV::ofs_running << std::setw(8) << nif << std::setw(5) << n11 << std::setw(5) << n12
-													<< std::setw(5) << n13 << std::setw(5) << n21 << std::setw(5) << n22
-													<< std::setw(5) << n23 << std::setw(5) << n31 << std::setw(5) << n32
-													<< std::setw(5) << n33 << std::setw(5) << ibrav << std::endl;
-												GlobalV::ofs_running << " r1: " << r1.x << " " << r1.y << " " << r1.z << std::endl;
-												GlobalV::ofs_running << " r2: " << r2.x << " " << r2.y << " " << r2.z << std::endl;
-												GlobalV::ofs_running << " r3: " << r3.x << " " << r3.y << " " << r3.z << std::endl;
-												GlobalV::ofs_running << " cel_const[3]=" << cel_const[3] << std::endl;
-												GlobalV::ofs_running << " cel_const[4]=" << cel_const[4] << std::endl;
-												GlobalV::ofs_running << " cel_const[5]=" << cel_const[5] << std::endl;
-											}
-											*/
-//											if(brav == 14)
-//											{
-//												GlobalV::ofs_running << " ABS(CELLDM(4))=" << fabs(cel_const[3]) << std::endl;
-//												GlobalV::ofs_running << " ABS(CELLDM(5))=" << fabs(cel_const[4]) << std::endl;
-//												GlobalV::ofs_running << " ABS(CELLDM(6))=" << fabs(cel_const[5]) << std::endl;
-//											}
-
-                                            if ( brav < temp_brav || ( brav == temp_brav
-                                                    && ( fabs(cel_const[3]) < (cos1-1.0e-9) )
-                                                    && ( fabs(cel_const[4]) < (cos2-1.0e-9) )
-                                                    && ( fabs(cel_const[5]) < (cos3-1.0e-9) )) //mohan fix bug 2012-01-15, not <=
-                                               )
-                                            {
-												/*
-												GlobalV::ofs_running << "\n IBRAV=" << brav << " ITYP=" << temp_brav << std::endl;
-												GlobalV::ofs_running << " ABS(CELLDM(4))=" << fabs(cel_const[3]) << std::endl;
-												GlobalV::ofs_running << " ABS(CELLDM(5))=" << fabs(cel_const[4]) << std::endl;
-												GlobalV::ofs_running << " ABS(CELLDM(6))=" << fabs(cel_const[5]) << std::endl;
-												GlobalV::ofs_running << " COS1=" << cos1 << std::endl;
-												GlobalV::ofs_running << " COS2=" << cos2 << std::endl;
-												GlobalV::ofs_running << " COS3=" << cos3 << std::endl;
-												*/
-												/*
-												GlobalV::ofs_running << " r1: " << r1.x << " " << r1.y << " " << r1.z << std::endl;
-												GlobalV::ofs_running << " r2: " << r2.x << " " << r2.y << " " << r2.z << std::endl;
-												GlobalV::ofs_running << " r3: " << r3.x << " " << r3.y << " " << r3.z << std::endl;
-												GlobalV::ofs_running << " N=" << n11 << " " << n12 << " " << n13 
-												<< " " << n21 << " " << n22 << " " << n23 
-												<< " " << n31 << " " << n32 << " " << n33 << std::endl; 
-												*/
-												//out.printM3("mat",mat);
-                                                temp_brav = brav;
-												
-                                                cos1 = fabs(cel_const[3]);
-                                                cos2 = fabs(cel_const[4]);
-                                                cos3 = fabs(cel_const[5]);
-
-                                                for (int i = 0; i < 6; ++i)
-                                                {
-                                                    temp_const[i] = cel_const[i];
-                                                }
-                                                w1 = r1;
-                                                w2 = r2;
-                                                w3 = r3;
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
+    this->get_optlat(v1, v2, v3, w1, w2, w3, real_brav, cel_const, temp_const);
 //        std::cout << "a1 = " << v1.x << " " << v1.y << " " << v1.z <<std::endl;
 //        std::cout << "a1 = " << v2.x << " " << v2.y << " " << v2.z <<std::endl;
 //        std::cout << "a1 = " << v3.x << " " << v3.y << " " << v3.z <<std::endl;
@@ -712,8 +523,12 @@ void Symmetry::lattice_type(
 //	GlobalV::ofs_running << " pre_brav=" << pre_brav << std::endl;
 //	GlobalV::ofs_running << " temp_brav=" << temp_brav << std::endl;
 
+    bool change_flag=false;
+    for (int i=0;i<6;++i)  
+        if(!equal(cel_const[i], pre_const[i])) 
+            {change_flag=true; break;}
 
-    if ( temp_brav < pre_brav)
+    if ( real_brav < pre_brav || change_flag )
     {
         //if the symmetry of the new vectors is higher, store the new ones
         for (int i = 0; i < 6; ++i)
@@ -723,62 +538,67 @@ void Symmetry::lattice_type(
         q1 = w1;
         q2 = w2;
         q3 = w3;
-        change = 1;
-        GlobalV::ofs_running <<std::endl;
-        GlobalV::ofs_running <<" !The lattice vectors have been changed (STRU_SIMPLE.cif)"<<std::endl;
-        GlobalV::ofs_running <<std::endl;
-        int at=0;
-        for(int it=0; it<ucell.ntype; ++it)
+        if(convert_atoms)
         {
-                for(int ia=0; ia<ucell.atoms[it].na; ++ia)
-                {
-                        ModuleBase::Mathzone::Cartesian_to_Direct(ucell.atoms[it].tau[ia].x,
-                                        ucell.atoms[it].tau[ia].y,
-                                        ucell.atoms[it].tau[ia].z,
-                                        q1.x, q1.y, q1.z,
-                                        q2.x, q2.y, q2.z,
-                                        q3.x, q3.y, q3.z,
-                                        newpos[3*at],newpos[3*at+1],newpos[3*at+2]);
-
-//                        std::cout << " newpos_before = " << newpos[3*iat] << " " << newpos[3*iat+1] << " " << newpos[3*iat+2] << std::endl;
-//                      GlobalV::ofs_running << " newpos_before = " << newpos[3*iat] << " " << newpos[3*iat+1] << " " << newpos[3*iat+2] << std::endl;
-                        for(int k=0; k<3; ++k)
-                        {
-                                this->check_translation( newpos[at*3+k], -floor(newpos[at*3+k]));
-                                this->check_boundary( newpos[at*3+k] );
-                        }
-//                        std::cout << " newpos = " << newpos[3*iat] << " " << newpos[3*iat+1] << " " << newpos[3*iat+2] << std::endl;
-
-//                      GlobalV::ofs_running << " newpos = " << newpos[3*iat] << " " << newpos[3*iat+1] << " " << newpos[3*iat+2] << std::endl;
-                        ++at;
-                }
-        }       
-        std::stringstream ss;
-        ss << GlobalV::global_out_dir << "STRU_SIMPLE.cif";
-
-        std::ofstream ofs( ss.str().c_str() );
-        ofs << "Lattice vector  : " << std::endl;
-        ofs << q1.x <<"   "<<q1.y<<"  "<<q1.z<< std::endl;
-        ofs << q2.x <<"   "<<q2.y<<"  "<<q2.z<< std::endl;
-        ofs << q3.x <<"   "<<q3.y<<"  "<<q3.z<< std::endl;
-        ofs << std::endl;
-        ofs << "Direct positions : " << " " << std::endl;
-        ofs << std::endl;
-        at =0;
-        
-        for (int it=0; it<ucell.ntype; it++)
-        {
-            for (int ia=0; ia<ucell.atoms[it].na; ia++)
+            GlobalV::ofs_running <<std::endl;
+            GlobalV::ofs_running <<" The lattice vectors have been changed (STRU_SIMPLE.cif)"<<std::endl;
+            GlobalV::ofs_running <<std::endl;
+            int at=0;
+            for(int it=0; it<ucell.ntype; ++it)
             {
-                 ofs << ucell.atoms[it].label
-                 << " " << newpos[3*at]
-                 << " " << newpos[3*at+1]
-                 << " " << newpos[3*at+2] << std::endl;
-                 at++;
+                    for(int ia=0; ia<ucell.atoms[it].na; ++ia)
+                    {
+                            ModuleBase::Mathzone::Cartesian_to_Direct(ucell.atoms[it].tau[ia].x,
+                                            ucell.atoms[it].tau[ia].y,
+                                            ucell.atoms[it].tau[ia].z,
+                                            q1.x, q1.y, q1.z,
+                                            q2.x, q2.y, q2.z,
+                                            q3.x, q3.y, q3.z,
+                                            newpos[3*at],newpos[3*at+1],newpos[3*at+2]);
+
+    //                        std::cout << " newpos_before = " << newpos[3*iat] << " " << newpos[3*iat+1] << " " << newpos[3*iat+2] << std::endl;
+    //                      GlobalV::ofs_running << " newpos_before = " << newpos[3*iat] << " " << newpos[3*iat+1] << " " << newpos[3*iat+2] << std::endl;
+                            for(int k=0; k<3; ++k)
+                            {
+                                    this->check_translation( newpos[at*3+k], -floor(newpos[at*3+k]));
+                                    this->check_boundary( newpos[at*3+k] );
+                            }
+    //                        std::cout << " newpos = " << newpos[3*iat] << " " << newpos[3*iat+1] << " " << newpos[3*iat+2] << std::endl;
+
+    //                      GlobalV::ofs_running << " newpos = " << newpos[3*iat] << " " << newpos[3*iat+1] << " " << newpos[3*iat+2] << std::endl;
+                            ++at;
+                    }
+            }       
+            std::stringstream ss;
+            ss << GlobalV::global_out_dir << "STRU_SIMPLE.cif";
+
+            std::ofstream ofs( ss.str().c_str() );
+            ofs << "Lattice vector  : " << std::endl;
+            ofs << q1.x <<"   "<<q1.y<<"  "<<q1.z<< std::endl;
+            ofs << q2.x <<"   "<<q2.y<<"  "<<q2.z<< std::endl;
+            ofs << q3.x <<"   "<<q3.y<<"  "<<q3.z<< std::endl;
+            ofs << std::endl;
+            ofs << "Direct positions : " << " " << std::endl;
+            ofs << std::endl;
+            at =0;
+            
+            for (int it=0; it<ucell.ntype; it++)
+            {
+                for (int ia=0; ia<ucell.atoms[it].na; ia++)
+                {
+                    ofs << ucell.atoms[it].label
+                    << " " << newpos[3*at]
+                    << " " << newpos[3*at+1]
+                    << " " << newpos[3*at+2] << std::endl;
+                    at++;
+                }
             }
+            ofs.close();
         }
-        ofs.close();
-        
+        // return the optimized lattice in v1, v2, v3
+        v1=q1;
+        v2=q2;
+        v3=q3;
     }
     else
     {
@@ -786,6 +606,30 @@ void Symmetry::lattice_type(
         for (int i = 0; i < 6; ++i)
         {
             cel_const[i] = pre_const[i];
+        }
+        //newpos also need to be set
+        if(convert_atoms)
+        {
+            int at=0;
+            for(int it=0; it<ucell.ntype; ++it)
+            {
+                for(int ia=0; ia<ucell.atoms[it].na; ++ia)
+                {
+                    ModuleBase::Mathzone::Cartesian_to_Direct(ucell.atoms[it].tau[ia].x,
+                                    ucell.atoms[it].tau[ia].y,
+                                    ucell.atoms[it].tau[ia].z,
+                                    v1.x, v1.y, v1.z,
+                                    v2.x, v2.y, v2.z,
+                                    v3.x, v3.y, v3.z,
+                                    newpos[3*at],newpos[3*at+1],newpos[3*at+2]);
+                    for(int k=0; k<3; ++k)
+                    {
+                            this->check_translation( newpos[at*3+k], -floor(newpos[at*3+k]));
+                            this->check_boundary( newpos[at*3+k] );
+                    }
+                    ++at;
+                }
+            }       
         }
     }
 
@@ -814,41 +658,7 @@ void Symmetry::lattice_type(
 			GlobalV::ofs_running<<" The lattice vectors have been set back!"<<std::endl;
         }
     }*/
-    brav = pre_brav;
-    //brav = temp_brav;
-    //bravname = get_brav_name(brav);
-    real_brav = temp_brav;     // pengfei Li 15-3-2022
     bravname = get_brav_name(real_brav);
-
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"BRAVAIS TYPE",real_brav);
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"BRAVAIS LATTICE NAME",bravname);
-    return;
-}
-
-
-void Symmetry::change_lattice(void)
-{
-    //if lattice vectors are changed, do the coordinates conversion
-    if (GlobalV::test_symmetry) ModuleBase::TITLE("Symmetry","change_lattice");
-
-	change = 0;
-
-	//GlobalV::ofs_running << "\n change = " << change;
-    if (change == 1)
-    {
-        this->veccon(dirpos, rotpos, nat, s1, s2, s3, a1, a2, a3);
-        for (int i = 0; i < nat * 3; ++i)
-        {
-            dirpos[i] = rotpos[i];
-        }
-    }
-    else
-    {
-        for (int i = 0; i < nat * 3; ++i)
-        {
-            rotpos[i] = dirpos[i];
-        }
-    }
     return;
 }
 
@@ -984,7 +794,7 @@ void Symmetry::checksym(ModuleBase::Matrix3 &s, ModuleBase::Vector3<double> &gtr
          //std::cout << " newpos_now1 = " << newpos[3*iat] << " " << newpos[3*iat+1] << " " << newpos[3*iat+2] << std::endl;
 
         //order original atomic positions for current species
-        this->atom_ordering(pos + istart[it] * 3, na[it], index + istart[it]);
+        this->atom_ordering_new(pos + istart[it] * 3, na[it], index + istart[it]);
          //for( int iat =0 ; iat < ucell.nat ; iat++)
          //std::cout << " newpos_now2 = " << newpos[3*iat] << " " << newpos[3*iat+1] << " " << newpos[3*iat+2] << std::endl;
 
@@ -1018,7 +828,7 @@ void Symmetry::checksym(ModuleBase::Matrix3 &s, ModuleBase::Vector3<double> &gtr
             this->check_boundary(rotpos[zz]);
         }
         //order rotated atomic positions for current species
-        this->atom_ordering(rotpos + istart[it] * 3, na[it], index + istart[it]);
+        this->atom_ordering_new(rotpos + istart[it] * 3, na[it], index + istart[it]);
     }
 
 	/*
@@ -1038,16 +848,16 @@ void Symmetry::checksym(ModuleBase::Matrix3 &s, ModuleBase::Vector3<double> &gtr
 	//---------------------------------------------------------
     // itmin_start = the start atom positions of species itmin
 	//---------------------------------------------------------
-    sptmin.x = pos[itmin_start*3];
-    sptmin.y = pos[itmin_start*3+1];
-    sptmin.z = pos[itmin_start*3+2];
+    sptmin.x = rotpos[itmin_start*3];
+    sptmin.y = rotpos[itmin_start*3+1];
+    sptmin.z = rotpos[itmin_start*3+2];
     for (int i = itmin_start; i < itmin_start + na[itmin_type]; ++i)
     {
         //set up the current test std::vector "gtrans"
         //and "gtrans" could possibly contain trivial translations:
-        gtrans.x = this->get_translation_vector( pos[i*3+0], sptmin.x);
-        gtrans.y = this->get_translation_vector( pos[i*3+1], sptmin.y);
-        gtrans.z = this->get_translation_vector( pos[i*3+2], sptmin.z);
+        gtrans.x = this->get_translation_vector( sptmin.x, pos[i*3+0]);
+        gtrans.y = this->get_translation_vector( sptmin.y, pos[i*3+1]);
+        gtrans.z = this->get_translation_vector( sptmin.z, pos[i*3+2]);
 
         //If we had already detected some translation,
         //we must only look at the vectors with coordinates smaller than those
@@ -1060,21 +870,21 @@ void Symmetry::checksym(ModuleBase::Matrix3 &s, ModuleBase::Vector3<double> &gtr
             continue;
         }
 
-        //translate all the atomic coordinates by "gtran"
+        //translate all the atomic coordinates BACK by "gtrans"
         for (int it = 0; it < ntype; it++)
         {
             for (int ia = istart[it]; ia < na[it] + istart[it]; ia++)
             {
-                this->check_boundary( rotpos[ia*3+0] );
-                this->check_boundary( rotpos[ia*3+1] );
-                this->check_boundary( rotpos[ia*3+2] );
-
                 this->check_translation( rotpos[ia*3+0], gtrans.x );
                 this->check_translation( rotpos[ia*3+1], gtrans.y );
                 this->check_translation( rotpos[ia*3+2], gtrans.z );
+
+                this->check_boundary( rotpos[ia*3+0] );
+                this->check_boundary( rotpos[ia*3+1] );
+                this->check_boundary( rotpos[ia*3+2] );
             }
             //order translated atomic positions for current species
-            this->atom_ordering(rotpos + istart[it] * 3, na[it], index + istart[it]);
+            this->atom_ordering_new(rotpos + istart[it] * 3, na[it], index + istart[it]);
         }
 
         no_diff = true;
@@ -1087,7 +897,6 @@ void Symmetry::checksym(ModuleBase::Matrix3 &s, ModuleBase::Vector3<double> &gtr
                 diff.x = this->check_diff( pos[ia*3+0], rotpos[ia*3+0]);
                 diff.y = this->check_diff( pos[ia*3+1], rotpos[ia*3+1]);
                 diff.z = this->check_diff( pos[ia*3+2], rotpos[ia*3+2]);
-
                 //only if all "diff" are zero vectors, flag will remain "1"
                 if (	no_diff == false||
                         !equal(diff.x,0.0)||
@@ -1109,8 +918,6 @@ void Symmetry::checksym(ModuleBase::Matrix3 &s, ModuleBase::Vector3<double> &gtr
 		print_pos(rotpos, nat);
 		*/
 		//BLOCK_HERE("check symm");
-
-				
 
         //the current test is successful
         if (no_diff == true)
@@ -1143,6 +950,294 @@ void Symmetry::checksym(ModuleBase::Matrix3 &s, ModuleBase::Vector3<double> &gtr
     return;
 }
 
+void Symmetry::pricell(double* pos)
+{
+    bool no_diff = 0;
+    s_flag = 0;
+    ptrans.clear();
+
+    for (int it = 0; it < ntype; it++)
+    {
+		//------------------------------------
+        // impose periodic boundary condition
+		// 0.5 -> -0.5
+		//------------------------------------
+        for (int j = istart[it]; j < istart[it] + na[it]; ++j)
+        {
+            this->check_boundary(pos[j*3+0]);
+            this->check_boundary(pos[j*3+1]);
+            this->check_boundary(pos[j*3+2]);
+        }
+
+        //order original atomic positions for current species
+        this->atom_ordering_new(pos + istart[it] * 3, na[it], index + istart[it]);
+        //copy pos to rotpos
+        for (int j = istart[it]; j < istart[it] + na[it]; ++j)
+        {
+            const int xx=j*3;
+            const int yy=j*3+1;
+            const int zz=j*3+2;
+            rotpos[xx] = pos[xx];
+            rotpos[yy] = pos[yy];
+            rotpos[zz] = pos[zz];
+        }
+    }
+
+    ModuleBase::Vector3<double> diff;
+    ModuleBase::Vector3<double> tmp_ptrans;
+
+	//---------------------------------------------------------
+    // itmin_start = the start atom positions of species itmin
+	//---------------------------------------------------------
+    sptmin.x = pos[itmin_start*3];
+    sptmin.y = pos[itmin_start*3+1];
+    sptmin.z = pos[itmin_start*3+2];
+    for (int i = itmin_start; i < itmin_start + na[itmin_type]; ++i)
+    {
+        //set up the current test std::vector "gtrans"
+        //and "gtrans" could possibly contain trivial translations:
+        tmp_ptrans.x = this->get_translation_vector( pos[i*3+0], sptmin.x);
+        tmp_ptrans.y = this->get_translation_vector( pos[i*3+1], sptmin.y);
+        tmp_ptrans.z = this->get_translation_vector( pos[i*3+2], sptmin.z);
+        //translate all the atomic coordinates by "gtrans"
+        for (int it = 0; it < ntype; it++)
+        {
+            for (int ia = istart[it]; ia < na[it] + istart[it]; ia++)
+            {
+                this->check_translation( rotpos[ia*3+0], tmp_ptrans.x );
+                this->check_translation( rotpos[ia*3+1], tmp_ptrans.y );
+                this->check_translation( rotpos[ia*3+2], tmp_ptrans.z );
+
+                this->check_boundary( rotpos[ia*3+0] );
+                this->check_boundary( rotpos[ia*3+1] );
+                this->check_boundary( rotpos[ia*3+2] );
+            }
+            //order translated atomic positions for current species
+            this->atom_ordering_new(rotpos + istart[it] * 3, na[it], index + istart[it]);
+        }
+
+        no_diff = true;
+        //compare the two lattices 'one-by-one' whether they are identical
+        for (int it = 0; it < ntype; it++)
+        {
+            for (int ia = istart[it]; ia < na[it] + istart[it]; ia++)
+            {
+                //take the difference of the rotated and the original coordinates
+                diff.x = this->check_diff( pos[ia*3+0], rotpos[ia*3+0]);
+                diff.y = this->check_diff( pos[ia*3+1], rotpos[ia*3+1]);
+                diff.z = this->check_diff( pos[ia*3+2], rotpos[ia*3+2]);
+                //only if all "diff" are zero vectors, flag will remain "1"
+                if (!equal(diff.x,0.0)||
+                    !equal(diff.y,0.0)||
+                    !equal(diff.z,0.0))
+                {
+                    no_diff = false;
+                    break;
+                }
+            }
+            if(!no_diff) break;
+        }
+
+        //the current test is successful
+        if (no_diff)    ptrans.push_back(tmp_ptrans);
+
+        //restore the original rotated coordinates by subtracting "ptrans"
+        for (int it = 0; it < ntype; it++)
+        {
+            for (int ia = istart[it]; ia < na[it] + istart[it]; ia++)
+            {
+                rotpos[ia*3+0] -= tmp_ptrans.x;
+                rotpos[ia*3+1] -= tmp_ptrans.y;
+                rotpos[ia*3+2] -= tmp_ptrans.z;
+            }
+        }
+    }
+    int ntrans=ptrans.size();
+    if (ntrans <= 1)
+    {
+        GlobalV::ofs_running<<"Original cell was already a primitive cell."<<std::endl;
+        this->p1=this->a1;
+        this->p2=this->a2;
+        this->p3=this->a3;
+        this->pbrav=this->real_brav;
+        this->ncell=1;
+        for (int i=0;i<6;++i)   this->pcel_const[i]=this->cel_const[i];
+        return;
+    }
+
+    //sort ptrans:
+    double* ptrans_array = new double[ntrans*3];
+    for(int i=0;i<ntrans;++i)
+    {
+        ptrans_array[i*3]=ptrans[i].x;
+        ptrans_array[i*3+1]=ptrans[i].y;
+        ptrans_array[i*3+2]=ptrans[i].z;
+    }
+    this->atom_ordering_new(ptrans_array, ntrans, index);
+    // std::cout<<"final ptrans:"<<std::endl;
+    for(int i=0;i<ntrans;++i)
+    {
+        ptrans[i].x=ptrans_array[i*3];
+        ptrans[i].y=ptrans_array[i*3+1];
+        ptrans[i].z=ptrans_array[i*3+2];
+        // std::cout<<ptrans[i].x<<" "<<ptrans[i].y<<" "<<ptrans[i].z<<std::endl;
+    }
+    delete[] ptrans_array;
+
+    //calculate lattice vectors of pricell: 
+    // find the first non-zero ptrans on all 3 directions 
+    ModuleBase::Vector3<double> b1, b2, b3;
+    int iplane=0, jplane=0, kplane=0;
+    //1. kplane for b3
+    while(kplane<ntrans && std::abs(ptrans[kplane].z-ptrans[0].z)<this->epsilon) ++kplane;
+    if(kplane==ntrans) kplane=0;    //a3-direction have no smaller pricell
+    b3=kplane>0 ? 
+        ModuleBase::Vector3<double>(ptrans[kplane].x, ptrans[kplane].y, ptrans[kplane].z) : 
+        ModuleBase::Vector3<double>(0, 0, 1);
+    //2. jplane for b2 (not collinear with b3)
+    jplane=kplane+1;
+    while(jplane<ntrans && (std::abs(ptrans[jplane].y-ptrans[0].y)<this->epsilon
+        || equal((ptrans[jplane]^b3).norm(), 0))) ++jplane;
+    if(jplane==ntrans) jplane=kplane;    //a2-direction have no smaller pricell
+    b2=jplane>kplane ? 
+        ModuleBase::Vector3<double>(ptrans[jplane].x, ptrans[jplane].y, ptrans[jplane].z) : 
+        ModuleBase::Vector3<double>(0, 1, 0);
+    //3. iplane for b1 (not coplane with <b2, b3>)
+    iplane=jplane+1;
+    while(iplane<ntrans && (std::abs(ptrans[iplane].x-ptrans[0].x)<this->epsilon
+        || equal(ptrans[iplane]*(b2^b3), 0))) ++iplane;
+    b1=(iplane>jplane && iplane<ntrans)? 
+        ModuleBase::Vector3<double>(ptrans[iplane].x, ptrans[iplane].y, ptrans[iplane].z) : 
+        ModuleBase::Vector3<double>(1, 0, 0);    //a1-direction have no smaller pricell
+
+    // std::cout<<"iplane="<<iplane<<std::endl;
+    // std::cout<<"jplane="<<jplane<<std::endl;
+    // std::cout<<"kplane="<<kplane<<std::endl;
+    // std::cout<<"b1="<<b1.x<<" "<<b1.y<<" "<<b1.z<<std::endl;
+    // std::cout<<"b2="<<b2.x<<" "<<b2.y<<" "<<b2.z<<std::endl;
+    // std::cout<<"b3="<<b3.x<<" "<<b3.y<<" "<<b3.z<<std::endl;
+
+    ModuleBase::Matrix3 coeff(b1.x, b1.y, b1.z, b2.x, b2.y, b2.z, b3.x, b3.y, b3.z);
+    this->plat=coeff*this->optlat;
+
+    //deal with collineation caused by default b1, b2, b3
+    if(equal(plat.Det(), 0))
+    {
+        if(kplane==0)   //try a new b3
+        {
+            std::cout<<"try a new b3"<<std::endl;
+            if(jplane>kplane)   // use default b2
+            {
+                coeff.e31=0;
+                coeff.e32=1;
+                coeff.e33=0;
+            }
+            else    //use default b1
+            {
+                coeff.e31=1;
+                coeff.e32=0;
+                coeff.e33=0;
+            }
+        }
+        else if(jplane<=kplane)
+        {
+            //std::cout<<"try a new b2"<<std::endl;
+            //use default b3
+            coeff.e21=0;
+            coeff.e22=0;
+            coeff.e23=1;
+        }
+        else
+        {
+            //std::cout<<"try a new b1"<<std::endl;
+            //use default b3
+            coeff.e11=0;
+            coeff.e12=0;
+            coeff.e13=1;
+        }
+        this->plat=coeff*this->optlat;
+        assert(!equal(plat.Det(), 0));
+    }
+
+    this->p1.x=plat.e11;
+    this->p1.y=plat.e12;
+    this->p1.z=plat.e13;
+    this->p2.x=plat.e21;
+    this->p2.y=plat.e22;
+    this->p2.z=plat.e23;       
+    this->p3.x=plat.e31;
+    this->p3.y=plat.e32;
+    this->p3.z=plat.e33;
+
+    GlobalV::ofs_running<<"lattice vectors of primitive cell (initial):"<<std::endl;
+    GlobalV::ofs_running<<p1.x<<" "<<p1.y<<" "<<p1.z<<std::endl;
+    GlobalV::ofs_running<<p2.x<<" "<<p2.y<<" "<<p2.z<<std::endl;
+    GlobalV::ofs_running<<p3.x<<" "<<p3.y<<" "<<p3.z<<std::endl;
+
+    // get the optimized primitive cell
+    UnitCell tmp_ucell;
+    std::string pbravname;
+    ModuleBase::Vector3<double> p01=p1, p02=p2, p03=p3;
+    double pcel_pre_const[6];
+    for(int i=0;i<6;++i) pcel_pre_const[i]=pcel_const[i];
+    this->lattice_type(p1, p2, p3, p01, p02, p03, pcel_const, pcel_pre_const, pbrav, pbravname,tmp_ucell, false, nullptr);
+
+    this->plat.e11=p1.x;
+    this->plat.e12=p1.y;
+    this->plat.e13=p1.z;
+    this->plat.e21=p2.x;
+    this->plat.e22=p2.y;
+    this->plat.e23=p2.z;
+    this->plat.e31=p3.x;
+    this->plat.e32=p3.y;
+    this->plat.e33=p3.z;
+
+    GlobalV::ofs_running<<"lattice vectors of primitive cell (optimized):"<<std::endl;
+    GlobalV::ofs_running<<p1.x<<" "<<p1.y<<" "<<p1.z<<std::endl;
+    GlobalV::ofs_running<<p2.x<<" "<<p2.y<<" "<<p2.z<<std::endl;
+    GlobalV::ofs_running<<p3.x<<" "<<p3.y<<" "<<p3.z<<std::endl;
+
+    GlobalV::ofs_running<<"(for primitive cell:)"<<std::endl;
+    Symm_Other::print1(this->pbrav, this->pcel_const, GlobalV::ofs_running);
+
+    //count the number of pricells
+    GlobalV::ofs_running<<"optimized lattice volume: "<<this->optlat.Det()<<std::endl;
+    GlobalV::ofs_running<<"optimized primitive cell volume: "<<this->plat.Det()<<std::endl;
+    double ncell_double = std::abs(this->optlat.Det()/this->plat.Det());
+    this->ncell=floor(ncell_double+0.5);
+    if(this->ncell != ntrans)
+    {
+        std::cout << " ERROR: PRICELL: NCELL != NTRANS !" << std::endl;
+		ModuleBase::QUIT();
+    }
+    if(std::abs(ncell_double-double(this->ncell)) > this->epsilon*100)
+    {
+        std::cout << " ERROR: THE NUMBER OF PRIMITIVE CELL IS NOT AN INTEGER !" << std::endl;
+		ModuleBase::QUIT();
+    }
+    GlobalV::ofs_running<<"Original cell was built up by "<<this->ncell<<" primitive cells."<<std::endl;
+
+    //convert ptrans to input configuration
+    ModuleBase::Matrix3 inputlat(s1.x, s1.y, s1.z, s2.x, s2.y, s2.z, s3.x, s3.y, s3.z);
+    this->gtrans_convert(ptrans.data(), ptrans.data(), ntrans, this->optlat, inputlat );
+    
+    //how many pcell in supercell
+    int n1, n2, n3;
+    ModuleBase::Matrix3 nummat0=this->optlat*this->plat.Inverse();
+    ModuleBase::Matrix3 nummat, transmat;
+    hermite_normal_form(nummat0, nummat, transmat);
+    n1=floor (nummat.e11 + epsilon);
+    n2=floor (nummat.e22 + epsilon);
+    n3=floor (nummat.e33 + epsilon);
+    if(n1*n2*n3 != this->ncell) 
+    {
+        std::cout << " ERROR: Number of cells and number of vectors did not agree.";
+        std::cout<<"Try to change symmetry_prec in INPUT." << std::endl;
+		ModuleBase::QUIT();
+    }
+    return;
+}
+
 
 //modified by shu on 2010.01.20
 void Symmetry::rho_symmetry( double *rho,
@@ -1150,46 +1245,6 @@ void Symmetry::rho_symmetry( double *rho,
 {
 //  if (GlobalV::test_symmetry)ModuleBase::TITLE("Symmetry","rho_symmetry");
     ModuleBase::timer::tick("Symmetry","rho_symmetry");
-
-    //for fft commensuration
-	//nrotk : the number of space operations.
-    int count_fft = 0;
-    for (int i=0; i<nrotk; ++i)
-    {
-        //if ( (gtrans[i].x * nr1 - int(gtrans[i].x * nr1) < epsilon)
-        //   &&(gtrans[i].y * nr2 - int(gtrans[i].y * nr2) < epsilon)
-        //   &&(gtrans[i].z * nr3 - int(gtrans[i].z * nr3) < epsilon)
-        //   )
-        if (equal(gtrans[i].x,0.0) && equal(gtrans[i].y,0.0) && equal(gtrans[i].z,0.0))
-        {
-            ++count_fft;
-            this->symflag_fft[i] = true;
-        }
-        else
-        {
-            this->symflag_fft[i] = false;
-        }
-    }
-    nrotk = count_fft;
-	//std::cout << "\n nrotk = " << nrotk;
-
-
-	// get the remaining rotation matrix.
-	std::array<ModuleBase::Matrix3, 48> gmatrix_fft;
-
-    int counter = 0;
-    for (int i=0; i<48; ++i)
-    {
-        if (this->symflag_fft[i])
-        {
-            gmatrix_fft[counter] = this->gmatrix[i];
-            ++counter;
-        }
-    }
-    for (int i=0; i<48; ++i)
-    {
-        gmatrix[i] = gmatrix_fft[i];
-    }
 
 	// allocate flag for each FFT grid.
     bool* symflag = new bool[nr1 * nr2 * nr3];
@@ -1240,6 +1295,160 @@ void Symmetry::rho_symmetry( double *rho,
     delete[] rk;
     ModuleBase::timer::tick("Symmetry","rho_symmetry");
 }
+void Symmetry::rhog_symmetry(std::complex<double> *rhogtot, 
+    int* ixyz2ipw, const int &nx, const int &ny, const int &nz, 
+    const int &fftnx, const int &fftny, const int &fftnz)
+{
+//  if (GlobalV::test_symmetry)ModuleBase::TITLE("Symmetry","rho_symmetry");
+    ModuleBase::timer::tick("Symmetry","rho_symmetry");
+
+	// allocate flag for each FFT grid.
+    bool* symflag = new bool[fftnx*fftny*fftnz];
+    for (int i=0; i<fftnx*fftny*fftnz; i++)
+    {
+        symflag[i] = false;
+    }
+
+    assert(nrotk >0 );
+    assert(nrotk <=48 );
+
+    //map the gmatrix to inv
+    int* invmap = new int[nrotk];
+    this->gmatrix_invmap(kgmatrix, nrotk, invmap);
+
+    // record the index and gphase but not the final gdirect for each symm-opt
+    int *ipw_record = new int[nrotk];
+    int *ixyz_record = new int[nrotk];
+    std::complex<double>* gphase_record = new std::complex<double> [nrotk];
+
+    //tmp variables
+    ModuleBase::Vector3<int> tmp_gdirect0(0, 0, 0);
+    ModuleBase::Vector3<int> tmp_gdirect(0, 0, 0);
+    ModuleBase::Vector3<double> tmp_gdirect_double(0.0, 0.0, 0.0);
+    int ipw, ixyz, ii, jj, kk=0;
+    double arg=0.0;
+
+    //rotate function (different from real space, without scaling gmatrix)
+    auto rotate_recip = [&] (int isym) 
+    {
+        ModuleBase::Matrix3 g=kgmatrix[invmap[isym]];
+        ModuleBase::Vector3<int> g0=tmp_gdirect0;
+        
+        ii = int(g.e11 * g0.x + g.e21 * g0.y + g.e31 * g0.z) ;
+        if (ii < 0)
+        {
+            ii += 10 * nx;
+        }
+        ii = ii%nx;
+        jj = int(g.e12 * g0.x + g.e22 * g0.y + g.e32 * g0.z) ;
+        if (jj < 0)
+        {
+            jj += 10 * ny;
+        }
+        jj = jj%ny;
+        kk = int(g.e13 * g0.x + g.e23 * g0.y + g.e33 * g0.z);
+        if (kk < 0)
+        {
+            kk += 10 * nz;
+        }
+        kk = kk%nz;
+        return;
+    };
+    for (int i = 0; i< fftnx; ++i)
+    {
+        for (int j = 0; j< fftny; ++j)
+        {
+            for (int k = 0; k< fftnz; ++k)
+            {
+                if (!symflag[i * fftny * fftnz + j * fftnz + k])
+                {
+                    //if a fft-grid is not in pw-sphere, just do not consider it.
+                    int ixyz0=(i*fftny+j)*fftnz+k;
+                    int ipw0=ixyz2ipw[ixyz0];
+                    if (ipw0==-1) continue;
+
+                    std::complex<double> sum(0, 0);
+                    int rot_count=0;
+                    for (int isym = 0; isym < nrotk; ++isym)
+                    {
+                        // fft-grid index to old-gdirect
+                        tmp_gdirect0.x=(i>int(nx/2)+1)?(i-nx):i;
+                        tmp_gdirect0.y=(j>int(ny/2)+1)?(j-ny):j;
+                        tmp_gdirect0.z=(k>int(nz/2)+1)?(k-nz):k;
+                        // note : do not use PBC after rotation. 
+                        // we need a real gdirect to get the correspoding rhogtot.
+                        rotate_recip(isym);
+                        //fft-grid index to new-gdirect
+                        tmp_gdirect.x=(ii>int(nx/2)+1)?(ii-nx):ii;
+                        tmp_gdirect.y=(jj>int(ny/2)+1)?(jj-ny):jj;
+                        tmp_gdirect.z=(kk>int(nz/2)+1)?(kk-nz):kk;
+                        if(ii>=fftnx || jj>=fftny || kk>= fftnz)
+                        {
+                            if(!GlobalV::GAMMA_ONLY_PW)
+                            {
+                                std::cout << " ROTATE OUT OF FFT-GRID IN RHOG_SYMMETRY !" << std::endl;
+		                        ModuleBase::QUIT();
+                            }
+                            // for gamma_only_pw, just do not consider this rotation.
+                            continue;
+                        }
+                        ixyz=(ii*fftny+jj)*fftnz+kk;
+                        //fft-grid index to (ip, ig)
+                        ipw=ixyz2ipw[ixyz];
+                        if(ipw==-1) //not in pw-sphere
+                        {
+                            //if (std::abs(rhogtot[ipw0].real())>this->epsilon || std::abs(rhogtot[ipw0].imag()>this->epsilon))
+                                //std::cout<<"warning: ipw0 is in pw-sphere but ipw not !!!"<<std::endl;
+                            continue;   //else, just skip it
+                        }
+                        //calculate phase factor
+                        tmp_gdirect_double.x=(double)tmp_gdirect.x;
+                        tmp_gdirect_double.y=(double)tmp_gdirect.y;
+                        tmp_gdirect_double.z=(double)tmp_gdirect.z;
+                        double cos_arg=0.0, sin_arg=0.0;
+                        // for each pricell in supercell:
+                        for(int ipt=0;ipt<this->ncell;++ipt)
+                        {
+                            arg = ( tmp_gdirect_double * (gtrans[isym]+ptrans[ipt]) ) * ModuleBase::TWO_PI;
+                            cos_arg += cos(arg);
+                            sin_arg += sin(arg);   
+                        }
+                        // add nothing to sum, so don't consider this isym into rot_count
+                        cos_arg/=double(ncell);
+                        sin_arg/=double(ncell);
+                        //deal with double-zero
+                        if(equal(cos_arg, 0.0) && equal(sin_arg, 0.0)) continue;
+                        std::complex<double> gphase( cos_arg,  sin_arg );
+                        //deal with small difference from 1
+                        if(equal(gphase.real(), 1.0) && equal(gphase.imag(), 0))  gphase=std::complex<double>(1.0, 0.0);
+                        gphase_record[rot_count]=gphase;
+                        sum += rhogtot[ipw]*gphase;
+                        //record
+                        ipw_record[rot_count]=ipw;
+                        ixyz_record[rot_count]=ixyz;
+                        ++rot_count;
+                    }
+                    assert(rot_count<=nrotk);
+                    sum /= rot_count;
+
+                    for (int isym = 0; isym < rot_count; ++isym)
+                    {
+                        rhogtot[ipw_record[isym]] = sum/gphase_record[isym];
+                        symflag[ixyz_record[isym]] = true;
+                    }
+                }
+            }
+        }
+    }
+
+    delete[] symflag;
+    delete[] ipw_record;
+    delete[] ixyz_record;
+    delete[] gphase_record;
+    delete[] invmap;
+    ModuleBase::timer::tick("Symmetry","rho_symmetry");
+}
+
 
 void Symmetry::force_symmetry(ModuleBase::matrix &force , double* pos, const UnitCell &ucell)   // pengfei 2016-12-20
 {
@@ -1273,10 +1482,10 @@ void Symmetry::force_symmetry(ModuleBase::matrix &force , double* pos, const Uni
 			// std::cout << "nrotk ="<<nrotk<<std::endl;
 			for(int k = 0 ; k < nrotk; ++k)
 			{
-				protpos[xx] = pos[xx] * gmatrix[k].e11 + pos[yy] * gmatrix[k].e21 + pos[zz] * gmatrix[k].e31 + gtrans[k].x;
+                protpos[xx] = pos[xx] * gmatrix[k].e11 + pos[yy] * gmatrix[k].e21 + pos[zz] * gmatrix[k].e31 + gtrans[k].x;
 				protpos[yy] = pos[xx] * gmatrix[k].e12 + pos[yy] * gmatrix[k].e22 + pos[zz] * gmatrix[k].e32 + gtrans[k].y;
-				protpos[zz] = pos[xx] * gmatrix[k].e13 + pos[yy] * gmatrix[k].e23 + pos[zz] * gmatrix[k].e33 + gtrans[k].z;
-							    			   			
+				protpos[zz] = pos[xx] * gmatrix[k].e13 + pos[yy] * gmatrix[k].e23 + pos[zz] * gmatrix[k].e33 + gtrans[k].z;    	
+
 				check_translation( protpos[xx], -floor(protpos[xx]));
 				check_boundary( protpos[xx] );
 				check_translation( protpos[yy], -floor(protpos[yy]));
@@ -1451,4 +1660,344 @@ void Symmetry::stress_symmetry(ModuleBase::matrix& sigma, const UnitCell &ucell)
 	return;
 }
 
+void Symmetry::gmatrix_convert_int(const ModuleBase::Matrix3* sa, ModuleBase::Matrix3* sb, 
+        const int n, const ModuleBase::Matrix3 &a, const ModuleBase::Matrix3 &b) const
+{
+    auto round = [](double x){return (x>0.0)?floor(x+0.5):ceil(x-0.5);};
+    ModuleBase::Matrix3 ai = a.Inverse();
+    ModuleBase::Matrix3 bi = b.Inverse();
+    for (int i=0;i<n;++i)
+    {
+          sb[i]=b*ai*sa[i]*a*bi;
+          //to int 
+          sb[i].e11=round(sb[i].e11);
+          sb[i].e12=round(sb[i].e12);
+          sb[i].e13=round(sb[i].e13);
+          sb[i].e21=round(sb[i].e21);
+          sb[i].e22=round(sb[i].e22);
+          sb[i].e23=round(sb[i].e23);
+          sb[i].e31=round(sb[i].e31);
+          sb[i].e32=round(sb[i].e32);
+          sb[i].e33=round(sb[i].e33);
+    }
+}
+void Symmetry::gmatrix_convert(const ModuleBase::Matrix3* sa, ModuleBase::Matrix3* sb, 
+        const int n, const ModuleBase::Matrix3 &a, const ModuleBase::Matrix3 &b)const
+{
+    ModuleBase::Matrix3 ai = a.Inverse();
+    ModuleBase::Matrix3 bi = b.Inverse();
+    for (int i=0;i<n;++i)
+    {
+          sb[i]=b*ai*sa[i]*a*bi;
+    }
+}
+void Symmetry::gtrans_convert(const ModuleBase::Vector3<double>* va, ModuleBase::Vector3<double>* vb, 
+        const int n, const ModuleBase::Matrix3 &a, const ModuleBase::Matrix3 &b)const
+{
+    ModuleBase::Matrix3 bi = b.Inverse();
+    for (int i=0;i<n;++i)
+    {
+          vb[i]=va[i]*a*bi;
+    }
+}
+void Symmetry::gmatrix_invmap(const ModuleBase::Matrix3* s, const int n, int* invmap)
+{
+    ModuleBase::Matrix3 eig(1, 0, 0, 0, 1, 0, 0, 0, 1);
+    ModuleBase::Matrix3 tmp;
+    for (int i=0;i<n;++i)
+    {
+        for (int j=i;j<n;++j)
+        {
+            tmp=s[i]*s[j];
+            if(equal(tmp.e11, 1) && equal(tmp.e22, 1) && equal(tmp.e33, 1) &&
+                equal(tmp.e12, 0) && equal(tmp.e21, 0) && equal(tmp.e13, 0) &&
+                equal(tmp.e31, 0) && equal(tmp.e23, 0) && equal(tmp.e32, 0))
+            {
+                invmap[i]=j;
+                invmap[j]=i;
+                break;
+            }
+        }
+    }
+}
+
+void Symmetry::get_shortest_latvec(ModuleBase::Vector3<double> &a1, 
+        ModuleBase::Vector3<double> &a2, ModuleBase::Vector3<double> &a3) const
+{
+    double len1=a1.norm();
+    double len2=a2.norm();
+    double len3=a3.norm();
+    bool flag=true; //at least one iter
+    auto loop = [this, &flag](ModuleBase::Vector3<double> &v1, ModuleBase::Vector3<double>&v2, double &len)
+    {
+        bool fa=false, fb=false;
+        // loop a
+        double tmp_len=(v1-v2).norm();
+        while (tmp_len < len-epsilon)
+        {
+            v1=v1-v2;
+            len=v1.norm();
+            tmp_len=(v1-v2).norm();
+            fa=true;
+        }
+        // loop b
+        tmp_len=(v1+v2).norm();
+        while(tmp_len < len-epsilon)
+        {
+            assert(!fa);
+            v1=v1+v2;
+            len=v1.norm();
+            tmp_len=(v1+v2).norm();
+            fb=true;
+        }
+        if(fa || fb) flag=true;
+        return;
+    };
+    while(flag) //iter
+    {
+        flag=false;
+        // if any of a1, a2, a3 is updated, flag will become true.
+        // which means a further search is needed.
+        loop(a1, a2, len1);
+        loop(a1, a3, len1);
+        loop(a2, a1, len2);
+        loop(a2, a3, len2);
+        loop(a3, a1, len3);
+        loop(a3, a2, len3);
+    }
+    return;
+}
+
+void Symmetry::get_optlat(ModuleBase::Vector3<double> &v1, ModuleBase::Vector3<double> &v2, 
+        ModuleBase::Vector3<double> &v3, ModuleBase::Vector3<double> &w1, 
+        ModuleBase::Vector3<double> &w2, ModuleBase::Vector3<double> &w3, 
+        int& real_brav, double* cel_const, double* tmp_const) const
+{
+    ModuleBase::Vector3<double> r1, r2, r3;
+    double cos1 = 1;
+    double cos2 = 1;
+    double cos3 = 1;
+    int nif = 0;
+    int ibrav;
+    for (int n33 = -2; n33 < 3; ++n33)
+    {
+        for (int n32 = -2; n32 < 3; ++n32)
+        {
+            for (int n31 = -2; n31 < 3; ++n31)
+            {
+                for (int n23 = -2; n23 < 3; ++n23)
+                {
+                    for (int n22 = -2; n22 < 3; ++n22)
+                    {
+                        for (int n21 = -2; n21 < 3; ++n21)
+                        {
+                            for (int n13 = -2; n13 < 3; ++n13)
+                            {
+                                for (int n12 = -2; n12 < 3; ++n12)
+                                {
+                                    for (int n11 = -2; n11 < 3; ++n11)
+                                    {
+                                        ModuleBase::Matrix3 mat(n11, n12, n13, n21, n22, n23, n31, n32, n33);
+
+                                        if (equal(mat.Det(),1.0))
+                                        {
+                                            r1.x = n11 * v1.x + n12 * v2.x + n13 * v3.x;
+                                            r1.y = n11 * v1.y + n12 * v2.y + n13 * v3.y;
+                                            r1.z = n11 * v1.z + n12 * v2.z + n13 * v3.z;
+                                     
+									        r2.x = n21 * v1.x + n22 * v2.x + n23 * v3.x;
+                                            r2.y = n21 * v1.y + n22 * v2.y + n23 * v3.y;
+                                            r2.z = n21 * v1.z + n22 * v2.z + n23 * v3.z;
+                                     
+									        r3.x = n31 * v1.x + n32 * v2.x + n33 * v3.x;
+                                            r3.y = n31 * v1.y + n32 * v2.y + n33 * v3.y;
+                                            r3.z = n31 * v1.z + n32 * v2.z + n33 * v3.z;
+                                            //std::cout << "mat = " << n11 <<" " <<n12<<" "<<n13<<" "<<n21<<" "<<n22<<" "<<n23<<" "<<n31<<" "<<n32<<" "<<n33<<std::endl;
+											
+                                            ibrav = standard_lat(r1, r2, r3, cel_const);
+//                                            if(brav == 8)
+//                                            {
+//                                               std::cout << "mat = " << n11 <<" " <<n12<<" "<<n13<<" "<<n21<<" "<<n22<<" "<<n23<<" "<<n31<<" "<<n32<<" "<<n33<<std::endl;
+//                                            }
+
+/*
+											if(n11== 1 && n12==0 && n13==-2 && n21==2 && n22==1 && n23==-1
+												&& n31==-2 && n32==-2 && n33==-1)
+											{
+												++nif;
+												GlobalV::ofs_running << " " << std::endl;
+												GlobalV::ofs_running << std::setw(8) << nif << std::setw(5) << n11 << std::setw(5) << n12
+													<< std::setw(5) << n13 << std::setw(5) << n21 << std::setw(5) << n22
+													<< std::setw(5) << n23 << std::setw(5) << n31 << std::setw(5) << n32
+													<< std::setw(5) << n33 << std::setw(5) << ibrav << std::endl;
+												GlobalV::ofs_running << " r1: " << r1.x << " " << r1.y << " " << r1.z << std::endl;
+												GlobalV::ofs_running << " r2: " << r2.x << " " << r2.y << " " << r2.z << std::endl;
+												GlobalV::ofs_running << " r3: " << r3.x << " " << r3.y << " " << r3.z << std::endl;
+												GlobalV::ofs_running << " cel_const[3]=" << cel_const[3] << std::endl;
+												GlobalV::ofs_running << " cel_const[4]=" << cel_const[4] << std::endl;
+												GlobalV::ofs_running << " cel_const[5]=" << cel_const[5] << std::endl;
+											}
+											*/
+//											if(brav == 14)
+//											{
+//												GlobalV::ofs_running << " ABS(CELLDM(4))=" << fabs(cel_const[3]) << std::endl;
+//												GlobalV::ofs_running << " ABS(CELLDM(5))=" << fabs(cel_const[4]) << std::endl;
+//												GlobalV::ofs_running << " ABS(CELLDM(6))=" << fabs(cel_const[5]) << std::endl;
+//											}
+
+                                            if ( ibrav < real_brav || ( ibrav == real_brav
+                                                    && ( fabs(cel_const[3]) < (cos1-1.0e-9) )
+                                                    && ( fabs(cel_const[4]) < (cos2-1.0e-9) )
+                                                    && ( fabs(cel_const[5]) < (cos3-1.0e-9) )) //mohan fix bug 2012-01-15, not <=
+                                               )
+                                            {
+												/*
+												GlobalV::ofs_running << "\n IBRAV=" << brav << " ITYP=" << temp_brav << std::endl;
+												GlobalV::ofs_running << " ABS(CELLDM(4))=" << fabs(cel_const[3]) << std::endl;
+												GlobalV::ofs_running << " ABS(CELLDM(5))=" << fabs(cel_const[4]) << std::endl;
+												GlobalV::ofs_running << " ABS(CELLDM(6))=" << fabs(cel_const[5]) << std::endl;
+												GlobalV::ofs_running << " COS1=" << cos1 << std::endl;
+												GlobalV::ofs_running << " COS2=" << cos2 << std::endl;
+												GlobalV::ofs_running << " COS3=" << cos3 << std::endl;
+												*/
+												/*
+												GlobalV::ofs_running << " r1: " << r1.x << " " << r1.y << " " << r1.z << std::endl;
+												GlobalV::ofs_running << " r2: " << r2.x << " " << r2.y << " " << r2.z << std::endl;
+												GlobalV::ofs_running << " r3: " << r3.x << " " << r3.y << " " << r3.z << std::endl;
+												GlobalV::ofs_running << " N=" << n11 << " " << n12 << " " << n13 
+												<< " " << n21 << " " << n22 << " " << n23 
+												<< " " << n31 << " " << n32 << " " << n33 << std::endl; 
+												*/
+												//out.printM3("mat",mat);
+                                                real_brav = ibrav;
+												
+                                                cos1 = fabs(cel_const[3]);
+                                                cos2 = fabs(cel_const[4]);
+                                                cos3 = fabs(cel_const[5]);
+
+                                                for (int i = 0; i < 6; ++i)
+                                                {
+                                                    tmp_const[i] = cel_const[i];
+                                                }
+                                                w1 = r1;
+                                                w2 = r2;
+                                                w3 = r3;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return;
+}
+
+void Symmetry::hermite_normal_form(const ModuleBase::Matrix3 &s3, ModuleBase::Matrix3 &h3, ModuleBase::Matrix3 &b3) const
+{
+    ModuleBase::TITLE("Symmetry","hermite_normal_form");
+    // check the non-singularity and integer elements of s
+    assert(!equal(s3.Det(), 0.0));
+    auto round = [](double x){return (x>0.0)?floor(x+0.5):ceil(x-0.5);};
+    ModuleBase::matrix s=s3.to_matrix();
+    for (int i=0;i<3;++i)
+        for(int j=0;j<3;++j)
+            assert(equal(s(i, j), round(s(i, j))));
+
+    // convert Matrix3 to matrix
+    ModuleBase::matrix h=s, b(3, 3, true);
+    b(0, 0)=1; b(1, 1)=1; b(2, 2)=1;
+
+    // transform H into lower triangular form
+    auto max_min_index = [&h, this](int row, int &i1_to_max, int &i2_to_min)
+    {
+        if(fabs(h(row, i1_to_max)) < fabs(h(row, i2_to_min)) - epsilon)
+        {
+            int tmp = i2_to_min;
+            i2_to_min = i1_to_max;
+            i1_to_max = tmp;
+        }
+        return;
+    };
+    auto max_min_index_row1 = [&max_min_index, &h, this](int &imax, int &imin)
+    {
+        int imid=1;
+        imax=0; imin=2;
+        max_min_index(0, imid, imin);
+        max_min_index(0, imax, imid);
+        max_min_index(0, imid, imin);
+        if(equal(h(0, imin), 0)) imin=imid;
+        else if (equal(h(0, imax), 0)) imax=imid;
+        return;
+    };
+    auto swap_col = [&h, &b](int c1, int c2)
+    {
+        double tmp;
+        for(int r=0;r<3;++r)
+        {
+            tmp = h(r, c2);
+            h(r, c2)=h(r, c1);
+            h(r, c1)=tmp;
+            tmp = b(r, c2);
+            b(r, c2)=b(r, c1);
+            b(r, c1)=tmp;
+        }
+        return;
+    };
+    // row 1 
+    int imax, imin;
+    while(int(equal(h(0, 0), 0)) + int(equal(h(0, 1), 0)) + int(equal(h(0, 2), 0)) < 2)
+    {
+        max_min_index_row1(imax, imin);
+        double f = floor((fabs(h(0, imax) )+ epsilon)/fabs(h(0, imin)));
+        if(h(0, imax)*h(0, imin) < -epsilon) f*=-1;
+        for(int r=0;r<3;++r) {h(r, imax) -= f*h(r, imin); b(r, imax) -= f*b(r, imin); }
+    }
+    if(equal(h(0, 0), 0))  equal(h(0, 1), 0) ? swap_col(0, 2) : swap_col(0, 1);
+    if(h(0, 0) < -epsilon) for(int r=0;r<3;++r) {h(r, 0)*=-1; b(r, 0)*=-1;}
+    //row 2
+    if(equal(h(1, 1), 0))  swap_col(1, 2);
+    while(!equal(h(1, 2), 0))
+    {
+        imax=1, imin=2;
+        max_min_index(1, imax, imin);
+        double f = floor((fabs(h(1, imax) )+ epsilon)/fabs(h(1, imin)));
+        if(h(1, imax)*h(1, imin) < -epsilon) f*=-1;
+        for(int r=0;r<3;++r) {h(r, imax) -= f*h(r, imin); b(r, imax) -= f*b(r, imin); }
+        if(equal(h(1, 1), 0)) swap_col(1, 2); 
+    }
+    if(h(1, 1) < -epsilon) for(int r=0;r<3;++r) {h(r, 1)*=-1; b(r, 1)*=-1;}
+    //row3
+    if(h(2, 2) < -epsilon) for(int r=0;r<3;++r) {h(r, 2)*=-1; b(r, 2)*=-1;}
+    // deal with off-diagonal elements 
+    while(h(1, 0) > h(1, 1) - epsilon) 
+        for(int r=0;r<3;++r) {h(r, 0) -= h(r, 1); b(r, 0) -= b(r, 1); }
+    while(h(1, 0) < -epsilon) 
+        for(int r=0;r<3;++r) {h(r, 0) += h(r, 1); b(r, 0) += b(r, 1); }
+    for(int j=0;j<2;++j)
+    {
+        while(h(2, j) > h(2, 2) - epsilon)
+            for(int r=0;r<3;++r) {h(r, j) -= h(r, 2); b(r, j) -= b(r, 2); }
+        while(h(2, j) < -epsilon) 
+            for(int r=0;r<3;++r) {h(r, j) += h(r, 2); b(r, j) += b(r, 2); }
+    }
+
+    //convert matrix to Matrix3
+    h3.e11=h(0, 0); h3.e12=h(0, 1); h3.e13=h(0, 2);
+    h3.e21=h(1, 0); h3.e22=h(1, 1); h3.e23=h(1, 2);
+    h3.e31=h(2, 0); h3.e32=h(2, 1); h3.e33=h(2, 2);
+    b3.e11=b(0, 0); b3.e12=b(0, 1); b3.e13=b(0, 2);
+    b3.e21=b(1, 0); b3.e22=b(1, 1); b3.e23=b(1, 2);
+    b3.e31=b(2, 0); b3.e32=b(2, 1); b3.e33=b(2, 2);
+
+    //check s*b=h
+    ModuleBase::matrix check_zeros =s3.to_matrix() * b -h;
+    for (int i=0;i<3;++i)
+        for(int j=0;j<3;++j)
+            assert(equal(check_zeros(i, j), 0));
+    return;
+}
 }

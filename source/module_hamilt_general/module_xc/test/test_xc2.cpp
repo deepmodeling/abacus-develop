@@ -2,6 +2,13 @@
 #include "gtest/gtest.h"
 #include "../exx_info.h"
 
+/************************************************
+*  unit test of functionals
+***********************************************/
+
+// For more information of the functions, check the comment of xc_functional.h
+// LDA and GGA Functionals are tested under nspin = 2
+
 namespace ModuleBase
 {
     void WARNING_QUIT(const std::string &file,const std::string &description) {return ;}
@@ -323,6 +330,110 @@ TEST_F(XCTest_P86_SPN, set_xc_type)
     }
 }
 
+class XCTest_PBE0_SPN : public testing::Test
+{
+    protected:
+        std::vector<double> e_lda, v1_lda, v2_lda;
+        std::vector<double> e_gga, v1_gga, v2_gga, v3_gga;
+
+        void SetUp()
+        {
+            XC_Functional::set_xc_type("PBE0");
+            std::vector<double> rho  = {0.17E+01, 0.17E+01, 0.15E+01, 0.88E-01, 0.18E+04};
+            std::vector<double> grho = {0.81E-11, 0.17E+01, 0.36E+02, 0.87E-01, 0.55E+00};
+            std::vector<double> zeta = {0.0, 0.2, 0.5, 0.8, 1.0};
+
+            for(int i=0;i<5;i++)
+            {
+                double e,ec,ex,v1,v2,v1c,v2c,v1x,v2x,v3,v4;
+                XC_Functional::xc_spin(rho[i],zeta[i],e,v1,v2);
+                e_lda.push_back(e);
+                v1_lda.push_back(v1);
+                v2_lda.push_back(v2);
+                XC_Functional::gcc_spin(rho[i],zeta[i],grho[i],ec,v1c,v2c,v3);
+                double r1 = rho[i] * (1+zeta[i]) / 2.0;
+                double r2 = rho[i] * (1-zeta[i]) / 2.0;
+                XC_Functional::gcx_spin(r1,r2,grho[i],grho[i],ex,v1x,v2x,v3,v4);
+                e_gga.push_back(ec+ex);
+                v1_gga.push_back(v1c+v1x);
+                v2_gga.push_back(v2c+v2x);
+            }
+        }
+};
+
+TEST_F(XCTest_PBE0_SPN, set_xc_type)
+{
+    EXPECT_EQ(XC_Functional::get_func_type(),4);
+    std::vector<double> e_lda_ref  = {-0.7367262693,-0.7416270243,-0.7383945818,-0.323250599,-8.562036119};
+    std::vector<double> v1_lda_ref  = {-0.9655397971,-1.011656606,-1.03026884,-0.4360664638,-11.39685435};
+    std::vector<double> v2_lda_ref  = {-0.9655397971,-0.9132852823,-0.7874096872,-0.3099000525,-0.6598499399};
+    std::vector<double> e_gga_ref  = {-3.387102535e-14,-0.007743108067,-0.1276936518,-0.003065679956,-4.873559704e-05};
+    std::vector<double> v1_gga_ref = {2.647449932e-14,0.002731113185,0.0509595338,0.04805322921,-1.564140065e-11};
+    std::vector<double> v2_gga_ref = {2.647449932e-14,0.01077066448,-0.13893647,-0.09075421814,-0.07223171674};
+
+    for (int i = 0;i<5;++i)
+    {
+        EXPECT_NEAR(e_lda[i],e_lda_ref[i],1.0e-8);
+        EXPECT_NEAR(v1_lda[i],v1_lda_ref[i],1.0e-8);
+        EXPECT_NEAR(v2_lda[i],v2_lda_ref[i],1.0e-8);
+        EXPECT_NEAR(e_gga[i],e_gga_ref[i],1.0e-8);
+        EXPECT_NEAR(v1_gga[i],v1_gga_ref[i],1.0e-8);
+        EXPECT_NEAR(v2_gga[i],v2_gga_ref[i],1.0e-8);
+    }
+}
+
+class XCTest_PBEsol_SPN : public testing::Test
+{
+    protected:
+        std::vector<double> e_lda, v1_lda, v2_lda;
+        std::vector<double> e_gga, v1_gga, v2_gga, v3_gga;
+
+        void SetUp()
+        {
+            XC_Functional::set_xc_type("PBEsol");
+            std::vector<double> rho  = {0.17E+01, 0.17E+01, 0.15E+01, 0.88E-01, 0.18E+04};
+            std::vector<double> grho = {0.81E-11, 0.17E+01, 0.36E+02, 0.87E-01, 0.55E+00};
+            std::vector<double> zeta = {0.0, 0.2, 0.5, 0.8, 1.0};
+
+            for(int i=0;i<5;i++)
+            {
+                double e,ec,ex,v1,v2,v1c,v2c,v1x,v2x,v3,v4;
+                XC_Functional::xc_spin(rho[i],zeta[i],e,v1,v2);
+                e_lda.push_back(e);
+                v1_lda.push_back(v1);
+                v2_lda.push_back(v2);
+                XC_Functional::gcc_spin(rho[i],zeta[i],grho[i],ec,v1c,v2c,v3);
+                double r1 = rho[i] * (1+zeta[i]) / 2.0;
+                double r2 = rho[i] * (1-zeta[i]) / 2.0;
+                XC_Functional::gcx_spin(r1,r2,grho[i],grho[i],ex,v1x,v2x,v3,v4);
+                e_gga.push_back(ec+ex);
+                v1_gga.push_back(v1c+v1x);
+                v2_gga.push_back(v2c+v2x);
+            }
+        }
+};
+
+TEST_F(XCTest_PBEsol_SPN, set_xc_type)
+{
+    EXPECT_EQ(XC_Functional::get_func_type(),2);
+    std::vector<double> e_lda_ref  = {-0.9570906378,-0.9639575384,-0.961793486,-0.4179657552,-11.39185886};
+    std::vector<double> v1_lda_ref  = {-1.259358955,-1.323886052,-1.352864095,-0.5692699308,-15.16995135};
+    std::vector<double> v2_lda_ref  = {-1.259358955,-1.186042827,-1.011084744,-0.3739376001,-0.6598499399};
+    std::vector<double> e_gga_ref  = {-2.62771452e-14,-0.006047638,-0.1299218028,-0.002961686645,-6.49980662e-05};
+    std::vector<double> v1_gga_ref = {2.076877742e-14,0.002195207557,0.04137297359,0.04655318731,-7.946869062e-12};
+    std::vector<double> v2_gga_ref = {2.076877742e-14,0.008452420394,-0.04748419323,-0.1553803728,-0.09630827121};
+
+    for (int i = 0;i<5;++i)
+    {
+        EXPECT_NEAR(e_lda[i],e_lda_ref[i],1.0e-8);
+        EXPECT_NEAR(v1_lda[i],v1_lda_ref[i],1.0e-8);
+        EXPECT_NEAR(v2_lda[i],v2_lda_ref[i],1.0e-8);
+        EXPECT_NEAR(e_gga[i],e_gga_ref[i],1.0e-8);
+        EXPECT_NEAR(v1_gga[i],v1_gga_ref[i],1.0e-8);
+        EXPECT_NEAR(v2_gga[i],v2_gga_ref[i],1.0e-8);
+    }
+}
+
 class XCTest_PBE_SPN_LibXC : public testing::Test
 {
     protected:
@@ -365,5 +476,44 @@ TEST_F(XCTest_PBE_SPN_LibXC, set_xc_type)
         EXPECT_NEAR(e_gga[i],e_gga_ref[i],1.0e-8);
         EXPECT_NEAR(v1_gga[i],v1_gga_ref[i],1.0e-8);
         EXPECT_NEAR(v2_gga[i],v2_gga_ref[i],1.0e-8);
+    }
+}
+
+class XCTest_PZ_SPN_LibXC : public testing::Test
+{
+    protected:
+        std::vector<double> e_lda, v1_lda, v2_lda;
+
+        void SetUp()
+        {
+            XC_Functional::set_xc_type("LDA_X+LDA_C_PZ");
+            std::vector<double> rho  = {-1, 0.17E+01, 0.17E+01, 0.15E+01, 0.88E-01, 0.18E+04};
+            std::vector<double> zeta = {0.0, 0.0, 0.2, 0.5, 0.8, 1.0};
+
+            for(int i=0;i<5;i++)
+            {
+                double e,v1,v2;
+                double r1 = rho[i] * (1+zeta[i]) / 2.0;
+                double r2 = rho[i] * (1-zeta[i]) / 2.0;
+                XC_Functional::xc_spin_libxc(r1,r2,e,v1,v2);
+                e_lda.push_back(e);
+                v1_lda.push_back(v1);
+                v2_lda.push_back(v2);
+            }
+        }
+};
+
+TEST_F(XCTest_PZ_SPN_LibXC, set_xc_type)
+{
+    EXPECT_EQ(XC_Functional::get_func_type(),1);
+    std::vector<double> e_lda_ref  = {0.0, -0.9565173576,-0.9631718612,-0.9599847987,-0.4169042219};
+    std::vector<double> v1_lda_ref  = {0,-1.258813137,-1.321386744,-1.348655,-0.5679440064};
+    std::vector<double> v2_lda_ref  = {0,-1.258813137,-1.18779241,-1.015533091,-0.3709293796};
+
+    for (int i = 0;i<5;++i)
+    {
+        EXPECT_NEAR(e_lda[i],e_lda_ref[i],1.0e-8);
+        EXPECT_NEAR(v1_lda[i],v1_lda_ref[i],1.0e-8);
+        EXPECT_NEAR(v2_lda[i],v2_lda_ref[i],1.0e-8);
     }
 }

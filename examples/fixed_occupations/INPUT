@@ -17,7 +17,6 @@ relax_nmax                    50
 cal_force                     1
 force_thr_ev                  0.01
 relax_method                  cg
-out_force                     1
 out_stru                      1
 ocp                           1
 ocp_set                       128*1 92*0 125*1 0 0.5 0.5 92*0

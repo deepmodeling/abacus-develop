@@ -112,9 +112,8 @@ void DONE(std::ofstream &ofs, const std::string &description, const bool only_ra
 // NAME : TEST_LEVEL
 // control the test_level
 //==========================================================
-void TEST_LEVEL(const std::string &name)
+void TEST_LEVEL(const std::string &name, bool disable=true)
 {
-    bool disable = true;
     if (disable) return;
 
     if (name == "none")
