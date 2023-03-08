@@ -32,6 +32,8 @@ TEST_F(GlobalFile,mkdiratom)
         ModuleBase::Global_File::make_dir_atom("Si");
         int a = access("./Si/",0);
         EXPECT_EQ(a , 0);
+        std::string ss = "./Si/";
+        rmdir(ss.c_str());
 }
 
 TEST_F(GlobalFile,openlog)
@@ -43,4 +45,6 @@ TEST_F(GlobalFile,openlog)
         ModuleBase::Global_File::open_log(ofs,"Si","md",false);
         EXPECT_TRUE(ofs.is_open());
         ofs.close();
+        std::string sss = "Si.log"; 
+        remove(sss.c_str());
 }
