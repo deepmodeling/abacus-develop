@@ -292,11 +292,11 @@ void Stress_Func<FPTYPE, Device>::stress_nl(ModuleBase::matrix& sigma, const Mod
     delmem_complex_op()(this->ctx, pvkb0);
     delmem_complex_op()(this->ctx, dbecp);
     delmem_complex_op()(this->ctx, dbecp_noevc);
+	delmem_var_h_op()(this->cpu_ctx, sigmanlc);
     if (this->device == psi::GpuDevice) {
         delmem_var_op()(this->ctx, d_wg);
         delmem_var_op()(this->ctx, gcar);
         delmem_var_op()(this->ctx, kvec_c);
-        delmem_var_h_op()(this->cpu_ctx, sigmanlc);
         delmem_int_op()(this->ctx, atom_nh);
         delmem_int_op()(this->ctx, atom_na);
         delmem_complex_op()(this->ctx, pvkb2);

@@ -18,6 +18,14 @@ Operator<FPTYPE, Device>::~Operator()
         node_delete->next_op = nullptr;
         delete node_delete;
     }
+    Operator* sublast = this->next_sub_op;
+    while(sublast != nullptr)
+    {
+        Operator* node_delete = sublast;
+        sublast = sublast->next_sub_op;
+        node_delete->next_sub_op = nullptr;
+        delete node_delete;
+    }
 }
 
 template<typename FPTYPE, typename Device>
