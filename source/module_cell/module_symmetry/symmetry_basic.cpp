@@ -1036,15 +1036,39 @@ void Symmetry_Basic::atom_ordering_new(double *posi, const int natom, int *subin
 	double z_min = *min_element(tmpz.begin(),tmpz.end());
 
 	double*  weighted_func = new double[natom];
+	
+	//the first time: f(x, y, z)
 	for(int i=0; i<natom; i++)
 	{
-		weighted_func[i]=
-		1/epsilon*(tmpx[i]-x_min)/(x_max-x_min+epsilon)
-		+1/sqrt(epsilon)*(tmpy[i]-y_min)/(y_max-y_min+epsilon)
-		+(tmpz[i]-z_min)/(z_max-z_min+epsilon);
+		weighted_func[i]=1/epsilon/epsilon*tmpx[i]+1/epsilon*tmpy[i]+tmpz[i];
 	}
 	ModuleBase::heapsort(natom, weighted_func, subindex);
 	this->order_atoms(posi, natom, subindex);
+	for(int i=0; i<natom; i++)
+	{
+		tmpx[i] = posi[i*3];
+		tmpy[i] = posi[i*3+1];
+		tmpz[i] = posi[i*3+2];
+	}
+
+	//the second time: f(y, z) for fixed x	
+	for(int i=0; i<natom-1;)
+	{
+		int ix_right=i+1;	//right bound is no included
+		while(ix_right<natom && equal(tmpx[ix_right],tmpx[i])) ++ix_right;
+		int nxequal=ix_right-i;
+		if(nxequal>1)	//need a new sort
+		{
+			subindex[0] = 0;
+			for(int j=0; j<nxequal; ++j)
+			{
+				weighted_func[j]=1/epsilon*tmpy[i+j]+tmpz[i+j];
+			}
+			ModuleBase::heapsort(nxequal, weighted_func, subindex);
+			this->order_atoms(&posi[i*3], nxequal, subindex);
+		}
+		i=ix_right;
+	}
 	
 	delete[] weighted_func;
 	return;
