@@ -153,7 +153,6 @@ TEST_F(TestHSolverPW_SDFT, solve)
     stowf.nchi = 0;
     stowf.nchip_max = 0;
 	psi_test_cd.resize(1, 2, 3);
-    psi_test_no.resize(2, 0, 0);
 	GlobalV::nelec = 1.0;
     GlobalV::MY_STOGROUP = 0.0;
     int istep = 0;
