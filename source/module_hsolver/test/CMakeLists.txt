@@ -29,6 +29,12 @@ AddTest(
   SOURCES test_hsolver_pw.cpp ../hsolver_pw.cpp
 )
 
+AddTest(
+  TARGET HSolver_sdft
+  LIBS ${math_libs} psi device base
+  SOURCES test_hsolver_sdft.cpp ../hsolver_pw_sdft.cpp ../hsolver_pw.cpp
+)
+
 if(ENABLE_LCAO)
   if(USE_ELPA)
   AddTest(

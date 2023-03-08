@@ -19,7 +19,7 @@ Symmetry_Basic::~Symmetry_Basic()
 
 
 // Find the type of bravais lattice.
-std::string Symmetry_Basic::get_brav_name(const int ibrav)
+std::string Symmetry_Basic::get_brav_name(const int ibrav) const
 {
 	switch(ibrav)
 	{
@@ -63,13 +63,13 @@ void Symmetry_Basic::check_boundary(double &x)const
 double Symmetry_Basic::get_translation_vector(const double &x1, const double &x2)
 {
 	double t=0.0; // "t"ranslation
-	t = x1 - x2;
+	t = x2 - x1;
 	t = fmod(t+100.0, 1.0);
 	if( fabs(t-1) < epsilon * 0.5) t = 0.0;
 	return t;
 }
 
-void Symmetry_Basic::check_translation(double &x, const double &t)
+void Symmetry_Basic::check_translation(double &x, const double &t) const
 {
 	x += t;
 	//impose the periodic boundary condition
@@ -89,7 +89,7 @@ double Symmetry_Basic::check_diff(const double &x1, const double &x2)
 	return diff;
 }
 
-void Symmetry_Basic::order_atoms(double* pos, const int &nat, const int *index)
+void Symmetry_Basic::order_atoms(double* pos, const int &nat, const int *index) const
 {
 	double** tmp = new double*[nat];
 	for(int ia=0; ia<nat; ia++)
@@ -353,7 +353,7 @@ void Symmetry_Basic::veccon(
 
 
 //generate all point group symmetry operations from the generation group
-void Symmetry_Basic::matrigen(ModuleBase::Matrix3 *symgen, const int ngen, ModuleBase::Matrix3* symop, int &nop)
+void Symmetry_Basic::matrigen(ModuleBase::Matrix3 *symgen, const int ngen, ModuleBase::Matrix3* symop, int &nop) const
 {
 	int m1, m2;
 	int n;
@@ -526,7 +526,7 @@ void Symmetry_Basic::matrigen(ModuleBase::Matrix3 *symgen, const int ngen, Modul
 // given in crystal coordinates) 
 // of a lattice with some arbitrary basis (atomic arrangement).
 //--------------------------------------------------------------
-void Symmetry_Basic::setgroup(ModuleBase::Matrix3* symop, int &nop, const int &ibrav)
+void Symmetry_Basic::setgroup(ModuleBase::Matrix3* symop, int &nop, const int &ibrav) const
 {
 	if(GlobalV::test_symmetry) ModuleBase::TITLE("Symmetry_Basic","setgroup");
 
@@ -551,6 +551,7 @@ void Symmetry_Basic::setgroup(ModuleBase::Matrix3* symop, int &nop, const int &i
 	//the pure translation lattice (bravais lattice) has some maximum symmetry
 	//set first up the point group operations for this symmetry.
 	symgen[0] = inv;
+
 	if(ibrav == 14)
 	{
 		this->matrigen(symgen, 1, symop, nop);
@@ -1002,5 +1003,56 @@ void Symmetry_Basic::rotate( ModuleBase::Matrix3 &gmatrix, ModuleBase::Vector3<d
 	}
 	rk = rk%nr3;
 	return;
+}
+
+// atom ordering for each atom type 
+// by a "weighted function" f
+// (instead of ordering by x, y, z directly)
+void Symmetry_Basic::atom_ordering_new(double *posi, const int natom, int *subindex) const
+{
+	//order the atomic positions inside a supercell by a unique ordering scheme	
+	subindex[0] = 0;
+
+	if(natom == 1)
+	{
+		//if there is only one atom, it is not necessary to order
+		return;
+	}
+
+	std::vector<double> tmpx(natom);
+	std::vector<double> tmpy(natom);
+	std::vector<double> tmpz(natom);
+	for(int i=0; i<natom; i++)
+	{
+		tmpx[i] = posi[i*3];
+		tmpy[i] = posi[i*3+1];
+		tmpz[i] = posi[i*3+2];
+	}
+	double x_max = *max_element(tmpx.begin(),tmpx.end());
+	double x_min = *min_element(tmpx.begin(),tmpx.end());
+	double y_max = *max_element(tmpy.begin(),tmpy.end());
+	double y_min = *min_element(tmpy.begin(),tmpy.end());
+	double z_max = *max_element(tmpz.begin(),tmpz.end());
+	double z_min = *min_element(tmpz.begin(),tmpz.end());
+
+	double*  weighted_func = new double[natom];
+	for(int i=0; i<natom; i++)
+	{
+		weighted_func[i]=
+		1/epsilon*(tmpx[i]-x_min)/(x_max-x_min+epsilon)
+		+1/sqrt(epsilon)*(tmpy[i]-y_min)/(y_max-y_min+epsilon)
+		+(tmpz[i]-z_min)/(z_max-z_min+epsilon);
+	}
+	ModuleBase::heapsort(natom, weighted_func, subindex);
+	this->order_atoms(posi, natom, subindex);
+	
+	delete[] weighted_func;
+	return;
+}
+
+void Symmetry_Basic::test_atom_ordering(double *posi, const int natom, int *subindex) const
+{
+	//an interface to test a protected function
+	this->atom_ordering_new(posi, natom, subindex);
 }
 }

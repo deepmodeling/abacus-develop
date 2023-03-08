@@ -11,12 +11,25 @@ Operator<FPTYPE, Device>::~Operator()
 {
     if(this->hpsi != nullptr) delete this->hpsi;
     Operator* last = this->next_op;
-    while(last != nullptr)
+    Operator* last_sub = this->next_sub_op;
+    while(last != nullptr || last_sub != nullptr)
     {
-        Operator* node_delete = last;
-        last = last->next_op;
-        node_delete->next_op = nullptr;
-        delete node_delete;
+        if(last_sub != nullptr)
+        {//delete sub_chain first
+            Operator* node_delete = last_sub;
+            last_sub = last_sub->next_sub_op;
+            node_delete->next_sub_op = nullptr;
+            delete node_delete;
+        }
+        else
+        {//delete main chain if sub_chain is deleted
+            Operator* node_delete = last;
+            last_sub = last->next_sub_op;
+            node_delete->next_sub_op = nullptr;
+            last = last->next_op;
+            node_delete->next_op = nullptr;
+            delete node_delete;
+        }
     }
 }
 

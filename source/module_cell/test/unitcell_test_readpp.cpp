@@ -44,14 +44,6 @@ Magnetism::~Magnetism()
  *     - upf.functional_error == 1
  *   - ReadCellPP
  *     - read_cell_pseudopots(): read pp files with flag_empty_element set
- *   - UpdatePosTaud
- *     - update_pos_taud(const double* pos)
- *     - bcast_atoms_tau() is also called in the above function, which calls Atom::bcast_atom with many
- *       atomic info in addition to tau
- *   - BcastUnitcell
- *     - bcast basic info of unitcell and basic info of atoms
- *   - BcastUnitcell2
- *     - calls bcast_atoms2() to bcast atomic pseudo info
  *   - CalMeshx
  *     - cal_meshx(): calculate max mesh info from atomic pseudo potential file
  *   - CalNatomwfc1
@@ -71,10 +63,12 @@ Magnetism::~Magnetism()
  *     - setup GlobalV::NLOCAL
  *   - CalNwfc2
  *     - cal_nwfc(): calcuate the total number of local basis: NSPIN == 4
- *   - CalUx
- *     - cal_ux(): 
  *   - CheckStructure
  *     - check_structure(): check if too atoms are two close
+ *   - ReadPseudoWarning1
+ *     - read_pseudo(): All DFT functional must consistent.
+ *   - ReadPseudoWarning2
+ *     - read_pseudo(): number valence electrons > corresponding minimum possible of an element
  */
 
 //mock function
@@ -90,33 +84,7 @@ void LCAO_Orbitals::bcast_files(
 class UcellTest : public ::testing::Test
 {
 protected:
-	UcellTestPrepare UTP = UcellTestPrepare("C1H2-Index",	//system-name
-				"bcc",		//latname
-				2,		//lmaxmax
-				true,		//init_vel
-				true,		//selective_dyanmics
-				true,		//relax_new
-				"volume",	//fixed_axes
-				1.8897261254578281, //lat0
-				{10.0,0.0,0.0,	//latvec
-				 0.0,10.0,0.0,
-				 0.0,0.0,10.0},
-				{"C","H"},	//elements
-				{"C.upf","H.upf"},	//upf file
-				{"upf201","upf201"},	//upf types
-				{"C.orb","H.orb"},	//orb file
-				{1,2},		//number of each elements
-				{12.0,1.0},	//atomic mass
-				"Direct",	//coordination type
-				{0.1,0.1,0.1,	//atomic coordinates
-				 0.12,0.12,0.12,
-				 0.08,0.08,0.08},
-				{1,1,1,	//if atom can move: mbl
-				 0,0,0,
-				 0,0,1},
-				{0.1,0.1,0.1,	//velocity: vel
-				 0.1,0.1,0.1,
-				 0.1,0.1,0.1});
+	UcellTestPrepare utp = UcellTestLib["C1H2-Read"];
 	std::unique_ptr<UnitCell> ucell;
 	std::ofstream ofs;
 	std::string pp_dir;
@@ -124,9 +92,9 @@ protected:
 	void SetUp()
 	{
 		ofs.open("running.log");
-		GlobalV::relax_new = UTP.relax_new;
+		GlobalV::relax_new = utp.relax_new;
 		GlobalV::global_out_dir = "./";
-		ucell = UTP.SetUcellInfo();
+		ucell = utp.SetUcellInfo();
 		GlobalV::LSPINORB = false;
 		pp_dir = "./support/";
 		GlobalV::PSEUDORCUT = 15.0;
@@ -203,61 +171,6 @@ TEST_F(UcellTest,ReadCellPP)
     	EXPECT_THAT(str, testing::HasSubstr("valence electrons = 4"));
     	EXPECT_THAT(str, testing::HasSubstr("Read in pseudopotential file is H.upf"));
     	EXPECT_THAT(str, testing::HasSubstr("valence electrons = 0"));
-}
-
-TEST_F(UcellTest,UpdatePosTaud)
-{
-	double* pos_in = new double[ucell->nat*3];
-	ModuleBase::Vector3<double>* tmp = new ModuleBase::Vector3<double>[ucell->nat];
-	ucell->set_iat2itia();
-	for(int iat=0; iat<ucell->nat; ++iat)
-	{
-		pos_in[iat*3] = 0.01;
-		pos_in[iat*3+1] = 0.01;
-		pos_in[iat*3+2] = 0.01;
-		int it, ia;
-		ucell->iat2iait(iat,&ia,&it);
-		tmp[iat] = ucell->atoms[it].taud[ia];
-	}
-	ucell->update_pos_taud(pos_in);
-	for(int iat=0; iat<ucell->nat; ++iat)
-	{
-		int it, ia;
-		ucell->iat2iait(iat,&ia,&it);
-		EXPECT_DOUBLE_EQ(ucell->atoms[it].taud[ia].x,tmp[iat].x+0.01);
-		EXPECT_DOUBLE_EQ(ucell->atoms[it].taud[ia].y,tmp[iat].y+0.01);
-		EXPECT_DOUBLE_EQ(ucell->atoms[it].taud[ia].z,tmp[iat].z+0.01);
-	}
-	delete[] pos_in;
-}
-
-TEST_F(UcellTest,BcastUnitcell2)
-{
-	if(GlobalV::MY_RANK==0)
-	{
-		ucell->read_cell_pseudopots(pp_dir,ofs);
-	}
-	ucell->bcast_unitcell2();
-	if(GlobalV::MY_RANK!=0)
-	{
-		EXPECT_EQ(ucell->atoms[0].ncpp.nbeta,6);
-		EXPECT_EQ(ucell->atoms[0].ncpp.nchi,3);
-		EXPECT_EQ(ucell->atoms[1].ncpp.nbeta,3);
-		EXPECT_EQ(ucell->atoms[1].ncpp.nchi,1);
-	}
-}
-
-TEST_F(UcellTest,BcastUnitcell)
-{
-	GlobalV::NSPIN=4;
-	ucell->bcast_unitcell();
-	if(GlobalV::MY_RANK!=0)
-	{
-		EXPECT_EQ(ucell->Coordinate,"Direct");
-		EXPECT_DOUBLE_EQ(ucell->a1.x,10.0);
-		EXPECT_EQ(ucell->atoms[0].na,2);
-		EXPECT_EQ(ucell->atoms[1].na,1);
-	}
 }
 
 TEST_F(UcellTest,CalMeshx)
@@ -357,31 +270,6 @@ TEST_F(UcellTest,CalNwfc2)
 	EXPECT_EQ(GlobalV::NLOCAL,3*9*2);
 }
 
-TEST_F(UcellTest,CalUx1)
-{
-	ucell->atoms[0].m_loc_[0].set(0,-1,0);
-	ucell->atoms[1].m_loc_[0].set(1,1,1);
-	ucell->atoms[1].m_loc_[1].set(0,0,0);
-	ucell->cal_ux();
-	EXPECT_FALSE(ucell->magnet.lsign_);
-	EXPECT_DOUBLE_EQ(ucell->magnet.ux_[0],0);
-	EXPECT_DOUBLE_EQ(ucell->magnet.ux_[1],-1);
-	EXPECT_DOUBLE_EQ(ucell->magnet.ux_[2],0);
-}
-
-TEST_F(UcellTest,CalUx2)
-{
-	ucell->atoms[0].m_loc_[0].set(0,0,0);
-	ucell->atoms[1].m_loc_[0].set(1,1,1);
-	ucell->atoms[1].m_loc_[1].set(0,0,0);
-	//(0,0,0) is also parallel to (1,1,1)
-	ucell->cal_ux();
-	EXPECT_TRUE(ucell->magnet.lsign_);
-	EXPECT_NEAR(ucell->magnet.ux_[0],0.57735,1e-5);
-	EXPECT_NEAR(ucell->magnet.ux_[1],0.57735,1e-5);
-	EXPECT_NEAR(ucell->magnet.ux_[2],0.57735,1e-5);
-}
-
 TEST_F(UcellDeathTest,CheckStructure)
 {
 	ucell->read_cell_pseudopots(pp_dir,ofs);
@@ -405,15 +293,42 @@ TEST_F(UcellDeathTest,CheckStructure)
 	EXPECT_THAT(output,testing::HasSubstr("Notice: symbol 'arbitrary' is not an element symbol!!!! set the covalent radius to be 0."));
 }
 
+TEST_F(UcellDeathTest,ReadPseudoWarning1)
+{
+	GlobalV::global_pseudo_dir = pp_dir;
+	GlobalV::out_element_info = 1;
+	GlobalV::MIN_DIST_COEF = 0.2;
+	ucell->pseudo_fn[1] = "H_sr_lda.upf";
+	testing::internal::CaptureStdout();
+	EXPECT_EXIT(ucell->read_pseudo(ofs),::testing::ExitedWithCode(0),"");
+	output = testing::internal::GetCapturedStdout();
+	EXPECT_THAT(output,testing::HasSubstr("All DFT functional must consistent."));
+}
+
+TEST_F(UcellDeathTest,ReadPseudoWarning2)
+{
+	GlobalV::global_pseudo_dir = pp_dir;
+	GlobalV::out_element_info = 1;
+	GlobalV::MIN_DIST_COEF = 0.2;
+	ucell->pseudo_fn[0] = "Al_ONCV_PBE-1.0.upf";
+	testing::internal::CaptureStdout();
+	EXPECT_NO_THROW(ucell->read_pseudo(ofs));
+	output = testing::internal::GetCapturedStdout();
+	EXPECT_THAT(output,testing::HasSubstr("Warning: number valence electrons > 3 for Al: [Ne] 3s2 3p1"));
+}
+
+#ifdef __MPI
+#include "mpi.h"
 int main(int argc, char **argv)
 {
-#ifdef __MPI
 	MPI_Init(&argc, &argv);
-#endif
 	testing::InitGoogleTest(&argc, argv);
+
+	MPI_Comm_size(MPI_COMM_WORLD,&GlobalV::NPROC);
+	MPI_Comm_rank(MPI_COMM_WORLD,&GlobalV::MY_RANK);
+
 	int result = RUN_ALL_TESTS();
-#ifdef __MPI
 	MPI_Finalize();
-#endif
 	return result;
 }
+#endif
