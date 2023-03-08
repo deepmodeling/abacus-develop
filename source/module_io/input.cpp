@@ -396,9 +396,6 @@ void Input::Default(void)
     // tddft
     //----------------------------------------------------------
     td_force_dt = 0.02;
-    td_val_elec_01 = 1;
-    td_val_elec_02 = 1;
-    td_val_elec_03 = 1;
     td_vext = false;
     td_vext_dire = "1";
 
@@ -1482,18 +1479,6 @@ bool Input::Read(const std::string &fn)
         else if (strcmp("td_force_dt", word) == 0)
         {
             read_value(ifs, td_force_dt);
-        }
-        else if (strcmp("td_val_elec_01", word) == 0)
-        {
-            read_value(ifs, td_val_elec_01);
-        }
-        else if (strcmp("td_val_elec_02", word) == 0)
-        {
-            read_value(ifs, td_val_elec_02);
-        }
-        else if (strcmp("td_val_elec_03", word) == 0)
-        {
-            read_value(ifs, td_val_elec_03);
         }
         else if (strcmp("td_vext", word) == 0)
         {
@@ -2909,9 +2894,6 @@ void Input::Bcast()
     Parallel_Common::bcast_int(vdw_cutoff_period.y);
     Parallel_Common::bcast_int(vdw_cutoff_period.z);
     // Fuxiang He add 2016-10-26
-    Parallel_Common::bcast_int(td_val_elec_01);
-    Parallel_Common::bcast_int(td_val_elec_02);
-    Parallel_Common::bcast_int(td_val_elec_03);
     Parallel_Common::bcast_double(td_force_dt);
     Parallel_Common::bcast_bool(td_vext);
     Parallel_Common::bcast_string(td_vext_dire);

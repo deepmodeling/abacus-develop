@@ -355,9 +355,6 @@ void Input_Conv::Convert(void)
 //----------------------------------------------------------
 #ifdef __LCAO
     ELEC_evolve::td_force_dt = INPUT.td_force_dt;
-    ELEC_evolve::td_val_elec_01 = INPUT.td_val_elec_01;
-    ELEC_evolve::td_val_elec_02 = INPUT.td_val_elec_02;
-    ELEC_evolve::td_val_elec_03 = INPUT.td_val_elec_03;
     ELEC_evolve::td_vext = INPUT.td_vext;
     if (ELEC_evolve::td_vext)
     {
