@@ -1,0 +1,89 @@
+#include "gtest/gtest.h"
+#include "gmock/gmock.h"
+#include "memory"
+#include "module_base/mathzone.h"
+#include "module_base/global_variable.h"
+#include "module_cell/unitcell.h"
+#include<vector>
+#include<valarray>
+
+Magnetism::Magnetism()
+{
+	this->tot_magnetization = 0.0;
+	this->abs_magnetization = 0.0;
+	this->start_magnetization = nullptr;
+}
+Magnetism::~Magnetism()
+{
+	delete[] this->start_magnetization;
+}
+
+/************************************************
+ *  unit test of class UnitCell
+ ***********************************************/
+
+/**
+ * - Tested Functions:
+ *   - ReadAtomSpecies
+ *     - read_atom_species(): read header part of orbital file
+ *   - ReadAtomPositions
+ *     - read_atom_positions(): ABACUS Cannot find the ORBITAL file
+ */
+
+class UcellTest : public ::testing::Test
+{
+protected:
+	std::unique_ptr<UnitCell> ucell{new UnitCell};
+	std::string output;
+};
+
+TEST_F(UcellTest,ReadAtomSpecies)
+{
+	std::string fn = "./support/STRU_MgO";
+	std::ifstream ifa(fn.c_str());
+	std::ofstream ofs_running;
+	ofs_running.open("read_atom_species.tmp");
+	ucell->ntype = 2;
+	ucell->atoms = new Atom[ucell->ntype];
+	ucell->set_atom_flag = true;
+	GlobalV::test_pseudo_cell = 2;
+	EXPECT_NO_THROW(ucell->read_atom_species(ifa,ofs_running));
+	EXPECT_DOUBLE_EQ(ucell->latvec.e11,4.27957);
+	EXPECT_DOUBLE_EQ(ucell->latvec.e22,4.27957);
+	EXPECT_DOUBLE_EQ(ucell->latvec.e33,4.27957);
+	ofs_running.close();
+	ifa.close();
+	remove("read_atom_species.tmp");
+}
+
+TEST_F(UcellTest,ReadAtomPositions)
+{
+	std::string fn = "./support/STRU_MgO";
+	std::ifstream ifa(fn.c_str());
+	std::ofstream ofs_running;
+	std::ofstream ofs_warning;
+	ofs_running.open("read_atom_species.tmp");
+	ofs_warning.open("read_atom_species.warn");
+	ucell->ntype = 2;
+	ucell->atoms = new Atom[ucell->ntype];
+	ucell->set_atom_flag = true;
+	GlobalV::test_pseudo_cell = 2;
+	GlobalV::BASIS_TYPE = "pw";
+	//call read_atom_species
+	EXPECT_NO_THROW(ucell->read_atom_species(ifa,ofs_running));
+	EXPECT_DOUBLE_EQ(ucell->latvec.e11,4.27957);
+	EXPECT_DOUBLE_EQ(ucell->latvec.e22,4.27957);
+	EXPECT_DOUBLE_EQ(ucell->latvec.e33,4.27957);
+	//mandatory preliminaries
+#ifndef __CMD
+	delete[] ucell->magnet.start_magnetization;
+	ucell->magnet.start_magnetization = new double[ucell->ntype];
+#endif
+	//call read_atom_positions
+	EXPECT_NO_THROW(ucell->read_atom_positions(ifa,ofs_running,ofs_warning));
+	ofs_running.close();
+	ofs_warning.close();
+	ifa.close();
+	remove("read_atom_species.tmp");
+	remove("read_atom_species.warn");
+}
