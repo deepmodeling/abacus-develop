@@ -54,20 +54,20 @@ AddTest(
     LIBS ${math_libs} device base
 )
 
+AddTest(
+    TARGET ORB_atomic_lm_test
+    SOURCES ORB_atomic_lm_test.cpp
+        ${depend_files}
+        ../../module_base/parallel_reduce.cpp
+        ../../module_base/parallel_global.cpp
+        ../../module_base/parallel_common.cpp
+        ../../module_cell/parallel_kpoints.cpp
+    LIBS ${math_libs} device
+)
+
 #AddTest(
 #    TARGET ORB_read_test
 #    SOURCES ORB_read_test.cpp
-#        ${depend_files}
-#        ../../module_base/parallel_reduce.cpp
-#        ../../module_base/parallel_global.cpp
-#        ../../module_base/parallel_common.cpp
-#        ../../module_cell/parallel_kpoints.cpp
-#    LIBS ${math_libs} device
-#)
-#
-#AddTest(
-#    TARGET ORB_atomic_lm_test
-#    SOURCES ORB_atomic_lm_test.cpp
 #        ${depend_files}
 #        ../../module_base/parallel_reduce.cpp
 #        ../../module_base/parallel_global.cpp
