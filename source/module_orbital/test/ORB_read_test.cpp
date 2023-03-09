@@ -1,5 +1,6 @@
 #include <fstream>
 #include "gtest/gtest.h"
+#include "module_base/global_variable.h"
 #include "module_orbital/ORB_atomic.h"
 #include "module_orbital/ORB_atomic_lm.h"
 
@@ -18,22 +19,12 @@
 /** 
  * Tested functions:
  *
- * - read_orb_file
- *   read orbital file from given ifstream and pour the data into
- *   Numerical_Orbital & its member Numerical_Orbital_Lm objects.
- *   This function is the core of the class.
- *
- * - Read_PAO
- *   read
- *
- * - Read_Descriptor
- *   read
- *
  * - Read_Orbitals
- *   read
+ *   read orbital & (optionally) descriptor files and pour the data
+ *   into Numerical_Orbital (and its member Numerical_Orbital_Lm) objects
  *
  * - bcast_files
- *   broadcast
+ *   broadcast the orbital_file from rank-0 to all other processes
  *
  * - all "getters"
  *   get access to class members
@@ -50,244 +41,292 @@ protected:
     // object under unit test
     LCAO_Orbitals lcao_;
 
-    // helper functions
-    void init();
-    size_t calc_nk(double const& ecutwfc, double const& dk);
+    // initialize lcao_ with parameters below & call Read_Orbitals
+    void lcao_read();
+
+    // parameters to pass to lcao_
+    std::ofstream ofs_log_;
+    int ntype_;
+    int lmax_;
+    int out_mat_r_; // unused variable
+    bool force_flag_;
+    int my_rank_;
+    bool deepks_setorb_;
+    bool read_in_flag_;
+    std::string descriptor_file_;
+    std::vector<std::string> orbital_file_;
+    double ecutwfc_;
+    double dk_;
+    double dR_;
+    double Rmax_;
 };
 
 
-size_t LcaoOrbitalsTest::calc_nk(double const& ecutwfc, double const& dk) {
-
-    // current formula for calculating nk from ecutwfc & dk
-    // see module_orbital/ORB_read.cpp, function "Read_Orbitals"
-
-    size_t nk = 0;
-
-    if(ecutwfc < 20) {
-        nk = static_cast<int>( 2 * sqrt(ecutwfc) / dk )  + 4;
-    } else {
-        nk = static_cast<int>( sqrt(ecutwfc) / dk )  + 4;
-    }
-
-    if (nk%2 == 0) {
-        ++nk;
-    }
-
-    return nk;
-}
-
-
-/*
 void LcaoOrbitalsTest::SetUp() {
+    ofs_log_.open("ORB_read_test.log");
+    ntype_ = 2;
+    lmax_ = 2;
+    out_mat_r_ = 0; // unused variable
+    force_flag_ = true;
+    my_rank_ = 0;
+    deepks_setorb_ = true;
 
-    ///////////////////////////////////////////////////
-    //                  Parameters
-    ///////////////////////////////////////////////////
+    read_in_flag_ = true;
+    descriptor_file_ = "./lcao_H2O/jle.orb";
+    orbital_file_.push_back("./lcao_H2O/H_gga_8au_60Ry_2s1p.orb");
+    orbital_file_.push_back("./lcao_H2O/O_gga_7au_60Ry_2s2p1d.orb");
 
-    // mock GlobalV::ofs_running
-    std::ofstream ofs_log("ORB_read_test.log");
-
-    // test case directory
-    // contains the abacus input files & numerical atomic orbital files
-    std::string case_dir = "./lcao_H2O/";
-
-    // these numbers are not read by LCAO_Orbitals; just pass in for simplicity
-    int ntype = 2;
-    int lmax = 2;
-    double lcao_ecut = 100.0;
-    double lcao_dk = 0.01;
-    double lcao_dr = 0.01;
-    double lcao_rmax = 20;
-
-    bool deepks_setorb = true;
-    //int out_mat_r = 0; // unused variable?
-    bool force_flag = true;
-    int my_rank = 0;
-
-
-    // append numerical atomic orbital files to lcao.orbital_file
-    lcao_.read_in_flag = true;
-    std::string stru_file = case_dir + "STRU";
-    std::ifstream ifs(stru_file);
-
-    ModuleBase::GlobalFunc::SCAN_BEGIN(ifs, "NUMERICAL_ORBITAL");
-    std::string orb_file;
-    for(int it = 0; it < this->ntype; ++it) {
-        ifs >> orb_file;
-        orb_file = case_dir + orb_file;
-        lcao_.orbital_file.push_back(orb_file);
-    }
-
-    // set descriptor file
-    ModuleBase::GlobalFunc::SCAN_BEGIN(ifs, "NUMERICAL_DESCRIPTOR");
-    std::string desc_file;
-    ifs >> desc_file;
-    desc_file = case_dir + desc_file;
-    lcao_.descriptor_file = desc_file; 
+    //if (GlobalV::MY_RANK != 0) {
+    //    std::cout << "rank=" << GlobalV::MY_RANK 
+    //        << "    orbital_file_0 = " << orbital_file_[0] << std::endl;
+    //}
 
     // below we mimic ORB_control::read_orb_first
-    lcao_.ecutwfc = lcao_ecut;
-    lcao_.dk = lcao_dk;
-    lcao_.dR = lcao_dr;
-    lcao_.Rmax = lcao_rmax;
-
-    lcao_.Read_Orbitals(ofs_log, ntype, lmax, deepks_setorb, 0, 
-            force_flag, my_rank);
-
-    ofs_log << "ecutwfc = " << lcao_.ecutwfc << std::endl
-        << "kmesh = " << lcao_.get_kmesh() << std::endl
-        << "dk = " << lcao_.get_dk() << std::endl
-        << "dR = " << lcao_.get_dR() << std::endl
-        << "Rmax = " << lcao_.get_Rmax() << std::endl
-        << "lmax = " << lcao_.get_lmax() << std::endl
-        << "lmax_d = " << lcao_.get_lmax_d() << std::endl
-        << "nchimax = " << lcao_.get_nchimax() << std::endl
-        << "nchimax_d = " << lcao_.get_nchimax_d() << std::endl
-        << "ntype = " << lcao_.get_ntype() << std::endl
-        << "dr_uniform = " << lcao_.get_dr_uniform() << std::endl
-        << "rcutmax_Phi = " << lcao_.get_rcutmax_Phi() << std::endl;
-
+    ecutwfc_ = 123.0;
+    dk_ = 0.01;
+    dR_ = 0.01;
+    Rmax_ = 20;
 }
-*/
 
-void LcaoOrbitalsTest::SetUp() {
 
+void LcaoOrbitalsTest::lcao_read() {
+
+    // see UnitCell::read_atom_species in module_cell/read_atoms.cpp
+    lcao_.read_in_flag = read_in_flag_;
+    lcao_.descriptor_file = descriptor_file_;
+    lcao_.orbital_file = orbital_file_;
+#ifdef __MPI
+    lcao_.bcast_files(ntype_, GlobalV::MY_RANK);
+#endif
+
+    // see ORB_control::read_orb_first
+    lcao_.ecutwfc = ecutwfc_;
+    lcao_.dk = dk_;
+    lcao_.dR = dR_;
+    lcao_.Rmax = Rmax_;
+
+    lcao_.Read_Orbitals(ofs_log_, ntype_, lmax_, deepks_setorb_, out_mat_r_, 
+            force_flag_, my_rank_);
 }
 
 
 void LcaoOrbitalsTest::TearDown() {
-
 }
 
 
-TEST_F(LcaoOrbitalsTest, ReadOrbFile) {
-
-    // This test checks whether read_orb_file behaves as expected.
-    //
-    // read_orb_file is supposed to read an orbital file, which contains
-    // all the numerical atomic orbital information of a single element.
-    //
-    // The information includes the element name, the radial mesh, and
-    // certain number of radial functions classified by their angular
-    // momentum. 
-
-    // mock GlobalV::ofs_running
-    std::ofstream ofs_log("ORB_read_test.log");
-
-    // orbital file to read data from
-    std::string orb_file = "./lcao_H2O/O_gga_7au_60Ry_2s2p1d.orb";
+TEST_F(LcaoOrbitalsTest, ReadInFlag) {
+    read_in_flag_ = false;
+    EXPECT_EXIT(this->lcao_read(), testing::ExitedWithCode(0), "");
+}
 
 
-    std::ifstream ifs(orb_file);
+TEST_F(LcaoOrbitalsTest, WrongOrbFile) {
+    orbital_file_[0] = "./lcao_H2O/H_gga_8au_60Ry_2s1.orb";
+    EXPECT_EXIT(this->lcao_read(), testing::ExitedWithCode(0), "");
+}
 
-    // index of element type, not meaningful here
-    int iat = 7;
 
-    // maximum angular momentum & number of chi for 
-    int lmax = 0;
+TEST_F(LcaoOrbitalsTest, WrongDescFile) {
+    descriptor_file_ = "./lcao_H2O/jl.orb";
+    EXPECT_EXIT(this->lcao_read(), testing::ExitedWithCode(0), "");
+}
 
-    // maximum number of chi of all angular momemtum
-    int nchimax = 0;
 
-    bool force_flag = true;
+TEST_F(LcaoOrbitalsTest, BcastFiles) {
+#ifdef __MPI
+    if ( GlobalV::MY_RANK == 0 ) {
+        lcao_.orbital_file = orbital_file_;
+    }
 
-    // In order to test read_orb_file, we have to reproduce the necessary
-    // steps done by Read_Orbitals and Read_PAO/Read_Descriptor before 
-    // read_orb_file is called within them.
+    if ( GlobalV::MY_RANK != 0) {
+        EXPECT_EQ(lcao_.orbital_file, std::vector<std::string>{});
+    }
 
-	delete[] lcao_.Phi;
+    lcao_.read_in_flag = read_in_flag_;
+    lcao_.bcast_files(2, GlobalV::MY_RANK);
 
-    lcao_.dk = 0.01;
-    lcao_.ecutwfc = 100.0;
-    lcao_.kmesh = calc_nk(lcao_.ecutwfc, lcao_.dk);
-    lcao_.dr_uniform = 0.001;
-    lcao_.Phi = new Numerical_Orbital[iat+1];
+    EXPECT_EQ(lcao_.orbital_file, orbital_file_);
+#endif
+}
 
-    int my_rank = 0;
 
-    lcao_.read_orb_file(ofs_log, ifs, iat, lmax, nchimax, lcao_.Phi,
-            force_flag, my_rank);
+TEST_F(LcaoOrbitalsTest, ReadOrbitals) {
+    
+    this->lcao_read();
+
+    // This test checks whether Read_Orbitals behaves as expected.
 
     // alias
-    Numerical_Orbital& ao = lcao_.Phi[iat];
+    Numerical_Orbital& ao0 = lcao_.Phi[0];
+    Numerical_Orbital& ao1 = lcao_.Phi[1];
+    Numerical_Orbital& aod = lcao_.Alpha[0];
 
-    ////////////////////////////////////////////////////
-    //      check data in Numerical_Orbital object
-    ////////////////////////////////////////////////////
-    EXPECT_EQ(ao.getType(), iat);
-    EXPECT_EQ(ao.getLabel(), "O");
-    EXPECT_EQ(ao.getLmax(), 2);
-    EXPECT_EQ(ao.getNchi(0), 2);
-    EXPECT_EQ(ao.getNchi(1), 2);
-    EXPECT_EQ(ao.getNchi(2), 1);
-    ASSERT_EQ(ao.getTotal_nchi(), 5);
+    // we now check whether the contents of the above
+    // Numerical_Orbital objects are correct
 
+    // maximum tolerance for double-type comparison
+    double max_tol = 1e-12;
 
-    ////////////////////////////////////////////////////
-    //  check data in Numerical_Orbital_Lm object
-    ////////////////////////////////////////////////////
+    // H
+    EXPECT_EQ(ao0.getType(), 0);
+    EXPECT_EQ(ao0.getLabel(), "H");
+    EXPECT_EQ(ao0.getLmax(), 1);
+    EXPECT_EQ(ao0.getNchi(0), 2);
+    EXPECT_EQ(ao0.getNchi(1), 1);
+    ASSERT_EQ(ao0.getTotal_nchi(), 3);
 
-    std::vector<int> L_list{0,0,1,1,2};
-    std::vector<int> N_list{0,1,0,1,0};
+    std::vector<int> L0_list{0,0,1};
+    std::vector<int> N0_list{0,1,0};
 
-    for (size_t i = 0; i != 5; ++i) {
-        int L = L_list[i], N = N_list[i];
-        EXPECT_EQ(ao.PhiLN(L,N).getLabel(), "O");
-        EXPECT_EQ(ao.PhiLN(L,N).getType(), iat);
-        EXPECT_EQ(ao.PhiLN(L,N).getL(), L);
-        EXPECT_EQ(ao.PhiLN(L,N).getChi(), N);
-        EXPECT_EQ(ao.PhiLN(L,N).getNr(), 701);
-        EXPECT_EQ(ao.PhiLN(L,N).getNk(), lcao_.kmesh);
-        EXPECT_EQ(ao.PhiLN(L,N).getDk(), lcao_.dk);
-        EXPECT_EQ(ao.PhiLN(L,N).getDruniform(), lcao_.dr_uniform);
+    for (size_t i = 0; i != 3; ++i) {
+        int L = L0_list[i], N = N0_list[i];
+        EXPECT_EQ(ao0.PhiLN(L,N).getLabel(), "H");
+        EXPECT_EQ(ao0.PhiLN(L,N).getType(), 0);
+        EXPECT_EQ(ao0.PhiLN(L,N).getL(), L);
+        EXPECT_EQ(ao0.PhiLN(L,N).getChi(), N);
+        EXPECT_EQ(ao0.PhiLN(L,N).getNr(), 801);
+        EXPECT_EQ(ao0.PhiLN(L,N).getNk(), lcao_.kmesh);
+        EXPECT_EQ(ao0.PhiLN(L,N).getDk(), lcao_.dk);
+        EXPECT_EQ(ao0.PhiLN(L,N).getDruniform(), lcao_.dr_uniform);
 
-        for (int ir = 0; ir != 701; ++ir) {
-            EXPECT_DOUBLE_EQ(ao.PhiLN(L,N).getRab(ir), 0.01);
-            EXPECT_DOUBLE_EQ(ao.PhiLN(L,N).getRadial(ir), 0.01*ir);
+        for (int ir = 0; ir != 801; ++ir) {
+            EXPECT_DOUBLE_EQ(ao0.PhiLN(L,N).getRab(ir), 0.01);
+            EXPECT_DOUBLE_EQ(ao0.PhiLN(L,N).getRadial(ir), 0.01*ir);
         }
     }
 
-    double max_tol = 1e-12;
-    EXPECT_NEAR(ao.PhiLN(0,0).getPsi(0), 1.208504975904e+00, max_tol);
-    EXPECT_NEAR(ao.PhiLN(0,0).getPsi(1), 1.208605373194e+00, max_tol);
-    EXPECT_NEAR(ao.PhiLN(0,0).getPsi(4), 1.210103935461e+00, max_tol);
-    EXPECT_NEAR(ao.PhiLN(0,0).getPsi(699), 4.465396560257e-08, max_tol);
-    EXPECT_NEAR(ao.PhiLN(0,0).getPsi(700), 0.0, max_tol);
+    EXPECT_NEAR(ao0.PhiLN(0,0).getPsi(0  ), 1.837183001954e+00, max_tol);
+    EXPECT_NEAR(ao0.PhiLN(0,0).getPsi(1  ), 1.836944589913e+00, max_tol);
+    EXPECT_NEAR(ao0.PhiLN(0,0).getPsi(4  ), 1.833374417163e+00, max_tol);
+    EXPECT_NEAR(ao0.PhiLN(0,0).getPsi(799), 3.037233152557e-07, max_tol);
+    EXPECT_NEAR(ao0.PhiLN(0,0).getPsi(800), 0.000000000000e+00, max_tol);
 
-    EXPECT_NEAR(ao.PhiLN(0,1).getPsi(0), 7.254873428942e-01, max_tol);
-    EXPECT_NEAR(ao.PhiLN(0,1).getPsi(1), 7.256666701836e-01, max_tol);
-    EXPECT_NEAR(ao.PhiLN(0,1).getPsi(4), 7.283448557011e-01, max_tol);
-    EXPECT_NEAR(ao.PhiLN(0,1).getPsi(699), -1.916246212603e-06, max_tol);
-    EXPECT_NEAR(ao.PhiLN(0,1).getPsi(700), 0.0, max_tol);
+    EXPECT_NEAR(ao0.PhiLN(0,1).getPsi(0  ), -2.482045090982e+00, max_tol);
+    EXPECT_NEAR(ao0.PhiLN(0,1).getPsi(1  ), -2.481575045574e+00, max_tol);
+    EXPECT_NEAR(ao0.PhiLN(0,1).getPsi(4  ), -2.474535579529e+00, max_tol);
+    EXPECT_NEAR(ao0.PhiLN(0,1).getPsi(799), 1.115867959482e-06, max_tol);
+    EXPECT_NEAR(ao0.PhiLN(0,1).getPsi(800), 0.000000000000e+00, max_tol);
 
-    EXPECT_NEAR(ao.PhiLN(1,0).getPsi(0), 0.0, max_tol);
-    EXPECT_NEAR(ao.PhiLN(1,0).getPsi(1), 4.626669306440e-02, max_tol);
-    EXPECT_NEAR(ao.PhiLN(1,0).getPsi(4), 1.845014292772e-01, max_tol);
-    EXPECT_NEAR(ao.PhiLN(1,0).getPsi(699), 2.870401658966e-07, max_tol);
-    EXPECT_NEAR(ao.PhiLN(1,0).getPsi(700), 0.0, max_tol);
+    EXPECT_NEAR(ao0.PhiLN(1,0).getPsi(0  ), 0.000000000000e+00, max_tol);
+    EXPECT_NEAR(ao0.PhiLN(1,0).getPsi(1  ), -2.619148756396e-02, max_tol);
+    EXPECT_NEAR(ao0.PhiLN(1,0).getPsi(4  ), -1.045849793771e-01, max_tol);
+    EXPECT_NEAR(ao0.PhiLN(1,0).getPsi(799), 3.217573100688e-06, max_tol);
+    EXPECT_NEAR(ao0.PhiLN(1,0).getPsi(800), 0.000000000000e+00, max_tol);
 
-    EXPECT_NEAR(ao.PhiLN(1,1).getPsi(0), 0.0, max_tol);
-    EXPECT_NEAR(ao.PhiLN(1,1).getPsi(1), 3.375340101333e-02, max_tol);
-    EXPECT_NEAR(ao.PhiLN(1,1).getPsi(4), 1.346256082234e-01, max_tol);
-    EXPECT_NEAR(ao.PhiLN(1,1).getPsi(699), -2.771091616120e-06, max_tol);
-    EXPECT_NEAR(ao.PhiLN(1,1).getPsi(700), 0.0, max_tol);
 
-    EXPECT_NEAR(ao.PhiLN(2,0).getPsi(0), 0.0, max_tol);
-    EXPECT_NEAR(ao.PhiLN(2,0).getPsi(1), -3.343626342662e-04, max_tol);
-    EXPECT_NEAR(ao.PhiLN(2,0).getPsi(4), -5.337546547975e-03, max_tol);
-    EXPECT_NEAR(ao.PhiLN(2,0).getPsi(699), 1.396308876444e-06, max_tol);
-    EXPECT_NEAR(ao.PhiLN(2,0).getPsi(700), 0.0, max_tol);
+    // O
+    EXPECT_EQ(ao1.getType(), 1);
+    EXPECT_EQ(ao1.getLabel(), "O");
+    EXPECT_EQ(ao1.getLmax(), 2);
+    EXPECT_EQ(ao1.getNchi(0), 2);
+    EXPECT_EQ(ao1.getNchi(1), 2);
+    EXPECT_EQ(ao1.getNchi(2), 1);
+    ASSERT_EQ(ao1.getTotal_nchi(), 5);
+
+    std::vector<int> L1_list{0,0,1,1,2};
+    std::vector<int> N1_list{0,1,0,1,0};
+
+    for (size_t i = 0; i != 5; ++i) {
+        int L = L1_list[i], N = N1_list[i];
+        EXPECT_EQ(ao1.PhiLN(L,N).getLabel(), "O");
+        EXPECT_EQ(ao1.PhiLN(L,N).getType(), 1);
+        EXPECT_EQ(ao1.PhiLN(L,N).getL(), L);
+        EXPECT_EQ(ao1.PhiLN(L,N).getChi(), N);
+        EXPECT_EQ(ao1.PhiLN(L,N).getNr(), 701);
+        EXPECT_EQ(ao1.PhiLN(L,N).getNk(), lcao_.kmesh);
+        EXPECT_EQ(ao1.PhiLN(L,N).getDk(), lcao_.dk);
+        EXPECT_EQ(ao1.PhiLN(L,N).getDruniform(), lcao_.dr_uniform);
+
+        for (int ir = 0; ir != 701; ++ir) {
+            EXPECT_DOUBLE_EQ(ao1.PhiLN(L,N).getRab(ir), 0.01);
+            EXPECT_DOUBLE_EQ(ao1.PhiLN(L,N).getRadial(ir), 0.01*ir);
+        }
+    }
+
+    EXPECT_NEAR(ao1.PhiLN(0,0).getPsi(0), 1.208504975904e+00, max_tol);
+    EXPECT_NEAR(ao1.PhiLN(0,0).getPsi(1), 1.208605373194e+00, max_tol);
+    EXPECT_NEAR(ao1.PhiLN(0,0).getPsi(4), 1.210103935461e+00, max_tol);
+    EXPECT_NEAR(ao1.PhiLN(0,0).getPsi(699), 4.465396560257e-08, max_tol);
+    EXPECT_NEAR(ao1.PhiLN(0,0).getPsi(700), 0.0, max_tol);
+
+    EXPECT_NEAR(ao1.PhiLN(0,1).getPsi(0), 7.254873428942e-01, max_tol);
+    EXPECT_NEAR(ao1.PhiLN(0,1).getPsi(1), 7.256666701836e-01, max_tol);
+    EXPECT_NEAR(ao1.PhiLN(0,1).getPsi(4), 7.283448557011e-01, max_tol);
+    EXPECT_NEAR(ao1.PhiLN(0,1).getPsi(699), -1.916246212603e-06, max_tol);
+    EXPECT_NEAR(ao1.PhiLN(0,1).getPsi(700), 0.0, max_tol);
+
+    EXPECT_NEAR(ao1.PhiLN(1,0).getPsi(0), 0.0, max_tol);
+    EXPECT_NEAR(ao1.PhiLN(1,0).getPsi(1), 4.626669306440e-02, max_tol);
+    EXPECT_NEAR(ao1.PhiLN(1,0).getPsi(4), 1.845014292772e-01, max_tol);
+    EXPECT_NEAR(ao1.PhiLN(1,0).getPsi(699), 2.870401658966e-07, max_tol);
+    EXPECT_NEAR(ao1.PhiLN(1,0).getPsi(700), 0.0, max_tol);
+
+    EXPECT_NEAR(ao1.PhiLN(1,1).getPsi(0), 0.0, max_tol);
+    EXPECT_NEAR(ao1.PhiLN(1,1).getPsi(1), 3.375340101333e-02, max_tol);
+    EXPECT_NEAR(ao1.PhiLN(1,1).getPsi(4), 1.346256082234e-01, max_tol);
+    EXPECT_NEAR(ao1.PhiLN(1,1).getPsi(699), -2.771091616120e-06, max_tol);
+    EXPECT_NEAR(ao1.PhiLN(1,1).getPsi(700), 0.0, max_tol);
+
+    EXPECT_NEAR(ao1.PhiLN(2,0).getPsi(0), 0.0, max_tol);
+    EXPECT_NEAR(ao1.PhiLN(2,0).getPsi(1), -3.343626342662e-04, max_tol);
+    EXPECT_NEAR(ao1.PhiLN(2,0).getPsi(4), -5.337546547975e-03, max_tol);
+    EXPECT_NEAR(ao1.PhiLN(2,0).getPsi(699), 1.396308876444e-06, max_tol);
+    EXPECT_NEAR(ao1.PhiLN(2,0).getPsi(700), 0.0, max_tol);
+
+
+    // Descriptor
+
+    EXPECT_EQ(aod.getType(), 0);
+    EXPECT_EQ(aod.getLabel(), "");
+    EXPECT_EQ(aod.getLmax(), 2);
+    EXPECT_EQ(aod.getNchi(0), 2);
+    EXPECT_EQ(aod.getNchi(1), 2);
+    EXPECT_EQ(aod.getNchi(2), 2);
+    ASSERT_EQ(aod.getTotal_nchi(), 6);
+
+    std::vector<int> Ld_list{0,0,1,1,2,2};
+    std::vector<int> Nd_list{0,1,0,1,0,1};
+
+    for (size_t i = 0; i != 6; ++i) {
+        int L = Ld_list[i], N = Nd_list[i];
+        EXPECT_EQ(aod.PhiLN(L,N).getLabel(), "");
+        EXPECT_EQ(aod.PhiLN(L,N).getType(), 0);
+        EXPECT_EQ(aod.PhiLN(L,N).getL(), L);
+        EXPECT_EQ(aod.PhiLN(L,N).getChi(), N);
+        EXPECT_EQ(aod.PhiLN(L,N).getNr(), 205);
+        EXPECT_EQ(aod.PhiLN(L,N).getNk(), lcao_.kmesh);
+        EXPECT_EQ(aod.PhiLN(L,N).getDk(), lcao_.dk);
+        EXPECT_EQ(aod.PhiLN(L,N).getDruniform(), lcao_.dr_uniform);
+
+        for (int ir = 0; ir != 205; ++ir) {
+            EXPECT_DOUBLE_EQ(aod.PhiLN(L,N).getRab(ir), 0.01);
+            EXPECT_DOUBLE_EQ(aod.PhiLN(L,N).getRadial(ir), 0.01*ir);
+        }
+    }
+
+    // TODO chi value check is skipped for now
+    // orbitals in jle.orb are not normalized
+    // getPsi() does not gives the numbers in jle.orb
 }
 
-/*
+
 TEST_F(LcaoOrbitalsTest, Getters) {
-    EXPECT_DOUBLE_EQ(lcao_.get_dr_uniform(), 0.001);
-    EXPECT_DOUBLE_EQ(lcao_.get_rcutmax_Phi(), 8.0);
 
-    EXPECT_EQ(lcao_.get_lmax_d(), 2);
-    EXPECT_EQ(lcao_.get_nchimax_d(), 2);
+    this->lcao_read();
+
+    EXPECT_EQ(lcao_.get_ecutwfc(), lcao_.ecutwfc);
+    EXPECT_EQ(lcao_.get_kmesh(), lcao_.kmesh);
+    EXPECT_EQ(lcao_.get_dk(), lcao_.dk);
+    EXPECT_EQ(lcao_.get_dR(), lcao_.dR);
+    EXPECT_EQ(lcao_.get_Rmax(), lcao_.Rmax);
+    EXPECT_EQ(lcao_.get_lmax(), lcao_.lmax);
+    EXPECT_EQ(lcao_.get_lmax_d(), lcao_.lmax_d);
+    EXPECT_EQ(lcao_.get_nchimax(), lcao_.nchimax);
+    EXPECT_EQ(lcao_.get_nchimax_d(), lcao_.nchimax_d);
+    EXPECT_EQ(lcao_.get_ntype(), lcao_.ntype);
+    EXPECT_EQ(lcao_.get_dr_uniform(), lcao_.dr_uniform);
+    EXPECT_EQ(lcao_.get_rcutmax_Phi(), lcao_.rcutmax_Phi);
 }
-*/
 
 
 int main(int argc, char **argv)
@@ -308,6 +347,5 @@ int main(int argc, char **argv)
 
     return result;
 }
-
 
 
