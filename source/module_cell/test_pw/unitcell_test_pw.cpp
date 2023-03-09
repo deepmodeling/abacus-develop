@@ -39,6 +39,10 @@ protected:
 
 TEST_F(UcellTest,ReadAtomSpecies)
 {
+#ifdef __MPI
+if(GlobalV::MY_RANK==0)
+{
+#endif
 	std::string fn = "./support/STRU_MgO";
 	std::ifstream ifa(fn.c_str());
 	std::ofstream ofs_running;
@@ -54,10 +58,17 @@ TEST_F(UcellTest,ReadAtomSpecies)
 	ofs_running.close();
 	ifa.close();
 	remove("read_atom_species.tmp");
+#ifdef __MPI
+}
+#endif
 }
 
 TEST_F(UcellTest,ReadAtomPositions)
 {
+#ifdef __MPI
+if(GlobalV::MY_RANK==0)
+{
+#endif
 	std::string fn = "./support/STRU_MgO";
 	std::ifstream ifa(fn.c_str());
 	std::ofstream ofs_running;
@@ -86,4 +97,59 @@ TEST_F(UcellTest,ReadAtomPositions)
 	ifa.close();
 	remove("read_atom_species.tmp");
 	remove("read_atom_species.warn");
+#ifdef __MPI
 }
+#endif
+}
+
+TEST_F(UcellTest,SetupCell)
+{
+	std::string s_pseudopot_dir = "./support/";
+	std::string fn = "./support/STRU_MgO";
+	std::ofstream ofs_running;
+	ofs_running.open("setup_cell.tmp");
+	GlobalV::ofs_warning.open("setup_cell.warn");
+	GlobalV::NSPIN = 1;
+	ucell->ntype = 2;
+	ucell->setup_cell(s_pseudopot_dir,fn,ofs_running);
+	ofs_running.close();
+	GlobalV::ofs_warning.close();
+	remove("setup_cell.warn");
+	remove("setup_cell.tmp");
+}
+
+TEST_F(UcellTest,SetupCellClassic)
+{
+	std::string s_pseudopot_dir = "./support/";
+	std::string fn = "./support/STRU_MgO";
+	std::ofstream ofs_running;
+	ofs_running.open("setup_cell.tmp");
+	GlobalV::ofs_warning.open("setup_cell.warn");
+	GlobalV::NSPIN = 1;
+	ucell->ntype = 2;
+#ifndef __CMD
+	delete[] ucell->magnet.start_magnetization;
+	ucell->magnet.start_magnetization = new double[ucell->ntype];
+#endif
+	ucell->setup_cell_classic(fn,ofs_running,GlobalV::ofs_warning);
+	ofs_running.close();
+	GlobalV::ofs_warning.close();
+	remove("setup_cell.warn");
+	remove("setup_cell.tmp");
+}
+
+#ifdef __MPI
+#include "mpi.h"
+int main(int argc, char **argv)
+{
+	MPI_Init(&argc, &argv);
+	testing::InitGoogleTest(&argc, argv);
+
+	MPI_Comm_size(MPI_COMM_WORLD,&GlobalV::NPROC);
+	MPI_Comm_rank(MPI_COMM_WORLD,&GlobalV::MY_RANK);
+
+	int result = RUN_ALL_TESTS();
+	MPI_Finalize();
+	return result;
+}
+#endif
