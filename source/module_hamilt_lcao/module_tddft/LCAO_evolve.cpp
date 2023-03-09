@@ -505,7 +505,7 @@ void Evolve_LCAO_Matrix::compute_U_operator(
 //->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     // (3) Next, invert Denominator
     int* ipiv = new int[this->ParaV->nloc];
-    int info;
+    int info = 0;
     // (3.1) compute ipiv
     ScalapackConnector::getrf(
         nlocal,
@@ -515,7 +515,7 @@ void Evolve_LCAO_Matrix::compute_U_operator(
         1, 
         this->ParaV->desc,
         ipiv, 
-        info
+        &info
     );
     int lwork = -1;
     int liwotk = -1;
@@ -533,7 +533,7 @@ void Evolve_LCAO_Matrix::compute_U_operator(
         &lwork,
         iwork.data(),
         &liwotk,
-        info
+        &info
     );
     lwork = work[0].real();
     work.resize(lwork, 0);
@@ -551,7 +551,7 @@ void Evolve_LCAO_Matrix::compute_U_operator(
         &lwork,
         iwork.data(),
         &liwotk,
-        info
+        &info
     );
     assert(0 == info);
 
