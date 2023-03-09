@@ -44,7 +44,6 @@ void LCAO_Orbitals::bcast_files(
 {
 	return;
 }
-#endif
 
 class UcellTest : public ::testing::Test
 {
@@ -250,4 +249,5 @@ int main(int argc, char **argv)
 	MPI_Finalize();
 	return result;
 }
+#endif
 #endif
