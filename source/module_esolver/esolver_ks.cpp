@@ -219,7 +219,8 @@ namespace ModuleESolver
                     }
                     else
                     {
-                        //charge mixing
+                        //----------charge mixing---------------
+                        //before first calling mix_rho(), bandgap and cell structure can be analyzed to get better default parameters
                         if(iter == 1)
                         {
                             double bandgap_for_autoset = 0.0;
@@ -237,6 +238,7 @@ namespace ModuleESolver
                         }
                         //conv_elec = this->estate.mix_rho();
                         GlobalC::CHR_MIX.mix_rho(iter, pelec->charge);
+                        //----------charge mixing done-----------
                     }
                 }
 #ifdef __MPI

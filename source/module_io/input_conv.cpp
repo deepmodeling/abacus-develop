@@ -498,6 +498,10 @@ void Input_Conv::Convert(void)
     {
         GlobalC::CHR_MIX.need_auto_set();
     }
+    else if(INPUT.mixing_beta > 1.0 || INPUT.mixing_beta<0.0)
+    {
+        ModuleBase::WARNING("INPUT", "You'd better set mixing_beta to [0.0, 1.0]!");
+    }
 
     //----------------------------------------------------------
     // iteration
