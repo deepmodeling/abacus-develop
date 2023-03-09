@@ -28,6 +28,10 @@ Magnetism::~Magnetism()
  *     - read_atom_species(): read header part of orbital file
  *   - ReadAtomPositions
  *     - read_atom_positions(): ABACUS Cannot find the ORBITAL file
+ *   - SetupCell
+ *     - setup_cell(): the pw version
+ *   - SetupCellClassic
+ *     - setup_cell_classic: the pw version
  */
 
 class UcellTest : public ::testing::Test

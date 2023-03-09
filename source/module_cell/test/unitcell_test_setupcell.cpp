@@ -33,7 +33,24 @@ Magnetism::~Magnetism()
 
 /**
  * - Tested Functions:
- *   - setup_cell
+ *   - SetupCellS1
+ *     - setup_cell: spin 1 case
+ *   - SetupCellS2
+ *     - setup_cell: spin 2 case
+ *   - SetupCellS4
+ *     - setup_cell: spin 4 case
+ *   - SetupCellWarning1
+ *     - setup_cell: Can not find the file containing atom positions.
+ *   - SetupCellWarning2
+ *     - setup_cell: Something wrong during read_atom_positions
+ *   - SetupCellClassic
+ *     - setup_cell_classic
+ *   - SetupCellClassicWarning1
+ *     - setup_cell_classic: Can not find the file containing atom positions.
+ *   - SetupCellClassicWarning2
+ *     - setup_cell_classic: Something wrong during read_atom_positions
+ *   - SetupCellAfterVC
+ *     - setup_cell_after_vc
  */
 
 //mock function
