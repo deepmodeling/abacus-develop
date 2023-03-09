@@ -36,6 +36,12 @@ toWannier90::~toWannier90()
         delete[] exclude_bands;
     if (GlobalV::BASIS_TYPE == "lcao")
         delete unk_inLcao;
+    delete[] R_centre;
+    delete[] L;
+    delete[] m;
+    delete[] rvalue;
+    delete[] alfa;
+    delete[] tag_cal_band;
 }
 
 void toWannier90::init_wannier(const ModuleBase::matrix& ekb, const psi::Psi<std::complex<double>> *psi)
@@ -225,6 +231,8 @@ void toWannier90::read_nnkp()
                 nnkp_read >> x_axis[count].x >> x_axis[count].y >> x_axis[count].z;
                 ModuleBase::GlobalFunc::READ_VALUE(nnkp_read, alfa[count]);
             }
+            delete[] z_axis;
+            delete[] x_axis;
         }
     }
     else
@@ -1380,6 +1388,7 @@ void toWannier90::produce_trial_in_pw(const int &ik, ModuleBase::ComplexMatrix &
             }
         }
     }
+    delete[] gk;
 }
 
 void toWannier90::get_trial_orbitals_lm_k(const int wannier_index,

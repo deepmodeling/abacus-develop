@@ -11,11 +11,8 @@
 
 #include "module_base/global_variable.h"
 
-template class hsolver::HSolverPW<float, psi::DEVICE_CPU>;
-template class hsolver::HSolverPW<double, psi::DEVICE_CPU>;
-
 /************************************************
- *  unit test of HSolver base class
+ *  unit test of HSolverPW class
  ***********************************************/
 
 /**
@@ -85,7 +82,7 @@ TEST_F(TestHSolverPW, solve)
 	EXPECT_DOUBLE_EQ(hsolver::DiagoIterAssist<double>::avg_iter, 0.0);
 	for(int i=0;i<psi_test_cd.size();i++)
 	{
-		EXPECT_DOUBLE_EQ(psi_test_cf.get_pointer()[i].real(), i+3);
+		EXPECT_DOUBLE_EQ(psi_test_cd.get_pointer()[i].real(), i+3);
 	}
 	EXPECT_DOUBLE_EQ(elecstate_test.ekb.c[0], 4.0);
 	EXPECT_DOUBLE_EQ(elecstate_test.ekb.c[1], 7.0);
