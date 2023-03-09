@@ -220,6 +220,21 @@ namespace ModuleESolver
                     else
                     {
                         //charge mixing
+                        if(iter == 1)
+                        {
+                            double bandgap_for_autoset = 0.0;
+                            if (!GlobalV::TWO_EFERMI)
+                            {
+                                GlobalC::en.cal_bandgap(this->pelec);
+                                bandgap_for_autoset = GlobalC::en.bandgap;
+                            }
+                            else
+                            {
+                                GlobalC::en.cal_bandgap_updw(this->pelec);
+                                bandgap_for_autoset = std::min(GlobalC::en.bandgap_up, GlobalC::en.bandgap_dw);
+                            }
+                            GlobalC::CHR_MIX.auto_set(bandgap_for_autoset, GlobalC::ucell);
+                        }
                         //conv_elec = this->estate.mix_rho();
                         GlobalC::CHR_MIX.mix_rho(iter, pelec->charge);
                     }
