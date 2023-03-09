@@ -1409,7 +1409,7 @@ void Symmetry::rhog_symmetry(std::complex<double> *rhogtot,
                         // for each pricell in supercell:
                         for(int ipt=0;ipt<this->ncell;++ipt)
                         {
-                            arg = ( tmp_gdirect_double * (gtrans[isym]+ptrans[ipt]) ) * ModuleBase::TWO_PI;
+                            arg = ( tmp_gdirect_double * (gtrans[invmap[isym]]+ptrans[ipt]) ) * ModuleBase::TWO_PI;
                             cos_arg += cos(arg);
                             sin_arg += sin(arg);   
                         }
