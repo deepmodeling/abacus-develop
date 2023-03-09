@@ -454,6 +454,8 @@ TEST_F(SymmetryTest, AtomOrderingNew)
     double* old_pos=new double[nat*3];
     double* new_pos=new double[nat*3];
     int* subindex=new int[nat];
+
+    // 1. Random Test
     //generate random number and restrict to [-0.5,0.5)
     srand(time(NULL));
     for(int i=0;i<3*nat;++i)
@@ -486,6 +488,15 @@ TEST_F(SymmetryTest, AtomOrderingNew)
     std::cout<<"iatom     x      y     z"<<std::endl;
     for (int i=0;i<nat;++i)
         std::cout<<i<<" "<<new_pos[3*i]<<" "<<new_pos[3*i+1]<<" "<<new_pos[3*i+2]<<std::endl;
+
+    //2. Special Case Test
+    //(1). z-to-x
+    new_pos[0]=0.0; new_pos[1]=1/3; new_pos[2]=0.1;
+    new_pos[3]=symm.epsilon*0.9; new_pos[4]=1/3; new_pos[5]=0.0;
+    symm.test_atom_ordering(new_pos, 2, subindex);
+    EXPECT_NEAR(new_pos[5], 0.1, DOUBLETHRESHOLD);
+    EXPECT_NEAR(new_pos[2], 0.0, DOUBLETHRESHOLD);
+
     delete[] old_pos;
     delete[] new_pos;
     delete[] subindex;

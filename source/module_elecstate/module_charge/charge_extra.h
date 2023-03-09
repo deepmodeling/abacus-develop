@@ -35,13 +35,13 @@ class Charge_Extra
     int rho_extr;
 
     // for the second-order extrapolation
-    ModuleBase::Vector3<double> *pos_old1;
-    ModuleBase::Vector3<double> *pos_old2;
-    ModuleBase::Vector3<double> *pos_now;
-    ModuleBase::Vector3<double> *pos_next;
+    ModuleBase::Vector3<double> *pos_old1 = nullptr;
+    ModuleBase::Vector3<double> *pos_old2 = nullptr;
+    ModuleBase::Vector3<double> *pos_now = nullptr;
+    ModuleBase::Vector3<double> *pos_next = nullptr;
 
-    double** delta_rho1;
-    double** delta_rho2;
+    double** delta_rho1 = nullptr;
+    double** delta_rho2 = nullptr;
 
     double alpha,beta;
 
