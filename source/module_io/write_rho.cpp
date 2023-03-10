@@ -55,7 +55,7 @@ void ModuleIO::write_rho(
 			}
 			else
 			{
-				ofs_cube << GlobalC::en.ef << " (fermi energy)" << std::endl;
+				ofs_cube << GlobalC::en.ef << " (fermi energy, in Ry)" << std::endl;
 			}
 		}
 		else
@@ -78,22 +78,40 @@ void ModuleIO::write_rho(
 			<< " " << fac*GlobalC::ucell.latvec.e32/double(GlobalC::rhopw->nz) 
 			<< " " << fac*GlobalC::ucell.latvec.e33/double(GlobalC::rhopw->nz) << std::endl;
 
+		std::string element = "";
 		for(int it=0; it<GlobalC::ucell.ntype; it++)
 		{
+			// erase the number in label, such as Fe1.
+			element = GlobalC::ucell.atoms[it].label;
+			std::string::iterator temp = element.begin();
+			while (temp != element.end())
+			{
+				if ((*temp >= '1') && (*temp <= '9'))
+				{
+					temp = element.erase(temp);
+				}
+				else
+				{
+					temp++;
+				}
+			}
+
 			for(int ia=0; ia<GlobalC::ucell.atoms[it].na; ia++)
 			{
 				//convert from label to atomic number
 				int z = 0;
 				for(int j=0; j!=ModuleBase::element_name.size(); j++)
-					if (GlobalC::ucell.atoms[it].label == ModuleBase::element_name[j])
+				{
+					if (element == ModuleBase::element_name[j])
 					{
 						z=j+1;
 						break;
 					}
+				}
 				ofs_cube << " " << z << " " << GlobalC::ucell.atoms[it].ncpp.zv
-					<< " " << fac*GlobalC::ucell.atoms[it].tau[ia].x
-					<< " " << fac*GlobalC::ucell.atoms[it].tau[ia].y
-					<< " " << fac*GlobalC::ucell.atoms[it].tau[ia].z << std::endl;
+						 << " " << fac*GlobalC::ucell.atoms[it].tau[ia].x
+						 << " " << fac*GlobalC::ucell.atoms[it].tau[ia].y
+						 << " " << fac*GlobalC::ucell.atoms[it].tau[ia].z << std::endl;
 			}
 		}
 		ofs_cube << std::setprecision(precision);
