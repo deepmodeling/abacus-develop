@@ -31,12 +31,10 @@ class Parallel_Grid
 
 	void z_distribution(void);
 	
-	int *nproc_in_pool;
-	int **numz;
-	int **startz;
-	int **whichpro;
-	int **numdata;
-	int **startdata;
+    int *nproc_in_pool = nullptr;
+    int **numz = nullptr;
+    int **startz = nullptr;
+    int **whichpro = nullptr;
 
 	int ncx;
 	int ncy;
