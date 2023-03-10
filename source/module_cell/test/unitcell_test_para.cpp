@@ -40,6 +40,8 @@ Magnetism::~Magnetism()
  *     - bcast basic info of unitcell and basic info of atoms
  *   - BcastUnitcell2
  *     - calls bcast_atoms2() to bcast atomic pseudo info
+ *   - ReadPseudo
+ *     - read_pseudo()
  */
 
 //mock function
