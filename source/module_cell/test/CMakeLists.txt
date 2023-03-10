@@ -8,12 +8,13 @@ install(FILES bcast_atom_pseudo_test.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 install(FILES bcast_atom_spec_test.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 install(FILES parallel_kpoints_test.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 install(FILES klist_test_para.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+install(FILES unitcell_test_parallel.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
 AddTest(
   TARGET cell_read_pp
   LIBS ${math_libs} base device
   SOURCES read_pp_test.cpp ../read_pp.cpp ../read_pp_upf201.cpp ../read_pp_upf100.cpp ../read_pp_vwr.cpp ../read_pp_blps.cpp 
-  	../../module_io/output.cpp
+  ../../module_io/output.cpp
 )
 
 AddTest(
@@ -104,3 +105,15 @@ AddTest(
 	../read_pp_vwr.cpp ../read_pp_blps.cpp ../../module_io/output.cpp
 )
 
+AddTest(
+  TARGET cell_unitcell_test_setupcell
+  LIBS ${math_libs} base device
+  SOURCES unitcell_test_setupcell.cpp ../unitcell.cpp ../read_atoms.cpp ../read_cell_pseudopots.cpp ../atom_spec.cpp
+	../atom_pseudo.cpp ../pseudo_nc.cpp ../read_pp.cpp ../read_pp_upf201.cpp ../read_pp_upf100.cpp
+	../read_pp_vwr.cpp ../read_pp_blps.cpp ../../module_io/output.cpp
+)
+
+add_test(NAME cell_unitcell_test_parallel
+      COMMAND ${BASH} unitcell_test_parallel.sh
+      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+)
