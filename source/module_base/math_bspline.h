@@ -24,7 +24,7 @@ namespace ModuleBase
  *               x+n*Dx-xi               xi+(k-n+1)*Dx-x
  *      Bk[n] = -----------*B(k-1)[n] + -----------------*B(k-1)[n-1]
  *                 k*Dx                        k*Dx
- * USAGE：
+ * USAGE: 
  *   ModuleBase::Bspline bp;
  *   bp.init(10,0.7,2); //Dx = 0.7, xi = 2
  *   bp.getbslpine(0.5); //x = 0.5
