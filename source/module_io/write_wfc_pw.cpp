@@ -1,5 +1,5 @@
 #include "write_wfc_pw.h"
-#include "rwstream.h"
+#include "binstream.h"
 #include "module_base/tool_title.h"
 #include "module_base/global_variable.h"
 #include "module_io/input.h"
@@ -52,7 +52,7 @@ void ModuleIO::write_wfc_pw(  const std::string &fn, const psi::Psi<std::complex
             }
             else if(INPUT.out_wfc_pw==2)
             {
-                Rwstream wfs(wfss.str(),"w");
+                Binstream wfs(wfss.str(),"w");
                 wfs.close();
             }
         }
@@ -126,7 +126,7 @@ void ModuleIO::write_wfc_pw(  const std::string &fn, const psi::Psi<std::complex
                     }
                     else if(INPUT.out_wfc_pw==2)
                     {
-                        Rwstream wfs2( wfilename[ikstot],"a");
+                        Binstream wfs2( wfilename[ikstot],"a");
                         if(id==0)
                         {
                             wfs2<<int(72)<<ikstot+1<<nkstot<<p_kv->kvec_c[ik].x
@@ -183,7 +183,7 @@ void ModuleIO::write_wfc_pw(  const std::string &fn, const psi::Psi<std::complex
                         }
                         else if(INPUT.out_wfc_pw==2)
                         {
-                            Rwstream wfs2(wfilename[ikstot],"a");
+                            Binstream wfs2(wfilename[ikstot],"a");
                             if(id==0) wfs2<<ikngtot*16;
                             for (int ig=0; ig<psi.get_current_nbas(); ig++)
 							{

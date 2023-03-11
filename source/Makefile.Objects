@@ -346,7 +346,7 @@ OBJS_IO=input.o\
     print_info.o\
     read_rho.o\
     restart.o\
-    rwstream.o\
+    binstream.o\
     to_wannier90.o\
     unk_overlap_pw.o\
     write_wfc_pw.o\
