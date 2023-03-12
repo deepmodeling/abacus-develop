@@ -127,7 +127,7 @@ void ESolver_KS_PW<FPTYPE, Device>:: jjcorr_ks(const int ik, const int nt, const
         int nkstot = GlobalC::kv.nkstot;
         int ikglobal = getink(ik, GlobalV::MY_POOL, nkstot, GlobalV::KPAR);
         stringstream ss;
-        ss<<GlobalV::global_out_dir<<"vmatrix"<<ikglobal<<".dat";
+        ss<<GlobalV::global_out_dir<<"vmatrix"<<ikglobal+1<<".dat";
         Binstream binpij(ss.str(), "w");
         binpij<<8*reducenb2;
         binpij.write(pij2, reducenb2);
