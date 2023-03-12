@@ -351,3 +351,30 @@ TEST_F(matrixTest,Fillout)
         }
     }
 }
+
+
+TEST_F(matrixTest,Print)
+{
+    std::string output;
+    const double threshold=4.0;
+    testing::internal::CaptureStdout();
+    EXPECT_EXIT(m33a.print(std::cout,threshold),::testing::ExitedWithCode(0),"");
+    output  = testing::internal::GetCapturedStdout();
+    EXPECT_THAT(output,testing::HasSubstr("0    0   0   0   5   6   7   8   9   "));
+}
+// Peize Lin add 2021.09.08
+// std::ostream & matrix::print( std::ostream & os, const double threshold ) const
+// {
+// 	for( int ir=0; ir!=this->nr; ++ir )
+// 	{
+// 		for( int ic=0; ic!=this->nc; ++ic )
+// 		{
+// 			if(std::abs((*this)(ir,ic))>threshold)
+// 				os<<(*this)(ir,ic)<<"\t";
+// 			else
+// 				os<<0<<"\t";
+// 		}
+// 		os<<std::endl;
+// 	}
+// 	return os;
+// }
