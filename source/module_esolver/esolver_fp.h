@@ -14,6 +14,7 @@ namespace ModuleESolver
         ESolver_FP();
         virtual ~ESolver_FP();
         virtual void Init(Input& inp, UnitCell& cell) override;
+        virtual void init_after_vc(Input& inp, UnitCell& cell);    // liuyu add 2023-03-09
         // Hamilt* phamilt;
 
         elecstate::ElecState* pelec = nullptr;

@@ -87,6 +87,7 @@ namespace ModuleESolver
     template<typename FPTYPE, typename Device>
     void ESolver_KS_PW<FPTYPE, Device>::Init_GlobalC(Input& inp, UnitCell& cell)
     {
+        if(this->psi != nullptr) delete this->psi;
         this->psi = GlobalC::wf.allocate(GlobalC::kv.nks);
 
         // cout<<GlobalC::rhopw->nrxx<<endl;
@@ -189,6 +190,40 @@ namespace ModuleESolver
         {
             this->pelec->fixed_weights(GlobalV::ocp_kb.data());
         }
+    }
+
+    template<typename FPTYPE, typename Device>
+    void ESolver_KS_PW<FPTYPE, Device>::init_after_vc(Input& inp, UnitCell& ucell)
+    {
+        ESolver_KS<FPTYPE, Device>::init_after_vc(inp,ucell);
+
+        this->pw_wfc->initgrids(ucell.lat0, ucell.latvec, GlobalC::rhopw->nx, GlobalC::rhopw->ny, GlobalC::rhopw->nz);
+        this->pw_wfc->initparameters(false, inp.ecutwfc, GlobalC::kv.nks, GlobalC::kv.kvec_d.data());
+#ifdef __MPI
+        if(INPUT.pw_seed > 0)    MPI_Allreduce(MPI_IN_PLACE, &this->pw_wfc->ggecut, 1, MPI_DOUBLE, MPI_MAX , MPI_COMM_WORLD);
+        //qianrui add 2021-8-13 to make different kpar parameters can get the same results
+#endif
+        this->pw_wfc->setuptransform();
+        for(int ik = 0 ; ik < GlobalC::kv.nks; ++ik)   GlobalC::kv.ngk[ik] = this->pw_wfc->npwk[ik];
+        this->pw_wfc->collect_local_pw(); 
+
+        delete this->phsol;  this->phsol = new hsolver::HSolverPW<FPTYPE, Device>(GlobalC::wfcpw);
+
+        delete this->pelec;  this->pelec = new elecstate::ElecStatePW<FPTYPE, Device>( GlobalC::wfcpw, &(this->chr), (K_Vectors*)(&(GlobalC::kv)));
+
+        this->pelec->charge->allocate(GlobalV::NSPIN, GlobalC::rhopw->nrxx, GlobalC::rhopw->npw);
+
+        delete this->pelec->pot;
+        this->pelec->pot = new elecstate::Potential(
+            GlobalC::rhopw,
+            &GlobalC::ucell,
+            &(GlobalC::ppcell.vloc),
+            &(GlobalC::sf.strucFac),
+            &(GlobalC::en.etxc),
+            &(GlobalC::en.vtxc));
+        
+        //temporary
+        this->Init_GlobalC(inp,ucell);
     }
 
     template<typename FPTYPE, typename Device>

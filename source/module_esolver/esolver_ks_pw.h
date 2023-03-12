@@ -18,6 +18,7 @@ namespace ModuleESolver
         ESolver_KS_PW();
         ~ESolver_KS_PW();
         void Init(Input& inp, UnitCell& cell) override;
+        void init_after_vc(Input& inp, UnitCell& cell) override;
         void cal_Energy(double& etot) override;
         void cal_Force(ModuleBase::matrix& force) override;
         void cal_Stress(ModuleBase::matrix& stress) override;

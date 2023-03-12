@@ -19,7 +19,7 @@ wavefunc::~wavefunc()
 	{
 		std::cout << " ~wavefunc()" << std::endl;
 	}
-	if(this->irindex == nullptr) 
+	if(this->irindex != nullptr) 
 	{
 		delete[] this->irindex;		
 		this->irindex=nullptr;
@@ -62,7 +62,8 @@ psi::Psi<std::complex<double>>* wavefunc::allocate(const int nks)
 	}
 	else if(GlobalV::BASIS_TYPE!="pw")
 	{
-		this->evc = new ModuleBase::ComplexMatrix [nks2];
+        if(this->evc != nullptr) delete[] this->evc;
+        this->evc = new ModuleBase::ComplexMatrix [nks2];
 		for (int ik = 0; ik < nks2; ik++)
 		{
 			this->evc[ik].create(GlobalV::NBANDS, npwx * GlobalV::NPOL);
@@ -73,7 +74,8 @@ psi::Psi<std::complex<double>>* wavefunc::allocate(const int nks)
 
 		if((GlobalV::BASIS_TYPE=="lcao" || GlobalV::BASIS_TYPE=="lcao_in_pw") || winput::out_spillage==2)
 		{//for lcao_in_pw
-			this->wanf2 = new ModuleBase::ComplexMatrix [nks2];
+            if(this->wanf2 != nullptr) delete[] this->wanf2;
+            this->wanf2 = new ModuleBase::ComplexMatrix [nks2];
 			for (int ik = 0; ik < nks2; ik++)
 			{
 				this->wanf2[ik].create(GlobalV::NLOCAL, npwx * GlobalV::NPOL);
@@ -520,7 +522,8 @@ void wavefunc::wfcinit_k(psi::Psi<std::complex<double>>* psi_in)
 
 	if(GlobalV::BASIS_TYPE=="pw") 
 	{
-		this->irindex = new int [GlobalC::wfcpw->fftnxy];
+        if(this->irindex != nullptr) delete[] this->irindex;
+        this->irindex = new int [GlobalC::wfcpw->fftnxy];
 		GlobalC::wfcpw->getfftixy2is(this->irindex);
     #if defined(__CUDA) || defined(__ROCM)
     if (GlobalV::device_flag == "gpu") {

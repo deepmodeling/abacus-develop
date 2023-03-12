@@ -39,6 +39,20 @@ namespace ModuleESolver
         
     }
 
+    void ESolver_FP::init_after_vc(Input& inp, UnitCell& cell)
+    {
+        if (inp.nx * inp.ny * inp.nz == 0)
+            this->pw_rho->initgrids(cell.lat0, cell.latvec, inp.ecutrho);
+        else
+            this->pw_rho->initgrids(cell.lat0, cell.latvec, inp.nx, inp.ny, inp.nz);
+
+        this->pw_rho->initparameters(false, inp.ecutrho);
+        this->pw_rho->setuptransform();
+        this->pw_rho->collect_local_pw(); 
+        this->pw_rho->collect_uniqgg();
+        this->print_rhofft(inp, GlobalV::ofs_running);
+    }
+
     void ESolver_FP::print_rhofft(Input&inp, ofstream &ofs)
     {
         std::cout << " UNIFORM GRID DIM     : " << GlobalC::rhopw->nx << " * " << GlobalC::rhopw->ny << " * " << GlobalC::rhopw->nz << std::endl;
