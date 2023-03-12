@@ -5,6 +5,7 @@
 #include "module_elecstate/occupy.h"
 #include "module_io/binstream.h"
 
+int getink(const int &ik,const int &rankp,const int &nktot,const int &kpar);
 namespace ModuleESolver
 {
 
@@ -121,9 +122,13 @@ void ESolver_KS_PW<FPTYPE, Device>:: jjcorr_ks(const int ik, const int nt, const
         }
     }
 
-    if(velop.nonlocal)
+    if(velop.nonlocal && GlobalV::RANK_IN_POOL == 0)
     {
-        Binstream binpij("pij2.dat", "w");
+        int nkstot = GlobalC::kv.nkstot;
+        int ikglobal = getink(ik, GlobalV::MY_POOL, nkstot, GlobalV::KPAR);
+        stringstream ss;
+        ss<<GlobalV::global_out_dir<<"vmatrix"<<ikglobal<<".dat";
+        Binstream binpij(ss.str(), "w");
         binpij<<8*reducenb2;
         binpij.write(pij2, reducenb2);
         binpij<<8*reducenb2;
