@@ -63,6 +63,14 @@ void Numerical_Nonlocal_Lm::freemem(void)
 	delete[] this->dbeta_uniform;
 	delete[] this->k_radial;
 	delete[] this->beta_k;
+
+    r_radial = nullptr;
+    rab = nullptr;
+    beta_r = nullptr;
+    beta_uniform = nullptr;
+    dbeta_uniform = nullptr;
+    k_radial = nullptr;
+    beta_k = nullptr;
 }
 
 Numerical_Nonlocal_Lm& Numerical_Nonlocal_Lm::operator=
@@ -73,6 +81,7 @@ Numerical_Nonlocal_Lm& Numerical_Nonlocal_Lm::operator=
 	this->label = nol.label;
 	this->index_atom_type = nol.index_atom_type;
 	this->angular_momentum_l = nol.angular_momentum_l;
+    this->index_proj = nol.index_proj;
 
 	this->nr = nol.nr;
 	this->nk = nol.nk;
@@ -167,6 +176,14 @@ void Numerical_Nonlocal_Lm::set_NL_proj(
 	return;
 }
 
+/*
+// extra_uniform currently does not work, because
+// beta[ir] = this->beta_r[ir]/r_radial[ir];
+// does not work for ir==0, and this formula is not stable for small r.
+//
+// If one really needs beta (in what circumstance?), one should do
+// extrapolation to reach r=0.
+
 void Numerical_Nonlocal_Lm::extra_uniform(const double &dr_uniform_in)
 {
 	assert(dr_uniform_in>0.0);
@@ -226,7 +243,7 @@ void Numerical_Nonlocal_Lm::extra_uniform(const double &dr_uniform_in)
 	delete [] tmp1;
 	return;
 }
-
+*/
 
 void Numerical_Nonlocal_Lm::get_kradial(void)
 {

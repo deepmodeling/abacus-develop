@@ -145,13 +145,13 @@ void ModuleIO::save_HSR_sparse(
         {
             for (int ispin = 0; ispin < spin_loop; ++ispin)
             {
-                g1[ispin].open(ssh[ispin].str().c_str(), ios::binary | ios::app);
+                g1[ispin].open(ssh[ispin].str().c_str(), ios::binary);
                 g1[ispin].write(reinterpret_cast<char *>(&step), sizeof(int));
                 g1[ispin].write(reinterpret_cast<char *>(&GlobalV::NLOCAL), sizeof(int));
                 g1[ispin].write(reinterpret_cast<char *>(&output_R_number), sizeof(int));
             }
 
-            g2.open(sss.str().c_str(), ios::binary | ios::app);
+            g2.open(sss.str().c_str(), ios::binary);
             g2.write(reinterpret_cast<char *>(&step), sizeof(int));
             g2.write(reinterpret_cast<char *>(&GlobalV::NLOCAL), sizeof(int));
             g2.write(reinterpret_cast<char *>(&output_R_number), sizeof(int));
@@ -160,13 +160,13 @@ void ModuleIO::save_HSR_sparse(
         {
             for (int ispin = 0; ispin < spin_loop; ++ispin)
             {
-                g1[ispin].open(ssh[ispin].str().c_str(), ios::app);
+                g1[ispin].open(ssh[ispin].str().c_str());
                 g1[ispin] << "STEP: " << istep << std::endl;
                 g1[ispin] << "Matrix Dimension of H(R): " << GlobalV::NLOCAL <<std::endl;
                 g1[ispin] << "Matrix number of H(R): " << output_R_number << std::endl;
             }
 
-            g2.open(sss.str().c_str(), ios::app);
+            g2.open(sss.str().c_str());
             g2 << "STEP: " << istep <<std::endl;
             g2 << "Matrix Dimension of S(R): " << GlobalV::NLOCAL <<std::endl;
             g2 << "Matrix number of S(R): " << output_R_number << std::endl;
@@ -728,17 +728,17 @@ void ModuleIO::save_dH_sparse(
         {
             for (int ispin = 0; ispin < spin_loop; ++ispin)
             {
-                g1x[ispin].open(sshx[ispin].str().c_str(), ios::binary | ios::app);
+                g1x[ispin].open(sshx[ispin].str().c_str(), ios::binary);
                 g1x[ispin].write(reinterpret_cast<char *>(&step), sizeof(int));
                 g1x[ispin].write(reinterpret_cast<char *>(&GlobalV::NLOCAL), sizeof(int));
                 g1x[ispin].write(reinterpret_cast<char *>(&output_R_number), sizeof(int));
 
-                g1y[ispin].open(sshy[ispin].str().c_str(), ios::binary | ios::app);
+                g1y[ispin].open(sshy[ispin].str().c_str(), ios::binary);
                 g1y[ispin].write(reinterpret_cast<char *>(&step), sizeof(int));
                 g1y[ispin].write(reinterpret_cast<char *>(&GlobalV::NLOCAL), sizeof(int));
                 g1y[ispin].write(reinterpret_cast<char *>(&output_R_number), sizeof(int));
 
-                g1z[ispin].open(sshz[ispin].str().c_str(), ios::binary | ios::app);
+                g1z[ispin].open(sshz[ispin].str().c_str(), ios::binary);
                 g1z[ispin].write(reinterpret_cast<char *>(&step), sizeof(int));
                 g1z[ispin].write(reinterpret_cast<char *>(&GlobalV::NLOCAL), sizeof(int));
                 g1z[ispin].write(reinterpret_cast<char *>(&output_R_number), sizeof(int));                                
@@ -748,17 +748,17 @@ void ModuleIO::save_dH_sparse(
         {
             for (int ispin = 0; ispin < spin_loop; ++ispin)
             {
-                g1x[ispin].open(sshx[ispin].str().c_str(), ios::app);
+                g1x[ispin].open(sshx[ispin].str().c_str());
                 g1x[ispin] << "STEP: " << istep << std::endl;
                 g1x[ispin] << "Matrix Dimension of dHx(R): " << GlobalV::NLOCAL <<std::endl;
                 g1x[ispin] << "Matrix number of dHx(R): " << output_R_number << std::endl;
 
-                g1y[ispin].open(sshy[ispin].str().c_str(), ios::app);
+                g1y[ispin].open(sshy[ispin].str().c_str());
                 g1y[ispin] << "STEP: " << istep << std::endl;
                 g1y[ispin] << "Matrix Dimension of dHy(R): " << GlobalV::NLOCAL <<std::endl;
                 g1y[ispin] << "Matrix number of dHy(R): " << output_R_number << std::endl;
 
-                g1z[ispin].open(sshz[ispin].str().c_str(), ios::app);
+                g1z[ispin].open(sshz[ispin].str().c_str());
                 g1z[ispin] << "STEP: " << istep << std::endl;
                 g1z[ispin] << "Matrix Dimension of dHz(R): " << GlobalV::NLOCAL <<std::endl;
                 g1z[ispin] << "Matrix number of dHz(R): " << output_R_number << std::endl;                                

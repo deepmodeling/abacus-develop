@@ -5,7 +5,7 @@ include Makefile.vars
 #==========================
 INCLUDES = -I. -Icommands -I../
 LIBS = -lm -lpthread
-OPTS = -Ofast -march=native -std=c++14 -pedantic -m64 ${INCLUDES}
+OPTS = -std=c++14 -pedantic -m64 ${INCLUDES}
 HONG = -D__LCAO
 HONG += -D__ELPA
 ifeq ($(OPENMP), ON)
@@ -41,9 +41,9 @@ ifeq ($(DEBUG), ON)
     else
         CXX = g++
     endif
-    OPTS +=  -fsanitize=address -fno-omit-frame-pointer -Wall -g #It can check segmental defaults
+    OPTS += -O0 -fsanitize=address -fno-omit-frame-pointer -Wall -g #It can check segmental defaults
 else
-    HONG += -DNDEBUG
+    HONG += -Ofast -march=native -DNDEBUG
 endif
 
 ifeq ($(INTEL), ON)
@@ -63,7 +63,10 @@ ifeq ($(INTEL), ON)
     LIBS     += -L${ELPA_LIB_DIR} -l${ELPA_NAME}  -Wl,-rpath=${ELPA_LIB_DIR}
     INCLUDES += -I${ELPA_INCLUDE_DIR}
 else
-    OPTS += -fopenmp -fpermissive
+    OPTS += -fpermissive
+    ifeq ($(OPENMP), ON)
+        OPTS += -fopenmp 
+    endif
     ##==========================
     ## FFTW package
     ##==========================

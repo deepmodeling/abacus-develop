@@ -1,4 +1,3 @@
-remove_definitions(-D__MPI)
 remove_definitions(-D__EXX)
 
 list(APPEND depend_files
@@ -46,3 +45,31 @@ AddTest(
 )
 install(DIRECTORY GaAs DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/../../../tests)
 install(DIRECTORY GaAs DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+
+
+AddTest(
+    TARGET ORB_nonlocal_lm_test
+    SOURCES ORB_nonlocal_lm_test.cpp
+        ../ORB_nonlocal_lm.cpp
+    LIBS ${math_libs} device base
+)
+
+AddTest(
+    TARGET ORB_atomic_lm_test
+    SOURCES ORB_atomic_lm_test.cpp
+        ../ORB_atomic_lm.cpp
+    LIBS ${math_libs} device base
+)
+
+AddTest(
+    TARGET ORB_read_test
+    SOURCES ORB_read_test.cpp
+        ../ORB_read.cpp
+        ../ORB_atomic.cpp
+        ../ORB_atomic_lm.cpp
+    LIBS ${math_libs} device base
+)
+
+install(DIRECTORY lcao_H2O DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+install(DIRECTORY lcao_H2O DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/../../../tests)
+

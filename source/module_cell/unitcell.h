@@ -266,11 +266,6 @@ public:
 			const bool &init_vel_in,
 			const std::string &fixed_axes_in);
 
-#ifdef __MPI
-	void bcast_unitcell_pseudo(void);
-	void bcast_unitcell_pseudo2(void);
-#endif
-
 	void check_structure(double factor);
 };
 

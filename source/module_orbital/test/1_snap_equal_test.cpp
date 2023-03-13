@@ -1,5 +1,6 @@
 #include<gtest/gtest.h>
 #include"ORB_unittest.h"
+#include "module_base/global_variable.h"
 
 //Test whether the 2-center-int results
 // and its derivative from two clases are equal. 
@@ -70,3 +71,22 @@ TEST_F(test_orb, equal_test)
 		}
 	}
 }
+
+int main(int argc, char **argv)
+{
+
+#ifdef __MPI
+    MPI_Init(&argc, &argv);
+    MPI_Comm_size(MPI_COMM_WORLD,&GlobalV::NPROC);
+    MPI_Comm_rank(MPI_COMM_WORLD,&GlobalV::MY_RANK);
+#endif
+    testing::InitGoogleTest(&argc, argv);
+    int result = RUN_ALL_TESTS();
+
+#ifdef __MPI
+    MPI_Finalize();
+#endif
+
+    return result;
+}
+

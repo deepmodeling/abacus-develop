@@ -11,20 +11,32 @@ Symmetry_rho::~Symmetry_rho()
 
 }
 
-void Symmetry_rho::begin(const int &spin_now, const Charge &CHR, const ModulePW::PW_Basis *rho_basis, Parallel_Grid &Pgrid, ModuleSymmetry::Symmetry &symm) const
+void Symmetry_rho::begin(const int &spin_now, const Charge &CHR, ModulePW::PW_Basis *rho_basis, Parallel_Grid &Pgrid, ModuleSymmetry::Symmetry &symm) const
 {
 	assert(spin_now < 4);//added by zhengdy-soc
 
 	if(ModuleSymmetry::Symmetry::symm_flag != 1) return;
-#ifdef __MPI
-	// parallel version
-	psymm(CHR.rho[spin_now], rho_basis, Pgrid, symm);
-	if(XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5) psymm(CHR.kin_r[spin_now],rho_basis,Pgrid,symm);
-#else
-	// series version.
-	symm.rho_symmetry(CHR.rho[spin_now], rho_basis->nx, rho_basis->ny, rho_basis->nz);
-	if(XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5) symm.rho_symmetry(CHR.kin_r[spin_now],rho_basis->nx, rho_basis->ny, rho_basis->nz);
-#endif
+	// both parallel and serial
+	if(symm.nrot==symm.nrotk) //pure point-group, do rho_symm in real space
+	{
+		psymm(CHR.rho[spin_now], rho_basis, Pgrid, symm);
+		if(XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5) psymm(CHR.kin_r[spin_now], rho_basis,Pgrid,symm);
+	}
+	else	//space group, do rho_symm in reciprocal space
+	{
+		rho_basis->real2recip(CHR.rho[spin_now], CHR.rhog[spin_now]);
+		psymmg(CHR.rhog[spin_now], rho_basis, Pgrid, symm);	//need to modify
+		rho_basis->recip2real(CHR.rhog[spin_now], CHR.rho[spin_now]);
+
+		if(XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5) 
+		{
+			std::complex<double>* kin_g = new std::complex<double>[CHR.ngmc];
+			rho_basis->real2recip(CHR.kin_r[spin_now], kin_g);
+			psymmg(kin_g,  rho_basis,Pgrid,symm);
+			rho_basis->recip2real(kin_g, CHR.kin_r[spin_now]);
+			delete[] kin_g;
+		}	
+	}
 	return;
 }
 
@@ -44,6 +56,9 @@ void Symmetry_rho::psymm(double* rho_part, const ModulePW::PW_Basis *rho_basis, 
 	if(GlobalV::MY_RANK==0)
 	{
 		symm.rho_symmetry(rhotot, rho_basis->nx, rho_basis->ny, rho_basis->nz);
+#else
+		symm.rho_symmetry(rho_part, rho_basis->nx, rho_basis->ny, rho_basis->nz);
+#endif
 		/*
 		int count = 0;
 		GlobalV::ofs_running << scientific;
@@ -61,6 +76,7 @@ void Symmetry_rho::psymm(double* rho_part, const ModulePW::PW_Basis *rho_basis, 
 			}
 		}
 		*/
+	#ifdef __MPI
 	}
 
 	// (3)

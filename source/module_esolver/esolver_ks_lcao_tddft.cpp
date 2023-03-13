@@ -305,11 +305,12 @@ void ESolver_KS_LCAO_TDDFT::updatepot(const int istep, const int iter)
             this->psi_laststep
                 = new psi::Psi<std::complex<double>>(GlobalC::kv.nks, GlobalV::NBANDS, GlobalV::NLOCAL, nullptr);
 #endif
-        for (int ik = 0; ik < GlobalC::kv.nks; ++ik)
+
+        std::complex<double> *p_psi = &psi[0](0,0,0);
+        std::complex<double> *p_psi_laststep = &psi_laststep[0](0,0,0);
+        for (int index = 0; index < psi[0].size(); ++index)
         {
-            psi->fix_k(ik);
-            for (int index = 0; index < psi[0].size(); ++index)
-                psi_laststep[0].get_pointer()[index] = psi[0].get_pointer()[index];
+            p_psi_laststep[index] = p_psi[index];
         }
         if (istep > 1 && ELEC_evolve::td_edm == 0)
             this->cal_edm_tddft();
@@ -525,14 +526,14 @@ void ESolver_KS_LCAO_TDDFT::cal_edm_tddft()
                  &info);
 
         const char N_char = 'N', T_char = 'T';
-        const double one_float[2] = {1.0, 0.0}, zero_float[2] = {0.0, 0.0};
-        const complex<double> half_float[2] = {0.5, 0.0};
+        const complex<double> one_float = {1.0, 0.0}, zero_float = {0.0, 0.0};
+        const complex<double> half_float = {0.5, 0.0};
         pzgemm_(&T_char,
                 &T_char,
                 &GlobalV::NLOCAL,
                 &GlobalV::NLOCAL,
                 &GlobalV::NLOCAL,
-                &one_float[0],
+                &one_float,
                 this->LOC.dm_k[ik].c,
                 &one_int,
                 &one_int,
@@ -541,7 +542,7 @@ void ESolver_KS_LCAO_TDDFT::cal_edm_tddft()
                 &one_int,
                 &one_int,
                 this->LOC.ParaV->desc,
-                &zero_float[0],
+                &zero_float,
                 tmp1,
                 &one_int,
                 &one_int,
@@ -552,7 +553,7 @@ void ESolver_KS_LCAO_TDDFT::cal_edm_tddft()
                 &GlobalV::NLOCAL,
                 &GlobalV::NLOCAL,
                 &GlobalV::NLOCAL,
-                &one_float[0],
+                &one_float,
                 tmp1,
                 &one_int,
                 &one_int,
@@ -561,7 +562,7 @@ void ESolver_KS_LCAO_TDDFT::cal_edm_tddft()
                 &one_int,
                 &one_int,
                 this->LOC.ParaV->desc,
-                &zero_float[0],
+                &zero_float,
                 tmp2,
                 &one_int,
                 &one_int,
@@ -572,7 +573,7 @@ void ESolver_KS_LCAO_TDDFT::cal_edm_tddft()
                 &GlobalV::NLOCAL,
                 &GlobalV::NLOCAL,
                 &GlobalV::NLOCAL,
-                &one_float[0],
+                &one_float,
                 Sinv,
                 &one_int,
                 &one_int,
@@ -581,7 +582,7 @@ void ESolver_KS_LCAO_TDDFT::cal_edm_tddft()
                 &one_int,
                 &one_int,
                 this->LOC.ParaV->desc,
-                &zero_float[0],
+                &zero_float,
                 tmp3,
                 &one_int,
                 &one_int,
@@ -592,7 +593,7 @@ void ESolver_KS_LCAO_TDDFT::cal_edm_tddft()
                 &GlobalV::NLOCAL,
                 &GlobalV::NLOCAL,
                 &GlobalV::NLOCAL,
-                &one_float[0],
+                &one_float,
                 tmp3,
                 &one_int,
                 &one_int,
@@ -601,7 +602,7 @@ void ESolver_KS_LCAO_TDDFT::cal_edm_tddft()
                 &one_int,
                 &one_int,
                 this->LOC.ParaV->desc,
-                &zero_float[0],
+                &zero_float,
                 tmp4,
                 &one_int,
                 &one_int,
@@ -610,12 +611,12 @@ void ESolver_KS_LCAO_TDDFT::cal_edm_tddft()
         pzgeadd_(&N_char,
                  &GlobalV::NLOCAL,
                  &GlobalV::NLOCAL,
-                 &half_float[0],
+                 &half_float,
                  tmp2,
                  &one_int,
                  &one_int,
                  this->LOC.ParaV->desc,
-                 &half_float[0],
+                 &half_float,
                  tmp4,
                  &one_int,
                  &one_int,
@@ -623,12 +624,12 @@ void ESolver_KS_LCAO_TDDFT::cal_edm_tddft()
 
         pztranu_(&GlobalV::NLOCAL,
                  &GlobalV::NLOCAL,
-                 &one_float[0],
+                 &one_float,
                  tmp4,
                  &one_int,
                  &one_int,
                  this->LOC.ParaV->desc,
-                 &zero_float[0],
+                 &zero_float,
                  tmp5,
                  &one_int,
                  &one_int,

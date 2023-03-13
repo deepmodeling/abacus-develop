@@ -61,8 +61,9 @@ std::pair<int, std::vector<int>> DiagoBlas::pdsygvx_once(const int *const desc,
     const char jobz = 'V', range = 'I', uplo = 'U';
     const int itype = 1, il = 1, iu = GlobalV::NBANDS, one = 1;
     int M = 0, NZ = 0, lwork = -1, liwork = -1, info = 0;
+    double vl = 0, vu = 0;
     const double abstol = 0, orfac = -1;
-    std::vector<double> work(1, 0);
+    std::vector<double> work(3, 0);
     std::vector<int> iwork(1, 0);
     std::vector<int> ifail(GlobalV::NLOCAL, 0);
     std::vector<int> iclustr(2 * GlobalV::DSIZE);
@@ -81,8 +82,8 @@ std::pair<int, std::vector<int>> DiagoBlas::pdsygvx_once(const int *const desc,
              &one,
              &one,
              desc,
-             NULL,
-             NULL,
+             &vl,
+             &vu,
              &il,
              &iu,
              &abstol,
@@ -109,7 +110,7 @@ std::pair<int, std::vector<int>> DiagoBlas::pdsygvx_once(const int *const desc,
 
     //	GlobalV::ofs_running<<"lwork="<<work[0]<<"\t"<<"liwork="<<iwork[0]<<std::endl;
     lwork = work[0];
-    work.resize(lwork, 0);
+    work.resize(std::max(lwork,3), 0);
     liwork = iwork[0];
     iwork.resize(liwork, 0);
 
@@ -126,8 +127,8 @@ std::pair<int, std::vector<int>> DiagoBlas::pdsygvx_once(const int *const desc,
              &one,
              &one,
              desc,
-             NULL,
-             NULL,
+             &vl,
+             &vu,
              &il,
              &iu,
              &abstol,
@@ -184,8 +185,12 @@ std::pair<int, std::vector<int>> DiagoBlas::pzhegvx_once(const int *const desc,
     const int itype = 1, il = 1, iu = GlobalV::NBANDS, one = 1;
     int M = 0, NZ = 0, lwork = -1, lrwork = -1, liwork = -1, info = 0;
     const double abstol = 0, orfac = -1;
+    //Note: pzhegvx_ has a bug
+    //      We must give vl,vu a value, although we do not use range 'V'
+    //      We must give rwork at least a memory of sizeof(double) * 3
+    const double vl = 0, vu = 0;
     std::vector<std::complex<double>> work(1, 0);
-    std::vector<double> rwork(1, 0);
+    std::vector<double> rwork(3, 0);
     std::vector<int> iwork(1, 0);
     std::vector<int> ifail(GlobalV::NLOCAL, 0);
     std::vector<int> iclustr(2 * GlobalV::DSIZE);
@@ -204,8 +209,8 @@ std::pair<int, std::vector<int>> DiagoBlas::pzhegvx_once(const int *const desc,
              &one,
              &one,
              desc,
-             NULL,
-             NULL,
+             &vl,
+             &vu,
              &il,
              &iu,
              &abstol,
@@ -236,7 +241,8 @@ std::pair<int, std::vector<int>> DiagoBlas::pzhegvx_once(const int *const desc,
     lwork = work[0].real();
     work.resize(lwork, 0);
     lrwork = rwork[0] + this->degeneracy_max * GlobalV::NLOCAL;
-    rwork.resize(lrwork, 0);
+    int maxlrwork = std::max(lrwork,3);
+    rwork.resize(maxlrwork, 0);
     liwork = iwork[0];
     iwork.resize(liwork, 0);
 
@@ -253,8 +259,8 @@ std::pair<int, std::vector<int>> DiagoBlas::pzhegvx_once(const int *const desc,
              &one,
              &one,
              desc,
-             NULL,
-             NULL,
+             &vl,
+             &vu,
              &il,
              &iu,
              &abstol,

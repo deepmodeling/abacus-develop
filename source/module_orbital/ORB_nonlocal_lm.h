@@ -46,6 +46,7 @@ class Numerical_Nonlocal_Lm
 	const double* getBeta_k() const { return this->beta_k; }
 	const double& getBeta_k(const int &ik) const { return this->beta_k[ik]; }
 	
+    // enables deep copy
 	Numerical_Nonlocal_Lm& operator= (const Numerical_Nonlocal_Lm& nol );
 
 	void set_NL_proj(
@@ -66,7 +67,7 @@ class Numerical_Nonlocal_Lm
 
 	void freemem(void);
 	void renew(void);
-	void extra_uniform(const double &dr_uniform);
+	//void extra_uniform(const double &dr_uniform);
 	void get_kradial(void);
 
 	std::string label;

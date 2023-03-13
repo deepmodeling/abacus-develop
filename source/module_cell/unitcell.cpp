@@ -687,15 +687,6 @@ void UnitCell::setup_cell(
 #else
 			ok2 = this->read_atom_positions(ifa, log, GlobalV::ofs_warning);
 #endif
-
-			if(ok2&&GlobalV::out_element_info)
-			{
-				for(int i=0;i<this->ntype;i++)
-				{
-					ModuleBase::Global_File::make_dir_atom( this->atoms[i].label );
-				}
-			}
-
 		}
 	}
 #ifdef __MPI
@@ -717,8 +708,7 @@ void UnitCell::setup_cell(
 	}
 
 #ifdef __MPI
-	this->bcast_unitcell_pseudo();
-
+	this->bcast_unitcell();
 	// mohan add 2010-09-29
 	#ifdef __LCAO
 	orb.bcast_files(ntype, GlobalV::MY_RANK);
@@ -810,6 +800,10 @@ void UnitCell::read_pseudo(ofstream &ofs)
 
     if(GlobalV::MY_RANK == 0 && GlobalV::out_element_info)
     {
+	for(int i=0;i<this->ntype;i++)
+	{
+		ModuleBase::Global_File::make_dir_atom( this->atoms[i].label );
+	}
         for(int it=0; it<ntype; it++)
         {
             Atom* atom = &atoms[it];
@@ -873,7 +867,7 @@ void UnitCell::read_pseudo(ofstream &ofs)
     }
 
 #ifdef __MPI
-    bcast_unitcell_pseudo2();
+    bcast_unitcell2();
 #endif
 
     for(int it=0; it<ntype; it++)
@@ -932,6 +926,13 @@ void UnitCell::read_pseudo(ofstream &ofs)
     }
 
     cal_meshx();
+
+#ifdef __MPI
+    Parallel_Common::bcast_int( meshx );
+    Parallel_Common::bcast_int( natomwfc );
+    Parallel_Common::bcast_int( lmax );
+    Parallel_Common::bcast_int( lmax_ppwf );
+#endif
 }
 
 void UnitCell::setup_cell_classic(
@@ -997,13 +998,6 @@ void UnitCell::setup_cell_classic(
 #else
 			ok2 = this->read_atom_positions(ifa, ofs_running, ofs_warning);
 #endif
-			if(ok2&&GlobalV::out_element_info)
-			{
-				for(int i=0;i<this->ntype;i++)
-				{
-					ModuleBase::Global_File::make_dir_atom( this->atoms[i].label );
-				}
-			}
 		}
 	}
 #ifdef __MPI
