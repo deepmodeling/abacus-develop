@@ -50,7 +50,6 @@ namespace ModuleESolver
         this->pw_rho->setuptransform();
         this->pw_rho->collect_local_pw(); 
         this->pw_rho->collect_uniqgg();
-        this->print_rhofft(inp, GlobalV::ofs_running);
     }
 
     void ESolver_FP::print_rhofft(Input&inp, ofstream &ofs)
