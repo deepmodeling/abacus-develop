@@ -53,19 +53,19 @@ if(ENABLE_LCAO)
 endif()
 
 add_library(
-    io
-    OBJECT
-    ${objects} ${objects_advanced}
-)
-
-add_library(
-    io_cov
+    io_basic
     OBJECT
     ${objects}
 )
 
+add_library(
+    io_advanced
+    OBJECT
+    ${objects_advanced}
+)
+
 if(ENABLE_COVERAGE)
-  add_coverage(io_cov)
+  add_coverage(io_basic)
 endif()
 
 if(BUILD_TESTING)
