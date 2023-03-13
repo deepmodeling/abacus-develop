@@ -14,7 +14,6 @@ list(APPEND objects
     read_rho.cpp
     restart.cpp
     rwstream.cpp
-    unk_overlap_pw.cpp
     write_wfc_pw.cpp
     write_input.cpp
     write_rho.cpp
@@ -23,6 +22,7 @@ list(APPEND objects
 )
 
 list(APPEND objects_advanced
+    unk_overlap_pw.cpp
     berryphase.cpp
     to_wannier90.cpp
     winput.cpp
@@ -38,7 +38,6 @@ if(ENABLE_LCAO)
       istate_charge.cpp
       istate_envelope.cpp
       read_dm.cpp
-      unk_overlap_lcao.cpp
       read_wfc_nao.cpp
       write_wfc_nao.cpp
       write_HS.cpp
@@ -48,24 +47,25 @@ if(ENABLE_LCAO)
       write_dm_sparse.cpp
   )
   list(APPEND objects_advanced
+      unk_overlap_lcao.cpp
       mulliken_charge.cpp
   )
 endif()
 
 add_library(
-    io
-    OBJECT
-    ${objects} ${objects_advanced}
-)
-
-add_library(
-    io_cov
+    io_basic
     OBJECT
     ${objects}
 )
 
+add_library(
+    io_advanced
+    OBJECT
+    ${objects_advanced}
+)
+
 if(ENABLE_COVERAGE)
-  add_coverage(io_cov)
+  add_coverage(io_basic)
 endif()
 
 if(BUILD_TESTING)

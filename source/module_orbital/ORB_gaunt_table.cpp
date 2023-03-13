@@ -57,7 +57,7 @@ void ORB_gaunt_table::init_Gaunt(const int &lmax)
     return;
 }
 
-
+/*
 double ORB_gaunt_table::Cal_Gaunt_single
 (
     const int &L1, 
@@ -108,8 +108,8 @@ double ORB_gaunt_table::Cal_Gaunt_single
 	ModuleBase::timer::tick("ORB_gaunt_table", "Cal_Gaunt_single");
 	return result;
 }
-
-
+*/
+/*
 void ORB_gaunt_table::init_Ylm_Gaunt
 (
  	const int &lmax,
@@ -152,7 +152,7 @@ void ORB_gaunt_table::init_Ylm_Gaunt
 	ModuleBase::timer::tick("ORB_gaunt_table", "init_Ylm_Gaunt");
 	return;
 }
-
+*/
 
 int ORB_gaunt_table::get_lm_index(
 	const int l, 
@@ -166,10 +166,10 @@ int ORB_gaunt_table::get_lm_index(
   * Rasch and Yu's Method
   ***********************/
 ///total pointers
-int ORB_gaunt_table::P_EL(const int& L)
-{
-	return (L+1) * (L+2) * (L+3) * (L+4) / 24;
-}
+//int ORB_gaunt_table::P_EL(const int& L)
+//{
+//	return (L+1) * (L+2) * (L+3) * (L+4) / 24;
+//}
 
 
 ///effective pointers

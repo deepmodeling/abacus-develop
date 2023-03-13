@@ -307,15 +307,15 @@ std::shared_ptr<ModuleBase::matrix> Abfs::DPcal_C(
 {
 	// Attention: 
 	// 在计算 C[it1,it1,0][it2,R] 后，额外计算 C[it2,it2,0][it1,-R] 几乎不耗时。
-	// if 仅保存 C[it1,it1,0][it2,R]，不保存 C[it2,it2,0][it1,-R]：
-	//     if C[it2,it2,0][it1,-R] 在本核上亦需计算：
+	// if 仅保存 C[it1,it1,0][it2,R]，不保存 C[it2,it2,0][it1,-R]: 
+	//     if C[it2,it2,0][it1,-R] 在本核上亦需计算: 
 	//         浪费时间重算一遍
-	//     if C[it2,it2,0][it1,-R] 在本核上不需计算：
+	//     if C[it2,it2,0][it1,-R] 在本核上不需计算: 
 	//         好
-	// if 同时保存 C[it1,it1,0][it2,R]、C[it2,it2,0][it1,-R]：
-	//     if C[it2,it2,0][it1,-R] 在本核上亦需计算：
+	// if 同时保存 C[it1,it1,0][it2,R]、C[it2,it2,0][it1,-R]: 
+	//     if C[it2,it2,0][it1,-R] 在本核上亦需计算: 
 	//         好
-	//     if C[it2,it2,0][it1,-R] 在本核上不需计算：
+	//     if C[it2,it2,0][it1,-R] 在本核上不需计算: 
 	//         浪费空间（可在算完全部Cs后根据需要删除无需的Cs，释放空间？）
 	// 根据后续情况选择权衡。
 	
