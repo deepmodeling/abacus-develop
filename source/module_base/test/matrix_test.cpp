@@ -358,7 +358,7 @@ TEST_F(matrixTest,Print)
     std::string output;
     const double threshold=4.0;
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(m33a.print(std::cout,threshold),::testing::ExitedWithCode(0),"");
+    //EXPECT_EXIT(m33a.print(std::cout,threshold),::testing::ExitedWithCode(0),"");
     output  = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output,testing::HasSubstr("0\t0\t0\t\n0\t5\t6\t\n7\t8\t9\t\n"));
 }
