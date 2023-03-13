@@ -57,6 +57,7 @@ int OUT_FREQ_ELEC = 0;
 int OUT_FREQ_ION = 0;
 int RELAX_NMAX = 20;
 int MD_NSTEP = 20;
+int MD_PREC_LEVEL = 0;
 int SCF_NMAX = 100;
 
 std::string BASIS_TYPE = "pw"; // xiaohui add 2013-09-01

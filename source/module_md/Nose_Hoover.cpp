@@ -17,6 +17,12 @@ Nose_Hoover::Nose_Hoover(MD_parameters& MD_para_in, UnitCell &unit_in) : MDrun(M
         ModuleBase::WARNING_QUIT("Nose_Hoover", " md_tfirst must be larger than 0 in NHC !!! ");
     }
 
+    if(mdp.md_pmode != "none")
+    {
+        GlobalV::MD_PREC_LEVEL = mdp.md_prec_level;
+        ucell.cell_parameter_updated = true;
+    }
+
     // init NPT related variables
     for(int i=0; i<6; ++i)
     {

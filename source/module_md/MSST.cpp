@@ -8,7 +8,8 @@
 
 MSST::MSST(MD_parameters& MD_para_in, UnitCell &unit_in) : MDrun(MD_para_in, unit_in)
 {
-    std::cout << "MSST" << std::endl;
+    GlobalV::MD_PREC_LEVEL = mdp.md_prec_level;
+    ucell.cell_parameter_updated = true;
 
     mdp.msst_qmass = mdp.msst_qmass / pow(ModuleBase::ANGSTROM_AU, 4) / pow(ModuleBase::AU_to_MASS, 2);
     mdp.msst_vel = mdp.msst_vel * ModuleBase::ANGSTROM_AU * ModuleBase::AU_to_FS;

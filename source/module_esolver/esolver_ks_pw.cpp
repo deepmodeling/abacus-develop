@@ -238,12 +238,20 @@ namespace ModuleESolver
             this->CE.save_pos_next(GlobalC::ucell);
             this->CE.extrapolate_charge(this->pelec->charge);
 
-            if(GlobalC::ucell.cell_parameter_updated)
+            // different precision level for vc-md
+            if(GlobalC::ucell.cell_parameter_updated && GlobalV::MD_PREC_LEVEL)
+            {
+                this->init_after_vc(INPUT, GlobalC::ucell);
+            }
+            else
             {
                 Variable_Cell::init_after_vc();
+                GlobalC::wfcpw->initgrids(GlobalC::ucell.lat0, GlobalC::ucell.latvec, GlobalC::wfcpw->nx, GlobalC::wfcpw->ny, GlobalC::wfcpw->nz);
+                GlobalC::wfcpw->initparameters(false, INPUT.ecutwfc, GlobalC::kv.nks, GlobalC::kv.kvec_d.data());
+                GlobalC::wfcpw->collect_local_pw(); 
+                GlobalC::wf.init_after_vc(GlobalC::kv.nks);
+                GlobalC::wf.init_at_1();
             }
-
-            //this->pelec->init_scf(istep, GlobalC::sf.strucFac);
         }
 
         if(GlobalV::CALCULATION=="relax" || GlobalV::CALCULATION=="cell-relax")
@@ -262,15 +270,17 @@ namespace ModuleESolver
                 // the new charge density.
                 //this->pelec->init_scf( istep, GlobalC::sf.strucFac );
             }
+
+            if(GlobalC::ucell.cell_parameter_updated)
+            {
+                GlobalC::wfcpw->initgrids(GlobalC::ucell.lat0, GlobalC::ucell.latvec, GlobalC::wfcpw->nx, GlobalC::wfcpw->ny, GlobalC::wfcpw->nz);
+                GlobalC::wfcpw->initparameters(false, INPUT.ecutwfc, GlobalC::kv.nks, GlobalC::kv.kvec_d.data());
+                GlobalC::wfcpw->collect_local_pw(); 
+                GlobalC::wf.init_after_vc(GlobalC::kv.nks);
+                GlobalC::wf.init_at_1();
+            }
         }
-        if(GlobalC::ucell.cell_parameter_updated)
-        {
-            GlobalC::wfcpw->initgrids(GlobalC::ucell.lat0, GlobalC::ucell.latvec, GlobalC::wfcpw->nx, GlobalC::wfcpw->ny, GlobalC::wfcpw->nz);
-            GlobalC::wfcpw->initparameters(false, INPUT.ecutwfc, GlobalC::kv.nks, GlobalC::kv.kvec_d.data());
-            GlobalC::wfcpw->collect_local_pw(); 
-            GlobalC::wf.init_after_vc(GlobalC::kv.nks);
-            GlobalC::wf.init_at_1();
-        }
+
         //init Hamilt, this should be allocated before each scf loop
         //Operators in HamiltPW should be reallocated once cell changed
         //delete Hamilt if not first scf
@@ -578,6 +588,7 @@ namespace ModuleESolver
     void ESolver_KS_PW<FPTYPE, Device>::cal_Force(ModuleBase::matrix& force)
     {
         Forces<double, Device> ff;
+        if (this->__kspw_psi != nullptr) this->__kspw_psi = nullptr;
         if (this->__kspw_psi == nullptr) {
             this->__kspw_psi = GlobalV::precision_flag == "single" ?
                                new psi::Psi<std::complex<double>, Device>(this->kspw_psi[0]) :
@@ -590,6 +601,7 @@ namespace ModuleESolver
     void ESolver_KS_PW<FPTYPE, Device>::cal_Stress(ModuleBase::matrix& stress)
     {
         Stress_PW<double, Device> ss(this->pelec);
+        if (this->__kspw_psi != nullptr) this->__kspw_psi = nullptr;
         if (this->__kspw_psi == nullptr) {
             this->__kspw_psi = GlobalV::precision_flag == "single" ?
                              new psi::Psi<std::complex<double>, Device>(this->kspw_psi[0]) :

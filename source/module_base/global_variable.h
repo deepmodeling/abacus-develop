@@ -62,6 +62,7 @@ extern bool fixed_atoms;
 extern int RELAX_NMAX; // 8.3
 extern int SCF_NMAX; // 8.4
 extern int MD_NSTEP;
+extern int MD_PREC_LEVEL;    // liuyu 2023-03-13
 
 extern std::string BASIS_TYPE; // xiaohui add 2013-09-01
 extern std::string KS_SOLVER; // xiaohui add 2013-09-01
