@@ -43,15 +43,15 @@ class toWannier90
     std::vector<std::vector<ModuleBase::Vector3<double>>> nncell;
     int nntot = 0;
     int num_wannier;
-    int *L;
-    int *m;
-    int *rvalue;
-    double *alfa;
-    ModuleBase::Vector3<double> *R_centre;
+    int *L = nullptr;
+    int *m = nullptr;
+    int *rvalue = nullptr;
+    double *alfa = nullptr;
+    ModuleBase::Vector3<double> *R_centre = nullptr;
     std::string wannier_file_name = "seedname";
     int num_exclude_bands = 0;
-    int *exclude_bands;
-    bool *tag_cal_band;
+    int *exclude_bands = nullptr;
+    bool *tag_cal_band = nullptr;
     int num_bands;
     bool gamma_only_wannier = false;
     std::string wannier_spin = "up";
@@ -105,7 +105,7 @@ class toWannier90
     void get_lcao_wfc_global_ik(std::complex<double> **ctot, std::complex<double> **cc);
 
   private:
-    std::complex<double> ***wfc_k_grid;
+    std::complex<double> ***wfc_k_grid = nullptr;
 };
 
 #endif

@@ -179,6 +179,7 @@ void atom_arrange::delete_vector(
 		}
 
 		delete[] grid_d.Cell;
+		grid_d.init_cell_flag = false;
 	}
 	return;
 }

@@ -520,8 +520,14 @@ calculations.
 ### mixing_beta
 
 - **Type**: Real
-- **Description**: mixing parameter: 0 means no new charge
-- **Default**: 0.7
+- **Description**: mixing parameter. We recommand the following options:
+  - default: -10.0 means program will autoset **mixing_beta** and **mixing_gg0** before charge mixing method starts. 
+    - Default values of transition metal system are **mixing_beta=0.2** and **mixing_gg0=1.5**; 
+    - Default values of metal system (bandgap <= 1.0 eV) are **mixing_beta=0.2** and **mixing_gg0=0.0**;
+    - Default values of other systems (bandgap > 1.0eV) are **mixing_beta=0.7** and **mixing_gg0=0.0**.
+  - 0: keep charge density unchanged, usually used for restarting with **init_chg=file** or testing.
+  - 0.1 or less: if convergence of SCF calculation is difficult to reach, please try **0 < mixing_beta < 0.1**  
+- **Default**: -10.0
 
 ### mixing_ndim
 

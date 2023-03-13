@@ -140,18 +140,18 @@ public:
 	void getrf(
 		const int M, const int N, 
 		std::complex<double> *A, const int IA, const int JA, const int *DESCA,
-		int *ipiv,  int info)
+		int *ipiv,  int *info) //fix a bug: info is output and we must use int*
 	{
-		pzgetrf_(&M, &N, A, &IA, &JA, DESCA, ipiv, &info);
+		pzgetrf_(&M, &N, A, &IA, &JA, DESCA, ipiv, info);
 	}
 
 	static inline
 	void getri(
 		const int n, 
 		const std::complex<double> *A, const int ia, const int ja, const int *desca, int *ipiv, 
-		const std::complex<double> *work, const int *lwork, const int *iwork, const int *liwork, const int info)
+		const std::complex<double> *work, const int *lwork, const int *iwork, const int *liwork, int *info)
 	{
-		pzgetri_(&n, A, &ia, &ja, desca, ipiv, work, lwork, iwork, liwork, &info);
+		pzgetri_(&n, A, &ia, &ja, desca, ipiv, work, lwork, iwork, liwork, info);
 	}
 
 	static inline

@@ -13,6 +13,7 @@
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
 #include "module_base/matrix.h"
+#include "module_cell/unitcell.h"
 #include "charge.h"
 class Charge_Mixing
 {
@@ -31,6 +32,9 @@ class Charge_Mixing
 		const double &mixing_gg0_in,
 		const bool &mixing_tau_in
     );//mohan add mixing_gg0_in 2014-09-27
+
+	void need_auto_set();
+	void auto_set(const double& bandgap_in, const UnitCell& ucell_);
 
 	double get_drho(Charge* chr, const double nelec);
 
@@ -131,6 +135,9 @@ class Charge_Mixing
 
 	std::complex<double>*** dF; // dF(i) = rhog(i) - rhog_save(i), (GlobalV::NSPIN, rstep, rhopw->npw)
 	std::complex<double>*** dn; // dn(i) = rhog(i+1) - rhog(i), (GlobalV::NSPIN, rstep, rhopw->npw)
+
+	private: 
+	bool autoset = false;
 };
 
 #endif
