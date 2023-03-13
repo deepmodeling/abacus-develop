@@ -14,6 +14,8 @@
  *     - set a 3d vector
  *   - Equal
  *     - overload operator "=" for 3d vector
+ *   - equal
+ *     - overload operator "=" for scalar
  *   - PlusEqual
  *     - overload operator "+=" for 3d vector
  *   - MinusEqual
@@ -162,6 +164,31 @@ TEST_F(Vector3Test,Equal)
 	EXPECT_EQ(wp.x,3);
 	EXPECT_EQ(wp.y,4);
 	EXPECT_EQ(wp.z,5);
+}
+
+TEST_F(Vector3Test,equal)
+{
+	// double Vector3
+	ModuleBase::Vector3<double> u;
+	u.set(da,db,dc);
+	u = 2;
+	EXPECT_EQ(u.x,2.0);
+	EXPECT_EQ(u.y,2.0);
+	EXPECT_EQ(u.z,2.0);
+	// float Vector3
+	ModuleBase::Vector3<float> v;
+	v.set(fa,fb,fc);
+	v = 2;
+	EXPECT_EQ(v.x,2.0);
+	EXPECT_EQ(v.y,2.0);
+	EXPECT_EQ(v.z,2.0);
+	// int Vector3
+	ModuleBase::Vector3<int> w;
+	w.set(ia,ib,ic);
+	w = 2;
+	EXPECT_EQ(w.x,2);
+	EXPECT_EQ(w.y,2);
+	EXPECT_EQ(w.z,2);
 }
 
 TEST_F(Vector3Test,PlusEqual)
