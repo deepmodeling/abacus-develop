@@ -243,7 +243,7 @@ namespace ModuleESolver
             {
                 this->init_after_vc(INPUT, GlobalC::ucell);
             }
-            else
+            else if(GlobalC::ucell.cell_parameter_updated)
             {
                 Variable_Cell::init_after_vc();
                 GlobalC::wfcpw->initgrids(GlobalC::ucell.lat0, GlobalC::ucell.latvec, GlobalC::wfcpw->nx, GlobalC::wfcpw->ny, GlobalC::wfcpw->nz);
