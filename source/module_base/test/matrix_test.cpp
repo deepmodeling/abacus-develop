@@ -18,10 +18,10 @@
  *      - operator "*=", "+=", "-="
  *      - function trace_on
  *      - function zero_out
- *      - function fill_out
+ *      - function fill_out(fill a matrix with a const double)
  *      - function max/min/absmax
  *      - function norm
- *      - function print (not called in abacus, no need to test)
+ *      - function print(print the element which is larger than threshold)
  * 
  * - Tested functions related to class matrix
  *      - operator "+", "-", "*" between two matrixs
@@ -362,19 +362,3 @@ TEST_F(matrixTest,Print)
     output  = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output,testing::HasSubstr("0    0   0   0   5   6   7   8   9   "));
 }
-// Peize Lin add 2021.09.08
-// std::ostream & matrix::print( std::ostream & os, const double threshold ) const
-// {
-// 	for( int ir=0; ir!=this->nr; ++ir )
-// 	{
-// 		for( int ic=0; ic!=this->nc; ++ic )
-// 		{
-// 			if(std::abs((*this)(ir,ic))>threshold)
-// 				os<<(*this)(ir,ic)<<"\t";
-// 			else
-// 				os<<0<<"\t";
-// 		}
-// 		os<<std::endl;
-// 	}
-// 	return os;
-// }
