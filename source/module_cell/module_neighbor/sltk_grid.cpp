@@ -57,6 +57,24 @@ Grid::Grid(const int &test_grid_in):test_grid(test_grid_in)
 Grid::~Grid()
 {
 	delete[] atomlink;
+	if (this->init_cell_flag)
+	{
+		for (int i = 0;i < this->dx;i++)
+		{
+			for (int j = 0;j < this->dy;j++)
+			{
+				delete[] this->Cell[i][j];
+			}
+		}
+
+		for (int i = 0;i < this->dx;i++)
+		{
+			delete[] this->Cell[i];
+		}
+
+		delete[] this->Cell;
+		this->init_cell_flag = false;
+	}
 
 }
 

@@ -41,6 +41,7 @@ void ELEC_evolve::evolve_psi(const int& istep,
         ModuleBase::timer::tick("Efficience", "evolve_k");
         Evolve_LCAO_Matrix ELM(lowf.ParaV);
         psi->fix_k(ik);
+        psi_laststep->fix_k(ik);
         ELM.evolve_complex_matrix(ik, phm, psi, psi_laststep, &(ekb(ik, 0)));
         ModuleBase::timer::tick("Efficience", "evolve_k");
     } // end k

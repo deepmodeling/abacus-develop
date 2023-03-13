@@ -186,9 +186,9 @@ void Input::Default(void)
     init_vel = false;
     symmetry_prec = 1.0e-5; // LiuXh add 2021-08-12, accuracy for symmetry
     cal_force = 0;
-    out_force = false;
-    out_vel = false;
-    out_virial = false;
+    dump_force = true;
+    dump_vel = true;
+    dump_virial = true;
     force_thr = 1.0e-3;
     force_thr_ev2 = 0;
     stress_thr = 1.0e-2; // LiuXh add 20180515
@@ -264,7 +264,7 @@ void Input::Default(void)
     //  charge mixing
     //----------------------------------------------------------
     mixing_mode = "pulay";
-    mixing_beta = 0.7;
+    mixing_beta = -10.0;
     mixing_ndim = 8;
     mixing_gg0 = 0.00; // used in kerker method. mohan add 2014-09-27
     mixing_tau = false;
@@ -844,17 +844,17 @@ bool Input::Read(const std::string &fn)
         {
             read_bool(ifs, cal_force);
         }
-        else if (strcmp("out_force", word) == 0)
+        else if (strcmp("dump_force", word) == 0)
         {
-            read_bool(ifs, out_force);
+            read_bool(ifs, dump_force);
         }
-        else if (strcmp("out_vel", word) == 0)
+        else if (strcmp("dump_vel", word) == 0)
         {
-            read_bool(ifs, out_vel);
+            read_bool(ifs, dump_vel);
         }
-        else if (strcmp("out_virial", word) == 0)
+        else if (strcmp("dump_virial", word) == 0)
         {
-            read_bool(ifs, out_virial);
+            read_bool(ifs, dump_virial);
         }
         else if (strcmp("force_thr", word) == 0)
         {
@@ -2709,9 +2709,9 @@ void Input::Bcast()
     Parallel_Common::bcast_bool(init_vel); // liuyu 2021-07-14
     Parallel_Common::bcast_double(symmetry_prec); // LiuXh add 2021-08-12, accuracy for symmetry
     Parallel_Common::bcast_bool(cal_force);
-    Parallel_Common::bcast_bool(out_force);
-    Parallel_Common::bcast_bool(out_vel);
-    Parallel_Common::bcast_bool(out_virial);
+    Parallel_Common::bcast_bool(dump_force);
+    Parallel_Common::bcast_bool(dump_vel);
+    Parallel_Common::bcast_bool(dump_virial);
     Parallel_Common::bcast_double(force_thr);
     Parallel_Common::bcast_double(force_thr_ev2);
     Parallel_Common::bcast_double(stress_thr); // LiuXh add 20180515

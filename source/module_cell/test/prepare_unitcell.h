@@ -1,50 +1,48 @@
 #ifndef PREPARE_UNITCELL_H
 #define PREPARE_UNITCELL_H
+#include<map>
+#include<string>
 
 class UcellTestPrepare
 {
 public:
-	UcellTestPrepare(std::string system_name_in,
-			std::string latname_in,
-			int lmaxmax_in,
-			bool init_vel_in,
-			bool selective_dynamics_in,
-			bool relax_new_in,
-			std::string fixed_axes_in,
-			double lat0_in,
-			std::valarray<double> latvec_in,
-			std::vector<std::string> elements_in,
-			std::vector<std::string> pp_files_in,
-			std::vector<std::string> pp_types_in,
-			std::vector<std::string> orb_files_in,
-			std::valarray<int> natom_in,
-			std::vector<double> atomic_mass_in,
-			std::string coor_type_in,
-			std::valarray<double> coordinates_in,
-			std::valarray<double> mbl_in = {0},
-			std::valarray<double> velocity_in = {0}
-			):
-		system_name(system_name_in),
-		latname(latname_in),
-		lmaxmax(lmaxmax_in),
-		init_vel(init_vel_in),
-		selective_dynamics(selective_dynamics_in),
-		relax_new(relax_new_in),
-		fixed_axes(fixed_axes_in),
-		lat0(lat0_in),
-		latvec(latvec_in),
-		elements(elements_in),
-		pp_files(pp_files_in),
-		pp_types(pp_types_in),
-		orb_files(orb_files_in),
-		natom(natom_in),
-		atomic_mass(atomic_mass_in),
-		coor_type(coor_type_in),
-		coordinates(coordinates_in),
-		mbl(mbl_in),
-		velocity(velocity_in) // velocity assume the existence of mbl in print_stru_file()
-	{}
-	std::string system_name;
+	UcellTestPrepare()=default;
+	UcellTestPrepare(std::string latname_in,
+		int lmaxmax_in,
+		bool init_vel_in,
+		bool selective_dynamics_in,
+		bool relax_new_in,
+		std::string fixed_axes_in,
+		double lat0_in,
+		std::valarray<double> latvec_in,
+		std::vector<std::string> elements_in,
+		std::vector<std::string> pp_files_in,
+		std::vector<std::string> pp_types_in,
+		std::vector<std::string> orb_files_in,
+		std::valarray<int> natom_in,
+		std::vector<double> atomic_mass_in,
+		std::string coor_type_in,
+		std::valarray<double> coordinates_in);
+	UcellTestPrepare(std::string latname_in,
+		int lmaxmax_in,
+		bool init_vel_in,
+		bool selective_dynamics_in,
+		bool relax_new_in,
+		std::string fixed_axes_in,
+		double lat0_in,
+		std::valarray<double> latvec_in,
+		std::vector<std::string> elements_in,
+		std::vector<std::string> pp_files_in,
+		std::vector<std::string> pp_types_in,
+		std::vector<std::string> orb_files_in,
+		std::valarray<int> natom_in,
+		std::vector<double> atomic_mass_in,
+		std::string coor_type_in,
+		std::valarray<double> coordinates_in,
+		std::valarray<double> mbl_in,
+		std::valarray<double> velocity_in);
+	UcellTestPrepare(const UcellTestPrepare &utp);
+
 	std::string latname;
 	int lmaxmax;
 	bool init_vel;
@@ -220,4 +218,256 @@ public:
 	}
 };
 
+UcellTestPrepare::UcellTestPrepare(std::string latname_in,
+		int lmaxmax_in,
+		bool init_vel_in,
+		bool selective_dynamics_in,
+		bool relax_new_in,
+		std::string fixed_axes_in,
+		double lat0_in,
+		std::valarray<double> latvec_in,
+		std::vector<std::string> elements_in,
+		std::vector<std::string> pp_files_in,
+		std::vector<std::string> pp_types_in,
+		std::vector<std::string> orb_files_in,
+		std::valarray<int> natom_in,
+		std::vector<double> atomic_mass_in,
+		std::string coor_type_in,
+		std::valarray<double> coordinates_in):
+	latname(latname_in),
+	lmaxmax(lmaxmax_in),
+	init_vel(init_vel_in),
+	selective_dynamics(selective_dynamics_in),
+	relax_new(relax_new_in),
+	fixed_axes(fixed_axes_in),
+	lat0(lat0_in),
+	latvec(latvec_in),
+	elements(elements_in),
+	pp_files(pp_files_in),
+	pp_types(pp_types_in),
+	orb_files(orb_files_in),
+	natom(natom_in),
+	atomic_mass(atomic_mass_in),
+	coor_type(coor_type_in),
+	coordinates(coordinates_in)
+{
+	mbl = {0};
+	velocity = {0};
+}
+
+UcellTestPrepare::UcellTestPrepare(std::string latname_in,
+		int lmaxmax_in,
+		bool init_vel_in,
+		bool selective_dynamics_in,
+		bool relax_new_in,
+		std::string fixed_axes_in,
+		double lat0_in,
+		std::valarray<double> latvec_in,
+		std::vector<std::string> elements_in,
+		std::vector<std::string> pp_files_in,
+		std::vector<std::string> pp_types_in,
+		std::vector<std::string> orb_files_in,
+		std::valarray<int> natom_in,
+		std::vector<double> atomic_mass_in,
+		std::string coor_type_in,
+		std::valarray<double> coordinates_in,
+		std::valarray<double> mbl_in,
+		std::valarray<double> velocity_in):
+	latname(latname_in),
+	lmaxmax(lmaxmax_in),
+	init_vel(init_vel_in),
+	selective_dynamics(selective_dynamics_in),
+	relax_new(relax_new_in),
+	fixed_axes(fixed_axes_in),
+	lat0(lat0_in),
+	latvec(latvec_in),
+	elements(elements_in),
+	pp_files(pp_files_in),
+	pp_types(pp_types_in),
+	orb_files(orb_files_in),
+	natom(natom_in),
+	atomic_mass(atomic_mass_in),
+	coor_type(coor_type_in),
+	coordinates(coordinates_in),
+	mbl(mbl_in),
+	velocity(velocity_in) // velocity assume the existence of mbl in print_stru_file()
+{}
+
+UcellTestPrepare::UcellTestPrepare(const UcellTestPrepare &utp):
+	latname(utp.latname),
+	lmaxmax(utp.lmaxmax),
+	init_vel(utp.init_vel),
+	selective_dynamics(utp.selective_dynamics),
+	relax_new(utp.relax_new),
+	fixed_axes(utp.fixed_axes),
+	lat0(utp.lat0),
+	latvec(utp.latvec),
+	elements(utp.elements),
+	pp_files(utp.pp_files),
+	pp_types(utp.pp_types),
+	orb_files(utp.orb_files),
+	natom(utp.natom),
+	atomic_mass(utp.atomic_mass),
+	coor_type(utp.coor_type),
+	coordinates(utp.coordinates),
+	mbl(utp.mbl),
+	velocity(utp.velocity) // velocity assume the existence of mbl in print_stru_file()
+{}
+
+std::map<std::string,UcellTestPrepare> UcellTestLib
+{
+	{"C1H2-Index", UcellTestPrepare(
+				"bcc",		//latname
+				2,		//lmaxmax
+				true,		//init_vel
+				true,		//selective_dyanmics
+				true,		//relax_new
+				"volume",	//fixed_axes
+				1.8897261254578281, //lat0
+				{10.0,0.0,0.0,	//latvec
+				 0.0,10.0,0.0,
+				 0.0,0.0,10.0},
+				{"C","H"},	//elements
+				{"C.upf","H.upf"},	//upf file
+				{"upf201","upf201"},	//upf types
+				{"C.orb","H.orb"},	//orb file
+				{1,2},		//number of each elements
+				{12.0,1.0},	//atomic mass
+				"Direct",	//coordination type
+				{0.1,0.1,0.1,	//atomic coordinates
+				 0.15,0.15,0.15,
+				 0.05,0.05,0.05},
+				{1,1,1,	//if atom can move: mbl
+				 0,0,0,
+				 0,0,1},
+				{0.1,0.1,0.1,	//velocity: vel
+				 0.1,0.1,0.1,
+				 0.1,0.1,0.1})},
+	{"C1H2-Cartesian", UcellTestPrepare(
+				"bcc",		//latname
+				2,		//lmaxmax
+				true,		//init_vel
+				true,		//selective_dyanmics
+				true,		//relax_new
+				"volume",	//fixed_axes
+				1.8897261254578281, //lat0
+				{10.0,0.0,0.0,	//latvec
+				 0.0,10.0,0.0,
+				 0.0,0.0,10.0},
+				{"C","H"},	//elements
+				{"C.upf","H.upf"},	//upf file
+				{"upf201","upf201"},	//upf types
+				{"C.orb","H.orb"},	//orb file
+				{1,2},		//number of each elements
+				{12.0,1.0},	//atomic mass
+				"Cartesian",	//coordination type
+				{1,1,1,	//atomic coordinates
+				 1.5,1.5,1.5,
+				 0.5,0.5,0.5})},
+	{"C1H2-CheckDTau", UcellTestPrepare(
+				"bcc",		//latname
+				2,		//lmaxmax
+				false,		//init_vel
+				false,		//selective_dyanmics
+				true,		//relax_new
+				"volume",	//fixed_axes
+				1.8897261254578281, //lat0
+				{0.1,0.1,0.1,	//latvec
+				 0.15,0.15,0.15,
+				 0.05,0.05,0.05},
+				{"C","H"},	//elements
+				{"C.upf","H.upf"},	//upf file
+				{"upf201","upf201"},	//upf types
+				{"C.orb","H.orb"},	//orb file
+				{1,2},		//number of each elements
+				{12.0,1.0},	//atomic mass
+				"Direct",	//coordination type
+				{1.6,2.5,3.8,	//atomic coordinates
+				 -0.15,1.0,-0.15,
+				 -3.05,-2.8,0.0})},
+	{"C1H2-CheckTau", UcellTestPrepare(
+				"bcc",		//latname
+				2,		//lmaxmax
+				false,		//init_vel
+				false,		//selective_dyanmics
+				true,		//relax_new
+				"volume",	//fixed_axes
+				1.8897261254578281, //lat0
+				{0.1,0.1,0.1,	//latvec
+				 0.15,0.15,0.15,
+				 0.05,0.05,0.05},
+				{"C","H"},	//elements
+				{"C.upf","H.upf"},	//upf file
+				{"upf201","upf201"},	//upf types
+				{"C.orb","H.orb"},	//orb file
+				{1,2},		//number of each elements
+				{12.0,1.0},	//atomic mass
+				"Direct",	//coordination type
+				{0.0,0.0,0.0,	//atomic coordinates
+				 0.00001,0.00001,0.00001,
+				 -3.05,-2.8,0.0})},
+	{"C1H2-SD", UcellTestPrepare(
+				"bcc",		//latname
+				2,		//lmaxmax
+				false,		//init_vel
+				false,		//selective_dyanmics
+				true,		//relax_new
+				"volume",	//fixed_axes
+				1.8897261254578281, //lat0
+				{0.1,0.1,0.1,	//latvec
+				 0.15,0.15,0.15,
+				 0.05,0.05,0.05},
+				{"C","H"},	//elements
+				{"C.upf","H.upf"},	//upf file
+				{"upf201","upf201"},	//upf types
+				{"C.orb","H.orb"},	//orb file
+				{1,2},		//number of each elements
+				{12.0,1.0},	//atomic mass
+				"Direct",	//coordination type
+				{0.1,0.1,0.1,	//atomic coordinates
+				 0.15,0.15,0.15,
+				 0.05,0.05,0.05})},
+	{"C1H2-PBA", UcellTestPrepare(
+				"bcc",		//latname
+				2,		//lmaxmax
+				false,		//init_vel
+				false,		//selective_dyanmics
+				true,		//relax_new
+				"volume",	//fixed_axes
+				1.8897261254578281, //lat0
+				{0.1,0.1,0.1,	//latvec
+				 0.15,0.15,0.15,
+				 0.05,0.05,0.05},
+				{"C","H"},	//elements
+				{"C.upf","H.upf"},	//upf file
+				{"upf201","upf201"},	//upf types
+				{"C.orb","H.orb"},	//orb file
+				{1,2},		//number of each elements
+				{12.0,1.0},	//atomic mass
+				"Direct",	//coordination type
+				{-0.1,-0.1,-0.1,	//atomic coordinates
+				 1.2,1.2,1.2,
+				 -3.05,-2.8,0.0})},
+	{"C1H2-Read", UcellTestPrepare(
+				"bcc",		//latname
+				2,		//lmaxmax
+				true,		//init_vel
+				true,		//selective_dyanmics
+				true,		//relax_new
+				"volume",	//fixed_axes
+				1.8897261254578281, //lat0
+				{10.0,0.0,0.0,	//latvec
+				 0.0,10.0,0.0,
+				 0.0,0.0,10.0},
+				{"C","H"},	//elements
+				{"C.upf","H.upf"},	//upf file
+				{"upf201","upf201"},	//upf types
+				{"C.orb","H.orb"},	//orb file
+				{1,2},		//number of each elements
+				{12.0,1.0},	//atomic mass
+				"Direct",	//coordination type
+				{0.1,0.1,0.1,	//atomic coordinates
+				 0.12,0.12,0.12,
+				 0.08,0.08,0.08})}
+};
 #endif
