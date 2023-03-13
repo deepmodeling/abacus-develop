@@ -333,6 +333,7 @@ TEST_F(InputTest, Default)
 	EXPECT_EQ(INPUT.mdp.md_restart,0);
 	EXPECT_EQ(INPUT.mdp.md_restartfreq,5);
 	EXPECT_EQ(INPUT.mdp.md_seed,-1);
+    EXPECT_EQ(INPUT.mdp.md_prec_level,0);
 	EXPECT_EQ(INPUT.mdp.md_tchain,1);
 	EXPECT_DOUBLE_EQ(INPUT.mdp.md_tfirst,-1);
 	EXPECT_DOUBLE_EQ(INPUT.mdp.md_tfreq,0);
@@ -665,6 +666,7 @@ TEST_F(InputTest, Read)
 	EXPECT_EQ(INPUT.mdp.md_restart,0);
 	EXPECT_EQ(INPUT.mdp.md_restartfreq,5);
 	EXPECT_EQ(INPUT.mdp.md_seed,-1);
+    EXPECT_EQ(INPUT.mdp.md_prec_level,1);
 	EXPECT_EQ(INPUT.mdp.md_tchain,1);
 	EXPECT_DOUBLE_EQ(INPUT.mdp.md_tfirst,-1);
 	EXPECT_DOUBLE_EQ(INPUT.mdp.md_tfreq,0);
