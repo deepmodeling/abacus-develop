@@ -27,7 +27,7 @@ Magnetism::~Magnetism()
  *   - ReadAtomSpecies
  *     - read_atom_species(): read header part of orbital file
  *   - ReadAtomPositions
- *     - read_atom_positions(): ABACUS Cannot find the ORBITAL file
+ *     - read_atom_positions(): read atomic coordinates, velocities, magmoms
  *   - SetupCell
  *     - setup_cell(): the pw version
  *   - SetupCellClassic
