@@ -17,6 +17,35 @@
 /* Tested functions:
  *
  * - allocate
+ *   copy the input parameters to class members & initialize k space mesh
+ *
+ * - init_DS_Opair
+ *   make a 1-d index from the composite index (l, ld, ichi, ichid) of each
+ *   element where l/ld is the angular momentum of atomic/descriptor orbital 
+ *   and ichi/ichid is the index of basis function within that angular momentum;
+ *   save the index map to member DS_Opair.
+ *
+ * - init_DS_2Lplus1
+ *   calculate 2*max(lmax, lmaxd)+1 for each element, where lmax/lmaxd is 
+ *   the maximum angular momentum of atomic/descriptor orbital.
+ *
+ * - init_Table_Alpha
+ *   make a table for the radial overlap (and its derivative) between the atomic 
+ *   and descriptor orbitals.
+ *
+ * - Destroy_Table_Alpha
+ *   deallocate the radial overlap (and its derivative) table (Table_DSR)
+ *
+ * - get_rmesh
+ *   calculate the number of real space mesh points given two radial cutoffs.
+ *   the result is made odd to accomodate to Simpson_Integral.
+ *
+ * - cal_S_PhiAlpha_R
+ *   core subroutine for calculating the radial overlap and its derivative
+ *   (Eq. A. 3 of the ABACUS2016 paper)
+ *
+ * - print_Table_DSR (unit test incomplete)
+ *   save S(R) table to file
  *
  ***********************************************************/
 
@@ -29,6 +58,9 @@ protected:
 
     // orbitals from which the table is calculated
     LCAO_Orbitals lcao_;
+
+    // table for spherical bessel functions
+    ModuleBase::Sph_Bessel_Recursive::D2 sbr_;
 
     void SetUp();
     void TearDown();
@@ -51,6 +83,7 @@ protected:
 
     // helper
     int calc_nr(double const& Rmax, double const& dR);
+    void init_sph_bessel();
 };
 
 
@@ -98,6 +131,7 @@ void OrbTableAlphaTest::SetUp() {
 
     lcao_.Read_Orbitals(ofs_log_, ntype_, lmax_, deepks_setorb_, out_mat_r_, 
             force_flag_, my_rank_);
+
 }
 
 
@@ -105,7 +139,15 @@ void OrbTableAlphaTest::TearDown() {
 
 }
 
-/*
+
+void OrbTableAlphaTest::init_sph_bessel() {
+    // initialize spherical bessel table
+	sbr_.set_dx(dR_*dk_);
+    // max(l+ld) = 4, but the derivative calculation of j_l relies on j_{l+1}
+	sbr_.cal_jlx(5, calc_nr(Rmax_, dR_), lcao_.get_kmesh());
+}
+
+
 TEST_F(OrbTableAlphaTest, Allocate) {
 
     ota.allocate(ntype_, lmax_, lcao_.get_kmesh(), Rmax_, dR_, dk_);
@@ -127,10 +169,10 @@ TEST_F(OrbTableAlphaTest, Allocate) {
         EXPECT_DOUBLE_EQ(ota.kab[ik], dk_);
     }
 
-    for (int ir = 0; ir != nr; ++ir) {
-        EXPECT_DOUBLE_EQ(ota.r[ir], ir*dR_);
-        EXPECT_DOUBLE_EQ(ota.rab[ir], dR_);
-    }
+//    for (int ir = 0; ir != nr; ++ir) {
+//        EXPECT_DOUBLE_EQ(ota.r[ir], ir*dR_);
+//        EXPECT_DOUBLE_EQ(ota.rab[ir], dR_);
+//    }
 }
 
 
@@ -183,6 +225,13 @@ TEST_F(OrbTableAlphaTest, GetRmeshAbnormal) {
 }
 
 
+TEST_F(OrbTableAlphaTest, DS2Lplus1) {
+    ota.allocate(ntype_, lmax_, lcao_.get_kmesh(), Rmax_, dR_, dk_);
+    ota.init_DS_2Lplus1(lcao_);
+    EXPECT_EQ(ota.DS_2Lplus1[0], 5);
+}
+
+
 TEST_F(OrbTableAlphaTest, CheckOpair) {
 
     // this test checks whether the indices in ota.DS_Opair are expected
@@ -216,12 +265,12 @@ TEST_F(OrbTableAlphaTest, CheckOpair) {
     EXPECT_EQ(ota.DS_Opair(1, 1, 0, 0, 0), 12);
     EXPECT_EQ(ota.DS_Opair(1, 2, 0, 0, 0), 24);
 }
-*/
+
 
 TEST_F(OrbTableAlphaTest, FiniteDiffOverlap) {
 
     // this test checks whether dS(R)/dR agrees with 
-    // the finite difference of S(R)
+    // the finite difference derivative of S(R)
 
     ota.allocate(ntype_, lmax_, lcao_.get_kmesh(), Rmax_, dR_, dk_);
     ota.init_DS_Opair(lcao_);
@@ -229,10 +278,7 @@ TEST_F(OrbTableAlphaTest, FiniteDiffOverlap) {
     double* S_R = new double[ota.Rmesh];
     double* dS_R = new double[ota.Rmesh];
 
-    ModuleBase::Sph_Bessel_Recursive::D2 sbr;
-	sbr.set_dx(ota.dr * ota.dk);
-    // lmax = lmaxd = 2, Lmax is 4, but derivative calculation needs one more
-	sbr.cal_jlx(5, ota.Rmesh, ota.kmesh);
+    init_sph_bessel();
 
     double max_tol = 1e-4;
 
@@ -252,7 +298,7 @@ TEST_F(OrbTableAlphaTest, FiniteDiffOverlap) {
                         // loop over possible angular momentum
                         // L = |L1-L2|, |L1-L2|+2, ..., L1+L2
                         for (int L = std::abs(l-ld); L <= l+ld; L = L+2) {
-                            ota.cal_S_PhiAlpha_R(&sbr, L, 
+                            ota.cal_S_PhiAlpha_R(&sbr_, L, 
                                     lcao_.Phi[ielem].PhiLN(l,ichi), 
                                     lcao_.Alpha[0].PhiLN(ld, ichid), 
                                     rmesh, S_R, dS_R);
@@ -277,50 +323,42 @@ TEST_F(OrbTableAlphaTest, FiniteDiffOverlap) {
     }
 }
 
-/*
+
 TEST_F(OrbTableAlphaTest, DestroyTable) {
 
     ota.allocate(ntype_, lmax_, lcao_.get_kmesh(), Rmax_, dR_, dk_);
     ota.init_DS_Opair(lcao_);
-	ota.init_DS_2Lplus1(lcao_);
 
-    ModuleBase::Sph_Bessel_Recursive::D2 sbr;
-	sbr.set_dx(ota.dr * ota.dk);
-	sbr.cal_jlx(5, ota.Rmesh, ota.kmesh);
+    init_sph_bessel();
+    ota.init_Table_Alpha(&sbr_, lcao_);
 
-    ota.init_Table_Alpha(&sbr, lcao_);
-    std::cout << "init table alpha" << std::endl;
-
-
+    // should do nothing
     ota.destroy_nr = false;
-    ota.Destroy_Table_Alpha(lcao_); // should do nothing
+    ota.Destroy_Table_Alpha(lcao_);
     EXPECT_NE(ota.Table_DSR, nullptr);
 
+    // should destroy the table
     ota.destroy_nr = true;
     ota.Destroy_Table_Alpha(lcao_);
-
+    EXPECT_EQ(ota.Table_DSR, nullptr);
 }
-*/
 
 
-//TEST_F(OrbTableAlphaTest, ) {
-//
-//}
-//
-//
-//TEST_F(OrbTableAlphaTest, ) {
-//
-//}
-//
-//
-//TEST_F(OrbTableAlphaTest, ) {
-//
-//}
-//
-//
-//TEST_F(OrbTableAlphaTest, DestroyTableAlpha) {
-//
-//}
+TEST_F(OrbTableAlphaTest, PrintTable) {
+
+    ota.allocate(ntype_, lmax_, lcao_.get_kmesh(), Rmax_, dR_, dk_);
+    ota.init_DS_Opair(lcao_);
+    ota.init_DS_2Lplus1(lcao_);
+
+    init_sph_bessel();
+
+    ota.init_Table_Alpha(&sbr_, lcao_);
+    EXPECT_NO_THROW(ota.print_Table_DSR(lcao_));
+    
+    // TODO content/format check to be done after code refactoring
+
+    remove("./S_I_mu_alpha.dat");
+}
 
 
 int main(int argc, char **argv)

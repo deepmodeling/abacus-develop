@@ -70,8 +70,8 @@ private:
 	int nlm;
 	int kmesh;
 	double *kpoint;
-	double *r;
-	double *rab;
+	//double *r;
+	//double *rab;
 	double *kab;
 };
 #endif

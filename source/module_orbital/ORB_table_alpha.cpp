@@ -23,8 +23,8 @@ ORB_table_alpha::ORB_table_alpha()
 	Rmesh = 0;
 
 	kpoint = nullptr;
-	r = nullptr;
-	rab = nullptr;
+	//r = nullptr;
+	//rab = nullptr;
 	kab = nullptr;
 	DS_2Lplus1 = nullptr;
 }
@@ -32,8 +32,8 @@ ORB_table_alpha::ORB_table_alpha()
 ORB_table_alpha::~ORB_table_alpha()
 {
 	delete[] kpoint;
-	delete[] r;
-	delete[] rab;
+	//delete[] r;
+	//delete[] rab;
 	delete[] kab;
 	delete[] DS_2Lplus1;
 }
@@ -78,14 +78,14 @@ void ORB_table_alpha::allocate(
 	//	OUT(GlobalV::ofs_running,"kmesh",kmesh);
 
 	delete[] kpoint;
-	delete[] r;
+	//delete[] r;
 	kpoint = new double[kmesh];
-	r = new double[Rmesh];
+	//r = new double[Rmesh];
 
-	delete[] rab;
+	//delete[] rab;
 	delete[] kab;
 	kab = new double[kmesh];
-	rab = new double[Rmesh];
+	//rab = new double[Rmesh];
 
 	for (int ik = 0; ik < kmesh; ik++)
 	{
@@ -93,11 +93,11 @@ void ORB_table_alpha::allocate(
 		kab[ik] = dk_in;
 	}
 
-	for (int ir = 0; ir < Rmesh; ir++)
-	{
-		r[ir] = ir * dr;
-		rab[ir] = dr;
-	}
+	//for (int ir = 0; ir < Rmesh; ir++)
+	//{
+	//	r[ir] = ir * dr;
+	//	rab[ir] = dr;
+	//}
 
 	//	OUT(GlobalV::ofs_running,"allocate kpoint, r, rab, kab","Done");
 	return;
