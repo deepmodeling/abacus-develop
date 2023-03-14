@@ -254,7 +254,7 @@ void ESolver_KS_LCAO::postprocess()
     // qianrui modify 2020-10-18
     if (GlobalV::CALCULATION == "scf" || GlobalV::CALCULATION == "md" || GlobalV::CALCULATION == "relax")
     {
-        ModuleIO::write_istate_info(this->pelec,&(GlobalC::kv),&(GlobalC::Pkpoints));
+        ModuleIO::write_istate_info(this->pelec->ekb,this->pelec->wg,&(GlobalC::kv),&(GlobalC::Pkpoints));
     }
 
     // GlobalV::mulliken charge analysis
