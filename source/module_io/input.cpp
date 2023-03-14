@@ -264,7 +264,7 @@ void Input::Default(void)
     //  charge mixing
     //----------------------------------------------------------
     mixing_mode = "pulay";
-    mixing_beta = 0.7;
+    mixing_beta = -10.0;
     mixing_ndim = 8;
     mixing_gg0 = 0.00; // used in kerker method. mohan add 2014-09-27
     mixing_tau = false;
@@ -495,7 +495,7 @@ void Input::Default(void)
     //==========================================================
     //    DFT+U     Xin Qu added on 2020-10-29
     //==========================================================
-    dft_plus_u = false; // 1:DFT+U correction; 0：standard DFT calcullation
+    dft_plus_u = false; // 1:DFT+U correction; 0: standard DFT calcullation
     yukawa_potential = false;
     yukawa_lambda = -1.0;
     omc = 0;

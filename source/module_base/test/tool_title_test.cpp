@@ -36,7 +36,7 @@ TEST_F(ToolTitleTest, TITLE1)
 {
     GlobalV::ofs_running.open("TITLEtest1.log");
     std::string output1;
-    ModuleBase::TITLE(cfname,true);
+    ModuleBase::TITLE(cfname,false);
     GlobalV::ofs_running.close();
     ifs.open("TITLEtest1.log");
     getline(ifs,output1);
@@ -48,7 +48,7 @@ TEST_F(ToolTitleTest, TITLE2)
 {
     GlobalV::ofs_running.open("TITLEtest2.log");
     std::string output2;
-    ModuleBase::TITLE(claname,funname,true);
+    ModuleBase::TITLE(claname,funname,false);
     GlobalV::ofs_running.close();
     ifs.open("TITLEtest2.log");
     getline(ifs,output2);
@@ -62,7 +62,7 @@ TEST_F(ToolTitleTest, TITLE3)
     std::string output3a;
     std::string output3b;
     oofs.open("TITLEtest3.log");
-    ModuleBase::TITLE(oofs,claname,funname,true);
+    ModuleBase::TITLE(oofs,claname,funname,false);
     oofs.close();
     ifs.open("TITLEtest3.log");
     getline(ifs,output3a);

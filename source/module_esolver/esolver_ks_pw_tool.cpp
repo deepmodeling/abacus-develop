@@ -79,7 +79,6 @@ void ESolver_KS_PW<FPTYPE, Device>:: jjcorr_ks(const int ik, const int nt, const
     char transc = 'C';
     const int ndim = 3;
     const int npwx = GlobalC::wf.npwx;
-    const double tpiba = GlobalC::ucell.tpiba;
     const int nbands = GlobalV::NBANDS;
     const double ef = this->pelec->ef;
     const int npw = GlobalC::kv.ngk[ik];
@@ -208,7 +207,7 @@ void ESolver_KS_PW<FPTYPE, Device>::calcondw(const int nt,
     }
     cout << setprecision(6) << "DC electrical conductivity: " << cw11[0] - (cw11[1] - cw11[0]) * 0.5 << " Sm^-1"
          << endl;
-    cout << setprecision(6) << "Thermal conductivity: " << kappa[0] - (kappa[1] - kappa[0]) * 0.5 << " Wm^-1" << endl;
+    cout << setprecision(6) << "Thermal conductivity: " << kappa[0] - (kappa[1] - kappa[0]) * 0.5 << " W(mK)^-1" << endl;
     ;
     ofscond.close();
 
