@@ -1,6 +1,7 @@
 #include "gtest/gtest.h"
+#include "gmock/gmock.h"
 #include "module_base/sph_bessel_recursive.h"
-#include <stdexcept>
+
 #ifdef __MPI
 #include <mpi.h>
 #endif
@@ -220,8 +221,12 @@ TEST_F(OrbTableAlphaTest, GetRmeshAbnormal) {
 
     ota.allocate(ntype_, lmax_, lcao_.get_kmesh(), Rmax_, dR_, dk_);
 
-    EXPECT_EXIT(ota.get_rmesh(0.0, -1.0), testing::ExitedWithCode(0), "");
-    EXPECT_EXIT(ota.get_rmesh(0.0, -1.0), testing::ExitedWithCode(0), "");
+	testing::internal::CaptureStdout();
+
+    EXPECT_EXIT(ota.get_rmesh(0.5, -1.0), testing::ExitedWithCode(0), "");
+
+	std::string output = testing::internal::GetCapturedStdout();
+	EXPECT_THAT(output, testing::HasSubstr("rmesh <= 0"));
 }
 
 
@@ -371,7 +376,7 @@ int main(int argc, char **argv)
 #endif
 
     testing::InitGoogleTest(&argc, argv);
-    GTEST_FLAG_SET(death_test_style, "threadsafe");
+    //GTEST_FLAG_SET(death_test_style, "threadsafe");
     int result = RUN_ALL_TESTS();
 
 #ifdef __MPI
