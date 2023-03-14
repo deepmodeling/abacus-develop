@@ -234,7 +234,8 @@ TEST_F(InputTest, Default)
         EXPECT_DOUBLE_EQ(INPUT.exx_cauchy_threshold,1E-7);
         EXPECT_DOUBLE_EQ(INPUT.exx_c_grad_threshold,1E-4);
         EXPECT_DOUBLE_EQ(INPUT.exx_v_grad_threshold,1E-1);
-        EXPECT_DOUBLE_EQ(INPUT.exx_cauchy_grad_threshold,1E-7);
+        EXPECT_DOUBLE_EQ(INPUT.exx_cauchy_force_threshold,1E-7);
+        EXPECT_DOUBLE_EQ(INPUT.exx_cauchy_stress_threshold,1E-7);
         EXPECT_DOUBLE_EQ(INPUT.exx_ccp_threshold,1E-8);
         EXPECT_EQ(INPUT.exx_ccp_rmesh_times,"default");
         EXPECT_EQ(INPUT.exx_distribute_type,"htime");
@@ -563,7 +564,8 @@ TEST_F(InputTest, Read)
         EXPECT_DOUBLE_EQ(INPUT.exx_cauchy_threshold,0);
         EXPECT_DOUBLE_EQ(INPUT.exx_c_grad_threshold,0);
         EXPECT_DOUBLE_EQ(INPUT.exx_v_grad_threshold,0);
-        EXPECT_DOUBLE_EQ(INPUT.exx_cauchy_grad_threshold,0);
+        EXPECT_DOUBLE_EQ(INPUT.exx_cauchy_force_threshold,0);
+        EXPECT_DOUBLE_EQ(INPUT.exx_cauchy_stress_threshold,0);
         EXPECT_DOUBLE_EQ(INPUT.exx_ccp_threshold,1E-8);
         EXPECT_EQ(INPUT.exx_ccp_rmesh_times,"default");
         EXPECT_EQ(INPUT.exx_distribute_type,"htime");

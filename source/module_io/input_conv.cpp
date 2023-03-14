@@ -459,7 +459,8 @@ void Input_Conv::Convert(void)
         GlobalC::exx_info.info_ri.cauchy_threshold = INPUT.exx_cauchy_threshold;
         GlobalC::exx_info.info_ri.C_grad_threshold = INPUT.exx_c_grad_threshold;
         GlobalC::exx_info.info_ri.V_grad_threshold = INPUT.exx_v_grad_threshold;
-        GlobalC::exx_info.info_ri.cauchy_grad_threshold = INPUT.exx_cauchy_grad_threshold;
+        GlobalC::exx_info.info_ri.cauchy_force_threshold = INPUT.exx_cauchy_force_threshold;
+        GlobalC::exx_info.info_ri.cauchy_stress_threshold = INPUT.exx_cauchy_stress_threshold;
         GlobalC::exx_info.info_ri.ccp_threshold = INPUT.exx_ccp_threshold;
         GlobalC::exx_info.info_ri.ccp_rmesh_times = std::stod(INPUT.exx_ccp_rmesh_times);
 

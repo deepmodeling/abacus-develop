@@ -376,7 +376,8 @@ void Input::Default(void)
     exx_cauchy_threshold = 1E-7;
     exx_c_grad_threshold = 1E-4;
     exx_v_grad_threshold = 1E-1;
-    exx_cauchy_grad_threshold = 1E-7;
+    exx_cauchy_force_threshold = 1E-7;
+    exx_cauchy_stress_threshold = 1E-7;
     exx_ccp_threshold = 1E-8;
     exx_ccp_rmesh_times = "default";
 
@@ -1814,9 +1815,13 @@ bool Input::Read(const std::string &fn)
         {
             read_value(ifs, exx_v_grad_threshold);
         }
-        else if (strcmp("exx_cauchy_grad_threshold", word) == 0)
+        else if (strcmp("exx_cauchy_force_threshold", word) == 0)
         {
-            read_value(ifs, exx_cauchy_grad_threshold);
+            read_value(ifs, exx_cauchy_force_threshold);
+        }
+        else if (strcmp("exx_cauchy_stress_threshold", word) == 0)
+        {
+            read_value(ifs, exx_cauchy_stress_threshold);
         }
         else if (strcmp("exx_ccp_threshold", word) == 0)
         {
@@ -2419,7 +2424,7 @@ void Input::Default_2(void) // jiyy add 2019-08-04
     if (exx_ccp_rmesh_times == "default")
     {
         if (dft_functional == "hf" || dft_functional == "pbe0" || dft_functional == "scan0")
-            exx_ccp_rmesh_times = "10";
+            exx_ccp_rmesh_times = "5";
         else if (dft_functional == "hse")
             exx_ccp_rmesh_times = "1.5";
     }
@@ -2985,7 +2990,8 @@ void Input::Bcast()
     Parallel_Common::bcast_double(exx_cauchy_threshold);
     Parallel_Common::bcast_double(exx_c_grad_threshold);
     Parallel_Common::bcast_double(exx_v_grad_threshold);
-    Parallel_Common::bcast_double(exx_cauchy_grad_threshold);
+    Parallel_Common::bcast_double(exx_cauchy_force_threshold);
+    Parallel_Common::bcast_double(exx_cauchy_stress_threshold);
     Parallel_Common::bcast_double(exx_ccp_threshold);
     Parallel_Common::bcast_string(exx_ccp_rmesh_times);
     Parallel_Common::bcast_string(exx_distribute_type);

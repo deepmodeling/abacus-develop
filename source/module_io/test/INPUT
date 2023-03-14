@@ -265,7 +265,8 @@ exx_schwarz_threshold          0 #
 exx_cauchy_threshold           0 #
 exx_c_grad_threshold           0 #
 exx_v_grad_threshold           0 #
-exx_cauchy_grad_threshold      0 #
+exx_cauchy_force_threshold     0 #
+exx_cauchy_stress_threshold    0 #
 exx_ccp_threshold              1e-08 #
 exx_ccp_rmesh_times            default #
 exx_distribute_type            htime #htime or kmeans1 or kmeans2
