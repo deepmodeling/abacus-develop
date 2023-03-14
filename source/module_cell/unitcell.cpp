@@ -998,13 +998,6 @@ void UnitCell::setup_cell_classic(
 #else
 			ok2 = this->read_atom_positions(ifa, ofs_running, ofs_warning);
 #endif
-			if(ok2&&GlobalV::out_element_info)
-			{
-				for(int i=0;i<this->ntype;i++)
-				{
-					ModuleBase::Global_File::make_dir_atom( this->atoms[i].label );
-				}
-			}
 		}
 	}
 #ifdef __MPI

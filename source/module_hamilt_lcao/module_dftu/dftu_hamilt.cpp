@@ -26,8 +26,8 @@ void DFTU::cal_eff_pot_mat_complex(const int ik, std::complex<double>* eff_pot)
     const char transN = 'N', transT = 'T';
     const int one_int = 1;
     const std::complex<double> one(1.0, 0.0);
-    const double half = 0.5;
-    const double zero = 0.0;
+    const std::complex<double> half = 0.5;
+    const std::complex<double> zero = 0.0;
 
     std::vector<std::complex<double>> VU(this->LM->ParaV->nloc);
     this->cal_VU_pot_mat_complex(spin, true, &VU[0]);
@@ -140,7 +140,7 @@ void DFTU::cal_eff_pot_mat_R_complex_double(const int ispin, std::complex<double
 {
     const char transN = 'N', transT = 'T';
     const int one_int = 1;
-    const double zero = 0.0, one = 1.0, half = 0.5;
+    const std::complex<double> zero = 0.0, one = 1.0, half = 0.5;
 
     std::vector<std::complex<double>> VU(this->LM->ParaV->nloc);
     this->cal_VU_pot_mat_complex(ispin, 1, &VU[0]);

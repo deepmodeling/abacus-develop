@@ -19,24 +19,17 @@ Local_Orbital_wfc::~Local_Orbital_wfc()
 {
 
 	// used for k-points.
-	if(complex_flag && this->wfck_flag)
+	if(this->complex_flag)
 	{
+        delete[] this->wfc_k_grid2;
+    }
+    if(this->wfck_flag)
+    {
 		for(int i=0; i<GlobalC::kv.nks; i++)
 		{
-			//for(int j=0; j<GlobalV::NBANDS; j++)
-			//{
-			//	delete[] this->wfc_k_grid[i][j];
-			//}
 			delete[] this->wfc_k_grid[i];
-			//std::cout<<"delete wfc_k_grid["<<i<<"] success"<<std::endl;
 		}
 		delete[] this->wfc_k_grid;
-		//std::cout<<"delete wfc_k_grid success"<<std::endl;
-		if(GlobalV::NLOCAL!= 0 )
-		{
-			delete[] this->wfc_k_grid2;
-			//std::cout<<"delete wfc_k_grid2 success"<<std::endl;
-		}
 	}
 
 }
