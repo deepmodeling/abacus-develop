@@ -326,9 +326,9 @@ LRI_CV<Tdata>::DPcal_C_dC(
 			}
 			else
 			{
-				const std::vector<size_t> sizes = {this->index_abfs[it0].count_size,
-				                                   this->index_lcaos[it0].count_size,
-												   this->index_lcaos[it0].count_size};
+				const RI::Shape_Vector sizes = {this->index_abfs[it0].count_size,
+				                                this->index_lcaos[it0].count_size,
+				                                this->index_lcaos[it0].count_size};
 				const std::array<RI::Tensor<Tdata>,3>
 					dC({RI::Tensor<Tdata>({sizes}), RI::Tensor<Tdata>({sizes}), RI::Tensor<Tdata>({sizes})});
 				if(flags.at("writable_dCws"))
