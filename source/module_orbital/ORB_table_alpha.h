@@ -41,7 +41,7 @@ public:
 
 	void Destroy_Table_Alpha(LCAO_Orbitals &orb);
 
-	int get_rmesh(const double &R1, const double &R2);
+	int get_rmesh(const double &R1, const double &R2) const;
 
 	double dr;
 

@@ -103,7 +103,7 @@ void ORB_table_alpha::allocate(
 	return;
 }
 
-int ORB_table_alpha::get_rmesh(const double &R1, const double &R2)
+int ORB_table_alpha::get_rmesh(const double &R1, const double &R2) const
 {
 	//int rmesh = static_cast<int>((R1 + R2) / ORB_table_alpha::dr) + 5;
 	int rmesh = static_cast<int>((R1 + R2) / this->dr) + 5;
