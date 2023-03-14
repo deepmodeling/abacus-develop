@@ -1,4 +1,5 @@
 #include "module_base/kernels/math_op.h"
+#include "module_base/libm/libm.h"
 
 namespace ModuleBase {
 
@@ -38,7 +39,9 @@ struct cal_ylm_real_op<FPTYPE, psi::DEVICE_CPU> {
             FPTYPE * p,
             FPTYPE * ylm)
     {
-        FPTYPE cost = 0.0, phi = 0.0;
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
         for (int ig = 0; ig < ng; ig++) {
             //----------------------------------------------------------
             // EXPLAIN : if lmax = 1,only use Y00 , output result.
@@ -53,7 +56,8 @@ struct cal_ylm_real_op<FPTYPE, psi::DEVICE_CPU> {
             // NAME : phi
             //----------------------------------------------------------
             const FPTYPE gmod = sqrt(g[ig * 3 + 0] * g[ig * 3 + 0] + g[ig * 3 + 1] * g[ig * 3 + 1] + g[ig * 3 + 2] * g[ig * 3 + 2]);
-            cost = gmod < 1.0e-9 ? 0.0 : g[ig * 3 + 2] / gmod;
+            FPTYPE cost = gmod < 1.0e-9 ? 0.0 : g[ig * 3 + 2] / gmod;
+            FPTYPE phi;
             //  beware the arc tan, it is defined modulo pi
             if (g[ig * 3 + 0] > 1.0e-9) {
                 phi = atan(g[ig * 3 + 1] / g[ig * 3 + 0]);
@@ -105,13 +109,14 @@ struct cal_ylm_real_op<FPTYPE, psi::DEVICE_CPU> {
                     const FPTYPE same =
                             c * sqrt(__fact<FPTYPE>(l - m) /
                                      __fact<FPTYPE>(l + m)) * SQRT2;
-
+                    FPTYPE sinp, cosp;
+                    ModuleBase::libm::sincos(m * phi, &sinp, &cosp);
                     ++lm;
-                    ylm[lm * ng + ig] = same * p[m * (lmax + 1) * ng + l * ng + ig] * cos(m * phi);
+                    ylm[lm * ng + ig] = same * p[m * (lmax + 1) * ng + l * ng + ig] * cosp;
 
                     // Y_lm, m < 0
                     ++lm;
-                    ylm[lm * ng + ig] = same * p[m * (lmax + 1) * ng + l * ng + ig] * sin(m * phi);
+                    ylm[lm * ng + ig] = same * p[m * (lmax + 1) * ng + l * ng + ig] * sinp;
                 }
            }// end do
         }
