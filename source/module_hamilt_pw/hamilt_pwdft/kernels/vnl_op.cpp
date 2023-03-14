@@ -57,6 +57,12 @@ struct cal_vnl_op<FPTYPE, psi::DEVICE_CPU> {
         const std::complex<FPTYPE> *sk,
         std::complex<FPTYPE> *vkb_in)
     {
+        const int imag_pow_period = 4;
+        // result table of pow(0-1i, int)
+        static const std::complex<FPTYPE> pref_tab[imag_pow_period] = {{1, 0}, {0, -1}, {-1, 0}, {0, 1}};
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
         for (int ig = 0; ig < npw; ig++) {
             int jkb = 0, iat = 0;
             FPTYPE vq = 0.0;
@@ -85,7 +91,8 @@ struct cal_vnl_op<FPTYPE, psi::DEVICE_CPU> {
                 // now add the structure factor and factor (-i)^l
                 for (int ia = 0; ia < atom_na[it]; ia++) {
                     for (int ih = 0; ih < nh; ih++) {
-                        std::complex<FPTYPE> pref = pow(NEG_IMAG_UNIT, nhtol[it * nhm + ih]);    //?
+                        // std::complex<FPTYPE> pref = pow(NEG_IMAG_UNIT, nhtol[it * nhm + ih]);    //?
+                        std::complex<FPTYPE> pref = pref_tab[int(nhtol[it * nhm + ih]) % imag_pow_period];
                         std::complex<FPTYPE> *pvkb = vkb_in + jkb * npwx;
                         pvkb[ig] = vkb1[ih * npw + ig] * sk[iat * npw + ig] * pref;
                         ++jkb;
