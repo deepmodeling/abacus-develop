@@ -30,7 +30,6 @@ list(APPEND objects_advanced
 
 if(ENABLE_LCAO)
   list(APPEND objects
-      cal_r_overlap_R.cpp
       write_dos_lcao.cpp
       write_orb_info.cpp
       write_proj_band_lcao.cpp
@@ -41,14 +40,15 @@ if(ENABLE_LCAO)
       read_wfc_nao.cpp
       write_wfc_nao.cpp
       write_HS.cpp
-      write_HS_sparse.cpp
-      write_HS_R.cpp
       write_dm.cpp
-      write_dm_sparse.cpp
   )
   list(APPEND objects_advanced
       unk_overlap_lcao.cpp
       mulliken_charge.cpp
+      write_HS_R.cpp
+      write_HS_sparse.cpp
+      write_dm_sparse.cpp
+      cal_r_overlap_R.cpp
   )
 endif()
 
