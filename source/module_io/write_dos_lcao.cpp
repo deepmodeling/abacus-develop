@@ -422,7 +422,6 @@ void ModuleIO::write_dos_lcao(const psi::Psi<double>* psid,
         ss1 << GlobalV::global_out_dir << "DOS" << is + 1 << "_smearing.dat";
 
         ModuleIO::calculate_dos(is,
-                           GlobalC::kv.isk,
                            ss.str(),
                            ss1.str(),
                            dos_edelta_ev,
@@ -432,9 +431,10 @@ void ModuleIO::write_dos_lcao(const psi::Psi<double>* psid,
                            GlobalC::kv.nks,
                            GlobalC::kv.nkstot,
                            GlobalC::kv.wk,
-                           wg,
+                           GlobalC::kv.isk,
                            GlobalV::NBANDS,
-                           ekb);
+                           ekb,
+                           wg);
     }
 
     return;

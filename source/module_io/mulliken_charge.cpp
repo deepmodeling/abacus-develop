@@ -48,13 +48,13 @@ ModuleBase::matrix Mulliken_Charge::cal_mulliken(const std::vector<ModuleBase::m
         const char T_char = 'T';
         const char N_char = 'N';
         const int one_int = 1;
-        const double one_float[2] = {1.0, 0.0}, zero_float[2] = {0.0, 0.0};        
+        const double one_float = 1.0, zero_float = 0.0;        
         pdgemm_(&T_char,
                 &N_char,
                 &GlobalV::NLOCAL,
                 &GlobalV::NLOCAL,
                 &GlobalV::NLOCAL,
-                &one_float[0],
+                &one_float,
                 dm[is].c,
                 &one_int,
                 &one_int,
@@ -63,7 +63,7 @@ ModuleBase::matrix Mulliken_Charge::cal_mulliken(const std::vector<ModuleBase::m
                 &one_int,
                 &one_int,
                 uhm.LM->ParaV->desc,
-                &zero_float[0],
+                &zero_float,
                 mud.c,
                 &one_int,
                 &one_int,
@@ -169,13 +169,13 @@ ModuleBase::matrix Mulliken_Charge::cal_mulliken_k(const std::vector<ModuleBase:
         const char T_char = 'T';
         const char N_char = 'N';
         const int one_int = 1;
-        const double one_float[2] = {1.0, 0.0}, zero_float[2] = {0.0, 0.0};        
+        const std::complex<double> one_float = {1.0, 0.0}, zero_float = {0.0, 0.0};        
         pzgemm_(&T_char,
                 &N_char,
                 &GlobalV::NLOCAL,
                 &GlobalV::NLOCAL,
                 &GlobalV::NLOCAL,
-                &one_float[0],
+                &one_float,
                 dm[ik].c,
                 &one_int,
                 &one_int,
@@ -184,7 +184,7 @@ ModuleBase::matrix Mulliken_Charge::cal_mulliken_k(const std::vector<ModuleBase:
                 &one_int,
                 &one_int,
                 uhm.LM->ParaV->desc,
-                &zero_float[0],
+                &zero_float,
                 mud.c,
                 &one_int,
                 &one_int,

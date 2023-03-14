@@ -18,10 +18,10 @@
  *      - operator "*=", "+=", "-="
  *      - function trace_on
  *      - function zero_out
- *      - function fill_out
+ *      - function fill_out(fill a matrix with a const double)
  *      - function max/min/absmax
  *      - function norm
- *      - function print (not called in abacus, no need to test)
+ *      - function print(print the element which is larger than threshold)
  * 
  * - Tested functions related to class matrix
  *      - operator "+", "-", "*" between two matrixs
@@ -350,4 +350,16 @@ TEST_F(matrixTest,Fillout)
             EXPECT_DOUBLE_EQ(m33a(i,j),k);
         }
     }
+}
+
+
+TEST_F(matrixTest,Print)
+{
+    std::string output;
+    const double threshold=4.0;
+    testing::internal::CaptureStdout();
+    //EXPECT_EXIT(m33a.print(std::cout,threshold),::testing::ExitedWithCode(0),"");
+    m33a.print(std::cout,threshold);
+    output  = testing::internal::GetCapturedStdout();
+    EXPECT_THAT(output,testing::HasSubstr("0\t0\t0\t\n0\t5\t6\t\n7\t8\t9\t\n"));
 }

@@ -29,6 +29,7 @@ namespace ModuleBase
 
 void matrixAlloc(){ModuleBase::WARNING_QUIT("matrix","Allocation error for Matrix");}
 
+/*create a matrix with nrows*ncols size */
 matrix::matrix( const int nrows, const int ncols, const bool flag_zero )
 	:nr(nrows),
 	 nc(ncols),
@@ -288,6 +289,7 @@ void matrix::zero_out(void)
 		c[i] = 0.0;
 }
 
+/* fill out the matrix with a constant double*/
 void matrix::fill_out(const double x)
 {
 	const int size = nr*nc;
@@ -321,33 +323,34 @@ double matrix::trace_on(void) const
     return tr;
 }
 
-void matrix::get_extreme_eigen_values(double &ev_lower, double &ev_upper)const
-{
-    double *a = new double[nr];
-    double *b = new double[nr];
-    for (int i = 0; i < nr; ++i)
-    {
-        double sum = 0.0;
-        for(int j = 0; j < nc; ++j)
-        {
-            sum += fabs(c[i * nc + j]);
-        }
-        sum -= fabs(c[i * nc + i]);
-        a[i] = c[i * nc + i] - sum;
-        b[i] = c[i * nc + i] + sum;
-    }
+//this function is wrong, and there is no file use this function.
+// void matrix::get_extreme_eigen_values(double &ev_lower, double &ev_upper)const
+// {
+//     double *a = new double[nr];
+//     double *b = new double[nr];
+//     for (int i = 0; i < nr; ++i)
+//     {
+//         double sum = 0.0;
+//         for(int j = 0; j < nc; ++j)
+//         {
+//             sum += fabs(c[i * nc + j]);
+//         }
+//         sum -= fabs(c[i * nc + i]);
+//         a[i] = c[i * nc + i] - sum;
+//         b[i] = c[i * nc + i] + sum;
+//     }
 
-    ev_lower = a[0];
-    ev_upper = b[0];
+//     ev_lower = a[0];
+//     ev_upper = b[0];
 
-    for (int i = 1; i < nr; ++i)
-    {
-        if (a[i] < ev_lower) ev_lower = a[i];
-        if (b[i] > ev_upper) ev_upper = b[i];
-    }
-    delete[] a;
-    delete[] b;
-}
+//     for (int i = 1; i < nr; ++i)
+//     {
+//         if (a[i] < ev_lower) ev_lower = a[i];
+//         if (b[i] > ev_upper) ev_upper = b[i];
+//     }
+//     delete[] a;
+//     delete[] b;
+// }
 
 // Peize Lin add 2017-05-27
 void matrix::reshape( const double nr_new, const double nc_new, const bool flag_zero )
@@ -403,6 +406,7 @@ std::ostream & operator<<( std::ostream & os, const matrix & m )
 */
 
 // Peize Lin add 2021.09.08
+/*output the element in a matrix whose absolute value is larger than the input threshold*/
 std::ostream & matrix::print( std::ostream & os, const double threshold ) const
 {
 	for( int ir=0; ir!=this->nr; ++ir )

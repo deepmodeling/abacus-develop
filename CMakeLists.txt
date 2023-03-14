@@ -482,7 +482,8 @@ target_link_libraries(${ABACUS_BIN_NAME}
     planewave
     surchem
     neighbor
-    io
+    io_basic
+    io_advanced
     relax
     driver
     xc_
