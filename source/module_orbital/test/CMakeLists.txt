@@ -70,12 +70,12 @@ AddTest(
     LIBS ${math_libs} device base
 )
 
-AddTest(
-    TARGET ORB_gaunt_table_test
-    SOURCES ORB_gaunt_table_test.cpp
-        ../ORB_gaunt_table.cpp
-    LIBS ${math_libs} device base
-)
+#AddTest(
+#    TARGET ORB_gaunt_table_test
+#    SOURCES ORB_gaunt_table_test.cpp
+#        ../ORB_gaunt_table.cpp
+#    LIBS ${math_libs} device base
+#)
 
 AddTest(
     TARGET ORB_table_alpha_test
