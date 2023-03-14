@@ -137,7 +137,7 @@ TEST_F(InputTest, Default)
         EXPECT_EQ(INPUT.smearing_method,"fixed");
         EXPECT_DOUBLE_EQ(INPUT.smearing_sigma,0.01);
         EXPECT_EQ(INPUT.mixing_mode,"pulay");
-        EXPECT_DOUBLE_EQ(INPUT.mixing_beta,0.7);
+        EXPECT_DOUBLE_EQ(INPUT.mixing_beta,-10.0);
         EXPECT_EQ(INPUT.mixing_ndim,8);
         EXPECT_DOUBLE_EQ(INPUT.mixing_gg0,0.00);
         EXPECT_EQ(INPUT.init_wfc,"atomic");
@@ -350,7 +350,8 @@ TEST_F(InputTest, Default)
 
 TEST_F(InputTest, Read)
 {
-	std::string input_file = "INPUT";
+	std::string input_file = "./support/INPUT";
+	GlobalV::stru_file = "./support/STRU";
 	INPUT.Read(input_file);
 	EXPECT_EQ(INPUT.suffix,"autotest");
 	EXPECT_EQ(INPUT.stru_file,"STRU");
