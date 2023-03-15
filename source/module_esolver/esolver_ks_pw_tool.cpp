@@ -170,6 +170,7 @@ void ESolver_KS_PW<FPTYPE, Device>:: jjcorr_ks(const int ik, const int nt, const
     }
     delete[] pij;
     delete[] prevc;
+    delete[] pij2;
     return;
 }
 

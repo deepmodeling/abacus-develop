@@ -65,7 +65,7 @@
   [gate_flag](#gate_flag) | [zgate](#zgate) | [block](#block) | [block_down](#block_down) | [block_up](#block_up) | [block_height](#block_height)
 - [Electronic conductivities](#electronic-conductivities)
 
-  [cal_cond](#cal_cond) | [cond_nche](#cond_nche) | [cond_dw](#cond_dw) | [cond_wcut](#cond_wcut) | [cond_dt](#cond_dt) | [cond_fwhm](#cond_fwhm) | [cond_nonlocal](#cond_nonlocal)
+  [cal_cond](#cal_cond) | [cond_nche](#cond_nche) | [cond_dw](#cond_dw) | [cond_wcut](#cond_wcut) | [cond_dt](#cond_dt) | [cond_dtbatch](#cond_dtbatch) | [cond_fwhm](#cond_fwhm) | [cond_nonlocal](#cond_nonlocal)
 - [Implicit solvation model](#implicit-solvation-model)
 
   [imp_sol](#imp_sol) | [eb_k](#eb_k) | [tau](#tau) | [sigma_k](#sigma_k) | [nc_k](#nc_k)
@@ -2412,6 +2412,12 @@ Thermal conductivities: $\kappa = \lim_{\omega\to 0}\kappa(\omega)$.
 - **Type**: Real
 - **Description**: t interval to integrate Onsager coefficiencies. The unit is a.u.
 - **Default**: 10
+
+### cond_dtbatch
+
+- **Type**: Integer
+- **Description**: exp(iH*dt*cond_dtbatch) is expanded with Chebyshev expansion.
+- **Default**: 1
 
 ### cond_fwhm
 
