@@ -2,7 +2,7 @@ INPUT_PARAMETERS
 #Parameters (1.General)
 suffix                         autotest #the name of main output directory
 latname                        none #the name of lattice name
-stru_file                      STRU #the filename of file containing atom positions
+stru_file                      ./support/STRU #the filename of file containing atom positions
 kpoint_file                    KPT #the name of file containing k points
 pseudo_dir                     ../../PP_ORB/ #the directory containing pseudo files
 orbital_dir                    ../../PP_ORB/ #the directory containing orbital files
