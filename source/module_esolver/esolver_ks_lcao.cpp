@@ -852,7 +852,7 @@ void ESolver_KS_LCAO::afterscf(const int istep)
     {
         if (elecstate::ElecStateLCAO::out_wfc_lcao)
         {
-            this->pelec->out_wfc_flag = 1;
+            elecstate::ElecStateLCAO::out_wfc_flag = 1;
         }
         for (int ik = 0; ik < GlobalC::kv.nks; ik++)
         {
@@ -867,7 +867,7 @@ void ESolver_KS_LCAO::afterscf(const int istep)
                 this->pelec->print_psi(this->psid[0]);
             }
         }
-        this->pelec->out_wfc_flag = 0;
+        elecstate::ElecStateLCAO::out_wfc_flag = 0;
     }
 
     if (GlobalV::OUT_LEVEL != "m")

@@ -40,6 +40,7 @@ class ElecStateLCAO : public ElecState
     virtual void print_psi(const psi::Psi<std::complex<double>>& psi_in) override;
 
     static int out_wfc_lcao;
+    static int out_wfc_flag;
     static bool need_psi_grid;
 
   protected:
