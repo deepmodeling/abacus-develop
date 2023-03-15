@@ -7,7 +7,10 @@ bool ModuleIO::read_rho(const int &is, const std::string &fn, double* rho, int &
     std::ifstream ifs(fn.c_str());
     if (!ifs) 
 	{
-		ModuleBase::WARNING_QUIT("read_rho","!!! Couldn't find the charge file !!! The default directory \n of SPIN1_CHG is OUT.suffix, or you must set read_file_dir \n to a specific directory. ");
+		std::string tmp_warning_info = "!!! Couldn't find the charge file of ";
+		tmp_warning_info += fn;
+		GlobalV::ofs_running << tmp_warning_info << std::endl;
+		return false;
 	}
 	else
 	{

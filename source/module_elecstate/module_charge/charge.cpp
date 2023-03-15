@@ -204,6 +204,11 @@ void Charge::init_rho()
                     ModuleBase::WARNING_QUIT("Charge::init_rho", "Incomplete charge density file!");
                 }
             }
+            else
+            {
+		    ModuleBase::WARNING_QUIT("init_rho","!!! Couldn't find the charge file !!! The default directory \n of SPIN1_CHG.cube is OUT.suffix, or you must set read_file_dir \n to a specific directory. ");
+            }
+
         }
         
 		if(XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
