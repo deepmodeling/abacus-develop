@@ -254,7 +254,7 @@ void ESolver_KS_LCAO::postprocess()
     // qianrui modify 2020-10-18
     if (GlobalV::CALCULATION == "scf" || GlobalV::CALCULATION == "md" || GlobalV::CALCULATION == "relax")
     {
-        ModuleIO::write_istate_info(this->pelec->ekb,this->pelec->wg,&(GlobalC::kv),&(GlobalC::Pkpoints));
+        ModuleIO::write_istate_info(this->pelec->ekb, this->pelec->wg, &(GlobalC::kv), &(GlobalC::Pkpoints));
     }
 
     // GlobalV::mulliken charge analysis
@@ -819,19 +819,36 @@ void ESolver_KS_LCAO::afterscf(const int istep)
 
     if (this->conv_elec)
     {
-        //for (int ik = 0; ik < this->psi->get_nk(); ++ik)
-        //{
+        for (int ik = 0; ik < GlobalC::kv.nks; ++ik)
+        {
             bool bit = false; // LiuXh, 2017-03-21
             // if set bit = true, there would be error in soc-multi-core calculation, noted by zhengdy-soc
-            //hamilt::MatrixBlock<std::complex<double>> h_mat, s_mat;
-            //this->p_hamilt->matrix(h_mat, s_mat);
-            // ModuleIO::saving_HS(h_mat.p,
-            //                     s_mat.p,
-            //                     bit,
-            //                     hsolver::HSolverLCAO::out_mat_hs,
-            //                     "data-" + std::to_string(ik),
-            //                     this->LOWF.ParaV[0]); // LiuXh, 2017-03-21
-        //}
+            hamilt::MatrixBlock<double> h_mat, s_mat;
+            this->p_hamilt->matrix(h_mat, s_mat);
+            ModuleIO::saving_HS(h_mat.p,
+                                s_mat.p,
+                                bit,
+                                hsolver::HSolverLCAO::out_mat_hs,
+                                "data-" + std::to_string(ik),
+                                this->LOWF.ParaV[0]); // LiuXh, 2017-03-21
+        }
+    }
+
+    if (this->conv_elec)
+    {
+        for (int ik = 0; ik < GlobalC::kv.nks; ik++)
+        {
+            if (this->psi != nullptr)
+            {
+                this->psi[0].fix_k(ik);
+                this->pelec->print_psi(this->psi[0]);
+            }
+            else
+            {
+                this->psid[0].fix_k(ik);
+                this->pelec->print_psi(this->psid[0]);
+            }
+        }
     }
 
     if (GlobalV::OUT_LEVEL != "m")

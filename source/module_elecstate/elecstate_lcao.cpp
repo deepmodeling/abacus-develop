@@ -35,7 +35,6 @@ void ElecStateLCAO::psiToRho(const psi::Psi<std::complex<double>>& psi)
         for (int ik = 0; ik < psi.get_nk(); ik++)
         {
             psi.fix_k(ik);
-            this->print_psi(psi);
         }
     }
 
@@ -91,7 +90,6 @@ void ElecStateLCAO::psiToRho(const psi::Psi<double>& psi)
             if (GlobalV::KS_SOLVER == "genelpa" || GlobalV::KS_SOLVER == "scalapack_gvx")
             {
                 psi.fix_k(ik);
-                this->print_psi(psi);
             }
             this->loc->cal_dk_gamma_from_2D_pub();
         }
