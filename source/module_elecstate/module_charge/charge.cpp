@@ -204,6 +204,11 @@ void Charge::init_rho()
                     ModuleBase::WARNING_QUIT("Charge::init_rho", "Incomplete charge density file!");
                 }
             }
+            else
+            {
+		    ModuleBase::WARNING_QUIT("init_rho","!!! Couldn't find the charge file !!! The default directory \n of SPIN1_CHG.cube is OUT.suffix, or you must set read_file_dir \n to a specific directory. ");
+            }
+
         }
         
 		if(XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
@@ -502,7 +507,7 @@ void Charge::atomic_rho(const int spin_number_need, double** rho_in, ModulePW::P
 					{
 						double sin_a1, sin_a2, cos_a1, cos_a2;
 						if(GlobalV::DOMAG)
-						{
+						{//will not be used now, will be deleted later
 							ModuleBase::libm::sincos(atom->angle1[0], &sin_a1, &cos_a1);
 							ModuleBase::libm::sincos(atom->angle2[0], &sin_a2, &cos_a2);
 						}
@@ -514,7 +519,7 @@ void Charge::atomic_rho(const int spin_number_need, double** rho_in, ModulePW::P
 							const std::complex<double> swap = GlobalC::sf.strucFac(it, ig)* rho_lgl[rho_basis->ig2igg[ig]];
 							rho_g3d(0, ig) += swap ;
 							if(GlobalV::DOMAG)
-							{
+							{//will not be used now, will be deleted later
 								rho_g3d(1, ig) += swap * (GlobalC::ucell.magnet.start_magnetization[it] / atom->ncpp.zv) 
 								* sin_a1 * cos_a2;
 								rho_g3d(2, ig) += swap * (GlobalC::ucell.magnet.start_magnetization[it] / atom->ncpp.zv) 
@@ -524,7 +529,8 @@ void Charge::atomic_rho(const int spin_number_need, double** rho_in, ModulePW::P
 							}
 							else if(GlobalV::DOMAG_Z)
 							{
-								//rho_g3d(3, ig) += swap * GlobalC::ucell.magnet.start_magnetization[it];
+								rho_g3d(1, ig) = 0.0;
+								rho_g3d(2, ig) = 0.0;
 								rho_g3d(3, ig) += swap * (GlobalC::ucell.magnet.start_magnetization[it] / atom->ncpp.zv);
 							}
 						}
@@ -535,9 +541,12 @@ void Charge::atomic_rho(const int spin_number_need, double** rho_in, ModulePW::P
 						for(int ia = 0;ia<atom->na;ia++)
 						{
 							double sin_a1, sin_a2, cos_a1, cos_a2;
-							if(GlobalV::DOMAG)
+							if(GlobalV::DOMAG || GlobalV::DOMAG_Z)
 							{
 								ModuleBase::libm::sincos(atom->angle1[ia], &sin_a1, &cos_a1);
+							}
+							if(GlobalV::DOMAG)
+							{
 								ModuleBase::libm::sincos(atom->angle2[ia], &sin_a2, &cos_a2);
 							}
 #ifdef _OPENMP
@@ -552,19 +561,26 @@ void Charge::atomic_rho(const int spin_number_need, double** rho_in, ModulePW::P
 
 								std::complex<double> swap = exp(ci_tpi * Gtau) * rho_lgl[rho_basis->ig2igg[ig]];
 
+								//calculate rho_total
 								rho_g3d(0, ig) += swap;
+								//calculate mag_z
+								if(GlobalV::DOMAG || GlobalV::DOMAG_Z)
+								{
+									rho_g3d(3, ig) += swap * (atom->mag[ia] / atom->ncpp.zv) 
+										* cos_a1;
+								}
+								//calculate mag_x and mag_y
 								if(GlobalV::DOMAG)
 								{
 									rho_g3d(1, ig) += swap * (atom->mag[ia] / atom->ncpp.zv) 
 										* sin_a1 * cos_a2;
 									rho_g3d(2, ig) += swap * (atom->mag[ia] / atom->ncpp.zv) 
 										* sin_a1 * sin_a2;
-									rho_g3d(3, ig) += swap * (atom->mag[ia] / atom->ncpp.zv) 
-										* cos_a1;
 								}
-								else if(GlobalV::DOMAG_Z)
+								else
 								{
-									rho_g3d(3, ig) += swap * (atom->mag[ia] / atom->ncpp.zv);
+									rho_g3d(1, ig) = 0.0;
+									rho_g3d(2, ig) = 0.0;
 								}
 							}
 						}

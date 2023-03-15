@@ -22,7 +22,7 @@ bool ModuleIO::calculate_dos
 	const ModuleBase::matrix &wg//weight of (kpoint,bands)
 )
 {
-	ModuleBase::TITLE("Dos","calculae_dos");
+	ModuleBase::TITLE("ModuleIO","calculate_dos");
 	std::ofstream ofs;
 	std::ofstream ofs1;
 	if(GlobalV::MY_RANK==0)
@@ -45,7 +45,7 @@ bool ModuleIO::calculate_dos
 	}
 	else if(emax_ev < emin_ev)
 	{
-		ModuleBase::WARNING("calculate_dos","emax_ev < emin_ev");
+		ModuleBase::WARNING("ModuleIO::calculate_dos","emax_ev < emin_ev");
 		return 0;
 	}
 
@@ -56,7 +56,7 @@ bool ModuleIO::calculate_dos
 	if(npoints <= 0)
 	{
 		ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"npoints",npoints);
-		ModuleBase::WARNING("calculate_dos","npoints < 0");
+		ModuleBase::WARNING("ModuleIO::calculate_dos","npoints <= 0");
 		return 0;
 	}
 	if(GlobalV::MY_RANK==0)
