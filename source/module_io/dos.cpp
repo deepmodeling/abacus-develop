@@ -22,7 +22,7 @@ bool ModuleIO::calculate_dos
 	const ModuleBase::matrix &wg//weight of (kpoint,bands)
 )
 {
-	ModuleBase::TITLE("ModuleIO","calculae_dos");
+	ModuleBase::TITLE("ModuleIO","calculate_dos");
 	std::ofstream ofs;
 	std::ofstream ofs1;
 	if(GlobalV::MY_RANK==0)
