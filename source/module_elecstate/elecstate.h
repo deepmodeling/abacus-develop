@@ -76,6 +76,7 @@ class ElecState
     {
         return;
     }
+    int out_wfc_flag = 0; // output wfc only when scf is converged
 
     void init_scf(const int istep, const ModuleBase::ComplexMatrix& strucfac);
 
