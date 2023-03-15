@@ -398,14 +398,28 @@ void ESolver_KS_LCAO_TDDFT::afterscf(const int istep)
         {
             bool bit = false; // LiuXh, 2017-03-21
             // if set bit = true, there would be error in soc-multi-core calculation, noted by zhengdy-soc
-            hamilt::MatrixBlock<double> h_mat, s_mat;
-            this->p_hamilt->matrix(h_mat, s_mat);
-            ModuleIO::saving_HS(h_mat.p,
-                                s_mat.p,
-                                bit,
-                                hsolver::HSolverLCAO::out_mat_hs,
-                                "data-" + std::to_string(ik),
-                                this->LOWF.ParaV[0]); // LiuXh, 2017-03-21
+            if (this->psi != nullptr)
+            {
+                hamilt::MatrixBlock<complex<double>> h_mat, s_mat;
+                this->p_hamilt->matrix(h_mat, s_mat);
+                ModuleIO::saving_HS(h_mat.p,
+                                    s_mat.p,
+                                    bit,
+                                    hsolver::HSolverLCAO::out_mat_hs,
+                                    "data-" + std::to_string(ik),
+                                    this->LOWF.ParaV[0]); // LiuXh, 2017-03-21
+            }
+            else if (this->psid != nullptr)
+            {
+                hamilt::MatrixBlock<double> h_mat, s_mat;
+                this->p_hamilt->matrix(h_mat, s_mat);
+                ModuleIO::saving_HS(h_mat.p,
+                                    s_mat.p,
+                                    bit,
+                                    hsolver::HSolverLCAO::out_mat_hs,
+                                    "data-" + std::to_string(ik),
+                                    this->LOWF.ParaV[0]); // LiuXh, 2017-03-21
+            }
         }
     }
 
