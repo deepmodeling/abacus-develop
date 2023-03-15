@@ -1,5 +1,5 @@
-#ifndef TEST_KLIST_INCLUDE_H
-#define TEST_KLIST_INCLUDE_H
+#ifndef FOR_TESTING_KLIST_H
+#define FOR_TESTING_KLIST_H
 
 #include "module_cell/parallel_kpoints.h"
 #include "module_base/parallel_global.h"
