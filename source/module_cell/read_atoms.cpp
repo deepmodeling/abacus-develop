@@ -639,12 +639,18 @@ bool UnitCell::read_atom_positions(std::ifstream &ifpos, std::ofstream &ofs_runn
 													 ifpos >> atoms[it].angle1[ia];
 													 atoms[it].angle1[ia]=atoms[it].angle1[ia]/180 *ModuleBase::PI;
 													 input_angle_mag=true;
+#ifndef __CMD
+													 set_element_mag_zero = true;
+#endif
 												}
 												else if ( tmpid == "angle2")
 												{
 													 ifpos >> atoms[it].angle2[ia];
 													 atoms[it].angle2[ia]=atoms[it].angle2[ia]/180 *ModuleBase::PI;
 													 input_angle_mag=true;
+#ifndef __CMD
+													 set_element_mag_zero = true;
+#endif
 												}
 												
                                         }
@@ -661,21 +667,30 @@ bool UnitCell::read_atom_positions(std::ifstream &ifpos, std::ofstream &ofs_runn
 						{
 							if(input_angle_mag)
 							{
-								atoms[it].m_loc_[ia].x = atoms[it].mag[ia] *
-									sin(atoms[it].angle1[ia]) * cos(atoms[it].angle2[ia]);
-								atoms[it].m_loc_[ia].y = atoms[it].mag[ia] *
-									sin(atoms[it].angle1[ia]) * sin(atoms[it].angle2[ia]);
 								atoms[it].m_loc_[ia].z = atoms[it].mag[ia] *
 									cos(atoms[it].angle1[ia]);
+								if(sin(atoms[it].angle1[ia]) > 1e-10 )
+								{
+									atoms[it].m_loc_[ia].x = atoms[it].mag[ia] *
+										sin(atoms[it].angle1[ia]) * cos(atoms[it].angle2[ia]);
+									atoms[it].m_loc_[ia].y = atoms[it].mag[ia] *
+										sin(atoms[it].angle1[ia]) * sin(atoms[it].angle2[ia]);
+									//if magnetization only along z-axis, default settings are DOMAG_Z=true and DOMAG=false
+									GlobalV::DOMAG_Z = false;
+									GlobalV::DOMAG = true;
+								}
 							}
 							else if (input_vec_mag)
 							{
 								double mxy=sqrt(pow(atoms[it].m_loc_[ia].x,2)+pow(atoms[it].m_loc_[ia].y,2));
 								atoms[it].angle1[ia]=atan2(mxy,atoms[it].m_loc_[ia].z);
 								if(mxy>1e-8)
+								{
 									atoms[it].angle2[ia]=atan2(atoms[it].m_loc_[ia].y,atoms[it].m_loc_[ia].x);
-									//cout<<"it"<<it<<"ia"<<ia<<"x"<<atoms[it].m_loc_[ia].x<<"y"<<atoms[it].m_loc_[ia].y<<"z"<<atoms[it].m_loc_[ia].z<<"mag"<<atoms[it].mag[ia]<<"angle1"<<atoms[it].angle1[ia]
-									//<<"angle2"<<atoms[it].angle2[ia]<<'\n';
+									//if magnetization only along z-axis, default settings are DOMAG_Z=true and DOMAG=false
+									GlobalV::DOMAG_Z = false;
+									GlobalV::DOMAG = true;
+								}
 							}
 						}
 						else

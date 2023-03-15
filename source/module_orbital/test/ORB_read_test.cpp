@@ -76,11 +76,6 @@ void LcaoOrbitalsTest::SetUp() {
     orbital_file_.push_back("./lcao_H2O/H_gga_8au_60Ry_2s1p.orb");
     orbital_file_.push_back("./lcao_H2O/O_gga_7au_60Ry_2s2p1d.orb");
 
-    //if (GlobalV::MY_RANK != 0) {
-    //    std::cout << "rank=" << GlobalV::MY_RANK 
-    //        << "    orbital_file_0 = " << orbital_file_[0] << std::endl;
-    //}
-
     // below we mimic ORB_control::read_orb_first
     ecutwfc_ = 123.0;
     dk_ = 0.01;

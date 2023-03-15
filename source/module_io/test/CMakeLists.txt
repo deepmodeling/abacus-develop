@@ -26,3 +26,15 @@ AddTest(
   TARGET io_rwstream_test
   SOURCES rwstream_test.cpp ../rwstream.cpp
 )
+
+AddTest(
+  TARGET io_write_istate_info_test
+  LIBS ${math_libs} base device symmetry
+  SOURCES write_istate_info_test.cpp ../write_istate_info.cpp ../output.cpp ../../module_cell/parallel_kpoints.cpp ../../module_cell/klist.cpp
+)
+
+AddTest(
+  TARGET io_dos_test
+  LIBS ${math_libs} base device
+  SOURCES dos_test.cpp ../dos.cpp
+)

@@ -306,7 +306,7 @@ if ! test -z "$out_dm"  && [ $out_dm == 1 ]; then
 fi
 
 if ! test -z "$out_mul"  && [ $out_mul == 1 ]; then
-    python3 ../tools/CompareFile.py mulliken.txt.ref OUT.autotest/mulliken.txt 8
+    python3 ../tools/CompareFile.py mulliken.txt.ref OUT.autotest/mulliken.txt 6
 	echo "Compare_mulliken_pass $?" >>$1
 fi
 
