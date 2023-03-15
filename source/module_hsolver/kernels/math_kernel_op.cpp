@@ -37,6 +37,9 @@ template <typename FPTYPE> struct vector_div_constant_op<FPTYPE, psi::DEVICE_CPU
                     const std::complex<FPTYPE>* vector,
                     const FPTYPE constant)
     {
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 4096/sizeof(FPTYPE))
+#endif
         for (int i = 0; i < dim; i++)
         {
             result[i] = vector[i] / constant;
@@ -52,6 +55,9 @@ template <typename FPTYPE> struct vector_mul_vector_op<FPTYPE, psi::DEVICE_CPU>
                     const std::complex<FPTYPE>* vector1,
                     const FPTYPE* vector2)
     {
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 4096/sizeof(FPTYPE))
+#endif
         for (int i = 0; i < dim; i++)
         {
             result[i] = vector1[i] * vector2[i];
@@ -67,6 +73,9 @@ template <typename FPTYPE> struct vector_div_vector_op<FPTYPE, psi::DEVICE_CPU>
                     const std::complex<FPTYPE>* vector1,
                     const FPTYPE* vector2)
     {
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 4096/sizeof(FPTYPE))
+#endif
         for (int i = 0; i < dim; i++)
         {
             result[i] = vector1[i] / vector2[i];
@@ -84,6 +93,9 @@ template <typename FPTYPE> struct constantvector_addORsub_constantVector_op<FPTY
                     const std::complex<FPTYPE>* vector2,
                     const FPTYPE constant2)
     {
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 4096/sizeof(FPTYPE))
+#endif
         for (int i = 0; i < dim; i++)
         {
             result[i] = vector1[i] * constant1 + vector2[i] * constant2;
@@ -171,13 +183,19 @@ template <typename FPTYPE> struct matrixTranspose_op<FPTYPE, psi::DEVICE_CPU>
     {
         std::complex<FPTYPE>* temp = nullptr;
         psi::memory::resize_memory_op<std::complex<FPTYPE>, psi::DEVICE_CPU>()(d, temp, row * col, "MTransOp");
-        for (int i = 0; i < row; i++)
+#ifdef _OPENMP
+#pragma omp parallel for collapse(2) schedule(static, 4096/sizeof(FPTYPE))
+#endif
+        for (int j = 0; j < col; j++)
         {
-            for (int j = 0; j < col; j++)
+            for (int i = 0; i < row; i++)
             {
                 temp[j * row + i] = input_matrix[i * col + j];
             }
         }
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 4096/sizeof(FPTYPE))
+#endif
         for (int i = 0; i < row * col; i++)
         {
             output_matrix[i] = temp[i];
@@ -195,6 +213,9 @@ template <typename FPTYPE> struct matrixSetToAnother<FPTYPE, psi::DEVICE_CPU>
                     std::complex<FPTYPE>* B,
                     const int& LDB)
     {
+#ifdef _OPENMP
+#pragma omp parallel for collapse(2) schedule(static, 4096/sizeof(FPTYPE))
+#endif
         for (int i = 0; i < n; i++)
         {
             for (int j = 0; j < LDA; j++)
