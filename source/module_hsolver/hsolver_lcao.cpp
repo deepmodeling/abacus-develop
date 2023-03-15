@@ -90,16 +90,16 @@ void HSolverLCAO::solveTemplate(hamilt::Hamilt<double>* pHamilt,
         /// update H(k) for each k point
         pHamilt->updateHk(ik);
 
-        bool bit = false; // LiuXh, 2017-03-21
-        // if set bit = true, there would be error in soc-multi-core calculation, noted by zhengdy-soc
-        hamilt::MatrixBlock<T> h_mat, s_mat;
-        pHamilt->matrix(h_mat, s_mat);
-        ModuleIO::saving_HS(h_mat.p,
-                             s_mat.p,
-                             bit,
-                             this->out_mat_hs,
-                             "data-" + std::to_string(ik),
-                             this->ParaV[0]); // LiuXh, 2017-03-21
+        // bool bit = false; // LiuXh, 2017-03-21
+        // // if set bit = true, there would be error in soc-multi-core calculation, noted by zhengdy-soc
+        // hamilt::MatrixBlock<T> h_mat, s_mat;
+        // pHamilt->matrix(h_mat, s_mat);
+        // ModuleIO::saving_HS(h_mat.p,
+        //                      s_mat.p,
+        //                      bit,
+        //                      this->out_mat_hs,
+        //                      "data-" + std::to_string(ik),
+        //                     this->ParaV[0]); // LiuXh, 2017-03-21
 
         psi.fix_k(ik);
 

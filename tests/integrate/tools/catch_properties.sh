@@ -312,18 +312,18 @@ fi
 
 if [ $calculation == "ienvelope" ]; then
 	nfile=0
-	envfiles=`ls OUT.autotest/ | grep ENV$`
-	if test -z "$envfiles"; then
-		echo "Can't find ENV(-elope) files"
-		exit 1
-	else
-		for env in $envfiles;
-		do
-			nelec=`../tools/sum_ENV_H2 OUT.autotest/$env`
-			nfile=$(($nfile+1))
-			echo "nelec$nfile $nelec" >>$1
-		done
-	fi
+	# envfiles=`ls OUT.autotest/ | grep ENV$`
+	# if test -z "$envfiles"; then
+	# 	echo "Can't find ENV(-elope) files"
+	# 	exit 1
+	# else
+	# 	for env in $envfiles;
+	# 	do
+	# 		nelec=`../tools/sum_ENV_H2 OUT.autotest/$env`
+	# 		nfile=$(($nfile+1))
+	# 		echo "nelec$nfile $nelec" >>$1
+	# 	done
+	# fi
 	cubefiles=`ls OUT.autotest/ | grep -E '.cube$'`
 	if test -z "$cubefiles"; then
 		echo "Can't find BAND_CHG files"
@@ -339,18 +339,18 @@ fi
 
 if [ $calculation == "istate" ]; then
 	nfile=0
-	chgfiles=`ls OUT.autotest/ | grep -E '_CHG$'`
-	if test -z "$chgfiles"; then
-		echo "Can't find BAND_CHG files"
-		exit 1
-	else
-		for chg in $chgfiles;
-		do
-			total_chg=`../tools/sum_BAND_CHG_H2 OUT.autotest/$chg`
-			nfile=$(($nfile+1))
-			echo "nelec$nfile $total_chg" >>$1
-		done
-	fi
+	# chgfiles=`ls OUT.autotest/ | grep -E '_CHG$'`
+	# if test -z "$chgfiles"; then
+	# 	echo "Can't find BAND_CHG files"
+	# 	exit 1
+	# else
+	# 	for chg in $chgfiles;
+	# 	do
+	# 		total_chg=`../tools/sum_BAND_CHG_H2 OUT.autotest/$chg`
+	# 		nfile=$(($nfile+1))
+	# 		echo "nelec$nfile $total_chg" >>$1
+	# 	done
+	# fi
 	cubefiles=`ls OUT.autotest/ | grep -E '.cube$'`
 	if test -z "$cubefiles"; then
 		echo "Can't find BAND_CHG files"

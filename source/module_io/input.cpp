@@ -495,7 +495,7 @@ void Input::Default(void)
     //==========================================================
     //    DFT+U     Xin Qu added on 2020-10-29
     //==========================================================
-    dft_plus_u = false; // 1:DFT+U correction; 0：standard DFT calcullation
+    dft_plus_u = false; // 1:DFT+U correction; 0: standard DFT calcullation
     yukawa_potential = false;
     yukawa_lambda = -1.0;
     omc = 0;

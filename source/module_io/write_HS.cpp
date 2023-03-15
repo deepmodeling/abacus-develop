@@ -128,7 +128,6 @@ void ModuleIO::save_HS(const double *H, const double *S, const bool bit, const s
         ssh << GlobalV::global_out_dir << file_name+"-H";
         sss << GlobalV::global_out_dir << file_name+"-S";
     }
-
     if (bit)
     {
 #ifdef __MPI
@@ -230,8 +229,8 @@ void ModuleIO::save_HS(const double *H, const double *S, const bool bit, const s
 
         if (GlobalV::DRANK==0)
         {
-            g1.open(ssh.str().c_str());
-            g2.open(sss.str().c_str());
+            g1.open(ssh.str().c_str(), ofstream::app);
+            g2.open(sss.str().c_str(), ofstream::app);
             g1 << GlobalV::NLOCAL;
             g2 << GlobalV::NLOCAL;
         }
