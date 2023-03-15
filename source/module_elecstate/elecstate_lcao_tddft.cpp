@@ -33,6 +33,7 @@ void ElecStateLCAO_TDDFT::psiToRho_td(const psi::Psi<std::complex<double>>& psi)
         for (int ik = 0; ik < psi.get_nk(); ik++)
         {
             psi.fix_k(ik);
+            this->print_psi(psi);
         }
     }
 
