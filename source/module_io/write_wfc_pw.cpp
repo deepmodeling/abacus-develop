@@ -8,22 +8,6 @@
 #include "mpi.h"
 #endif
 
-
-inline int getink(const int &ik,const int &rankp,const int &nktot,const int &kpar)
-{
-    int nkp = nktot / kpar;
-    int rem = nktot % kpar;
-    if(rankp < rem)
-    {
-        return rankp*nkp + rankp + ik;
-    }
-    else
-    {
-        return rankp*nkp + rem + ik;       
-    }
-    
-}
-
 void ModuleIO::write_wfc_pw(  const std::string &fn, const psi::Psi<std::complex<double>> &psi,
                         const K_Vectors* p_kv, const ModulePW::PW_Basis_K *wfc_basis)
 {
@@ -80,8 +64,8 @@ void ModuleIO::write_wfc_pw(  const std::string &fn, const psi::Psi<std::complex
                 
                 // ikstot=GlobalC::Pkpoints.startk_pool[ip]+ik;
                 // In the future, Pkpoints should be moved into Klist
-                // To avoid GlobalC, we use getink instead
-                ikstot = getink(ik, ip, nkstot, GlobalV::KPAR);
+                // To avoid GlobalC, we use getik_global instead
+                ikstot = p_kv->getik_global(ik);
 #else
                 ikngtot=p_kv->ngk[ik];
                 ikstot=ik;

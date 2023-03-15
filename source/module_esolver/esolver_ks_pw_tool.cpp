@@ -4,8 +4,6 @@
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_elecstate/occupy.h"
 #include "module_io/binstream.h"
-
-int getink(const int &ik,const int &rankp,const int &nktot,const int &kpar);
 namespace ModuleESolver
 {
 
@@ -26,7 +24,7 @@ namespace ModuleESolver
 #define FACTOR      1.839939223835727e7
 template<typename FPTYPE, typename Device>
 void ESolver_KS_PW<FPTYPE, Device>::KG(const int nche_KG, const double fwhmin, const double wcut,
-        const double dw_in, const int times, ModuleBase::matrix& wg)
+        const double dw_in, const double dt_in, ModuleBase::matrix& wg)
 {
     //-----------------------------------------------------------
     //               KS conductivity
@@ -35,7 +33,7 @@ void ESolver_KS_PW<FPTYPE, Device>::KG(const int nche_KG, const double fwhmin, c
     int nw = ceil(wcut / dw_in);
     double dw = dw_in / ModuleBase::Ry_to_eV; // converge unit in eV to Ry
     double sigma = fwhmin / TWOSQRT2LN2 / ModuleBase::Ry_to_eV;
-    double dt = ModuleBase::PI / (dw * nw) / times; // unit in a.u., 1 a.u. = 4.837771834548454e-17 s
+    double dt = dt_in; // unit in a.u., 1 a.u. = 4.837771834548454e-17 s
     int nt = ceil(sqrt(20) / sigma / dt);
     cout << "nw: " << nw << " ; dw: " << dw * ModuleBase::Ry_to_eV << " eV" << endl;
     cout << "nt: " << nt << " ; dt: " << dt << " a.u.(ry^-1)" << endl;
@@ -122,10 +120,10 @@ void ESolver_KS_PW<FPTYPE, Device>:: jjcorr_ks(const int ik, const int nt, const
         }
     }
 
-    if(velop.nonlocal && GlobalV::RANK_IN_POOL == 0)
+    if(GlobalV::RANK_IN_POOL == 0)
     {
         int nkstot = GlobalC::kv.nkstot;
-        int ikglobal = getink(ik, GlobalV::MY_POOL, nkstot, GlobalV::KPAR);
+        int ikglobal = GlobalC::kv.getik_global(ik);
         stringstream ss;
         ss<<GlobalV::global_out_dir<<"vmatrix"<<ikglobal+1<<".dat";
         Binstream binpij(ss.str(), "w");

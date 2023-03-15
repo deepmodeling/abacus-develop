@@ -57,7 +57,7 @@ TEST_F(InputTest, Default)
         EXPECT_EQ(INPUT.cond_nche,20);
         EXPECT_DOUBLE_EQ(INPUT.cond_dw,0.1);
         EXPECT_DOUBLE_EQ(INPUT.cond_wcut,10);
-        EXPECT_EQ(INPUT.cond_wenlarge,10);
+        EXPECT_EQ(INPUT.cond_dt,0.032);
         EXPECT_DOUBLE_EQ(INPUT.cond_fwhm,0.3);
         EXPECT_TRUE(INPUT.cond_nonlocal);
         EXPECT_FALSE(INPUT.berry_phase);
@@ -383,7 +383,7 @@ TEST_F(InputTest, Read)
         EXPECT_EQ(INPUT.cond_nche,20);
         EXPECT_DOUBLE_EQ(INPUT.cond_dw,0.1);
         EXPECT_DOUBLE_EQ(INPUT.cond_wcut,10);
-        EXPECT_EQ(INPUT.cond_wenlarge,10);
+        EXPECT_EQ(INPUT.cond_dt,0.07);
         EXPECT_DOUBLE_EQ(INPUT.cond_fwhm,0.3);
         EXPECT_TRUE(INPUT.cond_nonlocal);
         EXPECT_FALSE(INPUT.berry_phase);

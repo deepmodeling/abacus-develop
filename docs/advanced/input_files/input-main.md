@@ -65,7 +65,7 @@
   [gate_flag](#gate_flag) | [zgate](#zgate) | [block](#block) | [block_down](#block_down) | [block_up](#block_up) | [block_height](#block_height)
 - [Electronic conductivities](#electronic-conductivities)
 
-  [cal_cond](#cal_cond) | [cond_nche](#cond_nche) | [cond_dw](#cond_dw) | [cond_wcut](#cond_wcut) | [cond_wenlarge](#cond_wenlarge) | [cond_fwhm](#cond_fwhm) | [cond_nonlocal](#cond_nonlocal)
+  [cal_cond](#cal_cond) | [cond_nche](#cond_nche) | [cond_dw](#cond_dw) | [cond_wcut](#cond_wcut) | [cond_dt](#cond_dt) | [cond_fwhm](#cond_fwhm) | [cond_nonlocal](#cond_nonlocal)
 - [Implicit solvation model](#implicit-solvation-model)
 
   [imp_sol](#imp_sol) | [eb_k](#eb_k) | [tau](#tau) | [sigma_k](#sigma_k) | [nc_k](#nc_k)
@@ -2407,10 +2407,10 @@ Thermal conductivities: $\kappa = \lim_{\omega\to 0}\kappa(\omega)$.
 - **Description**: Cutoff frequency for frequency-dependent conductivities. The unit is eV.
 - **Default**: 10.0
 
-### cond_wenlarge
+### cond_dt
 
-- **Type**: Integer
-- **Description**: Control the t interval: dt = $\frac{\pi}{\omega_{cut}\times\omega enlarge}$
+- **Type**: Real
+- **Description**: t interval to integrate Onsager coefficiencies. The unit is a.u.
 - **Default**: 10
 
 ### cond_fwhm
