@@ -374,7 +374,11 @@ if(DEFINED Libxc_DIR)
   set(ENABLE_LIBXC ON)
 endif()
 if(ENABLE_LIBXC)
-  find_package(Libxc HINTS ${Libxc_DIR}/share/cmake/Libxc ${Libxc_DIR}/lib/cmake/Libxc)
+  find_package(Libxc HINTS
+    ${Libxc_DIR}/share/cmake/Libxc
+    ${Libxc_DIR}/lib/cmake/Libxc
+    ${Libxc_DIR}/lib64/cmake/Libxc
+  )
   if(${Libxc_FOUND})
     message(STATUS "Found Libxc: version " ${Libxc_VERSION})
     if(${Libxc_VERSION} VERSION_LESS 5.1.7)
