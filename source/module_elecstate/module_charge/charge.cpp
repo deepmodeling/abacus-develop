@@ -159,7 +159,7 @@ void Charge::init_rho()
             ssc << GlobalV::global_readin_dir << "SPIN" << is + 1 << "_CHG.cube";
             GlobalV::ofs_running << ssc.str() << std::endl;
             // mohan update 2012-02-10, sunliang update 2023-03-09
-            if (ModuleIO::read_rho(is, ssc.str(), this->rho[is], this->prenspin))
+            if (ModuleIO::read_rho(is, ssc.str(), this->rho[is], GlobalC::rhopw->nx, GlobalC::rhopw->ny, GlobalC::rhopw->nz, this->prenspin))
             {
                 GlobalV::ofs_running << " Read in the charge density: " << ssc.str() << std::endl;
             }
@@ -219,7 +219,7 @@ void Charge::init_rho()
 				ssc << GlobalV::global_readin_dir << "SPIN" << is + 1 << "_TAU.cube";
 				GlobalV::ofs_running << " try to read kinetic energy density from file : " << ssc.str() << std::endl;
 				// mohan update 2012-02-10, sunliang update 2023-03-09
-				if (ModuleIO::read_rho(is, ssc.str(), this->kin_r[is], this->prenspin))
+				if (ModuleIO::read_rho(is, ssc.str(), this->kin_r[is], GlobalC::rhopw->nx, GlobalC::rhopw->ny, GlobalC::rhopw->nz, this->prenspin))
 				{
 					GlobalV::ofs_running << " Read in the kinetic energy density: " << ssc.str() << std::endl;
 				}

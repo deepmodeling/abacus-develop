@@ -1,7 +1,7 @@
 #include "module_io/rho_io.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 
-bool ModuleIO::read_rho(const int &is, const std::string &fn, double* rho, int &prenspin) //add by dwan
+bool ModuleIO::read_rho(const int &is, const std::string &fn, double* rho, int& nx, int& ny, int& nz, int &prenspin) //add by dwan
 {
     ModuleBase::TITLE("ModuleIO","read_rho");
     std::ifstream ifs(fn.c_str());
@@ -48,18 +48,18 @@ bool ModuleIO::read_rho(const int &is, const std::string &fn, double* rho, int &
 	ifs.ignore(150, '\n');
 
 	double fac=GlobalC::ucell.lat0;
-	ModuleBase::CHECK_INT(ifs, GlobalC::rhopw->nx);	
-	ModuleBase::CHECK_DOUBLE(ifs, fac*GlobalC::ucell.latvec.e11/double(GlobalC::rhopw->nx), quit);
-	ModuleBase::CHECK_DOUBLE(ifs, fac*GlobalC::ucell.latvec.e12/double(GlobalC::rhopw->nx), quit);
-	ModuleBase::CHECK_DOUBLE(ifs, fac*GlobalC::ucell.latvec.e13/double(GlobalC::rhopw->nx), quit);
-	ModuleBase::CHECK_INT(ifs, GlobalC::rhopw->ny);	
-	ModuleBase::CHECK_DOUBLE(ifs, fac*GlobalC::ucell.latvec.e21/double(GlobalC::rhopw->ny), quit);
-	ModuleBase::CHECK_DOUBLE(ifs, fac*GlobalC::ucell.latvec.e22/double(GlobalC::rhopw->ny), quit);
-	ModuleBase::CHECK_DOUBLE(ifs, fac*GlobalC::ucell.latvec.e23/double(GlobalC::rhopw->ny), quit);
-	ModuleBase::CHECK_INT(ifs, GlobalC::rhopw->nz);	
-	ModuleBase::CHECK_DOUBLE(ifs, fac*GlobalC::ucell.latvec.e31/double(GlobalC::rhopw->nz), quit);
-	ModuleBase::CHECK_DOUBLE(ifs, fac*GlobalC::ucell.latvec.e32/double(GlobalC::rhopw->nz), quit);
-	ModuleBase::CHECK_DOUBLE(ifs, fac*GlobalC::ucell.latvec.e33/double(GlobalC::rhopw->nz), quit);
+	ModuleBase::CHECK_INT(ifs, nx);	
+	ModuleBase::CHECK_DOUBLE(ifs, fac*GlobalC::ucell.latvec.e11/double(nx), quit);
+	ModuleBase::CHECK_DOUBLE(ifs, fac*GlobalC::ucell.latvec.e12/double(nx), quit);
+	ModuleBase::CHECK_DOUBLE(ifs, fac*GlobalC::ucell.latvec.e13/double(nx), quit);
+	ModuleBase::CHECK_INT(ifs, ny);	
+	ModuleBase::CHECK_DOUBLE(ifs, fac*GlobalC::ucell.latvec.e21/double(ny), quit);
+	ModuleBase::CHECK_DOUBLE(ifs, fac*GlobalC::ucell.latvec.e22/double(ny), quit);
+	ModuleBase::CHECK_DOUBLE(ifs, fac*GlobalC::ucell.latvec.e23/double(ny), quit);
+	ModuleBase::CHECK_INT(ifs, nz);	
+	ModuleBase::CHECK_DOUBLE(ifs, fac*GlobalC::ucell.latvec.e31/double(nz), quit);
+	ModuleBase::CHECK_DOUBLE(ifs, fac*GlobalC::ucell.latvec.e32/double(nz), quit);
+	ModuleBase::CHECK_DOUBLE(ifs, fac*GlobalC::ucell.latvec.e33/double(nz), quit);
 
 	int temp = 0;
 	for(int it=0; it<GlobalC::ucell.ntype; it++)
@@ -78,37 +78,37 @@ bool ModuleIO::read_rho(const int &is, const std::string &fn, double* rho, int &
 #ifndef __MPI
 	GlobalV::ofs_running << " Read SPIN = " << is+1 << " charge now." << std::endl;
 	// consistent with the write_rho,
-	for(int i=0; i<GlobalC::rhopw->nx; i++)
+	for(int i=0; i<nx; i++)
 	{
-		for(int j=0; j<GlobalC::rhopw->ny; j++)
+		for(int j=0; j<ny; j++)
 		{
-			for(int k=0; k<GlobalC::rhopw->nz; k++)
+			for(int k=0; k<nz; k++)
 			{
-				ifs >> rho[k*GlobalC::rhopw->nx*GlobalC::rhopw->ny+i*GlobalC::rhopw->ny+j];
+				ifs >> rho[k*nx*ny+i*ny+j];
 			}
 		}
 	}
 #else
 	
-	const int nxy = GlobalC::rhopw->nx * GlobalC::rhopw->ny;
+	const int nxy = nx * ny;
 	double *zpiece = nullptr;
 	double **tempRho = nullptr;
 
 	if(GlobalV::MY_RANK==0||(GlobalV::ESOLVER_TYPE == "sdft"&&GlobalV::RANK_IN_STOGROUP==0))
 	{
-		tempRho = new double*[GlobalC::rhopw->nz];
-		for(int iz=0; iz<GlobalC::rhopw->nz; iz++)
+		tempRho = new double*[nz];
+		for(int iz=0; iz<nz; iz++)
 		{
 			tempRho[iz] = new double[nxy];
 			// ModuleBase::GlobalFunc::ZEROS(tempRho[iz], nxy);
 		}
-		for(int ix=0; ix<GlobalC::rhopw->nx; ix++)
+		for(int ix=0; ix<nx; ix++)
 		{
-			for(int iy=0; iy<GlobalC::rhopw->ny; iy++)
+			for(int iy=0; iy<ny; iy++)
 			{
-				for(int iz=0; iz<GlobalC::rhopw->nz; iz++)
+				for(int iz=0; iz<nz; iz++)
 				{
-					ifs >> tempRho[iz][ix*GlobalC::rhopw->ny + iy];
+					ifs >> tempRho[iz][ix*ny + iy];
 				}
 			}
 		}
@@ -119,7 +119,7 @@ bool ModuleIO::read_rho(const int &is, const std::string &fn, double* rho, int &
 		ModuleBase::GlobalFunc::ZEROS(zpiece, nxy);
 	}
 
-	for(int iz=0; iz<GlobalC::rhopw->nz; iz++)
+	for(int iz=0; iz<nz; iz++)
 	{
 		if(GlobalV::MY_RANK==0||(GlobalV::ESOLVER_TYPE == "sdft"&&GlobalV::RANK_IN_STOGROUP==0))
 		{
@@ -130,7 +130,7 @@ bool ModuleIO::read_rho(const int &is, const std::string &fn, double* rho, int &
 
 	if(GlobalV::MY_RANK==0||(GlobalV::ESOLVER_TYPE == "sdft"&&GlobalV::RANK_IN_STOGROUP==0))
 	{
-		for(int iz=0; iz<GlobalC::rhopw->nz; iz++)
+		for(int iz=0; iz<nz; iz++)
 		{
 			delete[] tempRho[iz];
 		}

@@ -97,7 +97,7 @@ psi::Psi<complex<double>>* wavefunc::allocate(const int nks)
 	return psi;
 }
 
-bool ModuleIO::read_rho(const int &is, const std::string &fn, double* rho, int &prenspin) //add by dwan
+bool ModuleIO::read_rho(const int &is, const std::string &fn, double* rho, int& nx, int& ny, int& nz, int &prenspin) //add by dwan
 {
 	std::ifstream ifs(fn.c_str());
 	bool quit=false;
@@ -113,18 +113,18 @@ bool ModuleIO::read_rho(const int &is, const std::string &fn, double* rho, int &
 	ifs.ignore(150, '\n');
 
 	double fac=GlobalC::ucell.lat0;
-	ModuleBase::CHECK_INT(ifs, GlobalC::rhopw->nx);	
-	ModuleBase::CHECK_DOUBLE(ifs, fac*GlobalC::ucell.latvec.e11/double(GlobalC::rhopw->nx), quit);
-	ModuleBase::CHECK_DOUBLE(ifs, fac*GlobalC::ucell.latvec.e12/double(GlobalC::rhopw->nx), quit);
-	ModuleBase::CHECK_DOUBLE(ifs, fac*GlobalC::ucell.latvec.e13/double(GlobalC::rhopw->nx), quit);
-	ModuleBase::CHECK_INT(ifs, GlobalC::rhopw->ny);	
-	ModuleBase::CHECK_DOUBLE(ifs, fac*GlobalC::ucell.latvec.e21/double(GlobalC::rhopw->ny), quit);
-	ModuleBase::CHECK_DOUBLE(ifs, fac*GlobalC::ucell.latvec.e22/double(GlobalC::rhopw->ny), quit);
-	ModuleBase::CHECK_DOUBLE(ifs, fac*GlobalC::ucell.latvec.e23/double(GlobalC::rhopw->ny), quit);
-	ModuleBase::CHECK_INT(ifs, GlobalC::rhopw->nz);	
-	ModuleBase::CHECK_DOUBLE(ifs, fac*GlobalC::ucell.latvec.e31/double(GlobalC::rhopw->nz), quit);
-	ModuleBase::CHECK_DOUBLE(ifs, fac*GlobalC::ucell.latvec.e32/double(GlobalC::rhopw->nz), quit);
-	ModuleBase::CHECK_DOUBLE(ifs, fac*GlobalC::ucell.latvec.e33/double(GlobalC::rhopw->nz), quit);
+	ModuleBase::CHECK_INT(ifs,nx);	
+	ModuleBase::CHECK_DOUBLE(ifs, fac*GlobalC::ucell.latvec.e11/double(nx), quit);
+	ModuleBase::CHECK_DOUBLE(ifs, fac*GlobalC::ucell.latvec.e12/double(nx), quit);
+	ModuleBase::CHECK_DOUBLE(ifs, fac*GlobalC::ucell.latvec.e13/double(nx), quit);
+	ModuleBase::CHECK_INT(ifs, ny);	
+	ModuleBase::CHECK_DOUBLE(ifs, fac*GlobalC::ucell.latvec.e21/double(ny), quit);
+	ModuleBase::CHECK_DOUBLE(ifs, fac*GlobalC::ucell.latvec.e22/double(ny), quit);
+	ModuleBase::CHECK_DOUBLE(ifs, fac*GlobalC::ucell.latvec.e23/double(ny), quit);
+	ModuleBase::CHECK_INT(ifs, nz);	
+	ModuleBase::CHECK_DOUBLE(ifs, fac*GlobalC::ucell.latvec.e31/double(nz), quit);
+	ModuleBase::CHECK_DOUBLE(ifs, fac*GlobalC::ucell.latvec.e32/double(nz), quit);
+	ModuleBase::CHECK_DOUBLE(ifs, fac*GlobalC::ucell.latvec.e33/double(nz), quit);
 
 	int temp = 0;
 	for(int it=0; it<GlobalC::ucell.ntype; it++)
@@ -139,13 +139,13 @@ bool ModuleIO::read_rho(const int &is, const std::string &fn, double* rho, int &
 		}
 	}
 
-	for(int i=0; i<GlobalC::rhopw->nx; i++)
+	for(int i=0; i<nx; i++)
 	{
-		for(int j=0; j<GlobalC::rhopw->ny; j++)
+		for(int j=0; j<ny; j++)
 		{
-			for(int k=0; k<GlobalC::rhopw->nz; k++)
+			for(int k=0; k<nz; k++)
 			{
-				ifs >> rho[k*GlobalC::rhopw->nx*GlobalC::rhopw->ny+i*GlobalC::rhopw->ny+j];
+				ifs >> rho[k*nx*ny+i*ny+j];
 			}
 		}
 	}
