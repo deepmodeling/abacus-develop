@@ -36,7 +36,7 @@ void Potential::write_potential(
 		ofs << "Cubefile created from ABACUS SCF calculation. The inner loop is z index, followed by y index, x index in turn." << std::endl;
 		ofs << GlobalV::NSPIN << " (nspin) " << std::endl;
 
-        // We assum that SPIN1_POT does not need Fermi Energy.
+        // We assum that SPIN1_POT.cube does not need Fermi Energy.
 		// if(GlobalV::NSPIN==1 || GlobalV::NSPIN == 4)
 		// {
 		// 	ofs << GlobalC::en.ef << " (fermi energy, in Ry)" << std::endl;
