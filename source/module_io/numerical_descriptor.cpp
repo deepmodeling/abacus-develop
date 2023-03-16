@@ -65,6 +65,7 @@ void Numerical_Descriptor::output_descriptor(const psi::Psi<std::complex<double>
 	// As a result, I will return here and the rest of the code is saved for future use
 	return;
 
+/*
 	//-----------------------------------
 	// 2. Open the file
 	//-----------------------------------
@@ -165,9 +166,10 @@ void Numerical_Descriptor::output_descriptor(const psi::Psi<std::complex<double>
 
     if (GlobalV::MY_RANK==0) ofs.close();
     return;
+*/
 }
 
-
+/*
 void Numerical_Descriptor::generate_descriptor(ModuleBase::realArray &overlap_Q1, ModuleBase::realArray &overlap_Q2, 
 const int &it, const int &ia, double *d, const int &nd)
 {
@@ -242,6 +244,7 @@ const int &it, const int &ia, double *d, const int &nd)
 
 	return;
 }
+
 
 
 void Numerical_Descriptor::jlq3d_overlap(
@@ -327,7 +330,7 @@ void Numerical_Descriptor::jlq3d_overlap(
     ModuleBase::timer::tick("Numerical_Descriptor","jlq3d_overlap");
     return;
 }
-
+*/
 
 void Numerical_Descriptor::init_mu_index(void)
 {

@@ -6,7 +6,7 @@
 #include "../module_base/memory.h"
 #include "../module_base/timer.h"
 
-double ORB_table_alpha::dr = -1.0;
+//double ORB_table_alpha::dr = -1.0;
 
 ORB_table_alpha::ORB_table_alpha()
 {
@@ -23,8 +23,8 @@ ORB_table_alpha::ORB_table_alpha()
 	Rmesh = 0;
 
 	kpoint = nullptr;
-	r = nullptr;
-	rab = nullptr;
+	//r = nullptr;
+	//rab = nullptr;
 	kab = nullptr;
 	DS_2Lplus1 = nullptr;
 }
@@ -32,8 +32,8 @@ ORB_table_alpha::ORB_table_alpha()
 ORB_table_alpha::~ORB_table_alpha()
 {
 	delete[] kpoint;
-	delete[] r;
-	delete[] rab;
+	//delete[] r;
+	//delete[] rab;
 	delete[] kab;
 	delete[] DS_2Lplus1;
 }
@@ -57,7 +57,7 @@ void ORB_table_alpha::allocate(
 
 	assert(ntype > 0);
 	assert(lmax >= 0);
-	assert(kmesh > 0.0);
+	assert(kmesh > 0);
 	assert(Rmax >= 0.0);
 	assert(dr > 0.0);
 	assert(dk > 0.0);
@@ -78,14 +78,14 @@ void ORB_table_alpha::allocate(
 	//	OUT(GlobalV::ofs_running,"kmesh",kmesh);
 
 	delete[] kpoint;
-	delete[] r;
+	//delete[] r;
 	kpoint = new double[kmesh];
-	r = new double[Rmesh];
+	//r = new double[Rmesh];
 
-	delete[] rab;
+	//delete[] rab;
 	delete[] kab;
 	kab = new double[kmesh];
-	rab = new double[Rmesh];
+	//rab = new double[Rmesh];
 
 	for (int ik = 0; ik < kmesh; ik++)
 	{
@@ -93,19 +93,20 @@ void ORB_table_alpha::allocate(
 		kab[ik] = dk_in;
 	}
 
-	for (int ir = 0; ir < Rmesh; ir++)
-	{
-		r[ir] = ir * dr;
-		rab[ir] = dr;
-	}
+	//for (int ir = 0; ir < Rmesh; ir++)
+	//{
+	//	r[ir] = ir * dr;
+	//	rab[ir] = dr;
+	//}
 
 	//	OUT(GlobalV::ofs_running,"allocate kpoint, r, rab, kab","Done");
 	return;
 }
 
-int ORB_table_alpha::get_rmesh(const double &R1, const double &R2)
+int ORB_table_alpha::get_rmesh(const double &R1, const double &R2) const
 {
-	int rmesh = static_cast<int>((R1 + R2) / ORB_table_alpha::dr) + 5;
+	//int rmesh = static_cast<int>((R1 + R2) / ORB_table_alpha::dr) + 5;
+	int rmesh = static_cast<int>((R1 + R2) / this->dr) + 5;
 
 	//mohan update 2009-09-08 +1 ==> +5
 	//considering interpolation or so on...
@@ -128,6 +129,19 @@ int ORB_table_alpha::get_rmesh(const double &R1, const double &R2)
 #include "../module_base/mathzone_add1.h"
 #include "../module_base/constants.h"
 
+/* This function implements Eq. A. 3 (and its derivative) of ABACUS2016 paper.
+ *
+ * The derivative of j_l(k*R) (see https://dlmf.nist.gov/10.51) follows
+ *
+ *                   /                  -k*j_1(k*R)                       l = 0
+ * (d/dR) j_l(k*R) = |
+ *                   \ (l*k*j_{l-1}(k*R) - (l+1)*k*j_{l+1}(k*R))/(2*l+1)  l > 0
+ *
+ * The limiting form of j_l(k*R) (see https://dlmf.nist.gov/10.51) at 0 follows
+ *
+ * j_l(k*R) ~ (k*R)^l / (2*l+1)!!
+ *
+ */
 void ORB_table_alpha::cal_S_PhiAlpha_R(
 	ModuleBase::Sph_Bessel_Recursive::D2 *pSB, // mohan add 2021-03-06
 	const int &l,
@@ -284,6 +298,10 @@ void ORB_table_alpha::init_Table_Alpha(
 						assert(Rcut2 > 0.0 && Rcut2 < 100);
 
 						const int rmesh = this->get_rmesh(Rcut1, Rcut2);
+
+                        // Rmesh corresponds to the maximum distance of the 
+                        // radial table, while rmesh corresponds to the
+                        // distance of current atom pair.
 						assert(rmesh < this->Rmesh);
 
 						//L=|L1-L2|,|L1-L2|+2,...,L1+L2
@@ -366,6 +384,7 @@ void ORB_table_alpha::Destroy_Table_Alpha(LCAO_Orbitals &orb)
 		delete[] Table_DSR[ir];
 	}
 	delete[] Table_DSR;
+    Table_DSR = nullptr;
 	return;
 }
 

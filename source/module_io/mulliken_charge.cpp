@@ -6,6 +6,7 @@
   Log of Mulliken_Charge.cpp:
 
      12/Oct/2018  Released by Feng Qi
+     03/2023/     Refactored by Yuyang Ji
 
 ***********************************************************************/
 
@@ -43,18 +44,18 @@ ModuleBase::matrix Mulliken_Charge::cal_mulliken(const std::vector<ModuleBase::m
     for(size_t is=0; is!=nspin; ++is)
     {
         ModuleBase::matrix mud;
-        mud.create(uhm.LM->ParaV->nrow, uhm.LM->ParaV->ncol);
+        mud.create(uhm.LM->ParaV->ncol, uhm.LM->ParaV->nrow);
 #ifdef __MPI
         const char T_char = 'T';
         const char N_char = 'N';
         const int one_int = 1;
-        const double one_float[2] = {1.0, 0.0}, zero_float[2] = {0.0, 0.0};        
+        const double one_float = 1.0, zero_float = 0.0;        
         pdgemm_(&T_char,
-                &N_char,
+                &T_char,
                 &GlobalV::NLOCAL,
                 &GlobalV::NLOCAL,
                 &GlobalV::NLOCAL,
-                &one_float[0],
+                &one_float,
                 dm[is].c,
                 &one_int,
                 &one_int,
@@ -63,7 +64,7 @@ ModuleBase::matrix Mulliken_Charge::cal_mulliken(const std::vector<ModuleBase::m
                 &one_int,
                 &one_int,
                 uhm.LM->ParaV->desc,
-                &zero_float[0],
+                &zero_float,
                 mud.c,
                 &one_int,
                 &one_int,
@@ -75,10 +76,11 @@ ModuleBase::matrix Mulliken_Charge::cal_mulliken(const std::vector<ModuleBase::m
                 {
                     const int ir = uhm.LM->ParaV->trace_loc_row[i];
                     const int ic = uhm.LM->ParaV->trace_loc_col[i];
-                    MecMulP(is, i) += mud(ir, ic);
+                    MecMulP(is, i) += mud(ic, ir);
                 }
         }
-        else if(GlobalV::NSPIN == 4)
+        //NSPIN=4 is forbidden for gamma_only case
+        /*else if(GlobalV::NSPIN == 4)
         {
             for(size_t i=0; i!=GlobalV::NLOCAL; ++i)
             {
@@ -114,7 +116,7 @@ ModuleBase::matrix Mulliken_Charge::cal_mulliken(const std::vector<ModuleBase::m
                     }
                 }
             }
-        }
+        }*/
 #endif
     }
 #ifdef __MPI 
@@ -163,19 +165,19 @@ ModuleBase::matrix Mulliken_Charge::cal_mulliken_k(const std::vector<ModuleBase:
 		uhm.LM->folding_fixedH(ik);
 
         ModuleBase::ComplexMatrix mud;
-        mud.create(uhm.LM->ParaV->nrow, uhm.LM->ParaV->ncol);
+        mud.create(uhm.LM->ParaV->ncol, uhm.LM->ParaV->nrow);
 
 #ifdef __MPI
         const char T_char = 'T';
         const char N_char = 'N';
         const int one_int = 1;
-        const double one_float[2] = {1.0, 0.0}, zero_float[2] = {0.0, 0.0};        
+        const std::complex<double> one_float = {1.0, 0.0}, zero_float = {0.0, 0.0};        
         pzgemm_(&T_char,
-                &N_char,
+                &T_char,
                 &GlobalV::NLOCAL,
                 &GlobalV::NLOCAL,
                 &GlobalV::NLOCAL,
-                &one_float[0],
+                &one_float,
                 dm[ik].c,
                 &one_int,
                 &one_int,
@@ -184,7 +186,7 @@ ModuleBase::matrix Mulliken_Charge::cal_mulliken_k(const std::vector<ModuleBase:
                 &one_int,
                 &one_int,
                 uhm.LM->ParaV->desc,
-                &zero_float[0],
+                &zero_float,
                 mud.c,
                 &one_int,
                 &one_int,
@@ -197,7 +199,7 @@ ModuleBase::matrix Mulliken_Charge::cal_mulliken_k(const std::vector<ModuleBase:
                 {
                     const int ir = uhm.LM->ParaV->trace_loc_row[i];
                     const int ic = uhm.LM->ParaV->trace_loc_col[i];
-                    MecMulP(spin, i) += mud(ir, ic).real();
+                    MecMulP(spin, i) += mud(ic, ir).real();
                 }
         }
         else if(GlobalV::NSPIN == 4)
@@ -214,25 +216,29 @@ ModuleBase::matrix Mulliken_Charge::cal_mulliken_k(const std::vector<ModuleBase:
                     {
                         const int ir = uhm.LM->ParaV->trace_loc_row[k1];
                         const int ic = uhm.LM->ParaV->trace_loc_col[k1];
-                        MecMulP(0, j) += mud(ir, ic).real();
+                        MecMulP(0, j) += mud(ic, ir).real();
+                        MecMulP(3, j) += mud(ic, ir).real();
                     }
                     if(uhm.LM->ParaV->in_this_processor(k1, k2))
                     {
                         const int ir = uhm.LM->ParaV->trace_loc_row[k1];
                         const int ic = uhm.LM->ParaV->trace_loc_col[k2];
-                        MecMulP(1, j) += mud(ir, ic).real();
+                        MecMulP(1, j) += mud(ic, ir).real();
+                        MecMulP(2, j) += mud(ic, ir).imag();
                     }
                     if(uhm.LM->ParaV->in_this_processor(k2, k1))
                     {
                         const int ir = uhm.LM->ParaV->trace_loc_row[k2];
                         const int ic = uhm.LM->ParaV->trace_loc_col[k1];
-                        MecMulP(2, j) += mud(ir, ic).real();
+                        MecMulP(1, j) += mud(ic, ir).real();
+                        MecMulP(2, j) -= mud(ic, ir).imag();
                     }
                     if(uhm.LM->ParaV->in_this_processor(k2, k2))
                     {
                         const int ir = uhm.LM->ParaV->trace_loc_row[k2];
                         const int ic = uhm.LM->ParaV->trace_loc_col[k2];
-                        MecMulP(3, j) += mud(ir, ic).real();
+                        MecMulP(0, j) += mud(ic, ir).real();
+                        MecMulP(3, j) -= mud(ic, ir).real();
                     }
                 }
             }
@@ -299,17 +305,21 @@ void Mulliken_Charge::out_mulliken(LCAO_Hamilt &uhm, Local_Orbital_Charge &loc)
         os << "CALCULATE THE MULLIkEN ANALYSIS FOR EACH ATOM" << std::endl;
 
 		double sch = 0.0;
-		os << std::setprecision(8);
+		os << std::setprecision(4);
 		for(size_t is=0; is!=GlobalV::NSPIN; ++is)
 		{
+            if(GlobalV::NSPIN == 4 && is>0) continue;
 			double sss = 0.0;
 			for(size_t iw=0; iw!=nlocal; ++iw)
 			{
 				sch += orbMulP(is, iw);
 				sss += orbMulP(is, iw);
 			}
-			os << " Total charge of spin " << is+1 << ":\t" << sss << std::endl;
-		}
+            if(GlobalV::NSPIN == 2)
+            {
+			    os << " Total charge of spin " << is+1 << ":\t" << sss << std::endl;
+            }
+        }
 		os << " Total charge:\t" << sch << std::endl;
 		os << "Decomposed Mulliken populations" << std::endl;
 
@@ -336,62 +346,58 @@ void Mulliken_Charge::out_mulliken(LCAO_Hamilt &uhm, Local_Orbital_Charge &loc)
                     {
                         if (GlobalV::NSPIN==1)
                         {
-                            double spin1 = AorbMulP[0][i][num];
+                            double spin1 = output_cut(AorbMulP[0][i][num]);
                             os << GlobalC::en.Name_Angular[L][M] << std::setw(25) << Z << std::setw(32) << spin1 << std::endl;
-                            sum_m[0] += spin1;
+                            sum_m[0] += AorbMulP[0][i][num];
                         }
                         else if (GlobalV::NSPIN==2)
                         {
-                            double spin1 = AorbMulP[0][i][num]; 
-                            double spin2 = AorbMulP[1][i][num];
-                            double sum = spin1 + spin2;
-                            double diff = spin1 - spin2;
+                            double spin1 = output_cut(AorbMulP[0][i][num]); 
+                            double spin2 = output_cut(AorbMulP[1][i][num]);
+                            double sum = output_cut(spin1 + spin2);
+                            double diff = output_cut(spin1 - spin2);
                             os << GlobalC::en.Name_Angular[L][M] << std::setw(25) << Z << std::setw(32) << spin1 << std::setw(30) << spin2 << std::setw(30) << sum << std::setw(30) << diff << std::endl;
                             sum_m[0] += AorbMulP[0][i][num];
                             sum_m[1] += AorbMulP[1][i][num];
                         }
                         else if (GlobalV::NSPIN==4)
                         {
-                            double spin1 = AorbMulP[0][i][num]; 
-                            double spin2 = AorbMulP[1][i][num]; 
-                            double spin3 = AorbMulP[2][i][num]; 
-                            double spin4 = AorbMulP[3][i][num]; 
-                            os << GlobalC::en.Name_Angular[L][M] << std::setw(25) << Z << std::setw(32) << spin1 << std::setw(30) << spin2 << std::setw(30) << spin3 << std::setw(30) << spin4 << std::endl;
-                            sum_m[0] += spin1;
-                            sum_m[1] += spin2;
-                            sum_m[2] += spin3;
-                            sum_m[3] += spin4;
+                            double spin[4];
+                            for(int j=0;j<4;j++)
+                            {
+                                spin[j] = output_cut(AorbMulP[j][i][num]);
+                                sum_m[j] += AorbMulP[j][i][num];
+                            } 
+                            os << GlobalC::en.Name_Angular[L][M] << std::setw(25) << Z << std::setw(32) << spin[0] << std::setw(30) << spin[1] << std::setw(30) << spin[2] << std::setw(30) << spin[3] << std::endl;
                         }
                         num++;
                     }
 
                     if (GlobalV::NSPIN==1)
                     {
-                        double spin1 = sum_m[0];
+                        double spin1 = output_cut(sum_m[0]);
                         os << "  sum over m "<< std::setw(45) << spin1 << std::endl;
-                        sum_l[0] += spin1;
+                        sum_l[0] += sum_m[0];
                     }
                     else if (GlobalV::NSPIN==2)
                     {
-                        double spin1 = sum_m[0];
-                        double spin2 = sum_m[1];
-                        double sum = spin1 + spin2;
-                        double diff = spin1 - spin2;
+                        double spin1 = output_cut(sum_m[0]);
+                        double spin2 = output_cut(sum_m[1]);
+                        double sum = output_cut(spin1 + spin2);
+                        double diff = output_cut(spin1 - spin2);
                         os << "  sum over m "<< std::setw(45) << spin1 << std::setw(30) << spin2 << std::setw(35) << sum << std::setw(25) << diff << std::endl;
-                        sum_l[0] += spin1;
-                        sum_l[1] += spin2;
+                        sum_l[0] += sum_m[0];
+                        sum_l[1] += sum_m[1];
                     }
                     else if (GlobalV::NSPIN==4)
                     {
-                        double spin1 = sum_m[0];
-                        double spin2 = sum_m[1];
-                        double spin3 = sum_m[2];
-                        double spin4 = sum_m[3];
-                        os << "  sum over m "<< std::setw(45) << spin1 << std::setw(30) << spin2 << std::setw(30) << spin3 << std::setw(30) << spin4 << std::endl;
-                        sum_l[0] += spin1;
-                        sum_l[1] += spin2;
-                        sum_l[2] += spin3;
-                        sum_l[3] += spin4;
+                        double spin[4];
+                        for(int j=0;j<4;j++)
+                        {
+                            spin[j] = output_cut(sum_m[j]);
+                            sum_l[j] += sum_m[j];
+                        }
+                        os << "  sum over m "<< std::setw(45) << spin[0] << std::setw(30) << spin[1] << std::setw(30) << spin[2] << std::setw(30) << spin[3] << std::endl;
                     }
                 }
             
@@ -399,31 +405,29 @@ void Mulliken_Charge::out_mulliken(LCAO_Hamilt &uhm, Local_Orbital_Charge &loc)
                 {
                     if (GlobalV::NSPIN==1)
                     {
-                        double spin1 = sum_l[0];
+                        double spin1 = output_cut(sum_l[0]);
                         os << "  sum over m+zeta "<< std::setw(40) << spin1 << std::endl;
                         total_charge += sum_l[0];
                     }
                     else if (GlobalV::NSPIN==2)
                     {
-                        double spin1 = sum_l[0];
-                        double spin2 = sum_l[1];
-                        double sum = spin1 + spin2;
-                        double diff = spin1 - spin2;
+                        double spin1 = output_cut(sum_l[0]);
+                        double spin2 = output_cut(sum_l[1]);
+                        double sum = output_cut(spin1 + spin2);
+                        double diff = output_cut(spin1 - spin2);
                         os << "  sum over m+zeta "<< std::setw(40) << spin1 << std::setw(30) << spin2 << std::setw(35) << sum << std::setw(25) << diff << std::endl;
                         total_charge += sum_l[0] + sum_l[1];
                         atom_mag += sum_l[0] - sum_l[1];
                     }
                     else if (GlobalV::NSPIN==4)
                     {
-                        double spin1 = sum_l[0];
-                        double spin2 = sum_l[1];
-                        double spin3 = sum_l[2];
-                        double spin4 = sum_l[3];
-                        os << "  sum over m+zeta "<< std::setw(40) << spin1 << std::setw(30) << spin2 << std::setw(30) << spin3 << std::setw(30) << spin4 << std::endl;
-                        total_charge_soc[0] += spin1;
-                        total_charge_soc[1] += spin2;
-                        total_charge_soc[2] += spin3;
-                        total_charge_soc[3] += spin4;
+                        double spin[4];
+                        for(int j=0;j<4;j++)
+                        {
+                            spin[j] = output_cut(sum_l[j]);
+                            total_charge_soc[j] += sum_l[j];
+                        }
+                        os << "  sum over m+zeta "<< std::setw(40) << spin[0] << std::setw(30) << spin[1] << std::setw(30) << spin[2] << std::setw(30) << spin[3] << std::endl;
                     }
                 }
             }
@@ -433,16 +437,18 @@ void Mulliken_Charge::out_mulliken(LCAO_Hamilt &uhm, Local_Orbital_Charge &loc)
             else if (GlobalV::NSPIN==2)
             {
                 os << "Total Charge on atom:  " << GlobalC::ucell.atoms[t].label <<  std::setw(20) << total_charge <<std::endl;
-                os << "Total Magnetism on atom:  " << GlobalC::ucell.atoms[t].label <<  std::setw(20) << atom_mag <<std::endl;
+                os << "Total Magnetism on atom:  " << GlobalC::ucell.atoms[t].label <<  std::setw(20) << output_cut(atom_mag) <<std::endl;
             }
             else if (GlobalV::NSPIN==4)
             {
-                double spin1 = total_charge_soc[0];
-                double spin2 = total_charge_soc[1];
-                double spin3 = total_charge_soc[2];
-                double spin4 = total_charge_soc[3];
-                os << "Total Charge on atom in four components: " << GlobalC::ucell.atoms[t].label <<  std::setw(20) 
-                << "(" << spin1 << ", " << spin2 << ", " << spin3 << ", " << spin4 << ")" 
+                double spin1 = output_cut(total_charge_soc[0]);
+                double spin2 = output_cut(total_charge_soc[1]);
+                double spin3 = output_cut(total_charge_soc[2]);
+                double spin4 = output_cut(total_charge_soc[3]);
+                os << "Total Charge on atom:  " << GlobalC::ucell.atoms[t].label <<  std::setw(20) 
+                << spin1 <<std::endl;
+                os << "Total Magnetism on atom:  " << GlobalC::ucell.atoms[t].label <<  std::setw(20) 
+                << "("  << spin2 << ", " << spin3 << ", " << spin4 << ")" 
                 <<std::endl;
             }
             os << std::endl <<std::endl;
@@ -450,4 +456,13 @@ void Mulliken_Charge::out_mulliken(LCAO_Hamilt &uhm, Local_Orbital_Charge &loc)
         os.close();
         ModuleIO::write_orb_info();
     }
+}
+
+double Mulliken_Charge::output_cut(const double& result)
+{
+    if(std::abs(result) < 1e-6)
+    {
+        return 0.0;
+    }
+    return result;
 }

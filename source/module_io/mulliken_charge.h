@@ -36,5 +36,7 @@ class Mulliken_Charge
     );
 
     std::vector<std::vector<std::vector<double>>> convert(const ModuleBase::matrix &orbMulP);
+
+    double output_cut(const double& result);
 };
 #endif

@@ -22,8 +22,8 @@ extern "C"
 		double *beta ,  double *c , int *ic , int *jc , int *descc );
 
 	void pztranu_(const int *m,const int*n,
-		const double *alpha , std::complex<double> *a , const int *ia , const int *ja ,const int *desca ,
-		const double *beta ,  std::complex<double> *c , const int *ic ,const int *jc ,const int *descc);
+		const std::complex<double> *alpha , std::complex<double> *a , const int *ia , const int *ja ,const int *desca ,
+		const std::complex<double> *beta ,  std::complex<double> *c , const int *ic ,const int *jc ,const int *descc);
 
 	void pzgemv_(
 		const char *transa,
@@ -51,10 +51,10 @@ extern "C"
 	void pzgemm_(
 		const char *transa, const char *transb,
 		const int *M, const int *N, const int *K,
-		const double *alpha,
+		const std::complex<double> *alpha,
 		const std::complex<double> *A, const int *IA, const int *JA, const int *DESCA,
 		const std::complex<double> *B, const int *IB, const int *JB, const int *DESCB,
-		const double *beta,
+		const std::complex<double> *beta,
 		std::complex<double> *C, const int *IC, const int *JC, const int *DESCC);
 	void pdsymm_(char *side , char *uplo , int *m , int *n ,
 		double *alpha , double *a , int *ia , int *ja , int *desca ,
@@ -67,7 +67,7 @@ extern "C"
 //		double *alpha , double _Complex *a , int *ia , int *ja , int *desca ,
 //		double _Complex *b , int *ib , int *jb , int *descb );
 	void pztrmm_(char *side , char *uplo , char *transa , char *diag , int *m , int *n ,
-		double *alpha , std::complex<double> *a , int *ia , int *ja , int *desca ,
+		std::complex<double> *alpha , std::complex<double> *a , int *ia , int *ja , int *desca ,
 		std::complex<double> *b , int *ib , int *jb , int *descb );
 
 	void pzgetrf_(
@@ -126,10 +126,10 @@ public:
 	void gemm(
 		const char transa, const char transb,
 		const int M, const int N, const int K,
-		const double alpha,
+		const std::complex<double> alpha,
 		const std::complex<double> *A, const int IA, const int JA, const int *DESCA,
 		const std::complex<double> *B, const int IB, const int JB, const int *DESCB,
-		const double beta,
+		const std::complex<double> beta,
 		std::complex<double> *C, const int IC, const int JC, const int *DESCC)
 	{
 		pzgemm_(&transa, &transb, &M, &N, &K, &alpha, A, &IA, &JA, DESCA, 
@@ -157,8 +157,8 @@ public:
 	static inline
 	void tranu(
 		const int m, const int n,
-		const double alpha , std::complex<double> *a , const int ia , const int ja , const int *desca,
-		const double beta ,  std::complex<double> *c , const int ic , const int jc , const int *descc)
+		const std::complex<double> alpha , std::complex<double> *a , const int ia , const int ja , const int *desca,
+		const std::complex<double> beta ,  std::complex<double> *c , const int ic , const int jc , const int *descc)
 	{
 		pztranu_(&m, &n, &alpha, a, &ia, &ja, desca, &beta, c, &ic, &jc, descc);
 	}

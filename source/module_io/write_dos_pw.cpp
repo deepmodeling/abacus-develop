@@ -1,10 +1,11 @@
 #include "dos.h"
 #include "write_dos_pw.h"
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_base/parallel_reduce.h"
+#include "module_io/input.h"
 
 void ModuleIO::write_dos_pw(const ModuleBase::matrix &ekb,
 	const ModuleBase::matrix &wg,
+	const K_Vectors* kv,
 	const double &dos_edelta_ev,
 	const double &dos_scale,
 	const double &bcoeff)
@@ -18,7 +19,7 @@ void ModuleIO::write_dos_pw(const ModuleBase::matrix &ekb,
 	//find energy range
 	double emax = ekb(0, 0);
 	double emin = ekb(0, 0);
-	for(int ik=0; ik<GlobalC::kv.nks; ++ik)
+	for(int ik=0; ik<kv->nks; ++ik)
 	{
 		for(int ib=0; ib<GlobalV::NBANDS; ++ib)
 		{
@@ -63,21 +64,20 @@ void ModuleIO::write_dos_pw(const ModuleBase::matrix &ekb,
 		ss << GlobalV::global_out_dir << "DOS" << is+1;
 		std::stringstream ss1;
 		ss1 << GlobalV::global_out_dir << "DOS" << is+1 << "_smearing.dat";
-		ModuleIO::calculate_dos(
-			is,
-			GlobalC::kv.isk,
+		ModuleIO::calculate_dos(is,
 			ss.str(),
 			ss1.str(),
 			dos_edelta_ev,
 			emax,
 			emin,
 			bcoeff,
-			GlobalC::kv.nks,
-			GlobalC::kv.nkstot,
-			GlobalC::kv.wk,
-			wg,
+			kv->nks,
+			kv->nkstot,
+			kv->wk,
+			kv->isk,
 			GlobalV::NBANDS,
-			ekb);
+			ekb,
+			wg);
 	}
 
 

@@ -25,16 +25,16 @@ namespace ModulePW
  * plane waves: <r|g>=1/sqrt(V) * exp(igr)
  * f(r) = 1/sqrt(V) * \sum_g{c(g)*exp(igr)}
  * c(g) = \int f(r)*exp(-igr) dr
- * USAGE：
+ * USAGE: 
  * ModulePW::PW_Basis pwtest;
  * 0. init mpi for PW_Basis
  * pwtest.inimpi(nproc_in_pool,rank_in_pool,POOL_WORLD);
  * 1. setup FFT grids for PW_Basis
  * pwtest.initgrids(lat0,latvec,gridecut);
  * pwtest.initgrids(lat0,latvec,N1,N2,N3); 
- * //double lat0：unit length, (unit: bohr)
- * //ModuleBase::Matrix3 latvec：lattice vector, (unit: lat0), e.g. ModuleBase::Matrix3 latvec(1, 1, 0, 0, 2, 0, 0, 0, 2);
- * //double gridecut：cutoff energy to generate FFT grids, (unit: Ry)
+ * //double lat0: unit length, (unit: bohr)
+ * //ModuleBase::Matrix3 latvec: lattice vector, (unit: lat0), e.g. ModuleBase::Matrix3 latvec(1, 1, 0, 0, 2, 0, 0, 0, 2);
+ * //double gridecut: cutoff energy to generate FFT grids, (unit: Ry)
  * //int N1,N2,N3: FFT grids
  * 2. init parameters
  * pwtest.initparameters(gamma_only,ggecut,dividemthd);
