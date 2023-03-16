@@ -1,5 +1,4 @@
 #include "sto_wf.h"
-
 #include "time.h"
 
 //---------Temporary------------------------------------
@@ -33,25 +32,35 @@ void Stochastic_WF::init(const int nks_in)
     this->nks = nks_in;
 }
 
-void Init_Sto_Orbitals(Stochastic_WF& stowf, const int seed_in)
+void Init_Sto_Orbitals
+(
+    Stochastic_WF& stowf, 
+    const int seed_in   // input value
+)
 {
     if (seed_in == 0 || seed_in == -1)
+    {
         srand((unsigned)time(nullptr) + GlobalV::MY_RANK * 10000);
+    }
     else
     {
         srand((unsigned)abs(seed_in) + GlobalV::MY_RANK * 10000);
     }
 
     bool firstrankmore = false;
-    int igroup;
+    int igroup = 0; // 初始化变量赋予数值 int igroup =0; hz03_16
+    //assert(ngroup>0); ? 在那个头文件引用宏 hz03_16
     // I am not sure which is better.
     // former processor calculate more bands
     if (firstrankmore)
+    {
         igroup = GlobalV::MY_STOGROUP;
+    }
     // latter processor calculate more bands
     else
+    {
         igroup = GlobalV::NSTOGROUP - GlobalV::MY_STOGROUP - 1;
-
+    }
     const int nchi = INPUT.nbands_sto;
     const int ndim = GlobalC::wf.npwx;
     const int ngroup = GlobalV::NSTOGROUP;
@@ -65,12 +74,15 @@ void Init_Sto_Orbitals(Stochastic_WF& stowf, const int seed_in)
         stowf.nchip[ik] = tmpnchip;
         stowf.chi0[ik].create(tmpnchip, ndim, false);
         if (seed_in >= 0)
+        {
             for (int i = 0; i < stowf.chi0[ik].size; ++i)
             {
                 const double phi = 2 * ModuleBase::PI * rand() / double(RAND_MAX);
                 stowf.chi0[ik].c[i] = complex<double>(cos(phi), sin(phi)) / sqrt(double(nchi));
             }
+        }
         else
+        {
             for (int i = 0; i < stowf.chi0[ik].size; ++i)
             {
                 if (rand() / double(RAND_MAX) < 0.5)
@@ -78,11 +90,16 @@ void Init_Sto_Orbitals(Stochastic_WF& stowf, const int seed_in)
                 else
                     stowf.chi0[ik].c[i] = 1.0 / sqrt(double(nchi));
             }
+        }
     }
     stowf.nchip_max = tmpnchip;
 }
 
-void Update_Sto_Orbitals(Stochastic_WF& stowf, const int seed_in)
+void Update_Sto_Orbitals
+(
+    Stochastic_WF& stowf, 
+    const int seed_in   // input value
+)
 {
     const int nchi = INPUT.nbands_sto;
     const int nks = GlobalC::kv.nks;
@@ -107,7 +124,11 @@ void Update_Sto_Orbitals(Stochastic_WF& stowf, const int seed_in)
 }
 
 #ifdef __MPI
-void Init_Com_Orbitals(Stochastic_WF& stowf, K_Vectors& kv)
+void Init_Com_Orbitals
+(
+    Stochastic_WF& stowf, 
+    K_Vectors& kv
+)
 {
     const bool firstrankmore = false;
     int igroup;
@@ -188,7 +209,11 @@ void Init_Com_Orbitals(Stochastic_WF& stowf, K_Vectors& kv)
     delete[] totnpw;
 }
 #else
-void Init_Com_Orbitals(Stochastic_WF& stowf, K_Vectors& kv)
+void Init_Com_Orbitals
+(
+    Stochastic_WF& stowf,
+    K_Vectors& kv
+)
 {
     const int ndim = GlobalC::wf.npwx;
     for (int ik = 0; ik < kv.nks; ++ik)
