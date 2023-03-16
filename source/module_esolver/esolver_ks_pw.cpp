@@ -605,6 +605,7 @@ namespace ModuleESolver
         {
             ModuleIO::write_dos_pw(this->pelec->ekb,
                 this->pelec->wg,
+                &(GlobalC::kv),
                 GlobalC::en.dos_edelta_ev,
                 GlobalC::en.dos_scale,
                 GlobalC::en.bcoeff);
