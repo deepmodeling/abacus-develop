@@ -1,4 +1,5 @@
 #include "module_hamilt_pw/hamilt_pwdft/kernels/wf_op.h"
+#include "module_base/libm/libm.h"
 
 namespace hamilt{
 
@@ -28,6 +29,9 @@ struct cal_sk_op<FPTYPE, psi::DEVICE_CPU> {
         std::complex<FPTYPE> *eigts3,
         std::complex<FPTYPE> *sk)
     {
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
         for (int igl = 0; igl < npw; ++igl) {
             int iat = 0;
             for (int it = 0; it < ntype; it++) {
@@ -37,7 +41,9 @@ struct cal_sk_op<FPTYPE, psi::DEVICE_CPU> {
                         arg += kvec_c[ik * 3 + ii] * atom_tau[iat * 3 + ii];
                     }
                     arg *= TWO_PI;
-                    const std::complex<FPTYPE> kphase = std::complex<FPTYPE>(cos(arg), -sin(arg));
+                    FPTYPE sinp, cosp;
+                    ModuleBase::libm::sincos(arg, &sinp, &cosp);
+                    const std::complex<FPTYPE> kphase = std::complex<FPTYPE>(cosp, -sinp);
                     const int isz = igl2isz[ik * npwx + igl];
                     int iz = isz % nz;
                     const int is = isz / nz;
