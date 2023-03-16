@@ -2411,19 +2411,19 @@ Thermal conductivities: $\kappa = \lim_{\omega\to 0}\kappa(\omega)$.
 
 - **Type**: Real
 - **Description**: t interval to integrate Onsager coefficiencies. The unit is a.u.
-- **Default**: 10
+- **Default**: 0.02
 
 ### cond_dtbatch
 
 - **Type**: Integer
 - **Description**: exp(iH*dt*cond_dtbatch) is expanded with Chebyshev expansion.
-- **Default**: 1
+- **Default**: 4
 
 ### cond_fwhm
 
 - **Type**: Integer
 - **Description**: We use gaussian functions to approximate $\delta(E)\approx \frac{1}{\sqrt{2\pi}\Delta E}e^{-\frac{E^2}{2{\Delta E}^2}}$. FWHM for conductivities, $FWHM=2*\sqrt{2\ln2}\cdot \Delta E$. The unit is eV.
-- **Default**: 0.3
+- **Default**: 0.4
 
 ### cond_nonlocal
 

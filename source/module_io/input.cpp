@@ -157,9 +157,9 @@ void Input::Default(void)
     cond_nche = 20;
     cond_dw = 0.1;
     cond_wcut = 10;
-    cond_dt = 0.032;
-    cond_dtbatch = 1;
-    cond_fwhm = 0.3;
+    cond_dt = 0.02;
+    cond_dtbatch = 4;
+    cond_fwhm = 0.4;
     cond_nonlocal = true;
     berry_phase = false;
     gdir = 3;
