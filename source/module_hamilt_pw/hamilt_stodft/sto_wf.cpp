@@ -36,7 +36,9 @@ void Stochastic_WF::init(const int nks_in)
 void Init_Sto_Orbitals(Stochastic_WF& stowf, const int seed_in)
 {
     if (seed_in == 0 || seed_in == -1)
+    {
         srand((unsigned)time(nullptr) + GlobalV::MY_RANK * 10000);
+    }
     else
     {
         srand((unsigned)abs(seed_in) + GlobalV::MY_RANK * 10000);
