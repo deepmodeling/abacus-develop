@@ -74,6 +74,7 @@ void ModuleIO::write_wfc_nao_complex(const std::string &name, std::complex<doubl
                 ofs << ctot[i][j].real() << " " << ctot[i][j].imag() << " ";
             }
         }
+        ofs << std::endl;
         ofs.close();
     }
 
