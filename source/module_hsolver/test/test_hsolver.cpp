@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 #include <iostream>
 #include <vector>
+#define protected public
 
 #include "module_hsolver/hsolver.h"
 #include "hsolver_supplementary_mock.h"
@@ -23,6 +24,9 @@ template class hsolver::HSolver<float, psi::DEVICE_CPU>;
  * 		- set_diagethr, for setting diagethr;
  *  	- reset_diagethr, for updating diagethr;
  * 		- cal_hsolerror, for calculate actually diagethr;
+ *  - hsolver::DiagH (for cases below)
+ *      - diag() for Psi(FPTYPE) case
+ *      - destructor of DiagH and HSolver
  *
  * the definition of supplementary functions is added in hsolver_supplementary_mock.h 
  */
@@ -89,4 +93,34 @@ TEST_F(TestHSolver, diagethr)
     test_diagethr_d = hs_d.cal_hsolerror();
 	EXPECT_EQ(hs_d.diag_ethr, 0.0);
 	EXPECT_EQ(test_diagethr_d, 0.0);
+}
+namespace hsolver
+{
+	template <typename FPTYPE, typename Device = psi::DEVICE_CPU>
+	class DiagH_mock : public DiagH<FPTYPE, Device>
+	{
+		public:
+		DiagH_mock(){}
+		~DiagH_mock(){}
+
+		void diag(hamilt::Hamilt<FPTYPE, Device> *phm_in, psi::Psi<std::complex<FPTYPE>, Device> &psi, FPTYPE *eigenvalue_in)
+		{
+			return;
+		}
+	};
+	template class DiagH_mock<double>;
+	template class DiagH_mock<float>;
+}
+
+TEST_F(TestHSolver, diagh)
+{
+	this->hs_f.pdiagh = new hsolver::DiagH_mock<float>;
+	//test DiagH::diag
+	this->hs_f.pdiagh->diag(nullptr, this->psi_test_f, nullptr);
+	EXPECT_EQ(this->hs_f.pdiagh->method, "none");
+	this->hs_d.pdiagh = new hsolver::DiagH_mock<double>;
+	//test DiagH::diag
+	this->hs_d.pdiagh->diag(nullptr, this->psi_test_d, nullptr);
+	EXPECT_EQ(this->hs_d.pdiagh->method, "none");
+	//test HSolver::~HSolver() it will delete pdiagh
 }
