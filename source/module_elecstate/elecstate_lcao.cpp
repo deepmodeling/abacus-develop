@@ -8,6 +8,7 @@
 namespace elecstate
 {
 int ElecStateLCAO::out_wfc_lcao = 0;
+int ElecStateLCAO::out_wfc_flag = 0;
 bool ElecStateLCAO::need_psi_grid = 1;
 
 // multi-k case
@@ -132,7 +133,7 @@ void ElecStateLCAO::print_psi(const psi::Psi<double>& psi_in)
     // output but not do "2d-to-grid" conversion
     double** wfc_grid = nullptr;
 #ifdef __MPI
-    this->lowf->wfc_2d_to_grid(ElecStateLCAO::out_wfc_lcao, psi_in.get_pointer(), wfc_grid, this->ekb, this->wg);
+    this->lowf->wfc_2d_to_grid(out_wfc_flag, psi_in.get_pointer(), wfc_grid, this->ekb, this->wg);
 #endif
     return;
 }
@@ -149,7 +150,7 @@ void ElecStateLCAO::print_psi(const psi::Psi<std::complex<double>>& psi_in)
         wfc_grid = this->lowf->wfc_k_grid[ik];
     }
 #ifdef __MPI
-    this->lowf->wfc_2d_to_grid(ElecStateLCAO::out_wfc_lcao, psi_in.get_pointer(), wfc_grid, ik, this->ekb, this->wg);
+    this->lowf->wfc_2d_to_grid(ElecStateLCAO::out_wfc_flag, psi_in.get_pointer(), wfc_grid, ik, this->ekb, this->wg);
 #else
     for (int ib = 0; ib < GlobalV::NBANDS; ib++)
     {

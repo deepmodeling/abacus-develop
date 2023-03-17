@@ -58,10 +58,10 @@ void HSolverLCAO::solveTemplate(hamilt::Hamilt<double>* pHamilt,
 #endif
     else if (this->method == "lapack")
     {
-        ModuleBase::WARNING_QUIT("hsolver_lcao","please fix lapack solver!!!");
-        //We are not supporting diagonalization with lapack
-        //until the obsolete globalc::hm is removed from
-        //diago_lapack.cpp
+        ModuleBase::WARNING_QUIT("hsolver_lcao", "please fix lapack solver!!!");
+        // We are not supporting diagonalization with lapack
+        // until the obsolete globalc::hm is removed from
+        // diago_lapack.cpp
         /*
         if (pdiagh != nullptr)
         {
@@ -90,16 +90,16 @@ void HSolverLCAO::solveTemplate(hamilt::Hamilt<double>* pHamilt,
         /// update H(k) for each k point
         pHamilt->updateHk(ik);
 
-        bool bit = false; // LiuXh, 2017-03-21
-        // if set bit = true, there would be error in soc-multi-core calculation, noted by zhengdy-soc
         hamilt::MatrixBlock<T> h_mat, s_mat;
-        pHamilt->matrix(h_mat, s_mat);
-        ModuleIO::saving_HS(h_mat.p,
-                             s_mat.p,
-                             bit,
-                             this->out_mat_hs,
-                             "data-" + std::to_string(ik),
-                             this->ParaV[0]); // LiuXh, 2017-03-21
+        T *h_mat_copy, *s_mat_copy;
+        if (hsolver::HSolverLCAO::out_mat_hs)
+        {
+            pHamilt->matrix(h_mat, s_mat);
+            h_mat_copy = new T[this->ParaV[0].nloc];
+            s_mat_copy = new T[this->ParaV[0].nloc];
+            BlasConnector::copy(this->ParaV[0].nloc, h_mat.p, 1, h_mat_copy, 1);
+            BlasConnector::copy(this->ParaV[0].nloc, s_mat.p, 1, s_mat_copy, 1);
+        }
 
         psi.fix_k(ik);
 
@@ -107,7 +107,15 @@ void HSolverLCAO::solveTemplate(hamilt::Hamilt<double>* pHamilt,
         double* p_eigenvalues = &(pes->ekb(ik, 0));
         this->hamiltSolvePsiK(pHamilt, psi, p_eigenvalues);
 
-        if(skip_charge) 
+        if (hsolver::HSolverLCAO::out_mat_hs)
+        {
+            BlasConnector::copy(this->ParaV[0].nloc, h_mat_copy, 1, h_mat.p, 1);
+            BlasConnector::copy(this->ParaV[0].nloc, s_mat_copy, 1, s_mat.p, 1);
+            delete[] h_mat_copy;
+            delete[] s_mat_copy;
+        }
+
+        if (skip_charge)
         {
             pes->print_psi(psi);
         }
