@@ -276,7 +276,8 @@ bool Line_Search::brent(
 
         xnew = xb;
         if(std::abs(dy)<conv_thr) return true;
-        if(ls_step == 6)
+        if(ls_step == 6) //I'm not sure if this is a good choice, but the idea is there should not be so many line search steps
+                         //I feel if the line search does not converge, we'd better change the direction and restart line search
         {
             GlobalV::ofs_running << "Too many Brent steps, let's do next CG step" << std::endl;
             return true;
