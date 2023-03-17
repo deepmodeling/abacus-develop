@@ -1,7 +1,16 @@
 #include "module_io/rho_io.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 
-bool ModuleIO::read_rho(const int &is, const std::string &fn, double* rho, int& nx, int& ny, int& nz, int &prenspin) //add by dwan
+bool ModuleIO::read_rho(const int &is,
+	const int &nspin,
+	const std::string &fn,
+	double* rho,
+	int& nx,
+	int& ny,
+	int& nz,
+	double& ef,
+	UnitCell& ucell,
+	int &prenspin)
 {
     ModuleBase::TITLE("ModuleIO","read_rho");
     std::ifstream ifs(fn.c_str());
@@ -21,57 +30,49 @@ bool ModuleIO::read_rho(const int &is, const std::string &fn, double* rho, int& 
 
 	ifs.ignore(300, '\n'); // skip the header
 
-	if(GlobalV::NSPIN != 4) ModuleBase::CHECK_INT(ifs, GlobalV::NSPIN);
+	if(nspin != 4)
+	{
+		ModuleBase::CHECK_INT(ifs, nspin);
+	}
 	else
 	{
 		ifs >> prenspin;
 	}
 	ifs.ignore(150, ')');
 
-	if(GlobalV::NSPIN == 1||GlobalV::NSPIN == 4)
-	{
-		ifs >> GlobalC::en.ef;
-		GlobalV::ofs_running << " read in fermi energy = " << GlobalC::en.ef << std::endl;
-	}
-	else if(GlobalV::NSPIN == 2)
-	{
-		if(is==0)		ifs >> GlobalC::en.ef_up;
-		else if(is==1)	ifs >> GlobalC::en.ef_dw;
-	}
-	else 
-	{
-		ModuleBase::WARNING_QUIT("read_rho","check nspin!");
-	}
+	ifs >> ef;
+	GlobalV::ofs_running << " read in fermi energy = " << ef << std::endl;
+
 	ifs.ignore(150, '\n');
 
-	ModuleBase::CHECK_INT(ifs,GlobalC::ucell.nat,quit);
+	ModuleBase::CHECK_INT(ifs,ucell.nat,quit);
 	ifs.ignore(150, '\n');
 
-	double fac=GlobalC::ucell.lat0;
+	double fac=ucell.lat0;
 	ModuleBase::CHECK_INT(ifs, nx);	
-	ModuleBase::CHECK_DOUBLE(ifs, fac*GlobalC::ucell.latvec.e11/double(nx), quit);
-	ModuleBase::CHECK_DOUBLE(ifs, fac*GlobalC::ucell.latvec.e12/double(nx), quit);
-	ModuleBase::CHECK_DOUBLE(ifs, fac*GlobalC::ucell.latvec.e13/double(nx), quit);
+	ModuleBase::CHECK_DOUBLE(ifs, fac*ucell.latvec.e11/double(nx), quit);
+	ModuleBase::CHECK_DOUBLE(ifs, fac*ucell.latvec.e12/double(nx), quit);
+	ModuleBase::CHECK_DOUBLE(ifs, fac*ucell.latvec.e13/double(nx), quit);
 	ModuleBase::CHECK_INT(ifs, ny);	
-	ModuleBase::CHECK_DOUBLE(ifs, fac*GlobalC::ucell.latvec.e21/double(ny), quit);
-	ModuleBase::CHECK_DOUBLE(ifs, fac*GlobalC::ucell.latvec.e22/double(ny), quit);
-	ModuleBase::CHECK_DOUBLE(ifs, fac*GlobalC::ucell.latvec.e23/double(ny), quit);
+	ModuleBase::CHECK_DOUBLE(ifs, fac*ucell.latvec.e21/double(ny), quit);
+	ModuleBase::CHECK_DOUBLE(ifs, fac*ucell.latvec.e22/double(ny), quit);
+	ModuleBase::CHECK_DOUBLE(ifs, fac*ucell.latvec.e23/double(ny), quit);
 	ModuleBase::CHECK_INT(ifs, nz);	
-	ModuleBase::CHECK_DOUBLE(ifs, fac*GlobalC::ucell.latvec.e31/double(nz), quit);
-	ModuleBase::CHECK_DOUBLE(ifs, fac*GlobalC::ucell.latvec.e32/double(nz), quit);
-	ModuleBase::CHECK_DOUBLE(ifs, fac*GlobalC::ucell.latvec.e33/double(nz), quit);
+	ModuleBase::CHECK_DOUBLE(ifs, fac*ucell.latvec.e31/double(nz), quit);
+	ModuleBase::CHECK_DOUBLE(ifs, fac*ucell.latvec.e32/double(nz), quit);
+	ModuleBase::CHECK_DOUBLE(ifs, fac*ucell.latvec.e33/double(nz), quit);
 
 	int temp = 0;
-	for(int it=0; it<GlobalC::ucell.ntype; it++)
+	for(int it=0; it<ucell.ntype; it++)
 	{
-		for(int ia=0; ia<GlobalC::ucell.atoms[it].na; ia++)
+		for(int ia=0; ia<ucell.atoms[it].na; ia++)
 		{
 			ifs >> temp; // skip atomic number
 			ifs >> temp; // skip Z valance
 			// ModuleBase::CHECK_DOUBLE(ifs,GlobalC::ucell.atoms[it].ncpp.zv,quit); // check Z valance
-			ModuleBase::CHECK_DOUBLE(ifs,fac*GlobalC::ucell.atoms[it].taud[ia].x,quit);
-			ModuleBase::CHECK_DOUBLE(ifs,fac*GlobalC::ucell.atoms[it].taud[ia].y,quit);
-			ModuleBase::CHECK_DOUBLE(ifs,fac*GlobalC::ucell.atoms[it].taud[ia].z,quit);
+			ModuleBase::CHECK_DOUBLE(ifs,fac*ucell.atoms[it].taud[ia].x,quit);
+			ModuleBase::CHECK_DOUBLE(ifs,fac*ucell.atoms[it].taud[ia].y,quit);
+			ModuleBase::CHECK_DOUBLE(ifs,fac*ucell.atoms[it].taud[ia].z,quit);
 		}
 	}
 
