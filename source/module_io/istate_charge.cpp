@@ -141,7 +141,7 @@ void IState_Charge::begin(Gint_Gamma &gg, elecstate::ElecState* pelec)
 			// 0 means definitely output charge density.
 			for(int is=0; is<GlobalV::NSPIN; is++)
 			{
-				ss<<"_SPIN"<<is <<"_CHG";
+				ss<<"_SPIN"<<is <<"_CHG.cube";
 				bool for_plot = true;
 				ModuleIO::write_rho(pelec->charge->rho_save[is], is, 0, ss.str(), 3, for_plot );
 			}

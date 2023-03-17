@@ -100,7 +100,7 @@ void IState_Envelope::begin(const psi::Psi<double>* psid, Local_Orbital_wfc& low
 
                 pes->charge->save_rho_before_sum_band(); //xiaohui add 2014-12-09
                 std::stringstream ss;
-                ss << GlobalV::global_out_dir << "BAND" << ib + 1 << "_s_" << is + 1 << "_ENV";
+                ss << GlobalV::global_out_dir << "BAND" << ib + 1 << "_s_" << is + 1 << "_ENV.cube";
                 // 0 means definitely output charge density.
                 bool for_plot = true;
                 ModuleIO::write_rho(pes->charge->rho_save[is], is, 0, ss.str(), 3, for_plot);
@@ -214,7 +214,7 @@ void IState_Envelope::begin(const psi::Psi<std::complex<double>>* psi, Local_Orb
                 gk.cal_env_k(ik, lowf.wfc_k_grid[ik][ib], pes->charge->rho[ispin]);
 
                 std::stringstream ss;
-                ss << GlobalV::global_out_dir << "BAND" << ib + 1 << "_k_" << ik / nspin0 + 1 << "_s_" << ispin + 1 << "_ENV";
+                ss << GlobalV::global_out_dir << "BAND" << ib + 1 << "_k_" << ik / nspin0 + 1 << "_s_" << ispin + 1 << "_ENV.cube";
 
                 bool for_plot = true;   //if false, separate the output into spin up and spin down
                 ModuleIO::write_rho(pes->charge->rho[ispin], ispin, 0, ss.str(), 3, for_plot);

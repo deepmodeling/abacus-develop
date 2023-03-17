@@ -840,7 +840,7 @@ These variables are used to control the output of properties.
 ### out_freq_elec
 
 - **Type**: Integer
-- **Description**: If set to >1, it represents the frequency of electronic iters to output charge density (if [out_chg](#out_chg) is turned on) and wavefunction (if [out_wfc_pw](#out_wfc_pw) or [out_wfc_r](#out_wfc_r) is turned on). If set to 0, ABACUS will output them only when converged in SCF. Used for the restart of SCF.
+- **Description**: If set to >1, it represents the frequency of electronic iters to output charge density (if [out_chg](#out_chg) is turned on),  wavefunction (if [out_wfc_pw](#out_wfc_pw) or [out_wfc_r](#out_wfc_r) is turned on), and density matrix of localized orbitals (if [out_dm](#out_dm) is turned on). If set to 0, ABACUS will output them only when converged in SCF or electronic iters reach its maximum. Used for the restart of SCF.
 - **Default**: 0
 
 ### out_freq_ion
@@ -848,6 +848,8 @@ These variables are used to control the output of properties.
 - **Type**: Integer
 - **Description**: If set to >1, it represents the frequency of ionic steps to output charge density (if [out_chg](#out_chg) is turned on) and wavefunction (if [out_wfc_pw](#out_wfc_pw) or [out_wfc_r](#out_wfc_r) is turned on). If set to 0, ABACUS will output them only when ionic steps reach its maximum step. Used for the restart of MD or Relax.
 - **Default**: 0
+
+> Note : out_freq_ion is currently useless.
 
 ### out_chg
 

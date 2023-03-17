@@ -426,13 +426,9 @@ namespace ModuleESolver
         GlobalC::en.calculate_etot();
         //We output it for restarting the scf.
         bool print = false;
-        if (this->out_freq_elec == 0)
+        if (this->out_freq_elec && iter % this->out_freq_elec == 0)
         {
-            if (this->conv_elec) print = true;
-        }
-        else
-        {
-            if (iter % this->out_freq_elec == 0 || this->conv_elec) print = true;
+            print = true;
         }
 
         if (print)
@@ -442,8 +438,7 @@ namespace ModuleESolver
                 for (int is = 0; is < GlobalV::NSPIN; is++)
                 {
                     std::stringstream ssc;
-                    std::stringstream ss1;
-                    ssc << GlobalV::global_out_dir << "tmp" << "_SPIN" << is + 1 << "_CHG";
+                    ssc << GlobalV::global_out_dir << "tmp" << "_SPIN" << is + 1 << "_CHG.cube";
                     ModuleIO::write_rho(this->pelec->charge->rho_save[is], is, iter, ssc.str(), 3);//mohan add 2007-10-17
                 }
                 if(XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
@@ -451,8 +446,7 @@ namespace ModuleESolver
                     for (int is = 0; is < GlobalV::NSPIN; is++)
                     {
                         std::stringstream ssc;
-                        std::stringstream ss1;
-                        ssc << GlobalV::global_out_dir << "tmp" << "_SPIN" << is + 1 << "_TAU";
+                        ssc << GlobalV::global_out_dir << "tmp" << "_SPIN" << is + 1 << "_TAU.cube";
                         ModuleIO::write_rho(this->pelec->charge->kin_r_save[is], is, iter, ssc.str(), 3);//mohan add 2007-10-17
                     }
                 }
@@ -476,27 +470,38 @@ namespace ModuleESolver
         // Temporary liuyu add 2022-11-07
         this->CE.update_all_pos(GlobalC::ucell);
 
-        for (int is = 0; is < GlobalV::NSPIN; is++)
-        {
-            std::stringstream ssc;
-            std::stringstream ss1;
-            ss1 << GlobalV::global_out_dir << "tmp_SPIN" << is + 1 << "_CHG";
-            std::remove(ss1.str().c_str());    // remove tmp_SPIN_CHG when scf is finished    liuyu 2023-03-01
-            ss1 << ".cube";
-            std::remove(ss1.str().c_str());    // remove tmp_SPIN_CHG.cube when scf is finished    liuyu 2023-03-01
-
-            ssc << GlobalV::global_out_dir << "SPIN" << is + 1 << "_CHG";
-            ModuleIO::write_rho(this->pelec->charge->rho_save[is], is, 0, ssc.str());//mohan add 2007-10-17
-        }
-        if(XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
+        if (GlobalV::out_chg)
         {
             for (int is = 0; is < GlobalV::NSPIN; is++)
             {
+                std::stringstream ssc_tmp;
+                ssc_tmp << GlobalV::global_out_dir << "tmp_SPIN" << is + 1 << "_CHG.cube";
+                std::remove(ssc_tmp.str().c_str());    // remove tmp_SPIN_CHG.cube when scf is finished    liuyu 2023-03-01
+
                 std::stringstream ssc;
-                std::stringstream ss1;
-                ssc << GlobalV::global_out_dir << "SPIN" << is + 1 << "_TAU";
-                ModuleIO::write_rho(this->pelec->charge->kin_r_save[is], is, 0, ssc.str());//mohan add 2007-10-17
+                ssc << GlobalV::global_out_dir << "SPIN" << is + 1 << "_CHG.cube";
+                ModuleIO::write_rho(this->pelec->charge->rho_save[is], is, 0, ssc.str());//mohan add 2007-10-17
             }
+            if(XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
+            {
+                for (int is = 0; is < GlobalV::NSPIN; is++)
+                {
+                    std::stringstream ssc_tmp;
+                    ssc_tmp << GlobalV::global_out_dir << "tmp_SPIN" << is + 1 << "_TAU.cube";
+                    std::remove(ssc_tmp.str().c_str());
+
+                    std::stringstream ssc;
+                    ssc << GlobalV::global_out_dir << "SPIN" << is + 1 << "_TAU.cube";
+                    ModuleIO::write_rho(this->pelec->charge->kin_r_save[is], is, 0, ssc.str());//mohan add 2007-10-17
+                }
+            }
+        }
+
+        if (GlobalC::wf.out_wfc_pw == 1 || GlobalC::wf.out_wfc_pw == 2)
+        {
+            std::stringstream ssw;
+            ssw << GlobalV::global_out_dir << "WAVEFUNC";
+            ModuleIO::write_wfc_pw(ssw.str(), this->psi[0], &GlobalC::kv, GlobalC::wfcpw);
         }
         if (this->conv_elec)
         {

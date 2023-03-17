@@ -408,7 +408,7 @@ void ESolver_KS_LCAO_TDDFT::afterscf(const int istep)
         const int precision = 3;
 
         std::stringstream ssc;
-        ssc << GlobalV::global_out_dir << "SPIN" << is + 1 << "_CHG";
+        ssc << GlobalV::global_out_dir << "SPIN" << is + 1 << "_CHG.cube";
         ModuleIO::write_rho(pelec->charge->rho_save[is], is, 0, ssc.str()); // mohan add 2007-10-17
 
         if (ELEC_evolve::out_dipole == 1)
