@@ -261,13 +261,20 @@ namespace ModuleESolver
         // Temporary, md and relax will merge later   liuyu add 2022-11-07
         if(GlobalV::CALCULATION == "md" && istep)
         {
-            CE.update_istep();
-            CE.save_pos_next(GlobalC::ucell);
-            CE.extrapolate_charge(pelec->charge);
-
-            if(GlobalC::ucell.cell_parameter_updated)
+            // different precision level for vc-md
+            if(GlobalC::ucell.cell_parameter_updated && GlobalV::MD_PREC_LEVEL)
             {
-                Variable_Cell::init_after_vc();
+                this->init_after_vc(INPUT, GlobalC::ucell);
+            }
+            else
+            {
+                this->CE.update_istep();
+                this->CE.save_pos_next(GlobalC::ucell);
+                this->CE.extrapolate_charge(this->pelec->charge);
+                if(GlobalC::ucell.cell_parameter_updated)
+                {
+                    Variable_Cell::init_after_vc();
+                }
             }
         }
 

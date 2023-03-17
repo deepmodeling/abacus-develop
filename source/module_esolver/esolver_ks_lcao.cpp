@@ -195,6 +195,31 @@ void ESolver_KS_LCAO::Init(Input& inp, UnitCell& ucell)
     }
 }
 
+void ESolver_KS_LCAO::init_after_vc(Input& inp, UnitCell& ucell)
+{
+    ESolver_KS::init_after_vc(inp, ucell);
+
+    delete this->pelec;  
+    this->pelec = new elecstate::ElecStateLCAO(&(chr), &(GlobalC::kv), GlobalC::kv.nks, &(this->LOC), &(this->UHM), &(this->LOWF));
+
+    GlobalC::ppcell.init_vloc(GlobalC::ppcell.vloc, GlobalC::rhopw);
+
+    this->pelec->charge->allocate(GlobalV::NSPIN, GlobalC::rhopw->nrxx, GlobalC::rhopw->npw);
+
+    if(this->pelec->pot != nullptr)
+    {
+        delete this->pelec->pot;
+        this->pelec->pot = new elecstate::Potential(
+            GlobalC::rhopw,
+            &GlobalC::ucell,
+            &(GlobalC::ppcell.vloc),
+            &(GlobalC::sf.strucFac),
+            &(GlobalC::en.etxc),
+            &(GlobalC::en.vtxc)
+        );
+    }
+}
+
 void ESolver_KS_LCAO::cal_Energy(double& etot)
 {
     etot = GlobalC::en.etot;

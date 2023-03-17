@@ -234,23 +234,25 @@ namespace ModuleESolver
         // Temporary, md and relax will merge later   liuyu add 2022-11-07
         if(GlobalV::CALCULATION == "md" && istep)
         {
-            this->CE.update_istep();
-            this->CE.save_pos_next(GlobalC::ucell);
-            this->CE.extrapolate_charge(this->pelec->charge);
-
             // different precision level for vc-md
             if(GlobalC::ucell.cell_parameter_updated && GlobalV::MD_PREC_LEVEL)
             {
                 this->init_after_vc(INPUT, GlobalC::ucell);
             }
-            else if(GlobalC::ucell.cell_parameter_updated)
+            else
             {
-                Variable_Cell::init_after_vc();
-                GlobalC::wfcpw->initgrids(GlobalC::ucell.lat0, GlobalC::ucell.latvec, GlobalC::wfcpw->nx, GlobalC::wfcpw->ny, GlobalC::wfcpw->nz);
-                GlobalC::wfcpw->initparameters(false, INPUT.ecutwfc, GlobalC::kv.nks, GlobalC::kv.kvec_d.data());
-                GlobalC::wfcpw->collect_local_pw(); 
-                GlobalC::wf.init_after_vc(GlobalC::kv.nks);
-                GlobalC::wf.init_at_1();
+                this->CE.update_istep();
+                this->CE.save_pos_next(GlobalC::ucell);
+                this->CE.extrapolate_charge(this->pelec->charge);
+                if(GlobalC::ucell.cell_parameter_updated)
+                {
+                    Variable_Cell::init_after_vc();
+                    GlobalC::wfcpw->initgrids(GlobalC::ucell.lat0, GlobalC::ucell.latvec, GlobalC::wfcpw->nx, GlobalC::wfcpw->ny, GlobalC::wfcpw->nz);
+                    GlobalC::wfcpw->initparameters(false, INPUT.ecutwfc, GlobalC::kv.nks, GlobalC::kv.kvec_d.data());
+                    GlobalC::wfcpw->collect_local_pw(); 
+                    GlobalC::wf.init_after_vc(GlobalC::kv.nks);
+                    GlobalC::wf.init_at_1();
+                }
             }
         }
 
