@@ -31,6 +31,10 @@ void Stochastic_WF::init(const int nks_in)
     chiortho = new ModuleBase::ComplexMatrix[nks_in];
     nchip = new int[nks_in];
     this->nks = nks_in;
+    if (nks_in <= 0)
+    {
+        ModuleBase::WARNING_QUIT("Stochastic_WF", "nks_in <=0!");
+    }
 }
 
 void Init_Sto_Orbitals
@@ -42,7 +46,7 @@ void Init_Sto_Orbitals
 {
     if (seed_in == 0 || seed_in == -1)
     {
-        srand((unsigned)time(nullptr) + GlobalV::MY_RANK * 10000); // 预留了GlobalV 全局变量
+        srand((unsigned)time(nullptr) + GlobalV::MY_RANK * 10000); // GlobalV global variables are reserved 
     }
     else
     {
@@ -65,8 +69,10 @@ void Init_Sto_Orbitals
     const int nchi = INPUT.nbands_sto;
     const int ndim = GlobalC::wf.npwx;
     const int ngroup = GlobalV::NSTOGROUP;
-    //const int nks = GlobalC::kv.nks;  //delete GlobalC 全局变量
-    assert(ngroup>0);
+    if (ngroup <= 0)
+    {
+        ModuleBase::WARNING_QUIT("Init_Sto_Orbitals","ngroup <= 0!");
+    }
     int tmpnchip = int(nchi / ngroup);
     if (igroup < nchi % ngroup)
     {
@@ -106,11 +112,10 @@ void Update_Sto_Orbitals
 (
     Stochastic_WF& stowf, 
     const int seed_in,
-    const int nks
+    const int nks   // GlobalC variables are deleted and become an input parameter
 )
 {
     const int nchi = INPUT.nbands_sto;
-    //const int nks = GlobalC::kv.nks;
 
     for (int ik = 0; ik < nks; ++ik)
     {
@@ -144,7 +149,7 @@ void Init_Com_Orbitals
 (
     Stochastic_WF& stowf, 
     K_Vectors& kv,
-    const int ndim
+    const int ndim  // GlobalC variables are deleted and become an input parameter
 )
 {
     const bool firstrankmore = false;
@@ -164,7 +169,6 @@ void Init_Com_Orbitals
     const int n_in_pool = GlobalV::NPROC_IN_POOL;
     const int i_in_group = GlobalV::RANK_IN_STOGROUP;
     const int i_in_pool = GlobalV::RANK_IN_POOL;
-    //const int ndim = GlobalC::wf.npwx;
 
     int* totnpw = new int[nks];
     for (int ik = 0; ik < nks; ++ik)
@@ -235,10 +239,9 @@ void Init_Com_Orbitals
 (
     Stochastic_WF& stowf, 
     K_Vectors& kv,
-    const int ndim
+    const int ndim // GlobalC variables are deleted and become an input parameter
 )
 {
-    //const int ndim = GlobalC::wf.npwx;
     for (int ik = 0; ik < kv.nks; ++ik)
     {
         stowf.nchip[ik] = ndim;
