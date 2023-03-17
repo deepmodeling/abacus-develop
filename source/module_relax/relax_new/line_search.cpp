@@ -276,9 +276,9 @@ bool Line_Search::brent(
 
         xnew = xb;
         if(std::abs(dy)<conv_thr) return true;
-        if(ls_step == 8)
+        if(ls_step == 6)
         {
-            GlobalV::ofs_running << "Too much Brent steps, let's do next CG step" << std::endl;
+            GlobalV::ofs_running << "Too many Brent steps, let's do next CG step" << std::endl;
             return true;
             //ModuleBase::WARNING_QUIT("Brent","too many steps in line search, something wrong");
         }
@@ -378,9 +378,9 @@ bool Line_Search::brent(
 
         xnew = xb;
         if(std::abs(dy)<conv_thr) return true;
-        if(ls_step == 8)
+        if(ls_step == 6)
         {
-            GlobalV::ofs_running << "Too much Brent steps, let's do next CG step" << std::endl;
+            GlobalV::ofs_running << "Too many Brent steps, let's do next CG step" << std::endl;
             return true;
             //ModuleBase::WARNING_QUIT("Brent","too many steps in line search, something wrong");
         }
