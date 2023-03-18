@@ -75,6 +75,9 @@ extern "C"
     void zheev_(const char* jobz,const char* uplo,const int* n,std::complex<double> *a,
                 const int* lda,double* w,std::complex<double >* work,const int* lwork,
                 double* rwork,int* info);
+    void cheev_(const char* jobz,const char* uplo,const int* n,std::complex<float> *a,
+                const int* lda,float* w,std::complex<float >* work,const int* lwork,
+                float* rwork,int* info);
 
 	// solve the generalized eigenproblem Ax=eBx, where A is Symmetric and real couble
     // dsygv_ returns all eigenvalues while dsygvx_ returns selected ones

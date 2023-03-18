@@ -22,7 +22,6 @@ void ModuleIO::write_rho(
 	}
 	
 	time_t start, end;
-	std::ofstream ofs;
 	std::ofstream ofs_cube;
 
 	std::string fn_cube = fn;
@@ -31,81 +30,39 @@ void ModuleIO::write_rho(
 	if(GlobalV::MY_RANK==0)
 	{
 		start = time(NULL);
-    	
-		ofs.open(fn.c_str());
+
 		ofs_cube.open(fn_cube.c_str());
 		
-    		if (!ofs || !ofs_cube)
-    		{
-        			ModuleBase::WARNING("ModuleIO::write_rho","Can't create Charge File!");
-    		}	
-
-		//GlobalV::ofs_running << "\n Output charge file." << std::endl;
-
-		ofs << GlobalC::ucell.latName << std::endl;//1
-		ofs << " " << GlobalC::ucell.lat0 * 0.529177 << std::endl;
-		ofs << " " << GlobalC::ucell.latvec.e11 << " " << GlobalC::ucell.latvec.e12 << " " << GlobalC::ucell.latvec.e13 << std::endl;
-		ofs << " " << GlobalC::ucell.latvec.e21 << " " << GlobalC::ucell.latvec.e22 << " " << GlobalC::ucell.latvec.e23 << std::endl;
-		ofs << " " << GlobalC::ucell.latvec.e31 << " " << GlobalC::ucell.latvec.e32 << " " << GlobalC::ucell.latvec.e33 << std::endl;
-
-		for(int it=0; it<GlobalC::ucell.ntype; it++)
+		if (!ofs_cube)
 		{
-			ofs << " " << GlobalC::ucell.atoms[it].label;
-		}
-		ofs << std::endl;
-		for(int it=0; it<GlobalC::ucell.ntype; it++)
-		{
-			ofs << " " << GlobalC::ucell.atoms[it].na;
-		}
-		ofs << std::endl;
-		ofs << "Direct" << std::endl;
-
-		for(int it=0; it<GlobalC::ucell.ntype; it++)
-		{
-			for(int ia=0; ia<GlobalC::ucell.atoms[it].na; ia++)
-			{
-				ofs << " " << GlobalC::ucell.atoms[it].taud[ia].x
-					<< " " << GlobalC::ucell.atoms[it].taud[ia].y
-					<< " " << GlobalC::ucell.atoms[it].taud[ia].z << std::endl;
-			}
-		}
-
-
-		if(for_plot)
-		{
-
-		}
-		else
-		{
-			ofs << "\n  " << GlobalV::NSPIN;
-			if(GlobalV::NSPIN==1 || GlobalV::NSPIN == 4)
-			{
-				ofs << "\n " << GlobalC::en.ef << " (fermi energy)";
-			}
-			else if(GlobalV::NSPIN==2)
-			{
-				if (GlobalV::TWO_EFERMI)
-				{
-					if(is==0)ofs << "\n " << GlobalC::en.ef_up << " (fermi energy for spin=1)"; 
-					else if(is==1)ofs << "\n " << GlobalC::en.ef_dw << " (fermi energy for spin=2)";
-				}
-				else
-				{
-					ofs << "\n " << GlobalC::en.ef << " (fermi energy)";
-				}
-			}
-			else
-			{
-				ModuleBase::WARNING_QUIT("write_rho","check nspin!");
-			}
-		}
-		ofs << "\n  " << GlobalC::rhopw->nx << " " << GlobalC::rhopw->ny << " " << GlobalC::rhopw->nz << std::endl;
-		ofs << std::setprecision(precision);
-		ofs << scientific;
+				ModuleBase::WARNING("ModuleIO::write_rho","Can't create Charge File!");
+		}	
 
 		/// output header for cube file
 		ofs_cube << "Cubefile created from ABACUS SCF calculation" << std::endl;
-		ofs_cube << "Contains the selected quantity on a FFT grid" << std::endl;
+		// ofs_cube << "Contains the selected quantity on a FFT grid" << std::endl;
+		ofs_cube << GlobalV::NSPIN << " (nspin) ";
+		if(GlobalV::NSPIN==1 || GlobalV::NSPIN == 4)
+		{
+			ofs_cube << GlobalC::en.ef << " (fermi energy, in Ry)" << std::endl;
+		}
+		else if(GlobalV::NSPIN==2)
+		{
+			if (GlobalV::TWO_EFERMI)
+			{
+				if(is==0)		ofs_cube << GlobalC::en.ef_up << " (fermi energy for spin=1, in Ry)" << std::endl; 
+				else if(is==1)	ofs_cube << GlobalC::en.ef_dw << " (fermi energy for spin=2, in Ry)" << std::endl;
+			}
+			else
+			{
+				ofs_cube << GlobalC::en.ef << " (fermi energy, in Ry)" << std::endl;
+			}
+		}
+		else
+		{
+			ModuleBase::WARNING_QUIT("write_rho","check nspin!");
+		}
+
 		ofs_cube << GlobalC::ucell.nat << " 0.0 0.0 0.0 " << std::endl;
 		double fac=GlobalC::ucell.lat0;
 		ofs_cube << GlobalC::rhopw->nx 
@@ -121,58 +78,60 @@ void ModuleIO::write_rho(
 			<< " " << fac*GlobalC::ucell.latvec.e32/double(GlobalC::rhopw->nz) 
 			<< " " << fac*GlobalC::ucell.latvec.e33/double(GlobalC::rhopw->nz) << std::endl;
 
+		std::string element = "";
 		for(int it=0; it<GlobalC::ucell.ntype; it++)
 		{
+			// erase the number in label, such as Fe1.
+			element = GlobalC::ucell.atoms[it].label;
+			std::string::iterator temp = element.begin();
+			while (temp != element.end())
+			{
+				if ((*temp >= '1') && (*temp <= '9'))
+				{
+					temp = element.erase(temp);
+				}
+				else
+				{
+					temp++;
+				}
+			}
+
 			for(int ia=0; ia<GlobalC::ucell.atoms[it].na; ia++)
 			{
 				//convert from label to atomic number
 				int z = 0;
 				for(int j=0; j!=ModuleBase::element_name.size(); j++)
-					if (GlobalC::ucell.atoms[it].label == ModuleBase::element_name[j])
+				{
+					if (element == ModuleBase::element_name[j])
 					{
 						z=j+1;
 						break;
 					}
-				ofs_cube << " " << z << " " << z
-					<< " " << fac*GlobalC::ucell.atoms[it].tau[ia].x
-					<< " " << fac*GlobalC::ucell.atoms[it].tau[ia].y
-					<< " " << fac*GlobalC::ucell.atoms[it].tau[ia].z << std::endl;
+				}
+				ofs_cube << " " << z << " " << GlobalC::ucell.atoms[it].ncpp.zv
+						 << " " << fac*GlobalC::ucell.atoms[it].tau[ia].x
+						 << " " << fac*GlobalC::ucell.atoms[it].tau[ia].y
+						 << " " << fac*GlobalC::ucell.atoms[it].tau[ia].z << std::endl;
 			}
 		}
 		ofs_cube << std::setprecision(precision);
 		ofs_cube << scientific;
-		/// cube file
 	}
 	
 #ifndef __MPI
-	int count=0;
-	for(int k=0; k<GlobalC::rhopw->nz; k++)
-	{
-		for(int j=0; j<GlobalC::rhopw->ny; j++)
-		{
-			for(int i=0; i<GlobalC::rhopw->nx; i++)
-			{
-				if(count%8==0) ofs << "\n";
-				ofs << " " << rho_save[i*GlobalC::rhopw->ny*GlobalC::rhopw->nz + j*GlobalC::rhopw->nz + k];
-				++count;
-			}
-		}
-	}
-	/// for cube file
-	int count_cube=0;
 	for(int i=0; i<GlobalC::rhopw->nx; i++)
 	{
 		for(int j=0; j<GlobalC::rhopw->ny; j++)
 		{
 			for(int k=0; k<GlobalC::rhopw->nz; k++)
 			{
-				if(count_cube%6==0) ofs_cube << "\n";
-				ofs_cube << " " << rho_save[i*GlobalC::rhopw->ny*GlobalC::rhopw->nz + j*GlobalC::rhopw->nz + k];
-				++count_cube;
+				ofs_cube << " " << rho_save[k*GlobalC::rhopw->nx*GlobalC::rhopw->ny+i*GlobalC::rhopw->ny+j];
+				// ++count_cube;
+				if(k%6==5 && k!=GlobalC::rhopw->nz-1) ofs_cube << "\n";
 			}
+			ofs_cube << "\n";
 		}
 	}
-	/// for cube file
 #else
 //	for(int ir=0; ir<GlobalC::rhopw->nrxx; ir++) chr.rho[0][ir]=1; // for testing
 //	GlobalV::ofs_running << "\n GlobalV::RANK_IN_POOL = " << GlobalV::RANK_IN_POOL;
@@ -275,17 +234,6 @@ void ModuleIO::write_rho(
 			// write data	
 			if(GlobalV::MY_RANK==0)
 			{
-				// ofs << "\niz=" << iz;
-				// mohan update 2011-03-30
-				for(int iy=0; iy<GlobalC::rhopw->ny; iy++)
-				{
-					for(int ix=0; ix<GlobalC::rhopw->nx; ix++)
-					{
-						if(count%8==0) ofs << "\n";
-						ofs << " " << zpiece[ix*GlobalC::rhopw->ny+iy];
-						++count;
-					}
-				}
 				/// for cube file
 				for(int ir=0; ir<nxy; ir++)
 				{
@@ -324,7 +272,7 @@ void ModuleIO::write_rho(
 	{
 		end = time(NULL);
 		ModuleBase::GlobalFunc::OUT_TIME("write_rho",start,end);
-		ofs.close();
+		// ofs.close();
 		/// for cube file
 		ofs_cube.close();
 	}

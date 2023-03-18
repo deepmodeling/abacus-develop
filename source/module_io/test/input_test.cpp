@@ -351,10 +351,10 @@ TEST_F(InputTest, Default)
 
 TEST_F(InputTest, Read)
 {
-	std::string input_file = "INPUT";
+	std::string input_file = "./support/INPUT";
 	INPUT.Read(input_file);
 	EXPECT_EQ(INPUT.suffix,"autotest");
-	EXPECT_EQ(INPUT.stru_file,"STRU");
+	EXPECT_EQ(INPUT.stru_file,"./support/STRU");
 	EXPECT_EQ(INPUT.kpoint_file,"KPT");
 	EXPECT_EQ(INPUT.pseudo_dir,"../../PP_ORB/");
 	EXPECT_EQ(INPUT.orbital_dir,"../../PP_ORB/");
