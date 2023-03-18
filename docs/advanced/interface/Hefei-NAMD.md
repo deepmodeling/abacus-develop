@@ -16,15 +16,15 @@ Then we obtain output files of hamiltonian matrix, overlap matrix, and wavefunct
 
 2. Clone Hefei-NAMD codes optimized for ABACUS from [website](https://github.com/vtzf/abacus-namd).
 
-3. Modify parameters in Args.py including directory of ABACUS output files and NAMD parameters. We can see detailed explanation for all parameters in Args.py. 
+3. Modify parameters in `Args.py` including directory of ABACUS output files and NAMD parameters. We can see detailed explanation for all parameters in `Args.py`. 
 
-4. Run NAC.py to prepare related files for NAMD simulations. 
+4. Run `NAC.py` to prepare related files for NAMD simulations. 
 ```
 sbatch sub_nac
 ```
 
-5. Run SurfHop.py to perform NAMD simulations. 
+5. Run `SurfHop.py` to perform NAMD simulations. 
 ```
 sbatch sub_sh
 ```
-And results are under directory namddir in Args.py.
+And results are under directory namddir in `Args.py`.
