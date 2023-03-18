@@ -83,7 +83,8 @@ class Input
     int cond_nche; //orders of Chebyshev expansions for conductivities
     double cond_dw; //d\omega for conductivities
     double cond_wcut; //cutoff \omega for conductivities
-    int cond_wenlarge;
+    double cond_dt;  //dt to integrate conductivities
+    int cond_dtbatch; //exp(iH*dt*cond_dtbatch) is expanded with Chebyshev expansion.
     double cond_fwhm; //FWHM for conductivities 
     bool cond_nonlocal; //if calculate nonlocal effects
 

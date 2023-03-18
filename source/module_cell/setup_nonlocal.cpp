@@ -45,76 +45,17 @@ void InfoNonlocal::Set_NonLocal(
 
 	ModuleBase::ComplexMatrix coefficient_D_nc_in(nh*2, nh*2);//zhengdy-soc
 
-	if(!atom->ncpp.has_so)
-	{
-		for(int p1 = 0; p1<n_projectors; p1++)
-		{
-			const int lnow = atom->ncpp.lll[p1];
-
-			// only keep the nonzero part.
-			int cut_mesh = atom->ncpp.mesh; 
-			for(int ir=atom->ncpp.mesh-1; ir>=0; --ir)
-			{
-				if( abs( atom->ncpp.betar(p1,ir) ) > 1.0e-10 )
-				{
-					cut_mesh = ir; 
-					break;
-				}
-			}
-			if(cut_mesh %2 == 0) ++cut_mesh;
-
-//		std::cout << " cut_mesh=" << cut_mesh << std::endl;
-			double* beta_r = new double[cut_mesh];
-			ModuleBase::GlobalFunc::ZEROS(beta_r, cut_mesh);
-			for(int ir=0; ir<cut_mesh; ++ir)
-			{
-				beta_r[ir] = atom->ncpp.betar(p1,ir);
-			}
-
-			tmpBeta_lm[p1].set_NL_proj(
-					atom->label,
-					it, //type
-					lnow, // angular momentum L
-					cut_mesh, // number of radial mesh
-					atom->ncpp.rab,
-					atom->ncpp.r, // radial mesh value (a.u.)
-					beta_r,
-					kmesh,
-					dk,
-					dr_uniform); // delta k mesh in reciprocal space
-
-			if(GlobalV::out_element_info)tmpBeta_lm[p1].plot(GlobalV::MY_RANK);
-
-			delete[] beta_r;
-				
-		}
-		
-		// mohan comment out 2021-04-26
-		//ModuleBase::WARNING("InfoNonlocal::Set_NonLocal","bug in line "+TO_STRING(__LINE__)+", matrix ic>=nc");		
-
-
-		// Peize Lin add 2019-01-23
-		this->Beta[it].set_type_info(
-			it, 
-			atom->label, 
-			atom->ncpp.pp_type, 
-			atom->ncpp.lmax, 
-			n_projectors, 
-			tmpBeta_lm);//LiuXh 2016-01-14, 2016-07-19
-
-		// mohan add 2021-05-07
-		atom->ncpp.set_d_so(coefficient_D_nc_in,n_projectors,0,0);
-	}
-	else//added by zhengdy-soc
-	{
 		int lmaxkb = - 1;
 		for (int ibeta = 0; ibeta < atom->ncpp.nbeta; ibeta++)
 		{
 			lmaxkb = max( lmaxkb, atom->ncpp.lll[ibeta]);
 		}
 		Soc soc;
-		soc.rot_ylm(lmaxkb);
-		soc.fcoef.create(1, atom->ncpp.nh, atom->ncpp.nh);
+		if(atom->ncpp.has_so)
+		{
+			soc.rot_ylm(lmaxkb);
+			soc.fcoef.create(1, atom->ncpp.nh, atom->ncpp.nh);
+		}
 
 		int ip1=0;
 		for(int p1 = 0; p1<n_projectors; p1++)//nbeta
@@ -138,16 +79,27 @@ void InfoNonlocal::Set_NonLocal(
 							{
 								for(int is2=0;is2<2;is2++)
 								{
-									soc.set_fcoef(l1, l2,
-										is1, is2,
-										m1, m2,
-										j1, j2,
-										0, ip1, ip2);
-									coefficient_D_nc_in(ip1 + nh*is1, ip2 + nh*is2) = atom->ncpp.dion(p1,p2) 
-									* soc.fcoef(0, is1, is2, ip1, ip2);
-									if(p1 != p2) 
+									if(atom->ncpp.has_so)
 									{
-										soc.fcoef(0, is1, is2, ip1, ip2) = std::complex<double>(0.0,0.0);
+										soc.set_fcoef(l1, l2,
+											is1, is2,
+											m1, m2,
+											j1, j2,
+											0, ip1, ip2);
+										
+										coefficient_D_nc_in(ip1 + nh*is1, ip2 + nh*is2) = atom->ncpp.dion(p1,p2) 
+										* soc.fcoef(0, is1, is2, ip1, ip2);
+										if(p1 != p2) 
+										{
+											soc.fcoef(0, is1, is2, ip1, ip2) = std::complex<double>(0.0,0.0);
+										}
+									}
+									else
+									{
+										if(is1==is2 && ip1==ip2)
+										{
+											coefficient_D_nc_in(ip1 + nh*is1, ip2 + nh*is2) = atom->ncpp.dion(p1,p2);
+										}
 									}
 								}// end is2
 							}// end is1
@@ -210,8 +162,6 @@ void InfoNonlocal::Set_NonLocal(
 
 		// mohan add 2021-05-07
 		atom->ncpp.set_d_so(coefficient_D_nc_in,n_projectors,nh,1);
-
-	}//end if
 
 	delete[] tmpBeta_lm;
 

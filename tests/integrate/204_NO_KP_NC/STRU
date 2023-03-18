@@ -16,7 +16,7 @@ ATOMIC_POSITIONS
 Direct 
 
 Si	// Element type	
-1.0	// magnetism
+0.0	// magnetism
 2	
-0.00 0.00 0.00 1 1 1 angle1 90 angle2 0
-0.25 0.25 0.25 1 1 1 angle1 90 angle2 180
+0.00 0.00 0.00 1 1 1 mag 1.0 angle1 90 angle2 0
+0.25 0.25 0.25 1 1 1 mag 1.0 angle1 90 angle2 180

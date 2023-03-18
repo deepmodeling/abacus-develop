@@ -137,6 +137,10 @@ double Charge_Mixing::get_drho(Charge* chr, const double nelec)
 	double scf_thr2 = 0.0;
 	for(int is=0; is<GlobalV::NSPIN; is++)
 	{
+		if(is!=0 && is!=3 && GlobalV::DOMAG_Z)
+		{
+			continue;
+		}
 #ifdef _OPENMP
 #pragma omp parallel for reduction(+:scf_thr2)
 #endif
@@ -173,6 +177,11 @@ void Charge_Mixing::mix_rho(const int &iter, Charge* chr)
 	for(int is=0; is<GlobalV::NSPIN; ++is)
 	{
 		rho123[is] = new double[GlobalC::rhopw->nrxx];
+		if(is!=0 && is!=3 && GlobalV::DOMAG_Z)
+		{
+			ModuleBase::GlobalFunc::ZEROS(rho123[is], GlobalC::rhopw->nrxx);
+			continue;
+		} 
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 512)
 #endif
@@ -218,11 +227,12 @@ void Charge_Mixing::mix_rho(const int &iter, Charge* chr)
 
 	// mohan add 2012-06-05
 	// rho_save is the charge before mixing
-#ifdef _OPENMP
-#pragma omp parallel for collapse(2) schedule(static, 512)
-#endif
 	for(int is=0; is<GlobalV::NSPIN; is++)
 	{
+		if(is!=0 && is!=3 && GlobalV::DOMAG_Z) continue;
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 512)
+#endif
 		for(int ir=0; ir<GlobalC::rhopw->nrxx; ++ir)
 		{
 			chr->rho_save[is][ir] = rho123[is][ir];

@@ -128,7 +128,6 @@ void ModuleIO::save_HS(const double *H, const double *S, const bool bit, const s
         ssh << GlobalV::global_out_dir << file_name+"-H";
         sss << GlobalV::global_out_dir << file_name+"-S";
     }
-
     if (bit)
     {
 #ifdef __MPI
@@ -230,8 +229,8 @@ void ModuleIO::save_HS(const double *H, const double *S, const bool bit, const s
 
         if (GlobalV::DRANK==0)
         {
-            g1.open(ssh.str().c_str());
-            g2.open(sss.str().c_str());
+            g1.open(ssh.str().c_str(), ofstream::app);
+            g2.open(sss.str().c_str(), ofstream::app);
             g1 << GlobalV::NLOCAL;
             g2 << GlobalV::NLOCAL;
         }
@@ -298,8 +297,8 @@ void ModuleIO::save_HS(const double *H, const double *S, const bool bit, const s
             g2.close();
         }
 #else
-        std::ofstream g1(ssh.str().c_str());
-        std::ofstream g2(sss.str().c_str());
+        std::ofstream g1(ssh.str().c_str(), ofstream::app);
+        std::ofstream g2(sss.str().c_str(), ofstream::app);
 
         g1 << GlobalV::NLOCAL;
         g2 << GlobalV::NLOCAL;
@@ -463,8 +462,8 @@ void ModuleIO::save_HS_complex(std::complex<double> *H, std::complex<double> *S,
 
         if (GlobalV::DRANK==0)
         {
-            g1.open(ssh.str().c_str());
-            g2.open(sss.str().c_str());
+            g1.open(ssh.str().c_str(), ofstream::app);
+            g2.open(sss.str().c_str(), ofstream::app);
             g1 << GlobalV::NLOCAL;
             g2 << GlobalV::NLOCAL;
         }
@@ -531,8 +530,8 @@ void ModuleIO::save_HS_complex(std::complex<double> *H, std::complex<double> *S,
             g2.close();
         }
 #else
-        std::ofstream g1(ssh.str().c_str());
-        std::ofstream g2(sss.str().c_str());
+        std::ofstream g1(ssh.str().c_str(), ofstream::app);
+        std::ofstream g2(sss.str().c_str(), ofstream::app);
 
         g1 << GlobalV::NLOCAL;
         g2 << GlobalV::NLOCAL;

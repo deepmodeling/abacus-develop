@@ -65,7 +65,7 @@
   [gate_flag](#gate_flag) | [zgate](#zgate) | [block](#block) | [block_down](#block_down) | [block_up](#block_up) | [block_height](#block_height)
 - [Electronic conductivities](#electronic-conductivities)
 
-  [cal_cond](#cal_cond) | [cond_nche](#cond_nche) | [cond_dw](#cond_dw) | [cond_wcut](#cond_wcut) | [cond_wenlarge](#cond_wenlarge) | [cond_fwhm](#cond_fwhm) | [cond_nonlocal](#cond_nonlocal)
+  [cal_cond](#cal_cond) | [cond_nche](#cond_nche) | [cond_dw](#cond_dw) | [cond_wcut](#cond_wcut) | [cond_dt](#cond_dt) | [cond_dtbatch](#cond_dtbatch) | [cond_fwhm](#cond_fwhm) | [cond_nonlocal](#cond_nonlocal)
 - [Implicit solvation model](#implicit-solvation-model)
 
   [imp_sol](#imp_sol) | [eb_k](#eb_k) | [tau](#tau) | [sigma_k](#sigma_k) | [nc_k](#nc_k)
@@ -175,7 +175,7 @@ These variables are used to control general system parameters.
 ### init_chg
 
 - **Type**: String
-- **Description**: This variable is used for both plane wave set and localized orbitals set. It indicates the type of starting density. If set to `atomic`, the density is starting from the summation of the atomic density of single atoms. If set this to `file`, the density will be read in from a file. Besides, when you do `nspin=1` calculation, you only need the density file SPIN1_CHGCAR. However, if you do `nspin=2` calculation, you also need the density file SPIN2_CHGCAR. The density file should be output with these names if you set out_chg = 1 in INPUT file.
+- **Description**: This variable is used for both plane wave set and localized orbitals set. It indicates the type of starting density. If set to `atomic`, the density is starting from the summation of the atomic density of single atoms. If set this to `file`, the density will be read in from a file. Besides, when you do `nspin=1` calculation, you only need the density file SPIN1_CHG.cube. However, if you do `nspin=2` calculation, you also need the density file SPIN2_CHG.cube. The density file should be output with these names if you set out_chg = 1 in INPUT file.
 - **Default**: atomic
 
 ### init_vel
@@ -311,7 +311,7 @@ These variables are used to control parameters related to input files.
 ### read_file_dir
 
 - **Type**: String
-- **Description**: when the program needs to read files such as electron density(`SPIN1_CHG`) as a starting point, this variable tells the location of the files. For example, './' means the file is located in the working directory.
+- **Description**: when the program needs to read files such as electron density(`SPIN1_CHG.cube`) as a starting point, this variable tells the location of the files. For example, './' means the file is located in the working directory.
 - **Default**: OUT.$suffix
 
 ### wannier_card
@@ -852,7 +852,7 @@ These variables are used to control the output of properties.
 ### out_chg
 
 - **Type**: Boolean
-- **Description**: If set to 1, ABACUS will output the charge density on real space grid. The name of the density file is SPIN1_CHGCAR and SPIN2_CHGCAR (if nspin = 2). Suppose each density on grid has coordinate (x; y; z). The circle order of the density on real space grid is: z is the outer loop, then y and finally x (x is moving fastest).
+- **Description**: If set to 1, ABACUS will output the charge density on real space grid. The name of the density file is SPIN1_CHG.cube and SPIN2_CHG.cube (if nspin = 2). Suppose each density on grid has coordinate (x; y; z). The circle order of the density on real space grid is: z is the outer loop, then y and finally x (x is moving fastest).
 - **Default**: 0
 
 ### out_pot
@@ -2407,17 +2407,23 @@ Thermal conductivities: $\kappa = \lim_{\omega\to 0}\kappa(\omega)$.
 - **Description**: Cutoff frequency for frequency-dependent conductivities. The unit is eV.
 - **Default**: 10.0
 
-### cond_wenlarge
+### cond_dt
+
+- **Type**: Real
+- **Description**: t interval to integrate Onsager coefficiencies. The unit is a.u.
+- **Default**: 0.02
+
+### cond_dtbatch
 
 - **Type**: Integer
-- **Description**: Control the t interval: dt = $\frac{\pi}{\omega_{cut}\times\omega enlarge}$
-- **Default**: 10
+- **Description**: exp(iH*dt*cond_dtbatch) is expanded with Chebyshev expansion.
+- **Default**: 4
 
 ### cond_fwhm
 
 - **Type**: Integer
 - **Description**: We use gaussian functions to approximate $\delta(E)\approx \frac{1}{\sqrt{2\pi}\Delta E}e^{-\frac{E^2}{2{\Delta E}^2}}$. FWHM for conductivities, $FWHM=2*\sqrt{2\ln2}\cdot \Delta E$. The unit is eV.
-- **Default**: 0.3
+- **Default**: 0.4
 
 ### cond_nonlocal
 

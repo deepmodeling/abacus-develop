@@ -599,12 +599,13 @@ namespace ModuleESolver
         int nspin0=1;
         if(GlobalV::NSPIN==2) nspin0=2;
         //print occupation in istate.info
-        ModuleIO::write_istate_info(this->pelec,&(GlobalC::kv),&(GlobalC::Pkpoints));
+        ModuleIO::write_istate_info(this->pelec->ekb,this->pelec->wg,&(GlobalC::kv),&(GlobalC::Pkpoints));
         // compute density of states
         if (GlobalC::en.out_dos)
         {
             ModuleIO::write_dos_pw(this->pelec->ekb,
                 this->pelec->wg,
+                &(GlobalC::kv),
                 GlobalC::en.dos_edelta_ev,
                 GlobalC::en.dos_scale,
                 GlobalC::en.bcoeff);
@@ -689,7 +690,7 @@ namespace ModuleESolver
 
         if(INPUT.cal_cond)
 	    {
-            this->KG(INPUT.cond_nche,INPUT.cond_fwhm,INPUT.cond_wcut,INPUT.cond_dw,INPUT.cond_wenlarge, this->pelec->wg);
+            this->KG(INPUT.cond_nche,INPUT.cond_fwhm,INPUT.cond_wcut,INPUT.cond_dw,INPUT.cond_dt, this->pelec->wg);
         }
     }
 
