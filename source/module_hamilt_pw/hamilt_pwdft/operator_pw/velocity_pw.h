@@ -32,9 +32,9 @@ class Velocity
         std::complex<double>* tmhpsi,
         const bool add = false
     )const;
+    bool nonlocal = true;
 
     private:
-    bool nonlocal = true;
     const ModulePW::PW_Basis_K* wfcpw = nullptr;
 
     const int* isk = nullptr;

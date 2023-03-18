@@ -9,7 +9,7 @@
 #include "module_pw/test/test_tool.h"
 #include"mpi.h"
 
-#define CONVTHRESHOLD 1e-3
+#define CONVTHRESHOLD 1e-0
 #define DETAILINFO false
 
 
@@ -19,7 +19,7 @@
 
 /**
  * Class Diago_David is used to solve the eigenvalues
- * This unittest test the function Diago_David::diag() for FPTYPE=double and Device=cpu
+ * This unittest test the function Diago_David::diag() for FPTYPE=float and Device=cpu
  * with different examples.
  * 	- the hamilt matrix (npw=100,500,1000) produced by random with sparsity of 90%
  *  - the hamilt matrix (npw=100,500,1000) produced by random with sparsity of 50%
@@ -32,11 +32,11 @@
 
 //use lapack to calcualte eigenvalue of matrix hm
 //NOTE: after finish this function, hm stores the eigen vectors.
-void lapackEigen(int &npw, std::vector<std::complex<double>> &hm, double * e, bool outtime=false)
+void lapackEigen(int &npw, std::vector<std::complex<float>> &hm, float * e, bool outtime=false)
 {
 	int lwork = 2 * npw;
-	std::complex<double> *work2= new std::complex<double>[lwork];
-	double* rwork = new double[3*npw-2];
+	std::complex<float> *work2= new std::complex<float>[lwork];
+	float* rwork = new float[3*npw-2];
 	int info = 0;
 
 	auto tmp = hm;
@@ -44,10 +44,10 @@ void lapackEigen(int &npw, std::vector<std::complex<double>> &hm, double * e, bo
 	clock_t start,end;
 	start = clock();
 	char tmp_c1 = 'V', tmp_c2 = 'U';
-	zheev_(&tmp_c1, &tmp_c2, &npw, tmp.data(), &npw, e, work2, &lwork, rwork, &info);
+	cheev_(&tmp_c1, &tmp_c2, &npw, tmp.data(), &npw, e, work2, &lwork, rwork, &info);
 	end = clock();
 	if(info) std::cout << "ERROR: Lapack solver, info=" << info <<std::endl;
-	if (outtime) std::cout<<"Lapack Run time: "<<(double)(end - start) / CLOCKS_PER_SEC<<" S"<<std::endl;
+	if (outtime) std::cout<<"Lapack Run time: "<<(float)(end - start) / CLOCKS_PER_SEC<<" S"<<std::endl;
 
 	delete [] rwork;
 	delete [] work2;
@@ -56,7 +56,7 @@ void lapackEigen(int &npw, std::vector<std::complex<double>> &hm, double * e, bo
 class DiagoDavPrepare 
 {
 public:
-	DiagoDavPrepare(int nband, int npw, int sparsity, int order,double eps,int maxiter):
+	DiagoDavPrepare(int nband, int npw, int sparsity, int order,float eps,int maxiter):
 		nband(nband),npw(npw),sparsity(sparsity),order(order),eps(eps),maxiter(maxiter) 
 	{
 #ifdef __MPI	
@@ -66,30 +66,30 @@ public:
 	} 
 
 	int nband, npw, sparsity, order, maxiter, notconv;
-	double eps, avg_iter;
+	float eps, avg_iter;
 	int nprocs=1, mypnum=0;
 
-	void CompareEigen(psi::Psi<std::complex<double>> &phi, double *precondition)
+	void CompareEigen(psi::Psi<std::complex<float>> &phi, float *precondition)
 	{
 		//calculate eigenvalues by LAPACK;
-		double* e_lapack = new double[npw];
-		double* ev;
-		if(mypnum == 0) lapackEigen(npw, DIAGOTEST::hmatrix, e_lapack,DETAILINFO);
+		float* e_lapack = new float[npw];
+		float* ev;
+		if(mypnum == 0) lapackEigen(npw, DIAGOTEST::hmatrix_f, e_lapack,DETAILINFO);
 
 		//do Diago_David::diag()
-		double* en = new double[npw];		
-		hamilt::Hamilt<double> *phm;
-		phm = new hamilt::HamiltPW<double>(nullptr);
-		hsolver::DiagoDavid<double> dav(precondition);
-		hsolver::DiagoDavid<double>::PW_DIAG_NDIM = order;
-		hsolver::DiagoIterAssist<double>::PW_DIAG_NMAX = maxiter;
-		hsolver::DiagoIterAssist<double>::PW_DIAG_THR = eps;
+		float* en = new float[npw];		
+		hamilt::Hamilt<float> *phm;
+		phm = new hamilt::HamiltPW<float>(nullptr);
+		hsolver::DiagoDavid<float> dav(precondition);
+		hsolver::DiagoDavid<float>::PW_DIAG_NDIM = order;
+		hsolver::DiagoIterAssist<float>::PW_DIAG_NMAX = maxiter;
+		hsolver::DiagoIterAssist<float>::PW_DIAG_THR = eps;
 		GlobalV::NPROC_IN_POOL = nprocs;
 		phi.fix_k(0);
 
-		double use_time = 0.0;
+		float use_time = 0.0;
 #ifdef __MPI		
-		double start = 0.0, end = 0.0;		
+		float start = 0.0, end = 0.0;		
 		start = MPI_Wtime();
 #else
 		clock_t start, end;
@@ -103,7 +103,7 @@ public:
 		use_time = end - start;
 #else		
 		end = clock();
-		use_time = (double)(end-start);
+		use_time = (float)(end-start);
 #endif		
 
 		if(mypnum == 0)
@@ -128,24 +128,24 @@ TEST_P(DiagoDavTest,RandomHamilt)
 	if (DETAILINFO&&ddp.mypnum==0) std::cout << "npw=" << ddp.npw << ", nband=" << ddp.nband << ", sparsity=" 
 			  << ddp.sparsity << ", eps=" << ddp.eps << std::endl;
 
-	HPsi hpsi(ddp.nband,ddp.npw,ddp.sparsity);
-	DIAGOTEST::hmatrix = hpsi.hamilt();
+	HPsi_f hpsi(ddp.nband,ddp.npw,ddp.sparsity);
+	DIAGOTEST::hmatrix_f = hpsi.hamilt();
 	DIAGOTEST::npw = ddp.npw;
 	DIAGOTEST::npw_local = new int[ddp.nprocs];
-	psi::Psi<std::complex<double>> psi = hpsi.psi();
-	psi::Psi<std::complex<double>> psi_local;
-	double* precondition_local;
+	psi::Psi<std::complex<float>> psi = hpsi.psi();
+	psi::Psi<std::complex<float>> psi_local;
+	float* precondition_local;
 
 #ifdef __MPI				
 	DIAGOTEST::cal_division(DIAGOTEST::npw);
-	DIAGOTEST::divide_hpsi(psi,psi_local);
-	precondition_local = new double[DIAGOTEST::npw_local[ddp.mypnum]];
-	DIAGOTEST::divide_psi<double>(hpsi.precond(),precondition_local);	
+	DIAGOTEST::divide_hpsi_f(psi,psi_local);
+	precondition_local = new float[DIAGOTEST::npw_local[ddp.mypnum]];
+	DIAGOTEST::divide_psi_f<float>(hpsi.precond(),precondition_local);	
 #else
-	DIAGOTEST::hmatrix_local = DIAGOTEST::hmatrix;
+	DIAGOTEST::hmatrix_local_f = DIAGOTEST::hmatrix_f;
 	DIAGOTEST::npw_local[0] = DIAGOTEST::npw;
 	psi_local = psi;
-	precondition_local = new double[DIAGOTEST::npw];
+	precondition_local = new float[DIAGOTEST::npw];
 	for(int i=0;i<DIAGOTEST::npw;i++) precondition_local[i] = (hpsi.precond())[i];
 #endif
 
@@ -156,7 +156,7 @@ TEST_P(DiagoDavTest,RandomHamilt)
 
 
 INSTANTIATE_TEST_SUITE_P(VerifyDiag,DiagoDavTest,::testing::Values(
-		//DiagoDavPrepare(int nband, int npw, int sparsity, int order,double eps,int maxiter)
+		//DiagoDavPrepare(int nband, int npw, int sparsity, int order,float eps,int maxiter)
         DiagoDavPrepare(10,100,0,4,1e-5,500),
         DiagoDavPrepare(20,500,7,4,1e-5,500)
         //DiagoDavPrepare(50,1000,8,4,1e-5,500)
@@ -165,31 +165,31 @@ INSTANTIATE_TEST_SUITE_P(VerifyDiag,DiagoDavTest,::testing::Values(
 
 TEST(DiagoDavRealSystemTest,dataH)
 {
-	std::vector<std::complex<double>> hmatrix;
+	std::vector<std::complex<float>> hmatrix;
 	std::ifstream ifs("H-KPoints-Si64.dat");
 	DIAGOTEST::readh(ifs,hmatrix);
 	ifs.close();
-	DIAGOTEST::hmatrix = hmatrix;
+	DIAGOTEST::hmatrix_f = hmatrix;
 	int nband = max(DIAGOTEST::npw/20,1);
 
 	DiagoDavPrepare ddp(nband,DIAGOTEST::npw,0,2,1e-5,500);
 	
-	HPsi hpsi(nband,DIAGOTEST::npw);
-	psi::Psi<std::complex<double>> psi = hpsi.psi();
+	HPsi_f hpsi(nband,DIAGOTEST::npw);
+	psi::Psi<std::complex<float>> psi = hpsi.psi();
 	DIAGOTEST::npw_local = new int[ddp.nprocs];
-	psi::Psi<std::complex<double>> psi_local;
-	double* precondition_local;
+	psi::Psi<std::complex<float>> psi_local;
+	float* precondition_local;
 
 #ifdef __MPI				
 	DIAGOTEST::cal_division(DIAGOTEST::npw);
-	DIAGOTEST::divide_hpsi(psi,psi_local);
-	precondition_local = new double[DIAGOTEST::npw_local[ddp.mypnum]];
-	DIAGOTEST::divide_psi<double>(hpsi.precond(),precondition_local);	
+	DIAGOTEST::divide_hpsi_f(psi,psi_local);
+	precondition_local = new float[DIAGOTEST::npw_local[ddp.mypnum]];
+	DIAGOTEST::divide_psi_f<float>(hpsi.precond(),precondition_local);	
 #else
-	DIAGOTEST::hmatrix_local = DIAGOTEST::hmatrix;
+	DIAGOTEST::hmatrix_local_f = DIAGOTEST::hmatrix_f;
 	DIAGOTEST::npw_local[0] = DIAGOTEST::npw;
 	psi_local = psi;
-	precondition_local = new double[DIAGOTEST::npw];
+	precondition_local = new float[DIAGOTEST::npw];
 	for(int i=0;i<DIAGOTEST::npw;i++) precondition_local[i] = (hpsi.precond())[i];
 #endif
 

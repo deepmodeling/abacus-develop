@@ -13,7 +13,7 @@ list(APPEND objects
     print_info.cpp
     read_rho.cpp
     restart.cpp
-    rwstream.cpp
+    binstream.cpp
     write_wfc_pw.cpp
     write_input.cpp
     write_rho.cpp

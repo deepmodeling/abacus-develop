@@ -5,6 +5,7 @@
 #include "module_io/rho_io.h"
 #include "module_io/dipole_io.h"
 #include "module_io/write_HS_R.h"
+#include "module_io/write_HS.h"
 
 //--------------temporary----------------------------
 #include "module_base/blas_connector.h"
@@ -279,6 +280,59 @@ void ESolver_KS_LCAO_TDDFT::hamilt2density(int istep, int iter, double ethr)
 
 void ESolver_KS_LCAO_TDDFT::updatepot(const int istep, const int iter)
 {
+    if (this->conv_elec)
+    {
+        for (int ik = 0; ik < GlobalC::kv.nks; ++ik)
+        {
+            bool bit = false; // LiuXh, 2017-03-21
+            // if set bit = true, there would be error in soc-multi-core calculation, noted by zhengdy-soc
+            if (this->psi != nullptr)
+            {
+                hamilt::MatrixBlock<complex<double>> h_mat, s_mat;
+                this->p_hamilt->matrix(h_mat, s_mat);
+                ModuleIO::saving_HS(h_mat.p,
+                                    s_mat.p,
+                                    bit,
+                                    hsolver::HSolverLCAO::out_mat_hs,
+                                    "data-" + std::to_string(ik),
+                                    this->LOWF.ParaV[0]); // LiuXh, 2017-03-21
+            }
+            else if (this->psid != nullptr)
+            {
+                hamilt::MatrixBlock<double> h_mat, s_mat;
+                this->p_hamilt->matrix(h_mat, s_mat);
+                ModuleIO::saving_HS(h_mat.p,
+                                    s_mat.p,
+                                    bit,
+                                    hsolver::HSolverLCAO::out_mat_hs,
+                                    "data-" + std::to_string(ik),
+                                    this->LOWF.ParaV[0]); // LiuXh, 2017-03-21
+            }
+        }
+    }
+
+    if (this->conv_elec)
+    {
+        if (elecstate::ElecStateLCAO::out_wfc_lcao)
+        {
+            elecstate::ElecStateLCAO::out_wfc_flag = 1;
+        }
+        for (int ik = 0; ik < GlobalC::kv.nks; ik++)
+        {
+            if (this->psi != nullptr)
+            {
+                this->psi[0].fix_k(ik);
+                this->pelec->print_psi(this->psi[0]);
+            }
+            else
+            {
+                this->psid[0].fix_k(ik);
+                this->pelec->print_psi(this->psid[0]);
+            }
+        }
+        elecstate::ElecStateLCAO::out_wfc_flag = 0;
+    }
+
     // (9) Calculate new potential according to new Charge Density.
 
     if (!this->conv_elec)

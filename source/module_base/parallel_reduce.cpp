@@ -159,7 +159,7 @@ void Parallel_Reduce::reduce_complex_double_pool(std::complex<double> &object)
 void Parallel_Reduce::reduce_complex_double_pool(std::complex <float> *object, const int n)
 {
 #ifdef __MPI
-	MPI_Allreduce(MPI_IN_PLACE, object, n, MPI_DOUBLE_COMPLEX, MPI_SUM, POOL_WORLD);
+	MPI_Allreduce(MPI_IN_PLACE, object, n, MPI_C_FLOAT_COMPLEX, MPI_SUM, POOL_WORLD);
 #endif
     return;
 }
