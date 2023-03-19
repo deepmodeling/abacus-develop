@@ -35,7 +35,7 @@
 Charge::Charge()
 {
 	allocate_rho = false;
-    allocate_rho_final_scf = false; //LiuXh add 20180619
+	allocate_rho_final_scf = false; //LiuXh add 20180619
 }
 
 
@@ -159,6 +159,18 @@ void Charge::init_rho()
 		std::stringstream ssc;
 		ssc << GlobalV::global_readin_dir << "SPIN" << is + 1 << "_CHG.cube";
 		GlobalV::ofs_running << ssc.str() << std::endl;
+#ifdef __MPI
+		if (ModuleIO::read_rho(GlobalC::Pgrid, is,
+					GlobalV::NSPIN,
+					ssc.str(),
+					this->rho[is],
+					GlobalC::rhopw->nx,
+					GlobalC::rhopw->ny,
+					GlobalC::rhopw->nz,
+					GlobalC::en.ef,
+					GlobalC::ucell,
+					this->prenspin))
+#else
 		if (ModuleIO::read_rho(is,
 					GlobalV::NSPIN,
 					ssc.str(),
@@ -169,6 +181,7 @@ void Charge::init_rho()
 					GlobalC::en.ef,
 					GlobalC::ucell,
 					this->prenspin))
+#endif
 		{
 			GlobalV::ofs_running << " Read in the charge density: " << ssc.str() << std::endl;
 		}
@@ -184,6 +197,18 @@ void Charge::init_rho()
 			std::stringstream ssc;
 			ssc << GlobalV::global_readin_dir << "SPIN" << is + 1 << "_CHG.cube";
 			GlobalV::ofs_running << ssc.str() << std::endl;
+#ifdef __MPI
+			if(is == 0 && ModuleIO::read_rho(GlobalC::Pgrid, is,
+					GlobalV::NSPIN,
+					ssc.str(),
+					this->rho[is],
+					GlobalC::rhopw->nx,
+					GlobalC::rhopw->ny,
+					GlobalC::rhopw->nz,
+					GlobalC::en.ef_up,
+					GlobalC::ucell,
+					this->prenspin))
+#else
 			if(is == 0 && ModuleIO::read_rho(is,
 					GlobalV::NSPIN,
 					ssc.str(),
@@ -194,9 +219,22 @@ void Charge::init_rho()
 					GlobalC::en.ef_up,
 					GlobalC::ucell,
 					this->prenspin))
+#endif
 			{
 				GlobalV::ofs_running << " Read in the charge density: " << ssc.str() << std::endl;
 			}
+#ifdef __MPI
+			else if(is == 1 && ModuleIO::read_rho(GlobalC::Pgrid, is,
+					GlobalV::NSPIN,
+					ssc.str(),
+					this->rho[is],
+					GlobalC::rhopw->nx,
+					GlobalC::rhopw->ny,
+					GlobalC::rhopw->nz,
+					GlobalC::en.ef_dw,
+					GlobalC::ucell,
+					this->prenspin))
+#else
 			else if(is == 1 && ModuleIO::read_rho(is,
 					GlobalV::NSPIN,
 					ssc.str(),
@@ -207,6 +245,7 @@ void Charge::init_rho()
 					GlobalC::en.ef_dw,
 					GlobalC::ucell,
 					this->prenspin))
+#endif
 			{
 				GlobalV::ofs_running << " Read in the charge density: " << ssc.str() << std::endl;
 			}
@@ -223,6 +262,18 @@ void Charge::init_rho()
 			std::stringstream ssc;
 			ssc << GlobalV::global_readin_dir << "SPIN" << is + 1 << "_CHG.cube";
 			GlobalV::ofs_running << ssc.str() << std::endl;
+#ifdef __MPI
+			if (ModuleIO::read_rho(GlobalC::Pgrid, is,
+						GlobalV::NSPIN,
+						ssc.str(),
+						this->rho[is],
+						GlobalC::rhopw->nx,
+						GlobalC::rhopw->ny,
+						GlobalC::rhopw->nz,
+						GlobalC::en.ef,
+						GlobalC::ucell,
+						this->prenspin))
+#else
 			if (ModuleIO::read_rho(is,
 						GlobalV::NSPIN,
 						ssc.str(),
@@ -233,6 +284,7 @@ void Charge::init_rho()
 						GlobalC::en.ef,
 						GlobalC::ucell,
 						this->prenspin))
+#endif
 			{
 				GlobalV::ofs_running << " Read in the charge density: " << ssc.str() << std::endl;
 			}
@@ -293,6 +345,18 @@ void Charge::init_rho()
 				ssc << GlobalV::global_readin_dir << "SPIN" << is + 1 << "_TAU.cube";
 				GlobalV::ofs_running << " try to read kinetic energy density from file : " << ssc.str() << std::endl;
 				// mohan update 2012-02-10, sunliang update 2023-03-09
+#ifdef __MPI
+				if (ModuleIO::read_rho(GlobalC::Pgrid, is,
+							GlobalV::NSPIN,
+							ssc.str(),
+							this->kin_r[is],
+							GlobalC::rhopw->nx,
+							GlobalC::rhopw->ny,
+							GlobalC::rhopw->nz,
+							GlobalC::en.ef,
+							GlobalC::ucell,
+							this->prenspin))
+#else
 				if (ModuleIO::read_rho(is,
 							GlobalV::NSPIN,
 							ssc.str(),
@@ -303,6 +367,7 @@ void Charge::init_rho()
 							GlobalC::en.ef,
 							GlobalC::ucell,
 							this->prenspin))
+#endif
 				{
 					GlobalV::ofs_running << " Read in the kinetic energy density: " << ssc.str() << std::endl;
 				}

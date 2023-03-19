@@ -1,16 +1,29 @@
 #include "module_io/rho_io.h"
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "module_base/global_variable.h"
 
+#ifdef __MPI
+bool ModuleIO::read_rho(Parallel_Grid &Pgrid, const int &is,
+		    const int &nspin,
+		    const std::string &fn,
+		    double* rho,
+		    int& nx,
+		    int& ny,
+		    int& nz,
+		    double& ef,
+		    UnitCell& ucell,
+		    int &prenspin)
+#else
 bool ModuleIO::read_rho(const int &is,
-	const int &nspin,
-	const std::string &fn,
-	double* rho,
-	int& nx,
-	int& ny,
-	int& nz,
-	double& ef,
-	UnitCell& ucell,
-	int &prenspin)
+		    const int &nspin,
+		    const std::string &fn,
+		    double* rho,
+		    int& nx,
+		    int& ny,
+		    int& nz,
+		    double& ef,
+		    UnitCell& ucell,
+		    int &prenspin)
+#endif
 {
     ModuleBase::TITLE("ModuleIO","read_rho");
     std::ifstream ifs(fn.c_str());
@@ -76,21 +89,7 @@ bool ModuleIO::read_rho(const int &is,
 		}
 	}
 
-#ifndef __MPI
-	GlobalV::ofs_running << " Read SPIN = " << is+1 << " charge now." << std::endl;
-	// consistent with the write_rho,
-	for(int i=0; i<nx; i++)
-	{
-		for(int j=0; j<ny; j++)
-		{
-			for(int k=0; k<nz; k++)
-			{
-				ifs >> rho[k*nx*ny+i*ny+j];
-			}
-		}
-	}
-#else
-	
+#ifdef __MPI
 	const int nxy = nx * ny;
 	double *zpiece = nullptr;
 	double **tempRho = nullptr;
@@ -126,7 +125,7 @@ bool ModuleIO::read_rho(const int &is,
 		{
 			zpiece = tempRho[iz];
 		}
-		GlobalC::Pgrid.zpiece_to_all(zpiece, iz, rho);
+		Pgrid.zpiece_to_all(zpiece, iz, rho);
 	}// iz
 
 	if(GlobalV::MY_RANK==0||(GlobalV::ESOLVER_TYPE == "sdft"&&GlobalV::RANK_IN_STOGROUP==0))
@@ -140,6 +139,19 @@ bool ModuleIO::read_rho(const int &is,
 	else
 	{
 		delete[] zpiece;
+	}
+#else
+	GlobalV::ofs_running << " Read SPIN = " << is+1 << " charge now." << std::endl;
+	// consistent with the write_rho,
+	for(int i=0; i<nx; i++)
+	{
+		for(int j=0; j<ny; j++)
+		{
+			for(int k=0; k<nz; k++)
+			{
+				ifs >> rho[k*nx*ny+i*ny+j];
+			}
+		}
 	}
 #endif
 
