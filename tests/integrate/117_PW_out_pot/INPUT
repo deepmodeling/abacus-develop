@@ -6,6 +6,7 @@ calculation     scf
 nbands			8
 symmetry		1
 pseudo_dir	../../PP_ORB
+out_pot			1
 
 #Parameters (2.Iteration)
 ecutwfc			20

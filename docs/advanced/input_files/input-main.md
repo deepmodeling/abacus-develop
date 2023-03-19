@@ -858,9 +858,7 @@ These variables are used to control the output of properties.
 ### out_pot
 
 - **Type**: Integer
-- **Description**: If set to 1, ABACUS will output the local potential on real space grid. The name of the file is SPIN1_POT and SPIN2_POT (if nspin = 2). If set to 2, ABACUS will output the electrostatic potential on real space grid. The name of the file is ElecStaticPot and ElecStaticP ot_AV E (along the z-axis).
-
-> Note : output = 1 is currently broken as of v3.0.2
+- **Description**: If set to 1, ABACUS will output the local potential on real space grid. The name of the file is SPIN1_POT.cube and SPIN2_POT.cube (if nspin = 2). If set to 2, ABACUS will output the electrostatic potential on real space grid. The name of the file is ElecStaticPot and ElecStaticP ot_AV E (along the z-axis).
 
 - **Default**: 0
 
