@@ -33,7 +33,7 @@ protected:
 public:
     //Stochastic Kubo-Greenwood
     void sKG(const int nche_KG, const double fwhmin, const double wcut, 
-             const double dw_in, const int times);
+             const double dw_in, const double dt_in, const int nbatch);
     //calculate DOS
     void caldos(const int nche_dos, const double sigmain, 
             const double emin, const double emax, const double de, const int npart);

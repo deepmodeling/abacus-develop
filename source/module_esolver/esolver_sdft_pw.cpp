@@ -202,7 +202,7 @@ void ESolver_SDFT_PW::postprocess()
     
     if(INPUT.cal_cond)
 	{
-        this->sKG(INPUT.cond_nche,INPUT.cond_fwhm,INPUT.cond_wcut,INPUT.cond_dw,INPUT.cond_wenlarge);
+        this->sKG(INPUT.cond_nche,INPUT.cond_fwhm,INPUT.cond_wcut,INPUT.cond_dw,INPUT.cond_dt, INPUT.cond_dtbatch);
     }
     if(INPUT.out_dos)
 	{
