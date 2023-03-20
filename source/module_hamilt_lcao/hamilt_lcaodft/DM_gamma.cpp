@@ -346,7 +346,9 @@ void Local_Orbital_Charge::cal_dk_gamma_from_2D_pub(void)
 void Local_Orbital_Charge::cal_dk_gamma_from_2D(void)
 {
     ModuleBase::timer::tick("LCAO_Charge","dm_2dTOgrid");
+#ifdef __DEBUG
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"cal_dk_gamma_from_2D, NSPIN", GlobalV::NSPIN);
+#endif
 
     for(int is=0; is<GlobalV::NSPIN; ++is)
     {
@@ -385,9 +387,11 @@ void Local_Orbital_Charge::cal_dk_gamma_from_2D(void)
             if(sender_buffer[i]!=0) ++nNONZERO;
         }
 
+#ifdef __DEBUG
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"number of non-zero elements in sender_buffer",nNONZERO);
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"sender_size",sender_size);
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"last sender_buffer",sender_buffer[sender_size-1]);
+#endif
 
         // transform data via MPI_Alltoallv
         #ifdef __MPI
@@ -414,10 +418,11 @@ void Local_Orbital_Charge::cal_dk_gamma_from_2D(void)
             if(receiver_buffer[i]!=0) ++nNONZERO;
         }
 
-
+#ifdef __DEBUG
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"number of non-zero elements in receiver_buffer",nNONZERO);
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"receiver_size",receiver_size);
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"last receiver_buffer",receiver_buffer[receiver_size-1]);
+#endif
         // GlobalV::ofs_running<<"DM[0][0:1][0:1] after receiver:"<<std::endl;
         // int idx0=GlobalC::GridT.trace_lo[0];
         // int idx1=GlobalC::GridT.trace_lo[1];
