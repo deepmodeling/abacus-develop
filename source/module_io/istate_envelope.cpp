@@ -112,20 +112,17 @@ void IState_Envelope::begin(const psi::Psi<double>* psid, Local_Orbital_wfc& low
         }
     }
 
-    if (out_wfc_pw || out_wfc_r)
+    if (out_wfc_pw)
     {
-        if (out_wfc_pw)
-        {
-            std::stringstream ssw;
-            ssw << GlobalV::global_out_dir << "WAVEFUNC";
-            std::cout << " write G-space wavefunction into \"" <<
-                GlobalV::global_out_dir << "/" << ssw.str() << "\" files." << std::endl;
-            ModuleIO::write_wfc_pw(ssw.str(), pw_wfc_g, &GlobalC::kv, GlobalC::wfcpw);
-        }
-        if (out_wfc_r)
-        {
-            ModuleIO::write_psi_r_1(pw_wfc_g, "wfc_realspace", false);
-        }
+        std::stringstream ssw;
+        ssw << GlobalV::global_out_dir << "WAVEFUNC";
+        std::cout << " write G-space wavefunction into \"" <<
+            GlobalV::global_out_dir << "/" << ssw.str() << "\" files." << std::endl;
+        ModuleIO::write_wfc_pw(ssw.str(), pw_wfc_g, &GlobalC::kv, GlobalC::wfcpw);
+    }
+    if (out_wfc_r)
+    {
+        ModuleIO::write_psi_r_1(pw_wfc_g, "wfc_realspace", false);
     }
 
     delete[] bands_picked;
