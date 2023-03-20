@@ -113,22 +113,8 @@ void ModuleIO::write_rho(
 		ofs_cube << std::setprecision(precision);
 		ofs_cube << scientific;
 	}
-	
-#ifndef __MPI
-	for(int i=0; i<nx; i++)
-	{
-		for(int j=0; j<ny; j++)
-		{
-			for(int k=0; k<nz; k++)
-			{
-				ofs_cube << " " << rho_save[k*nx*ny+i*ny+j];
-				// ++count_cube;
-				if(k%6==5 && k!=nz-1) ofs_cube << "\n";
-			}
-			ofs_cube << "\n";
-		}
-	}
-#else
+
+#ifdef __MPI
 //	for(int ir=0; ir<GlobalC::rhopw->nrxx; ir++) chr.rho[0][ir]=1; // for testing
 //	GlobalV::ofs_running << "\n GlobalV::RANK_IN_POOL = " << GlobalV::RANK_IN_POOL;
 	
@@ -261,6 +247,20 @@ void ModuleIO::write_rho(
 		/// for cube file
 	}
 	MPI_Barrier(MPI_COMM_WORLD);
+#else
+	for(int i=0; i<nx; i++)
+	{
+		for(int j=0; j<ny; j++)
+		{
+			for(int k=0; k<nz; k++)
+			{
+				ofs_cube << " " << rho_save[k*nx*ny+i*ny+j];
+				// ++count_cube;
+				if(k%6==5 && k!=nz-1) ofs_cube << "\n";
+			}
+			ofs_cube << "\n";
+		}
+	}
 #endif
 
 	if(GlobalV::MY_RANK==0) 
