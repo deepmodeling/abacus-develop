@@ -8,31 +8,22 @@
 
 namespace ModuleIO
 {
+	bool read_rho(
 #ifdef __MPI
-    bool read_rho(Parallel_Grid& Pgrid, const int &is,
-		    const int &nspin,
-		    const std::string &fn,
-		    double* rho,
-		    int& nx,
-		    int& ny,
-		    int& nz,
-		    double& ef,
-		    UnitCell& ucell,
-		    int &prenspin);
-#else
-    bool read_rho(const int &is,
-		    const int &nspin,
-		    const std::string &fn,
-		    double* rho,
-		    int& nx,
-		    int& ny,
-		    int& nz,
-		    double& ef,
-		    UnitCell& ucell,
-		    int &prenspin); //mohan add 2007-10-17
+		Parallel_Grid* Pgrid,
 #endif
+		const int &is,
+		const int &nspin,
+		const std::string &fn,
+		double* rho,
+		int& nx,
+		int& ny,
+		int& nz,
+		double& ef,
+		UnitCell& ucell,
+		int &prenspin);
 
-    void write_rho(const double* rho_save,
+	void write_rho(const double* rho_save,
 		    const int &is,
 		    const int &iter,
 		    const std::string &fn,

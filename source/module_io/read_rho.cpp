@@ -1,29 +1,21 @@
 #include "module_io/rho_io.h"
 #include "module_base/global_variable.h"
 
+
+bool ModuleIO::read_rho(
 #ifdef __MPI
-bool ModuleIO::read_rho(Parallel_Grid &Pgrid, const int &is,
-		    const int &nspin,
-		    const std::string &fn,
-		    double* rho,
-		    int& nx,
-		    int& ny,
-		    int& nz,
-		    double& ef,
-		    UnitCell& ucell,
-		    int &prenspin)
-#else
-bool ModuleIO::read_rho(const int &is,
-		    const int &nspin,
-		    const std::string &fn,
-		    double* rho,
-		    int& nx,
-		    int& ny,
-		    int& nz,
-		    double& ef,
-		    UnitCell& ucell,
-		    int &prenspin)
+		Parallel_Grid* Pgrid,
 #endif
+		const int &is,
+		const int &nspin,
+		const std::string &fn,
+		double* rho,
+		int& nx,
+		int& ny,
+		int& nz,
+		double& ef,
+		UnitCell& ucell,
+		int &prenspin)
 {
     ModuleBase::TITLE("ModuleIO","read_rho");
     std::ifstream ifs(fn.c_str());
@@ -125,7 +117,7 @@ bool ModuleIO::read_rho(const int &is,
 		{
 			zpiece = tempRho[iz];
 		}
-		Pgrid.zpiece_to_all(zpiece, iz, rho);
+		Pgrid->zpiece_to_all(zpiece, iz, rho);
 	}// iz
 
 	if(GlobalV::MY_RANK==0||(GlobalV::ESOLVER_TYPE == "sdft"&&GlobalV::RANK_IN_STOGROUP==0))
