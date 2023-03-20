@@ -487,6 +487,14 @@ namespace ModuleESolver
 
             ssc << GlobalV::global_out_dir << "SPIN" << is + 1 << "_CHG";
             ModuleIO::write_rho(this->pelec->charge->rho_save[is], is, 0, ssc.str());//mohan add 2007-10-17
+        
+            if (GlobalV::out_pot == 1) // output the effective potential, sunliang 2023-03-16
+            {
+                int precision = 3; // be consistent with esolver_ks_lcao.cpp
+                std::stringstream ssp;
+                ssp << GlobalV::global_out_dir << "SPIN" << is + 1 << "_POT.cube";
+                this->pelec->pot->write_potential(is, 0, ssp.str(), this->pelec->pot->get_effective_v(), precision);
+            }
         }
         if(XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
         {
