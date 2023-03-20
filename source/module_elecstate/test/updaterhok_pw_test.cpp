@@ -373,7 +373,16 @@ TEST_F(EState,RhoPW)
         rho_for_compare[is] = new double[GlobalC::rhopw->nrxx];
         std::stringstream ssc;
         ssc <<GlobalV::global_out_dir<< "SPIN" << is + 1 << "_CHG.cube";
-        ModuleIO::read_rho(is, ssc.str(), rho_for_compare[is],GlobalC::CHR.prenspin);
+        ModuleIO::read_rho(is,
+					GlobalV::NSPIN,
+					ssc.str(),
+					rho_for_compare[is],
+					GlobalC::rhopw->nx,
+					GlobalC::rhopw->ny,
+					GlobalC::rhopw->nz,
+					GlobalC::en.ef,
+					GlobalC::ucell,
+					GlobalC::CHR.prenspin);
         for (int ix = 0; ix < GlobalC::rhopw->nrxx; ix++)
         //for (int ix = 0; ix < 5; ix++)
         {

@@ -13,11 +13,11 @@ class ElecStateLCAO : public ElecState
 {
   public:
     ElecStateLCAO(Charge* chg_in = nullptr,
-                        const K_Vectors* klist_in = nullptr,
-                        int nks_in = 1,
-                        Local_Orbital_Charge* loc_in = nullptr,
-                        LCAO_Hamilt* uhm_in = nullptr,
-                        Local_Orbital_wfc* lowf_in = nullptr)
+                  const K_Vectors* klist_in = nullptr,
+                  int nks_in = 1,
+                  Local_Orbital_Charge* loc_in = nullptr,
+                  LCAO_Hamilt* uhm_in = nullptr,
+                  Local_Orbital_wfc* lowf_in = nullptr)
     {
         init_ks(chg_in, klist_in, nks_in);
         this->loc = loc_in;
@@ -36,10 +36,11 @@ class ElecStateLCAO : public ElecState
     // update charge density for next scf step
     // void getNewRho() override;
 
-    virtual void print_psi(const psi::Psi<double>& psi_in)override;
-    virtual void print_psi(const psi::Psi<std::complex<double>>& psi_in)override;
+    virtual void print_psi(const psi::Psi<double>& psi_in) override;
+    virtual void print_psi(const psi::Psi<std::complex<double>>& psi_in) override;
 
     static int out_wfc_lcao;
+    static int out_wfc_flag;
     static bool need_psi_grid;
 
   protected:
@@ -54,6 +55,7 @@ class ElecStateLCAO : public ElecState
     Local_Orbital_Charge* loc = nullptr;
     LCAO_Hamilt* uhm = nullptr;
     Local_Orbital_wfc* lowf = nullptr;
+    
 };
 
 } // namespace elecstate

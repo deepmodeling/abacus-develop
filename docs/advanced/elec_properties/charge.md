@@ -31,14 +31,13 @@ Cubefile created from ABACUS SCF calculation
  ...
 ```
 
-The first line is a brief description.
-The second line contains NSPIN and Fermi energy.
-The following 4 lines are the informations of lattice, in order: 
-&emsp;total number of atoms, the coordinate of original point.
-&emsp;the number of lattice points along lattice vector a1 (nx), a1/nx, in Bohr,
-&emsp;the number of lattice points along lattice vector a2 (ny), a2/ny, in Bohr,
-&emsp;the number of lattice points along lattice vector a3 (nz), a3/nz, in Bohr,
-The following lines are about the elements and coordinates, in order: the atom number of each atoms, the electron number in pseudopotential, the Cartesian coordinates, in Bohr.
-The rest lines are the value of charge density at each grid. Note that the inner loop is z index, followed by y index, x index in turn.
-
+The first line is a brief description.\
+The second line contains NSPIN and Fermi energy.\
+The following 4 lines are the informations of lattice, in order:\
+&emsp;total number of atoms, the coordinate of original point.\
+&emsp;the number of lattice points along lattice vector a1 (nx), a1/nx, in Bohr.\
+&emsp;the number of lattice points along lattice vector a2 (ny), a2/ny, in Bohr.\
+&emsp;the number of lattice points along lattice vector a3 (nz), a3/nz, in Bohr.\
+The following lines are about the elements and coordinates, in order: the atom number of each atoms, the electron number in pseudopotential, the Cartesian coordinates, in Bohr.\
+The rest lines are the value of charge density at each grid. Note that the inner loop is z index, followed by y index, x index in turn.\
 The examples can be found in [examples/charge_density](https://github.com/deepmodeling/abacus-develop/tree/develop/examples/charge_density)

@@ -157,8 +157,9 @@ void Input::Default(void)
     cond_nche = 20;
     cond_dw = 0.1;
     cond_wcut = 10;
-    cond_wenlarge = 10;
-    cond_fwhm = 0.3;
+    cond_dt = 0.02;
+    cond_dtbatch = 4;
+    cond_fwhm = 0.4;
     cond_nonlocal = true;
     berry_phase = false;
     gdir = 3;
@@ -742,9 +743,13 @@ bool Input::Read(const std::string &fn)
         {
             read_value(ifs, cond_wcut);
         }
-        else if (strcmp("cond_wenlarge", word) == 0)
+        else if (strcmp("cond_dt", word) == 0)
         {
-            read_value(ifs, cond_wenlarge);
+            read_value(ifs, cond_dt);
+        }
+        else if (strcmp("cond_dtbatch", word) == 0)
+        {
+            read_value(ifs, cond_dtbatch);
         }
         else if (strcmp("cond_fwhm", word) == 0)
         {
@@ -2682,7 +2687,8 @@ void Input::Bcast()
     Parallel_Common::bcast_int(cond_nche);
     Parallel_Common::bcast_double(cond_dw);
     Parallel_Common::bcast_double(cond_wcut);
-    Parallel_Common::bcast_int(cond_wenlarge);
+    Parallel_Common::bcast_double(cond_dt);
+    Parallel_Common::bcast_int(cond_dtbatch);
     Parallel_Common::bcast_double(cond_fwhm);
     Parallel_Common::bcast_bool(cond_nonlocal);
     Parallel_Common::bcast_int(bndpar);
