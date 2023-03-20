@@ -276,7 +276,7 @@ bool Line_Search::brent(
 
         xnew = xb;
         if(std::abs(dy)<conv_thr) return true;
-        if(ls_step == 6) //I'm not sure if this is a good choice, but the idea is there should not be so many line search steps
+        if(ls_step == 4) //I'm not sure if this is a good choice, but the idea is there should not be so many line search steps
                          //I feel if the line search does not converge, we'd better change the direction and restart line search
         {
             GlobalV::ofs_running << "Too many Brent steps, let's do next CG step" << std::endl;
@@ -285,7 +285,7 @@ bool Line_Search::brent(
         }
 
         return false;
-    }//end ibrack
+    }//end bracked
     else
     {
         if(!( (xa<=xb && xb<=xc) || (xc<=xb && xb<=xa) ))
@@ -379,7 +379,7 @@ bool Line_Search::brent(
 
         xnew = xb;
         if(std::abs(dy)<conv_thr) return true;
-        if(ls_step == 6)
+        if(ls_step == 4)
         {
             GlobalV::ofs_running << "Too many Brent steps, let's do next CG step" << std::endl;
             return true;
