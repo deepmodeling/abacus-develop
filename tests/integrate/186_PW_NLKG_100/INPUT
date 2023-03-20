@@ -30,5 +30,6 @@ cond_nche  18
 cond_fwhm   8
 cond_wcut        20
 cond_dw          0.02
-cond_wenlarge    9
+cond_dt          0.237464
+cond_dtbatch     1
 cond_nonlocal    1

@@ -470,6 +470,17 @@ namespace ModuleESolver
         // Temporary liuyu add 2022-11-07
         this->CE.update_all_pos(GlobalC::ucell);
 
+        if (GlobalV::out_pot == 1) // output the effective potential, sunliang 2023-03-16
+        {
+            for (int is = 0; is < GlobalV::NSPIN; is++)
+            {
+                int precision = 3; // be consistent with esolver_ks_lcao.cpp
+                std::stringstream ssp;
+                ssp << GlobalV::global_out_dir << "SPIN" << is + 1 << "_POT.cube";
+                this->pelec->pot->write_potential(is, 0, ssp.str(), this->pelec->pot->get_effective_v(), precision);
+            }
+        }
+
         if (GlobalV::out_chg)
         {
             for (int is = 0; is < GlobalV::NSPIN; is++)
@@ -695,7 +706,7 @@ namespace ModuleESolver
 
         if(INPUT.cal_cond)
 	    {
-            this->KG(INPUT.cond_nche,INPUT.cond_fwhm,INPUT.cond_wcut,INPUT.cond_dw,INPUT.cond_wenlarge, this->pelec->wg);
+            this->KG(INPUT.cond_nche,INPUT.cond_fwhm,INPUT.cond_wcut,INPUT.cond_dw,INPUT.cond_dt, this->pelec->wg);
         }
     }
 

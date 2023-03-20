@@ -46,6 +46,8 @@ public:
             const int& nspin,
             const ModuleBase::Matrix3 &reciprocal_vec,
             const ModuleBase::Matrix3 &latvec);
+    //get global index for ik
+    inline int getik_global(const int& ik) const;
 
 private:
     int nspin;
@@ -86,5 +88,19 @@ private:
     void set_both_kvec_after_vc(const ModuleBase::Matrix3 &G,const ModuleBase::Matrix3 &R);
     void set_kup_and_kdw_after_vc();
 };
+
+inline int K_Vectors:: getik_global(const int& ik) const
+{
+    int nkp = this->nkstot / GlobalV::KPAR;
+    int rem = this->nkstot % GlobalV::KPAR;
+    if(GlobalV::MY_POOL < rem)
+    {
+        return GlobalV::MY_POOL*nkp + GlobalV::MY_POOL + ik;
+    }
+    else
+    {
+        return GlobalV::MY_POOL*nkp + rem + ik;       
+    }
+}
 
 #endif // KVECT_H

@@ -789,6 +789,7 @@ void ESolver_KS_LCAO::afterscf(const int istep)
         {
             delete[] dm2d[is];
         }
+
         delete[] dm2d;
     }
 
@@ -842,15 +843,6 @@ void ESolver_KS_LCAO::afterscf(const int istep)
         }
     }
 
-        /* Broken, please fix it
-                if (GlobalV::out_pot == 1) // LiuXh add 20200701
-                {
-                    std::stringstream ssp;
-                    ssp << GlobalV::global_out_dir << "SPIN" << is + 1 << "_POT";
-                    this->pelec->pot->write_potential(is, 0, ssp.str(), this->pelec->pot->get_effective_v(), precision);
-                }
-        */
-
 #ifdef __EXX
     if (GlobalC::exx_info.info_global.cal_exx) // Peize Lin add if 2022.11.14
     {
@@ -861,7 +853,18 @@ void ESolver_KS_LCAO::afterscf(const int istep)
             GlobalC::exx_lri_complex.write_Hexxs(file_name_exx);
     }
 #endif
-    if (GlobalV::out_pot == 2)
+
+    if (GlobalV::out_pot == 1)
+    {
+        const int precision = 3;
+        for (int is = 0; is < GlobalV::NSPIN; is++)
+        {
+            std::stringstream ssp;
+            ssp << GlobalV::global_out_dir << "SPIN" << is + 1 << "_POT.cube";
+            this->pelec->pot->write_potential(is, 0, ssp.str(), this->pelec->pot->get_effective_v(), precision);
+        }
+    }
+    else if (GlobalV::out_pot == 2)
     {
         std::stringstream ssp;
         std::stringstream ssp_ave;
