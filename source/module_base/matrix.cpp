@@ -353,8 +353,9 @@ double matrix::trace_on(void) const
 // }
 
 // Peize Lin add 2017-05-27
-void matrix::reshape( const double nr_new, const double nc_new, const bool flag_zero )
-{
+void matrix::reshape( const int nr_new, const int nc_new, const bool flag_zero )
+//nr_new and nc_new are index of a array.So they are integer.
+{ 
 	assert( nr*nc == nr_new*nc_new );
 	nr=nr_new;
 	nc=nc_new;
