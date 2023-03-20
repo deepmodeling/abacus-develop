@@ -20,15 +20,16 @@ namespace ModuleIO
 		int& ny,
 		int& nz,
 		double& ef,
-		UnitCell& ucell,
+		const UnitCell* ucell,
 		int &prenspin);
 
-	void write_rho(const double* rho_save,
-		    const int &is,
-		    const int &iter,
-		    const std::string &fn,
-		    const int &precision = 11,
-		    const bool for_plot = false);//mohan add 2007-10-17
+	void write_rho(
+		const double* rho_save,
+		const int &is,
+		const int &iter,
+		const std::string &fn,
+		const int &precision = 11,
+		const bool for_plot = false);//mohan add 2007-10-17
 }
 
 #endif

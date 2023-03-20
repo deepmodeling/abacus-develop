@@ -30,10 +30,11 @@ protected:
 	int nrxx = 36*36*36;
 	int prenspin = 1;
 	double **rho;
-	std::unique_ptr<UnitCell> ucell{new UnitCell};
+	UnitCell* ucell;
 	void SetUp()
 	{
 		rho = new double*[nspin];
+		ucell = new UnitCell;
 		for(int is=0; is<nspin; ++is)
 		{
 			rho[is] = new double[nrxx];
@@ -46,6 +47,7 @@ protected:
 			delete[] rho[is];
 		}
 		delete[] rho;
+		delete ucell;
 	}
 };
 
@@ -59,7 +61,7 @@ TEST_F(ReadRhoTest,Read)
 	double ef;
 	UcellTestPrepare utp = UcellTestLib["Si"];
 	ucell = utp.SetUcellInfo();
-	ModuleIO::read_rho(is,nspin,fn,rho[is],nx,ny,nz,ef,*ucell,prenspin);
+	ModuleIO::read_rho(is,nspin,fn,rho[is],nx,ny,nz,ef,ucell,prenspin);
 	EXPECT_DOUBLE_EQ(ef,0.461002);
 	EXPECT_DOUBLE_EQ(rho[0][0],1.27020863940e-03);
 	EXPECT_DOUBLE_EQ(rho[0][46655],1.33581335706e-02);

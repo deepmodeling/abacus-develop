@@ -172,7 +172,7 @@ void Charge::init_rho()
 					GlobalC::rhopw->ny,
 					GlobalC::rhopw->nz,
 					GlobalC::en.ef,
-					GlobalC::ucell,
+					&(GlobalC::ucell),
 					this->prenspin))
 		{
 			GlobalV::ofs_running << " Read in the charge density: " << ssc.str() << std::endl;
@@ -201,7 +201,7 @@ void Charge::init_rho()
 					GlobalC::rhopw->ny,
 					GlobalC::rhopw->nz,
 					GlobalC::en.ef_up,
-					GlobalC::ucell,
+					&(GlobalC::ucell),
 					this->prenspin))
 			{
 				GlobalV::ofs_running << " Read in the charge density: " << ssc.str() << std::endl;
@@ -218,7 +218,7 @@ void Charge::init_rho()
 					GlobalC::rhopw->ny,
 					GlobalC::rhopw->nz,
 					GlobalC::en.ef_dw,
-					GlobalC::ucell,
+					&(GlobalC::ucell),
 					this->prenspin))
 			{
 				GlobalV::ofs_running << " Read in the charge density: " << ssc.str() << std::endl;
@@ -248,7 +248,7 @@ void Charge::init_rho()
 						GlobalC::rhopw->ny,
 						GlobalC::rhopw->nz,
 						GlobalC::en.ef,
-						GlobalC::ucell,
+						&(GlobalC::ucell),
 						this->prenspin))
 			{
 				GlobalV::ofs_running << " Read in the charge density: " << ssc.str() << std::endl;
@@ -322,7 +322,7 @@ void Charge::init_rho()
 							GlobalC::rhopw->ny,
 							GlobalC::rhopw->nz,
 							GlobalC::en.ef,
-							GlobalC::ucell,
+							&(GlobalC::ucell),
 							this->prenspin))
 				{
 					GlobalV::ofs_running << " Read in the kinetic energy density: " << ssc.str() << std::endl;

@@ -105,7 +105,7 @@ bool ModuleIO::read_rho(const int &is,
 	int& ny,
 	int& nz,
 	double& ef,
-	UnitCell& ucell,
+	const UnitCell* ucell,
 	int &prenspin)
 {
 	std::ifstream ifs(fn.c_str());
@@ -118,27 +118,27 @@ bool ModuleIO::read_rho(const int &is,
 	ifs >> ef;
 	ifs.ignore(150, '\n');
 
-	ModuleBase::CHECK_INT(ifs,ucell.nat,quit);
+	ModuleBase::CHECK_INT(ifs,ucell->nat,quit);
 	ifs.ignore(150, '\n');
 
-	double fac=ucell.lat0;
+	double fac=ucell->lat0;
 	ModuleBase::CHECK_INT(ifs,nx);	
-	ModuleBase::CHECK_DOUBLE(ifs, fac*ucell.latvec.e11/double(nx), quit);
-	ModuleBase::CHECK_DOUBLE(ifs, fac*ucell.latvec.e12/double(nx), quit);
-	ModuleBase::CHECK_DOUBLE(ifs, fac*ucell.latvec.e13/double(nx), quit);
+	ModuleBase::CHECK_DOUBLE(ifs, fac*ucell->latvec.e11/double(nx), quit);
+	ModuleBase::CHECK_DOUBLE(ifs, fac*ucell->latvec.e12/double(nx), quit);
+	ModuleBase::CHECK_DOUBLE(ifs, fac*ucell->latvec.e13/double(nx), quit);
 	ModuleBase::CHECK_INT(ifs, ny);	
-	ModuleBase::CHECK_DOUBLE(ifs, fac*ucell.latvec.e21/double(ny), quit);
-	ModuleBase::CHECK_DOUBLE(ifs, fac*ucell.latvec.e22/double(ny), quit);
-	ModuleBase::CHECK_DOUBLE(ifs, fac*ucell.latvec.e23/double(ny), quit);
+	ModuleBase::CHECK_DOUBLE(ifs, fac*ucell->latvec.e21/double(ny), quit);
+	ModuleBase::CHECK_DOUBLE(ifs, fac*ucell->latvec.e22/double(ny), quit);
+	ModuleBase::CHECK_DOUBLE(ifs, fac*ucell->latvec.e23/double(ny), quit);
 	ModuleBase::CHECK_INT(ifs, nz);	
-	ModuleBase::CHECK_DOUBLE(ifs, fac*ucell.latvec.e31/double(nz), quit);
-	ModuleBase::CHECK_DOUBLE(ifs, fac*ucell.latvec.e32/double(nz), quit);
-	ModuleBase::CHECK_DOUBLE(ifs, fac*ucell.latvec.e33/double(nz), quit);
+	ModuleBase::CHECK_DOUBLE(ifs, fac*ucell->latvec.e31/double(nz), quit);
+	ModuleBase::CHECK_DOUBLE(ifs, fac*ucell->latvec.e32/double(nz), quit);
+	ModuleBase::CHECK_DOUBLE(ifs, fac*ucell->latvec.e33/double(nz), quit);
 
 	int temp = 0;
-	for(int it=0; it<ucell.ntype; it++)
+	for(int it=0; it<ucell->ntype; it++)
 	{
-		for(int ia=0; ia<ucell.atoms[it].na; ia++)
+		for(int ia=0; ia<ucell->atoms[it].na; ia++)
 		{
 			ifs >> temp;
 			ifs >> temp; 
