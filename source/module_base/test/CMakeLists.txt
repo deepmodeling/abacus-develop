@@ -142,3 +142,8 @@ AddTest(
   TARGET base_global_file
   SOURCES global_file_test.cpp ../global_file.cpp  ../global_variable.cpp ../memory.cpp ../timer.cpp
 )
+
+AddTest(
+  TARGET base_tool_title
+  SOURCES tool_title_test.cpp ../tool_title.cpp  ../global_variable.cpp
+)

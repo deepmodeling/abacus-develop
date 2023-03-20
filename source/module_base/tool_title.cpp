@@ -11,10 +11,12 @@ namespace ModuleBase
 // GLOBAL FUNCTION :
 // NAME : TITLE( title for each function )
 //==========================================================
-void TITLE(const std::string &class_function_name)
+void TITLE(const std::string &class_function_name,const bool disable)
 {
-    return;//no output
-
+    if (disable)
+    {
+        return;//no output
+    }
 #ifdef __NORMAL
     std::cout<<" ==> "<<class_function_name<<std::endl;
 #else
@@ -25,9 +27,12 @@ void TITLE(const std::string &class_function_name)
 #endif
 }
 
-void TITLE(const std::string &class_name,const std::string &function_name)
+void TITLE(const std::string &class_name,const std::string &function_name,const bool disable)
 {
-    return;//no output
+    if (disable)
+    {
+        return;//no output
+    }
 #ifdef __NORMAL
     std::cout<<" ==> "<<class_name<<"::"<<function_name<<std::endl;
 #else
@@ -39,9 +44,12 @@ void TITLE(const std::string &class_name,const std::string &function_name)
     return;
 }
 
-void TITLE(std::ofstream &ofs,const std::string &class_name,const std::string &function_name)
+void TITLE(std::ofstream &ofs,const std::string &class_name,const std::string &function_name,const bool disable)
 {
-    return;// no output
+    if (disable)
+    {
+        return;//no output
+    }
 #ifdef __NORMAL
     std::cout<<"\n\n ==> "<<class_name<<"::"<<function_name<<std::endl;
 #else

@@ -267,9 +267,9 @@ ModuleBase::GlobalFunc::OUTP(ofs, "out_bandgap", out_bandgap, "if true, print ou
     ModuleBase::GlobalFunc::OUTP(ofs,"md_pfirst",mdp.md_pfirst,"initial target pressure");
     ModuleBase::GlobalFunc::OUTP(ofs,"md_plast",mdp.md_plast,"final target pressure");
     ModuleBase::GlobalFunc::OUTP(ofs,"md_pfreq",mdp.md_pfreq,"oscillation frequency, used to determine qmass of thermostats coupled with barostat");
-    ModuleBase::GlobalFunc::OUTP(ofs, "out_force", out_force, "output atomic forces into the file MD_dump or not");
-    ModuleBase::GlobalFunc::OUTP(ofs, "out_vel", out_vel, "output atomic velocities into the file MD_dump or not");
-    ModuleBase::GlobalFunc::OUTP(ofs, "out_virial", out_virial, "output atomic velocities into the file MD_dump or not");
+    ModuleBase::GlobalFunc::OUTP(ofs, "dump_force", dump_force, "output atomic forces into the file MD_dump or not");
+    ModuleBase::GlobalFunc::OUTP(ofs, "dump_vel", dump_vel, "output atomic velocities into the file MD_dump or not");
+    ModuleBase::GlobalFunc::OUTP(ofs, "dump_virial", dump_virial, "output lattice virial into the file MD_dump or not");
 
     ofs << "\n#Parameters (10.Electric field and dipole correction)" << std::endl;
     ModuleBase::GlobalFunc::OUTP(ofs,"efield_flag",efield_flag,"add electric field");

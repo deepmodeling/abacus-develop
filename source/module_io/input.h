@@ -46,7 +46,7 @@ class Input
     int pw_seed; // random seed for initializing wave functions qianrui 2021-8-12
 
     bool init_vel; // read velocity from STRU or not  liuyu 2021-07-14
-    bool out_vel;    // output atomic velocities into the file MD_dump or not. liuyu 2023-03-01
+    bool dump_vel;    // output atomic velocities into the file MD_dump or not. liuyu 2023-03-01
 
     /* symmetry level: 
       -1, no symmetry at all; 
@@ -107,7 +107,7 @@ class Input
     // Forces
     //==========================================================
     bool cal_force;
-    bool out_force;    // output atomic forces into the file MD_dump or not. liuyu 2023-03-01
+    bool dump_force;    // output atomic forces into the file MD_dump or not. liuyu 2023-03-01
     double force_thr; // threshold of force in unit (Ry/Bohr)
     double force_thr_ev2; // invalid force threshold, mohan add 2011-04-17
 
@@ -119,7 +119,7 @@ class Input
     double press2;
     double press3;
     bool cal_stress; // calculate the stress
-    bool out_virial;    // output lattice virial into the file MD_dump or not. liuyu 2023-03-01
+    bool dump_virial;    // output lattice virial into the file MD_dump or not. liuyu 2023-03-01
 
     std::string fixed_axes; // which axes are fixed
     bool fixed_ibrav; //whether to keep type of lattice; must be used along with latname
@@ -463,7 +463,7 @@ class Input
     //==========================================================
     //    DFT+U       Xin Qu added on 2020-10-29
     //==========================================================
-    bool dft_plus_u; // true:DFT+U correction; false：standard DFT calculation(default)
+    bool dft_plus_u; // true:DFT+U correction; false: standard DFT calculation(default)
     int *orbital_corr; // which correlated orbitals need corrected ; d:2 ,f:3, do not need correction:-1
     double *hubbard_u; // Hubbard Coulomb interaction parameter U(ev)
     int omc; // whether turn on occupation matrix control method or not
@@ -473,7 +473,7 @@ class Input
     //==========================================================
     //    DFT+DMFT       Xin Qu added on 2021-08
     //==========================================================
-    bool dft_plus_dmft; // true:DFT+DMFT; false：standard DFT calcullation(default)
+    bool dft_plus_dmft; // true:DFT+DMFT; false: standard DFT calcullation(default)
 
     //==========================================================
     //    RPA           Rong Shi added on 2022-04
@@ -496,7 +496,7 @@ class Input
     //==========================================================
     //    implicit solvation model       Menglin Sun added on 2022-04-04
     //==========================================================
-    bool imp_sol; // true:implicit solvation correction; false：vacuum calculation(default)
+    bool imp_sol; // true:implicit solvation correction; false: vacuum calculation(default)
     double eb_k;
     double tau;
     double sigma_k;

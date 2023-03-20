@@ -687,15 +687,6 @@ void UnitCell::setup_cell(
 #else
 			ok2 = this->read_atom_positions(ifa, log, GlobalV::ofs_warning);
 #endif
-
-			if(ok2&&GlobalV::out_element_info)
-			{
-				for(int i=0;i<this->ntype;i++)
-				{
-					ModuleBase::Global_File::make_dir_atom( this->atoms[i].label );
-				}
-			}
-
 		}
 	}
 #ifdef __MPI
@@ -809,6 +800,10 @@ void UnitCell::read_pseudo(ofstream &ofs)
 
     if(GlobalV::MY_RANK == 0 && GlobalV::out_element_info)
     {
+	for(int i=0;i<this->ntype;i++)
+	{
+		ModuleBase::Global_File::make_dir_atom( this->atoms[i].label );
+	}
         for(int it=0; it<ntype; it++)
         {
             Atom* atom = &atoms[it];
@@ -1003,13 +998,6 @@ void UnitCell::setup_cell_classic(
 #else
 			ok2 = this->read_atom_positions(ifa, ofs_running, ofs_warning);
 #endif
-			if(ok2&&GlobalV::out_element_info)
-			{
-				for(int i=0;i<this->ntype;i++)
-				{
-					ModuleBase::Global_File::make_dir_atom( this->atoms[i].label );
-				}
-			}
 		}
 	}
 #ifdef __MPI

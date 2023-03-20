@@ -474,6 +474,7 @@ OBJS_SRCPW=H_Ewald_pw.o\
     stress_pw.o\
     of_stress_pw.o\
     symmetry_rho.o\
+    symmetry_rhog.o\
     wavefunc.o\
     wf_atomic.o\
     wf_igk.o\

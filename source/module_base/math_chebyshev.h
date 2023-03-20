@@ -37,7 +37,7 @@ class FFTW;
  * v^+f(A)v = \sum_{n=0}^{norder-1} C_n[f]*v^+v_n = \sum_{n=0}^{norder-1} C_n[f] * w_n, 
  * where w_n = v^+ * v_n = v^+ * T_n(A) * v
  * 
- * USAGE：
+ * USAGE: 
  * Chebyshev che(10); // constructe a chebyshev expansion of 10 orders (n=0,1,...,9)
  * 1. che.calcoef_real(&a, &A::cos) 						// calculate C_n[f], where f is a.cos
  *    for(int i=0;i<10;++i) cout<<che.coef_real[i]<<endl; 	//Then we print C_n[f]

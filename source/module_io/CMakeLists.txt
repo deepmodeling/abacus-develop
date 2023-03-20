@@ -1,7 +1,6 @@
 list(APPEND objects
     input.cpp
     input_conv.cpp
-    berryphase.cpp
     bessel_basis.cpp
     cal_test.cpp
     dos.cpp
@@ -15,14 +14,18 @@ list(APPEND objects
     read_rho.cpp
     restart.cpp
     rwstream.cpp
-    to_wannier90.cpp
-    unk_overlap_pw.cpp
     write_wfc_pw.cpp
-    winput.cpp
-    write_input.cpp    
+    write_input.cpp
     write_rho.cpp
     write_dipole.cpp
     write_wfc_r.cpp
+)
+
+list(APPEND objects_advanced
+    unk_overlap_pw.cpp
+    berryphase.cpp
+    to_wannier90.cpp
+    winput.cpp
 )
 
 if(ENABLE_LCAO)
@@ -34,9 +37,7 @@ if(ENABLE_LCAO)
       nscf_fermi_surf.cpp
       istate_charge.cpp
       istate_envelope.cpp
-      mulliken_charge.cpp
       read_dm.cpp
-      unk_overlap_lcao.cpp
       read_wfc_nao.cpp
       write_wfc_nao.cpp
       write_HS.cpp
@@ -45,16 +46,26 @@ if(ENABLE_LCAO)
       write_dm.cpp
       write_dm_sparse.cpp
   )
+  list(APPEND objects_advanced
+      unk_overlap_lcao.cpp
+      mulliken_charge.cpp
+  )
 endif()
 
 add_library(
-    io
+    io_basic
     OBJECT
     ${objects}
 )
 
+add_library(
+    io_advanced
+    OBJECT
+    ${objects_advanced}
+)
+
 if(ENABLE_COVERAGE)
-  add_coverage(io)
+  add_coverage(io_basic)
 endif()
 
 if(BUILD_TESTING)

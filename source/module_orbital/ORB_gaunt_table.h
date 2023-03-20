@@ -57,15 +57,18 @@ class ORB_gaunt_table
 
 	/// (1) Make Ylm_Gaunt Table.
 	///----------------
+    /*
 	void init_Ylm_Gaunt(
 		const int &lmax, 
 		const double &s1,
 		const double &e1,
 		const double &s2,
 		const double &e2);
+    */
 
 	/// (2) Use Ylm_Gaunt to calculate Gaunt Coefficinets element
 	///------
+    /*
 	double Cal_Gaunt_single(
 	   	const int &l1, 
 		const int &m1, 
@@ -77,6 +80,7 @@ class ORB_gaunt_table
 		const double &e1,    
 	   	const double &s2, 
 		const double &e2);
+    */
 
 	/// (3) Make the whole Gaunt Coefficients table
 	/// ------------------------------------
@@ -92,7 +96,7 @@ class ORB_gaunt_table
 	// Yu's mehtod
 	// Peize Lin delete void ModuleBase::GlobalFunc::ZEROS(); 2016-08-26
 	
-	int P_EL(const int& L);
+	//int P_EL(const int& L);
 
 	int EP_EL(const int& L);
 

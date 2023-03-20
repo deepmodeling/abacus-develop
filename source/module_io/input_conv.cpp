@@ -493,6 +493,15 @@ void Input_Conv::Convert(void)
                                 INPUT.mixing_ndim,
                                 INPUT.mixing_gg0,
                                 INPUT.mixing_tau); // mohan modify 2014-09-27, add mixing_gg0
+    //using bandgap to auto set mixing_beta
+    if(std::abs(INPUT.mixing_beta + 10.0) < 1e-6)
+    {
+        GlobalC::CHR_MIX.need_auto_set();
+    }
+    else if(INPUT.mixing_beta > 1.0 || INPUT.mixing_beta<0.0)
+    {
+        ModuleBase::WARNING("INPUT", "You'd better set mixing_beta to [0.0, 1.0]!");
+    }
 
     //----------------------------------------------------------
     // iteration
