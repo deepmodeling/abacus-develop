@@ -2,7 +2,7 @@ name: Dynamic Analysis
 
 on:
   schedule:
-    - cron: '0 3 * * *'
+    - cron: '0 20 * * *'
   workflow_dispatch:
 
 jobs:
@@ -21,7 +21,7 @@ jobs:
           cmake --install build
       - name: Testing
         run: |
-          cmake --build build --target test ARGS="-V"
+          cmake --build build --target test ARGS="-V --timeout 21600"
       - name: Publish Report to Dashboard
         uses: crazy-max/ghaction-github-pages@v2
         if: ${{ ! cancelled() }}
