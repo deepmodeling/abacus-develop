@@ -22,6 +22,7 @@
  *      - function max/min/absmax
  *      - function norm
  *      - function print(print the element which is larger than threshold)
+ *      - function reshape(change the index of the array)
  * 
  * - Tested functions related to class matrix
  *      - operator "+", "-", "*" between two matrixs
@@ -362,4 +363,22 @@ TEST_F(matrixTest,Print)
     m33a.print(std::cout,threshold);
     output  = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output,testing::HasSubstr("0\t0\t0\t\n0\t5\t6\t\n7\t8\t9\t\n"));
+}
+
+TEST_F(matrixTest,Reshape)
+{
+    const int nr_new=3;
+    const int nc_new=2;
+    const bool flag_zero=true;
+    m23a.reshape(nr_new,nc_new,flag_zero);
+    ASSERT_DEATH(m33a.reshape(nr_new,nc_new),"");
+    EXPECT_DOUBLE_EQ(m23a.nr,nr_new);
+    EXPECT_DOUBLE_EQ(m23a.nc,nc_new);
+    for (int i=0;i<m23a.nr;++i)
+    {
+        for (int j=0;j<m23a.nc;++j)
+        {
+            EXPECT_DOUBLE_EQ(m23a(i,j),0.0);
+        }
+    }
 }

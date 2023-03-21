@@ -62,6 +62,15 @@ TEST_F(PWTEST,test_big)
     EXPECT_EQ(pwktest.ny%2, 0);
     EXPECT_EQ(pwktest.nz%2, 0);
 
+    int bsize = 0;
+    pwtest.autoset_big_cell_size(bsize, 12);
+    EXPECT_EQ(bsize, 4);
+    pwtest.autoset_big_cell_size(bsize, 12, 4);
+    EXPECT_EQ(bsize, 3);
+    pwtest.autoset_big_cell_size(bsize, 14, 4);
+    EXPECT_EQ(bsize, 2);
+
+
     delete[] kvec_d;
     ModulePW::PW_Basis_Big *p_pw = new ModulePW::PW_Basis_Big(device_flag, precision_flag);
     ModulePW::PW_Basis_K_Big *p_pwk = new ModulePW::PW_Basis_K_Big(device_flag, precision_flag);
