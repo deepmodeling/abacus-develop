@@ -1089,6 +1089,7 @@ void Forces<FPTYPE, Device>::cal_force_scc(ModuleBase::matrix& forcescc, ModuleP
     //for orbital free case
     if(!GlobalC::en.vnew_exist)
     {
+        ModuleBase::timer::tick("Forces", "cal_force_scc");
         return;
     }
 
