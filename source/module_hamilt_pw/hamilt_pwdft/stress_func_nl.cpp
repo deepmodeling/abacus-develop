@@ -9,13 +9,13 @@
 template <typename FPTYPE, typename Device>
 void Stress_Func<FPTYPE, Device>::stress_nl(ModuleBase::matrix& sigma, const ModuleBase::matrix& wg, const psi::Psi<complex<FPTYPE>, Device>* psi_in)
 {
-	ModuleBase::TITLE("Stress_Func","stres_nl");
-	ModuleBase::timer::tick("Stress_Func","stres_nl");
+	ModuleBase::TITLE("Stress_Func","stress_nl");
+	ModuleBase::timer::tick("Stress_Func","stress_nl");
 	
 	const int nkb = GlobalC::ppcell.nkb;
 	if(nkb == 0) 
 	{
-		ModuleBase::timer::tick("Stress_Func","stres_nl");
+		ModuleBase::timer::tick("Stress_Func","stress_nl");
 		return;
 	}
 
@@ -302,7 +302,7 @@ void Stress_Func<FPTYPE, Device>::stress_nl(ModuleBase::matrix& sigma, const Mod
         delmem_complex_op()(this->ctx, pvkb2);
     }
 	//  this->print(GlobalV::ofs_running, "nonlocal stress", stresnl);
-	ModuleBase::timer::tick("Stress_Func","stres_nl");
+	ModuleBase::timer::tick("Stress_Func","stress_nl");
 }
 
 template <typename FPTYPE, typename Device>
@@ -323,7 +323,6 @@ void Stress_Func<FPTYPE, Device>::get_dvnl1
 
 	const int npw = GlobalC::kv.ngk[ik];
 	const int nhm = GlobalC::ppcell.nhm;
-	int ig, ia, nb, ih;
 	ModuleBase::matrix vkb1(nhm, npw);
 	vkb1.zero_out();
 	FPTYPE *vq = new FPTYPE[npw];
@@ -331,13 +330,19 @@ void Stress_Func<FPTYPE, Device>::get_dvnl1
 
 	ModuleBase::matrix dylm(x1, npw);
 	ModuleBase::Vector3<FPTYPE> *gk = new ModuleBase::Vector3<FPTYPE>[npw];
-	for (ig = 0;ig < npw;ig++)
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
+	for (int ig = 0;ig < npw;ig++)
 	{
 		gk[ig] = GlobalC::wf.get_1qvec_cartesian(ik, ig);
 	}
 			   
 	dylmr2(x1, npw, gk, dylm, ipol);
 
+	const int imag_pow_period = 4;
+    // result table of pow(0-1i, int)
+    static const std::complex<FPTYPE> pref_tab[imag_pow_period] = {{1, 0}, {0, -1}, {-1, 0}, {0, 1}};
 	int jkb = 0;
 	for(int it = 0;it < GlobalC::ucell.ntype;it++)
 	{
@@ -348,10 +353,13 @@ void Stress_Func<FPTYPE, Device>::get_dvnl1
 
 		if(GlobalV::test_pp>1) ModuleBase::GlobalFunc::OUT("nbeta",nbeta);
 
-		for (nb = 0;nb < nbeta;nb++)
+		for (int nb = 0;nb < nbeta;nb++)
 		{
 			if(GlobalV::test_pp>1) ModuleBase::GlobalFunc::OUT("ib",nb);
-			for (ig = 0;ig < npw;ig++)
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
+			for (int ig = 0;ig < npw;ig++)
 			{
 				const FPTYPE gnorm = gk[ig].norm() * GlobalC::ucell.tpiba;
 
@@ -364,12 +372,15 @@ void Stress_Func<FPTYPE, Device>::get_dvnl1
 			} // enddo
 
 			// add spherical harmonic part
-			for (ih = 0;ih < nh;ih++)
+			for (int ih = 0;ih < nh;ih++)
 			{
 				if (nb == GlobalC::ppcell.indv(it, ih))
 				{
 					const int lm = static_cast<int>( GlobalC::ppcell.nhtolm(it, ih) );
-					for (ig = 0;ig < npw;ig++)
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
+					for (int ig = 0;ig < npw;ig++)
 					{
 						vkb1(ih, ig) = dylm(lm, ig) * vq [ig];
 					}
@@ -382,18 +393,22 @@ void Stress_Func<FPTYPE, Device>::get_dvnl1
 
 		// vkb1 contains all betas including angular part for type nt
 		// now add the structure factor and factor (-i)^l
-		for (ia=0; ia<GlobalC::ucell.atoms[it].na; ia++)
+		for (int ia=0; ia<GlobalC::ucell.atoms[it].na; ia++)
 		{
 			std::complex<FPTYPE> *sk = GlobalC::wf.get_sk(ik, it, ia,GlobalC::wfcpw);
-			for (ih = 0;ih < nh;ih++)
+#ifdef _OPENMP
+#pragma omp parallel for collapse(2)
+#endif
+			for (int ih = 0;ih < nh;ih++)
 			{
-				std::complex<FPTYPE> pref = pow( ModuleBase::NEG_IMAG_UNIT, GlobalC::ppcell.nhtol(it, ih));      //?
-				for (ig = 0;ig < npw;ig++)
-				{
-					vkb(jkb, ig) = vkb1(ih, ig) * sk [ig] * pref;
+				for (int ig = 0;ig < npw;ig++)
+				{	
+					std::complex<FPTYPE> pref = pref_tab[int(GlobalC::ppcell.nhtol(it, ih)) % imag_pow_period];      //?
+					vkb(jkb + ih, ig) = vkb1(ih, ig) * sk [ig] * pref;
 				}
-				++jkb;
+				
 			} // end ih
+			jkb += nh;
 		delete [] sk;
 		} // end ia
 	} // enddo
@@ -417,19 +432,24 @@ void Stress_Func<FPTYPE, Device>::get_dvnl2(ModuleBase::ComplexMatrix &vkb,
 
 	const int npw = GlobalC::kv.ngk[ik];
 	const int nhm = GlobalC::ppcell.nhm;
-	int ig, ia, nb, ih;
 	ModuleBase::matrix vkb1(nhm, npw);
 	FPTYPE *vq = new FPTYPE[npw];
 	const int x1= (lmaxkb + 1)*(lmaxkb + 1);
 
 	ModuleBase::matrix ylm(x1, npw);
 	ModuleBase::Vector3<FPTYPE> *gk = new ModuleBase::Vector3<FPTYPE>[npw];
-	for (ig = 0;ig < npw;ig++)
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
+	for (int ig = 0;ig < npw;ig++)
 	{
 		gk[ig] = GlobalC::wf.get_1qvec_cartesian(ik, ig);
 	}
 	ModuleBase::YlmReal::Ylm_Real(x1, npw, gk, ylm);
 
+	const int imag_pow_period = 4;
+    // result table of pow(0-1i, int)
+    static const std::complex<FPTYPE> pref_tab[imag_pow_period] = {{1, 0}, {0, -1}, {-1, 0}, {0, 1}};
 	int jkb = 0;
 	for(int it = 0;it < GlobalC::ucell.ntype;it++)
 	{
@@ -440,10 +460,13 @@ void Stress_Func<FPTYPE, Device>::get_dvnl2(ModuleBase::ComplexMatrix &vkb,
 
 		if(GlobalV::test_pp>1) ModuleBase::GlobalFunc::OUT("nbeta",nbeta);
 
-		for (nb = 0;nb < nbeta;nb++)
+		for (int nb = 0;nb < nbeta;nb++)
 		{
 			if(GlobalV::test_pp>1) ModuleBase::GlobalFunc::OUT("ib",nb);
-			for (ig = 0;ig < npw;ig++)
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
+			for (int ig = 0;ig < npw;ig++)
 			{
 				const FPTYPE gnorm = gk[ig].norm() * GlobalC::ucell.tpiba;
 	//cout << "\n gk[ig] = " << gk[ig].x << " " << gk[ig].y << " " << gk[ig].z;
@@ -454,12 +477,15 @@ void Stress_Func<FPTYPE, Device>::get_dvnl2(ModuleBase::ComplexMatrix &vkb,
 			} // enddo
 
 							// add spherical harmonic part
-			for (ih = 0;ih < nh;ih++)
+			for (int ih = 0;ih < nh;ih++)
 			{
 				if (nb == GlobalC::ppcell.indv(it, ih))
 				{
 					const int lm = static_cast<int>( GlobalC::ppcell.nhtolm(it, ih) );
-					for (ig = 0;ig < npw;ig++)
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
+					for (int ig = 0;ig < npw;ig++)
 					{
 						vkb1(ih, ig) = ylm(lm, ig) * vq [ig];
 					}
@@ -469,18 +495,22 @@ void Stress_Func<FPTYPE, Device>::get_dvnl2(ModuleBase::ComplexMatrix &vkb,
 
 		// vkb1 contains all betas including angular part for type nt
 		// now add the structure factor and factor (-i)^l
-		for (ia=0; ia<GlobalC::ucell.atoms[it].na; ia++)
+		for (int ia=0; ia<GlobalC::ucell.atoms[it].na; ia++)
 		{
 			std::complex<FPTYPE> *sk = GlobalC::wf.get_sk(ik, it, ia,GlobalC::wfcpw);
-			for (ih = 0;ih < nh;ih++)
+#ifdef _OPENMP
+#pragma omp parallel for collapse(2)
+#endif
+			for (int ih = 0;ih < nh;ih++)
 			{
-				std::complex<FPTYPE> pref = pow( ModuleBase::NEG_IMAG_UNIT, GlobalC::ppcell.nhtol(it, ih));      //?
-				for (ig = 0;ig < npw;ig++)
+				for (int ig = 0;ig < npw;ig++)
 				{
-					vkb(jkb, ig) = vkb1(ih, ig) * sk [ig] * pref;
+					std::complex<FPTYPE> pref = pref_tab[int(GlobalC::ppcell.nhtol(it, ih)) % imag_pow_period];      //?
+					vkb(jkb + ih, ig) = vkb1(ih, ig) * sk [ig] * pref;
 				}
-			++jkb;
+			
 			} // end ih
+			jkb += nh;
 			delete [] sk;
 		} // end ia
 	}	 // enddo
@@ -545,10 +575,6 @@ void Stress_Func<FPTYPE, Device>::dylmr2 (
   // the moduli of g vectors
   // the spherical harmonics derivatives
   //
-	int ig, lm;
-	// counter on g vectors
-	// counter on l,m component
-
 	const FPTYPE delta = 1e-6;
 	FPTYPE *dg, *dgi;
 
@@ -570,11 +596,17 @@ void Stress_Func<FPTYPE, Device>::dylmr2 (
 	dylm.zero_out();
 	ylmaux.zero_out();
 
-	for( ig = 0;ig< ngy;ig++){
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
+	for(int ig = 0;ig< ngy;ig++){
 		gx[ig] = gk[ig];
 	}
 	//$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(ig)
-	for( ig = 0;ig< ngy;ig++){
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
+	for(int ig = 0;ig< ngy;ig++){
 		dg [ig] = delta * gx[ig].norm() ;
 		if (gx[ig].norm2() > 1e-9) {
 			dgi [ig] = 1.0 / dg [ig];
@@ -586,27 +618,23 @@ void Stress_Func<FPTYPE, Device>::dylmr2 (
 	//$OMP END PARALLEL DO
 
 	//$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(ig)
-	for( ig = 0;ig< ngy;ig++)
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
+	for(int ig = 0;ig< ngy;ig++)
 	{
-		if(ipol==0)
-			gx [ig].x = gk[ ig].x + dg [ig];
-		else if(ipol==1)
-			gx [ig].y = gk [ ig].y + dg [ig];
-		else if(ipol==2)
-			gx [ig].z = gk [ ig].z + dg [ig];
+		gx [ig][ipol] = gk[ ig][ipol] + dg [ig];
 	}
 	//$OMP END PARALLEL DO
 
 	ModuleBase::YlmReal::Ylm_Real(nylm, ngy, gx, dylm);
 	//$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(ig)
-	for(ig = 0;ig< ngy;ig++)
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
+	for(int ig = 0;ig< ngy;ig++)
 	{
-		if(ipol==0)
-			gx [ig].x = gk [ ig].x - dg [ig];
-		else if(ipol==1)
-			gx [ig].y = gk [ ig].y - dg [ig];
-		else if(ipol==2)
-			gx [ig].z = gk [ ig].z - dg [ig];
+		gx [ig][ipol]= gk [ ig][ipol] - dg [ig];
 	}
 	//$OMP END PARALLEL DO
 
@@ -614,24 +642,18 @@ void Stress_Func<FPTYPE, Device>::dylmr2 (
 
 
 	//  zaxpy ( - 1.0, ylmaux, 1, dylm, 1);
-	for( lm = 0;lm< nylm;lm++)
+#ifdef _OPENMP
+#pragma omp parallel for collapse(2)
+#endif
+	for(int lm = 0;lm< nylm;lm++)
 	{
-		for(ig = 0;ig< ngy;ig++)
+		for(int ig = 0;ig< ngy;ig++)
 		{
 			dylm (lm,ig) = dylm(lm,ig) - ylmaux(lm,ig);
-		}
-	}
-
-
-	for( lm = 0;lm< nylm;lm++)
-	{
-		//$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(ig)
-		for(ig = 0;ig< ngy;ig++)
-		{
 			dylm (lm,ig) = dylm(lm,ig) * 0.5 * dgi [ig];
 		}
-		//$OMP END PARALLEL DO
 	}
+
 	delete[] gx;
 	delete[] dg;
 	delete[] dgi;
