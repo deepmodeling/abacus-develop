@@ -17,7 +17,7 @@ option(USE_CUDA "Enable support to CUDA for PW." OFF)
 option(ENABLE_FLOAT_FFTW "Enable support to single precision FFTW library." OFF)
 # option(USE_CUSOLVER_LCAO "Enable support to CUSOLVER for LCAO." OFF) # broken
 option(USE_ROCM "Enable support to ROCm." OFF)
-option(USE_OPENMP " Enable OpenMP in abacus." ON)
+option(USE_OPENMP "Enable OpenMP in ABACUS." ON)
 option(ENABLE_ASAN "Enable AddressSanitizer" OFF)
 option(BUILD_TESTING "Build ABACUS unit tests" OFF)
 option(INFO "Enable gathering of math library information" OFF)
@@ -26,6 +26,7 @@ option(ENABLE_LIBRI "Enable EXX with LibRI." OFF)
 option(USE_ELPA "Enable ELPA" ON)
 option(USE_ABACUS_LIBM "Build libmath from source to speed up." ON)
 option(GIT_SUBMODULE "Check submodules during build" ON)
+option(DEBUG_INFO "Print message for developers to debug." OFF)
 # Do not enable it if generated code will run on different CPUs
 option(ENABLE_NATIVE_OPTIMIZATION "Enable compilation optimization for the native machine's CPU type" OFF)
 
@@ -122,6 +123,10 @@ if(ENABLE_LCAO)
 else()
   set(ENABLE_DEEPKS OFF)
   set(ENABLE_LIBRI OFF)
+endif()
+
+if(DEBUG_INFO)
+  add_compile_definitions(__DEBUG)
 endif()
 
 find_package(MPI REQUIRED)
