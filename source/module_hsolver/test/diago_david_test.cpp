@@ -19,7 +19,7 @@
 
 /**
  * Class Diago_David is used to solve the eigenvalues
- * This unittest test the function Diago_David::diag()
+ * This unittest test the function Diago_David::diag() for FPTYPE=double and Device=cpu
  * with different examples.
  * 	- the hamilt matrix (npw=100,500,1000) produced by random with sparsity of 90%
  *  - the hamilt matrix (npw=100,500,1000) produced by random with sparsity of 50%
@@ -32,23 +32,22 @@
 
 //use lapack to calcualte eigenvalue of matrix hm
 //NOTE: after finish this function, hm stores the eigen vectors.
-void lapackEigen(int &npw, ModuleBase::ComplexMatrix &hm, ModuleBase::ComplexMatrix &ev,double * e, bool outtime=false)
+void lapackEigen(int &npw, std::vector<std::complex<double>> &hm, double * e, bool outtime=false)
 {
 	int lwork = 2 * npw;
 	std::complex<double> *work2= new std::complex<double>[lwork];
 	double* rwork = new double[3*npw-2];
 	int info = 0;
 
-	ModuleBase::ComplexMatrix tmp = hm;
+	auto tmp = hm;
 
 	clock_t start,end;
 	start = clock();
-	LapackConnector::zheev('V', 'U', npw, tmp, npw, e, work2, lwork, rwork, &info);
+	char tmp_c1 = 'V', tmp_c2 = 'U';
+	zheev_(&tmp_c1, &tmp_c2, &npw, tmp.data(), &npw, e, work2, &lwork, rwork, &info);
 	end = clock();
 	if(info) std::cout << "ERROR: Lapack solver, info=" << info <<std::endl;
 	if (outtime) std::cout<<"Lapack Run time: "<<(double)(end - start) / CLOCKS_PER_SEC<<" S"<<std::endl;
-
-	ev = tmp;
 
 	delete [] rwork;
 	delete [] work2;
@@ -74,8 +73,8 @@ public:
 	{
 		//calculate eigenvalues by LAPACK;
 		double* e_lapack = new double[npw];
-		ModuleBase::ComplexMatrix ev;
-		if(mypnum == 0) lapackEigen(npw, DIAGOTEST::hmatrix, ev, e_lapack,DETAILINFO);
+		double* ev;
+		if(mypnum == 0) lapackEigen(npw, DIAGOTEST::hmatrix, e_lapack,DETAILINFO);
 
 		//do Diago_David::diag()
 		double* en = new double[npw];		
@@ -166,13 +165,12 @@ INSTANTIATE_TEST_SUITE_P(VerifyDiag,DiagoDavTest,::testing::Values(
 
 TEST(DiagoDavRealSystemTest,dataH)
 {
-	ModuleBase::ComplexMatrix hmatrix;
+	std::vector<std::complex<double>> hmatrix;
 	std::ifstream ifs("H-KPoints-Si64.dat");
 	DIAGOTEST::readh(ifs,hmatrix);
 	ifs.close();
 	DIAGOTEST::hmatrix = hmatrix;
-	DIAGOTEST::npw = hmatrix.nc;
-	int nband = max(hmatrix.nc/20,1);
+	int nband = max(DIAGOTEST::npw/20,1);
 
 	DiagoDavPrepare ddp(nband,DIAGOTEST::npw,0,2,1e-5,500);
 	

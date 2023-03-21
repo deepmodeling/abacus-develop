@@ -57,8 +57,9 @@ TEST_F(InputTest, Default)
         EXPECT_EQ(INPUT.cond_nche,20);
         EXPECT_DOUBLE_EQ(INPUT.cond_dw,0.1);
         EXPECT_DOUBLE_EQ(INPUT.cond_wcut,10);
-        EXPECT_EQ(INPUT.cond_wenlarge,10);
-        EXPECT_DOUBLE_EQ(INPUT.cond_fwhm,0.3);
+        EXPECT_EQ(INPUT.cond_dt,0.02);
+		EXPECT_EQ(INPUT.cond_dtbatch,4);
+        EXPECT_DOUBLE_EQ(INPUT.cond_fwhm,0.4);
         EXPECT_TRUE(INPUT.cond_nonlocal);
         EXPECT_FALSE(INPUT.berry_phase);
         EXPECT_EQ(INPUT.gdir,3);
@@ -351,10 +352,10 @@ TEST_F(InputTest, Default)
 
 TEST_F(InputTest, Read)
 {
-	std::string input_file = "INPUT";
+	std::string input_file = "./support/INPUT";
 	INPUT.Read(input_file);
 	EXPECT_EQ(INPUT.suffix,"autotest");
-	EXPECT_EQ(INPUT.stru_file,"STRU");
+	EXPECT_EQ(INPUT.stru_file,"./support/STRU");
 	EXPECT_EQ(INPUT.kpoint_file,"KPT");
 	EXPECT_EQ(INPUT.pseudo_dir,"../../PP_ORB/");
 	EXPECT_EQ(INPUT.orbital_dir,"../../PP_ORB/");
@@ -384,7 +385,8 @@ TEST_F(InputTest, Read)
         EXPECT_EQ(INPUT.cond_nche,20);
         EXPECT_DOUBLE_EQ(INPUT.cond_dw,0.1);
         EXPECT_DOUBLE_EQ(INPUT.cond_wcut,10);
-        EXPECT_EQ(INPUT.cond_wenlarge,10);
+        EXPECT_EQ(INPUT.cond_dt,0.07);
+		EXPECT_EQ(INPUT.cond_dtbatch,2);
         EXPECT_DOUBLE_EQ(INPUT.cond_fwhm,0.3);
         EXPECT_TRUE(INPUT.cond_nonlocal);
         EXPECT_FALSE(INPUT.berry_phase);

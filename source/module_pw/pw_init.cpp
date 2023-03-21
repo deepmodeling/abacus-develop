@@ -58,6 +58,8 @@ void PW_Basis:: initgrids(
     lat.z = latvec.e33;
     ibox[2] = int(sqrt(this->gridecut_lat) * sqrt(lat * lat)) + 1;
     
+    // We should check if ibox is the minimum number to cover the planewave ball. 
+    // Find the minimum number of ibox by traveling all possible ibox
     int n1,n2,n3; 
     n1 = n2 = n3 = 0;
     for(int igz = -ibox[2]+this->poolrank; igz <= ibox[2]; igz += this->poolnproc)

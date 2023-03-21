@@ -68,8 +68,8 @@ void ESolver_SDFT_PW::Init(Input &inp, UnitCell &ucell)
     this->Init_GlobalC(inp,ucell);//temporary
 
 	stowf.init(GlobalC::kv.nks);
-	if(INPUT.nbands_sto != 0)	Init_Sto_Orbitals(this->stowf, inp.seed_sto);
-	else						Init_Com_Orbitals(this->stowf, GlobalC::kv);
+	if(INPUT.nbands_sto != 0)	Init_Sto_Orbitals(this->stowf, inp.seed_sto, GlobalC::kv.nks);
+	else						Init_Com_Orbitals(this->stowf, GlobalC::kv, GlobalC::wf.npwx);
 	for (int ik =0 ; ik < GlobalC::kv.nks; ++ik)
     {
         this->stowf.shchi[ik].create(this->stowf.nchip[ik],GlobalC::wf.npwx,false);
@@ -87,7 +87,7 @@ void ESolver_SDFT_PW::Init(Input &inp, UnitCell &ucell)
 void ESolver_SDFT_PW::beforescf(const int istep)
 {
     ESolver_KS_PW::beforescf(istep);
-	if(istep > 0 && INPUT.nbands_sto != 0 && INPUT.initsto_freq > 0 && istep%INPUT.initsto_freq == 0) Update_Sto_Orbitals(this->stowf, INPUT.seed_sto);
+	if(istep > 0 && INPUT.nbands_sto != 0 && INPUT.initsto_freq > 0 && istep%INPUT.initsto_freq == 0) Update_Sto_Orbitals(this->stowf, INPUT.seed_sto, GlobalC::kv.nks);
 }
 
 void ESolver_SDFT_PW::eachiterfinish(int iter)
@@ -182,7 +182,7 @@ void ESolver_SDFT_PW::postprocess()
     GlobalV::ofs_running << std::setprecision(16);
     GlobalV::ofs_running << " !FINAL_ETOT_IS " << GlobalC::en.etot * ModuleBase::Ry_to_eV << " eV" << std::endl;
     GlobalV::ofs_running << " --------------------------------------------\n\n" << std::endl;
-    ModuleIO::write_istate_info(this->pelec,&(GlobalC::kv),&(GlobalC::Pkpoints));
+    ModuleIO::write_istate_info(this->pelec->ekb,this->pelec->wg,&(GlobalC::kv),&(GlobalC::Pkpoints));
 
     if(this->maxniter == 0)
     {
@@ -202,7 +202,7 @@ void ESolver_SDFT_PW::postprocess()
     
     if(INPUT.cal_cond)
 	{
-        this->sKG(INPUT.cond_nche,INPUT.cond_fwhm,INPUT.cond_wcut,INPUT.cond_dw,INPUT.cond_wenlarge);
+        this->sKG(INPUT.cond_nche,INPUT.cond_fwhm,INPUT.cond_wcut,INPUT.cond_dw,INPUT.cond_dt, INPUT.cond_dtbatch);
     }
     if(INPUT.out_dos)
 	{

@@ -62,6 +62,15 @@ TEST_F(PWTEST,test_big)
     EXPECT_EQ(pwktest.ny%2, 0);
     EXPECT_EQ(pwktest.nz%2, 0);
 
+    int bsize = 0;
+    pwtest.autoset_big_cell_size(bsize, 12);
+    EXPECT_EQ(bsize, 4);
+    pwtest.autoset_big_cell_size(bsize, 12, 4);
+    EXPECT_EQ(bsize, 3);
+    pwtest.autoset_big_cell_size(bsize, 14, 4);
+    EXPECT_EQ(bsize, 2);
+
+
     delete[] kvec_d;
     ModulePW::PW_Basis_Big *p_pw = new ModulePW::PW_Basis_Big(device_flag, precision_flag);
     ModulePW::PW_Basis_K_Big *p_pwk = new ModulePW::PW_Basis_K_Big(device_flag, precision_flag);
@@ -71,4 +80,81 @@ TEST_F(PWTEST,test_big)
 #ifdef __ENABLE_FLOAT_FFTW
     fftwf_cleanup();
 #endif
+}
+
+class TestPW_Basis_Big : public ::testing::Test
+{
+    public:
+    ModulePW::PW_Basis_Big pwtest = ModulePW::PW_Basis_Big();
+};
+
+// Test the function with nproc = 0 (bx and by)
+TEST_F(TestPW_Basis_Big, BxByTest) {
+    int b_size = 0;
+    int nc_size = 12;
+    pwtest.autoset_big_cell_size(b_size, nc_size);
+    EXPECT_EQ(b_size, 4);
+}
+
+// Test the function with nproc > 0 (bz)
+TEST_F(TestPW_Basis_Big, BzTest) {
+    int b_size = 0;
+    int nc_size = 12;
+    int nproc = 2;
+    pwtest.autoset_big_cell_size(b_size, nc_size, nproc);
+    EXPECT_EQ(b_size, 3);
+}
+
+// Test the function with nproc > 0 (bz) and nc_size not factored by any candidate
+TEST_F(TestPW_Basis_Big, BzNoFactorTest) {
+    int b_size = 0;
+    int nc_size = 11;
+    int nproc = 2;
+    pwtest.autoset_big_cell_size(b_size, nc_size, nproc);
+    EXPECT_EQ(b_size, 4);
+}
+
+// Test the function with nproc > 0 (bz) and nc_size not factored by any candidate
+TEST_F(TestPW_Basis_Big, BzNoFactorNoResultTest) {
+    int b_size = 0;
+    int nc_size = 11;
+    int nproc = 3;
+    pwtest.autoset_big_cell_size(b_size, nc_size, nproc);
+    EXPECT_EQ(b_size, 4);
+}
+
+// Test the function with nproc > 0 (bz) and nc_size smaller than candidates
+TEST_F(TestPW_Basis_Big, BzSmallTest) {
+    int b_size = 0;
+    int nc_size = 2;
+    int nproc = 2;
+    pwtest.autoset_big_cell_size(b_size, nc_size, nproc);
+    EXPECT_EQ(b_size, 2);
+}
+
+// Test the function with nproc > 0 (bz) and nc_size smaller than candidates
+TEST_F(TestPW_Basis_Big, BzSmallNoResultTest) {
+    int b_size = 0;
+    int nc_size = 2;
+    int nproc = 3;
+    pwtest.autoset_big_cell_size(b_size, nc_size, nproc);
+    EXPECT_EQ(b_size, 2);
+}
+
+// Test the function with nproc > 0 (bz) and nc_size not divisible by nproc
+TEST_F(TestPW_Basis_Big, BzNprocTest) {
+    int b_size = 0;
+    int nc_size = 12;
+    int nproc = 3;
+    pwtest.autoset_big_cell_size(b_size, nc_size, nproc);
+    EXPECT_EQ(b_size, 4);
+}
+
+// Test the function with nproc > 0 (bz) and nc_size not divisible by nproc
+TEST_F(TestPW_Basis_Big, BzNprocNoResultTest) {
+    int b_size = 0;
+    int nc_size = 12;
+    int nproc = 5;
+    pwtest.autoset_big_cell_size(b_size, nc_size, nproc);
+    EXPECT_EQ(b_size, 3);
 }

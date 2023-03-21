@@ -209,9 +209,11 @@ void Gint_Gamma::vl_grid_to_2D(const int lgd_now, LCAO_Matrix &lm, const bool ne
                            this->receiver_size_process, this->receiver_displacement_process,
                            this->receiver_size, this->receiver_buffer);
         #endif
+#ifdef __DEBUG
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "vlocal exchange index is built");
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "buffer size(M):", (this->sender_size+this->receiver_size)*sizeof(double)/1024/1024);
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "buffer index size(M):", (this->sender_index_size+this->receiver_index_size)*sizeof(int)/1024/1024);
+#endif
         ModuleBase::timer::tick("Gint_Gamma","distri_vl_index");
     }
 
@@ -231,7 +233,10 @@ void Gint_Gamma::vl_grid_to_2D(const int lgd_now, LCAO_Matrix &lm, const bool ne
             this->sender_buffer[i/2]=pvpR_grid[icol*lgd_now+irow];
 		}
     }
+
+#ifdef __DEBUG
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "vlocal data are put in sender_buffer, size(M):", this->sender_size*8/1024/1024);
+#endif
 
     // use mpi_alltoall to get local data
     #ifdef __MPI
@@ -239,7 +244,10 @@ void Gint_Gamma::vl_grid_to_2D(const int lgd_now, LCAO_Matrix &lm, const bool ne
                   this->receiver_buffer, this->receiver_size_process,
 					this->receiver_displacement_process, MPI_DOUBLE, lm.ParaV->comm_2D);
     #endif
+
+#ifdef __DEBUG
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "vlocal data are exchanged, received size(M):", this->receiver_size*8/1024/1024);
+#endif
 
     // put local data to H matrix
     for(int i=0; i<this->receiver_index_size; i+=2)

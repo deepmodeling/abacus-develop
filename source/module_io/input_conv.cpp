@@ -31,7 +31,6 @@
 template <typename T> void Input_Conv::parse_expression(const std::string &fn, std::vector<T> &vec)
 {
     ModuleBase::TITLE("Input_Conv", "parse_expression");
-    ModuleBase::timer::tick("Input_Conv", "parse_expression");
     int count = 0;
     std::string pattern("([0-9]+\\*[0-9.]+|[0-9,.]+)");
     std::vector<std::string> str;
@@ -284,16 +283,8 @@ void Input_Conv::Convert(void)
         // wavefunctions are spinors with 2 components
         GlobalV::NPOL = 2;
         // set the domag variable to make a spin-orbit calculation with zero magnetization
-        if (GlobalV::NONCOLIN)
-        {
-            GlobalV::DOMAG = true;
-            GlobalV::DOMAG_Z = false;
-        }
-        else
-        {
-            GlobalV::DOMAG = false;
-            GlobalV::DOMAG_Z = true;
-        }
+        GlobalV::DOMAG = false;
+        GlobalV::DOMAG_Z = true;
         GlobalV::LSPINORB = INPUT.lspinorb;
         GlobalV::soc_lambda = INPUT.soc_lambda;
 

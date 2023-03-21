@@ -534,6 +534,14 @@ namespace ModuleESolver
 
             ssc << GlobalV::global_out_dir << "SPIN" << is + 1 << "_CHG";
             ModuleIO::write_rho(this->pelec->charge->rho_save[is], is, 0, ssc.str());//mohan add 2007-10-17
+        
+            if (GlobalV::out_pot == 1) // output the effective potential, sunliang 2023-03-16
+            {
+                int precision = 3; // be consistent with esolver_ks_lcao.cpp
+                std::stringstream ssp;
+                ssp << GlobalV::global_out_dir << "SPIN" << is + 1 << "_POT.cube";
+                this->pelec->pot->write_potential(is, 0, ssp.str(), this->pelec->pot->get_effective_v(), precision);
+            }
         }
         if(XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
         {
@@ -648,12 +656,13 @@ namespace ModuleESolver
         int nspin0=1;
         if(GlobalV::NSPIN==2) nspin0=2;
         //print occupation in istate.info
-        ModuleIO::write_istate_info(this->pelec,&(GlobalC::kv),&(GlobalC::Pkpoints));
+        ModuleIO::write_istate_info(this->pelec->ekb,this->pelec->wg,&(GlobalC::kv),&(GlobalC::Pkpoints));
         // compute density of states
         if (GlobalC::en.out_dos)
         {
             ModuleIO::write_dos_pw(this->pelec->ekb,
                 this->pelec->wg,
+                &(GlobalC::kv),
                 GlobalC::en.dos_edelta_ev,
                 GlobalC::en.dos_scale,
                 GlobalC::en.bcoeff);
@@ -738,7 +747,7 @@ namespace ModuleESolver
 
         if(INPUT.cal_cond)
 	    {
-            this->KG(INPUT.cond_nche,INPUT.cond_fwhm,INPUT.cond_wcut,INPUT.cond_dw,INPUT.cond_wenlarge, this->pelec->wg);
+            this->KG(INPUT.cond_nche,INPUT.cond_fwhm,INPUT.cond_wcut,INPUT.cond_dw,INPUT.cond_dt, this->pelec->wg);
         }
     }
 

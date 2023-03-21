@@ -70,6 +70,24 @@ AddTest(
     LIBS ${math_libs} device base
 )
 
+#AddTest(
+#    TARGET ORB_gaunt_table_test
+#    SOURCES ORB_gaunt_table_test.cpp
+#        ../ORB_gaunt_table.cpp
+#    LIBS ${math_libs} device base
+#)
+
+AddTest(
+    TARGET ORB_table_alpha_test
+    SOURCES ORB_table_alpha_test.cpp
+        ../ORB_table_alpha.cpp
+        ../ORB_read.cpp
+        ../ORB_atomic.cpp
+        ../ORB_atomic_lm.cpp
+    LIBS ${math_libs} device base
+)
+
+
 install(DIRECTORY lcao_H2O DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 install(DIRECTORY lcao_H2O DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/../../../tests)
 
