@@ -429,14 +429,12 @@ void ESolver_KS_LCAO_TDDFT::afterscf(const int istep)
         }
         ModuleIO::write_dm(is, 0, ssd.str(), precision, this->LOC.out_dm, this->LOC.DM);
 
-        /* Broken, please fix it
-                if (GlobalV::out_pot == 1) // LiuXh add 20200701
-                {
-                    std::stringstream ssp;
-                    ssp << GlobalV::global_out_dir << "SPIN" << is + 1 << "_POT";
-                    this->pelec->pot->write_potential(is, 0, ssp.str(), this->pelec->pot->get_effective_v(), precision);
-                }
-        */
+        if (GlobalV::out_pot == 1) // LiuXh add 20200701
+        {
+            std::stringstream ssp;
+            ssp << GlobalV::global_out_dir << "SPIN" << is + 1 << "_POT.cube";
+            this->pelec->pot->write_potential(is, 0, ssp.str(), this->pelec->pot->get_effective_v(), precision);
+        }
     }
 
     if (this->conv_elec)

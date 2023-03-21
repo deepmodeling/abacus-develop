@@ -137,6 +137,38 @@ public:
     lat.z = latvec.e33;
     ibox[2] = 2 * int(sqrt(gridecut_lat) * sqrt(lat * lat)) + 1;
 
+    // We should check if ibox is the minimum number to cover the planewave ball. 
+    // Find the minimum number of ibox by traveling all possible ibox
+    int n1,n2,n3; 
+    n1 = n2 = n3 = 0;
+    for(int igz = -ibox[2]+this->poolrank; igz <= ibox[2]; igz += this->poolnproc)
+    {
+        for(int igy = -ibox[1]; igy <= ibox[1]; ++igy)
+        {
+            for(int igx = -ibox[0]; igx <= ibox[0]; ++igx)
+            {
+                ModuleBase::Vector3<double> f;
+                f.x = igx;
+                f.y = igy;
+                f.z = igz;
+                double modulus = f * (this->GGT * f);
+                if(modulus <= this->gridecut_lat)
+                {
+                    if(n1 < abs(igx)) n1 = abs(igx);
+                    if(n2 < abs(igy)) n2 = abs(igy);
+                    if(n3 < abs(igz)) n3 = abs(igz);
+                }
+            }
+        }
+    }
+    ibox[0] = 2*n1+1;
+    ibox[1] = 2*n2+1;
+    ibox[2] = 2*n3+1;
+#ifdef __MPI
+    MPI_Allreduce(MPI_IN_PLACE, ibox, 3, MPI_INT, MPI_MAX , this->pool_world);
+#endif
+
+
     // Find the minimal FFT box size the factors into the primes (2,3,5,7).
     for (int i = 0; i < 3; i++)
     {
@@ -146,12 +178,6 @@ public:
         int n5 = 0;
         //int n7 = 0;
         bool done_factoring = false;
-
-        // mohan add 2011-04-22
-        int s;
-		if(i==0) s=bx;
-		else if(i==1) s=by;
-		else if(i==2) s=bz;
 	
         // increase ibox[i] by 1 until it is totally factorizable by (2,3,5,7) 
         do

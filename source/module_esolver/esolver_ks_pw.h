@@ -27,7 +27,7 @@ namespace ModuleESolver
         void postprocess() override;
         //calculate conductivities with Kubo-Greenwood formula
         void KG(const int nche_KG, const double fwhmin, const double wcut,
-             const double dw_in, const int times, ModuleBase::matrix& wg);
+             const double dw_in, const double dt_in, ModuleBase::matrix& wg);
         void jjcorr_ks(const int ik, const int nt, const double dt, ModuleBase::matrix& wg, hamilt::Velocity& velop, 
                        double* ct11, double* ct12, double* ct22);
 

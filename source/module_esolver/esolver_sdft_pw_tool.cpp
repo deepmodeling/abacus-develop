@@ -94,7 +94,7 @@ void ESolver_SDFT_PW::check_che(const int nche_in)
 }
 
 void ESolver_SDFT_PW::sKG(const int nche_KG, const double fwhmin, const double wcut, 
-                          const double dw_in, const int times)
+                          const double dw_in, const double dt_in, const int nbatch)
 {
      ModuleBase::TITLE(this->classname,"sKG");
     ModuleBase::timer::tick(this->classname,"sKG");
@@ -103,7 +103,7 @@ void ESolver_SDFT_PW::sKG(const int nche_KG, const double fwhmin, const double w
     int nw = ceil(wcut/dw_in);
     double dw =  dw_in / ModuleBase::Ry_to_eV; //converge unit in eV to Ry 
     double sigma = fwhmin / TWOSQRT2LN2 / ModuleBase::Ry_to_eV;
-    double dt = ModuleBase::PI/(dw*nw)/times ; //unit in a.u., 1 a.u. = 4.837771834548454e-17 s
+    double dt = dt_in; //unit in a.u., 1 a.u. = 4.837771834548454e-17 s
     int nt = ceil(sqrt(20)/sigma/dt);
     cout<<"nw: "<<nw<<" ; dw: "<<dw*ModuleBase::Ry_to_eV<<" eV"<<endl;
     cout<<"nt: "<<nt<<" ; dt: "<<dt<<" a.u.(ry^-1)"<<endl;
@@ -131,8 +131,7 @@ void ESolver_SDFT_PW::sKG(const int nche_KG, const double fwhmin, const double w
     ModuleBase::GlobalFunc::ZEROS(ct11,nt);
     ModuleBase::GlobalFunc::ZEROS(ct12,nt);
     ModuleBase::GlobalFunc::ZEROS(ct22,nt);
-
-    stoiter.stofunc.t = dt;
+    stoiter.stofunc.t = dt * nbatch;
     chet.calcoef_pair(&stoiter.stofunc, &Sto_Func<double>::ncos, &Sto_Func<double>::nsin);
     chet2.calcoef_pair(&stoiter.stofunc, &Sto_Func<double>::ncos, &Sto_Func<double>::n_sin);
     cout<<"Relative Chebyshev precision: "<<abs(chet.coef_complex[nche_KG-1]/chet.coef_complex[0])<<endl;
@@ -142,6 +141,27 @@ void ESolver_SDFT_PW::sKG(const int nche_KG, const double fwhmin, const double w
         cheofs<<setw(5)<<i<<setw(20)<<abs(chet.coef_complex[i]/chet.coef_complex[0])<<endl;
     }
     cheofs.close();
+    std::complex<double>* batchcoef = nullptr;
+    if(nbatch > 1)
+    {
+        batchcoef = new std::complex<double> [nche_KG * nbatch];
+        std::complex<double>* tmpcoef = batchcoef + (nbatch - 1) * nche_KG;
+        for(int i = 0 ; i < nche_KG ; ++i)
+        {
+            tmpcoef[i] = chet.coef_complex[i];
+        }
+        for(int ib = 0 ; ib < nbatch - 1; ++ib)
+        {
+            tmpcoef = batchcoef + ib * nche_KG;
+            stoiter.stofunc.t = dt * (ib + 1);
+            chet.calcoef_pair(&stoiter.stofunc, &Sto_Func<double>::ncos, &Sto_Func<double>::nsin);
+            for(int i = 0 ; i < nche_KG ; ++i)
+            {
+                tmpcoef[i] = chet.coef_complex[i];
+            }
+        }
+        stoiter.stofunc.t = dt * nbatch;
+    }
 
     
     //parallel KS orbitals
@@ -330,7 +350,9 @@ void ESolver_SDFT_PW::sKG(const int nche_KG, const double fwhmin, const double w
         if (GlobalV::NSTOGROUP > 1)
         {
             j1psi_tot.resize(1,ndim*totbands,npwx);
+            ModuleBase::Memory::record("SDFT::j1psi_tot", ndim*totbands*npwx);
             j2psi_tot.resize(1,ndim*totbands,npwx);
+            ModuleBase::Memory::record("SDFT::j2psi_tot", ndim*totbands*npwx);
             for(int id = 0 ; id < ndim ; ++id)
             {
                 const int idnb_per = id * totbands_per;
@@ -354,6 +376,14 @@ void ESolver_SDFT_PW::sKG(const int nche_KG, const double fwhmin, const double w
         ModuleBase::Memory::record("SDFT::exppsi", sizeof(std::complex<double>) * totbands_per * npwx);
         psi::Psi<std::complex<double>> expsfpsi(1,totbands_per,npwx);
         ModuleBase::Memory::record("SDFT::expsfpsi", sizeof(std::complex<double>) * totbands_per * npwx);
+        psi::Psi<std::complex<double>> *poly_psi = nullptr, *poly_sfpsi = nullptr;
+        if(nbatch > 1)
+        {
+            poly_psi = new psi::Psi<std::complex<double>>(nche_KG, nchip, npwx);
+            ModuleBase::Memory::record("SDFT::poly_psi", sizeof(std::complex<double>) * nche_KG * nchip * npwx);
+            poly_sfpsi = new psi::Psi<std::complex<double>>(nche_KG, nchip, npwx);
+            ModuleBase::Memory::record("SDFT::poly_sfpsi", sizeof(std::complex<double>) * nche_KG * nchip * npwx);
+        }
         for(int ib = 0; ib < totbands_per; ++ib)
         {
             for(int ig = 0 ; ig < npw ; ++ig)
@@ -381,10 +411,49 @@ void ESolver_SDFT_PW::sKG(const int nche_KG, const double fwhmin, const double w
             ModuleBase::timer::tick(this->classname,"evolution_ks");
             
             ModuleBase::timer::tick(this->classname,"evolution_sto");
-            //exp(iHdt)|chi>
-            chet.calfinalvec_complex(&stohchi, &Stochastic_hchi::hchi_norm, &exppsi(ksbandper,0), &exppsi(ksbandper,0), npw, npwx, nchip);
-            //exp(-iHdt)|shchi>
-            chet2.calfinalvec_complex(&stohchi, &Stochastic_hchi::hchi_norm, &expsfpsi(ksbandper,0), &expsfpsi(ksbandper,0), npw, npwx, nchip);
+            if(nbatch == 1)
+            {
+                //exp(iHdt)|chi>
+                chet.calfinalvec_complex(&stohchi, &Stochastic_hchi::hchi_norm, &exppsi(ksbandper,0), &exppsi(ksbandper,0), npw, npwx, nchip);
+                //exp(-iHdt)|shchi>
+                chet2.calfinalvec_complex(&stohchi, &Stochastic_hchi::hchi_norm, &expsfpsi(ksbandper,0), &expsfpsi(ksbandper,0), npw, npwx, nchip);
+            }
+            else
+            {
+                std::complex<double>* tmppolypsi = poly_psi->get_pointer();
+                std::complex<double>* tmppolysfpsi = poly_sfpsi->get_pointer();
+                std::complex<double>* psisto_c = &exppsi(ksbandper,0);
+                std::complex<double>* sfpsisto_c = &expsfpsi(ksbandper,0);
+                if((it - 1) % nbatch == 0)
+                {
+                    //exp(iHdt)|chi>
+                    chet.calpolyvec_complex(&stohchi, &Stochastic_hchi::hchi_norm, psisto_c, tmppolypsi, npw, npwx, nchip);
+                    //exp(-iHdt)|shchi>
+                    chet2.calpolyvec_complex(&stohchi, &Stochastic_hchi::hchi_norm, sfpsisto_c, tmppolysfpsi, npw, npwx, nchip);
+                }
+                
+                std::complex<double>* tmpcoef = batchcoef + (it - 1) % nbatch * nche_KG;
+                ModuleBase::GlobalFunc::ZEROS(  psisto_c, npwx*nchip);
+                ModuleBase::GlobalFunc::ZEROS(sfpsisto_c, npwx*nchip);
+                for(int iche = 0 ; iche < nche_KG ; ++iche)
+                {
+                    std::complex<double> *tmp1 =   psisto_c;
+                    std::complex<double> *tmp2 = sfpsisto_c;
+                    std::complex<double> coef = tmpcoef[iche];
+                    for(int ib = 0 ; ib < nchip; ++ib)
+                    {
+                        for(int ig = 0 ; ig < npw ; ++ig)
+                        {
+                            tmp1[ig] += coef * tmppolypsi[ig];
+                            tmp2[ig] += conj(coef) * tmppolysfpsi[ig];
+                        }
+                        tmppolypsi += npwx;
+                        tmppolysfpsi += npwx;
+                        tmp1 += npwx;
+                        tmp2 += npwx;
+                    }
+                }
+            }
             ModuleBase::timer::tick(this->classname,"evolution_sto");
             psi::Psi<std::complex<double>> *p_exppsi = &exppsi;
 #ifdef __MPI
@@ -489,7 +558,8 @@ void ESolver_SDFT_PW::sKG(const int nche_KG, const double fwhmin, const double w
         }
         cout<<endl;
         if(ksbandper > 0)   delete[] en;
-
+        delete poly_psi;
+        delete poly_sfpsi;
     }
     ModuleBase::timer::tick(this->classname,"kloop");
 #ifdef __MPI
@@ -508,6 +578,7 @@ void ESolver_SDFT_PW::sKG(const int nche_KG, const double fwhmin, const double w
     delete[] ct11;
     delete[] ct12;
     delete[] ct22;
+    delete[] batchcoef;
     // delete[] cterror;
     ModuleBase::timer::tick(this->classname,"sKG");
 }

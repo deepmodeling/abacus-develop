@@ -31,7 +31,6 @@
 template <typename T> void Input_Conv::parse_expression(const std::string &fn, std::vector<T> &vec)
 {
     ModuleBase::TITLE("Input_Conv", "parse_expression");
-    ModuleBase::timer::tick("Input_Conv", "parse_expression");
     int count = 0;
     std::string pattern("([0-9]+\\*[0-9.]+|[0-9,.]+)");
     std::vector<std::string> str;

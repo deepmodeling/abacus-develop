@@ -147,3 +147,8 @@ AddTest(
   TARGET base_tool_title
   SOURCES tool_title_test.cpp ../tool_title.cpp  ../global_variable.cpp
 )
+
+AddTest(
+  TARGET base_element_basis_index
+  SOURCES element_basis_index_test.cpp ../element_basis_index.cpp
+)

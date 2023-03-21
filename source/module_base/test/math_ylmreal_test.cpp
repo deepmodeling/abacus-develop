@@ -23,7 +23,8 @@
  *      - Ylm_Real
  *      - Ylm_Real2
  *      - rlylm 
- * 
+ *      - YlmRealTemplate (double and float)
+ *
  * - Tested functions of class Ylm
  *      - get_ylm_real
  *      - sph_harm
@@ -487,4 +488,26 @@ TEST_F(YlmRealTest, equality_gradient_test)
         EXPECT_LT(diffx,1e-8);
 	}
 
+}
+TEST_F(YlmRealTest,YlmRealTemplatefloat)
+{
+    ModuleBase::Vector3<float> *gg;
+    gg = new ModuleBase::Vector3<float>[ng];
+    gg[0].set(1.0,0.0,0.0);
+    gg[1].set(0.0,1.0,0.0);
+    gg[2].set(0.0,0.0,1.0);
+    gg[3].set(-1.0,-1.0,-1.0);
+    float*ccc;
+    ccc=new float[nylm*ng];
+    psi::DEVICE_CPU * cpu_ctx = {};
+    ModuleBase::YlmReal::Ylm_Real<float, psi::DEVICE_CPU>(cpu_ctx, nylm, ng, reinterpret_cast<float*>(gg), ccc);
+    for(int i=0;i<nylm;++i)
+    {
+        for(int j=0;j<ng;++j)
+        {
+            EXPECT_NEAR(ccc[i*ng+j],ref[i*ng+j],2.45e-06)  << "Ylm[" << i << "], example " << j << " not pass";
+        }
+    }
+    delete [] gg;
+    delete [] ccc;
 }

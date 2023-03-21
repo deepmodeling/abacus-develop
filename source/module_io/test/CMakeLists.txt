@@ -23,8 +23,8 @@ AddTest(
 )
 
 AddTest(
-  TARGET io_rwstream_test
-  SOURCES rwstream_test.cpp ../rwstream.cpp
+  TARGET binstream_test
+  SOURCES binstream_test.cpp ../binstream.cpp
 )
 
 AddTest(

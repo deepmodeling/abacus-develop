@@ -1,4 +1,4 @@
-Cubefile created from ABACUS SCF calculation
+Cubefile created from ABACUS SCF calculation. The inner loop is z index, followed by y index, x index in turn.
 1 (nspin) 1.42748 (fermi energy, in Ry)
 2 0.0 0.0 0.0
 20 -0.152500 0.000000 0.152500

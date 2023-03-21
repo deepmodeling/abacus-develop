@@ -3,7 +3,7 @@
 #include "module_base/global_variable.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_elecstate/occupy.h"
-
+#include "module_io/binstream.h"
 namespace ModuleESolver
 {
 
@@ -24,7 +24,7 @@ namespace ModuleESolver
 #define FACTOR      1.839939223835727e7
 template<typename FPTYPE, typename Device>
 void ESolver_KS_PW<FPTYPE, Device>::KG(const int nche_KG, const double fwhmin, const double wcut,
-        const double dw_in, const int times, ModuleBase::matrix& wg)
+        const double dw_in, const double dt_in, ModuleBase::matrix& wg)
 {
     //-----------------------------------------------------------
     //               KS conductivity
@@ -33,7 +33,7 @@ void ESolver_KS_PW<FPTYPE, Device>::KG(const int nche_KG, const double fwhmin, c
     int nw = ceil(wcut / dw_in);
     double dw = dw_in / ModuleBase::Ry_to_eV; // converge unit in eV to Ry
     double sigma = fwhmin / TWOSQRT2LN2 / ModuleBase::Ry_to_eV;
-    double dt = ModuleBase::PI / (dw * nw) / times; // unit in a.u., 1 a.u. = 4.837771834548454e-17 s
+    double dt = dt_in; // unit in a.u., 1 a.u. = 4.837771834548454e-17 s
     int nt = ceil(sqrt(20) / sigma / dt);
     cout << "nw: " << nw << " ; dw: " << dw * ModuleBase::Ry_to_eV << " eV" << endl;
     cout << "nt: " << nt << " ; dt: " << dt << " a.u.(ry^-1)" << endl;
@@ -82,13 +82,18 @@ void ESolver_KS_PW<FPTYPE, Device>:: jjcorr_ks(const int ik, const int nt, const
     const int nbands = GlobalV::NBANDS;
     const double ef = this->pelec->ef;
     const int npw = GlobalC::kv.ngk[ik];
+    const int reducenb2 = (nbands - 1) * nbands / 2;
+    bool gamma_only = false; //ABACUS do not support gamma_only yet.
     std::complex<double> *levc = &(this->psi[0](ik, 0, 0));
     complex<double> *prevc = new complex<double>[3 * npwx * nbands];
+    complex<double> *pij = new complex<double>[nbands * nbands];
+    double *pij2 = new double[reducenb2];
+    ModuleBase::GlobalFunc::ZEROS(pij2, reducenb2);
     // px|right>
     velop.act(this->psi, nbands*GlobalV::NPOL, levc, prevc);
     for (int id = 0; id < ndim; ++id)
     {
-        complex<double> *pij = new complex<double>[nbands * nbands];
+        
         zgemm_(&transc,
                &transn,
                &nbands,
@@ -103,47 +108,69 @@ void ESolver_KS_PW<FPTYPE, Device>:: jjcorr_ks(const int ik, const int nt, const
                pij,
                &nbands);
 #ifdef __MPI
-        MPI_Allreduce(MPI_IN_PLACE, pij, 2 * nbands * nbands, MPI_DOUBLE, MPI_SUM, POOL_WORLD);
+        MPI_Allreduce(MPI_IN_PLACE, pij, nbands * nbands, MPI_DOUBLE_COMPLEX, MPI_SUM, POOL_WORLD);
 #endif
-        int ntper = nt / GlobalV::NPROC_IN_POOL;
-        int itstart = ntper * GlobalV::RANK_IN_POOL;
-        if (nt % GlobalV::NPROC_IN_POOL > GlobalV::RANK_IN_POOL)
+        if(!gamma_only)
+        for (int ib = 0, ijb = 0; ib < nbands; ++ib)
         {
-            ntper++;
-            itstart += GlobalV::RANK_IN_POOL;
-        }
-        else
-        {
-            itstart += nt % GlobalV::NPROC_IN_POOL;
-        }
-
-        for (int it = itstart; it < itstart + ntper; ++it)
-        {
-            double tmct11 = 0;
-            double tmct12 = 0;
-            double tmct22 = 0;
-            double *enb = &(this->pelec->ekb(ik, 0));
-            for (int ib = 0; ib < nbands; ++ib)
+            for (int jb = ib + 1; jb < nbands; ++jb, ++ijb)
             {
-                double ei = enb[ib];
-                double fi = wg(ik, ib);
-                for (int jb = ib + 1; jb < nbands; ++jb)
-                {
-                    double ej = enb[jb];
-                    double fj = wg(ik, jb);
-                    double tmct = sin((ej - ei) * (it)*dt) * (fi - fj) * norm(pij[ib * nbands + jb]);
-                    tmct11 += tmct;
-                    tmct12 += -tmct * ((ei + ej) / 2 - ef);
-                    tmct22 += tmct * pow((ei + ej) / 2 - ef, 2);
-                }
+                pij2[ijb] += norm(pij[ib * nbands + jb]);
             }
-            ct11[it] += tmct11 / 2.0;
-            ct12[it] += tmct12 / 2.0;
-            ct22[it] += tmct22 / 2.0;
         }
-        delete[] pij;
     }
+
+    if(GlobalV::RANK_IN_POOL == 0)
+    {
+        int nkstot = GlobalC::kv.nkstot;
+        int ikglobal = GlobalC::kv.getik_global(ik);
+        stringstream ss;
+        ss<<GlobalV::global_out_dir<<"vmatrix"<<ikglobal+1<<".dat";
+        Binstream binpij(ss.str(), "w");
+        binpij<<8*reducenb2;
+        binpij.write(pij2, reducenb2);
+        binpij<<8*reducenb2;
+    }
+
+    int ntper = nt / GlobalV::NPROC_IN_POOL;
+    int itstart = ntper * GlobalV::RANK_IN_POOL;
+    if (nt % GlobalV::NPROC_IN_POOL > GlobalV::RANK_IN_POOL)
+    {
+        ntper++;
+        itstart += GlobalV::RANK_IN_POOL;
+    }
+    else
+    {
+        itstart += nt % GlobalV::NPROC_IN_POOL;
+    }
+
+    for (int it = itstart; it < itstart + ntper; ++it)
+    {
+        double tmct11 = 0;
+        double tmct12 = 0;
+        double tmct22 = 0;
+        double *enb = &(this->pelec->ekb(ik, 0));
+        for (int ib = 0, ijb = 0; ib < nbands; ++ib)
+        {
+            double ei = enb[ib];
+            double fi = wg(ik, ib);
+            for (int jb = ib + 1; jb < nbands; ++jb, ++ijb)
+            {
+                double ej = enb[jb];
+                double fj = wg(ik, jb);
+                double tmct = sin((ej - ei) * (it)*dt) * (fi - fj) * pij2[ijb];
+                tmct11 += tmct;
+                tmct12 += -tmct * ((ei + ej) / 2 - ef);
+                tmct22 += tmct * pow((ei + ej) / 2 - ef, 2);
+            }
+        }
+        ct11[it] += tmct11 / 2.0;
+        ct12[it] += tmct12 / 2.0;
+        ct22[it] += tmct22 / 2.0;
+    }
+    delete[] pij;
     delete[] prevc;
+    delete[] pij2;
     return;
 }
 
