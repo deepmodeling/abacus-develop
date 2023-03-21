@@ -10,8 +10,8 @@
 
 /**
  * - Tested Functions:
- *   - UpdatePosTaud
- *     - update_pos_taud(const double* pos)
+ *   - bcast()
+ *     - bcast input parameters to all processes
  */
 
 #define private public
