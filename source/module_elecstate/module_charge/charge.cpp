@@ -23,6 +23,7 @@
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "charge.h"
 #include "module_elecstate/magnetism.h"
+#include "module_elecstate/energy.h"
 #include "module_hamilt_pw/hamilt_pwdft/parallel_grid.h"
 #include "module_base/math_integral.h"
 #include "module_base/math_sphbes.h"
@@ -158,7 +159,7 @@ void Charge::init_rho()
 		std::stringstream ssc;
 		ssc << GlobalV::global_readin_dir << "SPIN" << is + 1 << "_CHG.cube";
 		GlobalV::ofs_running << ssc.str() << std::endl;
-		double ef_tmp;
+		double& ef_tmp = GlobalC::en.get_ef(is,GlobalV::TWO_EFERMI);
 		if (ModuleIO::read_rho(
 #ifdef __MPI
 			&(GlobalC::Pgrid),
@@ -175,18 +176,6 @@ void Charge::init_rho()
 			this->prenspin))
 		{
 			GlobalV::ofs_running << " Read in the charge density: " << ssc.str() << std::endl;
-			if(is==0 && GlobalV::NSPIN==2)
-			{
-				GlobalC::en.ef_up = ef_tmp;
-			}
-			else if(is==1 && GlobalV::NSPIN==2)
-			{
-				GlobalC::en.ef_dw = ef_tmp;
-			}
-			else
-			{
-				GlobalC::en.ef = ef_tmp;
-			}
 		}
 		else if(is > 0)
 		{

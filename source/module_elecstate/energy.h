@@ -107,6 +107,8 @@ class energy
 
     void set_exx();       // Peize Lin add 2016-12-03
 
+    double& get_ef(const int& is, const bool& two_fermi=false);
+
 };
 
 #endif //energy

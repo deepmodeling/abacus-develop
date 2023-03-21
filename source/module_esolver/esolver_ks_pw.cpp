@@ -443,19 +443,7 @@ namespace ModuleESolver
                 {
                     std::stringstream ssc;
                     ssc << GlobalV::global_out_dir << "tmp" << "_SPIN" << is + 1 << "_CHG.cube";
-                    double ef_tmp;
-                    if(is==0 && GlobalV::NSPIN==2)
-                    {
-                        ef_tmp = GlobalC::en.ef_up;
-                    }
-                    else if(is==1 && GlobalV::NSPIN==2)
-                    {
-                        ef_tmp = GlobalC::en.ef_dw;
-                    }
-                    else
-                    {
-                        ef_tmp = GlobalC::en.ef;
-                    }
+                    double& ef_tmp = GlobalC::en.get_ef(is,GlobalV::TWO_EFERMI);
                     ModuleIO::write_rho(
 #ifdef __MPI
                         GlobalC::bigpw->bz,
@@ -481,19 +469,7 @@ namespace ModuleESolver
                     {
                         std::stringstream ssc;
                         ssc << GlobalV::global_out_dir << "tmp" << "_SPIN" << is + 1 << "_TAU.cube";
-                        double ef_tmp;
-                        if(is==0 && GlobalV::NSPIN==2)
-                        {
-                            ef_tmp = GlobalC::en.ef_up;
-                        }
-                        else if(is==1 && GlobalV::NSPIN==2)
-                        {
-                            ef_tmp = GlobalC::en.ef_dw;
-                        }
-                        else
-                        {
-                            ef_tmp = GlobalC::en.ef;
-                        }
+                        double& ef_tmp = GlobalC::en.get_ef(is,GlobalV::TWO_EFERMI);
                         ModuleIO::write_rho(
 #ifdef __MPI
                             GlobalC::bigpw->bz,
@@ -538,19 +514,7 @@ namespace ModuleESolver
         {
             std::stringstream ssc;
             ssc << GlobalV::global_out_dir << "SPIN" << is + 1 << "_CHG.cube";
-            double ef_tmp;
-            if(is==0 && GlobalV::NSPIN==2)
-            {
-                ef_tmp = GlobalC::en.ef_up;
-            }
-            else if(is==1 && GlobalV::NSPIN==2)
-            {
-                ef_tmp = GlobalC::en.ef_dw;
-            }
-            else
-            {
-                ef_tmp = GlobalC::en.ef;
-            }
+            double& ef_tmp = GlobalC::en.get_ef(is,GlobalV::TWO_EFERMI);
             ModuleIO::write_rho(
 #ifdef __MPI
                 GlobalC::bigpw->bz,
@@ -583,19 +547,7 @@ namespace ModuleESolver
             {
                 std::stringstream ssc;
                 ssc << GlobalV::global_out_dir << "SPIN" << is + 1 << "_TAU.cube";
-                double ef_tmp;
-                if(is==0 && GlobalV::NSPIN==2)
-                {
-                    ef_tmp = GlobalC::en.ef_up;
-                }
-                else if(is==1 && GlobalV::NSPIN==2)
-                {
-                    ef_tmp = GlobalC::en.ef_dw;
-                }
-                else
-                {
-                    ef_tmp = GlobalC::en.ef;
-                }
+                double& ef_tmp = GlobalC::en.get_ef(is,GlobalV::TWO_EFERMI);
                 ModuleIO::write_rho(
 #ifdef __MPI
                     GlobalC::bigpw->bz,

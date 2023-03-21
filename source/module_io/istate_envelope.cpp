@@ -101,19 +101,7 @@ void IState_Envelope::begin(const psi::Psi<double>* psid, Local_Orbital_wfc& low
                 pes->charge->save_rho_before_sum_band(); //xiaohui add 2014-12-09
                 std::stringstream ss;
                 ss << GlobalV::global_out_dir << "BAND" << ib + 1 << "_s_" << is + 1 << "_ENV.cube";
-                double ef_tmp;
-                if(is==0 && GlobalV::NSPIN==2)
-                {
-                    ef_tmp = GlobalC::en.ef_up;
-                }
-                else if(is==1 && GlobalV::NSPIN==2)
-                {
-                    ef_tmp = GlobalC::en.ef_dw;
-                }
-                else
-                {
-                    ef_tmp = GlobalC::en.ef;
-                }
+                double& ef_tmp = GlobalC::en.get_ef(is,GlobalV::TWO_EFERMI);
                 ModuleIO::write_rho(
 #ifdef __MPI
                     GlobalC::bigpw->bz,
@@ -243,19 +231,7 @@ void IState_Envelope::begin(const psi::Psi<std::complex<double>>* psi, Local_Orb
 
                 std::stringstream ss;
                 ss << GlobalV::global_out_dir << "BAND" << ib + 1 << "_k_" << ik / nspin0 + 1 << "_s_" << ispin + 1 << "_ENV.cube";
-                double ef_tmp;
-                if(ispin==0 && GlobalV::NSPIN==2)
-                {
-                    ef_tmp = GlobalC::en.ef_up;
-                }
-                else if(ispin==1 && GlobalV::NSPIN==2)
-                {
-                    ef_tmp = GlobalC::en.ef_dw;
-                }
-                else
-                {
-                    ef_tmp = GlobalC::en.ef;
-                }
+                double& ef_tmp = GlobalC::en.get_ef(ispin,GlobalV::TWO_EFERMI);
                 ModuleIO::write_rho(
 #ifdef __MPI
                     GlobalC::bigpw->bz,

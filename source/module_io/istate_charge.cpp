@@ -141,19 +141,7 @@ void IState_Charge::begin(Gint_Gamma &gg, elecstate::ElecState* pelec)
 			for(int is=0; is<GlobalV::NSPIN; is++)
 			{
 				ssc<<"_SPIN"<<is <<"_CHG.cube";
-				double ef_tmp;
-				if(is==0 && GlobalV::NSPIN==2)
-				{
-				    ef_tmp = GlobalC::en.ef_up;
-				}
-				else if(is==1 && GlobalV::NSPIN==2)
-				{
-				    ef_tmp = GlobalC::en.ef_dw;
-				}
-				else
-				{
-				    ef_tmp = GlobalC::en.ef;
-				}
+				double& ef_tmp = GlobalC::en.get_ef(is,GlobalV::TWO_EFERMI);
 				ModuleIO::write_rho(
 #ifdef __MPI
 				    GlobalC::bigpw->bz,

@@ -577,6 +577,26 @@ void energy::cal_bandgap_updw(const elecstate::ElecState* pelec)
 	this->bandgap_dw = lumo_dw - homo_dw;
 }
 
+double& energy::get_ef(const int& is, const bool& two_efermi)
+{
+	if(!two_efermi)
+	{
+		return this->ef;
+	}
+	else if(is==0)
+	{
+		return this->ef_up;
+	}
+	else if(is==1)
+	{
+		return this->ef_dw;
+	}
+	else
+	{
+		ModuleBase::WARNING_QUIT("energy","Please check NSPIN when TWO_EFERMI is true");
+	}
+}
+
 // Peize Lin add 2016-12-03
 #ifdef __EXX
 #ifdef __LCAO
