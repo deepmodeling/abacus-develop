@@ -55,7 +55,7 @@ void Input::Init(const std::string &fn)
     // NAME : Run::make_dir( dir name : OUT.suffix)
     //----------------------------------------------------------
     bool out_dir = false;
-    if(out_mat_hs2 || out_mat_r || out_mat_t || out_mat_dh) out_dir = true;
+    if(!out_app_flag && (out_mat_hs2 || out_mat_r || out_mat_t || out_mat_dh)) out_dir = true;
     ModuleBase::Global_File::make_dir_out(this->suffix,
                                           this->calculation,
                                           out_dir,
@@ -301,6 +301,7 @@ void Input::Default(void)
     out_mat_hs2 = 0; // LiuXh add 2019-07-15
     out_mat_t = 0;
     out_hs2_interval = 1;
+    out_app_flag = true;
     out_mat_r = 0; // jingan add 2019-8-14
     out_wfc_lcao = false;
     out_alllog = false;
@@ -1242,6 +1243,10 @@ bool Input::Read(const std::string &fn)
         else if (strcmp("out_hs2_interval", word) == 0)
         {
             read_value(ifs, out_hs2_interval);
+        }
+        else if (strcmp("out_app_flag", word) == 0)
+        {
+            read_value(ifs, out_app_flag);
         }
         else if (strcmp("out_mat_r", word) == 0)
         {
@@ -2821,6 +2826,8 @@ void Input::Bcast()
     Parallel_Common::bcast_bool(out_wfc_lcao);
     Parallel_Common::bcast_bool(out_alllog);
     Parallel_Common::bcast_bool(out_element_info);
+    Parallel_Common::bcast_bool(out_app_flag);
+    Parallel_Common::bcast_int(out_hs2_interval);
 
     Parallel_Common::bcast_double(dos_emin_ev);
     Parallel_Common::bcast_double(dos_emax_ev);

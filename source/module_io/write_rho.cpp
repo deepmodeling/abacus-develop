@@ -21,19 +21,15 @@ void ModuleIO::write_rho(
 	const int &precision)
 {
 	ModuleBase::TITLE("ModuleIO","write_rho");
-
+	
 	if (GlobalV::out_chg==0) 
 	{
 		return;
 	}
-	else if(iter % GlobalV::out_chg != 0) 
-	{
-		return; // mohan add 2010-05-22
-	}
-	
+
 	time_t start, end;
 	std::ofstream ofs_cube;
-	
+  
 	if(GlobalV::MY_RANK==0)
 	{
 		start = time(NULL);

@@ -426,13 +426,9 @@ namespace ModuleESolver
         GlobalC::en.calculate_etot();
         //We output it for restarting the scf.
         bool print = false;
-        if (this->out_freq_elec == 0)
+        if (this->out_freq_elec && iter % this->out_freq_elec == 0)
         {
-            if (this->conv_elec) print = true;
-        }
-        else
-        {
-            if (iter % this->out_freq_elec == 0 || this->conv_elec) print = true;
+            print = true;
         }
 
         if (print)
@@ -510,30 +506,9 @@ namespace ModuleESolver
         // Temporary liuyu add 2022-11-07
         this->CE.update_all_pos(GlobalC::ucell);
 
-        for (int is = 0; is < GlobalV::NSPIN; is++)
+        if (GlobalV::out_pot == 1) // output the effective potential, sunliang 2023-03-16
         {
-            std::stringstream ssc;
-            ssc << GlobalV::global_out_dir << "SPIN" << is + 1 << "_CHG.cube";
-            double& ef_tmp = GlobalC::en.get_ef(is,GlobalV::TWO_EFERMI);
-            ModuleIO::write_rho(
-#ifdef __MPI
-                GlobalC::bigpw->bz,
-                GlobalC::bigpw->nbz,
-                GlobalC::rhopw->nplane,
-                GlobalC::rhopw->startz_current,
-#endif
-                this->pelec->charge->rho_save[is],
-                is,
-                GlobalV::NSPIN,
-                0,
-                ssc.str(),
-                GlobalC::rhopw->nx,
-                GlobalC::rhopw->ny,
-                GlobalC::rhopw->nz,
-                ef_tmp,
-                &(GlobalC::ucell));
-
-            if (GlobalV::out_pot == 1) // output the effective potential, sunliang 2023-03-16
+            for (int is = 0; is < GlobalV::NSPIN; is++)
             {
                 int precision = 3; // be consistent with esolver_ks_lcao.cpp
                 std::stringstream ssp;
@@ -541,12 +516,13 @@ namespace ModuleESolver
                 this->pelec->pot->write_potential(is, 0, ssp.str(), this->pelec->pot->get_effective_v(), precision);
             }
         }
-        if(XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
+
+        if (GlobalV::out_chg)
         {
             for (int is = 0; is < GlobalV::NSPIN; is++)
             {
                 std::stringstream ssc;
-                ssc << GlobalV::global_out_dir << "SPIN" << is + 1 << "_TAU.cube";
+                ssc << GlobalV::global_out_dir << "SPIN" << is + 1 << "_CHG.cube";
                 double& ef_tmp = GlobalC::en.get_ef(is,GlobalV::TWO_EFERMI);
                 ModuleIO::write_rho(
 #ifdef __MPI
@@ -555,7 +531,7 @@ namespace ModuleESolver
                     GlobalC::rhopw->nplane,
                     GlobalC::rhopw->startz_current,
 #endif
-                    this->pelec->charge->kin_r_save[is],
+                    this->pelec->charge->rho_save[is],
                     is,
                     GlobalV::NSPIN,
                     0,
@@ -566,6 +542,39 @@ namespace ModuleESolver
                     ef_tmp,
                     &(GlobalC::ucell));
             }
+            if(XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
+            {
+                for (int is = 0; is < GlobalV::NSPIN; is++)
+                {
+                    std::stringstream ssc;
+                    ssc << GlobalV::global_out_dir << "SPIN" << is + 1 << "_TAU.cube";
+                    double& ef_tmp = GlobalC::en.get_ef(is,GlobalV::TWO_EFERMI);
+                    ModuleIO::write_rho(
+#ifdef __MPI
+                        GlobalC::bigpw->bz,
+                        GlobalC::bigpw->nbz,
+                        GlobalC::rhopw->nplane,
+                        GlobalC::rhopw->startz_current,
+#endif
+                        this->pelec->charge->kin_r_save[is],
+                        is,
+                        GlobalV::NSPIN,
+                        0,
+                        ssc.str(),
+                        GlobalC::rhopw->nx,
+                        GlobalC::rhopw->ny,
+                        GlobalC::rhopw->nz,
+                        ef_tmp,
+                        &(GlobalC::ucell));      
+                }
+            }
+        }
+
+        if (GlobalC::wf.out_wfc_pw == 1 || GlobalC::wf.out_wfc_pw == 2)
+        {
+            std::stringstream ssw;
+            ssw << GlobalV::global_out_dir << "WAVEFUNC";
+            ModuleIO::write_wfc_pw(ssw.str(), this->psi[0], &GlobalC::kv, GlobalC::wfcpw);
         }
         if (this->conv_elec)
         {

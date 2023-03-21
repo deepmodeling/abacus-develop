@@ -716,59 +716,24 @@ void ESolver_KS_LCAO::eachiterfinish(int iter)
             GlobalC::restart.save_disk(*this->UHM.LM, "charge", is, pelec->charge->rho);
         }
     }
+
     //-----------------------------------
     // output charge density for tmp
     //-----------------------------------
-    for (int is = 0; is < GlobalV::NSPIN; is++)
+    bool print = false;
+    if (this->out_freq_elec && iter % this->out_freq_elec == 0)
     {
-        const int precision = 3;
-
-        std::stringstream ssc;
-        ssc << GlobalV::global_out_dir << "tmp"
-            << "_SPIN" << is + 1 << "_CHG.cube";
-        double& ef_tmp = GlobalC::en.get_ef(is,GlobalV::TWO_EFERMI);
-        ModuleIO::write_rho(
-#ifdef __MPI
-            GlobalC::bigpw->bz,
-            GlobalC::bigpw->nbz,
-            GlobalC::rhopw->nplane,
-            GlobalC::rhopw->startz_current,
-#endif
-            pelec->charge->rho_save[is],
-            is,
-            GlobalV::NSPIN,
-            iter,
-            ssc.str(),
-            GlobalC::rhopw->nx,
-            GlobalC::rhopw->ny,
-            GlobalC::rhopw->nz,
-            ef_tmp,
-            &(GlobalC::ucell),
-            precision);
-
-        std::stringstream ssd;
-
-        if (GlobalV::GAMMA_ONLY_LOCAL)
-        {
-            ssd << GlobalV::global_out_dir << "tmp"
-                << "_SPIN" << is + 1 << "_DM";
-        }
-        else
-        {
-            ssd << GlobalV::global_out_dir << "tmp"
-                << "_SPIN" << is + 1 << "_DM_R";
-        }
-        ModuleIO::write_dm(is, iter, ssd.str(), precision, this->LOC.out_dm, this->LOC.DM);
+        print = true;
     }
 
-    if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
+    if (print)
     {
-        const int precision = 3;
         for (int is = 0; is < GlobalV::NSPIN; is++)
         {
+            const int precision = 3;
             std::stringstream ssc;
             ssc << GlobalV::global_out_dir << "tmp"
-                << "_SPIN" << is + 1 << "_TAU.cube";
+                << "_SPIN" << is + 1 << "_CHG.cube";
             double& ef_tmp = GlobalC::en.get_ef(is,GlobalV::TWO_EFERMI);
             ModuleIO::write_rho(
 #ifdef __MPI
@@ -777,7 +742,7 @@ void ESolver_KS_LCAO::eachiterfinish(int iter)
                 GlobalC::rhopw->nplane,
                 GlobalC::rhopw->startz_current,
 #endif
-                pelec->charge->kin_r_save[is],
+                pelec->charge->rho_save[is],
                 is,
                 GlobalV::NSPIN,
                 iter,
@@ -788,6 +753,49 @@ void ESolver_KS_LCAO::eachiterfinish(int iter)
                 ef_tmp,
                 &(GlobalC::ucell),
                 precision);
+
+            std::stringstream ssd;
+            if (GlobalV::GAMMA_ONLY_LOCAL)
+            {
+                ssd << GlobalV::global_out_dir << "tmp"
+                    << "_SPIN" << is + 1 << "_DM";
+            }
+            else
+            {
+                ssd << GlobalV::global_out_dir << "tmp"
+                    << "_SPIN" << is + 1 << "_DM_R";
+            }
+            ModuleIO::write_dm(is, iter, ssd.str(), precision, this->LOC.out_dm, this->LOC.DM);
+        }
+
+        if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
+        {
+            const int precision = 3;
+            for (int is = 0; is < GlobalV::NSPIN; is++)
+            {
+                std::stringstream ssc;
+                ssc << GlobalV::global_out_dir << "tmp"
+                    << "_SPIN" << is + 1 << "_TAU.cube";
+                double& ef_tmp = GlobalC::en.get_ef(is,GlobalV::TWO_EFERMI);
+                ModuleIO::write_rho(
+#ifdef __MPI
+                    GlobalC::bigpw->bz,
+                    GlobalC::bigpw->nbz,
+                    GlobalC::rhopw->nplane,
+                    GlobalC::rhopw->startz_current,
+#endif
+                    pelec->charge->kin_r_save[is],
+                    is,
+                    GlobalV::NSPIN,
+                    iter,
+                    ssc.str(),
+                    GlobalC::rhopw->nx,
+                    GlobalC::rhopw->ny,
+                    GlobalC::rhopw->nz,
+                    ef_tmp,
+                    &(GlobalC::ucell),
+                    precision);
+            }
         }
     }
 
@@ -800,16 +808,9 @@ void ESolver_KS_LCAO::afterscf(const int istep)
     // Temporary liuyu add 2022-11-07
     CE.update_all_pos(GlobalC::ucell);
 
-    // if (this->conv_elec || iter == GlobalV::SCF_NMAX)
-    // {
-    //--------------------------------------
-    // 1. output charge density for converged,
-    // 0 means don't need to consider iter,
-    //--------------------------------------
-
-    double** dm2d;
     if (this->LOC.out_dm1 == 1)
     {
+        double** dm2d;
         dm2d = new double*[GlobalV::NSPIN];
         for (int is = 0; is < GlobalV::NSPIN; is++)
         {
@@ -817,62 +818,27 @@ void ESolver_KS_LCAO::afterscf(const int istep)
             ModuleBase::GlobalFunc::ZEROS(dm2d[is], this->LOC.ParaV->nnr);
         }
         this->LOC.cal_dm_R(this->LOC.dm_k, this->RA, dm2d);
-    }
 
-    for (int is = 0; is < GlobalV::NSPIN; is++)
-    {
-        const int precision = 3;
-        std::stringstream ssc;
-        ssc << GlobalV::global_out_dir << "SPIN" << is + 1 << "_CHG.cube";
-        double& ef_tmp = GlobalC::en.get_ef(is,GlobalV::TWO_EFERMI);
-        ModuleIO::write_rho(
-#ifdef __MPI
-            GlobalC::bigpw->bz,
-            GlobalC::bigpw->nbz,
-            GlobalC::rhopw->nplane,
-            GlobalC::rhopw->startz_current,
-#endif
-            pelec->charge->rho_save[is],
-            is,
-            GlobalV::NSPIN,
-            0,
-            ssc.str(),
-            GlobalC::rhopw->nx,
-            GlobalC::rhopw->ny,
-            GlobalC::rhopw->nz,
-            ef_tmp,
-            &(GlobalC::ucell),
-            precision);
-
-        std::stringstream ssd;
-        if (GlobalV::GAMMA_ONLY_LOCAL)
-        {
-            ssd << GlobalV::global_out_dir << "SPIN" << is + 1 << "_DM";
-        }
-        else
-        {
-            ssd << GlobalV::global_out_dir << "SPIN" << is + 1 << "_DM_R";
-        }
-        ModuleIO::write_dm(is, 0, ssd.str(), precision, this->LOC.out_dm, this->LOC.DM);
-        if (this->LOC.out_dm1 == 1)
+        for (int is = 0; is < GlobalV::NSPIN; is++)
         {
             ModuleIO::write_dm1(is, istep, dm2d, this->LOC.ParaV, this->LOC.DMR_sparse);
         }
 
-        if (GlobalV::out_pot == 1) // LiuXh add 20200701
+        for (int is = 0; is < GlobalV::NSPIN; is++)
         {
-            std::stringstream ssp;
-            ssp << GlobalV::global_out_dir << "SPIN" << is + 1 << "_POT.cube";
-            this->pelec->pot->write_potential(is, 0, ssp.str(), this->pelec->pot->get_effective_v(), precision);
+            delete[] dm2d[is];
         }
+
+        delete[] dm2d;
     }
 
-    if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
+    if (GlobalV::out_chg)
     {
         for (int is = 0; is < GlobalV::NSPIN; is++)
         {
             std::stringstream ssc;
-            ssc << GlobalV::global_out_dir << "SPIN" << is + 1 << "_TAU.cube";
+            const int precision = 3;
+            ssc << GlobalV::global_out_dir << "SPIN" << is + 1 << "_CHG.cube";
             double& ef_tmp = GlobalC::en.get_ef(is,GlobalV::TWO_EFERMI);
             ModuleIO::write_rho(
 #ifdef __MPI
@@ -881,7 +847,7 @@ void ESolver_KS_LCAO::afterscf(const int istep)
                 GlobalC::rhopw->nplane,
                 GlobalC::rhopw->startz_current,
 #endif
-                pelec->charge->kin_r_save[is],
+                pelec->charge->rho_save[is],
                 is,
                 GlobalV::NSPIN,
                 0,
@@ -890,17 +856,58 @@ void ESolver_KS_LCAO::afterscf(const int istep)
                 GlobalC::rhopw->ny,
                 GlobalC::rhopw->nz,
                 ef_tmp,
-                &(GlobalC::ucell));
+                &(GlobalC::ucell),
+                precision);
+        }
+        if(XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
+        {
+            for (int is = 0; is < GlobalV::NSPIN; is++)
+            {
+                std::stringstream ssc;
+                ssc << GlobalV::global_out_dir << "SPIN" << is + 1 << "_TAU.cube";
+                double& ef_tmp = GlobalC::en.get_ef(is,GlobalV::TWO_EFERMI);
+                ModuleIO::write_rho(
+#ifdef __MPI
+                    GlobalC::bigpw->bz,
+                    GlobalC::bigpw->nbz,
+                    GlobalC::rhopw->nplane,
+                    GlobalC::rhopw->startz_current,
+#endif
+                    pelec->charge->kin_r_save[is],
+                    is,
+                    GlobalV::NSPIN,
+                    0,
+                    ssc.str(),
+                    GlobalC::rhopw->nx,
+                    GlobalC::rhopw->ny,
+                    GlobalC::rhopw->nz,
+                    ef_tmp,
+                    &(GlobalC::ucell));
+            }
         }
     }
 
-    if (this->LOC.out_dm1 == 1)
+    if (this->LOC.out_dm)
     {
         for (int is = 0; is < GlobalV::NSPIN; is++)
         {
-            delete[] dm2d[is];
+            const int precision = 3;
+
+            std::stringstream ssd;
+            std::stringstream ssd_tmp;
+            if (GlobalV::GAMMA_ONLY_LOCAL)
+            {
+                ssd_tmp << GlobalV::global_out_dir << "tmp_SPIN" << is + 1 << "_DM";
+                ssd << GlobalV::global_out_dir << "SPIN" << is + 1 << "_DM";
+            }
+            else
+            {
+                ssd_tmp << GlobalV::global_out_dir << "tmp_SPIN" << is + 1 << "_DM_R";
+                ssd << GlobalV::global_out_dir << "SPIN" << is + 1 << "_DM_R";
+            }
+            std::remove(ssd_tmp.str().c_str());
+            ModuleIO::write_dm(is, 0, ssd.str(), precision, this->LOC.out_dm, this->LOC.DM);
         }
-        delete[] dm2d;
     }
 
 #ifdef __EXX
@@ -913,7 +920,18 @@ void ESolver_KS_LCAO::afterscf(const int istep)
             GlobalC::exx_lri_complex.write_Hexxs(file_name_exx);
     }
 #endif
-    if (GlobalV::out_pot == 2)
+
+    if (GlobalV::out_pot == 1)
+    {
+        const int precision = 3;
+        for (int is = 0; is < GlobalV::NSPIN; is++)
+        {
+            std::stringstream ssp;
+            ssp << GlobalV::global_out_dir << "SPIN" << is + 1 << "_POT.cube";
+            this->pelec->pot->write_potential(is, 0, ssp.str(), this->pelec->pot->get_effective_v(), precision);
+        }
+    }
+    else if (GlobalV::out_pot == 2)
     {
         std::stringstream ssp;
         std::stringstream ssp_ave;

@@ -516,6 +516,7 @@ void Input_Conv::Convert(void)
     GlobalC::en.out_dos = INPUT.out_dos;
     GlobalC::en.out_band = INPUT.out_band;
     GlobalC::en.out_proj_band = INPUT.out_proj_band;
+    GlobalV::out_app_flag = INPUT.out_app_flag;
 
     GlobalV::out_bandgap = INPUT.out_bandgap; // QO added for bandgap printing
 #ifdef __LCAO

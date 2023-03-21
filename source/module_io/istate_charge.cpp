@@ -140,7 +140,7 @@ void IState_Charge::begin(Gint_Gamma &gg, elecstate::ElecState* pelec)
 			// 0 means definitely output charge density.
 			for(int is=0; is<GlobalV::NSPIN; is++)
 			{
-				ssc<<"_SPIN"<<is <<"_CHG.cube";
+				ssc<<"_SPIN"<<is<<"_CHG.cube";
 				double& ef_tmp = GlobalC::en.get_ef(is,GlobalV::TWO_EFERMI);
 				ModuleIO::write_rho(
 #ifdef __MPI
