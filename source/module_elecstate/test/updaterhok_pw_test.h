@@ -54,7 +54,7 @@ pseudopot_cell_vnl::pseudopot_cell_vnl(){}
 pseudopot_cell_vnl::~pseudopot_cell_vnl(){}
 energy::energy(){}
 energy::~energy(){}
-double& energy::get_ef(const int&is, const bool& two_efermi){}
+double& energy::get_ef(const int&is, const bool& two_efermi){return this->ef;} //just mock
 
 
 XC_Functional::XC_Functional(){}
