@@ -185,10 +185,6 @@ public:
     void update_vel(const ModuleBase::Vector3<double>* vel_in);
     void periodic_boundary_adjustment();
     void bcast_atoms_tau();
-    void save_cartesian_position(double* pos)const;
-    void save_cartesian_position(ModuleBase::Vector3<double>* pos)const;
-    void save_cartesian_position_original(double* pos)const;
-    void save_cartesian_position_original(ModuleBase::Vector3<double>* pos)const;
     bool judge_big_cell(void)const;
 
     void update_stress(ModuleBase::matrix &scs); //updates stress

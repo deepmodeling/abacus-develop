@@ -29,6 +29,16 @@ public:
     virtual void second_half();
 
     /**
+     * @brief perform one step update of pos due to atomic velocity
+     */
+    virtual void update_pos();
+
+    /**
+     * @brief perform half-step update of vel due to atomic force
+     */
+    virtual void update_vel(const ModuleBase::Vector3<double>* force);
+
+    /**
      * @brief output MD information such as energy, temperature, and pressure
      * @param ofs determine the output files
      * @param cal_stress whether calculate and output stress

@@ -238,7 +238,7 @@ void Nose_Hoover::first_half()
     }
 
     // perform half-step update of vel due to atomic force
-    update_vel();
+    MDrun::update_vel(force);
 
     if(npt_flag)
     {
@@ -247,7 +247,7 @@ void Nose_Hoover::first_half()
     }
 
     // perform one step update of pos due to atomic velocity
-    update_pos();
+    MDrun::update_pos();
 
     if(npt_flag)
     {
@@ -264,7 +264,7 @@ void Nose_Hoover::second_half()
     ModuleBase::timer::tick("Nose_Hoover", "second_half");
 
     // perform half-step update of vel due to atomic force
-    update_vel();
+    MDrun::update_vel(force);
 
     if(npt_flag)
     {
@@ -700,27 +700,6 @@ void Nose_Hoover::vel_baro()
     }
 }
 
-void Nose_Hoover::update_vel()
-{
-    if(GlobalV::MY_RANK==0)
-    {
-        for(int i=0; i<ucell.nat; ++i)
-        {
-            for(int k=0; k<3; ++k)
-            {
-                if(ionmbl[i][k])
-                {
-                    vel[i][k] += 0.5*force[i][k]*mdp.md_dt/allmass[i];
-                }
-            }
-        }
-    }
-
-#ifdef __MPI
-    MPI_Bcast(vel , ucell.nat*3,MPI_DOUBLE,0,MPI_COMM_WORLD);
-#endif
-}
-
 void Nose_Hoover::update_volume()
 {
     double factor;
@@ -815,35 +794,6 @@ void Nose_Hoover::update_volume()
     // reset ucell and pos due to change of lattice
     ucell.setup_cell_after_vc(GlobalV::ofs_running);
 }
-
-void Nose_Hoover::update_pos()
-{
-    if(GlobalV::MY_RANK==0)
-    {
-        for(int i=0; i<ucell.nat; ++i)
-        {
-            for(int k=0; k<3; ++k)
-            {
-                if(ionmbl[i][k])
-                {
-                    pos[i][k] = vel[i][k] * mdp.md_dt / ucell.lat0;
-                }
-                else
-                {
-                    pos[i][k] = 0;
-                }
-            }
-            pos[i] = pos[i] * ucell.GT;
-        }
-    }
-
-#ifdef __MPI
-    MPI_Bcast(pos , ucell.nat*3,MPI_DOUBLE,0,MPI_COMM_WORLD);
-#endif
-
-    ucell.update_pos_taud(pos);
-}
-
 
 void Nose_Hoover::target_stress()
 {
