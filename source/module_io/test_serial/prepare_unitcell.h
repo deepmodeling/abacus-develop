@@ -66,11 +66,11 @@ public:
 	int ntype;
 	int atomic_index;
 
-	std::unique_ptr<UnitCell> SetUcellInfo()
+	UnitCell* SetUcellInfo()
 	{
 		//basic info
 		this->ntype = this->elements.size();
-		std::unique_ptr<UnitCell> ucell(new UnitCell);
+		UnitCell* ucell = new UnitCell;
 		ucell->setup(this->latname,
 				this->ntype,
 				this->lmaxmax,
