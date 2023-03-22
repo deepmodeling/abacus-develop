@@ -293,12 +293,6 @@ void UnitCell::set_iat2itia(void)
     return;
 }
 
-// Note : note here we are not keeping track of 'tau_original', namely
-// the Cartesian coordinate before periodic adjustment
-// The reason is that this is only used in relaxation
-// for which we are not using 2nd order extrapolation
-// and tau_original is only relevant for 2nd order extrapolation
-// and is only meaningful in the context of MD
 void UnitCell::update_pos_taud(double* posd_in)
 {
     int iat = 0;
@@ -328,10 +322,8 @@ void UnitCell::update_pos_taud(const ModuleBase::Vector3<double>* posd_in)
         {
             for ( int ik = 0; ik < 3; ++ik)
             {
-                if (atom->mbl[ia][ik])
-                {
-                    atom->taud[ia][ik] += posd_in[ia][ik];
-                }
+                atom->taud[ia][ik] += posd_in[ia][ik];
+                atom->dis[ia][ik] = posd_in[ia][ik];
             }
         }
     }

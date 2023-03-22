@@ -91,28 +91,31 @@ void Ions_Move_Basic::move_atoms(double *move)
 		assert( iat == GlobalC::ucell.nat );
 	}
 
-	const double move_threshold = 1.0e-10;
+    int iat = 0;
+    const double move_threshold = 1.0e-10;
     ModuleBase::Vector3<double> *move_ion = new ModuleBase::Vector3<double> [GlobalC::ucell.nat];
-    for (int i = 0; i < GlobalC::ucell.nat; ++i)
+    for(int it = 0; it < GlobalC::ucell.ntype; it++)
     {
-        for (int k = 0; k < 3; ++k)
+        Atom* atom = &GlobalC::ucell.atoms[it];
+        for(int ia = 0; ia < atom->na; ia++)
         {
-            if( abs(move[3*i + k]) > move_threshold )
+            for (int k = 0; k < 3; ++k)
             {
-                move_ion[i][k] = move[3*i + k] / GlobalC::ucell.lat0;
+                if( abs(move[3*iat + k]) > move_threshold && atom->mbl[ia][k])
+                {
+                    move_ion[iat][k] = move[3*iat + k] / GlobalC::ucell.lat0;
+                }
+                else
+                {
+                    move_ion[iat][k] = 0;
+                }
             }
-            else
-            {
-                move_ion[i][k] = 0;
-            }
+            move_ion[iat] = move_ion[iat] * GlobalC::ucell.GT;
+            iat++;
         }
-        move_ion[i] = move_ion[i] * GlobalC::ucell.GT;
     }
-	GlobalC::ucell.update_pos_taud(move_ion);
-
-	GlobalC::ucell.periodic_boundary_adjustment();
-	
-	GlobalC::ucell.bcast_atoms_tau();
+    assert( iat == GlobalC::ucell.nat );
+    GlobalC::ucell.update_pos_taud(move_ion);
 
 	//--------------------------------------------
 	// Print out the structure file.

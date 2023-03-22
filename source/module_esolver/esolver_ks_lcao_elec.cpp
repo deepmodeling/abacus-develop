@@ -268,9 +268,7 @@ namespace ModuleESolver
             }
             else
             {
-                this->CE.update_istep();
-                // this->CE.update_all_pos(GlobalC::ucell);
-                this->CE.save_pos_next(GlobalC::ucell);
+                this->CE.update_all_dis(GlobalC::ucell);
                 this->CE.extrapolate_charge(this->pelec->charge);
                 if(GlobalC::ucell.cell_parameter_updated && GlobalV::md_prec_level == 0)
                 {
@@ -285,10 +283,8 @@ namespace ModuleESolver
             {
                 GlobalV::ofs_running << " Setup the extrapolated charge." << std::endl;
                 // charge extrapolation if istep>0.
-                CE.update_istep();
-                CE.update_all_pos(GlobalC::ucell);
-                CE.extrapolate_charge(pelec->charge);
-                CE.save_pos_next(GlobalC::ucell);
+                this->CE.update_all_dis(GlobalC::ucell);
+                this->CE.extrapolate_charge(this->pelec->charge);
 
                 GlobalV::ofs_running << " Setup the Vl+Vh+Vxc according to new structure factor and new charge." << std::endl;
                 // calculate the new potential accordint to

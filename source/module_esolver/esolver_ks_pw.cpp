@@ -241,9 +241,7 @@ namespace ModuleESolver
             }
             else
             {
-                // this->CE.update_all_pos(GlobalC::ucell);
-                this->CE.update_istep();
-                this->CE.save_pos_next(GlobalC::ucell);
+                this->CE.update_all_dis(GlobalC::ucell);
                 this->CE.extrapolate_charge(this->pelec->charge);
                 if(GlobalC::ucell.cell_parameter_updated && GlobalV::md_prec_level == 0)
                 {
@@ -263,10 +261,8 @@ namespace ModuleESolver
             {
                 GlobalV::ofs_running << " Setup the extrapolated charge." << std::endl;
                 // charge extrapolation if istep>0.
-                this->CE.update_istep();
-                this->CE.update_all_pos(GlobalC::ucell);
+                this->CE.update_all_dis(GlobalC::ucell);
                 this->CE.extrapolate_charge(this->pelec->charge);
-                this->CE.save_pos_next(GlobalC::ucell);
 
                 GlobalV::ofs_running << " Setup the Vl+Vh+Vxc according to new structure factor and new charge." << std::endl;
                 // calculate the new potential accordint to
@@ -551,9 +547,6 @@ namespace ModuleESolver
     template<typename FPTYPE, typename Device>
     void ESolver_KS_PW<FPTYPE, Device>::afterscf(const int istep)
     {
-        // Temporary liuyu add 2022-11-07
-        this->CE.update_all_pos(GlobalC::ucell);
-
         if (GlobalV::out_pot == 1) // output the effective potential, sunliang 2023-03-16
         {
             for (int is = 0; is < GlobalV::NSPIN; is++)

@@ -830,9 +830,6 @@ void ESolver_KS_LCAO::eachiterfinish(int iter)
 
 void ESolver_KS_LCAO::afterscf(const int istep)
 {
-    // Temporary liuyu add 2022-11-07
-    CE.update_all_pos(GlobalC::ucell);
-
     if (this->LOC.out_dm1 == 1)
     {
         double** dm2d;
