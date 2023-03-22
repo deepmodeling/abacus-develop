@@ -24,6 +24,12 @@ add_test(NAME io_input_test_para4
 )
 
 AddTest(
+  TARGET io_input_conv
+  LIBS ${math_libs} base device
+  SOURCES input_conv_test.cpp ../input.cpp ../input_conv.cpp
+)
+
+AddTest(
   TARGET io_winput_test
   LIBS ${math_libs} base device
   SOURCES winput_test.cpp ../winput.cpp
