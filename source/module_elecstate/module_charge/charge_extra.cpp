@@ -297,6 +297,9 @@ void Charge_Extra::find_alpha_and_beta(void)
         }
     }
 
+    GlobalV::ofs_running << " alpha = " << alpha << std::endl;
+    GlobalV::ofs_running << " beta = " << beta << std::endl;
+
     return;
 }
 
