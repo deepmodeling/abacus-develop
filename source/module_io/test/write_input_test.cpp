@@ -568,7 +568,7 @@ TEST_F(write_input,print)
     getline(ifs,output);
     EXPECT_THAT(output,testing::HasSubstr("td_vext                        0 #add extern potential or not"));
     getline(ifs,output);
-    EXPECT_THAT(output,testing::HasSubstr("td_vext_dire                                      1 #extern potential direction #extern potential direction"));
+    EXPECT_THAT(output,testing::HasSubstr("td_vext_dire                                      1 #extern potential direction\r #extern potential direction"));
     getline(ifs,output);
     EXPECT_THAT(output,testing::HasSubstr("out_dipole                     0 #output dipole or not"));
     getline(ifs,output);
