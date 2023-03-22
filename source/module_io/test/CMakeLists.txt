@@ -1,6 +1,7 @@
 remove_definitions(-D__DEEPKS)
 remove_definitions(-D__CUDA)
 remove_definitions(-D__ROCM)
+remove_definitions(-D__EXX)
 
 install(DIRECTORY support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
