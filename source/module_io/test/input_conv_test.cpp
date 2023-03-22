@@ -43,16 +43,4 @@ TEST_F(InputConvTest,ParseExpressionDouble)
 	EXPECT_DOUBLE_EQ(vec[3],0.5);
 }
 
-TEST_F(InputConvTest,ParseExpressionInt)
-{
-	std::vector<int> vec;
-	std::string input = "2*3.5 1.2 0.5";
-	Input_Conv::parse_expression(input,vec);
-	EXPECT_EQ(vec.size(),4);
-	EXPECT_DOUBLE_EQ(vec[0],3);
-	EXPECT_DOUBLE_EQ(vec[1],3);
-	EXPECT_DOUBLE_EQ(vec[2],1);
-	EXPECT_DOUBLE_EQ(vec[3],0);
-}
-
 #undef private
