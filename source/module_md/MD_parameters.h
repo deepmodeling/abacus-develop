@@ -62,7 +62,7 @@ public:
     int md_dumpfreq;              // The period to dump MD information
 	int md_restartfreq;           // The period to output MD restart information
     int md_seed;                  // random seed for MD
-    int md_prec_level;            // precision level for vc-md; 0: do not reinit FFT grid, 1: reinit FFT grid per step
+    int md_prec_level;            // precision level for vc-md; 0: do not reinit FFT grid, 1: reference cell, 2: reinit FFT grid per step
 
 	// Classic MD               // liuyu 2021-07-30
 	double lj_rcut;             // cutoff radius of LJ potential (\AA)

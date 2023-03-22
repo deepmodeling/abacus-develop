@@ -32,7 +32,7 @@
   [exx_hybrid_alpha](#exx_hybrid_alpha) | [exx_hse_omega](#exx_hse_omega) | [exx_separate_loop](#exx_separate_loop) | [exx_hybrid_step](#exx_hybrid_step) | [exx_lambda](#exx_lambda) | [exx_pca_threshold](#exx_pca_threshold) | [exx_c_threshold](#exx_c_threshold) | [exx_v_threshold](#exx_v_threshold) | [exx_c_grad_threshold](#exx_c_grad_threshold) | [exx_v_grad_threshold](#exx_v_grad_threshold) | [exx_dm_threshold](#exx_dm_threshold) | [exx_schwarz_threshold](#exx_schwarz_threshold) | [exx_cauchy_threshold](#exx_cauchy_threshold) | [exx_cauchy_grad_threshold](#exx_cauchy_grad_threshold) | [exx_ccp_threshold](#exx_ccp_threshold) | [exx_ccp_rmesh_times](#exx_ccp_rmesh_times) | [exx_distribute_type](#exx_distribute_type) | [exx_opt_orb_lmax](#exx_opt_orb_lmax) | [exx_opt_orb_ecut](#exx_opt_orb_ecut) | [exx_opt_orb_tolerence](#exx_opt_orb_tolerence) | [exx_real_number](#exx_real_number)
 - [Molecular dynamics](#molecular-dynamics)
 
-  [md_type](#md_type) | [md_thermostat](#md_thermostat) | [md_nstep](#md_nstep) | [md_restart](#md_restart) | [md_dt](#md_dt) | [md_tfirst, md_tlast](#md_tfirst-md_tlast) | [md_dumpfreq](#md_dumpfreq) | [md_restartfreq](#md_restartfreq) | [md_seed](#md_seed) | [md_prec_level](#md_prec_level) | [md_tfreq](#md_tfreq) | [md_tchain](#md_tchain) | [md_pmode](#md_pmode) | [md_pcouple](#md_pcouple) | [md_pfirst, md_plast](#md_pfirst-md_plast) | [md_pfreq](#md_pfreq) | [md_pchain](#md_pchain) | [dump_force](#dump_force) | [dump_vel](#dump_vel) | [dump_virial](#dump_virial) | [lj_rcut](#lj_rcut) | [lj_epsilon](#lj_epsilon) | [lj_sigma](#lj_sigma) | [pot_file](#pot_file) | [msst_direction](#msst_direction) | [msst_vel](#msst_vel) | [msst_vis](#msst_vis) | [msst_tscale](#msst_tscale) | [msst_qmass](#msst_qmass) | [md_damp](#md_damp) | [md_tolerance](#md_tolerance) | [md_nraise](#md_nraise)
+  [md_type](#md_type) | [md_thermostat](#md_thermostat) | [md_nstep](#md_nstep) | [md_restart](#md_restart) | [md_dt](#md_dt) | [md_tfirst, md_tlast](#md_tfirst-md_tlast) | [md_dumpfreq](#md_dumpfreq) | [md_restartfreq](#md_restartfreq) | [md_seed](#md_seed) | [md_prec_level](#md_prec_level) | [ref_cell_factor](#ref_cell_factor) | [md_tfreq](#md_tfreq) | [md_tchain](#md_tchain) | [md_pmode](#md_pmode) | [md_pcouple](#md_pcouple) | [md_pfirst, md_plast](#md_pfirst-md_plast) | [md_pfreq](#md_pfreq) | [md_pchain](#md_pchain) | [dump_force](#dump_force) | [dump_vel](#dump_vel) | [dump_virial](#dump_virial) | [lj_rcut](#lj_rcut) | [lj_epsilon](#lj_epsilon) | [lj_sigma](#lj_sigma) | [pot_file](#pot_file) | [msst_direction](#msst_direction) | [msst_vel](#msst_vel) | [msst_vis](#msst_vis) | [msst_tscale](#msst_tscale) | [msst_qmass](#msst_qmass) | [md_damp](#md_damp) | [md_tolerance](#md_tolerance) | [md_nraise](#md_nraise)
 - [vdW correction](#vdw-correction)
 
   [vdw_method](#vdw_method) | [vdw_s6](#vdw_s6) | [vdw_s8](#vdw_s8) | [vdw_a1](#vdw_a1) | [vdw_a2](#vdw_a2) | [vdw_d](#vdw_d) | [vdw_abc](#vdw_abc) | [vdw_C6_file](#vdw_c6_file) | [vdw_C6_unit](#vdw_c6_unit) | [vdw_R0_file](#vdw_r0_file) | [vdw_R0_unit](#vdw_r0_unit) | [vdw_cutoff_type](#vdw_cutoff_type) | [vdw_cutoff_radius](#vdw_cutoff_radius) | [vdw_radius_unit](#vdw_radius_unit) | [vdw_cutoff_period](#vdw_cutoff_period) | [vdw_cn_thr](#vdw_cn_thr) | [vdw_cn_thr_unit](#vdw_cn_thr_unit)
@@ -558,7 +558,7 @@ calculations.
   If you set gamma_only = 1, ABACUS uses gamma only, the algorithm is faster and you don't need to specify the k-points file. If you set gamma_only = 0, more than one k-point is used and the ABACUS is slower compared to the gamma only algorithm.
 
   > Note: If gamma_only is set to 1, the KPT file will be overwritten. So make sure to turn off gamma_only for multi-k calculations.
-  >
+
 - **Default**: 0
 
 ### printe
@@ -1554,7 +1554,7 @@ These variables are used to control the molecular dynamics calculations.
   - 2: NVT ensemble with Langevin method;
   - 4: MSST method;
 
-  ***Note: when md_type is set to 1, md_tfreq is required to stablize temperature. It is an empirical parameter whose value is system-dependent, ranging from 1/(40\*md_dt) to 1/(100\*md_dt). An improper choice of its value might lead to failure of job.***
+  > Note: when md_type is set to 1, md_tfreq is required to stablize temperature. It is an empirical parameter whose value is system-dependent, ranging from 1/(40\*md_dt) to 1/(100\*md_dt). An improper choice of its value might lead to failure of job.
 - **Default**: 1
 
 ### md_thermostat
@@ -1618,10 +1618,19 @@ These variables are used to control the molecular dynamics calculations.
 ### md_prec_level
 
 - **Type**: Integer
-- **Description**: Determine the precision level of vc-md. Note that this parameter is only used in variable-cell MD!
+- **Description**: Determine the precision level of vc-md. 
   - 0: FFT grids do not change, only G vectors and K vectors are changed due to the change of lattice vector. This level is suitable for cases where the variation of the volume and shape is not large, and the efficiency is relatively higher.
-  - 1: FFT grids change per MD step. This level is suitable for cases where the variation of the volume and shape is large, such as the MSST method. However, accuracy comes at the cost of efficiency.
+  - 1: A reference cell is constructed at the beginning, controlled by [ref_cell_factor](#ref_cell_factor). Then the reference cell is used to initialize FFT real-space grids and reciprocal space mesh instead of the initial cell. The cost will increase with the size of the reference cell.
+  - 2: FFT grids change per MD step. This level is suitable for cases where the variation of the volume and shape is large, such as the MSST method. However, accuracy comes at the cost of efficiency.
+  > Note: this parameter is only used in variable-cell MD!
 - **Default**: 0
+
+### ref_cell_factor
+
+- **Type**: Real
+- **Description**: 
+  Construct a reference cell bigger than the initial cell. Only used in variable-cell MD, if [md_prec_level](#md_prec_level) is set to 1. The reference cell has to be large enough so that the lattice vectors of the fluctuating cell do not exceed the reference lattice vectors during MD. Typically, 1.02 ~ 1.10 is sufficient. However, the cell fluctuations depend on the specific system and thermodynamic conditions. So users must test for a proper choice. This parameters should be used in conjunction with q2sigma, qcutz, and ecfixed. 
+- **Default**: 1.0
 
 ### md_tfreq
 

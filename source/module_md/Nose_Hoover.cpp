@@ -19,7 +19,6 @@ Nose_Hoover::Nose_Hoover(MD_parameters& MD_para_in, UnitCell &unit_in) : MDrun(M
 
     if(mdp.md_pmode != "none")
     {
-        GlobalV::MD_PREC_LEVEL = mdp.md_prec_level;
         ucell.cell_parameter_updated = true;
     }
 

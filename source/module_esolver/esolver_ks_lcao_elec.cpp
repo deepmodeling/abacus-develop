@@ -262,16 +262,17 @@ namespace ModuleESolver
         if(GlobalV::CALCULATION == "md" && istep)
         {
             // different precision level for vc-md
-            if(GlobalC::ucell.cell_parameter_updated && GlobalV::MD_PREC_LEVEL)
+            if(GlobalC::ucell.cell_parameter_updated && GlobalV::md_prec_level == 2)
             {
                 this->init_after_vc(INPUT, GlobalC::ucell);
             }
             else
             {
                 this->CE.update_istep();
+                this->CE.update_all_pos(GlobalC::ucell);
                 this->CE.save_pos_next(GlobalC::ucell);
                 this->CE.extrapolate_charge(this->pelec->charge);
-                if(GlobalC::ucell.cell_parameter_updated)
+                if(GlobalC::ucell.cell_parameter_updated && GlobalV::md_prec_level == 0)
                 {
                     Variable_Cell::init_after_vc();
                 }

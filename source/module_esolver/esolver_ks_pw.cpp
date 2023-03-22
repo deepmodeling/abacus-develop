@@ -235,16 +235,17 @@ namespace ModuleESolver
         if(GlobalV::CALCULATION == "md" && istep)
         {
             // different precision level for vc-md
-            if(GlobalC::ucell.cell_parameter_updated && GlobalV::MD_PREC_LEVEL)
+            if(GlobalC::ucell.cell_parameter_updated && GlobalV::md_prec_level == 2)
             {
                 this->init_after_vc(INPUT, GlobalC::ucell);
             }
             else
             {
                 this->CE.update_istep();
+                this->CE.update_all_pos(GlobalC::ucell);
                 this->CE.save_pos_next(GlobalC::ucell);
                 this->CE.extrapolate_charge(this->pelec->charge);
-                if(GlobalC::ucell.cell_parameter_updated)
+                if(GlobalC::ucell.cell_parameter_updated && GlobalV::md_prec_level == 0)
                 {
                     Variable_Cell::init_after_vc();
                     GlobalC::wfcpw->initgrids(GlobalC::ucell.lat0, GlobalC::ucell.latvec, GlobalC::wfcpw->nx, GlobalC::wfcpw->ny, GlobalC::wfcpw->nz);
@@ -520,9 +521,6 @@ namespace ModuleESolver
     template<typename FPTYPE, typename Device>
     void ESolver_KS_PW<FPTYPE, Device>::afterscf(const int istep)
     {
-        // Temporary liuyu add 2022-11-07
-        this->CE.update_all_pos(GlobalC::ucell);
-
         for (int is = 0; is < GlobalV::NSPIN; is++)
         {
             std::stringstream ssc;
