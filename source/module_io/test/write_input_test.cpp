@@ -681,8 +681,6 @@ TEST_F(write_input,print)
     EXPECT_THAT(output,testing::HasSubstr("bessel_descriptor_smooth       1 #spherical bessel smooth or not"));    
     getline(ifs,output);
     EXPECT_THAT(output,testing::HasSubstr("bessel_descriptor_sigma        0.1 #spherical bessel smearing_sigma"));
-    // getline(ifs,output);
-    // EXPECT_THAT(output,testing::HasSubstr(""));
     ifs.close();
     remove("write_input_test.log");
 }
