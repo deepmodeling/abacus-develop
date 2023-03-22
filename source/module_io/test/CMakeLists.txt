@@ -1,6 +1,7 @@
 remove_definitions(-D__DEEPKS)
 remove_definitions(-D__CUDA)
 remove_definitions(-D__ROCM)
+remove_definitions(-D__EXX)
 
 install(DIRECTORY support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
@@ -21,6 +22,12 @@ find_program(BASH bash)
 add_test(NAME io_input_test_para4
       COMMAND ${BASH} input_test_para.sh
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+)
+
+AddTest(
+  TARGET io_input_conv
+  LIBS ${math_libs} base device
+  SOURCES input_conv_test.cpp ../input.cpp ../input_conv.cpp
 )
 
 AddTest(
