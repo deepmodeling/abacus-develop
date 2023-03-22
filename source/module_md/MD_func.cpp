@@ -144,7 +144,7 @@ void MD_func::RandomVel(
         }
 
         double factor;
-        if(3*numIon == frozen_freedom)
+        if(3*numIon == frozen_freedom || temperature == 0)
         {
             factor = 0;
         }

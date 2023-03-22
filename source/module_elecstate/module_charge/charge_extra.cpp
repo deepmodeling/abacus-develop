@@ -273,7 +273,7 @@ void Charge_Extra::find_alpha_and_beta(void)
     a21 = a12;
     det = a11 * a22 - a12 * a21;
 
-    if(det < -1e-16)
+    if(det < -1e-20)
     {
         alpha = 0.0;
         beta = 0.0;
@@ -281,7 +281,7 @@ void Charge_Extra::find_alpha_and_beta(void)
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_warning,"in find_alpha_and beta()  det = ", det);
     }
 
-    if(det > 1e-16)
+    if(det > 1e-20)
     {
         alpha = (b1 * a22 - b2 * a12) / det;
         beta  = (a11 * b2 - a21 * b1) / det;
