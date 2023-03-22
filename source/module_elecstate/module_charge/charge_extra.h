@@ -33,6 +33,7 @@ class Charge_Extra
     int natom;
     int pot_order;
     int rho_extr;
+    double omega_old;    // the old volume of the last step
 
     // for the second-order extrapolation
     ModuleBase::Vector3<double> *pos_old1 = nullptr;

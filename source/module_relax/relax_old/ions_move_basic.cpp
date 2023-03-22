@@ -20,23 +20,19 @@ double Ions_Move_Basic::best_xxx = 1.0;
 
 int Ions_Move_Basic::out_stru=0;
 
-void Ions_Move_Basic::setup_gradient(double* pos, double *grad, const ModuleBase::matrix &force)
+void Ions_Move_Basic::setup_gradient(double *grad, const ModuleBase::matrix &force)
 {
 	ModuleBase::TITLE("Ions_Move_Basic","setup_gradient");
 	
 	assert(GlobalC::ucell.ntype>0);
-	assert(pos!=NULL);
 	assert(grad!=NULL);
 	assert(dim == 3*GlobalC::ucell.nat);
 
-	ModuleBase::GlobalFunc::ZEROS(pos, dim);
 	ModuleBase::GlobalFunc::ZEROS(grad, dim);
 
 	// (1) init gradient
-	// the unit of pos: Bohr.
 	// the unit of force: Ry/Bohr.
 	// the unit of gradient: 
-	GlobalC::ucell.save_cartesian_position(pos);
 	int iat=0;
 	for(int it = 0;it < GlobalC::ucell.ntype;it++)
 	{
@@ -64,12 +60,11 @@ void Ions_Move_Basic::setup_gradient(double* pos, double *grad, const ModuleBase
 	return;
 }
 
-void Ions_Move_Basic::move_atoms(double *move, double *pos)
+void Ions_Move_Basic::move_atoms(double *move)
 {
 	ModuleBase::TITLE("Ions_Move_Basic","move_atoms");
 
 	assert(move!=NULL);
-	assert(pos!=NULL);
 
 	//------------------------
 	// for test only
@@ -97,15 +92,23 @@ void Ions_Move_Basic::move_atoms(double *move, double *pos)
 	}
 
 	const double move_threshold = 1.0e-10;
-	const int total_freedom = GlobalC::ucell.nat * 3;
-	for(int i =0;i<total_freedom;i++)
-	{
-		if( abs(move[i]) > move_threshold )
-		{
-			pos[i] += move[i];
-		}
-	}
-	GlobalC::ucell.update_pos_tau(pos);
+    ModuleBase::Vector3<double> *move_ion = new ModuleBase::Vector3<double> [GlobalC::ucell.nat];
+    for (int i = 0; i < GlobalC::ucell.nat; ++i)
+    {
+        for (int k = 0; k < 3; ++k)
+        {
+            if( abs(move[3*i + k]) > move_threshold )
+            {
+                move_ion[i][k] = move[3*i + k] / GlobalC::ucell.lat0;
+            }
+            else
+            {
+                move_ion[i][k] = 0;
+            }
+        }
+        move_ion[i] = move_ion[i] * GlobalC::ucell.GT;
+    }
+	GlobalC::ucell.update_pos_taud(move_ion);
 
 	GlobalC::ucell.periodic_boundary_adjustment();
 	
@@ -122,6 +125,7 @@ void Ions_Move_Basic::move_atoms(double *move, double *pos)
 	{
 		GlobalC::ucell.print_cell_cif("STRU_NOW.cif");
 	}
+    delete[] move_ion;
 	return;
 }
 

@@ -293,72 +293,6 @@ void UnitCell::set_iat2itia(void)
     return;
 }
 
-void UnitCell::update_pos_tau(const double* pos)
-{
-    int iat = 0;
-    for (int it = 0; it < this->ntype; it++)
-    {
-        Atom* atom = &this->atoms[it];
-        for (int ia = 0; ia < atom->na; ia++)
-        {
-            if (atom->mbl[ia].x != 0)
-            {
-                atom->tau_original[ia].x += (pos[3 * iat] / this->lat0 - atom->tau[ia].x);
-                atom->tau[ia].x = pos[3 * iat] / this->lat0;
-            }
-            if (atom->mbl[ia].y != 0)
-            {
-                atom->tau_original[ia].y += (pos[3 * iat + 1] / this->lat0 - atom->tau[ia].y);
-                atom->tau[ia].y = pos[3 * iat + 1] / this->lat0;
-            }
-            if (atom->mbl[ia].z != 0)
-            {
-                atom->tau_original[ia].z += (pos[3 * iat + 2] / this->lat0 - atom->tau[ia].z);
-                atom->tau[ia].z = pos[3 * iat + 2] / this->lat0;
-            }
-
-            // the direct coordinates also need to be updated.
-            atom->taud[ia] = atom->tau[ia] * this->GT;
-            iat++;
-        }
-    }
-    assert(iat == this->nat);
-    return;
-}
-
-void UnitCell::update_pos_tau(const ModuleBase::Vector3<double>* posd_in)
-{
-    int iat = 0;
-    for (int it = 0; it < this->ntype; ++it)
-    {
-        Atom* atom = &this->atoms[it];
-        for (int ia = 0; ia < atom->na; ++ia)
-        {
-            if (atom->mbl[ia].x != 0)
-            {
-                atom->tau_original[ia].x += (posd_in[iat].x / this->lat0 - atom->tau[ia].x);
-                atom->tau[ia].x = posd_in[iat].x / this->lat0;
-            }
-            if (atom->mbl[ia].y != 0)
-            {
-                atom->tau_original[ia].y += (posd_in[iat].y / this->lat0 - atom->tau[ia].y);
-                atom->tau[ia].y = posd_in[iat].y / this->lat0;
-            }
-            if (atom->mbl[ia].z != 0)
-            {
-                atom->tau_original[ia].z += (posd_in[iat].z / this->lat0 - atom->tau[ia].z);
-                atom->tau[ia].z = posd_in[iat].z / this->lat0;
-            }
-
-            // the direct coordinates also need to be updated.
-            atom->taud[ia] = atom->tau[ia] * this->GT;
-            iat++;
-        }
-    }
-    assert(iat == this->nat);
-    return;
-}
-
 // Note : note here we are not keeping track of 'tau_original', namely
 // the Cartesian coordinate before periodic adjustment
 // The reason is that this is only used in relaxation
@@ -380,6 +314,27 @@ void UnitCell::update_pos_taud(double* posd_in)
         }
     }
     assert(iat == this->nat);
+    this->periodic_boundary_adjustment();
+    this->bcast_atoms_tau();
+}
+
+// posd_in is atomic displacements here  liuyu 2023-03-22
+void UnitCell::update_pos_taud(const ModuleBase::Vector3<double>* posd_in)
+{
+    for (int it = 0; it < this->ntype; it++)
+    {
+        Atom* atom = &this->atoms[it];
+        for (int ia = 0; ia < atom->na; ia++)
+        {
+            for ( int ik = 0; ik < 3; ++ik)
+            {
+                if (atom->mbl[ia][ik])
+                {
+                    atom->taud[ia][ik] += posd_in[ia][ik];
+                }
+            }
+        }
+    }
     this->periodic_boundary_adjustment();
     this->bcast_atoms_tau();
 }

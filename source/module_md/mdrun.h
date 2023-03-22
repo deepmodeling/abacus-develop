@@ -57,7 +57,7 @@ public:
 	int frozen_freedom_;                 // the fixed freedom of the system
 
     double *allmass;                     // atom mass 
-    ModuleBase::Vector3<double> *pos;    // atom position
+    ModuleBase::Vector3<double> *pos;    // atom displacements  liuyu modify 2023-03-22
     ModuleBase::Vector3<double> *vel;    // atom velocity
     ModuleBase::Vector3<int> *ionmbl;    // atom is frozen or not
     ModuleBase::Vector3<double> *force;  // force of each atom

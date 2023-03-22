@@ -191,21 +191,6 @@ void MD_func::InitVel(
 	std::cout << "--------------------------------- INITVEL DONE ------------------------------------" << std::endl;
 }
 
-void MD_func::InitPos(
-	const UnitCell &unit_in, 
-	ModuleBase::Vector3<double>* pos)
-{
-	int ion=0;
-	for(int it=0;it<unit_in.ntype;it++)
-	{
-		for(int i=0;i<unit_in.atoms[it].na;i++)
-		{
-			pos[ion] = unit_in.atoms[it].tau[i]*unit_in.lat0;
-			ion++;
-		}
-	}
-}
-
 //calculate potential, force and virial
 void MD_func::force_virial(
 		ModuleESolver::ESolver *p_esolver,

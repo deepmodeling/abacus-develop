@@ -114,15 +114,25 @@ void MSST::first_half()
     // propagate atom positions 1 time step
     for(int i=0; i<ucell.nat; ++i)
     {
-        pos[i] += vel[i] * mdp.md_dt;
+        for(int k=0; k<3; ++k)
+        {
+            if(ionmbl[i][k])
+            {
+                pos[i][k] = vel[i][k] * mdp.md_dt / ucell.lat0;
+            }
+            else
+            {
+                pos[i][k] = 0;
+            }
+        }
+        pos[i] = pos[i] * ucell.GT;
     }
 #ifdef __MPI
     MPI_Bcast(pos , ucell.nat*3,MPI_DOUBLE,0,MPI_COMM_WORLD);
     MPI_Bcast(vel , ucell.nat*3,MPI_DOUBLE,0,MPI_COMM_WORLD);
 #endif
 
-    ucell.update_pos_tau(pos);
-    ucell.periodic_boundary_adjustment();
+    ucell.update_pos_taud(pos);
 
     // propagate volume 1/2 step
     vol = ucell.omega + omega[sd] * dthalf;
@@ -253,7 +263,6 @@ void MSST::rescale(double volume)
     ucell.latvec.e33 *= dilation[2];
 
     ucell.setup_cell_after_vc(GlobalV::ofs_running);
-    MD_func::InitPos(ucell, pos);
 
     // rescale velocity
     for(int i=0; i<ucell.nat; ++i)

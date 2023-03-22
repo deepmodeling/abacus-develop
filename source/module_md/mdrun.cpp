@@ -35,7 +35,6 @@ MDrun::MDrun(MD_parameters& MD_para_in, UnitCell &unit_in):
     step_ = 0;
     step_rst_ = 0;
 
-    MD_func::InitPos(ucell, pos);
     MD_func::InitVel(ucell, mdp.md_tfirst, allmass, frozen_freedom_, ionmbl, vel);
 }
 
@@ -72,18 +71,21 @@ void MDrun::first_half()
             if(ionmbl[i][k])
             {
                 vel[i][k] += 0.5*force[i][k]*mdp.md_dt/allmass[i];
-                pos[i][k] += vel[i][k]*mdp.md_dt;
+                pos[i][k] = vel[i][k] * mdp.md_dt / ucell.lat0;
+            }
+            else
+            {
+                pos[i][k] = 0;
             }
         }
+        pos[i] = pos[i] * ucell.GT;
     }
 #ifdef __MPI
     MPI_Bcast(pos , ucell.nat*3,MPI_DOUBLE,0,MPI_COMM_WORLD);
     MPI_Bcast(vel , ucell.nat*3,MPI_DOUBLE,0,MPI_COMM_WORLD);
 #endif
 
-    ucell.update_pos_tau(pos);
-    ucell.periodic_boundary_adjustment();
-    MD_func::InitPos(ucell, pos);
+    ucell.update_pos_taud(pos);
 }
 
 void MDrun::second_half()

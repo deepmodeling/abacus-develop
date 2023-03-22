@@ -241,8 +241,8 @@ namespace ModuleESolver
             }
             else
             {
-                this->CE.update_istep();
                 this->CE.update_all_pos(GlobalC::ucell);
+                this->CE.update_istep();
                 this->CE.save_pos_next(GlobalC::ucell);
                 this->CE.extrapolate_charge(this->pelec->charge);
                 if(GlobalC::ucell.cell_parameter_updated && GlobalV::md_prec_level == 0)

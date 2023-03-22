@@ -814,7 +814,6 @@ void Nose_Hoover::update_volume()
 
     // reset ucell and pos due to change of lattice
     ucell.setup_cell_after_vc(GlobalV::ofs_running);
-    MD_func::InitPos(ucell, pos);
 }
 
 void Nose_Hoover::update_pos()
@@ -827,9 +826,14 @@ void Nose_Hoover::update_pos()
             {
                 if(ionmbl[i][k])
                 {
-                    pos[i][k] += vel[i][k]*mdp.md_dt;
+                    pos[i][k] = vel[i][k] * mdp.md_dt / ucell.lat0;
+                }
+                else
+                {
+                    pos[i][k] = 0;
                 }
             }
+            pos[i] = pos[i] * ucell.GT;
         }
     }
 
@@ -837,9 +841,7 @@ void Nose_Hoover::update_pos()
     MPI_Bcast(pos , ucell.nat*3,MPI_DOUBLE,0,MPI_COMM_WORLD);
 #endif
 
-    ucell.update_pos_tau(pos);
-    ucell.periodic_boundary_adjustment();
-    MD_func::InitPos(ucell, pos);
+    ucell.update_pos_taud(pos);
 }
 
 

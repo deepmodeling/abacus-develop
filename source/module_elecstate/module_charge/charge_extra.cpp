@@ -64,6 +64,7 @@ void Charge_Extra::Init_CE()
     }
 
     natom = GlobalC::ucell.nat;
+    omega_old = GlobalC::ucell.omega;
 
     pos_old1 = new ModuleBase::Vector3<double>[natom];
     pos_old2 = new ModuleBase::Vector3<double>[natom];
@@ -100,7 +101,6 @@ void Charge_Extra::extrapolate_charge(Charge* chr)
     rho_extr = min(istep, pot_order);
     if(rho_extr == 0)
     {
-        // if(cellchange) scale();
         GlobalC::sf.setup_structure_factor(&GlobalC::ucell, GlobalC::rhopw);
         GlobalV::ofs_running << " charge density from previous step !" << std::endl;
         return;
@@ -125,6 +125,10 @@ void Charge_Extra::extrapolate_charge(Charge* chr)
         for(int ir=0; ir<GlobalC::rhopw->nrxx; ir++)
         {
             chr->rho[is][ir] -= rho_atom[is][ir];
+            if(GlobalC::ucell.cell_parameter_updated)
+            {
+                chr->rho[is][ir] *= omega_old;
+            }
         }
     }
 
@@ -215,6 +219,10 @@ void Charge_Extra::extrapolate_charge(Charge* chr)
     {
         for(int ir=0; ir<GlobalC::rhopw->nrxx; ir++)
         {
+            if(GlobalC::ucell.cell_parameter_updated)
+            {
+                chr->rho[is][ir] /= GlobalC::ucell.omega;
+            }
             chr->rho[is][ir] += rho_atom[is][ir];
         }
     }
