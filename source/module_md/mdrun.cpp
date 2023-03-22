@@ -100,7 +100,7 @@ void MDrun::update_pos()
     ucell.update_pos_taud(pos);
 }
 
-void Nose_Hoover::update_vel(const ModuleBase::Vector3<double>* force)
+void MDrun::update_vel(const ModuleBase::Vector3<double>* force)
 {
     if(GlobalV::MY_RANK == 0)
     {
