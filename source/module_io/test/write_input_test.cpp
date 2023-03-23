@@ -296,7 +296,7 @@ TEST_F(write_input,print)
         EXPECT_THAT(output,testing::HasSubstr("td_val_elec_02                 1 #td_val_elec_02"));
         EXPECT_THAT(output,testing::HasSubstr("td_val_elec_03                 1 #td_val_elec_03"));    
         EXPECT_THAT(output,testing::HasSubstr("td_vext                        0 #add extern potential or not"));
-        EXPECT_THAT(output,testing::HasSubstr("td_vext_dire                                      1 #extern potential direction #extern potential direction"));
+        EXPECT_THAT(output,testing::HasSubstr("td_vext_dire                                      1 #extern potential direction"));
         EXPECT_THAT(output,testing::HasSubstr("out_dipole                     0 #output dipole or not"));
         EXPECT_THAT(output,testing::HasSubstr("out_efield                     0 #output dipole or not"));
         EXPECT_THAT(output,testing::HasSubstr("ocp                            0 #change occupation or not"));    
