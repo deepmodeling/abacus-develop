@@ -220,9 +220,9 @@ TEST_F(MSST_test, outputMD)
     getline(ifs,output_str);
     EXPECT_THAT(output_str,testing::HasSubstr(" ------------------------------------------------------------------------------------------------"));
     getline(ifs,output_str);
-    EXPECT_THAT(output_str,testing::HasSubstr(" Energy              Potential           Kinetic             Temperature         Pressure (KBAR)     "));
+    EXPECT_THAT(output_str,testing::HasSubstr(" Energy (Ry)         Potential (Ry)      Kinetic (Ry)        Temperature (K)     Pressure (kbar)     "));
     getline(ifs,output_str);
-    EXPECT_THAT(output_str,testing::HasSubstr(" -0.0077253698       -0.011957819        0.0042324488        297                 1.0762537           "));
+    EXPECT_THAT(output_str,testing::HasSubstr(" -0.01545074         -0.023915637        0.0084648976        297                 1.0762537           "));
     getline(ifs,output_str);
     EXPECT_THAT(output_str,testing::HasSubstr(" ------------------------------------------------------------------------------------------------"));
     ifs.close();

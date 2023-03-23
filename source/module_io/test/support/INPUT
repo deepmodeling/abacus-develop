@@ -78,7 +78,8 @@ cal_cond                       0 #calculate electronic conductivities
 cond_nche                      20 #orders of Chebyshev expansions for conductivities
 cond_dw                        0.1 #frequency interval for conductivities
 cond_wcut                      10 #cutoff frequency (omega) for conductivities
-cond_wenlarge                  10 #control the t interval: dt = PI/wcut/cond_wenlarge
+cond_dt                        0.07 #control the t interval
+cond_dtbatch                   2 #control dt batch
 cond_fwhm                      0.3 #FWHM for conductivities
 cond_nonlocal                  1 #Nonlocal effects for conductivities
 
@@ -128,6 +129,7 @@ lcao_rmax                      30 #max R for 1D two-center integration table
 out_mat_hs                     0 #output H and S matrix
 out_mat_hs2                    0 #output H(R) and S(R) matrix
 out_hs2_interval               1 #interval for printing H(R) and S(R) matrix during MD
+out_app_flag                   0 #whether output r(R), H(R), S(R), T(R), and dH(R) matrices in an append manner during MD
 out_element_info               0 #output (projected) wavefunction of each element
 out_mat_r                      0 #output r(R) matrix
 out_wfc_lcao                   0 #ouput LCAO wave functions

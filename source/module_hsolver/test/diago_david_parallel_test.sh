@@ -8,7 +8,8 @@ for i in 6 3 2;do
         continue
     fi
     echo "TEST DIAGO davidson in parallel, nprocs=$i"
-    mpirun -np $i ./HSolver_dav
+    OMP_NUM_THREADS=1 mpirun -np $i ./HSolver_dav
+    OMP_NUM_THREADS=1 mpirun -np $i ./HSolver_dav_float
     if [[ $? != 0 ]];then
         echo -e "\e[1;33m [  FAILED  ] \e[0m"\
 			"execute UT with $i cores error."

@@ -136,7 +136,8 @@ void Input::Print(const std::string &fn) const
     ModuleBase::GlobalFunc::OUTP(ofs, "cond_nche", cond_nche, "orders of Chebyshev expansions for conductivities");
     ModuleBase::GlobalFunc::OUTP(ofs, "cond_dw", cond_dw, "frequency interval for conductivities");
     ModuleBase::GlobalFunc::OUTP(ofs, "cond_wcut", cond_wcut, "cutoff frequency (omega) for conductivities");
-    ModuleBase::GlobalFunc::OUTP(ofs, "cond_wenlarge", cond_wenlarge, "control the t interval: dt = PI/wcut/cond_wenlarge");
+    ModuleBase::GlobalFunc::OUTP(ofs, "cond_dt", cond_dt, "t interval to integrate Onsager coefficiencies");
+    ModuleBase::GlobalFunc::OUTP(ofs, "cond_dtbatch", cond_dtbatch, "exp(iH*dt*cond_dtbatch) is expanded with Chebyshev expansion.");
     ModuleBase::GlobalFunc::OUTP(ofs, "cond_fwhm", cond_fwhm, "FWHM for conductivities");
     ModuleBase::GlobalFunc::OUTP(ofs, "cond_nonlocal", cond_nonlocal, "Nonlocal effects for conductivities");
     
@@ -205,6 +206,7 @@ ModuleBase::GlobalFunc::OUTP(ofs, "out_bandgap", out_bandgap, "if true, print ou
     ModuleBase::GlobalFunc::OUTP(ofs, "out_mat_hs2", out_mat_hs2, "output H(R) and S(R) matrix");
     ModuleBase::GlobalFunc::OUTP(ofs, "out_mat_dh", out_mat_dh, "output of derivative of H(R) matrix");
     ModuleBase::GlobalFunc::OUTP(ofs, "out_hs2_interval", out_hs2_interval, "interval for printing H(R) and S(R) matrix during MD");
+    ModuleBase::GlobalFunc::OUTP(ofs, "out_app_flag", out_app_flag, "whether output r(R), H(R), S(R), T(R), and dH(R) matrices in an append manner during MD");
     ModuleBase::GlobalFunc::OUTP(ofs, "out_mat_t", out_mat_t, "output T(R) matrix");
     ModuleBase::GlobalFunc::OUTP(ofs, "out_element_info", out_element_info, "output (projected) wavefunction of each element");
     ModuleBase::GlobalFunc::OUTP(ofs, "out_mat_r", out_mat_r, "output r(R) matrix");

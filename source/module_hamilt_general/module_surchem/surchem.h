@@ -5,7 +5,7 @@
 #include "module_base/global_variable.h"
 #include "module_base/matrix.h"
 #include "module_cell/unitcell.h"
-#include "module_pw/pw_basis.h"
+#include "module_basis/module_pw/pw_basis.h"
 #include "module_base/parallel_reduce.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_hamilt_pw/hamilt_pwdft/structure_factor.h"

@@ -209,9 +209,9 @@ TEST_F(NHC_test, outputMD)
     getline(ifs,output_str);
     EXPECT_THAT(output_str,testing::HasSubstr(" ------------------------------------------------------------------------------------------------"));
     getline(ifs,output_str);
-    EXPECT_THAT(output_str,testing::HasSubstr(" Energy              Potential           Kinetic             Temperature         Pressure (KBAR)     "));
+    EXPECT_THAT(output_str,testing::HasSubstr(" Energy (Ry)         Potential (Ry)      Kinetic (Ry)        Temperature (K)     Pressure (kbar)     "));
     getline(ifs,output_str);
-    EXPECT_THAT(output_str,testing::HasSubstr(" -0.0076826178       -0.011957819        0.0042752008        300                 1.0846391           "));
+    EXPECT_THAT(output_str,testing::HasSubstr(" -0.015365236        -0.023915637        0.0085504016        300                 1.0846391           "));
     getline(ifs,output_str);
     EXPECT_THAT(output_str,testing::HasSubstr(" ------------------------------------------------------------------------------------------------"));
     ifs.close();

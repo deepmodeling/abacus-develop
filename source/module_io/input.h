@@ -83,7 +83,8 @@ class Input
     int cond_nche; //orders of Chebyshev expansions for conductivities
     double cond_dw; //d\omega for conductivities
     double cond_wcut; //cutoff \omega for conductivities
-    int cond_wenlarge;
+    double cond_dt;  //dt to integrate conductivities
+    int cond_dtbatch; //exp(iH*dt*cond_dtbatch) is expanded with Chebyshev expansion.
     double cond_fwhm; //FWHM for conductivities 
     bool cond_nonlocal; //if calculate nonlocal effects
 
@@ -244,6 +245,7 @@ class Input
     bool out_mat_hs2; // LiuXh add 2019-07-16, output H(R) matrix and S(R) matrix in local basis.
     bool out_mat_dh;
     int out_hs2_interval;
+    bool out_app_flag;    // whether output r(R), H(R), S(R), T(R), and dH(R) matrices in an append manner during MD  liuyu 2023-03-20
     bool out_mat_t;
     bool out_mat_r; // jingan add 2019-8-14, output r(R) matrix.
     bool out_wfc_lcao; // output the wave functions in local basis.

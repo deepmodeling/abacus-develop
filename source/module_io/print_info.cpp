@@ -10,7 +10,7 @@ Print_Info::~Print_Info(){}
 void Print_Info::setup_parameters(UnitCell &ucell, K_Vectors &kv)
 {
 	ModuleBase::TITLE("Print_Info","setup_parameters");
-	
+
     if(GlobalV::CALCULATION=="scf" || GlobalV::CALCULATION=="relax" || GlobalV::CALCULATION=="cell-relax" || GlobalV::CALCULATION=="nscf"
 	        || GlobalV::CALCULATION=="istate" || GlobalV::CALCULATION=="ienvelope" || GlobalV::CALCULATION=="md")
 	{
@@ -119,7 +119,7 @@ void Print_Info::setup_parameters(UnitCell &ucell, K_Vectors &kv)
 
 
 		std::cout << " ---------------------------------------------------------" << std::endl;
-		if(GlobalV::BASIS_TYPE=="lcao") 
+		if(GlobalV::BASIS_TYPE=="lcao")
 		{
 			if(GlobalV::COLOUR && GlobalV::MY_RANK==0)
 			{
@@ -226,7 +226,7 @@ void Print_Info::print_time(time_t &time_start, time_t &time_finish)
     // print out information before ABACUS ends
 	std::cout << "\n START  Time  : " << ctime(&time_start);
 	std::cout << " FINISH Time  : " << ctime(&time_finish);
-	std::cout << " TOTAL  Time  : " << difftime(time_finish, time_start) << std::endl;
+	std::cout << " TOTAL  Time  : " << int(difftime(time_finish, time_start)) << std::endl;
 	std::cout << " SEE INFORMATION IN : " << GlobalV::global_out_dir << std::endl;
 
 	GlobalV::ofs_running << "\n Start  Time  : " << ctime(&time_start);
@@ -312,7 +312,7 @@ void Print_Info::print_screen(const int &stress_step, const int &force_step, con
         	GlobalV::ofs_running << " RELAX IONS : " << unsigned(force_step) << " (in total: " << unsigned(istep) << ")" << std::endl;
     	}
 	}
-		
+
     std::cout << " -------------------------------------------" << std::endl;
     GlobalV::ofs_running << " -------------------------------------------" << std::endl;
 }

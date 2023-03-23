@@ -13,7 +13,7 @@
 #include "atom_spec.h"
 
 #ifdef __LCAO
-#include "module_orbital/ORB_read.h"
+#include "module_basis/module_ao/ORB_read.h"
 #include "setup_nonlocal.h"
 #endif
 

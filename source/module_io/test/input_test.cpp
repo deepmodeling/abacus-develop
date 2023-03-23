@@ -57,8 +57,9 @@ TEST_F(InputTest, Default)
         EXPECT_EQ(INPUT.cond_nche,20);
         EXPECT_DOUBLE_EQ(INPUT.cond_dw,0.1);
         EXPECT_DOUBLE_EQ(INPUT.cond_wcut,10);
-        EXPECT_EQ(INPUT.cond_wenlarge,10);
-        EXPECT_DOUBLE_EQ(INPUT.cond_fwhm,0.3);
+        EXPECT_EQ(INPUT.cond_dt,0.02);
+		EXPECT_EQ(INPUT.cond_dtbatch,4);
+        EXPECT_DOUBLE_EQ(INPUT.cond_fwhm,0.4);
         EXPECT_TRUE(INPUT.cond_nonlocal);
         EXPECT_FALSE(INPUT.berry_phase);
         EXPECT_EQ(INPUT.gdir,3);
@@ -163,6 +164,7 @@ TEST_F(InputTest, Default)
         EXPECT_EQ(INPUT.out_mat_hs,0);
         EXPECT_EQ(INPUT.out_mat_hs2,0);
         EXPECT_EQ(INPUT.out_hs2_interval,1);
+        EXPECT_EQ(INPUT.out_app_flag,1);
         EXPECT_EQ(INPUT.out_mat_r,0);
         EXPECT_FALSE(INPUT.out_wfc_lcao);
         EXPECT_FALSE(INPUT.out_alllog);
@@ -385,7 +387,8 @@ TEST_F(InputTest, Read)
         EXPECT_EQ(INPUT.cond_nche,20);
         EXPECT_DOUBLE_EQ(INPUT.cond_dw,0.1);
         EXPECT_DOUBLE_EQ(INPUT.cond_wcut,10);
-        EXPECT_EQ(INPUT.cond_wenlarge,10);
+        EXPECT_EQ(INPUT.cond_dt,0.07);
+		EXPECT_EQ(INPUT.cond_dtbatch,2);
         EXPECT_DOUBLE_EQ(INPUT.cond_fwhm,0.3);
         EXPECT_TRUE(INPUT.cond_nonlocal);
         EXPECT_FALSE(INPUT.berry_phase);
@@ -495,6 +498,7 @@ TEST_F(InputTest, Read)
         EXPECT_EQ(INPUT.out_mat_hs,0);
         EXPECT_EQ(INPUT.out_mat_hs2,0);
         EXPECT_EQ(INPUT.out_hs2_interval,1);
+        EXPECT_EQ(INPUT.out_app_flag,0);
         EXPECT_EQ(INPUT.out_mat_r,0);
         EXPECT_FALSE(INPUT.out_wfc_lcao);
         EXPECT_FALSE(INPUT.out_alllog);
