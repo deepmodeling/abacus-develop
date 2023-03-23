@@ -4,7 +4,7 @@
 #include "module_base/complexmatrix.h"
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
-#include "module_pw/pw_basis.h"
+#include "module_basis/module_pw/pw_basis.h"
 #include "module_base/parallel_global.h"
 
 //==========================================================

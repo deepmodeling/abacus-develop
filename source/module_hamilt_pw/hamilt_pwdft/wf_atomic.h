@@ -6,7 +6,7 @@
 #include "module_base/complexmatrix.h"
 #include "wf_igk.h"
 #include "module_psi/psi.h"
-#include "module_pw/pw_basis_k.h"
+#include "module_basis/module_pw/pw_basis_k.h"
 
 class WF_atomic : public WF_igk
 {

@@ -1,5 +1,5 @@
 #include "module_base/global_variable.h"
-#include "module_orbital/ORB_read.h"
+#include "module_basis/module_ao/ORB_read.h"
 #include "module_elecstate/occupy.h"
 #include "module_cell/klist.h"
 #include "module_elecstate/magnetism.h"
@@ -19,7 +19,7 @@
 #include "module_io/input.h"
 #include "module_elecstate/energy.h"
 #include "module_hamilt_general/module_xc/xc_functional.h"
-#include "module_pw/pw_basis_k.h"
+#include "module_basis/module_pw/pw_basis_k.h"
 #include "module_io/restart.h"
 #include "module_io/rho_io.h"
 

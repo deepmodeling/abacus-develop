@@ -2,7 +2,7 @@
 #define HSOLVERPW_H
 
 #include "hsolver.h"
-#include "module_pw/pw_basis_k.h"
+#include "module_basis/module_pw/pw_basis_k.h"
 
 namespace hsolver {
 
