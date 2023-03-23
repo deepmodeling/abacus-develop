@@ -28,40 +28,6 @@ void UnitCell::update_pos_taud(double* posd_in)
         }
     }
     assert(iat == this->nat);
-    this->periodic_boundary_adjustment();
-}
-
-void UnitCell::periodic_boundary_adjustment()
-{
-    //----------------------------------------------
-    // because of the periodic boundary condition
-    // we need to adjust the atom positions,
-    // first adjust direct coordinates,
-    // then update them into cartesian coordinates,
-    //----------------------------------------------
-    for (int it = 0; it < this->ntype; it++)
-    {
-        Atom* atom = &this->atoms[it];
-        for (int ia = 0; ia < atom->na; ia++)
-        {
-            // mohan update 2011-03-21
-            if (atom->taud[ia].x < 0)
-                atom->taud[ia].x += 1.0;
-            if (atom->taud[ia].y < 0)
-                atom->taud[ia].y += 1.0;
-            if (atom->taud[ia].z < 0)
-                atom->taud[ia].z += 1.0;
-            if (atom->taud[ia].x >= 1.0)
-                atom->taud[ia].x -= 1.0;
-            if (atom->taud[ia].y >= 1.0)
-                atom->taud[ia].y -= 1.0;
-            if (atom->taud[ia].z >= 1.0)
-                atom->taud[ia].z -= 1.0;
-
-            atom->tau[ia] = atom->taud[ia] * this->latvec;
-        }
-    }
-    return;
 }
 
 void UnitCell::print_stru_file(const std::string &fn, const int &type, const int &level)const {};
@@ -71,6 +37,13 @@ void UnitCell::print_cell_cif(const std::string& fn) const{};
 
 Magnetism::Magnetism(){};
 Magnetism::~Magnetism(){};
+
+Atom::Atom(){};
+Atom::~Atom(){};
+Atom_pseudo::Atom_pseudo(){};
+Atom_pseudo::~Atom_pseudo(){};
+pseudo_nc::pseudo_nc(){};
+pseudo_nc::~pseudo_nc(){};
 
 Structure_Factor::Structure_Factor(){};
 Structure_Factor::~Structure_Factor(){};
