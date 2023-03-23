@@ -105,7 +105,7 @@ void Stress_Func<FPTYPE, Device>::stress_ewa(ModuleBase::matrix& sigma, ModulePW
 	}
 
     //R-space sum here (only for the processor that contains G=0) 
-    int mxr = 50;
+    int mxr = 200;
     int *irr;
     ModuleBase::Vector3<FPTYPE> *r;
     FPTYPE *r2;
