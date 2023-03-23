@@ -474,13 +474,8 @@ void ModuleIO::save_HS_complete(const double *H,
         {
             g1.open(ssh.str().c_str(), ofstream::app);
             g2.open(sss.str().c_str(), ofstream::app);
-<<<<<<< HEAD
             g1 << GlobalV::NLOCAL<< endl;
             g2 << GlobalV::NLOCAL<< endl;
-=======
-            g1 << GlobalV::NLOCAL;
-            g2 << GlobalV::NLOCAL;
->>>>>>> 91058e5cf85e0d00be4b17eb5feb78dc15854c08
         }
 
         int ir, ic;

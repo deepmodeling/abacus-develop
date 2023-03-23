@@ -727,11 +727,7 @@ void ESolver_KS_LCAO::eachiterfinish(int iter)
         print = true;
     }
 
-<<<<<<< HEAD
-    if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
-=======
     if (print)
->>>>>>> 91058e5cf85e0d00be4b17eb5feb78dc15854c08
     {
         for (int is = 0; is < GlobalV::NSPIN; is++)
         {
@@ -813,17 +809,6 @@ void ESolver_KS_LCAO::afterscf(const int istep)
     // Temporary liuyu add 2022-11-07
     CE.update_all_pos(GlobalC::ucell);
 
-<<<<<<< HEAD
-    // if (this->conv_elec || iter == GlobalV::SCF_NMAX)
-    // {
-    //--------------------------------------
-    // 1. output charge density for converged,
-    // 0 means don't need to consider iter,
-    //--------------------------------------
-
-    double** dm2d;
-=======
->>>>>>> 91058e5cf85e0d00be4b17eb5feb78dc15854c08
     if (this->LOC.out_dm1 == 1)
     {
         double** dm2d;
@@ -834,49 +819,6 @@ void ESolver_KS_LCAO::afterscf(const int istep)
             ModuleBase::GlobalFunc::ZEROS(dm2d[is], this->LOC.ParaV->nnr);
         }
         this->LOC.cal_dm_R(this->LOC.dm_k, this->RA, dm2d);
-<<<<<<< HEAD
-    }
-
-    for (int is = 0; is < GlobalV::NSPIN; is++)
-    {
-        const int precision = 3;
-
-        std::stringstream ssc;
-        std::stringstream ss1;
-        ss1 << GlobalV::global_out_dir << "tmp_SPIN" << is + 1 << "_CHG";
-        std::remove(ss1.str().c_str()); // remove tmp_SPIN_CHG when scf is finished    liuyu 2023-03-01
-        ss1 << ".cube";
-        std::remove(ss1.str().c_str()); // remove tmp_SPIN_CHG.cube when scf is finished    liuyu 2023-03-01
-
-        ssc << GlobalV::global_out_dir << "SPIN" << is + 1 << "_CHG";
-        ModuleIO::write_rho(pelec->charge->rho_save[is], is, 0, ssc.str()); // mohan add 2007-10-17
-
-        std::stringstream ssd;
-        if (GlobalV::GAMMA_ONLY_LOCAL)
-        {
-            ssd << GlobalV::global_out_dir << "SPIN" << is + 1 << "_DM";
-        }
-        else
-        {
-            ssd << GlobalV::global_out_dir << "SPIN" << is + 1 << "_DM_R";
-        }
-        ModuleIO::write_dm(is, 0, ssd.str(), precision, this->LOC.out_dm, this->LOC.DM);
-        if (this->LOC.out_dm1 == 1)
-        {
-            ModuleIO::write_dm1(is, istep, dm2d, this->LOC.ParaV, this->LOC.DMR_sparse);
-        }
-        /* Broken, please fix it
-                if (GlobalV::out_pot == 1) // LiuXh add 20200701
-                {
-                    std::stringstream ssp;
-                    ssp << GlobalV::global_out_dir << "SPIN" << is + 1 << "_POT";
-                    this->pelec->pot->write_potential(is, 0, ssp.str(), this->pelec->pot->get_effective_v(), precision);
-                }
-        */
-    }
-
-    if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
-=======
 
         for (int is = 0; is < GlobalV::NSPIN; is++)
         {
@@ -892,7 +834,6 @@ void ESolver_KS_LCAO::afterscf(const int istep)
     }
 
     if (GlobalV::out_chg)
->>>>>>> 91058e5cf85e0d00be4b17eb5feb78dc15854c08
     {
         for (int is = 0; is < GlobalV::NSPIN; is++)
         {
@@ -947,11 +888,7 @@ void ESolver_KS_LCAO::afterscf(const int istep)
         }
     }
 
-<<<<<<< HEAD
-    if (this->LOC.out_dm1 == 1)
-=======
     if (this->LOC.out_dm)
->>>>>>> 91058e5cf85e0d00be4b17eb5feb78dc15854c08
     {
         for (int is = 0; is < GlobalV::NSPIN; is++)
         {
