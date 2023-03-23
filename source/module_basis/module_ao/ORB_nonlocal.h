@@ -48,9 +48,9 @@ public:
 
 	private:
 	
-	std::string label; /// <atom type
+	std::string label; /// <element label
 
-	int type; ///< number of atom types
+	int type; ///< element index
 
 	int lmax; ///< max value of L angular momentum
 

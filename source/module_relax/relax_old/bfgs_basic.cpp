@@ -8,8 +8,6 @@ double BFGS_Basic::relax_bfgs_w2 = -1.0; // defalut is 0.05
 
 BFGS_Basic::BFGS_Basic()
 {
-	pos = nullptr;
-	pos_p = nullptr;
 	grad = nullptr;
 	grad_p = nullptr;
 	move = nullptr;
@@ -20,8 +18,6 @@ BFGS_Basic::BFGS_Basic()
 
 BFGS_Basic::~BFGS_Basic()
 {
-    delete[] pos;
-    delete[] pos_p;
     delete[] grad;
     delete[] grad_p;
     delete[] move;
@@ -32,23 +28,17 @@ void BFGS_Basic::allocate_basic(void)
 {
 	assert(dim>0);
 		
-    delete[] pos;
-    delete[] pos_p;
     delete[] grad;
     delete[] grad_p;
     delete[] move;
     delete[] move_p;
 
-    pos = new double[dim];
-    pos_p = new double [dim];
     grad = new double[dim];
     grad_p = new double [dim];
     move = new double [dim];
     move_p = new double [dim];
 
-    ModuleBase::GlobalFunc::ZEROS(pos, dim);
     ModuleBase::GlobalFunc::ZEROS(grad, dim);
-    ModuleBase::GlobalFunc::ZEROS(pos_p, dim);
     ModuleBase::GlobalFunc::ZEROS(grad_p, dim);
     ModuleBase::GlobalFunc::ZEROS(move, dim);
     ModuleBase::GlobalFunc::ZEROS(move_p, dim);
@@ -71,9 +61,8 @@ void BFGS_Basic::update_inverse_hessian(void)
 
     for(int i=0;i<dim;i++)
     {
-//      s[i] = this->pos[i] - this->pos_p[i];
 //		mohan update 2010-07-27
-		s[i] = this->check_move( pos[i], pos_p[i] );     	
+		s[i] = this->check_move( move_p[i] );     	
 		s[i] *= GlobalC::ucell.lat0;
 	 
 	    y[i] = this->grad[i] - this->grad_p[i];
@@ -201,7 +190,6 @@ void BFGS_Basic::save_bfgs(void)
     this->save_flag = true;
     for(int i=0;i<dim;i++)
     {
-        this->pos_p[i] = this->pos[i];
         this->grad_p[i] = this->grad[i];
         this->move_p[i] = this->move[i];
     }
@@ -390,12 +378,12 @@ void BFGS_Basic::compute_trust_radius(void)
     return;
 }
 
-double BFGS_Basic::check_move(const double &pos, const double &pos_p)
+double BFGS_Basic::check_move(const double &move_p)
 {
 	// this must be careful.
 	// unit is GlobalC::ucell.lat0.
 	assert(GlobalC::ucell.lat0>0.0);
-	const double direct_move = (pos - pos_p)/GlobalC::ucell.lat0;
+	const double direct_move = move_p / GlobalC::ucell.lat0;
 	double shortest_move = direct_move;
 	for(int cell=-1; cell<=1; ++cell)
 	{

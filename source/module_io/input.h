@@ -47,6 +47,7 @@ class Input
 
     bool init_vel; // read velocity from STRU or not  liuyu 2021-07-14
     bool dump_vel;    // output atomic velocities into the file MD_dump or not. liuyu 2023-03-01
+    double ref_cell_factor;    // construct a reference cell bigger than the initial cell  liuyu 2023-03-21
 
     /* symmetry level: 
       -1, no symmetry at all; 

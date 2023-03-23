@@ -48,6 +48,14 @@ install(DIRECTORY GaAs DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
 
 AddTest(
+    TARGET ORB_nonlocal_test
+    SOURCES ORB_nonlocal_test.cpp
+        ../ORB_nonlocal.cpp
+        ../ORB_nonlocal_lm.cpp
+    LIBS ${math_libs} device base
+)
+
+AddTest(
     TARGET ORB_nonlocal_lm_test
     SOURCES ORB_nonlocal_lm_test.cpp
         ../ORB_nonlocal_lm.cpp

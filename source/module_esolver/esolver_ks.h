@@ -28,6 +28,8 @@ namespace ModuleESolver
         int out_freq_elec;// frequency for output
         virtual void Init(Input& inp, UnitCell& cell) override;
 
+        virtual void init_after_vc(Input& inp, UnitCell& cell) override;    // liuyu add 2023-03-09
+
         virtual void Run(const int istep, UnitCell& cell) override;
 
         // calculate electron density from a specific Hamiltonian

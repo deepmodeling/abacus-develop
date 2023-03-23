@@ -87,6 +87,7 @@ namespace ModuleESolver
     template<typename FPTYPE, typename Device>
     void ESolver_KS_PW<FPTYPE, Device>::Init_GlobalC(Input& inp, UnitCell& cell)
     {
+        if(this->psi != nullptr) delete this->psi;
         this->psi = GlobalC::wf.allocate(GlobalC::kv.nks);
 
         // cout<<GlobalC::rhopw->nrxx<<endl;
@@ -192,6 +193,40 @@ namespace ModuleESolver
     }
 
     template<typename FPTYPE, typename Device>
+    void ESolver_KS_PW<FPTYPE, Device>::init_after_vc(Input& inp, UnitCell& ucell)
+    {
+        ESolver_KS<FPTYPE, Device>::init_after_vc(inp,ucell);
+
+        this->pw_wfc->initgrids(ucell.lat0, ucell.latvec, GlobalC::rhopw->nx, GlobalC::rhopw->ny, GlobalC::rhopw->nz);
+        this->pw_wfc->initparameters(false, inp.ecutwfc, GlobalC::kv.nks, GlobalC::kv.kvec_d.data());
+#ifdef __MPI
+        if(INPUT.pw_seed > 0)    MPI_Allreduce(MPI_IN_PLACE, &this->pw_wfc->ggecut, 1, MPI_DOUBLE, MPI_MAX , MPI_COMM_WORLD);
+        //qianrui add 2021-8-13 to make different kpar parameters can get the same results
+#endif
+        this->pw_wfc->setuptransform();
+        for(int ik = 0 ; ik < GlobalC::kv.nks; ++ik)   GlobalC::kv.ngk[ik] = this->pw_wfc->npwk[ik];
+        this->pw_wfc->collect_local_pw(); 
+
+        delete this->phsol;  this->phsol = new hsolver::HSolverPW<FPTYPE, Device>(GlobalC::wfcpw);
+
+        delete this->pelec;  this->pelec = new elecstate::ElecStatePW<FPTYPE, Device>( GlobalC::wfcpw, &(this->chr), (K_Vectors*)(&(GlobalC::kv)));
+
+        this->pelec->charge->allocate(GlobalV::NSPIN, GlobalC::rhopw->nrxx, GlobalC::rhopw->npw);
+
+        delete this->pelec->pot;
+        this->pelec->pot = new elecstate::Potential(
+            GlobalC::rhopw,
+            &GlobalC::ucell,
+            &(GlobalC::ppcell.vloc),
+            &(GlobalC::sf.strucFac),
+            &(GlobalC::en.etxc),
+            &(GlobalC::en.vtxc));
+        
+        //temporary
+        this->Init_GlobalC(inp,ucell);
+    }
+
+    template<typename FPTYPE, typename Device>
     void ESolver_KS_PW<FPTYPE, Device>::beforescf(int istep)
     {
         ModuleBase::TITLE("ESolver_KS_PW", "beforescf");
@@ -199,16 +234,25 @@ namespace ModuleESolver
         // Temporary, md and relax will merge later   liuyu add 2022-11-07
         if(GlobalV::CALCULATION == "md" && istep)
         {
-            this->CE.update_istep();
-            this->CE.save_pos_next(GlobalC::ucell);
-            this->CE.extrapolate_charge(this->pelec->charge);
-
-            if(GlobalC::ucell.cell_parameter_updated)
+            // different precision level for vc-md
+            if(GlobalC::ucell.cell_parameter_updated && GlobalV::md_prec_level == 2)
             {
-                Variable_Cell::init_after_vc();
+                this->init_after_vc(INPUT, GlobalC::ucell);
             }
-
-            //this->pelec->init_scf(istep, GlobalC::sf.strucFac);
+            else
+            {
+                this->CE.update_all_dis(GlobalC::ucell);
+                this->CE.extrapolate_charge(this->pelec->charge);
+                if(GlobalC::ucell.cell_parameter_updated && GlobalV::md_prec_level == 0)
+                {
+                    Variable_Cell::init_after_vc();
+                    GlobalC::wfcpw->initgrids(GlobalC::ucell.lat0, GlobalC::ucell.latvec, GlobalC::wfcpw->nx, GlobalC::wfcpw->ny, GlobalC::wfcpw->nz);
+                    GlobalC::wfcpw->initparameters(false, INPUT.ecutwfc, GlobalC::kv.nks, GlobalC::kv.kvec_d.data());
+                    GlobalC::wfcpw->collect_local_pw(); 
+                    GlobalC::wf.init_after_vc(GlobalC::kv.nks);
+                    GlobalC::wf.init_at_1();
+                }
+            }
         }
 
         if(GlobalV::CALCULATION=="relax" || GlobalV::CALCULATION=="cell-relax")
@@ -217,25 +261,25 @@ namespace ModuleESolver
             {
                 GlobalV::ofs_running << " Setup the extrapolated charge." << std::endl;
                 // charge extrapolation if istep>0.
-                this->CE.update_istep();
-                this->CE.update_all_pos(GlobalC::ucell);
+                this->CE.update_all_dis(GlobalC::ucell);
                 this->CE.extrapolate_charge(this->pelec->charge);
-                this->CE.save_pos_next(GlobalC::ucell);
 
                 GlobalV::ofs_running << " Setup the Vl+Vh+Vxc according to new structure factor and new charge." << std::endl;
                 // calculate the new potential accordint to
                 // the new charge density.
                 //this->pelec->init_scf( istep, GlobalC::sf.strucFac );
             }
+
+            if(GlobalC::ucell.cell_parameter_updated)
+            {
+                GlobalC::wfcpw->initgrids(GlobalC::ucell.lat0, GlobalC::ucell.latvec, GlobalC::wfcpw->nx, GlobalC::wfcpw->ny, GlobalC::wfcpw->nz);
+                GlobalC::wfcpw->initparameters(false, INPUT.ecutwfc, GlobalC::kv.nks, GlobalC::kv.kvec_d.data());
+                GlobalC::wfcpw->collect_local_pw(); 
+                GlobalC::wf.init_after_vc(GlobalC::kv.nks);
+                GlobalC::wf.init_at_1();
+            }
         }
-        if(GlobalC::ucell.cell_parameter_updated)
-        {
-            GlobalC::wfcpw->initgrids(GlobalC::ucell.lat0, GlobalC::ucell.latvec, GlobalC::wfcpw->nx, GlobalC::wfcpw->ny, GlobalC::wfcpw->nz);
-            GlobalC::wfcpw->initparameters(false, INPUT.ecutwfc, GlobalC::kv.nks, GlobalC::kv.kvec_d.data());
-            GlobalC::wfcpw->collect_local_pw(); 
-            GlobalC::wf.init_after_vc(GlobalC::kv.nks);
-            GlobalC::wf.init_at_1();
-        }
+
         //init Hamilt, this should be allocated before each scf loop
         //Operators in HamiltPW should be reallocated once cell changed
         //delete Hamilt if not first scf
@@ -503,9 +547,6 @@ namespace ModuleESolver
     template<typename FPTYPE, typename Device>
     void ESolver_KS_PW<FPTYPE, Device>::afterscf(const int istep)
     {
-        // Temporary liuyu add 2022-11-07
-        this->CE.update_all_pos(GlobalC::ucell);
-
         if (GlobalV::out_pot == 1) // output the effective potential, sunliang 2023-03-16
         {
             for (int is = 0; is < GlobalV::NSPIN; is++)
@@ -621,6 +662,7 @@ namespace ModuleESolver
     void ESolver_KS_PW<FPTYPE, Device>::cal_Force(ModuleBase::matrix& force)
     {
         Forces<double, Device> ff;
+        if (this->__kspw_psi != nullptr) this->__kspw_psi = nullptr;
         if (this->__kspw_psi == nullptr) {
             this->__kspw_psi = GlobalV::precision_flag == "single" ?
                                new psi::Psi<std::complex<double>, Device>(this->kspw_psi[0]) :
@@ -633,6 +675,7 @@ namespace ModuleESolver
     void ESolver_KS_PW<FPTYPE, Device>::cal_Stress(ModuleBase::matrix& stress)
     {
         Stress_PW<double, Device> ss(this->pelec);
+        if (this->__kspw_psi != nullptr) this->__kspw_psi = nullptr;
         if (this->__kspw_psi == nullptr) {
             this->__kspw_psi = GlobalV::precision_flag == "single" ?
                              new psi::Psi<std::complex<double>, Device>(this->kspw_psi[0]) :

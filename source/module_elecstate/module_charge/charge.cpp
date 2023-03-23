@@ -42,39 +42,48 @@ Charge::Charge()
 
 Charge::~Charge()
 {
-	//if(allocate_rho) //LiuXh modify 20180619
-	if(allocate_rho || allocate_rho_final_scf) //LiuXh add 20180619
-	{
-		for(int i=0; i<GlobalV::NSPIN; i++)
-		{
-			delete[] rho[i];
-			delete[] rhog[i];
-			delete[] rho_save[i];
-			delete[] rhog_save[i];
-			if(XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
-			{
-				delete[] kin_r[i];
-				delete[] kin_r_save[i];
-			}
-		}
-		delete[] rho;
-		delete[] rhog;
-		delete[] rho_save;
-		delete[] rhog_save;
-    	delete[] rho_core;
-		delete[] rhog_core;
-		if(XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
-		{
-			delete[] kin_r;
-			delete[] kin_r_save;
-		}
-	}
+    this->destroy();
 }
 
+void Charge::destroy()
+{
+    if(allocate_rho || allocate_rho_final_scf) //LiuXh add 20180619
+    {
+        for(int i=0; i<GlobalV::NSPIN; i++)
+        {
+            delete[] rho[i];
+            delete[] rhog[i];
+            delete[] rho_save[i];
+            delete[] rhog_save[i];
+            if(XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
+            {
+                delete[] kin_r[i];
+                delete[] kin_r_save[i];
+            }
+        }
+        delete[] rho;
+        delete[] rhog;
+        delete[] rho_save;
+        delete[] rhog_save;
+        delete[] rho_core;
+        delete[] rhog_core;
+        if(XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
+        {
+            delete[] kin_r;
+            delete[] kin_r_save;
+        }
+    }
+}
 
 void Charge::allocate(const int &nspin_in, const int &nrxx_in, const int &ngmc_in)
 {
     ModuleBase::TITLE("Charge","allocate");
+
+    if(allocate_rho == true)
+    {
+        this->destroy();
+        allocate_rho = false;
+    }
 
 	assert(allocate_rho == false);
 

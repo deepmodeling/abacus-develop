@@ -144,7 +144,7 @@ void MD_func::RandomVel(
         }
 
         double factor;
-        if(3*numIon == frozen_freedom)
+        if(3*numIon == frozen_freedom || temperature == 0)
         {
             factor = 0;
         }
@@ -189,21 +189,6 @@ void MD_func::InitVel(
         RandomVel(unit_in.nat, temperature, allmass, frozen_freedom, frozen, ionmbl, vel);
     }
 	std::cout << "--------------------------------- INITVEL DONE ------------------------------------" << std::endl;
-}
-
-void MD_func::InitPos(
-	const UnitCell &unit_in, 
-	ModuleBase::Vector3<double>* pos)
-{
-	int ion=0;
-	for(int it=0;it<unit_in.ntype;it++)
-	{
-		for(int i=0;i<unit_in.atoms[it].na;i++)
-		{
-			pos[ion] = unit_in.atoms[it].tau[i]*unit_in.lat0;
-			ion++;
-		}
-	}
 }
 
 //calculate potential, force and virial

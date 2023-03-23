@@ -21,7 +21,8 @@ void Verlet::first_half()
     ModuleBase::TITLE("Verlet", "first_half");
     ModuleBase::timer::tick("Verlet", "first_half");
 
-    MDrun::first_half();
+    MDrun::update_vel(force);
+    MDrun::update_pos();
 
     ModuleBase::timer::tick("Verlet", "first_half");
 }
@@ -31,7 +32,7 @@ void Verlet::second_half()
     ModuleBase::TITLE("Verlet", "second_half");
     ModuleBase::timer::tick("Verlet", "second_half");
 
-    MDrun::second_half();
+    MDrun::update_vel(force);
     apply_thermostat();
 
     ModuleBase::timer::tick("Verlet", "second_half");

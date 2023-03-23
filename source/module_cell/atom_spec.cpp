@@ -13,7 +13,7 @@ Atom::Atom()
     stapos_wf = 0;
     mass = 0.0;
     tau = new ModuleBase::Vector3<double>[1];
-    tau_original = new ModuleBase::Vector3<double>[1];
+    dis = new ModuleBase::Vector3<double>[1];
     taud = new ModuleBase::Vector3<double>[1];
     vel = new ModuleBase::Vector3<double>[1];
     mag = new double[1];
@@ -32,7 +32,7 @@ Atom::Atom()
 Atom::~Atom()
 {
     delete[] tau;
-    delete[] tau_original;
+    delete[] dis;
     delete[] taud;
     delete[] vel;
     delete[] mag;
@@ -142,7 +142,7 @@ void Atom::bcast_atom(void)
     {
         assert(na!=0);
         delete[] tau;
-        delete[] tau_original;
+        delete[] dis;
 		delete[] taud;
 	    delete[] vel;
         delete[] mag;
@@ -151,7 +151,7 @@ void Atom::bcast_atom(void)
         delete[] m_loc_;
         delete[] mbl;
         tau = new ModuleBase::Vector3<double>[na];
-        tau_original = new ModuleBase::Vector3<double>[na];
+        dis = new ModuleBase::Vector3<double>[na];
 		taud = new ModuleBase::Vector3<double>[na];
 	    vel = new ModuleBase::Vector3<double>[na];
         mag = new double[na];
@@ -169,6 +169,9 @@ void Atom::bcast_atom(void)
         Parallel_Common::bcast_double( taud[i].x );
         Parallel_Common::bcast_double( taud[i].y );
         Parallel_Common::bcast_double( taud[i].z );
+        Parallel_Common::bcast_double( dis[i].x );
+        Parallel_Common::bcast_double( dis[i].y );
+        Parallel_Common::bcast_double( dis[i].z );
 	    Parallel_Common::bcast_double( vel[i].x );
 	    Parallel_Common::bcast_double( vel[i].y );
 	    Parallel_Common::bcast_double( vel[i].z );
