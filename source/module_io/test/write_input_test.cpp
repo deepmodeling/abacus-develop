@@ -1,3 +1,22 @@
+#include "gtest/gtest.h"
+#include "gmock/gmock.h"
+#define private public
+#include "module_io/input.h"
+/************************************************
+ *  unit test of write_input.cpp
+ ***********************************************/
+
+/**
+ * - Tested Functions:
+ *   - Print()
+ *     - output the information in the input file.
+ */
+class write_input : public testing::Test
+{
+     protected:
+     Input INPUT;
+};
+
 TEST_F(write_input,print)
 {
     INPUT.Read("./support/witestfile");
