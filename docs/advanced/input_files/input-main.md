@@ -956,7 +956,7 @@ These variables are used to control the output of properties.
 - **Type**: Boolean
 - **Description**: For LCAO calculations, if out_mat_r is set to 1, ABACUS will calculate and print the matrix representation of the position matrix, namely $\langle \chi_\mu|\hat{r}|\chi_\nu\rangle$ in a file named `data-rR-tr` in the directory `OUT.${suffix}`.
 
-  Each file or each section of the appended file starts with "STEP: " followed by the current ion/md step, then the second line starts with "Matrix Dimension of r(R): " followed by the dimension of the matrix, and the third line starts with "Matrix number of r(R): " followed by the matrix number. The rest of the format is arranged into blocks, such as:
+  Each file or each section of the appended file starts with "STEP: " followed by the current ion/md step, then the second line starts with "Matrix Dimension of $r(R)$: " followed by the dimension of the matrix, and the third line starts with "Matrix number of $r(R)$: " followed by the matrix number. The rest of the format is arranged into blocks, such as:
 
   ```
   -5 -5 -5    //R (lattice vector)
@@ -977,9 +977,9 @@ These variables are used to control the output of properties.
 ### out_mat_hs2
 
 - **Type**: Boolean
-- **Description**: For LCAO calculations, if out_mat_hs2 is set to 1, ABACUS will generate files containing the Hamiltonian matrix H(R) and overlap matrix S(R).
+- **Description**: For LCAO calculations, if out_mat_hs2 is set to 1, ABACUS will generate files containing the Hamiltonian matrix $H(R)$ and overlap matrix $S(R)$.
 
-  For single-point SCF calculations, if nspin = 1 or nspin = 4, two files `data-HR-sparse_SPIN0.csr` and `data-SR-sparse_SPIN0.csr` are generated, which contain the Hamiltonian matrix H(R) and overlap matrix S(R) respectively. For nspin = 2, three files `data-HR-sparse_SPIN0.csr` and `data-HR-sparse_SPIN1.csr` and `data-SR-sparse_SPIN0.csr` are created, where the first two contain H(R) for spin up and spin down, respectively.
+  For single-point SCF calculations, if nspin = 1 or nspin = 4, two files `data-HR-sparse_SPIN0.csr` and `data-SR-sparse_SPIN0.csr` are generated, which contain the Hamiltonian matrix $H(R)$ and overlap matrix $S(R)$ respectively. For nspin = 2, three files `data-HR-sparse_SPIN0.csr` and `data-HR-sparse_SPIN1.csr` and `data-SR-sparse_SPIN0.csr` are created, where the first two contain $H(R)$ for spin up and spin down, respectively.
 
   As for molecular dynamics calculations, the format is controlled by [out_hs2_interval](#out_hs2_interval) and [out_app_flag](#out_app_flag) in the same manner as the position matrix as detailed in [out_mat_r](#out_mat_r).
 
@@ -1006,24 +1006,24 @@ These variables are used to control the output of properties.
 
 ### out_mat_t
 - **Type**: Boolean
-- **Description**: For LCAO calculations, if out_mat_t is set to 1, ABACUS will generate files containing the kinetic energy matrix T(R). The format will be the same as the Hamiltonian matrix H(R) and overlap matrix S(R) as mentioned in [out_mat_hs2](#out_mat_hs2). The name of the files will be `data-TR-sparse_SPIN0.csr` and so on. Also controled by [out_hs2_interval](#out_hs2_interval) and [out_app_flag](#out_app_flag).
+- **Description**: For LCAO calculations, if out_mat_t is set to 1, ABACUS will generate files containing the kinetic energy matrix $T(R)$. The format will be the same as the Hamiltonian matrix $H(R)$ and overlap matrix $S(R)$ as mentioned in [out_mat_hs2](#out_mat_hs2). The name of the files will be `data-TR-sparse_SPIN0.csr` and so on. Also controled by [out_hs2_interval](#out_hs2_interval) and [out_app_flag](#out_app_flag).
 - **Default**: 0
 
 ### out_mat_dh
 - **Type**: Boolean
-- **Description**: For LCAO calculations, if out_mat_dh is set to 1, ABACUS will generate files containing the derivatives of the Hamiltonian matrix. The format will be the same as the Hamiltonian matrix H(R) and overlap matrix S(R) as mentioned in [out_mat_hs2](#out_mat_hs2). The name of the files will be `data-dHRx-sparse_SPIN0.csr` and so on. Also controled by [out_hs2_interval](#out_hs2_interval) and [out_app_flag](#out_app_flag).
+- **Description**: For LCAO calculations, if out_mat_dh is set to 1, ABACUS will generate files containing the derivatives of the Hamiltonian matrix. The format will be the same as the Hamiltonian matrix $H(R)$ and overlap matrix $S(R)$ as mentioned in [out_mat_hs2](#out_mat_hs2). The name of the files will be `data-dHRx-sparse_SPIN0.csr` and so on. Also controled by [out_hs2_interval](#out_hs2_interval) and [out_app_flag](#out_app_flag).
 - **Default**: 0
 
 ### out_app_flag
 
 - **Type**: Boolean
-- **Description**: Whether output r(R), H(R), S(R), T(R), and dH(R) matrices in an append manner during MD. Check input parameters [out_mat_r](#out_mat_r), [out_mat_hs2](#out_mat_hs2), [out_mat_t](#out_mat_t), and [out_mat_dh](#out_mat_dh) for more information.
+- **Description**: Whether output $r(R)$, $H(R)$, $S(R)$, $T(R)$, and $dH(R)$ matrices in an append manner during MD. Check input parameters [out_mat_r](#out_mat_r), [out_mat_hs2](#out_mat_hs2), [out_mat_t](#out_mat_t), and [out_mat_dh](#out_mat_dh) for more information.
 - **Default**: true
 
 ### out_hs2_interval
 
 - **Type**: Integer
-- **Description**: Only relevant for printing H(R), S(R), T(R), dH(R) matrices during MD. It controls the interval at which to print. Check input parameter [out_mat_hs2](#out_mat_hs2) for more information.
+- **Description**: Only relevant for printing $H(R)$, $S(R)$, $T(R)$, $dH(R)$ matrices during MD. It controls the interval at which to print. Check input parameter [out_mat_hs2](#out_mat_hs2) for more information.
 - **Default**: 1
 
 ### out_element_info
