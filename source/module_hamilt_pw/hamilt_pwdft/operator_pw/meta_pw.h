@@ -3,7 +3,7 @@
 
 #include "operator_pw.h"
 #include "module_base/matrix.h"
-#include "module_pw/pw_basis_k.h"
+#include "module_basis/module_pw/pw_basis_k.h"
 #include "module_hamilt_pw/hamilt_pwdft/kernels/meta_op.h"
 #include "module_hsolver/kernels/math_kernel_op.h"
 

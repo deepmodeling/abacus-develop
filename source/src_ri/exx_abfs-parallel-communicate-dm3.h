@@ -4,7 +4,7 @@
 #include "exx_abfs-parallel.h"
 #include "module_base/abfs-vector3_order.h"
 #include "../module_base/complexmatrix.h"
-#include "module_orbital/parallel_orbitals.h"
+#include "module_basis/module_ao/parallel_orbitals.h"
 #ifdef __MPI
 #include "mpi.h"
 #endif

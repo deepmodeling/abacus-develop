@@ -248,7 +248,6 @@ void MD_func::force_virial(
 
 void MD_func::outStress(const ModuleBase::matrix &virial, const ModuleBase::matrix &stress)
 {
-	GlobalV::ofs_running<<"\noutput Pressure for check!"<<std::endl;
     double stress_scalar = 0.0, virial_scalar = 0.0;
     for(int i=0;i<3;i++)
     {
@@ -256,13 +255,13 @@ void MD_func::outStress(const ModuleBase::matrix &virial, const ModuleBase::matr
 		virial_scalar += virial(i,i)/3;
     }
     const double unit_transform = ModuleBase::HARTREE_SI / pow(ModuleBase::BOHR_RADIUS_SI,3) * 1.0e-8;
-    GlobalV::ofs_running<<"Virtual Pressure is "<<stress_scalar*unit_transform<<" Kbar "<<std::endl;
-    GlobalV::ofs_running<<"Virial Term is "<<virial_scalar*unit_transform<<" Kbar "<<std::endl;
-    GlobalV::ofs_running<<"Kenetic Term is "<<(stress_scalar-virial_scalar)*unit_transform<<" Kbar "<<std::endl;
+    GlobalV::ofs_running << "Virtual Pressure is " << stress_scalar*unit_transform << " kbar " << std::endl;
+    GlobalV::ofs_running << "Virial Term is " << virial_scalar*unit_transform << " kbar "<< std::endl;
+    GlobalV::ofs_running << "Kinetic Term is " << (stress_scalar-virial_scalar)*unit_transform << " kbar "<< std::endl;
 
     GlobalV::ofs_running.unsetf(ios::fixed);
     GlobalV::ofs_running << std::setprecision(8) << std::endl;
-    ModuleBase::GlobalFunc::NEW_PART("MD STRESS (KBAR)");
+    ModuleBase::GlobalFunc::NEW_PART("MD STRESS (kbar)");
     for (int i=0; i<3; i++)
     {
         GlobalV::ofs_running << std::setw(15) << stress(i,0)*unit_transform 
@@ -302,7 +301,7 @@ void MD_func::MDdump(const int &step,
     ofs << "MDSTEP:  " << step << std::endl;
     ofs << std::setprecision(12) << std::setiosflags(ios::fixed);
 
-    ofs << "LATTICE_CONSTANT: " << unit_in.lat0 << std::endl;
+    ofs << "LATTICE_CONSTANT: " << unit_in.lat0_angstrom << " Angstrom" << std::endl;
 
     ofs << "LATTICE_VECTORS" << std::endl;
     ofs << "  " << unit_in.latvec.e11 << "  " << unit_in.latvec.e12 << "  " << unit_in.latvec.e13 << std::endl; 
@@ -311,7 +310,7 @@ void MD_func::MDdump(const int &step,
 
     if(GlobalV::CAL_STRESS && inp.dump_virial)
     {
-        ofs << "VIRIAL (kBar)" << std::endl;
+        ofs << "VIRIAL (kbar)" << std::endl;
         for(int i=0; i<3; ++i)
         {
             ofs << "  " << virial(i, 0) * unit_virial 

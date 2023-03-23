@@ -11,7 +11,7 @@
 #include "diagh.h"
 #include "module_base/complexmatrix.h"
 #include "module_base/matrix.h"
-#include "module_orbital/parallel_orbitals.h"
+#include "module_basis/module_ao/parallel_orbitals.h"
 
 #include <complex>
 #include <utility>
