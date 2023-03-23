@@ -114,18 +114,18 @@ void MDrun::outputMD(std::ofstream &ofs, bool cal_stress)
     }
 
     std::cout << " ------------------------------------------------------------------------------------------------" << std::endl;
-    std::cout << " " << std::left << std::setw(20) << "Energy" 
-            << std::left << std::setw(20) << "Potential" 
-            << std::left << std::setw(20) << "Kinetic" 
-            << std::left << std::setw(20) << "Temperature";
+    std::cout << " " << std::left << std::setw(20) << "Energy (Ry)" 
+            << std::left << std::setw(20) << "Potential (Ry)" 
+            << std::left << std::setw(20) << "Kinetic (Ry)" 
+            << std::left << std::setw(20) << "Temperature (K)";
     if(cal_stress)
     {
-        std::cout << std::left << std::setw(20) << "Pressure (KBAR)";
+        std::cout << std::left << std::setw(20) << "Pressure (kbar)";
     }
     std::cout << std::endl;
-    std::cout << " " << std::left << std::setw(20) << potential+kinetic
-            << std::left << std::setw(20) << potential
-            << std::left << std::setw(20) << kinetic
+    std::cout << " " << std::left << std::setw(20) << 2 * (potential+kinetic)
+            << std::left << std::setw(20) << 2 * potential
+            << std::left << std::setw(20) << 2 * kinetic
             << std::left << std::setw(20) << t_current * ModuleBase::Hartree_to_K;
     if(cal_stress)
     {
@@ -138,18 +138,18 @@ void MDrun::outputMD(std::ofstream &ofs, bool cal_stress)
     ofs << std::setprecision(8) << std::endl;
     ofs << std::endl;
     ofs << " ------------------------------------------------------------------------------------------------" << std::endl;
-	ofs << " " << std::left << std::setw(20) << "Energy" 
-        << std::left << std::setw(20) << "Potential" 
-        << std::left << std::setw(20) << "Kinetic" 
-        << std::left << std::setw(20) << "Temperature"; 
+	ofs << " " << std::left << std::setw(20) << "Energy (Ry)" 
+        << std::left << std::setw(20) << "Potential (Ry)" 
+        << std::left << std::setw(20) << "Kinetic (Ry)" 
+        << std::left << std::setw(20) << "Temperature (K)"; 
     if(cal_stress)
     {
-        ofs << std::left << std::setw(20) << "Pressure (KBAR)";
+        ofs << std::left << std::setw(20) << "Pressure (kbar)";
     }
     ofs << std::endl;
-    ofs << " " << std::left << std::setw(20) << potential+kinetic
-        << std::left << std::setw(20) << potential
-        << std::left << std::setw(20) << kinetic
+    ofs << " " << std::left << std::setw(20) << 2 * (potential+kinetic)
+        << std::left << std::setw(20) << 2 * potential
+        << std::left << std::setw(20) << 2 * kinetic
         << std::left << std::setw(20) << t_current * ModuleBase::Hartree_to_K;
     if(cal_stress)
     {

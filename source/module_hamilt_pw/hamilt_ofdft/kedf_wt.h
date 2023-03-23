@@ -6,7 +6,7 @@
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
 #include "module_base/matrix.h"
-#include "module_pw/pw_basis.h"
+#include "module_basis/module_pw/pw_basis.h"
 
 class KEDF_WT
 {

@@ -5,7 +5,7 @@
 #include "module_base/global_variable.h"
 #include "module_base/intarray.h"
 #include "module_hamilt_pw/hamilt_pwdft/structure_factor.h"
-#include "module_pw/pw_basis_k.h"
+#include "module_basis/module_pw/pw_basis_k.h"
 
 class WF_igk 
 {

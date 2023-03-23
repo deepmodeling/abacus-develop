@@ -16,7 +16,7 @@
 #include "module_base/vector3.h"
 #include "module_base/matrix.h"
 #include "exx_info.h"
-#include "module_pw/pw_basis_k.h"
+#include "module_basis/module_pw/pw_basis_k.h"
 #include "module_elecstate/module_charge/charge.h"
 #include "module_cell/unitcell.h"
 class XC_Functional

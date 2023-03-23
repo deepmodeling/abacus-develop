@@ -4,7 +4,7 @@
 #include<module_base/matrix.h>
 #include<module_base/complexmatrix.h>
 #include "module_hamilt_lcao/hamilt_lcaodft/local_orbital_charge.h"
-#include "module_gint/gint_gamma.h"
+#include "module_hamilt_lcao/module_gint/gint_gamma.h"
 #include "module_psi/psi.h"
 
 class IState_Charge

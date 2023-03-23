@@ -76,3 +76,9 @@ AddTest(
 	../../module_cell/module_symmetry/symm_other.cpp ../../module_cell/module_symmetry/symmetry_basic.cpp
 	../../module_cell/module_symmetry/symmetry.cpp
 )
+
+ AddTest(
+  TARGET io_write_input_test
+  LIBS ${math_libs} base device
+  SOURCES write_input_test.cpp ../write_input.cpp ../input.cpp
+)
