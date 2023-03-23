@@ -255,8 +255,8 @@ void ModuleIO::save_HS_triangle(const double *H,
         {
             g1.open(ssh.str().c_str(), ofstream::app);
             g2.open(sss.str().c_str(), ofstream::app);
-            g1 << GlobalV::NLOCAL<< endl;
-            g2 << GlobalV::NLOCAL<< endl;
+            g1 << GlobalV::NLOCAL;
+            g2 << GlobalV::NLOCAL;
         }
 
         int ir, ic;
@@ -324,8 +324,8 @@ void ModuleIO::save_HS_triangle(const double *H,
         std::ofstream g1(ssh.str().c_str(), ofstream::app);
         std::ofstream g2(sss.str().c_str(), ofstream::app);
 
-        g1 << GlobalV::NLOCAL<< endl;
-        g2 << GlobalV::NLOCAL<< endl;
+        g1 << GlobalV::NLOCAL;
+        g2 << GlobalV::NLOCAL;
 
         for (int i = 0; i < GlobalV::NLOCAL; i++)
         {
@@ -474,8 +474,8 @@ void ModuleIO::save_HS_complete(const double *H,
         {
             g1.open(ssh.str().c_str(), ofstream::app);
             g2.open(sss.str().c_str(), ofstream::app);
-            g1 << GlobalV::NLOCAL<< endl;
-            g2 << GlobalV::NLOCAL<< endl;
+            g1 << GlobalV::NLOCAL;
+            g2 << GlobalV::NLOCAL;
         }
 
         int ir, ic;
@@ -543,8 +543,8 @@ void ModuleIO::save_HS_complete(const double *H,
         std::ofstream g1(ssh.str().c_str(), ofstream::app);
         std::ofstream g2(sss.str().c_str(), ofstream::app);
 
-        g1 << GlobalV::NLOCAL<< endl;
-        g2 << GlobalV::NLOCAL<< endl;
+        g1 << GlobalV::NLOCAL;
+        g2 << GlobalV::NLOCAL;
 
         for (int i = 0; i < GlobalV::NLOCAL; i++)
         {
@@ -724,8 +724,8 @@ void ModuleIO::save_HS_complex_triangle(std::complex<double> *H,
         {
             g1.open(ssh.str().c_str(), ofstream::app);
             g2.open(sss.str().c_str(), ofstream::app);
-            g1 << GlobalV::NLOCAL<< endl;
-            g2 << GlobalV::NLOCAL<< endl;
+            g1 << GlobalV::NLOCAL;
+            g2 << GlobalV::NLOCAL;
         }
 
         int ir, ic;
@@ -793,8 +793,8 @@ void ModuleIO::save_HS_complex_triangle(std::complex<double> *H,
         std::ofstream g1(ssh.str().c_str(), ofstream::app);
         std::ofstream g2(sss.str().c_str(), ofstream::app);
 
-        g1 << GlobalV::NLOCAL<< endl;
-        g2 << GlobalV::NLOCAL<< endl;
+        g1 << GlobalV::NLOCAL;
+        g2 << GlobalV::NLOCAL;
 
         for (int i = 0; i < GlobalV::NLOCAL; i++)
         {
@@ -943,8 +943,8 @@ void ModuleIO::save_HS_complex_complete(std::complex<double> *H,
         {
             g1.open(ssh.str().c_str(), ofstream::app);
             g2.open(sss.str().c_str(), ofstream::app);
-            g1 << GlobalV::NLOCAL <<endl;
-            g2 << GlobalV::NLOCAL <<endl;
+            g1 << GlobalV::NLOCAL;
+            g2 << GlobalV::NLOCAL;
         }
 
         int ir, ic;
@@ -1012,8 +1012,8 @@ void ModuleIO::save_HS_complex_complete(std::complex<double> *H,
         std::ofstream g1(ssh.str().c_str(), ofstream::app);
         std::ofstream g2(sss.str().c_str(), ofstream::app);
 
-        g1 << GlobalV::NLOCAL << endl;
-        g2 << GlobalV::NLOCAL<< endl;
+        g1 << GlobalV::NLOCAL;
+        g2 << GlobalV::NLOCAL;
 
         for (int i = 0; i < GlobalV::NLOCAL; i++)
         {
@@ -1238,8 +1238,8 @@ void ModuleIO::save_HSR_tr(const int current_spin, LCAO_Matrix &lm)
     std::ofstream g1(ssh.str().c_str());
     std::ofstream g2(sss.str().c_str());
 
-    g1 << GlobalV::NLOCAL<< endl;
-    g2 << GlobalV::NLOCAL<< endl;
+    g1 << GlobalV::NLOCAL;
+    g2 << GlobalV::NLOCAL;
 
     for (int i = 0; i < GlobalV::NLOCAL; i++)
     {
