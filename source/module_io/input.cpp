@@ -2737,7 +2737,7 @@ void Input::Bcast()
     Parallel_Common::bcast_double(search_radius);
     Parallel_Common::bcast_int(symmetry);
     Parallel_Common::bcast_bool(init_vel); // liuyu 2021-07-14
-    Parallel_Common::bcast_int(ref_cell_factor);
+    Parallel_Common::bcast_double(ref_cell_factor);
     Parallel_Common::bcast_double(symmetry_prec); // LiuXh add 2021-08-12, accuracy for symmetry
     Parallel_Common::bcast_bool(cal_force);
     Parallel_Common::bcast_bool(dump_force);
