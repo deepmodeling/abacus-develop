@@ -297,6 +297,8 @@ void Input::Default(void)
     out_band = 0;
     out_proj_band = 0;
     out_mat_hs = 0;
+    cal_syns = 0;
+    dmax = 0.01;
     out_mat_hs2 = 0; // LiuXh add 2019-07-15
     out_mat_t = 0;
     out_hs2_interval = 1;
@@ -1316,6 +1318,14 @@ bool Input::Read(const std::string &fn)
         else if (strcmp("md_nraise", word) == 0)
         {
             read_value(ifs, mdp.md_nraise);
+        }
+        else if (strcmp("cal_syns", word) == 0)
+        {
+            read_value(ifs, cal_syns);
+        }
+        else if (strcmp("dmax", word) == 0)
+        {
+            read_value(ifs, dmax);
         }
         else if (strcmp("md_tolerance", word) == 0)
         {
@@ -2864,6 +2874,8 @@ void Input::Bcast()
     Parallel_Common::bcast_double(mdp.md_damp);
     Parallel_Common::bcast_string(mdp.pot_file);
     Parallel_Common::bcast_int(mdp.md_nraise);
+    Parallel_Common::bcast_bool(cal_syns);
+    Parallel_Common::bcast_double(dmax);
     Parallel_Common::bcast_double(mdp.md_tolerance);
     Parallel_Common::bcast_string(mdp.md_pmode);
     Parallel_Common::bcast_string(mdp.md_pcouple);

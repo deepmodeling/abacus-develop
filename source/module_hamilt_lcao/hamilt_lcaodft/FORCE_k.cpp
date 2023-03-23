@@ -7,6 +7,7 @@
 #include "module_hamilt_lcao/hamilt_lcaodft/global_fp.h"
 #include "module_elecstate/cal_dm.h"
 #include "module_base/tool_threading.h"
+#include "module_io/write_HS.h"
 
 #include <map>
 #include <unordered_map>
@@ -261,6 +262,27 @@ void Force_LCAO_k::allocate_k(const Parallel_Orbitals& pv)
     // calculate dVnl=<phi|dVnl|dphi> in LCAO
     this->UHM->genH.build_Nonlocal_mu_new (this->UHM->genH.LM->Hloc_fixed.data(), cal_deri);
     // test(this->UHM->LM->DHloc_fixedR_x,"this->UHM->LM->DHloc_fixedR_x Vnl part");
+
+    // calculate asynchronous S matrix to output for Hefei-NAMD
+    if (INPUT.cal_syns)
+    {
+        cal_deri = false;
+        //this->UHM->genH.build_ST_new('S', cal_deri, GlobalC::ucell, this->UHM->genH.LM->SlocR.data(), INPUT.cal_syns);
+        this->UHM->genH.build_ST_new('S', cal_deri, GlobalC::ucell, this->UHM->genH.LM->SlocR.data(), INPUT.cal_syns, INPUT.dmax);
+        for (int ik = 0; ik < GlobalC::kv.nks; ik++)
+        {
+            this->UHM->genH.LM->zeros_HSk('S');
+            this->UHM->genH.LM->folding_fixedH(ik, 1);
+            bool bit = false; // LiuXh, 2017-03-21
+            ModuleIO::saving_HS(this->UHM->genH.LM->Hloc2.data(),
+                                this->UHM->genH.LM->Sloc2.data(),
+                                bit,
+                                1,
+                                "data-" + std::to_string(ik),
+                                this->ParaV[0],
+                                0); // LiuXh, 2017-03-21
+        }
+    }
 
     ModuleBase::timer::tick("Force_LCAO_k", "allocate_k");
     return;

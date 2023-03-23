@@ -97,6 +97,8 @@ void HSolverLCAO::solveTemplate(hamilt::Hamilt<double>* pHamilt,
             pHamilt->matrix(h_mat, s_mat);
             h_mat_copy = new T[this->ParaV[0].nloc];
             s_mat_copy = new T[this->ParaV[0].nloc];
+            ModuleBase::GlobalFunc::ZEROS(h_mat_copy, this->ParaV[0].nloc);
+            ModuleBase::GlobalFunc::ZEROS(s_mat_copy, this->ParaV[0].nloc);
             BlasConnector::copy(this->ParaV[0].nloc, h_mat.p, 1, h_mat_copy, 1);
             BlasConnector::copy(this->ParaV[0].nloc, s_mat.p, 1, s_mat_copy, 1);
         }

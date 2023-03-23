@@ -162,7 +162,6 @@ void ElecState::calculate_weights()
                              -1,
                              this->klist->isk);
         }
-
         // qianrui fix a bug on 2021-7-21
         Parallel_Reduce::reduce_double_allpool(this->demet);
     }
