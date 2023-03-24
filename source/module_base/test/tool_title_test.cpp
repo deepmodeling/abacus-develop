@@ -26,23 +26,10 @@ class ToolTitleTest : public testing::Test
         }
   void TearDown()
 	    {
-		  remove("TITLEtest1.log");
           remove("TITLEtest2.log");
           remove("TITLEtest3.log");
 	    }
 };
-
-TEST_F(ToolTitleTest, TITLE1)
-{
-    GlobalV::ofs_running.open("TITLEtest1.log");
-    std::string output1;
-    ModuleBase::TITLE(cfname,false);
-    GlobalV::ofs_running.close();
-    ifs.open("TITLEtest1.log");
-    getline(ifs,output1);
-    EXPECT_THAT(output1,testing::HasSubstr(" ==> ComplexMatrix::scaled_sum()"));
-    ifs.close(); 
-}
 
 TEST_F(ToolTitleTest, TITLE2)
 {

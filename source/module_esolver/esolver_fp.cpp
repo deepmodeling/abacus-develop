@@ -27,9 +27,9 @@ namespace ModuleESolver
         if (this->classname == "ESolver_OF") this->pw_rho->setfullpw(inp.of_full_pw, inp.of_full_pw_dim);
         // Initalize the plane wave basis set
         if (inp.nx * inp.ny * inp.nz == 0)
-            this->pw_rho->initgrids(cell.lat0, cell.latvec, inp.ecutrho);
+            this->pw_rho->initgrids(inp.ref_cell_factor * cell.lat0, cell.latvec, inp.ecutrho);
 	    else
-            this->pw_rho->initgrids(cell.lat0, cell.latvec, inp.nx, inp.ny, inp.nz);
+            this->pw_rho->initgrids(inp.ref_cell_factor * cell.lat0, cell.latvec, inp.nx, inp.ny, inp.nz);
         
         this->pw_rho->initparameters(false, inp.ecutrho);
         this->pw_rho->setuptransform();
@@ -37,6 +37,19 @@ namespace ModuleESolver
         this->pw_rho->collect_uniqgg();
         this->print_rhofft(inp, GlobalV::ofs_running);
         
+    }
+
+    void ESolver_FP::init_after_vc(Input& inp, UnitCell& cell)
+    {
+        if (inp.nx * inp.ny * inp.nz == 0)
+            this->pw_rho->initgrids(cell.lat0, cell.latvec, inp.ecutrho);
+        else
+            this->pw_rho->initgrids(cell.lat0, cell.latvec, inp.nx, inp.ny, inp.nz);
+
+        this->pw_rho->initparameters(false, inp.ecutrho);
+        this->pw_rho->setuptransform();
+        this->pw_rho->collect_local_pw(); 
+        this->pw_rho->collect_uniqgg();
     }
 
     void ESolver_FP::print_rhofft(Input&inp, ofstream &ofs)

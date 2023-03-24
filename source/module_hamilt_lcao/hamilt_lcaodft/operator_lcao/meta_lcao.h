@@ -2,8 +2,8 @@
 #define METALCAO_H
 #include "operator_lcao.h"
 #include "module_base/timer.h"
-#include "module_gint/gint_gamma.h"
-#include "module_gint/gint_k.h"
+#include "module_hamilt_lcao/module_gint/gint_gamma.h"
+#include "module_hamilt_lcao/module_gint/gint_k.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/local_orbital_charge.h"
 
 namespace hamilt

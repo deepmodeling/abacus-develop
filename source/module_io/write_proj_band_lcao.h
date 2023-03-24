@@ -5,7 +5,7 @@
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_hamilt.h"
 #include "module_cell/klist.h"
 #include "module_cell/unitcell.h"
-#include "module_orbital/ORB_read.h"
+#include "module_basis/module_ao/ORB_read.h"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
 
 namespace ModuleIO

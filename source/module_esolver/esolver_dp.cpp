@@ -1,4 +1,5 @@
 #include "esolver_dp.h"
+#include "module_base/timer.h"
 
 
 namespace ModuleESolver
@@ -17,6 +18,9 @@ namespace ModuleESolver
 
     void ESolver_DP::Run(const int istep, UnitCell& ucell)
     {
+        ModuleBase::TITLE("ESolver_DP", "Run");
+        ModuleBase::timer::tick("ESolver_DP", "Run");
+
         cell[0] = ucell.latvec.e11 * ucell.lat0_angstrom;
         cell[1] = ucell.latvec.e12 * ucell.lat0_angstrom;
         cell[2] = ucell.latvec.e13 * ucell.lat0_angstrom;
@@ -71,6 +75,7 @@ namespace ModuleESolver
 #else
         ModuleBase::WARNING_QUIT("DP_pot", "Please recompile with -D__DPMD !");
 #endif
+        ModuleBase::timer::tick("ESolver_DP", "Run");
     }
 
     void ESolver_DP::cal_Energy(double& etot)

@@ -14,7 +14,7 @@
 #include "module_hamilt_pw/hamilt_pwdft/parallel_grid.h"
 #include "module_cell/parallel_kpoints.h"
 #include "module_io/berryphase.h"
-#include "module_orbital/ORB_gaunt_table.h"
+#include "module_basis/module_ao/ORB_gaunt_table.h"
 
 bool berryphase::berry_phase_flag=0;
 

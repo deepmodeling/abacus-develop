@@ -8,12 +8,10 @@ Ions_Move_SD::Ions_Move_SD()
 {
 	this->energy_saved = 1.0e10;
 	this->grad_saved = nullptr;
-	this->pos_saved = nullptr;
 }
 Ions_Move_SD::~Ions_Move_SD()
 {
 	delete[] grad_saved;
-	delete[] pos_saved;
 }
 
 void Ions_Move_SD::allocate(void)
@@ -21,9 +19,7 @@ void Ions_Move_SD::allocate(void)
     ModuleBase::TITLE("Ions_Move_SD","allocate");
     assert( dim > 0);
 	delete[] grad_saved;
-    delete[] pos_saved;
     this->grad_saved = new double[dim];
-    this->pos_saved = new double[dim];
 }
 
 void Ions_Move_SD::start(const ModuleBase::matrix& force, const double& etot_in)
@@ -32,12 +28,9 @@ void Ions_Move_SD::start(const ModuleBase::matrix& force, const double& etot_in)
 
 	assert(dim>0);
 	assert(grad_saved!=0);
-	assert(pos_saved!=0);
 
-	double* pos = new double[dim];
 	double* grad = new double[dim];
 	double* move =new double[dim];
-	ModuleBase::GlobalFunc::ZEROS(pos, dim);
 	ModuleBase::GlobalFunc::ZEROS(grad, dim);
 	ModuleBase::GlobalFunc::ZEROS(move, dim);
 
@@ -45,12 +38,11 @@ void Ions_Move_SD::start(const ModuleBase::matrix& force, const double& etot_in)
 	// 0: ediff < 0
 	bool judgement = 0;
 	setup_etot(etot_in, judgement);
-	setup_gradient(pos, grad, force);	
+	setup_gradient(grad, force);	
 
 	if(istep==1 || etot_in <= energy_saved)
 	{
 		energy_saved = etot_in;
-		for(int i=0; i<dim; i++) pos_saved[i] = pos[i];
 		for(int i=0; i<dim; i++) 
 		{
 			grad_saved[i] = grad[i];
@@ -77,11 +69,10 @@ void Ions_Move_SD::start(const ModuleBase::matrix& force, const double& etot_in)
 		{
 			move[i] = -grad_saved[i] * trust_radius;
 		}
-		move_atoms(move, pos_saved);
+		move_atoms(move);
 		Ions_Move_Basic::update_iter++;
 	}
 
-	delete[] pos;
 	delete[] grad;
 	delete[] move;
 

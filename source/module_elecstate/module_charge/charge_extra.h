@@ -24,21 +24,19 @@ class Charge_Extra
     //Init_CE will be removed and everything put back in the constructor
     void Init_CE();
     void extrapolate_charge(Charge* chr);
-    void save_pos_next(const UnitCell& ucell);
-    void update_istep();
-    void update_all_pos(const UnitCell& ucell);
+    void update_all_dis(const UnitCell& ucell);
 
     private:
     int istep = 0;
     int natom;
     int pot_order;
     int rho_extr;
+    double omega_old;    // the old volume of the last step
 
     // for the second-order extrapolation
-    ModuleBase::Vector3<double> *pos_old1 = nullptr;
-    ModuleBase::Vector3<double> *pos_old2 = nullptr;
-    ModuleBase::Vector3<double> *pos_now = nullptr;
-    ModuleBase::Vector3<double> *pos_next = nullptr;
+    ModuleBase::Vector3<double> *dis_old1 = nullptr;    // dis_old2 = pos_old1 - pos_old2
+    ModuleBase::Vector3<double> *dis_old2 = nullptr;    // dis_old1 = pos_now - pos_old1
+    ModuleBase::Vector3<double> *dis_now = nullptr;     // dis_now = pos_next - pos_now
 
     double** delta_rho1 = nullptr;
     double** delta_rho2 = nullptr;

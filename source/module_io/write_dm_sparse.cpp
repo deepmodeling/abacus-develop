@@ -207,6 +207,7 @@ void ModuleIO::write_dm_sparse(const int &is, const int &istep, const Parallel_O
     ModuleBase::TITLE("ModuleIO","write_dm_sparse");
 
     double sparse_threshold = 1e-10;
+    int step = istep;
 
 //get list of R
     int R_minX = int(GlobalC::GridD.getD_minX());
@@ -263,9 +264,9 @@ void ModuleIO::write_dm_sparse(const int &is, const int &istep, const Parallel_O
     }
 
     std::stringstream ssdm;
-    if(GlobalV::CALCULATION == "md")
+    if(GlobalV::CALCULATION == "md" && !GlobalV::out_app_flag)
     {
-        ssdm << GlobalV::global_matrix_dir << istep << "_" << "data-DMR-sparse_SPIN" << is << ".csr";
+        ssdm << GlobalV::global_matrix_dir << step << "_" << "data-DMR-sparse_SPIN" << is << ".csr";
     }
     else
     {
@@ -275,8 +276,15 @@ void ModuleIO::write_dm_sparse(const int &is, const int &istep, const Parallel_O
 
     if(GlobalV::DRANK==0)
     {
-        g1.open(ssdm.str().c_str());
-        g1 << "STEP: " << istep << std::endl;
+        if(GlobalV::CALCULATION == "md" && GlobalV::out_app_flag && step)
+        {
+            g1.open(ssdm.str().c_str(), ios::app);
+        }
+        else
+        {
+            g1.open(ssdm.str().c_str());
+        }
+        g1 << "STEP: " << step << std::endl;
         g1 << "Matrix Dimension of DM(R): " << GlobalV::NLOCAL <<std::endl;
         g1 << "Matrix number of DM(R): " << output_R_number << std::endl;
     }

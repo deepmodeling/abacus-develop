@@ -1,11 +1,11 @@
 #ifndef ISTATE_ENVELOPE_H
 #define ISTATE_ENVELOPE_H
 #include "module_hamilt_lcao/hamilt_lcaodft/local_orbital_wfc.h"
-#include "module_gint/gint_gamma.h"
-#include "module_gint/gint_k.h"
+#include "module_hamilt_lcao/module_gint/gint_gamma.h"
+#include "module_hamilt_lcao/module_gint/gint_k.h"
 #include "module_hamilt_pw/hamilt_pwdft/structure_factor.h"
 #include "module_psi/psi.h"
-#include "module_pw/pw_basis_k.h"
+#include "module_basis/module_pw/pw_basis_k.h"
 #include "module_elecstate/elecstate.h"
 
 class IState_Envelope
