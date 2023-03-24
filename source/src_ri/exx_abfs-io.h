@@ -5,7 +5,7 @@
 
 #include <map>
 #include <vector>
-#include "../module_orbital/ORB_atomic_lm.h"
+#include "../module_basis/module_ao/ORB_atomic_lm.h"
 #include "../module_base/matrix.h"
 #include "../module_base/element_basis_index.h"
 #ifdef __MPI

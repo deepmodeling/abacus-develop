@@ -350,7 +350,9 @@ void ESolver_SDFT_PW::sKG(const int nche_KG, const double fwhmin, const double w
         if (GlobalV::NSTOGROUP > 1)
         {
             j1psi_tot.resize(1,ndim*totbands,npwx);
+            ModuleBase::Memory::record("SDFT::j1psi_tot", ndim*totbands*npwx);
             j2psi_tot.resize(1,ndim*totbands,npwx);
+            ModuleBase::Memory::record("SDFT::j2psi_tot", ndim*totbands*npwx);
             for(int id = 0 ; id < ndim ; ++id)
             {
                 const int idnb_per = id * totbands_per;

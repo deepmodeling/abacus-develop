@@ -16,7 +16,6 @@ public:
 private:
 
 	double energy_saved;
-    double* pos_saved;
     double* grad_saved;
 
 	void cal_tradius_sd(void)const;

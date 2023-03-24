@@ -13,7 +13,7 @@
 #include <deque>
 #include "mpi.h"
 #include <atomic>
-#include "module_orbital/parallel_orbitals.h"
+#include "module_basis/module_ao/parallel_orbitals.h"
 
 // mohan comment out 2021-02-06
 //#include <boost/dynamic_bitset.hpp>

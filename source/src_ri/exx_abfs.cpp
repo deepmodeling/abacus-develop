@@ -10,7 +10,7 @@
 #include "exx_abfs-matrix_orbs21.h"
 #include "exx_abfs-matrix_lcaoslcaos_lcaoslcaos.h"
 
-#include "module_orbital/ORB_read.h"
+#include "module_basis/module_ao/ORB_read.h"
 #include "conv_coulomb_pot.h"
 #include "conv_coulomb_pot-inl.h"
 

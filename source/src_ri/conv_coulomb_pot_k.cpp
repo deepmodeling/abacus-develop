@@ -1,6 +1,6 @@
 #include "conv_coulomb_pot_k.h"
 #include "../module_base/constants.h"
-#include "../module_orbital/ORB_atomic_lm.h"
+#include "../module_basis/module_ao/ORB_atomic_lm.h"
 #include "../module_hamilt_pw/hamilt_pwdft/global.h"
 std::vector<double> Conv_Coulomb_Pot_K::cal_psi_ccp( const std::vector<double> & psif )
 {

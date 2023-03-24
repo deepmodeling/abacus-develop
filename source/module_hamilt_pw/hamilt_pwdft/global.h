@@ -15,7 +15,7 @@
 #include "module_cell/klist.h"
 #include "module_elecstate/magnetism.h"
 #include "module_hamilt_pw/hamilt_pwdft/structure_factor.h"
-#include "module_pw/pw_basis_k.h"
+#include "module_basis/module_pw/pw_basis_k.h"
 #include "module_hamilt_pw/hamilt_pwdft/wavefunc.h"
 #include "module_hamilt_general/module_xc/xc_functional.h"
 

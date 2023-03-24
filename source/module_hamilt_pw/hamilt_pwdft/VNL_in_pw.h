@@ -8,7 +8,7 @@
 #include "module_base/complexmatrix.h"
 #include "VL_in_pw.h"
 #ifdef __LCAO
-#include "module_orbital/ORB_gen_tables.h"
+#include "module_basis/module_ao/ORB_gen_tables.h"
 #endif
 #include "module_hamilt_lcao/hamilt_lcaodft/wavefunc_in_pw.h"
 #include "module_cell/unitcell.h"
