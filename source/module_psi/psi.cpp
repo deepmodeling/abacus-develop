@@ -241,12 +241,6 @@ template <typename T, typename Device> void Psi<T, Device>::fix_k(const int ik) 
     }
 }
 
-template <typename T, typename Device> void Psi<T, Device>::fix_band(const int iband) const
-{
-    assert(iband >= 0 && iband < this->nbands);
-    this->current_b = iband;
-}
-
 template <typename T, typename Device>
 T& Psi<T, Device>::operator()(const int ik, const int ibands, const int ibasis) const
 {

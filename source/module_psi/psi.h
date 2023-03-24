@@ -69,8 +69,6 @@ template <typename T, typename Device = DEVICE_CPU> class Psi
 
     // choose k-point index , then Psi(iband, ibasis) can reach Psi(ik, iband, ibasis)
     void fix_k(const int ik) const;
-    // choose k-point index , then Psi(iband, ibasis) can reach Psi(ik, iband, ibasis)
-    void fix_band(const int iband) const;
 
     // use operator "(ik, iband, ibasis)" to reach target element
     T& operator()(const int ik, const int ibands, const int ibasis) const;
@@ -114,20 +112,18 @@ template <typename T, typename Device = DEVICE_CPU> class Psi
     int nbands = 1; // number of bands
     int nbasis = 1; // number of basis
 
-    // current k point
-    mutable int current_k = 0;
-    // current band index
-    mutable int current_b = 0;
+    mutable int current_k = 0; // current k point
+    mutable int current_b = 0; // current band index
+    mutable int current_nbasis = 1; // current number of basis of current_k
+
     // current pointer for getting the psi
     mutable T* psi_current = nullptr;
-    // current number of basis of current_k
-    mutable int current_nbasis = 1;
+    // psi_current = psi + psi_bias;
+    mutable int psi_bias = 0;
 
     const int* ngk = nullptr;
 
     bool k_first = true;
-
-    mutable int psi_bias = 0; // psi_current = psi + psi_bias;
 
     using set_memory_op = psi::memory::set_memory_op<T, Device>;
     using delete_memory_op = psi::memory::delete_memory_op<T, Device>;
