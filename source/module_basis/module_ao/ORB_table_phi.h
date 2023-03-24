@@ -146,5 +146,17 @@ class ORB_table_phi
 	double *rab;
 
 	double *kab;	
+
+
+	//------------------------------
+	// sizes of table
+	int nelem_; // number of elements
+	std::vector<int> lmax_; // lmax of each element
+	std::vector<int> nchi_tot_; // total nchi of each element
+
+	// automatically deallocate Table_DSR using lmax_d_, lmax_ & nchi_pairs_
+	// called by destructor
+	void _destroy_table();
+
 };
 #endif

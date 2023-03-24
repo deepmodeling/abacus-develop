@@ -177,6 +177,7 @@ TEST_F(OrbTableAlphaTest, Allocate) {
 }
 
 
+#ifndef NDEBUG
 TEST_F(OrbTableAlphaTest, AllocateSanityCheck) {
 
     // make sure allocate() would abort with unphysical input
@@ -196,6 +197,7 @@ TEST_F(OrbTableAlphaTest, AllocateSanityCheck) {
     EXPECT_EXIT(ota.allocate(ntype_, lmax_, lcao_.get_kmesh(), Rmax_, dR_, -0.1),
             testing::KilledBySignal(SIGABRT), "");
 }
+#endif
 
 
 TEST_F(OrbTableAlphaTest, GetRmesh) {
@@ -216,7 +218,7 @@ TEST_F(OrbTableAlphaTest, GetRmesh) {
 
 }
 
-
+#ifndef NDEBUG
 TEST_F(OrbTableAlphaTest, GetRmeshAbnormal) {
 
     ota.allocate(ntype_, lmax_, lcao_.get_kmesh(), Rmax_, dR_, dk_);
@@ -228,6 +230,7 @@ TEST_F(OrbTableAlphaTest, GetRmeshAbnormal) {
 	std::string output = testing::internal::GetCapturedStdout();
 	EXPECT_THAT(output, testing::HasSubstr("rmesh <= 0"));
 }
+#endif
 
 
 TEST_F(OrbTableAlphaTest, DS2Lplus1) {
@@ -326,6 +329,8 @@ TEST_F(OrbTableAlphaTest, FiniteDiffOverlap) {
             }
         }
     }
+	delete [] S_R;
+	delete [] dS_R;
 }
 
 
@@ -363,6 +368,26 @@ TEST_F(OrbTableAlphaTest, PrintTable) {
     // TODO content/format check to be done after code refactoring
 
     remove("./S_I_mu_alpha.dat");
+	ota.Destroy_Table_Alpha(lcao_);
+}
+
+
+TEST_F(OrbTableAlphaTest, AutoDestroyTable) {
+    ota.allocate(ntype_, lmax_, lcao_.get_kmesh(), Rmax_, dR_, dk_);
+    ota.init_DS_Opair(lcao_);
+
+    init_sph_bessel();
+    ota.init_Table_Alpha(&sbr_, lcao_);
+
+    // should do nothing
+    ota.destroy_nr = false;
+    ota._destroy_table();
+    EXPECT_NE(ota.Table_DSR, nullptr);
+
+    // should destroy the table
+    ota.destroy_nr = true;
+    ota._destroy_table();
+    EXPECT_EQ(ota.Table_DSR, nullptr);
 }
 
 

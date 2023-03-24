@@ -38,6 +38,10 @@ ORB_table_phi::~ORB_table_phi()
 	delete[] r;
 	delete[] rab;
 	delete[] kab;
+
+	// pSB does not own memory
+
+	_destroy_table();
 }
 
 void ORB_table_phi::allocate
@@ -387,6 +391,15 @@ void ORB_table_phi::init_Table(LCAO_Orbitals &orb)
 	assert( ORB_table_phi::dr > 0.0);
 	assert( OV_nTpairs>0);
 
+	// record necessary information for the sizes of tables
+	nelem_ = ntype;
+	lmax_.resize(nelem_);
+	nchi_tot_.resize(nelem_);
+	for (int ielem = 0; ielem != nelem_; ++ielem) {
+		lmax_[ielem] = orb.Phi[ielem].getLmax();
+		nchi_tot_[ielem] = orb.Phi[ielem].getTotal_nchi();
+	}
+
 	// init 1st dimension
 	this->Table_SR = new double****[2];
 	this->Table_TR = new double****[2];
@@ -583,9 +596,68 @@ void ORB_table_phi::Destroy_Table(LCAO_Orbitals &orb)
 	if(destroy_sr) delete[] Table_SR;
 	if(destroy_tr) delete[] Table_TR;
 
+	destroy_sr = true;
+	destroy_tr = true;
+
 	return;
 }
 
+
+void ORB_table_phi::_destroy_table() {
+	if(!destroy_sr && !destroy_tr) {
+		return;
+	}
+
+	// below is almost the same as Destroy_Table
+	int dim1 = 0;
+	for (int ir = 0; ir < 2; ir++)
+	{
+		for (int T1 = 0; T1 < ntype; T1++)
+		{
+			// Notice !! T2 start from T1
+			// means that T2 >= T1
+			for (int T2 = T1; T2 < ntype; T2++)
+			{
+				//const int Lmax1 = orb.Phi[T1].getLmax();
+				//const int Lmax2 = orb.Phi[T2].getLmax();
+				const int Lmax1 = lmax_[T1];
+				const int Lmax2 = lmax_[T2];
+
+				const int lmax_now = std::max(Lmax1, Lmax2);
+
+				//const int pairs = orb.Phi[T1].getTotal_nchi() * orb.Phi[T2].getTotal_nchi();
+				const int pairs = nchi_tot_[T1] * nchi_tot_[T2];
+
+				for (int dim2 = 0; dim2 < pairs; dim2++)
+				{
+					for (int L = 0; L < 2*lmax_now + 1; L++)
+					{
+						if(destroy_sr) delete [] Table_SR[ir][dim1][dim2][L];
+						if(destroy_tr) delete [] Table_TR[ir][dim1][dim2][L];
+					}
+					if(destroy_sr) delete [] Table_SR[ir][dim1][dim2];
+					if(destroy_tr) delete [] Table_TR[ir][dim1][dim2];
+				}
+				if(destroy_sr) delete [] Table_SR[ir][dim1];
+				if(destroy_tr) delete [] Table_TR[ir][dim1];
+				dim1++;
+
+			}
+        }
+
+		dim1 = 0;
+		if(destroy_sr) delete [] Table_SR[ir];
+		if(destroy_tr) delete [] Table_TR[ir];
+	}
+
+	if(destroy_sr) delete[] Table_SR;
+	if(destroy_tr) delete[] Table_TR;
+
+	destroy_sr = true;
+	destroy_tr = true;
+
+	return;
+}
 
 
 void ORB_table_phi::init_OV_Tpair(LCAO_Orbitals &orb)

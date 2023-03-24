@@ -95,6 +95,16 @@ AddTest(
     LIBS ${math_libs} device base
 )
 
+AddTest(
+    TARGET ORB_table_phi_test
+    SOURCES ORB_table_phi_test.cpp
+        ../ORB_table_phi.cpp
+        ../ORB_read.cpp
+        ../ORB_atomic.cpp
+        ../ORB_atomic_lm.cpp
+    LIBS ${math_libs} device base
+)
+
 
 install(DIRECTORY lcao_H2O DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 install(DIRECTORY lcao_H2O DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/../../../tests)
