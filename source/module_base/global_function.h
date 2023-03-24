@@ -78,7 +78,7 @@ void OUTP(std::ofstream &ofs, const std::string &name, const T &a, const std::st
 template <class T>
 void OUT(const std::string &name,const T &a)
 {
-    std::cout << " " << std::setw(40) << name << " = " << a;
+    std::cout << " " << std::setw(40) << name << " = " << a << std::endl;
 //	std::cout << " " << name << a << std::endl;
     return;
 }

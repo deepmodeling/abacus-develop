@@ -261,13 +261,19 @@ namespace ModuleESolver
         // Temporary, md and relax will merge later   liuyu add 2022-11-07
         if(GlobalV::CALCULATION == "md" && istep)
         {
-            CE.update_istep();
-            CE.save_pos_next(GlobalC::ucell);
-            CE.extrapolate_charge(pelec->charge);
-
-            if(GlobalC::ucell.cell_parameter_updated)
+            // different precision level for vc-md
+            if(GlobalC::ucell.cell_parameter_updated && GlobalV::md_prec_level == 2)
             {
-                Variable_Cell::init_after_vc();
+                this->init_after_vc(INPUT, GlobalC::ucell);
+            }
+            else
+            {
+                this->CE.update_all_dis(GlobalC::ucell);
+                this->CE.extrapolate_charge(this->pelec->charge);
+                if(GlobalC::ucell.cell_parameter_updated && GlobalV::md_prec_level == 0)
+                {
+                    Variable_Cell::init_after_vc();
+                }
             }
         }
 
@@ -277,10 +283,8 @@ namespace ModuleESolver
             {
                 GlobalV::ofs_running << " Setup the extrapolated charge." << std::endl;
                 // charge extrapolation if istep>0.
-                CE.update_istep();
-                CE.update_all_pos(GlobalC::ucell);
-                CE.extrapolate_charge(pelec->charge);
-                CE.save_pos_next(GlobalC::ucell);
+                this->CE.update_all_dis(GlobalC::ucell);
+                this->CE.extrapolate_charge(this->pelec->charge);
 
                 GlobalV::ofs_running << " Setup the Vl+Vh+Vxc according to new structure factor and new charge." << std::endl;
                 // calculate the new potential accordint to

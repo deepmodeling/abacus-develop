@@ -48,7 +48,7 @@ include Makefile.Objects
 VPATH=../../module_base\
 :../../module_io\
 :../../module_hamilt_pw/hamilt_pwdft\
-:../../module_orbital\
+:../../module_basis/module_ao\
 :../../module_neighbor\
 :../../module_cell\
 :../../\

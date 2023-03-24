@@ -36,40 +36,12 @@ void FIRE::first_half()
 {
     ModuleBase::TITLE("FIRE", "first_half");
     ModuleBase::timer::tick("FIRE", "first_half");
-    if(GlobalV::MY_RANK == 0)
-    {
-    for(int i=0; i<ucell.nat; ++i)
-    {
-        for(int k=0; k<3; ++k)
-        {
-            if(ionmbl[i][k])
-            {
-                vel[i][k] += 0.5*force[i][k]*mdp.md_dt/allmass[i];
-            }
-        }
-    }
+
+    MDrun::update_vel(force);
 
     check_FIRE();
 
-    for(int i=0; i<ucell.nat; ++i)
-    {
-        for(int k=0; k<3; ++k)
-        {
-            if(ionmbl[i][k])
-            {
-                pos[i][k] += vel[i][k]*mdp.md_dt;
-            }
-        }
-    }
-    }
-#ifdef __MPI
-    MPI_Bcast(pos , ucell.nat*3,MPI_DOUBLE,0,MPI_COMM_WORLD);
-    MPI_Bcast(vel , ucell.nat*3,MPI_DOUBLE,0,MPI_COMM_WORLD);
-#endif
-
-    ucell.update_pos_tau(pos);
-    ucell.periodic_boundary_adjustment();
-    MD_func::InitPos(ucell, pos);
+    MDrun::update_pos();
 
     ModuleBase::timer::tick("FIRE", "first_half");
 }
@@ -79,7 +51,7 @@ void FIRE::second_half()
     ModuleBase::TITLE("FIRE", "second_half");
     ModuleBase::timer::tick("FIRE", "second_half");
 
-    MDrun::second_half();
+    MDrun::update_vel(force);
 
     check_force();
 

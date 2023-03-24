@@ -381,7 +381,7 @@ TEST_F(EState,RhoPW)
 					GlobalC::rhopw->ny,
 					GlobalC::rhopw->nz,
 					GlobalC::en.ef,
-					GlobalC::ucell,
+					&(GlobalC::ucell),
 					GlobalC::CHR.prenspin);
         for (int ix = 0; ix < GlobalC::rhopw->nrxx; ix++)
         //for (int ix = 0; ix < 5; ix++)

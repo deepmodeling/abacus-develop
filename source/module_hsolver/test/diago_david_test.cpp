@@ -6,7 +6,7 @@
 #include"gtest/gtest.h"
 #include "module_base/inverse_matrix.h"
 #include "module_base/lapack_connector.h"
-#include "module_pw/test/test_tool.h"
+#include "module_basis/module_pw/test/test_tool.h"
 #include"mpi.h"
 
 #define CONVTHRESHOLD 1e-3

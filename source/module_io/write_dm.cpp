@@ -52,10 +52,7 @@ void ModuleIO::write_dm(
 	{
 		return;
 	}
-	else if(iter % out_dm != 0)
-	{
-		return; 
-	}
+
 	ModuleBase::timer::tick("ModuleIO","write_dm");
 
 	time_t start, end;

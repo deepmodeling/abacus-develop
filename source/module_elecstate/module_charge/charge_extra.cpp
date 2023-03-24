@@ -21,10 +21,12 @@ Charge_Extra::~Charge_Extra()
         delete[] delta_rho2;
     }
 
-    delete[] pos_old1;
-    delete[] pos_old2;
-    delete[] pos_now;
-    delete[] pos_next;
+    if(pot_order == 3)
+    {
+        delete[] dis_old1;
+        delete[] dis_old2;
+        delete[] dis_now;
+    }
 }
 
 void Charge_Extra::Init_CE()
@@ -64,11 +66,14 @@ void Charge_Extra::Init_CE()
     }
 
     natom = GlobalC::ucell.nat;
+    omega_old = GlobalC::ucell.omega;
 
-    pos_old1 = new ModuleBase::Vector3<double>[natom];
-    pos_old2 = new ModuleBase::Vector3<double>[natom];
-    pos_now  = new ModuleBase::Vector3<double>[natom];
-    pos_next = new ModuleBase::Vector3<double>[natom];
+    if(pot_order == 3)
+    {
+        dis_old1 = new ModuleBase::Vector3<double>[natom];
+        dis_old2 = new ModuleBase::Vector3<double>[natom];
+        dis_now  = new ModuleBase::Vector3<double>[natom];
+    }
 
     alpha = 1.0;
     beta  = 0.0;
@@ -100,7 +105,6 @@ void Charge_Extra::extrapolate_charge(Charge* chr)
     rho_extr = min(istep, pot_order);
     if(rho_extr == 0)
     {
-        // if(cellchange) scale();
         GlobalC::sf.setup_structure_factor(&GlobalC::ucell, GlobalC::rhopw);
         GlobalV::ofs_running << " charge density from previous step !" << std::endl;
         return;
@@ -125,6 +129,10 @@ void Charge_Extra::extrapolate_charge(Charge* chr)
         for(int ir=0; ir<GlobalC::rhopw->nrxx; ir++)
         {
             chr->rho[is][ir] -= rho_atom[is][ir];
+            if(GlobalC::ucell.cell_parameter_updated)
+            {
+                chr->rho[is][ir] *= omega_old;
+            }
         }
     }
 
@@ -215,9 +223,15 @@ void Charge_Extra::extrapolate_charge(Charge* chr)
     {
         for(int ir=0; ir<GlobalC::rhopw->nrxx; ir++)
         {
+            if(GlobalC::ucell.cell_parameter_updated)
+            {
+                chr->rho[is][ir] /= GlobalC::ucell.omega;
+            }
             chr->rho[is][ir] += rho_atom[is][ir];
         }
     }
+
+    omega_old = GlobalC::ucell.omega;
 
     for(int is=0; is<GlobalV::NSPIN; is++)
     {
@@ -248,18 +262,18 @@ void Charge_Extra::find_alpha_and_beta(void)
 #endif
     for(int i=0; i<natom; ++i)
     {
-        a11 += (pos_now[i] - pos_old1[i]).norm2();
-        a12 += ModuleBase::dot((pos_now[i] - pos_old1[i]), (pos_old1[i] - pos_old2[i]));
-        a22 += (pos_old1[i] - pos_old2[i]).norm2();
-        b1  -= ModuleBase::dot((pos_now[i] - pos_next[i]), (pos_now[i] - pos_old1[i]));
-        b2  -= ModuleBase::dot((pos_now[i] - pos_next[i]), (pos_old1[i] - pos_old2[i]));
-        c   += (pos_now[i] - pos_next[i]).norm2();
+        a11 += dis_old1[i].norm2();
+        a12 += ModuleBase::dot(dis_old1[i], dis_old2[i]);
+        a22 += dis_old2[i].norm2();
+        b1  += ModuleBase::dot(dis_now[i], dis_old1[i]);
+        b2  += ModuleBase::dot(dis_now[i], dis_old2[i]);
+        c   += dis_now[i].norm2();
     }
 
     a21 = a12;
     det = a11 * a22 - a12 * a21;
 
-    if(det < -1e-16)
+    if(det < -1e-20)
     {
         alpha = 0.0;
         beta = 0.0;
@@ -267,7 +281,7 @@ void Charge_Extra::find_alpha_and_beta(void)
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_warning,"in find_alpha_and beta()  det = ", det);
     }
 
-    if(det > 1e-16)
+    if(det > 1e-20)
     {
         alpha = (b1 * a22 - b2 * a12) / det;
         beta  = (a11 * b2 - a21 * b1) / det;
@@ -283,33 +297,30 @@ void Charge_Extra::find_alpha_and_beta(void)
         }
     }
 
+    GlobalV::ofs_running << " alpha = " << alpha << std::endl;
+    GlobalV::ofs_running << " beta = " << beta << std::endl;
+
     return;
 }
 
-void Charge_Extra::save_pos_next(const UnitCell& ucell)
+void Charge_Extra::update_all_dis(const UnitCell& ucell)
 {
-    ucell.save_cartesian_position_original(this->pos_next);
-    return;
-}
-
-void Charge_Extra::update_istep()
-{
-    this->istep++;
-    return;
-}
-
-void Charge_Extra::update_all_pos(const UnitCell& ucell)
-{
-    for(int i=0; i<natom; ++i)
+    istep++;
+    if(pot_order == 3)
     {
-        this->pos_old2[i] = this->pos_old1[i];
-        this->pos_old1[i] = this->pos_now[i];
-        if(GlobalV::CALCULATION=="relax"||GlobalV::CALCULATION=="cell-relax")
+        int iat = 0;
+        for (int it = 0; it < ucell.ntype; it++)
         {
-            this->pos_now[i] = this->pos_next[i];
+            Atom* atom = &ucell.atoms[it];
+            for (int ia = 0; ia < atom->na; ia++)
+            {
+                dis_old2[iat] = dis_old1[iat];
+                dis_old1[iat] = dis_now[iat];
+                dis_now[iat] = atom->dis[ia];
+                iat++;
+            }
         }
+        assert(iat == ucell.nat);
     }
-    if(GlobalV::CALCULATION=="md")
-        ucell.save_cartesian_position_original(this->pos_now);
     return;
 }

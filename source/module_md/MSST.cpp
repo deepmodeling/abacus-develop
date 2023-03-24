@@ -8,7 +8,7 @@
 
 MSST::MSST(MD_parameters& MD_para_in, UnitCell &unit_in) : MDrun(MD_para_in, unit_in)
 {
-    std::cout << "MSST" << std::endl;
+    ucell.cell_parameter_updated = true;
 
     mdp.msst_qmass = mdp.msst_qmass / pow(ModuleBase::ANGSTROM_AU, 4) / pow(ModuleBase::AU_to_MASS, 2);
     mdp.msst_vel = mdp.msst_vel * ModuleBase::ANGSTROM_AU * ModuleBase::AU_to_FS;
@@ -112,17 +112,7 @@ void MSST::first_half()
     rescale(vol);
 
     // propagate atom positions 1 time step
-    for(int i=0; i<ucell.nat; ++i)
-    {
-        pos[i] += vel[i] * mdp.md_dt;
-    }
-#ifdef __MPI
-    MPI_Bcast(pos , ucell.nat*3,MPI_DOUBLE,0,MPI_COMM_WORLD);
-    MPI_Bcast(vel , ucell.nat*3,MPI_DOUBLE,0,MPI_COMM_WORLD);
-#endif
-
-    ucell.update_pos_tau(pos);
-    ucell.periodic_boundary_adjustment();
+    MDrun::update_pos();
 
     // propagate volume 1/2 step
     vol = ucell.omega + omega[sd] * dthalf;
@@ -253,7 +243,6 @@ void MSST::rescale(double volume)
     ucell.latvec.e33 *= dilation[2];
 
     ucell.setup_cell_after_vc(GlobalV::ofs_running);
-    MD_func::InitPos(ucell, pos);
 
     // rescale velocity
     for(int i=0; i<ucell.nat; ++i)

@@ -23,7 +23,6 @@ double Ions_Move_CG::RELAX_CG_THR =-1.0;  //default is 0.5
 
 Ions_Move_CG::Ions_Move_CG()
 {
-	this->pos0 = nullptr;
 	this->grad0 = nullptr;
 	this->cg_grad0 = nullptr;
  	this->move0 = nullptr;
@@ -31,7 +30,6 @@ Ions_Move_CG::Ions_Move_CG()
 
 Ions_Move_CG::~Ions_Move_CG()
 {
-	delete[] pos0;
 	delete[] grad0;
 	delete[] cg_grad0;
 	delete[] move0;
@@ -41,15 +39,12 @@ void Ions_Move_CG::allocate(void)
 {
 	ModuleBase::TITLE("Ions_Move_CG","allocate");
 	assert( dim > 0);
-	delete[] pos0;
 	delete[] grad0;
 	delete[] cg_grad0;
 	delete[] move0;
-	this->pos0 = new double[dim];
 	this->grad0 = new double[dim];
 	this->cg_grad0 = new double[dim];
 	this->move0 = new double[dim];
-	ModuleBase::GlobalFunc::ZEROS(pos0, dim);
 	ModuleBase::GlobalFunc::ZEROS(grad0, dim);
 	ModuleBase::GlobalFunc::ZEROS(cg_grad0, dim);
 	ModuleBase::GlobalFunc::ZEROS(move0, dim);
@@ -60,7 +55,6 @@ void Ions_Move_CG::start(const ModuleBase::matrix& force, const double& etot_in)
 {
 	ModuleBase::TITLE("Ions_Move_CG","start");
 	assert(dim>0);
-	assert(pos0!=0);
 	assert(grad0!=0);
 	assert(cg_grad0!=0);
 	assert(move0!=0);
@@ -72,7 +66,6 @@ void Ions_Move_CG::start(const ModuleBase::matrix& force, const double& etot_in)
 	static double xa,xb,xc,xpt,steplength,fmax;  // the steepest descent method
 	static int nbrent;
 	
-	double* pos = new double[dim];
 	double* grad = new double[dim];
 	double* cg_gradn = new double[dim];
 	double* move =new double[dim];
@@ -82,7 +75,6 @@ void Ions_Move_CG::start(const ModuleBase::matrix& force, const double& etot_in)
 	
 	int flag = 0;  
 	
-	ModuleBase::GlobalFunc::ZEROS(pos, dim);
 	ModuleBase::GlobalFunc::ZEROS(grad, dim);
 	ModuleBase::GlobalFunc::ZEROS(move, dim);
 	ModuleBase::GlobalFunc::ZEROS(cg_grad, dim);
@@ -101,7 +93,7 @@ void Ions_Move_CG::start(const ModuleBase::matrix& force, const double& etot_in)
 		nbrent = 0;
 	}
 	
-	Ions_Move_Basic::setup_gradient(pos, grad, force);
+	Ions_Move_Basic::setup_gradient(grad, force);
 	// use energy_in and istep to setup etot and etot_old.
 	Ions_Move_Basic::setup_etot(etot_in, 0);
 	// use gradient and etot and etot_old to check
@@ -142,7 +134,7 @@ void Ions_Move_CG::start(const ModuleBase::matrix& force, const double& etot_in)
 			}
 			
 			setup_move(move0, cg_gradn, steplength);                // move the atom position
-			Ions_Move_Basic::move_atoms(move0, pos); 
+			Ions_Move_Basic::move_atoms(move0); 
 			
 			for (int i=0;i<dim;i++)                                // grad0 ,cg_grad0 are used to store the grad and cg_grad for the future using
 			{
@@ -207,7 +199,7 @@ void Ions_Move_CG::start(const ModuleBase::matrix& force, const double& etot_in)
 				}
 				
 				setup_move(move, cg_gradn, best_x);
-				Ions_Move_Basic::move_atoms(move, pos);
+				Ions_Move_Basic::move_atoms(move);
 				
 				trial=false;
 				xa=0;
@@ -265,7 +257,7 @@ void Ions_Move_CG::start(const ModuleBase::matrix& force, const double& etot_in)
 					}
 					
 					setup_move(move, cg_gradn, best_x);
-					Ions_Move_Basic::move_atoms(move, pos);
+					Ions_Move_Basic::move_atoms(move);
 					
 					Ions_Move_Basic::relax_bfgs_init = xc;
 				}	 
@@ -276,7 +268,6 @@ void Ions_Move_CG::start(const ModuleBase::matrix& force, const double& etot_in)
 	delete[] cg_grad;
 	delete[] grad;
 	delete[] cg_gradn;
-	delete[] pos;
 	delete[] move;
 	
 	return;	

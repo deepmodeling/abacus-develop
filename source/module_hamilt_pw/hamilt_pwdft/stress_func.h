@@ -8,7 +8,7 @@
 #include "module_base/complexmatrix.h"
 #include "module_base/realarray.h"
 #include "module_base/vector3.h"
-#include "module_pw/pw_basis.h"
+#include "module_basis/module_pw/pw_basis.h"
 #include "module_psi/psi.h"
 #include "module_elecstate/module_charge/charge.h"
 #include "module_hsolver/kernels/math_kernel_op.h"

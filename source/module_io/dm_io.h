@@ -2,7 +2,7 @@
 #define DM_IO_H
 
 #include <string>
-#include "module_orbital/parallel_orbitals.h"
+#include "module_basis/module_ao/parallel_orbitals.h"
 #include "module_base/abfs-vector3_order.h"
 
 namespace ModuleIO

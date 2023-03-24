@@ -34,12 +34,6 @@ public:
     // couple stress component due to md_pcouple
     void couple_stress();
 
-    // perform half-step update of vel due to atomic force
-    void update_vel();
-
-    // perform one step update of pos due to atomic velocity
-    void update_pos();
-
     // perform half-step update of volume
     void update_volume();
 

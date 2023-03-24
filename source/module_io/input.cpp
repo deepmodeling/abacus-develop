@@ -55,7 +55,7 @@ void Input::Init(const std::string &fn)
     // NAME : Run::make_dir( dir name : OUT.suffix)
     //----------------------------------------------------------
     bool out_dir = false;
-    if(out_mat_hs2 || out_mat_r || out_mat_t || out_mat_dh) out_dir = true;
+    if(!out_app_flag && (out_mat_hs2 || out_mat_r || out_mat_t || out_mat_dh)) out_dir = true;
     ModuleBase::Global_File::make_dir_out(this->suffix,
                                           this->calculation,
                                           out_dir,
@@ -185,6 +185,7 @@ void Input::Default(void)
     search_pbc = true;
     symmetry = 0;
     init_vel = false;
+    ref_cell_factor = 1.0;
     symmetry_prec = 1.0e-5; // LiuXh add 2021-08-12, accuracy for symmetry
     cal_force = 0;
     dump_force = true;
@@ -301,6 +302,7 @@ void Input::Default(void)
     out_mat_hs2 = 0; // LiuXh add 2019-07-15
     out_mat_t = 0;
     out_hs2_interval = 1;
+    out_app_flag = true;
     out_mat_r = 0; // jingan add 2019-8-14
     out_wfc_lcao = false;
     out_alllog = false;
@@ -841,6 +843,10 @@ bool Input::Read(const std::string &fn)
         {
             read_bool(ifs, init_vel);
         }
+        else if (strcmp("ref_cell_factor", word) == 0)
+        {
+            read_value(ifs, ref_cell_factor);
+        }
         else if (strcmp("symmetry_prec", word) == 0) // LiuXh add 2021-08-12, accuracy for symmetry
         {
             read_value(ifs, symmetry_prec);
@@ -1243,6 +1249,10 @@ bool Input::Read(const std::string &fn)
         {
             read_value(ifs, out_hs2_interval);
         }
+        else if (strcmp("out_app_flag", word) == 0)
+        {
+            read_value(ifs, out_app_flag);
+        }
         else if (strcmp("out_mat_r", word) == 0)
         {
             read_bool(ifs, out_mat_r);
@@ -1357,6 +1367,10 @@ bool Input::Read(const std::string &fn)
         else if (strcmp("md_seed", word) == 0)
         {
             read_value(ifs, mdp.md_seed);
+        }
+        else if (strcmp("md_prec_level", word) == 0)
+        {
+            read_value(ifs, mdp.md_prec_level);
         }
         else if (strcmp("md_restart", word) == 0)
         {
@@ -2561,6 +2575,11 @@ void Input::Default_2(void) // jiyy add 2019-08-04
         {
             cal_stress = 1;
         }
+
+        if(mdp.md_type == 4 || (mdp.md_type == 1 && mdp.md_pmode != "none"))
+        {
+            GlobalV::md_prec_level = mdp.md_prec_level;
+        }
     }
     else if (calculation == "cell-relax") // mohan add 2011-11-04
     {
@@ -2647,6 +2666,11 @@ void Input::Default_2(void) // jiyy add 2019-08-04
 	{
 		bessel_descriptor_ecut = std::to_string(ecutwfc);
 	}
+
+    if (GlobalV::md_prec_level != 1)
+    {
+        ref_cell_factor = 1.0;
+    }
 }
 #ifdef __MPI
 void Input::Bcast()
@@ -2713,6 +2737,7 @@ void Input::Bcast()
     Parallel_Common::bcast_double(search_radius);
     Parallel_Common::bcast_int(symmetry);
     Parallel_Common::bcast_bool(init_vel); // liuyu 2021-07-14
+    Parallel_Common::bcast_double(ref_cell_factor);
     Parallel_Common::bcast_double(symmetry_prec); // LiuXh add 2021-08-12, accuracy for symmetry
     Parallel_Common::bcast_bool(cal_force);
     Parallel_Common::bcast_bool(dump_force);
@@ -2821,6 +2846,8 @@ void Input::Bcast()
     Parallel_Common::bcast_bool(out_wfc_lcao);
     Parallel_Common::bcast_bool(out_alllog);
     Parallel_Common::bcast_bool(out_element_info);
+    Parallel_Common::bcast_bool(out_app_flag);
+    Parallel_Common::bcast_int(out_hs2_interval);
 
     Parallel_Common::bcast_double(dos_emin_ev);
     Parallel_Common::bcast_double(dos_emax_ev);
@@ -2858,6 +2885,7 @@ void Input::Bcast()
     Parallel_Common::bcast_int(mdp.md_dumpfreq);
     Parallel_Common::bcast_int(mdp.md_restartfreq);
     Parallel_Common::bcast_int(mdp.md_seed);
+    Parallel_Common::bcast_int(mdp.md_prec_level);
     Parallel_Common::bcast_bool(mdp.md_restart);
     Parallel_Common::bcast_double(mdp.lj_rcut);
     Parallel_Common::bcast_double(mdp.lj_epsilon);
@@ -3126,6 +3154,11 @@ void Input::Check(void)
     if (gate_flag && efield_flag && !dip_cor_flag)
     {
         ModuleBase::WARNING_QUIT("Input", "gate field cannot be used with efield if dip_cor_flag=false !");
+    }
+
+    if(ref_cell_factor < 1.0)
+    {
+        ModuleBase::WARNING_QUIT("Input", "ref_cell_factor must not be less than 1.0");
     }
 
     //----------------------------------------------------------
