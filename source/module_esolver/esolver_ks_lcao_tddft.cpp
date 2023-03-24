@@ -541,14 +541,12 @@ void ESolver_KS_LCAO_TDDFT::cal_edm_tddft()
         complex<double>* tmp2 = new complex<double>[this->LOC.ParaV->nloc];
         complex<double>* tmp3 = new complex<double>[this->LOC.ParaV->nloc];
         complex<double>* tmp4 = new complex<double>[this->LOC.ParaV->nloc];
-        complex<double>* tmp5 = new complex<double>[this->LOC.ParaV->nloc];
         ModuleBase::GlobalFunc::ZEROS(Htmp, this->LOC.ParaV->nloc);
         ModuleBase::GlobalFunc::ZEROS(Sinv, this->LOC.ParaV->nloc);
         ModuleBase::GlobalFunc::ZEROS(tmp1, this->LOC.ParaV->nloc);
         ModuleBase::GlobalFunc::ZEROS(tmp2, this->LOC.ParaV->nloc);
         ModuleBase::GlobalFunc::ZEROS(tmp3, this->LOC.ParaV->nloc);
         ModuleBase::GlobalFunc::ZEROS(tmp4, this->LOC.ParaV->nloc);
-        ModuleBase::GlobalFunc::ZEROS(tmp5, this->LOC.ParaV->nloc);
         const int inc = 1;
         int nrow = this->LOC.ParaV->nrow;
         int ncol = this->LOC.ParaV->ncol;
@@ -598,8 +596,8 @@ void ESolver_KS_LCAO_TDDFT::cal_edm_tddft()
         const char N_char = 'N', T_char = 'T';
         const complex<double> one_float = {1.0, 0.0}, zero_float = {0.0, 0.0};
         const complex<double> half_float = {0.5, 0.0};
-        pzgemm_(&T_char,
-                &T_char,
+        pzgemm_(&N_char,
+                &N_char,
                 &GlobalV::NLOCAL,
                 &GlobalV::NLOCAL,
                 &GlobalV::NLOCAL,
@@ -639,7 +637,7 @@ void ESolver_KS_LCAO_TDDFT::cal_edm_tddft()
                 this->LOC.ParaV->desc);
 
         pzgemm_(&N_char,
-                &T_char,
+                &N_char,
                 &GlobalV::NLOCAL,
                 &GlobalV::NLOCAL,
                 &GlobalV::NLOCAL,
@@ -659,7 +657,7 @@ void ESolver_KS_LCAO_TDDFT::cal_edm_tddft()
                 this->LOC.ParaV->desc);
 
         pzgemm_(&N_char,
-                &T_char,
+                &N_char,
                 &GlobalV::NLOCAL,
                 &GlobalV::NLOCAL,
                 &GlobalV::NLOCAL,
@@ -692,19 +690,7 @@ void ESolver_KS_LCAO_TDDFT::cal_edm_tddft()
                  &one_int,
                  this->LOC.ParaV->desc);
 
-        pztranu_(&GlobalV::NLOCAL,
-                 &GlobalV::NLOCAL,
-                 &one_float,
-                 tmp4,
-                 &one_int,
-                 &one_int,
-                 this->LOC.ParaV->desc,
-                 &zero_float,
-                 tmp5,
-                 &one_int,
-                 &one_int,
-                 this->LOC.ParaV->desc);
-        zcopy_(&this->LOC.ParaV->nloc, tmp5, &inc, this->LOC.edm_k_tddft[ik].c, &inc);
+        zcopy_(&this->LOC.ParaV->nloc, tmp4, &inc, this->LOC.edm_k_tddft[ik].c, &inc);
 
         delete[] Htmp;
         delete[] Sinv;
@@ -712,7 +698,6 @@ void ESolver_KS_LCAO_TDDFT::cal_edm_tddft()
         delete[] tmp2;
         delete[] tmp3;
         delete[] tmp4;
-        delete[] tmp5;
         delete[] ipiv;
 #else
         this->LOC.edm_k_tddft[ik].create(this->LOC.ParaV->ncol, this->LOC.ParaV->nrow);
