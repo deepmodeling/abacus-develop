@@ -254,9 +254,6 @@ TEST_F(InputParaTest,Bcast)
         EXPECT_DOUBLE_EQ(INPUT.soc_lambda,1.0);
         EXPECT_EQ(INPUT.input_error,0);
         EXPECT_DOUBLE_EQ(INPUT.td_force_dt,0.02);
-        EXPECT_EQ(INPUT.td_val_elec_01,1);
-        EXPECT_EQ(INPUT.td_val_elec_02,1);
-        EXPECT_EQ(INPUT.td_val_elec_03,1);
         EXPECT_FALSE(INPUT.td_vext);
         EXPECT_EQ(INPUT.td_vext_dire,"1");
 		EXPECT_EQ(INPUT.td_stype,0);
