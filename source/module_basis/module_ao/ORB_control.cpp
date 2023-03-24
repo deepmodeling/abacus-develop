@@ -516,7 +516,47 @@ int ORB_control::mat_2d(MPI_Comm vu,
     }
     pv->nloc_wfc = pv->ncol_bands * LM.row_num;
 
-    pv->nloc_Eij= pv->ncol_bands * pv->ncol_bands;
+    // for Eij, calculate nrow_bands
+    block = N_A / nb;
+    if (block * nb < N_A)
+    {
+        block++;
+    }
+    if (dim[0] > block)
+    {
+        ofs_warning << " cpu 2D distribution : " << dim[0] << "*" << dim[1] << std::endl;
+        ofs_warning << " but, the number of bands-row-block is " << block << std::endl;
+        if (nb > 1)
+        {
+            return 1;
+        }
+        else
+        {
+            ModuleBase::WARNING_QUIT("ORB_control::mat_2d", "some processor has no bands-row-blocks.");
+        }
+    }
+    int row_b_bands = block / dim[0];
+    if (coord[0] < block % dim[0])
+    {
+        row_b_bands++;
+    }
+    if (block % dim[0] == 0)
+    {
+        end_id = dim[0] - 1;
+    }
+    else
+    {
+        end_id = block % dim[0] - 1;
+    }
+    if (coord[0] == end_id)
+    {
+        pv->nrow_bands = (row_b_bands - 1) * nb + (N_A - (block - 1) * nb);
+    }
+    else
+    {
+        pv->nrow_bands = row_b_bands * nb;
+    }
+    pv->nloc_Eij= pv->ncol_bands * pv->nrow_bands;
     
     return 0;
 }
