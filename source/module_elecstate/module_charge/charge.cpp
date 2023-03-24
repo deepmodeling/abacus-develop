@@ -23,6 +23,7 @@
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "charge.h"
 #include "module_elecstate/magnetism.h"
+#include "module_elecstate/energy.h"
 #include "module_hamilt_pw/hamilt_pwdft/parallel_grid.h"
 #include "module_base/math_integral.h"
 #include "module_base/math_sphbes.h"
@@ -35,45 +36,54 @@
 Charge::Charge()
 {
 	allocate_rho = false;
-    allocate_rho_final_scf = false; //LiuXh add 20180619
+	allocate_rho_final_scf = false; //LiuXh add 20180619
 }
 
 
 Charge::~Charge()
 {
-	//if(allocate_rho) //LiuXh modify 20180619
-	if(allocate_rho || allocate_rho_final_scf) //LiuXh add 20180619
-	{
-		for(int i=0; i<GlobalV::NSPIN; i++)
-		{
-			delete[] rho[i];
-			delete[] rhog[i];
-			delete[] rho_save[i];
-			delete[] rhog_save[i];
-			if(XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
-			{
-				delete[] kin_r[i];
-				delete[] kin_r_save[i];
-			}
-		}
-		delete[] rho;
-		delete[] rhog;
-		delete[] rho_save;
-		delete[] rhog_save;
-    	delete[] rho_core;
-		delete[] rhog_core;
-		if(XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
-		{
-			delete[] kin_r;
-			delete[] kin_r_save;
-		}
-	}
+    this->destroy();
 }
 
+void Charge::destroy()
+{
+    if(allocate_rho || allocate_rho_final_scf) //LiuXh add 20180619
+    {
+        for(int i=0; i<GlobalV::NSPIN; i++)
+        {
+            delete[] rho[i];
+            delete[] rhog[i];
+            delete[] rho_save[i];
+            delete[] rhog_save[i];
+            if(XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
+            {
+                delete[] kin_r[i];
+                delete[] kin_r_save[i];
+            }
+        }
+        delete[] rho;
+        delete[] rhog;
+        delete[] rho_save;
+        delete[] rhog_save;
+        delete[] rho_core;
+        delete[] rhog_core;
+        if(XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
+        {
+            delete[] kin_r;
+            delete[] kin_r_save;
+        }
+    }
+}
 
 void Charge::allocate(const int &nspin_in, const int &nrxx_in, const int &ngmc_in)
 {
     ModuleBase::TITLE("Charge","allocate");
+
+    if(allocate_rho == true)
+    {
+        this->destroy();
+        allocate_rho = false;
+    }
 
 	assert(allocate_rho == false);
 
@@ -152,74 +162,96 @@ void Charge::init_rho()
     }
     else if (GlobalV::init_chg == "file")
     {
-        GlobalV::ofs_running << " try to read charge from file : ";
-        for (int is = 0; is < GlobalV::NSPIN; is++)
-        {
-            std::stringstream ssc;
-            ssc << GlobalV::global_readin_dir << "SPIN" << is + 1 << "_CHG.cube";
-            GlobalV::ofs_running << ssc.str() << std::endl;
-            // mohan update 2012-02-10, sunliang update 2023-03-09
-            if (ModuleIO::read_rho(is, ssc.str(), this->rho[is], this->prenspin))
-            {
-                GlobalV::ofs_running << " Read in the charge density: " << ssc.str() << std::endl;
-            }
-            else if (is > 0 && GlobalV::NSPIN == 4)
-            {
-                // read only spin (up+down)
-                if (prenspin == 1)
-                {
-                    GlobalV::ofs_running << " Didn't read in the charge density but autoset it for spin " << is + 1
-                                         << std::endl;
-                    for (int ir = 0; ir < GlobalC::rhopw->nrxx; ir++)
-                    {
-                        this->rho[is][ir] = 0.0;
-                    }
-                }
-                //
-                else if (prenspin == 2)
-                { // read up and down , then rearrange them.
-                    if (is == 1)
-                    {
-                        ModuleBase::WARNING_QUIT("Charge::init_rho", "Incomplete charge density file!");
-                    }
-                    else if (is == 2)
-                    {
-                        GlobalV::ofs_running << " Didn't read in the charge density but would rearrange it later. "
-                                             << std::endl;
-                    }
-                    else if (is == 3)
-                    {
-                        GlobalV::ofs_running << " rearrange charge density " << std::endl;
-                        for (int ir = 0; ir < GlobalC::rhopw->nrxx; ir++)
-                        {
-                            this->rho[3][ir] = this->rho[0][ir] - this->rho[1][ir];
-                            this->rho[0][ir] = this->rho[0][ir] + this->rho[1][ir];
-                            this->rho[1][ir] = 0.0;
-                            this->rho[2][ir] = 0.0;
-                        }
-                    }
-                }
-                else
-                {
-                    ModuleBase::WARNING_QUIT("Charge::init_rho", "Incomplete charge density file!");
-                }
-            }
-            else
-            {
-		    ModuleBase::WARNING_QUIT("init_rho","!!! Couldn't find the charge file !!! The default directory \n of SPIN1_CHG.cube is OUT.suffix, or you must set read_file_dir \n to a specific directory. ");
-            }
+	GlobalV::ofs_running << " try to read charge from file : ";
+	for (int is=0; is<GlobalV::NSPIN; ++is)
+	{
+		std::stringstream ssc;
+		ssc << GlobalV::global_readin_dir << "SPIN" << is + 1 << "_CHG.cube";
+		GlobalV::ofs_running << ssc.str() << std::endl;
+		double& ef_tmp = GlobalC::en.get_ef(is,GlobalV::TWO_EFERMI);
+		if (ModuleIO::read_rho(
+#ifdef __MPI
+			&(GlobalC::Pgrid),
+#endif
+			is,
+			GlobalV::NSPIN,
+			ssc.str(),
+			this->rho[is],
+			GlobalC::rhopw->nx,
+			GlobalC::rhopw->ny,
+			GlobalC::rhopw->nz,
+			ef_tmp,
+			&(GlobalC::ucell),
+			this->prenspin))
+		{
+			GlobalV::ofs_running << " Read in the charge density: " << ssc.str() << std::endl;
+		}
+		else if(is > 0)
+		{
+			if (prenspin == 1)
+			{
+			    GlobalV::ofs_running << " Didn't read in the charge density but autoset it for spin " << is + 1
+			                         << std::endl;
+			    for (int ir = 0; ir < GlobalC::rhopw->nrxx; ir++)
+			    {
+			        this->rho[is][ir] = 0.0;
+			    }
+			}
+			//
+			else if (prenspin == 2)
+			{ // read up and down , then rearrange them.
+			    if (is == 1)
+			    {
+			        ModuleBase::WARNING_QUIT("Charge::init_rho", "Incomplete charge density file!");
+			    }
+			    else if (is == 2)
+			    {
+			        GlobalV::ofs_running << " Didn't read in the charge density but would rearrange it later. "
+			                             << std::endl;
+			    }
+			    else if (is == 3)
+			    {
+			        GlobalV::ofs_running << " rearrange charge density " << std::endl;
+			        for (int ir = 0; ir < GlobalC::rhopw->nrxx; ir++)
+			        {
+			            this->rho[3][ir] = this->rho[0][ir] - this->rho[1][ir];
+			            this->rho[0][ir] = this->rho[0][ir] + this->rho[1][ir];
+			            this->rho[1][ir] = 0.0;
+			            this->rho[2][ir] = 0.0;
+			        }
+			    }
+			}
+		}
+		else
+		{
+			ModuleBase::WARNING_QUIT("init_rho","!!! Couldn't find the charge file !!! The default directory \n of SPIN1_CHG.cube is OUT.suffix, or you must set read_file_dir \n to a specific directory. ");
+		}
+	}
 
-        }
+
         
-		if(XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
-        {
+	if(XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
+	{
 			for (int is = 0; is < GlobalV::NSPIN; is++)
 			{
 				std::stringstream ssc;
 				ssc << GlobalV::global_readin_dir << "SPIN" << is + 1 << "_TAU.cube";
 				GlobalV::ofs_running << " try to read kinetic energy density from file : " << ssc.str() << std::endl;
 				// mohan update 2012-02-10, sunliang update 2023-03-09
-				if (ModuleIO::read_rho(is, ssc.str(), this->kin_r[is], this->prenspin))
+				if (ModuleIO::read_rho(
+#ifdef __MPI
+							&(GlobalC::Pgrid),
+#endif
+							is,
+							GlobalV::NSPIN,
+							ssc.str(),
+							this->kin_r[is],
+							GlobalC::rhopw->nx,
+							GlobalC::rhopw->ny,
+							GlobalC::rhopw->nz,
+							GlobalC::en.ef,
+							&(GlobalC::ucell),
+							this->prenspin))
 				{
 					GlobalV::ofs_running << " Read in the kinetic energy density: " << ssc.str() << std::endl;
 				}

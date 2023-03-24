@@ -5,7 +5,7 @@
 
 #include "module_base/intarray.h"
 #include "module_base/complexmatrix.h"
-#include "module_orbital/ORB_gen_tables.h"
+#include "module_basis/module_ao/ORB_gen_tables.h"
 #include <unordered_map>
 
 #include "torch/script.h"
@@ -13,7 +13,7 @@
 #include "torch/csrc/api/include/torch/linalg.h"
 
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
-#include "module_orbital/parallel_orbitals.h"
+#include "module_basis/module_ao/parallel_orbitals.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_matrix.h"
 #include "module_base/intarray.h"
 #include "module_base/complexmatrix.h"

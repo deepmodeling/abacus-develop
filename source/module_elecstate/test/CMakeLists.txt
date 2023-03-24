@@ -27,14 +27,14 @@ if(ENABLE_LCAO)
     SOURCES elecstate_lcao_test.cpp ../elecstate_lcao.cpp
               ../../module_hamilt_lcao/hamilt_lcaodft/local_orbital_charge.cpp ../../module_hamilt_lcao/hamilt_lcaodft/DM_gamma.cpp ../../module_hamilt_lcao/hamilt_lcaodft/DM_k.cpp
               ../../module_hamilt_lcao/hamilt_lcaodft/local_orbital_wfc.cpp
-              ../../module_gint/grid_technique.cpp ../../module_gint/grid_meshball.cpp ../../module_gint/grid_bigcell.cpp
-              ../../module_gint/grid_meshcell.cpp ../../module_gint/grid_meshk.cpp
-              ../../module_gint/gint_tools.cpp ../../module_gint/gint_k_pvpr.cpp ../../module_gint/gint_tau.cpp
+              ../../module_hamilt_lcao/module_gint/grid_technique.cpp ../../module_hamilt_lcao/module_gint/grid_meshball.cpp ../../module_hamilt_lcao/module_gint/grid_bigcell.cpp
+              ../../module_hamilt_lcao/module_gint/grid_meshcell.cpp ../../module_hamilt_lcao/module_gint/grid_meshk.cpp
+              ../../module_hamilt_lcao/module_gint/gint_tools.cpp ../../module_hamilt_lcao/module_gint/gint_k_pvpr.cpp ../../module_hamilt_lcao/module_gint/gint_tau.cpp
               ../../module_hamilt_lcao/hamilt_lcaodft/dm_2d.cpp ../../module_hamilt_lcao/hamilt_lcaodft/LCAO_matrix.cpp
               ../../module_hamilt_lcao/hamilt_lcaodft/record_adj.cpp  ../../module_hamilt_lcao/hamilt_lcaodft/LCAO_nnr.cpp
-              ../../module_gint/gint.cpp ../../module_gint/gint_gamma.cpp
-              ../../module_gint/gint_fvl.cpp ../../module_gint/gint_rho.cpp
-              ../../module_gint/gint_vl.cpp
+              ../../module_hamilt_lcao/module_gint/gint.cpp ../../module_hamilt_lcao/module_gint/gint_gamma.cpp
+              ../../module_hamilt_lcao/module_gint/gint_fvl.cpp ../../module_hamilt_lcao/module_gint/gint_rho.cpp
+              ../../module_hamilt_lcao/module_gint/gint_vl.cpp
               ../../module_hamilt_pw/hamilt_pwdft/charge.cpp
               ../../module_io/output.cpp ../../module_hamilt_pw/hamilt_pwdft/soc.cpp ../../module_io/read_rho.cpp
   )
@@ -94,16 +94,16 @@ add_library(
 )
 
 list(APPEND planewave_serial_srcs
-  ../../module_pw/fft.cpp
-  ../../module_pw/pw_basis.cpp
-  ../../module_pw/pw_basis_k.cpp
-  ../../module_pw/pw_distributeg.cpp
-  ../../module_pw/pw_distributeg_method1.cpp
-  ../../module_pw/pw_distributeg_method2.cpp
-  ../../module_pw/pw_distributer.cpp
-  ../../module_pw/pw_init.cpp
-  ../../module_pw/pw_transform.cpp
-  ../../module_pw/pw_transform_k.cpp
+  ../../module_basis/module_pw/fft.cpp
+  ../../module_basis/module_pw/pw_basis.cpp
+  ../../module_basis/module_pw/pw_basis_k.cpp
+  ../../module_basis/module_pw/pw_distributeg.cpp
+  ../../module_basis/module_pw/pw_distributeg_method1.cpp
+  ../../module_basis/module_pw/pw_distributeg_method2.cpp
+  ../../module_basis/module_pw/pw_distributer.cpp
+  ../../module_basis/module_pw/pw_init.cpp
+  ../../module_basis/module_pw/pw_transform.cpp
+  ../../module_basis/module_pw/pw_transform_k.cpp
 )
 
 list(APPEND symmetry

@@ -9,7 +9,7 @@
 //  and gives the spin up and spin down components of the charge.
 
 #include "xc_functional.h"
-#include "module_pw/pw_basis_k.h"
+#include "module_basis/module_pw/pw_basis_k.h"
 
 // from gradcorr.f90
 void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v,

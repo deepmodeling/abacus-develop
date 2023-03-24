@@ -231,6 +231,7 @@ void cal_r_overlap_R::out_rR(const int &istep)
     ModuleBase::TITLE("cal_r_overlap_R", "out_rR");
     ModuleBase::timer::tick("cal_r_overlap_R", "out_rR");
 
+    int step = istep;
     // set R coor range
     int R_minX = int(GlobalC::GridD.getD_minX());
     int R_minY = int(GlobalC::GridD.getD_minY());
@@ -406,15 +407,23 @@ void cal_r_overlap_R::out_rR(const int &istep)
     {
         std::ofstream out_r;
         std::stringstream ssr;
-        if(GlobalV::CALCULATION == "md")
-            ssr << GlobalV::global_matrix_dir << istep << "_" << "data-rR-sparse.csr";
+        if(GlobalV::CALCULATION == "md" && !GlobalV::out_app_flag)
+            ssr << GlobalV::global_matrix_dir << step << "_" << "data-rR-sparse.csr";
         else
             ssr << GlobalV::global_out_dir << "data-rR-sparse.csr";
 
         if (binary)
         {
             ofs_tem1.close();
-            out_r.open(ssr.str().c_str(), ios::binary);
+            if(GlobalV::CALCULATION == "md" && GlobalV::out_app_flag && step)
+            {
+                out_r.open(ssr.str().c_str(), ios::binary | ios::app);
+            }
+            else
+            {
+                out_r.open(ssr.str().c_str(), ios::binary);
+            }
+            out_r.write(reinterpret_cast<char *>(&step), sizeof(int));
             out_r.write(reinterpret_cast<char *>(&GlobalV::NLOCAL), sizeof(int));
             out_r.write(reinterpret_cast<char *>(&output_R_number), sizeof(int));
 
@@ -426,7 +435,15 @@ void cal_r_overlap_R::out_rR(const int &istep)
         else
         {
             ofs_tem1.close();
-            out_r.open(ssr.str().c_str());
+            if(GlobalV::CALCULATION == "md" && GlobalV::out_app_flag && step)
+            {
+                out_r.open(ssr.str().c_str(), ios::app);
+            }
+            else
+            {
+                out_r.open(ssr.str().c_str());
+            }
+            out_r << "STEP: " << step << std::endl;
             out_r << "Matrix Dimension of r(R): " << GlobalV::NLOCAL <<std::endl;
             out_r << "Matrix number of r(R): " << output_R_number << std::endl;
 
@@ -456,11 +473,12 @@ void cal_r_overlap_R::out_rR_other(const int &istep, const std::set<Abfs::Vector
     ModuleBase::Vector3<double> origin_point(0.0, 0.0, 0.0);
     double factor = sqrt(ModuleBase::FOUR_PI/3.0);
     int output_R_number = output_R_coor.size();
+    int step = istep;
 
     std::ofstream out_r;
     std::stringstream ssr;
-    if(GlobalV::CALCULATION == "md")
-        ssr << GlobalV::global_matrix_dir << istep << "_" << "data-rR-sparse.csr";
+    if(GlobalV::CALCULATION == "md" && !GlobalV::out_app_flag)
+        ssr << GlobalV::global_matrix_dir << step << "_" << "data-rR-sparse.csr";
     else
         ssr << GlobalV::global_out_dir << "data-rR-sparse.csr";
 
@@ -468,13 +486,29 @@ void cal_r_overlap_R::out_rR_other(const int &istep, const std::set<Abfs::Vector
     {
         if (binary)
         {
-            out_r.open(ssr.str().c_str(), ios::binary);
+            if(GlobalV::CALCULATION == "md" && GlobalV::out_app_flag && step)
+            {
+                out_r.open(ssr.str().c_str(), ios::binary | ios::app);
+            }
+            else
+            {
+                out_r.open(ssr.str().c_str(), ios::binary);
+            }
+            out_r.write(reinterpret_cast<char *>(&step), sizeof(int));
             out_r.write(reinterpret_cast<char *>(&GlobalV::NLOCAL), sizeof(int));
             out_r.write(reinterpret_cast<char *>(&output_R_number), sizeof(int));
         }
         else
         {
-            out_r.open(ssr.str().c_str());
+            if(GlobalV::CALCULATION == "md" && GlobalV::out_app_flag && step)
+            {
+                out_r.open(ssr.str().c_str(), ios::app);
+            }
+            else
+            {
+                out_r.open(ssr.str().c_str());
+            }
+            out_r << "STEP: " << step << std::endl;
             out_r << "Matrix Dimension of r(R): " << GlobalV::NLOCAL <<std::endl;
             out_r << "Matrix number of r(R): " << output_R_number << std::endl;
         }

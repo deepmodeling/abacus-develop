@@ -45,7 +45,7 @@ out_mul=`grep out_mul INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
 gamma_only=`grep gamma_only INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
 imp_sol=`grep imp_sol INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
 run_rpa=`grep rpa INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
-out_pot2=`grep out_pot INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
+out_pot=`grep out_pot INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
 out_dm1=`grep out_dm1 INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
 get_s=`grep calculation INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
 out_pband=`grep out_proj_band INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
@@ -123,8 +123,16 @@ if ! test -z "$out_dm1"  && [  $out_dm1 == 1 ]; then
 	echo "CompareDM1_pass $?" >>$1
 fi
 
+#echo $out_pot1
+if ! test -z "$out_pot"  && [  $out_pot == 1 ]; then
+	pot1ref=refSPIN1_POT.cube
+	pot1cal=OUT.autotest/SPIN1_POT.cube
+	python3 ../tools/CompareFile.py $pot1ref $pot1cal 8
+	echo "ComparePot1_pass $?" >>$1
+fi
+
 #echo $out_pot2
-if ! test -z "$out_pot2"  && [  $out_pot2 == 2 ]; then
+if ! test -z "$out_pot"  && [  $out_pot == 2 ]; then
 	pot1ref=refElecStaticPot
 	pot1cal=OUT.autotest/ElecStaticPot
 	pot2ref=refElecStaticPot_AVE

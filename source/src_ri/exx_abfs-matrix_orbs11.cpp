@@ -3,7 +3,7 @@
 #include <algorithm>
 #include <set>
 #include "../module_hamilt_pw/hamilt_pwdft/global.h"
-#include "../module_orbital/ORB_read.h"
+#include "../module_basis/module_ao/ORB_read.h"
 #include "../module_base/ylm.h"
 #include "../module_base/global_function.h"
 

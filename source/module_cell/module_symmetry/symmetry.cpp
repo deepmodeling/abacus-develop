@@ -1169,10 +1169,12 @@ void Symmetry::pricell(double* pos)
     this->p3.y=plat.e32;
     this->p3.z=plat.e33;
 
+#ifdef __DEBUG
     GlobalV::ofs_running<<"lattice vectors of primitive cell (initial):"<<std::endl;
     GlobalV::ofs_running<<p1.x<<" "<<p1.y<<" "<<p1.z<<std::endl;
     GlobalV::ofs_running<<p2.x<<" "<<p2.y<<" "<<p2.z<<std::endl;
     GlobalV::ofs_running<<p3.x<<" "<<p3.y<<" "<<p3.z<<std::endl;
+#endif
 
     // get the optimized primitive cell
     UnitCell tmp_ucell;
@@ -1192,10 +1194,12 @@ void Symmetry::pricell(double* pos)
     this->plat.e32=p3.y;
     this->plat.e33=p3.z;
 
+#ifdef __DEBUG
     GlobalV::ofs_running<<"lattice vectors of primitive cell (optimized):"<<std::endl;
     GlobalV::ofs_running<<p1.x<<" "<<p1.y<<" "<<p1.z<<std::endl;
     GlobalV::ofs_running<<p2.x<<" "<<p2.y<<" "<<p2.z<<std::endl;
     GlobalV::ofs_running<<p3.x<<" "<<p3.y<<" "<<p3.z<<std::endl;
+#endif
 
     GlobalV::ofs_running<<"(for primitive cell:)"<<std::endl;
     Symm_Other::print1(this->pbrav, this->pcel_const, GlobalV::ofs_running);

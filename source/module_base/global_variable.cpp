@@ -33,6 +33,7 @@ std::string ESOLVER_TYPE = "ksdft";
 int EFIELD_FLAG = 0; // 5: add electric field
 int DIP_COR_FLAG = 0; // 7: add dipole field
 bool GATE_FLAG = false;    // add gate field
+bool out_app_flag = true;  // whether output r(R), H(R), S(R), T(R), and dH(R) matrices in an append manner during MD  liuyu 2023-03-20
 
 std::string DFT_FUNCTIONAL = "default";
 double XC_TEMPERATURE = 0.0;
@@ -57,6 +58,7 @@ int OUT_FREQ_ELEC = 0;
 int OUT_FREQ_ION = 0;
 int RELAX_NMAX = 20;
 int MD_NSTEP = 20;
+int md_prec_level = 0;
 int SCF_NMAX = 100;
 
 std::string BASIS_TYPE = "pw"; // xiaohui add 2013-09-01

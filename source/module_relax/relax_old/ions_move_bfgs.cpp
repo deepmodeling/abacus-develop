@@ -40,7 +40,7 @@ void Ions_Move_BFGS::start(const ModuleBase::matrix& force, const double &energy
 	// istep must be set eariler.
 
 	// use force to setup gradient.
-	Ions_Move_Basic::setup_gradient(this->pos, this->grad, force);
+	Ions_Move_Basic::setup_gradient(this->grad, force);
 	// use energy_in and istep to setup etot and etot_old.
 	Ions_Move_Basic::setup_etot(energy_in, 0);	
 	// use gradient and etot and etot_old to check
@@ -72,7 +72,7 @@ void Ions_Move_BFGS::start(const ModuleBase::matrix& force, const double &energy
 		// even if the energy is higher, we save the information.
 		this->save_bfgs();	
 		
-		Ions_Move_Basic::move_atoms(move, pos);
+		Ions_Move_Basic::move_atoms(move);
 	}
 	return;	
 }
@@ -109,14 +109,13 @@ void Ions_Move_BFGS::restart_bfgs(void)
 		{
 			// mohan add 2010-07-26.
 			// there must be one of the two has the correct sign and value.
-			this->move_p[i] = this->check_move(pos[i], pos_p[i])/trust_radius_old;
+			this->move_p[i] = this->check_move(move_p[i])/trust_radius_old;
 			//std::cout << " " << std::setw(20) << move_p[i] << std::setw(20) << dpmin << std::endl;
 		}
 	}
 	else
 	{
 		//	bfgs initialization
-		ModuleBase::GlobalFunc::ZEROS(pos_p, dim);
 		ModuleBase::GlobalFunc::ZEROS(grad_p, dim);
 		ModuleBase::GlobalFunc::ZEROS(move_p, dim);
 		
@@ -234,7 +233,6 @@ void Ions_Move_BFGS::bfgs_routine(void)
 		etot = etot_p;
 		for(int i=0;i<dim;i++)
 		{
-			this->pos[i] = pos_p[i];
 			this->grad[i] = grad_p[i];
 		}
 		

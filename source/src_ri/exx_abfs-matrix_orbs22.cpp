@@ -4,7 +4,7 @@
 #include "exx_abfs-abfs_index.h"
 
 #include "../module_hamilt_pw/hamilt_pwdft/global.h"
-#include "../module_orbital/ORB_read.h"
+#include "../module_basis/module_ao/ORB_read.h"
 #include "../module_base/ylm.h"
 
 #include "../src_ri/test_code/test_function.h"			// Peize Lin test 2016-04-05

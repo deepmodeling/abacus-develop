@@ -76,7 +76,7 @@ Here, we use a simple [example calculation](https://github.com/deepmodeling/abac
     In the log_ref file, you will see the repetitive appearance of a piece of warning message:
     ```
     The angular momentum larger than 4 (g orbitals) may be error about eggbox.
-    Check file ./module_orbital/ORB_atomic_lm.cpp line 272
+    Check file ./module_basis/module_ao/ORB_atomic_lm.cpp line 272
     ```
     This is normal and it will not affect the results of calculation.
     
